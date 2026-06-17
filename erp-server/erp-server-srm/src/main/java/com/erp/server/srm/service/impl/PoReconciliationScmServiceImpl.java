@@ -958,9 +958,8 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
         }
 
         List<PoReconciliationDTO.InvoiceFileDTO> attachmentList = dto.getAttachmentList();
-        // 空列表语义：保留现有数据，直接返回
         if (CollectionUtils.isEmpty(attachmentList)) {
-            return;
+            throw new ServiceException(ApiError.PO_RECONCILIATION_INVOICE_FILE_INVALID);
         }
         if (attachmentList.size() > INVOICE_MAX_COUNT) {
             throw new ServiceException(ApiError.PO_RECONCILIATION_INVOICE_LIMIT_EXCEEDED);
@@ -969,10 +968,10 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
             if (item == null
                     || StringUtils.isBlank(item.getAttachUrl())
                     || StringUtils.isBlank(item.getAttachName())) {
-                throw new ServiceException("发票附件 URL 或文件名不能为空");
+                throw new ServiceException(ApiError.PO_RECONCILIATION_INVOICE_FILE_INVALID);
             }
             if (!StringUtils.endsWithIgnoreCase(item.getAttachName(), ".pdf")) {
-                throw new ServiceException("仅支持上传PDF格式的文件");
+                throw new ServiceException(ApiError.PO_RECONCILIATION_INVOICE_PDF_ONLY);
             }
         }
 

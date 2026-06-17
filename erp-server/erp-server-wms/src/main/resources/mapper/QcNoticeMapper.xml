@@ -266,7 +266,7 @@
         FROM
         qc_notice AS qn
         LEFT JOIN qc_notice_detail AS qnd ON qn.ID = qnd.main_id
-        LEFT JOIN qc_info AS qi ON qi.source_detail_id = qnd.id
+        LEFT JOIN qc_info AS qi ON qi.source_detail_id = qnd.id AND qi.is_deleted = FALSE
         WHERE
         qn.is_deleted = FALSE
         AND qn.approve_status = 'approve'
@@ -303,7 +303,7 @@
         FROM
         qc_notice AS qn
         LEFT JOIN qc_notice_detail AS qnd ON qn.ID = qnd.main_id
-        LEFT JOIN qc_info AS qi ON qi.source_detail_id = qnd.id
+        LEFT JOIN qc_info AS qi ON qi.source_detail_id = qnd.id AND qi.is_deleted = FALSE
         WHERE
         qn.is_deleted = FALSE
         AND qn.approve_status = 'approve'

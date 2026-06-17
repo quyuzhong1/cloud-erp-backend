@@ -2990,7 +2990,8 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     public void reQcSample(QcInfoDTO.ReQcDTO dto) {
         dto.setIds(dto.getIds().stream().distinct().collect(Collectors.toList()));
         List<QcResultEntity> qcResultlist = qcResultService.getByMainIdList(dto.getIds());
-        Map<String, QcResultEntity> qcResultMap = qcResultlist.stream().collect(Collectors.toMap(QcResultEntity::getMainId, Function.identity()));
+        Map<String, QcResultEntity> qcResultMap = qcResultlist.stream()
+                .collect(Collectors.toMap(QcResultEntity::getMainId, Function.identity(), this::pickLatestQcResult));
         dto.getIds().stream().forEach(id -> {
             QcInfoEntity qcInfoEntity = super.getById(id);
             if (Objects.isNull(qcInfoEntity)) {
@@ -3293,9 +3294,10 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 .collect(Collectors.toList());
         
         // 查询供应商信息
-        Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = new HashMap<>();
+        Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = Collections.emptyMap();
         if (CollUtil.isNotEmpty(supplierIds)) {
-            supplierMap = supplierFeign.getSupplierSimpleInfo(supplierIds);
+            Map<String, SupplierDTO.SupplierSimpleDTO> feignMap = supplierFeign.getSupplierSimpleInfo(supplierIds);
+            supplierMap = feignMap != null ? feignMap : Collections.emptyMap();
         }
         
         // 查询质检结果信息
@@ -3305,16 +3307,19 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                     .in(QcResultEntity::getMainId, qcInfoIds)
                     .list();
             qcResultMap = qcResults.stream()
-                    .collect(Collectors.toMap(QcResultEntity::getMainId, e -> e));
+                    .collect(Collectors.toMap(QcResultEntity::getMainId, e -> e, this::pickLatestQcResult));
         }
 
+        Map<String, SkuVO> skuMap = CollUtil.isEmpty(skuVOS) ? Collections.emptyMap()
+                : skuVOS.stream().collect(Collectors.toMap(SkuVO::getSkuId, v -> v, (a, b) -> a));
         Map<String, SupplierDTO.SupplierSimpleDTO> finalSupplierMap = supplierMap;
         Map<String, QcResultEntity> finalQcResultMap = qcResultMap;
         list.forEach(item -> {
             item.setQcStatusName(QcBillStatusEnum.getNameByCode(item.getQcStatus()));
-            skuVOS.stream().filter(s -> s.getSkuId().equals(item.getSkuId())).findFirst().ifPresent(skuVO -> {
+            SkuVO skuVO = skuMap.get(item.getSkuId());
+            if (skuVO != null) {
                 item.setProductName(skuVO.getSkuName());
-            });
+            }
             
             // 填充供应商名称、送检数量、质检结果
             QcInfoEntity entity = qcInfoMap.get(item.getId());
@@ -3418,5 +3423,15 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 throw new ServiceException(apiError);
             }
         }
+    }
+
+    private QcResultEntity pickLatestQcResult(QcResultEntity a, QcResultEntity b) {
+        if (a.getCreateTime() == null) {
+            return b;
+        }
+        if (b.getCreateTime() == null) {
+            return a;
+        }
+        return a.getCreateTime().isAfter(b.getCreateTime()) ? a : b;
     }
 }

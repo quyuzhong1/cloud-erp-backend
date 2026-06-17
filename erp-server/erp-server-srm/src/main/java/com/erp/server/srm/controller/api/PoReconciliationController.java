@@ -2,6 +2,8 @@ package com.erp.server.srm.controller.api;
 
 
 import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.DataPermission;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.vo.PagingVO;
@@ -222,6 +224,11 @@ public class PoReconciliationController extends BaseController {
      * @return ApiResult<List<InvoiceFileVO>>
      */
     @PostMapping("/listInvoice")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "srm:poReconciliation:viewMain",
+            serviceClass = PoReconciliationService.class,
+            keyIdName = "id")
     public ApiResult<List<PoReconciliationDTO.InvoiceFileVO>> listInvoice(@RequestBody @Validated BaseIdDTO dto) {
         return success(poReconciliationService.listInvoice(dto.getId()));
     }

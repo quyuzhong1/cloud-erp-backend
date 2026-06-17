@@ -304,9 +304,11 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                 .map(QcNoticeDetailEntity::getSupplierId)
                 .filter(StrUtil::isNotBlank)
                 .collect(Collectors.toSet());
-        Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = CollUtil.isEmpty(supplierIds)
-                ? Collections.emptyMap()
-                : supplierFeign.getSupplierSimpleInfo(new ArrayList<>(supplierIds));
+        Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = Collections.emptyMap();
+        if (CollUtil.isNotEmpty(supplierIds)) {
+            Map<String, SupplierDTO.SupplierSimpleDTO> feignMap = supplierFeign.getSupplierSimpleInfo(new ArrayList<>(supplierIds));
+            supplierMap = feignMap != null ? feignMap : Collections.emptyMap();
+        }
 
         List<QcNoticeDTO.UpdateQcUserViewDTO> result = new ArrayList<>(detailList.size());
         for (QcNoticeDetailEntity detail : detailList) {
@@ -439,10 +441,16 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             return resultList;
         }
 
-        ApplicationContextUtils.getBean(QcNoticeServiceImpl.class)
-                .persistBatchUpdateQcUser(resolvedValidDetails, resolvedValidItemMap);
-
-        resolvedValidDetails.forEach(d -> resultList.add(BatchResultDTO.success(d.getId(), d.getSkuNo())));
+        try {
+            ApplicationContextUtils.getBean(QcNoticeServiceImpl.class)
+                    .persistBatchUpdateQcUser(resolvedValidDetails, resolvedValidItemMap);
+            resolvedValidDetails.forEach(d -> resultList.add(BatchResultDTO.success(d.getId(), d.getSkuNo())));
+        } catch (ServiceException e) {
+            String errMsg = e.getMsg();
+            for (QcNoticeDetailEntity detail : resolvedValidDetails) {
+                resultList.add(BatchResultDTO.fail(detail.getId(), detail.getSkuNo(), errMsg));
+            }
+        }
 
         return resultList;
     }
@@ -1272,9 +1280,11 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                 .filter(StrUtil::isNotBlank)
                 .distinct()
                 .collect(Collectors.toList());
-        Map<String, SupplierDTO.SupplierSimpleDTO> qcSupplierMap = CollUtil.isEmpty(qcSupplierIds)
-                ? Collections.emptyMap()
-                : supplierFeign.getSupplierSimpleInfo(qcSupplierIds);
+        Map<String, SupplierDTO.SupplierSimpleDTO> qcSupplierMap = Collections.emptyMap();
+        if (CollUtil.isNotEmpty(qcSupplierIds)) {
+            Map<String, SupplierDTO.SupplierSimpleDTO> feignMap = supplierFeign.getSupplierSimpleInfo(qcSupplierIds);
+            qcSupplierMap = feignMap != null ? feignMap : Collections.emptyMap();
+        }
 
         List<String> qcNoticeIds = qcInfoViews
                 .stream()
