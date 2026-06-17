@@ -1113,7 +1113,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         checkWorkflowTaskContext(dto, kolId, WorkflowTaskRecordTypeEnum.KOL_B2C_APPLICATION_APPROVE, 0);
         KolB2cApplicationEntity entity = getById(kolId);
         if (Objects.isNull(entity)) {
-            responseDTO.setErrorMsg(MessageUtils.getMessage(ApiError.BILL_NOT_EXIST_WITH_TYPE, "B2C寄样申请单"));
+            setTerminalFailed(responseDTO, MessageUtils.getMessage(ApiError.BILL_NOT_EXIST_WITH_TYPE, "B2C寄样申请单"));
             return responseDTO;
         }
         checkKolB2cApproveTaskCanPush(entity);
@@ -1137,7 +1137,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         checkWorkflowTaskContext(dto, kolId, WorkflowTaskRecordTypeEnum.KOL_B2C_APPLICATION_APPROVE, 1);
         KolB2cApplicationEntity entity = getById(kolId);
         if (Objects.isNull(entity)) {
-            responseDTO.setErrorMsg(MessageUtils.getMessage(ApiError.BILL_NOT_EXIST_WITH_TYPE, "B2C寄样申请单"));
+            setTerminalFailed(responseDTO, MessageUtils.getMessage(ApiError.BILL_NOT_EXIST_WITH_TYPE, "B2C寄样申请单"));
             return responseDTO;
         }
         checkKolB2cApproveTaskCanPush(entity);
@@ -1146,7 +1146,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
                 .eq(KolSubB2cApplicationEntity::getIsDeleted, false)
                 .list();
         if (CollUtil.isEmpty(subList)) {
-            responseDTO.setErrorMsg(MessageUtils.getMessage(ApiError.BILL_NOT_EXIST_WITH_TYPE, "B2C寄样申请单拆分单"));
+            setTerminalFailed(responseDTO, MessageUtils.getMessage(ApiError.BILL_NOT_EXIST_WITH_TYPE, "B2C寄样申请单拆分单"));
             return responseDTO;
         }
         if (!hasWorkflowTaskNode(WorkflowTaskRecordTypeEnum.KOL_B2C_SUB_APPROVE)) {
@@ -1181,7 +1181,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         checkWorkflowTaskContext(dto, kolId, WorkflowTaskRecordTypeEnum.KOL_B2C_APPLICATION_APPROVE, 2);
         KolB2cApplicationEntity entity = getById(kolId);
         if (Objects.isNull(entity)) {
-            responseDTO.setErrorMsg(MessageUtils.getMessage(ApiError.BILL_NOT_EXIST_WITH_TYPE, "B2C寄样申请单"));
+            setTerminalFailed(responseDTO, MessageUtils.getMessage(ApiError.BILL_NOT_EXIST_WITH_TYPE, "B2C寄样申请单"));
             return responseDTO;
         }
         checkKolB2cApproveTaskCanPush(entity);
@@ -1246,13 +1246,13 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         checkWorkflowTaskContext(dto, subId, WorkflowTaskRecordTypeEnum.KOL_B2C_SUB_APPROVE, 0);
         KolB2cApplicationEntity entity = getById(kolId);
         if (Objects.isNull(entity)) {
-            responseDTO.setErrorMsg(MessageUtils.getMessage(ApiError.BILL_NOT_EXIST_WITH_TYPE, "B2C寄样申请单"));
+            setTerminalFailed(responseDTO, MessageUtils.getMessage(ApiError.BILL_NOT_EXIST_WITH_TYPE, "B2C寄样申请单"));
             return responseDTO;
         }
         checkKolB2cApproveTaskCanPush(entity);
         List<KolSubB2cApplicationDTO.PushDTO> pushDTOS = kolSubB2cApplicationService.listPushByIds(Collections.singletonList(subId));
         if (CollUtil.isEmpty(pushDTOS)) {
-            responseDTO.setErrorMsg(MessageUtils.getMessage(ApiError.BILL_NOT_EXIST_WITH_TYPE, "B2C寄样申请单拆分单"));
+            setTerminalFailed(responseDTO, MessageUtils.getMessage(ApiError.BILL_NOT_EXIST_WITH_TYPE, "B2C寄样申请单拆分单"));
             return responseDTO;
         }
         KolSubB2cApplicationDTO.PushDTO pushDTO = pushDTOS.get(0);
@@ -1597,6 +1597,11 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
             detail = detail + StrUtil.format("；其余{}个失败任务略", failedTasks.size() - 5);
         }
         return StrUtil.format("KOL B2C拆分单子任务已失败{}个，{}", failedTasks.size(), detail);
+    }
+
+    private void setTerminalFailed(WorkflowTaskRecordDTO.MqResponseDTO responseDTO, String errorMsg) {
+        responseDTO.setStatus(WorkflowTaskRecordStatusEnum.FAILED.getCode());
+        responseDTO.setErrorMsg(errorMsg);
     }
 
     private Boolean hasWorkflowTaskNode(WorkflowTaskRecordTypeEnum sourceTypeEnum) {
