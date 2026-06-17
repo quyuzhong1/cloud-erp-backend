@@ -518,14 +518,6 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
     }
 
     @Override
-    public CfgQcUserEntity getBySupplierId(String supplierId) {
-        return this.lambdaQuery()
-                .eq(CfgQcUserEntity::getSupplierId, supplierId)
-                .eq(CfgQcUserEntity::getIsDeleted, false)
-                .one();
-    }
-
-    @Override
     public CfgQcUserEntity getBySupplierIdAndWarehouseId(String supplierId, String warehouseId) {
         if (StrUtil.isBlank(supplierId)) {
             return null;

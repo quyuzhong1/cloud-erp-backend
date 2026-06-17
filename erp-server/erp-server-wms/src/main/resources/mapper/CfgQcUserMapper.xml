@@ -154,13 +154,6 @@
         </if>
     </select>
 
-    <select id="selectBySupplierId" resultMap="BaseResultMap">
-        SELECT <include refid="Base_Column_List" />
-        FROM cfg_qc_user
-        WHERE is_deleted = FALSE
-          AND supplier_id = #{supplierId}
-    </select>
-
     <!-- 按供应商 + 仓库精确匹配 -->
     <select id="selectBySupplierIdAndWarehouseId" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List" />
