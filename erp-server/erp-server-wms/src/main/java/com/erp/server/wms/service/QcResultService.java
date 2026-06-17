@@ -54,6 +54,11 @@ public interface QcResultService extends SuperService<QcResultEntity> {
                                 List<String> productImgUrlList, List<String> productImgNameList,
                                 List<String> boxImgUrlList, List<String> boxImgNameList);
 
+    /**
+     * 批量保存产品实物图片 / 箱唛图片（单次事务，按 type 批量删后插）
+     */
+    void batchSaveProductAndBoxImage(List<QcResultDTO.ProductBoxImageItem> items);
+
 
     /**
      * 获取到质检信息

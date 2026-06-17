@@ -172,6 +172,78 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
         }
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void batchSaveProductAndBoxImage(List<QcResultDTO.ProductBoxImageItem> items) {
+        if (CollUtil.isEmpty(items)) {
+            return;
+        }
+        List<String> productRemoveIds = new ArrayList<>();
+        List<String> boxRemoveIds = new ArrayList<>();
+        List<WmsAttachmentEntity> saveList = new ArrayList<>();
+        for (QcResultDTO.ProductBoxImageItem item : items) {
+            if (item == null || CharSequenceUtil.isBlank(item.getQcResultId())) {
+                continue;
+            }
+            String qcResultId = item.getQcResultId();
+            if (item.getProductImgUrlList() != null) {
+                productRemoveIds.add(qcResultId);
+                appendAttachmentEntities(saveList, item.getProductImgUrlList(), item.getProductImgNameList(),
+                        WmsConstant.QC_PRODUCT, qcResultId);
+            }
+            if (item.getBoxImgUrlList() != null) {
+                boxRemoveIds.add(qcResultId);
+                appendAttachmentEntities(saveList, item.getBoxImgUrlList(), item.getBoxImgNameList(),
+                        WmsConstant.QC_BOX, qcResultId);
+            }
+        }
+        batchRemoveByTypeAndBusinessIds(WmsConstant.QC_PRODUCT, productRemoveIds);
+        batchRemoveByTypeAndBusinessIds(WmsConstant.QC_BOX, boxRemoveIds);
+        if (CollUtil.isNotEmpty(saveList)) {
+            wmsAttachmentService.saveBatch(saveList);
+        }
+    }
+
+    private void batchRemoveByTypeAndBusinessIds(String type, List<String> businessIds) {
+        if (CharSequenceUtil.isBlank(type) || CollUtil.isEmpty(businessIds)) {
+            return;
+        }
+        List<String> distinctIds = businessIds.stream()
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(distinctIds)) {
+            return;
+        }
+        LambdaQueryWrapper<WmsAttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(WmsAttachmentEntity::getType, type)
+                .in(WmsAttachmentEntity::getBusinessId, distinctIds);
+        wmsAttachmentService.remove(queryWrapper);
+    }
+
+    private void appendAttachmentEntities(List<WmsAttachmentEntity> saveList,
+                                          List<String> urlList, List<String> nameList,
+                                          String type, String businessId) {
+        if (CollUtil.isEmpty(urlList)) {
+            return;
+        }
+        int nameSize = CollUtil.isNotEmpty(nameList) ? nameList.size() : 0;
+        for (int i = 0; i < urlList.size(); i++) {
+            String url = urlList.get(i);
+            if (CharSequenceUtil.isBlank(url)) {
+                continue;
+            }
+            WmsAttachmentEntity entity = new WmsAttachmentEntity();
+            entity.setAttachUrl(url);
+            if (nameSize > i && nameList.get(i) != null) {
+                entity.setAttachName(nameList.get(i));
+            }
+            entity.setType(type);
+            entity.setBusinessId(businessId);
+            saveList.add(entity);
+        }
+    }
+
 
     /**
      * 计算比率
