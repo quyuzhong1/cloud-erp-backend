@@ -92,7 +92,7 @@ public class ExportPlmProductInfoHandler extends AbstractStreamingMultiSheetHand
     private List<Integer> deriveExportDataListByEvent(String event) {
         List<Integer> exportDataList = ProductDevelopExportEventMapping.exportDataListFromEventCode(event);
         if (exportDataList == null) {
-            throw new ServiceException(ProductDevelopExportTypeEnum.validateCombinationMessage(null));
+            throw new ServiceException("无法根据导出事件解析数据类型，event=" + event);
         }
         return new ArrayList<>(exportDataList);
     }
