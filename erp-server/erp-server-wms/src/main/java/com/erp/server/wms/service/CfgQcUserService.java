@@ -84,7 +84,7 @@ public interface CfgQcUserService extends SuperService<CfgQcUserEntity> {
     void importCfgQcUser(BaseDTO.ImportDTO dto);
 
     /**
-     * 处理导入校验通过的数据：批量预加载后落库，跳过 add/update 中的重复 Feign 校验
+     * 处理导入校验通过的数据：批量预加载后 saveBatch / updateBatchById 落库
      *
      * @param successList 本批次校验通过的数据（方法执行后会 clear）
      * @param errorList   失败数据收集列表

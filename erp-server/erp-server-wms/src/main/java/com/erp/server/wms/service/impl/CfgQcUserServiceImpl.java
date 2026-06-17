@@ -39,6 +39,7 @@ import com.erp.model.sys.dto.UserInfoDTO;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.server.wms.listener.CfgQcUserExcelListener;
 import com.erp.server.wms.mapper.CfgQcUserMapper;
+import com.erp.server.wms.service.imports.CfgQcUserImportPersistItem;
 import com.erp.server.wms.service.CfgQcUserService;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.WarehouseService;
@@ -71,6 +72,8 @@ import static com.common.business.enums.FileTaskEventEnum.IMPORT_WMS_CFG_QC_USER
 @Slf4j
 @Service
 public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQcUserEntity> implements CfgQcUserService {
+
+    private static final int IMPORT_SAVE_BATCH_SIZE = 500;
     @Resource
     private OperateLogService operateLogService;
 
@@ -479,85 +482,174 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
         prefetchImportQcUserMaps(successList, supplierByCode, warehouseMap, qcUserNameToIdMapByOrgId,
                 qcUserIdToNameMapByOrgId, qcUserLoadFailedOrgIds);
 
-        // 阶段二：校验 + 落库（逐行短事务，不含 Feign）
-        CfgQcUserServiceImpl bean = ApplicationContextUtils.getBean(CfgQcUserServiceImpl.class);
+        // 阶段二：业务校验（同批次同供应商+仓库后者覆盖前者）
+        Map<String, CfgQcUserImportPersistItem> persistItemMap = new LinkedHashMap<>();
         for (CfgQcUserDTO.ImportExcelDTO dto : new ArrayList<>(successList)) {
             try {
-                SupplierEntity supplier = supplierByCode.get(dto.getSupplierCode());
-                if (Objects.isNull(supplier)) {
-                    dto.setErrorMsg(MessageFormat.format(ApiError.CFG_QC_USER_SUPPLIER_NOT_FOUND.getMsg(), dto.getSupplierCode()));
+                CfgQcUserImportPersistItem item = resolveImportPersistItem(dto, supplierByCode, warehouseMap, existsByKey,
+                        qcUserNameToIdMapByOrgId, qcUserIdToNameMapByOrgId, qcUserLoadFailedOrgIds);
+                if (item == null) {
                     errorList.add(dto);
                     continue;
                 }
-
-                WarehouseDTO.ListDTO warehouse = resolveImportWarehouse(dto, warehouseMap);
-                if (warehouse == null) {
-                    errorList.add(dto);
-                    continue;
-                }
-
-                CfgQcUserEntity exists = existsByKey.get(buildSupplierWarehouseKey(supplier.getId(), warehouse.getId()));
-                String orgId = warehouse.getOrgId();
-
-                Map<String, String> qcUserMap = getImportQcUserNameToIdMap(orgId, qcUserNameToIdMapByOrgId,
-                        qcUserIdToNameMapByOrgId, qcUserLoadFailedOrgIds);
-                List<String> notFoundUsers = new ArrayList<>();
-                String stockInId = resolveImportQcUserId(qcUserMap, dto.getStockInQcUserName(), notFoundUsers);
-                String stockOutId = resolveImportQcUserId(qcUserMap, dto.getStockOutQcUserName(), notFoundUsers);
-                String outsideId = resolveImportQcUserId(qcUserMap, dto.getOutsideQcUserName(), notFoundUsers);
-                String insideId = resolveImportQcUserId(qcUserMap, dto.getInsideQcUserName(), notFoundUsers);
-                String newProductStockInId = resolveImportQcUserId(qcUserMap, dto.getNewProductStockInQcUserName(), notFoundUsers);
-                String b2bOutsideId = resolveImportQcUserId(qcUserMap, dto.getB2bOutsideQcUserName(), notFoundUsers);
-                String returnId = resolveImportQcUserId(qcUserMap, dto.getReturnQcUserName(), notFoundUsers);
-                if (!notFoundUsers.isEmpty()) {
-                    Set<String> uniq = new LinkedHashSet<>(notFoundUsers);
-                    dto.setErrorMsg(MessageFormat.format(ApiError.CFG_QC_USER_IMPORT_USER_NOT_IN_ORG.getMsg(),
-                            String.join(",", uniq)));
-                    errorList.add(dto);
-                    continue;
-                }
-
-                if (!hasAnyImportQcUserId(stockInId, stockOutId, outsideId, insideId, newProductStockInId, b2bOutsideId, returnId)) {
-                    dto.setErrorMsg(ApiError.CFG_QC_USER_QC_USER_AT_LEAST_ONE.getMsg());
-                    errorList.add(dto);
-                    continue;
-                }
-
-                Map<String, String> qcUserIdToNameMap = getImportQcUserIdToNameMap(orgId, qcUserNameToIdMapByOrgId,
-                        qcUserIdToNameMapByOrgId, qcUserLoadFailedOrgIds);
-                String pairKey = buildSupplierWarehouseKey(supplier.getId(), warehouse.getId());
-                CfgQcUserEntity saved;
-                if (Objects.nonNull(exists)) {
-                    CfgQcUserDTO.UpdateDTO updateDTO = new CfgQcUserDTO.UpdateDTO();
-                    copyImportToCommonDTO(dto, updateDTO, stockInId, stockOutId, outsideId, insideId,
-                            newProductStockInId, b2bOutsideId, returnId);
-                    saved = bean.persistImportRow(updateDTO, exists, supplier, warehouse.getId(), qcUserIdToNameMap);
-                } else {
-                    CfgQcUserDTO.AddDTO addDTO = new CfgQcUserDTO.AddDTO();
-                    copyImportToCommonDTO(dto, addDTO, stockInId, stockOutId, outsideId, insideId,
-                            newProductStockInId, b2bOutsideId, returnId);
-                    saved = bean.persistImportRow(addDTO, null, supplier, warehouse.getId(), qcUserIdToNameMap);
-                }
-                existsByKey.put(pairKey, saved);
+                persistItemMap.put(item.getPairKey(), item);
             } catch (Exception e) {
-                log.error("质检员配置导入处理失败，supplierCode={}", dto.getSupplierCode(), e);
+                log.error("质检员配置导入校验失败，supplierCode={}", dto.getSupplierCode(), e);
                 String message = BatchResultDTO.resolveFailMsg(e);
                 dto.setErrorMsg(message.length() > 200 ? message.substring(0, 200) : message);
                 errorList.add(dto);
             }
         }
+
+        // 阶段三：批量落库（短事务 saveBatch / updateBatchById，不含 Feign）
+        if (!persistItemMap.isEmpty()) {
+            List<CfgQcUserImportPersistItem> persistItems = new ArrayList<>(persistItemMap.values());
+            CfgQcUserServiceImpl bean = ApplicationContextUtils.getBean(CfgQcUserServiceImpl.class);
+            try {
+                bean.persistImportBatch(persistItems);
+                for (CfgQcUserImportPersistItem item : persistItems) {
+                    existsByKey.put(item.getPairKey(), item.getSavedEntity());
+                }
+            } catch (Exception e) {
+                log.error("质检员配置导入批量落库失败，size={}", persistItems.size(), e);
+                String message = BatchResultDTO.resolveFailMsg(e);
+                String errMsg = message.length() > 200 ? message.substring(0, 200) : message;
+                for (CfgQcUserImportPersistItem item : persistItems) {
+                    item.getDto().setErrorMsg(errMsg);
+                    errorList.add(item.getDto());
+                }
+            }
+        }
         successList.clear();
     }
 
+    private CfgQcUserImportPersistItem resolveImportPersistItem(CfgQcUserDTO.ImportExcelDTO dto,
+                                                       Map<String, SupplierEntity> supplierByCode,
+                                                       Map<String, List<WarehouseDTO.ListDTO>> warehouseMap,
+                                                       Map<String, CfgQcUserEntity> existsByKey,
+                                                       Map<String, Map<String, String>> qcUserNameToIdMapByOrgId,
+                                                       Map<String, Map<String, String>> qcUserIdToNameMapByOrgId,
+                                                       Set<String> qcUserLoadFailedOrgIds) {
+        SupplierEntity supplier = supplierByCode.get(dto.getSupplierCode());
+        if (Objects.isNull(supplier)) {
+            dto.setErrorMsg(MessageFormat.format(ApiError.CFG_QC_USER_SUPPLIER_NOT_FOUND.getMsg(), dto.getSupplierCode()));
+            return null;
+        }
+
+        WarehouseDTO.ListDTO warehouse = resolveImportWarehouse(dto, warehouseMap);
+        if (warehouse == null) {
+            return null;
+        }
+
+        CfgQcUserEntity exists = existsByKey.get(buildSupplierWarehouseKey(supplier.getId(), warehouse.getId()));
+        String orgId = warehouse.getOrgId();
+
+        Map<String, String> qcUserMap = getImportQcUserNameToIdMap(orgId, qcUserNameToIdMapByOrgId,
+                qcUserIdToNameMapByOrgId, qcUserLoadFailedOrgIds);
+        List<String> notFoundUsers = new ArrayList<>();
+        String stockInId = resolveImportQcUserId(qcUserMap, dto.getStockInQcUserName(), notFoundUsers);
+        String stockOutId = resolveImportQcUserId(qcUserMap, dto.getStockOutQcUserName(), notFoundUsers);
+        String outsideId = resolveImportQcUserId(qcUserMap, dto.getOutsideQcUserName(), notFoundUsers);
+        String insideId = resolveImportQcUserId(qcUserMap, dto.getInsideQcUserName(), notFoundUsers);
+        String newProductStockInId = resolveImportQcUserId(qcUserMap, dto.getNewProductStockInQcUserName(), notFoundUsers);
+        String b2bOutsideId = resolveImportQcUserId(qcUserMap, dto.getB2bOutsideQcUserName(), notFoundUsers);
+        String returnId = resolveImportQcUserId(qcUserMap, dto.getReturnQcUserName(), notFoundUsers);
+        if (!notFoundUsers.isEmpty()) {
+            Set<String> uniq = new LinkedHashSet<>(notFoundUsers);
+            dto.setErrorMsg(MessageFormat.format(ApiError.CFG_QC_USER_IMPORT_USER_NOT_IN_ORG.getMsg(),
+                    String.join(",", uniq)));
+            return null;
+        }
+
+        if (!hasAnyImportQcUserId(stockInId, stockOutId, outsideId, insideId, newProductStockInId, b2bOutsideId, returnId)) {
+            dto.setErrorMsg(ApiError.CFG_QC_USER_QC_USER_AT_LEAST_ONE.getMsg());
+            return null;
+        }
+
+        Map<String, String> qcUserIdToNameMap = getImportQcUserIdToNameMap(orgId, qcUserNameToIdMapByOrgId,
+                qcUserIdToNameMapByOrgId, qcUserLoadFailedOrgIds);
+        String pairKey = buildSupplierWarehouseKey(supplier.getId(), warehouse.getId());
+        CfgQcUserDTO.CommonDTO commonDTO;
+        if (Objects.nonNull(exists)) {
+            CfgQcUserDTO.UpdateDTO updateDTO = new CfgQcUserDTO.UpdateDTO();
+            updateDTO.setId(exists.getId());
+            copyImportToCommonDTO(dto, updateDTO, stockInId, stockOutId, outsideId, insideId,
+                    newProductStockInId, b2bOutsideId, returnId);
+            commonDTO = updateDTO;
+        } else {
+            CfgQcUserDTO.AddDTO addDTO = new CfgQcUserDTO.AddDTO();
+            addDTO.setSupplierId(supplier.getId());
+            addDTO.setWarehouseId(warehouse.getId());
+            copyImportToCommonDTO(dto, addDTO, stockInId, stockOutId, outsideId, insideId,
+                    newProductStockInId, b2bOutsideId, returnId);
+            commonDTO = addDTO;
+        }
+        return new CfgQcUserImportPersistItem(dto, supplier, warehouse.getId(), exists, commonDTO, qcUserIdToNameMap, pairKey);
+    }
+
     /**
-     * 导入单行落库（短事务，仅包含 doAdd/doUpdate）
+     * 导入批量落库（短事务，saveBatch / updateBatchById）
      */
     @Transactional(rollbackFor = Exception.class)
-    public CfgQcUserEntity persistImportRow(CfgQcUserDTO.CommonDTO dto, CfgQcUserEntity exists,
-                                              SupplierEntity supplier, String warehouseId,
-                                              Map<String, String> qcUserIdToNameMap) {
-        CfgQcUserServiceImpl bean = ApplicationContextUtils.getBean(CfgQcUserServiceImpl.class);
-        return saveImportRow(bean, dto, exists, supplier, warehouseId, qcUserIdToNameMap);
+    public void persistImportBatch(List<CfgQcUserImportPersistItem> items) {
+        if (CollUtil.isEmpty(items)) {
+            return;
+        }
+        List<CfgQcUserEntity> addList = new ArrayList<>();
+        List<CfgQcUserEntity> updateList = new ArrayList<>();
+        for (CfgQcUserImportPersistItem item : items) {
+            CfgQcUserEntity entity = buildImportEntity(item);
+            item.setEntity(entity);
+            if (item.getExists() != null) {
+                updateList.add(entity);
+            } else {
+                addList.add(entity);
+            }
+        }
+        if (CollUtil.isNotEmpty(addList) && !super.saveBatch(addList, IMPORT_SAVE_BATCH_SIZE)) {
+            throw new ServiceException(ApiError.BILL_SAVE_FAILED);
+        }
+        if (CollUtil.isNotEmpty(updateList) && !super.updateBatchById(updateList, IMPORT_SAVE_BATCH_SIZE)) {
+            throw new ServiceException(ApiError.BILL_UPDATE_FAILED);
+        }
+        for (CfgQcUserImportPersistItem item : items) {
+            item.setSavedEntity(item.getEntity());
+        }
+        addImportOperateLogs(items);
+    }
+
+    private CfgQcUserEntity buildImportEntity(CfgQcUserImportPersistItem item) {
+        CfgQcUserDTO.CommonDTO dto = item.getCommonDTO();
+        CfgQcUserEntity entity = new CfgQcUserEntity();
+        if (item.getExists() != null) {
+            entity.setId(item.getExists().getId());
+        }
+        entity.setSupplierId(item.getSupplier().getId());
+        entity.setWarehouseId(item.getWarehouseId());
+        entity.setStockinQcUserId(dto.getStockInQcUserId());
+        entity.setStockoutQcUserId(dto.getStockOutQcUserId());
+        entity.setOutsideQcUserId(dto.getOutsideQcUserId());
+        entity.setInsideQcUserId(dto.getInsideQcUserId());
+        entity.setNewProductStockinQcUserId(dto.getNewProductStockInQcUserId());
+        entity.setB2bOutsideQcUserId(dto.getB2bOutsideQcUserId());
+        entity.setReturnQcUserId(dto.getReturnQcUserId());
+        fillQcUserNames(entity, item.getQcUserIdToNameMap());
+        return entity;
+    }
+
+    private void addImportOperateLogs(List<CfgQcUserImportPersistItem> items) {
+        String userName = UserContext.getDefaultLoginUser().getUserName();
+        for (CfgQcUserImportPersistItem item : items) {
+            CfgQcUserEntity saved = item.getSavedEntity();
+            if (saved == null || StrUtil.isBlank(saved.getId())) {
+                continue;
+            }
+            boolean isUpdate = item.getExists() != null;
+            String action = isUpdate ? "编辑" : "新增";
+            String msg = StrUtil.format("用户【{}】{}质检员配置，供应商【{}】",
+                    userName, action, item.getSupplier().getName());
+            operateLogService.addModuleOperateLog(msg, null, saved.getId(), action + "质检员配置");
+        }
     }
 
     private Map<String, List<WarehouseDTO.ListDTO>> loadImportWarehouseMap(List<CfgQcUserDTO.ImportExcelDTO> rows) {
@@ -634,40 +726,6 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
                 log.warn("预加载质检员列表失败，orgId={}", orgId, e);
             }
         }
-    }
-
-    /**
-     * 导入单行落库：复用批量校验/缓存数据，直接 doAdd/doUpdate
-     */
-    private CfgQcUserEntity saveImportRow(CfgQcUserServiceImpl bean, CfgQcUserDTO.CommonDTO dto,
-                                          CfgQcUserEntity exists, SupplierEntity supplier,
-                                          String warehouseId, Map<String, String> qcUserIdToNameMap) {
-        if (supplier == null || StrUtil.isBlank(supplier.getId())) {
-            throw new ServiceException(ApiError.SUPPLIER_NOT_FOUND);
-        }
-        if (StrUtil.isBlank(warehouseId)) {
-            throw new ServiceException(ApiError.CFG_QC_USER_WAREHOUSE_REQUIRED);
-        }
-        Map<String, String> userNameMap = qcUserIdToNameMap != null ? qcUserIdToNameMap : Collections.emptyMap();
-        HandleDataResult ctx = new HandleDataResult(supplier, null, supplier.getId(), warehouseId, userNameMap);
-        if (exists != null) {
-            CfgQcUserDTO.UpdateDTO updateDTO = new CfgQcUserDTO.UpdateDTO();
-            updateDTO.setId(exists.getId());
-            copyQcUserFields(dto, updateDTO);
-            CfgQcUserEntity updated = bean.doUpdate(updateDTO, ctx);
-            updated.setId(exists.getId());
-            updated.setSupplierId(supplier.getId());
-            updated.setWarehouseId(warehouseId);
-            if (exists.getVersion() != null) {
-                updated.setVersion(exists.getVersion() + 1);
-            }
-            return updated;
-        }
-        CfgQcUserDTO.AddDTO addDTO = new CfgQcUserDTO.AddDTO();
-        addDTO.setSupplierId(supplier.getId());
-        addDTO.setWarehouseId(warehouseId);
-        copyQcUserFields(dto, addDTO);
-        return bean.doAdd(addDTO, ctx);
     }
 
     private Map<String, CfgQcUserEntity> loadImportExistsByKey(List<CfgQcUserDTO.ImportExcelDTO> rows,
@@ -851,23 +909,6 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
         commonDTO.setB2bOutsideQcUserName(importDTO.getB2bOutsideQcUserName());
         commonDTO.setReturnQcUserId(returnId);
         commonDTO.setReturnQcUserName(importDTO.getReturnQcUserName());
-    }
-
-    private void copyQcUserFields(CfgQcUserDTO.CommonDTO source, CfgQcUserDTO.CommonDTO target) {
-        target.setStockInQcUserId(source.getStockInQcUserId());
-        target.setStockInQcUserName(source.getStockInQcUserName());
-        target.setStockOutQcUserId(source.getStockOutQcUserId());
-        target.setStockOutQcUserName(source.getStockOutQcUserName());
-        target.setOutsideQcUserId(source.getOutsideQcUserId());
-        target.setOutsideQcUserName(source.getOutsideQcUserName());
-        target.setInsideQcUserId(source.getInsideQcUserId());
-        target.setInsideQcUserName(source.getInsideQcUserName());
-        target.setNewProductStockInQcUserId(source.getNewProductStockInQcUserId());
-        target.setNewProductStockInQcUserName(source.getNewProductStockInQcUserName());
-        target.setB2bOutsideQcUserId(source.getB2bOutsideQcUserId());
-        target.setB2bOutsideQcUserName(source.getB2bOutsideQcUserName());
-        target.setReturnQcUserId(source.getReturnQcUserId());
-        target.setReturnQcUserName(source.getReturnQcUserName());
     }
 
     @Override
