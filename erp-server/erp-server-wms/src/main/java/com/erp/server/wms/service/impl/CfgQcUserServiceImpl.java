@@ -451,9 +451,8 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
     }
 
     /**
-     * 处理导入校验通过的数据：批量预加载后落库，跳过 add/update 中的重复 Feign 校验
+     * 处理导入校验通过的数据：预加载（无事务）+ 落库（短事务）
      */
-    @Transactional(rollbackFor = Exception.class)
     @Override
     public void handleImportSuccessList(List<CfgQcUserDTO.ImportExcelDTO> successList,
                                         List<CfgQcUserDTO.ImportExcelDTO> errorList) {
@@ -461,41 +460,17 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
             return;
         }
 
-        List<String> warehouseNames = successList.stream()
-                .map(CfgQcUserDTO.ImportExcelDTO::getWarehouseName)
-                .filter(StrUtil::isNotBlank)
-                .distinct()
-                .collect(Collectors.toList());
-        Map<String, List<WarehouseDTO.ListDTO>> warehouseMap = new HashMap<>();
-        if (CollUtil.isNotEmpty(warehouseNames)) {
-            List<WarehouseDTO.ListDTO> warehouseList = warehouseService.listByNames(warehouseNames);
-            if (CollUtil.isNotEmpty(warehouseList)) {
-                warehouseMap = warehouseList.stream().collect(Collectors.groupingBy(WarehouseDTO.ListDTO::getName));
-            }
-        }
-
-        List<String> supplierCodes = successList.stream()
-                .map(CfgQcUserDTO.ImportExcelDTO::getSupplierCode)
-                .filter(StrUtil::isNotBlank)
-                .distinct()
-                .collect(Collectors.toList());
-        Map<String, SupplierEntity> supplierByCode = new HashMap<>();
-        if (CollUtil.isNotEmpty(supplierCodes)) {
-            List<SupplierEntity> suppliers = supplierFeign.listByCodes(supplierCodes);
-            if (CollUtil.isNotEmpty(suppliers)) {
-                for (SupplierEntity supplier : suppliers) {
-                    if (StrUtil.isNotBlank(supplier.getCode())) {
-                        supplierByCode.putIfAbsent(supplier.getCode(), supplier);
-                    }
-                }
-            }
-        }
-
+        // 阶段一：预加载（Feign / 只读查库，无事务）
+        Map<String, List<WarehouseDTO.ListDTO>> warehouseMap = loadImportWarehouseMap(successList);
+        Map<String, SupplierEntity> supplierByCode = loadImportSupplierMap(successList);
         Map<String, CfgQcUserEntity> existsByKey = loadImportExistsByKey(successList, supplierByCode, warehouseMap);
         Map<String, Map<String, String>> qcUserNameToIdMapByOrgId = new HashMap<>();
         Map<String, Map<String, String>> qcUserIdToNameMapByOrgId = new HashMap<>();
         Set<String> qcUserLoadFailedOrgIds = new HashSet<>();
+        prefetchImportQcUserMaps(successList, supplierByCode, warehouseMap, qcUserNameToIdMapByOrgId,
+                qcUserIdToNameMapByOrgId, qcUserLoadFailedOrgIds);
 
+        // 阶段二：校验 + 落库（逐行短事务，不含 Feign）
         CfgQcUserServiceImpl bean = ApplicationContextUtils.getBean(CfgQcUserServiceImpl.class);
         for (CfgQcUserDTO.ImportExcelDTO dto : new ArrayList<>(successList)) {
             try {
@@ -547,12 +522,12 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
                     CfgQcUserDTO.UpdateDTO updateDTO = new CfgQcUserDTO.UpdateDTO();
                     copyImportToCommonDTO(dto, updateDTO, stockInId, stockOutId, outsideId, insideId,
                             newProductStockInId, b2bOutsideId, returnId);
-                    saved = saveImportRow(bean, updateDTO, exists, supplier, warehouse.getId(), qcUserIdToNameMap);
+                    saved = bean.persistImportRow(updateDTO, exists, supplier, warehouse.getId(), qcUserIdToNameMap);
                 } else {
                     CfgQcUserDTO.AddDTO addDTO = new CfgQcUserDTO.AddDTO();
                     copyImportToCommonDTO(dto, addDTO, stockInId, stockOutId, outsideId, insideId,
                             newProductStockInId, b2bOutsideId, returnId);
-                    saved = saveImportRow(bean, addDTO, null, supplier, warehouse.getId(), qcUserIdToNameMap);
+                    saved = bean.persistImportRow(addDTO, null, supplier, warehouse.getId(), qcUserIdToNameMap);
                 }
                 existsByKey.put(pairKey, saved);
             } catch (Exception e) {
@@ -563,6 +538,87 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
             }
         }
         successList.clear();
+    }
+
+    /**
+     * 导入单行落库（短事务，仅包含 doAdd/doUpdate）
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public CfgQcUserEntity persistImportRow(CfgQcUserDTO.CommonDTO dto, CfgQcUserEntity exists,
+                                              SupplierEntity supplier, String warehouseId,
+                                              Map<String, String> qcUserIdToNameMap) {
+        CfgQcUserServiceImpl bean = ApplicationContextUtils.getBean(CfgQcUserServiceImpl.class);
+        return saveImportRow(bean, dto, exists, supplier, warehouseId, qcUserIdToNameMap);
+    }
+
+    private Map<String, List<WarehouseDTO.ListDTO>> loadImportWarehouseMap(List<CfgQcUserDTO.ImportExcelDTO> rows) {
+        List<String> warehouseNames = rows.stream()
+                .map(CfgQcUserDTO.ImportExcelDTO::getWarehouseName)
+                .filter(StrUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(warehouseNames)) {
+            return new HashMap<>();
+        }
+        List<WarehouseDTO.ListDTO> warehouseList = warehouseService.listByNames(warehouseNames);
+        if (CollUtil.isEmpty(warehouseList)) {
+            return new HashMap<>();
+        }
+        return warehouseList.stream().collect(Collectors.groupingBy(WarehouseDTO.ListDTO::getName));
+    }
+
+    private Map<String, SupplierEntity> loadImportSupplierMap(List<CfgQcUserDTO.ImportExcelDTO> rows) {
+        List<String> supplierCodes = rows.stream()
+                .map(CfgQcUserDTO.ImportExcelDTO::getSupplierCode)
+                .filter(StrUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, SupplierEntity> supplierByCode = new HashMap<>();
+        if (CollUtil.isEmpty(supplierCodes)) {
+            return supplierByCode;
+        }
+        List<SupplierEntity> suppliers = supplierFeign.listByCodes(supplierCodes);
+        if (CollUtil.isEmpty(suppliers)) {
+            return supplierByCode;
+        }
+        for (SupplierEntity supplier : suppliers) {
+            if (StrUtil.isNotBlank(supplier.getCode())) {
+                supplierByCode.putIfAbsent(supplier.getCode(), supplier);
+            }
+        }
+        return supplierByCode;
+    }
+
+    /**
+     * 批次内涉及的组织一次性预加载质检员映射，避免落库阶段触发 Feign
+     */
+    private void prefetchImportQcUserMaps(List<CfgQcUserDTO.ImportExcelDTO> rows,
+                                          Map<String, SupplierEntity> supplierByCode,
+                                          Map<String, List<WarehouseDTO.ListDTO>> warehouseMap,
+                                          Map<String, Map<String, String>> qcUserNameToIdMapByOrgId,
+                                          Map<String, Map<String, String>> qcUserIdToNameMapByOrgId,
+                                          Set<String> qcUserLoadFailedOrgIds) {
+        Set<String> orgIds = new LinkedHashSet<>();
+        for (CfgQcUserDTO.ImportExcelDTO dto : rows) {
+            if (StrUtil.isBlank(dto.getSupplierCode()) || StrUtil.isBlank(dto.getWarehouseName())) {
+                continue;
+            }
+            SupplierEntity supplier = supplierByCode.get(dto.getSupplierCode());
+            if (supplier == null) {
+                continue;
+            }
+            List<WarehouseDTO.ListDTO> warehouses = warehouseMap.get(dto.getWarehouseName().trim());
+            if (CollUtil.isEmpty(warehouses) || warehouses.size() != 1) {
+                continue;
+            }
+            String orgId = warehouses.get(0).getOrgId();
+            if (StrUtil.isNotBlank(orgId)) {
+                orgIds.add(orgId);
+            }
+        }
+        for (String orgId : orgIds) {
+            getImportQcUserNameToIdMap(orgId, qcUserNameToIdMapByOrgId, qcUserIdToNameMapByOrgId, qcUserLoadFailedOrgIds);
+        }
     }
 
     /**
