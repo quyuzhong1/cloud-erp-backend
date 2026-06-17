@@ -5,10 +5,13 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.threadlocal.UserContext;
+import com.common.message.constant.DistributeKeyConstant;
 import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -169,11 +172,32 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public WorkflowTaskRecordDTO.ForceRetryResultDTO forceRetry(WorkflowTaskRecordDTO.ForceRetryDTO dto) {
         if (Objects.isNull(dto)) {
             throw new ServiceException(ApiError.WF_TASK_RECORD_FORCE_RETRY_PARAM_REQUIRED);
         }
+        String sourceType;
+        String sourceId;
+        if (CharSequenceUtil.isNotBlank(dto.getId())) {
+            WorkflowTaskRecordEntity lockTask = getById(dto.getId());
+            if (Objects.isNull(lockTask)) {
+                throw new ServiceException(ApiError.WF_TASK_RECORD_FORCE_RETRY_NOT_FOUND);
+            }
+            sourceType = lockTask.getSourceType();
+            sourceId = lockTask.getSourceId();
+        } else {
+            if (CharSequenceUtil.isBlank(dto.getSourceType()) || CharSequenceUtil.isBlank(dto.getSourceId())) {
+                throw new ServiceException(ApiError.WF_TASK_RECORD_FORCE_RETRY_PARAM_INCOMPLETE);
+            }
+            sourceType = dto.getSourceType();
+            sourceId = dto.getSourceId();
+        }
+        return SpringUtil.getBean(WorkflowTaskRecordServiceImpl.class).forceRetryWithLock(dto, sourceType, sourceId);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "sourceType,sourceId", unlockAfterTx = true)
+    public WorkflowTaskRecordDTO.ForceRetryResultDTO forceRetryWithLock(WorkflowTaskRecordDTO.ForceRetryDTO dto, String sourceType, String sourceId) {
         checkForceRetryPermission();
         List<WorkflowTaskRecordEntity> taskList = listForceRetryTasks(dto);
         if (CollUtil.isEmpty(taskList)) {
@@ -332,13 +356,41 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
                     try {
                         sendForceRetryMq(entity);
                     } catch (Exception e) {
-                        log.error("任务节点人工强制重试事务提交后发送MQ失败，sourceType={}, sourceId={}", entity.getSourceType(), entity.getSourceId(), e);
+                        log.error("任务节点人工强制重试事务提交后发送MQ失败，sourceType={}, sourceId={}, traceId={}",
+                                entity.getSourceType(), entity.getSourceId(), entity.getTraceId(), e);
+                        markForceRetryMqSendFailed(entity, e);
                     }
                 }
             });
             return;
         }
         sendForceRetryMq(entity);
+    }
+
+    private void markForceRetryMqSendFailed(WorkflowTaskRecordEntity entity, Exception e) {
+        if (Objects.isNull(entity) || CharSequenceUtil.isBlank(entity.getSourceId()) || CharSequenceUtil.isBlank(entity.getSourceType())) {
+            return;
+        }
+        WorkflowTaskRecordEntity taskEntity = this.lambdaQuery()
+                .eq(WorkflowTaskRecordEntity::getSourceId, entity.getSourceId())
+                .eq(WorkflowTaskRecordEntity::getSourceType, entity.getSourceType())
+                .eq(WorkflowTaskRecordEntity::getIsDeleted, false)
+                .ne(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.SUCCESS.getCode())
+                .orderByAsc(WorkflowTaskRecordEntity::getIndex)
+                .last("limit 1")
+                .one();
+        if (Objects.isNull(taskEntity)) {
+            return;
+        }
+        String errorMsg = StrUtil.format("任务节点人工强制重试MQ发送失败，traceId={}，error={}",
+                entity.getTraceId(),
+                Objects.nonNull(e.getMessage()) ? e.getMessage() : e.getClass().getSimpleName());
+        this.lambdaUpdate()
+                .eq(WorkflowTaskRecordEntity::getId, taskEntity.getId())
+                .set(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.FAILED.getCode())
+                .set(WorkflowTaskRecordEntity::getLastError, errorMsg)
+                .set(WorkflowTaskRecordEntity::getRetryCount, Optional.ofNullable(taskEntity.getRetryCount()).orElse(0) + 1)
+                .update();
     }
 
     private void addForceRetryLog(WorkflowTaskRecordDTO.ForceRetryDTO dto, List<WorkflowTaskRecordEntity> taskList, int resetCount, int mqCount) {
