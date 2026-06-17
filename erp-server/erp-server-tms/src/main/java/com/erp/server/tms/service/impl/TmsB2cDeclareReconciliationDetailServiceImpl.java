@@ -24,6 +24,7 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
+import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.oms.entity.*;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
@@ -49,6 +50,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -133,6 +136,8 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
     @Autowired
     @Qualifier("costAllocationPool")
     private ExecutorService costAllocationPool;
+    @Resource
+    private RedissonClient redissonClient;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -452,105 +457,170 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
     }
 
 
+    /**
+     * 消费已迁移的 B2C 报关对账下推异步任务。
+     * <p>
+     * 加 Redisson 任务锁防 MQ 重投重复执行；正常路径按供应商游标分页，
+     * {@code FAILED_ONLY} 重试改读来源任务失败明细游标。
+     *
+     * @param taskRecord MQ 消息体，持久化载荷从 {@code dataJson} 信封解析
+     */
     @Override
-    public void pushDeclareReconciliation(TmsAsyncTaskRecordDTO.PushParamsDTO dto) {
-        String taskId = dto.getTaskId();
-        LocalDate startDate = dto.getStartDate();
-        LocalDate endDate = dto.getEndDate();
-        if (null == startDate || null == endDate) {
-            asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),"开始时间或结束时间为空");
+    public void pushDeclareReconciliation(TmsAsyncTaskRecordEntity taskRecord) {
+        if (ObjectUtil.isEmpty(taskRecord) || StringUtils.isBlank(taskRecord.getId())) {
+            log.error("B2C报关对账下推异步任务ID为空");
             return;
         }
+        String taskId = taskRecord.getId();
 
-        TmsAsyncTaskRecordEntity tmsAsyncTaskRecordEntity = asyncTaskRecordService.getById(taskId);
-        if(Objects.isNull(tmsAsyncTaskRecordEntity)){
-            log.error("任务记录不存在，taskId: {}", taskId);
-            asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),ApiError.LOGISTICS_PENDING_COST_NOT_FOUND.getMsg());
-            return;
-        }
+        RLock taskLock = redissonClient.getLock(DistributeKeyConstant.TMS_ASYNC_TASK_EXEC_KEY + ":" + taskId);
+        boolean locked = false;
+        try {
+            locked = taskLock.tryLock(0, TimeUnit.SECONDS);
+            if (!locked) {
+                log.warn("B2C报关对账下推异步任务正在执行，跳过重复消费，taskId: {}", taskId);
+                return;
+            }
 
-        CfgSettingValueDTO.BillBatchParamsDTO billBatchParamsDTO = asyncTaskRecordService.loadBillBatchParams(taskId);
-        if (Objects.isNull(billBatchParamsDTO)) {
-            return;
-        }
-        int batchSize = asyncTaskRecordService.resolveBatchSize(billBatchParamsDTO.getBatch(), 500);
-        int timeoutSeconds = Objects.nonNull(tmsAsyncTaskRecordEntity.getExecTimeout()) ? tmsAsyncTaskRecordEntity.getExecTimeout() : 3600;
-        String cursor = "";
-        int totalProcessed = 0;
-        int totalFailed = 0;
-        int batchNumber = 0;
-        final int maxBatchLimit = 100000;
-        LocalDateTime taskStartTime = tmsAsyncTaskRecordEntity.getStartTime();
-        Integer taskExecTimeout = tmsAsyncTaskRecordEntity.getExecTimeout();
-        while (true) {
-            batchNumber++;
-            if (batchNumber > maxBatchLimit) {
-                log.warn("B2C报关对账超过最大批次数，强制退出，taskId: {}, maxBatchLimit: {}", taskId, maxBatchLimit);
-                asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(), "超过最大批次数，强制退出");
-                break;
+            CfgSettingValueDTO.BillBatchParamsDTO billBatchParamsDTO = asyncTaskRecordService.loadBillBatchParams(taskId);
+            if (billBatchParamsDTO == null) {
+                return;
             }
-            if (batchNumber == 1 || batchNumber % 10 == 0) {
-                TmsAsyncTaskRecordEntity currentTask = asyncTaskRecordService.getById(taskId);
-                if (asyncTaskRecordService.shouldStopLoopTask(taskId, currentTask)) {
-                    break;
-                }
-                if (currentTask != null) {
-                    taskExecTimeout = currentTask.getExecTimeout();
-                }
+
+            TmsAsyncTaskRecordEntity currentRecord = asyncTaskRecordService.getById(taskId);
+            if (Objects.isNull(currentRecord)) {
+                log.error("任务记录不存在，taskId: {}", taskId);
+                asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),
+                    ApiError.LOGISTICS_PENDING_COST_NOT_FOUND.getMsg());
+                return;
             }
-            if (taskExecTimeout != null && taskExecTimeout > 0 && taskStartTime != null) {
-                long elapsedSeconds = java.time.Duration.between(taskStartTime, LocalDateTime.now()).getSeconds();
-                if (elapsedSeconds > taskExecTimeout) {
-                    log.error("B2C报关对账任务执行超时，taskId: {}, 已耗时: {}秒", taskId, elapsedSeconds);
-                    asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),
-                            "任务执行超时，已耗时" + elapsedSeconds + "秒");
-                    break;
-                }
+            if (Objects.equals(currentRecord.getStatus(), TmsAsyncTaskRecordStatusEnum.FINISH.getCode())) {
+                log.warn("B2C报关对账下推异步任务已完成，跳过重复消费，taskId: {}", taskId);
+                return;
             }
-            List<TmsAsyncTaskDetailEntity> batchDetails = prepareDeclareReconciliationBatchDetails(dto, cursor, batchSize);
-            if (CollUtil.isEmpty(batchDetails)) {
-                if (totalProcessed == 0) {
-                    asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),
-                            TmsAsyncTaskRecordDTO.RETRY_MODE_FAILED_ONLY.equals(dto.getRetryMode()) ? "无失败明细可重试" : "b2c报关对账单明细为空");
+
+            TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope = asyncTaskRecordService.parseEnvelope(currentRecord.getDataJson());
+            TmsAsyncTaskRecordDTO.B2cDeclareReconciliationPushPayloadDTO payload =
+                asyncTaskRecordService.parseEnvelopePayloadOrFinishTask(
+                    taskId, envelope, TmsAsyncTaskRecordDTO.B2cDeclareReconciliationPushPayloadDTO.class,
+                    "B2C报关对账下推异步任务信封参数解析失败");
+            if (envelope == null || payload == null) {
+                return;
+            }
+            if (payload.getStartDate() == null || payload.getEndDate() == null) {
+                asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(), "开始日期或结束日期为空");
+                return;
+            }
+
+            TmsAsyncTaskRecordDTO.PushParamsDTO dispatchParams =
+                asyncTaskRecordService.buildDispatchPushParams(taskRecord, envelope);
+            String businessType = StringUtils.defaultIfBlank(dispatchParams.getBusinessType(),
+                SourceTypeEnum.TMS_B2C_DECLARE_RECONCILIATION.getCode());
+
+            if (Objects.equals(currentRecord.getStatus(), TmsAsyncTaskRecordStatusEnum.PENDING.getCode())) {
+                boolean claimed = asyncTaskRecordService.lambdaUpdate()
+                    .set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
+                    .set(TmsAsyncTaskRecordEntity::getErrorData, ApiError.COMMON_BATCH_PROCESSING.getMsg())
+                    .eq(TmsAsyncTaskRecordEntity::getId, taskId)
+                    .eq(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode())
+                    .update();
+                if (!claimed) {
+                    log.warn("B2C报关对账下推异步任务已被其他消费者认领，taskId: {}", taskId);
                     return;
                 }
-                break;
+            } else if (!Objects.equals(currentRecord.getStatus(), TmsAsyncTaskRecordStatusEnum.ING.getCode())) {
+                log.warn("B2C报关对账下推异步任务状态不可执行，taskId: {}, status: {}", taskId, currentRecord.getStatus());
+                return;
             }
-            TmsAsyncTaskRecordDTO.BatchProcessResult result = executeDeclareReconciliationBatch(batchDetails, startDate, endDate, timeoutSeconds);
-            totalProcessed += batchDetails.size();
-            totalFailed += result.getFailedCount();
-            asyncTaskRecordService.lambdaUpdate()
+
+            int batchSize = asyncTaskRecordService.resolveBatchSize(billBatchParamsDTO.getBatch(), 500);
+            int timeoutSeconds = asyncTaskRecordService.resolveTimeoutSeconds(
+                billBatchParamsDTO.getBatchTimeoutSeconds(), 5000);
+            int staleDetailSeconds = asyncTaskRecordService.resolveStaleDetailSeconds(billBatchParamsDTO);
+            String cursor = "";
+            int totalProcessed = 0;
+            int totalFailed = 0;
+            int batchNumber = 0;
+            final int maxBatchLimit = 100000;
+
+            while (true) {
+                batchNumber++;
+                if (batchNumber > maxBatchLimit) {
+                    log.warn("B2C报关对账超过最大批次数，强制退出，taskId: {}, maxBatchLimit: {}", taskId, maxBatchLimit);
+                    asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(), "超过最大批次数，强制退出");
+                    break;
+                }
+                if (batchNumber == 1 || batchNumber % 10 == 0) {
+                    TmsAsyncTaskRecordEntity loopTask = asyncTaskRecordService.getById(taskId);
+                    if (asyncTaskRecordService.shouldStopLoopTask(taskId, loopTask)) {
+                        break;
+                    }
+                    if (asyncTaskRecordService.terminateTaskIfExecTimeoutReached(loopTask, billBatchParamsDTO)) {
+                        break;
+                    }
+                }
+
+                List<TmsAsyncTaskDetailEntity> batchDetails = prepareDeclareReconciliationBatchDetails(
+                    taskId, businessType, dispatchParams.getRetryMode(), dispatchParams.getRetrySourceTaskId(),
+                    payload.getStartDate(), payload.getEndDate(), cursor, batchSize);
+                if (CollUtil.isEmpty(batchDetails)) {
+                    if (totalProcessed == 0) {
+                        asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),
+                            TmsAsyncTaskRecordDTO.RETRY_MODE_FAILED_ONLY.equals(dispatchParams.getRetryMode())
+                                ? "无失败明细可重试" : "b2c报关对账单明细为空");
+                        return;
+                    }
+                    break;
+                }
+                TmsAsyncTaskRecordDTO.BatchProcessResult result = executeDeclareReconciliationBatch(
+                    taskId, batchDetails, payload.getStartDate(), payload.getEndDate(), timeoutSeconds, staleDetailSeconds);
+                totalProcessed += batchDetails.size();
+                totalFailed += result.getFailedCount();
+                asyncTaskRecordService.lambdaUpdate()
                     .set(TmsAsyncTaskRecordEntity::getDetailCount, totalProcessed)
                     .set(TmsAsyncTaskRecordEntity::getErrorCount, totalFailed)
                     .eq(TmsAsyncTaskRecordEntity::getId, taskId)
                     .update();
-            String lastBusinessId = batchDetails.get(batchDetails.size() - 1).getBusinessId();
-            if (StringUtils.isBlank(lastBusinessId)) {
-                log.error("B2C报关对账批次末尾 businessId 为空，终止循环，taskId: {}", taskId);
-                asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(), "批次末尾 businessId 为空，终止循环");
-                break;
+
+                String lastBusinessId = batchDetails.get(batchDetails.size() - 1).getBusinessId();
+                if (StringUtils.isBlank(lastBusinessId)) {
+                    log.error("B2C报关对账批次末尾 businessId 为空，终止循环，taskId: {}", taskId);
+                    asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(), "批次末尾 businessId 为空，终止循环");
+                    break;
+                }
+                cursor = lastBusinessId;
+                log.info("B2C报关对账第{}批完成，taskId: {}, 本批数量: {}, 失败: {}",
+                    batchNumber, taskId, batchDetails.size(), result.getFailedCount());
             }
-            cursor = lastBusinessId;
-            log.info("B2C报关对账第{}批完成，taskId: {}, 本批数量: {}, 失败: {}", batchNumber, taskId, batchDetails.size(), result.getFailedCount());
+            asyncTaskRecordService.updateTaskFinally(taskId);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.error("B2C报关对账下推异步任务锁等待中断，taskId: {}", taskId, e);
+        } finally {
+            if (locked && taskLock.isHeldByCurrentThread()) {
+                taskLock.unlock();
+            }
         }
-        asyncTaskRecordService.updateTaskFinally(taskId);
     }
 
-    private List<TmsAsyncTaskDetailEntity> prepareDeclareReconciliationBatchDetails(TmsAsyncTaskRecordDTO.PushParamsDTO dto, String cursor, int batchSize) {
+    private List<TmsAsyncTaskDetailEntity> prepareDeclareReconciliationBatchDetails(String taskId, String businessType,
+                                                                                    String retryMode, String retrySourceTaskId,
+                                                                                    LocalDate startDate, LocalDate endDate,
+                                                                                    String cursor, int batchSize) {
         List<TmsAsyncTaskDetailEntity> sourceDetails;
-        if (TmsAsyncTaskRecordDTO.RETRY_MODE_FAILED_ONLY.equals(dto.getRetryMode())) {
-            sourceDetails = asyncTaskDetailRecordService.listFailedDetailsByCursor(dto.getRetrySourceTaskId(), cursor, batchSize);
+        if (TmsAsyncTaskRecordDTO.RETRY_MODE_FAILED_ONLY.equals(retryMode)) {
+            sourceDetails = asyncTaskDetailRecordService.listFailedDetailsByCursor(retrySourceTaskId, cursor, batchSize);
         } else {
-            TmsAsyncTaskRecordDTO.CursorPageDTO pageDTO = buildCursorPageDTO(dto.getStartDate(), dto.getEndDate(), dto.getIds(), cursor, batchSize);
+            TmsAsyncTaskRecordDTO.CursorPageDTO pageDTO = buildCursorPageDTO(startDate, endDate, null, cursor, batchSize);
             List<String> supplierIds = baseMapper.pageAutoGenerateDeclareReconciliationSupplierIds(pageDTO);
             sourceDetails = supplierIds.stream()
-                    .map(supplierId -> buildTaskDetail(dto.getTaskId(), dto.getBusinessType(), supplierId, null))
-                    .collect(Collectors.toList());
+                .map(supplierId -> buildTaskDetail(taskId, businessType, supplierId, null))
+                .collect(Collectors.toList());
         }
         if (CollUtil.isEmpty(sourceDetails)) {
             return Collections.emptyList();
         }
-        return saveAndListDeclareReconciliationBatchDetails(dto.getTaskId(), dto.getBusinessType(), sourceDetails, batchSize);
+        return saveAndListDeclareReconciliationBatchDetails(taskId, businessType, sourceDetails, batchSize);
     }
 
     private List<TmsAsyncTaskDetailEntity> saveAndListDeclareReconciliationBatchDetails(String taskId, String businessType, List<TmsAsyncTaskDetailEntity> sourceDetails, int batchSize) {
@@ -577,16 +647,40 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
                 .list();
     }
 
-    private TmsAsyncTaskRecordDTO.BatchProcessResult executeDeclareReconciliationBatch(List<TmsAsyncTaskDetailEntity> taskDetailList,
+    private TmsAsyncTaskRecordDTO.BatchProcessResult executeDeclareReconciliationBatch(String taskId,
+                                                                                       List<TmsAsyncTaskDetailEntity> taskDetailList,
                                                                                        LocalDate startDate,
                                                                                        LocalDate endDate,
-                                                                                       int timeoutSeconds) {
+                                                                                       int timeoutSeconds,
+                                                                                       int staleDetailSeconds) {
         if (CollUtil.isEmpty(taskDetailList)) {
             return new TmsAsyncTaskRecordDTO.BatchProcessResult(0, 0);
         }
+        List<String> businessIds = taskDetailList.stream()
+            .map(TmsAsyncTaskDetailEntity::getBusinessId)
+            .filter(StringUtils::isNotBlank)
+            .distinct()
+            .collect(Collectors.toList());
+        LocalDateTime staleBefore = LocalDateTime.now().minusSeconds(staleDetailSeconds);
+        List<TmsAsyncTaskDetailEntity> existingDetails = asyncTaskDetailRecordService.lambdaQuery()
+            .eq(TmsAsyncTaskDetailEntity::getMainId, taskId)
+            .in(TmsAsyncTaskDetailEntity::getBusinessId, businessIds)
+            .list();
+        Set<String> staleIngBusinessIds = existingDetails.stream()
+            .filter(d -> Objects.equals(d.getStatus(), TmsAsyncTaskRecordStatusEnum.ING.getCode()))
+            .filter(d -> asyncTaskRecordService.isStaleIngDetail(d, staleBefore))
+            .map(TmsAsyncTaskDetailEntity::getBusinessId)
+            .filter(StringUtils::isNotBlank)
+            .collect(Collectors.toSet());
+        int staleFailedCount = asyncTaskDetailRecordService.markStaleIngDetailsFailed(
+            taskId, staleIngBusinessIds, staleBefore, ApiError.ASYNC_TASK_DETAIL_TIMEOUT.getMsg());
+        if (staleFailedCount > 0) {
+            log.warn("B2C报关对账僵死ING明细已标记失败，taskId: {}, 数量: {}", taskId, staleFailedCount);
+        }
+
         CountDownLatch latch = new CountDownLatch(taskDetailList.size());
         AtomicInteger successCount = new AtomicInteger(0);
-        AtomicInteger failedCount = new AtomicInteger(0);
+        AtomicInteger failedCount = new AtomicInteger(staleFailedCount);
         List<String> supplierIds = taskDetailList.stream().map(TmsAsyncTaskDetailEntity::getBusinessId).distinct().collect(Collectors.toList());
         TmsAsyncTaskRecordDTO.CursorPageDTO pageDTO = buildCursorPageDTO(startDate, endDate, supplierIds, null, supplierIds.size());
         List<TmsB2cDeclareReconciliationDetailEntity> list = baseMapper.listAutoGenerateDeclareReconciliationBySuppliers(pageDTO);
@@ -1472,11 +1566,6 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
         TmsAsyncTaskRecordDTO.CursorPageDTO pageDTO = new TmsAsyncTaskRecordDTO.CursorPageDTO();
         pageDTO.setIds(ids);
         return this.getBaseMapper().listAutoGenerateCostByIds(pageDTO);
-    }
-
-    @Override
-    public void pushAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto) {
-        pushDeclareReconciliation(dto);
     }
 
 }

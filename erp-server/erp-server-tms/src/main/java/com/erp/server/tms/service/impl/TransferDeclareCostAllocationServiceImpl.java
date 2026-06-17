@@ -103,7 +103,9 @@ import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 /**
  * <p>
  * 中转费用分摊 服务实现类
@@ -1268,9 +1270,315 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
         return baseMapper.listByReportPeriodStr(reportPeriodStr,reportStatus);
     }
 
+    /**
+     * 消费已迁移的中转下推分摊异步任务。
+     * <p>
+     * 加 Redisson 任务锁防 MQ 重投重复执行；正常路径按审核日期游标分页，
+     * {@code FAILED_ONLY} 重试改读来源任务失败明细游标，不依赖 payload 中的业务 ID 列表。
+     *
+     * @param taskRecord MQ 消息体，持久化载荷从 {@code dataJson} 信封解析
+     */
     @Override
-    public void pushAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto) {
-        transferDeclareService.pushTransferDeclare(dto);
+    public void pushTransferDeclareCostAllocation(TmsAsyncTaskRecordEntity taskRecord) {
+        if (ObjectUtil.isEmpty(taskRecord) || StringUtils.isBlank(taskRecord.getId())) {
+            log.error("中转下推分摊异步任务ID为空");
+            return;
+        }
+        String taskId = taskRecord.getId();
+
+        RLock taskLock = redissonClient.getLock(DistributeKeyConstant.TMS_ASYNC_TASK_EXEC_KEY + ":" + taskId);
+        boolean locked = false;
+        try {
+            locked = taskLock.tryLock(0, TimeUnit.SECONDS);
+            if (!locked) {
+                log.warn("中转下推分摊异步任务正在执行，跳过重复消费，taskId: {}", taskId);
+                return;
+            }
+
+            CfgSettingValueDTO.BillBatchParamsDTO billBatchParamsDTO = asyncTaskRecordService.loadBillBatchParams(taskId);
+            if (billBatchParamsDTO == null) {
+                return;
+            }
+
+            TmsAsyncTaskRecordEntity currentRecord = asyncTaskRecordService.getById(taskId);
+            if (Objects.isNull(currentRecord)) {
+                log.error("任务记录不存在，taskId: {}", taskId);
+                asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),
+                    ApiError.LOGISTICS_PENDING_COST_NOT_FOUND.getMsg());
+                return;
+            }
+            if (Objects.equals(currentRecord.getStatus(), TmsAsyncTaskRecordStatusEnum.FINISH.getCode())) {
+                log.warn("中转下推分摊异步任务已完成，跳过重复消费，taskId: {}", taskId);
+                return;
+            }
+
+            TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope = asyncTaskRecordService.parseEnvelope(currentRecord.getDataJson());
+            TmsAsyncTaskRecordDTO.TransferDeclarePushAllocationPayloadDTO payload =
+                asyncTaskRecordService.parseEnvelopePayloadOrFinishTask(
+                    taskId, envelope, TmsAsyncTaskRecordDTO.TransferDeclarePushAllocationPayloadDTO.class,
+                    "中转下推分摊异步任务信封参数解析失败");
+            if (envelope == null || payload == null) {
+                return;
+            }
+            if (payload.getStartDate() == null || payload.getEndDate() == null) {
+                asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(), "开始日期或结束日期为空");
+                return;
+            }
+
+            TmsAsyncTaskRecordDTO.PushParamsDTO dispatchParams =
+                asyncTaskRecordService.buildDispatchPushParams(taskRecord, envelope);
+            String businessType = StringUtils.defaultIfBlank(dispatchParams.getBusinessType(),
+                SourceTypeEnum.TRANSFER_DECLARE_COST_ALLOCATION.getCode());
+
+            if (Objects.equals(currentRecord.getStatus(), TmsAsyncTaskRecordStatusEnum.PENDING.getCode())) {
+                boolean claimed = asyncTaskRecordService.lambdaUpdate()
+                    .set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
+                    .set(TmsAsyncTaskRecordEntity::getErrorData, ApiError.COMMON_BATCH_PROCESSING.getMsg())
+                    .eq(TmsAsyncTaskRecordEntity::getId, taskId)
+                    .eq(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode())
+                    .update();
+                if (!claimed) {
+                    log.warn("中转下推分摊异步任务已被其他消费者认领，taskId: {}", taskId);
+                    return;
+                }
+            } else if (!Objects.equals(currentRecord.getStatus(), TmsAsyncTaskRecordStatusEnum.ING.getCode())) {
+                log.warn("中转下推分摊异步任务状态不可执行，taskId: {}, status: {}", taskId, currentRecord.getStatus());
+                return;
+            }
+
+            int batchSize = asyncTaskRecordService.resolveBatchSize(billBatchParamsDTO.getBatch(), 500);
+            int timeoutSeconds = asyncTaskRecordService.resolveTimeoutSeconds(
+                billBatchParamsDTO.getBatchTimeoutSeconds(), 5000);
+            int staleDetailSeconds = asyncTaskRecordService.resolveStaleDetailSeconds(billBatchParamsDTO);
+            String cursor = "";
+            int totalProcessed = 0;
+            int totalFailed = 0;
+            int batchNumber = 0;
+            final int maxBatchLimit = 100000;
+
+            while (true) {
+                batchNumber++;
+                if (batchNumber > maxBatchLimit) {
+                    log.warn("中转下推分摊超过最大批次数，强制退出，taskId: {}, maxBatchLimit: {}", taskId, maxBatchLimit);
+                    asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(), "超过最大批次数，强制退出");
+                    break;
+                }
+                if (batchNumber == 1 || batchNumber % 10 == 0) {
+                    TmsAsyncTaskRecordEntity loopTask = asyncTaskRecordService.getById(taskId);
+                    if (asyncTaskRecordService.shouldStopLoopTask(taskId, loopTask)) {
+                        break;
+                    }
+                    if (asyncTaskRecordService.terminateTaskIfExecTimeoutReached(loopTask, billBatchParamsDTO)) {
+                        break;
+                    }
+                }
+
+                List<TmsAsyncTaskDetailEntity> batchDetails = prepareTransferDeclarePushBatchDetails(
+                    taskId, businessType, dispatchParams.getRetryMode(), dispatchParams.getRetrySourceTaskId(),
+                    payload.getStartDate(), payload.getEndDate(), cursor, batchSize);
+                if (CollectionUtils.isEmpty(batchDetails)) {
+                    if (totalProcessed == 0) {
+                        asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),
+                            TmsAsyncTaskRecordDTO.RETRY_MODE_FAILED_ONLY.equals(dispatchParams.getRetryMode())
+                                ? "无失败明细可重试" : "b2c报关对账单明细为空");
+                        return;
+                    }
+                    break;
+                }
+
+                TmsAsyncTaskRecordDTO.BatchProcessResult result = executeTransferDeclarePushBatch(
+                    taskId, batchDetails, timeoutSeconds, staleDetailSeconds);
+                totalProcessed += batchDetails.size();
+                totalFailed += result.getFailedCount();
+                asyncTaskRecordService.lambdaUpdate()
+                    .set(TmsAsyncTaskRecordEntity::getDetailCount, totalProcessed)
+                    .set(TmsAsyncTaskRecordEntity::getErrorCount, totalFailed)
+                    .eq(TmsAsyncTaskRecordEntity::getId, taskId)
+                    .update();
+
+                String lastBusinessId = batchDetails.get(batchDetails.size() - 1).getBusinessId();
+                if (StringUtils.isBlank(lastBusinessId)) {
+                    log.error("中转下推分摊批次末尾 businessId 为空，终止循环，taskId: {}", taskId);
+                    asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),
+                        "批次末尾 businessId 为空，终止循环");
+                    break;
+                }
+                cursor = lastBusinessId;
+                log.info("中转下推分摊第{}批完成，taskId: {}, 本批数量: {}, 失败: {}",
+                    batchNumber, taskId, batchDetails.size(), result.getFailedCount());
+            }
+            asyncTaskRecordService.updateTaskFinally(taskId);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.error("中转下推分摊异步任务锁等待中断，taskId: {}", taskId, e);
+        } finally {
+            if (locked && taskLock.isHeldByCurrentThread()) {
+                taskLock.unlock();
+            }
+        }
+    }
+
+    /**
+     * 准备本批次待执行的任务明细。
+     * <p>
+     * 完整重试走 {@code pageAutoGenerateCost} 游标；失败明细重试走来源任务失败明细游标，
+     * 避免在 payload 中持久化大批量 businessId。
+     */
+    private List<TmsAsyncTaskDetailEntity> prepareTransferDeclarePushBatchDetails(String taskId, String businessType,
+                                                                                  String retryMode, String retrySourceTaskId,
+                                                                                  LocalDate startDate, LocalDate endDate,
+                                                                                  String cursor, int batchSize) {
+        List<TmsAsyncTaskDetailEntity> sourceDetails;
+        if (TmsAsyncTaskRecordDTO.RETRY_MODE_FAILED_ONLY.equals(retryMode)) {
+            sourceDetails = asyncTaskDetailRecordService.listFailedDetailsByCursor(retrySourceTaskId, cursor, batchSize);
+        } else {
+            List<TmsB2cDeclareReconciliationDetailEntity> pageList = tmsB2cDeclareReconciliationDetailService
+                .pageAutoGenerateCost(startDate, endDate, null, cursor, batchSize);
+            sourceDetails = pageList.stream()
+                .map(detail -> buildTransferDeclarePushTaskDetail(taskId, businessType, detail.getId(), detail.getSourceCode()))
+                .collect(Collectors.toList());
+        }
+        if (CollectionUtils.isEmpty(sourceDetails)) {
+            return new ArrayList<>();
+        }
+        return saveAndListTransferDeclarePushBatchDetails(taskId, businessType, sourceDetails, batchSize);
+    }
+
+    /** 构建待持久化的中转下推分摊任务明细（初始状态 PENDING）。 */
+    private TmsAsyncTaskDetailEntity buildTransferDeclarePushTaskDetail(String taskId, String businessType,
+                                                                        String businessId, String businessCode) {
+        TmsAsyncTaskDetailEntity detail = new TmsAsyncTaskDetailEntity();
+        detail.setMainId(taskId);
+        detail.setBusinessType(businessType);
+        detail.setBusinessId(businessId);
+        detail.setBusinessCode(businessCode);
+        detail.setStatus(TmsAsyncTaskRecordStatusEnum.PENDING.getCode());
+        detail.setCreateTime(LocalDateTime.now());
+        return detail;
+    }
+
+    /**
+     * 幂等写入本批任务明细并返回可执行行。
+     * <p>
+     * 已存在的 businessId 不重复插入，MQ 重投时可复用未执行的 PENDING 明细。
+     */
+    private List<TmsAsyncTaskDetailEntity> saveAndListTransferDeclarePushBatchDetails(String taskId, String businessType,
+                                                                                      List<TmsAsyncTaskDetailEntity> sourceDetails,
+                                                                                      int batchSize) {
+        List<String> businessIds = sourceDetails.stream()
+            .map(TmsAsyncTaskDetailEntity::getBusinessId)
+            .filter(StringUtils::isNotBlank)
+            .distinct()
+            .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(businessIds)) {
+            return new ArrayList<>();
+        }
+        List<String> existingBusinessIds = asyncTaskDetailRecordService.listExistingBusinessIds(taskId, businessIds);
+        Set<String> existingSet = new HashSet<>(existingBusinessIds);
+        List<TmsAsyncTaskDetailEntity> addDetails = sourceDetails.stream()
+            .filter(detail -> StringUtils.isNotBlank(detail.getBusinessId()))
+            .filter(detail -> !existingSet.contains(detail.getBusinessId()))
+            .map(detail -> buildTransferDeclarePushTaskDetail(taskId, businessType, detail.getBusinessId(), detail.getBusinessCode()))
+            .collect(Collectors.toList());
+        asyncTaskDetailRecordService.saveBatchInChunks(addDetails, batchSize);
+        return asyncTaskDetailRecordService.lambdaQuery()
+            .eq(TmsAsyncTaskDetailEntity::getMainId, taskId)
+            .in(TmsAsyncTaskDetailEntity::getBusinessId, businessIds)
+            .orderByAsc(TmsAsyncTaskDetailEntity::getBusinessId)
+            .list();
+    }
+
+    /**
+     * 并发执行本批中转下推分摊明细。
+     * <p>
+     * 执行前先标记僵死 ING 为 FAILED；明细认领成功后委托 {@code singPushAllocation} 写分摊数据。
+     *
+     * @return 本批成功数与失败数（含僵死明细与批次超时标记的失败）
+     */
+    private TmsAsyncTaskRecordDTO.BatchProcessResult executeTransferDeclarePushBatch(String taskId,
+                                                                                     List<TmsAsyncTaskDetailEntity> taskDetailList,
+                                                                                     int timeoutSeconds, int staleDetailSeconds) {
+        if (CollectionUtils.isEmpty(taskDetailList)) {
+            return new TmsAsyncTaskRecordDTO.BatchProcessResult(0, 0);
+        }
+        List<String> businessIds = taskDetailList.stream()
+            .map(TmsAsyncTaskDetailEntity::getBusinessId)
+            .filter(StringUtils::isNotBlank)
+            .distinct()
+            .collect(Collectors.toList());
+        LocalDateTime staleBefore = LocalDateTime.now().minusSeconds(staleDetailSeconds);
+        List<TmsAsyncTaskDetailEntity> existingDetails = asyncTaskDetailRecordService.lambdaQuery()
+            .eq(TmsAsyncTaskDetailEntity::getMainId, taskId)
+            .in(TmsAsyncTaskDetailEntity::getBusinessId, businessIds)
+            .list();
+        Set<String> staleIngBusinessIds = existingDetails.stream()
+            .filter(d -> Objects.equals(d.getStatus(), TmsAsyncTaskRecordStatusEnum.ING.getCode()))
+            .filter(d -> asyncTaskRecordService.isStaleIngDetail(d, staleBefore))
+            .map(TmsAsyncTaskDetailEntity::getBusinessId)
+            .filter(StringUtils::isNotBlank)
+            .collect(Collectors.toSet());
+        int staleFailedCount = asyncTaskDetailRecordService.markStaleIngDetailsFailed(
+            taskId, staleIngBusinessIds, staleBefore, ApiError.ASYNC_TASK_DETAIL_TIMEOUT.getMsg());
+        if (staleFailedCount > 0) {
+            log.warn("中转下推分摊僵死ING明细已标记失败，taskId: {}, 数量: {}", taskId, staleFailedCount);
+        }
+
+        CountDownLatch latch = new CountDownLatch(taskDetailList.size());
+        AtomicInteger successCount = new AtomicInteger(0);
+        AtomicInteger failedCount = new AtomicInteger(staleFailedCount);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM");
+        List<TmsB2cDeclareReconciliationDetailEntity> list =
+            tmsB2cDeclareReconciliationDetailService.listAutoGenerateCostByIds(businessIds);
+        Map<String, TmsB2cDeclareReconciliationDetailEntity> map = list.stream()
+            .collect(Collectors.toMap(TmsB2cDeclareReconciliationDetailEntity::getId, Function.identity(), (o1, o2) -> o1));
+        for (TmsAsyncTaskDetailEntity detail : taskDetailList) {
+            String taskDetailId = detail.getId();
+            String businessId = detail.getBusinessId();
+            try {
+                costAllocationPool.execute(() -> {
+                    try {
+                        if (!asyncTaskDetailRecordService.tryClaimDetailForExecution(taskDetailId)) {
+                            log.debug("任务明细[{}]状态已变更，跳过", taskDetailId);
+                            return;
+                        }
+                        TmsB2cDeclareReconciliationDetailEntity entity = map.get(businessId);
+                        if (Objects.isNull(entity)) {
+                            throw new ServiceException("b2c报关对账单明细为空");
+                        }
+                        transferDeclareService.singPushAllocation(entity.getSourceId(),
+                            entity.getApproveDate().format(formatter), Collections.singletonList(entity));
+                        asyncTaskDetailRecordService.updateDetail(taskDetailId,
+                            TmsAsyncTaskRecordStatusEnum.FINISH.getCode(), "");
+                        successCount.incrementAndGet();
+                    } catch (Exception e) {
+                        log.error("处理中转下推分摊任务失败 taskDetailId: {}", taskDetailId, e);
+                        asyncTaskRecordService.updateTaskDetailFailure(taskDetailId, e);
+                        failedCount.incrementAndGet();
+                    } finally {
+                        latch.countDown();
+                    }
+                });
+            } catch (RejectedExecutionException ex) {
+                log.error("中转下推分摊任务提交失败 taskDetailId: {}", taskDetailId, ex);
+                asyncTaskRecordService.updateTaskDetailFailure(taskDetailId, ex);
+                failedCount.incrementAndGet();
+                latch.countDown();
+            }
+        }
+        try {
+            boolean completed = latch.await(timeoutSeconds, TimeUnit.SECONDS);
+            if (!completed) {
+                log.warn("中转下推分摊批次执行超时，taskId: {}, timeoutSeconds: {}", taskId, timeoutSeconds);
+                failedCount.addAndGet(asyncTaskDetailRecordService.markUnfinishedBatchDetailsFailed(
+                    taskDetailList, "批次执行超时"));
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.error("中转下推分摊任务等待中断", e);
+            failedCount.addAndGet(asyncTaskDetailRecordService.markUnfinishedBatchDetailsFailed(
+                taskDetailList, "任务等待中断"));
+        }
+        return new TmsAsyncTaskRecordDTO.BatchProcessResult(successCount.get(), failedCount.get());
     }
 
 }

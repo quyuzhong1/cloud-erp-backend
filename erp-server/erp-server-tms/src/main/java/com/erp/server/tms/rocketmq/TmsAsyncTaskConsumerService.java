@@ -76,8 +76,8 @@ public class TmsAsyncTaskConsumerService implements RocketMQListener<TmsAsyncTas
         log.info("开始消费TMS异步任务，taskId: {}, businessType: {}", taskId, businessType);
         //头程对账单
         if(Objects.equals(businessType,SourceTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode())){
-            if (StringUtils.isBlank(methodType) || Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode())) {
-                tmsFirstMileReconciliationDetailService.pushAllocation(dto);
+            if (Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode())) {
+                tmsFirstMileReconciliationDetailService.pushFirstMileReconciliation(taskRecord);
             } else {
                 log.warn("头程对账单MQ方法类型不支持，跳过消费，taskId: {}, methodType: {}", taskId, methodType);
                 asyncTaskRecordService.finishTaskWithError(taskId, "头程对账单MQ方法类型不支持: " + methodType);
@@ -86,8 +86,8 @@ public class TmsAsyncTaskConsumerService implements RocketMQListener<TmsAsyncTas
         }
         //报关对账
         else if(Objects.equals(businessType,SourceTypeEnum.TMS_B2C_DECLARE_RECONCILIATION.getCode())){
-            if (StringUtils.isBlank(methodType) || Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode())) {
-                tmsB2cDeclareReconciliationDetailService.pushAllocation(dto);
+            if (Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode())) {
+                tmsB2cDeclareReconciliationDetailService.pushDeclareReconciliation(taskRecord);
             } else {
                 log.warn("报关对账MQ方法类型不支持，跳过消费，taskId: {}, methodType: {}", taskId, methodType);
                 asyncTaskRecordService.finishTaskWithError(taskId, "报关对账MQ方法类型不支持: " + methodType);
@@ -139,8 +139,8 @@ public class TmsAsyncTaskConsumerService implements RocketMQListener<TmsAsyncTas
                 transferDeclareCostAllocationService.pushReAllocation(dto);
             } else if (Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.DELETE.getCode())) {
                 transferDeclareCostAllocationService.pushDelete(dto);
-            } else if (StringUtils.isBlank(methodType) || Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode())) {
-                transferDeclareCostAllocationService.pushAllocation(dto);
+            } else if (Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode())) {
+                transferDeclareCostAllocationService.pushTransferDeclareCostAllocation(taskRecord);
             } else {
                 log.warn("中转分摊MQ方法类型不支持，跳过消费，taskId: {}, methodType: {}", taskId, methodType);
                 asyncTaskRecordService.finishTaskWithError(taskId, "中转分摊MQ方法类型不支持: " + methodType);

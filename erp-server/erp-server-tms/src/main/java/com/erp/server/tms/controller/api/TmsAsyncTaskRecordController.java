@@ -229,11 +229,11 @@ public class TmsAsyncTaskRecordController extends BaseController {
 
 
     /**
-     * 测试 - 创建所有的自动任务
+     * 测试接口：触发自动周期任务生成，返回与 XXL-JOB 相同的执行汇总。
      */
     @GetMapping("/genAutoTask")
-    public void genAutoTask() {
-        tmsAsyncTaskRecordService.genAutoTask();
+    public TmsAsyncTaskRecordDTO.GenAutoTaskResultDTO genAutoTask() {
+        return tmsAsyncTaskRecordService.genAutoTask();
     }
     /**
      * 测试 - 启动所有符合条件自动任务

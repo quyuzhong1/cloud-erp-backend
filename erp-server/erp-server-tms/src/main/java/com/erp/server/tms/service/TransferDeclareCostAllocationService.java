@@ -10,6 +10,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.TransferDeclareCostAllocationDTO;
 import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
 import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
+import com.erp.model.tms.entity.TmsAsyncTaskRecordEntity;
 import com.erp.model.tms.entity.TransferDeclareCostAllocationEntity;
 import com.erp.model.tms.entity.TransferDeclareCostAllocationMainEntity;
 
@@ -57,8 +58,15 @@ public interface TransferDeclareCostAllocationService extends SuperService<Trans
      */
     void pushUpdateReportStatus(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
 
-    /** MQ 消费：下推中转费用分摊（含任务明细初始化） */
-    void pushAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
+    /**
+     * MQ 消费：已迁移的中转下推分摊批次任务。
+     * <p>
+     * 从任务记录解析 {@link TmsAsyncTaskRecordDTO.TransferDeclarePushAllocationPayloadDTO}，
+     * 按 B2C 报关对账审核日期范围游标分批生成费用分摊；单条业务仍委托 {@code singPushAllocation}。
+     *
+     * @param taskRecord MQ 路由后的任务记录，业务载荷从 {@code dataJson} 信封读取
+     */
+    void pushTransferDeclareCostAllocation(TmsAsyncTaskRecordEntity taskRecord);
 
     BatchResultDTO asyncReAllocation(FirstMileCostAllocationDTO.ResetIdsDTO dto);
 

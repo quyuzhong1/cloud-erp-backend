@@ -33,7 +33,11 @@ public interface TmsAsyncTaskRecordService extends SuperService<TmsAsyncTaskReco
     TmsAsyncTaskRecordEntity addManualTask(TmsAsyncTaskRecordDTO.ManualCreateDTO dto);
 
     /**
-     * 新增自动任务（带方法类型）
+     * 新增自动周期任务（带方法类型）。
+     * 防重键为 {@code businessType + methodType + startTimeStr}。
+     *
+     * @param dto 创建入参，含可选 {@code execTimeout}
+     * @return 任务主键；已存在或保存失败时返回 null
      */
     String addAutoTask(TmsAsyncTaskRecordDTO.AutoCreateDTO dto);
 
@@ -208,7 +212,15 @@ public interface TmsAsyncTaskRecordService extends SuperService<TmsAsyncTaskReco
     void startTask();
 
 
-    void genAutoTask();
+    /**
+     * 按对账周期配置生成全部自动周期任务（仅创建，不派发 MQ）。
+     * <p>
+     * 生成结果为 {@code AUTO + PENDING}，由 {@link #startTask()} 在 {@code startTime} 到期后派发。
+     * 各业务生成器相互隔离，单项失败不影响其余任务。
+     *
+     * @return 本次生成的执行汇总，含逐项状态与统计计数
+     */
+    TmsAsyncTaskRecordDTO.GenAutoTaskResultDTO genAutoTask();
 
     /**
      * 异步任务 watchdog：负责超时和孤儿明细清理。
