@@ -1,6 +1,8 @@
 package com.common.business.dto.base;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -66,5 +68,12 @@ public class BatchResultDTO implements Serializable {
     public static BatchResultDTO fail(String id, String code, String msg) {
         code = null == code ? "" : code;
         return new BatchResultDTO(id, code, msg,Boolean.FALSE);
+    }
+
+    public static BatchResultDTO fail(String id, String code, Exception e) {
+        String msg = e instanceof ServiceException
+                ? ((ServiceException) e).getMsg()
+                : ApiError.HTTP_UNKNOWN.getMsg();
+        return fail(id, code, msg);
     }
 }

@@ -172,7 +172,7 @@ public class QcNoticeFeignController extends BaseController {
                     resultDTOS.add(submitResult);
                     continue;
                 }
-                submitResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+                submitResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e);
             }
             resultDTOS.add(submitResult);
         }
@@ -211,7 +211,7 @@ public class QcNoticeFeignController extends BaseController {
                     resultDTOS.add(approveResult);
                     continue;
                 }
-                approveResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+                approveResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e);
             }
             resultDTOS.add(approveResult);
         }
