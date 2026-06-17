@@ -6,6 +6,7 @@ import com.alibaba.excel.EasyExcel;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.vo.LoginUser;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -24,6 +25,8 @@ import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.tms.dto.LogisticsReconDetailDTO;
 import com.erp.model.tms.dto.LogisticsReconMatchDTO;
 import com.erp.model.tms.dto.excel.LogisticsReconMatchImportExcelDTO;
+import com.erp.model.tms.entity.CfgLogisticsCostImportDetailEntity;
+import com.erp.model.tms.entity.CfgLogisticsCostImportEntity;
 import com.erp.model.tms.entity.LogisticsReconDetailEntity;
 import com.erp.model.tms.entity.LogisticsReconDetailSubEntity;
 import com.erp.model.tms.entity.LogisticsReconEntity;
@@ -34,11 +37,16 @@ import com.erp.model.tms.enums.LogisticsReconRefMatchTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.tms.constant.LogisticsReconImportMatchConstant;
 import com.erp.server.tms.listener.LogisticsReconMatchImportExcelListener;
 import com.erp.server.tms.mapper.LogisticsReconDetailMapper;
+import com.erp.server.tms.service.CfgLogisticsCostImportDetailService;
+import com.erp.server.tms.service.CfgLogisticsCostImportService;
 import com.erp.server.tms.service.LogisticsReconDetailService;
 import com.erp.server.tms.service.LogisticsReconDetailSubService;
 import com.erp.server.tms.service.LogisticsReconService;
+import com.erp.server.tms.service.support.LogisticsReconImportMatchContext;
+import com.erp.server.tms.util.LogisticsReconMatchGroupHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -86,7 +94,14 @@ public class LogisticsReconDetailServiceImpl
     @Resource
     private SysUserFeign sysUserFeign;
 
-    private static final int IMPORT_MATCH_TRACK_NO_BATCH = 1000;
+    @Resource
+    private CfgLogisticsCostImportDetailService cfgLogisticsCostImportDetailService;
+
+    @Resource
+    private CfgLogisticsCostImportService cfgLogisticsCostImportService;
+
+    /** 识别未命中对账明细时的统一提示 */
+    private static final String IMPORT_MATCH_IDENTIFY_NOT_FOUND = "未匹配到对账明细";
 
     @Override
     public PagingVO<LogisticsReconDetailDTO.ListDTO> paging(PagingDTO<LogisticsReconDetailDTO.PagingParamDTO> pagingParamDTO) {
@@ -188,9 +203,10 @@ public class LogisticsReconDetailServiceImpl
             if (!LogisticsReconCheckStatusEnum.CONFIRMED.getCode().equals(main.getCheckStatus())) {
                 throw new ServiceException(ApiError.LOGISTICS_RECON_ONLY_CONFIRMED_ALLOW_MATCH);
             }
+            LogisticsReconImportMatchContext matchContext = buildImportMatchContext(main);
             byte[] fileBytes = fileFeign.downloadFile(dto.getFileUrl());
             LogisticsReconMatchImportExcelListener listener =
-                    new LogisticsReconMatchImportExcelListener(dto.getMainId());
+                    new LogisticsReconMatchImportExcelListener(matchContext);
             EasyExcel.read(new ByteArrayInputStream(fileBytes), LogisticsReconMatchImportExcelDTO.class, listener)
                     .sheet().doRead();
             if (listener.getTotalCount() == 0) {
@@ -198,14 +214,14 @@ public class LogisticsReconDetailServiceImpl
             }
 
             List<LogisticsReconMatchImportExcelDTO> errorRows = new ArrayList<>();
-            for (Map.Entry<String, LogisticsReconMatchImportExcelDTO> entry : listener.getRowByTrackNo().entrySet()) {
-                String trackNo = entry.getKey();
+            for (Map.Entry<String, LogisticsReconMatchImportExcelDTO> entry : listener.getRowByGroupKey().entrySet()) {
+                String groupKey = entry.getKey();
                 LogisticsReconMatchImportExcelDTO row = entry.getValue();
                 String failReason = null;
-                if (!listener.getMatchedTrackNoSet().contains(trackNo)) {
-                    failReason = "未匹配到对账明细";
-                } else if (listener.getTrackNoErrorMap().containsKey(trackNo)) {
-                    failReason = String.join("；", listener.getTrackNoErrorMap().get(trackNo));
+                if (!listener.getMatchedGroupKeySet().contains(groupKey)) {
+                    failReason = IMPORT_MATCH_IDENTIFY_NOT_FOUND;
+                } else if (listener.getGroupErrorMap().containsKey(groupKey)) {
+                    failReason = String.join("；", listener.getGroupErrorMap().get(groupKey));
                 }
                 if (StrUtil.isNotBlank(failReason)) {
                     row.setMatchResult("失败");
@@ -259,126 +275,315 @@ public class LogisticsReconDetailServiceImpl
     }
 
     /**
-     * 导入匹配分批处理：按 trackNo 定位明细，认领后异步提交匹配（与手动匹配一致）。
+     * 导入匹配分批处理：按模板识别号分组合并费用项，认领后异步提交匹配。
+     *
+     * @author Will
+     * @date 2026/6/12
+     * @param context            导入匹配上下文（识别号分组后的账单费用项）
+     * @param excelBatch         本批 Excel 行
+     * @param groupErrorMap      识别号分组键 → 错误文案（可累积）
+     * @param matchedGroupKeySet 本文件已命中账单识别组的键（可累积，允许 null）
+     * @param handledGroupKeySet 本文件已处理过的识别组（跨分批去重，可累积，允许 null）
      */
     @Override
-    public void processImportMatchBatch(String mainId, List<LogisticsReconMatchImportExcelDTO> excelBatch,
-                                         Map<String, List<String>> trackNoErrorMap,
-                                         Set<String> matchedTrackNoSet) {
-        if (CollUtil.isEmpty(excelBatch)) {
+    public void processImportMatchBatch(LogisticsReconImportMatchContext context,
+                                        List<LogisticsReconMatchImportExcelDTO> excelBatch,
+                                        Map<String, List<String>> groupErrorMap,
+                                        Set<String> matchedGroupKeySet,
+                                        Set<String> handledGroupKeySet) {
+        if (context == null || CollUtil.isEmpty(excelBatch)) {
             return;
         }
-        Map<String, LogisticsReconMatchImportExcelDTO> batchRowByTrackNo = new LinkedHashMap<>();
+        List<CfgLogisticsCostImportDetailEntity> uniqueKeyList = context.getUniqueKeyList();
+        Map<String, LogisticsReconMatchImportExcelDTO> batchRowByGroupKey = new LinkedHashMap<>();
         for (LogisticsReconMatchImportExcelDTO row : excelBatch) {
-            batchRowByTrackNo.putIfAbsent(StrUtil.trim(row.getTrackNo()), row);
+            if (LogisticsReconMatchGroupHelper.isTemplateRowBlank(row)) {
+                continue;
+            }
+            if (!LogisticsReconMatchGroupHelper.isConfiguredIdentifyComplete(row, uniqueKeyList)) {
+                continue;
+            }
+            String groupKey = LogisticsReconMatchGroupHelper.buildImportMatchExcelGroupKey(row, uniqueKeyList);
+            batchRowByGroupKey.putIfAbsent(groupKey, row);
         }
-        List<String> trackNos = new ArrayList<>(batchRowByTrackNo.keySet());
-        List<LogisticsReconDetailEntity> detailList = new ArrayList<>();
-        for (int i = 0; i < trackNos.size(); i += IMPORT_MATCH_TRACK_NO_BATCH) {
-            List<String> trackNoBatch = trackNos.subList(i,
-                    Math.min(trackNos.size(), i + IMPORT_MATCH_TRACK_NO_BATCH));
-            detailList.addAll(lambdaQuery()
-                    .eq(LogisticsReconDetailEntity::getMainId, mainId)
-                    .in(LogisticsReconDetailEntity::getTrackNo, trackNoBatch)
-                    .list());
-        }
-        if (CollUtil.isEmpty(detailList)) {
+        if (batchRowByGroupKey.isEmpty()) {
             return;
-        }
-        Set<String> trimmedTrackNoSet = batchRowByTrackNo.keySet();
-        detailList = detailList.stream()
-                .filter(detail -> StrUtil.isNotBlank(detail.getTrackNo())
-                        && trimmedTrackNoSet.contains(StrUtil.trim(detail.getTrackNo())))
-                .collect(Collectors.toList());
-        if (CollUtil.isEmpty(detailList)) {
-            return;
-        }
-        Map<String, List<LogisticsReconDetailEntity>> detailGroupByTrackNo = detailList.stream()
-                .filter(detail -> StrUtil.isNotBlank(detail.getTrackNo()))
-                .collect(Collectors.groupingBy(detail -> StrUtil.trim(detail.getTrackNo())));
-        Set<String> duplicateTrackNoSet = detailGroupByTrackNo.entrySet().stream()
-                .filter(entry -> entry.getValue().size() > 1)
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toSet());
-        for (String duplicateTrackNo : duplicateTrackNoSet) {
-            trackNoErrorMap.computeIfAbsent(duplicateTrackNo, key -> new ArrayList<>())
-                    .add("对账物流跟踪号对应多条明细");
-        }
-        matchedTrackNoSet.addAll(detailGroupByTrackNo.keySet());
-
-        List<String> detailIds = detailList.stream()
-                .map(LogisticsReconDetailEntity::getId)
-                .collect(Collectors.toList());
-        Map<String, List<LogisticsReconDetailSubEntity>> subByDetail = new HashMap<>();
-        for (int i = 0; i < detailIds.size(); i += IMPORT_MATCH_TRACK_NO_BATCH) {
-            List<String> detailIdBatch = detailIds.subList(i,
-                    Math.min(detailIds.size(), i + IMPORT_MATCH_TRACK_NO_BATCH));
-            logisticsReconDetailSubService.lambdaQuery()
-                    .eq(LogisticsReconDetailSubEntity::getMainId, mainId)
-                    .in(LogisticsReconDetailSubEntity::getDetailId, detailIdBatch)
-                    .list()
-                    .forEach(sub -> subByDetail.computeIfAbsent(sub.getDetailId(), key -> new ArrayList<>()).add(sub));
         }
 
         List<LogisticsReconMatchDTO.SubErpInputDTO> inputs = new ArrayList<>();
-        Map<String, String> subIdToTrackNo = new HashMap<>();
-        Set<String> detailWithEligibleSub = new HashSet<>();
-        for (LogisticsReconDetailEntity detail : detailList) {
-            String trackNo = StrUtil.trim(detail.getTrackNo());
-            if (duplicateTrackNoSet.contains(trackNo)) {
+        Map<String, String> subIdToGroupKey = new HashMap<>();
+        for (Map.Entry<String, LogisticsReconMatchImportExcelDTO> entry : batchRowByGroupKey.entrySet()) {
+            String groupKey = entry.getKey();
+            if (handledGroupKeySet != null && handledGroupKeySet.contains(groupKey)) {
                 continue;
             }
-            LogisticsReconMatchImportExcelDTO row = batchRowByTrackNo.get(trackNo);
-            if (row == null) {
+            if (handledGroupKeySet != null) {
+                handledGroupKeySet.add(groupKey);
+            }
+            LogisticsReconMatchImportExcelDTO row = entry.getValue();
+            List<String> allSubIds = context.getGroupKeyToAllSubIds().get(groupKey);
+            if (CollUtil.isEmpty(allSubIds)) {
                 continue;
             }
-            List<LogisticsReconDetailSubEntity> subs = subByDetail.get(detail.getId());
-            if (CollUtil.isEmpty(subs)) {
-                trackNoErrorMap.computeIfAbsent(trackNo, key -> new ArrayList<>()).add("对账明细下无费用项");
+            if (matchedGroupKeySet != null) {
+                matchedGroupKeySet.add(groupKey);
+            }
+            List<String> eligibleSubIds = context.getGroupKeyToEligibleSubIds().get(groupKey);
+            if (CollUtil.isEmpty(eligibleSubIds)) {
+                groupErrorMap.computeIfAbsent(groupKey, key -> new ArrayList<>())
+                        .add("费用项已匹配或已确认，无法重新匹配");
                 continue;
             }
-            boolean hasEligible = false;
-            for (LogisticsReconDetailSubEntity sub : subs) {
-                if (!canImportMatchSub(sub)) {
-                    continue;
-                }
-                hasEligible = true;
+            for (String subId : eligibleSubIds) {
                 LogisticsReconMatchDTO.SubErpInputDTO input = new LogisticsReconMatchDTO.SubErpInputDTO();
-                input.setDetailSubId(sub.getId());
+                input.setDetailSubId(subId);
                 input.setErpSoCode(row.getErpSoCode());
                 input.setErpPlatformOrderNo(row.getErpPlatformOrderNo());
                 input.setErpTrackNo(row.getErpTrackNo());
                 input.setErpSoDeliveryCode(row.getErpSoDeliveryCode());
                 inputs.add(input);
-                subIdToTrackNo.put(sub.getId(), trackNo);
-            }
-            if (hasEligible) {
-                detailWithEligibleSub.add(trackNo);
-            }
-        }
-        for (String trackNo : batchRowByTrackNo.keySet()) {
-            if (matchedTrackNoSet.contains(trackNo)
-                    && !detailWithEligibleSub.contains(trackNo)
-                    && !trackNoErrorMap.containsKey(trackNo)) {
-                trackNoErrorMap.computeIfAbsent(trackNo, key -> new ArrayList<>())
-                        .add("费用项已匹配或已确认，无法重新匹配");
+                subIdToGroupKey.put(subId, groupKey);
             }
         }
         if (CollUtil.isEmpty(inputs)) {
             return;
         }
-        List<BatchResultDTO> submitResults = logisticsReconService.submitManualMatch(inputs,
-                LogisticsReconRefMatchTypeEnum.MANUAL.getCode());
+        submitImportMatchInputsByGroupChunks(context.getMainId(), inputs, subIdToGroupKey, groupErrorMap);
+    }
+
+    /**
+     * 按识别组边界分片提交匹配，单组不拆分（保证组内费用合并匹配）。
+     *
+     * @author Will
+     * @date 2026/6/12
+     * @param mainId          对账单 id
+     * @param inputs          待提交费用项
+     * @param subIdToGroupKey 费用项 id → 识别组键
+     * @param groupErrorMap   识别组错误累积
+     */
+    private void submitImportMatchInputsByGroupChunks(String mainId,
+                                                      List<LogisticsReconMatchDTO.SubErpInputDTO> inputs,
+                                                      Map<String, String> subIdToGroupKey,
+                                                      Map<String, List<String>> groupErrorMap) {
+        Map<String, List<LogisticsReconMatchDTO.SubErpInputDTO>> inputsByGroupKey = new LinkedHashMap<>();
+        for (LogisticsReconMatchDTO.SubErpInputDTO input : inputs) {
+            String groupKey = subIdToGroupKey.get(input.getDetailSubId());
+            if (StrUtil.isBlank(groupKey)) {
+                continue;
+            }
+            inputsByGroupKey.computeIfAbsent(groupKey, key -> new ArrayList<>()).add(input);
+        }
+        List<LogisticsReconMatchDTO.SubErpInputDTO> chunk = new ArrayList<>();
+        for (Map.Entry<String, List<LogisticsReconMatchDTO.SubErpInputDTO>> entry : inputsByGroupKey.entrySet()) {
+            String groupKey = entry.getKey();
+            List<LogisticsReconMatchDTO.SubErpInputDTO> groupInputs = entry.getValue();
+            if (groupInputs.size() > LogisticsReconImportMatchConstant.SUBMIT_CHUNK_SIZE) {
+                log.warn("[submitImportMatchInputsByGroupChunks] 单识别组费用项超过提交分片阈值，整组提交不拆分 "
+                                + "mainId={} groupKey={} subCount={} threshold={}",
+                        mainId, groupKey, groupInputs.size(), LogisticsReconImportMatchConstant.SUBMIT_CHUNK_SIZE);
+                if (CollUtil.isNotEmpty(chunk)) {
+                    mergeSubmitResultsToGroupErrors(
+                            logisticsReconService.submitManualMatch(chunk, LogisticsReconRefMatchTypeEnum.MANUAL.getCode()),
+                            subIdToGroupKey, groupErrorMap);
+                    chunk.clear();
+                }
+                mergeSubmitResultsToGroupErrors(
+                        logisticsReconService.submitManualMatch(groupInputs, LogisticsReconRefMatchTypeEnum.MANUAL.getCode()),
+                        subIdToGroupKey, groupErrorMap);
+                continue;
+            }
+            if (chunk.size() + groupInputs.size() > LogisticsReconImportMatchConstant.SUBMIT_CHUNK_SIZE) {
+                mergeSubmitResultsToGroupErrors(
+                        logisticsReconService.submitManualMatch(chunk, LogisticsReconRefMatchTypeEnum.MANUAL.getCode()),
+                        subIdToGroupKey, groupErrorMap);
+                chunk.clear();
+            }
+            chunk.addAll(groupInputs);
+        }
+        if (CollUtil.isNotEmpty(chunk)) {
+            mergeSubmitResultsToGroupErrors(
+                    logisticsReconService.submitManualMatch(chunk, LogisticsReconRefMatchTypeEnum.MANUAL.getCode()),
+                    subIdToGroupKey, groupErrorMap);
+        }
+    }
+
+    /**
+     * 合并同步提交阶段的失败结果到识别组错误 Map。
+     *
+     * @author Will
+     * @date 2026/6/12
+     * @param submitResults   提交结果
+     * @param subIdToGroupKey 费用项 id → 识别组键
+     * @param groupErrorMap   识别组错误累积
+     */
+    private void mergeSubmitResultsToGroupErrors(List<BatchResultDTO> submitResults,
+                                                 Map<String, String> subIdToGroupKey,
+                                                 Map<String, List<String>> groupErrorMap) {
+        if (CollUtil.isEmpty(submitResults)) {
+            return;
+        }
         for (BatchResultDTO submitResult : submitResults) {
             if (Boolean.TRUE.equals(submitResult.getSuccess())) {
                 continue;
             }
-            String trackNo = subIdToTrackNo.get(submitResult.getCode());
-            if (StrUtil.isBlank(trackNo)) {
+            String groupKey = subIdToGroupKey.get(submitResult.getCode());
+            if (StrUtil.isBlank(groupKey)) {
                 continue;
             }
-            trackNoErrorMap.computeIfAbsent(trackNo, key -> new ArrayList<>()).add(submitResult.getMsg());
+            groupErrorMap.computeIfAbsent(groupKey, key -> new ArrayList<>()).add(submitResult.getMsg());
         }
+    }
+
+    /**
+     * 预加载对账单费用项：按模板唯一识别字段分组（与导入匹配分组键一致）。
+     *
+     * @author Will
+     * @date 2026/6/12
+     * @param main 对账单主表
+     * @return 导入匹配上下文
+     */
+    private LogisticsReconImportMatchContext buildImportMatchContext(LogisticsReconEntity main) {
+        if (StrUtil.isBlank(main.getCfgImportId())) {
+            throw new ServiceException(ApiError.LOGISTICS_RECON_IMPORT_TEMPLATE_NOT_RECOGNIZED);
+        }
+        List<CfgLogisticsCostImportDetailEntity> cfgDetails = cfgLogisticsCostImportDetailService.lambdaQuery()
+                .eq(CfgLogisticsCostImportDetailEntity::getMainId, main.getCfgImportId())
+                .list();
+        if (CollUtil.isEmpty(cfgDetails)) {
+            throw new ServiceException(ApiError.LOGISTICS_CFG_IMPORT_DETAIL_NOT_FOUND);
+        }
+        String importCfgName = resolveImportCfgName(main.getCfgImportId());
+        List<CfgLogisticsCostImportDetailEntity> uniqueKeyList = extractUniqueKeyList(cfgDetails, importCfgName);
+
+        Map<String, String> detailIdToGroupKey = buildDetailIdToGroupKeyMap(main.getId(), uniqueKeyList);
+        Map<String, List<String>> groupKeyToAllSubIds = new LinkedHashMap<>();
+        Map<String, List<String>> groupKeyToEligibleSubIds = new LinkedHashMap<>();
+        aggregateSubIdsByGroupKey(main.getId(), detailIdToGroupKey, groupKeyToAllSubIds, groupKeyToEligibleSubIds);
+
+        return new LogisticsReconImportMatchContext(main.getId(), uniqueKeyList, groupKeyToAllSubIds, groupKeyToEligibleSubIds);
+    }
+
+    /**
+     * 游标扫描对账明细，构建 detailId → 识别组键映射（避免一次性加载全量明细实体）。
+     *
+     * @author Will
+     * @date 2026/6/12
+     * @param mainId         对账单 id
+     * @param uniqueKeyList  模板唯一识别字段
+     * @return detailId → groupKey
+     */
+    private Map<String, String> buildDetailIdToGroupKeyMap(String mainId,
+                                                           List<CfgLogisticsCostImportDetailEntity> uniqueKeyList) {
+        Map<String, String> detailIdToGroupKey = new HashMap<>();
+        String lastDetailId = null;
+        while (true) {
+            LambdaQueryChainWrapper<LogisticsReconDetailEntity> detailQuery = lambdaQuery()
+                    .eq(LogisticsReconDetailEntity::getMainId, mainId)
+                    .orderByAsc(LogisticsReconDetailEntity::getId)
+                    .last("LIMIT " + LogisticsReconImportMatchConstant.CONTEXT_SCAN_BATCH_SIZE);
+            if (lastDetailId != null) {
+                detailQuery.gt(LogisticsReconDetailEntity::getId, lastDetailId);
+            }
+            List<LogisticsReconDetailEntity> detailBatch = detailQuery.list();
+            if (CollUtil.isEmpty(detailBatch)) {
+                break;
+            }
+            lastDetailId = detailBatch.get(detailBatch.size() - 1).getId();
+            for (LogisticsReconDetailEntity detail : detailBatch) {
+                String groupKey = LogisticsReconMatchGroupHelper.buildDetailGroupKey(detail, uniqueKeyList);
+                if (StrUtil.isNotBlank(groupKey)) {
+                    detailIdToGroupKey.put(detail.getId(), groupKey);
+                }
+            }
+        }
+        return detailIdToGroupKey;
+    }
+
+    /**
+     * 游标扫描费用项，按识别组聚合 subId（仅保留 id，降低超大对账单内存占用）。
+     *
+     * @author Will
+     * @date 2026/6/12
+     * @param mainId                   对账单 id
+     * @param detailIdToGroupKey       明细 id → 识别组键
+     * @param groupKeyToAllSubIds      输出：组 → 全部费用项 id
+     * @param groupKeyToEligibleSubIds 输出：组 → 可匹配费用项 id
+     */
+    private void aggregateSubIdsByGroupKey(String mainId,
+                                           Map<String, String> detailIdToGroupKey,
+                                           Map<String, List<String>> groupKeyToAllSubIds,
+                                           Map<String, List<String>> groupKeyToEligibleSubIds) {
+        if (CollUtil.isEmpty(detailIdToGroupKey)) {
+            return;
+        }
+        String lastSubId = null;
+        while (true) {
+            LambdaQueryChainWrapper<LogisticsReconDetailSubEntity> subQuery = logisticsReconDetailSubService.lambdaQuery()
+                    .eq(LogisticsReconDetailSubEntity::getMainId, mainId)
+                    .orderByAsc(LogisticsReconDetailSubEntity::getId)
+                    .last("LIMIT " + LogisticsReconImportMatchConstant.CONTEXT_SCAN_BATCH_SIZE);
+            if (lastSubId != null) {
+                subQuery.gt(LogisticsReconDetailSubEntity::getId, lastSubId);
+            }
+            List<LogisticsReconDetailSubEntity> subBatch = subQuery.list();
+            if (CollUtil.isEmpty(subBatch)) {
+                break;
+            }
+            lastSubId = subBatch.get(subBatch.size() - 1).getId();
+            for (LogisticsReconDetailSubEntity sub : subBatch) {
+                String groupKey = detailIdToGroupKey.get(sub.getDetailId());
+                if (StrUtil.isBlank(groupKey)) {
+                    continue;
+                }
+                groupKeyToAllSubIds.computeIfAbsent(groupKey, key -> new ArrayList<>()).add(sub.getId());
+                if (canImportMatchSub(sub)) {
+                    groupKeyToEligibleSubIds.computeIfAbsent(groupKey, key -> new ArrayList<>()).add(sub.getId());
+                }
+            }
+        }
+    }
+
+    /**
+     * 提取模板唯一识别字段配置（与物流费用导入一致）。
+     *
+     * @author Will
+     * @date 2026/6/12
+     * @param cfgImportDetailList 物流费用导入模板明细配置
+     * @param importCfgName       导入模板名称（用于错误提示）
+     * @return 唯一识别字段配置列表
+     */
+    private List<CfgLogisticsCostImportDetailEntity> extractUniqueKeyList(
+            List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList, String importCfgName) {
+        List<CfgLogisticsCostImportDetailEntity> uniqueKeyList = cfgImportDetailList.stream()
+                .filter(CfgLogisticsCostImportDetailEntity::getIsUniqueKey)
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(uniqueKeyList)) {
+            throw new ServiceException(ApiError.LOGISTICS_CFG_IMPORT_DETAIL_IS_UNIQUE_KEY_NOT_FOUND, importCfgName);
+        }
+        List<String> invalidUniqueFields = uniqueKeyList.stream()
+                .filter(detail -> StrUtil.isBlank(detail.getSourceField()))
+                .map(detail -> StrUtil.blankToDefault(detail.getTargetFieldName(), detail.getTargetField()))
+                .collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(invalidUniqueFields)) {
+            throw new ServiceException(ApiError.LOGISTICS_BILL_COST_IMPORT_RECORD_UNIQUE_KEY_ERROR);
+        }
+        return uniqueKeyList;
+    }
+
+    /**
+     * 解析物流费用导入模板名称（用于唯一键相关错误提示）。
+     *
+     * @author Will
+     * @date 2026/6/12
+     * @param cfgImportId 导入模板主表 id
+     * @return 模板名称，查不到时回退为 id
+     */
+    private String resolveImportCfgName(String cfgImportId) {
+        CfgLogisticsCostImportEntity importCfg = cfgLogisticsCostImportService.getById(cfgImportId);
+        if (importCfg != null && StrUtil.isNotBlank(importCfg.getName())) {
+            return importCfg.getName();
+        }
+        return cfgImportId;
     }
 
     /**

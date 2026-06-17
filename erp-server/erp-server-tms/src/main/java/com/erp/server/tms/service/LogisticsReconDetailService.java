@@ -7,6 +7,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.LogisticsReconDetailDTO;
 import com.erp.model.tms.dto.excel.LogisticsReconMatchImportExcelDTO;
 import com.erp.model.tms.entity.LogisticsReconDetailEntity;
+import com.erp.server.tms.service.support.LogisticsReconImportMatchContext;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.Collection;
@@ -70,10 +71,21 @@ public interface LogisticsReconDetailService extends SuperService<LogisticsRecon
     void executeImportMatchTask(LogisticsReconDetailDTO.ImportMatchSyncDTO dto);
 
     /**
-     * 导入匹配分批处理：按 trackNo 定位明细，认领后异步提交匹配。
+     * 导入匹配分批处理：按模板识别号分组合并费用项后认领并异步提交匹配。
+     *
+     * @author Will
+     * @date 2026/6/12
+     * @param context            导入匹配上下文（识别号分组后的账单费用项）
+     * @param excelBatch         本批 Excel 行
+     * @param groupErrorMap      识别号分组键 → 错误文案（可累积）
+     * @param matchedGroupKeySet 本文件已命中账单识别组的键（可累积）
+     * @param handledGroupKeySet 本文件已处理过的识别组（跨分批去重，可累积）
      */
-    void processImportMatchBatch(String mainId, List<LogisticsReconMatchImportExcelDTO> excelBatch,
-                                 Map<String, List<String>> trackNoErrorMap, Set<String> matchedTrackNoSet);
+    void processImportMatchBatch(LogisticsReconImportMatchContext context,
+                                 List<LogisticsReconMatchImportExcelDTO> excelBatch,
+                                 Map<String, List<String>> groupErrorMap,
+                                 Set<String> matchedGroupKeySet,
+                                 Set<String> handledGroupKeySet);
 
     /**
      * 物流商对账费用项手动匹配（批量指定 ERP 四个业务单号）

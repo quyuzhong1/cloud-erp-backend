@@ -50,10 +50,6 @@ public class LogisticsReconMatchDTO implements Serializable {
          */
         private String processingType;
         /**
-         * 是否要求识别号唯一命中一张物流单（手动 / 导入匹配为 true，命中多张视为失败）
-         */
-        private boolean requireUnique = true;
-        /**
          * 是否按行内传入的识别字段匹配（手动 / 导入匹配使用）。
          * false 时按导入模板配置的唯一键匹配，true 时每行按用户填写的 ERP 单号字段匹配。
          */
@@ -182,8 +178,11 @@ public class LogisticsReconMatchDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ResolvedCfgCostDTO {
+        /** 对账费用项 id */
         private String detailSubId;
+        /** ERP 费用配置 id */
         private String cfgCostId;
+        /** ERP 费用配置名称 */
         private String cfgCostName;
     }
 

@@ -71,12 +71,23 @@ public interface LogisticsReconDetailSubService extends SuperService<LogisticsRe
 
     /**
      * 条件更新匹配状态并返回实际更新成功的费用项 id（用于认领防并发）。
+     *
+     * @param detailSubIds       待认领费用项 id
+     * @param matchStatus        目标 match_status
+     * @param failReason         失败原因（仅置 failed 时写入）
+     * @param fromMatchStatuses  前置 match_status 条件（为空则不限制）
+     * @return 本次真正更新成功的费用项 id
      */
     List<String> batchClaimMatchStatus(Collection<String> detailSubIds, String matchStatus, String failReason,
                                        Collection<String> fromMatchStatuses);
 
     /**
      * 认领对账单下一批可匹配费用项（短事务），返回本次真正认领成功的 id 集合。
+     * 排除已确认费用项，仅认领未匹配/失败状态。
+     *
+     * @param mainId    对账单 id
+     * @param batchSize 单批认领上限
+     * @return 认领成功的费用项 id
      */
     List<String> claimMainSubsMatchingBatch(String mainId, int batchSize);
 }
