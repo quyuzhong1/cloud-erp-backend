@@ -5,10 +5,10 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.business.dto.base.BaseDTO;
 import com.erp.model.file.dto.FileDTO;
-import com.erp.server.file.dto.FileTaskParamsDTO;
-import com.erp.server.file.entity.FileTask;
+import com.erp.model.file.dto.FileTaskParamsDTO;
+import com.erp.model.file.entity.FileTask;
 import com.common.business.enums.FileTaskStatusEnum;
-import com.erp.server.file.vo.FileTaskVO;
+import com.erp.model.file.vo.FileTaskVO;
 
 import java.time.LocalDateTime;
 import java.util.List;

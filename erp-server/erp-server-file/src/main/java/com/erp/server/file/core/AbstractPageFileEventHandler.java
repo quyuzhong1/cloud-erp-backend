@@ -13,7 +13,7 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.erp.server.file.handler.FileRegistry;
 import com.fasterxml.jackson.databind.JavaType;
-import com.erp.server.file.entity.FileTask;
+import com.erp.model.file.entity.FileTask;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;

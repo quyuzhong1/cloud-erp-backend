@@ -533,6 +533,29 @@ public class LogisticsCostImportFieldRuleTest {
     }
 
     @Test
+    public void parseOptionalDecimalFieldShouldRejectInvalidWeightFormat() throws Exception {
+        ImportHistoryRecordServiceImpl service = new ImportHistoryRecordServiceImpl();
+        List<String> errorMsgList = new ArrayList<>();
+
+        BigDecimal valid = (BigDecimal) invokePrivate(service, "parseOptionalDecimalField",
+                new Class[]{String.class, String.class, List.class},
+                "1,000.5", "计费重", errorMsgList);
+        assertBigDecimalEquals(new BigDecimal("1000.5"), valid);
+        assertTrue(errorMsgList.isEmpty());
+
+        BigDecimal blank = (BigDecimal) invokePrivate(service, "parseOptionalDecimalField",
+                new Class[]{String.class, String.class, List.class},
+                "  ", "计费重", errorMsgList);
+        assertNull(blank);
+
+        BigDecimal invalid = (BigDecimal) invokePrivate(service, "parseOptionalDecimalField",
+                new Class[]{String.class, String.class, List.class},
+                "1000kg", "计费重", errorMsgList);
+        assertNull(invalid);
+        assertEquals(Collections.singletonList("计费重格式不正确"), errorMsgList);
+    }
+
+    @Test
     public void platformCodeGroupKeyShouldUseMatchedLogisticsBillSet() throws Exception {
         ImportHistoryRecordServiceImpl service = new ImportHistoryRecordServiceImpl();
         CfgLogisticsCostImportDetailEntity platformCode = importDetail("platformCode", "platformCode", "平台订单号");
