@@ -1229,7 +1229,6 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public WorkflowTaskRecordDTO.MqResponseDTO pushKolB2cSubOrder(WorkflowTaskRecordDTO.MqRequestDTO dto) {
         WorkflowTaskRecordDTO.MqResponseDTO responseDTO = new WorkflowTaskRecordDTO.MqResponseDTO();
         String kolId = getRequiredString(dto, "kolId");
@@ -1432,9 +1431,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         }
         List<WorkflowTaskRecordEntity> existTasks = workflowTaskRecordService.listBySourceId(entity.getId(), WorkflowTaskRecordTypeEnum.KOL_B2C_APPLICATION_APPROVE.getCode());
         WorkflowTaskRecordDTO.AddTaskDTO addTaskDTO = buildKolB2cParentTaskDTO(entity, CollUtil.isNotEmpty(existTasks) ? existTasks.get(0).getTraceId() : TraceContext.traceId());
-        if (CollUtil.isEmpty(existTasks)) {
-            workflowTaskRecordService.addTask(addTaskDTO);
-        }
+        addWorkflowTaskIfAbsent(addTaskDTO, existTasks);
         sendWorkflowTaskMq(addTaskDTO, entity.getId(), 2);
         return Boolean.TRUE;
     }
@@ -1466,10 +1463,23 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         map.put("subId", subEntity.getId());
         map.put("subCode", subEntity.getCode());
         addTaskDTO.setFirstNodeInputData(map);
-        if (CollUtil.isEmpty(existTasks)) {
-            workflowTaskRecordService.addTask(addTaskDTO);
-        }
+        addWorkflowTaskIfAbsent(addTaskDTO, existTasks);
         sendWorkflowTaskMq(addTaskDTO, subEntity.getId(), 2);
+    }
+
+    private void addWorkflowTaskIfAbsent(WorkflowTaskRecordDTO.AddTaskDTO addTaskDTO, List<WorkflowTaskRecordEntity> existTasks) {
+        if (CollUtil.isNotEmpty(existTasks)) {
+            return;
+        }
+        try {
+            workflowTaskRecordService.addTask(addTaskDTO);
+        } catch (ServiceException e) {
+            if (!Objects.equals(e.getCode(), ApiError.WF_TASK_RECORD_DUPLICATE.getCode())) {
+                throw e;
+            }
+            log.warn("任务节点并发创建命中唯一约束，按幂等继续，sourceType={}, sourceId={}",
+                    addTaskDTO.getSourceTypeEnum().getCode(), addTaskDTO.getSourceId());
+        }
     }
 
     private void sendKolB2cParentTaskMq(KolB2cApplicationEntity entity, int delayLevel) {

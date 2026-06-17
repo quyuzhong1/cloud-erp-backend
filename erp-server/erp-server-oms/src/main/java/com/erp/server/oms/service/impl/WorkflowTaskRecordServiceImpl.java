@@ -5,10 +5,13 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.threadlocal.UserContext;
+import com.common.message.constant.DistributeKeyConstant;
 import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -169,11 +172,32 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public WorkflowTaskRecordDTO.ForceRetryResultDTO forceRetry(WorkflowTaskRecordDTO.ForceRetryDTO dto) {
         if (Objects.isNull(dto)) {
             throw new ServiceException(ApiError.WF_TASK_RECORD_FORCE_RETRY_PARAM_REQUIRED);
         }
+        String sourceType;
+        String sourceId;
+        if (CharSequenceUtil.isNotBlank(dto.getId())) {
+            WorkflowTaskRecordEntity lockTask = getById(dto.getId());
+            if (Objects.isNull(lockTask)) {
+                throw new ServiceException(ApiError.WF_TASK_RECORD_FORCE_RETRY_NOT_FOUND);
+            }
+            sourceType = lockTask.getSourceType();
+            sourceId = lockTask.getSourceId();
+        } else {
+            if (CharSequenceUtil.isBlank(dto.getSourceType()) || CharSequenceUtil.isBlank(dto.getSourceId())) {
+                throw new ServiceException(ApiError.WF_TASK_RECORD_FORCE_RETRY_PARAM_INCOMPLETE);
+            }
+            sourceType = dto.getSourceType();
+            sourceId = dto.getSourceId();
+        }
+        return SpringUtil.getBean(WorkflowTaskRecordServiceImpl.class).forceRetryWithLock(dto, sourceType, sourceId);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "sourceType,sourceId", unlockAfterTx = true)
+    public WorkflowTaskRecordDTO.ForceRetryResultDTO forceRetryWithLock(WorkflowTaskRecordDTO.ForceRetryDTO dto, String sourceType, String sourceId) {
         checkForceRetryPermission();
         List<WorkflowTaskRecordEntity> taskList = listForceRetryTasks(dto);
         if (CollUtil.isEmpty(taskList)) {
