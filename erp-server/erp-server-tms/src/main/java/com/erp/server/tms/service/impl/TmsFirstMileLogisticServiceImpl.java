@@ -293,7 +293,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         Boolean originalValue = UserContext.getIsUserSystem();
         UserContext.setIsUserSystem(Boolean.TRUE);
         try {
-             logisticsBillCostService.add(costAddDTO);
+             logisticsBillCostService.add(costAddDTO, null);
         } finally {
             //恢复系统标识
             UserContext.setIsUserSystem(originalValue);
@@ -474,7 +474,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             costDetailList.add(dto);
         }
         updateCostDTO.setCostDetailList(costDetailList);
-        logisticsBillCostService.update(updateCostDTO,Boolean.FALSE);
+        logisticsBillCostService.update(updateCostDTO,Boolean.FALSE, null);
 
         //更新发货单物流状态
         if(!oldOutstockId.equals(updateDTO.getOutstockId())){

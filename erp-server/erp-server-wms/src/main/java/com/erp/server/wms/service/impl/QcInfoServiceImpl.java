@@ -684,11 +684,15 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         }
         QcNoticeDetailEntity qcNoticeDetail = qcNoticeDetailService.getById(sourceDetailId);
         if (Objects.nonNull(qcNoticeDetail)) {
+            Integer safeTotalQty = totalQty == null ? 0 : totalQty;
+            Integer safeQcQty = qcQty == null ? 0 : qcQty;
+            Integer safeGoodQty = goodQty == null ? 0 : goodQty;
+            Integer safeBadQty = badQty == null ? 0 : badQty;
             LambdaUpdateChainWrapper<QcNoticeDetailEntity> updateWrapper = qcNoticeDetailService.lambdaUpdate()
-                    .set(QcNoticeDetailEntity::getQcQty, totalQty)
-                    .set(QcNoticeDetailEntity::getQcDiffQty, qcNoticeDetail.getQcNoticeQty() - totalQty)
-                    .set(QcNoticeDetailEntity::getQcGoodQty, goodQty)
-                    .set(QcNoticeDetailEntity::getQcBadQty, badQty)
+                    .set(QcNoticeDetailEntity::getQcQty, safeQcQty)
+                    .set(QcNoticeDetailEntity::getQcDiffQty, safeTotalQty - safeQcQty)
+                    .set(QcNoticeDetailEntity::getQcGoodQty, safeGoodQty)
+                    .set(QcNoticeDetailEntity::getQcBadQty, safeBadQty)
                     .set(QcNoticeDetailEntity::getQcStatus, QcNoticeStatusEnum.FINISH.getCode())
                     .set(QcNoticeDetailEntity::getQcDate, LocalDateTime.now())
                     .eq(QcNoticeDetailEntity::getId, sourceDetailId);
@@ -3373,9 +3377,6 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         if (Objects.isNull(view.getQcInfo().getIsInside())){
             view.getQcInfo().setIsInside(QcTypeEnum.OUTSIDE_QC.getCode().equals(qcType) || QcTypeEnum.B2B_OUTSIDE_QC.getCode().equals(qcType) ? Boolean.FALSE : Boolean.TRUE);
         }
-        view.getQcInfo().setQcQty(view.getQcInfo().getQcQty() == 0 ? null : view.getQcInfo().getQcQty());
-        view.getQcInfo().setQcBadQty(view.getQcInfo().getQcBadQty() == 0 ? null : view.getQcInfo().getQcBadQty());
-
         //获取对应抽样方案
         SamplingPlanDTO.PlanParamDTO planParamDTO = new SamplingPlanDTO.PlanParamDTO();
         planParamDTO.setQcType(view.getQcInfo().getQcType());

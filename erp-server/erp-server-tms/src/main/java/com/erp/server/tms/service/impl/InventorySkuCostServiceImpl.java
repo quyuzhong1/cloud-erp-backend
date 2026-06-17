@@ -691,6 +691,20 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
     }
 
     @Override
+    public List<InventorySkuCostDTO.SkuCostCNYDTO> getSkuCostInCNYForStdCost(InventorySkuCostDTO.SkuCostCNYQueryDTO queryDTO) {
+        if (CollUtil.isEmpty(queryDTO.getSkuIds()) || CollUtil.isEmpty(queryDTO.getWarehouseIds()) ||
+            CharSequenceUtil.isBlank(queryDTO.getOrgId())) {
+            return Collections.emptyList();
+        }
+        List<InventorySkuCostDTO.SkuCostCNYDTO> result = baseMapper.getSkuCostInCNYForStdCost(
+            queryDTO.getSkuIds(),
+            queryDTO.getWarehouseIds(),
+            queryDTO.getOrgId()
+        );
+        return result != null ? result : Collections.emptyList();
+    }
+
+    @Override
     public List<InventorySkuCostDTO.InvSkuCostDTO> listInventorySkuCost(InventorySkuCostDTO.SkuCostParamDTO paramDTO) {
         return baseMapper.listInventorySkuCost(paramDTO);
     }

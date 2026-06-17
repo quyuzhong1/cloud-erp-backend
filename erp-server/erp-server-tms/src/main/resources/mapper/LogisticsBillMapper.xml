@@ -730,10 +730,14 @@
         WHERE lb.is_deleted = FALSE
         <trim prefix="AND (" suffix=")" prefixOverrides="OR">
             <if test="platformCodeList != null and platformCodeList.size > 0">
-                or lb.platform_code IN
-                <foreach collection="platformCodeList" item="platformCode" open="(" close=")" separator=",">
-                    #{platformCode}
-                </foreach>
+                or EXISTS (
+                    SELECT 1
+                    FROM unnest(regexp_split_to_array(COALESCE(lb.platform_code, ''), '[[:space:]]*,[[:space:]]*')) AS platform_code_item(code)
+                    WHERE trim(platform_code_item.code) IN
+                    <foreach collection="platformCodeList" item="platformCode" open="(" close=")" separator=",">
+                        #{platformCode}
+                    </foreach>
+                )
             </if>
             <if test="soCodeList != null and soCodeList.size > 0">
                 or lb.source_code IN
@@ -764,6 +768,8 @@
         lb.id,
         lb.shop_id as shopId,
         lb.shop_name as shopName,
+        lb.sales_platform as salesPlatform,
+        lb.logistics_supplier_id as logisticsSupplierId,
         lb.source_type as sourceType,
         lb.source_id as sourceId,
         lb.source_code as sourceCode,
@@ -785,10 +791,24 @@
         <trim prefix="AND (" suffix=")" prefixOverrides="OR">
             <foreach collection="paramMap" item="valueList" index="field" separator=" ">
                 <if test="valueList != null and valueList.size() > 0">
-                    OR ${field} IN
-                    <foreach collection="valueList" item="val" open="(" separator="," close=")">
-                        #{val}
-                    </foreach>
+                    <choose>
+                        <when test="'platformCode'.equals(field)">
+                            OR EXISTS (
+                                SELECT 1
+                                FROM unnest(regexp_split_to_array(COALESCE(${field}, ''), '[[:space:]]*,[[:space:]]*')) AS platform_code_item(code)
+                                WHERE trim(platform_code_item.code) IN
+                                <foreach collection="valueList" item="val" open="(" separator="," close=")">
+                                    #{val}
+                                </foreach>
+                            )
+                        </when>
+                        <otherwise>
+                            OR ${field} IN
+                            <foreach collection="valueList" item="val" open="(" separator="," close=")">
+                                #{val}
+                            </foreach>
+                        </otherwise>
+                    </choose>
                 </if>
             </foreach>
         </trim>
