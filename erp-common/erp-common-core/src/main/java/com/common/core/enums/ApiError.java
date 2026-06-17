@@ -820,6 +820,9 @@ public enum ApiError implements Serializable {
     SHOP_PARAM_AUTHORIZE_FAILED(8018,"店铺【{0}】授权失败，原因：【{1}】"),
     SHOP_DELETE_ONLY_DISABLED(8019,"仅禁用状态的店铺允许删除"),
     SHOP_INVOICE_NOT_BIND_COMPANY(8020,"店铺【{0}】未配置公司账号"),
+    SHOP_COUNTRY_CODE_REQUIRED(8021,"店铺未配置国家，无法完成授权"),
+    SHOP_TIKTOK_AUTHORIZED_SHOPS_EMPTY(8022,"TikTok授权失败：未获取到平台授权站点"),
+    SHOP_TIKTOK_REGION_NOT_MATCH(8023,"TikTok授权失败：店铺国家[{0}]在平台授权站点中不存在，可用站点：{1}"),
 
 
     /**

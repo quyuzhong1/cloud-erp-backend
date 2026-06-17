@@ -144,7 +144,7 @@ public class TikTokAuthorize implements IShopAuthorizeService<T> {
             throw new ServiceException(ApiError.SHOP_AUTHORIZE_CODE_REQUIRED);
         }
         if (StringUtils.isBlank(shopInfo.getDictCountryCode())) {
-            throw new ServiceException("店铺未配置国家，无法完成TikTok授权");
+            throw new ServiceException(ApiError.SHOP_COUNTRY_CODE_REQUIRED);
         }
         AppClientEnum appClient = AppClientEnum.TIKTOK_ACCESS_TOKEN;
         CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
