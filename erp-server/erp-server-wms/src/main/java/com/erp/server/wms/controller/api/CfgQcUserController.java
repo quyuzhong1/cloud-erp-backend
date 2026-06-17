@@ -230,7 +230,7 @@ public class CfgQcUserController extends BaseController {
                     resultDTOS.add(deleteResult);
                     continue;
                 }
-                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getSupplierId(), e.getMessage());
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getSupplierId(), e);
             }
             resultDTOS.add(deleteResult);
         }
