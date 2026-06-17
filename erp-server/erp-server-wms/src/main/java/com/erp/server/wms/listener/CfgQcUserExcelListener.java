@@ -23,9 +23,9 @@ import java.util.Objects;
 @Slf4j
 public class CfgQcUserExcelListener extends AnalysisEventListener<CfgQcUserDTO.ImportExcelDTO> {
 
-    private static final int BATCH_COUNT = 1000;
+    private static final int BATCH_COUNT = 500;
 
-    private static final int MAX_IMPORT_ROWS = 5000;
+    private static final int MAX_IMPORT_ROWS = 50000;
 
     private final String taskId;
 
