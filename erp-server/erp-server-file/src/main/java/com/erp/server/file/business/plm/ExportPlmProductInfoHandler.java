@@ -3,16 +3,12 @@ package com.erp.server.file.business.plm;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.plm.dto.ProductSearchDTO;
+import com.erp.model.plm.enums.ProductDevelopExportEventMapping;
 import com.erp.model.plm.enums.ProductDevelopExportTypeEnum;
 import com.erp.rpc.plm.feign.ExportPlmFeign;
-import com.erp.server.file.core.AbstractPageFileEventHandler;
-import com.erp.model.file.entity.FileTask;
-import com.erp.server.file.exception.BusinessException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.poi.ss.formula.functions.T;
 import com.erp.server.file.core.multisheet.AbstractStreamingMultiSheetHandler;
 import com.erp.server.file.core.multisheet.MultiSheetTemplateWriter;
+import com.erp.model.file.entity.FileTask;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
@@ -46,7 +42,7 @@ public class ExportPlmProductInfoHandler extends AbstractStreamingMultiSheetHand
     protected ProductSearchDTO.ExportDTO resolveExportParams(FileTask fileTask) {
         ProductSearchDTO.ExportDTO params = super.resolveExportParams(fileTask);
         if (params == null) {
-            throw new ServiceException("导出数据类型不能为空");
+            throw new ServiceException(ProductDevelopExportTypeEnum.validateCombinationMessage(null));
         }
         if (CollectionUtils.isEmpty(params.getExportDataList())) {
             params.setExportDataList(deriveExportDataListByEvent(fileTask.getEvent()));
@@ -79,6 +75,7 @@ public class ExportPlmProductInfoHandler extends AbstractStreamingMultiSheetHand
     @Override
     protected List<MultiSheetTemplateWriter.IndependentSheet<ProductSearchDTO.ExportDTO>> sheets(ProductSearchDTO.ExportDTO params) {
         List<Integer> exportDataList = params.getExportDataList();
+        // 列表顺序决定 streamIndependent 的「主 sheet」与 fileTask.count：首项为产品（若存在），与旧 handle 仅记产品条数一致；勿调整顺序。
         List<MultiSheetTemplateWriter.IndependentSheet<ProductSearchDTO.ExportDTO>> sheets = new ArrayList<>(exportDataList.size());
         if (exportDataList.contains(EXPORT_PRODUCT)) {
             sheets.add(new MultiSheetTemplateWriter.IndependentSheet<>(params, dto -> exportPlmFeign.exportProductShow(dto)));
@@ -93,16 +90,16 @@ public class ExportPlmProductInfoHandler extends AbstractStreamingMultiSheetHand
      * 根据 event 兜底推导导出类型，保证仅切换 event 的新事件也能正确导出。
      */
     private List<Integer> deriveExportDataListByEvent(String event) {
-        List<Integer> exportDataList = ProductDevelopExportTypeEnum.exportDataListFromEventCode(event);
+        List<Integer> exportDataList = ProductDevelopExportEventMapping.exportDataListFromEventCode(event);
         if (exportDataList == null) {
-            throw new ServiceException("导出数据类型不能为空");
+            throw new ServiceException(ProductDevelopExportTypeEnum.validateCombinationMessage(null));
         }
         return new ArrayList<>(exportDataList);
     }
 
     @Override
     public boolean isMatch(String event) {
-        return ProductDevelopExportTypeEnum.exportDataListFromEventCode(event) != null;
+        return ProductDevelopExportEventMapping.exportDataListFromEventCode(event) != null;
     }
 
     @Override

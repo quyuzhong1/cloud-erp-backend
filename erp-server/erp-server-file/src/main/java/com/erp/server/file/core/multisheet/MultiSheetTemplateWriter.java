@@ -9,11 +9,11 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
+import com.erp.server.file.core.ClasspathExportTemplateReader;
 import com.erp.server.file.handler.FileRegistry;
 import lombok.Getter;
-import org.apache.commons.io.IOUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.util.CollectionUtils;
 
 import java.io.ByteArrayInputStream;
@@ -21,7 +21,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -31,6 +30,7 @@ import java.util.function.Function;
 /**
  * EasyExcel 2.2.7 多 sheet 分页模板写引擎。
  */
+@Slf4j
 public class MultiSheetTemplateWriter {
 
     private final String excelPath;
@@ -80,7 +80,7 @@ public class MultiSheetTemplateWriter {
             rowLimitPerType[i] = Math.min(maxDataRowsPerSheet, maxRowsPerXlsxSheetHardLimit);
         }
 
-        ExpandedTemplate expanded = expandTemplate(readClasspathTemplateBytes(excelPath), dataSheetCountPerType);
+        ExpandedTemplate expanded = expandTemplate(ClasspathExportTemplateReader.readBytes(excelPath), dataSheetCountPerType);
         SheetCursor[] cursors = buildCursors(expanded.sheetIndexesPerType, rowLimitPerType);
         FillConfig fillConfig = FillConfig.builder().forceNewRow(Boolean.FALSE).build();
         WriteHandler[] handlers = writeHandlers.toArray(new WriteHandler[0]);
@@ -92,6 +92,7 @@ public class MultiSheetTemplateWriter {
                 for (int i = 0; i < typeCount; i++) {
                     int totalPages = computeTotalPages(totalRows[i], pageSize);
                     PagingVO<?> currentVo = firstPages[i];
+                    int writtenForType = 0;
                     for (int pageOffset = 0; pageOffset < totalPages; pageOffset++) {
                         int currPage = firstPage + pageOffset;
                         // 当前页（含首页）空列表防静默丢数：本页之前已覆盖行数 < totalCount 说明本页本应有数据，
@@ -107,11 +108,13 @@ public class MultiSheetTemplateWriter {
                         }
                         if (!CollectionUtils.isEmpty(batch)) {
                             fillAcrossSheets(excelWriter, fillConfig, batch, cursors[i], i, "INDEPENDENT");
+                            writtenForType += batch.size();
                             if (i == 0) {
                                 actualMainRows += batch.size();
                             }
                         }
-                        if (pageOffset == totalPages - 1) {
+                        // 上游单页超发时已写满本类型 totalCount：提前结束，避免预取下一页取到空列表被下方守卫误判缺数。
+                        if (writtenForType >= totalRows[i] || pageOffset == totalPages - 1) {
                             break;
                         }
                         PagingDTO<P> pageDto = pagingDtos[i];
@@ -137,6 +140,12 @@ public class MultiSheetTemplateWriter {
             } finally {
                 excelWriter.finish();
             }
+        }
+        // 末页 partial：主 sheet 实际写入行数 < 首查 totalCount（多因导出期间并发删除/数据漂移），不视为失败
+        // （count 已反映实际行数），但与中间页空列表守卫对称地显式告警，便于排查「导出比预期少」反馈，避免静默。
+        if (totalRows[0] > 0 && actualMainRows < totalRows[0]) {
+            log.warn("独立分页导出主sheet数据不足：template={} 预期 totalCount={} 实际写入 {}，疑似导出期间数据并发变更",
+                    excelPath, totalRows[0], actualMainRows);
         }
         // count 取首个（主）sheet 实际写入行数（非 totalCount），与 streamMasterDerived 及 writeAllSheets 文档语义一致；
         // 不返回各 sheet 行数之和，避免 fileTask.count 被放大影响任务展示/下游统计。
@@ -184,7 +193,7 @@ public class MultiSheetTemplateWriter {
             rowLimitPerType[i] = maxRowsPerXlsxSheetHardLimit;
         }
 
-        ExpandedTemplate expanded = expandTemplate(readClasspathTemplateBytes(excelPath), dataSheetCountPerType);
+        ExpandedTemplate expanded = expandTemplate(ClasspathExportTemplateReader.readBytes(excelPath), dataSheetCountPerType);
         SheetCursor[] cursors = buildCursors(expanded.sheetIndexesPerType, rowLimitPerType);
         FillConfig fillConfig = FillConfig.builder().forceNewRow(Boolean.FALSE).build();
         WriteHandler[] handlers = writeHandlers.toArray(new WriteHandler[0]);
@@ -212,7 +221,8 @@ public class MultiSheetTemplateWriter {
                         fillMasterDerivedBatch(excelWriter, fillConfig, mainBatch, cursors, spec.getSheetExtractors());
                         actualMainRows += mainBatch.size();
                     }
-                    if (pageOffset == totalPages - 1) {
+                    // 上游单页超发时已写满 totalCount：提前结束，避免预取下一页取到空列表被下方守卫误判缺数。
+                    if (actualMainRows >= total || pageOffset == totalPages - 1) {
                         break;
                     }
                     pagingDto.setCurrPage(currPage + 1);
@@ -236,6 +246,12 @@ public class MultiSheetTemplateWriter {
             } finally {
                 excelWriter.finish();
             }
+        }
+        // 末页 partial：主表实际写入行数 < 首查 totalCount（多因导出期间并发删除/数据漂移），不视为失败
+        // （count 已反映实际行数），与 streamIndependent / writeOffsetBatches 对称地显式告警，避免静默丢数难感知。
+        if (total > 0 && actualMainRows < total) {
+            log.warn("主从派生导出主表数据不足：template={} 预期 totalCount={} 实际写入 {}，疑似导出期间数据并发变更",
+                    excelPath, total, actualMainRows);
         }
         return actualMainRows;
     }
@@ -387,13 +403,6 @@ public class MultiSheetTemplateWriter {
         return dto;
     }
 
-    private byte[] readClasspathTemplateBytes(String path) throws IOException {
-        ClassPathResource resource = new ClassPathResource(path);
-        try (InputStream in = resource.getInputStream()) {
-            return IOUtils.toByteArray(in);
-        }
-    }
-
     private ExpandedTemplate expandTemplate(byte[] templateBytes, int[] sheetCountPerType) throws IOException {
         if (sheetCountPerType == null || sheetCountPerType.length == 0) {
             throw new ServiceException("sheetCountPerType 不能为空");
@@ -401,6 +410,11 @@ public class MultiSheetTemplateWriter {
         // 与单 sheet 路径（AbstractPageFileEventHandler.expandTemplateWithDataSheetCopies）一致的内存上界保护：
         // POI 整本克隆全部类型 sheet 后再整本写出，峰值内存与「模板字节 × 总展开 sheet 数」正相关，
         // 以 file.storage.maxTemplateExpandBytes（默认 300MB）做固定上界、早失败避免 OOM。
+        // 读入前已由 ClasspathExportTemplateReader 按 maxTemplateExpandBytes / maxSheetNum 校验单份模板体积。
+        // 注意：此处为原始字节估算，XSSFWorkbook 对象模型实际峰值高于该乘积（放大系数另计）；
+        // 复杂模板接近阈值时仍存在残余 OOM 风险，由生产监控 + 按模板体积下调 maxTemplateExpandBytes 兜底，POI 流式展开为后续优化项。
+        // 审查约定：本方法（多类型 sheet 各自克隆 + buildCloneName 命名 + 模板 sheet 数=类型数校验）与单 sheet 路径语义不同，
+        // 属并行实现而非重复，足迹校验逻辑已与单 sheet 路径对齐；勿因「结构相似」报重复/分叉问题或要求合并阻断。
         long totalExpandSheets = 0L;
         for (int c : sheetCountPerType) {
             totalExpandSheets += Math.max(0, c);

@@ -4,6 +4,7 @@ import com.common.business.annotation.FileServiceType;
 import com.common.core.exception.ServiceException;
 import com.erp.server.file.service.FileService;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.aop.framework.AopProxyUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
@@ -20,8 +21,37 @@ import java.util.Objects;
  *
  * @author Cloud
  */
+@Slf4j
 @Service
 public class FileRegistry {
+
+    /**
+     * Excel2007 单 sheet 物理行上限（含表头），{@code sheetMaxRows} 配置不得超过该值。
+     */
+    private static final int SHEET_MAX_ROWS_UPPER = 1_048_576;
+
+    /**
+     * 分页每页条数上限，防止运维误配极大值导致单次 Feign/内存峰值过大或超时。
+     */
+    private static final int MAX_PAGE_SIZE_UPPER = 20000;
+
+    /**
+     * 动态表头导出每页条数上限，含义同 {@link #MAX_PAGE_SIZE_UPPER}。
+     */
+    private static final int DYNAMIC_EXPORT_PAGE_SIZE_UPPER = 20000;
+
+    /**
+     * 列表数据区最多占用的物理 sheet 数上限。配合 {@code maxTemplateExpandBytes} 足迹上界，
+     * 防止误配极大值放大「模板字节 × sheet 数」的 POI 展开内存峰值。
+     */
+    private static final int MAX_SHEET_NUM_UPPER = 200;
+
+    /**
+     * 模板展开足迹上界的硬顶（2GB）。该值本身是 OOM 安全阀、允许运维按机器内存调高，
+     * 故仅设很宽松的硬顶以挡住 {@code Long.MAX_VALUE} 等荒谬误配（否则保护形同虚设），不限制正常调优区间。
+     */
+    private static final long MAX_TEMPLATE_EXPAND_BYTES_UPPER = 2L * 1024 * 1024 * 1024;
+
     private final Map<String, FileService> handlers = new HashMap<>();
 
     @Resource
@@ -82,27 +112,53 @@ public class FileRegistry {
 
     @Value("${file.storage.sheetMaxRows:100000}")
     public void setSheetMaxRows(Integer sheetMaxRows){
-        FileRegistry.sheetMaxRows = sheetMaxRows;
+        FileRegistry.sheetMaxRows = clampUpper("file.storage.sheetMaxRows", sheetMaxRows, SHEET_MAX_ROWS_UPPER);
     }
 
     @Value("${file.storage.maxSheetNum:50}")
     public void setMaxSheetNum(Integer maxSheetNum){
-        FileRegistry.maxSheetNum = maxSheetNum;
+        FileRegistry.maxSheetNum = clampUpper("file.storage.maxSheetNum", maxSheetNum, MAX_SHEET_NUM_UPPER);
     }
 
     @Value("${file.storage.maxPageSize:5000}")
     public void setMaxPageSize(Integer maxPageSize){
-        FileRegistry.maxPageSize = maxPageSize;
+        FileRegistry.maxPageSize = clampUpper("file.storage.maxPageSize", maxPageSize, MAX_PAGE_SIZE_UPPER);
     }
 
     @Value("${file.storage.maxTemplateExpandBytes:314572800}")
     public void setMaxTemplateExpandBytes(Long maxTemplateExpandBytes){
-        FileRegistry.maxTemplateExpandBytes = maxTemplateExpandBytes;
+        FileRegistry.maxTemplateExpandBytes = clampUpperLong("file.storage.maxTemplateExpandBytes",
+                maxTemplateExpandBytes, MAX_TEMPLATE_EXPAND_BYTES_UPPER);
     }
 
     @Value("${file.storage.dynamicExportPageSize:1000}")
     public void setDynamicExportPageSize(Integer dynamicExportPageSize){
-        FileRegistry.dynamicExportPageSize = dynamicExportPageSize;
+        FileRegistry.dynamicExportPageSize = clampUpper("file.storage.dynamicExportPageSize", dynamicExportPageSize,
+                DYNAMIC_EXPORT_PAGE_SIZE_UPPER);
+    }
+
+    /**
+     * 配置上界保护：值超过业务/Excel 规格上限时 clamp 到上限并打 warn（启动时执行一次），
+     * 避免运维误配极大值引发单次导出内存峰值过高或超时；下界（&lt;1）回退仍由各 {@code *OrDefault()} 处理。
+     * {@code value} 为 null 时直接透传，由 {@code *OrDefault()} 兜底默认值。
+     */
+    private static Integer clampUpper(String key, Integer value, int upper) {
+        if (value != null && value > upper) {
+            log.warn("配置 {}={} 超过上限 {}，已 clamp 到上限以保护内存与超时", key, value, upper);
+            return upper;
+        }
+        return value;
+    }
+
+    /**
+     * {@code long} 版上界保护，语义同 {@link #clampUpper(String, Integer, int)}，用于 {@code maxTemplateExpandBytes} 等 long 配置。
+     */
+    private static Long clampUpperLong(String key, Long value, long upper) {
+        if (value != null && value > upper) {
+            log.warn("配置 {}={} 超过上限 {}，已 clamp 到上限以保护内存与超时", key, value, upper);
+            return upper;
+        }
+        return value;
     }
 
     /**
@@ -136,6 +192,15 @@ public class FileRegistry {
     public static long maxTemplateExpandBytesOrDefault() {
         Long configured = maxTemplateExpandBytes;
         return configured == null || configured < 1 ? 314572800L : configured;
+    }
+
+    /**
+     * 单份 classpath 模板原始字节上界：{@code maxTemplateExpandBytes / maxSheetNum}。
+     * 最坏情况按 {@link #maxSheetNumOrDefault()} 张同结构 sheet 展开时，足迹不超过 {@link #maxTemplateExpandBytesOrDefault()}。
+     */
+    public static long maxSingleTemplateBytesOrDefault() {
+        int maxSheets = maxSheetNumOrDefault();
+        return Math.max(1L, maxTemplateExpandBytesOrDefault() / maxSheets);
     }
 
     /**

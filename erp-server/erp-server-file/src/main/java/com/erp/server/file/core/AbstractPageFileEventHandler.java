@@ -15,10 +15,8 @@ import com.erp.server.file.handler.FileRegistry;
 import com.fasterxml.jackson.databind.JavaType;
 import com.erp.model.file.entity.FileTask;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.IOUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.ResolvableType;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.util.CollectionUtils;
 
 import java.io.ByteArrayInputStream;
@@ -26,7 +24,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.util.*;
 
@@ -106,7 +103,8 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
                 return writeOffsetBatches(outFile, params, excelPath);
             // 当前 ExportPaginationMode 仅 OFFSET / KEYSET_BY_SORT_ID；default 供未来新增枚举值未补分支时兜底（审查勿要求改文案为合并项）。
             default:
-                throw new ServiceException(exportPaginationMode().name());
+                throw new ServiceException("不支持的导出分页模式: " + exportPaginationMode()
+                        + "，请在 writePagedExcel 中补充对应分支或检查子类 exportPaginationMode() 配置。");
         }
     }
 
@@ -123,7 +121,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
      * {@code WHERE id > ? ORDER BY id LIMIT ?}。
      */
     protected KeysetPagingVO<T> fetchKeyset(P params, Long lastIdExclusive, int limit) {
-        throw new UnsupportedOperationException("启用键集导出时请重写 fetchKeyset(Object,Long,int)");
+        throw new ServiceException("启用键集导出时请重写 fetchKeyset(params, lastIdExclusive, limit)");
     }
 
     /**
@@ -196,13 +194,11 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
      * 故须在配置层约束 {@code maxTemplateDataSheets}（{@link #maxTemplateDataSheets()}）与单 sheet 行数
      * （{@link #maxDataRowsPerSheet()}）；并在 {@link #expandTemplateWithDataSheetCopies} 入口以
      * {@code file.storage.maxTemplateExpandBytes}（默认 300MB）对「模板字节 × sheet 数」做固定上界保护、早失败避免 OOM。
+     * 读入前另由 {@link ClasspathExportTemplateReader} 按 {@code maxTemplateExpandBytes / maxSheetNum} 校验单份模板体积。
      * 超大导出场景的 POI 流式模板展开作为后续优化。
      */
     private byte[] readClasspathTemplateBytes(String excelPath) throws IOException {
-        ClassPathResource resource = new ClassPathResource(excelPath);
-        try (InputStream in = resource.getInputStream()) {
-            return IOUtils.toByteArray(in);
-        }
+        return ClasspathExportTemplateReader.readBytes(excelPath);
     }
 
     private static final class ExpandedTemplate {
@@ -235,8 +231,12 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
             throw new ServiceException("dataSheetCount 必须大于 0");
         }
         // 模板展开为非流式：POI 整本读入并克隆 dataSheetCount 张 sheet 后再整本写出，
-        // 峰值内存与「模板字节 × sheet 数」正相关（POI 对象模型放大系数另计）。此处以「展开足迹」固定上界早失败，
+        // 峰值内存与「模板字节 × sheet 数」正相关（POI 对象模型放大系数另计）。读入前已由 ClasspathExportTemplateReader
+        // 按 maxTemplateExpandBytes / maxSheetNum 校验单份模板体积；此处再以「展开足迹」固定上界早失败，
         // 把「复杂模板 × 高 sheet 数」从开放风险收成可证明上界，避免 OOM；上界由 file.storage.maxTemplateExpandBytes 配置（默认 300MB）。
+        // 审查约定：本方法（单数据源 sheet 克隆 + 空占位 sheet 移除 + 连续物理下标）与多 sheet 路径
+        // MultiSheetTemplateWriter.expandTemplate（多类型 sheet 各自克隆 + buildCloneName 命名）语义不同，属并行实现而非重复，
+        // 当前无行为分叉；勿要求合并为同一工具类作为合并阻断项，抽取仅为可选优化。
         long expandFootprint = (long) templateBytes.length * dataSheetCount;
         long maxExpandBytes = FileRegistry.maxTemplateExpandBytesOrDefault();
         if (expandFootprint > maxExpandBytes) {
@@ -390,7 +390,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
             List<T> fillList = (take == batch.size() && idx == 0) ? batch : new ArrayList<>(slice);
             try {
                 fillOnSheet(excelWriter, c.writeSheet, fillList, fillConfig);
-            } catch (Throwable fillEx) {
+            } catch (Exception fillEx) {
                 logEasyExcelFillContext(exportPhase, excelPath, fillEx, pagingState + ",totalCount=" + dataTotalCount, c.sheetNo,
                         c.rowsInSheet, fillList, rawPageForLog);
                 ServiceException se = new ServiceException("模板导出填充失败，phase=" + exportPhase + "，" + pagingState);
@@ -463,6 +463,12 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
                     }
                     if (next == null) {
                         throw new ServiceException("键集导出无法推导下一游标，请在 KeysetPagingVO 中设置 nextCursorId 或重写 extractSortId");
+                    }
+                    // 游标必须严格单调递增：上游若返回不前进/回退的游标（hasNext 恒真、重复返回同批等），
+                    // 仅靠下方 cap 上限会在写满后才失败；此处提前以明确异常拦截，避免无谓的重复拉取与写入。
+                    if (lastId != null && next <= lastId) {
+                        throw new ServiceException("键集导出游标未前进（lastId=" + lastId + "，next=" + next
+                                + "），疑似上游键集分页实现异常或数据并发变更，请排查上游键集接口。");
                     }
                     lastId = next;
                     clearBatchIfDetachedCopy(batch, rawList);
@@ -593,7 +599,9 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
                         totalRows += batch.size();
                         clearBatchIfDetachedCopy(batch, rawPage);
                     }
-                    if (isLastPage(dto.getCurrPage(), totalCount)) {
+                    // 上游单页可能返回超过 pageSize 的行（分页不规范）：已写满 totalCount 即正常结束，
+                    // 避免继续翻页取到空列表被上方中间页守卫误判为「数据缺失」。
+                    if (totalRows >= totalCount || isLastPage(dto.getCurrPage(), totalCount)) {
                         break;
                     }
                     dto.setCurrPage(dto.getCurrPage() + 1);
@@ -606,6 +614,12 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
             } finally {
                 excelWriter.finish();
             }
+        }
+        // 末页 partial：实际写入行数 < 首查 totalCount（多因导出期间并发删除/数据漂移），不视为失败
+        // （fileTask.count 已回填实际行数），但与中间页空列表守卫对称地显式告警，便于排查「导出比预期少」反馈，避免静默。
+        if (totalCount > 0 && totalRows < totalCount) {
+            log.warn("导出末页数据不足：handler={} template={} 预期 totalCount={} 实际写入 totalRows={}，疑似导出期间数据并发变更",
+                    getClass().getName(), excelPath, totalCount, totalRows);
         }
         return totalRows;
     }
@@ -642,7 +656,8 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
                 }
                 dataList.addAll(batch);
             }
-            if (isLastPage(dto.getCurrPage(), totalCount)) {
+            // 与 writeOffsetBatches 对齐：已写满 totalCount（含上游单页超发）即结束，避免空页被误判为缺数。
+            if (dataList.size() >= totalCount || isLastPage(dto.getCurrPage(), totalCount)) {
                 hasNext = false;
             }
             dto.setCurrPage(dto.getCurrPage() + 1);
@@ -650,6 +665,12 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
         if (totalCount > 0 && dataList.isEmpty()) {
             throw new ServiceException("导出失败：totalCount=" + totalCount
                     + " 但未写入任何数据行，疑似分页查询异常或数据全为空行，请检查上游分页接口。");
+        }
+        // 末页 partial：实际累计行数 < 首查 totalCount（多因导出期间并发删除/数据漂移），不视为失败，
+        // 与 writeOffsetBatches 对称地显式告警，避免静默丢数难感知。
+        if (totalCount > 0 && dataList.size() < totalCount) {
+            log.warn("导出末页数据不足(listSeqData)：handler={} 预期 totalCount={} 实际 {}，疑似导出期间数据并发变更",
+                    getClass().getName(), totalCount, dataList.size());
         }
         return dataList;
     }

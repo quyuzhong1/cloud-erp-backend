@@ -2507,6 +2507,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     }
 
     private Boolean commonExport(ProductSearchDTO.ExportDTO params) {
+        // 前置校验：非法 exportDataList 在执行分类展开、用户注入等准备逻辑前快速失败，避免无效的分类查询等开销
+        String eventCode = resolveProductDevelopExportEventCode(params.getExportDataList());
+
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
         StringBuilder builder = new StringBuilder();
         builder.append("产品开发导出").append(date);
@@ -2521,7 +2524,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         if(CollUtil.isNotEmpty(params.getProductIds())){
             params.setIds(params.getProductIds());
         }
-        String eventCode = resolveProductDevelopExportEventCode(params.getExportDataList());
         downloadTaskFeign.saveDownloadTask(builder.toString(), eventCode, params);
         return Boolean.TRUE;
     }
@@ -2641,7 +2643,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         if (validateMessage != null) {
             throw new ServiceException(validateMessage);
         }
-        String eventCode = ProductDevelopExportTypeEnum.resolveEventCode(exportDataList);
+        String eventCode = ProductDevelopExportEventMapping.resolveEventCode(exportDataList);
         if (eventCode == null) {
             throw new ServiceException("导出数据类型不合法：" + exportDataList);
         }
