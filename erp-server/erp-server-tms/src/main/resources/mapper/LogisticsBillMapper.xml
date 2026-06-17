@@ -44,57 +44,6 @@
         source_id,
         source_code, outstock_id, outstock_code, channel_id, order_time, delivery_time, transport_no
     </sql>
-    <sql id="pagingSql">
-        SELECT
-        lbd.id as detailId,
-        lb.id as id,
-        lb.sales_platform AS salesPlatform,
-        lb.shop_id AS shopId,
-        lb.shop_name AS shopName,
-        lb.source_type AS sourceType,
-        lb.order_type AS orderType,
-        lb.source_id AS sourceId,
-        lb.source_code AS sourceCode,
-        lb.outstock_id AS outstockId,
-        lb.outstock_code AS outstockCode,
-        lb.channel_id AS channelId,
-        lb.channel_name AS channelName,
-        lb.order_time AS orderTime,
-        lb.delivery_time AS deliveryTime,
-        lb.transport_no AS transportNo,
-        lb.to_country AS toCountry,
-        lb.logistics_supplier_id AS logisticsSupplierId,
-        lbd.track_status AS trackStatus ,
-        lbd.track_no AS trackNo,
-        lbd.sign_time AS signTime,
-        lbd.update_time AS updateTime,
-        lbd.track_time AS trackTime,
-        lbd.track_content AS trackContent,
-        lbd.track_query_mode AS trackQueryMode,
-        lc.name AS channelName,
-        lc.track_query_type AS trackQueryType,
-        lb.platform_code as platformCode,
-        lb.shipment_type as shipmentType,
-        lb.create_time AS createTime,
-        lb.is_allocate_cost_required as isAllocateRequired,
-        lb.not_allocate_cost_remark as notAllocateRemark
-        FROM  logistics_bill lb
-        LEFT JOIN  logistics_bill_detail lbd ON lbd.main_id=lb.id and (lbd.is_deleted=false or lbd.is_deleted is null)
-        LEFT JOIN  logistics_channel lc ON lc.id=lb.channel_id and lc.is_deleted=false
-        where
-            ${params.sqlMap.default}
-            and lb.is_deleted=false and lb.order_type in ('B2B','B2C','AfterSale','other')
-            <if test="params.permissionSql!=null and params.permissionSql!=''">
-                ${params.permissionSql}
-            </if>
-        ORDER BY
-        <if test="params.sortList != null and params.sortList.size > 0">
-            <foreach collection="params.sortList" item="item" separator="," close=",">
-                ${item.field} ${item.sort}
-            </foreach>
-        </if>
-        lb.create_time DESC
-    </sql>
 
     <select id="listLogisticsBillVoBySourceIds" resultType="com.erp.model.tms.dto.LogisticsBillDTO$LogisticsBillVo">
         SELECT
@@ -148,8 +97,7 @@
         COUNT(1) AS count,
         lbd.track_status AS tabFlag
         FROM  logistics_bill lb
-        LEFT JOIN  logistics_bill_detail lbd ON lbd.main_id=lb.id and (lbd.is_deleted=false or lbd.is_deleted is null)
-        LEFT JOIN  logistics_channel lc ON lc.id=lb.channel_id and lc.is_deleted=false
+        LEFT JOIN  logistics_bill_detail lbd ON lbd.main_id=lb.id and lbd.is_deleted=false
         WHERE  lb.is_deleted=false
         and lb.order_type in ('B2B','B2C','AfterSale','other')
         <if test="permissionSql!=null and permissionSql!=''">
@@ -159,12 +107,52 @@
     </select>
     <!--分页列表-->
     <select id="paging" resultType="com.erp.model.tms.dto.LogisticsBillDTO$PagingVO">
-         <include refid="pagingSql"/>
-    </select>
-
-    <!--导出-->
-    <select id="listExport" resultType="com.erp.model.tms.dto.LogisticsBillDTO$PagingVO">
-        <include refid="pagingSql"/>
+        SELECT
+        lbd.id as detailId,
+        lb.id as id,
+        lb.sales_platform AS salesPlatform,
+        lb.shop_id AS shopId,
+        lb.shop_name AS shopName,
+        lb.source_type AS sourceType,
+        lb.order_type AS orderType,
+        lb.source_id AS sourceId,
+        lb.source_code AS sourceCode,
+        lb.outstock_id AS outstockId,
+        lb.outstock_code AS outstockCode,
+        lb.channel_id AS channelId,
+        lb.channel_name AS channelName,
+        lb.order_time AS orderTime,
+        lb.delivery_time AS deliveryTime,
+        lb.transport_no AS transportNo,
+        lb.to_country AS toCountry,
+        lb.logistics_supplier_id AS logisticsSupplierId,
+        lbd.track_status AS trackStatus ,
+        lbd.track_no AS trackNo,
+        lbd.sign_time AS signTime,
+        lbd.update_time AS updateTime,
+        lbd.track_time AS trackTime,
+        lbd.track_content AS trackContent,
+        lbd.track_query_mode AS trackQueryMode,
+        lb.platform_code as platformCode,
+        lb.shipment_type as shipmentType,
+        lb.create_time AS createTime,
+        lb.is_allocate_cost_required as isAllocateRequired,
+        lb.not_allocate_cost_remark as notAllocateRemark
+        FROM  logistics_bill lb
+        LEFT JOIN  logistics_bill_detail lbd ON lbd.main_id=lb.id and lbd.is_deleted=false
+        where
+        ${params.sqlMap.default}
+        and lb.is_deleted=false and lb.order_type in ('B2B','B2C','AfterSale','other')
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        lb.create_time DESC
     </select>
 
     <select id="getBaseByTrackNo" resultType="com.erp.model.tms.dto.LogisticsBillDTO$BaseDTO">

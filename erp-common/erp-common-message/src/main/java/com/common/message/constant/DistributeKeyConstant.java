@@ -26,4 +26,8 @@ public class DistributeKeyConstant {
      * tms 生成异步任务key
      */
     public static final String TMS_ASYNC_TASK_RECORD_KEY = "TMS_ASYNC_TASK_RECORD_KEY";
+    /**
+     * TMS 异步任务执行锁（按 taskId 互斥，防 MQ 重投并发）
+     */
+    public static final String TMS_ASYNC_TASK_EXEC_KEY = "TMS_ASYNC_TASK_EXEC";
 }

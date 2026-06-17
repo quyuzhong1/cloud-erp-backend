@@ -20,142 +20,142 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
 
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
-        if("tab".equals(field)){
+        if ("tab".equals(field)) {
             return getTabSql(value);
         }
 
-        if("sku".equals(field)){
-            return " EXISTS (SELECT 1 from so_b2c_detail sbd where sbd.is_deleted = false and sbd.main_id = sb2c.id and sbd.sku_no "+ compareCodeSplicingValueSql +" ) ";
+        if ("sku".equals(field)) {
+            return " EXISTS (SELECT 1 from so_b2c_detail sbd where sbd.is_deleted = false and sbd.main_id = sb2c.id and sbd.sku_no " + compareCodeSplicingValueSql + " ) ";
         }
 
-        if("platformSpuNo".equals(field)){
-            return " exists ( select id from so_b2c_detail where is_deleted = false and main_id = sb2c.id and platform_spu_no "+compareCodeSplicingValueSql+" ) ";
+        if ("platformSpuNo".equals(field)) {
+            return " exists ( select id from so_b2c_detail where is_deleted = false and main_id = sb2c.id and platform_spu_no " + compareCodeSplicingValueSql + " ) ";
         }
 
-        if("platformSkuNo".equals(field)){
-            return " exists ( select id from so_b2c_detail where is_deleted = false and main_id = sb2c.id and platform_sku_no "+compareCodeSplicingValueSql+" ) ";
+        if ("platformSkuNo".equals(field)) {
+            return " exists ( select id from so_b2c_detail where is_deleted = false and main_id = sb2c.id and platform_sku_no " + compareCodeSplicingValueSql + " ) ";
         }
 
-        if("category".equals(field)){
-            return " sb2c.id in ( select so_b2c_id from so_b2c_ref_category  where is_deleted = false and category_id "+compareCodeSplicingValueSql+" ) ";
+        if ("category".equals(field)) {
+            return " sb2c.id in ( select so_b2c_id from so_b2c_ref_category  where is_deleted = false and category_id " + compareCodeSplicingValueSql + " ) ";
         }
-        if("sb2cd.warehouse_id".equals(field)){
-        	return " EXISTS (SELECT 1 from so_b2c_detail sbd where sbd.is_deleted = false and sbd.main_id = sb2c.id and sbd.warehouse_id "+ compareCodeSplicingValueSql +" ) ";
+        if ("sb2cd.warehouse_id".equals(field)) {
+            return " EXISTS (SELECT 1 from so_b2c_detail sbd where sbd.is_deleted = false and sbd.main_id = sb2c.id and sbd.warehouse_id " + compareCodeSplicingValueSql + " ) ";
         }
-        if("sb2cd.virtual_warehouse_id".equals(field)){
-            return " EXISTS (SELECT 1 from so_b2c_detail sbd where sbd.is_deleted = false and sbd.main_id = sb2c.id and sbd.virtual_warehouse_id "+ compareCodeSplicingValueSql +" ) ";
+        if ("sb2cd.virtual_warehouse_id".equals(field)) {
+            return " EXISTS (SELECT 1 from so_b2c_detail sbd where sbd.is_deleted = false and sbd.main_id = sb2c.id and sbd.virtual_warehouse_id " + compareCodeSplicingValueSql + " ) ";
         }
-        if("deliveryCode".equals(field)){
-            if(DynamicDataSourceTypeEnum.isDoris(DynamicDataSourceThreadLocal.get())){ // 切换到doris
-                return "(sb2c.id in ( SELECT so_id FROM erp_wms.third_warehouse_delivery twd where is_deleted = false  AND status != 'cancelDelivery' and twd.code "+compareCodeSplicingValueSql+" ) OR sbd.code "+compareCodeSplicingValueSql+" )";
-            }else {
-                return "(sb2c.id in ( SELECT so_id FROM foreign_third_warehouse_delivery twd where is_deleted = false  AND status != 'cancelDelivery' and twd.code "+compareCodeSplicingValueSql+" ) OR sbd.code "+compareCodeSplicingValueSql+" )";
+        if ("deliveryCode".equals(field)) {
+            if (DynamicDataSourceTypeEnum.isDoris(DynamicDataSourceThreadLocal.get())) { // 切换到doris
+                return "(sb2c.id in ( SELECT so_id FROM erp_wms.third_warehouse_delivery twd where is_deleted = false  AND status != 'cancelDelivery' and twd.code " + compareCodeSplicingValueSql + " ) OR sbd.code " + compareCodeSplicingValueSql + " )";
+            } else {
+                return "(sb2c.id in ( SELECT so_id FROM foreign_third_warehouse_delivery twd where is_deleted = false  AND status != 'cancelDelivery' and twd.code " + compareCodeSplicingValueSql + " ) OR sbd.code " + compareCodeSplicingValueSql + " )";
             }
 
 
         }
         //标签类型
-        if("lable".equals(field)){
+        if ("lable".equals(field)) {
             QueryConditionEnum queryConditionEnum = AdvanceQueryContext.getCompareCode();
             List<String> valueList = com.common.business.utils.CollectionUtils.convertStrClzToList(value);
             StringBuilder sb = new StringBuilder();
             sb.append(" ( ");
             //是否是第一个，否则需要加连接符
             boolean isFirst = true;
-            if(queryConditionEnum.equals(QueryConditionEnum.EQ) || queryConditionEnum.equals(QueryConditionEnum.IN_LIST)){
-                for(String valueStr : valueList){
-                    if(!isFirst){
+            if (queryConditionEnum.equals(QueryConditionEnum.EQ) || queryConditionEnum.equals(QueryConditionEnum.IN_LIST)) {
+                for (String valueStr : valueList) {
+                    if (!isFirst) {
                         sb.append(" or ");
                     }
-                    if(valueStr.equals("frozen")){
+                    if (valueStr.equals("frozen")) {
                         sb.append(" (sb2c.label_json ~ 'RISK_CONTROL' or sb2c.label_json ~ 'IN_FROZEN' or sb2c.label_json ~ 'Unfulfillable') ");
                     }
-                    if(valueStr.equals("fba")){
+                    if (valueStr.equals("fba")) {
                         sb.append(" sb2c.label_json ~ 'AFN' ");
                     }
-                    if(valueStr.equals("manual")){
+                    if (valueStr.equals("manual")) {
                         sb.append(" sb2c.source_type = 'selfAdd' ");
                     }
-                    if(valueStr.equals("intercept")){
+                    if (valueStr.equals("intercept")) {
                         sb.append(" sb2c.is_intercept = true ");
                     }
-                    if(valueStr.equals("split")){
+                    if (valueStr.equals("split")) {
                         sb.append("  exists (select id from so_b2c_ref sbf where sbf.is_deleted = false and type = 'split' and sbf.target_id = sb2c.id) ");
                     }
-                    if(valueStr.equals("merge")){
+                    if (valueStr.equals("merge")) {
                         sb.append(" exists (select id from so_b2c_ref sbf where sbf.is_deleted = false and type = 'merge' and sbf.target_id = sb2c.id ) ");
                     }
-                    if(valueStr.equals("aliexpressTaxed")){
+                    if (valueStr.equals("aliexpressTaxed")) {
                         sb.append(" exists ( select id from so_b2c_detail where is_deleted = false and main_id = sb2c.id and (label_json ~ 'U_TAXED' or label_json ~ 'I_TAXED')) ");
                     }
-                    if(valueStr.equals("cainiaoWarehouse")){
+                    if (valueStr.equals("cainiaoWarehouse")) {
                         sb.append(" sb2c.label_json ~ 'cainiaoInternationalWarehouse' ");
                     }
-                    if(valueStr.equals("preOrder")){
+                    if (valueStr.equals("preOrder")) {
                         sb.append(" sb2c.label_json ~ 'preOrder' ");
                     }
-                    if(valueStr.equals("aliexpressAePlus")){
+                    if (valueStr.equals("aliexpressAePlus")) {
                         sb.append(" sb2c.label_json ~ 'AE_PLUS' ");
                     }
-                    if(valueStr.equals("aliexpressUpExpress")){
+                    if (valueStr.equals("aliexpressUpExpress")) {
                         sb.append(" sb2c.label_json ~ 'HBA_UP_EXPRESS' ");
                     }
-                    if(valueStr.equals("leadTenTime")){
+                    if (valueStr.equals("leadTenTime")) {
                         sb.append(" sb2c.label_json ~ 'leadTimeTag#10' ");
                     }
-                    if(valueStr.equals("refunded")){
+                    if (valueStr.equals("refunded")) {
                         sb.append(" sb2c.label_json::json->>'isRefunded' = 'true' ");
                     }
-                    if(valueStr.equals("soMultiChannel")){
+                    if (valueStr.equals("soMultiChannel")) {
                         sb.append(" sb2c.multi_channel_type != '' ");
                     }
-                    if(valueStr.equals("transitWarehouse")){
+                    if (valueStr.equals("transitWarehouse")) {
                         sb.append(" sb2c.label_json ~ 'fbs' ");
                     }
                     isFirst = false;
                 }
             }
 
-            if(queryConditionEnum.equals(QueryConditionEnum.NE) || queryConditionEnum.equals(QueryConditionEnum.NOT_IN_LIST)){
-                for(String valueStr : valueList){
-                    if(!isFirst){
+            if (queryConditionEnum.equals(QueryConditionEnum.NE) || queryConditionEnum.equals(QueryConditionEnum.NOT_IN_LIST)) {
+                for (String valueStr : valueList) {
+                    if (!isFirst) {
                         sb.append(" and ");
                     }
-                    if(valueStr.equals("frozen")){
+                    if (valueStr.equals("frozen")) {
                         sb.append(" (sb2c.label_json !~ 'RISK_CONTROL' and sb2c.label_json !~ 'IN_FROZEN' and sb2c.label_json !~ 'Unfulfillable') ");
                     }
-                    if(valueStr.equals("fba")){
+                    if (valueStr.equals("fba")) {
                         sb.append(" sb2c.label_json !~ 'AFN' ");
                     }
-                    if(valueStr.equals("manual")){
+                    if (valueStr.equals("manual")) {
                         sb.append(" sb2c.source_type != 'selfAdd' ");
                     }
-                    if(valueStr.equals("intercept")){
+                    if (valueStr.equals("intercept")) {
                         sb.append(" sb2c.is_intercept = false ");
                     }
-                    if(valueStr.equals("split")){
+                    if (valueStr.equals("split")) {
                         sb.append("  exists (select id from so_b2c_ref sbf where sbf.is_deleted = false and type != 'split' and sbf.target_id = sb2c.id) ");
                     }
-                    if(valueStr.equals("merge")){
+                    if (valueStr.equals("merge")) {
                         sb.append(" exists (select id from so_b2c_ref sbf where sbf.is_deleted = false and type != 'merge' and sbf.target_id = sb2c.id ) ");
                     }
-                    if(valueStr.equals("aliexpressTaxed")){
+                    if (valueStr.equals("aliexpressTaxed")) {
                         sb.append(" ( sb2c.label_json !~ 'U_TAXED' AND sb2c.label_json !~ 'I_TAXED' )  ");
                         sb.append(" and exists ( select id from so_b2c_detail where is_deleted = false and main_id = sb2c.id and (label_json !~ 'U_TAXED' and label_json !~ 'I_TAXED')) ");
                     }
-                    if(valueStr.equals("cainiaoWarehouse")){
+                    if (valueStr.equals("cainiaoWarehouse")) {
                         sb.append(" sb2c.label_json !~ 'cainiaoInternationalWarehouse' ");
                     }
-                    if(valueStr.equals("preOrder")){
+                    if (valueStr.equals("preOrder")) {
                         sb.append(" sb2c.label_json !~ 'preOrder' ");
                     }
-                    if(valueStr.equals("aliexpressAePlus")){
+                    if (valueStr.equals("aliexpressAePlus")) {
                         sb.append(" sb2c.label_json !~ 'AE_PLUS' ");
                     }
-                    if(valueStr.equals("aliexpressUpExpress")){
+                    if (valueStr.equals("aliexpressUpExpress")) {
                         sb.append(" sb2c.label_json !~ 'HBA_UP_EXPRESS' ");
                     }
-                    if(valueStr.equals("leadTenTime")){
+                    if (valueStr.equals("leadTenTime")) {
                         sb.append(" sb2c.label_json !~ 'leadTimeTag#10' ");
                     }
                     isFirst = false;
@@ -164,29 +164,29 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
             sb.append(" ) ");
             return sb.toString();
         }
-        if("warehouse".equals(field)){
-            return " EXISTS (SELECT 1 from so_b2c_detail sbd where sbd.main_id = sb2c.id and sbd.warehouse_id "+ compareCodeSplicingValueSql +" ) ";
+        if ("warehouse".equals(field)) {
+            return " EXISTS (SELECT 1 from so_b2c_detail sbd where sbd.main_id = sb2c.id and sbd.warehouse_id " + compareCodeSplicingValueSql + " ) ";
         }
 
         //是否缺货 （待配货和配货中且sku数量大于可用库存且不是忽略库存计算SKU） 因为需要查询PLM系统和WMS系统，所以无法在这里直接处理
-        if("isOutStock".equals(field)){
+        if ("isOutStock".equals(field)) {
             Boolean bool = (Boolean) value;
-            if(bool){
-                super.buildDefaultDTO("sb2c.bill_status", Arrays.asList(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode(),SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode()));
-            }else {
+            if (bool) {
+                super.buildDefaultDTO("sb2c.bill_status", Arrays.asList(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode(), SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode()));
+            } else {
                 return getQueryAllSql();
             }
         }
 
-        if("orderDeliveryType".equals(field)){
+        if ("orderDeliveryType".equals(field)) {
             QueryConditionEnum queryConditionEnum = AdvanceQueryContext.getCompareCode();
             List<String> valueList = com.common.business.utils.CollectionUtils.convertStrClzToList(value);
             StringBuilder sb = new StringBuilder();
             //是否是第一个，否则需要加连接符
             boolean isFirst = true;
             sb.append(" ( ");
-            if(queryConditionEnum.equals(QueryConditionEnum.EQ) || queryConditionEnum.equals(QueryConditionEnum.IN_LIST) ){
-                for(String valueStr : valueList) {
+            if (queryConditionEnum.equals(QueryConditionEnum.EQ) || queryConditionEnum.equals(QueryConditionEnum.IN_LIST)) {
+                for (String valueStr : valueList) {
                     if (!isFirst) {
                         sb.append(" or ");
                     }
@@ -203,8 +203,8 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
                 }
             }
 
-            if(queryConditionEnum.equals(QueryConditionEnum.NE) || queryConditionEnum.equals(QueryConditionEnum.NOT_IN_LIST) ){
-                for(String valueStr : valueList) {
+            if (queryConditionEnum.equals(QueryConditionEnum.NE) || queryConditionEnum.equals(QueryConditionEnum.NOT_IN_LIST)) {
+                for (String valueStr : valueList) {
                     if (!isFirst) {
                         sb.append(" and ");
                     }
@@ -232,7 +232,7 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
          * 仓库规则不通过：订单状态是待配货，待配货原因是仓库规则不通过（注意区分没有走仓库规则的数据）
          * 物流规则不通过：订单状态是待配货，待配货原因是物流规则不通过
          */
-        if ("waitHandle".equals(field))  {
+        if ("waitHandle".equals(field)) {
 
             //审核不通过（自动）
             if (SoB2cWaitHandleTypeEnum.APPROVE_REJECT.getCode().equals(value)) {
@@ -250,15 +250,59 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
             }
             //仓库规则不通过
             if (SoB2cWaitHandleTypeEnum.WAREHOUSE_RULE_REJECT.getCode().equals(value)) {
-                super.buildSplicingSQLDTO("sb2cd.is_match_warehouse_rule", QueryConditionEnum.EQ,Boolean.FALSE, QueryDataTypeEnum.BOOLEAN);
+                super.buildSplicingSQLDTO("sb2cd.is_match_warehouse_rule", QueryConditionEnum.EQ, Boolean.FALSE, QueryDataTypeEnum.BOOLEAN);
             }
             //物流规则不通过
             if (SoB2cWaitHandleTypeEnum.LOGISTICS_RULE_REJECT.getCode().equals(value)) {
-                super.buildSplicingSQLDTO("sb2c.is_match_logistics_rule", QueryConditionEnum.EQ,Boolean.FALSE, QueryDataTypeEnum.BOOLEAN);
+                super.buildSplicingSQLDTO("sb2c.is_match_logistics_rule", QueryConditionEnum.EQ, Boolean.FALSE, QueryDataTypeEnum.BOOLEAN);
                 super.buildDefaultDTO("sb2c.abnormal_type", Arrays.asList(SoB2cAbnormalTypeEnum.ENUM_DISTRIBUTION_REJECT.getCode()));
             }
         }
-         return null;
+        if ("sbe.required_delivery_time".equals(field)) {
+            return " exists ( select 1 from so_b2c_extend sbe where sbe.is_deleted = false and sbe.main_id = sb2c.id and sbe.required_delivery_time " + compareCodeSplicingValueSql + " ) ";
+        }
+        if ("sbd.create_time".equals(field)) {
+            DynamicDataSourceTypeEnum dynamicDataSourceTypeEnum = DynamicDataSourceThreadLocal.get();
+            String tableName = "so_b2c_delivery";
+            if (DynamicDataSourceTypeEnum.DORIS.equals(dynamicDataSourceTypeEnum)) {
+                tableName = "erp_wms.so_b2c_delivery";
+            }
+            return " exists ( select 1 from " + tableName + " sbd where sbd.is_deleted = false and sbd.status != 'cancelDelivery' and sbd.source_id = sb2c.id and sbd.create_time " + compareCodeSplicingValueSql + " ) ";
+        }
+        if ("sbd.finish_print_time".equals(field)) {
+            DynamicDataSourceTypeEnum dynamicDataSourceTypeEnum = DynamicDataSourceThreadLocal.get();
+            String tableName = "so_b2c_delivery";
+            if (DynamicDataSourceTypeEnum.DORIS.equals(dynamicDataSourceTypeEnum)) {
+                tableName = "erp_wms.so_b2c_delivery";
+            }
+            return " exists ( select 1 from " + tableName + " sbd where sbd.is_deleted = false and sbd.status != 'cancelDelivery' and sbd.source_id = sb2c.id and sbd.finish_print_time " + compareCodeSplicingValueSql + " ) ";
+        }
+        if ("sb2cr.partition_id".equals(field)) {
+            return " exists ( select 1 from so_b2c_receiver sb2cr where sb2cr.is_deleted = false and sb2cr.main_id = sb2c.id and sb2cr.partition_id " + compareCodeSplicingValueSql + " ) ";
+        }
+        if ("sb2cr.name".equals(field)) {
+            return " exists ( select 1 from so_b2c_receiver sb2cr where sb2cr.is_deleted = false and sb2cr.main_id = sb2c.id and sb2cr.name " + compareCodeSplicingValueSql + " ) ";
+        }
+        if ("sb2cr.country".equals(field)) {
+            return " exists ( select 1 from so_b2c_receiver sb2cr where sb2cr.is_deleted = false and sb2cr.main_id = sb2c.id and sb2cr.country " + compareCodeSplicingValueSql + " ) ";
+        }
+        if ("sb2cl.logistics_channel_id".equals(field)) {
+            return " exists ( select 1 from so_b2c_logistics sb2cl where sb2cl.is_deleted = false and sb2cl.main_id = sb2c.id and sb2cl.logistics_channel_id " + compareCodeSplicingValueSql + " ) ";
+        }
+        if ("sb2cl.track_no".equals(field)) {
+            return " exists ( select 1 from so_b2c_logistics sb2cl where sb2cl.is_deleted = false and sb2cl.main_id = sb2c.id and sb2cl.track_no " + compareCodeSplicingValueSql + " ) ";
+        }
+        if ("sb2cl.code".equals(field)) {
+            return " exists ( select 1 from so_b2c_logistics sb2cl where sb2cl.is_deleted = false and sb2cl.main_id = sb2c.id and sb2cl.code " + compareCodeSplicingValueSql + " ) ";
+        }
+        if ("sb2cl.transfer_logistics_channel_id".equals(field)) {
+            return " exists ( select 1 from so_b2c_logistics sb2cl where sb2cl.is_deleted = false and sb2cl.main_id = sb2c.id and sb2cl.transfer_logistics_channel_id " + compareCodeSplicingValueSql + " ) ";
+        }
+        if ("sb2cl.ioss_tax_no".equals(field)) {
+            return " exists ( select 1 from so_b2c_logistics sb2cl where sb2cl.is_deleted = false and sb2cl.main_id = sb2c.id and sb2cl.ioss_tax_no " + compareCodeSplicingValueSql + " ) ";
+        }
+
+        return null;
     }
 
     private String getPlatformWarehouseDeliverySql() {
@@ -279,13 +323,13 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
 
 
     /**
+     * @param value
+     * @return String
      * @description: tabSql
      * @author Will
      * @date: 2024/2/26 15:55
-     * @param value
-     * @return String
      */
-    public String getTabSql (Object value) {
+    public String getTabSql(Object value) {
         //审核状态
         List<String> approveStatusList = new ArrayList<>(1);
         //付款状态
@@ -295,24 +339,24 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
         // 待付款
         if (SoB2cTabEnum.ENUM_PAYMENT.getCode().equals(value)) {
             payStatusList.add(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
-            super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
+            super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ, false, QueryDataTypeEnum.BOOLEAN);
         }
         //待提审  显示订单审核状态为待提交、审核不通过，订单状态非冻结的订单，订单非作废
         if (SoB2cTabEnum.ENUM_PENDING.getCode().equals(value)) {
             payStatusList.add(SoB2cPayStatusEnum.ENUM_PAID.getCode());
             approveStatusList.add(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
             approveStatusList.add(ApproveStatusEnum.REJECT.getStatus());
-            super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
-            super.buildSplicingSQLDTO("sb2c.is_frozen", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
-            super.buildSplicingSQLDTO("sb2c.bill_status", QueryConditionEnum.NE,"frozen", QueryDataTypeEnum.STRING);
+            super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ, false, QueryDataTypeEnum.BOOLEAN);
+            super.buildSplicingSQLDTO("sb2c.is_frozen", QueryConditionEnum.EQ, false, QueryDataTypeEnum.BOOLEAN);
+            super.buildSplicingSQLDTO("sb2c.bill_status", QueryConditionEnum.NE, "frozen", QueryDataTypeEnum.STRING);
         }
         //待审核
         if (SoB2cTabEnum.ENUM_APPROVE_ING.getCode().equals(value)) {
             payStatusList.add(SoB2cPayStatusEnum.ENUM_PAID.getCode());
             approveStatusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
-            super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
-            super.buildSplicingSQLDTO("sb2c.is_frozen", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
-            super.buildSplicingSQLDTO("sb2c.bill_status", QueryConditionEnum.NE,"frozen", QueryDataTypeEnum.STRING);
+            super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ, false, QueryDataTypeEnum.BOOLEAN);
+            super.buildSplicingSQLDTO("sb2c.is_frozen", QueryConditionEnum.EQ, false, QueryDataTypeEnum.BOOLEAN);
+            super.buildSplicingSQLDTO("sb2c.bill_status", QueryConditionEnum.NE, "frozen", QueryDataTypeEnum.STRING);
         }
         //配货中
         if (SoB2cTabEnum.ENUM_IN_DISTRIBUTION.getCode().equals(value)) {
@@ -320,38 +364,38 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
             approveStatusList.add(ApproveStatusEnum.APPROVE.getStatus());
             billStatusList.add(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
             billStatusList.add(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode());
-            super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
+            super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ, false, QueryDataTypeEnum.BOOLEAN);
         }
         //待发货
         if (SoB2cTabEnum.ENUM_WAIT_SHIPPED.getCode().equals(value)) {
             payStatusList.add(SoB2cPayStatusEnum.ENUM_PAID.getCode());
             approveStatusList.add(ApproveStatusEnum.APPROVE.getStatus());
             billStatusList.add(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
-            super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
+            super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ, false, QueryDataTypeEnum.BOOLEAN);
         }
         //已发货
         if (SoB2cTabEnum.ENUM_SHIPPED.getCode().equals(value)) {
             payStatusList.add(SoB2cPayStatusEnum.ENUM_PAID.getCode());
             approveStatusList.add(ApproveStatusEnum.APPROVE.getStatus());
             billStatusList.add(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
-            super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
+            super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ, false, QueryDataTypeEnum.BOOLEAN);
         }
         //冻结中
         if (SoB2cTabEnum.ENUM_FROZEN.getCode().equals(value)) {
             payStatusList.add(SoB2cPayStatusEnum.ENUM_PAID.getCode());
             billStatusList.add(SoB2cBillStatusEnum.ENUM_FROZEN.getCode());
-            super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
+            super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ, false, QueryDataTypeEnum.BOOLEAN);
         }
         //已作废
         if (SoB2cTabEnum.ENUM_INVALID.getCode().equals(value)) {
             payStatusList.add(SoB2cPayStatusEnum.ENUM_PAID.getCode());
-            super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ,true, QueryDataTypeEnum.BOOLEAN);
+            super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ, true, QueryDataTypeEnum.BOOLEAN);
         }
         //订单异常
         if (SoB2cTabEnum.ENUM_ORDER_ERROR.getCode().equals(value)) {
             payStatusList.add(SoB2cPayStatusEnum.ENUM_PAID.getCode());
-            super.buildSplicingSQLDTO("sb2c.sign_order_error", QueryConditionEnum.NE,"", QueryDataTypeEnum.STRING);
-            super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
+            super.buildSplicingSQLDTO("sb2c.sign_order_error", QueryConditionEnum.NE, "", QueryDataTypeEnum.STRING);
+            super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ, false, QueryDataTypeEnum.BOOLEAN);
         }
         if (CollectionUtils.isNotEmpty(approveStatusList)) {
             super.buildDefaultDTO("sb2c.approve_status", approveStatusList);

@@ -1,0 +1,13 @@
+---
+description: Frontend rules for this repository
+globs: ["**/*.{js,jsx,ts,tsx,vue,css,scss,less,html}"]
+alwaysApply: false
+---
+
+# Frontend Rules
+
+- No frontend application is confirmed in this repository.
+- Do not assume React, Vue, Angular, Vite, Webpack, a UI library, routing, state management, or styling framework.
+- Before editing frontend files, locate and read the actual frontend root, package manager files, build config, and component directories.
+- If a frontend project is added later, document its real framework and conventions before adding feature code.
+- Keep API model naming aligned with backend semantics: DTO for inputs and VO for outputs.

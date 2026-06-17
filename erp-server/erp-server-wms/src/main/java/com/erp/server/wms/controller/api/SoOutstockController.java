@@ -88,7 +88,7 @@ public class SoOutstockController extends BaseController {
     )
     @WebAdvanceQuery(handler = SoOutstockQueryHandler.class)
     public ApiResult<PagingVO<SoOutstockDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<SoOutstockDTO.PagingParamDTO> dto) {
-    	PagingVO<SoOutstockDTO.PagingViewDTO> pagingVO = soOutstockService.paging(dto);
+    	PagingVO<SoOutstockDTO.PagingViewDTO> pagingVO = soOutstockService.paging(dto,Boolean.FALSE);
         return success(pagingVO);
     }
 
@@ -407,7 +407,7 @@ public class SoOutstockController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出销售出库单")
     @PostMapping("/export")
-    public ApiResult exportWarehouse(@RequestBody @Valid SoOutstockDTO.ExportDTO dto) {
+    public ApiResult exportWarehouse(@RequestBody @Valid SoOutstockDTO.PagingParamDTO dto) {
         Boolean result = soOutstockService.exportExcel(dto);
         return result ? success() : failure();
     }
@@ -565,6 +565,22 @@ public class SoOutstockController extends BaseController {
     public ApiResult<Object> exportLogisticsHandover(@RequestBody @Valid BaseIdsDTO.IdsDTO idsDTO, HttpServletResponse response) throws IOException {
         soOutstockService.exportLogisticsHandover(idsDTO,response);
         return success();
+    }
+
+    /**
+     * 更新出库日期
+     */
+    @PostMapping("/updateOutstockDate")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "更新出库日期")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id,seller_id",
+            menuCode = "wms:so:outstock:updateOutstockDate",
+            serviceClass = SoOutstockService.class,
+            keyIdName = "id"
+    )
+    public ApiResult<List<BatchResultDTO>> updateOutstockDate(@RequestBody @Valid List<SoOutstockDTO.UpdateOutstockDateDTO> updateOutstockDateDTOList) {
+        List<BatchResultDTO> batchResultDTOList = soOutstockService.updateOutstockDate(updateOutstockDateDTOList);
+        return batchResultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(batchResultDTOList) : failure(batchResultDTOList);
     }
 
 }

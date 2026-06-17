@@ -218,12 +218,13 @@
         WHERE rn = 1
     </select>
 
-    <!-- 列出库存SKU成本列表 -->
+    <!-- 列出库存SKU成本列表：按组织+SKU+仓库返回历史最新已审核成本；旧调用方传月份时仍按月份兼容过滤。 -->
     <select id="listInventorySkuCost" resultType="com.erp.model.tms.dto.InventorySkuCostDTO$InvSkuCostDTO">
-        select
+        select distinct on (isc.company_id, iscd.sku_id, iscd.warehouse_id)
             isc.company_id as orgId,
             isc.currency,
             isc.exchange_rate,
+            isc.accounting_month as accountingMonth,
             isc.create_time as createTime,
             iscd.warehouse_id as warehouseId,
             iscd.sku_id as skuId,
@@ -251,14 +252,14 @@
                 #{item}
             </foreach>
         </if>
-        <if test="param.startAccountingMonth != null ">
-            and isc.accounting_month >= #{param.startAccountingMonth}
+        <if test="param.startAccountingMonth != null">
+            and isc.accounting_month <![CDATA[>=]]> #{param.startAccountingMonth}
         </if>
-        <if test="param.endAccountingMonth != null ">
-            and #{param.endAccountingMonth} > isc.accounting_month
+        <if test="param.endAccountingMonth != null">
+            and isc.accounting_month <![CDATA[<=]]> #{param.endAccountingMonth}
         </if>
         and isc.status = 'approve'
-        order by isc.create_time desc, isc.id desc
+        order by isc.company_id, iscd.sku_id, iscd.warehouse_id, isc.accounting_month desc, isc.create_time desc, isc.id desc
     </select>
 
 </mapper>

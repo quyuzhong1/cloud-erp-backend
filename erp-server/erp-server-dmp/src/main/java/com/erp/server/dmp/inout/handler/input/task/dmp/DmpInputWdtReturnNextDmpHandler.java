@@ -3,6 +3,7 @@ package com.erp.server.dmp.inout.handler.input.task.dmp;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -29,6 +30,11 @@ public class DmpInputWdtReturnNextDmpHandler extends DmpInputWdtNextDmpHandler{
 				d.put("returnOriginalType",type.toString());
 				d.put("solutionType", type.toString().equals("2") || type.toString().equals("3") ? "return_and_refund" : "refund");
 			}
+			Object rawRefundNo = d.get("raw_refund_no");
+			if(rawRefundNo == null || StringUtils.isBlank(rawRefundNo.toString())) {
+				rawRefundNo = dmpInputMongoEntity.get("raw_refund_nos");
+			}
+			d.put("raw_refund_nos", rawRefundNo);
 		});
 		return detailList;
 	}

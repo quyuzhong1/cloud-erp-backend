@@ -77,6 +77,8 @@ public enum ApiError implements Serializable {
     QUERY_BETWEEN_ERROR(704, "介于条件需要填起始时间和开始时间"),
     QUERY_ILLEGAL_DATE_FORMAT(705, "非法日期格式"),
     QUERY_NOT_EXTEND_CLASS(706,"扩展字段没有配置处理类"),
+    CFG_QUERY_OPTION_API_CONFIG_REQUIRED(707,"接口路径、下拉框绑定值、下拉框显示值不能为空"),
+    CFG_QUERY_OPTION_API_CONFIG_DUPLICATE(708,"接口路径、下拉框绑定值、下拉框显示值的组合已存在"),
 
     /**
      * COMMON 从1000 - 2000 开始 与业务域无直接关联提示
@@ -1353,6 +1355,12 @@ public enum ApiError implements Serializable {
     PO_RECONCILIATION_DETAIL_ALREADY_IN_RECONCILIATION(94109,"单号【{0}】SKU【{1}】已加入对账单，不允许重复添加"),
     PO_RECONCILIATION_REMARK_REQUIRED(96009,"对账单备注不能为空"),
     SO_B2C_GET_EXCHANGE_RATE_FAILED(10718,"获取汇率异常-汇率获取失败，请重新获取"),
+    SO_RETURN_EXCHANGE_RATE_REQUIRED(10719,"销售订单明细【{0}】汇率为空，无法计算本位币金额"),
+    SO_RETURN_RECEIVE_QTY_INVALID(10720,"sku【{0}】签收数量异常，实际值：{1}"),
+    SO_RETURN_RECEIVE_AMOUNT_MISSING(10721,"sku【{0}】签收金额数据缺失"),
+    SO_B2C_NOT_OUTBOUND_DETAIL_WAREHOUSE_UPDATE_FAILED(10753,"不出库发货失败：销售订单明细仓库未成功落库，请刷新后重试"),
+    SO_B2C_NOT_OUTBOUND_LOGISTICS_UPDATE_FAILED(10754,"不出库发货失败：销售订单物流信息更新失败，请刷新后重试"),
+    SO_B2C_NOT_OUTBOUND_STATUS_UPDATE_FAILED(10755,"不出库发货失败：销售订单状态更新失败，请刷新后重试"),
     CUSTOMER_ADDRESS_NOT_MATCH(94108,"未匹配到客户地址，客户id：{0}，收货地址：{1}"),
 
     /**
@@ -1590,6 +1598,9 @@ public enum ApiError implements Serializable {
     SAMPLE_USER_ID_CHINESE_QUERY_FAILED(10746,"领用人【{0}】查询失败，请传入正确的用户ID或用户名称"),
     SAMPLE_USE_USER_ID_CHINESE_NOT_FOUND(10747,"使用方【{0}】不存在，请传入正确的使用方ID或使用方名称"),
     SAMPLE_USE_USER_ID_CHINESE_QUERY_FAILED(10748,"使用方【{0}】查询失败，请传入正确的使用方ID或使用方名称"),
+    SO_B2C_DELIVERY_TRANSFER_NOT_PERSISTED(10750,"发货单【{0}】中转调拨单未落库，不允许生成销售出库单"),
+    SO_B2C_DELIVERY_TRANSFER_NOT_APPROVED(10751,"发货单【{0}】关联的中转调拨单【{1}】未审核通过，不允许生成销售出库单"),
+    SO_B2C_DELIVERY_MULTI_WAREHOUSE_NOT_SUPPORTED(10752,"发货单【{0}】明细存在多个发货仓库，不支持校验中转调拨单"),
     /**
      * 虚拟仓 错误 信息 12500-13000
      */
@@ -1617,11 +1628,13 @@ public enum ApiError implements Serializable {
     VM_NO_SYNC_INFO(12521,"暂无可同步信息"),
     VM_CHECK_OUT_VIRTUAL_INVENTORY(12522,"SKU【{0}】实体仓【{1}】虚拟仓库存已分配【{2}】，出库数量不能超过【{3}】"),
     VM_CHANNEL_RELATION_ERROR(12523,"平台【{0}】店铺【{1}】军区【{2}】已绑定虚拟仓【{3}】\n"),
+    VM_SAME_WAREHOUSE_B2B_FOREIGN_ERROR(12525,"实体仓【{0}】下虚拟仓【{1}】已配置平台【{2}】，同一实体仓的不同虚拟仓不可重复配置"),
     VM_INVENTORY_INSUFFICIENT_FOR_TRANSFER(12524,"虚拟仓【{0}】库存不足"),
     VM_FROM_WAREHOUSE_NOT_BLANK(92290,"启动自动借调时，借调仓不能为空"),
     VM_NOT_CONTAINS_FROM_WAREHOUSE(92291,"虚拟仓关联实体仓不能包含借调仓"),
     VM_ALLOCATION_NOT_REPEAT(92292,"存在未同步成功的虚拟仓分货单调出任务，调出仓库ID：{0}，调出虚拟仓ID：{1}，SKU：{2}，请确认后再操作"),
     VM_VIRTUAL_WAREHOUSE_NOT_FOUND(12524,"虚拟仓【{0}】未找到"),
+    VM_WDT_ENTITY_INVENTORY_INSUFFICIENT(12525,"提交失败，旺店通【{0}】【{1}】可用库存不足无法分货，可用库存【{2}】，分配数量【{3}】"),
 
     /**
      * 客户管理 错误 信息 13000-13500

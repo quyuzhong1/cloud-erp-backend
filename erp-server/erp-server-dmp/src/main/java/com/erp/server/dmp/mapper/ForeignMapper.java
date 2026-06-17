@@ -22,6 +22,4 @@ import java.util.List;
 public interface ForeignMapper extends BaseMapper<Object> {
 
     List<LogisticsTrackDTO.UpdateTrackDTO> listTrackDto(@Param("query") LogisticsBillDetailQueryDTO query);
-
-    List<LogisticsTrackDTO.UpdateTrackDTO> listWaitingRegisterByConfig(@Param("query") LogisticsBillDetailQueryDTO query, @Param("platformType") String platformType);
 }

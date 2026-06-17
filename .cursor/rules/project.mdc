@@ -1,0 +1,15 @@
+---
+description: Cloud ERP backend global project rules
+alwaysApply: true
+---
+
+# Project Rules
+
+- Treat this repository as a Java 8 Maven multi-module backend project.
+- Use only confirmed stack assumptions: Spring Boot, Spring Cloud, Gateway, Nacos, Seata, RocketMQ, PostgreSQL/pgsql, Redis, XXL-JOB, Lombok, MyBatis, MyBatis-Plus, Maven.
+- `erp-gateway` is the unified entry gateway.
+- Preserve module boundaries: common code in `erp-common`, models in `erp-model`, Feign/RPC contracts in `erp-rpc`, business services in `erp-server`, third-party integrations in `erp-sdk`.
+- For new CRUD or module skeletons, check `erp-generator` templates before inventing structure.
+- Use `Entity` for data-layer objects, `DTO` for inputs, `VO` for outputs, and `VO` for system-to-system transfer.
+- Historical DTO outputs may exist; keep existing API compatibility when modifying old code.
+- Do not invent frontend, lint, format, CI, or deployment rules that are not confirmed in this repository.

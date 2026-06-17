@@ -135,7 +135,16 @@ public class SoB2cDeliveryInterceptEntity extends BaseEntity<SoB2cDeliveryInterc
      */
     @TableField("delivery_id")
     private String deliveryId;
-
+    /**
+     * 店铺id
+     */
+    @TableField("shop_id")
+    private String shopId;
+    /**
+     * 平台订单编号
+     */
+    @TableField("platform_code")
+    private String platformCode;
     
 
     public static final String SOURCE_ID = "source_id";

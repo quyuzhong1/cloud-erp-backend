@@ -65,6 +65,7 @@ public class DmpInputLxOrderDetailNextDmpHandler extends DmpInputDoNextDmpHandle
             // 如果是TeMu平台，添加spu_id信息
             if (LingxingPlatformCodeEnum.TEMU_FBP.getCode().equalsIgnoreCase(platformCode)) {
                 String orderDetailProductNo = jsonObject.getOrDefault("product_no", "").toString();
+                String platformSubSoCode = jsonObject.getOrDefault("order_item_no", "").toString();
                 jsonObject.put("platformSkuId", orderDetailProductNo);
                 Map<String, Object> skuInfoMap = skuMongoData.stream()
                         .filter(e -> e.get("mskuId").equals(orderDetailProductNo))
@@ -72,6 +73,7 @@ public class DmpInputLxOrderDetailNextDmpHandler extends DmpInputDoNextDmpHandle
                         .orElseThrow(() -> new ServiceException("SKU信息不存在，product_no: " + orderDetailProductNo));
                 // 将产品ID信息添加到jsonObject中
                 jsonObject.put("product_no", skuInfoMap.get("spuId"));
+                jsonObject.put("platformSubSoCode", platformSubSoCode);
             }
             resultList.add(jsonObject);
         }

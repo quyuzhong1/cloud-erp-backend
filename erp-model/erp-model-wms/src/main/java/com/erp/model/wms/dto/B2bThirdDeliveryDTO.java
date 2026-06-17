@@ -1,7 +1,6 @@
 package com.erp.model.wms.dto;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
@@ -21,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -208,6 +208,16 @@ public class B2bThirdDeliveryDTO implements Serializable {
         private String thirdWarehouseCode;
 
         /**
+         * 三方仓服务商编码
+         */
+        private String thirdWarehouseProviderCode;
+
+        /**
+         * 三方仓服务商名称
+         */
+        private String thirdWarehouseProviderName;
+
+        /**
          * 异常原因
          */
         private String errorMessage;
@@ -215,6 +225,23 @@ public class B2bThirdDeliveryDTO implements Serializable {
          * 产品明细
          */
         private List<B2bThirdDeliveryDetailDTO.ViewDTO> detailList;
+        /**
+         * 装箱明细
+         */
+        private List<B2bCustomerPackingDTO.ViewDTO> packingDetailList;
+        /**
+         * 装箱类型
+         */
+        private String packingType;
+        private String packingTypeName;
+        /**
+         * 每箱张贴货件标签数
+         */
+        private Integer labelsPerBox;
+        /**
+         * 是否展示装箱明细（谷仓仓）
+         */
+        private Boolean showPackingDetail;
         /**
          * 附件
          */
@@ -424,6 +451,22 @@ public class B2bThirdDeliveryDTO implements Serializable {
 //        @NotNull(message = "是否API发货不能为空")
         private Boolean isApiDelivery;
 
+        /**
+         * 装箱类型 B2bPackingTypeEnum，默认0
+         */
+        private String packingType;
+
+        /**
+         * 每箱张贴货件标签数 0/1/2/4
+         */
+        private Integer labelsPerBox;
+
+        /**
+         * 装箱明细（谷仓仓）
+         */
+        @Valid
+        private List<B2bCustomerPackingDTO.AddDTO> packingDetailList;
+
     }
 
 
@@ -482,9 +525,15 @@ public class B2bThirdDeliveryDTO implements Serializable {
         private String soId;
 
         /**
+         * 销售订单平台订单编号
+         */
+        private String salesPlatformOrderCode;
+
+        /**
          * 销售订单编码
          */
         private String soCode;
+
         /**
          * 收货人
          */
@@ -514,7 +563,7 @@ public class B2bThirdDeliveryDTO implements Serializable {
         private String warehouseOrgName;
 
         /**
-         * 平台订单编号
+         * 三方仓订单号
          */
         private String platformOrderCode;
 
@@ -527,6 +576,11 @@ public class B2bThirdDeliveryDTO implements Serializable {
          * 发货仓库名称[可排序]
          */
         private String deliveryWarehouseName;
+
+        /**
+         * 客户PO号
+         */
+        private String customerPO;
 
         /**
          * 仓库操作类型[可排序]
@@ -554,6 +608,10 @@ public class B2bThirdDeliveryDTO implements Serializable {
          * 明细id
          */
         private String  detailId;
+        /**
+         * 销售订单明细id
+         */
+        private String soDetailId;
 
         /**
          * 产品id

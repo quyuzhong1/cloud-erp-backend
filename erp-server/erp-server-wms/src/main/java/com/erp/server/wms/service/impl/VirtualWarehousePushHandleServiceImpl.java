@@ -121,7 +121,7 @@ public class VirtualWarehousePushHandleServiceImpl extends SuperServiceImpl<Virt
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    public List<VirtualWarehousePushHandleDetailEntity> addAllocationPush(VirtualWarehouseAllocationEntity allocationEntity,List<String> transferIdList) {
+    public List<VirtualWarehousePushHandleDetailEntity> addAllocationPush(VirtualWarehouseAllocationEntity allocationEntity, List<String> transferIdList) {
         //查询是否存在分货单拆单主表
         VirtualWarehousePushHandleEntity pushHandleEntity = getByAllocation(allocationEntity);
         List<VirtualWarehousePushHandleDetailEntity> pushDetailList = vmAllocationHandleDetailService.addAllocationDetailPush(allocationEntity, pushHandleEntity);
@@ -129,7 +129,7 @@ public class VirtualWarehousePushHandleServiceImpl extends SuperServiceImpl<Virt
             return pushDetailList;
         }
         //推送中台任务:保存任务+发送mq
-        syncWdtVirtualWarehousePushOrderService.saveTaskList(pushDetailList,transferIdList,
+        syncWdtVirtualWarehousePushOrderService.saveTaskList(pushDetailList, transferIdList,
                 allocationEntity.getCode(), SyncOperateEnum.OPERATE_APPROVE.getCode(), SourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode());
 
         return pushDetailList;

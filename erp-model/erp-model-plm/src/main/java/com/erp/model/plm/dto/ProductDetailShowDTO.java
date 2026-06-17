@@ -1,5 +1,6 @@
 package com.erp.model.plm.dto;
 
+import cn.hutool.json.JSONArray;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -219,6 +220,16 @@ public class ProductDetailShowDTO implements Serializable {
      * 一级供应商名称
      */
     private String mainSupplierName;
+
+    /**
+     * 体系认证集合，字典certificate类型
+     */
+    private JSONArray certificateJson;
+
+    /**
+     * 体系认证名称
+     */
+    private String certificateNames;
 
     /**
      * 年度销量

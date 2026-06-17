@@ -1,21 +1,19 @@
 package com.erp.model.dmp.dto;
 
-import java.util.Date;
-
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
-
-import java.util.List;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
-import com.common.business.dto.AdvanceQueryDTO;
-
+import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -110,9 +108,16 @@ public class AdsErpDiffOutstockSyncDTO implements Serializable {
       @AllArgsConstructor
       public static class ReCreateDTO{
       	/**
-           * 核算周期
+           * 核算周期，任意月份都可以选择
            */
+          @NotBlank(message = "核算周期不能为空")
           private String checkMonth;
+
+          /**
+           * 核对仓库
+           */
+          @NotBlank(message = "核对仓库不能为空")
+          private String sourceSystem;
       }
       
       @Data
@@ -139,17 +144,6 @@ public class AdsErpDiffOutstockSyncDTO implements Serializable {
            */
           private List<String> ids;
       }
-      
-      @Data
-      @NoArgsConstructor
-      @AllArgsConstructor
-      public static class UpdateErpDTO extends PagingParamDTO{
-      	/**
-           * 主键id
-           */
-          private List<String> ids;
-      }
-
 
     /**
     * 分页列表
@@ -225,7 +219,7 @@ public class AdsErpDiffOutstockSyncDTO implements Serializable {
         /**
          * 平台ERP_SKU
          */
-        private String platformSku;
+        private String platformSkuNo;
 
         /**
          * 平台ERP_SKU数量
@@ -251,6 +245,11 @@ public class AdsErpDiffOutstockSyncDTO implements Serializable {
         * 平台单据日期
         */
         private Date platformBillDate;
+
+        /**
+         * 平台跟踪号
+         */
+        private String platformTrackNo;
 
         /**
         * ERP单据名称
@@ -309,6 +308,11 @@ public class AdsErpDiffOutstockSyncDTO implements Serializable {
         * erp单据日期
         */
         private Date billDate;
+
+        /**
+         * ERP-跟踪号
+         */
+        private String trackNo;
 
         /**
         * 差异数量

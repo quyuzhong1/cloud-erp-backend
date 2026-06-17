@@ -197,6 +197,13 @@ public interface RedisCacheConstants {
     String MERGE_PACKAGE_RETRY_COUNT_KEY = "wms:mergePackage:retryCount:{}";
 
     /**
+     * B2C 发货单生成直接调拨单互斥锁:{发货单id}
+     * 多个并发入口（组包 MQ、重新出库、intercept、async 等）调用 pushTransferInfoError 时按发货单串行，
+     * 防止 check-then-act + Seata XA 提交窗口内并发导致重复生成 transfer_info
+     */
+    String SO_B2C_DELIVERY_PUSH_TRANSFER_INFO_LOCK = "wms:soB2cDelivery:pushTransferInfo:{}";
+
+    /**
      * 中台拉取track123海运标记
      */
     String DMP_TRACK123_TRACK_OCEAN_LOGISTICS_NO = "dmp:track123:ocean:trackNo";
@@ -373,4 +380,21 @@ public interface RedisCacheConstants {
      * 直接读取避免冷启动空窗（与周期广播互补，遵循"先写 Bucket 再 publish"的写入顺序）
      */
     String DORIS_QUERY_CFG_FULL_KEY = "erp:doris_query_cfg:full";
+
+    // dict_basic 缓存 —— 按服务+type 维度存储
+    // 格式: cache:{serviceCode}:dict:type:{type}
+    String SYS_DICT_BASIC_BY_TYPE = "cache:sys:dict:type";
+    String DMP_DICT_BASIC_BY_TYPE = "cache:dmp:dict:type";
+    String MRP_DICT_BASIC_BY_TYPE = "cache:mrp:dict:type";
+    String FMS_DICT_BASIC_BY_TYPE = "cache:mrp:dict:type";
+    String OMS_DICT_BASIC_BY_TYPE = "cache:oms:dict:type";
+    String SCM_DICT_BASIC_BY_TYPE = "cache:scm:dict:type";
+    String TMS_DICT_BASIC_BY_TYPE = "cache:tms:dict:type";
+    String WMS_DICT_BASIC_BY_TYPE = "cache:wms:dict:type";
+    String PLM_DICT_BASIC_BY_TYPE = "cache:plm:dict:type";
+    String SRM_DICT_BASIC_BY_TYPE = "cache:srm:dict:type";
+    String WORKFLOW_DICT_BASIC_BY_TYPE = "cache:workflow:dict:type";
+    //区域管理
+    String SYS_DICT_GLOBAL_AREA_ID = "cache:sys:globalArea:id";
+    String SYS_COUNTRY_BY_ID = "cache:sys:country:id";
 }
