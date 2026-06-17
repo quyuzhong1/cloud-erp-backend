@@ -399,6 +399,19 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
 
     @Override
     public void importCfgQcUser(BaseDTO.ImportDTO dto) {
+        try {
+            doImportCfgQcUser(dto);
+        } catch (Exception e) {
+            log.error("导入质检员配置失败", e);
+            BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+            importResultDTO.setTaskId(dto.getTaskId());
+            importResultDTO.setStatus(FileTaskStatusEnum.FAIL.getCode());
+            importResultDTO.setRemark(buildImportFailRemark(e));
+            downloadTaskFeign.updateTask(importResultDTO);
+        }
+    }
+
+    private void doImportCfgQcUser(BaseDTO.ImportDTO dto) {
         if (StrUtil.isNotBlank(dto.getUserId())) {
             FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(dto.getUserId());
             if (Objects.nonNull(findUserDTO)) {
@@ -438,6 +451,11 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
         importResultDTO.setFinishTime(LocalDateTime.now());
         importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
         downloadTaskFeign.updateTask(importResultDTO);
+    }
+
+    private String buildImportFailRemark(Exception e) {
+        String message = StrUtil.blankToDefault(e.getMessage(), ApiError.HTTP_UNKNOWN.getMsg());
+        return message.length() > 490 ? message.substring(0, 490) : message;
     }
 
     @Override
