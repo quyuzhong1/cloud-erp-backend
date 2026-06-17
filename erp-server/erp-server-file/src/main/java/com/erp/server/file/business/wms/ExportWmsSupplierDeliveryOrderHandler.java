@@ -7,13 +7,10 @@ import com.erp.model.srm.dto.DeliveryOrderDTO;
 import com.erp.model.srm.dto.excel.DeliveryOrderExportExcelDTO;
 import com.erp.rpc.wms.feign.ExportWmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
-import com.erp.model.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.List;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SUPPLIER_DELIVERY_ORDER;
 
@@ -33,12 +30,6 @@ public class ExportWmsSupplierDeliveryOrderHandler extends AbstractPageFileEvent
         return EXPORT_WMS_SUPPLIER_DELIVERY_ORDER;
     }
 
-    @Override
-    protected List<DeliveryOrderExportExcelDTO> getData(FileTask fileTask) {
-        DeliveryOrderDTO.ParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<DeliveryOrderDTO.ParamDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
 
     @Override

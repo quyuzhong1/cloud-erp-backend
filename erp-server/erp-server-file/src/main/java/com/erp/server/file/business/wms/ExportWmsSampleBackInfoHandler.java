@@ -5,14 +5,11 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.SampleBackInfoDTO;
 import com.erp.rpc.wms.feign.ExportWmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
-import com.erp.model.file.entity.FileTask;
 import com.common.business.enums.FileTaskEventEnum;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.List;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SAMPLE_BACK_INFO_REPORT;
 
@@ -28,12 +25,6 @@ public class ExportWmsSampleBackInfoHandler extends AbstractPageFileEventHandler
     @Resource
     private ExportWmsFeign exportWmsFeign;
 
-    @Override
-    protected List<SampleBackInfoDTO.ListDTO> getData(FileTask fileTask) {
-        SampleBackInfoDTO.ExportDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<SampleBackInfoDTO.ExportDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected PagingVO<SampleBackInfoDTO.ListDTO> getPageData(PagingDTO<SampleBackInfoDTO.ExportDTO> dto) {

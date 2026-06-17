@@ -42,7 +42,6 @@ public class ServiceException extends RuntimeException {
         log.error("[ServiceException] code={}, msg={}", code, msg);
     }
 
-
     /** 仅传入消息，使用默认错误码 */
     public ServiceException(String msg, Object... args) {
         this(ApiError.HTTP_UNKNOWN.getCode(), msg, args);
@@ -79,6 +78,15 @@ public class ServiceException extends RuntimeException {
         this.data = null;
         log.error("[ServiceException] code={}, msg={}", code, this.msg);
     }
+
+    /** 传入ApiError 异常*/
+    public ServiceException(Throwable cause, ApiError apiError, Object... args) {
+        super(resolveMessage(apiError, args), cause);
+        this.code = apiError != null ? apiError.getCode() : ApiError.HTTP_UNKNOWN.getCode();
+        this.msg = resolveMessage(apiError, args);
+        log.error("[ServiceException] code={}, msg={}", code, msg, cause);
+    }
+
 
     // ====================== 静态快速抛出方法 ====================== //
     /**

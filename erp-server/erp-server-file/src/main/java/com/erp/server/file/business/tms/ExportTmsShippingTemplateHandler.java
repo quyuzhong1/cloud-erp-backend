@@ -6,13 +6,10 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.ShippingTemplateDTO;
 import com.erp.rpc.tms.feign.ExportTmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
-import com.erp.model.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.List;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_SHIPPING_TEMPLATE;
 
@@ -32,12 +29,6 @@ public class ExportTmsShippingTemplateHandler extends AbstractPageFileEventHandl
         return EXPORT_TMS_SHIPPING_TEMPLATE;
     }
 
-    @Override
-    protected List<ShippingTemplateDTO.ListDTO> getData(FileTask fileTask) {
-        ShippingTemplateDTO.ExportExcelParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<ShippingTemplateDTO.ExportExcelParamDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected PagingVO<ShippingTemplateDTO.ListDTO> getPageData(PagingDTO<ShippingTemplateDTO.ExportExcelParamDTO> dto) {

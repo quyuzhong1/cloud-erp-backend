@@ -6,13 +6,10 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.MoldRefSkuDTO;
 import com.erp.rpc.plm.feign.ExportPlmFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
-import com.erp.model.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.List;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_MOLD_REF_SKU;
 
@@ -34,12 +31,6 @@ public class ExportPlmMoldRefSkuHandler extends AbstractPageFileEventHandler<Mol
         return exportPlmFeign.exportMoldRefSku(dto);
     }
 
-    @Override
-    protected List<MoldRefSkuDTO.ListDTO> getData(FileTask fileTask) {
-        MoldRefSkuDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<MoldRefSkuDTO.PagingParamDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected String getExcelPath() {

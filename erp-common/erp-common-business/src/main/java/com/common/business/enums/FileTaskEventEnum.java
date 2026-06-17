@@ -65,6 +65,9 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_PLM_ORDER_TRACKING("EXPORT_PLM_ORDER_TRACKING", "下单跟踪导出","","",""),
     EXPORT_PLM_ORDER_TRACKING_DETAIL("EXPORT_PLM_ORDER_TRACKING_DETAIL", "下单跟踪明细导出","","",""),
     EXPORT_PLM_PRODUCT("EXPORT_PLM_PRODUCT", "产品开发","","",""),
+    EXPORT_PLM_PRODUCT_DEV_PRODUCT("EXPORT_PLM_PRODUCT_DEV_PRODUCT", "产品开发-产品列表","","",""),
+    EXPORT_PLM_PRODUCT_DEV_TASK("EXPORT_PLM_PRODUCT_DEV_TASK", "产品开发-任务列表","","",""),
+    EXPORT_PLM_PRODUCT_DEV_BOTH("EXPORT_PLM_PRODUCT_DEV_BOTH", "产品开发-产品列表/任务列表","","",""),
     EXPORT_PLM_SKU("EXPORT_PLM_SKU", "产品管理导出","","",""),
     EXPORT_PLM_SKU_DYNAMIC("EXPORT_PLM_SKU_DYNAMIC", "产品管理导出","","",""),
     IMPORT_PLM_SKU_IMAGES("IMPORT_PLM_SKU_IMAGES", "导入SKU图片","com.erp.rpc.plm.feign.ImportPlmFeign","productDetailImages",""),
@@ -89,7 +92,7 @@ public enum FileTaskEventEnum implements EnumMessage {
     IMPORT_PLM_SKU_STD_RETAIL_PRICE("IMPORT_PLM_SKU_STD_RETAIL_PRICE", "导入sku标准零售价","com.erp.rpc.plm.feign.ImportPlmFeign","importSkuStdRetailPrice",""),
 
     //oms
-    EXPORT_OMS_RETURN_INFO("EXPORT_BI_RETURN_INFO", "退款数据导出","","",""),
+    EXPORT_OMS_RETURN_INFO("EXPORT_OMS_RETURN_INFO", "退款数据导出","","",""),
     EXPORT_OMS_CUSTOMER_B2B_SELLER_CHANGE("EXPORT_OMS_CUSTOMER_B2B_SELLER_CHANGE","客户b2b销售变更单","","",""),
     EXPORT_OMS_SO_CHANGE("EXPORT_OMS_SO_CHANGE","销售变更单列表","","",""),
     EXPORT_OMS_SO_PI("EXPORT_OMS_SO_PI","销售单发票信息","","",""),

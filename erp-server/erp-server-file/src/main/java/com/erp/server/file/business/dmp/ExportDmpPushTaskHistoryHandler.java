@@ -6,12 +6,9 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.rpc.dmp.feign.ExportDmpFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
-import com.erp.model.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.List;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_PUSH_TASK_HISTORY;
 
@@ -20,12 +17,6 @@ public class ExportDmpPushTaskHistoryHandler extends AbstractPageFileEventHandle
     @Resource
     private ExportDmpFeign exportDmpFeign;
 
-    @Override
-    protected List<DmpPushTaskDTO.ListDTO> getData(FileTask fileTask) {
-        DmpPushTaskDTO.ParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<DmpPushTaskDTO.ParamDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected String getExcelPath() {

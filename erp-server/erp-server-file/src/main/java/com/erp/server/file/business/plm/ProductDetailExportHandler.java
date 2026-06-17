@@ -6,7 +6,6 @@ import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.ProductDetailExcelExportDTO;
 import com.erp.server.file.core.AbstractDynamicHeadersFileEventHandler;
-import com.erp.model.file.entity.FileTask;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -18,10 +17,6 @@ public class ProductDetailExportHandler extends AbstractDynamicHeadersFileEventH
 
 
 
-    @Override
-    protected DynamicExcelDTO getData(FileTask fileTask) {
-        return null;
-    }
 
     @Override
     protected PagingVO<DynamicExcelDTO> getPageData(PagingDTO<ProductDetailExcelExportDTO> dto) {

@@ -6,12 +6,9 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.DictHsCodeDTO;
 import com.erp.rpc.tms.feign.ExportTmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
-import com.erp.model.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
-import java.util.List;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_DICT_HS_CODE;
 
@@ -32,11 +29,6 @@ public class ExportTmsDictHsCodeHandler extends AbstractPageFileEventHandler<Dic
         return exportTmsFeign.exportDictHsCode(dto);
     }
 
-    @Override
-    protected List<DictHsCodeDTO.ListDTO> getData(FileTask fileTask) {
-        DictHsCodeDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<DictHsCodeDTO.PagingParamDTO>() {});
-        return listSeqData(dto);
-    }
 
     @Override
     protected String getExcelPath() {

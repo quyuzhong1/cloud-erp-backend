@@ -6,13 +6,10 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.DeliveryBoxRuleDTO;
 import com.erp.rpc.oms.feign.ExportOmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
-import com.erp.model.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.List;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_DELIVERY_BOX_RULE;
 
@@ -35,12 +32,6 @@ public class ExportOmsDeliveryBoxRuleHandler extends AbstractPageFileEventHandle
         return exportOmsFeign.exportDeliveryBoxRule(dto);
     }
 
-    @Override
-    protected List<DeliveryBoxRuleDTO.ListDTO> getData(FileTask fileTask) {
-        DeliveryBoxRuleDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<DeliveryBoxRuleDTO.PagingParamDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected String getExcelPath() {
