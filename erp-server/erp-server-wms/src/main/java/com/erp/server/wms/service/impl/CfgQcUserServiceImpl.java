@@ -617,7 +617,12 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
             }
         }
         for (String orgId : orgIds) {
-            getImportQcUserNameToIdMap(orgId, qcUserNameToIdMapByOrgId, qcUserIdToNameMapByOrgId, qcUserLoadFailedOrgIds);
+            try {
+                getImportQcUserNameToIdMap(orgId, qcUserNameToIdMapByOrgId, qcUserIdToNameMapByOrgId, qcUserLoadFailedOrgIds);
+            } catch (ServiceException e) {
+                qcUserLoadFailedOrgIds.add(StrUtil.blankToDefault(orgId, ""));
+                log.warn("预加载质检员列表失败，orgId={}", orgId, e);
+            }
         }
     }
 
