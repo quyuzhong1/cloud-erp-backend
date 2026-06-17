@@ -1103,9 +1103,14 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
             return;
         }
         Map<String, ProductCertificateEntity> existedCertificateMap = existedCertificateList.stream()
+                .filter(e -> !isBlank(buildCertificateUniqueKey(e)))
                 .collect(Collectors.toMap(this::buildCertificateUniqueKey, Function.identity(), (oldValue, newValue) -> newValue));
         overwriteList.forEach(entity -> {
-            ProductCertificateEntity existedCertificate = existedCertificateMap.get(buildCertificateUniqueKey(entity));
+            String key = buildCertificateUniqueKey(entity);
+            if (isBlank(key)) {
+                return;
+            }
+            ProductCertificateEntity existedCertificate = existedCertificateMap.get(key);
             if (ObjectUtils.isEmpty(existedCertificate)) {
                 return;
             }

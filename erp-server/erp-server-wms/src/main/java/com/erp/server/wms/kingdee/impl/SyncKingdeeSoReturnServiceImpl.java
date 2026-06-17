@@ -311,8 +311,8 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             	}
             }
             //收款条件
-            List<DictBasicDTO.ViewDTO> collectionTermsList = customerFeign.getDictBasicByKey("collectionTerms");
-            DictBasicDTO.ViewDTO viewDTO = collectionTermsList.stream().filter(req -> req.getValue().equals(customerInfoEntity.getCode())).findFirst().orElse(new DictBasicDTO.ViewDTO());
+            List<DictBasicEntity> collectionTermsList = customerFeign.getDictBasicByKey("collectionTerms");
+            DictBasicEntity viewDTO = collectionTermsList.stream().filter(req -> req.getValue().equals(customerInfoEntity.getCode())).findFirst().orElse(new DictBasicEntity());
             resultMap.put("collectionTerms", viewDTO.getRemark());
 
             //获取币别信息
@@ -380,14 +380,18 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             if(Objects.isNull(realQty) || realQty <= 0){
                 realQty = 1;
             }
+            BigDecimal returnAmount = Objects.nonNull(detailEntity.getReturnAmount())
+                    ? detailEntity.getReturnAmount() : BigDecimal.ZERO;
+            BigDecimal taxReturnAmount = Objects.nonNull(detailEntity.getTaxReturnAmount())
+                    ? detailEntity.getTaxReturnAmount() : BigDecimal.ZERO;
             BigDecimal price = Objects.nonNull(detailEntity.getPrice())
                     ? detailEntity.getPrice()
-                    : MathUtil.divide(detailEntity.getReturnAmount(), BigDecimal.valueOf(realQty));
+                    : MathUtil.divide(returnAmount, BigDecimal.valueOf(realQty));
             map.put("price", price);
             map.put("taxRate", Objects.nonNull(detailEntity.getTaxRate()) ? detailEntity.getTaxRate() : BigDecimal.ZERO);
             BigDecimal taxPrice = Objects.nonNull(detailEntity.getTaxPrice())
                     ? detailEntity.getTaxPrice()
-                    : MathUtil.divide(detailEntity.getTaxReturnAmount(), BigDecimal.valueOf(realQty));
+                    : MathUtil.divide(taxReturnAmount, BigDecimal.valueOf(realQty));
             //含税单价
             map.put("taxPrice", taxPrice);
             map.put("returnAmount", detailEntity.getReturnAmount());

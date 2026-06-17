@@ -9,6 +9,7 @@ import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.SellerDTO;
 import com.erp.model.oms.entity.CustomerAddressEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.vo.CustomerInfoVO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -133,7 +134,7 @@ public interface CustomerFeign {
      * @date 2023-03-17 14:16
      */
     @PostMapping("feign/customer/getDictBasicByKey")
-    List<DictBasicDTO.ViewDTO> getDictBasicByKey(@RequestBody String Key);
+    List<DictBasicEntity> getDictBasicByKey(@RequestBody String Key);
 
 
     /**

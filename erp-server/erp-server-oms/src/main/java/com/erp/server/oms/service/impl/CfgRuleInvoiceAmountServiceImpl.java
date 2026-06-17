@@ -3,7 +3,6 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.enums.PlatformDictEnum;
@@ -16,8 +15,8 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.InvoiceRuleEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.oms.convert.InvoiceSettingConverter;
-import com.erp.server.oms.mapper.CfgInvoiceSettingDetailMapper;
 import com.erp.server.oms.mapper.CfgRuleInvoiceAmountMapper;
+import com.erp.server.oms.service.CfgInvoiceSettingDetailService;
 import com.erp.server.oms.service.CfgRuleInvoiceAmountService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -55,7 +54,7 @@ public class CfgRuleInvoiceAmountServiceImpl extends SuperServiceImpl<CfgRuleInv
     @Resource
     private RuleConditionService ruleConditionService;
     @Resource
-    private CfgInvoiceSettingDetailMapper cfgInvoiceSettingDetailMapper;
+    private CfgInvoiceSettingDetailService cfgInvoiceSettingDetailService;
     @Resource
     private ShopInfoService shopInfoService;
 
@@ -194,11 +193,10 @@ public class CfgRuleInvoiceAmountServiceImpl extends SuperServiceImpl<CfgRuleInv
         if (!CharSequenceUtil.equals(dictInvoiceRule, InvoiceRuleEnum.DEDUCT.getCode()) || CharSequenceUtil.isBlank(cfgId)) {
             return;
         }
-        List<CfgInvoiceSettingDetailEntity> detailEntityList = cfgInvoiceSettingDetailMapper.selectList(
-                new LambdaQueryWrapper<CfgInvoiceSettingDetailEntity>()
-                        .eq(CfgInvoiceSettingDetailEntity::getMainId, cfgId)
-                        .eq(CfgInvoiceSettingDetailEntity::getIsDeleted, false)
-        );
+        List<CfgInvoiceSettingDetailEntity> detailEntityList = cfgInvoiceSettingDetailService.lambdaQuery()
+                .eq(CfgInvoiceSettingDetailEntity::getMainId, cfgId)
+                .eq(CfgInvoiceSettingDetailEntity::getIsDeleted, false)
+                .list();
         if (CollUtil.isEmpty(detailEntityList)) {
             return;
         }
@@ -223,7 +221,7 @@ public class CfgRuleInvoiceAmountServiceImpl extends SuperServiceImpl<CfgRuleInv
 
     private boolean isShopeeBrazilShop(ShopInfoEntity shopInfoEntity) {
         return Objects.nonNull(shopInfoEntity)
-                && CharSequenceUtil.equals(shopInfoEntity.getDictPlatform(), PlatformDictEnum.SHOPEE.getCode())
+                && CharSequenceUtil.equalsIgnoreCase(shopInfoEntity.getDictPlatform(), PlatformDictEnum.SHOPEE.getCode())
                 && CharSequenceUtil.equalsIgnoreCase(shopInfoEntity.getDictCountryCode(), "BR");
     }
 }

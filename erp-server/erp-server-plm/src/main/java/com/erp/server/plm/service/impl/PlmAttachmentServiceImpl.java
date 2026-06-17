@@ -112,6 +112,7 @@ public class PlmAttachmentServiceImpl extends SuperServiceImpl<PlmAttachmentMapp
         List<PlmAttachmentEntity> existingList = listByBusinessIdAndType(businessId, type);
 
         // 如果新列表为空，清空所有
+        // PlmAttachmentEntity.isDeleted 已配置 @TableLogic（BaseEntity 继承），removeByIds 实为逻辑删除
         if (CollUtil.isEmpty(attachDTOList)) {
             if (CollUtil.isNotEmpty(existingList)) {
                 removeByIds(existingList.stream().map(PlmAttachmentEntity::getId).collect(Collectors.toList()));
@@ -124,7 +125,7 @@ public class PlmAttachmentServiceImpl extends SuperServiceImpl<PlmAttachmentMapp
                 .filter(dto -> StrUtil.isNotBlank(dto.getAttachUrl()))
                 .collect(Collectors.toList());
 
-        // 如果过滤后为空，同样清空
+        // 如果过滤后为空，同样清空（@TableLogic 软删）
         if (CollUtil.isEmpty(validNewList)) {
             if (CollUtil.isNotEmpty(existingList)) {
                 removeByIds(existingList.stream().map(PlmAttachmentEntity::getId).collect(Collectors.toList()));
@@ -136,7 +137,7 @@ public class PlmAttachmentServiceImpl extends SuperServiceImpl<PlmAttachmentMapp
         Map<String, PlmAttachmentEntity> existingMap = existingList.stream()
                 .collect(Collectors.toMap(PlmAttachmentEntity::getAttachUrl, e -> e, (e1, e2) -> e1));
 
-        // 删除：现有中不在新列表的
+        // 删除：现有中不在新列表的（@TableLogic 软删）
         List<String> deleteIds = existingList.stream()
                 .filter(e -> !newUrls.contains(e.getAttachUrl()))
                 .map(PlmAttachmentEntity::getId)

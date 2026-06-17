@@ -138,6 +138,7 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -407,8 +408,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<String> sourceIds = list.stream().map(ProductDetailShowDTO::getId).collect(Collectors.toList());
         List<String> changeIngSourceIds = bomChangeService.getBySourceId(sourceIds);
         List<ApplicationCategoryEntity> applicationCategoryList = applicationCategoryService.list();
-        List<String> mainSupplierIds = list.stream().map(ProductDetailShowDTO::getMainSupplier).distinct().collect(Collectors.toList());
-        Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(mainSupplierIds);
+        List<String> mainSupplierIds = list.stream().map(ProductDetailShowDTO::getMainSupplier).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = CollUtil.isEmpty(mainSupplierIds) ? Collections.emptyMap() : supplierFeign.getSupplierSimpleInfo(mainSupplierIds);
 
         //是否存在资产属性
         List<String> moldCodeList = list.stream().map(ProductDetailShowDTO::getSkuNo).distinct().collect(Collectors.toList());
@@ -531,24 +532,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             noSpecDetailById.setBuId(productRefBuEntity.getBuId());
             noSpecDetailById.setBuName(productRefBuEntity.getBuName());
         }
-        //客户定制附件
-        List<PlmAttachmentEntity> productCustomizedList = plmAttachmentService.listByBusinessIdAndType(productId,ProductConstant.PRODUCT_CUSTOMIZED);
-        if(CollUtil.isNotEmpty(productCustomizedList)){
-            noSpecDetailById.setCustomizedAttachmentList(productCustomizedList.stream().map(a -> {
-                AttachmentDTO.AttachDTO dto = new AttachmentDTO.AttachDTO();
-                BeanUtils.copyProperties(a, dto);
-                return dto;
-            }).collect(Collectors.toList()));
-        }
-        //产品说明书附件
-        List<PlmAttachmentEntity> productInstructionList = plmAttachmentService.listByBusinessIdAndType(productId,ProductConstant.PRODUCT_INSTRUCTION);
-        if(CollUtil.isNotEmpty(productInstructionList)){
-            noSpecDetailById.setInstructionAttachmentList(productInstructionList.stream().map(a -> {
-                AttachmentDTO.AttachDTO dto = new AttachmentDTO.AttachDTO();
-                BeanUtils.copyProperties(a, dto);
-                return dto;
-            }).collect(Collectors.toList()));
-        }
+        fillProductAttachments(productId, noSpecDetailById::setCustomizedAttachmentList, noSpecDetailById::setInstructionAttachmentList);
 
         productNoSpecDetailAllDTO.setProductNoDetailDTO(noSpecDetailById);
         //产品成本信息查询列表
@@ -679,24 +663,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             noSpecDetailById.setBuId(productRefBuEntity.getBuId());
             noSpecDetailById.setBuName(productRefBuEntity.getBuName());
         }
-        //客户定制附件
-        List<PlmAttachmentEntity> productCustomizedList = plmAttachmentService.listByBusinessIdAndType(productId,ProductConstant.PRODUCT_CUSTOMIZED);
-        if(CollUtil.isNotEmpty(productCustomizedList)){
-            noSpecDetailById.setCustomizedAttachmentList(productCustomizedList.stream().map(a -> {
-                AttachmentDTO.AttachDTO dto = new AttachmentDTO.AttachDTO();
-                BeanUtils.copyProperties(a, dto);
-                return dto;
-            }).collect(Collectors.toList()));
-        }
-        //产品说明书附件
-        List<PlmAttachmentEntity> productInstructionList = plmAttachmentService.listByBusinessIdAndType(productId,ProductConstant.PRODUCT_INSTRUCTION);
-        if(CollUtil.isNotEmpty(productInstructionList)){
-            noSpecDetailById.setInstructionAttachmentList(productInstructionList.stream().map(a -> {
-                AttachmentDTO.AttachDTO dto = new AttachmentDTO.AttachDTO();
-                BeanUtils.copyProperties(a, dto);
-                return dto;
-            }).collect(Collectors.toList()));
-        }
+        fillProductAttachments(productId, noSpecDetailById::setCustomizedAttachmentList, noSpecDetailById::setInstructionAttachmentList);
 
         if (ObjectUtils.isNotEmpty(noSpecDetailById)) {
             //获取多级分类
@@ -894,24 +861,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     manySpecDetailById.setApplicationCategoryNameList(applicationCategoryNameList);
                 }
             }
-            //客户定制附件
-            List<PlmAttachmentEntity> productCustomizedList = plmAttachmentService.listByBusinessIdAndType(productId,ProductConstant.PRODUCT_CUSTOMIZED);
-            if(CollUtil.isNotEmpty(productCustomizedList)){
-                manySpecDetailById.setCustomizedAttachmentList(productCustomizedList.stream().map(a -> {
-                    AttachmentDTO.AttachDTO dto = new AttachmentDTO.AttachDTO();
-                    BeanUtils.copyProperties(a, dto);
-                    return dto;
-                }).collect(Collectors.toList()));
-            }
-            //产品说明书附件
-            List<PlmAttachmentEntity> productInstructionList = plmAttachmentService.listByBusinessIdAndType(productId,ProductConstant.PRODUCT_INSTRUCTION);
-            if(CollUtil.isNotEmpty(productInstructionList)){
-                manySpecDetailById.setInstructionAttachmentList(productInstructionList.stream().map(a -> {
-                    AttachmentDTO.AttachDTO dto = new AttachmentDTO.AttachDTO();
-                    BeanUtils.copyProperties(a, dto);
-                    return dto;
-                }).collect(Collectors.toList()));
-            }
+            fillProductAttachments(productId, manySpecDetailById::setCustomizedAttachmentList, manySpecDetailById::setInstructionAttachmentList);
 
             productManyDetail.setProductManySpecBaseDTO(manySpecDetailById);
 
@@ -948,15 +898,15 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<FindUserDTO> userList = sysUserFeign.getUserList();
 
         List<String> supplierIds = Lists.newArrayList();
-        List<String> mainSupplierIds = purchaseShowDTOList.stream().map(ProductPurchaseShowDTO::getMainSupplier).distinct().collect(Collectors.toList());
+        List<String> mainSupplierIds = purchaseShowDTOList.stream().map(ProductPurchaseShowDTO::getMainSupplier).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
         if (CollUtil.isNotEmpty(mainSupplierIds)) {
             supplierIds.addAll(mainSupplierIds);
         }
-        List<String> secondSupplierIds = purchaseShowDTOList.stream().map(ProductPurchaseShowDTO::getSecondSupplier).distinct().collect(Collectors.toList());
+        List<String> secondSupplierIds = purchaseShowDTOList.stream().map(ProductPurchaseShowDTO::getSecondSupplier).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
         if (CollUtil.isNotEmpty(secondSupplierIds)) {
             supplierIds.addAll(secondSupplierIds);
         }
-        Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(supplierIds);
+        Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = CollUtil.isEmpty(supplierIds) ? Collections.emptyMap() : supplierFeign.getSupplierSimpleInfo(supplierIds);
 
         purchaseShowDTOList.forEach(req -> {
             ProductDetailEntity entity = list.stream().filter(v -> v.getId().equals(req.getSkuId())).findFirst().orElse(new ProductDetailEntity());
@@ -1207,6 +1157,30 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
         }
         return detailEntity.getId();
+    }
+
+    /**
+     * 统一填充产品客户定制 / 产品说明书附件，避免多处重复转换逻辑
+     */
+    private void fillProductAttachments(String productId,
+                                        Consumer<List<AttachmentDTO.AttachDTO>> customizedSetter,
+                                        Consumer<List<AttachmentDTO.AttachDTO>> instructionSetter) {
+        List<PlmAttachmentEntity> productCustomizedList = plmAttachmentService.listByBusinessIdAndType(productId, ProductConstant.PRODUCT_CUSTOMIZED);
+        if (CollUtil.isNotEmpty(productCustomizedList)) {
+            customizedSetter.accept(toAttachDTOList(productCustomizedList));
+        }
+        List<PlmAttachmentEntity> productInstructionList = plmAttachmentService.listByBusinessIdAndType(productId, ProductConstant.PRODUCT_INSTRUCTION);
+        if (CollUtil.isNotEmpty(productInstructionList)) {
+            instructionSetter.accept(toAttachDTOList(productInstructionList));
+        }
+    }
+
+    private List<AttachmentDTO.AttachDTO> toAttachDTOList(List<PlmAttachmentEntity> attachmentEntities) {
+        return attachmentEntities.stream().map(a -> {
+            AttachmentDTO.AttachDTO dto = new AttachmentDTO.AttachDTO();
+            BeanUtils.copyProperties(a, dto);
+            return dto;
+        }).collect(Collectors.toList());
     }
 
     private BasicDictEntity getBasicDictByNameOrValue(List<BasicDictEntity> basicDictList, BasicDictTypeEnum typeEnum, String dictText) {
@@ -2886,8 +2860,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             List<String> productIds = list.stream().map(ProductDetailExcelExportDTO::getProductId).distinct().collect(Collectors.toList());
             List<ProductRefBuEntity> productRefBuEntities = productRefBuService.listByProductIds(productIds);
 
-            List<String> mainSupplierIds = list.stream().map(ProductDetailExcelExportDTO::getMainSupplier).distinct().collect(Collectors.toList());
-            Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(mainSupplierIds);
+            List<String> mainSupplierIds = list.stream().map(ProductDetailExcelExportDTO::getMainSupplier)
+                    .filter(StringUtils::isNotBlank)
+                    .distinct().collect(Collectors.toList());
+            Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = CollUtil.isEmpty(mainSupplierIds)
+                    ? Collections.emptyMap()
+                    : supplierFeign.getSupplierSimpleInfo(mainSupplierIds);
 
             for(ProductDetailExcelExportDTO l : list) {
                 ProductRefBuEntity productRefBuEntity = productRefBuEntities.stream()
@@ -5070,11 +5048,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         Integer state = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
         dto.setStatus(state);
         List<SkuVO> skuVOS = baseMapper.pdaSearchSku(dto);
-        List<String> mainSupplierIds = skuVOS.stream().map(SkuVO::getMainSupplier).distinct().collect(Collectors.toList());
-        List<String> secondSupplierIds = skuVOS.stream().map(SkuVO::getSecondSupplier).distinct().collect(Collectors.toList());
+        List<String> mainSupplierIds = skuVOS.stream().map(SkuVO::getMainSupplier).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        List<String> secondSupplierIds = skuVOS.stream().map(SkuVO::getSecondSupplier).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
         mainSupplierIds.addAll(secondSupplierIds);
         List<String> supplierIds = mainSupplierIds.stream().distinct().collect(Collectors.toList());
-        Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(supplierIds);
+        Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = CollUtil.isEmpty(supplierIds) ? Collections.emptyMap() : supplierFeign.getSupplierSimpleInfo(supplierIds);
         skuVOS.forEach(req -> {
             // 一级供应商名称
             if (StrUtils.isNotEmpty(req.getMainSupplier()) && supplierMap.containsKey(req.getMainSupplier())) {
@@ -5123,7 +5101,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             view.setSpuName("");
         }
 
-        Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(Arrays.asList(view.getMainSupplier(), view.getSecondSupplier()));
+        List<String> supplierIds = Arrays.asList(view.getMainSupplier(), view.getSecondSupplier()).stream()
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = CollUtil.isEmpty(supplierIds) ? Collections.emptyMap() : supplierFeign.getSupplierSimpleInfo(supplierIds);
         // 一级供应商名称
         if (StrUtils.isNotEmpty(view.getMainSupplier()) && supplierMap.containsKey(view.getMainSupplier())) {
             view.setMainSupplierName(supplierMap.get(view.getMainSupplier()).getName());
@@ -6515,12 +6497,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (ObjectUtils.isEmpty(productProperty)) {
                 errorMsgList.add("产品属性在系统中未找到");
             }
-            BasicDictEntity warrantyPeriod = getBasicDictByNameOrValue(basicDictList, BasicDictTypeEnum.WARRANTY_PERIOD, dto.getWarrantyPeriod());
+            if (StringUtils.isNotBlank(dto.getWarrantyPeriod())) {
+                BasicDictEntity warrantyPeriod = getBasicDictByNameOrValue(basicDictList, BasicDictTypeEnum.WARRANTY_PERIOD, dto.getWarrantyPeriod());
 
-            if (ObjectUtils.isEmpty(warrantyPeriod)) {
-                errorMsgList.add("产品质保期在系统中未找到");
-            } else {
-                productInfoDTO.setWarrantyPeriod(warrantyPeriod.getValue());
+                if (ObjectUtils.isEmpty(warrantyPeriod)) {
+                    errorMsgList.add("产品质保期在系统中未找到");
+                } else {
+                    productInfoDTO.setWarrantyPeriod(warrantyPeriod.getValue());
+                }
             }
             //产品等级
             BasicDictEntity productGrade = basicDictList.stream().filter(b -> BasicDictTypeEnum.PRODUCT_GRADE.getCode().equals(b.getType()) && b.getValue().

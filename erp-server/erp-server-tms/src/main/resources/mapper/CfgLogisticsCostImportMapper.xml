@@ -21,6 +21,7 @@
        <result column="header_row" property="headerRow" />
        <result column="cost_type" property="costType" />
        <result column="import_type" property="importType" />
+       <result column="identify_type" property="identifyType" />
        <result column="disabled" property="disabled" />
        <result column="remark" property="remark" />
     </resultMap>
@@ -45,6 +46,7 @@ clci.sheet_name AS sheetName,
 clci.header_row AS headerRow,
 clci.cost_type AS costType,
 clci.import_type AS importType,
+clci.identify_type AS identifyType,
 clci.disabled AS disabled,
 clci.remark AS remark
     </sql>
@@ -56,6 +58,8 @@ clci.remark AS remark
         clcid.id AS detailId,
         clcid.source_field AS sourceField,
         clcid.source_detail_field AS sourceDetailField,
+        clcid.default_value AS defaultValue,
+        clcid.etl_rule_list AS etlRuleListStorage,
         clcid.is_unique_key AS isUniqueKey,
         clcid.is_absolute_value AS isAbsoluteValue,
         clcid.target_field_id AS targetFieldId,

@@ -21,6 +21,7 @@ import com.erp.model.wms.dto.CfgSettingVirtualValueDTO;
 import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.entity.CfgRuleOutEntity;
 import com.erp.model.wms.entity.CfgSettingEntity;
+import com.erp.model.wms.entity.DictBasicEntity;
 import com.erp.model.wms.enums.CfgRuleOutEnum;
 import com.erp.model.wms.enums.CfgSettingVirtualEnum;
 import com.erp.model.wms.enums.DictBasicEnum;
@@ -73,7 +74,7 @@ public class CfgSettingVirtualServiceImpl  implements CfgSettingVirtualService {
     @Override
     public CfgSettingVirtualDTO.ViewDTO viewVirtual() {
         CfgSettingVirtualDTO.ViewDTO viewDTO = new CfgSettingVirtualDTO.ViewDTO();
-        List<DictBasicDTO.ListDTO> dictList = dictBasicService.getByKey(DictBasicEnum.CFG_SETTING_VIRTUAL.getKey());
+        List<DictBasicEntity> dictList = dictBasicService.getByKey(DictBasicEnum.CFG_SETTING_VIRTUAL.getKey());
         if (CollectionUtils.isEmpty(dictList)) {
             return viewDTO;
         }
@@ -127,14 +128,14 @@ public class CfgSettingVirtualServiceImpl  implements CfgSettingVirtualService {
      */
     private List<CfgSettingEntity> handleData(CfgSettingVirtualDTO.AddDTO addDTO) {
         List<CfgSettingEntity> list = new ArrayList<>();
-        List<DictBasicDTO.ListDTO> dictList = dictBasicService.getByKey(DictBasicEnum.CFG_SETTING_VIRTUAL.getKey());
+        List<DictBasicEntity> dictList = dictBasicService.getByKey(DictBasicEnum.CFG_SETTING_VIRTUAL.getKey());
         if (CollectionUtils.isEmpty(dictList)) {
             throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
         }
         //查询已有配置信息
         List<CfgSettingEntity> cfgSettingList = cfgSettingService.listCfgSetting();
 
-        for (DictBasicDTO.ListDTO listDTO : dictList) {
+        for (DictBasicEntity listDTO : dictList) {
             //添加数据
             CfgSettingEntity entity = handleAddEnum(listDTO, addDTO,cfgSettingList);
             if (Objects.nonNull(entity)){
@@ -153,7 +154,7 @@ public class CfgSettingVirtualServiceImpl  implements CfgSettingVirtualService {
      * @param cfgSettingList
      * @return CfgSettingEntity
      */
-    private CfgSettingEntity handleAddEnum (DictBasicDTO.ListDTO listDTO,CfgSettingVirtualDTO.AddDTO addDTO,List<CfgSettingEntity> cfgSettingList) {
+    private CfgSettingEntity handleAddEnum (DictBasicEntity listDTO,CfgSettingVirtualDTO.AddDTO addDTO,List<CfgSettingEntity> cfgSettingList) {
         CfgSettingEntity entity = new CfgSettingEntity();
         //系统配置json
         JSONObject jsonObject = new JSONObject();

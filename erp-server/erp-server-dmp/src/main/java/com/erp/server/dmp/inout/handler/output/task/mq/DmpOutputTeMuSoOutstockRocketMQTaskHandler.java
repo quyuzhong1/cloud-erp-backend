@@ -87,6 +87,7 @@ public class DmpOutputTeMuSoOutstockRocketMQTaskHandler extends DmpOutputRocketM
 			TeMuSoOutStockDetailDTO teMuSoOutStockDetailDTO = new TeMuSoOutStockDetailDTO();
 			teMuSoOutStockDetailDTO.setPlatformWarehouseCode(dmpSoOutstockDetailEntity.getWarehouseId());
 			teMuSoOutStockDetailDTO.setPlatformSkuNo(dmpSoOutstockDetailEntity.getPlatformSku());
+			teMuSoOutStockDetailDTO.setPlatformSubSoCode(dmpSoOutstockDetailEntity.getThirdDetailId());
 			teMuSoOutStockDetailDTO.setQty(dmpSoOutstockDetailEntity.getQty());
 			teMuSoOutStockDetailDTOS.add(teMuSoOutStockDetailDTO);
 		}

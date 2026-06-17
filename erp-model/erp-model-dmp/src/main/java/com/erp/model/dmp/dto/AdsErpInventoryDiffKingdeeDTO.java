@@ -252,6 +252,16 @@ public class AdsErpInventoryDiffKingdeeDTO implements Serializable {
          * 创建人名称
          */
         private String createUserName;
+        
+        /**
+         * 数据生成时间（业务生成时间）
+         */
+        private LocalDateTime finishTime;
+
+        /**
+         * 执行状态
+         */
+        private String execStatusName;
 
     }
 

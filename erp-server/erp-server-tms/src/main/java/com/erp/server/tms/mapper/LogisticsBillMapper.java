@@ -64,14 +64,6 @@ public interface LogisticsBillMapper extends BaseMapper<LogisticsBillEntity> {
      *@date 2023-11-16
      */
     IPage<LogisticsBillDTO.PagingVO> paging(Page query,@Param("params")LogisticsBillDTO.PagingParamDTO params);
-    /**
-     * 导出
-     *@parms dto
-     *@return 
-     *@author yl
-     *@date 2023-11-16
-     */
-    Page<LogisticsBillDTO.PagingVO> listExport(@Param("page") Page<LogisticsBillDTO.PagingVO> page, @Param("params")LogisticsBillDTO.PagingParamDTO dto);
 
     /**
      * 获取物流单基础信息 根据跟踪号

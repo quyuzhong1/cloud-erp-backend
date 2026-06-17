@@ -71,6 +71,8 @@
         inner_org_id,
         inner_org_name,
         customer_property,
+        default_shipping_warehouse,
+        default_receive_account,
         mail_address,
         approve_user_name,
         ci.create_user_id,
