@@ -92,7 +92,7 @@ public enum FileTaskEventEnum implements EnumMessage {
     IMPORT_PLM_SKU_STD_RETAIL_PRICE("IMPORT_PLM_SKU_STD_RETAIL_PRICE", "导入sku标准零售价","com.erp.rpc.plm.feign.ImportPlmFeign","importSkuStdRetailPrice",""),
 
     //oms
-    EXPORT_OMS_RETURN_INFO("EXPORT_BI_RETURN_INFO", "退款数据导出","","",""),
+    EXPORT_OMS_RETURN_INFO("EXPORT_OMS_RETURN_INFO", "退款数据导出","","",""),
     EXPORT_OMS_CUSTOMER_B2B_SELLER_CHANGE("EXPORT_OMS_CUSTOMER_B2B_SELLER_CHANGE","客户b2b销售变更单","","",""),
     EXPORT_OMS_SO_CHANGE("EXPORT_OMS_SO_CHANGE","销售变更单列表","","",""),
     EXPORT_OMS_SO_PI("EXPORT_OMS_SO_PI","销售单发票信息","","",""),
