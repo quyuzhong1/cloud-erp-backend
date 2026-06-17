@@ -640,7 +640,7 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
     */
     private void handleData(QcApplicationEntity qcApplicationEntity) {
         if (ObjectUtil.isNotEmpty(qcApplicationEntity.getExpectQcDate()) && qcApplicationEntity.getExpectQcDate().isBefore(LocalDate.now())) {
-            throw new ServiceException(ApiError.QC_APPLICATION_PLAN_QC_DATE_NOT_BEFORE_NOW);
+            throw new ServiceException(ApiError.QC_APPLICATION_EXPECT_QC_DATE_NOT_BEFORE_NOW);
         }
 
     }
