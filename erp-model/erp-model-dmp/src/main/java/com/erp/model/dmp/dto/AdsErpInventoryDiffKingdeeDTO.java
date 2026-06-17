@@ -1,5 +1,6 @@
 package com.erp.model.dmp.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.AllArgsConstructor;
@@ -98,6 +99,16 @@ public class AdsErpInventoryDiffKingdeeDTO implements Serializable {
          * 来源平台：gyy，kingdee，mabang
          */
         private String sourceSystem;
+
+        /**
+         * 核对平台
+         */
+        private String checkPlatform;
+
+        /**
+         * 核对平台名称
+         */
+        private String checkPlatformName;
 
         /**
          * 核对周期（YYYY-MM）
