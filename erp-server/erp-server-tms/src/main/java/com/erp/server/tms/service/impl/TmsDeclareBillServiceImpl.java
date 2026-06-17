@@ -74,6 +74,7 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.model.oms.entity.SoDetailEntity;
+import com.erp.model.oms.utils.SoDetailPriceUtils;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.plm.feign.ProductPackFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
@@ -3234,16 +3235,6 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         return mainId + "#" + skuId;
     }
 
-    private BigDecimal resolveSoDetailTaxUnitPrice(SoDetailEntity soDetailEntity) {
-        if (Objects.isNull(soDetailEntity)) {
-            return null;
-        }
-        if (Objects.nonNull(soDetailEntity.getTaxPrice())) {
-            return soDetailEntity.getTaxPrice();
-        }
-        return soDetailEntity.getPrice();
-    }
-
     /**
      * 准备前端提交的报关明细
      * <p>
@@ -3994,7 +3985,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
         if (sixDimensionMerge && Objects.nonNull(soDetailEntity)) {
             // B2B 按客户分发场景：单价/币别/币别符号取 so_detail 销售含税单价及对应币种。
-            detailDTO.setUnitPrice(resolveSoDetailTaxUnitPrice(soDetailEntity));
+            detailDTO.setUnitPrice(SoDetailPriceUtils.resolveTaxUnitPrice(soDetailEntity));
             detailDTO.setDeclareCurrency(soDetailEntity.getCurrency());
             detailDTO.setDeclareCurrencySymbol(soDetailEntity.getCurrencySymbol());
             detailDTO.setDeclareCurrencyName(currencyMap.get(detailDTO.getDeclareCurrency()));

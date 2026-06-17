@@ -41,6 +41,7 @@ import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
+import com.erp.model.oms.utils.SoDetailPriceUtils;
 import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.BillTypeEnum;
@@ -1137,7 +1138,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 
                 SoDetailEntity soDetailEntity = soDetailMap.get(buildSoDetailKey(deliveryDetailDTO.getBusinessId(), deliveryDetailDTO.getSkuId()));
                 if (customerReceiver && Objects.nonNull(soDetailEntity)) {
-                    deliveryDetailDTO.setUnitPrice(resolveSoDetailTaxUnitPrice(soDetailEntity));
+                    deliveryDetailDTO.setUnitPrice(SoDetailPriceUtils.resolveTaxUnitPrice(soDetailEntity));
                     deliveryDetailDTO.setDeclareCurrency(soDetailEntity.getCurrency());
                     deliveryDetailDTO.setDeclareCurrencySymbol(soDetailEntity.getCurrencySymbol());
                     deliveryDetailDTO.setDeclareCurrencyName(currencyMap.get(deliveryDetailDTO.getDeclareCurrency()));
@@ -1150,16 +1151,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             }
             fillB2bPreviewBusinessTypeDefault(deliveryDetailDTO);
         }
-    }
-
-    private BigDecimal resolveSoDetailTaxUnitPrice(SoDetailEntity soDetailEntity) {
-        if (Objects.isNull(soDetailEntity)) {
-            return null;
-        }
-        if (Objects.nonNull(soDetailEntity.getTaxPrice())) {
-            return soDetailEntity.getTaxPrice();
-        }
-        return soDetailEntity.getPrice();
     }
 
     private void fillB2bPreviewBusinessTypeDefault(TmsDeclareBillDTO.SourceDeliveryDetailDTO detailDTO) {
@@ -1326,7 +1317,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         SoDetailEntity soDetailEntity = soDetailMap.get(buildSoDetailKey(detailDTO.getBusinessId(), detailDTO.getSkuId()));
         if (Objects.nonNull(soDetailEntity)) {
             // B2B 不合并预览：单价/币别/币别符号取自 so_detail 销售含税单价及对应币种。
-            detailDTO.setUnitPrice(resolveSoDetailTaxUnitPrice(soDetailEntity));
+            detailDTO.setUnitPrice(SoDetailPriceUtils.resolveTaxUnitPrice(soDetailEntity));
             detailDTO.setDeclareCurrency(soDetailEntity.getCurrency());
             detailDTO.setDeclareCurrencySymbol(soDetailEntity.getCurrencySymbol());
             detailDTO.setDeclareCurrencyName(currencyMap.get(detailDTO.getDeclareCurrency()));
