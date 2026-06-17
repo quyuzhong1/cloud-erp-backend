@@ -300,7 +300,13 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 dto.setFromWarehouseCountry(deliveryWarehouse.getCountry());
             }
         }
-        dto.setSalesOrgId(soB2cEntity.getOrgId());
+        //销售组织根据订单所属店铺的销售组织赋值
+        String shopId = soB2cEntity.getShopId();
+        ShopInfoEntity shopInfo = CharSequenceUtil.isNotBlank(shopId) ? shopInfoFeign.getShopInfoById(shopId) : null;
+        if (Objects.isNull(shopInfo)){
+            throw new ServiceException(ApiError.SHOP_NOT_FOUND);
+        }
+        dto.setSalesOrgId(shopInfo.getSalesOrgId());
         dto.setDictPlatform(soB2cEntity.getDictPlatform());
         CfgRuleOutDTO.MatchTransferResultDTO matchTransferResultDTO = cfgRuleOutService.matchTransferRule(dto);
         if (Objects.nonNull(matchTransferResultDTO) && Objects.nonNull(matchTransferResultDTO.getIsTransit()) && matchTransferResultDTO.getIsTransit()){
