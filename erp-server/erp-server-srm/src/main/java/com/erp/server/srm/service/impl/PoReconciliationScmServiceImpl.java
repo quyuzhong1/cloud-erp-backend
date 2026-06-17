@@ -101,6 +101,17 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_SRM_PO_RECONCIL
 @Slf4j
 @Service
 public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconciliationMapper, PoReconciliationEntity> implements PoReconciliationScmService {
+
+    /**
+     * 发票附件 type 标识，存储在 attachment 表 type 字段
+     */
+    private static final String INVOICE_ATTACHMENT_TYPE = "po_reconciliation_invoice";
+
+    /**
+     * 单个对账单最多允许上传的发票数量
+     */
+    private static final int INVOICE_MAX_COUNT = 10;
+
     @Autowired
     private OperateLogService operateLogService;
 
@@ -936,16 +947,6 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
                 .update();
     }
 
-    /**
-     * 发票附件 type 标识，存储在 attachment 表 type 字段
-     */
-    private static final String INVOICE_ATTACHMENT_TYPE = "po_reconciliation_invoice";
-
-    /**
-     * 单个对账单最多允许上传的发票数量
-     */
-    private static final int INVOICE_MAX_COUNT = 10;
-
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void uploadInvoice(PoReconciliationDTO.UploadFileDTO dto) {
@@ -958,24 +959,23 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
         }
 
         List<PoReconciliationDTO.InvoiceFileDTO> attachmentList = dto.getAttachmentList();
-        if (CollectionUtils.isEmpty(attachmentList)) {
-            throw new ServiceException(ApiError.PO_RECONCILIATION_INVOICE_FILE_INVALID);
-        }
-        if (attachmentList.size() > INVOICE_MAX_COUNT) {
-            throw new ServiceException(ApiError.PO_RECONCILIATION_INVOICE_LIMIT_EXCEEDED);
-        }
-        for (PoReconciliationDTO.InvoiceFileDTO item : attachmentList) {
-            if (item == null
-                    || StringUtils.isBlank(item.getAttachUrl())
-                    || StringUtils.isBlank(item.getAttachName())) {
-                throw new ServiceException(ApiError.PO_RECONCILIATION_INVOICE_FILE_INVALID);
+        if (CollectionUtils.isNotEmpty(attachmentList)) {
+            if (attachmentList.size() > INVOICE_MAX_COUNT) {
+                throw new ServiceException(ApiError.PO_RECONCILIATION_INVOICE_LIMIT_EXCEEDED);
             }
-            if (!StringUtils.endsWithIgnoreCase(item.getAttachName(), ".pdf")) {
-                throw new ServiceException(ApiError.PO_RECONCILIATION_INVOICE_PDF_ONLY);
+            for (PoReconciliationDTO.InvoiceFileDTO item : attachmentList) {
+                if (item == null
+                        || StringUtils.isBlank(item.getAttachUrl())
+                        || StringUtils.isBlank(item.getAttachName())) {
+                    throw new ServiceException(ApiError.PO_RECONCILIATION_INVOICE_FILE_INVALID);
+                }
+                if (!StringUtils.endsWithIgnoreCase(item.getAttachName(), ".pdf")) {
+                    throw new ServiceException(ApiError.PO_RECONCILIATION_INVOICE_PDF_ONLY);
+                }
             }
         }
 
-        // 全量保存：删旧 + 批量写新
+        // 全量保存：删旧 + 批量写新；传入为空则仅删旧
         List<SrmAttachmentEntity> oldList = attachmentService.list(new QueryWrapper<SrmAttachmentEntity>().lambda()
                 .eq(SrmAttachmentEntity::getBusinessId, poReconciliationEntity.getId())
                 .eq(SrmAttachmentEntity::getType, INVOICE_ATTACHMENT_TYPE));
@@ -983,6 +983,16 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
             List<String> oldIds = oldList.stream().map(SrmAttachmentEntity::getId).collect(Collectors.toList());
             attachmentService.removeByIds(oldIds);
         }
+
+        if (CollectionUtils.isEmpty(attachmentList)) {
+            poReconciliationEntity.setInvoiceStatus(false);
+            updateById(poReconciliationEntity);
+            String msg = CharSequenceUtil.format("用户【{}】删除【{}】单据单号为【{}】的发票",
+                    UserContext.getDefaultLoginUser().getUserName(), "采购对账单", poReconciliationEntity.getCode());
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PO_RECONCILIATION.getCode(), poReconciliationEntity.getId(), "上传发票");
+            return;
+        }
+
         List<String> urlList = attachmentList.stream()
                 .map(PoReconciliationDTO.InvoiceFileDTO::getAttachUrl).collect(Collectors.toList());
         List<String> nameList = attachmentList.stream()
