@@ -91,7 +91,7 @@ public class QcNoticeController extends BaseController {
     @PostMapping("/updateQcUserView")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:qcNotice:update",
+            menuCode = "qcNotice:updateQcUserView",
             serviceClass = QcNoticeDetailService.class,
             keyIdName = "detailIds")
     public ApiResult<List<QcNoticeDTO.UpdateQcUserViewDTO>> updateQcUserView(
