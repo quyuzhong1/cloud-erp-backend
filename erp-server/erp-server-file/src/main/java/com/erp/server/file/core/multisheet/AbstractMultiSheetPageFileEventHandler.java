@@ -17,6 +17,10 @@ import java.util.List;
 /**
  * 多 sheet 导出公共样板：
  * 参数解析、临时文件、上传与清理统一在父类实现，子类仅负责分页取数与写入策略。
+ * <p>
+ * <strong>{@link FileTask#getCount()} 回填（审查勿误报子类缺 setCount）</strong>：
+ * 本类 {@link #handle(FileTask)} 委托 {@link ExportTempFilesHandler#exportToTempAndUpload}，
+ * 在流式上传成功后将 {@link #writeAllSheets} 的返回值写入 {@code fileTask.count}，子类无需也不应再调用 {@code setCount}。
  */
 @Slf4j
 public abstract class AbstractMultiSheetPageFileEventHandler<P> extends AbstractFileEventHandler<Object> {
@@ -26,13 +30,17 @@ public abstract class AbstractMultiSheetPageFileEventHandler<P> extends Abstract
         P params = resolveExportParams(fileTask);
         String excelPath = getExcelPath(params);
         String displayName = buildDownloadFileName(fileTask, excelPath);
-        // 复用统一导出模板：流式上传（streamUploadFile），避免整文件入内存导致大文件 OOM 与上传失败被静默写入空 url
+        // count/url 由 exportToTempAndUpload 在 writeAllSheets 完成且上传成功后统一回填（见类 JavaDoc）
         ExportTempFilesHandler.exportToTempAndUpload(fileTask, ".xlsx", displayName,
                 outFile -> writeAllSheets(outFile, params, excelPath));
     }
 
     /**
-     * 由策略子类实现具体写入路径，返回主 sheet 行数（用于 fileTask.count）。
+     * 由策略子类实现具体写入路径。
+     *
+     * @return 写入 {@link FileTask#setCount(Integer)} 的行数语义由子类/写引擎约定：
+     *         独立分页（{@link AbstractStreamingMultiSheetHandler}）为 {@code sheets()} 列表<strong>首项</strong>的实际写入行数，
+     *         非各 sheet {@code totalCount} 之和（与历史 PLM 双 sheet 仅记产品条数一致；审查勿建议默认累加各 sheet total）。
      */
     protected abstract int writeAllSheets(File outFile, P params, String excelPath) throws IOException;
 

@@ -1,19 +1,16 @@
 package com.erp.model.plm.enums;
 
-import com.common.business.enums.FileTaskEventEnum;
 import com.common.core.constant.EnumMessage;
 import lombok.Getter;
 
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
 /**
- * 产品开发导出数据类型
- *
- * @author jack
+ * 产品开发导出数据类型（PLM 域）：{@link com.erp.model.plm.dto.ProductSearchDTO.ExportDTO#getExportDataList()} 的元素语义。
+ * <p>
+ * 与下载中心 event 的双向映射见 {@link ProductDevelopExportEventMapping}，勿在本枚举内重复维护路由字符串。
  */
 @Getter
 public enum ProductDevelopExportTypeEnum implements EnumMessage {
@@ -77,53 +74,5 @@ public enum ProductDevelopExportTypeEnum implements EnumMessage {
             return "导出数据类型不合法：" + exportDataList;
         }
         return null;
-    }
-
-    /**
-     * {@code exportDataList}（须已通过 {@link #validateCombinationMessage}）→ file 侧 event code。
-     * 与 {@link FileTaskEventEnum} 共用同一 code 源，避免 PLM 创建任务与 file Handler 路由字符串分叉。
-     *
-     * @return event code；入参非法时返回 {@code null}
-     */
-    public static String resolveEventCode(List<Integer> exportDataList) {
-        if (exportDataList == null || exportDataList.isEmpty()) {
-            return null;
-        }
-        if (validateCombinationMessage(exportDataList) != null) {
-            return null;
-        }
-        if (exportDataList.size() == 1) {
-            Integer flag = exportDataList.get(0);
-            if (EXPORT_PRODUCT.equals(flag)) {
-                return FileTaskEventEnum.EXPORT_PLM_PRODUCT_DEV_PRODUCT.getCode();
-            }
-            if (EXPORT_TASK.equals(flag)) {
-                return FileTaskEventEnum.EXPORT_PLM_PRODUCT_DEV_TASK.getCode();
-            }
-            return null;
-        }
-        return FileTaskEventEnum.EXPORT_PLM_PRODUCT_DEV_BOTH.getCode();
-    }
-
-    /**
-     * file 侧 event code → {@code exportDataList}；未知 event 返回 {@code null}。
-     * {@link FileTaskEventEnum#EXPORT_PLM_PRODUCT} 为历史遗留 code，等价于仅产品。
-     */
-    public static List<Integer> exportDataListFromEventCode(String eventCode) {
-        FileTaskEventEnum event = FileTaskEventEnum.getByCode(eventCode);
-        if (event == null) {
-            return null;
-        }
-        switch (event) {
-            case EXPORT_PLM_PRODUCT_DEV_PRODUCT:
-            case EXPORT_PLM_PRODUCT:
-                return Collections.singletonList(EXPORT_PRODUCT);
-            case EXPORT_PLM_PRODUCT_DEV_TASK:
-                return Collections.singletonList(EXPORT_TASK);
-            case EXPORT_PLM_PRODUCT_DEV_BOTH:
-                return Arrays.asList(EXPORT_PRODUCT, EXPORT_TASK);
-            default:
-                return null;
-        }
     }
 }

@@ -38,6 +38,12 @@ public class CleanFileTaskJob {
 
     private static final int BATCH_SIZE = 100;
 
+    /**
+     * 僵尸任务兜底窗口（天）：临时文件 mtime 早于「正常过期窗口再加该天数」时，即使其 taskId 仍匹配处理中任务也强制删除。
+     * 用于回收因 JVM 崩溃中途等异常导致任务长期卡在 PROCESS、临时文件残留无法清理的磁盘泄漏。
+     */
+    private static final int ZOMBIE_FORCE_DELETE_EXTRA_DAYS = 7;
+
 
     @Resource
     private FileTaskRepository fileTaskRepository;
@@ -103,6 +109,8 @@ public class CleanFileTaskJob {
                     continue;
                 }
 
+                // FastDFS 与 DB 软删无法同一事务：先删远端、后删库，宁可短暂「文件已删、记录仍在」，也不留孤儿文件占存储。
+                // 若远端已删而 removeById 失败，本轮计 logicDeleteFailCount 且游标已推进；下次调度 exist 为 false 会跳过远端删除并补做软删（审查勿误报为需分布式事务）。
                 try {
                     // 参考 FileTaskContext.delete 的「先查 exist 再删」模式：文件不存在（已删除）则跳过删除，
                     // 直接执行后续 DB 软删，避免记录因 FastDFS 反复返回非 0 而永久卡住、fileUrl 长期残留。
@@ -125,6 +133,7 @@ public class CleanFileTaskJob {
                 }
 
                 try {
+                    // 远端已确认不存在或删除成功后的 DB 软删；失败不在本轮重试，依赖下次调度 exist 跳过后仅补库删。
                     boolean removed = fileTaskRepository.removeById(id);
                     if (removed) {
                         successCount++;
@@ -186,14 +195,17 @@ public class CleanFileTaskJob {
         }
 
         LocalDateTime expireTime = LocalDateTime.now().minusDays(days);
-        XxlJobHelper.log("清理目录{}下创建时间早于{}、以{}为前缀且非处理中的导出临时文件", workDir, expireTime,
-                ExportTempFilesHandler.EXPORT_TMP_PREFIX);
+        // 僵尸兜底窗口：早于该时间的残留文件即使匹配处理中任务也强删，回收 PROCESS 卡死任务的临时文件磁盘泄漏。
+        LocalDateTime forceExpireTime = LocalDateTime.now().minusDays((long) days + ZOMBIE_FORCE_DELETE_EXTRA_DAYS);
+        XxlJobHelper.log("清理目录{}下创建时间早于{}、以{}为前缀且非处理中的导出临时文件（早于{}的残留文件强制清理）", workDir, expireTime,
+                ExportTempFilesHandler.EXPORT_TMP_PREFIX, forceExpireTime);
 
         int scanCount = 0;
         int successCount = 0;
         int skipNonExportCount = 0;
         int skipProcessingCount = 0;
         int deleteFailCount = 0;
+        int forceDeleteZombieCount = 0;
 
         // 扫描前一次性加载处理中任务 ID 集合，循环内 O(1) 精确匹配，避免逐文件查库（N+1）。
         // 快照之后新进入 PROCESS 的任务：其临时文件 mtime 为导出进行中写入时间，通常晚于 expireTime（默认 3 天前），
@@ -221,9 +233,15 @@ public class CleanFileTaskJob {
                     continue;
                 }
                 if (isProcessingTempFile(path, processingTaskIds)) {
-                    skipProcessingCount++;
-                    XxlJobHelper.log("跳过处理中的临时文件, path={}", path);
-                    continue;
+                    // 正常进行中任务的临时文件 mtime 较新（写入中），不会早于 forceExpireTime；
+                    // 仅当其早于兜底窗口才视为僵尸残留并强删，避免 PROCESS 卡死任务导致磁盘永久占用。
+                    if (!fileTime.isBefore(forceExpireTime)) {
+                        skipProcessingCount++;
+                        XxlJobHelper.log("跳过处理中的临时文件, path={}", path);
+                        continue;
+                    }
+                    forceDeleteZombieCount++;
+                    XxlJobHelper.log("强制清理疑似僵尸任务的过期临时文件, path={}, mtime={}", path, fileTime);
                 }
 
                 try {
@@ -242,8 +260,10 @@ public class CleanFileTaskJob {
         }
 
         long end = System.currentTimeMillis();
-        String summary = CharSequenceUtil.format("扫描文件={}, 成功删除={}, 跳过非导出临时文件={}, 跳过处理中={}, 删除失败={}, 耗时={}ms",
-                scanCount, successCount, skipNonExportCount, skipProcessingCount, deleteFailCount, end - start);
+        String summary = CharSequenceUtil.format(
+                "扫描文件={}, 成功删除={}, 跳过非导出临时文件={}, 跳过处理中={}, 强制清理僵尸残留={}, 删除失败={}, 耗时={}ms",
+                scanCount, successCount, skipNonExportCount, skipProcessingCount, forceDeleteZombieCount, deleteFailCount,
+                end - start);
         XxlJobHelper.log("====结束清理文件临时目录, {}====", summary);
         // 存在删除失败时返回 FAIL，便于调度平台告警与运维感知
         if (deleteFailCount > 0) {
@@ -257,6 +277,8 @@ public class CleanFileTaskJob {
      * <p>临时文件名为 {@code exportTmp_{id}_{safeName}_{timestamp}_{uuid}.xlsx}（见 {@link com.erp.server.file.entity.FileTask#getUniqueWithFileName()} 与
      * {@link ExportTempFilesHandler#createTempPath}），取 {@code exportTmp_} 后第一个 {@code _} 之前的一段作为 taskId，与处理中 ID 集合做精确匹配，
      * 避免 {@code startsWith("exportTmp_{id}_")} 在 ID 存在前缀包含关系时误判（如 "12" 与 "123"）。
+     * <p>不变量：依赖主键为 {@code IdType.ASSIGN_ID} 的纯数字雪花串（不含下划线），故首段恰为 taskId；
+     * 若主键改为含 {@code _} 的自定义 id，须同步改造本方法与 {@link ExportTempFilesHandler#createTempPath} 的解析。
      */
     private boolean isProcessingTempFile(Path path, Set<String> processingTaskIds) {
         if (CollUtil.isEmpty(processingTaskIds)) {

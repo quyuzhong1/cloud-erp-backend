@@ -1283,6 +1283,10 @@ public class ExcelPrintUtils {
      * <b>Breaking change</b>：原实现内部 {@code catch Exception} 转 {@code ServiceException}，现改为向上抛 {@code IOException}。
      * 经全量检索当前仓库内无调用方，故不影响既有编译；新增调用方须保证由统一导出模板捕获 {@code IOException} 并转 {@code ServiceException}，
      * 不要再各自 {@code catch} 后吞异常或抛非 {@code ServiceException} 类型，以保持任务失败语义一致。
+     * <p>
+     * 审查约定：本方法与同类的 {@link #patchExportListToFile}、{@link #sheetPatchExportToFile} 抛 {@link IOException} 为刻意设计；
+     * 调用链配套在 {@code erp-server-file} 的 {@code ExportTempFilesHandler.exportToTempAndUpload}（同 MR 已合入），
+     * 主链路 Handler 已在 lambda 内调用；勿因「单批 diff 仅有本类」误判调用链缺失。零调用方 API 勿要求强行接入。
      */
     public <T> void exportDynamicHeadersExcelToFile(File outputFile, String sheetName, List<List<String>> head, List<List<T>> data) throws IOException {
         try (FileOutputStream out = new FileOutputStream(outputFile)) {
@@ -1296,7 +1300,10 @@ public class ExcelPrintUtils {
     }
 
     /**
-     * 列表模板导出到本地文件（避免整表字节数组驻留内存）
+     * 列表模板导出到本地文件（避免整表字节数组驻留内存）。
+     * <p>
+     * 审查约定：抛 {@link IOException}，须在 {@code ExportTempFilesHandler.exportToTempAndUpload} 的 {@code TempFileWriter} 内调用并由其统一转 {@code ServiceException}；
+     * 存量调用见 {@code ExportMrpHistorySalesCalcHandler}（MRP 停用遗留）。勿要求在本类内 catch 转业务异常。
      */
     public void patchExportListToFile(File outputFile, List<?> list, String excelPath, WriteHandler... writeHandlers) throws IOException {
         try (FileOutputStream outputStream = new FileOutputStream(outputFile)) {
@@ -1407,6 +1414,9 @@ public class ExcelPrintUtils {
      * <p>
      * <b>Breaking change</b>：原实现内部 {@code catch Exception} 转 {@code ServiceException}，现改为向上抛 {@code IOException}。
      * 经全量检索当前仓库内无调用方，故不影响既有编译；新增调用方须由统一导出模板捕获 {@code IOException} 并转 {@code ServiceException}。
+     * <p>
+     * 审查约定：本方法当前<strong>零调用方</strong>，为有意保留的预留写盘 API；抛 {@code IOException} 由 {@code ExportTempFilesHandler.exportToTempAndUpload} 统一归口，
+     * 勿误报「调用方缺失 / 未捕获 IOException」。
      */
     public void sheetPatchExportToFile(File outputFile, List<Pair<Integer, List<?>>> pairList, String excelPath) throws IOException {
         ClassPathResource classPathResource = new ClassPathResource(excelPath);
@@ -1428,6 +1438,11 @@ public class ExcelPrintUtils {
 
     /**
      * 打开动态表头 Writer（分批 write 后须 {@link ExcelWriter#finish()}）。
+     * <p>
+     * 异常风格：本方法 {@code build()} 阶段不做 IO，故不声明受检 {@link IOException}；
+     * IO 异常在调用方后续 {@link ExcelWriter#write}/{@link ExcelWriter#finish} 阶段以运行时异常抛出，
+     * 由 file 服务层（{@code ExportTempFilesHandler.exportToTempAndUpload}）集中转换为 {@code ServiceException}，
+     * 与 {@link #openTemplateListWriter} 的最终异常归口一致（后者因读取模板字节才额外声明受检 {@link IOException}）。
      */
     public ExcelWriter openDynamicHeadersWriter(OutputStream outputStream, List<List<String>> head) {
         HorizontalCellStyleStrategy horizontalCellStyleStrategy = getHorizontalCellStyleStrategy();

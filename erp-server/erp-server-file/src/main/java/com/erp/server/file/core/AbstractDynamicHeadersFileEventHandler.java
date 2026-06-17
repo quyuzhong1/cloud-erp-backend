@@ -11,9 +11,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
-import com.common.business.dto.DynamicExcelDTO;
 import com.erp.model.file.entity.FileTask;
-import com.erp.server.file.exception.BusinessException;
 import com.erp.server.file.handler.FileRegistry;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -189,6 +187,11 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
                         rowsInSheet += take;
                         idx += take;
                     }
+                    // 上游单页超发（返回行数超过 pageSize）时已写满 totalCount：提前结束，
+                    // 避免后续 pageNo 取到空列表被上方中间页守卫误判为「数据缺失」。
+                    if (totalRows >= totalCount) {
+                        break;
+                    }
                 }
                 if (totalCount > 0 && totalRows == 0) {
                     throw new ServiceException("导出失败：totalCount=" + totalCount
@@ -197,6 +200,12 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
             } finally {
                 excelWriter.finish();
             }
+        }
+        // 末页 partial：实际写入行数 < 首查 totalCount（多因导出期间并发删除/数据漂移），不视为失败
+        // （fileTask.count 已回填实际行数），与固定模板分页路径对称地显式告警，避免静默丢数难感知。
+        if (totalCount > 0 && totalRows < totalCount) {
+            log.warn("动态表头导出末页数据不足：handler={} 预期 totalCount={} 实际写入 totalRows={}，疑似导出期间数据并发变更",
+                    getClass().getName(), totalCount, totalRows);
         }
         return totalRows;
     }
@@ -302,7 +311,8 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
                     throw new ServiceException("导出数据存在空行，请检查查询结果（页码=" + dto.getCurrPage() + "）");
                 }
             }
-            if (totalCount <= (long) dto.getCurrPage() * getPageSize()) {
+            // 与主写循环对齐：已写满 totalCount（含上游单页超发）即结束，避免空页被误判为缺数。
+            if (result.size() >= totalCount || totalCount <= (long) dto.getCurrPage() * getPageSize()) {
                 hasNext = false;
             }
             dto.setCurrPage(dto.getCurrPage() + 1);
