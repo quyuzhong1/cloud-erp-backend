@@ -1092,7 +1092,9 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if (ApproveTypeEnum.PASS.equals(approveType)) {
             if (!startKolB2cApproveWorkflowTask(entity)) {
-                legacyApproveEndPush(entity);
+                log.warn("KOL B2C审核下推走legacy路径，请确认工作流任务节点字典已配置，kolId={}, kolCode={}",
+                        entity.getId(), entity.getCode());
+                registerLegacyApproveEndPush(entity);
             }
         }
         return Boolean.TRUE;
@@ -1412,16 +1414,32 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
             List<String> skuNos = pushDTOS.stream()
                     .flatMap(e -> e.getDetailList().stream())
                     .map(KolSubB2cApplicationDetailEntity::getSkuNo)
+                    .filter(StringUtils::isNotBlank)
                     .distinct()
                     .collect(Collectors.toList());
-
-            List<SkuVO> skuVOS = plmTaskFeign.listBySkuNoList(skuNos);
-            Map<String, SkuVO> skuMap = skuVOS.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
+            Map<String, SkuVO> skuMap = buildKolSubB2cSkuMapBySkuNos(skuNos);
             for (KolSubB2cApplicationDTO.PushDTO pushDTO : pushDTOS) {
                 syncWangDianSoB2cService.syncDataToWangDian(pushDTO, skuMap);
             }
         }
         updateBillStatus(entity.getId(), KolB2cApplicationDocumentStatusEnum.CREATED.getCode());
+    }
+
+    private void registerLegacyApproveEndPush(KolB2cApplicationEntity entity) {
+        if (TransactionSynchronizationManager.isActualTransactionActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                @Override
+                public void afterCommit() {
+                    try {
+                        legacyApproveEndPush(entity);
+                    } catch (Exception e) {
+                        log.error("KOL B2C legacy审核下推失败，kolId={}, kolCode={}", entity.getId(), entity.getCode(), e);
+                    }
+                }
+            });
+            return;
+        }
+        legacyApproveEndPush(entity);
     }
 
     private Boolean startKolB2cApproveWorkflowTask(KolB2cApplicationEntity entity) {
@@ -1606,10 +1624,26 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
                 .filter(StringUtils::isNotBlank)
                 .distinct()
                 .collect(Collectors.toList());
+        return buildKolSubB2cSkuMapBySkuIds(skuIds);
+    }
+
+    private Map<String, SkuVO> buildKolSubB2cSkuMapBySkuNos(List<String> skuNos) {
+        if (CollUtil.isEmpty(skuNos)) {
+            return Collections.emptyMap();
+        }
+        List<SkuVO> skuList = plmTaskFeign.listBySkuNoList(skuNos);
+        return toSkuMap(skuList);
+    }
+
+    private Map<String, SkuVO> buildKolSubB2cSkuMapBySkuIds(List<String> skuIds) {
         if (CollUtil.isEmpty(skuIds)) {
             return Collections.emptyMap();
         }
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
+        return toSkuMap(skuList);
+    }
+
+    private Map<String, SkuVO> toSkuMap(List<SkuVO> skuList) {
         if (CollUtil.isEmpty(skuList)) {
             return Collections.emptyMap();
         }
