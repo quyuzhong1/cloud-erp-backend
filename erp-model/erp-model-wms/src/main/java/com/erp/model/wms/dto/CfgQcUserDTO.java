@@ -572,4 +572,15 @@ public class CfgQcUserDTO implements Serializable {
 
     }
 
+    /**
+     * 供应商 + 仓库组合键（批量查询已存在配置时使用）
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SupplierWarehousePair implements Serializable {
+        private String supplierId;
+        private String warehouseId;
+    }
+
 }

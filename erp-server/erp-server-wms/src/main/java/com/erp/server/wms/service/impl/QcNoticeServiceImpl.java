@@ -27,6 +27,7 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
@@ -333,7 +334,6 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public List<BatchResultDTO> batchUpdateQcUser(List<QcNoticeDTO.UpdateQcUserDTO> dtos) {
         if (CollUtil.isEmpty(dtos)) {
             return Collections.emptyList();
@@ -380,15 +380,20 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                         ApiError.QC_NOTICE_UPDATE_QC_USER_STATUS_INVALID.getMsg()));
                 continue;
             }
+            QcNoticeDTO.UpdateQcUserDTO item = itemMap.get(detailId);
+            if (StrUtil.isBlank(item.getQcUserId())) {
+                resultList.add(BatchResultDTO.fail(detailId, detail.getSkuNo(), "质检员id不能为空"));
+                continue;
+            }
             validDetails.add(detail);
-            validItemMap.put(detailId, itemMap.get(detailId));
+            validItemMap.put(detailId, item);
         }
 
         if (validDetails.isEmpty()) {
             return resultList;
         }
 
-        // 根据质检员id批量查询用户名，不使用前端传入的名称
+        // 根据质检员id批量查询用户名（事务外远程调用，避免长事务）
         List<String> qcUserIds = validItemMap.values().stream()
                 .map(QcNoticeDTO.UpdateQcUserDTO::getQcUserId)
                 .filter(StrUtil::isNotBlank)
@@ -434,6 +439,20 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             return resultList;
         }
 
+        ApplicationContextUtils.getBean(QcNoticeServiceImpl.class)
+                .persistBatchUpdateQcUser(resolvedValidDetails, resolvedValidItemMap);
+
+        resolvedValidDetails.forEach(d -> resultList.add(BatchResultDTO.success(d.getId(), d.getSkuNo())));
+
+        return resultList;
+    }
+
+    /**
+     * 批量更新质检员持久化（短事务，不含远程调用）
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void persistBatchUpdateQcUser(List<QcNoticeDetailEntity> resolvedValidDetails,
+                                         Map<String, QcNoticeDTO.UpdateQcUserDTO> resolvedValidItemMap) {
         List<QcNoticeDetailEntity> detailUpdates = resolvedValidDetails.stream().map(detail -> {
             QcNoticeDTO.UpdateQcUserDTO item = resolvedValidItemMap.get(detail.getId());
             QcNoticeDetailEntity e = new QcNoticeDetailEntity();
@@ -446,10 +465,8 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             throw new ServiceException(ApiError.BILL_UPDATE_FAILED);
         }
 
-        // 级联：同步更新下游 qc_info 的质检员
         batchUpdateQcInfoUsers(resolvedValidItemMap);
 
-        // 操作日志：按所属通知单 + 质检员分组记录，避免一通知单下不同质检员被覆盖
         String userName = UserContext.getDefaultLoginUser().getUserName();
         Map<String, List<QcNoticeDetailEntity>> detailsByNotice = resolvedValidDetails.stream()
                 .collect(Collectors.groupingBy(QcNoticeDetailEntity::getMainId));
@@ -471,10 +488,6 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                 operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.QC_NOTICE.getCode(), mainId, "批量更新质检员");
             }
         }
-
-        resolvedValidDetails.forEach(d -> resultList.add(BatchResultDTO.success(d.getId(), d.getSkuNo())));
-
-        return resultList;
     }
 
     /**
@@ -2683,7 +2696,8 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             data.setQcWarehouseName(warehouseMap.get(data.getQcWarehouseId()));
             data.setPutawayWarehouseName(warehouseMap.get(data.getPutawayWarehouseId()));
             data.setQcTypeName(QcTypeEnum.getByCode(data.getQcType()));
-            data.setQcStatusName(QcNoticeStatusEnum.getByCode(data.getQcStatus()).getName());
+            QcNoticeStatusEnum qcStatusEnum = QcNoticeStatusEnum.getByCode(data.getQcStatus());
+            data.setQcStatusName(qcStatusEnum != null ? qcStatusEnum.getName() : "");
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
         }
@@ -2727,7 +2741,8 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             data.setQcTypeName(QcTypeEnum.getByCode(data.getQcType()));
 
             //单据质检状态
-            data.setQcStatusName(QcNoticeStatusEnum.getByCode(data.getQcStatus()).getName());
+            QcNoticeStatusEnum qcStatusEnum = QcNoticeStatusEnum.getByCode(data.getQcStatus());
+            data.setQcStatusName(qcStatusEnum != null ? qcStatusEnum.getName() : "");
 
             //单据状态
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
@@ -2736,7 +2751,8 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
 
             //sku 质检状态
-            data.setQcDetailStatusName(QcNoticeStatusEnum.getByCode(data.getQcDetailStatus()).getName());
+            QcNoticeStatusEnum qcDetailStatusEnum = QcNoticeStatusEnum.getByCode(data.getQcDetailStatus());
+            data.setQcDetailStatusName(qcDetailStatusEnum != null ? qcDetailStatusEnum.getName() : "");
 
             //上架状态 待上架:wait  部分上架：part  已上架：finish
             data.setPutawayStatusName(PutawayStatusEnum.getByCode(data.getPutawayStatus()).getName());

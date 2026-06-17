@@ -34,12 +34,12 @@ import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
 import com.erp.model.sys.dto.UserInfoDTO;
+import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.server.wms.listener.CfgQcUserExcelListener;
 import com.erp.server.wms.mapper.CfgQcUserMapper;
 import com.erp.server.wms.service.CfgQcUserService;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.WarehouseService;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -89,7 +89,6 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
     @Resource
     private KingdeeFeign kingdeeFeign;
 
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(CfgQcUserDTO.AddDTO addDTO) {
@@ -323,7 +322,7 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
     private Map<String, String> loadQcUserMapByOrgId(String orgId) {
         KingdeeBusinessOperatorDTO.ListBusinessOperatorDTO listDTO = new KingdeeBusinessOperatorDTO.ListBusinessOperatorDTO();
         listDTO.setOrgId(orgId);
-        listDTO.setType("ZJY");
+        listDTO.setType(KingdeeBusinessOperatorTypeEnum.ZJY.getCode());
         ApiResult<List<UserInfoDTO.BusinessOperationUserDTO>> apiResult = kingdeeFeign.listKingdeeUser(listDTO);
         if (apiResult == null || !apiResult.isSuccess() || CollUtil.isEmpty(apiResult.getData())) {
             return Collections.emptyMap();
@@ -387,18 +386,18 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void importCfgQcUser(BaseDTO.ImportDTO dto) {
-        List<FindUserDTO> userList = sysUserFeign.getUserList();
-        FindUserDTO findUserDTO = userList.stream().filter(e -> StrUtil.isNotBlank(dto.getUserId()) && Objects.equals(e.getUserId(), dto.getUserId())).findFirst().orElse(null);
-        if (Objects.nonNull(findUserDTO)) {
-            LoginUser user = new LoginUser();
-            user.setUid(findUserDTO.getUserId());
-            user.setUserName(findUserDTO.getUserName());
-            user.setRealName(findUserDTO.getRealName());
-            user.setUserAccount(findUserDTO.getMobile());
-            user.setMobile(findUserDTO.getMobile());
-            UserContext.setLoginUser(user);
+        if (StrUtil.isNotBlank(dto.getUserId())) {
+            FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(dto.getUserId());
+            if (Objects.nonNull(findUserDTO)) {
+                LoginUser user = new LoginUser();
+                user.setUid(findUserDTO.getUserId());
+                user.setUserName(findUserDTO.getUserName());
+                user.setRealName(findUserDTO.getRealName());
+                user.setUserAccount(findUserDTO.getMobile());
+                user.setMobile(findUserDTO.getMobile());
+                UserContext.setLoginUser(user);
+            }
         }
 
         CfgQcUserExcelListener excelListenerUtil = new CfgQcUserExcelListener(dto.getTaskId(), dto.getImportCount());
@@ -499,7 +498,7 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
         KingdeeBusinessOperatorDTO.ListBusinessOperatorDTO listDTO = new KingdeeBusinessOperatorDTO.ListBusinessOperatorDTO();
         listDTO.setOrgId(orgId);
         // 质检员类型是 ZJY
-        listDTO.setType("ZJY");
+        listDTO.setType(KingdeeBusinessOperatorTypeEnum.ZJY.getCode());
         
         // 获取质检员列表
         ApiResult<List<UserInfoDTO.BusinessOperationUserDTO>> apiResult = kingdeeFeign.listKingdeeUser(listDTO);
