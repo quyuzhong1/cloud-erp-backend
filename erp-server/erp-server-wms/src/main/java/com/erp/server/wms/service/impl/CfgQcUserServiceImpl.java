@@ -89,6 +89,7 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
     @Resource
     private KingdeeFeign kingdeeFeign;
 
+    @DistributeLocker(keyName = "addDTO.getSupplierId(),addDTO.getWarehouseId()")
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(CfgQcUserDTO.AddDTO addDTO) {
@@ -323,8 +324,19 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
         KingdeeBusinessOperatorDTO.ListBusinessOperatorDTO listDTO = new KingdeeBusinessOperatorDTO.ListBusinessOperatorDTO();
         listDTO.setOrgId(orgId);
         listDTO.setType(KingdeeBusinessOperatorTypeEnum.ZJY.getCode());
-        ApiResult<List<UserInfoDTO.BusinessOperationUserDTO>> apiResult = kingdeeFeign.listKingdeeUser(listDTO);
-        if (apiResult == null || !apiResult.isSuccess() || CollUtil.isEmpty(apiResult.getData())) {
+        ApiResult<List<UserInfoDTO.BusinessOperationUserDTO>> apiResult;
+        try {
+            apiResult = kingdeeFeign.listKingdeeUser(listDTO);
+        } catch (ServiceException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("加载业务员管理质检员列表失败，orgId={}", orgId, e);
+            throw new ServiceException(ApiError.CFG_QC_USER_LOAD_QC_USER_LIST_FAILED);
+        }
+        if (apiResult == null || !apiResult.isSuccess()) {
+            throw new ServiceException(ApiError.CFG_QC_USER_LOAD_QC_USER_LIST_FAILED);
+        }
+        if (CollUtil.isEmpty(apiResult.getData())) {
             return Collections.emptyMap();
         }
         Map<String, String> result = new HashMap<>();
