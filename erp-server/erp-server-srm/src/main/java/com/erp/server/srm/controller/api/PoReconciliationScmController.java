@@ -454,7 +454,7 @@ public class PoReconciliationScmController extends BaseController {
     @PostMapping("/listInvoice")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "srm:poReconciliation:scm:viewMain",
+            menuCode = "srm:poReconciliation:scm:uploadInvoice",
             serviceClass = PoReconciliationService.class,
             keyIdName = "id")
     public ApiResult<List<PoReconciliationDTO.InvoiceFileVO>> listInvoice(@RequestBody @Validated BaseIdDTO dto) {
