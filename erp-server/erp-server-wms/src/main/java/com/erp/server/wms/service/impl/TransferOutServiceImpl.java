@@ -401,6 +401,8 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         if (!dto.getType().equals(ApproveType.PASS)) {
             return Boolean.TRUE;
         }
+        // 调出审核前校验可分配库存（盘盈盘亏来源暂不校验）
+        validateAllocationInventoryOnApprove(entity);
         //更新库存
         updateInventoryTransCore(Collections.singletonList(entity));
         //推送旺店通
@@ -408,6 +410,38 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         //推送金蝶
         syncApproveInfoToKingdee(entity,SyncOperateEnum.OPERATE_APPROVE);
         return Boolean.TRUE;
+    }
+
+    /**
+     * 分步式调出审核可分配库存校验：
+     * 调出数量 <= 可分配库存（实体仓可用+冻结-虚拟仓可用-冻结）
+     */
+    private void validateAllocationInventoryOnApprove(TransferOutEntity entity) {
+        if (SourceTypeEnum.isStocktaking(entity.getSourceType())) {
+            return;
+        }
+        List<TransferOutDetailEntity> detailList = transferOutDetailService.listByMainId(entity.getId());
+        if (CollUtil.isEmpty(detailList)) {
+            return;
+        }
+        Map<String, Integer> requestQtyMap = detailList.stream()
+                .collect(Collectors.groupingBy(TransferOutDetailEntity::getSkuId,
+                        Collectors.summingInt(obj -> MathUtil.valueOfZero(obj.getQty()))));
+        // 仅需 skuNo 用于错误提示，避免存整 Entity 时 (left, right)->left 误取与 requestQty 求和不一致的明细
+        Map<String, String> skuIdToSkuNo = detailList.stream()
+                .filter(d -> CharSequenceUtil.isNotBlank(d.getSkuId()))
+                .collect(Collectors.toMap(TransferOutDetailEntity::getSkuId, TransferOutDetailEntity::getSkuNo, (left, right) -> left));
+        // 一次性批量查询可分配库存，避免循环内 N+1
+        Map<String, Integer> allocatableQtyMap = inventoryService.getRecipientAvailableQtyBatch(
+                entity.getOutWarehouseId(), new ArrayList<>(requestQtyMap.keySet()));
+        for (Map.Entry<String, Integer> entry : requestQtyMap.entrySet()) {
+            String skuId = entry.getKey();
+            Integer requestQty = entry.getValue();
+            Integer allocatableQty = allocatableQtyMap.getOrDefault(skuId, 0);
+            if (MathUtil.compareTo(allocatableQty, requestQty) < 0) {
+                throw new ServiceException(ApiError.WH_ENTITY_ALLOCATION_STOCK_INSUFFICIENT, skuIdToSkuNo.get(skuId), entity.getOutWarehouseName(), allocatableQty);
+            }
+        }
     }
 
     @Override
@@ -631,7 +665,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         List<String> warehouseLocationCodeList = dataList.stream().map(r-> StrUtils.null2EmptyWithTrim(r.getOutWarehouseLocation())).distinct().collect(Collectors.toList());
         List<WarehouseLocationEntity> warehouseLocationList = warehouseLocationService.listByWarehouseIdsAndCodeList(outWarehouseIds, warehouseLocationCodeList);
         // 调拨方向
-        List<DictBasicDTO.ListDTO> transferDirectionList = dictBasicService.getByKey(DictBasicEnum.TRANSFER_DIRECTION.getKey());
+        List<DictBasicEntity> transferDirectionList = dictBasicService.getByKey(DictBasicEnum.TRANSFER_DIRECTION.getKey());
 
         // 分步式调出单明细id集合
         List<String> sourceDetailIds = dataList.stream().map(TransferOutDTO.ViewGenerateTransferInDTO::getSourceDetailId).distinct().collect(Collectors.toList());
@@ -646,7 +680,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
             data.setUnitName(Objects.nonNull(productDetail) ? productDetail.getUnitName() : null);
 
             // 调拨方向名称
-            String transferDirectionName = transferDirectionList.stream().filter(e -> Objects.equals(e.getValue(), data.getTransferDirection())).map(DictBasicDTO.ListDTO::getName).findFirst().orElse("");
+            String transferDirectionName = transferDirectionList.stream().filter(e -> Objects.equals(e.getValue(), data.getTransferDirection())).map(DictBasicEntity::getName).findFirst().orElse("");
             data.setTransferDirectionName(transferDirectionName);
             // 单据来源
             data.setSourceType(SourceTypeEnum.TRANSFER_OUT.getCode());
@@ -896,14 +930,14 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         }
 
         //调拨方向
-        List<DictBasicDTO.ListDTO> transferDirectionList = dictBasicService.getByKey(DictBasicEnum.TRANSFER_DIRECTION.getKey());
+        List<DictBasicEntity> transferDirectionList = dictBasicService.getByKey(DictBasicEnum.TRANSFER_DIRECTION.getKey());
         for (TransferOutDTO.PagingViewDTO data : list) {
             //产品名称
             String productName = skuMap.getOrDefault(data.getSkuId(),new ProductDetailEntity()).getName();
             data.setProductName(productName);
 
             //调拨方向名称
-            String transferDirectionName = transferDirectionList.stream().filter(e -> Objects.equals(e.getValue(), data.getTransferDirection())).map(DictBasicDTO.ListDTO::getName).findFirst().orElse("");
+            String transferDirectionName = transferDirectionList.stream().filter(e -> Objects.equals(e.getValue(), data.getTransferDirection())).map(DictBasicEntity::getName).findFirst().orElse("");
             data.setTransferDirectionName(transferDirectionName);
 
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
@@ -923,9 +957,9 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
      */
     private void fillingView(TransferOutDTO.ViewDTO data, List<TransferOutDetailDTO.ViewDTO> viewDetailList) {
         // 调拨方向
-        List<DictBasicDTO.ListDTO> transferDirectionList = dictBasicService.getByKey(DictBasicEnum.TRANSFER_DIRECTION.getKey());
+        List<DictBasicEntity> transferDirectionList = dictBasicService.getByKey(DictBasicEnum.TRANSFER_DIRECTION.getKey());
         // 调拨方向名称
-        String transferDirectionName = transferDirectionList.stream().filter(e -> Objects.equals(e.getValue(), data.getTransferDirection())).map(DictBasicDTO.ListDTO::getName).findFirst().orElse("");
+        String transferDirectionName = transferDirectionList.stream().filter(e -> Objects.equals(e.getValue(), data.getTransferDirection())).map(DictBasicEntity::getName).findFirst().orElse("");
         data.setTransferDirectionName(transferDirectionName);
         // 审核状态
         data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));

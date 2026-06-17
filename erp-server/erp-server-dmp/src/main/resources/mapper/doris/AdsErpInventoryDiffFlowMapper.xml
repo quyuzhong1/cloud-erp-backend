@@ -173,4 +173,13 @@
          , #{dto.checkMonth} , #{dto.stockSku} , #{dto.platformWarehouseCode} , #{dto.platformWarehouseName} , #{dto.initQty})
     	</foreach>
     </insert>
+    
+    <update id="updateReCreateInventoryMonthCheck">
+        UPDATE ${inventoryMonthCheckEnumCode}
+        SET exec_status = #{execStatus},finish_time = null,exec_status_name = #{execStatusName}
+        WHERE check_month = #{checkMonth} 
+        <if test="sourceSystem != null and sourceSystem != ''">
+            and source_system = #{sourceSystem}
+        </if>
+    </update>
 </mapper>

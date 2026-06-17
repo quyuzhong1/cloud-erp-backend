@@ -7,6 +7,7 @@ import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.erp.model.scm.dto.DictBasicDTO;
+import com.erp.model.scm.entity.DictBasicEntity;
 import com.erp.model.scm.entity.PurchasePriceDetailEntity;
 import com.erp.model.scm.entity.PurchasePriceEntity;
 import com.erp.model.scm.entity.PurchaseSkuOrgRefEntity;
@@ -142,7 +143,7 @@ public class PurchaseSkuOrgRefServiceImpl extends SuperServiceImpl<PurchaseSkuOr
         }
         List<PurchaseSkuOrgRefEntity> list = this.lambdaQuery().in(PurchaseSkuOrgRefEntity::getSkuId, skuIdList).list();
         //为空默认取值简拍组织
-        List<DictBasicDTO> dictList = dictBasicService.getByKey("skuDefaultOrg");
+        List<DictBasicEntity> dictList = dictBasicService.getByKey("skuDefaultOrg");
         List<PurchaseSkuOrgRefEntity> resultList = new ArrayList<>();
         skuIdList.forEach(e ->{
             PurchaseSkuOrgRefEntity purchaseSkuOrgRefEntity = list.stream().filter(f -> f.getSkuId().equals(e)).findFirst().orElse(null);

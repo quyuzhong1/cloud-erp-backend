@@ -162,7 +162,7 @@
         WHERE rn = 1
     </select>
 
-    <!-- 根据skuId和仓库Id、orgId查询最新已审核单据的SKU成本（人民币） -->
+    <!-- 根据skuId和仓库Id、orgId查询最新已审核单据的SKU成本（人民币），按分摊月份排序 -->
     <select id="getSkuCostInCNY" resultType="com.erp.model.tms.dto.InventorySkuCostDTO$SkuCostCNYDTO">
         WITH latest_approved_costs AS (
             SELECT
@@ -218,12 +218,72 @@
         WHERE rn = 1
     </select>
 
-    <!-- 列出库存SKU成本列表 -->
+    <!-- PLM标准成本专用：按核算月份取最新已审核SKU成本（人民币），生效日期取核算月1日 -->
+    <select id="getSkuCostInCNYForStdCost" resultType="com.erp.model.tms.dto.InventorySkuCostDTO$SkuCostCNYDTO">
+        WITH latest_approved_costs AS (
+            SELECT
+                isc.id as mainId,
+                isc.code,
+                isc.allocated_month as allocatedMonth,
+                isc.accounting_month as accountingMonth,
+                isc.currency,
+                isc.exchange_rate,
+                iscd.sku_id as skuId,
+                iscd.warehouse_id as warehouseId,
+                iscd.product_cost as productCost,
+                isc.company_id as orgId,
+                ROW_NUMBER() OVER (PARTITION BY iscd.sku_id, iscd.warehouse_id, isc.company_id ORDER BY isc.accounting_month DESC, isc.id DESC) as rn
+            FROM
+                inventory_sku_cost isc
+            LEFT JOIN inventory_sku_cost_detail iscd ON iscd.main_id = isc.id AND iscd.is_deleted = FALSE
+            WHERE
+                isc.is_deleted = FALSE
+                AND isc.status = 'approve'
+                AND isc.accounting_month IS NOT NULL
+                AND iscd.sku_id IS NOT NULL
+                AND iscd.warehouse_id IS NOT NULL
+                AND isc.company_id = #{orgId}
+                <if test="skuIds != null and skuIds.size > 0">
+                    AND iscd.sku_id IN
+                    <foreach collection="skuIds" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="warehouseIds != null and warehouseIds.size > 0">
+                    AND iscd.warehouse_id IN
+                    <foreach collection="warehouseIds" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+        )
+        SELECT
+            skuId,
+            warehouseId,
+            orgId,
+            productCost,
+            exchange_rate as exchangeRate,
+            CASE
+                WHEN exchange_rate IS NOT NULL AND exchange_rate > 0
+                THEN productCost * exchange_rate
+                ELSE productCost
+            END as productCostCNY,
+            currency,
+            mainId,
+            code,
+            allocatedMonth,
+            accountingMonth
+        FROM
+            latest_approved_costs
+        WHERE rn = 1
+    </select>
+
+    <!-- 列出库存SKU成本列表：按组织+SKU+仓库返回历史最新已审核成本；旧调用方传月份时仍按月份兼容过滤。 -->
     <select id="listInventorySkuCost" resultType="com.erp.model.tms.dto.InventorySkuCostDTO$InvSkuCostDTO">
-        select
+        select distinct on (isc.company_id, iscd.sku_id, iscd.warehouse_id)
             isc.company_id as orgId,
             isc.currency,
             isc.exchange_rate,
+            isc.accounting_month as accountingMonth,
             isc.create_time as createTime,
             iscd.warehouse_id as warehouseId,
             iscd.sku_id as skuId,
@@ -251,14 +311,14 @@
                 #{item}
             </foreach>
         </if>
-        <if test="param.startAccountingMonth != null ">
-            and isc.accounting_month >= #{param.startAccountingMonth}
+        <if test="param.startAccountingMonth != null">
+            and isc.accounting_month <![CDATA[>=]]> #{param.startAccountingMonth}
         </if>
-        <if test="param.endAccountingMonth != null ">
-            and #{param.endAccountingMonth} > isc.accounting_month
+        <if test="param.endAccountingMonth != null">
+            and isc.accounting_month <![CDATA[<=]]> #{param.endAccountingMonth}
         </if>
         and isc.status = 'approve'
-        order by isc.create_time desc, isc.id desc
+        order by isc.company_id, iscd.sku_id, iscd.warehouse_id, isc.accounting_month desc, isc.create_time desc, isc.id desc
     </select>
 
 </mapper>

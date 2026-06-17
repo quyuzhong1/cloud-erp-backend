@@ -2,6 +2,7 @@ package com.common.business.utils;
 
 import cn.hutool.core.net.URLDecoder;
 import cn.hutool.core.util.RandomUtil;
+import com.common.business.constant.ThirdWarehouseConstants;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastDFSClientUtil;
@@ -18,12 +19,15 @@ import org.apache.commons.text.StringEscapeUtils;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
+import org.apache.pdfbox.rendering.ImageType;
+import org.apache.pdfbox.rendering.PDFRenderer;
 import org.apache.pdfbox.text.PDFTextStripper;
-import sun.misc.BASE64Decoder;
-import sun.misc.BASE64Encoder;
 
+import javax.imageio.ImageIO;
 import javax.servlet.http.HttpServletResponse;
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -34,6 +38,13 @@ import java.util.UUID;
 
 @Slf4j
 public class PdfUtil {
+
+    private static final float DEFAULT_RENDER_DPI = 300F;
+    /**
+     * PDF 渲染最大像素数（宽×高），超过此值拒绝转换以防 OOM。
+     * 1000 万像素在 RGB 渲染下约占用 30MB 堆内存，不含 PNG 编码和 Base64 字符串。
+     */
+    private static final long MAX_RENDER_PIXELS = 10_000_000L;
 
     private PdfUtil() {
     }
@@ -203,9 +214,8 @@ public class PdfUtil {
             return null;
         }
         List<byte[]> returnStrLists = new ArrayList<>();
-        BASE64Decoder decoder = new BASE64Decoder();
         for (String base64Str : base64Lists) {
-            byte[] fileBytes = decoder.decodeBuffer(base64Str);
+            byte[] fileBytes = Base64.getDecoder().decode(cleanBase64DataUrlPrefix(base64Str));
             returnStrLists.add(fileBytes);
         }
         return returnStrLists;
@@ -215,8 +225,6 @@ public class PdfUtil {
      *将文件输入流，转换为 base64 返回给请求端
      **/
     public static String base64ForPdf(InputStream fin) throws Exception {
-        BASE64Encoder encoder = new BASE64Encoder();
-
         BufferedInputStream bin = new BufferedInputStream(fin);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         BufferedOutputStream bout = new BufferedOutputStream(baos);
@@ -228,7 +236,7 @@ public class PdfUtil {
 
         bout.flush();
         byte[] bytes = baos.toByteArray();
-        String var11 = encoder.encodeBuffer(bytes).trim();
+        String var11 = Base64.getEncoder().encodeToString(bytes);
         return var11;
     }
 
@@ -261,10 +269,9 @@ public class PdfUtil {
             response.setContentType("application/pdf");
             // 设置 PDF 的显示方式和文件名
             response.setHeader("Content-Disposition", "inline; filename=\"filename.pdf\"");
-            BASE64Decoder decoder = new BASE64Decoder();
             try (OutputStream out = response.getOutputStream()) {
                 // 将 Base64 编码的字符串解码为字节数组
-                byte[] pdfBytes = decoder.decodeBuffer(newMergePdfBase64);
+                byte[] pdfBytes = Base64.getDecoder().decode(cleanBase64DataUrlPrefix(newMergePdfBase64));
                 // 将字节数组写入到响应输出流中
                 out.write(pdfBytes);
             } catch (IOException e) {
@@ -369,6 +376,92 @@ public class PdfUtil {
         }
 
         return Base64.getEncoder().encodeToString(pdfBytes);
+    }
+
+    public static String pdfBase64FirstPageToPngBase64(String pdfBase64) {
+        if (StringUtils.isBlank(pdfBase64)) {
+            throw new ServiceException("PDF文件内容为空，无法转换PNG");
+        }
+        byte[] pdfBytes;
+        try {
+            pdfBytes = Base64.getDecoder().decode(cleanBase64DataUrlPrefix(pdfBase64));
+        } catch (Exception e) {
+            log.warn("PDF文件Base64解析失败", e);
+            throw new ServiceException("PDF文件Base64解析失败，无法转换PNG");
+        }
+        if (pdfBytes.length == 0) {
+            throw new ServiceException("PDF文件内容为空，无法转换PNG");
+        }
+
+        try (PDDocument document = PDDocument.load(pdfBytes);
+             ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+            if (document.getNumberOfPages() <= 0) {
+                throw new ServiceException("PDF文件页数为空，无法转换PNG");
+            }
+            checkFirstPageRenderPixels(document);
+            PDFRenderer renderer = new PDFRenderer(document);
+            BufferedImage image = renderer.renderImageWithDPI(0, DEFAULT_RENDER_DPI, ImageType.RGB);
+            boolean writeResult = ImageIO.write(image, "png", outputStream);
+            if (!writeResult || outputStream.size() == 0) {
+                throw new ServiceException("PDF文件转换PNG失败");
+            }
+            byte[] pngBytes = outputStream.toByteArray();
+            if (estimateBase64Length(pngBytes.length) > ThirdWarehouseConstants.MAX_INVOICE_PDF_BASE64_LENGTH) {
+                throw new ServiceException("PDF转PNG后图片过大，无法转换");
+            }
+            return Base64.getEncoder().encodeToString(pngBytes);
+        } catch (ServiceException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("PDF文件转换PNG失败", e);
+            throw new ServiceException("PDF文件转换PNG失败，请检查文件格式");
+        }
+    }
+
+    public static float[] getPdfFirstPageSizeMm(String pdfBase64) {
+        if (StringUtils.isBlank(pdfBase64)) {
+            throw new ServiceException("PDF文件内容为空，无法读取尺寸");
+        }
+        byte[] pdfBytes;
+        try {
+            pdfBytes = Base64.getDecoder().decode(cleanBase64DataUrlPrefix(pdfBase64));
+        } catch (Exception e) {
+            log.warn("PDF文件Base64解析失败", e);
+            throw new ServiceException("PDF文件Base64解析失败，无法读取尺寸");
+        }
+        try (PDDocument document = PDDocument.load(pdfBytes)) {
+            if (document.getNumberOfPages() <= 0) {
+                throw new ServiceException("PDF文件页数为空，无法读取尺寸");
+            }
+            PDRectangle mediaBox = document.getPage(0).getMediaBox();
+            return new float[]{pointsToMm(mediaBox.getWidth()), pointsToMm(mediaBox.getHeight())};
+        } catch (ServiceException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("PDF文件尺寸读取失败", e);
+            throw new ServiceException("PDF文件尺寸读取失败，请检查文件格式");
+        }
+    }
+
+    private static String cleanBase64DataUrlPrefix(String base64) {
+        return base64.replaceFirst("(?i)^data:[^;]+;base64,", "").replaceAll("\\s", "");
+    }
+
+    private static void checkFirstPageRenderPixels(PDDocument document) {
+        PDRectangle mediaBox = document.getPage(0).getMediaBox();
+        long widthPixels = Math.round(mediaBox.getWidth() / 72F * DEFAULT_RENDER_DPI);
+        long heightPixels = Math.round(mediaBox.getHeight() / 72F * DEFAULT_RENDER_DPI);
+        if (widthPixels * heightPixels > MAX_RENDER_PIXELS) {
+            throw new ServiceException("PDF首页尺寸过大，无法转换PNG");
+        }
+    }
+
+    private static long estimateBase64Length(int byteLength) {
+        return ((long) (byteLength + 2) / 3) * 4;
+    }
+
+    private static float pointsToMm(float points) {
+        return points * 25.4F / 72F;
     }
 
     /**

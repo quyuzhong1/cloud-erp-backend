@@ -1,5 +1,6 @@
 package com.erp.server.dmp.push.service.wdt.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -11,6 +12,7 @@ import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.server.dmp.push.service.CommonService;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.push.service.wdt.WdtOtherInStockService;
+import com.erp.server.dmp.push.service.wdt.WdtWarnMsgHelper;
 import com.sdk.wangdian.sdk.Pager;
 import com.sdk.wangdian.sdk.WdtErpException;
 import com.sdk.wangdian.sdk.api.wms.external.in.*;
@@ -37,12 +39,17 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class WdtOtherInStockServiceImpl implements WdtOtherInStockService {
+
+    private static final String BIZ_NAME = "旺店通其他入库单同步通知";
+
     @Resource
     private KingdeeCommonService kingdeeCommonService;
     @Resource
     private WangDianClientService wangDianClientService;
     @Resource
     private CommonService commonService;
+    @Resource
+    private WdtWarnMsgHelper wdtWarnMsgHelper;
 
     @Override
     public void executeConsumer(CreateOtherStockinRequest stockinRequest) {
@@ -70,11 +77,19 @@ public class WdtOtherInStockServiceImpl implements WdtOtherInStockService {
             throw new ServiceException(ApiError.COMMON_WDT_API_CALL_FAILED.getCode(), "推送旺店通其他入库单异常: {}", message);
         }
         if (response.getStatus() != 0) {
-            log.error("旺店通其他出库单推送失败，request：{}， response：{}", stockinRequest, response);
+            log.error("旺店通其他入库单推送失败，request：{}， response：{}", stockinRequest, response);
+            String warnMsg = CharSequenceUtil.format("创建失败，批次号：{}，仓库编码：{}，状态码：{}，错误信息：{}",
+                    stockinRequest.getOuterNo(), stockinRequest.getWarehouseNo(), response.getStatus(), response.getMessage());
+            wdtWarnMsgHelper.safeSendCreateOrApproveWarnMsg(BIZ_NAME, "旺店通其他入库单创建失败",
+                    WdtWarnMsgHelper.resolveTableId(stockinRequest.getDmpSyncTaskId(), stockinRequest.getSourceId()), warnMsg);
             throw new ServiceException(ApiError.COMMON_WDT_API_CALL_FAILED.getCode(), "推送旺店通其他入库单失败: {}, {}, {}", stockinRequest.getOuterNo(), response.getStatus(), response.getMessage());
         }
         if (null != response.getData() && null != response.getData().getStatus() && 0 != response.getData().getStatus()) {
-            log.error("旺店通其他出库单审核失败，request：{}，response：{}", stockinRequest, response);
+            log.error("旺店通其他入库单审核失败，request：{}，response：{}", stockinRequest, response);
+            String warnMsg = CharSequenceUtil.format("审核失败，批次号：{}，仓库编码：{}，状态码：{}，错误信息：{}",
+                    stockinRequest.getOuterNo(), stockinRequest.getWarehouseNo(), response.getData().getStatus(), response.getData().getMessage());
+            wdtWarnMsgHelper.safeSendCreateOrApproveWarnMsg(BIZ_NAME, "旺店通其他入库单审核失败",
+                    WdtWarnMsgHelper.resolveTableId(stockinRequest.getDmpSyncTaskId(), stockinRequest.getSourceId()), warnMsg);
             throw new ServiceException(ApiError.COMMON_WDT_API_CALL_FAILED.getCode(), "推送旺店通其他入库单审核失败: {}, {}, {}", stockinRequest.getOuterNo(), response.getStatus(), response.getMessage());
         }
     }
@@ -112,16 +127,16 @@ public class WdtOtherInStockServiceImpl implements WdtOtherInStockService {
         try {
             response = stockExternalInAPI.createOrder(requestBody.get("order"), requestBody.get("order_details"), requestBody.get("is_check"));
         } catch (WdtErpException e) {
-            log.error("推送旺店通其他出库单失败:{}", e.getMessage(), e);
+            log.error("推送旺店通其他入库单失败:{}", e.getMessage(), e);
             throw new ServiceException(ApiError.COMMON_WDT_API_CALL_FAILED.getCode(), "推送旺店通其他入库单失败:{}", e.getMessage());
         }
         if (response.getStatus() != 0) {
-            log.error("推送旺店通其他出库单失败:{}", response.getMessage());
+            log.error("推送旺店通其他入库单失败:{}", response.getMessage());
             throw new ServiceException(ApiError.COMMON_WDT_API_CALL_FAILED.getCode(), "推送旺店通其他入库单失败:{}", response.getMessage());
         }
         Map<String, Object> data = response.getData();
         if (ObjectUtils.isNotEmpty(data) && !data.get("status").equals("0")) {
-            log.error("推送旺店通其他出库单异常:{}", data.get("message"));
+            log.error("推送旺店通其他入库单异常:{}", data.get("message"));
             throw new ServiceException(ApiError.COMMON_WDT_API_CALL_FAILED.getCode(), "推送旺店通其他入库单异常:{}", data.get("message"));
         }
     }

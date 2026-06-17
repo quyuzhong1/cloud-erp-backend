@@ -482,6 +482,18 @@ public class CustomerDTO implements Serializable {
         private String customerProperty;
 
         /**
+         * 默认发货仓库
+         */
+        @Size(max = 64, message = "默认发货仓库最大64字符")
+        private String defaultShippingWarehouse;
+
+        /**
+         * 默认收款账号
+         */
+        @Size(max = 64, message = "默认收款账号最大64字符")
+        private String defaultReceiveAccount;
+
+        /**
          * 通讯地址
          */
         @Size(max = 255, message = "通讯地址最大255字符")
@@ -747,6 +759,16 @@ public class CustomerDTO implements Serializable {
         private String customerProperty;
 
         /**
+         * 默认发货仓库
+         */
+        private String defaultShippingWarehouse;
+
+        /**
+         * 默认收款账号
+         */
+        private String defaultReceiveAccount;
+
+        /**
          * 通讯地址
          */
         private String mailAddress;
@@ -961,6 +983,18 @@ public class CustomerDTO implements Serializable {
         private String customerProperty;
 
         /**
+         * 默认发货仓库
+         */
+        @Size(max = 64, message = "默认发货仓库最大64字符")
+        private String defaultShippingWarehouse;
+
+        /**
+         * 默认收款账号
+         */
+        @Size(max = 64, message = "默认收款账号最大64字符")
+        private String defaultReceiveAccount;
+
+        /**
          * 通讯地址
          */
         @Size(max = 255, message = "通讯地址最大255字符")
@@ -1093,6 +1127,16 @@ public class CustomerDTO implements Serializable {
          * 币种
          */
         private String currency;
+
+        /**
+         * 默认发货仓库 id（B2B 客户维护）
+         */
+        private String defaultShippingWarehouse;
+
+        /**
+         * 默认收款账号 id（银行账号表）
+         */
+        private String defaultReceiveAccount;
     }
 
     /**
@@ -1278,6 +1322,16 @@ public class CustomerDTO implements Serializable {
          */
         private String salesDeptName;
 
+        /**
+         * 默认发货仓库
+         */
+        private String defaultShippingWarehouse;
+
+        /**
+         * 默认收款账号
+         */
+        private String defaultReceiveAccount;
+
 
     }
 
@@ -1430,6 +1484,14 @@ public class CustomerDTO implements Serializable {
          *客户属性
          */
         private String customerProperty;
+        /**
+         * 默认发货仓库
+         */
+        private String defaultShippingWarehouse;
+        /**
+         * 默认收款账号
+         */
+        private String defaultReceiveAccount;
         /**
          *通讯地址
          */

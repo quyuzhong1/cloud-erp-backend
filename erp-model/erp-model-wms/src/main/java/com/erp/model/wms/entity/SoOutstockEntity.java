@@ -48,6 +48,12 @@ public class SoOutstockEntity extends BaseEntity<SoOutstockEntity> {
     private String soId;
 
     /**
+     * 销售订单id
+     */
+    @TableField("partition_id")
+    private String partitionId;
+
+    /**
      * 承运商 来源供应商
      */
     @TableField("carrier_id")

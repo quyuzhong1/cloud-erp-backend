@@ -16,6 +16,7 @@ import com.common.business.constant.ApproveType;
 import com.common.business.constant.SearchType;
 import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.PlatformB2bOrderDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -46,12 +47,14 @@ import com.erp.model.sys.entity.*;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
 import com.erp.model.wms.dto.VirtualWarehouseDTO;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
 import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.*;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.wms.feign.WmsVirtualWarehouseFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.dht.DhtService;
@@ -170,6 +173,10 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
 
     @Resource
     private WmsVirtualWarehouseFeign wmsVirtualWarehouseFeign;
+    @Resource
+    private WmsTaskFeign wmsTaskFeign;
+    @Resource
+    private BankAccountService bankAccountService;
     @Resource
     private CfgSettingService cfgSettingService;
 
@@ -582,7 +589,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         }
         //平台信息
         String type = DictBasicTypeEnum.SALES_PLATFORM.getType();
-        List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(type);
+        List<DictBasicEntity> dictList = dictBasicService.getByKey(type);
 
         // 国家
         List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
@@ -804,6 +811,11 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         String useOrgName = orgList.stream().filter(d -> d.getId().equals(useOrgId)).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
         customer.setUseOrgName(useOrgName);
+        // 默认仓库/账号有值时才做实时校验；Feign 不可用时会阻断保存，属有意设计以保证默认值有效。
+        validateCustomerDefaultFields(dto.getDefaultShippingWarehouse(), dto.getDefaultReceiveAccount());
+        // 客户编辑为全量保存，编辑页会回显默认值；前端须传空串表示清空，null 亦按空串落库（与既有字符串字段一致）。
+        customer.setDefaultShippingWarehouse(StringUtils.defaultString(dto.getDefaultShippingWarehouse()));
+        customer.setDefaultReceiveAccount(StringUtils.defaultString(dto.getDefaultReceiveAccount()));
         Boolean updateResult = this.updateById(customer);
         
         shopInfoService.lambdaUpdate()
@@ -1210,7 +1222,9 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
                 CustomerInfoEntity::getShortName,
                 CustomerInfoEntity::getApproveStatus,
                 CustomerInfoEntity::getDisabled,
-                CustomerInfoEntity::getCurrency);
+                CustomerInfoEntity::getCurrency,
+                CustomerInfoEntity::getDefaultShippingWarehouse,
+                CustomerInfoEntity::getDefaultReceiveAccount);
         if (StringUtils.isNotBlank(permissionSql)) {
             queryWrapper.last(permissionSql + " ORDER BY create_time DESC");
         } else {
@@ -1307,6 +1321,9 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         //平台类型
         base.setBusinessMode(customer.getBusinessMode());
         base.setBusinessModeName(CustomerInfoBusinessModeEnum.getName(customer.getBusinessMode()));
+
+        base.setDefaultShippingWarehouse(customer.getDefaultShippingWarehouse());
+        base.setDefaultReceiveAccount(customer.getDefaultReceiveAccount());
 
         return base;
     }
@@ -1424,12 +1441,12 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
     public Boolean processData() {
         List<CustomerInfoEntity> list = this.list();
         String type = DictBasicTypeEnum.SALES_PLATFORM.getType();
-        List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(type);
+        List<DictBasicEntity> dictList = dictBasicService.getByKey(type);
         for (CustomerInfoEntity item : list) {
             String platformType = item.getPlatformType();
             String platformTypeName = PlatformDictEnum.getByCode(platformType).getName();
             String newPlatformType = dictList.stream().filter(d -> d.getName().equals(platformTypeName)).
-                    findFirst().map(DictBasicDTO.ViewDTO::getValue).orElse("");
+                    findFirst().map(DictBasicEntity::getValue).orElse("");
             item.setPlatformType(newPlatformType);
         }
         return this.updateBatchById(list);
@@ -1453,14 +1470,14 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
         Map<String, List<DictCountryDTO.ListDTO>> countryNameMap = countryList.stream().collect(Collectors.groupingBy(DictCountryDTO.ListDTO::getNameCn));
         // 平台类型
-        List<DictBasicDTO.ViewDTO> platFormList = dictBasicService.getByKey(DictBasicTypeEnum.SALES_PLATFORM.getType());
-        Map<String, DictBasicDTO.ViewDTO> platformNameMap = platFormList.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getName, Function.identity()));
+        List<DictBasicEntity> platFormList = dictBasicService.getByKey(DictBasicTypeEnum.SALES_PLATFORM.getType());
+        Map<String, DictBasicEntity> platformNameMap = platFormList.stream().collect(Collectors.toMap(DictBasicEntity::getName, Function.identity()));
         // 客户类别
-        List<DictBasicDTO.ViewDTO> customerCategoryList = dictBasicService.getByKey("customerCompanyCategory");
-        Map<String, DictBasicDTO.ViewDTO> customerCategoryNameMap = customerCategoryList.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getName, Function.identity()));
+        List<DictBasicEntity> customerCategoryList = dictBasicService.getByKey("customerCompanyCategory");
+        Map<String, DictBasicEntity> customerCategoryNameMap = customerCategoryList.stream().collect(Collectors.toMap(DictBasicEntity::getName, Function.identity()));
         // 结算方式
-        List<DictBasicDTO.ViewDTO> settleModeList = dictBasicService.getByKey("settleMode");
-        Map<String, DictBasicDTO.ViewDTO> settleModeNameMap = settleModeList.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getName, Function.identity()));
+        List<DictBasicEntity> settleModeList = dictBasicService.getByKey("settleMode");
+        Map<String, DictBasicEntity> settleModeNameMap = settleModeList.stream().collect(Collectors.toMap(DictBasicEntity::getName, Function.identity()));
         // 币别
         List<DictCurrencyEntity> currencyList = sysUserFeign.currencyList();
         Map<String, DictCurrencyEntity> currencyNameMap = currencyList.stream().collect(Collectors.toMap(DictCurrencyEntity::getName, Function.identity()));
@@ -2214,7 +2231,7 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
 
         //平台信息
         String type = DictBasicTypeEnum.SALES_PLATFORM.getType();
-        List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(type);
+        List<DictBasicEntity> dictList = dictBasicService.getByKey(type);
 
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
         customerIdList.forEach(obj -> dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.CUSTOMER_INFO.getCode(), obj)));
@@ -2251,10 +2268,10 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         }
 
         //公司类别
-        List<DictBasicDTO.ViewDTO> customerCategoryList = dictBasicService.getByKey("customerCompanyCategory");
+        List<DictBasicEntity> customerCategoryList = dictBasicService.getByKey("customerCompanyCategory");
         Map<String,String> customerCategoryMap = new HashMap<>();
         if(CollectionUtils.isNotEmpty(customerCategoryList)){
-            customerCategoryMap = customerCategoryList.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getId, DictBasicDTO.ViewDTO::getName));
+            customerCategoryMap = customerCategoryList.stream().collect(Collectors.toMap(DictBasicEntity::getId, DictBasicEntity::getName));
         }
 
         for (CustomerDTO.PagingExportDTO item : records) {
@@ -2336,7 +2353,7 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
 
         //平台信息
         String type = DictBasicTypeEnum.SALES_PLATFORM.getType();
-        List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(type);
+        List<DictBasicEntity> dictList = dictBasicService.getByKey(type);
 
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
         customerIdList.forEach(obj -> dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.CUSTOMER_INFO.getCode(), obj)));
@@ -2373,10 +2390,10 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         }
 
         //公司类别
-        List<DictBasicDTO.ViewDTO> customerCategoryList = dictBasicService.getByKey("customerCompanyCategory");
+        List<DictBasicEntity> customerCategoryList = dictBasicService.getByKey("customerCompanyCategory");
         Map<String,String> customerCategoryMap = new HashMap<>();
         if(CollectionUtils.isNotEmpty(customerCategoryList)){
-            customerCategoryMap = customerCategoryList.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getValue, DictBasicDTO.ViewDTO::getName));
+            customerCategoryMap = customerCategoryList.stream().collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName));
         }
         //销售部门id
         List<String> salesDeptIdList = records.stream().map(CustomerDTO.PagingExportDTO::getSalesDeptId).distinct().collect(Collectors.toList());
@@ -2640,5 +2657,47 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         }
 
         return customerInfoEntity.getId();
+    }
+
+    @Override
+    public void applyB2bOrderCustomerDefaults(PlatformB2bOrderDTO dto, CustomerInfoEntity customerInfo) {
+        if (dto == null || customerInfo == null) {
+            return;
+        }
+        if (StringUtils.isBlank(dto.getWarehouseId()) && StringUtils.isNotBlank(customerInfo.getDefaultShippingWarehouse())) {
+            dto.setWarehouseId(customerInfo.getDefaultShippingWarehouse());
+        }
+        if (StringUtils.isBlank(dto.getReceiveAccount()) && StringUtils.isNotBlank(customerInfo.getDefaultReceiveAccount())) {
+            dto.setReceiveAccount(customerInfo.getDefaultReceiveAccount());
+        }
+    }
+
+    /** 默认仓库/账号有值时同步校验有效性；WMS 不可用会阻断保存，属有意设计，异步校验需产品方案后再改。 */
+    private void validateCustomerDefaultFields(String defaultShippingWarehouse, String defaultReceiveAccount) {
+        if (StringUtils.isNotBlank(defaultShippingWarehouse)) {
+            List<WarehouseDTO.UpdateDTO> warehouseList;
+            try {
+                warehouseList = wmsTaskFeign.listWarehouseByIds(Collections.singletonList(defaultShippingWarehouse));
+            } catch (ServiceException e) {
+                log.warn("校验默认发货仓库失败(Feign调用异常), warehouseId={}", defaultShippingWarehouse, e);
+                throw new ServiceException("校验默认发货仓库失败，请稍后重试");
+            } catch (Exception e) {
+                log.error("校验默认发货仓库失败(未知异常), warehouseId={}", defaultShippingWarehouse, e);
+                throw new ServiceException("校验默认发货仓库失败，请联系管理员");
+            }
+            if (warehouseList == null || warehouseList.isEmpty()) {
+                throw new ServiceException("默认发货仓库不存在或已禁用");
+            }
+            WarehouseDTO.UpdateDTO warehouse = warehouseList.get(0);
+            if (warehouse == null || Boolean.TRUE.equals(warehouse.getDisabled())) {
+                throw new ServiceException("默认发货仓库不存在或已禁用");
+            }
+        }
+        if (StringUtils.isNotBlank(defaultReceiveAccount)) {
+            BankAccountEntity account = bankAccountService.getById(defaultReceiveAccount);
+            if (account == null || Boolean.TRUE.equals(account.getDisabled())) {
+                throw new ServiceException("默认收款账号不存在或已禁用");
+            }
+        }
     }
 }

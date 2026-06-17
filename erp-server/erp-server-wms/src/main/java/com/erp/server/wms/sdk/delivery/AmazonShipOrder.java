@@ -22,6 +22,7 @@ import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.wms.dto.DictBasicDTO;
+import com.erp.model.wms.entity.DictBasicEntity;
 import com.erp.rpc.dmp.feign.DmpAmazonFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
@@ -164,14 +165,14 @@ public class AmazonShipOrder extends AbstractShipOrder {
 
             // 非线上环境需要指定订单ID
             if (!BusinessCommonConstants.hasProfile("prod")){
-                List<DictBasicDTO.ListDTO> warehouseTypes = dictBasicService.getByKey("amazonAllowShipOrderId");
+                List<DictBasicEntity> warehouseTypes = dictBasicService.getByKey("amazonAllowShipOrderId");
                 if (CollectionUtils.isEmpty(warehouseTypes)){
                     log.warn("【{}】不存在指定的订单ID配置,不请求亚马逊接口:请求参数={}", mainEntity.getPlatformCode(), JSONUtil.toJsonStr(body));
                     signShippedDetailList.addAll(detailEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList()));
                     continue;
                 }
                 // 允许通过的ID
-                DictBasicDTO.ListDTO configAllowPlatformOrderDTO = warehouseTypes.stream().filter(e -> mainEntity.getPlatformCode().equalsIgnoreCase(e.getValue())).findFirst().orElse(null);
+                DictBasicEntity configAllowPlatformOrderDTO = warehouseTypes.stream().filter(e -> mainEntity.getPlatformCode().equalsIgnoreCase(e.getValue())).findFirst().orElse(null);
                 if (null == configAllowPlatformOrderDTO){
                     log.warn("【{}】不属于配置指定的订单ID,不请求亚马逊接口:请求参数={}", mainEntity.getPlatformCode(), JSONUtil.toJsonStr(body));
                     signShippedDetailList.addAll(detailEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList()));

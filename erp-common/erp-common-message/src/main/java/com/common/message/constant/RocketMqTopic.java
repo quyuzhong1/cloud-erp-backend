@@ -151,6 +151,7 @@ public class RocketMqTopic {
     public static final String WMS_VIRTUAL_DETAIL_MSG_TOPIC = "${spring.cloud.nacos.discovery.namespace}-wms_virtual_detail_msg_topic";
     /**
      * 同步track123 物流轨迹更新记录
+     * 注意：原 Track123 专用，现快递100 小包/海运拉取也复用此 topic 推进 update_time 游标（仅刷新时间，与轨迹数据回写无关）
      */
     public static final String TMS_123_LOGISTICS_TRACK = "${spring.cloud.nacos.discovery.namespace}-tms_track123_logistics_track_msg_topic";
 
