@@ -28,6 +28,9 @@ public class LogisticsReconDetailQueryHandler extends AbstractQueryHandler {
         return "";
     }
 
+    /**
+     * 将费用项 match_status 枚举码转为 SQL 条件片段（别名 sub）。
+     */
     private String matchStatusSql(String status) {
         if (LogisticsReconDetailMatchStatusEnum.UNMATCHED.getCode().equals(status)) {
             return "sub.match_status = 'unmatched'";
@@ -44,6 +47,9 @@ public class LogisticsReconDetailQueryHandler extends AbstractQueryHandler {
         return "";
     }
 
+    /**
+     * 关键字模糊匹配：物流跟踪号 / 运单号 / 销售单号 / 平台订单号。
+     */
     private String buildKeywordSql(Object value) {
         if (value == null) {
             return "";
@@ -57,6 +63,9 @@ public class LogisticsReconDetailQueryHandler extends AbstractQueryHandler {
                 + "OR d.so_code LIKE '%" + escaped + "%' OR d.platform_order_no LIKE '%" + escaped + "%')";
     }
 
+    /**
+     * 将查询入参（单值 / 集合 / 逗号分隔字符串）规范为状态码列表。
+     */
     private List<String> toCodeList(Object value) {
         List<String> list = new ArrayList<>();
         if (value instanceof Collection) {
@@ -69,6 +78,9 @@ public class LogisticsReconDetailQueryHandler extends AbstractQueryHandler {
         return list;
     }
 
+    /**
+     * 解析单个状态码并追加到列表（兼容 JSON 数组样式字符串）。
+     */
     private void addCode(List<String> list, Object value) {
         if (value == null) {
             return;
@@ -86,6 +98,9 @@ public class LogisticsReconDetailQueryHandler extends AbstractQueryHandler {
         }
     }
 
+    /**
+     * 将多个状态码条件用 OR 拼接为括号表达式。
+     */
     private String buildOrCondition(List<String> codes, SqlBuilder builder) {
         List<String> parts = new ArrayList<>();
         for (String code : codes) {
@@ -100,6 +115,9 @@ public class LogisticsReconDetailQueryHandler extends AbstractQueryHandler {
         return "(" + String.join(" OR ", parts) + ")";
     }
 
+    /**
+     * 单状态码 → SQL 片段构建器。
+     */
     private interface SqlBuilder {
         String build(String value);
     }

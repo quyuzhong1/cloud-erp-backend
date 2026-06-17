@@ -42,8 +42,10 @@ import com.erp.model.tms.dto.TmsCostDetailDTO;
 import com.erp.model.tms.dto.excel.ImportHistoryRecordExcelDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
+import com.erp.server.tms.constant.LogisticsCostImportTargetFieldConstant;
 import com.erp.server.tms.util.CfgLogisticsCostImportEtlRuleHelper;
 import com.erp.server.tms.util.LogisticsBillPlatformCodeUtil;
+import com.erp.server.tms.util.LogisticsCostImportMatchHelper;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -94,7 +96,6 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
     private static final String COST_ITEM_FIELD = "costItem";
     private static final String ACTUAL_AMOUNT_FIELD = "actualAmount";
     private static final String ESTIMATED_AMOUNT_FIELD = "estimatedAmount";
-    private static final String PLATFORM_CODE_FIELD = "platformCode";
     private static final String LOGISTICS_WEIGHT_UNIT_FIELD = "logisticsWeightUnit";
     private static final String BILLING_WEIGHT_LOGISTICS_FIELD = "billingWeightLogistics";
     private static final String THIRD_ACTUAL_WEIGHT_FIELD = "thirdActualWeight";
@@ -650,7 +651,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
      * <p>platformCode 与其他字段不同，数据库侧可能以逗号存储多个平台订单号，需要单独处理多对一分组。</p>
      */
     private boolean containsPlatformCodeUniqueKey(List<CfgLogisticsCostImportDetailEntity> uniqueKeyList) {
-        return uniqueKeyList.stream().anyMatch(uniqueKey -> CharSequenceUtil.equals(PLATFORM_CODE_FIELD, uniqueKey.getTargetField()));
+        return uniqueKeyList.stream().anyMatch(uniqueKey -> CharSequenceUtil.equals(LogisticsCostImportTargetFieldConstant.PLATFORM_CODE, uniqueKey.getTargetField()));
     }
 
     private Map<String, List<LogisticsBillDTO.LogisticsBillVo>> buildLogisticsBillVoIndex(List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVos,
@@ -673,7 +674,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 if (ObjectUtil.isNull(billValue)) {
                     continue;
                 }
-                if (CharSequenceUtil.equals(PLATFORM_CODE_FIELD, field)) {
+                if (CharSequenceUtil.equals(LogisticsCostImportTargetFieldConstant.PLATFORM_CODE, field)) {
                     LogisticsBillPlatformCodeUtil.splitPlatformCodes(String.valueOf(billValue))
                             .forEach(platformCode -> putLogisticsBillVoIndex(billVoIndex, field, platformCode, logisticsBillVo));
                     continue;
@@ -703,7 +704,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 if (ObjectUtil.isNull(billValue)) {
                     continue;
                 }
-                if (CharSequenceUtil.equals(PLATFORM_CODE_FIELD, field)) {
+                if (CharSequenceUtil.equals(LogisticsCostImportTargetFieldConstant.PLATFORM_CODE, field)) {
                     LogisticsBillPlatformCodeUtil.splitPlatformCodes(String.valueOf(billValue))
                             .forEach(platformCode -> putLogisticsBillVoIndex(billVoIndex, field, platformCode, logisticsBillVo));
                     continue;
@@ -812,7 +813,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 .filter(entry -> CharSequenceUtil.isNotBlank(entry.getKey()) && CharSequenceUtil.isNotBlank(entry.getValue()))
                 .allMatch(entry -> {
                     Object billValue = BeanUtil.getFieldValue(logisticsBillVo, entry.getKey());
-                    if (CharSequenceUtil.equals(PLATFORM_CODE_FIELD, entry.getKey())) {
+                    if (CharSequenceUtil.equals(LogisticsCostImportTargetFieldConstant.PLATFORM_CODE, entry.getKey())) {
                         return LogisticsBillPlatformCodeUtil.matches(entry.getValue(), ObjectUtil.isNull(billValue) ? null : String.valueOf(billValue));
                     }
                     return CharSequenceUtil.equals(entry.getValue(), ObjectUtil.isNull(billValue) ? null : String.valueOf(billValue));
@@ -1276,60 +1277,79 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             fillOrderWeightPreQuery(distinctLogisticsBillVoList(multiBillVoList), preQueryResult);
         }
 
-        // 逐行匹配并构造落库数据，校验失败按行收集，不中断其它行
-        List<LogisticsBillCostDTO.ImportDataDTO> importDataList = new ArrayList<>();
-        Map<String, LogisticsBillCostDTO.ImportDataDTO> rowImportDataMap = new LinkedHashMap<>();
+        // 与费用项导入一致：按识别号（platformCode 按命中物流单集合）分组合并费用后再匹配分摊
+        Map<String, List<LogisticsReconMatchDTO.MatchRowDTO>> groupRowsMap = new LinkedHashMap<>();
+        Map<String, List<String>> groupToOriginalRowKeys = new LinkedHashMap<>();
         for (LogisticsReconMatchDTO.MatchRowDTO row : ctx.getRows()) {
-            LogisticsReconMatchDTO.MatchResultDTO result = new LogisticsReconMatchDTO.MatchResultDTO();
-            result.setRowKey(row.getRowKey());
-            results.add(result);
-
             List<LogisticsBillDTO.LogisticsBillVo> matchedBillList = rowMatchedMap.get(row.getRowKey());
-            if (CollUtil.isEmpty(matchedBillList)) {
-                result.setSuccess(false);
-                result.setFailReason("未找到对应物流单");
+            String groupKey = buildReconRowGroupKey(row, uniqueKeyList, matchedBillList);
+            groupRowsMap.computeIfAbsent(groupKey, key -> new ArrayList<>()).add(row);
+            groupToOriginalRowKeys.computeIfAbsent(groupKey, key -> new ArrayList<>()).add(row.getRowKey());
+        }
+
+        List<LogisticsBillCostDTO.ImportDataDTO> importDataList = new ArrayList<>();
+        Map<String, LogisticsBillCostDTO.ImportDataDTO> groupImportDataMap = new LinkedHashMap<>();
+        Map<String, LogisticsReconMatchDTO.MatchRowDTO> mergedRowMap = new LinkedHashMap<>();
+        List<LogisticsReconMatchDTO.MatchResultDTO> groupResults = new ArrayList<>();
+        for (Map.Entry<String, List<LogisticsReconMatchDTO.MatchRowDTO>> groupEntry : groupRowsMap.entrySet()) {
+            String groupKey = groupEntry.getKey();
+            List<LogisticsReconMatchDTO.MatchRowDTO> groupRows = groupEntry.getValue();
+            LogisticsReconMatchDTO.MatchResultDTO groupResult = new LogisticsReconMatchDTO.MatchResultDTO();
+            groupResult.setRowKey(groupKey);
+            groupResults.add(groupResult);
+
+            List<String> consistencyErrors = new ArrayList<>();
+            List<LogisticsBillDTO.LogisticsBillVo> groupMatchedBillList =
+                    resolveReconGroupMatchedBillList(groupRows, rowMatchedMap, consistencyErrors);
+            if (CollUtil.isNotEmpty(consistencyErrors)) {
+                groupResult.setSuccess(false);
+                groupResult.setFailReason(FieldValidUtil.getMsgSort(consistencyErrors));
                 continue;
             }
-            if (ctx.isRequireUnique() && matchedBillList.size() > 1) {
-                result.setSuccess(false);
-                result.setFailReason("识别号匹配到多张物流单，无法匹配到唯一单号");
+            if (CollUtil.isEmpty(groupMatchedBillList)) {
+                groupResult.setSuccess(false);
+                groupResult.setFailReason("未找到对应物流单");
                 continue;
             }
+
+            LogisticsReconMatchDTO.MatchRowDTO mergedRow = mergeReconMatchRows(groupRows);
+            mergedRow.setRowKey(groupKey);
+            mergedRowMap.put(groupKey, mergedRow);
 
             List<String> errorMsgList = new ArrayList<>();
             Map<String, LogisticsReconMatchDTO.ResolvedCfgCostDTO> resolvedCfgCostBySubId = new LinkedHashMap<>();
             List<TmsCostDetailDTO.UpdateDTO> mergeCostDetail =
-                    buildReconCostDetail(row, preQueryResult.getCfgCostList(), currencyLookupMap, currencyRateMap,
+                    buildReconCostDetail(mergedRow, preQueryResult.getCfgCostList(), currencyLookupMap, currencyRateMap,
                             costImportEntity, cfgImportDetailList, errorMsgList, resolvedCfgCostBySubId);
             if (CollUtil.isNotEmpty(errorMsgList)) {
-                result.setSuccess(false);
-                result.setFailReason(FieldValidUtil.getMsgSort(errorMsgList));
+                groupResult.setSuccess(false);
+                groupResult.setFailReason(FieldValidUtil.getMsgSort(errorMsgList));
                 continue;
             }
 
-            JSONObject successJson = buildReconSuccessJson(row);
+            JSONObject successJson = buildReconSuccessJson(mergedRow);
             LogisticsBillCostDTO.ImportDataDTO importDataDTO;
             try {
                 importDataDTO = handleImportData(uniqueKeyList, successJson, mergeCostDetail,
                         preQueryResult.getLogisticsBillCostList(), preQueryResult.getCfgCostList(), importDTO,
                         costImportEntity, errorMsgList, preQueryResult.getMainIdListMap(),
-                        preQueryResult.getOrderWeightMap(), preQueryResult.getOrderWeightErrorMap(), matchedBillList);
+                        preQueryResult.getOrderWeightMap(), preQueryResult.getOrderWeightErrorMap(), groupMatchedBillList);
             } catch (Exception e) {
-                log.error("[reconMatch] 行匹配失败 rowKey={}", row.getRowKey(), e);
-                result.setSuccess(false);
-                result.setFailReason(ObjectUtil.defaultIfNull(e.getMessage(), e.toString()));
+                log.error("[reconMatch] 分组匹配失败 groupKey={}", groupKey, e);
+                groupResult.setSuccess(false);
+                groupResult.setFailReason(ObjectUtil.defaultIfNull(e.getMessage(), e.toString()));
                 continue;
             }
             if (CollUtil.isNotEmpty(errorMsgList)) {
-                result.setSuccess(false);
-                result.setFailReason(FieldValidUtil.getMsgSort(errorMsgList));
+                groupResult.setSuccess(false);
+                groupResult.setFailReason(FieldValidUtil.getMsgSort(errorMsgList));
                 continue;
             }
-            result.setSuccess(true);
-            result.setImportType(importDataDTO.getImportType());
-            result.setResolvedCfgCostBySubId(resolvedCfgCostBySubId);
+            groupResult.setSuccess(true);
+            groupResult.setImportType(importDataDTO.getImportType());
+            groupResult.setResolvedCfgCostBySubId(resolvedCfgCostBySubId);
             importDataList.add(importDataDTO);
-            rowImportDataMap.put(row.getRowKey(), importDataDTO);
+            groupImportDataMap.put(groupKey, importDataDTO);
         }
 
         // 复用导入落库：新增/更新物流单、物流费用单、费用项（短事务分片，与 Feign 预查询分离）
@@ -1340,20 +1360,112 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 importHistoryRecordService.persistReconMatchImportData(batch, importDTO.getProcessingType());
             }
         }
-        Map<String, LogisticsReconMatchDTO.MatchRowDTO> rowMap = ctx.getRows().stream()
-                .collect(Collectors.toMap(LogisticsReconMatchDTO.MatchRowDTO::getRowKey, row -> row, (first, second) -> first));
         Map<String, List<TmsCostDetailEntity>> reconBillRefCostDetailMap =
-                buildReconBillRefCostDetailMap(rowImportDataMap);
-        for (LogisticsReconMatchDTO.MatchResultDTO result : results) {
-            if (!result.isSuccess()) {
+                buildReconBillRefCostDetailMap(groupImportDataMap);
+        for (LogisticsReconMatchDTO.MatchResultDTO groupResult : groupResults) {
+            if (!groupResult.isSuccess()) {
                 continue;
             }
-            LogisticsReconMatchDTO.MatchRowDTO row = rowMap.get(result.getRowKey());
-            LogisticsBillCostDTO.ImportDataDTO importDataDTO = rowImportDataMap.get(result.getRowKey());
-            result.setBillRefs(buildReconBillRefs(row, importDataDTO, preQueryResult.getCfgCostList(),
+            LogisticsReconMatchDTO.MatchRowDTO mergedRow = mergedRowMap.get(groupResult.getRowKey());
+            LogisticsBillCostDTO.ImportDataDTO importDataDTO = groupImportDataMap.get(groupResult.getRowKey());
+            groupResult.setBillRefs(buildReconBillRefs(mergedRow, importDataDTO, preQueryResult.getCfgCostList(),
                     costImportEntity, cfgImportDetailList, reconBillRefCostDetailMap));
         }
+        return fanOutReconMatchResults(groupResults, groupToOriginalRowKeys);
+    }
+
+    /**
+     * 将分组匹配结果按原始行键（费用项 id）展开，供对账单 ref 回写使用。
+     */
+    private List<LogisticsReconMatchDTO.MatchResultDTO> fanOutReconMatchResults(
+            List<LogisticsReconMatchDTO.MatchResultDTO> groupResults,
+            Map<String, List<String>> groupToOriginalRowKeys) {
+        List<LogisticsReconMatchDTO.MatchResultDTO> results = new ArrayList<>();
+        for (LogisticsReconMatchDTO.MatchResultDTO groupResult : groupResults) {
+            List<String> originalRowKeys = groupToOriginalRowKeys.get(groupResult.getRowKey());
+            if (CollUtil.isEmpty(originalRowKeys)) {
+                results.add(groupResult);
+                continue;
+            }
+            for (String originalRowKey : originalRowKeys) {
+                LogisticsReconMatchDTO.MatchResultDTO rowResult = new LogisticsReconMatchDTO.MatchResultDTO();
+                rowResult.setRowKey(originalRowKey);
+                rowResult.setSuccess(groupResult.isSuccess());
+                rowResult.setFailReason(groupResult.getFailReason());
+                rowResult.setImportType(groupResult.getImportType());
+                rowResult.setResolvedCfgCostBySubId(groupResult.getResolvedCfgCostBySubId());
+                rowResult.setBillRefs(groupResult.getBillRefs());
+                results.add(rowResult);
+            }
+        }
         return results;
+    }
+
+    /**
+     * 对账匹配分组键：与导入 {@link #buildImportRowGroupKey} 规则一致。
+     */
+    private String buildReconRowGroupKey(LogisticsReconMatchDTO.MatchRowDTO row,
+                                          List<CfgLogisticsCostImportDetailEntity> uniqueKeyList,
+                                          List<LogisticsBillDTO.LogisticsBillVo> matchedBillList) {
+        JSONObject json = new JSONObject();
+        if (row.getIdentifyValues() != null) {
+            row.getIdentifyValues().forEach((field, value) -> {
+                if (CharSequenceUtil.isNotBlank(field) && CharSequenceUtil.isNotBlank(value)) {
+                    json.set(field, value);
+                }
+            });
+        }
+        return buildImportRowGroupKey(json, uniqueKeyList, matchedBillList);
+    }
+
+    /**
+     * 校验同识别分组内各行命中的物流单集合一致（与导入 resolveGroupMatchedLogisticsBillVoList 一致）。
+     */
+    private List<LogisticsBillDTO.LogisticsBillVo> resolveReconGroupMatchedBillList(
+            List<LogisticsReconMatchDTO.MatchRowDTO> groupRows,
+            Map<String, List<LogisticsBillDTO.LogisticsBillVo>> rowMatchedMap,
+            List<String> errorMsgList) {
+        if (CollUtil.isEmpty(groupRows)) {
+            return Collections.emptyList();
+        }
+        List<LogisticsBillDTO.LogisticsBillVo> firstMatchedList = rowMatchedMap.get(groupRows.get(0).getRowKey());
+        if (firstMatchedList == null) {
+            firstMatchedList = Collections.emptyList();
+        }
+        String firstBillSetKey = buildMatchedBillSetKey(firstMatchedList);
+        for (int i = 1; i < groupRows.size(); i++) {
+            List<LogisticsBillDTO.LogisticsBillVo> currentMatchedList = rowMatchedMap.get(groupRows.get(i).getRowKey());
+            if (!CharSequenceUtil.equals(firstBillSetKey, buildMatchedBillSetKey(currentMatchedList))) {
+                errorMsgList.add("同一识别单号分组命中的物流单不一致，无法合并分摊费用");
+                return Collections.emptyList();
+            }
+        }
+        return firstMatchedList;
+    }
+
+    /**
+     * 合并同识别分组内多行费用项（计费重/实重等取首行，与导入分组后使用同一 successJson 一致）。
+     */
+    private LogisticsReconMatchDTO.MatchRowDTO mergeReconMatchRows(List<LogisticsReconMatchDTO.MatchRowDTO> groupRows) {
+        LogisticsReconMatchDTO.MatchRowDTO first = groupRows.get(0);
+        LogisticsReconMatchDTO.MatchRowDTO merged = new LogisticsReconMatchDTO.MatchRowDTO();
+        merged.setPayType(first.getPayType());
+        merged.setCurrency(first.getCurrency());
+        merged.setBillingWeightLogistics(first.getBillingWeightLogistics());
+        merged.setThirdActualWeight(first.getThirdActualWeight());
+        merged.setWeightUnit(first.getWeightUnit());
+        merged.setThirdLength(first.getThirdLength());
+        merged.setThirdWidth(first.getThirdWidth());
+        merged.setThirdHeight(first.getThirdHeight());
+        merged.setIdentifyValues(first.getIdentifyValues() == null ? new HashMap<>() : new HashMap<>(first.getIdentifyValues()));
+        List<LogisticsReconMatchDTO.MatchCostItemDTO> costItems = new ArrayList<>();
+        for (LogisticsReconMatchDTO.MatchRowDTO row : groupRows) {
+            if (CollUtil.isNotEmpty(row.getCostItems())) {
+                costItems.addAll(row.getCostItems());
+            }
+        }
+        merged.setCostItems(costItems);
+        return merged;
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -2241,7 +2353,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         return uniqueKeyList.stream().allMatch(uniqueKey -> {
             String importValue = getPreparedValue(successJson, uniqueKey);
             Object billValue = BeanUtil.getFieldValue(logisticsBillVo, uniqueKey.getTargetField());
-            if (CharSequenceUtil.equals(PLATFORM_CODE_FIELD, uniqueKey.getTargetField())) {
+            if (CharSequenceUtil.equals(LogisticsCostImportTargetFieldConstant.PLATFORM_CODE, uniqueKey.getTargetField())) {
                 return LogisticsBillPlatformCodeUtil.matches(importValue, ObjectUtil.isNull(billValue) ? null : String.valueOf(billValue));
             }
             return CharSequenceUtil.equals(importValue, ObjectUtil.isNull(billValue) ? null : String.valueOf(billValue));
@@ -2249,34 +2361,22 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
     }
 
     /**
-     * 物流商/平台模板只允许处理自身配置范围内的物流单，避免跨模板误写费用。
-     * <p>按识别单号（identify_no）时不按配置平台过滤；按识别单号+物流商（identify_no_supplier）或空值时保持原有过滤。</p>
+     * 判断物流单是否落在费用项导入配置的平台范围内。
+     * 委托 {@link LogisticsCostImportMatchHelper#matchesCostImportConfig}。
      */
     private boolean matchesCostImportConfig(CfgLogisticsCostImportEntity costImportEntity, LogisticsBillDTO.LogisticsBillVo logisticsBillVo) {
-        if (!shouldFilterByCostImportPlatform(costImportEntity)) {
-            return true;
-        }
-        String cfgType = costImportEntity.getCfgType();
-        String dictPlatform = costImportEntity.getDictPlatform();
-        if (CharSequenceUtil.equals(CfgLogisticsCostImportCfgTypeEnum.LOGISTICS_SUPPLIER.getCode(), cfgType)) {
-            return CharSequenceUtil.equals(dictPlatform, logisticsBillVo.getLogisticsSupplierId());
-        }
-        if (CharSequenceUtil.equals(CfgLogisticsCostImportCfgTypeEnum.PLATFORM.getCode(), cfgType)) {
-            return CharSequenceUtil.equals(dictPlatform, logisticsBillVo.getSalesPlatform());
-        }
-        return true;
+        return LogisticsCostImportMatchHelper.matchesCostImportConfig(costImportEntity, logisticsBillVo);
     }
 
     /**
-     * 是否按配置平台（物流商/销售平台）收窄物流单匹配范围。
-     * identify_no 为 false：分组阶段可跨物流商命中，费用分摊与落库在 handleImportData 内再按状态筛选。
+     * 是否按费用项导入配置的平台维度收窄物流单匹配范围。
+     * 委托 {@link LogisticsCostImportMatchHelper#shouldFilterByCostImportPlatform}，与对账匹配共用同一套识别维度规则。
+     *
+     * @param costImportEntity 费用项导入配置
+     * @return true 表示需按 cfg_type + dict_platform 过滤物流商/销售平台；false 表示仅按识别单号匹配、不收窄平台
      */
     private boolean shouldFilterByCostImportPlatform(CfgLogisticsCostImportEntity costImportEntity) {
-        String identifyType = costImportEntity.getIdentifyType();
-        if (CharSequenceUtil.isBlank(identifyType)) {
-            return true;
-        }
-        return CharSequenceUtil.equals(CfgLogisticsCostImportIdentifyTypeEnum.IDENTIFY_NO_SUPPLIER.getCode(), identifyType);
+        return LogisticsCostImportMatchHelper.shouldFilterByCostImportPlatform(costImportEntity);
     }
 
     /**

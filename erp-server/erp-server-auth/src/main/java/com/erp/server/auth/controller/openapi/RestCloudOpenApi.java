@@ -50,11 +50,13 @@ public class RestCloudOpenApi {
     }
 
     /**
-     * 导入的Excel数据（预处理、导入、导入确认）
+     * 开放接口：物流 Excel 导入（已切换为物流商对账单导入，入参契约保持不变）。
+     * <p>processingType：preprocessing / import → 仅落库待确认；confirmImport → 落库并已确认。</p>
+     *
      * @author will
      * @date 2026/1/20 18:43
-     * @param dto
-     * @return ApiResult<Object>
+     * @param dto 业务类型、费用类型、对账月份、文件列表及处理类型
+     * @return 各文件异步导入任务结果
      */
     @OpenApi("preprocessingImportExcel")
     public ApiResult<List<BatchResultDTO>>  preprocessingImportExcel(@Valid ImportHistoryRecordDTO.ImportDTO dto) {

@@ -15,10 +15,20 @@ import java.util.Map;
 @Getter
 public class LogisticsReconMatchExecutionResultDTO {
 
+    /** 逐行（或逐费用项）匹配结果 */
     private final List<LogisticsReconMatchDTO.MatchResultDTO> matchResults;
+
+    /** 行键 → 对账明细 id */
     private final Map<String, String> rowKeyToDetailId;
+
+    /** 行键 → 参与匹配的费用项列表 */
     private final Map<String, List<LogisticsReconDetailSubEntity>> rowKeyToSubs;
 
+    /**
+     * @param matchResults     匹配服务返回的逐单元结果
+     * @param rowKeyToDetailId 行键与明细 id 映射
+     * @param rowKeyToSubs     行键与费用项列表映射
+     */
     public LogisticsReconMatchExecutionResultDTO(List<LogisticsReconMatchDTO.MatchResultDTO> matchResults,
                                                  Map<String, String> rowKeyToDetailId,
                                                  Map<String, List<LogisticsReconDetailSubEntity>> rowKeyToSubs) {

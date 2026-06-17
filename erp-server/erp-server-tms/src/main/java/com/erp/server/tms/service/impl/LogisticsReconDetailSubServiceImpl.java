@@ -43,6 +43,7 @@ public class LogisticsReconDetailSubServiceImpl
      */
     private static final int UPDATE_BATCH_SIZE = 1000;
 
+    /** 主表整批匹配认领时可覆盖的前置 match_status */
     private static final List<String> MAIN_CLAIM_FROM_STATUSES = Arrays.asList(
             LogisticsReconDetailMatchStatusEnum.UNMATCHED.getCode(),
             LogisticsReconDetailMatchStatusEnum.FAILED.getCode());
@@ -107,8 +108,12 @@ public class LogisticsReconDetailSubServiceImpl
     /**
      * 原子认领：同事务内先 SELECT ... FOR UPDATE 锁定符合 fromMatchStatuses 的行，
      * 再仅更新被锁定的这些 id，返回值即本次真正认领成功的 id。
-     * 这样并发认领时后到的线程会阻塞，待前者提交后这些行已不在 fromMatchStatuses，
-     * 从而避免「SELECT 当前 matching 全集」导致的跨线程假阳性。
+     *
+     * @param detailSubIds       待认领费用项 id
+     * @param matchStatus        目标 match_status
+     * @param failReason         失败原因（仅置 failed 时写入）
+     * @param fromMatchStatuses  前置 match_status 条件（为空则不限制）
+     * @return 本次真正认领成功的费用项 id
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -189,6 +194,11 @@ public class LogisticsReconDetailSubServiceImpl
 
     /**
      * 单批认领整单可匹配费用项：短事务内先查候选 id，再 FOR UPDATE 原子认领。
+     * 排除 reconciliation_status=confirmed 的费用项。
+     *
+     * @param mainId    对账单 id
+     * @param batchSize 单批认领上限
+     * @return 认领成功的费用项 id
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
