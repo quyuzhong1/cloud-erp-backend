@@ -33,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
@@ -66,6 +67,9 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
     private LogisticsMappingFeign logisticsMappingFeign;
     @Resource
     private RuleLogisticsService ruleLogisticsService;
+
+    @Resource
+    private SoB2cCoreService soB2cCoreService;
 
 
     @Override
@@ -118,9 +122,14 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
                 resultDTOList.add(soB2cService.retryPackagePlan(id));
                 break;
             case GENERATE_OUTSTOCK:
-                Boolean flag = soOutstockFeign.afreshGenerateB2cOutstock(Arrays.asList(id));
-                BatchResultDTO outStockResultDTO = flag ? BatchResultDTO.success(id, soB2cEntity.getCode(), "重试成功") : BatchResultDTO.fail(id, soB2cEntity.getCode(), "重试失败");
-                resultDTOList.add(outStockResultDTO);
+                if (Boolean.TRUE.equals(soB2cEntity.hasPlatformWarehouseOrder())) {
+                    CompletableFuture.runAsync(() -> soB2cCoreService.handleOrderRetryConsumer(soB2cEntity));
+                    resultDTOList.add(BatchResultDTO.success(id, soB2cEntity.getCode(), "重试成功,稍后刷新查看结果"));
+                } else {
+                    Boolean flag = soOutstockFeign.afreshGenerateB2cOutstock(Arrays.asList(id));
+                    BatchResultDTO outStockResultDTO = flag ? BatchResultDTO.success(id, soB2cEntity.getCode(), "重试成功") : BatchResultDTO.fail(id, soB2cEntity.getCode(), "重试失败");
+                    resultDTOList.add(outStockResultDTO);
+                }
                 break;
             case INTERCEPT_SUCCESS:
                 resultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(), soB2cEntity.getCode(), "拦截成功，无需重试"));
