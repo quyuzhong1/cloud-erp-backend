@@ -1,5 +1,6 @@
 package com.erp.server.wms.convert;
 
+import com.common.business.dto.AttachDTO;
 import com.erp.model.wms.dto.FileManagementDTO;
 import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.dto.WmsVirtualDetailMsgDTO;
@@ -52,4 +53,7 @@ public interface WmsAttachmentConverter {
     @Mapping(target = "attachSizeStr",source = "attachSize",qualifiedByName = "decimal2ToPlainString")
     FileManagementDTO.VersionDTO entityToVersionDTO(WmsAttachmentEntity attachmentEntity);
     List<FileManagementDTO.VersionDTO> entityToVersionDTO(List<WmsAttachmentEntity> attachmentEntityList);
+
+    AttachDTO entityToAttachDTO(WmsAttachmentEntity entity);
+    List<AttachDTO> entityListToAttachDTOList(List<WmsAttachmentEntity> entityList);
 }
