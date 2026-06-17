@@ -7,6 +7,7 @@ import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqNewTag;
 import com.common.message.constant.RocketMqTopic;
 import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
+import com.erp.model.tms.entity.TmsAsyncTaskRecordEntity;
 import com.erp.model.tms.enums.TmsAsyncTaskMethodTypeEnum;
 import com.erp.server.tms.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +27,7 @@ import java.util.Objects;
 @RocketMQMessageListener(topic = RocketMqTopic.TMS_ASYNC_TASK_RECORD_TOPIC,
         selectorExpression = RocketMqNewTag.TMS_ASYNC_TASK_RECORD_TAG,
         consumerGroup = RocketMqConsumerGroup.TMS_ASYNC_TASK_RECORD_CONSUMER)
-public class TmsAsyncTaskConsumerService implements RocketMQListener<String> {
+public class TmsAsyncTaskConsumerService implements RocketMQListener<TmsAsyncTaskRecordEntity> {
 
     @Resource
     private FirstMileCostAllocationService firstMileCostAllocationService;
@@ -55,22 +56,26 @@ public class TmsAsyncTaskConsumerService implements RocketMQListener<String> {
      * 已迁移任务优先按 TaskEnvelope 路由；未迁移任务继续按 PushParamsDTO 解析，
      * 以便小包试点和历史 TMS 异步任务在迁移期间共存。
      *
-     * @param message MQ 原始 JSON 消息
+     * @param taskRecord MQ 任务记录消息
      */
     @Override
-    public void onMessage(String message) {
-        TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope = asyncTaskRecordService.parseEnvelope(message);
-        TmsAsyncTaskRecordDTO.PushParamsDTO dto = envelope == null ? parseLegacyPushParams(message) : buildDispatchParams(envelope);
-        if (Objects.isNull(dto) || StringUtils.isBlank(dto.getTaskId()) || StringUtils.isBlank(dto.getBusinessType())) {
+    public void onMessage(TmsAsyncTaskRecordEntity taskRecord) {
+        if (Objects.isNull(taskRecord) || StringUtils.isBlank(taskRecord.getId())) {
             log.warn("TMS异步任务MQ消息为空，跳过消费");
             return;
         }
+        TmsAsyncTaskRecordDTO.PushParamsDTO dto = buildRuntimePushParams(taskRecord);
         String taskId = dto.getTaskId();
         String businessType = dto.getBusinessType();
+        String methodType = dto.getMethodType();
+        if (StringUtils.isBlank(businessType)) {
+            log.warn("TMS异步任务业务类型为空，跳过消费，taskId: {}", taskId);
+            asyncTaskRecordService.finishTaskWithError(taskId, "TMS异步任务业务类型为空");
+            return;
+        }
         log.info("开始消费TMS异步任务，taskId: {}, businessType: {}", taskId, businessType);
         //头程对账单
         if(Objects.equals(businessType,SourceTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode())){
-            String methodType = dto.getMethodType();
             if (StringUtils.isBlank(methodType) || Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode())) {
                 tmsFirstMileReconciliationDetailService.pushAllocation(dto);
             } else {
@@ -81,7 +86,6 @@ public class TmsAsyncTaskConsumerService implements RocketMQListener<String> {
         }
         //报关对账
         else if(Objects.equals(businessType,SourceTypeEnum.TMS_B2C_DECLARE_RECONCILIATION.getCode())){
-            String methodType = dto.getMethodType();
             if (StringUtils.isBlank(methodType) || Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode())) {
                 tmsB2cDeclareReconciliationDetailService.pushAllocation(dto);
             } else {
@@ -92,15 +96,14 @@ public class TmsAsyncTaskConsumerService implements RocketMQListener<String> {
         }
         //头程分摊
         else if(Objects.equals(businessType,SourceTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode())){
-            String methodType = dto.getMethodType();
             if (Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.UPDATE_REPORT_STATUS.getCode())) {
                 firstMileCostAllocationService.pushUpdateStatus(dto);
             } else if (Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.RE_ALLOCATION.getCode())) {
                 firstMileCostAllocationService.pushReAllocationCalcCost(dto);
             } else if (Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.DELETE.getCode())) {
                 firstMileCostAllocationService.pushDelete(dto);
-            } else if (StringUtils.isBlank(methodType) || Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode())) {
-                firstMileCostAllocationService.pushFirstMileCostAllocation(dto);
+            } else if (Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode())) {
+                firstMileCostAllocationService.pushFirstMileCostAllocation(taskRecord);
             } else {
                 log.warn("头程分摊MQ方法类型不支持，跳过消费，taskId: {}, methodType: {}", taskId, methodType);
                 asyncTaskRecordService.finishTaskWithError(taskId, "头程分摊MQ方法类型不支持: " + methodType);
@@ -109,7 +112,6 @@ public class TmsAsyncTaskConsumerService implements RocketMQListener<String> {
         }
         //小包分摊
         else if(Objects.equals(businessType,SourceTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode())){
-            String methodType = dto.getMethodType();
             if (Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.UPDATE_REPORT_STATUS.getCode())) {
                 //批量更新核算状态
                 smallBagCostAllocationService.pushUpdateReportStatus(dto);
@@ -122,7 +124,7 @@ public class TmsAsyncTaskConsumerService implements RocketMQListener<String> {
                 smallBagCostAllocationService.pushDelete(dto);
             } else if (isSmallBagPushAllocationMethodType(methodType)) {
                 //下推小包费用分摊
-                logisticsBillCostService.pushSmallBagCostAllocation(dto);
+                logisticsBillCostService.pushSmallBagCostAllocation(taskRecord);
             } else {
                 log.warn("小包分摊MQ方法类型不支持，跳过消费，taskId: {}, methodType: {}", taskId, methodType);
                 asyncTaskRecordService.finishTaskWithError(taskId, "小包分摊MQ方法类型不支持: " + methodType);
@@ -131,7 +133,6 @@ public class TmsAsyncTaskConsumerService implements RocketMQListener<String> {
         }
         //中转分摊
         else if(Objects.equals(businessType,SourceTypeEnum.TRANSFER_DECLARE_COST_ALLOCATION.getCode())){
-            String methodType = dto.getMethodType();
             if (Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.UPDATE_REPORT_STATUS.getCode())) {
                 transferDeclareCostAllocationService.pushUpdateReportStatus(dto);
             } else if (Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.RE_ALLOCATION.getCode())) {
@@ -154,42 +155,34 @@ public class TmsAsyncTaskConsumerService implements RocketMQListener<String> {
         log.info("TMS异步任务消费完成，taskId: {}, businessType: {}", taskId, businessType);
     }
 
-    /**
-     * 解析未迁移任务的 legacy PushParamsDTO 消息。
-     *
-     * @param message MQ 原始 JSON 消息
-     * @return 解析成功的 PushParamsDTO；解析失败时返回 null
-     */
-    private TmsAsyncTaskRecordDTO.PushParamsDTO parseLegacyPushParams(String message) {
-        if (StringUtils.isBlank(message)) {
+    private TmsAsyncTaskRecordDTO.PushParamsDTO buildRuntimePushParams(TmsAsyncTaskRecordEntity taskRecord) {
+        TmsAsyncTaskRecordDTO.PushParamsDTO dto = parseLegacyPushParams(taskRecord.getDataJson());
+        if (dto == null) {
+            dto = new TmsAsyncTaskRecordDTO.PushParamsDTO();
+        }
+        TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope = asyncTaskRecordService.parseEnvelope(taskRecord.getDataJson());
+        TmsAsyncTaskRecordDTO.PushParamsDTO dispatchParams =
+            asyncTaskRecordService.buildDispatchPushParams(taskRecord, envelope);
+        dto.setTaskId(dispatchParams.getTaskId());
+        dto.setBusinessType(dispatchParams.getBusinessType());
+        dto.setMethodType(dispatchParams.getMethodType());
+        dto.setRetryMode(dispatchParams.getRetryMode());
+        dto.setRetrySourceTaskId(dispatchParams.getRetrySourceTaskId());
+        dto.setOperatorUserId(dispatchParams.getOperatorUserId());
+        dto.setOperatorUserName(dispatchParams.getOperatorUserName());
+        return dto;
+    }
+
+    private TmsAsyncTaskRecordDTO.PushParamsDTO parseLegacyPushParams(String dataJson) {
+        if (StringUtils.isBlank(dataJson)) {
             return null;
         }
         try {
-            return JSONUtil.toBean(message, TmsAsyncTaskRecordDTO.PushParamsDTO.class);
+            return JSONUtil.toBean(dataJson, TmsAsyncTaskRecordDTO.PushParamsDTO.class);
         } catch (Exception e) {
-            log.warn("TMS异步任务MQ消息解析失败，跳过消费，error: {}", e.getMessage());
+            log.debug("TMS异步任务 legacy 参数解析失败: {}", e.getMessage());
             return null;
         }
-    }
-
-    /**
-     * 将任务信封转换为运行态派发参数。
-     * <p>
-     * 这里只复制调度和重试元数据，业务 payload 由对应业务消费者从任务记录中解析。
-     *
-     * @param envelope 任务信封
-     * @return 运行态派发参数
-     */
-    private TmsAsyncTaskRecordDTO.PushParamsDTO buildDispatchParams(TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope) {
-        TmsAsyncTaskRecordDTO.PushParamsDTO dto = new TmsAsyncTaskRecordDTO.PushParamsDTO();
-        dto.setTaskId(envelope.getTaskId());
-        dto.setBusinessType(envelope.getBusinessType());
-        dto.setMethodType(envelope.getMethodType());
-        dto.setRetryMode(envelope.getRetryMode());
-        dto.setRetrySourceTaskId(envelope.getRetrySourceTaskId());
-        dto.setOperatorUserId(envelope.getOperatorUserId());
-        dto.setOperatorUserName(envelope.getOperatorUserName());
-        return dto;
     }
 
     /**

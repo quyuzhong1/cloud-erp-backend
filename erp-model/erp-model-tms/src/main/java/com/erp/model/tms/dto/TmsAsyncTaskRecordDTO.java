@@ -355,11 +355,6 @@ public class TmsAsyncTaskRecordDTO implements Serializable {
     public static class TaskEnvelopeDTO implements Serializable {
 
         /**
-         * 主任务 ID，创建任务前可为空，派发前补齐。
-         */
-        private String taskId;
-
-        /**
          * 单据类型
          */
         private String businessType;
@@ -414,11 +409,6 @@ public class TmsAsyncTaskRecordDTO implements Serializable {
     public static class SmallBagPushAllocationPayloadDTO implements Serializable {
 
         /**
-         * 费用 ID 集合
-         */
-        private List<String> ids;
-
-        /**
          * 核算日期
          */
         private String reportDate;
@@ -427,16 +417,39 @@ public class TmsAsyncTaskRecordDTO implements Serializable {
          * 费用类型：自发货/尾程
          */
         private String type;
+    }
+
+    /**
+     * 头程费用分摊下推载荷。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class FirstMilePushAllocationPayloadDTO implements Serializable {
 
         /**
-         * 页面高级查询生成的 SQL 条件
+         * 核算日期 yyyy-MM。
          */
-        private Map<String, String> sqlMap;
+        private String reportDate;
+    }
+
+    /**
+     * 头程下推分摊候选发货单游标查询参数。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class FirstMilePushAllocationQueryDTO implements Serializable {
 
         /**
-         * 数据权限 SQL
+         * 游标 ID。
          */
-        private String permissionSql;
+        private String lastId;
+
+        /**
+         * 批次大小。
+         */
+        private Integer batchSize;
     }
 
     /**

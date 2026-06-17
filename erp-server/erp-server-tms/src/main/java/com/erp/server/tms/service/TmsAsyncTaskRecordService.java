@@ -77,6 +77,8 @@ public interface TmsAsyncTaskRecordService extends SuperService<TmsAsyncTaskReco
      * @param billBatchParamsDTO 批次配置，来源于 {@link #loadBillBatchParams(String)}
      * @return 小包明细僵死判定窗口，单位：秒
      */
+    int resolveStaleDetailSeconds(CfgSettingValueDTO.BillBatchParamsDTO billBatchParamsDTO);
+
     int resolveSmallBagStaleDetailSeconds(CfgSettingValueDTO.BillBatchParamsDTO billBatchParamsDTO);
 
     /**
@@ -86,6 +88,8 @@ public interface TmsAsyncTaskRecordService extends SuperService<TmsAsyncTaskReco
      * @param staleBefore 僵死阈值时间，早于或等于该时间的 ING 明细视为僵死
      * @return true 表示明细处于 ING 且执行开始时间已超过僵死阈值
      */
+    boolean isStaleIngDetail(com.erp.model.tms.entity.TmsAsyncTaskDetailEntity detail, LocalDateTime staleBefore);
+
     boolean isSmallBagStaleIngDetail(com.erp.model.tms.entity.TmsAsyncTaskDetailEntity detail, LocalDateTime staleBefore);
 
     /**
@@ -108,7 +112,7 @@ public interface TmsAsyncTaskRecordService extends SuperService<TmsAsyncTaskReco
     /**
      * 构建 TMS 异步任务信封。
      */
-    TmsAsyncTaskRecordDTO.TaskEnvelopeDTO buildEnvelope(String taskId, String businessType, String methodType,
+    TmsAsyncTaskRecordDTO.TaskEnvelopeDTO buildEnvelope(String businessType, String methodType,
                                                         String retryMode, String retrySourceTaskId, Object payload);
 
     /**
@@ -133,6 +137,12 @@ public interface TmsAsyncTaskRecordService extends SuperService<TmsAsyncTaskReco
      */
     <T> T parseEnvelopePayloadOrFinishTask(String taskId, TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope,
                                            Class<T> payloadClass, String errorMsg);
+
+    /**
+     * 从任务记录和信封构建消费期运行态参数。
+     */
+    TmsAsyncTaskRecordDTO.PushParamsDTO buildDispatchPushParams(TmsAsyncTaskRecordEntity taskRecord,
+                                                                TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope);
 
     /**
      * 认领待执行任务并派发 MQ。

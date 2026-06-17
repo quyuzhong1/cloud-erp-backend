@@ -2929,10 +2929,9 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
         //新建一个任务：小包下推使用信封 + 业务载荷，避免 PushParamsDTO 继续承载业务私有字段。
         TmsAsyncTaskRecordDTO.SmallBagPushAllocationPayloadDTO payload =
-            new TmsAsyncTaskRecordDTO.SmallBagPushAllocationPayloadDTO(
-                dto.getIds(), dto.getReportDate(), dto.getType(), dto.getSqlMap(), dto.getPermissionSql());
+            new TmsAsyncTaskRecordDTO.SmallBagPushAllocationPayloadDTO(dto.getReportDate(), dto.getType());
         TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope = asyncTaskRecordService.buildEnvelope(
-            null, businessType, methodType, null, null, payload);
+            businessType, methodType, null, null, payload);
         String jsonStr = JSONUtil.toJsonStr(envelope);
         if(StringUtils.isBlank(businessType)){
             throw new ServiceException(ApiError.LOGISTICS_ASYNC_TASK_CREATE_ERROR,jsonStr);
@@ -2959,12 +2958,12 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     }
 
     @Override
-    public void pushSmallBagCostAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto) {
-        String taskId = dto.getTaskId();
-        if (StringUtils.isBlank(taskId)) {
+    public void pushSmallBagCostAllocation(TmsAsyncTaskRecordEntity taskRecord) {
+        if (Objects.isNull(taskRecord) || StringUtils.isBlank(taskRecord.getId())) {
             log.error("小包分摊异步任务ID为空");
             return;
         }
+        String taskId = taskRecord.getId();
 
         RLock taskLock = redissonClient.getLock(DistributeKeyConstant.TMS_ASYNC_TASK_EXEC_KEY + ":" + taskId);
         boolean locked = false;
@@ -2981,12 +2980,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 return;
             }
 
-            // 1. 校验任务存在性和状态
-            TmsAsyncTaskRecordEntity taskRecord = asyncTaskRecordService.getById(taskId);
-            if (Objects.isNull(taskRecord)) {
-                log.error("任务记录不存在，taskId: {}", taskId);
-                return;
-            }
+            // 1. 校验任务状态
             if (Objects.equals(taskRecord.getStatus(), TmsAsyncTaskRecordStatusEnum.FINISH.getCode())) {
                 log.warn("小包分摊异步任务已完成，跳过重复消费，taskId: {}", taskId);
                 return;
@@ -2998,17 +2992,10 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             if (envelope == null || payload == null) {
                 return;
             }
-            dto.setBusinessType(StringUtils.isBlank(envelope.getBusinessType()) ? taskRecord.getBusinessType() : envelope.getBusinessType());
-            dto.setMethodType(StringUtils.isBlank(envelope.getMethodType()) ? taskRecord.getMethodType() : envelope.getMethodType());
-            dto.setRetryMode(envelope.getRetryMode());
-            dto.setRetrySourceTaskId(envelope.getRetrySourceTaskId());
-            dto.setOperatorUserId(envelope.getOperatorUserId());
-            dto.setOperatorUserName(envelope.getOperatorUserName());
-            dto.setIds(payload.getIds());
+            TmsAsyncTaskRecordDTO.PushParamsDTO dto =
+                asyncTaskRecordService.buildDispatchPushParams(taskRecord, envelope);
             dto.setReportDate(payload.getReportDate());
             dto.setType(payload.getType());
-            dto.setSqlMap(payload.getSqlMap());
-            dto.setPermissionSql(payload.getPermissionSql());
             if (Objects.equals(taskRecord.getStatus(), TmsAsyncTaskRecordStatusEnum.PENDING.getCode())) {
                 boolean claimed = asyncTaskRecordService.lambdaUpdate()
                     .set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
@@ -3028,7 +3015,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             // 2. 初始化批次配置
             int batchSize = asyncTaskRecordService.resolveBatchSize(billBatchParamsDTO.getBatch(), 500);
             int timeoutSeconds = asyncTaskRecordService.resolveTimeoutSeconds(billBatchParamsDTO.getBatchTimeoutSeconds(), 5000);
-            int staleDetailSeconds = asyncTaskRecordService.resolveSmallBagStaleDetailSeconds(billBatchParamsDTO);
+            int staleDetailSeconds = asyncTaskRecordService.resolveStaleDetailSeconds(billBatchParamsDTO);
             String lastId = ""; // 游标起点为空
 
             int totalProcessed = 0;
@@ -3171,7 +3158,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             .list();
         Set<String> staleIngBusinessIds = existingDetails.stream()
             .filter(d -> Objects.equals(d.getStatus(), TmsAsyncTaskRecordStatusEnum.ING.getCode()))
-            .filter(d -> asyncTaskRecordService.isSmallBagStaleIngDetail(d, staleBefore))
+            .filter(d -> asyncTaskRecordService.isStaleIngDetail(d, staleBefore))
             .map(TmsAsyncTaskDetailEntity::getBusinessId)
             .filter(StringUtils::isNotBlank)
             .collect(Collectors.toSet());

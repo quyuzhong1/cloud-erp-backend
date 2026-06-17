@@ -360,10 +360,15 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
      * @return 小包明细僵死判定窗口，单位：秒
      */
     @Override
-    public int resolveSmallBagStaleDetailSeconds(CfgSettingValueDTO.BillBatchParamsDTO billBatchParamsDTO) {
+    public int resolveStaleDetailSeconds(CfgSettingValueDTO.BillBatchParamsDTO billBatchParamsDTO) {
         int timeoutSeconds = resolveTimeoutSeconds(billBatchParamsDTO == null ? null : billBatchParamsDTO.getBatchTimeoutSeconds(), 5000);
         int bufferSeconds = resolveTimeoutSeconds(billBatchParamsDTO == null ? null : billBatchParamsDTO.getDetailBufferSeconds(), 600);
         return timeoutSeconds + bufferSeconds;
+    }
+
+    @Override
+    public int resolveSmallBagStaleDetailSeconds(CfgSettingValueDTO.BillBatchParamsDTO billBatchParamsDTO) {
+        return resolveStaleDetailSeconds(billBatchParamsDTO);
     }
 
     /**
@@ -376,12 +381,17 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
      * @return true 表示该 ING 明细已超过执行窗口
      */
     @Override
-    public boolean isSmallBagStaleIngDetail(TmsAsyncTaskDetailEntity detail, LocalDateTime staleBefore) {
+    public boolean isStaleIngDetail(TmsAsyncTaskDetailEntity detail, LocalDateTime staleBefore) {
         return detail != null
                 && staleBefore != null
                 && Objects.equals(detail.getStatus(), TmsAsyncTaskRecordStatusEnum.ING.getCode())
                 && detail.getStartTime() != null
                 && !detail.getStartTime().isAfter(staleBefore);
+    }
+
+    @Override
+    public boolean isSmallBagStaleIngDetail(TmsAsyncTaskDetailEntity detail, LocalDateTime staleBefore) {
+        return isStaleIngDetail(detail, staleBefore);
     }
 
     @Override
@@ -422,7 +432,6 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
      * <p>
      * 信封保存调度、重试和载荷路由信息，业务参数会序列化到 payloadJson 中。
      *
-     * @param taskId 任务 ID，创建任务前可为空
      * @param businessType 业务类型
      * @param methodType 方法类型
      * @param retryMode 重试模式
@@ -431,10 +440,9 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
      * @return 任务信封
      */
     @Override
-    public TmsAsyncTaskRecordDTO.TaskEnvelopeDTO buildEnvelope(String taskId, String businessType, String methodType,
+    public TmsAsyncTaskRecordDTO.TaskEnvelopeDTO buildEnvelope(String businessType, String methodType,
                                                                String retryMode, String retrySourceTaskId, Object payload) {
         TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope = new TmsAsyncTaskRecordDTO.TaskEnvelopeDTO();
-        envelope.setTaskId(StringUtils.trimToNull(taskId));
         envelope.setBusinessType(StringUtils.trimToNull(businessType));
         envelope.setMethodType(StringUtils.trimToNull(methodType));
         envelope.setRetryMode(StringUtils.trimToNull(retryMode));
@@ -512,6 +520,24 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
             finishTaskWithError(taskId, errorMsg);
         }
         return null;
+    }
+
+    @Override
+    public TmsAsyncTaskRecordDTO.PushParamsDTO buildDispatchPushParams(TmsAsyncTaskRecordEntity taskRecord,
+                                                                       TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope) {
+        TmsAsyncTaskRecordDTO.PushParamsDTO pushParamsDTO = new TmsAsyncTaskRecordDTO.PushParamsDTO();
+        pushParamsDTO.setTaskId(taskRecord == null ? null : taskRecord.getId());
+        pushParamsDTO.setBusinessType(StringUtils.defaultIfBlank(envelope == null ? null : envelope.getBusinessType(),
+            taskRecord == null ? null : taskRecord.getBusinessType()));
+        pushParamsDTO.setMethodType(StringUtils.defaultIfBlank(envelope == null ? null : envelope.getMethodType(),
+            taskRecord == null ? null : taskRecord.getMethodType()));
+        if (envelope != null) {
+            pushParamsDTO.setRetryMode(envelope.getRetryMode());
+            pushParamsDTO.setRetrySourceTaskId(envelope.getRetrySourceTaskId());
+            pushParamsDTO.setOperatorUserId(envelope.getOperatorUserId());
+            pushParamsDTO.setOperatorUserName(envelope.getOperatorUserName());
+        }
+        return pushParamsDTO;
     }
 
     @Override
@@ -823,7 +849,6 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
     private String buildFullRetryDataJson(TmsAsyncTaskRecordEntity entity) {
         TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope = parseEnvelope(entity.getDataJson());
         if (envelope != null) {
-            envelope.setTaskId(null);
             envelope.setRetryMode(null);
             envelope.setRetrySourceTaskId(null);
             return JSONUtil.toJsonStr(envelope, TASK_DATA_JSON_CONFIG);
@@ -850,7 +875,6 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
     private String buildFailedOnlyRetryDataJson(TmsAsyncTaskRecordEntity entity) {
         TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope = parseEnvelope(entity.getDataJson());
         if (envelope != null) {
-            envelope.setTaskId(null);
             envelope.setRetrySourceTaskId(entity.getId());
             envelope.setRetryMode(TmsAsyncTaskRecordDTO.RETRY_MODE_FAILED_ONLY);
             if (StringUtils.isBlank(envelope.getBusinessType())) {
@@ -858,12 +882,6 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
             }
             if (StringUtils.isBlank(envelope.getMethodType())) {
                 envelope.setMethodType(entity.getMethodType());
-            }
-            TmsAsyncTaskRecordDTO.SmallBagPushAllocationPayloadDTO payload =
-                    parseEnvelopePayload(envelope, TmsAsyncTaskRecordDTO.SmallBagPushAllocationPayloadDTO.class);
-            if (payload != null) {
-                payload.setIds(null);
-                envelope.setPayloadJson(JSONUtil.toJsonStr(payload, TASK_DATA_JSON_CONFIG));
             }
             return JSONUtil.toJsonStr(envelope, TASK_DATA_JSON_CONFIG);
         }
@@ -1147,7 +1165,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         if (billBatchParamsDTO == null) {
             return;
         }
-        LocalDateTime staleBefore = LocalDateTime.now().minusSeconds(resolveSmallBagStaleDetailSeconds(billBatchParamsDTO));
+        LocalDateTime staleBefore = LocalDateTime.now().minusSeconds(resolveStaleDetailSeconds(billBatchParamsDTO));
         for (WatchdogStaleDetailTaskType taskType : staleDetailCleanupTaskTypes()) {
             for (int round = 0; round < runConfig.maxRounds; round++) {
                 List<String> detailIds = tmsAsyncTaskDetailService.listStaleIngDetailIdsByTaskType(
@@ -1202,11 +1220,13 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
     }
 
     private List<WatchdogStaleDetailTaskType> staleDetailCleanupTaskTypes() {
-        String businessType = TmsAsyncTaskRecordBusinessTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode();
+        String smallBagBusinessType = TmsAsyncTaskRecordBusinessTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode();
+        String firstMileBusinessType = TmsAsyncTaskRecordBusinessTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode();
         return Arrays.asList(
-                new WatchdogStaleDetailTaskType(businessType, TmsAsyncTaskMethodTypeEnum.SELFDELIVER_PUSH_ALLOCATION.getCode()),
-                new WatchdogStaleDetailTaskType(businessType, TmsAsyncTaskMethodTypeEnum.LASTMILE_PUSH_ALLOCATION.getCode()),
-                new WatchdogStaleDetailTaskType(businessType, TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode())
+                new WatchdogStaleDetailTaskType(smallBagBusinessType, TmsAsyncTaskMethodTypeEnum.SELFDELIVER_PUSH_ALLOCATION.getCode()),
+                new WatchdogStaleDetailTaskType(smallBagBusinessType, TmsAsyncTaskMethodTypeEnum.LASTMILE_PUSH_ALLOCATION.getCode()),
+                new WatchdogStaleDetailTaskType(smallBagBusinessType, TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode()),
+                new WatchdogStaleDetailTaskType(firstMileBusinessType, TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode())
         );
     }
 
@@ -1276,6 +1296,12 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
             }
             return;
         }
+        if (dispatchPayload instanceof TmsAsyncTaskRecordEntity) {
+            TmsAsyncTaskRecordEntity dispatchTask = (TmsAsyncTaskRecordEntity) dispatchPayload;
+            dispatchTask.setStatus(TmsAsyncTaskRecordStatusEnum.ING.getCode());
+            dispatchTask.setErrorData(ApiError.COMMON_BATCH_PROCESSING.getMsg());
+            dispatchTask.setStartTime(dispatchTime);
+        }
         SendResult sendResult;
         try {
             sendResult = mQProducerService.syncClassMsg(
@@ -1299,7 +1325,8 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
     /**
      * 构建实际发送到 MQ 的消息体。
      * <p>
-     * 已迁移任务发送信封，未迁移任务继续发送 legacy PushParamsDTO，确保迁移期间两种路径可并存。
+     * 派发消息统一发送任务实体；消费者根据任务 ID、businessType、methodType 路由，
+     * 已迁移业务从实体 dataJson 解析 envelope payload，未迁移业务继续兼容 legacy dataJson。
      *
      * @param entity 待派发任务
      * @return MQ 消息体；解析失败时返回 null
@@ -1307,27 +1334,13 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
     private Object buildDispatchPayload(TmsAsyncTaskRecordEntity entity) {
         TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope = parseEnvelope(entity.getDataJson());
         if (envelope != null) {
-            envelope.setTaskId(entity.getId());
-            if (StringUtils.isBlank(envelope.getBusinessType())) {
-                envelope.setBusinessType(entity.getBusinessType());
-            }
-            if (StringUtils.isBlank(envelope.getMethodType())) {
-                envelope.setMethodType(entity.getMethodType());
-            }
-            return envelope;
+            return entity;
         }
         TmsAsyncTaskRecordDTO.PushParamsDTO taskDTO = parsePushParams(entity.getDataJson());
         if (taskDTO == null) {
             return null;
         }
-        taskDTO.setTaskId(entity.getId());
-        if (StringUtils.isBlank(taskDTO.getBusinessType())) {
-            taskDTO.setBusinessType(entity.getBusinessType());
-        }
-        if (StringUtils.isBlank(taskDTO.getMethodType())) {
-            taskDTO.setMethodType(entity.getMethodType());
-        }
-        return taskDTO;
+        return entity;
     }
 
     /**
@@ -1493,9 +1506,9 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         }
         // 同一小包分摊业务下按费用类型拆分任务，便于任务列表和重试按 methodType 区分。
         TmsAsyncTaskRecordDTO.SmallBagPushAllocationPayloadDTO payload =
-                new TmsAsyncTaskRecordDTO.SmallBagPushAllocationPayloadDTO(null, reportDate, type, null, null);
+                new TmsAsyncTaskRecordDTO.SmallBagPushAllocationPayloadDTO(reportDate, type);
         TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope =
-                buildEnvelope(null, businessType, methodType, null, null, payload);
+                buildEnvelope(businessType, methodType, null, null, payload);
         String jsonStr = JSONUtil.toJsonStr(envelope, TASK_DATA_JSON_CONFIG);
         selfServer.addAutoTask(new TmsAsyncTaskRecordDTO.AutoCreateDTO(businessType, methodType, jsonStr, startTimeStr));
     }
@@ -1620,12 +1633,13 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
                 //根据任务执行时间，推算出当时的时间
                 LocalDate taskStartDate = LocalDate.parse(startTimeStr);
                 //创建当月的自动任务
-                TmsAsyncTaskRecordDTO.PushParamsDTO pushDTO = new TmsAsyncTaskRecordDTO.PushParamsDTO();
                 reportPeriodMonth = taskStartDate.minusMonths(1).withDayOfMonth(1);
-                pushDTO.setReportDate(reportPeriodMonth.withDayOfMonth(day).format(DateTimeFormatter.ofPattern("yyyy-MM")));
-                pushDTO.setBusinessType(businessType);
-                pushDTO.setMethodType(TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode());
-                String jsonStr = JSONUtil.toJsonStr(pushDTO);
+                String reportDate = reportPeriodMonth.withDayOfMonth(day).format(DateTimeFormatter.ofPattern("yyyy-MM"));
+                TmsAsyncTaskRecordDTO.FirstMilePushAllocationPayloadDTO payload =
+                        new TmsAsyncTaskRecordDTO.FirstMilePushAllocationPayloadDTO(reportDate);
+                TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope =
+                        buildEnvelope(businessType, TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode(), null, null, payload);
+                String jsonStr = JSONUtil.toJsonStr(envelope, TASK_DATA_JSON_CONFIG);
                 selfServer.addAutoTask(new TmsAsyncTaskRecordDTO.AutoCreateDTO(businessType, TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode(), jsonStr, startTimeStr));
             }
         } else {

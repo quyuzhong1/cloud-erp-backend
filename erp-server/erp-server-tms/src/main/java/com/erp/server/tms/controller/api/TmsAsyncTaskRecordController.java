@@ -242,6 +242,13 @@ public class TmsAsyncTaskRecordController extends BaseController {
     public void startTask() {
         tmsAsyncTaskRecordService.startTask();
     }
+    /**
+     * watchDog
+     */
+    @GetMapping("/watchDog")
+    public void watchDog() {
+        tmsAsyncTaskRecordService.watchdogTask();
+    }
 
 
 
