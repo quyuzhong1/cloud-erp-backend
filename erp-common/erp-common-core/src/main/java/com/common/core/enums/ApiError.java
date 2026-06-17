@@ -820,6 +820,9 @@ public enum ApiError implements Serializable {
     SHOP_PARAM_AUTHORIZE_FAILED(8018,"店铺【{0}】授权失败，原因：【{1}】"),
     SHOP_DELETE_ONLY_DISABLED(8019,"仅禁用状态的店铺允许删除"),
     SHOP_INVOICE_NOT_BIND_COMPANY(8020,"店铺【{0}】未配置公司账号"),
+    SHOP_COUNTRY_CODE_REQUIRED(8021,"店铺未配置国家，无法完成授权"),
+    SHOP_TIKTOK_AUTHORIZED_SHOPS_EMPTY(8022,"TikTok授权失败：未获取到平台授权站点"),
+    SHOP_TIKTOK_REGION_NOT_MATCH(8023,"TikTok授权失败：店铺国家[{0}]在平台授权站点中不存在，可用站点：{1}"),
 
 
     /**
@@ -1087,6 +1090,9 @@ public enum ApiError implements Serializable {
     PO_QC_RESULT_NOT_EMPTY(9671,"质检结果不允许为空"),
     PO_RETURN_NOT_ALLOW_PUSH_DOWN(9672,"不同退货方式的采购退货单不允许合并下推委外订单"),
     PO_RECONCILIATION_STATUS_NOT_CONFIRM(9673,"单据状态不是【已确认待完结】，不允许上传发票"),
+    PO_SUBCONTRACT_REPAIR_QTY_MUST_GT_ZERO(9675,"SKU【{0}】返修数量必须大于0"),
+    PO_SUBCONTRACT_REPAIR_SUB_LINE_PRICE_REQUIRED(9676,"SKU【{0}】委外返修子行价格不能为空"),
+    PO_SUBCONTRACT_REPAIR_SUB_LINE_TAX_RATE_OR_CURRENCY_REQUIRED(9677,"SKU【{0}】委外返修子行税率或币种不能为空"),
 
     /**
      * 采购价目表错误 信息 10000 - 10500
