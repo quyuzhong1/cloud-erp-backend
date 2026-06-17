@@ -224,11 +224,6 @@ public class PoReconciliationController extends BaseController {
      * @return ApiResult<List<InvoiceFileVO>>
      */
     @PostMapping("/listInvoice")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "srm:poReconciliation:viewMain",
-            serviceClass = PoReconciliationService.class,
-            keyIdName = "id")
     public ApiResult<List<PoReconciliationDTO.InvoiceFileVO>> listInvoice(@RequestBody @Validated BaseIdDTO dto) {
         return success(poReconciliationService.listInvoice(dto.getId()));
     }
