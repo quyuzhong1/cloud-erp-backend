@@ -61,18 +61,14 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
      * 从当前 Handler 类解析 {@link AbstractDynamicHeadersFileEventHandler} 的类型参数 P。
      */
     static Type resolvePagingParamType(Class<?> handlerClass) {
-        ResolvableType rt = ResolvableType.forClass(handlerClass);
-        while (rt != ResolvableType.NONE) {
-            if (rt.getRawClass() != null && rt.getRawClass() == AbstractDynamicHeadersFileEventHandler.class) {
-                ResolvableType param = rt.getGeneric(0);
-                if (param != ResolvableType.NONE && null != param.getType()) {
-                    return param.getType();
-                }
-                return null;
-            }
-            rt = rt.getSuperType();
+        // 用 forClass(baseType, implementationClass) 跨中间继承层把类型变量 P 绑定到具体类型；
+        // 逐层 getSuperType() 在多层继承下会丢失变量绑定，使 P 退化为 TypeVariable，
+        // 进而 Jackson constructType 退回 Object 并反序列化成 LinkedHashMap，最终在使用处抛 ClassCastException。
+        ResolvableType param = ResolvableType.forClass(AbstractDynamicHeadersFileEventHandler.class, handlerClass).getGeneric(0);
+        if (param == ResolvableType.NONE || param.resolve() == null) {
+            return null;
         }
-        return null;
+        return param.resolve();
     }
 
     /**
