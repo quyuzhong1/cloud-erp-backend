@@ -930,7 +930,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             }
 
             //仓位名称
-            if (CharSequenceUtil.isNotBlank(data.getWarehouseLocation())) {
+            if (Objects.nonNull(data.getWarehouseLocation())) {
                 WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream()
                         .filter(req -> req.getCode().equals(data.getWarehouseLocation())
                                 && req.getWarehouseId().equals(data.getWarehouseId())

@@ -1331,6 +1331,5 @@ public class LogisticsBillCostDTO implements Serializable {
     @NoArgsConstructor
     public static class OutstockWeightPreloadDTO {
         private Map<String, List<SoOutstockDetailEntity>> outstockDetailMap = Collections.emptyMap();
-        private Map<String, ProductPackEntity> productPackMap = Collections.emptyMap();
     }
 }

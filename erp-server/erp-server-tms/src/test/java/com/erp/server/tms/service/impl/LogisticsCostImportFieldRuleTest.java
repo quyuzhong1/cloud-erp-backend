@@ -7,14 +7,21 @@ import com.erp.model.tms.dto.CfgLogisticsCostImportFieldDTO;
 import com.erp.model.tms.dto.ImportHistoryRecordDTO;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.TmsCostDetailDTO;
+import com.erp.model.tms.enums.CfgLogisticsCostImportCfgTypeEnum;
+import com.erp.model.tms.enums.CfgLogisticsCostImportIdentifyTypeEnum;
 import com.erp.model.tms.entity.CfgLogisticsCostImportEntity;
 import com.erp.model.tms.entity.CfgLogisticsCostImportDetailEntity;
 import com.erp.model.tms.entity.CfgLogisticsCostImportFieldEntity;
+import com.erp.model.tms.entity.LogisticsBillCostEntity;
 import com.erp.model.tms.enums.CfgLogisticsCostImportEtlFillModeEnum;
 import com.erp.model.tms.enums.CfgLogisticsCostImportEtlOrderDirectionEnum;
 import com.erp.model.tms.enums.CfgLogisticsCostImportEtlReplaceModeEnum;
 import com.erp.model.tms.enums.CfgLogisticsCostImportEtlRuleTypeEnum;
 import com.erp.model.tms.enums.CfgLogisticsCostImportEtlSubstringModeEnum;
+import com.erp.model.tms.enums.CfgLogisticsCostImportImportTypeEnum;
+import com.erp.model.tms.enums.LogisticsBillCostCheckStatusEnum;
+import com.erp.model.tms.enums.ReconciliationStatusEnum;
+import com.erp.model.tms.enums.logisticsPayTypeEnum;
 import com.erp.model.tms.enums.CfgLogisticsCostImportEtlSymbolPositionEnum;
 import com.erp.server.tms.util.CfgLogisticsCostImportEtlRuleHelper;
 import org.junit.Test;
@@ -31,6 +38,7 @@ import java.util.Map;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -151,6 +159,159 @@ public class LogisticsCostImportFieldRuleTest {
         assertThrowsServiceException(() -> clean(service, "ABC",
                 detailWithRules(rule("UNKNOWN")),
                 new JSONObject(), Collections.emptyMap()));
+    }
+
+    @Test
+    public void matchesCostImportConfigShouldFilterBySupplierWhenIdentifyNoSupplier() throws Exception {
+        ImportHistoryRecordServiceImpl service = new ImportHistoryRecordServiceImpl();
+        CfgLogisticsCostImportEntity config = costImportConfig(
+                CfgLogisticsCostImportIdentifyTypeEnum.IDENTIFY_NO_SUPPLIER.getCode(),
+                CfgLogisticsCostImportCfgTypeEnum.LOGISTICS_SUPPLIER.getCode(),
+                "supplier-a");
+        LogisticsBillDTO.LogisticsBillVo matched = billVoWithSupplier("bill-1", "detail-1", "supplier-a");
+        LogisticsBillDTO.LogisticsBillVo other = billVoWithSupplier("bill-2", "detail-2", "supplier-b");
+
+        assertTrue((Boolean) invokePrivate(service, "matchesCostImportConfig",
+                new Class[]{CfgLogisticsCostImportEntity.class, LogisticsBillDTO.LogisticsBillVo.class}, config, matched));
+        assertFalse((Boolean) invokePrivate(service, "matchesCostImportConfig",
+                new Class[]{CfgLogisticsCostImportEntity.class, LogisticsBillDTO.LogisticsBillVo.class}, config, other));
+    }
+
+    @Test
+    public void matchesCostImportConfigShouldSkipSupplierFilterWhenIdentifyNo() throws Exception {
+        ImportHistoryRecordServiceImpl service = new ImportHistoryRecordServiceImpl();
+        CfgLogisticsCostImportEntity config = costImportConfig(
+                CfgLogisticsCostImportIdentifyTypeEnum.IDENTIFY_NO.getCode(),
+                CfgLogisticsCostImportCfgTypeEnum.LOGISTICS_SUPPLIER.getCode(),
+                "supplier-a");
+        LogisticsBillDTO.LogisticsBillVo other = billVoWithSupplier("bill-2", "detail-2", "supplier-b");
+
+        assertTrue((Boolean) invokePrivate(service, "matchesCostImportConfig",
+                new Class[]{CfgLogisticsCostImportEntity.class, LogisticsBillDTO.LogisticsBillVo.class}, config, other));
+    }
+
+    @Test
+    public void validateDuplicateImportConfigShouldRejectSameRecognitionName() throws Exception {
+        ImportHistoryRecordServiceImpl service = new ImportHistoryRecordServiceImpl();
+        CfgLogisticsCostImportEntity first = costImportConfig(
+                CfgLogisticsCostImportIdentifyTypeEnum.IDENTIFY_NO.getCode(),
+                CfgLogisticsCostImportCfgTypeEnum.LOGISTICS_SUPPLIER.getCode(),
+                "supplier-a");
+        first.setName("模板A");
+        first.setSheetName("sheet1");
+        first.setCostType("excel");
+        CfgLogisticsCostImportEntity second = costImportConfig(
+                CfgLogisticsCostImportIdentifyTypeEnum.IDENTIFY_NO_SUPPLIER.getCode(),
+                CfgLogisticsCostImportCfgTypeEnum.LOGISTICS_SUPPLIER.getCode(),
+                "supplier-a");
+        second.setName("模板A");
+        second.setSheetName("sheet1");
+        second.setCostType("excel");
+
+        assertThrowsServiceException(() -> invokePrivate(service, "validateDuplicateImportConfig",
+                new Class[]{List.class}, Arrays.asList(first, second)));
+    }
+
+    @Test
+    public void splitIdentifyNoProcessBillsShouldOnlyUpdateWhenGroupHasToBeConfirm() throws Exception {
+        // 分组内混有待确认与已确认时，仅待确认进更新批次，已确认（跨月）不进入 addOld 批次。
+        ImportHistoryRecordServiceImpl service = new ImportHistoryRecordServiceImpl();
+        String payType = logisticsPayTypeEnum.PAY.getCode();
+        LogisticsBillDTO.LogisticsBillVo toConfirm1 = billVoWithSupplier("bill-1", "detail-1", "supplier-a");
+        LogisticsBillDTO.LogisticsBillVo toConfirm2 = billVoWithSupplier("bill-2", "detail-2", "supplier-b");
+        LogisticsBillDTO.LogisticsBillVo confirmedOtherMonth = billVoWithSupplier("bill-3", "detail-3", "supplier-c");
+        List<LogisticsBillCostEntity> costList = Arrays.asList(
+                billCost("cost-1", "detail-1", payType, ReconciliationStatusEnum.TO_BE_CONFIRM.getCode(), "2026-05"),
+                billCost("cost-2", "detail-2", payType, ReconciliationStatusEnum.TO_BE_CONFIRM.getCode(), "2026-05"),
+                billCost("cost-3", "detail-3", payType, ReconciliationStatusEnum.CONFIRMED.getCode(), "2026-04"));
+        CfgLogisticsCostImportEntity config = costImportConfig(
+                CfgLogisticsCostImportIdentifyTypeEnum.IDENTIFY_NO.getCode(),
+                CfgLogisticsCostImportCfgTypeEnum.LOGISTICS_SUPPLIER.getCode(),
+                "supplier-a");
+        config.setImportType(CfgLogisticsCostImportImportTypeEnum.IMPORT_UPDATE.getCode()
+                + "," + CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_OLD.getCode());
+        List<LogisticsBillDTO.LogisticsBillVo> updateBillList = new ArrayList<>();
+        List<LogisticsBillDTO.LogisticsBillVo> addOldBillList = new ArrayList<>();
+
+        invokePrivate(service, "splitIdentifyNoProcessBills",
+                new Class[]{List.class, List.class, String.class, String.class, CfgLogisticsCostImportEntity.class, List.class, List.class},
+                Arrays.asList(toConfirm1, toConfirm2, confirmedOtherMonth), costList, payType, "2026-05", config,
+                updateBillList, addOldBillList);
+
+        assertEquals(2, updateBillList.size());
+        assertTrue(addOldBillList.isEmpty());
+    }
+
+    @Test
+    public void splitIdentifyNoProcessBillsShouldAddOldWhenNoToBeConfirm() throws Exception {
+        // 无待确认时，已确认上月单 + 本月导入 → 仅 addOld 批次。
+        ImportHistoryRecordServiceImpl service = new ImportHistoryRecordServiceImpl();
+        String payType = logisticsPayTypeEnum.PAY.getCode();
+        LogisticsBillDTO.LogisticsBillVo billVo = billVoWithSupplier("bill-1", "detail-1", "supplier-a");
+        List<LogisticsBillCostEntity> costList = Collections.singletonList(
+                billCost("cost-1", "detail-1", payType, ReconciliationStatusEnum.CONFIRMED.getCode(), "2026-04"));
+        CfgLogisticsCostImportEntity config = costImportConfig(
+                CfgLogisticsCostImportIdentifyTypeEnum.IDENTIFY_NO.getCode(),
+                CfgLogisticsCostImportCfgTypeEnum.LOGISTICS_SUPPLIER.getCode(),
+                "supplier-a");
+        config.setImportType(CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_OLD.getCode());
+        List<LogisticsBillDTO.LogisticsBillVo> updateBillList = new ArrayList<>();
+        List<LogisticsBillDTO.LogisticsBillVo> addOldBillList = new ArrayList<>();
+
+        invokePrivate(service, "splitIdentifyNoProcessBills",
+                new Class[]{List.class, List.class, String.class, String.class, CfgLogisticsCostImportEntity.class, List.class, List.class},
+                Collections.singletonList(billVo), costList, payType, "2026-05", config,
+                updateBillList, addOldBillList);
+
+        assertTrue(updateBillList.isEmpty());
+        assertEquals(1, addOldBillList.size());
+    }
+
+    @Test
+    public void splitIdentifyNoProcessBillsShouldAddOldForSameMonthConfirmedWhenNoToBeConfirm() throws Exception {
+        // 全组无待确认时，同月已确认也进 addOld 批次，由下游 checkCostImportData 拦截重复新增。
+        ImportHistoryRecordServiceImpl service = new ImportHistoryRecordServiceImpl();
+        String payType = logisticsPayTypeEnum.PAY.getCode();
+        LogisticsBillDTO.LogisticsBillVo billVo = billVoWithSupplier("bill-1", "detail-1", "supplier-a");
+        List<LogisticsBillCostEntity> costList = Collections.singletonList(
+                billCost("cost-1", "detail-1", payType, ReconciliationStatusEnum.CONFIRMED.getCode(), "2026-05"));
+        CfgLogisticsCostImportEntity config = costImportConfig(
+                CfgLogisticsCostImportIdentifyTypeEnum.IDENTIFY_NO.getCode(),
+                CfgLogisticsCostImportCfgTypeEnum.LOGISTICS_SUPPLIER.getCode(),
+                "supplier-a");
+        config.setImportType(CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_OLD.getCode());
+        List<LogisticsBillDTO.LogisticsBillVo> updateBillList = new ArrayList<>();
+        List<LogisticsBillDTO.LogisticsBillVo> addOldBillList = new ArrayList<>();
+
+        invokePrivate(service, "splitIdentifyNoProcessBills",
+                new Class[]{List.class, List.class, String.class, String.class, CfgLogisticsCostImportEntity.class, List.class, List.class},
+                Collections.singletonList(billVo), costList, payType, "2026-05", config,
+                updateBillList, addOldBillList);
+
+        assertTrue(updateBillList.isEmpty());
+        assertEquals(1, addOldBillList.size());
+    }
+
+    @Test
+    public void findMatchedLogisticsBillCostShouldSkipEstimateConfirmForIdentifyNo() throws Exception {
+        // identify_no + IMPORT_UPDATE 不匹配暂估确认，避免误更新不可分摊状态的费用单。
+        ImportHistoryRecordServiceImpl service = new ImportHistoryRecordServiceImpl();
+        String payType = logisticsPayTypeEnum.PAY.getCode();
+        LogisticsBillDTO.LogisticsBillVo billVo = billVoWithSupplier("bill-1", "detail-1", "supplier-a");
+        LogisticsBillCostEntity estimateCost = billCost("cost-1", "detail-1", payType,
+                ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode(), "2026-05");
+        estimateCost.setCheckStatus(LogisticsBillCostCheckStatusEnum.CHECKING.getCode());
+        CfgLogisticsCostImportEntity config = costImportConfig(
+                CfgLogisticsCostImportIdentifyTypeEnum.IDENTIFY_NO.getCode(),
+                CfgLogisticsCostImportCfgTypeEnum.LOGISTICS_SUPPLIER.getCode(),
+                "supplier-a");
+
+        LogisticsBillCostEntity matched = (LogisticsBillCostEntity) invokePrivate(service, "findMatchedLogisticsBillCost",
+                new Class[]{List.class, LogisticsBillDTO.LogisticsBillVo.class, String.class, String.class, CfgLogisticsCostImportEntity.class},
+                Collections.singletonList(estimateCost), billVo, payType,
+                CfgLogisticsCostImportImportTypeEnum.IMPORT_UPDATE.getCode(), config);
+
+        assertNull(matched);
     }
 
     /**
@@ -372,6 +533,29 @@ public class LogisticsCostImportFieldRuleTest {
     }
 
     @Test
+    public void parseOptionalDecimalFieldShouldRejectInvalidWeightFormat() throws Exception {
+        ImportHistoryRecordServiceImpl service = new ImportHistoryRecordServiceImpl();
+        List<String> errorMsgList = new ArrayList<>();
+
+        BigDecimal valid = (BigDecimal) invokePrivate(service, "parseOptionalDecimalField",
+                new Class[]{String.class, String.class, List.class},
+                "1,000.5", "计费重", errorMsgList);
+        assertBigDecimalEquals(new BigDecimal("1000.5"), valid);
+        assertTrue(errorMsgList.isEmpty());
+
+        BigDecimal blank = (BigDecimal) invokePrivate(service, "parseOptionalDecimalField",
+                new Class[]{String.class, String.class, List.class},
+                "  ", "计费重", errorMsgList);
+        assertNull(blank);
+
+        BigDecimal invalid = (BigDecimal) invokePrivate(service, "parseOptionalDecimalField",
+                new Class[]{String.class, String.class, List.class},
+                "1000kg", "计费重", errorMsgList);
+        assertNull(invalid);
+        assertEquals(Collections.singletonList("计费重格式不正确"), errorMsgList);
+    }
+
+    @Test
     public void platformCodeGroupKeyShouldUseMatchedLogisticsBillSet() throws Exception {
         ImportHistoryRecordServiceImpl service = new ImportHistoryRecordServiceImpl();
         CfgLogisticsCostImportDetailEntity platformCode = importDetail("platformCode", "platformCode", "平台订单号");
@@ -439,6 +623,32 @@ public class LogisticsCostImportFieldRuleTest {
     }
 
     @Test
+    public void buildOrderWeightMapShouldCollectErrorsWhenPreloadMissingAnyBill() throws Exception {
+        ImportHistoryRecordServiceImpl service = new ImportHistoryRecordServiceImpl();
+        Map<String, BigDecimal> preQueryOrderWeightMap = new HashMap<>();
+        preQueryOrderWeightMap.put("D2", new BigDecimal("10"));
+        Map<String, List<String>> preQueryOrderWeightErrorMap = new HashMap<>();
+        preQueryOrderWeightErrorMap.put("D1", Collections.singletonList("出库单CK001存在SKU无法获取重量用于分摊：SKU-A"));
+        List<String> errorMsgList = new ArrayList<>();
+        LogisticsBillDTO.LogisticsBillVo bill1 = billVo("B1", "D1", null, null, null);
+        bill1.setOutstockId("OS1");
+        bill1.setOutstockCode("CK001");
+        LogisticsBillDTO.LogisticsBillVo bill2 = billVo("B2", "D2", null, null, null);
+        bill2.setOutstockId("OS2");
+        bill2.setOutstockCode("CK002");
+
+        @SuppressWarnings("unchecked")
+        Map<String, BigDecimal> weightMap = (Map<String, BigDecimal>) invokePrivate(service, "buildOrderWeightMap",
+                new Class[]{List.class, List.class, Map.class, Map.class},
+                Arrays.asList(bill1, bill2),
+                errorMsgList, preQueryOrderWeightMap, preQueryOrderWeightErrorMap);
+
+        assertFalse(errorMsgList.isEmpty());
+        assertEquals(1, weightMap.size());
+        assertBigDecimalEquals(new BigDecimal("10"), weightMap.get("D2"));
+    }
+
+    @Test
     public void allocateCostDetailMapShouldSplitByOrderWeight() throws Exception {
         ImportHistoryRecordServiceImpl service = new ImportHistoryRecordServiceImpl();
         Map<String, BigDecimal> weightMap = new HashMap<>();
@@ -457,6 +667,29 @@ public class LogisticsCostImportFieldRuleTest {
         assertTrue(errorMsgList.isEmpty());
         assertBigDecimalEquals(new BigDecimal("25"), allocateMap.get("D1").get(0).getCostValue());
         assertBigDecimalEquals(new BigDecimal("75"), allocateMap.get("D2").get(0).getCostValue());
+    }
+
+    @Test
+    public void allocateValueByWeightShouldSplitWithLastBillAbsorbingRemainder() throws Exception {
+        ImportHistoryRecordServiceImpl service = new ImportHistoryRecordServiceImpl();
+        Map<String, BigDecimal> weightMap = new HashMap<>();
+        weightMap.put("D1", new BigDecimal("1"));
+        weightMap.put("D2", new BigDecimal("3"));
+        List<LogisticsBillDTO.LogisticsBillVo> billGroup = Arrays.asList(
+                billVo("B1", "D1", null, null, null),
+                billVo("B2", "D2", null, null, null));
+        BigDecimal totalValue = new BigDecimal("2000");
+
+        BigDecimal first = (BigDecimal) invokePrivate(service, "allocateValueByWeight",
+                new Class[]{BigDecimal.class, List.class, Map.class, int.class, BigDecimal.class},
+                totalValue, billGroup, weightMap, 0, BigDecimal.ZERO);
+        BigDecimal second = (BigDecimal) invokePrivate(service, "allocateValueByWeight",
+                new Class[]{BigDecimal.class, List.class, Map.class, int.class, BigDecimal.class},
+                totalValue, billGroup, weightMap, 1, first);
+
+        assertBigDecimalEquals(new BigDecimal("500"), first);
+        assertBigDecimalEquals(new BigDecimal("1500"), second);
+        assertBigDecimalEquals(totalValue, first.add(second));
     }
 
     /**
@@ -645,6 +878,32 @@ public class LogisticsCostImportFieldRuleTest {
         CfgLogisticsCostImportDetailEntity detail = importDetail("clean", "amount", "金额");
         detail.setEtlRuleList(Arrays.asList(rules));
         return detail;
+    }
+
+    private LogisticsBillDTO.LogisticsBillVo billVoWithSupplier(String id, String detailId, String logisticsSupplierId) {
+        LogisticsBillDTO.LogisticsBillVo billVo = new LogisticsBillDTO.LogisticsBillVo();
+        billVo.setId(id);
+        billVo.setDetailId(detailId);
+        billVo.setLogisticsSupplierId(logisticsSupplierId);
+        return billVo;
+    }
+
+    private CfgLogisticsCostImportEntity costImportConfig(String identifyType, String cfgType, String dictPlatform) {
+        CfgLogisticsCostImportEntity entity = new CfgLogisticsCostImportEntity();
+        entity.setIdentifyType(identifyType);
+        entity.setCfgType(cfgType);
+        entity.setDictPlatform(dictPlatform);
+        return entity;
+    }
+
+    private LogisticsBillCostEntity billCost(String id, String detailId, String payType, String reconciliationStatus, String reconciliationMonth) {
+        LogisticsBillCostEntity entity = new LogisticsBillCostEntity();
+        entity.setId(id);
+        entity.setLogisticsBillDetailId(detailId);
+        entity.setPayType(payType);
+        entity.setReconciliationStatus(reconciliationStatus);
+        entity.setReconciliationMonth(reconciliationMonth);
+        return entity;
     }
 
     private LogisticsBillDTO.LogisticsBillVo billVo(String id, String detailId, String platformCode, String trackNo, String sourceCode) {

@@ -12,7 +12,7 @@ import com.erp.model.plm.dto.ProductShowDTO;
 import com.erp.model.plm.dto.excel.TaskExportDTO;
 import com.erp.rpc.plm.feign.ExportPlmFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
-import com.erp.server.file.entity.FileTask;
+import com.erp.model.file.entity.FileTask;
 import com.erp.server.file.exception.BusinessException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;

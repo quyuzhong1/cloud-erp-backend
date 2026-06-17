@@ -610,8 +610,23 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         if (ObjectUtil.isEmpty(entity)) {
             return Boolean.TRUE;
         }
-        ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
-        updateForApprove(entity.getId(), approveStatus.getStatus());
+        if (StringUtils.isBlank(dto.getType())) {
+            throw new ServiceException(ApiError.COMMON_PARAM_REQUIRED, "审核类型");
+        }
+        ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
+        if (Objects.isNull(approveType)) {
+            throw new ServiceException(ApiError.COMMON_PARAM_REQUIRED, "审核类型");
+        }
+        if (Objects.equals(approveType, ApproveTypeEnum.PASS)) {
+            updateForApprove(entity.getId(), ApproveStatusEnum.APPROVE.getStatus());
+        } else if (Objects.equals(approveType, ApproveTypeEnum.REJECT)
+                || Objects.equals(approveType, ApproveTypeEnum.REJECT_APPOINT)) {
+            // 审核不通过
+            updateForApprove(entity.getId(), ApproveStatusEnum.REJECT.getStatus());
+            return Boolean.TRUE;
+        } else {
+            throw new ServiceException(ApiError.WF_APPROVE_FAILED);
+        }
 
         List<QcNoticeDetailEntity> qcNoticeDetails = qcNoticeDetailService.listByMainIds(Collections.singletonList(entity.getId()));
         //人员
@@ -1928,7 +1943,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             Integer noticeQty = detail.getQcNoticeQty();
             Integer inventoryQty = skuInventoryMap.getOrDefault(skuId, 0);
             if (inventoryQty <= 0 || inventoryQty.intValue() < noticeQty.intValue()) {
-                results.add(BatchResultDTO.fail(skuId, skuNo, CharSequenceUtil.format(ApiError.PO_QC_STOCK_INSUFFICIENT_CONTINUE_CONFIRM.getMsg(), noticeQty, inventoryQty)));
+                results.add(BatchResultDTO.fail(skuId, skuNo, MessageUtils.getMessage(ApiError.PO_QC_STOCK_INSUFFICIENT_CONTINUE_CONFIRM, noticeQty, inventoryQty)));
             }
         }
         return results;
