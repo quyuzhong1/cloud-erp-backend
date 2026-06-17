@@ -31,9 +31,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.common.core.utils.date.LocalDateUtil;
 import com.common.message.constant.DistributeKeyConstant;
-import com.common.message.constant.RocketMqNewTag;
-import com.common.message.constant.RocketMqTopic;
-import com.common.message.service.mq.MQProducerService;
 import com.erp.model.oms.entity.*;
 import com.erp.model.plm.entity.ProductPackEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -70,8 +67,6 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.apache.rocketmq.client.producer.SendResult;
-import org.apache.rocketmq.client.producer.SendStatus;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -191,8 +186,6 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     private TmsAsyncTaskRecordService asyncTaskRecordService;
     @Resource
     private TmsAsyncTaskDetailService asyncTaskDetailRecordService;
-    @Resource
-    private MQProducerService mQProducerService;
     @Resource
     private RedissonClient redissonClient;
     @Autowired
@@ -3789,62 +3782,30 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         validateUpdateReconciliationStatusParams(dto.getReconciliationStatus(), dto.getConfirmTime());
         validateUpdateReconciliationStatusScope(dto);
         String costTypeName = resolveCostAttributionName(dto.getType());
+        String businessType = SourceTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode();
+        String methodType = resolveUpdateReconciliationStatusMethodType(dto.getType());
 
-        TmsAsyncTaskRecordDTO.PushParamsDTO params = new TmsAsyncTaskRecordDTO.PushParamsDTO();
-        params.setBusinessType(SourceTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode());
-        params.setMethodType(TmsAsyncTaskMethodTypeEnum.UPDATE_RECONCILIATION_STATUS.getCode());
-        params.setType(dto.getType());
-        params.setReconciliationStatus(dto.getReconciliationStatus());
-        params.setConfirmTime(dto.getConfirmTime());
-        params.setSqlMap(dto.getSqlMap());
-        params.setPermissionSql(dto.getPermissionSql());
-        params.setIds(dto.getIds());
-        fillUpdateReconciliationStatusCodes(params);
-        com.common.business.vo.LoginUser loginUser = UserContext.getDefaultLoginUser();
-        params.setOperatorUserId(loginUser.getUid());
-        params.setOperatorUserName(loginUser.getUserName());
-
-        int total = countByUpdateReconciliationStatus(params);
+        TmsAsyncTaskRecordDTO.PushParamsDTO countParams = buildUpdateReconciliationStatusCountParams(dto);
+        int total = countByUpdateReconciliationStatus(countParams);
         if (total == 0) {
             throw new ServiceException("没有可更新对账状态的数据");
         }
 
-        String jsonStr = JSONUtil.toJsonStr(params);
+        TmsAsyncTaskRecordDTO.UpdateReconciliationStatusPayloadDTO payload =
+            new TmsAsyncTaskRecordDTO.UpdateReconciliationStatusPayloadDTO(
+                dto.getReconciliationStatus(), dto.getConfirmTime(), dto.getSqlMap(), dto.getPermissionSql());
+        TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope =
+            asyncTaskRecordService.buildEnvelope(businessType, methodType, null, null, payload);
+        String jsonStr = JSONUtil.toJsonStr(envelope);
+
         TmsAsyncTaskRecordEntity taskRecord = asyncTaskRecordService.addManualTask(
-            new TmsAsyncTaskRecordDTO.ManualCreateDTO(params.getBusinessType(), params.getMethodType(), total, jsonStr));
+            new TmsAsyncTaskRecordDTO.ManualCreateDTO(businessType, methodType, total, jsonStr));
         if (Objects.isNull(taskRecord)) {
             throw new ServiceException(ApiError.LOGISTICS_ASYNC_TASK_CREATE_ERROR, jsonStr);
         }
-        String taskId = taskRecord.getId();
-        params.setTaskId(taskId);
-
-        // 派发前先认领任务，避免重复请求或MQ重投导致同一任务被并发执行。
-        boolean claimed = asyncTaskRecordService.lambdaUpdate()
-                .set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
-                .set(TmsAsyncTaskRecordEntity::getErrorData, ApiError.COMMON_BATCH_PROCESSING.getMsg())
-                .eq(TmsAsyncTaskRecordEntity::getId, taskId)
-                .eq(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode())
-                .update();
-        BatchResultDTO claimResult = asyncTaskRecordService.resolveDispatchClaimOrThrow(taskId, claimed, taskRecord.getCode(), jsonStr);
-        if (claimResult != null) {
-            return claimResult;
-        }
-
-        try {
-            SendResult sendResult = mQProducerService.syncClassMsg(RocketMqTopic.TMS_ASYNC_TASK_RECORD_TOPIC,
-                    RocketMqNewTag.TMS_ASYNC_TASK_RECORD_TAG, params, taskId);
-            if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
-                log.error("{}对账状态变更 MQ消息发送失败：{}", costTypeName, sendResult);
-                throw new ServiceException(ApiError.LOGISTICS_ASYNC_TASK_CREATE_ERROR, "MQ消息发送失败");
-            }
-            log.info("{}对账状态变更 MQ消息发送成功，taskId: {}, 预计处理数据量: {}", costTypeName, taskId, total);
-        } catch (Exception e) {
-            log.error("{}对账状态变更 MQ消息发送异常，taskId: {}", costTypeName, taskId, e);
-            asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),
-                    asyncTaskRecordService.formatTaskErrorMessage(e));
-            throw e;
-        }
-        return BatchResultDTO.success(taskId, taskRecord.getCode());
+        asyncTaskRecordService.claimAndDispatch(taskRecord, true);
+        log.info("{}对账状态变更异步任务派发成功，taskId: {}, 预计处理数据量: {}", costTypeName, taskRecord.getId(), total);
+        return BatchResultDTO.success(taskRecord.getId(), taskRecord.getCode());
     }
 
     /**
@@ -3948,21 +3909,19 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
      * 通过任务锁和游标分页处理，避免MQ重投并发执行和一次性加载大量ID。
      */
     @Override
-    public void pushUpdateReconciliationStatus(TmsAsyncTaskRecordDTO.PushParamsDTO dto) {
-        String taskId = dto.getTaskId();
-        String costTypeName = resolveCostAttributionName(dto.getType());
-        fillUpdateReconciliationStatusCodes(dto);
-        if (StringUtils.isBlank(taskId)) {
-            log.error("{}对账状态变更异步任务ID为空", costTypeName);
+    public void pushUpdateReconciliationStatus(TmsAsyncTaskRecordEntity taskRecord) {
+        if (Objects.isNull(taskRecord) || StringUtils.isBlank(taskRecord.getId())) {
+            log.error("对账状态变更异步任务ID为空");
             return;
         }
+        String taskId = taskRecord.getId();
 
         RLock taskLock = redissonClient.getLock(DistributeKeyConstant.TMS_ASYNC_TASK_EXEC_KEY + ":" + taskId);
         boolean locked = false;
         try {
             locked = taskLock.tryLock(0, TimeUnit.SECONDS);
             if (!locked) {
-                log.warn("{}对账状态变更异步任务正在执行，跳过重复消费，taskId: {}", costTypeName, taskId);
+                log.warn("对账状态变更异步任务正在执行，跳过重复消费，taskId: {}", taskId);
                 return;
             }
 
@@ -3970,16 +3929,40 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             if (billBatchParamsDTO == null) {
                 return;
             }
-            TmsAsyncTaskRecordEntity taskRecord = asyncTaskRecordService.getById(taskId);
-            if (Objects.isNull(taskRecord)) {
+
+            TmsAsyncTaskRecordEntity currentRecord = asyncTaskRecordService.getById(taskId);
+            if (Objects.isNull(currentRecord)) {
                 log.error("任务记录不存在，taskId: {}", taskId);
                 return;
             }
-            if (Objects.equals(taskRecord.getStatus(), TmsAsyncTaskRecordStatusEnum.FINISH.getCode())) {
-                log.warn("{}对账状态变更异步任务已完成，跳过重复消费，taskId: {}", costTypeName, taskId);
+            if (Objects.equals(currentRecord.getStatus(), TmsAsyncTaskRecordStatusEnum.FINISH.getCode())) {
+                log.warn("对账状态变更异步任务已完成，跳过重复消费，taskId: {}", taskId);
                 return;
             }
-            if (Objects.equals(taskRecord.getStatus(), TmsAsyncTaskRecordStatusEnum.PENDING.getCode())) {
+
+            TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope = asyncTaskRecordService.parseEnvelope(currentRecord.getDataJson());
+            TmsAsyncTaskRecordDTO.UpdateReconciliationStatusPayloadDTO payload =
+                asyncTaskRecordService.parseEnvelopePayloadOrFinishTask(
+                    taskId, envelope, TmsAsyncTaskRecordDTO.UpdateReconciliationStatusPayloadDTO.class,
+                    "对账状态变更异步任务信封参数解析失败");
+            if (envelope == null || payload == null) {
+                return;
+            }
+            if (StringUtils.isBlank(payload.getReconciliationStatus())) {
+                asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(), "对账状态不能为空");
+                return;
+            }
+
+            String methodType = org.apache.commons.lang3.StringUtils.defaultIfBlank(
+                envelope.getMethodType(), currentRecord.getMethodType());
+            String costType = resolveCostTypeFromUpdateReconciliationMethodType(methodType);
+            String costTypeName = resolveCostAttributionName(costType);
+            TmsAsyncTaskRecordDTO.PushParamsDTO dispatchParams =
+                asyncTaskRecordService.buildDispatchPushParams(taskRecord, envelope);
+            TmsAsyncTaskRecordDTO.PushParamsDTO queryParams =
+                buildUpdateReconciliationStatusRuntimeParams(payload, costType, dispatchParams);
+
+            if (Objects.equals(currentRecord.getStatus(), TmsAsyncTaskRecordStatusEnum.PENDING.getCode())) {
                 boolean claimed = asyncTaskRecordService.lambdaUpdate()
                         .set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
                         .set(TmsAsyncTaskRecordEntity::getErrorData, ApiError.COMMON_BATCH_PROCESSING.getMsg())
@@ -3990,41 +3973,42 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                     log.warn("{}对账状态变更异步任务已被其他消费者认领，taskId: {}", costTypeName, taskId);
                     return;
                 }
-            } else if (!Objects.equals(taskRecord.getStatus(), TmsAsyncTaskRecordStatusEnum.ING.getCode())) {
-                log.warn("{}对账状态变更异步任务状态不可执行，taskId: {}, status: {}", costTypeName, taskId, taskRecord.getStatus());
+            } else if (!Objects.equals(currentRecord.getStatus(), TmsAsyncTaskRecordStatusEnum.ING.getCode())) {
+                log.warn("{}对账状态变更异步任务状态不可执行，taskId: {}, status: {}", costTypeName, taskId, currentRecord.getStatus());
                 return;
             }
 
             int batchSize = asyncTaskRecordService.resolveBatchSize(billBatchParamsDTO.getBatch(), 500);
             int timeoutSeconds = asyncTaskRecordService.resolveTimeoutSeconds(billBatchParamsDTO.getBatchTimeoutSeconds(), 5000);
+            int staleDetailSeconds = asyncTaskRecordService.resolveStaleDetailSeconds(billBatchParamsDTO);
             String lastId = "";
             int totalProcessed = 0;
             int totalSuccess = 0;
             int totalFailed = 0;
             int batchNumber = 0;
 
-            log.info("开始分批处理{}对账状态变更任务，taskId: {}, 批次大小: {}, 预计总数: {}", costTypeName, taskId, batchSize, taskRecord.getDetailCount());
+            log.info("开始分批处理{}对账状态变更任务，taskId: {}, 批次大小: {}, 预计总数: {}", costTypeName, taskId, batchSize, currentRecord.getDetailCount());
             while (true) {
                 batchNumber++;
                 if (batchNumber == 1 || batchNumber % 10 == 0) {
-                    TmsAsyncTaskRecordEntity currentTask = asyncTaskRecordService.getById(taskId);
-                    if (asyncTaskRecordService.shouldStopLoopTask(taskId, currentTask)) {
+                    TmsAsyncTaskRecordEntity loopTask = asyncTaskRecordService.getById(taskId);
+                    if (asyncTaskRecordService.shouldStopLoopTask(taskId, loopTask)) {
                         break;
                     }
-                    if (asyncTaskRecordService.terminateTaskIfExecTimeoutReached(currentTask, billBatchParamsDTO)) {
+                    if (asyncTaskRecordService.terminateTaskIfExecTimeoutReached(loopTask, billBatchParamsDTO)) {
                         break;
                     }
                 }
 
-                // 每批重新查询可处理ID，保证任务执行期间被其他操作改动的数据仍由单条校验兜底。
-                dto.setLastId(lastId);
-                dto.setBatchSize(batchSize);
+                queryParams.setLastId(lastId);
+                queryParams.setBatchSize(batchSize);
                 List<String> batchIds;
                 try {
-                    if (TmsAsyncTaskRecordDTO.RETRY_MODE_FAILED_ONLY.equals(dto.getRetryMode())) {
-                        batchIds = asyncTaskDetailRecordService.listFailedBusinessIdsByCursor(dto.getRetrySourceTaskId(), lastId, batchSize);
+                    if (TmsAsyncTaskRecordDTO.RETRY_MODE_FAILED_ONLY.equals(dispatchParams.getRetryMode())) {
+                        batchIds = asyncTaskDetailRecordService.listFailedBusinessIdsByCursor(
+                            dispatchParams.getRetrySourceTaskId(), lastId, batchSize);
                     } else {
-                        batchIds = pageByUpdateReconciliationStatus(dto);
+                        batchIds = pageByUpdateReconciliationStatus(queryParams);
                     }
                 } catch (Exception e) {
                     log.error("第{}批查询失败，taskId: {}", batchNumber, taskId, e);
@@ -4039,7 +4023,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                     break;
                 }
 
-                TmsAsyncTaskRecordDTO.BatchProcessResult result = processUpdateReconciliationStatusBatch(taskId, batchIds, dto, timeoutSeconds);
+                TmsAsyncTaskRecordDTO.BatchProcessResult result =
+                    processUpdateReconciliationStatusBatch(taskId, batchIds, queryParams, timeoutSeconds, staleDetailSeconds);
                 totalProcessed += batchIds.size();
                 totalSuccess += result.getSuccessCount();
                 totalFailed += result.getFailedCount();
@@ -4052,9 +4037,9 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             asyncTaskRecordService.updateTaskFinally(taskId);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            log.warn("{}对账状态变更异步任务获取锁被中断，taskId: {}", costTypeName, taskId, e);
+            log.warn("对账状态变更异步任务获取锁被中断，taskId: {}", taskId, e);
         } catch (Exception e) {
-            log.error("{}对账状态变更异步任务执行失败，taskId: {}", costTypeName, taskId, e);
+            log.error("对账状态变更异步任务执行失败，taskId: {}", taskId, e);
             asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),
                     asyncTaskRecordService.formatTaskErrorMessage(e));
         } finally {
@@ -4064,13 +4049,64 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         }
     }
 
+    private String resolveUpdateReconciliationStatusMethodType(String type) {
+        if (Objects.equals(type, DictCostAttributionEnum.SELF_DELIVER.getCode())) {
+            return TmsAsyncTaskMethodTypeEnum.SELFDELIVER_UPDATE_RECONCILIATION_STATUS.getCode();
+        }
+        if (Objects.equals(type, DictCostAttributionEnum.LAST_MILE.getCode())) {
+            return TmsAsyncTaskMethodTypeEnum.LASTMILE_UPDATE_RECONCILIATION_STATUS.getCode();
+        }
+        throw new ServiceException("费用归属类型不支持");
+    }
+
+    private String resolveCostTypeFromUpdateReconciliationMethodType(String methodType) {
+        if (Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.SELFDELIVER_UPDATE_RECONCILIATION_STATUS.getCode())) {
+            return DictCostAttributionEnum.SELF_DELIVER.getCode();
+        }
+        if (Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.LASTMILE_UPDATE_RECONCILIATION_STATUS.getCode())) {
+            return DictCostAttributionEnum.LAST_MILE.getCode();
+        }
+        throw new ServiceException("对账状态变更异步任务方法类型不支持: " + methodType);
+    }
+
+    private TmsAsyncTaskRecordDTO.PushParamsDTO buildUpdateReconciliationStatusCountParams(LogisticsBillCostDTO.UpdateStatusDTO dto) {
+        TmsAsyncTaskRecordDTO.PushParamsDTO params = new TmsAsyncTaskRecordDTO.PushParamsDTO();
+        params.setType(dto.getType());
+        params.setReconciliationStatus(dto.getReconciliationStatus());
+        params.setConfirmTime(dto.getConfirmTime());
+        params.setSqlMap(dto.getSqlMap());
+        params.setPermissionSql(dto.getPermissionSql());
+        fillUpdateReconciliationStatusCodes(params);
+        return params;
+    }
+
+    private TmsAsyncTaskRecordDTO.PushParamsDTO buildUpdateReconciliationStatusRuntimeParams(
+            TmsAsyncTaskRecordDTO.UpdateReconciliationStatusPayloadDTO payload,
+            String costType,
+            TmsAsyncTaskRecordDTO.PushParamsDTO dispatchParams) {
+        TmsAsyncTaskRecordDTO.PushParamsDTO params = new TmsAsyncTaskRecordDTO.PushParamsDTO();
+        params.setTaskId(dispatchParams.getTaskId());
+        params.setRetryMode(dispatchParams.getRetryMode());
+        params.setRetrySourceTaskId(dispatchParams.getRetrySourceTaskId());
+        params.setOperatorUserId(dispatchParams.getOperatorUserId());
+        params.setOperatorUserName(dispatchParams.getOperatorUserName());
+        params.setType(costType);
+        params.setReconciliationStatus(payload.getReconciliationStatus());
+        params.setConfirmTime(payload.getConfirmTime());
+        params.setSqlMap(payload.getSqlMap());
+        params.setPermissionSql(payload.getPermissionSql());
+        fillUpdateReconciliationStatusCodes(params);
+        return params;
+    }
+
     /**
      * 执行单批对账状态变更，并把每条成功或失败写入任务明细。
      */
     private TmsAsyncTaskRecordDTO.BatchProcessResult processUpdateReconciliationStatusBatch(String taskId,
                                                                                            List<String> batchIds,
                                                                                            TmsAsyncTaskRecordDTO.PushParamsDTO dto,
-                                                                                           int timeoutSeconds) {
+                                                                                           int timeoutSeconds,
+                                                                                           int staleDetailSeconds) {
         List<String> distinctBatchIds = batchIds.stream()
                 .filter(StringUtils::isNotBlank)
                 .distinct()
@@ -4082,7 +4118,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         List<LogisticsBillCostEntity> costList = listByIds(distinctBatchIds);
         Map<String, LogisticsBillCostEntity> costMap = costList.stream()
                 .collect(Collectors.toMap(LogisticsBillCostEntity::getId, Function.identity(), (o1, o2) -> o1));
-        List<TmsAsyncTaskDetailEntity> details = buildUpdateReconciliationStatusDetails(taskId, distinctBatchIds, costMap);
+        List<TmsAsyncTaskDetailEntity> details =
+            buildUpdateReconciliationStatusDetails(taskId, distinctBatchIds, costMap, staleDetailSeconds);
         if (CollUtil.isEmpty(details)) {
             return new TmsAsyncTaskRecordDTO.BatchProcessResult(0, 0);
         }
@@ -4196,11 +4233,32 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
      */
     private List<TmsAsyncTaskDetailEntity> buildUpdateReconciliationStatusDetails(String taskId,
                                                                                   List<String> batchIds,
-                                                                                  Map<String, LogisticsBillCostEntity> costMap) {
+                                                                                  Map<String, LogisticsBillCostEntity> costMap,
+                                                                                  int staleDetailSeconds) {
         List<TmsAsyncTaskDetailEntity> existingDetails = asyncTaskDetailRecordService.lambdaQuery()
                 .eq(TmsAsyncTaskDetailEntity::getMainId, taskId)
                 .in(TmsAsyncTaskDetailEntity::getBusinessId, batchIds)
                 .list();
+        LocalDateTime staleBefore = LocalDateTime.now().minusSeconds(staleDetailSeconds);
+        Set<String> staleIngBusinessIds = existingDetails.stream()
+                .filter(d -> Objects.equals(d.getStatus(), TmsAsyncTaskRecordStatusEnum.ING.getCode()))
+                .filter(d -> asyncTaskRecordService.isStaleIngDetail(d, staleBefore))
+                .map(TmsAsyncTaskDetailEntity::getBusinessId)
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.toSet());
+        if (CollUtil.isNotEmpty(staleIngBusinessIds)) {
+            int staleFailedCount = asyncTaskDetailRecordService.markStaleIngDetailsFailed(
+                taskId, staleIngBusinessIds, staleBefore, ApiError.ASYNC_TASK_DETAIL_TIMEOUT.getMsg());
+            if (staleFailedCount > 0) {
+                log.warn("对账状态变更僵死ING明细已标记失败，taskId: {}, 数量: {}", taskId, staleFailedCount);
+            }
+        }
+        Set<String> existingIngBusinessIds = existingDetails.stream()
+                .filter(d -> Objects.equals(d.getStatus(), TmsAsyncTaskRecordStatusEnum.ING.getCode()))
+                .filter(d -> !staleIngBusinessIds.contains(d.getBusinessId()))
+                .map(TmsAsyncTaskDetailEntity::getBusinessId)
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.toSet());
         Set<String> existingBusinessIds = existingDetails.stream()
                 .map(TmsAsyncTaskDetailEntity::getBusinessId)
                 .filter(StringUtils::isNotBlank)
@@ -4211,7 +4269,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         LocalDateTime now = LocalDateTime.now();
         List<TmsAsyncTaskDetailEntity> addDetails = new ArrayList<>();
         for (String businessId : batchIds) {
-            if (existingBusinessIds.contains(businessId)) {
+            if (existingIngBusinessIds.contains(businessId) || existingBusinessIds.contains(businessId)) {
                 continue;
             }
             LogisticsBillCostEntity entity = costMap.get(businessId);

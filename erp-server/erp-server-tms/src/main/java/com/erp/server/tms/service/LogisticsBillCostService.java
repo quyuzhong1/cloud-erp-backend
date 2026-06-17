@@ -299,9 +299,9 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
     /**
      * 消费尾程费用对账状态变更异步任务，按游标分页执行。
      *
-     * @param dto 任务参数
+     * @param taskRecord 任务记录
      */
-    void pushUpdateReconciliationStatus(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
+    void pushUpdateReconciliationStatus(TmsAsyncTaskRecordEntity taskRecord);
 
     LogisticsBillCostDTO.PushAllocatedCostCountDTO pushAllocationCount(LogisticsBillCostDTO.PushDTO dto);
 

@@ -151,39 +151,38 @@ public class SmallBagCostAllocationController extends BaseController {
             tableAlias = "t",
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> updateReportStatus(@RequestBody @Validated SmallBagCostAllocationDTO.UpdateStatusDTO dto) {
-        // 按核算月份全量处理：改为异步任务，立即返回任务 id+code（结构保持 List<BatchResultDTO> 不变）
-        if (CharSequenceUtil.isNotBlank(dto.getReportPeriodStr())){
+        if (CollUtil.isNotEmpty(dto.getIds())) {
+            List<SmallBagCostAllocationEntity> entityList = smallBagCostAllocationService.listByIds(dto.getIds());
+            if (CollectionUtils.isEmpty(entityList)) {
+                return failure("批量更新小包分摊状态失败，未查询到小包分摊记录");
+            }
+            List<String> ids = entityList.stream().map(SmallBagCostAllocationEntity::getMainId).distinct().collect(Collectors.toList());
+            Map<String, SmallBagCostAllocationMainEntity> mainEntityMap = smallBagCostAllocationMainService.listByIds(ids)
+                    .stream().collect(Collectors.toMap(SmallBagCostAllocationMainEntity::getId, e -> e, (a, b) -> a));
+            List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+            for (String id : ids) {
+                BatchResultDTO submit;
+                try {
+                    submit = smallBagCostAllocationService.updateReportStatus(id, dto.getReportDate(), dto.getReportStatus());
+                } catch (Exception e) {
+                    log.error("小包分摊 状态变更", e);
+                    SmallBagCostAllocationMainEntity entity = mainEntityMap.get(id);
+                    if (ObjectUtil.isEmpty(entity)) {
+                        submit = BatchResultDTO.fail(id, id, "小包分摊不存在, 核算状态");
+                        resultDTOS.add(submit);
+                        continue;
+                    }
+                    submit = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());
+                }
+                resultDTOS.add(submit);
+            }
+            return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+        }
+        if (CharSequenceUtil.isNotBlank(dto.getReportPeriodStr())) {
             BatchResultDTO taskResult = smallBagCostAllocationService.asyncUpdateReportStatus(dto);
             return success(Collections.singletonList(taskResult));
         }
-        List<SmallBagCostAllocationEntity> entityList = null;
-        if (CollUtil.isNotEmpty(dto.getIds())){
-            entityList = smallBagCostAllocationService.listByIds(dto.getIds());
-        }
-        if (CollectionUtils.isEmpty(entityList)){
-            return failure("批量更新小包分摊状态失败，未查询到小包分摊记录");
-        }
-        List<String> ids = entityList.stream().map(SmallBagCostAllocationEntity::getMainId).distinct().collect(Collectors.toList());
-        Map<String, SmallBagCostAllocationMainEntity> mainEntityMap = smallBagCostAllocationMainService.listByIds(ids)
-                .stream().collect(Collectors.toMap(SmallBagCostAllocationMainEntity::getId, e -> e, (a, b) -> a));
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-        for (String id : ids) {
-            BatchResultDTO submit;
-            try {
-                submit = smallBagCostAllocationService.updateReportStatus(id, dto.getReportDate(), dto.getReportStatus());
-            } catch (Exception e) {
-                log.error("小包分摊 状态变更", e);
-                SmallBagCostAllocationMainEntity entity = mainEntityMap.get(id);
-                if (ObjectUtil.isEmpty(entity)) {
-                    submit = BatchResultDTO.fail(id, id, "小包分摊不存在, 核算状态");
-                    resultDTOS.add(submit);
-                    continue;
-                }
-                submit = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());
-            }
-            resultDTOS.add(submit);
-        }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+        return failure("批量更新小包分摊状态失败，未查询到小包分摊记录");
     }
     
     /**

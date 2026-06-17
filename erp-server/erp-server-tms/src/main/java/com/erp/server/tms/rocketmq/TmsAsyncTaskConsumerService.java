@@ -97,11 +97,11 @@ public class TmsAsyncTaskConsumerService implements RocketMQListener<TmsAsyncTas
         //头程分摊
         else if(Objects.equals(businessType,SourceTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode())){
             if (Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.UPDATE_REPORT_STATUS.getCode())) {
-                firstMileCostAllocationService.pushUpdateStatus(dto);
+                firstMileCostAllocationService.pushUpdateStatus(taskRecord);
             } else if (Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.RE_ALLOCATION.getCode())) {
-                firstMileCostAllocationService.pushReAllocationCalcCost(dto);
+                firstMileCostAllocationService.pushReAllocationCalcCost(taskRecord);
             } else if (Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.DELETE.getCode())) {
-                firstMileCostAllocationService.pushDelete(dto);
+                firstMileCostAllocationService.pushDelete(taskRecord);
             } else if (Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode())) {
                 firstMileCostAllocationService.pushFirstMileCostAllocation(taskRecord);
             } else {
@@ -113,15 +113,13 @@ public class TmsAsyncTaskConsumerService implements RocketMQListener<TmsAsyncTas
         //小包分摊
         else if(Objects.equals(businessType,SourceTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode())){
             if (Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.UPDATE_REPORT_STATUS.getCode())) {
-                //批量更新核算状态
-                smallBagCostAllocationService.pushUpdateReportStatus(dto);
-            } else if (Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.UPDATE_RECONCILIATION_STATUS.getCode())) {
-                //批量更新对账状态
-                logisticsBillCostService.pushUpdateReconciliationStatus(dto);
+                smallBagCostAllocationService.pushUpdateReportStatus(taskRecord);
+            } else if (isUpdateReconciliationStatusMethodType(methodType)) {
+                logisticsBillCostService.pushUpdateReconciliationStatus(taskRecord);
             } else if (Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.RE_ALLOCATION.getCode())) {
-                smallBagCostAllocationService.pushReAllocation(dto);
+                smallBagCostAllocationService.pushReAllocation(taskRecord);
             } else if (Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.DELETE.getCode())) {
-                smallBagCostAllocationService.pushDelete(dto);
+                smallBagCostAllocationService.pushDelete(taskRecord);
             } else if (isSmallBagPushAllocationMethodType(methodType)) {
                 //下推小包费用分摊
                 logisticsBillCostService.pushSmallBagCostAllocation(taskRecord);
@@ -134,11 +132,11 @@ public class TmsAsyncTaskConsumerService implements RocketMQListener<TmsAsyncTas
         //中转分摊
         else if(Objects.equals(businessType,SourceTypeEnum.TRANSFER_DECLARE_COST_ALLOCATION.getCode())){
             if (Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.UPDATE_REPORT_STATUS.getCode())) {
-                transferDeclareCostAllocationService.pushUpdateReportStatus(dto);
+                transferDeclareCostAllocationService.pushUpdateReportStatus(taskRecord);
             } else if (Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.RE_ALLOCATION.getCode())) {
-                transferDeclareCostAllocationService.pushReAllocation(dto);
+                transferDeclareCostAllocationService.pushReAllocation(taskRecord);
             } else if (Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.DELETE.getCode())) {
-                transferDeclareCostAllocationService.pushDelete(dto);
+                transferDeclareCostAllocationService.pushDelete(taskRecord);
             } else if (Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode())) {
                 transferDeclareCostAllocationService.pushTransferDeclareCostAllocation(taskRecord);
             } else {
@@ -196,5 +194,10 @@ public class TmsAsyncTaskConsumerService implements RocketMQListener<TmsAsyncTas
             || Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode())
             || Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.SELFDELIVER_PUSH_ALLOCATION.getCode())
             || Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.LASTMILE_PUSH_ALLOCATION.getCode());
+    }
+
+    private boolean isUpdateReconciliationStatusMethodType(String methodType) {
+        return Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.SELFDELIVER_UPDATE_RECONCILIATION_STATUS.getCode())
+            || Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.LASTMILE_UPDATE_RECONCILIATION_STATUS.getCode());
     }
 }

@@ -56,7 +56,7 @@ public interface TransferDeclareCostAllocationService extends SuperService<Trans
     /**
      * MQ 消费：游标分批批量更新核算状态
      */
-    void pushUpdateReportStatus(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
+    void pushUpdateReportStatus(TmsAsyncTaskRecordEntity taskRecord);
 
     /**
      * MQ 消费：已迁移的中转下推分摊批次任务。
@@ -70,11 +70,11 @@ public interface TransferDeclareCostAllocationService extends SuperService<Trans
 
     BatchResultDTO asyncReAllocation(FirstMileCostAllocationDTO.ResetIdsDTO dto);
 
-    void pushReAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
+    void pushReAllocation(TmsAsyncTaskRecordEntity taskRecord);
 
     BatchResultDTO asyncDelete(FirstMileCostAllocationDTO.ResetIdsDTO dto);
 
-    void pushDelete(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
+    void pushDelete(TmsAsyncTaskRecordEntity taskRecord);
     
     BatchResultDTO reAllocation(String id);
 

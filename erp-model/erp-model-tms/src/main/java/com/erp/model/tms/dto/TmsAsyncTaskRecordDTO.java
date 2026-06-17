@@ -440,6 +440,153 @@ public class TmsAsyncTaskRecordDTO implements Serializable {
     }
 
     /**
+     * 头程费用分摊更新核算状态载荷。
+     * <p>
+     * 仅持久化核算期间与目标状态/会计期间；游标、批次大小和重试元数据由框架运行时注入，不写入 payload。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class FirstMileUpdateReportStatusPayloadDTO implements Serializable {
+
+        /**
+         * 核算期间 yyyy-MM。
+         */
+        private String reportPeriodStr;
+
+        /**
+         * 目标核算状态（亦作候选记录筛选条件）。
+         */
+        private String reportStatus;
+
+        /**
+         * 目标会计期间。
+         */
+        private String reportDate;
+    }
+
+    /**
+     * 头程费用分摊按核算期间批量操作载荷（重新分摊、删除等）。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class FirstMileReportPeriodBatchPayloadDTO implements Serializable {
+
+        private String reportPeriodStr;
+
+        /**
+         * 候选记录筛选条件（如待确认状态）。
+         */
+        private String reportStatus;
+    }
+
+    /**
+     * 小包费用分摊更新核算状态载荷。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SmallBagUpdateReportStatusPayloadDTO implements Serializable {
+
+        /**
+         * 核算期间 yyyy-MM。
+         */
+        private String reportPeriodStr;
+
+        /**
+         * 目标核算状态（亦作候选记录筛选条件）。
+         */
+        private String reportStatus;
+
+        /**
+         * 目标会计期间。
+         */
+        private String reportDate;
+    }
+
+    /**
+     * 小包费用分摊按核算期间批量操作载荷（重新分摊、删除等）。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SmallBagReportPeriodBatchPayloadDTO implements Serializable {
+
+        private String reportPeriodStr;
+
+        private String reportStatus;
+    }
+
+    /**
+     * 中转费用分摊更新核算状态载荷。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TransferDeclareUpdateReportStatusPayloadDTO implements Serializable {
+
+        /**
+         * 核算期间 yyyy-MM。
+         */
+        private String reportPeriodStr;
+
+        /**
+         * 目标核算状态（亦作候选记录筛选条件）。
+         */
+        private String reportStatus;
+
+        /**
+         * 目标会计期间。
+         */
+        private String reportDate;
+    }
+
+    /**
+     * 中转费用分摊按核算期间批量操作载荷（重新分摊、删除等）。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TransferDeclareReportPeriodBatchPayloadDTO implements Serializable {
+
+        private String reportPeriodStr;
+
+        private String reportStatus;
+    }
+
+    /**
+     * 尾程费用对账状态变更载荷。
+     * <p>
+     * 仅持久化目标状态、确认时间、高级查询与数据权限 SQL；费用归属由 methodType 区分，不写入 payload。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UpdateReconciliationStatusPayloadDTO implements Serializable {
+
+        /**
+         * 目标对账状态
+         */
+        private String reconciliationStatus;
+
+        /**
+         * 对账确认时间
+         */
+        private LocalDateTime confirmTime;
+
+        /**
+         * 页面高级查询生成的 SQL 条件
+         */
+        private Map<String, String> sqlMap;
+
+        /**
+         * 数据权限 SQL
+         */
+        private String permissionSql;
+    }
+
+    /**
      * 中转费用分摊下推载荷。
      * <p>
      * 仅持久化 B2C 报关对账审核日期查询范围；游标、批次大小和重试元数据由框架运行时注入，不写入 payload。

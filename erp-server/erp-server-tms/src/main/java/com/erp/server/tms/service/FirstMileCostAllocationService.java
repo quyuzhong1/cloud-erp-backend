@@ -118,15 +118,15 @@ public interface FirstMileCostAllocationService extends SuperService<FirstMileCo
     /**
      * 消费端分批更新核算状态
      */
-    void pushUpdateStatus(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
+    void pushUpdateStatus(TmsAsyncTaskRecordEntity taskRecord);
 
     BatchResultDTO asyncReAllocationCalcCost(FirstMileCostAllocationDTO.ResetIdsDTO dto);
 
-    void pushReAllocationCalcCost(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
+    void pushReAllocationCalcCost(TmsAsyncTaskRecordEntity taskRecord);
 
     BatchResultDTO asyncDelete(FirstMileCostAllocationDTO.ResetIdsDTO dto);
 
-    void pushDelete(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
+    void pushDelete(TmsAsyncTaskRecordEntity taskRecord);
 
     /**
      * 根据对账单id查询费用分摊记录
