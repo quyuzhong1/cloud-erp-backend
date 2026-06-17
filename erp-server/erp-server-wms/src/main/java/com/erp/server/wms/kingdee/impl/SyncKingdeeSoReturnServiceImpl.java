@@ -427,6 +427,8 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             String inventoryOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getInventoryOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse(null);
             //库存组织
             map.put("inventoryOrgCode", inventoryOrgCode);
+            //入库库存状态
+            map.put("stockStatusId", detailEntity.getStockStatusId());
             //备注
             map.put("remark", detailEntity.getRemark());
             if (ObjectUtils.isNotEmpty(soReturnEntity)) {
