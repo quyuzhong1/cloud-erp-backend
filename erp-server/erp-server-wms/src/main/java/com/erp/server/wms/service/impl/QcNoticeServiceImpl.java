@@ -335,199 +335,85 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         return result;
     }
 
+    @Transactional(rollbackFor = Exception.class)
     @Override
-    public List<BatchResultDTO> batchUpdateQcUser(List<QcNoticeDTO.UpdateQcUserDTO> dtos) {
-        if (CollUtil.isEmpty(dtos)) {
-            return Collections.emptyList();
+    public BatchResultDTO updateQcUser(QcNoticeDTO.UpdateQcUserDTO dto) {
+        String detailId = dto.getDetailId();
+        if (StrUtil.isBlank(detailId)) {
+            throw new ServiceException(ApiError.PO_QC_NOTICE_DETAIL_NOT_FOUND);
+        }
+        if (StrUtil.isBlank(dto.getQcUserId())) {
+            throw new ServiceException(ApiError.QC_NOTICE_QC_USER_ID_REQUIRED);
         }
 
-        // 同一明细id去重，后面同id的覆盖前面（与前端最后一次输入一致）
-        Map<String, QcNoticeDTO.UpdateQcUserDTO> itemMap = new LinkedHashMap<>();
-        for (QcNoticeDTO.UpdateQcUserDTO item : dtos) {
-            itemMap.put(item.getDetailId(), item);
-        }
-        List<String> detailIds = new ArrayList<>(itemMap.keySet());
-
-        List<BatchResultDTO> resultList = new ArrayList<>();
-
-        List<QcNoticeDetailEntity> detailList = qcNoticeDetailService.listByIds(detailIds);
-        Map<String, QcNoticeDetailEntity> detailMap = detailList.stream()
-                .collect(Collectors.toMap(QcNoticeDetailEntity::getId, e -> e));
-
-        Set<String> mainIds = detailList.stream()
-                .map(QcNoticeDetailEntity::getMainId)
-                .filter(StrUtil::isNotBlank)
-                .collect(Collectors.toSet());
-        Map<String, QcNoticeEntity> noticeMap = CollUtil.isEmpty(mainIds)
-                ? Collections.emptyMap()
-                : this.listByIds(mainIds).stream()
-                        .collect(Collectors.toMap(QcNoticeEntity::getId, e -> e));
-
-        List<QcNoticeDetailEntity> validDetails = new ArrayList<>(detailIds.size());
-        Map<String, QcNoticeDTO.UpdateQcUserDTO> validItemMap = new HashMap<>(detailIds.size());
-        for (String detailId : detailIds) {
-            QcNoticeDetailEntity detail = detailMap.get(detailId);
-            if (detail == null) {
-                resultList.add(BatchResultDTO.fail(detailId, detailId, ApiError.PO_QC_NOTICE_DETAIL_NOT_FOUND.getMsg()));
-                continue;
-            }
-            QcNoticeEntity notice = noticeMap.get(detail.getMainId());
-            if (notice == null) {
-                resultList.add(BatchResultDTO.fail(detailId, detail.getSkuNo(),
-                        MessageFormat.format(ApiError.BILL_NOT_EXIST_WITH_TYPE.getMsg(), "质检通知单")));
-                continue;
-            }
-            if (!QcNoticeStatusEnum.WAIT.getCode().equals(notice.getQcStatus())) {
-                resultList.add(BatchResultDTO.fail(detailId, detail.getSkuNo(),
-                        ApiError.QC_NOTICE_UPDATE_QC_USER_STATUS_INVALID.getMsg()));
-                continue;
-            }
-            QcNoticeDTO.UpdateQcUserDTO item = itemMap.get(detailId);
-            if (StrUtil.isBlank(item.getQcUserId())) {
-                resultList.add(BatchResultDTO.fail(detailId, detail.getSkuNo(), ApiError.QC_NOTICE_QC_USER_ID_REQUIRED.getMsg()));
-                continue;
-            }
-            validDetails.add(detail);
-            validItemMap.put(detailId, item);
+        QcNoticeDetailEntity detail = qcNoticeDetailService.getById(detailId);
+        if (detail == null) {
+            throw new ServiceException(ApiError.PO_QC_NOTICE_DETAIL_NOT_FOUND);
         }
 
-        if (validDetails.isEmpty()) {
-            return resultList;
+        QcNoticeEntity notice = this.getById(detail.getMainId());
+        if (notice == null) {
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "质检通知单");
+        }
+        if (!QcNoticeStatusEnum.WAIT.getCode().equals(notice.getQcStatus())) {
+            throw new ServiceException(ApiError.QC_NOTICE_UPDATE_QC_USER_STATUS_INVALID);
         }
 
-        // 根据质检员id批量查询用户名（事务外远程调用，避免长事务）
-        List<String> qcUserIds = validItemMap.values().stream()
-                .map(QcNoticeDTO.UpdateQcUserDTO::getQcUserId)
-                .filter(StrUtil::isNotBlank)
-                .distinct()
-                .collect(Collectors.toList());
-        List<FindUserDTO> userInfoList;
-        try {
-            userInfoList = CollUtil.isEmpty(qcUserIds)
-                    ? Collections.emptyList()
-                    : sysUserFeign.getUserListByUserIds(qcUserIds);
-        } catch (Exception e) {
-            log.warn("批量查询质检员失败, qcUserIds={}", qcUserIds, e);
-            String errMsg = e instanceof ServiceException
-                    ? ((ServiceException) e).getMsg()
-                    : ApiError.HTTP_UNKNOWN.getMsg();
-            for (QcNoticeDetailEntity detail : validDetails) {
-                resultList.add(BatchResultDTO.fail(detail.getId(), detail.getSkuNo(), errMsg));
-            }
-            return resultList;
-        }
+        List<FindUserDTO> userInfoList = sysUserFeign.getUserListByUserIds(Collections.singletonList(dto.getQcUserId()));
         if (userInfoList == null) {
             userInfoList = Collections.emptyList();
         }
-        Map<String, String> qcUserNameMap = userInfoList.stream()
-                .filter(u -> u != null && StrUtil.isNotBlank(u.getUserId()))
-                .collect(Collectors.toMap(FindUserDTO::getUserId, FindUserDTO::getUserName, (a, b) -> a));
-
-        List<QcNoticeDetailEntity> resolvedValidDetails = new ArrayList<>(validDetails.size());
-        Map<String, QcNoticeDTO.UpdateQcUserDTO> resolvedValidItemMap = new HashMap<>(validDetails.size());
-        for (QcNoticeDetailEntity detail : validDetails) {
-            QcNoticeDTO.UpdateQcUserDTO item = validItemMap.get(detail.getId());
-            String qcUserName = qcUserNameMap.get(item.getQcUserId());
-            if (StrUtil.isBlank(qcUserName)) {
-                resultList.add(BatchResultDTO.fail(detail.getId(), detail.getSkuNo(),
-                        MessageFormat.format(ApiError.AUTH_USER_NOT_FOUND.getMsg(), item.getQcUserId())));
-                continue;
-            }
-            item.setQcUserName(qcUserName);
-            resolvedValidDetails.add(detail);
-            resolvedValidItemMap.put(detail.getId(), item);
+        String qcUserName = userInfoList.stream()
+                .filter(u -> u != null && Objects.equals(dto.getQcUserId(), u.getUserId()))
+                .map(FindUserDTO::getUserName)
+                .filter(StrUtil::isNotBlank)
+                .findFirst()
+                .orElse(null);
+        if (StrUtil.isBlank(qcUserName)) {
+            throw new ServiceException(ApiError.AUTH_USER_NOT_FOUND, dto.getQcUserId());
         }
-        if (resolvedValidDetails.isEmpty()) {
-            return resultList;
-        }
+        dto.setQcUserName(qcUserName);
 
-        try {
-            ApplicationContextUtils.getBean(QcNoticeServiceImpl.class)
-                    .persistBatchUpdateQcUser(resolvedValidDetails, resolvedValidItemMap);
-            resolvedValidDetails.forEach(d -> resultList.add(BatchResultDTO.success(d.getId(), d.getSkuNo())));
-        } catch (ServiceException e) {
-            String errMsg = e.getMsg();
-            for (QcNoticeDetailEntity detail : resolvedValidDetails) {
-                resultList.add(BatchResultDTO.fail(detail.getId(), detail.getSkuNo(), errMsg));
-            }
-        }
-
-        return resultList;
-    }
-
-    /**
-     * 批量更新质检员持久化（短事务，不含远程调用）
-     */
-    @Transactional(rollbackFor = Exception.class)
-    public void persistBatchUpdateQcUser(List<QcNoticeDetailEntity> resolvedValidDetails,
-                                         Map<String, QcNoticeDTO.UpdateQcUserDTO> resolvedValidItemMap) {
-        List<QcNoticeDetailEntity> detailUpdates = resolvedValidDetails.stream().map(detail -> {
-            QcNoticeDTO.UpdateQcUserDTO item = resolvedValidItemMap.get(detail.getId());
-            QcNoticeDetailEntity e = new QcNoticeDetailEntity();
-            e.setId(detail.getId());
-            e.setQcUserId(item.getQcUserId());
-            e.setQcUserName(item.getQcUserName());
-            return e;
-        }).collect(Collectors.toList());
-        if (!qcNoticeDetailService.updateBatchById(detailUpdates)) {
+        QcNoticeDetailEntity detailUpdate = new QcNoticeDetailEntity();
+        detailUpdate.setId(detail.getId());
+        detailUpdate.setQcUserId(dto.getQcUserId());
+        detailUpdate.setQcUserName(dto.getQcUserName());
+        if (!qcNoticeDetailService.updateById(detailUpdate)) {
             throw new ServiceException(ApiError.BILL_UPDATE_FAILED);
         }
 
-        batchUpdateQcInfoUsers(resolvedValidItemMap);
+        updateQcInfoUserByDetailId(detail.getId(), dto);
 
         String userName = UserContext.getDefaultLoginUser().getUserName();
-        Map<String, List<QcNoticeDetailEntity>> detailsByNotice = resolvedValidDetails.stream()
-                .collect(Collectors.groupingBy(QcNoticeDetailEntity::getMainId));
-        for (Map.Entry<String, List<QcNoticeDetailEntity>> entry : detailsByNotice.entrySet()) {
-            String mainId = entry.getKey();
-            Map<String, List<QcNoticeDetailEntity>> detailsByUser = entry.getValue().stream()
-                    .collect(Collectors.groupingBy(d -> {
-                        QcNoticeDTO.UpdateQcUserDTO item = resolvedValidItemMap.get(d.getId());
-                        return item.getQcUserName();
-                    }));
-            for (Map.Entry<String, List<QcNoticeDetailEntity>> userEntry : detailsByUser.entrySet()) {
-                String showName = userEntry.getKey();
-                String skuNos = userEntry.getValue().stream()
-                        .map(QcNoticeDetailEntity::getSkuNo)
-                        .filter(StrUtil::isNotBlank)
-                        .collect(Collectors.joining(","));
-                String msg = StrUtil.format("用户【{}】批量更新质检员为【{}】，SKU【{}】",
-                        userName, showName, skuNos);
-                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.QC_NOTICE.getCode(), mainId, "批量更新质检员");
-            }
-        }
+        String msg = StrUtil.format("用户【{}】批量更新质检员为【{}】，SKU【{}】",
+                userName, dto.getQcUserName(), detail.getSkuNo());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.QC_NOTICE.getCode(), detail.getMainId(), "批量更新质检员");
+
+        return BatchResultDTO.success(detail.getId(), detail.getSkuNo());
     }
 
     /**
-     * 批量同步下游质检单的质检员（按明细维度独立设置质检员）
+     * 同步单条明细对应下游质检单的质检员
      */
-    private void batchUpdateQcInfoUsers(Map<String, QcNoticeDTO.UpdateQcUserDTO> itemMapByDetailId) {
-        if (CollUtil.isEmpty(itemMapByDetailId)) {
+    private void updateQcInfoUserByDetailId(String detailId, QcNoticeDTO.UpdateQcUserDTO item) {
+        if (StrUtil.isBlank(detailId) || item == null) {
             return;
         }
         List<QcInfoEntity> qcInfoList = qcInfoService.lambdaQuery()
-                .in(QcInfoEntity::getSourceDetailId, itemMapByDetailId.keySet())
+                .eq(QcInfoEntity::getSourceDetailId, detailId)
                 .list();
         if (CollUtil.isEmpty(qcInfoList)) {
             return;
         }
         List<QcInfoEntity> updateList = qcInfoList.stream()
                 .map(qcInfo -> {
-                    QcNoticeDTO.UpdateQcUserDTO item = itemMapByDetailId.get(qcInfo.getSourceDetailId());
-                    if (item == null) {
-                        return null;
-                    }
                     QcInfoEntity entity = new QcInfoEntity();
                     entity.setId(qcInfo.getId());
                     entity.setQcUserId(item.getQcUserId());
                     entity.setQcUserName(item.getQcUserName());
                     return entity;
                 })
-                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
-        if (updateList.isEmpty()) {
-            return;
-        }
         if (!qcInfoService.updateBatchById(updateList)) {
             throw new ServiceException(ApiError.BILL_UPDATE_FAILED);
         }

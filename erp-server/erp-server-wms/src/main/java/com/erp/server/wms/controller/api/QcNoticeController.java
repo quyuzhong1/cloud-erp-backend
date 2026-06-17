@@ -22,6 +22,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.QcNoticeDTO;
+import com.erp.model.wms.entity.QcNoticeDetailEntity;
 import com.erp.model.wms.entity.QcNoticeEntity;
 import com.erp.server.wms.service.QcNoticeDetailService;
 import com.erp.server.wms.service.QcNoticeService;
@@ -30,6 +31,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -48,6 +50,9 @@ public class QcNoticeController extends BaseController {
 
     @Resource
     private QcNoticeService qcNoticeService;
+
+    @Resource
+    private QcNoticeDetailService qcNoticeDetailService;
 
     /**
     * 新增
@@ -115,7 +120,31 @@ public class QcNoticeController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "质检通知单批量更新质检员")
     public ApiResult<List<BatchResultDTO>> batchUpdateQcUser(
             @RequestBody @Valid List<QcNoticeDTO.UpdateQcUserDTO> dtos) {
-        List<BatchResultDTO> resultDTOS = qcNoticeService.batchUpdateQcUser(dtos);
+        Map<String, QcNoticeDTO.UpdateQcUserDTO> itemMap = new LinkedHashMap<>();
+        for (QcNoticeDTO.UpdateQcUserDTO item : dtos) {
+            itemMap.put(item.getDetailId(), item);
+        }
+        List<String> detailIds = new ArrayList<>(itemMap.keySet());
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(detailIds.size());
+        List<QcNoticeDetailEntity> detailList = qcNoticeDetailService.listByIds(detailIds);
+        Map<String, QcNoticeDetailEntity> detailMap = detailList.stream()
+                .collect(Collectors.toMap(QcNoticeDetailEntity::getId, d -> d));
+        for (QcNoticeDTO.UpdateQcUserDTO dto : itemMap.values()) {
+            BatchResultDTO updateResult;
+            try {
+                updateResult = qcNoticeService.updateQcUser(dto);
+            } catch (Exception e) {
+                log.error("质检通知单批量更新质检员失败", e);
+                QcNoticeDetailEntity detail = detailMap.get(dto.getDetailId());
+                if (ObjectUtil.isEmpty(detail)) {
+                    updateResult = BatchResultDTO.fail(dto.getDetailId(), dto.getDetailId(), "质检通知单明细不存在, 更新质检员失败");
+                    resultDTOS.add(updateResult);
+                    continue;
+                }
+                updateResult = BatchResultDTO.fail(detail.getId(), detail.getSkuNo(), e.getMessage());
+            }
+            resultDTOS.add(updateResult);
+        }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
