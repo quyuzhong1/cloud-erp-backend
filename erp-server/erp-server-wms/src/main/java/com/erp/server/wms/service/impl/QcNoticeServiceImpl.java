@@ -1754,16 +1754,27 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         if (CollUtil.isNotEmpty(qcInfoBatchUpdateList)) qcInfoService.updateBatchById(qcInfoBatchUpdateList);
         if (CollUtil.isNotEmpty(qcResultBatchUpdateList)) qcResultService.updateBatchById(qcResultBatchUpdateList);
 
-        // 完成质检（详细版）：将质检结果中的产品实物图片 / 箱唛图片 落库到 attachment (business_id = qc_result.id)
+        // 完成质检（详细版）：批量落库产品实物图片 / 箱唛图片，避免逐行短事务 IO
+        List<QcResultDTO.ProductBoxImageItem> productBoxImageItems = new ArrayList<>();
         for (QcNoticeDTO.QcInfoFullView qcInfoView : dto) {
+            if (qcInfoView == null || qcInfoView.getQcResultView() == null) {
+                continue;
+            }
             QcResultEntity qcResult = qcResultMap.get(qcInfoView.getQcBillId());
-            if (qcResult == null || qcInfoView.getQcResultView() == null) {
+            if (qcResult == null || StrUtil.isBlank(qcResult.getId())) {
                 continue;
             }
             QcRemarkDTO.QcResultView qrv = qcInfoView.getQcResultView();
-            qcResultService.saveProductAndBoxImage(qcResult.getId(),
-                    qrv.getProductRealImageUrlList(), qrv.getProductRealImageNameList(),
-                    qrv.getBoxImageUrlList(), qrv.getBoxImageNameList());
+            QcResultDTO.ProductBoxImageItem item = new QcResultDTO.ProductBoxImageItem();
+            item.setQcResultId(qcResult.getId());
+            item.setProductImgUrlList(qrv.getProductRealImageUrlList());
+            item.setProductImgNameList(qrv.getProductRealImageNameList());
+            item.setBoxImgUrlList(qrv.getBoxImageUrlList());
+            item.setBoxImgNameList(qrv.getBoxImageNameList());
+            productBoxImageItems.add(item);
+        }
+        if (CollUtil.isNotEmpty(productBoxImageItems)) {
+            qcResultService.batchSaveProductAndBoxImage(productBoxImageItems);
         }
 
         //更新收货单的待质检量
@@ -2744,6 +2755,16 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                 .filter(d -> StringUtils.isNotBlank(d.getValue()))
                 .collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName, (a, b) -> a));
 
+        Set<String> supplierIds = list.stream()
+                .map(QcNoticeDTO.ListDTO::getSupplierId)
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.toSet());
+        Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = Collections.emptyMap();
+        if (CollUtil.isNotEmpty(supplierIds)) {
+            Map<String, SupplierDTO.SupplierSimpleDTO> feignMap = supplierFeign.getSupplierSimpleInfo(new ArrayList<>(supplierIds));
+            supplierMap = feignMap != null ? feignMap : Collections.emptyMap();
+        }
+
         LocalDateTime nowTime = LocalDateTime.now();
         // 属性赋值
         for (QcNoticeDTO.ListDTO data : list) {
@@ -2771,7 +2792,8 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             data.setQcDetailStatusName(qcDetailStatusEnum != null ? qcDetailStatusEnum.getName() : "");
 
             //上架状态 待上架:wait  部分上架：part  已上架：finish
-            data.setPutawayStatusName(PutawayStatusEnum.getByCode(data.getPutawayStatus()).getName());
+            PutawayStatusEnum putawayStatusEnum = PutawayStatusEnum.getByCode(data.getPutawayStatus());
+            data.setPutawayStatusName(putawayStatusEnum != null ? putawayStatusEnum.getName() : "");
 
             data.setQcInfoCode(map.getOrDefault(data.getDetailId(), ""));
 
@@ -2780,9 +2802,11 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                 data.setQcProblemDictName(qcProblemDictNameMap.getOrDefault(data.getQcProblemDict(), ""));
             }
 
-            SupplierEntity supplier = supplierFeign.getSupplierById(data.getSupplierId());
-            if (Objects.nonNull(supplier)) {
-                data.setSupplierName(supplier.getName());
+            if (StringUtils.isNotBlank(data.getSupplierId())) {
+                SupplierDTO.SupplierSimpleDTO supplier = supplierMap.get(data.getSupplierId());
+                if (supplier != null) {
+                    data.setSupplierName(supplier.getName());
+                }
             }
 //            if(!data.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode())){
 //                data.setQcTimeliness(this.getHoursDiff(data.getApproveTime(),nowTime));

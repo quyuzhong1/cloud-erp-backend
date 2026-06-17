@@ -92,6 +92,7 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
     @Resource
     private KingdeeFeign kingdeeFeign;
 
+    @DistributeLocker(keyName = "addDTO.getSupplierId(),addDTO.getWarehouseId()")
     @Override
     public BaseResultDTO.AddDTO add(CfgQcUserDTO.AddDTO addDTO) {
         HandleDataResult ctx = handleData(addDTO, null);
@@ -409,45 +410,53 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
 
     @Override
     public void importCfgQcUser(BaseDTO.ImportDTO dto) {
-        if (StrUtil.isNotBlank(dto.getUserId())) {
-            FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(dto.getUserId());
-            if (Objects.nonNull(findUserDTO)) {
-                LoginUser user = new LoginUser();
-                user.setUid(findUserDTO.getUserId());
-                user.setUserName(findUserDTO.getUserName());
-                user.setRealName(findUserDTO.getRealName());
-                user.setUserAccount(findUserDTO.getMobile());
-                user.setMobile(findUserDTO.getMobile());
-                UserContext.setLoginUser(user);
-            }
-        }
-
-        CfgQcUserExcelListener excelListenerUtil = new CfgQcUserExcelListener(dto.getTaskId(), dto.getImportCount());
+        boolean userContextSet = false;
         try {
-            byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
-            EasyExcel.read(new ByteArrayInputStream(bytes), CfgQcUserDTO.ImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
-        } catch (ExcelCommonException e) {
-            log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
-        }
+            if (StrUtil.isNotBlank(dto.getUserId())) {
+                FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(dto.getUserId());
+                if (Objects.nonNull(findUserDTO)) {
+                    LoginUser user = new LoginUser();
+                    user.setUid(findUserDTO.getUserId());
+                    user.setUserName(findUserDTO.getUserName());
+                    user.setRealName(findUserDTO.getRealName());
+                    user.setUserAccount(findUserDTO.getMobile());
+                    user.setMobile(findUserDTO.getMobile());
+                    UserContext.setLoginUser(user);
+                    userContextSet = true;
+                }
+            }
 
-        BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
-        importResultDTO.setTaskId(dto.getTaskId());
-        importResultDTO.setCount(excelListenerUtil.getCount());
-        List<CfgQcUserDTO.ImportExcelDTO> errorList = excelListenerUtil.getErrorList();
-        String url = "";
-        if (CollUtil.isNotEmpty(errorList)) {
-            String fileName = "质检员配置错误信息.xlsx";
-            File file = ExcelUtil.exportFile(fileName, "error", errorList, CfgQcUserDTO.ImportExcelDTO.class);
-            if (!file.isDirectory()) {
-                url = FastDFSClientUtil.uploadFile(file, fileName);
+            CfgQcUserExcelListener excelListenerUtil = new CfgQcUserExcelListener(dto.getTaskId(), dto.getImportCount());
+            try {
+                byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
+                EasyExcel.read(new ByteArrayInputStream(bytes), CfgQcUserDTO.ImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+            } catch (ExcelCommonException e) {
+                log.error("导入格式错误！", e);
+                throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
+            }
+
+            BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+            importResultDTO.setTaskId(dto.getTaskId());
+            importResultDTO.setCount(excelListenerUtil.getCount());
+            List<CfgQcUserDTO.ImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+            String url = "";
+            if (CollUtil.isNotEmpty(errorList)) {
+                String fileName = "质检员配置错误信息.xlsx";
+                File file = ExcelUtil.exportFile(fileName, "error", errorList, CfgQcUserDTO.ImportExcelDTO.class);
+                if (!file.isDirectory()) {
+                    url = FastDFSClientUtil.uploadFile(file, fileName);
+                }
+            }
+            importResultDTO.setRemark("处理完成，失败" + errorList.size() + "条");
+            importResultDTO.setErrorUrl(url);
+            importResultDTO.setFinishTime(LocalDateTime.now());
+            importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
+            downloadTaskFeign.updateTask(importResultDTO);
+        } finally {
+            if (userContextSet) {
+                UserContext.clear();
             }
         }
-        importResultDTO.setRemark("处理完成，失败" + errorList.size() + "条");
-        importResultDTO.setErrorUrl(url);
-        importResultDTO.setFinishTime(LocalDateTime.now());
-        importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
-        downloadTaskFeign.updateTask(importResultDTO);
     }
 
     /**

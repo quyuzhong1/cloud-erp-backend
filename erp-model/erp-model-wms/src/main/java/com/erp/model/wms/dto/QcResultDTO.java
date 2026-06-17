@@ -673,4 +673,22 @@ public class QcResultDTO {
         private Integer totalQty;
 
     }
+
+    /**
+     * 批量保存产品实物 / 箱唛图片入参
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ProductBoxImageItem {
+
+        private String qcResultId;
+
+        private List<String> productImgUrlList;
+
+        private List<String> productImgNameList;
+
+        private List<String> boxImgUrlList;
+
+        private List<String> boxImgNameList;
+    }
 }
