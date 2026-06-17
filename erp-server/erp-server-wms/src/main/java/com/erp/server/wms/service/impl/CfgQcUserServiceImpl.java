@@ -555,6 +555,7 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
         List<String> warehouseNames = rows.stream()
                 .map(CfgQcUserDTO.ImportExcelDTO::getWarehouseName)
                 .filter(StrUtil::isNotBlank)
+                .map(String::trim)
                 .distinct()
                 .collect(Collectors.toList());
         if (CollUtil.isEmpty(warehouseNames)) {
@@ -677,7 +678,7 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
             if (supplier == null || StrUtil.isBlank(supplier.getId())) {
                 continue;
             }
-            List<WarehouseDTO.ListDTO> warehouses = warehouseMap.get(dto.getWarehouseName());
+            List<WarehouseDTO.ListDTO> warehouses = warehouseMap.get(dto.getWarehouseName().trim());
             if (CollUtil.isEmpty(warehouses) || warehouses.size() != 1) {
                 continue;
             }
