@@ -175,12 +175,13 @@ public class TikTokSdkClientService {
     private ShopsBean resolveAuthorizedShop(TikTokShopAuthDTO tikTokShopAuthDTO, String targetRegion) {
         if (tikTokShopAuthDTO == null || tikTokShopAuthDTO.getData() == null
                 || CollectionUtil.isEmpty(tikTokShopAuthDTO.getData().getShops())) {
-            throw new ServiceException("TikTok授权失败：未获取到平台授权站点");
+            throw new ServiceException(ApiError.SHOP_TIKTOK_AUTHORIZED_SHOPS_EMPTY);
         }
         if (StringUtils.isBlank(targetRegion)) {
-            throw new ServiceException("店铺未配置国家，无法完成TikTok授权");
+            throw new ServiceException(ApiError.SHOP_COUNTRY_CODE_REQUIRED);
         }
         String normalizedRegion = targetRegion.trim().toUpperCase(Locale.ROOT);
+        // TikTok 同一 seller 下通常每 region 仅一个站点；若平台返回重复 region，findFirst 取列表首个即可。
         ShopsBean matchedShop = tikTokShopAuthDTO.getData().getShops().stream()
                 .filter(shop -> shop.getRegion() != null
                         && normalizedRegion.equalsIgnoreCase(shop.getRegion()))
@@ -191,9 +192,7 @@ public class TikTokSdkClientService {
                     .map(ShopsBean::getRegion)
                     .filter(StringUtils::isNotBlank)
                     .collect(Collectors.joining(", "));
-            throw new ServiceException(StrUtil.format(
-                    "TikTok授权失败：店铺国家[{}]在平台授权站点中不存在，可用站点：{}",
-                    normalizedRegion, availableRegions));
+            throw new ServiceException(ApiError.SHOP_TIKTOK_REGION_NOT_MATCH, normalizedRegion, availableRegions);
         }
         return matchedShop;
     }
