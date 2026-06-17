@@ -98,23 +98,20 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
     @Transactional(rollbackFor = Exception.class)
     public List<WorkflowTaskRecordEntity> addMissingTask(WorkflowTaskRecordDTO.AddTaskDTO dto, List<WorkflowTaskRecordEntity> existTasks) {
         List<WorkflowTaskRecordEntity> allTaskEntities = buildTaskEntities(dto);
-        Set<Integer> existIndexSet = CollUtil.emptyIfNull(existTasks).stream()
-                .map(WorkflowTaskRecordEntity::getIndex)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toSet());
+        List<WorkflowTaskRecordEntity> mergedExistTasks = new ArrayList<>(listBySourceId(dto.getSourceId(), dto.getSourceTypeEnum().getCode()));
+        mergedExistTasks.addAll(CollUtil.emptyIfNull(existTasks));
+        Map<Integer, WorkflowTaskRecordEntity> existTaskMap = buildIndexTaskMap(mergedExistTasks);
+        Set<Integer> existIndexSet = existTaskMap.keySet();
         List<WorkflowTaskRecordEntity> missingEntities = allTaskEntities.stream()
                 .filter(e -> !existIndexSet.contains(e.getIndex()))
                 .collect(Collectors.toList());
         if (CollUtil.isEmpty(missingEntities)) {
             return Collections.emptyList();
         }
-        Map<Integer, WorkflowTaskRecordEntity> existTaskMap = CollUtil.emptyIfNull(existTasks).stream()
-                .filter(e -> Objects.nonNull(e.getIndex()))
-                .collect(Collectors.toMap(WorkflowTaskRecordEntity::getIndex, e -> e, (o1, o2) -> o1));
         for (WorkflowTaskRecordEntity missingEntity : missingEntities) {
-            WorkflowTaskRecordEntity previousTask = existTaskMap.get(missingEntity.getIndex() - 1);
-            if (Objects.nonNull(previousTask) && CharSequenceUtil.isNotBlank(previousTask.getOutputData())) {
-                missingEntity.setInputData(previousTask.getOutputData());
+            String previousOutputData = getPreviousSuccessOutputData(missingEntity, existTaskMap);
+            if (CharSequenceUtil.isNotBlank(previousOutputData)) {
+                missingEntity.setInputData(previousOutputData);
             }
         }
         try {
@@ -252,8 +249,9 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
             if (CollUtil.isEmpty(resetTasks)) {
                 continue;
             }
+            Map<Integer, WorkflowTaskRecordEntity> indexTaskMap = buildIndexTaskMap(groupTasks);
             for (WorkflowTaskRecordEntity entity : resetTasks) {
-                resetForceRetryTask(entity, dto);
+                resetForceRetryTask(entity, dto, indexTaskMap);
                 resetCount++;
             }
             WorkflowTaskRecordEntity firstTask = groupTasks.stream()
@@ -294,6 +292,7 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
         }
         return this.lambdaQuery().eq(WorkflowTaskRecordEntity::getSourceId,soId)
                 .eq(WorkflowTaskRecordEntity::getSourceType,sourceType)
+                .eq(WorkflowTaskRecordEntity::getIsDeleted, false)
                 .list();
     }
 
@@ -357,9 +356,9 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
         return listBySourceId(dto.getSourceId(), dto.getSourceType());
     }
 
-    private void resetForceRetryTask(WorkflowTaskRecordEntity entity, WorkflowTaskRecordDTO.ForceRetryDTO dto) {
+    private void resetForceRetryTask(WorkflowTaskRecordEntity entity, WorkflowTaskRecordDTO.ForceRetryDTO dto, Map<Integer, WorkflowTaskRecordEntity> indexTaskMap) {
         String remark = appendForceRetryRemark(entity.getRemark(), dto.getRemark());
-        String refreshedInputData = getPreviousSuccessOutputData(entity);
+        String refreshedInputData = getPreviousSuccessOutputData(entity, indexTaskMap);
         if (CharSequenceUtil.isNotBlank(refreshedInputData)) {
             this.lambdaUpdate()
                     .eq(WorkflowTaskRecordEntity::getId, entity.getId())
@@ -380,23 +379,28 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
                 .update();
     }
 
-    private String getPreviousSuccessOutputData(WorkflowTaskRecordEntity entity) {
+    private Map<Integer, WorkflowTaskRecordEntity> buildIndexTaskMap(List<WorkflowTaskRecordEntity> taskList) {
+        return CollUtil.emptyIfNull(taskList).stream()
+                .filter(Objects::nonNull)
+                .filter(e -> Objects.nonNull(e.getIndex()))
+                .filter(e -> !Boolean.TRUE.equals(e.getIsDeleted()))
+                .collect(Collectors.toMap(WorkflowTaskRecordEntity::getIndex, e -> e, (o1, o2) -> o1));
+    }
+
+    private String getPreviousSuccessOutputData(WorkflowTaskRecordEntity entity, Map<Integer, WorkflowTaskRecordEntity> indexTaskMap) {
         if (Objects.isNull(entity)
                 || Objects.isNull(entity.getIndex())
                 || entity.getIndex() <= 0
-                || CharSequenceUtil.isBlank(entity.getSourceType())
-                || CharSequenceUtil.isBlank(entity.getSourceId())) {
+                || Objects.isNull(indexTaskMap)) {
             return null;
         }
-        WorkflowTaskRecordEntity previousTask = this.lambdaQuery()
-                .eq(WorkflowTaskRecordEntity::getSourceType, entity.getSourceType())
-                .eq(WorkflowTaskRecordEntity::getSourceId, entity.getSourceId())
-                .eq(WorkflowTaskRecordEntity::getIndex, entity.getIndex() - 1)
-                .eq(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.SUCCESS.getCode())
-                .eq(WorkflowTaskRecordEntity::getIsDeleted, false)
-                .last("limit 1")
-                .one();
-        return Objects.isNull(previousTask) ? null : previousTask.getOutputData();
+        WorkflowTaskRecordEntity previousTask = indexTaskMap.get(entity.getIndex() - 1);
+        if (Objects.isNull(previousTask)
+                || !Objects.equals(previousTask.getStatus(), WorkflowTaskRecordStatusEnum.SUCCESS.getCode())
+                || Boolean.TRUE.equals(previousTask.getIsDeleted())) {
+            return null;
+        }
+        return previousTask.getOutputData();
     }
 
     private boolean allowForceRetry(WorkflowTaskRecordEntity entity) {
