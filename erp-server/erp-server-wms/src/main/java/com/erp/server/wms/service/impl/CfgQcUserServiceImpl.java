@@ -15,6 +15,7 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.FileTaskStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
@@ -90,11 +91,14 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
     private KingdeeFeign kingdeeFeign;
 
     @DistributeLocker(keyName = "addDTO.getSupplierId(),addDTO.getWarehouseId()")
-    @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(CfgQcUserDTO.AddDTO addDTO) {
-        // 公共校验
         HandleDataResult ctx = handleData(addDTO, null);
+        return ApplicationContextUtils.getBean(CfgQcUserServiceImpl.class).doAdd(addDTO, ctx);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public BaseResultDTO.AddDTO doAdd(CfgQcUserDTO.AddDTO addDTO, HandleDataResult ctx) {
         SupplierEntity supplier = ctx.getSupplier();
 
         // 保存主表
@@ -123,14 +127,17 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
     * 修改
     */
     @DistributeLocker(keyName = "updateDTO.getId()")
-    @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(CfgQcUserDTO.UpdateDTO updateDTO) {
         CfgQcUserEntity old = super.getById(updateDTO.getId());
         old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.CFG_QC_USER_NOT_EXIST));
 
-        // 公共校验
         HandleDataResult ctx = handleData(updateDTO, old);
+        return ApplicationContextUtils.getBean(CfgQcUserServiceImpl.class).doUpdate(updateDTO, ctx);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean doUpdate(CfgQcUserDTO.UpdateDTO updateDTO, HandleDataResult ctx) {
         String supplierId = ctx.getSupplierId();
         String warehouseId = ctx.getWarehouseId();
         SupplierEntity supplier = ctx.getSupplier();
