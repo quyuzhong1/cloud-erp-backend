@@ -18,6 +18,7 @@ import com.erp.model.plm.entity.CfgProductForbiddenWordEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.plm.mapper.CfgProductForbiddenWordMapper;
 import com.erp.server.plm.service.CfgProductForbiddenWordService;
+import com.erp.server.plm.support.PlmPagingSortSupport;
 import com.erp.server.plm.support.ProductForbiddenWordMatcher;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -60,7 +61,6 @@ public class CfgProductForbiddenWordServiceImpl extends SuperServiceImpl<CfgProd
             if (Objects.nonNull(old)) {
                 // 已存在的未删除词仅刷新更新审计字段，不改变原词文本和状态。
                 super.updateById(old);
-                productForbiddenWordMatcher.refreshNow();
                 if (StringUtils.isBlank(firstId)) {
                     firstId = old.getId();
                 }
@@ -70,11 +70,11 @@ public class CfgProductForbiddenWordServiceImpl extends SuperServiceImpl<CfgProd
             entity.setForbiddenWord(word);
             entity.setDisabled(DisabledEnum.ENABLE.getCode());
             super.save(entity);
-            productForbiddenWordMatcher.refreshNow();
             if (StringUtils.isBlank(firstId)) {
                 firstId = entity.getId();
             }
         }
+        productForbiddenWordMatcher.refreshNow();
         return new BaseResultDTO.AddDTO(firstId, firstId);
     }
 
@@ -101,6 +101,7 @@ public class CfgProductForbiddenWordServiceImpl extends SuperServiceImpl<CfgProd
 
     @Override
     public PagingVO<CfgProductForbiddenWordDTO.ListDTO> paging(PagingDTO<CfgProductForbiddenWordDTO.PagingParamDTO> dto) {
+        PlmPagingSortSupport.sanitizeForbiddenWordSort(dto.getParams().getSortList());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         IPage<CfgProductForbiddenWordDTO.ListDTO> pageData = baseMapper.paging(query, dto.getParams());
         fillList(pageData.getRecords());
@@ -120,8 +121,14 @@ public class CfgProductForbiddenWordServiceImpl extends SuperServiceImpl<CfgProd
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO updateStatus(String id, Boolean disabled) {
         CfgProductForbiddenWordEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到违禁词数据"));
-        entity.setDisabled(disabled);
-        super.updateById(entity);
+        boolean updated = lambdaUpdate()
+                .eq(CfgProductForbiddenWordEntity::getId, id)
+                .eq(CfgProductForbiddenWordEntity::getVersion, entity.getVersion())
+                .set(CfgProductForbiddenWordEntity::getDisabled, disabled)
+                .update();
+        if (!updated) {
+            throw new ServiceException("违禁词状态更新失败，数据已被修改");
+        }
         productForbiddenWordMatcher.refreshNow();
         return BatchResultDTO.success(entity.getId(), entity.getForbiddenWord(), OperationTypeEnum.DISABLED);
     }

@@ -50,6 +50,7 @@ import com.erp.model.plm.vo.ProjectTaskTimeRecordPageVO;
 import com.erp.server.plm.query.BomInfoHandler;
 import com.erp.server.plm.query.CfgMoldAlertRuleQueryHandler;
 import com.erp.server.plm.query.CfgMoldReturnAlertRuleQueryHandler;
+import com.erp.server.plm.query.CfgProductForbiddenWordQueryHandler;
 import com.erp.server.plm.query.MoldInfoQueryHandler;
 import com.erp.server.plm.query.MoldMonitorQueryHandler;
 import com.erp.server.plm.query.MoldRefSkuQueryHandler;
@@ -287,6 +288,7 @@ public class ExportPlmFeignController {
     }
 
     @PostMapping("/productForbiddenWord")
+    @WebAdvanceQuery(handler = CfgProductForbiddenWordQueryHandler.class)
     public PagingVO<CfgProductForbiddenWordExportExcelDTO> exportProductForbiddenWord(@RequestBody @Validated PagingDTO<CfgProductForbiddenWordDTO.PagingParamDTO> dto) {
         return cfgProductForbiddenWordService.exportPaging(dto);
     }

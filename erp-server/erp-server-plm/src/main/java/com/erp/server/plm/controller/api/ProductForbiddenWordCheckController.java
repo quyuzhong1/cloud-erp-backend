@@ -5,9 +5,11 @@ import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
+import com.erp.server.plm.query.ProductForbiddenWordCheckQueryHandler;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.plm.dto.ProductForbiddenWordCheckDTO;
@@ -44,6 +46,7 @@ public class ProductForbiddenWordCheckController extends BaseController {
      * 列表查询
      */
     @PostMapping("/paging")
+    @WebAdvanceQuery(handler = ProductForbiddenWordCheckQueryHandler.class)
     public ApiResult<PagingVO<ProductForbiddenWordCheckDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<ProductForbiddenWordCheckDTO.PagingParamDTO> dto) {
         return success(productForbiddenWordCheckService.paging(dto));
     }

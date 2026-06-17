@@ -1,26 +1,34 @@
 package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.ExcelWriter;
+import com.alibaba.excel.write.metadata.WriteSheet;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.sensitive.SensitiveWordMatcher;
 import com.common.business.vo.PagingVO;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.plm.dto.ProductForbiddenWordCheckDTO;
 import com.erp.model.plm.dto.excel.ProductForbiddenWordCheckReportExcelDTO;
 import com.erp.model.plm.entity.ProductForbiddenWordCheckEntity;
+import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.plm.enums.ProductForbiddenWordCheckStatusEnum;
 import com.erp.server.plm.mapper.ProductForbiddenWordCheckMapper;
-import com.erp.server.plm.service.CfgProductForbiddenWordService;
 import com.erp.server.plm.service.ProductForbiddenWordCheckService;
+import com.erp.server.plm.support.PlmPagingSortSupport;
+import com.erp.server.plm.support.ProductForbiddenWordMatcher;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
@@ -30,12 +38,15 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import javax.annotation.Resource;
 import java.io.File;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -47,14 +58,21 @@ import java.util.stream.Collectors;
 @Service
 public class ProductForbiddenWordCheckServiceImpl extends SuperServiceImpl<ProductForbiddenWordCheckMapper, ProductForbiddenWordCheckEntity> implements ProductForbiddenWordCheckService {
 
-    private static final Object REPORT_SEQ_LOCK = new Object();
+    private static final int SCAN_BATCH_SIZE = 1000;
 
-    private static final int BATCH_SIZE = 1000;
+    private static final int REPORT_WRITE_BATCH_SIZE = 5000;
+
+    private static final int MAX_REPORT_ROWS = 100000;
+
+    private static final String DETECT_LOCK_KEY = "plm:productForbiddenWordCheck:detect";
 
     private static final DateTimeFormatter REPORT_DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd");
 
     @Resource
-    private CfgProductForbiddenWordService cfgProductForbiddenWordService;
+    private ProductForbiddenWordMatcher productForbiddenWordMatcher;
+
+    @Resource
+    private RedissonClient redissonClient;
 
     @Resource
     @Qualifier("customExecutor")
@@ -62,6 +80,7 @@ public class ProductForbiddenWordCheckServiceImpl extends SuperServiceImpl<Produ
 
     @Override
     public PagingVO<ProductForbiddenWordCheckDTO.ListDTO> paging(PagingDTO<ProductForbiddenWordCheckDTO.PagingParamDTO> dto) {
+        PlmPagingSortSupport.sanitizeForbiddenWordCheckSort(dto.getParams().getSortList());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         IPage<ProductForbiddenWordCheckDTO.ListDTO> pageData = baseMapper.paging(query, dto.getParams());
         fillList(pageData.getRecords());
@@ -71,13 +90,28 @@ public class ProductForbiddenWordCheckServiceImpl extends SuperServiceImpl<Produ
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ProductForbiddenWordCheckDTO.DetectDTO detect() {
-        ProductForbiddenWordCheckEntity entity;
-        synchronized (REPORT_SEQ_LOCK) {
-            entity = buildCheckEntity();
+        RLock detectLock = redissonClient.getLock(DETECT_LOCK_KEY);
+        boolean locked = false;
+        try {
+            locked = detectLock.tryLock(0, 30, TimeUnit.SECONDS);
+            if (!locked) {
+                throw new ServiceException("已有检测任务进行中，请稍后再试");
+            }
+            if (countActiveDetectTask() > 0) {
+                throw new ServiceException("已有检测任务进行中，请稍后再试");
+            }
+            ProductForbiddenWordCheckEntity entity = buildCheckEntity();
             super.save(entity);
+            runAfterCommit(entity.getId());
+            return new ProductForbiddenWordCheckDTO.DetectDTO(entity.getId(), entity.getReportName());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new ServiceException("创建检测任务失败，请稍后重试");
+        } finally {
+            if (locked && detectLock.isHeldByCurrentThread()) {
+                detectLock.unlock();
+            }
         }
-        runAfterCommit(entity.getId());
-        return new ProductForbiddenWordCheckDTO.DetectDTO(entity.getId(), entity.getReportName());
     }
 
     @Override
@@ -112,30 +146,10 @@ public class ProductForbiddenWordCheckServiceImpl extends SuperServiceImpl<Produ
         File reportFile = null;
         try {
             updateRunning(id);
-            List<String> enabledWords = cfgProductForbiddenWordService.listEnabledWords();
+            SensitiveWordMatcher matcher = productForbiddenWordMatcher.openSnapshot();
             Integer totalCount = baseMapper.countProductForDetect();
-            List<ProductForbiddenWordCheckReportExcelDTO> reportRows = new ArrayList<>();
-            int offset = 0;
-            while (offset < totalCount) {
-                List<ProductForbiddenWordCheckDTO.ProductScanDTO> products = baseMapper.listProductForDetect(BATCH_SIZE, offset);
-                if (CollectionUtils.isEmpty(products)) {
-                    break;
-                }
-                for (ProductForbiddenWordCheckDTO.ProductScanDTO product : products) {
-                    List<String> hitWords = cfgProductForbiddenWordService.matchWords(product.getName(), enabledWords);
-                    if (CollectionUtils.isEmpty(hitWords)) {
-                        continue;
-                    }
-                    reportRows.add(new ProductForbiddenWordCheckReportExcelDTO(
-                            product.getSkuNo(),
-                            product.getName(),
-                            hitWords.stream().collect(Collectors.joining("\n")),
-                            DisabledEnumName.ENABLE
-                    ));
-                }
-                offset += products.size();
-            }
-            reportFile = ExcelUtil.exportFile(entity.getReportName(), "产品检测", reportRows, ProductForbiddenWordCheckReportExcelDTO.class);
+            ReportWriteResult writeResult = writeReportFile(entity.getReportName(), matcher, totalCount);
+            reportFile = writeResult.getReportFile();
             String reportUrl = FastDFSClientUtil.uploadFile(reportFile, entity.getReportName());
             ProductForbiddenWordCheckEntity updateEntity = new ProductForbiddenWordCheckEntity();
             updateEntity.setId(id);
@@ -143,8 +157,8 @@ public class ProductForbiddenWordCheckServiceImpl extends SuperServiceImpl<Produ
             updateEntity.setFinishTime(LocalDateTime.now());
             updateEntity.setReportUrl(reportUrl);
             updateEntity.setTotalCount(totalCount);
-            updateEntity.setHitCount(reportRows.size());
-            updateEntity.setFailReason("");
+            updateEntity.setHitCount(writeResult.getHitCount());
+            updateEntity.setFailReason(writeResult.isTruncated() ? "命中结果超过上限，仅导出前10万条" : "");
             super.updateById(updateEntity);
         } catch (Exception e) {
             log.error("产品违禁词检测失败，id：{}", id, e);
@@ -161,16 +175,93 @@ public class ProductForbiddenWordCheckServiceImpl extends SuperServiceImpl<Produ
 
     private ProductForbiddenWordCheckEntity buildCheckEntity() {
         String reportDate = LocalDate.now().format(REPORT_DATE_FORMATTER);
-        Integer reportSeq = baseMapper.nextSeq(reportDate);
-        String reportName = StrUtil.format("检测报告{}{}.xlsx", reportDate, String.format("%06d", reportSeq));
-        ProductForbiddenWordCheckEntity entity = new ProductForbiddenWordCheckEntity();
-        entity.setReportDate(reportDate);
-        entity.setReportSeq(reportSeq);
-        entity.setReportName(reportName);
-        entity.setStatus(ProductForbiddenWordCheckStatusEnum.WAIT.getCode());
-        entity.setTotalCount(0);
-        entity.setHitCount(0);
-        return entity;
+        RLock seqLock = redissonClient.getLock("plm:productForbiddenWordCheck:seq:" + reportDate);
+        seqLock.lock();
+        try {
+            Integer reportSeq = baseMapper.nextSeq(reportDate);
+            String reportName = StrUtil.format("检测报告{}{}.xlsx", reportDate, String.format("%06d", reportSeq));
+            ProductForbiddenWordCheckEntity entity = new ProductForbiddenWordCheckEntity();
+            entity.setReportDate(reportDate);
+            entity.setReportSeq(reportSeq);
+            entity.setReportName(reportName);
+            entity.setStatus(ProductForbiddenWordCheckStatusEnum.WAIT.getCode());
+            entity.setTotalCount(0);
+            entity.setHitCount(0);
+            return entity;
+        } finally {
+            if (seqLock.isHeldByCurrentThread()) {
+                seqLock.unlock();
+            }
+        }
+    }
+
+    private ReportWriteResult writeReportFile(String reportName, SensitiveWordMatcher matcher, Integer totalCount) throws IOException {
+        File tempDirectory = FileUtils.getTempDirectory();
+        File templateFile = new File(tempDirectory, "productForbiddenWordCheckTemplate" + LocalDate.now() + ".xlsx");
+        File outputFile = new File(tempDirectory, reportName);
+        if (!templateFile.exists()) {
+            EasyExcel.write(templateFile, ProductForbiddenWordCheckReportExcelDTO.class)
+                    .sheet("产品检测")
+                    .doWrite(Collections.emptyList());
+        }
+        ExcelWriter excelWriter = EasyExcel.write(outputFile, ProductForbiddenWordCheckReportExcelDTO.class)
+                .withTemplate(templateFile)
+                .inMemory(false)
+                .build();
+        WriteSheet writeSheet = EasyExcel.writerSheet("产品检测").build();
+        List<ProductForbiddenWordCheckReportExcelDTO> batch = new ArrayList<>(REPORT_WRITE_BATCH_SIZE);
+        int hitCount = 0;
+        boolean truncated = false;
+        int offset = 0;
+        int safeTotalCount = Objects.isNull(totalCount) ? 0 : totalCount;
+        try {
+            while (offset < safeTotalCount && hitCount < MAX_REPORT_ROWS) {
+                List<ProductForbiddenWordCheckDTO.ProductScanDTO> products = baseMapper.listProductForDetect(SCAN_BATCH_SIZE, offset);
+                if (CollectionUtils.isEmpty(products)) {
+                    break;
+                }
+                for (ProductForbiddenWordCheckDTO.ProductScanDTO product : products) {
+                    List<String> hitWords = matcher.findAll(product.getName());
+                    if (CollectionUtils.isEmpty(hitWords)) {
+                        continue;
+                    }
+                    batch.add(buildReportRow(product, hitWords));
+                    hitCount++;
+                    if (hitCount >= MAX_REPORT_ROWS) {
+                        truncated = true;
+                        break;
+                    }
+                    if (batch.size() >= REPORT_WRITE_BATCH_SIZE) {
+                        excelWriter.write(batch, writeSheet);
+                        batch.clear();
+                    }
+                }
+                offset += products.size();
+            }
+            if (CollectionUtils.isNotEmpty(batch)) {
+                excelWriter.write(batch, writeSheet);
+            }
+        } finally {
+            excelWriter.finish();
+        }
+        return new ReportWriteResult(outputFile, hitCount, truncated);
+    }
+
+    private ProductForbiddenWordCheckReportExcelDTO buildReportRow(ProductForbiddenWordCheckDTO.ProductScanDTO product, List<String> hitWords) {
+        return new ProductForbiddenWordCheckReportExcelDTO(
+                product.getSkuNo(),
+                product.getName(),
+                hitWords.stream().collect(Collectors.joining("\n")),
+                ProductDetailStatusEnum.getName(product.getStatus())
+        );
+    }
+
+    private long countActiveDetectTask() {
+        return lambdaQuery()
+                .in(ProductForbiddenWordCheckEntity::getStatus,
+                        ProductForbiddenWordCheckStatusEnum.WAIT.getCode(),
+                        ProductForbiddenWordCheckStatusEnum.RUNNING.getCode())
+                .count();
     }
 
     private void runAfterCommit(String id) {
@@ -214,7 +305,27 @@ public class ProductForbiddenWordCheckServiceImpl extends SuperServiceImpl<Produ
         }
     }
 
-    private static class DisabledEnumName {
-        private static final String ENABLE = "启用";
+    private static class ReportWriteResult {
+        private final File reportFile;
+        private final int hitCount;
+        private final boolean truncated;
+
+        private ReportWriteResult(File reportFile, int hitCount, boolean truncated) {
+            this.reportFile = reportFile;
+            this.hitCount = hitCount;
+            this.truncated = truncated;
+        }
+
+        private File getReportFile() {
+            return reportFile;
+        }
+
+        private int getHitCount() {
+            return hitCount;
+        }
+
+        private boolean isTruncated() {
+            return truncated;
+        }
     }
 }

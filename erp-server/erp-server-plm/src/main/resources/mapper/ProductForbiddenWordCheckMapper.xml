@@ -104,7 +104,8 @@
         SELECT
             id AS id,
             sku_no AS skuNo,
-            name AS name
+            name AS name,
+            status AS status
         FROM product_detail
         WHERE is_deleted = FALSE
         ORDER BY id

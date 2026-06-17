@@ -1,6 +1,7 @@
 package com.erp.server.plm.support;
 
 import com.common.business.sensitive.SensitiveWordMatcher;
+import com.common.business.sensitive.SensitiveWordMatcher;
 import com.erp.server.plm.mapper.CfgProductForbiddenWordMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -46,7 +47,22 @@ public class ProductForbiddenWordMatcher {
         if (StringUtils.isBlank(text) || CollectionUtils.isEmpty(enabledWords)) {
             return new ArrayList<>();
         }
-        return newEngine(enabledWords).findAll(text);
+        return openSnapshot(enabledWords).findAll(text);
+    }
+
+    /**
+     * 基于当前启用词库构建一次性匹配器，供全量检测等批处理场景复用。
+     */
+    public SensitiveWordMatcher openSnapshot() {
+        refreshIfNeeded();
+        return newEngine(cfgProductForbiddenWordMapper.listEnabledWords());
+    }
+
+    /**
+     * 基于指定词库构建一次性匹配器。
+     */
+    public static SensitiveWordMatcher openSnapshot(List<String> enabledWords) {
+        return newEngine(enabledWords);
     }
 
     public void refreshNow() {

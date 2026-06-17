@@ -136,5 +136,7 @@ public class ProductForbiddenWordCheckDTO implements Serializable {
         private String skuNo;
 
         private String name;
+
+        private Integer status;
     }
 }

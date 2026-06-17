@@ -7,9 +7,11 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.vo.PagingVO;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
+import com.erp.server.plm.query.CfgProductForbiddenWordQueryHandler;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.plm.dto.CfgProductForbiddenWordDTO;
@@ -63,6 +65,7 @@ public class CfgProductForbiddenWordController extends BaseController {
      * 列表查询
      */
     @PostMapping("/paging")
+    @WebAdvanceQuery(handler = CfgProductForbiddenWordQueryHandler.class)
     public ApiResult<PagingVO<CfgProductForbiddenWordDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<CfgProductForbiddenWordDTO.PagingParamDTO> dto) {
         return success(cfgProductForbiddenWordService.paging(dto));
     }
@@ -130,6 +133,7 @@ public class CfgProductForbiddenWordController extends BaseController {
      */
     @PostMapping("/export")
     @LogAction(value = LogActionEnum.EXPORT, desc = "违禁词库导出Excel数据")
+    @WebAdvanceQuery(handler = CfgProductForbiddenWordQueryHandler.class)
     public ApiResult<Object> exportList(@RequestBody @Validated CfgProductForbiddenWordDTO.PagingParamDTO dto) {
         Boolean flag = cfgProductForbiddenWordService.exportList(dto);
         return Boolean.TRUE.equals(flag) ? success() : failure();
