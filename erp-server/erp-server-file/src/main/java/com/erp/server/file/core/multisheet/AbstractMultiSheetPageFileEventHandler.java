@@ -58,27 +58,24 @@ public abstract class AbstractMultiSheetPageFileEventHandler<P> extends Abstract
                     + " 无法推断导出参数类型 P，请确保直接继承 AbstractMultiSheetPageFileEventHandler<P> 并指定具体 P，或重写 resolveExportParams");
         }
         JavaType javaType = getObjectMapper().getTypeFactory().constructType(paramType);
-        Object value = readValue(fileTask.getMetaInfo(), javaType);
-        return (P) value;
+        return (P) readValue(fileTask.getMetaInfo(), javaType);
     }
 
     /**
-     * 从当前 Handler 类沿继承链解析 {@link AbstractMultiSheetPageFileEventHandler} 的类型参数 P，
-     * 返回 {@link Type} 以保留泛型嵌套信息（与 {@code AbstractPageFileEventHandler} 的解析方式一致）。
+     * 解析当前 Handler 实现的 {@link AbstractMultiSheetPageFileEventHandler} 类型参数 P，解析不到返回 {@code null}。
      */
     static Type resolveExportParamType(Class<?> handlerClass) {
-        ResolvableType rt = ResolvableType.forClass(handlerClass);
-        while (rt != ResolvableType.NONE) {
-            if (rt.getRawClass() != null && rt.getRawClass() == AbstractMultiSheetPageFileEventHandler.class) {
-                ResolvableType param = rt.getGeneric(0);
-                if (param != ResolvableType.NONE && null != param.getType()) {
-                    return param.getType();
-                }
-                return null;
-            }
-            rt = rt.getSuperType();
+        // 用 forClass(baseType, implementationClass) 让 Spring 跨中间继承层（如 AbstractMasterDerivedSheetHandler<P,M>）
+        // 把类型变量 P 绑定到具体类型；返回值必须用 resolve()（已绑定的具体 Class），不能用 getType()。
+        // 注意：getType() 返回的是声明处的原始 Type，跨继承层时即未解析的 TypeVariable（如 "P"），
+        // Jackson constructType 会退回 Object 并把 metaInfo 反序列化成 LinkedHashMap，最终在 getExcelPath 处抛 ClassCastException
+        // ——这正是本类历史 BUG 的根因。本仓库所有导出 Handler 的 P 均为非参数化 DTO，resolve() 不存在嵌套泛型丢失问题；
+        // 若将来出现参数化 P（如 PagingDTO<T>），应改为由 ResolvableType 递归构造 Jackson JavaType，而非退回 getType()。
+        ResolvableType param = ResolvableType.forClass(AbstractMultiSheetPageFileEventHandler.class, handlerClass).getGeneric(0);
+        if (param == ResolvableType.NONE || param.resolve() == null) {
+            return null;
         }
-        return null;
+        return param.resolve();
     }
 
     protected int getPageSize() {
