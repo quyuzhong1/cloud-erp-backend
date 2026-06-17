@@ -1992,29 +1992,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //修改组包和中转状态
         updatePackageAndTransferStatus(id, packageStatus, transferStatus, isRegistration, isUpdateTransferStatus);
 
-        //如果有物流单号 就要去取消
+        //如果有物流单号 就要去取消（独立事务提交，避免后续配货校验失败回滚导致云途已删但 ERP 仍留运单号）
         if (StringUtils.isNotBlank(code) && !Objects.equals(logisticsChannelId, existChannelId) && soB2cLogisticsEntity.getSourceSystem().equals(SoB2cLogisticSourceSystemEnum.THIRD.getCode())) {
-            //已存在的渠道为空
             if (StringUtils.isBlank(existChannelId)) {
                 throw new ServiceException(ApiError.LOGISTICS_CHANNEL_REQUIRED_FOR_CANCEL);
             }
-            //取消物流单
-            LogisticsBillDTO.CancelBillDTO cancelBillDTO = LogisticsBillDTO.CancelBillDTO.builder().
-                    channelId(existChannelId).transportNo(code).platformCode(entity.getPlatformCode()).
-                    referenceNumber(entity.getCode()).orderId(entity.getId()).shopId(entity.getShopId()).build();
-            ApiResult<CancelResponseVO> cancelResult = logisticsBillFeign.cancelBill(cancelBillDTO);
-            //取消失败
-            if (!cancelResult.isSuccess() && cancelResult.getCode() != -1) {
+            BatchResultDTO cancelResult = soB2cLogisticsService.cancelThirdLogisticsRequiresNew(entity, existChannelId);
+            if (!cancelResult.getSuccess()) {
                 throw new ServiceException(ApiError.LOGISTICS_CANCEL_NOT_SUPPORTED, code);
-            } else {
-                String msg = CharSequenceUtil.format("取消物流单单号成功,单号:【{}/{}】 ", soB2cLogisticsEntity.getCode(), soB2cLogisticsEntity.getTrackNo());
-                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "取消物流单");
-                soB2cLogisticsEntity.setCode("");
-                soB2cLogisticsEntity.setTrackNo("");
-                //清空面单信息
-                soB2cLabelService.deleteByMainIds(Arrays.asList(id));
-                soB2cErrorService.removeErrorOrder(id, SoB2cErrorTypeEnum.GET_LOGISTICS_LABEL.getCode());
             }
+            soB2cLogisticsEntity = soB2cLogisticsService.getByMainId(id);
         }
         //重置物流渠道信息
         soB2cLogisticsEntity.setLogisticsChannelId(logisticsChannelId);

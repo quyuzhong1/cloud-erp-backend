@@ -44,6 +44,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
@@ -517,6 +518,47 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
             return BatchResultDTO.success(id,soB2cEntity.getCode(),"取消成功");
         }
 
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
+    public BatchResultDTO cancelThirdLogisticsRequiresNew(SoB2cEntity entity, String cancelChannelId) {
+        SoB2cLogisticsEntity soB2cLogisticsEntity = this.getByMainId(entity.getId());
+        if (Objects.isNull(soB2cLogisticsEntity)) {
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "找不到物流单");
+        }
+        if (StringUtils.isBlank(cancelChannelId)) {
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "物流渠道为空");
+        }
+        if (StringUtils.isBlank(soB2cLogisticsEntity.getCode())) {
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), "无需取消");
+        }
+        if (!SoB2cLogisticSourceSystemEnum.THIRD.getCode().equals(soB2cLogisticsEntity.getSourceSystem())) {
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), "无需取消");
+        }
+        LogisticsBillDTO.CancelBillDTO cancelBillDTO = LogisticsBillDTO.CancelBillDTO.builder()
+                .channelId(cancelChannelId)
+                .transportNo(soB2cLogisticsEntity.getCode())
+                .referenceNumber(entity.getCode())
+                .platformCode(entity.getPlatformCode())
+                .orderId(entity.getId())
+                .shopId(entity.getShopId())
+                .build();
+        ApiResult cancelResult = logisticsBillFeign.cancelBill(cancelBillDTO);
+        if (!cancelResult.isSuccess() && cancelResult.getCode() != -1) {
+            log.error("配货换渠道取消物流单失败,单号:【{}/{}】,{} ", soB2cLogisticsEntity.getCode(),
+                    soB2cLogisticsEntity.getTrackNo(), cancelResult.getMsg());
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), cancelResult.getMsg());
+        }
+        String msg = CharSequenceUtil.format("取消物流单单号成功,单号:【{}/{}】 ",
+                soB2cLogisticsEntity.getCode(), soB2cLogisticsEntity.getTrackNo());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "取消物流单");
+        soB2cLogisticsEntity.setCode("");
+        soB2cLogisticsEntity.setTrackNo("");
+        this.updateById(soB2cLogisticsEntity);
+        soB2cLabelService.deleteByMainIds(Collections.singletonList(entity.getId()));
+        soB2cErrorService.removeErrorOrder(entity.getId(), SoB2cErrorTypeEnum.GET_LOGISTICS_LABEL.getCode());
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "取消成功");
     }
 
     @Override
