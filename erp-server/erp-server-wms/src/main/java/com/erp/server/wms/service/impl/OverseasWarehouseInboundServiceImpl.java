@@ -1046,8 +1046,8 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         WarehouseDTO.UpdateDTO destWarehouse = warehouseList.stream().filter(req -> req.getId().equals(mainEntity.getToWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
 
         //校验目的仓是否为FBA第三方仓
-        List<com.erp.model.wms.entity.DictBasicEntity> warehouseTypes = dictBasicService.getByKey("warehouseType");
-        com.erp.model.wms.entity.DictBasicEntity listDTO = warehouseTypes.stream().filter(req -> "FBA".equals(req.getValue())).findFirst().orElse(null);
+        List<DictBasicEntity> warehouseTypes = dictBasicService.getByKey("warehouseType");
+        DictBasicEntity listDTO = warehouseTypes.stream().filter(req -> "FBA".equals(req.getValue())).findFirst().orElse(null);
         //如果是FBA第三方仓
         if (listDTO.getId().equals(destWarehouse.getTypeId())) {
 
@@ -1242,6 +1242,23 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         Map<String, OverseasWarehouseInboundDetailEntity> updateDetailEntityMap = new HashMap<>();
         Map<String, Integer> thisSignQtyMap = new HashMap<>();
         boolean isDaMaiReceivedFlow = dto.getHasReceivedData() && PlatformDictEnum.DA_MAI.getCode().equalsIgnoreCase(dto.getPlatform());
+        // 极风入库单同一 SKU 满足 putawayCount = goodCount + badCount，存在不良品时需按良品/不良品拆成两条签收记录
+        boolean isJiFengReceivedFlow = OmsPlatformEnum.JIFENG.getCode().equalsIgnoreCase(dto.getPlatform());
+        List<String> detailIds = detailList.stream().map(OverseasWarehouseInboundDetailEntity::getId).collect(Collectors.toList());
+        List<OverseasWarehouseInboundReceivedEntity> receivedEntityList = overseasWarehouseInboundReceivedService.listByDetailIds(detailIds);
+        // 极风按累计差量拆分前，先统计每个明细库里已记录的良品/不良品累计签收数
+        Map<String, Integer> recordedGoodQtyMap = new HashMap<>();
+        Map<String, Integer> recordedBadQtyMap = new HashMap<>();
+        if (isJiFengReceivedFlow) {
+            for (OverseasWarehouseInboundReceivedEntity received : receivedEntityList) {
+                int qty = Objects.isNull(received.getReceiveQty()) ? 0 : received.getReceiveQty();
+                if (Boolean.TRUE.equals(received.getDefectiveProductFlag())) {
+                    recordedBadQtyMap.merge(received.getDetailId(), qty, Integer::sum);
+                } else {
+                    recordedGoodQtyMap.merge(received.getDetailId(), qty, Integer::sum);
+                }
+            }
+        }
         //更新明细表
         for (OverseasWarehouseInboundDetailEntity detailEntity : detailList) {
             PlatformInboundDTO.Item item = itemMap.get(detailEntity.getPlatformSkuNo());
@@ -1267,16 +1284,23 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
             updateDetailEntityMap.put(detailEntity.getId(), detailEntity);
             //如果没有签收数据，在这里封装签收记录
             if (!dto.getHasReceivedData()) {
-                OverseasWarehouseInboundReceivedEntity receivedEntity = new OverseasWarehouseInboundReceivedEntity();
-                receivedEntity.setDetailId(detailEntity.getId());
-                receivedEntity.setReceiveQty(thisSignNumber);
-                receivedEntity.setReceiveTime(dto.getDownloadTime());
-                receivedEntity.setSourceType(SignSourceTypeEnum.API.getCode());
-                insertReceiveEntityList.add(receivedEntity);
+                if (isJiFengReceivedFlow && Objects.nonNull(item.getGoodQuantity()) && Objects.nonNull(item.getBadQuantity())) {
+                    // 极风：按良品/不良品累计差量分别落库，有不良品则生成两条记录（良品+不良品）
+                    int recordedGood = recordedGoodQtyMap.getOrDefault(detailEntity.getId(), 0);
+                    int recordedBad = recordedBadQtyMap.getOrDefault(detailEntity.getId(), 0);
+                    int goodDiff = item.getGoodQuantity() - recordedGood;
+                    int badDiff = item.getBadQuantity() - recordedBad;
+                    if (goodDiff != 0) {
+                        insertReceiveEntityList.add(buildReceivedEntity(detailEntity.getId(), goodDiff, dto.getDownloadTime(), Boolean.FALSE));
+                    }
+                    if (badDiff != 0) {
+                        insertReceiveEntityList.add(buildReceivedEntity(detailEntity.getId(), badDiff, dto.getDownloadTime(), Boolean.TRUE));
+                    }
+                } else {
+                    insertReceiveEntityList.add(buildReceivedEntity(detailEntity.getId(), thisSignNumber, dto.getDownloadTime(), null));
+                }
             }
         }
-        List<String> detailIds = detailList.stream().map(OverseasWarehouseInboundDetailEntity::getId).collect(Collectors.toList());
-        List<OverseasWarehouseInboundReceivedEntity> receivedEntityList = overseasWarehouseInboundReceivedService.listByDetailIds(detailIds);
         Map<String, OverseasWarehouseInboundReceivedEntity> receivedEntityMap = receivedEntityList.stream().collect(Collectors.toMap(v -> v.getDetailId() + v.getReceiveQty() + LocalDateTimeUtil.formatNormal(v.getReceiveTime()), Function.identity(), (v1, v2) -> v1));
         Set<String> receivedKeySet = new HashSet<>(receivedEntityMap.keySet());
         Set<String> daMaiFlowKeySet = receivedEntityList.stream()
@@ -1434,6 +1458,27 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
             this.updateById(mainEntity);
         }
         return ApiResult.success();
+    }
+
+    /**
+     * 构建一条签收记录（无平台流水数据场景）。
+     *
+     * @param detailId             入库明细id
+     * @param receiveQty           本次签收数量（可为负，表示签收数减少）
+     * @param receiveTime          签收时间
+     * @param defectiveProductFlag 是否不良品；为 {@code null} 时保持实体默认（非不良品平台不区分良品/不良品）
+     */
+    private OverseasWarehouseInboundReceivedEntity buildReceivedEntity(String detailId, Integer receiveQty,
+                                                                       LocalDateTime receiveTime, Boolean defectiveProductFlag) {
+        OverseasWarehouseInboundReceivedEntity receivedEntity = new OverseasWarehouseInboundReceivedEntity();
+        receivedEntity.setDetailId(detailId);
+        receivedEntity.setReceiveQty(receiveQty);
+        receivedEntity.setReceiveTime(receiveTime);
+        receivedEntity.setSourceType(SignSourceTypeEnum.API.getCode());
+        if (Objects.nonNull(defectiveProductFlag)) {
+            receivedEntity.setDefectiveProductFlag(defectiveProductFlag);
+        }
+        return receivedEntity;
     }
 
     private OverseasWarehouseInboundEntity getBySourceCode(String sourceCode) {

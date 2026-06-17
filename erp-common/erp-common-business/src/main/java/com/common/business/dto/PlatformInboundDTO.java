@@ -67,6 +67,14 @@ public class PlatformInboundDTO extends UniqueDto {
         //上架数量
         private Integer putawayQuantity;
 
+        //累计良品上架数（极风等区分良品/不良品的平台使用，其他平台留空即可）
+        @EqualsAndHashCode.Exclude
+        private Integer goodQuantity;
+
+        //累计不良品上架数（极风等区分良品/不良品的平台使用，其他平台留空即可）
+        @EqualsAndHashCode.Exclude
+        private Integer badQuantity;
+
         //箱号
         @EqualsAndHashCode.Exclude
         private String boxNo;
