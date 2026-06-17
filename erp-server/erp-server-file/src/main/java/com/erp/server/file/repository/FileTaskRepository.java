@@ -119,4 +119,14 @@ public class FileTaskRepository extends ServiceImpl<FileTaskMapper, FileTask> im
                 .map(FileTask::getId)
                 .collect(Collectors.toSet());
     }
+
+    @Override
+    public boolean removeWithAudit(FileTask fileTask, boolean userSystem) {
+        // 复用已加载实体走 updateById：触发 updateFill 审计填充并借助 version 乐观锁，
+        // 避免 removeById 仅置 is_deleted 而不更新更新时间/更新人；
+        // isUserSystem 标识让拦截器（ErpObjectHandler#updateFill）记录系统用户或当前登录人
+        fileTask.setIsDeleted(Boolean.TRUE);
+        fileTask.setIsUserSystem(userSystem);
+        return updateById(fileTask);
+    }
 }
