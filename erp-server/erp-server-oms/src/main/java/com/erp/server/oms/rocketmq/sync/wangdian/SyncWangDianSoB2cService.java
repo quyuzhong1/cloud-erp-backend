@@ -14,6 +14,8 @@ public interface SyncWangDianSoB2cService {
 
     Boolean saveApproveMsgToWangDian(KolSubB2cApplicationDTO.PushDTO pushDTO, Map<String, SkuVO> skuMap );
 
+    Boolean saveApproveMsgToWangDian(KolSubB2cApplicationDTO.PushDTO pushDTO, PushSelf2Request request);
+
     DmpPushTaskEntity syncCancelDataToWangDian(KolSubB2cApplicationDTO.PushDTO pushDTO, Map<String, SkuVO> skuMap );
 
     PushSelf2Request newSyncKolB2c(KolSubB2cApplicationDTO.PushDTO pushDTO, Map<String, SkuVO> skuMap);

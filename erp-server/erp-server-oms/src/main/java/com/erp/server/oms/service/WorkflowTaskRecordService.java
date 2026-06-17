@@ -22,6 +22,11 @@ public interface WorkflowTaskRecordService extends SuperService<WorkflowTaskReco
 
     List<WorkflowTaskRecordEntity> addTask(WorkflowTaskRecordDTO.AddTaskDTO dto);
 
+    /**
+     * 补齐同一业务键下缺失的任务节点。
+     */
+    List<WorkflowTaskRecordEntity> addMissingTask(WorkflowTaskRecordDTO.AddTaskDTO dto, List<WorkflowTaskRecordEntity> existTasks);
+
     List<WorkflowTaskRecordEntity> listErrorTask();
 
     void WorkflowTaskRecordRetryJob(String id);

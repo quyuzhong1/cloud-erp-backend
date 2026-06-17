@@ -83,8 +83,52 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
     @Override
     @Transactional(rollbackFor = Exception.class)
     public List<WorkflowTaskRecordEntity> addTask(WorkflowTaskRecordDTO.AddTaskDTO dto) {
+        List<WorkflowTaskRecordEntity> entities = buildTaskEntities(dto);
+        // 批量保存所有实体。数据库唯一索引生效后，并发创建命中唯一冲突时让事务回滚，补偿任务会复用已提交记录。
+        try {
+            saveBatch(entities);
+            return entities;
+        } catch (DuplicateKeyException e) {
+            log.warn("任务节点已存在，sourceType={}, sourceId={}", dto.getSourceTypeEnum().getCode(), dto.getSourceId(), e);
+            throw new ServiceException(ApiError.WF_TASK_RECORD_DUPLICATE);
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public List<WorkflowTaskRecordEntity> addMissingTask(WorkflowTaskRecordDTO.AddTaskDTO dto, List<WorkflowTaskRecordEntity> existTasks) {
+        List<WorkflowTaskRecordEntity> allTaskEntities = buildTaskEntities(dto);
+        Set<Integer> existIndexSet = CollUtil.emptyIfNull(existTasks).stream()
+                .map(WorkflowTaskRecordEntity::getIndex)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        List<WorkflowTaskRecordEntity> missingEntities = allTaskEntities.stream()
+                .filter(e -> !existIndexSet.contains(e.getIndex()))
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(missingEntities)) {
+            return Collections.emptyList();
+        }
+        Map<Integer, WorkflowTaskRecordEntity> existTaskMap = CollUtil.emptyIfNull(existTasks).stream()
+                .filter(e -> Objects.nonNull(e.getIndex()))
+                .collect(Collectors.toMap(WorkflowTaskRecordEntity::getIndex, e -> e, (o1, o2) -> o1));
+        for (WorkflowTaskRecordEntity missingEntity : missingEntities) {
+            WorkflowTaskRecordEntity previousTask = existTaskMap.get(missingEntity.getIndex() - 1);
+            if (Objects.nonNull(previousTask) && CharSequenceUtil.isNotBlank(previousTask.getOutputData())) {
+                missingEntity.setInputData(previousTask.getOutputData());
+            }
+        }
+        try {
+            saveBatch(missingEntities);
+            return missingEntities;
+        } catch (DuplicateKeyException e) {
+            log.warn("任务节点补齐命中唯一约束，sourceType={}, sourceId={}", dto.getSourceTypeEnum().getCode(), dto.getSourceId(), e);
+            throw new ServiceException(ApiError.WF_TASK_RECORD_DUPLICATE);
+        }
+    }
+
+    private List<WorkflowTaskRecordEntity> buildTaskEntities(WorkflowTaskRecordDTO.AddTaskDTO dto) {
         //查询字典表 type = workflowTaskNode
-        List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByType(dto.getDictBasicTypeEnum().getType(),dto.getSourceTypeEnum().getCode());
+        List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByType(dto.getDictBasicTypeEnum().getType(), dto.getSourceTypeEnum().getCode());
         if(CollUtil.isEmpty(dictList)){
             throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC,dto.getSourceTypeEnum().getName());
         }
@@ -114,14 +158,7 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
             }
             entities.add(entity);
         }
-        // 批量保存所有实体。数据库唯一索引生效后，并发创建命中唯一冲突时让事务回滚，补偿任务会复用已提交记录。
-        try {
-            saveBatch(entities);
-            return entities;
-        } catch (DuplicateKeyException e) {
-            log.warn("任务节点已存在，sourceType={}, sourceId={}", dto.getSourceTypeEnum().getCode(), dto.getSourceId(), e);
-            throw new ServiceException(ApiError.WF_TASK_RECORD_DUPLICATE);
-        }
+        return entities;
     }
 
 

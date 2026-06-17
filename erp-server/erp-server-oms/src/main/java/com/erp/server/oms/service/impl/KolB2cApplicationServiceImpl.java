@@ -1113,7 +1113,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         checkWorkflowTaskContext(dto, kolId, WorkflowTaskRecordTypeEnum.KOL_B2C_APPLICATION_APPROVE, 0);
         KolB2cApplicationEntity entity = getById(kolId);
         if (Objects.isNull(entity)) {
-            responseDTO.setErrorMsg("B2C寄样申请单不存在");
+            responseDTO.setErrorMsg(MessageUtils.getMessage(ApiError.BILL_NOT_EXIST_WITH_TYPE, "B2C寄样申请单"));
             return responseDTO;
         }
         checkKolB2cApproveTaskCanPush(entity);
@@ -1137,7 +1137,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         checkWorkflowTaskContext(dto, kolId, WorkflowTaskRecordTypeEnum.KOL_B2C_APPLICATION_APPROVE, 1);
         KolB2cApplicationEntity entity = getById(kolId);
         if (Objects.isNull(entity)) {
-            responseDTO.setErrorMsg("B2C寄样申请单不存在");
+            responseDTO.setErrorMsg(MessageUtils.getMessage(ApiError.BILL_NOT_EXIST_WITH_TYPE, "B2C寄样申请单"));
             return responseDTO;
         }
         checkKolB2cApproveTaskCanPush(entity);
@@ -1146,7 +1146,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
                 .eq(KolSubB2cApplicationEntity::getIsDeleted, false)
                 .list();
         if (CollUtil.isEmpty(subList)) {
-            responseDTO.setErrorMsg("B2C寄样申请单拆分单不存在");
+            responseDTO.setErrorMsg(MessageUtils.getMessage(ApiError.BILL_NOT_EXIST_WITH_TYPE, "B2C寄样申请单拆分单"));
             return responseDTO;
         }
         if (!hasWorkflowTaskNode(WorkflowTaskRecordTypeEnum.KOL_B2C_SUB_APPROVE)) {
@@ -1181,7 +1181,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         checkWorkflowTaskContext(dto, kolId, WorkflowTaskRecordTypeEnum.KOL_B2C_APPLICATION_APPROVE, 2);
         KolB2cApplicationEntity entity = getById(kolId);
         if (Objects.isNull(entity)) {
-            responseDTO.setErrorMsg("B2C寄样申请单不存在");
+            responseDTO.setErrorMsg(MessageUtils.getMessage(ApiError.BILL_NOT_EXIST_WITH_TYPE, "B2C寄样申请单"));
             return responseDTO;
         }
         checkKolB2cApproveTaskCanPush(entity);
@@ -1246,13 +1246,13 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         checkWorkflowTaskContext(dto, subId, WorkflowTaskRecordTypeEnum.KOL_B2C_SUB_APPROVE, 0);
         KolB2cApplicationEntity entity = getById(kolId);
         if (Objects.isNull(entity)) {
-            responseDTO.setErrorMsg("B2C寄样申请单不存在");
+            responseDTO.setErrorMsg(MessageUtils.getMessage(ApiError.BILL_NOT_EXIST_WITH_TYPE, "B2C寄样申请单"));
             return responseDTO;
         }
         checkKolB2cApproveTaskCanPush(entity);
         List<KolSubB2cApplicationDTO.PushDTO> pushDTOS = kolSubB2cApplicationService.listPushByIds(Collections.singletonList(subId));
         if (CollUtil.isEmpty(pushDTOS)) {
-            responseDTO.setErrorMsg("B2C寄样申请单拆分单不存在");
+            responseDTO.setErrorMsg(MessageUtils.getMessage(ApiError.BILL_NOT_EXIST_WITH_TYPE, "B2C寄样申请单拆分单"));
             return responseDTO;
         }
         KolSubB2cApplicationDTO.PushDTO pushDTO = pushDTOS.get(0);
@@ -1449,6 +1449,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
                         legacyApproveEndPush(entity);
                     } catch (Exception e) {
                         log.error("KOL B2C legacy审核下推失败，kolId={}, kolCode={}", entity.getId(), entity.getCode(), e);
+                        updateBillStatus(entity.getId(), KolB2cApplicationDocumentStatusEnum.CREATE_FAIL.getCode());
                         String reason = StringUtils.substring(StrUtil.blankToDefault(e.getMessage(), e.getClass().getSimpleName()), 0, 500);
                         String msg = StrUtil.format("legacy审核下推失败，单号为【{}】，原因：【{}】", entity.getCode(), reason);
                         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.KOL_B2C_APPLICATION.getCode(), entity.getId(), "legacy下推失败");
@@ -1504,10 +1505,11 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
     }
 
     private void addWorkflowTaskIfAbsent(WorkflowTaskRecordDTO.AddTaskDTO addTaskDTO, List<WorkflowTaskRecordEntity> existTasks) {
-        if (CollUtil.isNotEmpty(existTasks)) {
-            return;
-        }
         try {
+            if (CollUtil.isNotEmpty(existTasks)) {
+                workflowTaskRecordService.addMissingTask(addTaskDTO, existTasks);
+                return;
+            }
             workflowTaskRecordService.addTask(addTaskDTO);
         } catch (ServiceException e) {
             if (!Objects.equals(e.getCode(), ApiError.WF_TASK_RECORD_DUPLICATE.getCode())) {

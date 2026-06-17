@@ -27,6 +27,7 @@ import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.context.annotation.Lazy;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
@@ -37,6 +38,9 @@ import java.util.stream.Collectors;
 @Service
 public class SyncWangDianSoB2cServiceImpl implements SyncWangDianSoB2cService {
 
+    @Resource
+    @Lazy
+    private SyncWangDianSoB2cService self;
     @Resource
     private OmsPushMsgService omsPushMsgService;
     @Resource
@@ -50,28 +54,28 @@ public class SyncWangDianSoB2cServiceImpl implements SyncWangDianSoB2cService {
 
     private static DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public DmpPushTaskEntity syncDataToWangDian(KolSubB2cApplicationDTO.PushDTO pushDTO,Map<String, SkuVO> skuMap ) {
         saveApproveMsgToWangDian(pushDTO, skuMap);
         return null;
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public Boolean saveApproveMsgToWangDian(KolSubB2cApplicationDTO.PushDTO pushDTO, Map<String, SkuVO> skuMap) {
         KolSubB2cApplicationEntity entity = pushDTO.getEntity();
-        OmsPushMsgEntity exist = omsPushMsgService.lambdaQuery()
-                .eq(OmsPushMsgEntity::getTargetPlatform, DmpBasicSystemCodeEnum.WDT.getCode())
-                .eq(OmsPushMsgEntity::getSourceType, SourceTypeEnum.WDT_SO_B2C.getCode())
-                .eq(OmsPushMsgEntity::getSourceId, entity.getId())
-                .eq(OmsPushMsgEntity::getSyncOperate, SyncOperateEnum.OPERATE_APPROVE.getCode())
-                .eq(OmsPushMsgEntity::getIsDeleted, false)
-                .last("limit 1")
-                .one();
-        if (Objects.nonNull(exist)) {
+        if (existApprovePushMsg(entity.getId())) {
             return Boolean.FALSE;
         }
         PushSelf2Request request = newSyncKolB2c(pushDTO, skuMap, SyncOperateEnum.OPERATE_APPROVE.getCode());
+        return self.saveApproveMsgToWangDian(pushDTO, request);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean saveApproveMsgToWangDian(KolSubB2cApplicationDTO.PushDTO pushDTO, PushSelf2Request request) {
+        KolSubB2cApplicationEntity entity = pushDTO.getEntity();
+        if (existApprovePushMsg(entity.getId())) {
+            return Boolean.FALSE;
+        }
         OmsPushMsgEntity omsPushMsgEntity = new OmsPushMsgEntity();
         omsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.WDT.getCode());
         omsPushMsgEntity.setSourceType(SourceTypeEnum.WDT_SO_B2C.getCode());
@@ -81,6 +85,18 @@ public class SyncWangDianSoB2cServiceImpl implements SyncWangDianSoB2cService {
         omsPushMsgEntity.setPushData(JSON.toJSONString(request));
         omsPushMsgService.save(omsPushMsgEntity);
         return Boolean.TRUE;
+    }
+
+    private boolean existApprovePushMsg(String sourceId) {
+        OmsPushMsgEntity exist = omsPushMsgService.lambdaQuery()
+                .eq(OmsPushMsgEntity::getTargetPlatform, DmpBasicSystemCodeEnum.WDT.getCode())
+                .eq(OmsPushMsgEntity::getSourceType, SourceTypeEnum.WDT_SO_B2C.getCode())
+                .eq(OmsPushMsgEntity::getSourceId, sourceId)
+                .eq(OmsPushMsgEntity::getSyncOperate, SyncOperateEnum.OPERATE_APPROVE.getCode())
+                .eq(OmsPushMsgEntity::getIsDeleted, false)
+                .last("limit 1")
+                .one();
+        return Objects.nonNull(exist);
     }
 
     @Override
