@@ -489,6 +489,7 @@ public enum ApiError implements Serializable {
     WF_TASK_RECORD_FORCE_RETRY_NO_ELIGIBLE(4073,"没有可强制重试的任务节点，成功节点不会重试，处理中节点需超过3分钟才允许接管"),
     WF_TASK_RECORD_FORCE_RETRY_PARAM_INCOMPLETE(4074,"任务节点id或sourceType/sourceId不能为空"),
     WF_KOL_B2C_SUB_TASK_NODE_NOT_FOUND(4075,"KOL B2C拆分单任务节点配置不存在"),
+    WF_KOL_B2C_SPLIT_DETAIL_INCOMPLETE(4076,"B2C寄样申请单拆分单明细不完整，单号【{0}】，达人【{1}】"),
     /**
      * PROJECT 项目相关 4500 - 5000
      */
@@ -1912,7 +1913,7 @@ public enum ApiError implements Serializable {
     LOGISTICS_RECON_PREPROCESS_IMPORT_NOT_READY(13651,"预处理导入功能暂未开放，请稍后再试"),
     LOGISTICS_RECON_IMPORTING_CHECK_STATUS_FORBIDDEN(13652,"对账单导入中，暂不允许切换校验状态"),
     LOGISTICS_RECON_CHECK_STATUS_INVALID(13653,"非法的校验状态目标值"),
-    LOGISTICS_RECON_MATCH_REF_EXISTS_ROLLBACK_FORBIDDEN(13654,"已存在有效匹配关系，不允许回退到待确认"),
+    LOGISTICS_RECON_MATCH_REF_EXISTS_ROLLBACK_FORBIDDEN(13654,"存在非未匹配费用项，不允许回退到待确认"),
     LOGISTICS_RECON_ONLY_CONFIRMED_ALLOW_MATCH(13655,"仅已确认的对账单允许触发合并匹配"),
     LOGISTICS_RECON_RECONCILIATION_STATUS_INVALID(13656,"仅支持更新为待确认或账单确认"),
     LOGISTICS_RECON_ONLY_CONFIRMED_ALLOW_BILL_CONFIRM(13657,"仅已确认的对账单允许执行账单确认"),
@@ -1929,6 +1930,8 @@ public enum ApiError implements Serializable {
     LOGISTICS_RECON_IMPORT_FAILED_CHECK_STATUS_FORBIDDEN(13668,"导入失败的对账单须重新导入后再确认"),
     LOGISTICS_RECON_IMPORTING_DUPLICATE(13669,"相同对账维度（月份+物流商+Sheet）正在导入，不允许重复导入"),
     LOGISTICS_RECON_IMPORT_MAIN_NOT_FOUND(13670,"导入任务关联的对账单不存在或已失效，请重新提交导入"),
+    LOGISTICS_RECON_CHECK_STATUS_NO_CHANGE(13671,"校验状态与当前状态相同，无需变更"),
+    LOGISTICS_RECON_ONLY_PENDING_ALLOW_CHECK_CONFIRM(13672,"仅待确认的对账单允许切换为已确认"),
     /**
      * 财务管理 错误 信息 14000-14500
      */
