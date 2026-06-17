@@ -1271,6 +1271,192 @@ public class ExcelPrintUtils {
 		return dataList;
 	}
 
+    /**
+     * 动态表头导出到本地文件。
+     * <p>
+     * 注意：{@code doWrite(data)} 需一次性提供完整 data，仅适用于小批量动态表头导出；
+     * 大数据量请改用 {@link #openDynamicHeadersWriter} 分批 write，避免全量 data 驻留内存导致 OOM。
+     * <p>
+     * 异常风格：与 {@link #patchExportListToFile}、{@link #patchExportDetailToFile}、{@link #sheetPatchExportToFile}
+     * 统一为向上抛 {@link IOException}，由 file 服务层（{@code ExportTempFilesHandler.exportToTempAndUpload}）集中转换为 {@code ServiceException}。
+     * <p>
+     * <b>Breaking change</b>：原实现内部 {@code catch Exception} 转 {@code ServiceException}，现改为向上抛 {@code IOException}。
+     * 经全量检索当前仓库内无调用方，故不影响既有编译；新增调用方须保证由统一导出模板捕获 {@code IOException} 并转 {@code ServiceException}，
+     * 不要再各自 {@code catch} 后吞异常或抛非 {@code ServiceException} 类型，以保持任务失败语义一致。
+     * <p>
+     * 审查约定：本方法与同类的 {@link #patchExportListToFile}、{@link #sheetPatchExportToFile} 抛 {@link IOException} 为刻意设计；
+     * 调用链配套在 {@code erp-server-file} 的 {@code ExportTempFilesHandler.exportToTempAndUpload}（同 MR 已合入），
+     * 主链路 Handler 已在 lambda 内调用；勿因「单批 diff 仅有本类」误判调用链缺失。零调用方 API 勿要求强行接入。
+     */
+    public <T> void exportDynamicHeadersExcelToFile(File outputFile, String sheetName, List<List<String>> head, List<List<T>> data) throws IOException {
+        try (FileOutputStream out = new FileOutputStream(outputFile)) {
+            HorizontalCellStyleStrategy horizontalCellStyleStrategy = getHorizontalCellStyleStrategy();
+            EasyExcelFactory.write(out)
+                    .registerConverter(new SqlDateNumberConverter())
+                    .registerConverter(new SqlDateStringConverter())
+                    .registerConverter(new SqlTimestampStringConverter())
+                    .head(head).registerWriteHandler(horizontalCellStyleStrategy).registerWriteHandler(new ExcelCellWidthStyleStrategy()).sheet(sheetName).doWrite(data);
+        }
+    }
+
+    /**
+     * 列表模板导出到本地文件（避免整表字节数组驻留内存）。
+     * <p>
+     * 审查约定：抛 {@link IOException}，须在 {@code ExportTempFilesHandler.exportToTempAndUpload} 的 {@code TempFileWriter} 内调用并由其统一转 {@code ServiceException}；
+     * 存量调用见 {@code ExportMrpHistorySalesCalcHandler}（MRP 停用遗留）。勿要求在本类内 catch 转业务异常。
+     */
+    public void patchExportListToFile(File outputFile, List<?> list, String excelPath, WriteHandler... writeHandlers) throws IOException {
+        try (FileOutputStream outputStream = new FileOutputStream(outputFile)) {
+            ClassPathResource classPathResource = new ClassPathResource(excelPath);
+            try (InputStream inputStream = classPathResource.getInputStream()) {
+                ExcelWriterBuilder excelWriterBuilder = EasyExcelFactory.write(outputStream).withTemplate(inputStream).autoCloseStream(false);
+                for (WriteHandler handler : writeHandlers) {
+                    excelWriterBuilder.registerWriteHandler(handler);
+                }
+                ExcelWriter excelWriter = excelWriterBuilder.build();
+                registerPatchExportListConverters(excelWriter);
+                WriteSheet writeSheet = EasyExcelFactory.writerSheet().build();
+                try {
+                    excelWriter.fill(list, writeSheet);
+                } finally {
+                    excelWriter.finish();
+                }
+            }
+        }
+    }
+
+    /**
+     * 打开列表模板 Writer（分批 fill 后须 {@link ExcelWriter#finish()}）。
+     * 模板先读入内存再交给 EasyExcel，避免 Classpath 模板流长期未关；模板体积一般较小。
+     */
+    public static ExcelWriter openTemplateListWriter(OutputStream outputStream, String excelPath, WriteHandler... writeHandlers) throws IOException {
+        ClassPathResource classPathResource = new ClassPathResource(excelPath);
+        final byte[] templateBytes;
+        try (InputStream in = classPathResource.getInputStream()) {
+            templateBytes = IOUtils.toByteArray(in);
+        }
+        return openTemplateListWriter(outputStream, templateBytes, writeHandlers);
+    }
+
+    /**
+     * 使用已预处理（例如 POI 克隆多 sheet）的模板字节打开列表模板 Writer。
+     * <p>
+     * {@code autoCloseStream(false)}：与 {@link #patchExportListToFile}、{@link #openDynamicHeadersWriter} 一致，
+     * {@code finish()} 后不自动关闭 {@code outputStream}，由调用方显式管理其生命周期（通常以 try-with-resources 包裹）。
+     */
+    public static ExcelWriter openTemplateListWriter(OutputStream outputStream, byte[] templateBytes, WriteHandler... writeHandlers) throws IOException {
+        try (InputStream templateIn = new ByteArrayInputStream(templateBytes)) {
+            ExcelWriterBuilder excelWriterBuilder = EasyExcelFactory.write(outputStream).withTemplate(templateIn).autoCloseStream(false);
+            for (WriteHandler handler : writeHandlers) {
+                excelWriterBuilder.registerWriteHandler(handler);
+            }
+            ExcelWriter excelWriter = excelWriterBuilder.build();
+            registerPatchExportListConverters(excelWriter);
+            return excelWriter;
+        }
+    }
+
+    public static void registerPatchExportListConverters(ExcelWriter excelWriter) {
+        LocalDateTimeConverter converter = new LocalDateTimeConverter();
+        excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(converter.supportJavaTypeKey()), converter);
+        excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(converter.supportJavaTypeKey(), converter.supportExcelTypeKey()), converter);
+
+        EasyExcelLocalTimeConverter localDateTimeDateConverter = new EasyExcelLocalTimeConverter();
+        excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateTimeDateConverter.supportJavaTypeKey()), localDateTimeDateConverter);
+        excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateTimeDateConverter.supportJavaTypeKey(), localDateTimeDateConverter.supportExcelTypeKey()), localDateTimeDateConverter);
+
+        EasyExcelLocalDateConverter localDateConverter = new EasyExcelLocalDateConverter();
+        excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateConverter.supportJavaTypeKey()), localDateConverter);
+        excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateConverter.supportJavaTypeKey(), localDateConverter.supportExcelTypeKey()), localDateConverter);
+
+        EasyExcelListConverter listConverter = new EasyExcelListConverter();
+        excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(listConverter.supportJavaTypeKey()), listConverter);
+        excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(listConverter.supportJavaTypeKey(), listConverter.supportExcelTypeKey()), listConverter);
+
+        ByteArrayImageConverter byteArrayImageConverter = new ByteArrayImageConverter();
+        excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(byteArrayImageConverter.supportJavaTypeKey()), byteArrayImageConverter);
+        excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(byteArrayImageConverter.supportJavaTypeKey(), byteArrayImageConverter.supportExcelTypeKey()), byteArrayImageConverter);
+    }
+
+    /**
+     * 主子表模板导出到本地文件
+     */
+    public <T> void patchExportDetailToFile(File outputFile, List<?> list, T obj, String excelPath) throws IOException {
+        ClassPathResource classPathResource = new ClassPathResource(excelPath);
+        try (FileOutputStream outputStream = new FileOutputStream(outputFile);
+             InputStream inputStream = classPathResource.getInputStream()) {
+            ExcelWriter excelWriter = EasyExcel.write(outputStream).withTemplate(inputStream)
+                    .autoCloseStream(false)
+                    .registerWriteHandler(new ExcelFillCellMergeStrategy())
+                    .build();
+            // 复用统一 Converter 注册，避免与列表导出行为不一致（含 List/图片字段转换器），并消除重复代码
+            registerPatchExportListConverters(excelWriter);
+
+            WriteSheet writeSheet = EasyExcel.writerSheet().build();
+            FillConfig fillConfig = FillConfig.builder().forceNewRow(Boolean.FALSE).build();
+            try {
+                excelWriter.fill(list, fillConfig, writeSheet);
+
+                if (obj != null) {
+                    excelWriter.fill(obj, writeSheet);
+                }
+            } finally {
+                excelWriter.finish();
+            }
+        }
+    }
+
+    /**
+     * 多 sheet 模板填充写入本地文件。
+     * <p>
+     * 异常风格：与 {@link #patchExportListToFile}、{@link #patchExportDetailToFile}、{@link #exportDynamicHeadersExcelToFile}
+     * 统一为向上抛 {@link IOException}，由 file 服务层（{@code ExportTempFilesHandler.exportToTempAndUpload}）集中转换为 {@code ServiceException}。
+     * <p>
+     * <b>Breaking change</b>：原实现内部 {@code catch Exception} 转 {@code ServiceException}，现改为向上抛 {@code IOException}。
+     * 经全量检索当前仓库内无调用方，故不影响既有编译；新增调用方须由统一导出模板捕获 {@code IOException} 并转 {@code ServiceException}。
+     * <p>
+     * 审查约定：本方法当前<strong>零调用方</strong>，为有意保留的预留写盘 API；抛 {@code IOException} 由 {@code ExportTempFilesHandler.exportToTempAndUpload} 统一归口，
+     * 勿误报「调用方缺失 / 未捕获 IOException」。
+     */
+    public void sheetPatchExportToFile(File outputFile, List<Pair<Integer, List<?>>> pairList, String excelPath) throws IOException {
+        ClassPathResource classPathResource = new ClassPathResource(excelPath);
+        try (FileOutputStream out = new FileOutputStream(outputFile);
+             InputStream inputStream = classPathResource.getInputStream()) {
+            ExcelWriter excelWriter = EasyExcel.write(out).withTemplate(inputStream).autoCloseStream(false).build();
+            // 复用统一 Converter 注册，避免与列表导出行为不一致（含 List/图片字段转换器），并消除重复代码
+            registerPatchExportListConverters(excelWriter);
+            try {
+                for (Pair<Integer, List<?>> pair : pairList) {
+                    WriteSheet writeSheet = EasyExcel.writerSheet(pair.getKey()).build();
+                    excelWriter.fill(pair.getValue(), writeSheet);
+                }
+            } finally {
+                excelWriter.finish();
+            }
+        }
+    }
+
+    /**
+     * 打开动态表头 Writer（分批 write 后须 {@link ExcelWriter#finish()}）。
+     * <p>
+     * 异常风格：本方法 {@code build()} 阶段不做 IO，故不声明受检 {@link IOException}；
+     * IO 异常在调用方后续 {@link ExcelWriter#write}/{@link ExcelWriter#finish} 阶段以运行时异常抛出，
+     * 由 file 服务层（{@code ExportTempFilesHandler.exportToTempAndUpload}）集中转换为 {@code ServiceException}，
+     * 与 {@link #openTemplateListWriter} 的最终异常归口一致（后者因读取模板字节才额外声明受检 {@link IOException}）。
+     */
+    public ExcelWriter openDynamicHeadersWriter(OutputStream outputStream, List<List<String>> head) {
+        HorizontalCellStyleStrategy horizontalCellStyleStrategy = getHorizontalCellStyleStrategy();
+        return EasyExcelFactory.write(outputStream)
+                .registerConverter(new SqlDateNumberConverter())
+                .registerConverter(new SqlDateStringConverter())
+                .registerConverter(new SqlTimestampStringConverter())
+                .head(head)
+                .registerWriteHandler(horizontalCellStyleStrategy)
+                .registerWriteHandler(new ExcelCellWidthStyleStrategy())
+                .autoCloseStream(false)
+                .build();
+    }
+
 	public static void main(String[] args) throws Exception{
 		String filePath = "C:\\Users\\Administrator\\Desktop\\新建 XLS 工作表.xls";
 		InputStream inputStream = new FileInputStream(filePath);

@@ -6,13 +6,10 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.AdsErpReceiveFlowDiffDTO;
 import com.erp.rpc.dmp.feign.ExportDmpFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
-import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.List;
 
 /**
  * 签收流水差异导出
@@ -29,11 +26,6 @@ public class ExportAdsErpReceiveFlowDiffHandler extends AbstractPageFileEventHan
         return exportDmpFeign.exportAdsErpReceiveFlowDiff(dto);
     }
 
-    @Override
-    protected List<AdsErpReceiveFlowDiffDTO.ListDTO> getData(FileTask fileTask) {
-        AdsErpReceiveFlowDiffDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<AdsErpReceiveFlowDiffDTO.PagingParamDTO>() {});
-        return listSeqData(dto);
-    }
 
     @Override
     protected String getExcelPath() {
