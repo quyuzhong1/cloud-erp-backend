@@ -2739,8 +2739,8 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         List<WarehouseEntity> warehouseEntities = warehouseService.listByIds(warehouseIdList);
         Map<String, String> warehouseMap = warehouseEntities.stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName));
 
-        //问题属性字典 type=qcProblemType
-        Map<String, String> qcProblemDictNameMap = dictBasicService.getByKey("qcProblemType").stream()
+        //问题属性字典
+        Map<String, String> qcProblemDictNameMap = dictBasicService.getByKey(DictBasicEnum.QC_PROBLEM_TYPE.getKey()).stream()
                 .filter(d -> StringUtils.isNotBlank(d.getValue()))
                 .collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName, (a, b) -> a));
 
