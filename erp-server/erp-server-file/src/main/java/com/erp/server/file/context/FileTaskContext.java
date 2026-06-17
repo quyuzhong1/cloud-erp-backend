@@ -151,8 +151,9 @@ public class FileTaskContext {
         ExceptionUtils.conditionThrow(() -> !String.valueOf(fileTask.getCreateUserId()).equals(currentUser.getUid()), "非数据创建人不可删除!");
         // 处于PENDING状态的任务无法被删除
         ExceptionUtils.conditionThrow(fileTask::volatileStatus, String.format("当前任务[%s]正在处理中,无法被删除,请稍后尝试!", id));
-        // 加锁执行删除
-        fileTaskRepository.removeById(id);
+        // 复用已加载实体走乐观锁软删并填充审计字段；版本冲突/已删返回 false 时中止，避免库未删却把文件删了
+        boolean removed = fileTaskRepository.removeWithAudit(fileTask, false);
+        ExceptionUtils.conditionThrow(() -> !removed, String.format("任务[%s]已被更新或删除,请刷新后重试", id));
         // 删除文件
         boolean exist = fileService.exist(fileTask.getFileUrl());
         if (exist) {
@@ -346,7 +347,11 @@ public class FileTaskContext {
         for (FileTask task : fileTasks) {
             String id = task.getId();
             try {
-                fileTaskRepository.removeById(id);
+                // 软删返回 false（版本冲突/已删）则不删文件，留待下次调度，避免库未删却把文件删了
+                if (!fileTaskRepository.removeWithAudit(task, true)) {
+                    log.warn("文件任务[{}]逻辑删除失败,跳过文件删除", id);
+                    continue;
+                }
                 boolean exist = fileService.exist(task.getFileUrl());
                 if (exist) {
                     fileService.deleteFile(task.getFileUrl());
