@@ -659,6 +659,19 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
     }
 
     @Override
+    public boolean hasBlockingInvoiceStatus(String soId) {
+        if (CharSequenceUtil.isBlank(soId)) {
+            return false;
+        }
+        return lambdaQuery()
+                .eq(InvoiceInfoEntity::getSoId, soId)
+                .in(InvoiceInfoEntity::getStatus,
+                        InvoiceInfoStatusEnum.INVOICING.getCode(),
+                        InvoiceInfoStatusEnum.INVOICE_SUCCESS.getCode())
+                .count() > 0;
+    }
+
+    @Override
     public void retryInvoice(String jobParam) {
         JSONObject jsonObject = JSONObject.parseObject(jobParam);
         List<InvoiceInfoEntity> allInvoiceInfoEntityList;

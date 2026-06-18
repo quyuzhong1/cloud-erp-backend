@@ -407,6 +407,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             }
             try {
                 soB2cService.checkGeneratedDeliveryForOperation(soB2cEntity.getId(), "拆分合并");
+                soB2cService.checkInvoiceStatusForOperation(soB2cEntity.getId(), "捆绑拆分");
             } catch (Exception e) {
                 batchResultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(), soB2cEntity.getCode(), e.getMessage()));
                 continue;
@@ -558,6 +559,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             // 与 bomSplitAndSave 对齐：仅当订单未生成 B2C 发货单/三方仓发货单时才允许还原捆绑
             try {
                 soB2cService.checkGeneratedDeliveryForOperation(soB2cEntity.getId(), "还原捆绑");
+                soB2cService.checkInvoiceStatusForOperation(soB2cEntity.getId(), "还原捆绑");
             } catch (Exception e) {
                 batchResultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(), soB2cEntity.getCode(), e.getMessage()));
                 continue;
@@ -1179,6 +1181,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             throw new ServiceException(ApiError.SO_B2C_SPLIT_FORBIDDEN_BY_STATUS);
         }
         soB2cService.checkGeneratedDeliveryForOperation(entity.getId(), "拆分合并");
+        soB2cService.checkInvoiceStatusForOperation(entity.getId(), "拆单");
         if(!SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(entity.getBillStatus())){
             if(Objects.nonNull(soB2cLogisticsEntity) && StringUtils.isNotBlank(soB2cLogisticsEntity.getCode())){
                 throw new ServiceException("已获取跟踪号，请取消物流单后再执行拆分");
@@ -1327,6 +1330,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         if (PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(entity.getDictPlatform()) && isCheckPlatform) {
             throw new ServiceException("tiktok订单不允许取消拆分，请在tiktok后台操作");
         }
+        soB2cService.checkInvoiceStatusForOperation(entity.getId(), "取消拆单");
         //关联关系
         List<SoB2cRefEntity> soB2cRefList = soB2cRefService.listSourceByTargetIds(Arrays.asList(id), SoB2cOptionTypeEnum.ENUM_SPLIT.getCode());
         if (CollectionUtils.isEmpty(soB2cRefList)) {
@@ -1336,6 +1340,9 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         List<SoB2cEntity> sameTargetList = this.listByIds(targetIdList);
         if (CollectionUtils.isEmpty(sameTargetList)) {
             throw new ServiceException(ApiError.SO_B2C_CHILD_NOT_FOUND, entity.getCode());
+        }
+        for (SoB2cEntity child : sameTargetList) {
+            soB2cService.checkInvoiceStatusForOperation(child.getId(), "取消拆单");
         }
         //关联的子单是否又拆分
         List<SoB2cRefEntity> otherB2cSplitRefList = soB2cRefService.listBySourceIds(targetIdList, SoB2cOptionTypeEnum.ENUM_SPLIT);
