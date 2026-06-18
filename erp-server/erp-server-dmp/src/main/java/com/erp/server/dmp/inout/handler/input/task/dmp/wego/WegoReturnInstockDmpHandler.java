@@ -122,4 +122,5 @@ public class WegoReturnInstockDmpHandler extends DmpInputDbConvertDmpHandler {
             return null;
         }
     }
+
 }
