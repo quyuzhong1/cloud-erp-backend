@@ -35,6 +35,7 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
 import com.erp.server.fms.mapper.AssetProfitLossMapper;
 import com.erp.server.fms.service.*;
+import com.erp.server.fms.utils.FmsAssetNameResolver;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -81,6 +82,8 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
     private CfgQueryOptionFeign cfgQueryOptionFeign;
     @Resource
     private AssetDisposalService assetDisposalService;
+    @Resource
+    private FmsAssetNameResolver fmsAssetNameResolver;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -438,10 +441,33 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
         
         if (CollUtil.isNotEmpty(detailEntities)) {
             List<AssetProfitLossDetailDTO.ViewDTO> detailList = BeanMapperUtils.copyList(AssetProfitLossDetailDTO.ViewDTO.class,detailEntities);
+            fillDetailAssetNameFromCard(detailList);
             data.setDetailList(detailList);
         }
         
         return data;
+    }
+
+    private void fillDetailAssetNameFromCard(List<AssetProfitLossDetailDTO.ViewDTO> detailList) {
+        if (CollUtil.isEmpty(detailList)) {
+            return;
+        }
+        List<String> cardIds = detailList.stream()
+                .map(AssetProfitLossDetailDTO.ViewDTO::getCardId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(cardIds)) {
+            return;
+        }
+        Map<String, String> cardNameMap = assetCardService.listByIds(cardIds).stream()
+                .filter(card -> StringUtils.isNotBlank(card.getId()))
+                .collect(Collectors.toMap(AssetCardEntity::getId, AssetCardEntity::getName, (v1, v2) -> v1));
+        for (AssetProfitLossDetailDTO.ViewDTO detail : detailList) {
+            if (StringUtils.isNotBlank(detail.getCardId())) {
+                detail.setAssetName(cardNameMap.get(detail.getCardId()));
+            }
+        }
     }
     /**
     * 启动流程
@@ -703,6 +729,12 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
         List<AssetProfitLossDTO.PushToCardListDTO> resultList = new ArrayList<>(detailList.size());
         Map<String, String> finalAssetCategoryMap = assetCategoryMap;
         Map<String, String> finalLocationMap = locationMap;
+        List<String> cardIds = detailList.stream()
+                .map(AssetProfitLossDetailEntity::getCardId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, String> cardNameMap = fmsAssetNameResolver.batchResolveCardNameByIds(cardIds);
         
         for (AssetProfitLossDetailEntity detail : detailList) {
             AssetProfitLossDTO.PushToCardListDTO dto = new AssetProfitLossDTO.PushToCardListDTO();
@@ -727,7 +759,9 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
             dto.setAssetCategory(detail.getAssetCategory());
             dto.setAssetCategoryName(finalAssetCategoryMap.get(detail.getAssetCategory()));
             dto.setCardCode(detail.getCardCode());
-            dto.setAssetName(detail.getAssetName());
+            dto.setAssetName(StringUtils.isNotBlank(detail.getCardId())
+                    ? cardNameMap.get(detail.getCardId())
+                    : fmsAssetNameResolver.resolveMoldNameByCode(detail.getAssetCode()));
             dto.setAssetCode(detail.getAssetCode());
             dto.setUnit(detail.getUnit());
             dto.setQty(detail.getDiffQty());  // 使用差异数量
@@ -771,6 +805,7 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
         // 遍历明细列表，每个明细独立处理（可能来自不同的盘盈盘亏单）
         for (AssetProfitLossDTO.PushToCardListDTO item : dto.getDetailList()) {
             BatchResultDTO result;
+            String assetName = item.getAssetName();
             try {
                 // 1. 查询该明细所属的主单
                 AssetProfitLossEntity mainEntity = null;
@@ -780,6 +815,11 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
                     detailEntity = assetProfitLossDetailService.getById(item.getDetailId());
                     if (detailEntity != null) {
                         mainEntity = super.getById(detailEntity.getMainId());
+                        assetName = StrUtil.blankToDefault(
+                                StringUtils.isNotBlank(detailEntity.getCardId())
+                                        ? fmsAssetNameResolver.resolveCardNameById(detailEntity.getCardId(), detailEntity.getAssetCode())
+                                        : fmsAssetNameResolver.resolveMoldNameByCode(detailEntity.getAssetCode()),
+                                assetName);
                     }
                 }
                 
@@ -791,27 +831,27 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
                 }
                 
                 if (mainEntity == null) {
-                    result = BatchResultDTO.fail(item.getDetailId(), item.getAssetName(), "所属盘盈盘亏单不存在");
+                    result = BatchResultDTO.fail(item.getDetailId(), assetName, "所属盘盈盘亏单不存在");
                     resultDTOS.add(result);
-                    log.warn("明细【{}】所属盘盈盘亏单不存在", item.getAssetName());
+                    log.warn("明细【{}】所属盘盈盘亏单不存在", assetName);
                     continue;
                 }
                 
                 // 2. 校验单据类型必须是盘盈
                 if (!AssetProfitLossTypeEnum.PROFIT.getCode().equals(mainEntity.getDocType())) {
-                    result = BatchResultDTO.fail(item.getDetailId(), item.getAssetName(), 
+                    result = BatchResultDTO.fail(item.getDetailId(), assetName,
                             StrUtil.format("所属单据【{}】不是盘盈类型", mainEntity.getCode()));
                     resultDTOS.add(result);
-                    log.warn("明细【{}】所属单据【{}】不是盘盈类型", item.getAssetName(), mainEntity.getCode());
+                    log.warn("明细【{}】所属单据【{}】不是盘盈类型", assetName, mainEntity.getCode());
                     continue;
                 }
                 
                 // 3. 校验单据必须已审核
                 if (!ApproveStatusEnum.APPROVE.getStatus().equals(mainEntity.getApproveStatus().getStatus())) {
-                    result = BatchResultDTO.fail(item.getDetailId(), item.getAssetName(), 
+                    result = BatchResultDTO.fail(item.getDetailId(), assetName,
                             StrUtil.format("所属单据【{}】未审核", mainEntity.getCode()));
                     resultDTOS.add(result);
-                    log.warn("明细【{}】所属单据【{}】未审核", item.getAssetName(), mainEntity.getCode());
+                    log.warn("明细【{}】所属单据【{}】未审核", assetName, mainEntity.getCode());
                     continue;
                 }
                 
@@ -824,7 +864,7 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
                 
                 if (CollUtil.isNotEmpty(existingCards)) {
                     String cardCode = existingCards.get(0).getCode();
-                    result = BatchResultDTO.fail(item.getDetailId(), item.getAssetName(), 
+                    result = BatchResultDTO.fail(item.getDetailId(), assetName,
                             StrUtil.format("该单据已下推过资产卡片【{}】", cardCode));
                     resultDTOS.add(result);
                     log.warn("盘盈盘亏单【{}】已经下推过资产卡片【{}】", mainEntity.getCode(), cardCode);
@@ -843,7 +883,7 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
                 cardDTO.setType(item.getAssetCategory()); // 资产类别
                 cardDTO.setStatus(AssetStatusEnum.NORMAL.getCode()); // 资产状态：正常使用
                 cardDTO.setChangeMethod(ChangeMethodEnum.PROFIT.getCode()); // 变动方式：盘盈
-                cardDTO.setName(item.getAssetName()); // 资产名称
+                cardDTO.setName(assetName);
                 cardDTO.setStartUseDate(LocalDate.now()); // 开始使用日期：当前日期
                 cardDTO.setQty(item.getQty()); // 数量
                 
@@ -883,19 +923,19 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
 //                }
                 
                 // 9. 记录该明细操作日志
-                String msg = StrUtil.format("用户【{}】将盘盈盘亏单【{}】的资产【{}】下推为资产卡片【{}】", 
-                        UserContext.getDefaultLoginUser().getUserName(), 
+                String msg = StrUtil.format("用户【{}】将盘盈盘亏单【{}】的资产【{}】下推为资产卡片【{}】",
+                        UserContext.getDefaultLoginUser().getUserName(),
                         mainEntity.getCode(),
-                        item.getAssetName(),
+                        assetName,
                         cardResult.getCode());
                 operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_PROFIT_LOSS.getCode(),
                         mainEntity.getId(), "下推资产卡片操作");
                 
-                result = BatchResultDTO.success(item.getDetailId(), item.getAssetName(), OperationTypeEnum.UPDATE);
+                result = BatchResultDTO.success(item.getDetailId(), assetName, OperationTypeEnum.UPDATE);
                 
             } catch (Exception e) {
-                log.error("创建资产卡片失败，资产名称：{}", item.getAssetName(), e);
-                result = BatchResultDTO.fail(item.getDetailId(), item.getAssetName(), e.getMessage());
+                log.error("创建资产卡片失败，资产名称：{}", assetName, e);
+                result = BatchResultDTO.fail(item.getDetailId(), assetName, e.getMessage());
             }
             resultDTOS.add(result);
         }

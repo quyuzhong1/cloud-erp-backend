@@ -28,9 +28,6 @@ public class AssetDisposalQueryHandler extends AbstractQueryHandler {
 
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
-        if ("tab".equals(field)) {
-            return getTabSql(value);
-        }
         if("ad.approve_user_id".equals(field)){
             ValidList<ProcessManagementDTO.ApproveActivityDTO> dtoList = new ValidList<>();
 
@@ -66,7 +63,18 @@ public class AssetDisposalQueryHandler extends AbstractQueryHandler {
                 super.buildSplicingSQLDTO("ad.id",QueryConditionEnum.EQ,"-1",QueryDataTypeEnum.STRING);
             }
         }
+        if ("tab".equals(field)) {
+            return getTabSql(value);
+        }
+        if (isAssetNameField(field)) {
+            super.buildDefaultDTO("ac.name", value);
+            return super.getSplicingSQL();
+        }
         return null;
+    }
+
+    private boolean isAssetNameField(String field) {
+        return "assetName".equals(field) || "add.asset_name".equals(field);
     }
 
     public String getTabSql(Object value) {

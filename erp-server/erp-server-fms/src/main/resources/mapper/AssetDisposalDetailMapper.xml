@@ -41,7 +41,7 @@ add.is_deleted AS isDeleted,
 add.source_id AS sourceId,
 add.source_code AS sourceCode,
 add.main_id AS mainId,
-add.asset_name AS assetName,
+ac.name AS assetName,
 add.unit AS unit,
 add.qty AS qty,
 add.disposal_qty AS disposalQty,
@@ -58,6 +58,7 @@ add.tax_amount AS taxAmount
         <include refid="Base_Column_List"></include>
         FROM
         asset_disposal_detail add
+        LEFT JOIN asset_card ac ON ac.id = add.source_id AND ac.is_deleted = false
         where add.is_deleted = FALSE
         <if test="mainId != null and mainId != ''">
             AND add.main_id = #{mainId}

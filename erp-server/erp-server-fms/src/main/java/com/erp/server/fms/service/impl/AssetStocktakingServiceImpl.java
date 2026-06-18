@@ -35,6 +35,7 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
 import com.erp.server.fms.mapper.AssetStocktakingMapper;
 import com.erp.server.fms.service.*;
+import com.erp.server.fms.utils.FmsAssetNameResolver;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -83,6 +84,8 @@ public class AssetStocktakingServiceImpl extends SuperServiceImpl<AssetStocktaki
     private CfgQueryOptionFeign cfgQueryOptionFeign;
     @Resource
     private com.erp.server.fms.service.AssetStocktakingPlanService assetStocktakingPlanService;
+    @Resource
+    private FmsAssetNameResolver fmsAssetNameResolver;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -776,8 +779,35 @@ public class AssetStocktakingServiceImpl extends SuperServiceImpl<AssetStocktaki
 
         if (CollUtil.isNotEmpty(detailEntities)) {
             List<AssetStocktakingDetailDTO.ViewDTO> detailList = BeanMapperUtils.copyList(AssetStocktakingDetailDTO.ViewDTO.class, detailEntities);
+            fillDetailAssetNameFromCard(detailList);
             data.setDetailList(detailList);
         }
+    }
+
+    private void fillDetailAssetNameFromCard(List<? extends AssetStocktakingDetailDTO.ViewDTO> detailList) {
+        if (CollUtil.isEmpty(detailList)) {
+            return;
+        }
+        List<String> cardIds = detailList.stream()
+                .map(AssetStocktakingDetailDTO.ViewDTO::getCardId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, String> cardNameMap = buildCardNameMap(cardIds);
+        for (AssetStocktakingDetailDTO.ViewDTO detail : detailList) {
+            if (StringUtils.isNotBlank(detail.getCardId())) {
+                detail.setAssetName(cardNameMap.get(detail.getCardId()));
+            }
+        }
+    }
+
+    private Map<String, String> buildCardNameMap(List<String> cardIds) {
+        if (CollUtil.isEmpty(cardIds)) {
+            return Collections.emptyMap();
+        }
+        return assetCardService.listByIds(cardIds).stream()
+                .filter(card -> StringUtils.isNotBlank(card.getId()))
+                .collect(Collectors.toMap(AssetCardEntity::getId, AssetCardEntity::getName, (v1, v2) -> v1));
     }
 
     /**
@@ -974,6 +1004,12 @@ public class AssetStocktakingServiceImpl extends SuperServiceImpl<AssetStocktaki
 
             // 创建明细
             List<AssetProfitLossDetailEntity> profitLossDetails = new ArrayList<>();
+            List<String> cardIds = detailList.stream()
+                    .map(AssetStocktakingDetailEntity::getCardId)
+                    .filter(StringUtils::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.toList());
+            Map<String, String> cardNameMap = fmsAssetNameResolver.batchResolveCardNameByIds(cardIds);
             for (AssetStocktakingDetailEntity stocktakingDetail : detailList) {
                 AssetProfitLossDetailEntity profitLossDetail = new AssetProfitLossDetailEntity();
                 profitLossDetail.setSourceDetailId(stocktakingDetail.getId());
@@ -983,7 +1019,9 @@ public class AssetStocktakingServiceImpl extends SuperServiceImpl<AssetStocktaki
                 profitLossDetail.setCardDetailId(stocktakingDetail.getCardDetailId());
                 profitLossDetail.setCardCode(stocktakingDetail.getCardCode());
                 profitLossDetail.setAssetId(stocktakingDetail.getAssetId());
-                profitLossDetail.setAssetName(stocktakingDetail.getAssetName());
+                profitLossDetail.setAssetName(StringUtils.isNotBlank(stocktakingDetail.getCardId())
+                        ? cardNameMap.get(stocktakingDetail.getCardId())
+                        : fmsAssetNameResolver.resolveMoldNameByCode(stocktakingDetail.getAssetCode()));
                 profitLossDetail.setAssetCode(stocktakingDetail.getAssetCode());
                 profitLossDetail.setUnit(stocktakingDetail.getUnit());
                 profitLossDetail.setBookQty(stocktakingDetail.getBookQty());

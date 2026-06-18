@@ -38,6 +38,7 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
 import com.erp.server.fms.mapper.AssetStocktakingPlanMapper;
 import com.erp.server.fms.service.*;
+import com.erp.server.fms.utils.FmsAssetNameResolver;
 import com.erp.server.fms.listener.AssetStocktakingPlanExcelListener;
 import com.erp.model.fms.dto.excel.AssetStocktakingPlanImportExcelDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -101,6 +102,8 @@ public class AssetStocktakingPlanServiceImpl extends SuperServiceImpl<AssetStock
     private AssetLocationService assetLocationService;
     @Resource
     private CfgQueryOptionFeign cfgQueryOptionFeign;
+    @Resource
+    private FmsAssetNameResolver fmsAssetNameResolver;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -504,7 +507,7 @@ public class AssetStocktakingPlanServiceImpl extends SuperServiceImpl<AssetStock
             detailDTO.setCardDetailId(detail.getId());  // 关键字段：标识从资产卡片关联的明细
             detailDTO.setCardCode(card.getCode());
             detailDTO.setAssetId(card.getId());
-            detailDTO.setAssetName(card.getName());
+            detailDTO.setAssetName(fmsAssetNameResolver.resolveCardName(card, detail.getAssetCode()));
             detailDTO.setUnit(card.getUnit());
             detailDTO.setAssetStatus(card.getStatus());
             detailDTO.setAssetCode(detail.getAssetCode());
