@@ -3190,6 +3190,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                     BeanUtil.copyProperties(detailDTO, sourceDeliveryDetailDTO);
                     sourceDeliveryDetailDTO.setSkuId(logisticDTO.getSkuId());
                     sourceDeliveryDetailDTO.setSkuNo(logisticDTO.getSkuNo());
+                    sourceDeliveryDetailDTO.setParentSkuId(detailDTO.getSkuId());
                     sourceDeliveryDetailDTO.setBomVersion(logisticDTO.getBomVersion());
                     sourceDeliveryDetailDTO.setBomHistoryId(logisticDTO.getBomHistoryId());
                     sourceDeliveryDetailDTO.setQty((detailDTO.getQty() == null ? 0 : detailDTO.getQty()) * (logisticDTO.getChildQty() == null ? 1 : logisticDTO.getChildQty()));
@@ -3201,7 +3202,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                     // 的优先级独立取值，不依赖父 SKU。
                     sourceDeliveryDetailDTO.setSourceCargo(null);
                     sourceDeliveryDetailDTO.setExemption(null);
-                    fillDeclareInfo(sourceDeliveryDetailDTO, logisticDTO, declareUnitNameMap, currencyMap, sixDimensionMerge,Collections.emptyMap());
+                    fillDeclareInfo(sourceDeliveryDetailDTO, logisticDTO, declareUnitNameMap, currencyMap, sixDimensionMerge, soDetailMap);
                     applyDeclareLineDefaults(sourceDeliveryDetailDTO);
                     result.add(sourceDeliveryDetailDTO);
                 }
@@ -3249,6 +3250,16 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
     private String buildSoDetailKey(String mainId, String skuId) {
         return mainId + "#" + skuId;
+    }
+
+    /**
+     * BOM 拆分子 SKU 在 so_detail 中无独立行，需回退到父 SKU 取销售单价/币别。
+     */
+    private String resolveSoDetailSkuId(TmsDeclareBillDTO.SourceDeliveryDetailDTO detailDTO) {
+        if (StringUtils.isNotBlank(detailDTO.getParentSkuId())) {
+            return detailDTO.getParentSkuId();
+        }
+        return detailDTO.getSkuId();
     }
 
     /**
@@ -3997,7 +4008,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         detailDTO.setUnit(productLogisticsDTO.getDeclareUnit());
         detailDTO.setUnitName(declareUnitNameMap.get(productLogisticsDTO.getDeclareUnit()));
 
-        SoDetailEntity soDetailEntity = soDetailMap.get(buildSoDetailKey(detailDTO.getBusinessId(),detailDTO.getSkuId()));
+        SoDetailEntity soDetailEntity = soDetailMap.get(buildSoDetailKey(detailDTO.getBusinessId(), resolveSoDetailSkuId(detailDTO)));
 
         if (sixDimensionMerge && Objects.nonNull(soDetailEntity)) {
             // B2B 按客户分发场景：单价/币别/币别符号取 so_detail 销售含税单价及对应币种。
