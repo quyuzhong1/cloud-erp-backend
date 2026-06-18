@@ -377,11 +377,6 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         return timeoutSeconds + bufferSeconds;
     }
 
-    @Override
-    public int resolveSmallBagStaleDetailSeconds(CfgSettingValueDTO.BillBatchParamsDTO billBatchParamsDTO) {
-        return resolveStaleDetailSeconds(billBatchParamsDTO);
-    }
-
     /**
      * 判断明细是否为僵死 ING。
      * <p>
@@ -401,28 +396,11 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
     }
 
     @Override
-    public boolean isSmallBagStaleIngDetail(TmsAsyncTaskDetailEntity detail, LocalDateTime staleBefore) {
-        return isStaleIngDetail(detail, staleBefore);
-    }
-
-    @Override
     public String formatTaskErrorMessage(Exception e) {
         String message = e == null ? null : e.getMessage();
         return StringUtils.substring(Objects.toString(message, e == null ? "未知错误" : e.getClass().getSimpleName()), ERROR_START, ERROR_END);
     }
 
-    @Override
-    public BatchResultDTO resolveDispatchClaimOrThrow(String taskId, boolean claimed, String taskCode, String errorPayload) {
-        if (claimed) {
-            return null;
-        }
-        TmsAsyncTaskRecordEntity existing = getById(taskId);
-        if (existing != null && TmsAsyncTaskRecordStatusEnum.ING.getCode().equals(existing.getStatus())) {
-            return BatchResultDTO.success(taskId, existing.getCode());
-        }
-        finishTaskWithError(taskId, "任务状态竞争失败");
-        throw new ServiceException(ApiError.LOGISTICS_ASYNC_TASK_CREATE_ERROR, errorPayload);
-    }
 
     /**
      * 构建业务载荷类型。

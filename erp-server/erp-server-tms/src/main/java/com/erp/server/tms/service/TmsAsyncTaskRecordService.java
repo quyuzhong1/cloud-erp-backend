@@ -83,8 +83,6 @@ public interface TmsAsyncTaskRecordService extends SuperService<TmsAsyncTaskReco
      */
     int resolveStaleDetailSeconds(CfgSettingValueDTO.BillBatchParamsDTO billBatchParamsDTO);
 
-    int resolveSmallBagStaleDetailSeconds(CfgSettingValueDTO.BillBatchParamsDTO billBatchParamsDTO);
-
     /**
      * 判断小包明细是否为超过执行窗口的 ING 明细。
      *
@@ -94,19 +92,10 @@ public interface TmsAsyncTaskRecordService extends SuperService<TmsAsyncTaskReco
      */
     boolean isStaleIngDetail(com.erp.model.tms.entity.TmsAsyncTaskDetailEntity detail, LocalDateTime staleBefore);
 
-    boolean isSmallBagStaleIngDetail(com.erp.model.tms.entity.TmsAsyncTaskDetailEntity detail, LocalDateTime staleBefore);
-
     /**
      * 格式化任务错误信息，避免 getMessage() 为 null
      */
     String formatTaskErrorMessage(Exception e);
-
-    /**
-     * MQ 派发前 CAS 认领失败时的幂等处理：任务已在 ING 则返回成功，否则标记失败并抛异常
-     *
-     * @return 幂等成功时返回 BatchResultDTO，认领成功时返回 null 由调用方继续
-     */
-    BatchResultDTO resolveDispatchClaimOrThrow(String taskId, boolean claimed, String taskCode, String errorPayload);
 
     /**
      * 构建业务载荷类型，默认使用 businessType:methodType 约定。

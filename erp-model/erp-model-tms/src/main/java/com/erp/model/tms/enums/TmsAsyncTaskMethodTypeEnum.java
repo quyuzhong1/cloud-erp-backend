@@ -19,7 +19,6 @@ public enum TmsAsyncTaskMethodTypeEnum implements EnumMessage {
     LASTMILE_UPDATE_RECONCILIATION_STATUS("lastMileUpdateReconciliationStatus", "尾程批量更新对账状态"),
 	PUSH_ALLOCATION("pushAllocation", "下推分摊"),
 	UPDATE_REPORT_STATUS("updateReportStatus", "批量更新核算状态"),
-	UPDATE_RECONCILIATION_STATUS("updateReconciliationStatus", "批量更新对账状态"),
 	RE_ALLOCATION("reAllocation", "重新分摊"),
 	DELETE("delete", "批量删除"),
     ;

@@ -64,10 +64,9 @@ public class TmsAsyncTaskConsumerService implements RocketMQListener<TmsAsyncTas
             log.warn("TMS异步任务MQ消息为空，跳过消费");
             return;
         }
-        TmsAsyncTaskRecordDTO.PushParamsDTO dto = buildRuntimePushParams(taskRecord);
-        String taskId = dto.getTaskId();
-        String businessType = dto.getBusinessType();
-        String methodType = dto.getMethodType();
+        String taskId = taskRecord.getId();
+        String businessType = taskRecord.getBusinessType();
+        String methodType = taskRecord.getMethodType();
         if (StringUtils.isBlank(businessType)) {
             log.warn("TMS异步任务业务类型为空，跳过消费，taskId: {}", taskId);
             asyncTaskRecordService.finishTaskWithError(taskId, "TMS异步任务业务类型为空");
@@ -151,36 +150,6 @@ public class TmsAsyncTaskConsumerService implements RocketMQListener<TmsAsyncTas
             return;
         }
         log.info("TMS异步任务消费完成，taskId: {}, businessType: {}", taskId, businessType);
-    }
-
-    private TmsAsyncTaskRecordDTO.PushParamsDTO buildRuntimePushParams(TmsAsyncTaskRecordEntity taskRecord) {
-        TmsAsyncTaskRecordDTO.PushParamsDTO dto = parseLegacyPushParams(taskRecord.getDataJson());
-        if (dto == null) {
-            dto = new TmsAsyncTaskRecordDTO.PushParamsDTO();
-        }
-        TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope = asyncTaskRecordService.parseEnvelope(taskRecord.getDataJson());
-        TmsAsyncTaskRecordDTO.PushParamsDTO dispatchParams =
-            asyncTaskRecordService.buildDispatchPushParams(taskRecord, envelope);
-        dto.setTaskId(dispatchParams.getTaskId());
-        dto.setBusinessType(dispatchParams.getBusinessType());
-        dto.setMethodType(dispatchParams.getMethodType());
-        dto.setRetryMode(dispatchParams.getRetryMode());
-        dto.setRetrySourceTaskId(dispatchParams.getRetrySourceTaskId());
-        dto.setOperatorUserId(dispatchParams.getOperatorUserId());
-        dto.setOperatorUserName(dispatchParams.getOperatorUserName());
-        return dto;
-    }
-
-    private TmsAsyncTaskRecordDTO.PushParamsDTO parseLegacyPushParams(String dataJson) {
-        if (StringUtils.isBlank(dataJson)) {
-            return null;
-        }
-        try {
-            return JSONUtil.toBean(dataJson, TmsAsyncTaskRecordDTO.PushParamsDTO.class);
-        } catch (Exception e) {
-            log.debug("TMS异步任务 legacy 参数解析失败: {}", e.getMessage());
-            return null;
-        }
     }
 
     /**
