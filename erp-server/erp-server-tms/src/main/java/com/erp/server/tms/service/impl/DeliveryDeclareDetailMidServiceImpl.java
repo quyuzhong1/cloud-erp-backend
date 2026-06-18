@@ -217,6 +217,7 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
                 .collect(Collectors.toList());
         if (CollUtil.isEmpty(sourceIds)) {
             log.warn("B2B报关来源明细补齐目的国失败：来源单id为空，declareBillIds={}", declareBillIdList);
+            applyDeclareBillCountryFallback(sourceDetailList, declareBillIdList);
             return;
         }
         List<SoDeliveryNoticeEntity> noticeList = soDeliveryNoticeFeign.listByIds(sourceIds);
@@ -301,6 +302,15 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         if (CollUtil.isEmpty(declareBillMap)) {
             return;
         }
+        Map<String, String> countryNameMap = Optional.ofNullable(sysDictFeign.listCountryByIds(
+                        declareBillMap.values().stream()
+                                .map(TmsDeclareBillEntity::getCountry)
+                                .filter(CharSequenceUtil::isNotBlank)
+                                .distinct()
+                                .collect(Collectors.toList())))
+                .orElse(Collections.emptyList())
+                .stream()
+                .collect(Collectors.toMap(DictCountryEntity::getId, DictCountryEntity::getNameCn, (oldValue, newValue) -> oldValue));
         String singleDeclareBillId = declareBillIdList.size() == 1 ? declareBillIdList.get(0) : null;
         for (TmsDeclareBillDTO.SourceDeliveryDetailDTO detail : sourceDetailList) {
             if (!CharSequenceUtil.equals(detail.getSourceType(), SourceTypeEnum.SO_DELIVERY_NOTICE.getCode())
@@ -318,8 +328,11 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
                 continue;
             }
             detail.setCountryId(declareBill.getCountry());
-            if (CharSequenceUtil.isNotBlank(declareBill.getCountryName())) {
-                detail.setCountryName(declareBill.getCountryName());
+            String countryName = CharSequenceUtil.isNotBlank(declareBill.getCountryName())
+                    ? declareBill.getCountryName()
+                    : countryNameMap.get(declareBill.getCountry());
+            if (CharSequenceUtil.isNotBlank(countryName)) {
+                detail.setCountryName(countryName);
             }
         }
     }

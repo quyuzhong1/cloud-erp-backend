@@ -2881,7 +2881,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteDeclareBillById (String id) {
-        // 恢复报关单关联的中间表为待生成，保留来源箱明细历史数据。
+        // 删除报关单关联的中间表、明细及主表数据。
         deliveryDeclareDetailMidService.removeByDeclareBillIds(Collections.singletonList(id));
         //删除明细数据
         detailService.deleteDetailByMainIdList(Collections.singletonList(id));
@@ -2916,21 +2916,40 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         }
 
         String splitBaseCode = declareBillEntity.getCode();
+        String originalDeclareBillId = declareBillEntity.getId();
         TmsDeclareBillDTO.SplitDeclareCodeSequence splitCodeSequence = StringUtils.isNotBlank(splitBaseCode)
                 ? new TmsDeclareBillDTO.SplitDeclareCodeSequence(splitBaseCode)
                 : null;
-        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDeliveryDetailList = deliveryDeclareDetailMidService.listSourceByDeclareIdList(Collections.singletonList(declareBillEntity.getId()));
+        log.info("B2B拆分报关开始，原报关单id={}，code={}，拆分数={}", originalDeclareBillId, splitBaseCode,
+                declareDTO.getSplitDeclareDTOList().size());
+        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDeliveryDetailList = deliveryDeclareDetailMidService.listSourceByDeclareIdList(Collections.singletonList(originalDeclareBillId));
+        log.info("B2B拆分报关加载来源明细完成，原报关单id={}，来源明细数={}", originalDeclareBillId, sourceDeliveryDetailList.size());
+        if (CollUtil.isEmpty(sourceDeliveryDetailList)) {
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_SOURCE_DETAIL_NOT_FOUND_FOR_SAVE);
+        }
+
+        // 与头程拆分一致：先删原报关单及其中间表关联，再按票生成新报关单，避免原单残留导致中间表重复挂载、事务变长。
+        deleteDeclareBillById(originalDeclareBillId);
+        log.info("B2B拆分报关已删除原报关单，原报关单id={}，code={}", originalDeclareBillId, splitBaseCode);
+
+        int groupIndex = 0;
         for (List<TmsDeclareBillDTO.SplitDeclareDTO> splitGroup : declareDTO.getSplitDeclareDTOList()) {
+            groupIndex++;
             List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> batchSourceList = filterSplitSourceDetailGroup(sourceDeliveryDetailList, splitGroup);
+            log.info("B2B拆分报关第{}票过滤来源明细完成，原报关单id={}，本票明细数={}", groupIndex, originalDeclareBillId, batchSourceList.size());
             List<TmsDeclareBillDTO.MergeDeclareBillDTO> mergeDeclareBillDTOS = autoMergeDeclareBillView(
                     new TmsDeclareBillDTO.AutoMergeDeclareBillViewDTO(Boolean.TRUE, batchSourceList),
                     isB2bCustomerReceiver(declareBillEntity.getType(), declareBillEntity.getReceiverType()));
+            log.info("B2B拆分报关第{}票合并预览完成，原报关单id={}，合并结果数={}", groupIndex, originalDeclareBillId, mergeDeclareBillDTOS.size());
 
             //保存合并数据（合同号：原单号_1、_2…）
             batchAddMergeDetail(SourceTypeEnum.B2B_DECLARE_BILL.getCode(), mergeDeclareBillDTOS, splitCodeSequence, Boolean.FALSE);
+            log.info("B2B拆分报关第{}票保存完成，原报关单id={}", groupIndex, originalDeclareBillId);
         }
         String splitMsg = CharSequenceUtil.format("拆分报关单：拆分为{}{}", declareDTO.getSplitDeclareDTOList().size(), "票");
-        operateLogService.addModuleOperateLog(splitMsg, SourceTypeEnum.B2B_DECLARE_BILL.getCode(), declareBillEntity.getId(), "拆分操作");
+        operateLogService.addModuleOperateLog(splitMsg, SourceTypeEnum.B2B_DECLARE_BILL.getCode(), originalDeclareBillId, "拆分操作");
+        log.info("B2B拆分报关完成，原报关单id={}，code={}，拆分数={}", originalDeclareBillId, splitBaseCode,
+                declareDTO.getSplitDeclareDTOList().size());
         return Boolean.TRUE;
     }
 
