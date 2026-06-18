@@ -162,6 +162,7 @@
     <select id="listSourceByDeclareIdList"
             resultType="com.erp.model.tms.dto.TmsDeclareBillDTO$SourceDeliveryDetailDTO">
         select
+        dddm.declare_id as declareId,
         dddm.source_id as sourceId,
         dddm.source_code as sourceCode,
         dddm.source_type as sourceType,

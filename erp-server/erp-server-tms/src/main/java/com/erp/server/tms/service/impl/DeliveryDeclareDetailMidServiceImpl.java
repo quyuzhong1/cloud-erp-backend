@@ -271,7 +271,13 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
                 continue;
             }
             detail.setCountryId(countryId);
-            detail.setCountryName(countryNameMap.get(countryId));
+            String countryName = countryNameMap.get(countryId);
+            if (CharSequenceUtil.isNotBlank(countryName)) {
+                detail.setCountryName(countryName);
+            } else {
+                log.warn("B2B报关来源明细补齐目的国名称失败：国家字典未命中，countryId={}，sourceId={}，declareBillIds={}",
+                        countryId, detail.getSourceId(), declareBillIdList);
+            }
         }
         if (CollUtil.isNotEmpty(unresolvedSourceIds)) {
             log.warn("B2B报关来源明细部分来源单未补齐目的国，sourceIds={}，declareBillIds={}", unresolvedSourceIds, declareBillIdList);
@@ -280,24 +286,41 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
     }
 
     /**
-     * OMS 无法补齐时，单票报关单回退使用主表目的国。
+     * OMS 无法补齐时，按明细所属报关单回退使用主表目的国。
+     * 支持批量报关单场景，单次 listByIds 批量查询主表，避免循环内查库。
      */
     private void applyDeclareBillCountryFallback(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList,
                                                  List<String> declareBillIdList) {
-        if (CollUtil.isEmpty(declareBillIdList) || declareBillIdList.size() != 1) {
+        if (CollUtil.isEmpty(declareBillIdList)) {
             return;
         }
-        TmsDeclareBillEntity declareBill = tmsDeclareBillService.getById(declareBillIdList.get(0));
-        if (Objects.isNull(declareBill) || CharSequenceUtil.isBlank(declareBill.getCountry())) {
+        Map<String, TmsDeclareBillEntity> declareBillMap = tmsDeclareBillService.listByIds(declareBillIdList)
+                .stream()
+                .filter(item -> Objects.nonNull(item) && CharSequenceUtil.isNotBlank(item.getCountry()))
+                .collect(Collectors.toMap(TmsDeclareBillEntity::getId, item -> item, (oldValue, newValue) -> oldValue));
+        if (CollUtil.isEmpty(declareBillMap)) {
             return;
         }
+        String singleDeclareBillId = declareBillIdList.size() == 1 ? declareBillIdList.get(0) : null;
         for (TmsDeclareBillDTO.SourceDeliveryDetailDTO detail : sourceDetailList) {
             if (!CharSequenceUtil.equals(detail.getSourceType(), SourceTypeEnum.SO_DELIVERY_NOTICE.getCode())
                     || CharSequenceUtil.isNotBlank(detail.getCountryId())) {
                 continue;
             }
+            String declareId = CharSequenceUtil.isNotBlank(detail.getDeclareId())
+                    ? detail.getDeclareId()
+                    : singleDeclareBillId;
+            if (CharSequenceUtil.isBlank(declareId)) {
+                continue;
+            }
+            TmsDeclareBillEntity declareBill = declareBillMap.get(declareId);
+            if (Objects.isNull(declareBill)) {
+                continue;
+            }
             detail.setCountryId(declareBill.getCountry());
-            detail.setCountryName(declareBill.getCountryName());
+            if (CharSequenceUtil.isNotBlank(declareBill.getCountryName())) {
+                detail.setCountryName(declareBill.getCountryName());
+            }
         }
     }
 
