@@ -217,7 +217,7 @@ public class AfterSalesWarehouseLocationSuggestServiceImpl extends SuperServiceI
         }
         pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
         normalizeExportAdvanceQuery(pagingDTO.getParams());
-        downloadTaskFeign.saveDownloadTask("售后仓位推荐数据导出", EXPORT_WAREHOUSE_LOCATION_SUGGEST_AFTER_SALES.getCode(), pagingDTO);
+        downloadTaskFeign.saveDownloadTask("售后仓位推荐数据导出", EXPORT_WAREHOUSE_LOCATION_SUGGEST_AFTER_SALES.getCode(), pagingDTO.getParams());
     }
 
     @Transactional(rollbackFor = Exception.class)
