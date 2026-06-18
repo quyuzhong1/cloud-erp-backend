@@ -6,6 +6,7 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
+import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
@@ -26,6 +27,8 @@ import com.erp.server.oms.service.*;
 import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
@@ -33,6 +36,9 @@ import javax.annotation.Resource;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * <p>
@@ -45,6 +51,10 @@ import java.util.Objects;
 @Slf4j
 @Service
 public class SoB2cRuleServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity> implements SoB2cRuleService {
+
+    private static final String DISTRIBUTED_LOCK_PREFIX = "RedissonLock:";
+
+    private static final long AUTO_SUBMIT_DELIVERY_LOCK_WAIT_SECONDS = 0L;
 
     @Resource
     private SoB2cLogisticsService soB2cLogisticsService;
@@ -70,6 +80,76 @@ public class SoB2cRuleServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEnt
 
     @Resource
     private OperateLogService operateLogService;
+
+    @Resource(name = "platformOrderDeferredExecutor")
+    private ExecutorService platformOrderDeferredExecutor;
+
+    @Resource
+    private RedissonClient redissonClient;
+
+    @Override
+    public void handleAutoSubmitDeliveryAsync(String soId, String name) {
+        if (StringUtils.isBlank(soId)) {
+            log.warn("异步自动提交发货跳过，soId为空，规则={}", name);
+            return;
+        }
+        try {
+            platformOrderDeferredExecutor.execute(() -> doHandleAutoSubmitDeliveryAsync(soId, name));
+        } catch (RejectedExecutionException e) {
+            log.error("异步自动提交发货线程池繁忙，任务被拒绝，soId={}，规则={}", soId, name, e);
+            addAutoSubmitDeliveryOperateLog(soId, CharSequenceUtil.format("异步自动提交发货未执行，线程池繁忙，物流规则【{}】", name));
+            addSubmitDeliveryError(soId, "异步自动提交发货线程池繁忙，任务未执行");
+        }
+    }
+
+    private void doHandleAutoSubmitDeliveryAsync(String soId, String name) {
+        RLock lock = redissonClient.getLock(buildOrderLockKey(soId));
+        boolean locked = false;
+        try {
+            locked = lock.tryLock(AUTO_SUBMIT_DELIVERY_LOCK_WAIT_SECONDS, TimeUnit.SECONDS);
+            if (!locked) {
+                log.warn("异步自动提交发货未获取到订单锁，跳过本次执行，soId={}，规则={}", soId, name);
+                addAutoSubmitDeliveryOperateLog(soId, CharSequenceUtil.format("异步自动提交发货跳过，订单正在处理中，物流规则【{}】", name));
+                return;
+            }
+            handleAutoSubmitDelivery(soId, name);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.warn("异步自动提交发货等待订单锁被中断，soId={}，规则={}", soId, name, e);
+            addAutoSubmitDeliveryOperateLog(soId, CharSequenceUtil.format("异步自动提交发货未执行，等待订单锁被中断，物流规则【{}】", name));
+        } catch (Exception e) {
+            log.error("异步自动提交发货失败，soId={}，规则={}", soId, name, e);
+            addAutoSubmitDeliveryOperateLog(soId, CharSequenceUtil.format("异步自动提交发货失败，物流规则【{}】，原因：{}", name, e.getMessage()));
+        } finally {
+            if (locked && lock.isHeldByCurrentThread()) {
+                lock.unlock();
+            }
+        }
+    }
+
+    private void addAutoSubmitDeliveryOperateLog(String soId, String message) {
+        try {
+            operateLogService.addModuleOperateLog(message, ModuleTypeEnum.SO_B2C.getCode(), soId, "自动提交发货");
+        } catch (Exception e) {
+            log.error("记录异步自动提交发货操作日志失败，soId={}，message={}", soId, message, e);
+        }
+    }
+
+    private void addSubmitDeliveryError(String soId, String message) {
+        try {
+            SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+            addError.setType(SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode());
+            addError.setMainId(soId);
+            addError.setMessage(message);
+            soB2cErrorService.add(addError);
+        } catch (Exception e) {
+            log.error("记录异步自动提交发货异常单失败，soId={}，message={}", soId, message, e);
+        }
+    }
+
+    private String buildOrderLockKey(String soId) {
+        return DISTRIBUTED_LOCK_PREFIX + DistributeKeyConstant.SO_B2C_ORDER_KEY + "." + soId;
+    }
 
     @Override
     public boolean handleAutoSubmitDelivery(String soId, String name) {
