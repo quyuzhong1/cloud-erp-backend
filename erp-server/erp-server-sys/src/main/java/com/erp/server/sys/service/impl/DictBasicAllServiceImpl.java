@@ -170,7 +170,7 @@ public class DictBasicAllServiceImpl implements DictBasicAllService {
 		if(CollUtil.isNotEmpty(list)) {
 			throw new ServiceException(type + "类型下的"+ value +"值在" + systemCode + "系统已存在");
 		}
-		
+		redisUtil.del(CharSequenceUtil.format(RedisCacheConstants.BASE_DICT_BASIC_BY_TYPE, systemCode, type));
 		PagingDTO<DictBasicAllDTO.PagingParamDTO> pageDto = new PagingDTO<>();
 	   	pageDto.setPageSize(-1);
 	   	DictBasicAllDTO.PagingParamDTO pDto = new DictBasicAllDTO.PagingParamDTO();
@@ -185,7 +185,7 @@ public class DictBasicAllServiceImpl implements DictBasicAllService {
 	   	PagingVO<ViewDTO> paging = paging(pageDto);
 	   	List<ViewDTO> pagingList = paging.getList();
 	   	DictBasicEntity oldEntity = BeanUtil.copyProperties(pagingList.get(0), DictBasicEntity.class);
-	   	
+		// updateJsonObject 无 @CacheEvict，由调用方统一负责缓存清除（见 DictBasicServiceImpl.updateJsonObject 注释）
 		FeignQuery.invoke(this.getServiceClass(systemCode), "updateJsonObject", Arrays.asList(Arrays.asList(this.getEntityMap(dto))));
 		String msg = CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), id, "字典数据");
 		paging = paging(pageDto);
@@ -217,15 +217,14 @@ public class DictBasicAllServiceImpl implements DictBasicAllService {
 				e -> (String)BeanUtil.beanToMap(e).get("type"),
 					(v1, v2) -> v1
 			));
-
+		//手动删除redis缓存
+		typeMap.values().stream().distinct().forEach(type -> {
+			redisUtil.del(CharSequenceUtil.format(RedisCacheConstants.BASE_DICT_BASIC_BY_TYPE, systemCode, type));
+		});
 		List<Map<String, Object>> param = new ArrayList<>(ids.size());
         if("delete".equals(opType)) {
         	opTypeName = "批量删除";
         	FeignQuery.invoke(this.getServiceClass(systemCode), "removeByIds", Arrays.asList(ids));
-			//手动删除redis缓存
-			typeMap.values().stream().distinct().forEach(type -> {
-				redisUtil.del(CharSequenceUtil.format(RedisCacheConstants.BASE_DICT_BASIC_BY_TYPE, systemCode, type));
-			});
         }else {
         	for(String id : ids) {
     			Map<String, Object> p = new HashMap<>();
@@ -240,7 +239,7 @@ public class DictBasicAllServiceImpl implements DictBasicAllService {
     			}
     			param.add(p);
     		}
-			//在方法updateJsonObject存在缓存失效注解
+			// updateJsonObject 无 @CacheEvict，由调用方统一负责缓存清除（见 DictBasicServiceImpl.updateJsonObject 注释）
         	FeignQuery.invoke(this.getServiceClass(systemCode), "updateJsonObject", Collections.singletonList(param));
         }
 		
