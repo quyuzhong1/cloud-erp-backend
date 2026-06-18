@@ -2874,6 +2874,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             //保存合并数据（合同号：原单号_1、_2…）
             batchAddMergeDetail(SourceTypeEnum.FM_DECLARE_BILL.getCode(), mergeDeclareBillDTOS, splitCodeSequence, Boolean.FALSE);
         }
+        syncSourceDeclareStatusAfterSplit(SourceTypeEnum.FM_DECLARE_BILL.getCode(), sourceDeliveryDetailList);
         return Boolean.TRUE;
     }
 
@@ -2946,6 +2947,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             batchAddMergeDetail(SourceTypeEnum.B2B_DECLARE_BILL.getCode(), mergeDeclareBillDTOS, splitCodeSequence, Boolean.FALSE);
             log.info("B2B拆分报关第{}票保存完成，原报关单id={}", groupIndex, originalDeclareBillId);
         }
+        syncSourceDeclareStatusAfterSplit(SourceTypeEnum.B2B_DECLARE_BILL.getCode(), sourceDeliveryDetailList);
         String splitMsg = CharSequenceUtil.format("拆分报关单：拆分为{}{}", declareDTO.getSplitDeclareDTOList().size(), "票");
         operateLogService.addModuleOperateLog(splitMsg, SourceTypeEnum.B2B_DECLARE_BILL.getCode(), originalDeclareBillId, "拆分操作");
         log.info("B2B拆分报关完成，原报关单id={}，code={}，拆分数={}", originalDeclareBillId, splitBaseCode,
@@ -4418,8 +4420,10 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (CollUtil.isNotEmpty(addMidList)) {
             deliveryDeclareDetailMidService.saveBatch(addMidList);
         }
-        //更新报关状态
-        updateSourceDeclareStatus(declareBillType, addMidList);
+        // 拆分保存多轮调用时延后统一回写来源单报关状态，避免同一全局事务内重复 Feign 回写 WMS。
+        if (splitCodeSequence == null) {
+            updateSourceDeclareStatus(declareBillType, addMidList);
+        }
         return Boolean.TRUE;
     }
 
@@ -4640,18 +4644,62 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (CollUtil.isEmpty(addMidList)) {
             return;
         }
-        List<String> sourceIdList = addMidList.stream().map(DeliveryDeclareDetailMidEntity::getSourceId).distinct().collect(Collectors.toList());
+        List<String> sourceIdList = addMidList.stream()
+                .map(DeliveryDeclareDetailMidEntity::getSourceId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        updateSourceDeclareStatusBySourceIds(type, sourceIdList);
+    }
 
-        //更新源单据报关状态
-        if (CharSequenceUtil.equals(type,SourceTypeEnum.FM_DECLARE_BILL.getCode())) {
-            //头程报关单
-            FirstMileDeliveryDTO.UpdateStatusDTO dto = new FirstMileDeliveryDTO.UpdateStatusDTO(sourceIdList,null,WmsDeclareStatusEnum.FINISH.getCode());
-            Boolean updateResult = wmsFirstMileDeliveryFeign.updateStatus(dto);
-        } else {
-            //b2b报关单
-            SoDeliveryNoticeDTO.DeclareStatusDTO dto = new SoDeliveryNoticeDTO.DeclareStatusDTO(sourceIdList, WmsDeclareStatusEnum.FINISH.getCode());
-            soDeliveryNoticeFeign.updateDeclareStatus(dto);
+    /**
+     * 拆分保存全部完成后，统一回写来源单报关状态。
+     */
+    private void syncSourceDeclareStatusAfterSplit(String declareBillType,
+                                                   List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDeliveryDetailList) {
+        if (CollUtil.isEmpty(sourceDeliveryDetailList)) {
+            return;
         }
+        List<String> sourceIdList = sourceDeliveryDetailList.stream()
+                .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getSourceId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        updateSourceDeclareStatusBySourceIds(declareBillType, sourceIdList);
+    }
+
+    /**
+     * 来源单不存在待生成中间表明细时，回写 WMS 报关状态为已生成。
+     */
+    private void updateSourceDeclareStatusBySourceIds(String type, List<String> sourceIdList) {
+        if (CollUtil.isEmpty(sourceIdList)) {
+            return;
+        }
+        String sourceType = resolveDeclareSourceType(type);
+        List<DeliveryDeclareDetailMidEntity> waitMidList = deliveryDeclareDetailMidService.lambdaQuery()
+                .eq(DeliveryDeclareDetailMidEntity::getSourceType, sourceType)
+                .eq(DeliveryDeclareDetailMidEntity::getGenerateStatus, DeliveryDeclareDetailMidGenerateStatusEnum.WAIT.getCode())
+                .in(DeliveryDeclareDetailMidEntity::getSourceId, sourceIdList)
+                .list();
+        Set<String> waitSourceIdSet = waitMidList.stream()
+                .map(DeliveryDeclareDetailMidEntity::getSourceId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .collect(Collectors.toSet());
+        List<String> finishSourceIds = sourceIdList.stream()
+                .filter(sourceId -> !waitSourceIdSet.contains(sourceId))
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(finishSourceIds)) {
+            log.info("来源单仍存在待生成报关明细，跳过回写报关状态，declareBillType={}，sourceIds={}", type, sourceIdList);
+            return;
+        }
+        log.info("回写来源单报关状态为已生成，declareBillType={}，sourceIds={}", type, finishSourceIds);
+        if (CharSequenceUtil.equals(type, SourceTypeEnum.FM_DECLARE_BILL.getCode())) {
+            FirstMileDeliveryDTO.UpdateStatusDTO dto = new FirstMileDeliveryDTO.UpdateStatusDTO(finishSourceIds, null, WmsDeclareStatusEnum.FINISH.getCode());
+            wmsFirstMileDeliveryFeign.updateStatus(dto);
+            return;
+        }
+        SoDeliveryNoticeDTO.DeclareStatusDTO dto = new SoDeliveryNoticeDTO.DeclareStatusDTO(finishSourceIds, WmsDeclareStatusEnum.FINISH.getCode());
+        soDeliveryNoticeFeign.updateDeclareStatus(dto);
     }
 
     @Override
