@@ -44,6 +44,7 @@ import com.erp.model.tms.dto.LogisticsReconMatchExecutionResultDTO;
 import com.erp.model.tms.dto.excel.LogisticsReconImportExcelDTO;
 import com.erp.model.tms.entity.CfgLogisticsCostImportDetailEntity;
 import com.erp.model.tms.entity.CfgLogisticsCostImportEntity;
+import com.erp.model.tms.entity.LogisticsBillCostEntity;
 import com.erp.model.tms.entity.LogisticsReconDetailEntity;
 import com.erp.model.tms.entity.LogisticsReconDetailSubEntity;
 import com.erp.model.tms.entity.LogisticsReconEntity;
@@ -58,6 +59,7 @@ import com.erp.model.tms.enums.LogisticsReconRefMatchTypeEnum;
 import com.erp.model.tms.enums.ImportHistoryRecordProcessingTypeEnum;
 import com.erp.model.tms.enums.ImportHistoryRecordStatusEnum;
 import com.erp.model.tms.enums.ImportHistoryRecordTypeEnum;
+import com.erp.model.tms.enums.LogisticsBillCostCheckStatusEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -78,6 +80,7 @@ import com.erp.server.tms.util.LogisticsReconMatchGroupHelper;
 import com.erp.server.tms.util.LogisticsReconOpenImportConverter;
 import com.erp.server.tms.service.LogisticsSupplierService;
 import com.erp.server.tms.service.OperateLogService;
+import com.erp.server.tms.service.support.LogisticsReconMatchFailReasonSupport;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -128,6 +131,9 @@ public class LogisticsReconServiceImpl
     private static final String IMPORT_ERROR_MSG_HEADER = "错误信息";
 
     private static final String IMPORT_DETAIL_ROW_CACHE_PREFIX = "row:";
+
+    /** 物流费用未付/未退时的 pay_status，与 LogisticsBillCostServiceImpl#updateReconciliationStatus 一致 */
+    private static final String UNPAID_PAY_STATUS = "payment";
 
     @Resource
     private DocNoGenHelper docNoGenHelper;
@@ -1759,7 +1765,7 @@ public class LogisticsReconServiceImpl
             log.error("[asyncMatchByMain] 匹配失败 mainId={} scopeSize={}", mainId,
                     scopeSubIds == null ? 0 : scopeSubIds.size(), e);
             try {
-                self.markReconMatchFailed(mainId, scopeSubIds, resolveMatchFailReason(e));
+                self.markReconMatchFailed(mainId, scopeSubIds, LogisticsReconMatchFailReasonSupport.resolve(e));
             } catch (Exception ex) {
                 log.error("[asyncMatchByMain] 回写失败状态异常 mainId={}", mainId, ex);
             }
@@ -1770,32 +1776,6 @@ public class LogisticsReconServiceImpl
                 UserContext.clear();
             }
         }
-    }
-
-    /**
-     * 截断匹配失败原因，避免超过字段长度。
-     * @author Will
-     * @date 2026/6/12
-     */
-    private String resolveMatchFailReason(Exception e) {
-        Throwable root = e;
-        while (root.getCause() != null && root.getCause() != root) {
-            root = root.getCause();
-        }
-        if (root instanceof ServiceException && StrUtil.isNotBlank(root.getMessage())) {
-            return truncateMatchFailReason(root.getMessage());
-        }
-        if (StrUtil.isNotBlank(root.getMessage())) {
-            return truncateMatchFailReason(root.getMessage());
-        }
-        if (root instanceof UnsupportedOperationException) {
-            return "匹配处理异常，请联系管理员";
-        }
-        return truncateMatchFailReason(root.getClass().getSimpleName());
-    }
-
-    private String truncateMatchFailReason(String msg) {
-        return msg.length() > 490 ? msg.substring(0, 490) : msg;
     }
 
     @Override
@@ -1816,7 +1796,7 @@ public class LogisticsReconServiceImpl
                 self.doMatchSubsChunk(mainId, chunk);
             } catch (Exception e) {
                 log.error("[doMatchByMain] 分片匹配失败 mainId={} chunkSize={}", mainId, chunk.size(), e);
-                self.markReconMatchFailed(mainId, chunk, resolveMatchFailReason(e));
+                self.markReconMatchFailed(mainId, chunk, LogisticsReconMatchFailReasonSupport.resolve(e));
             }
         }
     }
@@ -2166,7 +2146,7 @@ public class LogisticsReconServiceImpl
         } catch (Exception e) {
             log.error("[asyncMatchDetailSubsByErp] 匹配失败 mainId={}", mainId, e);
             try {
-                self.markReconMatchFailed(mainId, claimIds, resolveMatchFailReason(e));
+                self.markReconMatchFailed(mainId, claimIds, LogisticsReconMatchFailReasonSupport.resolve(e));
             } catch (Exception ex) {
                 log.error("[asyncMatchDetailSubsByErp] 回写失败状态异常 mainId={}", mainId, ex);
             }
@@ -2518,6 +2498,7 @@ public class LogisticsReconServiceImpl
             if (ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus)) {
                 refUpdateChain.eq(LogisticsReconRefLogisticsBillEntity::getReconciliationStatus,
                         ReconciliationStatusEnum.TO_BE_CONFIRM.getCode());
+                applyMatchedSubExists(refUpdateChain, mainId);
             } else if (ReconciliationStatusEnum.TO_BE_CONFIRM.getCode().equals(reconciliationStatus)) {
                 refUpdateChain.eq(LogisticsReconRefLogisticsBillEntity::getReconciliationStatus,
                         ReconciliationStatusEnum.CONFIRMED.getCode());
@@ -2530,6 +2511,161 @@ public class LogisticsReconServiceImpl
             refUpdated += batchRefUpdated;
         }
         log.info("[confirmBillRefCostBatch] mainId={} costCount={} refUpdated={}", mainId, distinctCostIds.size(), refUpdated);
+    }
+
+    /**
+     * 账单确认（→账单确认）时仅处理已匹配费用项下的关联 ref。
+     */
+    private void applyMatchedSubExists(LambdaQueryChainWrapper<LogisticsReconRefLogisticsBillEntity> query,
+                                       String mainId) {
+        query.apply("EXISTS (SELECT 1 FROM logistics_recon_detail_sub sub "
+                        + "WHERE sub.id = logistics_recon_ref_logistics_bill.detail_sub_id "
+                        + "AND sub.main_id = {0} AND sub.match_status = {1} AND sub.is_deleted = false)",
+                mainId, LogisticsReconDetailMatchStatusEnum.MATCHED.getCode());
+    }
+
+    private void applyMatchedSubExists(LambdaUpdateChainWrapper<LogisticsReconRefLogisticsBillEntity> updateChain,
+                                       String mainId) {
+        updateChain.apply("EXISTS (SELECT 1 FROM logistics_recon_detail_sub sub "
+                        + "WHERE sub.id = logistics_recon_ref_logistics_bill.detail_sub_id "
+                        + "AND sub.main_id = {0} AND sub.match_status = {1} AND sub.is_deleted = false)",
+                mainId, LogisticsReconDetailMatchStatusEnum.MATCHED.getCode());
+    }
+
+    /**
+     * 扫描对账单关联 ref，统计可执行账单确认/回退的物流费用单。
+     */
+    private ConfirmBillScanResult scanConfirmBillEligibility(String mainId, String targetReconciliationStatus) {
+        ConfirmBillScanResult result = new ConfirmBillScanResult();
+        String lastRefId = null;
+        while (true) {
+            LambdaQueryChainWrapper<LogisticsReconRefLogisticsBillEntity> refQuery =
+                    logisticsReconRefLogisticsBillService.lambdaQuery()
+                            .eq(LogisticsReconRefLogisticsBillEntity::getMainId, mainId)
+                            .eq(LogisticsReconRefLogisticsBillEntity::getIsDeleted, false)
+                            .orderByAsc(LogisticsReconRefLogisticsBillEntity::getId)
+                            .last("LIMIT " + MATCH_ID_BATCH_SIZE);
+            if (lastRefId != null) {
+                refQuery.gt(LogisticsReconRefLogisticsBillEntity::getId, lastRefId);
+            }
+            List<LogisticsReconRefLogisticsBillEntity> refBatch = refQuery.list();
+            if (CollUtil.isEmpty(refBatch)) {
+                break;
+            }
+            lastRefId = refBatch.get(refBatch.size() - 1).getId();
+            result.hasRef = true;
+
+            List<String> subIds = refBatch.stream()
+                    .map(LogisticsReconRefLogisticsBillEntity::getDetailSubId)
+                    .filter(StrUtil::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.toList());
+            List<String> costIds = refBatch.stream()
+                    .map(LogisticsReconRefLogisticsBillEntity::getLogisticsBillCostId)
+                    .filter(StrUtil::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.toList());
+            Map<String, LogisticsReconDetailSubEntity> subMap = CollUtil.isEmpty(subIds)
+                    ? Collections.emptyMap()
+                    : logisticsReconDetailSubService.listByIds(subIds).stream()
+                    .collect(Collectors.toMap(LogisticsReconDetailSubEntity::getId, s -> s, (a, b) -> a));
+            Map<String, LogisticsBillCostEntity> costMap = CollUtil.isEmpty(costIds)
+                    ? Collections.emptyMap()
+                    : logisticsBillCostService.listByIds(costIds).stream()
+                    .collect(Collectors.toMap(LogisticsBillCostEntity::getId, c -> c, (a, b) -> a));
+
+            for (LogisticsReconRefLogisticsBillEntity ref : refBatch) {
+                if (ReconciliationStatusEnum.TO_BE_CONFIRM.getCode().equals(ref.getReconciliationStatus())) {
+                    result.refToBeConfirmCount++;
+                } else if (ReconciliationStatusEnum.CONFIRMED.getCode().equals(ref.getReconciliationStatus())) {
+                    result.refConfirmedCount++;
+                } else {
+                    result.refOtherCount++;
+                }
+                if (isEligibleConfirmBillRef(ref, subMap, costMap, targetReconciliationStatus)) {
+                    result.eligibleCostIds.add(ref.getLogisticsBillCostId());
+                } else if (ReconciliationStatusEnum.TO_BE_CONFIRM.getCode().equals(targetReconciliationStatus)
+                        && ReconciliationStatusEnum.CONFIRMED.getCode().equals(ref.getReconciliationStatus())) {
+                    LogisticsBillCostEntity cost = costMap.get(ref.getLogisticsBillCostId());
+                    if (cost != null
+                            && ReconciliationStatusEnum.CONFIRMED.getCode().equals(cost.getReconciliationStatus())
+                            && !isRevertibleBillCost(cost)) {
+                        result.hasNonRevertibleConfirmedRef = true;
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+    private boolean isEligibleConfirmBillRef(LogisticsReconRefLogisticsBillEntity ref,
+                                              Map<String, LogisticsReconDetailSubEntity> subMap,
+                                              Map<String, LogisticsBillCostEntity> costMap,
+                                              String targetReconciliationStatus) {
+        if (ref == null || StrUtil.isBlank(ref.getLogisticsBillCostId())) {
+            return false;
+        }
+        LogisticsBillCostEntity cost = costMap.get(ref.getLogisticsBillCostId());
+        if (cost == null) {
+            return false;
+        }
+        if (ReconciliationStatusEnum.CONFIRMED.getCode().equals(targetReconciliationStatus)) {
+            if (!ReconciliationStatusEnum.TO_BE_CONFIRM.getCode().equals(ref.getReconciliationStatus())) {
+                return false;
+            }
+            LogisticsReconDetailSubEntity sub = subMap.get(ref.getDetailSubId());
+            if (sub == null || !LogisticsReconDetailMatchStatusEnum.MATCHED.getCode().equals(sub.getMatchStatus())) {
+                return false;
+            }
+            return ReconciliationStatusEnum.TO_BE_CONFIRM.getCode().equals(cost.getReconciliationStatus());
+        }
+        if (ReconciliationStatusEnum.TO_BE_CONFIRM.getCode().equals(targetReconciliationStatus)) {
+            if (!ReconciliationStatusEnum.CONFIRMED.getCode().equals(ref.getReconciliationStatus())) {
+                return false;
+            }
+            if (!ReconciliationStatusEnum.CONFIRMED.getCode().equals(cost.getReconciliationStatus())) {
+                return false;
+            }
+            return isRevertibleBillCost(cost);
+        }
+        return false;
+    }
+
+    private boolean isRevertibleBillCost(LogisticsBillCostEntity cost) {
+        return cost != null
+                && LogisticsBillCostCheckStatusEnum.CHECKING.getCode().equals(cost.getCheckStatus())
+                && UNPAID_PAY_STATUS.equals(cost.getPayStatus());
+    }
+
+    private void assertConfirmBillEligibility(ConfirmBillScanResult scanResult, String targetReconciliationStatus) {
+        if (!scanResult.hasRef) {
+            throw new ServiceException(ApiError.LOGISTICS_RECON_MATCHED_BILL_COST_NOT_FOUND);
+        }
+        if (CollUtil.isNotEmpty(scanResult.eligibleCostIds)) {
+            return;
+        }
+        if (ReconciliationStatusEnum.CONFIRMED.getCode().equals(targetReconciliationStatus)) {
+            if (scanResult.refToBeConfirmCount <= 0 && scanResult.refOtherCount <= 0) {
+                throw new ServiceException(ApiError.LOGISTICS_RECON_BILL_CONFIRM_ALREADY_CONFIRMED);
+            }
+            throw new ServiceException(ApiError.LOGISTICS_RECON_BILL_CONFIRM_NO_ELIGIBLE);
+        }
+        if (scanResult.refConfirmedCount <= 0 && scanResult.refOtherCount <= 0) {
+            throw new ServiceException(ApiError.LOGISTICS_RECON_BILL_CONFIRM_ALREADY_TO_BE_CONFIRM);
+        }
+        if (scanResult.hasNonRevertibleConfirmedRef) {
+            throw new ServiceException(ApiError.LOGISTICS_RECON_BILL_REVERT_COST_STATUS_FORBIDDEN);
+        }
+        throw new ServiceException(ApiError.LOGISTICS_RECON_BILL_REVERT_NO_ELIGIBLE);
+    }
+
+    private static class ConfirmBillScanResult {
+        private boolean hasRef;
+        private long refToBeConfirmCount;
+        private long refConfirmedCount;
+        private long refOtherCount;
+        private boolean hasNonRevertibleConfirmedRef;
+        private final Set<String> eligibleCostIds = new LinkedHashSet<>();
     }
 
     /**
@@ -2552,6 +2688,7 @@ public class LogisticsReconServiceImpl
         if (ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus)) {
             query.eq(LogisticsReconRefLogisticsBillEntity::getReconciliationStatus,
                     ReconciliationStatusEnum.TO_BE_CONFIRM.getCode());
+            applyMatchedSubExists(query, mainId);
         } else if (ReconciliationStatusEnum.TO_BE_CONFIRM.getCode().equals(reconciliationStatus)) {
             query.eq(LogisticsReconRefLogisticsBillEntity::getReconciliationStatus,
                     ReconciliationStatusEnum.CONFIRMED.getCode());
@@ -2581,35 +2718,13 @@ public class LogisticsReconServiceImpl
         if (matchingCount > 0) {
             throw new ServiceException(ApiError.LOGISTICS_RECON_MATCHING_CONFIRM_FORBIDDEN);
         }
-        boolean hasBillCost = false;
-        String lastRefId = null;
+        ConfirmBillScanResult scanResult = scanConfirmBillEligibility(mainId, reconciliationStatus);
+        assertConfirmBillEligibility(scanResult, reconciliationStatus);
+        List<String> eligibleCostIds = new ArrayList<>(scanResult.eligibleCostIds);
         int batchNo = 0;
-        while (true) {
-            LambdaQueryChainWrapper<LogisticsReconRefLogisticsBillEntity> refQuery =
-                    logisticsReconRefLogisticsBillService.lambdaQuery()
-                            .eq(LogisticsReconRefLogisticsBillEntity::getMainId, mainId)
-                            .eq(LogisticsReconRefLogisticsBillEntity::getIsDeleted, false)
-                            .select(LogisticsReconRefLogisticsBillEntity::getId,
-                                    LogisticsReconRefLogisticsBillEntity::getLogisticsBillCostId)
-                            .orderByAsc(LogisticsReconRefLogisticsBillEntity::getId)
-                            .last("LIMIT " + MATCH_ID_BATCH_SIZE);
-            if (lastRefId != null) {
-                refQuery.gt(LogisticsReconRefLogisticsBillEntity::getId, lastRefId);
-            }
-            List<LogisticsReconRefLogisticsBillEntity> refBatch = refQuery.list();
-            if (CollUtil.isEmpty(refBatch)) {
-                break;
-            }
-            lastRefId = refBatch.get(refBatch.size() - 1).getId();
-            List<String> batchCostIds = refBatch.stream()
-                    .map(LogisticsReconRefLogisticsBillEntity::getLogisticsBillCostId)
-                    .filter(StrUtil::isNotBlank)
-                    .distinct()
-                    .collect(Collectors.toList());
-            if (CollUtil.isEmpty(batchCostIds)) {
-                continue;
-            }
-            hasBillCost = true;
+        for (int i = 0; i < eligibleCostIds.size(); i += MATCH_ID_BATCH_SIZE) {
+            List<String> batchCostIds = eligibleCostIds.subList(i,
+                    Math.min(eligibleCostIds.size(), i + MATCH_ID_BATCH_SIZE));
             batchNo++;
             try {
                 self.confirmBillRefCostBatch(mainId, batchCostIds, reconciliationStatus, effectiveConfirmTime);
@@ -2620,9 +2735,6 @@ public class LogisticsReconServiceImpl
                 }
                 throw new ServiceException(ApiError.LOGISTICS_RECON_CONFIRM_PARTIAL_FAILURE, batchNo);
             }
-        }
-        if (!hasBillCost) {
-            throw new ServiceException(ApiError.LOGISTICS_RECON_MATCHED_BILL_COST_NOT_FOUND);
         }
         self.refreshDetailSubReconciliationStatusInTx(mainId);
         String msg = StrUtil.format("用户【{}】将{}【{}】关联物流费用单对账状态更新为【{}】",

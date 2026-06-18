@@ -1934,6 +1934,11 @@ public enum ApiError implements Serializable {
     LOGISTICS_RECON_IMPORT_MAIN_NOT_FOUND(13670,"导入任务关联的对账单不存在或已失效，请重新提交导入"),
     LOGISTICS_RECON_CHECK_STATUS_NO_CHANGE(13671,"校验状态与当前状态相同，无需变更"),
     LOGISTICS_RECON_ONLY_PENDING_ALLOW_CHECK_CONFIRM(13672,"仅待确认的对账单允许切换为已确认"),
+    LOGISTICS_RECON_BILL_CONFIRM_ALREADY_TO_BE_CONFIRM(13673,"当前关联数据已是待确认，无需更新"),
+    LOGISTICS_RECON_BILL_CONFIRM_ALREADY_CONFIRMED(13674,"当前关联数据已是账单确认，无需更新"),
+    LOGISTICS_RECON_BILL_CONFIRM_NO_ELIGIBLE(13675,"没有可确认的已匹配待确认数据"),
+    LOGISTICS_RECON_BILL_REVERT_NO_ELIGIBLE(13676,"没有可回退为待确认的已确认数据"),
+    LOGISTICS_RECON_BILL_REVERT_COST_STATUS_FORBIDDEN(13677,"存在已确认关联数据，但物流费用核算状态非待生成或支付状态非待付/待退，无法回退为待确认"),
     ASYNC_TASK_DETAIL_TIMEOUT(13648,"明细执行超时，系统自动标记失败"),
     /**
      * 财务管理 错误 信息 14000-14500

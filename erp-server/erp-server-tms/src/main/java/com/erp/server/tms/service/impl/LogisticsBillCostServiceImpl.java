@@ -805,7 +805,9 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                         ReconciliationStatusEnum.TO_BE_CONFIRM.getCode());
             } else if (ReconciliationStatusEnum.TO_BE_CONFIRM.getCode().equals(reconciliationStatus)) {
                 updateChain.eq(LogisticsBillCostEntity::getReconciliationStatus,
-                        ReconciliationStatusEnum.CONFIRMED.getCode());
+                        ReconciliationStatusEnum.CONFIRMED.getCode())
+                        .eq(LogisticsBillCostEntity::getCheckStatus, LogisticsBillCostCheckStatusEnum.CHECKING.getCode())
+                        .eq(LogisticsBillCostEntity::getPayStatus, "payment");
             }
             updateChain
                     .set(LogisticsBillCostEntity::getReconciliationStatus, reconciliationStatus)
