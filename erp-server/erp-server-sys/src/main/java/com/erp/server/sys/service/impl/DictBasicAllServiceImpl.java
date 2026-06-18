@@ -170,7 +170,6 @@ public class DictBasicAllServiceImpl implements DictBasicAllService {
 		if(CollUtil.isNotEmpty(list)) {
 			throw new ServiceException(type + "类型下的"+ value +"值在" + systemCode + "系统已存在");
 		}
-		redisUtil.del(CharSequenceUtil.format(RedisCacheConstants.BASE_DICT_BASIC_BY_TYPE, systemCode, type));
 		PagingDTO<DictBasicAllDTO.PagingParamDTO> pageDto = new PagingDTO<>();
 	   	pageDto.setPageSize(-1);
 	   	DictBasicAllDTO.PagingParamDTO pDto = new DictBasicAllDTO.PagingParamDTO();
@@ -187,6 +186,7 @@ public class DictBasicAllServiceImpl implements DictBasicAllService {
 	   	DictBasicEntity oldEntity = BeanUtil.copyProperties(pagingList.get(0), DictBasicEntity.class);
 		// updateJsonObject 无 @CacheEvict，由调用方统一负责缓存清除（见 DictBasicServiceImpl.updateJsonObject 注释）
 		FeignQuery.invoke(this.getServiceClass(systemCode), "updateJsonObject", Arrays.asList(Arrays.asList(this.getEntityMap(dto))));
+		redisUtil.del(CharSequenceUtil.format(RedisCacheConstants.BASE_DICT_BASIC_BY_TYPE, systemCode, type));
 		String msg = CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), id, "字典数据");
 		paging = paging(pageDto);
 	   	pagingList = paging.getList();
@@ -211,16 +211,11 @@ public class DictBasicAllServiceImpl implements DictBasicAllService {
 			throw new ServiceException(ApiError.COMMON_DATA_NOT_EXIST,systemCode);
 		}
 		//转换成按照id、type的map形式
-		Map<String, String> typeMap = (Map<String, String>) list.stream()
-			.collect(Collectors.toMap(
-				e -> (String)BeanUtil.beanToMap(e).get("id"),
-				e -> (String)BeanUtil.beanToMap(e).get("type"),
-					(v1, v2) -> v1
-			));
-		//手动删除redis缓存
-		typeMap.values().stream().distinct().forEach(type -> {
-			redisUtil.del(CharSequenceUtil.format(RedisCacheConstants.BASE_DICT_BASIC_BY_TYPE, systemCode, type));
-		});
+		Map<String, String> typeMap = new HashMap<>(ids.size());
+		for(Object obj : list) {
+			Map<String, Object> beanMap = BeanUtil.beanToMap(obj);
+			typeMap.put((String) beanMap.get("id"), (String) beanMap.get("type"));
+		}
 		List<Map<String, Object>> param = new ArrayList<>(ids.size());
         if("delete".equals(opType)) {
         	opTypeName = "批量删除";
@@ -242,7 +237,10 @@ public class DictBasicAllServiceImpl implements DictBasicAllService {
 			// updateJsonObject 无 @CacheEvict，由调用方统一负责缓存清除（见 DictBasicServiceImpl.updateJsonObject 注释）
         	FeignQuery.invoke(this.getServiceClass(systemCode), "updateJsonObject", Collections.singletonList(param));
         }
-		
+		//手动删除redis缓存
+		typeMap.values().stream().distinct().forEach(type -> {
+			redisUtil.del(CharSequenceUtil.format(RedisCacheConstants.BASE_DICT_BASIC_BY_TYPE, systemCode, type));
+		});
 		for(String id : ids) {
 			operateLogService.addModuleOperateLog(opTypeName, ModuleTypeEnum.DICT_BASIC.getCode(), id, "状态变更");
 		}
