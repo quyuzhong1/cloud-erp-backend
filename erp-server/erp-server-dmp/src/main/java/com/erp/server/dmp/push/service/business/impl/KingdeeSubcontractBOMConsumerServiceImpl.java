@@ -51,6 +51,7 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontractBOMConsumerService {
+
     @Resource
     private KingdeeCommonService kingdeeCommonService;
 
@@ -161,7 +162,8 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
                 kingdeeCommonService.audit(null,bomChangeApiUtils,saveOld.getId(),ApiModuleTypeEnum.SUBCONTRACT_BOM.getCode());
 
                 //新增新单
-                JSONObject convertNewData = convertNewData(view,subcontractOrder,subcontractOrderDetails,query.get("FBillNo").toString());
+                JSONObject convertNewData = convertNewData(view, subcontractOrder, subcontractOrderDetails,
+                        query.get("FBillNo").toString(), map);
                 KingdeeParamDTO.SaveParamDTO saveNewParam = new KingdeeParamDTO.SaveParamDTO(convertNewData);
                 saveNewParam.setIsVerifyBaseDataField(Boolean.FALSE);
                 //新增
@@ -216,7 +218,9 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         return entries;
     }
 
-    public JSONObject convertNewData(JSONObject view,SubcontractOrderEntity subcontractOrder,List<SubcontractOrderDetailEntity> subcontractOrderDetails,String bomBillNo){
+    public JSONObject convertNewData(JSONObject view, SubcontractOrderEntity subcontractOrder,
+            List<SubcontractOrderDetailEntity> subcontractOrderDetails, String bomBillNo,
+            Map<String, Object> map) {
         JSONArray FEntities = new JSONArray();
         JSONObject entries = new JSONObject();
         SysAccountingCompanyEntity sysAccountingCompany = sysUserFeign.getCompanyByKindgeeId(view.get("SubOrgId_Id").toString());
@@ -232,6 +236,8 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         List<SubcontractOrderDetailEntity> childList = subcontractOrderDetails.stream()
                 .filter(item -> StringUtils.isNotBlank(item.getParentId()))
                 .collect(Collectors.toList());
+
+        Map<String, JSONObject> detailStockFieldMap = buildDetailStockFieldMap(map);
 
         if (!parentList.isEmpty()) {
             // 一次性按 id 批量加载供应商与产品，避免循环内 2N 次 Feign 调用造成下游服务压力
@@ -296,7 +302,8 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
                             .filter(item -> Objects.equals(item.getParentId(), parentDetail.getId()))
                             .collect(Collectors.toList());
                     for (SubcontractOrderDetailEntity subcontractOrderDetail : filterChildList) {
-                        entries = createNewPpBomEntry(FEntities, subcontractOrder, parentDetail, subcontractOrderDetail, sysAccountingCompany, bomBillNo);
+                        entries = createNewPpBomEntry(FEntities, subcontractOrder, parentDetail, subcontractOrderDetail,
+                                sysAccountingCompany, bomBillNo, detailStockFieldMap);
                     }
                 }
             }
@@ -534,7 +541,10 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         return entry;
     }
 
-    private JSONObject createNewPpBomEntry(JSONArray ppBomEntries,SubcontractOrderEntity subcontractOrder,SubcontractOrderDetailEntity parentDetail,SubcontractOrderDetailEntity chilDetail,SysAccountingCompanyEntity sysAccountingCompany, String bomBillNo) {
+    private JSONObject createNewPpBomEntry(JSONArray ppBomEntries, SubcontractOrderEntity subcontractOrder,
+            SubcontractOrderDetailEntity parentDetail, SubcontractOrderDetailEntity chilDetail,
+            SysAccountingCompanyEntity sysAccountingCompany, String bomBillNo,
+            Map<String, JSONObject> detailStockFieldMap) {
         JSONObject entries = new JSONObject();
         Map<String, Object> entry = new HashMap<>();
 
@@ -588,6 +598,20 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         if (parentDetail.getRepairQty() == 1) {
             entry.put("FNumerator", parentDetail.getRepairQty());
         }
+
+        String effectiveWarehouseId = resolveEffectiveWarehouseId(chilDetail, parentDetail);
+        JSONObject stockFields = resolveDetailStockFields(detailStockFieldMap, chilDetail.getId(), parentDetail.getId());
+        if (StringUtils.isBlank(effectiveWarehouseId)) {
+            log.warn("委外用料清单明细未配置仓库，跳过仓库/仓位同步，childDetailId={}, skuNo={}",
+                    chilDetail.getId(), chilDetail.getSkuNo());
+        } else if (stockFields == null || !stockFields.containsKey("FStockId")) {
+            log.warn("委外用料清单明细仓库映射为空，跳过仓库/仓位同步，childDetailId={}, skuNo={}, warehouseId={}",
+                    chilDetail.getId(), chilDetail.getSkuNo(), effectiveWarehouseId);
+        } else if (!stockFields.containsKey("FStockLocId")) {
+            log.warn("委外用料清单明细库位映射为空，仅同步仓库，childDetailId={}, skuNo={}, warehouseId={}",
+                    chilDetail.getId(), chilDetail.getSkuNo(), effectiveWarehouseId);
+        }
+        mergeStockFields(entry, stockFields);
 
         ppBomEntries.put(entry);
         entries.put("FEntity", ppBomEntries);
@@ -778,6 +802,89 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
             qtyStr = qtyStr.substring(0, dotIndex);
         }
         return ConvertUtil.toInt(qtyStr, null);
+    }
+
+    /**
+     * 从 SCM 组装的 list 中按 detailId 提取仓库/仓位（FStockId、FStockLocId），避免与 FEntity 下标对齐。
+     */
+    private Map<String, JSONObject> buildDetailStockFieldMap(Map<String, Object> map) {
+        if (CollectionUtils.isEmpty(map)) {
+            return Collections.emptyMap();
+        }
+        Object listObj = map.get("list");
+        if (listObj == null) {
+            return Collections.emptyMap();
+        }
+        JSONArray list = JSONUtil.parseArray(JSONUtil.toJsonStr(listObj));
+        if (CollectionUtils.isEmpty(list)) {
+            return Collections.emptyMap();
+        }
+        Map<String, JSONObject> result = new HashMap<>();
+        for (int i = 0; i < list.size(); i++) {
+            JSONObject listItem = list.getJSONObject(i);
+            String detailId = listItem.getStr("detailId");
+            if (StringUtils.isBlank(detailId)) {
+                continue;
+            }
+            JSONObject stockFields = buildStockFieldsFromListItem(listItem);
+            if (!stockFields.isEmpty()) {
+                result.put(detailId, stockFields);
+            }
+        }
+        return result;
+    }
+
+    private JSONObject buildStockFieldsFromListItem(JSONObject listItem) {
+        String warehouseCode = listItem.getStr("warehouseCode");
+        String warehouseLocation = listItem.getStr("warehouseLocation");
+        if (StringUtils.isBlank(warehouseCode) && StringUtils.isBlank(warehouseLocation)) {
+            return new JSONObject();
+        }
+        JSONObject stockFields = new JSONObject(new LinkedHashMap<>());
+        if (StringUtils.isNotBlank(warehouseCode)) {
+            KingdeeUtils.makeFieldJson(stockFields, "FStockId.FNumber", ".", warehouseCode);
+        }
+        if (StringUtils.isNotBlank(warehouseLocation)) {
+            KingdeeUtils.makeFieldJson(stockFields, "FStockLocId.FSTOCKLOCID__FF100014.FNumber", ".", warehouseLocation);
+        }
+        return stockFields;
+    }
+
+    private JSONObject resolveDetailStockFields(Map<String, JSONObject> detailStockFieldMap,
+            String childDetailId, String parentDetailId) {
+        JSONObject stockFields = detailStockFieldMap.get(childDetailId);
+        if (stockFields != null && !stockFields.isEmpty()) {
+            return stockFields;
+        }
+        if (StringUtils.isNotBlank(parentDetailId)) {
+            return detailStockFieldMap.get(parentDetailId);
+        }
+        return null;
+    }
+
+    private String resolveEffectiveWarehouseId(SubcontractOrderDetailEntity childDetail,
+            SubcontractOrderDetailEntity parentDetail) {
+        if (StringUtils.isNotBlank(childDetail.getWarehouseId())) {
+            return childDetail.getWarehouseId();
+        }
+        if (parentDetail != null && StringUtils.isNotBlank(parentDetail.getWarehouseId())) {
+            return parentDetail.getWarehouseId();
+        }
+        return null;
+    }
+
+    private void mergeStockFields(Map<String, Object> entry, JSONObject stockFields) {
+        if (stockFields == null || stockFields.isEmpty()) {
+            return;
+        }
+        Object fStockId = stockFields.get("FStockId");
+        if (fStockId != null) {
+            entry.put("FStockId", fStockId);
+        }
+        Object fStockLocId = stockFields.get("FStockLocId");
+        if (fStockLocId != null) {
+            entry.put("FStockLocId", fStockLocId);
+        }
     }
 
 }
