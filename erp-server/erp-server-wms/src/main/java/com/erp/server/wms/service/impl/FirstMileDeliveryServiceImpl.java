@@ -6,6 +6,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONConfig;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -53,6 +54,7 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.DictCountryDTO;
+import com.erp.model.sys.dto.ThirdNoticePushRecordDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.sys.entity.SysPostEntity;
@@ -3177,10 +3179,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     }
 
     @Override
-//    @Async("wmsErpExecutor")
     public void sendMsg(List<String> logisticsBillIds){
         List<LogisticsBillEntity> list = FeignQuery.create(LogisticsBillEntity.class).in(LogisticsBillEntity::getId, logisticsBillIds).list();
         if(CollUtil.isNotEmpty(list)){
+            JSONConfig config = JSONConfig.create().setDateFormat("yyyy-MM-dd HH:mm:ss");
             List<String> jsonStrList = new ArrayList<>(list.size());
             TableName tableName = LogisticsBillEntity.class.getDeclaredAnnotation(TableName.class);
             for (LogisticsBillEntity entity : list) {
@@ -3193,10 +3195,12 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 Map<String, Map<String, Object>> map = new HashMap<>();
                 map.put("before", before);
                 map.put("after", after);
-                String jsonStr = JSONUtil.toJsonStr(map);
+                String jsonStr = JSONUtil.toJsonStr(map, config);
                 jsonStrList.add(jsonStr);
             }
-            thirdNoticePushRecordFeign.batchSendMqRecordConsumer(jsonStrList);
+            ThirdNoticePushRecordDTO.BatchSendMqRecordConsumerDTO batchSendDto = new ThirdNoticePushRecordDTO.BatchSendMqRecordConsumerDTO();
+            batchSendDto.setJsonStrList(jsonStrList);
+            thirdNoticePushRecordFeign.batchSendMqRecordConsumer(batchSendDto);
         }
     }
 

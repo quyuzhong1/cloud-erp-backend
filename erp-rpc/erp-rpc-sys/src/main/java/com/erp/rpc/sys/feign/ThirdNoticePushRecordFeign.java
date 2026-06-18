@@ -21,6 +21,6 @@ public interface ThirdNoticePushRecordFeign {
     Boolean updateStatusById(@RequestBody ThirdNoticePushRecordEntity entity);
 
     @PostMapping("/feign/thirdNoticePushRecord/batchSendMqRecordConsumer")
-    Boolean batchSendMqRecordConsumer(@RequestBody List<String> jsonStrList);
+    Boolean batchSendMqRecordConsumer(@RequestBody ThirdNoticePushRecordDTO.BatchSendMqRecordConsumerDTO dto);
 
 }
