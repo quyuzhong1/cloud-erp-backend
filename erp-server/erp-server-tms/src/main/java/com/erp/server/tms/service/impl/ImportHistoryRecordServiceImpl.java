@@ -562,6 +562,26 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         return new ArrayList<>(dedupeMap.values());
     }
 
+    private String resolveMatchExceptionMessage(Throwable e) {
+        if (e == null) {
+            return "匹配失败";
+        }
+        Throwable root = e;
+        while (root.getCause() != null && root.getCause() != root) {
+            root = root.getCause();
+        }
+        if (root instanceof ServiceException && CharSequenceUtil.isNotBlank(root.getMessage())) {
+            return root.getMessage();
+        }
+        if (CharSequenceUtil.isNotBlank(root.getMessage())) {
+            return root.getMessage();
+        }
+        if (root instanceof UnsupportedOperationException) {
+            return "匹配处理异常，请联系管理员";
+        }
+        return root.getClass().getSimpleName();
+    }
+
     /**
      * 按费用单 id 分批加载费用明细，key = logistics_bill_cost.id。
      */
@@ -572,7 +592,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         }
         for (int i = 0; i < billCostIds.size(); i += PRE_QUERY_BATCH_SIZE) {
             List<String> batch = billCostIds.subList(i, Math.min(billCostIds.size(), i + PRE_QUERY_BATCH_SIZE));
-            batch.forEach(id -> mainIdListMap.putIfAbsent(id, Collections.emptyList()));
+            batch.forEach(id -> mainIdListMap.putIfAbsent(id, new ArrayList<>()));
             List<TmsCostDetailEntity> batchDetails = tmsCostDetailService.listByMainIdList(batch);
             if (CollUtil.isNotEmpty(batchDetails)) {
                 batchDetails.forEach(detail ->
@@ -1337,7 +1357,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             } catch (Exception e) {
                 log.error("[reconMatch] 分组匹配失败 groupKey={}", groupKey, e);
                 groupResult.setSuccess(false);
-                groupResult.setFailReason(ObjectUtil.defaultIfNull(e.getMessage(), e.toString()));
+                groupResult.setFailReason(resolveMatchExceptionMessage(e));
                 continue;
             }
             if (CollUtil.isNotEmpty(errorMsgList)) {

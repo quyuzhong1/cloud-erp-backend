@@ -1778,7 +1778,23 @@ public class LogisticsReconServiceImpl
      * @date 2026/6/12
      */
     private String resolveMatchFailReason(Exception e) {
-        String msg = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+        Throwable root = e;
+        while (root.getCause() != null && root.getCause() != root) {
+            root = root.getCause();
+        }
+        if (root instanceof ServiceException && StrUtil.isNotBlank(root.getMessage())) {
+            return truncateMatchFailReason(root.getMessage());
+        }
+        if (StrUtil.isNotBlank(root.getMessage())) {
+            return truncateMatchFailReason(root.getMessage());
+        }
+        if (root instanceof UnsupportedOperationException) {
+            return "匹配处理异常，请联系管理员";
+        }
+        return truncateMatchFailReason(root.getClass().getSimpleName());
+    }
+
+    private String truncateMatchFailReason(String msg) {
         return msg.length() > 490 ? msg.substring(0, 490) : msg;
     }
 
