@@ -1133,7 +1133,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 deliveryDetailDTO.setUnit(productLogisticsEntity.getDeclareUnit());
                 deliveryDetailDTO.setUnitName(declareUnitNameMap.get(productLogisticsEntity.getDeclareUnit()));
 
-                SoDetailEntity soDetailEntity = soDetailMap.get(buildSoDetailKey(deliveryDetailDTO.getBusinessId(), resolveSoDetailSkuId(deliveryDetailDTO)));
+                SoDetailEntity soDetailEntity = soDetailMap.get(buildSoDetailKey(deliveryDetailDTO.getBusinessId(), deliveryDetailDTO.resolveSoDetailSkuId()));
                 if (customerReceiver && Objects.nonNull(soDetailEntity)) {
                     deliveryDetailDTO.setUnitPrice(MathUtil.preferNonNull(soDetailEntity.getTaxPrice(), soDetailEntity.getPrice()));
                     deliveryDetailDTO.setDeclareCurrency(soDetailEntity.getCurrency());
@@ -1292,16 +1292,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     }
 
     /**
-     * BOM 拆分子 SKU 在 so_detail 中无独立行，需回退到父 SKU 取销售单价/币别。
-     */
-    private String resolveSoDetailSkuId(TmsDeclareBillDTO.SourceDeliveryDetailDTO detailDTO) {
-        if (StringUtils.isNotBlank(detailDTO.getParentSkuId())) {
-            return detailDTO.getParentSkuId();
-        }
-        return detailDTO.getSkuId();
-    }
-
-    /**
      * 填充报关字段。
      * @author will
      * @date 2026/5/9 15:00
@@ -1321,7 +1311,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         detailDTO.setUnit(productLogisticsDTO.getDeclareUnit());
         detailDTO.setUnitName(productLogisticsDTO.getDeclareUnitName());
 
-        SoDetailEntity soDetailEntity = soDetailMap.get(buildSoDetailKey(detailDTO.getBusinessId(), resolveSoDetailSkuId(detailDTO)));
+        SoDetailEntity soDetailEntity = soDetailMap.get(buildSoDetailKey(detailDTO.getBusinessId(), detailDTO.resolveSoDetailSkuId()));
         if (Objects.nonNull(soDetailEntity)) {
             // B2B 不合并预览：单价/币别/币别符号取自 so_detail 销售含税单价及对应币种。
             detailDTO.setUnitPrice(MathUtil.preferNonNull(soDetailEntity.getTaxPrice(), soDetailEntity.getPrice()));

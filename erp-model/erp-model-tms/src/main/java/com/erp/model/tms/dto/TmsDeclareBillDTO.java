@@ -2561,6 +2561,16 @@ public class TmsDeclareBillDTO implements Serializable {
          * 销售组织名称
          */
         private String salesOrgName;
+
+        /**
+         * BOM 拆分子 SKU 在 so_detail 无独立行，查价/币别需回退父 SKU。
+         */
+        public String resolveSoDetailSkuId() {
+            if (parentSkuId != null && !parentSkuId.isBlank()) {
+                return parentSkuId;
+            }
+            return skuId;
+        }
     }
 
 

@@ -353,10 +353,12 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
                 .filter(CharSequenceUtil::isNotBlank)
                 .distinct()
                 .collect(Collectors.toList());
-        validateSameBoxFullSelected(entityList, distinctIds, listBySourceIdList(sourceIds));
+        List<DeliveryDeclareDetailMidEntity> sourceMidList = listBySourceIdList(sourceIds);
+        validateSameBoxFullSelected(entityList, distinctIds, sourceMidList);
 
         // 中间表入口以用户勾选的明细为准，不能再按来源单整单拉取，否则会把未勾选行带入预览。
-        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList = buildSelectedSourceDetailForPreview(entityList, distinctIds, sourceType);
+        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList = buildSelectedSourceDetailForPreview(
+                entityList, distinctIds, sourceType, sourceMidList);
         if (CollUtil.isEmpty(sourceDetailList)) {
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_SOURCE_DETAIL_NOT_FOUND_FOR_SAVE);
         }
@@ -549,7 +551,8 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
      */
     private List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> buildSelectedSourceDetailForPreview(List<DeliveryDeclareDetailMidEntity> selectedMidList,
                                                                                                 List<String> selectedIds,
-                                                                                                String sourceType) {
+                                                                                                String sourceType,
+                                                                                                List<DeliveryDeclareDetailMidEntity> sourceMidList) {
         List<String> sourceIds = selectedMidList.stream()
                 .map(DeliveryDeclareDetailMidEntity::getSourceId)
                 .filter(CharSequenceUtil::isNotBlank)
@@ -557,7 +560,6 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
                 .collect(Collectors.toList());
         Map<String, TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceContextByBoxSkuMap = loadSourceContextMap(sourceType, sourceIds);
         Map<String, TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceContextBySourceIdMap = buildSourceContextBySourceId(sourceContextByBoxSkuMap);
-        List<DeliveryDeclareDetailMidEntity> sourceMidList = listBySourceIdList(sourceIds);
         Set<String> selectedIdSet = new HashSet<>(selectedIds);
 
         List<String> bomHistoryIds = selectedMidList.stream()
