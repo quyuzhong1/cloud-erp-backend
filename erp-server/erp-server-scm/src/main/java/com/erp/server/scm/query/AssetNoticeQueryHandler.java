@@ -50,20 +50,44 @@ public class AssetNoticeQueryHandler extends AbstractQueryHandler {
         
         // 项目名称查询：根据项目名称远程查询对应的模具编码，然后使用 in 查询
         if ("projectName".equals(field)) {
-            String projectName = value != null ? value.toString() : null;
-            if (StringUtils.isNotBlank(projectName)) {
-                // 远程查询根据项目名称获取模具编码列表
-                List<String> moldCodes = plmTaskFeign.listMoldCodesByProjectName(projectName);
-                if (CollectionUtils.isNotEmpty(moldCodes)) {
-                    // 使用模具编码列表进行 in 查询
-                    super.buildDefaultDTO("and1.asset_code", moldCodes);
-                } else {
-                    // 如果没有找到匹配的模具编码，返回空结果
-                    return this.getQueryEmptySql();
-                }
-            }
+            return handleProjectNameQuery(value, "and1.asset_code");
+        }
+
+        // 模具名称查询：根据模具档案名称远程查询模具编码，再按 asset_code in 查询
+        if (isAssetNameField(field)) {
+            return handleAssetNameQuery(value, "and1.asset_code");
         }
 
         return null;
+    }
+
+    private String handleProjectNameQuery(Object value, String assetCodeField) {
+        String projectName = value != null ? value.toString() : null;
+        if (StringUtils.isBlank(projectName)) {
+            return null;
+        }
+        List<String> moldCodes = plmTaskFeign.listMoldCodesByProjectName(projectName);
+        if (CollectionUtils.isNotEmpty(moldCodes)) {
+            super.buildDefaultDTO(assetCodeField, moldCodes);
+            return null;
+        }
+        return this.getQueryEmptySql();
+    }
+
+    private String handleAssetNameQuery(Object value, String assetCodeField) {
+        String moldName = value != null ? value.toString() : null;
+        if (StringUtils.isBlank(moldName)) {
+            return null;
+        }
+        List<String> moldCodes = plmTaskFeign.listMoldCodesByName(moldName);
+        if (CollectionUtils.isNotEmpty(moldCodes)) {
+            super.buildDefaultDTO(assetCodeField, moldCodes);
+            return null;
+        }
+        return this.getQueryEmptySql();
+    }
+
+    private boolean isAssetNameField(String field) {
+        return "assetName".equals(field) || "moldName".equals(field) || "and1.asset_name".equals(field);
     }
 }

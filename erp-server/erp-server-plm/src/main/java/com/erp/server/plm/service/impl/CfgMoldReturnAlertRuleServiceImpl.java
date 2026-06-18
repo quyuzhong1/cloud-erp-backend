@@ -399,6 +399,7 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
         data.setCountDimName(CfgMoldReturnAlertRuleCountDimEnum.getName(data.getCountDim()));
         data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
         data.setDisabledName(DisabledEnum.getName(data.getDisabled()));
+        fillMoldNameFromArchive(data.getMoldId(), data::setMoldName);
         String noticeType = data.getNoticeType();
         if(StringUtils.isNotBlank(noticeType)){
             List<String> noticeTypeList = Arrays.asList(noticeType.split(","));
@@ -421,6 +422,16 @@ public class CfgMoldReturnAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldR
                 .list();
         if (CollUtil.isNotEmpty(list)) {
             data.setDetailList(BeanMapper.copyList(list, CfgMoldReturnAlertDetailDTO.ViewDTO.class));
+        }
+    }
+
+    private void fillMoldNameFromArchive(String moldId, java.util.function.Consumer<String> moldNameSetter) {
+        if (StringUtils.isBlank(moldId)) {
+            return;
+        }
+        MoldInfoEntity moldInfo = moldInfoService.getById(moldId);
+        if (Objects.nonNull(moldInfo)) {
+            moldNameSetter.accept(moldInfo.getName());
         }
     }
 

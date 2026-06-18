@@ -951,11 +951,12 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
 
         for (AssetNoticeDetailDTO.ViewDTO detailDTO : dtoList) {
             detailDTO.setTagName(MoldInfoTagEnum.getName(detailDTO.getTag()));
-            // 项目名称从模具档案获取
+            // 项目名称、模具名称从模具档案获取
             if (StringUtils.isNotBlank(detailDTO.getAssetCode())) {
                 MoldInfoEntity moldInfoEntity = plmTaskFeign.getMoldInfoByCode(detailDTO.getAssetCode());
                 if (Objects.nonNull(moldInfoEntity)) {
                     detailDTO.setProjectName(moldInfoEntity.getProjectName());
+                    detailDTO.setAssetName(moldInfoEntity.getName());
                 }
             }
         }
@@ -1179,11 +1180,12 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
                 }
             }
 
-            // 项目名称从模具档案获取
+            // 项目名称、模具名称从模具档案获取
             if (StringUtils.isNotBlank(data.getAssetCode())) {
                 MoldInfoEntity moldInfoEntity = moldInfoMap.get(data.getAssetCode());
                 if (Objects.nonNull(moldInfoEntity)) {
                     data.setProjectName(moldInfoEntity.getProjectName());
+                    data.setAssetName(moldInfoEntity.getName());
                 }
             }
 

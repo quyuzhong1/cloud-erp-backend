@@ -721,6 +721,12 @@ public interface PlmTaskFeign {
     List<String> listMoldCodesByProjectName(@RequestBody String projectName);
 
     /**
+     * 根据模具名称模糊查询模具编码列表
+     */
+    @PostMapping("feign/moldInfo/listMoldCodesByName")
+    List<String> listMoldCodesByName(@RequestBody String moldName);
+
+    /**
      * 获取模具信息
      * @param dto
      */

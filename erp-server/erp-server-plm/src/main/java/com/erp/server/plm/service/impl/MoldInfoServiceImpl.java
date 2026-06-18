@@ -27,12 +27,14 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.wrapper.FeignQuery;
+import com.common.business.enums.SyncOperateEnum;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.dto.excel.MoldInfoImportExcelDTO;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.ProductTypeEnum;
 import com.erp.model.plm.enums.*;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.server.plm.rocketmq.sync.wangdian.SyncWangDianProductDetailService;
 import com.erp.model.scm.dto.DictBasicDTO;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.enums.DictBasicEnum;
@@ -124,6 +126,8 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
     private CfgMoldAlertRuleService cfgMoldAlertRuleService;
     @Resource
     private CfgMoldReturnAlertRuleService cfgMoldReturnAlertRuleService;
+    @Resource
+    private SyncWangDianProductDetailService syncWangDianProductDetailService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -386,12 +390,6 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
             throw new ServiceException(ApiError.BILL_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY);
         }
-        // 校验下游SKU是否存在
-        Integer count1 = productInfoService.lambdaQuery().eq(ProductInfoEntity::getSpuNo, entity.getCode()).count();
-        Integer count2 = productDetailService.lambdaQuery().eq(ProductDetailEntity::getSkuNo, entity.getCode()).count();
-        if (count1 > 0 || count2 > 0) {
-            throw new ServiceException(ApiError.PRODUCT_EXIST_SKU,entity.getCode());
-        }
         return true;
     }
 
@@ -534,10 +532,7 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
             Boolean originalValue = UserContext.getIsUserSystem();
             UserContext.setIsUserSystem(Boolean.TRUE);
             try {
-                //生成SKU
-                String id = genSku(entity);
-                //SKU审核通过
-                skuSubmitApprove(id);
+                handleSkuOnMoldApprove(entity);
             }finally {
                 //恢复系统标识
                 UserContext.setIsUserSystem(originalValue);
@@ -546,16 +541,72 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         return Boolean.TRUE;
     }
 
+    /**
+     * 模具审核通过：首次生成SKU并审核；再次审核则更新已生成的SKU并按需重推外部系统。
+     */
+    private void handleSkuOnMoldApprove(MoldInfoEntity entity) {
+        ProductDetailEntity existingSku = productDetailService.lambdaQuery()
+                .eq(ProductDetailEntity::getSkuNo, entity.getCode())
+                .one();
+        if (Objects.nonNull(existingSku)) {
+            updateSkuFromMold(entity, existingSku);
+            return;
+        }
+        String id = genSku(entity);
+        skuSubmitApprove(id);
+    }
+
+    /**
+     * 编辑后再次审核：更新已生成的SKU基础信息，并重推金蝶、旺店通。
+     */
+    private void updateSkuFromMold(MoldInfoEntity entity, ProductDetailEntity existingSku) {
+        ProductInfoEntity productInfo = productInfoService.getBySpuNo(entity.getCode());
+        if (Objects.isNull(productInfo)) {
+            productInfo = productInfoService.getById(existingSku.getProductId());
+        }
+        if (Objects.isNull(productInfo)) {
+            throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
+        }
+        List<BasicCategoryEntity> categoryList = basicCategoryService.getCategoryList();
+        Map<String, String> categoryMap = categoryList.stream().collect(Collectors.toMap(BasicCategoryEntity::getId, BasicCategoryEntity::getName));
+        String categoryName = categoryMap.getOrDefault(entity.getCategoryId(), "");
+
+        productInfoService.lambdaUpdate()
+                .eq(ProductInfoEntity::getId, productInfo.getId())
+                .set(ProductInfoEntity::getName, entity.getName())
+                .set(ProductInfoEntity::getChargeId, entity.getChargeId())
+                .set(ProductInfoEntity::getChargeName, entity.getChargeName())
+                .set(ProductInfoEntity::getCategoryId, entity.getCategoryId())
+                .set(ProductInfoEntity::getCategory, categoryName)
+                .update();
+
+        productDetailService.lambdaUpdate()
+                .eq(ProductDetailEntity::getId, existingSku.getId())
+                .set(ProductDetailEntity::getName, entity.getName())
+                .set(ProductDetailEntity::getChargeId, entity.getChargeId())
+                .set(ProductDetailEntity::getChargeName, entity.getChargeName())
+                .update();
+
+        ProductDetailEntity updatedSku = productDetailService.getById(existingSku.getId());
+        pushSkuExternalIfNeeded(updatedSku);
+    }
+
     private String genSku(MoldInfoEntity entity) {
-        //分类
+        ProductNoSpecDTO productNoSpecDTO = buildProductNoSpecDTO(entity);
+        Boolean b = productDetailService.saveOrUpdateNoSpec(productNoSpecDTO);
+        if (!b) {
+            throw new ServiceException("生成SKU失败");
+        }
+        return productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO().getId();
+    }
+
+    private ProductNoSpecDTO buildProductNoSpecDTO(MoldInfoEntity entity) {
         List<BasicCategoryEntity> categoryList = basicCategoryService.getCategoryList();
         Map<String, String> categoryMap = categoryList.stream().collect(Collectors.toMap(BasicCategoryEntity::getId, BasicCategoryEntity::getName));
 
-        //产品信息新增
         ProductNoSpecDTO productNoSpecDTO = new ProductNoSpecDTO();
         ProductBaseInfoDTO productBaseInfoDTO = new ProductBaseInfoDTO();
 
-        //产品信息
         ProductInfoDTO productInfoDTO = new ProductInfoDTO();
         productInfoDTO.setType(ProductTypeEnum.NEW_PRODUCT.getCode());
         productInfoDTO.setName(entity.getName());
@@ -569,13 +620,11 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         productInfoDTO.setGradeId("");
         productInfoDTO.setEntrustedDevelopCost(BigDecimal.ZERO);
 
-        //产品属性默认资产
         BasicDictEntity basicDictEntity = basicDictService.listByTypeAndValue(BasicDictTypeEnum.PRODUCT_PROPERTY.getCode(), ProductConstant.PRODUCT_PROPERTY_ASSET);
         if (ObjectUtils.isNotEmpty(basicDictEntity)) {
             productInfoDTO.setProperty(ProductConstant.PRODUCT_PROPERTY_ASSET);
             productInfoDTO.setPropertyId(basicDictEntity.getId());
         }
-        //品牌默认未知
         BasicDictEntity brandEntity = basicDictService.listByTypeAndValue(BasicDictTypeEnum.PRODUCT_BRAND.getCode(), ProductConstant.PRODUCT_BRAND_UNKNOWN);
         if (ObjectUtils.isNotEmpty(brandEntity)) {
             productInfoDTO.setBrandId(brandEntity.getId());
@@ -583,7 +632,7 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         }
 
         productBaseInfoDTO.setProductSpuBaseInfoDTO(productInfoDTO);
-        //sku信息
+
         ProductSkuBaseInfoDTO productSkuBaseInfoDTO = new ProductSkuBaseInfoDTO();
         productSkuBaseInfoDTO.setSkuNo(entity.getCode());
         productSkuBaseInfoDTO.setName(entity.getName());
@@ -591,7 +640,6 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         productSkuBaseInfoDTO.setChargeName(entity.getChargeName());
         productSkuBaseInfoDTO.setProductState(ProductDetailStateEnum.DEVELOP_FINISH.getCode());
 
-        //单位默认Pcs
         ProductUnitEntity productUnitEntity = productUnitService.getByName(ProductConstant.PRODUCT_UNIT_DEFAULT);
         if (ObjectUtils.isNotEmpty(productUnitEntity)) {
             productSkuBaseInfoDTO.setUnitName(ProductConstant.PRODUCT_UNIT_DEFAULT);
@@ -600,7 +648,7 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
 
         productBaseInfoDTO.setProductSkuBaseInfoDTO(productSkuBaseInfoDTO);
         productNoSpecDTO.setProductBaseInfoDTO(productBaseInfoDTO);
-        //成本信息
+
         ProductCostDTO productCostDTO = new ProductCostDTO();
         productCostDTO.setTargetTaxCost(BigDecimal.ZERO);
         productCostDTO.setTargetNoTaxCost(BigDecimal.ZERO);
@@ -615,10 +663,9 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         productCostDTO.setProjectCost(BigDecimal.ZERO);
         productCostDTO.setTaxRate(BigDecimal.ZERO);
         productNoSpecDTO.setProductCostDTO(productCostDTO);
-        //采购信息信息
-        ProductPurchaseDTO productPurchaseDTO = new ProductPurchaseDTO();
-        productNoSpecDTO.setProductPurchaseDTO(productPurchaseDTO);
-        //销售信息
+
+        productNoSpecDTO.setProductPurchaseDTO(new ProductPurchaseDTO());
+
         ProductSaleDTO productSaleDTO = new ProductSaleDTO();
         productSaleDTO.setSaleState(SaleStateEnum.NOT_SALE.getCode());
         productSaleDTO.setIsMarketable(0);
@@ -630,31 +677,29 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         productSaleDTO.setIsFinishedVideo(2);
         productSaleDTO.setTargetSalesQty(BigDecimal.ZERO);
         productNoSpecDTO.setProductSaleDTO(productSaleDTO);
-        //物流信息
-        ProductLogisticsDTO productLogisticsDTO = new ProductLogisticsDTO();
-        productNoSpecDTO.setProductLogisticsDTO(productLogisticsDTO);
-        //包装信息
-        ProductPackDTO productPackDTO = new ProductPackDTO();
-        productNoSpecDTO.setProductPackDTO(productPackDTO);
-        //包装辅料信息
+
+        productNoSpecDTO.setProductLogisticsDTO(new ProductLogisticsDTO());
+        productNoSpecDTO.setProductPackDTO(new ProductPackDTO());
+
         List<ProductAccessoriesDTO> productAccessoriesList = new ArrayList<>();
         ProductAccessoriesDTO productAccessoriesDTO = new ProductAccessoriesDTO();
         productAccessoriesDTO.setParentSkuNo(entity.getCode());
         productAccessoriesList.add(productAccessoriesDTO);
         productNoSpecDTO.setProductAccessoriesList(productAccessoriesList);
-        //证书信息
-        List<ProductCertificateDTO.ProductAddOrUpdateDTO> productCertificateList = new ArrayList<>();
-        productNoSpecDTO.setProductCertificateList(productCertificateList);
-        //海关信息
-        List<ProductCustomsDTO> productCustomsList = new ArrayList<>();
-        productNoSpecDTO.setProductCustomsList(productCustomsList);
+        productNoSpecDTO.setProductCertificateList(new ArrayList<>());
+        productNoSpecDTO.setProductCustomsList(new ArrayList<>());
+        return productNoSpecDTO;
+    }
 
-        Boolean b = productDetailService.saveOrUpdateNoSpec(productNoSpecDTO);
-        if (!b) {
-            throw new ServiceException("生成SKU失败");
+    /**
+     * 模具再次审核通过后，重推金蝶与旺店通。
+     */
+    private void pushSkuExternalIfNeeded(ProductDetailEntity sku) {
+        if (Objects.isNull(sku)) {
+            return;
         }
-
-        return productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO().getId();
+        productDetailService.sendSinglePushTask(sku, SyncOperateEnum.OPERATE_APPROVE.getCode());
+        syncWangDianProductDetailService.syncDataToWangDian(sku);
     }
 
     /**

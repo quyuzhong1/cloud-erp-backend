@@ -794,11 +794,31 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
     }
 
     public void fillViewList(List<AssetPurchaseOrderDetailDTO.ViewDTO> dtoList){
-
+        if (CollUtil.isEmpty(dtoList)) {
+            return;
+        }
+        List<String> moldCodes = dtoList.stream()
+                .map(AssetPurchaseOrderDetailDTO.ViewDTO::getAssetCode)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, MoldInfoEntity> moldInfoMap = new HashMap<>();
+        if (CollectionUtils.isNotEmpty(moldCodes)) {
+            List<MoldInfoEntity> moldInfoList = plmTaskFeign.listMoldInfoByCodes(moldCodes);
+            if (CollectionUtils.isNotEmpty(moldInfoList)) {
+                moldInfoMap = moldInfoList.stream()
+                        .filter(x -> StringUtils.isNotBlank(x.getCode()))
+                        .collect(Collectors.toMap(MoldInfoEntity::getCode, Function.identity(), (k1, k2) -> k1));
+            }
+        }
         for (AssetPurchaseOrderDetailDTO.ViewDTO detailDTO : dtoList) {
             detailDTO.setTagName(MoldInfoTagEnum.getName(detailDTO.getTag()));
+            MoldInfoEntity moldInfoEntity = moldInfoMap.get(detailDTO.getAssetCode());
+            if (Objects.nonNull(moldInfoEntity)) {
+                detailDTO.setProjectName(moldInfoEntity.getProjectName());
+                detailDTO.setAssetName(moldInfoEntity.getName());
+            }
         }
-
     }
 
     /**
@@ -898,14 +918,14 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
             }
         }
 
-        //获取项目名称
+        //获取项目名称、模具名称
         List<String> moldCodes = list.stream().map(AssetPurchaseOrderDTO.ListDTO::getAssetCode).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
-        Map<String, String> codeToProjectNameMap = new HashMap<>();
+        Map<String, MoldInfoEntity> moldInfoMap = new HashMap<>();
         if (CollectionUtils.isNotEmpty(moldCodes)) {
             List<MoldInfoEntity> moldInfoEntities = plmTaskFeign.listMoldInfoByCodes(moldCodes);
-            codeToProjectNameMap = moldInfoEntities.stream()
-                    .filter(x -> StringUtils.isNotBlank(x.getCode()) && StringUtils.isNotBlank(x.getProjectName()))
-                    .collect(Collectors.toMap(MoldInfoEntity::getCode, MoldInfoEntity::getProjectName, (oldValue, newValue) -> oldValue));
+            moldInfoMap = moldInfoEntities.stream()
+                    .filter(x -> StringUtils.isNotBlank(x.getCode()))
+                    .collect(Collectors.toMap(MoldInfoEntity::getCode, Function.identity(), (oldValue, newValue) -> oldValue));
         }
 
 
@@ -935,7 +955,11 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
                     data.setApproveUserName(curApprove);
                 }
             }
-            data.setProjectName(codeToProjectNameMap.getOrDefault(data.getAssetCode(),""));
+            MoldInfoEntity moldInfoEntity = moldInfoMap.get(data.getAssetCode());
+            if (Objects.nonNull(moldInfoEntity)) {
+                data.setProjectName(moldInfoEntity.getProjectName());
+                data.setAssetName(moldInfoEntity.getName());
+            }
 
         }
     }
@@ -1078,6 +1102,22 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
             return new ArrayList<>();
         }
 
+        List<String> moldCodes = detailList.stream()
+                .map(AssetPurchaseOrderDetailEntity::getAssetCode)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, MoldInfoEntity> moldInfoMap = new HashMap<>();
+        if (CollectionUtils.isNotEmpty(moldCodes)) {
+            List<MoldInfoEntity> moldInfoList = plmTaskFeign.listMoldInfoByCodes(moldCodes);
+            if (CollectionUtils.isNotEmpty(moldInfoList)) {
+                moldInfoMap = moldInfoList.stream()
+                        .filter(x -> StringUtils.isNotBlank(x.getCode()))
+                        .collect(Collectors.toMap(MoldInfoEntity::getCode, Function.identity(), (k1, k2) -> k1));
+            }
+        }
+
+        Map<String, MoldInfoEntity> finalMoldInfoMap = moldInfoMap;
         // 转换为DTO（数量计算由 FMS 模块负责）
         return detailList.stream().map(detail -> {
             AssetPurchaseOrderDTO.DetailForAcceptDTO dto = new AssetPurchaseOrderDTO.DetailForAcceptDTO();
@@ -1089,8 +1129,10 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
             dto.setIsUrgent(detail.getIsUrgent());
             dto.setIsGift(detail.getIsGift());
             dto.setRemark(detail.getRemark());
-            dto.setMoldCode(detail.getAssetCode()); // 模具编码使用资产编码
-            dto.setMoldName(detail.getAssetName()); // 模具名称使用资产名称
+            dto.setMoldCode(detail.getAssetCode());
+            MoldInfoEntity moldInfoEntity = finalMoldInfoMap.get(detail.getAssetCode());
+            dto.setMoldName(moldInfoEntity != null && StringUtils.isNotBlank(moldInfoEntity.getName())
+                    ? moldInfoEntity.getName() : detail.getAssetName());
             return dto;
         }).collect(Collectors.toList());
     }
@@ -1625,6 +1667,21 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
 
         Map<String, BigDecimal> acceptableQtyMap = assetAceptFeign.getAcceptableQtyByDetailId(detailIdList);
 
+        List<String> moldCodes = detailList.stream()
+                .map(AssetPurchaseOrderDetailEntity::getAssetCode)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, MoldInfoEntity> moldInfoMap = new HashMap<>();
+        if (CollectionUtils.isNotEmpty(moldCodes)) {
+            List<MoldInfoEntity> moldInfoList = plmTaskFeign.listMoldInfoByCodes(moldCodes);
+            if (CollectionUtils.isNotEmpty(moldInfoList)) {
+                moldInfoMap = moldInfoList.stream()
+                        .filter(x -> StringUtils.isNotBlank(x.getCode()))
+                        .collect(Collectors.toMap(MoldInfoEntity::getCode, Function.identity(), (k1, k2) -> k1));
+            }
+        }
+
         List<AssetPurchaseOrderDTO.ViewGenerateAssetAcceptDTO> viewGeneratePurchaseOrderDTOList = new ArrayList<>();
         for (AssetPurchaseOrderDetailEntity assetPurchaseOrderDetailEntity : detailList) {
             AssetPurchaseOrderDTO.ViewGenerateAssetAcceptDTO viewGeneratePurchaseOrderDTO = new AssetPurchaseOrderDTO.ViewGenerateAssetAcceptDTO();
@@ -1635,7 +1692,9 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
             viewGeneratePurchaseOrderDTO.setDetailId(assetPurchaseOrderDetailEntity.getId());
             viewGeneratePurchaseOrderDTO.setAssetId(assetPurchaseOrderDetailEntity.getAssetId());
             viewGeneratePurchaseOrderDTO.setAssetCode(assetPurchaseOrderDetailEntity.getAssetCode());
-            viewGeneratePurchaseOrderDTO.setAssetName(assetPurchaseOrderDetailEntity.getAssetName());
+            MoldInfoEntity moldInfoEntity = moldInfoMap.get(assetPurchaseOrderDetailEntity.getAssetCode());
+            viewGeneratePurchaseOrderDTO.setAssetName(moldInfoEntity != null && StringUtils.isNotBlank(moldInfoEntity.getName())
+                    ? moldInfoEntity.getName() : assetPurchaseOrderDetailEntity.getAssetName());
             viewGeneratePurchaseOrderDTO.setPurchaseUserId(StringUtils.isNotBlank(assetPurchaseOrderEntity.getPurchaseUserId()) ? assetPurchaseOrderEntity.getPurchaseUserId() : null);
             viewGeneratePurchaseOrderDTO.setPurchaseUserName(StringUtils.isNotBlank(assetPurchaseOrderEntity.getPurchaseUserName()) ? assetPurchaseOrderEntity.getPurchaseUserName() : null);
             viewGeneratePurchaseOrderDTO.setPurchaseDeptId(StringUtils.isNotBlank(assetPurchaseOrderEntity.getPurchaseDeptId()) ? assetPurchaseOrderEntity.getPurchaseDeptId() : null);
