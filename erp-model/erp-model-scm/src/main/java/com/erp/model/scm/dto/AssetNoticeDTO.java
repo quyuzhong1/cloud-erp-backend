@@ -835,4 +835,53 @@ public class AssetNoticeDTO implements Serializable {
         @NotEmpty(message = "DFM附件列表不能为空")
         private List<BaseDTO.AttachmentDTO> fileList;
     }
+
+    /**
+     * DFM附件缺失飞书提醒任务参数（XXL-JOB jobParam JSON）
+     */
+    @Data
+    @NoArgsConstructor
+    public static class DfmAttachmentNoticeJobParamDTO {
+
+        /**
+         * 创建时间偏移天数，默认30（创建日 + 天数 = 今日时触发）
+         */
+        private Integer offsetDays;
+
+        /**
+         * 通知人字段：applyUserId（申请人，默认）/ createUserId（创建人）
+         */
+        private String receiverField;
+
+        /**
+         * 飞书通知标题，默认：上传DMF附件
+         */
+        private String title;
+
+        /**
+         * 飞书通知正文模板，占位符 {code}=开模通知单号
+         */
+        private String contentTemplate;
+
+        /**
+         * 单次任务最大处理单据数，默认500
+         */
+        private Integer batchLimit;
+    }
+
+    /**
+     * DFM附件缺失飞书提醒查询结果
+     */
+    @Data
+    @NoArgsConstructor
+    public static class MissingDfmNoticeDTO {
+
+        private String id;
+
+        private String code;
+
+        private String applyUserId;
+
+        private String createUserId;
+    }
 }

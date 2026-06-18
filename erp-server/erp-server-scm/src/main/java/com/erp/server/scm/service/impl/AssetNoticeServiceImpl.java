@@ -3,6 +3,7 @@ package com.erp.server.scm.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
@@ -27,6 +28,11 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
+import com.common.message.service.mq.MQProducerService;
+import com.erp.model.msg.dto.NoticeMsgInfoDTO;
+import com.erp.model.msg.enums.NoticeTypeEnum;
 import com.erp.model.plm.dto.MoldInfoDTO;
 import com.erp.model.plm.entity.MoldInfoEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -39,6 +45,7 @@ import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.*;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
+import com.erp.model.sys.dto.SysUserSimpleDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -56,6 +63,8 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -87,6 +96,14 @@ import static com.common.business.enums.FileTaskEventEnum.IMPORT_SCM_ASSET_NOTIC
 @Slf4j
 @Service
 public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, AssetNoticeEntity> implements AssetNoticeService {
+
+    private static final int DEFAULT_DFM_NOTICE_OFFSET_DAYS = 30;
+    private static final String DEFAULT_DFM_NOTICE_RECEIVER_FIELD = "applyUserId";
+    private static final String DEFAULT_DFM_NOTICE_TITLE = "上传DMF附件";
+    private static final String DEFAULT_DFM_NOTICE_CONTENT_TEMPLATE =
+            "请确认开模通知单【{code}】是否已和供应商确认DFM附件，已确认及时在数大臣系统上传！";
+    private static final int DEFAULT_DFM_NOTICE_BATCH_LIMIT = 500;
+    private static final String RECEIVER_FIELD_CREATE_USER_ID = "createUserId";
 
     @Autowired
     private ModuleOperateLogService moduleOperateLogService;
@@ -132,6 +149,9 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
 
     @Autowired
     private FileFeign fileFeign;
+
+    @Autowired
+    private MQProducerService<NoticeMsgInfoDTO> mqProducerService;
 
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
@@ -1587,6 +1607,101 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
                 target.getAttachName());
         moduleOperateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_NOTICE.getCode(), entity.getId(), "删除DFM附件");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "删除DFM附件成功");
+    }
+
+    @Override
+    public List<AssetNoticeDTO.MissingDfmNoticeDTO> listMissingDfmAttachment(LocalDate targetCreateDate,
+                                                                             int batchLimit) {
+        return baseMapper.listMissingDfmAttachment(targetCreateDate, batchLimit);
+    }
+
+    @Override
+    public int notifyMissingDfmAttachment(AssetNoticeDTO.DfmAttachmentNoticeJobParamDTO param) {
+        AssetNoticeDTO.DfmAttachmentNoticeJobParamDTO jobParam = normalizeDfmNoticeJobParam(param);
+        LocalDate targetCreateDate = LocalDate.now().minusDays(jobParam.getOffsetDays());
+        List<AssetNoticeDTO.MissingDfmNoticeDTO> noticeList = listMissingDfmAttachment(
+                targetCreateDate, jobParam.getBatchLimit());
+        if (CollUtil.isEmpty(noticeList)) {
+            log.info("开模通知单DFM附件缺失提醒：无符合条件单据，targetCreateDate={}", targetCreateDate);
+            return 0;
+        }
+        boolean notifyCreateUser = RECEIVER_FIELD_CREATE_USER_ID.equalsIgnoreCase(jobParam.getReceiverField());
+        List<String> receiverUserIds = noticeList.stream()
+                .map(item -> notifyCreateUser ? item.getCreateUserId() : item.getApplyUserId())
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(receiverUserIds)) {
+            log.warn("开模通知单DFM附件缺失提醒：未找到有效通知人，receiverField={}", jobParam.getReceiverField());
+            return 0;
+        }
+        List<SysUserSimpleDTO> userList = sysUserFeign.getUserSimpleInfoByIds(receiverUserIds);
+        if (CollUtil.isEmpty(userList)) {
+            log.warn("开模通知单DFM附件缺失提醒：通知人均不可用或已禁用，receiverUserIds={}", receiverUserIds);
+            return 0;
+        }
+        Set<String> enabledUserIds = userList.stream()
+                .map(SysUserSimpleDTO::getUid)
+                .filter(CharSequenceUtil::isNotBlank)
+                .collect(Collectors.toSet());
+        int sentCount = 0;
+        for (AssetNoticeDTO.MissingDfmNoticeDTO item : noticeList) {
+            String receiverUserId = notifyCreateUser ? item.getCreateUserId() : item.getApplyUserId();
+            if (CharSequenceUtil.isBlank(receiverUserId) || !enabledUserIds.contains(receiverUserId)) {
+                continue;
+            }
+            String content = buildDfmNoticeContent(jobParam.getContentTemplate(), item.getCode());
+            NoticeMsgInfoDTO noticeMsgInfo = new NoticeMsgInfoDTO();
+            noticeMsgInfo.setReceiverUserIds(Collections.singletonList(receiverUserId));
+            noticeMsgInfo.setTitle(jobParam.getTitle());
+            noticeMsgInfo.setContent(content);
+            noticeMsgInfo.setNoticeTypeEnum(NoticeTypeEnum.SCM_TASK);
+            SendResult result = mqProducerService.syncClassMsg(
+                    RocketMqTopic.NOTICE_MSG_TOPIC,
+                    RocketMqTagEnum.MSG_NOTICE_TAG.getName(),
+                    noticeMsgInfo,
+                    IdUtil.simpleUUID());
+            if (SendStatus.SEND_OK.equals(result.getSendStatus())) {
+                sentCount++;
+            } else {
+                log.error("开模通知单DFM附件缺失提醒发送失败，code={}，receiverUserId={}，result={}",
+                        item.getCode(), receiverUserId, result);
+            }
+        }
+        log.info("开模通知单DFM附件缺失提醒完成，匹配{}条，成功发送{}条", noticeList.size(), sentCount);
+        return sentCount;
+    }
+
+    private AssetNoticeDTO.DfmAttachmentNoticeJobParamDTO normalizeDfmNoticeJobParam(
+            AssetNoticeDTO.DfmAttachmentNoticeJobParamDTO param) {
+        AssetNoticeDTO.DfmAttachmentNoticeJobParamDTO normalized =
+                param == null ? new AssetNoticeDTO.DfmAttachmentNoticeJobParamDTO() : param;
+        if (normalized.getOffsetDays() == null || normalized.getOffsetDays() < 0) {
+            normalized.setOffsetDays(DEFAULT_DFM_NOTICE_OFFSET_DAYS);
+        }
+        if (CharSequenceUtil.isBlank(normalized.getReceiverField())) {
+            normalized.setReceiverField(DEFAULT_DFM_NOTICE_RECEIVER_FIELD);
+        } else if (!RECEIVER_FIELD_CREATE_USER_ID.equalsIgnoreCase(normalized.getReceiverField())
+                && !DEFAULT_DFM_NOTICE_RECEIVER_FIELD.equalsIgnoreCase(normalized.getReceiverField())) {
+            log.warn("开模通知单DFM附件缺失提醒：未知receiverField={}，回退为applyUserId", normalized.getReceiverField());
+            normalized.setReceiverField(DEFAULT_DFM_NOTICE_RECEIVER_FIELD);
+        }
+        if (CharSequenceUtil.isBlank(normalized.getTitle())) {
+            normalized.setTitle(DEFAULT_DFM_NOTICE_TITLE);
+        }
+        if (CharSequenceUtil.isBlank(normalized.getContentTemplate())) {
+            normalized.setContentTemplate(DEFAULT_DFM_NOTICE_CONTENT_TEMPLATE);
+        }
+        if (normalized.getBatchLimit() == null || normalized.getBatchLimit() <= 0) {
+            normalized.setBatchLimit(DEFAULT_DFM_NOTICE_BATCH_LIMIT);
+        }
+        return normalized;
+    }
+
+    private String buildDfmNoticeContent(String contentTemplate, String code) {
+        return contentTemplate
+                .replace("{code}", code)
+                .replace("【开模通知单号】", "【" + code + "】");
     }
 
     private void saveAttachmentsOnAdd(String businessId, String code, AssetNoticeDTO.CommonDTO dto) {
