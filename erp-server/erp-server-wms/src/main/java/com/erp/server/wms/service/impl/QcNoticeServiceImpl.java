@@ -219,8 +219,25 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         String qcType = addDTO.getQcType();
         String warehouseId = addDTO.getQcWarehouseId();
 
-        // 同一通知单内多明细可能复用相同供应商，缓存避免重复查询
+        Set<String> seenSupplierIds = new HashSet<>();
+        List<CfgQcUserDTO.SupplierWarehousePair> pairs = new ArrayList<>();
+        for (QcNoticeDetailDTO.AddDTO detail : addDTO.getDetailList()) {
+            String supplierId = detail.getSupplierId();
+            if (StrUtil.isBlank(supplierId) || !seenSupplierIds.add(supplierId)) {
+                continue;
+            }
+            pairs.add(new CfgQcUserDTO.SupplierWarehousePair(supplierId, warehouseId));
+        }
         Map<String, CfgQcUserEntity> cfgCache = new HashMap<>();
+        if (CollUtil.isNotEmpty(pairs)) {
+            List<CfgQcUserEntity> cfgList = cfgQcUserService.listBySupplierWarehousePairs(pairs);
+            if (CollUtil.isNotEmpty(cfgList)) {
+                for (CfgQcUserEntity entity : cfgList) {
+                    cfgCache.putIfAbsent(entity.getSupplierId(), entity);
+                }
+            }
+        }
+
         for (QcNoticeDetailDTO.AddDTO detail : addDTO.getDetailList()) {
             String supplierId = detail.getSupplierId();
             if (StrUtil.isBlank(supplierId)) {
@@ -228,8 +245,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             }
 
             // 按"供应商 + 仓库"严格精确匹配，匹配不到则不分配
-            CfgQcUserEntity cfgQcUser = cfgCache.computeIfAbsent(supplierId,
-                    sid -> cfgQcUserService.getBySupplierIdAndWarehouseId(sid, warehouseId));
+            CfgQcUserEntity cfgQcUser = cfgCache.get(supplierId);
             if (cfgQcUser == null) {
                 continue;
             }
@@ -350,12 +366,14 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             throw new ServiceException(ApiError.PO_QC_NOTICE_DETAIL_NOT_FOUND);
         }
 
-        QcNoticeEntity notice = this.getById(detail.getMainId());
-        if (notice == null) {
+        if (StrUtil.isBlank(detail.getMainId())) {
             throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "质检通知单");
         }
-        if (!QcNoticeStatusEnum.WAIT.getCode().equals(notice.getQcStatus())) {
-            throw new ServiceException(ApiError.QC_NOTICE_UPDATE_QC_USER_STATUS_INVALID);
+        if (this.lambdaQuery()
+                .select(QcNoticeEntity::getId)
+                .eq(QcNoticeEntity::getId, detail.getMainId())
+                .count() == 0) {
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "质检通知单");
         }
         if (!QcNoticeStatusEnum.WAIT.getCode().equals(detail.getQcStatus())) {
             throw new ServiceException(ApiError.QC_NOTICE_DETAIL_UPDATE_QC_USER_STATUS_INVALID);
@@ -615,6 +633,9 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             throw new ServiceException(ApiError.WF_REJECT_COMMENT_REQUIRED);
         }
         QcNoticeEntity entity = getById(dto.getId());
+        if (entity == null) {
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "质检通知单");
+        }
         // 检查是否已作废
         if (Objects.equals(entity.getInvalidStatus(), InvalidStatusEnum.VOIDED.getStatus())) {
             throw new ServiceException(ApiError.PO_QC_NOTICE_VOIDED_OPERATION_NOT_ALLOWED, "审核");

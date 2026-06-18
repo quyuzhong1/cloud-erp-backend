@@ -89,7 +89,7 @@ public class QcProductServiceImpl extends SuperServiceImpl<QcProductMapper, QcPr
             qcProductEntity.setSkuNo(skuVO.getSkuNo());
             qcProductEntity.setEan(skuVO.getEan());
         }
-        // 重量尺寸信息只做展示，不保存到数据库，从产品资料获取
+        // 重量尺寸字段不在此接口更新入库：MyBatis-Plus 默认 NOT_NULL 策略下 null 不参与 UPDATE，库内保留原值；展示请从产品资料获取
         qcProductEntity.setProductLength(null);
         qcProductEntity.setProductWidth(null);
         qcProductEntity.setProductHeight(null);

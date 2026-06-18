@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.feign;
 
 import com.common.business.dto.base.BaseDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.FileTaskStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.wms.service.SampleBorrowInfoService;
@@ -177,7 +178,8 @@ public class ImportWmsFeignController {
             BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
             importResultDTO.setTaskId(dto.getTaskId());
             importResultDTO.setStatus(FileTaskStatusEnum.FAIL.getCode());
-            importResultDTO.setRemark(e.getMessage().length() > 490 ? e.getMessage().substring(0, 490) : e.getMessage());
+            String message = BatchResultDTO.resolveFailMsg(e);
+            importResultDTO.setRemark(message.length() > 490 ? message.substring(0, 490) : message);
             downloadTaskFeign.updateTask(importResultDTO);
         }
     }

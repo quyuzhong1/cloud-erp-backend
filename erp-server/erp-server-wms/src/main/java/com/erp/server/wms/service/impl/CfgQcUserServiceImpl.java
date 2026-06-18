@@ -1008,6 +1008,14 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
         return baseMapper.selectBySupplierIdAndWarehouseId(supplierId, warehouseId);
     }
 
+    @Override
+    public List<CfgQcUserEntity> listBySupplierWarehousePairs(List<CfgQcUserDTO.SupplierWarehousePair> pairs) {
+        if (CollUtil.isEmpty(pairs)) {
+            return Collections.emptyList();
+        }
+        return baseMapper.selectBySupplierWarehousePairs(pairs);
+    }
+
     /**
     * 分页查询、导出 数据处理
     */
@@ -1025,7 +1033,8 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
                 .collect(Collectors.toList());
         
         // 批量获取供应商信息
-        Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(supplierIds);
+        Map<String, SupplierDTO.SupplierSimpleDTO> feignMap = supplierFeign.getSupplierSimpleInfo(supplierIds);
+        Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = feignMap != null ? feignMap : Collections.emptyMap();
         Map<String, String> warehouseNameMap = new HashMap<>();
         if (CollUtil.isNotEmpty(warehouseIds)) {
             List<com.erp.model.wms.dto.WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseNameByIds(warehouseIds);

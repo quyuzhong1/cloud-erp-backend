@@ -119,4 +119,12 @@ public interface CfgQcUserService extends SuperService<CfgQcUserEntity> {
      */
     CfgQcUserEntity getBySupplierIdAndWarehouseId(String supplierId, String warehouseId);
 
+    /**
+     * 按 (supplierId, warehouseId) 组合批量查询质检员配置
+     *
+     * @param pairs 供应商与仓库组合列表
+     * @return 匹配的质检员配置列表
+     */
+    List<CfgQcUserEntity> listBySupplierWarehousePairs(List<CfgQcUserDTO.SupplierWarehousePair> pairs);
+
 }
