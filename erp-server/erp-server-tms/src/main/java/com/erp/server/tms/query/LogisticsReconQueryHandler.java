@@ -1,14 +1,13 @@
 package com.erp.server.tms.query;
 
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.query.AbstractQueryHandler;
+import com.erp.model.tms.enums.LogisticsReconCheckStatusEnum;
 import com.erp.model.tms.enums.LogisticsReconMatchStatusEnum;
 import com.erp.model.tms.enums.LogisticsReconReconciliationStatusEnum;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * 物流商对账单（主表）高级查询
@@ -34,8 +33,31 @@ public class LogisticsReconQueryHandler extends AbstractQueryHandler {
         if ("reconciliationStatus".equals(field)) {
             return buildOrCondition(toCodeList(value), this::reconciliationStatusSql);
         }
+        if(field.equals("tab")){
+            return getTabSql(value);
+        }
         return "";
     }
+
+    /**
+     * tab查询
+     * @author Will
+     * @date: 2026/06/18
+     * @param value
+     * @return String
+     */
+    public String getTabSql (Object value) {
+        // 待确认
+        if (LogisticsReconCheckStatusEnum.PENDING.getCode().equals(value)) {
+            super.buildDefaultDTO("logistics_recon.check_status", Collections.singletonList(LogisticsReconCheckStatusEnum.PENDING.getCode()));
+        }
+        // 已确认
+        if (LogisticsReconCheckStatusEnum.CONFIRMED.getCode().equals(value)) {
+            super.buildDefaultDTO("logistics_recon.check_status", Collections.singletonList(LogisticsReconCheckStatusEnum.CONFIRMED.getCode()));
+        }
+        return super.getSplicingSQL();
+    }
+
 
     /**
      * 构建匹配状态派生字段查询 SQL
