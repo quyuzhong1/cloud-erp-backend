@@ -2406,6 +2406,10 @@ public class TmsDeclareBillDTO implements Serializable {
          */
         private String sourceId;
         /**
+         * 报关单id（delivery_declare_detail_mid.declare_id）
+         */
+        private String declareId;
+        /**
          *  来源类型
          */
         private String sourceType;
