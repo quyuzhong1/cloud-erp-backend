@@ -127,6 +127,8 @@ public class LogisticsReconServiceImpl
 
     private static final String IMPORT_ERROR_MSG_HEADER = "错误信息";
 
+    private static final String IMPORT_DETAIL_ROW_CACHE_PREFIX = "row:";
+
     @Resource
     private DocNoGenHelper docNoGenHelper;
 
@@ -440,6 +442,8 @@ public class LogisticsReconServiceImpl
                     dto.setImportDetailKeyMap(null);
                     dto.setImportDetailMaxSeqMap(null);
                     dto.setImportDetailSubKeyMap(null);
+                    dto.setImportDetailSubSnapshotMap(null);
+                    dto.setImportDetailSnapshotMap(null);
                 }
                 // 边解析边分批落库（监听器内 BATCH_COUNT 达阈值回调 handleReconImportBatch）
                 LogisticsReconExcelListener excelListener =
@@ -486,7 +490,7 @@ public class LogisticsReconServiceImpl
         List<LogisticsReconDetailEntity> updateDetailList = new ArrayList<>();
         List<LogisticsReconDetailSubEntity> updateSubList = new ArrayList<>();
         List<LogisticsReconImportExcelDTO> errorList = new ArrayList<>();
-        // 与物流费用导入一致：区分纵向（费用项按行展开、按识别单号分组）/ 横向（费用项多列、一行多费用）
+        // 纵向/横向导入均为「一行一条明细」；仅匹配阶段按识别单号合并费用项
         Map<String, Integer> detailCostCountDelta = new HashMap<>();
         if (isVerticalReconCostItem(cfgDetails)) {
             processVerticalReconRows(rows, headMap, headerIndexMap, rowNoStart, dto, cfgDetails, rateCache,
@@ -805,7 +809,7 @@ public class LogisticsReconServiceImpl
     }
 
     /**
-     * 横向费用项：一行一个明细，每个费用列生成一个费用项。
+     * 横向费用项：一行一条明细，同一行内各费用列生成该明细下多个费用项（导入不合并行）。
      * @author Will
      * @date: 2026/06/12
      */
@@ -821,9 +825,6 @@ public class LogisticsReconServiceImpl
                                             List<LogisticsReconImportExcelDTO> errorList,
                                             Map<String, Integer> detailCostCountDelta) {
         List<CfgLogisticsCostImportDetailEntity> costCfgList = reconCostItemCfgList(cfgDetails);
-        List<CfgLogisticsCostImportDetailEntity> uniqueKeyList = cfgDetails.stream()
-                .filter(CfgLogisticsCostImportDetailEntity::getIsUniqueKey)
-                .collect(Collectors.toList());
         int rowNo = rowNoStart;
         for (Map<Integer, String> row : rows) {
             int currentRowNo = rowNo++;
@@ -836,8 +837,7 @@ public class LogisticsReconServiceImpl
                     errorList.add(excelDTO);
                     continue;
                 }
-                String groupKey = reconUniqueGroupKey(row, headerIndexMap, uniqueKeyList);
-                DetailResolveResult resolveResult = resolveImportDetail(dto, groupKey, currentRowNo, excelDTO);
+                DetailResolveResult resolveResult = resolveImportDetail(dto, currentRowNo, excelDTO);
                 LogisticsReconDetailEntity detail = resolveResult.getDetail();
                 List<LogisticsReconDetailSubEntity> rowNewSubs = new ArrayList<>();
                 List<LogisticsReconDetailSubEntity> rowUpdateSubs = new ArrayList<>();
@@ -888,7 +888,7 @@ public class LogisticsReconServiceImpl
     }
 
     /**
-     * 纵向费用项：费用名称在单元格、金额在固定列；按识别单号分组合并为一个明细 + 多个费用项。
+     * 纵向费用项：一行一条明细 + 该行一个费用项（识别号相同也不合并；匹配阶段再按识别号合并）。
      * @author Will
      * @date: 2026/06/12
      */
@@ -904,10 +904,6 @@ public class LogisticsReconServiceImpl
                                           List<LogisticsReconImportExcelDTO> errorList,
                                           Map<String, Integer> detailCostCountDelta) {
         List<CfgLogisticsCostImportDetailEntity> costCfgList = reconCostItemCfgList(cfgDetails);
-        List<CfgLogisticsCostImportDetailEntity> uniqueKeyList = cfgDetails.stream()
-                .filter(CfgLogisticsCostImportDetailEntity::getIsUniqueKey)
-                .collect(Collectors.toList());
-        // 费用名称列（费用项配置的物流商抬头字段）+ 实际/预估金额列
         String costNameHeader = costCfgList.stream()
                 .map(CfgLogisticsCostImportDetailEntity::getSourceField)
                 .filter(StrUtil::isNotBlank)
@@ -917,36 +913,25 @@ public class LogisticsReconServiceImpl
         CfgLogisticsCostImportDetailEntity estimatedCfg = cfgDetails.stream()
                 .filter(detail -> StrUtil.equals("estimatedAmount", detail.getTargetField())).findFirst().orElse(null);
 
-        // 先解析 + 校验每行，再按识别单号分组
-        Map<String, List<ReconRowContext>> grouped = new LinkedHashMap<>();
         int rowNo = rowNoStart;
         for (Map<Integer, String> row : rows) {
             int currentRowNo = rowNo++;
-            LogisticsReconImportExcelDTO excelDTO = buildReconImportExcel(currentRowNo, row, headMap, headerIndexMap, cfgDetails);
-            List<String> errorMsgList = FieldValidUtil.fieldValid(excelDTO);
-            if (CollUtil.isNotEmpty(errorMsgList)) {
-                excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
-                errorList.add(excelDTO);
-                continue;
-            }
-            String groupKey = reconUniqueGroupKey(row, headerIndexMap, uniqueKeyList);
-            grouped.computeIfAbsent(groupKey, key -> new ArrayList<>())
-                    .add(new ReconRowContext(currentRowNo, row, excelDTO));
-        }
+            LogisticsReconImportExcelDTO excelDTO = null;
+            try {
+                excelDTO = buildReconImportExcel(currentRowNo, row, headMap, headerIndexMap, cfgDetails);
+                List<String> errorMsgList = FieldValidUtil.fieldValid(excelDTO);
+                if (CollUtil.isNotEmpty(errorMsgList)) {
+                    excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                    errorList.add(excelDTO);
+                    continue;
+                }
+                DetailResolveResult resolveResult = resolveImportDetail(dto, currentRowNo, excelDTO);
+                LogisticsReconDetailEntity detail = resolveResult.getDetail();
+                List<LogisticsReconDetailSubEntity> rowNewSubs = new ArrayList<>();
+                List<LogisticsReconDetailSubEntity> rowUpdateSubs = new ArrayList<>();
+                int seqNo = resolveResult.getNextSeqNo();
 
-        for (List<ReconRowContext> group : grouped.values()) {
-            ReconRowContext first = group.get(0);
-            String groupKey = reconUniqueGroupKey(first.row, headerIndexMap, uniqueKeyList);
-            DetailResolveResult resolveResult = resolveImportDetail(dto, groupKey, first.rowNo, first.excelDTO);
-            LogisticsReconDetailEntity detail = resolveResult.getDetail();
-            List<LogisticsReconDetailSubEntity> groupNewSubs = new ArrayList<>();
-            List<LogisticsReconDetailSubEntity> groupUpdateSubs = new ArrayList<>();
-            int seqNo = resolveResult.getNextSeqNo();
-            String rowError = null;
-            LogisticsReconImportExcelDTO errorExcel = first.excelDTO;
-            for (ReconRowContext ctx : group) {
-                errorExcel = ctx.excelDTO;
-                String costNameCell = StrUtil.isBlank(costNameHeader) ? "" : readCellByHeader(ctx.row, headerIndexMap, costNameHeader);
+                String costNameCell = StrUtil.isBlank(costNameHeader) ? "" : readCellByHeader(row, headerIndexMap, costNameHeader);
                 CfgLogisticsCostImportDetailEntity matched = costCfgList.stream()
                         .filter(costCfg -> StrUtil.equals(costCfg.getSourceDetailField(), costNameCell))
                         .findFirst().orElse(null);
@@ -954,54 +939,53 @@ public class LogisticsReconServiceImpl
                         ? StrUtil.blankToDefault(matched.getTargetDetailFieldName(), matched.getSourceDetailField())
                         : costNameCell;
                 if (StrUtil.isBlank(costName)) {
-                    rowError = "费用名称为空，无法识别费用项";
-                    break;
+                    excelDTO.setErrorMsg("费用名称为空，无法识别费用项");
+                    errorList.add(excelDTO);
+                    continue;
                 }
-                try {
-                    BigDecimal actual = actualCfg == null ? BigDecimal.ZERO
-                            : parseAmount(getCellValue(ctx.row, headerIndexMap, actualCfg), false).setScale(4, RoundingMode.HALF_UP);
-                    BigDecimal estimated = estimatedCfg == null ? BigDecimal.ZERO
-                            : parseAmount(getCellValue(ctx.row, headerIndexMap, estimatedCfg), false).setScale(4, RoundingMode.HALF_UP);
-                    ImportSubResolveResult subResult = resolveOrBuildImportSub(dto, detail, seqNo, costName, actual, estimated, rateCache);
-                    if (subResult.getRateError() != null) {
-                        rowError = subResult.getRateError();
-                        break;
-                    }
-                    if (subResult.isUpdateExisting()) {
-                        groupUpdateSubs.add(subResult.getSub());
-                    } else {
-                        groupNewSubs.add(subResult.getSub());
-                        seqNo = subResult.getNextSeqNo();
-                    }
-                } catch (NumberFormatException e) {
-                    rowError = "金额或数字字段格式不正确";
-                    break;
+                BigDecimal actual = actualCfg == null ? BigDecimal.ZERO
+                        : parseAmount(getCellValue(row, headerIndexMap, actualCfg), false).setScale(4, RoundingMode.HALF_UP);
+                BigDecimal estimated = estimatedCfg == null ? BigDecimal.ZERO
+                        : parseAmount(getCellValue(row, headerIndexMap, estimatedCfg), false).setScale(4, RoundingMode.HALF_UP);
+                ImportSubResolveResult subResult = resolveOrBuildImportSub(dto, detail, seqNo, costName, actual, estimated, rateCache);
+                if (subResult.getRateError() != null) {
+                    excelDTO.setErrorMsg(subResult.getRateError());
+                    errorList.add(excelDTO);
+                    continue;
                 }
+                if (subResult.isUpdateExisting()) {
+                    rowUpdateSubs.add(subResult.getSub());
+                } else {
+                    rowNewSubs.add(subResult.getSub());
+                }
+                if (rowNewSubs.isEmpty() && rowUpdateSubs.isEmpty()) {
+                    excelDTO.setErrorMsg("费用项不能为空");
+                    errorList.add(excelDTO);
+                    continue;
+                }
+                finishImportDetailSubs(dto, resolveResult, rowNewSubs, rowUpdateSubs, currentRowNo, excelDTO,
+                        detailList, subList, updateDetailList, updateSubList, detailCostCountDelta);
+            } catch (NumberFormatException e) {
+                if (excelDTO == null) {
+                    excelDTO = new LogisticsReconImportExcelDTO();
+                    excelDTO.setNo(String.valueOf(currentRowNo));
+                    attachImportErrorRow(excelDTO, row, headMap);
+                }
+                excelDTO.setErrorMsg("金额或数字字段格式不正确");
+                errorList.add(excelDTO);
             }
-            if (rowError != null) {
-                errorExcel.setErrorMsg(rowError);
-                errorList.add(errorExcel);
-                continue;
-            }
-            if (groupNewSubs.isEmpty() && groupUpdateSubs.isEmpty()) {
-                first.excelDTO.setErrorMsg("费用项不能为空");
-                errorList.add(first.excelDTO);
-                continue;
-            }
-            finishImportDetailSubs(dto, resolveResult, groupNewSubs, groupUpdateSubs, first.rowNo, first.excelDTO,
-                    detailList, subList, updateDetailList, updateSubList, detailCostCountDelta);
         }
     }
 
     /**
-     * 导入明细解析结果：新建或合并到已有明细。
+     * 导入明细解析结果：新建或按 rowNo 重导更新已有明细。
      */
     private static class DetailResolveResult {
         /** 目标明细（新建或已存在） */
         private final LogisticsReconDetailEntity detail;
         /** 是否为本次导入新建明细 */
         private final boolean newDetail;
-        /** 下一费用项 seq_no（合并明细时用于递增） */
+        /** 下一费用项 seq_no（同一明细内多费用列时递增） */
         private final int nextSeqNo;
 
         private DetailResolveResult(LogisticsReconDetailEntity detail, boolean newDetail, int nextSeqNo) {
@@ -1036,12 +1020,13 @@ public class LogisticsReconServiceImpl
     }
 
     /**
-     * 按识别单号分组键解析明细：已存在则合并到原明细，否则新建。
+     * 解析导入明细：一律按 Excel 行号 rowNo 对应库内 (main_id, row_no)；导入阶段不按识别单号合并。
      */
-    private DetailResolveResult resolveImportDetail(LogisticsReconDTO.ImportDTO dto, String groupKey, int rowNo,
+    private DetailResolveResult resolveImportDetail(LogisticsReconDTO.ImportDTO dto, int rowNo,
                                                     LogisticsReconImportExcelDTO excelDTO) {
         ensureImportDetailCache(dto);
-        String existingDetailId = dto.getImportDetailKeyMap().get(groupKey);
+        String cacheKey = buildImportDetailRowCacheKey(rowNo);
+        String existingDetailId = StrUtil.isBlank(cacheKey) ? null : dto.getImportDetailKeyMap().get(cacheKey);
         if (StrUtil.isNotBlank(existingDetailId)) {
             LogisticsReconDetailEntity detail = new LogisticsReconDetailEntity();
             detail.setId(existingDetailId);
@@ -1051,13 +1036,19 @@ public class LogisticsReconServiceImpl
             return new DetailResolveResult(detail, false, nextSeqNo);
         }
         LogisticsReconDetailEntity detail = buildReconDetail(dto, rowNo, excelDTO);
-        dto.getImportDetailKeyMap().put(groupKey, detail.getId());
+        if (StrUtil.isNotBlank(cacheKey)) {
+            dto.getImportDetailKeyMap().put(cacheKey, detail.getId());
+        }
         dto.getImportDetailMaxSeqMap().put(detail.getId(), 0);
         return new DetailResolveResult(detail, true, 1);
     }
 
+    private String buildImportDetailRowCacheKey(Integer rowNo) {
+        return rowNo == null ? "" : IMPORT_DETAIL_ROW_CACHE_PREFIX + rowNo;
+    }
+
     /**
-     * 费用项落库：新建明细入 detailList，合并明细按唯一键更新并累加新增费用项 cost_count。
+     * 费用项落库：新建明细入 detailList；重导时按 rowNo 更新已有明细并写入/更新该行下费用项。
      */
     private void finishImportDetailSubs(LogisticsReconDTO.ImportDTO dto, DetailResolveResult resolveResult,
                                         List<LogisticsReconDetailSubEntity> newSubs,
@@ -1075,6 +1066,12 @@ public class LogisticsReconServiceImpl
         } else {
             LogisticsReconDetailEntity updateDetail = buildReconDetail(dto, rowNo, excelDTO);
             updateDetail.setId(detail.getId());
+            if (dto.getImportDetailSnapshotMap() != null) {
+                LogisticsReconDetailEntity snapshot = dto.getImportDetailSnapshotMap().get(detail.getId());
+                if (snapshot != null) {
+                    updateDetail.setVersion(snapshot.getVersion());
+                }
+            }
             updateDetailList.add(updateDetail);
             if (CollUtil.isNotEmpty(newSubs)) {
                 detailCostCountDelta.merge(detail.getId(), newSubs.size(), Integer::sum);
@@ -1152,6 +1149,7 @@ public class LogisticsReconServiceImpl
                 LogisticsReconDetailSubEntity sub = buildReconDetailSub(dto, detail, seqNo, costName,
                         actualAmount, estimatedAmount);
                 sub.setId(existingSubId);
+                applyExistingSubSnapshot(sub, dto, subKey);
                 String rateError = fillSubLocalAmount(sub, dto, rateCache);
                 return new ImportSubResolveResult(sub, true, seqNo, rateError);
             }
@@ -1173,6 +1171,61 @@ public class LogisticsReconServiceImpl
         if (dto.getImportDetailSubKeyMap() == null) {
             dto.setImportDetailSubKeyMap(new HashMap<>());
         }
+    }
+
+    private void ensureImportDetailSubSnapshotMap(LogisticsReconDTO.ImportDTO dto) {
+        if (dto.getImportDetailSubSnapshotMap() == null) {
+            dto.setImportDetailSubSnapshotMap(new HashMap<>());
+        }
+    }
+
+    private void ensureImportDetailSnapshotMap(LogisticsReconDTO.ImportDTO dto) {
+        if (dto.getImportDetailSnapshotMap() == null) {
+            dto.setImportDetailSnapshotMap(new HashMap<>());
+        }
+    }
+
+    /**
+     * 重导覆盖更新费用项时保留库内 seq_no、version 及匹配/配置快照，避免 batch update 冲突。
+     */
+    private void applyExistingSubSnapshot(LogisticsReconDetailSubEntity sub, LogisticsReconDTO.ImportDTO dto,
+                                          String subKey) {
+        if (sub == null || dto.getImportDetailSubSnapshotMap() == null) {
+            return;
+        }
+        LogisticsReconDetailSubEntity snapshot = dto.getImportDetailSubSnapshotMap().get(subKey);
+        if (snapshot == null) {
+            return;
+        }
+        if (snapshot.getSeqNo() != null) {
+            sub.setSeqNo(snapshot.getSeqNo());
+        }
+        sub.setVersion(snapshot.getVersion());
+        sub.setCfgCostId(snapshot.getCfgCostId());
+        sub.setCfgCostName(snapshot.getCfgCostName());
+        sub.setMatchStatus(snapshot.getMatchStatus());
+        sub.setMatchFailReason(snapshot.getMatchFailReason());
+        sub.setReconciliationStatus(snapshot.getReconciliationStatus());
+    }
+
+    private LogisticsReconDetailSubEntity copySubReimportSnapshot(LogisticsReconDetailSubEntity source) {
+        LogisticsReconDetailSubEntity snapshot = new LogisticsReconDetailSubEntity();
+        snapshot.setId(source.getId());
+        snapshot.setSeqNo(source.getSeqNo());
+        snapshot.setVersion(source.getVersion());
+        snapshot.setCfgCostId(source.getCfgCostId());
+        snapshot.setCfgCostName(source.getCfgCostName());
+        snapshot.setMatchStatus(source.getMatchStatus());
+        snapshot.setMatchFailReason(source.getMatchFailReason());
+        snapshot.setReconciliationStatus(source.getReconciliationStatus());
+        return snapshot;
+    }
+
+    private LogisticsReconDetailEntity copyDetailReimportSnapshot(LogisticsReconDetailEntity source) {
+        LogisticsReconDetailEntity snapshot = new LogisticsReconDetailEntity();
+        snapshot.setId(source.getId());
+        snapshot.setVersion(source.getVersion());
+        return snapshot;
     }
 
     /**
@@ -1235,18 +1288,14 @@ public class LogisticsReconServiceImpl
     }
 
     /**
-     * 重导更新：从库内预加载唯一键明细映射与费用名费用项映射。
+     * 重导更新：从库内预加载 rowNo → 明细 id、明细 id + 费用名 → 费用项 id 映射。
      */
     private void initImportDetailCacheFromDb(LogisticsReconDTO.ImportDTO dto,
                                              List<CfgLogisticsCostImportDetailEntity> cfgDetails) {
         ensureImportDetailCache(dto);
         ensureImportDetailSubKeyMap(dto);
-        List<CfgLogisticsCostImportDetailEntity> uniqueKeyList = cfgDetails.stream()
-                .filter(CfgLogisticsCostImportDetailEntity::getIsUniqueKey)
-                .collect(Collectors.toList());
-        if (CollUtil.isEmpty(uniqueKeyList)) {
-            return;
-        }
+        ensureImportDetailSubSnapshotMap(dto);
+        ensureImportDetailSnapshotMap(dto);
         String lastDetailId = null;
         while (true) {
             LambdaQueryChainWrapper<LogisticsReconDetailEntity> detailQuery = logisticsReconDetailService.lambdaQuery()
@@ -1262,10 +1311,11 @@ public class LogisticsReconServiceImpl
             }
             lastDetailId = detailBatch.get(detailBatch.size() - 1).getId();
             for (LogisticsReconDetailEntity detail : detailBatch) {
-                String groupKey = LogisticsReconMatchGroupHelper.buildDetailGroupKey(detail, uniqueKeyList);
-                if (StrUtil.isNotBlank(groupKey)) {
-                    dto.getImportDetailKeyMap().putIfAbsent(groupKey, detail.getId());
+                String cacheKey = buildImportDetailRowCacheKey(detail.getRowNo());
+                if (StrUtil.isNotBlank(cacheKey)) {
+                    dto.getImportDetailKeyMap().putIfAbsent(cacheKey, detail.getId());
                 }
+                dto.getImportDetailSnapshotMap().putIfAbsent(detail.getId(), copyDetailReimportSnapshot(detail));
             }
         }
         String lastSubId = null;
@@ -1287,6 +1337,8 @@ public class LogisticsReconServiceImpl
                     continue;
                 }
                 dto.getImportDetailSubKeyMap().putIfAbsent(buildImportSubKey(sub.getDetailId(), sub.getCostName()), sub.getId());
+                dto.getImportDetailSubSnapshotMap().putIfAbsent(buildImportSubKey(sub.getDetailId(), sub.getCostName()),
+                        copySubReimportSnapshot(sub));
                 dto.getImportDetailMaxSeqMap().merge(sub.getDetailId(),
                         sub.getSeqNo() == null ? 0 : sub.getSeqNo(), Math::max);
             }
@@ -1332,24 +1384,6 @@ public class LogisticsReconServiceImpl
         return uniqueKeyList.stream()
                 .map(uniqueKey -> getCellValue(row, headerIndexMap, uniqueKey))
                 .collect(Collectors.joining("_"));
-    }
-
-    /**
-     * 纵向解析行上下文（行号 + 原始行 + 映射后的 Excel 中间对象）。
-     */
-    private static class ReconRowContext {
-        /** Excel 行号（sheet 内连续） */
-        private final int rowNo;
-        /** 原始单元格行 */
-        private final Map<Integer, String> row;
-        /** 字段映射后的中间对象 */
-        private final LogisticsReconImportExcelDTO excelDTO;
-
-        private ReconRowContext(int rowNo, Map<Integer, String> row, LogisticsReconImportExcelDTO excelDTO) {
-            this.rowNo = rowNo;
-            this.row = row;
-            this.excelDTO = excelDTO;
-        }
     }
 
     /**
