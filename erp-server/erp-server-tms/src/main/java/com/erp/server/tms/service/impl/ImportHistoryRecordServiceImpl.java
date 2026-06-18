@@ -55,6 +55,7 @@ import com.erp.server.tms.listener.ImportHistoryRecordExcelListener;
 import com.erp.server.tms.mapper.ImportHistoryRecordMapper;
 import com.erp.server.tms.service.*;
 import com.erp.server.tms.service.support.LogisticsOrderWeightSupport;
+import com.erp.server.tms.service.support.LogisticsReconMatchFailReasonSupport;
 import com.google.common.base.Stopwatch;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -560,26 +561,6 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             }
         }
         return new ArrayList<>(dedupeMap.values());
-    }
-
-    private String resolveMatchExceptionMessage(Throwable e) {
-        if (e == null) {
-            return "匹配失败";
-        }
-        Throwable root = e;
-        while (root.getCause() != null && root.getCause() != root) {
-            root = root.getCause();
-        }
-        if (root instanceof ServiceException && CharSequenceUtil.isNotBlank(root.getMessage())) {
-            return root.getMessage();
-        }
-        if (CharSequenceUtil.isNotBlank(root.getMessage())) {
-            return root.getMessage();
-        }
-        if (root instanceof UnsupportedOperationException) {
-            return "匹配处理异常，请联系管理员";
-        }
-        return root.getClass().getSimpleName();
     }
 
     /**
@@ -1357,7 +1338,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             } catch (Exception e) {
                 log.error("[reconMatch] 分组匹配失败 groupKey={}", groupKey, e);
                 groupResult.setSuccess(false);
-                groupResult.setFailReason(resolveMatchExceptionMessage(e));
+                groupResult.setFailReason(LogisticsReconMatchFailReasonSupport.resolve(e));
                 continue;
             }
             if (CollUtil.isNotEmpty(errorMsgList)) {
