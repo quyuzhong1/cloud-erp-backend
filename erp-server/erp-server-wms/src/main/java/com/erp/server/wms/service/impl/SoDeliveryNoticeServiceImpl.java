@@ -14,8 +14,8 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.FileTemplateConstant;
-import com.common.business.dto.ApproveDTO;
 import com.common.business.constant.ThirdConstants;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -41,7 +41,6 @@ import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
-import com.erp.model.oms.utils.SoDetailPriceUtils;
 import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.BillTypeEnum;
@@ -87,8 +86,8 @@ import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.sys.feign.FileTemplateFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.tms.feign.TmsDeclareBillFeign;
 import com.erp.rpc.tms.feign.DeliveryDeclareDetailMidFeign;
+import com.erp.rpc.tms.feign.TmsDeclareBillFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.mapper.SoDeliveryNoticeMapper;
@@ -108,8 +107,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronizationAdapter;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 import sun.misc.BASE64Decoder;
 
 import javax.annotation.Resource;
@@ -1138,7 +1135,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 
                 SoDetailEntity soDetailEntity = soDetailMap.get(buildSoDetailKey(deliveryDetailDTO.getBusinessId(), deliveryDetailDTO.getSkuId()));
                 if (customerReceiver && Objects.nonNull(soDetailEntity)) {
-                    deliveryDetailDTO.setUnitPrice(SoDetailPriceUtils.resolveTaxUnitPrice(soDetailEntity));
+                    deliveryDetailDTO.setUnitPrice(MathUtil.preferNonNull(soDetailEntity.getTaxPrice(), soDetailEntity.getPrice()));
                     deliveryDetailDTO.setDeclareCurrency(soDetailEntity.getCurrency());
                     deliveryDetailDTO.setDeclareCurrencySymbol(soDetailEntity.getCurrencySymbol());
                     deliveryDetailDTO.setDeclareCurrencyName(currencyMap.get(deliveryDetailDTO.getDeclareCurrency()));
@@ -1317,7 +1314,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         SoDetailEntity soDetailEntity = soDetailMap.get(buildSoDetailKey(detailDTO.getBusinessId(), detailDTO.getSkuId()));
         if (Objects.nonNull(soDetailEntity)) {
             // B2B 不合并预览：单价/币别/币别符号取自 so_detail 销售含税单价及对应币种。
-            detailDTO.setUnitPrice(SoDetailPriceUtils.resolveTaxUnitPrice(soDetailEntity));
+            detailDTO.setUnitPrice(MathUtil.preferNonNull(soDetailEntity.getTaxPrice(), soDetailEntity.getPrice()));
             detailDTO.setDeclareCurrency(soDetailEntity.getCurrency());
             detailDTO.setDeclareCurrencySymbol(soDetailEntity.getCurrencySymbol());
             detailDTO.setDeclareCurrencyName(currencyMap.get(detailDTO.getDeclareCurrency()));
