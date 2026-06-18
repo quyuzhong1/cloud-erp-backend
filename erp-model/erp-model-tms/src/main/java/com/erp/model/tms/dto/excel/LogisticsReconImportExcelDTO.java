@@ -8,6 +8,7 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.Map;
 
 /**
  * 物流商对账单导入 Excel 中间对象
@@ -76,21 +77,21 @@ public class LogisticsReconImportExcelDTO implements Serializable {
      * 物流商实重
      */
     @ExcelProperty(value = "物流商实重", index = 8)
-    @FieldValid(fieldName = "物流商实重", formatPattern = FieldFormatPatternTypeEnum.DECIMAL)
+    @FieldValid(fieldName = "物流商实重", formatPattern = FieldFormatPatternTypeEnum.NUMBER)
     private String weightLogistics;
 
     /**
      * 物流商体积重
      */
     @ExcelProperty(value = "物流商体积重", index = 9)
-    @FieldValid(fieldName = "物流商体积重", formatPattern = FieldFormatPatternTypeEnum.DECIMAL)
+    @FieldValid(fieldName = "物流商体积重", formatPattern = FieldFormatPatternTypeEnum.NUMBER)
     private String volumeWeightLogistics;
 
     /**
      * 物流商计费重
      */
     @ExcelProperty(value = "物流商计费重", index = 10)
-    @FieldValid(fieldName = "物流商计费重", formatPattern = FieldFormatPatternTypeEnum.DECIMAL)
+    @FieldValid(fieldName = "物流商计费重", formatPattern = FieldFormatPatternTypeEnum.NUMBER)
     private String billingWeightLogistics;
 
     /**
@@ -104,21 +105,21 @@ public class LogisticsReconImportExcelDTO implements Serializable {
      * 物流商尺寸-长
      */
     @ExcelProperty(value = "物流商尺寸-长", index = 12)
-    @FieldValid(fieldName = "物流商尺寸-长", formatPattern = FieldFormatPatternTypeEnum.DECIMAL)
+    @FieldValid(fieldName = "物流商尺寸-长", formatPattern = FieldFormatPatternTypeEnum.NUMBER)
     private String thirdLength;
 
     /**
      * 物流商尺寸-宽
      */
     @ExcelProperty(value = "物流商尺寸-宽", index = 13)
-    @FieldValid(fieldName = "物流商尺寸-宽", formatPattern = FieldFormatPatternTypeEnum.DECIMAL)
+    @FieldValid(fieldName = "物流商尺寸-宽", formatPattern = FieldFormatPatternTypeEnum.NUMBER)
     private String thirdWidth;
 
     /**
      * 物流商尺寸-高
      */
     @ExcelProperty(value = "物流商尺寸-高", index = 14)
-    @FieldValid(fieldName = "物流商尺寸-高", formatPattern = FieldFormatPatternTypeEnum.DECIMAL)
+    @FieldValid(fieldName = "物流商尺寸-高", formatPattern = FieldFormatPatternTypeEnum.NUMBER)
     private String thirdHeight;
 
     /**
@@ -132,7 +133,7 @@ public class LogisticsReconImportExcelDTO implements Serializable {
      * 实际金额
      */
     @ExcelProperty(value = "实际金额", index = 16)
-    @FieldValid(fieldName = "实际金额", isNotBlank = true, formatPattern = FieldFormatPatternTypeEnum.DECIMAL)
+    @FieldValid(fieldName = "实际金额", isNotBlank = true, formatPattern = FieldFormatPatternTypeEnum.NUMBER)
     private String actualAmount;
 
     /**
@@ -146,4 +147,16 @@ public class LogisticsReconImportExcelDTO implements Serializable {
      */
     @ExcelIgnore
     private BigDecimal actualAmountValue;
+
+    /**
+     * 原始 Excel 行（列索引 → 单元格值），错误导出时还原原表头结构
+     */
+    @ExcelIgnore
+    private Map<Integer, String> rawRow;
+
+    /**
+     * 原始 Excel 表头（列索引 → 表头名），错误导出时还原原表头结构
+     */
+    @ExcelIgnore
+    private Map<Integer, String> headMap;
 }

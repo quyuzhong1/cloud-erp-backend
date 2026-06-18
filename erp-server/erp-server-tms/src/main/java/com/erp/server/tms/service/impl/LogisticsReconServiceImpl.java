@@ -97,6 +97,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -123,6 +124,8 @@ public class LogisticsReconServiceImpl
         implements LogisticsReconService {
 
     private static final String DOC_NAME = "物流商对账单";
+
+    private static final String IMPORT_ERROR_MSG_HEADER = "错误信息";
 
     @Resource
     private DocNoGenHelper docNoGenHelper;
@@ -486,10 +489,10 @@ public class LogisticsReconServiceImpl
         // 与物流费用导入一致：区分纵向（费用项按行展开、按识别单号分组）/ 横向（费用项多列、一行多费用）
         Map<String, Integer> detailCostCountDelta = new HashMap<>();
         if (isVerticalReconCostItem(cfgDetails)) {
-            processVerticalReconRows(rows, headerIndexMap, rowNoStart, dto, cfgDetails, rateCache,
+            processVerticalReconRows(rows, headMap, headerIndexMap, rowNoStart, dto, cfgDetails, rateCache,
                     detailList, subList, updateDetailList, updateSubList, errorList, detailCostCountDelta);
         } else {
-            processHorizontalReconRows(rows, headerIndexMap, rowNoStart, dto, cfgDetails, rateCache,
+            processHorizontalReconRows(rows, headMap, headerIndexMap, rowNoStart, dto, cfgDetails, rateCache,
                     detailList, subList, updateDetailList, updateSubList, errorList, detailCostCountDelta);
         }
         // detail + sub 落库走独立事务（经自注入代理生效），保证两表原子写
@@ -681,10 +684,12 @@ public class LogisticsReconServiceImpl
      * @return LogisticsReconImportExcelDTO
      */
     private LogisticsReconImportExcelDTO buildReconImportExcel(int rowNo, Map<Integer, String> row,
+                                                              Map<Integer, String> headMap,
                                                               Map<String, Integer> headerIndexMap,
                                                               List<CfgLogisticsCostImportDetailEntity> cfgDetails) {
         LogisticsReconImportExcelDTO excelDTO = new LogisticsReconImportExcelDTO();
         excelDTO.setNo(String.valueOf(rowNo));
+        attachImportErrorRow(excelDTO, row, headMap);
         for (CfgLogisticsCostImportDetailEntity cfg : cfgDetails) {
             String target = StrUtil.blankToDefault(cfg.getTargetField(), cfg.getTargetDetailField());
             String value = getCellValue(row, headerIndexMap, cfg);
@@ -699,6 +704,18 @@ public class LogisticsReconServiceImpl
                     parseAmount(excelDTO.getActualAmount(), false).setScale(4, RoundingMode.HALF_UP));
         }
         return excelDTO;
+    }
+
+    /**
+     * 绑定原始 Excel 行与表头，供错误文件按原表头导出。
+     */
+    private void attachImportErrorRow(LogisticsReconImportExcelDTO excelDTO, Map<Integer, String> row,
+                                      Map<Integer, String> headMap) {
+        if (excelDTO == null) {
+            return;
+        }
+        excelDTO.setRawRow(row == null ? Collections.emptyMap() : new HashMap<>(row));
+        excelDTO.setHeadMap(headMap == null ? Collections.emptyMap() : new HashMap<>(headMap));
     }
 
     /**
@@ -792,7 +809,8 @@ public class LogisticsReconServiceImpl
      * @author Will
      * @date: 2026/06/12
      */
-    private void processHorizontalReconRows(List<Map<Integer, String>> rows, Map<String, Integer> headerIndexMap,
+    private void processHorizontalReconRows(List<Map<Integer, String>> rows, Map<Integer, String> headMap,
+                                            Map<String, Integer> headerIndexMap,
                                             int rowNoStart, LogisticsReconDTO.ImportDTO dto,
                                             List<CfgLogisticsCostImportDetailEntity> cfgDetails,
                                             Map<String, BigDecimal> rateCache,
@@ -811,7 +829,7 @@ public class LogisticsReconServiceImpl
             int currentRowNo = rowNo++;
             LogisticsReconImportExcelDTO excelDTO = null;
             try {
-                excelDTO = buildReconImportExcel(currentRowNo, row, headerIndexMap, cfgDetails);
+                excelDTO = buildReconImportExcel(currentRowNo, row, headMap, headerIndexMap, cfgDetails);
                 List<String> errorMsgList = FieldValidUtil.fieldValid(excelDTO);
                 if (CollUtil.isNotEmpty(errorMsgList)) {
                     excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
@@ -861,6 +879,7 @@ public class LogisticsReconServiceImpl
                 if (excelDTO == null) {
                     excelDTO = new LogisticsReconImportExcelDTO();
                     excelDTO.setNo(String.valueOf(currentRowNo));
+                    attachImportErrorRow(excelDTO, row, headMap);
                 }
                 excelDTO.setErrorMsg("金额或数字字段格式不正确");
                 errorList.add(excelDTO);
@@ -873,7 +892,8 @@ public class LogisticsReconServiceImpl
      * @author Will
      * @date: 2026/06/12
      */
-    private void processVerticalReconRows(List<Map<Integer, String>> rows, Map<String, Integer> headerIndexMap,
+    private void processVerticalReconRows(List<Map<Integer, String>> rows, Map<Integer, String> headMap,
+                                          Map<String, Integer> headerIndexMap,
                                           int rowNoStart, LogisticsReconDTO.ImportDTO dto,
                                           List<CfgLogisticsCostImportDetailEntity> cfgDetails,
                                           Map<String, BigDecimal> rateCache,
@@ -902,7 +922,7 @@ public class LogisticsReconServiceImpl
         int rowNo = rowNoStart;
         for (Map<Integer, String> row : rows) {
             int currentRowNo = rowNo++;
-            LogisticsReconImportExcelDTO excelDTO = buildReconImportExcel(currentRowNo, row, headerIndexMap, cfgDetails);
+            LogisticsReconImportExcelDTO excelDTO = buildReconImportExcel(currentRowNo, row, headMap, headerIndexMap, cfgDetails);
             List<String> errorMsgList = FieldValidUtil.fieldValid(excelDTO);
             if (CollUtil.isNotEmpty(errorMsgList)) {
                 excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
@@ -1436,8 +1456,58 @@ public class LogisticsReconServiceImpl
                 }))
                 .collect(Collectors.toList());
         String fileName = "物流商对账单导入错误信息.xlsx";
-        File file = ExcelUtil.exportFile(fileName, "error", sortedErrorList, LogisticsReconImportExcelDTO.class);
+        File file;
+        if (sortedErrorList.stream().anyMatch(item -> CollUtil.isNotEmpty(item.getRawRow()) && CollUtil.isNotEmpty(item.getHeadMap()))) {
+            List<String> headers = buildImportErrorExportHeaders(sortedErrorList);
+            List<List<Object>> exportRows = sortedErrorList.stream()
+                    .map(item -> buildImportErrorExportRow(item, headers))
+                    .collect(Collectors.toList());
+            file = ExcelUtil.exportFile(fileName, "error", exportRows, headers);
+        } else {
+            file = ExcelUtil.exportFile(fileName, "error", sortedErrorList, LogisticsReconImportExcelDTO.class);
+        }
         return file.isDirectory() ? "" : FastDFSClientUtil.uploadFile(file, fileName);
+    }
+
+    /**
+     * 按原 Excel 表头顺序拼接导出列，末尾追加错误信息列。
+     */
+    private List<String> buildImportErrorExportHeaders(List<LogisticsReconImportExcelDTO> errorList) {
+        LinkedHashSet<String> headerSet = new LinkedHashSet<>();
+        for (LogisticsReconImportExcelDTO error : errorList) {
+            Map<Integer, String> headMap = error.getHeadMap();
+            if (CollUtil.isEmpty(headMap)) {
+                continue;
+            }
+            headMap.entrySet().stream()
+                    .sorted(Map.Entry.comparingByKey())
+                    .map(Map.Entry::getValue)
+                    .filter(StrUtil::isNotBlank)
+                    .forEach(headerSet::add);
+        }
+        List<String> headers = new ArrayList<>(headerSet);
+        headers.add(IMPORT_ERROR_MSG_HEADER);
+        return headers;
+    }
+
+    /**
+     * 按表头名从原始行取值，最后一列写入错误信息。
+     */
+    private List<Object> buildImportErrorExportRow(LogisticsReconImportExcelDTO error, List<String> headers) {
+        List<Object> exportRow = new ArrayList<>(headers.size());
+        Map<Integer, String> headMap = error.getHeadMap();
+        Map<Integer, String> rawRow = error.getRawRow() == null ? Collections.emptyMap() : error.getRawRow();
+        Map<String, Integer> indexByHeader = CollUtil.isEmpty(headMap) ? Collections.emptyMap() : buildHeaderIndexMap(headMap);
+        int errorColumnIndex = headers.size() - 1;
+        for (int i = 0; i < headers.size(); i++) {
+            if (i == errorColumnIndex) {
+                exportRow.add(StrUtil.blankToDefault(error.getErrorMsg(), ""));
+                continue;
+            }
+            Integer columnIndex = indexByHeader.get(headers.get(i));
+            exportRow.add(columnIndex == null ? "" : StrUtil.blankToDefault(rawRow.get(columnIndex), ""));
+        }
+        return exportRow;
     }
 
     /**
