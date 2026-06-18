@@ -122,15 +122,19 @@ public class LogisticsReconDetailServiceImpl
         if (list == null) {
             list = new ArrayList<>();
         }
+        if (CollUtil.isNotEmpty(list)) {
+            list.forEach(obj -> obj.setTabFlagName(LogisticsReconDetailMatchStatusEnum.getName(obj.getTabFlag())));
+        }
         List<String> existStatus = list.stream()
                 .map(LogisticsReconDetailDTO.TabListDTO::getTabFlag)
                 .collect(Collectors.toList());
         for (String status : LogisticsReconDetailMatchStatusEnum.getStatusList()) {
             if (!existStatus.contains(status)) {
-                list.add(new LogisticsReconDetailDTO.TabListDTO(status, 0));
+                list.add(new LogisticsReconDetailDTO.TabListDTO(status,
+                        LogisticsReconDetailMatchStatusEnum.getName(status), 0));
             }
         }
-        list.add(new LogisticsReconDetailDTO.TabListDTO("all",
+        list.add(new LogisticsReconDetailDTO.TabListDTO("all", "全部",
                 list.stream().mapToInt(LogisticsReconDetailDTO.TabListDTO::getCount).sum()));
         return list;
     }

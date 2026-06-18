@@ -277,6 +277,10 @@ public class LogisticsReconDetailDTO implements Serializable {
          */
         private String tabFlag;
         /**
+         * tab 名称
+         */
+        private String tabFlagName;
+        /**
          * 数量
          */
         private Integer count;
