@@ -2023,6 +2023,7 @@ public enum ApiError implements Serializable {
     QC_NOTICE_DETAILS_MUST_SAME_NOTICE(16025,"选中的明细必须属于同一质检通知单"),
     QC_NOTICE_UPDATE_QC_USER_STATUS_INVALID(16026,"只能更新待质检状态通知单的质检员"),
     QC_NOTICE_QC_USER_ID_REQUIRED(16027,"质检员id不能为空"),
+    QC_NOTICE_DETAIL_UPDATE_QC_USER_STATUS_INVALID(16028,"只能更新待质检状态明细的质检员"),
 
     ;
     @Getter

@@ -335,7 +335,6 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         return result;
     }
 
-    @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO updateQcUser(QcNoticeDTO.UpdateQcUserDTO dto) {
         String detailId = dto.getDetailId();
@@ -358,6 +357,9 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         if (!QcNoticeStatusEnum.WAIT.getCode().equals(notice.getQcStatus())) {
             throw new ServiceException(ApiError.QC_NOTICE_UPDATE_QC_USER_STATUS_INVALID);
         }
+        if (!QcNoticeStatusEnum.WAIT.getCode().equals(detail.getQcStatus())) {
+            throw new ServiceException(ApiError.QC_NOTICE_DETAIL_UPDATE_QC_USER_STATUS_INVALID);
+        }
 
         List<FindUserDTO> userInfoList = sysUserFeign.getUserListByUserIds(Collections.singletonList(dto.getQcUserId()));
         if (userInfoList == null) {
@@ -374,12 +376,20 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         }
         dto.setQcUserName(qcUserName);
 
-        QcNoticeDetailEntity detailUpdate = new QcNoticeDetailEntity();
-        detailUpdate.setId(detail.getId());
-        detailUpdate.setQcUserId(dto.getQcUserId());
-        detailUpdate.setQcUserName(dto.getQcUserName());
-        if (!qcNoticeDetailService.updateById(detailUpdate)) {
-            throw new ServiceException(ApiError.BILL_UPDATE_FAILED);
+        ApplicationContextUtils.getBean(QcNoticeServiceImpl.class).persistUpdateQcUser(detail, dto);
+        return BatchResultDTO.success(detail.getId(), detail.getSkuNo());
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void persistUpdateQcUser(QcNoticeDetailEntity detail, QcNoticeDTO.UpdateQcUserDTO dto) {
+        boolean updated = qcNoticeDetailService.lambdaUpdate()
+                .eq(QcNoticeDetailEntity::getId, detail.getId())
+                .eq(QcNoticeDetailEntity::getQcStatus, QcNoticeStatusEnum.WAIT.getCode())
+                .set(QcNoticeDetailEntity::getQcUserId, dto.getQcUserId())
+                .set(QcNoticeDetailEntity::getQcUserName, dto.getQcUserName())
+                .update();
+        if (!updated) {
+            throw new ServiceException(ApiError.QC_NOTICE_DETAIL_UPDATE_QC_USER_STATUS_INVALID);
         }
 
         updateQcInfoUserByDetailId(detail.getId(), dto);
@@ -388,8 +398,6 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         String msg = StrUtil.format("用户【{}】批量更新质检员为【{}】，SKU【{}】",
                 userName, dto.getQcUserName(), detail.getSkuNo());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.QC_NOTICE.getCode(), detail.getMainId(), "批量更新质检员");
-
-        return BatchResultDTO.success(detail.getId(), detail.getSkuNo());
     }
 
     /**
