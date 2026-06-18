@@ -141,7 +141,7 @@ public class QcNoticeController extends BaseController {
                     resultDTOS.add(updateResult);
                     continue;
                 }
-                updateResult = BatchResultDTO.fail(detail.getId(), detail.getSkuNo(), e.getMessage());
+                updateResult = BatchResultDTO.fail(detail.getId(), detail.getSkuNo(), e);
             }
             resultDTOS.add(updateResult);
         }
