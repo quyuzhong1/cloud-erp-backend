@@ -6,6 +6,8 @@ import com.common.business.dto.base.SortDTO;
 import com.common.business.dto.base.SuperDTO;
 import com.erp.model.tms.entity.CfgLogisticsCostImportDetailEntity;
 import com.erp.model.tms.entity.CfgLogisticsCostImportEntity;
+import com.erp.model.tms.entity.LogisticsReconDetailEntity;
+import com.erp.model.tms.entity.LogisticsReconDetailSubEntity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -430,7 +432,7 @@ public class LogisticsReconDTO implements Serializable {
         private String userId;
 
         /**
-         * 导入过程缓存：识别单号分组键 → 已落库明细 id（跨批次合并同单费用项）
+         * 导入过程缓存：Excel rowNo → 已落库明细 id（与库表 main_id + row_no 一致；导入不合并）
          */
         private Map<String, String> importDetailKeyMap;
 
@@ -443,6 +445,16 @@ public class LogisticsReconDTO implements Serializable {
          * 导入过程缓存：明细 id + 费用名称 → 已落库费用项 id（同 Excel 重导时按费用名更新）
          */
         private Map<String, String> importDetailSubKeyMap;
+
+        /**
+         * 重导缓存：明细 id + 费用名 → 库内费用项快照（更新时保留 seq_no / version 等字段）
+         */
+        private Map<String, LogisticsReconDetailSubEntity> importDetailSubSnapshotMap;
+
+        /**
+         * 重导缓存：明细 id → 库内明细快照（更新时保留 version 等字段）
+         */
+        private Map<String, LogisticsReconDetailEntity> importDetailSnapshotMap;
 
         /**
          * 是否为同 Excel 覆盖更新待确认对账单（否则为新增主表导入）
