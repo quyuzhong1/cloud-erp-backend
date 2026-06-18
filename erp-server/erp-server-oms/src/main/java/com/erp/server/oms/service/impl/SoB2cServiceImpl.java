@@ -5245,7 +5245,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 .filter(Objects::nonNull)
                 .collect(Collectors.toMap(
                         e -> e.getSkuId() + "-" + e.getSoDetailId(),
-                        e -> e
+                        e -> e,
+                        (existing, replacement) -> replacement // 覆盖
                 )) : Collections.emptyMap();
         //产品信息
         List<String> skuIdList = list.stream().flatMap(obj -> Stream.of(allDetailList.stream().map(SoB2cDetailEntity::getSkuId).toArray(String[]::new))).distinct().collect(Collectors.toList());
