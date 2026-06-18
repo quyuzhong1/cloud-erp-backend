@@ -50,7 +50,6 @@ public interface WmsConstant {
      */
     String QC_ATTACHMENT="qcAttachment";
 
-
     /**
      * 质检结果处理措施
      */
