@@ -4,13 +4,17 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
-import com.erp.model.dmp.constant.DmpOutputConstant;
+import com.erp.model.dmp.dto.CfgSettingDTO;
 import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
@@ -21,18 +25,23 @@ import com.erp.model.scm.entity.ScmPushMsgEntity;
 import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
 import com.erp.model.scm.entity.SubcontractOrderEntity;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.kingdee.SyncKingdeeSubcontractBOMService;
 import com.erp.server.scm.service.ScmPushMsgService;
 import com.erp.server.scm.service.SubcontractOrderDetailService;
 import com.erp.server.scm.service.SubcontractOrderService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @Author: wtr
@@ -60,19 +69,27 @@ public class SyncKingdeeSubcontractBOMServiceImpl implements SyncKingdeeSubcontr
     @Resource
     private DmpMqFeign dmpMqFeign;
 
+    @Resource
+    private WmsTaskFeign wmsTaskFeign;
+
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
+
     /**
      * 组装数据发送到金蝶
      */
     @Override
+    public DmpPushTaskEntity syncDataToKingdee(SubcontractBOMDTO.KingdeeSubcontractBOMDTO dto, String operate) {
+        Map<String, Object> resultMap = this.newSyncDataToKingdee(dto, operate);
+        return ApplicationContextUtils.getBean(SyncKingdeeSubcontractBOMServiceImpl.class)
+                .saveTaskInTransaction(dto, operate, resultMap);
+    }
+
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    public DmpPushTaskEntity syncDataToKingdee(SubcontractBOMDTO.KingdeeSubcontractBOMDTO dto, String operate) {
-        //生成任务
-        if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-            return saveTask(dto, operate, DmpOutputConstant.getQuerySyncMap());
-        }else {
-            return saveTask(dto, operate, this.newSyncDataToKingdee(dto, operate));
-        }
+    public DmpPushTaskEntity saveTaskInTransaction(SubcontractBOMDTO.KingdeeSubcontractBOMDTO dto, String operate,
+            Map<String, Object> resultMap) {
+        return saveTask(dto, operate, resultMap);
     }
 
     private DmpPushTaskEntity saveTask (SubcontractBOMDTO.KingdeeSubcontractBOMDTO dto, String operate, Map<String, Object> resultMap) {
@@ -127,11 +144,17 @@ public class SyncKingdeeSubcontractBOMServiceImpl implements SyncKingdeeSubcontr
         //委外用料清单号
         resultMap.put("FBillNo", dto.getCode());
 
-        resultMap.put("syncKingdeeId", dto.getSyncKingdeeId());
+        SubcontractOrderEntity subcontractOrderEntity = subcontractOrderService.getById(dto.getSourceId());
+        if (subcontractOrderEntity == null) {
+            throw new ServiceException(ApiError.PO_SUBCONTRACT_ORDER_NOT_FOUND);
+        }
+        String syncKingdeeId = StringUtils.isNotBlank(dto.getSyncKingdeeId())
+                ? dto.getSyncKingdeeId()
+                : subcontractOrderEntity.getSyncKingdeeId();
+        resultMap.put("syncKingdeeId", syncKingdeeId);
 
         resultMap.put("TargetBillTypeId", "SUB_OutSrcBOMChange");
 
-        SubcontractOrderEntity subcontractOrderEntity = subcontractOrderService.getById(dto.getSourceId());
         SysAccountingCompanyEntity accountCompany = sysUserFeign.getCompanyById(subcontractOrderEntity.getSubcontractOrgId());
         if (Objects.nonNull(accountCompany)) {
             //委外组织
@@ -145,16 +168,67 @@ public class SyncKingdeeSubcontractBOMServiceImpl implements SyncKingdeeSubcontr
 
         List<SubcontractOrderDetailEntity> subcontractOrderDetailList = subcontractOrderDetailService.listByMainId(dto.getSourceId());
 
+        List<String> warehouseIdList = subcontractOrderDetailList.stream()
+                .map(SubcontractOrderDetailEntity::getWarehouseId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        List<WarehouseDTO.UpdateDTO> warehouseList = CollectionUtils.isEmpty(warehouseIdList)
+                ? Collections.emptyList()
+                : wmsTaskFeign.listWarehouseByIds(warehouseIdList);
+        if (!CollectionUtils.isEmpty(warehouseIdList) && (warehouseList == null || CollectionUtils.isEmpty(warehouseList))) {
+            throw new ServiceException(ApiError.WH_PARAM_NOT_FOUND, warehouseIdList.get(0));
+        }
+        List<CfgSettingDTO.WarehouseLocationSettingDTO> pushKingdeeList = CollectionUtils.isEmpty(warehouseIdList)
+                ? Collections.emptyList()
+                : dmpTaskFeign.isPushKingdeeWarehouseLocation(warehouseIdList);
+        if (pushKingdeeList == null) {
+            pushKingdeeList = Collections.emptyList();
+        }
+        Map<String, WarehouseDTO.UpdateDTO> warehouseMap = CollectionUtils.isEmpty(warehouseList)
+                ? Collections.emptyMap()
+                : warehouseList.stream()
+                        .filter(Objects::nonNull)
+                        .filter(item -> StringUtils.isNotBlank(item.getId()))
+                        .collect(Collectors.toMap(WarehouseDTO.UpdateDTO::getId, item -> item, (oldValue, newValue) -> oldValue));
+        Map<String, Boolean> pushKingdeeMap = pushKingdeeList.stream()
+                .filter(Objects::nonNull)
+                .filter(item -> StringUtils.isNotBlank(item.getWarehouseId()))
+                .collect(Collectors.toMap(CfgSettingDTO.WarehouseLocationSettingDTO::getWarehouseId,
+                        item -> Boolean.TRUE.equals(item.getIsPush()), (oldValue, newValue) -> oldValue));
+        Map<String, SubcontractOrderDetailEntity> detailMap = subcontractOrderDetailList.stream()
+                .filter(item -> StringUtils.isNotBlank(item.getId()))
+                .collect(Collectors.toMap(SubcontractOrderDetailEntity::getId, item -> item, (oldValue, newValue) -> oldValue));
+
         List<JSONObject> list = new ArrayList<>();
         for (SubcontractOrderDetailEntity subcontractOrderDetailEntity : subcontractOrderDetailList) {
             JSONObject jsonObject = new JSONObject();
-            jsonObject.set("detailId",subcontractOrderDetailEntity.getId());
-            jsonObject.set("parentId",subcontractOrderDetailEntity.getParentId());
+            jsonObject.set("detailId", subcontractOrderDetailEntity.getId());
+            jsonObject.set("parentId", subcontractOrderDetailEntity.getParentId());
             //产品编码
             jsonObject.set("FMaterialID", subcontractOrderDetailEntity.getSkuNo());
+            String warehouseId = subcontractOrderDetailEntity.getWarehouseId();
+            String warehouseLocation = subcontractOrderDetailEntity.getWarehouseLocation();
+            if (StringUtils.isBlank(warehouseId) && StringUtils.isNotBlank(subcontractOrderDetailEntity.getParentId())) {
+                SubcontractOrderDetailEntity parentDetail = detailMap.get(subcontractOrderDetailEntity.getParentId());
+                if (parentDetail != null) {
+                    warehouseId = parentDetail.getWarehouseId();
+                    warehouseLocation = parentDetail.getWarehouseLocation();
+                }
+            }
+            if (StringUtils.isNotBlank(warehouseId)) {
+                WarehouseDTO.UpdateDTO warehouse = warehouseMap.get(warehouseId);
+                if (warehouse == null || StringUtils.isBlank(warehouse.getKingdeeWarehouseCode())) {
+                    throw new ServiceException(ApiError.WH_PARAM_NOT_FOUND, warehouseId);
+                }
+                jsonObject.set("warehouseCode", warehouse.getKingdeeWarehouseCode());
+                if (Boolean.TRUE.equals(pushKingdeeMap.get(warehouseId))) {
+                    jsonObject.set("warehouseLocation", warehouseLocation);
+                }
+            }
             list.add(jsonObject);
         }
-        resultMap.put("list",list);
+        resultMap.put("list", list);
         return resultMap;
     }
 }
