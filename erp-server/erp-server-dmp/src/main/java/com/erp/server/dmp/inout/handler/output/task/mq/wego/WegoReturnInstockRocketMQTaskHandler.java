@@ -156,6 +156,7 @@ public class WegoReturnInstockRocketMQTaskHandler extends DmpOutputRocketMQTaskH
         d.setReceiveQty(detail.getReceiveQty());
         d.setRealQty(detail.getRealQty());
         d.setThirdId(detail.getThirdDetailId());
+        d.setDefectiveProductFlag(detail.getDefectiveProductFlag());
         return d;
     }
 

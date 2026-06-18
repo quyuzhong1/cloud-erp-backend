@@ -42,6 +42,12 @@ public class WegoReturnInstockDmpHandler extends DmpInputDbConvertDmpHandler {
     private static final String MONGO_KEY_ARRIVAL_DATE = "arrivalDate";
     /** WEGO API 返回的订单创建日期字段名 */
     private static final String MONGO_KEY_DATE = "date";
+    /** WEGO API 返回的库存类型字段名：3=不良品，其余=可用 */
+    private static final String MONGO_KEY_INVENTORY_TYPE = "inventoryType";
+    /** WEGO 不良品库存类型值 */
+    private static final int INVENTORY_TYPE_DEFECTIVE = 3;
+    /** DMP 明细字段：是否不良品 */
+    private static final String DMP_KEY_DEFECTIVE_PRODUCT_FLAG = "defectiveProductFlag";
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
@@ -58,11 +64,12 @@ public class WegoReturnInstockDmpHandler extends DmpInputDbConvertDmpHandler {
                 continue;
             }
 
-            // 从 mongo 原始数据中取到仓日期 / 订单创建日期
+            // 从 mongo 原始数据中取到仓日期 / 订单创建日期 / 库存类型
             Map<String, Object> mongoData = (mongoDataList != null && !mongoDataList.isEmpty())
                     ? mongoDataList.get(0) : null;
             LocalDateTime putAwayTime = resolveArrivalDateTime(mongoData);
             LocalDateTime platformCreateTime = resolveCreateDateTime(mongoData);
+            Boolean defectiveProductFlag = resolveDefectiveProductFlag(mongoData);
 
             for (TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
                 // 强制覆盖为海外仓类型，与 WegoInBoundDmpHandler 策略一致
@@ -74,6 +81,9 @@ public class WegoReturnInstockDmpHandler extends DmpInputDbConvertDmpHandler {
                 }
                 if (platformCreateTime != null) {
                     dmpDataMap.put(DMP_KEY_PLATFORM_CREATE_TIME, platformCreateTime);
+                }
+                if (defectiveProductFlag != null) {
+                    dmpDataMap.put(DMP_KEY_DEFECTIVE_PRODUCT_FLAG, defectiveProductFlag);
                 }
             }
         }
@@ -119,6 +129,29 @@ public class WegoReturnInstockDmpHandler extends DmpInputDbConvertDmpHandler {
         try {
             return LocalDate.parse(date.trim(), DATE_FORMATTER).atStartOfDay();
         } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
+     * 将 WEGO {@code inventoryType} 转换为是否不良品标识。
+     * <ul>
+     *   <li>3（不良品库存） → true</li>
+     *   <li>0（2C库存）/ 1（2B库存）/ null → false</li>
+     * </ul>
+     */
+    private Boolean resolveDefectiveProductFlag(Map<String, Object> mongoData) {
+        if (mongoData == null) {
+            return null;
+        }
+        Object inventoryTypeObj = mongoData.get(MONGO_KEY_INVENTORY_TYPE);
+        if (inventoryTypeObj == null) {
+            return null;
+        }
+        try {
+            int inventoryType = Integer.parseInt(inventoryTypeObj.toString());
+            return inventoryType == INVENTORY_TYPE_DEFECTIVE;
+        } catch (NumberFormatException e) {
             return null;
         }
     }
