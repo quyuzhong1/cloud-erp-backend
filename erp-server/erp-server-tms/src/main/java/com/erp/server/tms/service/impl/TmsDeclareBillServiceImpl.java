@@ -3252,16 +3252,6 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     }
 
     /**
-     * BOM 拆分子 SKU 在 so_detail 中无独立行，需回退到父 SKU 取销售单价/币别。
-     */
-    private String resolveSoDetailSkuId(TmsDeclareBillDTO.SourceDeliveryDetailDTO detailDTO) {
-        if (StringUtils.isNotBlank(detailDTO.getParentSkuId())) {
-            return detailDTO.getParentSkuId();
-        }
-        return detailDTO.getSkuId();
-    }
-
-    /**
      * 准备前端提交的报关明细
      * <p>
      * 该方法负责处理前端传入的合并报关明细列表，根据是否启用合并模式进行不同的处理：
@@ -4007,7 +3997,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         detailDTO.setUnit(productLogisticsDTO.getDeclareUnit());
         detailDTO.setUnitName(declareUnitNameMap.get(productLogisticsDTO.getDeclareUnit()));
 
-        SoDetailEntity soDetailEntity = soDetailMap.get(buildSoDetailKey(detailDTO.getBusinessId(), resolveSoDetailSkuId(detailDTO)));
+        SoDetailEntity soDetailEntity = soDetailMap.get(buildSoDetailKey(detailDTO.getBusinessId(), detailDTO.resolveSoDetailSkuId()));
 
         if (sixDimensionMerge && Objects.nonNull(soDetailEntity)) {
             // B2B 按客户分发场景：单价/币别/币别符号取 so_detail 销售含税单价及对应币种。
