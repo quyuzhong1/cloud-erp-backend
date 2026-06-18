@@ -87,5 +87,8 @@ public class PlatformReturnInstockDTO extends UniqueDto {
 
         //明细唯一ID
         private String thirdId;
+
+        //是否不良品（true=不良品，false=可用），各平台按需填写，null 时由数据库默认值兜底
+        private Boolean defectiveProductFlag;
     }
 }

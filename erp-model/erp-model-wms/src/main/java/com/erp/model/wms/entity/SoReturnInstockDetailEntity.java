@@ -200,10 +200,10 @@ public class SoReturnInstockDetailEntity extends BaseEntity<SoReturnInstockDetai
     private BigDecimal taxPrice;
 
     /**
-     * 入库库存状态ID（来自金蝶FStockstatusId）
+     * 是否不良品（true=不良品，false=可用），默认可用
      */
-    @TableField("stock_status_id")
-    private String stockStatusId;
+    @TableField("defective_product_flag")
+    private Boolean defectiveProductFlag;
 
     public static final String MAIN_ID = "main_id";
 

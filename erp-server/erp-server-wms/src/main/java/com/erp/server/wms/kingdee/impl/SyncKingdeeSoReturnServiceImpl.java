@@ -23,6 +23,7 @@ import com.erp.model.dmp.constant.DmpOutputConstant;
 import com.erp.model.dmp.dto.CfgSettingDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
+import com.erp.model.dmp.enums.KingdeeStockStatusEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.dto.DictBasicDTO;
@@ -428,7 +429,9 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             //库存组织
             map.put("inventoryOrgCode", inventoryOrgCode);
             //入库库存状态
-            map.put("stockStatusId", detailEntity.getStockStatusId());
+            map.put("stockStatusId", Boolean.TRUE.equals(detailEntity.getDefectiveProductFlag())
+                    ? KingdeeStockStatusEnum.DEFECTIVE.getCode()
+                    : KingdeeStockStatusEnum.USABLE.getCode());
             //备注
             map.put("remark", detailEntity.getRemark());
             if (ObjectUtils.isNotEmpty(soReturnEntity)) {
