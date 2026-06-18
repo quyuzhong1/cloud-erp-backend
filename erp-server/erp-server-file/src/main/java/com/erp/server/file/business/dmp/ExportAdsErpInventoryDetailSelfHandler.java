@@ -6,13 +6,10 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.AdsErpInventoryDiffFlowDetailDTO;
 import com.erp.rpc.dmp.feign.ExportDmpFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
-import com.erp.model.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.List;
 
 /**
  * 导出
@@ -31,11 +28,6 @@ public class ExportAdsErpInventoryDetailSelfHandler extends AbstractPageFileEven
         return exportDmpFeign.exportAdsErpInventoryDetailSelf(dto);
     }
 
-    @Override
-    protected List<AdsErpInventoryDiffFlowDetailDTO.SourceSelfDTO> getData(FileTask fileTask) {
-        AdsErpInventoryDiffFlowDetailDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<AdsErpInventoryDiffFlowDetailDTO.PagingParamDTO>() {});
-        return listSeqData(dto);
-    }
 
     @Override
     protected String getExcelPath() {

@@ -6,13 +6,10 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.SupplierVisitDTO;
 import com.erp.rpc.scm.feign.ExportScmFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
-import com.erp.model.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.List;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_SUPPLIER_VISIT_REPORT;
 
@@ -32,12 +29,6 @@ public class ExportScmSupplierVisitHandler extends AbstractPageFileEventHandler<
         return EXPORT_SCM_SUPPLIER_VISIT_REPORT;
     }
 
-    @Override
-    protected List<SupplierVisitDTO.ListDTO> getData(FileTask fileTask) {
-        SupplierVisitDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<SupplierVisitDTO.PagingParamDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected PagingVO<SupplierVisitDTO.ListDTO> getPageData(PagingDTO<SupplierVisitDTO.PagingParamDTO> dto) {

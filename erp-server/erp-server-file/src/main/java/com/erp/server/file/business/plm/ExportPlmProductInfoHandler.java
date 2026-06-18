@@ -1,201 +1,105 @@
 package com.erp.server.file.business.plm;
 
-import cn.hutool.core.lang.Pair;
-import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.FileTaskEventEnum;
-import com.common.business.vo.PagingVO;
-import com.common.core.excel.ExcelPrintUtils;
-import com.common.core.utils.FastDFSClientUtil;
-import com.common.core.utils.date.DateUtil;
+import com.common.core.exception.ServiceException;
 import com.erp.model.plm.dto.ProductSearchDTO;
-import com.erp.model.plm.dto.ProductShowDTO;
-import com.erp.model.plm.dto.excel.TaskExportDTO;
+import com.erp.model.plm.enums.ProductDevelopExportEventMapping;
+import com.erp.model.plm.enums.ProductDevelopExportTypeEnum;
 import com.erp.rpc.plm.feign.ExportPlmFeign;
-import com.erp.server.file.core.AbstractPageFileEventHandler;
+import com.erp.server.file.core.multisheet.AbstractStreamingMultiSheetHandler;
+import com.erp.server.file.core.multisheet.MultiSheetTemplateWriter;
 import com.erp.model.file.entity.FileTask;
-import com.erp.server.file.exception.BusinessException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_PRODUCT;
 
 /**
  * 产品开发导出
- * @date 2025-02-14
+ *
  * @author jack
+ * @date 2025-02-14
  */
 @Component
-@Slf4j
-public class ExportPlmProductInfoHandler extends AbstractPageFileEventHandler<T, ProductSearchDTO.ExportDTO> {
+public class ExportPlmProductInfoHandler extends AbstractStreamingMultiSheetHandler<ProductSearchDTO.ExportDTO> {
+
+    private static final Integer EXPORT_PRODUCT = ProductDevelopExportTypeEnum.PRODUCT.getCode();
+    private static final Integer EXPORT_TASK = ProductDevelopExportTypeEnum.TASK.getCode();
 
     @Resource
     private ExportPlmFeign exportPlmFeign;
 
-    private List<ProductShowDTO> getProductShow(ProductSearchDTO.ExportDTO p) {
-        PagingDTO<ProductSearchDTO.ExportDTO> dto = new PagingDTO<>();
-        dto.setPageSize(getPageSize());
-        dto.setCurrPage(getFirstPage());
-        List<ProductShowDTO> dataList = new ArrayList<>();
-        boolean hasNext = true;
-        int totalCount = 0;
-        while (hasNext) {
-            dto.setParams(p);
-            PagingVO<ProductShowDTO> data = getProductShowPageData(dto);
-            if (!CollectionUtils.isEmpty(data.getList())) {
-                dataList.addAll(data.getList());
-            }
-            if (totalCount == 0) {
-                totalCount = data.getTotalCount();
-            }
-            if (1 == getFirstPage()) {
-                if (totalCount <= dto.getCurrPage() * getPageSize()) {
-                    hasNext = false;
-                }
-            } else {
-                if (totalCount <= (dto.getCurrPage() + 1) * getPageSize()) {
-                    hasNext = false;
-                }
-            }
-            dto.setCurrPage(dto.getCurrPage() + 1);
+    /**
+     * 解析导出参数：当上游仅切换 event 而未在 metaInfo 中携带 exportDataList 时，
+     * 根据 {@link FileTask#getEvent()} 兜底推导导出类型，并在此处完成唯一一次校验，
+     * 后续 {@link #getExcelPath} / {@link #sheets} 直接复用已规范化的 exportDataList。
+     */
+    @Override
+    protected ProductSearchDTO.ExportDTO resolveExportParams(FileTask fileTask) {
+        ProductSearchDTO.ExportDTO params = super.resolveExportParams(fileTask);
+        if (params == null) {
+            throw new ServiceException(ProductDevelopExportTypeEnum.validateCombinationMessage(null));
         }
-        return dataList;
-    }
-    private PagingVO<ProductShowDTO> getProductShowPageData(PagingDTO<ProductSearchDTO.ExportDTO> dto) {
-        return exportPlmFeign.exportProductShow(dto);
-    }
-
-    private List<TaskExportDTO.ProductTaskExcelDTO> getProductTask(ProductSearchDTO.ExportDTO p) {
-        PagingDTO<ProductSearchDTO.ExportDTO> dto = new PagingDTO<>();
-        dto.setPageSize(getPageSize());
-        dto.setCurrPage(getFirstPage());
-        List<TaskExportDTO.ProductTaskExcelDTO> dataList = new ArrayList<>();
-        boolean hasNext = true;
-        int totalCount = 0;
-        while (hasNext) {
-            dto.setParams(p);
-            PagingVO<TaskExportDTO.ProductTaskExcelDTO> data = getProductTaskPageData(dto);
-            if (!CollectionUtils.isEmpty(data.getList())) {
-                dataList.addAll(data.getList());
-            }
-            if (totalCount == 0) {
-                totalCount = data.getTotalCount();
-            }
-            if (1 == getFirstPage()) {
-                if (totalCount <= dto.getCurrPage() * getPageSize()) {
-                    hasNext = false;
-                }
-            } else {
-                if (totalCount <= (dto.getCurrPage() + 1) * getPageSize()) {
-                    hasNext = false;
-                }
-            }
-            dto.setCurrPage(dto.getCurrPage() + 1);
+        if (CollectionUtils.isEmpty(params.getExportDataList())) {
+            params.setExportDataList(deriveExportDataListByEvent(fileTask.getEvent()));
         }
-        return dataList;
-
-    }
-    private PagingVO<TaskExportDTO.ProductTaskExcelDTO> getProductTaskPageData(PagingDTO<ProductSearchDTO.ExportDTO> dto) {
-        return exportPlmFeign.exportProjectTask(dto);
-    }
-
-    @Override
-    public void handle(FileTask fileTask) {
-        StringBuilder sb = new StringBuilder();
-        String name = fileTask.getFileName();
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        ProductSearchDTO.ExportDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<ProductSearchDTO.ExportDTO>() {});
-        /**
-         * 导出数据 类型
-         * 0，产品列表
-         * 1. 任务列表
-         */
-        List<Integer> exportDataList = dto.getExportDataList();
-        int size = exportDataList.size();
-        Integer flag = exportDataList.get(0);
-
-        if (size == 2) {
-            List<ProductShowDTO> productShow = getProductShow(dto);
-            fileTask.setCount(productShow.size());
-
-            List<TaskExportDTO.ProductTaskExcelDTO> productTask = getProductTask(dto);
-
-            List<Pair<Integer, List<?>>> pairList = new ArrayList<>();
-            pairList.add(new Pair(0, productShow));
-            pairList.add(new Pair(1, productTask));
-            String excelPath = "excel/plm/productDevelop.xlsx";
-
-            sb.append(date);
-            sb.append(name);
-            sb.append(excelPath.substring(excelPath.lastIndexOf(".")));
-            try {
-                byte[] bytes = new ExcelPrintUtils().sheetPatchExport(pairList, sb.toString(),excelPath);
-                String s = FastDFSClientUtil.uploadFile(bytes, sb.toString(), null);
-                fileTask.setFileUrl(s);
-            } catch (IOException e) {
-                log.error("上传文件失败{}", e.getMessage(), e);
-                throw new BusinessException(e.getMessage());
-            }
-        }else {
-            if ( 0 == flag) {
-                //产品导出
-                List<ProductShowDTO> productShow = getProductShow(dto);
-                fileTask.setCount(productShow.size());
-                String excelPath = "excel/plm/product.xlsx";
-                sb.append(date);
-                sb.append(name);
-                sb.append(excelPath.substring(excelPath.lastIndexOf(".")));
-                try {
-                    byte[] bytes = new ExcelPrintUtils().patchExport(productShow, excelPath);
-                    String s = FastDFSClientUtil.uploadFile(bytes, sb.toString(), null);
-                    fileTask.setFileUrl(s);
-                } catch (IOException e) {
-                    log.error("上传文件失败{}", e.getMessage(), e);
-                    throw new BusinessException(e.getMessage());
-                }
-            }else {
-                //任务列表
-                List<TaskExportDTO.ProductTaskExcelDTO> productTask = getProductTask(dto);
-                fileTask.setCount(productTask.size());
-
-                String excelPath = "excel/plm/productTask.xlsx";
-                sb.append(date);
-                sb.append(name);
-                sb.append(excelPath.substring(excelPath.lastIndexOf(".")));
-                try {
-                    byte[] bytes = new ExcelPrintUtils().patchExport(productTask, excelPath);
-                    String s = FastDFSClientUtil.uploadFile(bytes, sb.toString(), null);
-                    fileTask.setFileUrl(s);
-                } catch (IOException e) {
-                    log.error("上传文件失败{}", e.getMessage(), e);
-                    throw new BusinessException(e.getMessage());
-                }
-            }
+        String validateMessage = ProductDevelopExportTypeEnum.validateCombinationMessage(params.getExportDataList());
+        if (validateMessage != null) {
+            throw new ServiceException(validateMessage);
         }
-    }
-
-
-    @Override
-    protected PagingVO<T> getPageData(PagingDTO<ProductSearchDTO.ExportDTO> dto) {
-        return null;
+        return params;
     }
 
     @Override
-    protected List<T> getData(FileTask fileTask) {
-        return null;
+    protected String getExcelPath(ProductSearchDTO.ExportDTO params) {
+        List<Integer> exportDataList = params.getExportDataList();
+        // 双 Sheet 以元素语义（contains）判定，非旧版 size==2；非法组合（如 [0,0]）已在 resolveExportParams / PLM 建任务侧由 validateCombinationMessage 拒绝（审查勿误报为行为回退）。
+        boolean exportProduct = exportDataList.contains(EXPORT_PRODUCT);
+        boolean exportTask = exportDataList.contains(EXPORT_TASK);
+        if (exportProduct && exportTask) {
+            return "excel/plm/productDevelop.xlsx";
+        }
+        if (exportProduct) {
+            return "excel/plm/product.xlsx";
+        }
+        if (exportTask) {
+            return "excel/plm/productTask.xlsx";
+        }
+        throw new ServiceException("导出数据类型不合法：" + exportDataList);
     }
 
     @Override
-    protected String getExcelPath() {
-        return "";
+    protected List<MultiSheetTemplateWriter.IndependentSheet<ProductSearchDTO.ExportDTO>> sheets(ProductSearchDTO.ExportDTO params) {
+        List<Integer> exportDataList = params.getExportDataList();
+        // 列表顺序决定 streamIndependent 的「主 sheet」与 fileTask.count：首项为产品（若存在），与旧 handle 仅记产品条数一致；勿调整顺序。
+        List<MultiSheetTemplateWriter.IndependentSheet<ProductSearchDTO.ExportDTO>> sheets = new ArrayList<>(exportDataList.size());
+        if (exportDataList.contains(EXPORT_PRODUCT)) {
+            sheets.add(new MultiSheetTemplateWriter.IndependentSheet<>(params, dto -> exportPlmFeign.exportProductShow(dto)));
+        }
+        if (exportDataList.contains(EXPORT_TASK)) {
+            sheets.add(new MultiSheetTemplateWriter.IndependentSheet<>(params, dto -> exportPlmFeign.exportProjectTask(dto)));
+        }
+        return sheets;
+    }
+
+    /**
+     * 根据 event 兜底推导导出类型，保证仅切换 event 的新事件也能正确导出。
+     */
+    private List<Integer> deriveExportDataListByEvent(String event) {
+        List<Integer> exportDataList = ProductDevelopExportEventMapping.exportDataListFromEventCode(event);
+        if (exportDataList == null) {
+            throw new ServiceException("无法根据导出事件解析数据类型，event=" + event);
+        }
+        return new ArrayList<>(exportDataList);
+    }
+
+    @Override
+    public boolean isMatch(String event) {
+        return ProductDevelopExportEventMapping.exportDataListFromEventCode(event) != null;
     }
 
     @Override

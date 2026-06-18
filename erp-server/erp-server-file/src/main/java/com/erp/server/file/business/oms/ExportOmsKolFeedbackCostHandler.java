@@ -6,12 +6,9 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.KolFeedbackCostDTO;
 import com.erp.rpc.oms.feign.ExportOmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
-import com.erp.model.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
-import java.util.List;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_KOL_FEEDBACK_COST;
 
 /**
@@ -31,11 +28,6 @@ public class ExportOmsKolFeedbackCostHandler extends AbstractPageFileEventHandle
         return exportOmsFeign.exportKolFeedbackCost(dto);
     }
 
-    @Override
-    protected List<KolFeedbackCostDTO.ListDTO> getData(FileTask fileTask) {
-        KolFeedbackCostDTO.ParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<KolFeedbackCostDTO.ParamDTO>() {});
-        return listSeqData(dto);
-    }
 
     @Override
     protected String getExcelPath() {

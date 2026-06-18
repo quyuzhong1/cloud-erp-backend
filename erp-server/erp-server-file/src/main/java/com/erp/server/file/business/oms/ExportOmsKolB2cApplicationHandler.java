@@ -6,13 +6,10 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.KolB2cApplicationDTO;
 import com.erp.rpc.oms.feign.ExportOmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
-import com.erp.model.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.List;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_KOL_B2C_APPLICATION;
 
@@ -33,11 +30,6 @@ public class ExportOmsKolB2cApplicationHandler extends AbstractPageFileEventHand
         return exportOmsFeign.exportOmsKolB2cApplication(dto);
     }
 
-    @Override
-    protected List<KolB2cApplicationDTO.ListDTO> getData(FileTask fileTask) {
-        KolB2cApplicationDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<KolB2cApplicationDTO.PagingParamDTO>() {});
-        return listSeqData(dto);
-    }
 
     @Override
     protected String getExcelPath() {

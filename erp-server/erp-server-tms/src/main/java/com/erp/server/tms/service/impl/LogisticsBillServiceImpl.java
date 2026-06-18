@@ -933,8 +933,15 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         LocalDateTime now = LocalDateTime.now();
         String signCode = LogisticTrackStatusEnum.SIGN.getCode();
         //销售平台字典表数据
-        List<DictBasicEntity> salesPlatformList = dictBasicService.getByKey(DictBasicTypeEnum.SALES_PLATFORM.getType());
-        Map<String, String> salesPlatformMap = CollUtil.isEmpty(salesPlatformList) ? new HashMap<>() : salesPlatformList.stream().collect(Collectors.toMap(DictBasicEntity::getCode, DictBasicEntity::getName));
+        Map<String, String> salesPlatformMap = new HashMap<>();
+        List<com.erp.model.oms.entity.DictBasicEntity> salesPlatformList = FeignQuery.create(com.erp.model.oms.entity.DictBasicEntity.class)
+                .eq(com.erp.model.oms.entity.DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType())
+                .eq(com.erp.model.oms.entity.DictBasicEntity::getStatus, Boolean.TRUE)
+                .eq(com.erp.model.oms.entity.DictBasicEntity::getIsDeleted, Boolean.FALSE)
+                .list();
+        if(CollectionUtils.isNotEmpty(salesPlatformList)){
+            salesPlatformMap = salesPlatformList.stream().collect(Collectors.toMap(com.erp.model.oms.entity.DictBasicEntity::getValue, com.erp.model.oms.entity.DictBasicEntity::getName));
+        }
         //供应商
         List<String> supplierIds = list.stream().map(LogisticsBillDTO.PagingVO::getLogisticsSupplierId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         Map<String, String> supplierMap = new HashMap<>();

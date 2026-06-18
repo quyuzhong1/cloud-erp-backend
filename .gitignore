@@ -38,3 +38,6 @@ erp-common/erp-common-business/mvnw.cmd
 erp-common/erp-common-business/.mvn/
 rebel.xml
 /.agents
+
+### Cursor 个人本地规则（不提交，体验后再决定是否转公共规则） ###
+.cursor/rules/*.local.mdc
