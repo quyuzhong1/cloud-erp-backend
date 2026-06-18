@@ -343,6 +343,325 @@ public class TmsAsyncTaskRecordDTO implements Serializable {
          * 任务开始时间 yyyy-MM-dd
          */
         private String startTimeStr;
+
+        /**
+         * 主任务执行超时时间（秒）。
+         * 自动周期任务创建时应传入对账周期配置中的单据超时；为空时由 {@code addAutoTask} 回退批次配置。
+         */
+        private Integer execTimeout;
+    }
+
+    /**
+     * TMS 异步任务信封。
+     * 调度、重试和载荷路由字段放在信封层，业务参数放入 payloadJson。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TaskEnvelopeDTO implements Serializable {
+
+        /**
+         * 单据类型
+         */
+        private String businessType;
+
+        /**
+         * 方法类型：同一 business_type 下区分不同方法
+         */
+        private String methodType;
+
+        /**
+         * 重试模式：FAILED_ONLY 表示按来源任务失败明细分页执行
+         */
+        private String retryMode;
+
+        /**
+         * 错误重试来源任务
+         */
+        private String retrySourceTaskId;
+
+        /**
+         * 业务载荷类型，默认使用 businessType:methodType 约定。
+         */
+        private String payloadType;
+
+        /**
+         * 业务载荷版本，用于后续载荷结构演进。
+         */
+        private Integer payloadVersion;
+
+        /**
+         * 任务提交人 ID
+         */
+        private String operatorUserId;
+
+        /**
+         * 任务提交人名称
+         */
+        private String operatorUserName;
+
+        /**
+         * 业务载荷 JSON
+         */
+        private String payloadJson;
+    }
+
+    /**
+     * 小包费用分摊下推载荷。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SmallBagPushAllocationPayloadDTO implements Serializable {
+
+        /**
+         * 核算日期
+         */
+        private String reportDate;
+
+        /**
+         * 费用类型：自发货/尾程
+         */
+        private String type;
+    }
+
+    /**
+     * 头程费用分摊下推载荷。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class FirstMilePushAllocationPayloadDTO implements Serializable {
+
+        /**
+         * 核算日期 yyyy-MM。
+         */
+        private String reportDate;
+    }
+
+    /**
+     * 头程费用分摊更新核算状态载荷。
+     * <p>
+     * 仅持久化核算期间与目标状态/会计期间；游标、批次大小和重试元数据由框架运行时注入，不写入 payload。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class FirstMileUpdateReportStatusPayloadDTO implements Serializable {
+
+        /**
+         * 核算期间 yyyy-MM。
+         */
+        private String reportPeriodStr;
+
+        /**
+         * 目标核算状态（亦作候选记录筛选条件）。
+         */
+        private String reportStatus;
+
+        /**
+         * 目标会计期间。
+         */
+        private String reportDate;
+    }
+
+    /**
+     * 头程费用分摊按核算期间批量操作载荷（重新分摊、删除等）。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class FirstMileReportPeriodBatchPayloadDTO implements Serializable {
+
+        private String reportPeriodStr;
+
+        /**
+         * 候选记录筛选条件（如待确认状态）。
+         */
+        private String reportStatus;
+    }
+
+    /**
+     * 小包费用分摊更新核算状态载荷。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SmallBagUpdateReportStatusPayloadDTO implements Serializable {
+
+        /**
+         * 核算期间 yyyy-MM。
+         */
+        private String reportPeriodStr;
+
+        /**
+         * 目标核算状态（亦作候选记录筛选条件）。
+         */
+        private String reportStatus;
+
+        /**
+         * 目标会计期间。
+         */
+        private String reportDate;
+    }
+
+    /**
+     * 小包费用分摊按核算期间批量操作载荷（重新分摊、删除等）。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SmallBagReportPeriodBatchPayloadDTO implements Serializable {
+
+        private String reportPeriodStr;
+
+        private String reportStatus;
+    }
+
+    /**
+     * 中转费用分摊更新核算状态载荷。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TransferDeclareUpdateReportStatusPayloadDTO implements Serializable {
+
+        /**
+         * 核算期间 yyyy-MM。
+         */
+        private String reportPeriodStr;
+
+        /**
+         * 目标核算状态（亦作候选记录筛选条件）。
+         */
+        private String reportStatus;
+
+        /**
+         * 目标会计期间。
+         */
+        private String reportDate;
+    }
+
+    /**
+     * 中转费用分摊按核算期间批量操作载荷（重新分摊、删除等）。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TransferDeclareReportPeriodBatchPayloadDTO implements Serializable {
+
+        private String reportPeriodStr;
+
+        private String reportStatus;
+    }
+
+    /**
+     * 尾程费用对账状态变更载荷。
+     * <p>
+     * 仅持久化目标状态、确认时间、高级查询与数据权限 SQL；费用归属由 methodType 区分，不写入 payload。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UpdateReconciliationStatusPayloadDTO implements Serializable {
+
+        /**
+         * 目标对账状态
+         */
+        private String reconciliationStatus;
+
+        /**
+         * 对账确认时间
+         */
+        private LocalDateTime confirmTime;
+
+        /**
+         * 页面高级查询生成的 SQL 条件
+         */
+        private Map<String, String> sqlMap;
+
+        /**
+         * 数据权限 SQL
+         */
+        private String permissionSql;
+    }
+
+    /**
+     * 中转费用分摊下推载荷。
+     * <p>
+     * 仅持久化 B2C 报关对账审核日期查询范围；游标、批次大小和重试元数据由框架运行时注入，不写入 payload。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TransferDeclarePushAllocationPayloadDTO implements Serializable {
+
+        /**
+         * B2C 报关对账审核日期范围起始（含）。
+         */
+        private LocalDate startDate;
+
+        /**
+         * B2C 报关对账审核日期范围结束（不含）。
+         */
+        private LocalDate endDate;
+    }
+
+    /**
+     * 头程对账单下推载荷。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class FirstMileReconciliationPushPayloadDTO implements Serializable {
+
+        /**
+         * 对账周期起始（含）。
+         */
+        private LocalDate startDate;
+
+        /**
+         * 对账周期结束（含）。
+         */
+        private LocalDate endDate;
+    }
+
+    /**
+     * B2C 报关对账下推载荷。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class B2cDeclareReconciliationPushPayloadDTO implements Serializable {
+
+        /**
+         * 对账周期起始（含）。
+         */
+        private LocalDate startDate;
+
+        /**
+         * 对账周期结束（含）。
+         */
+        private LocalDate endDate;
+    }
+
+    /**
+     * 头程下推分摊候选发货单游标查询参数。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class FirstMilePushAllocationQueryDTO implements Serializable {
+
+        /**
+         * 游标 ID。
+         */
+        private String lastId;
+
+        /**
+         * 批次大小。
+         */
+        private Integer batchSize;
     }
 
     /**
@@ -372,16 +691,6 @@ public class TmsAsyncTaskRecordDTO implements Serializable {
          *物流标签类型
          */
         private String type;
-
-        /**
-         * 自发货费用类型（兼容历史小包下推任务）
-         */
-        private String selfDeliverType;
-
-        /**
-         * 尾程费用类型（兼容历史小包下推任务）
-         */
-        private String lastMileType;
 
         /**
          * 方法类型：同一 business_type 下区分不同方法  枚举：TmsAsyncTaskMethodTypeEnum
@@ -636,6 +945,61 @@ public class TmsAsyncTaskRecordDTO implements Serializable {
         private String execType;
     }
 
+
+    /**
+     * 自动周期任务生成单项结果。
+     * <p>
+     * {@link #status} 取值见本类 {@code STATUS_*} 常量。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class GenAutoTaskItemResult implements Serializable {
+
+        /** 任务已创建 */
+        public static final String STATUS_CREATED = "CREATED";
+        /** 同调度日任务已存在，跳过创建 */
+        public static final String STATUS_SKIPPED_EXISTS = "SKIPPED_EXISTS";
+        /** 配置的生成类型当前不支持 */
+        public static final String STATUS_SKIPPED_UNSUPPORTED = "SKIPPED_UNSUPPORTED";
+        /** 生成或保存失败 */
+        public static final String STATUS_FAILED = "FAILED";
+
+        /** 展示名称，如「头程对账单」「小包费用分摊-自配送」 */
+        private String taskName;
+        /** 业务类型 */
+        private String businessType;
+        /** 方法类型 */
+        private String methodType;
+        /** 调度日，格式 yyyy-MM-dd，对应当月配置的生成日期 */
+        private String startTimeStr;
+        /** 创建成功时的任务主键；跳过时为空 */
+        private String taskId;
+        /** 单项执行状态，见 {@code STATUS_*} */
+        private String status;
+        /** 失败或不支持时的说明 */
+        private String message;
+    }
+
+    /**
+     * 自动周期任务生成汇总。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class GenAutoTaskResultDTO implements Serializable {
+
+        /** 本次 genAutoTask 总耗时（毫秒） */
+        private long durationMs;
+        /** 各业务生成器的逐项结果 */
+        private List<GenAutoTaskItemResult> items;
+        /** {@link GenAutoTaskItemResult#STATUS_CREATED} 数量 */
+        private int createdCount;
+        /** 跳过数量（已存在 + 不支持） */
+        private int skippedCount;
+        /** {@link GenAutoTaskItemResult#STATUS_FAILED} 数量 */
+        private int failedCount;
+    }
 
     /**
      * 任务执行结果

@@ -214,7 +214,7 @@ public enum ApiError implements Serializable {
     COMMON_NOT_FOUND_PUSH_DADA(98136,"未找到可下推数据"),
     COMMON_SELECT_DATA_REQUIRED(98137,"请选择要操作的数据"),
     COMMON_DATA_NOT_EXIST(98138,"要操作的数据{0}系统不存在"),
-
+    COMMON_BATCH_PROCESSING(98136,"分批处理中"),
     /**
      * AUTH 授权与登录 相关 2000 - 2200
      */
@@ -1934,6 +1934,7 @@ public enum ApiError implements Serializable {
     LOGISTICS_RECON_IMPORT_MAIN_NOT_FOUND(13670,"导入任务关联的对账单不存在或已失效，请重新提交导入"),
     LOGISTICS_RECON_CHECK_STATUS_NO_CHANGE(13671,"校验状态与当前状态相同，无需变更"),
     LOGISTICS_RECON_ONLY_PENDING_ALLOW_CHECK_CONFIRM(13672,"仅待确认的对账单允许切换为已确认"),
+    ASYNC_TASK_DETAIL_TIMEOUT(13648,"明细执行超时，系统自动标记失败"),
     /**
      * 财务管理 错误 信息 14000-14500
      */

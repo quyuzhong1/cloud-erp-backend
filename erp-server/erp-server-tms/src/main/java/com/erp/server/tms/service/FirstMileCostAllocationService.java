@@ -2,6 +2,7 @@ package com.erp.server.tms.service;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
 import com.erp.model.tms.entity.FirstMileCostAllocationEntity;
+import com.erp.model.tms.entity.TmsAsyncTaskRecordEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
@@ -117,15 +118,15 @@ public interface FirstMileCostAllocationService extends SuperService<FirstMileCo
     /**
      * 消费端分批更新核算状态
      */
-    void pushUpdateStatus(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
+    void pushUpdateStatus(TmsAsyncTaskRecordEntity taskRecord);
 
     BatchResultDTO asyncReAllocationCalcCost(FirstMileCostAllocationDTO.ResetIdsDTO dto);
 
-    void pushReAllocationCalcCost(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
+    void pushReAllocationCalcCost(TmsAsyncTaskRecordEntity taskRecord);
 
     BatchResultDTO asyncDelete(FirstMileCostAllocationDTO.ResetIdsDTO dto);
 
-    void pushDelete(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
+    void pushDelete(TmsAsyncTaskRecordEntity taskRecord);
 
     /**
      * 根据对账单id查询费用分摊记录
@@ -183,5 +184,5 @@ public interface FirstMileCostAllocationService extends SuperService<FirstMileCo
 
     FirstMileCostAllocationDTO.PushAllocatedCostCountDTO pushAllocatedCostCount(FirstMileCostAllocationDTO.IdsDTO dto);
 
-    void pushFirstMileCostAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
+    void pushFirstMileCostAllocation(TmsAsyncTaskRecordEntity taskRecord);
 }

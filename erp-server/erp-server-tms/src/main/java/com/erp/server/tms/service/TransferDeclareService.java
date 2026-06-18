@@ -203,6 +203,4 @@ public interface TransferDeclareService extends SuperService<TransferDeclareEnti
     BatchResultDTO pushAllocation(String id , String reportDate);
     
     void singPushAllocation(String id , String reportDate , List<TmsB2cDeclareReconciliationDetailEntity> tmsB2cDeclareReconciliationDetailEntityList);
-
-    void pushTransferDeclare(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
 }

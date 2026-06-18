@@ -121,6 +121,22 @@ tatr.method_type AS methodType
         </if>
     </select>
 
+    <select id="listTimedOutTasksForWatchdog" resultMap="BaseResultMap">
+        SELECT
+        tatr.*
+        FROM
+        tms_async_task_record as tatr
+        WHERE
+        tatr.is_deleted = FALSE
+        AND tatr.status = 'ing'
+        AND tatr.start_time IS NOT NULL
+        AND tatr.start_time + ((COALESCE(tatr.exec_timeout, #{defaultExecTimeout}) || ' seconds')::interval) <![CDATA[ <= ]]> #{now}
+        ORDER BY
+        tatr.start_time ASC,
+        tatr.id ASC
+        LIMIT #{limit}
+    </select>
+
 
 
 </mapper>

@@ -5,6 +5,7 @@ import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
 import com.erp.model.tms.dto.TmsCostDetailDTO;
+import com.erp.model.tms.entity.TmsAsyncTaskRecordEntity;
 import com.erp.model.tms.entity.TmsFirstMileReconciliationDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -169,11 +170,7 @@ public interface TmsFirstMileReconciliationDetailService extends SuperService<Tm
      */
     void autoGenFirstMileReconciliation(LocalDate startDate, LocalDate endDate, String transportNo);
 
-    @Transactional(rollbackFor = Exception.class)
-    void pushFirstMileReconciliation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
-
-    /** MQ 消费：下推头程对账单（含任务明细初始化） */
-    void pushAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
+    void pushFirstMileReconciliation(TmsAsyncTaskRecordEntity taskRecord);
 
     void addOrUpdateCost(List<TmsFirstMileReconciliationDetailEntity> list);
 

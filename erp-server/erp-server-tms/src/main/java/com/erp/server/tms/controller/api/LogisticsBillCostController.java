@@ -172,6 +172,7 @@ public class LogisticsBillCostController extends BaseController {
             resultDTOS.add(logisticsBillCostService.batchAsyncUpdateReconciliationStatus(dto));
             return success(resultDTOS);
         }
+        logisticsBillCostService.checkUpdateReconciliationStatusPermission(dto);
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
             BatchResultDTO submit;
@@ -389,7 +390,7 @@ public class LogisticsBillCostController extends BaseController {
              for (String id : dto.getIds()) {
                  BatchResultDTO submit;
                  try {
-                     submit = logisticsBillCostService.pushAllocation(id,dto.getReportDate());
+                     submit = logisticsBillCostService.pushAllocation(id, dto.getReportDate(), null);
                  }catch (Exception e){
                      log.error("尾程费用(自发货) 状态变更",e);
                      LogisticsBillCostEntity entity = logisticsBillCostService.getById(id);
