@@ -119,7 +119,7 @@ public class QcNoticeController extends BaseController {
             keyIdName = "detailId")
     @LogAction(value = LogActionEnum.UPDATE, desc = "质检通知单批量更新质检员")
     public ApiResult<List<BatchResultDTO>> batchUpdateQcUser(
-            @RequestBody @Valid List<QcNoticeDTO.UpdateQcUserDTO> dtos) {
+            @RequestBody @Validated ValidList<QcNoticeDTO.UpdateQcUserDTO> dtos) {
         Map<String, QcNoticeDTO.UpdateQcUserDTO> itemMap = new LinkedHashMap<>();
         for (QcNoticeDTO.UpdateQcUserDTO item : dtos) {
             itemMap.put(item.getDetailId(), item);
