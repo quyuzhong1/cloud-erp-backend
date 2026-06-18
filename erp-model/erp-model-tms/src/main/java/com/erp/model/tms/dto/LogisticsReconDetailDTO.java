@@ -42,16 +42,6 @@ public class LogisticsReconDetailDTO implements Serializable {
         private String mainId;
 
         /**
-         * 费用项匹配状态过滤：unmatched / matching / matched / failed
-         */
-        private String matchStatus;
-
-        /**
-         * 关键字搜索（trackNo / transportNo / soCode / platformOrderNo）
-         */
-        private String keyword;
-
-        /**
          * 页面高级查询
          */
         private List<AdvanceQueryDTO> advanceQueryDTOList;
