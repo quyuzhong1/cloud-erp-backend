@@ -27,14 +27,12 @@ import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.entity.PackingTaskEntity;
 import com.erp.server.wms.query.FirstMileDeliveryQueryHandler;
-import com.erp.server.wms.service.FirstMileDeliveryDetailService;
 import com.erp.server.wms.service.FirstMileDeliveryService;
 import com.erp.server.wms.service.PackingTaskService;
 import com.erp.server.wms.service.RequisitionApplicationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
 import javax.annotation.Resource;
 import javax.validation.Valid;
 import java.util.ArrayList;
@@ -56,10 +54,6 @@ public class FirstMileDeliveryController extends BaseController {
 
     @Resource
     private FirstMileDeliveryService firstMileDeliveryService;
-
-    @Resource
-    private FirstMileDeliveryDetailService firstMileDeliveryDetailService;
-
     @Resource
     private PackingTaskService packingTaskService;
     @Resource

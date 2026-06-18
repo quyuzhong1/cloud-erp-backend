@@ -43,9 +43,9 @@ public class ThirdNoticePushRecordFeignController {
      * @return
      */
     @PostMapping("/batchSendMqRecordConsumer")
-    public Boolean batchSendMqRecordConsumer(@RequestBody List<String> jsonStrList) {
-        if(CollUtil.isNotEmpty(jsonStrList)){
-            for (String jsonStr : jsonStrList) {
+    public Boolean batchSendMqRecordConsumer(@RequestBody ThirdNoticePushRecordDTO.BatchSendMqRecordConsumerDTO dto) {
+        if (dto != null && CollUtil.isNotEmpty(dto.getJsonStrList())) {
+            for (String jsonStr : dto.getJsonStrList()) {
                 thirdNoticePushRecordService.sendMqRecordConsumer(jsonStr);
             }
         }
