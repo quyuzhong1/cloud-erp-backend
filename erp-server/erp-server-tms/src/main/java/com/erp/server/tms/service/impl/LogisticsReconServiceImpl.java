@@ -60,6 +60,7 @@ import com.erp.model.tms.enums.ImportHistoryRecordProcessingTypeEnum;
 import com.erp.model.tms.enums.ImportHistoryRecordStatusEnum;
 import com.erp.model.tms.enums.ImportHistoryRecordTypeEnum;
 import com.erp.model.tms.enums.LogisticsBillCostCheckStatusEnum;
+import com.erp.model.tms.enums.LogisticsBillCostPayStateEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -131,9 +132,6 @@ public class LogisticsReconServiceImpl
     private static final String IMPORT_ERROR_MSG_HEADER = "错误信息";
 
     private static final String IMPORT_DETAIL_ROW_CACHE_PREFIX = "row:";
-
-    /** 物流费用未付/未退时的 pay_status，与 LogisticsBillCostServiceImpl#updateReconciliationStatus 一致 */
-    private static final String UNPAID_PAY_STATUS = "payment";
 
     @Resource
     private DocNoGenHelper docNoGenHelper;
@@ -2483,6 +2481,8 @@ public class LogisticsReconServiceImpl
         int costUpdated = logisticsBillCostService.batchUpdateReconciliationStatus(distinctCostIds, reconciliationStatus,
                 confirmTime);
         if (costUpdated != distinctCostIds.size()) {
+            log.warn("[confirmBillRefCostBatch] cost update mismatch mainId={} expected={} actual={} reconciliationStatus={}",
+                    mainId, distinctCostIds.size(), costUpdated, reconciliationStatus);
             throw new ServiceException(ApiError.LOGISTICS_RECON_CONFIRM_COST_UPDATE_MISMATCH);
         }
         int refUpdated = 0;
@@ -2634,7 +2634,7 @@ public class LogisticsReconServiceImpl
     private boolean isRevertibleBillCost(LogisticsBillCostEntity cost) {
         return cost != null
                 && LogisticsBillCostCheckStatusEnum.CHECKING.getCode().equals(cost.getCheckStatus())
-                && UNPAID_PAY_STATUS.equals(cost.getPayStatus());
+                && LogisticsBillCostPayStateEnum.PAYMENT.getCode().equals(cost.getPayStatus());
     }
 
     private void assertConfirmBillEligibility(ConfirmBillScanResult scanResult, String targetReconciliationStatus) {

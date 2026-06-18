@@ -743,14 +743,14 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         		}
         	}else {
         		if(!(LogisticsBillCostCheckStatusEnum.CHECKING.getCode().equals(entity.getCheckStatus())
-            			&& "payment".equals(entity.getPayStatus()))) {
+            			&& LogisticsBillCostPayStateEnum.PAYMENT.getCode().equals(entity.getPayStatus()))) {
             		String p = entity.getPayType().equals("pay") ? "付" : "退";
             		throw new ServiceException("当前对账状态为暂估确认，只有核算状态为待生成且支付状态为待" + p + "款时才能修改为非账单确认状态");
             	}
         	}
         }else if(ReconciliationStatusEnum.CONFIRMED.getCode().equals(beforeReconciliationStatus)) {
         	if(!(LogisticsBillCostCheckStatusEnum.CHECKING.getCode().equals(entity.getCheckStatus())
-        			&& "payment".equals(entity.getPayStatus()))) {
+        			&& LogisticsBillCostPayStateEnum.PAYMENT.getCode().equals(entity.getPayStatus()))) {
         		String p = entity.getPayType().equals("pay") ? "付" : "退";
         		throw new ServiceException("当前对账状态为账单确认，只有核算状态为待生成且支付状态为待" + p + "款时才能修改为其他状态");
         	}
@@ -816,7 +816,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 updateChain.eq(LogisticsBillCostEntity::getReconciliationStatus,
                         ReconciliationStatusEnum.CONFIRMED.getCode())
                         .eq(LogisticsBillCostEntity::getCheckStatus, LogisticsBillCostCheckStatusEnum.CHECKING.getCode())
-                        .eq(LogisticsBillCostEntity::getPayStatus, "payment");
+                        .eq(LogisticsBillCostEntity::getPayStatus, LogisticsBillCostPayStateEnum.PAYMENT.getCode());
             }
             updateChain
                     .set(LogisticsBillCostEntity::getReconciliationStatus, reconciliationStatus)
