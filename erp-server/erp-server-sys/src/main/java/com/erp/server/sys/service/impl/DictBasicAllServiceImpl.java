@@ -1,15 +1,13 @@
 package com.erp.server.sys.service.impl;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
+import com.common.business.constant.RedisCacheConstants;
+import com.common.business.utils.RedisUtil;
+import com.common.core.enums.ApiError;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,6 +67,9 @@ public class DictBasicAllServiceImpl implements DictBasicAllService {
 	
 	@Autowired
 	protected IdentifierGenerator identifierGenerator;
+
+	@Resource
+	private RedisUtil redisUtil;
 	
 	private static final Map<String, Map<String, String>> systemCodeDiffFieldMap = new HashMap<>();
 	static {
@@ -82,8 +83,8 @@ public class DictBasicAllServiceImpl implements DictBasicAllService {
 		systemCodeDiffFieldMap.put(SystemCodeEnum.SRM.getCode(), srmTmsMrpMap);
 		systemCodeDiffFieldMap.put(SystemCodeEnum.TMS.getCode(), srmTmsMrpMap);
 	}
-	
-    @Transactional(rollbackFor = Exception.class)
+
+	@Transactional(rollbackFor = Exception.class)
 	@Override
 	public BaseResultDTO.AddDTO add(AddDTO dto) {
 		String systemCode = dto.getSystemCode();
@@ -201,14 +202,35 @@ public class DictBasicAllServiceImpl implements DictBasicAllService {
 		String opType = dto.getOpType();
 		String opTypeName = "";
 		List<String> ids = dto.getIds();
+		if(CollUtil.isEmpty(ids)) {
+			throw new ServiceException(ApiError.COMMON_SELECT_DATA_REQUIRED);
+		}
+		FeignBuilder feignBuilder = FeignBuilder.create(this.getEntityClass(systemCode)).in("id", ids);
+		List list = FeignQuery.list(feignBuilder);
+		if(CollUtil.isEmpty(list)) {
+			throw new ServiceException(ApiError.COMMON_DATA_NOT_EXIST,systemCode);
+		}
+		//转换成按照id、type的map形式
+		Map<String, String> typeMap = (Map<String, String>) list.stream()
+			.collect(Collectors.toMap(
+				e -> (String)BeanUtil.beanToMap(e).get("id"),
+				e -> (String)BeanUtil.beanToMap(e).get("type"),
+					(v1, v2) -> v1
+			));
+
 		List<Map<String, Object>> param = new ArrayList<>(ids.size());
         if("delete".equals(opType)) {
         	opTypeName = "批量删除";
         	FeignQuery.invoke(this.getServiceClass(systemCode), "removeByIds", Arrays.asList(ids));
+			//手动删除redis缓存
+			typeMap.values().stream().distinct().forEach(type -> {
+				redisUtil.del(CharSequenceUtil.format(RedisCacheConstants.BASE_DICT_BASIC_BY_TYPE, systemCode, type));
+			});
         }else {
         	for(String id : ids) {
     			Map<String, Object> p = new HashMap<>();
     			p.put("id", id);
+				p.put("type", typeMap.get(id));
     			if("able".equals(opType)) {
     				p.put("status", true);
     				opTypeName = "批量启用，启用状态由{停用}改为{启用}";
@@ -218,7 +240,8 @@ public class DictBasicAllServiceImpl implements DictBasicAllService {
     			}
     			param.add(p);
     		}
-        	FeignQuery.invoke(this.getServiceClass(systemCode), "updateJsonObject", Arrays.asList(param));
+			//在方法updateJsonObject存在缓存失效注解
+        	FeignQuery.invoke(this.getServiceClass(systemCode), "updateJsonObject", Collections.singletonList(param));
         }
 		
 		for(String id : ids) {
