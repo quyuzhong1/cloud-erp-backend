@@ -9,6 +9,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
@@ -2566,7 +2567,7 @@ public class TmsDeclareBillDTO implements Serializable {
          * BOM 拆分子 SKU 在 so_detail 无独立行，查价/币别需回退父 SKU。
          */
         public String resolveSoDetailSkuId() {
-            if (parentSkuId != null && !parentSkuId.isBlank()) {
+            if (parentSkuId != null && StringUtils.isNotBlank(parentSkuId)) {
                 return parentSkuId;
             }
             return skuId;
