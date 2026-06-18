@@ -599,18 +599,8 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
             entry.put("FNumerator", parentDetail.getRepairQty());
         }
 
-        String effectiveWarehouseId = resolveEffectiveWarehouseId(chilDetail, parentDetail);
+        // 仓库/仓位降级策略由 SCM 侧统一判定并写入 list；此处仅透传已组装的字段，不再重复 warn
         JSONObject stockFields = resolveDetailStockFields(detailStockFieldMap, chilDetail.getId(), parentDetail.getId());
-        if (StringUtils.isBlank(effectiveWarehouseId)) {
-            log.warn("委外用料清单明细未配置仓库，跳过仓库/仓位同步，childDetailId={}, skuNo={}",
-                    chilDetail.getId(), chilDetail.getSkuNo());
-        } else if (stockFields == null || !stockFields.containsKey("FStockId")) {
-            log.warn("委外用料清单明细仓库映射为空，跳过仓库/仓位同步，childDetailId={}, skuNo={}, warehouseId={}",
-                    chilDetail.getId(), chilDetail.getSkuNo(), effectiveWarehouseId);
-        } else if (!stockFields.containsKey("FStockLocId")) {
-            log.warn("委外用料清单明细库位映射为空，仅同步仓库，childDetailId={}, skuNo={}, warehouseId={}",
-                    chilDetail.getId(), chilDetail.getSkuNo(), effectiveWarehouseId);
-        }
         mergeStockFields(entry, stockFields);
 
         ppBomEntries.put(entry);
@@ -858,17 +848,6 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         }
         if (StringUtils.isNotBlank(parentDetailId)) {
             return detailStockFieldMap.get(parentDetailId);
-        }
-        return null;
-    }
-
-    private String resolveEffectiveWarehouseId(SubcontractOrderDetailEntity childDetail,
-            SubcontractOrderDetailEntity parentDetail) {
-        if (StringUtils.isNotBlank(childDetail.getWarehouseId())) {
-            return childDetail.getWarehouseId();
-        }
-        if (parentDetail != null && StringUtils.isNotBlank(parentDetail.getWarehouseId())) {
-            return parentDetail.getWarehouseId();
         }
         return null;
     }
