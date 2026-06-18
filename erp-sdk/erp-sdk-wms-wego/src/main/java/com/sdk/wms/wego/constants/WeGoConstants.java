@@ -14,7 +14,7 @@ public class WeGoConstants {
     /**
      * WEGO 接口域名-正式环境
      */
-    public static final String BASE_URL_PROD = "http://oms.wegocorp.net/api";
+    public static final String BASE_URL_PROD = "https://oms.wegocorp.net/api";
 
     public static final String ROUTER_PATH = "/open-api/router";
 
