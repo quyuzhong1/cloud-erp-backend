@@ -36,7 +36,7 @@ import com.erp.server.scm.service.SubcontractOrderDetailService;
 import com.erp.server.scm.service.SubcontractOrderService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
@@ -194,6 +194,7 @@ public class SyncKingdeeSubcontractBOMServiceImpl implements SyncKingdeeSubcontr
                 .collect(Collectors.toMap(SubcontractOrderDetailEntity::getId, item -> item, (oldValue, newValue) -> oldValue));
 
         List<JSONObject> list = new ArrayList<>();
+        List<String> skippedWarehouseDetails = new ArrayList<>();
         for (SubcontractOrderDetailEntity subcontractOrderDetailEntity : subcontractOrderDetailList) {
             JSONObject jsonObject = new JSONObject();
             jsonObject.set("detailId", subcontractOrderDetailEntity.getId());
@@ -211,10 +212,10 @@ public class SyncKingdeeSubcontractBOMServiceImpl implements SyncKingdeeSubcontr
             }
             if (StringUtils.isNotBlank(warehouseId)) {
                 WarehouseDTO.UpdateDTO warehouse = warehouseMap.get(warehouseId);
-                // 仓库未配置金蝶编码时跳过该明细仓库/仓位，不阻断整单推送
+                // 仓库降级策略统一在 SCM 侧判定；DMP 消费端仅透传 list 中已组装的 warehouseCode/warehouseLocation
                 if (warehouse == null || StringUtils.isBlank(warehouse.getKingdeeWarehouseCode())) {
-                    log.warn("委外用料清单明细仓库映射为空，跳过仓库/仓位组装，detailId={}, skuNo={}, warehouseId={}",
-                            subcontractOrderDetailEntity.getId(), subcontractOrderDetailEntity.getSkuNo(), warehouseId);
+                    appendWarehouseSkip(skippedWarehouseDetails, subcontractOrderDetailEntity.getId(),
+                            subcontractOrderDetailEntity.getSkuNo(), warehouseId, resolveWarehouseSkipReason(warehouse));
                 } else {
                     jsonObject.set("warehouseCode", warehouse.getKingdeeWarehouseCode());
                     if (Boolean.TRUE.equals(pushKingdeeMap.get(warehouseId))) {
@@ -224,8 +225,45 @@ public class SyncKingdeeSubcontractBOMServiceImpl implements SyncKingdeeSubcontr
             }
             list.add(jsonObject);
         }
+        logWarehouseAssemblySummary(dto.getCode(), warehouseIdList, warehouseList, skippedWarehouseDetails);
         resultMap.put("list", list);
         return resultMap;
+    }
+
+    private void appendWarehouseSkip(List<String> skippedWarehouseDetails, String detailId, String skuNo,
+            String warehouseId, String reason) {
+        skippedWarehouseDetails.add(String.format("detailId=%s,skuNo=%s,warehouseId=%s,reason=%s",
+                detailId, skuNo, warehouseId, reason));
+    }
+
+    private String resolveWarehouseSkipReason(WarehouseDTO.UpdateDTO warehouse) {
+        if (warehouse == null) {
+            return "WMS未返回该仓库";
+        }
+        return "金蝶仓库编码未配置";
+    }
+
+    /**
+     * 仓库/仓位降级汇总日志：一次输出 FBillNo 与跳过明细列表，便于运维按单排查，避免逐行 warn 分散在 SCM/DMP 两侧。
+     */
+    private void logWarehouseAssemblySummary(String fBillNo, List<String> warehouseIdList,
+            List<WarehouseDTO.UpdateDTO> warehouseList, List<String> skippedWarehouseDetails) {
+        if (CollectionUtils.isEmpty(skippedWarehouseDetails)) {
+            return;
+        }
+        StringBuilder message = new StringBuilder();
+        message.append("委外用料清单同步仓库字段降级汇总，FBillNo=").append(fBillNo)
+                .append(", 跳过明细数=").append(skippedWarehouseDetails.size())
+                .append(", 明细列表=[").append(String.join("; ", skippedWarehouseDetails)).append("]");
+        if (!CollectionUtils.isEmpty(warehouseIdList)
+                && (warehouseList == null || CollectionUtils.isEmpty(warehouseList))) {
+            message.append(", 全局原因=WMS未返回任何仓库信息, warehouseIdList=").append(warehouseIdList);
+        } else if (!CollectionUtils.isEmpty(warehouseIdList) && warehouseList != null
+                && warehouseList.size() < warehouseIdList.size()) {
+            message.append(", 全局原因=WMS仓库信息不完整, 请求数=").append(warehouseIdList.size())
+                    .append(", 返回数=").append(warehouseList.size());
+        }
+        log.warn(message.toString());
     }
 
     /**
@@ -237,11 +275,7 @@ public class SyncKingdeeSubcontractBOMServiceImpl implements SyncKingdeeSubcontr
         }
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(warehouseIdList);
         if (warehouseList == null || CollectionUtils.isEmpty(warehouseList)) {
-            log.warn("委外用料清单同步未查询到仓库信息，跳过仓库/仓位组装，warehouseIdList={}", warehouseIdList);
             return Collections.emptyList();
-        }
-        if (warehouseList.size() < warehouseIdList.size()) {
-            log.warn("委外用料清单同步仓库信息不完整，请求数={}, 返回数={}", warehouseIdList.size(), warehouseList.size());
         }
         return warehouseList;
     }
