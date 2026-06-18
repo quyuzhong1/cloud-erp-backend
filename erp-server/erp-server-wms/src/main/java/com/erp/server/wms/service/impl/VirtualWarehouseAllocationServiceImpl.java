@@ -331,6 +331,20 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         }
         params.setDynamicDataSource(dynamicDataSourceTypeEnum.getCode());
         params.setPermissionSql(dto.getPermissionSql());
+        // 从 tab 高级搜索条件中提取状态值注入到内层 WHERE，避免全量数据加载后再在外层过滤
+        if (CollUtil.isNotEmpty(params.getAdvanceQueryDTOList())) {
+            params.getAdvanceQueryDTOList().stream()
+                .filter(obj -> "tab".equals(obj.getField()) && ObjectUtil.isNotNull(obj.getValue()))
+                .map(obj -> obj.getValue())
+                .findFirst()
+                .ifPresent(tabValue -> {
+                    String tab = tabValue.toString();
+                    // 同步失败是计算列（来自 push_handle 子查询），无法注入内层 WHERE；其余 tab 均为 vma.status 字段
+                    if (!VirtualWarehouseAllocationSyncStatusEnum.FAILED_SYNC.getCode().equals(tab)) {
+                        params.setStatus(tab);
+                    }
+                });
+        }
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         IPage<VirtualWarehouseAllocationDTO.ListDTO> pageData = this.baseMapper.paging(query, dto.getParams());
         if (CollUtil.isEmpty(pageData.getRecords())) {
