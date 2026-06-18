@@ -94,7 +94,7 @@ public class CleanFileTaskJob {
                 if (CharSequenceUtil.isBlank(fileUrl)) {
                     // null / 空串 / 仅空白字符的 fileUrl 无法走 FastDFS 删除，直接逻辑软删，避免游标推进后脏数据永久残留
                     try {
-                        if (fileTaskRepository.removeById(id)) {
+                        if (fileTaskRepository.removeWithAudit(fileTask, true)) {
                             successCount++;
                         } else {
                             logicDeleteFailCount++;
@@ -134,7 +134,7 @@ public class CleanFileTaskJob {
 
                 try {
                     // 远端已确认不存在或删除成功后的 DB 软删；失败不在本轮重试，依赖下次调度 exist 跳过后仅补库删。
-                    boolean removed = fileTaskRepository.removeById(id);
+                    boolean removed = fileTaskRepository.removeWithAudit(fileTask, true);
                     if (removed) {
                         successCount++;
                     } else {
@@ -274,7 +274,7 @@ public class CleanFileTaskJob {
 
     /**
      * 判断临时文件是否属于「处理中」任务。
-     * <p>临时文件名为 {@code exportTmp_{id}_{safeName}_{timestamp}_{uuid}.xlsx}（见 {@link com.erp.server.file.entity.FileTask#getUniqueWithFileName()} 与
+     * <p>临时文件名为 {@code exportTmp_{id}_{safeName}_{timestamp}_{uuid}.xlsx}（见 {@link com.erp.model.file.entity.FileTask#getUniqueWithFileName()} 与
      * {@link ExportTempFilesHandler#createTempPath}），取 {@code exportTmp_} 后第一个 {@code _} 之前的一段作为 taskId，与处理中 ID 集合做精确匹配，
      * 避免 {@code startsWith("exportTmp_{id}_")} 在 ID 存在前缀包含关系时误判（如 "12" 与 "123"）。
      * <p>不变量：依赖主键为 {@code IdType.ASSIGN_ID} 的纯数字雪花串（不含下划线），故首段恰为 taskId；
