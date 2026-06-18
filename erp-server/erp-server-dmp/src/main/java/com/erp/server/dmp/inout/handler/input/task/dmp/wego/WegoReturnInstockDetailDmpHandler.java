@@ -13,6 +13,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * WEGO 退货入库单明细 DMP handler。
@@ -36,6 +37,52 @@ public class WegoReturnInstockDetailDmpHandler extends DmpInputDoNextDmpHandler 
 
     /** WEGO API 预计入库明细字段（实际明细为空时的回退） */
     private static final String MONGO_KEY_QUERY_PRODUCTS = "queryProducts";
+
+    /** WEGO API 返回的库存类型字段名：3=不良品，其余=可用 */
+    private static final String MONGO_KEY_INVENTORY_TYPE = "inventoryType";
+    /** WEGO 不良品库存类型值 */
+    private static final int INVENTORY_TYPE_DEFECTIVE = 3;
+    /** DMP 明细字段：是否不良品 */
+    private static final String DMP_KEY_DEFECTIVE_PRODUCT_FLAG = "defectiveProductFlag";
+
+    /**
+     * 将父级 MongoDB 文档中的 {@code inventoryType} 转换为 {@code defectiveProductFlag}，
+     * 并写入每条明细实体 Map。
+     * <p>
+     * {@code inventoryType} 是订单级字段，无法通过 {@code instockProducts} 数组元素直接获取，
+     * 因此需要在此处从 {@code entry.getKey().get(0)}（即完整的父级 MongoDB 文档）读取后，
+     * 回填到所有明细实体 Map 中。
+     */
+    @Override
+    protected void afterConvertData(
+            Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMaps) {
+        super.afterConvertData(dmpInputDataDmpRelationMaps);
+        for (Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> entry
+                : dmpInputDataDmpRelationMaps.entrySet()) {
+            List<Map<String, Object>> mongoDataList = entry.getKey();
+            List<TreeMap<String, Object>> dmpDataMaps = entry.getValue();
+            if (dmpDataMaps == null || dmpDataMaps.isEmpty()) {
+                continue;
+            }
+            if (mongoDataList == null || mongoDataList.isEmpty()) {
+                continue;
+            }
+            Map<String, Object> mongoData = mongoDataList.get(0);
+            Object inventoryTypeObj = mongoData.get(MONGO_KEY_INVENTORY_TYPE);
+            if (inventoryTypeObj == null) {
+                continue;
+            }
+            try {
+                int inventoryType = Integer.parseInt(inventoryTypeObj.toString());
+                boolean defectiveProductFlag = (inventoryType == INVENTORY_TYPE_DEFECTIVE);
+                for (TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
+                    dmpDataMap.put(DMP_KEY_DEFECTIVE_PRODUCT_FLAG, defectiveProductFlag);
+                }
+            } catch (NumberFormatException e) {
+                // inventoryType 格式异常时跳过，不影响正常明细处理
+            }
+        }
+    }
 
     @Override
     protected List<Map<String, Object>> getDetailList(Map<String, Object> dmpInputMongoEntity) {
