@@ -76,7 +76,9 @@ public class SyncKingdeeSubcontractBOMServiceImpl implements SyncKingdeeSubcontr
     private DmpTaskFeign dmpTaskFeign;
 
     /**
-     * 组装数据发送到金蝶
+     * 组装数据发送到金蝶。
+     * <p>非 delete 操作推送完整 payload（含 list/仓库字段），不再使用 {@code isQuerySync}，
+     * 以便 DMP 消费端按 detailId 组装仓库/仓位；Feign 查询在事务外执行，仅 saveTask 参与分布式事务。</p>
      */
     @Override
     public DmpPushTaskEntity syncDataToKingdee(SubcontractBOMDTO.KingdeeSubcontractBOMDTO dto, String operate) {
@@ -173,18 +175,9 @@ public class SyncKingdeeSubcontractBOMServiceImpl implements SyncKingdeeSubcontr
                 .filter(StringUtils::isNotBlank)
                 .distinct()
                 .collect(Collectors.toList());
-        List<WarehouseDTO.UpdateDTO> warehouseList = CollectionUtils.isEmpty(warehouseIdList)
-                ? Collections.emptyList()
-                : wmsTaskFeign.listWarehouseByIds(warehouseIdList);
-        if (!CollectionUtils.isEmpty(warehouseIdList) && (warehouseList == null || CollectionUtils.isEmpty(warehouseList))) {
-            throw new ServiceException(ApiError.WH_PARAM_NOT_FOUND, warehouseIdList.get(0));
-        }
-        List<CfgSettingDTO.WarehouseLocationSettingDTO> pushKingdeeList = CollectionUtils.isEmpty(warehouseIdList)
-                ? Collections.emptyList()
-                : dmpTaskFeign.isPushKingdeeWarehouseLocation(warehouseIdList);
-        if (pushKingdeeList == null) {
-            pushKingdeeList = Collections.emptyList();
-        }
+        // 委外用料清单变更单允许无仓库/仓位降级推送（与同模块委外订单 fail-fast 策略不同）
+        List<WarehouseDTO.UpdateDTO> warehouseList = loadWarehouseList(warehouseIdList);
+        List<CfgSettingDTO.WarehouseLocationSettingDTO> pushKingdeeList = loadPushKingdeeLocationSettings(warehouseIdList);
         Map<String, WarehouseDTO.UpdateDTO> warehouseMap = CollectionUtils.isEmpty(warehouseList)
                 ? Collections.emptyMap()
                 : warehouseList.stream()
@@ -218,17 +211,46 @@ public class SyncKingdeeSubcontractBOMServiceImpl implements SyncKingdeeSubcontr
             }
             if (StringUtils.isNotBlank(warehouseId)) {
                 WarehouseDTO.UpdateDTO warehouse = warehouseMap.get(warehouseId);
+                // 仓库未配置金蝶编码时跳过该明细仓库/仓位，不阻断整单推送
                 if (warehouse == null || StringUtils.isBlank(warehouse.getKingdeeWarehouseCode())) {
-                    throw new ServiceException(ApiError.WH_PARAM_NOT_FOUND, warehouseId);
-                }
-                jsonObject.set("warehouseCode", warehouse.getKingdeeWarehouseCode());
-                if (Boolean.TRUE.equals(pushKingdeeMap.get(warehouseId))) {
-                    jsonObject.set("warehouseLocation", warehouseLocation);
+                    log.warn("委外用料清单明细仓库映射为空，跳过仓库/仓位组装，detailId={}, skuNo={}, warehouseId={}",
+                            subcontractOrderDetailEntity.getId(), subcontractOrderDetailEntity.getSkuNo(), warehouseId);
+                } else {
+                    jsonObject.set("warehouseCode", warehouse.getKingdeeWarehouseCode());
+                    if (Boolean.TRUE.equals(pushKingdeeMap.get(warehouseId))) {
+                        jsonObject.set("warehouseLocation", warehouseLocation);
+                    }
                 }
             }
             list.add(jsonObject);
         }
         resultMap.put("list", list);
         return resultMap;
+    }
+
+    /**
+     * 批量查询仓库；Feign 调用失败会抛异常由上层重试，返回 null/空列表视为无可用仓库并降级跳过。
+     */
+    private List<WarehouseDTO.UpdateDTO> loadWarehouseList(List<String> warehouseIdList) {
+        if (CollectionUtils.isEmpty(warehouseIdList)) {
+            return Collections.emptyList();
+        }
+        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(warehouseIdList);
+        if (warehouseList == null || CollectionUtils.isEmpty(warehouseList)) {
+            log.warn("委外用料清单同步未查询到仓库信息，跳过仓库/仓位组装，warehouseIdList={}", warehouseIdList);
+            return Collections.emptyList();
+        }
+        if (warehouseList.size() < warehouseIdList.size()) {
+            log.warn("委外用料清单同步仓库信息不完整，请求数={}, 返回数={}", warehouseIdList.size(), warehouseList.size());
+        }
+        return warehouseList;
+    }
+
+    private List<CfgSettingDTO.WarehouseLocationSettingDTO> loadPushKingdeeLocationSettings(List<String> warehouseIdList) {
+        if (CollectionUtils.isEmpty(warehouseIdList)) {
+            return Collections.emptyList();
+        }
+        List<CfgSettingDTO.WarehouseLocationSettingDTO> pushKingdeeList = dmpTaskFeign.isPushKingdeeWarehouseLocation(warehouseIdList);
+        return pushKingdeeList == null ? Collections.emptyList() : pushKingdeeList;
     }
 }
