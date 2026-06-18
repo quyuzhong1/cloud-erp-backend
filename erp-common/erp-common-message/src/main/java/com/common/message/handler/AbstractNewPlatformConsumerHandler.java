@@ -60,9 +60,9 @@ public abstract class AbstractNewPlatformConsumerHandler implements RocketMQList
         RLock lock = StringUtils.isBlank(lockKey) ? null : redissonClient.getLock(lockKey);
         boolean locked = false;
         try {
-            locked = tryLock(lock, lockKey, dmpOutputTaskRecordDataId);
 
             try {
+                locked = tryLock(lock, lockKey, dmpOutputTaskRecordDataId);
                 this.handle(data);
             } catch (Throwable e) {
                 log.error("{}同步输出任务失败，msg = {}", bizName, e.getMessage(), e);
