@@ -20,6 +20,8 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.tms.dto.DeliveryDeclareDetailMidDTO;
@@ -34,7 +36,10 @@ import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.enums.WmsDeclareStatusEnum;
+import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
+import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.wms.feign.SoDeliveryNoticeFeign;
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
 import com.erp.rpc.wms.feign.WmsWarehouseFeign;
@@ -74,6 +79,10 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
     private WmsFirstMileDeliveryFeign wmsFirstMileDeliveryFeign;
     @Resource
     private SoDeliveryNoticeFeign soDeliveryNoticeFeign;
+    @Resource
+    private CustomerFeign customerFeign;
+    @Resource
+    private SysDictFeign sysDictFeign;
     @Resource
     private PlmTaskFeign plmTaskFeign;
     @Resource
@@ -180,7 +189,116 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
 
     @Override
     public List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> listSourceByDeclareIdList(List<String> declareBillIdList) {
-        return baseMapper.listSourceByDeclareIdList(declareBillIdList);
+        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList = baseMapper.listSourceByDeclareIdList(declareBillIdList);
+        fillB2bSourceCountry(sourceDetailList, declareBillIdList);
+        return sourceDetailList;
+    }
+
+    /**
+     * B2B 来源明细的目的国不在 TMS 库内，统一通过 WMS 发货通知单 + OMS 客户信息远程补齐，
+     * 避免报关单主表 country 覆盖客户真实目的国；OMS 查不到时再回退主表目的国。
+     */
+    private void fillB2bSourceCountry(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList,
+                                      List<String> declareBillIdList) {
+        if (CollUtil.isEmpty(sourceDetailList)) {
+            return;
+        }
+        boolean hasB2bSource = sourceDetailList.stream()
+                .anyMatch(item -> Objects.nonNull(item)
+                        && CharSequenceUtil.equals(item.getSourceType(), SourceTypeEnum.SO_DELIVERY_NOTICE.getCode()));
+        if (!hasB2bSource) {
+            return;
+        }
+        List<String> sourceIds = sourceDetailList.stream()
+                .filter(item -> CharSequenceUtil.equals(item.getSourceType(), SourceTypeEnum.SO_DELIVERY_NOTICE.getCode()))
+                .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getSourceId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(sourceIds)) {
+            log.warn("B2B报关来源明细补齐目的国失败：来源单id为空，declareBillIds={}", declareBillIdList);
+            return;
+        }
+        List<SoDeliveryNoticeEntity> noticeList = soDeliveryNoticeFeign.listByIds(sourceIds);
+        if (CollUtil.isEmpty(noticeList)) {
+            log.warn("B2B报关来源明细补齐目的国失败：未查询到发货通知单，sourceIds={}，declareBillIds={}", sourceIds, declareBillIdList);
+            applyDeclareBillCountryFallback(sourceDetailList, declareBillIdList);
+            return;
+        }
+        List<String> customerIds = noticeList.stream()
+                .map(SoDeliveryNoticeEntity::getCustomerId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(customerIds)) {
+            log.warn("B2B报关来源明细补齐目的国失败：发货通知单未关联客户，sourceIds={}，declareBillIds={}", sourceIds, declareBillIdList);
+            applyDeclareBillCountryFallback(sourceDetailList, declareBillIdList);
+            return;
+        }
+        Map<String, CustomerInfoEntity> customerMap = Optional.ofNullable(customerFeign.listCustomerByIds(customerIds))
+                .orElse(Collections.emptyList())
+                .stream()
+                .collect(Collectors.toMap(CustomerInfoEntity::getId, item -> item, (oldValue, newValue) -> oldValue));
+        Map<String, String> sourceCountryIdMap = new HashMap<>();
+        for (SoDeliveryNoticeEntity notice : noticeList) {
+            CustomerInfoEntity customer = customerMap.get(notice.getCustomerId());
+            if (Objects.isNull(customer) || CharSequenceUtil.isBlank(customer.getCountryId())) {
+                continue;
+            }
+            sourceCountryIdMap.put(notice.getId(), customer.getCountryId());
+        }
+        if (CollUtil.isEmpty(sourceCountryIdMap)) {
+            log.warn("B2B报关来源明细补齐目的国失败：客户未维护目的国，sourceIds={}，customerIds={}，declareBillIds={}",
+                    sourceIds, customerIds, declareBillIdList);
+            applyDeclareBillCountryFallback(sourceDetailList, declareBillIdList);
+            return;
+        }
+        Map<String, String> countryNameMap = Optional.ofNullable(sysDictFeign.listCountryByIds(
+                        sourceCountryIdMap.values().stream().distinct().collect(Collectors.toList())))
+                .orElse(Collections.emptyList())
+                .stream()
+                .collect(Collectors.toMap(DictCountryEntity::getId, DictCountryEntity::getNameCn, (oldValue, newValue) -> oldValue));
+        Set<String> unresolvedSourceIds = new TreeSet<>();
+        for (TmsDeclareBillDTO.SourceDeliveryDetailDTO detail : sourceDetailList) {
+            if (!CharSequenceUtil.equals(detail.getSourceType(), SourceTypeEnum.SO_DELIVERY_NOTICE.getCode())) {
+                continue;
+            }
+            String countryId = sourceCountryIdMap.get(detail.getSourceId());
+            if (CharSequenceUtil.isBlank(countryId)) {
+                if (CharSequenceUtil.isNotBlank(detail.getSourceId())) {
+                    unresolvedSourceIds.add(detail.getSourceId());
+                }
+                continue;
+            }
+            detail.setCountryId(countryId);
+            detail.setCountryName(countryNameMap.get(countryId));
+        }
+        if (CollUtil.isNotEmpty(unresolvedSourceIds)) {
+            log.warn("B2B报关来源明细部分来源单未补齐目的国，sourceIds={}，declareBillIds={}", unresolvedSourceIds, declareBillIdList);
+            applyDeclareBillCountryFallback(sourceDetailList, declareBillIdList);
+        }
+    }
+
+    /**
+     * OMS 无法补齐时，单票报关单回退使用主表目的国。
+     */
+    private void applyDeclareBillCountryFallback(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList,
+                                                 List<String> declareBillIdList) {
+        if (CollUtil.isEmpty(declareBillIdList) || declareBillIdList.size() != 1) {
+            return;
+        }
+        TmsDeclareBillEntity declareBill = tmsDeclareBillService.getById(declareBillIdList.get(0));
+        if (Objects.isNull(declareBill) || CharSequenceUtil.isBlank(declareBill.getCountry())) {
+            return;
+        }
+        for (TmsDeclareBillDTO.SourceDeliveryDetailDTO detail : sourceDetailList) {
+            if (!CharSequenceUtil.equals(detail.getSourceType(), SourceTypeEnum.SO_DELIVERY_NOTICE.getCode())
+                    || CharSequenceUtil.isNotBlank(detail.getCountryId())) {
+                continue;
+            }
+            detail.setCountryId(declareBill.getCountry());
+            detail.setCountryName(declareBill.getCountryName());
+        }
     }
 
     @Override

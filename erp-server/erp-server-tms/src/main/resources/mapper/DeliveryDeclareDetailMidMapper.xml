@@ -187,9 +187,10 @@
         fmd.country_name as countryName
         from delivery_declare_detail_mid dddm
         inner join foreign_product_logistics fpl on dddm.sku_id = fpl.sku_id and fpl.is_deleted = false
-        left join wms_first_mile_delivery fmd on dddm.source_id = fmd.id and fmd.is_deleted = false
+        left join wms_first_mile_delivery fmd on dddm.source_id = fmd.id and dddm.source_type = 'firstMileDelivery' and fmd.is_deleted = false
         where  dddm.is_deleted = false
         and dddm.declare_id in
+            
         <foreach collection="declareBillIdList" item="declareBillId" open="(" separator="," close=")">
             #{declareBillId}
         </foreach>
