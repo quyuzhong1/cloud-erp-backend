@@ -3233,7 +3233,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             }
             ThirdNoticePushRecordDTO.BatchSendMqRecordConsumerDTO batchSendDto = new ThirdNoticePushRecordDTO.BatchSendMqRecordConsumerDTO();
             batchSendDto.setJsonStrList(jsonStrList);
-            thirdNoticePushRecordFeign.batchSendMqRecordConsumer(batchSendDto);
+            Boolean ok = thirdNoticePushRecordFeign.batchSendMqRecordConsumer(batchSendDto);
+            if (!Boolean.TRUE.equals(ok)) {
+                log.error("batchSendMqRecordConsumer failed, logisticsBillIds={}", logisticsBillIds);
+            }
         }
     }
 

@@ -1135,7 +1135,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 deliveryDetailDTO.setUnit(productLogisticsEntity.getDeclareUnit());
                 deliveryDetailDTO.setUnitName(declareUnitNameMap.get(productLogisticsEntity.getDeclareUnit()));
 
-                SoDetailEntity soDetailEntity = soDetailMap.get(buildSoDetailKey(deliveryDetailDTO.getBusinessId(), deliveryDetailDTO.getSkuId()));
+                SoDetailEntity soDetailEntity = soDetailMap.get(buildSoDetailKey(deliveryDetailDTO.getBusinessId(), resolveSoDetailSkuId(deliveryDetailDTO)));
                 if (customerReceiver && Objects.nonNull(soDetailEntity)) {
                     deliveryDetailDTO.setUnitPrice(MathUtil.preferNonNull(soDetailEntity.getTaxPrice(), soDetailEntity.getPrice()));
                     deliveryDetailDTO.setDeclareCurrency(soDetailEntity.getCurrency());
@@ -1251,11 +1251,11 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                     BeanUtil.copyProperties(detailDTO, childDetailDTO);
                     childDetailDTO.setSkuId(childLogisticsDTO.getSkuId());
                     childDetailDTO.setSkuNo(childLogisticsDTO.getSkuNo());
+                    childDetailDTO.setParentSkuId(detailDTO.getSkuId());
                     childDetailDTO.setBomVersion(childLogisticsDTO.getBomVersion());
                     childDetailDTO.setBomHistoryId(childLogisticsDTO.getBomHistoryId());
                     childDetailDTO.setQty((detailDTO.getQty() == null ? 0 : detailDTO.getQty()) * (childLogisticsDTO.getChildQty() == null ? 1 : childLogisticsDTO.getChildQty()));
-                    // 子 SKU 在 so_detail 中无对应行，传空 map 让子件单价/币别仍取自子件 PLM，与 TMS 子件分支保持一致。
-                    fillB2bMinDeclareInfo(childDetailDTO, childLogisticsDTO, currencyMap, Collections.emptyMap());
+                    fillB2bMinDeclareInfo(childDetailDTO, childLogisticsDTO, currencyMap, soDetailMap);
                     result.add(childDetailDTO);
                 }
             } else {
@@ -1294,6 +1294,16 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     }
 
     /**
+     * BOM 拆分子 SKU 在 so_detail 中无独立行，需回退到父 SKU 取销售单价/币别。
+     */
+    private String resolveSoDetailSkuId(TmsDeclareBillDTO.SourceDeliveryDetailDTO detailDTO) {
+        if (StringUtils.isNotBlank(detailDTO.getParentSkuId())) {
+            return detailDTO.getParentSkuId();
+        }
+        return detailDTO.getSkuId();
+    }
+
+    /**
      * 填充报关字段。
      * @author will
      * @date 2026/5/9 15:00
@@ -1313,7 +1323,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         detailDTO.setUnit(productLogisticsDTO.getDeclareUnit());
         detailDTO.setUnitName(productLogisticsDTO.getDeclareUnitName());
 
-        SoDetailEntity soDetailEntity = soDetailMap.get(buildSoDetailKey(detailDTO.getBusinessId(), detailDTO.getSkuId()));
+        SoDetailEntity soDetailEntity = soDetailMap.get(buildSoDetailKey(detailDTO.getBusinessId(), resolveSoDetailSkuId(detailDTO)));
         if (Objects.nonNull(soDetailEntity)) {
             // B2B 不合并预览：单价/币别/币别符号取自 so_detail 销售含税单价及对应币种。
             detailDTO.setUnitPrice(MathUtil.preferNonNull(soDetailEntity.getTaxPrice(), soDetailEntity.getPrice()));

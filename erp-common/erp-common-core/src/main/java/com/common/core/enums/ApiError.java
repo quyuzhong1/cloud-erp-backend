@@ -1907,6 +1907,7 @@ public enum ApiError implements Serializable {
     LOGISTICS_PACKING_DELIVERY_CHECK_DECLARE_STATUS(13701,"关联单号【{0}】已生成报关单，不能修改装箱信息"),
     LOGISTICS_DECLARE_AUTO_DETAIL_FIELD_REQUIRED(13702,"单据【{0}】SKU【{1}】缺少报关信息：{2}，请先到PLM物流产品资料完善后再生成报关单"),
     LOGISTICS_DECLARE_DEST_COUNTRY_CN_NOT_GENERATE(13703,"单据【{0}】目的国为中国大陆，不生成报关单"),
+    LOGISTICS_DECLARE_BOX_NOT_FULL_SELECTED(13704,"来源单【{0}】箱号【{1}】未勾选完整，缺失SKU：{2}"),
 
 
     LOGISTICS_RECON_IMPORT_TEMPLATE_NOT_RECOGNIZED(13648,"无法识别导入模板，请检查配置是否正确"),

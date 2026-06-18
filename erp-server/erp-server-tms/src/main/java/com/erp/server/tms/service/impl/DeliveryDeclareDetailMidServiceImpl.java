@@ -348,6 +348,13 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         }
         String sourceType = sourceTypeSet.iterator().next();
 
+        List<String> sourceIds = entityList.stream()
+                .map(DeliveryDeclareDetailMidEntity::getSourceId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        validateSameBoxFullSelected(entityList, distinctIds, listBySourceIdList(sourceIds));
+
         // 中间表入口以用户勾选的明细为准，不能再按来源单整单拉取，否则会把未勾选行带入预览。
         List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList = buildSelectedSourceDetailForPreview(entityList, distinctIds, sourceType);
         if (CollUtil.isEmpty(sourceDetailList)) {
@@ -356,7 +363,6 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         validatePreviewSourceConsistent(sourceType, sourceDetailList);
         List<TmsDeclareBillDTO.MergeDeclareBillDTO> previewList = tmsDeclareBillService.autoMergeDeclareBillView(
                 new TmsDeclareBillDTO.AutoMergeDeclareBillViewDTO(Boolean.TRUE, sourceDetailList));
-//        validatePreviewDeclareInfo(previewList);
         return previewList;
     }
 
@@ -417,6 +423,7 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         if (CollUtil.isEmpty(sourceDetailList)) {
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_SAVE_REQUIRED);
         }
+        validateSameBoxFullSelectedBySourceDetail(sourceDetailList);
         String sourceType = resolveMidSourceType(sourceDetailList);
         String declareBillType = resolveDeclareBillType(sourceType);
         validateLatestProductLogistics(sourceDetailList);
@@ -511,6 +518,11 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         if (countrySet.size() > 1) {
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_COUNTRY_CONFLICT);
         }
+        boolean hasBlankCountry = sourceDetailList.stream()
+                .anyMatch(item -> CharSequenceUtil.isBlank(item.getCountryId()));
+        if (hasBlankCountry && countrySet.size() != 1) {
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_COUNTRY_CONFLICT);
+        }
 
         String declareBillType = resolveDeclareBillType(sourceType);
         Set<String> receiverTypeSet = new HashSet<>();
@@ -530,34 +542,6 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
     }
 
     /**
-     * 校验最终预览报关资料完整性。
-     *
-     * <p>该校验放在自动合并之后执行，确保检查的是经过最新 PLM 资料补齐、组合品最新 BOM 重拆后的
-     * 最终报关明细，而不是中间表历史快照。</p>
-     */
-    private void validatePreviewDeclareInfo(List<TmsDeclareBillDTO.MergeDeclareBillDTO> previewList) {
-        List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> detailList = collectMergeDetailList(previewList);
-        for (int i = 0; i < detailList.size(); i++) {
-            TmsDeclareBillDTO.MergeDeclareBillDetailDTO detail = detailList.get(i);
-            int rowNo = i + 1;
-            requirePreviewField(detail.getHsCode(), rowNo, "海关编码");
-            requirePreviewField(detail.getProductNameCn(), rowNo, "报关品名");
-            requirePreviewField(detail.getDeclareElement(), rowNo, "申报要素");
-            requirePreviewField(detail.getUnit(), rowNo, "单位");
-            requirePreviewField(detail.getDeclareCurrency(), rowNo, "币种");
-            if (Objects.isNull(detail.getUnitPrice()) || detail.getUnitPrice().compareTo(BigDecimal.ZERO) <= 0) {
-                throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_FIELD_POSITIVE_REQUIRED, rowNo, "单价");
-            }
-        }
-    }
-
-    private void requirePreviewField(String value, int rowNo, String fieldName) {
-        if (CharSequenceUtil.isBlank(value)) {
-            throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_FIELD_REQUIRED, rowNo, fieldName);
-        }
-    }
-
-    /**
      * 根据用户勾选的中间表明细构造预览来源明细。
      *
      * <p>组合品拆分子 SKU 需要先按旧 BOM 历史版本校验全选；如果最新 BOM 已变化，
@@ -571,7 +555,8 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
                 .filter(CharSequenceUtil::isNotBlank)
                 .distinct()
                 .collect(Collectors.toList());
-        Map<String, TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceContextMap = loadSourceContextMap(sourceType, sourceIds);
+        Map<String, TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceContextByBoxSkuMap = loadSourceContextMap(sourceType, sourceIds);
+        Map<String, TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceContextBySourceIdMap = buildSourceContextBySourceId(sourceContextByBoxSkuMap);
         List<DeliveryDeclareDetailMidEntity> sourceMidList = listBySourceIdList(sourceIds);
         Set<String> selectedIdSet = new HashSet<>(selectedIds);
 
@@ -593,7 +578,7 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> result = new ArrayList<>();
         for (DeliveryDeclareDetailMidEntity selectedMid : selectedMidList) {
             if (CharSequenceUtil.isBlank(selectedMid.getBomHistoryId())) {
-                result.add(buildSourceDetailFromMid(selectedMid, sourceContextMap.get(buildSourceBoxSkuKey(selectedMid)), null));
+                result.add(buildSourceDetailFromMid(selectedMid, sourceContextByBoxSkuMap, sourceContextBySourceIdMap, null));
                 continue;
             }
             String comboGroupKey = buildSourceBoxBomKey(selectedMid);
@@ -615,14 +600,127 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
                         CharSequenceUtil.blankToDefault(historyList.get(0).getParentSkuNo(), parentSkuId));
             }
             if (isComboBomChanged(selectedMid.getBomHistoryId(), historyList, latestParentLogistics)) {
-                result.addAll(buildLatestComboSourceDetails(oldGroupList, historyList, latestParentLogistics, sourceContextMap));
+                result.addAll(buildLatestComboSourceDetails(oldGroupList, historyList, latestParentLogistics,
+                        sourceContextByBoxSkuMap, sourceContextBySourceIdMap));
                 continue;
             }
             for (DeliveryDeclareDetailMidEntity oldMid : oldGroupList) {
-                result.add(buildSourceDetailFromMid(oldMid, sourceContextMap.get(buildSourceBoxSkuKey(oldMid)), parentSkuId));
+                result.add(buildSourceDetailFromMid(oldMid, sourceContextByBoxSkuMap, sourceContextBySourceIdMap, parentSkuId));
             }
         }
         return result;
+    }
+
+    /**
+     * 校验同箱待生成明细必须整箱勾选，避免同一箱货物被拆到多张报关单。
+     *
+     * <p>业务规则说明：</p>
+     * <ul>
+     *   <li>当用户选择某些明细进行报关时，如果某个箱子中有部分明细被选中，则该箱子的所有明细都必须被选中</li>
+     *   <li>不允许同一箱货物被拆分到多张报关单中，确保报关数据的完整性</li>
+     *   <li>仅对状态为"待生成"（WAIT）且存在来源ID和箱号的明细进行校验</li>
+     * </ul>
+     *
+     * @param selectedMidList 用户已选中的中间表明细列表，用于检查哪些明细被勾选
+     * @param selectedIds 用户选中的明细ID集合，用于快速判断某条明细是否被选中
+     * @param sourceMidList 原始的中间表明细列表，包含所有待生成的明细数据
+     * @throws ServiceException 当检测到某箱明细未整箱勾选时抛出异常，错误信息包含来源单号、箱号和未选中的SKU编号
+     */
+    private void validateSameBoxFullSelected(List<DeliveryDeclareDetailMidEntity> selectedMidList,
+                                             List<String> selectedIds,
+                                             List<DeliveryDeclareDetailMidEntity> sourceMidList) {
+        if (CollUtil.isEmpty(selectedMidList) || CollUtil.isEmpty(sourceMidList)) {
+            return;
+        }
+        Set<String> selectedIdSet = new HashSet<>(selectedIds);
+        // 按来源ID+箱号分组，构建每个箱子对应的明细列表映射关系
+        // 只处理状态为"待生成"且存在来源ID和箱号的明细记录
+        Map<String, List<DeliveryDeclareDetailMidEntity>> boxGroupMap = sourceMidList.stream()
+                .filter(item -> CharSequenceUtil.equals(item.getGenerateStatus(), DeliveryDeclareDetailMidGenerateStatusEnum.WAIT.getCode()))
+                .filter(item -> CharSequenceUtil.isNotBlank(item.getSourceId()) && CharSequenceUtil.isNotBlank(item.getBoxNo()))
+                .collect(Collectors.groupingBy(this::buildSourceBoxKey));
+
+        // 提取已选中的明细所涉及的箱子标识集合
+        Set<String> selectedBoxKeys = selectedMidList.stream()
+                .filter(item -> CharSequenceUtil.isNotBlank(item.getSourceId()) && CharSequenceUtil.isNotBlank(item.getBoxNo()))
+                .map(this::buildSourceBoxKey)
+                .collect(Collectors.toSet());
+
+        // 遍历每个被选中的箱子，校验该箱子是否整箱勾选
+        for (String boxKey : selectedBoxKeys) {
+            List<DeliveryDeclareDetailMidEntity> boxMidList = boxGroupMap.get(boxKey);
+            if (CollUtil.isEmpty(boxMidList)) {
+                continue;
+            }
+
+            // 找出当前箱子中未被选中的SKU编号列表
+            List<String> missingSkuNoList = boxMidList.stream()
+                    .filter(item -> !selectedIdSet.contains(item.getId()))
+                    .map(DeliveryDeclareDetailMidEntity::getSkuNo)
+                    .filter(CharSequenceUtil::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.toList());
+
+            // 如果存在未选中的SKU，说明该箱未整箱勾选，抛出业务异常
+            if (CollUtil.isNotEmpty(missingSkuNoList)) {
+                DeliveryDeclareDetailMidEntity firstMid = boxMidList.get(0);
+                throw new ServiceException(ApiError.LOGISTICS_DECLARE_BOX_NOT_FULL_SELECTED,
+                        firstMid.getSourceCode(), firstMid.getBoxNo(), String.join("、", missingSkuNoList));
+            }
+        }
+    }
+
+    /**
+     * 按提交的来源明细反查中间表行，复用同箱整箱勾选校验，防止绕过 mergeAfterPreview 直接确认生成。
+     */
+    private void validateSameBoxFullSelectedBySourceDetail(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList) {
+        if (CollUtil.isEmpty(sourceDetailList)) {
+            return;
+        }
+        List<String> sourceIds = sourceDetailList.stream()
+                .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getSourceId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(sourceIds)) {
+            return;
+        }
+        List<DeliveryDeclareDetailMidEntity> sourceMidList = listBySourceIdList(sourceIds);
+        if (CollUtil.isEmpty(sourceMidList)) {
+            return;
+        }
+        Map<String, DeliveryDeclareDetailMidEntity> midBySourceBoxSku = sourceMidList.stream()
+                .collect(Collectors.toMap(this::buildSourceBoxSkuKey, item -> item, (oldValue, newValue) -> oldValue));
+        Map<String, DeliveryDeclareDetailMidEntity> selectedMidMap = new LinkedHashMap<>();
+        for (TmsDeclareBillDTO.SourceDeliveryDetailDTO sourceDetail : sourceDetailList) {
+            if (Objects.isNull(sourceDetail)) {
+                continue;
+            }
+            DeliveryDeclareDetailMidEntity mid = midBySourceBoxSku.get(buildSourceBoxSkuKey(sourceDetail));
+            if (Objects.nonNull(mid)) {
+                selectedMidMap.putIfAbsent(mid.getId(), mid);
+            }
+        }
+        if (selectedMidMap.isEmpty()) {
+            return;
+        }
+        validateSameBoxFullSelected(new ArrayList<>(selectedMidMap.values()),
+                new ArrayList<>(selectedMidMap.keySet()), sourceMidList);
+    }
+
+    private String buildSourceBoxKey(DeliveryDeclareDetailMidEntity mid) {
+        return CharSequenceUtil.join("|", mid.getSourceId(), mid.getBoxNo());
+    }
+
+    private Map<String, TmsDeclareBillDTO.SourceDeliveryDetailDTO> buildSourceContextBySourceId(
+            Map<String, TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceContextByBoxSkuMap) {
+        if (CollUtil.isEmpty(sourceContextByBoxSkuMap)) {
+            return Collections.emptyMap();
+        }
+        return sourceContextByBoxSkuMap.values().stream()
+                .filter(Objects::nonNull)
+                .filter(item -> CharSequenceUtil.isNotBlank(item.getSourceId()))
+                .collect(Collectors.toMap(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getSourceId, item -> item, (oldValue, newValue) -> oldValue));
     }
 
     private Map<String, TmsDeclareBillDTO.SourceDeliveryDetailDTO> loadSourceContextMap(String sourceType, List<String> sourceIds) {
@@ -719,16 +817,18 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
     private List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> buildLatestComboSourceDetails(List<DeliveryDeclareDetailMidEntity> oldGroupList,
                                                                                          List<BomChildrenSkuDTO> historyList,
                                                                                          ProductDetailDTO.ProductLogisticDTO latestParentLogistics,
-                                                                                         Map<String, TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceContextMap) {
+                                                                                         Map<String, TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceContextByBoxSkuMap,
+                                                                                         Map<String, TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceContextBySourceIdMap) {
         if (CollUtil.isEmpty(latestParentLogistics.getChildList())) {
             throw new ServiceException(ApiError.LOGISTICS_COMBO_DECLARE_CHILD_EMPTY,
                     CharSequenceUtil.blankToDefault(latestParentLogistics.getSkuNo(), latestParentLogistics.getSkuId()));
         }
         DeliveryDeclareDetailMidEntity firstOldMid = oldGroupList.get(0);
-        TmsDeclareBillDTO.SourceDeliveryDetailDTO parentContext = sourceContextMap.get(buildSourceBoxSkuKey(
-                firstOldMid.getSourceId(), firstOldMid.getBoxNo(), latestParentLogistics.getSkuId()));
+        TmsDeclareBillDTO.SourceDeliveryDetailDTO parentContext = resolveSourceContext(firstOldMid, sourceContextByBoxSkuMap,
+                sourceContextBySourceIdMap, latestParentLogistics.getSkuId());
         if (Objects.isNull(parentContext)) {
-            parentContext = buildSourceDetailFromMid(firstOldMid, null, latestParentLogistics.getSkuId());
+            parentContext = buildSourceDetailFromMid(firstOldMid, sourceContextByBoxSkuMap, sourceContextBySourceIdMap,
+                    latestParentLogistics.getSkuId());
         }
         // 旧中间表只保存拆分后的子件数量，最新 BOM 重拆时需先反算父 SKU 数量再乘以最新子件用量。
         int parentQty = calculateParentQty(oldGroupList, historyList);
@@ -1238,9 +1338,28 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         }
     }
 
+    private TmsDeclareBillDTO.SourceDeliveryDetailDTO resolveSourceContext(DeliveryDeclareDetailMidEntity mid,
+                                                                           Map<String, TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceContextByBoxSkuMap,
+                                                                           Map<String, TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceContextBySourceIdMap,
+                                                                           String parentSkuId) {
+        TmsDeclareBillDTO.SourceDeliveryDetailDTO context = sourceContextByBoxSkuMap.get(buildSourceBoxSkuKey(mid));
+        if (Objects.nonNull(context)) {
+            return context;
+        }
+        if (CharSequenceUtil.isNotBlank(parentSkuId)) {
+            context = sourceContextByBoxSkuMap.get(buildSourceBoxSkuKey(mid.getSourceId(), mid.getBoxNo(), parentSkuId));
+            if (Objects.nonNull(context)) {
+                return context;
+            }
+        }
+        return sourceContextBySourceIdMap.get(mid.getSourceId());
+    }
+
     private TmsDeclareBillDTO.SourceDeliveryDetailDTO buildSourceDetailFromMid(DeliveryDeclareDetailMidEntity mid,
-                                                                               TmsDeclareBillDTO.SourceDeliveryDetailDTO context,
+                                                                               Map<String, TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceContextByBoxSkuMap,
+                                                                               Map<String, TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceContextBySourceIdMap,
                                                                                String parentSkuId) {
+        TmsDeclareBillDTO.SourceDeliveryDetailDTO context = resolveSourceContext(mid, sourceContextByBoxSkuMap, sourceContextBySourceIdMap, parentSkuId);
         TmsDeclareBillDTO.SourceDeliveryDetailDTO detailDTO = copySourceDetail(context);
         detailDTO.setSourceId(CharSequenceUtil.blankToDefault(mid.getSourceId(), detailDTO.getSourceId()));
         detailDTO.setSourceType(CharSequenceUtil.blankToDefault(mid.getSourceType(), detailDTO.getSourceType()));
@@ -1248,6 +1367,8 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         detailDTO.setBusinessId(CharSequenceUtil.blankToDefault(mid.getBusinessId(), detailDTO.getBusinessId()));
         detailDTO.setBusinessCode(CharSequenceUtil.blankToDefault(mid.getBusinessCode(), detailDTO.getBusinessCode()));
         detailDTO.setBoxNo(CharSequenceUtil.blankToDefault(mid.getBoxNo(), detailDTO.getBoxNo()));
+        detailDTO.setCountryId(CharSequenceUtil.blankToDefault(detailDTO.getCountryId(), context == null ? null : context.getCountryId()));
+        detailDTO.setCountryName(CharSequenceUtil.blankToDefault(detailDTO.getCountryName(), context == null ? null : context.getCountryName()));
         detailDTO.setParentSkuId(parentSkuId);
         detailDTO.setSkuId(mid.getSkuId());
         detailDTO.setSkuNo(mid.getSkuNo());
