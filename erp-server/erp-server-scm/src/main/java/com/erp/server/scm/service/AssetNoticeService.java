@@ -5,6 +5,7 @@ import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.AssetNoticeDTO;
+import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.dto.excel.AssetNoticeImportExcelDTO;
 import com.erp.model.scm.entity.AssetNoticeEntity;
 
@@ -166,4 +167,19 @@ public interface AssetNoticeService extends SuperService<AssetNoticeEntity> {
      * @param dto
      */
     void importAssetNotice(BaseDTO.ImportDTO dto);
+
+    /**
+     * 查询 DFM 附件列表（列表/弹窗下载）
+     */
+    List<AttachmentDTO.UpdateDTO> listDfmAttachment(String id);
+
+    /**
+     * 上传 DFM 附件
+     */
+    BatchResultDTO uploadDfmAttachment(AssetNoticeDTO.UploadDfmAttachmentDTO dto);
+
+    /**
+     * 删除 DFM 附件
+     */
+    BatchResultDTO deleteDfmAttachment(AttachmentDTO.DeleteDTO dto);
 }

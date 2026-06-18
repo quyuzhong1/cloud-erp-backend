@@ -18,6 +18,7 @@ import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -136,6 +137,36 @@ public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, Sc
             return Collections.emptyList();
         }
         return BeanMapper.copyList(list, AttachmentDTO.UpdateDTO.class);
+    }
+
+    @Override
+    public List<AttachmentDTO.UpdateDTO> listByBusinessIdAndType(String businessId, String type) {
+        if (StringUtils.isBlank(businessId) || StringUtils.isBlank(type)) {
+            return Collections.emptyList();
+        }
+        LambdaQueryWrapper<ScmAttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ScmAttachmentEntity::getBusinessId, businessId);
+        queryWrapper.eq(ScmAttachmentEntity::getType, type);
+        List<ScmAttachmentEntity> list = this.list(queryWrapper);
+        if (CollectionUtils.isEmpty(list)) {
+            return Collections.emptyList();
+        }
+        return BeanMapper.copyList(list, AttachmentDTO.UpdateDTO.class);
+    }
+
+    @Override
+    public Map<String, Long> countByBusinessIdsAndType(List<String> businessIds, String type) {
+        if (CollectionUtils.isEmpty(businessIds) || StringUtils.isBlank(type)) {
+            return Collections.emptyMap();
+        }
+        LambdaQueryWrapper<ScmAttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(ScmAttachmentEntity::getBusinessId, businessIds);
+        queryWrapper.eq(ScmAttachmentEntity::getType, type);
+        List<ScmAttachmentEntity> list = this.list(queryWrapper);
+        if (CollectionUtils.isEmpty(list)) {
+            return Collections.emptyMap();
+        }
+        return list.stream().collect(Collectors.groupingBy(ScmAttachmentEntity::getBusinessId, Collectors.counting()));
     }
 
     /**
