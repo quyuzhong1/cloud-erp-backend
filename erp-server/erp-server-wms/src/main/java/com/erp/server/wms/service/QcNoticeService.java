@@ -202,7 +202,7 @@ public interface QcNoticeService extends SuperService<QcNoticeEntity> {
     List<QcNoticeDTO.UpdateQcUserViewDTO> updateQcUserView(QcNoticeDTO.UpdateQcUserViewParamDTO dto);
 
     /**
-    * 更新质检员（单条，含级联更新下游质检单）
+    * 更新质检员（单条：校验与 Feign 无事务，落库见 persistUpdateQcUser）
     * @author wtr
     * @date: 2026-05-28
     * @param dto 明细质检员 {detailId, qcUserId}
