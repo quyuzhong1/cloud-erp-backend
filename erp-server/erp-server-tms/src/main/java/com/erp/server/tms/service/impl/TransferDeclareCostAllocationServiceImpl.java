@@ -1393,7 +1393,11 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
             asyncTaskRecordService.updateTaskFinally(taskId);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            log.error("中转下推分摊异步任务锁等待中断，taskId: {}", taskId, e);
+            log.warn("中转下推分摊异步任务获取锁被中断，taskId: {}", taskId, e);
+        } catch (Exception e) {
+            log.error("中转下推分摊异步任务执行失败，taskId: {}", taskId, e);
+            asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),
+                asyncTaskRecordService.formatTaskErrorMessage(e));
         } finally {
             if (locked && taskLock.isHeldByCurrentThread()) {
                 taskLock.unlock();

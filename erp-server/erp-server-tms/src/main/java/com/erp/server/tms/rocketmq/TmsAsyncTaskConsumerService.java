@@ -1,12 +1,10 @@
 package com.erp.server.tms.rocketmq;
 
 
-import cn.hutool.json.JSONUtil;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqNewTag;
 import com.common.message.constant.RocketMqTopic;
-import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
 import com.erp.model.tms.entity.TmsAsyncTaskRecordEntity;
 import com.erp.model.tms.enums.TmsAsyncTaskMethodTypeEnum;
 import com.erp.server.tms.service.*;
@@ -75,7 +73,7 @@ public class TmsAsyncTaskConsumerService implements RocketMQListener<TmsAsyncTas
         log.info("开始消费TMS异步任务，taskId: {}, businessType: {}", taskId, businessType);
         //头程对账单
         if(Objects.equals(businessType,SourceTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode())){
-            if (Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode())) {
+            if (isDefaultPushAllocationMethodType(methodType)) {
                 tmsFirstMileReconciliationDetailService.pushFirstMileReconciliation(taskRecord);
             } else {
                 log.warn("头程对账单MQ方法类型不支持，跳过消费，taskId: {}, methodType: {}", taskId, methodType);
@@ -85,7 +83,7 @@ public class TmsAsyncTaskConsumerService implements RocketMQListener<TmsAsyncTas
         }
         //报关对账
         else if(Objects.equals(businessType,SourceTypeEnum.TMS_B2C_DECLARE_RECONCILIATION.getCode())){
-            if (Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode())) {
+            if (isDefaultPushAllocationMethodType(methodType)) {
                 tmsB2cDeclareReconciliationDetailService.pushDeclareReconciliation(taskRecord);
             } else {
                 log.warn("报关对账MQ方法类型不支持，跳过消费，taskId: {}, methodType: {}", taskId, methodType);
@@ -101,7 +99,7 @@ public class TmsAsyncTaskConsumerService implements RocketMQListener<TmsAsyncTas
                 firstMileCostAllocationService.pushReAllocationCalcCost(taskRecord);
             } else if (Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.DELETE.getCode())) {
                 firstMileCostAllocationService.pushDelete(taskRecord);
-            } else if (Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode())) {
+            } else if (isDefaultPushAllocationMethodType(methodType)) {
                 firstMileCostAllocationService.pushFirstMileCostAllocation(taskRecord);
             } else {
                 log.warn("头程分摊MQ方法类型不支持，跳过消费，taskId: {}, methodType: {}", taskId, methodType);
@@ -136,7 +134,7 @@ public class TmsAsyncTaskConsumerService implements RocketMQListener<TmsAsyncTas
                 transferDeclareCostAllocationService.pushReAllocation(taskRecord);
             } else if (Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.DELETE.getCode())) {
                 transferDeclareCostAllocationService.pushDelete(taskRecord);
-            } else if (Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode())) {
+            } else if (isDefaultPushAllocationMethodType(methodType)) {
                 transferDeclareCostAllocationService.pushTransferDeclareCostAllocation(taskRecord);
             } else {
                 log.warn("中转分摊MQ方法类型不支持，跳过消费，taskId: {}, methodType: {}", taskId, methodType);
@@ -153,14 +151,21 @@ public class TmsAsyncTaskConsumerService implements RocketMQListener<TmsAsyncTas
     }
 
     /**
+     * 判断默认下推分摊方法类型（含迁移期空 methodType 兜底）。
+     */
+    private boolean isDefaultPushAllocationMethodType(String methodType) {
+        return StringUtils.isBlank(methodType)
+            || Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode());
+    }
+
+    /**
      * 判断小包费用分摊下推方法类型。
      *
      * @param methodType 方法类型
      * @return true 表示应路由到小包费用分摊下推消费逻辑
      */
     private boolean isSmallBagPushAllocationMethodType(String methodType) {
-        return StringUtils.isBlank(methodType)
-            || Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode())
+        return isDefaultPushAllocationMethodType(methodType)
             || Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.SELFDELIVER_PUSH_ALLOCATION.getCode())
             || Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.LASTMILE_PUSH_ALLOCATION.getCode());
     }

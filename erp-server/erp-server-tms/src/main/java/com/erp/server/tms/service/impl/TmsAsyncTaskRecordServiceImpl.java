@@ -1832,10 +1832,9 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         YearMonth yearMonth = YearMonth.from(now);
         int maxDay = yearMonth.lengthOfMonth();
         int day = Math.min(firstMileAllocationDate, maxDay);
-        String startTimeStr = now.withDayOfMonth(day).format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-        LocalDate taskStartDate = LocalDate.parse(startTimeStr);
-        LocalDate reportPeriodMonth = taskStartDate.minusMonths(1).withDayOfMonth(1);
-        String reportDate = reportPeriodMonth.withDayOfMonth(day).format(DateTimeFormatter.ofPattern("yyyy-MM"));
+        LocalDate localDate = now.withDayOfMonth(day);
+        String startTimeStr = localDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        String reportDate = localDate.minusMonths(1).format(DateTimeFormatter.ofPattern("yyyy-MM"));
         TmsAsyncTaskRecordDTO.FirstMilePushAllocationPayloadDTO payload =
             new TmsAsyncTaskRecordDTO.FirstMilePushAllocationPayloadDTO(reportDate);
         TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope =
