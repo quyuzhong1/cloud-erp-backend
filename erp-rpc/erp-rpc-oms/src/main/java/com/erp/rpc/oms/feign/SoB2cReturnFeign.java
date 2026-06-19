@@ -44,6 +44,6 @@ public interface SoB2cReturnFeign {
     List<SoB2cReturnDetailDTO.ViewDTO> listDetailByMainIds(@RequestBody List<String> mainIds);
 
 
-    @PostMapping("feign/soReturn/updateBatch")
+    @PostMapping("feign/soB2cReturn/updateBatch")
     void updateBatch(@RequestBody List<SoB2cReturnEntity> list);
 }

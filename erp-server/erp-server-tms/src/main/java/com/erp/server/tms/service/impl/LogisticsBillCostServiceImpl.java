@@ -63,6 +63,7 @@ import com.erp.server.tms.mapper.LogisticsBillCostMapper;
 import com.erp.server.tms.query.LogisticsBillCostQueryHandler;
 import com.erp.server.tms.query.LogisticsLastMileCostQueryHandler;
 import com.erp.server.tms.service.*;
+import com.erp.server.tms.service.support.LogisticsOrderWeightSupport;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -188,6 +189,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     private TmsAsyncTaskDetailService asyncTaskDetailRecordService;
     @Resource
     private RedissonClient redissonClient;
+    @Resource
+    private LogisticsOrderWeightSupport logisticsOrderWeightSupport;
     @Autowired
     @Qualifier("costAllocationPool")
     private ExecutorService costAllocationPool;
@@ -1732,20 +1735,6 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         }
         preloadData.setOutstockDetailMap(outstockDetailList.stream()
                 .collect(Collectors.groupingBy(SoOutstockDetailEntity::getMainId)));
-        List<String> skuIdList = outstockDetailList.stream()
-                .map(SoOutstockDetailEntity::getSkuId)
-                .filter(CharSequenceUtil::isNotBlank)
-                .distinct()
-                .collect(Collectors.toList());
-        if (CollUtil.isEmpty(skuIdList)) {
-            return preloadData;
-        }
-        List<ProductPackEntity> productPackList = FeignQuery.create(ProductPackEntity.class)
-                .in(ProductPackEntity::getSkuId, skuIdList).list();
-        if (CollUtil.isNotEmpty(productPackList)) {
-            preloadData.setProductPackMap(productPackList.stream()
-                    .collect(Collectors.toMap(ProductPackEntity::getSkuId, obj -> obj, (first, second) -> first)));
-        }
         return preloadData;
     }
 
@@ -1755,47 +1744,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                                                        OutstockWeightPreloadDTO preloadData) {
         Map<String, List<SoOutstockDetailEntity>> outstockDetailMap = preloadData == null
                 ? Collections.emptyMap() : ObjectUtil.defaultIfNull(preloadData.getOutstockDetailMap(), Collections.emptyMap());
-        Map<String, ProductPackEntity> productPackMap = preloadData == null
-                ? Collections.emptyMap() : ObjectUtil.defaultIfNull(preloadData.getProductPackMap(), Collections.emptyMap());
-        Map<String, BigDecimal> weightMap = new HashMap<>();
-        if (logisticsBillVoList.stream().anyMatch(vo -> CharSequenceUtil.isBlank(vo.getOutstockId()))) {
-            errorMsgList.add("无法获取上游出库单用于重量分摊");
-            return weightMap;
-        }
-        if (CollUtil.isEmpty(outstockDetailMap)) {
-            errorMsgList.add("无法获取上游出库明细用于重量分摊");
-            return weightMap;
-        }
-        if (CollUtil.isEmpty(productPackMap)) {
-            errorMsgList.add("出库明细缺少SKU信息，无法按重量分摊");
-            return weightMap;
-        }
-        for (LogisticsBillDTO.LogisticsBillVo logisticsBillVo : logisticsBillVoList) {
-            List<SoOutstockDetailEntity> detailList = outstockDetailMap.get(logisticsBillVo.getOutstockId());
-            if (CollUtil.isEmpty(detailList)) {
-                errorMsgList.add("无法获取上游出库明细用于重量分摊：" + logisticsBillVo.getOutstockCode());
-                continue;
-            }
-            BigDecimal orderWeight = BigDecimal.ZERO;
-            for (SoOutstockDetailEntity detailEntity : detailList) {
-                ProductPackEntity productPackEntity = productPackMap.get(detailEntity.getSkuId());
-                if (ObjectUtil.isNull(productPackEntity) || ObjectUtil.isNull(productPackEntity.getGrossWeight()) || productPackEntity.getGrossWeight().compareTo(BigDecimal.ZERO) <= 0) {
-                    errorMsgList.add("缺少SKU毛重，无法按重量分摊：" + detailEntity.getSkuNo());
-                    continue;
-                }
-                if (ObjectUtil.isNull(detailEntity.getActualQty())) {
-                    errorMsgList.add("出库实发数量为空，无法按重量分摊：" + detailEntity.getSkuNo());
-                    continue;
-                }
-                orderWeight = orderWeight.add(productPackEntity.getGrossWeight().multiply(BigDecimal.valueOf(detailEntity.getActualQty())));
-            }
-            weightMap.put(logisticsBillVo.getDetailId(), orderWeight);
-        }
-        BigDecimal totalWeight = weightMap.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
-        if (totalWeight.compareTo(BigDecimal.ZERO) <= 0) {
-            errorMsgList.add("总订单重量为0，无法执行费用分摊");
-        }
-        return weightMap;
+        return logisticsOrderWeightSupport.buildOrderWeightMap(logisticsBillVoList, outstockDetailMap, errorMsgList);
     }
 
     @Override
