@@ -51,8 +51,7 @@ public class TmsAsyncTaskConsumerService implements RocketMQListener<TmsAsyncTas
     /**
      * 消费 TMS 异步任务消息。
      * <p>
-     * 已迁移任务优先按 TaskEnvelope 路由；未迁移任务继续按 PushParamsDTO 解析，
-     * 以便小包试点和历史 TMS 异步任务在迁移期间共存。
+     * 按 {@code businessType + methodType} 路由至各业务 Service，业务载荷从 {@code dataJson} 信封解析。
      *
      * @param taskRecord MQ 任务记录消息
      */

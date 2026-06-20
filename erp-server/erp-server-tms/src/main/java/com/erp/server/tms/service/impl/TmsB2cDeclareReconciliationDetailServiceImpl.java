@@ -512,10 +512,10 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
                 return;
             }
 
-            TmsAsyncTaskRecordDTO.PushParamsDTO dispatchParams =
-                asyncTaskRecordService.buildDispatchPushParams(taskRecord, envelope);
-            String businessType = StringUtils.defaultIfBlank(dispatchParams.getBusinessType(),
-                SourceTypeEnum.TMS_B2C_DECLARE_RECONCILIATION.getCode());
+            String businessType = StringUtils.defaultIfBlank(envelope.getBusinessType(), taskRecord.getBusinessType());
+            if (StringUtils.isBlank(businessType)) {
+                businessType = SourceTypeEnum.TMS_B2C_DECLARE_RECONCILIATION.getCode();
+            }
 
             if (Objects.equals(currentRecord.getStatus(), TmsAsyncTaskRecordStatusEnum.PENDING.getCode())) {
                 boolean claimed = asyncTaskRecordService.lambdaUpdate()
@@ -561,12 +561,12 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
                 }
 
                 List<TmsAsyncTaskDetailEntity> batchDetails = prepareDeclareReconciliationBatchDetails(
-                    taskId, businessType, dispatchParams.getRetryMode(), dispatchParams.getRetrySourceTaskId(),
+                    taskId, businessType, envelope.getRetryMode(), envelope.getRetrySourceTaskId(),
                     payload.getStartDate(), payload.getEndDate(), cursor, batchSize);
                 if (CollUtil.isEmpty(batchDetails)) {
                     if (totalProcessed == 0) {
                         asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),
-                            TmsAsyncTaskRecordDTO.RETRY_MODE_FAILED_ONLY.equals(dispatchParams.getRetryMode())
+                            TmsAsyncTaskRecordDTO.RETRY_MODE_FAILED_ONLY.equals(envelope.getRetryMode())
                                 ? "无失败明细可重试" : "b2c报关对账单明细为空");
                         return;
                     }

@@ -11,14 +11,12 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.json.JSONUtil;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -87,8 +85,11 @@ import com.erp.server.tms.service.TmsAsyncTaskRecordService;
 import com.erp.server.tms.service.TmsB2cDeclareReconciliationDetailService;
 import com.erp.server.tms.service.TransferDeclareCostAllocationDetailService;
 import com.erp.server.tms.service.TransferDeclareCostAllocationMainService;
+import com.erp.server.tms.service.BatchBusinessIdProvider;
+import com.erp.server.tms.service.TmsAsyncTaskBatchPushHandler;
 import com.erp.server.tms.service.TransferDeclareCostAllocationService;
 import com.erp.server.tms.service.TransferDeclareService;
+import com.erp.server.tms.service.support.TmsAsyncTaskBatchConsumerSupport;
 
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -111,6 +112,14 @@ import java.time.format.DateTimeFormatter;
 @Slf4j
 @Service
 public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<TransferDeclareCostAllocationMapper, TransferDeclareCostAllocationEntity> implements TransferDeclareCostAllocationService {
+
+    private final TransferUpdateReportStatusBatchPushHandler transferUpdateReportStatusBatchPushHandler =
+        new TransferUpdateReportStatusBatchPushHandler();
+    private final TransferReAllocationBatchPushHandler transferReAllocationBatchPushHandler =
+        new TransferReAllocationBatchPushHandler();
+    private final TransferDeleteBatchPushHandler transferDeleteBatchPushHandler =
+        new TransferDeleteBatchPushHandler();
+
     @Autowired
     private OperateLogService operateLogService;
     @Autowired
@@ -139,6 +148,8 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
     @Lazy
     @Resource
     private TransferDeclareCostAllocationService self;
+    @Resource
+    private TmsAsyncTaskBatchConsumerSupport tmsAsyncTaskBatchConsumerSupport;
 
     @Autowired
     @Qualifier("costAllocationPool")
@@ -373,16 +384,9 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 				dto.getReportPeriodStr(), reportStatus, dto.getReportDate());
 		TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope =
 			asyncTaskRecordService.buildEnvelope(businessType, methodType, null, null, payload);
-		String jsonStr = JSONUtil.toJsonStr(envelope);
-
-		TmsAsyncTaskRecordEntity taskRecord = asyncTaskRecordService.addManualTask(
-			new TmsAsyncTaskRecordDTO.ManualCreateDTO(businessType, methodType, total, jsonStr));
-		if (Objects.isNull(taskRecord)) {
-			throw new ServiceException(ApiError.LOGISTICS_ASYNC_TASK_CREATE_ERROR, jsonStr);
-		}
-		asyncTaskRecordService.claimAndDispatch(taskRecord, true);
-		log.info("中转核算状态变更异步任务派发成功，taskId: {}, 预计处理数据量: {}", taskRecord.getId(), total);
-		return BatchResultDTO.success(taskRecord.getId(), taskRecord.getCode());
+		return asyncTaskRecordService.dispatchManualEnvelopeTask(
+			businessType, methodType, total, envelope,
+			"中转核算状态变更异步任务派发成功，taskId: {}, 预计处理数据量: {}");
 	}
 
 	/**
@@ -390,153 +394,7 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 	 */
 	@Override
 	public void pushUpdateReportStatus(TmsAsyncTaskRecordEntity taskRecord) {
-		if (Objects.isNull(taskRecord) || StringUtils.isBlank(taskRecord.getId())) {
-			log.error("中转核算状态变更异步任务ID为空");
-			return;
-		}
-		String taskId = taskRecord.getId();
-
-		RLock taskLock = redissonClient.getLock(DistributeKeyConstant.TMS_ASYNC_TASK_EXEC_KEY + ":" + taskId);
-		boolean locked = false;
-		try {
-			locked = taskLock.tryLock(0, TimeUnit.SECONDS);
-			if (!locked) {
-				log.warn("中转核算状态变更异步任务正在执行，跳过重复消费，taskId: {}", taskId);
-				return;
-			}
-
-			CfgSettingValueDTO.BillBatchParamsDTO billBatchParamsDTO = asyncTaskRecordService.loadBillBatchParams(taskId);
-			if (billBatchParamsDTO == null) {
-				return;
-			}
-
-			TmsAsyncTaskRecordEntity currentRecord = asyncTaskRecordService.getById(taskId);
-			if (Objects.isNull(currentRecord)) {
-				log.error("任务记录不存在，taskId: {}", taskId);
-				return;
-			}
-			if (Objects.equals(currentRecord.getStatus(), TmsAsyncTaskRecordStatusEnum.FINISH.getCode())) {
-				log.warn("中转核算状态变更异步任务已完成，跳过重复消费，taskId: {}", taskId);
-				return;
-			}
-
-			TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope = asyncTaskRecordService.parseEnvelope(currentRecord.getDataJson());
-			TmsAsyncTaskRecordDTO.TransferDeclareUpdateReportStatusPayloadDTO payload =
-				asyncTaskRecordService.parseEnvelopePayloadOrFinishTask(
-					taskId, envelope, TmsAsyncTaskRecordDTO.TransferDeclareUpdateReportStatusPayloadDTO.class,
-					"中转核算状态变更异步任务信封参数解析失败");
-			if (envelope == null || payload == null) {
-				return;
-			}
-			if (CharSequenceUtil.isBlank(payload.getReportPeriodStr())) {
-				asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(), "核算期间为空");
-				return;
-			}
-
-			TmsAsyncTaskRecordDTO.PushParamsDTO dispatchParams =
-				asyncTaskRecordService.buildDispatchPushParams(taskRecord, envelope);
-
-			if (Objects.equals(currentRecord.getStatus(), TmsAsyncTaskRecordStatusEnum.PENDING.getCode())) {
-				boolean claimed = asyncTaskRecordService.lambdaUpdate()
-					.set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
-					.set(TmsAsyncTaskRecordEntity::getErrorData, ApiError.COMMON_BATCH_PROCESSING.getMsg())
-					.eq(TmsAsyncTaskRecordEntity::getId, taskId)
-					.eq(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode())
-					.update();
-				if (!claimed) {
-					log.warn("中转核算状态变更异步任务已被其他消费者认领，taskId: {}", taskId);
-					return;
-				}
-			} else if (!Objects.equals(currentRecord.getStatus(), TmsAsyncTaskRecordStatusEnum.ING.getCode())) {
-				log.warn("中转核算状态变更异步任务状态不可执行，taskId: {}, status: {}", taskId, currentRecord.getStatus());
-				return;
-			}
-
-			int batchSize = asyncTaskRecordService.resolveBatchSize(billBatchParamsDTO.getBatch(), 500);
-			int timeoutSeconds = asyncTaskRecordService.resolveTimeoutSeconds(billBatchParamsDTO.getBatchTimeoutSeconds(), 5000);
-			int staleDetailSeconds = asyncTaskRecordService.resolveStaleDetailSeconds(billBatchParamsDTO);
-			String lastId = "";
-			int totalProcessed = 0;
-			int totalSuccess = 0;
-			int totalFailed = 0;
-			int batchNumber = 0;
-
-			boolean excludeBigTableDone = TransferDeclareCostAllocationMainReportStatusEnum.TOBECONFIRM.getCode().equals(payload.getReportStatus());
-			String bigTableDoneCode = TransferDeclareCostAllocationBigTableStatusEnum.DONE.getCode();
-			LoginUser operatorUser = asyncTaskRecordService.resolveOperatorLoginUser(taskRecord, dispatchParams);
-
-			log.info("开始分批处理中转核算状态变更任务，taskId: {}, 批次大小: {}, 预计总数: {}", taskId, batchSize, currentRecord.getDetailCount());
-
-			while (true) {
-				batchNumber++;
-
-				if (batchNumber == 1 || batchNumber % 10 == 0) {
-					TmsAsyncTaskRecordEntity loopTask = asyncTaskRecordService.getById(taskId);
-					if (asyncTaskRecordService.shouldStopLoopTask(taskId, loopTask)) {
-						break;
-					}
-					if (asyncTaskRecordService.terminateTaskIfExecTimeoutReached(loopTask, billBatchParamsDTO)) {
-						break;
-					}
-				}
-
-				List<String> batchIds;
-				try {
-					String cursor = lastId;
-					batchIds = pageTransferCostAllocationIds(dispatchParams, cursor, batchSize,
-						() -> transferDeclareCostAllocationMainService.pageMainIdsByReportPeriodStr(
-							payload.getReportPeriodStr(), payload.getReportStatus(), excludeBigTableDone, bigTableDoneCode, cursor, batchSize));
-				} catch (Exception e) {
-					log.error("第{}批查询失败，taskId: {}", batchNumber, taskId, e);
-					asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),
-						"第" + batchNumber + "批查询失败: " + asyncTaskRecordService.formatTaskErrorMessage(e));
-					break;
-				}
-
-				if (CollUtil.isEmpty(batchIds)) {
-					log.info("所有数据处理完成，taskId: {}, 总批次: {}, 总处理: {}/成功: {}/失败: {}",
-						taskId, batchNumber - 1, totalProcessed, totalSuccess, totalFailed);
-					break;
-				}
-
-				TmsAsyncTaskRecordDTO.BatchProcessResult result = processTransferUpdateStatusBatch(
-					taskId, batchIds, payload.getReportDate(), payload.getReportStatus(),
-					timeoutSeconds, staleDetailSeconds, operatorUser);
-
-				totalProcessed += batchIds.size();
-				totalSuccess += result.getSuccessCount();
-				totalFailed += result.getFailedCount();
-
-				try {
-					asyncTaskRecordService.lambdaUpdate()
-						.set(TmsAsyncTaskRecordEntity::getErrorCount, totalFailed)
-						.eq(TmsAsyncTaskRecordEntity::getId, taskId)
-						.update();
-				} catch (Exception e) {
-					log.error("更新任务进度失败，taskId: {}", taskId, e);
-				}
-
-				lastId = batchIds.get(batchIds.size() - 1);
-			}
-
-			try {
-				asyncTaskRecordService.updateTaskFinally(taskId);
-				log.info("中转核算状态变更任务最终状态更新完成，taskId: {}", taskId);
-			} catch (Exception e) {
-				log.error("更新任务最终状态失败，taskId: {}", taskId, e);
-			}
-		} catch (InterruptedException e) {
-			Thread.currentThread().interrupt();
-			log.warn("中转核算状态变更异步任务获取锁被中断，taskId: {}", taskId, e);
-		} catch (Exception e) {
-			log.error("中转核算状态变更异步任务执行失败，taskId: {}", taskId, e);
-			asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),
-				asyncTaskRecordService.formatTaskErrorMessage(e));
-		} finally {
-			if (locked && taskLock.isHeldByCurrentThread()) {
-				taskLock.unlock();
-			}
-		}
+		tmsAsyncTaskBatchConsumerSupport.execute(taskRecord, transferUpdateReportStatusBatchPushHandler);
 	}
 
 	@Override
@@ -557,16 +415,9 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 				dto.getReportPeriodStr(), reportStatus);
 		TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope =
 			asyncTaskRecordService.buildEnvelope(businessType, methodType, null, null, payload);
-		String jsonStr = JSONUtil.toJsonStr(envelope);
-
-		TmsAsyncTaskRecordEntity taskRecord = asyncTaskRecordService.addManualTask(
-			new TmsAsyncTaskRecordDTO.ManualCreateDTO(businessType, methodType, total, jsonStr));
-		if (Objects.isNull(taskRecord)) {
-			throw new ServiceException(ApiError.LOGISTICS_ASYNC_TASK_CREATE_ERROR, jsonStr);
-		}
-		asyncTaskRecordService.claimAndDispatch(taskRecord, true);
-		log.info("中转重新分摊异步任务派发成功，taskId: {}, 预计处理数据量: {}", taskRecord.getId(), total);
-		return BatchResultDTO.success(taskRecord.getId(), taskRecord.getCode());
+		return asyncTaskRecordService.dispatchManualEnvelopeTask(
+			businessType, methodType, total, envelope,
+			"中转重新分摊异步任务派发成功，taskId: {}, 预计处理数据量: {}");
 	}
 
 	/**
@@ -574,151 +425,7 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 	 */
 	@Override
 	public void pushReAllocation(TmsAsyncTaskRecordEntity taskRecord) {
-		if (Objects.isNull(taskRecord) || StringUtils.isBlank(taskRecord.getId())) {
-			log.error("中转重新分摊异步任务ID为空");
-			return;
-		}
-		String taskId = taskRecord.getId();
-
-		RLock taskLock = redissonClient.getLock(DistributeKeyConstant.TMS_ASYNC_TASK_EXEC_KEY + ":" + taskId);
-		boolean locked = false;
-		try {
-			locked = taskLock.tryLock(0, TimeUnit.SECONDS);
-			if (!locked) {
-				log.warn("中转重新分摊异步任务正在执行，跳过重复消费，taskId: {}", taskId);
-				return;
-			}
-
-			CfgSettingValueDTO.BillBatchParamsDTO billBatchParamsDTO = asyncTaskRecordService.loadBillBatchParams(taskId);
-			if (billBatchParamsDTO == null) {
-				return;
-			}
-
-			TmsAsyncTaskRecordEntity currentRecord = asyncTaskRecordService.getById(taskId);
-			if (Objects.isNull(currentRecord)) {
-				log.error("任务记录不存在，taskId: {}", taskId);
-				return;
-			}
-			if (Objects.equals(currentRecord.getStatus(), TmsAsyncTaskRecordStatusEnum.FINISH.getCode())) {
-				log.warn("中转重新分摊异步任务已完成，跳过重复消费，taskId: {}", taskId);
-				return;
-			}
-
-			TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope = asyncTaskRecordService.parseEnvelope(currentRecord.getDataJson());
-			TmsAsyncTaskRecordDTO.TransferDeclareReportPeriodBatchPayloadDTO payload =
-				asyncTaskRecordService.parseEnvelopePayloadOrFinishTask(
-					taskId, envelope, TmsAsyncTaskRecordDTO.TransferDeclareReportPeriodBatchPayloadDTO.class,
-					"中转重新分摊异步任务信封参数解析失败");
-			if (envelope == null || payload == null) {
-				return;
-			}
-			if (CharSequenceUtil.isBlank(payload.getReportPeriodStr())) {
-				asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(), "核算期间为空");
-				return;
-			}
-
-			TmsAsyncTaskRecordDTO.PushParamsDTO dispatchParams =
-				asyncTaskRecordService.buildDispatchPushParams(taskRecord, envelope);
-
-			if (Objects.equals(currentRecord.getStatus(), TmsAsyncTaskRecordStatusEnum.PENDING.getCode())) {
-				boolean claimed = asyncTaskRecordService.lambdaUpdate()
-					.set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
-					.set(TmsAsyncTaskRecordEntity::getErrorData, ApiError.COMMON_BATCH_PROCESSING.getMsg())
-					.eq(TmsAsyncTaskRecordEntity::getId, taskId)
-					.eq(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode())
-					.update();
-				if (!claimed) {
-					log.warn("中转重新分摊异步任务已被其他消费者认领，taskId: {}", taskId);
-					return;
-				}
-			} else if (!Objects.equals(currentRecord.getStatus(), TmsAsyncTaskRecordStatusEnum.ING.getCode())) {
-				log.warn("中转重新分摊异步任务状态不可执行，taskId: {}, status: {}", taskId, currentRecord.getStatus());
-				return;
-			}
-
-			int batchSize = asyncTaskRecordService.resolveBatchSize(billBatchParamsDTO.getBatch(), 500);
-			int timeoutSeconds = asyncTaskRecordService.resolveTimeoutSeconds(billBatchParamsDTO.getBatchTimeoutSeconds(), 5000);
-			int staleDetailSeconds = asyncTaskRecordService.resolveStaleDetailSeconds(billBatchParamsDTO);
-			String lastId = "";
-			int totalProcessed = 0;
-			int totalSuccess = 0;
-			int totalFailed = 0;
-			int batchNumber = 0;
-			String reportStatus = CharSequenceUtil.blankToDefault(
-				payload.getReportStatus(), TransferDeclareCostAllocationMainReportStatusEnum.TOBECONFIRM.getCode());
-			LoginUser operatorUser = asyncTaskRecordService.resolveOperatorLoginUser(taskRecord, dispatchParams);
-
-			log.info("开始分批处理中转重新分摊任务，taskId: {}, 批次大小: {}, 预计总数: {}", taskId, batchSize, currentRecord.getDetailCount());
-
-			while (true) {
-				batchNumber++;
-
-				if (batchNumber == 1 || batchNumber % 10 == 0) {
-					TmsAsyncTaskRecordEntity loopTask = asyncTaskRecordService.getById(taskId);
-					if (asyncTaskRecordService.shouldStopLoopTask(taskId, loopTask)) {
-						break;
-					}
-					if (asyncTaskRecordService.terminateTaskIfExecTimeoutReached(loopTask, billBatchParamsDTO)) {
-						break;
-					}
-				}
-
-				List<String> batchIds;
-				try {
-					String cursor = lastId;
-					batchIds = pageTransferCostAllocationIds(dispatchParams, cursor, batchSize,
-						() -> transferDeclareCostAllocationMainService.pageMainIdsForReAllocation(
-							payload.getReportPeriodStr(), reportStatus, cursor, batchSize));
-				} catch (Exception e) {
-					log.error("第{}批查询失败，taskId: {}", batchNumber, taskId, e);
-					asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),
-						"第" + batchNumber + "批查询失败: " + asyncTaskRecordService.formatTaskErrorMessage(e));
-					break;
-				}
-
-				if (CollUtil.isEmpty(batchIds)) {
-					log.info("所有数据处理完成，taskId: {}, 总批次: {}, 总处理: {}/成功: {}/失败: {}",
-						taskId, batchNumber - 1, totalProcessed, totalSuccess, totalFailed);
-					break;
-				}
-
-				TmsAsyncTaskRecordDTO.BatchProcessResult result = processTransferReAllocationBatch(
-					taskId, batchIds, timeoutSeconds, staleDetailSeconds, operatorUser);
-
-				totalProcessed += batchIds.size();
-				totalSuccess += result.getSuccessCount();
-				totalFailed += result.getFailedCount();
-
-				try {
-					asyncTaskRecordService.lambdaUpdate()
-						.set(TmsAsyncTaskRecordEntity::getErrorCount, totalFailed)
-						.eq(TmsAsyncTaskRecordEntity::getId, taskId)
-						.update();
-				} catch (Exception e) {
-					log.error("更新任务进度失败，taskId: {}", taskId, e);
-				}
-
-				lastId = batchIds.get(batchIds.size() - 1);
-			}
-
-			try {
-				asyncTaskRecordService.updateTaskFinally(taskId);
-				log.info("中转重新分摊任务最终状态更新完成，taskId: {}", taskId);
-			} catch (Exception e) {
-				log.error("更新任务最终状态失败，taskId: {}", taskId, e);
-			}
-		} catch (InterruptedException e) {
-			Thread.currentThread().interrupt();
-			log.warn("中转重新分摊异步任务获取锁被中断，taskId: {}", taskId, e);
-		} catch (Exception e) {
-			log.error("中转重新分摊异步任务执行失败，taskId: {}", taskId, e);
-			asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),
-				asyncTaskRecordService.formatTaskErrorMessage(e));
-		} finally {
-			if (locked && taskLock.isHeldByCurrentThread()) {
-				taskLock.unlock();
-			}
-		}
+		tmsAsyncTaskBatchConsumerSupport.execute(taskRecord, transferReAllocationBatchPushHandler);
 	}
 
 	@Override
@@ -739,16 +446,9 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 				dto.getReportPeriodStr(), reportStatus);
 		TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope =
 			asyncTaskRecordService.buildEnvelope(businessType, methodType, null, null, payload);
-		String jsonStr = JSONUtil.toJsonStr(envelope);
-
-		TmsAsyncTaskRecordEntity taskRecord = asyncTaskRecordService.addManualTask(
-			new TmsAsyncTaskRecordDTO.ManualCreateDTO(businessType, methodType, total, jsonStr));
-		if (Objects.isNull(taskRecord)) {
-			throw new ServiceException(ApiError.LOGISTICS_ASYNC_TASK_CREATE_ERROR, jsonStr);
-		}
-		asyncTaskRecordService.claimAndDispatch(taskRecord, true);
-		log.info("中转批量删除异步任务派发成功，taskId: {}, 预计处理数据量: {}", taskRecord.getId(), total);
-		return BatchResultDTO.success(taskRecord.getId(), taskRecord.getCode());
+		return asyncTaskRecordService.dispatchManualEnvelopeTask(
+			businessType, methodType, total, envelope,
+			"中转批量删除异步任务派发成功，taskId: {}, 预计处理数据量: {}");
 	}
 
 	/**
@@ -756,178 +456,7 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 	 */
 	@Override
 	public void pushDelete(TmsAsyncTaskRecordEntity taskRecord) {
-		if (Objects.isNull(taskRecord) || StringUtils.isBlank(taskRecord.getId())) {
-			log.error("中转批量删除异步任务ID为空");
-			return;
-		}
-		String taskId = taskRecord.getId();
-
-		RLock taskLock = redissonClient.getLock(DistributeKeyConstant.TMS_ASYNC_TASK_EXEC_KEY + ":" + taskId);
-		boolean locked = false;
-		try {
-			locked = taskLock.tryLock(0, TimeUnit.SECONDS);
-			if (!locked) {
-				log.warn("中转批量删除异步任务正在执行，跳过重复消费，taskId: {}", taskId);
-				return;
-			}
-
-			CfgSettingValueDTO.BillBatchParamsDTO billBatchParamsDTO = asyncTaskRecordService.loadBillBatchParams(taskId);
-			if (billBatchParamsDTO == null) {
-				return;
-			}
-
-			TmsAsyncTaskRecordEntity currentRecord = asyncTaskRecordService.getById(taskId);
-			if (Objects.isNull(currentRecord)) {
-				log.error("任务记录不存在，taskId: {}", taskId);
-				return;
-			}
-			if (Objects.equals(currentRecord.getStatus(), TmsAsyncTaskRecordStatusEnum.FINISH.getCode())) {
-				log.warn("中转批量删除异步任务已完成，跳过重复消费，taskId: {}", taskId);
-				return;
-			}
-
-			TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope = asyncTaskRecordService.parseEnvelope(currentRecord.getDataJson());
-			TmsAsyncTaskRecordDTO.TransferDeclareReportPeriodBatchPayloadDTO payload =
-				asyncTaskRecordService.parseEnvelopePayloadOrFinishTask(
-					taskId, envelope, TmsAsyncTaskRecordDTO.TransferDeclareReportPeriodBatchPayloadDTO.class,
-					"中转批量删除异步任务信封参数解析失败");
-			if (envelope == null || payload == null) {
-				return;
-			}
-			if (CharSequenceUtil.isBlank(payload.getReportPeriodStr())) {
-				asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(), "核算期间为空");
-				return;
-			}
-
-			TmsAsyncTaskRecordDTO.PushParamsDTO dispatchParams =
-				asyncTaskRecordService.buildDispatchPushParams(taskRecord, envelope);
-
-			if (Objects.equals(currentRecord.getStatus(), TmsAsyncTaskRecordStatusEnum.PENDING.getCode())) {
-				boolean claimed = asyncTaskRecordService.lambdaUpdate()
-					.set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
-					.set(TmsAsyncTaskRecordEntity::getErrorData, ApiError.COMMON_BATCH_PROCESSING.getMsg())
-					.eq(TmsAsyncTaskRecordEntity::getId, taskId)
-					.eq(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode())
-					.update();
-				if (!claimed) {
-					log.warn("中转批量删除异步任务已被其他消费者认领，taskId: {}", taskId);
-					return;
-				}
-			} else if (!Objects.equals(currentRecord.getStatus(), TmsAsyncTaskRecordStatusEnum.ING.getCode())) {
-				log.warn("中转批量删除异步任务状态不可执行，taskId: {}, status: {}", taskId, currentRecord.getStatus());
-				return;
-			}
-
-			int batchSize = asyncTaskRecordService.resolveBatchSize(billBatchParamsDTO.getBatch(), 500);
-			int timeoutSeconds = asyncTaskRecordService.resolveTimeoutSeconds(billBatchParamsDTO.getBatchTimeoutSeconds(), 5000);
-			int staleDetailSeconds = asyncTaskRecordService.resolveStaleDetailSeconds(billBatchParamsDTO);
-			String lastId = "";
-			int totalProcessed = 0;
-			int totalSuccess = 0;
-			int totalFailed = 0;
-			int batchNumber = 0;
-			String reportStatus = CharSequenceUtil.blankToDefault(
-				payload.getReportStatus(), TransferDeclareCostAllocationMainReportStatusEnum.TOBECONFIRM.getCode());
-			LoginUser operatorUser = asyncTaskRecordService.resolveOperatorLoginUser(taskRecord, dispatchParams);
-
-			log.info("开始分批处理中转批量删除任务，taskId: {}, 批次大小: {}, 预计总数: {}", taskId, batchSize, currentRecord.getDetailCount());
-
-			while (true) {
-				batchNumber++;
-
-				if (batchNumber == 1 || batchNumber % 10 == 0) {
-					TmsAsyncTaskRecordEntity loopTask = asyncTaskRecordService.getById(taskId);
-					if (asyncTaskRecordService.shouldStopLoopTask(taskId, loopTask)) {
-						break;
-					}
-					if (asyncTaskRecordService.terminateTaskIfExecTimeoutReached(loopTask, billBatchParamsDTO)) {
-						break;
-					}
-				}
-
-				List<String> batchIds;
-				try {
-					String cursor = lastId;
-					batchIds = pageTransferCostAllocationIds(dispatchParams, cursor, batchSize,
-						() -> transferDeclareCostAllocationMainService.pageMainIdsForReAllocation(
-							payload.getReportPeriodStr(), reportStatus, cursor, batchSize));
-				} catch (Exception e) {
-					log.error("第{}批查询失败，taskId: {}", batchNumber, taskId, e);
-					asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),
-						"第" + batchNumber + "批查询失败: " + asyncTaskRecordService.formatTaskErrorMessage(e));
-					break;
-				}
-
-				if (CollUtil.isEmpty(batchIds)) {
-					log.info("所有数据处理完成，taskId: {}, 总批次: {}, 总处理: {}/成功: {}/失败: {}",
-						taskId, batchNumber - 1, totalProcessed, totalSuccess, totalFailed);
-					break;
-				}
-
-				TmsAsyncTaskRecordDTO.BatchProcessResult result = processTransferDeleteBatch(
-					taskId, batchIds, timeoutSeconds, staleDetailSeconds, operatorUser);
-
-				totalProcessed += batchIds.size();
-				totalSuccess += result.getSuccessCount();
-				totalFailed += result.getFailedCount();
-
-				try {
-					asyncTaskRecordService.lambdaUpdate()
-						.set(TmsAsyncTaskRecordEntity::getErrorCount, totalFailed)
-						.eq(TmsAsyncTaskRecordEntity::getId, taskId)
-						.update();
-				} catch (Exception e) {
-					log.error("更新任务进度失败，taskId: {}", taskId, e);
-				}
-
-				lastId = batchIds.get(batchIds.size() - 1);
-			}
-
-			try {
-				asyncTaskRecordService.updateTaskFinally(taskId);
-				log.info("中转批量删除任务最终状态更新完成，taskId: {}", taskId);
-			} catch (Exception e) {
-				log.error("更新任务最终状态失败，taskId: {}", taskId, e);
-			}
-		} catch (InterruptedException e) {
-			Thread.currentThread().interrupt();
-			log.warn("中转批量删除异步任务获取锁被中断，taskId: {}", taskId, e);
-		} catch (Exception e) {
-			log.error("中转批量删除异步任务执行失败，taskId: {}", taskId, e);
-			asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),
-				asyncTaskRecordService.formatTaskErrorMessage(e));
-		} finally {
-			if (locked && taskLock.isHeldByCurrentThread()) {
-				taskLock.unlock();
-			}
-		}
-	}
-
-	/**
-	 * 普通任务按查询条件分页；失败重试任务只遍历失败明细中的 businessId。
-	 */
-	private List<String> pageTransferCostAllocationIds(TmsAsyncTaskRecordDTO.PushParamsDTO dto, String lastId, int batchSize, Supplier<List<String>> querySupplier) {
-		if (TmsAsyncTaskRecordDTO.RETRY_MODE_FAILED_ONLY.equals(dto.getRetryMode())) {
-			return asyncTaskDetailRecordService.listFailedBusinessIdsByCursor(dto.getRetrySourceTaskId(), lastId, batchSize);
-		}
-		List<String> retryIds = dto.getIds();
-		if (CollUtil.isEmpty(retryIds)) {
-			return querySupplier.get();
-		}
-		List<String> distinctIds = retryIds.stream()
-			.filter(StringUtils::isNotBlank)
-			.distinct()
-			.collect(Collectors.toList());
-		int startIndex = 0;
-		if (StringUtils.isNotBlank(lastId)) {
-			int lastIndex = distinctIds.indexOf(lastId);
-			if (lastIndex < 0 || lastIndex + 1 >= distinctIds.size()) {
-				return Collections.emptyList();
-			}
-			startIndex = lastIndex + 1;
-		}
-		int endIndex = Math.min(startIndex + batchSize, distinctIds.size());
-		return new ArrayList<>(distinctIds.subList(startIndex, endIndex));
+		tmsAsyncTaskBatchConsumerSupport.execute(taskRecord, transferDeleteBatchPushHandler);
 	}
 
 	/**
@@ -1308,10 +837,10 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
                 return;
             }
 
-            TmsAsyncTaskRecordDTO.PushParamsDTO dispatchParams =
-                asyncTaskRecordService.buildDispatchPushParams(taskRecord, envelope);
-            String businessType = StringUtils.defaultIfBlank(dispatchParams.getBusinessType(),
-                SourceTypeEnum.TRANSFER_DECLARE_COST_ALLOCATION.getCode());
+            String businessType = StringUtils.defaultIfBlank(envelope.getBusinessType(), taskRecord.getBusinessType());
+            if (StringUtils.isBlank(businessType)) {
+                businessType = SourceTypeEnum.TRANSFER_DECLARE_COST_ALLOCATION.getCode();
+            }
 
             if (Objects.equals(currentRecord.getStatus(), TmsAsyncTaskRecordStatusEnum.PENDING.getCode())) {
                 boolean claimed = asyncTaskRecordService.lambdaUpdate()
@@ -1357,12 +886,12 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
                 }
 
                 List<TmsAsyncTaskDetailEntity> batchDetails = prepareTransferDeclarePushBatchDetails(
-                    taskId, businessType, dispatchParams.getRetryMode(), dispatchParams.getRetrySourceTaskId(),
+                    taskId, businessType, envelope.getRetryMode(), envelope.getRetrySourceTaskId(),
                     payload.getStartDate(), payload.getEndDate(), cursor, batchSize);
                 if (CollectionUtils.isEmpty(batchDetails)) {
                     if (totalProcessed == 0) {
                         asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),
-                            TmsAsyncTaskRecordDTO.RETRY_MODE_FAILED_ONLY.equals(dispatchParams.getRetryMode())
+                            TmsAsyncTaskRecordDTO.RETRY_MODE_FAILED_ONLY.equals(envelope.getRetryMode())
                                 ? "无失败明细可重试" : "b2c报关对账单明细为空");
                         return;
                     }
@@ -1566,6 +1095,186 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
                 taskDetailList, "任务等待中断"));
         }
         return new TmsAsyncTaskRecordDTO.BatchProcessResult(successCount.get(), failedCount.get());
+    }
+
+    private class TransferUpdateReportStatusBatchPushHandler
+        implements TmsAsyncTaskBatchPushHandler<TmsAsyncTaskRecordDTO.TransferDeclareUpdateReportStatusPayloadDTO> {
+
+        @Override
+        public String taskDisplayName() {
+            return "中转核算状态变更异步任务";
+        }
+
+        @Override
+        public Class<TmsAsyncTaskRecordDTO.TransferDeclareUpdateReportStatusPayloadDTO> payloadClass() {
+            return TmsAsyncTaskRecordDTO.TransferDeclareUpdateReportStatusPayloadDTO.class;
+        }
+
+        @Override
+        public String payloadParseErrorMessage() {
+            return "中转核算状态变更异步任务信封参数解析失败";
+        }
+
+        @Override
+        public String validatePayload(TmsAsyncTaskRecordDTO.TransferDeclareUpdateReportStatusPayloadDTO payload) {
+            if (CharSequenceUtil.isBlank(payload.getReportPeriodStr())) {
+                return "核算期间为空";
+            }
+            return null;
+        }
+
+        @Override
+        public List<String> pageBatchIds(String taskId,
+                                         TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope,
+                                         TmsAsyncTaskRecordDTO.TransferDeclareUpdateReportStatusPayloadDTO payload,
+                                         String lastId,
+                                         int batchSize,
+                                         TmsAsyncTaskRecordEntity taskRecord) {
+            boolean excludeBigTableDone = TransferDeclareCostAllocationMainReportStatusEnum.TOBECONFIRM.getCode()
+                .equals(payload.getReportStatus());
+            String bigTableDoneCode = TransferDeclareCostAllocationBigTableStatusEnum.DONE.getCode();
+            BatchBusinessIdProvider defaultProvider = (cursor, size) ->
+                transferDeclareCostAllocationMainService.pageMainIdsByReportPeriodStr(
+                    payload.getReportPeriodStr(), payload.getReportStatus(), excludeBigTableDone, bigTableDoneCode,
+                    cursor, size);
+            return asyncTaskRecordService.pageBatchBusinessIds(
+                envelope.getRetryMode(), envelope.getRetrySourceTaskId(), lastId, batchSize,
+                defaultProvider, null);
+        }
+
+        @Override
+        public TmsAsyncTaskRecordDTO.BatchProcessResult processBatch(String taskId,
+                                                                     TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope,
+                                                                     TmsAsyncTaskRecordDTO.TransferDeclareUpdateReportStatusPayloadDTO payload,
+                                                                     LoginUser operatorUser,
+                                                                     List<String> batchIds,
+                                                                     int batchNumber,
+                                                                     CfgSettingValueDTO.BillBatchParamsDTO billBatchParams) {
+            int timeoutSeconds = asyncTaskRecordService.resolveTimeoutSeconds(
+                billBatchParams.getBatchTimeoutSeconds(), 5000);
+            int staleDetailSeconds = asyncTaskRecordService.resolveStaleDetailSeconds(billBatchParams);
+            return processTransferUpdateStatusBatch(
+                taskId, batchIds, payload.getReportDate(), payload.getReportStatus(),
+                timeoutSeconds, staleDetailSeconds, operatorUser);
+        }
+    }
+
+    private class TransferReAllocationBatchPushHandler
+        implements TmsAsyncTaskBatchPushHandler<TmsAsyncTaskRecordDTO.TransferDeclareReportPeriodBatchPayloadDTO> {
+
+        @Override
+        public String taskDisplayName() {
+            return "中转重新分摊异步任务";
+        }
+
+        @Override
+        public Class<TmsAsyncTaskRecordDTO.TransferDeclareReportPeriodBatchPayloadDTO> payloadClass() {
+            return TmsAsyncTaskRecordDTO.TransferDeclareReportPeriodBatchPayloadDTO.class;
+        }
+
+        @Override
+        public String payloadParseErrorMessage() {
+            return "中转重新分摊异步任务信封参数解析失败";
+        }
+
+        @Override
+        public String validatePayload(TmsAsyncTaskRecordDTO.TransferDeclareReportPeriodBatchPayloadDTO payload) {
+            if (CharSequenceUtil.isBlank(payload.getReportPeriodStr())) {
+                return "核算期间为空";
+            }
+            return null;
+        }
+
+        @Override
+        public List<String> pageBatchIds(String taskId,
+                                         TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope,
+                                         TmsAsyncTaskRecordDTO.TransferDeclareReportPeriodBatchPayloadDTO payload,
+                                         String lastId,
+                                         int batchSize,
+                                         TmsAsyncTaskRecordEntity taskRecord) {
+            String reportStatus = CharSequenceUtil.blankToDefault(
+                payload.getReportStatus(), TransferDeclareCostAllocationMainReportStatusEnum.TOBECONFIRM.getCode());
+            BatchBusinessIdProvider defaultProvider = (cursor, size) ->
+                transferDeclareCostAllocationMainService.pageMainIdsForReAllocation(
+                    payload.getReportPeriodStr(), reportStatus, cursor, size);
+            return asyncTaskRecordService.pageBatchBusinessIds(
+                envelope.getRetryMode(), envelope.getRetrySourceTaskId(), lastId, batchSize,
+                defaultProvider, null);
+        }
+
+        @Override
+        public TmsAsyncTaskRecordDTO.BatchProcessResult processBatch(String taskId,
+                                                                     TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope,
+                                                                     TmsAsyncTaskRecordDTO.TransferDeclareReportPeriodBatchPayloadDTO payload,
+                                                                     LoginUser operatorUser,
+                                                                     List<String> batchIds,
+                                                                     int batchNumber,
+                                                                     CfgSettingValueDTO.BillBatchParamsDTO billBatchParams) {
+            int timeoutSeconds = asyncTaskRecordService.resolveTimeoutSeconds(
+                billBatchParams.getBatchTimeoutSeconds(), 5000);
+            int staleDetailSeconds = asyncTaskRecordService.resolveStaleDetailSeconds(billBatchParams);
+            return processTransferReAllocationBatch(
+                taskId, batchIds, timeoutSeconds, staleDetailSeconds, operatorUser);
+        }
+    }
+
+    private class TransferDeleteBatchPushHandler
+        implements TmsAsyncTaskBatchPushHandler<TmsAsyncTaskRecordDTO.TransferDeclareReportPeriodBatchPayloadDTO> {
+
+        @Override
+        public String taskDisplayName() {
+            return "中转批量删除异步任务";
+        }
+
+        @Override
+        public Class<TmsAsyncTaskRecordDTO.TransferDeclareReportPeriodBatchPayloadDTO> payloadClass() {
+            return TmsAsyncTaskRecordDTO.TransferDeclareReportPeriodBatchPayloadDTO.class;
+        }
+
+        @Override
+        public String payloadParseErrorMessage() {
+            return "中转批量删除异步任务信封参数解析失败";
+        }
+
+        @Override
+        public String validatePayload(TmsAsyncTaskRecordDTO.TransferDeclareReportPeriodBatchPayloadDTO payload) {
+            if (CharSequenceUtil.isBlank(payload.getReportPeriodStr())) {
+                return "核算期间为空";
+            }
+            return null;
+        }
+
+        @Override
+        public List<String> pageBatchIds(String taskId,
+                                         TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope,
+                                         TmsAsyncTaskRecordDTO.TransferDeclareReportPeriodBatchPayloadDTO payload,
+                                         String lastId,
+                                         int batchSize,
+                                         TmsAsyncTaskRecordEntity taskRecord) {
+            String reportStatus = CharSequenceUtil.blankToDefault(
+                payload.getReportStatus(), TransferDeclareCostAllocationMainReportStatusEnum.TOBECONFIRM.getCode());
+            BatchBusinessIdProvider defaultProvider = (cursor, size) ->
+                transferDeclareCostAllocationMainService.pageMainIdsForReAllocation(
+                    payload.getReportPeriodStr(), reportStatus, cursor, size);
+            return asyncTaskRecordService.pageBatchBusinessIds(
+                envelope.getRetryMode(), envelope.getRetrySourceTaskId(), lastId, batchSize,
+                defaultProvider, null);
+        }
+
+        @Override
+        public TmsAsyncTaskRecordDTO.BatchProcessResult processBatch(String taskId,
+                                                                     TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope,
+                                                                     TmsAsyncTaskRecordDTO.TransferDeclareReportPeriodBatchPayloadDTO payload,
+                                                                     LoginUser operatorUser,
+                                                                     List<String> batchIds,
+                                                                     int batchNumber,
+                                                                     CfgSettingValueDTO.BillBatchParamsDTO billBatchParams) {
+            int timeoutSeconds = asyncTaskRecordService.resolveTimeoutSeconds(
+                billBatchParams.getBatchTimeoutSeconds(), 5000);
+            int staleDetailSeconds = asyncTaskRecordService.resolveStaleDetailSeconds(billBatchParams);
+            return processTransferDeleteBatch(
+                taskId, batchIds, timeoutSeconds, staleDetailSeconds, operatorUser);
+        }
     }
 
 }

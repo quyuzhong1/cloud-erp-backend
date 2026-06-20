@@ -1347,4 +1347,65 @@ public class LogisticsBillCostDTO implements Serializable {
     public static class OutstockWeightPreloadDTO {
         private Map<String, List<SoOutstockDetailEntity>> outstockDetailMap = Collections.emptyMap();
     }
+
+    /**
+     * 小包下推分摊游标分页查询参数。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CanPushAllocationPageQueryDTO implements Serializable {
+
+        private String reportDate;
+
+        private String type;
+
+        private String lastId;
+
+        private Integer batchSize;
+
+        private List<String> ids;
+    }
+
+    /**
+     * 批量更新对账状态游标分页查询参数。
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateReconciliationStatusPageQueryDTO implements Serializable {
+
+        private String type;
+
+        private String reconciliationStatus;
+
+        private LocalDateTime confirmTime;
+
+        private Map<String, String> sqlMap;
+
+        private String permissionSql;
+
+        private String lastId;
+
+        private Integer batchSize;
+
+        private List<String> ids;
+
+        private String estimateConfirmStatus;
+
+        private String confirmedStatus;
+
+        private String invalidStatus;
+
+        private String toBeConfirmStatus;
+
+        private String checkedCheckStatus;
+
+        private String checkingCheckStatus;
+
+        private String refundPayType;
+
+        private String paymentPayStatus;
+
+    }
+
 }

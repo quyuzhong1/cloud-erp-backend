@@ -2926,10 +2926,10 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 return;
             }
 
-            TmsAsyncTaskRecordDTO.PushParamsDTO dispatchParams =
-                asyncTaskRecordService.buildDispatchPushParams(taskRecord, envelope);
-            String businessType = StringUtils.defaultIfBlank(dispatchParams.getBusinessType(),
-                SourceTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode());
+            String businessType = StringUtils.defaultIfBlank(envelope.getBusinessType(), taskRecord.getBusinessType());
+            if (StringUtils.isBlank(businessType)) {
+                businessType = SourceTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode();
+            }
 
             if (Objects.equals(currentRecord.getStatus(), TmsAsyncTaskRecordStatusEnum.PENDING.getCode())) {
                 boolean claimed = asyncTaskRecordService.lambdaUpdate()
@@ -2975,12 +2975,12 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 }
 
                 List<TmsAsyncTaskDetailEntity> batchDetails = prepareFirstMileReconciliationBatchDetails(
-                    taskId, businessType, dispatchParams.getRetryMode(), dispatchParams.getRetrySourceTaskId(),
+                    taskId, businessType, envelope.getRetryMode(), envelope.getRetrySourceTaskId(),
                     payload.getStartDate(), payload.getEndDate(), cursor, batchSize);
                 if (CollUtil.isEmpty(batchDetails)) {
                     if (totalProcessed == 0) {
                         asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),
-                            TmsAsyncTaskRecordDTO.RETRY_MODE_FAILED_ONLY.equals(dispatchParams.getRetryMode())
+                            TmsAsyncTaskRecordDTO.RETRY_MODE_FAILED_ONLY.equals(envelope.getRetryMode())
                                 ? "无失败明细可重试" : "周期内已签收未对账的物流单为空");
                         return;
                     }

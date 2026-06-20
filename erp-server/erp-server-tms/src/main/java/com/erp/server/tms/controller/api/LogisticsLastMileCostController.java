@@ -363,10 +363,9 @@ public class LogisticsLastMileCostController extends BaseController {
      keyIdName = "id")
      public ApiResult<List<BatchResultDTO>> pushAllocation(@RequestBody @Validated PushDTO dto) {
          if(CollUtil.isEmpty(dto.getIds())){
-             dto.setType(DictCostAttributionEnum.LAST_MILE.getCode());
-             TmsAsyncTaskRecordDTO.PushParamsDTO pushDTO = new TmsAsyncTaskRecordDTO.PushParamsDTO();
-             BeanMapper.copy(dto,pushDTO);
-             logisticsBillCostService.batchAsyncPushAllocation(pushDTO);
+             TmsAsyncTaskRecordDTO.SmallBagPushAllocationPayloadDTO payload =
+                     new TmsAsyncTaskRecordDTO.SmallBagPushAllocationPayloadDTO(dto.getReportDate(), DictCostAttributionEnum.LAST_MILE.getCode());
+             logisticsBillCostService.batchAsyncPushAllocation(payload);
              return success();
          }else {
              List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
