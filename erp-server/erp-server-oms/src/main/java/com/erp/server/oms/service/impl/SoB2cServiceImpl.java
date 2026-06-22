@@ -3761,10 +3761,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             uploadHandoverFileReq.setThirdWarehouseProvideCode(overseasProviderWarehouse.getProviderCode());
             ApiResult<ThirdWarehouseUploadHandoverFileResponse> uploadHandoverFile = thirdWarehouseFeign.uploadHandoverFile(uploadHandoverFileReq);
             if (!uploadHandoverFile.isSuccess()) {
-                //删除三方仓订单和发货单
+                // 先取消海外仓订单，取消成功后再删除本地发货单；取消失败时保留本地单据，避免重试重新下单。
                 thirdWarehouseDeliveryEntity = thirdWarehouseDeliveryFeign.getLatestBySoId(entity.getId());
                 if (Objects.nonNull(thirdWarehouseDeliveryEntity)) {
-                    thirdWarehouseDeliveryFeign.deleteById(thirdWarehouseDeliveryEntity.getId());
                     ThirdWarehouseCancelOutboundReq req = new ThirdWarehouseCancelOutboundReq();
                     req.setOrderCode(shippingOrderNo);
                     req.setThirdWarehouseProvideCode(overseasProviderWarehouse.getProviderCode());
@@ -3775,10 +3774,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     req.setReason("推送交接文件失败，取消订单");
                     req.setAuthId(overseasProviderWarehouse.getMainId());
                     ApiResult<String> cancelResult = thirdWarehouseFeign.cancelOutboundOrder(req);
-                    if (!cancelResult.isSuccess()) {
-                        log.error("推送交接文件失败，取消三方仓订单失败，订单号{}，原因{}", shippingOrderNo, cancelResult.getMsg());
-                        throw new ServiceException("推送交接文件失败{},同时取消三方仓订单失败，原因{}", uploadHandoverFile.getMsg(), cancelResult.getMsg());
+                    if (Objects.isNull(cancelResult) || !cancelResult.isSuccess()) {
+                        String cancelMsg = Objects.isNull(cancelResult) ? "取消三方仓订单返回为空" : cancelResult.getMsg();
+                        log.error("推送交接文件失败，取消三方仓订单失败，订单号{}，原因{}", shippingOrderNo, cancelMsg);
+                        throw new ServiceException("推送交接文件失败{},同时取消三方仓订单失败，原因{}", uploadHandoverFile.getMsg(), cancelMsg);
                     }
+                    thirdWarehouseDeliveryFeign.deleteById(thirdWarehouseDeliveryEntity.getId());
                 }
                 throw new ServiceException("推送交接文件失败{}", uploadHandoverFile.getMsg());
             }
