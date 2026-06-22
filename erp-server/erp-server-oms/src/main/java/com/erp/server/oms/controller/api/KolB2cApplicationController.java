@@ -539,6 +539,9 @@ public class KolB2cApplicationController extends BaseController {
         return flag == true ? success() : failure();
     }
 
+    /**
+     * 工作流任务回调由 WorkflowTaskRecordConsumer 直接反序列化 MqResponseDTO，不包装 ApiResult。
+     */
     @PostMapping("/generateKolB2cSplitOrder")
     @LogAction(value = LogActionEnum.EXECUTE, desc = "KOL B2C任务节点回调-生成拆分单")
     public WorkflowTaskRecordDTO.MqResponseDTO generateKolB2cSplitOrder(@RequestBody WorkflowTaskRecordDTO.MqRequestDTO dto) {

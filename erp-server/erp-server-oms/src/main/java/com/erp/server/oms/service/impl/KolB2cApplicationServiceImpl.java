@@ -107,6 +107,15 @@ import static com.common.business.enums.FileTaskEventEnum.IMPORT_OMS_KOL_B2C_APP
 @Slf4j
 @Service
 public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplicationMapper, KolB2cApplicationEntity> implements KolB2cApplicationService {
+    private static final String TASK_DATA_KOL_ID = "kolId";
+    private static final String TASK_DATA_KOL_CODE = "kolCode";
+    private static final String TASK_DATA_SUB_IDS = "subIds";
+    private static final String TASK_DATA_SUB_ID = "subId";
+    private static final String TASK_DATA_SUB_CODE = "subCode";
+    private static final String TASK_DATA_B2C_CODE = "b2cCode";
+    private static final String TASK_DATA_WDT_PUSH_MSG = "wdtPushMsg";
+    private static final String TASK_DATA_WDT_PUSH_MSG_SKIPPED = "wdtPushMsgSkipped";
+
     @Resource
     private OperateLogService operateLogService;
     @Resource
@@ -1111,7 +1120,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         WorkflowTaskRecordDTO.MqResponseDTO responseDTO = new WorkflowTaskRecordDTO.MqResponseDTO();
         String kolId;
         try {
-            kolId = getRequiredString(dto, "kolId");
+            kolId = getRequiredString(dto, TASK_DATA_KOL_ID);
             checkWorkflowTaskContext(dto, kolId, WorkflowTaskRecordTypeEnum.KOL_B2C_APPLICATION_APPROVE, 0);
         } catch (ServiceException e) {
             setTerminalFailed(responseDTO, e.getMsg());
@@ -1130,9 +1139,9 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
                 .list();
         List<KolSubB2cApplicationDTO.PushDTO> pushDTOS = kolSubB2cApplicationService.generateSplitOrderIdempotent(entity, detailList);
         Map<String, Object> data = new HashMap<>();
-        data.put("kolId", entity.getId());
-        data.put("kolCode", entity.getCode());
-        data.put("subIds", pushDTOS.stream().map(e -> e.getEntity().getId()).collect(Collectors.toList()));
+        data.put(TASK_DATA_KOL_ID, entity.getId());
+        data.put(TASK_DATA_KOL_CODE, entity.getCode());
+        data.put(TASK_DATA_SUB_IDS, pushDTOS.stream().map(e -> e.getEntity().getId()).collect(Collectors.toList()));
         responseDTO.setData(data);
         return responseDTO;
     }
@@ -1143,7 +1152,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         WorkflowTaskRecordDTO.MqResponseDTO responseDTO = new WorkflowTaskRecordDTO.MqResponseDTO();
         String kolId;
         try {
-            kolId = getRequiredString(dto, "kolId");
+            kolId = getRequiredString(dto, TASK_DATA_KOL_ID);
             checkWorkflowTaskContext(dto, kolId, WorkflowTaskRecordTypeEnum.KOL_B2C_APPLICATION_APPROVE, 1);
         } catch (ServiceException e) {
             setTerminalFailed(responseDTO, e.getMsg());
@@ -1182,9 +1191,9 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
             dispatchKolB2cSubTask(entity, subEntity, existChildTaskMap.getOrDefault(subEntity.getId(), Collections.emptyList()));
         }
         Map<String, Object> data = new HashMap<>();
-        data.put("kolId", entity.getId());
-        data.put("kolCode", entity.getCode());
-        data.put("subIds", subIds);
+        data.put(TASK_DATA_KOL_ID, entity.getId());
+        data.put(TASK_DATA_KOL_CODE, entity.getCode());
+        data.put(TASK_DATA_SUB_IDS, subIds);
         responseDTO.setData(data);
         return responseDTO;
     }
@@ -1195,7 +1204,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         WorkflowTaskRecordDTO.MqResponseDTO responseDTO = new WorkflowTaskRecordDTO.MqResponseDTO();
         String kolId;
         try {
-            kolId = getRequiredString(dto, "kolId");
+            kolId = getRequiredString(dto, TASK_DATA_KOL_ID);
             checkWorkflowTaskContext(dto, kolId, WorkflowTaskRecordTypeEnum.KOL_B2C_APPLICATION_APPROVE, 2);
         } catch (ServiceException e) {
             setTerminalFailed(responseDTO, e.getMsg());
@@ -1255,8 +1264,8 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         }
         updateBillStatus(entity.getId(), KolB2cApplicationDocumentStatusEnum.CREATED.getCode());
         Map<String, Object> data = new HashMap<>();
-        data.put("kolId", entity.getId());
-        data.put("kolCode", entity.getCode());
+        data.put(TASK_DATA_KOL_ID, entity.getId());
+        data.put(TASK_DATA_KOL_CODE, entity.getCode());
         responseDTO.setData(data);
         return responseDTO;
     }
@@ -1268,8 +1277,8 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         String kolId;
         String subId;
         try {
-            kolId = getRequiredString(dto, "kolId");
-            subId = getRequiredString(dto, "subId");
+            kolId = getRequiredString(dto, TASK_DATA_KOL_ID);
+            subId = getRequiredString(dto, TASK_DATA_SUB_ID);
             checkWorkflowTaskContext(dto, subId, WorkflowTaskRecordTypeEnum.KOL_B2C_SUB_APPROVE, 0);
         } catch (ServiceException e) {
             setTerminalFailed(responseDTO, e.getMsg());
@@ -1298,19 +1307,20 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
     @Override
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public Map<String, Object> executeKolB2cSubOrderPush(KolB2cApplicationEntity entity, KolSubB2cApplicationDTO.PushDTO pushDTO) {
+        // 推单编排不包大事务：下游销售单创建、网店推送消息各自提交，并通过来源单据做幂等防重。
         Map<String, Object> data = new HashMap<>();
-        data.put("kolId", entity.getId());
-        data.put("kolCode", entity.getCode());
-        data.put("subId", pushDTO.getEntity().getId());
-        data.put("subCode", pushDTO.getEntity().getCode());
+        data.put(TASK_DATA_KOL_ID, entity.getId());
+        data.put(TASK_DATA_KOL_CODE, entity.getCode());
+        data.put(TASK_DATA_SUB_ID, pushDTO.getEntity().getId());
+        data.put(TASK_DATA_SUB_CODE, pushDTO.getEntity().getCode());
         if (Boolean.TRUE.equals(entity.getIsInternational())) {
             String b2cCode = pushSingleSoB2c(entity, pushDTO);
-            data.put("b2cCode", b2cCode);
+            data.put(TASK_DATA_B2C_CODE, b2cCode);
         } else {
             Map<String, SkuVO> skuMap = buildKolSubB2cSkuMap(pushDTO);
             Boolean created = syncWangDianSoB2cService.saveApproveMsgToWangDian(pushDTO, skuMap);
-            data.put("wdtPushMsg", created);
-            data.put("wdtPushMsgSkipped", !created);
+            data.put(TASK_DATA_WDT_PUSH_MSG, created);
+            data.put(TASK_DATA_WDT_PUSH_MSG_SKIPPED, !created);
         }
         return data;
     }
@@ -1514,8 +1524,8 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         addTaskDTO.setSourceTypeEnum(WorkflowTaskRecordTypeEnum.KOL_B2C_APPLICATION_APPROVE);
         addTaskDTO.setTraceId(traceId);
         Map<String, Object> map = new HashMap<>();
-        map.put("kolId", entity.getId());
-        map.put("kolCode", entity.getCode());
+        map.put(TASK_DATA_KOL_ID, entity.getId());
+        map.put(TASK_DATA_KOL_CODE, entity.getCode());
         addTaskDTO.setFirstNodeInputData(map);
         return addTaskDTO;
     }
@@ -1528,10 +1538,10 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         addTaskDTO.setSourceTypeEnum(WorkflowTaskRecordTypeEnum.KOL_B2C_SUB_APPROVE);
         addTaskDTO.setTraceId(CollUtil.isNotEmpty(existTasks) ? existTasks.get(0).getTraceId() : TraceContext.traceId());
         Map<String, Object> map = new HashMap<>();
-        map.put("kolId", parentEntity.getId());
-        map.put("kolCode", parentEntity.getCode());
-        map.put("subId", subEntity.getId());
-        map.put("subCode", subEntity.getCode());
+        map.put(TASK_DATA_KOL_ID, parentEntity.getId());
+        map.put(TASK_DATA_KOL_CODE, parentEntity.getCode());
+        map.put(TASK_DATA_SUB_ID, subEntity.getId());
+        map.put(TASK_DATA_SUB_CODE, subEntity.getCode());
         addTaskDTO.setFirstNodeInputData(map);
         addWorkflowTaskIfAbsent(addTaskDTO, existTasks);
         sendWorkflowTaskMq(addTaskDTO, subEntity.getId(), 2);

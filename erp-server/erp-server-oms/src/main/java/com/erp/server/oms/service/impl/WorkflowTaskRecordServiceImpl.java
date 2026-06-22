@@ -209,6 +209,7 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
         if (Objects.isNull(dto)) {
             throw new ServiceException(ApiError.WF_TASK_RECORD_FORCE_RETRY_PARAM_REQUIRED);
         }
+        checkForceRetryPermission();
         String sourceType;
         String sourceId;
         WorkflowTaskRecordEntity lockTask = null;
