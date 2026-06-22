@@ -542,7 +542,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         // 价税合计金额一致性校验：出库明细=0 但上游销售订单明细非0 时拦截，赠品整单放行；上游查不到不拦截
         if (isAmountMismatchWithUpstreamSo(entity)) {
             String message = MessageUtils.getMessage(ApiError.SO_OUTSTOCK_AMOUNT_MISMATCH_SUBMIT);
-            // 独立事务写入审核状态说明，不影响后续返回值；不抛异常，避免回滚 remark
             soOutstockService.appendApproveRemark(entity.getId(), message);
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), message);
         }
@@ -3736,14 +3735,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             boolean amountMismatch = soOutstockService.isAmountMismatchWithUpstreamSo(soOutstock, detailEntities);
             if (amountMismatch) {
                 String mismatchMsg = MessageUtils.getMessage(ApiError.SO_OUTSTOCK_AMOUNT_MISMATCH_SUBMIT);
-                String stamped = "[" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) + "] " + mismatchMsg;
-                if (stamped.length() > APPROVE_REMARK_MAX_LENGTH) {
-                    stamped = stamped.substring(stamped.length() - APPROVE_REMARK_MAX_LENGTH);
-                }
                 soOutstock.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
                 soOutstock.setApproveTime(null);
-                soOutstock.setApproveRemark(stamped);
                 this.updateById(soOutstock);
+                soOutstockService.appendApproveRemark(soOutstock.getId(), mismatchMsg);
                 log.warn("平台仓/海外仓下推销售出库单金额异常，落待提交状态，单号：{}，soId：{}", soOutstock.getCode(), soOutstock.getSoId());
             }
             //添加日志

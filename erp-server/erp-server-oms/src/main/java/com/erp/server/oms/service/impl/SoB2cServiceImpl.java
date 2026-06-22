@@ -12571,6 +12571,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 if (!errorNoList.contains(no)) {
 
                     SoB2cAmountUtil.applyAll(soB2cEntity, detailList);
+                    BigDecimal paidAmount = soB2cEntity.getPaidAmount();
+                    BigDecimal totalDiscount = soB2cEntity.getTotalDiscount();
+                    SoB2cAmountUtil.ignoreRequestMainPaidAmount(soB2cEntity);
+                    SoB2cAmountUtil.ignoreRequestMainTotalDiscount(soB2cEntity);
                     soB2cService.save(soB2cEntity);
                     // 操作日志
                     String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "B2C销售订单表", soB2cEntity.getCode());
@@ -12605,8 +12609,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     }
                     //新增买家信息
                     soB2cReceiverService.add(receiverDTO, soB2cEntity);
-                    //新增明细
-                    soB2cDetailService.saveBatch(detailList);
+                    //新增明细（成功后再回写主表 paidAmount/totalDiscount）
+                    if (!soB2cDetailService.saveBatch(detailList)) {
+                        throw new ServiceException("B2C销售订单明细导入失败");
+                    }
+                    soB2cEntity.setPaidAmount(paidAmount);
+                    soB2cEntity.setTotalDiscount(totalDiscount);
+                    soB2cService.updateById(soB2cEntity);
                     //新增财务信息
                     addSoB2cFinance(soB2cEntity);
                     //订单分类
