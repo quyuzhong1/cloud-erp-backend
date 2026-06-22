@@ -26,16 +26,36 @@ public class PurchaseOrderQueryHandler extends AbstractQueryHandler {
 
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
-        if("so.code".equals(field)){
-            value = "'"+value+"'";
-            return "case when  subString ( " + value + ",1,2) != 'PL' then po.source_code "+ compareCodeSplicingValueSql +
-                    " else EXISTS ( select pa.id from purchase_application pa left join purchase_application_ref_po parp on parp.is_deleted = false and pa.id = parp.purchase_application_id " +
-                    " where parp.purchase_order_id = po.id and pa.code "+ compareCodeSplicingValueSql +" ) end";
+        if ("so.code".equals(field) || "po.source_code".equals(field)) {
+            return buildSourceCodeSql(compareCodeSplicingValueSql);
         }
         if("tab".equals(field)){
            return getTabSql(value);
         }
         return null;
+    }
+
+    /**
+     * 来源单号：与列表展示一致，覆盖采购申请(ref表)、主表source_code(退货/委外)、委外单联表兜底
+     */
+    private String buildSourceCodeSql(String compareCodeSplicingValueSql) {
+        String subcontractSourceType = SourceTypeEnum.SUBCONTRACT_ORDER.getCode();
+        return "("
+                + "po.source_code " + compareCodeSplicingValueSql
+                + " OR EXISTS ("
+                + " SELECT 1 FROM purchase_application pa"
+                + " INNER JOIN purchase_application_ref_po parp"
+                + " ON parp.purchase_application_id = pa.id AND parp.is_deleted = false"
+                + " WHERE parp.purchase_order_id = po.id AND pa.is_deleted = false"
+                + " AND pa.code " + compareCodeSplicingValueSql
+                + " )"
+                + " OR EXISTS ("
+                + " SELECT 1 FROM subcontract_order so2"
+                + " WHERE so2.id = po.source_id AND so2.is_deleted = false"
+                + " AND po.source_type = '" + subcontractSourceType + "'"
+                + " AND so2.code " + compareCodeSplicingValueSql
+                + " )"
+                + ")";
     }
 
 
