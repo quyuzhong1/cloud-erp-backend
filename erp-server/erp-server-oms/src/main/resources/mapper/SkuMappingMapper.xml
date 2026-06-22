@@ -912,12 +912,10 @@
             END AS groupName,
             COUNT(*) AS unmatchCount
         FROM sku_mapping sm
-        LEFT JOIN listing_info li ON li.id = sm.listing_id AND li.is_deleted = false
+        INNER JOIN listing_info li ON li.id = sm.listing_id AND li.is_deleted = false AND li.match_result = 'false'
         LEFT JOIN overseas_provider op ON op.id = li.auth_id AND op.is_deleted = false
         WHERE sm.is_deleted = false
           AND sm.is_expire   = false
-          AND li.is_deleted  = false
-          AND li.match_result = 'false'
           <if test="params.warehouseId != null and params.warehouseId != ''">
               AND sm.warehouse_id = #{params.warehouseId}
           </if>

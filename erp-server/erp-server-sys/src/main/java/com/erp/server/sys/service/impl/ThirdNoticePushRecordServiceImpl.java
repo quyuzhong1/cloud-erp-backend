@@ -70,6 +70,7 @@ import com.erp.model.workflow.enums.CfgQueryOptionFieldBelongsTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.model.msg.dto.NoticeMsgCardButtonDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
+import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.sys.feign.SysPostFeign;
@@ -1605,46 +1606,31 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
         // 4. 标题直接取三方通知配置，正文模板按 skuType 区分
         String cardTitle = noticeEntity.getTitle();
         String contentTemplate;
-        switch (skuType) {
-            case "platform":
-                contentTemplate = NoticeMsgConstant.FS_SKU_MAPPING_PLATFORM_CONTENT;
-                break;
-            case "customer":
-                contentTemplate = NoticeMsgConstant.FS_SKU_MAPPING_CUSTOMER_CONTENT;
-                break;
-            case "b2bPlatform":
-                contentTemplate = NoticeMsgConstant.FS_SKU_MAPPING_B2B_PLATFORM_CONTENT;
-                break;
-            default:
-                contentTemplate = NoticeMsgConstant.FS_SKU_MAPPING_WAREHOUSE_CONTENT;
-                break;
-        }
-        // 根据 skuType 确定"未知"分组的显示标签
         String unknownLabel;
-        switch (skuType) {
-            case "customer":
-                unknownLabel = "未知客户";
-                break;
-            case "platform":
-            case "b2bPlatform":
-                unknownLabel = "未知平台";
-                break;
-            default:
-                unknownLabel = "未知仓库";
-                break;
+        if (RuleTypeEnum.B2C_PLATFORM.getCode().equals(skuType)) {
+            contentTemplate = NoticeMsgConstant.FS_SKU_MAPPING_PLATFORM_CONTENT;
+            unknownLabel = "未知平台";
+        } else if (RuleTypeEnum.CUSTOMER.getCode().equals(skuType)) {
+            contentTemplate = NoticeMsgConstant.FS_SKU_MAPPING_CUSTOMER_CONTENT;
+            unknownLabel = "未知客户";
+        } else if (RuleTypeEnum.B2B_PLATFORM.getCode().equals(skuType)) {
+            contentTemplate = NoticeMsgConstant.FS_SKU_MAPPING_B2B_PLATFORM_CONTENT;
+            unknownLabel = "未知平台";
+        } else {
+            contentTemplate = NoticeMsgConstant.FS_SKU_MAPPING_WAREHOUSE_CONTENT;
+            unknownLabel = "未知仓库";
         }
         StringBuilder lines = new StringBuilder();
-        long unknownWarehouseCount = 0;
+        long unknownCount = 0;
         for (SkuMappingDTO.UnmatchCountDTO dto : unmatchList) {
             if (StringUtils.isBlank(dto.getGroupName())) {
-                // 未配置名称的，汇总到"未知（仓库/平台/客户）"
-                unknownWarehouseCount += dto.getUnmatchCount();
+                unknownCount += dto.getUnmatchCount();
                 continue;
             }
             lines.append(dto.getGroupName()).append("(").append(dto.getUnmatchCount()).append("个)\n");
         }
-        if (unknownWarehouseCount > 0) {
-            lines.append(unknownLabel).append("(").append(unknownWarehouseCount).append("个)\n");
+        if (unknownCount > 0) {
+            lines.append(unknownLabel).append("(").append(unknownCount).append("个)\n");
         }
         String cardContent = String.format(contentTemplate, lines.toString().trim());
 
