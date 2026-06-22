@@ -2113,7 +2113,8 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             // 调入端仅 wego / 极风 等支持不良品标记的平台正向签收(在途仓→目的仓)且不良品标记时落不良品，其余默认可用。
             String dictPlatform = mainEntity.getDictPlatform();
             boolean supportDefectiveFlag = OmsPlatformEnum.WE_GO.getCode().equalsIgnoreCase(dictPlatform)
-                    || OmsPlatformEnum.JIFENG.getCode().equalsIgnoreCase(dictPlatform);
+                    || OmsPlatformEnum.JIFENG.getCode().equalsIgnoreCase(dictPlatform)
+                    || OmsPlatformEnum.JI_TU.getCode().equalsIgnoreCase(dictPlatform);
             boolean isDefective = supportDefectiveFlag
                     && Boolean.FALSE.equals(isToOnwayWarehouse)
                     && Boolean.TRUE.equals(receivedEntity.getDefectiveProductFlag());

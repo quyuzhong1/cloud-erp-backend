@@ -1312,6 +1312,12 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 .filter(v -> StringUtil.isNotBlank(v.getFlowId()))
                 .map(OverseasWarehouseInboundReceivedEntity::getFlowId)
                 .collect(Collectors.toCollection(HashSet::new));
+        // 极兔：同一行可能同时回传 ZP(正品) 与 CC(不良品) 批次，(detailId,qty,time) 可能完全相同，
+        // 仅按三要素去重会把不良品流水误判为重复丢失，故幂等键额外拼接不良品标记。
+        Set<String> jituKeySet = receivedEntityList.stream()
+                .map(v -> v.getDetailId() + v.getReceiveQty() + LocalDateTimeUtil.formatNormal(v.getReceiveTime())
+                        + Boolean.TRUE.equals(v.getDefectiveProductFlag()))
+                .collect(Collectors.toCollection(HashSet::new));
         //有签收记录直接保存，没有签收记录判断签收数量与数据库是否一致，不一致的话用签收数量-数据库签收数量
         if (dto.getHasReceivedData() && CollectionUtils.isNotEmpty(dto.getReceivingDataList())) {
             //判断是否存在，通过明细id+数量+时间
@@ -1361,6 +1367,14 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                         if (!receivedKeySet.add(key)) {
                             continue;
                         }
+                    }
+                } else if (OmsPlatformEnum.JI_TU.getCode().equalsIgnoreCase(dto.getPlatform())) {
+                    // 极兔：把不良品标记纳入幂等键，确保同一行的 ZP/CC 流水即使数量、时间相同也能各自落库，
+                    // 且重推时仍能正确去重。
+                    String key = detailId + receiving.getReceiveQty() + LocalDateTimeUtil.formatNormal(receiving.getReceiveTime())
+                            + Boolean.TRUE.equals(receiving.getDefectiveProductFlag());
+                    if (!jituKeySet.add(key)) {
+                        continue;
                     }
                 } else {
                     String key = detailId + receiving.getReceiveQty() + LocalDateTimeUtil.formatNormal(receiving.getReceiveTime());
