@@ -288,9 +288,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         //仓库sku 对照
         if (warehouse.equals(type)) {
             // 查询仓库关联服务商
-            List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listApproveWarehouse();
+            List<WarehouseDTO.ListDTO> warehouseList = wmsTaskFeign.listApproveWarehouse();
             warehouseList = warehouseList.stream().filter(w -> !w.getDisabled()).collect(Collectors.toList());
-            List<String> warehouseIds = warehouseList.stream().map(WarehouseDTO.UpdateDTO::getId).collect(Collectors.toList());
+            List<String> warehouseIds = warehouseList.stream().map(WarehouseDTO.ListDTO::getId).collect(Collectors.toList());
             // 海外仓库
             List<WarehouseDTO.ListDTO> overseasWarehouseList = wmsWarehouseFeign.listByIds(warehouseIds);
             Map<String, WarehouseDTO.ListDTO> overseasWarehouseMap = new HashMap<>();

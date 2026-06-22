@@ -232,7 +232,7 @@ public interface OverseasWarehouseInboundConverter {
             @Mapping(target = "consigneeTaxNumber",  source = "receiverInfo.taxNumber"),
             @Mapping(target = "name",  source = "receiverInfo.name"),
             @Mapping(target = "phone",  source = "receiverInfo.phone"),
-            @Mapping(target = "doorplate",  constant = "0"),
+            @Mapping(target = "doorplate", source = "receiverInfo.houseNumber", qualifiedByName = "defaultDoorplate"),
             @Mapping(target = "email",  source = "receiverInfo.email"),
             @Mapping(target = "items",  source = "items"),
     })

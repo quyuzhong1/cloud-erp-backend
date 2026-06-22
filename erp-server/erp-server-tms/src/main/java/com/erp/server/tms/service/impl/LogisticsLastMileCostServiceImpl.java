@@ -331,7 +331,8 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
             LogisticsLastMileCostExcelDTO excelDTO = rowExcelMap.get(value.get(0));
             List<String> errorMsgList = new ArrayList<>();
             List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVoList = groupLogisticsBillVoMap.getOrDefault(entry.getKey(), Collections.emptyList());
-            if (CollUtil.isEmpty(logisticsBillVoList)) {
+            boolean importAddNew =Objects.equals("import_add_new",importType);
+            if (CollUtil.isEmpty(logisticsBillVoList) && !importAddNew) {
                 errorMsgList.add("未找到对应物流单");
             }
             if (CollectionUtils.isNotEmpty(errorMsgList)) {

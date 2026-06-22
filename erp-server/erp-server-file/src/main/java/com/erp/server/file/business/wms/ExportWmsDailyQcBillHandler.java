@@ -13,7 +13,7 @@ import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.rpc.wms.feign.ExportWmsFeign;
 import com.erp.server.file.business.wms.hanldler.HyperlinkWriteHandler;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
-import com.erp.server.file.entity.FileTask;
+import com.erp.model.file.entity.FileTask;
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

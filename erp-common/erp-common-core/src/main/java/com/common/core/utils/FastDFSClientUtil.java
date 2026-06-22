@@ -2,6 +2,8 @@ package com.common.core.utils;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -36,6 +38,11 @@ public class FastDFSClientUtil {
 
 	private static String configFile;
 
+	/**
+	 * 全类共享的单个 FastDFS 客户端（底层单 socket 连接）。{@link StorageClient1} 非线程安全，
+	 * 故各上传/下载方法以 {@code synchronized} 串行化对该共享连接的访问；这也是并发上传瓶颈的根因。
+	 * 若需提升并发，应改为连接池或按调用新建短连接，而非简单去掉方法上的 {@code synchronized}。
+	 */
 	private static StorageClient1 storageClient1 = null;
 
 	public static String publicUrl;
@@ -386,4 +393,58 @@ public class FastDFSClientUtil {
 		}
 		return result;
 	}
+
+    /**
+     * 流式上传底层方法：仅供已持有共享连接锁的 {@link #streamUploadFile} 调用，禁止对外直接使用。
+     * {@link StorageClient1} 非线程安全且全 JVM 共享单连接，绕过 {@code streamUploadFile} 的 {@code synchronized}
+     * 直接并发调用本方法会导致数据串包/文件损坏，故声明为 {@code private}。
+     */
+    private static String uploadFile2Client(long fileSize, UploadCallback callback, String fileName, Map<String, String> metaList) throws IOException, MyException {
+        NameValuePair[] nameValuePairs = null;
+        if (metaList != null) {
+            nameValuePairs = new NameValuePair[metaList.size()];
+            int index = 0;
+            for (Map.Entry<String, String> entry : metaList.entrySet()) {
+                nameValuePairs[index++] = new NameValuePair(entry.getKey(), entry.getValue());
+            }
+        }
+        String filePath = getStorageClient().upload_file1("", fileSize, callback, FilenameUtils.getExtension(fileName), nameValuePairs);
+        return checkFileId(filePath);
+    }
+
+	/**
+	 * 上传文件（流式，避免整文件读入内存）。
+	 * <p>
+	 * <strong>{@code synchronized} 系有意为之，请勿删除：</strong>全类共用一个静态 {@link #storageClient1}
+	 * （底层单 socket 连接），而 {@code org.csource} 的 {@link StorageClient1} 非线程安全，多线程在同一连接上
+	 * 并发读写会串包、数据损坏。此处的锁是保护这唯一共享连接的正确性手段，去锁前必须先改掉"全 JVM 共用单连接"
+	 * 的模型（如引入连接池或按调用新建短连接），否则会从"上传串行变慢"升级为"上传数据损坏"。
+	 * 已知的并发瓶颈根因即此共享单连接，后续优化方向为连接池。
+	 *
+	 * @param file     文件对象
+	 * @param fileName 文件名
+	 * @param metaList 文件元数据
+	 * @return 上传成功后的文件 ID（group/path）
+	 */
+	public synchronized static String streamUploadFile(File file, String fileName, Map<String, String> metaList) {
+        try {
+            long size = file.length();
+            // 使用 File 打开流，避免 getAbsolutePath/getCanonicalPath 与路径字符串在相对路径、符号链接等场景下与 JVM 解析不一致
+            UploadCallback sender = out -> {
+                try (FileInputStream fis = new FileInputStream(file)) {
+                    IOUtils.copy(fis, out);
+                }
+                // 返回值是 FastDFS 协议的 errno（状态码），不是写入字节数：
+                // csource StorageClient#do_upload_file 会把 callback.send(out) 的返回值作为本次上传的错误码，
+                // 0=成功，非 0=失败（do_upload_file 直接返回 null，表现为上传"返回空"）。
+                // 上传字节数由协议头里的 file_size（即 upload_file1 传入的 size）单独声明，回调只负责把字节写入 out。
+                // 切勿改成返回 IOUtils.copy 的字节数，否则任意非空文件都会变成非 0 errno 而上传失败。
+                return 0;
+            };
+            return uploadFile2Client(size, sender, fileName, metaList);
+        } catch (Exception e) {
+            // 保留 cause，便于全局异常处理器/线上日志定位根因；对外仍只暴露 FILE_UPLOAD_FAILED 文案，不泄露内部路径
+            throw new ServiceException(e, ApiError.FILE_UPLOAD_FAILED);
+        }
+    }
 }

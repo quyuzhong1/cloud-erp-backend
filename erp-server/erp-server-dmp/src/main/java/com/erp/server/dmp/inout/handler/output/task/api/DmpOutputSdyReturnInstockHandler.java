@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 
 import com.erp.model.dmp.entity.DmpSoReturnInfoEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.KingdeeDepartmentEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -136,6 +137,9 @@ public class DmpOutputSdyReturnInstockHandler extends DmpOutputSdyBaseTaskHandle
 		List<SysDepartmentEntity> deptList = sysUserFeign.getDeptEntityList();
 		Map<String, Object> deptMap = deptList.stream().collect(Collectors.toMap(SysDepartmentEntity::getCode, k -> k, (k1, k2) -> k1));
 		cacheMap.put("deptList", deptMap);
+		
+		Map<String, Object> countryIdNameMap = FeignQuery.list(DictCountryEntity.class).stream().collect(Collectors.toMap(DictCountryEntity::getId, DictCountryEntity::getNameCn));
+		cacheMap.put("country", countryIdNameMap);
 
 		Map<String, String> map = new HashMap<>();
         String cfgOutputId = dmpResponse.getDmpCfgOutputEntity().getId();
@@ -294,7 +298,15 @@ public class DmpOutputSdyReturnInstockHandler extends DmpOutputSdyBaseTaskHandle
 
     	        
     	        // 国家编码
-    	        shudiyunB2cOrderDTO.setCountry_code(dmpReturnInstockDetailEntity.getCountryCode());
+    	        String countryCode = dmpReturnInstockDetailEntity.getCountryCode();
+				shudiyunB2cOrderDTO.setCountry_code(countryCode);
+    	        Map<String, Object> countryMap = cacheMap.get("country");
+    	        if(countryMap != null && StringUtils.isNotBlank(countryCode)) {
+    	        	Object countryNameObj = countryMap.get(countryCode);
+    	        	if(countryNameObj != null) {
+    	        		dmpReturnInstockDetailEntity.setCountryName(countryNameObj.toString());
+    	        	}
+    	        }
     	        // 国家名称
     	        shudiyunB2cOrderDTO.setCountry(dmpReturnInstockDetailEntity.getCountryName());
     	        // 区域编码

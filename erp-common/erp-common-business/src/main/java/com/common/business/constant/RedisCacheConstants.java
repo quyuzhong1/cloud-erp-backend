@@ -299,9 +299,6 @@ public interface RedisCacheConstants {
 
     String REDIS_GEN_KEY = "snowflake:order:code";
 
-    String MRP_DATA_ARCHIVING_KEY = "mrp:data:archiving";
-    String MRP_KEY = "mrp";
-
     String LOCK_KEY_PREFIX = "wms:fbt:sync:";
 
     String DATA_COMPARE_TASK_KEY = "wms:data:compare:task:";
@@ -385,14 +382,13 @@ public interface RedisCacheConstants {
     // 格式: cache:{serviceCode}:dict:type:{type}
     String SYS_DICT_BASIC_BY_TYPE = "cache:sys:dict:type";
     String DMP_DICT_BASIC_BY_TYPE = "cache:dmp:dict:type";
-    String MRP_DICT_BASIC_BY_TYPE = "cache:mrp:dict:type";
-    String FMS_DICT_BASIC_BY_TYPE = "cache:mrp:dict:type";
     String OMS_DICT_BASIC_BY_TYPE = "cache:oms:dict:type";
     String SCM_DICT_BASIC_BY_TYPE = "cache:scm:dict:type";
     String TMS_DICT_BASIC_BY_TYPE = "cache:tms:dict:type";
     String WMS_DICT_BASIC_BY_TYPE = "cache:wms:dict:type";
     String PLM_DICT_BASIC_BY_TYPE = "cache:plm:dict:type";
     String SRM_DICT_BASIC_BY_TYPE = "cache:srm:dict:type";
+    String FMS_DICT_BASIC_BY_TYPE = "cache:fms:dict:type";
     String WORKFLOW_DICT_BASIC_BY_TYPE = "cache:workflow:dict:type";
     //区域管理
     String SYS_DICT_GLOBAL_AREA_ID = "cache:sys:globalArea:id";

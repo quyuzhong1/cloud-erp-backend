@@ -1719,8 +1719,8 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
         Map<String, String> deptMap = deptList.stream().collect(Collectors.toMap(SysDepartmentDTO::getName, SysDepartmentDTO::getId, (o1, o2) -> o1));
         //仓库
-        List<WarehouseDTO.UpdateDTO> warehouserList = wmsTaskFeign.listApproveWarehouse();
-        Map<String, String> warehouserMap = warehouserList.stream().collect(Collectors.toMap(WarehouseDTO.UpdateDTO::getName, WarehouseDTO.UpdateDTO::getId, (o1, o2) -> o1));
+        List<WarehouseDTO.ListDTO> warehouserList = wmsTaskFeign.listApproveWarehouse();
+        Map<String, String> warehouserMap = warehouserList.stream().collect(Collectors.toMap(WarehouseDTO.ListDTO::getName, WarehouseDTO.ListDTO::getId, (o1, o2) -> o1));
         //物流渠道
         List<BaseDropDownDTO.DisabledDTO> logisticsList = logisticsFeign.listAll();
         Map<String, String> logisticsMap = logisticsList.stream().filter(e -> e.getDisabled().equals(Boolean.FALSE))

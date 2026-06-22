@@ -74,7 +74,6 @@ import java.util.stream.Collectors;
 import static com.alibaba.excel.EasyExcelFactory.write;
 import static com.alibaba.excel.EasyExcelFactory.writerSheet;
 import static com.alibaba.fastjson.JSON.toJSONString;
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_PRODUCT;
 
 /**
  * <p>
@@ -2508,6 +2507,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     }
 
     private Boolean commonExport(ProductSearchDTO.ExportDTO params) {
+        // 前置校验：非法 exportDataList 在执行分类展开、用户注入等准备逻辑前快速失败，避免无效的分类查询等开销
+        String eventCode = resolveProductDevelopExportEventCode(params.getExportDataList());
+
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
         StringBuilder builder = new StringBuilder();
         builder.append("产品开发导出").append(date);
@@ -2522,7 +2524,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         if(CollUtil.isNotEmpty(params.getProductIds())){
             params.setIds(params.getProductIds());
         }
-        downloadTaskFeign.saveDownloadTask(builder.toString(), EXPORT_PLM_PRODUCT.getCode(), params);
+        downloadTaskFeign.saveDownloadTask(builder.toString(), eventCode, params);
         return Boolean.TRUE;
     }
 
@@ -2636,5 +2638,15 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         return Boolean.TRUE;
     }
 
-
+    private String resolveProductDevelopExportEventCode(List<Integer> exportDataList) {
+        String validateMessage = ProductDevelopExportTypeEnum.validateCombinationMessage(exportDataList);
+        if (validateMessage != null) {
+            throw new ServiceException(validateMessage);
+        }
+        String eventCode = ProductDevelopExportEventMapping.resolveEventCode(exportDataList);
+        if (eventCode == null) {
+            throw new ServiceException("导出数据类型不合法：" + exportDataList);
+        }
+        return eventCode;
+    }
 }

@@ -54,7 +54,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_BI_RETURN_INFO;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_RETURN_INFO;
 
 /**
  * <p>
@@ -117,7 +117,7 @@ public class SoB2cRefundServiceImpl extends SuperServiceImpl<SoB2cRefundMapper, 
 
     @Override
     public void exportExcel(SoB2cRefundDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveDownloadTask("退款订单导出", EXPORT_BI_RETURN_INFO.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("退款订单导出", EXPORT_OMS_RETURN_INFO.getCode(), dto);
     }
 
     @Override

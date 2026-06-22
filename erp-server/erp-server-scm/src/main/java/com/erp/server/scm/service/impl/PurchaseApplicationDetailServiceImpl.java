@@ -168,7 +168,6 @@ public class PurchaseApplicationDetailServiceImpl extends SuperServiceImpl<Purch
             }
             entity.setDestWarehouseName(warehouseDTO.getName());
             entity.setReceiveOrgId(warehouseDTO.getOrgId());
-            entity.setSourceJson(JSONUtil.parseArray(entity.getSourceJsonList()));
             //核算公司
             if (CollectionUtils.isEmpty(accountingCompanyList)) {
                 throw new ServiceException(ApiError.COMMON_COMPANY_NOT_FOUND);

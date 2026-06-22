@@ -98,7 +98,6 @@ public class CfgLogisticsCostImportDetailServiceImpl extends SuperServiceImpl<Cf
 
     @DistributeLocker(keyName = "addOrUpdateDTO.getId()")
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean updateInTransaction(CfgLogisticsCostImportDetailDTO.UpdateDTO addOrUpdateDTO, Set<String> validCurrencyKeys) {
         CfgLogisticsCostImportDetailEntity old = super.getById(addOrUpdateDTO.getId());
         old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "费用项配置字段配置"));
