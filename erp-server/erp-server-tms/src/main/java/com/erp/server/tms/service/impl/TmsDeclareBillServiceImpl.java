@@ -4666,25 +4666,41 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     private void fillBatchDeclareBillBusinessType(String type,
                                                   List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList,
                                                   TmsDeclareBillEntity declareBillEntity) {
-        List<String> sourceIdList = sourceDetailList.stream()
+        List<String> businessTypeList = new ArrayList<>();
+        if (CollUtil.isNotEmpty(sourceDetailList)) {
+            businessTypeList.addAll(sourceDetailList.stream()
+                    .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getBusinessType)
+                    .collect(Collectors.toList()));
+        }
+
+        List<String> sourceIdList = CollUtil.isEmpty(sourceDetailList) ? Collections.emptyList()
+                : sourceDetailList.stream()
                 .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getSourceId)
                 .filter(StringUtils::isNotBlank)
                 .distinct()
                 .collect(Collectors.toList());
-        if (CollUtil.isEmpty(sourceIdList)) {
-            return;
+        if (CollUtil.isNotEmpty(sourceIdList)) {
+            if (CharSequenceUtil.equals(type, SourceTypeEnum.FM_DECLARE_BILL.getCode())) {
+                List<TmsDeclareBillDTO.DeliveryDTO> deliveryDTOList = getCanGenerateDeliveryOrder(
+                        TmsDeclareBillDTO.QuerySourceDTO.builder().ids(sourceIdList).build());
+                businessTypeList.addAll(deliveryDTOList.stream()
+                        .map(TmsDeclareBillDTO.DeliveryDTO::getBusinessType)
+                        .collect(Collectors.toList()));
+            } else if (CharSequenceUtil.equals(type, SourceTypeEnum.B2B_DECLARE_BILL.getCode())) {
+                List<TmsDeclareBillDTO.SoOutDTO> deliveryDTOList = getCanGenerateSoOut(
+                        TmsDeclareBillDTO.QuerySourceDTO.builder().ids(sourceIdList).build());
+                businessTypeList.addAll(deliveryDTOList.stream()
+                        .map(TmsDeclareBillDTO.SoOutDTO::getBusinessType)
+                        .collect(Collectors.toList()));
+            }
         }
-        if (CharSequenceUtil.equals(type, SourceTypeEnum.FM_DECLARE_BILL.getCode())) {
-            List<TmsDeclareBillDTO.DeliveryDTO> deliveryDTOList = getCanGenerateDeliveryOrder(TmsDeclareBillDTO.QuerySourceDTO.builder().ids(sourceIdList).build());
-            declareBillEntity.setBusinessType(joinDistinct(deliveryDTOList.stream()
-                    .map(TmsDeclareBillDTO.DeliveryDTO::getBusinessType)
-                    .collect(Collectors.toList())));
-        } else if (CharSequenceUtil.equals(type, SourceTypeEnum.B2B_DECLARE_BILL.getCode())) {
-            List<TmsDeclareBillDTO.SoOutDTO> deliveryDTOList = getCanGenerateSoOut(TmsDeclareBillDTO.QuerySourceDTO.builder().ids(sourceIdList).build());
-            declareBillEntity.setBusinessType(joinDistinct(deliveryDTOList.stream()
-                    .map(TmsDeclareBillDTO.SoOutDTO::getBusinessType)
-                    .collect(Collectors.toList())));
+
+        String businessType = joinDistinct(businessTypeList);
+        if (StringUtils.isBlank(businessType)
+                && CharSequenceUtil.equals(type, SourceTypeEnum.B2B_DECLARE_BILL.getCode())) {
+            businessType = OrderTypeEnum.B2B.getCode();
         }
+        declareBillEntity.setBusinessType(businessType);
     }
 
     /**
