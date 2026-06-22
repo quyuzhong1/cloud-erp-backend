@@ -22,7 +22,8 @@ import lombok.extern.slf4j.Slf4j;
 @RocketMQMessageListener(topic = RocketMqNewTopic.DMP_PLATFORM_ORDER_TO_OMS_TOPIC,
 selectorExpression = RocketMqNewTag.DMP_PLATFORM_ORDER_TO_OMS_TAG,
 consumerGroup = RocketMqNewConsumerGroup.DMP_PLATFORM_ORDER_TO_OMS_GROUP,
-consumeMode = ConsumeMode.ORDERLY)
+consumeMode = ConsumeMode.CONCURRENTLY,
+consumeThreadNumber = 8)
 public class NewPlatformOrderConsumerService extends AbstractNewPlatformConsumerHandler{
 	@Resource
 	private PlatformOrderConsumerService platformOrderConsumerService;
