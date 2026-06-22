@@ -49,15 +49,15 @@ public class PurchaseOrderQueryHandler extends AbstractQueryHandler {
                 + " OR EXISTS ("
                 + " SELECT 1 FROM purchase_application_ref_po"
                 + " WHERE purchase_order_id = po.id"
-                + " AND is_deleted = 'f'"
+                + " AND is_deleted = false"
                 + " AND purchase_application_id IN ("
-                + " SELECT id FROM purchase_application WHERE is_deleted = 'f' AND " + codeCompareSql
+                + " SELECT id FROM purchase_application WHERE is_deleted = false AND " + codeCompareSql
                 + " )"
                 + " )"
                 + " OR (LOWER(po.source_type) = LOWER('" + subcontractSourceType + "')"
                 + " AND EXISTS ("
                 + " SELECT 1 FROM subcontract_order WHERE id = po.source_id"
-                + " AND is_deleted = 'f' AND " + codeCompareSql
+                + " AND is_deleted = false AND " + codeCompareSql
                 + " ))"
                 + ")";
     }
