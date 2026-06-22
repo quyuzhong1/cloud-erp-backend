@@ -896,15 +896,16 @@
     </select>
 
     <!-- 统计未匹配SKU数量，按不同维度分组：
-         warehouse → 按仓库分组；platform/b2bPlatform → 按平台名分组；customer → 按平台名（客户名）分组 -->
+         warehouse → 按仓库分组；platform/b2bPlatform → 按平台名分组；customer → 按平台名（客户名）分组
+         使用 li.match_result = 'false' 判断未匹配，与前端 Tab 计数保持一致 -->
     <select id="countUnmatchedGroupByWarehouse" resultType="com.erp.model.oms.dto.SkuMappingDTO$UnmatchCountDTO">
         SELECT
             sm.warehouse_id AS warehouseId,
             COALESCE(NULLIF(sm.warehouse_name, ''), NULLIF(sm.warehouse_id, ''), '未知仓库') AS warehouseName,
             CASE
                 WHEN sm.type = 'warehouse'
-                    THEN COALESCE(NULLIF(MAX(op.short_name), ''), NULLIF(sm.warehouse_name, ''), NULLIF(sm.warehouse_id, ''), '未知仓库')
-                ELSE COALESCE(NULLIF(sm.platform_name, ''), NULLIF(sm.dict_platform, ''), '未知')
+                    THEN NULLIF(MAX(op.short_name), '')
+                ELSE COALESCE(NULLIF(sm.platform_name, ''), NULLIF(sm.dict_platform, ''))
             END AS groupName,
             COUNT(*) AS unmatchCount
         FROM sku_mapping sm
@@ -912,7 +913,8 @@
         LEFT JOIN overseas_provider op ON op.id = li.auth_id AND op.is_deleted = false
         WHERE sm.is_deleted = false
           AND sm.is_expire   = false
-          AND (sm.product_sku_id IS NULL OR sm.product_sku_id = '')
+          AND li.is_deleted  = false
+          AND li.match_result = 'false'
           <if test="params.warehouseId != null and params.warehouseId != ''">
               AND sm.warehouse_id = #{params.warehouseId}
           </if>

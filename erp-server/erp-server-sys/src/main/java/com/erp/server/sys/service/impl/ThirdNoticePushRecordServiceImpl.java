@@ -1613,11 +1613,32 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                 contentTemplate = NoticeMsgConstant.FS_SKU_MAPPING_WAREHOUSE_CONTENT;
                 break;
         }
+        // 根据 skuType 确定"未知"分组的显示标签
+        String unknownLabel;
+        switch (skuType) {
+            case "customer":
+                unknownLabel = "未知客户";
+                break;
+            case "platform":
+            case "b2bPlatform":
+                unknownLabel = "未知平台";
+                break;
+            default:
+                unknownLabel = "未知仓库";
+                break;
+        }
         StringBuilder lines = new StringBuilder();
+        long unknownWarehouseCount = 0;
         for (SkuMappingDTO.UnmatchCountDTO dto : unmatchList) {
-            String groupName = StringUtils.isNotBlank(dto.getGroupName()) ? dto.getGroupName()
-                    : (StringUtils.isNotBlank(dto.getWarehouseName()) ? dto.getWarehouseName() : "未知");
-            lines.append(groupName).append("(").append(dto.getUnmatchCount()).append("个)\n");
+            if (StringUtils.isBlank(dto.getGroupName())) {
+                // 未配置名称的，汇总到"未知（仓库/平台/客户）"
+                unknownWarehouseCount += dto.getUnmatchCount();
+                continue;
+            }
+            lines.append(dto.getGroupName()).append("(").append(dto.getUnmatchCount()).append("个)\n");
+        }
+        if (unknownWarehouseCount > 0) {
+            lines.append(unknownLabel).append("(").append(unknownWarehouseCount).append("个)\n");
         }
         String cardContent = String.format(contentTemplate, lines.toString().trim());
 
