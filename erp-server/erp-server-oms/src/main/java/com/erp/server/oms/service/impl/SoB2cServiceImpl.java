@@ -13002,8 +13002,21 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void updateB2cByPlatformOutbound(SoB2cDTO.B2cByPlatformOutboundDTO dto) {
+        // 三方仓渠道映射依赖 Feign，须在事务外完成，避免长事务占用连接
+        SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsService.getByMainId(dto.getSoB2cId());
+        if (Objects.nonNull(logisticsEntity)) {
+            logisticsEntity.setCode(CharSequenceUtil.isNotBlank(logisticsEntity.getCode()) ? logisticsEntity.getCode() : dto.getTrackNo());
+            logisticsEntity.setTrackNo(CharSequenceUtil.isNotBlank(logisticsEntity.getTrackNo()) ? logisticsEntity.getTrackNo() : dto.getTrackNo());
+            fillLogisticsChannelFromThirdShipping(logisticsEntity, dto.getThirdWarehousePlatform(),
+                    dto.getShippingMethod(), dto.getPlatformWarehouseCode());
+        }
+        soB2cService.updateB2cByPlatformOutboundTransactional(dto, logisticsEntity);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void updateB2cByPlatformOutboundTransactional(SoB2cDTO.B2cByPlatformOutboundDTO dto,
+                                                         SoB2cLogisticsEntity logisticsEntity) {
         lambdaUpdate().eq(SoB2cEntity::getId, dto.getSoB2cId())
                 .set(StringUtils.isNotBlank(dto.getBillStatus()), SoB2cEntity::getBillStatus, dto.getBillStatus())
                 .set(SoB2cEntity::getSoOutstockDate, dto.getSoOutstockDate())
@@ -13018,20 +13031,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 .set(StringUtils.isNotBlank(dto.getWarehouseOrgName()), SoB2cDetailEntity::getWarehouseOrgName, dto.getWarehouseOrgName())
                 .update();
 
-        // 记录跟踪号；渠道为空时按三方仓 shipping_method 映射 ERP 物流渠道（须在生成物流单前写入）
-        SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsService.getByMainId(dto.getSoB2cId());
         if (Objects.nonNull(logisticsEntity)) {
-            logisticsEntity.setCode(CharSequenceUtil.isNotBlank(logisticsEntity.getCode()) ? logisticsEntity.getCode() : dto.getTrackNo());
-            logisticsEntity.setTrackNo(CharSequenceUtil.isNotBlank(logisticsEntity.getTrackNo()) ? logisticsEntity.getTrackNo() : dto.getTrackNo());
-            fillLogisticsChannelFromThirdShipping(logisticsEntity, dto.getThirdWarehousePlatform(),
-                    dto.getShippingMethod(), dto.getPlatformWarehouseCode());
             soB2cLogisticsService.updateById(logisticsEntity);
         }
 
         if (dto.isAddOperationLog()) {
             operateLogService.addModuleOperateLog("海外仓发货成功", ModuleTypeEnum.SO_B2C.getCode(), dto.getSoB2cId(), "海外仓发货");
         }
-
     }
 
 
