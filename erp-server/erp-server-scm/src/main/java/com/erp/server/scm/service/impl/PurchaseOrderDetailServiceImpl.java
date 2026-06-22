@@ -510,10 +510,11 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
                             continue;
                         }
                         Integer qty = Objects.nonNull(addDTO.getPurchaseQty()) ? addDTO.getPurchaseQty() : MathUtil.ZERO;
-                        if (Objects.isNull(sourceDetail.getTaxRate()) || StrUtil.isBlank(sourceDetail.getCurrency())) {
-                            errorList.add(MessageUtils.getMessage(ApiError.PO_SUBCONTRACT_REPAIR_SUB_LINE_TAX_RATE_OR_CURRENCY_REQUIRED, addDTO.getSkuNo()));
-                            continue;
-                        }
+                        // 委外来源明细 currency/taxRate 可能为空，暂跳过校验，避免下推采购订单被拦截
+//                        if (Objects.isNull(sourceDetail.getTaxRate()) || StrUtil.isBlank(sourceDetail.getCurrency())) {
+//                            errorList.add(MessageUtils.getMessage(ApiError.PO_SUBCONTRACT_REPAIR_SUB_LINE_TAX_RATE_OR_CURRENCY_REQUIRED, addDTO.getSkuNo()));
+//                            continue;
+//                        }
                         addDTO.setTaxPrice(price);
                         addDTO.setTaxRate(sourceDetail.getTaxRate());
                         addDTO.setCurrency(sourceDetail.getCurrency());
