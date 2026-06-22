@@ -21,9 +21,7 @@ import org.springframework.util.CollectionUtils;
 
 import java.io.*;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 @Slf4j
 public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEventHandler<T> {
@@ -183,6 +181,12 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
         return Math.min(maxTemplateDataSheets(), Math.max(1, byHard));
     }
 
+    private int expandSheetCountForGroupKeeping(int estimatedSheets) {
+        int max = maxTemplateDataSheets();
+        int extra = Math.max(0, sheetGroupExtraSheetCount());
+        return Math.min(max, estimatedSheets + extra);
+    }
+
     /**
      * 读取 classpath 模板为字节数组。
      * <p>
@@ -280,6 +284,65 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
         }
     }
 
+    /**
+     * 「尽力而为」地删除分组预留但未使用的尾部空 sheet，仅在 {@link #keepSheetGroupTogether()} 开启
+     * （即确有 {@link #sheetGroupExtraSheetCount()} 预留）时执行，避免对未启用分组保护的存量导出引入
+     * 额外的 XSSFWorkbook 全量加载/重写开销。
+     * <p>
+     * 调用时主导出文件已完整写出且正确，清理仅为去除尾部空 sheet 的展示瑕疵；因此任何异常只 WARN、
+     * 保留预留空 sheet，<strong>不</strong>让裁剪失败拖垮已成功的导出。
+     */
+    private void trimUnusedDataSheetsQuietly(File outFile, List<Integer> dataSheetIndexes, int usedDataSheetCount) {
+        if (!keepSheetGroupTogether()) {
+            return;
+        }
+        try {
+            trimUnusedDataSheets(outFile, dataSheetIndexes, usedDataSheetCount);
+        } catch (Exception e) {
+            log.warn("裁剪尾部空 sheet 失败，保留预留空 sheet，不影响导出结果：handler={} file={}",
+                    getClass().getName(), outFile.getName(), e);
+        }
+    }
+
+    /**
+     * 写完后删除分组预留但未使用的尾部空 sheet。须全量加载 xlsx（XSSFWorkbook），
+     * 超过 {@code file.storage.maxTrimUnusedSheetBytes}（默认 50MB）时跳过清理并 WARN。
+     */
+    private void trimUnusedDataSheets(File outFile, List<Integer> dataSheetIndexes, int usedDataSheetCount) throws IOException {
+        if (CollectionUtils.isEmpty(dataSheetIndexes) || usedDataSheetCount >= dataSheetIndexes.size()) {
+            return;
+        }
+        int keep = Math.max(1, usedDataSheetCount);
+        long maxTrimBytes = FileRegistry.maxTrimUnusedSheetBytesOrDefault();
+        long fileBytes = outFile.length();
+        if (fileBytes > maxTrimBytes) {
+            log.warn("跳过尾部空 sheet 清理：handler={} file={} 文件大小={}MB 超过 file.storage.maxTrimUnusedSheetBytes 安全阈值={}MB，保留预留空 sheet 以避免 XSSFWorkbook 全量加载 OOM",
+                    getClass().getName(), outFile.getName(), fileBytes / 1024 / 1024, maxTrimBytes / 1024 / 1024);
+            return;
+        }
+        XSSFWorkbook wb;
+        try (FileInputStream inputStream = new FileInputStream(outFile)) {
+            wb = new XSSFWorkbook(inputStream);
+        }
+        try {
+            for (int i = dataSheetIndexes.size() - 1; i >= keep; i--) {
+                wb.removeSheetAt(dataSheetIndexes.get(i));
+            }
+            try (FileOutputStream outputStream = new FileOutputStream(outFile)) {
+                wb.write(outputStream);
+            }
+        } finally {
+            wb.close();
+        }
+    }
+
+    private int usedDataSheetCount(int writtenRows, OffsetSheetCursor cursor) {
+        if (writtenRows <= 0) {
+            return 1;
+        }
+        return cursor.sheetNo + 1;
+    }
+
     private List<T> withoutNullListElements(List<T> raw) {
         if (CollectionUtils.isEmpty(raw)) {
             return raw;
@@ -347,6 +410,17 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
         List<Integer> dataSheetIndexes;
     }
 
+    /**
+     * 分组保护开启时暂存分页末尾的未闭合分组。
+     * <p>
+     * 查询结果按 {@link #sheetGroupKey(Object)} 连续排序时，当前页末尾分组可能延续到下一页；
+     * 需要先暂存，等下一页确认分组结束后再写出，避免同一业务维度被分页边界拆开。
+     */
+    private static final class SheetGroupBuffer<T> {
+        final List<T> rows = new ArrayList<>();
+        final Set<Object> writtenGroupKeys = new HashSet<>();
+    }
+
     private WriteSheet buildCurrentDataSheet(OffsetSheetCursor c) {
         if (c.sheetNo >= c.dataSheetIndexes.size()) {
             throw new ServiceException("导出数据超过当前模板可承载的 sheet 数，请缩小筛选范围导出。");
@@ -368,6 +442,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
     private void fillBatchAcrossDataSheets(String exportPhase, String excelPath, ExcelWriter excelWriter, FillConfig fillConfig,
             List<T> batch, List<T> rawPageForLog, OffsetSheetCursor c, String pagingState, int dataTotalCount) {
         int maxPerConfigured = maxDataRowsPerSheet();
+        boolean keepGroupTogether = isSheetGroupEnabled(batch);
         int idx = 0;
         while (idx < batch.size()) {
             int roomConfigured = maxPerConfigured - (int) c.rowsInSheet;
@@ -383,6 +458,21 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
                         "导出数据超过 Excel 单 sheet 最大行数（约 104 万行），请缩小筛选范围或拆分导出。");
             }
             int take = Math.min(Math.min(roomConfigured, hardRoom), batch.size() - idx);
+            if (keepGroupTogether) {
+                int adjustedTake = adjustTakeForSheetGroup(batch, idx, take);
+                if (adjustedTake <= 0) {
+                    if (c.rowsInSheet > 0) {
+                        c.sheetNo++;
+                        c.writeSheet = buildCurrentDataSheet(c);
+                        c.rowsInSheet = 0;
+                        continue;
+                    }
+                    throw new ServiceException("导出分组数据超过单 sheet 最大行数（分组="
+                            + sheetGroupKey(batch.get(idx)) + "，上限=" + Math.min(maxPerConfigured, maxRowsPerXlsxSheetHardLimit())
+                            + " 行），请缩小筛选范围或调整单 sheet 行数配置。");
+                }
+                take = adjustedTake;
+            }
             List<T> slice = batch.subList(idx, idx + take);
             List<T> fillList = (take == batch.size() && idx == 0) ? batch : new ArrayList<>(slice);
             try {
@@ -402,6 +492,147 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
         }
     }
 
+    private boolean isSheetGroupEnabled(List<T> rows) {
+        if (!keepSheetGroupTogether()) {
+            return false;
+        }
+        if (CollectionUtils.isEmpty(rows)) {
+            return false;
+        }
+        for (T row : rows) {
+            if (row != null && sheetGroupKey(row) != null) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 根据分组 key 回退当前 sheet 的写入临界点。
+     * <p>
+     * 若默认切片的最后一行与下一行属于同一分组，则把整个尾部分组留到下一个 sheet；
+     * 返回 0 表示当前 sheet 剩余空间不足以容纳该分组，需要先切换 sheet。
+     */
+    private int adjustTakeForSheetGroup(List<T> batch, int idx, int take) {
+        int end = idx + take;
+        if (end >= batch.size()) {
+            return take;
+        }
+        Object nextKey = sheetGroupKey(batch.get(end));
+        if (nextKey == null) {
+            return take;
+        }
+        if (!Objects.equals(sheetGroupKey(batch.get(end - 1)), nextKey)) {
+            return take;
+        }
+        while (end > idx && Objects.equals(sheetGroupKey(batch.get(end - 1)), nextKey)) {
+            end--;
+        }
+        return end - idx;
+    }
+
+    /**
+     * 合并上一页暂存尾组与当前页数据，返回当前可以安全写出的行。
+     * <p>
+     * 非末页会继续暂存合并后最后一个分组，直到下一页确认该分组是否结束；
+     * 末页则直接返回全部剩余数据，避免导出结束时遗漏尾组。
+     */
+    private List<T> drainReadyRowsForSheetGroup(List<T> batch, SheetGroupBuffer<T> buffer, boolean lastPage) {
+        if (CollectionUtils.isEmpty(buffer.rows) && !isSheetGroupEnabled(batch)) {
+            return batch;
+        }
+        List<T> combined = new ArrayList<>(buffer.rows.size() + batch.size());
+        combined.addAll(buffer.rows);
+        buffer.rows.clear();
+        combined.addAll(batch);
+        if (combined.isEmpty() || lastPage) {
+            return combined;
+        }
+        int tailStart = tailGroupStart(combined);
+        List<T> ready = new ArrayList<>(combined.subList(0, tailStart));
+        buffer.rows.addAll(combined.subList(tailStart, combined.size()));
+        assertPendingSheetGroupWithinLimit(buffer.rows);
+        return ready;
+    }
+
+    /**
+     * 找到列表尾部分组的起始下标。
+     * <p>
+     * 返回值之前的数据可立即写出，返回值之后的数据需暂存到下一页继续判断。
+     */
+    private int tailGroupStart(List<T> rows) {
+        int tailStart = rows.size() - 1;
+        Object tailKey = sheetGroupKey(rows.get(tailStart));
+        if (tailKey == null) {
+            return rows.size();
+        }
+        while (tailStart > 0 && Objects.equals(sheetGroupKey(rows.get(tailStart - 1)), tailKey)) {
+            tailStart--;
+        }
+        return tailStart;
+    }
+
+    /**
+     * 暂存分组超过单 sheet 上限时尽早失败。
+     * <p>
+     * 该场景无法通过临界点回退解决，否则同一分组必然被拆 sheet，只能提示用户缩小筛选范围或调整配置。
+     */
+    private void assertPendingSheetGroupWithinLimit(List<T> rows) {
+        if (CollectionUtils.isEmpty(rows)) {
+            return;
+        }
+        int maxRows = Math.min(maxDataRowsPerSheet(), maxRowsPerXlsxSheetHardLimit());
+        if (rows.size() > maxRows) {
+            throw new ServiceException("导出分组数据超过单 sheet 最大行数（分组=" + sheetGroupKey(rows.get(0))
+                    + "，行数=" + rows.size() + "，上限=" + maxRows + " 行），请缩小筛选范围或调整单 sheet 行数配置。");
+        }
+    }
+
+    /**
+     * 导出结束或遇到合法空末页时，将暂存尾组写出。
+     */
+    private int flushSheetGroupBuffer(String exportPhase, String excelPath, ExcelWriter excelWriter, FillConfig fillConfig,
+            SheetGroupBuffer<T> buffer, OffsetSheetCursor cursor, String pagingState, int dataTotalCount) {
+        if (CollectionUtils.isEmpty(buffer.rows)) {
+            return 0;
+        }
+        List<T> remaining = new ArrayList<>(buffer.rows);
+        buffer.rows.clear();
+        validateAndMarkReadySheetGroups(remaining, buffer, pagingState);
+        beforeWriteRows(remaining);
+        fillBatchAcrossDataSheets(exportPhase, excelPath, excelWriter, fillConfig, remaining, remaining, cursor,
+                pagingState, dataTotalCount);
+        return remaining.size();
+    }
+
+    /**
+     * 写出前校验分组连续性，防止上游排序变化导致同一 groupKey 非相邻重复出现时静默失效。
+     * <p>
+     * 默认只打 WARN，不中断导出；分组保护的正确性仍以 {@link #sheetGroupKey(Object)} 连续排序为前提。
+     */
+    private void validateAndMarkReadySheetGroups(List<T> rows, SheetGroupBuffer<T> buffer, String pagingState) {
+        if (!keepSheetGroupTogether() || CollectionUtils.isEmpty(rows)) {
+            return;
+        }
+        int start = 0;
+        while (start < rows.size()) {
+            Object groupKey = sheetGroupKey(rows.get(start));
+            int end = start + 1;
+            while (end < rows.size() && Objects.equals(groupKey, sheetGroupKey(rows.get(end)))) {
+                end++;
+            }
+            if (groupKey != null && !buffer.writtenGroupKeys.add(groupKey)) {
+                String message = "导出分组未连续：handler=" + getClass().getName() + " groupKey=" + groupKey
+                        + " paging=" + pagingState + "，分组保护可能失效，请检查上游排序是否保持 sheetGroupKey 连续";
+                if (failOnNonContinuousSheetGroup()) {
+                    throw new ServiceException(message);
+                }
+                log.warn(message);
+            }
+            start = end;
+        }
+    }
+
     private int writeKeysetBatches(File outFile, P params, String excelPath) throws IOException {
         FillConfig fillConfig = FillConfig.builder().forceNewRow(Boolean.FALSE).build();
 
@@ -414,6 +645,9 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
         int preparedSheets = vo.isHasNext()
                 ? keysetPreparedSheetCount()
                 : computeDataSheetCountForTotalRows(firstBatchRows);
+        if (keepSheetGroupTogether()) {
+            preparedSheets = expandSheetCountForGroupKeeping(preparedSheets);
+        }
 
         byte[] rawTemplate = readClasspathTemplateBytes(excelPath);
         // 预先克隆好数据 sheet，避免在写入过程中再 clone 导致的性能问题（尤其模板复杂时）。若数据量超出预估则直接报错，避免无限克隆。
@@ -421,11 +655,13 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
         rawTemplate = null;
 
         int total = 0;
+        int fetchedRows = 0;
         Long lastId = null;
         OffsetSheetCursor cursor = new OffsetSheetCursor();
         cursor.sheetNo = 0;
         cursor.rowsInSheet = 0;
         cursor.dataSheetIndexes = expandedTemplate.dataSheetIndexes;
+        SheetGroupBuffer<T> groupBuffer = new SheetGroupBuffer<>();
         WriteHandler[] handlers = getWriteHandler().toArray(new WriteHandler[0]);
         try (FileOutputStream fos = new FileOutputStream(outFile)) {
             ExcelWriter excelWriter = ExcelPrintUtils.openTemplateListWriter(fos, expandedTemplate.templateBytes, handlers);
@@ -440,6 +676,8 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
                             throw new ServiceException("键集导出数据缺失：返回空列表但 hasNext=true（游标 lastId=" + lastId
                                     + "），疑似分页查询异常或数据并发变更，请重试或排查上游键集接口。");
                         }
+                        total += flushSheetGroupBuffer("KEYSET", excelPath, excelWriter, fillConfig, groupBuffer, cursor,
+                                "lastIdExclusive=" + lastId + ",hasNext=false", 0);
                         break;
                     }
                     afterFetchPage(rawList);
@@ -447,20 +685,27 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
                     if (batch.isEmpty()) {
                         throw new ServiceException("导出数据存在空行，请检查查询结果");
                     }
+                    fetchedRows += batch.size();
                     long cap = (long) preparedSheets * maxDataRowsPerSheet();
-                    if (total + batch.size() > cap) {
+                    if (fetchedRows > cap) {
                         throw new ServiceException("键集导出数据量超过当前模板可承载的上限（约 " + cap
                                 + " 行），请缩小筛选范围或改用 OFFSET 导出。");
                     }
-                    fillBatchAcrossDataSheets("KEYSET", excelPath, excelWriter, fillConfig, batch, rawList, cursor,
-                            "lastIdExclusive=" + lastId + ",hasNext=" + vo.isHasNext(), 0);
-                    total += batch.size();
                     Long next = vo.getNextCursorId();
                     if (next == null) {
                         next = maxSortId(batch);
                     }
                     if (next == null) {
                         throw new ServiceException("键集导出无法推导下一游标，请在 KeysetPagingVO 中设置 nextCursorId 或重写 extractSortId");
+                    }
+                    List<T> readyBatch = drainReadyRowsForSheetGroup(batch, groupBuffer, !vo.isHasNext());
+                    if (!CollectionUtils.isEmpty(readyBatch)) {
+                        validateAndMarkReadySheetGroups(readyBatch, groupBuffer,
+                                "lastIdExclusive=" + lastId + ",hasNext=" + vo.isHasNext());
+                        beforeWriteRows(readyBatch);
+                        fillBatchAcrossDataSheets("KEYSET", excelPath, excelWriter, fillConfig, readyBatch, rawList, cursor,
+                                "lastIdExclusive=" + lastId + ",hasNext=" + vo.isHasNext(), 0);
+                        total += readyBatch.size();
                     }
                     // 游标必须严格单调递增：上游若返回不前进/回退的游标（hasNext 恒真、重复返回同批等），
                     // 仅靠下方 cap 上限会在写满后才失败；此处提前以明确异常拦截，避免无谓的重复拉取与写入。
@@ -476,11 +721,14 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
                     vo = requirePagingResult(fetchKeyset(params, lastId, getPageSize()), "游标 lastId=" + lastId);
                     rawList = vo.getList();
                 }
+                total += flushSheetGroupBuffer("KEYSET", excelPath, excelWriter, fillConfig, groupBuffer, cursor,
+                        "lastIdExclusive=" + lastId + ",hasNext=false", 0);
             } finally {
                 // 必须在底层 OutputStream 仍打开时 finish，否则依赖 finalize 会出现 Zip 未关闭 entry 等 WARN
                 excelWriter.finish();
             }
         }
+        trimUnusedDataSheetsQuietly(outFile, expandedTemplate.dataSheetIndexes, usedDataSheetCount(total, cursor));
         return total;
     }
 
@@ -554,15 +802,20 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
         PagingVO<T> firstData = requirePagingResult(getPageData(dto), "页码=" + dto.getCurrPage());
         int totalCount = firstData.getTotalCount();
         int dataSheets = computeDataSheetCountForTotalRows(totalCount);
+        if (keepSheetGroupTogether()) {
+            dataSheets = expandSheetCountForGroupKeeping(dataSheets);
+        }
         byte[] rawTemplate = readClasspathTemplateBytes(excelPath);
         ExpandedTemplate expandedTemplate = expandTemplateWithDataSheetCopies(rawTemplate, dataSheets);
         rawTemplate = null;
 
         int totalRows = 0;
+        int fetchedRows = 0;
         OffsetSheetCursor cursor = new OffsetSheetCursor();
         cursor.sheetNo = 0;
         cursor.rowsInSheet = 0;
         cursor.dataSheetIndexes = expandedTemplate.dataSheetIndexes;
+        SheetGroupBuffer<T> groupBuffer = new SheetGroupBuffer<>();
         WriteHandler[] handlers = getWriteHandler().toArray(new WriteHandler[0]);
 
         try (FileOutputStream fos = new FileOutputStream(outFile)) {
@@ -581,7 +834,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
                                 + " 返回空列表，但 totalCount=" + totalCount + " 预期仍有数据，疑似分页查询异常或数据并发变更，请重试或排查上游分页接口。");
                     }
                     long cap = (long) dataSheets * maxDataRowsPerSheet();
-                    if (totalRows + pageListSize > cap) {
+                    if (fetchedRows + pageListSize > cap) {
                         throw new ServiceException("导出数据量超过当前模板可承载的上限（约 " + cap
                                 + " 行），请缩小筛选范围导出。");
                     }
@@ -593,19 +846,28 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
                             // 与 KEYSET 路径对齐：rawPage 非空但元素全为 null 时不可静默跳过，否则 totalRows 偏小仍可能「成功」结束
                             throw new ServiceException("导出数据存在空行，请检查查询结果（页码=" + dto.getCurrPage() + "）");
                         }
-                        fillBatchAcrossDataSheets("OFFSET", excelPath, excelWriter, fillConfig, batch, rawPage, cursor,
-                                "currPage=" + dto.getCurrPage(), pageData.getTotalCount());
-                        totalRows += batch.size();
+                        fetchedRows += batch.size();
+                        List<T> readyBatch = drainReadyRowsForSheetGroup(batch, groupBuffer,
+                                fetchedRows >= totalCount || isLastPage(dto.getCurrPage(), totalCount));
+                        if (!CollectionUtils.isEmpty(readyBatch)) {
+                            validateAndMarkReadySheetGroups(readyBatch, groupBuffer, "currPage=" + dto.getCurrPage());
+                            beforeWriteRows(readyBatch);
+                            fillBatchAcrossDataSheets("OFFSET", excelPath, excelWriter, fillConfig, readyBatch, rawPage, cursor,
+                                    "currPage=" + dto.getCurrPage(), pageData.getTotalCount());
+                            totalRows += readyBatch.size();
+                        }
                         clearBatchIfDetachedCopy(batch, rawPage);
                     }
                     // 上游单页可能返回超过 pageSize 的行（分页不规范）：已写满 totalCount 即正常结束，
                     // 避免继续翻页取到空列表被上方中间页守卫误判为「数据缺失」。
-                    if (totalRows >= totalCount || isLastPage(dto.getCurrPage(), totalCount)) {
+                    if (fetchedRows >= totalCount || isLastPage(dto.getCurrPage(), totalCount)) {
                         break;
                     }
                     dto.setCurrPage(dto.getCurrPage() + 1);
                     pageData = requirePagingResult(getPageData(dto), "页码=" + dto.getCurrPage());
                 }
+                totalRows += flushSheetGroupBuffer("OFFSET", excelPath, excelWriter, fillConfig, groupBuffer, cursor,
+                        "currPage=" + dto.getCurrPage(), totalCount);
                 if (totalCount > 0 && totalRows == 0) {
                     throw new ServiceException("导出失败：totalCount=" + totalCount
                             + " 但未写入任何数据行，疑似分页查询异常或数据全为空行，请检查上游分页接口。");
@@ -614,6 +876,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
                 excelWriter.finish();
             }
         }
+        trimUnusedDataSheetsQuietly(outFile, expandedTemplate.dataSheetIndexes, usedDataSheetCount(totalRows, cursor));
         // 末页 partial：实际写入行数 < 首查 totalCount（多因导出期间并发删除/数据漂移），不视为失败
         // （fileTask.count 已回填实际行数），但与中间页空列表守卫对称地显式告警，便于排查「导出比预期少」反馈，避免静默。
         if (totalCount > 0 && totalRows < totalCount) {
@@ -699,5 +962,76 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
      * @param pageList 当前页数据（可能含 null 元素，实现需自行跳过），可为 {@code null}
      */
     protected void afterFetchPage(List<T> pageList) {
+    }
+
+    /**
+     * 是否启用「同一分组不拆到多个 sheet」保护。默认关闭，保持按 {@link #maxDataRowsPerSheet()} 直接切 sheet 的历史行为。
+     */
+    protected boolean keepSheetGroupTogether() {
+        return false;
+    }
+
+    /**
+     * 分组保护启用时，在按总行数估算的数据 sheet 数基础上额外预留的 sheet 数。
+     * <p>
+     * 同组不拆 sheet 会在临界点回退，实际 sheet 数可能略高于 {@code totalCount / maxDataRowsPerSheet}；
+     * 默认额外预留 1 张用于承接分组回退，写出完成后会删除尾部未使用的预留空 sheet。
+     * <p>
+     * 线上单 sheet 数据行通常 10 万行起步，常规业务分组远小于单 sheet 容量，分组回退累计溢出整张 sheet 的概率较低。
+     * 若子类存在大分组或超多 sheet 导出场景，可按业务最大分组行数重写本方法增加预留。
+     */
+    protected int sheetGroupExtraSheetCount() {
+        return 1;
+    }
+
+    /**
+     * 启用 {@link #keepSheetGroupTogether()} 后用于识别同一业务维度的分组 key。
+     * <p>
+     * 查询结果必须按该 key 稳定排序，使同组数据连续；否则基类无法保证非连续的相同 key 落在同一个 sheet。
+     */
+    protected Object sheetGroupKey(T row) {
+        return null;
+    }
+
+    /**
+     * 分组保护发现同一 groupKey 非连续出现时是否快速失败。
+     * <p>
+     * 默认只打 WARN，避免影响仅将分组保护作为「尽量不拆 sheet」优化的导出；
+     * 若子类的展示正确性强依赖连续分组，应重写为 {@code true}，避免静默产出错误 Excel。
+     */
+    protected boolean failOnNonContinuousSheetGroup() {
+        return false;
+    }
+
+    /**
+     * 最终写出前的加工钩子。分组保护开启时，分页尾组可能被延后到下一页后才写出；
+     * 子类若需要依赖完整连续分组做置空/汇总，应优先重写本钩子。
+     */
+    protected void beforeWriteRows(List<T> rows) {
+        if (!keepSheetGroupTogether() || CollectionUtils.isEmpty(rows)) {
+            return;
+        }
+        int start = 0;
+        while (start < rows.size()) {
+            Object groupKey = sheetGroupKey(rows.get(start));
+            int end = start + 1;
+            while (end < rows.size() && Objects.equals(groupKey, sheetGroupKey(rows.get(end)))) {
+                end++;
+            }
+            beforeWriteGroupRows(groupKey, rows.subList(start, end));
+            start = end;
+        }
+    }
+
+    /**
+     * 最终写出前对单个完整分组的加工钩子。
+     * <p>
+     * 仅在 {@link #keepSheetGroupTogether()} 开启后由 {@link #beforeWriteRows(List)} 按连续
+     * {@link #sheetGroupKey(Object)} 分组回调；此时跨页尾组已由基类合并，子类只需处理单组内的业务展示或汇总逻辑。
+     *
+     * @param groupKey  分组 key，来自 {@link #sheetGroupKey(Object)}
+     * @param groupRows 同一分组的连续行，不应增删元素
+     */
+    protected void beforeWriteGroupRows(Object groupKey, List<T> groupRows) {
     }
 }

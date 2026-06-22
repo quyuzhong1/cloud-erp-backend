@@ -12,7 +12,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
 import java.util.List;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_VIRTUAL_INVENTORY_DIFF;
@@ -40,36 +39,63 @@ public class ExportWmsVirtualInventoryDiffHandler extends AbstractPageFileEventH
     }
 
     @Override
-    protected void afterFetchPage(List<VirtualInventoryDiffDTO.ListDiffExportDataDTO> pageList) {
-        blankRepeatedSkuWarehouse(pageList);
+    protected boolean keepSheetGroupTogether() {
+        return true;
     }
 
     /**
-     * 相同 sku+仓库仅首条保留，其余置空。改为按页判重：流式分页后跨页/跨 sheet 的同组首行会各自保留，
-     * 与历史全量判重相比，分页边界处少量重复行会重新展示，不影响数据正确性。
+     * 虚拟库存差异导出以「SKU + 实体仓」作为单据维度。
+     * <p>
+     * 上游 {@code exportListDiffExportData} 默认按 {@code diff.id asc, diff.virtualWarehouseId asc} 排序：
+     * {@code diff.id} 来源于 Inventory CTE 中按 {@code sku_id + warehouse_id} 聚合后的 {@code min(id)}，
+     * 因此同一 {@code skuId + warehouseId} 维度天然连续；{@code virtualWarehouseId} 仅用于组内稳定排序。
+     * 若后续调整导出排序，必须保持 {@code skuId + warehouseId} 连续，否则基类分组保护无法生效。
      */
-    private void blankRepeatedSkuWarehouse(List<VirtualInventoryDiffDTO.ListDiffExportDataDTO> pageList) {
-        if (CollUtil.isEmpty(pageList)) {
+    @Override
+    protected Object sheetGroupKey(VirtualInventoryDiffDTO.ListDiffExportDataDTO row) {
+        if (row == null) {
+            return null;
+        }
+        return CharSequenceUtil.format("{}_{}", row.getSkuId(), row.getWarehouseId());
+    }
+
+    /**
+     * 本导出会在同一 sku+仓库分组内置空重复展示字段，若分组非连续会产出错误展示，必须快速失败。
+     */
+    @Override
+    protected boolean failOnNonContinuousSheetGroup() {
+        return true;
+    }
+
+    /**
+     * 基类已按 {@link #sheetGroupKey(VirtualInventoryDiffDTO.ListDiffExportDataDTO)} 合并跨页尾组；
+     * 此处只处理单个完整维度内的展示字段置空。
+     */
+    @Override
+    protected void beforeWriteGroupRows(Object groupKey, List<VirtualInventoryDiffDTO.ListDiffExportDataDTO> groupRows) {
+        blankRepeatedRowsInGroup(groupRows);
+    }
+
+    /**
+     * 单个 sku+仓库分组内仅首条保留实体仓维度字段，其余明细行置空，避免导出展示重复。
+     */
+    private void blankRepeatedRowsInGroup(List<VirtualInventoryDiffDTO.ListDiffExportDataDTO> groupRows) {
+        if (CollUtil.isEmpty(groupRows)) {
             return;
         }
-        List<String> flagList = new ArrayList<>();
-        for (VirtualInventoryDiffDTO.ListDiffExportDataDTO listDTO : pageList) {
+        for (int i = 1; i < groupRows.size(); i++) {
+            VirtualInventoryDiffDTO.ListDiffExportDataDTO listDTO = groupRows.get(i);
             if (listDTO == null) {
                 continue;
             }
-            String flag = CharSequenceUtil.format("{}_{}", listDTO.getSkuId(), listDTO.getWarehouseId());
-            if (flagList.contains(flag)) {
-                listDTO.setSkuNo("");
-                listDTO.setProductName("");
-                listDTO.setWarehouseName("");
-                listDTO.setRealQty(null);
-                listDTO.setUsableQty(null);
-                listDTO.setFrozenQty(null);
-                listDTO.setInTransitQty(null);
-                listDTO.setWaitQcQty(null);
-                continue;
-            }
-            flagList.add(flag);
+            listDTO.setSkuNo("");
+            listDTO.setProductName("");
+            listDTO.setWarehouseName("");
+            listDTO.setRealQty(null);
+            listDTO.setUsableQty(null);
+            listDTO.setFrozenQty(null);
+            listDTO.setInTransitQty(null);
+            listDTO.setWaitQcQty(null);
         }
     }
 }

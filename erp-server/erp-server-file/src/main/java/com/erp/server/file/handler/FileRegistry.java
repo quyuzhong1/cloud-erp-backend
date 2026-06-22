@@ -95,6 +95,14 @@ public class FileRegistry {
     private static Long maxTemplateExpandBytes;
 
     /**
+     * 写后删除尾部预留空 sheet 时，允许 XSSFWorkbook 全量加载的文件大小上界，单位字节。
+     * 磁盘字节与解压后内存存在膨胀，故独立于 {@link #maxTemplateExpandBytes} 且默认更保守。
+     * 默认全局指定：50MB（52428800）。
+     */
+    @Getter
+    private static Long maxTrimUnusedSheetBytes;
+
+    /**
      * 动态表头导出每页条数。动态表头单行 DynamicExcelDTO 体积通常大于固定模板行对象，
      * 沿用更保守的批次（默认 1000）控制 Feign/内存峰值与超时，避免大宽表导出回归。
      */
@@ -129,6 +137,12 @@ public class FileRegistry {
     public void setMaxTemplateExpandBytes(Long maxTemplateExpandBytes){
         FileRegistry.maxTemplateExpandBytes = clampUpperLong("file.storage.maxTemplateExpandBytes",
                 maxTemplateExpandBytes, MAX_TEMPLATE_EXPAND_BYTES_UPPER);
+    }
+
+    @Value("${file.storage.maxTrimUnusedSheetBytes:52428800}")
+    public void setMaxTrimUnusedSheetBytes(Long maxTrimUnusedSheetBytes) {
+        FileRegistry.maxTrimUnusedSheetBytes = clampUpperLong("file.storage.maxTrimUnusedSheetBytes",
+                maxTrimUnusedSheetBytes, MAX_TEMPLATE_EXPAND_BYTES_UPPER);
     }
 
     @Value("${file.storage.dynamicExportPageSize:1000}")
@@ -192,6 +206,14 @@ public class FileRegistry {
     public static long maxTemplateExpandBytesOrDefault() {
         Long configured = maxTemplateExpandBytes;
         return configured == null || configured < 1 ? 314572800L : configured;
+    }
+
+    /**
+     * 写后删除尾部预留空 sheet 时允许全量加载的文件大小上界（字节），未注入或非法（&lt;1）时回退 50MB（52428800）。
+     */
+    public static long maxTrimUnusedSheetBytesOrDefault() {
+        Long configured = maxTrimUnusedSheetBytes;
+        return configured == null || configured < 1 ? 52428800L : configured;
     }
 
     /**
