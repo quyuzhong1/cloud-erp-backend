@@ -42,11 +42,11 @@ public class WorkflowTaskInstanceEntity extends BaseEntity<WorkflowTaskInstanceE
     @TableField("trace_id")
     private String traceId;
 
-    @TableField("started_at")
-    private LocalDateTime startedAt;
+    @TableField("start_time")
+    private LocalDateTime startTime;
 
-    @TableField("finished_at")
-    private LocalDateTime finishedAt;
+    @TableField("finish_time")
+    private LocalDateTime finishTime;
 
     @TableField("last_error")
     private String lastError;

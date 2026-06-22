@@ -53,7 +53,7 @@ public class CrossServiceStepInvoker {
             return StepInvokeResult.notClaimed();
         }
         entity.setStatus(WorkflowTaskRecordStatusEnum.PROCESSING.getCode());
-        entity.setStartedAt(LocalDateTime.now());
+        entity.setStartTime(LocalDateTime.now());
         workflowTaskRecordService.updateById(entity);
 
         String traceId = TraceContext.traceId();
@@ -125,7 +125,7 @@ public class CrossServiceStepInvoker {
             entity.setStatus(WorkflowTaskRecordStatusEnum.WAITING.getCode());
             entity.setLastError(StringUtils.defaultString(errorMsg));
             entity.setErrorSource(ERROR_SOURCE_REMOTE);
-            entity.setFinishedAt(LocalDateTime.now());
+            entity.setEndTime(LocalDateTime.now());
             workflowTaskRecordService.updateById(entity);
             return StepInvokeResult.waiting(errorMsg);
         }
@@ -141,7 +141,7 @@ public class CrossServiceStepInvoker {
         entity.setStatus(WorkflowTaskRecordStatusEnum.SUCCESS.getCode());
         entity.setLastError("");
         entity.setErrorSource("");
-        entity.setFinishedAt(LocalDateTime.now());
+        entity.setEndTime(LocalDateTime.now());
         entity.setRetryCount(Optional.ofNullable(entity.getRetryCount()).orElse(0) + (retryIncrement ? 1 : 0));
         workflowTaskRecordService.updateById(entity);
         return StepInvokeResult.success(entity.getOutputData());
@@ -154,7 +154,7 @@ public class CrossServiceStepInvoker {
         entity.setRetryCount(Optional.ofNullable(entity.getRetryCount()).orElse(0) + (retryIncrement ? 1 : 0));
         entity.setErrorSource(errorSource);
         entity.setFeignDurationMs(duration);
-        entity.setFinishedAt(LocalDateTime.now());
+        entity.setEndTime(LocalDateTime.now());
         workflowTaskRecordService.updateById(entity);
     }
 

@@ -6,9 +6,11 @@ import cn.hutool.extra.spring.SpringUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.base.PagingDTO;
 import com.common.business.annotation.DistributeLocker;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -25,6 +27,7 @@ import com.erp.server.oms.orchestration.WorkflowTaskNodeConfigParser;
 import com.erp.server.oms.orchestration.WorkflowTaskStepDispatcher;
 import com.erp.server.oms.service.WorkflowTaskInstanceService;
 import com.erp.server.oms.service.WorkflowTaskRecordService;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -34,9 +37,11 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -56,6 +61,9 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
     @Resource
     private WorkflowTaskStepDispatcher workflowTaskStepDispatcher;
 
+    @Resource
+    private SysUserFeign sysUserFeign;
+
     /** {@inheritDoc} */
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -69,7 +77,7 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
         entity.setCurrentIndex(0);
         entity.setTotalSteps(totalSteps);
         entity.setTraceId(CharSequenceUtil.blankToDefault(dto.getTraceId(), ""));
-        entity.setStartedAt(LocalDateTime.now());
+        entity.setStartTime(LocalDateTime.now());
         entity.setLastError("");
         save(entity);
         return entity;
@@ -148,6 +156,8 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
     public void markRunning(String instanceId, int currentIndex, int totalSteps) {
         this.lambdaUpdate()
                 .eq(WorkflowTaskInstanceEntity::getId, instanceId)
+                .ne(WorkflowTaskInstanceEntity::getStatus, WorkflowTaskInstanceStatusEnum.CANCELLED.getCode())
+                .ne(WorkflowTaskInstanceEntity::getStatus, WorkflowTaskInstanceStatusEnum.SUCCESS.getCode())
                 .set(WorkflowTaskInstanceEntity::getStatus, WorkflowTaskInstanceStatusEnum.RUNNING.getCode())
                 .set(WorkflowTaskInstanceEntity::getCurrentIndex, currentIndex)
                 .set(WorkflowTaskInstanceEntity::getTotalSteps, totalSteps)
@@ -160,6 +170,8 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
     public void markWaiting(String instanceId, int currentIndex, String lastError) {
         this.lambdaUpdate()
                 .eq(WorkflowTaskInstanceEntity::getId, instanceId)
+                .ne(WorkflowTaskInstanceEntity::getStatus, WorkflowTaskInstanceStatusEnum.CANCELLED.getCode())
+                .ne(WorkflowTaskInstanceEntity::getStatus, WorkflowTaskInstanceStatusEnum.SUCCESS.getCode())
                 .set(WorkflowTaskInstanceEntity::getStatus, WorkflowTaskInstanceStatusEnum.WAITING.getCode())
                 .set(WorkflowTaskInstanceEntity::getCurrentIndex, currentIndex)
                 .set(WorkflowTaskInstanceEntity::getLastError, CharSequenceUtil.blankToDefault(lastError, ""))
@@ -171,9 +183,11 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
     public void markFailed(String instanceId, int currentIndex, String lastError) {
         this.lambdaUpdate()
                 .eq(WorkflowTaskInstanceEntity::getId, instanceId)
+                .ne(WorkflowTaskInstanceEntity::getStatus, WorkflowTaskInstanceStatusEnum.CANCELLED.getCode())
                 .set(WorkflowTaskInstanceEntity::getStatus, WorkflowTaskInstanceStatusEnum.FAILED.getCode())
                 .set(WorkflowTaskInstanceEntity::getCurrentIndex, currentIndex)
                 .set(WorkflowTaskInstanceEntity::getLastError, CharSequenceUtil.blankToDefault(lastError, ""))
+                .set(WorkflowTaskInstanceEntity::getFinishTime, LocalDateTime.now())
                 .update();
     }
 
@@ -182,11 +196,12 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
     public void markSuccess(String instanceId, int currentIndex, int totalSteps) {
         this.lambdaUpdate()
                 .eq(WorkflowTaskInstanceEntity::getId, instanceId)
+                .ne(WorkflowTaskInstanceEntity::getStatus, WorkflowTaskInstanceStatusEnum.CANCELLED.getCode())
                 .set(WorkflowTaskInstanceEntity::getStatus, WorkflowTaskInstanceStatusEnum.SUCCESS.getCode())
                 .set(WorkflowTaskInstanceEntity::getCurrentIndex, currentIndex)
                 .set(WorkflowTaskInstanceEntity::getTotalSteps, totalSteps)
                 .set(WorkflowTaskInstanceEntity::getLastError, "")
-                .set(WorkflowTaskInstanceEntity::getFinishedAt, LocalDateTime.now())
+                .set(WorkflowTaskInstanceEntity::getFinishTime, LocalDateTime.now())
                 .update();
     }
 
@@ -202,7 +217,7 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
                 .eq(WorkflowTaskInstanceEntity::getId, instanceId)
                 .set(WorkflowTaskInstanceEntity::getStatus, WorkflowTaskInstanceStatusEnum.CANCELLED.getCode())
                 .set(WorkflowTaskInstanceEntity::getLastError, CharSequenceUtil.blankToDefault(remark, "已取消"))
-                .set(WorkflowTaskInstanceEntity::getFinishedAt, LocalDateTime.now())
+                .set(WorkflowTaskInstanceEntity::getFinishTime, LocalDateTime.now())
                 .update();
         workflowTaskRecordService.lambdaUpdate()
                 .eq(WorkflowTaskRecordEntity::getInstanceId, instanceId)
@@ -257,15 +272,31 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
         if (CollUtil.isEmpty(instanceIds)) {
             return Collections.emptyList();
         }
-        return instanceIds.stream().map(this::view).collect(Collectors.toList());
+        List<WorkflowTaskInstanceDTO.ViewDTO> headers = baseMapper.listViewHeaders(instanceIds);
+        if (CollUtil.isEmpty(headers)) {
+            return Collections.emptyList();
+        }
+        Map<String, List<WorkflowTaskInstanceDTO.StepDTO>> stepsMap = baseMapper.listStepsByInstanceIds(instanceIds).stream()
+                .collect(Collectors.groupingBy(WorkflowTaskInstanceDTO.StepDTO::getInstanceId));
+        return headers.stream().map(header -> {
+            fillViewNames(header);
+            List<WorkflowTaskInstanceDTO.StepDTO> steps = stepsMap.getOrDefault(header.getInstanceId(), Collections.emptyList());
+            fillStepNames(steps);
+            header.setSteps(steps);
+            fillAutoRetryExceeded(header, steps);
+            if (header.getTotalSteps() != null && header.getTotalSteps() > 0 && CollUtil.isNotEmpty(steps)) {
+                long successCount = steps.stream()
+                        .filter(s -> WorkflowTaskRecordStatusEnum.SUCCESS.getCode().equals(s.getStatus()))
+                        .count();
+                header.setProgressPercent((int) Math.min(100, successCount * 100 / header.getTotalSteps()));
+            }
+            return header;
+        }).collect(Collectors.toList());
     }
 
     /** {@inheritDoc} */
     @Override
     public List<WorkflowTaskInstanceDTO.ErrorReportDTO> errorReport(WorkflowTaskInstanceDTO.ErrorReportParamDTO param) {
-        if (param == null) {
-            param = new WorkflowTaskInstanceDTO.ErrorReportParamDTO();
-        }
         List<WorkflowTaskInstanceDTO.ErrorReportDTO> list = baseMapper.errorReport(param);
         if (CollUtil.isEmpty(list)) {
             return list;
@@ -281,6 +312,12 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
     @Override
     @Transactional(rollbackFor = Exception.class)
     public WorkflowTaskInstanceDTO.RetryResultDTO retry(WorkflowTaskInstanceDTO.RetryDTO dto) {
+        if (CharSequenceUtil.isAllBlank(dto.getStepId(), dto.getInstanceId())) {
+            throw new ServiceException(ApiError.WF_TASK_RECORD_FORCE_RETRY_PARAM_INCOMPLETE);
+        }
+        if (CharSequenceUtil.isBlank(dto.getStepId()) && CharSequenceUtil.isNotBlank(dto.getInstanceId())) {
+            assertInstanceDataPermission(dto.getInstanceId());
+        }
         WorkflowTaskRecordDTO.ForceRetryDTO forceRetryDTO = new WorkflowTaskRecordDTO.ForceRetryDTO();
         forceRetryDTO.setId(dto.getStepId());
         forceRetryDTO.setRetryCount(dto.getRetryCount());
@@ -327,21 +364,54 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
         if (instance == null) {
             throw new ServiceException(ApiError.WF_TASK_INSTANCE_NOT_FOUND);
         }
+        if (WorkflowTaskInstanceStatusEnum.CANCELLED.getCode().equals(instance.getStatus())
+                || WorkflowTaskInstanceStatusEnum.SUCCESS.getCode().equals(instance.getStatus())) {
+            throw new ServiceException(ApiError.WF_TASK_RECORD_FORCE_RETRY_NO_ELIGIBLE);
+        }
         int fromIndex = Optional.ofNullable(dto.getFromIndex()).orElse(instance.getCurrentIndex());
-        List<WorkflowTaskRecordEntity> steps = workflowTaskRecordService.lambdaQuery()
+        if (fromIndex < 0) {
+            throw new ServiceException(ApiError.WF_TASK_RECORD_FORCE_RETRY_NOT_FOUND);
+        }
+        List<WorkflowTaskRecordEntity> allSteps = workflowTaskRecordService.lambdaQuery()
                 .eq(WorkflowTaskRecordEntity::getInstanceId, instance.getId())
                 .eq(WorkflowTaskRecordEntity::getIsDeleted, false)
-                .ge(WorkflowTaskRecordEntity::getIndex, fromIndex)
+                .orderByAsc(WorkflowTaskRecordEntity::getIndex)
                 .list();
+        if (CollUtil.isEmpty(allSteps)) {
+            throw new ServiceException(ApiError.WF_TASK_RECORD_FORCE_RETRY_NOT_FOUND);
+        }
+        int maxIndex = allSteps.stream()
+                .map(WorkflowTaskRecordEntity::getIndex)
+                .max(Integer::compareTo)
+                .orElse(0);
+        if (fromIndex > maxIndex) {
+            throw new ServiceException(ApiError.WF_TASK_RECORD_FORCE_RETRY_NOT_FOUND);
+        }
+        List<WorkflowTaskRecordEntity> steps = allSteps.stream()
+                .filter(step -> step.getIndex() != null && step.getIndex() >= fromIndex)
+                .collect(Collectors.toList());
         if (CollUtil.isEmpty(steps)) {
             throw new ServiceException(ApiError.WF_TASK_RECORD_FORCE_RETRY_NOT_FOUND);
         }
         for (WorkflowTaskRecordEntity step : steps) {
+            if (!workflowTaskRecordService.isStepForceRetryAllowed(step)) {
+                throw new ServiceException(ApiError.WF_TASK_RECORD_FORCE_RETRY_NO_ELIGIBLE);
+            }
+        }
+        Map<Integer, WorkflowTaskRecordEntity> indexTaskMap = allSteps.stream()
+                .filter(step -> step.getIndex() != null)
+                .collect(Collectors.toMap(WorkflowTaskRecordEntity::getIndex, step -> step, (a, b) -> a));
+        for (WorkflowTaskRecordEntity step : steps) {
+            String remark = workflowTaskRecordService.formatForceRetryRemark(step.getRemark(), dto.getRemark());
+            String refreshedInputData = workflowTaskRecordService.getPreviousSuccessOutputData(step, indexTaskMap);
             workflowTaskRecordService.lambdaUpdate()
                     .eq(WorkflowTaskRecordEntity::getId, step.getId())
                     .set(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.PENDING.getCode())
                     .set(WorkflowTaskRecordEntity::getRetryCount, Optional.ofNullable(dto.getRetryCount()).orElse(0))
                     .set(WorkflowTaskRecordEntity::getLastError, "")
+                    .set(WorkflowTaskRecordEntity::getRemark, remark)
+                    .set(CharSequenceUtil.isNotBlank(refreshedInputData),
+                            WorkflowTaskRecordEntity::getInputData, refreshedInputData)
                     .update();
         }
         markRunning(instance.getId(), fromIndex, instance.getTotalSteps());
@@ -439,11 +509,46 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
                 @Override
                 public void afterCommit() {
-                    workflowTaskStepDispatcher.sendDispatchMq(dispatch, messageKey);
+                    try {
+                        workflowTaskStepDispatcher.sendDispatchMq(dispatch, messageKey);
+                    } catch (Exception ex) {
+                        log.error("任务编排 MQ 发送失败（事务已提交），sourceId={}, instanceId={}, targetIndex={}",
+                                dispatch.getSourceId(), dispatch.getInstanceId(), dispatch.getTargetIndex(), ex);
+                    }
                 }
             });
             return;
         }
         workflowTaskStepDispatcher.sendDispatchMq(dispatch, messageKey);
+    }
+
+    /**
+     * 仅 instanceId 重试时的数据权限兜底（stepId 路径由 Controller @DataPermission 校验）。
+     */
+    private void assertInstanceDataPermission(String instanceId) {
+        WorkflowTaskInstanceEntity instance = getById(instanceId);
+        if (instance == null) {
+            throw new ServiceException(ApiError.WF_TASK_INSTANCE_NOT_FOUND);
+        }
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
+        if (loginUser != null && Boolean.TRUE.equals(loginUser.getIsSupper())) {
+            return;
+        }
+        if (CharSequenceUtil.isBlank(instance.getCreateUserId())) {
+            return;
+        }
+        if (loginUser == null) {
+            throw new ServiceException(ApiError.HTTP_FORBIDDEN);
+        }
+        List<String> owners = Arrays.asList(instance.getCreateUserId().split(","));
+        List<String> deptUsers = sysUserFeign.getDepUserList(loginUser.getUid());
+        if (CollUtil.isNotEmpty(deptUsers)) {
+            if (owners.stream().anyMatch(deptUsers::contains)) {
+                return;
+            }
+        } else if (owners.contains(loginUser.getUid())) {
+            return;
+        }
+        throw new ServiceException(ApiError.HTTP_FORBIDDEN);
     }
 }

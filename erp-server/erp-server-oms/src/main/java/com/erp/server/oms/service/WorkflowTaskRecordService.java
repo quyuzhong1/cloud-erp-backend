@@ -7,6 +7,7 @@ import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -109,4 +110,20 @@ public interface WorkflowTaskRecordService extends SuperService<WorkflowTaskReco
      * 校验人工强制重试权限（超级管理员或持有 forceRetry 菜单权限）。
      */
     void validateForceRetryPermission();
+
+    /**
+     * 判断节点是否允许强制重试（含 PROCESSING 超时判定）。
+     */
+    boolean isStepForceRetryAllowed(WorkflowTaskRecordEntity entity);
+
+    /**
+     * 拼接人工重试备注。
+     */
+    String formatForceRetryRemark(String oldRemark, String remark);
+
+    /**
+     * 获取上一成功节点的 output，作为当前节点重试 input。
+     */
+    String getPreviousSuccessOutputData(WorkflowTaskRecordEntity entity,
+                                        Map<Integer, WorkflowTaskRecordEntity> indexTaskMap);
 }

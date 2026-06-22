@@ -21,5 +21,9 @@ public interface WorkflowTaskInstanceMapper extends BaseMapper<WorkflowTaskInsta
 
     List<String> listBySource(@Param("params") WorkflowTaskInstanceDTO.ListBySourceParamDTO params);
 
+    List<WorkflowTaskInstanceDTO.ViewDTO> listViewHeaders(@Param("instanceIds") List<String> instanceIds);
+
+    List<WorkflowTaskInstanceDTO.StepDTO> listStepsByInstanceIds(@Param("instanceIds") List<String> instanceIds);
+
     List<WorkflowTaskInstanceDTO.ErrorReportDTO> errorReport(@Param("params") WorkflowTaskInstanceDTO.ErrorReportParamDTO params);
 }

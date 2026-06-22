@@ -123,14 +123,14 @@ public class WorkflowTaskRecordEntity extends BaseEntity<WorkflowTaskRecordEntit
     /**
      * 节点开始执行时间
      */
-    @TableField("started_at")
-    private java.time.LocalDateTime startedAt;
+    @TableField("start_time")
+    private java.time.LocalDateTime startTime;
 
     /**
      * 节点结束执行时间
      */
-    @TableField("finished_at")
-    private java.time.LocalDateTime finishedAt;
+    @TableField("end_time")
+    private java.time.LocalDateTime endTime;
 
 
     public static final String SOURCE_ID = "source_id";

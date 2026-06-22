@@ -145,6 +145,11 @@ public class WorkflowTaskStepDispatcher {
             return;
         }
 
+        if (!isInstanceActive(instance.getId())) {
+            log.info("编排实例已取消或终态，终止后续调度，instanceId={}", instance.getId());
+            return;
+        }
+
         if (result.isWaiting()) {
             workflowTaskInstanceService.markWaiting(instance.getId(), targetIndex, result.getErrorMsg());
             return;
@@ -179,6 +184,10 @@ public class WorkflowTaskStepDispatcher {
      */
     public void scheduleNextStep(WorkflowTaskInstanceEntity instance, WorkflowTaskRecordDTO.AddTaskDTO template,
                                  int completedIndex, Map<Integer, WorkflowTaskRecordEntity> indexMap) {
+        if (!isInstanceActive(instance.getId())) {
+            log.info("编排实例已取消或终态，跳过链式调度，instanceId={}", instance.getId());
+            return;
+        }
         int nextIndex = completedIndex + 1;
         if (!indexMap.containsKey(nextIndex)) {
             markInstanceSuccess(instance, indexMap.values().stream()
@@ -286,5 +295,14 @@ public class WorkflowTaskStepDispatcher {
             return false;
         }
         return updateTime.plusMinutes(WorkflowTaskRecordService.TASK_PROCESSING_TIMEOUT_MINUTES).isAfter(LocalDateTime.now());
+    }
+
+    private boolean isInstanceActive(String instanceId) {
+        WorkflowTaskInstanceEntity fresh = workflowTaskInstanceService.getById(instanceId);
+        if (fresh == null || Boolean.TRUE.equals(fresh.getIsDeleted())) {
+            return false;
+        }
+        return !WorkflowTaskInstanceStatusEnum.SUCCESS.getCode().equals(fresh.getStatus())
+                && !WorkflowTaskInstanceStatusEnum.CANCELLED.getCode().equals(fresh.getStatus());
     }
 }

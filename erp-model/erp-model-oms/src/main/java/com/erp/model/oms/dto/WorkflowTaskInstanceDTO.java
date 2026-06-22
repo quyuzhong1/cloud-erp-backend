@@ -1,12 +1,16 @@
 package com.erp.model.oms.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 任务编排实例 DTO
@@ -17,7 +21,12 @@ public class WorkflowTaskInstanceDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class PagingParamDTO implements Serializable {
+    public static class PagingParamDTO extends SortDTO {
+        /** 页面高级查询 */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+        /** sqlMap 默认 key default */
+        private Map<String, String> sqlMap;
+
         private List<String> sourceTypeList;
         private String sourceCode;
         private String sourceId;
@@ -25,8 +34,6 @@ public class WorkflowTaskInstanceDTO implements Serializable {
         private Boolean hasError;
         private String currentNodeName;
         private String targetService;
-        /** 数据权限 SQL，由框架注入 */
-        private String permissionSql;
     }
 
     @Data
@@ -71,8 +78,8 @@ public class WorkflowTaskInstanceDTO implements Serializable {
         private LocalDateTime createTime;
         private LocalDateTime updateTime;
         private String createUserName;
-        private LocalDateTime startedAt;
-        private LocalDateTime finishedAt;
+        private LocalDateTime startTime;
+        private LocalDateTime finishTime;
         private Boolean autoRetryExceeded;
         private List<StepDTO> steps;
     }
@@ -80,6 +87,8 @@ public class WorkflowTaskInstanceDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class StepDTO implements Serializable {
+        /** 批量查询时用于分组，非 API 必返字段 */
+        private String instanceId;
         private String stepId;
         private Integer index;
         private String nodeName;
@@ -118,6 +127,7 @@ public class WorkflowTaskInstanceDTO implements Serializable {
     public static class RetryFromStepDTO implements Serializable {
         @NotBlank
         private String instanceId;
+        @Min(0)
         private Integer fromIndex;
         private Integer retryCount;
         private String remark;
