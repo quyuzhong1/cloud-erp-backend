@@ -334,4 +334,67 @@ public final class SoB2cAmountUtil {
             c.setDiscountAmount(sale.subtract(paid).setScale(SCALE, RoundingMode.HALF_UP));
         }
     }
+
+    /**
+     * 列表/详情展示：补全明细 saleAmount/paidAmount/discountAmount（原币），未落库时按主表比例分摊兜底。
+     */
+    public static void fillDetailListDisplayAmounts(List<SoB2cDetailDTO.ListDTO> details, BigDecimal mainAmount, BigDecimal mainPaidAmount) {
+        if (CollUtil.isEmpty(details)) {
+            return;
+        }
+        mainAmount = MathUtil.getValue(mainAmount);
+        mainPaidAmount = MathUtil.getValue(preferPositive(mainPaidAmount, mainAmount));
+
+        boolean anyDetailHasNewAmount = details.stream().anyMatch(d ->
+                (d.getSaleAmount() != null && d.getSaleAmount().compareTo(BigDecimal.ZERO) > 0)
+                        || (d.getPaidAmount() != null && d.getPaidAmount().compareTo(BigDecimal.ZERO) > 0)
+                        || (d.getDiscountAmount() != null && d.getDiscountAmount().compareTo(BigDecimal.ZERO) != 0));
+
+        if (!anyDetailHasNewAmount && mainAmount.compareTo(BigDecimal.ZERO) > 0) {
+            allocateDetailDisplayAmountsFromMain(details, mainAmount, mainPaidAmount);
+            return;
+        }
+        for (SoB2cDetailDTO.ListDTO detail : details) {
+            fillSingleDetailDisplayAmount(detail, mainAmount, mainPaidAmount);
+        }
+    }
+
+    private static void allocateDetailDisplayAmountsFromMain(List<SoB2cDetailDTO.ListDTO> details, BigDecimal mainAmount, BigDecimal mainPaidAmount) {
+        BigDecimal allocated = BigDecimal.ZERO;
+        int lastIdx = details.size() - 1;
+        for (int i = 0; i < details.size(); i++) {
+            SoB2cDetailDTO.ListDTO detail = details.get(i);
+            BigDecimal saleAmount = MathUtil.getValue(preferPositive(detail.getSaleAmount(), detail.getAmount()));
+            detail.setSaleAmount(saleAmount.setScale(SCALE, RoundingMode.HALF_UP));
+            BigDecimal paid;
+            if (i == lastIdx) {
+                paid = mainPaidAmount.subtract(allocated).setScale(SCALE, RoundingMode.HALF_UP);
+            } else {
+                paid = saleAmount.multiply(mainPaidAmount).divide(mainAmount, SCALE, RoundingMode.HALF_UP);
+                allocated = allocated.add(paid);
+            }
+            detail.setPaidAmount(paid);
+            detail.setDiscountAmount(saleAmount.subtract(paid).setScale(SCALE, RoundingMode.HALF_UP));
+        }
+    }
+
+    private static void fillSingleDetailDisplayAmount(SoB2cDetailDTO.ListDTO detail, BigDecimal mainAmount, BigDecimal mainPaidAmount) {
+        BigDecimal legacyAmount = MathUtil.getValue(detail.getAmount());
+        BigDecimal saleAmount = preferPositive(detail.getSaleAmount(), legacyAmount);
+        BigDecimal paidAmount = detail.getPaidAmount();
+        if (paidAmount == null || paidAmount.compareTo(BigDecimal.ZERO) <= 0) {
+            if (mainAmount.compareTo(BigDecimal.ZERO) > 0 && saleAmount.compareTo(BigDecimal.ZERO) > 0) {
+                paidAmount = saleAmount.multiply(mainPaidAmount).divide(mainAmount, SCALE, RoundingMode.HALF_UP);
+            } else {
+                paidAmount = legacyAmount;
+            }
+        }
+        BigDecimal discountAmount = detail.getDiscountAmount();
+        if (discountAmount == null) {
+            discountAmount = MathUtil.getValue(saleAmount).subtract(MathUtil.getValue(paidAmount));
+        }
+        detail.setSaleAmount(MathUtil.getValue(saleAmount).setScale(SCALE, RoundingMode.HALF_UP));
+        detail.setPaidAmount(MathUtil.getValue(paidAmount).setScale(SCALE, RoundingMode.HALF_UP));
+        detail.setDiscountAmount(discountAmount.setScale(SCALE, RoundingMode.HALF_UP));
+    }
 }

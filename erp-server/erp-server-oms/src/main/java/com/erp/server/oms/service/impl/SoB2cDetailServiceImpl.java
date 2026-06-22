@@ -1350,6 +1350,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             List<SoB2cDetailDTO.ListDTO> detailDTOList = b2cDetailEntityList.stream()
                     .map(detailEntity -> buildDetailDTO(detailEntity, skuVOMap, bomChildrenList, bomType, inventoryMap, virtualInventoryMap, declareProductList, ignoreInventorySkuIds, entity,virtualWarehouseNameMap,skuMappingList,listingInfoEntityList))
                     .collect(Collectors.toList());
+            SoB2cAmountUtil.fillDetailListDisplayAmounts(detailDTOList, entity.getAmount(), entity.getPaidAmount());
 
             mainDTO.setDetailList(detailDTOList);
             mainDTOList.add(mainDTO);

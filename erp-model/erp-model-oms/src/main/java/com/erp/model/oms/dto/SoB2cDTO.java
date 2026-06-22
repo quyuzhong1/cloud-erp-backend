@@ -629,12 +629,12 @@ public class SoB2cDTO implements Serializable {
         private BigDecimal amount;
 
         /**
-         * 实付总额（订单付款总额）：sum(明细.实付金额)，平台已推送时直接取平台值
+         * 实付总额（订单付款总额）：sum(明细.实付金额)，平台已推送时直接取平台值【可排序】
          */
         private BigDecimal paidAmount;
 
         /**
-         * 订单折扣总额
+         * 订单折扣总额【可排序】
          */
         private BigDecimal totalDiscount;
 

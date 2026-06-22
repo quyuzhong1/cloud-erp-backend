@@ -5490,6 +5490,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             Boolean isCombination = Boolean.FALSE;
             List<SoB2cDetailEntity> detailList = detailListMap.getOrDefault(data.getId(), Collections.emptyList());
             List<SoB2cDetailDTO.ListDTO> soB2cDetailList = B2cOrderConverter.INSTANCE.toDetailDTOList(detailList);
+            SoB2cAmountUtil.fillDetailListDisplayAmounts(soB2cDetailList, data.getAmount(), data.getPaidAmount());
             for (SoB2cDetailDTO.ListDTO detailDTO : soB2cDetailList) {
                 SkuVO skuVO = skuVOMap.get(detailDTO.getSkuId());
 
