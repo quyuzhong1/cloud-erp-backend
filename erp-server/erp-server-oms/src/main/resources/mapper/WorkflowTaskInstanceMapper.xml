@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.oms.mapper.WorkflowTaskInstanceMapper">
+
+    <select id="paging" resultType="com.erp.model.oms.dto.WorkflowTaskInstanceDTO$ListDTO">
+        SELECT
+            wti.id AS instanceId,
+            wti.source_type AS sourceType,
+            wti.source_id AS sourceId,
+            wti.source_code AS sourceCode,
+            wti.status AS status,
+            wti.current_index AS currentIndex,
+            wti.total_steps AS totalSteps,
+            CASE
+                WHEN wti.total_steps IS NULL OR wti.total_steps = 0 THEN 0
+                ELSE LEAST(100, FLOOR(
+                    (SELECT COUNT(1) FROM workflow_task_record wtr
+                     WHERE wtr.instance_id = wti.id AND wtr.is_deleted = false AND wtr.status = 'success') * 100.0
+                    / wti.total_steps))
+            END AS progressPercent,
+            db.name AS currentNodeName,
+            wti.last_error AS lastError,
+            wtr_cur.retry_count AS retryCount,
+            wti.trace_id AS traceId,
+            wti.create_time AS createTime,
+            wti.update_time AS updateTime,
+            wti.create_user_name AS createUserName
+        FROM workflow_task_instance wti
+        LEFT JOIN workflow_task_record wtr_cur
+            ON wtr_cur.instance_id = wti.id
+            AND wtr_cur.index = wti.current_index
+            AND wtr_cur.is_deleted = false
+        LEFT JOIN dict_basic db
+            ON db.id = wtr_cur.dict_basic_id
+            AND db.is_deleted = false
+        <where>
+            wti.is_deleted = false
+            ${params.sqlMap.default}
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+            <if test="params.sourceTypeList != null and params.sourceTypeList.size() > 0">
+                AND wti.source_type IN
+                <foreach collection="params.sourceTypeList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.statusList != null and params.statusList.size() > 0">
+                AND wti.status IN
+                <foreach collection="params.statusList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.sourceCode != null and params.sourceCode != ''">
+                AND wti.source_code ILIKE CONCAT('%', #{params.sourceCode}, '%')
+            </if>
+            <if test="params.sourceId != null and params.sourceId != ''">
+                AND wti.source_id = #{params.sourceId}
+            </if>
+            <if test="params.hasError != null and params.hasError">
+                AND wti.status IN ('failed', 'waiting')
+            </if>
+            <if test="params.currentNodeName != null and params.currentNodeName != ''">
+                AND db.name ILIKE CONCAT('%', #{params.currentNodeName}, '%')
+            </if>
+            <if test="params.targetService != null and params.targetService != ''">
+                AND EXISTS (
+                    SELECT 1 FROM workflow_task_record wtrf
+                    WHERE wtrf.instance_id = wti.id
+                      AND wtrf.is_deleted = false
+                      AND wtrf.target_service = #{params.targetService}
+                )
+            </if>
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size() > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        wti.update_time DESC
+    </select>
+
+    <select id="viewHeader" resultType="com.erp.model.oms.dto.WorkflowTaskInstanceDTO$ViewDTO">
+        SELECT
+            wti.id AS instanceId,
+            wti.source_type AS sourceType,
+            wti.source_id AS sourceId,
+            wti.source_code AS sourceCode,
+            wti.status AS status,
+            wti.current_index AS currentIndex,
+            wti.total_steps AS totalSteps,
+            wti.last_error AS lastError,
+            wti.trace_id AS traceId,
+            wti.create_time AS createTime,
+            wti.update_time AS updateTime,
+            wti.create_user_name AS createUserName,
+            wti.started_at AS startedAt,
+            wti.finished_at AS finishedAt
+        FROM workflow_task_instance wti
+        WHERE wti.id = #{id}
+          AND wti.is_deleted = false
+    </select>
+
+    <select id="listSteps" resultType="com.erp.model.oms.dto.WorkflowTaskInstanceDTO$StepDTO">
+        SELECT
+            wtr.id AS stepId,
+            wtr.index AS index,
+            db.name AS nodeName,
+            wtr.class_path AS classPath,
+            wtr.target_service AS targetService,
+            wtr.target_endpoint AS targetEndpoint,
+            wtr.feign_duration_ms AS feignDurationMs,
+            wtr.error_source AS errorSource,
+            wtr.status AS status,
+            wtr.retry_count AS retryCount,
+            wtr.last_error AS lastError,
+            wtr.input_data AS inputData,
+            wtr.output_data AS outputData,
+            wtr.started_at AS startTime,
+            wtr.finished_at AS endTime,
+            CASE
+                WHEN wtr.started_at IS NOT NULL AND wtr.finished_at IS NOT NULL
+                THEN EXTRACT(EPOCH FROM (wtr.finished_at - wtr.started_at)) * 1000
+                ELSE NULL
+            END AS durationMs,
+            wtr.remark AS remark
+        FROM workflow_task_record wtr
+        LEFT JOIN dict_basic db ON db.id = wtr.dict_basic_id AND db.is_deleted = false
+        WHERE wtr.instance_id = #{instanceId}
+          AND wtr.is_deleted = false
+        ORDER BY wtr.index ASC
+    </select>
+
+    <select id="listBySource" resultType="java.lang.String">
+        SELECT wti.id
+        FROM workflow_task_instance wti
+        WHERE wti.is_deleted = false
+          AND wti.source_type = #{params.sourceType}
+          AND wti.source_id = #{params.sourceId}
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY wti.create_time DESC
+    </select>
+
+    <select id="errorReport" resultType="com.erp.model.oms.dto.WorkflowTaskInstanceDTO$ErrorReportDTO">
+        SELECT
+            wtr.source_type AS sourceType,
+            wtr.dict_basic_id AS dictBasicId,
+            db.name AS dictBasicName,
+            wtr.target_service AS targetService,
+            SUM(CASE WHEN wtr.status = 'failed' THEN 1 ELSE 0 END) AS failedCount,
+            SUM(CASE WHEN wtr.status = 'waiting' THEN 1 ELSE 0 END) AS waitingCount,
+            COALESCE(AVG(wtr.retry_count), 0)::INT AS avgRetryCount,
+            MAX(wtr.update_time) AS lastOccurTime
+        FROM workflow_task_record wtr
+        INNER JOIN workflow_task_instance wti
+            ON wti.id = wtr.instance_id
+            AND wti.is_deleted = false
+        LEFT JOIN dict_basic db ON db.id = wtr.dict_basic_id AND db.is_deleted = false
+        WHERE wtr.is_deleted = false
+          AND wtr.status IN ('failed', 'waiting')
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        <if test="params != null and params.sourceTypeList != null and params.sourceTypeList.size() > 0">
+            AND wtr.source_type IN
+            <foreach collection="params.sourceTypeList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params != null and params.targetService != null and params.targetService != ''">
+            AND wtr.target_service = #{params.targetService}
+        </if>
+        GROUP BY wtr.source_type, wtr.dict_basic_id, db.name, wtr.target_service
+        ORDER BY failedCount DESC, lastOccurTime DESC
+    </select>
+
+</mapper>

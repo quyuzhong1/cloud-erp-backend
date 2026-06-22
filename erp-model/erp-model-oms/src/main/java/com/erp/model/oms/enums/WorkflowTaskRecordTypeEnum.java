@@ -14,6 +14,8 @@ public enum WorkflowTaskRecordTypeEnum implements EnumMessage {
     EXHIBITION_ORDER_DISAPPROVE("exhibitionOrderDisapprove", "展会订单反审核"),
     SO_B2C_GET_LOGISTICS("soB2cGetLogistics", "获取物流单"),
     PACKAGE_PLAN_GENERATE("packagePlanGenerate", "生成组包计划"),
+    KOL_B2C_APPLICATION_APPROVE("kolB2cApplicationApprove", "KOL B2C寄样申请审批"),
+    KOL_B2C_SUB_APPROVE("kolB2cSubApprove", "KOL B2C寄样拆分单审批"),
     ;
     /**
      * 类型
@@ -68,6 +70,18 @@ public enum WorkflowTaskRecordTypeEnum implements EnumMessage {
         WorkflowTaskRecordTypeEnum[] values = values();
         for (WorkflowTaskRecordTypeEnum value : values) {
             if (value.getName().equals(name)) {
+                return value;
+            }
+        }
+        return null;
+    }
+
+    public static WorkflowTaskRecordTypeEnum getByCode(String code) {
+        if (StringUtils.isBlank(code)) {
+            return null;
+        }
+        for (WorkflowTaskRecordTypeEnum value : values()) {
+            if (value.getCode().equals(code)) {
                 return value;
             }
         }

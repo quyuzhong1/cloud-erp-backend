@@ -939,13 +939,9 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
             map.put("exhibitionOrderId", entity.getId());
             addTaskDTO.setFirstNodeInputData(map);
 
-            List<WorkflowTaskRecordEntity> workflowTaskRecordEntities = workflowTaskRecordService.addTask(addTaskDTO);
+            List<WorkflowTaskRecordEntity> workflowTaskRecordEntities = workflowTaskRecordService.addTaskAndStart(addTaskDTO);
             if(CollUtil.isEmpty(workflowTaskRecordEntities)){
                 throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC,DictBasicTypeEnum.WORKFLOW_TASK_NODE.getDesc());
-            }
-            SendResult result = mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.OMS_WORKFLOW_TASK_RECORD_TOPIC, RocketMqTagEnum.OMS_WORKFLOW_TASK_RECORD_TAG.getName(), addTaskDTO, entity.getId(),2);
-            if (!result.getSendStatus().equals(SendStatus.SEND_OK)) {
-                throw new RuntimeException(StrUtil.format("展会订单审批通过发送任务编排MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
         }
 
@@ -1082,13 +1078,9 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
             Map<String, Object> map = new HashMap<>();
             map.put("id", entity.getId());
             addTaskDTO.setFirstNodeInputData(map);
-            List<WorkflowTaskRecordEntity> workflowTaskRecordEntities = workflowTaskRecordService.addTask(addTaskDTO);
+            List<WorkflowTaskRecordEntity> workflowTaskRecordEntities = workflowTaskRecordService.addTaskAndStart(addTaskDTO);
             if(CollUtil.isEmpty(workflowTaskRecordEntities)){
                 throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC,DictBasicTypeEnum.WORKFLOW_TASK_NODE.getDesc());
-            }
-            SendResult result = mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.OMS_WORKFLOW_TASK_RECORD_TOPIC, RocketMqTagEnum.OMS_WORKFLOW_TASK_RECORD_TAG.getName(), addTaskDTO, entity.getId(),2);
-            if (!result.getSendStatus().equals(SendStatus.SEND_OK)) {
-                throw new RuntimeException(StrUtil.format("展会订单审批通过发送任务编排MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
         }
 
