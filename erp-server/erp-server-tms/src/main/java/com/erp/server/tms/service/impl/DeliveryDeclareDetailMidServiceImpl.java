@@ -378,6 +378,7 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
                 .set(DeliveryDeclareDetailMidEntity::getDeclareId, "")
                 .set(DeliveryDeclareDetailMidEntity::getDeclareCode, "")
                 .set(DeliveryDeclareDetailMidEntity::getDeclareDetailId, "")
+                .set(DeliveryDeclareDetailMidEntity::getContractNo, "")
                 .update();
     }
 
@@ -399,6 +400,7 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
                 .set(DeliveryDeclareDetailMidEntity::getDeclareId, "")
                 .set(DeliveryDeclareDetailMidEntity::getDeclareCode, "")
                 .set(DeliveryDeclareDetailMidEntity::getDeclareDetailId, "")
+                .set(DeliveryDeclareDetailMidEntity::getContractNo, "")
                 .update();
     }
 
@@ -581,6 +583,7 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         }
         validateSameBoxFullSelectedBySourceDetail(sourceDetailList);
         String sourceType = resolveMidSourceType(sourceDetailList);
+        validatePreviewSourceConsistent(sourceType, sourceDetailList);
         String declareBillType = resolveDeclareBillType(sourceType);
         validateLatestProductLogistics(sourceDetailList);
         // 保存以最新 PLM 报关资料为准，前端提交的预览结果只作为选择范围，保存前必须重新生成合并结果。
@@ -681,20 +684,12 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         }
 
         String declareBillType = resolveDeclareBillType(sourceType);
-        Set<String> receiverTypeSet = new HashSet<>();
-        for (TmsDeclareBillDTO.SourceDeliveryDetailDTO sourceDetail : sourceDetailList) {
-            CfgDeclareRuleEntity cfgDeclareRule = cfgDeclareRuleService.listMatchedRule(
-                    buildDeclareRuleMatchParamMap(declareBillType, Collections.singletonList(sourceDetail)));
-            if (Objects.isNull(cfgDeclareRule)) {
-                throw new ServiceException(ApiError.LOGISTICS_DECLARE_RULE_NOT_FOUND_FOR_SOURCE);
-            }
-            if (CharSequenceUtil.isNotBlank(cfgDeclareRule.getReceiverType())) {
-                receiverTypeSet.add(cfgDeclareRule.getReceiverType());
-            }
-        }
-        if (receiverTypeSet.size() > 1) {
-            throw new ServiceException(ApiError.LOGISTICS_DECLARE_MERGE_RECEIVER_TYPE_DIFF);
-        }
+        cfgDeclareRuleService.resolveConsistentReceiverType(
+                declareBillType,
+                sourceDetailList,
+                this::buildDeclareRuleMatchParamMap,
+                ApiError.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_RULE_NOT_FOUND_FOR_SOURCE,
+                ApiError.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_RECEIVER_TYPE_CONFLICT);
     }
 
     /**
@@ -1160,7 +1155,13 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
 
         CfgDeclareRuleEntity cfgDeclareRule = cfgDeclareRuleService.listMatchedRule(buildDeclareRuleMatchParamMap(declareBillType, sourceDetailList));
         if (Objects.isNull(cfgDeclareRule)) {
-            throw new ServiceException(ApiError.LOGISTICS_DECLARE_RULE_NOT_FOUND_FOR_SOURCE);
+            String sourceCode = sourceDetailList.stream()
+                    .filter(Objects::nonNull)
+                    .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getSourceCode)
+                    .filter(CharSequenceUtil::isNotBlank)
+                    .findFirst()
+                    .orElse("");
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_RULE_NOT_FOUND_FOR_SOURCE, sourceCode);
         }
         entity.setSenderId(cfgDeclareRule.getSenderId());
         entity.setReceiverId(cfgDeclareRule.getReceiverId());
@@ -1237,7 +1238,8 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
      * <p>普通明细复用原中间表行更新为已生成；组合品 BOM 已变化时，必须等报关单保存成功后，
      * 才逻辑删除同来源单、箱号、父 SKU 下的旧拆分行，并写入最新 BOM 对应的生成行。</p>
      */
-    private List<DeliveryDeclareDetailMidEntity> saveGeneratedMidData(String sourceType,
+    @Override
+    public List<DeliveryDeclareDetailMidEntity> saveGeneratedMidData(String sourceType,
                                                                       List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> declareBillList,
                                                                       List<TmsDeclareBillDetailEntity> detailEntityList,
                                                                       String declareId,
@@ -1254,9 +1256,7 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
                 .distinct()
                 .collect(Collectors.toList());
         List<DeliveryDeclareDetailMidEntity> existingMidList = listBySourceIdList(sourceIds);
-        Map<String, DeliveryDeclareDetailMidEntity> existingKeyMap = existingMidList.stream()
-                .filter(item -> CharSequenceUtil.equals(item.getSourceType(), sourceType))
-                .collect(Collectors.toMap(this::buildSourceBoxSkuKey, item -> item, (oldValue, newValue) -> oldValue));
+        Map<String, DeliveryDeclareDetailMidEntity> existingKeyMap = buildExistingMidKeyMap(existingMidList, sourceType);
         Set<String> sourceKeySet = sourceDetailList.stream()
                 .map(this::buildSourceBoxSkuKey)
                 .collect(Collectors.toSet());
@@ -1302,6 +1302,7 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
                 if (Objects.nonNull(existingMid) && !comboChanged) {
                     fillGeneratedMid(existingMid, sourceType, sourceDetail, declareDetail, declareId, declareCode, billDetail.getId());
                     changedMidList.add(existingMid);
+                    removeDuplicateSameKeyMid(sourceType, sourceKey, existingMid.getId(), existingMidList);
                     continue;
                 }
                 DeliveryDeclareDetailMidEntity addMid = new DeliveryDeclareDetailMidEntity();
@@ -1320,6 +1321,60 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
             super.saveBatch(addMidList);
         }
         return changedMidList;
+    }
+
+    private Map<String, DeliveryDeclareDetailMidEntity> buildExistingMidKeyMap(List<DeliveryDeclareDetailMidEntity> existingMidList,
+                                                                               String sourceType) {
+        Map<String, DeliveryDeclareDetailMidEntity> existingKeyMap = new LinkedHashMap<>();
+        for (DeliveryDeclareDetailMidEntity item : existingMidList) {
+            if (!CharSequenceUtil.equals(item.getSourceType(), sourceType)) {
+                continue;
+            }
+            String key = buildSourceBoxSkuKey(item);
+            DeliveryDeclareDetailMidEntity current = existingKeyMap.get(key);
+            if (Objects.isNull(current)) {
+                existingKeyMap.put(key, item);
+                continue;
+            }
+            existingKeyMap.put(key, choosePreferredExistingMid(current, item));
+        }
+        return existingKeyMap;
+    }
+
+    private DeliveryDeclareDetailMidEntity choosePreferredExistingMid(DeliveryDeclareDetailMidEntity left,
+                                                                      DeliveryDeclareDetailMidEntity right) {
+        boolean leftWait = isWaitReusableMid(left);
+        boolean rightWait = isWaitReusableMid(right);
+        if (leftWait && !rightWait) {
+            return left;
+        }
+        if (rightWait && !leftWait) {
+            return right;
+        }
+        return left;
+    }
+
+    private boolean isWaitReusableMid(DeliveryDeclareDetailMidEntity mid) {
+        return CharSequenceUtil.equals(mid.getGenerateStatus(), DeliveryDeclareDetailMidGenerateStatusEnum.WAIT.getCode())
+                && CharSequenceUtil.isBlank(mid.getDeclareId());
+    }
+
+    private void removeDuplicateSameKeyMid(String sourceType,
+                                           String sourceKey,
+                                           String retainId,
+                                           List<DeliveryDeclareDetailMidEntity> existingMidList) {
+        List<String> removeIds = existingMidList.stream()
+                .filter(item -> CharSequenceUtil.equals(item.getSourceType(), sourceType))
+                .filter(item -> sourceKey.equals(buildSourceBoxSkuKey(item)))
+                .filter(item -> !CharSequenceUtil.equals(item.getId(), retainId))
+                .map(DeliveryDeclareDetailMidEntity::getId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(removeIds)) {
+            return;
+        }
+        super.removeByIds(removeIds);
+        existingMidList.removeIf(item -> removeIds.contains(item.getId()));
     }
 
     /**

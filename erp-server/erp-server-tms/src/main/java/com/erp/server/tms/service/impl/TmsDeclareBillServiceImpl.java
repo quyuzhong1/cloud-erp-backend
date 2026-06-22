@@ -310,12 +310,9 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             declareBillEntity.setBoxQty(boxNoSet.size());
             BaseResultDTO.AddDTO addResult = service.add(declareBillEntity, detailEntityList, SourceTypeEnum.FM_DECLARE_BILL, false);
 
-            List<DeliveryDeclareDetailMidEntity> addMidList = buildDeclareDetailMidList(mergeDetailList, detailEntityList,
-                    SourceTypeEnum.FIRST_MILE_DELIVERY.getCode(), firstSourceId(sourceIdList), addResult.getId(), addResult.getCode());
-            if (CollUtil.isNotEmpty(addMidList)) {
-                deliveryDeclareDetailMidService.saveBatch(addMidList);
-            }
-            return extractSourceIdListFromMidList(addMidList);
+            return extractSourceIdListFromMidList(deliveryDeclareDetailMidService.saveGeneratedMidData(
+                    SourceTypeEnum.FIRST_MILE_DELIVERY.getCode(), mergeDetailList, detailEntityList,
+                    addResult.getId(), addResult.getCode()));
         }
 
         // fallback 路径按 deliveryDTO 维度直接生成，提前判断目的国是否为中国大陆，
@@ -1857,12 +1854,9 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             declareBillEntity.setBoxQty(boxNoSet.size());
             BaseResultDTO.AddDTO addResult = service.add(declareBillEntity, detailEntityList, SourceTypeEnum.B2B_DECLARE_BILL, false);
 
-            List<DeliveryDeclareDetailMidEntity> addMidList = buildDeclareDetailMidList(mergeDetailList, detailEntityList,
-                    SourceTypeEnum.SO_DELIVERY_NOTICE.getCode(), firstSourceId(sourceIdList), addResult.getId(), addResult.getCode());
-            if (CollUtil.isNotEmpty(addMidList)) {
-                deliveryDeclareDetailMidService.saveBatch(addMidList);
-            }
-            return extractSourceIdListFromMidList(addMidList);
+            return extractSourceIdListFromMidList(deliveryDeclareDetailMidService.saveGeneratedMidData(
+                    SourceTypeEnum.SO_DELIVERY_NOTICE.getCode(), mergeDetailList, detailEntityList,
+                    addResult.getId(), addResult.getCode()));
         }
 
         TmsDeclareBillEntity baseTmsDeclareBillEntity = new TmsDeclareBillEntity();
@@ -3124,10 +3118,17 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             return false;
         }
         CfgDeclareRuleEntity cfgDeclareRule = cfgDeclareRuleService.listMatchedRule(buildDeclareRuleMatchParamMap(declareBillType, sourceDetailList));
-        if (cfgDeclareRule == null) {
-            throw new ServiceException(ApiError.LOGISTICS_DECLARE_RULE_NOT_FOUND_FOR_SOURCE);
+        if (cfgDeclareRule != null) {
+            return CharSequenceUtil.equals(CfgDeclareRuleReceiverTypeEnum.BY_CUSTOMER.getCode(), cfgDeclareRule.getReceiverType());
         }
-        return CharSequenceUtil.equals(CfgDeclareRuleReceiverTypeEnum.BY_CUSTOMER.getCode(), cfgDeclareRule.getReceiverType());
+        // 整批无法命中单一规则时，按来源单分拆校验收货人类型，避免多规则场景误报规则缺失。
+        String receiverType = cfgDeclareRuleService.resolveConsistentReceiverType(
+                declareBillType,
+                sourceDetailList,
+                this::buildDeclareRuleMatchParamMap,
+                ApiError.LOGISTICS_DECLARE_RULE_NOT_FOUND_FOR_SOURCE,
+                ApiError.LOGISTICS_DECLARE_MERGE_RECEIVER_TYPE_DIFF);
+        return CharSequenceUtil.equals(CfgDeclareRuleReceiverTypeEnum.BY_CUSTOMER.getCode(), receiverType);
     }
 
     private boolean isB2bCustomerReceiver(String declareBillType, String receiverType) {
@@ -4455,7 +4456,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             }
         }
 
-        List<DeliveryDeclareDetailMidEntity> addMidList = new ArrayList<>();
+        List<DeliveryDeclareDetailMidEntity> changedMidList = new ArrayList<>();
         for (TmsDeclareBillDTO.MergeDeclareBillDTO mergeDeclareBillDTO : list) {
             if (Objects.isNull(mergeDeclareBillDTO) || CollUtil.isEmpty(mergeDeclareBillDTO.getDeclareBillList())) {
                 continue;
@@ -4480,17 +4481,14 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             }
             BaseResultDTO.AddDTO addResult = add(declareBillEntity, detailEntityList, SourceTypeEnum.getEnum(declareBillType), false);
 
-            addMidList.addAll(buildDeclareDetailMidList(declareBillList, detailEntityList,
-                    sourceType, null, addResult.getId(), addResult.getCode()));
-        }
-        if (CollUtil.isNotEmpty(addMidList)) {
-            deliveryDeclareDetailMidService.saveBatch(addMidList);
+            changedMidList.addAll(deliveryDeclareDetailMidService.saveGeneratedMidData(
+                    sourceType, declareBillList, detailEntityList, addResult.getId(), addResult.getCode()));
         }
         // 拆分保存多轮调用时延后统一回写来源单报关状态，由拆分入口在全局事务提交后一次 Feign 回写 WMS。
         if (splitCodeSequence != null) {
             return Collections.emptyList();
         }
-        return extractSourceIdListFromMidList(addMidList);
+        return extractSourceIdListFromMidList(changedMidList);
     }
 
     /**
@@ -4587,7 +4585,13 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         }
         CfgDeclareRuleEntity cfgDeclareRule = cfgDeclareRuleService.listMatchedRule(paramMap);
         if (cfgDeclareRule == null) {
-            throw new ServiceException(ApiError.LOGISTICS_DECLARE_RULE_NOT_FOUND_FOR_SOURCE);
+            String sourceCode = headerParamDTO.getSourceDeliveryDetailList().stream()
+                    .filter(Objects::nonNull)
+                    .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getSourceCode)
+                    .filter(CharSequenceUtil::isNotBlank)
+                    .findFirst()
+                    .orElse("");
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_RULE_NOT_FOUND_FOR_SOURCE, sourceCode);
         }
         declareBillEntity.setSenderId(cfgDeclareRule.getSenderId());
         declareBillEntity.setSenderName(cfgDeclareRule.getSenderName());

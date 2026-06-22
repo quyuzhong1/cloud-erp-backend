@@ -16,14 +16,13 @@ import com.common.core.exception.ServiceException;
 import com.common.core.entity.ConditionElement;
 import com.common.core.server.rule.SpElServer;
 import com.common.core.utils.BeanMapperUtils;
-import com.erp.model.oms.dto.CustomerDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysAccountingCompanyDTO;
-import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.tms.dto.CfgConditionDTO;
 import com.erp.model.tms.dto.CfgDeclareRuleConditionDTO;
 import com.erp.model.tms.dto.CfgDeclareRuleDTO;
+import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.tms.entity.CfgDeclareRuleConditionEntity;
 import com.erp.model.tms.entity.CfgDeclareRuleEntity;
 import com.erp.model.tms.enums.CfgDeclareRuleReceiverTypeEnum;
@@ -43,6 +42,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.*;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 /**
@@ -223,6 +223,58 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
                 .min(Comparator.comparing(CfgDeclareRuleEntity::getIndex,
                         Comparator.nullsLast(Integer::compareTo)))
                 .orElse(null);
+    }
+
+    @Override
+    public String resolveConsistentReceiverType(String declareBillType,
+                                                List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList,
+                                                BiFunction<String, List<TmsDeclareBillDTO.SourceDeliveryDetailDTO>, Map<String, String>> paramMapBuilder,
+                                                ApiError ruleNotFoundError,
+                                                ApiError receiverTypeConflictError) {
+        if (CollUtil.isEmpty(sourceDetailList)) {
+            return "";
+        }
+        Map<String, List<TmsDeclareBillDTO.SourceDeliveryDetailDTO>> sourceGroupMap = groupSourceDetailsBySourceId(sourceDetailList);
+        Set<String> receiverTypeSet = new LinkedHashSet<>();
+        for (List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetails : sourceGroupMap.values()) {
+            CfgDeclareRuleEntity matchedRule = listMatchedRule(paramMapBuilder.apply(declareBillType, sourceDetails));
+            if (matchedRule == null) {
+                throw new ServiceException(ruleNotFoundError, resolveSourceCode(sourceDetails));
+            }
+            if (StrUtil.isNotBlank(matchedRule.getReceiverType())) {
+                receiverTypeSet.add(matchedRule.getReceiverType());
+            }
+        }
+        if (receiverTypeSet.size() > 1) {
+            throw new ServiceException(receiverTypeConflictError);
+        }
+        return receiverTypeSet.stream().findFirst().orElse("");
+    }
+
+    private String resolveSourceCode(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetails) {
+        if (CollUtil.isEmpty(sourceDetails)) {
+            return "";
+        }
+        return sourceDetails.stream()
+                .filter(Objects::nonNull)
+                .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getSourceCode)
+                .filter(StrUtil::isNotBlank)
+                .findFirst()
+                .orElse("");
+    }
+
+    private Map<String, List<TmsDeclareBillDTO.SourceDeliveryDetailDTO>> groupSourceDetailsBySourceId(
+            List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList) {
+        Map<String, List<TmsDeclareBillDTO.SourceDeliveryDetailDTO>> sourceGroupMap = new LinkedHashMap<>();
+        int anonymousIndex = 0;
+        for (TmsDeclareBillDTO.SourceDeliveryDetailDTO sourceDetail : sourceDetailList) {
+            if (sourceDetail == null) {
+                continue;
+            }
+            String groupKey = StrUtil.blankToDefault(sourceDetail.getSourceId(), "__anonymous_" + (anonymousIndex++));
+            sourceGroupMap.computeIfAbsent(groupKey, key -> new ArrayList<>()).add(sourceDetail);
+        }
+        return sourceGroupMap;
     }
 
     /**
