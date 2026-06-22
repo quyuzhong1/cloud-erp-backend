@@ -36,25 +36,24 @@ public class PurchaseOrderQueryHandler extends AbstractQueryHandler {
     }
 
     /**
-     * 来源单号：与列表展示一致，覆盖采购申请(ref表)、主表source_code(退货/委外)、委外单联表兜底
+     * 来源单号：与列表展示一致，覆盖采购申请(ref表)、主表source_code(退货/委外)、委外单联表兜底。
+     * 子查询内不使用表别名.字段，避免「包含」条件下 wrapFieldsWithLower 对 boolean 字段执行 LOWER() 导致 SQL 报错。
      */
     private String buildSourceCodeSql(String compareCodeSplicingValueSql) {
         String subcontractSourceType = SourceTypeEnum.SUBCONTRACT_ORDER.getCode();
         return "("
                 + "po.source_code " + compareCodeSplicingValueSql
-                + " OR EXISTS ("
-                + " SELECT 1 FROM purchase_application pa"
-                + " INNER JOIN purchase_application_ref_po parp"
-                + " ON parp.purchase_application_id = pa.id AND parp.is_deleted = false"
-                + " WHERE parp.purchase_order_id = po.id AND pa.is_deleted = false"
-                + " AND pa.code " + compareCodeSplicingValueSql
+                + " OR po.id IN ("
+                + " SELECT purchase_order_id FROM purchase_application_ref_po"
+                + " WHERE is_deleted IS NOT TRUE"
+                + " AND purchase_application_id IN ("
+                + " SELECT id FROM purchase_application WHERE is_deleted IS NOT TRUE AND code " + compareCodeSplicingValueSql
                 + " )"
-                + " OR EXISTS ("
-                + " SELECT 1 FROM subcontract_order so2"
-                + " WHERE so2.id = po.source_id AND so2.is_deleted = false"
-                + " AND po.source_type = '" + subcontractSourceType + "'"
-                + " AND so2.code " + compareCodeSplicingValueSql
                 + " )"
+                + " OR (po.source_type = '" + subcontractSourceType + "'"
+                + " AND po.source_id IN ("
+                + " SELECT id FROM subcontract_order WHERE is_deleted IS NOT TRUE AND code " + compareCodeSplicingValueSql
+                + " ))"
                 + ")";
     }
 
