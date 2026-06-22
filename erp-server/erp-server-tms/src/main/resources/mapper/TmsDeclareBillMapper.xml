@@ -14,7 +14,7 @@
        <result column="is_deleted" property="isDeleted" />
        <result column="code" property="code" />
        <result column="declare_status" property="declareStatus" />
-       <result column="delivery_type" property="businessType" />
+       <result column="business_type" property="businessType" />
        <result column="logistics_supplier_id" property="logisticsSupplierId" />
        <result column="logistics_supplier_name" property="logisticsSupplierName" />
        <result column="country" property="country" />
