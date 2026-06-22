@@ -284,15 +284,19 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
         }
     }
 
+    /**
+     * 写完后删除分组预留但未使用的尾部空 sheet。须全量加载 xlsx（XSSFWorkbook），
+     * 超过 {@code file.storage.maxTrimUnusedSheetBytes}（默认 100MB）时跳过清理并 WARN。
+     */
     private void trimUnusedDataSheets(File outFile, List<Integer> dataSheetIndexes, int usedDataSheetCount) throws IOException {
         if (CollectionUtils.isEmpty(dataSheetIndexes) || usedDataSheetCount >= dataSheetIndexes.size()) {
             return;
         }
         int keep = Math.max(1, usedDataSheetCount);
-        long maxTrimBytes = FileRegistry.maxTemplateExpandBytesOrDefault();
+        long maxTrimBytes = FileRegistry.maxTrimUnusedSheetBytesOrDefault();
         long fileBytes = outFile.length();
         if (fileBytes > maxTrimBytes) {
-            log.warn("跳过尾部空 sheet 清理：handler={} file={} 文件大小={}MB 超过安全阈值={}MB，保留预留空 sheet 以避免 XSSFWorkbook 全量加载 OOM",
+            log.warn("跳过尾部空 sheet 清理：handler={} file={} 文件大小={}MB 超过 file.storage.maxTrimUnusedSheetBytes 安全阈值={}MB，保留预留空 sheet 以避免 XSSFWorkbook 全量加载 OOM",
                     getClass().getName(), outFile.getName(), fileBytes / 1024 / 1024, maxTrimBytes / 1024 / 1024);
             return;
         }
@@ -621,7 +625,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
         int preparedSheets = vo.isHasNext()
                 ? keysetPreparedSheetCount()
                 : computeDataSheetCountForTotalRows(firstBatchRows);
-        if (preparedSheets > 1 && keepSheetGroupTogether()) {
+        if (keepSheetGroupTogether()) {
             preparedSheets = expandSheetCountForGroupKeeping(preparedSheets);
         }
 
@@ -778,7 +782,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
         PagingVO<T> firstData = requirePagingResult(getPageData(dto), "页码=" + dto.getCurrPage());
         int totalCount = firstData.getTotalCount();
         int dataSheets = computeDataSheetCountForTotalRows(totalCount);
-        if (dataSheets > 1 && keepSheetGroupTogether()) {
+        if (keepSheetGroupTogether()) {
             dataSheets = expandSheetCountForGroupKeeping(dataSheets);
         }
         byte[] rawTemplate = readClasspathTemplateBytes(excelPath);
