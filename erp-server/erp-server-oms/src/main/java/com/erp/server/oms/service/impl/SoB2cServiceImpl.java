@@ -12663,7 +12663,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         soB2cReceiverService.add(receiverDTO, soB2cEntity);
         if (!soB2cDetailService.saveBatch(detailList)) {
-            throw new ServiceException("B2C销售订单明细导入失败");
+            throw new ServiceException(ApiError.SO_B2C_DETAIL_IMPORT_FAILED);
         }
         soB2cEntity.setPaidAmount(paidAmount);
         soB2cEntity.setTotalDiscount(totalDiscount);
