@@ -159,9 +159,6 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     private DmpMqFeign dmpMqFeign;
 
     @Resource
-    private WmsAttachmentService wmsAttachmentService;
-
-    @Resource
     private SkuMappingFeign skuMappingFeign;
 
     @Resource
