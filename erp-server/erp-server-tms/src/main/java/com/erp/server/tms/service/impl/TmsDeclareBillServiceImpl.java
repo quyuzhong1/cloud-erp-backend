@@ -4668,9 +4668,10 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                                                   TmsDeclareBillEntity declareBillEntity) {
         List<String> businessTypeList = new ArrayList<>();
         if (CollUtil.isNotEmpty(sourceDetailList)) {
-            businessTypeList.addAll(sourceDetailList.stream()
+            sourceDetailList.stream()
                     .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getBusinessType)
-                    .collect(Collectors.toList()));
+                    .filter(StringUtils::isNotBlank)
+                    .forEach(businessTypeList::add);
         }
 
         List<String> sourceIdList = CollUtil.isEmpty(sourceDetailList) ? Collections.emptyList()
@@ -4683,15 +4684,17 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             if (CharSequenceUtil.equals(type, SourceTypeEnum.FM_DECLARE_BILL.getCode())) {
                 List<TmsDeclareBillDTO.DeliveryDTO> deliveryDTOList = getCanGenerateDeliveryOrder(
                         TmsDeclareBillDTO.QuerySourceDTO.builder().ids(sourceIdList).build());
-                businessTypeList.addAll(deliveryDTOList.stream()
+                deliveryDTOList.stream()
                         .map(TmsDeclareBillDTO.DeliveryDTO::getBusinessType)
-                        .collect(Collectors.toList()));
+                        .filter(StringUtils::isNotBlank)
+                        .forEach(businessTypeList::add);
             } else if (CharSequenceUtil.equals(type, SourceTypeEnum.B2B_DECLARE_BILL.getCode())) {
                 List<TmsDeclareBillDTO.SoOutDTO> deliveryDTOList = getCanGenerateSoOut(
                         TmsDeclareBillDTO.QuerySourceDTO.builder().ids(sourceIdList).build());
-                businessTypeList.addAll(deliveryDTOList.stream()
+                deliveryDTOList.stream()
                         .map(TmsDeclareBillDTO.SoOutDTO::getBusinessType)
-                        .collect(Collectors.toList()));
+                        .filter(StringUtils::isNotBlank)
+                        .forEach(businessTypeList::add);
             }
         }
 
