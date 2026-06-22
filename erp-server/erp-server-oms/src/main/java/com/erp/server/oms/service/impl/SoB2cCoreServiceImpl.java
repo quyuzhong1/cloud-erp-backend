@@ -478,7 +478,7 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
         }else if (PlatformDictEnum.LING_XING.getCode().equals(soB2cEntity.getThirdSystem())) {
             outPutClass = "DmpOutputLxOrderRocketMQTaskHandler";
             sourceCode = soB2cEntity.getThirdCode();
-        }else if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(soB2cEntity.getDictPlatform())) {
+        }else if (isAliExpressApiPlatform(soB2cEntity.getDictPlatform())) {
             outPutClass = "DmpOutputAliExpressOrderRocketMQTaskHandler";
             sourceCode = soB2cEntity.getThirdCode();
         }
@@ -525,7 +525,7 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
         }else if (PlatformDictEnum.LING_XING.getCode().equals(soB2cEntity.getThirdSystem())) {
             outPutClass = "DmpOutputLxOrderRocketMQTaskHandler";
             sourceCode = soB2cEntity.getThirdCode();
-        }else if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(soB2cEntity.getDictPlatform())) {
+        }else if (isAliExpressApiPlatform(soB2cEntity.getDictPlatform())) {
             outPutClass = "DmpOutputAliExpressOrderRocketMQTaskHandler";
             sourceCode = soB2cEntity.getPlatformCode();
         }else if (PlatformDictEnum.AMAZON.getCode().equals(soB2cEntity.getDictPlatform())) {
@@ -547,5 +547,9 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
             platformOrderConsumerService.handle(dmpOutputTaskRecordEntity.getRequestData());
         }
         return true;
+    }
+
+    private boolean isAliExpressApiPlatform(String platform) {
+        return PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(PlatformDictEnum.getApiPlatformCode(platform));
     }
 }

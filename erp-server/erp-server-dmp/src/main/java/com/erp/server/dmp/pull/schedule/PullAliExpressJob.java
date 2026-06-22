@@ -30,6 +30,8 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -55,6 +57,21 @@ public class PullAliExpressJob {
 
     @Resource
     private ShopInfoFeign shopInfoFeign;
+
+    private List<PlatformApiTaskEntity> listAliExpressOrderTasks() {
+        Map<String, PlatformApiTaskEntity> taskMap = new LinkedHashMap<>();
+        List<PlatformApiTaskEntity> aliExpressTasks =
+                platformApiTaskService.listByPlatformAndBillType(PlatformDictEnum.ALI_EXPRESS.getCode(), BusinessTypeEnum.ORDER.getCode());
+        if (CollectionUtils.isNotEmpty(aliExpressTasks)) {
+            aliExpressTasks.forEach(task -> taskMap.put(task.getId(), task));
+        }
+        List<PlatformApiTaskEntity> overseasManagedTasks =
+                platformApiTaskService.listByPlatformAndBillType(PlatformDictEnum.ALI_EXPRESS_OVERSEAS_MANAGED.getCode(), BusinessTypeEnum.ORDER.getCode());
+        if (CollectionUtils.isNotEmpty(overseasManagedTasks)) {
+            overseasManagedTasks.forEach(task -> taskMap.put(task.getId(), task));
+        }
+        return new ArrayList<>(taskMap.values());
+    }
 
 
     /**
@@ -112,7 +129,7 @@ public class PullAliExpressJob {
             size = 100;
         }
         // 查询所有任务列表
-        List<PlatformApiTaskEntity> taskList = platformApiTaskService.listByPlatformAndBillType(PlatformDictEnum.ALI_EXPRESS.getCode(), CleanDataTableEnum.ALI_EXPRESS_ORDER.getBusiness());
+        List<PlatformApiTaskEntity> taskList = listAliExpressOrderTasks();
         if (CollectionUtils.isEmpty(taskList)) {
             XxlJobHelper.log("[拉取速卖通订单地址任务] aliExpressAddressExecute 任务结束,未找到需执行的任务");
         }
@@ -143,16 +160,13 @@ public class PullAliExpressJob {
         }
         XxlJobHelper.log("[拉取速卖通订单详情任务] aliExpressOrderDetailDownload 任务开始,size={}", size);
         // 查询所有任务列表
-        List<PlatformApiTaskEntity> taskList = platformApiTaskService.listByPlatformAndBillType(PlatformDictEnum.ALI_EXPRESS.getCode(), "order");
+        List<PlatformApiTaskEntity> taskList = listAliExpressOrderTasks();
         if (CollectionUtils.isEmpty(taskList)) {
             XxlJobHelper.log("[拉取速卖通订单详情任务] aliExpressOrderDetailDownload 任务结束,未找到需执行的任务");
             return ReturnT.SUCCESS;
         }
         // 根据状态查询
-        ShopInfoDTO.ListParamDTO conditionDTO = new ShopInfoDTO.ListParamDTO();
-        conditionDTO.setAuthStatus(AuthStatusEnum.ALREADY.getCode());
-        conditionDTO.setDictPlatform(PlatformDictEnum.ALI_EXPRESS.getCode());
-        List<ShopInfoEntity> list = shopInfoFeign.listByParams(conditionDTO);
+        List<ShopInfoEntity> list = listAuthorizedAliExpressShops();
 
         // 根据groupId分组店铺id
         Map<String, List<PlatformApiTaskEntity>> taskGroupMap = taskList.stream().collect(Collectors.groupingBy(PlatformApiTaskEntity::getGroupId));
@@ -196,13 +210,13 @@ public class PullAliExpressJob {
         }
         XxlJobHelper.log("[拉取速卖通发货单任务] aliExpressSoDeliveryDownload 任务开始,size={}", size);
         // 查询所有任务列表
-        List<PlatformApiTaskEntity> taskList = platformApiTaskService.listByPlatformAndBillType(PlatformDictEnum.ALI_EXPRESS.getCode(), "order");
+        List<PlatformApiTaskEntity> taskList = listAliExpressOrderTasks();
         if (org.springframework.util.CollectionUtils.isEmpty(taskList)) {
             XxlJobHelper.log("[拉取速卖通发货单任务] aliExpressSoDeliveryDownload 任务结束,未找到需执行的任务");
             return ReturnT.SUCCESS;
         }
         // 根据状态查询
-        List<ShopInfoEntity> list = shopInfoFeign.listByParams(new ShopInfoDTO.ListParamDTO(AuthStatusEnum.ALREADY.getCode(), PlatformDictEnum.ALI_EXPRESS.getCode(), null));
+        List<ShopInfoEntity> list = listAuthorizedAliExpressShops();
 
         // 根据groupId分组店铺id
         Map<String, List<PlatformApiTaskEntity>> taskGroupMap = taskList.stream().collect(Collectors.groupingBy(PlatformApiTaskEntity::getGroupId));
@@ -245,13 +259,13 @@ public class PullAliExpressJob {
         }
         XxlJobHelper.log("[拉取速卖通发货单明细任务] aliExpressSoDeliveryDetailDownload 任务开始,size={}", size);
         // 查询所有任务列表
-        List<PlatformApiTaskEntity> taskList = platformApiTaskService.listByPlatformAndBillType(PlatformDictEnum.ALI_EXPRESS.getCode(), "order");
+        List<PlatformApiTaskEntity> taskList = listAliExpressOrderTasks();
         if (org.springframework.util.CollectionUtils.isEmpty(taskList)) {
             XxlJobHelper.log("[拉取速卖通发货单明细任务] aliExpressSoDeliveryDetailDownload 任务结束,未找到需执行的任务");
             return ReturnT.SUCCESS;
         }
         // 根据状态查询
-        List<ShopInfoEntity> list = shopInfoFeign.listByParams(new ShopInfoDTO.ListParamDTO(AuthStatusEnum.ALREADY.getCode(), PlatformDictEnum.ALI_EXPRESS.getCode(), null));
+        List<ShopInfoEntity> list = listAuthorizedAliExpressShops();
 
         // 根据groupId分组店铺id
         Map<String, List<PlatformApiTaskEntity>> taskGroupMap = taskList.stream().collect(Collectors.groupingBy(PlatformApiTaskEntity::getGroupId));
@@ -277,5 +291,18 @@ public class PullAliExpressJob {
         }
         XxlJobHelper.log("[拉取速卖通发货单明细任务] aliExpressSoDeliveryDetailDownload 任务结束");
         return ReturnT.SUCCESS;
+    }
+
+    private List<ShopInfoEntity> listAuthorizedAliExpressShops() {
+        List<ShopInfoEntity> shopList = new ArrayList<>();
+        List<ShopInfoEntity> aliExpressShopList = shopInfoFeign.listByParams(new ShopInfoDTO.ListParamDTO(AuthStatusEnum.ALREADY.getCode(), PlatformDictEnum.ALI_EXPRESS.getCode(), null));
+        if (CollectionUtils.isNotEmpty(aliExpressShopList)) {
+            shopList.addAll(aliExpressShopList);
+        }
+        List<ShopInfoEntity> overseasManagedShopList = shopInfoFeign.listByParams(new ShopInfoDTO.ListParamDTO(AuthStatusEnum.ALREADY.getCode(), PlatformDictEnum.ALI_EXPRESS_OVERSEAS_MANAGED.getCode(), null));
+        if (CollectionUtils.isNotEmpty(overseasManagedShopList)) {
+            shopList.addAll(overseasManagedShopList);
+        }
+        return shopList;
     }
 }

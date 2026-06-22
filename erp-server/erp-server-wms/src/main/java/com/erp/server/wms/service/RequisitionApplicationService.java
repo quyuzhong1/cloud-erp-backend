@@ -5,6 +5,7 @@ import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
+import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.dto.inventory.VirtualFlowRefactorDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
@@ -298,4 +299,10 @@ public interface RequisitionApplicationService extends SuperService<RequisitionA
      * @param dto
      */
     void generateThirdDelivery(RequisitionApplicationDTO.GenerateThirdDelivery dto);
+
+    List<RequisitionApplicationDTO.UploadProductLabelViewDTO> uploadProductLabelView(List<String> ids);
+
+    Boolean uploadProductLabel(List<RequisitionApplicationDTO.UploadProductLabelDTO> dtoList);
+
+    WmsAttachmentDTO.UpdateDTO printProductLabel(RequisitionApplicationDTO.PrintProductLabelDTO dto);
 }

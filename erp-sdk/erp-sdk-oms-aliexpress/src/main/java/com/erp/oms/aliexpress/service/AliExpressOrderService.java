@@ -14,6 +14,7 @@ import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.oms.entity.ShopAuthEntity;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.oms.aliexpress.api.IopClient;
 import com.erp.oms.aliexpress.api.IopClientImpl;
 import com.erp.oms.aliexpress.api.IopRequest;
@@ -267,7 +268,10 @@ public class AliExpressOrderService {
         Object tokenObj = redisUtil.get(tokenKey);
         if (null != tokenObj) {
             if (tokenObj instanceof AliExpressShopInfoDTO) {
-                return (AliExpressShopInfoDTO) tokenObj;
+                AliExpressShopInfoDTO cached = (AliExpressShopInfoDTO) tokenObj;
+                if (StrUtil.isNotBlank(cached.getDictPlatform())) {
+                    return cached;
+                }
             }
         }
             ShopAuthEntity shopAuthEntity = shopInfoFeign.getShopAuthByShopId(shopId);
@@ -286,8 +290,16 @@ public class AliExpressOrderService {
             result.setClientId(cfgAppClient.getClientId());
             result.setClientSecret(cfgAppClient.getClientSecret());
             result.setId(shopId);
+            ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(shopId);
+            if (Objects.nonNull(shopInfoEntity)) {
+                result.setName(shopInfoEntity.getName());
+                result.setDictPlatform(shopInfoEntity.getDictPlatform());
+            }
             if (Objects.nonNull(shopAuthEntity)) {
                 result.setToken(shopAuthEntity.getToken());
+                if (StrUtil.isBlank(result.getDictPlatform())) {
+                    result.setDictPlatform(shopAuthEntity.getDictPlatform());
+                }
                 redisUtil.set(tokenKey, result, shopAuthEntity.getExpiresIn());
             }
 
@@ -530,6 +542,148 @@ public class AliExpressOrderService {
             } else {
                 ServiceException.runError(errorCode, JSONUtil.toJsonStr(body));
             }
+        }
+    }
+
+    /**
+     * 速卖通海外托管子订单声明发货
+     */
+    public void overseasManagedSubDeclareDeliver(DeclareDeliverRequest declareDeliverRequest) throws ApiException {
+        String shopId = declareDeliverRequest.getShopId();
+        AliExpressShopInfoDTO shopInfoDTO = this.getShopInfoByShopId(shopId);
+        if (Objects.isNull(shopInfoDTO)) {
+            log.error("[速卖通海外托管声明发货 获取 token 失败: shopId={}", shopId);
+            throw new ServiceException(ApiError.SHOP_TOKEN_FETCH_FAILED, shopId);
+        }
+        if (CollectionUtils.isEmpty(declareDeliverRequest.getSubTradeOrderDTOList())) {
+            ServiceException.runError("提交的子订单小标不能为空");
+        }
+        String sellerId = resolveOverseasManagedSellerId(shopInfoDTO);
+        if (StringUtils.isBlank(sellerId)) {
+            ServiceException.runError("速卖通海外托管声明发货失败，未获取到sellerId");
+        }
+
+        List<Map<String, Object>> subTradeOrderList = new LinkedList<>();
+        for (DeclareDeliverRequest.SubTradeOrderDTO subTradeOrderDTO : declareDeliverRequest.getSubTradeOrderDTOList()) {
+            Map<String, Object> shipment = new HashMap<>();
+            shipment.put("logisticsNo", declareDeliverRequest.getLogisticsNo());
+            shipment.put("serviceName", declareDeliverRequest.getServiceName());
+            if (StringUtils.isNotBlank(declareDeliverRequest.getActualCarrier())) {
+                shipment.put("carrierCode", declareDeliverRequest.getActualCarrier());
+            }
+
+            Map<String, Object> subTradeOrder = new HashMap<>();
+            subTradeOrder.put("tradeOrderLineId", subTradeOrderDTO.getSubTradeOrderIndex());
+            subTradeOrder.put("sendType", subTradeOrderDTO.getSendType());
+            subTradeOrder.put("shipmentList", Collections.singletonList(shipment));
+            subTradeOrderList.add(subTradeOrder);
+        }
+
+        String appKey = shopInfoDTO.getClientId();
+        String appSecret = shopInfoDTO.getClientSecret();
+        String baseUrl = shopInfoDTO.getBaseUrl();
+        String token = shopInfoDTO.getToken();
+        IopClient client = new IopClientImpl(baseUrl, appKey, appSecret);
+        IopRequest request = new IopRequest();
+        request.setApiName(AliexpressConstants.OVERSEAS_MANAGED_SUB_DECLARE_DELIVER);
+        request.addApiParameter("tradeOrderId", declareDeliverRequest.getOutRef());
+        request.addApiParameter("sellerId", sellerId);
+        request.addApiParameter("subTradeOrderList", JSONUtil.toJsonStr(subTradeOrderList));
+        request.addApiParameter("simplify", "true");
+        log.warn("【{}】速卖通海外托管标记发货:请求参数={}", declareDeliverRequest.getOutRef(), JSONUtil.toJsonStr(request));
+        IopResponse response = client.execute(request, token, Protocol.TOP);
+        log.warn("【{}】速卖通海外托管标记发货:响应结果={}", declareDeliverRequest.getOutRef(), JSONUtil.toJsonStr(response));
+        assertOverseasManagedSubDeclareSuccess(response.getBody());
+    }
+
+    private String resolveOverseasManagedSellerId(AliExpressShopInfoDTO shopInfoDTO) throws ApiException {
+        IopClient client = new IopClientImpl(shopInfoDTO.getBaseUrl(), shopInfoDTO.getClientId(), shopInfoDTO.getClientSecret());
+        IopRequest request = new IopRequest();
+        request.setApiName(AliexpressConstants.SELLER_RELATION_QUERY);
+        request.addApiParameter("business_type", "LOCAL_SERVICE");
+        request.addApiParameter("simplify", "true");
+        IopResponse response = client.execute(request, shopInfoDTO.getToken(), Protocol.TOP);
+        JSONObject payload = unwrapPayload(response.getBody(), "global_seller_relation_query_response");
+        return firstNotBlank(payload.getStr("channel_seller_id"), payload.getStr("channelSellerId"));
+    }
+
+    private void assertOverseasManagedSubDeclareSuccess(String body) {
+        JSONObject payload = unwrapPayload(body, "aliexpress_asf_local_supply_sub_declareship_response");
+        JSONObject data = payload.getJSONObject("data");
+        String code = firstNotBlank(payload.getStr("code"), Objects.nonNull(data) ? data.getStr("code") : "");
+        String errorCode = firstNotBlank(
+                payload.getStr("errorCode"),
+                payload.getStr("error_code"),
+                Objects.nonNull(data) ? data.getStr("errorCode") : "",
+                Objects.nonNull(data) ? data.getStr("error_code") : ""
+        );
+        String errorMessage = firstNotBlank(
+                payload.getStr("errorMessage"),
+                payload.getStr("error_message"),
+                Objects.nonNull(data) ? data.getStr("errorMessage") : "",
+                Objects.nonNull(data) ? data.getStr("error_message") : ""
+        );
+        Object success = firstNotNull(
+                payload.get("success"),
+                payload.get("result_success"),
+                Objects.nonNull(data) ? data.get("success") : null
+        );
+        boolean successFlag = Objects.isNull(success)
+                || (!Boolean.FALSE.equals(success) && !"false".equalsIgnoreCase(String.valueOf(success)));
+        if (StringUtils.isNotBlank(code) && !AliexpressConstants.SUCCESS_CODE.equals(code)) {
+            ServiceException.runError(-1000000, JSONUtil.toJsonStr(payload));
+        }
+        boolean hasErrorCode = StringUtils.isNotBlank(errorCode) && !AliexpressConstants.SUCCESS_CODE.equals(errorCode);
+        if (hasErrorCode || !successFlag) {
+            ServiceException.runError(parseErrorCode(errorCode), firstNotBlank(errorMessage, JSONUtil.toJsonStr(payload)));
+        }
+    }
+
+    private JSONObject unwrapPayload(String body, String responseKey) {
+        if (StringUtils.isBlank(body)) {
+            return new JSONObject();
+        }
+        JSONObject root = JSONUtil.parseObj(body);
+        JSONObject payload = root.getJSONObject(responseKey);
+        if (Objects.isNull(payload)) {
+            payload = root;
+        } else {
+            if (StringUtils.isBlank(payload.getStr("code"))) {
+                payload.set("code", root.getStr("code"));
+            }
+            if (StringUtils.isBlank(payload.getStr("request_id"))) {
+                payload.set("request_id", root.getStr("request_id"));
+            }
+        }
+        return payload;
+    }
+
+    private static Object firstNotNull(Object... values) {
+        for (Object value : values) {
+            if (Objects.nonNull(value)) {
+                return value;
+            }
+        }
+        return null;
+    }
+
+    private static String firstNotBlank(String... values) {
+        for (String value : values) {
+            if (StringUtils.isNotBlank(value)) {
+                return value;
+            }
+        }
+        return "";
+    }
+
+    private static Integer parseErrorCode(String errorCode) {
+        if (StringUtils.isBlank(errorCode)) {
+            return -1000000;
+        }
+        try {
+            return Integer.valueOf(errorCode);
+        } catch (Exception e) {
+            return -1000000;
         }
     }
 

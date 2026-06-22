@@ -8,6 +8,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDetailDTO;
+import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.model.wms.entity.OverseasWarehouseInboundDetailEntity;
@@ -202,4 +203,10 @@ public interface OverseasWarehouseInboundService extends SuperService<OverseasWa
      * @date: 2025-05-19
      */
     List<OverseasWarehouseInboundDetailDTO.ViewChangeDTO> viewChangeList(OverseasWarehouseInboundDTO.ViewListReqDTO dto);
+
+    List<OverseasWarehouseInboundDTO.UploadCartonLabelViewDTO> uploadCartonLabelView(OverseasWarehouseInboundDTO.UploadCartonLabelViewReqDTO dto);
+
+    Boolean uploadCartonLabel(List<OverseasWarehouseInboundDTO.UploadCartonLabelDTO> dtoList);
+
+    WmsAttachmentDTO.UpdateDTO printCartonLabel(OverseasWarehouseInboundDTO.PrintCartonLabelDTO dto);
 }

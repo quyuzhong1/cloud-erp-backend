@@ -28,6 +28,11 @@ public class AliExpressShopInfoDTO {
     private String name;
 
     /**
+     * ERP店铺平台
+     */
+    private String dictPlatform;
+
+    /**
      * url
      */
     private String baseUrl;

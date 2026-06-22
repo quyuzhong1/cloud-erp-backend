@@ -28,6 +28,7 @@ import com.erp.oms.aliexpress.dto.request.DeclareDeliverRequest;
 import com.erp.oms.aliexpress.dto.response.AliExpressOrderDetail;
 import com.erp.oms.aliexpress.dto.response.OrderItemDetail;
 import com.erp.oms.aliexpress.service.AliExpressOrderService;
+import com.erp.oms.aliexpress.util.ApiException;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.server.wms.service.DictBasicService;
@@ -55,7 +56,7 @@ public class AliexpressShipOrder extends AbstractShipOrder {
     private LogisticsFeign logisticsFeign;
 
     @Resource
-    private AliExpressOrderService aliExpressOrderService;
+    protected AliExpressOrderService aliExpressOrderService;
 
     @Resource
     private DictBasicService dictBasicService;
@@ -74,7 +75,7 @@ public class AliexpressShipOrder extends AbstractShipOrder {
         //获取销售渠道信息
         LogisticsChannelDTO.SignShipDTO tmsSignShipDTO = logisticsFeign.getScaleChannelByChannelById(
                 channelId,
-                PlatformDictEnum.ALI_EXPRESS.getCode()
+                getLogisticsPlatformCode()
         );
         if (null == tmsSignShipDTO) {
             throw new ServiceException("找不到渠道信息");
@@ -132,7 +133,7 @@ public class AliexpressShipOrder extends AbstractShipOrder {
                 if(!sourceDetailIds.contains(orderItemDetail.getChildOrderId())){
                     continue;
                 }
-                subTradeOrderDTOList.add(new DeclareDeliverRequest.SubTradeOrderDTO(orderItemDetail.getOrderSortId(), signDetailMap.getOrDefault(orderItemDetail.getChildOrderId(), "all")));
+                subTradeOrderDTOList.add(new DeclareDeliverRequest.SubTradeOrderDTO(getSubTradeOrderIndex(orderItemDetail), signDetailMap.getOrDefault(orderItemDetail.getChildOrderId(), "all")));
             }
             if (CollectionUtils.isEmpty(subTradeOrderDTOList)){
                 log.error("【速卖通标记发货】订单【{}】数据异常未匹配到有效子订单下标: 需要标记的sourceDetailIds={}",
@@ -171,7 +172,7 @@ public class AliexpressShipOrder extends AbstractShipOrder {
             }
 
             try {
-                aliExpressOrderService.subDeclareDeliver(request);
+                declareDeliver(request);
                 signShippedDetailList.addAll(currentDetailEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList()));
             } catch (ServiceException e){
                 if (Integer.valueOf(-353).equals(e.getCode())) {
@@ -258,7 +259,7 @@ public class AliexpressShipOrder extends AbstractShipOrder {
         //重置发货声明订单号
         request.setTrackingWebSite(secondContent);
         try {
-            aliExpressOrderService.subDeclareDeliver(request);
+            declareDeliver(request);
             signShippedDetailList.addAll(detailEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList()));
             return signShippedDetailList;
         } catch (ServiceException e){
@@ -272,6 +273,18 @@ public class AliexpressShipOrder extends AbstractShipOrder {
             log.error("【速卖通标记发货】销售订单【{}】,平台订单【{}】速卖通标记发货失败 >>>>{}", mainEntity.getCode(), mainEntity.getPlatformCode(), ExceptionUtil.stacktraceToString(e));
             throw new ServiceException("速卖通标记发货失败:" + e.getMessage());
         }
+    }
+
+    protected String getLogisticsPlatformCode() {
+        return PlatformDictEnum.ALI_EXPRESS.getCode();
+    }
+
+    protected String getSubTradeOrderIndex(OrderItemDetail orderItemDetail) {
+        return orderItemDetail.getOrderSortId();
+    }
+
+    protected void declareDeliver(DeclareDeliverRequest request) throws ApiException {
+        aliExpressOrderService.subDeclareDeliver(request);
     }
 
     @Override

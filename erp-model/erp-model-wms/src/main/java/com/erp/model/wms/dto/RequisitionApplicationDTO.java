@@ -1766,6 +1766,56 @@ public class RequisitionApplicationDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    public static class UploadProductLabelViewDTO implements Serializable {
+        /**
+         * 主键id
+         */
+        private String id;
+
+        /**
+         * 单据编号
+         */
+        private String code;
+
+        /**
+         * 文件
+         */
+        private AttachDTO attachDTO;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class UploadProductLabelDTO implements Serializable {
+        /**
+         * 主键id
+         */
+        @NotBlank(message = "id不能为空")
+        private String id;
+
+        /**
+         * 文件
+         */
+        @NotNull(message = "文件不能为空")
+        private AttachDTO attachDTO;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PrintProductLabelDTO implements Serializable {
+        /**
+         * 主键id
+         */
+        @NotBlank(message = "id不能为空")
+        private String id;
+
+        /**
+         * 单据编号
+         */
+        private String code;
+    }
+
+    @Data
+    @NoArgsConstructor
     @AllArgsConstructor
     public static class InventoryDTO {
         /**

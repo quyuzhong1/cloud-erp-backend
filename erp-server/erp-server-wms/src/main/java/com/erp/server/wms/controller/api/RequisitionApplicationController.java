@@ -18,6 +18,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
+import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
@@ -679,6 +680,46 @@ public class RequisitionApplicationController extends BaseController {
     @PostMapping("/printFnskuBillConfirm")
     public void printFnskuBillConfirm(@RequestBody @Validated RequisitionApplicationDTO.PrintFnskuBillConfirmDTO dto , HttpServletResponse response) {
         requisitionApplicationService.printFnskuBillConfirm(dto,response);
+    }
+
+    /**
+     * 上传货品标签回显
+     */
+    @PostMapping("/uploadProductLabelView")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:requisitionApplication:uploadProductLabelView",
+            serviceClass = RequisitionApplicationService.class,
+            keyIdName = "ids")
+    public ApiResult<List<RequisitionApplicationDTO.UploadProductLabelViewDTO>> uploadProductLabelView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        return success(requisitionApplicationService.uploadProductLabelView(dto.getIds()));
+    }
+
+    /**
+     * 上传货品标签
+     */
+    @PostMapping("/uploadProductLabel")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "要货申请上传货品标签")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:requisitionApplication:uploadProductLabel",
+            serviceClass = RequisitionApplicationService.class,
+            keyIdName = "id")
+    public ApiResult<Boolean> uploadProductLabel(@RequestBody @Validated List<RequisitionApplicationDTO.UploadProductLabelDTO> dtoList) {
+        return success(requisitionApplicationService.uploadProductLabel(dtoList));
+    }
+
+    /**
+     * 打印货品标签
+     */
+    @PostMapping("/printProductLabel")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:requisitionApplication:printProductLabel",
+            serviceClass = RequisitionApplicationService.class,
+            keyIdName = "id")
+    public ApiResult<WmsAttachmentDTO.UpdateDTO> printProductLabel(@RequestBody @Validated RequisitionApplicationDTO.PrintProductLabelDTO dto) {
+        return success(requisitionApplicationService.printProductLabel(dto));
     }
 
     /**

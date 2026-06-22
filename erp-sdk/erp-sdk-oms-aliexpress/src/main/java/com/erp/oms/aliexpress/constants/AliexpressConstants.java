@@ -58,6 +58,16 @@ public interface AliexpressConstants {
     String SUB_DECLARE_DELIVER = "aliexpress.logistics.order.shipment";
 
     /**
+     * 海外托管标发平台
+     */
+    String OVERSEAS_MANAGED_SUB_DECLARE_DELIVER = "aliexpress.asf.local.supply.sub.declareship";
+
+    /**
+     * 查询海外托管卖家关系
+     */
+    String SELLER_RELATION_QUERY = "global.seller.relation.query";
+
+    /**
      * 海外仓表示
      */
     String CAINIAO_INTERNATIONAL_WAREHOUSE="cainiaoInternationalWarehouse";

@@ -38,7 +38,7 @@ public class AuthSaveHandler extends AbstractSparrowAnnotationBeanMap<PlatformAn
      * @param dto
      */
     public static String getShopAuthorizeUrl(ShopAuthorizeUrlDTO dto) {
-        IShopAuthorizeService<T> service = PAY_MAP.get(PlatformDictEnum.getByCode(dto.getPlatformCode()));
+        IShopAuthorizeService<T> service = PAY_MAP.get(getAuthorizePlatform(dto.getPlatformCode()));
         if(Objects.isNull(service)){
             throw new ServiceException("未对接授权平台");
         }
@@ -51,7 +51,7 @@ public class AuthSaveHandler extends AbstractSparrowAnnotationBeanMap<PlatformAn
      * @param response
      */
     public static Boolean shopAuthorize(ShopAuthorizeDTO dto, HttpServletResponse response){
-        IShopAuthorizeService<T> service = PAY_MAP.get(PlatformDictEnum.getByCode(dto.getPlatformCode()));
+        IShopAuthorizeService<T> service = PAY_MAP.get(getAuthorizePlatform(dto.getPlatformCode()));
         if(Objects.isNull(service)){
             throw new ServiceException("未对接授权平台");
         }
@@ -63,7 +63,7 @@ public class AuthSaveHandler extends AbstractSparrowAnnotationBeanMap<PlatformAn
      * @param dto
      */
     public static Boolean cleanShopAuthorize(CancelAuthorizeDTO dto) {
-        IShopAuthorizeService<T> service = PAY_MAP.get(PlatformDictEnum.getByCode(dto.getPlatformCode()));
+        IShopAuthorizeService<T> service = PAY_MAP.get(getAuthorizePlatform(dto.getPlatformCode()));
         if(Objects.isNull(service)){
             throw new ServiceException("未对接授权平台");
         }
@@ -75,12 +75,15 @@ public class AuthSaveHandler extends AbstractSparrowAnnotationBeanMap<PlatformAn
      * @param dto
      */
     public static Boolean refreshShopToken(RefreshShopTokenDTO dto) {
-        IShopAuthorizeService<T> service = PAY_MAP.get(PlatformDictEnum.getByCode(dto.getPlatformCode()));
+        IShopAuthorizeService<T> service = PAY_MAP.get(getAuthorizePlatform(dto.getPlatformCode()));
         if(Objects.isNull(service)){
             throw new ServiceException("未对接授权平台");
         }
         return service.refreshToken(dto);
     }
 
+    private static PlatformDictEnum getAuthorizePlatform(String platformCode) {
+        return PlatformDictEnum.getByCode(PlatformDictEnum.getApiPlatformCode(platformCode));
+    }
 
 }

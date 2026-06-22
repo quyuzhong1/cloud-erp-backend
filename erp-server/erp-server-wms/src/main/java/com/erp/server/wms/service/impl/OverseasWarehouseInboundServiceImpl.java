@@ -11,6 +11,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.AttachDTO;
 import com.common.business.dto.PlatformInboundDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -78,6 +79,11 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_OVERSEAS_WA
 @Slf4j
 @Service
 public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<OverseasWarehouseInboundMapper, OverseasWarehouseInboundEntity> implements OverseasWarehouseInboundService {
+    private static final String THIRD_WAREHOUSE_CARTON_LABEL = "thirdWarehouseCartonLabel";
+    private static final String TRANSFER_CARTON_LABEL = "transferCartonLabel";
+    private static final String OVERSEAS_INBOUND_THIRD_CARTON_LABEL_TYPE = "overseasInboundThirdCartonLabel";
+    private static final String OVERSEAS_INBOUND_TRANSFER_CARTON_LABEL_TYPE = "overseasInboundTransferCartonLabel";
+
     @Resource
     private OperateLogService operateLogService;
     @Resource
@@ -1482,6 +1488,124 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
             return Collections.emptyList();
         }
         return baseMapper.viewChangeList(dto);
+    }
+
+    @Override
+    public List<OverseasWarehouseInboundDTO.UploadCartonLabelViewDTO> uploadCartonLabelView(OverseasWarehouseInboundDTO.UploadCartonLabelViewReqDTO dto) {
+        String attachmentType = getCartonLabelAttachmentType(dto.getLabelType());
+        List<String> ids = dto.getIds().stream()
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(ids)) {
+            return Collections.emptyList();
+        }
+        List<OverseasWarehouseInboundEntity> entityList = this.listByIds(ids);
+        validateOverseasWarehouseInboundList(ids, entityList);
+        List<OverseasWarehouseInboundDTO.UploadCartonLabelViewDTO> resultList = BeanUtil.copyToList(entityList, OverseasWarehouseInboundDTO.UploadCartonLabelViewDTO.class);
+        List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(ids, attachmentType);
+        resultList.forEach(item -> {
+            WmsAttachmentDTO.UpdateDTO updateDTO = attachmentList.stream()
+                    .filter(attach -> Objects.equals(attach.getBusinessId(), item.getId()))
+                    .findFirst()
+                    .orElse(new WmsAttachmentDTO.UpdateDTO());
+            AttachDTO attachDTO = new AttachDTO();
+            attachDTO.setAttachName(updateDTO.getAttachName());
+            attachDTO.setAttachUrl(updateDTO.getAttachUrl());
+            attachDTO.setBusinessId(updateDTO.getBusinessId());
+            item.setLabelType(dto.getLabelType());
+            item.setAttachDTO(attachDTO);
+        });
+        return resultList;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean uploadCartonLabel(List<OverseasWarehouseInboundDTO.UploadCartonLabelDTO> dtoList) {
+        if (CollectionUtils.isEmpty(dtoList)) {
+            return true;
+        }
+        List<String> ids = dtoList.stream()
+                .map(OverseasWarehouseInboundDTO.UploadCartonLabelDTO::getId)
+                .distinct()
+                .collect(Collectors.toList());
+        List<OverseasWarehouseInboundEntity> entityList = this.listByIds(ids);
+        validateOverseasWarehouseInboundList(ids, entityList);
+        Map<String, OverseasWarehouseInboundEntity> entityMap = entityList.stream()
+                .collect(Collectors.toMap(OverseasWarehouseInboundEntity::getId, Function.identity()));
+        for (OverseasWarehouseInboundDTO.UploadCartonLabelDTO dto : dtoList) {
+            OverseasWarehouseInboundEntity entity = entityMap.get(dto.getId());
+            String attachmentType = getCartonLabelAttachmentType(dto.getLabelType());
+            String labelName = getCartonLabelName(dto.getLabelType());
+            AttachDTO attachDTO = dto.getAttachDTO();
+            validatePdfAttach(entity.getCode(), labelName, attachDTO);
+            wmsAttachmentService.batchSave(
+                    Collections.singletonList(attachDTO.getAttachUrl()),
+                    Collections.singletonList(attachDTO.getAttachName()),
+                    attachmentType,
+                    entity.getId()
+            );
+        }
+        return true;
+    }
+
+    @Override
+    public WmsAttachmentDTO.UpdateDTO printCartonLabel(OverseasWarehouseInboundDTO.PrintCartonLabelDTO dto) {
+        String attachmentType = getCartonLabelAttachmentType(dto.getLabelType());
+        String labelName = getCartonLabelName(dto.getLabelType());
+        OverseasWarehouseInboundEntity entity = this.getById(dto.getId());
+        if (Objects.isNull(entity)) {
+            throw new ServiceException("海外仓入库单不存在");
+        }
+        List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Collections.singletonList(entity.getId()), attachmentType);
+        if (CollUtil.isEmpty(attachmentList)) {
+            throw new ServiceException("海外仓入库单【{}】未上传{}", entity.getCode(), labelName);
+        }
+        return attachmentList.get(0);
+    }
+
+    private void validateOverseasWarehouseInboundList(List<String> ids, List<OverseasWarehouseInboundEntity> entityList) {
+        if (CollectionUtils.isEmpty(entityList)) {
+            throw new ServiceException("海外仓入库单不存在");
+        }
+        Set<String> existIds = entityList.stream()
+                .map(OverseasWarehouseInboundEntity::getId)
+                .collect(Collectors.toSet());
+        Optional<String> missingId = ids.stream()
+                .filter(id -> !existIds.contains(id))
+                .findFirst();
+        if (missingId.isPresent()) {
+            throw new ServiceException("海外仓入库单【{}】不存在", missingId.get());
+        }
+    }
+
+    private void validatePdfAttach(String code, String labelName, AttachDTO attachDTO) {
+        if (Objects.isNull(attachDTO) || CharSequenceUtil.isBlank(attachDTO.getAttachUrl()) || CharSequenceUtil.isBlank(attachDTO.getAttachName())) {
+            throw new ServiceException("海外仓入库单【{}】上传{}失败：文件不能为空", code, labelName);
+        }
+        if (!attachDTO.getAttachName().toLowerCase(Locale.ROOT).endsWith(".pdf")) {
+            throw new ServiceException("海外仓入库单【{}】上传{}失败：仅支持PDF格式", code, labelName);
+        }
+    }
+
+    private String getCartonLabelAttachmentType(String labelType) {
+        if (THIRD_WAREHOUSE_CARTON_LABEL.equals(labelType)) {
+            return OVERSEAS_INBOUND_THIRD_CARTON_LABEL_TYPE;
+        }
+        if (TRANSFER_CARTON_LABEL.equals(labelType)) {
+            return OVERSEAS_INBOUND_TRANSFER_CARTON_LABEL_TYPE;
+        }
+        throw new ServiceException("箱唛类型不正确");
+    }
+
+    private String getCartonLabelName(String labelType) {
+        if (THIRD_WAREHOUSE_CARTON_LABEL.equals(labelType)) {
+            return "三方仓箱唛";
+        }
+        if (TRANSFER_CARTON_LABEL.equals(labelType)) {
+            return "中转箱唛";
+        }
+        throw new ServiceException("箱唛类型不正确");
     }
 
     /**

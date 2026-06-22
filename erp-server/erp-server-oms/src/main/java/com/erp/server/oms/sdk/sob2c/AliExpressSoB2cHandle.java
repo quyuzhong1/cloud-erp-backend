@@ -172,7 +172,7 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
                 shopName = shopInfoEntity.getName();
             }
         }
-        List<WarehouseMappingDTO.MappingViewDTO> mappingViewDTOS = warehouseMappingFeign.listMappingViewByDictPlatform(mainEntity.getDictPlatform());
+        List<WarehouseMappingDTO.MappingViewDTO> mappingViewDTOS = warehouseMappingFeign.listMappingViewByDictPlatform(PlatformDictEnum.getApiPlatformCode(mainEntity.getDictPlatform()));
         List<PlatformDeliveryDTO> deliveryDTOList = dto.getDeliveryDTOList();
         for (PlatformDeliveryDTO deliveryDTO : deliveryDTOList){
             LocalDateTime deliveryWarehouseTime = deliveryDTO.getDeliveryWarehouseTime();
@@ -284,7 +284,7 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
             return;
         }
         //仓库映射
-        List<WarehouseMappingDTO.MappingViewDTO> mappingViewDTOS = warehouseMappingFeign.listMappingViewByDictPlatform(mainEntity.getDictPlatform());
+        List<WarehouseMappingDTO.MappingViewDTO> mappingViewDTOS = warehouseMappingFeign.listMappingViewByDictPlatform(PlatformDictEnum.getApiPlatformCode(mainEntity.getDictPlatform()));
         //生产销售出库单
         deliveryDTOList.forEach(deliveryDTO -> {
             try {
@@ -372,7 +372,7 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
     private DmpInoutDTO.CreateInputDTO createAliExpressInputDTO(SoB2cEntity e) {
         DmpInoutDTO.CreateInputDTO dto = new DmpInoutDTO.CreateInputDTO();
         dto.setNextLevelId(e.getShopId());
-        dto.setSystemCode(e.getDictPlatform());
+        dto.setSystemCode(PlatformDictEnum.getApiPlatformCode(e.getDictPlatform()));
         dto.setBillType(BusinessTypeEnum.ORDER.getCode());
         //  DmpInputTaskTaskTypeEnum	HISTORY("history", "历史任务"),
         dto.setTaskType(HISTORY);

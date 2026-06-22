@@ -148,7 +148,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         if (isShipped
                 && isWarehouseEmpty
                 && hasPlatformWarehouse
-                && !PlatformDictEnum.ALI_EXPRESS.getCode().equals(mainEntity.getDictPlatform())) {
+                && !isAliExpressApiPlatform(mainEntity.getDictPlatform())) {
             String warehouseId = resultDTO.getShopWarehouseId();
             if(StringUtils.isNotBlank(warehouseId)){
               soB2cDetailService.updateWarehouseIdByMainId(mainEntity.getId(),warehouseId,true);
@@ -224,15 +224,8 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
             soB2cService.autoCancelOrderForecast(mainEntity);
         }
 
-        // 非平台
-        if (!mainEntity.hasPlatformWarehouseOrder()
-                && resultDTO.isUpdateCancel()
-        ){
-            if(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equalsIgnoreCase(mainEntity.getBillStatus())
-                    && !mainEntity.getIsIntercept()){
-                soB2cService.deliveryIntercept(mainEntity.getId(), "平台取消");
-            }
-            handleSplitTargetPlatformCancel(mainEntity);
+        if (resultDTO.isUpdateCancel()) {
+            handlePlatformCancelDeliveryIntercept(mainEntity);
         }
 
 
@@ -275,6 +268,20 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
 //        if (Objects.nonNull(entity) && ApproveStatusEnum.APPROVE.getCode().equals(entity.getApproveStatus().getCode())){
 //            cfgInvoiceSettingDetailService.generateNfeInvoice (mainEntity,InvoiceNodeEnum.AFTER_AUDIT.getCode());
 //        }
+    }
+
+    /**
+     * 平台取消后同步发货拦截；速卖通平台仓现有规则不支持本地拦截，海外托管保持一致。
+     */
+    private void handlePlatformCancelDeliveryIntercept(SoB2cEntity mainEntity) {
+        if (mainEntity.hasPlatformWarehouseOrder()) {
+            return;
+        }
+        if (SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equalsIgnoreCase(mainEntity.getBillStatus())
+                && !Boolean.TRUE.equals(mainEntity.getIsIntercept())) {
+            soB2cService.deliveryIntercept(mainEntity.getId(), "平台取消");
+        }
+        handleSplitTargetPlatformCancel(mainEntity);
     }
 
     /**
@@ -381,7 +388,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
 
         // 速卖通同店铺存在相同SkuNo需要配合平台产ID/SPU查询
         List<String> platformSpuList = new LinkedList<>();
-        if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dto.getPlatform())
+        if (isAliExpressApiPlatform(dto.getPlatform())
                 || PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(dto.getPlatform())
                 || PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equalsIgnoreCase(dto.getPlatform())
                 || PlatformDictEnum.SHOPEE.getCode().equalsIgnoreCase(dto.getPlatform())
@@ -713,13 +720,17 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dto.getDictPlatform())) {
             return this.checkHasMfnOrderAndNoAddress(dto);
         }
-        if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dto.getDictPlatform())) {
+        if (isAliExpressApiPlatform(dto.getDictPlatform())) {
             return this.aliExpressNotPlatformOrderNotExistAddress(dto,oldBillStatus);
         }
         if (PlatformDictEnum.TE_MU.getCode().equalsIgnoreCase(dto.getDictPlatform())) {
             return this.temuPlatformOrderNotExistAddress(dto);
         }
         return false;
+    }
+
+    private boolean isAliExpressApiPlatform(String platform) {
+        return PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(PlatformDictEnum.getApiPlatformCode(platform));
     }
 
     /**

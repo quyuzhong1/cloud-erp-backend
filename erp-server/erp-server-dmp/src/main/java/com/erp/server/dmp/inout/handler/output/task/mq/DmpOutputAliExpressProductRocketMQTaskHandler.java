@@ -7,6 +7,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang.StringUtils;
 import org.springframework.context.annotation.Scope;
@@ -80,6 +82,9 @@ public class DmpOutputAliExpressProductRocketMQTaskHandler extends DmpOutputRock
 		for(String changId : changeIds) {
 			DmpProductInfoEntity dmpProductInfoEntity = dmpProductInfoEntityMap.get(changId);
 			List<DmpSkuInfoEntity> dmpSkuInfoEntityList = dmpSkuInfoEntityMap.get(changId);
+			if (dmpProductInfoEntity == null || CollUtil.isEmpty(dmpSkuInfoEntityList)) {
+				continue;
+			}
 			for(DmpSkuInfoEntity dmpSkuInfoEntity : dmpSkuInfoEntityList) {
 				PlatformProductDTO product = this.convert(dmpProductInfoEntity, dmpSkuInfoEntity, cfgOutputId);
 				if(product != null) {
@@ -105,8 +110,12 @@ public class DmpOutputAliExpressProductRocketMQTaskHandler extends DmpOutputRock
         // 平台sku 名
         String spuName = dmpProductInfoEntity.getSpuName();
 		product.setPlatformProductName(spuName);
-        String skuNo = dmpSkuInfoEntity.getSkuNo();
+		String skuNo = dmpSkuInfoEntity.getSkuNo();
 		product.setPlatformSkuNo(StringUtils.isBlank(skuNo)? "" : skuNo);
+		String productSpec = StringUtils.isBlank(dmpSkuInfoEntity.getProdcutProperty())
+				? dmpSkuInfoEntity.getName()
+				: dmpSkuInfoEntity.getProdcutProperty();
+		product.setProductSpec(productSpec);
 
         product.setPlatformSkuName(spuName);
         // 类型 platform 平台  warehouse 仓库
@@ -120,10 +129,11 @@ public class DmpOutputAliExpressProductRocketMQTaskHandler extends DmpOutputRock
         }
         product.setShopId(dmpProductInfoEntity.getNextLevelId());
         // 包装信息
-        String packing = StrUtil.format("长度:{}cm;宽度:{}cm;高度:{}cm;重量:{}kg;", dmpSkuInfoEntity.getPackageLength(), dmpSkuInfoEntity.getPackageWidth(), dmpSkuInfoEntity.getPackageHeight(), dmpSkuInfoEntity.getGrossWeight());
-        product.setProductPacking(packing);
+        product.setProductPacking(buildPacking(dmpSkuInfoEntity));
         product.setPlatformUpdateTime(dmpSkuInfoEntity.getPlatformUpdateTime());
         product.setPlatformSkuId(dmpSkuInfoEntity.getSkuId());
+        product.setPlatformParentSpuNo(dmpSkuInfoEntity.getPlatformParentSpuNo());
+        product.setPlatformStatus(dmpSkuInfoEntity.getStatus());
 
         // 平台唯一标识=平台skuId + 店铺ID
         String uniqueId = StrUtil.format("{}_{}", dmpSkuInfoEntity.getSkuId(), dmpProductInfoEntity.getNextLevelId());
@@ -131,6 +141,20 @@ public class DmpOutputAliExpressProductRocketMQTaskHandler extends DmpOutputRock
     	
         return product;
     }
+
+	private String buildPacking(DmpSkuInfoEntity dmpSkuInfoEntity) {
+		return Stream.of(
+				buildPackingItem("长度", dmpSkuInfoEntity.getPackageLength(), "cm"),
+				buildPackingItem("宽度", dmpSkuInfoEntity.getPackageWidth(), "cm"),
+				buildPackingItem("高度", dmpSkuInfoEntity.getPackageHeight(), "cm"),
+				buildPackingItem("重量", dmpSkuInfoEntity.getGrossWeight(), "kg"))
+				.filter(StringUtils::isNotBlank)
+				.collect(Collectors.joining(";"));
+	}
+
+	private String buildPackingItem(String name, Object value, String unit) {
+		return value == null ? "" : StrUtil.format("{}:{}{}", name, value, unit);
+	}
 
     @Override
     protected List<String> getSourceCodeKeys() {
