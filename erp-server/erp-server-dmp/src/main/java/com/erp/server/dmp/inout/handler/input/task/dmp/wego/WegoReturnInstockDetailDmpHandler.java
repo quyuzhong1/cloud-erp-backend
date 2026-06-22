@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.erp.server.dmp.inout.handler.input.task.dmp.DmpInputDoNextDmpHandler;
 import com.erp.server.dmp.inout.handler.input.task.dmp.jifeng.JiFengReturnInstockDetailDmpHandler;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -28,6 +29,7 @@ import java.util.TreeMap;
  * 如需严格只用实际入库数据，在 InitHandler 层已过滤 status=6（已处理），
  * 「已处理」状态的退货单 instockProducts 通常非空。
  */
+@Slf4j
 @Service
 @Scope("prototype")
 public class WegoReturnInstockDetailDmpHandler extends DmpInputDoNextDmpHandler {
@@ -79,7 +81,7 @@ public class WegoReturnInstockDetailDmpHandler extends DmpInputDoNextDmpHandler 
                     dmpDataMap.put(DMP_KEY_DEFECTIVE_PRODUCT_FLAG, defectiveProductFlag);
                 }
             } catch (NumberFormatException e) {
-                // inventoryType 格式异常时跳过，不影响正常明细处理
+                log.warn("WEGO inventoryType 格式异常，跳过不良品标记回填，inventoryType={}", inventoryTypeObj, e);
             }
         }
     }
