@@ -479,14 +479,15 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     )
     @Override
     public Boolean update(TmsDeclareBillDTO.UpdateDTO updateDTO,SourceTypeEnum sourceTypeEnum) {
-        List<String> syncSourceIds = service.updateInGlobalTx(updateDTO, sourceTypeEnum);
+        List<String> syncSourceIds = service.updateInTx(updateDTO, sourceTypeEnum);
         syncSourceDeclareStatusIfNeeded(sourceTypeEnum.getCode(), syncSourceIds);
         return Boolean.TRUE;
     }
 
+    // 编辑保存仅写 TMS 单库（WMS 回写已移到事务外），用本地事务即可，
+    // 不再使用 @GlobalTransactional 避免 Seata XA prepare 分支失败。
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    public List<String> updateInGlobalTx(TmsDeclareBillDTO.UpdateDTO updateDTO, SourceTypeEnum sourceTypeEnum) {
+    public List<String> updateInTx(TmsDeclareBillDTO.UpdateDTO updateDTO, SourceTypeEnum sourceTypeEnum) {
         TmsDeclareBillEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "报关单"));
         if (!CharSequenceUtil.equals(old.getType(), sourceTypeEnum.getCode())) {
@@ -1789,14 +1790,15 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             unlockAfterTx = true
     )
     public Boolean addB2BDeclare(TmsDeclareBillDTO.AddDTO addDTO) {
-        List<String> syncSourceIds = service.addB2BDeclareInGlobalTx(addDTO);
+        List<String> syncSourceIds = service.addB2BDeclareInTx(addDTO);
         syncSourceDeclareStatusIfNeeded(SourceTypeEnum.B2B_DECLARE_BILL.getCode(), syncSourceIds);
         return Boolean.TRUE;
     }
 
+    // B2B 新增保存仅写 TMS 单库（WMS 回写已移到事务外），用本地事务即可，
+    // 不再使用 @GlobalTransactional 避免 Seata XA prepare 分支失败。
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    public List<String> addB2BDeclareInGlobalTx(TmsDeclareBillDTO.AddDTO addDTO) {
+    public List<String> addB2BDeclareInTx(TmsDeclareBillDTO.AddDTO addDTO) {
         List<String> sourceIdList = resolveAddSourceIdList(addDTO);
         TmsDeclareBillDTO.QuerySourceDTO querySourceDTO = TmsDeclareBillDTO.QuerySourceDTO.builder()
 //                .packingStatus(PackingTaskStatusEnum.PACKED.getCode())
@@ -2858,14 +2860,15 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (CollUtil.isEmpty(declareDTO.getSplitDeclareDTOList())) {
             return Boolean.TRUE;
         }
-        List<String> syncSourceIds = service.batchAddSplitFmDetailInGlobalTx(declareDTO);
+        List<String> syncSourceIds = service.batchAddSplitFmDetailInTx(declareDTO);
         syncSourceDeclareStatusIfNeeded(SourceTypeEnum.FM_DECLARE_BILL.getCode(), syncSourceIds);
         return Boolean.TRUE;
     }
 
+    // 拆分保存仅写 TMS 单库（WMS 回写已移到事务外），用本地事务即可，
+    // 不再使用 @GlobalTransactional 避免 Seata XA prepare 分支失败。
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    public List<String> batchAddSplitFmDetailInGlobalTx(TmsDeclareBillDTO.AddSplitDeclareDTO declareDTO) {
+    public List<String> batchAddSplitFmDetailInTx(TmsDeclareBillDTO.AddSplitDeclareDTO declareDTO) {
         validateSplitDeclareGroups(declareDTO.getSplitDeclareDTOList());
         TmsDeclareBillEntity declareBillEntity = super.getById(declareDTO.getId());
         if (ObjectUtil.isEmpty(declareBillEntity)) {
@@ -2922,14 +2925,15 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (CollUtil.isEmpty(declareDTO.getSplitDeclareDTOList())) {
             return Boolean.TRUE;
         }
-        List<String> syncSourceIds = service.batchAddSplitB2bDetailInGlobalTx(declareDTO);
+        List<String> syncSourceIds = service.batchAddSplitB2bDetailInTx(declareDTO);
         syncSourceDeclareStatusIfNeeded(SourceTypeEnum.B2B_DECLARE_BILL.getCode(), syncSourceIds);
         return Boolean.TRUE;
     }
 
+    // 拆分保存仅写 TMS 单库（WMS 回写已移到事务外），用本地事务即可，
+    // 不再使用 @GlobalTransactional 避免 Seata XA prepare 分支失败。
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    public List<String> batchAddSplitB2bDetailInGlobalTx(TmsDeclareBillDTO.AddSplitDeclareDTO declareDTO) {
+    public List<String> batchAddSplitB2bDetailInTx(TmsDeclareBillDTO.AddSplitDeclareDTO declareDTO) {
         validateSplitDeclareGroups(declareDTO.getSplitDeclareDTOList());
         TmsDeclareBillEntity declareBillEntity = super.getById(declareDTO.getId());
         if (ObjectUtil.isEmpty(declareBillEntity)) {
@@ -4294,14 +4298,15 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             unlockAfterTx = true
     )
     public Boolean batchAddMergeDetail(String type, List<TmsDeclareBillDTO.MergeDeclareBillDTO> list) {
-        List<String> syncSourceIds = service.batchAddMergeDetailInGlobalTx(type, list);
+        List<String> syncSourceIds = service.batchAddMergeDetailInTx(type, list);
         syncSourceDeclareStatusIfNeeded(type, syncSourceIds);
         return Boolean.TRUE;
     }
 
+    // 合并保存仅写 TMS 单库（WMS 回写已移到事务外），用本地事务即可，
+    // 不再使用 @GlobalTransactional 避免 Seata XA prepare 分支失败。
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    public List<String> batchAddMergeDetailInGlobalTx(String type, List<TmsDeclareBillDTO.MergeDeclareBillDTO> list) {
+    public List<String> batchAddMergeDetailInTx(String type, List<TmsDeclareBillDTO.MergeDeclareBillDTO> list) {
         return batchAddMergeDetail(type, list, null, Boolean.FALSE);
     }
 
