@@ -532,6 +532,18 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
                             errorList.add(purchasePriceError);
                         }
                     }
+                } else if (CharSequenceUtil.isBlank(entity.getSubcontractType())) {
+                    // 普通采购单（如采购申请下推）：按价目表补全单价、税率、币别、金额
+                    if (Objects.nonNull(viewDTO)) {
+                        addDTO.setCurrency(viewDTO.getCurrency());
+                        addDTO.setCurrencySymbol(viewDTO.getCurrencySymbol());
+                        addDTO.setTaxPrice(viewDTO.getTaxPrice());
+                        addDTO.setTaxRate(viewDTO.getTaxRate());
+                        addDTO.setPurchaseAmount(MathUtil.multiplyWithTwo(viewDTO.getTaxPrice(), addDTO.getPurchaseQty()));
+                    } else {
+                        String purchasePriceError = MessageUtils.getMessage(ApiError.PURCHASE_PRICE_SKU_NOT_FOUND, addDTO.getSkuNo(), addDTO.getPurchaseQty());
+                        errorList.add(purchasePriceError);
+                    }
                 }
             }else if (PurchaseOrderTypeEnum.ENUM_RETURN.getCode().equals(entity.getType())){
                 if(!addDTO.getIsRevalueTaxRate()){
