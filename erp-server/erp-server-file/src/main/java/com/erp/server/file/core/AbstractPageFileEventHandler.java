@@ -598,8 +598,12 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
                 end++;
             }
             if (groupKey != null && !buffer.writtenGroupKeys.add(groupKey)) {
-                log.warn("导出分组未连续：handler={} groupKey={} paging={}，分组保护可能失效，请检查上游排序是否保持 sheetGroupKey 连续",
-                        getClass().getName(), groupKey, pagingState);
+                String message = "导出分组未连续：handler=" + getClass().getName() + " groupKey=" + groupKey
+                        + " paging=" + pagingState + "，分组保护可能失效，请检查上游排序是否保持 sheetGroupKey 连续";
+                if (failOnNonContinuousSheetGroup()) {
+                    throw new ServiceException(message);
+                }
+                log.warn(message);
             }
             start = end;
         }
@@ -963,6 +967,16 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
      */
     protected Object sheetGroupKey(T row) {
         return null;
+    }
+
+    /**
+     * 分组保护发现同一 groupKey 非连续出现时是否快速失败。
+     * <p>
+     * 默认只打 WARN，避免影响仅将分组保护作为「尽量不拆 sheet」优化的导出；
+     * 若子类的展示正确性强依赖连续分组，应重写为 {@code true}，避免静默产出错误 Excel。
+     */
+    protected boolean failOnNonContinuousSheetGroup() {
+        return false;
     }
 
     /**

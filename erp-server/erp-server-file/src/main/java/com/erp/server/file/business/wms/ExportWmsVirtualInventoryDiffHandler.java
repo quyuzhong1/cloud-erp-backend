@@ -8,7 +8,6 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.VirtualInventoryDiffDTO;
 import com.erp.rpc.wms.feign.ExportWmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
-import com.erp.server.file.handler.FileRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -58,6 +57,14 @@ public class ExportWmsVirtualInventoryDiffHandler extends AbstractPageFileEventH
             return null;
         }
         return CharSequenceUtil.format("{}_{}", row.getSkuId(), row.getWarehouseId());
+    }
+
+    /**
+     * 本导出会在同一 sku+仓库分组内置空重复展示字段，若分组非连续会产出错误展示，必须快速失败。
+     */
+    @Override
+    protected boolean failOnNonContinuousSheetGroup() {
+        return true;
     }
 
     /**
