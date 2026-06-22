@@ -161,8 +161,9 @@ public class DeclarationGenerationService {
         IdentityHashMap<TmsDeclareBillDTO.SourceDeliveryDetailDTO, String> sourceKeyMap = new IdentityHashMap<>();
         for (int i = 0; i < sourceDetails.size(); i++) {
             TmsDeclareBillDTO.SourceDeliveryDetailDTO source = sourceDetails.get(i);
+            String shipmentKey = resolveShipmentKey(source);
             String sourceKey = String.join("|",
-                    StringUtils.defaultString(source.getSourceId()),
+                    StringUtils.defaultString(shipmentKey),
                     StringUtils.defaultString(source.getBoxNo()),
                     StringUtils.defaultString(source.getSkuId()));
             if (StringUtils.isBlank(sourceKey.replace("|", ""))) {
@@ -198,6 +199,7 @@ public class DeclarationGenerationService {
             input.setSku(source.getSkuNo());
             input.setPrice(source.getUnitPrice());
             input.setQuantity(source.getQty());
+            input.setBoxKey(buildDeclareBoxKey(source));
             inputs.add(input);
         }
         return inputs;
@@ -320,9 +322,17 @@ public class DeclarationGenerationService {
 
     private String buildSourceBoxSkuKey(TmsDeclareBillDTO.SourceDeliveryDetailDTO sourceDetail) {
         return String.join("|",
-                StringUtils.defaultString(sourceDetail.getSourceId()),
+                resolveShipmentKey(sourceDetail),
                 StringUtils.defaultString(sourceDetail.getBoxNo()),
                 StringUtils.defaultString(sourceDetail.getSkuId()));
+    }
+
+    /**
+     * 与 {@code TmsDeclareBillServiceImpl#buildDeclareBoxKey} 保持一致：sourceId|boxNo。
+     */
+    private String buildDeclareBoxKey(TmsDeclareBillDTO.SourceDeliveryDetailDTO source) {
+        String sourceKey = StringUtils.defaultIfBlank(source.getSourceId(), source.getBusinessId());
+        return StringUtils.defaultString(sourceKey) + "|" + StringUtils.defaultString(source.getBoxNo());
     }
 
     /**
@@ -509,64 +519,46 @@ public class DeclarationGenerationService {
                 .collect(Collectors.toList());
         detail.setLinkedDetailIds(linkedIds);
 
+        Set<String> boxKeys = groupItems.stream()
+                .map(DeclarationGenerationDTO.InputDetailDTO::getBoxKey)
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        detail.setBoxKeys(boxKeys);
+
         return detail;
     }
 
     /**
-     * 执行 FFD 装箱算法与超限拆分逻辑
-     * @author will
-     * @date 2026/5/9 15:00
-     * @param country 国家编码
-     * @param blocks 发货单聚合块
-     * @return java.util.List<com.erp.model.tms.dto.DeclarationGenerationDTO.OutputDeclarationDTO>
+     * 执行装箱与拆分：同箱明细必须在同一报关单，48 行为上限（单箱超 48 行时整箱保留在一票）。
      */
     private List<DeclarationGenerationDTO.OutputDeclarationDTO> performBinPacking(String country, List<DeclarationGenerationDTO.ShipmentBlock> blocks) {
-        List<DeclarationGenerationDTO.OutputDeclarationDTO> finalDeclarations = new ArrayList<>();
-
-        // 区分超限逻辑块与可打包逻辑块
-        List<DeclarationGenerationDTO.ShipmentBlock> oversizedBlocks = blocks.stream()
-                .filter(b -> b.getSize() > MAX_ROWS_PER_DECLARATION)
-                .collect(Collectors.toList());
-
-        List<DeclarationGenerationDTO.ShipmentBlock> packableBlocks = blocks.stream()
-                .filter(b -> b.getSize() <= MAX_ROWS_PER_DECLARATION)
-                .sorted((b1, b2) -> Integer.compare(b2.getSize(), b1.getSize())) // FFD: 按体积从大到小排序
-                .collect(Collectors.toList());
-
-        // 1. 处理超限逻辑块 (硬截断，不可合并锁定状态)
-        for (DeclarationGenerationDTO.ShipmentBlock block : oversizedBlocks) {
-            List<List<DeclarationGenerationDTO.OutputDeclarationDetailDTO>> partitions = partitionList(block.getDetails(), MAX_ROWS_PER_DECLARATION);
-            for (List<DeclarationGenerationDTO.OutputDeclarationDetailDTO> partition : partitions) {
-                DeclarationGenerationDTO.OutputDeclarationDTO decl = new DeclarationGenerationDTO.OutputDeclarationDTO(country);
-                decl.setLocked(true); // 锁定状态，严禁追加
-                decl.getDetails().addAll(partition);
-                finalDeclarations.add(decl);
-            }
+        List<List<DeclarationGenerationDTO.OutputDeclarationDetailDTO>> chunks = new ArrayList<>();
+        for (DeclarationGenerationDTO.ShipmentBlock block : blocks) {
+            chunks.addAll(partitionDetailsByBoxAwareLimit(block.getDetails(), MAX_ROWS_PER_DECLARATION));
         }
 
-        // 2. 处理可打包逻辑块 (贪婪紧凑打包)
-        for (DeclarationGenerationDTO.ShipmentBlock block : packableBlocks) {
-            DeclarationGenerationDTO.OutputDeclarationDTO targetDeclaration = null;
+        chunks.sort((c1, c2) -> Integer.compare(c2.size(), c1.size()));
 
-            // 寻找当前未锁定且容量足够容纳当前块的报关单
+        List<DeclarationGenerationDTO.OutputDeclarationDTO> finalDeclarations = new ArrayList<>();
+        for (List<DeclarationGenerationDTO.OutputDeclarationDetailDTO> chunk : chunks) {
+            DeclarationGenerationDTO.OutputDeclarationDTO targetDeclaration = null;
             for (DeclarationGenerationDTO.OutputDeclarationDTO decl : finalDeclarations) {
-                if (!decl.isLocked() && (MAX_ROWS_PER_DECLARATION - decl.getDetails().size()) >= block.getSize()) {
+                if (!decl.isLocked()
+                        && decl.getDetails().size() + chunk.size() <= MAX_ROWS_PER_DECLARATION) {
                     targetDeclaration = decl;
-                    break; // First-Fit
+                    break;
                 }
             }
-
-            // 若无可用，则新建
             if (targetDeclaration == null) {
                 targetDeclaration = new DeclarationGenerationDTO.OutputDeclarationDTO(country);
-                targetDeclaration.setLocked(false);
+                targetDeclaration.setLocked(chunk.size() >= MAX_ROWS_PER_DECLARATION);
                 finalDeclarations.add(targetDeclaration);
             }
-
-            // 发货单整体装入
-            targetDeclaration.getDetails().addAll(block.getDetails());
+            targetDeclaration.getDetails().addAll(chunk);
+            if (targetDeclaration.getDetails().size() >= MAX_ROWS_PER_DECLARATION) {
+                targetDeclaration.setLocked(true);
+            }
         }
-
         return finalDeclarations;
     }
 
@@ -583,7 +575,8 @@ public class DeclarationGenerationService {
             return Collections.emptyList();
         }
         List<DeclarationGenerationDTO.OutputDeclarationDTO> declarations = new ArrayList<>();
-        for (List<DeclarationGenerationDTO.OutputDeclarationDetailDTO> detailGroup : partitionList(details, MAX_ROWS_PER_DECLARATION)) {
+        for (List<DeclarationGenerationDTO.OutputDeclarationDetailDTO> detailGroup
+                : partitionDetailsByBoxAwareLimit(details, MAX_ROWS_PER_DECLARATION)) {
             DeclarationGenerationDTO.OutputDeclarationDTO declaration = new DeclarationGenerationDTO.OutputDeclarationDTO(country);
             declaration.setLocked(detailGroup.size() >= MAX_ROWS_PER_DECLARATION);
             declaration.getDetails().addAll(detailGroup);
@@ -593,16 +586,126 @@ public class DeclarationGenerationService {
     }
 
     /**
-     * 将列表按指定大小分块
-     * @author will
-     * @date 2026/5/9 15:00
-     * @param list 原始列表
-     * @param batchSize 每块大小
-     * @return java.util.List<java.util.List<T>>
+     * 按 48 行上限拆票，且保证同一箱（及跨行合并绑定的多箱）不会拆到不同报关单。
      */
-    private <T> List<List<T>> partitionList(List<T> list, int batchSize) {
-        return IntStream.range(0, (list.size() + batchSize - 1) / batchSize)
-                .mapToObj(i -> list.subList(i * batchSize, Math.min((i + 1) * batchSize, list.size())))
-                .collect(Collectors.toList());
+    private List<List<DeclarationGenerationDTO.OutputDeclarationDetailDTO>> partitionDetailsByBoxAwareLimit(
+            List<DeclarationGenerationDTO.OutputDeclarationDetailDTO> details,
+            int maxRowsPerDeclaration) {
+        if (details == null || details.isEmpty()) {
+            return Collections.emptyList();
+        }
+        if (details.size() <= maxRowsPerDeclaration) {
+            return Collections.singletonList(new ArrayList<>(details));
+        }
+
+        List<List<DeclarationGenerationDTO.OutputDeclarationDetailDTO>> rowClusters =
+                buildBoxConnectedRowClusters(details);
+        rowClusters.sort((c1, c2) -> Integer.compare(c2.size(), c1.size()));
+
+        List<List<DeclarationGenerationDTO.OutputDeclarationDetailDTO>> bins = new ArrayList<>();
+        for (List<DeclarationGenerationDTO.OutputDeclarationDetailDTO> cluster : rowClusters) {
+            boolean placed = false;
+            for (List<DeclarationGenerationDTO.OutputDeclarationDetailDTO> bin : bins) {
+                if (bin.size() + cluster.size() <= maxRowsPerDeclaration) {
+                    bin.addAll(cluster);
+                    placed = true;
+                    break;
+                }
+            }
+            if (!placed) {
+                bins.add(new ArrayList<>(cluster));
+            }
+        }
+        return bins;
+    }
+
+    /**
+     * 将共享同一箱维度键（或同一合并行内多箱绑定）的明细行聚为不可拆分的簇。
+     */
+    private List<List<DeclarationGenerationDTO.OutputDeclarationDetailDTO>> buildBoxConnectedRowClusters(
+            List<DeclarationGenerationDTO.OutputDeclarationDetailDTO> details) {
+        int rowCount = details.size();
+        UnionFind unionFind = new UnionFind(rowCount);
+        Map<String, Integer> boxKeyFirstRowMap = new HashMap<>();
+
+        for (int rowIndex = 0; rowIndex < rowCount; rowIndex++) {
+            Set<String> boxKeys = extractBoxKeys(details.get(rowIndex));
+            for (String boxKey : boxKeys) {
+                if (StringUtils.isBlank(boxKey)) {
+                    continue;
+                }
+                Integer firstRowIndex = boxKeyFirstRowMap.get(boxKey);
+                if (firstRowIndex == null) {
+                    boxKeyFirstRowMap.put(boxKey, rowIndex);
+                } else {
+                    unionFind.union(firstRowIndex, rowIndex);
+                }
+            }
+        }
+
+        Map<Integer, List<DeclarationGenerationDTO.OutputDeclarationDetailDTO>> clusterMap = new LinkedHashMap<>();
+        for (int rowIndex = 0; rowIndex < rowCount; rowIndex++) {
+            int root = unionFind.find(rowIndex);
+            clusterMap.computeIfAbsent(root, ignored -> new ArrayList<>()).add(details.get(rowIndex));
+        }
+        return new ArrayList<>(clusterMap.values());
+    }
+
+    private Set<String> extractBoxKeys(DeclarationGenerationDTO.OutputDeclarationDetailDTO detail) {
+        if (detail == null) {
+            return Collections.emptySet();
+        }
+        if (detail.getBoxKeys() != null && !detail.getBoxKeys().isEmpty()) {
+            return detail.getBoxKeys();
+        }
+        if (detail.getLinkedDetailIds() == null || detail.getLinkedDetailIds().isEmpty()) {
+            return Collections.emptySet();
+        }
+        Set<String> boxKeys = new LinkedHashSet<>();
+        for (String linkedDetailId : detail.getLinkedDetailIds()) {
+            String boxKey = extractBoxKeyFromLinkedDetailId(linkedDetailId);
+            if (StringUtils.isNotBlank(boxKey)) {
+                boxKeys.add(boxKey);
+            }
+        }
+        return boxKeys;
+    }
+
+    private String extractBoxKeyFromLinkedDetailId(String linkedDetailId) {
+        if (StringUtils.isBlank(linkedDetailId)) {
+            return "";
+        }
+        String idPart = linkedDetailId;
+        int suffixIndex = linkedDetailId.indexOf('#');
+        if (suffixIndex >= 0) {
+            idPart = linkedDetailId.substring(0, suffixIndex);
+        }
+        String[] parts = idPart.split("\\|", -1);
+        String sourceKey = parts.length > 0 ? parts[0] : "";
+        String boxNo = parts.length > 1 ? parts[1] : "";
+        return StringUtils.defaultString(sourceKey) + "|" + StringUtils.defaultString(boxNo);
+    }
+
+    private static final class UnionFind {
+        private final int[] parent;
+
+        private UnionFind(int size) {
+            parent = IntStream.range(0, size).toArray();
+        }
+
+        private int find(int index) {
+            if (parent[index] != index) {
+                parent[index] = find(parent[index]);
+            }
+            return parent[index];
+        }
+
+        private void union(int left, int right) {
+            int leftRoot = find(left);
+            int rightRoot = find(right);
+            if (leftRoot != rightRoot) {
+                parent[rightRoot] = leftRoot;
+            }
+        }
     }
 }

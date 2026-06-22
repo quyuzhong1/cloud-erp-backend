@@ -3188,7 +3188,12 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     /**
      * 按产品物流补全报关要素、组合品拆行，并写入境内货源地/征免默认值。
      *
-     * <p>sixDimensionMerge=true (B2B 按客户分发) 时，单价、报关币别、报关币别符号取 so_detail 销售含税单价及对应币种。</p>
+     * <p>单价/币别规则：</p>
+     * <ul>
+     *   <li>B2B 境外收货人=客户（sixDimensionMerge）：取 SO 含税单价/币别；BOM 拆分子 SKU 回退父 SKU 查 SO</li>
+     *   <li>B2B 境外收货人=核算公司：按当前 SKU 物流产品报关单价/币别（含 BOM 子 SKU 各自取值）</li>
+     *   <li>头程：按当前 SKU 物流产品报关单价/币别</li>
+     * </ul>
      */
     private List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> prepareSourceDetailsForDeclarationGeneration(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDeliveryDetailList, boolean sixDimensionMerge) {
         if (CollectionUtils.isEmpty(sourceDeliveryDetailList)) {
@@ -4049,18 +4054,19 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         detailDTO.setUnitName(declareUnitNameMap.get(productLogisticsDTO.getDeclareUnit()));
 
         SoDetailEntity soDetailEntity = soDetailMap.get(buildSoDetailKey(detailDTO.getBusinessId(), detailDTO.resolveSoDetailSkuId()));
+        // sixDimensionMerge=true 表示 B2B 境外收货人为客户；核算公司场景取当前 SKU 物流产品报关单价/币别。
+        boolean b2bCustomerBomSplitChild = sixDimensionMerge
+                && isB2bSourceDetail(detailDTO)
+                && StringUtils.isNotBlank(detailDTO.getParentSkuId());
 
         if (sixDimensionMerge && Objects.nonNull(soDetailEntity)) {
-            // B2B 按客户分发场景：单价/币别/币别符号取 so_detail 销售含税单价及对应币种。
-            detailDTO.setUnitPrice(MathUtil.preferNonNull(soDetailEntity.getTaxPrice(), soDetailEntity.getPrice()));
-            detailDTO.setDeclareCurrency(soDetailEntity.getCurrency());
-            detailDTO.setDeclareCurrencySymbol(soDetailEntity.getCurrencySymbol());
-            detailDTO.setDeclareCurrencyName(currencyMap.get(detailDTO.getDeclareCurrency()));
+            // B2B 客户：取 SO 含税单价/币别（BOM 拆分子 SKU 通过 resolveSoDetailSkuId 回退父 SKU）。
+            applySoDeclarePriceCurrency(detailDTO, soDetailEntity, currencyMap);
+        } else if (b2bCustomerBomSplitChild) {
+            // B2B 客户 + BOM 拆分子 SKU：沿用父 SKU 已回填的 SO 单价/币别，不用子 SKU 物流产品覆盖。
         } else {
-            detailDTO.setUnitPrice(productLogisticsDTO.getPrice());
-            detailDTO.setDeclareCurrency(productLogisticsDTO.getDeclareCurrency());
-            detailDTO.setDeclareCurrencySymbol(productLogisticsDTO.getDeclareCurrencySymbol());
-            detailDTO.setDeclareCurrencyName(currencyMap.get(productLogisticsDTO.getDeclareCurrency()));
+            // 头程 / B2B 核算公司 / 其它：按当前 SKU 物流产品报关单价/币别。
+            applyPlmDeclarePriceCurrency(detailDTO, productLogisticsDTO, currencyMap);
         }
         detailDTO.setSourceCountry(productLogisticsDTO.getSourceCountry());
         detailDTO.setSourceCountryName(productLogisticsDTO.getSourceCountryName());
@@ -4070,6 +4076,29 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (StringUtils.isNotBlank(productLogisticsDTO.getExemption())) {
             detailDTO.setExemption(productLogisticsDTO.getExemption());
         }
+    }
+
+    private boolean isB2bSourceDetail(TmsDeclareBillDTO.SourceDeliveryDetailDTO detailDTO) {
+        return Objects.nonNull(detailDTO)
+                && CharSequenceUtil.equals(detailDTO.getSourceType(), SourceTypeEnum.SO_DELIVERY_NOTICE.getCode());
+    }
+
+    private void applySoDeclarePriceCurrency(TmsDeclareBillDTO.SourceDeliveryDetailDTO detailDTO,
+                                             SoDetailEntity soDetailEntity,
+                                             Map<String, String> currencyMap) {
+        detailDTO.setUnitPrice(MathUtil.preferNonNull(soDetailEntity.getTaxPrice(), soDetailEntity.getPrice()));
+        detailDTO.setDeclareCurrency(soDetailEntity.getCurrency());
+        detailDTO.setDeclareCurrencySymbol(soDetailEntity.getCurrencySymbol());
+        detailDTO.setDeclareCurrencyName(currencyMap.get(detailDTO.getDeclareCurrency()));
+    }
+
+    private void applyPlmDeclarePriceCurrency(TmsDeclareBillDTO.SourceDeliveryDetailDTO detailDTO,
+                                              ProductDetailDTO.ProductLogisticDTO productLogisticsDTO,
+                                              Map<String, String> currencyMap) {
+        detailDTO.setUnitPrice(productLogisticsDTO.getPrice());
+        detailDTO.setDeclareCurrency(productLogisticsDTO.getDeclareCurrency());
+        detailDTO.setDeclareCurrencySymbol(productLogisticsDTO.getDeclareCurrencySymbol());
+        detailDTO.setDeclareCurrencyName(currencyMap.get(productLogisticsDTO.getDeclareCurrency()));
     }
 
     /**
