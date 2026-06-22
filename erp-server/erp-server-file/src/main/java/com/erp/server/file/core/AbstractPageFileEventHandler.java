@@ -21,10 +21,7 @@ import org.springframework.util.CollectionUtils;
 
 import java.io.*;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 @Slf4j
 public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEventHandler<T> {
@@ -287,6 +284,34 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
         }
     }
 
+    private void trimUnusedDataSheets(File outFile, List<Integer> dataSheetIndexes, int usedDataSheetCount) throws IOException {
+        if (CollectionUtils.isEmpty(dataSheetIndexes) || usedDataSheetCount >= dataSheetIndexes.size()) {
+            return;
+        }
+        int keep = Math.max(1, usedDataSheetCount);
+        XSSFWorkbook wb;
+        try (FileInputStream inputStream = new FileInputStream(outFile)) {
+            wb = new XSSFWorkbook(inputStream);
+        }
+        try {
+            for (int i = dataSheetIndexes.size() - 1; i >= keep; i--) {
+                wb.removeSheetAt(dataSheetIndexes.get(i));
+            }
+            try (FileOutputStream outputStream = new FileOutputStream(outFile)) {
+                wb.write(outputStream);
+            }
+        } finally {
+            wb.close();
+        }
+    }
+
+    private int usedDataSheetCount(int writtenRows, OffsetSheetCursor cursor) {
+        if (writtenRows <= 0) {
+            return 1;
+        }
+        return cursor.sheetNo + 1;
+    }
+
     private List<T> withoutNullListElements(List<T> raw) {
         if (CollectionUtils.isEmpty(raw)) {
             return raw;
@@ -362,6 +387,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
      */
     private static final class SheetGroupBuffer<T> {
         final List<T> rows = new ArrayList<>();
+        final Set<Object> writtenGroupKeys = new HashSet<>();
     }
 
     private WriteSheet buildCurrentDataSheet(OffsetSheetCursor c) {
@@ -541,10 +567,35 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
         }
         List<T> remaining = new ArrayList<>(buffer.rows);
         buffer.rows.clear();
+        validateAndMarkReadySheetGroups(remaining, buffer, pagingState);
         beforeWriteRows(remaining);
         fillBatchAcrossDataSheets(exportPhase, excelPath, excelWriter, fillConfig, remaining, remaining, cursor,
                 pagingState, dataTotalCount);
         return remaining.size();
+    }
+
+    /**
+     * 写出前校验分组连续性，防止上游排序变化导致同一 groupKey 非相邻重复出现时静默失效。
+     * <p>
+     * 默认只打 WARN，不中断导出；分组保护的正确性仍以 {@link #sheetGroupKey(Object)} 连续排序为前提。
+     */
+    private void validateAndMarkReadySheetGroups(List<T> rows, SheetGroupBuffer<T> buffer, String pagingState) {
+        if (!keepSheetGroupTogether() || CollectionUtils.isEmpty(rows)) {
+            return;
+        }
+        int start = 0;
+        while (start < rows.size()) {
+            Object groupKey = sheetGroupKey(rows.get(start));
+            int end = start + 1;
+            while (end < rows.size() && Objects.equals(groupKey, sheetGroupKey(rows.get(end)))) {
+                end++;
+            }
+            if (groupKey != null && !buffer.writtenGroupKeys.add(groupKey)) {
+                log.warn("导出分组未连续：handler={} groupKey={} paging={}，分组保护可能失效，请检查上游排序是否保持 sheetGroupKey 连续",
+                        getClass().getName(), groupKey, pagingState);
+            }
+            start = end;
+        }
     }
 
     private int writeKeysetBatches(File outFile, P params, String excelPath) throws IOException {
@@ -614,6 +665,8 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
                     }
                     List<T> readyBatch = drainReadyRowsForSheetGroup(batch, groupBuffer, !vo.isHasNext());
                     if (!CollectionUtils.isEmpty(readyBatch)) {
+                        validateAndMarkReadySheetGroups(readyBatch, groupBuffer,
+                                "lastIdExclusive=" + lastId + ",hasNext=" + vo.isHasNext());
                         beforeWriteRows(readyBatch);
                         fillBatchAcrossDataSheets("KEYSET", excelPath, excelWriter, fillConfig, readyBatch, rawList, cursor,
                                 "lastIdExclusive=" + lastId + ",hasNext=" + vo.isHasNext(), 0);
@@ -640,6 +693,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
                 excelWriter.finish();
             }
         }
+        trimUnusedDataSheets(outFile, expandedTemplate.dataSheetIndexes, usedDataSheetCount(total, cursor));
         return total;
     }
 
@@ -761,6 +815,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
                         List<T> readyBatch = drainReadyRowsForSheetGroup(batch, groupBuffer,
                                 fetchedRows >= totalCount || isLastPage(dto.getCurrPage(), totalCount));
                         if (!CollectionUtils.isEmpty(readyBatch)) {
+                            validateAndMarkReadySheetGroups(readyBatch, groupBuffer, "currPage=" + dto.getCurrPage());
                             beforeWriteRows(readyBatch);
                             fillBatchAcrossDataSheets("OFFSET", excelPath, excelWriter, fillConfig, readyBatch, rawPage, cursor,
                                     "currPage=" + dto.getCurrPage(), pageData.getTotalCount());
@@ -786,6 +841,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
                 excelWriter.finish();
             }
         }
+        trimUnusedDataSheets(outFile, expandedTemplate.dataSheetIndexes, usedDataSheetCount(totalRows, cursor));
         // 末页 partial：实际写入行数 < 首查 totalCount（多因导出期间并发删除/数据漂移），不视为失败
         // （fileTask.count 已回填实际行数），但与中间页空列表守卫对称地显式告警，便于排查「导出比预期少」反馈，避免静默。
         if (totalCount > 0 && totalRows < totalCount) {
@@ -884,7 +940,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
      * 分组保护启用时，在按总行数估算的数据 sheet 数基础上额外预留的 sheet 数。
      * <p>
      * 同组不拆 sheet 会在临界点回退，实际 sheet 数可能略高于 {@code totalCount / maxDataRowsPerSheet}；
-     * 默认额外预留 1 张，避免无条件展开到 {@link #maxTemplateDataSheets()} 带来的模板内存放大。
+     * 默认额外预留 1 张用于承接分组回退，写出完成后会删除尾部未使用的预留空 sheet。
      */
     protected int sheetGroupExtraSheetCount() {
         return 1;
