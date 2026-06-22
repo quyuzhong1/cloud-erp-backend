@@ -210,9 +210,7 @@ public class WorkflowTaskRecordConsumer implements RocketMQListener<WorkflowTask
             String errorMsg = mqResponseDTO.getErrorMsg();
             String responseStatus = mqResponseDTO.getStatus();
             if (Objects.equals(responseStatus, WorkflowTaskRecordStatusEnum.WAITING.getCode())) {
-                entity.setStatus(WorkflowTaskRecordStatusEnum.WAITING.getCode());
-                entity.setLastError(StringUtils.defaultString(errorMsg));
-                workflowTaskRecordService.updateById(entity);
+                markAsWaitingOrTimedOut(entity, errorMsg);
                 return Boolean.FALSE;
             }
             if (Objects.equals(responseStatus, WorkflowTaskRecordStatusEnum.FAILED.getCode())) {
@@ -243,6 +241,29 @@ public class WorkflowTaskRecordConsumer implements RocketMQListener<WorkflowTask
             }
 
         }
+    }
+
+    private void markAsWaitingOrTimedOut(WorkflowTaskRecordEntity entity, String errorMsg) {
+        Integer retryCount = Optional.ofNullable(entity.getRetryCount()).orElse(0);
+        String lastError = StringUtils.defaultString(errorMsg);
+        if (isWaitingTimedOut(entity)) {
+            entity.setStatus(WorkflowTaskRecordStatusEnum.FAILED.getCode());
+            entity.setLastError(StringUtils.substring(StrUtil.format("任务节点等待超过{}小时，{}", WorkflowTaskRecordService.TASK_WAITING_TIMEOUT_HOURS, lastError), 0, 2000));
+            // 等待超时属于业务终态失败，避免补偿任务后续反复唤醒。
+            entity.setRetryCount(Math.max(retryCount + 1, 4));
+            workflowTaskRecordService.updateById(entity);
+            return;
+        }
+        entity.setStatus(WorkflowTaskRecordStatusEnum.WAITING.getCode());
+        entity.setLastError(lastError);
+        entity.setRetryCount(retryCount + 1);
+        workflowTaskRecordService.updateById(entity);
+    }
+
+    private boolean isWaitingTimedOut(WorkflowTaskRecordEntity entity) {
+        LocalDateTime createTime = entity.getCreateTime();
+        return Objects.nonNull(createTime)
+                && createTime.plusHours(WorkflowTaskRecordService.TASK_WAITING_TIMEOUT_HOURS).isBefore(LocalDateTime.now());
     }
 
     private boolean isProcessingWithinTimeout(LocalDateTime updateTime) {

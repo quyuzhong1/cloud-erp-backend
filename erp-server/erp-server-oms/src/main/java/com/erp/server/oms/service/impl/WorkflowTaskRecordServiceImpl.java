@@ -211,8 +211,9 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
         }
         String sourceType;
         String sourceId;
+        WorkflowTaskRecordEntity lockTask = null;
         if (CharSequenceUtil.isNotBlank(dto.getId())) {
-            WorkflowTaskRecordEntity lockTask = getById(dto.getId());
+            lockTask = getById(dto.getId());
             if (Objects.isNull(lockTask)) {
                 throw new ServiceException(ApiError.WF_TASK_RECORD_FORCE_RETRY_NOT_FOUND);
             }
@@ -225,14 +226,14 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
             sourceType = dto.getSourceType();
             sourceId = dto.getSourceId();
         }
-        return SpringUtil.getBean(WorkflowTaskRecordServiceImpl.class).forceRetryWithLock(dto, sourceType, sourceId);
+        return SpringUtil.getBean(WorkflowTaskRecordServiceImpl.class).forceRetryWithLock(dto, sourceType, sourceId, lockTask);
     }
 
     @Transactional(rollbackFor = Exception.class)
     @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "sourceType,sourceId", unlockAfterTx = true)
-    public WorkflowTaskRecordDTO.ForceRetryResultDTO forceRetryWithLock(WorkflowTaskRecordDTO.ForceRetryDTO dto, String sourceType, String sourceId) {
+    public WorkflowTaskRecordDTO.ForceRetryResultDTO forceRetryWithLock(WorkflowTaskRecordDTO.ForceRetryDTO dto, String sourceType, String sourceId, WorkflowTaskRecordEntity lockTask) {
         checkForceRetryPermission();
-        List<WorkflowTaskRecordEntity> taskList = listForceRetryTasks(dto);
+        List<WorkflowTaskRecordEntity> taskList = listForceRetryTasks(dto, lockTask);
         if (CollUtil.isEmpty(taskList)) {
             throw new ServiceException(ApiError.WF_TASK_RECORD_FORCE_RETRY_NOT_FOUND);
         }
@@ -250,10 +251,8 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
                 continue;
             }
             Map<Integer, WorkflowTaskRecordEntity> indexTaskMap = buildIndexTaskMap(groupTasks);
-            for (WorkflowTaskRecordEntity entity : resetTasks) {
-                resetForceRetryTask(entity, dto, indexTaskMap);
-                resetCount++;
-            }
+            resetForceRetryTasks(resetTasks, dto, indexTaskMap);
+            resetCount += resetTasks.size();
             WorkflowTaskRecordEntity firstTask = groupTasks.stream()
                     .min(Comparator.comparing(WorkflowTaskRecordEntity::getIndex))
                     .orElse(resetTasks.get(0));
@@ -345,9 +344,9 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
                 .update();
     }
 
-    private List<WorkflowTaskRecordEntity> listForceRetryTasks(WorkflowTaskRecordDTO.ForceRetryDTO dto) {
+    private List<WorkflowTaskRecordEntity> listForceRetryTasks(WorkflowTaskRecordDTO.ForceRetryDTO dto, WorkflowTaskRecordEntity lockTask) {
         if (CharSequenceUtil.isNotBlank(dto.getId())) {
-            WorkflowTaskRecordEntity entity = getById(dto.getId());
+            WorkflowTaskRecordEntity entity = lockTask;
             return Objects.isNull(entity) ? Collections.emptyList() : listBySourceId(entity.getSourceId(), entity.getSourceType());
         }
         if (CharSequenceUtil.isBlank(dto.getSourceType()) || CharSequenceUtil.isBlank(dto.getSourceId())) {
@@ -356,26 +355,45 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
         return listBySourceId(dto.getSourceId(), dto.getSourceType());
     }
 
-    private void resetForceRetryTask(WorkflowTaskRecordEntity entity, WorkflowTaskRecordDTO.ForceRetryDTO dto, Map<Integer, WorkflowTaskRecordEntity> indexTaskMap) {
-        String remark = appendForceRetryRemark(entity.getRemark(), dto.getRemark());
-        String refreshedInputData = getPreviousSuccessOutputData(entity, indexTaskMap);
-        if (CharSequenceUtil.isNotBlank(refreshedInputData)) {
-            this.lambdaUpdate()
-                    .eq(WorkflowTaskRecordEntity::getId, entity.getId())
-                    .set(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.PENDING.getCode())
-                    .set(WorkflowTaskRecordEntity::getRetryCount, Optional.ofNullable(dto.getRetryCount()).orElse(0))
-                    .set(WorkflowTaskRecordEntity::getLastError, "")
-                    .set(WorkflowTaskRecordEntity::getRemark, remark)
-                    .set(WorkflowTaskRecordEntity::getInputData, refreshedInputData)
-                    .update();
+    private void resetForceRetryTasks(List<WorkflowTaskRecordEntity> resetTasks, WorkflowTaskRecordDTO.ForceRetryDTO dto, Map<Integer, WorkflowTaskRecordEntity> indexTaskMap) {
+        List<ForceRetryResetPlan> resetPlans = CollUtil.emptyIfNull(resetTasks).stream()
+                .map(entity -> new ForceRetryResetPlan(entity, appendForceRetryRemark(entity.getRemark(), dto.getRemark()), getPreviousSuccessOutputData(entity, indexTaskMap)))
+                .collect(Collectors.toList());
+        Map<String, List<ForceRetryResetPlan>> batchPlanMap = resetPlans.stream()
+                .filter(plan -> CharSequenceUtil.isBlank(plan.refreshedInputData))
+                .collect(Collectors.groupingBy(plan -> StrUtil.nullToEmpty(plan.remark)));
+        for (Map.Entry<String, List<ForceRetryResetPlan>> entry : batchPlanMap.entrySet()) {
+            List<String> ids = entry.getValue().stream()
+                    .map(plan -> plan.entity.getId())
+                    .collect(Collectors.toList());
+            batchResetForceRetryTasks(ids, dto, entry.getKey());
+        }
+        resetPlans.stream()
+                .filter(plan -> CharSequenceUtil.isNotBlank(plan.refreshedInputData))
+                .forEach(plan -> resetForceRetryTask(plan, dto));
+    }
+
+    private void batchResetForceRetryTasks(List<String> ids, WorkflowTaskRecordDTO.ForceRetryDTO dto, String remark) {
+        if (CollUtil.isEmpty(ids)) {
             return;
         }
         this.lambdaUpdate()
-                .eq(WorkflowTaskRecordEntity::getId, entity.getId())
+                .in(WorkflowTaskRecordEntity::getId, ids)
                 .set(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.PENDING.getCode())
                 .set(WorkflowTaskRecordEntity::getRetryCount, Optional.ofNullable(dto.getRetryCount()).orElse(0))
                 .set(WorkflowTaskRecordEntity::getLastError, "")
                 .set(WorkflowTaskRecordEntity::getRemark, remark)
+                .update();
+    }
+
+    private void resetForceRetryTask(ForceRetryResetPlan plan, WorkflowTaskRecordDTO.ForceRetryDTO dto) {
+        this.lambdaUpdate()
+                .eq(WorkflowTaskRecordEntity::getId, plan.entity.getId())
+                .set(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.PENDING.getCode())
+                .set(WorkflowTaskRecordEntity::getRetryCount, Optional.ofNullable(dto.getRetryCount()).orElse(0))
+                .set(WorkflowTaskRecordEntity::getLastError, "")
+                .set(WorkflowTaskRecordEntity::getRemark, plan.remark)
+                .set(WorkflowTaskRecordEntity::getInputData, plan.refreshedInputData)
                 .update();
     }
 
@@ -527,5 +545,17 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
             }
         }
         return entity.getSourceId();
+    }
+
+    private static class ForceRetryResetPlan {
+        private final WorkflowTaskRecordEntity entity;
+        private final String remark;
+        private final String refreshedInputData;
+
+        private ForceRetryResetPlan(WorkflowTaskRecordEntity entity, String remark, String refreshedInputData) {
+            this.entity = entity;
+            this.remark = remark;
+            this.refreshedInputData = refreshedInputData;
+        }
     }
 }
