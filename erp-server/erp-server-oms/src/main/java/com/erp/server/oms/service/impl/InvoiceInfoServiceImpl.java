@@ -439,7 +439,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         }
         //生成PDF
         addList.stream().filter(v->v.getStatus().equals(InvoiceInfoStatusEnum.INVOICE_SUCCESS.getCode())).forEach(invoiceInfoEntity -> {
-            generateInvoicePdf(invoiceInfoEntity, cfgVatInvoiceEntities, soB2cEntityList, allSoB2cDetailEntityList, allDmpSoBillDetailEntityList, listingInfoEntityList);
+            generateInvoicePdf(invoiceInfoEntity, cfgVatInvoiceEntities, soB2cEntityList, allSoB2cDetailEntityList, allDmpSoBillDetailEntityList, listingInfoEntityList, null);
             if(invoiceInfoEntity.getStatus().equals(InvoiceInfoStatusEnum.INVOICE_FAILED.getCode())){
                 resultDTOList.add(BatchResultDTO.fail(invoiceInfoEntity.getId(),invoiceInfoEntity.getCode(),invoiceInfoEntity.getRemark()));
             }
@@ -467,7 +467,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         return resultDTOList;
     }
 
-    private void generateInvoicePdf(InvoiceInfoEntity invoiceInfoEntity, List<CfgVatInvoiceEntity> cfgVatInvoiceEntities, List<SoB2cEntity> soB2cEntityList, List<SoB2cDetailEntity> allSoB2cDetailEntityList, List<DmpSoBillDetailEntity> allDmpSoBillDetailEntityList, List<ListingInfoEntity> listingInfoEntityList) {
+    private void generateInvoicePdf(InvoiceInfoEntity invoiceInfoEntity, List<CfgVatInvoiceEntity> cfgVatInvoiceEntities, List<SoB2cEntity> soB2cEntityList, List<SoB2cDetailEntity> allSoB2cDetailEntityList, List<DmpSoBillDetailEntity> allDmpSoBillDetailEntityList, List<ListingInfoEntity> listingInfoEntityList, SoB2cReceiverEntity fallbackReceiver) {
         CfgVatInvoiceEntity cfgVatInvoiceEntity = cfgVatInvoiceEntities.stream().filter(e ->  !e.getDisabled() && invoiceInfoEntity.getShopId().equals(e.getShopId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "发票配置"));
         SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(e -> invoiceInfoEntity.getSoId().equals(e.getId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "b2c订单"));
         //增加发票模板对接校验
@@ -479,9 +479,29 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         }
         List<SoB2cDetailEntity> soB2cDetailEntityList = allSoB2cDetailEntityList.stream().filter(e ->  e.getMainId().equals(soB2cEntity.getId())).collect(Collectors.toList());
         List<DmpSoBillDetailEntity> dmpSoBillDetailEntityList = allDmpSoBillDetailEntityList.stream().filter(e ->e.getShopId().equals(soB2cEntity.getShopId())&& e.getPlatformCode().equals(soB2cEntity.getPlatformCode())).collect(Collectors.toList());
-        DmpSoBillDetailEntity dmpSoBillDetailEntity = dmpSoBillDetailEntityList.get(0);
+        String customerBillAddress;
+        BigDecimal shippingCost;
+        BigDecimal discountAmount;
+        if (CollectionUtils.isNotEmpty(dmpSoBillDetailEntityList)) {
+            DmpSoBillDetailEntity dmpSoBillDetailEntity = dmpSoBillDetailEntityList.get(0);
+            customerBillAddress = dmpSoBillDetailEntity.getAddress1() + " " + dmpSoBillDetailEntity.getAddress2() + " "
+                    + dmpSoBillDetailEntity.getAddress3() + " " + dmpSoBillDetailEntity.getCity() + " "
+                    + dmpSoBillDetailEntity.getState() + " " + dmpSoBillDetailEntity.getPostalCode() + " "
+                    + dmpSoBillDetailEntity.getCountry();
+            shippingCost = dmpSoBillDetailEntityList.stream().map(DmpSoBillDetailEntity::getShippingPrice).reduce(BigDecimal.ZERO, BigDecimal::add);
+            discountAmount = dmpSoBillDetailEntityList.stream().map(v -> v.getDiscountAmount().add(v.getShippingDiscount())).reduce(BigDecimal.ZERO, BigDecimal::add);
+        } else if (hasReceiverInfoForVatInvoice(fallbackReceiver)) {
+            customerBillAddress = buildCustomerBillAddressFromReceiver(fallbackReceiver);
+            shippingCost = Objects.nonNull(soB2cEntity.getShippingFee()) ? soB2cEntity.getShippingFee() : BigDecimal.ZERO;
+            discountAmount = Objects.nonNull(soB2cEntity.getTotalDiscount()) ? soB2cEntity.getTotalDiscount() : BigDecimal.ZERO;
+        } else {
+            invoiceInfoEntity.setStatus(InvoiceInfoStatusEnum.INVOICE_FAILED.getCode());
+            invoiceInfoEntity.setRemark("生成发票失败,亚马逊财务配送报告及买家信息均不存在");
+            soB2cEntity.setVatInvoiceStatus(SoB2cVatStatusEnum.INVOICE_FAILED.getCode());
+            return;
+        }
         CfgVatInvoiceDTO.InvoiceTemplateDTO invoiceTemplateDTO = new CfgVatInvoiceDTO.InvoiceTemplateDTO();
-        invoiceTemplateDTO.setCustomerBillAddress(dmpSoBillDetailEntity.getAddress1()+" "+dmpSoBillDetailEntity.getAddress2()+" "+dmpSoBillDetailEntity.getAddress3()+" "+dmpSoBillDetailEntity.getCity()+" "+dmpSoBillDetailEntity.getState()+" "+dmpSoBillDetailEntity.getPostalCode()+" "+dmpSoBillDetailEntity.getCountry());
+        invoiceTemplateDTO.setCustomerBillAddress(customerBillAddress);
         invoiceTemplateDTO.setCompanyName(cfgVatInvoiceEntity.getCompanyName());
         invoiceTemplateDTO.setCompanyAddress(cfgVatInvoiceEntity.getCompanyAddress());
         invoiceTemplateDTO.setVatNo(cfgVatInvoiceEntity.getVatNo());
@@ -512,10 +532,8 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
             detailDTOS.add(detailDTO);
         }
         invoiceTemplateDTO.setDetailDTOS(detailDTOS);
-        BigDecimal shippingCost = dmpSoBillDetailEntityList.stream().map(DmpSoBillDetailEntity::getShippingPrice).reduce(BigDecimal.ZERO, BigDecimal::add);
         invoiceTemplateDTO.setShippingCost(shippingCost);
         invoiceTemplateDTO.setShippingCostStr(symbol + invoiceTemplateDTO.getShippingCost().setScale(2,BigDecimal.ROUND_DOWN));
-        BigDecimal discountAmount = dmpSoBillDetailEntityList.stream().map(v->v.getDiscountAmount().add(v.getShippingDiscount())).reduce(BigDecimal.ZERO, BigDecimal::add);
         invoiceTemplateDTO.setDiscount(discountAmount);
         invoiceTemplateDTO.setDiscountStr(symbol + invoiceTemplateDTO.getDiscount().setScale(2,BigDecimal.ROUND_DOWN));
         BigDecimal SubtotalVatInclusive = detailDTOS.stream().map(CfgVatInvoiceDTO.DetailDTO::getTotalTaxPrice).reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -543,6 +561,46 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
             invoiceInfoEntity.setRemark(StrUtil.format("生成发票失败,{}",e.getMessage()));
             soB2cEntity.setVatInvoiceStatus(SoB2cVatStatusEnum.INVOICE_FAILED.getCode());
         }
+    }
+
+    private boolean hasReceiverInfoForVatInvoice(SoB2cReceiverEntity receiver) {
+        if (Objects.isNull(receiver)) {
+            return false;
+        }
+        return CharSequenceUtil.isNotBlank(receiver.getInvoiceAddress())
+                || CharSequenceUtil.isNotBlank(receiver.getFullAddress())
+                || CharSequenceUtil.isNotBlank(receiver.getFirstAddress())
+                || CharSequenceUtil.isNotBlank(receiver.getSecondAddress());
+    }
+
+    private String buildCustomerBillAddressFromReceiver(SoB2cReceiverEntity receiver) {
+        if (CharSequenceUtil.isNotBlank(receiver.getInvoiceAddress())) {
+            return receiver.getInvoiceAddress().trim();
+        }
+        if (CharSequenceUtil.isNotBlank(receiver.getFullAddress())) {
+            return joinNonBlankAddress(
+                    receiver.getFullAddress(),
+                    receiver.getCityName(),
+                    receiver.getProvinceName(),
+                    receiver.getPostCode(),
+                    receiver.getCountryName()
+            );
+        }
+        return joinNonBlankAddress(
+                receiver.getFirstAddress(),
+                receiver.getSecondAddress(),
+                receiver.getCityName(),
+                receiver.getProvinceName(),
+                receiver.getPostCode(),
+                receiver.getCountryName()
+        );
+    }
+
+    private String joinNonBlankAddress(String... parts) {
+        return Arrays.stream(parts)
+                .filter(CharSequenceUtil::isNotBlank)
+                .map(String::trim)
+                .collect(Collectors.joining(" "));
     }
 
     @Override
@@ -660,7 +718,9 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
 
     @Override
     public void retryInvoice(String jobParam) {
-        JSONObject jsonObject = JSONObject.parseObject(jobParam);
+        JSONObject jsonObject = CharSequenceUtil.isNotBlank(jobParam) ? JSONObject.parseObject(jobParam) : null;
+        boolean useReceiverWhenNoBillDetail = Objects.nonNull(jsonObject)
+                && Boolean.TRUE.equals(jsonObject.getBoolean("useReceiverWhenNoBillDetail"));
         List<InvoiceInfoEntity> allInvoiceInfoEntityList;
         if(Objects.nonNull(jsonObject) && Objects.nonNull(jsonObject.getBoolean("queryHistory")) && jsonObject.getBoolean("queryHistory")){
             allInvoiceInfoEntityList = lambdaQuery().eq(InvoiceInfoEntity::getStatus, InvoiceInfoStatusEnum.INVOICING.getCode()).list();
@@ -690,14 +750,26 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
             List<DmpSoBillDetailEntity> allDmpSoBillDetailEntityList = FeignQuery.create(DmpSoBillDetailEntity.class).in(DmpSoBillDetailEntity::getPlatformCode,platformCodeList)
                     .in(DmpSoBillDetailEntity::getShopId,shopIds)
                     .eq(DmpSoBillDetailEntity::getSourcePlatform, PlatformDictEnum.AMAZON.getCode()).list();
+            Map<String, SoB2cReceiverEntity> receiverMap = Collections.emptyMap();
+            if (useReceiverWhenNoBillDetail) {
+                List<SoB2cReceiverEntity> receiverList = soB2cReceiverService.listByMainIds(soIds);
+                receiverMap = receiverList.stream()
+                        .collect(Collectors.toMap(SoB2cReceiverEntity::getMainId, Function.identity(), (oldValue, newValue) -> oldValue));
+            }
             List<InvoiceInfoEntity> updateList = new ArrayList<>();
             for (InvoiceInfoEntity invoiceInfoEntity : invoiceInfoEntityList) {
                 DmpSoBillDetailEntity dmpSoBillDetailEntity = allDmpSoBillDetailEntityList.stream().filter(e ->e.getShopId().equals(invoiceInfoEntity.getShopId())&& e.getPlatformCode().equals(invoiceInfoEntity.getPlatformCode())).findFirst().orElse(null);
-                if(Objects.isNull(dmpSoBillDetailEntity)){
-                    log.warn("{}亚马逊财务配送报告不存在",invoiceInfoEntity.getCode());
-                    continue;
+                SoB2cReceiverEntity fallbackReceiver = receiverMap.get(invoiceInfoEntity.getSoId());
+                if (Objects.isNull(dmpSoBillDetailEntity)) {
+                    if (!useReceiverWhenNoBillDetail || !hasReceiverInfoForVatInvoice(fallbackReceiver)) {
+                        log.warn("{}亚马逊财务配送报告不存在{}", invoiceInfoEntity.getCode(),
+                                useReceiverWhenNoBillDetail ? "，买家信息也不存在" : "");
+                        continue;
+                    }
+                    XxlJobHelper.log("发票{}无配送报告，使用订单买家信息生成", invoiceInfoEntity.getCode());
                 }
-                generateInvoicePdf(invoiceInfoEntity, cfgVatInvoiceEntities, soB2cEntityList, allSoB2cDetailEntityList, allDmpSoBillDetailEntityList, listingInfoEntityList);
+                generateInvoicePdf(invoiceInfoEntity, cfgVatInvoiceEntities, soB2cEntityList, allSoB2cDetailEntityList,
+                        allDmpSoBillDetailEntityList, listingInfoEntityList, fallbackReceiver);
                 updateList.add(invoiceInfoEntity);
             }
             this.autoUploadInvoice(updateList, cfgVatInvoiceEntities, soB2cEntityList, new ArrayList<>());

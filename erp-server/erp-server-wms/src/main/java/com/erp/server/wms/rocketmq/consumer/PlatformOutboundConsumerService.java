@@ -436,6 +436,14 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         }else {
             mainEntityList = listByReferenceNo;
         }
+        // 安兔等三方仓自动出库仅匹配平台拉单（XSDD），排除手工单（XSDS）及全托管单（XSBH）
+        mainEntityList = mainEntityList.stream()
+                .filter(entity -> CharSequenceUtil.startWith(entity.getCode(), BusinessNoConstant.XSDD))
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(mainEntityList)) {
+            log.error("三方仓自动出库: 未找到平台拉取的B2C销售订单 >>>>>>>{}", JSONUtil.toJsonStr(dto));
+            return null;
+        }
 
         List<String> soB2cIds = mainEntityList.stream().map(SoB2cEntity::getId).collect(Collectors.toList());
 
@@ -548,6 +556,9 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
             updateDto.setVirtualWarehouseId(virtualWarehouseId);
             updateDto.setTrackNo(dto.getTrackNo());
             updateDto.setSoB2cId(mainEntity.getId());
+            updateDto.setShippingMethod(dto.getShippingMethod());
+            updateDto.setThirdWarehousePlatform(dto.getPlatform());
+            updateDto.setPlatformWarehouseCode(dto.getWarehouseCode());
             if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dto.getOrderStatus())) {
                 //只有已发货才更新
                 updateDto.setBillStatus(dto.getOrderStatus());
