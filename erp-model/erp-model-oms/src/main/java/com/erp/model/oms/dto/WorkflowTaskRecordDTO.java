@@ -5,6 +5,8 @@ import com.erp.model.oms.enums.WorkflowTaskRecordTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;

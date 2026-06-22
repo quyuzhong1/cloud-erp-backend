@@ -487,6 +487,8 @@ public enum ApiError implements Serializable {
     WF_TASK_INSTANCE_NOT_FOUND(4075,"任务编排实例不存在"),
     WF_KOL_B2C_SUB_TASK_NODE_NOT_FOUND(4075,"KOL B2C拆分单任务节点配置不存在"),
     WF_KOL_B2C_SPLIT_DETAIL_INCOMPLETE(4076,"B2C寄样申请单拆分单明细不完整，单号【{0}】，达人【{1}】"),
+    WF_KOL_B2C_WAIT_SPLIT_ORDER(4077,"等待拆分单生成"),
+    WF_KOL_B2C_WAIT_SUB_TASK_COMPLETE(4078,"等待KOL B2C拆分单子任务完成，已完成{0}/{1}"),
     /**
      * PROJECT 项目相关 4500 - 5000
      */
@@ -1382,6 +1384,7 @@ public enum ApiError implements Serializable {
     SO_B2C_NOT_OUTBOUND_DETAIL_WAREHOUSE_UPDATE_FAILED(10753,"不出库发货失败：销售订单明细仓库未成功落库，请刷新后重试"),
     SO_B2C_NOT_OUTBOUND_LOGISTICS_UPDATE_FAILED(10754,"不出库发货失败：销售订单物流信息更新失败，请刷新后重试"),
     SO_B2C_NOT_OUTBOUND_STATUS_UPDATE_FAILED(10755,"不出库发货失败：销售订单状态更新失败，请刷新后重试"),
+    SO_CHANGE_DELETE_ALL_DETAIL_FORBIDDEN(10756,"销售变更单不允许删除所有的订单明细"),
     CUSTOMER_ADDRESS_NOT_MATCH(94108,"未匹配到客户地址，客户id：{0}，收货地址：{1}"),
 
     /**
