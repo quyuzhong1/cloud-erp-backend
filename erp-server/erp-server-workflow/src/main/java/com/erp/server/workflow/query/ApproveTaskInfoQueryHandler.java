@@ -35,6 +35,10 @@ public class ApproveTaskInfoQueryHandler extends AbstractQueryHandler {
         if (ApproveTaskStatusEnum.FAIL.getCode().equals(value)) {
             super.buildDefaultDTO("ati.status", Collections.singletonList(ApproveTaskStatusEnum.FAIL.getCode()));
         }
+        // 无需同步
+        if (ApproveTaskStatusEnum.NO_NEED_SYNC.getCode().equals(value)) {
+            super.buildDefaultDTO("ati.status", Collections.singletonList(ApproveTaskStatusEnum.NO_NEED_SYNC.getCode()));
+        }
         return super.getSplicingSQL();
     }
 }

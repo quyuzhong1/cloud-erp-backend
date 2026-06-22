@@ -14,6 +14,7 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
@@ -26,6 +27,7 @@ import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.model.wms.entity.SampleRecipientEntity;
 import com.erp.model.workflow.dto.*;
@@ -48,7 +50,9 @@ import com.google.gson.Gson;
 import com.lark.oapi.core.request.EventReq;
 import com.lark.oapi.core.utils.Jsons;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDateTime;
@@ -104,6 +108,9 @@ public class ApproveSyncRecordServiceImpl extends SuperServiceImpl<ApproveSyncRe
     @Resource
     private DmpInoutTaskFeign dmpInoutTaskFeign;
 
+    @Resource
+    private OperateLogService operateLogService;
+
     @Override
     public List<ApproveSyncRecordDTO.TabListDTO> tabList(PermissionsDTO param) {
         ApproveSyncRecordDTO.PagingParamDTO searchParam = new ApproveSyncRecordDTO.PagingParamDTO();
@@ -112,9 +119,11 @@ public class ApproveSyncRecordServiceImpl extends SuperServiceImpl<ApproveSyncRe
         List<ApproveSyncRecordDTO.TabListDTO> result = new ArrayList<>();
         ApproveSyncRecordDTO.TabListDTO enable = list.stream().filter(e -> e.getTabFlag().equals(ApproveSyncRecordStatusEnum.SUCCESS.getCode())).findFirst().orElse(null);
         ApproveSyncRecordDTO.TabListDTO disable = list.stream().filter(e -> e.getTabFlag().equals(ApproveSyncRecordStatusEnum.FAILED.getCode())).findFirst().orElse(null);
+        ApproveSyncRecordDTO.TabListDTO noNeedSync = list.stream().filter(e -> e.getTabFlag().equals(ApproveSyncRecordStatusEnum.NO_NEED_SYNC.getCode())).findFirst().orElse(null);
         result.add(new ApproveSyncRecordDTO.TabListDTO("all", "全部", 0));
         result.add(new ApproveSyncRecordDTO.TabListDTO(ApproveSyncRecordStatusEnum.SUCCESS.getCode(), ApproveSyncRecordStatusEnum.SUCCESS.getName(), null == enable ? 0 : enable.getCount()));
         result.add(new ApproveSyncRecordDTO.TabListDTO(ApproveSyncRecordStatusEnum.FAILED.getCode(), ApproveSyncRecordStatusEnum.FAILED.getName(), null == disable ? 0 : disable.getCount()));
+        result.add(new ApproveSyncRecordDTO.TabListDTO(ApproveSyncRecordStatusEnum.NO_NEED_SYNC.getCode(), ApproveSyncRecordStatusEnum.NO_NEED_SYNC.getName(), null == noNeedSync ? 0 : noNeedSync.getCount()));
         return result;
     }
 
@@ -154,7 +163,10 @@ public class ApproveSyncRecordServiceImpl extends SuperServiceImpl<ApproveSyncRe
 
     @Override
     public BatchResultDTO repush(String id) {
-        ApproveSyncRecordEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到三方推送记录数据"));
+        ApproveSyncRecordEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.WF_APPROVE_SYNC_RECORD_NOT_FOUND));
+        if (ApproveSyncRecordStatusEnum.NO_NEED_SYNC.getCode().equals(entity.getStatus())) {
+            throw new ServiceException(ApiError.WF_APPROVE_SYNC_RECORD_NO_NEED_SYNC_NOT_ALLOW_REPUSH);
+        }
         Map<String, Object> dataJson = entity.getDataJson();
         if (CollUtil.isEmpty(dataJson)) {
             return BatchResultDTO.fail(entity.getId(), entity.getId(), "流程未启动");
@@ -214,6 +226,38 @@ public class ApproveSyncRecordServiceImpl extends SuperServiceImpl<ApproveSyncRe
         return BatchResultDTO.success(entity.getId(), entity.getId(), "重推成功");
     }
 
+    /**
+     * 无需同步
+     * 仅推送失败状态可更新为无需同步，不同步原因写入失败原因字段
+     * @author jack
+     * @date 2026/6/22
+     * @param id 主键id
+     * @param remark 不同步原因
+     * @return BatchResultDTO
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO batchNoNeedSync(String id, String remark) {
+        ApproveSyncRecordEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.WF_APPROVE_SYNC_RECORD_NOT_FOUND));
+        if (!ApproveSyncRecordStatusEnum.FAILED.getCode().equals(entity.getStatus())) {
+            throw new ServiceException(ApiError.WF_APPROVE_SYNC_RECORD_NO_NEED_SYNC_ALLOWED_ONLY_FAIL);
+        }
+        boolean updated = lambdaUpdate()
+                .eq(ApproveSyncRecordEntity::getId, id)
+                .eq(ApproveSyncRecordEntity::getStatus, ApproveSyncRecordStatusEnum.FAILED.getCode())
+                .set(ApproveSyncRecordEntity::getStatus, ApproveSyncRecordStatusEnum.NO_NEED_SYNC.getCode())
+                .set(ApproveSyncRecordEntity::getErrorReason, remark)
+                .update();
+        if (!updated) {
+            throw new ServiceException(ApiError.WF_APPROVE_SYNC_RECORD_NO_NEED_SYNC_ALLOWED_ONLY_FAIL);
+        }
+        String msg = CharSequenceUtil.format("执行状态由【{}】变更为【{}】，不同步原因：{}",
+                ApproveSyncRecordStatusEnum.FAILED.getName(),
+                ApproveSyncRecordStatusEnum.NO_NEED_SYNC.getName(),
+                remark);
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.APPROVE_SYNC_RECORD.getCode(), entity.getId(), "无需同步");
+        return BatchResultDTO.success(entity.getId(), entity.getBusinessCode(), OperationTypeEnum.NO_NEED_SYNC);
+    }
 
 
     private BatchResultDTO getRepushNotice(String  approveSyncFailedType , Gson gson, Map<String, Object> dataJson, ApproveSyncRecordEntity entity) {
@@ -278,6 +322,12 @@ public class ApproveSyncRecordServiceImpl extends SuperServiceImpl<ApproveSyncRe
                 }
             }
             baseMapper.insertBatch(list);
+
+            List<Pair<String, String>> addPairList = list.stream()
+                    .map(obj -> new Pair<>(obj.getId(), CharSequenceUtil.format("新增-【{}】-【{}】",
+                            SourceTypeEnum.getName(obj.getBusinessType()), obj.getBusinessCode())))
+                    .collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog("%s", ModuleTypeEnum.APPROVE_SYNC_RECORD.getCode(), addPairList, "新增操作");
         }
     }
 

@@ -27,14 +27,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 三方生成查询
+ * 流程拉取
  *
  * @author will
  * @since 2025-05-27
  */
 @Slf4j
 @RestController
-@LogSystemModule("三方生成查询")
+@LogSystemModule("流程拉取")
 @RequestMapping("/approveTaskInfo")
 public class ApproveTaskInfoController extends BaseController {
 
@@ -75,7 +75,7 @@ public class ApproveTaskInfoController extends BaseController {
     * @return ApiResult
     */
     @PostMapping("/update")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "三方生成查询修改")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "流程拉取修改")
     public ApiResult<?> update(@RequestBody @Validated ApproveTaskInfoDTO.UpdateDTO dto) {
         approveTaskInfoService.update(dto);
         return success();
@@ -103,7 +103,7 @@ public class ApproveTaskInfoController extends BaseController {
      * @return ApiResult<Boolean>
      */
     @PostMapping("/export")
-    @LogAction(value = LogActionEnum.EXPORT, desc = "第三方生成查询导出Excel数据")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "流程拉取导出Excel数据")
     @WebAdvanceQuery(handler = ApproveTaskInfoQueryHandler.class)
     public ApiResult<Boolean> exportList(@RequestBody @Validated ApproveTaskInfoDTO.PagingParamDTO dto) {
         approveTaskInfoService.exportList(dto);
@@ -118,7 +118,7 @@ public class ApproveTaskInfoController extends BaseController {
      * @return ApiResult<List<BatchResultDTO>>
      */
     @PostMapping("/afreshGenerate")
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "第三方生成查询重新生成")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "流程拉取重新生成")
     public ApiResult<List<BatchResultDTO>> afreshGenerate(@RequestBody @Validated ApproveTaskInfoDTO.AfreshGenerateTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -126,10 +126,10 @@ public class ApproveTaskInfoController extends BaseController {
             try {
                 resultDTO = approveTaskInfoService.afreshGenerate(id);
             }catch (Exception e){
-                log.error("三方生成查询重新生成失败",e);
+                log.error("流程拉取重新生成失败",e);
                 ApproveTaskInfoEntity entity = approveTaskInfoService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    resultDTO = BatchResultDTO.fail(id, id, "三方生成查询数据不存在, 重新生成失败");
+                    resultDTO = BatchResultDTO.fail(id, id, "流程拉取数据不存在, 重新生成失败");
                     resultDTOS.add(resultDTO);
                     continue;
                 }
@@ -143,13 +143,13 @@ public class ApproveTaskInfoController extends BaseController {
 
     /**
      * 状态获取
-     * @author will
+     * @author willw哦
      * @date 2025/12/10 15:33
      * @param dto
      * @return ApiResult<List<BatchResultDTO>>
      */
     @PostMapping("/updateThirdStatus")
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "第三方生成查询状态获取")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "流程拉取状态获取")
     public ApiResult<List<BatchResultDTO>> updateThirdStatus(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -157,10 +157,40 @@ public class ApproveTaskInfoController extends BaseController {
             try {
                 resultDTO = approveTaskInfoService.updateThirdStatus(id);
             }catch (Exception e){
-                log.error("三方生成查询状态获取失败",e);
+                log.error("流程拉取状态获取失败",e);
                 ApproveTaskInfoEntity entity = approveTaskInfoService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    resultDTO = BatchResultDTO.fail(id, id, "三方生成查询数据不存在, 状态获取失败");
+                    resultDTO = BatchResultDTO.fail(id, id, "流程拉取数据不存在, 状态获取失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getBussinessCode(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 无需同步
+     * @author will
+     * @date 2026/6/22
+     * @param dto ids与不同步原因
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/batchNoNeedSync")
+    @LogAction(value = LogActionEnum.UPDATE_STATUS, desc = "流程拉取无需同步")
+    public ApiResult<List<BatchResultDTO>> batchNoNeedSync(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO = approveTaskInfoService.batchNoNeedSync(id, dto.getRemark());
+            } catch (Exception e) {
+                log.error("流程拉取无需同步失败", e);
+                ApproveTaskInfoEntity entity = approveTaskInfoService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "流程拉取数据不存在, 无需同步失败");
                     resultDTOS.add(resultDTO);
                     continue;
                 }

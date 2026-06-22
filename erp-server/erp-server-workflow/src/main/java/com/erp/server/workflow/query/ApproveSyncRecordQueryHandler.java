@@ -35,6 +35,9 @@ public class ApproveSyncRecordQueryHandler extends AbstractQueryHandler {
         if (ThirdNoticePushRecordStatusEnum.FAILED.getCode().equals(value)) {
             return "asr.status ='"+ ApproveSyncRecordStatusEnum.FAILED.getCode()+"'";
         }
+        if (ApproveSyncRecordStatusEnum.NO_NEED_SYNC.getCode().equals(value)) {
+            return "asr.status ='"+ ApproveSyncRecordStatusEnum.NO_NEED_SYNC.getCode()+"'";
+        }
         return "";
     }
 }

@@ -15,6 +15,7 @@ import org.apache.commons.lang3.StringUtils;
 public enum ApproveSyncRecordStatusEnum implements EnumMessage {
 	SUCCESS("success", "推送成功"),
 	FAILED("failed", "推送失败"),
+	NO_NEED_SYNC("noNeedSync", "无需同步"),
     ;
     /**
      * 类型

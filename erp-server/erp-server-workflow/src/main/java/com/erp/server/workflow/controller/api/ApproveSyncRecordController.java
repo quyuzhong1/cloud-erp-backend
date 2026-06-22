@@ -135,6 +135,39 @@ public class ApproveSyncRecordController extends BaseController {
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
+    /**
+     * 无需同步
+     * @author jack
+     * @date 2026/6/22
+     * @param dto ids与不同步原因
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/batchNoNeedSync")
+    @LogAction(value = LogActionEnum.UPDATE_STATUS, desc = "三方推送记录无需同步")
+    public ApiResult<List<BatchResultDTO>> batchNoNeedSync(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<ApproveSyncRecordEntity> list = approveSyncRecordService.lambdaQuery().in(ApproveSyncRecordEntity::getId, ids).list();
+        Map<String, ApproveSyncRecordEntity> idEntityMap = list.stream().collect(Collectors.toMap(ApproveSyncRecordEntity::getId, w -> w));
+        for (String id : dto.getIds()) {
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO = approveSyncRecordService.batchNoNeedSync(id, dto.getRemark());
+            } catch (Exception e) {
+                log.error("三方推送记录无需同步失败", e);
+                ApproveSyncRecordEntity entity = idEntityMap.get(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "三方推送记录不存在, 无需同步失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getBusinessCode(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
 
     @PostMapping("/externalInstance")
     public void externalInstance(@RequestBody @Validated ApproveSyncRecordDTO.externalInstanceParamDTO dto) throws ClassNotFoundException {

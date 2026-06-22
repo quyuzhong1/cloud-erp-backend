@@ -12,7 +12,7 @@ import java.io.Serializable;
 
 /**
  * <p>
- * 三方生成查询明细
+ * 流程拉取明细
  * </p>
  *
  * @author will
@@ -25,7 +25,7 @@ import java.io.Serializable;
 public class ApproveTaskDetailEntity extends BaseEntity<ApproveTaskDetailEntity> {
 
     /**
-    * 三方生成查询id
+    * 流程拉取id
     */
     @TableField("mian_id")
     private String mianId;

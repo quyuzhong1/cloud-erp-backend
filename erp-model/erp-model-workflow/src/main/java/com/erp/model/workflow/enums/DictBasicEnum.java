@@ -85,8 +85,8 @@ public enum DictBasicEnum {
     UPDATEFIELDORSTATUS("updateFieldOrStatus", "operateType", "仅更新字段/状态", "生成/更新配置"),
     CREATEANDUPDATE("createAndUpdate", "operateType", "创建并更新", "生成/更新配置"),
     FS("fs", "sourcePlatform", "飞书", "三方平台"),
-    SUCEESS("success", "taskInfoStatus", "成功", "三方生成查询状态"),
-    FAIL("fail", "taskInfoStatus", "失败", "三方生成查询状态"),
+    SUCEESS("success", "taskInfoStatus", "成功", "流程拉取状态"),
+    FAIL("fail", "taskInfoStatus", "失败", "流程拉取状态"),
     SYSCFG("sysCfg", "cfgType", "系统配置", "配置类型"),
     THIRDCFG("thirdCfg", "cfgType", "第三方配置", "配置类型"),
     PENDING("PENDING", "taskStatus", "approveIng", "审核中"), //公用

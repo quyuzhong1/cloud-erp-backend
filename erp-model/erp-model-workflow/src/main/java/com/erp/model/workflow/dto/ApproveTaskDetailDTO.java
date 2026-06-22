@@ -11,7 +11,7 @@ import java.io.Serializable;
 
 /**
  * <p>
- * 三方生成查询明细请求响应实体
+ * 流程拉取明细请求响应实体
  * </p>
  *
  * @author will
@@ -37,7 +37,7 @@ public class ApproveTaskDetailDTO implements Serializable {
         private String  id;
 
         /**
-        * 三方生成查询id
+        * 流程拉取id
         */
         private String mianId;
 
@@ -170,10 +170,10 @@ public class ApproveTaskDetailDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 三方生成查询id
+        * 流程拉取id
         */
-        @NotBlank(message = "三方生成查询id不能为空")
-        @Size(max = 19,message = "三方生成查询id最大长度不能超过19位")
+        @NotBlank(message = "流程拉取id不能为空")
+        @Size(max = 19,message = "流程拉取id最大长度不能超过19位")
         private String mianId;
 
         /**

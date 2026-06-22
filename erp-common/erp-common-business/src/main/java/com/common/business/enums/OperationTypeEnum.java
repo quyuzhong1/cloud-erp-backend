@@ -54,6 +54,8 @@ public enum OperationTypeEnum {
 
     MANUAL_GENERATE("manualGenerate", "手动生成"),
 
+    NO_NEED_SYNC("noNeedSync", "无需同步操作"),
+
     ;
     @JsonValue
     @EnumValue

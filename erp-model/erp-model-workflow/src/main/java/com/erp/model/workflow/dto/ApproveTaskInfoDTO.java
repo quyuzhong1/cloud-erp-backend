@@ -17,7 +17,7 @@ import java.util.Map;
 
 /**
  * <p>
- * 三方生成查询请求响应实体
+ * 流程拉取请求响应实体
  * </p>
  *
  * @author will
@@ -280,9 +280,9 @@ public class ApproveTaskInfoDTO implements Serializable {
     public static class AddDTO extends CommonDTO {
 
         /**
-         * 三方查询明细
+         * 流程拉取明细
          */
-        @NotEmpty(message = "三方查询明细数据不能为空")
+        @NotEmpty(message = "流程拉取明细数据不能为空")
         private List<ApproveTaskDetailDTO.AddDTO> detailList;
     }
 
@@ -299,9 +299,9 @@ public class ApproveTaskInfoDTO implements Serializable {
         @NotBlank(message = "主键id不能为空")
         private String id;
         /**
-         * 三方查询明细
+         * 流程拉取明细
          */
-        @NotEmpty(message = "三方查询明细数据不能为空")
+        @NotEmpty(message = "流程拉取明细数据不能为空")
         @Valid
         private List<ApproveTaskDetailDTO.UpdateDTO> detailList;
     }

@@ -10,7 +10,7 @@ import java.util.List;
 
 /**
  * <p>
- * 三方生成查询明细 Mapper 接口
+ * 流程拉取明细 Mapper 接口
  * </p>
  *
  * @author will
