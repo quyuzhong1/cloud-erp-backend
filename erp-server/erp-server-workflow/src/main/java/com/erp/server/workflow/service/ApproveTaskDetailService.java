@@ -9,7 +9,7 @@ import java.util.List;
 
 /**
  * <p>
- * 三方生成查询明细 服务类
+ * 流程拉取明细 服务类
  * </p>
  *
  * @author will

@@ -18,6 +18,7 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -25,6 +26,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.dto.ApproveTaskDetailDTO;
 import com.erp.model.workflow.dto.ApproveTaskInfoDTO;
 import com.erp.model.workflow.dto.ProcessDelegateDTO;
@@ -55,7 +57,7 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_APPROVE_TASK;
 
 /**
  * <p>
- * 三方生成查询 服务实现类
+ * 流程拉取 服务实现类
  * </p>
  *
  * @author will
@@ -99,14 +101,19 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
         // 数据处理
         handleData(approveTaskInfoEntity);
 
-        log.info("开始新增三方生成查询");
+        log.info("开始新增流程拉取");
         boolean save = super.save(approveTaskInfoEntity);
         if(!save) {
-            throw new ServiceException("三方生成查询保存失败");
+            throw new ServiceException("流程拉取保存失败");
         }
 
         //添加明细数据
         approveTaskDetailService.add(addDTO.getDetailList(), approveTaskInfoEntity.getId());
+
+        // 操作日志
+        String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据单号为【{}】",
+                UserContext.getDefaultLoginUser().getUserName(), "流程拉取", approveTaskInfoEntity.getBussinessCode());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.APPROVE_TASK_INFO.getCode(), approveTaskInfoEntity.getId(), "新增操作");
 
         return new BaseResultDTO.AddDTO(approveTaskInfoEntity.getId(), approveTaskInfoEntity.getId());
     }
@@ -120,16 +127,23 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
     @Override
     public Boolean update(ApproveTaskInfoDTO.UpdateDTO addOrUpdateDTO) {
         ApproveTaskInfoEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "三方生成查询"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "流程拉取"));
         ApproveTaskInfoEntity approveTaskInfoEntity =  BeanMapperUtils.map(ApproveTaskInfoEntity.class, addOrUpdateDTO);
 
         // 数据处理
         handleData(approveTaskInfoEntity);
+        log.info("编辑 开始修改流程拉取数据，单号：【{}】", old.getBussinessCode());
         boolean save = super.updateById(approveTaskInfoEntity);
         if(!save) {
-            throw new ServiceException("三方生成查询保存失败");
+            throw new ServiceException("流程拉取保存失败");
         }
         approveTaskDetailService.update(addOrUpdateDTO.getDetailList(),approveTaskInfoEntity.getId());
+
+        // 记录主单操作日志
+        log.info("编辑 开始记录流程拉取日志数据，单号：【{}】", old.getBussinessCode());
+        String msg = CharSequenceUtil.format("用户【{}】编辑单号为【{}】的【{}】单据",
+                UserContext.getDefaultLoginUser().getUserName(), old.getBussinessCode(), "流程拉取");
+        operateLogService.addModuleOperateLogByObj(old, approveTaskInfoEntity, ModuleTypeEnum.APPROVE_TASK_INFO.getCode(), approveTaskInfoEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
@@ -217,7 +231,7 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
 
     @Override
     public void exportList(ApproveTaskInfoDTO.PagingParamDTO param) {
-        downloadTaskFeign.saveDownloadTask("三方生成查询导出", EXPORT_APPROVE_TASK.getCode(), param);
+        downloadTaskFeign.saveDownloadTask("流程拉取导出", EXPORT_APPROVE_TASK.getCode(), param);
     }
 
     @Override
@@ -226,8 +240,9 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException(ApiError.WF_APPROVE_TASK_NOT_FOUND);
         }
+        checkNotNoNeedSyncStatus(entity);
         if (entity.getStatus().equals(ApproveTaskStatusEnum.ALL)){
-            throw new ServiceException("三方生成查询已完成，请不要重复生成");
+            throw new ServiceException("流程拉取已完成，请不要重复生成");
         }
         List<ApproveTaskDetailEntity> list = approveTaskDetailService.list(new LambdaQueryWrapper<ApproveTaskDetailEntity>().eq(ApproveTaskDetailEntity::getMianId, id).orderByAsc(ApproveTaskDetailEntity::getIndex));
         //处理结构
@@ -256,7 +271,7 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
             }
         }
         if (CharSequenceUtil.equals(entity.getType(),ApproveTaskTypeEnum.PULL.getCode())) {
-            //查询关联的三方审批生成
+            //查询关联的流程拉取
             CfgThirdProcessEntity thirdProcessEntity = cfgThirdProcessService.getOne(new LambdaQueryWrapper<CfgThirdProcessEntity>().eq(CfgThirdProcessEntity::getThirdProcessDefinitionCode, entity.getThirdApprovalCode()));
             CreateBillHandler createBillHandler = createBillFactory.getCreateBillHandler(entity.getBussinessKey());
             createBillHandler.afreshGenerate(detailMap, thirdProcessEntity, entity);
@@ -293,6 +308,7 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException(ApiError.WF_APPROVE_TASK_NOT_FOUND);
         }
+        checkNotNoNeedSyncStatus(entity);
         //根据审批定义和审批实例id生成中台即时拉取任务
         DmpInoutDTO.CreateInputDTO dto = new DmpInoutDTO.CreateInputDTO();
         dto.setSystemCode(CfgApproveSyncSyncPlatformEnum.FEISHU.getCode());
@@ -313,6 +329,42 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
             throw new ServiceException("所选数据未找到同步信息");
         }
         return BatchResultDTO.success(entity.getId(), entity.getBussinessCode(), OperationTypeEnum.MANUAL_GENERATE);
+    }
+
+    /**
+     * 无需同步
+     * 仅生成失败状态可更新为无需同步，不同步原因写入失败原因字段
+     * @author will
+     * @date 2026/6/22
+     * @param id 主键id
+     * @param remark 不同步原因
+     * @return BatchResultDTO
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO batchNoNeedSync(String id, String remark) {
+        ApproveTaskInfoEntity entity = getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException(ApiError.WF_APPROVE_TASK_NOT_FOUND);
+        }
+        if (!ApproveTaskStatusEnum.FAIL.getCode().equals(entity.getStatus())) {
+            throw new ServiceException(ApiError.WF_APPROVE_TASK_NO_NEED_SYNC_ALLOWED_ONLY_FAIL);
+        }
+        boolean updated = lambdaUpdate()
+                .eq(ApproveTaskInfoEntity::getId, id)
+                .eq(ApproveTaskInfoEntity::getStatus, ApproveTaskStatusEnum.FAIL.getCode())
+                .set(ApproveTaskInfoEntity::getStatus, ApproveTaskStatusEnum.NO_NEED_SYNC.getCode())
+                .set(ApproveTaskInfoEntity::getReason, remark)
+                .update();
+        if (!updated) {
+            throw new ServiceException(ApiError.WF_APPROVE_TASK_NO_NEED_SYNC_ALLOWED_ONLY_FAIL);
+        }
+        String msg = CharSequenceUtil.format("执行状态由【{}】变更为【{}】，不同步原因：{}",
+                ApproveTaskStatusEnum.FAIL.getName(),
+                ApproveTaskStatusEnum.NO_NEED_SYNC.getName(),
+                remark);
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.APPROVE_TASK_INFO.getCode(), entity.getId(), "无需同步");
+        return BatchResultDTO.success(entity.getId(), entity.getBussinessCode(), OperationTypeEnum.NO_NEED_SYNC);
     }
 
     /**
@@ -385,5 +437,15 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
     */
     private void handleData(ApproveTaskInfoEntity approveTaskInfoEntity) {
     // TODO 验证数据 & 数据赋值
+    }
+
+    /**
+     * 无需同步状态不允许重试操作
+     * @param entity 流程拉取
+     */
+    private void checkNotNoNeedSyncStatus(ApproveTaskInfoEntity entity) {
+        if (ApproveTaskStatusEnum.NO_NEED_SYNC.getCode().equals(entity.getStatus())) {
+            throw new ServiceException(ApiError.WF_APPROVE_TASK_NO_NEED_SYNC_NOT_ALLOW_OPERATION);
+        }
     }
 }

@@ -29,6 +29,16 @@ public interface ApproveSyncRecordService extends SuperService<ApproveSyncRecord
 
     BatchResultDTO repush(String id);
 
+    /**
+     * 无需同步
+     * @author jack
+     * @date 2026/6/22
+     * @param id 主键id
+     * @param remark 不同步原因
+     * @return BatchResultDTO
+     */
+    BatchResultDTO batchNoNeedSync(String id, String remark);
+
     void insertBatch(List<ApproveSyncRecordEntity> list);
 
     void externalInstance(ApproveSyncRecordDTO.externalInstanceParamDTO dto) throws ClassNotFoundException;

@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * 第三方审核任务状态
+ * 流程拉取状态
  * @author will
  * @date 2025/5/27 10:24
  */
@@ -17,6 +17,7 @@ public enum ApproveTaskStatusEnum implements EnumMessage {
     ALL("all", "全部"),
     SUCCESS("success", "生成成功"),
     FAIL("fail", "生成失败"),
+    NO_NEED_SYNC("noNeedSync", "无需同步"),
     ;
 
     @EnumValue

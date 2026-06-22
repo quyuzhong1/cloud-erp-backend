@@ -10,6 +10,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.dto.ApproveTaskDetailDTO;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.entity.ApproveTaskDetailEntity;
@@ -17,7 +18,10 @@ import com.erp.model.workflow.entity.ApproveTaskInfoEntity;
 import com.erp.model.workflow.enums.CfgQueryOptionUseTypeEnum;
 import com.erp.server.workflow.convert.ApproveTaskDetailConvert;
 import com.erp.server.workflow.mapper.ApproveTaskDetailMapper;
-import com.erp.server.workflow.service.*;
+import com.erp.server.workflow.service.ApproveTaskDetailService;
+import com.erp.server.workflow.service.ApproveTaskInfoService;
+import com.erp.server.workflow.service.CfgQueryOptionService;
+import com.erp.server.workflow.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,7 +36,7 @@ import java.util.stream.Collectors;
 
 /**
  * <p>
- * 三方生成查询明细 服务实现类
+ * 流程拉取明细 服务实现类
  * </p>
  *
  * @author will
@@ -58,10 +62,10 @@ public class ApproveTaskDetailServiceImpl extends SuperServiceImpl<ApproveTaskDe
         for (ApproveTaskDetailEntity detailLi : approveTaskDetailLis) {
             detailLi.setMianId(mainId);
         }
-        log.info("开始新增三方生成查询明细");
+        log.info("开始新增流程拉取明细");
         boolean save = super.saveBatch(approveTaskDetailLis);
         if(!save) {
-            throw new ServiceException("三方生成查询明细保存失败");
+            throw new ServiceException("流程拉取明细保存失败");
         }
         return new BaseResultDTO.AddDTO(mainId,mainId);
     }
@@ -75,30 +79,29 @@ public class ApproveTaskDetailServiceImpl extends SuperServiceImpl<ApproveTaskDe
         List<ApproveTaskDetailEntity> approveTaskDetailLis  = ApproveTaskDetailConvert.INSTANCE.approveTaskDetailUpdateToEntity(detailList);
         //处理字段信息
         handleErpField(approveTaskDetailLis,mainId);
-        log.info("编辑 开始修改三方生成查询明细数据，主表id：【{}】", mainId);
+        log.info("编辑 开始修改流程拉取明细数据，主表id：【{}】", mainId);
         boolean save = super.updateBatchById(approveTaskDetailLis);
         if(!save) {
-            throw new ServiceException("三方生成查询明细保存失败");
+            throw new ServiceException("流程拉取明细保存失败");
         }
         return Boolean.TRUE;
     }
     /**
-     * 处理加校验字段信息
+     * 处理字段校验并记录明细变更日志
      * @author will
      * @date 2025/10/15 17:35
-     * @param approveTaskDetailLis
-     * @param mainId
-     * @return void
+     * @param approveTaskDetailLis 待保存明细
+     * @param mainId 主表id
      */
     private void handleErpField ( List<ApproveTaskDetailEntity> approveTaskDetailLis,String mainId) {
         ApproveTaskInfoEntity entity = approveTaskInfoService.getById(mainId);
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException(ApiError.COMMON_PARAM_TIME_REQUIRED,"三方生成查询信息");
+            throw new ServiceException(ApiError.COMMON_PARAM_TIME_REQUIRED,"流程拉取信息");
         }
         //明细信息
         List<ApproveTaskDetailEntity> approveTaskDetailList = this.listByMainId(mainId);
         if (ObjectUtil.isEmpty(approveTaskDetailList)) {
-            throw new ServiceException(ApiError.COMMON_PARAM_TIME_REQUIRED,"三方生成查询明细信息");
+            throw new ServiceException(ApiError.COMMON_PARAM_TIME_REQUIRED,"流程拉取明细信息");
         }
         List<CfgQueryOptionDTO.ViewDTO> optionList = cfgQueryOptionService.getSystemfield(entity.getBussinessKey(), CfgQueryOptionUseTypeEnum.ALL_DATA.getCode());
         if (CollUtil.isEmpty(optionList)) {
@@ -106,6 +109,8 @@ public class ApproveTaskDetailServiceImpl extends SuperServiceImpl<ApproveTaskDe
         }
 
         Map<String, CfgQueryOptionDTO.ViewDTO> map = optionList.stream().collect(Collectors.toMap(CfgQueryOptionDTO.ViewDTO::getUniqueCode,Function.identity()));
+        Map<String, ApproveTaskDetailEntity> oldMap = approveTaskDetailList.stream()
+                .collect(Collectors.toMap(ApproveTaskDetailEntity::getId, Function.identity()));
 
         //保存数据可按照系统字段和实体编码进行校验
         Map<String, List<ApproveTaskDetailEntity>> detailMap = approveTaskDetailLis.stream().collect(Collectors.groupingBy(obj -> CharSequenceUtil.format("{}-{}", obj.getEntityCode(), obj.getSysField())));
@@ -123,6 +128,19 @@ public class ApproveTaskDetailServiceImpl extends SuperServiceImpl<ApproveTaskDe
             detailEntity.setSysFieldName(viewDTOS.getConditionFieldName());
             detailEntity.setSysFieldRequired(viewDTOS.getIsRequired());
             detailEntity.setSysFieldType(viewDTOS.getFieldType());
+        }
+
+        //添加操作日志
+        for (ApproveTaskDetailEntity detailEntity : approveTaskDetailLis) {
+            if (CharSequenceUtil.isBlank(detailEntity.getId())) {
+                continue;
+            }
+            ApproveTaskDetailEntity old = oldMap.get(detailEntity.getId());
+            if (ObjectUtil.isEmpty(old)) {
+                continue;
+            }
+            operateLogService.addModuleOperateLogByObj(old, detailEntity, ModuleTypeEnum.APPROVE_TASK_INFO.getCode(), mainId, "",
+                    CharSequenceUtil.format("【{}】", getFieldLabel(old)));
         }
     }
 
@@ -142,5 +160,14 @@ public class ApproveTaskDetailServiceImpl extends SuperServiceImpl<ApproveTaskDe
     */
     private void handleData(ApproveTaskDetailEntity approveTaskDetailEntity) {
     // TODO 验证数据 & 数据赋值
+    }
+
+    /**
+     * 获取明细字段展示名称
+     * @param entity 明细实体
+     * @return 字段名称
+     */
+    private String getFieldLabel(ApproveTaskDetailEntity entity) {
+        return CharSequenceUtil.blankToDefault(entity.getSysFieldName(), entity.getSysField());
     }
 }
