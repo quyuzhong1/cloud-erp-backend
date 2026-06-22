@@ -492,6 +492,8 @@ public enum ApiError implements Serializable {
     WF_TASK_RECORD_FORCE_RETRY_PARAM_INCOMPLETE(4074,"任务节点id或sourceType/sourceId不能为空"),
     WF_KOL_B2C_SUB_TASK_NODE_NOT_FOUND(4075,"KOL B2C拆分单任务节点配置不存在"),
     WF_KOL_B2C_SPLIT_DETAIL_INCOMPLETE(4076,"B2C寄样申请单拆分单明细不完整，单号【{0}】，达人【{1}】"),
+    WF_KOL_B2C_WAIT_SPLIT_ORDER(4077,"等待拆分单生成"),
+    WF_KOL_B2C_WAIT_SUB_TASK_COMPLETE(4078,"等待KOL B2C拆分单子任务完成，已完成{0}/{1}"),
     /**
      * PROJECT 项目相关 4500 - 5000
      */
