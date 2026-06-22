@@ -103,7 +103,7 @@
             sdn.code as sourceCode,
             so.id as soOutstockId,
             so.code as soOutstockCode,
-            COALESCE(so.order_type, si.order_type) as businessType,
+            so.order_type as businessType,
             wc.box_no as boxNo,
             concat(box_length, '*', wcs.box_width, '*', wcs.box_height) AS boxSize,
             box_length*box_width*box_height as multiplySize,
@@ -115,7 +115,6 @@
         INNER JOIN wms_carton wc ON wc.packing_task_id = pt.id AND wc.is_deleted = FALSE
         INNER JOIN wms_carton_spec wcs ON wc.spec_id = wcs.id AND wcs.is_deleted = FALSE
         left join so_outstock  so on sdn.id = so.source_id and so.is_deleted = false
-        left join so_info si on sdn.source_id = si.id and si.is_deleted = false
         WHERE sdn.is_deleted = FALSE
         AND sdn.id in
         <foreach collection="soDeliveryNoticeIdList" item="id" open="(" close=")" separator=",">
