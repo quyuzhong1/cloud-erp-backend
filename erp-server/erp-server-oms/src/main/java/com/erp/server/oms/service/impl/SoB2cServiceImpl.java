@@ -12575,59 +12575,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     BigDecimal totalDiscount = soB2cEntity.getTotalDiscount();
                     SoB2cAmountUtil.ignoreRequestMainPaidAmount(soB2cEntity);
                     SoB2cAmountUtil.ignoreRequestMainTotalDiscount(soB2cEntity);
-                    soB2cService.save(soB2cEntity);
-                    // 操作日志
-                    String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "B2C销售订单表", soB2cEntity.getCode());
-                    operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "新增操作");
-
-                    List<SoB2cDetailDTO.AddDTO> addDTOS = BeanMapper.copyList(detailList, SoB2cDetailDTO.AddDTO.class);
-                    //计算物流尺寸
-                    calculateSizeByAdd(b2cLogisitics, addDTOS);
-                    //新增物流信息
-                    soB2cLogisticsService.add(b2cLogisitics, soB2cEntity.getId());
-                    if (StringUtils.isBlank(receiverDTO.getCustomerId())) {
-                        //新增B2C客户
-//                        SoB2cDTO.AddDTO addDTO = new SoB2cDTO.AddDTO();
-//                        BeanMapper.copyNonNull(mainInfo, addDTO);
-//                        addDTO.setReceiverDTO(receiverDTO);
-//                        CustomerB2CDTO.AddDTO dto = buildB2cCustomerAddDTO(addDTO, soB2cEntity.getId());
-//                        dto.setName(mainInfo.getCustomerName());
-//                        String customerId = customerB2cService.add(dto);
-                        CustomerB2cEntity dto = new CustomerB2cEntity();
-                        String customerId = IdWorker.getIdStr();
-                        dto.setId(customerId);
-                        dto.setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_CUSTC));
-                        dto.setPlatformType(soB2cEntity.getDictPlatform());
-                        dto.setName(mainInfo.getCustomerName());
-                        dto.setCountryId(receiverDTO.getCountry());
-                        dto.setCurrency(soB2cEntity.getCurrency());
-                        dto.setSourceId(soB2cEntity.getId());
-                        dto.setSourceType("soB2c");
-                        dto.setApproveStatus(ApproveStatusEnum.APPROVE);
-                        customerB2cService.save(dto);
-                        receiverDTO.setCustomerId(customerId);
-                    }
-                    //新增买家信息
-                    soB2cReceiverService.add(receiverDTO, soB2cEntity);
-                    //新增明细（成功后再回写主表 paidAmount/totalDiscount）
-                    if (!soB2cDetailService.saveBatch(detailList)) {
-                        throw new ServiceException("B2C销售订单明细导入失败");
-                    }
-                    soB2cEntity.setPaidAmount(paidAmount);
-                    soB2cEntity.setTotalDiscount(totalDiscount);
-                    soB2cService.updateById(soB2cEntity);
-                    //新增财务信息
-                    addSoB2cFinance(soB2cEntity);
-                    //订单分类
-                    List<SoB2cRefCategoryDTO.AddDTO> addList = new ArrayList<>();
-                    String category = mainInfo.getCategory();
-                    if (StringUtils.isNotBlank(category)) {
-                        List<String> categoryNameList = Arrays.asList(category.split(","));
-                        for (String s : categoryNameList) {
-                            addList.add(new SoB2cRefCategoryDTO.AddDTO(soB2cEntity.getId(), orderCategoryMap.get(s)));
-                        }
-                        soB2cRefCategoryService.add(addList, soB2cEntity.getId());
-                    }
+                    ApplicationContextUtils.getBean(SoB2cServiceImpl.class).persistImportB2cOrder(
+                            soB2cEntity, paidAmount, totalDiscount, b2cLogisitics, receiverDTO, detailList, mainInfo, orderCategoryMap);
                     //检查是否备案并修改状态
                     soB2cService.checkProductRegistrationAndUpdate(soB2cEntity.getId(), "");
                     //速卖通平台仓订单不走任何规则
@@ -12675,6 +12624,60 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
         }
 
+    }
+
+    /**
+     * B2C Excel 导入单条订单落库（主表/物流/买家/明细/财务/分类同一事务，失败整体回滚）
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void persistImportB2cOrder(SoB2cEntity soB2cEntity,
+                                        BigDecimal paidAmount,
+                                        BigDecimal totalDiscount,
+                                        SoB2cLogisticsDTO.AddDTO b2cLogisitics,
+                                        SoB2cReceiverDTO.AddDTO receiverDTO,
+                                        List<SoB2cDetailEntity> detailList,
+                                        B2CSoImportExcelDTO mainInfo,
+                                        Map<String, String> orderCategoryMap) {
+        soB2cService.save(soB2cEntity);
+        String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据单号为【{}】",
+                UserContext.getDefaultLoginUser().getUserName(), "B2C销售订单表", soB2cEntity.getCode());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "新增操作");
+
+        List<SoB2cDetailDTO.AddDTO> addDTOS = BeanMapper.copyList(detailList, SoB2cDetailDTO.AddDTO.class);
+        calculateSizeByAdd(b2cLogisitics, addDTOS);
+        soB2cLogisticsService.add(b2cLogisitics, soB2cEntity.getId());
+        if (StringUtils.isBlank(receiverDTO.getCustomerId())) {
+            CustomerB2cEntity dto = new CustomerB2cEntity();
+            String customerId = IdWorker.getIdStr();
+            dto.setId(customerId);
+            dto.setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_CUSTC));
+            dto.setPlatformType(soB2cEntity.getDictPlatform());
+            dto.setName(mainInfo.getCustomerName());
+            dto.setCountryId(receiverDTO.getCountry());
+            dto.setCurrency(soB2cEntity.getCurrency());
+            dto.setSourceId(soB2cEntity.getId());
+            dto.setSourceType("soB2c");
+            dto.setApproveStatus(ApproveStatusEnum.APPROVE);
+            customerB2cService.save(dto);
+            receiverDTO.setCustomerId(customerId);
+        }
+        soB2cReceiverService.add(receiverDTO, soB2cEntity);
+        if (!soB2cDetailService.saveBatch(detailList)) {
+            throw new ServiceException("B2C销售订单明细导入失败");
+        }
+        soB2cEntity.setPaidAmount(paidAmount);
+        soB2cEntity.setTotalDiscount(totalDiscount);
+        soB2cService.updateById(soB2cEntity);
+        addSoB2cFinance(soB2cEntity);
+        String category = mainInfo.getCategory();
+        if (StringUtils.isNotBlank(category)) {
+            List<SoB2cRefCategoryDTO.AddDTO> addList = new ArrayList<>();
+            List<String> categoryNameList = Arrays.asList(category.split(","));
+            for (String s : categoryNameList) {
+                addList.add(new SoB2cRefCategoryDTO.AddDTO(soB2cEntity.getId(), orderCategoryMap.get(s)));
+            }
+            soB2cRefCategoryService.add(addList, soB2cEntity.getId());
+        }
     }
 
 

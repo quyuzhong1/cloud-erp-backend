@@ -152,12 +152,13 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         SoB2cAmountUtil.applyAllForManualDetailSave(soB2cEntity, list);
         //批量新增
         boolean flag = this.saveBatch(list);
-        if (flag) {
-            soB2cService.updateById(soB2cEntity);
+        if (!flag) {
+            return false;
         }
+        soB2cService.updateById(soB2cEntity);
         //新增拆分订单关联关系
         addSoB2cRef(addDTO, list, soB2cEntity);
-        return flag;
+        return true;
     }
 
     @Override
