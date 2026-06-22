@@ -177,7 +177,10 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
             if(CollUtil.isEmpty(workflowTaskRecordEntities)){
                 continue;
             }
-            long count = workflowTaskRecordEntities.stream().filter(e -> Objects.equals(e.getStatus(), WorkflowTaskRecordStatusEnum.FAILED.getCode()) && e.getRetryCount() > 3).count();
+            long count = workflowTaskRecordEntities.stream()
+                    .filter(e -> Objects.equals(e.getStatus(), WorkflowTaskRecordStatusEnum.FAILED.getCode())
+                            && e.getRetryCount() >= TASK_TERMINAL_RETRY_COUNT)
+                    .count();
             if(count > 0){
                 continue;
             }
@@ -471,7 +474,12 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
                     } catch (Exception e) {
                         log.error("任务节点人工强制重试事务提交后发送MQ失败，sourceType={}, sourceId={}, traceId={}",
                                 entity.getSourceType(), entity.getSourceId(), entity.getTraceId(), e);
-                        markForceRetryMqSendFailed(entity, e);
+                        try {
+                            markForceRetryMqSendFailed(entity, e);
+                        } catch (Exception updateException) {
+                            log.error("任务节点人工强制重试MQ失败状态回写异常，sourceType={}, sourceId={}, traceId={}",
+                                    entity.getSourceType(), entity.getSourceId(), entity.getTraceId(), updateException);
+                        }
                     }
                 }
             });

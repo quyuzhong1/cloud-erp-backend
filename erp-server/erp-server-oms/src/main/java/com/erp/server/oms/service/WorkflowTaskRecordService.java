@@ -22,6 +22,8 @@ public interface WorkflowTaskRecordService extends SuperService<WorkflowTaskReco
 
     int TASK_WAITING_TIMEOUT_HOURS = 24;
 
+    int TASK_TERMINAL_RETRY_COUNT = 4;
+
     List<WorkflowTaskRecordEntity> addTask(WorkflowTaskRecordDTO.AddTaskDTO dto);
 
     /**

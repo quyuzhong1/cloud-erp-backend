@@ -217,7 +217,7 @@ public class WorkflowTaskRecordConsumer implements RocketMQListener<WorkflowTask
                 entity.setStatus(WorkflowTaskRecordStatusEnum.FAILED.getCode());
                 entity.setLastError(StringUtils.defaultString(errorMsg));
                 // 节点主动返回 failed 表示业务已进入终态失败，补偿任务不再反复唤醒。
-                entity.setRetryCount(Math.max(Optional.ofNullable(entity.getRetryCount()).orElse(0), 4));
+                entity.setRetryCount(Math.max(Optional.ofNullable(entity.getRetryCount()).orElse(0), WorkflowTaskRecordService.TASK_TERMINAL_RETRY_COUNT));
                 workflowTaskRecordService.updateById(entity);
                 return Boolean.FALSE;
             }
@@ -250,7 +250,7 @@ public class WorkflowTaskRecordConsumer implements RocketMQListener<WorkflowTask
             entity.setStatus(WorkflowTaskRecordStatusEnum.FAILED.getCode());
             entity.setLastError(StringUtils.substring(StrUtil.format("任务节点等待超过{}小时，{}", WorkflowTaskRecordService.TASK_WAITING_TIMEOUT_HOURS, lastError), 0, 2000));
             // 等待超时属于业务终态失败，避免补偿任务后续反复唤醒。
-            entity.setRetryCount(Math.max(retryCount + 1, 4));
+            entity.setRetryCount(Math.max(retryCount + 1, WorkflowTaskRecordService.TASK_TERMINAL_RETRY_COUNT));
             workflowTaskRecordService.updateById(entity);
             return;
         }
