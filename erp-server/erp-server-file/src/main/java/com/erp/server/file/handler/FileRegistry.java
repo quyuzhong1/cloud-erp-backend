@@ -97,7 +97,7 @@ public class FileRegistry {
     /**
      * 写后删除尾部预留空 sheet 时，允许 XSSFWorkbook 全量加载的文件大小上界，单位字节。
      * 磁盘字节与解压后内存存在膨胀，故独立于 {@link #maxTemplateExpandBytes} 且默认更保守。
-     * 默认全局指定：100MB（104857600）。
+     * 默认全局指定：50MB（52428800）。
      */
     @Getter
     private static Long maxTrimUnusedSheetBytes;
@@ -139,7 +139,7 @@ public class FileRegistry {
                 maxTemplateExpandBytes, MAX_TEMPLATE_EXPAND_BYTES_UPPER);
     }
 
-    @Value("${file.storage.maxTrimUnusedSheetBytes:104857600}")
+    @Value("${file.storage.maxTrimUnusedSheetBytes:52428800}")
     public void setMaxTrimUnusedSheetBytes(Long maxTrimUnusedSheetBytes) {
         FileRegistry.maxTrimUnusedSheetBytes = clampUpperLong("file.storage.maxTrimUnusedSheetBytes",
                 maxTrimUnusedSheetBytes, MAX_TEMPLATE_EXPAND_BYTES_UPPER);
@@ -209,11 +209,11 @@ public class FileRegistry {
     }
 
     /**
-     * 写后删除尾部预留空 sheet 时允许全量加载的文件大小上界（字节），未注入或非法（&lt;1）时回退 100MB（104857600）。
+     * 写后删除尾部预留空 sheet 时允许全量加载的文件大小上界（字节），未注入或非法（&lt;1）时回退 50MB（52428800）。
      */
     public static long maxTrimUnusedSheetBytesOrDefault() {
         Long configured = maxTrimUnusedSheetBytes;
-        return configured == null || configured < 1 ? 104857600L : configured;
+        return configured == null || configured < 1 ? 52428800L : configured;
     }
 
     /**

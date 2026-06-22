@@ -306,7 +306,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
 
     /**
      * 写完后删除分组预留但未使用的尾部空 sheet。须全量加载 xlsx（XSSFWorkbook），
-     * 超过 {@code file.storage.maxTrimUnusedSheetBytes}（默认 100MB）时跳过清理并 WARN。
+     * 超过 {@code file.storage.maxTrimUnusedSheetBytes}（默认 50MB）时跳过清理并 WARN。
      */
     private void trimUnusedDataSheets(File outFile, List<Integer> dataSheetIndexes, int usedDataSheetCount) throws IOException {
         if (CollectionUtils.isEmpty(dataSheetIndexes) || usedDataSheetCount >= dataSheetIndexes.size()) {
