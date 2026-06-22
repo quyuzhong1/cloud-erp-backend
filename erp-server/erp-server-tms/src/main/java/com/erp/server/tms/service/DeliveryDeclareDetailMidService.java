@@ -1,6 +1,7 @@
 package com.erp.server.tms.service;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.tms.entity.DeliveryDeclareDetailMidEntity;
+import com.erp.model.tms.entity.TmsDeclareBillDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.DeliveryDeclareDetailMidDTO;
@@ -161,6 +162,15 @@ public interface DeliveryDeclareDetailMidService extends SuperService<DeliveryDe
     Boolean autoGenerateMidData(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> list);
 
     Boolean batchAddMergeDetail(List<TmsDeclareBillDTO.MergeDeclareBillDTO> list);
+
+    /**
+     * 保存报关单生成后的中间表数据，复用待生成行，避免重复插入。
+     */
+    List<DeliveryDeclareDetailMidEntity> saveGeneratedMidData(String sourceType,
+                                                              List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> declareBillList,
+                                                              List<TmsDeclareBillDetailEntity> detailEntityList,
+                                                              String declareId,
+                                                              String declareCode);
     /**
      * 来源id集合
      * @author will
