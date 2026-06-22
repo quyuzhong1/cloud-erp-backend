@@ -1,7 +1,7 @@
 package com.erp.server.file.core;
 
-import com.alibaba.excel.ExcelWriter;
 import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.ExcelWriter;
 import com.alibaba.excel.write.handler.WriteHandler;
 import com.alibaba.excel.write.metadata.WriteSheet;
 import com.alibaba.excel.write.metadata.fill.FillConfig;
@@ -11,21 +11,19 @@ import com.common.business.vo.KeysetPagingVO;
 import com.common.business.vo.PagingVO;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
+import com.erp.model.file.entity.FileTask;
 import com.erp.server.file.handler.FileRegistry;
 import com.fasterxml.jackson.databind.JavaType;
-import com.erp.model.file.entity.FileTask;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.ResolvableType;
 import org.springframework.util.CollectionUtils;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.lang.reflect.Type;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 @Slf4j
 public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEventHandler<T> {
@@ -444,6 +442,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
                         }
                         break;
                     }
+                    afterFetchPage(rawList);
                     List<T> batch = withoutNullListElements(rawList);
                     if (batch.isEmpty()) {
                         throw new ServiceException("导出数据存在空行，请检查查询结果");
@@ -588,6 +587,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
                     }
                     if (!CollectionUtils.isEmpty(pageData.getList())) {
                         List<T> rawPage = pageData.getList();
+                        afterFetchPage(rawPage);
                         List<T> batch = withoutNullListElements(rawPage);
                         if (batch.isEmpty()) {
                             // 与 KEYSET 路径对齐：rawPage 非空但元素全为 null 时不可静默跳过，否则 totalRows 偏小仍可能「成功」结束
@@ -688,4 +688,16 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
      * @return T 对应需下载的数据
      */
     protected abstract PagingVO<T> getPageData(PagingDTO<P> dto);
+
+    /**
+     * 取数后、写出前对「本页数据」的加工钩子，默认空实现（不影响未重写的单据）。
+     * <p>
+     * 在 OFFSET / KEYSET 两条链路的每次取数后由基类统一逐页回调，子类可重写做按页富化、
+     * 同组重复行置空等可变加工，无需再包裹 {@link #getPageData} / {@link #fetchKeyset}。
+     * 钩子按页调用，天然是「按页」粒度；可原地修改元素值，但不应增删元素（行数由基类按页统计）。
+     *
+     * @param pageList 当前页数据（可能含 null 元素，实现需自行跳过），可为 {@code null}
+     */
+    protected void afterFetchPage(List<T> pageList) {
+    }
 }
