@@ -1226,9 +1226,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 ? new HashMap<>()
                 : countryList.stream().collect(Collectors.toMap(DictCountryEntity::getId, DictCountryEntity::getNameCn, (a, b) -> a));
 
-        // B2B 不合并预览：按 businessId(=so_info.id) + skuId 维度回填 so_detail 的单价/币别/币别符号，
-        // 与 TMS 按客户分发 (sixDimensionMerge) 取数口径保持一致，避免被物流产品 (foreign_product_logistics) 覆盖。
-        Map<String, SoDetailEntity> soDetailMap = loadSoDetailMapForB2bMinDeclare(sourceDetailList);
+        // B2B 客户收货人：按 businessId(=so_info.id) 拉 SO 明细；核算公司不查 SO，按 SKU 取物流产品价。
+        boolean customerReceiver = Boolean.TRUE.equals(tmsDeclareBillFeign.isB2bCustomerReceiver(sourceDetailList));
+        Map<String, SoDetailEntity> soDetailMap = customerReceiver ? loadSoDetailMapForB2bMinDeclare(sourceDetailList) : Collections.emptyMap();
 
         List<DictCurrencyEntity> dictCurrencyList = sysUserFeign.currencyList();
         Map<String, String> currencyMap = CollUtil.isEmpty(dictCurrencyList)
@@ -1246,6 +1246,10 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                     && CombinationDeclareTypeEnums.SPLIT.getCode().equals(productLogisticsDTO.getCombinationDeclareType())
                     && Boolean.TRUE.equals(productLogisticsDTO.getIsCombination())
                     && CollUtil.isNotEmpty(productLogisticsDTO.getChildList())) {
+                // B2B 客户：先按父 SKU 回填 SO 单价/币别，BOM 子行 copy 后继承组合品订单价。
+                if (customerReceiver) {
+                    fillB2bMinDeclareInfo(detailDTO, productLogisticsDTO, currencyMap, soDetailMap, customerReceiver);
+                }
                 for (ProductDetailDTO.ProductLogisticDTO childLogisticsDTO : productLogisticsDTO.getChildList()) {
                     TmsDeclareBillDTO.SourceDeliveryDetailDTO childDetailDTO = new TmsDeclareBillDTO.SourceDeliveryDetailDTO();
                     BeanUtil.copyProperties(detailDTO, childDetailDTO);
@@ -1255,11 +1259,11 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                     childDetailDTO.setBomVersion(childLogisticsDTO.getBomVersion());
                     childDetailDTO.setBomHistoryId(childLogisticsDTO.getBomHistoryId());
                     childDetailDTO.setQty((detailDTO.getQty() == null ? 0 : detailDTO.getQty()) * (childLogisticsDTO.getChildQty() == null ? 1 : childLogisticsDTO.getChildQty()));
-                    fillB2bMinDeclareInfo(childDetailDTO, childLogisticsDTO, currencyMap, soDetailMap);
+                    fillB2bMinDeclareInfo(childDetailDTO, childLogisticsDTO, currencyMap, soDetailMap, customerReceiver);
                     result.add(childDetailDTO);
                 }
             } else {
-                fillB2bMinDeclareInfo(detailDTO, productLogisticsDTO, currencyMap, soDetailMap);
+                fillB2bMinDeclareInfo(detailDTO, productLogisticsDTO, currencyMap, soDetailMap, customerReceiver);
                 result.add(detailDTO);
             }
         }
@@ -1303,7 +1307,8 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     private void fillB2bMinDeclareInfo(TmsDeclareBillDTO.SourceDeliveryDetailDTO detailDTO,
                                        ProductDetailDTO.ProductLogisticDTO productLogisticsDTO,
                                        Map<String, String> currencyMap,
-                                       Map<String, SoDetailEntity> soDetailMap) {
+                                       Map<String, SoDetailEntity> soDetailMap,
+                                       boolean customerReceiver) {
         if (Objects.isNull(detailDTO) || Objects.isNull(productLogisticsDTO)) {
             return;
         }
@@ -1313,14 +1318,19 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         detailDTO.setUnit(productLogisticsDTO.getDeclareUnit());
         detailDTO.setUnitName(productLogisticsDTO.getDeclareUnitName());
 
-        SoDetailEntity soDetailEntity = soDetailMap.get(buildSoDetailKey(detailDTO.getBusinessId(), detailDTO.resolveSoDetailSkuId()));
-        if (Objects.nonNull(soDetailEntity)) {
-            // B2B 不合并预览：单价/币别/币别符号取自 so_detail 销售含税单价及对应币种。
+        SoDetailEntity soDetailEntity = customerReceiver
+                ? soDetailMap.get(buildSoDetailKey(detailDTO.getBusinessId(), detailDTO.resolveSoDetailSkuId()))
+                : null;
+        if (customerReceiver && Objects.nonNull(soDetailEntity)) {
+            // B2B 客户：SO 含税单价/币别（BOM 拆分子 SKU 回退父 SKU）。
             detailDTO.setUnitPrice(MathUtil.preferNonNull(soDetailEntity.getTaxPrice(), soDetailEntity.getPrice()));
             detailDTO.setDeclareCurrency(soDetailEntity.getCurrency());
             detailDTO.setDeclareCurrencySymbol(soDetailEntity.getCurrencySymbol());
             detailDTO.setDeclareCurrencyName(currencyMap.get(detailDTO.getDeclareCurrency()));
+        } else if (customerReceiver && StringUtils.isNotBlank(detailDTO.getParentSkuId())) {
+            // B2B 客户 + BOM 拆分子 SKU：沿用父 SKU SO 单价/币别，不用子 SKU 物流产品覆盖。
         } else {
+            // B2B 核算公司 / 头程等：按当前 SKU 物流产品报关单价/币别。
             detailDTO.setUnitPrice(productLogisticsDTO.getPrice());
             detailDTO.setDeclareCurrency(productLogisticsDTO.getDeclareCurrency());
             detailDTO.setDeclareCurrencyName(productLogisticsDTO.getDeclareCurrencyName());

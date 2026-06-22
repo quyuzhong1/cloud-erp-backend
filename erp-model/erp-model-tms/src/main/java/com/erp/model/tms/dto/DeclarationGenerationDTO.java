@@ -31,6 +31,8 @@ public class DeclarationGenerationDTO implements Serializable {
         private String sku;
         private BigDecimal price;
         private Integer quantity;
+        /** 与保存校验一致的箱维度键：sourceId|boxNo（sourceId 为空时取 businessId） */
+        private String boxKey;
     }
 
     @Data
@@ -58,6 +60,8 @@ public class DeclarationGenerationDTO implements Serializable {
         private Integer totalQuantity;
         private Set<String> skus;
         private List<String> linkedDetailIds;
+        /** 本行关联的全部箱维度键，拆票时同箱不可跨报关单 */
+        private Set<String> boxKeys;
 
     }
 
