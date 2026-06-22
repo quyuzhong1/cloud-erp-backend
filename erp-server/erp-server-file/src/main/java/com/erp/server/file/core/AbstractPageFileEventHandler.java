@@ -289,6 +289,13 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
             return;
         }
         int keep = Math.max(1, usedDataSheetCount);
+        long maxTrimBytes = FileRegistry.maxTemplateExpandBytesOrDefault();
+        long fileBytes = outFile.length();
+        if (fileBytes > maxTrimBytes) {
+            log.warn("跳过尾部空 sheet 清理：handler={} file={} 文件大小={}MB 超过安全阈值={}MB，保留预留空 sheet 以避免 XSSFWorkbook 全量加载 OOM",
+                    getClass().getName(), outFile.getName(), fileBytes / 1024 / 1024, maxTrimBytes / 1024 / 1024);
+            return;
+        }
         XSSFWorkbook wb;
         try (FileInputStream inputStream = new FileInputStream(outFile)) {
             wb = new XSSFWorkbook(inputStream);
@@ -941,6 +948,9 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
      * <p>
      * 同组不拆 sheet 会在临界点回退，实际 sheet 数可能略高于 {@code totalCount / maxDataRowsPerSheet}；
      * 默认额外预留 1 张用于承接分组回退，写出完成后会删除尾部未使用的预留空 sheet。
+     * <p>
+     * 线上单 sheet 数据行通常 10 万行起步，常规业务分组远小于单 sheet 容量，分组回退累计溢出整张 sheet 的概率较低。
+     * 若子类存在大分组或超多 sheet 导出场景，可按业务最大分组行数重写本方法增加预留。
      */
     protected int sheetGroupExtraSheetCount() {
         return 1;
