@@ -174,9 +174,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     /**
      * 审核状态说明字段最大长度，超过则从头部截断
-     * 与 DDL VARCHAR(255) 对齐
+     * 与 DDL VARCHAR(500) 对齐
      */
-    private static final int APPROVE_REMARK_MAX_LENGTH = 255;
+    private static final int APPROVE_REMARK_MAX_LENGTH = 500;
 
     @Resource
     private SysUserFeign sysUserFeign;
@@ -3736,7 +3736,14 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             boolean amountMismatch = soOutstockService.isAmountMismatchWithUpstreamSo(soOutstock, detailEntities);
             if (amountMismatch) {
                 String mismatchMsg = MessageUtils.getMessage(ApiError.SO_OUTSTOCK_AMOUNT_MISMATCH_SUBMIT);
-                soOutstockService.appendApproveRemark(soOutstock.getId(), mismatchMsg);
+                String stamped = "[" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) + "] " + mismatchMsg;
+                if (stamped.length() > APPROVE_REMARK_MAX_LENGTH) {
+                    stamped = stamped.substring(stamped.length() - APPROVE_REMARK_MAX_LENGTH);
+                }
+                soOutstock.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
+                soOutstock.setApproveTime(null);
+                soOutstock.setApproveRemark(stamped);
+                this.updateById(soOutstock);
                 log.warn("平台仓/海外仓下推销售出库单金额异常，落待提交状态，单号：{}，soId：{}", soOutstock.getCode(), soOutstock.getSoId());
             }
             //添加日志

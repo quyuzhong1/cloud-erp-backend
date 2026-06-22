@@ -4798,6 +4798,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         data.setFinancialInfoDTO(financialInfo);
 
         List<SoB2cDetailDTO.ViewDTO> detailList = BeanMapperUtils.copyList(SoB2cDetailDTO.ViewDTO.class, soB2cDetailList);
+        SoB2cAmountUtil.fillDetailViewDisplayAmounts(detailList, soB2cEntity.getAmount(), soB2cEntity.getPaidAmount());
 
         List<String> skuIdList = detailList.stream().map(SoB2cDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
         //根据SKU查询BOM判断是否是组合SKU

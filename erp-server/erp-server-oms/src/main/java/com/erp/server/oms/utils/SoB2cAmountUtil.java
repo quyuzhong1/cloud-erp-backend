@@ -8,6 +8,7 @@ import com.erp.model.oms.entity.SoB2cEntity;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -354,8 +355,32 @@ public final class SoB2cAmountUtil {
             allocateDetailDisplayAmountsFromMain(details, mainAmount, mainPaidAmount);
             return;
         }
-        for (SoB2cDetailDTO.ListDTO detail : details) {
-            fillSingleDetailDisplayAmount(detail, mainAmount, mainPaidAmount);
+        fillPartialDetailDisplayAmounts(details, mainAmount, mainPaidAmount);
+    }
+
+    /**
+     * 详情展示：与 {@link #fillDetailListDisplayAmounts} 逻辑一致，作用于 ViewDTO。
+     */
+    public static void fillDetailViewDisplayAmounts(List<SoB2cDetailDTO.ViewDTO> details, BigDecimal mainAmount, BigDecimal mainPaidAmount) {
+        if (CollUtil.isEmpty(details)) {
+            return;
+        }
+        List<SoB2cDetailDTO.ListDTO> listDTOs = new ArrayList<>(details.size());
+        for (SoB2cDetailDTO.ViewDTO detail : details) {
+            SoB2cDetailDTO.ListDTO listDTO = new SoB2cDetailDTO.ListDTO();
+            listDTO.setAmount(detail.getAmount());
+            listDTO.setSaleAmount(detail.getSaleAmount());
+            listDTO.setPaidAmount(detail.getPaidAmount());
+            listDTO.setDiscountAmount(detail.getDiscountAmount());
+            listDTOs.add(listDTO);
+        }
+        fillDetailListDisplayAmounts(listDTOs, mainAmount, mainPaidAmount);
+        for (int i = 0; i < details.size(); i++) {
+            SoB2cDetailDTO.ViewDTO viewDTO = details.get(i);
+            SoB2cDetailDTO.ListDTO listDTO = listDTOs.get(i);
+            viewDTO.setSaleAmount(listDTO.getSaleAmount());
+            viewDTO.setPaidAmount(listDTO.getPaidAmount());
+            viewDTO.setDiscountAmount(listDTO.getDiscountAmount());
         }
     }
 
@@ -378,23 +403,80 @@ public final class SoB2cAmountUtil {
         }
     }
 
-    private static void fillSingleDetailDisplayAmount(SoB2cDetailDTO.ListDTO detail, BigDecimal mainAmount, BigDecimal mainPaidAmount) {
-        BigDecimal legacyAmount = MathUtil.getValue(detail.getAmount());
-        BigDecimal saleAmount = preferPositive(detail.getSaleAmount(), legacyAmount);
-        BigDecimal paidAmount = detail.getPaidAmount();
-        if (paidAmount == null || paidAmount.compareTo(BigDecimal.ZERO) <= 0) {
-            if (mainAmount.compareTo(BigDecimal.ZERO) > 0 && saleAmount.compareTo(BigDecimal.ZERO) > 0) {
-                paidAmount = saleAmount.multiply(mainPaidAmount).divide(mainAmount, SCALE, RoundingMode.HALF_UP);
+    /**
+     * 部分明细已有新金额字段：保留已落库 paidAmount，对其余明细按 saleAmount 比例分摊剩余实付，最后一行吃尾差。
+     */
+    private static void fillPartialDetailDisplayAmounts(List<SoB2cDetailDTO.ListDTO> details, BigDecimal mainAmount, BigDecimal mainPaidAmount) {
+        List<SoB2cDetailDTO.ListDTO> needPaidAlloc = new ArrayList<>();
+        BigDecimal saleTotalForAlloc = BigDecimal.ZERO;
+        BigDecimal fixedPaidSum = BigDecimal.ZERO;
+
+        for (SoB2cDetailDTO.ListDTO detail : details) {
+            BigDecimal legacyAmount = MathUtil.getValue(detail.getAmount());
+            BigDecimal saleAmount = preferPositive(detail.getSaleAmount(), legacyAmount);
+            detail.setSaleAmount(MathUtil.getValue(saleAmount).setScale(SCALE, RoundingMode.HALF_UP));
+
+            BigDecimal paidAmount = detail.getPaidAmount();
+            if (paidAmount != null && paidAmount.compareTo(BigDecimal.ZERO) > 0) {
+                paidAmount = paidAmount.setScale(SCALE, RoundingMode.HALF_UP);
+                detail.setPaidAmount(paidAmount);
+                fixedPaidSum = fixedPaidSum.add(paidAmount);
             } else {
-                paidAmount = legacyAmount;
+                needPaidAlloc.add(detail);
+                saleTotalForAlloc = saleTotalForAlloc.add(detail.getSaleAmount());
             }
         }
-        BigDecimal discountAmount = detail.getDiscountAmount();
-        if (discountAmount == null) {
-            discountAmount = MathUtil.getValue(saleAmount).subtract(MathUtil.getValue(paidAmount));
+
+        BigDecimal remainingPaid = mainPaidAmount.subtract(fixedPaidSum);
+        if (remainingPaid.compareTo(BigDecimal.ZERO) < 0) {
+            remainingPaid = BigDecimal.ZERO;
         }
-        detail.setSaleAmount(MathUtil.getValue(saleAmount).setScale(SCALE, RoundingMode.HALF_UP));
-        detail.setPaidAmount(MathUtil.getValue(paidAmount).setScale(SCALE, RoundingMode.HALF_UP));
-        detail.setDiscountAmount(discountAmount.setScale(SCALE, RoundingMode.HALF_UP));
+
+        if (CollUtil.isNotEmpty(needPaidAlloc)) {
+            if (saleTotalForAlloc.compareTo(BigDecimal.ZERO) > 0) {
+                BigDecimal allocated = BigDecimal.ZERO;
+                int lastIdx = needPaidAlloc.size() - 1;
+                for (int i = 0; i < needPaidAlloc.size(); i++) {
+                    SoB2cDetailDTO.ListDTO detail = needPaidAlloc.get(i);
+                    BigDecimal paid;
+                    if (i == lastIdx) {
+                        paid = remainingPaid.subtract(allocated).setScale(SCALE, RoundingMode.HALF_UP);
+                    } else {
+                        paid = detail.getSaleAmount().multiply(remainingPaid)
+                                .divide(saleTotalForAlloc, SCALE, RoundingMode.HALF_UP);
+                        allocated = allocated.add(paid);
+                    }
+                    detail.setPaidAmount(paid);
+                }
+            } else if (mainAmount.compareTo(BigDecimal.ZERO) > 0) {
+                BigDecimal allocated = BigDecimal.ZERO;
+                int lastIdx = needPaidAlloc.size() - 1;
+                for (int i = 0; i < needPaidAlloc.size(); i++) {
+                    SoB2cDetailDTO.ListDTO detail = needPaidAlloc.get(i);
+                    BigDecimal legacyAmount = MathUtil.getValue(detail.getAmount());
+                    BigDecimal paid;
+                    if (i == lastIdx) {
+                        paid = remainingPaid.subtract(allocated).setScale(SCALE, RoundingMode.HALF_UP);
+                    } else {
+                        paid = legacyAmount.multiply(remainingPaid)
+                                .divide(mainAmount, SCALE, RoundingMode.HALF_UP);
+                        allocated = allocated.add(paid);
+                    }
+                    detail.setPaidAmount(paid);
+                }
+            } else {
+                for (SoB2cDetailDTO.ListDTO detail : needPaidAlloc) {
+                    detail.setPaidAmount(MathUtil.getValue(detail.getAmount()).setScale(SCALE, RoundingMode.HALF_UP));
+                }
+            }
+        }
+
+        for (SoB2cDetailDTO.ListDTO detail : details) {
+            BigDecimal discountAmount = detail.getDiscountAmount();
+            if (discountAmount == null) {
+                discountAmount = MathUtil.getValue(detail.getSaleAmount()).subtract(MathUtil.getValue(detail.getPaidAmount()));
+            }
+            detail.setDiscountAmount(discountAmount.setScale(SCALE, RoundingMode.HALF_UP));
+        }
     }
 }
