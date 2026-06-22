@@ -284,15 +284,39 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
         }
     }
 
+    /**
+     * 「尽力而为」地删除分组预留但未使用的尾部空 sheet，仅在 {@link #keepSheetGroupTogether()} 开启
+     * （即确有 {@link #sheetGroupExtraSheetCount()} 预留）时执行，避免对未启用分组保护的存量导出引入
+     * 额外的 XSSFWorkbook 全量加载/重写开销。
+     * <p>
+     * 调用时主导出文件已完整写出且正确，清理仅为去除尾部空 sheet 的展示瑕疵；因此任何异常只 WARN、
+     * 保留预留空 sheet，<strong>不</strong>让裁剪失败拖垮已成功的导出。
+     */
+    private void trimUnusedDataSheetsQuietly(File outFile, List<Integer> dataSheetIndexes, int usedDataSheetCount) {
+        if (!keepSheetGroupTogether()) {
+            return;
+        }
+        try {
+            trimUnusedDataSheets(outFile, dataSheetIndexes, usedDataSheetCount);
+        } catch (Exception e) {
+            log.warn("裁剪尾部空 sheet 失败，保留预留空 sheet，不影响导出结果：handler={} file={}",
+                    getClass().getName(), outFile.getName(), e);
+        }
+    }
+
+    /**
+     * 写完后删除分组预留但未使用的尾部空 sheet。须全量加载 xlsx（XSSFWorkbook），
+     * 超过 {@code file.storage.maxTrimUnusedSheetBytes}（默认 50MB）时跳过清理并 WARN。
+     */
     private void trimUnusedDataSheets(File outFile, List<Integer> dataSheetIndexes, int usedDataSheetCount) throws IOException {
         if (CollectionUtils.isEmpty(dataSheetIndexes) || usedDataSheetCount >= dataSheetIndexes.size()) {
             return;
         }
         int keep = Math.max(1, usedDataSheetCount);
-        long maxTrimBytes = FileRegistry.maxTemplateExpandBytesOrDefault();
+        long maxTrimBytes = FileRegistry.maxTrimUnusedSheetBytesOrDefault();
         long fileBytes = outFile.length();
         if (fileBytes > maxTrimBytes) {
-            log.warn("跳过尾部空 sheet 清理：handler={} file={} 文件大小={}MB 超过安全阈值={}MB，保留预留空 sheet 以避免 XSSFWorkbook 全量加载 OOM",
+            log.warn("跳过尾部空 sheet 清理：handler={} file={} 文件大小={}MB 超过 file.storage.maxTrimUnusedSheetBytes 安全阈值={}MB，保留预留空 sheet 以避免 XSSFWorkbook 全量加载 OOM",
                     getClass().getName(), outFile.getName(), fileBytes / 1024 / 1024, maxTrimBytes / 1024 / 1024);
             return;
         }
@@ -621,7 +645,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
         int preparedSheets = vo.isHasNext()
                 ? keysetPreparedSheetCount()
                 : computeDataSheetCountForTotalRows(firstBatchRows);
-        if (preparedSheets > 1 && keepSheetGroupTogether()) {
+        if (keepSheetGroupTogether()) {
             preparedSheets = expandSheetCountForGroupKeeping(preparedSheets);
         }
 
@@ -704,7 +728,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
                 excelWriter.finish();
             }
         }
-        trimUnusedDataSheets(outFile, expandedTemplate.dataSheetIndexes, usedDataSheetCount(total, cursor));
+        trimUnusedDataSheetsQuietly(outFile, expandedTemplate.dataSheetIndexes, usedDataSheetCount(total, cursor));
         return total;
     }
 
@@ -778,7 +802,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
         PagingVO<T> firstData = requirePagingResult(getPageData(dto), "页码=" + dto.getCurrPage());
         int totalCount = firstData.getTotalCount();
         int dataSheets = computeDataSheetCountForTotalRows(totalCount);
-        if (dataSheets > 1 && keepSheetGroupTogether()) {
+        if (keepSheetGroupTogether()) {
             dataSheets = expandSheetCountForGroupKeeping(dataSheets);
         }
         byte[] rawTemplate = readClasspathTemplateBytes(excelPath);
@@ -852,7 +876,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
                 excelWriter.finish();
             }
         }
-        trimUnusedDataSheets(outFile, expandedTemplate.dataSheetIndexes, usedDataSheetCount(totalRows, cursor));
+        trimUnusedDataSheetsQuietly(outFile, expandedTemplate.dataSheetIndexes, usedDataSheetCount(totalRows, cursor));
         // 末页 partial：实际写入行数 < 首查 totalCount（多因导出期间并发删除/数据漂移），不视为失败
         // （fileTask.count 已回填实际行数），但与中间页空列表守卫对称地显式告警，便于排查「导出比预期少」反馈，避免静默。
         if (totalCount > 0 && totalRows < totalCount) {
