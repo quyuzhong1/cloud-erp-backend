@@ -903,11 +903,13 @@
             COALESCE(NULLIF(sm.warehouse_name, ''), NULLIF(sm.warehouse_id, ''), '未知仓库') AS warehouseName,
             CASE
                 WHEN sm.type = 'warehouse'
-                    THEN COALESCE(NULLIF(sm.warehouse_name, ''), NULLIF(sm.warehouse_id, ''), '未知仓库')
+                    THEN COALESCE(NULLIF(op.short_name, ''), NULLIF(sm.warehouse_name, ''), NULLIF(sm.warehouse_id, ''), '未知仓库')
                 ELSE COALESCE(NULLIF(sm.platform_name, ''), NULLIF(sm.dict_platform, ''), '未知')
             END AS groupName,
             COUNT(*) AS unmatchCount
         FROM sku_mapping sm
+        LEFT JOIN listing_info li ON li.id = sm.listing_id AND li.is_deleted = false
+        LEFT JOIN overseas_provider op ON op.id = li.auth_id AND op.is_deleted = false
         WHERE sm.is_deleted = false
           AND sm.is_expire   = false
           AND (sm.product_sku_id IS NULL OR sm.product_sku_id = '')
@@ -923,7 +925,7 @@
           <if test="params.type != null and params.type != ''">
               AND sm.type = #{params.type}
           </if>
-        GROUP BY sm.type, sm.warehouse_id, sm.warehouse_name, sm.platform_name, sm.dict_platform
+        GROUP BY sm.type, sm.warehouse_id, sm.warehouse_name, sm.platform_name, sm.dict_platform, op.short_name
         HAVING COUNT(*) > 0
         ORDER BY unmatchCount DESC
     </select>
