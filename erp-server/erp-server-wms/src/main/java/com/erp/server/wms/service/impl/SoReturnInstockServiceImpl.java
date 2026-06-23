@@ -57,6 +57,8 @@ import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
+import com.common.business.enums.SubcontractTypeEnum;
+import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysDepartmentDTO;
@@ -83,6 +85,7 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.oms.feign.*;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.sys.feign.AuthDataFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.LogisticsBillCostFeign;
@@ -267,6 +270,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
     @Resource
     private SkuMappingFeign skuMappingFeign;
+
+    @Resource
+    private ScmTaskFeign scmTaskFeign;
 
     @Override
     public PagingVO<SoReturnInstockDTO.PagingView> paging(PagingDTO<SoReturnInstockDTO.PagingParam> pagingParamDTO) {
@@ -2754,7 +2760,120 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         operateLogService.addModuleOperateLog(
                 CharSequenceUtil.format("新增了一个销售退货入库单【{}】", code),
                 ModuleTypeEnum.SO_RETURN_INSTOCK.getCode(), entity.getId(), "新增操作");
-        soReturnInstockDetailService.add(dto, entity.getId());
+        persistImportAddDetails(bundle, entity.getId());
+    }
+
+    private void persistImportAddDetails(SoReturnInstockDTO.ImportAddBundle bundle, String mainId) {
+        SoReturnInstockDTO.Add dto = bundle.getAdd();
+        Map<String, String> platformSkuBySkuNo = bundle.getPlatformSkuBySkuNo() != null
+                ? bundle.getPlatformSkuBySkuNo() : Collections.emptyMap();
+        Map<String, String> warehouseNameById = bundle.getWarehouseNameById() != null
+                ? bundle.getWarehouseNameById() : Collections.emptyMap();
+        Map<String, Boolean> subContractBySkuId = bundle.getSubContractBySkuId() != null
+                ? bundle.getSubContractBySkuId() : Collections.emptyMap();
+        List<SoReturnInstockDetailEntity> detailEntities = new ArrayList<>();
+        for (SoReturnInstockDetailDTO.Add detailDto : dto.getDetailList()) {
+            SoReturnInstockDetailEntity detailEntity = new SoReturnInstockDetailEntity();
+            detailEntity.setMainId(mainId);
+            detailEntity.setSkuId(detailDto.getSkuId());
+            detailEntity.setSkuNo(detailDto.getSkuNo());
+            detailEntity.setRealQty(detailDto.getRealQty());
+            detailEntity.setReceiveQty(detailDto.getReceiveQty());
+            detailEntity.setWarehouseLocation(detailDto.getWarehouseLocation());
+            detailEntity.setRemark(detailDto.getRemark());
+            detailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
+            detailEntity.setReturnReasonDict(detailDto.getReturnReasonDict());
+            detailEntity.setWarehouseId(detailDto.getWarehouseId());
+            detailEntity.setWarehouseName(CharSequenceUtil.blankToDefault(
+                    warehouseNameById.get(detailDto.getWarehouseId()), ""));
+            if (CharSequenceUtil.isNotBlank(detailDto.getPlatformSkuNo())) {
+                detailEntity.setPlatformSkuNo(detailDto.getPlatformSkuNo());
+            } else {
+                detailEntity.setPlatformSkuNo(CharSequenceUtil.blankToDefault(
+                        platformSkuBySkuNo.get(detailDto.getSkuNo()), ""));
+            }
+            detailEntity.setIsChildSkuNo(detailDto.getIsChildSkuNo());
+            detailEntity.setReturnAmount(detailDto.getReturnAmount());
+            detailEntity.setTaxReturnAmount(detailDto.getTaxReturnAmount());
+            detailEntity.setReturnAmountLocalCurrency(detailDto.getReturnAmountLocalCurrency());
+            detailEntity.setTaxReturnAmountLocalCurrency(detailDto.getTaxReturnAmountLocalCurrency());
+            detailEntity.setPrice(detailDto.getPrice());
+            detailEntity.setTaxPrice(detailDto.getTaxPrice());
+            detailEntity.setTaxRate(detailDto.getTaxRate());
+            detailEntity.setExchangeRate(detailDto.getExchangeRate() != null
+                    ? detailDto.getExchangeRate() : dto.getExchangeRate());
+            if (Boolean.TRUE.equals(subContractBySkuId.get(detailDto.getSkuId()))) {
+                detailEntity.setIsSubContract(Boolean.TRUE);
+            }
+            detailEntities.add(detailEntity);
+        }
+        if (!soReturnInstockDetailService.saveBatch(detailEntities)) {
+            throw new ServiceException(ApiError.SO_RETURN_INSTOCK_IMPORT_PERSIST_FAILED);
+        }
+    }
+
+    private void enrichImportAddDetailContext(List<SoReturnInstockDTO.ImportAddBundle> bundles,
+                                              Map<String, String> warehouseNameById) {
+        if (CollUtil.isEmpty(bundles)) {
+            return;
+        }
+        Map<String, String> warehouseNameMap = warehouseNameById != null ? warehouseNameById : Collections.emptyMap();
+        List<String> allSkuIds = bundles.stream()
+                .flatMap(bundle -> bundle.getAdd().getDetailList().stream())
+                .map(SoReturnInstockDetailDTO.Add::getSkuId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, Boolean> subContractBySkuId = Collections.emptyMap();
+        if (CollUtil.isNotEmpty(allSkuIds)) {
+            List<PurchaseOrderDetailEntity> purchaseOrderDetails = scmTaskFeign.getLatestByCrtTime(allSkuIds);
+            if (CollectionUtils.isNotEmpty(purchaseOrderDetails)) {
+                subContractBySkuId = purchaseOrderDetails.stream()
+                        .filter(item -> SubcontractTypeEnum.ENUM_PARENT.getCode().equals(item.getSubcontractType()))
+                        .collect(Collectors.toMap(PurchaseOrderDetailEntity::getSkuId, item -> Boolean.TRUE, (a, b) -> a));
+            }
+        }
+        for (SoReturnInstockDTO.ImportAddBundle bundle : bundles) {
+            bundle.setWarehouseNameById(warehouseNameMap);
+            bundle.setSubContractBySkuId(subContractBySkuId);
+            List<String> skuNos = bundle.getAdd().getDetailList().stream()
+                    .map(SoReturnInstockDetailDTO.Add::getSkuNo)
+                    .filter(CharSequenceUtil::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.toList());
+            if (CollUtil.isEmpty(skuNos)) {
+                bundle.setPlatformSkuBySkuNo(Collections.emptyMap());
+                continue;
+            }
+            SkuMappingDTO.SkuParamDTO skuParamDTO = new SkuMappingDTO.SkuParamDTO();
+            skuParamDTO.setCutomerId(bundle.getCustomerId());
+            skuParamDTO.setSkuNoList(skuNos);
+            List<SkuMappingDTO.ProductSkuInfoDTO> productSkuInfoList = skuMappingFeign.listSkuBySkuNos(skuParamDTO);
+            if (CollectionUtils.isEmpty(productSkuInfoList)) {
+                bundle.setPlatformSkuBySkuNo(Collections.emptyMap());
+                continue;
+            }
+            bundle.setPlatformSkuBySkuNo(productSkuInfoList.stream()
+                    .collect(Collectors.toMap(SkuMappingDTO.ProductSkuInfoDTO::getSkuNo,
+                            item -> CharSequenceUtil.blankToDefault(item.getPlatformSkuNo(), ""),
+                            (a, b) -> a)));
+        }
+    }
+
+    private void updateImportAddSkuOccupyStatus(List<SoReturnInstockDTO.ImportAddBundle> bundles) {
+        if (CollUtil.isEmpty(bundles)) {
+            return;
+        }
+        List<String> skuIds = bundles.stream()
+                .flatMap(bundle -> bundle.getAdd().getDetailList().stream())
+                .map(SoReturnInstockDetailDTO.Add::getSkuId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(skuIds)) {
+            return;
+        }
+        plmTaskFeign.updateOccupyStatus(skuIds);
     }
 
     private List<String> validateImportUpdateRow(SoReturnStockUpdateImportExcelDTO row,
@@ -3236,6 +3355,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         List<String> warehosueNameList = successList.stream().map(SoReturnStockImportExcelDTO::getWarehouseName).distinct().collect(Collectors.toList());
         List<WarehouseDTO.ListDTO> warehouseList = warehouseService.listByNames(warehosueNameList);
         Map<String, WarehouseDTO.ListDTO> warehouseMap = warehouseList.stream().collect(Collectors.toMap(WarehouseDTO.ListDTO::getName, Function.identity()));
+        Map<String, String> warehouseNameById = warehouseList.stream()
+                .collect(Collectors.toMap(WarehouseDTO.ListDTO::getId, WarehouseDTO.ListDTO::getName, (a, b) -> a));
 
         //仓位
         List<String> warehousIdList = warehouseList.stream().map(WarehouseDTO.ListDTO::getId).distinct().collect(Collectors.toList());
@@ -3347,10 +3468,18 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         }
         try {
             enrichImportAddBundles(toAddList);
+            enrichImportAddDetailContext(toAddList, warehouseNameById);
             ApplicationContextUtils.getBean(SoReturnInstockServiceImpl.class).persistAllImportAdd(toAddList);
         } catch (Exception e) {
             log.error("销售退货入库单导入落库失败", e);
             markImportAddPersistFailedRows(toAddList, errorList, resolveImportPersistErrorMsg(e));
+        }
+        if (CollUtil.isEmpty(errorList)) {
+            try {
+                updateImportAddSkuOccupyStatus(toAddList);
+            } catch (Exception e) {
+                log.error("销售退货入库单导入更新SKU占用状态失败", e);
+            }
         }
     }
 

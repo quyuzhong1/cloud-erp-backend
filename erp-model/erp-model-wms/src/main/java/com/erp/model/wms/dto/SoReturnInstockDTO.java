@@ -1186,6 +1186,9 @@ public class SoReturnInstockDTO {
         private String salesDeptName;
         private String salesOrgName;
         private String inventoryOrgName;
+        private Map<String, String> platformSkuBySkuNo;
+        private Map<String, String> warehouseNameById;
+        private Map<String, Boolean> subContractBySkuId;
 
         public ImportAddBundle(Add add,
                                List<SoReturnStockImportExcelDTO> excelRows,
