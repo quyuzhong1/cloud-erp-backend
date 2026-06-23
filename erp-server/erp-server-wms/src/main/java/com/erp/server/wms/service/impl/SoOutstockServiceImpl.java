@@ -775,6 +775,33 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     }
 
     /**
+     * 三方同步落库：金额与上游 B2C 不一致时落待提交并写 approve_remark，不扣库存、不自动审核。
+     */
+    @Override
+    public boolean handleSyncAmountMismatchIfNeeded(SoOutstockEntity soOutstock,
+                                                    List<SoOutstockDetailEntity> detailList,
+                                                    boolean persisted) {
+        if (soOutstock == null || CollUtil.isEmpty(detailList)) {
+            return false;
+        }
+        if (!isAmountMismatchWithUpstreamSo(soOutstock, detailList)) {
+            return false;
+        }
+        String mismatchMsg = MessageUtils.getMessage(ApiError.SO_OUTSTOCK_AMOUNT_MISMATCH_SUBMIT);
+        soOutstock.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
+        soOutstock.setApproveTime(null);
+        if (persisted) {
+            this.updateById(soOutstock);
+        } else {
+            this.save(soOutstock);
+            soOutstockDetailService.saveBatch(detailList);
+        }
+        soOutstockService.appendApproveRemark(soOutstock.getId(), mismatchMsg);
+        log.warn("同步销售出库单金额异常，落待提交状态，单号：{}，soId：{}", soOutstock.getCode(), soOutstock.getSoId());
+        return true;
+    }
+
+    /**
      * 新增并提交
      *
      * @param dto

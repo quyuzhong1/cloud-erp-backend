@@ -1242,6 +1242,7 @@ public enum ApiError implements Serializable {
     SO_B2C_EXTEND_NOT_FOUND(10621,"B2C销售订单扩展信息不存在"),
     SO_B2C_DETAIL_NOT_FOUND(10622,"B2C销售订单明细不存在"),
     SO_B2C_DETAIL_IMPORT_FAILED(10758,"B2C销售订单明细导入失败"),
+    SO_B2C_DETAIL_SAVE_OR_UPDATE_FAILED(10759,"B2C销售订单明细批量保存或更新失败"),
     SO_B2C_DELIVERY_WAREHOUSE_CONFLICT(10623,"B2C销售订单【{0}】存在多个发货仓库，不支持提交发货"),
     SO_B2C_SKU_INVENTORY_NOT_FOUND(10624,"B2C销售订单【{0}】SKU【{1}】在仓库【{2}】中未找到可用库存"),
     SO_B2C_MERGE_PLATFORM_CONFLICT(10625,"合并订单要求销售平台一致"),

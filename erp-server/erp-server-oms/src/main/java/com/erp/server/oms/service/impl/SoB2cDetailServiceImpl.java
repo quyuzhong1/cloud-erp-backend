@@ -630,7 +630,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         SoB2cAmountUtil.applyDetailAmounts(mainEntity, saveOrUpdateList, true);
         // 批量保存和更新
         if (!this.saveOrUpdateBatch(saveOrUpdateList)) {
-            throw new ServiceException(" [SoB2cDetailEntity] 订单明细批量更新或保存失败");
+            throw new ServiceException(ApiError.SO_B2C_DETAIL_SAVE_OR_UPDATE_FAILED);
         }
         soB2cService.updateById(mainEntity);
         return saveOrUpdateList;

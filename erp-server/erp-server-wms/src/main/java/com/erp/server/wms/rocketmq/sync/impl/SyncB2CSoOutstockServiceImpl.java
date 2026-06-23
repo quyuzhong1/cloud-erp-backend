@@ -21,7 +21,6 @@ import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.MessageUtils;
 import com.common.core.utils.date.LocalDateUtil;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
@@ -204,6 +203,12 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         if (CollectionUtils.isNotEmpty(detailList)) {
             //当是审核通过的时候
             if ("C".equals(entity.getFDocumentStatus())) {
+                if (soOutstockService.handleSyncAmountMismatchIfNeeded(soOutstock, detailList, false)) {
+                    String warnMsg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】(金额异常待人工核实)",
+                            UserContext.getDefaultLoginUser().getUserName(), "销售出库单", soOutstock.getCode());
+                    operateLogService.addModuleOperateLog(warnMsg, ModuleTypeEnum.SO_OUT_STOCK.getCode(), soOutstock.getId(), "新增销售出库单");
+                    return;
+                }
                 //当已存在 就删除以前的  并回滚库存
             	if(entity != null && entity.getIsNew()) {
             		soOutstockService.handleNewKingdeeToErp(soOutstock, detailList, flagId);
@@ -431,17 +436,9 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
 
         // 价税合计金额一致性校验：拉回时若出库明细=0 但上游销售订单非0，落"待提交"状态等待人工处理，
         // 不扣库存、不创建物流单、不推送外部系统；上游查不到不拦截。
-        boolean amountMismatch = soOutstockService.isAmountMismatchWithUpstreamSo(soOutstock, detailList);
-        if (amountMismatch) {
-            String mismatchMsg = MessageUtils.getMessage(ApiError.SO_OUTSTOCK_AMOUNT_MISMATCH_SUBMIT);
-            soOutstock.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
-            soOutstock.setApproveTime(null);
-            soOutstockService.save(soOutstock);
-            soOutstockService.appendApproveRemark(soOutstock.getId(), mismatchMsg);
+        if (soOutstockService.handleSyncAmountMismatchIfNeeded(soOutstock, detailList, false)) {
             String warnMsg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】(金额异常待人工核实)", UserContext.getDefaultLoginUser().getUserName(), "销售出库单", soOutstock.getCode());
             operateLogService.addModuleOperateLog(warnMsg, ModuleTypeEnum.SO_OUT_STOCK.getCode(), soOutstock.getId(), "新增销售出库单");
-            soOutstockDetailService.saveBatch(detailList);
-            log.warn("旺店通同步销售出库单金额异常，落待提交状态，单号：{}，soId：{}", soOutstock.getCode(), soOutstock.getSoId());
             return;
         }
 
@@ -792,6 +789,12 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         boolean result = service.save(soOutstock);
         if(!result){
             throw new ServiceException("同步拼多多销售出库单失败，销售出库单保存失败，来源单号：{}", dto.getSourceCode());
+        }
+        if (soOutstockService.handleSyncAmountMismatchIfNeeded(soOutstock, soOutstock.getDetailList(), true)) {
+            String warnMsg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】(金额异常待人工核实)",
+                    UserContext.getDefaultLoginUser().getUserName(), "销售出库单", soOutstock.getCode());
+            operateLogService.addModuleOperateLog(warnMsg, ModuleTypeEnum.SO_OUT_STOCK.getCode(), soOutstock.getId(), "新增销售出库单");
+            return;
         }
         try {
             soOutstockService.submitAndApprove(soOutstock.getId());
