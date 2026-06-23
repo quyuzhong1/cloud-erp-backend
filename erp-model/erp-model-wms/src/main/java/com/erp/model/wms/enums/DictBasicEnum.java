@@ -32,6 +32,7 @@ public enum DictBasicEnum {
     VIRTUAL_SPLIT_BOM("virtual_split_bom", "", "拆分bom"),
     CFG_SETTING_VIRTUAL("cfgSettingVirtual", "", "虚拟仓配置"),
     SAMPLE_USAGE("sampleUsage", "", "样品领用用途"),
+    QC_PROBLEM_TYPE("qcProblemType", "", "问题属性"),
 
     ;
 
