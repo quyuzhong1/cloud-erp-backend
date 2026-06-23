@@ -3373,7 +3373,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
             List<CustomerInfoEntity> customerInfoEntityList = customerMap.get(excelDTO.getCustomerName());
             if (CollUtil.isEmpty(customerInfoEntityList)) {
-                headerErrors.add("未找到有效客户" + excelDTO.getCustomerName());
+                headerErrors.add(CharSequenceUtil.format(ApiError.SO_RETURN_INSTOCK_IMPORT_ADD_CUSTOMER_NOT_FOUND.getMsg(),
+                        excelDTO.getCustomerName()));
             } else {
                 add.setCustomerId(customerInfoEntityList.get(0).getId());
             }
@@ -3381,7 +3382,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                     .filter(obj -> obj.getName().equals(excelDTO.getCurrencyStr()) || obj.getId().equals(excelDTO.getCurrencyStr()))
                     .findFirst().orElse(null);
             if (ObjectUtil.isEmpty(dictCurrencyEntity)) {
-                headerErrors.add("未找到币别" + excelDTO.getCurrencyStr());
+                headerErrors.add(CharSequenceUtil.format(ApiError.SO_RETURN_INSTOCK_IMPORT_ADD_CURRENCY_NOT_FOUND.getMsg(),
+                        excelDTO.getCurrencyStr()));
             } else {
                 add.setCurrencySymbol(dictCurrencyEntity.getSymbol());
                 add.setCurrency(dictCurrencyEntity.getId());
@@ -3407,7 +3409,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 SoReturnInstockDetailDTO.Add addDetail = new SoReturnInstockDetailDTO.Add();
                 SkuVO skuVO = skuMap.get(soReturnStockImportExcelDTO.getSkuNo());
                 if (ObjectUtil.isEmpty(skuVO) || !ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(skuVO.getStatus())) {
-                    rowErrors.add("未找到有效SKU" + soReturnStockImportExcelDTO.getSkuNo());
+                    rowErrors.add(CharSequenceUtil.format(ApiError.SO_RETURN_INSTOCK_IMPORT_ADD_SKU_NOT_FOUND.getMsg(),
+                            soReturnStockImportExcelDTO.getSkuNo()));
                 } else {
                     addDetail.setSkuId(skuVO.getSkuId());
                     addDetail.setSkuNo(soReturnStockImportExcelDTO.getSkuNo());
@@ -3415,7 +3418,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 WarehouseDTO.ListDTO warehouseEntity = warehouseMap.get(soReturnStockImportExcelDTO.getWarehouseName());
                 if (ObjectUtil.isEmpty(warehouseEntity) || warehouseEntity.getDisabled()
                         || !ApproveStatusEnum.APPROVE.getStatus().equals(warehouseEntity.getApproveStatus().getCode())) {
-                    rowErrors.add("未找到有效仓库：" + soReturnStockImportExcelDTO.getWarehouseName());
+                    rowErrors.add(CharSequenceUtil.format(ApiError.SO_RETURN_INSTOCK_IMPORT_ADD_WAREHOUSE_NOT_FOUND.getMsg(),
+                            soReturnStockImportExcelDTO.getWarehouseName()));
                 } else {
                     addDetail.setWarehouseId(warehouseEntity.getId());
                 }
@@ -3425,8 +3429,10 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                         soReturnStockImportExcelDTO.getWarehouseLocationName()));
                 if (ObjectUtil.isEmpty(warehouseLocationEntity)
                         && CharSequenceUtil.isNotBlank(soReturnStockImportExcelDTO.getWarehouseLocationName())) {
-                    rowErrors.add("仓库:" + soReturnStockImportExcelDTO.getWarehouseName() + "未找到有效仓位："
-                            + soReturnStockImportExcelDTO.getWarehouseLocationName());
+                    rowErrors.add(CharSequenceUtil.format(
+                            ApiError.SO_RETURN_INSTOCK_IMPORT_ADD_WAREHOUSE_LOCATION_NOT_FOUND.getMsg(),
+                            soReturnStockImportExcelDTO.getWarehouseName(),
+                            soReturnStockImportExcelDTO.getWarehouseLocationName()));
                 }
                 if (ObjectUtil.isNotEmpty(warehouseLocationEntity)
                         && CharSequenceUtil.isNotBlank(soReturnStockImportExcelDTO.getWarehouseLocationName())) {
