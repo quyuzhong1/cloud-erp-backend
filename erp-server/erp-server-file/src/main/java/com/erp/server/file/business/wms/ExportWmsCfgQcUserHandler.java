@@ -33,13 +33,6 @@ public class ExportWmsCfgQcUserHandler extends AbstractPageFileEventHandler<CfgQ
     }
 
     @Override
-    protected List<CfgQcUserDTO.ListDTO> getData(FileTask fileTask) {
-        CfgQcUserDTO.ExportDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<CfgQcUserDTO.ExportDTO>() {
-        });
-        return listSeqData(dto);
-    }
-
-    @Override
     protected String getExcelPath() {
         return "excel/wms/cfgQcUserExport.xlsx";
     }
