@@ -546,7 +546,7 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
             SysAccountingCompanyEntity sysAccountingCompany, String bomBillNo,
             Map<String, JSONObject> detailStockFieldMap) {
         JSONObject entries = new JSONObject();
-        Map<String, Object> entry = new HashMap<>();
+        Map<String, Object> entry = new LinkedHashMap<>();
 
         //物料编码
         JSONObject skuJson = new JSONObject();
@@ -856,6 +856,9 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         if (stockFields == null || stockFields.isEmpty()) {
             return;
         }
+        // 金蝶要求 FStockId 必须在 FStockLocId 之前，先移除仓位再按序写入
+        entry.remove("FStockLocId");
+        entry.remove("FStockId");
         Object fStockId = stockFields.get("FStockId");
         if (fStockId != null) {
             entry.put("FStockId", fStockId);
