@@ -7,7 +7,7 @@ import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.VirtualInventoryDiffDTO;
 import com.erp.rpc.wms.feign.ExportWmsFeign;
-import com.erp.server.file.core.AbstractPageFileEventHandler;
+import com.erp.server.file.core.AbstractSingleSheetGroupPageFileEventHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -19,7 +19,7 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_VIRTUAL_INV
 
 @Component
 @Slf4j
-public class ExportWmsVirtualInventoryDiffHandler extends AbstractPageFileEventHandler<VirtualInventoryDiffDTO.ListDiffExportDataDTO, VirtualInventoryDiffDTO.SearchParamDTO> {
+public class ExportWmsVirtualInventoryDiffHandler extends AbstractSingleSheetGroupPageFileEventHandler<VirtualInventoryDiffDTO.ListDiffExportDataDTO, VirtualInventoryDiffDTO.SearchParamDTO> {
     @Resource
     private ExportWmsFeign exportWmsFeign;
 
@@ -38,15 +38,11 @@ public class ExportWmsVirtualInventoryDiffHandler extends AbstractPageFileEventH
         return exportWmsFeign.exportListDiffExportData(dto);
     }
 
-    @Override
-    protected boolean keepSheetGroupTogether() {
-        return true;
-    }
-
     /**
      * 虚拟库存差异导出以「SKU + 实体仓」作为单据维度。
      * <p>
-     * 上游 {@code exportListDiffExportData} 默认按 {@code diff.id asc, diff.virtualWarehouseId asc} 排序：
+     * 上游 {@code exportListDiffExportData}（{@code VirtualInventoryMapper.xml#listDiffExportData}）默认按
+     * {@code diff.id asc, diff.virtualWarehouseId asc} 排序，ORDER BY 处已标注导出分组依赖，禁止随意调整：
      * {@code diff.id} 来源于 Inventory CTE 中按 {@code sku_id + warehouse_id} 聚合后的 {@code min(id)}，
      * 因此同一 {@code skuId + warehouseId} 维度天然连续；{@code virtualWarehouseId} 仅用于组内稳定排序。
      * 若后续调整导出排序，必须保持 {@code skuId + warehouseId} 连续，否则基类分组保护无法生效。

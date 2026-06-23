@@ -172,7 +172,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
     /**
      * xlsx 单 sheet 最大数据行（预留表头），用于与 {@link #maxDataRowsPerSheet()} 组合防止超过 Excel 行上限。
      */
-    private int maxRowsPerXlsxSheetHardLimit() {
+    protected int maxRowsPerXlsxSheetHardLimit() {
         return Math.max(1, 1_048_576 - reservedTemplateHeaderRows() - 1);
     }
 
@@ -185,6 +185,49 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
         int max = maxTemplateDataSheets();
         int extra = Math.max(0, sheetGroupExtraSheetCount());
         return Math.min(max, estimatedSheets + extra);
+    }
+
+    /**
+     * 分组报表是否优先单 sheet。
+     * {@link AbstractSingleSheetGroupPageFileEventHandler} 为 {@code true}；
+     * {@link AbstractMultiSheetGroupPageFileEventHandler} 为 {@code false}；普通导出默认 {@code false}。
+     */
+    protected boolean preferSingleDataSheetForGroupKeeping() {
+        return false;
+    }
+
+    /**
+     * 解析 OFFSET 导出需预先展开的数据 sheet 数。
+     * 单 sheet 分组模式固定 1 张；否则按行数估算并可选 {@link #expandSheetCountForGroupKeeping(int)} 预留。
+     */
+    protected int resolveDataSheetCountForExport(int totalCount) {
+        if (preferSingleDataSheetForGroupKeeping() && keepSheetGroupTogether()) {
+            int maxPerSheet = maxDataRowsPerSheet();
+            if (totalCount > maxPerSheet) {
+                throw new ServiceException("导出数据量 " + totalCount + " 行超过单 sheet 分组报表上限 "
+                        + maxPerSheet + " 行，请缩小筛选范围。");
+            }
+            return 1;
+        }
+        int sheets = computeDataSheetCountForTotalRows(totalCount);
+        if (keepSheetGroupTogether()) {
+            sheets = expandSheetCountForGroupKeeping(sheets);
+        }
+        return sheets;
+    }
+
+    /**
+     * 解析 KEYSET 导出需预先展开的数据 sheet 数，语义同 {@link #resolveDataSheetCountForExport(int)}。
+     */
+    protected int resolvePreparedSheetCountForKeysetExport(boolean hasNext, int firstBatchRows) {
+        if (preferSingleDataSheetForGroupKeeping() && keepSheetGroupTogether()) {
+            return 1;
+        }
+        int preparedSheets = hasNext ? keysetPreparedSheetCount() : computeDataSheetCountForTotalRows(firstBatchRows);
+        if (keepSheetGroupTogether()) {
+            preparedSheets = expandSheetCountForGroupKeeping(preparedSheets);
+        }
+        return preparedSheets;
     }
 
     /**
@@ -282,65 +325,6 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
                 return new ExpandedTemplate(out.toByteArray(), dataSheetIndexes);
             }
         }
-    }
-
-    /**
-     * 「尽力而为」地删除分组预留但未使用的尾部空 sheet，仅在 {@link #keepSheetGroupTogether()} 开启
-     * （即确有 {@link #sheetGroupExtraSheetCount()} 预留）时执行，避免对未启用分组保护的存量导出引入
-     * 额外的 XSSFWorkbook 全量加载/重写开销。
-     * <p>
-     * 调用时主导出文件已完整写出且正确，清理仅为去除尾部空 sheet 的展示瑕疵；因此任何异常只 WARN、
-     * 保留预留空 sheet，<strong>不</strong>让裁剪失败拖垮已成功的导出。
-     */
-    private void trimUnusedDataSheetsQuietly(File outFile, List<Integer> dataSheetIndexes, int usedDataSheetCount) {
-        if (!keepSheetGroupTogether()) {
-            return;
-        }
-        try {
-            trimUnusedDataSheets(outFile, dataSheetIndexes, usedDataSheetCount);
-        } catch (Exception e) {
-            log.warn("裁剪尾部空 sheet 失败，保留预留空 sheet，不影响导出结果：handler={} file={}",
-                    getClass().getName(), outFile.getName(), e);
-        }
-    }
-
-    /**
-     * 写完后删除分组预留但未使用的尾部空 sheet。须全量加载 xlsx（XSSFWorkbook），
-     * 超过 {@code file.storage.maxTrimUnusedSheetBytes}（默认 50MB）时跳过清理并 WARN。
-     */
-    private void trimUnusedDataSheets(File outFile, List<Integer> dataSheetIndexes, int usedDataSheetCount) throws IOException {
-        if (CollectionUtils.isEmpty(dataSheetIndexes) || usedDataSheetCount >= dataSheetIndexes.size()) {
-            return;
-        }
-        int keep = Math.max(1, usedDataSheetCount);
-        long maxTrimBytes = FileRegistry.maxTrimUnusedSheetBytesOrDefault();
-        long fileBytes = outFile.length();
-        if (fileBytes > maxTrimBytes) {
-            log.warn("跳过尾部空 sheet 清理：handler={} file={} 文件大小={}MB 超过 file.storage.maxTrimUnusedSheetBytes 安全阈值={}MB，保留预留空 sheet 以避免 XSSFWorkbook 全量加载 OOM",
-                    getClass().getName(), outFile.getName(), fileBytes / 1024 / 1024, maxTrimBytes / 1024 / 1024);
-            return;
-        }
-        XSSFWorkbook wb;
-        try (FileInputStream inputStream = new FileInputStream(outFile)) {
-            wb = new XSSFWorkbook(inputStream);
-        }
-        try {
-            for (int i = dataSheetIndexes.size() - 1; i >= keep; i--) {
-                wb.removeSheetAt(dataSheetIndexes.get(i));
-            }
-            try (FileOutputStream outputStream = new FileOutputStream(outFile)) {
-                wb.write(outputStream);
-            }
-        } finally {
-            wb.close();
-        }
-    }
-
-    private int usedDataSheetCount(int writtenRows, OffsetSheetCursor cursor) {
-        if (writtenRows <= 0) {
-            return 1;
-        }
-        return cursor.sheetNo + 1;
     }
 
     private List<T> withoutNullListElements(List<T> raw) {
@@ -642,12 +626,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
         KeysetPagingVO<T> vo = requirePagingResult(fetchKeyset(params, null, getPageSize()), "游标 lastId=null");
         List<T> rawList = vo.getList();
         int firstBatchRows = (rawList == null) ? 0 : rawList.size() - nullElementCount(rawList);
-        int preparedSheets = vo.isHasNext()
-                ? keysetPreparedSheetCount()
-                : computeDataSheetCountForTotalRows(firstBatchRows);
-        if (keepSheetGroupTogether()) {
-            preparedSheets = expandSheetCountForGroupKeeping(preparedSheets);
-        }
+        int preparedSheets = resolvePreparedSheetCountForKeysetExport(vo.isHasNext(), firstBatchRows);
 
         byte[] rawTemplate = readClasspathTemplateBytes(excelPath);
         // 预先克隆好数据 sheet，避免在写入过程中再 clone 导致的性能问题（尤其模板复杂时）。若数据量超出预估则直接报错，避免无限克隆。
@@ -728,7 +707,6 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
                 excelWriter.finish();
             }
         }
-        trimUnusedDataSheetsQuietly(outFile, expandedTemplate.dataSheetIndexes, usedDataSheetCount(total, cursor));
         return total;
     }
 
@@ -801,10 +779,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
 
         PagingVO<T> firstData = requirePagingResult(getPageData(dto), "页码=" + dto.getCurrPage());
         int totalCount = firstData.getTotalCount();
-        int dataSheets = computeDataSheetCountForTotalRows(totalCount);
-        if (keepSheetGroupTogether()) {
-            dataSheets = expandSheetCountForGroupKeeping(dataSheets);
-        }
+        int dataSheets = resolveDataSheetCountForExport(totalCount);
         byte[] rawTemplate = readClasspathTemplateBytes(excelPath);
         ExpandedTemplate expandedTemplate = expandTemplateWithDataSheetCopies(rawTemplate, dataSheets);
         rawTemplate = null;
@@ -876,7 +851,6 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
                 excelWriter.finish();
             }
         }
-        trimUnusedDataSheetsQuietly(outFile, expandedTemplate.dataSheetIndexes, usedDataSheetCount(totalRows, cursor));
         // 末页 partial：实际写入行数 < 首查 totalCount（多因导出期间并发删除/数据漂移），不视为失败
         // （fileTask.count 已回填实际行数），但与中间页空列表守卫对称地显式告警，便于排查「导出比预期少」反馈，避免静默。
         if (totalCount > 0 && totalRows < totalCount) {
@@ -965,7 +939,8 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
     }
 
     /**
-     * 是否启用「同一分组不拆到多个 sheet」保护。默认关闭，保持按 {@link #maxDataRowsPerSheet()} 直接切 sheet 的历史行为。
+     * 是否启用「同一分组不拆到多个 sheet」保护。默认关闭。
+     * 分组报表子类见 {@link AbstractSingleSheetGroupPageFileEventHandler}、{@link AbstractMultiSheetGroupPageFileEventHandler}。
      */
     protected boolean keepSheetGroupTogether() {
         return false;
@@ -974,11 +949,9 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
     /**
      * 分组保护启用时，在按总行数估算的数据 sheet 数基础上额外预留的 sheet 数。
      * <p>
-     * 同组不拆 sheet 会在临界点回退，实际 sheet 数可能略高于 {@code totalCount / maxDataRowsPerSheet}；
-     * 默认额外预留 1 张用于承接分组回退，写出完成后会删除尾部未使用的预留空 sheet。
-     * <p>
-     * 线上单 sheet 数据行通常 10 万行起步，常规业务分组远小于单 sheet 容量，分组回退累计溢出整张 sheet 的概率较低。
-     * 若子类存在大分组或超多 sheet 导出场景，可按业务最大分组行数重写本方法增加预留。
+     * {@link AbstractMultiSheetGroupPageFileEventHandler} 默认 1（未使用的预留 sheet 保留为空 tab）；
+     * {@link AbstractSingleSheetGroupPageFileEventHandler} 为 0。
+     * 若子类存在大分组或超多 sheet 导出场景，可按业务重写本方法增加预留。
      */
     protected int sheetGroupExtraSheetCount() {
         return 1;

@@ -95,12 +95,12 @@ public class FileRegistry {
     private static Long maxTemplateExpandBytes;
 
     /**
-     * 写后删除尾部预留空 sheet 时，允许 XSSFWorkbook 全量加载的文件大小上界，单位字节。
-     * 磁盘字节与解压后内存存在膨胀，故独立于 {@link #maxTemplateExpandBytes} 且默认更保守。
-     * 默认全局指定：50MB（52428800）。
+     * 单 sheet 分组报表导出时，单 sheet 最大行数（含表头），默认 Excel2007 物理上限 1048576。
+     * 供 {@link AbstractSingleSheetGroupPageFileEventHandler} 使用；
+     * 多 sheet 分组报表见 {@link AbstractMultiSheetGroupPageFileEventHandler}（沿用 {@link #sheetMaxRows}）。
      */
     @Getter
-    private static Long maxTrimUnusedSheetBytes;
+    private static Integer singleSheetMaxRows;
 
     /**
      * 动态表头导出每页条数。动态表头单行 DynamicExcelDTO 体积通常大于固定模板行对象，
@@ -139,10 +139,10 @@ public class FileRegistry {
                 maxTemplateExpandBytes, MAX_TEMPLATE_EXPAND_BYTES_UPPER);
     }
 
-    @Value("${file.storage.maxTrimUnusedSheetBytes:52428800}")
-    public void setMaxTrimUnusedSheetBytes(Long maxTrimUnusedSheetBytes) {
-        FileRegistry.maxTrimUnusedSheetBytes = clampUpperLong("file.storage.maxTrimUnusedSheetBytes",
-                maxTrimUnusedSheetBytes, MAX_TEMPLATE_EXPAND_BYTES_UPPER);
+    @Value("${file.storage.singleSheetMaxRows:1048576}")
+    public void setSingleSheetMaxRows(Integer singleSheetMaxRows) {
+        FileRegistry.singleSheetMaxRows = clampUpper("file.storage.singleSheetMaxRows", singleSheetMaxRows,
+                SHEET_MAX_ROWS_UPPER);
     }
 
     @Value("${file.storage.dynamicExportPageSize:1000}")
@@ -209,11 +209,11 @@ public class FileRegistry {
     }
 
     /**
-     * 写后删除尾部预留空 sheet 时允许全量加载的文件大小上界（字节），未注入或非法（&lt;1）时回退 50MB（52428800）。
+     * 单 sheet 分组报表导出时的 sheet 行数上限（含表头），未注入或非法（&lt;1）时回退 Excel2007 物理上限（1048576）。
      */
-    public static long maxTrimUnusedSheetBytesOrDefault() {
-        Long configured = maxTrimUnusedSheetBytes;
-        return configured == null || configured < 1 ? 52428800L : configured;
+    public static int singleSheetMaxRowsOrDefault() {
+        Integer configured = singleSheetMaxRows;
+        return configured == null || configured < 1 ? SHEET_MAX_ROWS_UPPER : configured;
     }
 
     /**
