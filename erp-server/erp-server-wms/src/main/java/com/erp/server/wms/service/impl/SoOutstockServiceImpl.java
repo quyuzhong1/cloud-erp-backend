@@ -539,9 +539,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             }
         }
 
-        // 价税合计金额一致性校验：出库明细=0 但上游销售订单明细非0 时拦截，赠品整单放行；上游查不到不拦截
-        if (isAmountMismatchWithUpstreamSo(entity)) {
-            String message = MessageUtils.getMessage(ApiError.SO_OUTSTOCK_AMOUNT_MISMATCH_SUBMIT);
+        // 价税合计金额一致性校验：出库明细=0 但上游销售订单明细非0 时拦截，赠品整单放行；上游明细查不到不拦截，Feign 异常 fail-safe 拦截
+        UpstreamAmountCheckResultEnum amountCheckResult = checkUpstreamAmountWithSo(entity);
+        if (amountCheckResult != UpstreamAmountCheckResultEnum.PASS) {
+            String message = resolveUpstreamAmountCheckMessage(amountCheckResult, ApiError.SO_OUTSTOCK_AMOUNT_MISMATCH_SUBMIT);
             soOutstockService.appendApproveRemark(entity.getId(), message);
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), message);
         }
@@ -606,14 +607,14 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * 校验销售出库单与上游销售订单的金额一致性（自动从库中加载明细）。
      * 适用于 submit/approve 等"明细已落库"场景。
      */
-    private boolean isAmountMismatchWithUpstreamSo(SoOutstockEntity entity) {
+    private UpstreamAmountCheckResultEnum checkUpstreamAmountWithSo(SoOutstockEntity entity) {
         if (entity == null) {
-            return false;
+            return UpstreamAmountCheckResultEnum.PASS;
         }
         List<SoOutstockDetailEntity> outDetails = soOutstockDetailService.lambdaQuery()
                 .eq(SoOutstockDetailEntity::getMainId, entity.getId())
                 .list();
-        return isAmountMismatchWithUpstreamSo(entity, outDetails);
+        return checkUpstreamAmountWithSo(entity, outDetails);
     }
 
     /**
@@ -622,7 +623,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * 业务规则：
      * <ol>
      *     <li>仅 B2C 订单参与校验，B2B 链路保持原状</li>
-     *     <li>若 soId 为空或上游销售订单明细查询为空（如远程异常），不拦截</li>
+     *     <li>若 soId 为空或上游销售订单明细查询结果为空，不拦截</li>
+     *     <li>若上游 Feign 查询异常，返回 UPSTREAM_UNAVAILABLE（fail-safe，避免静默放行）</li>
      *     <li>对当前出库单中 tax_amount=0 的每条明细，按 so_detail_id 维度
      *         汇总<b>所有兄弟出库单（同 soId 且非作废，含当前内存明细）</b>的
      *         tax_amount 总和，与上游销售订单明细对比：
@@ -630,7 +632,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      *             <li>所有兄弟出库总和 != 0：金额已分摊到其他兄弟单，放行</li>
      *             <li>上游销售订单明细 isGift = true：赠品，放行</li>
      *             <li>上游销售订单明细 amount = 0：上游也是 0，放行</li>
-     *             <li>否则命中拦截</li>
+     *             <li>否则命中 AMOUNT_MISMATCH</li>
      *         </ul>
      *     </li>
      * </ol>
@@ -638,19 +640,19 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      *
      * @param entity     销售出库单主单
      * @param outDetails 销售出库单明细（可来自内存）
-     * @return true 表示金额异常，应拦截；false 表示通过
+     * @return 校验结果
      */
     @Override
-    public boolean isAmountMismatchWithUpstreamSo(SoOutstockEntity entity, List<SoOutstockDetailEntity> outDetails) {
+    public UpstreamAmountCheckResultEnum checkUpstreamAmountWithSo(SoOutstockEntity entity, List<SoOutstockDetailEntity> outDetails) {
         if (entity == null || !OrderTypeEnum.B2C.getCode().equalsIgnoreCase(entity.getOrderType())) {
-            return false;
+            return UpstreamAmountCheckResultEnum.PASS;
         }
         String soId = entity.getSoId();
         if (CharSequenceUtil.isBlank(soId)) {
-            return false;
+            return UpstreamAmountCheckResultEnum.PASS;
         }
         if (CollUtil.isEmpty(outDetails)) {
-            return false;
+            return UpstreamAmountCheckResultEnum.PASS;
         }
 
         // 1. 收集当前出库单中 tax_amount=0 的明细的 so_detail_id 作为校验候选
@@ -663,7 +665,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 .filter(CharSequenceUtil::isNotBlank)
                 .collect(Collectors.toSet());
         if (CollUtil.isEmpty(zeroTaxSoDetailIds)) {
-            return false;
+            return UpstreamAmountCheckResultEnum.PASS;
         }
 
         // 2. 查询上游销售订单明细
@@ -671,12 +673,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         try {
             b2cDetails = soB2cFeign.listDetailByMainIds(Collections.singletonList(soId));
         } catch (Exception e) {
-            // 上游查询异常视为查不到，按需求不拦截
-            log.warn("销售出库单金额校验：查询上游销售订单明细失败，跳过校验，soId={}, outstockId={}", soId, entity.getId(), e);
-            return false;
+            log.warn("销售出库单金额校验：查询上游销售订单明细失败，视为需人工核实并拦截，soId={}, outstockId={}", soId, entity.getId(), e);
+            return UpstreamAmountCheckResultEnum.UPSTREAM_UNAVAILABLE;
         }
         if (CollUtil.isEmpty(b2cDetails)) {
-            return false;
+            return UpstreamAmountCheckResultEnum.PASS;
         }
         Map<String, SoB2cDetailEntity> b2cDetailMap = b2cDetails.stream()
                 .collect(Collectors.toMap(SoB2cDetailEntity::getId, Function.identity(), (a, b) -> a));
@@ -728,10 +729,25 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             BigDecimal soAmount = (detailPaid != null && detailPaid.compareTo(BigDecimal.ZERO) > 0)
                     ? detailPaid : legacyAmount;
             if (soAmount.compareTo(BigDecimal.ZERO) != 0) {
-                return true;
+                return UpstreamAmountCheckResultEnum.AMOUNT_MISMATCH;
             }
         }
-        return false;
+        return UpstreamAmountCheckResultEnum.PASS;
+    }
+
+    @Override
+    public boolean isAmountMismatchWithUpstreamSo(SoOutstockEntity entity, List<SoOutstockDetailEntity> outDetails) {
+        return checkUpstreamAmountWithSo(entity, outDetails) != UpstreamAmountCheckResultEnum.PASS;
+    }
+
+    private String resolveUpstreamAmountCheckMessage(UpstreamAmountCheckResultEnum result, ApiError amountMismatchError) {
+        if (UpstreamAmountCheckResultEnum.UPSTREAM_UNAVAILABLE.equals(result)) {
+            return MessageUtils.getMessage(ApiError.SO_OUTSTOCK_UPSTREAM_AMOUNT_CHECK_UNAVAILABLE);
+        }
+        if (UpstreamAmountCheckResultEnum.AMOUNT_MISMATCH.equals(result)) {
+            return MessageUtils.getMessage(amountMismatchError);
+        }
+        return CharSequenceUtil.EMPTY;
     }
 
     /**
@@ -784,10 +800,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (soOutstock == null || CollUtil.isEmpty(detailList)) {
             return false;
         }
-        if (!isAmountMismatchWithUpstreamSo(soOutstock, detailList)) {
+        UpstreamAmountCheckResultEnum checkResult = checkUpstreamAmountWithSo(soOutstock, detailList);
+        if (UpstreamAmountCheckResultEnum.PASS.equals(checkResult)) {
             return false;
         }
-        String mismatchMsg = MessageUtils.getMessage(ApiError.SO_OUTSTOCK_AMOUNT_MISMATCH_SUBMIT);
+        String mismatchMsg = resolveUpstreamAmountCheckMessage(checkResult, ApiError.SO_OUTSTOCK_AMOUNT_MISMATCH_SUBMIT);
         soOutstock.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
         soOutstock.setApproveTime(null);
         if (persisted) {
@@ -991,10 +1008,13 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
 
         // 价税合计金额一致性校验：仅审核通过时拦截，状态保持审核中，写入审核状态说明
-        if (ApproveTypeEnum.PASS.equals(approveType) && isAmountMismatchWithUpstreamSo(entity)) {
-            String message = MessageUtils.getMessage(ApiError.SO_OUTSTOCK_AMOUNT_MISMATCH_APPROVE);
-            soOutstockService.appendApproveRemark(entity.getId(), message);
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), message);
+        if (ApproveTypeEnum.PASS.equals(approveType)) {
+            UpstreamAmountCheckResultEnum amountCheckResult = checkUpstreamAmountWithSo(entity);
+            if (amountCheckResult != UpstreamAmountCheckResultEnum.PASS) {
+                String message = resolveUpstreamAmountCheckMessage(amountCheckResult, ApiError.SO_OUTSTOCK_AMOUNT_MISMATCH_APPROVE);
+                soOutstockService.appendApproveRemark(entity.getId(), message);
+                return BatchResultDTO.fail(entity.getId(), entity.getCode(), message);
+            }
         }
 
         if(OrderTypeEnum.B2B.getCode().equalsIgnoreCase(entity.getOrderType())){
@@ -3756,12 +3776,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         Boolean addResult = super.save(soOutstock);
         if (addResult) {
             List<SoOutstockDetailEntity> detailEntities = soOutstockDetailService.add(soOutstock.getId(), detailList, OrderTypeEnum.B2C.getCode(), soOutstock);
-            // 价税合计金额一致性校验：平台仓/海外仓下推生成出库单时，
             // 若出库明细=0 但上游销售订单非0 → 状态保留待提交，写入审核状态说明等待人工核实；
-            // 上游查不到不拦截。
-            boolean amountMismatch = soOutstockService.isAmountMismatchWithUpstreamSo(soOutstock, detailEntities);
-            if (amountMismatch) {
-                String mismatchMsg = MessageUtils.getMessage(ApiError.SO_OUTSTOCK_AMOUNT_MISMATCH_SUBMIT);
+            // 上游明细查不到不拦截；Feign 异常 fail-safe 拦截。
+            UpstreamAmountCheckResultEnum amountCheckResult = soOutstockService.checkUpstreamAmountWithSo(soOutstock, detailEntities);
+            if (amountCheckResult != UpstreamAmountCheckResultEnum.PASS) {
+                String mismatchMsg = resolveUpstreamAmountCheckMessage(amountCheckResult, ApiError.SO_OUTSTOCK_AMOUNT_MISMATCH_SUBMIT);
                 soOutstock.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
                 soOutstock.setApproveTime(null);
                 this.updateById(soOutstock);
