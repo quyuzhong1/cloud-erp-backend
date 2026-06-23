@@ -6,6 +6,7 @@ import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -21,13 +22,21 @@ public class RepairBomConvertContext {
 
     public RepairBomConvertContext(Map<String, JSONObject> detailStockFieldMap,
             List<ParentChildGroup> matchedGroups) {
-        this.detailStockFieldMap = detailStockFieldMap;
-        this.matchedGroups = matchedGroups == null ? Collections.emptyList() : matchedGroups;
+        this.detailStockFieldMap = detailStockFieldMap == null ? Collections.emptyMap() : detailStockFieldMap;
+        this.matchedGroups = matchedGroups == null
+                ? Collections.emptyList()
+                : matchedGroups.stream().filter(Objects::nonNull).collect(Collectors.toList());
         this.changeChildDetails = this.matchedGroups.stream()
-                .flatMap(group -> group.getChildDetails().stream())
+                .map(ParentChildGroup::getChildDetails)
+                .filter(Objects::nonNull)
+                .flatMap(List::stream)
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
         this.matchedParentIds = this.matchedGroups.stream()
-                .map(group -> group.getParentDetail().getId())
+                .map(ParentChildGroup::getParentDetail)
+                .filter(Objects::nonNull)
+                .map(SubcontractOrderDetailEntity::getId)
+                .filter(id -> id != null && !id.isEmpty())
                 .collect(Collectors.toSet());
     }
 
@@ -54,8 +63,18 @@ public class RepairBomConvertContext {
 
         public ParentChildGroup(SubcontractOrderDetailEntity parentDetail,
                 List<SubcontractOrderDetailEntity> childDetails) {
+            if (parentDetail == null) {
+                throw new IllegalArgumentException("parentDetail must not be null");
+            }
             this.parentDetail = parentDetail;
-            this.childDetails = childDetails;
+            if (childDetails == null || childDetails.isEmpty()) {
+                this.childDetails = Collections.emptyList();
+            } else {
+                List<SubcontractOrderDetailEntity> filteredChildren = childDetails.stream()
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toList());
+                this.childDetails = Collections.unmodifiableList(filteredChildren);
+            }
         }
 
         public SubcontractOrderDetailEntity getParentDetail() {
