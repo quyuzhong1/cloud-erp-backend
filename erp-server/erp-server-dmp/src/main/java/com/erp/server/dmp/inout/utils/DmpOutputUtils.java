@@ -138,6 +138,9 @@ public class DmpOutputUtils{
 	        		}
 	        	}
 	        }
+	        if(StringUtils.isNotBlank(message) && message.contains("单据推送成功，当前状态")) {
+	        	isSend = false;
+	        }
 	        if(errorCount != null && errorCount > 3) {
 	        	isSend = false;
 	        }
