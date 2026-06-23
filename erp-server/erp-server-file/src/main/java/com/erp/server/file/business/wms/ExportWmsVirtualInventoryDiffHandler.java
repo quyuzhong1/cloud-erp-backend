@@ -7,7 +7,7 @@ import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.VirtualInventoryDiffDTO;
 import com.erp.rpc.wms.feign.ExportWmsFeign;
-import com.erp.server.file.core.AbstractPageFileEventHandler;
+import com.erp.server.file.core.AbstractSingleSheetGroupPageFileEventHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -19,7 +19,7 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_VIRTUAL_INV
 
 @Component
 @Slf4j
-public class ExportWmsVirtualInventoryDiffHandler extends AbstractPageFileEventHandler<VirtualInventoryDiffDTO.ListDiffExportDataDTO, VirtualInventoryDiffDTO.SearchParamDTO> {
+public class ExportWmsVirtualInventoryDiffHandler extends AbstractSingleSheetGroupPageFileEventHandler<VirtualInventoryDiffDTO.ListDiffExportDataDTO, VirtualInventoryDiffDTO.SearchParamDTO> {
     @Resource
     private ExportWmsFeign exportWmsFeign;
 
@@ -36,11 +36,6 @@ public class ExportWmsVirtualInventoryDiffHandler extends AbstractPageFileEventH
     @Override
     protected PagingVO<VirtualInventoryDiffDTO.ListDiffExportDataDTO> getPageData(PagingDTO<VirtualInventoryDiffDTO.SearchParamDTO> dto) {
         return exportWmsFeign.exportListDiffExportData(dto);
-    }
-
-    @Override
-    protected boolean keepSheetGroupTogether() {
-        return true;
     }
 
     /**
