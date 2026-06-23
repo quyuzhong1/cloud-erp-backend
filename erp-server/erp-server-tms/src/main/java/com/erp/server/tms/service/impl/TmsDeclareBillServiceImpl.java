@@ -129,9 +129,14 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     private OperateLogService operateLogService;
 
     /**
-     * 限制报关单最多sku
+     * 编辑保存：单票报关明细行数上限。
      */
-    private final int limitSkuNo = 50;
+    private static final int EDIT_DECLARE_DETAIL_LIMIT = 50;
+
+    /**
+     * 下推/合并/拆分保存：单票报关明细行数上限（严格 48，同箱连通簇亦不可超过）。
+     */
+    private static final int SAVE_DECLARE_DETAIL_LIMIT = 48;
 
     @Resource
     private WmsFirstMileDeliveryFeign wmsFirstMileDeliveryFeign;
@@ -336,7 +341,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         baseTmsDeclareBillEntity.setType(SourceTypeEnum.FM_DECLARE_BILL.getCode());
         // 贸易国默认中国香港。
         applyTradingAreaDefault(baseTmsDeclareBillEntity);
-        //50个明细为一个报关单
+        // 48 个明细为一个报关单
         List<TmsDeclareBillDTO.ProductDetail> allProductDetailList = deliveryDTO.getProductDetailList();
         if(CollectionUtils.isEmpty(allProductDetailList)){
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_GENERATABLE_DETAIL_NOT_FOUND);
@@ -344,7 +349,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         //自动生成报关单前校验海关编码/报关品名/申报要素/单位/币种/单价是否完整，
         // 缺失则提示对应来源单据 + SKU 缺哪些字段，不进入入库流程。
         validateAutoFmDeclareProductDetails(deliveryDTO.getSourceCode(), allProductDetailList);
-        List<List<TmsDeclareBillDTO.ProductDetail>> productDetailListList = Lists.partition(allProductDetailList, limitSkuNo);
+        List<List<TmsDeclareBillDTO.ProductDetail>> productDetailListList = Lists.partition(allProductDetailList, SAVE_DECLARE_DETAIL_LIMIT);
         for(List<TmsDeclareBillDTO.ProductDetail> productDetailList : productDetailListList){
             TmsDeclareBillEntity tmsDeclareBillEntity = BeanUtil.copyProperties(baseTmsDeclareBillEntity,TmsDeclareBillEntity.class);
             List<TmsDeclareBillDetailEntity> detailEntityList = BeanUtil.copyToList(productDetailList,TmsDeclareBillDetailEntity.class);
@@ -424,7 +429,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     @Transactional(rollbackFor = Exception.class)
     public BaseResultDTO.AddDTO add(TmsDeclareBillEntity tmsDeclareBillEntity,List<TmsDeclareBillDetailEntity> detailEntityList,SourceTypeEnum sourceTypeEnum,boolean isMerged) {
 
-        //合并的话不生成合同号；若调用方已预设合同号（如拆分保存 base_1、base_2）则不再覆盖
+        //合并的话不生成合同号；若调用方已预设合同号则不再覆盖
         if (!isMerged && StringUtils.isBlank(tmsDeclareBillEntity.getCode())) {
             String code = this.generateContractCode(tmsDeclareBillEntity,sourceTypeEnum);
             tmsDeclareBillEntity.setCode(code);
@@ -476,7 +481,12 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     )
     @Override
     public Boolean update(TmsDeclareBillDTO.UpdateDTO updateDTO,SourceTypeEnum sourceTypeEnum) {
-        List<String> syncSourceIds = service.updateInTx(updateDTO, sourceTypeEnum);
+        // 重量重算含 WMS/PLM Feign，须在事务外完成（erp-backend-standards：禁止事务内 Feign）。
+        List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList =
+                prepareSubmittedMergeDetailList(updateDTO.getMergeDetailList(), updateDTO.getIsMerge());
+        TmsDeclareBillDTO.SelectedSkuHeaderDTO recalculatedHeaderWeight =
+                computeRecalculatedHeaderWeight(mergeDetailList, sourceTypeEnum);
+        List<String> syncSourceIds = service.updateInTx(updateDTO, sourceTypeEnum, recalculatedHeaderWeight);
         syncSourceDeclareStatusIfNeeded(sourceTypeEnum.getCode(), syncSourceIds);
         return Boolean.TRUE;
     }
@@ -484,7 +494,9 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     // 编辑保存仅写 TMS 单库（WMS 回写已移到事务外），用本地事务即可，
     // 不再使用 @GlobalTransactional 避免 Seata XA prepare 分支失败。
     @Transactional(rollbackFor = Exception.class)
-    public List<String> updateInTx(TmsDeclareBillDTO.UpdateDTO updateDTO, SourceTypeEnum sourceTypeEnum) {
+    public List<String> updateInTx(TmsDeclareBillDTO.UpdateDTO updateDTO,
+                                   SourceTypeEnum sourceTypeEnum,
+                                   TmsDeclareBillDTO.SelectedSkuHeaderDTO recalculatedHeaderWeight) {
         TmsDeclareBillEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "报关单"));
         if (!CharSequenceUtil.equals(old.getType(), sourceTypeEnum.getCode())) {
@@ -495,7 +507,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_WAIT_STATUS_REQUIRED_FOR_EDIT);
         }
         List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList = prepareSubmittedMergeDetailList(updateDTO.getMergeDetailList(), updateDTO.getIsMerge());
-        validateDeclareMergeDetails(mergeDetailList);
+        validateDeclareMergeDetails(mergeDetailList, EDIT_DECLARE_DETAIL_LIMIT);
         validateUpdateImmutableSourceFields(old.getId(), mergeDetailList);
         Set<String> sourceKeySet = collectSourceKeySet(mergeDetailList);
         validateSourceNotGenerated(sourceKeySet, collectSourceIdSet(mergeDetailList), sourceType, old.getId());
@@ -512,16 +524,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         BeanMapper.copy(old,tmsDeclareBillEntity);
         BeanMapper.copy(updateDTO,tmsDeclareBillEntity);
 
-
-        Set<String> boxNoSet = mergeDetailList.stream()
-                .map(TmsDeclareBillDTO.MergeDeclareBillDetailDTO::getSourceDeliveryDetailList)
-                .filter(CollUtil::isNotEmpty)
-                .flatMap(Collection::stream)
-                .filter(Objects::nonNull)
-                .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getBoxNo)
-                .filter(StringUtils::isNotBlank)
-                .collect(Collectors.toSet());
-        tmsDeclareBillEntity.setBoxQty(boxNoSet.size());
+        applyRecalculatedHeaderWeight(tmsDeclareBillEntity, recalculatedHeaderWeight);
         tmsDeclareBillEntity.setCode(old.getCode());
         boolean save = super.updateById(tmsDeclareBillEntity);
         if(!save) {
@@ -887,6 +890,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             if(deliveryDTOList.size()>1){
                 deliveryDTOList = deliveryDTOList.stream().filter(v->listBillSourceDTO.getSourceCodeList().contains(v.getSourceCode())).collect(Collectors.toList());
             }
+            allPackDTOList = filterDeclareBillPackingList(allPackDTOList, midEntityList);
             allPackDTOList.forEach(v->v.setSku(v.getBoxDesc()));
             viewDTO.setPackingDTOList(allPackDTOList);
 
@@ -931,6 +935,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             if(deliveryDTOList.size()>1){
                 deliveryDTOList = deliveryDTOList.stream().filter(v-> listBillSourceDTO.getSourceCodeList().contains(v.getSourceCode())).collect(Collectors.toList());
             }
+            allPackDTOList = filterDeclareBillPackingList(allPackDTOList, midEntityList);
             allPackDTOList.forEach(v->v.setSku(v.getBoxDesc()));
             viewDTO.setPackingDTOList(allPackDTOList);
 
@@ -1534,6 +1539,44 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     }
 
     /**
+     * 编辑保存前按剩余明细重算主表总箱数、毛重、净重（含 Feign，须在事务外调用）。
+     * @author will
+     * @date 2026/6/23 11:00
+     * @param mergeDetailList 编辑后报关明细
+     * @param sourceTypeEnum 报关单类型
+     * @return 重算后的表头重量信息
+     */
+    private TmsDeclareBillDTO.SelectedSkuHeaderDTO computeRecalculatedHeaderWeight(
+            List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList,
+            SourceTypeEnum sourceTypeEnum) {
+        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> selectedDetailList = flattenMergeSourceDetails(mergeDetailList);
+        TmsDeclareBillDTO.SelectedSkuHeaderDTO headerDTO = new TmsDeclareBillDTO.SelectedSkuHeaderDTO();
+        if (CollUtil.isEmpty(selectedDetailList)) {
+            headerDTO.setBoxQty(0);
+            headerDTO.setGrossWeight(BigDecimal.ZERO);
+            headerDTO.setNetWeight(BigDecimal.ZERO);
+            return headerDTO;
+        }
+        TmsDeclareBillDTO.SelectedSkuHeaderParamDTO paramDTO = new TmsDeclareBillDTO.SelectedSkuHeaderParamDTO();
+        paramDTO.setSourceDeliveryDetailList(selectedDetailList);
+        return querySelectedSkuHeader(paramDTO, sourceTypeEnum);
+    }
+
+    /**
+     * 将事务外已重算的表头重量写入报关单主表。
+     * @author will
+     * @date 2026/6/23 11:00
+     * @param declareBillEntity 待保存报关单主表
+     * @param headerDTO 重算后的表头重量信息
+     */
+    private void applyRecalculatedHeaderWeight(TmsDeclareBillEntity declareBillEntity,
+                                               TmsDeclareBillDTO.SelectedSkuHeaderDTO headerDTO) {
+        declareBillEntity.setBoxQty(Objects.isNull(headerDTO.getBoxQty()) ? 0 : headerDTO.getBoxQty());
+        declareBillEntity.setGrossWeight(Objects.isNull(headerDTO.getGrossWeight()) ? BigDecimal.ZERO : headerDTO.getGrossWeight());
+        declareBillEntity.setNetWeight(Objects.isNull(headerDTO.getNetWeight()) ? BigDecimal.ZERO : headerDTO.getNetWeight());
+    }
+
+    /**
      * 填充报关表头物流信息
      * @author will
      * @date 2026/5/7 14:47
@@ -1714,6 +1757,69 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
      */
     private String buildSelectedBoxKey(String sourceKey, String boxNo) {
         return CharSequenceUtil.join("|", StringUtils.defaultString(sourceKey), StringUtils.defaultString(boxNo));
+    }
+
+    /**
+     * 构建业务单+箱号匹配键（与中间表 business_code、box_no 一致）。
+     * @author will
+     * @date 2026/6/23 10:00
+     * @param businessCode 业务单号
+     * @param boxNo 箱号
+     * @return 匹配键
+     */
+    private String buildBusinessBoxKey(String businessCode, String boxNo) {
+        return CharSequenceUtil.join("|", StringUtils.defaultString(businessCode), StringUtils.defaultString(boxNo));
+    }
+
+    /**
+     * 详情页装箱信息：仅保留当前报关单中间表挂载的业务单+箱号对应装箱。
+     * @author will
+     * @date 2026/6/23 10:00
+     * @param packingList WMS 返回的装箱明细
+     * @param midEntityList 当前报关单中间表明细
+     * @return 过滤后的装箱明细
+     */
+    private List<TmsDeclareBillDTO.PackingDTO> filterDeclareBillPackingList(List<TmsDeclareBillDTO.PackingDTO> packingList,
+                                                                            List<DeliveryDeclareDetailMidEntity> midEntityList) {
+        if (CollUtil.isEmpty(packingList) || CollUtil.isEmpty(midEntityList)) {
+            return Collections.emptyList();
+        }
+        Set<String> declareBusinessBoxKeySet = midEntityList.stream()
+                .filter(item -> StringUtils.isNotBlank(item.getBoxNo()))
+                .map(item -> buildBusinessBoxKey(item.getBusinessCode(), item.getBoxNo()))
+                .collect(Collectors.toSet());
+        if (CollUtil.isEmpty(declareBusinessBoxKeySet)) {
+            return Collections.emptyList();
+        }
+        return packingList.stream()
+                .filter(Objects::nonNull)
+                .filter(item -> StringUtils.isNotBlank(item.getBoxNo()))
+                .filter(item -> midEntityList.stream().anyMatch(mid -> isDeclareBillPacking(item, mid, declareBusinessBoxKeySet)))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 判断装箱明细是否属于当前报关单挂载的业务单+箱号。
+     * @author will
+     * @date 2026/6/23 10:00
+     * @param packing 装箱明细
+     * @param mid 报关中间表明细
+     * @param declareBusinessBoxKeySet 当前报关单允许的业务单+箱号集合
+     * @return 是否匹配
+     */
+    private boolean isDeclareBillPacking(TmsDeclareBillDTO.PackingDTO packing,
+                                         DeliveryDeclareDetailMidEntity mid,
+                                         Set<String> declareBusinessBoxKeySet) {
+        if (!StringUtils.equals(packing.getBoxNo(), mid.getBoxNo())) {
+            return false;
+        }
+        if (!declareBusinessBoxKeySet.contains(buildBusinessBoxKey(mid.getBusinessCode(), mid.getBoxNo()))) {
+            return false;
+        }
+        return StringUtils.equals(packing.getSourceId(), mid.getSourceId())
+                || StringUtils.equals(packing.getSourceCode(), mid.getSourceCode())
+                || StringUtils.equals(packing.getSoOutstockCode(), mid.getBusinessCode())
+                || StringUtils.equals(packing.getSoOutstockId(), mid.getBusinessId());
     }
 
     /**
@@ -2875,10 +2981,6 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_SPLIT_WAIT_STATUS_REQUIRED);
         }
 
-        String splitBaseCode = declareBillEntity.getCode();
-        TmsDeclareBillDTO.SplitDeclareCodeSequence splitCodeSequence = StringUtils.isNotBlank(splitBaseCode)
-                ? new TmsDeclareBillDTO.SplitDeclareCodeSequence(splitBaseCode)
-                : null;
         List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDeliveryDetailList = deliveryDeclareDetailMidService.listSourceByDeclareIdList(Collections.singletonList(declareBillEntity.getId()));
 
         //删除原本的报关单
@@ -2889,8 +2991,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             List<TmsDeclareBillDTO.MergeDeclareBillDTO> mergeDeclareBillDTOS = autoMergeDeclareBillView(
                     new TmsDeclareBillDTO.AutoMergeDeclareBillViewDTO(Boolean.TRUE, batchSourceList), Boolean.FALSE);
 
-            //保存合并数据（合同号：原单号_1、_2…）
-            batchAddMergeDetail(SourceTypeEnum.FM_DECLARE_BILL.getCode(), mergeDeclareBillDTOS, splitCodeSequence, Boolean.FALSE);
+            //保存合并数据（合同协议号按新增规则自动生成）
+            batchAddMergeDetail(SourceTypeEnum.FM_DECLARE_BILL.getCode(), mergeDeclareBillDTOS, Boolean.TRUE, Boolean.FALSE);
         }
         return extractSourceIdListFromSourceDetails(sourceDeliveryDetailList);
     }
@@ -2942,9 +3044,6 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
         String splitBaseCode = declareBillEntity.getCode();
         String originalDeclareBillId = declareBillEntity.getId();
-        TmsDeclareBillDTO.SplitDeclareCodeSequence splitCodeSequence = StringUtils.isNotBlank(splitBaseCode)
-                ? new TmsDeclareBillDTO.SplitDeclareCodeSequence(splitBaseCode)
-                : null;
         log.info("B2B拆分报关开始，原报关单id={}，code={}，拆分数={}", originalDeclareBillId, splitBaseCode,
                 declareDTO.getSplitDeclareDTOList().size());
         List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDeliveryDetailList = deliveryDeclareDetailMidService.listSourceByDeclareIdList(Collections.singletonList(originalDeclareBillId));
@@ -2967,8 +3066,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                     isB2bCustomerReceiver(declareBillEntity.getType(), declareBillEntity.getReceiverType()));
             log.info("B2B拆分报关第{}票合并预览完成，原报关单id={}，合并结果数={}", groupIndex, originalDeclareBillId, mergeDeclareBillDTOS.size());
 
-            //保存合并数据（合同号：原单号_1、_2…）
-            batchAddMergeDetail(SourceTypeEnum.B2B_DECLARE_BILL.getCode(), mergeDeclareBillDTOS, splitCodeSequence, Boolean.FALSE);
+            //保存合并数据（合同协议号按新增规则自动生成）
+            batchAddMergeDetail(SourceTypeEnum.B2B_DECLARE_BILL.getCode(), mergeDeclareBillDTOS, Boolean.TRUE, Boolean.FALSE);
             log.info("B2B拆分报关第{}票保存完成，原报关单id={}", groupIndex, originalDeclareBillId);
         }
         String splitMsg = CharSequenceUtil.format("拆分报关单：拆分为{}{}", declareDTO.getSplitDeclareDTOList().size(), "票");
@@ -3431,17 +3530,29 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     }
 
     /**
-     * 校验报关明细
+     * 校验报关明细（下推/合并/拆分保存，单票严格不超过 48 条）。
      * @author will
      * @date 2026/5/7 14:08
-     * @param mergeDetailList
+     * @param mergeDetailList 报关明细
      */
     private void validateDeclareMergeDetails(List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList) {
+        validateDeclareMergeDetails(mergeDetailList, SAVE_DECLARE_DETAIL_LIMIT);
+    }
+
+    /**
+     * 校验报关明细行数及必填项。
+     * @author will
+     * @date 2026/6/23 14:00
+     * @param mergeDetailList 报关明细
+     * @param maxDetailCount 单票明细行数上限
+     */
+    private void validateDeclareMergeDetails(List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList,
+                                             int maxDetailCount) {
         if (CollUtil.isEmpty(mergeDetailList)) {
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_SAVE_REQUIRED);
         }
-        if (mergeDetailList.size() > limitSkuNo) {
-            throw new ServiceException(ApiError.LOGISTICS_DECLARE_MERGE_SKU_LIMIT_EXCEEDED, limitSkuNo);
+        if (mergeDetailList.size() > maxDetailCount) {
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_MERGE_SKU_LIMIT_EXCEEDED, maxDetailCount);
         }
         validateDuplicateSkuRows(mergeDetailList);
         Set<String> countrySet = new HashSet<>();
@@ -4337,17 +4448,17 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     // 不再使用 @GlobalTransactional 避免 Seata XA prepare 分支失败。
     @Transactional(rollbackFor = Exception.class)
     public List<String> batchAddMergeDetailInTx(String type, List<TmsDeclareBillDTO.MergeDeclareBillDTO> list) {
-        return batchAddMergeDetail(type, list, null, Boolean.FALSE);
+        return batchAddMergeDetail(type, list, Boolean.FALSE, Boolean.FALSE);
     }
 
     /**
      * 批量保存合并报关明细。
      *
-     * @param splitCodeSequence 非空时表示拆分保存：合同号为「原报关单合同号_1、_2…」递增，贯穿多次调用（多箱/多票拆分）
+     * @param splitSave 拆分保存时为 true：跳过「已生成」拦截并延后 WMS 回写；合同协议号由 {@link #generateContractCode} 按新增规则生成
      * @return 待回写 WMS 的来源单 id；拆分多轮调用时返回空列表，由拆分入口统一回写
      */
     private List<String> batchAddMergeDetail(String type, List<TmsDeclareBillDTO.MergeDeclareBillDTO> list,
-                                        TmsDeclareBillDTO.SplitDeclareCodeSequence splitCodeSequence,
+                                        boolean splitSave,
                                         boolean idempotent) {
         if (CollUtil.isEmpty(list)) {
             throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
@@ -4416,7 +4527,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         }
 
         // 拆分保存多轮调用：上一轮已生成报关单及中间表，不能按「已生成」拦截，也不能删除刚生成的报关单
-        if (splitCodeSequence == null) {
+        if (!splitSave) {
             Set<String> obsoleteDeclareBillIds = existsMidList.stream()
                     .map(DeliveryDeclareDetailMidEntity::getDeclareId)
                     .filter(StringUtils::isNotBlank)
@@ -4476,16 +4587,13 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             //数据处理
             fillBatchDeclareBillEntity(declareBillType, declareBillList, declareBillEntity);
 
-            if (splitCodeSequence != null) {
-                declareBillEntity.setCode(splitCodeSequence.nextCode());
-            }
             BaseResultDTO.AddDTO addResult = add(declareBillEntity, detailEntityList, SourceTypeEnum.getEnum(declareBillType), false);
 
             changedMidList.addAll(deliveryDeclareDetailMidService.saveGeneratedMidData(
                     sourceType, declareBillList, detailEntityList, addResult.getId(), addResult.getCode()));
         }
         // 拆分保存多轮调用时延后统一回写来源单报关状态，由拆分入口在全局事务提交后一次 Feign 回写 WMS。
-        if (splitCodeSequence != null) {
+        if (splitSave) {
             return Collections.emptyList();
         }
         return extractSourceIdListFromMidList(changedMidList);
