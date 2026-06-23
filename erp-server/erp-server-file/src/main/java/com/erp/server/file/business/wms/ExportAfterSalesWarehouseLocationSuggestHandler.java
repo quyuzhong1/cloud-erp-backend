@@ -34,28 +34,6 @@ public class ExportAfterSalesWarehouseLocationSuggestHandler extends AbstractPag
     }
 
     @Override
-    protected List<AfterSalesWarehouseLocationSuggestDto.ListDTO> getData(FileTask fileTask) {
-        try {
-            JsonNode root = objectMapper.readTree(fileTask.getMetaInfo());
-            AfterSalesWarehouseLocationSuggestDto.ExportParamDTO params;
-            if (root.hasNonNull("params")) {
-                PagingDTO<AfterSalesWarehouseLocationSuggestDto.ExportParamDTO> paging =
-                        objectMapper.convertValue(root, new TypeReference<PagingDTO<AfterSalesWarehouseLocationSuggestDto.ExportParamDTO>>() {
-                        });
-                params = paging.getParams();
-            } else {
-                params = objectMapper.convertValue(root, AfterSalesWarehouseLocationSuggestDto.ExportParamDTO.class);
-            }
-            if (params == null) {
-                params = new AfterSalesWarehouseLocationSuggestDto.ExportParamDTO();
-            }
-            return listSeqData(params);
-        } catch (Exception e) {
-            throw new ServiceException("解析售后仓位推荐导出任务参数失败: " + e.getMessage());
-        }
-    }
-
-    @Override
     protected String getExcelPath() {
         return "excel/wms/afterSalesWarehouseLocationSuggestExport.xlsx";
     }
