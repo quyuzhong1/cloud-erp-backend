@@ -480,14 +480,30 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     )
     @Override
     public Boolean update(TmsDeclareBillDTO.UpdateDTO updateDTO,SourceTypeEnum sourceTypeEnum) {
+        // 状态校验须在 Feign 重量重算之前，避免不可编辑单据触发无效远程调用。
+        validateUpdateEditableState(updateDTO.getId(), sourceTypeEnum);
         // 重量重算含 WMS/PLM Feign，须在事务外完成（erp-backend-standards：禁止事务内 Feign）。
         List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList =
                 prepareSubmittedMergeDetailList(updateDTO.getMergeDetailList(), updateDTO.getIsMerge());
         TmsDeclareBillDTO.SelectedSkuHeaderDTO recalculatedHeaderWeight =
                 computeRecalculatedHeaderWeight(mergeDetailList, sourceTypeEnum);
-        List<String> syncSourceIds = service.updateInTx(updateDTO, sourceTypeEnum, recalculatedHeaderWeight);
+        List<String> syncSourceIds = service.updateInTx(updateDTO, sourceTypeEnum, mergeDetailList, recalculatedHeaderWeight);
         syncSourceDeclareStatusIfNeeded(sourceTypeEnum.getCode(), syncSourceIds);
         return Boolean.TRUE;
+    }
+
+    /**
+     * 编辑保存前校验报关单是否可编辑（轻量 DB 查询，须在事务外 Feign 调用之前执行）。
+     */
+    private void validateUpdateEditableState(String declareBillId, SourceTypeEnum sourceTypeEnum) {
+        TmsDeclareBillEntity old = super.getById(declareBillId);
+        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "报关单"));
+        if (!CharSequenceUtil.equals(old.getType(), sourceTypeEnum.getCode())) {
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_BILL_TYPE_MISMATCH);
+        }
+        if (!old.getDeclareStatus().equals(com.erp.model.tms.enums.DeclareStatusEnum.WAIT.getCode())) {
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_WAIT_STATUS_REQUIRED_FOR_EDIT);
+        }
     }
 
     // 编辑保存仅写 TMS 单库（WMS 回写已移到事务外），用本地事务即可，
@@ -495,6 +511,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     @Transactional(rollbackFor = Exception.class)
     public List<String> updateInTx(TmsDeclareBillDTO.UpdateDTO updateDTO,
                                    SourceTypeEnum sourceTypeEnum,
+                                   List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList,
                                    TmsDeclareBillDTO.SelectedSkuHeaderDTO recalculatedHeaderWeight) {
         TmsDeclareBillEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "报关单"));
@@ -505,7 +522,6 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if(!old.getDeclareStatus().equals(com.erp.model.tms.enums.DeclareStatusEnum.WAIT.getCode())){
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_WAIT_STATUS_REQUIRED_FOR_EDIT);
         }
-        List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList = prepareSubmittedMergeDetailList(updateDTO.getMergeDetailList(), updateDTO.getIsMerge());
         validateDeclareMergeDetails(mergeDetailList, EDIT_DECLARE_DETAIL_LIMIT);
         validateUpdateImmutableSourceFields(old.getId(), mergeDetailList);
         Set<String> sourceKeySet = collectSourceKeySet(mergeDetailList);
@@ -1558,7 +1574,14 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         }
         TmsDeclareBillDTO.SelectedSkuHeaderParamDTO paramDTO = new TmsDeclareBillDTO.SelectedSkuHeaderParamDTO();
         paramDTO.setSourceDeliveryDetailList(selectedDetailList);
-        return querySelectedSkuHeader(paramDTO, sourceTypeEnum);
+        TmsDeclareBillDTO.SelectedSkuHeaderDTO recalculatedHeader = querySelectedSkuHeader(paramDTO, sourceTypeEnum);
+        if (Objects.isNull(recalculatedHeader)) {
+            headerDTO.setBoxQty(0);
+            headerDTO.setGrossWeight(BigDecimal.ZERO);
+            headerDTO.setNetWeight(BigDecimal.ZERO);
+            return headerDTO;
+        }
+        return recalculatedHeader;
     }
 
     /**
@@ -1570,6 +1593,12 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
      */
     private void applyRecalculatedHeaderWeight(TmsDeclareBillEntity declareBillEntity,
                                                TmsDeclareBillDTO.SelectedSkuHeaderDTO headerDTO) {
+        if (Objects.isNull(headerDTO)) {
+            declareBillEntity.setBoxQty(0);
+            declareBillEntity.setGrossWeight(BigDecimal.ZERO);
+            declareBillEntity.setNetWeight(BigDecimal.ZERO);
+            return;
+        }
         declareBillEntity.setBoxQty(Objects.isNull(headerDTO.getBoxQty()) ? 0 : headerDTO.getBoxQty());
         declareBillEntity.setGrossWeight(Objects.isNull(headerDTO.getGrossWeight()) ? BigDecimal.ZERO : headerDTO.getGrossWeight());
         declareBillEntity.setNetWeight(Objects.isNull(headerDTO.getNetWeight()) ? BigDecimal.ZERO : headerDTO.getNetWeight());
@@ -1790,11 +1819,31 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (CollUtil.isEmpty(declareBusinessBoxKeySet)) {
             return Collections.emptyList();
         }
+        Map<String, List<DeliveryDeclareDetailMidEntity>> midsByBoxNo = midEntityList.stream()
+                .filter(item -> StringUtils.isNotBlank(item.getBoxNo()))
+                .filter(item -> declareBusinessBoxKeySet.contains(buildBusinessBoxKey(item.getBusinessCode(), item.getBoxNo())))
+                .collect(Collectors.groupingBy(DeliveryDeclareDetailMidEntity::getBoxNo));
+        if (CollUtil.isEmpty(midsByBoxNo)) {
+            return Collections.emptyList();
+        }
         return packingList.stream()
                 .filter(Objects::nonNull)
                 .filter(item -> StringUtils.isNotBlank(item.getBoxNo()))
-                .filter(item -> midEntityList.stream().anyMatch(mid -> isDeclareBillPacking(item, mid, declareBusinessBoxKeySet)))
+                .filter(item -> matchesAnyDeclareBillMid(item, midsByBoxNo, declareBusinessBoxKeySet))
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * 判断装箱明细是否匹配当前报关单任一中间表箱号记录。
+     */
+    private boolean matchesAnyDeclareBillMid(TmsDeclareBillDTO.PackingDTO packing,
+                                             Map<String, List<DeliveryDeclareDetailMidEntity>> midsByBoxNo,
+                                             Set<String> declareBusinessBoxKeySet) {
+        List<DeliveryDeclareDetailMidEntity> candidates = midsByBoxNo.get(packing.getBoxNo());
+        if (CollUtil.isEmpty(candidates)) {
+            return false;
+        }
+        return candidates.stream().anyMatch(mid -> isDeclareBillPacking(packing, mid, declareBusinessBoxKeySet));
     }
 
     /**
