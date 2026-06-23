@@ -625,6 +625,8 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
         // 上限预克隆过多 sheet 造成的模板展开内存开销；多页（hasNext）导出因无法中途加 sheet，仍保守预展开以保证容量不回退。
         KeysetPagingVO<T> vo = requirePagingResult(fetchKeyset(params, null, getPageSize()), "游标 lastId=null");
         List<T> rawList = vo.getList();
+        // afterFetchPage 统一在循环入口（见下方 while 体内）按批调用一次，保证「每批仅一次」语义；
+        // 此处仅按行数预估 sheet 数，afterFetchPage 不增删元素，故不影响 firstBatchRows。
         int firstBatchRows = (rawList == null) ? 0 : rawList.size() - nullElementCount(rawList);
         int preparedSheets = resolvePreparedSheetCountForKeysetExport(vo.isHasNext(), firstBatchRows);
 
@@ -699,6 +701,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
                     }
                     vo = requirePagingResult(fetchKeyset(params, lastId, getPageSize()), "游标 lastId=" + lastId);
                     rawList = vo.getList();
+                    // 不在此处调用 afterFetchPage：下一轮循环入口会对新 rawList 调用一次，避免重复加工。
                 }
                 total += flushSheetGroupBuffer("KEYSET", excelPath, excelWriter, fillConfig, groupBuffer, cursor,
                         "lastIdExclusive=" + lastId + ",hasNext=false", 0);
@@ -719,22 +722,6 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
             }
         }
         return max;
-    }
-
-    /**
-     * 兼容旧代码路径：默认等价于 {@code listSeqData(resolveExportParams(fileTask))}。
-     * <p>
-     * <strong>异步导出任务</strong>已由 {@link #handle(FileTask)} 使用 {@link #resolveExportParams(FileTask)}
-     * + 分页写入临时文件，<strong>不会再调用本方法</strong>。
-     * <p>
-     * 若仍有外部代码调用 {@code getData}，可使用默认实现；子类也可暂时保留旧覆盖（请标注 {@code @Deprecated}）并逐步删除。
-     *
-     * @deprecated 请迁移调用方，勿依赖全量 List；新代码请使用 {@link #resolveExportParams} + 流式导出链路。
-     */
-    @Deprecated
-    @Override
-    protected List<T> getData(FileTask fileTask) {
-        return listSeqData(resolveExportParams(fileTask));
     }
 
     /**
@@ -778,6 +765,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
         dto.setParams(params);
 
         PagingVO<T> firstData = requirePagingResult(getPageData(dto), "页码=" + dto.getCurrPage());
+        // afterFetchPage 统一在循环内对非空页调用一次（见下方 if 块），保证「每页仅一次」语义，此处不再调用。
         int totalCount = firstData.getTotalCount();
         int dataSheets = resolveDataSheetCountForExport(totalCount);
         byte[] rawTemplate = readClasspathTemplateBytes(excelPath);
@@ -840,6 +828,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
                     }
                     dto.setCurrPage(dto.getCurrPage() + 1);
                     pageData = requirePagingResult(getPageData(dto), "页码=" + dto.getCurrPage());
+                    // 不在此处调用 afterFetchPage：下一轮循环内的非空页分支会调用一次，避免重复加工。
                 }
                 totalRows += flushSheetGroupBuffer("OFFSET", excelPath, excelWriter, fillConfig, groupBuffer, cursor,
                         "currPage=" + dto.getCurrPage(), totalCount);
@@ -860,57 +849,6 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
         return totalRows;
     }
 
-    /**
-     * 兼容旧调用：仍可将多页合并为 List（大数据量慎用）
-     */
-    @Deprecated
-    @SuppressWarnings("unchecked")
-    public List<T> listSeqData(P p) {
-        PagingDTO<P> dto = new PagingDTO<>();
-        dto.setPageSize(getPageSize());
-        dto.setCurrPage(getFirstPage());
-        List<T> dataList = new ArrayList<>();
-        boolean hasNext = true;
-        int totalCount = 0;
-        while (hasNext) {
-            dto.setParams(p);
-            PagingVO<T> data = requirePagingResult(getPageData(dto), "页码=" + dto.getCurrPage());
-            if (totalCount == 0) {
-                totalCount = data.getTotalCount();
-            }
-            int pageListSize = CollectionUtils.isEmpty(data.getList()) ? 0 : data.getList().size();
-            long coveredBeforeThisPage = (long) (dto.getCurrPage() - getFirstPage()) * getPageSize();
-            if (pageListSize == 0 && coveredBeforeThisPage < totalCount) {
-                throw new ServiceException("导出分页数据缺失：页码=" + dto.getCurrPage()
-                        + " 返回空列表，但 totalCount=" + totalCount + " 预期仍有数据，疑似分页查询异常或数据并发变更，请重试或排查上游分页接口。");
-            }
-            if (!CollectionUtils.isEmpty(data.getList())) {
-                List<T> rawPage = data.getList();
-                List<T> batch = withoutNullListElements(rawPage);
-                if (batch.isEmpty()) {
-                    throw new ServiceException("导出数据存在空行，请检查查询结果（页码=" + dto.getCurrPage() + "）");
-                }
-                dataList.addAll(batch);
-            }
-            // 与 writeOffsetBatches 对齐：已写满 totalCount（含上游单页超发）即结束，避免空页被误判为缺数。
-            if (dataList.size() >= totalCount || isLastPage(dto.getCurrPage(), totalCount)) {
-                hasNext = false;
-            }
-            dto.setCurrPage(dto.getCurrPage() + 1);
-        }
-        if (totalCount > 0 && dataList.isEmpty()) {
-            throw new ServiceException("导出失败：totalCount=" + totalCount
-                    + " 但未写入任何数据行，疑似分页查询异常或数据全为空行，请检查上游分页接口。");
-        }
-        // 末页 partial：实际累计行数 < 首查 totalCount（多因导出期间并发删除/数据漂移），不视为失败，
-        // 与 writeOffsetBatches 对称地显式告警，避免静默丢数难感知。
-        if (totalCount > 0 && dataList.size() < totalCount) {
-            log.warn("导出末页数据不足(listSeqData)：handler={} 预期 totalCount={} 实际 {}，疑似导出期间数据并发变更",
-                    getClass().getName(), totalCount, dataList.size());
-        }
-        return dataList;
-    }
-
     protected int getPageSize() {
         return FileRegistry.exportPageSize();
     }
@@ -929,8 +867,9 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
     /**
      * 取数后、写出前对「本页数据」的加工钩子，默认空实现（不影响未重写的单据）。
      * <p>
-     * 在 OFFSET / KEYSET 两条链路的每次取数后由基类统一逐页回调，子类可重写做按页富化、
-     * 同组重复行置空等可变加工，无需再包裹 {@link #getPageData} / {@link #fetchKeyset}。
+     * 在 OFFSET / KEYSET 两条链路中，基类保证<strong>每页/每批恰好回调一次</strong>（OFFSET 在循环内非空页分支调用，
+     * KEYSET 在循环入口调用），子类可重写做按页富化、同组重复行置空等可变加工，无需再包裹
+     * {@link #getPageData} / {@link #fetchKeyset}。
      * 钩子按页调用，天然是「按页」粒度；可原地修改元素值，但不应增删元素（行数由基类按页统计）。
      *
      * @param pageList 当前页数据（可能含 null 元素，实现需自行跳过），可为 {@code null}

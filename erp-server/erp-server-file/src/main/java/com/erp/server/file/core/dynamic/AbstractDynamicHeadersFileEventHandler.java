@@ -1,10 +1,11 @@
-package com.erp.server.file.core;
+package com.erp.server.file.core.dynamic;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.ExcelWriter;
 import com.alibaba.excel.write.metadata.WriteSheet;
+import com.alibaba.excel.write.style.HorizontalCellStyleStrategy;
 import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
@@ -12,6 +13,8 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.file.entity.FileTask;
+import com.erp.server.file.core.ExportTempFilesHandler;
+import com.erp.server.file.core.FileEventHandler;
 import com.erp.server.file.handler.FileRegistry;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -39,7 +42,16 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
         P params = resolveExportParams(fileTask);
         String displayName = buildDownloadFileName(fileTask);
         ExportTempFilesHandler.exportToTempAndUpload(fileTask, ".xlsx", displayName,
-                outFile -> writePagedDynamicHeadersExcel(outFile, params, fileTask.getFileName()));
+                outFile -> writePagedDynamicHeadersExcel(outFile, params, resolveSheetBaseName(fileTask)));
+    }
+
+    /**
+     * sheet 基础名（sheet 标签用；多 sheet 溢出时后续 sheet 在其后追加序号）。
+     * 默认取文件名；子类可重写（如还原旧版「日期+文件名」）。仅当未重写 {@link #getSheetName()}
+     * 且数据侧未设置 {@link DynamicExcelDTO#getSheetName()} 时生效（见 {@link #resolveSheetName}）。
+     */
+    protected String resolveSheetBaseName(FileTask fileTask) {
+        return fileTask.getFileName();
     }
 
     /**
@@ -72,16 +84,6 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
             return null;
         }
         return param.resolve();
-    }
-
-    /**
-     * 兼容旧调用：仍可将多页合并为 {@link DynamicExcelDTO}（大数据量慎用）。
-     *
-     * @deprecated 异步导出任务已改为分页写入临时文件，请使用 {@link #resolveExportParams(FileTask)} + 分页写出链路。
-     */
-    @Deprecated
-    protected DynamicExcelDTO getData(FileTask fileTask) {
-        return listSeqData(resolveExportParams(fileTask));
     }
 
     private String buildDownloadFileName(FileTask fileTask) {
@@ -133,19 +135,21 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
             throw new ServiceException("导出失败：总记录数=" + totalCount + " 但首页(页码=1, pageSize=" + pageSize
                     + ")未返回表头/数据，疑似分页查询异常或数据并发变更，请稍后重试或联系开发排查上游分页接口。");
         }
-        List<List<String>> header = convertHeadList(headers.values());
+        List<List<String>> header = convertHeadList(headers.values(), firstRowName());
         String sheetName = resolveSheetName(defaultSheetName, pageList);
 
         int totalRows = 0;
         int sheetNo = 0;
         long rowsInSheet = 0;
         int maxRowsPerSheet = maxRowsPerSheet();
-        int maxSheetNum = FileRegistry.maxSheetNumOrDefault();
+        int maxSheetNum = maxSheetCount();
         ExcelPrintUtils excelPrintUtils = new ExcelPrintUtils();
         try (FileOutputStream outputStream = new FileOutputStream(outFile)) {
-            ExcelWriter excelWriter = excelPrintUtils.openDynamicHeadersWriter(outputStream, header);
+            ExcelWriter excelWriter = excelPrintUtils.openDynamicHeadersWriter(outputStream, header, dynamicHeaderCellStyleStrategy());
             try {
                 WriteSheet writeSheet = buildWriteSheet(sheetNo, sheetName, header);
+                // 「按 sheet 逐行加工」状态：方法局部持有，单次导出独占，规避单例 Handler 字段并发；sheet 翻页时复位。
+                Object sheetState = newSheetState();
                 for (int pageNo = 1; pageNo <= totalPage; pageNo++) {
                     if (pageNo > 1) {
                         dto.setCurrPage(pageNo);
@@ -162,25 +166,35 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
                         }
                     }
                     ensureNoNewHeaderKeys(headers, pageList, pageNo);
-                    List<List<Object>> rows = convertPageDataList(pageList, headers.keySet());
-                    if (!CollectionUtils.isEmpty(pageList) && rows.isEmpty() && totalCount > 0) {
+                    List<LinkedHashMap<String, Object>> rowMaps = flattenPageData(pageList);
+                    if (!CollectionUtils.isEmpty(pageList) && rowMaps.isEmpty() && totalCount > 0) {
                         throw new ServiceException("导出数据存在空行，请检查查询结果（页码=" + pageNo + "）");
                     }
-                    if (rows.isEmpty() && totalRows == 0) {
-                        excelWriter.write(rows, writeSheet);
+                    if (rowMaps.isEmpty() && totalRows == 0) {
+                        excelWriter.write(Collections.emptyList(), writeSheet);
                     }
-                    for (int idx = 0; idx < rows.size();) {
+                    for (int idx = 0; idx < rowMaps.size();) {
                         if (rowsInSheet >= maxRowsPerSheet) {
                             sheetNo++;
                             if (sheetNo >= maxSheetNum) {
+                                if (maxSheetNum <= 1) {
+                                    throw new ServiceException("导出数据量超过单 sheet 上限 " + maxRowsPerSheet
+                                            + " 行，请缩小筛选范围导出。");
+                                }
                                 throw new ServiceException("导出数据超过当前系统可承载的 sheet 数，请缩小筛选范围导出。");
                             }
                             writeSheet = buildWriteSheet(sheetNo, sheetName, header);
                             rowsInSheet = 0;
+                            sheetState = newSheetState();
                         }
                         int room = maxRowsPerSheet - (int) rowsInSheet;
-                        int take = Math.min(room, rows.size() - idx);
-                        List<List<Object>> batch = rows.subList(idx, idx + take);
+                        int take = Math.min(room, rowMaps.size() - idx);
+                        List<List<Object>> batch = new ArrayList<>(take);
+                        for (int k = idx; k < idx + take; k++) {
+                            LinkedHashMap<String, Object> rowMap = rowMaps.get(k);
+                            decorateSheetRow(rowMap, sheetState, sheetNo);
+                            batch.add(toRow(rowMap, headers.keySet()));
+                        }
                         excelWriter.write(batch, writeSheet);
                         totalRows += take;
                         rowsInSheet += take;
@@ -268,71 +282,43 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
         return EasyExcel.writerSheet(sheetNo, currentSheetName).head(header).build();
     }
 
-    private int maxRowsPerSheet() {
+    /**
+     * 单 sheet 数据行上限。默认 {@code file.storage.sheetMaxRows}（多 sheet 分页，默认 10 万）。
+     * 单 sheet 变体 {@link AbstractSingleSheetDynamicHeadersFileEventHandler} 重写为 {@code file.storage.singleSheetMaxRows}。
+     */
+    protected int maxRowsPerSheet() {
         return Math.max(1, FileRegistry.sheetMaxRowsOrDefault());
     }
 
-    @SuppressWarnings("unchecked")
-    @Deprecated
-    public DynamicExcelDTO listSeqData(P p) {
-        DynamicExcelDTO excelDTO = new DynamicExcelDTO();
-        PagingDTO<P> dto = new PagingDTO<>();
-        dto.setPageSize(getPageSize());
-        dto.setCurrPage(1);
-        ArrayList<LinkedHashMap<String, Object>> result = new ArrayList<>();
-        boolean hasNext = true;
-        int totalCount = 0;
-        while (hasNext) {
-            dto.setParams(p);
-            PagingVO<DynamicExcelDTO> data = getPageData(dto);
-            if (data == null) {
-                throw new ServiceException("导出分页查询失败，页码=" + dto.getCurrPage());
-            }
-            if (totalCount == 0) {
-                totalCount = data.getTotalCount();
-            }
-            int pageListSize = CollectionUtils.isEmpty(data.getList()) ? 0 : data.getList().size();
-            long coveredBeforeThisPage = (long) (dto.getCurrPage() - 1) * getPageSize();
-            if (pageListSize == 0 && coveredBeforeThisPage < totalCount) {
-                throw new ServiceException("导出分页数据缺失：页码=" + dto.getCurrPage()
-                        + " 返回空列表，但 totalCount=" + totalCount + " 预期仍有数据，疑似分页查询异常或数据并发变更，请重试或排查上游分页接口。");
-            }
-            if (!CollectionUtils.isEmpty(data.getList())) {
-                int rowsBefore = result.size();
-                List<DynamicExcelDTO> list = (List<DynamicExcelDTO>) data.getList();
-                for (DynamicExcelDTO dynamicExcelDTO : list) {
-                    excelDTO.setHeaders(dynamicExcelDTO.getHeaders());
-                    if (dynamicExcelDTO != null && !CollectionUtils.isEmpty(dynamicExcelDTO.getData())) {
-                        result.addAll(dynamicExcelDTO.getData());
-                    }
-                }
-                if (result.size() == rowsBefore) {
-                    throw new ServiceException("导出数据存在空行，请检查查询结果（页码=" + dto.getCurrPage() + "）");
-                }
-            }
-            // 与主写循环对齐：已写满 totalCount（含上游单页超发）即结束，避免空页被误判为缺数。
-            if (result.size() >= totalCount || totalCount <= (long) dto.getCurrPage() * getPageSize()) {
-                hasNext = false;
-            }
-            dto.setCurrPage(dto.getCurrPage() + 1);
-        }
-        if (totalCount > 0 && result.isEmpty()) {
-            throw new ServiceException("导出失败：totalCount=" + totalCount
-                    + " 但未写入任何数据行，疑似分页查询异常或数据全为空行，请检查上游分页接口。");
-        }
-        excelDTO.setData(result);
-        return excelDTO;
+    /**
+     * 最多数据 sheet 数。默认 {@code file.storage.maxSheetNum}；
+     * 单 sheet 变体重写为 1：达到 {@link #maxRowsPerSheet()} 即显式失败、不再开新 sheet。
+     */
+    protected int maxSheetCount() {
+        return FileRegistry.maxSheetNumOrDefault();
     }
 
     protected abstract PagingVO<DynamicExcelDTO> getPageData(PagingDTO<P> dto);
+
+    /**
+     * 动态表头导出的单元格样式策略钩子，默认返回 {@code null}（沿用通用样式，不影响其它动态表头单据）。
+     * 子类可重写返回自定义样式（如旧版灰底加粗表头），仅作用于当前 Handler。
+     */
+    protected HorizontalCellStyleStrategy dynamicHeaderCellStyleStrategy() {
+        return null;
+    }
 
     protected int getPageSize() {
         // 动态表头单行体积通常大于固定模板行，使用专用且更保守的批次（默认 1000），避免大宽表导出内存/超时回归
         return FileRegistry.dynamicExportPageSize();
     }
 
-    private List<List<Object>> convertPageDataList(List<DynamicExcelDTO> pageList, Collection<String> headerKeys) {
-        List<List<Object>> result = new ArrayList<>();
+    /**
+     * 将本页各 {@link DynamicExcelDTO} 的数据行平铺为有序行 Map 列表，便于逐行（按 sheet 切片）写出与加工。
+     * 行 Map 可含表头未声明的辅助列（如去重用 id），写出时仅取表头列。
+     */
+    private List<LinkedHashMap<String, Object>> flattenPageData(List<DynamicExcelDTO> pageList) {
+        List<LinkedHashMap<String, Object>> result = new ArrayList<>();
         if (CollectionUtils.isEmpty(pageList)) {
             return result;
         }
@@ -340,28 +326,60 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
             if (dynamicExcelDTO == null || CollectionUtils.isEmpty(dynamicExcelDTO.getData())) {
                 continue;
             }
-            result.addAll(convertDataList(dynamicExcelDTO.getData(), headerKeys));
+            result.addAll(dynamicExcelDTO.getData());
         }
         return result;
     }
 
-    private List<List<Object>> convertDataList(List<LinkedHashMap<String, Object>> data, Collection<String> headerKeys) {
-        List<List<Object>> result = new ArrayList<>();
-        if (CollectionUtils.isEmpty(data)) {
-            return result;
+    private List<Object> toRow(LinkedHashMap<String, Object> map, Collection<String> headerKeys) {
+        List<Object> row = new ArrayList<>(headerKeys.size());
+        for (String key : headerKeys) {
+            row.add(map.get(key));
         }
-        for (LinkedHashMap<String, Object> map : data) {
-            List<Object> row = new ArrayList<>(headerKeys.size());
-            for (String key : headerKeys) {
-                row.add(map.get(key));
-            }
-            result.add(row);
-        }
-        return result;
+        return row;
     }
 
-    private List<List<String>> convertHeadList(Collection<String> headList) {
-        return headList.stream().map(Arrays::asList).collect(Collectors.toList());
+    /**
+     * 「按 sheet 逐行加工」的 sheet 级状态工厂。默认返回 {@code null}（无状态）。
+     * 每开启一个新 sheet 调用一次，返回对象作为方法局部状态在写出循环内持有：
+     * 单次导出独占、方法局部天然线程安全，规避单例 {@code @Component} Handler 字段并发串数据。
+     */
+    protected Object newSheetState() {
+        return null;
+    }
+
+    /**
+     * 「按 sheet 逐行加工」回调：写出每行前调用，可基于 {@code sheetState} 做当前 sheet 内的判重/置空等。
+     * 默认空实现。{@code rowMap} 可能含表头未声明的辅助列（如去重用 id），对其修改不影响最终列集（仅写出表头列）。
+     *
+     * @param rowMap     当前数据行（有序），可原地修改
+     * @param sheetState 当前 sheet 的状态对象（来自 {@link #newSheetState()}）
+     * @param sheetNo    当前 sheet 序号（从 0 开始）
+     */
+    protected void decorateSheetRow(LinkedHashMap<String, Object> rowMap, Object sheetState, int sheetNo) {
+    }
+
+    /**
+     * 把扁平列名转为 EasyExcel 表头。
+     * <p>
+     * {@code firstRowName} 为空：每列单级表头 {@code [列名]}，表头仅列名一行（默认，不影响其它单据）。
+     * {@code firstRowName} 非空：每列两级表头 {@code [首行名, 列名]}，首级各列同值，EasyExcel 横向合并出一行标题行；
+     * 该 {@code header} 被每张 sheet 复用（见 {@link #buildWriteSheet}），故多 sheet 溢出时每张 sheet 均带标题行。
+     */
+    private List<List<String>> convertHeadList(Collection<String> headList, String firstRowName) {
+        boolean withTitle = CharSequenceUtil.isNotBlank(firstRowName);
+        return headList.stream()
+                .map(h -> withTitle ? Arrays.asList(firstRowName, h) : Arrays.asList(h))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 表头首行单据名（合并单元格，位于列名行之上）。与 {@link #getSheetName()}（sheet 标签名）职责分离：
+     * 前者控制表内首行标题，后者控制 sheet 标签。默认 {@code null}（无标题行，表头仅列名一行，不影响未重写的单据）。
+     * 子类可重写返回首行文本以还原「首行单据名」场景。
+     */
+    protected String firstRowName() {
+        return null;
     }
 
     public <R> R readValue(String params, TypeReference<R> type) {
