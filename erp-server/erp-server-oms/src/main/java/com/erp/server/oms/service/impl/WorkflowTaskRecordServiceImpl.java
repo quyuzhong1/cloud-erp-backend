@@ -63,9 +63,6 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
     private DictBasicService dictBasicService;
 
     @Resource
-    private MQProducerService mqProducerService;
-
-    @Resource
     private OperateLogService operateLogService;
 
     @Resource
@@ -196,17 +193,26 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
         registerDispatchAfterCommit(dispatch, dto.getSourceId());
     }
 
+    /**
+     * 判断编排实例是否已进入终态（成功/已取消）。
+     */
     private boolean isTerminalInstance(String status) {
         return WorkflowTaskInstanceStatusEnum.SUCCESS.getCode().equals(status)
                 || WorkflowTaskInstanceStatusEnum.CANCELLED.getCode().equals(status);
     }
 
+    /**
+     * 判断编排实例是否处于可继续调度的活跃态。
+     */
     private boolean isActiveInstance(String status) {
         return WorkflowTaskInstanceStatusEnum.RUNNING.getCode().equals(status)
                 || WorkflowTaskInstanceStatusEnum.WAITING.getCode().equals(status)
                 || WorkflowTaskInstanceStatusEnum.FAILED.getCode().equals(status);
     }
 
+    /**
+     * 运行中实例防重：当前节点仍在 PROCESSING 且未超时则跳过重复调度。
+     */
     private boolean trySkipDuplicateDispatch(WorkflowTaskInstanceEntity instance) {
         WorkflowTaskRecordEntity current = resolveCurrentStep(instance);
         if (current == null) {
@@ -220,6 +226,9 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
                 && updateTime.plusMinutes(TASK_PROCESSING_TIMEOUT_MINUTES).isAfter(LocalDateTime.now());
     }
 
+    /**
+     * 定位实例当前应执行节点：优先 currentIndex，找不到则取首个非成功节点。
+     */
     private WorkflowTaskRecordEntity resolveCurrentStep(WorkflowTaskInstanceEntity instance) {
         if (CharSequenceUtil.isBlank(instance.getId())) {
             return null;
@@ -243,6 +252,9 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
                 .one();
     }
 
+    /**
+     * 对超时卡住的 PROCESSING 节点做状态回拨，便于重新调度。
+     */
     private void prepareStaleProcessingStep(WorkflowTaskRecordEntity currentStep) {
         if (!WorkflowTaskRecordStatusEnum.PROCESSING.getCode().equals(currentStep.getStatus())) {
             return;
@@ -384,11 +396,17 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
     }
 
 
+    /**
+     * 查询异常节点列表（用于补偿任务扫描）。
+     */
     @Override
     public List<WorkflowTaskRecordEntity> listErrorTask() {
         return baseMapper.listErrorTask("");
     }
 
+    /**
+     * 定时补偿入口：按实例维度聚合异常节点并触发最小 index 节点重试。
+     */
     @Override
     public void WorkflowTaskRecordRetryJob(String id) {
         compensateStuckChainSteps();
@@ -413,7 +431,7 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
                     .filter(e -> !WorkflowTaskRecordStatusEnum.SUCCESS.getCode().equals(e.getStatus()))
                     .min(Comparator.comparing(WorkflowTaskRecordEntity::getIndex))
                     .orElse(instanceTasks.get(0));
-            WorkflowTaskInstanceEntity instance = resolveRetryJobInstance(entity);
+            WorkflowTaskInstanceEntity instance = resolveRetryJobInstance(entity, instanceTasks);
             if (instance == null) {
                 log.warn("任务节点补偿重试跳过，未找到有效实例，sourceType={}, sourceId={}, instanceId={}",
                         entity.getSourceType(), entity.getSourceId(), entity.getInstanceId());
@@ -442,6 +460,9 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
         }
     }
 
+    /**
+     * 计算补偿分组键：优先 instance 维度，否则回退 legacy 维度。
+     */
     private String resolveRetryJobGroupKey(WorkflowTaskRecordEntity entity) {
         if (CharSequenceUtil.isNotBlank(entity.getInstanceId())) {
             return "instance:" + entity.getInstanceId();
@@ -449,7 +470,12 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
         return "legacy:" + entity.getSourceType() + ":" + entity.getSourceId();
     }
 
-    private WorkflowTaskInstanceEntity resolveRetryJobInstance(WorkflowTaskRecordEntity entity) {
+    /**
+     * 解析补偿任务对应实例：优先节点上的 instanceId，其次按 source 查询最新实例，
+     * 若仍不存在且为历史 legacy 节点，则在 Job 内补建实例并回填 instance_id。
+     */
+    private WorkflowTaskInstanceEntity resolveRetryJobInstance(WorkflowTaskRecordEntity entity,
+                                                               List<WorkflowTaskRecordEntity> groupTasks) {
         if (CharSequenceUtil.isNotBlank(entity.getInstanceId())) {
             WorkflowTaskInstanceEntity instance = workflowTaskInstanceService.getById(entity.getInstanceId());
             if (instance != null && !Boolean.TRUE.equals(instance.getIsDeleted())) {
@@ -457,9 +483,41 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
             }
             return null;
         }
-        return workflowTaskInstanceService.getLatestBySource(entity.getSourceId(), entity.getSourceType());
+        WorkflowTaskInstanceEntity latest = workflowTaskInstanceService.getLatestBySource(entity.getSourceId(), entity.getSourceType());
+        if (latest != null) {
+            return latest;
+        }
+
+        WorkflowTaskRecordTypeEnum sourceTypeEnum = WorkflowTaskRecordTypeEnum.getByCode(entity.getSourceType());
+        if (Objects.isNull(sourceTypeEnum)) {
+            log.warn("任务节点补偿重试跳过，legacy 节点 sourceType 无效，sourceType={}, sourceId={}",
+                    entity.getSourceType(), entity.getSourceId());
+            return null;
+        }
+        WorkflowTaskRecordDTO.AddTaskDTO dto = new WorkflowTaskRecordDTO.AddTaskDTO();
+        dto.setDictBasicTypeEnum(DictBasicTypeEnum.WORKFLOW_TASK_NODE);
+        dto.setSourceTypeEnum(sourceTypeEnum);
+        dto.setSourceId(entity.getSourceId());
+        dto.setSourceCode(entity.getSourceCode());
+        dto.setTraceId(entity.getTraceId());
+
+        List<WorkflowTaskRecordEntity> legacySteps = CollUtil.isNotEmpty(groupTasks)
+                ? groupTasks
+                : listLegacyTasksBySource(entity.getSourceId(), entity.getSourceType());
+        if (CollUtil.isEmpty(legacySteps)) {
+            return null;
+        }
+        WorkflowTaskInstanceEntity created = workflowTaskInstanceService.ensureInstanceForLegacy(dto, legacySteps);
+        if (created != null) {
+            log.info("任务节点补偿重试为历史数据补建实例成功，sourceType={}, sourceId={}, instanceId={}",
+                    entity.getSourceType(), entity.getSourceId(), created.getId());
+        }
+        return created;
     }
 
+    /**
+     * 聚合查询节点异常报表数据。
+     */
     @Override
     public List<WorkflowTaskRecordDTO.TaskErrorReportDTO> getTaskErrorReport() {
         return  baseMapper.getTaskErrorReport();
@@ -543,6 +601,9 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
         return resultDTO;
     }
 
+    /**
+     * 逻辑删除指定业务单据下的全部节点记录。
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void removeBySourceIdAndSourceType(String sourceId, String sourceType) {
@@ -556,6 +617,9 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
         }
     }
 
+    /**
+     * 查询指定业务单据下的全部有效节点（按 index 升序）。
+     */
     @Override
     public List<WorkflowTaskRecordEntity> listBySourceId(String soId, String sourceType) {
         if (CharSequenceUtil.isBlank(soId)) {
@@ -575,6 +639,9 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
         return listLegacyTasksBySource(sourceId, sourceType);
     }
 
+    /**
+     * 获取 source + index 对应的最新有效节点记录。
+     */
     @Override
     public WorkflowTaskRecordEntity getActiveTask(String sourceId, String sourceType, Integer index) {
         if (CharSequenceUtil.isBlank(sourceId) || CharSequenceUtil.isBlank(sourceType) || Objects.isNull(index)) {
@@ -626,6 +693,9 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
                 .update();
     }
 
+    /**
+     * 根据重试参数解析候选节点列表：支持按节点 ID 或按 source 维度查询。
+     */
     private List<WorkflowTaskRecordEntity> listForceRetryTasks(WorkflowTaskRecordDTO.ForceRetryDTO dto) {
         if (CharSequenceUtil.isNotBlank(dto.getId())) {
             WorkflowTaskRecordEntity entity = getById(dto.getId());
@@ -729,6 +799,9 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
         }
     }
 
+    /**
+     * 重置单个强制重试节点状态，并尽可能回填上一成功节点 output 到 input。
+     */
     private void resetForceRetryTask(WorkflowTaskRecordEntity entity, WorkflowTaskRecordDTO.ForceRetryDTO dto, Map<Integer, WorkflowTaskRecordEntity> indexTaskMap) {
         String remark = appendForceRetryRemark(entity.getRemark(), dto.getRemark());
         String refreshedInputData = getPreviousSuccessOutputDataInternal(entity, indexTaskMap);
@@ -752,6 +825,9 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
                 .update();
     }
 
+    /**
+     * 以 index 构建节点映射，过滤空节点和逻辑删除节点。
+     */
     private Map<Integer, WorkflowTaskRecordEntity> buildIndexTaskMap(List<WorkflowTaskRecordEntity> taskList) {
         return CollUtil.emptyIfNull(taskList).stream()
                 .filter(Objects::nonNull)
@@ -760,6 +836,9 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
                 .collect(Collectors.toMap(WorkflowTaskRecordEntity::getIndex, e -> e, (o1, o2) -> o1));
     }
 
+    /**
+     * 获取前一节点成功输出，作为当前节点重试入参。
+     */
     private String getPreviousSuccessOutputDataInternal(WorkflowTaskRecordEntity entity, Map<Integer, WorkflowTaskRecordEntity> indexTaskMap) {
         if (Objects.isNull(entity)
                 || Objects.isNull(entity.getIndex())
@@ -776,6 +855,9 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
         return previousTask.getOutputData();
     }
 
+    /**
+     * 判断节点是否可强制重试：成功节点不允许，PROCESSING 需超时。
+     */
     private boolean allowForceRetry(WorkflowTaskRecordEntity entity) {
         if (Objects.equals(entity.getStatus(), WorkflowTaskRecordStatusEnum.SUCCESS.getCode())) {
             return false;
@@ -787,6 +869,9 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
         return Objects.nonNull(updateTime) && updateTime.plusMinutes(TASK_PROCESSING_TIMEOUT_MINUTES).isBefore(LocalDateTime.now());
     }
 
+    /**
+     * 追加强制重试备注，保留历史备注并附加操作人信息。
+     */
     private String appendForceRetryRemark(String oldRemark, String remark) {
         String operator = UserContext.getDefaultLoginUser().getUserName();
         String current = StrUtil.format("人工强制重试，操作人：{}，备注：{}", operator, StrUtil.blankToDefault(remark, ""));
@@ -814,6 +899,9 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
         workflowTaskInstanceService.markRunning(instance.getId(), dispatchTask.getIndex(), totalSteps);
     }
 
+    /**
+     * 发送强制重试单步调度 MQ。
+     */
     private Boolean sendForceRetryMq(WorkflowTaskRecordEntity entity) {
         WorkflowTaskRecordTypeEnum sourceTypeEnum = WorkflowTaskRecordTypeEnum.getByCode(entity.getSourceType());
         if (Objects.isNull(sourceTypeEnum)) {
@@ -840,6 +928,9 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
         return Boolean.TRUE;
     }
 
+    /**
+     * 在事务提交后注册强制重试 MQ 发送，避免读取未提交数据。
+     */
     private void registerForceRetryMq(WorkflowTaskRecordEntity entity) {
         if (TransactionSynchronizationManager.isActualTransactionActive()) {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
@@ -859,6 +950,9 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
         sendForceRetryMq(entity);
     }
 
+    /**
+     * 强制重试 MQ 发送失败时，回写最早未成功节点为 FAILED 并记录错误。
+     */
     private void markForceRetryMqSendFailed(WorkflowTaskRecordEntity entity, Exception e) {
         if (Objects.isNull(entity) || CharSequenceUtil.isBlank(entity.getSourceId()) || CharSequenceUtil.isBlank(entity.getSourceType())) {
             return;
@@ -885,6 +979,9 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
                 .update();
     }
 
+    /**
+     * 写入人工强制重试操作日志。
+     */
     private void addForceRetryLog(WorkflowTaskRecordDTO.ForceRetryDTO dto, List<WorkflowTaskRecordEntity> taskList, int resetCount, int mqCount) {
         WorkflowTaskRecordEntity first = taskList.get(0);
         String content = StrUtil.format("用户【{}】人工强制重试任务节点，sourceType=【{}】，sourceId=【{}】，重置节点数=【{}】，调度MQ数=【{}】，备注=【{}】",
@@ -897,6 +994,9 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
         operateLogService.addModuleOperateLog(content, resolveModuleType(first), resolveBusinessId(first), "任务强制重试");
     }
 
+    /**
+     * 对外暴露强制重试权限校验能力。
+     */
     @Override
     public void validateForceRetryPermission() {
         checkForceRetryPermission();
@@ -921,6 +1021,9 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
         return getPreviousSuccessOutputDataInternal(entity, indexTaskMap);
     }
 
+    /**
+     * 校验当前用户是否拥有人工强制重试权限（超级管理员或菜单权限）。
+     */
     private void checkForceRetryPermission() {
         LoginUser loginUser = UserContext.getDefaultLoginUser();
         if (Objects.nonNull(loginUser) && Boolean.TRUE.equals(loginUser.getIsSupper())) {
@@ -933,6 +1036,9 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
         throw new ServiceException(ApiError.WF_TASK_RECORD_FORCE_RETRY_FORBIDDEN);
     }
 
+    /**
+     * 根据 sourceType 解析操作日志模块编码。
+     */
     private String resolveModuleType(WorkflowTaskRecordEntity entity) {
         if (Objects.equals(entity.getSourceType(), WorkflowTaskRecordTypeEnum.KOL_B2C_APPLICATION_APPROVE.getCode())
                 || Objects.equals(entity.getSourceType(), WorkflowTaskRecordTypeEnum.KOL_B2C_SUB_APPROVE.getCode())) {
@@ -941,6 +1047,9 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
         return null;
     }
 
+    /**
+     * 解析日志业务主键（子申请场景回溯到主申请 ID）。
+     */
     private String resolveBusinessId(WorkflowTaskRecordEntity entity) {
         if (Objects.equals(entity.getSourceType(), WorkflowTaskRecordTypeEnum.KOL_B2C_SUB_APPROVE.getCode())) {
             KolSubB2cApplicationEntity subEntity = kolSubB2cApplicationService.getById(entity.getSourceId());
