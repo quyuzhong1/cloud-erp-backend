@@ -4,6 +4,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.exception.ServiceException;
+import com.erp.model.file.entity.FileTask;
 import com.erp.model.wms.dto.AfterSalesWarehouseLocationSuggestDto;
 import com.erp.rpc.wms.feign.ExportWmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
@@ -30,6 +31,28 @@ public class ExportAfterSalesWarehouseLocationSuggestHandler extends AbstractPag
     @Override
     protected PagingVO<AfterSalesWarehouseLocationSuggestDto.ListDTO> getPageData(PagingDTO<AfterSalesWarehouseLocationSuggestDto.ExportParamDTO> dto) {
         return exportWmsFeign.exportAfterSalesWarehouseLocationSuggest(dto);
+    }
+
+    @Override
+    protected List<AfterSalesWarehouseLocationSuggestDto.ListDTO> getData(FileTask fileTask) {
+        try {
+            JsonNode root = objectMapper.readTree(fileTask.getMetaInfo());
+            AfterSalesWarehouseLocationSuggestDto.ExportParamDTO params;
+            if (root.hasNonNull("params")) {
+                PagingDTO<AfterSalesWarehouseLocationSuggestDto.ExportParamDTO> paging =
+                        objectMapper.convertValue(root, new TypeReference<PagingDTO<AfterSalesWarehouseLocationSuggestDto.ExportParamDTO>>() {
+                        });
+                params = paging.getParams();
+            } else {
+                params = objectMapper.convertValue(root, AfterSalesWarehouseLocationSuggestDto.ExportParamDTO.class);
+            }
+            if (params == null) {
+                params = new AfterSalesWarehouseLocationSuggestDto.ExportParamDTO();
+            }
+            return listSeqData(params);
+        } catch (Exception e) {
+            throw new ServiceException("解析售后仓位推荐导出任务参数失败: " + e.getMessage());
+        }
     }
 
     @Override

@@ -367,7 +367,7 @@ public class AfterSalesWarehouseLocationSuggestServiceImpl extends SuperServiceI
 
         // 2. 批量获取外部数据并转为 Map (空间换时间)
         // SKU 基础信息
-        List<ProductDetailEntity> skuDetailEntities = plmTaskFeign.listBySkuNos(skuNoList);
+        List<ProductDetailEntity> skuDetailEntities = Optional.ofNullable(plmTaskFeign.listBySkuNos(skuNoList)).orElse(Collections.emptyList());
         Map<String, ProductDetailEntity> skuDetailMap = skuDetailEntities.stream()
                 .collect(Collectors.toMap(ProductDetailEntity::getSkuNo, item -> item, (k1, k2) -> k1));
 

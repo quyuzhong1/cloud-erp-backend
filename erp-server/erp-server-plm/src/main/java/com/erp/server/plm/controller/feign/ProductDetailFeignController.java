@@ -5,9 +5,11 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductPurchaseEntity;
 import com.erp.server.plm.service.ProductDetailService;
 import com.erp.server.plm.service.ProductPurchaseService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -41,6 +43,9 @@ public class ProductDetailFeignController {
 
     @PostMapping("/listBySkuNos")
     List<ProductDetailEntity> listBySkuNos(@RequestBody List<String> skuNos) {
+        if (CollectionUtils.isEmpty(skuNos)) {
+            return Collections.emptyList();
+        }
         return productDetailService.lambdaQuery()
                 .in(ProductDetailEntity::getSkuNo, skuNos)
                 .list();
@@ -48,6 +53,9 @@ public class ProductDetailFeignController {
 
     @PostMapping("/listPurchaseBySkuIds")
     List<ProductPurchaseEntity> listPurchaseBySkuIds(@RequestBody List<String> skuIdList) {
+        if (CollectionUtils.isEmpty(skuIdList)) {
+            return Collections.emptyList();
+        }
         return productPurchaseService.lambdaQuery()
                 .in(ProductPurchaseEntity::getSkuId, skuIdList)
                 .list();
