@@ -311,6 +311,7 @@ public enum ApiError implements Serializable {
     FILE_EXPORT_SIZE_EXCEED_LIMIT(2447, "导出数据条数超过最大限制：{0}"),
     FILE_IMPORT_TASK_FINISH(2448,"处理完成，失败{0}条"),
     FILE_IMPORT_TASK_FINISH_EXPORT_FAILED(2449,"处理完成，失败{0}条，{1}"),
+    FILE_IMPORT_TASK_FINISH_ALL_SUCCESS(2450,"处理完成，全部成功"),
 
     /**
      * 单据相关提示 从3000 - 3500
