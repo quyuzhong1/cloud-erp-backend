@@ -1,6 +1,7 @@
 package com.common.business.config;
 
 import com.alibaba.fastjson.JSON;
+import com.common.business.constant.TokenConstants;
 import com.common.business.constant.UserStateConstants;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
@@ -40,14 +41,16 @@ public class FeignInterceptor implements RequestInterceptor {
                     "tokenuserinfo",
                     "user-agent",
                     "x-real-ip",
-                    "authorization"
+                    "authorization",
+                    "x-erp-api-token-id"
             );
 
 
     // 请求头会自动转换成了小写，此处做映射
     private static final Map<String, String> HEADER_NAME_MAPPING = Stream.of(
-                    new AbstractMap.SimpleEntry<>("tokenuserinfo", "tokenUserInfo"),
-                    new AbstractMap.SimpleEntry<>("authorization", "Authorization"))
+                    new AbstractMap.SimpleEntry<>("tokenuserinfo", TokenConstants.TOKEN_USER_INFO),
+                    new AbstractMap.SimpleEntry<>("authorization", TokenConstants.AUTHENTICATION),
+                    new AbstractMap.SimpleEntry<>("x-erp-api-token-id", TokenConstants.API_TOKEN_ID_HEADER))
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
 
