@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
+import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
@@ -30,7 +31,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/pda/afterSalesWarehouseLocationSuggest")
 @LogSystemModule("PDA售后推荐仓位管理")
-public class PdaAfterSalesWarehouseLocationSuggestController {
+public class PdaAfterSalesWarehouseLocationSuggestController extends BaseController {
 
     @Resource
     private AfterSalesWarehouseLocationSuggestService afterSalesWarehouseLocationSuggestService;
@@ -50,7 +51,7 @@ public class PdaAfterSalesWarehouseLocationSuggestController {
     @PostMapping("/getByCartonCode")
     public ApiResult<AfterSalePackDTO.ViewDTO> getByCartonCode(
             @RequestBody @Validated AfterSalesWarehouseLocationSuggestDto.BoxLabelQueryRequestDto dto) {
-        return ApiResult.success(afterSalePackService.viewByCode(CharSequenceUtil.trim(dto.getCartonCode())));
+        return success(afterSalePackService.viewByCode(CharSequenceUtil.trim(dto.getCartonCode())));
     }
 
     /**
@@ -76,7 +77,7 @@ public class PdaAfterSalesWarehouseLocationSuggestController {
         }
         dto.setTargetWarehouseLocationCode(targetCode);
 
-        return ApiResult.success(warehouseLocationMoveService.submitGoodsInfo(dto));
+        return success(warehouseLocationMoveService.submitGoodsInfo(dto));
     }
 
     /**
@@ -93,7 +94,7 @@ public class PdaAfterSalesWarehouseLocationSuggestController {
             throw new ServiceException("请确保存在仓库名称的默认值【东莞售后仓库】的仓库数量为1");
         }
         dto.setWarehouseId(dtos.get(0).getId());
-        return ApiResult.success(warehouseLocationMoveService.submitFullBoxInfo(dto));
+        return success(warehouseLocationMoveService.submitFullBoxInfo(dto));
     }
 
     /**
@@ -117,7 +118,7 @@ public class PdaAfterSalesWarehouseLocationSuggestController {
         dto.setWarehouseLocationCode("");
         //
         List<AfterSalesWarehouseLocationSuggestDto.PdaListDto> list  = afterSalesWarehouseLocationSuggestService.getSuggestWarehouseLocationList(dto);
-        return ApiResult.success(list);
+        return success(list);
     }
 
     /**
@@ -130,6 +131,6 @@ public class PdaAfterSalesWarehouseLocationSuggestController {
     @GetMapping("/getDefaultAddWarehouse")
     public ApiResult<WarehouseDTO.ListDTO> getDefaultAddData() {
         List<WarehouseDTO.ListDTO> dtos = warehouseService.listByNames(Collections.singletonList(WmsConstant.DG_AFTER_SALES_WAREHOUSE));
-        return CollUtil.isNotEmpty(dtos) ? ApiResult.success(dtos.get(0)) : ApiResult.success();
+        return CollUtil.isNotEmpty(dtos) ? success(dtos.get(0)) : success();
     }
 }

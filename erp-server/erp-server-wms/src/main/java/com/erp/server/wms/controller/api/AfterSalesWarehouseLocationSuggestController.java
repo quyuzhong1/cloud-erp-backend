@@ -132,7 +132,12 @@ import java.util.Objects;
      */
     @PostMapping("/batchDelete")
     @LogAction(value = LogActionEnum.DELETE, desc = "批量删除仓位售后推荐")
-    public ApiResult<List<BatchResultDTO>> removeByIds(@RequestBody AfterSalesWarehouseLocationSuggestDto.IdsDTO dto) {
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:afterSalesWarehouseLocationSuggest:batchDelete",
+            serviceClass = AfterSalesWarehouseLocationSuggestService.class,
+            keyIdName = "ids")
+    public ApiResult<List<BatchResultDTO>> removeByIds(@RequestBody @Validated AfterSalesWarehouseLocationSuggestDto.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         List<AfterSalesWarehouseLocationSuggestEntity> entities = afterSalesWarehouseLocationSuggestService.listByIds(dto.getIds());
         for (String id : dto.getIds()) {
@@ -235,6 +240,11 @@ import java.util.Objects;
      */
     @PostMapping("/updateStatus")
     @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量启用/禁用 id={id},状态值={disabled}(true=禁用,false=启用)")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:afterSalesWarehouseLocationSuggest:updateStatus",
+            serviceClass = AfterSalesWarehouseLocationSuggestService.class,
+            keyIdName = "id")
     public ApiResult<Void> updateStatus(@RequestBody @Validated AfterSalesWarehouseLocationSuggestDto.UpdateStatusDto dto) {
         afterSalesWarehouseLocationSuggestService.updateDisabled(dto);
         return ApiResult.success();
@@ -245,6 +255,11 @@ import java.util.Objects;
      */
     @PostMapping("/updateStatusBatch")
     @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量启用/禁用 id={ids},状态值={disabled}(true=禁用,false=启用)")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:afterSalesWarehouseLocationSuggest:updateStatusBatch",
+            serviceClass = AfterSalesWarehouseLocationSuggestService.class,
+            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> updateStatusBatch(@RequestBody @Validated AfterSalesWarehouseLocationSuggestDto.UpdateStatusDto dto) {
         List<BatchResultDTO> resultDTOList = afterSalesWarehouseLocationSuggestService.updateStatusBatch(dto);
         return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);

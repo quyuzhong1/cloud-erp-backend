@@ -80,6 +80,11 @@ public class AfterSalePackDetailController extends BaseController {
      * @date: 2026-05-12
      */
     @GetMapping("/listByCode")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:afterSalePackDetail:list",
+            serviceClass = AfterSalePackDetailService.class,
+            keyIdName = "code")
     @LogViewService
     public ApiResult<List<AfterSalePackDetailDTO.ViewDTO>> listByCode(@RequestParam("code") String code, @RequestParam(value = "sourceId", required = false) String sourceId) {
         return success(afterSalePackDetailService.listByCode(code, sourceId));

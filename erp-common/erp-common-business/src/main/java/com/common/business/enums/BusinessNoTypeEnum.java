@@ -176,7 +176,7 @@ public enum BusinessNoTypeEnum {
     CODE_VJ("VJ" ,"VJ","保宏预报合同号",BusinessNoConstant.VJ),
 
     CODE_BOX("BOX" ,"BOX","箱码管理",BusinessNoConstant.BOX),
-    ;
+;
 
 
 
