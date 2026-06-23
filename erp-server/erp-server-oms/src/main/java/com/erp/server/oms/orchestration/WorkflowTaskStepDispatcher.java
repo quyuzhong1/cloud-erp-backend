@@ -235,7 +235,7 @@ public class WorkflowTaskStepDispatcher {
         if (instance != null) {
             return instance;
         }
-        List<WorkflowTaskRecordEntity> legacySteps = workflowTaskRecordService.listBySourceId(
+        List<WorkflowTaskRecordEntity> legacySteps = workflowTaskRecordService.listLegacyBySourceId(
                 mqDTO.getSourceId(), mqDTO.getSourceTypeEnum().getCode());
         if (CollUtil.isEmpty(legacySteps)) {
             return null;
@@ -254,7 +254,7 @@ public class WorkflowTaskStepDispatcher {
                 return byInstance;
             }
         }
-        return workflowTaskRecordService.listBySourceId(instance.getSourceId(), instance.getSourceType());
+        return workflowTaskRecordService.listLegacyBySourceId(instance.getSourceId(), instance.getSourceType());
     }
 
     private Integer resolveTargetIndex(WorkflowTaskRecordDTO.AddTaskDTO mqDTO,

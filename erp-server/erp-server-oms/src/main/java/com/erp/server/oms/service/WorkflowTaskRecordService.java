@@ -25,6 +25,9 @@ public interface WorkflowTaskRecordService extends SuperService<WorkflowTaskReco
     /** 自动补偿（Job）最大重试次数，超过后仅允许人工 forceRetry */
     int AUTO_RETRY_MAX_COUNT = 3;
 
+    /** 节点终态失败判定阈值（retryCount 达到后不再自动补偿） */
+    int TASK_TERMINAL_RETRY_COUNT = AUTO_RETRY_MAX_COUNT;
+
     List<WorkflowTaskRecordEntity> addTask(WorkflowTaskRecordDTO.AddTaskDTO dto);
 
     /**
@@ -56,6 +59,11 @@ public interface WorkflowTaskRecordService extends SuperService<WorkflowTaskReco
      * @return
      */
     List<WorkflowTaskRecordEntity> listBySourceId(String soId, String sourceType);
+
+    /**
+     * 查询未绑定 instance_id 的历史节点（兼容改造前数据）。
+     */
+    List<WorkflowTaskRecordEntity> listLegacyBySourceId(String sourceId, String sourceType);
 
     /**
      * 根据业务键与节点序号查询未删除的最新任务节点。

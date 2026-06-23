@@ -170,6 +170,10 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
     private AddressParseService addressParseService;
     @Resource
     private WorkflowTaskRecordService workflowTaskRecordService;
+
+    @Lazy
+    @Resource
+    private WorkflowTaskInstanceService workflowTaskInstanceService;
     @Resource
     private DictBasicService dictBasicService;
     @Resource
@@ -1574,6 +1578,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
     }
 
     private void sendWorkflowTaskMq(WorkflowTaskRecordDTO.AddTaskDTO addTaskDTO, String key, int delayLevel) {
+        fillWorkflowTaskDispatchContext(addTaskDTO);
         if (TransactionSynchronizationManager.isActualTransactionActive()) {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
                 @Override
@@ -1590,6 +1595,27 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
             return;
         }
         doSendWorkflowTaskMq(addTaskDTO, key, delayLevel);
+    }
+
+    /**
+     * 补齐 MQ 调度所需的 instanceId，避免多轮编排时误用 getLatestBySource 回退。
+     */
+    private void fillWorkflowTaskDispatchContext(WorkflowTaskRecordDTO.AddTaskDTO addTaskDTO) {
+        if (StringUtils.isNotBlank(addTaskDTO.getInstanceId())) {
+            return;
+        }
+        WorkflowTaskInstanceEntity instance = workflowTaskInstanceService.getLatestBySource(
+                addTaskDTO.getSourceId(), addTaskDTO.getSourceTypeEnum().getCode());
+        if (instance != null && StringUtils.isNotBlank(instance.getId())) {
+            addTaskDTO.setInstanceId(instance.getId());
+            return;
+        }
+        workflowTaskRecordService.listBySourceId(addTaskDTO.getSourceId(), addTaskDTO.getSourceTypeEnum().getCode())
+                .stream()
+                .map(WorkflowTaskRecordEntity::getInstanceId)
+                .filter(StringUtils::isNotBlank)
+                .findFirst()
+                .ifPresent(addTaskDTO::setInstanceId);
     }
 
     private void doSendWorkflowTaskMq(WorkflowTaskRecordDTO.AddTaskDTO addTaskDTO, String key, int delayLevel) {

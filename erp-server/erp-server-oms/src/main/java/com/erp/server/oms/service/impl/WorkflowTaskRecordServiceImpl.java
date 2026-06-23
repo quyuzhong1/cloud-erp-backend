@@ -164,13 +164,26 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
             return;
         }
 
-        List<WorkflowTaskRecordEntity> existing = listBySourceId(dto.getSourceId(), dto.getSourceTypeEnum().getCode());
-        if (CollUtil.isEmpty(existing)) {
+        List<WorkflowTaskRecordEntity> allExisting = listBySourceId(dto.getSourceId(), dto.getSourceTypeEnum().getCode());
+        if (CollUtil.isEmpty(allExisting)) {
             addTask(dto);
-        } else if (latest == null) {
-            latest = workflowTaskInstanceService.ensureInstanceForLegacy(dto, existing);
         } else {
-            dto.setInstanceId(latest.getId());
+            String instanceIdOnSteps = allExisting.stream()
+                    .map(WorkflowTaskRecordEntity::getInstanceId)
+                    .filter(CharSequenceUtil::isNotBlank)
+                    .findFirst()
+                    .orElse(null);
+            if (CharSequenceUtil.isNotBlank(instanceIdOnSteps)) {
+                dto.setInstanceId(instanceIdOnSteps);
+                if (latest == null) {
+                    latest = workflowTaskInstanceService.getById(instanceIdOnSteps);
+                }
+            } else if (latest == null) {
+                latest = workflowTaskInstanceService.ensureInstanceForLegacy(dto,
+                        listLegacyBySourceId(dto.getSourceId(), dto.getSourceTypeEnum().getCode()));
+            } else {
+                dto.setInstanceId(latest.getId());
+            }
         }
         WorkflowTaskInstanceEntity instance = CharSequenceUtil.isNotBlank(dto.getInstanceId())
                 ? workflowTaskInstanceService.getById(dto.getInstanceId())
@@ -245,17 +258,33 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
     @Override
     @Transactional(rollbackFor = Exception.class)
     public List<WorkflowTaskRecordEntity> addMissingTask(WorkflowTaskRecordDTO.AddTaskDTO dto, List<WorkflowTaskRecordEntity> existTasks) {
-        List<WorkflowTaskRecordEntity> mergedExistTasks = new ArrayList<>(listBySourceId(dto.getSourceId(), dto.getSourceTypeEnum().getCode()));
-        mergedExistTasks.addAll(CollUtil.emptyIfNull(existTasks));
-        Map<Integer, WorkflowTaskRecordEntity> existTaskMap = buildIndexTaskMap(mergedExistTasks);
-        if (CollUtil.isEmpty(mergedExistTasks)) {
-            return Collections.emptyList();
-        }
-        String instanceId = mergedExistTasks.stream()
+        String instanceId = CollUtil.emptyIfNull(existTasks).stream()
                 .map(WorkflowTaskRecordEntity::getInstanceId)
                 .filter(CharSequenceUtil::isNotBlank)
                 .findFirst()
                 .orElse(null);
+        List<WorkflowTaskRecordEntity> mergedExistTasks;
+        if (CharSequenceUtil.isNotBlank(instanceId)) {
+            mergedExistTasks = this.lambdaQuery()
+                    .eq(WorkflowTaskRecordEntity::getInstanceId, instanceId)
+                    .eq(WorkflowTaskRecordEntity::getIsDeleted, false)
+                    .orderByAsc(WorkflowTaskRecordEntity::getIndex)
+                    .list();
+        } else {
+            mergedExistTasks = new ArrayList<>(listLegacyTasksBySource(dto.getSourceId(), dto.getSourceTypeEnum().getCode()));
+            mergedExistTasks.addAll(CollUtil.emptyIfNull(existTasks));
+        }
+        Map<Integer, WorkflowTaskRecordEntity> existTaskMap = buildIndexTaskMap(mergedExistTasks);
+        if (CollUtil.isEmpty(mergedExistTasks)) {
+            return Collections.emptyList();
+        }
+        if (CharSequenceUtil.isBlank(instanceId)) {
+            instanceId = mergedExistTasks.stream()
+                    .map(WorkflowTaskRecordEntity::getInstanceId)
+                    .filter(CharSequenceUtil::isNotBlank)
+                    .findFirst()
+                    .orElse(null);
+        }
         if (CharSequenceUtil.isBlank(instanceId)) {
             log.warn("补齐节点失败，未找到 instanceId，sourceType={}, sourceId={}",
                     dto.getSourceTypeEnum().getCode(), dto.getSourceId());
@@ -289,7 +318,7 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
             missingEntity.setTraceId(dto.getTraceId());
             missingEntity.setStatus(WorkflowTaskRecordStatusEnum.PENDING.getCode());
             missingEntity.setRetryCount(0);
-            String previousOutputData = getPreviousSuccessOutputData(missingEntity, existTaskMap);
+            String previousOutputData = getPreviousSuccessOutputDataInternal(missingEntity, existTaskMap);
             if (CharSequenceUtil.isNotBlank(previousOutputData)) {
                 missingEntity.setInputData(previousOutputData);
             }
@@ -538,6 +567,12 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
                 .eq(WorkflowTaskRecordEntity::getIsDeleted, false)
                 .orderByAsc(WorkflowTaskRecordEntity::getIndex)
                 .list();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public List<WorkflowTaskRecordEntity> listLegacyBySourceId(String sourceId, String sourceType) {
+        return listLegacyTasksBySource(sourceId, sourceType);
     }
 
     @Override
