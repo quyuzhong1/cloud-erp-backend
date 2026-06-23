@@ -224,6 +224,14 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
     @Override
     public PagingVO<VirtualInventoryDiffDTO.ListDiffExportDataDTO> exportListDiffExportData(PagingDTO<VirtualInventoryDiffDTO.SearchParamDTO> dto) {
         dto.getParams().setPermissionSql(dto.getPermissionSql());
+        // 导出维度(SKU+实体仓+虚拟仓)与列表 diffPaging(SKU+实体仓)不同，却共用同一 SearchParamDTO。
+        // 列表维度的用户 sortList 不能套用到导出：①列集不同——如 createTime 在导出查询不存在，拼进 ORDER BY 会报「列不存在」；
+        // ②同名列语义不同——virtualQty 在导出是按虚拟仓展开；③会打破 listDiffExportData 的 skuId+warehouseId 分组连续，
+        // 触发 ExportWmsVirtualInventoryDiffHandler.failOnNonContinuousSheetGroup 快速失败。
+        // 故导出维度自己说了算：主动清空用户排序，固定按 mapper 的 diff.id asc, diff.virtualWarehouseId asc 排序。
+        if (dto.getParams() != null) {
+            dto.getParams().setSortList(null);
+        }
         //库存差异
         Object isDiff = dto.getParams().getAdvanceQueryDTOList().stream().filter(obj -> CharSequenceUtil.equals(obj.getField(), "isDiff") && ObjectUtil.isNotNull(obj.getValue())).map(AdvanceQueryDTO::getValue).findFirst().orElse(null);
         if (ObjectUtil.isNotNull(isDiff)) {
