@@ -123,6 +123,10 @@ public class WorkflowTaskStepDispatcher {
             return;
         }
 
+        // 先按重置前状态判断是否计重试，超时 PROCESSING 回拨为 PENDING 后仍应消耗一次自动重试次数。
+        boolean retryIncrement = WorkflowTaskRecordStatusEnum.FAILED.getCode().equals(current.getStatus())
+                || WorkflowTaskRecordStatusEnum.PROCESSING.getCode().equals(current.getStatus());
+
         if (WorkflowTaskRecordStatusEnum.PROCESSING.getCode().equals(current.getStatus())) {
             if (isProcessingWithinTimeout(current.getUpdateTime())) {
                 log.warn("节点处理中且未超时，index={}, instanceId={}", targetIndex, instance.getId());
@@ -133,9 +137,6 @@ public class WorkflowTaskStepDispatcher {
                 current.setStatus(WorkflowTaskRecordStatusEnum.PENDING.getCode());
             }
         }
-
-        boolean retryIncrement = WorkflowTaskRecordStatusEnum.FAILED.getCode().equals(current.getStatus())
-                || WorkflowTaskRecordStatusEnum.PROCESSING.getCode().equals(current.getStatus());
 
         workflowTaskInstanceService.markRunning(instance.getId(), targetIndex, steps.size());
 

@@ -18,6 +18,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
 import java.lang.reflect.Field;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 
@@ -137,6 +138,57 @@ public class WorkflowTaskStepDispatcherTest {
         Mockito.verify(mqProducerService).syncClassMsgWithDelayLevel(
                 Mockito.anyString(), Mockito.anyString(), captor.capture(), Mockito.anyString(), Mockito.anyInt());
         Assert.assertEquals(Integer.valueOf(1), captor.getValue().getTargetIndex());
+    }
+
+    @Test
+    public void dispatchMarksSingleStepSuccessWhenNoNextStep() {
+        WorkflowTaskInstanceEntity instance = buildInstance("inst-4", WorkflowTaskInstanceStatusEnum.RUNNING.getCode());
+        Mockito.when(workflowTaskInstanceService.getById("inst-4")).thenReturn(instance);
+
+        WorkflowTaskRecordEntity step0 = buildStep("s0", 0, WorkflowTaskRecordStatusEnum.PENDING.getCode());
+        step0.setInstanceId("inst-4");
+        step0.setInputData("{\"k\":\"v\"}");
+
+        mockLambdaQuerySteps(Collections.singletonList(step0));
+
+        Mockito.when(crossServiceStepInvoker.invoke(Mockito.eq(step0), Mockito.isNull(), Mockito.eq(false)))
+                .thenReturn(StepInvokeResult.success("{\"out\":1}"));
+
+        WorkflowTaskRecordDTO.AddTaskDTO mqDTO = buildMqDto();
+        mqDTO.setInstanceId("inst-4");
+        mqDTO.setTargetIndex(0);
+
+        dispatcher.dispatch(mqDTO);
+
+        Mockito.verify(workflowTaskInstanceService).markSuccess("inst-4", 0, 1);
+        Mockito.verify(mqProducerService, Mockito.never()).syncClassMsgWithDelayLevel(
+                Mockito.anyString(), Mockito.anyString(), Mockito.any(), Mockito.anyString(), Mockito.anyInt());
+    }
+
+    @Test
+    public void dispatchRetriesStaleProcessingStepWithRetryIncrement() {
+        WorkflowTaskInstanceEntity instance = buildInstance("inst-5", WorkflowTaskInstanceStatusEnum.RUNNING.getCode());
+        Mockito.when(workflowTaskInstanceService.getById("inst-5")).thenReturn(instance);
+
+        WorkflowTaskRecordEntity step0 = buildStep("s0", 0, WorkflowTaskRecordStatusEnum.PROCESSING.getCode());
+        step0.setInstanceId("inst-5");
+        step0.setInputData("{\"k\":\"v\"}");
+        step0.setUpdateTime(LocalDateTime.now().minusMinutes(10));
+
+        mockLambdaQuerySteps(Collections.singletonList(step0));
+        Mockito.when(workflowTaskRecordService.resetStaleProcessingTask("s0")).thenReturn(Boolean.TRUE);
+        Mockito.when(crossServiceStepInvoker.invoke(Mockito.eq(step0), Mockito.isNull(), Mockito.eq(true)))
+                .thenReturn(StepInvokeResult.success("{\"out\":1}"));
+
+        WorkflowTaskRecordDTO.AddTaskDTO mqDTO = buildMqDto();
+        mqDTO.setInstanceId("inst-5");
+        mqDTO.setTargetIndex(0);
+
+        dispatcher.dispatch(mqDTO);
+
+        Mockito.verify(workflowTaskRecordService).resetStaleProcessingTask("s0");
+        Mockito.verify(crossServiceStepInvoker).invoke(Mockito.eq(step0), Mockito.isNull(), Mockito.eq(true));
+        Mockito.verify(workflowTaskInstanceService).markSuccess("inst-5", 0, 1);
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})

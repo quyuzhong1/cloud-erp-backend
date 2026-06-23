@@ -106,6 +106,8 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
         if (CollUtil.isEmpty(steps)) {
             return null;
         }
+        // 必须先回拨历史 PROCESSING，再回填 instance_id；回填会刷新 update_time，影响超时判断。
+        prepareLegacyProcessingSteps(steps);
         WorkflowTaskInstanceEntity existed = getLatestBySource(dto.getSourceId(), dto.getSourceTypeEnum().getCode());
         if (existed != null) {
             linkStepsToInstance(steps, existed.getId());
@@ -125,6 +127,20 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
                         .set(WorkflowTaskRecordEntity::getInstanceId, instanceId)
                         .update();
                 step.setInstanceId(instanceId);
+            }
+        }
+    }
+
+    /**
+     * 历史节点在回填 instance_id 前先释放已超时的 PROCESSING，避免回填时刷新 update_time 后被误判为未超时。
+     */
+    private void prepareLegacyProcessingSteps(List<WorkflowTaskRecordEntity> steps) {
+        for (WorkflowTaskRecordEntity step : steps) {
+            if (!WorkflowTaskRecordStatusEnum.PROCESSING.getCode().equals(step.getStatus())) {
+                continue;
+            }
+            if (Boolean.TRUE.equals(workflowTaskRecordService.resetStaleProcessingTask(step.getId()))) {
+                step.setStatus(WorkflowTaskRecordStatusEnum.PENDING.getCode());
             }
         }
     }

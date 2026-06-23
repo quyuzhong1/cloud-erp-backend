@@ -866,7 +866,8 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
             return true;
         }
         LocalDateTime updateTime = entity.getUpdateTime();
-        return Objects.nonNull(updateTime) && updateTime.plusMinutes(TASK_PROCESSING_TIMEOUT_MINUTES).isBefore(LocalDateTime.now());
+        // 历史 PROCESSING 节点可能没有可靠更新时间，按超时处理，允许人工/Job 重新调度。
+        return Objects.isNull(updateTime) || updateTime.plusMinutes(TASK_PROCESSING_TIMEOUT_MINUTES).isBefore(LocalDateTime.now());
     }
 
     /**
