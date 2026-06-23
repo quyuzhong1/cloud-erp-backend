@@ -40,13 +40,6 @@ public class ExportTmsLogisticsReconDetailHandler
         return EXPORT_TMS_LOGISTICS_RECON_DETAIL;
     }
 
-    @Override
-    protected List<LogisticsReconDetailDTO.ListDTO> getData(FileTask fileTask) {
-        LogisticsReconDetailDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(),
-                new TypeReference<LogisticsReconDetailDTO.PagingParamDTO>() {
-                });
-        return listSeqData(dto);
-    }
 
     @Override
     protected PagingVO<LogisticsReconDetailDTO.ListDTO> getPageData(PagingDTO<LogisticsReconDetailDTO.PagingParamDTO> dto) {

@@ -35,13 +35,6 @@ public class ExportWmsFbsInventoryHandler extends AbstractPageFileEventHandler<F
     }
 
     @Override
-    protected List<FbsInventoryDTO.ListDTO> getData(FileTask fileTask) {
-        FbsInventoryDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<FbsInventoryDTO.PagingParamDTO>() {
-        });
-        return listSeqData(dto);
-    }
-
-    @Override
     protected String getExcelPath() {
         return "excel/wms/fbsInventoryExport.xlsx";
     }
