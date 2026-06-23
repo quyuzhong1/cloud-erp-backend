@@ -203,6 +203,14 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         if (CollectionUtils.isNotEmpty(detailList)) {
             //当是审核通过的时候
             if ("C".equals(entity.getFDocumentStatus())) {
+                // [审查说明] 金蝶经 handleWmsSoOutstock 下推，历史上未回填 soId/soDetailId，checkUpstreamAmountWithSo 恒 PASS；
+                // 保留调用仅为与旺店通/拼多多路径结构一致，待产品确认 B2C 关联规则后再补关联并启用校验。
+                if (soOutstockService.handleSyncAmountMismatchIfNeeded(soOutstock, detailList, false)) {
+                    String warnMsg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】(金额异常待人工核实)",
+                            UserContext.getDefaultLoginUser().getUserName(), "销售出库单", soOutstock.getCode());
+                    operateLogService.addModuleOperateLog(warnMsg, ModuleTypeEnum.SO_OUT_STOCK.getCode(), soOutstock.getId(), "新增销售出库单");
+                    return;
+                }
                 //当已存在 就删除以前的  并回滚库存
             	if(entity != null && entity.getIsNew()) {
             		soOutstockService.handleNewKingdeeToErp(soOutstock, detailList, flagId);
@@ -341,6 +349,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         soOutstock.setSalesOrgName(shopInfo.getSalesOrgName());
         soOutstock.setPackingStatus(PackingTaskStatusEnum.WAIT.getCode());
         soOutstock.setInvalidStatus(false);
+        // 默认按已审核落库；后续金额校验不通过时会改为待提交
         soOutstock.setApproveStatus(ApproveStatusEnum.APPROVE);
         soOutstock.setApproveTime(soOutstock.getActualDeliveryDate());
         List<WdtSoOutStockDetailDTO> wdtSoOutStockDetailDTOS = buildOutStockDetail(soOutstock,entity.getDetailList());
@@ -426,6 +435,14 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         // 记录最新出库日期
         List<String> skuIds = detailList.stream().map(SoOutstockDetailEntity::getSkuId).distinct().collect(Collectors.toList());
 //        plmTaskFeign.updateSkuStdCost(new SkuStdCostDTO.UpdateDTO(skuIds, entity.getBillDate()));
+
+        // 价税合计金额一致性校验：拉回时若出库明细=0 但上游销售订单非0，落"待提交"状态等待人工处理，
+        // 不扣库存、不创建物流单、不推送外部系统；上游查不到不拦截。
+        if (soOutstockService.handleSyncAmountMismatchIfNeeded(soOutstock, detailList, false)) {
+            String warnMsg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】(金额异常待人工核实)", UserContext.getDefaultLoginUser().getUserName(), "销售出库单", soOutstock.getCode());
+            operateLogService.addModuleOperateLog(warnMsg, ModuleTypeEnum.SO_OUT_STOCK.getCode(), soOutstock.getId(), "新增销售出库单");
+            return;
+        }
 
         //保存销售出库单
         soOutstockService.save(soOutstock);
@@ -725,6 +742,12 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         SoOutstockEntity soOutstockEntity = soOutstockService.getOne(Wrappers.<SoOutstockEntity>lambdaQuery()
                 .eq(SoOutstockEntity::getSourceCode, dto.getSourceCode()));
         if (ObjectUtil.isNotEmpty(soOutstockEntity)) {
+            if (canRetryPddSubmitAfterSave(soOutstockEntity)) {
+                log.info("拼多多销售出库单已落库待提交，补偿提交审核，来源单号：{}，单号：{}",
+                        dto.getSourceCode(), soOutstockEntity.getCode());
+                soOutstockService.submitAndApprove(soOutstockEntity.getId());
+                return;
+            }
             log.warn("同步拼多多销售出库单失败，销售出库单已存在，来源单号：{}", dto.getSourceCode());
             return;
         }
@@ -770,16 +793,39 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         String virtualWarehouseId = handleVirtualWarehouse(Collections.singletonList(erpWarehouseId), shopInfo.getDictPlatform(),shopInfo.getId(), shopInfo.getCustomerId(), customerInfo.getCountryId());
 
         SoOutstockEntity soOutstock  = buildPddOutEntity(dto, shopInfo, customerInfo, warehouse, company, skuVOList, virtualWarehouseId);
+        service.saveAndSubmitPddSoOutstock(soOutstock);
+    }
 
-        boolean result = service.save(soOutstock);
-        if(!result){
-            throw new ServiceException("同步拼多多销售出库单失败，销售出库单保存失败，来源单号：{}", dto.getSourceCode());
+    /**
+     * 拼多多出库单落库并提交审核：save 独立短事务，submit 在事务外执行；失败时 MQ 重试走 {@link #canRetryPddSubmitAfterSave} 补偿。
+     */
+    public void saveAndSubmitPddSoOutstock(SoOutstockEntity soOutstock) {
+        if (!service.save(soOutstock)) {
+            throw new ServiceException("同步拼多多销售出库单失败，销售出库单保存失败，来源单号：{}", soOutstock.getSourceCode());
         }
-        try {
-            soOutstockService.submitAndApprove(soOutstock.getId());
-        }catch (Exception e){
-            log.error("拼多多销售出库单提交审核失败，销售出库单号：{}，错误信息：{}", soOutstock.getCode(), e.getMessage());
+        if (soOutstockService.handleSyncAmountMismatchIfNeeded(soOutstock, soOutstock.getDetailList(), true)) {
+            String warnMsg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】(金额异常待人工核实)",
+                    UserContext.getDefaultLoginUser().getUserName(), "销售出库单", soOutstock.getCode());
+            operateLogService.addModuleOperateLog(warnMsg, ModuleTypeEnum.SO_OUT_STOCK.getCode(), soOutstock.getId(), "新增销售出库单");
+            return;
         }
+        soOutstockService.submitAndApprove(soOutstock.getId());
+    }
+
+    /**
+     * 落库成功但尚未提交/审核，且无审核说明（非金额异常待核实路径）时，允许 MQ 重试补偿提交。
+     */
+    private boolean canRetryPddSubmitAfterSave(SoOutstockEntity entity) {
+        if (entity == null || Boolean.TRUE.equals(entity.getInvalidStatus())) {
+            return false;
+        }
+        ApproveStatusEnum status = entity.getApproveStatus();
+        if (status != null
+                && !ApproveStatusEnum.WAIT_SUBMIT.equals(status)
+                && !ApproveStatusEnum.REJECT.equals(status)) {
+            return false;
+        }
+        return CharSequenceUtil.isBlank(entity.getApproveRemark());
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -975,6 +1021,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         soOutstock.setApproveStatus(statusEnum);
         soOutstock.setSourceType(sourceType);
         soOutstock.setOrderType(OrderTypeEnum.B2C.getCode());
+        // [审查说明] 金蝶下推未回填 soId/soDetailId，上游 B2C 金额校验 intentionally 不生效（见 syncKingdeeSoOutstock 注释）。
         LocalDate billDate = null;
         String billDateStr = entity.getFDate();
         if (CharSequenceUtil.isNotBlank(billDateStr)) {

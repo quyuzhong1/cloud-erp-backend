@@ -36,6 +36,7 @@ import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import com.erp.server.dmp.service.DmpSoDetailService;
 import com.erp.server.dmp.service.DmpSoReceiverService;
+import com.erp.server.dmp.inout.utils.PlatformOrderAmountUtils;
 import com.sdk.oms.shopee.enums.OrderStatusEnum;
 
 import cn.hutool.core.collection.CollUtil;
@@ -192,7 +193,7 @@ public class DmpOutputShopeeOrderRocketMQTaskHandler extends DmpOutputRocketMQTa
         orderDTO.setPayTime(dmpSoInfoEntity.getPayTime());
         
         // 订单金额
-        orderDTO.setAmount(dmpSoInfoEntity.getPayAmount());
+        PlatformOrderAmountUtils.applyMainAmounts(orderDTO, dmpSoInfoEntity);
         // 币别（原币）
         orderDTO.setCurrency(dmpSoInfoEntity.getCurrencyCode());
         // 汇率
@@ -200,8 +201,6 @@ public class DmpOutputShopeeOrderRocketMQTaskHandler extends DmpOutputRocketMQTa
         // 运费收入
         orderDTO.setShippingFee(dmpSoInfoEntity.getShippingAmount());
         orderDTO.setTotalDiscount(dmpSoInfoEntity.getTotalDiscount());
-        // 付款金额
-        orderDTO.setPayAmount(dmpSoInfoEntity.getPayAmount());
         // 付款方式
         orderDTO.setDictPayMethod(dmpSoInfoEntity.getPayMethod());
         // 买家备注

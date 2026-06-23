@@ -34,6 +34,7 @@ import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import com.erp.rpc.wms.feign.SoB2cDeliveryFeign;
 import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
 import com.erp.server.oms.kingdee.SyncSoB2cService;
+import com.erp.server.oms.utils.SoB2cAmountUtil;
 import com.erp.server.oms.service.OmsPushMsgService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -102,7 +103,8 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
 
         shudiyunB2cOrderDTO.setGoods_transaction_quantity(soB2cDetailEntity.getQty());
         shudiyunB2cOrderDTO.setPrice(soB2cDetailEntity.getPrice());
-        shudiyunB2cOrderDTO.setGoods_transaction_amount(soB2cDetailEntity.getAmount());
+        // 商品成交金额按折后实付口径推送：优先 paidAmount，回填前的历史单回退到 amount
+        shudiyunB2cOrderDTO.setGoods_transaction_amount(SoB2cAmountUtil.preferPositive(soB2cDetailEntity.getPaidAmount(), soB2cDetailEntity.getAmount()));
 
         shudiyunB2cOrderDTO.setStatus(shudiyunB2cOrderDTO.sdyStatusHandle(operate, soB2cEntity.getVersion(), soB2cDetailEntity.getVersion()));
 
@@ -132,7 +134,8 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
         if (soB2cEntity.getDictPlatform().equalsIgnoreCase(PlatformDictEnum.ALI_EXPRESS.getCode())){
             shudiyunB2cOrderDTO.setBuyer_actual_payment(soB2cEntity.getAfterTaxAmount());
         } else {
-            shudiyunB2cOrderDTO.setBuyer_actual_payment(soB2cEntity.getAmount());
+            // 买家实际付款按实付总额推送：优先 paidAmount，回填前的历史单回退到 amount
+            shudiyunB2cOrderDTO.setBuyer_actual_payment(SoB2cAmountUtil.preferPositive(soB2cEntity.getPaidAmount(), soB2cEntity.getAmount()));
         }
 
         // 公共处理
@@ -222,7 +225,10 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
         }
         shudiyunB2cOrderDTO.setBiz_status(SoB2cBillStatusEnum.getName(soB2cEntity.getBillStatus()));
 
-        BigDecimal amount = soB2cDetailEntityList.stream().map(req -> req.getAmount()).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+        // 总商品成交金额：按折后实付口径汇总
+        BigDecimal amount = soB2cDetailEntityList.stream()
+                .map(d -> SoB2cAmountUtil.preferPositive(d.getPaidAmount(), d.getAmount()))
+                .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
         shudiyunB2cOrderDTO.setTotal_goods_transaction_amount(amount);
         //总优惠金额
         shudiyunB2cOrderDTO.setDiscount_deduction_amount(soB2cEntity.getTotalDiscount());
@@ -710,7 +716,8 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
         if (soB2cEntity.getDictPlatform().equalsIgnoreCase(PlatformDictEnum.ALI_EXPRESS.getCode())){
             shudiyunB2cOrderDTO.setBuyer_actual_payment(soB2cEntity.getAfterTaxAmount());
         } else {
-            shudiyunB2cOrderDTO.setBuyer_actual_payment(soB2cEntity.getAmount());
+            // 买家实际付款按实付总额推送：优先 paidAmount，回填前的历史单回退到 amount
+            shudiyunB2cOrderDTO.setBuyer_actual_payment(SoB2cAmountUtil.preferPositive(soB2cEntity.getPaidAmount(), soB2cEntity.getAmount()));
         }
 
         // 公共处理

@@ -20,6 +20,7 @@ import com.erp.model.dmp.enums.DmpOrderReturnStatusEnum;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
+import com.erp.server.dmp.inout.utils.PlatformOrderAmountUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -306,9 +307,7 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
         // 店铺ID
         orderDTO.setShopId(dmpSoInfoEntity.getNextLevelId());
 
-        //订单金额
-        BigDecimal amount = NumberUtil.toBigDecimal(dmpSoInfoEntity.getPayAmount());
-        orderDTO.setAmount(amount);
+        PlatformOrderAmountUtils.applyMainAmounts(orderDTO, dmpSoInfoEntity);
         //币别
         orderDTO.setCurrency(dmpSoInfoEntity.getCurrencyCode());
 

@@ -96,14 +96,14 @@ public class SoUtils {
     }
 
     /**
-     * 计算折扣额信息等
+     * B2B 销售订单：按主表订单折扣总额分摊至明细折扣额，并重算价税合计/实付金额。
      *
-     * @param discountAmount
-     * @param saveOrUpdateList
+     * @param discountAmount  订单折扣总额
+     * @param saveOrUpdateList 销售明细
      * @param isTax            是否含税
      */
     public static void handleDetailAmount(Boolean isTax, BigDecimal discountAmount, List<SoDetailEntity> saveOrUpdateList) {
-        // 折扣总额
+        // 订单折扣总额
         discountAmount = Objects.nonNull(discountAmount) ? discountAmount : BigDecimal.ZERO;
         // 总的价税合计（折前）
         BigDecimal totalTaxAmountBefore = BigDecimal.ZERO;
@@ -193,10 +193,11 @@ public class SoUtils {
             item.setAmount(amount);
 
             //折扣额=折扣总额*含税金额（折扣前）/总的价税合计（折前）
+            //26.6.2：明细折扣分摊改为四舍五入(原 ROUND_DOWN 截断)；末行非赠品仍承担差异保持总额自洽
             BigDecimal detailDiscountAmount = BigDecimal.ZERO;
             if (Objects.nonNull(discountAmount) && totalTaxAmountBefore.compareTo(BigDecimal.ZERO) > 0) {
                 BigDecimal discountFlag = MathUtil.multiplyWithTwo(discountAmount, taxAmount,4);
-                detailDiscountAmount = MathUtil.divide(discountFlag, totalTaxAmountBefore, 2, BigDecimal.ROUND_DOWN);
+                detailDiscountAmount = MathUtil.divide(discountFlag, totalTaxAmountBefore, 2, BigDecimal.ROUND_HALF_UP);
                 log.warn("销售订单明细第【{}】条数据，价税合计（折扣前）比例【{}】，折扣额【{}】", (i + 1), detailDiscountAmount);
             }
             //折扣总额

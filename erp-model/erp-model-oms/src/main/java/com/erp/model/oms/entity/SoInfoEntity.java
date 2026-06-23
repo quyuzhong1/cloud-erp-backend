@@ -280,7 +280,7 @@ public class SoInfoEntity extends BaseEntity<SoInfoEntity> {
     private BigDecimal customsFee;
 
     /**
-     * 折扣总额
+     * 订单折扣总额：订单享受的总折扣金额，平台推送优先；需分摊至明细折扣额
      */
     @TableField(value = "discount_amount")
     private BigDecimal discountAmount;
@@ -355,10 +355,16 @@ public class SoInfoEntity extends BaseEntity<SoInfoEntity> {
 
 
     /**
-     * 订单金额
+     * 订单总额：折前含税销售总额，平台推送优先
      */
     @TableField("order_amount")
     private BigDecimal orderAmount;
+
+    /**
+     * 实付总额（订单付款总额）：应收金额 = 订单总额 - 订单折扣总额；sum(明细.实付金额)，平台已推送时直接取平台值
+     */
+    @TableField("paid_amount")
+    private BigDecimal paidAmount;
 
     /**
      * 平台订单Id

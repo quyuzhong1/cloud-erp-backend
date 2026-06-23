@@ -55,6 +55,7 @@ import com.erp.server.oms.convert.B2cOrderConsumerConverter;
 import com.erp.server.oms.convert.B2cOrderConverter;
 import com.erp.server.oms.mapper.SoB2cDetailMapper;
 import com.erp.server.oms.service.*;
+import com.erp.server.oms.utils.SoB2cAmountUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -155,11 +156,16 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         }
         //处理明细中的数据id
         handleDetailList(list, soB2cEntity, Boolean.TRUE);
+        SoB2cAmountUtil.applyAllForManualDetailSave(soB2cEntity, list);
         //批量新增
         boolean flag = this.saveBatch(list);
+        if (!flag) {
+            return false;
+        }
+        soB2cService.updateById(soB2cEntity);
         //新增拆分订单关联关系
         addSoB2cRef(addDTO, list, soB2cEntity);
-        return flag;
+        return true;
     }
 
     @Override
@@ -186,7 +192,12 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         }
         //处理明细中的数据id
         handleDetailList(list, soB2cEntity, Boolean.FALSE);
-        return service.saveOrUpdateBatch(list);
+        SoB2cAmountUtil.applyAllForManualDetailSave(soB2cEntity, list);
+        boolean flag = service.saveOrUpdateBatch(list);
+        if (flag) {
+            soB2cService.updateById(soB2cEntity);
+        }
+        return flag;
     }
 
     @Override
@@ -624,10 +635,12 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
                 this.saveOrUpdateBatch(notExist);
             }
         }
+        SoB2cAmountUtil.applyDetailAmounts(mainEntity, saveOrUpdateList, true);
         // 批量保存和更新
         if (!this.saveOrUpdateBatch(saveOrUpdateList)) {
-            throw new ServiceException(" [SoB2cDetailEntity] 订单明细批量更新或保存失败");
+            throw new ServiceException(ApiError.SO_B2C_DETAIL_SAVE_OR_UPDATE_FAILED);
         }
+        soB2cService.updateById(mainEntity);
         return saveOrUpdateList;
     }
 
@@ -1351,6 +1364,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             List<SoB2cDetailDTO.ListDTO> detailDTOList = b2cDetailEntityList.stream()
                     .map(detailEntity -> buildDetailDTO(detailEntity, skuVOMap, bomChildrenList, bomType, inventoryMap, virtualInventoryMap, declareProductList, ignoreInventorySkuIds, entity,virtualWarehouseNameMap,skuMappingList,listingInfoEntityList))
                     .collect(Collectors.toList());
+            SoB2cAmountUtil.fillDetailListDisplayAmounts(detailDTOList, entity.getAmount(), entity.getPaidAmount());
 
             mainDTO.setDetailList(detailDTOList);
             mainDTOList.add(mainDTO);

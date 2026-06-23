@@ -1278,6 +1278,8 @@ public enum ApiError implements Serializable {
     SO_B2C_RECEIVER_NOT_FOUND(10620,"B2C销售订单买家信息不存在"),
     SO_B2C_EXTEND_NOT_FOUND(10621,"B2C销售订单扩展信息不存在"),
     SO_B2C_DETAIL_NOT_FOUND(10622,"B2C销售订单明细不存在"),
+    SO_B2C_DETAIL_IMPORT_FAILED(10758,"B2C销售订单明细导入失败"),
+    SO_B2C_DETAIL_SAVE_OR_UPDATE_FAILED(10759,"B2C销售订单明细批量保存或更新失败"),
     SO_B2C_DELIVERY_WAREHOUSE_CONFLICT(10623,"B2C销售订单【{0}】存在多个发货仓库，不支持提交发货"),
     SO_B2C_SKU_INVENTORY_NOT_FOUND(10624,"B2C销售订单【{0}】SKU【{1}】在仓库【{2}】中未找到可用库存"),
     SO_B2C_MERGE_PLATFORM_CONFLICT(10625,"合并订单要求销售平台一致"),
@@ -1396,6 +1398,9 @@ public enum ApiError implements Serializable {
     SO_B2C_NOT_OUTBOUND_LOGISTICS_UPDATE_FAILED(10754,"不出库发货失败：销售订单物流信息更新失败，请刷新后重试"),
     SO_B2C_NOT_OUTBOUND_STATUS_UPDATE_FAILED(10755,"不出库发货失败：销售订单状态更新失败，请刷新后重试"),
     SO_CHANGE_DELETE_ALL_DETAIL_FORBIDDEN(10756,"销售变更单不允许删除所有的订单明细"),
+    SO_OUTSTOCK_AMOUNT_MISMATCH_SUBMIT(10756,"提交失败，出库单明细金额=0，但上游销售订单明细金额非0，请核实销售出库单是否拉取有异"),
+    SO_OUTSTOCK_AMOUNT_MISMATCH_APPROVE(10757,"不可审核通过：出库单明细金额=0，但上游销售订单明细金额非0，请核实销售出库单是否拉取有异"),
+    SO_OUTSTOCK_UPSTREAM_AMOUNT_CHECK_UNAVAILABLE(10760,"查询上游销售订单明细异常，请稍后重试或人工核实"),
     CUSTOMER_ADDRESS_NOT_MATCH(94108,"未匹配到客户地址，客户id：{0}，收货地址：{1}"),
     BILL_DECLARE_STATUS_GENERATED_NOT_DISAPPROVE(94109,"单据已生成申报信息，不支持反审核"),
 

@@ -47,6 +47,7 @@ import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.server.oms.convert.B2cOrderConverter;
 import com.erp.server.oms.mapper.SoB2cMapper;
 import com.erp.server.oms.service.*;
+import com.erp.server.oms.utils.SoB2cAmountUtil;
 import com.sdk.oms.tiktok.dto.TikTokShopInfoDTO;
 import com.sdk.oms.tiktok.dto.tiktok.split.PackagesBean;
 import com.sdk.oms.tiktok.dto.tiktok.split.PlatformSplitViewDTO;
@@ -496,6 +497,9 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                     }
                     soB2cDetailEntity.setPrice(soB2cDetailEntity.getAmount().divide(new BigDecimal(soB2cDetailEntity.getQty()),4, RoundingMode.HALF_UP));
                 }
+                // 仅对原 BOM 父明细的 saleAmount/paidAmount 在 children 内部重分摊，
+                // 不动其他未拆明细，避免 last-eats-diff 灌爆整单 paidAmount
+                SoB2cAmountUtil.redistributeChildAmounts(detailEntity, addDetailList);
 
                 //封装平台sku信息
                 //SKU对照表信息
@@ -932,6 +936,8 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         BigDecimal groupWeight = BigDecimal.ZERO;
         //物流费用
         BigDecimal groupShippingFee = BigDecimal.ZERO;
+        //分组优惠金额
+        BigDecimal groupTotalDiscount = BigDecimal.ZERO;
 
         // 使用 Set 存储 platformSkuNo 值
         Set<String> platformSkuNoSet = new HashSet<>();
@@ -1029,6 +1035,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             BigDecimal accessoriesCost = MathUtil.multiplyWithTwo(rate, soB2cLogisticsEntity.getAccessoriesCost());
             BigDecimal accessoriesNw = MathUtil.multiplyWithTwo(rate, soB2cLogisticsEntity.getAccessoriesNw());
             BigDecimal shippingFee = MathUtil.multiplyWithTwo(rate, entity.getShippingFee());
+            BigDecimal totalDiscount = MathUtil.multiplyWithTwo(rate, MathUtil.getValue(entity.getTotalDiscount()));
             //最后一条根据减法计算金额
             if (i == splitList.size() - 1) {
                 amount = MathUtil.subtract(entity.getAmount(), groupAmount);
@@ -1038,9 +1045,11 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                 accessoriesCost = MathUtil.subtract(soB2cLogisticsEntity.getAccessoriesCost(), groupAccessoriesCost);
                 accessoriesNw = MathUtil.subtract(soB2cLogisticsEntity.getAccessoriesNw(), groupAccessoriesNw);
                 shippingFee = MathUtil.subtract(entity.getShippingFee(), groupShippingFee);
+                totalDiscount = MathUtil.subtract(MathUtil.getValue(entity.getTotalDiscount()), groupTotalDiscount);
             }
             //基本信息金额
             addDTO.setAmount(amount);
+            addDTO.setTotalDiscount(totalDiscount);
             if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(entity.getDictPlatform())) {
                 // 速卖通记录分摊的税后金额
                 addDTO.setAfterTaxAmount(afterTaxAmount);
@@ -1120,6 +1129,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             groupAccessoriesNw = MathUtil.add(logisticsAddDTO.getAccessoriesNw(), groupAccessoriesNw);
             groupWeight = MathUtil.add(logisticsAddDTO.getWeight(), groupWeight);
             groupShippingFee = MathUtil.add(add.getShippingFee(), groupShippingFee);
+            groupTotalDiscount = MathUtil.add(MathUtil.getValue(addDTO.getTotalDiscount()), groupTotalDiscount);
             flag++;
         }
         tikTokPramDTO.setSplittableGroups(splittableGroups);

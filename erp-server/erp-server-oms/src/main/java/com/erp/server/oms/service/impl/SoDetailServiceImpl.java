@@ -64,6 +64,7 @@ import com.erp.server.oms.listener.SoDetailExcelListener;
 import com.erp.server.oms.mapper.SoDetailMapper;
 import com.erp.server.oms.rocketmq.sync.wangdian.SyncWangDianDeliveryService;
 import com.erp.server.oms.service.*;
+import com.erp.server.oms.utils.SoInfoAmountUtil;
 import com.erp.server.oms.utils.SoUtils;
 import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -627,6 +628,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         }
         BigDecimal allAmountLc = saveOrUpdateList.stream().map(SoDetailEntity::getAllAmountLocalCurrency).reduce(BigDecimal.ZERO, BigDecimal::add);
         soInfoEntity.setAllAmountLc(allAmountLc);
+        SoInfoAmountUtil.applyMainPaidAmount(soInfoEntity, saveOrUpdateList);
         soInfoService.updateById(soInfoEntity);
         this.saveOrUpdateBatch(saveOrUpdateList);
     }
@@ -1387,6 +1389,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         }
         BigDecimal allAmountLc = saveOrUpdateList.stream().map(SoDetailEntity::getAllAmountLocalCurrency).reduce(BigDecimal.ZERO, BigDecimal::add);
         soInfoEntity.setAllAmountLc(allAmountLc);
+        SoInfoAmountUtil.applyMainPaidAmount(soInfoEntity, saveOrUpdateList);
         soInfoService.updateById(soInfoEntity);
         this.saveOrUpdateBatch(saveOrUpdateList);
     }

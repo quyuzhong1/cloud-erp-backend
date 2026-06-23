@@ -32,6 +32,7 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
+import com.erp.server.dmp.inout.utils.PlatformOrderAmountUtils;
 
 import cn.hutool.core.collection.CollUtil;
 
@@ -215,8 +216,7 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
         // 作废原因
         orderDTO.setInvalidRemark("");
 		orderDTO.setNfeInvoiceStatus(dmpSoInfoEntity.getNfeInvoiceStatus());
-        BigDecimal payAmount = dmpSoInfoEntity.getPayAmount();
-		orderDTO.setAmount(payAmount);
+        PlatformOrderAmountUtils.applyMainAmounts(orderDTO, dmpSoInfoEntity);
         String currencyCode = dmpSoInfoEntity.getCurrencyCode();
 		orderDTO.setCurrency(currencyCode);
         orderDTO.setExchangeRate(dmpSoInfoEntity.getExchangeRate());
@@ -234,8 +234,7 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
         orderDTO.setExtendData(oaidJson.toString());
     	
         orderDTO.setPayTime(dmpSoInfoEntity.getPayTime());
-        orderDTO.setPayAmount(payAmount);
-        
+
         orderDTO.setDictPayMethod(dmpSoInfoEntity.getPayMethod());
 
         orderDTO.setBuyerRemark(dmpSoInfoEntity.getBuyerRemark());

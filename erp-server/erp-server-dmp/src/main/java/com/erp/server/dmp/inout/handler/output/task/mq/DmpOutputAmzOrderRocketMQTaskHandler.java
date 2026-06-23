@@ -19,6 +19,7 @@ import com.erp.model.oms.enums.SoB2cItemStatusEnum;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
+import com.erp.server.dmp.inout.utils.PlatformOrderAmountUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -169,8 +170,7 @@ public class DmpOutputAmzOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskH
         // 审核状态
         orderDTO.setApproveStatusStr(dmpSoInfoEntity.getOrderStatus());
 
-        // 订单金额
-        orderDTO.setAmount(dmpSoInfoEntity.getPayAmount());
+        PlatformOrderAmountUtils.applyMainAmounts(orderDTO, dmpSoInfoEntity);
         // 币别（原币）
         orderDTO.setCurrency(dmpSoInfoEntity.getCurrencyCode());
         // 汇率
@@ -181,8 +181,6 @@ public class DmpOutputAmzOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskH
         // 付款时间
         // 未付款无付款时间
         orderDTO.setPayTime("payment".equalsIgnoreCase(orderDTO.getPayStatus()) ? null : dmpSoInfoEntity.getPlatformCreateTime());
-        // 付款金额
-        orderDTO.setPayAmount(dmpSoInfoEntity.getPayAmount());
         // 付款方式
         orderDTO.setDictPayMethod(dmpSoInfoEntity.getPayMethod());
         // 买家备注

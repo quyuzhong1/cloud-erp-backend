@@ -77,7 +77,7 @@ public class PlatformOrderDTO extends UniqueDto {
 
 
     /**
-     * 订单金额
+     * 订单总额：折前销售金额汇总，平台推送优先
      */
     private BigDecimal amount;
 
@@ -102,7 +102,7 @@ public class PlatformOrderDTO extends UniqueDto {
     private LocalDateTime payTime;
 
     /**
-     * 付款金额
+     * 平台原始付款金额；OMS 实付总额见 SoB2cEntity.paidAmount
      */
     private BigDecimal payAmount;
 
@@ -285,7 +285,7 @@ public class PlatformOrderDTO extends UniqueDto {
     private List<PlatformRefundOrderDTO> refundDTOList;
 
     /**
-     * 总优惠金额
+     * 订单折扣总额，平台推送优先
      */
     private BigDecimal totalDiscount;
 

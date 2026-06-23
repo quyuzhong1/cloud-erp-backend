@@ -109,10 +109,15 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     @TableField("pay_status")
     private String payStatus;
     /**
-     * 订单金额
+     * 订单总额：折前销售金额汇总，平台推送优先
      */
     @TableField("amount")
     private BigDecimal amount;
+    /**
+     * 实付总额（订单付款总额）：sum(明细.实付金额)，平台已推送时直接取平台值
+     */
+    @TableField("paid_amount")
+    private BigDecimal paidAmount;
     /**
      * 币别（原币）
      */
@@ -134,7 +139,7 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     @TableField("pay_time")
     private LocalDateTime payTime;
     /**
-     * 付款金额
+     * 平台原始付款金额（MQ/平台推送）；业务实付见 paidAmount
      */
     @TableField("pay_amount")
     private BigDecimal payAmount;
@@ -324,7 +329,7 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     private Boolean isManualDelivery;
 
     /**
-     * 总优惠金额
+     * 订单折扣总额：平台推送优先；未推送时由明细 discountAmount 汇总
      */
     @TableField("total_discount")
     private BigDecimal totalDiscount;
