@@ -56,8 +56,13 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.tms.listener.FirstMileCostChangeExcelListener;
+import com.erp.server.tms.handler.asynctask.FirstMileDeleteBatchPushHandler;
+import com.erp.server.tms.handler.asynctask.FirstMilePushAllocationBatchPushHandler;
+import com.erp.server.tms.handler.asynctask.FirstMileReAllocationBatchPushHandler;
+import com.erp.server.tms.handler.asynctask.FirstMileUpdateStatusBatchPushHandler;
 import com.erp.server.tms.mapper.FirstMileCostAllocationMapper;
 import com.erp.server.tms.service.*;
+import com.erp.server.tms.service.asynctask.FirstMileCostAllocationAsyncTaskDelegate;
 import com.erp.server.tms.service.support.TmsAsyncTaskBatchConsumerSupport;
 import com.xxl.job.core.context.XxlJobHelper;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -111,18 +116,19 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_FIRST_MILE_
  */
 @Slf4j
 @Service
-public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMileCostAllocationMapper, FirstMileCostAllocationEntity> implements FirstMileCostAllocationService {
+public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMileCostAllocationMapper, FirstMileCostAllocationEntity>
+    implements FirstMileCostAllocationService, FirstMileCostAllocationAsyncTaskDelegate {
 
     public static final String NAME = "头程费用分摊";
 
-    private final FirstMileReAllocationBatchPushHandler firstMileReAllocationBatchPushHandler =
-        new FirstMileReAllocationBatchPushHandler();
-    private final FirstMileUpdateStatusBatchPushHandler firstMileUpdateStatusBatchPushHandler =
-        new FirstMileUpdateStatusBatchPushHandler();
-    private final FirstMileDeleteBatchPushHandler firstMileDeleteBatchPushHandler =
-        new FirstMileDeleteBatchPushHandler();
-    private final FirstMilePushAllocationBatchPushHandler firstMilePushAllocationBatchPushHandler =
-        new FirstMilePushAllocationBatchPushHandler();
+    @Resource
+    private FirstMileReAllocationBatchPushHandler firstMileReAllocationBatchPushHandler;
+    @Resource
+    private FirstMileUpdateStatusBatchPushHandler firstMileUpdateStatusBatchPushHandler;
+    @Resource
+    private FirstMileDeleteBatchPushHandler firstMileDeleteBatchPushHandler;
+    @Resource
+    private FirstMilePushAllocationBatchPushHandler firstMilePushAllocationBatchPushHandler;
     @Resource
     private OperateLogService operateLogService;
     //sku分摊明细
@@ -2091,8 +2097,21 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         return baseMapper.listByReportPeriodMonth(reportPeriodMonth, reportStatus);
     }
 
-    private LocalDate parseReportPeriodMonth(String reportPeriodStr) {
+    @Override
+    public LocalDate parseReportPeriodMonth(String reportPeriodStr) {
         return LocalDate.parse(reportPeriodStr + "-01");
+    }
+
+    @Override
+    public List<String> pageIdsForReAllocation(LocalDate reportPeriodMonth, String reportStatus, String lastId,
+                                               int batchSize) {
+        return baseMapper.pageIdsForReAllocation(reportPeriodMonth, reportStatus, lastId, batchSize);
+    }
+
+    @Override
+    public List<String> pageIdsByReportPeriodMonth(LocalDate reportPeriodMonth, String reportStatus, String lastId,
+                                                   int batchSize) {
+        return baseMapper.pageIdsByReportPeriodMonth(reportPeriodMonth, reportStatus, lastId, batchSize);
     }
 
 
@@ -2336,7 +2355,8 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
     /**
      * 头程核算状态变更批次：为每条分摊记录创建任务明细并记录状态变更结果。
      */
-    private TmsAsyncTaskRecordDTO.BatchProcessResult processFirstMileUpdateStatusBatch(String taskId,
+    @Override
+    public TmsAsyncTaskRecordDTO.BatchProcessResult processUpdateStatusBatch(String taskId,
                                                                                        List<String> batchIds,
                                                                                        String reportStatus,
                                                                                        String reportDate,
@@ -2355,7 +2375,8 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
     /**
      * 头程重新分摊批次：批量加载发货单与发货明细，避免每条任务重复 Feign 查询。
      */
-    private TmsAsyncTaskRecordDTO.BatchProcessResult processFirstMileReAllocationBatch(String taskId,
+    @Override
+    public TmsAsyncTaskRecordDTO.BatchProcessResult processReAllocationBatch(String taskId,
                                                                                        List<String> batchIds,
                                                                                        int timeoutSeconds,
                                                                                        int staleDetailSeconds,
@@ -2405,7 +2426,8 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
     /**
      * 头程批量删除批次：将删除结果写回任务明细，支持只重试失败单据。
      */
-    private TmsAsyncTaskRecordDTO.BatchProcessResult processFirstMileDeleteBatch(String taskId,
+    @Override
+    public TmsAsyncTaskRecordDTO.BatchProcessResult processDeleteBatch(String taskId,
                                                                                  List<String> batchIds,
                                                                                  int timeoutSeconds,
                                                                                  int staleDetailSeconds,
@@ -2625,251 +2647,6 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         return new TmsAsyncTaskRecordDTO.BatchProcessResult(successCount.get(), failedCount.get());
     }
 
-    private class FirstMileReAllocationBatchPushHandler
-        implements TmsAsyncTaskBatchPushHandler<TmsAsyncTaskRecordDTO.FirstMileReportPeriodBatchPayloadDTO> {
-
-        @Override
-        public String taskDisplayName() {
-            return "头程重新分摊异步任务";
-        }
-
-        @Override
-        public Class<TmsAsyncTaskRecordDTO.FirstMileReportPeriodBatchPayloadDTO> payloadClass() {
-            return TmsAsyncTaskRecordDTO.FirstMileReportPeriodBatchPayloadDTO.class;
-        }
-
-        @Override
-        public String payloadParseErrorMessage() {
-            return "头程重新分摊异步任务信封参数解析失败";
-        }
-
-        @Override
-        public String validatePayload(TmsAsyncTaskRecordDTO.FirstMileReportPeriodBatchPayloadDTO payload) {
-            if (CharSequenceUtil.isBlank(payload.getReportPeriodStr())) {
-                return "核算期间为空";
-            }
-            return null;
-        }
-
-        @Override
-        public List<String> pageBatchIds(String taskId,
-                                         TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope,
-                                         TmsAsyncTaskRecordDTO.FirstMileReportPeriodBatchPayloadDTO payload,
-                                         String lastId,
-                                         int batchSize,
-                                         TmsAsyncTaskRecordEntity taskRecord) {
-            LocalDate reportPeriodMonth = parseReportPeriodMonth(payload.getReportPeriodStr());
-            String reportStatus = CharSequenceUtil.blankToDefault(
-                payload.getReportStatus(), ConfirmStatusEnum.WAIT_CONFIRM.getCode());
-            BatchBusinessIdProvider defaultProvider = (cursor, size) ->
-                baseMapper.pageIdsForReAllocation(reportPeriodMonth, reportStatus, cursor, size);
-            return asyncTaskRecordService.pageBatchBusinessIds(
-                envelope.getRetryMode(), envelope.getRetrySourceTaskId(), lastId, batchSize,
-                defaultProvider, null);
-        }
-
-        @Override
-        public TmsAsyncTaskRecordDTO.BatchProcessResult processBatch(String taskId,
-                                                                     TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope,
-                                                                     TmsAsyncTaskRecordDTO.FirstMileReportPeriodBatchPayloadDTO payload,
-                                                                     LoginUser operatorUser,
-                                                                     List<String> batchIds,
-                                                                     int batchNumber,
-                                                                     CfgSettingValueDTO.BillBatchParamsDTO billBatchParams) {
-            int timeoutSeconds = asyncTaskRecordService.resolveTimeoutSeconds(
-                billBatchParams.getBatchTimeoutSeconds(), 5000);
-            int staleDetailSeconds = asyncTaskRecordService.resolveStaleDetailSeconds(billBatchParams);
-            return processFirstMileReAllocationBatch(
-                taskId, batchIds, timeoutSeconds, staleDetailSeconds, operatorUser);
-        }
-    }
-
-    private class FirstMileUpdateStatusBatchPushHandler
-        implements TmsAsyncTaskBatchPushHandler<TmsAsyncTaskRecordDTO.FirstMileUpdateReportStatusPayloadDTO> {
-
-        @Override
-        public String taskDisplayName() {
-            return "头程核算状态变更异步任务";
-        }
-
-        @Override
-        public Class<TmsAsyncTaskRecordDTO.FirstMileUpdateReportStatusPayloadDTO> payloadClass() {
-            return TmsAsyncTaskRecordDTO.FirstMileUpdateReportStatusPayloadDTO.class;
-        }
-
-        @Override
-        public String payloadParseErrorMessage() {
-            return "头程核算状态变更异步任务信封参数解析失败";
-        }
-
-        @Override
-        public String validatePayload(TmsAsyncTaskRecordDTO.FirstMileUpdateReportStatusPayloadDTO payload) {
-            if (CharSequenceUtil.isBlank(payload.getReportPeriodStr())) {
-                return "核算期间为空";
-            }
-            return null;
-        }
-
-        @Override
-        public List<String> pageBatchIds(String taskId,
-                                         TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope,
-                                         TmsAsyncTaskRecordDTO.FirstMileUpdateReportStatusPayloadDTO payload,
-                                         String lastId,
-                                         int batchSize,
-                                         TmsAsyncTaskRecordEntity taskRecord) {
-            LocalDate reportPeriodMonth = parseReportPeriodMonth(payload.getReportPeriodStr());
-            BatchBusinessIdProvider defaultProvider = (cursor, size) ->
-                baseMapper.pageIdsByReportPeriodMonth(
-                    reportPeriodMonth, payload.getReportStatus(), cursor, size);
-            return asyncTaskRecordService.pageBatchBusinessIds(
-                envelope.getRetryMode(), envelope.getRetrySourceTaskId(), lastId, batchSize,
-                defaultProvider, null);
-        }
-
-        @Override
-        public TmsAsyncTaskRecordDTO.BatchProcessResult processBatch(String taskId,
-                                                                     TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope,
-                                                                     TmsAsyncTaskRecordDTO.FirstMileUpdateReportStatusPayloadDTO payload,
-                                                                     LoginUser operatorUser,
-                                                                     List<String> batchIds,
-                                                                     int batchNumber,
-                                                                     CfgSettingValueDTO.BillBatchParamsDTO billBatchParams) {
-            int timeoutSeconds = asyncTaskRecordService.resolveTimeoutSeconds(
-                billBatchParams.getBatchTimeoutSeconds(), 5000);
-            int staleDetailSeconds = asyncTaskRecordService.resolveStaleDetailSeconds(billBatchParams);
-            return processFirstMileUpdateStatusBatch(
-                taskId, batchIds, payload.getReportStatus(), payload.getReportDate(),
-                timeoutSeconds, staleDetailSeconds, operatorUser);
-        }
-    }
-
-    private class FirstMileDeleteBatchPushHandler
-        implements TmsAsyncTaskBatchPushHandler<TmsAsyncTaskRecordDTO.FirstMileReportPeriodBatchPayloadDTO> {
-
-        @Override
-        public String taskDisplayName() {
-            return "头程批量删除异步任务";
-        }
-
-        @Override
-        public Class<TmsAsyncTaskRecordDTO.FirstMileReportPeriodBatchPayloadDTO> payloadClass() {
-            return TmsAsyncTaskRecordDTO.FirstMileReportPeriodBatchPayloadDTO.class;
-        }
-
-        @Override
-        public String payloadParseErrorMessage() {
-            return "头程批量删除异步任务信封参数解析失败";
-        }
-
-        @Override
-        public String validatePayload(TmsAsyncTaskRecordDTO.FirstMileReportPeriodBatchPayloadDTO payload) {
-            if (CharSequenceUtil.isBlank(payload.getReportPeriodStr())) {
-                return "核算期间为空";
-            }
-            return null;
-        }
-
-        @Override
-        public List<String> pageBatchIds(String taskId,
-                                         TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope,
-                                         TmsAsyncTaskRecordDTO.FirstMileReportPeriodBatchPayloadDTO payload,
-                                         String lastId,
-                                         int batchSize,
-                                         TmsAsyncTaskRecordEntity taskRecord) {
-            LocalDate reportPeriodMonth = parseReportPeriodMonth(payload.getReportPeriodStr());
-            String reportStatus = CharSequenceUtil.blankToDefault(
-                payload.getReportStatus(), ConfirmStatusEnum.WAIT_CONFIRM.getCode());
-            BatchBusinessIdProvider defaultProvider = (cursor, size) ->
-                baseMapper.pageIdsForReAllocation(reportPeriodMonth, reportStatus, cursor, size);
-            return asyncTaskRecordService.pageBatchBusinessIds(
-                envelope.getRetryMode(), envelope.getRetrySourceTaskId(), lastId, batchSize,
-                defaultProvider, null);
-        }
-
-        @Override
-        public TmsAsyncTaskRecordDTO.BatchProcessResult processBatch(String taskId,
-                                                                     TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope,
-                                                                     TmsAsyncTaskRecordDTO.FirstMileReportPeriodBatchPayloadDTO payload,
-                                                                     LoginUser operatorUser,
-                                                                     List<String> batchIds,
-                                                                     int batchNumber,
-                                                                     CfgSettingValueDTO.BillBatchParamsDTO billBatchParams) {
-            int timeoutSeconds = asyncTaskRecordService.resolveTimeoutSeconds(
-                billBatchParams.getBatchTimeoutSeconds(), 5000);
-            int staleDetailSeconds = asyncTaskRecordService.resolveStaleDetailSeconds(billBatchParams);
-            return processFirstMileDeleteBatch(
-                taskId, batchIds, timeoutSeconds, staleDetailSeconds, operatorUser);
-        }
-    }
-
-    private class FirstMilePushAllocationBatchPushHandler
-        implements TmsAsyncTaskBatchPushHandler<TmsAsyncTaskRecordDTO.FirstMilePushAllocationPayloadDTO> {
-
-        @Override
-        public String taskDisplayName() {
-            return "头程分摊异步任务";
-        }
-
-        @Override
-        public Class<TmsAsyncTaskRecordDTO.FirstMilePushAllocationPayloadDTO> payloadClass() {
-            return TmsAsyncTaskRecordDTO.FirstMilePushAllocationPayloadDTO.class;
-        }
-
-        @Override
-        public String payloadParseErrorMessage() {
-            return "头程分摊异步任务信封参数解析失败";
-        }
-
-        @Override
-        public String validatePayload(TmsAsyncTaskRecordDTO.FirstMilePushAllocationPayloadDTO payload) {
-            if (CharSequenceUtil.isBlank(payload.getReportDate())) {
-                return "核算日期为空";
-            }
-            return null;
-        }
-
-        @Override
-        public boolean refreshRecordBeforeClaim() {
-            return false;
-        }
-
-        @Override
-        public List<String> pageBatchIds(String taskId,
-                                         TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope,
-                                         TmsAsyncTaskRecordDTO.FirstMilePushAllocationPayloadDTO payload,
-                                         String lastId,
-                                         int batchSize,
-                                         TmsAsyncTaskRecordEntity taskRecord) {
-            BatchBusinessIdProvider defaultProvider = (cursor, size) -> {
-                TmsAsyncTaskRecordDTO.FirstMilePushAllocationQueryDTO queryDTO =
-                    new TmsAsyncTaskRecordDTO.FirstMilePushAllocationQueryDTO(cursor, size);
-                return firstMileWeightAllocationService.pageFirstMileDeliveryIds(queryDTO);
-            };
-            return asyncTaskRecordService.pageBatchBusinessIds(
-                envelope.getRetryMode(), envelope.getRetrySourceTaskId(), lastId, batchSize,
-                defaultProvider, null);
-        }
-
-        @Override
-        public TmsAsyncTaskRecordDTO.BatchProcessResult processBatch(String taskId,
-                                                                     TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope,
-                                                                     TmsAsyncTaskRecordDTO.FirstMilePushAllocationPayloadDTO payload,
-                                                                     LoginUser operatorUser,
-                                                                     List<String> batchIds,
-                                                                     int batchNumber,
-                                                                     CfgSettingValueDTO.BillBatchParamsDTO billBatchParams) {
-            int timeoutSeconds = asyncTaskRecordService.resolveTimeoutSeconds(
-                billBatchParams.getBatchTimeoutSeconds(), 5000);
-            int staleDetailSeconds = asyncTaskRecordService.resolveStaleDetailSeconds(billBatchParams);
-            log.info("开始处理第{}批，数量: {}", batchNumber, batchIds.size());
-            TmsAsyncTaskRecordDTO.BatchProcessResult result = processFirstMileBatch(
-                taskId, batchIds, payload.getReportDate(), timeoutSeconds, staleDetailSeconds, operatorUser);
-            log.info("第{}批完成，本批成功: {}/失败: {}",
-                batchNumber, result.getSuccessCount(), result.getFailedCount());
-            return result;
-        }
-    }
-
     private interface FirstMileCostAllocationTaskExecutor {
         BatchResultDTO execute(String taskDetailId, String businessId, FirstMileCostAllocationEntity entity);
     }
@@ -2917,7 +2694,8 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
      * @author jack
      * @date 2026-04-22
      */
-    private TmsAsyncTaskRecordDTO.BatchProcessResult processFirstMileBatch(String taskId, List<String> batchDeliveryIds,
+    @Override
+    public TmsAsyncTaskRecordDTO.BatchProcessResult processPushAllocationBatch(String taskId, List<String> batchDeliveryIds,
                                                                            String reportDate, int timeoutSeconds,
                                                                            int staleDetailSeconds, LoginUser operatorUser) {
         LocalDate reportPeriodMonth = LocalDate.parse(reportDate + "-01");

@@ -11,6 +11,10 @@ import java.util.stream.Collectors;
 
 /**
  * 异步任务已选 ID 列表的分批游标辅助。
+ * <p>
+ * 当前 API 约定为「有 ids 走同步、无 ids 走全量条件异步」；{@link #selectedIdProvider(List)}
+ * 预留给信封载荷携带已选 ID 的异步分批场景，由 Handler 传入
+ * {@link com.erp.server.tms.service.TmsAsyncTaskRecordService#pageBatchBusinessIds} 的 selectedIdProvider 参数。
  */
 public final class TmsAsyncTaskBatchIdPages {
 

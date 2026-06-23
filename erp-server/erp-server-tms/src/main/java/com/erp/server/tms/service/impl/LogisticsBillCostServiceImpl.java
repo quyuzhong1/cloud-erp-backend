@@ -62,7 +62,10 @@ import com.erp.server.tms.util.LogisticsBillPlatformCodeUtil;
 import com.erp.server.tms.mapper.LogisticsBillCostMapper;
 import com.erp.server.tms.query.LogisticsBillCostQueryHandler;
 import com.erp.server.tms.query.LogisticsLastMileCostQueryHandler;
+import com.erp.server.tms.handler.asynctask.LogisticsSmallBagPushBatchPushHandlerFactory;
+import com.erp.server.tms.handler.asynctask.LogisticsUpdateReconciliationBatchPushHandler;
 import com.erp.server.tms.service.*;
+import com.erp.server.tms.service.asynctask.LogisticsBillCostAsyncTaskDelegate;
 import com.erp.server.tms.service.support.LogisticsOrderWeightSupport;
 import com.erp.server.tms.service.support.TmsAsyncTaskBatchConsumerSupport;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -113,7 +116,8 @@ import static com.common.business.enums.FileTaskEventEnum.IMPORT_TMS_LOGISTICS_B
  */
 @Slf4j
 @Service
-public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBillCostMapper, LogisticsBillCostEntity> implements LogisticsBillCostService {
+public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBillCostMapper, LogisticsBillCostEntity>
+    implements LogisticsBillCostService, LogisticsBillCostAsyncTaskDelegate {
     private static final int IMPORT_CONFIRM_BATCH_SIZE = 1000;
     private static final String LAST_MILE_FEE_ATTRIBUTION = DictCostAttributionEnum.LAST_MILE_DELIVERY.getCode();
     @Resource
@@ -191,8 +195,10 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     @Resource
     private LogisticsOrderWeightSupport logisticsOrderWeightSupport;
 
-    private final LogisticsUpdateReconciliationBatchPushHandler logisticsUpdateReconciliationBatchPushHandler =
-        new LogisticsUpdateReconciliationBatchPushHandler();
+    @Resource
+    private LogisticsUpdateReconciliationBatchPushHandler logisticsUpdateReconciliationBatchPushHandler;
+    @Resource
+    private LogisticsSmallBagPushBatchPushHandlerFactory logisticsSmallBagPushBatchPushHandlerFactory;
     @Autowired
     @Qualifier("costAllocationPool")
     private ExecutorService costAllocationPool;
@@ -2871,7 +2877,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
     @Override
     public void pushSmallBagCostAllocation(TmsAsyncTaskRecordEntity taskRecord) {
-        tmsAsyncTaskBatchConsumerSupport.execute(taskRecord, new LogisticsSmallBagPushBatchPushHandler(taskRecord));
+        tmsAsyncTaskBatchConsumerSupport.execute(taskRecord,
+            logisticsSmallBagPushBatchPushHandlerFactory.create(taskRecord));
     }
 
     /**
@@ -2885,7 +2892,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
      * @author jack
      * @date 2026-04-22
      */
-    private TmsAsyncTaskRecordDTO.BatchProcessResult processBatch(String taskId, String businessType,
+    @Override
+    public TmsAsyncTaskRecordDTO.BatchProcessResult processPushAllocationBatch(String taskId, String businessType,
                                              List<String> batchIds, String reportDate, int timeoutSeconds, int staleDetailSeconds,
                                                                   LogisticsBillCostDTO.SmallBagPushAllocationContext pushContext) {
 
@@ -3659,7 +3667,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         return count == null ? 0 : count;
     }
 
-    private LogisticsBillCostDTO.UpdateReconciliationStatusPageQueryDTO buildUpdateReconciliationStatusPageQuery(
+    @Override
+    public LogisticsBillCostDTO.UpdateReconciliationStatusPageQueryDTO buildUpdateReconciliationStatusPageQuery(
             TmsAsyncTaskRecordDTO.UpdateReconciliationStatusPayloadDTO payload, String costType) {
         LogisticsBillCostDTO.UpdateReconciliationStatusPageQueryDTO query =
             new LogisticsBillCostDTO.UpdateReconciliationStatusPageQueryDTO();
@@ -3690,7 +3699,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         throw new ServiceException("费用归属类型不支持");
     }
 
-    private String resolveCostTypeFromUpdateReconciliationMethodType(String methodType) {
+    @Override
+    public String resolveCostTypeFromUpdateReconciliationMethodType(String methodType) {
         if (Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.SELFDELIVER_UPDATE_RECONCILIATION_STATUS.getCode())) {
             return DictCostAttributionEnum.SELF_DELIVER.getCode();
         }
@@ -3711,7 +3721,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     /**
      * 执行单批对账状态变更，并把每条成功或失败写入任务明细。
      */
-    private TmsAsyncTaskRecordDTO.BatchProcessResult processUpdateReconciliationStatusBatch(String taskId,
+    @Override
+    public TmsAsyncTaskRecordDTO.BatchProcessResult processUpdateReconciliationStatusBatch(String taskId,
                                                                                            List<String> batchIds,
                                                                                            String reconciliationStatus,
                                                                                            LocalDateTime confirmTime,
@@ -3917,7 +3928,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         return totalCountDTO;
     }
 
-    private LogisticsBillCostDTO.SmallBagPushAllocationContext buildSmallBagPushAllocationContext() {
+    @Override
+    public LogisticsBillCostDTO.SmallBagPushAllocationContext buildSmallBagPushAllocationContext() {
         CfgSettingEntity byKey = cfgSettingService.getByKey(CfgSettingEnum.ALLOCATION_SETTING.getCode());
         if (byKey == null || byKey.getDataJson() == null) {
             throw new ServiceException("分摊配置不存在，请检查系统配置");
@@ -3954,176 +3966,6 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             }
         }
         return feeTypeSettingMaps;
-    }
-
-    private class LogisticsSmallBagPushBatchPushHandler
-        implements TmsAsyncTaskBatchPushHandler<TmsAsyncTaskRecordDTO.SmallBagPushAllocationPayloadDTO> {
-
-        private final TmsAsyncTaskRecordEntity mqTaskRecord;
-        private LogisticsBillCostDTO.SmallBagPushAllocationContext pushContext;
-        private int totalProcessed;
-
-        private LogisticsSmallBagPushBatchPushHandler(TmsAsyncTaskRecordEntity mqTaskRecord) {
-            this.mqTaskRecord = mqTaskRecord;
-        }
-
-        @Override
-        public String taskDisplayName() {
-            return "小包分摊异步任务";
-        }
-
-        @Override
-        public Class<TmsAsyncTaskRecordDTO.SmallBagPushAllocationPayloadDTO> payloadClass() {
-            return TmsAsyncTaskRecordDTO.SmallBagPushAllocationPayloadDTO.class;
-        }
-
-        @Override
-        public String payloadParseErrorMessage() {
-            return "小包分摊异步任务信封参数解析失败";
-        }
-
-        @Override
-        public String validatePayload(TmsAsyncTaskRecordDTO.SmallBagPushAllocationPayloadDTO payload) {
-            if (StringUtils.isBlank(payload.getReportDate())) {
-                return "核算日期为空";
-            }
-            if (StringUtils.isBlank(payload.getType())) {
-                return "费用类型不能为空";
-            }
-            if (!Objects.equals(payload.getType(), DictCostAttributionEnum.SELF_DELIVER.getCode())
-                && !Objects.equals(payload.getType(), DictCostAttributionEnum.LAST_MILE.getCode())) {
-                return "仅支持自发货/尾程费用下推分摊";
-            }
-            return null;
-        }
-
-        @Override
-        public boolean refreshRecordBeforeClaim() {
-            return false;
-        }
-
-        @Override
-        public List<String> pageBatchIds(String taskId,
-                                         TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope,
-                                         TmsAsyncTaskRecordDTO.SmallBagPushAllocationPayloadDTO payload,
-                                         String lastId,
-                                         int batchSize,
-                                         TmsAsyncTaskRecordEntity taskRecord) {
-            BatchBusinessIdProvider defaultProvider = (cursor, size) -> {
-                LogisticsBillCostDTO.CanPushAllocationPageQueryDTO query =
-                    new LogisticsBillCostDTO.CanPushAllocationPageQueryDTO(
-                        payload.getReportDate(), payload.getType(), cursor, size, null);
-                return pageByCanPushAllocation(query);
-            };
-            return asyncTaskRecordService.pageBatchBusinessIds(
-                envelope.getRetryMode(), envelope.getRetrySourceTaskId(), lastId, batchSize,
-                defaultProvider, null);
-        }
-
-        @Override
-        public TmsAsyncTaskRecordDTO.BatchProcessResult processBatch(String taskId,
-                                                                     TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope,
-                                                                     TmsAsyncTaskRecordDTO.SmallBagPushAllocationPayloadDTO payload,
-                                                                     LoginUser operatorUser,
-                                                                     List<String> batchIds,
-                                                                     int batchNumber,
-                                                                     CfgSettingValueDTO.BillBatchParamsDTO billBatchParams) {
-            int timeoutSeconds = asyncTaskRecordService.resolveTimeoutSeconds(
-                billBatchParams.getBatchTimeoutSeconds(), 5000);
-            int staleDetailSeconds = asyncTaskRecordService.resolveStaleDetailSeconds(billBatchParams);
-            if (pushContext == null) {
-                pushContext = buildSmallBagPushAllocationContext();
-            }
-            log.info("开始处理第{}批，数量: {}", batchNumber, batchIds.size());
-            TmsAsyncTaskRecordDTO.BatchProcessResult result = LogisticsBillCostServiceImpl.this.processBatch(
-                taskId, envelope.getBusinessType(), batchIds, payload.getReportDate(),
-                timeoutSeconds, staleDetailSeconds, pushContext);
-            log.info("第{}批完成，本批成功: {}/失败: {}",
-                batchNumber, result.getSuccessCount(), result.getFailedCount());
-            return result;
-        }
-
-        @Override
-        public void afterBatchProcessed(String taskId,
-                                        int batchNumber,
-                                        List<String> batchIds,
-                                        TmsAsyncTaskRecordDTO.BatchProcessResult result) {
-            totalProcessed += batchIds.size();
-            if (Objects.isNull(mqTaskRecord.getDetailCount()) || Objects.equals(mqTaskRecord.getDetailCount(), 0)) {
-                try {
-                    asyncTaskRecordService.lambdaUpdate()
-                        .set(TmsAsyncTaskRecordEntity::getDetailCount, totalProcessed)
-                        .eq(TmsAsyncTaskRecordEntity::getId, taskId)
-                        .update();
-                } catch (Exception e) {
-                    log.error("更新任务进度失败，taskId: {}", taskId, e);
-                }
-            }
-        }
-    }
-
-    private class LogisticsUpdateReconciliationBatchPushHandler
-        implements TmsAsyncTaskBatchPushHandler<TmsAsyncTaskRecordDTO.UpdateReconciliationStatusPayloadDTO> {
-
-        @Override
-        public String taskDisplayName() {
-            return "对账状态变更异步任务";
-        }
-
-        @Override
-        public Class<TmsAsyncTaskRecordDTO.UpdateReconciliationStatusPayloadDTO> payloadClass() {
-            return TmsAsyncTaskRecordDTO.UpdateReconciliationStatusPayloadDTO.class;
-        }
-
-        @Override
-        public String payloadParseErrorMessage() {
-            return "对账状态变更异步任务信封参数解析失败";
-        }
-
-        @Override
-        public String validatePayload(TmsAsyncTaskRecordDTO.UpdateReconciliationStatusPayloadDTO payload) {
-            if (StringUtils.isBlank(payload.getReconciliationStatus())) {
-                return "对账状态不能为空";
-            }
-            return null;
-        }
-
-        @Override
-        public List<String> pageBatchIds(String taskId,
-                                         TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope,
-                                         TmsAsyncTaskRecordDTO.UpdateReconciliationStatusPayloadDTO payload,
-                                         String lastId,
-                                         int batchSize,
-                                         TmsAsyncTaskRecordEntity taskRecord) {
-            String costType = resolveCostTypeFromUpdateReconciliationMethodType(envelope.getMethodType());
-            BatchBusinessIdProvider defaultProvider = (cursor, size) -> {
-                LogisticsBillCostDTO.UpdateReconciliationStatusPageQueryDTO query =
-                    buildUpdateReconciliationStatusPageQuery(payload, costType);
-                query.setLastId(cursor);
-                query.setBatchSize(size);
-                return pageByUpdateReconciliationStatus(query);
-            };
-            return asyncTaskRecordService.pageBatchBusinessIds(
-                envelope.getRetryMode(), envelope.getRetrySourceTaskId(), lastId, batchSize,
-                defaultProvider, null);
-        }
-
-        @Override
-        public TmsAsyncTaskRecordDTO.BatchProcessResult processBatch(String taskId,
-                                                                     TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope,
-                                                                     TmsAsyncTaskRecordDTO.UpdateReconciliationStatusPayloadDTO payload,
-                                                                     LoginUser operatorUser,
-                                                                     List<String> batchIds,
-                                                                     int batchNumber,
-                                                                     CfgSettingValueDTO.BillBatchParamsDTO billBatchParams) {
-            String costType = resolveCostTypeFromUpdateReconciliationMethodType(envelope.getMethodType());
-            int timeoutSeconds = asyncTaskRecordService.resolveTimeoutSeconds(
-                billBatchParams.getBatchTimeoutSeconds(), 5000);
-            int staleDetailSeconds = asyncTaskRecordService.resolveStaleDetailSeconds(billBatchParams);
-            return processUpdateReconciliationStatusBatch(
-                taskId, batchIds, payload.getReconciliationStatus(), payload.getConfirmTime(),
-                costType, operatorUser, timeoutSeconds, staleDetailSeconds);
-        }
     }
 
 }

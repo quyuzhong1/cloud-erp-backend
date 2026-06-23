@@ -149,6 +149,9 @@ public interface TmsAsyncTaskRecordService extends SuperService<TmsAsyncTaskReco
 
     /**
      * 异步任务 businessId 分批：FAILED_ONLY / 已选 ID Provider / 条件查询 Provider。
+     * <p>
+     * selectedIdProvider 优先于 defaultProvider；当前多数 Handler 仅使用 defaultProvider，
+     * selectedIdProvider 供后续「信封内已选 ID 异步分批」扩展。
      */
     List<String> pageBatchBusinessIds(String retryMode,
                                       String retrySourceTaskId,

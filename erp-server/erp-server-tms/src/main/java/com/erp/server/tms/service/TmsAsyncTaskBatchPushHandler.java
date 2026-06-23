@@ -26,6 +26,19 @@ public interface TmsAsyncTaskBatchPushHandler<P> {
         return true;
     }
 
+    /**
+     * 首批查询无 businessId 时的任务级提示。
+     * <p>
+     * 返回非空时主任务直接 FINISH 并写入 {@code errorData}，且不再调用 {@code updateTaskFinally}。
+     */
+    default String emptyFirstBatchMessage(TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope, P payload) {
+        if (envelope != null
+            && TmsAsyncTaskRecordDTO.RETRY_MODE_FAILED_ONLY.equals(envelope.getRetryMode())) {
+            return "无失败明细可重试";
+        }
+        return null;
+    }
+
     List<String> pageBatchIds(String taskId,
                               TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope,
                               P payload,

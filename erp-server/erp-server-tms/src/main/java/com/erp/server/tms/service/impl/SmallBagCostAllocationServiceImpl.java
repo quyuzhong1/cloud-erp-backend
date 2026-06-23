@@ -26,7 +26,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.tms.dto.CfgSettingValueDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
 import com.erp.model.tms.dto.SmallBagCostAllocationDTO;
@@ -38,8 +37,12 @@ import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.server.tms.handler.asynctask.SmallBagDeleteBatchPushHandler;
+import com.erp.server.tms.handler.asynctask.SmallBagReAllocationBatchPushHandler;
+import com.erp.server.tms.handler.asynctask.SmallBagUpdateReportStatusBatchPushHandler;
 import com.erp.server.tms.mapper.SmallBagCostAllocationMapper;
 import com.erp.server.tms.service.*;
+import com.erp.server.tms.service.asynctask.SmallBagCostAllocationAsyncTaskDelegate;
 import com.erp.server.tms.service.support.TmsAsyncTaskBatchConsumerSupport;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -75,13 +78,15 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
-public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBagCostAllocationMapper, SmallBagCostAllocationEntity> implements SmallBagCostAllocationService {
-    private final SmallBagUpdateReportStatusBatchPushHandler smallBagUpdateReportStatusBatchPushHandler =
-        new SmallBagUpdateReportStatusBatchPushHandler();
-    private final SmallBagReAllocationBatchPushHandler smallBagReAllocationBatchPushHandler =
-        new SmallBagReAllocationBatchPushHandler();
-    private final SmallBagDeleteBatchPushHandler smallBagDeleteBatchPushHandler =
-        new SmallBagDeleteBatchPushHandler();
+public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBagCostAllocationMapper, SmallBagCostAllocationEntity>
+    implements SmallBagCostAllocationService, SmallBagCostAllocationAsyncTaskDelegate {
+
+    @Resource
+    private SmallBagUpdateReportStatusBatchPushHandler smallBagUpdateReportStatusBatchPushHandler;
+    @Resource
+    private SmallBagReAllocationBatchPushHandler smallBagReAllocationBatchPushHandler;
+    @Resource
+    private SmallBagDeleteBatchPushHandler smallBagDeleteBatchPushHandler;
 
     @Autowired
     private OperateLogService operateLogService;
@@ -430,188 +435,11 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 		tmsAsyncTaskBatchConsumerSupport.execute(taskRecord, smallBagDeleteBatchPushHandler);
 	}
 
-	private class SmallBagUpdateReportStatusBatchPushHandler
-		implements TmsAsyncTaskBatchPushHandler<TmsAsyncTaskRecordDTO.SmallBagUpdateReportStatusPayloadDTO> {
-
-		@Override
-		public String taskDisplayName() {
-			return "小包核算状态变更异步任务";
-		}
-
-		@Override
-		public Class<TmsAsyncTaskRecordDTO.SmallBagUpdateReportStatusPayloadDTO> payloadClass() {
-			return TmsAsyncTaskRecordDTO.SmallBagUpdateReportStatusPayloadDTO.class;
-		}
-
-		@Override
-		public String payloadParseErrorMessage() {
-			return "小包核算状态变更异步任务信封参数解析失败";
-		}
-
-		@Override
-		public String validatePayload(TmsAsyncTaskRecordDTO.SmallBagUpdateReportStatusPayloadDTO payload) {
-			if (CharSequenceUtil.isBlank(payload.getReportPeriodStr())) {
-				return "核算期间为空";
-			}
-			return null;
-		}
-
-		@Override
-		public List<String> pageBatchIds(String taskId,
-										 TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope,
-										 TmsAsyncTaskRecordDTO.SmallBagUpdateReportStatusPayloadDTO payload,
-										 String lastId,
-										 int batchSize,
-										 TmsAsyncTaskRecordEntity taskRecord) {
-			boolean excludeBigTableDone = SmallBagCostAllocationReportStatusEnum.TOBECONFIRM.getCode().equals(payload.getReportStatus());
-			String bigTableDoneCode = SmallBagCostAllocationBigTableStatusEnum.DONE.getCode();
-			BatchBusinessIdProvider defaultProvider = (cursor, size) ->
-				smallBagCostAllocationMainService.pageMainIdsByReportPeriodStr(
-					payload.getReportPeriodStr(), payload.getReportStatus(), excludeBigTableDone, bigTableDoneCode, cursor, size);
-			return asyncTaskRecordService.pageBatchBusinessIds(
-				envelope.getRetryMode(), envelope.getRetrySourceTaskId(), lastId, batchSize,
-				defaultProvider, null);
-		}
-
-		@Override
-		public TmsAsyncTaskRecordDTO.BatchProcessResult processBatch(String taskId,
-																	 TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope,
-																	 TmsAsyncTaskRecordDTO.SmallBagUpdateReportStatusPayloadDTO payload,
-																	 LoginUser operatorUser,
-																	 List<String> batchIds,
-																	 int batchNumber,
-																	 CfgSettingValueDTO.BillBatchParamsDTO billBatchParams) {
-			int timeoutSeconds = asyncTaskRecordService.resolveTimeoutSeconds(
-				billBatchParams.getBatchTimeoutSeconds(), 5000);
-			int staleDetailSeconds = asyncTaskRecordService.resolveStaleDetailSeconds(billBatchParams);
-			return processSmallBagUpdateStatusBatch(
-				taskId, batchIds, payload.getReportDate(), payload.getReportStatus(),
-				timeoutSeconds, staleDetailSeconds, operatorUser);
-		}
-	}
-
-	private class SmallBagReAllocationBatchPushHandler
-		implements TmsAsyncTaskBatchPushHandler<TmsAsyncTaskRecordDTO.SmallBagReportPeriodBatchPayloadDTO> {
-
-		@Override
-		public String taskDisplayName() {
-			return "小包重新分摊异步任务";
-		}
-
-		@Override
-		public Class<TmsAsyncTaskRecordDTO.SmallBagReportPeriodBatchPayloadDTO> payloadClass() {
-			return TmsAsyncTaskRecordDTO.SmallBagReportPeriodBatchPayloadDTO.class;
-		}
-
-		@Override
-		public String payloadParseErrorMessage() {
-			return "小包重新分摊异步任务信封参数解析失败";
-		}
-
-		@Override
-		public String validatePayload(TmsAsyncTaskRecordDTO.SmallBagReportPeriodBatchPayloadDTO payload) {
-			if (CharSequenceUtil.isBlank(payload.getReportPeriodStr())) {
-				return "核算期间为空";
-			}
-			return null;
-		}
-
-		@Override
-		public List<String> pageBatchIds(String taskId,
-										 TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope,
-										 TmsAsyncTaskRecordDTO.SmallBagReportPeriodBatchPayloadDTO payload,
-										 String lastId,
-										 int batchSize,
-										 TmsAsyncTaskRecordEntity taskRecord) {
-			String reportStatus = CharSequenceUtil.blankToDefault(
-				payload.getReportStatus(), SmallBagCostAllocationMainReportStatusEnum.TOBECONFIRM.getCode());
-			BatchBusinessIdProvider defaultProvider = (cursor, size) ->
-				smallBagCostAllocationMainService.pageMainIdsForReAllocation(
-					payload.getReportPeriodStr(), reportStatus, cursor, size);
-			return asyncTaskRecordService.pageBatchBusinessIds(
-				envelope.getRetryMode(), envelope.getRetrySourceTaskId(), lastId, batchSize,
-				defaultProvider, null);
-		}
-
-		@Override
-		public TmsAsyncTaskRecordDTO.BatchProcessResult processBatch(String taskId,
-																	 TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope,
-																	 TmsAsyncTaskRecordDTO.SmallBagReportPeriodBatchPayloadDTO payload,
-																	 LoginUser operatorUser,
-																	 List<String> batchIds,
-																	 int batchNumber,
-																	 CfgSettingValueDTO.BillBatchParamsDTO billBatchParams) {
-			int timeoutSeconds = asyncTaskRecordService.resolveTimeoutSeconds(
-				billBatchParams.getBatchTimeoutSeconds(), 5000);
-			int staleDetailSeconds = asyncTaskRecordService.resolveStaleDetailSeconds(billBatchParams);
-			return processSmallBagReAllocationBatch(
-				taskId, batchIds, timeoutSeconds, staleDetailSeconds, operatorUser);
-		}
-	}
-
-	private class SmallBagDeleteBatchPushHandler
-		implements TmsAsyncTaskBatchPushHandler<TmsAsyncTaskRecordDTO.SmallBagReportPeriodBatchPayloadDTO> {
-
-		@Override
-		public String taskDisplayName() {
-			return "小包批量删除异步任务";
-		}
-
-		@Override
-		public Class<TmsAsyncTaskRecordDTO.SmallBagReportPeriodBatchPayloadDTO> payloadClass() {
-			return TmsAsyncTaskRecordDTO.SmallBagReportPeriodBatchPayloadDTO.class;
-		}
-
-		@Override
-		public String payloadParseErrorMessage() {
-			return "小包批量删除异步任务信封参数解析失败";
-		}
-
-		@Override
-		public String validatePayload(TmsAsyncTaskRecordDTO.SmallBagReportPeriodBatchPayloadDTO payload) {
-			if (CharSequenceUtil.isBlank(payload.getReportPeriodStr())) {
-				return "核算期间为空";
-			}
-			return null;
-		}
-
-		@Override
-		public List<String> pageBatchIds(String taskId,
-										 TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope,
-										 TmsAsyncTaskRecordDTO.SmallBagReportPeriodBatchPayloadDTO payload,
-										 String lastId,
-										 int batchSize,
-										 TmsAsyncTaskRecordEntity taskRecord) {
-			String reportStatus = CharSequenceUtil.blankToDefault(
-				payload.getReportStatus(), SmallBagCostAllocationMainReportStatusEnum.TOBECONFIRM.getCode());
-			BatchBusinessIdProvider defaultProvider = (cursor, size) ->
-				smallBagCostAllocationMainService.pageMainIdsForReAllocation(
-					payload.getReportPeriodStr(), reportStatus, cursor, size);
-			return asyncTaskRecordService.pageBatchBusinessIds(
-				envelope.getRetryMode(), envelope.getRetrySourceTaskId(), lastId, batchSize,
-				defaultProvider, null);
-		}
-
-		@Override
-		public TmsAsyncTaskRecordDTO.BatchProcessResult processBatch(String taskId,
-																	 TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope,
-																	 TmsAsyncTaskRecordDTO.SmallBagReportPeriodBatchPayloadDTO payload,
-																	 LoginUser operatorUser,
-																	 List<String> batchIds,
-																	 int batchNumber,
-																	 CfgSettingValueDTO.BillBatchParamsDTO billBatchParams) {
-			int timeoutSeconds = asyncTaskRecordService.resolveTimeoutSeconds(
-				billBatchParams.getBatchTimeoutSeconds(), 5000);
-			int staleDetailSeconds = asyncTaskRecordService.resolveStaleDetailSeconds(billBatchParams);
-			return processSmallBagDeleteBatch(
-				taskId, batchIds, timeoutSeconds, staleDetailSeconds, operatorUser);
-		}
-	}
-
 	/**
 	 * 小包核算状态变更批次：为主表记录补齐任务明细并回写单条执行结果。
 	 */
-	private TmsAsyncTaskRecordDTO.BatchProcessResult processSmallBagUpdateStatusBatch(String taskId,
+	@Override
+	public TmsAsyncTaskRecordDTO.BatchProcessResult processUpdateStatusBatch(String taskId,
 																					 List<String> batchIds,
 																					 String reportDate,
 																					 String reportStatus,
@@ -629,7 +457,8 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 	/**
 	 * 小包重新分摊批次：按任务明细维度执行，保证失败单据可单独重试。
 	 */
-	private TmsAsyncTaskRecordDTO.BatchProcessResult processSmallBagReAllocationBatch(String taskId,
+	@Override
+	public TmsAsyncTaskRecordDTO.BatchProcessResult processReAllocationBatch(String taskId,
 																					 List<String> batchIds,
 																					 int timeoutSeconds,
 																					 int staleDetailSeconds,
@@ -645,7 +474,8 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 	/**
 	 * 小包批量删除批次：将删除成功或失败逐条写入异步任务明细。
 	 */
-	private TmsAsyncTaskRecordDTO.BatchProcessResult processSmallBagDeleteBatch(String taskId,
+	@Override
+	public TmsAsyncTaskRecordDTO.BatchProcessResult processDeleteBatch(String taskId,
 																			   List<String> batchIds,
 																			   int timeoutSeconds,
 																			   int staleDetailSeconds,
