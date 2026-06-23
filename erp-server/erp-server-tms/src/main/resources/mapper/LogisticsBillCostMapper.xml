@@ -435,46 +435,6 @@
         </where>
     </select>
 
-    <select id="listByCanPushAllocation" resultType="java.lang.String">
-        SELECT lbc.id
-        FROM logistics_bill_cost AS lbc
-        inner join logistics_bill lb on lbc.logistics_bill_id = lb.id and lb.is_deleted = false
-        LEFT JOIN (
-            SELECT DISTINCT cost_id
-            FROM small_bag_cost_allocation_main
-            WHERE is_deleted = FALSE
-              AND (
-                  report_date = #{params.reportDate}
-                  OR report_status = 'confirmed'
-                  OR fee_source = 'confirmed'
-              )
-        ) excl_confirmed ON lbc.id = excl_confirmed.cost_id
-        LEFT JOIN (
-            SELECT DISTINCT cost_id
-            FROM small_bag_cost_allocation_main
-            WHERE is_deleted = FALSE
-              AND (
-                  report_date = #{params.reportDate}
-                  OR report_status = 'confirmed'
-              )
-        ) excl_estimate ON lbc.id = excl_estimate.cost_id
-        WHERE lbc.is_deleted = FALSE
-          AND lb.is_allocate_cost_required = true
-        AND lbc.type = #{params.type}
-          AND lbc.reconciliation_month = #{params.reportDate}
-          AND (
-              (lbc.reconciliation_status = 'confirmed'      AND excl_confirmed.cost_id IS NULL)
-              OR
-              (lbc.reconciliation_status = 'estimateConfirm' AND excl_estimate.cost_id IS NULL)
-          )
-        <if test="params.ids != null and params.ids.size() > 0">
-            AND lbc.id IN
-            <foreach collection="params.ids" item="item" open="(" separator="," close=")">
-                #{item}
-            </foreach>
-        </if>
-    </select>
-
     <select id="pageByCanPushAllocation" resultType="java.lang.String">
         SELECT
         lbc.ID

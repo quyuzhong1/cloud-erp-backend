@@ -287,9 +287,7 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      */
     LogisticsBillCostDTO.TotalCountDTO listTotalCount(LogisticsBillCostDTO.PagingParamDTO dto);
 
-    List<String> listByCanPushAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
-
-    void batchAsyncPushAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
+    void batchAsyncPushAllocation(TmsAsyncTaskRecordDTO.SmallBagPushAllocationPayloadDTO payload);
 
     /**
      * 创建尾程费用对账状态变更异步任务，用任务code承接全量高级查询场景。
@@ -318,38 +316,39 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
     /**
      * 游标分页查询可下推分摊的费用ID（SQL层分批，不全量加载）
      *
-     * @param dto 查询条件（含 lastId 游标、batchSize 批大小）
+     * @param query 查询条件（含 lastId 游标、batchSize 批大小）
      * @return 当前批次费用ID列表
      * @author jack
      * @date 2026-04-22
      */
-    List<String> pageByCanPushAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
+    List<String> pageByCanPushAllocation(LogisticsBillCostDTO.CanPushAllocationPageQueryDTO query);
 
     /**
      * 统计可下推分摊的费用总条数
      *
-     * @param dto 查询条件
+     * @param query 查询条件
      * @return 总条数
      * @author jack
      * @date 2026-04-22
      */
-    int countByCanPushAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
+    int countByCanPushAllocation(LogisticsBillCostDTO.CanPushAllocationPageQueryDTO query);
+
 
     /**
      * 游标分页查询可更新对账状态的费用ID。
      *
-     * @param dto 查询条件（含 lastId 游标、batchSize 批大小）
+     * @param query 查询条件（含 lastId 游标、batchSize 批大小）
      * @return 当前批次费用ID列表
      */
-    List<String> pageByUpdateReconciliationStatus(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
+    List<String> pageByUpdateReconciliationStatus(LogisticsBillCostDTO.UpdateReconciliationStatusPageQueryDTO query);
 
     /**
      * 统计可更新对账状态的费用数量，避免创建无效异步任务。
      *
-     * @param dto 查询条件
+     * @param query 查询条件
      * @return 可处理数量
      */
-    int countByUpdateReconciliationStatus(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
+    int countByUpdateReconciliationStatus(LogisticsBillCostDTO.UpdateReconciliationStatusPageQueryDTO query);
 
     /**
      * @description: 批量导入新增

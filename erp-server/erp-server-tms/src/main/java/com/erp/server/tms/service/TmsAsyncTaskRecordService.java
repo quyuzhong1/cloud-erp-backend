@@ -2,13 +2,12 @@ package com.erp.server.tms.service;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.service.SuperService;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.CfgSettingValueDTO;
 import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
 import com.erp.model.tms.entity.TmsAsyncTaskRecordEntity;
-import com.common.business.service.SuperService;
-
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -26,8 +25,6 @@ public interface TmsAsyncTaskRecordService extends SuperService<TmsAsyncTaskReco
     /**
      * 新增手动任务（带方法类型，在同一 businessType 下区分不同方法）
      * 防重键为 businessType + methodType + dataJson
-     *
-     * @param detailCount 预期明细数量（创建时直接写入，省去二次更新）
      * @return 创建成功的任务记录；命中防重或保存失败时返回 null
      */
     TmsAsyncTaskRecordEntity addManualTask(TmsAsyncTaskRecordDTO.ManualCreateDTO dto);
@@ -132,20 +129,36 @@ public interface TmsAsyncTaskRecordService extends SuperService<TmsAsyncTaskReco
                                            Class<T> payloadClass, String errorMsg);
 
     /**
-     * 从任务记录和信封构建消费期运行态参数。
-     */
-    TmsAsyncTaskRecordDTO.PushParamsDTO buildDispatchPushParams(TmsAsyncTaskRecordEntity taskRecord,
-                                                                TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope);
-
-    /**
      * 认领待执行任务并派发 MQ。
      */
     void claimAndDispatch(TmsAsyncTaskRecordEntity entity, boolean manualImmediate);
 
     /**
-     * 解析异步任务执行业务时的操作人：优先 PushParams 显式操作人，错误重试时追溯源任务创建人，否则取当前任务创建人。
+     * 解析异步任务执行业务时的操作人：优先信封显式操作人，错误重试时追溯源任务创建人，否则取当前任务创建人。
      */
-    LoginUser resolveOperatorLoginUser(TmsAsyncTaskRecordEntity taskRecord, TmsAsyncTaskRecordDTO.PushParamsDTO pushParams);
+    LoginUser resolveOperatorLoginUser(TmsAsyncTaskRecordEntity taskRecord, TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope);
+
+    /**
+     * 手动信封任务创建并立即派发 MQ。
+     */
+    BatchResultDTO dispatchManualEnvelopeTask(String businessType,
+                                              String methodType,
+                                              int detailCount,
+                                              TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope,
+                                              String dispatchSuccessLogTemplate);
+
+    /**
+     * 异步任务 businessId 分批：FAILED_ONLY / 已选 ID Provider / 条件查询 Provider。
+     * <p>
+     * selectedIdProvider 优先于 defaultProvider；当前多数 Handler 仅使用 defaultProvider，
+     * selectedIdProvider 供后续「信封内已选 ID 异步分批」扩展。
+     */
+    List<String> pageBatchBusinessIds(String retryMode,
+                                      String retrySourceTaskId,
+                                      String lastId,
+                                      int batchSize,
+                                      BatchBusinessIdProvider defaultProvider,
+                                      BatchBusinessIdProvider selectedIdProvider);
 
     /**
      * 分批循环内检查任务是否应终止（记录消失或已完成）

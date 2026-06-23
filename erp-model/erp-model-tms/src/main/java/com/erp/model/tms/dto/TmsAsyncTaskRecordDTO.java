@@ -206,36 +206,7 @@ public class TmsAsyncTaskRecordDTO implements Serializable {
 
     }
 
-//     /**
-//     * 状态统计
-//     */
-//     @Data
-//     @NoArgsConstructor
-//     @AllArgsConstructor
-//     public static class TaskDTO {
-//
-//         /**
-//         *
-//         */
-//         private List<String> ids;
-//
-//         /**
-//          *核算日期
-//          */
-//         private String reportDate;
-//         /**
-//          * 主任务id
-//          */
-//         private String taskId;
-//         /**
-//          * 单据类型
-//          */
-//         private String businessType;
-//         /**
-//          *物流标签类型
-//          */
-//         private String type;
-//     }
+
 
 
     /**
@@ -311,7 +282,7 @@ public class TmsAsyncTaskRecordDTO implements Serializable {
         private Integer detailCount;
 
         /**
-         * 任务参数 JSON（PushParamsDTO 序列化）
+         * 任务参数 JSON（TaskEnvelopeDTO 序列化）
          */
         private String dataJson;
     }
@@ -335,7 +306,7 @@ public class TmsAsyncTaskRecordDTO implements Serializable {
         private String methodType;
 
         /**
-         * 任务参数 JSON（PushParamsDTO 序列化）
+         * 任务参数 JSON（TaskEnvelopeDTO 序列化）
          */
         private String dataJson;
 
@@ -662,160 +633,6 @@ public class TmsAsyncTaskRecordDTO implements Serializable {
          * 批次大小。
          */
         private Integer batchSize;
-    }
-
-    /**
-     * 手动创建任务
-     */
-    @Data
-    @NoArgsConstructor
-    public static class PushParamsDTO {
-
-        /**
-         * ids
-         */
-        private List<String> ids;
-        /**
-         *核算日期
-         */
-        private String reportDate;
-        /**
-         * 主任务id
-         */
-        private String taskId;
-        /**
-         * 单据类型
-         */
-        private String businessType;
-        /**
-         *物流标签类型
-         */
-        private String type;
-
-        /**
-         * 方法类型：同一 business_type 下区分不同方法  枚举：TmsAsyncTaskMethodTypeEnum
-         */
-        private String methodType;
-
-        /**
-         * 错误重试来源任务：避免把大批量失败明细ID写入 dataJson
-         */
-        private String retrySourceTaskId;
-
-        /**
-         * 重试模式：FAILED_ONLY 表示按来源任务失败明细分页执行
-         */
-        private String retryMode;
-
-        /**
-         * 核算期间 yyyy-MM（按月处理时的过滤条件）
-         */
-        private String reportPeriodStr;
-
-        /**
-         * 目标核算状态（批量更新核算状态时使用）
-         */
-        private String reportStatus;
-
-        /**
-         * 目标对账状态（批量更新对账状态时使用）
-         */
-        private String reconciliationStatus;
-
-        /**
-         * 对账确认时间
-         */
-        private LocalDateTime confirmTime;
-
-        /**
-         * 页面高级查询生成的 SQL 条件
-         */
-        private Map<String, String> sqlMap;
-
-        /**
-         * 数据权限 SQL
-         */
-        private String permissionSql;
-
-        /**
-         * 任务提交人ID
-         */
-        private String operatorUserId;
-
-        /**
-         * 任务提交人名称
-         */
-        private String operatorUserName;
-
-        /**
-         * 对账状态：暂估确认
-         */
-        private String estimateConfirmStatus;
-
-        /**
-         * 对账状态：账单确认
-         */
-        private String confirmedStatus;
-
-        /**
-         * 对账状态：已作废
-         */
-        private String invalidStatus;
-
-        /**
-         * 对账状态：待确认
-         */
-        private String toBeConfirmStatus;
-
-        /**
-         * 核算状态：已生成
-         */
-        private String checkedCheckStatus;
-
-        /**
-         * 核算状态：待生成
-         */
-        private String checkingCheckStatus;
-
-        /**
-         * 支付类型：退款
-         */
-        private String refundPayType;
-
-        /**
-         * 支付状态：待付款/待退款
-         */
-        private String paymentPayStatus;
-
-        /**
-         *开始日期
-         */
-        private LocalDate startDate;
-        /**
-         *结束日期
-         */
-        private LocalDate endDate;
-
-        /**
-         *开始日期
-         */
-        private LocalDateTime startTime;
-        /**
-         *结束日期
-         */
-        private LocalDateTime endTime;
-
-        /**
-         * 游标分页：上一批最后一条记录的 id（首次传空字符串）
-         * 仅在服务内部循环中使用，不随 MQ 消息体传递
-         */
-        private String lastId;
-
-        /**
-         * 游标分页：每批查询条数
-         */
-        private Integer batchSize;
-
     }
 
     @Data

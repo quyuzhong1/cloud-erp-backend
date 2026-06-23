@@ -54,8 +54,11 @@ import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
 import com.erp.server.tms.convert.TmsFirstMileReconciliationConverter;
 import com.erp.server.tms.listener.FirstMileReconciliationConfigExcelListener;
 import com.erp.server.tms.listener.FirstMileReconciliationStandardExcelListener;
+import com.erp.server.tms.handler.asynctask.FirstMileReconciliationPushDetailHandler;
 import com.erp.server.tms.mapper.TmsFirstMileReconciliationDetailMapper;
 import com.erp.server.tms.service.*;
+import com.erp.server.tms.service.asynctask.TmsFirstMileReconciliationAsyncTaskDelegate;
+import com.erp.server.tms.service.support.TmsAsyncTaskBatchConsumerSupport;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -104,7 +107,8 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_TMS_FIRST_M
  */
 @Slf4j
 @Service
-public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImpl<TmsFirstMileReconciliationDetailMapper, TmsFirstMileReconciliationDetailEntity> implements TmsFirstMileReconciliationDetailService {
+public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImpl<TmsFirstMileReconciliationDetailMapper, TmsFirstMileReconciliationDetailEntity>
+    implements TmsFirstMileReconciliationDetailService, TmsFirstMileReconciliationAsyncTaskDelegate {
     @Resource
     private OperateLogService operateLogService;
     @Resource
@@ -160,6 +164,11 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
     private ExecutorService costAllocationPool;
     @Resource
     private RedissonClient redissonClient;
+    @Resource
+    private TmsAsyncTaskBatchConsumerSupport tmsAsyncTaskBatchConsumerSupport;
+
+    @Resource
+    private FirstMileReconciliationPushDetailHandler firstMileReconciliationPushDetailHandler;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -2895,143 +2904,11 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
      */
     @Override
     public void pushFirstMileReconciliation(TmsAsyncTaskRecordEntity taskRecord) {
-        if (ObjectUtil.isEmpty(taskRecord) || StringUtils.isBlank(taskRecord.getId())) {
-            log.error("头程对账下推异步任务ID为空");
-            return;
-        }
-        String taskId = taskRecord.getId();
-
-        RLock taskLock = redissonClient.getLock(DistributeKeyConstant.TMS_ASYNC_TASK_EXEC_KEY + ":" + taskId);
-        boolean locked = false;
-        try {
-            locked = taskLock.tryLock(0, TimeUnit.SECONDS);
-            if (!locked) {
-                log.warn("头程对账下推异步任务正在执行，跳过重复消费，taskId: {}", taskId);
-                return;
-            }
-
-            CfgSettingValueDTO.BillBatchParamsDTO billBatchParamsDTO = asyncTaskRecordService.loadBillBatchParams(taskId);
-            if (billBatchParamsDTO == null) {
-                return;
-            }
-
-            TmsAsyncTaskRecordEntity currentRecord = asyncTaskRecordService.getById(taskId);
-            if (Objects.isNull(currentRecord)) {
-                log.error("任务记录不存在，taskId: {}", taskId);
-                asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),
-                    ApiError.LOGISTICS_PENDING_COST_NOT_FOUND.getMsg());
-                return;
-            }
-            if (Objects.equals(currentRecord.getStatus(), TmsAsyncTaskRecordStatusEnum.FINISH.getCode())) {
-                log.warn("头程对账下推异步任务已完成，跳过重复消费，taskId: {}", taskId);
-                return;
-            }
-
-            TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope = asyncTaskRecordService.parseEnvelope(currentRecord.getDataJson());
-            TmsAsyncTaskRecordDTO.FirstMileReconciliationPushPayloadDTO payload =
-                asyncTaskRecordService.parseEnvelopePayloadOrFinishTask(
-                    taskId, envelope, TmsAsyncTaskRecordDTO.FirstMileReconciliationPushPayloadDTO.class,
-                    "头程对账下推异步任务信封参数解析失败");
-            if (envelope == null || payload == null) {
-                return;
-            }
-            if (payload.getStartDate() == null || payload.getEndDate() == null) {
-                asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(), "开始日期或结束日期为空");
-                return;
-            }
-
-            TmsAsyncTaskRecordDTO.PushParamsDTO dispatchParams =
-                asyncTaskRecordService.buildDispatchPushParams(taskRecord, envelope);
-            String businessType = StringUtils.defaultIfBlank(dispatchParams.getBusinessType(),
-                SourceTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode());
-
-            if (Objects.equals(currentRecord.getStatus(), TmsAsyncTaskRecordStatusEnum.PENDING.getCode())) {
-                boolean claimed = asyncTaskRecordService.lambdaUpdate()
-                    .set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
-                    .set(TmsAsyncTaskRecordEntity::getErrorData, ApiError.COMMON_BATCH_PROCESSING.getMsg())
-                    .eq(TmsAsyncTaskRecordEntity::getId, taskId)
-                    .eq(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode())
-                    .update();
-                if (!claimed) {
-                    log.warn("头程对账下推异步任务已被其他消费者认领，taskId: {}", taskId);
-                    return;
-                }
-            } else if (!Objects.equals(currentRecord.getStatus(), TmsAsyncTaskRecordStatusEnum.ING.getCode())) {
-                log.warn("头程对账下推异步任务状态不可执行，taskId: {}, status: {}", taskId, currentRecord.getStatus());
-                return;
-            }
-
-            int batchSize = asyncTaskRecordService.resolveBatchSize(billBatchParamsDTO.getBatch(), 500);
-            int timeoutSeconds = asyncTaskRecordService.resolveTimeoutSeconds(
-                billBatchParamsDTO.getBatchTimeoutSeconds(), 5000);
-            int staleDetailSeconds = asyncTaskRecordService.resolveStaleDetailSeconds(billBatchParamsDTO);
-            String cursor = "";
-            int totalProcessed = 0;
-            int totalFailed = 0;
-            int batchNumber = 0;
-            final int maxBatchLimit = 100000;
-
-            while (true) {
-                batchNumber++;
-                if (batchNumber > maxBatchLimit) {
-                    log.warn("头程对账超过最大批次数，强制退出，taskId: {}, maxBatchLimit: {}", taskId, maxBatchLimit);
-                    asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(), "超过最大批次数，强制退出");
-                    break;
-                }
-                if (batchNumber == 1 || batchNumber % 10 == 0) {
-                    TmsAsyncTaskRecordEntity loopTask = asyncTaskRecordService.getById(taskId);
-                    if (asyncTaskRecordService.shouldStopLoopTask(taskId, loopTask)) {
-                        break;
-                    }
-                    if (asyncTaskRecordService.terminateTaskIfExecTimeoutReached(loopTask, billBatchParamsDTO)) {
-                        break;
-                    }
-                }
-
-                List<TmsAsyncTaskDetailEntity> batchDetails = prepareFirstMileReconciliationBatchDetails(
-                    taskId, businessType, dispatchParams.getRetryMode(), dispatchParams.getRetrySourceTaskId(),
-                    payload.getStartDate(), payload.getEndDate(), cursor, batchSize);
-                if (CollUtil.isEmpty(batchDetails)) {
-                    if (totalProcessed == 0) {
-                        asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),
-                            TmsAsyncTaskRecordDTO.RETRY_MODE_FAILED_ONLY.equals(dispatchParams.getRetryMode())
-                                ? "无失败明细可重试" : "周期内已签收未对账的物流单为空");
-                        return;
-                    }
-                    break;
-                }
-                TmsAsyncTaskRecordDTO.BatchProcessResult result = executeFirstMileReconciliationBatch(
-                    taskId, batchDetails, payload.getStartDate(), payload.getEndDate(), timeoutSeconds, staleDetailSeconds);
-                totalProcessed += batchDetails.size();
-                totalFailed += result.getFailedCount();
-                asyncTaskRecordService.lambdaUpdate()
-                    .set(TmsAsyncTaskRecordEntity::getDetailCount, totalProcessed)
-                    .set(TmsAsyncTaskRecordEntity::getErrorCount, totalFailed)
-                    .eq(TmsAsyncTaskRecordEntity::getId, taskId)
-                    .update();
-
-                String lastBusinessId = batchDetails.get(batchDetails.size() - 1).getBusinessId();
-                if (StringUtils.isBlank(lastBusinessId)) {
-                    log.error("头程对账批次末尾 businessId 为空，终止循环，taskId: {}", taskId);
-                    asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(), "批次末尾 businessId 为空，终止循环");
-                    break;
-                }
-                cursor = lastBusinessId;
-                log.info("头程对账第{}批完成，taskId: {}, 本批数量: {}, 失败: {}",
-                    batchNumber, taskId, batchDetails.size(), result.getFailedCount());
-            }
-            asyncTaskRecordService.updateTaskFinally(taskId);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            log.error("头程对账下推异步任务锁等待中断，taskId: {}", taskId, e);
-        } finally {
-            if (locked && taskLock.isHeldByCurrentThread()) {
-                taskLock.unlock();
-            }
-        }
+        tmsAsyncTaskBatchConsumerSupport.executePreparedDetails(taskRecord, firstMileReconciliationPushDetailHandler);
     }
 
-    private List<TmsAsyncTaskDetailEntity> prepareFirstMileReconciliationBatchDetails(String taskId, String businessType,
+    @Override
+    public List<TmsAsyncTaskDetailEntity> prepareFirstMileReconciliationBatchDetails(String taskId, String businessType,
                                                                                       String retryMode, String retrySourceTaskId,
                                                                                       LocalDate startDate, LocalDate endDate,
                                                                                       String cursor, int batchSize) {
@@ -3075,7 +2952,8 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 .list();
     }
 
-    private TmsAsyncTaskRecordDTO.BatchProcessResult executeFirstMileReconciliationBatch(String taskId,
+    @Override
+    public TmsAsyncTaskRecordDTO.BatchProcessResult executeFirstMileReconciliationBatch(String taskId,
                                                                                          List<TmsAsyncTaskDetailEntity> taskDetailList,
                                                                                          LocalDate startDate,
                                                                                          LocalDate endDate,
@@ -3368,4 +3246,5 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         }
         return lambdaQuery().in(TmsFirstMileReconciliationDetailEntity::getRelationCode, relationCodeList).list();
     }
+
 }
