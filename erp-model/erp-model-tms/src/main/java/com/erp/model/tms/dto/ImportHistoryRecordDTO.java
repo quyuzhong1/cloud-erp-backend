@@ -1,5 +1,6 @@
 package com.erp.model.tms.dto;
 
+import cn.hutool.json.JSONObject;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.BaseDTO;
 import com.common.business.dto.base.SortDTO;
@@ -14,7 +15,9 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -79,7 +82,6 @@ public class ImportHistoryRecordDTO implements Serializable {
         /**
          * 业务类型，自发货费用/尾程费用
          */
-        @NotBlank(message = "业务类型不能为空")
         private String businessType;
 
     }
@@ -321,6 +323,12 @@ public class ImportHistoryRecordDTO implements Serializable {
         private Integer matchCount;
 
         /**
+         * sheet页名称不能为空
+         */
+        @NotBlank(message = "sheet页名称不能为空")
+        private String sheetName;
+
+        /**
          * 处理状态,ImportHistoryRecordStatusEnum
          */
         @NotBlank(message = "处理状态不能为空")
@@ -399,6 +407,35 @@ public class ImportHistoryRecordDTO implements Serializable {
          */
         @NotBlank(message = "对账月份不能为空")
         private String reconciliationMonth;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ImportRowContextDTO {
+        /**
+         * 导入行数据。
+         */
+        private JSONObject row;
+        /**
+         * 当前行预匹配到的物流单集合。
+         */
+        private List<LogisticsBillDTO.LogisticsBillVo> matchedBillList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ImportGroupContextDTO {
+        /**
+         * 导入分组行数据，key 为识别分组键。
+         */
+        private Map<String, List<ImportRowContextDTO>> groupRowMap;
+        /**
+         * 每个分组预匹配到的物流单集合。
+         */
+        private Map<String, List<LogisticsBillDTO.LogisticsBillVo>> groupMatchedBillMap;
     }
 
 
@@ -486,15 +523,8 @@ public class ImportHistoryRecordDTO implements Serializable {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class PreQueryResultDTO {
+        // sourceType、dictCostAttribution 已移除：费用项归属与主单 type 分别在 format/handleImportData 行级解析。
 
-        /**
-         * 来源类型
-         */
-        private String sourceType;
-        /**
-         * 费用归属
-         */
-        private String dictCostAttribution;
         /**
          * 物流信息
          */
@@ -511,7 +541,26 @@ public class ImportHistoryRecordDTO implements Serializable {
          * 费用配置列表
          */
         private List<TmsCfgCostEntity> cfgCostList;
+        /**
+         * 物流单明细id对应的订单重量
+         */
+        private Map<String, BigDecimal> orderWeightMap;
+        /**
+         * 物流单明细id对应的重量预查询错误
+         */
+        private Map<String, List<String>> orderWeightErrorMap;
 
+        public PreQueryResultDTO(List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVoList,
+                                 Map<String, List<TmsCostDetailEntity>> mainIdListMap,
+                                 List<LogisticsBillCostEntity> logisticsBillCostList,
+                                 List<TmsCfgCostEntity> cfgCostList) {
+            this.logisticsBillVoList = logisticsBillVoList;
+            this.mainIdListMap = mainIdListMap;
+            this.logisticsBillCostList = logisticsBillCostList;
+            this.cfgCostList = cfgCostList;
+            this.orderWeightMap = new HashMap<>();
+            this.orderWeightErrorMap = new HashMap<>();
+        }
 
     }
 

@@ -38,8 +38,14 @@ public interface DictBasicService extends SuperService<DictBasicEntity> {
      * @param type
      * @return java.util.List<com.erp.model.sys.dto.DictBasicDTO.ViewDTO>
      */
-    List<DictBasicDTO.ViewDTO> listByType(String type);
+    List<DictBasicEntity> listByType(String type);
 
+    /**
+     * 根据类型列表获取字典值
+     * @param typeList
+     * @return
+     */
+    List<DictBasicEntity> getByKeyList(List<String> typeList) ;
     /**
      * 根据值获取字典信息
      * @author yl

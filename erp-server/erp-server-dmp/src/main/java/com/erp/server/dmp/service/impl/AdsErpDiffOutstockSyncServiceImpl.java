@@ -1,54 +1,46 @@
 package com.erp.server.dmp.service.impl;
 
-import java.util.*;
-import java.util.stream.Collectors;
-
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
-
-import com.baomidou.dynamic.datasource.toolkit.DynamicDataSourceContextHolder;
-import com.common.business.dto.base.*;
-import com.common.business.enums.OperationTypeEnum;
-import com.common.core.utils.BeanMapper;
-import com.erp.model.dmp.dto.CfgDiffStrategyDTO;
-import com.erp.model.dmp.entity.CfgDiffStrategyDetailEntity;
-import com.erp.model.dmp.entity.CfgDiffStrategyEntity;
-import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.server.dmp.service.*;
-import jodd.util.StringUtil;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.dynamic.datasource.annotation.DS;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
+import com.common.business.dto.base.*;
 import com.common.business.enums.FileTaskEventEnum;
+import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO;
 import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO.ExpotParamDTO;
 import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO.PagingParamDTO;
-import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO.ReCreateDTO;
 import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO.TotalDTO;
-import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO.UpdateErpDTO;
 import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO.UpdateRemarkDTO;
+import com.erp.model.dmp.dto.CfgDiffStrategyDTO;
 import com.erp.model.dmp.entity.doris.AdsErpDiffOutstockSyncEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.dmp.mapper.doris.AdsErpDiffOutstockSyncMapper;
-import com.erp.server.dmp.utils.RestCloudApiUtil;
-
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
+import com.erp.server.dmp.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
+import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -235,57 +227,7 @@ public class AdsErpDiffOutstockSyncServiceImpl extends SuperServiceImpl<AdsErpDi
 	public TotalDTO total(PagingDTO<PagingParamDTO> dto) {
 		return baseMapper.total(dto.getParams());
 	}
-	
-	@Override
-	public Boolean reCreate(ReCreateDTO dto) {
-		String checkMonth = dto.getCheckMonth();
-		checkMonth = checkMonth.replace("-", "年") + "月";
-		if(!cn.hutool.core.date.DateUtil.format(cn.hutool.core.date.DateUtil.offsetMonth(new Date(), -1), "yyyy年MM月").equals(checkMonth)) {
-			throw new ServiceException("只允许重新生成上月核对任务");
-		}
-		Integer count = lambdaQuery().eq(AdsErpDiffOutstockSyncEntity::getCheckMonth, checkMonth)
-				.eq(AdsErpDiffOutstockSyncEntity::getExecStatus, "doing").count();
-		if(count != null && count > 0) {
-			throw new ServiceException(dto.getCheckMonth() + "核对任务正在执行中");
-		}
-		boolean reCreate = RestCloudApiUtil.syncReCreate(checkMonth, "ods_erp/ods_flow_outstock_diff_recreate");
-		if(reCreate) {
-			lambdaUpdate().eq(AdsErpDiffOutstockSyncEntity::getCheckMonth, checkMonth)
-			.set(AdsErpDiffOutstockSyncEntity::getExecStatus, "doing")
-			.set(AdsErpDiffOutstockSyncEntity::getExecStatusName, "执行中")
-			.setSql(" finish_time = null ")
-			.update();
-		}
-		return true;
-	}
-	
-	@Override
-	public Boolean updateErp(UpdateErpDTO dto) {
-		String querySql = dto.getSqlMap().get("default");
-		String permissionSql = dto.getPermissionSql();
-		List<AdsErpDiffOutstockSyncEntity> list = lambdaQuery().eq(AdsErpDiffOutstockSyncEntity::getIsDeleted, false)
-				.eq(AdsErpDiffOutstockSyncEntity::getCheckMonth, cn.hutool.core.date.DateUtil.format(cn.hutool.core.date.DateUtil.offsetMonth(new Date(), -1), "yyyy年MM月"))
-		.select(AdsErpDiffOutstockSyncEntity::getSourceSystem , AdsErpDiffOutstockSyncEntity::getAccountCode , AdsErpDiffOutstockSyncEntity::getCheckMonth)
-		.last(" and " + querySql + " " + (permissionSql == null ? "" : permissionSql) + " group by source_system,account_code,check_month ")
-		.list();
-		if(CollUtil.isNotEmpty(list)) {
-			Integer count = lambdaQuery().in(AdsErpDiffOutstockSyncEntity::getCheckMonth, list.stream().map(AdsErpDiffOutstockSyncEntity::getCheckMonth).collect(Collectors.toSet()))
-					.eq(AdsErpDiffOutstockSyncEntity::getExecStatus, "doing").count();
-			if(count != null && count > 0) {
-				throw new ServiceException(list.stream().map(AdsErpDiffOutstockSyncEntity::getCheckMonth).distinct().collect(Collectors.joining("、")) + "中有核对任务正在执行中");
-			}
-			boolean reCreate = RestCloudApiUtil.syncReCreate("", "ods_erp/ods_flow_outstock_diff_update");
-			if(reCreate) {
-				lambdaUpdate().eq(AdsErpDiffOutstockSyncEntity::getIsDeleted, false).last(" and " + querySql + " " + (permissionSql == null ? "" : permissionSql))
-				.set(AdsErpDiffOutstockSyncEntity::getExecStatus, "doing")
-				.set(AdsErpDiffOutstockSyncEntity::getExecStatusName, "执行中")
-				.setSql(" finish_time = null ")
-				.update();
-			}
-		}
-		return true;
-	}
-	
+
 	@Override
 	public Boolean updateRemark(UpdateRemarkDTO dto) {
 		return lambdaUpdate().eq(AdsErpDiffOutstockSyncEntity::getId, dto.getId()).set(AdsErpDiffOutstockSyncEntity::getRemark, dto.getRemark()).update();

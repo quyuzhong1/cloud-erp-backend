@@ -1,43 +1,46 @@
 package com.erp.server.scm.controller.api;
 
 
+import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
+import com.common.business.dto.base.*;
+import com.common.business.enums.DataAttributeEnum;
+import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.fms.dto.AssetAcceptDTO;
+import com.erp.model.scm.dto.AssetPurchaseOrderDTO;
+import com.erp.model.scm.entity.AssetPurchaseOrderEntity;
 import com.erp.server.scm.query.AssetPurchaseOrderQueryHandler;
 import com.erp.server.scm.service.AssetPurchaseOrderDetailService;
 import com.erp.server.scm.service.AssetPurchaseOrderService;
 import com.erp.server.scm.service.PurchaseOrderService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import javax.annotation.Resource;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import com.common.core.anno.LogAction;
-import com.common.core.anno.LogSystemModule;
-import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
-import org.springframework.web.bind.annotation.RestController;
-import com.common.core.controller.BaseController;
-import com.common.core.controller.vo.ApiResult;
-import com.common.business.vo.PagingVO;
-import cn.hutool.core.util.ObjectUtil;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
-import com.erp.model.scm.dto.AssetPurchaseOrderDTO;
+
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
-import com.erp.model.scm.entity.AssetPurchaseOrderEntity;
 
 /**
  * 
@@ -365,7 +368,7 @@ public class AssetPurchaseOrderController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO cancelResult;
             try {
-                cancelResult = assetPurchaseOrderService.cancelProcess(id);
+                cancelResult = assetPurchaseOrderService.cancelProcess(new ApproveDTO.CancelProcessDTO(id));
             }catch (Exception e){
                 log.error("撤回流程失败",e);
                 AssetPurchaseOrderEntity entity = idEntityMap.get(id);
@@ -548,7 +551,7 @@ public class AssetPurchaseOrderController extends BaseController {
     @GetMapping("/listAssetPurchaseContractPdf")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id",
-            menuCode = "scm:assetPurchaseOrder:exportAssetPurchaseContractPdf",
+            menuCode = "scm:assetPurchaseOrder:listPurchaseContractPdf",
             serviceClass = AssetPurchaseOrderService.class,
             keyIdName = "id")
     public ApiResult<AssetPurchaseOrderDTO.ExportPdfDTO> listPurchaseContractPdf(@RequestParam("id") String id) {
@@ -594,7 +597,7 @@ public class AssetPurchaseOrderController extends BaseController {
     @PostMapping("/viewGenerateAssetAccept")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "apply_user_id,create_user_id",
-            menuCode = "scm:assetNotice:viewGenerateAssetAccept",
+            menuCode = "scm:assetPurchaseOrder:viewGenerateAssetAccept",
             serviceClass = AssetPurchaseOrderService.class,
             keyIdName = "ids")
     public ApiResult<List<AssetPurchaseOrderDTO.ViewGenerateAssetAcceptDTO>> viewGenerateAssetAccept(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -626,7 +629,7 @@ public class AssetPurchaseOrderController extends BaseController {
     @PostMapping("/viewGeneratePurchaseChangeOrder")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "apply_user_id,create_user_id",
-            menuCode = "scm:assetNotice:viewGenerateAssetAccept",
+            menuCode = "scm:assetPurchaseOrder:viewGeneratePurchaseChangeOrder",
             serviceClass = AssetPurchaseOrderService.class,
             keyIdName = "ids")
     public ApiResult<AssetPurchaseOrderDTO.ViewGeneratePurchaseChangeDTO> viewGeneratePurchaseChangeOrder(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {

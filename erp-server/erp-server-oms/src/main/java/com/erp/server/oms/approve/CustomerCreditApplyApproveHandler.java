@@ -26,7 +26,7 @@ public class CustomerCreditApplyApproveHandler extends AbstractApproveHandler {
 
     @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
-        BatchResultDTO resultDTO = customerCreditApplyService.cancelProcess(dto.getId());
+        BatchResultDTO resultDTO = customerCreditApplyService.cancelProcess(dto);
         return resultDTO.getSuccess();
     }
 

@@ -212,7 +212,12 @@ public enum ModuleTypeEnum {
 
     QC_APPLICATION("163", "质检申请单"),
     FILE_MANAGEMENT("164", "文件管理"),
+    MESSAGE("162","系统通知"),
+    SYS_VERSION("163","版本更新"),
+    PDA_VERSION("164","PDA系统升级"),
 
+
+    LOGISTICS_ORDER("168", "物流下单"),
 
     AFTER_SALE_PACK("190", "售后装箱"),
     FULL_BOX_TRANSFER("191", "整箱移仓"),
@@ -235,6 +240,7 @@ public enum ModuleTypeEnum {
     CFG_DIFF_STRATEGY("150", "差异策略配置"),
     DELIVERY_BOX_RULE("156", "发货箱规"),
     B2B_THIRD_DELIVERY("157", "B2B三方发货单"),
+    B2B_CUSTOMER_PACKING_LABEL("166", "B2B客户装箱标签"),
     DMP_ADS_ERP_DIFF_OUTSTOCK_SYNC("158", "出库同步差异"),
     DMP_ADS_ERP_DIFF_RETURN_INSTOCK_SYNC("159", "退货同步差异"),
     SO_B2B_DELIVERY_INTERCEPT("165", "B2B发货拦截单"),

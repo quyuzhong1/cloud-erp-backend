@@ -1,4 +1,5 @@
 package com.erp.server.scm.service;
+import com.common.business.dto.ApproveDTO;
 import com.erp.model.scm.entity.AssetPurchaseChangeEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -129,10 +130,10 @@ public interface AssetPurchaseChangeService extends SuperService<AssetPurchaseCh
     * 撤销
     * @author wtr
     * @date: 2025-10-16
-    * @param id
+    * @param dto
     * @return
     */
-    BatchResultDTO cancelProcess(String id);
+    BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto);
 
     /**
     * 导出Excel

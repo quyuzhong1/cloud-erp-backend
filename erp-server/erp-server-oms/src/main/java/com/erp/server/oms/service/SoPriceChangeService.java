@@ -1,5 +1,6 @@
 package com.erp.server.oms.service;
 
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -94,10 +95,10 @@ public interface SoPriceChangeService extends SuperService<SoPriceChangeEntity> 
      * 取消流程
      * @author yl
      * @date 2023-03-28 16:56
-     * @param ids
+     * @param dto
      * @return java.lang.Boolean
      */
-    Boolean cancelProcess(List<String> ids);
+    Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto);
 
     /**
      * 分页获取销售价目变更数据

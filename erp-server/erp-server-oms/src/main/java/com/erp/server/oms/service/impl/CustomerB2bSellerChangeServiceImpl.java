@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.ApproveType;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -356,7 +357,8 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
     }
 
     @Override
-    public List<BatchResultDTO> batchCancel(List<String> ids) {
+    public List<BatchResultDTO> batchCancel(ApproveDTO.BatchCancelProcessDTO dto) {
+        List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOList = new ArrayList<>();
         for(String id : ids){
             BatchResultDTO batchResultDTO = new BatchResultDTO();
@@ -380,6 +382,7 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
             //撤销现有流程
             LoginUser userInfo = UserContext.getDefaultLoginUser();
             ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+            revokeDTO.setExecuteSystem(dto.getExecuteSystem());
             revokeDTO.setBusinessId(entity.getMainId());
             revokeDTO.setBusinessKey(SourceTypeEnum.CUSTOMER_B2B_CHANGE_SELLER.getCode());
             revokeDTO.setUserId(userInfo.getUid());

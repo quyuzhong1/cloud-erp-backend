@@ -35,7 +35,7 @@ public class AssetPurchaseOrderApproveHandler extends AbstractApproveHandler {
 
     @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
-        BatchResultDTO resultDTO = assetPurchaseOrderService.cancelProcess(dto.getId());
+        BatchResultDTO resultDTO = assetPurchaseOrderService.cancelProcess(dto);
         return resultDTO.getSuccess();
     }
 

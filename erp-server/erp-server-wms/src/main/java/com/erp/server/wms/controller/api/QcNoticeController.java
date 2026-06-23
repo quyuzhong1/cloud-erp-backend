@@ -1,38 +1,40 @@
 package com.erp.server.wms.controller.api;
 
 
+import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
+import com.common.business.dto.base.*;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
 import com.common.core.utils.ExcelUtil;
 import com.erp.server.wms.query.QcNoticeQueryHandler;
 import lombok.extern.slf4j.Slf4j;
-
 import javax.annotation.Resource;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.common.core.controller.BaseController;
-import com.erp.server.wms.service.QcNoticeService;
 import com.common.core.controller.vo.ApiResult;
-import com.common.business.vo.PagingVO;
-import cn.hutool.core.util.ObjectUtil;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.QcNoticeDTO;
-
+import com.erp.model.wms.entity.QcNoticeDetailEntity;
+import com.erp.model.wms.entity.QcNoticeEntity;
+import com.erp.server.wms.service.QcNoticeDetailService;
+import com.erp.server.wms.service.QcNoticeService;
+import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
-import com.erp.model.wms.entity.QcNoticeEntity;
-import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 质检通知单
@@ -48,6 +50,9 @@ public class QcNoticeController extends BaseController {
 
     @Resource
     private QcNoticeService qcNoticeService;
+
+    @Resource
+    private QcNoticeDetailService qcNoticeDetailService;
 
     /**
     * 新增
@@ -79,6 +84,68 @@ public class QcNoticeController extends BaseController {
     public ApiResult<?> update(@RequestBody @Validated QcNoticeDTO.UpdateDTO dto) {
         qcNoticeService.update(dto);
         return success();
+    }
+
+    /**
+    * 批量更新质检员-弹窗数据
+    * @author wtr
+    * @date: 2026-06-01
+    * @param dto 选中的质检通知单明细id列表
+    * @return ApiResult<List<QcNoticeDTO.UpdateQcUserViewDTO>>
+    */
+    @PostMapping("/updateQcUserView")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:qcNotice:updateQcUser",
+            serviceClass = QcNoticeDetailService.class,
+            keyIdName = "detailIds")
+    public ApiResult<List<QcNoticeDTO.UpdateQcUserViewDTO>> updateQcUserView(
+            @RequestBody @Validated QcNoticeDTO.UpdateQcUserViewParamDTO dto) {
+        return success(qcNoticeService.updateQcUserView(dto));
+    }
+
+    /**
+    * 批量更新质检员（每行独立质检员，并级联更新下游质检单）
+    * @author wtr
+    * @date: 2026-05-28
+    * @param dtos 明细质检员列表，每行 {detailId, qcUserId, qcUserName}
+    * @return ApiResult<List<BatchResultDTO>>
+    */
+    @PostMapping("/updateQcUser")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:qcNotice:updateQcUser",
+            serviceClass = QcNoticeDetailService.class,
+            keyIdName = "detailId")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "质检通知单批量更新质检员")
+    public ApiResult<List<BatchResultDTO>> batchUpdateQcUser(
+            @RequestBody @Validated ValidList<QcNoticeDTO.UpdateQcUserDTO> dtos) {
+        Map<String, QcNoticeDTO.UpdateQcUserDTO> itemMap = new LinkedHashMap<>();
+        for (QcNoticeDTO.UpdateQcUserDTO item : dtos) {
+            itemMap.put(item.getDetailId(), item);
+        }
+        List<String> detailIds = new ArrayList<>(itemMap.keySet());
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(detailIds.size());
+        List<QcNoticeDetailEntity> detailList = qcNoticeDetailService.listByIds(detailIds);
+        Map<String, QcNoticeDetailEntity> detailMap = detailList.stream()
+                .collect(Collectors.toMap(QcNoticeDetailEntity::getId, d -> d));
+        for (QcNoticeDTO.UpdateQcUserDTO dto : itemMap.values()) {
+            BatchResultDTO updateResult;
+            try {
+                updateResult = qcNoticeService.updateQcUser(dto);
+            } catch (Exception e) {
+                log.error("质检通知单批量更新质检员失败", e);
+                QcNoticeDetailEntity detail = detailMap.get(dto.getDetailId());
+                if (ObjectUtil.isEmpty(detail)) {
+                    updateResult = BatchResultDTO.fail(dto.getDetailId(), dto.getDetailId(), "质检通知单明细不存在, 更新质检员失败");
+                    resultDTOS.add(updateResult);
+                    continue;
+                }
+                updateResult = BatchResultDTO.fail(detail.getId(), detail.getSkuNo(), e);
+            }
+            resultDTOS.add(updateResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -206,7 +273,12 @@ public class QcNoticeController extends BaseController {
         for (String id : ids) {
             BatchResultDTO approveResult;
             try {
-                approveResult = qcNoticeService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()));
+                ApproveOneDTO approveOneDTO = new ApproveOneDTO();
+                approveOneDTO.setId(id);
+                approveOneDTO.setType(dto.getType());
+                approveOneDTO.setComment(dto.getComment());
+                approveOneDTO.setPlanQcDate(dto.getPlanQcDate());
+                approveResult = qcNoticeService.approve(approveOneDTO);
             }catch (Exception e){
                 log.error("质检通知单审核失败",e);
                 QcNoticeEntity entity = idEntityMap.get(id);
@@ -321,7 +393,7 @@ public class QcNoticeController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO cancelResult;
             try {
-                cancelResult = qcNoticeService.cancelProcess(id);
+                cancelResult = qcNoticeService.cancelProcess(new ApproveDTO.CancelProcessDTO(id));
             }catch (Exception e){
                 log.error("质检通知单撤回流程失败",e);
                 QcNoticeEntity entity = idEntityMap.get(id);
@@ -339,7 +411,7 @@ public class QcNoticeController extends BaseController {
 
     /**
     * 作废
-    * @author jack  
+    * @author jack
     * @date:  2025-11-10
     * @param dto
     * @return ApiResult<List<BatchResultDTO>>
@@ -357,7 +429,7 @@ public class QcNoticeController extends BaseController {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
         List<QcNoticeEntity> list = qcNoticeService.lambdaQuery().in(QcNoticeEntity::getId, ids).list();
         Map<String, QcNoticeEntity> idEntityMap = list.stream().collect(Collectors.toMap(QcNoticeEntity::getId, w -> w));
-        
+
         for (String id : ids) {
             BatchResultDTO invalidResult;
             try {

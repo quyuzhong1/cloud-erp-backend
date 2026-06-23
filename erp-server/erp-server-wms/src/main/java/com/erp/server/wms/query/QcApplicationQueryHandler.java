@@ -18,6 +18,13 @@ public class QcApplicationQueryHandler extends AbstractQueryHandler {
         if("tab".equals(field)){
             return getTabSql(value);
         }
+        if("qcStatus".equals(field)){
+            if (value.equals("wait")) {
+                return " (qnd.qc_status is null or qnd.qc_status "+ compareCodeSplicingValueSql +" ) ";
+            } else {
+                return " qnd.qc_status "+ compareCodeSplicingValueSql +" ";
+            }
+        }
         return null;
     }
 

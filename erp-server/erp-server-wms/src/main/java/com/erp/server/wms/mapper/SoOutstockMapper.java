@@ -30,10 +30,6 @@ import java.util.Map;
 public interface SoOutstockMapper extends BaseMapper<SoOutstockEntity> {
 
     IPage<SoOutstockDTO.PagingViewDTO> paging(Page query, @Param("params") SoOutstockDTO.PagingParamDTO params);
-
-    List<SoOutstockDTO.PagingViewDTO> listExport(@Param("params") SoOutstockDTO.ExportDTO dto);
-    Page<SoOutstockDTO.PagingViewDTO> listExport(@Param("page") Page<SoOutstockDTO.PagingViewDTO> page, @Param("params") SoOutstockDTO.ExportDTO dto);
-
     List<InOutStockDTO> listInventoryInOut(@Param("ids") List<String> idList);
 
     List<SoOutstockDTO.SoRefDTO> listSoRefSoOutstockBySoId(@Param("soId") String soId);
@@ -93,13 +89,6 @@ public interface SoOutstockMapper extends BaseMapper<SoOutstockEntity> {
      * @return java.util.List<com.erp.model.wms.dto.FirstMileCartonDetailDTO.ListPackingDetailDTO>
      **/
     List<WmsCartonDetailDTO.ListPackingDetailDTO> listPackingDetail(@Param("ids") List<String> id);
-
-    /**
-     * 导出装箱信息
-     * @param dto
-     * @return
-     */
-    List<WmsCartonSpecDTO.ExportPackingDTO> exportPacking(@Param("params") SoOutstockDTO.ExportDTO dto);
 
     List<WmsCartonSpecDTO.GroupSkuDTO> listGroupSkuByMainId(@Param("mainId") String id);
 

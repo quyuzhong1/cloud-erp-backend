@@ -2,9 +2,11 @@ package com.erp.server.dmp.handler;
 
 import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONUtil;
+import com.common.business.dto.WebhookResult;
 import com.common.core.security.HmacSHA256Utils;
 import com.erp.model.tms.dto.LogisticsTrackDTO;
 import com.erp.rpc.tms.feign.LogisticsFeign;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Map;
 
@@ -15,6 +17,7 @@ import java.util.Map;
  * @date 2024年11月11日
  * @version: 1.0
  */
+@Slf4j
 public class Track123WebhookHandler implements WebhookHandler{
     // 预先约定的Secret
     private static final String SECRET_KEY = "9fa500686633410a84ff0b00daed555e";
@@ -41,10 +44,11 @@ public class Track123WebhookHandler implements WebhookHandler{
     }
 
     @Override
-    public String process(String data, Map<String, String> headers, String serviceFlag) {
-        LogisticsTrackDTO.TrackWebHookDTO trackWebHookDTO = JSONUtil.toBean(data, LogisticsTrackDTO.TrackWebHookDTO.class);
-        logisticsFeign.webhookByTrack123(trackWebHookDTO);
-        return null;
+    public WebhookResult process(String data, Map<String, String> headers, String serviceFlag) {
+        log.warn("webhook 获取track123数据,{}",data);
+//        LogisticsTrackDTO.TrackWebHookDTO trackWebHookDTO = JSONUtil.toBean(data, LogisticsTrackDTO.TrackWebHookDTO.class);
+//        logisticsFeign.webhookByTrack123(trackWebHookDTO);
+        return WebhookResult.isSuccess();
     }
 
     private boolean verifySignature(String data, String signature) {

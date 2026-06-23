@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -101,6 +102,21 @@ public class ProductNoDetailDTO {
      * BU线名称
      */
     private String buName;
+    /**
+     * 客户定制附件
+     */
+    private List<AttachmentDTO.AttachDTO> customizedAttachmentList;
+
+    /**
+     * 产品说明书
+     */
+    private List<AttachmentDTO.AttachDTO> instructionAttachmentList;
+
+    /**
+     * 产品质保期
+     */
+    @NotBlank(message = "产品质保期不能为空")
+    private String warrantyPeriod;
 
     /**
      * 产品属性

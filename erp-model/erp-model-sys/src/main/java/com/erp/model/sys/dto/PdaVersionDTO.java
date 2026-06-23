@@ -1,5 +1,7 @@
 package com.erp.model.sys.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -8,6 +10,8 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -34,15 +38,20 @@ public class PdaVersionDTO implements Serializable {
         private String id;
 
         /**
+         * 通知类型
+         */
+        private String releaseType;
+
+        /**
+         * 通知类型名称
+         */
+        private String releaseTypeName;
+
+        /**
          * 下拉获取地址：sys/common/enumDropDown?type=SysType
          * 发版类型：ALL PC PDA
          */
         private String type;
-
-        /**
-         * 通知类型
-         */
-        private String releaseType;
 
         /**
          * 类型名称
@@ -50,14 +59,14 @@ public class PdaVersionDTO implements Serializable {
         private String typeName;
 
         /**
+         * 通知标题
+         */
+        private String noticeTitle;
+
+        /**
          * pda版本
          */
         private String pdaVersion;
-
-        /**
-         * 升级内容描述
-         */
-        private String remark;
 
         /**
          * 是否强制更新
@@ -70,9 +79,14 @@ public class PdaVersionDTO implements Serializable {
         private String url;
 
         /**
-         * 升级时间
+         * 升级内容描述
          */
-        private LocalDateTime upgradeTime;
+        private String dataJson;
+
+        /**
+         * 创建人id
+         */
+        private String createUserId;
 
         /**
          * 创建人名称
@@ -85,6 +99,11 @@ public class PdaVersionDTO implements Serializable {
         private LocalDateTime createTime;
 
         /**
+         * 修改人id
+         */
+        private String updateUserId;
+
+        /**
          * 修改人名称
          */
         private String updateUserName;
@@ -93,6 +112,16 @@ public class PdaVersionDTO implements Serializable {
          * 更新时间
          */
         private LocalDateTime updateTime;
+
+        /**
+         * 通知时间
+         */
+        private LocalDateTime noticeTime;
+
+        /**
+         * 升级时间
+         */
+        private LocalDateTime upgradeTime;
     }
 
 
@@ -102,8 +131,20 @@ public class PdaVersionDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class PagingParamDTO {
+    public static class PagingParamDTO extends SortDTO {
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
+
         private String searchKeyword;
+
     }
 
 

@@ -1,8 +1,10 @@
 package com.erp.server.oms.service;
 
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.common.business.dto.PlatformB2bOrderDTO;
 import com.erp.model.oms.dto.CustomerDTO;
 import com.erp.model.oms.dto.CustomerDTO.CustomerBatchUpdateDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
@@ -205,12 +207,12 @@ public interface CustomerInfoService extends SuperService<CustomerInfoEntity> {
     /**
      * 撤销流程
      *
-     * @param ids
+     * @param dto
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-05-15 15:39
      */
-    Boolean cancelProcess(List<String> ids);
+    Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto);
 
 
     /**
@@ -409,4 +411,9 @@ public interface CustomerInfoService extends SuperService<CustomerInfoEntity> {
     List<CustomerDTO.InfoDTO> listEnable2cCustomer(String permissionSql);
 
     String updateCustomerAddress(CustomerDTO.UpdateDTO dto);
+
+    /**
+     * B2B 平台订单入库时，用客户档案默认发货仓库/收款账号回填空字段。
+     */
+    void applyB2bOrderCustomerDefaults(PlatformB2bOrderDTO dto, CustomerInfoEntity customerInfo);
 }

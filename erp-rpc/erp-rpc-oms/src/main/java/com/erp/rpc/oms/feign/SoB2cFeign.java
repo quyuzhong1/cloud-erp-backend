@@ -464,6 +464,9 @@ public interface SoB2cFeign {
      */
     @PostMapping("/feign/soB2c/updateTrackNoByTransportNo")
     Boolean updateTrackNoByTransportNo(@RequestBody List<LogisticsBillDTO.TrackDTO> trackDTOS);
+
+    @PostMapping("/feign/soB2c/updateTrackNoByTransportNoWithResult")
+    List<BatchResultDTO> updateTrackNoByTransportNoWithResult(@RequestBody List<LogisticsBillDTO.TrackDTO> trackDTOS);
     /**
      * 根据平台单号和平台查询B2C销售订单
      *
@@ -736,6 +739,13 @@ public interface SoB2cFeign {
 
     @PostMapping("feign/soB2cError/listSoB2cErrorByMainIds")
     List<SoB2cErrorEntity> listSoB2cErrorByMainIds(@RequestBody List<String> errorSoIds);
+    /**
+     * 获取异常信息
+     * @param
+     * @return
+     */
+    @PostMapping("feign/soB2cError/getByMainIdsAndType")
+    public List<SoB2cErrorEntity> getByMainIdsAndType(@RequestBody SoB2cErrorDTO.MainIdsDTO mainIdsDTO);
 
     @PostMapping("feign/soB2c/handleSoOutStock")
     Boolean handleSoOutStock(@RequestBody String soId);
@@ -746,4 +756,14 @@ public interface SoB2cFeign {
 
     @PostMapping("feign/soB2c/updateB2cByPlatformOutbound")
     void updateB2cByPlatformOutbound(@RequestBody SoB2cDTO.B2cByPlatformOutboundDTO b2cByPlatformOutboundDTO);
+
+    /**
+     * 轻量查询B2C订单拦截标识（仅返回 id + isIntercept）。
+     * 当前专门服务于 WMS 的 SoOutstockServiceImpl.fillPaging 导出场景。
+     *
+     * @param soIds B2C订单ID集合
+     * @return 仅包含 id 与 isIntercept 的订单数据
+     */
+    @PostMapping("/feign/soB2c/listIdAndInterceptByIds")
+    List<SoB2cEntity> listIdAndInterceptByIds(@RequestBody List<String> soIds);
 }

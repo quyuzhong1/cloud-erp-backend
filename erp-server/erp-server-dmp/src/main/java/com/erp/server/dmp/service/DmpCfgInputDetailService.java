@@ -9,6 +9,7 @@ import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.dmp.entity.DmpCfgInputDetailEntity;
 import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.entity.DmpCfgInputEntity;
+import com.erp.server.dmp.enums.InventoryMonthCheckEnum;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -110,4 +111,12 @@ public interface DmpCfgInputDetailService extends SuperService<DmpCfgInputDetail
      * @return void
      */
     void optionDmpCfgInputDetail(DmpInputFeignDTO.CfgOptionDTO cfgOptionDTO);
+    
+    /**
+     * @param inventoryMonthCheckEnum
+     * @param checkMonth
+     * @param sourceSystem 取dim_check_warehouse表的数据，传dim_check_warehouse.platform_account，页面名称显示dim_check_warehouse.platform_name，需要distinct一下platform_account，platform_name
+     * @return
+     */
+    BatchResultDTO reCreateInventoryMonthCheck(InventoryMonthCheckEnum inventoryMonthCheckEnum , String checkMonth , String sourceSystem);
 }

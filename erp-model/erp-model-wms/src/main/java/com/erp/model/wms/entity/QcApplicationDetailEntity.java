@@ -42,7 +42,7 @@ public class QcApplicationDetailEntity extends BaseEntity<QcApplicationDetailEnt
     @TableField("sku_no")
     private String skuNo;
     /**
-    * 质检申请数量
+    * 送检数量
     */
     @TableField("qty")
     private Integer qty;

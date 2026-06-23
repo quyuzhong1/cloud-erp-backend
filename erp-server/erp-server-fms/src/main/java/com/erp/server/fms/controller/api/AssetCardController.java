@@ -1,34 +1,35 @@
 package com.erp.server.fms.controller.api;
 
 
-import lombok.extern.slf4j.Slf4j;
-
-import javax.annotation.Resource;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
-import com.common.core.anno.LogAction;
-import com.common.core.anno.LogSystemModule;
-import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.common.core.controller.BaseController;
-import com.erp.server.fms.service.AssetCardService;
-import com.common.core.controller.vo.ApiResult;
-import com.common.business.vo.PagingVO;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.enums.FileTaskEventEnum;
+import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.fms.dto.AssetCardDTO;
-import com.erp.server.fms.handler.AssetCardQueryHandler;
-import javax.servlet.http.HttpServletResponse;
-import java.util.*;
-import java.util.stream.Collectors;
 import com.erp.model.fms.entity.AssetCardEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
-import com.common.business.enums.FileTaskEventEnum;
+import com.erp.server.fms.handler.AssetCardQueryHandler;
+import com.erp.server.fms.service.AssetCardService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 资产卡片主表
@@ -361,7 +362,7 @@ public class AssetCardController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO cancelResult;
             try {
-                cancelResult = assetCardService.cancelProcess(id);
+                cancelResult = assetCardService.cancelProcess(new ApproveDTO.CancelProcessDTO(id));
             }catch (Exception e){
                 log.error("资产卡片主单撤回流程失败",e);
                 AssetCardEntity entity = idEntityMap.get(id);

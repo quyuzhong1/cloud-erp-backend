@@ -49,6 +49,7 @@ import javax.xml.bind.annotation.XmlType;
 @XmlType(name = "ReceivingInfo", propOrder = {
     "warehouseCode",
     "refCode",
+    "concatNo",
     "isDelivery",
     "iePort",
     "formType",
@@ -83,6 +84,11 @@ public class ReceivingInfo {
      */
     @XmlElement(required = true)
     protected String refCode;
+    /**
+     *合同协议号
+     */
+    @XmlElement(required = true)
+    protected String concatNo;
 
     /**
      * 是否提货：0否 1是
@@ -123,7 +129,7 @@ public class ReceivingInfo {
      */
     @XmlElement(required = true)
     @Builder.Default
-    protected String wrapType = "7";
+    protected String wrapType = "99";
 
     /**
      * 总件数

@@ -2,6 +2,9 @@ package com.erp.server.plm.controller.api;
 
 
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
+import com.common.business.dto.base.*;
+import com.common.business.vo.PagingVO;
 import com.erp.server.plm.query.ProductChangeQueryHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -352,7 +355,7 @@ public class ProductChangeController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO cancelResult;
             try {
-                cancelResult = productChangeService.cancelProcess(id);
+                cancelResult = productChangeService.cancelProcess(new ApproveDTO.CancelProcessDTO(id));
             }catch (Exception e){
                 log.error("产品变更信息单撤回流程失败",e);
                 ProductChangeEntity entity = idEntityMap.get(id);

@@ -1,4 +1,5 @@
 package com.erp.server.plm.service;
+import com.common.business.dto.ApproveDTO;
 import com.erp.model.plm.dto.MoldInfoDTO;
 import com.erp.model.plm.dto.excel.MoldRefSkuImportExcelDTO;
 import com.erp.model.plm.entity.MoldRefSkuEntity;
@@ -78,10 +79,10 @@ public interface MoldRefSkuService extends SuperService<MoldRefSkuEntity> {
     * 撤销
     * @author jack
     * @date: 2025-10-14
-    * @param id
+    * @param dto
     * @return
     */
-    BatchResultDTO cancelProcess(String id);
+    BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto);
 
     /**
     * 导出Excel

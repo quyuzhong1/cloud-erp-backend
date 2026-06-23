@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.api;
 
 
+import com.common.business.dto.ApproveDTO;
 import com.common.business.enums.ClientTypeEnum;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -358,7 +359,7 @@ public class SampleTransferInfoController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO cancelResult;
             try {
-                cancelResult = sampleTransferInfoService.cancelProcess(id);
+                cancelResult = sampleTransferInfoService.cancelProcess(new ApproveDTO.CancelProcessDTO(id));
             }catch (Exception e){
                 log.error("样品转移单主单撤回流程失败",e);
                 SampleTransferInfoEntity entity = idEntityMap.get(id);

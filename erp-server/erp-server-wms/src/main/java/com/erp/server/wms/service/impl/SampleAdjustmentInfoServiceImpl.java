@@ -1,95 +1,81 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import com.common.business.enums.OperationTypeEnum;
-import com.common.business.vo.LoginUser;
-
-import cn.hutool.core.util.StrUtil;
-import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.SampleLedgerTypeEnum;
-import com.erp.rpc.plm.feign.PlmTaskFeign;
-import io.seata.spring.annotation.GlobalTransactional;
-import com.common.business.annotation.DistributeLocker;
-import com.common.business.dto.base.BaseResultDTO;
-import com.erp.server.wms.mapper.SampleAdjustmentInfoMapper;
-import com.erp.server.wms.service.SampleAdjustmentInfoService;
-import com.erp.server.wms.service.SampleAdjustmentDetailService;
-import com.common.business.enums.BusinessNoTypeEnum;
-import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.wms.dto.SampleAdjustmentDetailDTO;
-import com.erp.model.wms.enums.SampleAdjustmentTypeEnum;
-import com.erp.model.plm.vo.SkuVO;
-import com.erp.server.wms.service.WmsAttachmentService;
-import com.erp.model.wms.dto.WmsAttachmentDTO;
-import com.baomidou.mybatisplus.annotation.TableName;
-import org.apache.commons.collections4.CollectionUtils;
-import java.util.ArrayList;
-import java.util.Arrays;
-import org.apache.commons.lang3.StringUtils;
-import java.util.Objects;
-import java.util.stream.Collectors;
-import java.util.Comparator;
-import java.util.function.Function;
-import java.util.List;
-import java.util.Map;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.erp.server.wms.service.OperateLogService;
-import org.apache.commons.math3.util.Pair;
-import com.common.core.exception.ServiceException;
-import com.common.business.config.DocNoGenHelper;
-import com.common.core.controller.vo.ApiResult;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.wms.dto.SampleAdjustmentInfoDTO;
-import com.erp.model.wms.dto.SampleLedgerFlowDTO;
-import com.erp.model.wms.entity.SampleAdjustmentDetailEntity;
-import com.erp.model.workflow.dto.ProcessManagementDTO;
-import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
-import com.erp.rpc.workflow.WorkflowFeign;
-import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.file.feign.DownloadTaskFeign;
-import com.erp.rpc.file.feign.FileFeign;
-import com.erp.server.wms.service.SampleLedgerFlowService;
-import com.erp.server.wms.service.SampleLedgerFlowBuilder;
-import com.erp.server.wms.service.SampleLedgerService;
-import com.common.business.enums.SourceTypeEnum;
-import com.common.business.utils.SampleDocumentAuditUtil;
-import com.common.business.validator.ValidList;
-import com.erp.model.sys.dto.SysDepartmentDTO;
-import com.erp.model.sys.entity.SysDepartmentEntity;
+import cn.hutool.core.util.StrUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import cn.hutool.core.collection.CollUtil;
-
-import com.common.business.enums.ApproveStatusEnum;
-import com.erp.model.scm.enums.InvalidStatusEnum;
-import com.common.business.enums.ApproveTypeEnum;
-import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
-
-import javax.servlet.http.HttpServletResponse;
-import java.time.LocalDateTime;
-import javax.annotation.Resource;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
-import com.alibaba.excel.EasyExcel;
-import com.alibaba.excel.exception.ExcelCommonException;
+import com.common.business.annotation.DistributeLocker;
+import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.enums.FileTaskStatusEnum;
+import com.common.business.dto.base.*;
+import com.common.business.enums.*;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.ApplicationContextUtils;
+import com.common.business.utils.SampleDocumentAuditUtil;
+import com.common.business.validator.ValidList;
+import com.common.business.vo.LoginUser;
+import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.FastDFSClientUtil;
+import com.common.core.utils.StrUtils;
+import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.enums.InvalidStatusEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.entity.SysDepartmentEntity;
+import com.erp.model.wms.dto.SampleAdjustmentDetailDTO;
+import com.erp.model.wms.dto.SampleAdjustmentInfoDTO;
+import com.erp.model.wms.dto.SampleLedgerFlowDTO;
+import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.dto.excel.SampleAdjustmentImportExcelDTO;
+import com.erp.model.wms.entity.SampleAdjustmentDetailEntity;
+import com.erp.model.wms.entity.SampleAdjustmentInfoEntity;
+import com.erp.model.wms.entity.SampleLedgerEntity;
+import com.erp.model.wms.entity.WmsAttachmentEntity;
+import com.erp.model.wms.enums.SampleAdjustmentTypeEnum;
+import com.erp.model.wms.enums.SampleLedgerTypeEnum;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.listener.SampleAdjustmentExcelListener;
+import com.erp.server.wms.mapper.SampleAdjustmentInfoMapper;
+import com.erp.server.wms.service.*;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
-import static com.common.business.enums.FileTaskEventEnum.IMPORT_WMS_SAMPLE_ADJUSTMENT_INFO;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SAMPLE_ADJUSTMENT_INFO_REPORT;
+import static com.common.business.enums.FileTaskEventEnum.IMPORT_WMS_SAMPLE_ADJUSTMENT_INFO;
 /**
  * <p>
  * 样品调整单 服务实现类
@@ -492,7 +478,8 @@ public class SampleAdjustmentInfoServiceImpl extends SuperServiceImpl<SampleAdju
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO cancelProcess(String id) {
+    public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto) {
+        String id = dto.getId();
         SampleAdjustmentInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品调整单数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus().getStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
@@ -510,6 +497,7 @@ public class SampleAdjustmentInfoServiceImpl extends SuperServiceImpl<SampleAdju
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_ADJUSTMENT_INFO.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+        revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.SAMPLE_ADJUSTMENT_INFO.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());

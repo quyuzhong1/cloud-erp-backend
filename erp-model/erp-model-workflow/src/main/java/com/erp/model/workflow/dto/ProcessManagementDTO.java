@@ -648,9 +648,9 @@ public class ProcessManagementDTO {
         private Map<String,Object> variablesMap;
 
         /**
-         * 平台，默认设置成erp
+         * ProcessSourcePlatformEnum枚举，默认设置成erp
          */
-        private String sourcePlatform = "erp";
+        private String executeSystem = "erp";
     }
 
     @Data
@@ -1237,6 +1237,20 @@ public class ProcessManagementDTO {
             this.businessId = historyActivityDTO.getBusinessId();
             this.businessKey = historyActivityDTO.getBusinessKey();
         }
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CurApproveSimpleDTO {
+        /**
+         * 流程业务ID
+         */
+        private String businessId;
+        /**
+         * 当前审批人名称
+         */
+        private String curApproveName;
     }
 
     @Data

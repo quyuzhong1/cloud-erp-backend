@@ -1,4 +1,5 @@
 package com.erp.server.wms.service;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.enums.ClientTypeEnum;
 import com.erp.model.wms.entity.SampleTransferInfoEntity;
 import com.common.business.service.SuperService;
@@ -132,10 +133,10 @@ public interface SampleTransferInfoService extends SuperService<SampleTransferIn
     * 撤销
     * @author wuhaotian
     * @date: 2025-10-28
-    * @param id
+    * @param dto
     * @return
     */
-    BatchResultDTO cancelProcess(String id);
+    BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto);
 
     /**
     * 导出Excel

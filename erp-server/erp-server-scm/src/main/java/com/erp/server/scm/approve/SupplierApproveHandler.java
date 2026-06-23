@@ -44,7 +44,7 @@ public class SupplierApproveHandler extends AbstractApproveHandler {
 
     @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
-        return supplierService.cancelProcess(Collections.singletonList(dto.getId()));
+        return supplierService.cancelProcess(new ApproveDTO.BatchCancelProcessDTO(dto));
     }
 
     @Override

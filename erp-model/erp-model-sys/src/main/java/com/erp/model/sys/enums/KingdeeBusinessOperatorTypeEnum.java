@@ -11,6 +11,7 @@ public enum KingdeeBusinessOperatorTypeEnum {
     XSY("XSY", "销售员"),
     CGY("CGY", "采购员"),
     WHY("WHY", "仓管员"),
+    ZJY("ZJY", "质检员"),
     ;
 
     private String code;

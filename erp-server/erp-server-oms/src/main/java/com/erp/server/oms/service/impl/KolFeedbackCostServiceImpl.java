@@ -31,6 +31,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import cn.hutool.crypto.digest.DigestUtil;
 import com.erp.server.oms.service.CfgKolOptionService;
 import com.erp.model.oms.entity.CfgKolOptionEntity;
+import com.erp.model.oms.enums.CfgKolOptionTypeEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.sys.dto.CurrencyDTO;
@@ -340,7 +341,9 @@ public class KolFeedbackCostServiceImpl extends SuperServiceImpl<KolFeedbackCost
         }
 
         // 批量查询费用类型配置
-        List<CfgKolOptionEntity> cfgKolOptionList = cfgKolOptionService.list();
+        List<CfgKolOptionEntity> cfgKolOptionList = cfgKolOptionService.lambdaQuery()
+                .eq(CfgKolOptionEntity::getType, CfgKolOptionTypeEnum.COST_TYPE.getCode())
+                .list();
         Map<String, String> costTypeNameToIdMap = cfgKolOptionList.stream()
                 .collect(Collectors.toMap(CfgKolOptionEntity::getName, CfgKolOptionEntity::getId, (k1, k2) -> k1));
 

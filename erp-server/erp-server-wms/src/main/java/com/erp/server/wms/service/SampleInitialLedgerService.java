@@ -1,9 +1,12 @@
 package com.erp.server.wms.service;
-import com.erp.model.wms.entity.SampleInitialLedgerEntity;
-import com.common.business.service.SuperService;
+
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
-import com.erp.model.wms.dto.SampleInitialLedgerDTO;
+import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.SampleInitialLedgerDTO;
+import com.erp.model.wms.entity.SampleInitialLedgerEntity;
+
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
@@ -129,10 +132,10 @@ public interface SampleInitialLedgerService extends SuperService<SampleInitialLe
     * 撤销
     * @author wuhaotian
     * @date: 2025-08-21
-    * @param id
+    * @param dto
     * @return
     */
-    BatchResultDTO cancelProcess(String id);
+   BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto);
 
     /**
     * 导出Excel

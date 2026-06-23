@@ -68,6 +68,7 @@
             kf.create_user_name AS createUserName
         FROM kol_feedback kf
         WHERE
+        <!-- params.sqlMap.default 由 @WebAdvanceQuery/WebAdvanceQueryAspect 根据高级查询字段生成，非前端原始 SQL。 -->
         ${params.sqlMap.default}
         AND kf.is_deleted = false
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
@@ -98,18 +99,29 @@
     <select id="listFeedbackQtyBySourceDetailIdList"
             resultType="com.erp.model.oms.dto.KolFeedbackDTO$FeedbackQtyDTO">
         select
-        kf.source_detail_id,
+        kfu.source_detail_id,
         count(0) as feedbackQty,
-        sum(case when kf.feedback_status = 'completed' then 1 else 0 end) as captureFeedbackQty,
-        "max"(kf.url) as feedbackUrl
-        from kol_feedback kf
-        <where>
-            kf.is_deleted = false and kf.source_detail_id in
-            <foreach collection="sourceDetailIdList" item="item" open="(" separator="," close=")">
-                #{item}
-            </foreach>
-        </where>
-        group by kf.source_detail_id
+        sum(case when kfu.feedback_status = 'completed' then 1 else 0 end) as captureFeedbackQty,
+        array_to_string(array_agg(kfu.url order by kfu.sort, kfu.create_time, kfu.id), ',') as feedbackUrl
+        from (
+            select distinct on (source_detail_id, url_hash)
+                source_detail_id,
+                url,
+                feedback_status,
+                sort,
+                create_time,
+                id
+            from kol_sample_cost_ref_feedback_url
+            where is_deleted = false
+              <!-- Mapper 方法已传入 sourceType，这里必须绑定来源类型，避免 B2B/B2C 回片数量串单。 -->
+              and source_type = #{sourceType}
+              and source_detail_id in
+              <foreach collection="sourceDetailIdList" item="item" open="(" separator="," close=")">
+                  #{item}
+              </foreach>
+            order by source_detail_id, url_hash, sort, create_time, id
+        ) kfu
+        group by kfu.source_detail_id
     </select>
 
 </mapper>

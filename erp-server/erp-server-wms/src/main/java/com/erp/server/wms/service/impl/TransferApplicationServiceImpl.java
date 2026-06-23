@@ -12,6 +12,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.ThirdConstants;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -313,9 +314,9 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         List<TransferApplicationDetailDTO.ViewDTO> viewDetailList = BeanMapperUtils.copyList(TransferApplicationDetailDTO.ViewDTO.class, detailList);
 
         //调拨方向
-        List<DictBasicDTO.ListDTO> transferDirectionList = dictBasicService.getByKey(DictBasicEnum.TRANSFER_DIRECTION.getKey());
+        List<DictBasicEntity> transferDirectionList = dictBasicService.getByKey(DictBasicEnum.TRANSFER_DIRECTION.getKey());
         if (CollectionUtils.isNotEmpty(transferDirectionList)) {
-            String name = transferDirectionList.stream().filter(obj -> obj.getValue().equals(viewDTO.getTransferDirection())).map(DictBasicDTO.ListDTO::getName).findFirst().orElse(null);
+            String name = transferDirectionList.stream().filter(obj -> obj.getValue().equals(viewDTO.getTransferDirection())).map(DictBasicEntity::getName).findFirst().orElse(null);
             viewDTO.setTransferDirectionName(name);
         }
 
@@ -608,7 +609,8 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean cancelProcess(List<String> ids) {
+    public Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto) {
+        List<String> ids = dto.getIds();
         //根据ids查询
         List<TransferApplicationEntity> list = getList(ids);
         //审核中允许审核
@@ -623,6 +625,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ids.forEach(obj -> {
             ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+            revokeDTO.setExecuteSystem(dto.getExecuteSystem());
             revokeDTO.setBusinessId(obj);
             revokeDTO.setBusinessKey(SourceTypeEnum.TRANSFER_APPLICATION.getCode());
             revokeDTO.setUserId(userInfo.getUid());
@@ -985,7 +988,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(skuIds);
 
         //调拨方向
-        List<DictBasicDTO.ListDTO> transferDirectionList = dictBasicService.getByKey(DictBasicEnum.TRANSFER_DIRECTION.getKey());
+        List<DictBasicEntity> transferDirectionList = dictBasicService.getByKey(DictBasicEnum.TRANSFER_DIRECTION.getKey());
 
         //直接调拨明细
         List<TransferInfoDetailEntity> transferInfoDetailList = transferInfoDetailService.listSourceDetailIds(sourceDetailIds);
@@ -1026,7 +1029,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
             }
             //调拨方向名称
             if (CollectionUtils.isNotEmpty(transferDirectionList)) {
-                String transferDirectionName = transferDirectionList.stream().filter(e -> e.getValue().equals(dto.getTransferDirection())).map(DictBasicDTO.ListDTO::getName).findFirst().orElse("");
+                String transferDirectionName = transferDirectionList.stream().filter(e -> e.getValue().equals(dto.getTransferDirection())).map(DictBasicEntity::getName).findFirst().orElse("");
                 dto.setTransferDirectionName(transferDirectionName);
             }
 
@@ -1146,7 +1149,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         List<ProductSaleEntity> productSaleEntityList = FeignQuery.create(ProductSaleEntity.class).in(ProductSaleEntity::getSkuId,ids).list();
 
         //调拨方向
-        List<DictBasicDTO.ListDTO> transferDirectionList = dictBasicService.getByKey(DictBasicEnum.TRANSFER_DIRECTION.getKey());
+        List<DictBasicEntity> transferDirectionList = dictBasicService.getByKey(DictBasicEnum.TRANSFER_DIRECTION.getKey());
         if (CollectionUtils.isEmpty(transferDirectionList)) {
             throw new ServiceException(ApiError.WH_TRANSFER_DIRECTION_NOT_FOUND);
         }
@@ -1179,7 +1182,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
             String saleStateName = productSaleEntityList.stream().filter(e -> CharSequenceUtil.equals(e.getSkuId(), obj.getSkuId())).findFirst().map(e -> SaleStateEnum.getNameByCode(e.getSaleState())).orElse("");
             obj.setSaleStateName(saleStateName);
             //调拨方向名称
-            String transferDirectionName = transferDirectionList.stream().filter(e -> e.getValue().equals(obj.getTransferDirection())).map(DictBasicDTO.ListDTO::getName).findFirst().orElse("");
+            String transferDirectionName = transferDirectionList.stream().filter(e -> e.getValue().equals(obj.getTransferDirection())).map(DictBasicEntity::getName).findFirst().orElse("");
             if (CharSequenceUtil.isBlank(transferDirectionName)) {
                 throw new ServiceException(ApiError.WH_TRANSFER_DIRECTION_NOT_FOUND);
             }

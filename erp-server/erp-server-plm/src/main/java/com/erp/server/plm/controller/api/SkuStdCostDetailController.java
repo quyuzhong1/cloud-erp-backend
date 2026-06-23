@@ -4,6 +4,7 @@ package com.erp.server.plm.controller.api;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -15,6 +16,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.utils.ExcelUtil;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.dto.SkuStdCostDTO;
 import com.erp.model.plm.dto.SkuStdCostDetailDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.SkuStdCostDetailEntity;
@@ -127,6 +129,18 @@ public class SkuStdCostDetailController extends BaseController {
     public ApiResult<?> update(@RequestBody @Validated SkuStdCostDetailDTO.UpdateDTO dto) {
         skuStdCostDetailService.update(dto);
         return success();
+    }
+
+    @PostMapping("/autoFetch")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "sku标准成本自动获取")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "plm:skuStdCost:autoFetch",
+            serviceClass = SkuStdCostDetailService.class,
+            keyIdName = "ids")
+    public ApiResult<List<BatchResultDTO>> autoFetch(@RequestBody @Validated SkuStdCostDTO.AutoFetchBatchDTO dto) {
+        List<BatchResultDTO> resultDTOS = skuStdCostDetailService.autoFetchBatch(dto);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -397,7 +411,7 @@ public class SkuStdCostDetailController extends BaseController {
                 continue;
             }
             try {
-                resultItem = skuStdCostDetailService.cancelProcess(id, entity, mainEntity);
+                resultItem = skuStdCostDetailService.cancelProcess(new ApproveDTO.CancelProcessDTO(id), entity, mainEntity);
             } catch (Exception e) {
                 log.error("sku标准成本单撤回流程失败", e);
                 resultItem = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());

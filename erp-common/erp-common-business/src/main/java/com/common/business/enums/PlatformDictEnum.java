@@ -73,6 +73,7 @@ public enum PlatformDictEnum implements EnumMessage {
     QI_MEN("qimen", "奇门", "奇门", "52"),
     TONG_YOU_WAREHOUSE("tongyou", "通邮", "通邮", "62"),
     ZHONG_BAO_WAREHOUSE("zhongbao", "众包", "众包", "63"),
+    JI_TU_WAREHOUSE("jitu", "极兔", "极兔", "64"),
 
     // 拼多多海外版
     TE_MU("TeMu", "TEMU半托管", "TEMU半托管", "034"),

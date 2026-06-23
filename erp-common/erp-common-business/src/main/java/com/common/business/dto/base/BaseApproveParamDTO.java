@@ -5,7 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
@@ -51,4 +50,9 @@ public class BaseApproveParamDTO extends PermissionsDTO {
      *发货日期
      */
     private LocalDate deliveryDate;
+
+    /**
+     * 计划质检日期(外验质检类型质检通知单审核)
+     */
+    private LocalDate planQcDate;
 }

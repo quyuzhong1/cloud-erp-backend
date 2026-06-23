@@ -43,6 +43,8 @@ import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
+import com.erp.model.plm.dto.ProductPackDTO;
+import com.erp.model.plm.enums.BomStateEnum;
 import com.erp.rpc.plm.feign.ProductPackFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -457,6 +459,11 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             }
         }
         List<LogisticsBillCostEntity> updateBillList = new ArrayList<>(billIds.size());
+        Map<String, TmsFirstMileReconciliationDetailEntity> estimatedMap = list.stream()
+                .filter(e -> Objects.nonNull(e)
+                        && DetailReconciliationTypeEnum.ESTIMATED.getCode().equalsIgnoreCase(e.getType())
+                        && CharSequenceUtil.isNotBlank(e.getSourceId()))
+                .collect(Collectors.toMap(TmsFirstMileReconciliationDetailEntity::getSourceId, Function.identity(), (first, second) -> first));
         for (String billId : billIds) {
             LogisticsBillEntity logisticsBillEntity = logisticsBillEntityList.stream().filter(e -> Objects.equals(billId, e.getId())).findFirst().orElse(null);
             if (Objects.isNull(logisticsBillEntity)) {
@@ -471,6 +478,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             }
             entity.setLogisticsBillId(billId);
             entity.setTransportNo(logisticsBillEntity.getTransportNo());
+            backfillEstimatedWeight(entity, estimatedMap.get(billId));
             TmsFirstMileReconciliationDetailEntity actualDetailEntity = actualMap.get(entity.getLogisticsBillId());
             if (null == actualDetailEntity) {
                 // 移除
@@ -478,10 +486,9 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 continue;
             }
             // 更新实际重量和体积重, 计费重
-            entity.setVolumeWeightLogistics(actualDetailEntity.getVolumeWeight());
-            entity.setWeightLogistics(actualDetailEntity.getActualWeight());
-            // 费用重取最大
-            entity.setBillingWeight(actualDetailEntity.getVolumeWeight().max(actualDetailEntity.getActualWeight()));
+            entity.setVolumeWeightLogistics(defaultWeight(actualDetailEntity.getVolumeWeight()));
+            entity.setWeightLogistics(defaultWeight(actualDetailEntity.getActualWeight()));
+            entity.setBillingWeightLogistics(maxWeight(actualDetailEntity.getVolumeWeight(), actualDetailEntity.getActualWeight()));
             //默认kg
             entity.setWeightUnit(CharSequenceUtil.isBlank(actualDetailEntity.getActualWeightUnit()) ? UnitEnum.WeightUnitEnum.KG.code : actualDetailEntity.getActualWeightUnit());
             // 设置实际费用明细
@@ -514,6 +521,58 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             updateBillList.add(entity);
         }
         return updateBillList;
+    }
+
+    /**
+     * 使用预估明细补齐费用记录的预估重量。
+     *
+     * @param entity 物流费用记录
+     * @param estimatedDetailEntity 预估对账明细
+     */
+    private void backfillEstimatedWeight(LogisticsBillCostEntity entity, TmsFirstMileReconciliationDetailEntity estimatedDetailEntity) {
+        if (Objects.isNull(entity) || Objects.isNull(estimatedDetailEntity)) {
+            return;
+        }
+        if (isBlankWeight(entity.getActualWeight()) && Objects.nonNull(estimatedDetailEntity.getActualWeight())) {
+            entity.setActualWeight(estimatedDetailEntity.getActualWeight());
+        }
+        if (isBlankWeight(entity.getVolumeWeight()) && Objects.nonNull(estimatedDetailEntity.getVolumeWeight())) {
+            entity.setVolumeWeight(estimatedDetailEntity.getVolumeWeight());
+        }
+        if (isBlankWeight(entity.getBillingWeight()) && Objects.nonNull(estimatedDetailEntity.getBillingWeight())) {
+            entity.setBillingWeight(estimatedDetailEntity.getBillingWeight());
+        }
+    }
+
+    /**
+     * 判断重量是否为空白值。
+     *
+     * @param value 重量
+     * @return 为空或零时返回true
+     */
+    private boolean isBlankWeight(BigDecimal value) {
+        return Objects.isNull(value) || BigDecimal.ZERO.compareTo(value) == 0;
+    }
+
+    /**
+     * 获取重量默认值。
+     *
+     * @param value 重量
+     * @return 非空重量或零
+     */
+    private BigDecimal defaultWeight(BigDecimal value) {
+        return Objects.nonNull(value) ? value : BigDecimal.ZERO;
+    }
+
+    /**
+     * 获取物流商计费重。
+     *
+     * @param volumeWeight 体积重
+     * @param actualWeight 实重
+     * @return 体积重和实重的较大值
+     */
+    private BigDecimal maxWeight(BigDecimal volumeWeight, BigDecimal actualWeight) {
+        return defaultWeight(volumeWeight).max(defaultWeight(actualWeight));
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -732,17 +791,17 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         return Arrays.asList(sourceListDTO, actualListDTO, diffListDTO);
     }
 
+    /**
+     * N次对账仅重置费用字段，保留预估重量和物流商重量来源。
+     *
+     * @param sourceListDTO 头程对账明细
+     */
     private void initSourceDataDTO(TmsFirstMileReconciliationDetailDTO.ListDTO sourceListDTO) {
         sourceListDTO.setTotalLogisticsCost(BigDecimal.ZERO);
-        sourceListDTO.setActualWeight(BigDecimal.ZERO);
-        sourceListDTO.setVolumeWeight(BigDecimal.ZERO);
-        sourceListDTO.setBillingWeight(BigDecimal.ZERO);
         sourceListDTO.setShippingCost(BigDecimal.ZERO);
         sourceListDTO.setDeclareCost(BigDecimal.ZERO);
         sourceListDTO.setOtherCost(BigDecimal.ZERO);
         sourceListDTO.setOtherTaxCost(BigDecimal.ZERO);
-        sourceListDTO.setVolumeWeightLogistics(BigDecimal.ZERO);
-        sourceListDTO.setWeightLogistics(BigDecimal.ZERO);
     }
 
 
@@ -1673,7 +1732,8 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         List<FirstMileDeliveryDTO.ListFirstMileDTO> firstMileDetailList = wmsFirstMileDeliveryFeign.listDetailByCodes(sourceCodeList);
         List<String> skuIdList = firstMileDetailList.stream().map(FirstMileDeliveryDTO.ListFirstMileDTO::getSkuId).distinct().collect(Collectors.toList());
         //sku的毛重
-        Map<String, BigDecimal> skuIdToGrossWeightMap = productPackFeign.listSingleBySkuIds(skuIdList);
+        Map<String, BigDecimal> skuIdToGrossWeightMap = productPackFeign.listSingleBySkuIds(
+                new ProductPackDTO.ListSingleBySkuIdsParam(skuIdList, BomStateEnum.AUDIT_PASS.getState()));
 
         //序号唯一的设置到结果集合里
         Map<String, List<FirstMileReconciliationStandardExcelDTO>> successMap = successList.stream()

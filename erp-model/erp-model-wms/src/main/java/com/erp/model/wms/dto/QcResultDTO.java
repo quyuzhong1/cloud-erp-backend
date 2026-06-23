@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.validator.AddGroup;
 import com.common.business.validator.UpdateGroup;
 import com.common.core.anno.StateEnumValue;
@@ -82,6 +83,15 @@ public class QcResultDTO {
 
 
         /**
+         * 允许入库量
+         */
+        @NotNull(message = "允许入库量不能为空")
+        @DecimalMax(value = "999999999", message = "最大值为999999999", groups = {UpdateGroup.class, AddGroup.class})
+        @DecimalMin(value = "0", message = "最小值为0", groups = {AddGroup.class})
+        private Integer allowInstockQty;
+
+
+        /**
          * 采购订单明细id 不能为空
          */
         //@NotBlank(message = "采购订单明细id 不能为空")
@@ -96,7 +106,6 @@ public class QcResultDTO {
 
 
         /**
-         * 不良现象
          * 选择不良的时候必填
          */
         @Size(max = 250, message = "最大250个字符")
@@ -111,6 +120,26 @@ public class QcResultDTO {
          * 质检附件名称集合
          */
         private List<String> qcAttachmentNameList;
+
+        /**
+         * 产品实物图片地址集合（从产品信息移动到质检信息）
+         */
+        private List<String> productRealImageUrlList;
+
+        /**
+         * 产品实物图片名称集合
+         */
+        private List<String> productRealImageNameList;
+
+        /**
+         * 箱唛图片地址集合（从产品信息移动到质检信息）
+         */
+        private List<String> boxImageUrlList;
+
+        /**
+         * 箱唛图片名称集合
+         */
+        private List<String> boxImageNameList;
 
 
         /**
@@ -211,7 +240,10 @@ public class QcResultDTO {
          */
         private Integer qcBadQty;
 
-
+        /**
+         * 允许入库量
+         */
+        private Integer allowInstockQty;
         /**
          * 质检不良率
          */
@@ -258,6 +290,26 @@ public class QcResultDTO {
          * 质检附件名称集合
          */
         private List<String> qcAttachmentNameList;
+
+        /**
+         * 产品实物图片地址集合（从产品信息移动到质检信息）
+         */
+        private List<String> productRealImageUrlList;
+
+        /**
+         * 产品实物图片名称集合
+         */
+        private List<String> productRealImageNameList;
+
+        /**
+         * 箱唛图片地址集合（从产品信息移动到质检信息）
+         */
+        private List<String> boxImageUrlList;
+
+        /**
+         * 箱唛图片名称集合
+         */
+        private List<String> boxImageNameList;
 
 
         /**
@@ -575,6 +627,20 @@ public class QcResultDTO {
          * 批次合格量汇总
          */
         private Integer totalLotQualifiedQty;
+        /**
+         *  允许入库量汇总
+         */
+        private Integer totalAllowInstockQty;
+        /**
+         *  总数量
+         */
+        private Integer totalQty;
+        /**
+         * 质检类型
+         * QcTypeEnum
+         */
+        private String qcType;
+
     }
 
 
@@ -597,5 +663,32 @@ public class QcResultDTO {
          * 批次合格量
          */
         private Integer totalLotQualifiedQty;
+        /**
+         * 允许入库数量
+         */
+        private Integer allowInstockQty;
+        /**
+         *  总数量
+         */
+        private Integer totalQty;
+
+    }
+
+    /**
+     * 批量保存产品实物 / 箱唛图片入参
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ProductBoxImageItem {
+
+        private String qcResultId;
+
+        private List<String> productImgUrlList;
+
+        private List<String> productImgNameList;
+
+        private List<String> boxImgUrlList;
+
+        private List<String> boxImgNameList;
     }
 }

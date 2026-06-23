@@ -2,6 +2,7 @@ package com.erp.server.dmp.inout.handler.input.task.init;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
+import com.erp.model.dmp.constant.DmpInputConstant;
 import com.erp.model.dmp.entity.DmpCfgApiEntity;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
@@ -51,14 +52,19 @@ public class DmpInputLxOrderApiInitHandler extends DmpInputInitHandler {
             requestMap.putAll(detailTreeMap);
         }
 
-        // 时间
-        // start_time 开始时间，时间戳格式【单位：秒】，双开区间	是	[int]	1710925191
-        long startEpochSecond = dmpInputTaskEntity.getStartTime().atZone(ZoneId.systemDefault()).toInstant().getEpochSecond();
-        requestMap.put("start_time", startEpochSecond);
-        // end_time 结束时间，时间戳格式【单位：秒】，双开区间	是	[int]	1713430791
-        long endEpochSecond = dmpInputTaskEntity.getEndTime().atZone(ZoneId.systemDefault()).toInstant().getEpochSecond();
-        requestMap.put("end_time", endEpochSecond);
-
+        Object orderIdListObject = requestMap.get(DmpInputConstant.ORDER_ID_LIST);
+        if(orderIdListObject == null) {
+        	// 时间
+            // start_time 开始时间，时间戳格式【单位：秒】，双开区间	是	[int]	1710925191
+            long startEpochSecond = dmpInputTaskEntity.getStartTime().atZone(ZoneId.systemDefault()).toInstant().getEpochSecond();
+            requestMap.put("start_time", startEpochSecond);
+            // end_time 结束时间，时间戳格式【单位：秒】，双开区间	是	[int]	1713430791
+            long endEpochSecond = dmpInputTaskEntity.getEndTime().atZone(ZoneId.systemDefault()).toInstant().getEpochSecond();
+            requestMap.put("end_time", endEpochSecond);
+        }else {
+        	requestMap.put("platform_order_nos", orderIdListObject);
+        }
+        
         // 结果
         JSONArray resultList = new JSONArray();
         // 分页参数

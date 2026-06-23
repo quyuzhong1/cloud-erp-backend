@@ -1,5 +1,6 @@
 package com.erp.server.dmp.controller.api;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogSystemModule;
@@ -15,6 +16,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -68,7 +74,20 @@ public class BiSettlementExchangeRateController extends BaseController {
      */
     @PostMapping("/findByCurrencyAndDate")
     public ApiResult<BigDecimal> findByCurrencyAndDate(@RequestBody @Validated BiSettlementExchangeRateDTO.CurrencyParamDTO dto) {
-        BigDecimal exchangeRate = biSettlementExchangeRateService.findByCurrencyAndDate(dto.getDate(), dto.getCurrency());
+        String date = dto.getDate();
+        if (CharSequenceUtil.isBlank(date)) {
+            date = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        }else{
+            // 尝试解析日期和时间部分
+            try{
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+                Date parse = sdf.parse(date);
+                date = sdf.format(parse);
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+        }
+        BigDecimal exchangeRate = biSettlementExchangeRateService.findByCurrencyAndDate(date, dto.getCurrency());
         return success(exchangeRate);
     }
 

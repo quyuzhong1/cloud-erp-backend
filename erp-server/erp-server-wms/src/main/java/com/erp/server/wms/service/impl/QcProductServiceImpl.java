@@ -11,20 +11,18 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.QcProductDTO;
 import com.erp.model.wms.dto.QcProductLogDTO;
-import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.entity.QcProductEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.mapper.QcProductMapper;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.QcProductService;
-import com.erp.server.wms.service.WmsAttachmentService;
 import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -41,10 +39,6 @@ import java.util.stream.Collectors;
  */
 @Service
 public class QcProductServiceImpl extends SuperServiceImpl<QcProductMapper, QcProductEntity> implements QcProductService {
-
-    @Resource
-    private WmsAttachmentService wmsAttachmentService;
-
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
@@ -95,14 +89,16 @@ public class QcProductServiceImpl extends SuperServiceImpl<QcProductMapper, QcPr
             qcProductEntity.setSkuNo(skuVO.getSkuNo());
             qcProductEntity.setEan(skuVO.getEan());
         }
-        //产品信息
-        List<String> productImageNameList = qcProduct.getProductImageNameList();
-        List<String> productImageUrlList = qcProduct.getProductImageUrlList();
-        wmsAttachmentService.batchSave(productImageUrlList, productImageNameList, WmsConstant.QC_PRODUCT, id);
-        //外箱信息
-        List<String> boxImageNameList = qcProduct.getBoxImageNameList();
-        List<String> boxImageUrlList = qcProduct.getBoxImageUrlList();
-        wmsAttachmentService.batchSave(boxImageUrlList, boxImageNameList, WmsConstant.QC_BOX, id);
+        // 重量尺寸字段不在此接口更新入库：MyBatis-Plus 默认 NOT_NULL 策略下 null 不参与 UPDATE，库内保留原值；展示请从产品资料获取
+        qcProductEntity.setProductLength(null);
+        qcProductEntity.setProductWidth(null);
+        qcProductEntity.setProductHeight(null);
+        qcProductEntity.setBoxLength(null);
+        qcProductEntity.setBoxWidth(null);
+        qcProductEntity.setBoxHeight(null);
+        qcProductEntity.setProductNetWeight(null);
+        qcProductEntity.setBoxWeight(null);
+        qcProductEntity.setBoxQty(null);
         this.saveOrUpdate(qcProductEntity);
 
         //标记SKU
@@ -144,24 +140,22 @@ public class QcProductServiceImpl extends SuperServiceImpl<QcProductMapper, QcPr
         QcProductDTO.ViewDTO productView = new QcProductDTO.ViewDTO();
         if (product != null) {
             BeanMapper.copy(product, productView);
-            List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(Collections.singletonList(product.getSkuId()));
-            List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Collections.singletonList(product.getId()));
-            List<String> boxImageUrlList = attachmentList.stream().filter(b -> b.getType().equals(WmsConstant.QC_BOX)).map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
-            List<String> boxNameList = attachmentList.stream().filter(b -> b.getType().equals(WmsConstant.QC_BOX)).map(WmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList());
-
-            List<String> productImageUrlList = attachmentList.stream().filter(b -> b.getType().equals(WmsConstant.QC_PRODUCT)).map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
-            List<String> productNameList = attachmentList.stream().filter(b -> b.getType().equals(WmsConstant.QC_PRODUCT)).map(WmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList());
-            productView.setBoxImageNameList(boxNameList);
-            productView.setBoxImageUrlList(boxImageUrlList);
-
-            productView.setProductImageNameList(productNameList);
-            productView.setProductImageUrlList(productImageUrlList);
+            List<SkuVO> skuVOList = plmTaskFeign.listSkuPackByIds(Collections.singletonList(product.getSkuId()));
             SkuVO skuVO = skuVOList.stream().filter(s -> s.getSkuId().equals(productView.getSkuId())).findFirst().orElse(null);
             if(skuVO!=null){
                 productView.setProductGrade(skuVO.getProductGrade());
                 productView.setProductName(skuVO.getSkuName());
                 productView.setSkuNo(skuVO.getSkuNo());
                 productView.setVariantProperty(skuVO.getVariantProperty());
+                productView.setProductLength(Objects.nonNull(productView.getProductLength()) && BigDecimal.ZERO.compareTo(productView.getProductLength()) != 0 ? productView.getProductLength() : skuVO.getProductLength());
+                productView.setProductWidth(Objects.nonNull(productView.getProductWidth()) && BigDecimal.ZERO.compareTo(productView.getProductWidth()) != 0 ? productView.getProductWidth() : skuVO.getProductWidth());
+                productView.setProductHeight(Objects.nonNull(productView.getProductHeight()) && BigDecimal.ZERO.compareTo(productView.getProductHeight()) != 0 ? productView.getProductHeight() : skuVO.getProductHeight());
+                productView.setBoxLength(Objects.nonNull(productView.getBoxLength()) && BigDecimal.ZERO.compareTo(productView.getBoxLength()) != 0 ? productView.getBoxLength() : skuVO.getProductLength());
+                productView.setBoxWidth(Objects.nonNull(productView.getBoxWidth()) && BigDecimal.ZERO.compareTo(productView.getBoxWidth()) != 0 ? productView.getBoxWidth() : skuVO.getProductWidth());
+                productView.setBoxHeight(Objects.nonNull(productView.getBoxHeight()) && BigDecimal.ZERO.compareTo(productView.getBoxHeight()) != 0 ? productView.getBoxHeight() : skuVO.getProductHeight());
+                productView.setProductNetWeight(Objects.nonNull(productView.getProductNetWeight()) && BigDecimal.ZERO.compareTo(productView.getProductNetWeight()) != 0 ? productView.getProductNetWeight() : skuVO.getNetWeight());
+                productView.setBoxWeight(Objects.nonNull(productView.getBoxWeight()) && BigDecimal.ZERO.compareTo(productView.getBoxWeight()) != 0 ? productView.getBoxWeight() : skuVO.getGrossWeight());
+                productView.setBoxQty(Objects.nonNull(productView.getBoxQty()) && productView.getBoxQty() != 0 ? productView.getBoxQty() : skuVO.getBoxQty());
             }
 
         }

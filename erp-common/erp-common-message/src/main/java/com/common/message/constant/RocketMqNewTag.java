@@ -317,4 +317,14 @@ public class RocketMqNewTag {
      */
     public static final String RESTCLOUD_PLATFORM_B2B_THIRD_OUTBOUND_TO_WMS_TAG = "${spring.cloud.nacos.discovery.namespace}-restcloud_platform_b2b_third_outbound_to_wms_tag";
 
+    /**
+     * tms 异步获取物流下单面单标签
+     */
+    public static final String TMS_ASYNC_GET_LOGISTICS_ORDER_LABEL_TAG = "tms_async_get_logistics_order_label_tag";
+
+    /**
+     * dmp 异步获取物流下单面单标签
+     */
+    public static final String DMP_ASYNC_GET_LOGISTICS_ORDER_LABEL_TAG = "dmp_async_get_logistics_order_label_tag";
+
 }

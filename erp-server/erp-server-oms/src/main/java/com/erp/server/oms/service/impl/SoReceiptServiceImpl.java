@@ -12,6 +12,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.AttachDTO;
 import com.common.business.dto.PlatformReceiptDTO;
 import com.common.business.dto.PlatformReceiptDetailDTO;
@@ -19,6 +20,7 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
@@ -48,10 +50,8 @@ import io.seata.common.util.StringUtils;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
@@ -72,11 +72,13 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_SO_RECEIPT;
 @Slf4j
 @Service
 public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoReceiptEntity> implements SoReceiptService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
-    @Autowired
+
+    @Resource
     private DocNoGenHelper docNoGenHelper;
-    @Autowired
+
+    @Resource
     private WorkflowFeign workflowFeign;
 
     @Resource
@@ -90,6 +92,7 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
 
     @Resource
     private SyncDhtService syncDhtService;
+
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
 
@@ -116,8 +119,9 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
 
         //校验明细关联的销售订单组织跟主记录的组织是否一致
         List<String> soIds = detailList.stream().map(SoReceiptDetailDTO.AddDTO::getSoId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        List<SoInfoEntity> soInfoEntityList = null;
         if(CollectionUtils.isNotEmpty(soIds)){
-            List<SoInfoEntity> soInfoEntityList = soInfoService.listByIds(soIds);
+            soInfoEntityList = soInfoService.listByIds(soIds);
             Set<String> salesOrgIdSet = soInfoEntityList.stream().map(SoInfoEntity::getSalesOrgId).collect(Collectors.toSet());
             if(salesOrgIdSet.size() > 1 || !salesOrgIdSet.contains(soReceiptEntity.getSalesOrgId())){
                 throw new ServiceException("明细关联的销售订单组织必须跟收款单的组织一致");
@@ -133,6 +137,10 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
         // 生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_SKD);
         soReceiptEntity.setCode(code);
+        // 设置默认审核状态为待提交
+        if (soReceiptEntity.getApproveStatus() == null) {
+            soReceiptEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
+        }
         boolean save = super.save(soReceiptEntity);
         if(!save) {
             throw new ServiceException("收款单保存失败");
@@ -150,6 +158,35 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "收款单" , soReceiptEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_RECEIPT.getCode(), soReceiptEntity.getId(), "新增操作");
+
+        // 检查关联销售订单状态，如果订单已提交或审核通过，则自动提交收款单
+        if (CollectionUtils.isNotEmpty(soIds) && CollectionUtils.isNotEmpty(soInfoEntityList)) {
+            // 检查是否有订单已经提交审核或审核通过
+            boolean hasSubmittedOrApproved = soInfoEntityList.stream()
+                    .anyMatch(v -> BillApproveStatusEnum.APPROVE_ING.equals(v.getApproveStatus())
+                            || BillApproveStatusEnum.APPROVE.equals(v.getApproveStatus()));
+
+            if (hasSubmittedOrApproved) {
+                try {
+                    // 检查收款单当前状态是否为待提交
+                    if (ApproveStatusEnum.WAIT_SUBMIT.equals(soReceiptEntity.getApproveStatus())) {
+                        // 自动提交收款单
+                        SoReceiptServiceImpl bean = ApplicationContextUtils.getBean(SoReceiptServiceImpl.class);
+                        bean.submit(soReceiptEntity.getId());
+
+                        // 记录操作日志
+                        operateLogService.addModuleOperateLog(
+                            StrUtil.format("收款单【{}】创建时，关联订单已提交审核或审核通过，系统自动提交收款单", soReceiptEntity.getCode()), 
+                            ModuleTypeEnum.SO_RECEIPT.getCode(), 
+                            soReceiptEntity.getId(), 
+                            "系统自动提交操作"
+                        );
+                    }
+                } catch (Exception e) {
+                    log.warn("收款单【{}】自动提交失败: {}", soReceiptEntity.getCode(), e.getMessage());
+                }
+            }
+        }
 
         return new BaseResultDTO.AddDTO(soReceiptEntity.getId(), code);
     }
@@ -429,7 +466,8 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean cancelProcess(String id) {
+    public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
+        String id = dto.getId();
         SoReceiptEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到收款单数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
@@ -441,6 +479,7 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
         String msg = StrUtil.format("用户【{}】【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), "收款单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_RECEIPT.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+        revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.SO_RECEIPT.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
@@ -913,9 +952,19 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void handlePlatformConsumer(PlatformReceiptDTO dto) {
         //查询是否存在
         SoReceiptEntity exist = this.getByThirdSystemAndCode(dto.getThirdSystem(), dto.getCode());
+        //查询销售订单状态
+        SoInfoEntity soInfoEntity = new SoInfoEntity();
+        if (!dto.getDetail().isEmpty()) {
+            if (StringUtils.isNotBlank(dto.getDetail().get(0).getSoCode())) {
+                soInfoEntity = soInfoService.lambdaQuery()
+                        .eq(SoInfoEntity::getCode,dto.getDetail().get(0).getSoCode())
+                        .one();
+            }
+        }
         List<SoReceiptDetailEntity> existList;
         if(exist != null) {
             existList = soReceiptDetailService.listByMainIds(Arrays.asList((exist.getId())));
@@ -943,7 +992,7 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
             }
             //如果是审核中，撤销审核
             if(ApproveStatusEnum.APPROVE_ING.equals(exist.getApproveStatus())){
-                this.cancelProcess(exist.getId());
+                this.cancelProcess(new ApproveDTO.CancelProcessDTO(exist.getId()));
             }
             //如果是已审核，反审核
             if(ApproveStatusEnum.APPROVE.equals(exist.getApproveStatus())){
@@ -997,6 +1046,14 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
             if(CollectionUtils.isNotEmpty(deleteDetailList)){
                 soReceiptDetailService.removeByIds(deleteDetailList.stream().map(SoReceiptDetailEntity::getId).collect(Collectors.toList()));
             }
+
+            if (Objects.nonNull(soInfoEntity)) {
+                if (soInfoEntity.getApproveStatus().equals(BillApproveStatusEnum.APPROVE)
+                        || soInfoEntity.getApproveStatus().equals(BillApproveStatusEnum.APPROVE_ING)) {
+                    this.submit(exist.getId());
+                }
+            }
+
         }else{
             //如果是作废，直接跳过
             if(dto.getIsInvalid()){
@@ -1036,7 +1093,14 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
                 }
             }
             addDTO.setDetailList(detailAddDTOList);
-            this.add(addDTO);
+            BaseResultDTO.AddDTO add = this.add(addDTO);
+
+            if (Objects.nonNull(soInfoEntity)) {
+                if (soInfoEntity.getApproveStatus().equals(BillApproveStatusEnum.APPROVE)
+                        || soInfoEntity.getApproveStatus().equals(BillApproveStatusEnum.APPROVE_ING)) {
+                    this.submit(add.getId());
+                }
+            }
         }
     }
 
@@ -1053,6 +1117,7 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
         }
         return new ArrayList<>();
     }
+
 
     private boolean judgeHasChange(SoReceiptEntity exist, List<SoReceiptDetailEntity> existList, PlatformReceiptDTO dto) {
         //校验主表字段

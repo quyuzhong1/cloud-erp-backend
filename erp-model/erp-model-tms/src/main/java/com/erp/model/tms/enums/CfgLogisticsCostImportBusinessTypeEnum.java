@@ -10,8 +10,9 @@ import org.apache.commons.lang3.StringUtils;
  * @date 2026/1/28 18:09
  */
 public enum CfgLogisticsCostImportBusinessTypeEnum implements EnumMessage {
-    LAST_MILE_LOGISTICS_BILL_COST("lastMileLogisticsBillCost", "尾程费用"),
-    LOGISTICS_BILL_COST("logisticsBillCost", "自发货费用"),
+    LAST_MILE_LOGISTICS_BILL_COST("lastMileLogisticsBillCost", "尾程费用(三方发货)"),
+    LOGISTICS_BILL_COST("logisticsBillCost", "尾程费用(自发货)"),
+    LAST_MILE_DELIVERY("lastMileDelivery", "尾程发货"),
     ;
     /**
      * 类型

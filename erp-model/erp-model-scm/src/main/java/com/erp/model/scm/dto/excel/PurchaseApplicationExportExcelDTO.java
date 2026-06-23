@@ -53,9 +53,9 @@ public class PurchaseApplicationExportExcelDTO implements Serializable {
     private String  productName;
 
     /**
-     * 供应商名称
+     * 一级供应商
      */
-    @ExcelProperty(value = "供应商名称", index = 6)
+    @ExcelProperty(value = "一级供应商", index = 6)
     private String  supplierName;
 
     /**

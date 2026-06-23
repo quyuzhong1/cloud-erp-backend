@@ -224,6 +224,7 @@ public class DmpOutputShopeeOrderRocketMQTaskHandler extends DmpOutputRocketMQTa
 	            .postCode(dmpSoReceiverEntity.getPostCode())
 	            .firstAddress(dmpSoReceiverEntity.getFullAddress())
 	            .fullAddress(dmpSoReceiverEntity.getFullAddress())
+	            .receiverTaxNo(dmpSoReceiverEntity.getReceiverTaxNo())
 	            .build();
         	orderDTO.setReceiver(receiver);
         }

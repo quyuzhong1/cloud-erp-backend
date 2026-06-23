@@ -1,11 +1,13 @@
 package com.erp.server.fms.service;
-import com.erp.model.fms.dto.excel.AssetDisposalImportExcelDTO;
-import com.erp.model.fms.entity.AssetDisposalDetailEntity;
-import com.erp.model.fms.entity.AssetDisposalEntity;
-import com.common.business.service.SuperService;
+
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
-import com.erp.model.fms.dto.AssetDisposalDTO;
+import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.fms.dto.AssetDisposalDTO;
+import com.erp.model.fms.dto.excel.AssetDisposalImportExcelDTO;
+import com.erp.model.fms.entity.AssetDisposalEntity;
+
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 import java.util.Map;
@@ -132,10 +134,10 @@ public interface AssetDisposalService extends SuperService<AssetDisposalEntity> 
     * 撤销
     * @author jack
     * @date: 2025-10-29
-    * @param id
+    * @param dto
     * @return
     */
-    BatchResultDTO cancelProcess(String id);
+    BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto);
 
     /**
     * 导出Excel

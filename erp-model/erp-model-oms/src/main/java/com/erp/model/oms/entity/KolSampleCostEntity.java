@@ -109,6 +109,26 @@ public class KolSampleCostEntity extends BaseEntity<KolSampleCostEntity> {
     @TableField("so_outstock_code")
     private String soOutstockCode;
     /**
+    * 物流商id
+    */
+    @TableField("logistics_supplier_id")
+    private String logisticsSupplierId;
+    /**
+    * 物流商
+    */
+    @TableField("logistics_supplier_name")
+    private String logisticsSupplierName;
+    /**
+    * 物流渠道id
+    */
+    @TableField("logistics_channel_id")
+    private String logisticsChannelId;
+    /**
+    * 物流渠道
+    */
+    @TableField("logistics_channel_name")
+    private String logisticsChannelName;
+    /**
     * 销售出库日期
     */
     @TableField("so_outstock_date")
@@ -174,6 +194,21 @@ public class KolSampleCostEntity extends BaseEntity<KolSampleCostEntity> {
     @TableField("product_cost")
     private BigDecimal productCost = BigDecimal.ZERO;
     /**
+     * 采购平均成本（来自B2C销售订单SKU明细，仅用于SKU成本未命中时兜底）
+     */
+    @TableField(exist = false)
+    private BigDecimal purchaseAverageCost;
+    /**
+    * 成本来源
+    */
+    @TableField("cost_source")
+    private String costSource;
+    /**
+    * 成本来源月份
+    */
+    @TableField("cost_source_month")
+    private String costSourceMonth;
+    /**
     * 头程费用
     */
     @TableField("first_mile_shipping_cost")
@@ -188,6 +223,11 @@ public class KolSampleCostEntity extends BaseEntity<KolSampleCostEntity> {
     */
     @TableField("shipping_cost")
     private BigDecimal shippingCost = BigDecimal.ZERO;
+    /**
+    * 费用来源
+    */
+    @TableField("fee_source")
+    private String feeSource;
     /**
     * 关税
     */
@@ -232,6 +272,14 @@ public class KolSampleCostEntity extends BaseEntity<KolSampleCostEntity> {
 
     public static final String SO_OUTSTOCK_CODE = "so_outstock_code";
 
+    public static final String LOGISTICS_SUPPLIER_ID = "logistics_supplier_id";
+
+    public static final String LOGISTICS_SUPPLIER_NAME = "logistics_supplier_name";
+
+    public static final String LOGISTICS_CHANNEL_ID = "logistics_channel_id";
+
+    public static final String LOGISTICS_CHANNEL_NAME = "logistics_channel_name";
+
     public static final String SO_OUTSTOCK_TIME = "so_outstock_time";
 
     public static final String WAREHOUSE_ID = "warehouse_id";
@@ -258,11 +306,17 @@ public class KolSampleCostEntity extends BaseEntity<KolSampleCostEntity> {
 
     public static final String PRODUCT_COST = "product_cost";
 
+    public static final String COST_SOURCE = "cost_source";
+
+    public static final String COST_SOURCE_MONTH = "cost_source_month";
+
     public static final String FIRST_MILE_SHIPPING_COST = "first_mile_shipping_cost";
 
     public static final String CLEARANCE_CUSTOMS_TAX = "clearance_customs_tax";
 
     public static final String SHIPPING_COST = "shipping_cost";
+
+    public static final String FEE_SOURCE = "fee_source";
 
     public static final String CUSTOMS_TAX = "customs_tax";
 

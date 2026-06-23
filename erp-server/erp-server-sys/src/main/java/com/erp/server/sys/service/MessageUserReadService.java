@@ -2,6 +2,7 @@ package com.erp.server.sys.service;
 import com.erp.model.sys.entity.MessageUserReadEntity;
 import com.common.business.service.SuperService;
 
+import java.util.Collection;
 import java.util.List;
 
 
@@ -52,4 +53,19 @@ public interface MessageUserReadService extends SuperService<MessageUserReadEnti
      * @return java.lang.Boolean
      **/
     Boolean readByMessageId(String messageId, String userId);
+
+    /**
+     * 批量标记同一消息的多个用户为已读
+     */
+    Boolean markReadByUserIds(String messageId, Collection<String> userIds);
+
+    /**
+     * 批量标记同一用户的多条消息为已读
+     */
+    Boolean markReadByMessageIds(Collection<String> messageIds, String userId);
+
+    /**
+     * 根据消息id删除读取记录
+     */
+    Boolean removeByMessageId(String messageId);
 }

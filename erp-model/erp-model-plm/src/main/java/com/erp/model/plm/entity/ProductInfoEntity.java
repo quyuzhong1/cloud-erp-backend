@@ -267,6 +267,12 @@ public class ProductInfoEntity extends BaseEntity<ProductInfoEntity> implements 
     @TableField(value = "application_category_id")
     private String applicationCategoryId;
 
+    /**
+     * 产品质保期
+     */
+    @TableField(value = "warranty_period")
+    private String warrantyPeriod;
+
     @TableField(exist = false)
     private String applicationCategoryName;
 }

@@ -16,6 +16,7 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import com.erp.server.dmp.service.DmpFbaInventoryService;
+import com.erp.server.dmp.service.DmpProductInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
@@ -34,6 +35,8 @@ public class DmpOutputAmzProductRocketMQTaskHandler extends DmpOutputRocketMQTas
 
     @Resource
     private DmpFbaInventoryService dmpFbaInventoryService;
+    @Resource
+    private DmpProductInfoService dmpProductInfoService;
 
     @Override
     public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
@@ -90,6 +93,20 @@ public class DmpOutputAmzProductRocketMQTaskHandler extends DmpOutputRocketMQTas
             }
         }
 
+        // 补充存在 changeIds，但不在 dmpProductInfoEntityMap 中的产品主数据（如仅明细变更触发、主表数据未随本次转换带入）。
+        // 注意：此处仅回查产品主表，不回查 SKU 明细。业务场景为：仅主表变更、明细未变更时不推送——
+        // 因此当 dmpSkuInfoEntityMap 中没有该 changeId 的明细时，下方循环会跳过，不推送该 Listing。
+        List<String> missProductMainIds = changeIds.stream().filter(e -> !dmpProductInfoEntityMap.containsKey(e)).collect(Collectors.toList());
+        if(CollectionUtils.isNotEmpty(missProductMainIds)) {
+            List<DmpProductInfoEntity> missProductInfoEntities = dmpProductInfoService.listByIds(missProductMainIds);
+            if (CollectionUtils.isNotEmpty(missProductInfoEntities)) {
+                for (DmpProductInfoEntity dmpProductInfoEntity : missProductInfoEntities) {
+                    dmpProductInfoEntityMap.put(dmpProductInfoEntity.getId(), dmpProductInfoEntity);
+                    shopIdList.add(dmpProductInfoEntity.getAuthId());
+                }
+            }
+        }
+
         // 库存信息
         List<DmpFbaInventoryEntity> dmpFbaInventoryEntityList = new LinkedList<>();
         if (!CollectionUtils.isEmpty(mskuList) && !CollectionUtils.isEmpty(shopIdList)){
@@ -104,14 +121,19 @@ public class DmpOutputAmzProductRocketMQTaskHandler extends DmpOutputRocketMQTas
                     .list();
         }
 
-
         Map<String, String> map = new HashMap<>();
         String cfgOutputId = dmpResponse.getDmpCfgOutputEntity().getId();
         for(String changId : changeIds) {
             DmpProductInfoEntity dmpProductInfoEntity = dmpProductInfoEntityMap.get(changId);
             List<DmpSkuInfoEntity> dmpSkuInfoEntityList = dmpSkuInfoEntityMap.get(changId);
+            // 产品主数据缺失：异常情况，跳过避免下方转换空指针
+            if (dmpProductInfoEntity == null){
+                log.warn("亚马逊中台Listing产品主数据缺失,跳过推送: mainId={}", changId);
+                continue;
+            }
+            // 明细(SKU)未变更：业务上仅主表变更不推送
             if (CollectionUtils.isEmpty(dmpSkuInfoEntityList)){
-                log.warn("亚马逊中台Listing数据解析异常: dmpProductInfoEntity={}, skuEntityList={}", JSONUtil.toJsonStr(dmpProductInfoEntity), JSONUtil.toJsonStr(dmpSkuInfoEntityList));
+                log.info("亚马逊中台Listing仅主表变更,明细未变更,跳过推送: mainId={}", changId);
                 continue;
             }
             for(DmpSkuInfoEntity dmpSkuInfoEntity : dmpSkuInfoEntityList) {
@@ -125,7 +147,7 @@ public class DmpOutputAmzProductRocketMQTaskHandler extends DmpOutputRocketMQTas
     }
 
     /**
-     * 解析订单数据
+     * 解析 Listing 产品数据
      **/
     public PlatformProductDTO convert(DmpProductInfoEntity dmpProductInfoEntity , DmpSkuInfoEntity dmpSkuInfoEntity , String cfgOutputId, List<DmpFbaInventoryEntity> dmpFbaInventoryEntityList) {
         if(this.validateDataBlack(dmpSkuInfoEntity, cfgOutputId)) {
@@ -174,7 +196,7 @@ public class DmpOutputAmzProductRocketMQTaskHandler extends DmpOutputRocketMQTas
         // fnsku
         DmpFbaInventoryEntity dmpFbaInventoryEntity = dmpFbaInventoryEntityList
                 .stream()
-                .filter(e -> e.getMsku().equals(dmpSkuInfoEntity.getSkuNo()))
+                .filter(e -> Objects.equals(e.getMsku(), dmpSkuInfoEntity.getSkuNo()))
                 .findFirst()
                 .orElse(null);
         if (null != dmpFbaInventoryEntity){

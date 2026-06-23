@@ -4,6 +4,7 @@ package com.erp.server.wms.controller.feign;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.ClientTypeEnum;
 import com.common.business.enums.DataAttributeEnum;
@@ -355,7 +356,7 @@ public class SampleScrapInfoFeignController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO cancelResult;
             try {
-                cancelResult = sampleScrapInfoService.cancelProcess(id,ClientTypeEnum.APP);
+                cancelResult = sampleScrapInfoService.cancelProcess(new ApproveDTO.CancelProcessDTO(id),ClientTypeEnum.APP);
             }catch (Exception e){
                 log.error("样品报废单app端撤回流程失败",e);
                 SampleScrapInfoEntity entity = idEntityMap.get(id);

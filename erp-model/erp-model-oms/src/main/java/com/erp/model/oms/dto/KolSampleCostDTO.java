@@ -122,6 +122,26 @@ public class KolSampleCostDTO implements Serializable {
         private String soOutstockCode;
 
         /**
+         * 物流商id
+         */
+        private String logisticsSupplierId;
+
+        /**
+         * 物流商
+         */
+        private String logisticsSupplierName;
+
+        /**
+         * 物流渠道id
+         */
+        private String logisticsChannelId;
+
+        /**
+         * 物流渠道
+         */
+        private String logisticsChannelName;
+
+        /**
          * 销售出库日期
          */
         private LocalDate soOutstockDate;
@@ -190,6 +210,16 @@ public class KolSampleCostDTO implements Serializable {
         private BigDecimal productCost;
 
         /**
+         * 成本来源
+         */
+        private String costSource;
+
+        /**
+         * 成本来源月份
+         */
+        private String costSourceMonth;
+
+        /**
          * 头程费用
          */
         private BigDecimal firstMileShippingCost;
@@ -203,6 +233,11 @@ public class KolSampleCostDTO implements Serializable {
          * 运费
          */
         private BigDecimal shippingCost;
+
+        /**
+         * 费用来源
+         */
+        private String feeSource;
 
         /**
          * 关税
@@ -298,6 +333,26 @@ public class KolSampleCostDTO implements Serializable {
         private String soOutstockCode;
 
         /**
+        * 物流商id
+        */
+        private String logisticsSupplierId;
+
+        /**
+        * 物流商
+        */
+        private String logisticsSupplierName;
+
+        /**
+        * 物流渠道id
+        */
+        private String logisticsChannelId;
+
+        /**
+        * 物流渠道
+        */
+        private String logisticsChannelName;
+
+        /**
         * 销售出库日期
         */
         private LocalDate soOutstockDate;
@@ -363,6 +418,16 @@ public class KolSampleCostDTO implements Serializable {
         private BigDecimal productCost;
 
         /**
+        * 成本来源
+        */
+        private String costSource;
+
+        /**
+        * 成本来源月份
+        */
+        private String costSourceMonth;
+
+        /**
         * 头程费用
         */
         private BigDecimal firstMileShippingCost;
@@ -376,6 +441,11 @@ public class KolSampleCostDTO implements Serializable {
         * 运费
         */
         private BigDecimal shippingCost;
+
+        /**
+        * 费用来源
+        */
+        private String feeSource;
 
         /**
         * 关税
@@ -510,6 +580,30 @@ public class KolSampleCostDTO implements Serializable {
         private String soOutstockCode;
 
         /**
+        * 物流商id
+        */
+        @Size(max = 19,message = "物流商id最大长度不能超过19位")
+        private String logisticsSupplierId;
+
+        /**
+        * 物流商
+        */
+        @Size(max = 128,message = "物流商最大长度不能超过128位")
+        private String logisticsSupplierName;
+
+        /**
+        * 物流渠道id
+        */
+        @Size(max = 19,message = "物流渠道id最大长度不能超过19位")
+        private String logisticsChannelId;
+
+        /**
+        * 物流渠道
+        */
+        @Size(max = 128,message = "物流渠道最大长度不能超过128位")
+        private String logisticsChannelName;
+
+        /**
         * 销售出库日期
         */
         private LocalDate soOutstockDate;
@@ -591,6 +685,18 @@ public class KolSampleCostDTO implements Serializable {
         private BigDecimal productCost;
 
         /**
+        * 成本来源
+        */
+        @Size(max = 32,message = "成本来源最大长度不能超过32位")
+        private String costSource;
+
+        /**
+        * 成本来源月份
+        */
+        @Size(max = 7,message = "成本来源月份最大长度不能超过7位")
+        private String costSourceMonth;
+
+        /**
         * 头程费用
         */
         @NotNull(message = "头程费用不能为空")
@@ -610,6 +716,12 @@ public class KolSampleCostDTO implements Serializable {
         @NotNull(message = "运费不能为空")
         @Digits(integer = 12, fraction = 4, message = "运费整数位不能超过12位，小数位不能超过4位")
         private BigDecimal shippingCost;
+
+        /**
+        * 费用来源
+        */
+        @Size(max = 32,message = "费用来源最大长度不能超过32位")
+        private String feeSource;
 
         /**
         * 关税
