@@ -38,6 +38,7 @@ import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.MessageUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.constant.DmpOutputConstant;
 import com.erp.model.dmp.dto.DmpPushWdtDTO;
@@ -2596,12 +2597,15 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             }
         }
         if (errorCount > 0 && CharSequenceUtil.isBlank(url)) {
-            importResultDTO.setRemark(CharSequenceUtil.format(
-                    ApiError.FILE_IMPORT_TASK_FINISH_EXPORT_FAILED.getMsg(),
-                    errorCount, ApiError.FILE_EXPORT_ERROR_DATA_FAILED.getMsg()));
+            importResultDTO.setRemark(MessageUtils.getMessage(
+                    ApiError.FILE_IMPORT_TASK_FINISH_EXPORT_FAILED,
+                    errorCount, MessageUtils.getMessage(ApiError.FILE_EXPORT_ERROR_DATA_FAILED)));
+        } else if (errorCount > 0) {
+            importResultDTO.setRemark(MessageUtils.getMessage(
+                    ApiError.FILE_IMPORT_TASK_FINISH, errorCount));
         } else {
-            importResultDTO.setRemark(CharSequenceUtil.format(
-                    ApiError.FILE_IMPORT_TASK_FINISH.getMsg(), errorCount));
+            importResultDTO.setRemark(MessageUtils.getMessage(
+                    ApiError.FILE_IMPORT_TASK_FINISH_ALL_SUCCESS));
         }
         importResultDTO.setErrorUrl(url);
         importResultDTO.setFinishTime(LocalDateTime.now());
@@ -2923,27 +2927,27 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         List<String> errorMsgList = new ArrayList<>();
         SoReturnInstockEntity entity = entityMap.get(row.getCode());
         if (ObjectUtil.isEmpty(entity)) {
-            errorMsgList.add(ApiError.SO_RETURN_INSTOCK_IMPORT_CODE_NOT_FOUND.getMsg());
+            errorMsgList.add(MessageUtils.getMessage(ApiError.SO_RETURN_INSTOCK_IMPORT_CODE_NOT_FOUND));
             return errorMsgList;
         }
         if (Boolean.TRUE.equals(entity.getInvalidStatus())
                 || !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus())) {
-            errorMsgList.add(ApiError.SO_RETURN_INSTOCK_IMPORT_UPDATE_STATUS_INVALID.getMsg());
+            errorMsgList.add(MessageUtils.getMessage(ApiError.SO_RETURN_INSTOCK_IMPORT_UPDATE_STATUS_INVALID));
             return errorMsgList;
         }
         if (!SourceTypeEnum.THIRD_WAREHOUSE_RETURN_INSTOCK.getCode().equalsIgnoreCase(entity.getSourceType())
                 && !SourceTypeEnum.SELF_ADD.getCode().equalsIgnoreCase(entity.getSourceType())) {
-            errorMsgList.add(ApiError.SO_RETURN_INSTOCK_IMPORT_SOURCE_TYPE_FORBIDDEN.getMsg());
+            errorMsgList.add(MessageUtils.getMessage(ApiError.SO_RETURN_INSTOCK_IMPORT_SOURCE_TYPE_FORBIDDEN));
             return errorMsgList;
         }
         if (CollUtil.isEmpty(customerMap.get(row.getCustomerName()))) {
-            errorMsgList.add(ApiError.SO_RETURN_INSTOCK_IMPORT_CUSTOMER_NOT_FOUND.getMsg());
+            errorMsgList.add(MessageUtils.getMessage(ApiError.SO_RETURN_INSTOCK_IMPORT_CUSTOMER_NOT_FOUND));
         } else if (isMappedToReturnOrder(entity)
                 && !CharSequenceUtil.equals(entity.getCustomerName(), row.getCustomerName())) {
-            errorMsgList.add(ApiError.SO_RETURN_INSTOCK_IMPORT_CUSTOMER_CHANGE_FORBIDDEN.getMsg());
+            errorMsgList.add(MessageUtils.getMessage(ApiError.SO_RETURN_INSTOCK_IMPORT_CUSTOMER_CHANGE_FORBIDDEN));
         }
         if (ObjectUtil.isEmpty(inventoryOrgMap.get(row.getInventoryOrgName()))) {
-            errorMsgList.add(ApiError.SO_RETURN_INSTOCK_IMPORT_INVENTORY_ORG_NOT_FOUND.getMsg());
+            errorMsgList.add(MessageUtils.getMessage(ApiError.SO_RETURN_INSTOCK_IMPORT_INVENTORY_ORG_NOT_FOUND));
         }
         DictCurrencyEntity matchedCurrency = null;
         if (CharSequenceUtil.isNotBlank(row.getCurrencyStr())) {
@@ -2951,7 +2955,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                     .filter(obj -> obj.getName().equals(row.getCurrencyStr()) || obj.getId().equals(row.getCurrencyStr()))
                     .findFirst().orElse(null);
             if (matchedCurrency == null) {
-                errorMsgList.add(ApiError.SO_RETURN_INSTOCK_IMPORT_CURRENCY_NOT_FOUND.getMsg());
+                errorMsgList.add(MessageUtils.getMessage(ApiError.SO_RETURN_INSTOCK_IMPORT_CURRENCY_NOT_FOUND));
             }
         }
         // 币种变更场景：按"入库日期"月份预校验汇率，提前在错误列表中暴露问题
@@ -2965,7 +2969,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 BigDecimal monthRate = monthRateCache.computeIfAbsent(cacheKey,
                         k -> dmpTaskFeign.getMonthRate(billDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), currency));
                 if (monthRate == null || MathUtil.compareTo(monthRate, BigDecimal.ZERO) == MathUtil.ZERO) {
-                    errorMsgList.add(CharSequenceUtil.format(ApiError.COMMON_EXCHANGE_RATE_NOT_EXIST.getMsg(),
+                    errorMsgList.add(MessageUtils.getMessage(ApiError.COMMON_EXCHANGE_RATE_NOT_EXIST,
                             billDate.format(DateTimeFormatter.ofPattern("yyyy-MM")), row.getCurrencyStr()));
                 }
             }
@@ -2993,7 +2997,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             if (!duplicateCodes.contains(row.getCode())) {
                 continue;
             }
-            appendImportUpdateError(row, ApiError.SO_RETURN_INSTOCK_IMPORT_DUPLICATE_CODE.getMsg());
+            appendImportUpdateError(row, MessageUtils.getMessage(ApiError.SO_RETURN_INSTOCK_IMPORT_DUPLICATE_CODE));
             if (!errorList.contains(row)) {
                 errorList.add(row);
             }
@@ -3010,7 +3014,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             if (errorList.contains(row)) {
                 continue;
             }
-            appendImportUpdateError(row, ApiError.SO_RETURN_INSTOCK_IMPORT_BATCH_ABORT.getMsg());
+            appendImportUpdateError(row, MessageUtils.getMessage(ApiError.SO_RETURN_INSTOCK_IMPORT_BATCH_ABORT));
             errorList.add(row);
         }
     }
