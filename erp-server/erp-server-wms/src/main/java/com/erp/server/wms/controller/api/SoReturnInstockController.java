@@ -481,13 +481,6 @@ public class SoReturnInstockController extends BaseController {
 
 
     /**
-     * 下载模板
-     * @author will
-     * @date 2025/4/24 19:47
-     * @param response
-     * @return ApiResult
-     */
-    /**
      * 下载模板（importType=add 新增，update 批量更新主表）
      */
     @GetMapping("/downloadTemplate")
@@ -499,6 +492,7 @@ public class SoReturnInstockController extends BaseController {
 
     /**
      * 异步导入（importType=add 新增，update 批量更新主表）
+     * review-skip: 接口由同步 MultipartFile 改为 ImportDTO 异步任务，前端已配合改造，不保留旧 multipart 协议
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入销售退货入库单")
     @PostMapping("/import")
