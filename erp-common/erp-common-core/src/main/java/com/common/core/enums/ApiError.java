@@ -472,6 +472,22 @@ public enum ApiError implements Serializable {
     WF_FS_PROCESS_USER_NOT_FOUND(4060,"未找到飞书用户对应的系统用户,飞书userId: {0}"),
     WF_FS_DEFINITION_SUBSCRIBE_FAIL(4061,"飞书定义订阅失败，请检查"),
     WF_FS_DEFINITION_UNSUBSCRIBE_FAIL(4062,"取消飞书定义订阅失败，请检查"),
+    WF_TASK_RECORD_CONTEXT_REQUIRED(4063,"任务节点上下文为空，禁止直接执行"),
+    WF_TASK_RECORD_CONTEXT_MISMATCH(4064,"任务节点上下文不匹配"),
+    WF_TASK_RECORD_NOT_MATCH(4065,"任务节点记录不存在或不匹配"),
+    WF_TASK_RECORD_NOT_PROCESSING(4066,"任务节点未处于执行中，禁止直接执行"),
+    WF_TASK_RECORD_DUPLICATE(4067,"任务节点已存在，请稍后重试"),
+    WF_TASK_RECORD_FORCE_RETRY_PARAM_REQUIRED(4068,"强制重试参数不能为空"),
+    WF_TASK_RECORD_FORCE_RETRY_NOT_FOUND(4069,"未找到可强制重试的任务节点"),
+    WF_TASK_RECORD_FORCE_RETRY_FORBIDDEN(4070,"无任务节点人工强制重试权限"),
+    WF_KOL_B2C_APPROVE_REQUIRED(4071,"B2C寄样申请单未审核通过，禁止下推"),
+    WF_TASK_RECORD_MQ_SEND_FAILED(4072,"任务节点MQ发送失败：{0}"),
+    WF_TASK_RECORD_FORCE_RETRY_NO_ELIGIBLE(4073,"没有可强制重试的任务节点，成功节点不会重试，处理中节点需超过3分钟才允许接管"),
+    WF_TASK_RECORD_FORCE_RETRY_PARAM_INCOMPLETE(4074,"任务节点id或sourceType/sourceId不能为空"),
+    WF_KOL_B2C_SUB_TASK_NODE_NOT_FOUND(4075,"KOL B2C拆分单任务节点配置不存在"),
+    WF_KOL_B2C_SPLIT_DETAIL_INCOMPLETE(4076,"B2C寄样申请单拆分单明细不完整，单号【{0}】，达人【{1}】"),
+    WF_KOL_B2C_WAIT_SPLIT_ORDER(4077,"等待拆分单生成"),
+    WF_KOL_B2C_WAIT_SUB_TASK_COMPLETE(4078,"等待KOL B2C拆分单子任务完成，已完成{0}/{1}"),
     /**
      * PROJECT 项目相关 4500 - 5000
      */
@@ -1093,6 +1109,9 @@ public enum ApiError implements Serializable {
     PO_SUBCONTRACT_REPAIR_QTY_MUST_GT_ZERO(9675,"SKU【{0}】返修数量必须大于0"),
     PO_SUBCONTRACT_REPAIR_SUB_LINE_PRICE_REQUIRED(9676,"SKU【{0}】委外返修子行价格不能为空"),
     PO_SUBCONTRACT_REPAIR_SUB_LINE_TAX_RATE_OR_CURRENCY_REQUIRED(9677,"SKU【{0}】委外返修子行税率或币种不能为空"),
+    PO_RECONCILIATION_INVOICE_LIMIT_EXCEEDED(9678,"发票数量不能超过10个"),
+    PO_RECONCILIATION_INVOICE_FILE_INVALID(9679,"发票附件 URL 或文件名不能为空"),
+    PO_RECONCILIATION_INVOICE_PDF_ONLY(9680,"仅支持上传PDF格式的文件"),
 
     /**
      * 采购价目表错误 信息 10000 - 10500
@@ -1364,6 +1383,7 @@ public enum ApiError implements Serializable {
     SO_B2C_NOT_OUTBOUND_DETAIL_WAREHOUSE_UPDATE_FAILED(10753,"不出库发货失败：销售订单明细仓库未成功落库，请刷新后重试"),
     SO_B2C_NOT_OUTBOUND_LOGISTICS_UPDATE_FAILED(10754,"不出库发货失败：销售订单物流信息更新失败，请刷新后重试"),
     SO_B2C_NOT_OUTBOUND_STATUS_UPDATE_FAILED(10755,"不出库发货失败：销售订单状态更新失败，请刷新后重试"),
+    SO_CHANGE_DELETE_ALL_DETAIL_FORBIDDEN(10756,"销售变更单不允许删除所有的订单明细"),
     CUSTOMER_ADDRESS_NOT_MATCH(94108,"未匹配到客户地址，客户id：{0}，收货地址：{1}"),
 
     /**
@@ -1867,7 +1887,7 @@ public enum ApiError implements Serializable {
     QC_APPLICATION_DETAIL_NOT_EXIST(16001,"质检申请明细单不存在"),
     QC_APPLICATION_SUPPLIER_NOT_DIFF(16002,"质检申请单明细单供应商与来源单据供应商不一致"),
     QC_APPLICATION_NOT_APPROVE_PUSH(16003,"质检申请单未审核不支持下推"),
-    QC_APPLICATION_PLAN_QC_DATE_NOT_BEFORE_NOW(16004,"期望质检日期不能早于当前日期"),
+    QC_APPLICATION_EXPECT_QC_DATE_NOT_BEFORE_NOW(16004,"期望质检日期不能早于当前日期"),
     QC_APPLICATION_DETAIL_QTY_NOT_GREATER_THAN_PO_QTY(16005,"申请质检数量不能大于未入库数量，SKU【{0}】未入库数量：【{1}】"),
     QC_STANDARD_SKU_NOT_FOUND(11140,  "SKU【{0}】未查得质检标准"),
     QC_STANDARD_NOT_FOUND(11141, "质检标准不存在"),
@@ -1879,6 +1899,24 @@ public enum ApiError implements Serializable {
     QC_APPLICATION_SOURCE_PO_NOT_OPTION(16008,"采购订单/自建质检申请单不允许操作"),
     QC_APPLICATION_PUSH_QC_NOTICE_NOT_DISAPPROVE(16009,"质检申请单已下推质检通知单，不支持反审核"),
     QC_APPLICATION_PUSH_QC_NOTICE_NOT_PUSH(16010,"质检申请单已下推质检通知单，不支持再次下推"),
+    CFG_QC_USER_NOT_EXIST(16011,"未找到质检员配置"),
+    CFG_QC_USER_SUPPLIER_DUPLICATE(16012,"供应商【{0}】仓库【{1}】已配置质检员，不允许重复添加"),
+    CFG_QC_USER_SUPPLIER_REQUIRED(16013,"供应商编码不能为空"),
+    CFG_QC_USER_SUPPLIER_NOT_FOUND(16014,"供应商编码【{0}】不存在"),
+    CFG_QC_USER_IMPORT_USER_NOT_IN_ORG(16015,"质检员【{0}】在仓库对应组织下不存在业务员任岗明细"),
+    CFG_QC_USER_WAREHOUSE_REQUIRED(16016,"仓库不能为空"),
+    CFG_QC_USER_WAREHOUSE_NOT_FOUND(16017,"仓库【{0}】不存在"),
+    CFG_QC_USER_WAREHOUSE_NAME_DUPLICATE(16018,"仓库名称【{0}】存在多条记录，请使用唯一仓库名称"),
+    PO_QC_NOTICE_PLAN_QC_DATE_REQUIRED(16019,"外验质检类型审核通过时，计划质检日期不能为空"),
+    PO_QC_NOTICE_PLAN_QC_DATE_NOT_BEFORE_NOW(16020,"计划质检日期只能选择当前及以后的日期"),
+    CFG_QC_USER_QC_USER_AT_LEAST_ONE(16021,"至少需要配置一名质检员"),
+    CFG_QC_USER_LOAD_QC_USER_LIST_FAILED(16022,"加载质检员列表失败，请稍后重试"),
+    CFG_QC_USER_UPDATE_KEY_NOT_MODIFIABLE(16023,"修改时不允许变更供应商或仓库"),
+    QC_NOTICE_PARAM_REQUIRED(16024,"请输入质检通知单号或选择明细"),
+    QC_NOTICE_DETAILS_MUST_SAME_NOTICE(16025,"选中的明细必须属于同一质检通知单"),
+    QC_NOTICE_UPDATE_QC_USER_STATUS_INVALID(16026,"只能更新待质检状态通知单的质检员"),
+    QC_NOTICE_QC_USER_ID_REQUIRED(16027,"质检员id不能为空"),
+    QC_NOTICE_DETAIL_UPDATE_QC_USER_STATUS_INVALID(16028,"只能更新待质检状态明细的质检员"),
 
     ;
     @Getter
