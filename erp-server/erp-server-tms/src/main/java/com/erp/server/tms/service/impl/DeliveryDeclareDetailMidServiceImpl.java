@@ -23,6 +23,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.dto.ProductBomHistoryDTO;
 import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.tms.dto.DeliveryDeclareDetailMidDTO;
 import com.erp.model.tms.enums.DeclareDeclareTypeEnum;
@@ -39,6 +40,7 @@ import com.erp.model.wms.enums.WmsDeclareStatusEnum;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.plm.feign.ProductBomHistoryFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.wms.feign.SoDeliveryNoticeFeign;
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
@@ -85,6 +87,8 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
     private SysDictFeign sysDictFeign;
     @Resource
     private PlmTaskFeign plmTaskFeign;
+    @Resource
+    private ProductBomHistoryFeign productBomHistoryFeign;
     @Resource
     private WmsWarehouseFeign wmsWarehouseFeign;
     @Resource
@@ -898,7 +902,9 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         if (CollUtil.isEmpty(bomHistoryIds)) {
             return Collections.emptyMap();
         }
-        List<BomChildrenSkuDTO> historyList = baseMapper.listBomHistoryByIds(bomHistoryIds);
+        ProductBomHistoryDTO.BomHistoryQueryDTO queryDTO =
+                new ProductBomHistoryDTO.BomHistoryQueryDTO(bomHistoryIds, null);
+        List<BomChildrenSkuDTO> historyList = productBomHistoryFeign.listBomHistoryByIds(queryDTO);
         if (CollUtil.isEmpty(historyList)) {
             return Collections.emptyMap();
         }
@@ -1422,7 +1428,9 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         if (CollUtil.isEmpty(parentSkuIds)) {
             return Collections.emptyMap();
         }
-        List<BomChildrenSkuDTO> historyList = baseMapper.listBomHistoryByParentSkuIds(parentSkuIds);
+        ProductBomHistoryDTO.BomHistoryQueryDTO queryDTO =
+                new ProductBomHistoryDTO.BomHistoryQueryDTO(null, parentSkuIds);
+        List<BomChildrenSkuDTO> historyList = productBomHistoryFeign.listBomHistoryByParentSkuIds(queryDTO);
         if (CollUtil.isEmpty(historyList)) {
             return Collections.emptyMap();
         }
