@@ -3028,7 +3028,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             if (errorList.contains(row)) {
                 continue;
             }
-            appendImportAddError(row, ApiError.SO_RETURN_INSTOCK_IMPORT_BATCH_ABORT.getMsg());
+            appendImportAddError(row, MessageUtils.getMessage(ApiError.SO_RETURN_INSTOCK_IMPORT_BATCH_ABORT));
             errorList.add(row);
         }
     }
@@ -3051,7 +3051,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         if (e instanceof ServiceException && CharSequenceUtil.isNotBlank(e.getMessage())) {
             msg = e.getMessage();
         } else {
-            msg = ApiError.SO_RETURN_INSTOCK_IMPORT_PERSIST_FAILED.getMsg();
+            msg = MessageUtils.getMessage(ApiError.SO_RETURN_INSTOCK_IMPORT_PERSIST_FAILED);
         }
         if (msg.length() > 200) {
             return msg.substring(0, 200);
@@ -3410,7 +3410,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
             List<CustomerInfoEntity> customerInfoEntityList = customerMap.get(excelDTO.getCustomerName());
             if (CollUtil.isEmpty(customerInfoEntityList)) {
-                headerErrors.add(CharSequenceUtil.format(ApiError.SO_RETURN_INSTOCK_IMPORT_ADD_CUSTOMER_NOT_FOUND.getMsg(),
+                headerErrors.add(MessageUtils.getMessage(ApiError.SO_RETURN_INSTOCK_IMPORT_ADD_CUSTOMER_NOT_FOUND,
                         excelDTO.getCustomerName()));
             } else {
                 add.setCustomerId(customerInfoEntityList.get(0).getId());
@@ -3419,7 +3419,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                     .filter(obj -> obj.getName().equals(excelDTO.getCurrencyStr()) || obj.getId().equals(excelDTO.getCurrencyStr()))
                     .findFirst().orElse(null);
             if (ObjectUtil.isEmpty(dictCurrencyEntity)) {
-                headerErrors.add(CharSequenceUtil.format(ApiError.SO_RETURN_INSTOCK_IMPORT_ADD_CURRENCY_NOT_FOUND.getMsg(),
+                headerErrors.add(MessageUtils.getMessage(ApiError.SO_RETURN_INSTOCK_IMPORT_ADD_CURRENCY_NOT_FOUND,
                         excelDTO.getCurrencyStr()));
             } else {
                 add.setCurrencySymbol(dictCurrencyEntity.getSymbol());
@@ -3446,7 +3446,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 SoReturnInstockDetailDTO.Add addDetail = new SoReturnInstockDetailDTO.Add();
                 SkuVO skuVO = skuMap.get(soReturnStockImportExcelDTO.getSkuNo());
                 if (ObjectUtil.isEmpty(skuVO) || !ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(skuVO.getStatus())) {
-                    rowErrors.add(CharSequenceUtil.format(ApiError.SO_RETURN_INSTOCK_IMPORT_ADD_SKU_NOT_FOUND.getMsg(),
+                    rowErrors.add(MessageUtils.getMessage(ApiError.SO_RETURN_INSTOCK_IMPORT_ADD_SKU_NOT_FOUND,
                             soReturnStockImportExcelDTO.getSkuNo()));
                 } else {
                     addDetail.setSkuId(skuVO.getSkuId());
@@ -3455,7 +3455,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 WarehouseDTO.ListDTO warehouseEntity = warehouseMap.get(soReturnStockImportExcelDTO.getWarehouseName());
                 if (ObjectUtil.isEmpty(warehouseEntity) || warehouseEntity.getDisabled()
                         || !ApproveStatusEnum.APPROVE.getStatus().equals(warehouseEntity.getApproveStatus().getCode())) {
-                    rowErrors.add(CharSequenceUtil.format(ApiError.SO_RETURN_INSTOCK_IMPORT_ADD_WAREHOUSE_NOT_FOUND.getMsg(),
+                    rowErrors.add(MessageUtils.getMessage(ApiError.SO_RETURN_INSTOCK_IMPORT_ADD_WAREHOUSE_NOT_FOUND,
                             soReturnStockImportExcelDTO.getWarehouseName()));
                 } else {
                     addDetail.setWarehouseId(warehouseEntity.getId());
@@ -3466,8 +3466,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                         soReturnStockImportExcelDTO.getWarehouseLocationName()));
                 if (ObjectUtil.isEmpty(warehouseLocationEntity)
                         && CharSequenceUtil.isNotBlank(soReturnStockImportExcelDTO.getWarehouseLocationName())) {
-                    rowErrors.add(CharSequenceUtil.format(
-                            ApiError.SO_RETURN_INSTOCK_IMPORT_ADD_WAREHOUSE_LOCATION_NOT_FOUND.getMsg(),
+                    rowErrors.add(MessageUtils.getMessage(
+                            ApiError.SO_RETURN_INSTOCK_IMPORT_ADD_WAREHOUSE_LOCATION_NOT_FOUND,
                             soReturnStockImportExcelDTO.getWarehouseName(),
                             soReturnStockImportExcelDTO.getWarehouseLocationName()));
                 }
