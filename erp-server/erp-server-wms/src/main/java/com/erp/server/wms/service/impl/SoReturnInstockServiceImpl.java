@@ -2622,7 +2622,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         }
 
         Map<String, BigDecimal> monthRateCache = new HashMap<>();
-        List<Pair<SoReturnInstockEntity, SoReturnInstockEntity>> toUpdateList = new ArrayList<>();
+        List<Pair<SoReturnStockUpdateImportExcelDTO, Pair<SoReturnInstockEntity, SoReturnInstockEntity>>> toUpdateList = new ArrayList<>();
         for (SoReturnStockUpdateImportExcelDTO row : successList) {
             List<String> rowErrors = validateImportUpdateRow(row, entityMap, customerMap, inventoryOrgMap, currencyList, monthRateCache);
             if (CollUtil.isNotEmpty(rowErrors)) {
@@ -2636,28 +2636,33 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             applyImportUpdate(entity, row, customerMap.get(row.getCustomerName()).get(0),
                     inventoryOrgMap.get(row.getInventoryOrgName()), currencyList,
                     salesOrgByIdMap, salesDeptByIdMap);
-            toUpdateList.add(Pair.create(oldEntity, entity));
+            toUpdateList.add(Pair.create(row, Pair.create(oldEntity, entity)));
         }
 
         if (CollUtil.isNotEmpty(errorList)) {
             markImportUpdateBatchAbortedRows(successList, errorList);
             return;
         }
-        try {
-            ApplicationContextUtils.getBean(SoReturnInstockServiceImpl.class)
-                    .persistAllImportUpdate(toUpdateList, monthRateCache);
-        } catch (Exception e) {
-            log.error("销售退货入库单批量更新落库失败", e);
-            markImportUpdatePersistFailedRows(successList, errorList, resolveImportPersistErrorMsg(e));
+        SoReturnInstockServiceImpl self = ApplicationContextUtils.getBean(SoReturnInstockServiceImpl.class);
+        for (Pair<SoReturnStockUpdateImportExcelDTO, Pair<SoReturnInstockEntity, SoReturnInstockEntity>> item : toUpdateList) {
+            SoReturnStockUpdateImportExcelDTO row = item.getFirst();
+            Pair<SoReturnInstockEntity, SoReturnInstockEntity> pair = item.getSecond();
+            try {
+                self.persistSingleImportUpdate(pair.getFirst(), pair.getSecond(), monthRateCache);
+            } catch (Exception e) {
+                log.error("销售退货入库单批量更新落库失败，code={}", pair.getSecond().getCode(), e);
+                appendImportUpdateError(row, resolveImportPersistErrorMsg(e));
+                if (!errorList.contains(row)) {
+                    errorList.add(row);
+                }
+            }
         }
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public void persistAllImportUpdate(List<Pair<SoReturnInstockEntity, SoReturnInstockEntity>> toUpdateList,
-                                       Map<String, BigDecimal> monthRateCache) {
-        for (Pair<SoReturnInstockEntity, SoReturnInstockEntity> pair : toUpdateList) {
-            persistImportUpdate(pair.getFirst(), pair.getSecond(), monthRateCache);
-        }
+    public void persistSingleImportUpdate(SoReturnInstockEntity oldEntity, SoReturnInstockEntity entity,
+                                          Map<String, BigDecimal> monthRateCache) {
+        persistImportUpdate(oldEntity, entity, monthRateCache);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -2960,17 +2965,6 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             }
             appendImportUpdateError(row, ApiError.SO_RETURN_INSTOCK_IMPORT_BATCH_ABORT.getMsg());
             errorList.add(row);
-        }
-    }
-
-    private void markImportUpdatePersistFailedRows(List<SoReturnStockUpdateImportExcelDTO> successList,
-                                                   List<SoReturnStockUpdateImportExcelDTO> errorList,
-                                                   String persistErrorMsg) {
-        for (SoReturnStockUpdateImportExcelDTO row : successList) {
-            appendImportUpdateError(row, persistErrorMsg);
-            if (!errorList.contains(row)) {
-                errorList.add(row);
-            }
         }
     }
 
