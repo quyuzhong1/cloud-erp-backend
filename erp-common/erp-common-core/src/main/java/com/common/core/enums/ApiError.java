@@ -411,6 +411,7 @@ public enum ApiError implements Serializable {
     DMP_THIRD_WAREHOUSE_WAREHOUSE_OPERATION_MISSING_ENUM(3514,"缺少必要的仓库操作类型【{0}】"),
     DMP_THIRD_WAREHOUSE_WAREHOUSE_OPERATION_VALUE_EMPTY(3515,"仓库操作类型或描述不能为空"),
     DMP_KINGDEE_SUBORDER_NOT_ALLOW_DISAPPROVE(3516,"请操作金蝶反审核至待提交后执行反审核"),
+    DMP_KINGDEE_SUBCONTRACT_BOM_CHILD_MATCH_AMBIGUOUS(3517,"委外用料清单变更单{0}子行SKU无法唯一匹配，skuNo={1}, detailIds={2}"),
 
     /**
      * 工作流错误 workflow 4000 - 4500
