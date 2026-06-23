@@ -41,7 +41,8 @@ public class ExportWmsVirtualInventoryDiffHandler extends AbstractSingleSheetGro
     /**
      * 虚拟库存差异导出以「SKU + 实体仓」作为单据维度。
      * <p>
-     * 上游 {@code exportListDiffExportData} 默认按 {@code diff.id asc, diff.virtualWarehouseId asc} 排序：
+     * 上游 {@code exportListDiffExportData}（{@code VirtualInventoryMapper.xml#listDiffExportData}）默认按
+     * {@code diff.id asc, diff.virtualWarehouseId asc} 排序，ORDER BY 处已标注导出分组依赖，禁止随意调整：
      * {@code diff.id} 来源于 Inventory CTE 中按 {@code sku_id + warehouse_id} 聚合后的 {@code min(id)}，
      * 因此同一 {@code skuId + warehouseId} 维度天然连续；{@code virtualWarehouseId} 仅用于组内稳定排序。
      * 若后续调整导出排序，必须保持 {@code skuId + warehouseId} 连续，否则基类分组保护无法生效。

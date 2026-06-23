@@ -438,6 +438,13 @@
                 ${params.permissionSql}
             </if>
         </where>
+        <!--
+            导出分组依赖（勿随意调整）：
+            erp-server-file ExportWmsVirtualInventoryDiffHandler 按 skuId+warehouseId 连续分组并组内置空展示字段，
+            failOnNonContinuousSheetGroup=true 时若同组非相邻将快速失败。
+            diff.id 为 Inventory CTE 按 sku_id+warehouse_id 聚合的 min(id)，diff.id asc 保证同 SKU+实体仓连续；
+            diff.virtualWarehouseId asc 仅组内稳定排序。若 params.sortList 非空，其字段不得破坏 skuId+warehouseId 连续性。
+        -->
         order by
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
