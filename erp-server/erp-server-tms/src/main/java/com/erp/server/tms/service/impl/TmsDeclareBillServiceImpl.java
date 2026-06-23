@@ -481,27 +481,35 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     @Override
     public Boolean update(TmsDeclareBillDTO.UpdateDTO updateDTO,SourceTypeEnum sourceTypeEnum) {
         // 状态校验须在 Feign 重量重算之前，避免不可编辑单据触发无效远程调用。
-        validateUpdateEditableState(updateDTO.getId(), sourceTypeEnum);
+        TmsDeclareBillEntity old = loadAndAssertUpdateEditableState(updateDTO.getId(), sourceTypeEnum);
         // 重量重算含 WMS/PLM Feign，须在事务外完成（erp-backend-standards：禁止事务内 Feign）。
         List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList =
                 prepareSubmittedMergeDetailList(updateDTO.getMergeDetailList(), updateDTO.getIsMerge());
         TmsDeclareBillDTO.SelectedSkuHeaderDTO recalculatedHeaderWeight =
                 computeRecalculatedHeaderWeight(mergeDetailList, sourceTypeEnum);
-        List<String> syncSourceIds = service.updateInTx(updateDTO, sourceTypeEnum, mergeDetailList, recalculatedHeaderWeight);
+        List<String> syncSourceIds = service.updateInTx(updateDTO, sourceTypeEnum, old, mergeDetailList, recalculatedHeaderWeight);
         syncSourceDeclareStatusIfNeeded(sourceTypeEnum.getCode(), syncSourceIds);
         return Boolean.TRUE;
     }
 
     /**
-     * 编辑保存前校验报关单是否可编辑（轻量 DB 查询，须在事务外 Feign 调用之前执行）。
+     * 加载报关单并校验是否可编辑（须在事务外 Feign 调用之前执行）。
      */
-    private void validateUpdateEditableState(String declareBillId, SourceTypeEnum sourceTypeEnum) {
+    private TmsDeclareBillEntity loadAndAssertUpdateEditableState(String declareBillId, SourceTypeEnum sourceTypeEnum) {
         TmsDeclareBillEntity old = super.getById(declareBillId);
+        assertUpdateEditableState(old, sourceTypeEnum);
+        return old;
+    }
+
+    /**
+     * 校验报关单是否允许编辑（存在性、类型、待确认状态）。
+     */
+    private void assertUpdateEditableState(TmsDeclareBillEntity old, SourceTypeEnum sourceTypeEnum) {
         Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "报关单"));
         if (!CharSequenceUtil.equals(old.getType(), sourceTypeEnum.getCode())) {
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_BILL_TYPE_MISMATCH);
         }
-        if (!old.getDeclareStatus().equals(com.erp.model.tms.enums.DeclareStatusEnum.WAIT.getCode())) {
+        if (!DeclareStatusEnum.WAIT.getCode().equals(old.getDeclareStatus())) {
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_WAIT_STATUS_REQUIRED_FOR_EDIT);
         }
     }
@@ -511,17 +519,12 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     @Transactional(rollbackFor = Exception.class)
     public List<String> updateInTx(TmsDeclareBillDTO.UpdateDTO updateDTO,
                                    SourceTypeEnum sourceTypeEnum,
+                                   TmsDeclareBillEntity old,
                                    List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList,
                                    TmsDeclareBillDTO.SelectedSkuHeaderDTO recalculatedHeaderWeight) {
-        TmsDeclareBillEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "报关单"));
-        if (!CharSequenceUtil.equals(old.getType(), sourceTypeEnum.getCode())) {
-            throw new ServiceException(ApiError.LOGISTICS_DECLARE_BILL_TYPE_MISMATCH);
-        }
+        // 复用 update() 事务前已加载的主表实体，避免重复 getById；规则与 assertUpdateEditableState 保持一致。
+        assertUpdateEditableState(old, sourceTypeEnum);
         String sourceType = resolveDeclareSourceType(old.getType());
-        if(!old.getDeclareStatus().equals(com.erp.model.tms.enums.DeclareStatusEnum.WAIT.getCode())){
-            throw new ServiceException(ApiError.LOGISTICS_DECLARE_WAIT_STATUS_REQUIRED_FOR_EDIT);
-        }
         validateDeclareMergeDetails(mergeDetailList, EDIT_DECLARE_DETAIL_LIMIT);
         validateUpdateImmutableSourceFields(old.getId(), mergeDetailList);
         Set<String> sourceKeySet = collectSourceKeySet(mergeDetailList);
