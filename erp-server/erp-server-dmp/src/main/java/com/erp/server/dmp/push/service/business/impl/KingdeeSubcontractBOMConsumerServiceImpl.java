@@ -301,7 +301,7 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         //应发数量
         entry.put("FMustQty",srcEntry.get("MustQty"));
         //未领数量
-        entry.put("FNoPickedQty",srcEntry.get("NoPickedQty"));
+        entry.put("FNoPickedQty", resolveNoPickedQty(srcEntry, 0));
         //用量类型
         entry.put("FDosageType", resolveDosageType(srcEntry));
         //子项类型
@@ -396,7 +396,7 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         //应发数量：变更后行清零，与 FNumerator=0 语义一致
         entry.put("FMustQty", 0);
         //未领数量
-        entry.put("FNoPickedQty", srcEntry.get("NoPickedQty"));
+        entry.put("FNoPickedQty", resolveNoPickedQty(srcEntry, 1));
         //用量类型
         entry.put("FDosageType", resolveDosageType(srcEntry));
         //标准用量：变更后行清零，与变更前字段对齐
@@ -682,6 +682,21 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
 
     private int resolveOperId(JSONObject srcEntry) {
         return ConvertUtil.toInt(srcEntry.get("OperID"), 0);
+    }
+
+    private int resolveNoPickedQty(JSONObject srcEntry, int defaultValue) {
+        Object noPickedQty = srcEntry.get("NoPickedQty");
+        if (noPickedQty == null) {
+            return defaultValue;
+        }
+        if (noPickedQty instanceof Number) {
+            return ((Number) noPickedQty).intValue();
+        }
+        String noPickedQtyStr = String.valueOf(noPickedQty).trim();
+        if (StringUtils.isBlank(noPickedQtyStr)) {
+            return defaultValue;
+        }
+        return ConvertUtil.toInt(noPickedQtyStr, defaultValue);
     }
 
     private int resolveReplaceGroup(JSONObject srcEntry, int entryIndex) {
