@@ -3010,17 +3010,6 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         }
     }
 
-    private void markImportAddBatchAbortedRows(List<SoReturnStockImportExcelDTO> successList,
-                                               List<SoReturnStockImportExcelDTO> errorList) {
-        for (SoReturnStockImportExcelDTO row : successList) {
-            if (errorList.contains(row)) {
-                continue;
-            }
-            appendImportAddError(row, ApiError.SO_RETURN_INSTOCK_IMPORT_BATCH_ABORT.getMsg());
-            errorList.add(row);
-        }
-    }
-
     private void markImportUpdatePersistFailedRows(List<SoReturnStockUpdateImportExcelDTO> successList,
                                                    List<SoReturnStockUpdateImportExcelDTO> errorList,
                                                    String persistErrorMsg) {
@@ -3397,7 +3386,6 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         List<WarehouseLocationEntity> warehouseLocationList = warehouseLocationService.listByWarehouseIdsAndNameList(warehousIdList, warehouseLocationNameList);
         Map<String, WarehouseLocationEntity> warehouseLocationMap = warehouseLocationList.stream().collect(Collectors.toMap(obj -> CharSequenceUtil.format("{}-{}",obj.getWarehouseId(),obj.getName()) , Function.identity()));
 
-        List<SoReturnInstockDTO.ImportAddBundle> toAddList = new ArrayList<>();
         for (Map.Entry<String, List<SoReturnStockImportExcelDTO>> entry : map.entrySet()) {
             List<SoReturnStockImportExcelDTO> value = entry.getValue();
             SoReturnStockImportExcelDTO excelDTO = value.get(0);
@@ -3436,7 +3424,6 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             add.setThirdCode(excelDTO.getThirdCode());
 
             List<SoReturnInstockDetailDTO.Add> detailList = new ArrayList<>();
-            boolean groupValid = true;
             for (SoReturnStockImportExcelDTO soReturnStockImportExcelDTO : value) {
                 List<String> rowErrors = new ArrayList<>();
                 SoReturnInstockDetailDTO.Add addDetail = new SoReturnInstockDetailDTO.Add();
@@ -3474,7 +3461,6 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 if (CollUtil.isNotEmpty(rowErrors)) {
                     soReturnStockImportExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(rowErrors));
                     errorList.add(soReturnStockImportExcelDTO);
-                    groupValid = false;
                     continue;
                 }
                 addDetail.setRemark(soReturnStockImportExcelDTO.getRemark());
@@ -3484,7 +3470,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 addDetail.setReturnReasonDict(ReturnReasonEnum.getCodeByName(soReturnStockImportExcelDTO.getReturnReasonDictStr()));
                 detailList.add(addDetail);
             }
-            if (!groupValid || CollUtil.isEmpty(detailList)) {
+            if (CollUtil.isEmpty(detailList)) {
                 continue;
             }
             add.setSellerId(customerInfoEntityList.get(0).getSellerId());
@@ -3494,30 +3480,21 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             add.setDetailList(detailList);
             WarehouseDTO.ListDTO warehouseEntity = warehouseMap.get(excelDTO.getWarehouseName());
             CustomerInfoEntity customerInfo = customerInfoEntityList.get(0);
-            toAddList.add(new SoReturnInstockDTO.ImportAddBundle(add, new ArrayList<>(value),
+            SoReturnInstockDTO.ImportAddBundle bundle = new SoReturnInstockDTO.ImportAddBundle(add, new ArrayList<>(value),
                     customerInfo.getId(), customerInfo.getName(),
                     customerInfo.getSellerId(), customerInfo.getSellerName(),
                     customerInfo.getSalesDeptId(), customerInfo.getUseOrgId(),
-                    warehouseEntity));
-        }
-
-        if (CollUtil.isNotEmpty(errorList)) {
-            markImportAddBatchAbortedRows(successList, errorList);
-            return;
-        }
-        try {
-            enrichImportAddBundles(toAddList);
-            enrichImportAddDetailContext(toAddList, warehouseNameById);
-            ApplicationContextUtils.getBean(SoReturnInstockServiceImpl.class).persistAllImportAdd(toAddList);
-        } catch (Exception e) {
-            log.error("销售退货入库单导入落库失败", e);
-            markImportAddPersistFailedRows(toAddList, errorList, resolveImportPersistErrorMsg(e));
-        }
-        if (CollUtil.isEmpty(errorList)) {
+                    warehouseEntity);
             try {
-                updateImportAddSkuOccupyStatus(toAddList);
+                enrichImportAddBundles(Collections.singletonList(bundle));
+                enrichImportAddDetailContext(Collections.singletonList(bundle), warehouseNameById);
+                ApplicationContextUtils.getBean(SoReturnInstockServiceImpl.class)
+                        .persistAllImportAdd(Collections.singletonList(bundle));
+                updateImportAddSkuOccupyStatus(Collections.singletonList(bundle));
             } catch (Exception e) {
-                log.error("销售退货入库单导入更新SKU占用状态失败", e);
+                log.error("销售退货入库单导入落库失败", e);
+                markImportAddPersistFailedRows(Collections.singletonList(bundle), errorList,
+                        resolveImportPersistErrorMsg(e));
             }
         }
     }
