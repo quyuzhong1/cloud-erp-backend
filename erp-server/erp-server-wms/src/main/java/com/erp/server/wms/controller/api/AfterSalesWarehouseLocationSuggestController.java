@@ -132,7 +132,7 @@ import java.util.Objects;
      */
     @PostMapping("/batchDelete")
     @LogAction(value = LogActionEnum.DELETE, desc = "批量删除仓位售后推荐")
-    public ApiResult<List<BatchResultDTO>> removeByIds(@RequestBody AfterSalesWarehouseLocationSuggestDto.IdsDTO dto) {
+    public ApiResult<List<BatchResultDTO>> removeByIds(@RequestBody @Validated AfterSalesWarehouseLocationSuggestDto.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         List<AfterSalesWarehouseLocationSuggestEntity> entities = afterSalesWarehouseLocationSuggestService.listByIds(dto.getIds());
         for (String id : dto.getIds()) {

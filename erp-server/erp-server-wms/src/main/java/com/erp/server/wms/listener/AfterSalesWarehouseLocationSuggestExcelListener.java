@@ -275,7 +275,7 @@ public class AfterSalesWarehouseLocationSuggestExcelListener extends AnalysisEve
 
         List<String> skuNoList = allList.stream().map(AfterSalesWarehouseLocationSuggestExcelDto::getSkuNo).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<String> warehouseNameList = allList.stream().map(AfterSalesWarehouseLocationSuggestExcelDto::getWarehouseName).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
-        List<ProductDetailEntity> skuVOS = CollUtil.isNotEmpty(skuNoList) ? plmTaskFeign.listBySkuNos(skuNoList) : Collections.emptyList();
+        List<ProductDetailEntity> skuVOS = CollUtil.isNotEmpty(skuNoList) ? Optional.ofNullable(plmTaskFeign.listBySkuNos(skuNoList)).orElse(Collections.emptyList()) : Collections.emptyList();
         List<WarehouseDTO.ListDTO> warehouseVOS = CollUtil.isNotEmpty(warehouseNameList) ? warehouseService.listByNames(warehouseNameList) : Collections.emptyList();
 
         Map<String, WarehouseDTO.ListDTO> warehouseNameAndIdMap = warehouseVOS.stream().collect(Collectors.toMap(WarehouseDTO.ListDTO::getName, item -> item));
