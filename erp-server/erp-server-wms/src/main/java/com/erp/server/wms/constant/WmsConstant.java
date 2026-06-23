@@ -88,4 +88,9 @@ public interface WmsConstant {
      * 质检单-缺陷信息
      */
     String QC_DEFECT = "qcDefect";
+
+    /**
+     * 东莞售后仓库
+     */
+    String DG_AFTER_SALES_WAREHOUSE = "东莞售后仓库";
 }

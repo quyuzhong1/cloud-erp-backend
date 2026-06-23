@@ -19,6 +19,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -35,6 +36,7 @@ import com.erp.model.wms.enums.WarehouseLocationTypeEnum;
 import com.erp.model.wms.vo.WarehouseLocationExportVo;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.listener.WarehouseLocationExcelListener;
 import com.erp.server.wms.mapper.InventoryMapper;
 import com.erp.server.wms.mapper.WarehouseLocationMapper;
@@ -1165,8 +1167,8 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     public List<WarehouseLocationDTO.ViewDto> listByAfterSalesWarehouse(String name) {
         // 查询东莞售后仓库信息
         WarehouseEntity warehouseEntity = warehouseMapper.selectOne(Wrappers.lambdaQuery(WarehouseEntity.class)
-                .eq(WarehouseEntity::getName, "东莞售后仓库")
-                .eq(WarehouseEntity::getApproveStatus, "approve")
+                .eq(WarehouseEntity::getName, WmsConstant.DG_AFTER_SALES_WAREHOUSE)
+                .eq(WarehouseEntity::getApproveStatus, LogActionEnum.APPROVE.getCode())
                 .eq(WarehouseEntity::getDisabled, false)
         );
         if (warehouseEntity == null) {
