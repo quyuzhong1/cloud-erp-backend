@@ -2631,26 +2631,6 @@ public class TmsDeclareBillDTO implements Serializable {
 
 
     /**
-     * 拆分保存时按原报关单合同号递增后缀：{@code 原号_1}、{@code 原号_2}…（再次拆分时原号若已为 {@code xxx_1} 则得到 {@code xxx_1_1}）。
-     */
-    @Data
-    @Builder
-    @AllArgsConstructor
-    public static class SplitDeclareCodeSequence {
-        private final String baseCode;
-        private int sequence;
-
-        public SplitDeclareCodeSequence(String baseCode) {
-            this.baseCode = baseCode;
-        }
-
-        public String nextCode() {
-            sequence++;
-            return baseCode + "_" + sequence;
-        }
-    }
-
-    /**
      * 自动生成报关明细中间表DTO
      */
     @Data
