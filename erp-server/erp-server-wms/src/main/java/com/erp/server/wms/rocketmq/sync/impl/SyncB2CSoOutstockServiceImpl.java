@@ -203,7 +203,8 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         if (CollectionUtils.isNotEmpty(detailList)) {
             //当是审核通过的时候
             if ("C".equals(entity.getFDocumentStatus())) {
-                // 金蝶同步出库单未关联 soId/soDetailId（见 handleWmsSoOutstock），金额校验在此路径实际不会命中
+                // [审查说明] 金蝶经 handleWmsSoOutstock 下推，历史上未回填 soId/soDetailId，checkUpstreamAmountWithSo 恒 PASS；
+                // 保留调用仅为与旺店通/拼多多路径结构一致，待产品确认 B2C 关联规则后再补关联并启用校验。
                 if (soOutstockService.handleSyncAmountMismatchIfNeeded(soOutstock, detailList, false)) {
                     String warnMsg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】(金额异常待人工核实)",
                             UserContext.getDefaultLoginUser().getUserName(), "销售出库单", soOutstock.getCode());
@@ -1020,7 +1021,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         soOutstock.setApproveStatus(statusEnum);
         soOutstock.setSourceType(sourceType);
         soOutstock.setOrderType(OrderTypeEnum.B2C.getCode());
-        // 金蝶下推出库单未回填 soId，明细亦未设置 soDetailId，isAmountMismatchWithUpstreamSo 无法关联上游 B2C 订单做金额校验
+        // [审查说明] 金蝶下推未回填 soId/soDetailId，上游 B2C 金额校验 intentionally 不生效（见 syncKingdeeSoOutstock 注释）。
         LocalDate billDate = null;
         String billDateStr = entity.getFDate();
         if (CharSequenceUtil.isNotBlank(billDateStr)) {

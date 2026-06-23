@@ -539,7 +539,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             }
         }
 
-        // 价税合计金额一致性校验：出库明细=0 但上游销售订单明细非0 时拦截，赠品整单放行；上游明细查不到不拦截，Feign 异常 fail-safe 拦截
+        // 价税合计金额一致性校验：出库明细=0 但上游销售订单明细非0 时拦截，赠品整单放行；上游明细查不到不拦截，Feign 异常 fail-safe 拦截。
+        // [审查说明] 校验内嵌 Feign 只读查询，与 submit 同事务是为 appendApproveRemark 与状态变更同一 commit；Feign 失败已 UPSTREAM_UNAVAILABLE 拦截，长事务风险可接受。
         UpstreamAmountCheckResultEnum amountCheckResult = checkUpstreamAmountWithSo(entity);
         if (amountCheckResult != UpstreamAmountCheckResultEnum.PASS) {
             String message = resolveUpstreamAmountCheckMessage(amountCheckResult, ApiError.SO_OUTSTOCK_AMOUNT_MISMATCH_SUBMIT);
@@ -636,6 +637,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      *         </ul>
      *     </li>
      * </ol>
+     * [审查说明] 本方法含 Feign 只读调用，由 submit/approve 事务方法内触发；fail-safe 已区分 UPSTREAM_UNAVAILABLE，暂不拆出事务外预检。
      * 适用于"主单和明细尚未落库"的同步落地场景，避免重复查询。
      *
      * @param entity     销售出库单主单
@@ -1007,7 +1009,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             throw new ServiceException(ApiError.WF_APPROVE_ALLOWED_STATUS_ONLY);
         }
 
-        // 价税合计金额一致性校验：仅审核通过时拦截，状态保持审核中，写入审核状态说明
+        // 价税合计金额一致性校验：仅审核通过时拦截，状态保持审核中，写入审核状态说明。
+        // [审查说明] 同 submit：Feign 只读校验与 approve 写库同一事务，fail-safe 已覆盖，暂不拆事务。
         if (ApproveTypeEnum.PASS.equals(approveType)) {
             UpstreamAmountCheckResultEnum amountCheckResult = checkUpstreamAmountWithSo(entity);
             if (amountCheckResult != UpstreamAmountCheckResultEnum.PASS) {
@@ -3578,8 +3581,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,"销售出库单");
         }
         BatchResultDTO submit = this.submit(entity, Boolean.FALSE);
-        if (submit.getSuccess()) {
-            soOutstockService.approve(new ApproveOneDTO(id, ApproveTypeEnum.PASS.getStatus(), ""));
+        if (!Boolean.TRUE.equals(submit.getSuccess())) {
+            throw new ServiceException(CharSequenceUtil.blankToDefault(submit.getMsg(), "销售出库单提交失败"));
+        }
+        BatchResultDTO approveResult = soOutstockService.approve(new ApproveOneDTO(id, ApproveTypeEnum.PASS.getStatus(), ""));
+        if (!Boolean.TRUE.equals(approveResult.getSuccess())) {
+            throw new ServiceException(CharSequenceUtil.blankToDefault(approveResult.getMsg(), "销售出库单审核失败"));
         }
     }
 
