@@ -385,29 +385,30 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         JSONObject supplyOrgJson = new JSONObject();
         supplyOrgJson.put("FNumber", sysAccountingCompany.getKingdeeCode());
         entry.put("FSupplyOrg", supplyOrgJson);
-        //发料方式
-        //发料方式：直接倒冲
-        entry.put("FIssueType", KingdeeSubcontractBomIssueTypeEnum.DIRECT_BACKFLUSH.getCode());
+        //发料方式/倒冲时机：与变更前一致，便于金蝶变更后行落库仓库/库位
+        entry.put("FIssueType", resolveIssueType(srcEntry));
         //变更后
         entry.put("FChangeType","3");
-        //分子
-        entry.put("FNumerator",0);
+        //分子固定为 0（业务要求，不可改）
+        entry.put("FNumerator", 0);
         //分母
-        entry.put("FDenominator",srcEntry.get("Denominator"));
-        //应发数量
-        entry.put("FMustQty",0);
+        entry.put("FDenominator", srcEntry.get("Denominator"));
+        //应发数量：变更后行清零，与 FNumerator=0 语义一致
+        entry.put("FMustQty", 0);
         //未领数量
-        entry.put("FNoPickedQty",1);
+        entry.put("FNoPickedQty", srcEntry.get("NoPickedQty"));
         //用量类型
         entry.put("FDosageType", resolveDosageType(srcEntry));
+        //标准用量：变更后行清零，与变更前字段对齐
+        entry.put("FStdQty", 0);
         //需求数量
         entry.put("FNeedQty2",srcEntry.get("NeedQty2"));
         //超发控制方式
         entry.put("FOverControlMode","1");
         //货主类型
         entry.put("FOwnerTypeId","BD_OwnerOrg");
-        //倒冲时机：入库倒冲
-        entry.put("FBackFlushType", KingdeeSubcontractBomBackFlushTypeEnum.INSTOCK_BACKFLUSH.getCode());
+        //倒冲时机：与变更前一致
+        entry.put("FBackFlushType", resolveBackFlushType(srcEntry));
         //领料考虑最小发料批量
         entry.put("FISMinIssueQty", resolveConsiderMinIssueQty(srcEntry));
         //需求日期
@@ -442,6 +443,7 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         entry.put("FSUBPPBOMEntrySeq", 1);
         entry.put("FSUBPPBOMEntryId", srcEntry.get("Id"));
         entry.put("FSUBPPBOMId",view.get("Id"));
+        mergeStockFields(entry, stockFields);
         JSONObject entityLinkEntry = new JSONObject();
         entityLinkEntry.put("FEntity_Link_FFlowId","0b064121-4926-4808-8632-a195b6a202e8");
         entityLinkEntry.put("FEntity_Link_FFlowLineId","14");
@@ -449,8 +451,7 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         entityLinkEntry.put("FEntity_Link_FSTableName","T_SUB_PPBOMENTRY");
         entityLinkEntry.put("FEntity_Link_FSBillId",view.get("BOMID_Id"));
         entityLinkEntry.put("FEntity_Link_FSId",srcEntry.get("BOMEntryID"));
-        entityLinkEntry.put("FEntity_Link_FBaseStdQty",0);
-        mergeStockFields(entry, stockFields);
+        entityLinkEntry.put("FEntity_Link_FBaseStdQty", 0);
         entry.put("FEntity__Link",entityLinkEntry);
         return entry;
     }
