@@ -633,11 +633,17 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         if (CollUtil.isEmpty(missingSkuList)) {
             return ThirdWarehouseSkuValidationContext.success(payload, effectiveMappingList);
         }
+        Map<String, Integer> missingSkuQtyMap = payload.getDetailList().stream()
+                .collect(Collectors.toMap(ThirdWarehouseSkuDetail::getProductSku,
+                        ThirdWarehouseSkuDetail::getQty,
+                        (oldQty, newQty) -> oldQty + newQty));
         String providerWarehouseName = StrUtil.blankToDefault(payload.getPlatformWarehouseName(), dto.getWarehouseCode());
         return ThirdWarehouseSkuValidationContext.fail(StrUtil.format(
                 "自动生成销售出库单失败：【{}】第三方仓SKU未映射SKU，第三方仓SKU：【{}】",
                 providerWarehouseName,
-                String.join("、", missingSkuList)
+                missingSkuList.stream()
+                        .map(sku -> formatSkuWithQty(sku, missingSkuQtyMap.getOrDefault(sku, 0)))
+                        .collect(Collectors.joining("、"))
         ));
     }
 
@@ -659,7 +665,8 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         for (SoB2cDetailEntity detail : detailList) {
             if (!matchSingleOrderDetail(detail, dtoSkuQtyMap, mappingMap)
                     && !matchCombinationOrderDetail(detail, dtoSkuQtyMap, mappingMap, bomChildrenMap)) {
-                unmatchedOrderSkuList.add(StringUtils.isNotBlank(detail.getSkuNo()) ? detail.getSkuNo() : detail.getSkuId());
+                String sku = StringUtils.isNotBlank(detail.getSkuNo()) ? detail.getSkuNo() : detail.getSkuId();
+                unmatchedOrderSkuList.add(formatSkuWithQty(sku, Objects.nonNull(detail.getQty()) ? detail.getQty() : 0));
             }
         }
         if (CollUtil.isEmpty(unmatchedOrderSkuList) && dtoSkuQtyMap.values().stream().allMatch(qty -> Objects.equals(qty, 0))) {
@@ -667,14 +674,18 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         }
         String providerWarehouseName = StrUtil.blankToDefault(validationContext.getPayload().getPlatformWarehouseName(), dto.getWarehouseCode());
         return ThirdWarehouseSkuCheckResult.fail(StrUtil.format(
-                "自动生成销售出库单失败：【{}】第三方仓DTO明细未完全匹配订单明细，未匹配订单SKU：【{}】，未匹配三方仓SKU：【{}】",
+                "自动生成销售出库单失败：【{}】第三方仓明细或者数量未完全匹配订单明细，未匹配订单SKU：【{}】，未匹配三方仓SKU：【{}】",
                 providerWarehouseName,
-                String.join("、", unmatchedOrderSkuList.stream().filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList())),
+                unmatchedOrderSkuList.stream().filter(StringUtils::isNotBlank).distinct().collect(Collectors.joining("、")),
                 dtoSkuQtyMap.entrySet().stream()
                         .filter(entry -> !Objects.equals(entry.getValue(), 0))
-                        .map(Map.Entry::getKey)
+                        .map(entry -> formatSkuWithQty(entry.getKey(), entry.getValue()))
                         .collect(Collectors.joining("、"))
         ));
+    }
+
+    private String formatSkuWithQty(String sku, Integer qty) {
+        return StrUtil.format("{}×{}", sku, Objects.nonNull(qty) ? qty : 0);
     }
 
     private ThirdWarehouseSkuPayload buildThirdWarehouseSkuPayload(PlatformOutboundDTO dto,
