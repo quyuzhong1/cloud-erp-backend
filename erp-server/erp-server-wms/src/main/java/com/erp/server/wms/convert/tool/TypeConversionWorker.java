@@ -126,5 +126,10 @@ public class TypeConversionWorker {
         }
         return source.toUpperCase();
     }
+
+    @Named("defaultDoorplate")
+    public String defaultDoorplate(String houseNumber) {
+        return CharSequenceUtil.isBlank(houseNumber) ? "0" : houseNumber;
+    }
 }
 

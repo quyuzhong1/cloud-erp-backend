@@ -4,9 +4,9 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.file.dto.FileDTO;
-import com.erp.server.file.dto.FileTaskParamsDTO;
-import com.erp.server.file.entity.FileTask;
-import com.erp.server.file.vo.FileTaskVO;
+import com.erp.model.file.dto.FileTaskParamsDTO;
+import com.erp.model.file.entity.FileTask;
+import com.erp.model.file.vo.FileTaskVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 

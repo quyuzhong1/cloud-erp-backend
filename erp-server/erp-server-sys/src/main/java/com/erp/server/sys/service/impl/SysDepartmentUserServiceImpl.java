@@ -265,7 +265,9 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
                 SysDepartmentUserNumberDTO dto = dbMap.getOrDefault(userId, new SysDepartmentUserNumberDTO());
                 String redisKey = String.format("cache:sys:dept:getDeptByUserId::%s", userId);
                 redisService.setCacheObject(redisKey, dto, 8L, TimeUnit.HOURS);
-                result.add(dto);
+                if (Objects.nonNull(dto.getDepartmentId())) {
+                    result.add(dto);
+                }
             }
         }
         return result;

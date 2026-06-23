@@ -438,13 +438,17 @@
                 ${params.permissionSql}
             </if>
         </where>
-        order by
-        <if test="params.sortList != null and params.sortList.size > 0">
-            <foreach collection="params.sortList" item="item" separator="," close=",">
-                ${item.field} ${item.sort}
-            </foreach>
-        </if>
-        diff.id asc,diff.virtualWarehouseId asc
+        <!--
+            导出分组依赖（勿随意调整）：
+            erp-server-file ExportWmsVirtualInventoryDiffHandler 按 skuId+warehouseId 连续分组并组内置空展示字段，
+            failOnNonContinuousSheetGroup=true 时若同组非相邻将快速失败。
+            导出维度(SKU+实体仓+虚拟仓)与列表 diffPaging(SKU+实体仓)不同但共用 SearchParamDTO；列表维度的用户 sortList
+            不适用于导出（列集/语义不同，如 createTime 在导出不存在、virtualQty 语义不同），Service 层 exportListDiffExportData
+            已清空 sortList，故此处固定排序、不拼接用户排序，导出维度自己说了算：
+            diff.id 为 Inventory CTE 按 sku_id+warehouse_id 聚合的 min(id)，diff.id asc 保证同 SKU+实体仓连续，
+            diff.virtualWarehouseId asc 为组内稳定排序。
+        -->
+        order by diff.id asc, diff.virtualWarehouseId asc
     </select>
 
 

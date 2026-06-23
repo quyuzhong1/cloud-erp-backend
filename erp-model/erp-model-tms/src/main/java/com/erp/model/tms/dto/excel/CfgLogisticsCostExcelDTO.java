@@ -24,13 +24,13 @@ public class CfgLogisticsCostExcelDTO implements Serializable {
     private String  no;
 
     /**
-     * 配置单据
+     * 识别维度
      */
-    @ExcelProperty(value = "*配置单据", index = 1)
-    @FieldValid(fieldName = "*配置单据",isNotBlank = true)
-    private String  businessTypeName;
+    @ExcelProperty(value = "*识别维度", index = 1)
+    @FieldValid(fieldName = "*识别维度",isNotBlank = true)
+    private String identifyTypeName;
     @ExcelIgnore
-    private String  businessType;
+    private String  identifyType;
 
     /**
      * 配置类型

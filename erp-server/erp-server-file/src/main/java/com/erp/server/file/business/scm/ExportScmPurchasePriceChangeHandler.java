@@ -7,13 +7,10 @@ import com.erp.model.scm.dto.PurchasePriceChangeDTO;
 import com.erp.model.scm.dto.excel.PurchasePriceChangeExportExcelDTO;
 import com.erp.rpc.scm.feign.ExportScmFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
-import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.List;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_PURCHASE_PRICE_CHANGE;
 
@@ -22,12 +19,6 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_PURCHASE_PR
 public class ExportScmPurchasePriceChangeHandler extends AbstractPageFileEventHandler<PurchasePriceChangeExportExcelDTO, PurchasePriceChangeDTO.PagingParamDTO> {
     @Resource
     private ExportScmFeign exportScmFeign;
-    @Override
-    protected List<PurchasePriceChangeExportExcelDTO> getData(FileTask fileTask) {
-        PurchasePriceChangeDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<PurchasePriceChangeDTO.PagingParamDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected PagingVO<PurchasePriceChangeExportExcelDTO> getPageData(PagingDTO<PurchasePriceChangeDTO.PagingParamDTO> dto) {

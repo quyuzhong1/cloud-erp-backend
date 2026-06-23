@@ -14,7 +14,6 @@ public enum SystemCodeEnum implements EnumMessage {
 	SYS("sys","系统"),
     TMS("tms","物流系统"),
     WMS("wms","仓储系统"),
-    MRP("mrp","智能补货系统"),
     WORKFLOW("workflow","工作流系统"),
     ;
 
