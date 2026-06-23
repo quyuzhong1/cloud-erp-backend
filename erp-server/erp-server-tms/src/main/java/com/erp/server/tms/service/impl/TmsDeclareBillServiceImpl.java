@@ -480,14 +480,14 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     )
     @Override
     public Boolean update(TmsDeclareBillDTO.UpdateDTO updateDTO,SourceTypeEnum sourceTypeEnum) {
-        // 状态校验须在 Feign 重量重算之前，避免不可编辑单据触发无效远程调用。
-        TmsDeclareBillEntity old = loadAndAssertUpdateEditableState(updateDTO.getId(), sourceTypeEnum);
+        // 事务外校验：拦截不可编辑单据，避免无效 Feign 重量重算。
+        loadAndAssertUpdateEditableState(updateDTO.getId(), sourceTypeEnum);
         // 重量重算含 WMS/PLM Feign，须在事务外完成（erp-backend-standards：禁止事务内 Feign）。
         List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList =
                 prepareSubmittedMergeDetailList(updateDTO.getMergeDetailList(), updateDTO.getIsMerge());
         TmsDeclareBillDTO.SelectedSkuHeaderDTO recalculatedHeaderWeight =
                 computeRecalculatedHeaderWeight(mergeDetailList, sourceTypeEnum);
-        List<String> syncSourceIds = service.updateInTx(updateDTO, sourceTypeEnum, old, mergeDetailList, recalculatedHeaderWeight);
+        List<String> syncSourceIds = service.updateInTx(updateDTO, sourceTypeEnum, mergeDetailList, recalculatedHeaderWeight);
         syncSourceDeclareStatusIfNeeded(sourceTypeEnum.getCode(), syncSourceIds);
         return Boolean.TRUE;
     }
@@ -519,10 +519,11 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     @Transactional(rollbackFor = Exception.class)
     public List<String> updateInTx(TmsDeclareBillDTO.UpdateDTO updateDTO,
                                    SourceTypeEnum sourceTypeEnum,
-                                   TmsDeclareBillEntity old,
                                    List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList,
                                    TmsDeclareBillDTO.SelectedSkuHeaderDTO recalculatedHeaderWeight) {
-        // 复用 update() 事务前已加载的主表实体，避免重复 getById；规则与 assertUpdateEditableState 保持一致。
+        // 事务内以 DB 最新主表为准二次校验，关闭 Feign 重算耗时窗口内的 TOCTOU 并发风险；
+        // updateById 携带 @Version 乐观锁，并发修改导致版本不一致时 save=false。
+        TmsDeclareBillEntity old = super.getById(updateDTO.getId());
         assertUpdateEditableState(old, sourceTypeEnum);
         String sourceType = resolveDeclareSourceType(old.getType());
         validateDeclareMergeDetails(mergeDetailList, EDIT_DECLARE_DETAIL_LIMIT);
