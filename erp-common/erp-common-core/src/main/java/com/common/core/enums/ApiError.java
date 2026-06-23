@@ -302,8 +302,9 @@ public enum ApiError implements Serializable {
     FILE_UNSUPPORTED_TYPE(2444, "不支持的文件类型【{0}】"),
     FILE_DOWNLOAD_FAILED(2445, "文件下载失败【{0}】"),
     FILE_SHEET_NOT_EXIST(2446,"未找到配置的sheet页名称"),
-    FILE_IMPORT_TASK_FINISH(2447,"处理完成，失败{0}条"),
-    FILE_IMPORT_TASK_FINISH_EXPORT_FAILED(2448,"处理完成，失败{0}条，{1}"),
+    FILE_EXPORT_SIZE_EXCEED_LIMIT(2447, "导出数据条数超过最大限制：{0}"),
+    FILE_IMPORT_TASK_FINISH(2448,"处理完成，失败{0}条"),
+    FILE_IMPORT_TASK_FINISH_EXPORT_FAILED(2449,"处理完成，失败{0}条，{1}"),
 
     /**
      * 单据相关提示 从3000 - 3500
