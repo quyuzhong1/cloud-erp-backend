@@ -214,6 +214,11 @@ public class AfterSalePackController extends BaseController {
      * @date: 2026-05-12
      */
     @GetMapping("/viewByCode")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:afterSalePack:view",
+            serviceClass = AfterSalePackService.class,
+            keyIdName = "code")
     @LogViewService
     public ApiResult<AfterSalePackDTO.ViewDTO> viewByCode(@RequestParam("code") String code) {
         return success(afterSalePackService.viewByCode(code));

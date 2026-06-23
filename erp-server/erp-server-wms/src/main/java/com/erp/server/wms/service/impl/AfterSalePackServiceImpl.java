@@ -21,6 +21,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -29,6 +30,7 @@ import com.erp.model.wms.dto.AfterSalePackDTO;
 import com.erp.model.wms.dto.AfterSalePackDetailDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.rpc.plm.feign.ProductDetailFeign;
+import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.mapper.AfterSalePackMapper;
 import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -171,8 +173,8 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
         }
         // 查询东莞售后仓库信息
         WarehouseEntity warehouseEntity = warehouseService.lambdaQuery()
-                .eq(WarehouseEntity::getName, "东莞售后仓库")
-                .eq(WarehouseEntity::getApproveStatus, "approve")
+                .eq(WarehouseEntity::getName, WmsConstant.DG_AFTER_SALES_WAREHOUSE)
+                .eq(WarehouseEntity::getApproveStatus, LogActionEnum.APPROVE.getCode())
                 .eq(WarehouseEntity::getDisabled, false)
                 .one();
         if (warehouseEntity == null) {
@@ -524,6 +526,7 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
      * 修改
      */
     @DistributeLocker(businessType = AFTER_SALE_PACK_LOCK_KEY, keyName = "addOrUpdateDTO.id")
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(AfterSalePackDTO.UpdateDTO addOrUpdateDTO) {
@@ -562,6 +565,7 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
     }
 
     @DistributeLocker(businessType = AFTER_SALE_PACK_LOCK_KEY, keyName = "addOrUpdateDTO.id")
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean submit(AfterSalePackDTO.UpdateDTO addOrUpdateDTO) {
@@ -627,6 +631,7 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
     }
 
     @DistributeLocker(businessType = AFTER_SALE_PACK_LOCK_KEY, keyName = "addOrUpdateDTO.id")
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean confirm(AfterSalePackDTO.UpdateDTO addOrUpdateDTO) {

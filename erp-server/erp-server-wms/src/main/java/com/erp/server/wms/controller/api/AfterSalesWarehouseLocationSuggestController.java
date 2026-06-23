@@ -16,6 +16,7 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.AfterSalesWarehouseLocationSuggestDto;
 import com.erp.model.wms.entity.AfterSalesWarehouseLocationSuggestEntity;
+import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.query.AfterSalesWarehouseLocationSuggestQueryHandler;
 import com.erp.server.wms.service.AfterSalesWarehouseLocationSuggestService;
 import com.erp.server.wms.service.WarehouseService;
@@ -82,7 +83,7 @@ import java.util.Objects;
      */
     @GetMapping("/getDefaultAddWarehouse")
     public ApiResult<WarehouseDTO.ListDTO> getDefaultAddData() {
-        List<WarehouseDTO.ListDTO> dtos = warehouseService.listByNames(Collections.singletonList("东莞售后仓库"));
+        List<WarehouseDTO.ListDTO> dtos = warehouseService.listByNames(Collections.singletonList(WmsConstant.DG_AFTER_SALES_WAREHOUSE));
         return CollUtil.isNotEmpty(dtos)?ApiResult.success(dtos.get(0)):new ApiResult<>();
     }
 
