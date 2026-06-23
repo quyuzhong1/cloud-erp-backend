@@ -77,4 +77,9 @@ public enum QcTypeEnum implements EnumMessage {
         }
         return false;
     }
+
+    public static QcTypeEnum getEnumByCode(String code) {
+        return Arrays.stream(values()).filter(p -> p.getCode().equals(code))
+                .findFirst().orElse(null);
+    }
 }

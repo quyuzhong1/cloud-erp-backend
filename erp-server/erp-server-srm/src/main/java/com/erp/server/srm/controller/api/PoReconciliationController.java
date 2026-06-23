@@ -216,6 +216,17 @@ public class PoReconciliationController extends BaseController {
     }
 
     /**
+     * 查询指定对账单的发票附件列表
+     *
+     * @param dto BaseIdDTO
+     * @return ApiResult<List<InvoiceFileVO>>
+     */
+    @PostMapping("/listInvoice")
+    public ApiResult<List<PoReconciliationDTO.InvoiceFileVO>> listInvoice(@RequestBody @Validated BaseIdDTO dto) {
+        return success(poReconciliationService.listInvoice(dto.getId()));
+    }
+
+    /**
      * 下载发票
      *
      * @param dto BaseIdsDTO.IdsDTO
