@@ -116,7 +116,6 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -2597,10 +2596,12 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             }
         }
         if (errorCount > 0 && CharSequenceUtil.isBlank(url)) {
-            importResultDTO.setRemark(CharSequenceUtil.format("处理完成，失败{}条，{}", errorCount,
-                    ApiError.FILE_EXPORT_ERROR_DATA_FAILED.getMsg()));
+            importResultDTO.setRemark(CharSequenceUtil.format(
+                    ApiError.FILE_IMPORT_TASK_FINISH_EXPORT_FAILED.getMsg(),
+                    errorCount, ApiError.FILE_EXPORT_ERROR_DATA_FAILED.getMsg()));
         } else {
-            importResultDTO.setRemark("处理完成，失败" + errorCount + "条");
+            importResultDTO.setRemark(CharSequenceUtil.format(
+                    ApiError.FILE_IMPORT_TASK_FINISH.getMsg(), errorCount));
         }
         importResultDTO.setErrorUrl(url);
         importResultDTO.setFinishTime(LocalDateTime.now());
@@ -2836,28 +2837,60 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         for (SoReturnInstockDTO.ImportAddBundle bundle : bundles) {
             bundle.setWarehouseNameById(warehouseNameMap);
             bundle.setSubContractBySkuId(subContractBySkuId);
-            List<String> skuNos = bundle.getAdd().getDetailList().stream()
+        }
+        Map<String, Map<String, String>> platformSkuByCustomerId = loadImportAddPlatformSkuByCustomer(bundles);
+        for (SoReturnInstockDTO.ImportAddBundle bundle : bundles) {
+            if (CharSequenceUtil.isBlank(bundle.getCustomerId())) {
+                bundle.setPlatformSkuBySkuNo(Collections.emptyMap());
+                continue;
+            }
+            Map<String, String> customerPlatformSkuMap = platformSkuByCustomerId.getOrDefault(
+                    bundle.getCustomerId(), Collections.emptyMap());
+            if (CollUtil.isEmpty(customerPlatformSkuMap)) {
+                bundle.setPlatformSkuBySkuNo(Collections.emptyMap());
+                continue;
+            }
+            Map<String, String> bundlePlatformSkuMap = bundle.getAdd().getDetailList().stream()
+                    .map(SoReturnInstockDetailDTO.Add::getSkuNo)
+                    .filter(CharSequenceUtil::isNotBlank)
+                    .distinct()
+                    .filter(customerPlatformSkuMap::containsKey)
+                    .collect(Collectors.toMap(Function.identity(), customerPlatformSkuMap::get, (a, b) -> a));
+            bundle.setPlatformSkuBySkuNo(bundlePlatformSkuMap);
+        }
+    }
+
+    private Map<String, Map<String, String>> loadImportAddPlatformSkuByCustomer(
+            List<SoReturnInstockDTO.ImportAddBundle> bundles) {
+        Map<String, Map<String, String>> platformSkuByCustomerId = new HashMap<>();
+        Map<String, List<SoReturnInstockDTO.ImportAddBundle>> bundlesByCustomerId = bundles.stream()
+                .filter(bundle -> CharSequenceUtil.isNotBlank(bundle.getCustomerId()))
+                .collect(Collectors.groupingBy(SoReturnInstockDTO.ImportAddBundle::getCustomerId));
+        for (Map.Entry<String, List<SoReturnInstockDTO.ImportAddBundle>> entry : bundlesByCustomerId.entrySet()) {
+            List<String> skuNos = entry.getValue().stream()
+                    .flatMap(bundle -> bundle.getAdd().getDetailList().stream())
                     .map(SoReturnInstockDetailDTO.Add::getSkuNo)
                     .filter(CharSequenceUtil::isNotBlank)
                     .distinct()
                     .collect(Collectors.toList());
             if (CollUtil.isEmpty(skuNos)) {
-                bundle.setPlatformSkuBySkuNo(Collections.emptyMap());
+                platformSkuByCustomerId.put(entry.getKey(), Collections.emptyMap());
                 continue;
             }
             SkuMappingDTO.SkuParamDTO skuParamDTO = new SkuMappingDTO.SkuParamDTO();
-            skuParamDTO.setCutomerId(bundle.getCustomerId());
+            skuParamDTO.setCutomerId(entry.getKey());
             skuParamDTO.setSkuNoList(skuNos);
             List<SkuMappingDTO.ProductSkuInfoDTO> productSkuInfoList = skuMappingFeign.listSkuBySkuNos(skuParamDTO);
             if (CollectionUtils.isEmpty(productSkuInfoList)) {
-                bundle.setPlatformSkuBySkuNo(Collections.emptyMap());
+                platformSkuByCustomerId.put(entry.getKey(), Collections.emptyMap());
                 continue;
             }
-            bundle.setPlatformSkuBySkuNo(productSkuInfoList.stream()
+            platformSkuByCustomerId.put(entry.getKey(), productSkuInfoList.stream()
                     .collect(Collectors.toMap(SkuMappingDTO.ProductSkuInfoDTO::getSkuNo,
                             item -> CharSequenceUtil.blankToDefault(item.getPlatformSkuNo(), ""),
                             (a, b) -> a)));
         }
+        return platformSkuByCustomerId;
     }
 
     private void updateImportAddSkuOccupyStatus(List<SoReturnInstockDTO.ImportAddBundle> bundles) {
