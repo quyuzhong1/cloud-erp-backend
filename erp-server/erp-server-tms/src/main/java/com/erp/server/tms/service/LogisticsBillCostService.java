@@ -250,7 +250,7 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
 
     BatchResultDTO pushAllocation(String id , String reportDate);
 
-    BatchResultDTO pushAllocation(String id , String reportDate, LogisticsBillCostDTO.SmallBagPushAllocationContext pushContext);
+    BatchResultDTO pushAllocationContext(String id , String reportDate, LogisticsBillCostDTO.SmallBagPushAllocationContext pushContext);
 
     /**
      * 删除没有物流单的物流费用
