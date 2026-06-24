@@ -73,6 +73,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.annotation.Resource;
 import java.io.IOException;
@@ -112,6 +114,9 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
 
     @Resource
     private PackageForecastDetailService packageForecastDetailService;
+
+    @Resource
+    private PlatformTransactionManager transactionManager;
 
     @Resource
     private SoB2cFeign soB2cFeign;
@@ -405,27 +410,33 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
     private List<BatchResultDTO> updateUploadResult(ShopeeForecastContext context, Set<String> successKeys,
                                                     Map<String, String> failReasonMap,
                                                     java.util.function.Consumer<PackageForecastEntity> successConsumer) {
-        List<BatchResultDTO> resultList = new ArrayList<>();
-        for (PackageForecastEntity entity : context.getEntityList()) {
-            List<String> orderKeys = context.getForecastOrderKeyMap().get(entity.getId());
-            List<String> failureReasons = orderKeys.stream()
-                    .filter(failReasonMap::containsKey)
-                    .map(failReasonMap::get)
-                    .collect(Collectors.toList());
-            boolean success = failureReasons.isEmpty() && (CollectionUtils.isEmpty(successKeys) || successKeys.containsAll(orderKeys));
-            if (success) {
-                successConsumer.accept(entity);
-                entity.setUploadStatus(PackageUploadStatusEnum.UPLOAD_SUCCESS.getCode());
-                entity.setRemark("");
-                resultList.add(BatchResultDTO.success(entity.getId(), entity.getCode(), "上传成功"));
-            } else {
-                entity.setUploadStatus(PackageUploadStatusEnum.UPLOAD_FAILURE.getCode());
-                entity.setRemark("上传失败:" + StringUtils.defaultIfBlank(String.join(";", failureReasons), "Shopee返回失败"));
-                resultList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), entity.getRemark()));
+        TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
+        return transactionTemplate.execute(status -> {
+            List<BatchResultDTO> resultList = new ArrayList<>();
+            for (PackageForecastEntity entity : context.getEntityList()) {
+                List<String> orderKeys = context.getForecastOrderKeyMap().get(entity.getId());
+                List<String> failureReasons = CollectionUtils.emptyIfNull(orderKeys).stream()
+                        .filter(failReasonMap::containsKey)
+                        .map(failReasonMap::get)
+                        .collect(Collectors.toList());
+                boolean success = CollectionUtils.isNotEmpty(orderKeys)
+                        && CollectionUtils.isNotEmpty(successKeys)
+                        && failureReasons.isEmpty()
+                        && successKeys.containsAll(orderKeys);
+                if (success) {
+                    successConsumer.accept(entity);
+                    entity.setUploadStatus(PackageUploadStatusEnum.UPLOAD_SUCCESS.getCode());
+                    entity.setRemark("");
+                    resultList.add(BatchResultDTO.success(entity.getId(), entity.getCode(), "上传成功"));
+                } else {
+                    entity.setUploadStatus(PackageUploadStatusEnum.UPLOAD_FAILURE.getCode());
+                    entity.setRemark("上传失败:" + StringUtils.defaultIfBlank(String.join(";", failureReasons), "Shopee返回失败"));
+                    resultList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), entity.getRemark()));
+                }
+                packageForecastMapper.updateById(entity);
             }
-            packageForecastMapper.updateById(entity);
-        }
-        return resultList;
+            return resultList;
+        });
     }
 
     private String printCourierDelivery(PackageForecastEntity entity, String shopId) {
@@ -741,9 +752,13 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
     }
 
     private void updateEntities(List<PackageForecastEntity> entities) {
-        for (PackageForecastEntity entity : entities) {
-            packageForecastMapper.updateById(entity);
-        }
+        TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
+        transactionTemplate.execute(status -> {
+            for (PackageForecastEntity entity : entities) {
+                packageForecastMapper.updateById(entity);
+            }
+            return null;
+        });
     }
 
     private String mapShopeeHandoverStatus(String status) {

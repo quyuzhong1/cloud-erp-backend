@@ -46,9 +46,9 @@ public class ShopeeWebhookHandler implements WebhookHandler{
     @Override
     public WebhookResult process(String data, Map<String, String> headers, String serviceFlag) {
         if(StringUtils.isBlank(data)){
-            return WebhookResult.isSuccess();
+            return WebhookResult.isSuccess("fail", 400, "回传数据为空");
         }
-        log.warn("虾皮webhook 获取数据,{}",data);
+        log.warn("虾皮webhook 获取数据,{}", data);
         try {
             JSONObject json = JSONUtil.parseObj(data);
             Integer code = json.getInt("code");
@@ -59,7 +59,7 @@ public class ShopeeWebhookHandler implements WebhookHandler{
             JSONObject webhookData = json.getJSONObject("data");
             if (Objects.isNull(webhookData)) {
                 log.warn("虾皮webhook data为空，payload={}", data);
-                return WebhookResult.isSuccess();
+                return WebhookResult.isSuccess("fail", 400, "data为空");
             }
             String ordersn = webhookData.getStr("ordersn");
             String status = webhookData.getStr("status");
@@ -68,7 +68,7 @@ public class ShopeeWebhookHandler implements WebhookHandler{
             if (StringUtils.isBlank(ordersn) || StringUtils.isBlank(status) || Objects.isNull(updateTime) || StringUtils.isBlank(platformShopId)) {
                 log.warn("虾皮webhook 关键字段为空，ordersn={}，status={}，updateTime={}，shopId={}",
                         ordersn, status, updateTime, platformShopId);
-                return WebhookResult.isSuccess();
+                return WebhookResult.isSuccess("fail", 400, "关键字段为空");
             }
             DmpCfgInputEntity cfgInputEntity = dmpCfgInputService.lambdaQuery()
                     .eq(DmpCfgInputEntity::getCode, CFG_INPUT_CODE)
@@ -77,13 +77,13 @@ public class ShopeeWebhookHandler implements WebhookHandler{
                     .one();
             if (Objects.isNull(cfgInputEntity)) {
                 log.warn("虾皮webhook 未找到任务配置，code={}", CFG_INPUT_CODE);
-                return WebhookResult.isSuccess();
+                return WebhookResult.isSuccess("fail", 500, "未找到任务配置");
             }
             DmpCfgInputDetailEntity detailEntity = resolveDetailEntity(cfgInputEntity.getId(), platformShopId);
             if (Objects.isNull(detailEntity)) {
                 log.warn("虾皮webhook 未找到任务明细配置，cfgInputId={}，shopId={}",
                         cfgInputEntity.getId(), platformShopId);
-                return WebhookResult.isSuccess();
+                return WebhookResult.isSuccess("fail", 500, "未找到任务明细配置");
             }
             json.set("platformShopId", platformShopId);
             ThirdWarehouseContext.setData(json.toString());

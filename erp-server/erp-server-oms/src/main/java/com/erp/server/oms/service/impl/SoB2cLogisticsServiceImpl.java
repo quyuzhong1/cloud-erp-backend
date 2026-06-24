@@ -559,7 +559,13 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
                     soB2cLogisticsEntity.getTrackNo(), cancelResult.getMsg());
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), cancelResult.getMsg());
         }
-        return clearCanceledThirdLogisticsRequiresNew(entity, soB2cLogisticsEntity);
+        try {
+            return clearCanceledThirdLogisticsRequiresNew(entity, soB2cLogisticsEntity);
+        } catch (Exception e) {
+            log.error("配货换渠道外部取消成功但本地清理失败, orderId: {}, code: {}, transportNo: {}",
+                    entity.getId(), entity.getCode(), soB2cLogisticsEntity.getCode(), e);
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "外部物流单已取消，本地清理失败:" + e.getMessage());
+        }
     }
 
     private BatchResultDTO clearCanceledThirdLogisticsRequiresNew(SoB2cEntity entity, SoB2cLogisticsEntity soB2cLogisticsEntity) {

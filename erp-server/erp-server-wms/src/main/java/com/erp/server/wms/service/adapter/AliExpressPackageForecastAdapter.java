@@ -242,10 +242,12 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
             }
             alExpressHandoverBase = this.getAlExpressHandoverBase(platform(), shopIds.get(0));
         } catch (Exception e) {
-            log.error("syncPackageForecastInfo error : {}", e.getMessage());
+            log.error("syncPackageForecastInfo build base error, id: {}, handoverNo: {}",
+                    packageForecastEntity.getId(), packageForecastEntity.getHandoverNo(), e);
+            throw new ServiceException("速卖通状态同步初始化失败:" + e.getMessage());
         }
         if (Objects.isNull(alExpressHandoverBase)) {
-            return;
+            throw new ServiceException("速卖通状态同步授权信息为空");
         }
         HandoverQueryRequest handoverQueryRequest = HandoverQueryRequest.builder()
                 .client(alExpressHandoverBase.getClient())
@@ -256,15 +258,15 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
         try {
             IopResponse response = aliExpressHandoverService.queryContent(alExpressHandoverBase.getAuthMap(), handoverQueryRequest);
             if (StringUtils.isEmpty(response.getBody())) {
-                return;
+                throw new ServiceException("速卖通状态同步响应为空");
             }
             BaseResponse baseResponse = JSONObject.parseObject(response.getBody(), BaseResponse.class);
             if (StringUtils.isEmpty(baseResponse.getResult())) {
-                return;
+                throw new ServiceException("速卖通状态同步result为空");
             }
             BaseResult baseResult = JSONObject.parseObject(baseResponse.getResult(), BaseResult.class);
             if (StringUtils.isEmpty(baseResult.getData())) {
-                return;
+                throw new ServiceException("速卖通状态同步data为空");
             }
             HandoverQueryResponse queryResponse = JSONObject.parseObject(baseResult.getData(), HandoverQueryResponse.class);
             packageForecastEntity.setHandoverStatus(queryResponse.getStatus());
@@ -277,6 +279,7 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
             batchUpdateDetailStatus(parcelOrderList);
         } catch (ApiException e) {
             log.error("接口调用异常记录：{}", e.getErrorMessage());
+            throw new ServiceException("速卖通状态同步接口异常:" + e.getErrorMessage());
         }
     }
 

@@ -144,13 +144,31 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
 
     private BatchResultDTO doUpload(PackageForecastDTO.UploadDTO dto) {
         List<PackageForecastDetailEntity> detailEntityList = packageForecastDetailService.listDbByMainIds(dto.getIds());
-        List<String> soIds = detailEntityList.stream().map(PackageForecastDetailEntity::getSoId).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(detailEntityList)) {
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "组包预报单明细");
+        }
+        List<String> soIds = detailEntityList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList());
         List<SoB2cLogisticsEntity> soB2cLogisticsEntityList = soB2cFeign.listSoB2cLogisticsByMainIdList(soIds);
         List<String> deliveryCodes = soB2cLogisticsEntityList.stream().map(SoB2cLogisticsEntity::getCode).collect(Collectors.toList());
         List<PackageForecastEntity> packageForecastEntityList = packageForecastMapper.selectBatchIds(dto.getIds());
         List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
+        if (CollectionUtils.isEmpty(packageForecastEntityList)) {
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "组包预报单");
+        }
+        packageForecastEntityList.forEach(this::validateUploadable);
         if (CollectionUtils.isEmpty(soB2cEntityList)) {
             throw new ServiceException("销售订单未找到");
+        }
+        List<String> shopIds = soB2cEntityList.stream()
+                .map(SoB2cEntity::getShopId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(shopIds)) {
+            throw new ServiceException("销售订单店铺未找到");
+        }
+        if (shopIds.size() > 1) {
+            throw new ServiceException("TikTok全托管不支持多店铺组包预报");
         }
         TikTokFullyShippingReq tikTokFullyShippingReq = new TikTokFullyShippingReq();
         tikTokFullyShippingReq.setDeliveryOrderCodes(deliveryCodes);
@@ -179,7 +197,7 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
             tikTokFullyShippingReq.setReserveInfo(reserveInfoDTO);
         }
         try {
-            TikTokFullyShippingResp tikTokFullyShippingResp = tikTokFullService.shipment(soB2cEntityList.get(0).getShopId(), tikTokFullyShippingReq);
+            TikTokFullyShippingResp tikTokFullyShippingResp = tikTokFullService.shipment(shopIds.get(0), tikTokFullyShippingReq);
             if (Objects.isNull(tikTokFullyShippingResp)
                     || Objects.isNull(tikTokFullyShippingResp.getData())
                     || StringUtils.isBlank(tikTokFullyShippingResp.getData().getLogisticsOrder())) {

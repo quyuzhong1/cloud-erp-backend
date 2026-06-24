@@ -58,6 +58,7 @@ public class ShopeeApiUtils {
             sign = String.format("%064x", new BigInteger(1, mac.doFinal(baseString)));
         } catch (Exception e) {
             log.error("虾皮签名生成异常, path: {}, 错误: {}", path, e.getMessage(), e);
+            throw new ServiceException("虾皮签名生成异常:" + e.getMessage());
         }
         return sign;
     }

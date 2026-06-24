@@ -327,39 +327,35 @@ public class NewPlatformReturnOrderConsumerService extends AbstractNewPlatformCo
 				.filter(so -> matchesReturnDetails(dto.getDetailList(), detailMap.get(so.getId())))
 				.collect(Collectors.toList());
 		if (CollectionUtils.isEmpty(matchedOrders)) {
-			SoB2cEntity fallback = soB2cEntityList.stream()
-					.min(Comparator.comparing(SoB2cEntity::getCreateTime, Comparator.nullsLast(Comparator.naturalOrder())))
-					.orElse(soB2cEntityList.get(0));
-			log.warn("【Shopee退货】未匹配到明细一致的订单，platformCode={}，降级选择最早订单 id={}",
-					dto.getDictPlatform(), fallback.getId());
-			return fallback;
+			throw new ServiceException("Shopee退货未匹配到明细一致的订单,platformOrderNo="
+					+ dto.getPlatformOrderNo() + ",returnNo=" + dto.getPlatformReturnNo());
 		}
 		if (matchedOrders.size() == 1) {
 			return matchedOrders.get(0);
 		}
-		return matchedOrders.stream()
-				.min(Comparator.comparing(SoB2cEntity::getCreateTime, Comparator.nullsLast(Comparator.naturalOrder())))
-				.orElse(matchedOrders.get(0));
+		throw new ServiceException("Shopee退货匹配到多个明细一致的订单,platformOrderNo="
+				+ dto.getPlatformOrderNo() + ",returnNo=" + dto.getPlatformReturnNo());
 	}
 
 	private boolean matchesReturnDetails(List<PlatformReturnOrderDTO.Detail> returnDetails, List<SoB2cDetailEntity> soDetails) {
 		if (CollectionUtils.isEmpty(returnDetails) || CollectionUtils.isEmpty(soDetails)) {
 			return false;
 		}
-		for (PlatformReturnOrderDTO.Detail returnDetail : returnDetails) {
-			if (StringUtils.isBlank(returnDetail.getPlatformSkuNo())) {
-				continue;
-			}
-			boolean matched = soDetails.stream().anyMatch(soDetail ->
-					Objects.equals(soDetail.getPlatformSkuNo(), returnDetail.getPlatformSkuNo())
-							&& (returnDetail.getReturnQty() == null
-							|| soDetail.getQty() == null
-							|| returnDetail.getReturnQty() <= soDetail.getQty()));
-			if (matched) {
-				return true;
-			}
+		Map<String, Integer> returnQtyMap = returnDetails.stream()
+				.filter(returnDetail -> StringUtils.isNotBlank(returnDetail.getPlatformSkuNo()))
+				.collect(Collectors.groupingBy(PlatformReturnOrderDTO.Detail::getPlatformSkuNo,
+						Collectors.summingInt(returnDetail -> Objects.isNull(returnDetail.getReturnQty()) ? 0 : returnDetail.getReturnQty())));
+		if (returnQtyMap.isEmpty()) {
+			return false;
 		}
-		return false;
+		Map<String, Integer> soQtyMap = soDetails.stream()
+				.filter(soDetail -> StringUtils.isNotBlank(soDetail.getPlatformSkuNo()))
+				.collect(Collectors.groupingBy(SoB2cDetailEntity::getPlatformSkuNo,
+						Collectors.summingInt(soDetail -> Objects.isNull(soDetail.getQty()) ? 0 : soDetail.getQty())));
+		return returnQtyMap.entrySet().stream().allMatch(entry -> {
+			Integer soQty = soQtyMap.get(entry.getKey());
+			return Objects.nonNull(soQty) && (entry.getValue() <= 0 || entry.getValue() <= soQty);
+		});
 	}
 
 }

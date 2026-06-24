@@ -309,6 +309,11 @@ public class PackageForecastController extends BaseController {
      * Shopee 快递寄送下单初始化数据
      */
     @PostMapping("/shopee/courierDeliveryOptions")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:packageForecast:view",
+            serviceClass = PackageForecastService.class,
+            keyIdName = "ids")
     public ApiResult<PackageForecastDTO.ShopeeCourierDeliveryOptionsDTO> shopeeCourierDeliveryOptions(@RequestBody @Valid PackageForecastDTO.ShopeeOptionParamDTO dto) {
         return success(shopeePackageForecastAdapter.courierDeliveryOptions(dto));
     }
@@ -317,6 +322,11 @@ public class PackageForecastController extends BaseController {
      * Shopee 非快递/卖家自送物流渠道
      */
     @PostMapping("/shopee/firstMileChannelList")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:packageForecast:view",
+            serviceClass = PackageForecastService.class,
+            keyIdName = "ids")
     public ApiResult<List<PackageForecastDTO.ShopeeFirstMileChannelDTO>> shopeeFirstMileChannelList(@RequestBody @Valid PackageForecastDTO.ShopeeOptionParamDTO dto) {
         return success(shopeePackageForecastAdapter.firstMileChannelList(dto));
     }
@@ -325,6 +335,11 @@ public class PackageForecastController extends BaseController {
      * Shopee 可绑定揽收批次号
      */
     @PostMapping("/shopee/trackingNumberList")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:packageForecast:view",
+            serviceClass = PackageForecastService.class,
+            keyIdName = "ids")
     public ApiResult<List<PackageForecastDTO.ShopeeTrackingNumberDTO>> shopeeTrackingNumberList(@RequestBody @Valid PackageForecastDTO.ShopeeOptionParamDTO dto) {
         return success(shopeePackageForecastAdapter.trackingNumberList(dto));
     }

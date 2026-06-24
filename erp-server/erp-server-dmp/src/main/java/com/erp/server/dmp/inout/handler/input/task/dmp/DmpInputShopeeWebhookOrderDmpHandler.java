@@ -26,6 +26,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * 虾皮订单状态 webhook 更新已存在的平台仓 DMP 订单。
@@ -64,6 +67,21 @@ public class DmpInputShopeeWebhookOrderDmpHandler extends DmpInputDbConvertDmpHa
         if (CollUtil.isEmpty(inputMongoEntityList)) {
             return resultList;
         }
+        Set<String> thirdCodes = inputMongoEntityList.stream()
+                .filter(data -> SHIPPED_STATUS_LIST.contains(Objects.toString(data.get(PLATFORM_ORIGINAL_STATUS), "")))
+                .filter(data -> Objects.nonNull(parseLong(data.get(DELIVERY_TIME))))
+                .map(data -> Objects.toString(data.get("thirdCode"), ""))
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.toSet());
+        if (CollUtil.isEmpty(thirdCodes)) {
+            return resultList;
+        }
+        Map<String, DmpSoInfoEntity> dmpSoInfoMap = dmpSoInfoService.list(new LambdaQueryWrapper<DmpSoInfoEntity>()
+                        .in(DmpSoInfoEntity::getThirdCode, thirdCodes)
+                        .eq(DmpSoInfoEntity::getSourcePlatform, PlatformDictEnum.SHOPEE.getCode())
+                        .eq(DmpSoInfoEntity::getIsDeleted, Boolean.FALSE))
+                .stream()
+                .collect(Collectors.toMap(DmpSoInfoEntity::getThirdCode, Function.identity(), (left, right) -> left));
         for (Map<String, Object> data : inputMongoEntityList) {
             String status = Objects.toString(data.get(PLATFORM_ORIGINAL_STATUS), "");
             String thirdCode = Objects.toString(data.get("thirdCode"), "");
@@ -71,11 +89,7 @@ public class DmpInputShopeeWebhookOrderDmpHandler extends DmpInputDbConvertDmpHa
             if (!SHIPPED_STATUS_LIST.contains(status) || StringUtils.isAnyBlank(thirdCode) || Objects.isNull(deliveryTime)) {
                 continue;
             }
-            DmpSoInfoEntity dmpSoInfoEntity = dmpSoInfoService.getOne(new LambdaQueryWrapper<DmpSoInfoEntity>()
-                    .eq(DmpSoInfoEntity::getThirdCode, thirdCode)
-                    .eq(DmpSoInfoEntity::getSourcePlatform, PlatformDictEnum.SHOPEE.getCode())
-                    .eq(DmpSoInfoEntity::getIsDeleted, Boolean.FALSE)
-                    .last("limit 1"));
+            DmpSoInfoEntity dmpSoInfoEntity = dmpSoInfoMap.get(thirdCode);
             if (Objects.isNull(dmpSoInfoEntity) || !isPlatformWarehouseOrder(dmpSoInfoEntity)) {
                 continue;
             }

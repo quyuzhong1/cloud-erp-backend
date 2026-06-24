@@ -73,7 +73,6 @@ public class TikTokPackageForecastAdapter extends AbstractPackageForecastPlatfor
         PackageForecastEntity entity = getForecastOrThrow(id);
         validateUploadable(entity);
         try {
-            entity.setUploadStatus(PackageUploadStatusEnum.UPLOAD_SUCCESS.getCode());
             entity.setCollectMode(collectMode);
             entity.setCollectAddressId(collectAddressId);
             String newPackageId = tikTokMergePackage(entity);
@@ -218,12 +217,12 @@ public class TikTokPackageForecastAdapter extends AbstractPackageForecastPlatfor
     private String tikTokPrint(PackageForecastEntity entity) {
         List<WmsAttachmentDTO.UpdateDTO> updateDTOS = wmsAttachmentService.getByBusinessIds(Collections.singletonList(entity.getId()));
         if (CollectionUtils.isEmpty(updateDTOS)) {
+            // 保持平台适配器返回空串，外层 print 统一转成“打印失败”，避免适配器直接改变接口兼容行为。
             return "";
         }
         WmsAttachmentDTO.UpdateDTO updateDTO = updateDTOS.get(0);
         String url = updateDTO.getAttachUrl();
-        try {
-            InputStream inputStream = FastDFSClientUtil.getInputStream(url);
+        try (InputStream inputStream = FastDFSClientUtil.getInputStream(url)) {
             String base64 = PdfUtil.base64ForPdf(inputStream);
             return "data:application/pdf;base64," + base64;
         } catch (Exception e) {

@@ -38,6 +38,7 @@ public enum HandoverStatusEnum implements EnumMessage {
     SHOPEE_ORDER_RECEIVED("ORDER_RECEIVED","等待快递揽收"),
     SHOPEE_PICKED_UP("PICKED_UP","已揽收"),
     SHOPEE_CANCELING("CANCELING","取消中"),
+    // Shopee 平台原始 DELIVERED 在适配器中映射到内部 SHOPEE_DELIVERED，避免与 TikTok DELIVERED 状态码混用。
     SHOPEE_DELIVERED("SHOPEE_DELIVERED","已到达"),
 
     //TIKTOKFully

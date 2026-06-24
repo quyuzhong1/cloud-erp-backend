@@ -10,6 +10,7 @@ import com.erp.server.dmp.handler.WebhookHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.formula.functions.T;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -74,11 +75,20 @@ public class WebhookController extends BaseController {
     }
 
     private static ResponseEntity<?> getWebhookResultResponseEntity(WebhookResult result, String serviceFlag) {
+        HttpStatus status = resolveStatus(result);
         if (WebhookServiceEnum.QIMEN_CALL_BACK.getCode().equals(serviceFlag)){
-            return ResponseEntity.ok().body(result.toXml());
+            return ResponseEntity.status(status).body(result.toXml());
         }else {
-            return ResponseEntity.ok(result);
+            return ResponseEntity.status(status).body(result);
         }
+    }
+
+    private static HttpStatus resolveStatus(WebhookResult result) {
+        Integer code = result.getCode();
+        if (Objects.isNull(code) || code < 400) {
+            return HttpStatus.OK;
+        }
+        return code >= 500 ? HttpStatus.INTERNAL_SERVER_ERROR : HttpStatus.BAD_REQUEST;
     }
 
     private String getService(String serviceFlag, Map<String, String> headers, String data) {
