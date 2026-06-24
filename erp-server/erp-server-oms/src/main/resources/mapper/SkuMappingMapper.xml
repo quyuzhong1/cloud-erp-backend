@@ -896,17 +896,20 @@
     </select>
 
     <!-- 统计未匹配SKU数量，按不同维度分组：
-         warehouse → 按仓库分组；platform/b2bPlatform → 按平台名分组；customer → 按平台名（客户名）分组
-         使用 li.match_result = 'false' 判断未匹配，与前端 Tab 计数保持一致 -->
+         warehouse → 按 overseas_provider（li.auth_id）分组，短名称取 op.short_name；
+         platform/b2bPlatform/customer → 按 sm.platform_name + sm.dict_platform 分组；
+         使用 li.match_result = 'false' 判断未匹配，与前端 Tab 计数保持一致；
+         groupName 为空（JOIN 未命中或字段为空）时由调用方归入"未知"分组 -->
     <select id="countUnmatchedGroupByWarehouse" resultType="com.erp.model.oms.dto.SkuMappingDTO$UnmatchCountDTO">
         SELECT
-            sm.warehouse_id AS warehouseId,
-            COALESCE(NULLIF(sm.warehouse_name, ''), NULLIF(sm.warehouse_id, ''), '未知仓库') AS warehouseName,
-            CASE
-                WHEN sm.type = 'warehouse'
-                    THEN NULLIF(MAX(op.short_name), '')
-                ELSE COALESCE(NULLIF(sm.platform_name, ''), NULLIF(sm.dict_platform, ''))
-            END AS groupName,
+            <choose>
+                <when test="'warehouse'.equals(params.type)">
+                    COALESCE(NULLIF(MAX(op.short_name), ''), NULL) AS groupName,
+                </when>
+                <otherwise>
+                    COALESCE(NULLIF(sm.platform_name, ''), NULLIF(sm.dict_platform, ''), NULL) AS groupName,
+                </otherwise>
+            </choose>
             COUNT(*) AS unmatchCount
         FROM sku_mapping sm
         INNER JOIN listing_info li ON li.id = sm.listing_id AND li.is_deleted = false AND li.match_result = 'false'
@@ -925,7 +928,14 @@
           <if test="params.type != null and params.type != ''">
               AND sm.type = #{params.type}
           </if>
-        GROUP BY sm.type, sm.warehouse_id, sm.warehouse_name, sm.platform_name, sm.dict_platform
+        <choose>
+            <when test="'warehouse'.equals(params.type)">
+                GROUP BY li.auth_id
+            </when>
+            <otherwise>
+                GROUP BY sm.platform_name, sm.dict_platform
+            </otherwise>
+        </choose>
         HAVING COUNT(*) > 0
         ORDER BY unmatchCount DESC
     </select>
