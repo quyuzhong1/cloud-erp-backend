@@ -2,6 +2,7 @@ package com.erp.server.dmp.controller.api;
 
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
@@ -308,7 +309,7 @@ public class DmpCfgInputDetailController extends BaseController {
                 result = dmpCfgInputDetailService.doTask(id, dto, dmpCfgInputEntity, entity);
             }catch (Exception e){
                 log.error("拉取调度生成任务失败",e);
-                result = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());
+                result = BatchResultDTO.fail(entity.getId(), entity.getId(), ExceptionUtil.getRootCauseMessage(e));
             }
             resultDTOS.add(result);
         }
