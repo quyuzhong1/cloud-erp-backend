@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 /**
- * dmp处理下一个扩展handler，如何订单收货人信息单独一张表，使用此handler即可，因有成员变量，最终实现类由spring管理需要是多例@Scope("prototype")
+ * dmp处理下一个扩展handler，如果订单收货人信息单独一张表，使用此handler即可，因有成员变量，最终实现类由spring管理需要是多例@Scope("prototype")
  * @author Administrator
  *
  */
@@ -28,6 +28,7 @@ public class EccangOutBoundDmpHandler extends DmpInputDbConvertDmpHandler {
 			if (CollUtil.isEmpty(mongoDataMaps)) {
 				continue;
 			}
+			// 出库同步场景 mongo 源与 dmp 行为 1:1，items 取自关联的首条 mongo 记录
 			Map<String, Object> mongoData = mongoDataMaps.get(0);
 			Object overseasDetail = mongoData.get("items");
 			if(overseasDetail != null) {

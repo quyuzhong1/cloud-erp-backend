@@ -10,9 +10,11 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 
 /**
- * 三方仓发货单跟踪号历史数据修复任务
+ * 三方仓发货单跟踪号历史数据修复任务。
+ * 批量 UPDATE 仅递增 version，不做乐观锁 WHERE 校验（一次性历史修复场景）。
  */
 @Component
 @Slf4j
@@ -35,8 +37,15 @@ public class ThirdWarehouseDeliveryTrackNoJob {
             return;
         }
 
-        LocalDate startDate = LocalDate.parse(split[0].trim());
-        LocalDate endDate = LocalDate.parse(split[1].trim());
+        LocalDate startDate;
+        LocalDate endDate;
+        try {
+            startDate = LocalDate.parse(split[0].trim());
+            endDate = LocalDate.parse(split[1].trim());
+        } catch (DateTimeParseException e) {
+            XxlJobHelper.log("任务参数日期格式错误，示例：2025-01-01,2025-01-31");
+            return;
+        }
         if (startDate.isAfter(endDate)) {
             XxlJobHelper.log("任务参数日期范围错误，startDate={}, endDate={}", startDate, endDate);
             return;

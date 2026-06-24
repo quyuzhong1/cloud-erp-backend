@@ -597,8 +597,13 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         if (CollUtil.isEmpty(payload.getDetailList())) {
             return ThirdWarehouseSkuValidationContext.fail("自动生成销售出库单失败：三方仓DTO出库明细为空");
         }
+        // SKU 映射校验依赖 DTO items，不再要求 referenceNo（订单定位仍在 checkAndBuildMap 中校验 swOrderNumber/referenceNo）
+        String authId = resolveProviderAuthId(dto, overseasWarehouse);
+        if (StringUtils.isBlank(authId)) {
+            return ThirdWarehouseSkuValidationContext.fail("自动生成销售出库单失败：三方仓库未映射");
+        }
         ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
-        paramDTO.setAuthId(resolveProviderAuthId(dto, overseasWarehouse));
+        paramDTO.setAuthId(authId);
         paramDTO.setPlatform(dto.getPlatform());
         paramDTO.setType(RuleTypeEnum.WAREHOUSE.getCode());
         paramDTO.setIsExpire(false);
@@ -696,9 +701,22 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         if (CollUtil.isEmpty(providerWarehouseList)) {
             return null;
         }
-        return providerWarehouseList.stream()
+        List<String> mainIds = providerWarehouseList.stream()
                 .map(OverseasProviderWarehouseEntity::getMainId)
                 .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(mainIds)) {
+            return null;
+        }
+        List<OverseasProviderEntity> providerEntityList = FeignQuery.list(FeignQuery.create(OverseasProviderEntity.class)
+                .in(OverseasProviderEntity::getId, mainIds)
+                .eq(OverseasProviderEntity::getAuthStatus, AuthStatusEnum.ALREADY.getCode())
+                .eq(OverseasProviderEntity::getCode, dto.getPlatform())
+                .eq(OverseasProviderEntity::getIsDeleted, false));
+        return providerEntityList.stream()
+                .filter(provider -> CollUtil.isNotEmpty(provider.getAuthJson()))
+                .map(OverseasProviderEntity::getId)
                 .findFirst()
                 .orElse(null);
     }
@@ -807,6 +825,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         return dtoSkuQtyMap.entrySet().stream()
                 .filter(entry -> entry.getValue() > 0)
                 .map(Map.Entry::getKey)
+                // 多平台 SKU 均可映射时按字典序固定选取，避免 HashMap 遍历顺序不确定
                 .sorted()
                 .filter(platformSku -> Optional.ofNullable(mappingMap.get(platformSku)).orElse(Collections.emptyList()).stream()
                         .anyMatch(mapping -> (StringUtils.isNotBlank(skuId)
