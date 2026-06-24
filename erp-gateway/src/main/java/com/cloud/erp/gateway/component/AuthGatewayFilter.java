@@ -400,6 +400,10 @@ public class AuthGatewayFilter implements GlobalFilter, Ordered {
             return 0;
         }
         if (!Boolean.TRUE.equals(validateResp.getTokenValid())) {
+            // 已知 token 的失效状态可能因延期、启用用户等后台操作恢复，避免缓存导致恢复后短暂误拒。
+            if (StringUtils.isNotBlank(validateResp.getTokenId())) {
+                return 0;
+            }
             return API_TOKEN_VALIDATE_INVALID_CACHE_SECONDS;
         }
         if (!Boolean.TRUE.equals(validateResp.getPathAllowed())) {

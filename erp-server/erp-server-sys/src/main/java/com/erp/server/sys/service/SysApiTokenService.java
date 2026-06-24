@@ -20,6 +20,8 @@ public interface SysApiTokenService extends SuperService<SysApiTokenEntity> {
 
     Boolean update(SysApiTokenDTO.UpdateDTO dto);
 
+    Boolean extend(SysApiTokenDTO.ExtendDTO dto);
+
     Boolean removeToken(BaseIdDTO dto);
 
     SysApiTokenDTO.TokenDTO copy(String id);

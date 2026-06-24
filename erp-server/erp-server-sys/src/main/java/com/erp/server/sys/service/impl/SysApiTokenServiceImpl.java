@@ -36,7 +36,7 @@ public class SysApiTokenServiceImpl extends SuperServiceImpl<SysApiTokenMapper, 
     private static final Integer USER_ENABLED = 1;
 
     /**
-     * 前端有效期下拉值：0 表示永不过期，其余值表示从创建时间起延长的天数。
+     * 前端有效期下拉值：0 表示永不过期，其余值表示从当前时间起延长的天数。
      */
     private static final int VALIDITY_NEVER_EXPIRES = 0;
 
@@ -87,6 +87,14 @@ public class SysApiTokenServiceImpl extends SuperServiceImpl<SysApiTokenMapper, 
     public Boolean update(SysApiTokenDTO.UpdateDTO dto) {
         SysApiTokenEntity entity = getOwnedToken(dto.getId());
         entity.setTokenName(normalizeTokenName(dto.getTokenName()));
+        return this.updateById(entity);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean extend(SysApiTokenDTO.ExtendDTO dto) {
+        SysApiTokenEntity entity = getOwnedToken(dto.getId());
+        entity.setExpiresTime(calculateExpiresTime(dto.getValidityDays()));
         return this.updateById(entity);
     }
 
@@ -152,6 +160,7 @@ public class SysApiTokenServiceImpl extends SuperServiceImpl<SysApiTokenMapper, 
         dto.setMaskedToken(SysApiTokenSupport.maskToken(entity.getTokenPreviewPrefix(), entity.getTokenPreviewSuffix()));
         dto.setCreateTime(entity.getCreateTime());
         dto.setExpiresTime(entity.getExpiresTime());
+        dto.setExpired(isExpired(entity.getExpiresTime()));
         return dto;
     }
 

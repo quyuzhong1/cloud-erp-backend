@@ -52,6 +52,15 @@ public class SysApiTokenController extends BaseController {
     }
 
     /**
+     * 延期个人访问令牌
+     */
+    @PostMapping("/extend")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "延期个人访问令牌:id={id},有效期={validityDays}")
+    public ApiResult<Boolean> extend(@RequestBody @Validated SysApiTokenDTO.ExtendDTO dto) {
+        return success(sysApiTokenService.extend(dto));
+    }
+
+    /**
      * 删除个人访问令牌
      */
     @PostMapping("/remove")

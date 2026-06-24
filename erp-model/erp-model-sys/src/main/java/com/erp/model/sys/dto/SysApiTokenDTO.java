@@ -52,6 +52,20 @@ public class SysApiTokenDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    public static class ExtendDTO implements Serializable {
+
+        @NotBlank(message = "id不能为空")
+        private String id;
+
+        /**
+         * 延期有效期天数：30、90、180、365；0 表示永不过期
+         */
+        @NotNull(message = "有效期不能为空")
+        private Integer validityDays;
+    }
+
+    @Data
+    @NoArgsConstructor
     public static class ListDTO implements Serializable {
 
         private String id;
@@ -75,6 +89,11 @@ public class SysApiTokenDTO implements Serializable {
          * 令牌过期时间，为空表示永不过期
          */
         private LocalDateTime expiresTime;
+
+        /**
+         * 是否已过期
+         */
+        private Boolean expired;
     }
 
     @Data
