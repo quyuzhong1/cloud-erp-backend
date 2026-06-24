@@ -299,9 +299,13 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 			soReturnInstockEntity.setCustomerName(customerInfo.getName());
 			soReturnInstockEntity.setSoCode(soB2cEntity.getCode());
 			soReturnInstockEntity.setSoId(soB2cEntity.getId());
+			//平台订单编码，订单平台单号为空时用平台消息单号兜底
+			soReturnInstockEntity.setPlatformOrderCode(CharSequenceUtil.isNotBlank(soB2cEntity.getPlatformCode()) ? soB2cEntity.getPlatformCode() : dto.getPlatformOrderNo());
 			soReturnInstockEntity.setShopId(soB2cEntity.getShopId());
 			soReturnInstockEntity.setCurrency(soB2cEntity.getCurrency());
 		} else {
+			//未匹配到销售订单，用平台消息单号兜底
+			soReturnInstockEntity.setPlatformOrderCode(dto.getPlatformOrderNo());
 			soReturnInstockEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 			soReturnInstockEntity.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
 			soReturnInstockEntity.setCurrencySymbol("¥");
