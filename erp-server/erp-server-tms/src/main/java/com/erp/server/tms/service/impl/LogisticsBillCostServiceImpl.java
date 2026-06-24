@@ -3274,7 +3274,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                         return;
                     }
 
-                    BatchResultDTO result = service.pushAllocation(businessId, reportDate, pushContext);
+                    BatchResultDTO result = service.pushAllocationContext(businessId, reportDate, pushContext);
 
                     if (result.getSuccess()) {
                         asyncTaskDetailRecordService.updateDetail(
@@ -3322,13 +3322,13 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
 	@Override
 	public BatchResultDTO pushAllocation(String id, String reportDate) {
-        return service.pushAllocation(id, reportDate, null);
+        return service.pushAllocationContext(id, reportDate, null);
     }
 
     @Transactional(rollbackFor = Exception.class)
     @DataIdempotent(keyIdName = "id")
     @Override
-    public BatchResultDTO pushAllocation(String id, String reportDate, LogisticsBillCostDTO.SmallBagPushAllocationContext pushContext) {
+    public BatchResultDTO pushAllocationContext(String id, String reportDate, LogisticsBillCostDTO.SmallBagPushAllocationContext pushContext) {
         if (pushContext == null) {
             pushContext = buildSmallBagPushAllocationContext();
         }

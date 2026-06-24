@@ -476,6 +476,22 @@ public enum ApiError implements Serializable {
     WF_FS_PROCESS_USER_NOT_FOUND(4060,"未找到飞书用户对应的系统用户,飞书userId: {0}"),
     WF_FS_DEFINITION_SUBSCRIBE_FAIL(4061,"飞书定义订阅失败，请检查"),
     WF_FS_DEFINITION_UNSUBSCRIBE_FAIL(4062,"取消飞书定义订阅失败，请检查"),
+    WF_TASK_RECORD_CONTEXT_REQUIRED(4063,"任务节点上下文为空，禁止直接执行"),
+    WF_TASK_RECORD_CONTEXT_MISMATCH(4064,"任务节点上下文不匹配"),
+    WF_TASK_RECORD_NOT_MATCH(4065,"任务节点记录不存在或不匹配"),
+    WF_TASK_RECORD_NOT_PROCESSING(4066,"任务节点未处于执行中，禁止直接执行"),
+    WF_TASK_RECORD_DUPLICATE(4067,"任务节点已存在，请稍后重试"),
+    WF_TASK_RECORD_FORCE_RETRY_PARAM_REQUIRED(4068,"强制重试参数不能为空"),
+    WF_TASK_RECORD_FORCE_RETRY_NOT_FOUND(4069,"未找到可强制重试的任务节点"),
+    WF_TASK_RECORD_FORCE_RETRY_FORBIDDEN(4070,"无任务节点人工强制重试权限"),
+    WF_KOL_B2C_APPROVE_REQUIRED(4071,"B2C寄样申请单未审核通过，禁止下推"),
+    WF_TASK_RECORD_MQ_SEND_FAILED(4072,"任务节点MQ发送失败：{0}"),
+    WF_TASK_RECORD_FORCE_RETRY_NO_ELIGIBLE(4073,"没有可强制重试的任务节点，成功节点不会重试，处理中节点需超过3分钟才允许接管"),
+    WF_TASK_RECORD_FORCE_RETRY_PARAM_INCOMPLETE(4074,"任务节点id或sourceType/sourceId不能为空"),
+    WF_KOL_B2C_SUB_TASK_NODE_NOT_FOUND(4075,"KOL B2C拆分单任务节点配置不存在"),
+    WF_KOL_B2C_SPLIT_DETAIL_INCOMPLETE(4076,"B2C寄样申请单拆分单明细不完整，单号【{0}】，达人【{1}】"),
+    WF_KOL_B2C_WAIT_SPLIT_ORDER(4077,"等待拆分单生成"),
+    WF_KOL_B2C_WAIT_SUB_TASK_COMPLETE(4078,"等待KOL B2C拆分单子任务完成，已完成{0}/{1}"),
     /**
      * PROJECT 项目相关 4500 - 5000
      */
@@ -1371,6 +1387,7 @@ public enum ApiError implements Serializable {
     SO_B2C_NOT_OUTBOUND_DETAIL_WAREHOUSE_UPDATE_FAILED(10753,"不出库发货失败：销售订单明细仓库未成功落库，请刷新后重试"),
     SO_B2C_NOT_OUTBOUND_LOGISTICS_UPDATE_FAILED(10754,"不出库发货失败：销售订单物流信息更新失败，请刷新后重试"),
     SO_B2C_NOT_OUTBOUND_STATUS_UPDATE_FAILED(10755,"不出库发货失败：销售订单状态更新失败，请刷新后重试"),
+    SO_CHANGE_DELETE_ALL_DETAIL_FORBIDDEN(10756,"销售变更单不允许删除所有的订单明细"),
     CUSTOMER_ADDRESS_NOT_MATCH(94108,"未匹配到客户地址，客户id：{0}，收货地址：{1}"),
 
     /**
