@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,7 @@ import java.util.TreeMap;
 /**
  * Shopee 售后退货明细 DMP 转换。
  */
+@Slf4j
 @Service
 @Scope("prototype")
 public class DmpInputShopeeReturnDetailDmpHandler extends DmpInputDoNextDmpHandler {
@@ -85,8 +87,9 @@ public class DmpInputShopeeReturnDetailDmpHandler extends DmpInputDoNextDmpHandl
             List<TreeMap<String, Object>> dmpDataMaps = entry.getValue();
             for (TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
                 Object returnSolution = dmpDataMap.get("return_solution");
-                if (returnSolution == null
-                        || RETURN_SOLUTION_RETURN_AND_REFUND != Integer.parseInt(String.valueOf(returnSolution))) {
+                Integer returnSolutionValue = parseInteger(returnSolution);
+                if (returnSolutionValue == null
+                        || RETURN_SOLUTION_RETURN_AND_REFUND != returnSolutionValue) {
                     continue;
                 }
                 String platformSku = resolvePlatformSku(dmpDataMap);
@@ -95,7 +98,10 @@ public class DmpInputShopeeReturnDetailDmpHandler extends DmpInputDoNextDmpHandl
                 }
                 Object amountObj = dmpDataMap.get("amount");
                 if (amountObj != null) {
-                    dmpDataMap.put("qty", Integer.parseInt(String.valueOf(amountObj)));
+                    Integer qty = parseInteger(amountObj);
+                    if (qty != null) {
+                        dmpDataMap.put("qty", qty);
+                    }
                 }
                 Object itemPriceObj = dmpDataMap.get("item_price");
                 if (itemPriceObj != null) {
@@ -129,5 +135,17 @@ public class DmpInputShopeeReturnDetailDmpHandler extends DmpInputDoNextDmpHandl
             return itemSku;
         }
         return String.valueOf(item.getOrDefault("variation_sku", ""));
+    }
+
+    private Integer parseInteger(Object value) {
+        if (value == null || StringUtils.isBlank(String.valueOf(value))) {
+            return null;
+        }
+        try {
+            return Integer.parseInt(String.valueOf(value));
+        } catch (NumberFormatException e) {
+            log.warn("退货明细字段解析失败,value:{}", value);
+            return null;
+        }
     }
 }

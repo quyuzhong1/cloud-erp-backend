@@ -100,8 +100,13 @@ public class DmpInputShopeeRetrunInitHandler extends DmpInputInitHandler {
         if (returnSolution == null) {
             return false;
         }
-        int solution = Integer.parseInt(String.valueOf(returnSolution));
-        return RETURN_SOLUTION_RETURN_AND_REFUND == solution || RETURN_SOLUTION_REFUND_ONLY == solution;
+        try {
+            int solution = Integer.parseInt(String.valueOf(returnSolution));
+            return RETURN_SOLUTION_RETURN_AND_REFUND == solution || RETURN_SOLUTION_REFUND_ONLY == solution;
+        } catch (NumberFormatException e) {
+            log.warn("退货列表return_solution解析失败,value:{}", returnSolution);
+            return false;
+        }
     }
 
     private ShopeeResponse executeWithRetry(OrderRequest orderRequest, String apiName) {

@@ -206,7 +206,11 @@ public class TikTokPackageForecastAdapter extends AbstractPackageForecastPlatfor
         combinePackagePramDTO.setCombinablePackages(combinePackageGroupsBeanList);
         CombinePackageViewDTO combinePackageViewDTO = tikTokPackageService.combinePackage(shopIds.get(0), combinePackagePramDTO);
         if (combinePackageViewDTO.getCode() != 0) {
-            throw new ServiceException("TIKTOK组包失败，{}", combinePackageViewDTO.getMessage());
+            throw new ServiceException("TIKTOK组包失败：" + combinePackageViewDTO.getMessage());
+        }
+        if (combinePackageViewDTO.getData() == null
+                || CollectionUtils.isEmpty(combinePackageViewDTO.getData().getPackages())) {
+            throw new ServiceException("TIKTOK组包失败：未返回有效包裹信息");
         }
         return combinePackageViewDTO.getData().getPackages().get(0).getId();
     }

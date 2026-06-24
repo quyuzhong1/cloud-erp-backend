@@ -2,6 +2,7 @@ package com.erp.server.dmp.inout.handler.input.task.dmp;
 
 import com.common.business.enums.PlatformDictEnum;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -19,6 +20,7 @@ import java.util.TreeMap;
 /**
  * Shopee 售后退货主表 DMP 转换。
  */
+@Slf4j
 @Service
 @Scope("prototype")
 public class DmpInputShopeeReturnDmpHandler extends DmpInputDbConvertDmpHandler {
@@ -63,7 +65,10 @@ public class DmpInputShopeeReturnDmpHandler extends DmpInputDbConvertDmpHandler 
 
         Object refundAmount = dmpDataMap.get("refund_amount");
         if (refundAmount != null) {
-            dmpDataMap.put("allAmount", new BigDecimal(String.valueOf(refundAmount)));
+            BigDecimal amount = parseBigDecimal(refundAmount);
+            if (amount != null) {
+                dmpDataMap.put("allAmount", amount);
+            }
         }
         Object currency = dmpDataMap.get("currency");
         if (currency != null) {
@@ -89,7 +94,8 @@ public class DmpInputShopeeReturnDmpHandler extends DmpInputDbConvertDmpHandler 
         if (returnSolution == null) {
             return false;
         }
-        return RETURN_SOLUTION_RETURN_AND_REFUND == Integer.parseInt(String.valueOf(returnSolution));
+        Integer returnSolutionValue = parseInteger(returnSolution);
+        return returnSolutionValue != null && RETURN_SOLUTION_RETURN_AND_REFUND == returnSolutionValue;
     }
 
     private String mapInternalStatus(String platformStatus) {
@@ -106,7 +112,10 @@ public class DmpInputShopeeReturnDmpHandler extends DmpInputDbConvertDmpHandler 
         if (epochSecondObj == null || StringUtils.isBlank(String.valueOf(epochSecondObj))) {
             return null;
         }
-        long epochSecond = Long.parseLong(String.valueOf(epochSecondObj));
+        Long epochSecond = parseLong(epochSecondObj);
+        if (epochSecond == null) {
+            return null;
+        }
         return LocalDateTime.ofInstant(Instant.ofEpochSecond(epochSecond), ZoneId.systemDefault());
     }
 
@@ -141,5 +150,41 @@ public class DmpInputShopeeReturnDmpHandler extends DmpInputDbConvertDmpHandler 
             return null;
         }
         return parentTask.getNextLevelId();
+    }
+
+    private Integer parseInteger(Object value) {
+        if (value == null || StringUtils.isBlank(String.valueOf(value))) {
+            return null;
+        }
+        try {
+            return Integer.parseInt(String.valueOf(value));
+        } catch (NumberFormatException e) {
+            log.warn("退货主表字段解析失败,value:{}", value);
+            return null;
+        }
+    }
+
+    private Long parseLong(Object value) {
+        if (value == null || StringUtils.isBlank(String.valueOf(value))) {
+            return null;
+        }
+        try {
+            return Long.parseLong(String.valueOf(value));
+        } catch (NumberFormatException e) {
+            log.warn("退货主表时间字段解析失败,value:{}", value);
+            return null;
+        }
+    }
+
+    private BigDecimal parseBigDecimal(Object value) {
+        if (value == null || StringUtils.isBlank(String.valueOf(value))) {
+            return null;
+        }
+        try {
+            return new BigDecimal(String.valueOf(value));
+        } catch (NumberFormatException e) {
+            log.warn("退货主表金额字段解析失败,value:{}", value);
+            return null;
+        }
     }
 }

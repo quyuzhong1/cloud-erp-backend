@@ -104,6 +104,8 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
     private static final String PAYMENT_MONTHLY_CN = "快递账号月结";
     private static final Long SHOPEE_PREPAID_LOGISTICS_PRODUCT_ID = 1010004L;
     private static final String FIRST_MILE_PACKAGE_HAS_NOT_BIND = "firstmile.package_has_not_bind";
+    private static final String SHOPEE_PLATFORM_STATUS_NOT_AVAILABLE = "NOT_AVAILABLE";
+    private static final String SHOPEE_PLATFORM_STATUS_DELIVERED = "DELIVERED";
 
     @Resource
     private PackageForecastMapper packageForecastMapper;
@@ -309,7 +311,10 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
 
     @Override
     public List<PackageForecastEntity> listSyncTrackingStatus(DateTime dateTime) {
-        return packageForecastMapper.getShopeeHandoverList(dateTime);
+        return packageForecastMapper.getShopeeHandoverList(dateTime, PlatformDictEnum.SHOPEE.getCode(),
+                Arrays.asList(
+                        HandoverStatusEnum.SHOPEE_DELIVERED.getCode(),
+                        HandoverStatusEnum.CANCELED_2.getCode()));
     }
 
     private List<BatchResultDTO> uploadCourierDelivery(PackageForecastDTO.UploadDTO dto, ShopeeForecastContext context) {
@@ -521,10 +526,11 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
     private void validateCourierDeliveryBindingStatus(PackageForecastEntity entity, CourierDeliveryBindingInfo bindingInfo) {
         String status = bindingInfo.getStatus();
         String bindingId = entity.getPlatformPackageNo();
-        if ("NOT_AVAILABLE".equals(status)) {
+        if (SHOPEE_PLATFORM_STATUS_NOT_AVAILABLE.equals(status)) {
             throw new ServiceException("虾皮快递寄送绑定ID暂未绑定订单，请稍后重试,bindingId:" + bindingId);
         }
-        if ("CANCELING".equals(status) || "CANCELED".equals(status)) {
+        if (HandoverStatusEnum.SHOPEE_CANCELING.getCode().equals(status)
+                || HandoverStatusEnum.CANCELED_2.getCode().equals(status)) {
             throw new ServiceException("虾皮快递寄送单已取消或取消中,bindingId:" + bindingId
                     + ",status:" + status + ",reason:" + StringUtils.defaultString(bindingInfo.getReason()));
         }
@@ -706,7 +712,10 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
             throw new ServiceException("Shopee应用配置不存在");
         }
         ApiResult<ShopAuthEntity> shopAuthResult = shopInfoFeign.getShopAuthById(shopId);
-        if (Objects.isNull(shopAuthResult) || Objects.isNull(shopAuthResult.getData())) {
+        if (Objects.isNull(shopAuthResult) || !shopAuthResult.isSuccess()) {
+            throw new ServiceException("Shopee店铺授权查询失败");
+        }
+        if (Objects.isNull(shopAuthResult.getData())) {
             throw new ServiceException("Shopee店铺授权不存在");
         }
         ShopAuthEntity shopAuth = shopAuthResult.getData();
@@ -738,10 +747,10 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
     }
 
     private String mapShopeeHandoverStatus(String status) {
-        if ("NOT_AVAILABLE".equals(status)) {
+        if (SHOPEE_PLATFORM_STATUS_NOT_AVAILABLE.equals(status)) {
             return "";
         }
-        if ("DELIVERED".equals(status)) {
+        if (SHOPEE_PLATFORM_STATUS_DELIVERED.equals(status)) {
             return HandoverStatusEnum.SHOPEE_DELIVERED.getCode();
         }
         return status;

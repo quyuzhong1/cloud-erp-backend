@@ -4,7 +4,6 @@ import com.sdk.oms.shopee.dto.base.ShopeeResponse;
 import com.sdk.oms.shopee.dto.sbs.request.SbsInventoryRequest;
 import com.sdk.oms.shopee.utils.ShopeeApiUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -13,7 +12,6 @@ import java.util.HashMap;
  * Shopee SBS 库存接口
  */
 @Slf4j
-@Component
 @Service
 public class ShopeeSbsInventoryService {
 

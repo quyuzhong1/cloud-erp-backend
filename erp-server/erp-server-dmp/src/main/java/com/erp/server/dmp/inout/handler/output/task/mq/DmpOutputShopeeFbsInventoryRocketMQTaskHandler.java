@@ -87,6 +87,9 @@ public class DmpOutputShopeeFbsInventoryRocketMQTaskHandler extends DmpOutputRoc
             listingInfoParamDTO.setPlatform(PlatformDictEnum.SHOPEE.getCode());
             listingInfoParamDTO.setShopIdList(Collections.singletonList(shopId));
             mappingSkuViewList = skuMappingFeign.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
+            if (mappingSkuViewList == null) {
+                mappingSkuViewList = Collections.emptyList();
+            }
         }
         ShopInfoEntity shopInfo = StringUtils.isBlank(shopId) ? null : shopInfoFeign.getShopInfoById(shopId);
 

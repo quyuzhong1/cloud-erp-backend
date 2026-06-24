@@ -82,7 +82,12 @@ public class DmpInputShopeeReturnDetailInitHandler extends DmpInputInitHandler {
                 .build();
 
         JSONArray detailList = new JSONArray();
-        for (String returnSn : returnSnList) {
+        int total = returnSnList.size();
+        for (int i = 0; i < total; i++) {
+            String returnSn = returnSnList.get(i);
+            if (i == 0 || (i + 1) % 50 == 0 || i + 1 == total) {
+                log.info("Shopee退货明细init进度:{}/{},returnSn:{}", i + 1, total, returnSn);
+            }
             orderRequest.setOrderSns(returnSn);
             ShopeeResponse response = executeWithRetry(orderRequest, "退货明细");
             JSONObject detail = response.getResponse();

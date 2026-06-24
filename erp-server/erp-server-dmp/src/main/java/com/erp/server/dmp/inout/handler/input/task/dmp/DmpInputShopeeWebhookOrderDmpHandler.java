@@ -11,6 +11,7 @@ import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.server.dmp.inout.dto.request.DmpInputDmpRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputMongoResponse;
 import com.erp.server.dmp.service.DmpSoInfoService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
@@ -29,6 +30,7 @@ import java.util.Objects;
 /**
  * 虾皮订单状态 webhook 更新已存在的平台仓 DMP 订单。
  */
+@Slf4j
 @Service
 @Scope("prototype")
 public class DmpInputShopeeWebhookOrderDmpHandler extends DmpInputDbConvertDmpHandler {
@@ -94,6 +96,7 @@ public class DmpInputShopeeWebhookOrderDmpHandler extends DmpInputDbConvertDmpHa
                     .set(DmpSoInfoEntity::getConvertId, dmpSoInfoEntity.getConvertId())
                     .update();
             if (!updated) {
+                log.warn("Webhook订单乐观锁更新失败,thirdCode:{},id:{},version:{}", thirdCode, dmpSoInfoEntity.getId(), dmpSoInfoEntity.getVersion());
                 continue;
             }
             resultList.add(dmpSoInfoEntity);

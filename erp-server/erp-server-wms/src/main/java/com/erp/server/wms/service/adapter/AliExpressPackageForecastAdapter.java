@@ -416,6 +416,9 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
             }
             HandoverCommitResult handoverCommitResult = JSONObject.parseObject(baseResult.getResult(), HandoverCommitResult.class);
             if (Objects.nonNull(handoverCommitResult) && handoverCommitResult.getSuccess()) {
+                if (Objects.isNull(handoverCommitResult.getResponse())) {
+                    throw new ServiceException("速卖通提交交接单响应为空");
+                }
                 entity.setHandoverNo(handoverCommitResult.getResponse().getHandoverContentCode());
                 entity.setPlatformPackageNo(String.valueOf(handoverCommitResult.getResponse().getHandoverContentId()));
                 entity.setRemark("");

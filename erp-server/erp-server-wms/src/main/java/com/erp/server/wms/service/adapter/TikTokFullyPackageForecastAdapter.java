@@ -199,7 +199,7 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
             packageForecastEntityList.forEach(packageForecastMapper::updateById);
             return BatchResultDTO.fail(dto.getIds().get(0), packageForecastEntityList.get(0).getCode(), e.getMessage());
         }
-        return BatchResultDTO.success();
+        return BatchResultDTO.success(packageForecastEntityList.get(0).getId(), packageForecastEntityList.get(0).getCode(), "上传成功");
     }
 
     private String tikTokFullyPrint(PackageForecastEntity entity) {

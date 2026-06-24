@@ -43,16 +43,30 @@ public class SyncPackageForecastStatusJob {
         List<PackageForecastEntity> awaitingPickupList = packageForecastService.getAliExpressHandoverList(dateTime);
         if (CollectionUtils.isNotEmpty(awaitingPickupList)){
             awaitingPickupList.forEach(packageForecastEntity -> {
-                packageForecastService.queryAliExpressInfo(packageForecastEntity);
-                XxlJobHelper.log("syncPackageForecastStatusJob awaitingPickupList update : {}", packageForecastEntity.getHandoverNo());
+                try {
+                    packageForecastService.queryAliExpressInfo(packageForecastEntity);
+                    XxlJobHelper.log("syncPackageForecastStatusJob awaitingPickupList update : {}", packageForecastEntity.getHandoverNo());
+                } catch (Exception e) {
+                    log.error("syncPackageForecastStatusJob AliExpress sync failed, id: {}, handoverNo: {}",
+                            packageForecastEntity.getId(), packageForecastEntity.getHandoverNo(), e);
+                    XxlJobHelper.log("syncPackageForecastStatusJob AliExpress sync failed, id: {}, error: {}",
+                            packageForecastEntity.getId(), e.getMessage());
+                }
             });
         }
         for (PackageForecastPlatformAdapter adapter : packageForecastPlatformAdapterFactory.listAdapters()) {
             List<PackageForecastEntity> trackingList = adapter.listSyncTrackingStatus(dateTime);
             if (CollectionUtils.isNotEmpty(trackingList)) {
                 trackingList.forEach(packageForecastEntity -> {
-                    adapter.syncTrackingStatus(packageForecastEntity);
-                    XxlJobHelper.log("syncPackageForecastStatusJob platformTrackingList update : {}", packageForecastEntity.getTransportNo());
+                    try {
+                        adapter.syncTrackingStatus(packageForecastEntity);
+                        XxlJobHelper.log("syncPackageForecastStatusJob platformTrackingList update : {}", packageForecastEntity.getTransportNo());
+                    } catch (Exception e) {
+                        log.error("syncPackageForecastStatusJob platform sync failed, id: {}, transportNo: {}",
+                                packageForecastEntity.getId(), packageForecastEntity.getTransportNo(), e);
+                        XxlJobHelper.log("syncPackageForecastStatusJob platform sync failed, id: {}, error: {}",
+                                packageForecastEntity.getId(), e.getMessage());
+                    }
                 });
             }
         }

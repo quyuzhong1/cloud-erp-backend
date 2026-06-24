@@ -37,7 +37,8 @@ public class ShopeeApiUtils {
     private static final String MASK = "***";
     private static final Set<String> SENSITIVE_KEYS = new HashSet<>(Arrays.asList(
             "access_token", "refresh_token", "sign", "partner_key", "tmp_partner_key",
-            "secret", "secret_key", "token", "authorization"
+            "secret", "secret_key", "prepaid_account_partner_secret", "prepaid_account_partner_key",
+            "token", "authorization"
     ));
     private static final List<MaskRule> SENSITIVE_MASK_RULES = buildSensitiveMaskRules();
             
