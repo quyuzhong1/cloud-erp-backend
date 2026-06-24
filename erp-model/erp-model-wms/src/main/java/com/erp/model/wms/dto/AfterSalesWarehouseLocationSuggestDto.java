@@ -289,6 +289,10 @@ public class AfterSalesWarehouseLocationSuggestDto implements Serializable {
          * 更新时间
          */
         private LocalDateTime updateTime;
+        /**
+         * 乐观锁版本号（编辑时回传）
+         */
+        private Integer version;
 
     }
 
