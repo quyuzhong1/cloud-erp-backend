@@ -426,7 +426,7 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
             list = listErrorTaskByRecord(id);
         }else {
             log.warn("workflowTaskRecordRetryJob 未知 type={}", type);
-            return;
+            throw new ServiceException(ApiError.COMMON_NOT_FOUND, type);
         }
         if (CollectionUtil.isEmpty(list)) {
             return ;

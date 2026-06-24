@@ -327,4 +327,7 @@ public class RocketMqNewTag {
      */
     public static final String DMP_ASYNC_GET_LOGISTICS_ORDER_LABEL_TAG = "dmp_async_get_logistics_order_label_tag";
 
+    /** OMS 任务编排单步调度 MQ Tag，与 RocketMqTagEnum.OMS_WORKFLOW_TASK_RECORD_TAG 保持一致 */
+    public static final String OMS_WORKFLOW_TASK_RECORD_TAG = "oms_workflow_task_record_tag";
+
 }

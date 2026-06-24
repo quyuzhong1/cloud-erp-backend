@@ -359,8 +359,7 @@ public class RocketMqConsumerGroup {
      * 添加系统操作日志
      */
     public static final String OMS_WORKFLOW_TASK_RECORD = "${spring.cloud.nacos.discovery.namespace}-oms_workflow_task_record";
-    /** OMS 任务编排单步调度 MQ Tag，与 RocketMqTagEnum.OMS_WORKFLOW_TASK_RECORD_TAG 保持一致 */
-    public static final String OMS_WORKFLOW_TASK_RECORD_TAG = "oms_workflow_task_record_tag";
+
     //---------------------------------------------------wangdian---------------------------------------------------------------------------------------------
     /**
      * 旺店通推送货品资料
