@@ -15,6 +15,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.jackson.JacksonFeature;
 
+import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
@@ -719,7 +720,7 @@ public class ShopifyRestClient {
                 .queryParam(UPDATED_AT_MIN_QUERY_PARAMETER, minimumUpdatedAtDate.toString())
                 .queryParam(UPDATED_AT_MAX_QUERY_PARAMETER, maximumUpdatedAtDate.toString());
         if (null != maximumCreatedAtDate){
-            webTarget.queryParam(CREATED_AT_MAX_QUERY_PARAMETER, maximumCreatedAtDate.toString());
+            currentWebTarget = currentWebTarget.queryParam(CREATED_AT_MAX_QUERY_PARAMETER, maximumCreatedAtDate.toString());
         }
         final Response response = get(currentWebTarget);
 		return getOrders(response);
@@ -1182,8 +1183,30 @@ public class ShopifyRestClient {
      * @return ShopifyPage<ShopifyOrder>
      */
     private ShopifyPage<ShopifyOrder> getOrders(final Response response) {
-        final ShopifyOrdersRoot shopifyOrderRootResponse = response.readEntity(ShopifyOrdersRoot.class);
-        return mapPagedResponse(shopifyOrderRootResponse.getOrders(), response);
+        try {
+            final ShopifyOrdersRoot shopifyOrderRootResponse = response.readEntity(ShopifyOrdersRoot.class);
+            return mapPagedResponse(shopifyOrderRootResponse.getOrders(), response);
+        } catch (ProcessingException e) {
+            throw toShopifyOrdersParseException(response, e);
+        }
+    }
+
+    private ShopifyClientException toShopifyOrdersParseException(final Response response, final ProcessingException e) {
+        final String responseBody = ResponseEntityToStringMapper.map(response);
+        final String bodyPreview = abbreviateResponseBody(responseBody);
+        log.error("Shopify orders response parse failed, status={}, bodyPreview={}", response.getStatus(), bodyPreview, e);
+        final Throwable rootCause = e.getCause() != null ? e.getCause() : e;
+        return new ShopifyClientException(
+                "Shopify订单响应解析失败(HTTP " + response.getStatus() + "): " + rootCause.getMessage()
+                        + (bodyPreview != null ? "，响应片段: " + bodyPreview : ""),
+                e);
+    }
+
+    private static String abbreviateResponseBody(final String responseBody) {
+        if (StringUtils.isBlank(responseBody)) {
+            return null;
+        }
+        return responseBody.length() > 500 ? responseBody.substring(0, 500) + "..." : responseBody;
     }
 
 
