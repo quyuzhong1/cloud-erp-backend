@@ -33,6 +33,8 @@ import com.erp.model.oms.enums.SoB2cSourcePlatformEnum;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.tms.entity.LogisticsChannelEntity;
+import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
@@ -533,6 +535,13 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                 }
             }
 
+            String logisticsChannelErrorMsg = validateThirdWarehouseLogisticsChannelMapping(
+                    mainEntity.getId(), dto);
+            if (StringUtils.isNotBlank(logisticsChannelErrorMsg)) {
+                addRetryPlatformOutboundError(mainEntity.getId(), dto, logisticsChannelErrorMsg);
+                continue;
+            }
+
             //虚拟仓库查询
             SoB2cReceiverEntity soB2cReceiverEntity = soB2cReceiverMap.getOrDefault(mainEntity.getId(),null);
             VirtualWarehouseChannelDTO.PlatformDTO platformDTO = new VirtualWarehouseChannelDTO.PlatformDTO();
@@ -602,6 +611,53 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                 ""
         );
         soB2cFeign.addSoB2cError(addError);
+    }
+
+    /**
+     * 订单物流渠道为空时，校验三方仓 shipping_method 是否已映射 ERP 物流渠道。
+     *
+     * @return 校验失败时的异常文案；null 表示通过或无需校验
+     */
+    private String validateThirdWarehouseLogisticsChannelMapping(String mainId,
+                                                                 PlatformOutboundDTO dto) {
+        List<SoB2cLogisticsEntity> logisticsList = FeignQuery.create(SoB2cLogisticsEntity.class)
+                .eq(SoB2cLogisticsEntity::getMainId, mainId)
+                .list();
+        SoB2cLogisticsEntity logisticsEntity = CollUtil.isEmpty(logisticsList) ? null : logisticsList.get(0);
+        if (Objects.isNull(logisticsEntity) || StringUtils.isNotBlank(logisticsEntity.getLogisticsChannelId())) {
+            return null;
+        }
+        String shippingMethod = dto.getShippingMethod();
+        String thirdWarehousePlatform = dto.getPlatform();
+        String platformWarehouseCode = dto.getWarehouseCode();
+        if (StringUtils.isBlank(shippingMethod)
+                || StringUtils.isBlank(thirdWarehousePlatform)
+                || StringUtils.isBlank(platformWarehouseCode)) {
+            return null;
+        }
+        List<LogisticsSaleChannelEntity> saleChannelList = FeignQuery.list(FeignQuery.create(LogisticsSaleChannelEntity.class)
+                .eq(LogisticsSaleChannelEntity::getIsDeleted, false)
+                .eq(LogisticsSaleChannelEntity::getLogisticsPlatform, thirdWarehousePlatform)
+                .eq(LogisticsSaleChannelEntity::getCode, shippingMethod)
+                .eq(LogisticsSaleChannelEntity::getPlatformWarehouseCode, platformWarehouseCode));
+        if (CollUtil.isEmpty(saleChannelList)) {
+            return buildLogisticsChannelNotMappedErrorMsg(dto);
+        }
+        String channelCode = saleChannelList.get(0).getCode();
+        List<LogisticsChannelEntity> channelList = FeignQuery.list(FeignQuery.create(LogisticsChannelEntity.class)
+                .eq(LogisticsChannelEntity::getIsDeleted, false)
+                .eq(LogisticsChannelEntity::getCode, channelCode)
+                .eq(LogisticsChannelEntity::getSourceType, SourceTypeEnum.LOGISTICS_WAREHOUSE.getCode()));
+        if (CollUtil.isEmpty(channelList)) {
+            return buildLogisticsChannelNotMappedErrorMsg(dto);
+        }
+        return null;
+    }
+
+    private String buildLogisticsChannelNotMappedErrorMsg(PlatformOutboundDTO dto) {
+        String providerCode = StrUtil.blankToDefault(dto.getProvider(), dto.getPlatform());
+        String providerName = StrUtil.blankToDefault(OmsPlatformEnum.getName(providerCode), providerCode);
+        return StrUtil.format("自动出库失败，【{}】物流渠道【{}】未映射", providerName, dto.getShippingMethod());
     }
 
     private ThirdWarehouseSkuValidationContext loadThirdWarehouseSkuValidationContext(PlatformOutboundDTO dto,
