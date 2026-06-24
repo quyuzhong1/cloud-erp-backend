@@ -36,12 +36,6 @@ public interface BasicDictService extends IService<BasicDictEntity> {
      */
     List<BasicDictEntity>  listByTypeList(List<String> typeList);
 
-    /**
-     * key = value,value = name
-     * @param type
-     * @return
-     */
-    Map<String,String>  mapByType(String type);
 
     /**
      * 根据类型和值查询字典信息

@@ -464,6 +464,9 @@ public interface SoB2cFeign {
      */
     @PostMapping("/feign/soB2c/updateTrackNoByTransportNo")
     Boolean updateTrackNoByTransportNo(@RequestBody List<LogisticsBillDTO.TrackDTO> trackDTOS);
+
+    @PostMapping("/feign/soB2c/updateTrackNoByTransportNoWithResult")
+    List<BatchResultDTO> updateTrackNoByTransportNoWithResult(@RequestBody List<LogisticsBillDTO.TrackDTO> trackDTOS);
     /**
      * 根据平台单号和平台查询B2C销售订单
      *
@@ -736,6 +739,13 @@ public interface SoB2cFeign {
 
     @PostMapping("feign/soB2cError/listSoB2cErrorByMainIds")
     List<SoB2cErrorEntity> listSoB2cErrorByMainIds(@RequestBody List<String> errorSoIds);
+    /**
+     * 获取异常信息
+     * @param
+     * @return
+     */
+    @PostMapping("feign/soB2cError/getByMainIdsAndType")
+    public List<SoB2cErrorEntity> getByMainIdsAndType(@RequestBody SoB2cErrorDTO.MainIdsDTO mainIdsDTO);
 
     @PostMapping("feign/soB2c/handleSoOutStock")
     Boolean handleSoOutStock(@RequestBody String soId);

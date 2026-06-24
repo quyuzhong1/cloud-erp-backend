@@ -982,6 +982,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         thirdWarehouseDeliveryEntity.setCode(dto.getReferenceNo());
         thirdWarehouseDeliveryEntity.setSoCode(mainEntity.getCode());
         thirdWarehouseDeliveryEntity.setSoId(mainEntity.getId());
+        thirdWarehouseDeliveryEntity.setShopId(mainEntity.getShopId());
         thirdWarehouseDeliveryEntity.setDictPlatform(mainEntity.getDictPlatform());
         thirdWarehouseDeliveryEntity.setPlatformCode(platformCode);
         thirdWarehouseDeliveryEntity.setThirdWarehousePlatform(dto.getPlatform());

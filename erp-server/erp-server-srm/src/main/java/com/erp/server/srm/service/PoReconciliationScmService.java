@@ -193,11 +193,22 @@ public interface PoReconciliationScmService extends SuperService<PoReconciliatio
     BatchResultDTO handleHisData(String id);
 
     /**
-     * 上传发票
+     * 上传发票，全量保存语义：
+     * - attachmentList 为空：删除该对账单全部发票附件
+     * - 1~10：删除已有发票后批量保存本次列表
+     * - 超过 10：抛 PO_RECONCILIATION_INVOICE_LIMIT_EXCEEDED
      *
-     * @param dto PoReconciliationDetailDTO.UploadFileDTO
+     * @param dto PoReconciliationDTO.UploadFileDTO
      */
     void uploadInvoice(PoReconciliationDTO.UploadFileDTO dto);
+
+    /**
+     * 查询指定对账单的发票附件列表，按上传时间正序返回
+     *
+     * @param id 对账单 id
+     * @return List<InvoiceFileVO>
+     */
+    List<PoReconciliationDTO.InvoiceFileVO> listInvoice(String id);
 
     /**
      * 下载发票

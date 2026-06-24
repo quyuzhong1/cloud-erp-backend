@@ -11,6 +11,8 @@ import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Slf4j
 @Component
 public class TongYouUtils {
@@ -44,6 +46,7 @@ public class TongYouUtils {
             throw e;
         } catch (Exception e) {
             log.error("JSON 解析失败,原始值：{}，异常: ", jsonStr,e);
+            // TongYouBaseResp.error(String, Object...) 内部使用 Hutool CharSequenceUtil.format，支持 {} 占位符。
             return TongYouBaseResp.error("JSON 解析失败,原始值：{}，异常: {}", jsonStr,e);
         }
     }
@@ -66,8 +69,32 @@ public class TongYouUtils {
             throw e;
         } catch (Exception e) {
             log.error("JSON 解析失败,原始值：{}，异常: ", jsonStr,e);
+            // TongYouBaseResp.error(String, Object...) 内部使用 Hutool CharSequenceUtil.format，支持 {} 占位符。
             return TongYouBaseResp.error("JSON 解析失败,原始值：{}，异常:{} ", jsonStr,e);
         }
     }
+
+
+    /**
+     * 解析通邮列表响应：兼容标准包装格式与直接返回 JSON 数组两种结构
+     */
+    public static <T> TongYouBaseResp<List<T>> parseToTongYouListResp(String jsonStr, Class<T> itemClass,
+                                                                      TypeReference<TongYouBaseResp<List<T>>> typeRef) {
+        try {
+            String trimmed = jsonStr == null ? "" : jsonStr.trim();
+            if (trimmed.startsWith("[")) {
+                List<T> data = JSON.parseArray(trimmed, itemClass);
+                TongYouBaseResp<List<T>> resp = new TongYouBaseResp<>();
+                resp.setError("T");
+                resp.setData(data);
+                return resp;
+            }
+            return JSON.parseObject(jsonStr, typeRef);
+        } catch (Exception e) {
+            log.error("JSON 解析失败,原始值：{}，异常: ", jsonStr, e);
+            return TongYouBaseResp.error("JSON 解析失败,原始值：{}，异常:{} ", jsonStr, e);
+        }
+    }
+
 
 }

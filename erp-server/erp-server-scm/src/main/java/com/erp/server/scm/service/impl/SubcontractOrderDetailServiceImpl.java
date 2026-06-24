@@ -12,6 +12,7 @@ import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.MessageUtils;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchaseApplicationRefPoDTO;
@@ -689,6 +690,14 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
                 continue;
             }
 
+            if (Objects.equals(SubcontractOrderTypeEnum.REPAIR_SUBCONTRACT.getCode(), subcontractOrderEntity.getType())
+                    && StringUtils.isBlank(detailEntity.getParentId())) {
+                if (Objects.isNull(detailEntity.getRepairQty()) || MathUtil.compareTo(detailEntity.getRepairQty(), MathUtil.ZERO) <= MathUtil.ZERO) {
+                    errorMessages.add(MessageUtils.getMessage(ApiError.PO_SUBCONTRACT_REPAIR_QTY_MUST_GT_ZERO, skuVO.getSkuNo()));
+                    continue;
+                }
+            }
+
             //采购退货数量校验
             if (CollectionUtils.isNotEmpty(sourceDetailList)) {
                 // 处理sourceDetailId可能包含多个值的情况
@@ -916,8 +925,8 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
                             && obj.getSupplierId().equals(entity.getSupplierId())
                             && StrUtil.equals(obj.getPurchaseOrgId(),purchaseOrgId))
                     .findFirst().orElse(null);
-            if (Objects.isNull(viewDTO)){
-                return;
+            if (Objects.isNull(viewDTO)) {
+                throw new ServiceException(ApiError.PURCHASE_PRICE_SKU_NOT_FOUND, entity.getSkuNo(), entity.getQty());
             }
             entity.setCurrency(viewDTO.getCurrency());
             entity.setCurrencySymbol(viewDTO.getCurrencySymbol());
@@ -959,17 +968,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
 
         if (StringUtils.isNotBlank(entity.getSourceDetailId())) {
             if (isChild) {
-                PurchasePriceDTO.PriceDTO viewDTO = priceList.stream().filter(obj ->
-                        obj.getSkuId().equals(entity.getSkuId())
-                                && obj.getSupplierId().equals(entity.getSupplierId())
-                                && StrUtil.equals(obj.getPurchaseOrgId(),purchaseOrgId))
-                        .findFirst().orElse(null);
-
-                if (Objects.isNull(viewDTO)){
-                    return;
-                }
-
-                // 处理sourceDetailId可能包含多个值的情况
+                // 优先取采购退货单价格：拆分 sourceDetailId（可能逗号分隔多个）
                 List<String> detailIds = new ArrayList<>();
                 String sourceDetailId = entity.getSourceDetailId();
                 if (sourceDetailId.contains(",")) {
@@ -982,34 +981,42 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
                 }
 
                 List<PoReturnDetailEntity> poReturnDetails = wmsTaskFeign.listPoReturnDetailByIdList(detailIds);
+                PoReturnDetailEntity poReturnDetailEntity = null;
                 if (CollectionUtils.isNotEmpty(poReturnDetails)) {
-                    PoReturnDetailEntity poReturnDetailEntity = poReturnDetails.stream()
+                    poReturnDetailEntity = poReturnDetails.stream()
                             .filter(obj -> Objects.equals(obj.getSkuId(), entity.getSkuId()))
                             .findFirst()
                             .orElse(poReturnDetails.get(0));
-
-                    if (poReturnDetailEntity.getReturnPrice().compareTo(BigDecimal.ZERO) > 0) {
-                        entity.setCurrency(poReturnDetailEntity.getCurrency());
-                        entity.setCurrencySymbol(poReturnDetailEntity.getCurrencySymbol());
-                        entity.setPrice(poReturnDetailEntity.getReturnPrice());
-                        entity.setAmount(MathUtil.multiplyWithTwo(poReturnDetailEntity.getReturnPrice(), entity.getQty()));
-                        if (Objects.nonNull(supplierEntity)) {
-                            entity.setTaxRate(supplierEntity.getTaxRate().compareTo(BigDecimal.ZERO) > 0 ? MathUtil.multiplyWithTwo(supplierEntity.getTaxRate(), MathUtil.BigDecimal_100) : BigDecimal.ZERO);
-                        }
-                    } else {
-                        entity.setCurrency(viewDTO.getCurrency());
-                        entity.setCurrencySymbol(viewDTO.getCurrencySymbol());
-                        entity.setPrice(viewDTO.getTaxPrice());
-                        entity.setTaxRate(viewDTO.getTaxRate());
-                        entity.setAmount(MathUtil.multiplyWithTwo(viewDTO.getTaxPrice(), entity.getQty()));
-                    }
-                } else {
-                    entity.setCurrency(viewDTO.getCurrency());
-                    entity.setCurrencySymbol(viewDTO.getCurrencySymbol());
-                    entity.setPrice(viewDTO.getTaxPrice());
-                    entity.setTaxRate(viewDTO.getTaxRate());
-                    entity.setAmount(MathUtil.multiplyWithTwo(viewDTO.getTaxPrice(), entity.getQty()));
                 }
+
+                // 返修子件价格来源优先级：退货单价（>0） > 采购价目表 > 抛异常
+                if (Objects.nonNull(poReturnDetailEntity)
+                        && Objects.nonNull(poReturnDetailEntity.getReturnPrice())
+                        && poReturnDetailEntity.getReturnPrice().compareTo(BigDecimal.ZERO) > 0) {
+                    entity.setCurrency(poReturnDetailEntity.getCurrency());
+                    entity.setCurrencySymbol(poReturnDetailEntity.getCurrencySymbol());
+                    entity.setPrice(poReturnDetailEntity.getReturnPrice());
+                    entity.setAmount(MathUtil.multiplyWithTwo(poReturnDetailEntity.getReturnPrice(), entity.getQty()));
+                    if (Objects.nonNull(supplierEntity)) {
+                        entity.setTaxRate(supplierEntity.getTaxRate().compareTo(BigDecimal.ZERO) > 0 ? MathUtil.multiplyWithTwo(supplierEntity.getTaxRate(), MathUtil.BigDecimal_100) : BigDecimal.ZERO);
+                    }
+                    return;
+                }
+
+                // 退货价为空 → 取采购价目表
+                PurchasePriceDTO.PriceDTO viewDTO = priceList.stream().filter(obj ->
+                        obj.getSkuId().equals(entity.getSkuId())
+                                && obj.getSupplierId().equals(entity.getSupplierId())
+                                && StrUtil.equals(obj.getPurchaseOrgId(), purchaseOrgId))
+                        .findFirst().orElse(null);
+                if (Objects.isNull(viewDTO)) {
+                    throw new ServiceException(ApiError.PURCHASE_PRICE_SKU_NOT_FOUND, entity.getSkuNo(), entity.getQty());
+                }
+                entity.setCurrency(viewDTO.getCurrency());
+                entity.setCurrencySymbol(viewDTO.getCurrencySymbol());
+                entity.setPrice(viewDTO.getTaxPrice());
+                entity.setTaxRate(viewDTO.getTaxRate());
+                entity.setAmount(MathUtil.multiplyWithTwo(viewDTO.getTaxPrice(), entity.getQty()));
             } else {
                 if (Objects.nonNull(supplierEntity)) {
                     entity.setTaxRate(supplierEntity.getTaxRate().compareTo(BigDecimal.ZERO) > 0 ? MathUtil.multiplyWithTwo(supplierEntity.getTaxRate(), MathUtil.BigDecimal_100) : BigDecimal.ZERO);
@@ -1024,8 +1031,8 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
                                 && obj.getSupplierId().equals(entity.getSupplierId())
                                 && StrUtil.equals(obj.getPurchaseOrgId(),purchaseOrgId))
                         .findFirst().orElse(null);
-                if (Objects.isNull(viewDTO)){
-                    return;
+                if (Objects.isNull(viewDTO)) {
+                    throw new ServiceException(ApiError.PURCHASE_PRICE_SKU_NOT_FOUND, entity.getSkuNo(), entity.getQty());
                 }
                 entity.setCurrency(viewDTO.getCurrency());
                 entity.setCurrencySymbol(viewDTO.getCurrencySymbol());

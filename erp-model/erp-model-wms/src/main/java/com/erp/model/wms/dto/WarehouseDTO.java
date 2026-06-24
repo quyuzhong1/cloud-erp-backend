@@ -178,8 +178,9 @@ public class WarehouseDTO implements Serializable {
         private LocalDateTime openTime;
 
         /**
-         * 国家
+         * 所属国家
          */
+        @NotBlank(message = "所属国家不能为空")
         private String country;
     }
 

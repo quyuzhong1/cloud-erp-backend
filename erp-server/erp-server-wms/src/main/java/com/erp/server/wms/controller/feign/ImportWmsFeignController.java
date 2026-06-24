@@ -2,6 +2,7 @@ package com.erp.server.wms.controller.feign;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.dto.base.BaseDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.FileTaskStatusEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -14,6 +15,7 @@ import com.erp.server.wms.service.SampleBackInfoService;
 import com.erp.server.wms.service.SampleInitialLedgerService;
 import com.erp.server.wms.service.SampleTransferInfoService;
 import com.erp.server.wms.service.SampleAdjustmentInfoService;
+import com.erp.server.wms.service.CfgQcUserService;
 import com.erp.server.wms.service.SoReturnInstockService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -48,6 +50,9 @@ public class ImportWmsFeignController {
 
     @Resource
     private SampleAdjustmentInfoService sampleAdjustmentInfoService;
+
+    @Resource
+    private CfgQcUserService cfgQcUserService;
 
     @Resource
     private SoReturnInstockService soReturnInstockService;
@@ -146,6 +151,21 @@ public class ImportWmsFeignController {
             importResultDTO.setTaskId(dto.getTaskId());
             importResultDTO.setStatus(FileTaskStatusEnum.FAIL.getCode());
             importResultDTO.setRemark(e.getMessage().length() > 490 ? e.getMessage().substring(0, 490) : e.getMessage());
+            downloadTaskFeign.updateTask(importResultDTO);
+        }
+    }
+
+    @PostMapping("/importCfgQcUser")
+    public void importCfgQcUser(@RequestBody BaseDTO.ImportDTO dto) {
+        try {
+            cfgQcUserService.importCfgQcUser(dto);
+        } catch (Exception e) {
+            log.error("导入质检员配置失败", e);
+            BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+            importResultDTO.setTaskId(dto.getTaskId());
+            importResultDTO.setStatus(FileTaskStatusEnum.FAIL.getCode());
+            String message = BatchResultDTO.resolveFailMsg(e);
+            importResultDTO.setRemark(message.length() > 490 ? message.substring(0, 490) : message);
             downloadTaskFeign.updateTask(importResultDTO);
         }
     }

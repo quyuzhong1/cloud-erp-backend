@@ -404,10 +404,6 @@ public class SoB2cDTO implements Serializable {
          */
         private String partitionId;
         /**
-         * 军区编码
-         */
-        private String partitionCode;
-        /**
          * 军区名称
          */
         private String partitionName;
@@ -583,6 +579,10 @@ public class SoB2cDTO implements Serializable {
          * 汇率
          */
         private BigDecimal exchangeRate;
+        /**
+         * 运费收入
+         */
+        private BigDecimal shippingFee;
 
         /**
          * 订单状态（审核状态、订单状态，取最后一级状态）
@@ -1202,6 +1202,11 @@ public class SoB2cDTO implements Serializable {
          * 销售订单
          */
         private SoB2cEntity soB2cEntity;
+
+        private BigDecimal shippingFee;
+        private String shopId;
+        private BigDecimal exchangeRate;
+        private String currency;
 
         /**
          * 销售订单物流信息

@@ -388,6 +388,19 @@ public class VirtualWarehouseDTO implements Serializable {
         private String partitionId;
 
     }
+
+    /**
+     * 同一实体仓下 B2B 海外线下平台冲突校验结果
+     */
+    @Data
+    @NoArgsConstructor
+    public static class B2bForeignConflictDTO {
+        private String virtualWarehouseId;
+        private String virtualWarehouseName;
+        private String warehouseId;
+        private String warehouseName;
+    }
+
     @Data
     @NoArgsConstructor
     public static class SelectDTO {
