@@ -1521,7 +1521,10 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 
     @Override
     public List<WarehouseDTO.ListDTO> getDefaultAddData() {
-        WarehouseEntity warehouseEntity = this.lambdaQuery().eq(WarehouseEntity::getKingdeeWarehouseCode, WmsConstant.DG_AFTER_SALES_WAREHOUSE_CODE).one();
+        WarehouseEntity warehouseEntity = this.lambdaQuery()
+                .eq(WarehouseEntity::getKingdeeWarehouseCode, WmsConstant.DG_AFTER_SALES_WAREHOUSE_CODE)
+                .eq(WarehouseEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus())
+                .eq(WarehouseEntity::getDisabled, Boolean.FALSE).one();
         if(warehouseEntity != null) {
             return this.listByNames(Collections.singletonList(warehouseEntity.getName()));
         }
