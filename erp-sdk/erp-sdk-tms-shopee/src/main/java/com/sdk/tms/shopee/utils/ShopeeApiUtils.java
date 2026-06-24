@@ -81,6 +81,7 @@ public class ShopeeApiUtils {
             sign = String.format("%064x", new BigInteger(1, mac.doFinal(baseString)));
         } catch (Exception e) {
             log.error("虾皮签名生成异常, path: {}, 错误: {}", path, e.getMessage(), e);
+            throw new ServiceException("虾皮签名生成异常:" + e.getMessage());
         }
         return sign;
     }
@@ -105,6 +106,7 @@ public class ShopeeApiUtils {
             resultMap = JSON.parseObject(bodyStr, BaseResponse.class);
         } catch (Exception e) {
             log.error("虾皮接口请求异常, method: GET, url: {}, 错误: {}", safeUrl, e.getMessage(), e);
+            throw new ServiceException("虾皮接口请求异常:" + e.getMessage());
         }
 
         return resultMap;
@@ -156,6 +158,7 @@ public class ShopeeApiUtils {
 
         } catch (Exception e) {
             log.error("虾皮接口请求异常, method: POST, url: {}, 错误: {}", safeUrl, e.getMessage(), e);
+            throw new ServiceException("虾皮接口请求异常:" + e.getMessage());
         }
         return resultMap;
     }

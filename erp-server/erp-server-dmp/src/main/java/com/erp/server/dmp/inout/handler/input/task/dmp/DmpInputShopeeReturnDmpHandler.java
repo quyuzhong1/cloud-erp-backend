@@ -26,6 +26,9 @@ import java.util.TreeMap;
 public class DmpInputShopeeReturnDmpHandler extends DmpInputDbConvertDmpHandler {
 
     private static final int RETURN_SOLUTION_RETURN_AND_REFUND = 0;
+    private static final String INTERNAL_STATUS_NORMAL = "1";
+    private static final String INTERNAL_STATUS_CANCELLED = "5";
+    private static final String PLATFORM_STATUS_CANCELLED = "CANCELLED";
 
     private boolean parentTaskShopIdLoaded;
     private String parentTaskShopId;
@@ -103,12 +106,12 @@ public class DmpInputShopeeReturnDmpHandler extends DmpInputDbConvertDmpHandler 
 
     private String mapInternalStatus(String platformStatus) {
         if (StringUtils.isBlank(platformStatus)) {
-            return "1";
+            return INTERNAL_STATUS_NORMAL;
         }
-        if ("CANCELLED".equalsIgnoreCase(platformStatus)) {
-            return "5";
+        if (PLATFORM_STATUS_CANCELLED.equalsIgnoreCase(platformStatus)) {
+            return INTERNAL_STATUS_CANCELLED;
         }
-        return "1";
+        return INTERNAL_STATUS_NORMAL;
     }
 
     private LocalDateTime toLocalDateTime(Object epochSecondObj) {

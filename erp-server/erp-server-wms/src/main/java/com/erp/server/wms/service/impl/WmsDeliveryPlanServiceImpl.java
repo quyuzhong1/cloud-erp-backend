@@ -886,6 +886,9 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
 
     @Override
     public ListingInfoDTO.ImportDTO importFile(MultipartFile excelFile, List<String> thirdSkuNoList, String warehouseId, String shopId, String type, HttpServletResponse response) {
+        if (DeliveryPlanTypeEnum.FBS.getCode().equals(type) && CharSequenceUtil.isBlank(shopId)) {
+            throw new ServiceException("FBS发货计划导入店铺不能为空");
+        }
         if(CharSequenceUtil.isBlank(warehouseId)&& CharSequenceUtil.isBlank(shopId)){
             throw new ServiceException("仓库id不能为空");
         }

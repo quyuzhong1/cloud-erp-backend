@@ -54,9 +54,14 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
 
     @Override
     public List<BatchResultDTO> upload(PackageForecastDTO.UploadDTO dto) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(1);
-        resultDTOS.add(doUpload(dto));
-        return resultDTOS;
+        try {
+            return doUpload(dto);
+        } catch (Exception e) {
+            log.error("TikTok全托管组包预报上传失败>>>>", e);
+            return dto.getIds().stream()
+                    .map(id -> BatchResultDTO.fail(id, id, e.getMessage()))
+                    .collect(Collectors.toList());
+        }
     }
 
     @Override
@@ -68,7 +73,7 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
             throw new ServiceException("打印失败");
         }
         entity.setPrintStatus(PackagePrintStatusEnum.ALREADY.getCode());
-        packageForecastMapper.updateById(entity);
+        updateForecastOrThrow(entity);
         return base64;
     }
 
@@ -86,13 +91,17 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
                 validateUploaded(entity);
                 tikTokFullyCancel(entity);
                 resetAfterCancel(entity);
-                packageForecastMapper.updateById(entity);
+                updateForecastOrThrow(entity);
                 resultDTOS.add(BatchResultDTO.success(entity.getId(), entity.getCode(), "取消上传"));
             } catch (Exception e) {
                 log.error("取消上传失败>>>>", e);
                 if (Objects.nonNull(entity)) {
                     entity.setRemark("取消失败原因:" + e.getMessage());
-                    packageForecastMapper.updateById(entity);
+                    try {
+                        updateForecastOrThrow(entity);
+                    } catch (Exception updateException) {
+                        log.error("TikTok全托管组包预报取消失败后更新失败原因失败, id: {}, code: {}", entity.getId(), entity.getCode(), updateException);
+                    }
                     resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), "取消上传失败:" + e.getMessage()));
                 } else {
                     resultDTOS.add(BatchResultDTO.fail(id, id, e.getMessage()));
@@ -138,11 +147,11 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
             for (PackageForecastEntity packageForecastEntity : sameCodeList) {
                 resetAfterCancel(packageForecastEntity);
             }
-            sameCodeList.forEach(packageForecastMapper::updateById);
+            updateForecastBatchOrThrow(sameCodeList);
         }
     }
 
-    private BatchResultDTO doUpload(PackageForecastDTO.UploadDTO dto) {
+    private List<BatchResultDTO> doUpload(PackageForecastDTO.UploadDTO dto) {
         List<PackageForecastDetailEntity> detailEntityList = packageForecastDetailService.listDbByMainIds(dto.getIds());
         if (CollectionUtils.isEmpty(detailEntityList)) {
             throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "组包预报单明细");
@@ -213,16 +222,24 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
                 v.setCollectAddress(addressName);
                 v.setRemark("");
             });
-            packageForecastEntityList.forEach(packageForecastMapper::updateById);
+            updateForecastBatchOrThrow(packageForecastEntityList);
         } catch (Exception e) {
             packageForecastEntityList.forEach(v -> {
                 v.setUploadStatus(PackageUploadStatusEnum.UPLOAD_FAILURE.getCode());
                 v.setRemark(e.getMessage());
             });
-            packageForecastEntityList.forEach(packageForecastMapper::updateById);
-            return BatchResultDTO.fail(dto.getIds().get(0), packageForecastEntityList.get(0).getCode(), e.getMessage());
+            try {
+                updateForecastBatchOrThrow(packageForecastEntityList);
+            } catch (Exception updateException) {
+                log.error("TikTok全托管组包预报上传失败后更新失败状态失败, ids: {}", dto.getIds(), updateException);
+            }
+            return packageForecastEntityList.stream()
+                    .map(entity -> BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()))
+                    .collect(Collectors.toList());
         }
-        return BatchResultDTO.success(packageForecastEntityList.get(0).getId(), packageForecastEntityList.get(0).getCode(), "上传成功");
+        return packageForecastEntityList.stream()
+                .map(entity -> BatchResultDTO.success(entity.getId(), entity.getCode(), "上传成功"))
+                .collect(Collectors.toList());
     }
 
     private void validateReserveInfo(PackageForecastDTO.UploadDTO dto) {
@@ -281,7 +298,7 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
         String logisticsCode = String.join(",", subLogisticCodeList);
         entity.setPlatformPackageNo(logisticsCode);
         entity.setPlatformNo(buildPlatformNo(entity.getHandoverNo(), entity.getPlatformPackageNo()));
-        packageForecastMapper.updateById(entity);
+        updateForecastOrThrow(entity);
         return logisticsCode;
     }
 

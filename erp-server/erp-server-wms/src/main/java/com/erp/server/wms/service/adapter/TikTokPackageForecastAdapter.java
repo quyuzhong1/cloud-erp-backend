@@ -80,12 +80,16 @@ public class TikTokPackageForecastAdapter extends AbstractPackageForecastPlatfor
             entity.setPlatformPackageNo(newPackageId);
             entity.setPlatformNo(buildPlatformNo(entity.getHandoverNo(), entity.getPlatformPackageNo()));
             entity.setUploadStatus(PackageUploadStatusEnum.UPLOAD_SUCCESS.getCode());
-            packageForecastMapper.updateById(entity);
+            updateForecastOrThrow(entity);
             return BatchResultDTO.success(entity.getId(), entity.getCode(), "上传成功");
         } catch (Exception e) {
             entity.setUploadStatus(PackageUploadStatusEnum.UPLOAD_FAILURE.getCode());
             entity.setRemark("上传失败:" + e.getMessage());
-            packageForecastMapper.updateById(entity);
+            try {
+                updateForecastOrThrow(entity);
+            } catch (Exception updateException) {
+                log.error("TikTok组包预报上传失败后更新失败状态失败, id: {}, code: {}", entity.getId(), entity.getCode(), updateException);
+            }
             log.error("组包预报上传失败>>>>>", e);
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), "上传失败" + e.getMessage());
         }
@@ -100,7 +104,7 @@ public class TikTokPackageForecastAdapter extends AbstractPackageForecastPlatfor
             throw new ServiceException("打印失败");
         }
         entity.setPrintStatus(PackagePrintStatusEnum.ALREADY.getCode());
-        packageForecastMapper.updateById(entity);
+        updateForecastOrThrow(entity);
         return base64;
     }
 
@@ -118,13 +122,17 @@ public class TikTokPackageForecastAdapter extends AbstractPackageForecastPlatfor
                 validateUploaded(entity);
                 tikTokCancel(entity);
                 resetAfterCancel(entity);
-                packageForecastMapper.updateById(entity);
+                updateForecastOrThrow(entity);
                 resultDTOS.add(BatchResultDTO.success(entity.getId(), entity.getCode(), "取消上传"));
             } catch (Exception e) {
                 log.error("取消上传失败>>>>", e);
                 if (Objects.nonNull(entity)) {
                     entity.setRemark("取消失败原因:" + e.getMessage());
-                    packageForecastMapper.updateById(entity);
+                    try {
+                        updateForecastOrThrow(entity);
+                    } catch (Exception updateException) {
+                        log.error("TikTok组包预报取消失败后更新失败原因失败, id: {}, code: {}", entity.getId(), entity.getCode(), updateException);
+                    }
                     resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), "取消上传失败:" + e.getMessage()));
                 } else {
                     resultDTOS.add(BatchResultDTO.fail(id, id, e.getMessage()));

@@ -11,6 +11,8 @@ import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.wms.mapper.PackageForecastMapper;
 import com.erp.server.wms.service.PackageForecastDetailService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.annotation.Resource;
 import java.util.Arrays;
@@ -31,6 +33,9 @@ public abstract class AbstractPackageForecastPlatformAdapter implements PackageF
 
     @Resource
     protected SoB2cFeign soB2cFeign;
+
+    @Resource
+    protected PlatformTransactionManager transactionManager;
 
     @Override
     public boolean isForecast(List<String> ids) {
@@ -96,6 +101,24 @@ public abstract class AbstractPackageForecastPlatformAdapter implements PackageF
         entity.setRemark("");
         entity.setPlatformPackageNo("");
         entity.setPlatformNo("");
+    }
+
+    protected void updateForecastOrThrow(PackageForecastEntity entity) {
+        if (packageForecastMapper.updateById(entity) <= 0) {
+            throw new ServiceException("组包预报单更新失败");
+        }
+    }
+
+    protected void updateForecastBatchOrThrow(List<PackageForecastEntity> entityList) {
+        if (CollectionUtils.isEmpty(entityList)) {
+            return;
+        }
+        new TransactionTemplate(transactionManager).execute(status -> {
+            for (PackageForecastEntity entity : entityList) {
+                updateForecastOrThrow(entity);
+            }
+            return null;
+        });
     }
 
     protected String platformName(String platform) {

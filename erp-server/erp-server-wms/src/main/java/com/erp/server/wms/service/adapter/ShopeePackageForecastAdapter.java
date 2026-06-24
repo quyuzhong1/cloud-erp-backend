@@ -227,7 +227,7 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
             throw new ServiceException("打印失败");
         }
         entity.setPrintStatus(PackagePrintStatusEnum.ALREADY.getCode());
-        packageForecastMapper.updateById(entity);
+        updateForecastOrThrow(entity);
         return withPdfPrefix(base64);
     }
 
@@ -257,8 +257,12 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
             log.error("虾皮组包预报取消上传失败, ids: {}", ids, e);
             context.getEntityList().forEach(entity -> {
                 entity.setRemark("取消失败原因:" + e.getMessage());
-                packageForecastMapper.updateById(entity);
             });
+            try {
+                updateEntities(context.getEntityList());
+            } catch (Exception updateException) {
+                log.error("虾皮组包预报取消失败后更新失败原因失败, ids: {}", ids, updateException);
+            }
             return context.getEntityList().stream()
                     .map(entity -> BatchResultDTO.fail(entity.getId(), entity.getCode(), "取消上传失败:" + e.getMessage()))
                     .collect(Collectors.toList());
@@ -303,7 +307,7 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
                 String status = mapShopeeHandoverStatus(number.getStatus());
                 if (StringUtils.isNotBlank(status)) {
                     entity.setHandoverStatus(status);
-                    packageForecastMapper.updateById(entity);
+                    updateForecastOrThrow(entity);
                 }
                 return;
             }
@@ -433,7 +437,7 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
                     entity.setRemark("上传失败:" + StringUtils.defaultIfBlank(String.join(";", failureReasons), "Shopee返回失败"));
                     resultList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), entity.getRemark()));
                 }
-                packageForecastMapper.updateById(entity);
+                updateForecastOrThrow(entity);
             }
             return resultList;
         });
@@ -449,7 +453,7 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
         String status = mapShopeeHandoverStatus(bindingInfo.getStatus());
         if (StringUtils.isNotBlank(status) && !status.equals(entity.getHandoverStatus())) {
             entity.setHandoverStatus(status);
-            packageForecastMapper.updateById(entity);
+            updateForecastOrThrow(entity);
         }
         CourierDeliveryWaybillRequest request = CourierDeliveryWaybillRequest.builder()
                 .bindingIdList(Collections.singletonList(entity.getPlatformPackageNo()))
@@ -499,7 +503,7 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
         String status = mapShopeeHandoverStatus(bindingInfoOptional.get().getStatus());
         if (StringUtils.isNotBlank(status)) {
             entity.setHandoverStatus(status);
-            packageForecastMapper.updateById(entity);
+            updateForecastOrThrow(entity);
         }
     }
 
@@ -751,14 +755,27 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
         entity.setPrintStatus(PackagePrintStatusEnum.NOT.getCode());
     }
 
-    private void updateEntities(List<PackageForecastEntity> entities) {
+    private void updateForecastOrThrow(PackageForecastEntity entity) {
+        if (packageForecastMapper.updateById(entity) <= 0) {
+            throw new ServiceException("组包预报单更新失败");
+        }
+    }
+
+    private void updateForecastBatchOrThrow(List<PackageForecastEntity> entities) {
+        if (CollectionUtils.isEmpty(entities)) {
+            return;
+        }
         TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
         transactionTemplate.execute(status -> {
             for (PackageForecastEntity entity : entities) {
-                packageForecastMapper.updateById(entity);
+                updateForecastOrThrow(entity);
             }
             return null;
         });
+    }
+
+    private void updateEntities(List<PackageForecastEntity> entities) {
+        updateForecastBatchOrThrow(entities);
     }
 
     private String mapShopeeHandoverStatus(String status) {

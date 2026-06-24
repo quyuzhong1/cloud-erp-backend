@@ -577,7 +577,9 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "取消物流单");
             soB2cLogisticsEntity.setCode("");
             soB2cLogisticsEntity.setTrackNo("");
-            this.updateById(soB2cLogisticsEntity);
+            if (!this.updateById(soB2cLogisticsEntity)) {
+                throw new ServiceException("物流单本地清理失败，请刷新后重试");
+            }
             soB2cLabelService.deleteByMainIds(Collections.singletonList(entity.getId()));
             soB2cErrorService.removeErrorOrder(entity.getId(), SoB2cErrorTypeEnum.GET_LOGISTICS_LABEL.getCode());
             return BatchResultDTO.success(entity.getId(), entity.getCode(), "取消成功");
