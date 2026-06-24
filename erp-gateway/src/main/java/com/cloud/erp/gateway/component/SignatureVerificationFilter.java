@@ -7,6 +7,7 @@ import com.cloud.erp.gateway.web.server.TokenService;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.SignTypeEnum;
+import com.erp.model.sys.constants.SysApiTokenConstants;
 import com.erp.model.sys.enums.LogicTypeEnum;
 import com.erp.rpc.sys.feign.SysRefereConfigFeign;
 import org.redisson.api.RedissonClient;
@@ -96,6 +97,11 @@ public class SignatureVerificationFilter implements GlobalFilter {
 
             // 只处理以/open/api开头的请求
             if (!uri.startsWith(OPEN_API_URL)) {
+                return chain.filter(exchange);
+            }
+
+            if (Boolean.TRUE.equals(exchange.getAttribute(SysApiTokenConstants.INTERNAL_AUTH_ATTRIBUTE))) {
+                log.debug("接口 {} 已通过API Token认证，跳过开放API签名验证", uri);
                 return chain.filter(exchange);
             }
             
