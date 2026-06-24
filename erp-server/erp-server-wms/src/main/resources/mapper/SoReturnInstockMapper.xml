@@ -45,6 +45,9 @@
         sri.currency,
         sri.currency_symbol,
         srid.exchange_rate ,
+        srid.price ,
+        srid.tax_rate as taxRate,
+        srid.tax_price as taxPrice,
         srid.return_amount ,
         srid.tax_return_amount ,
         srid.return_amount_local_currency ,
@@ -64,24 +67,16 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        srid.id desc
+        sri.create_time DESC, sri.id DESC
     </select>
 
 
-    <select id="listCount" resultType="java.lang.Integer">
+    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
         select
-        count(*)
+        sri.approve_status as approveStatus,
+        count(*) as count
         FROM so_return_instock sri
         WHERE sri.is_deleted = FALSE
-        <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
-            and sri.approve_status in
-            <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
-                #{item}
-            </foreach>
-        </if>
-        <if test="params.billDateList != null and params.billDateList.size > 0">
-            and sri.bill_date >= #{params.billDateList[0]} and  (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > sri.bill_date
-        </if>
         <if test="params.invalidStatus != null ">
             and sri.invalid_status = #{params.invalidStatus}
         </if>
@@ -94,63 +89,7 @@
                 ${params.permissionSql}
             </if>
         )
-    </select>
-
-    <select id="soReturnInstockExportExcel" resultType="com.erp.model.wms.dto.SoReturnInstockDTO$PagingView">
-        SELECT
-        sri.id,
-        sri.source_id AS sourceId,
-        srid.source_detail_id AS sourceDetailId,
-        srid.so_return_detail_id AS soReturnDetailId,
-        sri.code,
-        sri.source_code AS sourceCode,
-        sri.so_code AS soCode,
-        sri.type,
-        sri.customer_id AS customerId,
-        sri.customer_name AS customerName,
-        sri.approve_status AS approveStatus,
-        sri.invalid_status AS invalidStatus,
-        sri.seller_id AS sellerId,
-        sri.seller_name AS sellerName,
-        srid.sku_id AS skuId,
-        srid.sku_no AS skuNo,
-        srid.return_type_dict AS returnTypeDict,
-        srid.must_qty AS mustQty,
-        srid.receive_qty AS receiveQty,
-        srid.real_qty AS realQty,
-        sri.bill_date AS billDate,
-        sri.approve_user_name AS approveUserName,
-        sri.create_user_name AS createUserName,
-        sri.create_time AS createTime,
-        sri.inventory_org_id AS inventoryOrgId,
-        sri.inventory_org_name AS inventoryOrgName,
-        sri.third_code as thirdCode,
-        sri.return_logistic_code as returnLogisticCode,
-        srid.warehouse_id,
-        srid.warehouse_name,
-        srid.warehouse_location,
-        sri.currency,
-        sri.currency_symbol,
-        srid.exchange_rate ,
-        srid.return_amount ,
-        srid.tax_return_amount ,
-        srid.return_amount_local_currency ,
-        srid.tax_return_amount_local_currency
-        FROM so_return_instock sri
-        INNER JOIN so_return_instock_detail srid ON sri.id = srid.main_id AND sri.is_deleted = FALSE
-        WHERE
-        ${params.sqlMap.default}
-         and  srid.is_deleted = FALSE
-        <if test="params.permissionSql != null and params.permissionSql != ''">
-            ${params.permissionSql}
-        </if>
-        ORDER BY
-        <if test="params.sortList != null and params.sortList.size > 0">
-            <foreach collection="params.sortList" item="item" separator="," close=",">
-                ${item.field} ${item.sort}
-            </foreach>
-        </if>
-        sri.create_time desc, sri.id desc, srid.id desc
+        group by sri.approve_status
     </select>
 
     <select id="pagingCount" resultType="java.lang.Integer">

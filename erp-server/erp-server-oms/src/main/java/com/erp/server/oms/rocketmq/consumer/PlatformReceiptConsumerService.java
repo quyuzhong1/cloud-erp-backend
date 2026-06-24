@@ -12,6 +12,7 @@ import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.server.oms.service.*;
 import com.google.common.collect.Lists;
 import io.seata.common.util.StringUtils;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;

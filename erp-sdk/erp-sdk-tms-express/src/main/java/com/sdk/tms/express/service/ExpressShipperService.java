@@ -61,10 +61,6 @@ public class ExpressShipperService {
         String url = authMap.get("url");
         validate(partnerId, md5Key, url);
         IServiceCodeStandard standardService = ExpressServiceCodeEnum.EXP_RECE_CREATE_ORDER; //下订单
-        if (StringUtils.isEmpty(orderRequest.getMonthlyCard())) {
-            log.info("monthCard {}",monthCard);
-            orderRequest.setMonthlyCard(monthCard);
-        }
         return doPost(url, partnerId, md5Key, JSONUtil.toJsonStr(orderRequest), standardService.getCode());
     }
 

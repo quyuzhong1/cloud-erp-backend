@@ -54,6 +54,13 @@ public class MQSyncFsInstanceConsumerService implements RocketMQListener<CfgAppr
     @Transactional
     public void onMessage(CfgApproveSyncDTO.SyncFsProcessToMqDTO dto) {
         log.info("MQSyncFsInstanceConsumerService 开始");
+        log.error("MQSyncFsInstanceConsumerService 参数:{}", JSONUtil.toJsonStr(dto));
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.warn("线程休眠被中断", e);
+        }
         mqSyncFsHandler.handler(dto);
         log.info("MQSyncFsInstanceConsumerService 结束");
     }

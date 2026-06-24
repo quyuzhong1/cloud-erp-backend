@@ -4,17 +4,20 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONObject;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.ExcelWriter;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
+import com.alibaba.excel.write.metadata.WriteSheet;
 import com.common.business.dto.base.BaseDTO;
 import com.common.business.enums.FileTaskStatusEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.tms.dto.ImportHistoryRecordDTO;
 import com.erp.model.tms.entity.CfgLogisticsCostImportDetailEntity;
 import com.erp.model.tms.entity.CfgLogisticsCostImportEntity;
+import com.erp.model.tms.enums.CfgLogisticsCostImportBusinessTypeEnum;
 import com.erp.model.tms.enums.ImportHistoryRecordProcessingTypeEnum;
 import com.erp.model.tms.enums.ImportHistoryRecordStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -24,12 +27,11 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.io.FileUtils;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.io.IOException;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -78,6 +80,20 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
 
     @Getter
     private List<String> headList;
+    private ExcelWriter matchExcelWriter;
+    private WriteSheet matchWriteSheet;
+    private File matchResultFile;
+    private boolean hasMatchResult;
+    private int matchSuccessCount;
+    private int matchFailCount;
+    private String matchResultUrl = "";
+    /**
+     * processBatch 中整批次失败的次数（PG 死锁 / 服务异常等导致整个 3000 行批次写入失败）。
+     * 之前 catch 把异常吞掉只打了一条 error 日志，从外部看任务还是"正常完成"，
+     * 这里加一个累计计数 + 全量汇总日志，便于运维一眼看出"已完成"其实并不干净。
+     */
+    private int failedBatchCount;
+    private int totalBatchCount;
 
     private final ImportHistoryRecordService importHistoryRecordService = SpringUtil.getBean(ImportHistoryRecordService.class);
     private final DownloadTaskFeign downloadTaskFeign = SpringUtil.getBean(DownloadTaskFeign.class);
@@ -100,14 +116,20 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
      */
     @Override
     public void invoke(Map<Integer,String>  map, AnalysisContext analysisContext) {
+        //无表头数据报错
+        if (ObjectUtil.isEmpty(headMap)) {
+            throw new ServiceException(ApiError.COMMON_FILE_HEAD_READ_HEAD_FAIL);
+        }
+        //忽略公式错误值(#REF!/#VALUE! 等)，统一按空处理，避免脏单元格被录入或参与匹配
+        sanitizeErrorCellValues(map);
+        //整行无任何有效数据则跳过（含 EasyExcel 解析 .xls 公式错误单元格时多产生的幽灵空行），不计入进度也不写入清洗结果
+        if (isBlankDataRow(map)) {
+            return;
+        }
         count += 1;
         //已经导入的数据跳过进度
         if (Objects.nonNull(importCount) && count < importCount){
             return;
-        }
-        //无表头数据报错
-        if (ObjectUtil.isEmpty(headMap)) {
-            throw new ServiceException(ApiError.COMMON_FILE_HEAD_READ_HEAD_FAIL);
         }
 
         //当导入的最后一列数据都是空时map无值导致表头size和map.size不一致，所以需要添加表头一致的数据
@@ -127,6 +149,69 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
     }
 
     /**
+     * Excel 公式错误值集合（POI 读取公式错误单元格时返回的文本），这些值按空处理。
+     */
+    private static final Set<String> EXCEL_ERROR_VALUES = new HashSet<>(Arrays.asList(
+            "#REF!", "#VALUE!", "#DIV/0!", "#NAME?", "#N/A", "#NUM!", "#NULL!",
+            "#GETTING_DATA", "#SPILL!", "#CALC!"));
+
+    /**
+     * 配置的有效字段列在 headMap 中的列下标集合，解析表头后初始化一次。
+     * 判断一行是否为有效数据行时，只看导入配置中已映射的 sourceField 列，
+     * 而不是看整行所有单元格——因为源文件里 核对/差异 等跨表公式列会被一路向下填充到很大的行范围，
+     * 在没有真实数据的行上仍会被算出 0、0.8 等结果或 #REF! 错误值，
+     * 仅凭「整行是否全空」无法识别这类幽灵行，必须以配置的有效字段列是否有值为准。
+     */
+    private Set<Integer> effectiveColumnKeys = Collections.emptySet();
+
+    /**
+     * 将单元格中的 Excel 公式错误值清成空字符串。
+     * 典型场景：源文件「核对/差异」等列是跨表公式，引用的表缺失后整列变成 #REF!，
+     * EasyExcel 解析 .xls 时会因这些错误单元格额外吐出只含该列、其余全空的幽灵行。
+     */
+    private void sanitizeErrorCellValues(Map<Integer,String> map) {
+        if (map == null || map.isEmpty()) {
+            return;
+        }
+        for (Map.Entry<Integer,String> entry : map.entrySet()) {
+            String value = entry.getValue();
+            if (value == null) {
+                continue;
+            }
+            if (EXCEL_ERROR_VALUES.contains(value.trim().toUpperCase(Locale.ROOT))) {
+                entry.setValue("");
+            }
+        }
+    }
+
+    /**
+     * 判断当前行是否没有任何有效业务数据。
+     * 以导入配置中已映射的有效字段列（sourceField）是否有值为准：
+     * 只要任一有效字段列有值即视为有效数据行；有效字段列全空则视为幽灵/空行跳过。
+     * 这样可以正确剔除 核对/差异 等公式列被填充到空行区、算出 0 或脏值而产生的幽灵行，
+     * 且不依赖写死的列名关键字。若未能解析到任何有效字段列（兜底），退回到「整行是否全空」的判断。
+     */
+    private boolean isBlankDataRow(Map<Integer,String> map) {
+        if (map == null || map.isEmpty()) {
+            return true;
+        }
+        if (CollectionUtils.isNotEmpty(effectiveColumnKeys)) {
+            for (Integer key : effectiveColumnKeys) {
+                if (CharSequenceUtil.isNotBlank(map.get(key))) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        for (String value : map.values()) {
+            if (CharSequenceUtil.isNotBlank(value)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
      * @description: 批量处理
      * @author Will
      * @date: 2026/1/21 15:31
@@ -135,14 +220,17 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
         if (CollectionUtils.isEmpty(successList)) {
             return;
         }
+        totalBatchCount++;
         try {
             List<JSONObject> errorList2 = new ArrayList<>();
             // 批量处理，由 Service 内部负责事务控制
             List<ImportHistoryRecordDTO.ImportConfirmDTO> importConfirmDTOS = importHistoryRecordService.handleImportSuccessList(importDTO, costImportEntity, cfgImportDetailList, successList, errorList2, headList, headMap);
-            matchList.addAll(errorList2);
+            writeMatchResult(errorList2);
             confirmPairList.addAll(importConfirmDTOS);
         } catch (Exception e) {
-            log.error("批量导入处理异常批次，条数：{}", successList.size(), e);
+            failedBatchCount++;
+            log.error("批量导入处理异常批次 taskId={} fileName={} 当前批次条数={} 已失败批次数={}/{}",
+                    taskId, importDTO.getFileName(), successList.size(), failedBatchCount, totalBatchCount, e);
             // 整个批次失败的处理逻辑
             String msg = e.getMessage();
             if (CharSequenceUtil.isNotBlank(msg) && msg.length() > 100) {
@@ -159,7 +247,7 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
                 if (matchIdxStr != null) jsonObject.set(matchIdxStr, MATCH_FAIL);
                 if (errorIdxStr != null) jsonObject.set(errorIdxStr, finalMsg);
             });
-            matchList.addAll(new ArrayList<>(successList));
+            writeMatchResult(successList);
         }
     }
 
@@ -171,14 +259,29 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
      */
     @Override
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
-        if (!successList.isEmpty()) {
-            processBatch();
-            successList.clear();
+        try {
+            if (!successList.isEmpty()) {
+                processBatch();
+                successList.clear();
+            }
+            finishMatchExcelWriter();
+            //对所有确认数据进行批量确认
+            importHistoryRecordService.confirmImportData(importDTO,confirmPairList);
+            //添加匹配结果
+            addMatchExcelResult();
+            // 汇总日志：让运维一眼看到"已完成"任务里有没有败批
+            if (failedBatchCount > 0) {
+                log.error("[导入存在败批] taskId={} fileName={} 总批次={} 失败批次={} 行级成功={} 行级失败={} 总行数={}",
+                        taskId, importDTO.getFileName(), totalBatchCount, failedBatchCount,
+                        matchSuccessCount, matchFailCount, count);
+            } else {
+                log.info("[导入完成] taskId={} fileName={} 总批次={} 行级成功={} 行级失败={} 总行数={}",
+                        taskId, importDTO.getFileName(), totalBatchCount,
+                        matchSuccessCount, matchFailCount, count);
+            }
+        } finally {
+            finishMatchExcelWriter();
         }
-        //对所有确认数据进行批量确认
-        importHistoryRecordService.confirmImportData(importDTO,confirmPairList);
-        //添加匹配结果
-        addMatchExcelResult();
     }
     /**
      * 添加匹配结果
@@ -191,19 +294,18 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
         //添加导入历史记录表数据
         ImportHistoryRecordDTO.AddOrUpdateDTO addOrUpdateDTO = new ImportHistoryRecordDTO.AddOrUpdateDTO();
         addOrUpdateDTO.setReconciliationMonth(importDTO.getReconciliationMonth());
-        addOrUpdateDTO.setBusinessType(costImportEntity.getBusinessType());
+        addOrUpdateDTO.setBusinessType(CfgLogisticsCostImportBusinessTypeEnum.LAST_MILE_DELIVERY.getCode());
         addOrUpdateDTO.setFileUrl(importDTO.getFileUrl());
         addOrUpdateDTO.setFileName(importDTO.getFileName());
         //清洗结果
         String url = "";
         String fileName = importDTO.getFileName();
-        if (CollectionUtils.isNotEmpty(matchList) && headList != null) {
-            //matchList = matchList.stream().filter(Objects::nonNull).collect(Collectors.toList());
-            File file = ExcelUtil.customExportUtil(costImportEntity.getSheetName(), matchList, headList);
-            if (!file.isDirectory()) {
-                url = FastDFSClientUtil.uploadFile(file, fileName);
+        if (hasMatchResult && matchResultFile != null) {
+            if (!matchResultFile.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(matchResultFile, fileName);
             }
         }
+        matchResultUrl = url;
         addOrUpdateDTO.setSheetName(costImportEntity.getSheetName());
         addOrUpdateDTO.setCleanFileUrl(url);
         addOrUpdateDTO.setCleanFileName(fileName);
@@ -216,10 +318,7 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
         addOrUpdateDTO.setOperationUserId(importDTO.getUserId());
         addOrUpdateDTO.setImportCount(count);
 
-        //匹配结果序号
-        Integer matchIndex = getMapKey(headMap, MATCH_FIELD);
-        long errorCount = matchList.stream().filter(obj -> CharSequenceUtil.equals(MATCH_SUCCESS, (CharSequence) obj.get(matchIndex.toString()))).count();
-        addOrUpdateDTO.setMatchCount((int)errorCount);
+        addOrUpdateDTO.setMatchCount(matchSuccessCount);
         importHistoryRecordService.addOrUpdate(addOrUpdateDTO);
     }
 
@@ -233,6 +332,79 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
         map.put(size + 1,ERROR_MSG);
         this.headMap = map;
         this.headList = headList;
+        //根据导入配置解析有效字段列下标，供空行/幽灵行判断使用
+        this.effectiveColumnKeys = resolveEffectiveColumnKeys(map);
+    }
+
+    /**
+     * 根据导入配置解析有效字段列在表头中的列下标集合。
+     * 有效字段来自 cfgImportDetailList 中所有已配置 sourceField 的映射项，按 sourceField 与表头名称匹配，不依赖写死列名。
+     */
+    private Set<Integer> resolveEffectiveColumnKeys(Map<Integer,String> headMap) {
+        if (ObjectUtil.isEmpty(headMap) || CollectionUtils.isEmpty(cfgImportDetailList)) {
+            return Collections.emptySet();
+        }
+        Set<Integer> keys = new HashSet<>();
+        for (CfgLogisticsCostImportDetailEntity cfgDetail : cfgImportDetailList) {
+            if (cfgDetail == null || CharSequenceUtil.isBlank(cfgDetail.getSourceField())) {
+                continue;
+            }
+            Integer columnIndex = getMapKey(headMap, cfgDetail.getSourceField());
+            if (columnIndex != null) {
+                keys.add(columnIndex);
+            }
+        }
+        return keys;
+    }
+
+    private void writeMatchResult(List<JSONObject> batchMatchList) {
+        if (CollectionUtils.isEmpty(batchMatchList) || headList == null) {
+            return;
+        }
+        initMatchExcelWriter();
+        List<List<String>> rows = new ArrayList<>(batchMatchList.size());
+        Integer matchIndex = getMapKey(headMap, MATCH_FIELD);
+        String matchIndexStr = matchIndex == null ? null : matchIndex.toString();
+        for (JSONObject map : batchMatchList) {
+            List<String> row = new ArrayList<>(headList.size());
+            for (int j = 0; j < headList.size(); j++) {
+                Object value = map.get(String.valueOf(j));
+                row.add(ObjectUtil.isEmpty(value) ? "" : value.toString());
+            }
+            rows.add(row);
+            if (matchIndexStr != null && CharSequenceUtil.equals(MATCH_SUCCESS, (CharSequence) map.get(matchIndexStr))) {
+                matchSuccessCount++;
+            } else if (matchIndexStr != null && CharSequenceUtil.equals(MATCH_FAIL, (CharSequence) map.get(matchIndexStr))) {
+                matchFailCount++;
+            }
+        }
+        matchExcelWriter.write(rows, matchWriteSheet);
+        hasMatchResult = true;
+    }
+
+    private void initMatchExcelWriter() {
+        if (matchExcelWriter != null) {
+            return;
+        }
+        try {
+            matchResultFile = File.createTempFile("import-history-record-", ".xlsx", FileUtils.getTempDirectory());
+        } catch (IOException e) {
+            throw new ServiceException("创建导入结果临时文件失败");
+        }
+        List<List<String>> heads = headList.stream().map(Arrays::asList).collect(Collectors.toList());
+        matchExcelWriter = EasyExcel.write(matchResultFile)
+                .head(heads)
+                .inMemory(false)
+                .build();
+        matchWriteSheet = EasyExcel.writerSheet(costImportEntity.getSheetName()).build();
+    }
+
+    private void finishMatchExcelWriter() {
+        if (matchExcelWriter == null) {
+            return;
+        }
+        matchExcelWriter.finish();
+        matchExcelWriter = null;
     }
 
     private void updateTask(Integer count){

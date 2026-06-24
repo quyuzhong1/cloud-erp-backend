@@ -143,6 +143,9 @@ public class ExportWmsFeignController {
     @Resource
     private QcStandardService qcStandardService;
 
+    @Resource
+    private CfgQcUserService cfgQcUserService;
+
 
     @Resource
     private ReportOrderDemandDetailService reportOrderDemandDetailService;
@@ -232,7 +235,7 @@ public class ExportWmsFeignController {
     )
     @WebAdvanceQuery(handler = SoB2cDeliveryQueryHandler.class)
     public PagingVO<SoB2cDeliveryDTO.ListDTO> exportB2cDelivery(@RequestBody PagingDTO<SoB2cDeliveryDTO.PagingParamDTO> dto) {
-        return soB2cDeliveryService.exportB2cDelivery(dto);
+        return soB2cDeliveryService.paging(dto);
     }
 
     @PostMapping("/packageForecast")
@@ -716,9 +719,22 @@ public class ExportWmsFeignController {
             tableAlias = "so"
     )
     @WebAdvanceQuery(handler = SoOutstockQueryHandler.class)
-    public PagingVO<SoOutstockDTO.PagingViewDTO> exportSoOutStock(@RequestBody PagingDTO<SoOutstockDTO.ExportDTO> dto) {
-    	PagingVO<SoOutstockDTO.PagingViewDTO> pagingVO = soOutstockService.exportSoOutStock(dto);
+    public PagingVO<SoOutstockDTO.PagingViewDTO> exportSoOutStock(@RequestBody PagingDTO<SoOutstockDTO.PagingParamDTO> dto) {
+    	PagingVO<SoOutstockDTO.PagingViewDTO> pagingVO = soOutstockService.paging(dto, Boolean.TRUE);
         return pagingVO;
+    }
+
+    @PostMapping("/soOutStockDynamic")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id,seller_id",
+            warehouseTableField = "so.warehouse_id",
+            shopTableField = "so.shop_id",
+            menuCode = "wms:so:outstock:paging",
+            tableAlias = "so"
+    )
+    @WebAdvanceQuery(handler = SoOutstockQueryHandler.class)
+    public PagingVO<DynamicExcelDTO> exportDynamicSoOutStock(@RequestBody PagingDTO<SoOutstockDTO.PagingParamDTO> dto) {
+        return soOutstockService.exportDynamicSoOutStock(dto);
     }
 
     @PostMapping("/soReturnInStock")
@@ -730,7 +746,7 @@ public class ExportWmsFeignController {
     )
     @WebAdvanceQuery(handler = SoReturnInstockQueryHandler.class)
     public PagingVO<SoReturnInstockDTO.PagingView> exportSoReturnInStock(@RequestBody PagingDTO<SoReturnInstockDTO.PagingParam> dto) {
-        return soReturnInstockService.exportSoReturnInStock(dto);
+        return soReturnInstockService.paging(dto);
     }
 
     @PostMapping("/soReturnNotice")
@@ -742,7 +758,7 @@ public class ExportWmsFeignController {
     )
     @WebAdvanceQuery(handler = SoReturnNoticeQueryHandler.class)
     public PagingVO<SoReturnNoticeDTO.PagingView> exportSoReturnNotice(@RequestBody PagingDTO<SoReturnNoticeDTO.PagingParam> dto) {
-       return soReturnNoticeService.exportSoReturnNotice(dto);
+       return soReturnNoticeService.paging(dto);
     }
 
     @PostMapping("/soReturnReceive")
@@ -754,7 +770,7 @@ public class ExportWmsFeignController {
     )
     @WebAdvanceQuery(handler = SoReturnReceiveQueryHandler.class)
     public PagingVO<SoReturnReceiveDTO.PagingView> exportSoReturnReceive(@RequestBody PagingDTO<SoReturnReceiveDTO.PagingParam> dto) {
-        return soReturnReceiveService.exportSoReturnReceive(dto);
+        return soReturnReceiveService.paging(dto);
     }
 
     @PostMapping("/stocktakingProfitLoss")
@@ -1141,7 +1157,7 @@ public class ExportWmsFeignController {
     }
 
     @PostMapping("/exportThirdWarehouseDelivery")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = ThirdWarehouseDeliveryQueryHandler.class)
     public PagingVO<ThirdWarehouseDeliveryDTO.PagingViewDTO> exportThirdWarehouseDelivery(@RequestBody PagingDTO<ThirdWarehouseDeliveryDTO.PagingParamDTO> dto) {
         return thirdWarehouseDeliveryService.paging(dto);
     }
@@ -1327,5 +1343,18 @@ public class ExportWmsFeignController {
     @WebAdvanceQuery(handler = QcApplicationQueryHandler.class)
     public PagingVO<QcApplicationDTO.ListDTO> exportQcApplication(@RequestBody @Validated PagingDTO<QcApplicationDTO.PagingParamDTO> dto) {
         return qcApplicationService.paging(dto);
+    }
+
+    /**
+     * 导出质检员配置
+     */
+    @PostMapping("/exportCfgQcUser")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:cfgQcUser:export",
+            tableAlias = "cqu")
+    @WebAdvanceQuery(handler = CfgQcUserQueryHandler.class)
+    public PagingVO<CfgQcUserDTO.ListDTO> exportCfgQcUser(@RequestBody @Validated PagingDTO<CfgQcUserDTO.ExportDTO> dto) {
+        return cfgQcUserService.paging(dto);
     }
 }

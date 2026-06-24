@@ -386,7 +386,8 @@ public class PayableInfoServiceImpl extends SuperServiceImpl<PayableInfoMapper, 
                 } else if (CharSequenceUtil.equals(detailEntity.getSourceType(),SourceTypeEnum.PO_RETURN.getCode())) {
                     detailEntity.setPayableType(PayableTypeEnum.PURCHASE_RETURN.getCode());
                 }
-            } else if (CharSequenceUtil.equals(purchaseOrderEntity.getType(), PurchaseOrderTypeEnum.ENUM_SUBCONTRACT.getCode())) {
+            } else if (CharSequenceUtil.equals(purchaseOrderEntity.getType(), PurchaseOrderTypeEnum.ENUM_SUBCONTRACT.getCode())
+                    || CharSequenceUtil.equals(purchaseOrderEntity.getType(), PurchaseOrderTypeEnum.ENUM_REPAIR.getCode())) {
                 if (CharSequenceUtil.equals(detailEntity.getSourceType(),SourceTypeEnum.PO_INSTOCK.getCode())) {
                     detailEntity.setPayableType(PayableTypeEnum.SUBCONTRACT_INSTOCK.getCode());
                 } else if (CharSequenceUtil.equals(detailEntity.getSourceType(),SourceTypeEnum.PO_RETURN.getCode())) {

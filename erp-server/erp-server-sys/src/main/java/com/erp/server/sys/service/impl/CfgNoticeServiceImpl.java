@@ -268,7 +268,7 @@ public class CfgNoticeServiceImpl extends SuperServiceImpl<CfgNoticeMapper, CfgN
         List<FindUserDTO> allUserList = sysUserInfoService.getAllUserList(1);
 
         //飞书群
-        List<DictBasicDTO.ViewDTO> dictList = dictBasicService.listByType(DictBasicEnum.FS_GROUP.getKey());
+        List<com.erp.model.sys.entity.DictBasicEntity> dictList = dictBasicService.listByType(DictBasicEnum.FS_GROUP.getKey());
 
         for (CfgNoticeDTO.ListDTO item : records) {
             //通知节点
@@ -298,7 +298,7 @@ public class CfgNoticeServiceImpl extends SuperServiceImpl<CfgNoticeMapper, CfgN
                 }
                 if (CfgVirtualNoticeObjectTypeEnum.NOTICE_GROUP.getCode().equals(detailEntity.getNoticeType())) {
                     List<String> noticeObject = (List<String>) map.get("noticeObjectList");
-                    List<String> groupNameList = dictList.stream().filter(obj -> noticeObject.contains(obj.getValue())).map(DictBasicDTO.ViewDTO::getName).collect(Collectors.toList());
+                    List<String> groupNameList = dictList.stream().filter(obj -> noticeObject.contains(obj.getValue())).map(com.erp.model.sys.entity.DictBasicEntity::getName).collect(Collectors.toList());
                     map.put("noticeObjectName", groupNameList);
                 }
                 noticeObjectList.add(map);

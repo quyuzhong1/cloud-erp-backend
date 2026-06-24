@@ -111,6 +111,14 @@ public class OverseasProviderDTO implements Serializable {
         private String appId;
 
         private String appSecret;
+        /**
+         * 密钥
+         */
+        private String key;
+        /**
+         * eccompanyid
+         */
+        private String eccompanyid;
     }
     /**
     * 详情

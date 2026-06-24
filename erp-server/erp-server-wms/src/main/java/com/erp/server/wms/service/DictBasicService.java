@@ -39,7 +39,7 @@ public interface DictBasicService extends SuperService<DictBasicEntity> {
      * @param key
      * @return java.util.List<com.erp.model.scm.dto.DictBasicDTO>
      */
-    List<DictBasicDTO.ListDTO> getByKey(String key);
+    List<DictBasicEntity> getByKey(String key);
 
     
     /**

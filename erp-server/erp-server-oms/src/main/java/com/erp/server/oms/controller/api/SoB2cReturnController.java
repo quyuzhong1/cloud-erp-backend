@@ -58,7 +58,7 @@ public class SoB2cReturnController extends BaseController {
             menuCode = "oms:soB2cReturn:paging"
     )
     @WebAdvanceQuery(handler = SoB2cReturnQueryHandler.class)
-    public ApiResult<PagingVO<SoB2cReturnDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<SoB2cReturnDTO.PagingParamDTO> dto) {
+    public ApiResult<PagingVO<SoB2cReturnDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<SoB2cReturnDTO.PagingParamDTO> dto) {
         PagingVO<SoB2cReturnDTO.PagingViewDTO> pagingVO = soB2cReturnService.paging(dto);
         return success(pagingVO);
     }

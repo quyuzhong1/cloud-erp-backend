@@ -772,9 +772,9 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         approveDTO.getVariablesMap().put("totalQty", totalQty);
         
         // 确保usageCn变量不为null，使用字典服务获取样品用途名称
-        List<DictBasicDTO.ListDTO> dictList = dictBasicService.getByKey(DictBasicEnum.SAMPLE_USAGE.getKey());
+        List<DictBasicEntity> dictList = dictBasicService.getByKey(DictBasicEnum.SAMPLE_USAGE.getKey());
         Map<String, String> usageMap = dictList.stream()
-                .collect(Collectors.toMap(DictBasicDTO.ListDTO::getValue, DictBasicDTO.ListDTO::getName, (v1, v2) -> v1));
+                .collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName, (v1, v2) -> v1));
         String usageCn = usageMap.getOrDefault(entity.getUsage(), "");
         if (StringUtils.isBlank(usageCn)) {
             log.warn("usageCn is blank for entity usage: {}", entity.getUsage());
@@ -1291,9 +1291,9 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         startDTO.getVariablesMap().put("totalQty", totalQty);
 
         // 确保usageCn变量不为null，使用字典服务获取样品用途名称
-        List<DictBasicDTO.ListDTO> dictList = dictBasicService.getByKey(DictBasicEnum.SAMPLE_USAGE.getKey());
+        List<DictBasicEntity> dictList = dictBasicService.getByKey(DictBasicEnum.SAMPLE_USAGE.getKey());
         Map<String, String> usageMap = dictList.stream()
-                .collect(Collectors.toMap(DictBasicDTO.ListDTO::getValue, DictBasicDTO.ListDTO::getName, (v1, v2) -> v1));
+                .collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName, (v1, v2) -> v1));
         String usageCn = usageMap.getOrDefault(entity.getUsage(), "");
         if (StringUtils.isBlank(usageCn)) {
             log.warn("usageCn is blank for entity usage: {}", entity.getUsage());
@@ -1426,9 +1426,9 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 .collect(Collectors.toMap(FindUserDTO::getUserId, FindUserDTO::getUserName, (existing, replacement) -> existing));
 
         // 查询样品用途字典并转换为Map
-        List<DictBasicDTO.ListDTO> usageDictList = dictBasicService.getByKey(DictBasicEnum.SAMPLE_USAGE.getKey());
+        List<DictBasicEntity> usageDictList = dictBasicService.getByKey(DictBasicEnum.SAMPLE_USAGE.getKey());
         Map<String, String> usageNameMap = usageDictList.stream()
-                .collect(Collectors.toMap(DictBasicDTO.ListDTO::getValue, DictBasicDTO.ListDTO::getName, (v1, v2) -> v1));
+                .collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName, (v1, v2) -> v1));
 
         // 属性赋值
         for(SampleRecipientDTO.ListDTO data : list) {
@@ -2561,9 +2561,9 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             addDTO.setRemark(sampleRecipient.getUsageDesc()); // 备注
             // 用途：从字典获取中文名称
             if (StringUtils.isNotBlank(sampleRecipient.getUsage())) {
-                List<DictBasicDTO.ListDTO> usageDictList = dictBasicService.getByKey(DictBasicEnum.SAMPLE_USAGE.getKey());
+                List<DictBasicEntity> usageDictList = dictBasicService.getByKey(DictBasicEnum.SAMPLE_USAGE.getKey());
                 Map<String, String> usageNameMap = usageDictList.stream()
-                        .collect(Collectors.toMap(DictBasicDTO.ListDTO::getValue, DictBasicDTO.ListDTO::getName, (v1, v2) -> v1));
+                        .collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName, (v1, v2) -> v1));
                 String usageCn = usageNameMap.getOrDefault(sampleRecipient.getUsage(), sampleRecipient.getUsage());
                 addDTO.setUsage(usageCn);
             } else {

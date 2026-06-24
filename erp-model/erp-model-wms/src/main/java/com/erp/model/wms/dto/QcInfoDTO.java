@@ -18,10 +18,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -822,6 +819,11 @@ public class QcInfoDTO implements Serializable {
         private Integer qcBadQty;
 
         /**
+         * 允许入库量
+         */
+        private Integer allowInstockQty;
+
+        /**
          * 质检结果
          */
         private QcResultEnum qcResult;
@@ -1073,6 +1075,35 @@ public class QcInfoDTO implements Serializable {
          * 来源编号
          */
         private String sourceCode;
+        /**
+         * 允许入库量
+         */
+        private Integer allowInstockQty;
+        
+        /**
+         * 供应商ID
+         */
+        private String supplierId;
+        
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+        
+        /**
+         * 送检数量
+         */
+        private Integer totalQty;
+        
+        /**
+         * 质检结果
+         */
+        private String qcResult;
+        
+        /**
+         * 质检结果名称
+         */
+        private String qcResultName;
     }
 
     @Data

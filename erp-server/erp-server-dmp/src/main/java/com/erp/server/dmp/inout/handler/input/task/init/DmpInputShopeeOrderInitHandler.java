@@ -3,7 +3,10 @@ package com.erp.server.dmp.inout.handler.input.task.init;
 import java.net.SocketTimeoutException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 import javax.net.ssl.SSLHandshakeException;
@@ -13,9 +16,11 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.exception.ServiceException;
+import com.erp.model.dmp.constant.DmpInputConstant;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
@@ -48,6 +53,30 @@ public class DmpInputShopeeOrderInitHandler extends DmpInputInitHandler{
 	
 	@Override
 	public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
+		List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
+
+		DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
+		String extendJson = dmpInputTaskEntity.getExtendJson();
+		if(StringUtils.isNotBlank(extendJson)) {
+			com.alibaba.fastjson.JSONObject parseObject = com.alibaba.fastjson.JSON.parseObject(extendJson);
+			if(parseObject != null) {
+				JSONArray jsonArray = parseObject.getJSONArray(DmpInputConstant.ORDER_ID_LIST);
+				if(CollUtil.isNotEmpty(jsonArray)) {
+					List<Map<String, String>> orderIdListResult = jsonArray.stream()
+	                .map(j -> {
+	                	Map<String , String> map = new HashMap<>();
+	                	map.put("order_sn", j.toString());
+	                	map.put("booking_sn", "");
+	                	return map;
+	                })
+	                .collect(Collectors.toList());
+					dmpInputTaskInitDTO.setMsg(com.alibaba.fastjson.JSON.toJSONString(orderIdListResult));
+					dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);
+					return dmpInputTaskInitDTOList;
+				}
+			}
+		}
+		
 		AppClientEnum appClientEnum = AppClientEnum.SHOPEE_ACCESS_TOKEN;
 		List<CfgAppClientEntity> cfgAppClientEntityList = cfgAppClientService.lambdaQuery()
 			.eq(CfgAppClientEntity::getBusinessType, appClientEnum.getBusinessType())
@@ -79,9 +108,6 @@ public class DmpInputShopeeOrderInitHandler extends DmpInputInitHandler{
                 .build();
 		orderRequest.setCreateTime(DmpInputTaskTaskTypeEnum.HISTORY.getCode().equals(dmpInputTaskEntity.getTaskType()));
 		
-		List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
-
-		DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
 		JSONArray item = new JSONArray();
 		boolean hasNextPage = true;
 		while(hasNextPage) {

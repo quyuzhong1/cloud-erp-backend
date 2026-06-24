@@ -187,6 +187,18 @@ public class SoReturnInstockDetailEntity extends BaseEntity<SoReturnInstockDetai
     @TableField("tax_return_amount_local_currency")
     private BigDecimal taxReturnAmountLocalCurrency;
 
+    /**
+     *税率
+     */
+    @TableField("tax_rate")
+    private BigDecimal taxRate;
+
+    /**
+     *含税单价
+     */
+    @TableField("tax_price")
+    private BigDecimal taxPrice;
+
     public static final String MAIN_ID = "main_id";
 
     public static final String SKU_ID = "sku_id";

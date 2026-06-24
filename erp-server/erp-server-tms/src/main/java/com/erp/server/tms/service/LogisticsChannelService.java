@@ -294,4 +294,6 @@ public interface LogisticsChannelService extends SuperService<LogisticsChannelEn
      * @return List<LogisticsSupplierDTO.ListChildTreeDTO>
      */
     List<LogisticsSupplierDTO.ListChildTreeDTO> listChannelByPlatform(LogisticsSupplierDTO.SelectDTO dto);
+
+    void checkDeliveryType(String id, String logisticsPlatform);
 }

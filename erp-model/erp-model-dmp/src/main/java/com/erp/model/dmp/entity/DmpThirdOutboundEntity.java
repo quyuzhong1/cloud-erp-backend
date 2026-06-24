@@ -134,10 +134,11 @@ public class DmpThirdOutboundEntity extends BaseEntity<DmpThirdOutboundEntity> {
     private String carrierName;
 
     /**
-     *订单类型
+     *订单类型,B2C,B2B
      */
     @TableField("order_type")
     private String orderType;
+
     /**
      * 明细json
      */

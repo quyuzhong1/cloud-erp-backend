@@ -22,14 +22,11 @@ import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.wms.feign.OverseasProviderFeign;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
-import com.erp.server.wms.convert.ThirdWarehouseConverter;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
 import com.erp.server.wms.service.B2bThirdDeliveryService;
-import com.sdk.wms.goodcang.dto.request.GoodCangGetSkuReq;
 import com.sdk.wms.zhongbao.dto.request.*;
 import com.sdk.wms.zhongbao.dto.response.*;
 import com.sdk.wms.zhongbao.service.ZhongbaoService;
-import com.sdk.wms.zhongbao.utils.AuthUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -89,26 +86,8 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     @Override
-    protected ApiResult<List<ThirdWarehouseSkuResp>> getSkuList(ThirdWarehouseProductReq productReq) {
-        ProductRequest productRequest = ProductRequest.builder().commonParam(CommonRequest.builder()
-                .pageParam(PageRequest.builder().pageSize(100).pageNum(0).build()).build()).status(3).build();
-        List<ProductResponse.Product> respList = new ArrayList<>();
-        int pageNum = 1;
-        while (true) {
-         productRequest.getCommonParam().setPageParam(PageRequest.builder().pageSize(100).pageNum(pageNum).build());
-            BaseResponse<ProductResponse> response = zhongbaoService.productList(productRequest);
-            if (!response.getSuccess()) {
-                log.error(getPlatForm() +"查询产品信息异常" + response);
-                return failure(response.getMessage());
-            }
-            respList.addAll(response.getData().getList());
-            if (Integer.parseInt(response.getData().getTotalCount()) <= pageNum * 100) {
-                break;
-            }
-            pageNum++;
-        }
-        List<ThirdWarehouseSkuResp> thirdWarehouseSkuRespList = ThirdWarehouseConverter.INSTANCE.convertZhongbaoSku(respList);
-        return success(thirdWarehouseSkuRespList);
+    protected ApiResult<List<ThirdWarehouseSkuResp>> getSkuList(ThirdWarehouseProductReq productReq)  {
+        return null;
     }
 
     /***
@@ -131,7 +110,7 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     @Override
     protected ApiResult<String> editInboundBill(ThirdWarehouseCreateInboundReq createInboundReq) {
         return failure(getPlatForm().getName() + "不支持编辑入库单，请先取消入库单后，重新创建");
-//        OverseasInboundCreateRequest overseasInboundCreateRequest = this.buildInboundDto(createInboundReq);
+//        JituOverseasInboundCreateRequest overseasInboundCreateRequest = this.buildInboundDto(createInboundReq);
 //        BaseResponse<OverseasInboundUpdateResponse> responseBaseResponse = zhongbaoService.overseasInboundUpdate(overseasInboundCreateRequest);
 //        return responseBaseResponse.getSuccess() ? success(responseBaseResponse.getData().getOrderNo()) : failure(responseBaseResponse.getMessage());
     }

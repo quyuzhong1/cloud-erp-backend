@@ -70,7 +70,22 @@ public class WorkflowTaskRecordConsumer implements RocketMQListener<WorkflowTask
         }
 
         //默认第一个节点的入参
-        Map<Integer, WorkflowTaskRecordEntity> map = list.stream().collect(Collectors.toMap(WorkflowTaskRecordEntity::getIndex, Function.identity()));
+        Map<Integer, List<WorkflowTaskRecordEntity>> indexTaskMap = list.stream().collect(Collectors.groupingBy(WorkflowTaskRecordEntity::getIndex));
+        List<Integer> duplicateIndexList = indexTaskMap.entrySet().stream()
+                .filter(entry -> entry.getValue().size() > 1)
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(duplicateIndexList)) {
+            String msg = StrUtil.format("任务节点重复，sourceType={}, sourceId={}, index={}", mqDTO.getSourceTypeEnum().getCode(), mqDTO.getSourceId(), duplicateIndexList);
+            log.error(msg);
+            list.stream()
+                    .filter(e -> duplicateIndexList.contains(e.getIndex()))
+                    .filter(e -> !Objects.equals(e.getStatus(), WorkflowTaskRecordStatusEnum.SUCCESS.getCode()))
+                    .forEach(e -> markAsFailed(e, msg, 1));
+            return;
+        }
+        Map<Integer, WorkflowTaskRecordEntity> map = indexTaskMap.entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().get(0)));
 
         for (int i = 0; i < map.size(); i++) {
             WorkflowTaskRecordEntity entity = map.getOrDefault(i,null);
@@ -86,17 +101,21 @@ public class WorkflowTaskRecordConsumer implements RocketMQListener<WorkflowTask
                     success = Boolean.TRUE;
                     break;
                 case PROCESSING:
-                    LocalDateTime updateTime = entity.getUpdateTime();
-                    if (updateTime.plusMinutes(3).isAfter(LocalDateTime.now())) {
+                    if (isProcessingWithinTimeout(entity.getUpdateTime())) {
                         log.warn("节点处理中且未超时，index={}, sourceId={}", i, mqDTO.getSourceId());
                         break;
-                    } else {
-                        log.warn("节点处理超时，触发远程调用，index={}, sourceId={}", i, mqDTO.getSourceId());
-                        success = remoteInvoke(map, entity, i, 1); // 超时重试
                     }
+                    log.warn("节点处理超时，重置后重试，index={}, sourceId={}", i, mqDTO.getSourceId());
+                    if (Boolean.TRUE.equals(workflowTaskRecordService.resetStaleProcessingTask(entity.getId()))) {
+                        entity.setStatus(WorkflowTaskRecordStatusEnum.PENDING.getCode());
+                    }
+                    success = remoteInvoke(map, entity, i, 1);
                     break;
                 case PENDING:
                     success = remoteInvoke(map, entity, i, 0); // 初始执行
+                    break;
+                case WAITING:
+                    success = remoteInvoke(map, entity, i, 0); // 等待条件满足后继续执行
                     break;
                 case FAILED:
                     success = remoteInvoke(map, entity, i, 1); // 失败重试
@@ -134,9 +153,11 @@ public class WorkflowTaskRecordConsumer implements RocketMQListener<WorkflowTask
             return Boolean.FALSE;
         }
 
-        //更新为执行中
-        entity.setStatus(WorkflowTaskRecordStatusEnum.PROCESSING.getCode());
-        workflowTaskRecordService.updateById(entity);
+        // 条件抢占，避免重复MQ并发执行同一任务节点。
+        if (!workflowTaskRecordService.claimTask(entity.getId(), entity.getStatus())) {
+            log.warn("任务节点已被其他消费者抢占，id={}, index={}, sourceId={}", entity.getId(), i, entity.getSourceId());
+            return Boolean.FALSE;
+        }
 
         //inputData是一个jsonStr 需要转换成Map
         Map<String, Object> inputDataMap;
@@ -164,6 +185,9 @@ public class WorkflowTaskRecordConsumer implements RocketMQListener<WorkflowTask
 
         WorkflowTaskRecordDTO.MqRequestDTO dto = new WorkflowTaskRecordDTO.MqRequestDTO();
         dto.setData(inputDataMap);
+        dto.setTaskId(entity.getId());
+        dto.setSourceType(entity.getSourceType());
+        dto.setIndex(entity.getIndex());
 
         WorkflowTaskRecordDTO.MqResponseDTO mqResponseDTO;
         try {
@@ -184,6 +208,19 @@ public class WorkflowTaskRecordConsumer implements RocketMQListener<WorkflowTask
             entity.setOutputData(JSON.toJSONString(mqResponseDTO.getData()));
 
             String errorMsg = mqResponseDTO.getErrorMsg();
+            String responseStatus = mqResponseDTO.getStatus();
+            if (Objects.equals(responseStatus, WorkflowTaskRecordStatusEnum.WAITING.getCode())) {
+                markAsWaitingOrTimedOut(entity, errorMsg);
+                return Boolean.FALSE;
+            }
+            if (Objects.equals(responseStatus, WorkflowTaskRecordStatusEnum.FAILED.getCode())) {
+                entity.setStatus(WorkflowTaskRecordStatusEnum.FAILED.getCode());
+                entity.setLastError(StringUtils.defaultString(errorMsg));
+                // 节点主动返回 failed 表示业务已进入终态失败，补偿任务不再反复唤醒。
+                entity.setRetryCount(Math.max(Optional.ofNullable(entity.getRetryCount()).orElse(0), WorkflowTaskRecordService.TASK_TERMINAL_RETRY_COUNT));
+                workflowTaskRecordService.updateById(entity);
+                return Boolean.FALSE;
+            }
             if(StringUtils.isNotBlank(errorMsg)){
                 entity.setStatus(WorkflowTaskRecordStatusEnum.FAILED.getCode());
                 entity.setLastError(errorMsg);
@@ -204,6 +241,36 @@ public class WorkflowTaskRecordConsumer implements RocketMQListener<WorkflowTask
             }
 
         }
+    }
+
+    private void markAsWaitingOrTimedOut(WorkflowTaskRecordEntity entity, String errorMsg) {
+        Integer retryCount = Optional.ofNullable(entity.getRetryCount()).orElse(0);
+        String lastError = StringUtils.defaultString(errorMsg);
+        if (isWaitingTimedOut(entity)) {
+            entity.setStatus(WorkflowTaskRecordStatusEnum.FAILED.getCode());
+            entity.setLastError(StringUtils.substring(StrUtil.format("任务节点等待超过{}小时，{}", WorkflowTaskRecordService.TASK_WAITING_TIMEOUT_HOURS, lastError), 0, 2000));
+            // 等待超时属于业务终态失败，避免补偿任务后续反复唤醒。
+            entity.setRetryCount(Math.max(retryCount + 1, WorkflowTaskRecordService.TASK_TERMINAL_RETRY_COUNT));
+            workflowTaskRecordService.updateById(entity);
+            return;
+        }
+        entity.setStatus(WorkflowTaskRecordStatusEnum.WAITING.getCode());
+        entity.setLastError(lastError);
+        entity.setRetryCount(retryCount + 1);
+        workflowTaskRecordService.updateById(entity);
+    }
+
+    private boolean isWaitingTimedOut(WorkflowTaskRecordEntity entity) {
+        LocalDateTime createTime = entity.getCreateTime();
+        return Objects.nonNull(createTime)
+                && createTime.plusHours(WorkflowTaskRecordService.TASK_WAITING_TIMEOUT_HOURS).isBefore(LocalDateTime.now());
+    }
+
+    private boolean isProcessingWithinTimeout(LocalDateTime updateTime) {
+        if (Objects.isNull(updateTime)) {
+            return false;
+        }
+        return updateTime.plusMinutes(WorkflowTaskRecordService.TASK_PROCESSING_TIMEOUT_MINUTES).isAfter(LocalDateTime.now());
     }
 
     private void markAsFailed(WorkflowTaskRecordEntity entity,String errorMsg,Integer plus) {

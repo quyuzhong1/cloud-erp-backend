@@ -1326,7 +1326,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                     afterSaleProgressEntity.setRemark(dto.getRemark());
                     afterSaleProgressService.updateById(afterSaleProgressEntity);
 
-                    //erp状态变更客户寄件，输入快递单号后，需要流转至售后签收（待签收）
+                    //erp状态变更客户寄件，输入快递单号后，需要流转至待售后签收（待签收）
                     if (StringUtils.isNotBlank(dto.getTrackNo()) && afterSaleStatus.getCode().equals(AfterSaleStatusEnum.TO_BE_RETURNED.getCode())) {
                         AfterSaleProgressEntity byNode = afterSaleProgressService.getByNode(entity.getId(), AfterSaleStatusEnum.AFTER_SALES_RECEIVED.getCode());
                         byNode.setNodeTime(LocalDateTime.now());
@@ -1561,7 +1561,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 .update();
 
         //更新节点时间
-        //更新通过，则进入下一个节点：售后签收
+        //更新通过，则进入下一个节点：待售后签收
         updateProgressByMainId(afterSaleEntity.getId(), AfterSaleStatusEnum.AFTER_SALES_RECEIVED.getCode(), "", "待签收");
         //日志
         String msg = StrUtil.format("用户填写买家寄出快递单号为[{}]", trackNo);
@@ -1703,6 +1703,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             if (afterSaleEntity != null) {
                 LogisticsOrderEntity logisticsOrderEntity = new LogisticsOrderEntity();
                 BeanMapperUtils.copy(orderInfoDTO, logisticsOrderEntity);
+                logisticsOrderEntity.setId(null);
                 logisticsOrderEntity.setAfterSaleId(orderInfoDTO.getId());
                 logisticsOrderEntity.setLogisticsPlatform(dto.getLogisticsPlatform());
                 logisticsOrderEntity.setLogisticsChannelId(dto.getLogisticsChannelId());
@@ -1726,35 +1727,39 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             BatchResultDTO batchResultDTO;
             AfterSaleDTO.LogisticsOrderResultDTO resultDTO = resultDTOMap.get(afterSaleEntity.getId());
             if (resultDTO != null) {
-                afterSaleEntity.setType(OutboundTrackNoTypeEnum.API.getCode());
-                afterSaleEntity.setLogisticsChannelId(dto.getLogisticsChannelId());
-                updateAfterSaleList.add(afterSaleEntity);
-                AfterSaleProgressEntity afterSaleProgressEntity = afterSaleProgressMap.get(afterSaleEntity.getId());
-                if (afterSaleProgressEntity == null) {
-                    afterSaleProgressEntity = new AfterSaleProgressEntity();
-                    afterSaleProgressEntity.setMainId(afterSaleEntity.getId());
-                    afterSaleProgressEntity.setIndex(1);
-                    afterSaleProgressEntity.setNode(AfterSaleStatusEnum.TO_BE_SHIPPED.getCode());
-                    afterSaleProgressEntity.setTrackNo(resultDTO.getTrackNo());
-                    afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
-                    progressEntityList.add(afterSaleProgressEntity);
-                } else {
-                    // 售后发货
-                    if (AfterSaleStatusEnum.TO_BE_SHIPPED.getCode().equals(afterSaleProgressEntity.getNode())) {
-                        String oldTrackNo = afterSaleProgressEntity.getTrackNo();
-                        String newTrackNo = resultDTO.getTrackNo();
-                        if (!Objects.equals(oldTrackNo, newTrackNo)) {
-                            String msg = StrUtil.format("用户【{}】编辑商家寄出快递单号由[{}]变更为[{}] ", UserContext.getDefaultLoginUser().getUserName(), oldTrackNo, newTrackNo);
-                            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.AFTER_SALE.getCode(), afterSaleProgressEntity.getMainId(), "编辑信息");
-                        }
-                    } else {
+                if (Boolean.TRUE.equals(resultDTO.getStatus())) {
+                    afterSaleEntity.setType(OutboundTrackNoTypeEnum.API.getCode());
+                    afterSaleEntity.setLogisticsChannelId(dto.getLogisticsChannelId());
+                    updateAfterSaleList.add(afterSaleEntity);
+                    AfterSaleProgressEntity afterSaleProgressEntity = afterSaleProgressMap.get(afterSaleEntity.getId());
+                    if (afterSaleProgressEntity == null) {
+                        afterSaleProgressEntity = new AfterSaleProgressEntity();
+                        afterSaleProgressEntity.setMainId(afterSaleEntity.getId());
+                        afterSaleProgressEntity.setIndex(1);
                         afterSaleProgressEntity.setNode(AfterSaleStatusEnum.TO_BE_SHIPPED.getCode());
+                        afterSaleProgressEntity.setTrackNo(resultDTO.getTrackNo());
+                        afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
+                        progressEntityList.add(afterSaleProgressEntity);
+                    } else {
+                        // 售后发货
+                        if (AfterSaleStatusEnum.TO_BE_SHIPPED.getCode().equals(afterSaleProgressEntity.getNode())) {
+                            String oldTrackNo = afterSaleProgressEntity.getTrackNo();
+                            String newTrackNo = resultDTO.getTrackNo();
+                            if (!Objects.equals(oldTrackNo, newTrackNo)) {
+                                String msg = StrUtil.format("用户【{}】编辑商家寄出快递单号由[{}]变更为[{}] ", UserContext.getDefaultLoginUser().getUserName(), oldTrackNo, newTrackNo);
+                                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.AFTER_SALE.getCode(), afterSaleProgressEntity.getMainId(), "编辑信息");
+                            }
+                        } else {
+                            afterSaleProgressEntity.setNode(AfterSaleStatusEnum.TO_BE_SHIPPED.getCode());
+                        }
+                        afterSaleProgressEntity.setTrackNo(resultDTO.getTrackNo());
+                        afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
+                        progressEntityList.add(afterSaleProgressEntity);
                     }
-                    afterSaleProgressEntity.setTrackNo(resultDTO.getTrackNo());
-                    afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
-                    progressEntityList.add(afterSaleProgressEntity);
+                    batchResultDTO = BatchResultDTO.success(afterSaleEntity.getId(), afterSaleEntity.getCode(), "下单成功");
+                } else {
+                    batchResultDTO = BatchResultDTO.fail(afterSaleEntity.getId(), afterSaleEntity.getCode(), resultDTO.getErrorMsg());
                 }
-                batchResultDTO = BatchResultDTO.success(afterSaleEntity.getId(), afterSaleEntity.getCode(), "下单成功");
                 resultList.add(batchResultDTO);
             } else {
                 batchResultDTO = BatchResultDTO.fail(afterSaleEntity.getId(), afterSaleEntity.getCode(), "下单失败");

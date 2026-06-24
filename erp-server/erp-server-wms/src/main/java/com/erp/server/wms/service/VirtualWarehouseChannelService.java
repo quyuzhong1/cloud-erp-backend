@@ -82,4 +82,12 @@ public interface VirtualWarehouseChannelService extends SuperService<VirtualWare
      * @param hasPartitionIds
      */
     void checkBoundChannel(List<VirtualWarehouseChannelEntity> curChannelEntitieList, Boolean hasPartitionIds);
+
+    /**
+     * 同一实体仓下不同虚拟仓不可重复配置B2B海外线下平台
+     *
+     * @param virtualWarehouseId 当前虚拟仓id
+     * @param curChannelEntitieList 待保存渠道配置
+     */
+    void checkSameWarehouseB2bForeignPlatform(String virtualWarehouseId, List<VirtualWarehouseChannelEntity> curChannelEntitieList);
 }

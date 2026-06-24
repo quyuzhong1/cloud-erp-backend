@@ -126,5 +126,12 @@ public interface OverseasProviderService extends SuperService<OverseasProviderEn
 
     List<OverseasProviderEntity> listByAuthStatus(String code);
 
+    /**
+     * 根据授权ID查询货主编码。
+     *
+     * @return 未找到授权信息或未维护货主编码时返回 null，调用方需按空值处理。
+     */
+    String getOwnerCodeByAuthId(String authId);
+
     OverseasProviderEntity refreshToken(OverseasProviderEntity entity);
 }

@@ -6,10 +6,12 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.HttpCommonUtil;
+import com.erp.model.dmp.constant.DmpInputConstant;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputApiInitRequest;
 import com.erp.server.dmp.inout.handler.input.task.init.api.DmpInputApiInitHandler;
@@ -20,8 +22,11 @@ import com.sdk.oms.tiktok.service.TikTokFullService;
 import com.sdk.oms.tiktok.util.EncryptionUtils;
 import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
+
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.annotation.Resource;
@@ -30,6 +35,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -82,8 +88,14 @@ public class TikTokFullyOrderApiInitHandler implements DmpInputApiInitHandler {
             Map<String, Object> bodyMap = new HashMap<>();
             bodyMap.put("page_size", pageSize);
             bodyMap.put("page_token", pageToken);
-            bodyMap.put("latest_status_update_ge", dmpInputApiInitRequest.getStartTime().toInstant(ZoneOffset.ofHours(8)).getEpochSecond());
-            bodyMap.put("latest_status_update_lt", dmpInputApiInitRequest.getEndTime().toInstant(ZoneOffset.ofHours(8)).getEpochSecond());
+            
+            List<String> orderIds = checkAndGetOrderIds(dmpInputApiInitRequest.getTaskExtendJson());
+            if (CollectionUtils.isEmpty(orderIds)){
+            	bodyMap.put("latest_status_update_ge", dmpInputApiInitRequest.getStartTime().toInstant(ZoneOffset.ofHours(8)).getEpochSecond());
+                bodyMap.put("latest_status_update_lt", dmpInputApiInitRequest.getEndTime().toInstant(ZoneOffset.ofHours(8)).getEpochSecond());
+            }else {
+            	bodyMap.put("stockup_order_codes", orderIds);
+            }
             bodyMap.put("order_types", Collections.singletonList("JIT"));
             String input = EncryptionUtils.urlParamsSort(params, path, headerMap, toktikInfo, JSONUtil.toJsonStr(bodyMap));
             // 追加请求路径获取签名
@@ -133,6 +145,23 @@ public class TikTokFullyOrderApiInitHandler implements DmpInputApiInitHandler {
 
         }
         return dmpInputTaskInitDTOList;
+    }
+    
+    public List<String> checkAndGetOrderIds(String extendJson) {
+        if(StringUtils.isBlank(extendJson)) {
+            return Collections.emptyList();
+        }
+        JSONObject parseObject = JSON.parseObject(extendJson);
+        if(null == parseObject) {
+            return Collections.emptyList();
+        }
+        JSONArray jsonArray = parseObject.getJSONArray(DmpInputConstant.ORDER_ID_LIST);
+        if (CollectionUtils.isEmpty(jsonArray)){
+            return Collections.emptyList();
+        }
+        return jsonArray.stream()
+                .map(Object::toString)
+                .collect(Collectors.toList());
     }
 
     public static void main(String[] args) {
