@@ -173,7 +173,7 @@ public enum FileTaskEventEnum implements EnumMessage {
     //srm
     EXPORT_SRM_SALES_SHARING_REPORT("EXPORT_SRM_SALES_SHARING_REPORT","销量共享导出","","",""),
 
-    //SCM
+    //SCM（历史 EXPORT_SRM_PO_RECONCILIATION_SCM 为无入口遗留枚举，已删除；对账单导出统一走下方 EXPORT 事件）
     EXPORT_SRM_PO_RECONCILIATION_SCM_EXPORT("EXPORT_SRM_PO_RECONCILIATION_SCM_EXPORT","对账单Excel导出","","",""),
     EXPORT_SRM_PO_RECONCILIATION_DETAIL_SCM("EXPORT_SRM_PO_RECONCILIATION_DETAIL_SCM","对账明细导出","","",""),
 

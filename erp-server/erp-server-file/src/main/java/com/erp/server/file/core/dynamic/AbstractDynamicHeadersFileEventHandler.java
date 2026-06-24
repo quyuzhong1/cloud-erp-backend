@@ -34,6 +34,12 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
+/**
+ * 动态表头分页导出基类（无固定模板，运行时表头 + 流式写盘）。
+ * <p>
+ * 分页守卫（{@code null}、中间页空列表、空行等）与 {@link com.erp.server.file.core.AbstractPageFileEventHandler}
+ * OFFSET 路径语义对齐，见 {@link #requirePagingResult} 与 {@link #writePagedDynamicHeadersExcel}。
+ */
 public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileEventHandler {
     @Resource
     private ObjectMapper objectMapper;

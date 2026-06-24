@@ -166,7 +166,7 @@ public final class SoUtils {
      * 多 sheet 时基类保证同一主单不跨 sheet 拆分，避免 sheet 边界重复展示金额。
      *
      * @param row         当前数据行，命中重复时原地置空金额列
-     * @param seenMainIds 当前判重范围（按 sheet）已出现的主单 id 集合，原地维护
+     * @param seenMainIds 当前分组内已出现的主单 id 集合，原地维护
      */
     public static void hideRepeatedMainRow(LinkedHashMap<String, Object> row, Set<String> seenMainIds) {
         if (row == null || seenMainIds == null) {

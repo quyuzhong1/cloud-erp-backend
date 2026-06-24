@@ -26,6 +26,12 @@ import java.lang.reflect.Type;
 import java.util.*;
 
 @Slf4j
+/**
+ * 固定模板分页导出基类（OFFSET / KEYSET 流式写盘）。
+ * <p>
+ * 历史 {@code getData}/{@code listSeqData} 全量拉数已移除；子类实现 {@link #getPageData} 即可。
+ * 遗漏的旧 Handler 若仍覆写已删方法将在编译期失败，合并前跑全模块 {@code mvn compile} 验证。
+ */
 public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEventHandler<T> {
 
     /**
