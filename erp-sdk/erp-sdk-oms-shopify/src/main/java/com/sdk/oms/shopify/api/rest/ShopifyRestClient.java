@@ -13,7 +13,6 @@ import com.sdk.oms.shopify.api.rest.model.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.client.ClientProperties;
-import org.glassfish.jersey.jackson.JacksonFeature;
 
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Client;
@@ -1444,7 +1443,7 @@ public class ShopifyRestClient {
         final JacksonJaxbJsonProvider provider = new JacksonJaxbJsonProvider();
         provider.setMapper(mapper);
 
-        return ClientBuilder.newClient().register(JacksonFeature.class).register(provider);
+        return ClientBuilder.newClient().register(provider);
     }
 
     public class ShopifySdkRetryListener implements RetryListener {
