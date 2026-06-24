@@ -601,7 +601,10 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
                                 "lastIdExclusive=" + lastId + ",hasNext=false", 0);
                         break;
                     }
+                    int sizeBeforeHook = rawList.size();
                     afterFetchPage(rawList);
+                    assertAfterFetchPageRowCountUnchanged(sizeBeforeHook, rawList,
+                            "lastIdExclusive=" + lastId + ",hasNext=" + vo.isHasNext());
                     List<T> batch = withoutNullListElements(rawList);
                     if (batch.isEmpty()) {
                         throw new ServiceException("导出数据存在空行，请检查查询结果");
@@ -745,7 +748,9 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
                     }
                     if (!CollectionUtils.isEmpty(pageData.getList())) {
                         List<T> rawPage = pageData.getList();
+                        int sizeBeforeHook = rawPage.size();
                         afterFetchPage(rawPage);
+                        assertAfterFetchPageRowCountUnchanged(sizeBeforeHook, rawPage, "currPage=" + dto.getCurrPage());
                         List<T> batch = withoutNullListElements(rawPage);
                         if (batch.isEmpty()) {
                             // 与 KEYSET 路径对齐：rawPage 非空但元素全为 null 时不可静默跳过，否则 totalRows 偏小仍可能「成功」结束
@@ -809,12 +814,27 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
     protected abstract PagingVO<T> getPageData(PagingDTO<P> dto);
 
     /**
+     * {@link #afterFetchPage(List)} 调用后校验 list 长度未变，enforce「不得增删元素」契约。
+     * KEYSET 路径 preparedSheets 预估算、OFFSET/KEYSET 的 fetchedRows/cap 均依赖此假设。
+     */
+    private void assertAfterFetchPageRowCountUnchanged(int sizeBefore, List<T> pageList, String pagingState) {
+        int sizeAfter = pageList == null ? 0 : pageList.size();
+        if (sizeAfter == sizeBefore) {
+            return;
+        }
+        throw new ServiceException("afterFetchPage 不得增删分页行：handler=" + getClass().getName()
+                + " paging=" + pagingState + " 调用前=" + sizeBefore + " 调用后=" + sizeAfter
+                + "，请在上游取数阶段调整行数；钩子内仅允许原地修改元素字段。");
+    }
+
+    /**
      * 取数后、写出前对「本页数据」的加工钩子，默认空实现（不影响未重写的单据）。
      * <p>
      * 在 OFFSET / KEYSET 两条链路中，基类保证<strong>每页/每批恰好回调一次</strong>（OFFSET 在循环内非空页分支调用，
      * KEYSET 在循环入口调用），子类可重写做按页富化、同组重复行置空等可变加工，无需再包裹
      * {@link #getPageData} / {@link #fetchKeyset}。
      * 钩子按页调用，天然是「按页」粒度；可原地修改元素值，但不应增删元素（行数由基类按页统计）。
+     * 违反时由 {@link #assertAfterFetchPageRowCountUnchanged(int, List, String)} 快速失败。
      *
      * @param pageList 当前页数据（可能含 null 元素，实现需自行跳过），可为 {@code null}
      */
