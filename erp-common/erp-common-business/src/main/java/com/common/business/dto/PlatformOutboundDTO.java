@@ -2,11 +2,11 @@ package com.common.business.dto;
 
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.WarehousePlatformTypeEnum;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -77,22 +77,15 @@ public class PlatformOutboundDTO extends UniqueDto {
      */
     private String carrierName;
 
-    private List<Detail> detailList;
+    /**
+     * 出库明细
+     */
+    private List<Item> items;
 
-    //出库明细
-    private List<PlatformOutboundDTO.Item> items;
-    //签收批次
-    private List<PlatformOutboundDTO.Receiving> receivingDataList;
-
-    @Data
-    @ToString
-    @EqualsAndHashCode
-    public static class Detail {
-
-        private String platformSkuNo;
-
-        private Integer qty;
-    }
+    /**
+     * 签收批次
+     */
+    private List<Receiving> receivingDataList;
 
     @Data
     @ToString
@@ -100,10 +93,14 @@ public class PlatformOutboundDTO extends UniqueDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Item {
-        //SKU
+        /**
+         * 平台SKU
+         */
         private String productSku;
 
-        //实收数量
+        /**
+         * 实收/出库数量
+         */
         private Integer actualQty;
     }
 

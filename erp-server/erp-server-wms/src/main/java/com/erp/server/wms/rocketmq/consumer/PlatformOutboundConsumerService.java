@@ -593,7 +593,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         }
         ThirdWarehouseSkuPayload payload = buildThirdWarehouseSkuPayload(dto, overseasWarehouse);
         if (CollUtil.isEmpty(payload.getDetailList())) {
-            return ThirdWarehouseSkuValidationContext.fail("自动生成销售出库单失败：三方仓DTO明细为空");
+            return ThirdWarehouseSkuValidationContext.fail("自动生成销售出库单失败：三方仓DTO出库明细为空");
         }
         ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
         paramDTO.setPlatform(dto.getPlatform());
@@ -678,10 +678,10 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
 
     private ThirdWarehouseSkuPayload buildThirdWarehouseSkuPayload(PlatformOutboundDTO dto,
                                                                    OverseasProviderDTO.FeignDTO overseasWarehouse) {
-        List<ThirdWarehouseSkuDetail> detailList = Optional.ofNullable(dto.getDetailList()).orElse(Collections.emptyList()).stream()
+        List<ThirdWarehouseSkuDetail> detailList = Optional.ofNullable(dto.getItems()).orElse(Collections.emptyList()).stream()
                 .filter(Objects::nonNull)
-                .filter(detail -> StringUtils.isNotBlank(detail.getPlatformSkuNo()))
-                .map(detail -> new ThirdWarehouseSkuDetail(detail.getPlatformSkuNo(), Objects.nonNull(detail.getQty()) ? detail.getQty() : 0))
+                .filter(item -> StringUtils.isNotBlank(item.getProductSku()))
+                .map(item -> new ThirdWarehouseSkuDetail(item.getProductSku(), Objects.nonNull(item.getActualQty()) ? item.getActualQty() : 0))
                 .collect(Collectors.toList());
         return ThirdWarehouseSkuPayload.success(overseasWarehouse.getWarehouseId(),
                 overseasWarehouse.getPlatformWarehouseName(),

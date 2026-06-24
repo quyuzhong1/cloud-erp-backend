@@ -84,12 +84,12 @@ public class EccangOutboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHand
 		platformOutboundDTO.setOrderStatus(erpOrderStatus);
     	platformOutboundDTO.setThirdOrderStatus(AntuEnums.OrderStatusEnum.getName(orderStatus));
     	platformOutboundDTO.setTrackNo(dmpThirdOutboundEntity.getTrackingNo());
-    	platformOutboundDTO.setDetailList(this.convertDetailList(dmpThirdOutboundEntity.getDetailListJson()));
+    	platformOutboundDTO.setItems(this.convertItems(dmpThirdOutboundEntity.getDetailListJson()));
     	
         return platformOutboundDTO;
     }
 
-    private List<PlatformOutboundDTO.Detail> convertDetailList(String detailListJson) {
+    private List<PlatformOutboundDTO.Item> convertItems(String detailListJson) {
 		if(StringUtils.isBlank(detailListJson)) {
 			return Collections.emptyList();
 		}
@@ -97,14 +97,11 @@ public class EccangOutboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHand
 		if(CollUtil.isEmpty(itemList)) {
 			return Collections.emptyList();
 		}
-		List<PlatformOutboundDTO.Detail> detailList = new ArrayList<>();
+		List<PlatformOutboundDTO.Item> items = new ArrayList<>();
 		for(AntuCreateOutboundReq.Item item : itemList) {
-			PlatformOutboundDTO.Detail detail = new PlatformOutboundDTO.Detail();
-			detail.setPlatformSkuNo(item.getProductSku());
-			detail.setQty(item.getQuantity());
-			detailList.add(detail);
+			items.add(new PlatformOutboundDTO.Item(item.getProductSku(), item.getQuantity()));
 		}
-		return detailList;
+		return items;
     }
 
     @Override
