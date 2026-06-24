@@ -821,7 +821,12 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                 .collect(Collectors.toMap(OverseasProviderEntity::getId, Function.identity(), (left, right) -> left));
         for (OverseasProviderWarehouseEntity providerWarehouse : providerWarehouseList) {
             OverseasProviderEntity provider = providerMap.get(providerWarehouse.getMainId());
+            // provider 已按 dto.platform + ALREADY 授权过滤，与 DMP 出库平台一致
             if (Objects.nonNull(provider) && CollUtil.isNotEmpty(provider.getAuthJson())) {
+                if (providerWarehouseList.size() > 1) {
+                    log.warn("多Provider仓库映射，选用首个已授权Provider, platform={}, warehouseCode={}, authId={}",
+                            dto.getPlatform(), dto.getWarehouseCode(), provider.getId());
+                }
                 return provider.getId();
             }
         }
@@ -918,18 +923,33 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         // PlmTaskFeign.listBomChildBySkuIds 直接返回 List（非 ApiResult）；Feign 失败由框架抛 FeignServiceException
         List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
         if (CollUtil.isEmpty(bomChildrenList)) {
+            log.warn("组合品BOM查询无数据, skuIds={}", skuIdList);
             return Collections.emptyMap();
         }
-        return bomChildrenList.stream()
+        Map<String, List<BomChildrenSkuDTO>> combinationMap = bomChildrenList.stream()
                 .filter(item -> StringUtils.isNotBlank(item.getParentSkuId()))
                 .filter(item -> BomTypeEnum.COMBINATION.getType().equals(item.getType()))
                 .collect(Collectors.groupingBy(BomChildrenSkuDTO::getParentSkuId));
+        log.debug("组合品BOM加载完成, requestSkuCount={}, bomRowCount={}, combinationParentCount={}",
+                skuIdList.size(), bomChildrenList.size(), combinationMap.size());
+        return combinationMap;
     }
 
     private String findMappedPlatformSku(String skuId,
                                          String skuNo,
                                          Map<String, Integer> dtoSkuQtyMap,
                                          Map<String, List<ListingInfoWithSkuMappingDTO>> mappingMap) {
+        List<String> candidates = listMappedPlatformSkuCandidates(skuId, skuNo, dtoSkuQtyMap, mappingMap);
+        if (candidates.size() > 1) {
+            log.warn("多候选平台SKU映射，按字典序选用首个, skuId={}, skuNo={}, candidates={}", skuId, skuNo, candidates);
+        }
+        return CollUtil.isEmpty(candidates) ? null : candidates.get(0);
+    }
+
+    private List<String> listMappedPlatformSkuCandidates(String skuId,
+                                                         String skuNo,
+                                                         Map<String, Integer> dtoSkuQtyMap,
+                                                         Map<String, List<ListingInfoWithSkuMappingDTO>> mappingMap) {
         return dtoSkuQtyMap.entrySet().stream()
                 .filter(entry -> entry.getValue() > 0)
                 .map(Map.Entry::getKey)
@@ -942,8 +962,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                                 || (StringUtils.isNotBlank(skuNo)
                                 && StringUtils.isNotBlank(mapping.getProductSkuNo())
                                 && StrUtil.equals(skuNo, mapping.getProductSkuNo()))))
-                .findFirst()
-                .orElse(null);
+                .collect(Collectors.toList());
     }
 
     private static class ThirdWarehouseLogisticsChannelValidationContext {

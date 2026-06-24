@@ -75,7 +75,8 @@ public class ExportOmsSoHandler extends AbstractMultiSheetGroupDynamicHeadersFil
             dto.getParams().setSortList(null);
         }
         PagingVO<SoInfoDTO.PagingViewDTO> page = exportOmsFeign.exportSo(dto);
-        // Feign 返回 null 视为上游查询失败/熔断，显式失败而非包装成空结果，避免被基类误报为「导出数据不能为空」。
+        // 动态表头链路对 getPageData 返回值有 requirePagingResult，但本方法先调 Feign 再组装 DynamicExcelDTO，
+        // 须在此对中间结果判空，避免 page==null 时包装成空 PagingVO 导致基类误报「导出数据不能为空」。
         if (page == null) {
             throw new ServiceException("导出分页查询失败，查询为空：页码=" + dto.getCurrPage());
         }

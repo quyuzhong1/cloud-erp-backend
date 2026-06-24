@@ -68,7 +68,7 @@ public class ThirdWarehouseDeliveryEntity extends BaseEntity<ThirdWarehouseDeliv
     private String shippingMethod;
 
     /**
-     * 跟踪号
+     * 跟踪号（合 UAT 前需执行 third_warehouse_delivery.track_no 加列 DDL）
      */
     @TableField("track_no")
     private String trackNo;

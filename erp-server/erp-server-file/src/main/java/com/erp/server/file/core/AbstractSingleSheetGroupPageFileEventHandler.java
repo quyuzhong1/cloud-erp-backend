@@ -8,7 +8,7 @@ import com.erp.server.file.handler.FileRegistry;
  * 适用主从分组、数据量在单 sheet 容量内的展示型导出（如 SKU+实体仓 / 虚拟仓明细）。固定只展开 1 张数据 sheet、
  * {@link #sheetGroupExtraSheetCount()} 为 0，无尾部空 tab。
  * <p>
- * 数据量超过单 sheet 容量时请改用 {@link AbstractMultiSheetGroupPageFileEventHandler}（方案 C：多 sheet + 可接受尾部空 tab）。
+ * 数据量超过单 sheet 容量时请改用 {@link AbstractMultiSheetGroupPageFileEventHandler}（方案 C：多 sheet，finish 前 trim 未使用预留页）。
  * <p>
  * 子类须：
  * <ul>

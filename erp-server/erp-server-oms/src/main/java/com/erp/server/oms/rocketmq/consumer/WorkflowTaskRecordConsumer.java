@@ -2,6 +2,7 @@ package com.erp.server.oms.rocketmq.consumer;
 
 import cn.hutool.json.JSONUtil;
 import com.common.message.constant.RocketMqConsumerGroup;
+import com.common.message.constant.RocketMqNewTag;
 import com.common.message.constant.RocketMqTopic;
 import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
 import com.erp.server.oms.orchestration.WorkflowTaskStepDispatcher;
@@ -18,7 +19,7 @@ import java.util.Objects;
  */
 @Service
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqTopic.OMS_WORKFLOW_TASK_RECORD_TOPIC, selectorExpression = RocketMqConsumerGroup.OMS_WORKFLOW_TASK_RECORD_TAG, consumerGroup = RocketMqConsumerGroup.OMS_WORKFLOW_TASK_RECORD)
+@RocketMQMessageListener(topic = RocketMqTopic.OMS_WORKFLOW_TASK_RECORD_TOPIC, selectorExpression = RocketMqNewTag.OMS_WORKFLOW_TASK_RECORD_TAG, consumerGroup = RocketMqConsumerGroup.OMS_WORKFLOW_TASK_RECORD)
 public class WorkflowTaskRecordConsumer implements RocketMQListener<WorkflowTaskRecordDTO.AddTaskDTO> {
 
     @Resource

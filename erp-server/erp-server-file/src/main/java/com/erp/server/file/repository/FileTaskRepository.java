@@ -11,6 +11,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.UserStateConstants;
 import com.common.business.dto.base.BaseDTO;
 import com.common.business.threadlocal.UserContext;
+import com.common.core.exception.ServiceException;
 import com.common.business.vo.LoginUser;
 import com.erp.model.file.dto.FileDTO;
 import com.erp.model.file.dto.FileTaskParamsDTO;
@@ -126,12 +127,18 @@ public class FileTaskRepository extends ServiceImpl<FileTaskMapper, FileTask> im
     @Override
     public boolean removeWithAudit(FileTask fileTask, boolean userSystem) {
         LocalDateTime nowDate = LocalDateTime.now();
-        LoginUser userInfo = UserContext.getNonLoginUser();
-        String userId = userInfo.getUid();
-        String userName = userInfo.getUserName();
+        String userId;
+        String userName;
         if (userSystem) {
             userId = UserStateConstants.USER_SYSTEM_ID;
             userName = UserStateConstants.USER_SYSTEM;
+        } else {
+            LoginUser userInfo = UserContext.getNonLoginUser();
+            if (userInfo == null) {
+                throw new ServiceException("删除文件任务缺少用户信息");
+            }
+            userId = userInfo.getUid();
+            userName = userInfo.getUserName();
         }
         // updateById 会排除 @TableLogic 字段，无法写入 is_deleted；改 lambdaUpdate 显式软删并填充审计字段
         return this.lambdaUpdate()
