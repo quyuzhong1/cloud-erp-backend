@@ -1026,39 +1026,58 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 soOutstockService.appendApproveRemark(entity.getId(), message);
                 return BatchResultDTO.fail(entity.getId(), entity.getCode(), message);
             }
+            validateB2bOutboundQtyBeforeApprove(entity);
+            writeBackB2cSoOutstockDateIfNeeded(entity);
         }
         return ApplicationContextUtils.getBean(SoOutstockServiceImpl.class).approveInTransaction(dto, entity, approveType);
+    }
+
+    /**
+     * B2B 审核通过前：出库数量不得超过销售订单明细（Feign 只读，事务外执行）。
+     */
+    private void validateB2bOutboundQtyBeforeApprove(SoOutstockEntity entity) {
+        if (!OrderTypeEnum.B2B.getCode().equalsIgnoreCase(entity.getOrderType())
+                || ObjectUtil.isEmpty(entity.getSoId())) {
+            return;
+        }
+        List<SoOutstockDetailEntity> detailEntities = soOutstockDetailService.listDetailBySoIds(Collections.singletonList(entity.getSoId()));
+        List<SoDetailEntity> soDetails = soInfoFeign.listSoDetailByMainIds(Collections.singletonList(entity.getSoId()));
+        Map<String, Integer> detailMap = detailEntities.stream()
+                .filter(e -> Boolean.FALSE.equals(e.getInvalidStatus()))
+                .collect(Collectors.toMap(SoOutstockDetailEntity::getSkuNo, SoOutstockDetailEntity::getPlanQty, Integer::sum));
+        Map<String, Integer> soDetailMap = soDetails.stream()
+                .collect(Collectors.toMap(SoDetailEntity::getDeliverySkuNo, SoDetailEntity::getBoxQty, Integer::sum));
+        for (Map.Entry<String, Integer> entry : detailMap.entrySet()) {
+            int sellQty = Optional.ofNullable(soDetailMap.get(entry.getKey())).orElse(0);
+            if (sellQty == 0) {
+                throw new ServiceException(ApiError.SO_PICKLIST_DETAIL_NOT_FOUND_FOR_SO, entry.getKey());
+            }
+            if (sellQty < entry.getValue()) {
+                throw new ServiceException(ApiError.SO_OUTBOUND_QTY_EXCEEDS_ORDER, entry.getKey());
+            }
+        }
+    }
+
+    /**
+     * B2C 审核通过前：回写出库日期到销售订单（Feign 写，GlobalTransactional 外执行，与原逻辑时序一致）。
+     */
+    private void writeBackB2cSoOutstockDateIfNeeded(SoOutstockEntity entity) {
+        if (!OrderTypeEnum.B2C.getCode().equalsIgnoreCase(entity.getOrderType())
+                || entity.getBillDate() == null
+                || CharSequenceUtil.isBlank(entity.getSoId())) {
+            return;
+        }
+        Object isNotOutboundObj = redisUtil.get(CharSequenceUtil.format(RedisCacheConstants.SO_B2C_NOT_OUTBOUND_KEY + ":{}", entity.getSoId()));
+        Boolean isNotOutbound = Objects.nonNull(isNotOutboundObj) && Boolean.TRUE.equals(isNotOutboundObj);
+        if (!isNotOutbound) {
+            soB2cFeign.writeBackSoOutstockDate(entity.getSoId(),
+                    DateTimeFormatter.ofPattern("yyyy-MM-dd").format(entity.getBillDate()));
+        }
     }
 
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
     public BatchResultDTO approveInTransaction(ApproveOneDTO dto, SoOutstockEntity entity, ApproveTypeEnum approveType) {
-        if(OrderTypeEnum.B2B.getCode().equalsIgnoreCase(entity.getOrderType())){
-            if (ObjectUtil.isNotEmpty(entity.getSoId())) {
-                List<SoOutstockDetailEntity> detailEntities = soOutstockDetailService.listDetailBySoIds(Collections.singletonList(entity.getSoId()));
-                List<SoDetailEntity> soDetails = soInfoFeign.listSoDetailByMainIds(Collections.singletonList(entity.getSoId()));
-                Map<String, Integer> detailMap = detailEntities.stream().filter(e -> Boolean.FALSE.equals(e.getInvalidStatus())).collect(Collectors.toMap(SoOutstockDetailEntity::getSkuNo, SoOutstockDetailEntity::getPlanQty, Integer::sum));
-                Map<String, Integer> soDetailMap = soDetails.stream().collect(Collectors.toMap(SoDetailEntity::getDeliverySkuNo, SoDetailEntity::getBoxQty, Integer::sum));
-                for (Map.Entry<String, Integer> entry : detailMap.entrySet()) {
-                    int sellQty = Optional.ofNullable(soDetailMap.get(entry.getKey())).orElse(0);
-                    if (sellQty == 0) {
-                        throw new ServiceException(ApiError.SO_PICKLIST_DETAIL_NOT_FOUND_FOR_SO, entry.getKey());
-                    }
-                    if (sellQty < entry.getValue()) {
-                        throw new ServiceException(ApiError.SO_OUTBOUND_QTY_EXCEEDS_ORDER, entry.getKey());
-                    }
-                }
-            }
-        }else {
-            //销售出库单单据日期需要回写到B2C销售订单中
-            if(null != entity.getBillDate()){
-                Object isNotOutboundObj = redisUtil.get(CharSequenceUtil.format(RedisCacheConstants.SO_B2C_NOT_OUTBOUND_KEY+":{}", entity.getSoId()));
-                Boolean isNotOutbound = Objects.nonNull(isNotOutboundObj) && Boolean.TRUE.equals(isNotOutboundObj) ? Boolean.TRUE : Boolean.FALSE;
-                if (!isNotOutbound){
-                    soB2cFeign.writeBackSoOutstockDate(entity.getSoId(),DateTimeFormatter.ofPattern("yyyy-MM-dd").format(entity.getBillDate()));
-                }
-            }
-        }
         //销售出库单反审核后修改出库日期审核时，需要校验是否有关联的中转调拨单
         if (CharSequenceUtil.isNotBlank(entity.getSourceId())){
             List<TransferInfoEntity> transferInfoEntities = transferInfoService.listBySourceId(entity.getSourceId());
