@@ -383,7 +383,7 @@ public class AfterSalesWarehouseLocationSuggestServiceImpl extends SuperServiceI
 
         Map<String, WarehouseLocationEntity> locationMap = warehouseLocationList.stream()
                 .collect(Collectors.toMap(
-                        item -> item.getWarehouseId() + "_" + item.getCode() + "_" + item.getType().toUpperCase(),
+                        item -> item.getWarehouseId() + "_" + item.getCode() + "_" + (item.getType() == null ? "" : item.getType().toUpperCase()),
                         item -> item,
                         (oldVal, newVal) -> oldVal));
 

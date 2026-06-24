@@ -56,6 +56,7 @@ public class AfterSalesWarehouseLocationSuggestExcelListener extends AnalysisEve
     /**
      * 与 {@link AfterSalesWarehouseLocationSuggestExcelDto} 中 {@code @ExcelProperty} 的标题一致，缺任一列即拒绝导入。
      */
+    private static final int MAX_IMPORT_ROWS = 10_000;
     private static final List<String> REQUIRED_IMPORT_HEADER_TITLES = Collections.unmodifiableList(Arrays.asList(
             "sku编码",
             "产品名称",
@@ -200,6 +201,9 @@ public class AfterSalesWarehouseLocationSuggestExcelListener extends AnalysisEve
     public void invoke(LinkedHashMap<Integer, String> data, AnalysisContext context) {
         if (headerTitleToColumnIndex == null || headerTitleToColumnIndex.isEmpty()) {
             throw new ServiceException("导入文件未识别到有效表头，请下载最新导入模板");
+        }
+        if (allList.size() >= MAX_IMPORT_ROWS) {
+            throw new ServiceException("导入数据不能超过 " + MAX_IMPORT_ROWS + " 行，请分批导入");
         }
         AfterSalesWarehouseLocationSuggestExcelDto dto = new AfterSalesWarehouseLocationSuggestExcelDto();
         dto.setSkuNo(cellByHeader(data, "sku编码"));
