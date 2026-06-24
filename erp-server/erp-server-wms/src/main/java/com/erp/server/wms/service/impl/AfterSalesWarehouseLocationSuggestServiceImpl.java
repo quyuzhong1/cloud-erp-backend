@@ -24,6 +24,7 @@ import com.common.core.utils.ExcelUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.AfterSalesWarehouseLocationSuggestDto;
+import com.erp.model.wms.dto.OperateLogDTO;
 import com.erp.model.wms.dto.excel.AfterSalesWarehouseLocationSuggestExcelDto;
 import com.erp.model.wms.entity.AfterSalesWarehouseLocationSuggestEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
@@ -329,21 +330,26 @@ public class AfterSalesWarehouseLocationSuggestServiceImpl extends SuperServiceI
             return Collections.emptyList();
         }
         List<BatchResultDTO> resultDTOList = new ArrayList<>();
-        LoginUser user = UserContext.getNonLoginUser();
 
         List<AfterSalesWarehouseLocationSuggestEntity> list = baseMapper.selectBatchIds(dto.getIds());
 
         List<AfterSalesWarehouseLocationSuggestEntity> updateList = new ArrayList<>();
+        List<OperateLogDTO.AddModuleOperateLogDTO> operateLogList = new ArrayList<>();
         for (AfterSalesWarehouseLocationSuggestEntity entity : list) {
             if (entity.getDisabled().equals(Boolean.parseBoolean(dto.getDisabled()))) {
                 continue;
             }
             entity.setDisabled(Boolean.valueOf(dto.getDisabled()));
             updateList.add(entity);
-            operateLogService.addModuleOperateLog(String.format("更新售后推荐仓位状态：%s", entity.getDisabled() ? "禁用" : "启用"), ModuleTypeEnum.AFTERSALES_WAREHOUSE_LOCATION_SUGGEST.getCode(), entity.getId(), "状态变更", user.getUid(), user.getUserName());
+            operateLogList.add(new OperateLogDTO.AddModuleOperateLogDTO(
+                    String.format("更新售后推荐仓位状态：%s", entity.getDisabled() ? "禁用" : "启用"),
+                    ModuleTypeEnum.AFTERSALES_WAREHOUSE_LOCATION_SUGGEST.getCode(),
+                    entity.getId(),
+                    "状态变更"));
         }
         if (!updateList.isEmpty()) {
             this.updateBatchById(updateList);
+            operateLogService.batchAddModuleOperateLog(operateLogList);
         }
         //暂时没有对单个数据的修改状态做判断是否成功失败只返回空的结果后续可以加逻辑
         return resultDTOList;
