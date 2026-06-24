@@ -174,6 +174,10 @@ public class AfterSalesWarehouseLocationSuggestDto implements Serializable {
          * 是否禁用
          */
         private Boolean disabled;
+        /**
+         * 乐观锁版本号（编辑时必传）
+         */
+        private Integer version;
     }
 
     @EqualsAndHashCode(callSuper = true)

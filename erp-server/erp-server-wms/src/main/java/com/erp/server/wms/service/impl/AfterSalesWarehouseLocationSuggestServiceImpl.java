@@ -290,6 +290,7 @@ public class AfterSalesWarehouseLocationSuggestServiceImpl extends SuperServiceI
             try {
                 baseMapper.upsertBatch(batch);
             } catch (Exception e) {
+                log.error("售后仓位推荐 UPSERT 批次失败，批次大小={}", batch.size(), e);
                 throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
             }
         }
@@ -345,7 +346,7 @@ public class AfterSalesWarehouseLocationSuggestServiceImpl extends SuperServiceI
         List<AfterSalesWarehouseLocationSuggestEntity> updateList = new ArrayList<>();
         List<OperateLogDTO.AddModuleOperateLogDTO> operateLogList = new ArrayList<>();
         for (AfterSalesWarehouseLocationSuggestEntity entity : list) {
-            if (entity.getDisabled().equals(Boolean.parseBoolean(dto.getDisabled()))) {
+            if (Objects.equals(entity.getDisabled(), Boolean.parseBoolean(dto.getDisabled()))) {
                 continue;
             }
             entity.setDisabled(Boolean.valueOf(dto.getDisabled()));
