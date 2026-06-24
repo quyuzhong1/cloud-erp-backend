@@ -893,6 +893,103 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
     }
 
     @Override
+    public List<AfterSalePackDTO.ViewDTO> viewByIds(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return Collections.emptyList();
+        }
+        List<String> distinctIds = ids.stream()
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(distinctIds)) {
+            return Collections.emptyList();
+        }
+        // 1. 批量查主表，保持入参顺序，数据库中不存在的 ID 静默跳过
+        List<AfterSalePackEntity> entityList = this.listByIds(distinctIds);
+        Map<String, AfterSalePackEntity> entityMap = entityList.stream()
+                .collect(Collectors.toMap(AfterSalePackEntity::getId, item -> item, (v1, v2) -> v1));
+        List<AfterSalePackEntity> orderedEntityList = distinctIds.stream()
+                .filter(entityMap::containsKey)
+                .map(entityMap::get)
+                .collect(Collectors.toList());
+
+        // 2. 一次性批量查所有明细，避免 N+1
+        List<String> mainIds = orderedEntityList.stream()
+                .map(AfterSalePackEntity::getId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        List<AfterSalePackDetailEntity> afterSalePackDetailEntityList = afterSalePackDetailService.lambdaQuery()
+                .in(AfterSalePackDetailEntity::getMainId, mainIds)
+                .list();
+
+        // 3. 批量查仓位（移出 + 移入），转 Map 供组装时 O(1) 查找
+        List<String> outWarehouseLocationIds = afterSalePackDetailEntityList.stream()
+                .map(AfterSalePackDetailEntity::getOutWarehouseLocationId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, WarehouseLocationEntity> outWarehouseLocationMap = CollectionUtils.isEmpty(outWarehouseLocationIds)
+                ? Collections.emptyMap()
+                : warehouseLocationService.listByIds(outWarehouseLocationIds).stream()
+                .collect(Collectors.toMap(WarehouseLocationEntity::getId, item -> item, (v1, v2) -> v1));
+
+        List<String> inWarehouseLocationIds = afterSalePackDetailEntityList.stream()
+                .map(AfterSalePackDetailEntity::getInWarehouseLocationId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, WarehouseLocationEntity> inWarehouseLocationMap = CollectionUtils.isEmpty(inWarehouseLocationIds)
+                ? Collections.emptyMap()
+                : warehouseLocationService.listByIds(inWarehouseLocationIds).stream()
+                .collect(Collectors.toMap(WarehouseLocationEntity::getId, item -> item, (v1, v2) -> v1));
+
+        // 4. 按 mainId 分组明细，并回填仓位 code/name
+        Map<String, List<AfterSalePackDetailDTO.ViewDTO>> detailMap = new HashMap<>(16);
+        for (AfterSalePackDetailEntity detail : afterSalePackDetailEntityList) {
+            AfterSalePackDetailDTO.ViewDTO viewDTO = new AfterSalePackDetailDTO.ViewDTO();
+            BeanMapperUtils.copy(detail, viewDTO);
+            WarehouseLocationEntity outLoc = outWarehouseLocationMap.get(detail.getOutWarehouseLocationId());
+            if (ObjectUtil.isNotEmpty(outLoc)) {
+                viewDTO.setOutWarehouseLocationCode(outLoc.getCode());
+                viewDTO.setOutWarehouseLocationName(outLoc.getName());
+            }
+            WarehouseLocationEntity inLoc = inWarehouseLocationMap.get(detail.getInWarehouseLocationId());
+            if (ObjectUtil.isNotEmpty(inLoc)) {
+                viewDTO.setInWarehouseLocationCode(inLoc.getCode());
+                viewDTO.setInWarehouseLocationName(inLoc.getName());
+            }
+            detailMap.computeIfAbsent(detail.getMainId(), key -> new ArrayList<>()).add(viewDTO);
+        }
+
+        // 5. 批量查采购退货，补充供应商信息
+        List<String> sourceIds = orderedEntityList.stream()
+                .map(AfterSalePackEntity::getSourceId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, PoReturnEntity> poReturnMap = CollectionUtils.isEmpty(sourceIds)
+                ? Collections.emptyMap()
+                : poReturnService.listByIds(sourceIds).stream()
+                .collect(Collectors.toMap(PoReturnEntity::getId, item -> item, (v1, v2) -> v1));
+
+        // 6. 组装最终 ViewDTO
+        List<AfterSalePackDTO.ViewDTO> resultList = new ArrayList<>();
+        for (AfterSalePackEntity entity : orderedEntityList) {
+            AfterSalePackDTO.ViewDTO data = BeanMapperUtils.map(AfterSalePackDTO.ViewDTO.class, entity);
+            data.setTypeName(AfterSalePackTypeEnum.getByName(data.getType()));
+            PoReturnEntity poReturnEntity = poReturnMap.get(data.getSourceId());
+            if (ObjectUtil.isNotEmpty(poReturnEntity)) {
+                data.setSupplierId(poReturnEntity.getSupplierId());
+                data.setSupplierName(poReturnEntity.getSupplierName());
+            }
+            data.setDetailViewDTOList(detailMap.get(data.getId()));
+            resultList.add(data);
+        }
+        return resultList;
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public void markBoxesAsMoved(List<String> ids, String targetWarehouseLocationId) {
         if (CollUtil.isEmpty(ids)) {
