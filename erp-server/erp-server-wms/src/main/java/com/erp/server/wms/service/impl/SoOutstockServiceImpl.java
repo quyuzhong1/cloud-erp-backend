@@ -3563,6 +3563,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             if (soOutstockService.checkClosedAndUpdateRemark(dto, id)){
                 return true;
             }
+            if (shouldSkipSubmitAfterUpstreamAmountCheck(id)) {
+                log.info("销售出库单上游金额校验未通过，已落待提交，跳过自动提交审核，outstockId={}", id);
+                return true;
+            }
             soOutstockService.submitAndApprove(id);
         }
         return Boolean.TRUE;
@@ -3648,6 +3652,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 // 事务分开
                 // 检查关账或已有盘盈盘亏单据
                 if (soOutstockService.checkClosedAndUpdateRemark(dto, id)){
+                    return true;
+                }
+                if (shouldSkipSubmitAfterUpstreamAmountCheck(id)) {
+                    log.info("销售出库单上游金额校验未通过，已落待提交，跳过自动提交审核，outstockId={}", id);
                     return true;
                 }
                 soOutstockService.submitAndApprove(id);
@@ -3851,21 +3859,32 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     /**
      * 落库完成后校验上游 B2C 金额；不一致时单独短事务写待提交与审核说明。
+     *
+     * @return true 表示已按金额异常路径处理，调用方应跳过 submitAndApprove
      */
-    private void markB2cSoOutstockAmountMismatchIfNeeded(String outstockId) {
+    private boolean markB2cSoOutstockAmountMismatchIfNeeded(String outstockId) {
         SoOutstockEntity persisted = this.getById(outstockId);
         if (persisted == null) {
-            return;
+            return false;
         }
         List<SoOutstockDetailEntity> detailEntities = soOutstockDetailService.lambdaQuery()
                 .eq(SoOutstockDetailEntity::getMainId, outstockId)
                 .list();
         UpstreamAmountCheckResultEnum amountCheckResult = checkUpstreamAmountWithSo(persisted, detailEntities);
         if (UpstreamAmountCheckResultEnum.PASS.equals(amountCheckResult)) {
-            return;
+            return false;
         }
         ApplicationContextUtils.getBean(SoOutstockServiceImpl.class)
                 .markB2cSoOutstockAmountMismatch(outstockId, amountCheckResult);
+        return true;
+    }
+
+    /**
+     * addB2cSoOutstock 落库后若上游金额校验未通过，{@link #markB2cSoOutstockAmountMismatch} 已写入 approve_remark。
+     */
+    private boolean shouldSkipSubmitAfterUpstreamAmountCheck(String outstockId) {
+        SoOutstockEntity entity = this.getById(outstockId);
+        return entity != null && CharSequenceUtil.isNotBlank(entity.getApproveRemark());
     }
 
     @Transactional(rollbackFor = Exception.class)
