@@ -479,6 +479,8 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         if(!platformWarehouseCodeNotExist && !overseasProviderNotExist) {
             skuValidationContext = loadThirdWarehouseSkuValidationContext(dto, overseasWarehouse);
         }
+        ThirdWarehouseLogisticsChannelValidationContext logisticsChannelContext =
+                loadThirdWarehouseLogisticsChannelValidationContext(soB2cIds, dto);
 
         for (SoB2cEntity mainEntity : mainEntityList) {
             SoB2cDeliveryEntity soB2cDeliveryEntity = soB2cDeliveryMap.get(mainEntity.getId());
@@ -530,7 +532,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
             }
 
             String logisticsChannelErrorMsg = validateThirdWarehouseLogisticsChannelMapping(
-                    mainEntity.getId(), dto);
+                    mainEntity.getId(), dto, logisticsChannelContext);
             if (StringUtils.isNotBlank(logisticsChannelErrorMsg)) {
                 addRetryPlatformOutboundError(mainEntity.getId(), dto, logisticsChannelErrorMsg);
                 continue;
@@ -607,20 +609,25 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         soB2cFeign.addSoB2cError(addError);
     }
 
-    /**
-     * 订单物流渠道为空时，校验三方仓 shipping_method 是否已映射 ERP 物流渠道。
-     *
-     * @return 校验失败时的异常文案；null 表示通过或无需校验
-     */
-    private String validateThirdWarehouseLogisticsChannelMapping(String mainId,
-                                                                 PlatformOutboundDTO dto) {
+    private ThirdWarehouseLogisticsChannelValidationContext loadThirdWarehouseLogisticsChannelValidationContext(
+            List<String> soB2cIds, PlatformOutboundDTO dto) {
         List<SoB2cLogisticsEntity> logisticsList = FeignQuery.create(SoB2cLogisticsEntity.class)
-                .eq(SoB2cLogisticsEntity::getMainId, mainId)
+                .in(SoB2cLogisticsEntity::getMainId, soB2cIds)
                 .list();
-        SoB2cLogisticsEntity logisticsEntity = CollUtil.isEmpty(logisticsList) ? null : logisticsList.get(0);
-        if (Objects.isNull(logisticsEntity) || StringUtils.isNotBlank(logisticsEntity.getLogisticsChannelId())) {
-            return null;
+        Map<String, SoB2cLogisticsEntity> logisticsByMainId = new HashMap<>();
+        if (CollUtil.isNotEmpty(logisticsList)) {
+            for (SoB2cLogisticsEntity logisticsEntity : logisticsList) {
+                logisticsByMainId.putIfAbsent(logisticsEntity.getMainId(), logisticsEntity);
+            }
         }
+        Boolean mappingValid = resolveThirdWarehouseLogisticsMappingValid(dto);
+        return new ThirdWarehouseLogisticsChannelValidationContext(logisticsByMainId, mappingValid);
+    }
+
+    /**
+     * null 表示 dto 关键入参为空，跳过映射校验；true/false 表示映射是否存在。
+     */
+    private Boolean resolveThirdWarehouseLogisticsMappingValid(PlatformOutboundDTO dto) {
         String shippingMethod = dto.getShippingMethod();
         String thirdWarehousePlatform = dto.getPlatform();
         String platformWarehouseCode = dto.getWarehouseCode();
@@ -635,17 +642,36 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                 .eq(LogisticsSaleChannelEntity::getCode, shippingMethod)
                 .eq(LogisticsSaleChannelEntity::getPlatformWarehouseCode, platformWarehouseCode));
         if (CollUtil.isEmpty(saleChannelList)) {
-            return buildLogisticsChannelNotMappedErrorMsg(dto);
+            return false;
         }
         String channelCode = saleChannelList.get(0).getCode();
         List<LogisticsChannelEntity> channelList = FeignQuery.list(FeignQuery.create(LogisticsChannelEntity.class)
                 .eq(LogisticsChannelEntity::getIsDeleted, false)
                 .eq(LogisticsChannelEntity::getCode, channelCode)
                 .eq(LogisticsChannelEntity::getSourceType, SourceTypeEnum.LOGISTICS_WAREHOUSE.getCode()));
-        if (CollUtil.isEmpty(channelList)) {
-            return buildLogisticsChannelNotMappedErrorMsg(dto);
+        return CollUtil.isNotEmpty(channelList);
+    }
+
+    /**
+     * 订单物流渠道为空时，校验三方仓 shipping_method 是否已映射 ERP 物流渠道。
+     *
+     * @return 校验失败时的异常文案；null 表示通过或无需校验
+     */
+    private String validateThirdWarehouseLogisticsChannelMapping(String mainId,
+                                                                 PlatformOutboundDTO dto,
+                                                                 ThirdWarehouseLogisticsChannelValidationContext context) {
+        SoB2cLogisticsEntity logisticsEntity = context.getLogisticsByMainId().get(mainId);
+        if (Objects.isNull(logisticsEntity) || StringUtils.isNotBlank(logisticsEntity.getLogisticsChannelId())) {
+            return null;
         }
-        return null;
+        Boolean mappingValid = context.getMappingValid();
+        if (mappingValid == null) {
+            return null;
+        }
+        if (Boolean.TRUE.equals(mappingValid)) {
+            return null;
+        }
+        return buildLogisticsChannelNotMappedErrorMsg(dto);
     }
 
     private String buildLogisticsChannelNotMappedErrorMsg(PlatformOutboundDTO dto) {
@@ -835,6 +861,26 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                                 && StrUtil.equals(skuNo, mapping.getProductSkuNo()))))
                 .findFirst()
                 .orElse(null);
+    }
+
+    private static class ThirdWarehouseLogisticsChannelValidationContext {
+        private final Map<String, SoB2cLogisticsEntity> logisticsByMainId;
+        /** null 表示跳过映射校验 */
+        private final Boolean mappingValid;
+
+        private ThirdWarehouseLogisticsChannelValidationContext(Map<String, SoB2cLogisticsEntity> logisticsByMainId,
+                                                                Boolean mappingValid) {
+            this.logisticsByMainId = logisticsByMainId;
+            this.mappingValid = mappingValid;
+        }
+
+        public Map<String, SoB2cLogisticsEntity> getLogisticsByMainId() {
+            return logisticsByMainId;
+        }
+
+        public Boolean getMappingValid() {
+            return mappingValid;
+        }
     }
 
     private static class ThirdWarehouseSkuCheckResult {

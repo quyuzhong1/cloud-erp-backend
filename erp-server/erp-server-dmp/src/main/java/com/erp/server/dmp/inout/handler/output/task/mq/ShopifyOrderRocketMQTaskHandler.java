@@ -17,6 +17,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.StrUtils;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.DmpOrderReturnStatusEnum;
+import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
@@ -372,11 +373,12 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
         orderDTO.setIsCancel(platformCancelled);
         if (platformCancelled) {
             orderDTO.setInvalidStatus(Boolean.TRUE);
-            orderDTO.setInvalidType("automatic");
-            orderDTO.setInvalidRemark("平台取消");
+            orderDTO.setInvalidType(SoB2cInvalidTypeEnum.ENUM_AUTOMATIC.getCode());
+            orderDTO.setInvalidRemark(SoB2cInvalidTypeEnum.PLATFORM_CANCEL_REMARK);
         } else {
             orderDTO.setInvalidStatus(dmpSoInfoEntity.getInvalidStatus());
-            orderDTO.setInvalidType(dmpSoInfoEntity.getInvalidStatus() ? "automatic" : "");
+            orderDTO.setInvalidType(dmpSoInfoEntity.getInvalidStatus()
+                    ? SoB2cInvalidTypeEnum.ENUM_AUTOMATIC.getCode() : "");
             orderDTO.setInvalidRemark("");
         }
         // 主单退款标签(包含退款/部分退款)，与平台取消区分
