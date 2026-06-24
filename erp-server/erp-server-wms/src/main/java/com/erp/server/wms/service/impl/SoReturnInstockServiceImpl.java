@@ -2500,6 +2500,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         } catch (ExcelAnalysisException e) {
             log.error("{}解析失败！", bizName, e);
             throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
+        } catch (ServiceException e) {
+            throw e;
         } catch (Exception e) {
             log.error("{}文件读取失败！", bizName, e);
             throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
@@ -2716,6 +2718,14 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             return;
         }
         if (appendImportUpdateExchangeRateErrorsBeforePersist(toUpdateList, monthRateCache, errorList)) {
+            List<SoReturnStockUpdateImportExcelDTO> pendingRows = toUpdateList.stream()
+                    .map(Pair::getFirst)
+                    .filter(row -> !errorList.contains(row))
+                    .collect(Collectors.toList());
+            markImportUpdateBatchAbortedRows(pendingRows, errorList);
+            return;
+        }
+        if (appendImportUpdateStatusErrorsBeforePersist(toUpdateList, errorList)) {
             List<SoReturnStockUpdateImportExcelDTO> pendingRows = toUpdateList.stream()
                     .map(Pair::getFirst)
                     .filter(row -> !errorList.contains(row))
@@ -3062,6 +3072,62 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 errorList.add(row);
             }
             hasError = true;
+        }
+        return hasError;
+    }
+
+    /**
+     * 落库前二次校验单据状态与 version，避免异步任务执行窗口内并发审批/作废导致覆盖
+     *
+     * @return true 表示存在状态/版本冲突，调用方应终止落库
+     */
+    private boolean appendImportUpdateStatusErrorsBeforePersist(
+            List<Pair<SoReturnStockUpdateImportExcelDTO, Pair<SoReturnInstockEntity, SoReturnInstockEntity>>> toUpdateList,
+            List<SoReturnStockUpdateImportExcelDTO> errorList) {
+        List<String> codeList = toUpdateList.stream()
+                .map(item -> item.getFirst().getCode())
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(codeList)) {
+            return false;
+        }
+        Map<String, SoReturnInstockEntity> freshEntityMap = lambdaQuery()
+                .in(SoReturnInstockEntity::getCode, codeList)
+                .list()
+                .stream()
+                .collect(Collectors.toMap(SoReturnInstockEntity::getCode, Function.identity(), (a, b) -> a));
+        boolean hasError = false;
+        for (Pair<SoReturnStockUpdateImportExcelDTO, Pair<SoReturnInstockEntity, SoReturnInstockEntity>> item : toUpdateList) {
+            SoReturnStockUpdateImportExcelDTO row = item.getFirst();
+            SoReturnInstockEntity snapshotEntity = item.getSecond().getFirst();
+            SoReturnInstockEntity entityToUpdate = item.getSecond().getSecond();
+            SoReturnInstockEntity freshEntity = freshEntityMap.get(row.getCode());
+            if (ObjectUtil.isEmpty(freshEntity)) {
+                appendImportUpdateError(row, MessageUtils.getMessage(ApiError.SO_RETURN_INSTOCK_IMPORT_CODE_NOT_FOUND));
+                if (!errorList.contains(row)) {
+                    errorList.add(row);
+                }
+                hasError = true;
+                continue;
+            }
+            if (!isImportUpdateEntityUpdatable(freshEntity)) {
+                appendImportUpdateError(row, MessageUtils.getMessage(ApiError.SO_RETURN_INSTOCK_IMPORT_UPDATE_STATUS_INVALID));
+                if (!errorList.contains(row)) {
+                    errorList.add(row);
+                }
+                hasError = true;
+                continue;
+            }
+            if (!ObjectUtil.equal(snapshotEntity.getVersion(), freshEntity.getVersion())) {
+                appendImportUpdateError(row, MessageUtils.getMessage(ApiError.BILL_DATA_LOCKED));
+                if (!errorList.contains(row)) {
+                    errorList.add(row);
+                }
+                hasError = true;
+                continue;
+            }
+            entityToUpdate.setVersion(freshEntity.getVersion());
         }
         return hasError;
     }
