@@ -2725,7 +2725,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 .collect(Collectors.toList()));
 
         if (CollUtil.isNotEmpty(errorList)) {
-            // review-skip: 产品需求 — 批量更新任一行校验失败则整批不落库，已通过 markImportUpdateBatchAbortedRows 提示
+            // review-skip #3: 产品需求 — 批量更新采用「全有全无」策略，任一行校验失败则整批不落库（与新增导入按组部分成功不同）；
+            // 已通过 markImportUpdateBatchAbortedRows 向合格行追加「本批存在其他错误，整批未处理」提示，避免用户误以为已更新
             markImportUpdateBatchAbortedRows(successList, errorList);
             return;
         }
@@ -2768,7 +2769,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
     /**
      * 批量更新主表：全部校验通过后在单事务内落库
-     * review-skip: 产品需求 — 批量更新采用整批单事务落库，与新增导入按组落库策略不同
+     * review-skip #2: 产品需求 — 批量更新整批单事务原子落库，保证要么全部更新成功要么全部回滚；
+     * 主表/明细写库内部已按 IMPORT_UPDATE_BATCH_SIZE(500) 分批 SQL，与外层单事务策略 intentionally 不同
      */
     @Transactional(rollbackFor = Exception.class)
     public void persistAllImportUpdate(List<Pair<SoReturnInstockEntity, SoReturnInstockEntity>> updatePairs,
@@ -3752,11 +3754,12 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                         resolveImportPersistErrorMsg(e));
             }
         }
+        // review-skip #1: 产品需求 — SKU 占用为落库后非关键后置步骤，失败仅 warn 日志，不回写 errorList、不追加任务 remark；
+        // 原因：单据已创建即视为导入成功，若标失败用户会重复导入产生重复单；占用状态可后续人工/定时补偿
         if (CollUtil.isNotEmpty(persistedBundles)) {
             try {
                 updateImportAddSkuOccupyStatus(persistedBundles);
             } catch (Exception e) {
-                // 落库已成功，SKU 占用为非关键后置步骤；不回写 errorList，避免用户误判为导入失败并重复导入
                 log.warn("销售退货入库单导入落库已成功，但SKU占用状态更新失败，不影响已创建单据", e);
             }
         }
