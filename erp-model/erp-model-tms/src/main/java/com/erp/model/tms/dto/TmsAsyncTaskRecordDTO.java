@@ -529,7 +529,7 @@ public class TmsAsyncTaskRecordDTO implements Serializable {
     /**
      * 尾程费用对账状态变更载荷。
      * <p>
-     * 仅持久化目标状态、确认时间、高级查询与数据权限 SQL；费用归属由 methodType 区分，不写入 payload。
+     * 仅持久化目标状态、确认时间、创建时间范围、高级查询与数据权限 SQL；费用归属由 methodType 区分，不写入 payload。
      */
     @Data
     @NoArgsConstructor
@@ -545,6 +545,16 @@ public class TmsAsyncTaskRecordDTO implements Serializable {
          * 对账确认时间
          */
         private LocalDateTime confirmTime;
+
+        /**
+         * 费用记录创建时间范围起始
+         */
+        private LocalDateTime createTimeStart;
+
+        /**
+         * 费用记录创建时间范围结束
+         */
+        private LocalDateTime createTimeEnd;
 
         /**
          * 页面高级查询生成的 SQL 条件

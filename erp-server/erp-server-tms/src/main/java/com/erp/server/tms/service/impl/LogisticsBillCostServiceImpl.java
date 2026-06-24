@@ -16,7 +16,7 @@ import com.baomidou.mybatisplus.core.incrementer.IdentifierGenerator;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.annotation.DataIdempotent;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.*;
 import com.common.business.dto.base.BaseResultDTO.AddDTO;
 import com.common.business.enums.*;
@@ -3143,7 +3143,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
 
     @Transactional(rollbackFor = Exception.class)
-    @DataIdempotent(keyIdName = "id")
+    @DistributeLocker(keyName = "id")
     @Override
     public BatchResultDTO pushAllocation(String id, String reportDate, LogisticsBillCostDTO.SmallBagPushAllocationContext pushContext) {
         if (pushContext == null) {
@@ -3558,6 +3558,9 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         String costTypeName = resolveCostAttributionName(dto.getType());
         String businessType = SourceTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode();
         String methodType = resolveUpdateReconciliationStatusMethodType(dto.getType());
+        LocalDate today = LocalDate.now();
+        dto.setCreateTimeStart(today.minusDays(30).atStartOfDay());
+        dto.setCreateTimeEnd(today.atTime(23, 59, 59));
 
         int total = countByUpdateReconciliationStatus(buildUpdateReconciliationStatusCountQuery(dto));
         if (total == 0) {
@@ -3566,7 +3569,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
         TmsAsyncTaskRecordDTO.UpdateReconciliationStatusPayloadDTO payload =
             new TmsAsyncTaskRecordDTO.UpdateReconciliationStatusPayloadDTO(
-                dto.getReconciliationStatus(), dto.getConfirmTime(), dto.getSqlMap(), dto.getPermissionSql());
+                dto.getReconciliationStatus(), dto.getConfirmTime(),
+                dto.getCreateTimeStart(), dto.getCreateTimeEnd(), dto.getSqlMap(), dto.getPermissionSql());
         TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope =
             asyncTaskRecordService.buildEnvelope(businessType, methodType, null, null, payload);
         BatchResultDTO result = asyncTaskRecordService.dispatchManualEnvelopeTask(
@@ -3675,6 +3679,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         query.setType(costType);
         query.setReconciliationStatus(payload.getReconciliationStatus());
         query.setConfirmTime(payload.getConfirmTime());
+        query.setCreateTimeStart(payload.getCreateTimeStart());
+        query.setCreateTimeEnd(payload.getCreateTimeEnd());
         query.setSqlMap(payload.getSqlMap());
         query.setPermissionSql(payload.getPermissionSql());
         fillUpdateReconciliationStatusCodes(query);
@@ -3714,7 +3720,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             LogisticsBillCostDTO.UpdateStatusDTO dto) {
         return buildUpdateReconciliationStatusPageQuery(
             new TmsAsyncTaskRecordDTO.UpdateReconciliationStatusPayloadDTO(
-                dto.getReconciliationStatus(), dto.getConfirmTime(), dto.getSqlMap(), dto.getPermissionSql()),
+                dto.getReconciliationStatus(), dto.getConfirmTime(),
+                dto.getCreateTimeStart(), dto.getCreateTimeEnd(), dto.getSqlMap(), dto.getPermissionSql()),
             dto.getType());
     }
 
