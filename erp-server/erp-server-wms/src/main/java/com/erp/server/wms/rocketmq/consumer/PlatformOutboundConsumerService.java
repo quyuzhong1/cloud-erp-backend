@@ -24,6 +24,7 @@ import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.entity.SoB2cReceiverEntity;
+import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
@@ -194,6 +195,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
             }
             //是否需要走标发业务
             Boolean isSignShipped = true;
+            // 中宝(ZHONG_BAO)不走本分支：出库明细已由 DMP MQ 的 items 携带，不再依赖运行时 Antu 查单
             if (!referenceNo.contains(BusinessNoConstant.WFHD)
                     && SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dto.getOrderStatus())
                     && (OmsPlatformEnum.OMS_ANTU.getCode().equals(dto.getPlatform()) || OmsPlatformEnum.OMS_SPT.getCode().equals(dto.getPlatform()))) {
@@ -596,6 +598,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
             return ThirdWarehouseSkuValidationContext.fail("自动生成销售出库单失败：三方仓DTO出库明细为空");
         }
         ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
+        paramDTO.setAuthId(resolveProviderAuthId(dto, overseasWarehouse));
         paramDTO.setPlatform(dto.getPlatform());
         paramDTO.setType(RuleTypeEnum.WAREHOUSE.getCode());
         paramDTO.setIsExpire(false);
@@ -688,6 +691,52 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                 detailList);
     }
 
+    private String resolveProviderAuthId(PlatformOutboundDTO dto, OverseasProviderDTO.FeignDTO overseasWarehouse) {
+        List<OverseasProviderWarehouseEntity> providerWarehouseList = resolveProviderWarehouseList(dto, overseasWarehouse);
+        if (CollUtil.isEmpty(providerWarehouseList)) {
+            return null;
+        }
+        return providerWarehouseList.stream()
+                .map(OverseasProviderWarehouseEntity::getMainId)
+                .filter(StringUtils::isNotBlank)
+                .findFirst()
+                .orElse(null);
+    }
+
+    private List<OverseasProviderWarehouseEntity> resolveProviderWarehouseList(PlatformOutboundDTO dto,
+                                                                               OverseasProviderDTO.FeignDTO overseasWarehouse) {
+        List<OverseasProviderWarehouseEntity> providerWarehouseList = new ArrayList<>();
+        if (Objects.nonNull(overseasWarehouse) && StringUtils.isNotBlank(overseasWarehouse.getWarehouseId())) {
+            providerWarehouseList = FeignQuery.create(OverseasProviderWarehouseEntity.class)
+                    .eq(OverseasProviderWarehouseEntity::getWarehouseId, overseasWarehouse.getWarehouseId())
+                    .eq(OverseasProviderWarehouseEntity::getDisabled, false)
+                    .eq(OverseasProviderWarehouseEntity::getIsDeleted, false)
+                    .list();
+            providerWarehouseList = providerWarehouseList.stream()
+                    .filter(item -> StringUtils.isBlank(dto.getWarehouseCode())
+                            || StrUtil.equalsIgnoreCase(dto.getWarehouseCode(), item.getPlatformWarehouseCode()))
+                    .collect(Collectors.toList());
+        }
+        if (CollUtil.isNotEmpty(providerWarehouseList)) {
+            return providerWarehouseList;
+        }
+        List<OverseasProviderEntity> providerList = FeignQuery.create(OverseasProviderEntity.class)
+                .eq(OverseasProviderEntity::getCode, dto.getPlatform())
+                .eq(OverseasProviderEntity::getAuthStatus, AuthStatusEnum.ALREADY.getCode())
+                .eq(OverseasProviderEntity::getIsDeleted, false)
+                .list();
+        if (CollUtil.isEmpty(providerList) || StringUtils.isBlank(dto.getWarehouseCode())) {
+            return Collections.emptyList();
+        }
+        List<String> providerIds = providerList.stream().map(OverseasProviderEntity::getId).collect(Collectors.toList());
+        return FeignQuery.create(OverseasProviderWarehouseEntity.class)
+                .in(OverseasProviderWarehouseEntity::getMainId, providerIds)
+                .eq(OverseasProviderWarehouseEntity::getPlatformWarehouseCode, dto.getWarehouseCode())
+                .eq(OverseasProviderWarehouseEntity::getDisabled, false)
+                .eq(OverseasProviderWarehouseEntity::getIsDeleted, false)
+                .list();
+    }
+
     private boolean matchSingleOrderDetail(SoB2cDetailEntity detail,
                                            Map<String, Integer> dtoSkuQtyMap,
                                            Map<String, List<ListingInfoWithSkuMappingDTO>> mappingMap) {
@@ -758,6 +807,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         return dtoSkuQtyMap.entrySet().stream()
                 .filter(entry -> entry.getValue() > 0)
                 .map(Map.Entry::getKey)
+                .sorted()
                 .filter(platformSku -> Optional.ofNullable(mappingMap.get(platformSku)).orElse(Collections.emptyList()).stream()
                         .anyMatch(mapping -> (StringUtils.isNotBlank(skuId)
                                 && StringUtils.isNotBlank(mapping.getProductSkuId())
@@ -979,12 +1029,17 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         generateB2cDTO.setSourceType(SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL.getCode());
         soOutstockService.thirdWarehouseCheckAndGenerate(generateB2cDTO, dto);
         if(Objects.nonNull(thirdWarehouseDeliveryEntity)){
-            if(!SoB2cWarehouseDeliveryStatusEnum.SHIPPED.getStatus().equals(thirdWarehouseDeliveryEntity.getStatus())){
+            String newTrackNo = CharSequenceUtil.blankToDefault(dto.getTrackNo(), thirdWarehouseDeliveryEntity.getTrackNo());
+            boolean statusChanged = !SoB2cWarehouseDeliveryStatusEnum.SHIPPED.getStatus().equals(thirdWarehouseDeliveryEntity.getStatus());
+            boolean trackNoChanged = !StrUtil.equals(newTrackNo, thirdWarehouseDeliveryEntity.getTrackNo());
+            if (statusChanged) {
                 thirdWarehouseDeliveryEntity.setStatus(SoB2cWarehouseDeliveryStatusEnum.SHIPPED.getStatus());
                 operateLogService.addModuleOperateLog("状态变更已发货", ModuleTypeEnum.THIRD_WAREHOUSE_DELIVERY.getCode(),thirdWarehouseDeliveryEntity.getId(), "状态变更");
             }
-            thirdWarehouseDeliveryEntity.setTrackNo(CharSequenceUtil.blankToDefault(dto.getTrackNo(), thirdWarehouseDeliveryEntity.getTrackNo()));
-            thirdWarehouseDeliveryService.updateById(thirdWarehouseDeliveryEntity);
+            thirdWarehouseDeliveryEntity.setTrackNo(newTrackNo);
+            if (statusChanged || trackNoChanged) {
+                thirdWarehouseDeliveryService.updateById(thirdWarehouseDeliveryEntity);
+            }
         }
     }
 
