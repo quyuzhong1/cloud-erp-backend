@@ -41,6 +41,7 @@ public abstract class AbstractSingleSheetDynamicHeadersFileEventHandler<P> exten
     @Override
     protected int maxRowsPerSheet() {
         int reservedHeaderRows = CharSequenceUtil.isNotBlank(firstRowName()) ? 2 : 1;
-        return Math.max(1, FileRegistry.singleSheetMaxRowsOrDefault() - reservedHeaderRows);
+        int configuredCap = Math.max(1, FileRegistry.singleSheetMaxRowsOrDefault() - reservedHeaderRows);
+        return Math.min(configuredCap, maxRowsPerXlsxSheetHardLimit());
     }
 }
