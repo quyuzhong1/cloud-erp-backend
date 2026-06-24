@@ -1519,6 +1519,15 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         return baseMapper.listWarehouseNameByIds(warehouseIds);
     }
 
+    @Override
+    public List<WarehouseDTO.ListDTO> getDefaultAddData() {
+        WarehouseEntity warehouseEntity = this.lambdaQuery().eq(WarehouseEntity::getKingdeeWarehouseCode, WmsConstant.DG_AFTER_SALES_WAREHOUSE_CODE).one();
+        if(warehouseEntity != null) {
+            return this.listByNames(Collections.singletonList(warehouseEntity.getName()));
+        }
+        return Collections.emptyList();
+    }
+
     private void validateOpenCloseTime(WarehouseEntity warehouseEntity) {
 		if(this.checkOpenCloseTime(warehouseEntity)) {
 			throw new ServiceException(ApiError.WH_OPEN_STATUS_OPEN_TIME_REQUIRED);

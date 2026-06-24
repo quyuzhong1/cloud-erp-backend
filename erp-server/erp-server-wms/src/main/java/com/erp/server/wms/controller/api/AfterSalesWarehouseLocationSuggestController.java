@@ -85,7 +85,7 @@ import java.util.Objects;
      */
     @GetMapping("/getDefaultAddWarehouse")
     public ApiResult<WarehouseDTO.ListDTO> getDefaultAddData() {
-        List<WarehouseDTO.ListDTO> dtos = warehouseService.listByNames(Collections.singletonList(WmsConstant.DG_AFTER_SALES_WAREHOUSE));
+        List<WarehouseDTO.ListDTO> dtos = warehouseService.getDefaultAddData();
         return CollUtil.isNotEmpty(dtos)?ApiResult.success(dtos.get(0)):new ApiResult<>();
     }
 
