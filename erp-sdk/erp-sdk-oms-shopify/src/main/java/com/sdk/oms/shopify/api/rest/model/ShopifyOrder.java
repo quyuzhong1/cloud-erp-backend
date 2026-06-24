@@ -199,6 +199,9 @@ public class ShopifyOrder {
     }
 
     public Boolean convertInvalidStatus() {
+        if (this.cancelledAt != null) {
+            return Boolean.TRUE;
+        }
         return ShopifyOrderFinancialStatusEnum.VOIDED.getCode().equalsIgnoreCase(this.financialStatus);
     }
 

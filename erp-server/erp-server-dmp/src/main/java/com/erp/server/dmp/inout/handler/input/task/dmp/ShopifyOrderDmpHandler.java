@@ -195,13 +195,16 @@ public class ShopifyOrderDmpHandler extends ShopifyDmpHandler {
 
                 dmpDataMap.put("extendData", JSONUtil.toJsonStr(lableMap));
 
-                // ERP需要的作废状态
-                String financialStatusStr= dmpDataMap.getOrDefault("platformOriginalStatus", "").toString();
-                dmpDataMap.put("invalidStatus", ShopifyOrderFinancialStatusEnum.VOIDED.getCode().equalsIgnoreCase(financialStatusStr));
-
-                // 平台是否取消：仅依据 cancelled_at
+                // 平台是否取消/作废：仅依据 cancelled_at；部分退款不等同于平台取消
+                String financialStatusStr = dmpDataMap.getOrDefault("platformOriginalStatus", "").toString();
                 Object cancelledAtObj = dmpDataMap.get("cancelledAt");
-                dmpDataMap.put("isCancel", ObjectUtil.isNotEmpty(cancelledAtObj));
+                boolean platformCancelled = ObjectUtil.isNotEmpty(cancelledAtObj);
+                dmpDataMap.put("isCancel", platformCancelled);
+                if (platformCancelled) {
+                    dmpDataMap.put("invalidStatus", Boolean.TRUE);
+                } else {
+                    dmpDataMap.put("invalidStatus", ShopifyOrderFinancialStatusEnum.VOIDED.getCode().equalsIgnoreCase(financialStatusStr));
+                }
 
             }
         }
