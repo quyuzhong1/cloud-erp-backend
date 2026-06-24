@@ -1117,7 +1117,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * 审核落库与操作日志同一事务：先 workflow/approveEnd，再写日志，任一步失败整体回滚。
      * <p>
      * [审查说明] approveProcess（含 workflow Feign、无流程时 approveEnd）与操作日志 intentionally 处于同一
-     * {@code @GlobalTransactional}，保证审核结果与日志原子提交/回滚；Feign 纳入全局事务为业务一致性要求，勿建议拆分。
+     * {@code @GlobalTransactional}（timeoutMills=180000），保证审核结果、库存扣减与日志原子提交/回滚；
+     * Feign 纳入全局事务为业务一致性要求，勿建议拆出全局事务或仅保留本地 {@code @Transactional}。
      * </p>
      */
     @Transactional(rollbackFor = Exception.class)
@@ -3563,6 +3564,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * 自发货与平台仓均按阶段短事务执行，不在外层包大事务，以便 Feign 校验与写库分离；
      * 落库成功后若提交/审核失败，出库单保留待处理，由本方法 catch 写入 B2C 异常供重试。
      * </p>
+     * <p>
+     * [审查说明] 落库（{@link #addB2cSoOutstockPersist}）与 {@code submitAndApprove} intentionally 分事务：
+     * 产品要求「提交/审核失败不回滚已落库出库单」，失败走 B2C 异常表/MQ 重试（平台仓、拼多多同步同理），
+     * 勿建议恢复 uat 外层大事务一次性包裹创建全流程。
+     * </p>
      *
      * @param dto 生成参数
      * @return 是否处理完成（失败时写异常并返回 false）
@@ -3604,6 +3610,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     /**
      * 自发货 B2C 出库创建：addB2cSoOutstock（短事务落库 + 事务外金额校验）→ submitAndApprove（独立事务）。
      * 不使用外层 {@code @Transactional}，避免 Feign 金额校验被包进长事务。
+     * <p>
+     * [审查说明] 见 {@link #createB2cSoOutstock}：分阶段事务为产品有意设计，提交失败保留已落库单。
+     * </p>
      */
     @Override
     public Boolean handleCreateB2cSoOutstock(SoOutstockDTO.GenerateB2cDTO dto) {
@@ -3671,6 +3680,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
     }
 
+    /**
+     * 平台仓 B2C 出库创建：与自发货相同分阶段事务；方法名 WithoutTx 表示无外层大事务，非「不写库」。
+     * <p>
+     * [审查说明] 见 {@link #createB2cSoOutstock}：落库与 submitAndApprove 分事务，失败由 catch 写明细 remark 或中台/MQ 重试。
+     * </p>
+     */
     @Override
     public Boolean handleCreateB2cSoOutstockWithoutTx(SoOutstockDTO.GenerateB2cDTO dto) {
         SoOutstockEntity soOutstock = this.getBySoId(dto.getSoId());

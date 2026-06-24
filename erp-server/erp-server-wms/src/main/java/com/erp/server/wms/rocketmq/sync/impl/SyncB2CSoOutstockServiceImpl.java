@@ -798,6 +798,10 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
 
     /**
      * 拼多多出库单落库并提交审核：save 独立短事务，submit 在事务外执行；失败时 MQ 重试走 {@link #canRetryPddSubmitAfterSave} 补偿。
+     * <p>
+     * [审查说明] 与 {@link com.erp.server.wms.service.impl.SoOutstockServiceImpl#createB2cSoOutstock} 相同：
+     * 落库成功、提交失败时不回滚已保存出库单，由 MQ 补偿 submitAndApprove，勿建议合并为单事务。
+     * </p>
      */
     public void saveAndSubmitPddSoOutstock(SoOutstockEntity soOutstock) {
         if (!service.save(soOutstock)) {
