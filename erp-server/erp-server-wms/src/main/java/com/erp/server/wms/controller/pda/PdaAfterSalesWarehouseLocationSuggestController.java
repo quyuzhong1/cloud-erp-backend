@@ -61,7 +61,7 @@ public class PdaAfterSalesWarehouseLocationSuggestController extends BaseControl
     @PostMapping("/goodsInfo/submit")
     public ApiResult<String> submitGoodsInfo(@RequestBody @Validated AfterSalesWarehouseLocationSuggestDto.PdaGoodsShelvingSubmitDto dto) {
         //当前只有一个仓库 【东莞售后仓库】
-        List<WarehouseDTO.ListDTO> dtos = warehouseService.listByNames(Collections.singletonList(WmsConstant.DG_AFTER_SALES_WAREHOUSE));
+        List<WarehouseDTO.ListDTO> dtos = warehouseService.getDefaultAddData();
         if (CollUtil.isEmpty(dtos)){
             throw new ServiceException("请确保存在仓库名称的默认值【东莞售后仓库】的仓库");
         }else if (dtos.size() > 1){
@@ -87,7 +87,7 @@ public class PdaAfterSalesWarehouseLocationSuggestController extends BaseControl
     @PostMapping("/fullBoxInfo/submit")
     public ApiResult<String> submitFullBoxInfo(@RequestBody @Validated AfterSalesWarehouseLocationSuggestDto.PdaFullBoxTransferSubmitDto dto) {
         //当前只有一个仓库 【东莞售后仓库】
-        List<WarehouseDTO.ListDTO> dtos = warehouseService.listByNames(Collections.singletonList(WmsConstant.DG_AFTER_SALES_WAREHOUSE));
+        List<WarehouseDTO.ListDTO> dtos = warehouseService.getDefaultAddData();
         if (CollUtil.isEmpty(dtos)){
             throw new ServiceException("请确保存在仓库名称的默认值【东莞售后仓库】的仓库");
         }else if (dtos.size() > 1){
@@ -107,7 +107,7 @@ public class PdaAfterSalesWarehouseLocationSuggestController extends BaseControl
     @PostMapping("/listBySkuNoAndWarehouseInfo")
     public ApiResult<List<AfterSalesWarehouseLocationSuggestDto.PdaListDto>> listBySkuNoAndWarehouseInfo(@RequestBody AfterSalesWarehouseLocationSuggestDto.PdaSearchDto dto) {
         //当前只有一个仓库 【东莞售后仓库】
-        List<WarehouseDTO.ListDTO> dtos = warehouseService.listByNames(Collections.singletonList(WmsConstant.DG_AFTER_SALES_WAREHOUSE));
+        List<WarehouseDTO.ListDTO> dtos = warehouseService.getDefaultAddData();
         if (CollUtil.isEmpty(dtos)){
             throw new ServiceException("请确保存在仓库名称的默认值【东莞售后仓库】的仓库");
         }else if (dtos.size() > 1){
@@ -130,7 +130,7 @@ public class PdaAfterSalesWarehouseLocationSuggestController extends BaseControl
      */
     @GetMapping("/getDefaultAddWarehouse")
     public ApiResult<WarehouseDTO.ListDTO> getDefaultAddData() {
-        List<WarehouseDTO.ListDTO> dtos = warehouseService.listByNames(Collections.singletonList(WmsConstant.DG_AFTER_SALES_WAREHOUSE));
+        List<WarehouseDTO.ListDTO> dtos = warehouseService.getDefaultAddData();
         return CollUtil.isNotEmpty(dtos) ? success(dtos.get(0)) : success();
     }
 }

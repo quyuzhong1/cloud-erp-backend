@@ -5,6 +5,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.enums.AfterSalePackStatusEnum;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.enums.ApiError;
@@ -210,8 +211,8 @@ public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePa
     private Map<String, WarehouseLocationEntity> getWarehouseLocationMap(AfterSalePackDetailDTO.UpdateDTO addOrUpdateDTO) {
         // 查询东莞售后仓库信息
         WarehouseEntity warehouseEntity = warehouseService.lambdaQuery()
-                .eq(WarehouseEntity::getName, WmsConstant.DG_AFTER_SALES_WAREHOUSE)
-                .eq(WarehouseEntity::getApproveStatus, LogActionEnum.APPROVE.getCode())
+                .eq(WarehouseEntity::getKingdeeWarehouseCode, WmsConstant.DG_AFTER_SALES_WAREHOUSE_CODE)
+                .eq(WarehouseEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus())
                 .eq(WarehouseEntity::getDisabled, false)
                 .one();
         if (warehouseEntity == null) {

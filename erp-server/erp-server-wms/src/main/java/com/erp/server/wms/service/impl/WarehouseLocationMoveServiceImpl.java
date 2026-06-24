@@ -1410,8 +1410,11 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         }
 
         // 重新查询箱唛，防止前端绕过箱唛占用状态和移仓状态校验。
+        // 查询策略：有 code 的走 viewByCodes 批量按号加载；无 code 的走 viewByIds 批量按主键加载。
+        // 两路均在循环外一次完成，彻底避免循环内逐条调用 view() 产生的 N+1 查询。
         List<AfterSalePackDTO.ViewDTO> boxInfoList = new ArrayList<>();
         List<SubmittedBox> submittedBoxes = new ArrayList<>(submittedBoxMap.values());
+        // 有 code 的批量按 code 加载
         List<String> boxCodes = submittedBoxes.stream()
                 .map(submittedBox -> submittedBox.code)
                 .filter(CharSequenceUtil::isNotBlank)
@@ -1421,10 +1424,22 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
                 ? Collections.emptyMap()
                 : afterSalePackService.viewByCodes(boxCodes).stream()
                 .collect(Collectors.toMap(boxInfo -> CharSequenceUtil.trim(boxInfo.getCode()), boxInfo -> boxInfo, (a, b) -> a));
+        // 无 code 的批量按 mainId 加载，避免循环内逐条查询（N+1）
+        List<String> blankCodeMainIds = submittedBoxes.stream()
+                .filter(submittedBox -> CharSequenceUtil.isBlank(submittedBox.code))
+                .map(submittedBox -> submittedBox.mainId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, AfterSalePackDTO.ViewDTO> boxInfoByMainId = CollUtil.isEmpty(blankCodeMainIds)
+                ? Collections.emptyMap()
+                : afterSalePackService.viewByIds(blankCodeMainIds).stream()
+                .collect(Collectors.toMap(boxInfo -> CharSequenceUtil.trimToEmpty(boxInfo.getId()), boxInfo -> boxInfo, (a, b) -> a));
         for (SubmittedBox submittedBox : submittedBoxes) {
+            // code 非空命中 byCode Map，code 为空命中 byMainId Map，均为 O(1) 查找
             AfterSalePackDTO.ViewDTO boxInfo = CharSequenceUtil.isNotBlank(submittedBox.code)
                     ? boxInfoByCode.get(submittedBox.code)
-                    : afterSalePackService.view(submittedBox.mainId);
+                    : boxInfoByMainId.get(submittedBox.mainId);
             if (boxInfo == null) {
                 throw new ServiceException(CharSequenceUtil.format("箱唛号【{}】不存在", submittedBox.code));
             }

@@ -24,6 +24,7 @@ import com.common.core.utils.ExcelUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.AfterSalesWarehouseLocationSuggestDto;
+import com.erp.model.wms.dto.OperateLogDTO;
 import com.erp.model.wms.dto.excel.AfterSalesWarehouseLocationSuggestExcelDto;
 import com.erp.model.wms.entity.AfterSalesWarehouseLocationSuggestEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
@@ -41,6 +42,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.ListUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
@@ -78,6 +80,9 @@ public class AfterSalesWarehouseLocationSuggestServiceImpl extends SuperServiceI
     @Resource
     private WarehouseLocationService warehouseLocationService;
 
+    @Lazy
+    @Resource
+    private AfterSalesWarehouseLocationSuggestService selfService;
 
     @Override
     public PagingVO<AfterSalesWarehouseLocationSuggestDto.ListDTO> paging(PagingDTO<AfterSalesWarehouseLocationSuggestDto.SearchParamDTO> pagingDTO) {
@@ -220,7 +225,6 @@ public class AfterSalesWarehouseLocationSuggestServiceImpl extends SuperServiceI
         downloadTaskFeign.saveDownloadTask("售后仓位推荐数据导出", EXPORT_WAREHOUSE_LOCATION_SUGGEST_AFTER_SALES.getCode(), pagingDTO.getParams());
     }
 
-    @Transactional(rollbackFor = Exception.class)
     @Override
     public void importExcel(MultipartFile file, HttpServletResponse response) {
         LoginUser user = UserContext.getNonLoginUser();
@@ -233,6 +237,7 @@ public class AfterSalesWarehouseLocationSuggestServiceImpl extends SuperServiceI
             ExcelReaderSheetBuilder sheet = read.sheet(0);
             sheet.doRead();
         } catch (IOException e) {
+            log.error("售后仓位推荐导入失败", e);
             throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         }
 
@@ -244,7 +249,6 @@ public class AfterSalesWarehouseLocationSuggestServiceImpl extends SuperServiceI
             ExcelUtil.export("错误数据", "sheet1", allList, AfterSalesWarehouseLocationSuggestExcelDto.class, response);
         } else {
             log.info("开始封装实体数据，当前操作人：{}", userName);
-            // 统一使用应用服务器时间
             LocalDateTime now = LocalDateTime.now();
 
             List<AfterSalesWarehouseLocationSuggestEntity> entities = verifyList
@@ -271,16 +275,22 @@ public class AfterSalesWarehouseLocationSuggestServiceImpl extends SuperServiceI
                     })
                     .collect(Collectors.toList());
 
-            // 分批执行高速 UPSERT (每批 500 条)
             if (!entities.isEmpty()) {
-                List<List<AfterSalesWarehouseLocationSuggestEntity>> batches = ListUtils.partition(entities, 500);
-                for (List<AfterSalesWarehouseLocationSuggestEntity> batch : batches) {
-                    try {
-                        baseMapper.upsertBatch(batch);
-                    } catch (Exception e) {
-                        throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
-                    }
-                }
+                selfService.doUpsertBatch(entities);
+            }
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void doUpsertBatch(List<AfterSalesWarehouseLocationSuggestEntity> entities) {
+        // 分批执行高速 UPSERT (每批 500 条)，全批次在同一事务内，任意批次失败整体回滚
+        List<List<AfterSalesWarehouseLocationSuggestEntity>> batches = ListUtils.partition(entities, 500);
+        for (List<AfterSalesWarehouseLocationSuggestEntity> batch : batches) {
+            try {
+                baseMapper.upsertBatch(batch);
+            } catch (Exception e) {
+                throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
             }
         }
     }
@@ -329,21 +339,26 @@ public class AfterSalesWarehouseLocationSuggestServiceImpl extends SuperServiceI
             return Collections.emptyList();
         }
         List<BatchResultDTO> resultDTOList = new ArrayList<>();
-        LoginUser user = UserContext.getNonLoginUser();
 
         List<AfterSalesWarehouseLocationSuggestEntity> list = baseMapper.selectBatchIds(dto.getIds());
 
         List<AfterSalesWarehouseLocationSuggestEntity> updateList = new ArrayList<>();
+        List<OperateLogDTO.AddModuleOperateLogDTO> operateLogList = new ArrayList<>();
         for (AfterSalesWarehouseLocationSuggestEntity entity : list) {
             if (entity.getDisabled().equals(Boolean.parseBoolean(dto.getDisabled()))) {
                 continue;
             }
             entity.setDisabled(Boolean.valueOf(dto.getDisabled()));
             updateList.add(entity);
-            operateLogService.addModuleOperateLog(String.format("更新售后推荐仓位状态：%s", entity.getDisabled() ? "禁用" : "启用"), ModuleTypeEnum.AFTERSALES_WAREHOUSE_LOCATION_SUGGEST.getCode(), entity.getId(), "状态变更", user.getUid(), user.getUserName());
+            operateLogList.add(new OperateLogDTO.AddModuleOperateLogDTO(
+                    String.format("更新售后推荐仓位状态：%s", entity.getDisabled() ? "禁用" : "启用"),
+                    ModuleTypeEnum.AFTERSALES_WAREHOUSE_LOCATION_SUGGEST.getCode(),
+                    entity.getId(),
+                    "状态变更"));
         }
         if (!updateList.isEmpty()) {
             this.updateBatchById(updateList);
+            operateLogService.batchAddModuleOperateLog(operateLogList);
         }
         //暂时没有对单个数据的修改状态做判断是否成功失败只返回空的结果后续可以加逻辑
         return resultDTOList;
@@ -383,7 +398,7 @@ public class AfterSalesWarehouseLocationSuggestServiceImpl extends SuperServiceI
 
         Map<String, WarehouseLocationEntity> locationMap = warehouseLocationList.stream()
                 .collect(Collectors.toMap(
-                        item -> item.getWarehouseId() + "_" + item.getCode() + "_" + item.getType().toUpperCase(),
+                        item -> item.getWarehouseId() + "_" + item.getCode() + "_" + (item.getType() == null ? "" : item.getType().toUpperCase()),
                         item -> item,
                         (oldVal, newVal) -> oldVal));
 

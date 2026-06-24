@@ -66,7 +66,9 @@ import java.util.Objects;
      */
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            menuCode = "wms:afterSalesWarehouseLocationSuggest:paging"
+            tableField = "create_user_id",
+            menuCode = "wms:afterSalesWarehouseLocationSuggest:paging",
+            tableAlias = "awls"
     )
     @WebAdvanceQuery(handler = AfterSalesWarehouseLocationSuggestQueryHandler.class)
     public ApiResult<PagingVO<AfterSalesWarehouseLocationSuggestDto.ListDTO>> paging(@RequestBody PagingDTO<AfterSalesWarehouseLocationSuggestDto.SearchParamDTO> pagingDTO) {
@@ -83,7 +85,7 @@ import java.util.Objects;
      */
     @GetMapping("/getDefaultAddWarehouse")
     public ApiResult<WarehouseDTO.ListDTO> getDefaultAddData() {
-        List<WarehouseDTO.ListDTO> dtos = warehouseService.listByNames(Collections.singletonList(WmsConstant.DG_AFTER_SALES_WAREHOUSE));
+        List<WarehouseDTO.ListDTO> dtos = warehouseService.getDefaultAddData();
         return CollUtil.isNotEmpty(dtos)?ApiResult.success(dtos.get(0)):new ApiResult<>();
     }
 

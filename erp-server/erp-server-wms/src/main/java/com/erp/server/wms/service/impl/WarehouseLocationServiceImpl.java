@@ -1167,8 +1167,8 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     public List<WarehouseLocationDTO.ViewDto> listByAfterSalesWarehouse(String name) {
         // 查询东莞售后仓库信息
         WarehouseEntity warehouseEntity = warehouseMapper.selectOne(Wrappers.lambdaQuery(WarehouseEntity.class)
-                .eq(WarehouseEntity::getName, WmsConstant.DG_AFTER_SALES_WAREHOUSE)
-                .eq(WarehouseEntity::getApproveStatus, LogActionEnum.APPROVE.getCode())
+                .eq(WarehouseEntity::getKingdeeWarehouseCode, WmsConstant.DG_AFTER_SALES_WAREHOUSE_CODE)
+                .eq(WarehouseEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus())
                 .eq(WarehouseEntity::getDisabled, false)
         );
         if (warehouseEntity == null) {
