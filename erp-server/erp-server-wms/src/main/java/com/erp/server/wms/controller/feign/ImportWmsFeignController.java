@@ -1,8 +1,12 @@
 package com.erp.server.wms.controller.feign;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.dto.base.BaseDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.FileTaskStatusEnum;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.MessageUtils;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.wms.service.SampleBorrowInfoService;
 import com.erp.server.wms.service.SampleRecipientService;
@@ -193,8 +197,18 @@ public class ImportWmsFeignController {
             BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
             importResultDTO.setTaskId(dto.getTaskId());
             importResultDTO.setStatus(FileTaskStatusEnum.FAIL.getCode());
-            importResultDTO.setRemark(e.getMessage().length() > 490 ? e.getMessage().substring(0, 490) : e.getMessage());
+            importResultDTO.setRemark(resolveImportFailRemark(e));
             downloadTaskFeign.updateTask(importResultDTO);
         }
+    }
+
+    private static String resolveImportFailRemark(Exception e) {
+        String msg;
+        if (e instanceof ServiceException && CharSequenceUtil.isNotBlank(e.getMessage())) {
+            msg = e.getMessage();
+        } else {
+            msg = MessageUtils.getMessage(ApiError.SO_RETURN_INSTOCK_IMPORT_TASK_FAILED);
+        }
+        return msg.length() > 490 ? msg.substring(0, 490) : msg;
     }
 }
