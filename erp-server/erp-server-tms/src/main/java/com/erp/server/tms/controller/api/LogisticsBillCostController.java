@@ -388,7 +388,7 @@ public class LogisticsBillCostController extends BaseController {
              for (String id : dto.getIds()) {
                  BatchResultDTO submit;
                  try {
-                     submit = logisticsBillCostService.pushAllocation(id, dto.getReportDate(), null);
+                     submit = logisticsBillCostService.pushAllocationContext(id, dto.getReportDate(), null);
                  }catch (Exception e){
                      log.error("尾程费用(自发货) 状态变更",e);
                      LogisticsBillCostEntity entity = logisticsBillCostService.getById(id);

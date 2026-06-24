@@ -258,7 +258,7 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
 
     void pushSmallBagCostAllocation(TmsAsyncTaskRecordEntity taskRecord);
 
-    BatchResultDTO pushAllocationContext(String id , String reportDate, LogisticsBillCostDTO.SmallBagPushAllocationContext pushContext);
+    BatchResultDTO pushAllocation(String id , String reportDate, LogisticsBillCostDTO.SmallBagPushAllocationContext pushContext);
 
     /**
      * 删除没有物流单的物流费用
