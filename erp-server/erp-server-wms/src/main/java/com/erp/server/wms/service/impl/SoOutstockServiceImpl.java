@@ -38,6 +38,7 @@ import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.DynamicDataSourceThreadLocal;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.utils.RedisUtil;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
@@ -525,7 +526,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * @date 2023-05-19 10:34
      */
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO submit(SoOutstockEntity entity,Boolean isNeedProcess) {
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
@@ -542,6 +542,19 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 throw new ServiceException(ApiError.SO_INTERCEPTED_STATUS_NOT_UPDATE, soB2cEntity.getCode());
             }
         }
+
+        // 价税合计金额一致性校验（Feign 只读，事务外执行，避免拉长 submit 事务）
+        UpstreamAmountCheckResultEnum amountCheckResult = checkUpstreamAmountWithSo(entity);
+        if (amountCheckResult != UpstreamAmountCheckResultEnum.PASS) {
+            String message = resolveUpstreamAmountCheckMessage(amountCheckResult, ApiError.SO_OUTSTOCK_AMOUNT_MISMATCH_SUBMIT);
+            soOutstockService.appendApproveRemark(entity.getId(), message);
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), message);
+        }
+        return ApplicationContextUtils.getBean(SoOutstockServiceImpl.class).submitInTransaction(entity, isNeedProcess);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO submitInTransaction(SoOutstockEntity entity, Boolean isNeedProcess) {
         //更新审核状态
         boolean update = this.lambdaUpdate().set(SoOutstockEntity::getApproveStatus, ApproveStatusEnum.APPROVE_ING.getStatus())
                 .set(SoOutstockEntity::getApproveUserName, "")
@@ -624,6 +637,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      *     <li>仅 B2C 订单参与校验，B2B 链路保持原状</li>
      *     <li>若 soId 为空或上游销售订单明细查询结果为空，不拦截</li>
      *     <li>若上游 Feign 查询异常，返回 UPSTREAM_UNAVAILABLE（fail-safe，避免静默放行）</li>
+     *     <li>若上游明细已查到但 so_detail_id 无法关联，返回 AMOUNT_MISMATCH</li>
      *     <li>对当前出库单中 tax_amount=0 的每条明细，按 so_detail_id 维度
      *         汇总<b>所有兄弟出库单（同 soId 且非作废，含当前内存明细）</b>的
      *         tax_amount 总和，与上游销售订单明细对比：
@@ -635,7 +649,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      *         </ul>
      *     </li>
      * </ol>
-     * [审查说明] 本方法含 Feign 只读调用，由 submit/approve 事务方法内触发；fail-safe 已区分 UPSTREAM_UNAVAILABLE，暂不拆出事务外预检。
+     * [审查说明] submit/approve 在事务外调用本方法；同步落库场景仍可在落库事务内调用。
      * 适用于"主单和明细尚未落库"的同步落地场景，避免重复查询。
      *
      * @param entity     销售出库单主单
@@ -719,7 +733,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             }
             SoB2cDetailEntity b2c = b2cDetailMap.get(soDetailId);
             if (b2c == null) {
-                continue;
+                log.warn("销售出库单金额校验：出库明细 soDetailId={} 在上游 B2C 明细中未找到关联，soId={}, outstockId={}",
+                        soDetailId, soId, entity.getId());
+                return UpstreamAmountCheckResultEnum.AMOUNT_MISMATCH;
             }
             if (Boolean.TRUE.equals(b2c.getIsGift())) {
                 continue;
@@ -753,10 +769,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     /**
      * 追加写入"审核状态说明"
      * <p>
-     * 使用默认事务传播（REQUIRED），跟随调用方事务提交/回滚。
-     * 校验失败路径下，调用方在写 remark 后直接返回 fail（不抛异常），
-     * 因此父事务会正常 commit，remark 与主流程一起持久化；
-     * 这样也能在父事务尚未提交的同步落库链路里通过 getById 读到刚保存的实体。
+     * 传播行为 REQUIRED，具体提交时机取决于调用方是否在事务内：
+     * <ul>
+     *     <li>{@code submit}/{@code approve} 金额校验失败：调用方无事务，本方法以独立短事务立即 commit remark</li>
+     *     <li>{@code markB2cSoOutstockAmountMismatch}、{@link #persistSyncAmountMismatch} 等：调用方有事务，remark 与状态变更同一 commit</li>
+     * </ul>
      * </p>
      */
     @Override
@@ -805,17 +822,28 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             return false;
         }
         String mismatchMsg = resolveUpstreamAmountCheckMessage(checkResult, ApiError.SO_OUTSTOCK_AMOUNT_MISMATCH_SUBMIT);
+        ApplicationContextUtils.getBean(SoOutstockServiceImpl.class)
+                .persistSyncAmountMismatch(soOutstock, detailList, mismatchMsg, persisted);
+        log.warn("同步销售出库单金额异常，落待提交状态，单号：{}，soId：{}", soOutstock.getCode(), soOutstock.getSoId());
+        return true;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void persistSyncAmountMismatch(SoOutstockEntity soOutstock,
+                                          List<SoOutstockDetailEntity> detailList,
+                                          String mismatchMsg,
+                                          boolean persisted) {
         soOutstock.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
         soOutstock.setApproveTime(null);
         if (persisted) {
             this.updateById(soOutstock);
         } else {
             this.save(soOutstock);
-            soOutstockDetailService.saveBatch(detailList);
+            if (!soOutstockDetailService.saveBatch(detailList)) {
+                throw new ServiceException(ApiError.BILL_SAVE_FAILED);
+            }
         }
         soOutstockService.appendApproveRemark(soOutstock.getId(), mismatchMsg);
-        log.warn("同步销售出库单金额异常，落待提交状态，单号：{}，soId：{}", soOutstock.getCode(), soOutstock.getSoId());
-        return true;
     }
 
     /**
@@ -998,8 +1026,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * @date 2023-05-19 11:42
      */
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
     @DataIdempotent(keyIdName = "dto.id")
     public BatchResultDTO approve(ApproveOneDTO dto) {
         SoOutstockEntity entity = this.getById(dto.getId());
@@ -1013,58 +1039,112 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             throw new ServiceException(ApiError.WF_APPROVE_ALLOWED_STATUS_ONLY);
         }
 
-        if(OrderTypeEnum.B2B.getCode().equalsIgnoreCase(entity.getOrderType())){
-            if (ObjectUtil.isNotEmpty(entity.getSoId())) {
-                List<SoOutstockDetailEntity> detailEntities = soOutstockDetailService.listDetailBySoIds(Collections.singletonList(entity.getSoId()));
-                List<SoDetailEntity> soDetails = soInfoFeign.listSoDetailByMainIds(Collections.singletonList(entity.getSoId()));
-                Map<String, Integer> detailMap = detailEntities.stream().filter(e -> Boolean.FALSE.equals(e.getInvalidStatus())).collect(Collectors.toMap(SoOutstockDetailEntity::getSkuNo, SoOutstockDetailEntity::getPlanQty, Integer::sum));
-                Map<String, Integer> soDetailMap = soDetails.stream().collect(Collectors.toMap(SoDetailEntity::getDeliverySkuNo, SoDetailEntity::getBoxQty, Integer::sum));
-                for (Map.Entry<String, Integer> entry : detailMap.entrySet()) {
-                    int sellQty = Optional.ofNullable(soDetailMap.get(entry.getKey())).orElse(0);
-                    if (sellQty == 0) {
-                        throw new ServiceException(ApiError.SO_PICKLIST_DETAIL_NOT_FOUND_FOR_SO, entry.getKey());
-                    }
-                    if (sellQty < entry.getValue()) {
-                        throw new ServiceException(ApiError.SO_OUTBOUND_QTY_EXCEEDS_ORDER, entry.getKey());
-                    }
-                }
+        // 价税合计金额一致性校验（Feign 只读，事务外执行）
+        if (ApproveTypeEnum.PASS.equals(approveType)) {
+            UpstreamAmountCheckResultEnum amountCheckResult = checkUpstreamAmountWithSo(entity);
+            if (amountCheckResult != UpstreamAmountCheckResultEnum.PASS) {
+                String message = resolveUpstreamAmountCheckMessage(amountCheckResult, ApiError.SO_OUTSTOCK_AMOUNT_MISMATCH_APPROVE);
+                soOutstockService.appendApproveRemark(entity.getId(), message);
+                return BatchResultDTO.fail(entity.getId(), entity.getCode(), message);
             }
-        }else {
-            //销售出库单单据日期需要回写到B2C销售订单中
-            if(null != entity.getBillDate()){
-                Object isNotOutboundObj = redisUtil.get(CharSequenceUtil.format(RedisCacheConstants.SO_B2C_NOT_OUTBOUND_KEY+":{}", entity.getSoId()));
-                Boolean isNotOutbound = Objects.nonNull(isNotOutboundObj) && Boolean.TRUE.equals(isNotOutboundObj) ? Boolean.TRUE : Boolean.FALSE;
-                if (!isNotOutbound){
-                    soB2cFeign.writeBackSoOutstockDate(entity.getSoId(),DateTimeFormatter.ofPattern("yyyy-MM-dd").format(entity.getBillDate()));
-                }
-            }
+            validateB2bOutboundQtyBeforeApprove(entity);
         }
-        //销售出库单反审核后修改出库日期审核时，需要校验是否有关联的中转调拨单
-        if (CharSequenceUtil.isNotBlank(entity.getSourceId())){
-            List<TransferInfoEntity> transferInfoEntities = transferInfoService.listBySourceId(entity.getSourceId());
-            if (CollectionUtils.isNotEmpty(transferInfoEntities)){
-                //如果调拨单没有审核，需要提示，请先审核通过关联的中转调拨单后审核出库单
-                List<String> transferCodeList = transferInfoEntities.stream().filter(e -> !Objects.equals(ApproveStatusEnum.APPROVE.getStatus(), e.getApproveStatus())).map(TransferInfoEntity::getCode).distinct().collect(Collectors.toList());
-                if (CollectionUtils.isNotEmpty(transferCodeList)){
-                    throw new ServiceException(ApiError.WH_TRANSFER_ASSOCIATED_OUTBOUND_APPROVE_REQUIRED,String.join(",",transferCodeList));
-                }
-                //需要限制出库日期不能早于最后一个（按日期排序）调拨单的调拨日期
-                TransferInfoEntity transferInfoEntity = transferInfoEntities.stream().max(Comparator.comparing(TransferInfoEntity::getBillDate)).orElse(null);
-                if (Objects.nonNull(transferInfoEntity) && entity.getBillDate().isBefore(transferInfoEntity.getBillDate())){
-                    throw new ServiceException(ApiError.WH_TRANSFER_OUTBOUND_DATE_INVALID, transferInfoEntity.getBillDate());
-                }
-            }
-        }
-        // 更新SKU标准成本价出库时间
-        updateSkuStdCostOutstock(entity);
+        validateTransferBeforeApprove(entity);
+        return ApplicationContextUtils.getBean(SoOutstockServiceImpl.class).approveInTransaction(dto, entity, approveType);
+    }
 
-        // 调用流程审核
+    /**
+     * 审核前校验关联中转调拨单（本地只读，事务外执行）。
+     */
+    private void validateTransferBeforeApprove(SoOutstockEntity entity) {
+        if (CharSequenceUtil.isBlank(entity.getSourceId())) {
+            return;
+        }
+        List<TransferInfoEntity> transferInfoEntities = transferInfoService.listBySourceId(entity.getSourceId());
+        if (CollectionUtils.isEmpty(transferInfoEntities)) {
+            return;
+        }
+        List<String> transferCodeList = transferInfoEntities.stream()
+                .filter(e -> !Objects.equals(ApproveStatusEnum.APPROVE.getStatus(), e.getApproveStatus()))
+                .map(TransferInfoEntity::getCode)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(transferCodeList)) {
+            throw new ServiceException(ApiError.WH_TRANSFER_ASSOCIATED_OUTBOUND_APPROVE_REQUIRED, String.join(",", transferCodeList));
+        }
+        TransferInfoEntity transferInfoEntity = transferInfoEntities.stream()
+                .max(Comparator.comparing(TransferInfoEntity::getBillDate))
+                .orElse(null);
+        if (Objects.nonNull(transferInfoEntity) && entity.getBillDate().isBefore(transferInfoEntity.getBillDate())) {
+            throw new ServiceException(ApiError.WH_TRANSFER_OUTBOUND_DATE_INVALID, transferInfoEntity.getBillDate());
+        }
+    }
+
+    /**
+     * B2B 审核通过前：出库数量不得超过销售订单明细（Feign 只读，事务外执行）。
+     */
+    private void validateB2bOutboundQtyBeforeApprove(SoOutstockEntity entity) {
+        if (!OrderTypeEnum.B2B.getCode().equalsIgnoreCase(entity.getOrderType())
+                || ObjectUtil.isEmpty(entity.getSoId())) {
+            return;
+        }
+        List<SoOutstockDetailEntity> detailEntities = soOutstockDetailService.listDetailBySoIds(Collections.singletonList(entity.getSoId()));
+        List<SoDetailEntity> soDetails = soInfoFeign.listSoDetailByMainIds(Collections.singletonList(entity.getSoId()));
+        Map<String, Integer> detailMap = detailEntities.stream()
+                .filter(e -> Boolean.FALSE.equals(e.getInvalidStatus()))
+                .collect(Collectors.toMap(SoOutstockDetailEntity::getSkuNo, SoOutstockDetailEntity::getPlanQty, Integer::sum));
+        Map<String, Integer> soDetailMap = soDetails.stream()
+                .collect(Collectors.toMap(SoDetailEntity::getDeliverySkuNo, SoDetailEntity::getBoxQty, Integer::sum));
+        for (Map.Entry<String, Integer> entry : detailMap.entrySet()) {
+            int sellQty = Optional.ofNullable(soDetailMap.get(entry.getKey())).orElse(0);
+            if (sellQty == 0) {
+                throw new ServiceException(ApiError.SO_PICKLIST_DETAIL_NOT_FOUND_FOR_SO, entry.getKey());
+            }
+            if (sellQty < entry.getValue()) {
+                throw new ServiceException(ApiError.SO_OUTBOUND_QTY_EXCEEDS_ORDER, entry.getKey());
+            }
+        }
+    }
+
+    /**
+     * B2C 审核通过后：回写出库日期到销售订单（Feign 写，在 {@link #approveEnd} 本地审核成功之后执行）。
+     */
+    private void writeBackB2cSoOutstockDateIfNeeded(SoOutstockEntity entity) {
+        if (!OrderTypeEnum.B2C.getCode().equalsIgnoreCase(entity.getOrderType())
+                || entity.getBillDate() == null
+                || CharSequenceUtil.isBlank(entity.getSoId())) {
+            return;
+        }
+        Object isNotOutboundObj = redisUtil.get(CharSequenceUtil.format(RedisCacheConstants.SO_B2C_NOT_OUTBOUND_KEY + ":{}", entity.getSoId()));
+        Boolean isNotOutbound = Objects.nonNull(isNotOutboundObj) && Boolean.TRUE.equals(isNotOutboundObj);
+        if (!isNotOutbound) {
+            soB2cFeign.writeBackSoOutstockDate(entity.getSoId(),
+                    DateTimeFormatter.ofPattern("yyyy-MM-dd").format(entity.getBillDate()));
+        }
+    }
+
+    /**
+     * 审核落库与操作日志同一事务：先 workflow/approveEnd，再写日志，任一步失败整体回滚。
+     * <p>
+     * [审查说明] approveProcess（含 workflow Feign、无流程时 approveEnd）与操作日志 intentionally 处于同一
+     * {@code @GlobalTransactional}，保证审核结果与日志原子提交/回滚；Feign 纳入全局事务为业务一致性要求，勿建议拆分。
+     * </p>
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
+    public BatchResultDTO approveInTransaction(ApproveOneDTO dto, SoOutstockEntity entity, ApproveTypeEnum approveType) {
         approveProcess(entity, dto);
-        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "销售出库单", approveType.getName(), dto.getComment());
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_OUT_STOCK.getCode(), entity.getId(), "审核操作");
+        updateSkuStdCostOutstock(entity);
+        addApproveOperateLog(entity, approveType, dto.getComment());
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
+    }
 
+    private void addApproveOperateLog(SoOutstockEntity entity, ApproveTypeEnum approveType, String comment) {
+        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】",
+                UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "销售出库单",
+                approveType.getName(), comment);
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_OUT_STOCK.getCode(), entity.getId(), "审核操作");
     }
 
 
@@ -1094,8 +1174,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtils.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
-            // 无需走流程的数据则直接更新状态
-            this.approveEnd(dto, entity);
+            // 无需走流程的数据则直接更新状态（走 Spring 代理，保证 @GlobalTransactional 生效）
+            ApplicationContextUtils.getBean(SoOutstockServiceImpl.class).approveEnd(dto, entity);
         }
     }
 
@@ -1139,6 +1219,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             this.syncToSdy(entity,soOutstockDetailEntityList, SyncOperateEnum.OPERATE_APPROVE.getCode());
             //推送到订货通
             syncDhtOutstockService.syncB2bSoOutstockDht(entity,soOutstockDetailEntityList, SyncOperateEnum.OPERATE_APPROVE.getCode());
+            writeBackB2cSoOutstockDateIfNeeded(entity);
         }
         return Boolean.TRUE;
     }
@@ -3494,21 +3575,22 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     }
 
     /**
-     * 创建B2C销售出库单
-     * 1.先添加
-     * 2.提交审核
-     * 3.审核通过
+     * 创建 B2C 销售出库单：落库 →（金额 Feign 校验）→ 提交审核。
+     * <p>
+     * 自发货与平台仓均按阶段短事务执行，不在外层包大事务，以便 Feign 校验与写库分离；
+     * 落库成功后若提交/审核失败，出库单保留待处理，由本方法 catch 写入 B2C 异常供重试。
+     * </p>
      *
-     * @param dto
-     * @return
+     * @param dto 生成参数
+     * @return 是否处理完成（失败时写异常并返回 false）
      */
     public Boolean createB2cSoOutstock(SoOutstockDTO.GenerateB2cDTO dto) {
         try {
             if (dto.isHasPlatformWarehouseOrder()){
-                // 非自发货订单独立事务
+                // 平台仓：落库与 submitAndApprove 分事务，提交失败可 MQ/异常表重试
                 return soOutstockService.handleCreateB2cSoOutstockWithoutTx(dto);
             } else {
-                // 自发货订单事务一起
+                // 自发货：与平台仓相同分阶段事务，提交失败不回滚已落库出库单
                 return soOutstockService.handleCreateB2cSoOutstock(dto);
             }
         } catch (Exception e) {
@@ -3536,17 +3618,24 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
     }
 
+    /**
+     * 自发货 B2C 出库创建：addB2cSoOutstock（短事务落库 + 事务外金额校验）→ submitAndApprove（独立事务）。
+     * 不使用外层 {@code @Transactional}，避免 Feign 金额校验被包进长事务。
+     */
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public Boolean handleCreateB2cSoOutstock(SoOutstockDTO.GenerateB2cDTO dto) {
-        String id = this.addB2cSoOutstock(dto);
+        String id = soOutstockService.addB2cSoOutstock(dto);
         //表示添加成功
         if (CharSequenceUtil.isNotBlank(id)) {
             // 检查关账或已有盘盈盘亏单据
-            if (checkClosedAndUpdateRemark(dto, id)){
+            if (soOutstockService.checkClosedAndUpdateRemark(dto, id)){
                 return true;
             }
-            this.submitAndApprove(id);
+            if (shouldSkipSubmitAfterUpstreamAmountCheck(id)) {
+                log.info("销售出库单上游金额校验未通过，已落待提交，跳过自动提交审核，outstockId={}", id);
+                return true;
+            }
+            soOutstockService.submitAndApprove(id);
         }
         return Boolean.TRUE;
     }
@@ -3597,7 +3686,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public Boolean handleCreateB2cSoOutstockWithoutTx(SoOutstockDTO.GenerateB2cDTO dto) {
         SoOutstockEntity soOutstock = this.getBySoId(dto.getSoId());
         if(Objects.nonNull(soOutstock)
@@ -3628,6 +3716,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 // 事务分开
                 // 检查关账或已有盘盈盘亏单据
                 if (soOutstockService.checkClosedAndUpdateRemark(dto, id)){
+                    return true;
+                }
+                if (shouldSkipSubmitAfterUpstreamAmountCheck(id)) {
+                    log.info("销售出库单上游金额校验未通过，已落待提交，跳过自动提交审核，outstockId={}", id);
                     return true;
                 }
                 soOutstockService.submitAndApprove(id);
@@ -3786,30 +3878,104 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             soOutstock.setSourceId(thirdWarehouseDeliveryEntity.getId());
         }
 
-        Boolean addResult = super.save(soOutstock);
-        if (addResult) {
-            List<SoOutstockDetailEntity> detailEntities = soOutstockDetailService.add(soOutstock.getId(), detailList, OrderTypeEnum.B2C.getCode(), soOutstock);
-            //添加日志
-            String content = String.format("新增了一个{%s}-销售出库单-{%s}", ApproveStatusEnum.WAIT_SUBMIT.getName(), code);
-            addModuleOperateLog(content, ModuleTypeEnum.SO_OUT_STOCK.getCode(), soOutstock.getId(), "新增操作");
-            //如果是平台仓发货，处理发货单明细生成情况
-            if(sourceType.equals(SourceTypeEnum.PLATFORM_SO_OUT_STOCK.getCode())) {
-                List<ThirdWarehouseDeliveryDetailEntity> thirdWarehouseDeliveryDetailEntities = thirdWarehouseDeliveryEntity.getDetailEntityList();
-                if(CollectionUtils.isNotEmpty(thirdWarehouseDeliveryDetailEntities)){
-                    for (ThirdWarehouseDeliveryDetailEntity thirdWarehouseDeliveryDetailEntity : thirdWarehouseDeliveryDetailEntities) {
-                        SoOutstockDetailEntity soOutstockDetailEntity = detailEntities.stream().filter(d -> d.getSourceDetailId().equals(thirdWarehouseDeliveryDetailEntity.getId())).findFirst().orElse(null);
-                        if(Objects.nonNull(soOutstockDetailEntity)){
-                            thirdWarehouseDeliveryDetailEntity.setSoDetailId(soOutstockDetailEntity.getSoDetailId());
-                            thirdWarehouseDeliveryDetailEntity.setSkuNo(soOutstockDetailEntity.getSkuNo());
-                        }
-                    }
-                    thirdWarehouseDeliveryDetailService.saveBatch(thirdWarehouseDeliveryDetailEntities);
-                }
-            }
-
-            return soOutstock.getId();
+        Boolean addResult = ApplicationContextUtils.getBean(SoOutstockServiceImpl.class)
+                .addB2cSoOutstockPersist(soOutstock, detailList, sourceType, thirdWarehouseDeliveryEntity, code);
+        if (!Boolean.TRUE.equals(addResult)) {
+            return "";
         }
-        return "";
+        markB2cSoOutstockAmountMismatchIfNeeded(soOutstock.getId());
+        return soOutstock.getId();
+    }
+
+    /**
+     * B2C 销售出库单落库（主单/明细/平台发货单明细），不含上游金额 Feign 校验。
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean addB2cSoOutstockPersist(SoOutstockEntity soOutstock,
+                                           List<SoOutstockDetailDTO.AddDTO> detailList,
+                                           String sourceType,
+                                           ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity,
+                                           String code) {
+        if (!super.save(soOutstock)) {
+            return Boolean.FALSE;
+        }
+        List<SoOutstockDetailEntity> detailEntities = soOutstockDetailService.add(
+                soOutstock.getId(), detailList, OrderTypeEnum.B2C.getCode(), soOutstock);
+        String content = String.format("新增了一个{%s}-销售出库单-{%s}", ApproveStatusEnum.WAIT_SUBMIT.getName(), code);
+        addModuleOperateLog(content, ModuleTypeEnum.SO_OUT_STOCK.getCode(), soOutstock.getId(), "新增操作");
+        if (SourceTypeEnum.PLATFORM_SO_OUT_STOCK.getCode().equals(sourceType)) {
+            List<ThirdWarehouseDeliveryDetailEntity> thirdWarehouseDeliveryDetailEntities = thirdWarehouseDeliveryEntity.getDetailEntityList();
+            if (CollectionUtils.isNotEmpty(thirdWarehouseDeliveryDetailEntities)) {
+                for (ThirdWarehouseDeliveryDetailEntity thirdWarehouseDeliveryDetailEntity : thirdWarehouseDeliveryDetailEntities) {
+                    SoOutstockDetailEntity soOutstockDetailEntity = detailEntities.stream()
+                            .filter(d -> d.getSourceDetailId().equals(thirdWarehouseDeliveryDetailEntity.getId()))
+                            .findFirst().orElse(null);
+                    if (Objects.nonNull(soOutstockDetailEntity)) {
+                        thirdWarehouseDeliveryDetailEntity.setSoDetailId(soOutstockDetailEntity.getSoDetailId());
+                        thirdWarehouseDeliveryDetailEntity.setSkuNo(soOutstockDetailEntity.getSkuNo());
+                    }
+                }
+                thirdWarehouseDeliveryDetailService.saveBatch(thirdWarehouseDeliveryDetailEntities);
+            }
+        }
+        return Boolean.TRUE;
+    }
+
+    /**
+     * 落库完成后校验上游 B2C 金额；不一致时单独短事务写待提交与审核说明。
+     *
+     * @return true 表示已按金额异常路径处理，调用方应跳过 submitAndApprove
+     */
+    private boolean markB2cSoOutstockAmountMismatchIfNeeded(String outstockId) {
+        SoOutstockEntity persisted = this.getById(outstockId);
+        if (persisted == null) {
+            return false;
+        }
+        List<SoOutstockDetailEntity> detailEntities = soOutstockDetailService.lambdaQuery()
+                .eq(SoOutstockDetailEntity::getMainId, outstockId)
+                .list();
+        UpstreamAmountCheckResultEnum amountCheckResult = checkUpstreamAmountWithSo(persisted, detailEntities);
+        if (UpstreamAmountCheckResultEnum.PASS.equals(amountCheckResult)) {
+            return false;
+        }
+        ApplicationContextUtils.getBean(SoOutstockServiceImpl.class)
+                .markB2cSoOutstockAmountMismatch(outstockId, amountCheckResult);
+        return true;
+    }
+
+    /**
+     * addB2cSoOutstock 落库后若上游金额校验未通过，{@link #markB2cSoOutstockAmountMismatch} 已写入 approve_remark。
+     */
+    private boolean shouldSkipSubmitAfterUpstreamAmountCheck(String outstockId) {
+        SoOutstockEntity entity = this.getById(outstockId);
+        if (entity == null || !ApproveStatusEnum.WAIT_SUBMIT.equals(entity.getApproveStatus())) {
+            return false;
+        }
+        return containsUpstreamAmountCheckRemark(entity.getApproveRemark());
+    }
+
+    private boolean containsUpstreamAmountCheckRemark(String approveRemark) {
+        if (CharSequenceUtil.isBlank(approveRemark)) {
+            return false;
+        }
+        String mismatchMsg = MessageUtils.getMessage(ApiError.SO_OUTSTOCK_AMOUNT_MISMATCH_SUBMIT);
+        String unavailableMsg = MessageUtils.getMessage(ApiError.SO_OUTSTOCK_UPSTREAM_AMOUNT_CHECK_UNAVAILABLE);
+        return approveRemark.contains(mismatchMsg) || approveRemark.contains(unavailableMsg);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void markB2cSoOutstockAmountMismatch(String outstockId, UpstreamAmountCheckResultEnum amountCheckResult) {
+        SoOutstockEntity soOutstock = this.getById(outstockId);
+        if (soOutstock == null) {
+            return;
+        }
+        String mismatchMsg = resolveUpstreamAmountCheckMessage(amountCheckResult, ApiError.SO_OUTSTOCK_AMOUNT_MISMATCH_SUBMIT);
+        soOutstock.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
+        soOutstock.setApproveTime(null);
+        this.updateById(soOutstock);
+        soOutstockService.appendApproveRemark(outstockId, mismatchMsg);
+        log.warn("平台仓/海外仓下推销售出库单金额异常，落待提交状态，单号：{}，soId：{}",
+                soOutstock.getCode(), soOutstock.getSoId());
     }
 
     @Override
