@@ -4,6 +4,7 @@ import com.common.business.constant.RedisCacheConstants;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RScript;
 import org.redisson.api.RedissonClient;
+import org.redisson.client.codec.StringCodec;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -38,12 +39,12 @@ public class IpRateLimitUtil {
      */
     private static final String RATE_LIMIT_SCRIPT =
             "if redis.call('exists', KEYS[2]) == 1 then return 0 end " +
-            "redis.call('zremrangebyscore', KEYS[1], 0, ARGV[2]) " +
-            "redis.call('zadd', KEYS[1], ARGV[1], ARGV[6]) " +
+            "redis.call('zremrangebyscore', KEYS[1], 0, tonumber(ARGV[2])) " +
+            "redis.call('zadd', KEYS[1], tonumber(ARGV[1]), ARGV[6]) " +
             "local count = redis.call('zcard', KEYS[1]) " +
-            "redis.call('expire', KEYS[1], ARGV[4]) " +
+            "redis.call('expire', KEYS[1], tonumber(ARGV[4])) " +
             "if count > tonumber(ARGV[3]) then " +
-            "  redis.call('set', KEYS[2], 'blocked', 'EX', ARGV[5]) " +
+            "  redis.call('set', KEYS[2], 'blocked', 'EX', tonumber(ARGV[5])) " +
             "  return 0 " +
             "end " +
             "return 1";
@@ -52,7 +53,7 @@ public class IpRateLimitUtil {
      * 统计脚本也走 Redis 原子操作，避免查询时和清理窗口产生不一致读。
      */
     private static final String STATS_SCRIPT =
-            "redis.call('zremrangebyscore', KEYS[1], 0, ARGV[1]) " +
+            "redis.call('zremrangebyscore', KEYS[1], 0, tonumber(ARGV[1])) " +
             "local count = redis.call('zcard', KEYS[1]) " +
             "local blocked = redis.call('exists', KEYS[2]) " +
             "return {count, blocked}";
@@ -134,7 +135,7 @@ public class IpRateLimitUtil {
             // 成员值加随机后缀，避免同毫秒多个请求覆盖同一个 ZSET member。
             String member = currentTime + "-" + ThreadLocalRandom.current().nextLong(Long.MAX_VALUE);
 
-            Number allowed = redisson.getScript().eval(
+            Number allowed = redisson.getScript(StringCodec.INSTANCE).eval(
                     RScript.Mode.READ_WRITE,
                     RATE_LIMIT_SCRIPT,
                     RScript.ReturnType.INTEGER,
@@ -290,7 +291,7 @@ public class IpRateLimitUtil {
             long currentTime = System.currentTimeMillis();
             long windowStart = currentTime - (60 * 1000L); // 1分钟窗口
 
-            List<Object> stats = redisson.getScript().eval(
+            List<Object> stats = redisson.getScript(StringCodec.INSTANCE).eval(
                     RScript.Mode.READ_WRITE,
                     STATS_SCRIPT,
                     RScript.ReturnType.MULTI,
