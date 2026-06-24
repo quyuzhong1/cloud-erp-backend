@@ -489,8 +489,14 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             throw new ServiceException(e.getMessage());
         }
         if (CharSequenceUtil.isNotBlank(base64)) {
-            entity.setPrintStatus(PackagePrintStatusEnum.ALREADY.getCode());
-            this.updateById(entity);
+            boolean updated = this.lambdaUpdate()
+                    .set(PackageForecastEntity::getPrintStatus, PackagePrintStatusEnum.ALREADY.getCode())
+                    .eq(PackageForecastEntity::getId, id)
+                    .eq(PackageForecastEntity::getIsDeleted, false)
+                    .update();
+            if (!updated) {
+                throw new ServiceException("打印状态更新失败");
+            }
         } else {
             throw new ServiceException("打印失败");
         }
@@ -948,7 +954,27 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         PackageForecastPlatformAdapter adapter = packageForecastPlatformAdapterFactory.getByPlatform(PlatformDictEnum.TIK_TOK_FULLY.getCode())
                 .orElseThrow(() -> new ServiceException("TikTok全托管平台尚未对接上传"));
         dto.setDeliveryPlatform(PlatformDictEnum.TIK_TOK_FULLY.getCode());
-        return adapter.upload(dto).get(0);
+        List<BatchResultDTO> resultList = adapter.upload(dto);
+        if (CollectionUtils.isEmpty(resultList)) {
+            throw new ServiceException("TikTok全托管上传结果为空");
+        }
+        List<BatchResultDTO> failList = resultList.stream()
+                .filter(result -> !Boolean.TRUE.equals(result.getSuccess()))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(failList)) {
+            String failMsg = failList.stream()
+                    .limit(3)
+                    .map(result -> StringUtils.defaultString(result.getCode(), result.getId()) + ":" + StringUtils.defaultString(result.getMsg()))
+                    .collect(Collectors.joining(";"));
+            return BatchResultDTO.fail(failList.get(0).getId(), failList.get(0).getCode(),
+                    String.format("TikTok全托管上传失败%d条：%s", failList.size(), failMsg));
+        }
+        BatchResultDTO firstResult = resultList.get(0);
+        if (resultList.size() == 1) {
+            return firstResult;
+        }
+        return BatchResultDTO.success(firstResult.getId(), firstResult.getCode(),
+                String.format("TikTok全托管上传成功，共%d条", resultList.size()));
     }
 
     private String platformName(String platform) {

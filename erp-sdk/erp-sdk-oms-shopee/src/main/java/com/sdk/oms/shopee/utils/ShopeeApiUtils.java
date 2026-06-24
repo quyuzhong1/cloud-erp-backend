@@ -202,9 +202,9 @@ public class ShopeeApiUtils {
             log.info("虾皮接口响应, method: POST, url: {}, response: {}", safeUrl, maskSensitiveContent(bodyStr));
             ShopeeAuth resultMap = JSONUtil.toBean(bodyStr, ShopeeAuth.class);
             return resultMap;
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             log.error("虾皮接口请求异常, method: POST, url: {}, 错误: {}", safeUrl, e.getMessage(), e);
-            throw e;
+            throw new ServiceException("虾皮接口请求异常:" + e.getMessage());
         }
     }
 

@@ -278,7 +278,7 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
             if (CollectionUtils.isEmpty(parcelOrderList)) {
                 return;
             }
-            batchUpdateDetailStatus(parcelOrderList);
+            batchUpdateDetailStatus(packageForecastEntity.getId(), parcelOrderList);
         } catch (ApiException e) {
             log.error("接口调用异常记录：{}", e.getErrorMessage());
             throw new ServiceException("速卖通状态同步接口异常:" + e.getErrorMessage());
@@ -289,14 +289,15 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
         List<PackageForecastDetailEntity> forecastDetailList = packageForecastDetailService.listDbByMainId(entity.getId());
         String shopId = resolveSingleShopId(forecastDetailList);
         PackageForecastDTO.AlExpressHandoverBaseDTO base = this.getAlExpressHandoverBase(platform(), shopId);
+        Long platformPackageNo = parseAliExpressPlatformPackageNo(entity);
         CancelRequest cancelRequest = CancelRequest.builder()
                 .userInfo(base.getUserInfo())
                 .client(base.getClient())
-                .handoverContentId(Long.valueOf(entity.getPlatformPackageNo()))
+                .handoverContentId(platformPackageNo)
                 .build();
         try {
             IopResponse iopResponse = aliExpressHandoverService.cancel(base.getAuthMap(), cancelRequest);
-            BaseResult baseResult = JSONObject.parseObject(iopResponse.getBody(), BaseResult.class);
+            BaseResult baseResult = parseAliExpressBaseResult(iopResponse, "取消上传交接单");
             ErrorResponse errorResponse = baseResult.getErrorResponse();
             if (Objects.nonNull(errorResponse)) {
                 throw new ServiceException(errorResponse.getSubMsg());
@@ -367,21 +368,24 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
         List<PackageForecastDetailEntity> forecastDetailList = packageForecastDetailService.listDbByMainId(entity.getId());
         String shopId = resolveSingleShopId(forecastDetailList);
         PackageForecastDTO.AlExpressHandoverBaseDTO base = getAlExpressHandoverBase(platform(), shopId);
+        Long platformPackageNo = parseAliExpressPlatformPackageNo(entity);
         PdfRequest pdfRequest = PdfRequest.builder()
                 .client(base.getClient())
-                .handoverContentId(Long.valueOf(entity.getPlatformPackageNo()))
+                .handoverContentId(platformPackageNo)
                 .locale("zh_CN")
                 .type(1)
                 .userInfo(base.getUserInfo())
                 .build();
         try {
             IopResponse response = aliExpressHandoverService.getPdf(base.getAuthMap(), pdfRequest);
-            BaseResponse baseResponse = JSONObject.parseObject(response.getBody(), BaseResponse.class);
-            BaseResult baseResult = JSONObject.parseObject(baseResponse.getResult(), BaseResult.class);
+            BaseResult baseResult = parseAliExpressNestedBaseResult(response, "打印交接单");
             if (StringUtils.isNotEmpty(baseResult.getErrorMsg()) || StringUtils.isEmpty(baseResult.getData())) {
                 throw new ServiceException(baseResult.getErrorMsg());
             }
             PdfResponse pdfResponse = JSONObject.parseObject(baseResult.getData(), PdfResponse.class);
+            if (Objects.isNull(pdfResponse) || StringUtils.isBlank(pdfResponse.getBody())) {
+                throw new ServiceException("速卖通打印交接单响应面单为空");
+            }
             return "data:application/pdf;base64," + pdfResponse.getBody();
         } catch (ApiException e) {
             log.error("速卖通打印失败>>>{}", e);
@@ -397,6 +401,9 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
         List<String> soIdList = forecastDetailList.stream().map(PackageForecastDetailEntity::getSoId).collect(Collectors.toList());
         Map<String, String> authMap = base.getAuthMap();
         List<SoB2cLogisticsEntity> soB2cLogisticsList = soB2cFeign.listSoB2cLogisticsByMainIdList(soIdList);
+        if (CollectionUtils.isEmpty(soB2cLogisticsList)) {
+            throw new ServiceException("未获取到销售订单物流信息");
+        }
         List<String> orderCodeList = soB2cLogisticsList.stream()
                 .map(SoB2cLogisticsEntity::getCode)
                 .filter(StringUtils::isNotBlank)
@@ -490,7 +497,7 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
         return shopIds.get(0);
     }
 
-    private void batchUpdateDetailStatus(List<ParcelOrder> parcelOrderList) {
+    private void batchUpdateDetailStatus(String mainId, List<ParcelOrder> parcelOrderList) {
         Map<String, String> statusMap = parcelOrderList.stream()
                 .filter(parcelOrder -> StringUtils.isNotBlank(parcelOrder.getOrderCode())
                         && StringUtils.isNotBlank(parcelOrder.getStatus()))
@@ -499,6 +506,7 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
             return;
         }
         List<PackageForecastDetailEntity> detailList = packageForecastDetailService.lambdaQuery()
+                .eq(PackageForecastDetailEntity::getMainId, mainId)
                 .in(PackageForecastDetailEntity::getSourceCode, statusMap.keySet())
                 .eq(PackageForecastDetailEntity::getIsDeleted, false)
                 .list();
@@ -507,6 +515,40 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
         }
         detailList.forEach(detail -> detail.setHandoverStatus(statusMap.get(detail.getSourceCode())));
         packageForecastDetailService.updateBatchById(detailList);
+    }
+
+    private Long parseAliExpressPlatformPackageNo(PackageForecastEntity entity) {
+        String platformPackageNo = entity.getPlatformPackageNo();
+        if (StringUtils.isBlank(platformPackageNo) || !StringUtils.isNumeric(platformPackageNo)) {
+            throw new ServiceException("速卖通平台交接单ID为空或格式错误");
+        }
+        return Long.valueOf(platformPackageNo);
+    }
+
+    private BaseResult parseAliExpressBaseResult(IopResponse response, String scene) {
+        if (Objects.isNull(response) || StringUtils.isBlank(response.getBody())) {
+            throw new ServiceException("速卖通" + scene + "响应为空");
+        }
+        BaseResult baseResult = JSONObject.parseObject(response.getBody(), BaseResult.class);
+        if (Objects.isNull(baseResult)) {
+            throw new ServiceException("速卖通" + scene + "响应解析为空");
+        }
+        return baseResult;
+    }
+
+    private BaseResult parseAliExpressNestedBaseResult(IopResponse response, String scene) {
+        if (Objects.isNull(response) || StringUtils.isBlank(response.getBody())) {
+            throw new ServiceException("速卖通" + scene + "响应为空");
+        }
+        BaseResponse baseResponse = JSONObject.parseObject(response.getBody(), BaseResponse.class);
+        if (Objects.isNull(baseResponse) || StringUtils.isBlank(baseResponse.getResult())) {
+            throw new ServiceException("速卖通" + scene + "result为空");
+        }
+        BaseResult baseResult = JSONObject.parseObject(baseResponse.getResult(), BaseResult.class);
+        if (Objects.isNull(baseResult)) {
+            throw new ServiceException("速卖通" + scene + "result解析为空");
+        }
+        return baseResult;
     }
 
     private String buildPlatformNo(String handoverNo, String platformPackageNo) {

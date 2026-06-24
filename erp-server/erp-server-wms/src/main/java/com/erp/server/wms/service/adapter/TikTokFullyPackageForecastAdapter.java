@@ -123,6 +123,9 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
         List<PackageForecastDetailEntity> detailEntityList = packageForecastDetailService.listDbByMainId(entity.getId());
         List<String> soIds = detailEntityList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList());
         List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
+        if (CollectionUtils.isEmpty(soB2cEntityList)) {
+            throw new ServiceException("销售订单未找到");
+        }
         List<String> shopIds = soB2cEntityList.stream()
                 .map(SoB2cEntity::getShopId)
                 .filter(StringUtils::isNotBlank)
@@ -158,6 +161,9 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
         }
         List<String> soIds = detailEntityList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList());
         List<SoB2cLogisticsEntity> soB2cLogisticsEntityList = soB2cFeign.listSoB2cLogisticsByMainIdList(soIds);
+        if (CollectionUtils.isEmpty(soB2cLogisticsEntityList)) {
+            throw new ServiceException("销售订单物流信息未找到");
+        }
         List<String> deliveryCodes = soB2cLogisticsEntityList.stream().map(SoB2cLogisticsEntity::getCode).collect(Collectors.toList());
         List<PackageForecastEntity> packageForecastEntityList = packageForecastMapper.selectBatchIds(dto.getIds());
         List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
@@ -256,14 +262,28 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
 
     private String tikTokFullyPrint(PackageForecastEntity entity) {
         List<PackageForecastDetailEntity> forecastDetailList = packageForecastDetailService.listDbByMainId(entity.getId());
+        if (CollectionUtils.isEmpty(forecastDetailList)) {
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "组包预报单明细");
+        }
         List<String> soIds = forecastDetailList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList());
         List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
-        List<String> shopIds = soB2cEntityList.stream().map(SoB2cEntity::getShopId).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(soB2cEntityList)) {
+            throw new ServiceException("销售订单未找到");
+        }
+        List<String> shopIds = soB2cEntityList.stream()
+                .map(SoB2cEntity::getShopId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
         if (CollectionUtils.isEmpty(shopIds)) {
             throw new ServiceException("销售订单店铺未找到");
         }
-        String logisticsCode = resolvePrintLogisticsCode(entity, soB2cEntityList.get(0).getShopId());
-        String url = tikTokFullService.printLogistics(soB2cEntityList.get(0).getShopId(), logisticsCode);
+        if (shopIds.size() > 1) {
+            throw new ServiceException("TikTok全托管不支持多店铺打印面单");
+        }
+        String shopId = shopIds.get(0);
+        String logisticsCode = resolvePrintLogisticsCode(entity, shopId);
+        String url = tikTokFullService.printLogistics(shopId, logisticsCode);
         try {
             String base64 = PdfUtil.convertPdfUrlToBase64(url, true);
             return "data:application/pdf;base64," + base64;

@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -40,6 +41,9 @@ public class DmpInputShopeeReturnDetailDmpHandler extends DmpInputDoNextDmpHandl
 
     @Override
     protected List<Map<String, Object>> getDetailList(Map<String, Object> dmpInputMongoEntity) {
+        if (!isReturnAndRefund(dmpInputMongoEntity)) {
+            return new ArrayList<>();
+        }
         List<Map<String, Object>> itemList = parseItemList(dmpInputMongoEntity.get("item"));
         if (CollUtil.isEmpty(itemList)) {
             return new ArrayList<>();
@@ -83,13 +87,16 @@ public class DmpInputShopeeReturnDetailDmpHandler extends DmpInputDoNextDmpHandl
 
     @Override
     protected void afterConvertData(Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMaps) {
-        for (Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> entry : dmpInputDataDmpRelationMaps.entrySet()) {
+        Iterator<Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>>> iterator =
+                dmpInputDataDmpRelationMaps.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> entry = iterator.next();
             List<TreeMap<String, Object>> dmpDataMaps = entry.getValue();
-            for (TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
-                Object returnSolution = dmpDataMap.get("return_solution");
-                Integer returnSolutionValue = parseInteger(returnSolution);
-                if (returnSolutionValue == null
-                        || RETURN_SOLUTION_RETURN_AND_REFUND != returnSolutionValue) {
+            Iterator<TreeMap<String, Object>> dataIterator = dmpDataMaps.iterator();
+            while (dataIterator.hasNext()) {
+                TreeMap<String, Object> dmpDataMap = dataIterator.next();
+                if (!isReturnAndRefund(dmpDataMap)) {
+                    dataIterator.remove();
                     continue;
                 }
                 String platformSku = resolvePlatformSku(dmpDataMap);
@@ -122,7 +129,16 @@ public class DmpInputShopeeReturnDetailDmpHandler extends DmpInputDoNextDmpHandl
                     dmpDataMap.put("reason", StringUtils.left(String.valueOf(reasonObj), REASON_MAX_LENGTH));
                 }
             }
+            if (dmpDataMaps.isEmpty()) {
+                iterator.remove();
+            }
         }
+    }
+
+    private boolean isReturnAndRefund(Map<String, Object> dataMap) {
+        Object returnSolution = dataMap.get("return_solution");
+        Integer returnSolutionValue = parseInteger(returnSolution);
+        return returnSolutionValue != null && RETURN_SOLUTION_RETURN_AND_REFUND == returnSolutionValue;
     }
 
     private String resolvePlatformSku(Map<String, Object> item) {
