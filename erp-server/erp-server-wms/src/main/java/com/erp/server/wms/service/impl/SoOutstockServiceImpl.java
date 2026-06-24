@@ -3607,18 +3607,17 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      */
     @Override
     public Boolean handleCreateB2cSoOutstock(SoOutstockDTO.GenerateB2cDTO dto) {
-        String id = soOutstockService.addB2cSoOutstock(dto);
-        //表示添加成功
-        if (CharSequenceUtil.isNotBlank(id)) {
+        SoOutstockDTO.AddB2cSoOutstockResult result = addB2cSoOutstockWithAmountCheck(dto);
+        if (CharSequenceUtil.isNotBlank(result.getId())) {
             // 检查关账或已有盘盈盘亏单据
-            if (soOutstockService.checkClosedAndUpdateRemark(dto, id)){
+            if (soOutstockService.checkClosedAndUpdateRemark(dto, result.getId())) {
                 return true;
             }
-            if (shouldSkipSubmitAfterUpstreamAmountCheck(id)) {
-                log.info("销售出库单上游金额校验未通过，已落待提交，跳过自动提交审核，outstockId={}", id);
+            if (result.isUpstreamAmountMismatch()) {
+                log.info("销售出库单上游金额校验未通过，已落待提交，跳过自动提交审核，outstockId={}", result.getId());
                 return true;
             }
-            soOutstockService.submitAndApprove(id);
+            soOutstockService.submitAndApprove(result.getId());
         }
         return Boolean.TRUE;
     }
@@ -3696,20 +3695,19 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 return true;
             }
         }
-        String id = soOutstockService.addB2cSoOutstock(dto);
-        //表示添加成功
-        if (CharSequenceUtil.isNotBlank(id)) {
+        SoOutstockDTO.AddB2cSoOutstockResult result = addB2cSoOutstockWithAmountCheck(dto);
+        if (CharSequenceUtil.isNotBlank(result.getId())) {
             try {
                 // 事务分开
                 // 检查关账或已有盘盈盘亏单据
-                if (soOutstockService.checkClosedAndUpdateRemark(dto, id)){
+                if (soOutstockService.checkClosedAndUpdateRemark(dto, result.getId())) {
                     return true;
                 }
-                if (shouldSkipSubmitAfterUpstreamAmountCheck(id)) {
-                    log.info("销售出库单上游金额校验未通过，已落待提交，跳过自动提交审核，outstockId={}", id);
+                if (result.isUpstreamAmountMismatch()) {
+                    log.info("销售出库单上游金额校验未通过，已落待提交，跳过自动提交审核，outstockId={}", result.getId());
                     return true;
                 }
-                soOutstockService.submitAndApprove(id);
+                soOutstockService.submitAndApprove(result.getId());
             } catch (Exception e) {
                 log.error("B2C订单生成销售出库单提交或审核失败：error={}", ExceptionUtil.stacktraceToString(e));
                 // 非ServiceException 异常，抛出由中台重试
@@ -3717,7 +3715,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                     throw e;
                 }
                 // 记录明细(事务分开)
-                soOutstockDetailService.updateDetailRemark(id, e.getMessage(),false);
+                soOutstockDetailService.updateDetailRemark(result.getId(), e.getMessage(), false);
             }
         }
         return true;
@@ -3736,6 +3734,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         deleteDTO.setType(type);
         soB2cFeign.deleteError(deleteDTO);
     }
+
     /**
      * 添加B2C销售出库单
      *
@@ -3746,8 +3745,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * @create 2023-12-29 11:51
      */
     @Override
-//    @Transactional(rollbackFor = Exception.class)
     public String addB2cSoOutstock(SoOutstockDTO.GenerateB2cDTO dto) {
+        return addB2cSoOutstockWithAmountCheck(dto).getId();
+    }
+
+//    @Transactional(rollbackFor = Exception.class)
+    private SoOutstockDTO.AddB2cSoOutstockResult addB2cSoOutstockWithAmountCheck(SoOutstockDTO.GenerateB2cDTO dto) {
         //来源类型
         String sourceType = dto.getSourceType();
         if (CharSequenceUtil.isBlank(sourceType)) {
@@ -3772,7 +3775,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         //过滤出库明细中应发和实发为0的数据
         detailList = detailList.stream().filter(d -> Objects.nonNull(d.getActualQty()) && d.getActualQty() > 0).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(detailList)) {
-            return "";
+            return SoOutstockDTO.AddB2cSoOutstockResult.empty();
         }
 
         SoOutstockEntity soOutstock = new SoOutstockEntity();
@@ -3868,10 +3871,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         Boolean addResult = ApplicationContextUtils.getBean(SoOutstockServiceImpl.class)
                 .addB2cSoOutstockPersist(soOutstock, detailList, sourceType, thirdWarehouseDeliveryEntity, code);
         if (!Boolean.TRUE.equals(addResult)) {
-            return "";
+            return SoOutstockDTO.AddB2cSoOutstockResult.empty();
         }
-        markB2cSoOutstockAmountMismatchIfNeeded(soOutstock.getId());
-        return soOutstock.getId();
+        boolean upstreamAmountMismatch = markB2cSoOutstockAmountMismatchIfNeeded(soOutstock.getId());
+        return SoOutstockDTO.AddB2cSoOutstockResult.of(soOutstock.getId(), upstreamAmountMismatch);
     }
 
     /**
@@ -3928,26 +3931,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         ApplicationContextUtils.getBean(SoOutstockServiceImpl.class)
                 .markB2cSoOutstockAmountMismatch(outstockId, amountCheckResult);
         return true;
-    }
-
-    /**
-     * addB2cSoOutstock 落库后若上游金额校验未通过，{@link #markB2cSoOutstockAmountMismatch} 已写入 approve_remark。
-     */
-    private boolean shouldSkipSubmitAfterUpstreamAmountCheck(String outstockId) {
-        SoOutstockEntity entity = this.getById(outstockId);
-        if (entity == null || !ApproveStatusEnum.WAIT_SUBMIT.equals(entity.getApproveStatus())) {
-            return false;
-        }
-        return containsUpstreamAmountCheckRemark(entity.getApproveRemark());
-    }
-
-    private boolean containsUpstreamAmountCheckRemark(String approveRemark) {
-        if (CharSequenceUtil.isBlank(approveRemark)) {
-            return false;
-        }
-        String mismatchMsg = MessageUtils.getMessage(ApiError.SO_OUTSTOCK_AMOUNT_MISMATCH_SUBMIT);
-        String unavailableMsg = MessageUtils.getMessage(ApiError.SO_OUTSTOCK_UPSTREAM_AMOUNT_CHECK_UNAVAILABLE);
-        return approveRemark.contains(mismatchMsg) || approveRemark.contains(unavailableMsg);
     }
 
     @Transactional(rollbackFor = Exception.class)

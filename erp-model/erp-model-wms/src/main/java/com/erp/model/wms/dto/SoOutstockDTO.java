@@ -1876,6 +1876,32 @@ public class SoOutstockDTO implements Serializable {
 
     }
 
+    /**
+     * addB2cSoOutstock 落库 + 上游金额校验结果，仅供 B2C 出库创建链路使用。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AddB2cSoOutstockResult {
+
+        /**
+         * 销售出库单 id，落库失败或无可出库明细时为空串
+         */
+        private String id;
+
+        /**
+         * true：上游金额异常已落待提交，应跳过 submitAndApprove
+         */
+        private boolean upstreamAmountMismatch;
+
+        public static AddB2cSoOutstockResult empty() {
+            return new AddB2cSoOutstockResult("", false);
+        }
+
+        public static AddB2cSoOutstockResult of(String id, boolean upstreamAmountMismatch) {
+            return new AddB2cSoOutstockResult(id, upstreamAmountMismatch);
+        }
+    }
 
     @Data
     @NoArgsConstructor
