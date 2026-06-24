@@ -2592,8 +2592,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         try {
             downloadTaskFeign.updateTask(fallback);
         } catch (Exception e) {
-            log.error("销售退货入库单导入任务状态兜底更新失败，taskId={}", taskId, e);
-            throw new ServiceException(ApiError.FILE_IMPORT_TASK_STATUS_UPDATE_FAILED);
+            // 业务导入已完成，勿抛异常以免 Feign/MQ 入口误判整批失败并触发重试
+            log.warn("销售退货入库单导入业务已完成，但任务状态同步失败（含兜底），taskId={}，{}",
+                    taskId, MessageUtils.getMessage(ApiError.FILE_IMPORT_TASK_STATUS_UPDATE_FAILED), e);
         }
     }
 
