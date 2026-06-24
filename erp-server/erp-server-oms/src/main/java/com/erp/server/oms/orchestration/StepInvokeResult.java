@@ -1,5 +1,6 @@
 package com.erp.server.oms.orchestration;
 
+import com.erp.model.oms.enums.WorkflowTaskRecordStatusEnum;
 import lombok.Getter;
 
 /**
@@ -63,11 +64,11 @@ public class StepInvokeResult {
 
     public boolean isWaiting() {
         return outcome == Outcome.WAITING
-                || (responseStatus != null && "waiting".equalsIgnoreCase(responseStatus));
+                || (responseStatus != null && WorkflowTaskRecordStatusEnum.WAITING.getCode().equalsIgnoreCase(responseStatus));
     }
 
     public boolean isFailed() {
         return outcome == Outcome.FAILED
-                || (responseStatus != null && "failed".equalsIgnoreCase(responseStatus));
+                || (responseStatus != null && WorkflowTaskRecordStatusEnum.FAILED.getCode().equalsIgnoreCase(responseStatus));
     }
 }

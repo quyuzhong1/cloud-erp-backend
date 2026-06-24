@@ -70,16 +70,20 @@
 
     <update id="updateTrackNoByCreateTime">
         update third_warehouse_delivery twd
-        set track_no = so.track_no,
+        set track_no = latest_so.track_no,
             update_time = now(),
             version = twd.version + 1
-        from so_outstock so
-        where twd.id = so.source_id
-          and so.source_type = #{sourceType}
+        from (
+            select distinct on (so.source_id) so.source_id, so.track_no
+            from so_outstock so
+            where so.source_type = #{sourceType}
+              and so.is_deleted = false
+              and coalesce(so.track_no, '') != ''
+            order by so.source_id, so.create_time desc nulls last, so.id desc
+        ) latest_so
+        where twd.id = latest_so.source_id
           and twd.is_deleted = false
-          and so.is_deleted = false
           and coalesce(twd.track_no, '') = ''
-          and coalesce(so.track_no, '') != ''
           and twd.create_time &gt;= #{startTime}
           and twd.create_time &lt; #{endTime}
     </update>

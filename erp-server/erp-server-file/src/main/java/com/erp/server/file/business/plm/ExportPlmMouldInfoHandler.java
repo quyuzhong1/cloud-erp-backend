@@ -40,6 +40,7 @@ public class ExportPlmMouldInfoHandler extends AbstractMultiSheetGroupPageFileEv
         if (dto.getParams() != null) {
             dto.getParams().setSortList(null);
         }
+        // Feign 返回 null 由基类 writeOffsetBatches → requirePagingResult 统一拦截，Handler 无需重复判空。
         return exportPlmFeign.exportMouldInfo(dto);
     }
 
