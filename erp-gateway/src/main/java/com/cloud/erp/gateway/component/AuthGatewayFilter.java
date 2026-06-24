@@ -21,6 +21,7 @@ import com.erp.model.sys.dto.SysApiTokenDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.redisson.api.RedissonClient;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
@@ -108,6 +109,14 @@ public class AuthGatewayFilter implements GlobalFilter, Ordered {
 
     private static final Pattern API_TOKEN_PATTERN = Pattern.compile("^" + Pattern.quote(SysApiTokenConstants.TOKEN_PREFIX) + "[A-Za-z0-9_-]{43}$");
 
+    private static final String UNKNOWN_IP = "unknown";
+
+    private static final String X_FORWARDED_FOR = "X-Forwarded-For";
+
+    private static final String X_REAL_IP = "X-Real-IP";
+
+    private static final int IPV4_BIT_LENGTH = 32;
+
     @Resource
     private TokenService tokenService;
     @Resource
@@ -124,6 +133,13 @@ public class AuthGatewayFilter implements GlobalFilter, Ordered {
 
     @Resource
     private RedissonClient redissonClient;
+
+    /**
+     * 只有直接连接方在这些网段内，才信任代理写入的 X-Forwarded-For/X-Real-IP。
+     * 代理层需要清洗并重写转发头，避免客户端自带伪造头透传到网关。
+     */
+    @Value("${gateway.client-ip.trusted-proxy-cidrs:}")
+    private String trustedProxyCidrs;
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
@@ -323,7 +339,26 @@ public class AuthGatewayFilter implements GlobalFilter, Ordered {
     }
 
     private Mono<Void> checkOpenApiRateLimit(ServerWebExchange exchange, ServerHttpRequest request, String uri) {
-        String clientIp = getClientIp(request);
+        String remoteIp = getRemoteIp(request);
+        boolean trustedProxy = isTrustedProxy(remoteIp);
+        String xForwardedFor = request.getHeaders().getFirst(X_FORWARDED_FOR);
+        String xRealIp = request.getHeaders().getFirst(X_REAL_IP);
+        String clientIp = getClientIp(request, remoteIp);
+        log.info("开放接口限流IP解析，clientIp: {}, remoteIp: {}, trustedProxy: {}, xForwardedFor: {}, xRealIp: {}, URI: {}",
+                clientIp,
+                remoteIp,
+                trustedProxy,
+                xForwardedFor,
+                xRealIp,
+                uri);
+        if (!trustedProxy && (StringUtils.isNotBlank(xForwardedFor) || StringUtils.isNotBlank(xRealIp))) {
+            log.warn("开放接口忽略代理IP头，remoteIp未配置为可信代理，clientIp按remoteIp限流，remoteIp: {}, trustedProxyCidrs: {}, xForwardedFor: {}, xRealIp: {}, URI: {}",
+                    remoteIp,
+                    trustedProxyCidrs,
+                    xForwardedFor,
+                    xRealIp,
+                    uri);
+        }
         if (!ipRateLimitUtil.isOpenApiAllowed(clientIp)) {
             log.warn("开放接口访问频率过高或限流组件不可用，IP: {}, URI: {}", clientIp, uri);
             return unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.HTTP_TOO_MANY_REQUESTS, exchange.getRequest()), ApiError.HTTP_TOO_MANY_REQUESTS.getCode());
@@ -455,15 +490,142 @@ public class AuthGatewayFilter implements GlobalFilter, Ordered {
      * @return 客户端IP地址
      */
     private String getClientIp(ServerHttpRequest request) {
-        // 限流和封禁只使用直接连接地址，避免客户端伪造 X-Forwarded-For 等头影响封禁目标。
+        String remoteIp = getRemoteIp(request);
+        return getClientIp(request, remoteIp);
+    }
+
+    private String getClientIp(ServerHttpRequest request, String remoteIp) {
+        if (!isTrustedProxy(remoteIp)) {
+            return remoteIp;
+        }
+        String forwardedClientIp = resolveForwardedClientIp(request);
+        return StringUtils.defaultIfBlank(forwardedClientIp, remoteIp);
+    }
+
+    private String getRemoteIp(ServerHttpRequest request) {
         InetSocketAddress remoteAddress = request.getRemoteAddress();
         if (remoteAddress == null) {
-            return "unknown";
+            return UNKNOWN_IP;
         }
         if (remoteAddress.getAddress() != null) {
             return remoteAddress.getAddress().getHostAddress();
         }
-        return StringUtils.defaultIfBlank(remoteAddress.getHostString(), "unknown");
+        return StringUtils.defaultIfBlank(remoteAddress.getHostString(), UNKNOWN_IP);
+    }
+
+    private String resolveForwardedClientIp(ServerHttpRequest request) {
+        String xForwardedFor = request.getHeaders().getFirst(X_FORWARDED_FOR);
+        String clientIp = resolveFromXForwardedFor(xForwardedFor);
+        if (StringUtils.isNotBlank(clientIp)) {
+            return clientIp;
+        }
+        return normalizeHeaderIp(request.getHeaders().getFirst(X_REAL_IP));
+    }
+
+    private String resolveFromXForwardedFor(String xForwardedFor) {
+        if (StringUtils.isBlank(xForwardedFor)) {
+            return null;
+        }
+        String[] ipChain = xForwardedFor.split(",");
+        for (String ip : ipChain) {
+            String currentIp = normalizeHeaderIp(ip);
+            if (isIpLiteral(currentIp)) {
+                return currentIp;
+            }
+        }
+        return null;
+    }
+
+    private String normalizeHeaderIp(String rawIp) {
+        if (StringUtils.isBlank(rawIp)) {
+            return null;
+        }
+        String ip = rawIp.trim();
+        if (UNKNOWN_IP.equalsIgnoreCase(ip)) {
+            return null;
+        }
+        if (ip.startsWith("[") && ip.contains("]")) {
+            return ip.substring(1, ip.indexOf(']'));
+        }
+        int firstColonIndex = ip.indexOf(':');
+        if (firstColonIndex > 0 && ip.indexOf(':', firstColonIndex + 1) < 0) {
+            String hostPart = ip.substring(0, firstColonIndex);
+            if (ipv4ToLong(hostPart) >= 0) {
+                return hostPart;
+            }
+        }
+        return ip;
+    }
+
+    private boolean isTrustedProxy(String ip) {
+        if (!isIpLiteral(ip) || StringUtils.isBlank(trustedProxyCidrs)) {
+            return false;
+        }
+        String[] cidrs = trustedProxyCidrs.split(",");
+        for (String cidr : cidrs) {
+            if (matchesTrustedProxy(ip, cidr)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean matchesTrustedProxy(String ip, String cidr) {
+        if (StringUtils.isBlank(cidr)) {
+            return false;
+        }
+        String trustedRange = cidr.trim();
+        if (!trustedRange.contains("/")) {
+            return ip.equals(trustedRange);
+        }
+        String[] rangeParts = trustedRange.split("/");
+        if (rangeParts.length != 2) {
+            return false;
+        }
+        long ipValue = ipv4ToLong(ip);
+        long rangeValue = ipv4ToLong(rangeParts[0]);
+        if (ipValue < 0 || rangeValue < 0) {
+            return false;
+        }
+        try {
+            int prefixLength = Integer.parseInt(rangeParts[1]);
+            if (prefixLength < 0 || prefixLength > IPV4_BIT_LENGTH) {
+                return false;
+            }
+            long mask = prefixLength == 0 ? 0 : 0xFFFFFFFFL << (IPV4_BIT_LENGTH - prefixLength) & 0xFFFFFFFFL;
+            return (ipValue & mask) == (rangeValue & mask);
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
+    private boolean isIpLiteral(String ip) {
+        if (StringUtils.isBlank(ip)) {
+            return false;
+        }
+        return ipv4ToLong(ip) >= 0 || ip.contains(":") && ip.matches("^[0-9a-fA-F:.%]+$");
+    }
+
+    private long ipv4ToLong(String ip) {
+        if (StringUtils.isBlank(ip)) {
+            return -1L;
+        }
+        String[] parts = ip.split("\\.");
+        if (parts.length != 4) {
+            return -1L;
+        }
+        long value = 0L;
+        for (String part : parts) {
+            if (!part.matches("\\d{1,3}")) {
+                return -1L;
+            }
+            int number = Integer.parseInt(part);
+            if (number < 0 || number > 255) {
+                return -1L;
+            }
+            value = (value << 8) + number;
+        }
+        return value;
     }
 
     /**
