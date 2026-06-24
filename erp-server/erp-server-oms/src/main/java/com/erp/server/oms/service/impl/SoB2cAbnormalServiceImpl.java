@@ -34,6 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
 /**
@@ -47,6 +48,8 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
     private static final Logger log = LoggerFactory.getLogger(SoB2cAbnormalServiceImpl.class);
     @Resource
     private SoB2cService soB2cService;
+    @Resource(name = "omsErpExecutor")
+    private Executor omsErpExecutor;
     @Resource
     private SoB2cDetailService soB2cDetailService;
     @Resource
@@ -123,7 +126,11 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
                 break;
             case GENERATE_OUTSTOCK:
                 if (Boolean.TRUE.equals(soB2cEntity.hasPlatformWarehouseOrder())) {
-                    CompletableFuture.runAsync(() -> soB2cCoreService.handleOrderRetryConsumer(soB2cEntity));
+                    CompletableFuture.runAsync(() -> soB2cCoreService.handleOrderRetryConsumer(soB2cEntity), omsErpExecutor)
+                            .exceptionally(e -> {
+                                log.error("平台仓订单重试生成出库异步处理失败, id: {}, code: {}", soB2cEntity.getId(), soB2cEntity.getCode(), e);
+                                return null;
+                            });
                     resultDTOList.add(BatchResultDTO.success(id, soB2cEntity.getCode(), "重试成功,稍后刷新查看结果"));
                 } else {
                     Boolean flag = soOutstockFeign.afreshGenerateB2cOutstock(Arrays.asList(id));

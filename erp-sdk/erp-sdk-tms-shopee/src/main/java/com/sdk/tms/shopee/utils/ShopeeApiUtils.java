@@ -18,6 +18,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * @author zdy
@@ -38,6 +39,7 @@ public class ShopeeApiUtils {
             "access_token", "refresh_token", "sign", "partner_key", "tmp_partner_key",
             "secret", "secret_key", "token", "authorization"
     ));
+    private static final List<MaskRule> SENSITIVE_MASK_RULES = buildSensitiveMaskRules();
             
 
     public static String getOrderSign(String path, String accessToken, long partnerId, String tmpPartnerKey, long shopId) {
@@ -218,13 +220,32 @@ public class ShopeeApiUtils {
             return null;
         }
         String result = content;
-        for (String key : SENSITIVE_KEYS) {
-            result = result.replaceAll("(?i)(\"" + key + "\"\\s*:\\s*\")([^\"]*)(\")", "$1" + MASK + "$3");
-            result = result.replaceAll("(?i)(\"" + key + "\"\\s*:\\s*)([^,}\\]]+)", "$1\"" + MASK + "\"");
-            result = result.replaceAll("(?i)([?&]" + key + "=)([^&\\s]+)", "$1" + MASK);
-            result = result.replaceAll("(?i)(^" + key + "=)([^&\\s]+)", "$1" + MASK);
+        for (MaskRule rule : SENSITIVE_MASK_RULES) {
+            result = rule.pattern.matcher(result).replaceAll(rule.replacement);
         }
         return result;
+    }
+
+    private static List<MaskRule> buildSensitiveMaskRules() {
+        List<MaskRule> rules = new ArrayList<>();
+        for (String key : SENSITIVE_KEYS) {
+            String quotedKey = Pattern.quote(key);
+            rules.add(new MaskRule(Pattern.compile("(?i)(\"" + quotedKey + "\"\\s*:\\s*\")([^\"]*)(\")"), "$1" + MASK + "$3"));
+            rules.add(new MaskRule(Pattern.compile("(?i)(\"" + quotedKey + "\"\\s*:\\s*)([^,}\\]]+)"), "$1\"" + MASK + "\""));
+            rules.add(new MaskRule(Pattern.compile("(?i)([?&]" + quotedKey + "=)([^&\\s]+)"), "$1" + MASK));
+            rules.add(new MaskRule(Pattern.compile("(?i)(^" + quotedKey + "=)([^&\\s]+)"), "$1" + MASK));
+        }
+        return rules;
+    }
+
+    private static class MaskRule {
+        private final Pattern pattern;
+        private final String replacement;
+
+        private MaskRule(Pattern pattern, String replacement) {
+            this.pattern = pattern;
+            this.replacement = replacement;
+        }
     }
 
     public static String buildUrl(String url, Map<String, Object> urlParams) {

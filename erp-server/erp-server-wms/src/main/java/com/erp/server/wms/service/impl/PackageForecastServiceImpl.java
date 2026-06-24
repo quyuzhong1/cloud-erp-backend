@@ -639,7 +639,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
                 .distinct()
                 .collect(Collectors.toList());
         List<SoB2cEntity> soB2cEntityList = CollectionUtils.isNotEmpty(soIds) ? soB2cFeign.listByIds(soIds) : Collections.emptyList();
-        Map<String, SoB2cEntity> soB2cEntityMap = soB2cEntityList.stream()
+        Map<String, SoB2cEntity> soB2cEntityMap = CollectionUtils.emptyIfNull(soB2cEntityList).stream()
                 .collect(Collectors.toMap(SoB2cEntity::getId, item -> item, (oldValue, newValue) -> oldValue));
         for (PackageForecastDTO.ExportViewDTO item : list) {
             SoB2cEntity soB2cEntity = soB2cEntityMap.get(item.getSoId());

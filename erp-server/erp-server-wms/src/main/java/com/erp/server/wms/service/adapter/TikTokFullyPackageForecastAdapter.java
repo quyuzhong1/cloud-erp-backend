@@ -152,6 +152,9 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
         List<String> deliveryCodes = soB2cLogisticsEntityList.stream().map(SoB2cLogisticsEntity::getCode).collect(Collectors.toList());
         List<PackageForecastEntity> packageForecastEntityList = packageForecastMapper.selectBatchIds(dto.getIds());
         List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
+        if (CollectionUtils.isEmpty(soB2cEntityList)) {
+            throw new ServiceException("销售订单未找到");
+        }
         TikTokFullyShippingReq tikTokFullyShippingReq = new TikTokFullyShippingReq();
         tikTokFullyShippingReq.setDeliveryOrderCodes(deliveryCodes);
         LogisticsAddressEntity addressEntity = logisticsFeign.getLogisticsAddressById(dto.getCollectAddressId());

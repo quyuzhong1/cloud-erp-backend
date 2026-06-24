@@ -43,13 +43,11 @@ import com.erp.tms.aliexpress.model.order.response.BaseResult;
 import com.erp.tms.aliexpress.model.order.response.ErrorResponse;
 import com.erp.tms.aliexpress.service.AliExpressHandoverService;
 import com.erp.tms.aliexpress.util.ApiException;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
@@ -92,8 +90,6 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public List<BatchResultDTO> upload(PackageForecastDTO.UploadDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -144,8 +140,6 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public List<BatchResultDTO> cancel(List<String> ids) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
         for (String id : ids) {
@@ -316,8 +310,8 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
         String addressName = addressEntity.getName();
         entity.setCollectAddress(addressName);
         addBigPackage(entity, addressEntity);
-        asyncSyncAfterCommit(entity);
         packageForecastMapper.updateById(entity);
+        asyncSyncAfterCommit(entity);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "上传成功");
     }
 

@@ -73,7 +73,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.io.IOException;
@@ -151,7 +150,6 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public List<BatchResultDTO> upload(PackageForecastDTO.UploadDTO dto) {
         ShopeeForecastContext context = buildContext(dto.getIds());
         validateUploadEntities(context);
@@ -227,7 +225,6 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public List<BatchResultDTO> cancel(List<String> ids) {
         ShopeeForecastContext context = buildContext(ids);
         validateCancelEntities(context);

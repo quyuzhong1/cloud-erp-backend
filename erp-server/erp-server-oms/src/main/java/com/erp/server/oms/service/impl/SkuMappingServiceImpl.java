@@ -1237,16 +1237,28 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
         List<String> skuIdList = list.stream().map(SkuMappingDTO.PagingViewDTO::getProductSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIdList);
+        if (CollectionUtils.isEmpty(skuList)) {
+            skuList = Collections.emptyList();
+        }
         List<String> skuNoList = list.stream().map(SkuMappingDTO.PagingViewDTO::getProductSkuNo)
                 .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<SkuVO> skuNoVoList = CollectionUtils.isEmpty(skuNoList) ? Collections.emptyList() : plmTaskFeign.listBySkuNoList(skuNoList);
+        if (CollectionUtils.isEmpty(skuNoVoList)) {
+            skuNoVoList = Collections.emptyList();
+        }
         Map<String, SkuVO> skuNoVoMap = skuNoVoList.stream()
                 .collect(Collectors.toMap(SkuVO::getSkuNo, Function.identity(), (k1, k2) -> k1));
         //子件信息
         List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
+        if (CollectionUtils.isEmpty(bomChildrenSkuList)) {
+            bomChildrenSkuList = Collections.emptyList();
+        }
 
         //原产地名称
         List<DictBasicEntity> originList = dictBasicService.getByKey(DictBasicTypeEnum.INVOICE_TAX_NFE_ORIGIN.getType());
+        if (CollectionUtils.isEmpty(originList)) {
+            originList = Collections.emptyList();
+        }
         Map<String, String> originMap = originList.stream().collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName));
 
         for (SkuMappingDTO.PagingViewDTO item : list) {

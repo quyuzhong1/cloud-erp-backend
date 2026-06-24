@@ -95,12 +95,13 @@ public class DmpInputShopeeRefundDetailDmpHandler extends DmpInputDoNextDmpHandl
                     dmpDataMap.put("skuNo", platformSku);
                 }
                 Object amountObj = dmpDataMap.get("amount");
-                if (amountObj != null) {
-                    int qty = Integer.parseInt(String.valueOf(amountObj));
+                Integer qty = parseInteger(amountObj);
+                if (qty != null) {
                     dmpDataMap.put("qty", qty);
                     Object itemPriceObj = dmpDataMap.get("item_price");
-                    if (itemPriceObj != null) {
-                        dmpDataMap.put("amount", new BigDecimal(String.valueOf(itemPriceObj)).multiply(BigDecimal.valueOf(qty)));
+                    BigDecimal itemPrice = parseBigDecimal(itemPriceObj);
+                    if (itemPrice != null) {
+                        dmpDataMap.put("amount", itemPrice.multiply(BigDecimal.valueOf(qty)));
                     }
                 }
                 Object returnSnObj = dmpDataMap.get("return_sn");
@@ -118,8 +119,8 @@ public class DmpInputShopeeRefundDetailDmpHandler extends DmpInputDoNextDmpHandl
 
     private boolean isRefundOnlyClosed(Map<String, Object> dataMap) {
         Object returnSolution = dataMap.get("return_solution");
-        if (returnSolution == null
-                || RETURN_SOLUTION_REFUND_ONLY != Integer.parseInt(String.valueOf(returnSolution))) {
+        Integer returnSolutionValue = parseInteger(returnSolution);
+        if (returnSolutionValue == null || RETURN_SOLUTION_REFUND_ONLY != returnSolutionValue) {
             return false;
         }
         return STATUS_REFUND_ACCEPTED.equalsIgnoreCase(resolvePlatformStatus(dataMap));
@@ -149,5 +150,27 @@ public class DmpInputShopeeRefundDetailDmpHandler extends DmpInputDoNextDmpHandl
             return itemSku;
         }
         return String.valueOf(item.getOrDefault("variation_sku", ""));
+    }
+
+    private Integer parseInteger(Object value) {
+        if (value == null || StringUtils.isBlank(String.valueOf(value))) {
+            return null;
+        }
+        try {
+            return Integer.parseInt(String.valueOf(value));
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private BigDecimal parseBigDecimal(Object value) {
+        if (value == null || StringUtils.isBlank(String.valueOf(value))) {
+            return null;
+        }
+        try {
+            return new BigDecimal(String.valueOf(value));
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 }
