@@ -714,11 +714,15 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                 .eq(OverseasProviderEntity::getAuthStatus, AuthStatusEnum.ALREADY.getCode())
                 .eq(OverseasProviderEntity::getCode, dto.getPlatform())
                 .eq(OverseasProviderEntity::getIsDeleted, false));
-        return providerEntityList.stream()
-                .filter(provider -> CollUtil.isNotEmpty(provider.getAuthJson()))
-                .map(OverseasProviderEntity::getId)
-                .findFirst()
-                .orElse(null);
+        Map<String, OverseasProviderEntity> providerMap = providerEntityList.stream()
+                .collect(Collectors.toMap(OverseasProviderEntity::getId, Function.identity(), (left, right) -> left));
+        for (OverseasProviderWarehouseEntity providerWarehouse : providerWarehouseList) {
+            OverseasProviderEntity provider = providerMap.get(providerWarehouse.getMainId());
+            if (Objects.nonNull(provider) && CollUtil.isNotEmpty(provider.getAuthJson())) {
+                return provider.getId();
+            }
+        }
+        return null;
     }
 
     private List<OverseasProviderWarehouseEntity> resolveProviderWarehouseList(PlatformOutboundDTO dto,
@@ -808,6 +812,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         if (CollUtil.isEmpty(skuIdList)) {
             return Collections.emptyMap();
         }
+        // PlmTaskFeign.listBomChildBySkuIds 直接返回 List（非 ApiResult）；Feign 失败由框架抛 FeignServiceException
         List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
         if (CollUtil.isEmpty(bomChildrenList)) {
             return Collections.emptyMap();

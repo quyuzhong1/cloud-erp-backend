@@ -87,12 +87,12 @@ public class EccangOutboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHand
 		platformOutboundDTO.setOrderStatus(erpOrderStatus);
     	platformOutboundDTO.setThirdOrderStatus(AntuEnums.OrderStatusEnum.getName(orderStatus));
     	platformOutboundDTO.setTrackNo(dmpThirdOutboundEntity.getTrackingNo());
-    	platformOutboundDTO.setItems(this.convertItems(dmpThirdOutboundEntity.getDetailListJson()));
+    	platformOutboundDTO.setItems(this.convertItems(dmpThirdOutboundEntity.getDetailListJson(), dmpThirdOutboundEntity.getOrderCode()));
     	
         return platformOutboundDTO;
     }
 
-    private List<PlatformOutboundDTO.Item> convertItems(String detailListJson) {
+    private List<PlatformOutboundDTO.Item> convertItems(String detailListJson, String orderCode) {
 		if(StringUtils.isBlank(detailListJson)) {
 			return Collections.emptyList();
 		}
@@ -127,7 +127,7 @@ public class EccangOutboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHand
 			}
 			return items;
 		} catch (Exception e) {
-			log.warn("解析三方仓出库明细失败, detailListJson={}", detailListJson, e);
+			log.error("解析三方仓出库明细 JSON 失败, orderCode={}, detailListJson={}", orderCode, detailListJson, e);
 			return Collections.emptyList();
 		}
     }
