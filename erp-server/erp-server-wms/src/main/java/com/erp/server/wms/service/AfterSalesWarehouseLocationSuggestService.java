@@ -73,6 +73,11 @@ public interface AfterSalesWarehouseLocationSuggestService extends SuperService<
     void importExcel(MultipartFile file, HttpServletResponse response);
 
     /**
+     * 批量 UPSERT（事务边界独立，供 importExcel 通过代理调用，确保全批次原子提交）
+     */
+    void doUpsertBatch(List<AfterSalesWarehouseLocationSuggestEntity> entities);
+
+    /**
      * 下载导入模板
      *
      * @date 2026-04-30

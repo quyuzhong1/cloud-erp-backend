@@ -1127,11 +1127,17 @@ public class WarehouseLocationController extends BaseController {
     /**
      * 根据仓位编号查询仓位信息
      *
-     * @param code 仓库编码
-     * @return WarehouseLocationEntity
+     * @param code 仓位编码
+     * @return WarehouseLocationDTO.ViewDto
      */
     @GetMapping(value = "/getByCode")
-    public ApiResult<WarehouseLocationEntity> getByCode(@RequestParam("code") String code) {
-        return success(warehouseLocationService.getByCode(code));
+    public ApiResult<WarehouseLocationDTO.ViewDto> getByCode(@RequestParam("code") String code) {
+        WarehouseLocationEntity entity = warehouseLocationService.getByCode(code);
+        if (entity == null) {
+            return success(null);
+        }
+        WarehouseLocationDTO.ViewDto viewDto = new WarehouseLocationDTO.ViewDto();
+        org.springframework.beans.BeanUtils.copyProperties(entity, viewDto);
+        return success(viewDto);
     }
 }

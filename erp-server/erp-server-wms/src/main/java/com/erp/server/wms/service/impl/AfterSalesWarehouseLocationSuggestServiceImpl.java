@@ -42,6 +42,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.ListUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
@@ -79,6 +80,9 @@ public class AfterSalesWarehouseLocationSuggestServiceImpl extends SuperServiceI
     @Resource
     private WarehouseLocationService warehouseLocationService;
 
+    @Lazy
+    @Resource
+    private AfterSalesWarehouseLocationSuggestService selfService;
 
     @Override
     public PagingVO<AfterSalesWarehouseLocationSuggestDto.ListDTO> paging(PagingDTO<AfterSalesWarehouseLocationSuggestDto.SearchParamDTO> pagingDTO) {
@@ -221,7 +225,6 @@ public class AfterSalesWarehouseLocationSuggestServiceImpl extends SuperServiceI
         downloadTaskFeign.saveDownloadTask("售后仓位推荐数据导出", EXPORT_WAREHOUSE_LOCATION_SUGGEST_AFTER_SALES.getCode(), pagingDTO.getParams());
     }
 
-    @Transactional(rollbackFor = Exception.class)
     @Override
     public void importExcel(MultipartFile file, HttpServletResponse response) {
         LoginUser user = UserContext.getNonLoginUser();
@@ -246,7 +249,6 @@ public class AfterSalesWarehouseLocationSuggestServiceImpl extends SuperServiceI
             ExcelUtil.export("错误数据", "sheet1", allList, AfterSalesWarehouseLocationSuggestExcelDto.class, response);
         } else {
             log.info("开始封装实体数据，当前操作人：{}", userName);
-            // 统一使用应用服务器时间
             LocalDateTime now = LocalDateTime.now();
 
             List<AfterSalesWarehouseLocationSuggestEntity> entities = verifyList
@@ -273,16 +275,22 @@ public class AfterSalesWarehouseLocationSuggestServiceImpl extends SuperServiceI
                     })
                     .collect(Collectors.toList());
 
-            // 分批执行高速 UPSERT (每批 500 条)
             if (!entities.isEmpty()) {
-                List<List<AfterSalesWarehouseLocationSuggestEntity>> batches = ListUtils.partition(entities, 500);
-                for (List<AfterSalesWarehouseLocationSuggestEntity> batch : batches) {
-                    try {
-                        baseMapper.upsertBatch(batch);
-                    } catch (Exception e) {
-                        throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
-                    }
-                }
+                selfService.doUpsertBatch(entities);
+            }
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void doUpsertBatch(List<AfterSalesWarehouseLocationSuggestEntity> entities) {
+        // 分批执行高速 UPSERT (每批 500 条)，全批次在同一事务内，任意批次失败整体回滚
+        List<List<AfterSalesWarehouseLocationSuggestEntity>> batches = ListUtils.partition(entities, 500);
+        for (List<AfterSalesWarehouseLocationSuggestEntity> batch : batches) {
+            try {
+                baseMapper.upsertBatch(batch);
+            } catch (Exception e) {
+                throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
             }
         }
     }
