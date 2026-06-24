@@ -689,7 +689,15 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         List<ThirdWarehouseSkuDetail> detailList = Optional.ofNullable(dto.getItems()).orElse(Collections.emptyList()).stream()
                 .filter(Objects::nonNull)
                 .filter(item -> StringUtils.isNotBlank(item.getProductSku()))
-                .map(item -> new ThirdWarehouseSkuDetail(item.getProductSku(), Objects.nonNull(item.getActualQty()) ? item.getActualQty() : 0))
+                .filter(item -> {
+                    if (Objects.nonNull(item.getActualQty())) {
+                        return true;
+                    }
+                    log.warn("三方仓出库明细数量缺失, platform={}, referenceNo={}, productSku={}",
+                            dto.getPlatform(), dto.getReferenceNo(), item.getProductSku());
+                    return false;
+                })
+                .map(item -> new ThirdWarehouseSkuDetail(item.getProductSku(), item.getActualQty()))
                 .collect(Collectors.toList());
         return ThirdWarehouseSkuPayload.success(overseasWarehouse.getWarehouseId(),
                 overseasWarehouse.getPlatformWarehouseName(),
@@ -697,6 +705,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
     }
 
     private String resolveProviderAuthId(PlatformOutboundDTO dto, OverseasProviderDTO.FeignDTO overseasWarehouse) {
+        // providerWarehouseList 已按 dto.platform + warehouseCode 过滤，再按列表顺序取首个已授权 provider
         List<OverseasProviderWarehouseEntity> providerWarehouseList = resolveProviderWarehouseList(dto, overseasWarehouse);
         if (CollUtil.isEmpty(providerWarehouseList)) {
             return null;
@@ -830,7 +839,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         return dtoSkuQtyMap.entrySet().stream()
                 .filter(entry -> entry.getValue() > 0)
                 .map(Map.Entry::getKey)
-                // 多平台 SKU 均可映射时按字典序固定选取，避免 HashMap 遍历顺序不确定
+                // 多平台 SKU 均可映射时按字典序固定选取，避免 HashMap 遍历顺序不确定；一对多需业务映射约束
                 .sorted()
                 .filter(platformSku -> Optional.ofNullable(mappingMap.get(platformSku)).orElse(Collections.emptyList()).stream()
                         .anyMatch(mapping -> (StringUtils.isNotBlank(skuId)

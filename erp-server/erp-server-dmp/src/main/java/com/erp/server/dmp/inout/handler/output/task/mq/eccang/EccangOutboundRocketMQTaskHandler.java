@@ -121,15 +121,32 @@ public class EccangOutboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHand
 				if (qty == null) {
 					qty = row.getInteger("qty");
 				}
-				if (StringUtils.isNotBlank(productSku)) {
-					items.add(new PlatformOutboundDTO.Item(productSku, Objects.nonNull(qty) ? qty : 0));
+				if (StringUtils.isBlank(productSku)) {
+					continue;
 				}
+				if (qty == null) {
+					log.warn("三方仓出库明细数量缺失, orderCode={}, productSku={}", orderCode, productSku);
+					continue;
+				}
+				items.add(new PlatformOutboundDTO.Item(productSku, qty));
 			}
 			return items;
 		} catch (Exception e) {
-			log.error("解析三方仓出库明细 JSON 失败, orderCode={}, detailListJson={}", orderCode, detailListJson, e);
+			log.error("解析三方仓出库明细 JSON 格式异常, orderCode={}, jsonLen={}, detailListJson={}",
+					orderCode, detailListJson.length(), abbreviateDetailListJson(detailListJson), e);
 			return Collections.emptyList();
 		}
+    }
+
+    private String abbreviateDetailListJson(String detailListJson) {
+		if (detailListJson == null) {
+			return null;
+		}
+		int maxLen = 500;
+		if (detailListJson.length() <= maxLen) {
+			return detailListJson;
+		}
+		return detailListJson.substring(0, maxLen) + "...(len=" + detailListJson.length() + ")";
     }
 
     @Override

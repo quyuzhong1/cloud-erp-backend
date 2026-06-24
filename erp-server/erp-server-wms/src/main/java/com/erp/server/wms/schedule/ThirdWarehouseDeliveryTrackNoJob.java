@@ -15,6 +15,7 @@ import java.time.format.DateTimeParseException;
 /**
  * 三方仓发货单跟踪号历史数据修复任务。
  * 批量 UPDATE 仅递增 version，不做乐观锁 WHERE 校验（一次性历史修复场景）。
+ * so_outstock.source_id 对应 third_warehouse_delivery.id（见 PlatformOutboundConsumerService.generateSoOut）。
  */
 @Component
 @Slf4j
