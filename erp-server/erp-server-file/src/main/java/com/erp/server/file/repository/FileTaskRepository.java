@@ -139,6 +139,7 @@ public class FileTaskRepository extends ServiceImpl<FileTaskMapper, FileTask> im
                 .set(FileTask::getUpdateTime, nowDate)
                 .set(FileTask::getUpdateUserId, userId)
                 .set(FileTask::getUpdateUserName, userName)
+                .setSql("version = version + 1")
                 .eq(FileTask::getId, fileTask.getId())
                 .eq(FileTask::getVersion, fileTask.getVersion())
                 .update();
