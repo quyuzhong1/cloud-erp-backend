@@ -34,11 +34,11 @@
             ON db.id = wtr_cur.dict_basic_id
             AND db.is_deleted = false
         <where>
-            wti.is_deleted = false
             ${params.sqlMap.default}
             <if test="params.permissionSql != null and params.permissionSql != ''">
                 ${params.permissionSql}
             </if>
+            AND wti.is_deleted = false
             <if test="params.sourceTypeList != null and params.sourceTypeList.size() > 0">
                 AND wti.source_type IN
                 <foreach collection="params.sourceTypeList" item="item" open="(" separator="," close=")">

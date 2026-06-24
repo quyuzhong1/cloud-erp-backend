@@ -29,10 +29,11 @@
        <result column="end_time" property="endTime" />
        <result column="remark" property="remark" />
     </resultMap>
-
     <select id="listErrorTask" resultType="com.erp.model.oms.entity.WorkflowTaskRecordEntity">
         SELECT
-            *
+            id,create_user_id,create_user_name,create_time,update_user_id,update_user_name,update_time,version,is_deleted,
+            source_id,index,class_path,status,retry_count,last_error,output_data,input_data,instance_id,target_service,target_endpoint,
+            feign_duration_ms,error_source,start_time,end_time,remark
         FROM
             workflow_task_record
         WHERE
