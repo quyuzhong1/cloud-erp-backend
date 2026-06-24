@@ -13,7 +13,7 @@ import com.erp.model.file.entity.FileTask;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.rpc.oms.feign.ExportOmsFeign;
 import com.erp.server.file.business.oms.utils.SoUtils;
-import com.erp.server.file.core.dynamic.AbstractSingleSheetDynamicHeadersFileEventHandler;
+import com.erp.server.file.core.dynamic.AbstractMultiSheetGroupDynamicHeadersFileEventHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -30,14 +30,12 @@ import java.util.Set;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_SO;
 
 /**
- * 销售订单导出：列由运行时表头算出（无固定模板），故走动态表头流式分页路径，按页写盘避免全量内存建表的 OOM 风险。
- * 主单金额列去重（{@link SoUtils#hideRepeatedMainRow}）按 sheet 判重（见基类 {@code decorateSheetRow} 钩子说明），
- * 故继承单 sheet 变体 {@link AbstractSingleSheetDynamicHeadersFileEventHandler} 强制单数据 sheet：避免数据换 sheet
- * 导致同组判重在 sheet 边界重复展示、以及产生不可预估的 sheet 数量。
+ * 销售订单导出：列由运行时表头算出（无固定模板），按主单 {@code id} 分组展示金额列，
+ * 数据量超过单 sheet 时自动多 tab 分页（方案 C）。
  */
 @Component
 @Slf4j
-public class ExportOmsSoHandler extends AbstractSingleSheetDynamicHeadersFileEventHandler<SoInfoDTO.ExportDTO> {
+public class ExportOmsSoHandler extends AbstractMultiSheetGroupDynamicHeadersFileEventHandler<SoInfoDTO.ExportDTO> {
 
     private static final String SHEET_NAME = "销售订单";
     /** 仅作主单去重的辅助列，不参与导出表头。 */
@@ -70,9 +68,14 @@ public class ExportOmsSoHandler extends AbstractSingleSheetDynamicHeadersFileEve
 
     @Override
     protected PagingVO<DynamicExcelDTO> getPageData(PagingDTO<SoInfoDTO.ExportDTO> dto) {
+        // 导出按主单 id 分组判重，必须保证同一 id 连续。listExport 的 ORDER BY 默认以 sortList 为主排序，
+        // 若透传用户列排序会打散 id，触发 failOnNonContinuousSheetGroup；故导出固定清空 sortList，
+        // 回落到 si.create_time desc, sod.id asc（同主单明细天然相邻）。
+        if (dto.getParams() != null) {
+            dto.getParams().setSortList(null);
+        }
         PagingVO<SoInfoDTO.PagingViewDTO> page = exportOmsFeign.exportSo(dto);
-        // 与基类分页出口守卫对齐：Feign 返回 null 视为上游查询失败/熔断，显式失败而非包装成空结果，
-        // 避免被基类后续误报为「导出数据不能为空」掩盖真实根因。
+        // Feign 返回 null 视为上游查询失败/熔断，显式失败而非包装成空结果，避免被基类误报为「导出数据不能为空」。
         if (page == null) {
             throw new ServiceException("导出分页查询失败，查询为空：页码=" + dto.getCurrPage());
         }
@@ -83,7 +86,6 @@ public class ExportOmsSoHandler extends AbstractSingleSheetDynamicHeadersFileEve
         List<String> noPermitFields = params == null ? null : params.getNopermitFields();
         Map<String, String> headMap = SoUtils.getExportHeadList();
 
-        // 数据行：保留 id 作为按 sheet 去重的辅助列（id 不在导出表头中，不会写出到 Excel）
         List<LinkedHashMap<String, Object>> dataList = new ArrayList<>();
         if (CollUtil.isNotEmpty(page.getList())) {
             for (SoInfoDTO.PagingViewDTO item : page.getList()) {
@@ -91,7 +93,6 @@ public class ExportOmsSoHandler extends AbstractSingleSheetDynamicHeadersFileEve
             }
         }
 
-        // 导出表头：去除无权限列，并去掉 id 辅助列（与旧实现一致）
         LinkedHashMap<String, String> exportHeaders = new LinkedHashMap<>(headMap);
         if (CollUtil.isNotEmpty(noPermitFields)) {
             exportHeaders.keySet().removeIf(noPermitFields::contains);
@@ -105,23 +106,33 @@ public class ExportOmsSoHandler extends AbstractSingleSheetDynamicHeadersFileEve
         return result;
     }
 
-    /**
-     * 还原旧版销售订单导出样式：表头灰底、加粗、13 号、居中，正文居中。直接复用公共
-     * {@link ExcelUtil#getStyleStrategy()}，与其它模板导出保持同一套样式，避免重复定义。
-     */
     @Override
     protected HorizontalCellStyleStrategy dynamicHeaderCellStyleStrategy() {
         return ExcelUtil.getStyleStrategy();
     }
 
     @Override
-    protected Object newSheetState() {
-        return new HashSet<String>();
+    protected Object sheetGroupKey(LinkedHashMap<String, Object> row) {
+        if (row == null || !row.containsKey(ID_KEY)) {
+            return null;
+        }
+        Object id = row.get(ID_KEY);
+        return id == null ? null : String.valueOf(id);
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    protected void decorateSheetRow(LinkedHashMap<String, Object> rowMap, Object sheetState, int sheetNo) {
-        SoUtils.hideRepeatedMainRow(rowMap, (Set<String>) sheetState);
+    protected boolean failOnNonContinuousSheetGroup() {
+        return true;
+    }
+
+    /**
+     * 组内首行保留主单金额列，后续明细行置空（与旧版 hideRepeatedMainRow 语义一致）。
+     */
+    @Override
+    protected void beforeWriteGroupRows(Object groupKey, List<LinkedHashMap<String, Object>> groupRows) {
+        Set<String> seenMainIds = new HashSet<>();
+        for (LinkedHashMap<String, Object> row : groupRows) {
+            SoUtils.hideRepeatedMainRow(row, seenMainIds);
+        }
     }
 }
