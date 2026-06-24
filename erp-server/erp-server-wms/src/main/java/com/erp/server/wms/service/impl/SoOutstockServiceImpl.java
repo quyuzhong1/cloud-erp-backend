@@ -1027,9 +1027,36 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 return BatchResultDTO.fail(entity.getId(), entity.getCode(), message);
             }
             validateB2bOutboundQtyBeforeApprove(entity);
-            writeBackB2cSoOutstockDateIfNeeded(entity);
         }
+        validateTransferBeforeApprove(entity);
         return ApplicationContextUtils.getBean(SoOutstockServiceImpl.class).approveInTransaction(dto, entity, approveType);
+    }
+
+    /**
+     * 审核前校验关联中转调拨单（本地只读，事务外执行）。
+     */
+    private void validateTransferBeforeApprove(SoOutstockEntity entity) {
+        if (CharSequenceUtil.isBlank(entity.getSourceId())) {
+            return;
+        }
+        List<TransferInfoEntity> transferInfoEntities = transferInfoService.listBySourceId(entity.getSourceId());
+        if (CollectionUtils.isEmpty(transferInfoEntities)) {
+            return;
+        }
+        List<String> transferCodeList = transferInfoEntities.stream()
+                .filter(e -> !Objects.equals(ApproveStatusEnum.APPROVE.getStatus(), e.getApproveStatus()))
+                .map(TransferInfoEntity::getCode)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(transferCodeList)) {
+            throw new ServiceException(ApiError.WH_TRANSFER_ASSOCIATED_OUTBOUND_APPROVE_REQUIRED, String.join(",", transferCodeList));
+        }
+        TransferInfoEntity transferInfoEntity = transferInfoEntities.stream()
+                .max(Comparator.comparing(TransferInfoEntity::getBillDate))
+                .orElse(null);
+        if (Objects.nonNull(transferInfoEntity) && entity.getBillDate().isBefore(transferInfoEntity.getBillDate())) {
+            throw new ServiceException(ApiError.WH_TRANSFER_OUTBOUND_DATE_INVALID, transferInfoEntity.getBillDate());
+        }
     }
 
     /**
@@ -1059,7 +1086,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     }
 
     /**
-     * B2C 审核通过前：回写出库日期到销售订单（Feign 写，GlobalTransactional 外执行，与原逻辑时序一致）。
+     * B2C 审核通过后：回写出库日期到销售订单（Feign 写，在 {@link #approveEnd} 本地审核成功之后执行）。
      */
     private void writeBackB2cSoOutstockDateIfNeeded(SoOutstockEntity entity) {
         if (!OrderTypeEnum.B2C.getCode().equalsIgnoreCase(entity.getOrderType())
@@ -1075,35 +1102,28 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
     }
 
+    /**
+     * 审核落库与操作日志同一事务：先 workflow/approveEnd，再写日志，任一步失败整体回滚。
+     * <p>
+     * [审查说明] approveProcess（含 workflow Feign、无流程时 approveEnd）与操作日志 intentionally 处于同一
+     * {@code @GlobalTransactional}，保证审核结果与日志原子提交/回滚；Feign 纳入全局事务为业务一致性要求，勿建议拆分。
+     * </p>
+     */
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
     public BatchResultDTO approveInTransaction(ApproveOneDTO dto, SoOutstockEntity entity, ApproveTypeEnum approveType) {
-        //销售出库单反审核后修改出库日期审核时，需要校验是否有关联的中转调拨单
-        if (CharSequenceUtil.isNotBlank(entity.getSourceId())){
-            List<TransferInfoEntity> transferInfoEntities = transferInfoService.listBySourceId(entity.getSourceId());
-            if (CollectionUtils.isNotEmpty(transferInfoEntities)){
-                //如果调拨单没有审核，需要提示，请先审核通过关联的中转调拨单后审核出库单
-                List<String> transferCodeList = transferInfoEntities.stream().filter(e -> !Objects.equals(ApproveStatusEnum.APPROVE.getStatus(), e.getApproveStatus())).map(TransferInfoEntity::getCode).distinct().collect(Collectors.toList());
-                if (CollectionUtils.isNotEmpty(transferCodeList)){
-                    throw new ServiceException(ApiError.WH_TRANSFER_ASSOCIATED_OUTBOUND_APPROVE_REQUIRED,String.join(",",transferCodeList));
-                }
-                //需要限制出库日期不能早于最后一个（按日期排序）调拨单的调拨日期
-                TransferInfoEntity transferInfoEntity = transferInfoEntities.stream().max(Comparator.comparing(TransferInfoEntity::getBillDate)).orElse(null);
-                if (Objects.nonNull(transferInfoEntity) && entity.getBillDate().isBefore(transferInfoEntity.getBillDate())){
-                    throw new ServiceException(ApiError.WH_TRANSFER_OUTBOUND_DATE_INVALID, transferInfoEntity.getBillDate());
-                }
-            }
-        }
-        // 更新SKU标准成本价出库时间
-        updateSkuStdCostOutstock(entity);
-
-        // 调用流程审核
         approveProcess(entity, dto);
-        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "销售出库单", approveType.getName(), dto.getComment());
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_OUT_STOCK.getCode(), entity.getId(), "审核操作");
+        updateSkuStdCostOutstock(entity);
+        addApproveOperateLog(entity, approveType, dto.getComment());
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
+    }
 
+    private void addApproveOperateLog(SoOutstockEntity entity, ApproveTypeEnum approveType, String comment) {
+        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】",
+                UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "销售出库单",
+                approveType.getName(), comment);
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_OUT_STOCK.getCode(), entity.getId(), "审核操作");
     }
 
 
@@ -1133,8 +1153,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtils.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
-            // 无需走流程的数据则直接更新状态
-            this.approveEnd(dto, entity);
+            // 无需走流程的数据则直接更新状态（走 Spring 代理，保证 @GlobalTransactional 生效）
+            ApplicationContextUtils.getBean(SoOutstockServiceImpl.class).approveEnd(dto, entity);
         }
     }
 
@@ -1194,6 +1214,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             this.syncToSdy(entity,soOutstockDetailEntityList, SyncOperateEnum.OPERATE_APPROVE.getCode());
             //推送到订货通
             syncDhtOutstockService.syncB2bSoOutstockDht(entity,soOutstockDetailEntityList, SyncOperateEnum.OPERATE_APPROVE.getCode());
+            writeBackB2cSoOutstockDateIfNeeded(entity);
         }
         return Boolean.TRUE;
     }
