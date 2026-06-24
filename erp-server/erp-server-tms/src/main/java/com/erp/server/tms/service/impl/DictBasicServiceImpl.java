@@ -166,6 +166,7 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
         if (CollectionUtils.isNotEmpty(missTypes)) {
             List<DictBasicEntity> dbList = this.lambdaQuery()
                     .in(DictBasicEntity::getType, missTypes)
+                    .eq(DictBasicEntity::getStatus, Boolean.TRUE)
                     .list();
             Map<String, List<DictBasicEntity>> dbMap = dbList.stream()
                     .collect(Collectors.groupingBy(DictBasicEntity::getType));
@@ -218,6 +219,7 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
     private List<DictBasicEntity> listByKey(String key) {
         LambdaQueryWrapper<DictBasicEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(DictBasicEntity::getType, key);
+        queryWrapper.eq(DictBasicEntity::getStatus, Boolean.TRUE);
         queryWrapper.orderByAsc(DictBasicEntity::getIndex);
         return this.list(queryWrapper);
 
