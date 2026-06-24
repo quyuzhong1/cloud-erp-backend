@@ -80,8 +80,7 @@ public enum WorkflowTaskRecordTypeEnum implements EnumMessage {
         if (StringUtils.isBlank(code)) {
             return null;
         }
-        WorkflowTaskRecordTypeEnum[] values = values();
-        for (WorkflowTaskRecordTypeEnum value : values) {
+        for (WorkflowTaskRecordTypeEnum value : values()) {
             if (value.getCode().equals(code)) {
                 return value;
             }

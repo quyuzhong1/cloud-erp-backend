@@ -28,9 +28,6 @@ import com.common.core.enums.ApiError;
 import com.common.core.enums.DictCityTypeEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
-import com.common.message.constant.RocketMqTopic;
-import com.common.message.enums.RocketMqTagEnum;
-import com.common.message.service.mq.MQProducerService;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.KolB2cApplicationAddressImportExcelDTO;
 import com.erp.model.oms.dto.excel.KolB2cApplicationDetailImportExcelDTO;
@@ -71,8 +68,6 @@ import com.erp.server.oms.service.address.AddressParseService;
 import com.erp.server.oms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.rocketmq.client.producer.SendResult;
-import org.apache.rocketmq.client.producer.SendStatus;
 import org.apache.skywalking.apm.toolkit.trace.TraceContext;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -117,7 +112,6 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
     private static final String TASK_DATA_B2C_CODE = "b2cCode";
     private static final String TASK_DATA_WDT_PUSH_MSG = "wdtPushMsg";
     private static final String TASK_DATA_WDT_PUSH_MSG_SKIPPED = "wdtPushMsgSkipped";
-    private static final int WORKFLOW_TASK_MQ_DELAY_LEVEL = 2;
 
     @Resource
     private OperateLogService operateLogService;
@@ -171,10 +165,9 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
     private AddressParseService addressParseService;
     @Resource
     private WorkflowTaskRecordService workflowTaskRecordService;
+
     @Resource
     private DictBasicService dictBasicService;
-    @Resource
-    private MQProducerService mqProducerService;
 
     @Lazy
     @Resource
@@ -1297,7 +1290,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
             KolSubB2cApplicationDTO.PushDTO pushDTO = pushDTOS.get(0);
             Map<String, Object> data = self.executeKolB2cSubOrderPush(entity, pushDTO);
             responseDTO.setData(data);
-            sendKolB2cParentTaskMq(entity, WORKFLOW_TASK_MQ_DELAY_LEVEL);
+            resumeKolB2cParentTask(entity);
             return responseDTO;
         } catch (ServiceException e) {
             return handleWorkflowTaskServiceException(responseDTO, e);
@@ -1514,7 +1507,8 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         List<WorkflowTaskRecordEntity> existTasks = workflowTaskRecordService.listBySourceId(entity.getId(), WorkflowTaskRecordTypeEnum.KOL_B2C_APPLICATION_APPROVE.getCode());
         WorkflowTaskRecordDTO.AddTaskDTO addTaskDTO = buildKolB2cParentTaskDTO(entity, CollUtil.isNotEmpty(existTasks) ? existTasks.get(0).getTraceId() : TraceContext.traceId());
         addWorkflowTaskIfAbsent(addTaskDTO, existTasks);
-        sendWorkflowTaskMq(addTaskDTO, entity.getId(), WORKFLOW_TASK_MQ_DELAY_LEVEL);
+        // 统一入口负责分布式锁、instance 定位和超时 PROCESSING 回拨，避免手动发 MQ 绕过恢复逻辑。
+        workflowTaskRecordService.startOrResume(addTaskDTO);
         return Boolean.TRUE;
     }
 
@@ -1546,7 +1540,8 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         map.put(TASK_DATA_SUB_CODE, subEntity.getCode());
         addTaskDTO.setFirstNodeInputData(map);
         addWorkflowTaskIfAbsent(addTaskDTO, existTasks);
-        sendWorkflowTaskMq(addTaskDTO, subEntity.getId(), WORKFLOW_TASK_MQ_DELAY_LEVEL);
+        // 子流程也走统一恢复入口，兼容历史节点补建 instance 后的当前节点重试。
+        workflowTaskRecordService.startOrResume(addTaskDTO);
     }
 
     private void addWorkflowTaskIfAbsent(WorkflowTaskRecordDTO.AddTaskDTO addTaskDTO, List<WorkflowTaskRecordEntity> existTasks) {
@@ -1565,65 +1560,16 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         }
     }
 
-    private void sendKolB2cParentTaskMq(KolB2cApplicationEntity entity, int delayLevel) {
+    /**
+     * 子单推送成功后唤醒父流程当前节点，由 startOrResume 决定继续等待、重试或推进 finish 节点。
+     */
+    private void resumeKolB2cParentTask(KolB2cApplicationEntity entity) {
         List<WorkflowTaskRecordEntity> existTasks = workflowTaskRecordService.listBySourceId(entity.getId(), WorkflowTaskRecordTypeEnum.KOL_B2C_APPLICATION_APPROVE.getCode());
         if (CollUtil.isEmpty(existTasks)) {
             return;
         }
         WorkflowTaskRecordDTO.AddTaskDTO addTaskDTO = buildKolB2cParentTaskDTO(entity, existTasks.get(0).getTraceId());
-        sendWorkflowTaskMq(addTaskDTO, entity.getId(), delayLevel);
-    }
-
-    private void sendWorkflowTaskMq(WorkflowTaskRecordDTO.AddTaskDTO addTaskDTO, String key, int delayLevel) {
-        if (TransactionSynchronizationManager.isActualTransactionActive()) {
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-                @Override
-                public void afterCommit() {
-                    try {
-                        doSendWorkflowTaskMq(addTaskDTO, key, delayLevel);
-                    } catch (Exception e) {
-                        log.error("KOL B2C任务编排事务提交后发送MQ失败，sourceId={}, sourceType={}, traceId={}",
-                                addTaskDTO.getSourceId(), addTaskDTO.getSourceTypeEnum(), addTaskDTO.getTraceId(), e);
-                        markWorkflowTaskMqSendFailed(addTaskDTO, e);
-                    }
-                }
-            });
-            return;
-        }
-        doSendWorkflowTaskMq(addTaskDTO, key, delayLevel);
-    }
-
-    private void doSendWorkflowTaskMq(WorkflowTaskRecordDTO.AddTaskDTO addTaskDTO, String key, int delayLevel) {
-        SendResult result = mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.OMS_WORKFLOW_TASK_RECORD_TOPIC, RocketMqTagEnum.OMS_WORKFLOW_TASK_RECORD_TAG.getName(), addTaskDTO, key, delayLevel);
-        if (!result.getSendStatus().equals(SendStatus.SEND_OK)) {
-            throw new ServiceException(ApiError.WF_TASK_RECORD_MQ_SEND_FAILED, String.valueOf(result));
-        }
-    }
-
-    private void markWorkflowTaskMqSendFailed(WorkflowTaskRecordDTO.AddTaskDTO addTaskDTO, Exception e) {
-        if (Objects.isNull(addTaskDTO) || Objects.isNull(addTaskDTO.getSourceTypeEnum()) || StringUtils.isBlank(addTaskDTO.getSourceId())) {
-            return;
-        }
-        WorkflowTaskRecordEntity taskEntity = workflowTaskRecordService.lambdaQuery()
-                .eq(WorkflowTaskRecordEntity::getSourceId, addTaskDTO.getSourceId())
-                .eq(WorkflowTaskRecordEntity::getSourceType, addTaskDTO.getSourceTypeEnum().getCode())
-                .eq(WorkflowTaskRecordEntity::getIsDeleted, false)
-                .ne(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.SUCCESS.getCode())
-                .orderByAsc(WorkflowTaskRecordEntity::getIndex)
-                .last("limit 1")
-                .one();
-        if (Objects.isNull(taskEntity)) {
-            return;
-        }
-        String errorMsg = StrUtil.format("任务节点MQ发送失败，traceId={}，error={}",
-                addTaskDTO.getTraceId(),
-                Objects.nonNull(e.getMessage()) ? e.getMessage() : e.getClass().getSimpleName());
-        workflowTaskRecordService.lambdaUpdate()
-                .eq(WorkflowTaskRecordEntity::getId, taskEntity.getId())
-                .set(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.FAILED.getCode())
-                .set(WorkflowTaskRecordEntity::getLastError, errorMsg)
-                .set(WorkflowTaskRecordEntity::getRetryCount, Optional.ofNullable(taskEntity.getRetryCount()).orElse(0) + 1)
-                .update();
+        workflowTaskRecordService.startOrResume(addTaskDTO);
     }
 
     private boolean isTerminalFailedTask(WorkflowTaskRecordEntity entity) {
