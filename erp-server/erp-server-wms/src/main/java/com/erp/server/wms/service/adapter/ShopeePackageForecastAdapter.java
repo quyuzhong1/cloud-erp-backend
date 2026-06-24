@@ -328,6 +328,7 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
 
     private List<BatchResultDTO> uploadCourierDelivery(PackageForecastDTO.UploadDTO dto, ShopeeForecastContext context) {
         validateCourierDeliveryDTO(dto);
+        rejectRetryWithPlatformIdentifiers(context);
         GenerateAndBindFirstMileTrackingNumberRequest request = GenerateAndBindFirstMileTrackingNumberRequest.builder()
                 .shipmentMethod(PackageForecastCollectModeEnum.SHOPEE_COURIER_DELIVERY.getCode())
                 .region(defaultRegion(dto.getRegion()))
@@ -369,6 +370,7 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
 
     private List<BatchResultDTO> uploadFirstMile(PackageForecastDTO.UploadDTO dto, ShopeeForecastContext context) {
         validateFirstMileDTO(dto);
+        rejectRetryWithPlatformIdentifiers(context);
         String trackingNumber = dto.getFirstMileTrackingNumber();
         if (Boolean.TRUE.equals(dto.getGenerateNewTrackingNumber())) {
             GenerateFirstMileTrackingNumberRequest generateRequest = GenerateFirstMileTrackingNumberRequest.builder()
@@ -786,6 +788,18 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
             return HandoverStatusEnum.SHOPEE_DELIVERED.getCode();
         }
         return status;
+    }
+
+    private void rejectRetryWithPlatformIdentifiers(ShopeeForecastContext context) {
+        Optional<PackageForecastEntity> persistedPlatformEntity = context.getEntityList().stream()
+                .filter(entity -> StringUtils.isNotBlank(entity.getPlatformPackageNo())
+                        || StringUtils.isNotBlank(entity.getTransportNo()))
+                .findFirst();
+        if (persistedPlatformEntity.isPresent()) {
+            PackageForecastEntity entity = persistedPlatformEntity.get();
+            throw new ServiceException("虾皮组包预报已存在平台绑定信息，请先同步状态或人工处理后再重试，单号:"
+                    + entity.getCode());
+        }
     }
 
     private String orderKey(String orderSn, String packageNumber) {

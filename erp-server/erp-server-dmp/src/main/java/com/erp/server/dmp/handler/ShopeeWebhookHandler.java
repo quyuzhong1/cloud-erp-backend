@@ -117,10 +117,10 @@ public class ShopeeWebhookHandler implements WebhookHandler{
         if (Objects.nonNull(matchedDetail)) {
             return matchedDetail;
         }
-        if (detailList.size() == 1) {
+        if (detailList.size() == 1 && StringUtils.isBlank(detailList.get(0).getNextLevelId())) {
             return detailList.get(0);
         }
-        log.warn("虾皮webhook 存在多个任务明细但未匹配到店铺，cfgInputId={}，platformShopId={}，erpShopId={}",
+        log.warn("虾皮webhook 未匹配到店铺任务明细，cfgInputId={}，platformShopId={}，erpShopId={}",
                 cfgInputId, platformShopId, erpShopId);
         return null;
     }

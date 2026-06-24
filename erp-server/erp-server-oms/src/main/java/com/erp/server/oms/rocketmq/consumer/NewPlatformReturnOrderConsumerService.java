@@ -343,8 +343,9 @@ public class NewPlatformReturnOrderConsumerService extends AbstractNewPlatformCo
 		}
 		Map<String, Integer> returnQtyMap = returnDetails.stream()
 				.filter(returnDetail -> StringUtils.isNotBlank(returnDetail.getPlatformSkuNo()))
+				.filter(returnDetail -> Objects.nonNull(returnDetail.getReturnQty()) && returnDetail.getReturnQty() > 0)
 				.collect(Collectors.groupingBy(PlatformReturnOrderDTO.Detail::getPlatformSkuNo,
-						Collectors.summingInt(returnDetail -> Objects.isNull(returnDetail.getReturnQty()) ? 0 : returnDetail.getReturnQty())));
+						Collectors.summingInt(PlatformReturnOrderDTO.Detail::getReturnQty)));
 		if (returnQtyMap.isEmpty()) {
 			return false;
 		}
@@ -354,7 +355,7 @@ public class NewPlatformReturnOrderConsumerService extends AbstractNewPlatformCo
 						Collectors.summingInt(soDetail -> Objects.isNull(soDetail.getQty()) ? 0 : soDetail.getQty())));
 		return returnQtyMap.entrySet().stream().allMatch(entry -> {
 			Integer soQty = soQtyMap.get(entry.getKey());
-			return Objects.nonNull(soQty) && (entry.getValue() <= 0 || entry.getValue() <= soQty);
+			return Objects.nonNull(soQty) && entry.getValue() <= soQty;
 		});
 	}
 

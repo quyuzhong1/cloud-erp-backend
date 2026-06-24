@@ -63,7 +63,6 @@ public class DmpInputShopeeReturnDetailDmpHandler extends DmpInputDoNextDmpHandl
         return detailList;
     }
 
-    @SuppressWarnings("unchecked")
     private List<Map<String, Object>> parseItemList(Object itemObj) {
         if (itemObj == null) {
             return new ArrayList<>();
@@ -77,12 +76,31 @@ public class DmpInputShopeeReturnDetailDmpHandler extends DmpInputDoNextDmpHandl
         return castMapList(JSON.parseArray(JSON.toJSONString(itemObj), Map.class));
     }
 
-    @SuppressWarnings("unchecked")
     private List<Map<String, Object>> castMapList(List<?> rawList) {
         if (CollUtil.isEmpty(rawList)) {
             return new ArrayList<>();
         }
-        return (List<Map<String, Object>>) (List<?>) rawList;
+        List<Map<String, Object>> resultList = new ArrayList<>();
+        for (Object item : rawList) {
+            if (item instanceof Map) {
+                Map<?, ?> rawMap = (Map<?, ?>) item;
+                Map<String, Object> itemMap = new HashMap<>();
+                rawMap.forEach((key, value) -> itemMap.put(String.valueOf(key), value));
+                resultList.add(itemMap);
+                continue;
+            }
+            if (item != null) {
+                try {
+                    Map<String, Object> itemMap = JSON.parseObject(JSON.toJSONString(item), Map.class);
+                    if (itemMap != null) {
+                        resultList.add(itemMap);
+                    }
+                } catch (Exception e) {
+                    log.warn("Shopee退货明细item结构无法转换为Map,item:{}", item, e);
+                }
+            }
+        }
+        return resultList;
     }
 
     @Override

@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,7 @@ import java.util.TreeMap;
 /**
  * Shopee 仅退款明细 DMP 转换：return_solution=1 且 status=ACCEPTED。
  */
+@Slf4j
 @Service
 @Scope("prototype")
 public class DmpInputShopeeRefundDetailDmpHandler extends DmpInputDoNextDmpHandler {
@@ -60,7 +62,6 @@ public class DmpInputShopeeRefundDetailDmpHandler extends DmpInputDoNextDmpHandl
         return detailList;
     }
 
-    @SuppressWarnings("unchecked")
     private List<Map<String, Object>> parseItemList(Object itemObj) {
         if (itemObj == null) {
             return new ArrayList<>();
@@ -74,12 +75,31 @@ public class DmpInputShopeeRefundDetailDmpHandler extends DmpInputDoNextDmpHandl
         return castMapList(JSON.parseArray(JSON.toJSONString(itemObj), Map.class));
     }
 
-    @SuppressWarnings("unchecked")
     private List<Map<String, Object>> castMapList(List<?> rawList) {
         if (CollUtil.isEmpty(rawList)) {
             return new ArrayList<>();
         }
-        return (List<Map<String, Object>>) (List<?>) rawList;
+        List<Map<String, Object>> resultList = new ArrayList<>();
+        for (Object item : rawList) {
+            if (item instanceof Map) {
+                Map<?, ?> rawMap = (Map<?, ?>) item;
+                Map<String, Object> itemMap = new HashMap<>();
+                rawMap.forEach((key, value) -> itemMap.put(String.valueOf(key), value));
+                resultList.add(itemMap);
+                continue;
+            }
+            if (item != null) {
+                try {
+                    Map<String, Object> itemMap = JSON.parseObject(JSON.toJSONString(item), Map.class);
+                    if (itemMap != null) {
+                        resultList.add(itemMap);
+                    }
+                } catch (Exception e) {
+                    log.warn("Shopee仅退款明细item结构无法转换为Map,item:{}", item, e);
+                }
+            }
+        }
+        return resultList;
     }
 
     @Override

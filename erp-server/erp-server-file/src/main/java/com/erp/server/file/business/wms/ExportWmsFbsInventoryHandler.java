@@ -6,8 +6,6 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.FbsInventoryDTO;
 import com.erp.rpc.wms.feign.ExportWmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
-import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -32,13 +30,6 @@ public class ExportWmsFbsInventoryHandler extends AbstractPageFileEventHandler<F
     @Override
     protected PagingVO<FbsInventoryDTO.ListDTO> getPageData(PagingDTO<FbsInventoryDTO.PagingParamDTO> dto) {
         return exportWmsFeign.exportFbsInventory(dto);
-    }
-
-    @Override
-    protected List<FbsInventoryDTO.ListDTO> getData(FileTask fileTask) {
-        FbsInventoryDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<FbsInventoryDTO.PagingParamDTO>() {
-        });
-        return listSeqData(dto);
     }
 
     @Override

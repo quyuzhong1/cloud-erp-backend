@@ -20,6 +20,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
@@ -564,7 +565,22 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         } catch (Exception e) {
             log.error("配货换渠道外部取消成功但本地清理失败, orderId: {}, code: {}, transportNo: {}",
                     entity.getId(), entity.getCode(), soB2cLogisticsEntity.getCode(), e);
+            markThirdLogisticsCancelCleanupFailed(entity, soB2cLogisticsEntity, e);
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), "外部物流单已取消，本地清理失败:" + e.getMessage());
+        }
+    }
+
+    private void markThirdLogisticsCancelCleanupFailed(SoB2cEntity entity, SoB2cLogisticsEntity logisticsEntity, Exception exception) {
+        try {
+            SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+            addError.setType(SoB2cErrorTypeEnum.GET_LOGISTICS_CODE.getCode());
+            addError.setMainId(entity.getId());
+            addError.setMessage(CharSequenceUtil.format("外部物流单已取消，本地清理失败，请人工确认并清理物流单。物流单号:{},原因:{}",
+                    logisticsEntity.getCode(), exception.getMessage()));
+            soB2cErrorService.add(addError);
+        } catch (Exception markException) {
+            log.error("记录配货换渠道取消物流本地清理失败异常失败, orderId: {}, code: {}",
+                    entity.getId(), entity.getCode(), markException);
         }
     }
 

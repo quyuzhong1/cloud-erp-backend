@@ -121,8 +121,16 @@ public class DmpInputShopeeWebhookOrderDmpHandler extends DmpInputDbConvertDmpHa
 
     private boolean isPlatformWarehouseOrder(DmpSoInfoEntity dmpSoInfoEntity) {
         String extendData = dmpSoInfoEntity.getExtendData();
-        return StringUtils.isNotBlank(extendData)
-                && Boolean.TRUE.equals(JSONUtil.parseObj(extendData).getBool("isPlatformWarehouseOrder"));
+        if (StringUtils.isBlank(extendData)) {
+            return false;
+        }
+        try {
+            return Boolean.TRUE.equals(JSONUtil.parseObj(extendData).getBool("isPlatformWarehouseOrder"));
+        } catch (Exception e) {
+            log.warn("Webhook订单平台仓标识解析失败,thirdCode:{},id:{},extendData:{}",
+                    dmpSoInfoEntity.getThirdCode(), dmpSoInfoEntity.getId(), extendData, e);
+            return false;
+        }
     }
 
     private Long parseLong(Object value) {

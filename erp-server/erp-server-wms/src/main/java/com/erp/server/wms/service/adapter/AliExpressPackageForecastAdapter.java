@@ -318,7 +318,16 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
         }
         String addressName = addressEntity.getName();
         entity.setCollectAddress(addressName);
-        addBigPackage(entity, addressEntity);
+        boolean hasHandoverNo = StringUtils.isNotBlank(entity.getHandoverNo());
+        boolean hasPlatformPackageNo = StringUtils.isNotBlank(entity.getPlatformPackageNo());
+        if (!hasHandoverNo && !hasPlatformPackageNo) {
+            addBigPackage(entity, addressEntity);
+        } else if (hasHandoverNo && hasPlatformPackageNo) {
+            log.warn("速卖通组包预报已存在平台交接单信息，本次不重复提交平台, id: {}, code: {}, handoverNo: {}, platformPackageNo: {}",
+                    entity.getId(), entity.getCode(), entity.getHandoverNo(), entity.getPlatformPackageNo());
+        } else {
+            throw new ServiceException("速卖通组包预报已存在部分平台交接单信息，请先同步状态或人工处理后再重试");
+        }
         entity.setUploadStatus(PackageUploadStatusEnum.UPLOAD_SUCCESS.getCode());
         entity.setPlatformNo(buildPlatformNo(entity.getHandoverNo(), entity.getPlatformPackageNo()));
         updateForecastOrThrow(entity);

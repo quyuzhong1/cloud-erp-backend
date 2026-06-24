@@ -72,6 +72,7 @@ public class FbsInventoryServiceImpl extends SuperServiceImpl<FbsInventoryMapper
                 .eq(FbsInventoryEntity::getShopId, addDTO.getShopId())
                 .eq(FbsInventoryEntity::getWarehouseId, addDTO.getWarehouseId())
                 .eq(FbsInventoryEntity::getFbsSku, addDTO.getFbsSku())
+                .eq(FbsInventoryEntity::getIsDeleted, Boolean.FALSE)
                 .one();
         if (Objects.nonNull(existEntity)) {
             boolean update = this.lambdaUpdate()

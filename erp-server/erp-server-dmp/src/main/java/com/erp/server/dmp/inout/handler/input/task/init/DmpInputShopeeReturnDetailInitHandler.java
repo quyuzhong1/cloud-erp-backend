@@ -45,6 +45,7 @@ import java.util.stream.Collectors;
 public class DmpInputShopeeReturnDetailInitHandler extends DmpInputInitHandler {
 
     private static final int MAX_RETRY = 10;
+    private static final long REQUEST_INTERVAL_MILLIS = 200L;
     private static final String SHOPEE_RETURN_LIST_DATA = "Shopee_returnList_data";
 
     @Resource
@@ -83,17 +84,29 @@ public class DmpInputShopeeReturnDetailInitHandler extends DmpInputInitHandler {
 
         JSONArray detailList = new JSONArray();
         int total = returnSnList.size();
+        int failureCount = 0;
         for (int i = 0; i < total; i++) {
             String returnSn = returnSnList.get(i);
             if (i == 0 || (i + 1) % 50 == 0 || i + 1 == total) {
                 log.info("Shopee退货明细init进度:{}/{},returnSn:{}", i + 1, total, returnSn);
             }
             orderRequest.setOrderSns(returnSn);
-            ShopeeResponse response = executeWithRetry(orderRequest, "退货明细");
-            JSONObject detail = response.getResponse();
-            if (detail != null) {
-                detailList.add(detail);
+            try {
+                ShopeeResponse response = executeWithRetry(orderRequest, "退货明细");
+                JSONObject detail = response.getResponse();
+                if (detail != null) {
+                    detailList.add(detail);
+                }
+            } catch (Exception e) {
+                failureCount++;
+                log.error("Shopee退货明细init单条查询失败,returnSn:{},shopId:{}", returnSn, shopId, e);
             }
+            if (i + 1 < total) {
+                sleepBetweenRequests();
+            }
+        }
+        if (detailList.isEmpty() && failureCount == total) {
+            throw new ServiceException("Shopee退货明细全部查询失败");
         }
 
         DmpInputTaskInitDTO initDTO = new DmpInputTaskInitDTO();
@@ -101,6 +114,15 @@ public class DmpInputShopeeReturnDetailInitHandler extends DmpInputInitHandler {
         List<DmpInputTaskInitDTO> result = new ArrayList<>();
         result.add(initDTO);
         return result;
+    }
+
+    private void sleepBetweenRequests() {
+        try {
+            Thread.sleep(REQUEST_INTERVAL_MILLIS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new ServiceException("调用shopee退货明细接口被中断");
+        }
     }
 
     /**
