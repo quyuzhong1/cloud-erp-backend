@@ -15,6 +15,7 @@ import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.validator.ValidList;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
@@ -136,61 +137,68 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
 
     @Override
     public Boolean add(SoB2cDTO.AddDTO addDTO, String mainId) {
+        return ApplicationContextUtils.getBean(SoB2cDetailServiceImpl.class).addInTransaction(addDTO, mainId);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean addInTransaction(SoB2cDTO.AddDTO addDTO, String mainId) {
         List<SoB2cDetailDTO.AddDTO> detailList = addDTO.getDetailList();
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException(ApiError.BILL_DETAIL_NOT_FOUND, SourceTypeEnum.SO_B2C.getName());
         }
         List<SoB2cDetailEntity> list = BeanMapperUtils.copyList(SoB2cDetailEntity.class, detailList);
 
-        //主表信息
         SoB2cEntity soB2cEntity = soB2cService.getById(mainId);
         if (ObjectUtils.isEmpty(soB2cEntity)) {
             throw new ServiceException(ApiError.SO_B2C_NOT_FOUND);
         }
-        //处理明细中的数据id
         handleDetailList(list, soB2cEntity, Boolean.TRUE);
         SoB2cAmountUtil.applyAllForManualDetailSave(soB2cEntity, list);
-        //批量新增
-        boolean flag = this.saveBatch(list);
-        if (!flag) {
-            return false;
+        if (!this.saveBatch(list)) {
+            throw new ServiceException(ApiError.SO_B2C_DETAIL_SAVE_OR_UPDATE_FAILED);
         }
-        soB2cService.updateById(soB2cEntity);
-        //新增拆分订单关联关系
+        updateMainAmountOrThrow(soB2cEntity);
         addSoB2cRef(addDTO, list, soB2cEntity);
         return true;
     }
 
     @Override
     public Boolean update(List<SoB2cDetailDTO.UpdateDTO> detailList, String mainId) {
+        return ApplicationContextUtils.getBean(SoB2cDetailServiceImpl.class).updateInTransaction(detailList, mainId);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean updateInTransaction(List<SoB2cDetailDTO.UpdateDTO> detailList, String mainId) {
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException(ApiError.BILL_DETAIL_NOT_FOUND, SourceTypeEnum.SO_B2C.getName());
         }
-        //原明细数据
         List<SoB2cDetailEntity> oldList = this.listByMainIds(Arrays.asList(mainId));
         List<String> deleteIds = getDeleteIds(detailList, oldList);
         if (CollectionUtils.isNotEmpty(deleteIds)) {
             List<SoB2cDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
-            //操作日志
             List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getSkuNo())).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.SO_B2C.getCode(), pairList, "编辑操作");
             this.removeByIds(deleteIds);
         }
 
         List<SoB2cDetailEntity> list = BeanMapperUtils.copyList(SoB2cDetailEntity.class, detailList);
-        //主表信息
         SoB2cEntity soB2cEntity = soB2cService.getById(mainId);
         if (ObjectUtils.isEmpty(soB2cEntity)) {
             throw new ServiceException(ApiError.SO_B2C_NOT_FOUND);
         }
-        //处理明细中的数据id
         handleDetailList(list, soB2cEntity, Boolean.FALSE);
         SoB2cAmountUtil.applyAllForManualDetailSave(soB2cEntity, list);
-        boolean flag = service.saveOrUpdateBatch(list);
-        if (flag) {
-            soB2cService.updateById(soB2cEntity);
+        if (!service.saveOrUpdateBatch(list)) {
+            throw new ServiceException(ApiError.SO_B2C_DETAIL_SAVE_OR_UPDATE_FAILED);
         }
-        return flag;
+        updateMainAmountOrThrow(soB2cEntity);
+        return true;
+    }
+
+    private void updateMainAmountOrThrow(SoB2cEntity soB2cEntity) {
+        if (!soB2cService.updateById(soB2cEntity)) {
+            throw new ServiceException(ApiError.BILL_UPDATE_FAILED);
+        }
     }
 
     @Override
@@ -632,7 +640,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         if (!this.saveOrUpdateBatch(saveOrUpdateList)) {
             throw new ServiceException(ApiError.SO_B2C_DETAIL_SAVE_OR_UPDATE_FAILED);
         }
-        soB2cService.updateById(mainEntity);
+        updateMainAmountOrThrow(mainEntity);
         return saveOrUpdateList;
     }
 

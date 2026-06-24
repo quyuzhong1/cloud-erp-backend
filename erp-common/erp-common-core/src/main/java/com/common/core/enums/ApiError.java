@@ -1385,7 +1385,7 @@ public enum ApiError implements Serializable {
     SO_B2C_NOT_OUTBOUND_DETAIL_WAREHOUSE_UPDATE_FAILED(10753,"不出库发货失败：销售订单明细仓库未成功落库，请刷新后重试"),
     SO_B2C_NOT_OUTBOUND_LOGISTICS_UPDATE_FAILED(10754,"不出库发货失败：销售订单物流信息更新失败，请刷新后重试"),
     SO_B2C_NOT_OUTBOUND_STATUS_UPDATE_FAILED(10755,"不出库发货失败：销售订单状态更新失败，请刷新后重试"),
-    SO_OUTSTOCK_AMOUNT_MISMATCH_SUBMIT(10756,"提交失败，出库单明细金额=0，但上游销售订单明细金额非0，请核实销售出库单是否拉取有异"),
+    SO_OUTSTOCK_AMOUNT_MISMATCH_SUBMIT(10761,"提交失败，出库单明细金额=0，但上游销售订单明细金额非0，请核实销售出库单是否拉取有异"),
     SO_OUTSTOCK_AMOUNT_MISMATCH_APPROVE(10757,"不可审核通过：出库单明细金额=0，但上游销售订单明细金额非0，请核实销售出库单是否拉取有异"),
     SO_OUTSTOCK_UPSTREAM_AMOUNT_CHECK_UNAVAILABLE(10760,"查询上游销售订单明细异常，请稍后重试或人工核实"),
     SO_CHANGE_DELETE_ALL_DETAIL_FORBIDDEN(10756,"销售变更单不允许删除所有的订单明细"),
