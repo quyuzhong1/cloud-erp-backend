@@ -1132,12 +1132,10 @@ public class WarehouseLocationController extends BaseController {
      */
     @GetMapping(value = "/getByCode")
     public ApiResult<WarehouseLocationDTO.ViewDto> getByCode(@RequestParam("code") String code) {
-        WarehouseLocationEntity entity = warehouseLocationService.getByCode(code);
-        if (entity == null) {
+        WarehouseLocationDTO.ViewDto viewDto = warehouseLocationService.getByCode(code);
+        if (viewDto == null) {
             return success(null);
         }
-        WarehouseLocationDTO.ViewDto viewDto = new WarehouseLocationDTO.ViewDto();
-        org.springframework.beans.BeanUtils.copyProperties(entity, viewDto);
         return success(viewDto);
     }
 }

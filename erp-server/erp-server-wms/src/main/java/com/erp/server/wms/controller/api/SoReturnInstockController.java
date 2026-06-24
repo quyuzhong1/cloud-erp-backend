@@ -496,7 +496,7 @@ public class SoReturnInstockController extends BaseController {
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入销售退货入库单")
     @PostMapping("/import")
-    public ApiResult importWarehouse(@RequestBody BaseDTO.ImportDTO dto) {
+    public ApiResult importSoReturnInstock(@RequestBody BaseDTO.ImportDTO dto) {
         Boolean result = soReturnInstockService.importFile(dto);
         return result ? success() : failure();
     }

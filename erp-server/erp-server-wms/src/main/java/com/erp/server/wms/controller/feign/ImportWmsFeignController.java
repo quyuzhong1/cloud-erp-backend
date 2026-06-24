@@ -17,6 +17,7 @@ import com.erp.server.wms.service.SampleTransferInfoService;
 import com.erp.server.wms.service.SampleAdjustmentInfoService;
 import com.erp.server.wms.service.WarehouseLocationMappingService;
 import com.erp.server.wms.service.CfgQcUserService;
+import com.erp.server.wms.service.CfgQcUserService;
 import com.erp.server.wms.service.SoReturnInstockService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;

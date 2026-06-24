@@ -7,7 +7,9 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelAnalysisException;
 import com.alibaba.excel.exception.ExcelCommonException;
+import com.alibaba.excel.read.listener.ReadListener;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -2452,13 +2454,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     public void importSoReturnInstockAdd(BaseDTO.ImportDTO dto) {
         setImportUserContext(dto);
         SoReturnStockExcelListener excelListenerUtil = new SoReturnStockExcelListener();
-        try {
-            byte[] bytes = downloadImportFile(dto.getFileUrl());
-            EasyExcel.read(new ByteArrayInputStream(bytes), SoReturnStockImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
-        } catch (ExcelCommonException e) {
-            log.error("销售退货入库单导入格式错误！", e);
-            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
-        }
+        byte[] bytes = downloadImportFile(dto.getFileUrl());
+        readImportExcel(bytes, SoReturnStockImportExcelDTO.class, excelListenerUtil, "销售退货入库单导入");
         List<SoReturnStockImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
         if (CollectionUtils.isEmpty(excelDateList)) {
             throw new ServiceException(ApiError.FILE_DATA_REQUIRED);
@@ -2473,13 +2470,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     public void importSoReturnInstockUpdate(BaseDTO.ImportDTO dto) {
         setImportUserContext(dto);
         SoReturnStockUpdateExcelListener excelListenerUtil = new SoReturnStockUpdateExcelListener();
-        try {
-            byte[] bytes = downloadImportFile(dto.getFileUrl());
-            EasyExcel.read(new ByteArrayInputStream(bytes), SoReturnStockUpdateImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
-        } catch (ExcelCommonException e) {
-            log.error("销售退货入库单批量更新格式错误！", e);
-            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
-        }
+        byte[] bytes = downloadImportFile(dto.getFileUrl());
+        readImportExcel(bytes, SoReturnStockUpdateImportExcelDTO.class, excelListenerUtil, "销售退货入库单批量更新");
         List<SoReturnStockUpdateImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
         if (CollectionUtils.isEmpty(excelDateList)) {
             throw new ServiceException(ApiError.FILE_DATA_REQUIRED);
@@ -2497,6 +2489,21 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             throw new ServiceException(ApiError.FILE_DOWNLOAD_FAILED, fileUrl);
         }
         return bytes;
+    }
+
+    private <T> void readImportExcel(byte[] bytes, Class<T> headClass, ReadListener<T> listener, String bizName) {
+        try {
+            EasyExcel.read(new ByteArrayInputStream(bytes), headClass, listener).sheet(0).doRead();
+        } catch (ExcelCommonException e) {
+            log.error("{}格式错误！", bizName, e);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
+        } catch (ExcelAnalysisException e) {
+            log.error("{}解析失败！", bizName, e);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
+        } catch (Exception e) {
+            log.error("{}文件读取失败！", bizName, e);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
+        }
     }
 
     /**
@@ -2706,6 +2713,14 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         }
 
         if (CollUtil.isEmpty(toUpdateList)) {
+            return;
+        }
+        if (appendImportUpdateExchangeRateErrorsBeforePersist(toUpdateList, monthRateCache, errorList)) {
+            List<SoReturnStockUpdateImportExcelDTO> pendingRows = toUpdateList.stream()
+                    .map(Pair::getFirst)
+                    .filter(row -> !errorList.contains(row))
+                    .collect(Collectors.toList());
+            markImportUpdateBatchAbortedRows(pendingRows, errorList);
             return;
         }
         SoReturnInstockServiceImpl self = ApplicationContextUtils.getBean(SoReturnInstockServiceImpl.class);
@@ -3009,16 +3024,64 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                     : (entity.getBillDate() != null ? entity.getBillDate() : LocalDate.now());
             String currency = matchedCurrency.getId();
             if (!CurrencyEnum.CNY.getCurrencyCode().equals(currency)) {
-                String cacheKey = buildImportMonthRateCacheKey(billDate, currency);
-                BigDecimal monthRate = monthRateCache.computeIfAbsent(cacheKey,
-                        k -> dmpTaskFeign.getMonthRate(billDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), currency));
-                if (monthRate == null || MathUtil.compareTo(monthRate, BigDecimal.ZERO) == MathUtil.ZERO) {
-                    errorMsgList.add(MessageUtils.getMessage(ApiError.COMMON_EXCHANGE_RATE_NOT_EXIST,
-                            billDate.format(DateTimeFormatter.ofPattern("yyyy-MM")), row.getCurrencyStr()));
+                loadImportMonthRate(billDate, currency, monthRateCache, false, false);
+                String rateError = buildImportExchangeRateMissingMsg(billDate, currency, row.getCurrencyStr(), monthRateCache);
+                if (CharSequenceUtil.isNotBlank(rateError)) {
+                    errorMsgList.add(rateError);
                 }
             }
         }
         return errorMsgList;
+    }
+
+    /**
+     * 落库前按行二次校验汇率（仅读缓存，不调 Feign）；缺汇率写入 errorMsg 并整批 abort
+     *
+     * @return true 表示存在汇率错误，调用方应终止落库
+     */
+    private boolean appendImportUpdateExchangeRateErrorsBeforePersist(
+            List<Pair<SoReturnStockUpdateImportExcelDTO, Pair<SoReturnInstockEntity, SoReturnInstockEntity>>> toUpdateList,
+            Map<String, BigDecimal> monthRateCache,
+            List<SoReturnStockUpdateImportExcelDTO> errorList) {
+        boolean hasError = false;
+        for (Pair<SoReturnStockUpdateImportExcelDTO, Pair<SoReturnInstockEntity, SoReturnInstockEntity>> item : toUpdateList) {
+            SoReturnStockUpdateImportExcelDTO row = item.getFirst();
+            SoReturnInstockEntity oldEntity = item.getSecond().getFirst();
+            SoReturnInstockEntity entity = item.getSecond().getSecond();
+            if (CharSequenceUtil.equals(oldEntity.getCurrency(), entity.getCurrency())) {
+                continue;
+            }
+            LocalDate billDate = entity.getBillDate() != null ? entity.getBillDate() : LocalDate.now();
+            String currency = CharSequenceUtil.blankToDefault(entity.getCurrency(), CurrencyEnum.CNY.getCurrencyCode());
+            String rateError = buildImportExchangeRateMissingMsg(billDate, currency, row.getCurrencyStr(), monthRateCache);
+            if (CharSequenceUtil.isBlank(rateError)) {
+                continue;
+            }
+            appendImportUpdateError(row, rateError);
+            if (!errorList.contains(row)) {
+                errorList.add(row);
+            }
+            hasError = true;
+        }
+        return hasError;
+    }
+
+    /**
+     * 从 monthRateCache 只读校验汇率；缺失时返回国际化错误文案，否则返回 null
+     */
+    private String buildImportExchangeRateMissingMsg(LocalDate billDate, String currency, String currencyDisplay,
+                                                    Map<String, BigDecimal> monthRateCache) {
+        if (CurrencyEnum.CNY.getCurrencyCode().equals(
+                CharSequenceUtil.blankToDefault(currency, CurrencyEnum.CNY.getCurrencyCode()))) {
+            return null;
+        }
+        BigDecimal monthRate = loadImportMonthRate(billDate, currency, monthRateCache, false, true);
+        if (monthRate != null && MathUtil.compareTo(monthRate, BigDecimal.ZERO) != MathUtil.ZERO) {
+            return null;
+        }
+        String display = CharSequenceUtil.isNotBlank(currencyDisplay) ? currencyDisplay : currency;
+        return MessageUtils.getMessage(ApiError.COMMON_EXCHANGE_RATE_NOT_EXIST,
+                billDate.format(DateTimeFormatter.ofPattern("yyyy-MM")), display);
     }
 
     /**
@@ -3183,7 +3246,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         SoReturnInstockDTO.Add add = bundle.getAdd();
         LocalDate billDate = add.getBillDate() != null ? add.getBillDate() : LocalDate.now();
         String currency = CharSequenceUtil.blankToDefault(add.getCurrency(), CurrencyEnum.CNY.getCurrencyCode());
-        BigDecimal exchangeRate = loadImportMonthRate(billDate, currency, monthRateCache, false);
+        BigDecimal exchangeRate = loadImportMonthRate(billDate, currency, monthRateCache, false, false);
         if (exchangeRate == null || MathUtil.compareTo(exchangeRate, BigDecimal.ZERO) == MathUtil.ZERO) {
             if (CurrencyEnum.CNY.getCurrencyCode().equals(currency)) {
                 exchangeRate = MathUtil.BigDecimal_1;
@@ -3395,18 +3458,28 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     private BigDecimal resolveImportExchangeRate(SoReturnInstockEntity entity, Map<String, BigDecimal> monthRateCache) {
         LocalDate billDate = entity.getBillDate() != null ? entity.getBillDate() : LocalDate.now();
         String currency = CharSequenceUtil.blankToDefault(entity.getCurrency(), CurrencyEnum.CNY.getCurrencyCode());
-        return loadImportMonthRate(billDate, currency, monthRateCache, true);
+        return loadImportMonthRate(billDate, currency, monthRateCache, true, true);
     }
 
+    /**
+     * @param throwIfMissing 缓存缺失或汇率为 0 时是否抛异常
+     * @param cacheOnly      true 时仅读缓存（落库阶段使用，避免事务内 Feign）；false 时允许 Feign 回填缓存
+     */
     private BigDecimal loadImportMonthRate(LocalDate billDate, String currency,
-                                           Map<String, BigDecimal> monthRateCache, boolean throwIfMissing) {
+                                           Map<String, BigDecimal> monthRateCache,
+                                           boolean throwIfMissing, boolean cacheOnly) {
         String normalizedCurrency = CharSequenceUtil.blankToDefault(currency, CurrencyEnum.CNY.getCurrencyCode());
         if (CurrencyEnum.CNY.getCurrencyCode().equals(normalizedCurrency)) {
             return MathUtil.BigDecimal_1;
         }
         String cacheKey = buildImportMonthRateCacheKey(billDate, normalizedCurrency);
-        BigDecimal exchangeRate = monthRateCache.computeIfAbsent(cacheKey,
-                k -> dmpTaskFeign.getMonthRate(billDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), normalizedCurrency));
+        BigDecimal exchangeRate;
+        if (cacheOnly) {
+            exchangeRate = monthRateCache.get(cacheKey);
+        } else {
+            exchangeRate = monthRateCache.computeIfAbsent(cacheKey,
+                    k -> dmpTaskFeign.getMonthRate(billDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), normalizedCurrency));
+        }
         if (throwIfMissing && (exchangeRate == null || MathUtil.compareTo(exchangeRate, BigDecimal.ZERO) == MathUtil.ZERO)) {
             throw new ServiceException(ApiError.COMMON_EXCHANGE_RATE_NOT_EXIST,
                     billDate.format(DateTimeFormatter.ofPattern("yyyy-MM")), normalizedCurrency);

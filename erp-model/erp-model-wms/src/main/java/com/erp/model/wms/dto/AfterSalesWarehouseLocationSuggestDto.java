@@ -174,6 +174,10 @@ public class AfterSalesWarehouseLocationSuggestDto implements Serializable {
          * 是否禁用
          */
         private Boolean disabled;
+        /**
+         * 乐观锁版本号（编辑时必传）
+         */
+        private Integer version;
     }
 
     @EqualsAndHashCode(callSuper = true)
@@ -285,6 +289,10 @@ public class AfterSalesWarehouseLocationSuggestDto implements Serializable {
          * 更新时间
          */
         private LocalDateTime updateTime;
+        /**
+         * 乐观锁版本号（编辑时回传）
+         */
+        private Integer version;
 
     }
 
@@ -294,19 +302,6 @@ public class AfterSalesWarehouseLocationSuggestDto implements Serializable {
     @EqualsAndHashCode(callSuper = true)
     @Data
     public static class ExportParamDTO extends AfterSalesWarehouseLocationSuggestDto.SearchParamDTO {
-    }
-
-    /**
-     * 导出Excel
-     */
-    @EqualsAndHashCode(callSuper = true)
-    @Data
-    @NoArgsConstructor
-    public static class ExportDTO extends AwdInventoryDTO.PagingParamDTO {
-        /**
-         * 勾选的id集合
-         */
-        private List<String> ids;
     }
 
     @Data

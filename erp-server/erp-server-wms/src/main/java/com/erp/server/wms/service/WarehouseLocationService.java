@@ -366,5 +366,5 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
      * @param code 仓库编码
      * @return WarehouseLocationEntity
      */
-    WarehouseLocationEntity getByCode(String code);
+    WarehouseLocationDTO.ViewDto getByCode(String code);
 }
