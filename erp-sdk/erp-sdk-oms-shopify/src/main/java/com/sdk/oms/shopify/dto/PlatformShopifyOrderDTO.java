@@ -183,9 +183,14 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
         List<PlatformOrderDetailDTO> details = parseDetailDto(sourceOrder);
         orderDTO.setDetails(details);
 
-        // 平台是否取消：仅依据 cancelled_at
+        // 平台是否取消/作废：仅依据 cancelled_at
         Boolean isCancel = sourceOrder.convertIsCancel();
         orderDTO.setIsCancel(isCancel);
+        if (isCancel) {
+            orderDTO.setInvalidStatus(Boolean.TRUE);
+            orderDTO.setInvalidType("automatic");
+            orderDTO.setInvalidRemark("平台取消");
+        }
 
         // 标签json
         Map<String, Object> lableMap = new HashMap<>();
