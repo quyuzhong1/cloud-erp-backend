@@ -44,9 +44,10 @@ import com.erp.server.oms.listener.KolFeedbackExcelListener;
 import com.erp.server.oms.mapper.KolFeedbackMapper;
 import com.erp.server.oms.service.KolFeedbackService;
 import com.erp.server.oms.service.KolPartnerInfoService;
+import com.erp.server.oms.service.KolSampleCostFeedbackUrlService;
 import com.erp.server.oms.service.KolSocialMediaService;
 import com.erp.server.oms.service.OperateLogService;
-import io.seata.spring.annotation.GlobalTransactional;
+import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -81,6 +82,9 @@ import static com.common.business.enums.FileTaskEventEnum.IMPORT_OMS_KOL_FEEDBAC
 @Slf4j
 @Service
 public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, KolFeedbackEntity> implements KolFeedbackService {
+
+    private static final int SAME_ACTIVE_FEEDBACK_QUERY_BATCH_SIZE = 20;
+
     @Autowired
     private OperateLogService operateLogService;
 
@@ -108,7 +112,11 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
     @Autowired
     private KolSocialMediaService kolSocialMediaService;
 
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    @Autowired
+    private KolSampleCostFeedbackUrlService kolSampleCostFeedbackUrlService;
+
+    // 新增只写 kol_feedback/kol_sample_cost_ref_feedback_url 等 OMS 本地表；
+    // handleData 中的 PLM Feign 仅调用 getByIdList 补读 SKU 信息，不参与跨服务写事务。
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(KolFeedbackDTO.AddDTO addDTO) {
@@ -129,6 +137,7 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "KOL回片列单" , kolFeedbackEntity.getId());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.KOL_FEEDBACK.getCode(), kolFeedbackEntity.getId(), "新增操作");
+        kolSampleCostFeedbackUrlService.syncByFeedback(kolFeedbackEntity);
 
         return new BaseResultDTO.AddDTO(kolFeedbackEntity.getId(), kolFeedbackEntity.getId());
     }
@@ -136,7 +145,7 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
     /**
     * 批量新增
     */
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    // 批量新增沿用单条新增的本地写入边界，不涉及跨服务写事务。
     @Transactional(rollbackFor = Exception.class)
     @Override
     public List<BatchResultDTO> batchAdd(KolFeedbackDTO.BatchAddDTO dto) {
@@ -168,13 +177,10 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
     public Boolean update(KolFeedbackDTO.UpdateDTO addOrUpdateDTO) {
         KolFeedbackEntity old = super.getById(addOrUpdateDTO.getId());
         old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "KOL回片列单"));
-        
-        // 如果已回片，不允许编辑
-        if (FeedbackStatusEnum.COMPLETED.getCode().equals(old.getFeedbackStatus())) {
-            throw new ServiceException("已回片状态不允许编辑");
-        }
+        // 产品要求：回片列表编辑不再按“已回片”状态拦截，编辑后继续同步寄样费用回片链接。
         
         KolFeedbackEntity kolFeedbackEntity =  BeanMapperUtils.map(KolFeedbackEntity.class, addOrUpdateDTO);
+        fillMissingUpdateContext(kolFeedbackEntity, old);
 
         // 数据处理
         handleData(kolFeedbackEntity);
@@ -191,6 +197,10 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
         log.info("编辑 开始记录KOL回片列单日志数据，id：【{}】", kolFeedbackEntity.getId());
         String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), kolFeedbackEntity.getId(), "KOL回片列单");
         operateLogService.addModuleOperateLogByObj(old, kolFeedbackEntity,  ModuleTypeEnum.KOL_FEEDBACK.getCode(), kolFeedbackEntity.getId(), msg);
+        if (!sameFeedbackUrlKey(old, kolFeedbackEntity)) {
+            kolSampleCostFeedbackUrlService.removeByFeedback(old, hasSameActiveFeedback(old, Collections.singleton(old.getId())));
+        }
+        kolSampleCostFeedbackUrlService.syncByFeedback(kolFeedbackEntity);
         return Boolean.TRUE;
     }
 
@@ -208,47 +218,46 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void batchDelete(BaseIdsDTO.IdsDTO dto) {
         if (CollUtil.isEmpty(dto.getIds())) {
             throw new ServiceException("删除ID列表不能为空");
         }
         
-        // 检查是否有已回片状态的数据，已回片不允许删除
+        // 产品要求：回片列表删除不再按“已回片”状态拦截，删除时只维护寄样费用回片链接引用。
         List<KolFeedbackEntity> list = super.listByIds(dto.getIds());
         if (CollUtil.isEmpty(list)) {
             throw new ServiceException("未找到要删除的数据");
         }
         
-        for (KolFeedbackEntity entity : list) {
-            if (FeedbackStatusEnum.COMPLETED.getCode().equals(entity.getFeedbackStatus())) {
-                throw new ServiceException("已回片状态不允许删除");
-            }
-        }
-        
+        Set<String> deleteIdSet = new HashSet<>(dto.getIds());
+        Map<String, Boolean> sameFeedbackMap = buildSameActiveFeedbackMap(list, deleteIdSet);
+
         // 执行批量删除
         boolean remove = super.removeByIds(dto.getIds());
         if (!remove) {
             throw new ServiceException("批量删除失败");
         }
+        list.forEach(entity -> kolSampleCostFeedbackUrlService.removeByFeedback(entity, sameFeedbackMap.getOrDefault(entity.getId(), false)));
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO delete(String id) {
         KolFeedbackEntity entity = super.getById(id);
         if (entity == null) {
             throw new ServiceException("KOL回片列表不存在");
         }
+        // 产品要求：回片列表删除不再按“已回片”状态拦截，删除时只维护寄样费用回片链接引用。
         
-        // 检查状态，已回片不允许删除
-        if (FeedbackStatusEnum.COMPLETED.getCode().equals(entity.getFeedbackStatus())) {
-            throw new ServiceException("已回片状态不允许删除");
-        }
-        
+        boolean hasSameActiveFeedback = hasSameActiveFeedback(entity, Collections.singleton(id));
+
         // 执行删除
         boolean remove = super.removeById(id);
         if (!remove) {
             throw new ServiceException("删除失败");
         }
+        kolSampleCostFeedbackUrlService.removeByFeedback(entity, hasSameActiveFeedback);
         
         return BatchResultDTO.success(entity.getId(), entity.getSourceCode());
     }
@@ -393,6 +402,7 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
                 ));
 
         // 遍历数据进行校验和保存
+        List<KolFeedbackEntity> savedEntityList = new ArrayList<>();
         for (KolFeedbackExcelDTO excelDTO : successList) {
             List<String> errorMsgList = new ArrayList<>();
             
@@ -474,6 +484,8 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
                 if (!save) {
                     excelDTO.setErrorMsg("保存失败");
                     errorList2.add(excelDTO);
+                } else {
+                    savedEntityList.add(entity);
                 }
             } catch (Exception e) {
                 log.error("导入KOL回片列表数据失败", e);
@@ -481,6 +493,7 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
                 errorList2.add(excelDTO);
             }
         }
+        kolSampleCostFeedbackUrlService.syncByFeedbackList(savedEntityList);
     }
 
     @Override
@@ -509,11 +522,11 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
     }
 
     @Override
-    public List<KolFeedbackDTO.FeedbackQtyDTO> listFeedbackQtyBySourceDetailIdList(List<String> sourceDetailIdList) {
-        if (CollUtil.isEmpty(sourceDetailIdList)) {
+    public List<KolFeedbackDTO.FeedbackQtyDTO> listFeedbackQtyBySourceDetailIdList(List<String> sourceDetailIdList, String sourceType) {
+        if (CollUtil.isEmpty(sourceDetailIdList) || StrUtil.isBlank(sourceType)) {
             return Collections.emptyList();
         }
-        return baseMapper.listFeedbackQtyBySourceDetailIdList(sourceDetailIdList);
+        return baseMapper.listFeedbackQtyBySourceDetailIdList(sourceDetailIdList, sourceType);
     }
 
     @Override
@@ -683,6 +696,93 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
                 kolFeedbackEntity.setFeedbackStatus(FeedbackStatusEnum.PENDING.getCode());
             }
         }
+    }
+
+    private void fillMissingUpdateContext(KolFeedbackEntity target, KolFeedbackEntity old) {
+        if (target == null || old == null) {
+            return;
+        }
+        target.setSourceType(StrUtil.blankToDefault(target.getSourceType(), old.getSourceType()));
+        target.setSourceId(StrUtil.blankToDefault(target.getSourceId(), old.getSourceId()));
+        target.setSourceCode(StrUtil.blankToDefault(target.getSourceCode(), old.getSourceCode()));
+        target.setSourceDetailId(StrUtil.blankToDefault(target.getSourceDetailId(), old.getSourceDetailId()));
+        target.setPartnerId(StrUtil.blankToDefault(target.getPartnerId(), old.getPartnerId()));
+        target.setPartnerNickname(StrUtil.blankToDefault(target.getPartnerNickname(), old.getPartnerNickname()));
+        target.setSkuId(StrUtil.blankToDefault(target.getSkuId(), old.getSkuId()));
+        target.setSkuNo(StrUtil.blankToDefault(target.getSkuNo(), old.getSkuNo()));
+        target.setProductName(StrUtil.blankToDefault(target.getProductName(), old.getProductName()));
+        target.setUrl(StrUtil.blankToDefault(target.getUrl(), old.getUrl()));
+        target.setUrlHash(StrUtil.blankToDefault(target.getUrlHash(), old.getUrlHash()));
+    }
+
+    private boolean sameFeedbackUrlKey(KolFeedbackEntity oldEntity, KolFeedbackEntity newEntity) {
+        return Objects.equals(oldEntity.getSourceType(), newEntity.getSourceType())
+                && Objects.equals(oldEntity.getSourceDetailId(), newEntity.getSourceDetailId())
+                && Objects.equals(oldEntity.getUrlHash(), newEntity.getUrlHash());
+    }
+
+    private boolean hasSameActiveFeedback(KolFeedbackEntity entity, Collection<String> excludeIds) {
+        if (entity == null
+                || StrUtil.isBlank(entity.getSourceType())
+                || StrUtil.isBlank(entity.getSourceDetailId())
+                || StrUtil.isBlank(entity.getUrlHash())) {
+            return false;
+        }
+        return lambdaQuery()
+                .eq(KolFeedbackEntity::getSourceType, entity.getSourceType())
+                .eq(KolFeedbackEntity::getSourceDetailId, entity.getSourceDetailId())
+                .eq(KolFeedbackEntity::getUrlHash, entity.getUrlHash())
+                .eq(KolFeedbackEntity::getIsDeleted, false)
+                .notIn(CollUtil.isNotEmpty(excludeIds), KolFeedbackEntity::getId, excludeIds)
+                .count() > 0;
+    }
+
+    private Map<String, Boolean> buildSameActiveFeedbackMap(List<KolFeedbackEntity> deleteList, Set<String> deleteIdSet) {
+        Map<String, Boolean> result = new HashMap<>();
+        if (CollUtil.isEmpty(deleteList)) {
+            return result;
+        }
+        deleteList.stream()
+                .filter(item -> StrUtil.isNotBlank(item.getId()))
+                .forEach(item -> result.put(item.getId(), false));
+        List<KolFeedbackEntity> validDeleteList = deleteList.stream()
+                .filter(item -> StrUtil.isNotBlank(item.getId()))
+                .filter(item -> StrUtil.isNotBlank(item.getSourceType()))
+                .filter(item -> StrUtil.isNotBlank(item.getSourceDetailId()))
+                .filter(item -> StrUtil.isNotBlank(item.getUrlHash()))
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(validDeleteList)) {
+            return result;
+        }
+        Set<String> activeFeedbackKeySet = new HashSet<>();
+        for (List<KolFeedbackEntity> partitionList : Lists.partition(validDeleteList, SAME_ACTIVE_FEEDBACK_QUERY_BATCH_SIZE)) {
+            LambdaQueryWrapper<KolFeedbackEntity> wrapper = new LambdaQueryWrapper<KolFeedbackEntity>()
+                    .eq(KolFeedbackEntity::getIsDeleted, false)
+                    .notIn(CollUtil.isNotEmpty(deleteIdSet), KolFeedbackEntity::getId, deleteIdSet)
+                    .and(nested -> {
+                        appendFeedbackUrlCondition(nested, partitionList.get(0));
+                        for (int i = 1; i < partitionList.size(); i++) {
+                            KolFeedbackEntity item = partitionList.get(i);
+                            nested.or(orWrapper -> appendFeedbackUrlCondition(orWrapper, item));
+                        }
+                    });
+            List<KolFeedbackEntity> activeFeedbackList = super.list(wrapper);
+            if (CollUtil.isNotEmpty(activeFeedbackList)) {
+                activeFeedbackKeySet.addAll(activeFeedbackList.stream().map(this::buildFeedbackUrlKey).collect(Collectors.toSet()));
+            }
+        }
+        validDeleteList.forEach(item -> result.put(item.getId(), activeFeedbackKeySet.contains(buildFeedbackUrlKey(item))));
+        return result;
+    }
+
+    private void appendFeedbackUrlCondition(LambdaQueryWrapper<KolFeedbackEntity> wrapper, KolFeedbackEntity entity) {
+        wrapper.eq(KolFeedbackEntity::getSourceType, entity.getSourceType())
+                .eq(KolFeedbackEntity::getSourceDetailId, entity.getSourceDetailId())
+                .eq(KolFeedbackEntity::getUrlHash, entity.getUrlHash());
+    }
+
+    private String buildFeedbackUrlKey(KolFeedbackEntity entity) {
+        return StrUtil.format("{}#{}#{}", entity.getSourceType(), entity.getSourceDetailId(), entity.getUrlHash());
     }
 
     /**

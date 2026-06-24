@@ -116,6 +116,10 @@ public class DmpOutputSdySoDeliveryHandler extends DmpOutputSdyBaseTaskHandler {
         Map<String, String> map = new HashMap<>();
         String cfgOutputId = dmpResponse.getDmpCfgOutputEntity().getId();
 		Map<String, Map<String, Object>> cacheMap = new HashMap<>();
+		
+		Map<String, Object> countryIdNameMap = FeignQuery.list(DictCountryEntity.class).stream().collect(Collectors.toMap(DictCountryEntity::getId, DictCountryEntity::getNameCn));
+		cacheMap.put("country", countryIdNameMap);
+		
         for (String changId : changeIds) {
         	DmpSoDeliveryEntity dmpSoDeliveryEntity = dmpSoDeliveryEntityMap.get(changId);
         	if(dmpSoDeliveryEntity == null) {
@@ -337,8 +341,16 @@ public class DmpOutputSdySoDeliveryHandler extends DmpOutputSdyBaseTaskHandler {
     	        shudiyunB2cOrderDTO.setSource_system("SDC");
     	        
     	        // 国家编码
-    	        shudiyunB2cOrderDTO.setCountry_code(dmpSoDeliveryDetailEntity.getCountryCode());
+    	        String countryCode = dmpSoDeliveryDetailEntity.getCountryCode();
+				shudiyunB2cOrderDTO.setCountry_code(countryCode);
     	        // 国家名称
+    	        Map<String, Object> countryMap = cacheMap.get("country");
+    	        if(countryMap != null && StringUtils.isNotBlank(countryCode)) {
+    	        	Object countryNameObj = countryMap.get(countryCode);
+    	        	if(countryNameObj != null) {
+    	        		dmpSoDeliveryDetailEntity.setCountryName(countryNameObj.toString());
+    	        	}
+    	        }
     	        shudiyunB2cOrderDTO.setCountry(dmpSoDeliveryDetailEntity.getCountryName());
     	        // 区域编码
     	        shudiyunB2cOrderDTO.setRegion_code(dmpSoDeliveryDetailEntity.getRegionCode());

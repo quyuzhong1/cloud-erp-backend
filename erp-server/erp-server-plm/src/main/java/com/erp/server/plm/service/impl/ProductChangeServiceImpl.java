@@ -35,6 +35,7 @@ import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.sys.feign.SysFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.listener.ProductChangeExcelListener;
+import com.erp.server.plm.rocketmq.sync.wangdian.SyncWangDianProductDetailService;
 import com.erp.server.plm.service.*;
 import io.seata.common.util.StringUtils;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -51,6 +52,8 @@ import jnr.ffi.annotations.In;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.plm.dto.ProductChangeDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -94,6 +97,9 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
     private DocNoGenHelper docNoGenHelper;
     @Resource
     private WorkflowFeign workflowFeign;
+
+    @Resource
+    private SyncWangDianProductDetailService syncWangDianProductDetailService;
 
     @Resource
     private ProductChangeDetailService productChangeDetailService;
@@ -910,9 +916,54 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
             updateSkuChange(entity,detailEntityList,productDetailEntity);
             //推送金蝶
             productDetailService.sendSinglePushTask(productDetailEntity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+
+            syncDataToWangDianAfterCommit(productDetailEntity);
         }
 
         return Boolean.TRUE;
+    }
+
+    private void syncDataToWangDianAfterCommit(ProductDetailEntity productDetailEntity) {
+        // approveEnd 带 @Transactional，无事务上下文说明 AOP 失效，抛异常暴露配置问题而非静默写脏补偿。
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            log.error("产品变更审批缺少事务上下文，旺店通同步异常, productDetailId={}", productDetailEntity.getId());
+            throw new ServiceException("系统配置异常，请联系管理员");
+        }
+        runAfterTransactionCommit(() -> syncWangDianProductDetailWithFallback(productDetailEntity));
+    }
+
+    private void saveWangDianSyncPendingPushMsg(ProductDetailEntity productDetailEntity, String reason) {
+        try {
+            syncWangDianProductDetailService.saveSyncErrorPushMsg(productDetailEntity,
+                    String.format("【%s】产品变更审批后待同步旺店通（%s）", productDetailEntity.getSkuNo(), reason));
+        } catch (Exception ex) {
+            log.error("产品变更审批后同步旺店补偿消息写入失败, productDetailId={}", productDetailEntity.getId(), ex);
+        }
+    }
+
+    private void syncWangDianProductDetailWithFallback(ProductDetailEntity productDetailEntity) {
+        try {
+            syncWangDianProductDetailService.syncDataToWangDian(productDetailEntity);
+        } catch (Exception e) {
+            // 失败写 plm_push_msg 补偿；站内信/企微通知不在本 MR 范围。
+            log.error("产品变更审批后同步旺店失败, productDetailId={}", productDetailEntity.getId(), e);
+            saveWangDianSyncPendingPushMsg(productDetailEntity, "同步失败");
+        }
+    }
+
+    /** 外部同步统一在事务提交后执行；回调异常仅记录日志，避免影响事务框架。 */
+    private void runAfterTransactionCommit(Runnable action) {
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                try {
+                    action.run();
+                } catch (Exception e) {
+                    log.error("事务提交后回调执行失败", e);
+                    // 回调内 syncWangDianProductDetailWithFallback 已有补偿；告警通道不在本 MR 范围。
+                }
+            }
+        });
     }
 
     public void updateSkuChange(ProductChangeEntity entity, List<ProductChangeDetailEntity> detailEntityList,ProductDetailEntity productDetailEntity) {

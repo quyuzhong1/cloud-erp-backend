@@ -15,7 +15,6 @@ import org.apache.commons.lang3.StringUtils;
 public enum CfgLogisticsCostImportImportTypeEnum implements EnumMessage {
 	IMPORT_UPDATE("import_update", "导入更新"),
 	IMPORT_ADD_OLD("import_add_old", "导入新增(按原单)"),
-	IMPORT_ADD_NEW("import_add_new", "导入新增(按新单)"),
     ;
     /**
      * 类型

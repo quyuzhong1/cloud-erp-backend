@@ -445,6 +445,22 @@ public class PoReconciliationScmController extends BaseController {
         return success();
     }
 
+    /**
+     * 查询指定对账单的发票附件列表
+     *
+     * @param dto BaseIdDTO
+     * @return ApiResult<List<InvoiceFileVO>>
+     */
+    @PostMapping("/listInvoice")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "srm:poReconciliation:scm:uploadInvoice",
+            serviceClass = PoReconciliationService.class,
+            keyIdName = "id")
+    public ApiResult<List<PoReconciliationDTO.InvoiceFileVO>> listInvoice(@RequestBody @Validated BaseIdDTO dto) {
+        return success(poReconciliationScmService.listInvoice(dto.getId()));
+    }
+
     @PostMapping("/downloadInvoice")
     @LogAction(value = LogActionEnum.DOWNLOAD, desc = "下载发票")
     public ApiResult<Object> downloadInvoice(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {

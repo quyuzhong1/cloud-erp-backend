@@ -56,6 +56,7 @@ import com.erp.model.tms.vo.response.InterceptResponseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.CfgRuleFeign;
@@ -188,6 +189,19 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         BeanMapperUtils.copy(addDTO, logisticsBillEntity);
         // 数据处理
         handleData(logisticsBillEntity);
+        // 非B2B
+        if (!CharSequenceUtil.equals(logisticsBillEntity.getOrderType(), OrderTypeEnum.B2B.getCode())) {
+            if (CharSequenceUtil.isNotBlank(addDTO.getPlatformCode())){
+                //上游参数如果已经对销售出库明细 platform_code，多条英文逗号拼接，无需再去查询一次
+                logisticsBillEntity.setPlatformCode(addDTO.getPlatformCode());
+            }else if (CharSequenceUtil.isBlank(addDTO.getPlatformCode()) && CharSequenceUtil.isNotBlank(logisticsBillEntity.getOutstockId())) {
+                //进行查询兜底
+                List<SoOutstockDetailEntity> outstockDetailList = FeignQuery.create(SoOutstockDetailEntity.class)
+                        .eq(SoOutstockDetailEntity::getMainId, logisticsBillEntity.getOutstockId())
+                        .list();
+                logisticsBillEntity.setPlatformCode(buildLogisticsBillPlatformCodeFromOutstockDetail(outstockDetailList));
+            }
+        }
         boolean save = super.saveOrUpdate(logisticsBillEntity);
         if (!save) {
             throw new ServiceException("物流单保存失败");
@@ -228,6 +242,14 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 
         // 数据处理
         handleData(logisticsBillEntity);
+        // 非 B2B：平台订单号取销售出库明细 platform_code，多条英文逗号拼接
+        if (!CharSequenceUtil.equals(logisticsBillEntity.getOrderType(), OrderTypeEnum.B2B.getCode())
+                && CharSequenceUtil.isNotBlank(logisticsBillEntity.getOutstockId())) {
+            List<SoOutstockDetailEntity> outstockDetailList = FeignQuery.create(SoOutstockDetailEntity.class)
+                    .eq(SoOutstockDetailEntity::getMainId, logisticsBillEntity.getOutstockId())
+                    .list();
+            logisticsBillEntity.setPlatformCode(buildLogisticsBillPlatformCodeFromOutstockDetail(outstockDetailList));
+        }
         boolean save = super.updateById(logisticsBillEntity);
         if (!save) {
             throw new ServiceException("物流单保存失败");
@@ -322,15 +344,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 logisticsBillEntity.setLogisticsSupplierId(channelEntity.getMainId());
             }
         }
-        //平台订单号
-        if (CharSequenceUtil.equals(logisticsBillEntity.getSourceType(), SourceTypeEnum.SO_B2C.getCode())) {
-            SoB2cEntity soB2cEntity = soB2cFeign.getById(logisticsBillEntity.getSourceId());
-            if (ObjectUtil.isNotEmpty(soB2cEntity)) {
-                logisticsBillEntity.setPlatformCode(soB2cEntity.getPlatformCode());
-            }
-        }
-        if (CharSequenceUtil.isNotBlank(logisticsBillEntity.getOutstockId())) {
-
+        if(CharSequenceUtil.isNotBlank(logisticsBillEntity.getOutstockId())){
             if (CharSequenceUtil.equals(logisticsBillEntity.getOrderType(), OrderTypeEnum.FIRST_MILE.getCode())) {
                 List<FirstMileDeliveryDTO.BusinessDTO> businessDTOList = wmsFirstMileDeliveryFeign.getBusinessCodeByIds(Collections.singletonList(logisticsBillEntity.getOutstockId()));
                 if (CollUtil.isNotEmpty(businessDTOList)) {
@@ -383,6 +397,17 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         }
     }
 
+    private String buildLogisticsBillPlatformCodeFromOutstockDetail(List<SoOutstockDetailEntity> detailList) {
+        if (CollUtil.isEmpty(detailList)) {
+            return CharSequenceUtil.EMPTY;
+        }
+        return detailList.stream()
+                .map(SoOutstockDetailEntity::getPlatformCode)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.joining(","));
+    }
+
     public List<LogisticsBillEntity> listByOutstockIds(List<String> outstockIds) {
         if (CollectionUtils.isEmpty(outstockIds)) {
             return Collections.emptyList();
@@ -395,10 +420,37 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     public Boolean logisticsBillBatchSave(List<LogisticsBillDTO.AddDTO> addDTOList) {
         List<String> sourceIds = addDTOList.stream().map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
         List<LogisticsBillEntity> billEntityList = this.listBySourceIds(sourceIds);
+        List<String> outstockIds = addDTOList.stream()
+                .filter(dto -> !CharSequenceUtil.equals(dto.getOrderType(), OrderTypeEnum.B2B.getCode()))
+                .filter(dto -> CharSequenceUtil.isBlank(dto.getPlatformCode()))
+                .map(LogisticsBillDTO.AddDTO::getOutstockId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, List<SoOutstockDetailEntity>> outstockDetailMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(outstockIds)) {
+            List<SoOutstockDetailEntity> allOutstockDetailList = FeignQuery.create(SoOutstockDetailEntity.class)
+                    .in(SoOutstockDetailEntity::getMainId, outstockIds)
+                    .list();
+            if (CollUtil.isNotEmpty(allOutstockDetailList)) {
+                outstockDetailMap = allOutstockDetailList.stream()
+                        .collect(Collectors.groupingBy(SoOutstockDetailEntity::getMainId));
+            }
+        }
         for (LogisticsBillDTO.AddDTO addDTO : addDTOList) {
             LogisticsBillEntity saveEntity = new LogisticsBillEntity();
             BeanMapper.copy(addDTO, saveEntity);
             this.handleData(saveEntity);
+            // 非 B2B：平台订单号取销售出库明细 platform_code，多条英文逗号拼接
+            if (!CharSequenceUtil.equals(saveEntity.getOrderType(), OrderTypeEnum.B2B.getCode())) {
+                if (CharSequenceUtil.isNotBlank(addDTO.getPlatformCode())) {
+                    saveEntity.setPlatformCode(addDTO.getPlatformCode());
+                } else if (CharSequenceUtil.isNotBlank(saveEntity.getOutstockId())) {
+                    List<SoOutstockDetailEntity> outstockDetailList = outstockDetailMap.getOrDefault(
+                            saveEntity.getOutstockId(), Collections.emptyList());
+                    saveEntity.setPlatformCode(buildLogisticsBillPlatformCodeFromOutstockDetail(outstockDetailList));
+                }
+            }
             LogisticsBillEntity logisticsBillEntity = billEntityList.stream().filter(req -> req.getSourceId().equals(addDTO.getSourceId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(logisticsBillEntity)) {
                 saveEntity.setId(logisticsBillEntity.getId());
@@ -881,8 +933,15 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         LocalDateTime now = LocalDateTime.now();
         String signCode = LogisticTrackStatusEnum.SIGN.getCode();
         //销售平台字典表数据
-        List<DictBasicEntity> salesPlatformList = dictBasicService.getByKey(DictBasicTypeEnum.SALES_PLATFORM.getType());
-        Map<String, String> salesPlatformMap = CollUtil.isEmpty(salesPlatformList) ? new HashMap<>() : salesPlatformList.stream().collect(Collectors.toMap(DictBasicEntity::getCode, DictBasicEntity::getName));
+        Map<String, String> salesPlatformMap = new HashMap<>();
+        List<com.erp.model.oms.entity.DictBasicEntity> salesPlatformList = FeignQuery.create(com.erp.model.oms.entity.DictBasicEntity.class)
+                .eq(com.erp.model.oms.entity.DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType())
+                .eq(com.erp.model.oms.entity.DictBasicEntity::getStatus, Boolean.TRUE)
+                .eq(com.erp.model.oms.entity.DictBasicEntity::getIsDeleted, Boolean.FALSE)
+                .list();
+        if(CollectionUtils.isNotEmpty(salesPlatformList)){
+            salesPlatformMap = salesPlatformList.stream().collect(Collectors.toMap(com.erp.model.oms.entity.DictBasicEntity::getValue, com.erp.model.oms.entity.DictBasicEntity::getName));
+        }
         //供应商
         List<String> supplierIds = list.stream().map(LogisticsBillDTO.PagingVO::getLogisticsSupplierId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         Map<String, String> supplierMap = new HashMap<>();
@@ -1063,7 +1122,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         for (LogisticsBillDetailEntity detailEntity : list) {
             addDTO.setLogisticsBillDetailId(detailEntity.getId());
             addDTO.setTrackNo(detailEntity.getTrackNo());
-            logisticsBillCostService.add(addDTO);
+            logisticsBillCostService.add(addDTO, null);
         }
     }
 

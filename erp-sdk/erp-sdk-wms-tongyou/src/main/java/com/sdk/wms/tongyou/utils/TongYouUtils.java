@@ -46,6 +46,7 @@ public class TongYouUtils {
             throw e;
         } catch (Exception e) {
             log.error("JSON 解析失败,原始值：{}，异常: ", jsonStr,e);
+            // TongYouBaseResp.error(String, Object...) 内部使用 Hutool CharSequenceUtil.format，支持 {} 占位符。
             return TongYouBaseResp.error("JSON 解析失败,原始值：{}，异常: {}", jsonStr,e);
         }
     }
@@ -68,6 +69,7 @@ public class TongYouUtils {
             throw e;
         } catch (Exception e) {
             log.error("JSON 解析失败,原始值：{}，异常: ", jsonStr,e);
+            // TongYouBaseResp.error(String, Object...) 内部使用 Hutool CharSequenceUtil.format，支持 {} 占位符。
             return TongYouBaseResp.error("JSON 解析失败,原始值：{}，异常:{} ", jsonStr,e);
         }
     }

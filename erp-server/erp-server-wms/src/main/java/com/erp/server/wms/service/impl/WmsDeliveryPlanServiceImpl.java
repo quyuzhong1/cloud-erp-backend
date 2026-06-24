@@ -21,14 +21,12 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
-import com.common.business.wrapper.FeignQuery;
 import com.common.core.constant.EnumMessage;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
-import com.erp.model.mrp.entity.DeliverySuggestEntity;
 import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
@@ -75,7 +73,6 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_OVERSEAS_DELIVERY_PLAN;
 
@@ -1050,8 +1047,8 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
             return deliverPlanViewDTO;
         }
         //来源id集合
-        List<String> sourceIdList = wmsDeliveryPlanDetailList.stream().flatMap(obj -> Stream.of(BeanUtil.copyToList(JSONUtil.parseArray(obj.getSourceJson()), WmsDeliveryPlanDetailDTO.SourceJsonDTO.class).stream().map(WmsDeliveryPlanDetailDTO.SourceJsonDTO::getSourceId).toArray(String[]::new))).collect(Collectors.toList());
-        List<DeliverySuggestEntity> deliverySuggestList = FeignQuery.create(DeliverySuggestEntity.class).in(DeliverySuggestEntity::getId, sourceIdList).list();
+//        List<String> sourceIdList = wmsDeliveryPlanDetailList.stream().flatMap(obj -> Stream.of(BeanUtil.copyToList(JSONUtil.parseArray(obj.getSourceJson()), WmsDeliveryPlanDetailDTO.SourceJsonDTO.class).stream().map(WmsDeliveryPlanDetailDTO.SourceJsonDTO::getSourceId).toArray(String[]::new))).collect(Collectors.toList());
+//        List<DeliverySuggestEntity> deliverySuggestList = FeignQuery.create(DeliverySuggestEntity.class).in(DeliverySuggestEntity::getId, sourceIdList).list();
 
         //根据来源id查询发货单
         List<RequisitionApplicationEntity> requisitionApplicationEntityList = requisitionApplicationService.listBySourceIds(Collections.singletonList(id));
@@ -1113,8 +1110,8 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
                 WmsDeliveryPlanDetailDTO.SourceJsonDTO sourceJsonDTO = sourceJsonList.get(i);
 
                 WmsDeliveryPlanDTO.DescriptionViewDTO descriptionViewDTO = new WmsDeliveryPlanDTO.DescriptionViewDTO();
-                DeliverySuggestEntity suggestEntity = deliverySuggestList.stream().filter(obj -> StrUtil.equals(obj.getId(), sourceJsonDTO.getSourceId())).findFirst().orElse(new DeliverySuggestEntity());
-                descriptionViewDTO.setDeliverySuggestCode(suggestEntity.getCode());
+//                DeliverySuggestEntity suggestEntity = deliverySuggestList.stream().filter(obj -> StrUtil.equals(obj.getId(), sourceJsonDTO.getSourceId())).findFirst().orElse(new DeliverySuggestEntity());
+//                descriptionViewDTO.setDeliverySuggestCode(suggestEntity.getCode());
                 /**
                  * 最后一条数量 = 总数 - 前面数量合计
                  */

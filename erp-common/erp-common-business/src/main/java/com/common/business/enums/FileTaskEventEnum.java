@@ -7,26 +7,6 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum FileTaskEventEnum implements EnumMessage {
-    //bi  暂时不改
-    EXPORT_SKU_SALES("EXPORT_SKU_SALES", "sku销售额","","",""),
-    EXPORT_BI_ORDER_INFO("EXPORT_BI_ORDER_INFO", "销售数据","","",""),
-    EXPORT_BI_RETURN_ORDER_INFO("EXPORT_BI_RETURN_ORDER_INFO", "退货数据","","",""),
-    EXPORT_BI_RETURN_INFO("EXPORT_BI_RETURN_INFO", "退款数据导出","","",""),
-    EXPORT_BI_DATA_SOURCE_COST("EXPORT_BI_DATA_SOURCE_COST", "成本数据表导出","","",""),
-    EXPORT_BI_SHOP_INFO("EXPORT_BI_SHOP_INFO", "店铺数据导出","","",""),
-    EXPORT_BI_DATA_SOURCE_CUSTOM("EXPORT_BI_DATA_SOURCE_CUSTOM", "数据分析导出","","",""),
-    EXPORT_BI_DATA_SOURCE_CUSTOM_MARKET("EXPORT_BI_DATA_SOURCE_CUSTOM_MARKET", "市场数据导出","","",""),
-    EXPORT_BI_DATA_SOURCE_CUSTOM_SUPPLY_CHAIN("EXPORT_BI_DATA_SOURCE_CUSTOM_SUPPLY_CHAIN", "供应链数据导出","","",""),
-    EXPORT_BI_DATA_SOURCE_CUSTOM_OPERATE("EXPORT_BI_DATA_SOURCE_CUSTOM_OPERATE", "经营数据导出","","",""),
-    EXPORT_BI_DATA_SOURCE_CUSTOM_FINANCE("EXPORT_BI_DATA_SOURCE_CUSTOM_FINANCE", "财务数据导出","","",""),
-    EXPORT_BI_TARGET_CATEGORY_SETTING("EXPORT_BI_TARGET_CATEGORY_SETTING", "按品类导出目标报表","","",""),
-    EXPORT_BI_TARGET_NEW_PRODUCT_SETTING("EXPORT_BI_TARGET_NEW_PRODUCT_SETTING", "按新品导出目标报表","","",""),
-    EXPORT_BI_TARGET_SHOP_SETTING("EXPORT_BI_TARGET_SHOP_SETTING", "按店铺导出目标报表","","",""),
-    EXPORT_BI_TARGET_SKU_SETTING("EXPORT_BI_TARGET_SKU_SETTING", "按SKU导出目标报表","","",""),
-    EXPORT_BI_TARGET_STAFF_SETTING("EXPORT_BI_TARGET_STAFF_SETTING", "按人员导出目标报表","","",""),
-    EXPORT_BI_COUNTRY_SALES("EXPORT_BI_COUNTRY_SALES", "区域国家销售额数据","","",""),
-    EXPORT_BI_NEW_AND_OLD_SALES_EXPORT("EXPORT_BI_NEW_AND_OLD_SALES_EXPORT", "新老品销售额","","",""),
-    EXPORT_BI_REPORT("EXPORT_BI_REPORT", "新老品销售额报表","","",""),
 
     //dmp
     EXPORT_PUSH_TASK_HISTORY("EXPORT_PUSH_TASK_HISTORY","中台推送任务历史表","","",""),
@@ -85,6 +65,9 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_PLM_ORDER_TRACKING("EXPORT_PLM_ORDER_TRACKING", "下单跟踪导出","","",""),
     EXPORT_PLM_ORDER_TRACKING_DETAIL("EXPORT_PLM_ORDER_TRACKING_DETAIL", "下单跟踪明细导出","","",""),
     EXPORT_PLM_PRODUCT("EXPORT_PLM_PRODUCT", "产品开发","","",""),
+    EXPORT_PLM_PRODUCT_DEV_PRODUCT("EXPORT_PLM_PRODUCT_DEV_PRODUCT", "产品开发-产品列表","","",""),
+    EXPORT_PLM_PRODUCT_DEV_TASK("EXPORT_PLM_PRODUCT_DEV_TASK", "产品开发-任务列表","","",""),
+    EXPORT_PLM_PRODUCT_DEV_BOTH("EXPORT_PLM_PRODUCT_DEV_BOTH", "产品开发-产品列表/任务列表","","",""),
     EXPORT_PLM_SKU("EXPORT_PLM_SKU", "产品管理导出","","",""),
     EXPORT_PLM_SKU_DYNAMIC("EXPORT_PLM_SKU_DYNAMIC", "产品管理导出","","",""),
     IMPORT_PLM_SKU_IMAGES("IMPORT_PLM_SKU_IMAGES", "导入SKU图片","com.erp.rpc.plm.feign.ImportPlmFeign","productDetailImages",""),
@@ -109,6 +92,7 @@ public enum FileTaskEventEnum implements EnumMessage {
     IMPORT_PLM_SKU_STD_RETAIL_PRICE("IMPORT_PLM_SKU_STD_RETAIL_PRICE", "导入sku标准零售价","com.erp.rpc.plm.feign.ImportPlmFeign","importSkuStdRetailPrice",""),
 
     //oms
+    EXPORT_OMS_RETURN_INFO("EXPORT_OMS_RETURN_INFO", "退款数据导出","","",""),
     EXPORT_OMS_CUSTOMER_B2B_SELLER_CHANGE("EXPORT_OMS_CUSTOMER_B2B_SELLER_CHANGE","客户b2b销售变更单","","",""),
     EXPORT_OMS_SO_CHANGE("EXPORT_OMS_SO_CHANGE","销售变更单列表","","",""),
     EXPORT_OMS_SO_PI("EXPORT_OMS_SO_PI","销售单发票信息","","",""),
@@ -330,6 +314,8 @@ public enum FileTaskEventEnum implements EnumMessage {
 
     EXPORT_WMS_QC_APPLICATION("EXPORT_WMS_QC_APPLICATION", "质检申请导出","","",""),
     IMPORT_WMS_QC_APPLICATION_DETAIL("IMPORT_WMS_QC_APPLICATION_DETAIL", "质检申请明细导入","com.erp.rpc.wms.feign.ImportWmsFeign","importQcApplicationDetail",""),
+    IMPORT_WMS_CFG_QC_USER("IMPORT_WMS_CFG_QC_USER", "质检员配置导入","com.erp.rpc.wms.feign.ImportWmsFeign","importCfgQcUser",""),
+    EXPORT_WMS_CFG_QC_USER("EXPORT_WMS_CFG_QC_USER", "质检员配置导出","","",""),
 
 
     //tms
@@ -378,28 +364,6 @@ public enum FileTaskEventEnum implements EnumMessage {
 
     EXPORT_TMS_ASYNC_TASK_RECORD("EXPORT_TMS_ASYNC_TASK_RECORD","异步任务导出","","",""),
     EXPORT_TMS_ASYNC_TASK_DETAIL("EXPORT_TMS_ASYNC_TASK_DETAIL","异步任务错误导出","","",""),
-
-    //mrp
-    EXPORT_MRP_REPLENISHMENT_RULE("EXPORT_MRP_REPLENISHMENT_RULE", "补货规则","","",""),
-    EXPORT_MRP_HISTORY_SALES_QTY("EXPORT_MRP_HISTORY_SALES_QTY", "历史销量","","",""),
-    EXPORT_MRP_PURCHASE_SUGGESTION("EXPORT_MRP_PURCHASE_SUGGESTION", "补货计划_采购建议","","",""),
-    EXPORT_MRP_FBA_INVENTORY("EXPORT_MRP_FBA_INVENTORY", "FBA每日库存","","",""),
-    EXPORT_MRP_OVERSEAS_INVENTORY("EXPORT_MRP_OVERSEAS_INVENTORY", "海外仓每日库存","","",""),
-    EXPORT_MRP_LOCAL_INVENTORY("EXPORT_MRP_LOCAL_INVENTORY", "本地仓每日库存","","",""),
-    EXPORT_MRP_VIRTUAL_INVENTORY("EXPORT_MRP_VIRTUAL_INVENTORY", "虚拟仓库每日库存信息","","",""),
-    EXPORT_MRP_DELIVERY_SUGGESTION("EXPORT_MRP_DELIVERY_SUGGESTION", "补货计划_发货建议","","",""),
-    EXPORT_MRP_HISTORY_SALES_CALC("EXPORT_MRP_HISTORY_SALES_CALC", "历史销量导出(销量试算)","","",""),
-
-    EXPORT_MRP_PURCHASE_SUGGESTION_ENTITY("EXPORT_MRP_PURCHASE_SUGGESTION_ENTITY", "采购建议","","",""),
-    EXPORT_MRP_PURCHASE_SUGGESTION_MERGE_ENTITY("EXPORT_MRP_PURCHASE_SUGGESTION_MERGE_ENTITY", "采购建议(合并)","","",""),
-
-    EXPORT_MRP_DELIVERY_SUGGESTION_ENTITY("EXPORT_MRP_DELIVERY_SUGGESTION_ENTITY", "补货建议","","",""),
-
-    EXPORT_MRP_SALES_CALC("EXPORT_MRP_SALES_CALC", "销量试算","","",""),
-    EXPORT_MRP_SALES_CALC_LIST("EXPORT_MRP_SALES_CALC_LIST", "销量试算任务列表","","",""),
-    EXPORT_MRP_SALES_CALC_TEMPLATE_LIST("EXPORT_MRP_SALES_CALC_TEMPLATE_LIST", "销量试算模板列表","","",""),
-    EXPORT_MRP_SUGGESTION_CALC_DATA("EXPORT_MRP_SUGGESTION_CALC_DATA", "补货建议计算数据","","",""),
-
 
     //workflow
     EXPORT_PROCESS_MANAGEMENT("EXPORT_PROCESS_MANAGEMENT", "流程管理","","",""),

@@ -150,6 +150,7 @@ public class PlatformB2bOrderConsumerService extends AbstractNewPlatformConsumer
 				dto.setWarehouseId(thirdMappingEntityList.get(0).getSysId());
 			}
 		}
+		customerInfoService.applyB2bOrderCustomerDefaults(dto, customerInfo);
 
 		dto.setDictPlatform(customerInfo.getPlatformType());
 		dto.setAddressType(CustomerAddressTypeEnum.FORWARDER.getCode());
@@ -207,6 +208,7 @@ public class PlatformB2bOrderConsumerService extends AbstractNewPlatformConsumer
 				dto.setTelNumber(customerAddressEntity.getTelNumber());
 			}
 			dto.setIsDeclare(false);
+			customerInfoService.applyB2bOrderCustomerDefaults(dto, customerInfo);
 		}
 		//过滤掉明细已删除和已作废
 		if(CollectionUtils.isNotEmpty(dto.getDetail())) {
@@ -269,6 +271,5 @@ public class PlatformB2bOrderConsumerService extends AbstractNewPlatformConsumer
 			}
 		}
 	}
-
 
 }

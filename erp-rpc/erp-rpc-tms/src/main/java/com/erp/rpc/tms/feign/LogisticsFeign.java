@@ -198,6 +198,14 @@ public interface LogisticsFeign {
     @PostMapping("/feign/logistics/getSkuCostInCNY")
     List<InventorySkuCostDTO.SkuCostCNYDTO> getSkuCostInCNY(@RequestBody InventorySkuCostDTO.SkuCostCNYQueryDTO queryDTO);
 
+    /**
+     * PLM标准成本专用：按核算月份取最新已审核SKU成本（人民币）
+     * @param queryDTO
+     * @return
+     */
+    @PostMapping("/feign/logistics/getSkuCostInCNYForStdCost")
+    List<InventorySkuCostDTO.SkuCostCNYDTO> getSkuCostInCNYForStdCost(@RequestBody InventorySkuCostDTO.SkuCostCNYQueryDTO queryDTO);
+
     @GetMapping("/feign/logistics/getChannelByCodeAndOverseasWarehouseId")
     LogisticsSaleChannelEntity getChannelByCodeAndOverseasWarehouseId(@RequestParam("logisticsProductCode")String logisticsProductCode, @RequestParam("transferWarehouseId") String transferWarehouseId);
 

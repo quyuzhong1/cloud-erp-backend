@@ -98,14 +98,29 @@ public class GoodCangCreateB2bReq {
     @Builder
     public static class WarehouseService {
 
+        /**
+         * 每箱张贴货件标签数
+         */
         @JSONField(name = "box_mark_num")
         private Integer boxMarkNum;
 
+        /**
+         * 是否换标
+         */
         @JSONField(name = "is_change_label")
         private Integer isChangeLabel;
 
+        /**
+         * 整单SKU汇总列表
+         */
         @JSONField(name = "item_list")
         private List<GoodCangCreateB2bReq.Item> itemList;
+
+        /**
+         * 装箱信息列表
+         */
+        @JSONField(name = "packing_list")
+        private List<GoodCangCreateB2bReq.Packing> packingList;
 
     }
 
@@ -123,6 +138,105 @@ public class GoodCangCreateB2bReq {
 
     }
 
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Builder
+    public static class Packing {
+
+        /**
+         * 箱唛号
+         */
+        @JSONField(name = "box_mark")
+        private String boxMark;
+
+        /**
+         * 箱序号
+         */
+        @JSONField(name = "box_no")
+        private Integer boxNo;
+
+        /**
+         * 箱唛参考号
+         */
+        @JSONField(name = "box_ref_mark")
+        private String boxRefMark;
+
+        /**
+         * 货件标签文件ID
+         */
+        @JSONField(name = "shipment_file_id")
+        private Integer shipmentFileId;
+
+        /**
+         * 货件标签文件列表
+         */
+        @JSONField(name = "shipment_file_list")
+        private List<GoodCangCreateB2bReq.ShipmentFile> shipmentFileList;
+
+        /**
+         * 物流文件ID
+         */
+        @JSONField(name = "logistics_file_id")
+        private Integer logisticsFileId;
+
+        /**
+         * 报关文件ID
+         */
+        @JSONField(name = "customs_file_id")
+        private Integer customsFileId;
+
+        /**
+         * 箱内SKU列表
+         */
+        @JSONField(name = "packing_line_list")
+        private List<GoodCangCreateB2bReq.PackingLine> packingLineList;
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Builder
+    public static class ShipmentFile {
+
+        /**
+         * 贴标要求
+         */
+        @JSONField(name = "labelling_require")
+        private String labellingRequire;
+
+        /**
+         * 标签尺寸枚举值，100*150 对应 1
+         */
+        @JSONField(name = "label_size")
+        private Integer labelSize;
+
+        /**
+         * 货件标签文件ID
+         */
+        @JSONField(name = "shipment_file_id")
+        private Integer shipmentFileId;
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Builder
+    public static class PackingLine {
+
+        /**
+         * 三方仓SKU
+         */
+        @JSONField(name = "product_sku")
+        private String productSku;
+
+        /**
+         * 当前箱内该SKU数量
+         */
+        @JSONField(name = "quantity")
+        private Integer quantity;
+    }
+
     @JSONField(name = "other_info")
     private OtherInfo otherInfo;
 
@@ -132,10 +246,16 @@ public class GoodCangCreateB2bReq {
     @Builder
     public static class OtherInfo {
 
+        /**
+         * 订单备注
+         */
         @JSONField(name = "order_desc")
         private String orderDesc;
 
-        @JSONField(name = "packingFileId")
+        /**
+         * 装箱文件ID；B2B 创建接口按 GoodCang 文档使用 snake_case，当前仅该新接口使用。
+         */
+        @JSONField(name = "packing_file_id")
         private Integer packingFileId;
 
     }

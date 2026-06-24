@@ -21,7 +21,7 @@ public class DmpInputWdtPreStockNextDmpHandler extends DmpInputWdtNextDmpHandler
 	}
 	
 	@Override
-	protected boolean isDeleteInsert() {
+	protected boolean needDealDetailDelete() {
 		return true;
 	}
 }

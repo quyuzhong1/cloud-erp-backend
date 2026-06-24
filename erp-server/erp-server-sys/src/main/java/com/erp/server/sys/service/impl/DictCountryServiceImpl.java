@@ -264,7 +264,9 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
                 DictCountryEntity dto = dbMap.getOrDefault(id, new DictCountryEntity());
                 String redisKey = String.format("cache:sys:country:id::%s", id);
                 redisService.setCacheObject(redisKey, dto, 8L, TimeUnit.HOURS);
-                result.add(dto);
+                if (Objects.nonNull(dto.getId())) {
+                    result.add(dto);
+                }
             }
         }
         return result;
