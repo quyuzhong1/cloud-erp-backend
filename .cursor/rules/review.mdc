@@ -70,8 +70,10 @@ Nacos / Seata 1.5.2 / RocketMQ / Redis(Redisson) / XXL-JOB / EasyExcel / MapStru
 
 重点关注以下高频问题：
 
-- **`${...}` SQL 注入风险（排除权限 SQL）**：仅审查 Mapper XML 中业务可控的动态拼接，例如 `${field}`、`${sort}`、`${item.field}`、`${item.sort}`、`${params.sqlMap.default}` 等；须判断是否有白名单校验（合法列名 + ASC/DESC 枚举），否则标为「严重」
-  - **排除项（不得报告）**：`${params.permissionSql}`、`permissionSql` 及一切由 `@DataPermission` / 数据权限框架注入的 SQL 条件片段
+- **`${...}` SQL 注入风险（排除权限 SQL 和排序框架）**：仅审查 Mapper XML 中**业务自行拼接**的动态 SQL，例如 `${params.sqlMap.default}` 等未经框架校验的字段；须判断是否有白名单校验，否则标为「严重」
+  - **排除项（不得报告）**：
+    - `${params.permissionSql}`、`permissionSql` 及一切由 `@DataPermission` / 数据权限框架注入的 SQL 条件片段
+    - `${item.field}`、`${item.sort}`、`${field}`、`${sort}` 等排序字段：本项目统一通过 `@WebAdvanceQuery` / QueryHandler 框架处理，字段白名单与排序方向校验由框架统一保证，**不得**将此类排序动态拼接报告为 SQL 注入风险
 - **tabList N+1 查询**：若代码用循环对每个 Tab 执行一次 COUNT 查询，应改为单条 `GROUP BY` SQL
 - **分页 paging 缺少服务端 type 强制过滤**：业务类型字段（如 `type`）若仅依赖前端高级搜索传参，需在 Service 层强制注入兜底
 - **N+1 / 循环查库**：循环内调用 `getById` / Feign / Mapper 查询，改批量
@@ -137,7 +139,7 @@ Nacos / Seata 1.5.2 / RocketMQ / Redis(Redisson) / XXL-JOB / EasyExcel / MapStru
 
 ### 10. 安全
 
-- Mapper XML 中业务动态排序/字段拼接：对 `${field}`、`${sort}`、`${item.field}`、`${item.sort}`、`${params.sqlMap.default}` 等判断是否有字段白名单；**不审查** `${params.permissionSql}` / `permissionSql`
+- Mapper XML 中动态 SQL：**不审查** `${params.sqlMap.default}` / `${params.permissionSql}` / `permissionSql`，**不审查** `${item.field}`、`${item.sort}`、`${field}`、`${sort}` 等经 `@WebAdvanceQuery` 框架处理的排序字段
 - 日志中是否打印密码、Token、签名等敏感信息
 - 列表/修改/删除类接口是否**漏用** `@DataPermission`（仅检查注解缺失，不将 permissionSql 拼接视为注入或越权实现缺陷）
 
@@ -147,10 +149,20 @@ Nacos / Seata 1.5.2 / RocketMQ / Redis(Redisson) / XXL-JOB / EasyExcel / MapStru
 
 - 只报告**有依据**的问题，不臆测未提交代码，不空泛建议
 - 区分「必须修复」与「建议优化」
-- 每个问题必须给出**具体文件路径（含行号）**和**可执行的修复建议**
+- 每个问题必须给出**具体文件路径**和**可执行的修复建议**；行号基于 diff `@@` 标头估算，若无法精确确认，写行范围（如 `:100-120`）而非单个不确定行号，**禁止填写没有依据的行号**
 - 纯格式化、无逻辑变更的 diff，不要强行制造问题
 - 若变更质量良好，在结论中明确说明
-- **禁止**因 Mapper 中出现 `${params.permissionSql}` 或权限过滤 SQL 而报告 SQL 注入或安全问题
+- **禁止**因 Mapper 中出现 `${params.permissionSql}` 或`${params.sqlMap.default}`报告 SQL 注入或安全问题
+- **禁止**因 Mapper 中出现 `${item.field}`、`${item.sort}`、`${field}`、`${sort}` 等排序字段而报告 SQL 注入风险（本项目排序统一由 `@WebAdvanceQuery` 框架校验）
+
+### 不确定场景的表述规范（必须遵守）
+
+- 若问题依赖的关键代码（如被调用方法的实现、对应 Entity 定义、缓存写入端逻辑、枚举的实际返回值）**不在本次 diff 中**，
+  问题描述中**不得**以断言语气描述其行为，必须在问题描述中明确标注：
+  > 「XXX 不在本次 diff 中，无法确认；以下为潜在风险，需人工验证。」
+- **禁止将推断出的代码行为**（如「原代码使用了 X」「该枚举返回大写」「原缓存键前缀为全小写」）**以事实语气陈述**；
+  必须使用条件句：「若 X，则…」，并注明是基于 diff 中的线索还是推测。
+- 只有当问题的所有关键条件均可从 diff 中直接读取时，才允许以事实语气报告。
 
 ### 不确定场景的表述规范（必须遵守）
 
@@ -209,6 +221,7 @@ Nacos / Seata 1.5.2 / RocketMQ / Redis(Redisson) / XXL-JOB / EasyExcel / MapStru
 
 **1. 问题标题（简明扼要）**
 - 文件：`erp-server/erp-server-tms/src/main/java/com/erp/server/tms/service/impl/XxxServiceImpl.java:123`
+  （行号基于 diff `@@` 标头估算；若无法精确定位，写范围如 `:120-135`；若完全无法确认，只写文件路径）
 - 问题：具体描述问题现象、原因及可能后果
 - 修复建议：可执行的修改方案，必要时附代码片段
 

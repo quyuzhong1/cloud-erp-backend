@@ -315,6 +315,8 @@ public enum FileTaskEventEnum implements EnumMessage {
     IMPORT_WMS_CFG_QC_USER("IMPORT_WMS_CFG_QC_USER", "质检员配置导入","com.erp.rpc.wms.feign.ImportWmsFeign","importCfgQcUser",""),
     EXPORT_WMS_CFG_QC_USER("EXPORT_WMS_CFG_QC_USER", "质检员配置导出","","",""),
 
+    EXPORT_WAREHOUSE_LOCATION_SUGGEST_AFTER_SALES("EXPORT_WAREHOUSE_LOCATION_SUGGEST_AFTER_SALES", "售后仓位推荐数据导出","","",""),
+    IMPORT_WAREHOUSE_LOCATION_SUGGEST_AFTER_SALES("IMPORT_WAREHOUSE_LOCATION_SUGGEST_AFTER_SALES", "售后仓位推荐数据导入","","",""),
 
     //tms
     EXPORT_TMS_LOGISTICS_ADDRESS("EXPORT_TMS_LOGISTICS_ADDRESS", "物流地址列表","","",""),
