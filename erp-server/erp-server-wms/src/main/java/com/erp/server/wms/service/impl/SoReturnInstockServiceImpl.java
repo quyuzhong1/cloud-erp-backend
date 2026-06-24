@@ -24,7 +24,6 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -2733,12 +2732,11 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             markImportUpdateBatchAbortedRows(pendingRows, errorList);
             return;
         }
-        SoReturnInstockServiceImpl self = ApplicationContextUtils.getBean(SoReturnInstockServiceImpl.class);
         List<Pair<SoReturnInstockEntity, SoReturnInstockEntity>> updatePairs = toUpdateList.stream()
                 .map(Pair::getSecond)
                 .collect(Collectors.toList());
         try {
-            self.persistAllImportUpdate(updatePairs, monthRateCache);
+            selfService.persistAllImportUpdate(updatePairs, monthRateCache);
         } catch (Exception e) {
             log.error("销售退货入库单批量更新落库失败", e);
             markImportUpdatePersistFailedRows(toUpdateList, errorList, resolveImportPersistErrorMsg(e));
@@ -2750,6 +2748,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
      * review-skip #2: 产品需求 — 批量更新整批单事务原子落库，保证要么全部更新成功要么全部回滚；
      * 主表/明细写库内部已按 IMPORT_UPDATE_BATCH_SIZE(500) 分批 SQL，与外层单事务策略 intentionally 不同
      */
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public void persistAllImportUpdate(List<Pair<SoReturnInstockEntity, SoReturnInstockEntity>> updatePairs,
                                        Map<String, BigDecimal> monthRateCache) {
@@ -2782,6 +2781,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         batchUpdateImportDetails(detailsToUpdate);
     }
 
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public void persistAllImportAdd(List<SoReturnInstockDTO.ImportAddBundle> toAddList) {
         for (SoReturnInstockDTO.ImportAddBundle bundle : toAddList) {
@@ -3835,11 +3835,10 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             return;
         }
 
-        SoReturnInstockServiceImpl self = ApplicationContextUtils.getBean(SoReturnInstockServiceImpl.class);
         List<SoReturnInstockDTO.ImportAddBundle> persistedBundles = new ArrayList<>();
         for (SoReturnInstockDTO.ImportAddBundle bundle : readyToPersistList) {
             try {
-                self.persistAllImportAdd(Collections.singletonList(bundle));
+                selfService.persistAllImportAdd(Collections.singletonList(bundle));
                 persistedBundles.add(bundle);
             } catch (Exception e) {
                 log.error("销售退货入库单导入落库失败", e);

@@ -19,8 +19,10 @@ import com.erp.model.wms.dto.SoReturnReceiveDTO;
 import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
 import com.erp.wms.aliexpress.model.returnorder.AliexpressReturnInstockDTO;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.web.bind.annotation.RequestBody;
 import javax.servlet.http.HttpServletResponse;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -355,6 +357,18 @@ public interface SoReturnInstockService extends SuperService<SoReturnInstockEnti
      * 刷新价格字段后的事务写入入口，由实现类通过自身代理调用。
      */
     void persistRefreshedPriceFields(List<SoReturnInstockDetailEntity> detailList);
+
+    /**
+     * 导入批量更新落库，由实现类通过自身代理调用。
+     */
+    void persistAllImportUpdate(List<Pair<SoReturnInstockEntity, SoReturnInstockEntity>> updatePairs,
+                            Map<String, BigDecimal> monthRateCache);
+
+    /**
+     * 导入新增落库，由实现类通过自身代理调用。
+     */
+    void persistAllImportAdd(List<SoReturnInstockDTO.ImportAddBundle> toAddList);
+
     /**
      * 下载模板
      * @author will
