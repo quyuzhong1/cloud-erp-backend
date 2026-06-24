@@ -6,22 +6,22 @@ import com.erp.server.file.handler.FileRegistry;
 
 /**
  * 动态表头「单数据 sheet」导出（与 {@link AbstractSingleSheetGroupPageFileEventHandler} 对称）：列由运行时表头算出（无固定模板），
- * 强制只写 1 张数据 sheet，行数上限由 {@code file.storage.singleSheetMaxRows} 配置（默认 Excel2007 物理上限 1048576，已预留表头行）。
+ * 强制只写 1 张数据 sheet，行数上限由 {@code file.storage.singleSheetMaxRows} 配置（默认 200000，已预留表头行；可配至 Excel 物理上限 1048576）。
  * <p>
- * <strong>主要用于按 sheet 做分组判重/置空的动态表头导出</strong>（如销售订单 {@code ExportOmsSoHandler}：用
- * {@link #newSheetState()} + {@link #decorateSheetRow} 在单 sheet 内对主单字段判重置空）。这类场景必须强制单 sheet，否则：
- * <ul>
- *   <li>数据换 sheet 后 {@code sheetState} 复位，同一分组跨 sheet 边界会重复展示主单字段；</li>
- *   <li>产生不可预估的 sheet 数量。</li>
- * </ul>
- * 达到单 sheet 上限即显式失败，请缩小筛选范围；数据量可能超过单 sheet 容量、且无按 sheet 分组诉求时，
- * 请改用多 sheet 的 {@link AbstractDynamicHeadersFileEventHandler}。
+ * <strong>主要用于按 sheet 做分组判重/置空的动态表头导出</strong>（强制单 sheet：翻 sheet 会复位
+ * {@link #newSheetState()}，同组跨 sheet 会重复展示）。数据量超过单 sheet 且需分组展示时，
+ * 请改用 {@link AbstractMultiSheetGroupDynamicHeadersFileEventHandler}（如销售订单
+ * {@code ExportOmsSoHandler} 已迁移至该基类）。
+ * 达到单 sheet 上限即显式失败，请缩小筛选范围；数据量超过单 sheet 容量且需按分组展示时，
+ * 请改用 {@link AbstractMultiSheetGroupDynamicHeadersFileEventHandler}；无分组诉求时用
+ * {@link AbstractDynamicHeadersFileEventHandler}。
  * <p>
  * 子类实现 {@link #getPageData(com.common.business.dto.base.PagingDTO)} 即可；可选重写 {@link #firstRowName()}、
  * {@link #dynamicHeaderCellStyleStrategy()}、{@link #newSheetState()} / {@link #decorateSheetRow} 等钩子。
  *
  * @param <P> 查询参数类型
  * @see AbstractDynamicHeadersFileEventHandler
+ * @see AbstractMultiSheetGroupDynamicHeadersFileEventHandler
  * @see AbstractSingleSheetGroupPageFileEventHandler
  */
 public abstract class AbstractSingleSheetDynamicHeadersFileEventHandler<P> extends AbstractDynamicHeadersFileEventHandler<P> {
@@ -41,6 +41,7 @@ public abstract class AbstractSingleSheetDynamicHeadersFileEventHandler<P> exten
     @Override
     protected int maxRowsPerSheet() {
         int reservedHeaderRows = CharSequenceUtil.isNotBlank(firstRowName()) ? 2 : 1;
-        return Math.max(1, FileRegistry.singleSheetMaxRowsOrDefault() - reservedHeaderRows);
+        int configuredCap = Math.max(1, FileRegistry.singleSheetMaxRowsOrDefault() - reservedHeaderRows);
+        return Math.min(configuredCap, maxRowsPerXlsxSheetHardLimit());
     }
 }

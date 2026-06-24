@@ -162,9 +162,9 @@ public final class SoUtils {
     /**
      * 导出隐藏重复主单的金额列：同一主单(id) 在当前判重范围内的非首行，置空金额类列（仅首行保留）。
      * <p>
-     * 本方法按 {@code seenMainIds} 维护判重状态，判重范围由调用方决定（{@code ExportOmsSoHandler} 以 sheet 为范围，
-     * 每个 sheet 用独立集合并在翻页时复位）。OMS 销售订单导出当前强制单 sheet
-     * （{@code AbstractSingleSheetDynamicHeadersFileEventHandler}），不会翻页，故等价于整份导出范围内判重。
+     * 本方法按 {@code seenMainIds} 维护判重状态，判重范围由调用方决定。
+     * {@code ExportOmsSoHandler} 在 {@code beforeWriteGroupRows} 内按主单分组调用，同组内仅首行保留金额列；
+     * 多 sheet 时基类保证同一主单不跨 sheet 拆分，避免 sheet 边界重复展示金额。
      *
      * @param row         当前数据行，命中重复时原地置空金额列
      * @param seenMainIds 当前判重范围（按 sheet）已出现的主单 id 集合，原地维护
