@@ -166,6 +166,7 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
         if (CollectionUtils.isNotEmpty(missTypes)) {
             List<DictBasicEntity> dbList = this.lambdaQuery()
                     .in(DictBasicEntity::getType, missTypes)
+                    .eq(DictBasicEntity::getStatus, Boolean.TRUE)
                     .list();
             Map<String, List<DictBasicEntity>> dbMap = dbList.stream()
                     .collect(Collectors.groupingBy(DictBasicEntity::getType));
