@@ -93,10 +93,11 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
     private SoReturnInstockDetailService soReturnInstockDetailService;
 
 	@Resource
-	private ThirdWarehouseDeliveryService thirdWarehouseDeliveryService;
+	private SoB2cReturnFeign soB2cReturnFeign;
 
 	@Resource
-	private SoB2cReturnFeign soB2cReturnFeign;
+	private SoReturnInstockSalesMatchService soReturnInstockSalesMatchService;
+
 	@Override
 	public String getBizName() {
 		return "平台退货入库";
@@ -154,24 +155,15 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 		if(Objects.isNull(overseasProviderWarehouseEntity) || CharSequenceUtil.isBlank(overseasProviderWarehouseEntity.getWarehouseId())){
 			throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC,"仓库信息");
 		}
-		SoB2cEntity soB2cEntity = null;
+		SoB2cEntity soB2cEntity = soReturnInstockSalesMatchService.matchOriginalSoB2c(dto);
 		SoOutstockEntity soOutstock = null;
 		WarehouseEntity warehouseEntity = warehouseService.getById(overseasProviderWarehouseEntity.getWarehouseId());
-		if(CharSequenceUtil.isNotBlank(dto.getOrderReferenceNo())){
-			ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity;
-			if(dto.getOrderReferenceNo().contains(BusinessNoConstant.WFHD)){
-				//查询三方仓发货单
-				thirdWarehouseDeliveryEntity = thirdWarehouseDeliveryService.getLatestByCode(dto.getOrderReferenceNo());
-				if(Objects.nonNull(thirdWarehouseDeliveryEntity)){
-					String soCode = thirdWarehouseDeliveryEntity.getSoCode();
-					soB2cEntity = soB2cFeign.getSoCode(soCode);
-				}
-			}else{
-				soB2cEntity = soB2cFeign.getSoCode(dto.getOrderReferenceNo());
-			}
-			if(Objects.nonNull(soB2cEntity)){
-				soOutstock = soOutstockService.getBySoId(soB2cEntity.getId());
-			}
+		if (Objects.isNull(soB2cEntity) && CharSequenceUtil.isNotBlank(dto.getOrderReferenceNo())
+				&& !dto.getOrderReferenceNo().contains(BusinessNoConstant.WFHD)) {
+			soB2cEntity = soB2cFeign.getSoCode(dto.getOrderReferenceNo());
+		}
+		if (Objects.nonNull(soB2cEntity)) {
+			soOutstock = soOutstockService.getBySoId(soB2cEntity.getId());
 		}
 		SoReturnInstockEntity soReturnInstockEntity = this.buildSoReturnInstockEntity(dto,warehouseEntity,soB2cEntity,soOutstock);
 		List<SoReturnInstockDetailEntity> detailEntityList = this.buildSoReturnInstockDetail(dto,soReturnInstockEntity,warehouseEntity);
@@ -304,6 +296,9 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 			soReturnInstockEntity.setPlatformOrderCode(CharSequenceUtil.isNotBlank(soB2cEntity.getPlatformCode()) ? soB2cEntity.getPlatformCode() : dto.getPlatformOrderNo());
 			soReturnInstockEntity.setShopId(soB2cEntity.getShopId());
 			soReturnInstockEntity.setCurrency(soB2cEntity.getCurrency());
+			if (CharSequenceUtil.isNotBlank(soB2cEntity.getPlatformCode())) {
+				soReturnInstockEntity.setPlatformOrderCode(soB2cEntity.getPlatformCode());
+			}
 		} else {
 			//未匹配到销售订单，用平台消息单号兜底
 			soReturnInstockEntity.setPlatformOrderCode(dto.getPlatformOrderNo());
@@ -353,16 +348,16 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 		if(CollectionUtils.isEmpty(details)){
 			ServiceException.runError("【平台退货入库】来源明细为空");
 		}
-		// 查询对应销售订单
-		// 忽略店铺
-		List<SoB2cEntity> soB2cEntityList = soB2cFeign.getByPlatformCode(
-				Collections.singletonList(dto.getPlatformOrderNo()),
-				dto.getPlatform(),
-				"",
-				SourceTypeEnum.SO_B2C.getCode()
-		);
-		// 对应销售订单是否存在
-		SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(e -> shopIds.contains(e.getShopId())).findFirst().orElse(null);
+		SoB2cEntity soB2cEntity = soReturnInstockSalesMatchService.matchOriginalSoB2c(dto);
+		if (Objects.isNull(soB2cEntity)) {
+			List<SoB2cEntity> soB2cEntityList = soB2cFeign.getByPlatformCode(
+					Collections.singletonList(dto.getPlatformOrderNo()),
+					dto.getPlatform(),
+					"",
+					SourceTypeEnum.SO_B2C.getCode()
+			);
+			soB2cEntity = soB2cEntityList.stream().filter(e -> shopIds.contains(e.getShopId())).findFirst().orElse(null);
+		}
 		if (null == soB2cEntity){
 			log.warn("【平台退货入库】匹配销售订单不存在:{}", dto.getPlatformOrderNo());
 			// 不存在按当前映射关系生成
@@ -504,23 +499,32 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 		soReturnInstockEntity.setPlatformOrderCode(dto.getPlatformOrderNo());
 		soReturnInstockEntity.setCreated(dto.getCreateTime());
 		soReturnInstockEntity.setType("B2C");
+		ShopInfoEntity customerShop = shopInfoEntity;
 		if(Objects.nonNull(soB2cEntity)) {
 			soReturnInstockEntity.setSoId(soB2cEntity.getId());
 			soReturnInstockEntity.setSoCode(soB2cEntity.getCode());
 			soReturnInstockEntity.setCurrency(soB2cEntity.getCurrency());
+			soReturnInstockEntity.setShopId(soB2cEntity.getShopId());
+			if (CharSequenceUtil.isNotBlank(soB2cEntity.getPlatformCode())) {
+				soReturnInstockEntity.setPlatformOrderCode(soB2cEntity.getPlatformCode());
+			}
+			ShopInfoEntity originalShop = shopInfoFeign.getShopInfoById(soB2cEntity.getShopId());
+			if (Objects.nonNull(originalShop)) {
+				customerShop = originalShop;
+			}
 		} else {
 			soReturnInstockEntity.setCurrency(shopInfoEntity.getSettlementCurrency());
 		}
-		if (StringUtils.isBlank(shopInfoEntity.getCustomerId())){
-			ServiceException.runError("店铺对应客户信息为空:{}", shopInfoEntity.getName());
+		if (StringUtils.isBlank(customerShop.getCustomerId())){
+			ServiceException.runError("店铺对应客户信息为空:{}", customerShop.getName());
 		}
-		CustomerInfoEntity customerInfo = customerFeign.getCustomerById(shopInfoEntity.getCustomerId());
+		CustomerInfoEntity customerInfo = customerFeign.getCustomerById(customerShop.getCustomerId());
 		if (null == customerInfo){
-			ServiceException.runError("店铺对应客户信息不存在:客户ID={}", shopInfoEntity.getCustomerId());
+			ServiceException.runError("店铺对应客户信息不存在:客户ID={}", customerShop.getCustomerId());
 		}
 		soReturnInstockEntity.setSalesOrgId(customerInfo.getUseOrgId());
 		soReturnInstockEntity.setSalesOrgName(customerInfo.getUseOrgName());
-		soReturnInstockEntity.setCustomerId(shopInfoEntity.getCustomerId());
+		soReturnInstockEntity.setCustomerId(customerShop.getCustomerId());
 		soReturnInstockEntity.setCustomerName(customerInfo.getName());
 		if (StringUtils.isNotBlank(customerInfo.getSalesDeptId())){
 			SysDepartmentDTO department = sysUserFeign.getUserDeptById(customerInfo.getSalesDeptId());
@@ -580,11 +584,7 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 	 * 已存在销售订单创建退货入库单
 	 */
 	private void createByExistSoB2c(PlatformReturnInstockDTO dto, List<ShopInfoEntity> shopList, SoB2cEntity soB2cEntity) {
-		ShopInfoEntity shopInfoEntity = shopList.stream().filter(e -> e.getId().equalsIgnoreCase(soB2cEntity.getShopId())).findFirst().orElse(null);
-		if (null == shopInfoEntity){
-			log.warn("【平台退货入库】店铺不存在:{}", dto.getPlatformOrderNo());
-			ServiceException.runError("【平台退货入库】店铺不存在:店铺代号{}", dto.getAuthId());
-		}
+		ShopInfoEntity shopInfoEntity = resolveSalesShopInfo(shopList, soB2cEntity, dto);
 		WarehouseEntity warehouseEntity = checkAndGetWarehouseByShopInfo(shopInfoEntity);
 		// 查询是否已关账
 		LocalDate closedLocalDate = inventoryClosedRecordService.checkClosed(warehouseEntity.getOrgId(), dto.getPutawayTime().toLocalDate());
@@ -606,6 +606,21 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 		soReturnInstockService.addByThirdWarehouse(soReturnInstockEntity,detailEntityList);
 	}
 
+
+	private ShopInfoEntity resolveSalesShopInfo(List<ShopInfoEntity> shopList, SoB2cEntity soB2cEntity, PlatformReturnInstockDTO dto) {
+		ShopInfoEntity shopInfoEntity = shopList.stream()
+				.filter(e -> e.getId().equalsIgnoreCase(soB2cEntity.getShopId()))
+				.findFirst()
+				.orElse(null);
+		if (Objects.isNull(shopInfoEntity)) {
+			shopInfoEntity = shopInfoFeign.getShopInfoById(soB2cEntity.getShopId());
+		}
+		if (Objects.isNull(shopInfoEntity)) {
+			log.warn("【平台退货入库】店铺不存在:{}", dto.getPlatformOrderNo());
+			ServiceException.runError("【平台退货入库】店铺不存在:店铺代号{}", dto.getAuthId());
+		}
+		return shopInfoEntity;
+	}
 
 	/**
 	 * 平台退货入库
