@@ -7,6 +7,10 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.fasterxml.jackson.module.jaxb.JaxbAnnotationIntrospector;
+import com.sdk.oms.shopify.api.rest.model.serializer.LocalDateTimeDeserializer;
+import com.sdk.oms.shopify.api.rest.model.serializer.LocalDateTimeSerializer;
+
+import java.time.LocalDateTime;
 
 /**
  * Instead of using the default Spring ObjectMapper we are using a custom one for the Shopify REST API. This way, we can customize the serialization
@@ -32,7 +36,10 @@ public class ShopifySdkObjectMapper {
 				.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS).configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
 				.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false).configure(MapperFeature.USE_ANNOTATIONS, true)
 				.annotationIntrospector(pair).serializationInclusion(Include.NON_NULL).build();
-		objectMapper.registerModule(new SimpleModule());
+		SimpleModule shopifyDateTimeModule = new SimpleModule("ShopifyDateTimeModule");
+		shopifyDateTimeModule.addDeserializer(LocalDateTime.class, new LocalDateTimeDeserializer());
+		shopifyDateTimeModule.addSerializer(LocalDateTime.class, new LocalDateTimeSerializer());
+		objectMapper.registerModule(shopifyDateTimeModule);
 		return objectMapper;
 	}
 }
