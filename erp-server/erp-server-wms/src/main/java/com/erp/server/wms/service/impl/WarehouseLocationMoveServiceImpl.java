@@ -105,6 +105,9 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_PDA_WAREHOU
 @Slf4j
 @Service
 public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<WarehouseLocationMoveMapper, WarehouseLocationMoveEntity> implements WarehouseLocationMoveService {
+
+    private static final int QTY_MAX = 999999999;
+
     @Resource
     private OperateLogService operateLogService;
     @Resource
@@ -149,7 +152,6 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
     private DmpPushWdtFeign dmpPushWdtFeign;
     @Resource
     private AbstractWdtService abstractWdtService;
-    private static final int QTY_MAX = 999999999;
     @Resource
     private AfterSalePackService afterSalePackService;
     @Resource
