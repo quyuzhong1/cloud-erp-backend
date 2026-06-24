@@ -107,6 +107,17 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
         return CharSequenceUtil.isBlank(dataSheetName) ? defaultSheetName : dataSheetName;
     }
 
+    /**
+     * 与 {@link com.erp.server.file.core.AbstractPageFileEventHandler} 中 {@code requirePagingResult} 语义对齐：
+     * Feign/Service 返回 {@code null} 视为查询失败，错误文案统一便于排查。
+     */
+    private PagingVO<DynamicExcelDTO> requirePagingResult(PagingVO<DynamicExcelDTO> vo, String pageLocator) {
+        if (vo == null) {
+            throw new ServiceException("导出分页查询失败，查询为空：" + pageLocator);
+        }
+        return vo;
+    }
+
     private int writePagedDynamicHeadersExcel(File outFile, P params, String defaultSheetName) throws IOException {
         PagingDTO<P> dto = new PagingDTO<>();
         int pageSize = getPageSize();
@@ -114,10 +125,7 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
         dto.setCurrPage(1);
         dto.setParams(params);
 
-        PagingVO<DynamicExcelDTO> pageData = getPageData(dto);
-        if (pageData == null) {
-            throw new ServiceException("导出分页查询失败，页码=1");
-        }
+        PagingVO<DynamicExcelDTO> pageData = requirePagingResult(getPageData(dto), "页码=" + dto.getCurrPage());
         int totalCount = pageData.getTotalCount();
         int totalPage = computeTotalPage(totalCount, pageSize);
         // 表头以首页为准、不在后续分页重复 mergeHeaders：本链路为标准 OFFSET 分页（totalCount>0 时首页必有数据），
@@ -159,15 +167,14 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
                 for (int pageNo = 1; pageNo <= totalPage; pageNo++) {
                     if (pageNo > 1) {
                         dto.setCurrPage(pageNo);
-                        pageData = getPageData(dto);
-                        if (pageData == null) {
-                            throw new ServiceException("导出分页查询失败，页码=" + pageNo);
-                        }
-                        pageList = pageData.getList();
-                        if (CollectionUtils.isEmpty(pageList)) {
-                            throw new ServiceException("导出分页数据缺失：页码=" + pageNo + "（共 " + totalPage
-                                    + " 页）返回空列表，但 totalCount=" + totalCount + " 预期仍有数据，疑似分页查询异常或数据并发变更，请重试或排查上游分页接口。");
-                        }
+                        pageData = requirePagingResult(getPageData(dto), "页码=" + pageNo);
+                    }
+                    pageList = pageData.getList();
+                    long coveredBeforeThisPage = (long) (pageNo - 1) * pageSize;
+                    if (CollectionUtils.isEmpty(pageList) && coveredBeforeThisPage < totalCount) {
+                        throw new ServiceException("导出分页数据缺失：页码=" + pageNo
+                                + " 返回空列表，但 totalCount=" + totalCount
+                                + " 预期仍有数据，疑似分页查询异常或数据并发变更，请重试或排查上游分页接口。");
                     }
                     ensureNoNewHeaderKeys(headers, pageList, pageNo);
                     List<LinkedHashMap<String, Object>> rowMaps = flattenPageData(pageList);
