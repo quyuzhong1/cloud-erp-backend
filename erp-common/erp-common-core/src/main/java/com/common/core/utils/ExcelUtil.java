@@ -200,7 +200,7 @@ public class ExcelUtil {
      *  设置表格内容居中显示策略
      * @return
      */
-    private static HorizontalCellStyleStrategy getStyleStrategy(){
+    public static HorizontalCellStyleStrategy getStyleStrategy(){
         WriteCellStyle headWriteCellStyle = new WriteCellStyle();
         //设置背景颜色
         headWriteCellStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
