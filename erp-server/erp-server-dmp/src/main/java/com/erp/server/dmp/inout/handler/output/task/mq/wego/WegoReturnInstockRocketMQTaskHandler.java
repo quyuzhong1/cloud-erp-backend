@@ -8,6 +8,7 @@ import com.common.core.entity.BaseEntity;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpThirdReturnInboundDetailEntity;
 import com.erp.model.dmp.entity.DmpThirdReturnInboundEntity;
+import com.erp.model.wms.enums.ReturnTypeEnum;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import com.erp.server.dmp.inout.handler.output.task.mq.DmpOutputRocketMQTaskHandler;
@@ -141,6 +142,11 @@ public class WegoReturnInstockRocketMQTaskHandler extends DmpOutputRocketMQTaskH
         dto.setPlatform(main.getSourcePlatform());
         dto.setAuthId(main.getNextLevelId());
         dto.setPutawayTime(main.getPutAwayTime());
+        dto.setReturnLogisticCode(main.getReturnLogisticCode());
+        // 退货类型：WEGO 无来源值，默认"其他"
+        if (org.apache.commons.lang3.StringUtils.isBlank(dto.getReturnType())) {
+            dto.setReturnType(ReturnTypeEnum.OTHER.getCode());
+        }
 
         List<PlatformReturnInstockDTO.Detail> detailDTOList = validDetails.stream()
                 .map(this::convertDetail)

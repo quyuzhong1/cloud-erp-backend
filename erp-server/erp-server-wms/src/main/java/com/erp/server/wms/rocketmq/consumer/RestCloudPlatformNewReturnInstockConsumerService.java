@@ -34,6 +34,7 @@ import com.erp.model.oms.entity.SoB2cReturnDetailEntity;
 import com.erp.model.oms.entity.SoReturnEntity;
 import com.erp.model.oms.entity.SoReturnDetailEntity;
 import com.erp.model.wms.entity.*;
+import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.*;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -185,6 +186,26 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 				}
 			}else{
 				soB2cEntity = soB2cFeign.getSoCode(dto.getOrderReferenceNo());
+				// WEGO 特有：参考单号可能是 B2C 售后单号，通过售后单找关联销售订单
+				if(Objects.isNull(soB2cEntity)
+						&& DmpBasicSystemCodeEnum.WEGO.getCode().equalsIgnoreCase(dto.getPlatform())){
+					List<SoB2cReturnEntity> returnList = FeignQuery.create(SoB2cReturnEntity.class)
+							.eq(SoB2cReturnEntity::getCode, dto.getOrderReferenceNo())
+							.list();
+					if(CollUtil.isNotEmpty(returnList)){
+						if(returnList.size() > 1){
+							log.warn("[WEGO退货入库] 售后单号 {} 命中多条记录({})，取首条有 soCode 的记录，请人工确认关联关系",
+									dto.getOrderReferenceNo(), returnList.size());
+						}
+						SoB2cReturnEntity soB2cReturnEntity = returnList.stream()
+								.filter(r -> CharSequenceUtil.isNotBlank(r.getSoCode()))
+								.findFirst()
+								.orElse(null);
+						if(Objects.nonNull(soB2cReturnEntity)){
+							soB2cEntity = soB2cFeign.getSoCode(soB2cReturnEntity.getSoCode());
+						}
+					}
+				}
 			}
 			if(Objects.nonNull(soB2cEntity)){
 				soOutstock = soOutstockService.getBySoId(soB2cEntity.getId());
@@ -242,6 +263,15 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		} else {
 			soReturnInstockEntity = this.buildSoReturnInstockEntity(dto,warehouseEntity,soB2cEntity,soOutstock);
 			detailEntityList.addAll(this.buildSoReturnInstockDetail(dto,soReturnInstockEntity,warehouseEntity));
+			// WEGO 专属覆盖：仅补充平台订单编号，不干预审核状态
+			// 状态由 buildSoReturnInstockEntity + addByThirdWarehouse→approve() 链路统一处理：
+			//   有参考号且关联到 B2C 订单 → APPROVE_ING → approve() → APPROVE（含库存入账）
+			//   有参考号但未关联到订单   → WAIT_SUBMIT（无 customerId，persistByThirdWarehouse 提前返回）
+			//   无参考号               → WAIT_SUBMIT
+			if (DmpBasicSystemCodeEnum.WEGO.getCode().equalsIgnoreCase(dto.getPlatform())
+					&& CharSequenceUtil.isNotBlank(dto.getOrderReferenceNo())) {
+				soReturnInstockEntity.setPlatformOrderCode(dto.getOrderReferenceNo());
+			}
 		}
 
 		if(CollectionUtils.isEmpty(detailEntityList)){
