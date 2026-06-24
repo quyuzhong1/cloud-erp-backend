@@ -768,7 +768,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * 传播行为 REQUIRED，具体提交时机取决于调用方是否在事务内：
      * <ul>
      *     <li>{@code submit}/{@code approve} 金额校验失败：调用方无事务，本方法以独立短事务立即 commit remark</li>
-     *     <li>{@code markB2cSoOutstockAmountMismatch}、三方同步落库等：调用方有事务，remark 与状态变更同一 commit</li>
+     *     <li>{@code markB2cSoOutstockAmountMismatch}、{@link #persistSyncAmountMismatch} 等：调用方有事务，remark 与状态变更同一 commit</li>
      * </ul>
      * </p>
      */
@@ -818,17 +818,28 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             return false;
         }
         String mismatchMsg = resolveUpstreamAmountCheckMessage(checkResult, ApiError.SO_OUTSTOCK_AMOUNT_MISMATCH_SUBMIT);
+        ApplicationContextUtils.getBean(SoOutstockServiceImpl.class)
+                .persistSyncAmountMismatch(soOutstock, detailList, mismatchMsg, persisted);
+        log.warn("同步销售出库单金额异常，落待提交状态，单号：{}，soId：{}", soOutstock.getCode(), soOutstock.getSoId());
+        return true;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void persistSyncAmountMismatch(SoOutstockEntity soOutstock,
+                                          List<SoOutstockDetailEntity> detailList,
+                                          String mismatchMsg,
+                                          boolean persisted) {
         soOutstock.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
         soOutstock.setApproveTime(null);
         if (persisted) {
             this.updateById(soOutstock);
         } else {
             this.save(soOutstock);
-            soOutstockDetailService.saveBatch(detailList);
+            if (!soOutstockDetailService.saveBatch(detailList)) {
+                throw new ServiceException(ApiError.BILL_SAVE_FAILED);
+            }
         }
         soOutstockService.appendApproveRemark(soOutstock.getId(), mismatchMsg);
-        log.warn("同步销售出库单金额异常，落待提交状态，单号：{}，soId：{}", soOutstock.getCode(), soOutstock.getSoId());
-        return true;
     }
 
     /**
@@ -3924,7 +3935,19 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      */
     private boolean shouldSkipSubmitAfterUpstreamAmountCheck(String outstockId) {
         SoOutstockEntity entity = this.getById(outstockId);
-        return entity != null && CharSequenceUtil.isNotBlank(entity.getApproveRemark());
+        if (entity == null || !ApproveStatusEnum.WAIT_SUBMIT.equals(entity.getApproveStatus())) {
+            return false;
+        }
+        return containsUpstreamAmountCheckRemark(entity.getApproveRemark());
+    }
+
+    private boolean containsUpstreamAmountCheckRemark(String approveRemark) {
+        if (CharSequenceUtil.isBlank(approveRemark)) {
+            return false;
+        }
+        String mismatchMsg = MessageUtils.getMessage(ApiError.SO_OUTSTOCK_AMOUNT_MISMATCH_SUBMIT);
+        String unavailableMsg = MessageUtils.getMessage(ApiError.SO_OUTSTOCK_UPSTREAM_AMOUNT_CHECK_UNAVAILABLE);
+        return approveRemark.contains(mismatchMsg) || approveRemark.contains(unavailableMsg);
     }
 
     @Transactional(rollbackFor = Exception.class)
