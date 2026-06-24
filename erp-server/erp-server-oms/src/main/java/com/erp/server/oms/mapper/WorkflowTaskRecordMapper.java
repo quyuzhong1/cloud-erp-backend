@@ -20,7 +20,9 @@ import java.util.List;
 @Mapper
 public interface WorkflowTaskRecordMapper extends BaseMapper<WorkflowTaskRecordEntity> {
 
-    List<WorkflowTaskRecordEntity> listErrorTask(@Param("id") String id );
+    List<WorkflowTaskRecordEntity> listErrorTaskByInstance(@Param("id") String id);
 
-    List<WorkflowTaskRecordDTO.TaskErrorReportDTO> getTaskErrorReport();
+    List<WorkflowTaskRecordEntity> listErrorTaskByRecord(@Param("id") String id);
+
+    List<WorkflowTaskRecordDTO.TaskErrorReportDTO> getTaskErrorReport(@Param("maxRetryCount") int maxRetryCount);
 }

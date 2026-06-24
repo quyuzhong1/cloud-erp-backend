@@ -18,7 +18,7 @@ import java.util.Objects;
  */
 @Service
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqTopic.OMS_WORKFLOW_TASK_RECORD_TOPIC, selectorExpression = "oms_workflow_task_record_tag", consumerGroup = RocketMqConsumerGroup.OMS_WORKFLOW_TASK_RECORD)
+@RocketMQMessageListener(topic = RocketMqTopic.OMS_WORKFLOW_TASK_RECORD_TOPIC, selectorExpression = RocketMqConsumerGroup.OMS_WORKFLOW_TASK_RECORD_TAG, consumerGroup = RocketMqConsumerGroup.OMS_WORKFLOW_TASK_RECORD)
 public class WorkflowTaskRecordConsumer implements RocketMQListener<WorkflowTaskRecordDTO.AddTaskDTO> {
 
     @Resource
