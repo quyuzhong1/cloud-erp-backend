@@ -68,7 +68,7 @@ public class PdaWarehouseLocationController extends BaseController {
      * @return WarehouseLocationEntity
      */
     @GetMapping(value = "/getByCode")
-    public ApiResult<WarehouseLocationEntity> getByCode(@RequestParam("code") String code) {
+    public ApiResult<WarehouseLocationDTO.ViewDto> getByCode(@RequestParam("code") String code) {
         return success(warehouseLocationService.getByCode(code));
     }
 

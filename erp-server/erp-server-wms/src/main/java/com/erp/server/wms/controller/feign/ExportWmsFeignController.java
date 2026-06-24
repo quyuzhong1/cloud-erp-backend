@@ -1374,6 +1374,11 @@ public class ExportWmsFeignController {
      * 导出仓库位置建议售后单
      */
     @PostMapping("/exportAfterSalesWarehouseLocationSuggest")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:afterSalesWarehouseLocationSuggest:paging",
+            tableAlias = "awls"
+    )
     @WebAdvanceQuery(handler = AfterSalesWarehouseLocationSuggestQueryHandler.class)
     public PagingVO<AfterSalesWarehouseLocationSuggestDto.ListDTO> exportAfterSalesWarehouseLocationSuggest(@RequestBody @Validated PagingDTO<AfterSalesWarehouseLocationSuggestDto.ExportParamDTO> dto) {
         PagingDTO<AfterSalesWarehouseLocationSuggestDto.SearchParamDTO> wrap = new PagingDTO<>();

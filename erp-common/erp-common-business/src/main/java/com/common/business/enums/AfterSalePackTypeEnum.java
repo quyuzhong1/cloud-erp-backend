@@ -19,7 +19,7 @@ public enum AfterSalePackTypeEnum {
         this.name = name;
     }
 
-    public static String getByName(String code) {
+    public static String getByCode(String code) {
         if (StringUtils.isBlank(code)) {
             return "";
         }

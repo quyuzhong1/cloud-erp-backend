@@ -1,10 +1,7 @@
 package com.erp.server.oms.service;
-import com.common.business.enums.SourceTypeEnum;
 import com.erp.model.oms.entity.WorkflowTaskRecordEntity;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
 import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
-import com.erp.model.oms.enums.DictBasicTypeEnum;
 
 import java.util.List;
 import java.util.Map;
@@ -40,9 +37,11 @@ public interface WorkflowTaskRecordService extends SuperService<WorkflowTaskReco
      */
     List<WorkflowTaskRecordEntity> addMissingTask(WorkflowTaskRecordDTO.AddTaskDTO dto, List<WorkflowTaskRecordEntity> existTasks);
 
-    List<WorkflowTaskRecordEntity> listErrorTask();
+    List<WorkflowTaskRecordEntity> listErrorTaskByInstance(String id);
 
-    void WorkflowTaskRecordRetryJob(String id);
+    List<WorkflowTaskRecordEntity> listErrorTaskByRecord(String id);
+
+    void workflowTaskRecordRetryJob(String id, String type);
 
     List<WorkflowTaskRecordDTO.TaskErrorReportDTO> getTaskErrorReport();
 

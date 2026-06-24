@@ -22,12 +22,12 @@ import com.erp.model.oms.entity.WorkflowTaskRecordEntity;
 import com.erp.model.oms.enums.WorkflowTaskInstanceStatusEnum;
 import com.erp.model.oms.enums.WorkflowTaskRecordStatusEnum;
 import com.erp.model.oms.enums.WorkflowTaskRecordTypeEnum;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.mapper.WorkflowTaskInstanceMapper;
 import com.erp.server.oms.orchestration.WorkflowTaskNodeConfigParser;
 import com.erp.server.oms.orchestration.WorkflowTaskStepDispatcher;
 import com.erp.server.oms.service.WorkflowTaskInstanceService;
 import com.erp.server.oms.service.WorkflowTaskRecordService;
-import com.erp.rpc.sys.feign.SysUserFeign;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -37,13 +37,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -64,7 +58,9 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
     @Resource
     private SysUserFeign sysUserFeign;
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public WorkflowTaskInstanceEntity createInstance(WorkflowTaskRecordDTO.AddTaskDTO dto, int totalSteps) {
@@ -83,7 +79,9 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
         return entity;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public WorkflowTaskInstanceEntity getLatestBySource(String sourceId, String sourceType) {
         if (CharSequenceUtil.hasBlank(sourceId, sourceType)) {
@@ -98,7 +96,9 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
                 .one();
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public WorkflowTaskInstanceEntity ensureInstanceForLegacy(WorkflowTaskRecordDTO.AddTaskDTO dto,
@@ -111,6 +111,13 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
         WorkflowTaskInstanceEntity existed = getLatestBySource(dto.getSourceId(), dto.getSourceTypeEnum().getCode());
         if (existed != null) {
             linkStepsToInstance(steps, existed.getId());
+            if (Optional.ofNullable(existed.getTotalSteps()).orElse(0) <= 0) {
+                this.lambdaUpdate()
+                        .eq(WorkflowTaskInstanceEntity::getId, existed.getId())
+                        .set(WorkflowTaskInstanceEntity::getTotalSteps, steps.size())
+                        .update();
+                existed.setTotalSteps(steps.size());
+            }
             return existed;
         }
         WorkflowTaskInstanceEntity instance = createInstance(dto, steps.size());
@@ -167,7 +174,9 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
         }
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void markRunning(String instanceId, int currentIndex, int totalSteps) {
         this.lambdaUpdate()
@@ -181,7 +190,9 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
                 .update();
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void markWaiting(String instanceId, int currentIndex, String lastError) {
         this.lambdaUpdate()
@@ -194,7 +205,9 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
                 .update();
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void markFailed(String instanceId, int currentIndex, String lastError) {
         this.lambdaUpdate()
@@ -207,7 +220,9 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
                 .update();
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void markSuccess(String instanceId, int currentIndex, int totalSteps) {
         this.lambdaUpdate()
@@ -221,7 +236,9 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
                 .update();
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void markCancelled(String instanceId, String remark) {
@@ -243,7 +260,9 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
                 .update();
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public PagingVO<WorkflowTaskInstanceDTO.ListDTO> paging(PagingDTO<WorkflowTaskInstanceDTO.PagingParamDTO> dto) {
         WorkflowTaskInstanceDTO.PagingParamDTO params = dto.getParams();
@@ -257,7 +276,9 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
         return new PagingVO<>(pageData);
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public WorkflowTaskInstanceDTO.ViewDTO view(String id) {
         WorkflowTaskInstanceDTO.ViewDTO view = baseMapper.viewHeader(id);
@@ -278,7 +299,9 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
         return view;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<WorkflowTaskInstanceDTO.ViewDTO> listBySource(WorkflowTaskInstanceDTO.ListBySourceParamDTO param) {
         if (param == null || CharSequenceUtil.hasBlank(param.getSourceType(), param.getSourceId())) {
@@ -310,7 +333,9 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
         }).collect(Collectors.toList());
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<WorkflowTaskInstanceDTO.ErrorReportDTO> errorReport(WorkflowTaskInstanceDTO.ErrorReportParamDTO param) {
         List<WorkflowTaskInstanceDTO.ErrorReportDTO> list = baseMapper.errorReport(param);
@@ -324,7 +349,9 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
         return list;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public WorkflowTaskInstanceDTO.RetryResultDTO retry(WorkflowTaskInstanceDTO.RetryDTO dto) {
@@ -356,7 +383,9 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
         return wrapper;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public WorkflowTaskInstanceDTO.RetryResultDTO retryFromStep(WorkflowTaskInstanceDTO.RetryFromStepDTO dto) {
         WorkflowTaskInstanceEntity instance = getById(dto.getInstanceId());
@@ -449,7 +478,9 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
         return wrapper;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void cancel(WorkflowTaskInstanceDTO.CancelDTO dto) {
@@ -473,7 +504,11 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
         dto.setSourceId(instance.getSourceId());
         dto.setSourceCode(instance.getSourceCode());
         dto.setTraceId(instance.getTraceId());
-        dto.setSourceTypeEnum(WorkflowTaskRecordTypeEnum.getByCode(instance.getSourceType()));
+        WorkflowTaskRecordTypeEnum taskRecordTypeEnum = WorkflowTaskRecordTypeEnum.getByCode(instance.getSourceType());
+        if (Objects.isNull(taskRecordTypeEnum)) {
+            throw new ServiceException(ApiError.WF_TASK_RECORD_TYPE_NOT_FOUND);
+        }
+        dto.setSourceTypeEnum(taskRecordTypeEnum);
         return dto;
     }
 
@@ -519,7 +554,9 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
         });
     }
 
-    /** 事务提交后再发 MQ，避免消费端读不到未提交节点。 */
+    /**
+     * 事务提交后再发 MQ，避免消费端读不到未提交节点。
+     */
     private void registerDispatchAfterCommit(WorkflowTaskRecordDTO.AddTaskDTO dispatch, String messageKey) {
         if (TransactionSynchronizationManager.isActualTransactionActive()) {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
@@ -539,9 +576,10 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
     }
 
     /**
-     * 仅 instanceId 重试时的数据权限兜底（stepId 路径由 Controller @DataPermission 校验）。
+     * 校验当前用户对编排实例的数据权限（创建人/部门范围）。
      */
-    private void assertInstanceDataPermission(String instanceId) {
+    @Override
+    public void assertInstanceDataPermission(String instanceId) {
         WorkflowTaskInstanceEntity instance = getById(instanceId);
         if (instance == null) {
             throw new ServiceException(ApiError.WF_TASK_INSTANCE_NOT_FOUND);

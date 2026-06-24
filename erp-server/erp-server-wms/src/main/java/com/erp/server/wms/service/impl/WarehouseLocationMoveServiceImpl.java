@@ -105,6 +105,9 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_PDA_WAREHOU
 @Slf4j
 @Service
 public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<WarehouseLocationMoveMapper, WarehouseLocationMoveEntity> implements WarehouseLocationMoveService {
+
+    private static final int QTY_MAX = 999999999;
+
     @Resource
     private OperateLogService operateLogService;
     @Resource
@@ -149,7 +152,6 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
     private DmpPushWdtFeign dmpPushWdtFeign;
     @Resource
     private AbstractWdtService abstractWdtService;
-    private static final int QTY_MAX = 999999999;
     @Resource
     private AfterSalePackService afterSalePackService;
     @Resource
@@ -1303,11 +1305,12 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
      */
     private static void assertUsageStatusAllowsMove(AfterSalePackDTO.ViewDTO boxInfo) {
         Boolean u = boxInfo.getIsUse();
+        String boxDisplay = CharSequenceUtil.blankToDefault(CharSequenceUtil.trim(boxInfo.getCode()), CharSequenceUtil.trim(boxInfo.getId()));
         if (Boolean.TRUE.equals(u)) {
-            throw new ServiceException("该箱唛已被占用(usageStatus=true)，不支持整箱移仓");
+            throw new ServiceException(CharSequenceUtil.format("该箱码【{}】已被单据绑定，不能再移仓了", boxDisplay));
         }
         if (!Boolean.FALSE.equals(u)) {
-            throw new ServiceException(CharSequenceUtil.format("箱唛占用状态非法(usageStatus={})，仅允许为 false 时整箱移仓", u));
+            throw new ServiceException(CharSequenceUtil.format("箱唛【{}】占用状态非法(usageStatus={})，仅允许为 false 时整箱移仓", boxDisplay, u));
         }
     }
 
@@ -1451,10 +1454,6 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
                 throw new ServiceException(CharSequenceUtil.format("箱唛号与查询结果不一致：提交【{}】查询【{}】", submittedBox.code, boxInfo.getCode()));
             }
             assertUsageStatusAllowsMove(boxInfo);
-            //如果箱唛信息已经被单据绑定了则报错
-            if (boxInfo.getIsUse()) {
-                throw new ServiceException(CharSequenceUtil.format("该箱码【{}】已被单据绑定，不能再移仓了", boxInfo.getCode()));
-            }
             //如果这个箱唛没有封箱就报错
             if (!AfterSalePackStatusEnum.SEALED_BOX.getCode().equals(boxInfo.getPackStatus())) {
                 throw new ServiceException(CharSequenceUtil.format("该箱码【{}】尚未封箱，不能移仓了，请尽快完成封箱", boxInfo.getCode()));
@@ -1510,6 +1509,35 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
                     .collect(Collectors.toMap(vo -> CharSequenceUtil.trim(vo.getSkuNo()), vo -> vo, (a, b) -> a)));
         }
 
+        // 批量预加载可用库存，避免循环内 N+1 查询
+        List<String> batchSkuIds = aggregateMap.values().stream()
+                .map(agg -> {
+                    SkuVO vo = skuByNo.get(agg.skuNo);
+                    return vo != null ? vo.getSkuId() : null;
+                })
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        List<String> batchLocations = aggregateMap.values().stream()
+                .map(agg -> agg.sourceLoc)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, InventoryEntity> usableInventoryMap = new HashMap<>(16);
+        if (!batchSkuIds.isEmpty() && !batchLocations.isEmpty()) {
+            InventoryDTO.ParamDTO invParam = new InventoryDTO.ParamDTO();
+            invParam.setSkuIdList(batchSkuIds);
+            invParam.setWarehouseIdList(Collections.singletonList(warehouseId));
+            invParam.setOrgIdList(Collections.singletonList(orgId));
+            invParam.setWarehouseLocationList(batchLocations);
+            List<InventoryEntity> invList = inventoryService.listInventoryByParam(invParam);
+            if (CollUtil.isNotEmpty(invList)) {
+                invList.stream()
+                        .filter(inv -> InventoryStatusEnum.USABLE.getCode().equals(inv.getDictInventoryStatus()))
+                        .forEach(inv -> usableInventoryMap.put(inv.getSkuId() + "|" + inv.getWarehouseLocation(), inv));
+            }
+        }
+
         List<WarehouseLocationMoveDetailDTO.AddDTO> detailList = new ArrayList<>();
         for (FullBoxTransferAggregate aggregate : aggregateMap.values()) {
             validateQty(aggregate.qty);
@@ -1521,7 +1549,10 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
             if (CharSequenceUtil.isNotBlank(aggregate.skuId) && !CharSequenceUtil.equals(aggregate.skuId, skuVO.getSkuId())) {
                 throw new ServiceException(CharSequenceUtil.format("SKU【{}】与 skuId 不匹配", skuNo));
             }
-            assertUsableQtyAtLocation(warehouseId, orgId, skuVO.getSkuId(), aggregate.sourceLoc, aggregate.qty, skuNo);
+            InventoryEntity inv = usableInventoryMap.get(skuVO.getSkuId() + "|" + aggregate.sourceLoc);
+            if (inv == null || inv.getQty() == null || inv.getQty() < aggregate.qty) {
+                throw new ServiceException(CharSequenceUtil.format("【{}】sku移出仓位库存不足，不支持整箱移仓", skuNo));
+            }
 
             WarehouseLocationMoveDetailDTO.AddDTO detail = new WarehouseLocationMoveDetailDTO.AddDTO();
             detail.setSkuId(skuVO.getSkuId());
@@ -1650,11 +1681,11 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
     }
 
     private void validateQty(Integer qty) {
-        if (!StrUtils.isDigit(String.valueOf(qty)) || Objects.isNull(qty)) {
-            throw new ServiceException("移动数量只能是数字");
+        if (Objects.isNull(qty)) {
+            throw new ServiceException("移动数量不能为空");
         }
         if (qty <= 0) {
-            throw new ServiceException("移动数量不允许为0");
+            throw new ServiceException("移动数量不允许为负数或0");
         }
         if (qty > QTY_MAX) {
             throw new ServiceException(CharSequenceUtil.format("移动数量最大值为{}", QTY_MAX));
@@ -1664,13 +1695,6 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
     /**
      * 校验指定仓位的 SKU 可用库存是否满足本次移仓需求数量。
      */
-    private void assertUsableQtyAtLocation(String warehouseId, String orgId, String skuId, String location, int needQty, String skuNo) {
-        InventoryEntity inv = inventoryService.findInventory(orgId, warehouseId, skuId, location, InventoryStatusEnum.USABLE.getCode());
-        if (inv == null || inv.getQty() == null || inv.getQty() < needQty) {
-            throw new ServiceException(CharSequenceUtil.format("【{}】sku移出仓位库存不足，不支持整箱移仓", skuNo));
-        }
-    }
-
     /**
      * 前端提交的箱唛主键和箱唛号。
      */
