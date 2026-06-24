@@ -1179,7 +1179,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     }
 
     @Override
-    public WarehouseLocationEntity getByCode(String code) {
+    public WarehouseLocationDTO.ViewDto getByCode(String code) {
         if (CharSequenceUtil.isBlank(code)) {
             return null;
         }
@@ -1194,7 +1194,9 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
         List<WarehouseLocationDTO.ViewDto> list = this.listByAfterSalesWarehouse(null);
         // 判断仓位是否属于东莞售后仓库下的仓位
         if (list.stream().anyMatch(item -> item.getId().equals(entity.getId()))) {
-            return entity;
+            WarehouseLocationDTO.ViewDto viewDto = new WarehouseLocationDTO.ViewDto();
+            BeanMapperUtils.copy(entity, viewDto);
+            return viewDto;
         } else {
             throw new ServiceException("仓位编码【{}】不属于东莞售后仓库", code);
         }
