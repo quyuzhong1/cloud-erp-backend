@@ -2397,10 +2397,14 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         if (CollUtil.isNotEmpty(sourceIds)) {
             List<FirstMileDeliveryEntity> deliveryList = wmsFirstMileDeliveryFeign.listByIds(sourceIds);
             List<FirstMileDeliveryDetailEntity> detailList = wmsFirstMileDeliveryFeign.listDetailByMainIds(sourceIds);
-            deliveryMap = deliveryList.stream()
-                .collect(Collectors.toMap(FirstMileDeliveryEntity::getId, Function.identity(), (a, b) -> a));
-            detailMap = detailList.stream()
-                .collect(Collectors.groupingBy(FirstMileDeliveryDetailEntity::getMainId));
+            if(CollUtil.isNotEmpty(deliveryList)){
+                deliveryMap = deliveryList.stream()
+                        .collect(Collectors.toMap(FirstMileDeliveryEntity::getId, Function.identity(), (a, b) -> a));
+            }
+            if(CollUtil.isNotEmpty(detailList)){
+                detailMap = detailList.stream()
+                        .collect(Collectors.groupingBy(FirstMileDeliveryDetailEntity::getMainId));
+            }
         }
 
         Map<String, FirstMileDeliveryEntity> finalDeliveryMap = deliveryMap;

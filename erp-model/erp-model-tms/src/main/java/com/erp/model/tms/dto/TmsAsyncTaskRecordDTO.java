@@ -845,5 +845,35 @@ public class TmsAsyncTaskRecordDTO implements Serializable {
         }
     }
 
+    /**
+     * watchdog 单次执行的有界参数：每轮扫描上限、批量更新大小、最大轮数。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class WatchdogRunConfig implements Serializable {
+
+        /** 每轮最多扫描的超时主任务数 */
+        private int mainTaskLimit;
+        /** 每轮最多扫描的明细数 */
+        private int detailLimit;
+        /** 明细批量更新大小 */
+        private int updateBatchSize;
+        /** 每阶段最大轮数 */
+        private int maxRounds;
+    }
+
+    /**
+     * 僵死明细 watchdog 清理的任务类型维度：businessType + methodType。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class WatchdogStaleDetailTaskType implements Serializable {
+
+        private String businessType;
+        private String methodType;
+    }
+
 
 }

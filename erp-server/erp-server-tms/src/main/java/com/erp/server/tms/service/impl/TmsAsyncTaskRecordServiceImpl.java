@@ -87,14 +87,14 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
 
     private static final Integer ERROR_START = 0;
     private static final Integer ERROR_END = 1000;
-    private static final int DEFAULT_WATCHDOG_MAIN_TASK_LIMIT = 100;
-    private static final int DEFAULT_WATCHDOG_DETAIL_LIMIT = 1000;
-    private static final int DEFAULT_WATCHDOG_UPDATE_BATCH_SIZE = 500;
-    private static final int DEFAULT_WATCHDOG_MAX_ROUNDS = 3;
-    private static final int MAX_WATCHDOG_MAIN_TASK_LIMIT = 500;
-    private static final int MAX_WATCHDOG_DETAIL_LIMIT = 5000;
-    private static final int MAX_WATCHDOG_UPDATE_BATCH_SIZE = 500;
-    private static final int MAX_WATCHDOG_MAX_ROUNDS = 10;
+    private static final int DEFAULT_WATCHDOG_MAIN_TASK_LIMIT = 100;      // 每轮默认最多扫描超时主任务数
+    private static final int DEFAULT_WATCHDOG_DETAIL_LIMIT = 1000;        // 每轮默认最多扫描待清理明细数
+    private static final int DEFAULT_WATCHDOG_UPDATE_BATCH_SIZE = 500;    // 明细批量标记失败默认每批条数
+    private static final int DEFAULT_WATCHDOG_MAX_ROUNDS = 3;             // 每阶段默认最多循环轮数
+    private static final int MAX_WATCHDOG_MAIN_TASK_LIMIT = 500;          // 主任务扫描上限硬顶，防配置过大
+    private static final int MAX_WATCHDOG_DETAIL_LIMIT = 5000;            // 明细扫描上限硬顶，防配置过大
+    private static final int MAX_WATCHDOG_UPDATE_BATCH_SIZE = 500;        // 批量更新上限硬顶，与 DB 分批规范一致
+    private static final int MAX_WATCHDOG_MAX_ROUNDS = 10;              // 循环轮数上限硬顶，防单次 Job 过长
 
     @Resource
     private TmsAsyncTaskDetailService tmsAsyncTaskDetailService;
@@ -584,7 +584,8 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         List<TmsAsyncTaskDetailEntity> detailEntityList = tmsAsyncTaskDetailService.lambdaQuery().eq(TmsAsyncTaskDetailEntity::getMainId, taskId).list();
         int detailCount = detailEntityList.size();
         long finishCount = detailEntityList.stream().filter(e -> e.getStatus().equals(TmsAsyncTaskRecordStatusEnum.FINISH.getCode())).count();
-        tmsAsyncTaskDetailService.lambdaUpdate().set(TmsAsyncTaskDetailEntity::getStatus, TmsAsyncTaskRecordStatusEnum.FAILED.getCode())
+        tmsAsyncTaskDetailService.lambdaUpdate()
+                .set(TmsAsyncTaskDetailEntity::getStatus, TmsAsyncTaskRecordStatusEnum.FAILED.getCode())
                 .set(TmsAsyncTaskDetailEntity::getEndTime, LocalDateTime.now())
                 .set(TmsAsyncTaskDetailEntity::getErrorData, errorMsg)
                 .eq(TmsAsyncTaskDetailEntity::getMainId, taskId)
@@ -1078,78 +1079,104 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
     }
 
     /**
-     * 异步任务健康检查。
-     * 将周期派发之外的超时和明细兜底清理集中在一个入口，避免 startTask 职责膨胀。
+     * 异步任务 watchdog 兜底清理入口。
+     * <p>
+     * 消费端内循环已有 {@link #terminateTaskIfExecTimeoutReached} 等轻量检查，watchdog 是进程崩溃、
+     * MQ 重投异常等场景下的有界 fallback，单次执行受 limit + maxRounds 约束，避免占满调度线程。
+     * <p>
+     * 明细清理统一标记 FAILED，不回退 PENDING，防止僵死明细被重复消费。
      */
     @Override
     public void watchdogTask() {
         CfgSettingValueDTO.BillBatchParamsDTO billBatchParamsDTO = loadBillBatchParams(null);
-        WatchdogRunConfig runConfig = resolveWatchdogRunConfig(billBatchParamsDTO);
+        TmsAsyncTaskRecordDTO.WatchdogRunConfig runConfig = resolveWatchdogRunConfig(billBatchParamsDTO);
+        //阶段一：终止超时 ING 主任务。
         terminateTimedOutIngTasks(runConfig, billBatchParamsDTO);
+        //阶段二：清理孤儿 ING 明细（主任务已 FINISH，明细仍 ING）。
         markFinishedTaskIngDetailsFailed(runConfig);
         markConfiguredStaleIngDetailsFailed(runConfig, billBatchParamsDTO);
     }
 
-    private void terminateTimedOutIngTasks(WatchdogRunConfig runConfig, CfgSettingValueDTO.BillBatchParamsDTO billBatchParamsDTO) {
+    /**
+     * 阶段一：终止超时 ING 主任务。
+     * <p>
+     * 超时判定与 {@link #terminateTaskIfExecTimeoutReached} 一致：优先 task.execTimeout，
+     * 为空时取 BILL_BATCH_PARAMS.taskTimeoutSeconds（默认 28800 秒）。
+     * 配置缺失时仍可用默认超时执行，不阻断本阶段。
+     */
+    private void terminateTimedOutIngTasks(TmsAsyncTaskRecordDTO.WatchdogRunConfig runConfig, CfgSettingValueDTO.BillBatchParamsDTO billBatchParamsDTO) {
         LocalDateTime now = LocalDateTime.now();
         int defaultExecTimeout = resolveTaskExecTimeout(billBatchParamsDTO);
-        for (int round = 0; round < runConfig.maxRounds; round++) {
+        for (int round = 0; round < runConfig.getMaxRounds(); round++) {
             List<TmsAsyncTaskRecordEntity> timedOutTasks =
-                    baseMapper.listTimedOutTasksForWatchdog(defaultExecTimeout, now, runConfig.mainTaskLimit);
+                    baseMapper.listTimedOutTasksForWatchdog(defaultExecTimeout, now, runConfig.getMainTaskLimit());
             if (CollUtil.isEmpty(timedOutTasks)) {
                 return;
             }
             for (TmsAsyncTaskRecordEntity entity : timedOutTasks) {
                 selfServer.terminateTaskTimeout(entity.getId(), "任务执行超时");
             }
-            if (timedOutTasks.size() < runConfig.mainTaskLimit) {
+            if (timedOutTasks.size() < runConfig.getMainTaskLimit()) {
                 return;
             }
         }
     }
 
-    private void markFinishedTaskIngDetailsFailed(WatchdogRunConfig runConfig) {
-        for (int round = 0; round < runConfig.maxRounds; round++) {
-            List<String> detailIds = tmsAsyncTaskDetailService.listOrphanIngDetailIds(runConfig.detailLimit);
+    /**
+     * 阶段二：清理孤儿 ING 明细（主任务已 FINISH，明细仍 ING）。
+     * <p>
+     * 典型场景：主任务异常收尾或进程中断，明细状态未同步。仅更新明细，不再动主任务。
+     */
+    private void markFinishedTaskIngDetailsFailed(TmsAsyncTaskRecordDTO.WatchdogRunConfig runConfig) {
+        for (int round = 0; round < runConfig.getMaxRounds(); round++) {
+            List<String> detailIds = tmsAsyncTaskDetailService.listOrphanIngDetailIds(runConfig.getDetailLimit());
             if (CollUtil.isEmpty(detailIds)) {
                 return;
             }
             int failedCount = markDetailsFailedInBatches(
-                    detailIds, "主任务已结束，明细仍为执行中，系统自动标记失败", runConfig.updateBatchSize);
+                    detailIds, "主任务已结束，明细仍为执行中，系统自动标记失败", runConfig.getUpdateBatchSize());
             if (failedCount > 0) {
                 log.warn("已清理主任务结束后的ING明细，明细数量: {}", failedCount);
             }
-            if (detailIds.size() < runConfig.detailLimit || failedCount <= 0) {
+            if (detailIds.size() < runConfig.getDetailLimit() || failedCount <= 0) {
                 return;
             }
         }
     }
 
-    private void markConfiguredStaleIngDetailsFailed(WatchdogRunConfig runConfig, CfgSettingValueDTO.BillBatchParamsDTO billBatchParamsDTO) {
+    /**
+     * 阶段三：按 businessType + methodType 清理僵死 ING 明细。
+     * <p>
+     * 仅对已迁移至 envelope 的批次任务类型生效（见 {@link #staleDetailCleanupTaskTypes()}），
+     * 僵死窗口 = batchTimeoutSeconds + detailBufferSeconds，与消费端 {@link #isStaleIngDetail} 一致。
+     * BILL_BATCH_PARAMS 缺失时跳过——僵死窗口无法计算，且不影响阶段一/二的默认兜底。
+     */
+    private void markConfiguredStaleIngDetailsFailed(TmsAsyncTaskRecordDTO.WatchdogRunConfig runConfig, CfgSettingValueDTO.BillBatchParamsDTO billBatchParamsDTO) {
         if (billBatchParamsDTO == null) {
             return;
         }
         LocalDateTime staleBefore = LocalDateTime.now().minusSeconds(resolveStaleDetailSeconds(billBatchParamsDTO));
-        for (WatchdogStaleDetailTaskType taskType : staleDetailCleanupTaskTypes()) {
-            for (int round = 0; round < runConfig.maxRounds; round++) {
+        for (TmsAsyncTaskRecordDTO.WatchdogStaleDetailTaskType taskType : staleDetailCleanupTaskTypes()) {
+            for (int round = 0; round < runConfig.getMaxRounds(); round++) {
                 List<String> detailIds = tmsAsyncTaskDetailService.listStaleIngDetailIdsByTaskType(
-                        taskType.businessType, taskType.methodType, staleBefore, runConfig.detailLimit);
+                        taskType.getBusinessType(), taskType.getMethodType(), staleBefore, runConfig.getDetailLimit());
                 if (CollUtil.isEmpty(detailIds)) {
                     break;
                 }
                 int failedCount = markDetailsFailedInBatches(
-                        detailIds, ApiError.ASYNC_TASK_DETAIL_TIMEOUT.getMsg(), runConfig.updateBatchSize);
+                        detailIds, ApiError.ASYNC_TASK_DETAIL_TIMEOUT.getMsg(), runConfig.getUpdateBatchSize());
                 if (failedCount > 0) {
                     log.warn("已清理僵死ING明细，businessType: {}, methodType: {}, 明细数量: {}",
-                            taskType.businessType, taskType.methodType, failedCount);
+                            taskType.getBusinessType(), taskType.getMethodType(), failedCount);
                 }
-                if (detailIds.size() < runConfig.detailLimit || failedCount <= 0) {
+                if (detailIds.size() < runConfig.getDetailLimit() || failedCount <= 0) {
                     break;
                 }
             }
         }
     }
 
+    /** 明细批量标记失败，单批不超过 500 条，控制单次 UPDATE 行数。 */
     private int markDetailsFailedInBatches(List<String> detailIds, String errorMsg, int batchSize) {
         if (CollUtil.isEmpty(detailIds)) {
             return 0;
@@ -1162,7 +1189,8 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         return failedCount;
     }
 
-    private WatchdogRunConfig resolveWatchdogRunConfig(CfgSettingValueDTO.BillBatchParamsDTO billBatchParamsDTO) {
+    /** 解析 watchdog 扫描/更新上限，配置非法或缺失时用默认值并 clamp 到硬上限。 */
+    private TmsAsyncTaskRecordDTO.WatchdogRunConfig resolveWatchdogRunConfig(CfgSettingValueDTO.BillBatchParamsDTO billBatchParamsDTO) {
         int mainTaskLimit = boundedWatchdogValue(
                 billBatchParamsDTO == null ? null : billBatchParamsDTO.getWatchdogMainTaskLimit(),
                 DEFAULT_WATCHDOG_MAIN_TASK_LIMIT, MAX_WATCHDOG_MAIN_TASK_LIMIT);
@@ -1175,7 +1203,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         int maxRounds = boundedWatchdogValue(
                 billBatchParamsDTO == null ? null : billBatchParamsDTO.getWatchdogMaxRounds(),
                 DEFAULT_WATCHDOG_MAX_ROUNDS, MAX_WATCHDOG_MAX_ROUNDS);
-        return new WatchdogRunConfig(mainTaskLimit, detailLimit, updateBatchSize, maxRounds);
+        return new TmsAsyncTaskRecordDTO.WatchdogRunConfig(mainTaskLimit, detailLimit, updateBatchSize, maxRounds);
     }
 
     private int boundedWatchdogValue(String configuredValue, int defaultValue, int maxValue) {
@@ -1183,56 +1211,37 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         return Math.min(resolved, maxValue);
     }
 
-    private List<WatchdogStaleDetailTaskType> staleDetailCleanupTaskTypes() {
+    /**
+     * 启用僵死明细 watchdog 清理的任务类型白名单。
+     * <p>
+     * 新增迁移任务类型时需在此注册 businessType + methodType，不可仅按 businessType 全量开启。
+     */
+    private List<TmsAsyncTaskRecordDTO.WatchdogStaleDetailTaskType> staleDetailCleanupTaskTypes() {
         String smallBagBusinessType = TmsAsyncTaskRecordBusinessTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode();
         String firstMileBusinessType = TmsAsyncTaskRecordBusinessTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode();
         String transferDeclareBusinessType = TmsAsyncTaskRecordBusinessTypeEnum.TRANSFER_DECLARE_COST_ALLOCATION.getCode();
         String firstMileReconBusinessType = TmsAsyncTaskRecordBusinessTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode();
         String b2cDeclareBusinessType = TmsAsyncTaskRecordBusinessTypeEnum.TMS_B2C_DECLARE_RECONCILIATION.getCode();
         return Arrays.asList(
-                new WatchdogStaleDetailTaskType(smallBagBusinessType, TmsAsyncTaskMethodTypeEnum.SELFDELIVER_PUSH_ALLOCATION.getCode()),
-                new WatchdogStaleDetailTaskType(smallBagBusinessType, TmsAsyncTaskMethodTypeEnum.LASTMILE_PUSH_ALLOCATION.getCode()),
-                new WatchdogStaleDetailTaskType(smallBagBusinessType, TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode()),
-                new WatchdogStaleDetailTaskType(smallBagBusinessType, TmsAsyncTaskMethodTypeEnum.UPDATE_REPORT_STATUS.getCode()),
-                new WatchdogStaleDetailTaskType(smallBagBusinessType, TmsAsyncTaskMethodTypeEnum.RE_ALLOCATION.getCode()),
-                new WatchdogStaleDetailTaskType(smallBagBusinessType, TmsAsyncTaskMethodTypeEnum.DELETE.getCode()),
-                new WatchdogStaleDetailTaskType(smallBagBusinessType, TmsAsyncTaskMethodTypeEnum.SELFDELIVER_UPDATE_RECONCILIATION_STATUS.getCode()),
-                new WatchdogStaleDetailTaskType(smallBagBusinessType, TmsAsyncTaskMethodTypeEnum.LASTMILE_UPDATE_RECONCILIATION_STATUS.getCode()),
-                new WatchdogStaleDetailTaskType(firstMileBusinessType, TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode()),
-                new WatchdogStaleDetailTaskType(firstMileBusinessType, TmsAsyncTaskMethodTypeEnum.UPDATE_REPORT_STATUS.getCode()),
-                new WatchdogStaleDetailTaskType(firstMileBusinessType, TmsAsyncTaskMethodTypeEnum.RE_ALLOCATION.getCode()),
-                new WatchdogStaleDetailTaskType(firstMileBusinessType, TmsAsyncTaskMethodTypeEnum.DELETE.getCode()),
-                new WatchdogStaleDetailTaskType(transferDeclareBusinessType, TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode()),
-                new WatchdogStaleDetailTaskType(transferDeclareBusinessType, TmsAsyncTaskMethodTypeEnum.UPDATE_REPORT_STATUS.getCode()),
-                new WatchdogStaleDetailTaskType(transferDeclareBusinessType, TmsAsyncTaskMethodTypeEnum.RE_ALLOCATION.getCode()),
-                new WatchdogStaleDetailTaskType(transferDeclareBusinessType, TmsAsyncTaskMethodTypeEnum.DELETE.getCode()),
-                new WatchdogStaleDetailTaskType(firstMileReconBusinessType, TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode()),
-                new WatchdogStaleDetailTaskType(b2cDeclareBusinessType, TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode())
+                new TmsAsyncTaskRecordDTO.WatchdogStaleDetailTaskType(smallBagBusinessType, TmsAsyncTaskMethodTypeEnum.SELFDELIVER_PUSH_ALLOCATION.getCode()),
+                new TmsAsyncTaskRecordDTO.WatchdogStaleDetailTaskType(smallBagBusinessType, TmsAsyncTaskMethodTypeEnum.LASTMILE_PUSH_ALLOCATION.getCode()),
+                new TmsAsyncTaskRecordDTO.WatchdogStaleDetailTaskType(smallBagBusinessType, TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode()),
+                new TmsAsyncTaskRecordDTO.WatchdogStaleDetailTaskType(smallBagBusinessType, TmsAsyncTaskMethodTypeEnum.UPDATE_REPORT_STATUS.getCode()),
+                new TmsAsyncTaskRecordDTO.WatchdogStaleDetailTaskType(smallBagBusinessType, TmsAsyncTaskMethodTypeEnum.RE_ALLOCATION.getCode()),
+                new TmsAsyncTaskRecordDTO.WatchdogStaleDetailTaskType(smallBagBusinessType, TmsAsyncTaskMethodTypeEnum.DELETE.getCode()),
+                new TmsAsyncTaskRecordDTO.WatchdogStaleDetailTaskType(smallBagBusinessType, TmsAsyncTaskMethodTypeEnum.SELFDELIVER_UPDATE_RECONCILIATION_STATUS.getCode()),
+                new TmsAsyncTaskRecordDTO.WatchdogStaleDetailTaskType(smallBagBusinessType, TmsAsyncTaskMethodTypeEnum.LASTMILE_UPDATE_RECONCILIATION_STATUS.getCode()),
+                new TmsAsyncTaskRecordDTO.WatchdogStaleDetailTaskType(firstMileBusinessType, TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode()),
+                new TmsAsyncTaskRecordDTO.WatchdogStaleDetailTaskType(firstMileBusinessType, TmsAsyncTaskMethodTypeEnum.UPDATE_REPORT_STATUS.getCode()),
+                new TmsAsyncTaskRecordDTO.WatchdogStaleDetailTaskType(firstMileBusinessType, TmsAsyncTaskMethodTypeEnum.RE_ALLOCATION.getCode()),
+                new TmsAsyncTaskRecordDTO.WatchdogStaleDetailTaskType(firstMileBusinessType, TmsAsyncTaskMethodTypeEnum.DELETE.getCode()),
+                new TmsAsyncTaskRecordDTO.WatchdogStaleDetailTaskType(transferDeclareBusinessType, TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode()),
+                new TmsAsyncTaskRecordDTO.WatchdogStaleDetailTaskType(transferDeclareBusinessType, TmsAsyncTaskMethodTypeEnum.UPDATE_REPORT_STATUS.getCode()),
+                new TmsAsyncTaskRecordDTO.WatchdogStaleDetailTaskType(transferDeclareBusinessType, TmsAsyncTaskMethodTypeEnum.RE_ALLOCATION.getCode()),
+                new TmsAsyncTaskRecordDTO.WatchdogStaleDetailTaskType(transferDeclareBusinessType, TmsAsyncTaskMethodTypeEnum.DELETE.getCode()),
+                new TmsAsyncTaskRecordDTO.WatchdogStaleDetailTaskType(firstMileReconBusinessType, TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode()),
+                new TmsAsyncTaskRecordDTO.WatchdogStaleDetailTaskType(b2cDeclareBusinessType, TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode())
         );
-    }
-
-    private static class WatchdogRunConfig {
-        private final int mainTaskLimit;
-        private final int detailLimit;
-        private final int updateBatchSize;
-        private final int maxRounds;
-
-        private WatchdogRunConfig(int mainTaskLimit, int detailLimit, int updateBatchSize, int maxRounds) {
-            this.mainTaskLimit = mainTaskLimit;
-            this.detailLimit = detailLimit;
-            this.updateBatchSize = updateBatchSize;
-            this.maxRounds = maxRounds;
-        }
-    }
-
-    private static class WatchdogStaleDetailTaskType {
-        private final String businessType;
-        private final String methodType;
-
-        private WatchdogStaleDetailTaskType(String businessType, String methodType) {
-            this.businessType = businessType;
-            this.methodType = methodType;
-        }
     }
 
     /**
