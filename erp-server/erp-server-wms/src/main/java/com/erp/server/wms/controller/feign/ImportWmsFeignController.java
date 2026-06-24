@@ -155,8 +155,16 @@ public class ImportWmsFeignController {
             BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
             importResultDTO.setTaskId(dto.getTaskId());
             importResultDTO.setStatus(FileTaskStatusEnum.FAIL.getCode());
-            importResultDTO.setRemark(e.getMessage().length() > 490 ? e.getMessage().substring(0, 490) : e.getMessage());
+            importResultDTO.setRemark(resolveImportFailRemark(e));
             downloadTaskFeign.updateTask(importResultDTO);
         }
+    }
+
+    private static String resolveImportFailRemark(Exception e) {
+        String msg = e.getMessage();
+        if (msg == null || msg.isEmpty()) {
+            msg = "销售退货入库单导入失败";
+        }
+        return msg.length() > 490 ? msg.substring(0, 490) : msg;
     }
 }
