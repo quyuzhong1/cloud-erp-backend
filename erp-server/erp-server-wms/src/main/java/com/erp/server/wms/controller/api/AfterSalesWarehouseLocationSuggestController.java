@@ -66,7 +66,9 @@ import java.util.Objects;
      */
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            menuCode = "wms:afterSalesWarehouseLocationSuggest:paging"
+            tableField = "create_user_id",
+            menuCode = "wms:afterSalesWarehouseLocationSuggest:paging",
+            tableAlias = "awls"
     )
     @WebAdvanceQuery(handler = AfterSalesWarehouseLocationSuggestQueryHandler.class)
     public ApiResult<PagingVO<AfterSalesWarehouseLocationSuggestDto.ListDTO>> paging(@RequestBody PagingDTO<AfterSalesWarehouseLocationSuggestDto.SearchParamDTO> pagingDTO) {

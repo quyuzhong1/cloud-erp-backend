@@ -234,6 +234,7 @@ public class AfterSalesWarehouseLocationSuggestServiceImpl extends SuperServiceI
             ExcelReaderSheetBuilder sheet = read.sheet(0);
             sheet.doRead();
         } catch (IOException e) {
+            log.error("售后仓位推荐导入失败", e);
             throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         }
 
