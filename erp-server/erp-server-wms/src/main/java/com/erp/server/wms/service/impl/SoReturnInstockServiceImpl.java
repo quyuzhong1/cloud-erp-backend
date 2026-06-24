@@ -2613,10 +2613,34 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         importResultDTO.setErrorUrl(url);
         importResultDTO.setFinishTime(LocalDateTime.now());
         importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
+        updateImportTaskResult(dto.getTaskId(), importResultDTO);
+    }
+
+    private void updateImportTaskResult(String taskId, BaseDTO.ImportResultDTO importResultDTO) {
+        for (int attempt = 0; attempt < 3; attempt++) {
+            try {
+                downloadTaskFeign.updateTask(importResultDTO);
+                return;
+            } catch (Exception e) {
+                log.error("销售退货入库单导入任务状态更新失败，taskId={}，attempt={}", taskId, attempt + 1, e);
+            }
+        }
+        BaseDTO.ImportResultDTO fallback = new BaseDTO.ImportResultDTO();
+        fallback.setTaskId(taskId);
+        fallback.setCount(importResultDTO.getCount());
+        fallback.setErrorUrl(importResultDTO.getErrorUrl());
+        fallback.setFinishTime(LocalDateTime.now());
+        fallback.setStatus(FileTaskStatusEnum.FINISH.getCode());
+        String originalRemark = CharSequenceUtil.blankToDefault(importResultDTO.getRemark(), "");
+        String syncFailedMsg = MessageUtils.getMessage(ApiError.FILE_IMPORT_TASK_STATUS_UPDATE_FAILED);
+        fallback.setRemark(CharSequenceUtil.isBlank(originalRemark)
+                ? syncFailedMsg
+                : originalRemark + "；" + syncFailedMsg);
         try {
-            downloadTaskFeign.updateTask(importResultDTO);
+            downloadTaskFeign.updateTask(fallback);
         } catch (Exception e) {
-            log.error("销售退货入库单导入任务状态更新失败，taskId={}", dto.getTaskId(), e);
+            log.error("销售退货入库单导入任务状态兜底更新失败，taskId={}", taskId, e);
+            throw new ServiceException(ApiError.FILE_IMPORT_TASK_STATUS_UPDATE_FAILED);
         }
     }
 
@@ -2958,6 +2982,12 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         return platformSkuByCustomerId;
     }
 
+    private void markImportAddSkuOccupyFailedRows(List<SoReturnInstockDTO.ImportAddBundle> bundles,
+                                                  List<SoReturnStockImportExcelDTO> errorList) {
+        markImportAddPersistFailedRows(bundles, errorList,
+                MessageUtils.getMessage(ApiError.SO_RETURN_INSTOCK_IMPORT_SKU_OCCUPY_FAILED));
+    }
+
     private void updateImportAddSkuOccupyStatus(List<SoReturnInstockDTO.ImportAddBundle> bundles) {
         if (CollUtil.isEmpty(bundles)) {
             return;
@@ -2995,6 +3025,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         }
         if (CollUtil.isEmpty(customerMap.get(row.getCustomerName()))) {
             errorMsgList.add(MessageUtils.getMessage(ApiError.SO_RETURN_INSTOCK_IMPORT_CUSTOMER_NOT_FOUND));
+        } else if (customerMap.get(row.getCustomerName()).size() > 1) {
+            errorMsgList.add(MessageUtils.getMessage(ApiError.SO_RETURN_INSTOCK_IMPORT_CUSTOMER_DUPLICATE,
+                    row.getCustomerName()));
         } else if (ObjectUtil.isNotEmpty(entity)
                 && isMappedToReturnOrder(entity)
                 && !CharSequenceUtil.equals(entity.getCustomerName(), row.getCustomerName())) {
@@ -3158,19 +3191,6 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 BaseIdDTO.CodeDTO inventoryOrg = orgByIdMap.get(bundle.getWarehouse().getOrgId());
                 bundle.setInventoryOrgName(inventoryOrg != null
                         ? CharSequenceUtil.blankToDefault(inventoryOrg.getName(), "") : "");
-            }
-        }
-    }
-
-    private void enrichImportAddExchangeRates(List<SoReturnInstockDTO.ImportAddBundle> bundles,
-                                                Map<String, BigDecimal> monthRateCache) {
-        if (CollUtil.isEmpty(bundles)) {
-            return;
-        }
-        for (SoReturnInstockDTO.ImportAddBundle bundle : bundles) {
-            String exchangeError = resolveImportAddExchangeRateError(bundle, monthRateCache);
-            if (CharSequenceUtil.isNotBlank(exchangeError)) {
-                throw new ServiceException(ApiError.SO_RETURN_INSTOCK_IMPORT_PERSIST_FAILED.getCode(), exchangeError);
             }
         }
     }
@@ -3603,6 +3623,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             if (CollUtil.isEmpty(customerInfoEntityList)) {
                 headerErrors.add(MessageUtils.getMessage(ApiError.SO_RETURN_INSTOCK_IMPORT_ADD_CUSTOMER_NOT_FOUND,
                         excelDTO.getCustomerName()));
+            } else if (customerInfoEntityList.size() > 1) {
+                headerErrors.add(MessageUtils.getMessage(ApiError.SO_RETURN_INSTOCK_IMPORT_CUSTOMER_DUPLICATE,
+                        excelDTO.getCustomerName()));
             } else {
                 add.setCustomerId(customerInfoEntityList.get(0).getId());
             }
@@ -3733,6 +3756,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 updateImportAddSkuOccupyStatus(persistedBundles);
             } catch (Exception e) {
                 log.error("销售退货入库单导入更新SKU占用状态失败", e);
+                markImportAddSkuOccupyFailedRows(persistedBundles, errorList);
             }
         }
     }

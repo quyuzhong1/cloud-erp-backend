@@ -306,6 +306,7 @@ public enum ApiError implements Serializable {
     FILE_IMPORT_TASK_FINISH(2448,"处理完成，失败{0}条"),
     FILE_IMPORT_TASK_FINISH_EXPORT_FAILED(2449,"处理完成，失败{0}条，{1}"),
     FILE_IMPORT_TASK_FINISH_ALL_SUCCESS(2450,"处理完成，全部成功"),
+    FILE_IMPORT_TASK_STATUS_UPDATE_FAILED(2451,"导入处理已完成但任务状态同步失败，请刷新列表核对"),
 
     /**
      * 单据相关提示 从3000 - 3500
@@ -1377,6 +1378,8 @@ public enum ApiError implements Serializable {
     SO_RETURN_INSTOCK_IMPORT_ADD_WAREHOUSE_LOCATION_NOT_FOUND(10773,"仓库:{0}未找到有效仓位：{1}"),
     SO_RETURN_INSTOCK_IMPORT_TASK_CREATE_FAILED(10774,"创建销售退货入库单导入任务失败"),
     SO_RETURN_INSTOCK_IMPORT_TASK_FAILED(10775,"销售退货入库单导入失败"),
+    SO_RETURN_INSTOCK_IMPORT_CUSTOMER_DUPLICATE(10776,"存在多个同名客户【{0}】，请人工确认"),
+    SO_RETURN_INSTOCK_IMPORT_SKU_OCCUPY_FAILED(10777,"单据已创建但SKU占用状态更新失败"),
     SO_B2C_NOT_OUTBOUND_DETAIL_WAREHOUSE_UPDATE_FAILED(10753,"不出库发货失败：销售订单明细仓库未成功落库，请刷新后重试"),
     SO_B2C_NOT_OUTBOUND_LOGISTICS_UPDATE_FAILED(10754,"不出库发货失败：销售订单物流信息更新失败，请刷新后重试"),
     SO_B2C_NOT_OUTBOUND_STATUS_UPDATE_FAILED(10755,"不出库发货失败：销售订单状态更新失败，请刷新后重试"),
