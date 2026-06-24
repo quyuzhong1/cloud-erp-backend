@@ -40,7 +40,7 @@
         <if test="params.productName != null and params.productName != ''">
             AND pd.name ILIKE CONCAT('%', #{params.productName}::text, '%')
         </if>
-        <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
+        <if test="params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.default != ''">
             AND ${params.sqlMap.default}
         </if>
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">

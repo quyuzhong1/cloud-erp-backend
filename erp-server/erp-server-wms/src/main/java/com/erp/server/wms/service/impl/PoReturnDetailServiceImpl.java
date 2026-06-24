@@ -481,7 +481,7 @@ public class PoReturnDetailServiceImpl extends SuperServiceImpl<PoReturnDetailMa
     private boolean isPackRowLogicallyRemoved(PurchaseReturnOrderDetailDTO.UpdateDTO row) {
         Integer returnQty = Optional.ofNullable(row.getReturnQty()).orElse(MathUtil.ZERO);
         Integer deductAmountQty = Optional.ofNullable(row.getDeductAmountQty()).orElse(MathUtil.ZERO);
-        return returnQty <= MathUtil.ZERO && deductAmountQty <= MathUtil.ZERO;
+        return returnQty.equals(MathUtil.ZERO) && deductAmountQty.equals(MathUtil.ZERO);
     }
 
     /**
