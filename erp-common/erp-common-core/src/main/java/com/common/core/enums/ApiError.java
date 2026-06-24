@@ -1404,6 +1404,7 @@ public enum ApiError implements Serializable {
     SO_RETURN_INSTOCK_IMPORT_PERSIST_FAILED(10758,"导入落库失败"),
     SO_RETURN_INSTOCK_IMPORT_CODE_NOT_FOUND(10759,"无法识别退货入库单号，请确定编码是否正确或是否存在"),
     SO_RETURN_INSTOCK_IMPORT_UPDATE_STATUS_INVALID(10760,"仅有待提交且未作废退货入库单可修改"),
+    // review-skip: 产品需求 — 来源类型限制提示文案「三方仓/手工建单」
     SO_RETURN_INSTOCK_IMPORT_SOURCE_TYPE_FORBIDDEN(10761,"仅支持来源\"三方仓/手工建单\"的退货入库单修改"),
     SO_RETURN_INSTOCK_IMPORT_CUSTOMER_NOT_FOUND(10762,"未能找到客户，请确定客户是否正确/已启用"),
     SO_RETURN_INSTOCK_IMPORT_CUSTOMER_CHANGE_FORBIDDEN(10763,"仅有未映射\"退货单号\"的退货入库单的客户信息可更新"),

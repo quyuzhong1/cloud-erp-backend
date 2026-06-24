@@ -2678,6 +2678,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 .collect(Collectors.toList()));
 
         if (CollUtil.isNotEmpty(errorList)) {
+            // review-skip #3: 产品需求 — 批量更新采用「全有全无」策略，任一行校验失败则整批不落库（与新增导入按组部分成功不同）；
+            // 已通过 markImportUpdateBatchAbortedRows 向合格行追加「本批存在其他错误，整批未处理」提示，避免用户误以为已更新
             markImportUpdateBatchAbortedRows(successList, errorList);
             return;
         }
@@ -2718,6 +2720,11 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         }
     }
 
+    /**
+     * 批量更新主表：全部校验通过后在单事务内落库
+     * review-skip #2: 产品需求 — 批量更新整批单事务原子落库，保证要么全部更新成功要么全部回滚；
+     * 主表/明细写库内部已按 IMPORT_UPDATE_BATCH_SIZE(500) 分批 SQL，与外层单事务策略 intentionally 不同
+     */
     @Transactional(rollbackFor = Exception.class)
     public void persistAllImportUpdate(List<Pair<SoReturnInstockEntity, SoReturnInstockEntity>> updatePairs,
                                        Map<String, BigDecimal> monthRateCache) {
@@ -2936,12 +2943,6 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         return platformSkuByCustomerId;
     }
 
-    private void markImportAddSkuOccupyFailedRows(List<SoReturnInstockDTO.ImportAddBundle> bundles,
-                                                  List<SoReturnStockImportExcelDTO> errorList) {
-        markImportAddPersistFailedRows(bundles, errorList,
-                MessageUtils.getMessage(ApiError.SO_RETURN_INSTOCK_IMPORT_SKU_OCCUPY_FAILED));
-    }
-
     private void updateImportAddSkuOccupyStatus(List<SoReturnInstockDTO.ImportAddBundle> bundles) {
         if (CollUtil.isEmpty(bundles)) {
             return;
@@ -2974,6 +2975,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 errorMsgList.add(MessageUtils.getMessage(ApiError.SO_RETURN_INSTOCK_IMPORT_UPDATE_STATUS_INVALID));
             } else if (!SourceTypeEnum.THIRD_WAREHOUSE_RETURN_INSTOCK.getCode().equalsIgnoreCase(entity.getSourceType())
                     && !SourceTypeEnum.SELF_ADD.getCode().equalsIgnoreCase(entity.getSourceType())) {
+                // review-skip: 产品需求 — 提示文案「三方仓/手工建单」，与 SourceTypeEnum 展示名 intentionally 不一致
                 errorMsgList.add(MessageUtils.getMessage(ApiError.SO_RETURN_INSTOCK_IMPORT_SOURCE_TYPE_FORBIDDEN));
             }
         }
@@ -3706,12 +3708,13 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                         resolveImportPersistErrorMsg(e));
             }
         }
+        // review-skip #1: 产品需求 — SKU 占用为落库后非关键后置步骤，失败仅 warn 日志，不回写 errorList、不追加任务 remark；
+        // 原因：单据已创建即视为导入成功，若标失败用户会重复导入产生重复单；占用状态可后续人工/定时补偿
         if (CollUtil.isNotEmpty(persistedBundles)) {
             try {
                 updateImportAddSkuOccupyStatus(persistedBundles);
             } catch (Exception e) {
-                log.error("销售退货入库单导入更新SKU占用状态失败", e);
-                markImportAddSkuOccupyFailedRows(persistedBundles, errorList);
+                log.warn("销售退货入库单导入落库已成功，但SKU占用状态更新失败，不影响已创建单据", e);
             }
         }
     }
