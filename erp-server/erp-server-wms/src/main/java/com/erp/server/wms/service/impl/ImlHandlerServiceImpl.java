@@ -411,10 +411,25 @@ public class ImlHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                 ))
                 .build();
         ImlBaseResp<String> resp = imlService.uploadFile(imlUploadLabelReq);
-        if(!isSuccess(resp.getCode())){
+        if (!isSuccess(resp.getCode())) {
+            if (isHandoverAlreadyExistsMessage(resp.getMessage())) {
+                log.warn("IML交接文件已存在，按幂等成功处理，orderNo={}，msg={}",
+                        uploadHandoverFileReq.getOrderCode(), resp.getMessage());
+                return success(new ThirdWarehouseUploadHandoverFileResponse(uploadHandoverFileReq.getOrderCode()));
+            }
             return failure(resp.getMessage());
         }
         return success(new ThirdWarehouseUploadHandoverFileResponse(uploadHandoverFileReq.getOrderCode()));
+    }
+
+    /**
+     * IML 重复上传交接文件时返回「面单号已存在其它交接单中」，表示该面单已绑定交接单，可视为幂等成功。
+     */
+    static boolean isHandoverAlreadyExistsMessage(String message) {
+        if (StringUtils.isBlank(message)) {
+            return false;
+        }
+        return message.contains("已存在其它交接单");
     }
     @Override
     protected ApiResult<String> createFbaOutboundBill(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {

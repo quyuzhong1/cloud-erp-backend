@@ -379,7 +379,9 @@ public interface RedisCacheConstants {
     String DORIS_QUERY_CFG_FULL_KEY = "erp:doris_query_cfg:full";
 
     // dict_basic 缓存 —— 按服务+type 维度存储
-    // 格式: cache:{serviceCode}:dict:type:{type}
+    // 通用格式: cache:{serviceCode}:dict:type::{type}
+    String BASE_DICT_BASIC_BY_TYPE = "cache:{}:dict:type::{}";
+    //每个系统缓存格式: cache:系统编码:dict:type
     String SYS_DICT_BASIC_BY_TYPE = "cache:sys:dict:type";
     String DMP_DICT_BASIC_BY_TYPE = "cache:dmp:dict:type";
     String OMS_DICT_BASIC_BY_TYPE = "cache:oms:dict:type";
