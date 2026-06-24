@@ -682,7 +682,7 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
     public AfterSalePackDTO.ViewDTO view(String id) {
         AfterSalePackEntity afterSalePackEntity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "箱唛"));
         AfterSalePackDTO.ViewDTO data = BeanMapperUtils.map(AfterSalePackDTO.ViewDTO.class, afterSalePackEntity);
-        data.setTypeName(AfterSalePackTypeEnum.getByName(data.getType()));
+        data.setTypeName(AfterSalePackTypeEnum.getByCode(data.getType()));
         data.setIsUseName(BooleanEnum.getByCode(data.getIsUse()));
         data.setIsDifferenceName(BooleanEnum.getByCode(data.getIsDifference()));
         data.setPackStatusName(AfterSalePackStatusEnum.getByCode(data.getPackStatus()));
@@ -744,7 +744,7 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
         }
         // 属性赋值
         for (AfterSalePackDTO.ListDTO data : list) {
-            data.setTypeName(AfterSalePackTypeEnum.getByName(data.getType()));
+            data.setTypeName(AfterSalePackTypeEnum.getByCode(data.getType()));
             data.setIsUseName(BooleanEnum.getByCode(data.getIsUse()));
             data.setIsDifferenceName(BooleanEnum.getByCode(data.getIsDifference()));
             data.setPackStatusName(AfterSalePackStatusEnum.getByCode(data.getPackStatus()));
@@ -880,7 +880,7 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
         List<AfterSalePackDTO.ViewDTO> resultList = new ArrayList<>();
         for (AfterSalePackEntity afterSalePackEntity : orderedEntityList) {
             AfterSalePackDTO.ViewDTO data = BeanMapperUtils.map(AfterSalePackDTO.ViewDTO.class, afterSalePackEntity);
-            data.setTypeName(AfterSalePackTypeEnum.getByName(data.getType()));
+            data.setTypeName(AfterSalePackTypeEnum.getByCode(data.getType()));
             PoReturnEntity poReturnEntity = poReturnMap.get(data.getSourceId());
             if (ObjectUtil.isNotEmpty(poReturnEntity)) {
                 data.setSupplierId(poReturnEntity.getSupplierId());
@@ -977,7 +977,7 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
         List<AfterSalePackDTO.ViewDTO> resultList = new ArrayList<>();
         for (AfterSalePackEntity entity : orderedEntityList) {
             AfterSalePackDTO.ViewDTO data = BeanMapperUtils.map(AfterSalePackDTO.ViewDTO.class, entity);
-            data.setTypeName(AfterSalePackTypeEnum.getByName(data.getType()));
+            data.setTypeName(AfterSalePackTypeEnum.getByCode(data.getType()));
             PoReturnEntity poReturnEntity = poReturnMap.get(data.getSourceId());
             if (ObjectUtil.isNotEmpty(poReturnEntity)) {
                 data.setSupplierId(poReturnEntity.getSupplierId());
