@@ -1127,7 +1127,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * 审核落库与操作日志同一事务：先 workflow/approveEnd，再写日志，任一步失败整体回滚。
      * <p>
      * [审查说明] approveProcess（含 workflow Feign、无流程时 approveEnd）与操作日志 intentionally 处于同一
-     * {@code @GlobalTransactional}，保证审核结果与日志原子提交/回滚；Feign 纳入全局事务为业务一致性要求，勿建议拆分。
+     * {@code @GlobalTransactional}（timeoutMills=180000），保证审核结果、库存扣减与日志原子提交/回滚；
+     * Feign 纳入全局事务为业务一致性要求，勿建议拆出全局事务或仅保留本地 {@code @Transactional}。
      * </p>
      */
     @Transactional(rollbackFor = Exception.class)
@@ -3580,6 +3581,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * 自发货与平台仓均按阶段短事务执行，不在外层包大事务，以便 Feign 校验与写库分离；
      * 落库成功后若提交/审核失败，出库单保留待处理，由本方法 catch 写入 B2C 异常供重试。
      * </p>
+     * <p>
+     * [审查说明] 落库（{@link #addB2cSoOutstockPersist}）与 {@code submitAndApprove} intentionally 分事务：
+     * 产品要求「提交/审核失败不回滚已落库出库单」，失败走 B2C 异常表/MQ 重试（平台仓、拼多多同步同理），
+     * 勿建议恢复 uat 外层大事务一次性包裹创建全流程。
+     * </p>
      *
      * @param dto 生成参数
      * @return 是否处理完成（失败时写异常并返回 false）
@@ -3621,21 +3627,23 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     /**
      * 自发货 B2C 出库创建：addB2cSoOutstock（短事务落库 + 事务外金额校验）→ submitAndApprove（独立事务）。
      * 不使用外层 {@code @Transactional}，避免 Feign 金额校验被包进长事务。
+     * <p>
+     * [审查说明] 见 {@link #createB2cSoOutstock}：分阶段事务为产品有意设计，提交失败保留已落库单。
+     * </p>
      */
     @Override
     public Boolean handleCreateB2cSoOutstock(SoOutstockDTO.GenerateB2cDTO dto) {
-        String id = soOutstockService.addB2cSoOutstock(dto);
-        //表示添加成功
-        if (CharSequenceUtil.isNotBlank(id)) {
+        SoOutstockDTO.AddB2cSoOutstockResult result = addB2cSoOutstockWithAmountCheck(dto);
+        if (CharSequenceUtil.isNotBlank(result.getId())) {
             // 检查关账或已有盘盈盘亏单据
-            if (soOutstockService.checkClosedAndUpdateRemark(dto, id)){
+            if (soOutstockService.checkClosedAndUpdateRemark(dto, result.getId())) {
                 return true;
             }
-            if (shouldSkipSubmitAfterUpstreamAmountCheck(id)) {
-                log.info("销售出库单上游金额校验未通过，已落待提交，跳过自动提交审核，outstockId={}", id);
+            if (result.isUpstreamAmountMismatch()) {
+                log.info("销售出库单上游金额校验未通过，已落待提交，跳过自动提交审核，outstockId={}", result.getId());
                 return true;
             }
-            soOutstockService.submitAndApprove(id);
+            soOutstockService.submitAndApprove(result.getId());
         }
         return Boolean.TRUE;
     }
@@ -3685,6 +3693,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
     }
 
+    /**
+     * 平台仓 B2C 出库创建：与自发货相同分阶段事务；方法名 WithoutTx 表示无外层大事务，非「不写库」。
+     * <p>
+     * [审查说明] 见 {@link #createB2cSoOutstock}：落库与 submitAndApprove 分事务，失败由 catch 写明细 remark 或中台/MQ 重试。
+     * </p>
+     */
     @Override
     public Boolean handleCreateB2cSoOutstockWithoutTx(SoOutstockDTO.GenerateB2cDTO dto) {
         SoOutstockEntity soOutstock = this.getBySoId(dto.getSoId());
@@ -3709,20 +3723,19 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 return true;
             }
         }
-        String id = soOutstockService.addB2cSoOutstock(dto);
-        //表示添加成功
-        if (CharSequenceUtil.isNotBlank(id)) {
+        SoOutstockDTO.AddB2cSoOutstockResult result = addB2cSoOutstockWithAmountCheck(dto);
+        if (CharSequenceUtil.isNotBlank(result.getId())) {
             try {
                 // 事务分开
                 // 检查关账或已有盘盈盘亏单据
-                if (soOutstockService.checkClosedAndUpdateRemark(dto, id)){
+                if (soOutstockService.checkClosedAndUpdateRemark(dto, result.getId())) {
                     return true;
                 }
-                if (shouldSkipSubmitAfterUpstreamAmountCheck(id)) {
-                    log.info("销售出库单上游金额校验未通过，已落待提交，跳过自动提交审核，outstockId={}", id);
+                if (result.isUpstreamAmountMismatch()) {
+                    log.info("销售出库单上游金额校验未通过，已落待提交，跳过自动提交审核，outstockId={}", result.getId());
                     return true;
                 }
-                soOutstockService.submitAndApprove(id);
+                soOutstockService.submitAndApprove(result.getId());
             } catch (Exception e) {
                 log.error("B2C订单生成销售出库单提交或审核失败：error={}", ExceptionUtil.stacktraceToString(e));
                 // 非ServiceException 异常，抛出由中台重试
@@ -3730,7 +3743,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                     throw e;
                 }
                 // 记录明细(事务分开)
-                soOutstockDetailService.updateDetailRemark(id, e.getMessage(),false);
+                soOutstockDetailService.updateDetailRemark(result.getId(), e.getMessage(), false);
             }
         }
         return true;
@@ -3749,6 +3762,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         deleteDTO.setType(type);
         soB2cFeign.deleteError(deleteDTO);
     }
+
     /**
      * 添加B2C销售出库单
      *
@@ -3759,8 +3773,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * @create 2023-12-29 11:51
      */
     @Override
-//    @Transactional(rollbackFor = Exception.class)
     public String addB2cSoOutstock(SoOutstockDTO.GenerateB2cDTO dto) {
+        return addB2cSoOutstockWithAmountCheck(dto).getId();
+    }
+
+//    @Transactional(rollbackFor = Exception.class)
+    private SoOutstockDTO.AddB2cSoOutstockResult addB2cSoOutstockWithAmountCheck(SoOutstockDTO.GenerateB2cDTO dto) {
         //来源类型
         String sourceType = dto.getSourceType();
         if (CharSequenceUtil.isBlank(sourceType)) {
@@ -3785,7 +3803,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         //过滤出库明细中应发和实发为0的数据
         detailList = detailList.stream().filter(d -> Objects.nonNull(d.getActualQty()) && d.getActualQty() > 0).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(detailList)) {
-            return "";
+            return SoOutstockDTO.AddB2cSoOutstockResult.empty();
         }
 
         SoOutstockEntity soOutstock = new SoOutstockEntity();
@@ -3881,10 +3899,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         Boolean addResult = ApplicationContextUtils.getBean(SoOutstockServiceImpl.class)
                 .addB2cSoOutstockPersist(soOutstock, detailList, sourceType, thirdWarehouseDeliveryEntity, code);
         if (!Boolean.TRUE.equals(addResult)) {
-            return "";
+            return SoOutstockDTO.AddB2cSoOutstockResult.empty();
         }
-        markB2cSoOutstockAmountMismatchIfNeeded(soOutstock.getId());
-        return soOutstock.getId();
+        boolean upstreamAmountMismatch = markB2cSoOutstockAmountMismatchIfNeeded(soOutstock.getId());
+        return SoOutstockDTO.AddB2cSoOutstockResult.of(soOutstock.getId(), upstreamAmountMismatch);
     }
 
     /**
@@ -3941,26 +3959,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         ApplicationContextUtils.getBean(SoOutstockServiceImpl.class)
                 .markB2cSoOutstockAmountMismatch(outstockId, amountCheckResult);
         return true;
-    }
-
-    /**
-     * addB2cSoOutstock 落库后若上游金额校验未通过，{@link #markB2cSoOutstockAmountMismatch} 已写入 approve_remark。
-     */
-    private boolean shouldSkipSubmitAfterUpstreamAmountCheck(String outstockId) {
-        SoOutstockEntity entity = this.getById(outstockId);
-        if (entity == null || !ApproveStatusEnum.WAIT_SUBMIT.equals(entity.getApproveStatus())) {
-            return false;
-        }
-        return containsUpstreamAmountCheckRemark(entity.getApproveRemark());
-    }
-
-    private boolean containsUpstreamAmountCheckRemark(String approveRemark) {
-        if (CharSequenceUtil.isBlank(approveRemark)) {
-            return false;
-        }
-        String mismatchMsg = MessageUtils.getMessage(ApiError.SO_OUTSTOCK_AMOUNT_MISMATCH_SUBMIT);
-        String unavailableMsg = MessageUtils.getMessage(ApiError.SO_OUTSTOCK_UPSTREAM_AMOUNT_CHECK_UNAVAILABLE);
-        return approveRemark.contains(mismatchMsg) || approveRemark.contains(unavailableMsg);
     }
 
     @Transactional(rollbackFor = Exception.class)
