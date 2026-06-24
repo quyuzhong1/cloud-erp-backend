@@ -3390,7 +3390,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
          ||PlatformDictEnum.ZHONG_BAO_WAREHOUSE.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())
          ||PlatformDictEnum.JI_TU_WAREHOUSE.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())
          ||PlatformDictEnum.DA_MAI.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())
-         ||OmsPlatformEnum.WE_GO.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())) {
+         ||isWegoProvider(overseasProviderWarehouse.getProviderCode())) {
             receiverInfo.setAddress2(receiver.getSecondAddress());
             receiverInfo.setAddress3(receiver.getFullAddress());
         }
@@ -3514,7 +3514,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 if(Objects.isNull(packagePlanEntity) || StringUtils.isBlank(packagePlanEntity.getHandoverLabelUrl())){
                     throw new ServiceException("交接文件不存在，请先生成交接文件");
                 }
-                String domain = dictBasicService.getByTypeAndValue("fastDfsDomain",BusinessCommonConstants.getEnvironment()+"-fastDfsDomain").getName();
+                String domain = getFastDfsDomain();
 
                 handoverLabelUrl = domain + packagePlanEntity.getHandoverLabelUrl();
             }
@@ -3624,7 +3624,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
             byte[] bytes = fileFeign.downloadFile(logisticsLabelUrl);
             String logisticsLabelBase64 = "data:application/pdf;base64," + Base64.getEncoder().encodeToString(bytes);
-            if (!PlatformDictEnum.ZHONG_BAO_WAREHOUSE.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())) {
+            // WEGO 仅依赖 labelUrl，uploadFile 为空实现，跳过无效调用；众包同样跳过
+            if (!PlatformDictEnum.ZHONG_BAO_WAREHOUSE.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())
+                    && !isWegoProvider(overseasProviderWarehouse.getProviderCode())) {
                 ThirdWarehouseUploadFileReq thirdWarehouseUploadFileReq = new ThirdWarehouseUploadFileReq();
                 thirdWarehouseUploadFileReq.setOrderCode(entity.getCode());
                 thirdWarehouseUploadFileReq.setFileData(logisticsLabelBase64);
@@ -3642,15 +3644,46 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
             createOutboundReq.setLabelData(logisticsLabelBase64);
             //生成在线url
-            if(PlatformDictEnum.JIFENG.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())
-             ||PlatformDictEnum.CAINIAO.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())
-                    ||PlatformDictEnum.IML.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())
-                    || PlatformDictEnum.TONG_YOU_WAREHOUSE.getCode().equals(overseasProviderWarehouse.getProviderCode())) {
-                String path = FastDFSClientUtil.uploadFile(Base64.getDecoder().decode(logisticsLabelBase64.replace("data:application/pdf;base64,","")), entity.getCode()+".pdf",new HashMap<>());
-                String domain = dictBasicService.getByTypeAndValue("fastDfsDomain",BusinessCommonConstants.getEnvironment()+"-fastDfsDomain").getName();
-                createOutboundReq.setLabelUrl(domain+path);
+            if (needOnlineLabelUrl(overseasProviderWarehouse.getProviderCode())) {
+                String path;
+                try {
+                    path = FastDFSClientUtil.uploadFile(Base64.getDecoder().decode(logisticsLabelBase64.replace("data:application/pdf;base64,","")), entity.getCode()+".pdf",new HashMap<>());
+                } catch (Exception e) {
+                    throw new ServiceException("面单上传FastDFS失败：" + e.getMessage());
+                }
+                createOutboundReq.setLabelUrl(getFastDfsDomain() + path);
             }
         }
+    }
+
+    /**
+     * 判断该三方仓是否需要生成面单在线 URL（上传至 FastDFS 后回填 labelUrl）。
+     * WEGO / 极风 / 菜鸟 / 艾姆勒 / 通邮 通过 labelUrl 传递面单文件。
+     */
+    private boolean needOnlineLabelUrl(String providerCode) {
+        return PlatformDictEnum.JIFENG.getCode().equalsIgnoreCase(providerCode)
+                || PlatformDictEnum.CAINIAO.getCode().equalsIgnoreCase(providerCode)
+                || PlatformDictEnum.IML.getCode().equalsIgnoreCase(providerCode)
+                || PlatformDictEnum.TONG_YOU_WAREHOUSE.getCode().equalsIgnoreCase(providerCode)
+                || isWegoProvider(providerCode);
+    }
+
+    /**
+     * 判断是否为 WEGO 三方仓，统一收口，避免多处内联判断。
+     */
+    private boolean isWegoProvider(String providerCode) {
+        return OmsPlatformEnum.WE_GO.getCode().equalsIgnoreCase(providerCode);
+    }
+
+    /**
+     * 获取 FastDFS 域名，字典缺失时抛出明确的业务异常，避免 NPE。
+     */
+    private String getFastDfsDomain() {
+        DictBasicEntity domainEntity = dictBasicService.getByTypeAndValue("fastDfsDomain", BusinessCommonConstants.getEnvironment() + "-fastDfsDomain");
+        if (domainEntity == null || CharSequenceUtil.isBlank(domainEntity.getName())) {
+            throw new ServiceException("FastDFS域名配置缺失，请检查字典[fastDfsDomain]");
+        }
+        return domainEntity.getName();
     }
 
     private void setInsurePrice(SoB2cEntity entity, ThirdWarehouseCreateOutboundReq createOutboundReq) {
