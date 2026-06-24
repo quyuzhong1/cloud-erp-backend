@@ -1,12 +1,15 @@
 package com.erp.server.oms.controller.api;
 
 
+import com.common.business.annotation.DataPermission;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
+import com.erp.server.oms.service.WorkflowTaskInstanceService;
 import com.erp.server.oms.service.WorkflowTaskRecordService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -32,6 +35,11 @@ public class WorkflowTaskRecordController extends BaseController {
     @Resource
     private WorkflowTaskRecordService workflowTaskRecordService;
 
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:workflowTaskInstance:cancel",
+            serviceClass = WorkflowTaskInstanceService.class,
+            keyIdName = "id")
     @PostMapping("/forceRetry")
     @LogAction(value = LogActionEnum.EXECUTE, desc = "任务节点人工强制重试")
     public ApiResult<WorkflowTaskRecordDTO.ForceRetryResultDTO> forceRetry(@RequestBody @Validated WorkflowTaskRecordDTO.ForceRetryDTO dto) {
