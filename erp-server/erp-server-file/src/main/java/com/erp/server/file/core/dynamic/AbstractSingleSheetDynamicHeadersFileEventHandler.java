@@ -12,9 +12,7 @@ import com.erp.server.file.handler.FileRegistry;
  * {@link #newSheetState()}，同组跨 sheet 会重复展示）。数据量超过单 sheet 且需分组展示时，
  * 请改用 {@link AbstractMultiSheetGroupDynamicHeadersFileEventHandler}（如销售订单
  * {@code ExportOmsSoHandler} 已迁移至该基类）。
- * 达到单 sheet 上限即显式失败，请缩小筛选范围；数据量超过单 sheet 容量且需按分组展示时，
- * 请改用 {@link AbstractMultiSheetGroupDynamicHeadersFileEventHandler}；无分组诉求时用
- * {@link AbstractDynamicHeadersFileEventHandler}。
+ * 达到单 sheet 上限即显式失败，请缩小筛选范围；无分组诉求时用 {@link AbstractDynamicHeadersFileEventHandler}。
  * <p>
  * 子类实现 {@link #getPageData(com.common.business.dto.base.PagingDTO)} 即可；可选重写 {@link #firstRowName()}、
  * {@link #dynamicHeaderCellStyleStrategy()}、{@link #newSheetState()} / {@link #decorateSheetRow} 等钩子。

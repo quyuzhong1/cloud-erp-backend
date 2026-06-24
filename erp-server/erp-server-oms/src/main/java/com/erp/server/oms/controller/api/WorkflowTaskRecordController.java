@@ -37,8 +37,8 @@ public class WorkflowTaskRecordController extends BaseController {
 
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "oms:workflowTaskInstance:cancel",
-            serviceClass = WorkflowTaskInstanceService.class,
+            menuCode = "oms:workflowTaskRecord:forceRetry",
+            serviceClass = WorkflowTaskRecordService.class,
             keyIdName = "id")
     @PostMapping("/forceRetry")
     @LogAction(value = LogActionEnum.EXECUTE, desc = "任务节点人工强制重试")

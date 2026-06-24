@@ -103,6 +103,9 @@ public class FileRegistry {
      * 单 sheet 分组报表导出时，单 sheet 最大行数（含表头），默认 200000，配置上限 {@link #SHEET_MAX_ROWS_UPPER}（1048576）。
      * 供 {@link com.erp.server.file.core.AbstractSingleSheetGroupPageFileEventHandler} 使用；
      * 多 sheet 分组报表见 {@link com.erp.server.file.core.AbstractMultiSheetGroupPageFileEventHandler}（沿用 {@link #sheetMaxRows}）。
+     * <p>
+     * 该配置项及对应单 sheet 分组能力尚未上线生产，默认值可按部署环境通过 {@code file.storage.singleSheetMaxRows} 调整，
+     * 与多 sheet 场景的 {@link #sheetMaxRows} 语义不同，勿合并为同一配置项。
      */
     @Getter
     private static Integer singleSheetMaxRows;
