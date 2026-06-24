@@ -12,10 +12,7 @@ import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.AfterSalePackStatusEnum;
-import com.common.business.enums.AfterSalePackTypeEnum;
-import com.common.business.enums.BooleanEnum;
-import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
@@ -174,7 +171,7 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
         // 查询东莞售后仓库信息
         WarehouseEntity warehouseEntity = warehouseService.lambdaQuery()
                 .eq(WarehouseEntity::getKingdeeWarehouseCode, WmsConstant.DG_AFTER_SALES_WAREHOUSE_CODE)
-                .eq(WarehouseEntity::getApproveStatus, LogActionEnum.APPROVE.getCode())
+                .eq(WarehouseEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus())
                 .eq(WarehouseEntity::getDisabled, false)
                 .one();
         if (warehouseEntity == null) {
@@ -610,7 +607,7 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
         afterSalePackEntity = Optional.ofNullable(afterSalePackEntity).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "箱唛"));
         // 箱唛状态不等于复审中，不可驳回复审
         if (!AfterSalePackStatusEnum.UNDER_REVIEW.getCode().equals(afterSalePackEntity.getPackStatus())) {
-            throw new ServiceException("箱唛状态等于【{}】状态，不可复核驳回", AfterSalePackStatusEnum.getByName(afterSalePackEntity.getPackStatus()));
+            throw new ServiceException("箱唛状态等于【{}】状态，不可复核驳回", AfterSalePackStatusEnum.getByCode(afterSalePackEntity.getPackStatus()));
         }
         if (Boolean.TRUE.equals(afterSalePackEntity.getIsUse())) {
             throw new ServiceException("该箱唛已被单据使用，不可复核驳回");
@@ -688,7 +685,7 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
         data.setTypeName(AfterSalePackTypeEnum.getByName(data.getType()));
         data.setIsUseName(BooleanEnum.getByCode(data.getIsUse()));
         data.setIsDifferenceName(BooleanEnum.getByCode(data.getIsDifference()));
-        data.setPackStatusName(AfterSalePackStatusEnum.getByName(data.getPackStatus()));
+        data.setPackStatusName(AfterSalePackStatusEnum.getByCode(data.getPackStatus()));
         data.setIsMoveWarehouseName(BooleanEnum.getByCode(data.getIsMoveWarehouse()));
         // 查询采购退货信息
         PoReturnEntity poReturnEntity = poReturnService.getById(data.getSourceId());
@@ -750,7 +747,7 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
             data.setTypeName(AfterSalePackTypeEnum.getByName(data.getType()));
             data.setIsUseName(BooleanEnum.getByCode(data.getIsUse()));
             data.setIsDifferenceName(BooleanEnum.getByCode(data.getIsDifference()));
-            data.setPackStatusName(AfterSalePackStatusEnum.getByName(data.getPackStatus()));
+            data.setPackStatusName(AfterSalePackStatusEnum.getByCode(data.getPackStatus()));
             data.setIsMoveWarehouseName(BooleanEnum.getByCode(data.getIsMoveWarehouse()));
         }
     }
