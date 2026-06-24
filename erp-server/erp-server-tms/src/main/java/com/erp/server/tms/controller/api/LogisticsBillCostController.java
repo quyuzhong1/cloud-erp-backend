@@ -379,11 +379,9 @@ public class LogisticsBillCostController extends BaseController {
      keyIdName = "id")
      public ApiResult<List<BatchResultDTO>> pushAllocation(@RequestBody @Validated PushDTO dto) {
          if(CollUtil.isEmpty(dto.getIds())){
-             dto.setType(DictCostAttributionEnum.SELF_DELIVER.getCode());
-
-             TmsAsyncTaskRecordDTO.PushParamsDTO pushDTO = new TmsAsyncTaskRecordDTO.PushParamsDTO();
-             BeanMapper.copy(dto,pushDTO);
-             logisticsBillCostService.batchAsyncPushAllocation(pushDTO);
+             TmsAsyncTaskRecordDTO.SmallBagPushAllocationPayloadDTO payload =
+                     new TmsAsyncTaskRecordDTO.SmallBagPushAllocationPayloadDTO(dto.getReportDate(), DictCostAttributionEnum.SELF_DELIVER.getCode());
+             logisticsBillCostService.batchAsyncPushAllocation(payload);
              return success();
          }else {
              List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());

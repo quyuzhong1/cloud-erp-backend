@@ -5,7 +5,9 @@ import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.enums.OrderTypeEnum;
+import com.common.core.enums.ApiError;
 import com.common.core.utils.FieldValidUtil;
+import com.common.core.utils.MessageUtils;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.wms.dto.excel.SoReturnStockUpdateImportExcelDTO;
@@ -42,7 +44,7 @@ public class SoReturnStockUpdateExcelListener extends AnalysisEventListener<SoRe
         if (CharSequenceUtil.isNotBlank(importExcelDTO.getTypeName())) {
             String typeCode = resolveTypeCode(importExcelDTO.getTypeName());
             if (CharSequenceUtil.isBlank(typeCode)) {
-                errorMsgList.add("该单据类型未在系统枚举值找到，请确定是否正确");
+                errorMsgList.add(MessageUtils.getMessage(ApiError.SO_RETURN_INSTOCK_IMPORT_BILL_TYPE_NOT_FOUND));
             } else {
                 importExcelDTO.setTypeCode(typeCode);
             }
@@ -51,7 +53,7 @@ public class SoReturnStockUpdateExcelListener extends AnalysisEventListener<SoRe
             try {
                 importExcelDTO.setBillDate(LocalDateUtil.stringToLocalDate(importExcelDTO.getBillDateStr()));
             } catch (Exception e) {
-                errorMsgList.add("入库日期非日期格式，请调整");
+                errorMsgList.add(MessageUtils.getMessage(ApiError.SO_RETURN_INSTOCK_IMPORT_BILL_DATE_INVALID));
             }
         }
         if (!errorMsgList.isEmpty()) {

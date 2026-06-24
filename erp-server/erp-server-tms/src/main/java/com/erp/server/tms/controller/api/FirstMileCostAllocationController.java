@@ -280,9 +280,7 @@ public class FirstMileCostAllocationController extends BaseController {
     )
     public ApiResult<List<BatchResultDTO>> pushAllocatedCost(@RequestBody @Valid FirstMileCostAllocationDTO.IdsDTO dto) {
         if(CollUtil.isEmpty(dto.getIds())){
-            TmsAsyncTaskRecordDTO.PushParamsDTO pushDTO = new TmsAsyncTaskRecordDTO.PushParamsDTO();
-            BeanMapper.copy(dto,pushDTO);
-            firstMileCostAllocationService.asyncBatchPushAllocatedCost(pushDTO);
+            firstMileCostAllocationService.asyncBatchPushAllocatedCost(dto.getReportDate());
             return success();
         }else {
             List<FirstMileWeightAllocationEntity> firstMileWeightAllocationEntities = firstMileWeightAllocationService.listByIds(dto.getIds());

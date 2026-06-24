@@ -1358,17 +1358,6 @@ public class ExportWmsFeignController {
     }
 
     /**
-     * 导出仓库位置建议售后单
-     */
-    @PostMapping("/exportAfterSalesWarehouseLocationSuggest")
-    @WebAdvanceQuery(handler = AfterSalesWarehouseLocationSuggestQueryHandler.class)
-    public PagingVO<AfterSalesWarehouseLocationSuggestDto.ListDTO> exportAfterSalesWarehouseLocationSuggest(@RequestBody @Validated PagingDTO<AfterSalesWarehouseLocationSuggestDto.ExportParamDTO> dto) {
-        PagingDTO<AfterSalesWarehouseLocationSuggestDto.SearchParamDTO> wrap = new PagingDTO<>();
-        BeanUtils.copyProperties(dto, wrap);
-        return afterSalesWarehouseLocationSuggestService.paging(wrap);
-    }
-
-    /**
      * 导出质检员配置
      */
     @PostMapping("/exportCfgQcUser")
@@ -1380,4 +1369,16 @@ public class ExportWmsFeignController {
     public PagingVO<CfgQcUserDTO.ListDTO> exportCfgQcUser(@RequestBody @Validated PagingDTO<CfgQcUserDTO.ExportDTO> dto) {
         return cfgQcUserService.paging(dto);
     }
+
+    /**
+     * 导出仓库位置建议售后单
+     */
+    @PostMapping("/exportAfterSalesWarehouseLocationSuggest")
+    @WebAdvanceQuery(handler = AfterSalesWarehouseLocationSuggestQueryHandler.class)
+    public PagingVO<AfterSalesWarehouseLocationSuggestDto.ListDTO> exportAfterSalesWarehouseLocationSuggest(@RequestBody @Validated PagingDTO<AfterSalesWarehouseLocationSuggestDto.ExportParamDTO> dto) {
+        PagingDTO<AfterSalesWarehouseLocationSuggestDto.SearchParamDTO> wrap = new PagingDTO<>();
+        BeanUtils.copyProperties(dto, wrap);
+        return afterSalesWarehouseLocationSuggestService.paging(wrap);
+    }
+
 }

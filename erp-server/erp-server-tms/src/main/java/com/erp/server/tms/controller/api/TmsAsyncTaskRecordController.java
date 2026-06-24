@@ -11,6 +11,8 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.anno.LogAction;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
 import com.erp.model.tms.entity.TmsAsyncTaskRecordEntity;
 import com.erp.server.tms.query.TmsAsyncTaskRecordQueryHandler;
@@ -231,23 +233,28 @@ public class TmsAsyncTaskRecordController extends BaseController {
     /**
      * 测试接口：触发自动周期任务生成，返回与 XXL-JOB 相同的执行汇总。
      */
-    @GetMapping("/genAutoTask")
-    public TmsAsyncTaskRecordDTO.GenAutoTaskResultDTO genAutoTask() {
-        return tmsAsyncTaskRecordService.genAutoTask();
+    @PostMapping("/genAutoTask")
+    @LogAction(value = LogActionEnum.EXECUTE, desc = "手动触发自动周期任务生成")
+    public ApiResult<TmsAsyncTaskRecordDTO.GenAutoTaskResultDTO> genAutoTask() {
+        return success(tmsAsyncTaskRecordService.genAutoTask());
     }
     /**
-     * 测试 - 启动所有符合条件自动任务
+     * 测试接口：派发已到期的 AUTO + PENDING 自动任务（与 XXL-JOB TmsAsyncTaskJob 等价）。
      */
-    @GetMapping("/startTask")
-    public void startTask() {
+    @PostMapping("/startTask")
+    @LogAction(value = LogActionEnum.EXECUTE, desc = "手动触发自动任务派发")
+    public ApiResult<Boolean> startTask() {
         tmsAsyncTaskRecordService.startTask();
+        return success(Boolean.TRUE);
     }
     /**
-     * watchDog
+     * 测试接口：手动触发异步任务 watchdog（超时终止与僵死明细清理）。
      */
-    @GetMapping("/watchDog")
-    public void watchDog() {
+    @PostMapping("/watchDog")
+    @LogAction(value = LogActionEnum.EXECUTE, desc = "手动触发异步任务watchdog")
+    public ApiResult<Boolean> watchDog() {
         tmsAsyncTaskRecordService.watchdogTask();
+        return success(Boolean.TRUE);
     }
 
 

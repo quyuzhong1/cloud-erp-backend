@@ -2,6 +2,7 @@ package com.erp.model.wms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.erp.model.wms.dto.excel.SoReturnStockImportExcelDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -1165,5 +1166,48 @@ public class SoReturnInstockDTO {
          * code
          */
         private String searchKeyword;
+    }
+
+    /**
+     * 销售退货入库单导入新增落库上下文
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ImportAddBundle {
+        private Add add;
+        private List<SoReturnStockImportExcelDTO> excelRows;
+        private String customerId;
+        private String customerName;
+        private String sellerId;
+        private String sellerName;
+        private String salesDeptId;
+        private String salesOrgId;
+        private WarehouseDTO.ListDTO warehouse;
+        private String salesDeptName;
+        private String salesOrgName;
+        private String inventoryOrgName;
+        private Map<String, String> platformSkuBySkuNo;
+        private Map<String, String> warehouseNameById;
+        private Map<String, Boolean> subContractBySkuId;
+
+        public ImportAddBundle(Add add,
+                               List<SoReturnStockImportExcelDTO> excelRows,
+                               String customerId,
+                               String customerName,
+                               String sellerId,
+                               String sellerName,
+                               String salesDeptId,
+                               String salesOrgId,
+                               WarehouseDTO.ListDTO warehouse) {
+            this.add = add;
+            this.excelRows = excelRows;
+            this.customerId = customerId;
+            this.customerName = customerName;
+            this.sellerId = sellerId;
+            this.sellerName = sellerName;
+            this.salesDeptId = salesDeptId;
+            this.salesOrgId = salesOrgId;
+            this.warehouse = warehouse;
+        }
     }
 }
