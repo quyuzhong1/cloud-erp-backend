@@ -296,19 +296,6 @@ public class AfterSalesWarehouseLocationSuggestDto implements Serializable {
     public static class ExportParamDTO extends AfterSalesWarehouseLocationSuggestDto.SearchParamDTO {
     }
 
-    /**
-     * 导出Excel
-     */
-    @EqualsAndHashCode(callSuper = true)
-    @Data
-    @NoArgsConstructor
-    public static class ExportDTO extends AwdInventoryDTO.PagingParamDTO {
-        /**
-         * 勾选的id集合
-         */
-        private List<String> ids;
-    }
-
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
