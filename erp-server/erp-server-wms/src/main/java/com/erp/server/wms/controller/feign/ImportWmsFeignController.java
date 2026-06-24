@@ -1,7 +1,11 @@
 package com.erp.server.wms.controller.feign;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.dto.base.BaseDTO;
 import com.common.business.enums.FileTaskStatusEnum;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.MessageUtils;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.wms.service.SampleBorrowInfoService;
 import com.erp.server.wms.service.SampleRecipientService;
@@ -161,9 +165,11 @@ public class ImportWmsFeignController {
     }
 
     private static String resolveImportFailRemark(Exception e) {
-        String msg = e.getMessage();
-        if (msg == null || msg.isEmpty()) {
-            msg = "销售退货入库单导入失败";
+        String msg;
+        if (e instanceof ServiceException && CharSequenceUtil.isNotBlank(e.getMessage())) {
+            msg = e.getMessage();
+        } else {
+            msg = MessageUtils.getMessage(ApiError.SO_RETURN_INSTOCK_IMPORT_TASK_FAILED);
         }
         return msg.length() > 490 ? msg.substring(0, 490) : msg;
     }

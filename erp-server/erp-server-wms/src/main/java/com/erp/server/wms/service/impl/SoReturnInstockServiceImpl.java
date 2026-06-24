@@ -152,6 +152,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
     private static final int SO_RETURN_INSTOCK_IMPORT_MAX_ROWS = 5000;
 
+    private static final int IMPORT_UPDATE_DETAIL_BATCH_SIZE = 500;
+
     @Lazy
     @Resource
     private SoReturnInstockService selfService;
@@ -2470,19 +2472,19 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
     @Override
     public Boolean importFile(BaseDTO.ImportDTO dto) {
+        dto.setUserId(UserContext.getDefaultLoginUser().getUid());
+        boolean isUpdate = ImportTypeEnum.UPDATE.getCode().equalsIgnoreCase(dto.getImportType());
+        String taskName = isUpdate ? "销售退货入库单批量更新" : "销售退货入库单导入";
+        String eventCode = isUpdate
+                ? IMPORT_WMS_SO_RETURN_IN_STOCK_OVERWRITE.getCode()
+                : IMPORT_WMS_SO_RETURN_IN_STOCK.getCode();
         try {
-            dto.setUserId(UserContext.getDefaultLoginUser().getUid());
-            boolean isUpdate = ImportTypeEnum.UPDATE.getCode().equalsIgnoreCase(dto.getImportType());
-            String taskName = isUpdate ? "销售退货入库单批量更新" : "销售退货入库单导入";
-            String eventCode = isUpdate
-                    ? IMPORT_WMS_SO_RETURN_IN_STOCK_OVERWRITE.getCode()
-                    : IMPORT_WMS_SO_RETURN_IN_STOCK.getCode();
             downloadTaskFeign.saveImportTask(taskName, eventCode, dto);
-            return Boolean.TRUE;
         } catch (Exception e) {
             log.error("创建销售退货入库单导入任务失败", e);
-            return Boolean.FALSE;
+            throw new ServiceException(ApiError.SO_RETURN_INSTOCK_IMPORT_TASK_CREATE_FAILED);
         }
+        return Boolean.TRUE;
     }
 
     @Override
@@ -2741,9 +2743,30 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     @Transactional(rollbackFor = Exception.class)
     public void persistAllImportUpdate(List<Pair<SoReturnInstockEntity, SoReturnInstockEntity>> updatePairs,
                                        Map<String, BigDecimal> monthRateCache) {
-        for (Pair<SoReturnInstockEntity, SoReturnInstockEntity> pair : updatePairs) {
-            persistImportUpdate(pair.getFirst(), pair.getSecond(), monthRateCache);
+        if (CollUtil.isEmpty(updatePairs)) {
+            return;
         }
+        Set<String> mainIdsNeedDetailSync = new HashSet<>();
+        for (Pair<SoReturnInstockEntity, SoReturnInstockEntity> pair : updatePairs) {
+            SoReturnInstockEntity oldEntity = pair.getFirst();
+            SoReturnInstockEntity entity = pair.getSecond();
+            if (!CharSequenceUtil.equals(oldEntity.getInventoryOrgId(), entity.getInventoryOrgId())
+                    || !CharSequenceUtil.equals(oldEntity.getCurrency(), entity.getCurrency())) {
+                mainIdsNeedDetailSync.add(entity.getId());
+            }
+        }
+        Map<String, List<SoReturnInstockDetailEntity>> detailMap = Collections.emptyMap();
+        if (CollUtil.isNotEmpty(mainIdsNeedDetailSync)) {
+            List<SoReturnInstockDetailEntity> allDetails = soReturnInstockDetailService.listDetailByMainIds(
+                    new ArrayList<>(mainIdsNeedDetailSync));
+            detailMap = allDetails.stream()
+                    .collect(Collectors.groupingBy(SoReturnInstockDetailEntity::getMainId));
+        }
+        List<SoReturnInstockDetailEntity> detailsToUpdate = new ArrayList<>();
+        for (Pair<SoReturnInstockEntity, SoReturnInstockEntity> pair : updatePairs) {
+            persistImportUpdate(pair.getFirst(), pair.getSecond(), monthRateCache, detailMap, detailsToUpdate);
+        }
+        batchUpdateImportDetails(detailsToUpdate);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -3136,6 +3159,31 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         }
     }
 
+    private void enrichImportAddExchangeRates(List<SoReturnInstockDTO.ImportAddBundle> bundles) {
+        if (CollUtil.isEmpty(bundles)) {
+            return;
+        }
+        Map<String, BigDecimal> monthRateCache = new HashMap<>();
+        for (SoReturnInstockDTO.ImportAddBundle bundle : bundles) {
+            SoReturnInstockDTO.Add add = bundle.getAdd();
+            LocalDate billDate = add.getBillDate() != null ? add.getBillDate() : LocalDate.now();
+            String currency = CharSequenceUtil.blankToDefault(add.getCurrency(), CurrencyEnum.CNY.getCurrencyCode());
+            BigDecimal exchangeRate = loadImportMonthRate(billDate, currency, monthRateCache, true);
+            add.setExchangeRate(exchangeRate);
+            for (SoReturnInstockDetailDTO.Add detailDto : add.getDetailList()) {
+                detailDto.setExchangeRate(exchangeRate);
+                if (detailDto.getReturnAmount() != null && detailDto.getReturnAmountLocalCurrency() == null) {
+                    detailDto.setReturnAmountLocalCurrency(
+                            soReturnNoticeService.calLocalCurrency(exchangeRate, detailDto.getReturnAmount()));
+                }
+                if (detailDto.getTaxReturnAmount() != null && detailDto.getTaxReturnAmountLocalCurrency() == null) {
+                    detailDto.setTaxReturnAmountLocalCurrency(
+                            soReturnNoticeService.calLocalCurrency(exchangeRate, detailDto.getTaxReturnAmount()));
+                }
+            }
+        }
+    }
+
     private void appendImportAddError(SoReturnStockImportExcelDTO row, String msg) {
         List<String> errorMsgList = parseImportUpdateErrorMsg(row.getErrorMsg());
         if (errorMsgList.contains(msg)) {
@@ -3238,7 +3286,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     }
 
     private void persistImportUpdate(SoReturnInstockEntity oldEntity, SoReturnInstockEntity entity,
-                                       Map<String, BigDecimal> monthRateCache) {
+                                       Map<String, BigDecimal> monthRateCache,
+                                       Map<String, List<SoReturnInstockDetailEntity>> detailMap,
+                                       List<SoReturnInstockDetailEntity> detailsToUpdate) {
         boolean inventoryOrgChanged = !CharSequenceUtil.equals(oldEntity.getInventoryOrgId(), entity.getInventoryOrgId());
         boolean currencyChanged = !CharSequenceUtil.equals(oldEntity.getCurrency(), entity.getCurrency());
         operateLogService.addModuleOperateLogByObj(oldEntity, entity, ModuleTypeEnum.SO_RETURN_INSTOCK.getCode(), entity.getId(), "", "");
@@ -3251,13 +3301,17 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             throw new ServiceException(ApiError.BILL_UPDATE_FAILED);
         }
         if (inventoryOrgChanged || currencyChanged) {
-            syncImportUpdateDetails(entity, inventoryOrgChanged, currencyChanged, monthRateCache);
+            applyImportUpdateDetailChanges(entity, inventoryOrgChanged, currencyChanged, monthRateCache, detailMap, detailsToUpdate);
         }
     }
 
-    private void syncImportUpdateDetails(SoReturnInstockEntity entity, boolean inventoryOrgChanged, boolean currencyChanged,
-                                         Map<String, BigDecimal> monthRateCache) {
-        List<SoReturnInstockDetailEntity> detailList = soReturnInstockDetailService.listDetailByMainId(entity.getId());
+    private void applyImportUpdateDetailChanges(SoReturnInstockEntity entity,
+                                                boolean inventoryOrgChanged,
+                                                boolean currencyChanged,
+                                                Map<String, BigDecimal> monthRateCache,
+                                                Map<String, List<SoReturnInstockDetailEntity>> detailMap,
+                                                List<SoReturnInstockDetailEntity> detailsToUpdate) {
+        List<SoReturnInstockDetailEntity> detailList = detailMap.getOrDefault(entity.getId(), Collections.emptyList());
         if (CollUtil.isEmpty(detailList)) {
             return;
         }
@@ -3281,22 +3335,40 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 }
             }
         }
-        if (!soReturnInstockDetailService.updateBatchById(detailList)) {
-            throw new ServiceException(ApiError.BILL_UPDATE_FAILED);
+        detailsToUpdate.addAll(detailList);
+    }
+
+    private void batchUpdateImportDetails(List<SoReturnInstockDetailEntity> detailsToUpdate) {
+        if (CollUtil.isEmpty(detailsToUpdate)) {
+            return;
+        }
+        for (int i = 0; i < detailsToUpdate.size(); i += IMPORT_UPDATE_DETAIL_BATCH_SIZE) {
+            int end = Math.min(i + IMPORT_UPDATE_DETAIL_BATCH_SIZE, detailsToUpdate.size());
+            List<SoReturnInstockDetailEntity> batch = detailsToUpdate.subList(i, end);
+            if (!soReturnInstockDetailService.updateBatchById(new ArrayList<>(batch))) {
+                throw new ServiceException(ApiError.BILL_UPDATE_FAILED);
+            }
         }
     }
 
     private BigDecimal resolveImportExchangeRate(SoReturnInstockEntity entity, Map<String, BigDecimal> monthRateCache) {
         LocalDate billDate = entity.getBillDate() != null ? entity.getBillDate() : LocalDate.now();
-        String currency = CharSequenceUtil.blankToDefault(entity.getCurrency(), "CNY");
-        if (CurrencyEnum.CNY.getCurrencyCode().equals(currency)) {
+        String currency = CharSequenceUtil.blankToDefault(entity.getCurrency(), CurrencyEnum.CNY.getCurrencyCode());
+        return loadImportMonthRate(billDate, currency, monthRateCache, true);
+    }
+
+    private BigDecimal loadImportMonthRate(LocalDate billDate, String currency,
+                                           Map<String, BigDecimal> monthRateCache, boolean throwIfMissing) {
+        String normalizedCurrency = CharSequenceUtil.blankToDefault(currency, CurrencyEnum.CNY.getCurrencyCode());
+        if (CurrencyEnum.CNY.getCurrencyCode().equals(normalizedCurrency)) {
             return MathUtil.BigDecimal_1;
         }
-        String cacheKey = buildImportMonthRateCacheKey(billDate, currency);
-        BigDecimal exchangeRate = monthRateCache.get(cacheKey);
-        if (exchangeRate == null || MathUtil.compareTo(exchangeRate, BigDecimal.ZERO) == MathUtil.ZERO) {
+        String cacheKey = buildImportMonthRateCacheKey(billDate, normalizedCurrency);
+        BigDecimal exchangeRate = monthRateCache.computeIfAbsent(cacheKey,
+                k -> dmpTaskFeign.getMonthRate(billDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), normalizedCurrency));
+        if (throwIfMissing && (exchangeRate == null || MathUtil.compareTo(exchangeRate, BigDecimal.ZERO) == MathUtil.ZERO)) {
             throw new ServiceException(ApiError.COMMON_EXCHANGE_RATE_NOT_EXIST,
-                    billDate.format(DateTimeFormatter.ofPattern("yyyy-MM")), currency);
+                    billDate.format(DateTimeFormatter.ofPattern("yyyy-MM")), normalizedCurrency);
         }
         return exchangeRate;
     }
@@ -3579,6 +3651,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         List<SoReturnInstockDTO.ImportAddBundle> persistedBundles = new ArrayList<>();
         for (SoReturnInstockDTO.ImportAddBundle bundle : toPersistList) {
             try {
+                enrichImportAddExchangeRates(Collections.singletonList(bundle));
                 self.persistAllImportAdd(Collections.singletonList(bundle));
                 persistedBundles.add(bundle);
             } catch (Exception e) {
