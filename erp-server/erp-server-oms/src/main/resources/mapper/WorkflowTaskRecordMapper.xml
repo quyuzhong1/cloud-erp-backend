@@ -29,24 +29,55 @@
        <result column="end_time" property="endTime" />
        <result column="remark" property="remark" />
     </resultMap>
-    <select id="listErrorTask" resultType="com.erp.model.oms.entity.WorkflowTaskRecordEntity">
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,create_user_id,create_user_name,create_time,update_user_id,update_user_name,update_time,version,is_deleted,
+        source_id,index,class_path,status,retry_count,last_error,output_data,input_data,instance_id,target_service,target_endpoint,
+        feign_duration_ms,error_source,start_time,end_time,remark,source_type,source_code,dict_basic_id,trace_id
+    </sql>
+
+    <sql id="Record_Column_List">
+        wtr.id, wtr.create_user_id, wtr.create_user_name, wtr.create_time, wtr.update_user_id, wtr.update_user_name,
+        wtr.update_time, wtr.version, wtr.is_deleted, wtr.source_id, wtr.index, wtr.class_path, wtr.status,
+        wtr.retry_count, wtr.last_error, wtr.output_data, wtr.input_data, wtr.instance_id, wtr.target_service,
+        wtr.target_endpoint, wtr.feign_duration_ms, wtr.error_source, wtr.start_time, wtr.end_time, wtr.remark,
+        wtr.source_type, wtr.source_code, wtr.dict_basic_id, wtr.trace_id
+    </sql>
+
+    <!-- type=instance：按实例维度，关联 workflow_task_instance，仅查非 success 且实例非终态 -->
+    <select id="listErrorTaskByInstance" resultType="com.erp.model.oms.entity.WorkflowTaskRecordEntity">
         SELECT
-            id,create_user_id,create_user_name,create_time,update_user_id,update_user_name,update_time,version,is_deleted,
-            source_id,index,class_path,status,retry_count,last_error,output_data,input_data,instance_id,target_service,target_endpoint,
-            feign_duration_ms,error_source,start_time,end_time,remark
-        FROM
-            workflow_task_record
-        WHERE
-            is_deleted = false
-            and (source_type, source_id) IN (
-                SELECT DISTINCT source_type, source_id
-                FROM workflow_task_record
-                WHERE status !='success'
-                  and is_deleted = false
-            )
+            <include refid="Record_Column_List" />
+        FROM workflow_task_record wtr
+        INNER JOIN workflow_task_instance wti
+            ON wti.id = wtr.instance_id AND wti.is_deleted = false
+        WHERE wtr.is_deleted = false
+          AND wtr.status != 'success'
+          AND wtr.instance_id IS NOT NULL
+          AND wtr.instance_id != ''
+          AND wti.status NOT IN ('success', 'cancelled')
         <if test="id != null and id != ''">
-            and source_id = #{id}
+            AND wtr.source_id = #{id}
         </if>
+        ORDER BY wtr.instance_id, wtr.index
+    </select>
+
+    <!-- type=record：按 source 维度，保留历史 source 子查询逻辑（含 legacy 无 instance 节点） -->
+    <select id="listErrorTaskByRecord" resultType="com.erp.model.oms.entity.WorkflowTaskRecordEntity">
+        SELECT
+            <include refid="Base_Column_List" />
+        FROM workflow_task_record
+        WHERE is_deleted = false
+          AND (source_type, source_id) IN (
+            SELECT DISTINCT source_type, source_id
+            FROM workflow_task_record
+            WHERE status != 'success'
+              AND is_deleted = false
+          )
+        <if test="id != null and id != ''">
+            AND source_id = #{id}
+        </if>
+        ORDER BY source_type, source_id, index
     </select>
 
     <select id="getTaskErrorReport" resultType="com.erp.model.oms.dto.WorkflowTaskRecordDTO$TaskErrorReportDTO">
@@ -60,7 +91,7 @@
             left join dict_basic as db on wtr.dict_basic_id = db.id and db.is_deleted = false
         WHERE
             wtr.is_deleted = FALSE
-        and wtr.retry_count > 3
+        and wtr.retry_count > #{maxRetryCount}
         and wtr.source_type !=''
 	    and wtr.dict_basic_id != ''
 	    AND wtr.status =  'failed'

@@ -43,6 +43,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -397,23 +398,42 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
 
 
     /**
-     * 查询异常节点列表（用于补偿任务扫描）。
+     * 按实例维度查询异常节点（关联 workflow_task_instance，实例非终态）。
      */
     @Override
-    public List<WorkflowTaskRecordEntity> listErrorTask() {
-        return baseMapper.listErrorTask("");
+    public List<WorkflowTaskRecordEntity> listErrorTaskByInstance(String id) {
+        return baseMapper.listErrorTaskByInstance(CharSequenceUtil.blankToDefault(id, ""));
+    }
+
+    /**
+     * 按 source 维度查询异常节点（历史逻辑，含 legacy 无 instance 数据）。
+     */
+    @Override
+    public List<WorkflowTaskRecordEntity> listErrorTaskByRecord(String id) {
+        return baseMapper.listErrorTaskByRecord(CharSequenceUtil.blankToDefault(id, ""));
     }
 
     /**
      * 定时补偿入口：按实例维度聚合异常节点并触发最小 index 节点重试。
      */
     @Override
-    public void WorkflowTaskRecordRetryJob(String id) {
+    public void workflowTaskRecordRetryJob(String id, String type) {
         compensateStuckChainSteps();
-        List<WorkflowTaskRecordEntity> list = baseMapper.listErrorTask(id);
+        List<WorkflowTaskRecordEntity> list;
+        if ("instance".equalsIgnoreCase(type)) {
+            list =  listErrorTaskByInstance(id);
+        }else if ("record".equalsIgnoreCase(type)) {
+            list = listErrorTaskByRecord(id);
+        }else {
+            log.warn("workflowTaskRecordRetryJob 未知 type={}", type);
+            return;
+        }
         if (CollectionUtil.isEmpty(list)) {
             return ;
         }
+        List<String> instanceIds = list.stream().map(WorkflowTaskRecordEntity::getInstanceId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<WorkflowTaskInstanceEntity> instanceEntityList = CollUtil.isNotEmpty(instanceIds) ? workflowTaskInstanceService.listByIds(instanceIds) : Collections.emptyList();
+        Map<String, WorkflowTaskInstanceEntity> instanceEntityMap = instanceEntityList.stream().collect(Collectors.toMap(WorkflowTaskInstanceEntity::getId, Function.identity()));
         Map<String, List<WorkflowTaskRecordEntity>> map = list.stream()
                 .collect(Collectors.groupingBy(this::resolveRetryJobGroupKey));
         for (Map.Entry<String, List<WorkflowTaskRecordEntity>> entry : map.entrySet()) {
@@ -427,11 +447,18 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
             if (count > 0) {
                 continue;
             }
-            WorkflowTaskRecordEntity entity = instanceTasks.stream()
+            Optional<WorkflowTaskRecordEntity> candidate = instanceTasks.stream()
                     .filter(e -> !WorkflowTaskRecordStatusEnum.SUCCESS.getCode().equals(e.getStatus()))
-                    .min(Comparator.comparing(WorkflowTaskRecordEntity::getIndex))
-                    .orElse(instanceTasks.get(0));
-            WorkflowTaskInstanceEntity instance = resolveRetryJobInstance(entity, instanceTasks);
+                    .min(Comparator.comparing(WorkflowTaskRecordEntity::getIndex));
+            if (!candidate.isPresent()) {
+                continue;
+            }
+            WorkflowTaskRecordEntity entity = candidate.get();
+            if ("instance".equalsIgnoreCase(type)
+                    && shouldSkipListErrorTaskForStuckChain(instanceEntityMap.get(entity.getInstanceId()), instanceTasks, entity)) {
+                continue;
+            }
+            WorkflowTaskInstanceEntity instance = resolveRetryJobInstance(entity, instanceTasks,instanceEntityMap);
             if (instance == null) {
                 log.warn("任务节点补偿重试跳过，未找到有效实例，sourceType={}, sourceId={}, instanceId={}",
                         entity.getSourceType(), entity.getSourceId(), entity.getInstanceId());
@@ -461,6 +488,30 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
     }
 
     /**
+     * 链式断链场景已由 compensateStuckChainSteps 补发 MQ，listErrorTask 跳过避免同次 Job 重复调度。
+     */
+    private boolean shouldSkipListErrorTaskForStuckChain(WorkflowTaskInstanceEntity instance,
+                                                         List<WorkflowTaskRecordEntity> instanceTasks,
+                                                         WorkflowTaskRecordEntity candidate) {
+        if (instance == null || candidate == null || candidate.getIndex() == null) {
+            return false;
+        }
+        if (!WorkflowTaskInstanceStatusEnum.RUNNING.getCode().equals(instance.getStatus())) {
+            return false;
+        }
+        if (!Objects.equals(candidate.getIndex(), instance.getCurrentIndex() + 1)) {
+            return false;
+        }
+        Map<Integer, WorkflowTaskRecordEntity> indexMap = buildIndexTaskMap(instanceTasks);
+        WorkflowTaskRecordEntity current = indexMap.get(instance.getCurrentIndex());
+        if (current == null || !WorkflowTaskRecordStatusEnum.SUCCESS.getCode().equals(current.getStatus())) {
+            return false;
+        }
+        return WorkflowTaskRecordStatusEnum.PENDING.getCode().equals(candidate.getStatus())
+                || WorkflowTaskRecordStatusEnum.FAILED.getCode().equals(candidate.getStatus());
+    }
+
+    /**
      * 计算补偿分组键：优先 instance 维度，否则回退 legacy 维度。
      */
     private String resolveRetryJobGroupKey(WorkflowTaskRecordEntity entity) {
@@ -475,9 +526,10 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
      * 若仍不存在且为历史 legacy 节点，则在 Job 内补建实例并回填 instance_id。
      */
     private WorkflowTaskInstanceEntity resolveRetryJobInstance(WorkflowTaskRecordEntity entity,
-                                                               List<WorkflowTaskRecordEntity> groupTasks) {
+                                                               List<WorkflowTaskRecordEntity> groupTasks,
+                                                               Map<String, WorkflowTaskInstanceEntity> instanceEntityMap) {
         if (CharSequenceUtil.isNotBlank(entity.getInstanceId())) {
-            WorkflowTaskInstanceEntity instance = workflowTaskInstanceService.getById(entity.getInstanceId());
+            WorkflowTaskInstanceEntity instance = instanceEntityMap.get(entity.getInstanceId());
             if (instance != null && !Boolean.TRUE.equals(instance.getIsDeleted())) {
                 return instance;
             }
@@ -520,7 +572,7 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
      */
     @Override
     public List<WorkflowTaskRecordDTO.TaskErrorReportDTO> getTaskErrorReport() {
-        return  baseMapper.getTaskErrorReport();
+        return baseMapper.getTaskErrorReport(AUTO_RETRY_MAX_COUNT);
     }
 
     /**
@@ -547,6 +599,7 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
             sourceType = dto.getSourceType();
             sourceId = dto.getSourceId();
         }
+        assertForceRetryDataPermission(dto);
         return SpringUtil.getBean(WorkflowTaskRecordServiceImpl.class).forceRetryWithLock(dto, sourceType, sourceId);
     }
 
@@ -575,13 +628,16 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
                 continue;
             }
             Map<Integer, WorkflowTaskRecordEntity> indexTaskMap = buildIndexTaskMap(groupTasks);
-            for (WorkflowTaskRecordEntity entity : resetTasks) {
-                resetForceRetryTask(entity, dto, indexTaskMap);
-                resetCount++;
-            }
             WorkflowTaskRecordEntity dispatchTask = resetTasks.stream()
                     .min(Comparator.comparing(WorkflowTaskRecordEntity::getIndex))
                     .orElse(resetTasks.get(0));
+            List<WorkflowTaskRecordEntity> tasksToReset = retryByNodeId
+                    ? resetTasks
+                    : Collections.singletonList(dispatchTask);
+            for (WorkflowTaskRecordEntity entity : tasksToReset) {
+                resetForceRetryTask(entity, dto, indexTaskMap);
+                resetCount++;
+            }
             syncInstanceOnForceRetry(dispatchTask);
             registerForceRetryMq(dispatchTask);
             mqCount++;
@@ -959,6 +1015,8 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
             return;
         }
         WorkflowTaskRecordEntity taskEntity = this.lambdaQuery()
+                .eq(CharSequenceUtil.isNotBlank(entity.getInstanceId()),
+                        WorkflowTaskRecordEntity::getInstanceId, entity.getInstanceId())
                 .eq(WorkflowTaskRecordEntity::getSourceId, entity.getSourceId())
                 .eq(WorkflowTaskRecordEntity::getSourceType, entity.getSourceType())
                 .eq(WorkflowTaskRecordEntity::getIsDeleted, false)
@@ -973,6 +1031,8 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
                 entity.getTraceId(),
                 Objects.nonNull(e.getMessage()) ? e.getMessage() : e.getClass().getSimpleName());
         this.lambdaUpdate()
+                .eq(CharSequenceUtil.isNotBlank(entity.getInstanceId()),
+                        WorkflowTaskRecordEntity::getInstanceId, entity.getInstanceId())
                 .eq(WorkflowTaskRecordEntity::getId, taskEntity.getId())
                 .set(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.FAILED.getCode())
                 .set(WorkflowTaskRecordEntity::getLastError, errorMsg)
@@ -1020,6 +1080,30 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
     public String getPreviousSuccessOutputData(WorkflowTaskRecordEntity entity,
                                                Map<Integer, WorkflowTaskRecordEntity> indexTaskMap) {
         return getPreviousSuccessOutputDataInternal(entity, indexTaskMap);
+    }
+
+    /**
+     * 强制重试数据权限兜底：按 instanceId / 节点所属实例 / 最新实例校验数据范围。
+     */
+    private void assertForceRetryDataPermission(WorkflowTaskRecordDTO.ForceRetryDTO dto) {
+        if (CharSequenceUtil.isNotBlank(dto.getInstanceId())) {
+            workflowTaskInstanceService.assertInstanceDataPermission(dto.getInstanceId());
+            return;
+        }
+        if (CharSequenceUtil.isNotBlank(dto.getId())) {
+            WorkflowTaskRecordEntity task = getById(dto.getId());
+            if (task != null && CharSequenceUtil.isNotBlank(task.getInstanceId())) {
+                workflowTaskInstanceService.assertInstanceDataPermission(task.getInstanceId());
+            }
+            return;
+        }
+        if (CharSequenceUtil.isBlank(dto.getSourceType()) || CharSequenceUtil.isBlank(dto.getSourceId())) {
+            return;
+        }
+        WorkflowTaskInstanceEntity instance = workflowTaskInstanceService.getLatestBySource(dto.getSourceId(), dto.getSourceType());
+        if (instance != null) {
+            workflowTaskInstanceService.assertInstanceDataPermission(instance.getId());
+        }
     }
 
     /**

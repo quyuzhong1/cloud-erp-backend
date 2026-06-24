@@ -1,24 +1,21 @@
 package com.erp.server.oms.controller.api;
 
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import javax.annotation.Resource;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
-import com.common.core.anno.LogViewService;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
+import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
+import com.erp.server.oms.service.WorkflowTaskRecordService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.common.core.controller.BaseController;
-import com.erp.server.oms.service.WorkflowTaskRecordService;
-import com.common.core.controller.vo.ApiResult;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
-import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
+import javax.annotation.Resource;
 
 /**
  * 任务节点记录表
@@ -34,11 +31,6 @@ public class WorkflowTaskRecordController extends BaseController {
 
     @Resource
     private WorkflowTaskRecordService workflowTaskRecordService;
-
-    @GetMapping("/WorkflowTaskRecordRetryJob")
-    public void WorkflowTaskRecordRetryJob(@RequestParam("id") String id) {
-        workflowTaskRecordService.WorkflowTaskRecordRetryJob(id);
-    }
 
     @PostMapping("/forceRetry")
     @LogAction(value = LogActionEnum.EXECUTE, desc = "任务节点人工强制重试")

@@ -216,5 +216,12 @@ public interface WorkflowTaskInstanceService extends SuperService<WorkflowTaskIn
 
     void cancel(WorkflowTaskInstanceDTO.CancelDTO dto);
 
+    /**
+     * 校验当前用户对编排实例的数据权限（创建人/部门范围）。
+     *
+     * @param instanceId 实例 ID
+     */
+    void assertInstanceDataPermission(String instanceId);
+
 }
 
