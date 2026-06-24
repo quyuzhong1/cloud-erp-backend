@@ -112,7 +112,6 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
         PackageForecastEntity entity = getForecastOrThrow(id);
         validateUploadable(entity);
         try {
-            entity.setUploadStatus(PackageUploadStatusEnum.UPLOAD_SUCCESS.getCode());
             entity.setCollectMode(collectMode);
             entity.setCollectAddressId(collectAddressId);
             uploadAliExpress(entity, collectAddressId);
@@ -187,27 +186,38 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
         findDTO.setDictPlatform(logisticsPlatform);
         findDTO.setPlatformType(appClientEnum.getPlatformType());
         CfgAppClientEntity cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
+        if (Objects.isNull(cfgAppClient)) {
+            throw new ServiceException("未找到对应平台");
+        }
         ApiResult<List<ShopAuthEntity>> shopAuthResult = shopInfoFeign.getAuthShopByPlatformType(logisticsPlatform);
-        if (!shopAuthResult.isSuccess()) {
+        if (Objects.isNull(shopAuthResult) || !shopAuthResult.isSuccess()) {
             throw new ServiceException("获取店铺token失败");
+        }
+        if (CollectionUtils.isEmpty(shopAuthResult.getData())) {
+            throw new ServiceException("获取店铺token为空");
         }
         String sellerIdFlag = PackageForecastConstant.SELLER_ID;
         List<ShopAuthEntity> shopAuthList = shopAuthResult.getData().stream()
-                .filter(s -> s.getExtendData().contains(sellerIdFlag) && shopId.equals(s.getShopId()))
+                .filter(s -> StringUtils.isNotBlank(s.getExtendData())
+                        && s.getExtendData().contains(sellerIdFlag)
+                        && shopId.equals(s.getShopId()))
                 .collect(Collectors.toList());
         if (CollectionUtils.isEmpty(shopAuthList)) {
             throw new ServiceException("获取店铺速卖通卖家id失败");
         }
-        if (Objects.isNull(cfgAppClient)) {
-            throw new ServiceException("未找到对应平台");
-        }
         ShopAuthEntity shopAuthEntity = shopAuthList.get(0);
+        if (StringUtils.isBlank(shopAuthEntity.getToken())) {
+            throw new ServiceException("获取店铺token为空");
+        }
         Map<String, String> authMap = new HashMap<>(4);
         authMap.put("clientId", cfgAppClient.getClientId());
         authMap.put("clientSecret", cfgAppClient.getClientSecret());
         authMap.put("token", shopAuthEntity.getToken());
         JSONObject jsonObject = JSONObject.parseObject(shopAuthEntity.getExtendData());
         String sellerId = jsonObject.getString("sellerId");
+        if (StringUtils.isBlank(sellerId)) {
+            throw new ServiceException("获取店铺速卖通卖家id失败");
+        }
         UserInfo userInfo = UserInfo.builder().topUserKey(sellerId).build();
         alExpressHandoverBaseDTO.setClient(PackageForecastConstant.CLIENT);
         alExpressHandoverBaseDTO.setAuthMap(authMap);
@@ -264,9 +274,7 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
             if (CollectionUtils.isEmpty(parcelOrderList)) {
                 return;
             }
-            parcelOrderList.forEach(parcelOrder -> {
-                packageForecastDetailService.updateStatusByOrderCode(parcelOrder.getOrderCode(), parcelOrder.getStatus());
-            });
+            batchUpdateDetailStatus(parcelOrderList);
         } catch (ApiException e) {
             log.error("接口调用异常记录：{}", e.getErrorMessage());
         }
@@ -310,6 +318,8 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
         String addressName = addressEntity.getName();
         entity.setCollectAddress(addressName);
         addBigPackage(entity, addressEntity);
+        entity.setUploadStatus(PackageUploadStatusEnum.UPLOAD_SUCCESS.getCode());
+        entity.setPlatformNo(buildPlatformNo(entity.getHandoverNo(), entity.getPlatformPackageNo()));
         packageForecastMapper.updateById(entity);
         asyncSyncAfterCommit(entity);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "上传成功");
@@ -410,22 +420,58 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
                 .build();
         try {
             IopResponse iopResponse = aliExpressHandoverService.commit(authMap, commitRequest);
+            if (Objects.isNull(iopResponse) || StringUtils.isBlank(iopResponse.getBody())) {
+                throw new ServiceException("速卖通提交交接单响应为空");
+            }
             BaseResult baseResult = JSONObject.parseObject(iopResponse.getBody(), BaseResult.class);
+            if (Objects.isNull(baseResult)) {
+                throw new ServiceException("速卖通提交交接单响应为空");
+            }
             if (Objects.nonNull(baseResult.getErrorResponse())) {
                 throw new ServiceException(baseResult.getErrorResponse().getSubMsg());
             }
-            HandoverCommitResult handoverCommitResult = JSONObject.parseObject(baseResult.getResult(), HandoverCommitResult.class);
-            if (Objects.nonNull(handoverCommitResult) && handoverCommitResult.getSuccess()) {
-                if (Objects.isNull(handoverCommitResult.getResponse())) {
-                    throw new ServiceException("速卖通提交交接单响应为空");
-                }
-                entity.setHandoverNo(handoverCommitResult.getResponse().getHandoverContentCode());
-                entity.setPlatformPackageNo(String.valueOf(handoverCommitResult.getResponse().getHandoverContentId()));
-                entity.setRemark("");
+            if (StringUtils.isBlank(baseResult.getResult())) {
+                throw new ServiceException(StringUtils.defaultIfBlank(baseResult.getErrorMsg(), "速卖通提交交接单响应为空"));
             }
+            HandoverCommitResult handoverCommitResult = JSONObject.parseObject(baseResult.getResult(), HandoverCommitResult.class);
+            if (Objects.isNull(handoverCommitResult) || !Boolean.TRUE.equals(handoverCommitResult.getSuccess())) {
+                throw new ServiceException(StringUtils.defaultIfBlank(baseResult.getErrorMsg(), "速卖通提交交接单失败"));
+            }
+            if (Objects.isNull(handoverCommitResult.getResponse())) {
+                throw new ServiceException("速卖通提交交接单响应为空");
+            }
+            entity.setHandoverNo(handoverCommitResult.getResponse().getHandoverContentCode());
+            entity.setPlatformPackageNo(String.valueOf(handoverCommitResult.getResponse().getHandoverContentId()));
+            entity.setRemark("");
         } catch (ApiException e) {
             log.error("创建交接单失败>>>>>>{}", e);
             throw new ServiceException(e.getMessage());
         }
+    }
+
+    private void batchUpdateDetailStatus(List<ParcelOrder> parcelOrderList) {
+        Map<String, String> statusMap = parcelOrderList.stream()
+                .filter(parcelOrder -> StringUtils.isNotBlank(parcelOrder.getOrderCode())
+                        && StringUtils.isNotBlank(parcelOrder.getStatus()))
+                .collect(Collectors.toMap(ParcelOrder::getOrderCode, ParcelOrder::getStatus, (oldValue, newValue) -> newValue));
+        if (statusMap.isEmpty()) {
+            return;
+        }
+        List<PackageForecastDetailEntity> detailList = packageForecastDetailService.lambdaQuery()
+                .in(PackageForecastDetailEntity::getSourceCode, statusMap.keySet())
+                .eq(PackageForecastDetailEntity::getIsDeleted, false)
+                .list();
+        if (CollectionUtils.isEmpty(detailList)) {
+            return;
+        }
+        detailList.forEach(detail -> detail.setHandoverStatus(statusMap.get(detail.getSourceCode())));
+        packageForecastDetailService.updateBatchById(detailList);
+    }
+
+    private String buildPlatformNo(String handoverNo, String platformPackageNo) {
+        if (StringUtils.isBlank(handoverNo) && StringUtils.isBlank(platformPackageNo)) {
+            return "";
+        }
+        return StringUtils.defaultString(handoverNo) + "/" + StringUtils.defaultString(platformPackageNo);
     }
 }

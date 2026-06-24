@@ -18,12 +18,10 @@ import com.sdk.oms.tiktok.dto.tiktok.packages.CombinePackageGroupsBean;
 import com.sdk.oms.tiktok.dto.tiktok.packages.CombinePackagePramDTO;
 import com.sdk.oms.tiktok.dto.tiktok.split.CombinePackageViewDTO;
 import com.sdk.oms.tiktok.service.TikTokPackageService;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.io.IOException;
@@ -53,8 +51,6 @@ public class TikTokPackageForecastAdapter extends AbstractPackageForecastPlatfor
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public List<BatchResultDTO> upload(PackageForecastDTO.UploadDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -82,6 +78,8 @@ public class TikTokPackageForecastAdapter extends AbstractPackageForecastPlatfor
             entity.setCollectAddressId(collectAddressId);
             String newPackageId = tikTokMergePackage(entity);
             entity.setHandoverNo(newPackageId);
+            entity.setPlatformPackageNo(newPackageId);
+            entity.setPlatformNo(buildPlatformNo(entity.getHandoverNo(), entity.getPlatformPackageNo()));
             entity.setUploadStatus(PackageUploadStatusEnum.UPLOAD_SUCCESS.getCode());
             packageForecastMapper.updateById(entity);
             return BatchResultDTO.success(entity.getId(), entity.getCode(), "上传成功");
@@ -108,8 +106,6 @@ public class TikTokPackageForecastAdapter extends AbstractPackageForecastPlatfor
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public List<BatchResultDTO> cancel(List<String> ids) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
         for (String id : ids) {
@@ -212,7 +208,11 @@ public class TikTokPackageForecastAdapter extends AbstractPackageForecastPlatfor
                 || CollectionUtils.isEmpty(combinePackageViewDTO.getData().getPackages())) {
             throw new ServiceException("TIKTOK组包失败：未返回有效包裹信息");
         }
-        return combinePackageViewDTO.getData().getPackages().get(0).getId();
+        String newPackageId = combinePackageViewDTO.getData().getPackages().get(0).getId();
+        if (StringUtils.isBlank(newPackageId)) {
+            throw new ServiceException("TIKTOK组包失败：未返回有效包裹号");
+        }
+        return newPackageId;
     }
 
     private String tikTokPrint(PackageForecastEntity entity) {
@@ -229,5 +229,12 @@ public class TikTokPackageForecastAdapter extends AbstractPackageForecastPlatfor
         } catch (Exception e) {
             throw new ServiceException(e.getMessage());
         }
+    }
+
+    private String buildPlatformNo(String handoverNo, String platformPackageNo) {
+        if (StringUtils.isBlank(handoverNo) && StringUtils.isBlank(platformPackageNo)) {
+            return "";
+        }
+        return StringUtils.defaultString(handoverNo) + "/" + StringUtils.defaultString(platformPackageNo);
     }
 }

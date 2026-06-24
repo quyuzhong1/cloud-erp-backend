@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -78,11 +79,7 @@ public class ShopeeWebhookHandler implements WebhookHandler{
                 log.warn("虾皮webhook 未找到任务配置，code={}", CFG_INPUT_CODE);
                 return WebhookResult.isSuccess();
             }
-            DmpCfgInputDetailEntity detailEntity = dmpCfgInputDetailService.lambdaQuery()
-                    .eq(DmpCfgInputDetailEntity::getMainId, cfgInputEntity.getId())
-                    .eq(DmpCfgInputDetailEntity::getDisabled, Boolean.FALSE)
-                    .last("limit 1")
-                    .one();
+            DmpCfgInputDetailEntity detailEntity = resolveDetailEntity(cfgInputEntity.getId(), platformShopId);
             if (Objects.isNull(detailEntity)) {
                 log.warn("虾皮webhook 未找到任务明细配置，cfgInputId={}，shopId={}",
                         cfgInputEntity.getId(), platformShopId);
@@ -101,6 +98,39 @@ public class ShopeeWebhookHandler implements WebhookHandler{
             ThirdWarehouseContext.remove();
         }
         return WebhookResult.isSuccess();
+    }
+
+    private DmpCfgInputDetailEntity resolveDetailEntity(String cfgInputId, String platformShopId) {
+        List<DmpCfgInputDetailEntity> detailList = dmpCfgInputDetailService.lambdaQuery()
+                .eq(DmpCfgInputDetailEntity::getMainId, cfgInputId)
+                .eq(DmpCfgInputDetailEntity::getDisabled, Boolean.FALSE)
+                .list();
+        if (detailList.isEmpty()) {
+            return null;
+        }
+        String erpShopId = resolveErpShopId(platformShopId);
+        DmpCfgInputDetailEntity matchedDetail = detailList.stream()
+                .filter(detail -> Objects.equals(detail.getNextLevelId(), erpShopId)
+                        || Objects.equals(detail.getNextLevelId(), platformShopId))
+                .findFirst()
+                .orElse(null);
+        if (Objects.nonNull(matchedDetail)) {
+            return matchedDetail;
+        }
+        if (detailList.size() == 1) {
+            return detailList.get(0);
+        }
+        log.warn("虾皮webhook 存在多个任务明细但未匹配到店铺，cfgInputId={}，platformShopId={}，erpShopId={}",
+                cfgInputId, platformShopId, erpShopId);
+        return null;
+    }
+
+    private String resolveErpShopId(String platformShopId) {
+        ThirdMappingEntity mapping = thirdMappingService.getShopByThirdCode(platformShopId, PlatformDictEnum.SHOPEE.getCode());
+        if (Objects.isNull(mapping) || StringUtils.isBlank(mapping.getSysId())) {
+            return "";
+        }
+        return mapping.getSysId();
     }
 
 }

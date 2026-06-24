@@ -95,6 +95,7 @@ public abstract class AbstractPackageForecastPlatformAdapter implements PackageF
         entity.setHandoverNo("");
         entity.setRemark("");
         entity.setPlatformPackageNo("");
+        entity.setPlatformNo("");
     }
 
     protected String platformName(String platform) {

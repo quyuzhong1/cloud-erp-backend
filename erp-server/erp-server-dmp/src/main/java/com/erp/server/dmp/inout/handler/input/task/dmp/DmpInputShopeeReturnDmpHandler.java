@@ -27,6 +27,9 @@ public class DmpInputShopeeReturnDmpHandler extends DmpInputDbConvertDmpHandler 
 
     private static final int RETURN_SOLUTION_RETURN_AND_REFUND = 0;
 
+    private boolean parentTaskShopIdLoaded;
+    private String parentTaskShopId;
+
     @Override
     protected void afterConvertData(Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMaps) {
         super.afterConvertData(dmpInputDataDmpRelationMaps);
@@ -142,6 +145,10 @@ public class DmpInputShopeeReturnDmpHandler extends DmpInputDbConvertDmpHandler 
     }
 
     private String resolveParentTaskShopId() {
+        if (parentTaskShopIdLoaded) {
+            return parentTaskShopId;
+        }
+        parentTaskShopIdLoaded = true;
         if (dmpInputTaskEntity == null || StringUtils.isBlank(dmpInputTaskEntity.getParentTaskId())) {
             return null;
         }
@@ -149,7 +156,8 @@ public class DmpInputShopeeReturnDmpHandler extends DmpInputDbConvertDmpHandler 
         if (parentTask == null || StringUtils.isBlank(parentTask.getNextLevelId())) {
             return null;
         }
-        return parentTask.getNextLevelId();
+        parentTaskShopId = parentTask.getNextLevelId();
+        return parentTaskShopId;
     }
 
     private Integer parseInteger(Object value) {
