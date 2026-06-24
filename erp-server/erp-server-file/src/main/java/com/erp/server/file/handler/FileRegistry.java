@@ -26,9 +26,14 @@ import java.util.Objects;
 public class FileRegistry {
 
     /**
-     * Excel2007 单 sheet 物理行上限（含表头），{@code sheetMaxRows} 配置不得超过该值。
+     * Excel2007 单 sheet 物理行上限（含表头），{@code sheetMaxRows} / {@code singleSheetMaxRows} 配置不得超过该值。
      */
     private static final int SHEET_MAX_ROWS_UPPER = 1_048_576;
+
+    /**
+     * 单 sheet 分组/动态表头导出默认行数上限（含表头），与 {@code file.storage.singleSheetMaxRows} 缺省值一致。
+     */
+    private static final int SINGLE_SHEET_MAX_ROWS_DEFAULT = 200_000;
 
     /**
      * 分页每页条数上限，防止运维误配极大值导致单次 Feign/内存峰值过大或超时。
@@ -95,9 +100,9 @@ public class FileRegistry {
     private static Long maxTemplateExpandBytes;
 
     /**
-     * 单 sheet 分组报表导出时，单 sheet 最大行数（含表头），默认 Excel2007 物理上限 1048576。
-     * 供 {@link AbstractSingleSheetGroupPageFileEventHandler} 使用；
-     * 多 sheet 分组报表见 {@link AbstractMultiSheetGroupPageFileEventHandler}（沿用 {@link #sheetMaxRows}）。
+     * 单 sheet 分组报表导出时，单 sheet 最大行数（含表头），默认 200000，配置上限 {@link #SHEET_MAX_ROWS_UPPER}（1048576）。
+     * 供 {@link com.erp.server.file.core.AbstractSingleSheetGroupPageFileEventHandler} 使用；
+     * 多 sheet 分组报表见 {@link com.erp.server.file.core.AbstractMultiSheetGroupPageFileEventHandler}（沿用 {@link #sheetMaxRows}）。
      */
     @Getter
     private static Integer singleSheetMaxRows;
@@ -139,7 +144,7 @@ public class FileRegistry {
                 maxTemplateExpandBytes, MAX_TEMPLATE_EXPAND_BYTES_UPPER);
     }
 
-    @Value("${file.storage.singleSheetMaxRows:1048576}")
+    @Value("${file.storage.singleSheetMaxRows:200000}")
     public void setSingleSheetMaxRows(Integer singleSheetMaxRows) {
         FileRegistry.singleSheetMaxRows = clampUpper("file.storage.singleSheetMaxRows", singleSheetMaxRows,
                 SHEET_MAX_ROWS_UPPER);
@@ -209,11 +214,11 @@ public class FileRegistry {
     }
 
     /**
-     * 单 sheet 分组报表导出时的 sheet 行数上限（含表头），未注入或非法（&lt;1）时回退 Excel2007 物理上限（1048576）。
+     * 单 sheet 分组报表导出时的 sheet 行数上限（含表头），未注入或非法（&lt;1）时回退 {@link #SINGLE_SHEET_MAX_ROWS_DEFAULT}（200000）。
      */
     public static int singleSheetMaxRowsOrDefault() {
         Integer configured = singleSheetMaxRows;
-        return configured == null || configured < 1 ? SHEET_MAX_ROWS_UPPER : configured;
+        return configured == null || configured < 1 ? SINGLE_SHEET_MAX_ROWS_DEFAULT : configured;
     }
 
     /**

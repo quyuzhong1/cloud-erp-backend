@@ -2,17 +2,18 @@ package com.erp.server.file.core;
 
 /**
  * 大数据分组报表型分页导出：多 sheet 按 {@code file.storage.sheetMaxRows}（默认 10 万行）分页，
- * 同一业务分组不拆 sheet，额外预留 sheet 承接临界点回退，<strong>不做写后 trim</strong>（可接受尾部空 tab）。
+ * 同一业务分组不拆 sheet，额外预留 sheet 承接临界点回退；{@code finish()} 前通过
+ * {@link com.common.core.excel.RemoveTrailingUnusedDataSheetsWriteHandler} 移除未写入的尾部预留 sheet，避免占位符克隆页残留。
  * <p>
  * <strong>何时选用本类（方案 C）</strong>
  * <ul>
  *   <li>数据量超过单 sheet 容量，必须多 sheet 分页</li>
  *   <li>主从/分组展示：组内首行保留主表字段、后续行置空或汇总（见 {@link #beforeWriteGroupRows(Object, java.util.List)}）</li>
- *   <li>可接受导出 Excel 末尾偶尔多 1 个空 sheet tab（纯展示瑕疵，不影响数据正确性）</li>
+ *   <li>KEYSET 多页场景可能保守预展开多张 sheet，finish 前会 trim 未使用的预留页</li>
  * </ul>
  * <strong>何时选用 {@link AbstractSingleSheetGroupPageFileEventHandler}（方案 B）</strong>
  * <ul>
- *   <li>数据量可落在单 sheet 内（{@code file.storage.singleSheetMaxRows}，默认 Excel 物理上限 104 万行）</li>
+ *   <li>数据量可落在单 sheet 内（{@code file.storage.singleSheetMaxRows}，默认 20 万行）</li>
  *   <li>希望固定 1 张数据 sheet、无尾部空 tab</li>
  * </ul>
  * <strong>何时选用 {@link AbstractPageFileEventHandler}（无分组）</strong>
@@ -91,11 +92,19 @@ public abstract class AbstractMultiSheetGroupPageFileEventHandler<T, P> extends 
     }
 
     /**
-     * 分组临界点回退时额外预留的 sheet 数。默认 1；未使用的预留 sheet 保留为空 tab，不做写后删除。
+     * 分组临界点回退时额外预留的 sheet 数。默认 1；未使用的预留 sheet 在 {@code finish()} 前 trim 移除。
      * 超大分组或预估 sheet 数接近 {@link #maxTemplateDataSheets()} 时可重写增大。
      */
     @Override
     protected int sheetGroupExtraSheetCount() {
         return 1;
+    }
+
+    /**
+     * 移除尾部未 fill 的预留数据 sheet，避免占位符克隆页进入成品 Excel。
+     */
+    @Override
+    protected boolean trimTrailingUnusedDataSheets() {
+        return true;
     }
 }

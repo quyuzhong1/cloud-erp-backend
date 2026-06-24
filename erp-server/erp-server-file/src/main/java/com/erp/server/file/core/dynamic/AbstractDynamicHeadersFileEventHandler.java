@@ -14,6 +14,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.file.entity.FileTask;
 import com.erp.server.file.core.ExportTempFilesHandler;
+import com.erp.server.file.core.sheetgroup.SheetGroupWriteSupport;
 import com.erp.server.file.core.FileEventHandler;
 import com.erp.server.file.handler.FileRegistry;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -138,18 +139,23 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
         List<List<String>> header = convertHeadList(headers.values(), firstRowName());
         String sheetName = resolveSheetName(defaultSheetName, pageList);
 
-        int totalRows = 0;
-        int sheetNo = 0;
-        long rowsInSheet = 0;
         int maxRowsPerSheet = maxRowsPerSheet();
         int maxSheetNum = maxSheetCount();
+        assertExportWithinCapacity(totalCount, maxRowsPerSheet, maxSheetNum);
+
+        int totalRows = 0;
+        int fetchedRows = 0;
+        boolean groupKeeping = keepSheetGroupTogether();
+        SheetGroupWriteSupport.Buffer<LinkedHashMap<String, Object>> groupBuffer = groupKeeping
+                ? new SheetGroupWriteSupport.Buffer<>() : null;
+        SheetGroupWriteSupport.Policy groupPolicy = sheetGroupPolicy();
+        DynamicHeadersWriteCursor cursor = new DynamicHeadersWriteCursor();
         ExcelPrintUtils excelPrintUtils = new ExcelPrintUtils();
         try (FileOutputStream outputStream = new FileOutputStream(outFile)) {
             ExcelWriter excelWriter = excelPrintUtils.openDynamicHeadersWriter(outputStream, header, dynamicHeaderCellStyleStrategy());
             try {
-                WriteSheet writeSheet = buildWriteSheet(sheetNo, sheetName, header);
-                // 「按 sheet 逐行加工」状态：方法局部持有，单次导出独占，规避单例 Handler 字段并发；sheet 翻页时复位。
-                Object sheetState = newSheetState();
+                cursor.writeSheet = buildWriteSheet(cursor.sheetNo, sheetName, header);
+                cursor.sheetState = newSheetState();
                 for (int pageNo = 1; pageNo <= totalPage; pageNo++) {
                     if (pageNo > 1) {
                         dto.setCurrPage(pageNo);
@@ -158,8 +164,6 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
                             throw new ServiceException("导出分页查询失败，页码=" + pageNo);
                         }
                         pageList = pageData.getList();
-                        // 中间页空列表防静默丢数：pageNo 在 [1,totalPage] 内本应有数据，返回空属上游分页异常/数据并发变更；
-                        // 若放过会以不完整 Excel「成功」结束、totalRows 偏小，故显式失败（首页空已在上方按 totalCount 兜底）。
                         if (CollectionUtils.isEmpty(pageList)) {
                             throw new ServiceException("导出分页数据缺失：页码=" + pageNo + "（共 " + totalPage
                                     + " 页）返回空列表，但 totalCount=" + totalCount + " 预期仍有数据，疑似分页查询异常或数据并发变更，请重试或排查上游分页接口。");
@@ -170,41 +174,33 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
                     if (!CollectionUtils.isEmpty(pageList) && rowMaps.isEmpty() && totalCount > 0) {
                         throw new ServiceException("导出数据存在空行，请检查查询结果（页码=" + pageNo + "）");
                     }
-                    if (rowMaps.isEmpty() && totalRows == 0) {
-                        excelWriter.write(Collections.emptyList(), writeSheet);
+                    fetchedRows += rowMaps.size();
+                    List<LinkedHashMap<String, Object>> readyRows;
+                    if (groupKeeping) {
+                        readyRows = SheetGroupWriteSupport.drainReadyRows(rowMaps, groupBuffer,
+                                fetchedRows >= totalCount || isLastPage(pageNo, totalCount, pageSize), groupPolicy,
+                                this::sheetGroupKey);
+                    } else {
+                        readyRows = rowMaps;
                     }
-                    for (int idx = 0; idx < rowMaps.size();) {
-                        if (rowsInSheet >= maxRowsPerSheet) {
-                            sheetNo++;
-                            if (sheetNo >= maxSheetNum) {
-                                if (maxSheetNum <= 1) {
-                                    throw new ServiceException("导出数据量超过单 sheet 上限 " + maxRowsPerSheet
-                                            + " 行，请缩小筛选范围导出。");
-                                }
-                                throw new ServiceException("导出数据超过当前系统可承载的 sheet 数，请缩小筛选范围导出。");
-                            }
-                            writeSheet = buildWriteSheet(sheetNo, sheetName, header);
-                            rowsInSheet = 0;
-                            sheetState = newSheetState();
+                    if (readyRows.isEmpty() && totalRows == 0 && rowMaps.isEmpty()) {
+                        excelWriter.write(Collections.emptyList(), cursor.writeSheet);
+                    } else if (!CollectionUtils.isEmpty(readyRows)) {
+                        if (groupKeeping) {
+                            SheetGroupWriteSupport.validateContiguity(readyRows, groupBuffer, "pageNo=" + pageNo,
+                                    groupPolicy, this::sheetGroupKey);
                         }
-                        int room = maxRowsPerSheet - (int) rowsInSheet;
-                        int take = Math.min(room, rowMaps.size() - idx);
-                        List<List<Object>> batch = new ArrayList<>(take);
-                        for (int k = idx; k < idx + take; k++) {
-                            LinkedHashMap<String, Object> rowMap = rowMaps.get(k);
-                            decorateSheetRow(rowMap, sheetState, sheetNo);
-                            batch.add(toRow(rowMap, headers.keySet()));
-                        }
-                        excelWriter.write(batch, writeSheet);
-                        totalRows += take;
-                        rowsInSheet += take;
-                        idx += take;
+                        beforeWriteRows(readyRows);
+                        totalRows += writeRowMapsAcrossSheets(excelWriter, cursor, readyRows, headers.keySet(), header,
+                                sheetName, maxRowsPerSheet, maxSheetNum, groupKeeping);
                     }
-                    // 上游单页超发（返回行数超过 pageSize）时已写满 totalCount：提前结束，
-                    // 避免后续 pageNo 取到空列表被上方中间页守卫误判为「数据缺失」。
-                    if (totalRows >= totalCount) {
+                    if (fetchedRows >= totalCount || isLastPage(pageNo, totalCount, pageSize)) {
                         break;
                     }
+                }
+                if (groupKeeping) {
+                    totalRows += flushSheetGroupBuffer(excelWriter, cursor, groupBuffer, headers.keySet(), header,
+                            sheetName, maxRowsPerSheet, maxSheetNum);
                 }
                 if (totalCount > 0 && totalRows == 0) {
                     throw new ServiceException("导出失败：totalCount=" + totalCount
@@ -284,7 +280,7 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
 
     /**
      * 单 sheet 数据行上限。默认 {@code file.storage.sheetMaxRows}（多 sheet 分页，默认 10 万）。
-     * 单 sheet 变体 {@link AbstractSingleSheetDynamicHeadersFileEventHandler} 重写为 {@code file.storage.singleSheetMaxRows}。
+     * 单 sheet 变体 {@link AbstractSingleSheetDynamicHeadersFileEventHandler} 重写为 {@code file.storage.singleSheetMaxRows}（默认 20 万）。
      */
     protected int maxRowsPerSheet() {
         return Math.max(1, FileRegistry.sheetMaxRowsOrDefault());
@@ -337,6 +333,190 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
             row.add(map.get(key));
         }
         return row;
+    }
+
+    private static final class DynamicHeadersWriteCursor {
+        int sheetNo;
+        long rowsInSheet;
+        WriteSheet writeSheet;
+        Object sheetState;
+    }
+
+    private boolean isLastPage(int currPage, int totalCount, int pageSize) {
+        if (totalCount <= 0) {
+            return true;
+        }
+        return currPage >= computeTotalPage(totalCount, pageSize);
+    }
+
+    private int writeRowMapsAcrossSheets(ExcelWriter excelWriter, DynamicHeadersWriteCursor cursor,
+            List<LinkedHashMap<String, Object>> rowMaps, Collection<String> headerKeys, List<List<String>> header,
+            String sheetName, int maxRowsPerSheet, int maxSheetNum, boolean groupKeeping) {
+        int written = 0;
+        int idx = 0;
+        while (idx < rowMaps.size()) {
+            if (cursor.rowsInSheet >= maxRowsPerSheet) {
+                advanceToNextSheet(cursor, header, sheetName, maxRowsPerSheet, maxSheetNum, groupKeeping);
+            }
+            int room = maxRowsPerSheet - (int) cursor.rowsInSheet;
+            int hardRoom = maxRowsPerXlsxSheetHardLimit() - (int) cursor.rowsInSheet;
+            if (hardRoom <= 0) {
+                throw new ServiceException("导出数据超过 Excel 单 sheet 最大行数（约 104 万行），请缩小筛选范围或拆分导出。");
+            }
+            int take = Math.min(Math.min(room, hardRoom), rowMaps.size() - idx);
+            if (groupKeeping) {
+                take = SheetGroupWriteSupport.adjustTakeForSheetGroup(rowMaps, idx, take, this::sheetGroupKey);
+                if (take <= 0) {
+                    if (cursor.rowsInSheet > 0) {
+                        advanceToNextSheet(cursor, header, sheetName, maxRowsPerSheet, maxSheetNum, groupKeeping);
+                        continue;
+                    }
+                    throw SheetGroupWriteSupport.groupExceedsSingleSheetException(rowMaps.get(idx), sheetGroupPolicy(),
+                            this::sheetGroupKey);
+                }
+            }
+            List<List<Object>> batch = new ArrayList<>(take);
+            for (int k = idx; k < idx + take; k++) {
+                LinkedHashMap<String, Object> rowMap = rowMaps.get(k);
+                if (!groupKeeping) {
+                    decorateSheetRow(rowMap, cursor.sheetState, cursor.sheetNo);
+                }
+                batch.add(toRow(rowMap, headerKeys));
+            }
+            excelWriter.write(batch, cursor.writeSheet);
+            written += take;
+            cursor.rowsInSheet += take;
+            idx += take;
+        }
+        return written;
+    }
+
+    private void advanceToNextSheet(DynamicHeadersWriteCursor cursor, List<List<String>> header, String sheetName,
+            int maxRowsPerSheet, int maxSheetNum, boolean groupKeeping) {
+        cursor.sheetNo++;
+        if (cursor.sheetNo >= maxSheetNum) {
+            if (maxSheetNum <= 1) {
+                throw new ServiceException("导出数据量超过单 sheet 上限 " + maxRowsPerSheet + " 行，请缩小筛选范围导出。");
+            }
+            throw new ServiceException("导出数据超过当前系统可承载的 sheet 数，请缩小筛选范围导出。");
+        }
+        cursor.writeSheet = buildWriteSheet(cursor.sheetNo, sheetName, header);
+        cursor.rowsInSheet = 0;
+        if (!groupKeeping) {
+            cursor.sheetState = newSheetState();
+        }
+    }
+
+    private int flushSheetGroupBuffer(ExcelWriter excelWriter, DynamicHeadersWriteCursor cursor,
+            SheetGroupWriteSupport.Buffer<LinkedHashMap<String, Object>> buffer, Collection<String> headerKeys,
+            List<List<String>> header, String sheetName, int maxRowsPerSheet, int maxSheetNum) {
+        if (CollectionUtils.isEmpty(buffer.rows)) {
+            return 0;
+        }
+        List<LinkedHashMap<String, Object>> remaining = new ArrayList<>(buffer.rows);
+        buffer.rows.clear();
+        SheetGroupWriteSupport.validateContiguity(remaining, buffer, "flush", sheetGroupPolicy(), this::sheetGroupKey);
+        beforeWriteRows(remaining);
+        return writeRowMapsAcrossSheets(excelWriter, cursor, remaining, headerKeys, header, sheetName,
+                maxRowsPerSheet, maxSheetNum, true);
+    }
+
+    /**
+     * 导出开始前校验行数与 sheet 数上限。分组保护开启时在行数 cap 之外额外按
+     * {@link #computeEstimatedDataSheetCount(int, int)} + {@link #sheetGroupExtraSheetCount()} 估算 sheet 数，
+     * 避免临界点整组回退导致「行数未超 cap 但 sheet 先触顶」时仍跑完全部分页。
+     */
+    private void assertExportWithinCapacity(int totalCount, int maxRowsPerSheet, int maxSheetNum) {
+        if (totalCount <= 0) {
+            return;
+        }
+        long exportRowCap = (long) maxSheetNum * maxRowsPerSheet;
+        if (totalCount > exportRowCap) {
+            throw new ServiceException("导出数据量超过当前可承载的上限（约 " + exportRowCap
+                    + " 行），请缩小筛选范围导出。");
+        }
+        if (!keepSheetGroupTogether()) {
+            return;
+        }
+        int estimatedSheets = computeEstimatedDataSheetCount(totalCount, maxRowsPerSheet)
+                + Math.max(0, sheetGroupExtraSheetCount());
+        if (estimatedSheets > maxSheetNum) {
+            throw new ServiceException("导出数据量超过当前可承载的 sheet 数（预估约 " + estimatedSheets
+                    + " 张，上限 " + maxSheetNum + " 张；含分组临界点回退预留 "
+                    + sheetGroupExtraSheetCount() + " 张），请缩小筛选范围导出。");
+        }
+    }
+
+    /**
+     * 按总行数估算所需数据 sheet 数（向上取整），与模板路径 {@code computeDataSheetCountForTotalRows} 语义对齐。
+     */
+    protected int computeEstimatedDataSheetCount(int totalCount, int maxRowsPerSheet) {
+        if (totalCount <= 0) {
+            return 1;
+        }
+        long k = (totalCount + (long) maxRowsPerSheet - 1) / maxRowsPerSheet;
+        return (int) Math.max(1L, k);
+    }
+
+    /**
+     * 分组导出预检时，在 {@link #computeEstimatedDataSheetCount(int, int)} 估算值上额外加成的 sheet 数（仅用于
+     * {@link #assertExportWithinCapacity(int, int, int)} 早失败，<strong>不会</strong>预创建物理 sheet；写盘仍按需
+     * {@code EasyExcel.writerSheet} 逐张创建）。
+     * <p>
+     * 默认 {@code 0}（无分组或扁平导出不加成）；{@link AbstractMultiSheetGroupDynamicHeadersFileEventHandler}
+     * 为 {@code 1}，加成幅度与模板路径 {@code expandSheetCountForGroupKeeping} 的 {@code +sheetGroupExtraSheetCount}
+     * 一致，但模板侧用于预克隆 sheet，本处仅收紧预检。
+     */
+    protected int sheetGroupExtraSheetCount() {
+        return 0;
+    }
+
+    private SheetGroupWriteSupport.Policy sheetGroupPolicy() {
+        return new SheetGroupWriteSupport.Policy(keepSheetGroupTogether(), failOnNonContinuousSheetGroup(),
+                getClass().getName(), maxRowsPerSheet(), maxRowsPerXlsxSheetHardLimit());
+    }
+
+    /**
+     * 是否启用「同组不拆 sheet」保护。默认关闭；{@link AbstractMultiSheetGroupDynamicHeadersFileEventHandler} 开启。
+     */
+    protected boolean keepSheetGroupTogether() {
+        return false;
+    }
+
+    /**
+     * 分组 key；启用 {@link #keepSheetGroupTogether()} 后须保证上游按该 key 连续排序。
+     */
+    protected Object sheetGroupKey(LinkedHashMap<String, Object> row) {
+        return null;
+    }
+
+    /**
+     * 分组未连续出现时是否快速失败。展示强依赖连续分组时应重写为 {@code true}。
+     */
+    protected boolean failOnNonContinuousSheetGroup() {
+        return false;
+    }
+
+    /**
+     * xlsx 单 sheet 最大数据行（预留表头），与 {@link #maxRowsPerSheet()} 组合防止超过 Excel 行上限。
+     */
+    protected int maxRowsPerXlsxSheetHardLimit() {
+        int reservedHeaderRows = CharSequenceUtil.isNotBlank(firstRowName()) ? 2 : 1;
+        return Math.max(1, 1_048_576 - reservedHeaderRows - 1);
+    }
+
+    /**
+     * 写出前按连续 {@link #sheetGroupKey} 分组回调 {@link #beforeWriteGroupRows}。
+     */
+    protected void beforeWriteRows(List<LinkedHashMap<String, Object>> rows) {
+        SheetGroupWriteSupport.forEachContiguousGroup(rows, sheetGroupPolicy(), this::sheetGroupKey,
+                this::beforeWriteGroupRows);
+    }
+
+    /**
+     * 写出前对单个完整分组的加工钩子（跨页尾组已由基类合并后再回调）。
+     */
+    protected void beforeWriteGroupRows(Object groupKey, List<LinkedHashMap<String, Object>> groupRows) {
     }
 
     /**

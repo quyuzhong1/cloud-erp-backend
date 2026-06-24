@@ -5,7 +5,7 @@ import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.MouldInfoDTO;
 import com.erp.rpc.plm.feign.ExportPlmFeign;
-import com.erp.server.file.core.AbstractSingleSheetGroupPageFileEventHandler;
+import com.erp.server.file.core.AbstractMultiSheetGroupPageFileEventHandler;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 
@@ -14,8 +14,11 @@ import java.util.List;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_ORDER_TRACKING;
 
+/**
+ * 下单跟踪导出：按 {@code detailId} 分组展示，数据量超过单 sheet 时自动多 tab 分页（方案 C）。
+ */
 @Component
-public class ExportPlmOrderTrackingHandler extends AbstractSingleSheetGroupPageFileEventHandler<MouldInfoDTO.OrderTrackingExportDTO, MouldInfoDTO.PagingParamDTO> {
+public class ExportPlmOrderTrackingHandler extends AbstractMultiSheetGroupPageFileEventHandler<MouldInfoDTO.OrderTrackingExportDTO, MouldInfoDTO.PagingParamDTO> {
 
     @Resource
     private ExportPlmFeign exportPlmFeign;
@@ -62,8 +65,8 @@ public class ExportPlmOrderTrackingHandler extends AbstractSingleSheetGroupPageF
     }
 
     /**
-     * 基类已按 {@link #sheetGroupKey(MouldInfoDTO.OrderTrackingExportDTO)} 合并跨页尾组并强制单 sheet；
-     * 此处只处理单个完整明细分组内的重复行置空（仅首行保留）。
+     * 基类已按 {@link #sheetGroupKey(MouldInfoDTO.OrderTrackingExportDTO)} 合并跨页尾组，并按 sheet 容量多 tab 分页；
+     * 未使用的预留 sheet 在 finish 前 trim。此处只处理单个完整明细分组内的重复行置空（仅首行保留）。
      */
     @Override
     protected void beforeWriteGroupRows(Object groupKey, List<MouldInfoDTO.OrderTrackingExportDTO> groupRows) {
