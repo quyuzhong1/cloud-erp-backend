@@ -8,7 +8,10 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.constant.UserStateConstants;
 import com.common.business.dto.base.BaseDTO;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.erp.model.file.dto.FileDTO;
 import com.erp.model.file.dto.FileTaskParamsDTO;
 import com.erp.model.file.entity.FileTask;
@@ -122,11 +125,22 @@ public class FileTaskRepository extends ServiceImpl<FileTaskMapper, FileTask> im
 
     @Override
     public boolean removeWithAudit(FileTask fileTask, boolean userSystem) {
-        // 复用已加载实体走 updateById：触发 updateFill 审计填充并借助 version 乐观锁，
-        // 避免 removeById 仅置 is_deleted 而不更新更新时间/更新人；
-        // isUserSystem 标识让拦截器（ErpObjectHandler#updateFill）记录系统用户或当前登录人
-        fileTask.setIsDeleted(Boolean.TRUE);
-        fileTask.setIsUserSystem(userSystem);
-        return updateById(fileTask);
+        LocalDateTime nowDate = LocalDateTime.now();
+        LoginUser userInfo = UserContext.getNonLoginUser();
+        String userId = userInfo.getUid();
+        String userName = userInfo.getUserName();
+        if (userSystem) {
+            userId = UserStateConstants.USER_SYSTEM_ID;
+            userName = UserStateConstants.USER_SYSTEM;
+        }
+        // updateById 会排除 @TableLogic 字段，无法写入 is_deleted；改 lambdaUpdate 显式软删并填充审计字段
+        return this.lambdaUpdate()
+                .set(FileTask::getIsDeleted, Boolean.TRUE)
+                .set(FileTask::getUpdateTime, nowDate)
+                .set(FileTask::getUpdateUserId, userId)
+                .set(FileTask::getUpdateUserName, userName)
+                .eq(FileTask::getId, fileTask.getId())
+                .eq(FileTask::getVersion, fileTask.getVersion())
+                .update();
     }
 }
