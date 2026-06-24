@@ -130,6 +130,18 @@ public interface AfterSalePackService extends SuperService<AfterSalePackEntity> 
     List<AfterSalePackDTO.ViewDTO> viewByCodes(List<String> codes);
 
     /**
+     * 根据主键列表批量查询装箱单详情（含明细、仓位、采购退货信息）。
+     * <p>
+     * 用于"无箱唛号（code 为空）"场景的批量加载，对应 {@link #viewByCodes} 的 ID 版本。
+     * 调用方应在循环外一次性传入所有需要查询的 ID，避免在循环内逐条调用 {@link #view}。
+     * 入参中不存在的 ID 会被静默跳过（不抛异常），调用方自行判断结果是否完整。
+     *
+     * @param ids 装箱主键列表
+     * @return 按入参顺序返回的 ViewDTO 列表，过滤掉数据库中不存在的记录
+     */
+    List<AfterSalePackDTO.ViewDTO> viewByIds(List<String> ids);
+
+    /**
      * 将指定装箱单批量标记为已移仓（is_move_warehouse = true），并同步明细移入仓位。
      * <p>
      * 方法内部会<b>重新从库查询</b>最新的 is_move_warehouse 状态，若发现已有箱唛被标记为已移仓
