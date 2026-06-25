@@ -127,7 +127,7 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
                         resultDTOList.add(BatchResultDTO.success(id, soB2cEntity.getCode(), "重试成功"));
                     } catch (Exception e) {
                         log.error("平台仓订单重试生成出库失败, id: {}, code: {}", soB2cEntity.getId(), soB2cEntity.getCode(), e);
-                        resultDTOList.add(BatchResultDTO.fail(id, soB2cEntity.getCode(), "重试失败:" + e.getMessage()));
+                        resultDTOList.add(BatchResultDTO.fail(id, soB2cEntity.getCode(), "重试失败，请查看日志或联系管理员"));
                     }
                 } else {
                     Boolean flag = soOutstockFeign.afreshGenerateB2cOutstock(Arrays.asList(id));

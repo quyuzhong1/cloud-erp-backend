@@ -328,12 +328,23 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             throw new ServiceException("仅上传成功可操作");
         }
         //物流商
-        String supplierId = entity.getLogisticsSupplierId();
-        LogisticsSupplierDTO.AuthDTO authDTO = logisticsAuthFeign.getAuthBySupplierId(supplierId);
-        String logisticsPlatform = authDTO.getLogisticsPlatform();
-        PackageForecastPlatformAdapter adapter = packageForecastPlatformAdapterFactory.getByPlatform(logisticsPlatform)
-                .orElseThrow(() -> new ServiceException(platformName(logisticsPlatform) + "平台尚未对接取消上传"));
-        return firstResultOrThrow(adapter.cancel(Collections.singletonList(id)), "取消上传");
+        try {
+            String supplierId = entity.getLogisticsSupplierId();
+            LogisticsSupplierDTO.AuthDTO authDTO = logisticsAuthFeign.getAuthBySupplierId(supplierId);
+            String logisticsPlatform = authDTO.getLogisticsPlatform();
+            PackageForecastPlatformAdapter adapter = packageForecastPlatformAdapterFactory.getByPlatform(logisticsPlatform)
+                    .orElseThrow(() -> new ServiceException(platformName(logisticsPlatform) + "平台尚未对接取消上传"));
+            return firstResultOrThrow(adapter.cancel(Collections.singletonList(id)), "取消上传");
+        } catch (Exception e) {
+            log.error("组包预报单取消失败, id: {}, code: {}", entity.getId(), entity.getCode(), e);
+            entity.setRemark("取消失败原因:" + e.getMessage());
+            try {
+                this.updateById(entity);
+            } catch (Exception updateException) {
+                log.error("组包预报单取消失败后更新失败原因失败, id: {}, code: {}", entity.getId(), entity.getCode(), updateException);
+            }
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "取消上传失败:" + e.getMessage());
+        }
 
     }
 
@@ -349,7 +360,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             try {
                 cancelResult = this.cancel(id);
             } catch (Exception e) {
-                log.error("组包预报单取消失败===>{}", e.getMessage());
+                log.error("组包预报单取消失败", e);
                 PackageForecastEntity entity = this.getById(id);
                 if (Objects.isNull(entity)) {
                     cancelResult = BatchResultDTO.fail(id, id, "组包预报单不存在, 取消失败");

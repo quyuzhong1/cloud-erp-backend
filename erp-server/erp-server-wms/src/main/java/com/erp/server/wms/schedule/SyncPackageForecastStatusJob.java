@@ -5,7 +5,6 @@ import cn.hutool.core.date.DateUtil;
 import com.erp.model.wms.entity.PackageForecastEntity;
 import com.erp.server.wms.service.adapter.PackageForecastPlatformAdapter;
 import com.erp.server.wms.service.adapter.PackageForecastPlatformAdapterFactory;
-import com.erp.server.wms.service.PackageForecastService;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
@@ -27,9 +26,6 @@ import java.util.List;
 @Slf4j
 public class SyncPackageForecastStatusJob {
     @Resource
-    private PackageForecastService packageForecastService;
-
-    @Resource
     private PackageForecastPlatformAdapterFactory packageForecastPlatformAdapterFactory;
 
     /**
@@ -39,21 +35,7 @@ public class SyncPackageForecastStatusJob {
     public void SyncPackageForecastStatusJob() throws Exception {
         XxlJobHelper.log("syncPackageForecastStatusJob start : {}", LocalDateTime.now());
         DateTime dateTime = DateUtil.offsetMonth(DateUtil.date(), -3);
-        //根据订单查询组包明细  默认查询 3月内的组包数据
-        List<PackageForecastEntity> awaitingPickupList = packageForecastService.getAliExpressHandoverList(dateTime);
-        if (CollectionUtils.isNotEmpty(awaitingPickupList)){
-            awaitingPickupList.forEach(packageForecastEntity -> {
-                try {
-                    packageForecastService.queryAliExpressInfo(packageForecastEntity);
-                    XxlJobHelper.log("syncPackageForecastStatusJob awaitingPickupList update : {}", packageForecastEntity.getHandoverNo());
-                } catch (Exception e) {
-                    log.error("syncPackageForecastStatusJob AliExpress sync failed, id: {}, handoverNo: {}",
-                            packageForecastEntity.getId(), packageForecastEntity.getHandoverNo(), e);
-                    XxlJobHelper.log("syncPackageForecastStatusJob AliExpress sync failed, id: {}, error: {}",
-                            packageForecastEntity.getId(), e.getMessage());
-                }
-            });
-        }
+        // 默认查询 3 月内的组包数据；各平台统一走适配器，避免速卖通重复同步。
         for (PackageForecastPlatformAdapter adapter : packageForecastPlatformAdapterFactory.listAdapters()) {
             List<PackageForecastEntity> trackingList = adapter.listSyncTrackingStatus(dateTime);
             if (CollectionUtils.isNotEmpty(trackingList)) {

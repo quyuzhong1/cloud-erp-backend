@@ -85,6 +85,7 @@ public class DmpInputShopeeReturnDetailInitHandler extends DmpInputInitHandler {
         JSONArray detailList = new JSONArray();
         int total = returnSnList.size();
         int failureCount = 0;
+        List<String> failedReturnSnList = new ArrayList<>();
         for (int i = 0; i < total; i++) {
             String returnSn = returnSnList.get(i);
             if (i == 0 || (i + 1) % 50 == 0 || i + 1 == total) {
@@ -99,6 +100,7 @@ public class DmpInputShopeeReturnDetailInitHandler extends DmpInputInitHandler {
                 }
             } catch (Exception e) {
                 failureCount++;
+                failedReturnSnList.add(returnSn);
                 log.error("Shopee退货明细init单条查询失败,returnSn:{},shopId:{}", returnSn, shopId, e);
             }
             if (i + 1 < total) {
@@ -107,6 +109,10 @@ public class DmpInputShopeeReturnDetailInitHandler extends DmpInputInitHandler {
         }
         if (detailList.isEmpty() && failureCount == total) {
             throw new ServiceException("Shopee退货明细全部查询失败");
+        }
+        if (failureCount > 0) {
+            log.warn("Shopee退货明细init部分查询失败,total:{},failureCount:{},failedReturnSnList:{}",
+                    total, failureCount, failedReturnSnList);
         }
 
         DmpInputTaskInitDTO initDTO = new DmpInputTaskInitDTO();

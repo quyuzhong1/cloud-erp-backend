@@ -30,7 +30,9 @@ import java.io.IOException;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -58,9 +60,7 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
             return doUpload(dto);
         } catch (Exception e) {
             log.error("TikTok全托管组包预报上传失败>>>>", e);
-            return dto.getIds().stream()
-                    .map(id -> BatchResultDTO.fail(id, id, e.getMessage()))
-                    .collect(Collectors.toList());
+            return failUploadResult(dto, e);
         }
     }
 
@@ -194,7 +194,11 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
             throw new ServiceException("揽收地址不存在");
         }
         String addressName = addressEntity.getName();
-        tikTokFullyShippingReq.setSenderContactId(dto.getAddressId());
+        String senderContactId = StringUtils.defaultIfBlank(dto.getAddressId(), addressEntity.getAddressId());
+        if (StringUtils.isBlank(senderContactId)) {
+            throw new ServiceException("TikTok全托管寄件联系人不能为空");
+        }
+        tikTokFullyShippingReq.setSenderContactId(senderContactId);
         validateReserveInfo(dto);
         if (PackageForecastCollectModeEnum.SELF_SEND.getCode().equals(dto.getCollectMode())) {
             tikTokFullyShippingReq.setDeliveryMode("SELF_DELIVERY");
@@ -248,6 +252,33 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
         return packageForecastEntityList.stream()
                 .map(entity -> BatchResultDTO.success(entity.getId(), entity.getCode(), "上传成功"))
                 .collect(Collectors.toList());
+    }
+
+    private List<BatchResultDTO> failUploadResult(PackageForecastDTO.UploadDTO dto, Exception e) {
+        List<PackageForecastEntity> entityList = packageForecastMapper.selectBatchIds(dto.getIds());
+        Map<String, PackageForecastEntity> entityMap = entityList.stream()
+                .collect(Collectors.toMap(PackageForecastEntity::getId, entity -> entity, (left, right) -> left, LinkedHashMap::new));
+        if (CollectionUtils.isNotEmpty(entityList)) {
+            entityList.forEach(entity -> {
+                entity.setUploadStatus(PackageUploadStatusEnum.UPLOAD_FAILURE.getCode());
+                entity.setRemark(e.getMessage());
+            });
+            try {
+                updateForecastBatchOrThrow(entityList);
+            } catch (Exception updateException) {
+                log.error("TikTok全托管组包预报上传失败后更新失败状态失败, ids: {}", dto.getIds(), updateException);
+            }
+        }
+        List<BatchResultDTO> resultList = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            PackageForecastEntity entity = entityMap.get(id);
+            if (Objects.isNull(entity)) {
+                resultList.add(BatchResultDTO.fail(id, id, e.getMessage()));
+            } else {
+                resultList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultList;
     }
 
     private void validateReserveInfo(PackageForecastDTO.UploadDTO dto) {

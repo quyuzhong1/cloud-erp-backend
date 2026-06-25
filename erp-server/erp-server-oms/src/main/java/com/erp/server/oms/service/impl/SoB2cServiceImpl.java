@@ -2007,7 +2007,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 throw new ServiceException(ApiError.LOGISTICS_CHANNEL_REQUIRED_FOR_CANCEL);
             }
             BatchResultDTO cancelResult = soB2cLogisticsService.cancelThirdLogisticsRequiresNew(entity, existChannelId);
-            if (!cancelResult.getSuccess()) {
+            if (!Boolean.TRUE.equals(cancelResult.getSuccess())) {
+                String cancelMsg = Objects.toString(cancelResult.getMsg(), "");
+                if (cancelMsg.startsWith("外部物流单已取消，本地清理失败")) {
+                    throw new ServiceException(cancelMsg);
+                }
                 throw new ServiceException(ApiError.LOGISTICS_CANCEL_NOT_SUPPORTED, code);
             }
             soB2cLogisticsEntity = soB2cLogisticsService.getByMainId(id);

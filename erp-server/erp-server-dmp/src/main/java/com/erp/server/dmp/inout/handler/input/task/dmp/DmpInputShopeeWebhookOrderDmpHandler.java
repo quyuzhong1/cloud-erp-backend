@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.entity.BaseEntity;
+import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.DmpSoInfoEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.server.dmp.inout.dto.request.DmpInputDmpRequest;
@@ -109,8 +110,7 @@ public class DmpInputShopeeWebhookOrderDmpHandler extends DmpInputDbConvertDmpHa
         }
         List<DmpSoInfoEntity> updateList = new ArrayList<>(updateMap.values());
         if (!dmpSoInfoService.updateBatchById(updateList, BATCH_UPDATE_SIZE)) {
-            log.warn("Webhook订单批量更新返回失败,count:{}", updateList.size());
-            return resultList;
+            throw new ServiceException("Webhook订单批量更新失败,count:" + updateList.size());
         }
         resultList.addAll(updateList);
         changeConvertInputDmpBaseEntityList.addAll(updateList);

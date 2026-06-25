@@ -92,24 +92,26 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
     @Override
     public List<BatchResultDTO> upload(PackageForecastDTO.UploadDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, PackageForecastEntity> entityMap = packageForecastMapper.selectBatchIds(dto.getIds())
+                .stream()
+                .collect(Collectors.toMap(PackageForecastEntity::getId, entity -> entity, (left, right) -> left));
         for (String id : dto.getIds()) {
+            PackageForecastEntity entity = entityMap.get(id);
+            if (Objects.isNull(entity)) {
+                resultDTOS.add(BatchResultDTO.fail(id, id, "组包预报单不存在, 上传失败"));
+                continue;
+            }
             try {
-                resultDTOS.add(uploadOne(id, dto.getCollectMode(), dto.getCollectAddressId()));
+                resultDTOS.add(uploadOne(entity, dto.getCollectMode(), dto.getCollectAddressId()));
             } catch (Exception e) {
                 log.error("组包预报上传失败>>>>>", e);
-                PackageForecastEntity entity = packageForecastMapper.selectById(id);
-                if (Objects.isNull(entity)) {
-                    resultDTOS.add(BatchResultDTO.fail(id, id, "组包预报单不存在, 上传失败"));
-                } else {
-                    resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), userFailureMessage("上传")));
-                }
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), userFailureMessage("上传")));
             }
         }
         return resultDTOS;
     }
 
-    private BatchResultDTO uploadOne(String id, String collectMode, String collectAddressId) {
-        PackageForecastEntity entity = getForecastOrThrow(id);
+    private BatchResultDTO uploadOne(PackageForecastEntity entity, String collectMode, String collectAddressId) {
         validateUploadable(entity);
         try {
             entity.setCollectMode(collectMode);
@@ -117,17 +119,6 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
             uploadAliExpress(entity, collectAddressId);
             return BatchResultDTO.success(entity.getId(), entity.getCode(), "上传成功");
         } catch (Exception e) {
-            if (hasAliExpressPlatformIdentifiers(entity)) {
-                try {
-                    entity.setUploadStatus(PackageUploadStatusEnum.UPLOAD_SUCCESS.getCode());
-                    entity.setPlatformNo(buildPlatformNo(entity.getHandoverNo(), entity.getPlatformPackageNo()));
-                    queryAliExpressInfo(entity);
-                    return BatchResultDTO.success(entity.getId(), entity.getCode(), "上传成功");
-                } catch (Exception syncException) {
-                    log.error("速卖通组包预报上传失败后按平台交接单回查补偿失败, id: {}, code: {}, handoverNo: {}, platformPackageNo: {}",
-                            entity.getId(), entity.getCode(), entity.getHandoverNo(), entity.getPlatformPackageNo(), syncException);
-                }
-            }
             entity.setUploadStatus(PackageUploadStatusEnum.UPLOAD_FAILURE.getCode());
             entity.setRemark("上传失败:" + e.getMessage());
             try {
@@ -138,11 +129,6 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
             log.error("组包预报上传失败>>>>>", e);
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), userFailureMessage("上传"));
         }
-    }
-
-    private boolean hasAliExpressPlatformIdentifiers(PackageForecastEntity entity) {
-        return StringUtils.isNotBlank(entity.getHandoverNo())
-                && StringUtils.isNotBlank(entity.getPlatformPackageNo());
     }
 
     private String userFailureMessage(String operation) {
@@ -352,8 +338,24 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
         }
         entity.setUploadStatus(PackageUploadStatusEnum.UPLOAD_SUCCESS.getCode());
         entity.setPlatformNo(buildPlatformNo(entity.getHandoverNo(), entity.getPlatformPackageNo()));
-        updateForecastOrThrow(entity);
-        asyncSyncAfterCommit(entity);
+        boolean compensatedByQuery = false;
+        try {
+            updateForecastOrThrow(entity);
+        } catch (Exception updateException) {
+            log.error("速卖通组包预报平台提交成功后本地更新失败, id: {}, code: {}, handoverNo: {}, platformPackageNo: {}",
+                    entity.getId(), entity.getCode(), entity.getHandoverNo(), entity.getPlatformPackageNo(), updateException);
+            try {
+                queryAliExpressInfo(entity);
+                compensatedByQuery = true;
+            } catch (Exception syncException) {
+                log.error("速卖通组包预报本地更新失败后按平台交接单回查补偿失败, id: {}, code: {}, handoverNo: {}, platformPackageNo: {}",
+                        entity.getId(), entity.getCode(), entity.getHandoverNo(), entity.getPlatformPackageNo(), syncException);
+                throw updateException;
+            }
+        }
+        if (!compensatedByQuery) {
+            asyncSyncAfterCommit(entity);
+        }
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "上传成功");
     }
 
@@ -453,6 +455,9 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
         String type = PackageForecastConstant.CAINIAO_PICKUP;
         if (PackageForecastCollectModeEnum.SELF_SEND.getCode().equals(entity.getCollectMode())) {
             type = PackageForecastConstant.SELF_SEND;
+        }
+        if (Objects.isNull(entity.getTotalPackageWeight())) {
+            throw new ServiceException("组包总重量不能为空");
         }
         CommitRequest commitRequest = CommitRequest.builder().pickInfo(addressInfo)
                 .skipInvalidParcel(Boolean.FALSE)
