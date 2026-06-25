@@ -117,7 +117,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
     private ScmTaskFeign scmTaskFeign;
     @Lazy
     @Resource
-    private DeliveryOrderServiceImpl _this;
+    private DeliveryOrderServiceImpl service;
 
     @Override
     public PagingVO<DeliveryOrderDTO.ListDTO> paging(PagingDTO<DeliveryOrderDTO.ParamDTO> dto) {
@@ -420,7 +420,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
             try {
                 DeliveryOrderEntity deliveryOrderEntity = builderDeliveryOrder(purchaseOrderEntity, deliveryDTOS);
                 //处理明细列表
-                _this.handleDeliverOrderDetailList(deliveryOrderEntity.getId(), deliveryDTOS, purchaseOrderDetailList, dtos,
+                service.handleDeliverOrderDetailList(deliveryOrderEntity.getId(), deliveryDTOS, purchaseOrderDetailList, dtos,
                         deliveryOrderDetailList,receiveList,stockInDetailList,returnOrderDetailList);
             }catch (Exception e){
                 dtos.add(BatchResultDTO.fail(orderId,purchaseOrderEntity.getCode(),e.getMessage()));
@@ -807,7 +807,6 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
                 orderEntity.setReceiptStatus(DeliveryOrderEnum.ReceiptStatusEnum.WAIT_CONFIRMED.getCode());
             }
         }
-        DeliveryOrderServiceImpl bean = ApplicationContextUtils.getBean(DeliveryOrderServiceImpl.class);
-        return bean.updateBatchById(deliveryOrderEntityList);
+        return service.updateBatchById(deliveryOrderEntityList);
     }
 }
