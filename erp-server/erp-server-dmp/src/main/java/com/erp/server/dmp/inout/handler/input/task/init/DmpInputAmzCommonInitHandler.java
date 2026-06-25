@@ -58,7 +58,13 @@ public abstract class DmpInputAmzCommonInitHandler extends DmpInputInitHandler {
     }
 
     /**
-     * 根任务 extendJson 是否携带非空 {@code shipmentCodeList}（手动 hotfix / pullInboundPlanShipment 场景）。
+     * 根任务 extendJson 是否携带非空 {@code shipmentCodeList}（手动 hotfix 场景）。
+     * <p>
+     * 判定为 true 时，Init/Dmp 链路对明细拉取失败、主表关联失败等执行 fail-fast。
+     * 适用入口包括 WMS {@code pullShipment}（{@link com.erp.server.dmp.service.impl.AmzReportHandleServiceImpl#newDmpPullShipment}）
+     * 与 {@code pullInboundPlanShipment}（{@link com.erp.server.dmp.service.impl.AmzReportHandleServiceImpl#newDmpPullInboundPlanShipment}），
+     * 二者 hotfix 均将 {@link com.erp.model.dmp.dto.DmpPullShipmentDTO} 写入根任务 extendJson。
+     * 定时任务无 {@code shipmentCodeList}，不受 fail-fast 影响。
      */
     protected boolean hasManualShipmentCodeFilter() {
         return hasManualShipmentCodeFilter(resolveRootTaskByTaskChain());
@@ -66,6 +72,7 @@ public abstract class DmpInputAmzCommonInitHandler extends DmpInputInitHandler {
 
     /**
      * 解析根任务 extendJson（{@link com.erp.model.dmp.dto.DmpPullShipmentDTO} 序列化）中的 shipmentCodeList。
+     * 见 {@link #hasManualShipmentCodeFilter()} 说明共用范围。
      */
     public static boolean hasManualShipmentCodeFilter(DmpInputTaskEntity rootTask) {
         if (rootTask == null || StringUtils.isBlank(rootTask.getExtendJson())) {

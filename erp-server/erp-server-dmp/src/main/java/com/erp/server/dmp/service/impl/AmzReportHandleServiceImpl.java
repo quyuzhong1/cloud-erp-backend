@@ -723,6 +723,8 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
      * <p>
      * billType 由 {@link #resolveFbaShipmentPullBillType()} 解析；专用入库计划入口见
      * {@link #pullInboundPlanShipment} / {@link #newDmpPullInboundPlanShipment}。
+     * {@code shipmentCodeList} 非空时写入 hotfix extendJson，与入库计划入口共用
+     * {@link com.erp.server.dmp.inout.handler.input.task.init.DmpInputAmzCommonInitHandler#hasManualShipmentCodeFilter()} fail-fast 策略。
      */
     public boolean newDmpPullShipment(DmpPullShipmentDTO dto, AmazonShopInfoDTO shopInfoDTO) {
         // 当前账号所有店铺ID
@@ -813,6 +815,8 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
      * 代码审查说明（问题1）：任务链起步于 {@link DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler}，
      * 先 {@code listInboundPlans} 再按配置时间窗筛计划，{@code dto.shipmentCodeList} 在后续货件节点才生效。
      * 旧 {@code getShipments(shipmentIdList)} 可按货件号直查；本链路对「窗口外计划下的指定货件」可能拉不到，属已知限制。
+     * {@code shipmentCodeList} 非空时与 {@link #newDmpPullShipment} 共用
+     * {@link com.erp.server.dmp.inout.handler.input.task.init.DmpInputAmzCommonInitHandler#hasManualShipmentCodeFilter()} fail-fast 策略。
      */
     private boolean newDmpPullInboundPlanShipment(DmpPullShipmentDTO dto, AmazonShopInfoDTO shopInfoDTO) {
         List<String> sameAccountShopIds = shopInfoDTO.getMarketplaceShopIdMap().values()

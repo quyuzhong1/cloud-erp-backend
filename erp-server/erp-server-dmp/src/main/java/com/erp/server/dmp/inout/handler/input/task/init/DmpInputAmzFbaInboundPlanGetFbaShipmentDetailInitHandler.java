@@ -140,6 +140,9 @@ public class DmpInputAmzFbaInboundPlanGetFbaShipmentDetailInitHandler extends Dm
         }
 
         if (CollUtil.isEmpty(allItemList)) {
+            if (manualPull) {
+                throw new ServiceException("手动拉取FBA货件明细失败: 未拉取到任何明细, taskId=" + dmpInputTaskEntity.getId());
+            }
             return Collections.emptyList();
         }
         return Collections.singletonList(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(allItemList)));
