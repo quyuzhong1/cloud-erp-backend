@@ -128,7 +128,7 @@ public interface FirstMileWeightAllocationService extends SuperService<FirstMile
      * @author jack
      * @date 2026-04-22
      */
-    List<String> pageFirstMileDeliveryIds(TmsAsyncTaskRecordDTO.PushParamsDTO params);
+    List<String> pageFirstMileDeliveryIds(TmsAsyncTaskRecordDTO.FirstMilePushAllocationQueryDTO params);
 
     /**
      * 统计可下推分摊的总条数
@@ -137,5 +137,5 @@ public interface FirstMileWeightAllocationService extends SuperService<FirstMile
      * @author jack
      * @date 2026-04-22
      */
-    int countFirstMileDeliveryIds(TmsAsyncTaskRecordDTO.PushParamsDTO params);
+    int countFirstMileDeliveryIds(TmsAsyncTaskRecordDTO.FirstMilePushAllocationQueryDTO params);
 }
