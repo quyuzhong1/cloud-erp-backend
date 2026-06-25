@@ -225,6 +225,10 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
     private List<PlatformAmazonFbaShipmentDTO> fetchOldDmpPullShipmentFromAmazon(
             DmpPullShipmentDTO dto, AmazonShopInfoDTO shopInfoDTO, String shopId) {
         AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
+        if (marketplaceEnum == null) {
+            throw new ServiceException("未找到店铺国家对应Marketplace, shopId=" + shopId
+                    + ", countryCode=" + shopInfoDTO.getDictCountryCode());
+        }
         try {
             FbaInboundApi api = AmazonSpApiInitUtils.create(FbaInboundApi.class, shopInfoDTO, false);
             String queryType = AmazonFbaQueryTypeEnum.SHIPMENT.getCode();
