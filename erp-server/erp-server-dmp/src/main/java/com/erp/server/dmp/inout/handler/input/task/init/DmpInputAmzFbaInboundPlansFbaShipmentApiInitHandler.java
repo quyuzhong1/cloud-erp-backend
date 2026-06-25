@@ -10,6 +10,9 @@ import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.LWAException;
 import com.erp.sdk.oms.amz.spapi.api.FbaInboundApi;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonInboundPlanSortByEnum;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonInboundPlanSortOrderEnum;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonInboundPlanStatusEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonRequestTypeRateLimiterEnum;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.InboundPlanSummary;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.ListInboundPlansResponse;
@@ -26,11 +29,12 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * FBA InboundPlan 列表拉取 - 拉取FBA货件前置处理器。
@@ -51,8 +55,6 @@ public class DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler extends DmpInpu
      * dmp_cfg_input_convert.convert_class 配置值，与类名保持一致。
      */
     public static final String CONVERT_CLASS = DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler.class.getSimpleName();
-
-    private static final List<String> DEFAULT_STATUS_LIST = Arrays.asList("ACTIVE", "SHIPPED");
 
     @Resource
     private CfgAppClientService cfgAppClientService;
@@ -111,7 +113,7 @@ public class DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler extends DmpInpu
                                 continue;
                             }
                             if (planTime.isBefore(thresholdTime)) {
-                                if ("DESC".equals(sortOrder)) {
+                                if (AmazonInboundPlanSortOrderEnum.DESC.getCode().equals(sortOrder)) {
                                     reachedOlderData = true;
                                     break;
                                 }
@@ -185,56 +187,57 @@ public class DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler extends DmpInpu
 
     private List<String> parseStatusList(String extendJson) {
         if (StringUtils.isBlank(extendJson)) {
-            return DEFAULT_STATUS_LIST;
+            return AmazonInboundPlanStatusEnum.defaultSyncStatusCodes();
         }
         JSONObject extendObj = JSONObject.parseObject(extendJson);
         if (extendObj == null) {
-            return DEFAULT_STATUS_LIST;
+            return AmazonInboundPlanStatusEnum.defaultSyncStatusCodes();
         }
         JSONArray statusArray = extendObj.getJSONArray("statusList");
         if (CollUtil.isNotEmpty(statusArray)) {
             List<String> statusList = statusArray.toJavaList(String.class);
-            if (CollUtil.isNotEmpty(statusList)) {
-                return statusList;
+            List<String> validatedList = statusList.stream()
+                    .filter(StringUtils::isNotBlank)
+                    .map(status -> AmazonInboundPlanStatusEnum.fromCode(status.trim()))
+                    .filter(Objects::nonNull)
+                    .map(AmazonInboundPlanStatusEnum::getCode)
+                    .collect(Collectors.toList());
+            if (CollUtil.isNotEmpty(validatedList)) {
+                return validatedList;
             }
         }
         String status = extendObj.getString("status");
-        if (StringUtils.isNotBlank(status)) {
-            return Collections.singletonList(status);
+        AmazonInboundPlanStatusEnum statusEnum = AmazonInboundPlanStatusEnum.fromCode(status);
+        if (statusEnum != null) {
+            return Collections.singletonList(statusEnum.getCode());
         }
-        return DEFAULT_STATUS_LIST;
+        return AmazonInboundPlanStatusEnum.defaultSyncStatusCodes();
     }
 
     private String parseSortBy(String extendJson) {
-        final String defaultSortBy = "LAST_UPDATED_TIME";
+        AmazonInboundPlanSortByEnum defaultSortBy = AmazonInboundPlanSortByEnum.LAST_UPDATED_TIME;
         if (StringUtils.isBlank(extendJson)) {
-            return defaultSortBy;
+            return defaultSortBy.getCode();
         }
         JSONObject extendObj = JSONObject.parseObject(extendJson);
         if (extendObj == null) {
-            return defaultSortBy;
+            return defaultSortBy.getCode();
         }
-        String sortBy = StringUtils.trimToEmpty(extendObj.getString("sortBy")).toUpperCase();
-        if ("CREATION_TIME".equals(sortBy) || "LAST_UPDATED_TIME".equals(sortBy)) {
-            return sortBy;
-        }
-        return defaultSortBy;
+        AmazonInboundPlanSortByEnum sortByEnum = AmazonInboundPlanSortByEnum.fromCode(extendObj.getString("sortBy"));
+        return sortByEnum == null ? defaultSortBy.getCode() : sortByEnum.getCode();
     }
 
     private String parseSortOrder(String extendJson) {
-        final String defaultSortOrder = "DESC";
+        AmazonInboundPlanSortOrderEnum defaultSortOrder = AmazonInboundPlanSortOrderEnum.DESC;
         if (StringUtils.isBlank(extendJson)) {
-            return defaultSortOrder;
+            return defaultSortOrder.getCode();
         }
         JSONObject extendObj = JSONObject.parseObject(extendJson);
         if (extendObj == null) {
-            return defaultSortOrder;
+            return defaultSortOrder.getCode();
         }
-        String sortOrder = StringUtils.trimToEmpty(extendObj.getString("sortOrder")).toUpperCase();
-        if ("ASC".equals(sortOrder) || "DESC".equals(sortOrder)) {
-            return sortOrder;
-        }
-        return defaultSortOrder;
+        AmazonInboundPlanSortOrderEnum sortOrderEnum = AmazonInboundPlanSortOrderEnum.fromCode(extendObj.getString("sortOrder"));
+        return sortOrderEnum == null ? defaultSortOrder.getCode() : sortOrderEnum.getCode();
     }
 
     /**

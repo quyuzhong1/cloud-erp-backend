@@ -5,6 +5,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.exception.ServiceException;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonFbaLabelPageTypeEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonFbaPackTypeEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.Address;
@@ -128,7 +129,7 @@ public class DmpInputAmzFbaInboundPlanShipmentDmpHandler extends DmpInputDbConve
         } else {
             dmpDataMap.putIfAbsent("labelUrl", "");
         }
-        dmpDataMap.putIfAbsent("pageType", "PackageLabel_Plain_Paper");
+        dmpDataMap.putIfAbsent("pageType", AmazonFbaLabelPageTypeEnum.PLAIN_PAPER.getCode());
 
         if (CharSequenceUtil.isNotBlank(shipmentName)) {
             dmpDataMap.put("isSta", !shipmentName.contains("ASDN"));

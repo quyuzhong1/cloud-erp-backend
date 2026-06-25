@@ -81,6 +81,9 @@ public class DmpInputAmzFbaInboundPlanShipmentDetailDmpHandler extends DmpInputD
                 }
             }
         }
+        // 审查说明（非手动场景关联主表失败）：未匹配明细不写入 MAIN_ID；
+        // 父类 DmpInputDoChildDmpHandler.convertData 在 MAIN_ID 为空时会 continue，不会落库，不会产生无主明细。
+        // 定时同步场景仅 warn 并汇总 unmatchedCount 便于监控；手动拉取要求强一致，直接 fail-fast。
         int unmatchedCount = 0;
         for (Map<String, Object> childData : dmpInputMongoChildEntityList) {
             String shipmentKey = DmpInputAmzCommonInitHandler.firstNonBlankString(childData,
