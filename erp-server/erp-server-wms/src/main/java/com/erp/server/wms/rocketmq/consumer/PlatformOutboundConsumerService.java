@@ -27,9 +27,6 @@ import com.erp.model.oms.entity.SoB2cReceiverEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
-import com.erp.model.oms.enums.SoB2cSourcePlatformEnum;
-import com.erp.model.oms.enums.AuthStatusEnum;
-import com.erp.model.oms.enums.OrderSubTypeEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
@@ -249,11 +246,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                             updateStatus.setAddOperationLog(true);
                         }
                     }
-                    // WEGO 物流跟踪号仅针对线下下单同步，线上订单跟踪号由销售平台管理
-                    if (!OmsPlatformEnum.WE_GO.getCode().equals(dto.getPlatform())
-                            || OrderSubTypeEnum.OFFLINE_ORDER.getCode().equals(mainEntity.getTransactionSubType())) {
-                        updateStatus.setTrackNo(dto.getTrackNo());
-                    }
+                    updateStatus.setTrackNo(dto.getTrackNo());
                     soB2cFeign.updateSoB2cStatusByParams(updateStatus);
 
                     map.put(mainEntity, thirdWarehouseDeliveryEntity);
@@ -369,15 +362,8 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                             ""
                     );
                     soB2cFeign.addSoB2cError(addError);
-                    //异步取消海外仓订单（大臣拦截成功后会将销售订单更新为配货中）
+                    //异步取消海外仓订单
                     asyncService.asyncCancelThirdWarehouseOrder(mainEntity, dto.getAbnormalProblemReason());
-                    // WEGO 出库异常：三方仓发货单 → 取消发货
-                    if (OmsPlatformEnum.WE_GO.getCode().equals(dto.getPlatform())
-                            && Objects.nonNull(thirdWarehouseDeliveryEntity)) {
-                        thirdWarehouseDeliveryEntity.setStatus(SoB2cWarehouseDeliveryStatusEnum.CANCEL_DELIVERY.getStatus());
-                        operateLogService.addModuleOperateLog("状态变更为取消发货", ModuleTypeEnum.THIRD_WAREHOUSE_DELIVERY.getCode(), thirdWarehouseDeliveryEntity.getId(), "状态变更");
-                        thirdWarehouseDeliveryService.updateById(thirdWarehouseDeliveryEntity);
-                    }
                 }
                 if (SoB2cBillStatusEnum.ENUM_DISUSE.getCode().equals(dto.getOrderStatus())) {
                     if (mainEntity.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode())) {
