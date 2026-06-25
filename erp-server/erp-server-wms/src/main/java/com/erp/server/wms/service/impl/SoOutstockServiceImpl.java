@@ -4390,20 +4390,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         return baseMapper.logisticStatistics(deliveryStaticsReq);
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.SO_OUTSTOCK_APPROVE_KEY, keyName = "dto.ids", unlockAfterTx = true)
-    public Boolean updateStatus(TmsDeclareBillDTO.UpdateStatusDTO dto) {
-        if(CharSequenceUtil.isBlank(dto.getDeclareStatus()) && CharSequenceUtil.isBlank(dto.getLogisticsStatus())){
-            return false;
-        }
-        return this.lambdaUpdate()
-                .in(SoOutstockEntity :: getId,dto.getIds())
-                .set(CharSequenceUtil.isNotBlank(dto.getDeclareStatus()),SoOutstockEntity::getDeclareStatus,dto.getDeclareStatus())
-                .update();
-
-    }
 
     /**
      * 根据单号查询出库单
