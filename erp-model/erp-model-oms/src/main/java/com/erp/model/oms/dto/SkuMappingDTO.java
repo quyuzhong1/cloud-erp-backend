@@ -1850,16 +1850,16 @@ public class SkuMappingDTO implements Serializable {
     }
 
     /**
-     * 海外仓未匹配SKU统计结果（按维度分组）
+     * 未匹配SKU统计结果（按 type 维度动态分组）
+     * <ul>
+     *   <li>warehouse  → 按 overseas_provider 分组，groupName 为 op.short_name</li>
+     *   <li>其他类型   → 按 platform_name + dict_platform 分组，groupName 为平台/客户名</li>
+     * </ul>
      */
     @Data
     @NoArgsConstructor
     public static class UnmatchCountDTO {
-        /** 仓库ID（warehouse 类型时有值） */
-        private String warehouseId;
-        /** 仓库名称（warehouse 类型时有值，保留兼容） */
-        private String warehouseName;
-        /** 通用分组名称：仓库名/平台名/客户名 */
+        /** 通用分组名称：仓库短名/平台名/客户名；为 null 时归入"未知"分组 */
         private String groupName;
         /** 未匹配SKU数量 */
         private Long unmatchCount;

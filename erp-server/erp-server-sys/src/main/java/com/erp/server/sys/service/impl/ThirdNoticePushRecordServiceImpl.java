@@ -70,6 +70,7 @@ import com.erp.model.workflow.enums.CfgQueryOptionFieldBelongsTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.model.msg.dto.NoticeMsgCardButtonDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
+import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.sys.feign.SysPostFeign;
@@ -1599,25 +1600,31 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
         // 4. 标题直接取三方通知配置，正文模板按 skuType 区分
         String cardTitle = noticeEntity.getTitle();
         String contentTemplate;
-        switch (skuType) {
-            case "platform":
-                contentTemplate = NoticeMsgConstant.FS_SKU_MAPPING_PLATFORM_CONTENT;
-                break;
-            case "customer":
-                contentTemplate = NoticeMsgConstant.FS_SKU_MAPPING_CUSTOMER_CONTENT;
-                break;
-            case "b2bPlatform":
-                contentTemplate = NoticeMsgConstant.FS_SKU_MAPPING_B2B_PLATFORM_CONTENT;
-                break;
-            default:
-                contentTemplate = NoticeMsgConstant.FS_SKU_MAPPING_WAREHOUSE_CONTENT;
-                break;
+        String unknownLabel;
+        if (RuleTypeEnum.B2C_PLATFORM.getCode().equals(skuType)) {
+            contentTemplate = NoticeMsgConstant.FS_SKU_MAPPING_PLATFORM_CONTENT;
+            unknownLabel = "未知平台";
+        } else if (RuleTypeEnum.CUSTOMER.getCode().equals(skuType)) {
+            contentTemplate = NoticeMsgConstant.FS_SKU_MAPPING_CUSTOMER_CONTENT;
+            unknownLabel = "未知客户";
+        } else if (RuleTypeEnum.B2B_PLATFORM.getCode().equals(skuType)) {
+            contentTemplate = NoticeMsgConstant.FS_SKU_MAPPING_B2B_PLATFORM_CONTENT;
+            unknownLabel = "未知平台";
+        } else {
+            contentTemplate = NoticeMsgConstant.FS_SKU_MAPPING_WAREHOUSE_CONTENT;
+            unknownLabel = "未知仓库";
         }
         StringBuilder lines = new StringBuilder();
+        long unknownCount = 0;
         for (SkuMappingDTO.UnmatchCountDTO dto : unmatchList) {
-            String groupName = StringUtils.isNotBlank(dto.getGroupName()) ? dto.getGroupName()
-                    : (StringUtils.isNotBlank(dto.getWarehouseName()) ? dto.getWarehouseName() : "未知");
-            lines.append(groupName).append("(").append(dto.getUnmatchCount()).append("个)\n");
+            if (StringUtils.isBlank(dto.getGroupName())) {
+                unknownCount += dto.getUnmatchCount();
+                continue;
+            }
+            lines.append(dto.getGroupName()).append("(").append(dto.getUnmatchCount()).append("个)\n");
+        }
+        if (unknownCount > 0) {
+            lines.append(unknownLabel).append("(").append(unknownCount).append("个)\n");
         }
         String cardContent = String.format(contentTemplate, lines.toString().trim());
 

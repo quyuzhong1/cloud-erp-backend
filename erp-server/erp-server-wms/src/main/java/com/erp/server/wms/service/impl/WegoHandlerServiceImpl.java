@@ -891,13 +891,24 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     /**
-     * 拼装 WEGO 接口错误信息：优先取 errorMsg，缺失时回退到 errorCode。
+     * 拼装 WEGO 接口错误信息。
+     * <p>
+     * WEGO 在部分场景下（如派送渠道/SKU 校验失败）会将详细原因放在 {@code result} 字符串字段，
+     * 而 {@code errorMsg} 仅返回无意义的内部错误码（如 {@code tocOrder.error.dataError}）。
+     * 因此优先将 {@code result} 字符串拼入返回信息，确保调用方能看到具体原因。
+     * </p>
+     * 优先级：errorMsg + result（detail）> errorMsg > errorCode > 默认文案
      */
     private String buildErrorMessage(JSONObject resp) {
         if (resp == null) {
             return "WEGO接口返回为空";
         }
         String errorMsg = resp.getString(RESP_FIELD_ERROR_MSG);
+        // result 在报错时常含详细原因（如"派送渠道错误：xxx,sku错误：xxx"），优先直接返回
+        Object resultObj = resp.get(RESP_FIELD_RESULT);
+        if (resultObj instanceof String && CharSequenceUtil.isNotBlank((String) resultObj)) {
+            return (String) resultObj;
+        }
         if (CharSequenceUtil.isNotBlank(errorMsg)) {
             return errorMsg;
         }
