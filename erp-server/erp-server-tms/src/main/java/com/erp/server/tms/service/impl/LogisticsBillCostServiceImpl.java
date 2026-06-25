@@ -17,6 +17,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.conditions.update.LambdaUpdateChainWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DataIdempotent;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.*;
 import com.common.business.dto.base.BaseResultDTO.AddDTO;
@@ -3199,7 +3200,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
 
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(keyName = "id")
+    @DataIdempotent(keyIdName = "id")
     @Override
     public BatchResultDTO pushAllocation(String id, String reportDate, LogisticsBillCostDTO.SmallBagPushAllocationContext pushContext) {
         if (pushContext == null) {
@@ -3207,6 +3208,9 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         }
 		LogisticsBillCostEntity entity = getById(id);
 		String reconciliationStatus = entity.getReconciliationStatus();
+        if(StringUtils.isBlank(reconciliationStatus)){
+            throw new ServiceException("对账状态不能为空");
+        }
 		if(!(ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode().equals(reconciliationStatus)
 				|| ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus))) {
 			throw new ServiceException("只支持对账状态为暂估确认或账单确认下推分摊");
