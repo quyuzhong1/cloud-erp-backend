@@ -1,12 +1,8 @@
 package com.erp.server.dmp.inout.handler.input.task.init;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.common.business.constant.RedisCacheConstants;
-import com.common.business.enums.PlatformDictEnum;
-import com.common.business.utils.RedisUtil;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.LWAException;
@@ -17,10 +13,8 @@ import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.InboundPlan;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiInitUtils;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
-import com.erp.server.dmp.inout.dto.response.DmpInputInitResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.service.CfgAppClientService;
-import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
@@ -28,23 +22,22 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 /**
- * FBA InboundPlan 详情拉取 - 拉取FBA货件前置处理器
+ * FBA InboundPlan 详情拉取 - 拉取FBA货件前置处理器。
+ * <p>
+ * 手动 hotfix（根任务 extendJson 含 {@code shipmentCodeList}）对拉取失败执行 fail-fast，与
+ * {@link DmpInputAmzCommonInitHandler#hasManualShipmentCodeFilter()} 策略一致。
  */
 @Slf4j
 @Service
 @Scope("prototype")
 public class DmpInputAmzFbaInboundPlanFbaShipmentInitHandler extends DmpInputAmzCommonInitHandler {
 
-    @Resource
-    private RedisUtil redisUtil;
     @Resource
     private CfgAppClientService cfgAppClientService;
 
@@ -65,9 +58,13 @@ public class DmpInputAmzFbaInboundPlanFbaShipmentInitHandler extends DmpInputAmz
             throw new ServiceException("未找到店铺授权:" + shopId);
         }
 
+        boolean manualPull = hasManualShipmentCodeFilter();
         AmazonRequestTypeRateLimiterEnum requestType = AmazonRequestTypeRateLimiterEnum.FBA_INBOUND_PLAN_DETAIL;
         String limitKey = buildRateLimitKey(shopInfoDTO, requestType);
-        if (redisUtil.get(limitKey) != null) {
+        if (isRateLimited(limitKey)) {
+            if (manualPull) {
+                throw new ServiceException("手动拉取FBA入库计划详情失败: Amazon API 429 限流等待恢复, taskId=" + dmpInputTaskEntity.getId());
+            }
             log.warn("【FBA入库计划详情拉取】platformShopCode={},存在429等待恢复:放弃当前请求任务", shopInfoDTO.getPlatformShopCode());
             disableNextStatus(dmpResponse);
             return Collections.emptyList();
@@ -76,52 +73,47 @@ public class DmpInputAmzFbaInboundPlanFbaShipmentInitHandler extends DmpInputAmz
         FbaInboundApi api = AmazonSpApiInitUtils.create(FbaInboundApi.class, shopInfoDTO, false);
         List<JSONObject> inboundPlanDataList = new ArrayList<>();
         for (Map<String, Object> parentMongo : parentMongoData) {
-            String inboundPlanId = parentMongo.getOrDefault("inboundPlanId", "").toString();
+            String inboundPlanId = firstNonBlankString(parentMongo, "inboundPlanId");
             if (StringUtils.isBlank(inboundPlanId)) {
                 continue;
             }
             try {
                 InboundPlan inboundPlan = api.getInboundPlan(inboundPlanId);
                 if (inboundPlan == null) {
+                    if (manualPull) {
+                        throw new ServiceException("手动拉取FBA入库计划详情失败: getInboundPlan返回空, inboundPlanId=" + inboundPlanId
+                                + ", taskId=" + dmpInputTaskEntity.getId());
+                    }
                     continue;
                 }
                 inboundPlanDataList.add((JSONObject) JSON.toJSON(inboundPlan));
             } catch (ApiException e) {
-                if (e.getCode() == 429) {
-                    BigDecimal timeout = BigDecimal.ONE.max(BigDecimal.ONE.divide(new BigDecimal(requestType.getRateLimit()), 8, RoundingMode.DOWN));
-                    redisUtil.set(limitKey, requestType.getRateLimit(), timeout.longValue());
-                    log.warn("【FBA入库计划详情拉取】platformShopCode={},存在429等待恢复:放弃当前请求任务", shopInfoDTO.getPlatformShopCode());
+                if (e.getCode() == 429 && manualPull) {
+                    applyRateLimitBackoff(requestType, limitKey);
                     disableNextStatus(dmpResponse);
+                    throw new ServiceException("手动拉取FBA入库计划详情失败: Amazon API 429 限流, taskId=" + dmpInputTaskEntity.getId());
+                }
+                if (handleRateLimitAndCheckNeedStop(e, requestType, limitKey, shopInfoDTO, dmpResponse, "FBA入库计划详情拉取")) {
                     return Collections.emptyList();
+                }
+                if (manualPull) {
+                    throw new ServiceException("手动拉取FBA入库计划详情失败, inboundPlanId=" + inboundPlanId + ", error=" + e.getMessage());
                 }
                 log.warn("跳过inboundPlanId={}, 原因={}", inboundPlanId, e.getMessage());
             } catch (LWAException e) {
+                if (manualPull) {
+                    throw new ServiceException("手动拉取FBA入库计划详情失败, inboundPlanId=" + inboundPlanId + ", error=" + e.getMessage());
+                }
                 log.warn("跳过inboundPlanId={}, 原因={}", inboundPlanId, e.getMessage());
             }
         }
 
         if (CollUtil.isEmpty(inboundPlanDataList)) {
+            if (manualPull) {
+                throw new ServiceException("手动拉取FBA入库计划详情失败: 未拉取到任何计划详情, taskId=" + dmpInputTaskEntity.getId());
+            }
             return Collections.emptyList();
         }
         return Collections.singletonList(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(inboundPlanDataList)));
-    }
-
-    /**
-     * 子任务 nextLevelId 会变成上游 mongoId，这里沿父任务链回溯拿根任务店铺ID。
-     */
-    private String resolveAuthShopIdByTaskChain() {
-        DmpInputTaskEntity rootTask = dmpInputTaskService.findRootTaskInChain(dmpInputTaskEntity);
-        return rootTask == null ? "" : StringUtils.defaultString(rootTask.getNextLevelId());
-    }
-
-    private String buildRateLimitKey(AmazonShopInfoDTO shopInfoDTO, AmazonRequestTypeRateLimiterEnum requestType) {
-        return StrUtil.format(RedisCacheConstants.PLATFORM_RATE_LIMIT, PlatformDictEnum.AMAZON.getCode(),
-                shopInfoDTO.getPlatformShopCode(), requestType.getBusinessTypeName());
-    }
-
-    private void disableNextStatus(DmpInputTaskResponse dmpResponse) {
-        if (dmpResponse instanceof DmpInputInitResponse) {
-            ((DmpInputInitResponse) dmpResponse).setDoNextStatus(false);
-        }
     }
 }

@@ -34,6 +34,7 @@ import lombok.extern.slf4j.Slf4j;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 import org.apache.commons.lang3.StringUtils;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.InputStream;
@@ -50,12 +51,13 @@ import org.springframework.test.context.junit4.SpringRunner;
 import javax.annotation.Resource;
 
 /**
- * API tests for FbaInboundApi
+ * API tests for FbaInboundApi（本地手工联调，勿在 CI 执行）
  */
 @Slf4j
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {ErpServerDmpApplication.class}, webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @Profile("dev")
+@Ignore("manual SP-API integration test")
 public class FbaInboundApiTest {
     @Resource
     private CfgAppClientService cfgAppClientService;

@@ -21,11 +21,13 @@ import com.common.core.utils.MapUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.erp.model.dmp.dto.AmazonCreateReportResultDTO;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
+import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.dmp.dto.DmpPullShipmentDTO;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.*;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.ShopPlatformStatusEnum;
+import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.wms.feign.WmsFbaInventoryFeign;
@@ -53,6 +55,7 @@ import com.erp.server.dmp.inout.dto.request.DmpInputHotfixCreateRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputCreateResponse;
 import com.erp.server.dmp.inout.handler.factory.DmpInputCreateFactory;
 import com.erp.server.dmp.inout.handler.factory.DmpInputTaskFactory;
+import com.erp.server.dmp.inout.handler.input.task.init.DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.*;
 import com.xxl.job.core.context.XxlJobHelper;
@@ -61,6 +64,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -90,8 +94,9 @@ import java.util.stream.Stream;
 @Slf4j
 @Service
 public class AmzReportHandleServiceImpl implements AmzReportHandleService {
-    private static final String AMZ_FBA_INBOUND_PLAN_SHIPMENT_INIT_HANDLER =
-            "DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler";
+    /**
+     * newDmpPullShipment 可切换的 billType 白名单（cfg_setting 非法值时回退默认）。
+     */
     private static final Set<String> FBA_SHIPMENT_PULL_BILL_TYPE_ALLOW_LIST = new LinkedHashSet<>(
             Arrays.asList(
                     BusinessTypeEnum.FBA_INBOUND_PLANS.getCode(),
@@ -146,54 +151,79 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
     private ExecutorService dmpInputExecutorPool;
     @Resource
     private DmpInputTaskFactory dmpInputTaskFactory;
+    @Resource
+    private DmpInoutTaskFeign dmpInoutTaskFeign;
+    @Lazy
+    @Resource
+    private AmzReportHandleServiceImpl self;
 
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    //@GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean pullShipment(DmpPullShipmentDTO dto) {
         if (CollectionUtils.isEmpty(dto.getShipmentCodeList())){
             return true;
         }
 
-        // 获取店铺信息
+        // 获取店铺信息（事务外完成授权/缓存查询，避免长事务）
         String shopId = dto.getShopId();
-        // 获取店铺授权信息
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
         if (null == shopInfoDTO) {
             throw new ServiceException("未找到店铺授权:" + shopId);
         }
 
-        // 查询拉取配置
+        if (isNewDmpPullEnabled()) {
+            return self.pullShipmentTransactional(dto, shopInfoDTO, shopId);
+        }
+        // 历史分支：SP-API 在事务外拉取，事务内仅落库/推送
+        List<PlatformAmazonFbaShipmentDTO> amazonFbaShipmentDTOList =
+                fetchOldDmpPullShipmentFromAmazon(dto, shopInfoDTO, shopId);
+        return self.oldDmpPullShipmentPersist(dto, shopInfoDTO, shopId, amazonFbaShipmentDTOList);
+    }
+
+    private boolean isNewDmpPullEnabled() {
         Integer count = cfgSettingService.lambdaQuery()
                 .eq(CfgSettingEntity::getKey, SourceTypeEnum.FBA_SHIPMENT.getCode())
                 .eq(CfgSettingEntity::getType, SettingEnum.NEW_DMP_PULL_SWITCH_LIST.getType())
                 .eq(CfgSettingEntity::getValue, "1")
                 .count();
-        if (count > 0){
-            // 执行新中台拉取逻辑
-            return newDmpPullShipment(dto, shopInfoDTO);
-        } else {
-            // 执行历史逻辑
-            return oldDmpPullShipment(dto, shopInfoDTO, shopId);
-        }
+        return count != null && count > 0;
+    }
+
+    /**
+     * 审查问题3（intentional）：仅创建 hotfix 任务并同步返回，Amazon 拉取在异步 Init 链执行；
+     * WMS/Feign 侧 success 表示任务已提交，不代表货件已落库，Init fail-fast 异常体现在任务状态。
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean pullShipmentTransactional(DmpPullShipmentDTO dto, AmazonShopInfoDTO shopInfoDTO, String shopId) {
+        return newDmpPullShipment(dto, shopInfoDTO);
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public Boolean pullInboundPlanShipment(DmpPullShipmentDTO dto) {
+        if (CollectionUtils.isEmpty(dto.getShipmentCodeList())) {
+            return true;
+        }
         String shopId = dto.getShopId();
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
         if (null == shopInfoDTO) {
             throw new ServiceException("未找到店铺授权:" + shopId);
         }
+        return self.pullInboundPlanShipmentTransactional(dto, shopInfoDTO);
+    }
+
+    /**
+     * 审查问题3（intentional）：同 {@link #pullShipmentTransactional}，hotfix 异步执行，接口返回仅表示任务创建成功。
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean pullInboundPlanShipmentTransactional(DmpPullShipmentDTO dto, AmazonShopInfoDTO shopInfoDTO) {
         return newDmpPullInboundPlanShipment(dto, shopInfoDTO);
     }
 
     /**
-     * 历史拉取逻辑
+     * 历史拉取逻辑：事务外调用 Amazon SP-API 拉取货件及明细
      */
-    private boolean oldDmpPullShipment(DmpPullShipmentDTO dto, AmazonShopInfoDTO shopInfoDTO, String shopId) {
+    private List<PlatformAmazonFbaShipmentDTO> fetchOldDmpPullShipmentFromAmazon(
+            DmpPullShipmentDTO dto, AmazonShopInfoDTO shopInfoDTO, String shopId) {
         AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
         try {
             FbaInboundApi api = AmazonSpApiInitUtils.create(FbaInboundApi.class, shopInfoDTO, false);
@@ -201,25 +231,38 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
             String marketplaceId = marketplaceEnum.getMarketplaceId();
             List<String> shipmentStatusList = AmazonFbaShipmentStatusEnum.getAllStatus();
             List<String> shipmentIdList = dto.getShipmentCodeList();
-            // 请求亚马逊接口
             GetShipmentsResponse shipments = api.getShipments(queryType, marketplaceId, shipmentStatusList, shipmentIdList, null, null, null);
 
             InboundShipmentList responseList = shipments.getPayload().getShipmentData();
             if (CollectionUtils.isEmpty(shipments.getPayload().getShipmentData())) {
                 throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_ERROR);
             }
-            // 返回下载源数据
             List<PlatformAmazonFbaShipmentDTO> amazonFbaShipmentDTOList = responseList.stream()
                     .map(e -> new PlatformAmazonFbaShipmentDTO(e, shopId, shopInfoDTO.getName()))
                     .collect(Collectors.toList());
 
-            // 查询FBA货件item
             for (PlatformAmazonFbaShipmentDTO shipmentDTO : amazonFbaShipmentDTOList) {
-                GetShipmentItemsResponse response = api.getShipmentItemsByShipmentId(shipmentDTO.getShipmentInfo().getShipmentId(), marketplaceEnum.getMarketplaceId());
+                GetShipmentItemsResponse response = api.getShipmentItemsByShipmentId(
+                        shipmentDTO.getShipmentInfo().getShipmentId(), marketplaceEnum.getMarketplaceId());
                 InboundShipmentItemList itemData = response.getPayload().getItemData();
                 shipmentDTO.setDetailList(itemData);
             }
+            return amazonFbaShipmentDTOList;
+        } catch (ServiceException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("[Amazon SP-API] 下载FBA货件失败, shopId={}", shopId, e);
+            throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_ERROR);
+        }
+    }
 
+    /**
+     * 历史拉取逻辑：事务内落库 Mongo、同步任务并推送 WMS
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean oldDmpPullShipmentPersist(DmpPullShipmentDTO dto, AmazonShopInfoDTO shopInfoDTO, String shopId,
+                                              List<PlatformAmazonFbaShipmentDTO> amazonFbaShipmentDTOList) {
+        try {
             String category = PlatformCategoryEnum.THIRD_SYSTEM.getCode();
             String platform = PlatformDictEnum.AMAZON.getCode();
             String business = BusinessTypeEnum.FBA_SHIPMENT.getCode();
@@ -684,7 +727,14 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
     }
 
     /**
-     * 新中台拉取逻辑
+     * 新中台 pullShipment 拉取逻辑（需 cfg_setting 开启 new_dmp_pull_switch）。
+     * <p>
+     * billType 由 {@link #resolveFbaShipmentPullBillType()} 解析；专用入库计划入口见
+     * {@link #pullInboundPlanShipment} / {@link #newDmpPullInboundPlanShipment}。
+     * {@code shipmentCodeList} 非空时写入 hotfix extendJson，与入库计划入口共用
+     * {@link com.erp.server.dmp.inout.handler.input.task.init.DmpInputAmzCommonInitHandler#hasManualShipmentCodeFilter()} fail-fast 策略。
+     * 审查问题2（intentional）：billType 为 fba_inbound_plans 时同样受 listInboundPlans + lookbackMinutes 约束。
+     * 审查问题3（intentional）：hotfix 任务异步执行 Init 链，本方法 return true 仅表示任务已创建。
      */
     public boolean newDmpPullShipment(DmpPullShipmentDTO dto, AmazonShopInfoDTO shopInfoDTO) {
         // 当前账号所有店铺ID
@@ -693,7 +743,7 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
                 .map(AmazonShopInfoDTO.ShopNameDTO::getShopId)
                 .distinct()
                 .collect(Collectors.toList());
-        // 校验新中台明细配置
+        // billType 默认 fba_inbound_plans，可通过 cfg_setting 回退 fba_shipment，见 resolveFbaShipmentPullBillType
         String inputBillType = resolveFbaShipmentPullBillType();
         DmpCfgInputEntity inputEntity = dmpCfgInputService.lambdaQuery()
                 .eq(DmpCfgInputEntity::getBillType, inputBillType)
@@ -713,42 +763,26 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
         List<String> inputDetailIds = list.stream().map(BaseEntity::getId).collect(Collectors.toList());
 
         if (!dto.getShipmentCodeList().isEmpty()) {
-            dmpFbaShipmentService.lambdaUpdate()
-                    .set(DmpFbaShipmentEntity::getDataEncrypt,"")
-                    .in(DmpFbaShipmentEntity::getFbaShipmentId,dto.getShipmentCodeList())
-                    .update();
+            clearFbaShipmentDataEncrypt(dto.getShipmentCodeList());
         }
 
-        // 创建新中台hotfix任务
-         DmpInputHotfixCreateRequest dmpInputHotfixCreateRequest = new DmpInputHotfixCreateRequest();
+        DmpInputHotfixCreateRequest dmpInputHotfixCreateRequest = new DmpInputHotfixCreateRequest();
         dmpInputHotfixCreateRequest.setCfgInputDetailIdList(inputDetailIds);
         dmpInputHotfixCreateRequest.setCfgInputId(inputEntity.getId());
         dmpInputHotfixCreateRequest.setDetailExtendJson(JSON.toJSONString(dto));
         dmpInputHotfixCreateRequest.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
         dmpInputCreateFactory.doHotfixInputTask(dmpInputHotfixCreateRequest);
-        // 创建任务
-//        DmpInputCreateResponse response = dmpInputCreateFactory.createHotfixInputTask(dmpInputHotfixCreateRequest);
-//        // 执行任务
-//        if(!CollectionUtils.isEmpty(response.getAfterDmpInputTaskEntityList())) {
-//            for (DmpInputTaskEntity dmpInputTaskEntity : response.getAfterDmpInputTaskEntityList()) {
-//                //系统非dmp不立即执行，存在restcloud
-//                if (!CharSequenceUtil.equals(dmpInputTaskEntity.getExecSystem(), DmpCfgInputExecSystemEnum.DMP.getCode())) {
-//                    continue;
-//                }
-//                dmpInputExecutorPool.execute(() -> {
-//                    DmpInputFinishRequest dmpInputFinishRequest = new DmpInputFinishRequest();
-//                    dmpInputFinishRequest.setInputTaskId(dmpInputTaskEntity.getId());
-//                    dmpInputFinishRequest.setExecTimeout(dmpInputTaskEntity.getExecTimeout());
-//                    dmpInputTaskFactory.dealInputTask(dmpInputFinishRequest);
-//                });
-//            }
-//        }
         return true;
     }
 
     /**
-     * 可通过 cfg_setting 配置 key=fba_shipment_pull_bill_type(type=new_dmp_pull_switch) 动态切换。
-     * 默认使用 fba_inbound_plans；仅允许白名单值，避免误配置。
+     * 解析 newDmpPullShipment 使用的 dmp_cfg_input.billType。
+     * <p>
+     * 代码审查说明：默认 {@link BusinessTypeEnum#FBA_INBOUND_PLANS} 为产品 intentional 变更，
+     * 新中台手动拉货件统一走 Inbound Plan 链路；非破坏性遗漏。回退无需改代码：
+     * cfg_setting key={@link SettingEnum#FBA_SHIPMENT_PULL_BILL_TYPE} 设为 fba_shipment 即可；
+     * 白名单见 {@link #FBA_SHIPMENT_PULL_BILL_TYPE_ALLOW_LIST}。独立入口 {@link #pullInboundPlanShipment}
+     * 固定走入库计划配置。请勿报默认 billType 回归风险。
      */
     private String resolveFbaShipmentPullBillType() {
         String defaultBillType = BusinessTypeEnum.FBA_INBOUND_PLANS.getCode();
@@ -768,7 +802,14 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
     }
 
     /**
-     * 新中台手动拉取: 亚马逊FBA入库计划货件
+     * 新中台手动拉取: 亚马逊FBA入库计划货件。
+     * <p>
+     * 代码审查说明（审查问题2，intentional）：任务链起步于 {@link DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler}，
+     * 先 {@code listInboundPlans} 再按配置时间窗筛计划，{@code dto.shipmentCodeList} 在后续货件节点才生效。
+     * 旧 {@code getShipments(shipmentIdList)} 可按货件号直查；窗口外计划下的指定货件可能拉不到，勿当缺陷修复。
+     * {@code shipmentCodeList} 非空时与 {@link #newDmpPullShipment} 共用
+     * {@link com.erp.server.dmp.inout.handler.input.task.init.DmpInputAmzCommonInitHandler#hasManualShipmentCodeFilter()} fail-fast 策略。
+     * 审查问题3（intentional）：同 {@link #newDmpPullShipment}，接口同步返回 true，实际拉取由 hotfix 任务异步完成。
      */
     private boolean newDmpPullInboundPlanShipment(DmpPullShipmentDTO dto, AmazonShopInfoDTO shopInfoDTO) {
         List<String> sameAccountShopIds = shopInfoDTO.getMarketplaceShopIdMap().values()
@@ -777,8 +818,8 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
                 .distinct()
                 .collect(Collectors.toList());
         DmpCfgInputConvertEntity initConvertEntity = dmpCfgInputConvertService.lambdaQuery()
-                .eq(DmpCfgInputConvertEntity::getInputStatus, "init")
-                .eq(DmpCfgInputConvertEntity::getConvertClass, AMZ_FBA_INBOUND_PLAN_SHIPMENT_INIT_HANDLER)
+                .eq(DmpCfgInputConvertEntity::getInputStatus, DmpInputTaskStatusEnum.INIT.getCode())
+                .eq(DmpCfgInputConvertEntity::getConvertClass, DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler.CONVERT_CLASS)
                 .eq(DmpCfgInputConvertEntity::getDisabled, false)
                 .last(" LIMIT 1 ")
                 .one();
@@ -802,6 +843,8 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
         }
         List<String> inputDetailIds = list.stream().map(BaseEntity::getId).collect(Collectors.toList());
 
+        clearFbaShipmentDataEncrypt(dto.getShipmentCodeList());
+
         DmpInputHotfixCreateRequest dmpInputHotfixCreateRequest = new DmpInputHotfixCreateRequest();
         dmpInputHotfixCreateRequest.setCfgInputDetailIdList(inputDetailIds);
         dmpInputHotfixCreateRequest.setCfgInputId(inputEntity.getId());
@@ -809,5 +852,15 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
         dmpInputHotfixCreateRequest.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
         dmpInputCreateFactory.doHotfixInputTask(dmpInputHotfixCreateRequest);
         return true;
+    }
+
+    private void clearFbaShipmentDataEncrypt(List<String> shipmentCodeList) {
+        if (CollectionUtils.isEmpty(shipmentCodeList)) {
+            return;
+        }
+        dmpFbaShipmentService.lambdaUpdate()
+                .set(DmpFbaShipmentEntity::getDataEncrypt, "")
+                .in(DmpFbaShipmentEntity::getFbaShipmentId, shipmentCodeList)
+                .update();
     }
 }

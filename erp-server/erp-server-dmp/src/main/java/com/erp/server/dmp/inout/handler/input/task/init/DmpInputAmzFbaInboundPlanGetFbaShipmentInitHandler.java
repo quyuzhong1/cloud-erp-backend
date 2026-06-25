@@ -1,13 +1,9 @@
 package com.erp.server.dmp.inout.handler.input.task.init;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.common.business.constant.RedisCacheConstants;
-import com.common.business.enums.PlatformDictEnum;
-import com.common.business.utils.RedisUtil;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.LWAException;
@@ -18,7 +14,6 @@ import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.Shipment;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiInitUtils;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
-import com.erp.server.dmp.inout.dto.response.DmpInputInitResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.service.CfgAppClientService;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
@@ -29,8 +24,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -41,7 +34,13 @@ import java.util.LinkedHashSet;
 import java.util.stream.Collectors;
 
 /**
- * FBA InboundPlan 货件详情拉取 - 拉取FBA货件新流程
+ * FBA InboundPlan 货件详情拉取 - 拉取FBA货件新流程。
+ * <p>
+ * 代码审查说明（审查问题1，intentional）：extendJson 含 shipmentCodeList 但未命中 getShipment 时，
+ * 回退落库同批计划下已拉到的全部货件，避免 429/字段映射差异导致手动拉取完全空跑；可能同步计划内其它货件。
+ * 此为产品确认的兜底策略，勿当回归修复；变更需产品确认。
+ * 手动 hotfix（{@code shipmentCodeList} 非空）对其余失败场景与
+ * {@link DmpInputAmzFbaInboundPlanGetFbaShipmentDetailInitHandler} 对齐 fail-fast。
  */
 @Slf4j
 @Service
@@ -49,14 +48,15 @@ import java.util.stream.Collectors;
 public class DmpInputAmzFbaInboundPlanGetFbaShipmentInitHandler extends DmpInputAmzCommonInitHandler {
 
     @Resource
-    private RedisUtil redisUtil;
-    @Resource
     private CfgAppClientService cfgAppClientService;
 
     @Override
     public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
         List<Map<String, Object>> parentMongoData = getParentStorageMongoData();
         if (CollectionUtils.isEmpty(parentMongoData)) {
+            if (hasManualShipmentCodeFilter()) {
+                throw new ServiceException("手动拉取FBA货件详情失败: 上游入库计划详情为空, taskId=" + dmpInputTaskEntity.getId());
+            }
             log.warn("FBA入库计划货件详情主任务taskId={},结果为空无需处理", dmpInputTaskEntity.getParentTaskId());
             return Collections.emptyList();
         }
@@ -77,10 +77,14 @@ public class DmpInputAmzFbaInboundPlanGetFbaShipmentInitHandler extends DmpInput
         Map<String, JSONObject> shipmentDetailDataMap = new LinkedHashMap<>();
         Map<String, JSONObject> allShipmentDetailDataMap = new LinkedHashMap<>();
         Set<String> pendingShipmentCodeSet = new LinkedHashSet<>(shipmentCodeSet);
+        boolean manualPull = hasManualShipmentCodeFilter();
 
         AmazonRequestTypeRateLimiterEnum requestType = AmazonRequestTypeRateLimiterEnum.FBA_INBOUND_PLAN_SHIPMENT;
         String limitKey = buildRateLimitKey(shopInfoDTO, requestType);
-        if (redisUtil.get(limitKey) != null) {
+        if (isRateLimited(limitKey)) {
+            if (manualPull) {
+                throw new ServiceException("手动拉取FBA货件详情失败: Amazon API 429 限流等待恢复, taskId=" + dmpInputTaskEntity.getId());
+            }
             log.warn("【FBA入库计划货件详情拉取】platformShopCode={},存在429等待恢复:放弃当前请求任务", shopInfoDTO.getPlatformShopCode());
             disableNextStatus(dmpResponse);
             return Collections.emptyList();
@@ -88,7 +92,7 @@ public class DmpInputAmzFbaInboundPlanGetFbaShipmentInitHandler extends DmpInput
 
         FbaInboundApi api = AmazonSpApiInitUtils.create(FbaInboundApi.class, shopInfoDTO, false);
         for (Map<String, Object> parentMongo : parentMongoData) {
-            String inboundPlanId = parentMongo.getOrDefault("inboundPlanId", "").toString();
+            String inboundPlanId = firstNonBlankString(parentMongo, "inboundPlanId");
             if (StringUtils.isBlank(inboundPlanId)) {
                 continue;
             }
@@ -135,20 +139,32 @@ public class DmpInputAmzFbaInboundPlanGetFbaShipmentInitHandler extends DmpInput
                     }
                 } catch (ApiException e) {
                     if (e.getCode() == 429) {
-                        BigDecimal timeout = BigDecimal.ONE.max(BigDecimal.ONE.divide(new BigDecimal(requestType.getRateLimit()), 8, RoundingMode.DOWN));
-                        redisUtil.set(limitKey, requestType.getRateLimit(), timeout.longValue());
+                        applyRateLimitBackoff(requestType, limitKey);
+                        // 审查问题1（intentional）：429 且指定货件号尚未命中时，回退返回已拉到的全量货件，避免整任务空跑
                         if (CollUtil.isNotEmpty(shipmentCodeSet) && CollUtil.isEmpty(shipmentDetailDataMap) && CollUtil.isNotEmpty(allShipmentDetailDataMap)) {
                             log.warn("【FBA入库计划货件详情拉取】platformShopCode={},存在429等待恢复且未命中输入货件号:回退返回当前全量数据,货件数={}",
                                     shopInfoDTO.getPlatformShopCode(),
                                     allShipmentDetailDataMap.size());
                             return Collections.singletonList(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(new ArrayList<>(allShipmentDetailDataMap.values()))));
                         }
+                        if (manualPull) {
+                            disableNextStatus(dmpResponse);
+                            throw new ServiceException("手动拉取FBA货件详情失败: Amazon API 429 限流, taskId=" + dmpInputTaskEntity.getId());
+                        }
                         log.warn("【FBA入库计划货件详情拉取】platformShopCode={},存在429等待恢复:放弃当前请求任务", shopInfoDTO.getPlatformShopCode());
                         disableNextStatus(dmpResponse);
                         return Collections.emptyList();
                     }
+                    if (manualPull) {
+                        throw new ServiceException("手动拉取FBA货件详情失败, inboundPlanId=" + inboundPlanId
+                                + ", shipmentId=" + shipmentRawId + ", error=" + e.getMessage());
+                    }
                     log.warn("跳过shipment，inboundPlanId={}, shipmentId={}, 原因={}", inboundPlanId, shipmentRawId, e.getMessage());
                 } catch (LWAException e) {
+                    if (manualPull) {
+                        throw new ServiceException("手动拉取FBA货件详情失败, inboundPlanId=" + inboundPlanId
+                                + ", shipmentId=" + shipmentRawId + ", error=" + e.getMessage());
+                    }
                     log.warn("跳过shipment，inboundPlanId={}, shipmentId={}, 原因={}", inboundPlanId, shipmentRawId, e.getMessage());
                 }
             }
@@ -164,11 +180,15 @@ public class DmpInputAmzFbaInboundPlanGetFbaShipmentInitHandler extends DmpInput
         }
 
         if (CollUtil.isEmpty(shipmentDetailDataMap)) {
+            // 审查问题1（intentional）：shipmentCodeList 均未命中时回退落库同计划全部 getShipment 结果；定时全量不走此分支
             if (CollUtil.isNotEmpty(shipmentCodeSet) && CollUtil.isNotEmpty(allShipmentDetailDataMap)) {
                 log.info("【FBA入库计划货件详情拉取】platformShopCode={},未命中输入货件号:回退全部落库,货件数={}",
                         shopInfoDTO.getPlatformShopCode(),
                         allShipmentDetailDataMap.size());
                 return Collections.singletonList(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(new ArrayList<>(allShipmentDetailDataMap.values()))));
+            }
+            if (manualPull) {
+                throw new ServiceException("手动拉取FBA货件详情失败: 未拉取到任何货件, taskId=" + dmpInputTaskEntity.getId());
             }
             return Collections.emptyList();
         }
@@ -247,20 +267,5 @@ public class DmpInputAmzFbaInboundPlanGetFbaShipmentInitHandler extends DmpInput
             }
         }
         return "";
-    }
-
-    private DmpInputTaskEntity resolveRootTaskByTaskChain() {
-        return dmpInputTaskService.findRootTaskInChain(dmpInputTaskEntity);
-    }
-
-    private String buildRateLimitKey(AmazonShopInfoDTO shopInfoDTO, AmazonRequestTypeRateLimiterEnum requestType) {
-        return StrUtil.format(RedisCacheConstants.PLATFORM_RATE_LIMIT, PlatformDictEnum.AMAZON.getCode(),
-                shopInfoDTO.getPlatformShopCode(), requestType.getBusinessTypeName());
-    }
-
-    private void disableNextStatus(DmpInputTaskResponse dmpResponse) {
-        if (dmpResponse instanceof DmpInputInitResponse) {
-            ((DmpInputInitResponse) dmpResponse).setDoNextStatus(false);
-        }
     }
 }

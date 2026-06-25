@@ -5,9 +5,6 @@ import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.common.business.constant.RedisCacheConstants;
-import com.common.business.enums.PlatformDictEnum;
-import com.common.business.utils.RedisUtil;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.LWAException;
@@ -19,7 +16,6 @@ import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.ListInboundPlansRespon
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiInitUtils;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
-import com.erp.server.dmp.inout.dto.response.DmpInputInitResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.service.CfgAppClientService;
 import lombok.extern.slf4j.Slf4j;
@@ -28,8 +24,6 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,31 +33,48 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * FBA InboundPlan 列表拉取 - 拉取FBA货件前置处理器
+ * FBA InboundPlan 列表拉取 - 拉取FBA货件前置处理器。
+ * <p>
+ * 代码审查说明（审查问题2，intentional）：本 Handler 为 Inbound Plan 链路统一入口，定时同步与
+ * {@code pullInboundPlanShipment} 手动 hotfix 均先 {@code listInboundPlans}，再按
+ * {@link #parseLookbackMinutes()} 时间窗过滤。手动 {@code shipmentCodeList} 仅在后续 getShipment 阶段生效，
+ * 无法像旧版 {@code getShipments(shipmentIdList)} 绕过计划列表直查；窗口外计划下的货件需扩大 lookbackMinutes
+ * 或后续迭代专用直拉 Init。此为架构已知限制，勿当缺陷修复。
+ * 手动 hotfix（{@code shipmentCodeList}）对 429、空计划列表等与后续 Init 节点一致执行 fail-fast。
  */
 @Slf4j
 @Service("dmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler")
 @Scope("prototype")
-public class DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler extends DmpInputInitHandler {
+public class DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler extends DmpInputAmzCommonInitHandler {
+
+    /**
+     * dmp_cfg_input_convert.convert_class 配置值，与类名保持一致。
+     */
+    public static final String CONVERT_CLASS = DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler.class.getSimpleName();
 
     private static final List<String> DEFAULT_STATUS_LIST = Arrays.asList("ACTIVE", "SHIPPED");
 
     @Resource
     private CfgAppClientService cfgAppClientService;
-    @Resource
-    private RedisUtil redisUtil;
 
     @Override
     public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
         String shopId = dmpInputTaskEntity.getNextLevelId();
+        if (StringUtils.isBlank(shopId)) {
+            throw new ServiceException("未找到店铺授权ID:taskId=" + dmpInputTaskEntity.getId());
+        }
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
         if (shopInfoDTO == null) {
             throw new ServiceException("未找到店铺授权:" + shopId);
         }
 
+        boolean manualPull = hasManualShipmentCodeFilter();
         AmazonRequestTypeRateLimiterEnum requestType = AmazonRequestTypeRateLimiterEnum.FBA_INBOUND_PLAN;
         String limitKey = buildRateLimitKey(shopInfoDTO, requestType);
-        if (redisUtil.get(limitKey) != null) {
+        if (isRateLimited(limitKey)) {
+            if (manualPull) {
+                throw new ServiceException("手动拉取FBA入库计划列表失败: Amazon API 429 限流等待恢复, taskId=" + dmpInputTaskEntity.getId());
+            }
             log.warn("【FBA入库计划货件拉取】platformShopCode={},存在429等待恢复:放弃当前请求任务", shopInfoDTO.getPlatformShopCode());
             disableNextStatus(dmpResponse);
             return Collections.emptyList();
@@ -74,6 +85,7 @@ public class DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler extends DmpInpu
         List<String> inboundPlanStatusList = parseStatusList(extendJson);
         String sortBy = parseSortBy(extendJson);
         String sortOrder = parseSortOrder(extendJson);
+        // 审查问题2（intentional）：手动/定时共用 lookbackMinutes 时间窗，shipmentCodeList 无法跳过此过滤
         int lookbackMinutes = parseLookbackMinutes();
         OffsetDateTime thresholdTime = OffsetDateTime.now().minusMinutes(lookbackMinutes);
 
@@ -89,10 +101,21 @@ public class DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler extends DmpInpu
                     List<InboundPlanSummary> inboundPlans = response != null ? response.getInboundPlans() : null;
                     if (CollUtil.isNotEmpty(inboundPlans)) {
                         for (InboundPlanSummary inboundPlan : inboundPlans) {
-                            OffsetDateTime lastUpdatedAt = inboundPlan.getLastUpdatedAt();
-                            if (lastUpdatedAt == null || lastUpdatedAt.isBefore(thresholdTime)) {
-                                reachedOlderData = true;
-                                break;
+                            OffsetDateTime planTime = inboundPlan.getLastUpdatedAt();
+                            if (planTime == null) {
+                                planTime = inboundPlan.getCreatedAt();
+                            }
+                            if (planTime == null) {
+                                log.warn("【FBA入库计划拉取】跳过计划: lastUpdatedAt/createdAt 均为空, inboundPlanId={}",
+                                        inboundPlan.getInboundPlanId());
+                                continue;
+                            }
+                            if (planTime.isBefore(thresholdTime)) {
+                                if ("DESC".equals(sortOrder)) {
+                                    reachedOlderData = true;
+                                    break;
+                                }
+                                continue;
                             }
                             String inboundPlanId = inboundPlan.getInboundPlanId();
                             if (StrUtil.isBlank(inboundPlanId)) {
@@ -107,7 +130,15 @@ public class DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler extends DmpInpu
                     }
                     nextToken = response != null && response.getPagination() != null ? response.getPagination().getNextToken() : null;
                 } catch (ApiException e) {
+                    if (e.getCode() == 429 && manualPull) {
+                        applyRateLimitBackoff(requestType, limitKey);
+                        disableNextStatus(dmpResponse);
+                        throw new ServiceException("手动拉取FBA入库计划列表失败: Amazon API 429 限流, taskId=" + dmpInputTaskEntity.getId());
+                    }
                     if (handleRateLimitAndCheckNeedStop(e, requestType, limitKey, shopInfoDTO, dmpResponse, "FBA入库计划列表拉取")) {
+                        if (manualPull) {
+                            throw new ServiceException("手动拉取FBA入库计划列表失败: Amazon API 429 限流, taskId=" + dmpInputTaskEntity.getId());
+                        }
                         return Collections.emptyList();
                     }
                     throw new ServiceException("拉取FBA入库计划列表失败:" + e.getMessage());
@@ -121,6 +152,10 @@ public class DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler extends DmpInpu
         List<InboundPlanSummary> inboundPlanSummaryList = new ArrayList<>(inboundPlanSummaryMap.values());
         if (CollUtil.isEmpty(inboundPlanSummaryList)) {
             log.info("【FBA入库计划货件拉取】platformShopCode={},状态统计={},无符合时间范围的计划", shopInfoDTO.getPlatformShopCode(), JSON.toJSONString(statusCountMap));
+            if (manualPull) {
+                throw new ServiceException("手动拉取FBA入库计划列表失败: 无符合时间范围的计划, lookbackMinutes="
+                        + lookbackMinutes + ", threshold=" + thresholdTime + ", taskId=" + dmpInputTaskEntity.getId());
+            }
             return Collections.emptyList();
         }
 
@@ -140,6 +175,9 @@ public class DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler extends DmpInpu
                 thresholdTime);
 
         if (CollUtil.isEmpty(inboundPlanDataList)) {
+            if (manualPull) {
+                throw new ServiceException("手动拉取FBA入库计划列表失败: 未解析到有效计划ID, taskId=" + dmpInputTaskEntity.getId());
+            }
             return Collections.emptyList();
         }
         return Collections.singletonList(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(inboundPlanDataList)));
@@ -232,33 +270,6 @@ public class DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler extends DmpInpu
             return lookbackMinutes > 0 ? lookbackMinutes : defaultLookbackMinutes;
         } catch (Exception ignore) {
             return defaultLookbackMinutes;
-        }
-    }
-
-    private String buildRateLimitKey(AmazonShopInfoDTO shopInfoDTO, AmazonRequestTypeRateLimiterEnum requestType) {
-        return StrUtil.format(RedisCacheConstants.PLATFORM_RATE_LIMIT, PlatformDictEnum.AMAZON.getCode(),
-                shopInfoDTO.getPlatformShopCode(), requestType.getBusinessTypeName());
-    }
-
-    private boolean handleRateLimitAndCheckNeedStop(ApiException e,
-                                                    AmazonRequestTypeRateLimiterEnum requestType,
-                                                    String limitKey,
-                                                    AmazonShopInfoDTO shopInfoDTO,
-                                                    DmpInputTaskResponse dmpResponse,
-                                                    String businessDesc) {
-        if (e.getCode() != 429) {
-            return false;
-        }
-        BigDecimal timeout = BigDecimal.ONE.max(BigDecimal.ONE.divide(new BigDecimal(requestType.getRateLimit()), 8, RoundingMode.DOWN));
-        redisUtil.set(limitKey, requestType.getRateLimit(), timeout.longValue());
-        log.warn("【{}】platformShopCode={},存在429等待恢复:放弃当前请求任务", businessDesc, shopInfoDTO.getPlatformShopCode());
-        disableNextStatus(dmpResponse);
-        return true;
-    }
-
-    private void disableNextStatus(DmpInputTaskResponse dmpResponse) {
-        if (dmpResponse instanceof DmpInputInitResponse) {
-            ((DmpInputInitResponse) dmpResponse).setDoNextStatus(false);
         }
     }
 }

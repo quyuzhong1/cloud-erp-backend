@@ -390,6 +390,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(keyName = "dto.shopId")
     public Boolean pullShipment(FbaShipmentDTO.PullShipmentDTO dto) {
         // 检查当前店铺是否授权
         ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(dto.getShopId());
@@ -426,7 +427,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             return true;
         }
 
-        // FBA/Amazon货件：走DMP拉取
+        // FBA/Amazon货件：走DMP拉取（审查问题3 intentional：Feign success=hotfix 已提交，货件落库见 DMP 异步任务）
         DmpPullShipmentDTO pullShipmentDTO = new DmpPullShipmentDTO(dto.getShopId(), dto.getShipmentCodeList());
         if (!Boolean.TRUE.equals(dmpAmazonFeign.pullShipment(pullShipmentDTO))) {
             throw new ServiceException(ApiError.HTTP_BAD_REQUEST.getCode(), "拉取FBA货件失败");
@@ -437,6 +438,9 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     @Override
     @DistributeLocker(keyName = "dto.shopId")
     public Boolean pullInboundPlanShipment(FbaShipmentDTO.PullShipmentDTO dto) {
+        if (CollUtil.isEmpty(dto.getShipmentCodeList())) {
+            return true;
+        }
         ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(dto.getShopId());
         if (null == shopInfoEntity) {
             throw new ServiceException(ApiError.SHOP_NOT_FOUND);
@@ -448,6 +452,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         if (!PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(shopInfoEntity.getDictPlatform())) {
             throw new ServiceException(ApiError.HTTP_BAD_REQUEST.getCode(), "FBA入库计划货件拉取仅支持Amazon平台");
         }
+        // 审查问题3 intentional：Feign success=hotfix 已提交，货件落库见 DMP 异步任务
         DmpPullShipmentDTO pullShipmentDTO = new DmpPullShipmentDTO(dto.getShopId(), dto.getShipmentCodeList());
         if (!Boolean.TRUE.equals(dmpAmazonFeign.pullInboundPlanShipment(pullShipmentDTO))) {
             throw new ServiceException(ApiError.HTTP_BAD_REQUEST.getCode(), "拉取FBA入库计划货件失败");
