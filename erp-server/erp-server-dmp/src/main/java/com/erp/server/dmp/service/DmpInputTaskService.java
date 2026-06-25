@@ -10,7 +10,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -115,4 +117,12 @@ public interface DmpInputTaskService extends SuperService<DmpInputTaskEntity> {
      * @return 链路根任务；若 startTask 为 null 返回 null；若 parentTaskId 中途断链，返回最后一个有效任务
      */
     DmpInputTaskEntity findRootTaskInChain(DmpInputTaskEntity startTask);
+
+    /**
+     * 批量解析任务链根节点的 shopId（根任务 nextLevelId）。
+     *
+     * @param inputTaskIds 起始任务 ID 集合
+     * @return key=inputTaskId, value=根任务 shopId；未解析到则 value 为空字符串
+     */
+    Map<String, String> batchResolveRootTaskShopId(Collection<String> inputTaskIds);
 }

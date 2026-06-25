@@ -389,4 +389,67 @@ public class DmpInputTaskServiceImpl extends SuperServiceImpl<DmpInputTaskMapper
         return currentTask;
     }
 
+    @Override
+    public Map<String, String> batchResolveRootTaskShopId(Collection<String> inputTaskIds) {
+        if (CollUtil.isEmpty(inputTaskIds)) {
+            return Collections.emptyMap();
+        }
+        Map<String, DmpInputTaskEntity> taskMap = loadTaskChainMap(inputTaskIds);
+        Map<String, String> result = new HashMap<>(inputTaskIds.size());
+        for (String inputTaskId : inputTaskIds) {
+            if (StringUtils.isBlank(inputTaskId)) {
+                continue;
+            }
+            DmpInputTaskEntity rootTask = findRootTaskInChain(taskMap.get(inputTaskId), taskMap);
+            result.put(inputTaskId, rootTask == null ? "" : StringUtils.defaultString(rootTask.getNextLevelId()));
+        }
+        return result;
+    }
+
+    private Map<String, DmpInputTaskEntity> loadTaskChainMap(Collection<String> inputTaskIds) {
+        Set<String> pendingIds = inputTaskIds.stream()
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.toSet());
+        Map<String, DmpInputTaskEntity> taskMap = new HashMap<>();
+        while (CollUtil.isNotEmpty(pendingIds)) {
+            List<DmpInputTaskEntity> batchTasks = listByIds(new ArrayList<>(pendingIds));
+            pendingIds.clear();
+            for (DmpInputTaskEntity task : batchTasks) {
+                if (task == null || StringUtils.isBlank(task.getId())) {
+                    continue;
+                }
+                taskMap.put(task.getId(), task);
+            }
+            for (DmpInputTaskEntity task : batchTasks) {
+                if (task == null || StringUtils.isBlank(task.getParentTaskId())) {
+                    continue;
+                }
+                if (!taskMap.containsKey(task.getParentTaskId())) {
+                    pendingIds.add(task.getParentTaskId());
+                }
+            }
+        }
+        return taskMap;
+    }
+
+    private DmpInputTaskEntity findRootTaskInChain(DmpInputTaskEntity startTask, Map<String, DmpInputTaskEntity> taskMap) {
+        if (startTask == null || StringUtils.isBlank(startTask.getId())) {
+            return null;
+        }
+        DmpInputTaskEntity currentTask = startTask;
+        int guard = 0;
+        while (StringUtils.isNotBlank(currentTask.getParentTaskId()) && guard++ < MAX_TASK_CHAIN_DEPTH) {
+            DmpInputTaskEntity parentTask = taskMap.get(currentTask.getParentTaskId());
+            if (parentTask == null) {
+                break;
+            }
+            currentTask = parentTask;
+        }
+        if (StringUtils.isNotBlank(currentTask.getParentTaskId())) {
+            log.warn("DMP任务链回溯达到最大深度, startTaskId={}, currentTaskId={}, parentTaskId={}, maxDepth={}",
+                    startTask.getId(), currentTask.getId(), currentTask.getParentTaskId(), MAX_TASK_CHAIN_DEPTH);
+        }
+        return currentTask;
+    }
+
 }

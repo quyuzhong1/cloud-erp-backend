@@ -11,6 +11,7 @@ import com.erp.model.dmp.entity.ShopInfoMappingEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonFbaLabelPageTypeEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonFbaPackTypeEnum;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.Address;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.LabelPrepType;
@@ -127,7 +128,7 @@ public class DmpInputAmzFbaShipmentDmpHandler extends DmpInputDbConvertDmpHandle
                         if (label.get("shipment_id").toString().equals(dmpDataMap.get("fbaShipmentId"))) {
                             String labelUrl = (String)label.get("label_url");
                             dmpDataMap.put("labelUrl", CharSequenceUtil.isNotBlank(labelUrl) ? labelUrl : "");
-                            dmpDataMap.put("pageType", "PackageLabel_Plain_Paper");
+                            dmpDataMap.put("pageType", AmazonFbaLabelPageTypeEnum.PLAIN_PAPER.getCode());
                         }
                     }
 
