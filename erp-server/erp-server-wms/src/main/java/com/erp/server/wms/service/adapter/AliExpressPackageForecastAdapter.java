@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
@@ -150,11 +151,18 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
 
     @Override
     public List<BatchResultDTO> cancel(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return Collections.emptyList();
+        }
+        Map<String, PackageForecastEntity> entityMap = packageForecastMapper.selectBatchIds(ids).stream()
+                .collect(Collectors.toMap(PackageForecastEntity::getId, entity -> entity, (left, right) -> left));
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
         for (String id : ids) {
-            PackageForecastEntity entity = null;
+            PackageForecastEntity entity = entityMap.get(id);
             try {
-                entity = getForecastOrThrow(id);
+                if (Objects.isNull(entity)) {
+                    throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "组包预报单");
+                }
                 if (isCanceled(entity)) {
                     resultDTOS.add(BatchResultDTO.success(entity.getId(), entity.getCode(), "已取消上传"));
                     continue;

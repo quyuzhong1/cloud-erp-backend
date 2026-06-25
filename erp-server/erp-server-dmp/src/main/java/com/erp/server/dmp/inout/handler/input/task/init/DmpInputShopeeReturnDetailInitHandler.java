@@ -111,6 +111,7 @@ public class DmpInputShopeeReturnDetailInitHandler extends DmpInputInitHandler {
             throw new ServiceException("Shopee退货明细全部查询失败");
         }
         if (failureCount > 0) {
+            // 退货明细按 return_sn 单条补拉；部分失败不中断整批，保留成功明细入库，失败单号由日志人工补偿。
             log.warn("Shopee退货明细init部分查询失败,total:{},failureCount:{},failedReturnSnList:{}",
                     total, failureCount, failedReturnSnList);
         }

@@ -16,7 +16,6 @@ import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
-import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.oms.enums.AuthTypeEnum;
 import com.erp.model.wms.dto.PackageForecastDTO;
 import com.erp.model.wms.entity.PackageForecastDetailEntity;
@@ -842,31 +841,29 @@ public class ShopeePackageForecastAdapter extends AbstractPackageForecastPlatfor
     }
 
     private ShopAuthEntity findMerchantAuth(String shopId) {
-        ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(shopId);
-        ApiResult<List<ShopAuthEntity>> merchantAuthResult = shopInfoFeign.getShopListByParam(AuthTypeEnum.MERCHANT.getCode(),
-                AuthStatusEnum.ALREADY.getCode(), PlatformDictEnum.SHOPEE.getCode());
-        if (Objects.isNull(merchantAuthResult) || CollectionUtils.isEmpty(merchantAuthResult.getData())) {
+        List<ShopInfoEntity> relatedShopList = shopInfoFeign.getRelatedByShopId(shopId);
+        if (CollectionUtils.isEmpty(relatedShopList)) {
             return null;
         }
-        List<ShopInfoEntity> merchantShopList = shopInfoFeign.listShopInfoByIds(merchantAuthResult.getData().stream()
-                .map(ShopAuthEntity::getShopId)
+        relatedShopList = relatedShopList.stream()
+                .filter(item -> PlatformDictEnum.SHOPEE.getCode().equals(item.getDictPlatform()))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(relatedShopList)) {
+            return null;
+        }
+        Map<String, ShopInfoEntity> relatedShopMap = relatedShopList.stream()
+                .collect(Collectors.toMap(ShopInfoEntity::getId, Function.identity(), (left, right) -> left));
+        List<ShopAuthEntity> merchantAuthList = shopInfoFeign.listShopAuthByShopIds(relatedShopList.stream()
+                .map(ShopInfoEntity::getId)
                 .filter(StringUtils::isNotBlank)
                 .distinct()
                 .collect(Collectors.toList()));
-        Map<String, ShopInfoEntity> merchantShopMap = CollectionUtils.emptyIfNull(merchantShopList).stream()
-                .collect(Collectors.toMap(ShopInfoEntity::getId, Function.identity(), (left, right) -> left));
-        return merchantAuthResult.getData().stream()
+        return CollectionUtils.emptyIfNull(merchantAuthList).stream()
+                .filter(item -> AuthTypeEnum.MERCHANT.getCode().equals(item.getType()))
                 .filter(item -> StringUtils.isNotBlank(item.getAccessToken()) && StringUtils.isNotBlank(item.getShopeeId()))
-                .filter(item -> hasSameAccount(shopInfo, merchantShopMap.get(item.getShopId())))
+                .filter(item -> Objects.nonNull(relatedShopMap.get(item.getShopId())))
                 .findFirst()
                 .orElse(null);
-    }
-
-    private boolean hasSameAccount(ShopInfoEntity shopInfo, ShopInfoEntity merchantShop) {
-        if (Objects.isNull(shopInfo) || Objects.isNull(merchantShop)) {
-            return false;
-        }
-        return StringUtils.isNotBlank(shopInfo.getAccount()) && shopInfo.getAccount().equals(merchantShop.getAccount());
     }
 
     private Long parseLong(String value, String fieldName) {

@@ -7830,7 +7830,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
             // 只替换更新信息
             SoB2cEntity entity = B2cOrderConsumerConverter.INSTANCE.convertUpdateMainOrder(oldEntity, dto);
-            entity.setDeliveryType(resolveDeliveryType(entity));
+            String deliveryType = StringUtils.isNotBlank(entity.getDeliveryType()) ? entity.getDeliveryType() : oldEntity.getDeliveryType();
+            String shippingOrderNo = StringUtils.isNotBlank(entity.getShippingOrderNo()) ? entity.getShippingOrderNo() : oldEntity.getShippingOrderNo();
+            entity.setDeliveryType(resolveDeliveryType(entity, deliveryType, shippingOrderNo));
             if (StringUtils.isNotBlank(dto.getSellerOrderCode())) {
                 entity.setSellerOrderCode(dto.getSellerOrderCode());
             }
@@ -7849,6 +7851,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     private String resolveDeliveryType(SoB2cEntity entity) {
+        return resolveDeliveryType(entity, entity.getDeliveryType(), entity.getShippingOrderNo());
+    }
+
+    private String resolveDeliveryType(SoB2cEntity entity, String deliveryType, String shippingOrderNo) {
         if (Boolean.TRUE.equals(entity.hasPlatformWarehouseOrder())) {
             return OrderLogisticTypeEnum.PLATFORM_WAREHOUSE.getCode();
         }
@@ -7856,21 +7862,21 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (StringUtils.isBlank(entity.getId())) {
             return OrderLogisticTypeEnum.SELF_SHIPMENT.getCode();
         }
-        if (OrderLogisticTypeEnum.THIRD_WAREHOUSE.getCode().equals(entity.getDeliveryType())
-                && StringUtils.isNotBlank(entity.getShippingOrderNo())) {
-            return entity.getDeliveryType();
+        if (OrderLogisticTypeEnum.THIRD_WAREHOUSE.getCode().equals(deliveryType)
+                && StringUtils.isNotBlank(shippingOrderNo)) {
+            return deliveryType;
         }
-        if (StringUtils.isNotBlank(entity.getDeliveryType())
-                && !OrderLogisticTypeEnum.THIRD_WAREHOUSE.getCode().equals(entity.getDeliveryType())) {
-            return entity.getDeliveryType();
+        if (StringUtils.isNotBlank(deliveryType)
+                && !OrderLogisticTypeEnum.THIRD_WAREHOUSE.getCode().equals(deliveryType)) {
+            return deliveryType;
         }
         ThirdWarehouseDeliveryEntity thirdWarehouseDelivery;
         try {
             thirdWarehouseDelivery = thirdWarehouseDeliveryFeign.getLatestBySoId(entity.getId());
         } catch (Exception e) {
             log.warn("解析订单发货类型时查询三方仓发货单失败, soId: {}, code: {}", entity.getId(), entity.getCode(), e);
-            if (StringUtils.isNotBlank(entity.getDeliveryType())) {
-                return entity.getDeliveryType();
+            if (StringUtils.isNotBlank(deliveryType)) {
+                return deliveryType;
             }
             return OrderLogisticTypeEnum.SELF_SHIPMENT.getCode();
         }

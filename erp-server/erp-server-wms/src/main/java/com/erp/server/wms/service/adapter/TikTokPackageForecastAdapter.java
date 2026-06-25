@@ -191,14 +191,18 @@ public class TikTokPackageForecastAdapter extends AbstractPackageForecastPlatfor
             throw new ServiceException("TikTok不支持多店铺组包预报");
         }
         List<SoB2cDetailEntity> soB2cDetailEntityList = getSoDetailList(soIds, context);
-        String packageId = soB2cDetailEntityList.stream()
+        List<String> packageIds = soB2cDetailEntityList.stream()
                 .map(SoB2cDetailEntity::getPlatformPackageId)
                 .filter(StringUtils::isNotBlank)
-                .findFirst()
-                .orElse(null);
-        if (StringUtils.isBlank(packageId)) {
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(packageIds)) {
             throw new ServiceException("TikTok包裹号为空");
         }
+        if (packageIds.size() > 1) {
+            throw new ServiceException("TikTok不支持一个组包预报单关联多个平台包裹号");
+        }
+        String packageId = packageIds.get(0);
         List<String> orderIds = soB2cEntityList.stream().map(SoB2cEntity::getPlatformCode).collect(Collectors.toList());
         CombinePackagePramDTO combinePackagePramDTO = new CombinePackagePramDTO();
         List<CombinePackageGroupsBean> combinePackageGroupsBeanList = new ArrayList<>();
