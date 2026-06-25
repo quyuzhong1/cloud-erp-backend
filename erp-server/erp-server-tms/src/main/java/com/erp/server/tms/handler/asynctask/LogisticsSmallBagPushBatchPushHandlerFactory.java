@@ -26,6 +26,6 @@ public class LogisticsSmallBagPushBatchPushHandlerFactory {
     public TmsAsyncTaskBatchPushHandler<TmsAsyncTaskRecordDTO.SmallBagPushAllocationPayloadDTO> create(
         TmsAsyncTaskRecordEntity mqTaskRecord) {
         return new LogisticsSmallBagPushBatchPushHandler(
-            mqTaskRecord, asyncTaskDelegate, asyncTaskRecordService, logisticsBillCostService);
+            asyncTaskDelegate, asyncTaskRecordService, logisticsBillCostService);
     }
 }

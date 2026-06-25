@@ -13,10 +13,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -194,6 +196,37 @@ public class TmsAsyncTaskDetailServiceImpl extends SuperServiceImpl<AsyncTaskDet
                 .filter(StringUtils::isNotBlank)
                 .distinct()
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<TmsAsyncTaskDetailEntity> listPendingDetailsWithCursorAnchor(String mainId, Collection<String> businessIds,
+                                                                             String cursorBusinessId) {
+        if (StringUtils.isBlank(mainId) || businessIds == null || businessIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<TmsAsyncTaskDetailEntity> pendingDetails = lambdaQuery()
+                .eq(TmsAsyncTaskDetailEntity::getMainId, mainId)
+                .in(TmsAsyncTaskDetailEntity::getBusinessId, businessIds)
+                .eq(TmsAsyncTaskDetailEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode())
+                .orderByAsc(TmsAsyncTaskDetailEntity::getBusinessId)
+                .list();
+        if (StringUtils.isBlank(cursorBusinessId)) {
+            return pendingDetails;
+        }
+        if (CollUtil.isEmpty(pendingDetails)) {
+            TmsAsyncTaskDetailEntity anchor = new TmsAsyncTaskDetailEntity();
+            anchor.setBusinessId(cursorBusinessId);
+            return Collections.singletonList(anchor);
+        }
+        TmsAsyncTaskDetailEntity lastPending = pendingDetails.get(pendingDetails.size() - 1);
+        if (Objects.equals(lastPending.getBusinessId(), cursorBusinessId)) {
+            return pendingDetails;
+        }
+        List<TmsAsyncTaskDetailEntity> result = new ArrayList<>(pendingDetails);
+        TmsAsyncTaskDetailEntity anchor = new TmsAsyncTaskDetailEntity();
+        anchor.setBusinessId(cursorBusinessId);
+        result.add(anchor);
+        return result;
     }
 
     @Override

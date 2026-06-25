@@ -53,10 +53,4 @@ public interface TmsAsyncTaskBatchPushHandler<P> {
                                                           List<String> batchIds,
                                                           int batchNumber,
                                                           CfgSettingValueDTO.BillBatchParamsDTO billBatchParams);
-
-    default void afterBatchProcessed(String taskId,
-                                     int batchNumber,
-                                     List<String> batchIds,
-                                     TmsAsyncTaskRecordDTO.BatchProcessResult result) {
-    }
 }

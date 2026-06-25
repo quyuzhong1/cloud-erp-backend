@@ -133,22 +133,20 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
             .list();
 
         //仅头程/小包费用分摊防重维度需要不同月份
-        if(CollUtil.isNotEmpty(runningTasks)){
+        if (CollUtil.isNotEmpty(runningTasks)) {
             String reportDate = extractReportDate(compactJson);
-            //判断核算期间
             if (StringUtils.isBlank(reportDate)) {
-                log.warn("手动异步任务参数重复，businessType: {}, methodType: {}", businessType, methodType);
-                return null;
-            }else {
-                Optional<TmsAsyncTaskRecordEntity> periodConflict = runningTasks.stream()
-                        .filter(task -> reportDate.equals(extractReportDate(task.getDataJson())))
-                        .findFirst();
-                if (periodConflict.isPresent()) {
-                    TmsAsyncTaskRecordEntity conflict = periodConflict.get();
-                    log.warn("手动异步任务核算期间冲突，businessType: {}, methodType: {}, reportDate: {}, 进行中任务 code: {}",
-                            businessType,conflict.getMethodType(),reportDate, conflict.getCode());
-                    return null;
-                }
+                log.warn("存在进行中手动任务且无法提取核算期间，businessType: {}, methodType: {}", businessType, methodType);
+                throw new ServiceException("存在进行中的异步任务，请稍后重试或联系管理员");
+            }
+            Optional<TmsAsyncTaskRecordEntity> periodConflict = runningTasks.stream()
+                    .filter(task -> reportDate.equals(extractReportDate(task.getDataJson())))
+                    .findFirst();
+            if (periodConflict.isPresent()) {
+                TmsAsyncTaskRecordEntity conflict = periodConflict.get();
+                log.warn("手动异步任务核算期间冲突，businessType: {}, methodType: {}, reportDate: {}, 进行中任务 code: {}",
+                        businessType, conflict.getMethodType(), reportDate, conflict.getCode());
+                throw new ServiceException(ApiError.LOGISTICS_ASYNC_TASK_CREATE_ERROR, reportDate);
             }
         }
 
@@ -163,7 +161,10 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         entity.setExecTimeout(resolveTaskExecTimeout(loadBillBatchParams(null)));
         entity.setStatus(TmsAsyncTaskRecordStatusEnum.PENDING.getCode());
         entity.setExecType(TmsAsyncTaskRecordExecTypeEnum.MANUAL.getCode());
-        return save(entity) ? entity : null;
+        if (!save(entity)) {
+            throw new ServiceException("异步任务创建失败");
+        }
+        return entity;
     }
 
     /**
@@ -506,9 +507,6 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         String jsonStr = JSONUtil.toJsonStr(envelope);
         TmsAsyncTaskRecordEntity taskRecord = selfServer.addManualTask(
             new TmsAsyncTaskRecordDTO.ManualCreateDTO(businessType, methodType, detailCount, jsonStr));
-        if (taskRecord == null) {
-            throw new ServiceException(ApiError.LOGISTICS_ASYNC_TASK_CREATE_ERROR, jsonStr);
-        }
         claimAndDispatch(taskRecord, true);
         if (StringUtils.isNotBlank(dispatchSuccessLogTemplate)) {
             log.info(dispatchSuccessLogTemplate, taskRecord.getId(), detailCount);

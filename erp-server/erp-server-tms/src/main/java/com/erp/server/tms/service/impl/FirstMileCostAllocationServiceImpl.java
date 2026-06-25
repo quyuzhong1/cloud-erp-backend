@@ -2323,7 +2323,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
     }
 
     @Override
-    public void asyncBatchPushAllocatedCost(String reportDate){
+    public BatchResultDTO asyncBatchPushAllocatedCost(String reportDate){
         if (StringUtils.isBlank(reportDate)) {
             throw new ServiceException("核算日期不能为空");
         }
@@ -2342,7 +2342,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             new TmsAsyncTaskRecordDTO.FirstMilePushAllocationPayloadDTO(reportDate);
         TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope =
             asyncTaskRecordService.buildEnvelope(businessType, methodType, null, null, payload);
-        asyncTaskRecordService.dispatchManualEnvelopeTask(
+        return asyncTaskRecordService.dispatchManualEnvelopeTask(
             businessType, methodType, totalCount, envelope,
             "头程下推分摊异步任务派发成功，taskId: {}, 预计处理数据量: {}");
     }

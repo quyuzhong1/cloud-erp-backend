@@ -66,6 +66,16 @@ public interface TmsAsyncTaskDetailService extends SuperService<TmsAsyncTaskDeta
     List<String> listExistingBusinessIds(String mainId, Collection<String> businessIds);
 
     /**
+     * 查询本批待执行的 PENDING 明细；必要时追加游标占位行，保证批次消费框架能正确推进游标。
+     *
+     * @param mainId 主任务 ID
+     * @param businessIds 本批业务 ID
+     * @param cursorBusinessId 本批 source 末条 businessId，用于游标推进
+     */
+    List<TmsAsyncTaskDetailEntity> listPendingDetailsWithCursorAnchor(String mainId, Collection<String> businessIds,
+                                                                      String cursorBusinessId);
+
+    /**
      * 错误重试按失败明细游标分页，保留 businessCode 供目标任务明细展示。
      */
     List<TmsAsyncTaskDetailEntity> listFailedDetailsByCursor(String mainId, String lastBusinessId, int batchSize);

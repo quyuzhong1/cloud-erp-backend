@@ -42,11 +42,8 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import org.springframework.validation.annotation.Validated;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
+
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -280,8 +277,7 @@ public class FirstMileCostAllocationController extends BaseController {
     )
     public ApiResult<List<BatchResultDTO>> pushAllocatedCost(@RequestBody @Valid FirstMileCostAllocationDTO.IdsDTO dto) {
         if(CollUtil.isEmpty(dto.getIds())){
-            firstMileCostAllocationService.asyncBatchPushAllocatedCost(dto.getReportDate());
-            return success();
+            return success(Arrays.asList(firstMileCostAllocationService.asyncBatchPushAllocatedCost(dto.getReportDate())));
         }else {
             List<FirstMileWeightAllocationEntity> firstMileWeightAllocationEntities = firstMileWeightAllocationService.listByIds(dto.getIds());
             List<String> sourceIds = firstMileWeightAllocationEntities.stream().filter(Objects::nonNull).map(FirstMileWeightAllocationEntity::getSourceId).distinct().collect(Collectors.toList());

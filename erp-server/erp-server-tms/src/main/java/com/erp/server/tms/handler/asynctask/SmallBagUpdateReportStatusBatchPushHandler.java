@@ -2,6 +2,7 @@ package com.erp.server.tms.handler.asynctask;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.vo.LoginUser;
+import com.common.core.exception.ServiceException;
 import com.erp.model.tms.dto.CfgSettingValueDTO;
 import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
 import com.erp.model.tms.entity.TmsAsyncTaskRecordEntity;
@@ -12,6 +13,7 @@ import com.erp.server.tms.service.SmallBagCostAllocationMainService;
 import com.erp.server.tms.service.TmsAsyncTaskBatchPushHandler;
 import com.erp.server.tms.service.TmsAsyncTaskRecordService;
 import com.erp.server.tms.service.asynctask.SmallBagCostAllocationAsyncTaskDelegate;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
@@ -51,6 +53,9 @@ public class SmallBagUpdateReportStatusBatchPushHandler
     public String validatePayload(TmsAsyncTaskRecordDTO.SmallBagUpdateReportStatusPayloadDTO payload) {
         if (CharSequenceUtil.isBlank(payload.getReportPeriodStr())) {
             return "核算期间为空";
+        }
+        if (StringUtils.isBlank(payload.getReportDate()) && StringUtils.isBlank(payload.getReportStatus())) {
+            return"会计期间和核算状态不能同时为空";
         }
         return null;
     }

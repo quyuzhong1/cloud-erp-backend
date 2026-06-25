@@ -2945,11 +2945,8 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 .map(detail -> buildTaskDetail(taskId, businessType, detail.getBusinessId(), detail.getBusinessCode()))
                 .collect(Collectors.toList());
         asyncTaskDetailRecordService.saveBatchInChunks(addDetails, batchSize);
-        return asyncTaskDetailRecordService.lambdaQuery()
-                .eq(TmsAsyncTaskDetailEntity::getMainId, taskId)
-                .in(TmsAsyncTaskDetailEntity::getBusinessId, businessIds)
-                .orderByAsc(TmsAsyncTaskDetailEntity::getBusinessId)
-                .list();
+        String cursorBusinessId = sourceDetails.get(sourceDetails.size() - 1).getBusinessId();
+        return asyncTaskDetailRecordService.listPendingDetailsWithCursorAnchor(taskId, businessIds, cursorBusinessId);
     }
 
     @Override
@@ -2984,7 +2981,14 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             log.warn("头程对账僵死ING明细已标记失败，taskId: {}, 数量: {}", taskId, staleFailedCount);
         }
 
-        List<String> supplierIds = taskDetailList.stream().map(TmsAsyncTaskDetailEntity::getBusinessId).distinct().collect(Collectors.toList());
+        List<TmsAsyncTaskDetailEntity> executableDetails = taskDetailList.stream()
+            .filter(d -> Objects.equals(d.getStatus(), TmsAsyncTaskRecordStatusEnum.PENDING.getCode()))
+            .collect(Collectors.toList());
+        if (CollUtil.isEmpty(executableDetails)) {
+            return new TmsAsyncTaskRecordDTO.BatchProcessResult(0, staleFailedCount);
+        }
+
+        List<String> supplierIds = executableDetails.stream().map(TmsAsyncTaskDetailEntity::getBusinessId).distinct().collect(Collectors.toList());
         List<TmsFirstMileReconciliationDetailDTO.ListDTO> detailList = tmsFirstMileLogisticService.listAutoGenerateFirstMileReconciliationBySuppliers(startDate, endDate, supplierIds);
         List<TmsFirstMileReconciliationDetailDTO.ListDTO> list = detailList.stream().filter(e -> Objects.isNull(e.getSupplierType())).collect(Collectors.toList());
         Map<String, List<TmsFirstMileReconciliationDetailDTO.ListDTO>> map = list
@@ -2995,10 +2999,10 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         List<LogisticsSupplierEntity> logisticsSupplierEntityList = logisticsSupplierService.listByIds(supplierIds);
         Map<String, String> supplierMap = logisticsSupplierEntityList.stream().collect(Collectors.toMap(LogisticsSupplierEntity::getId, LogisticsSupplierEntity::getSupplierName));
         List<TmsFirstMileReconciliationDetailEntity> detailEntityList = this.listBySourceIds(billIds, DetailReconciliationTypeEnum.ACTUAL.getCode(), SupplierTypeEnum.LOGISTICS.getCode(), null);
-        CountDownLatch latch = new CountDownLatch(taskDetailList.size());
+        CountDownLatch latch = new CountDownLatch(executableDetails.size());
         AtomicInteger successCount = new AtomicInteger(0);
         AtomicInteger failedCount = new AtomicInteger(staleFailedCount);
-        for (TmsAsyncTaskDetailEntity detail : taskDetailList) {
+        for (TmsAsyncTaskDetailEntity detail : executableDetails) {
             String taskDetailId = detail.getId();
             String businessId = detail.getBusinessId();
             try {
@@ -3032,13 +3036,13 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             if (!completed) {
                 log.warn("头程对账批次执行超时，taskId: {}, timeoutSeconds: {}", taskDetailList.get(0).getMainId(), timeoutSeconds);
                 failedCount.addAndGet(asyncTaskDetailRecordService.markUnfinishedBatchDetailsFailed(
-                    taskDetailList, "批次执行超时"));
+                    executableDetails, "批次执行超时"));
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             log.error("任务等待中断", e);
             failedCount.addAndGet(asyncTaskDetailRecordService.markUnfinishedBatchDetailsFailed(
-                taskDetailList, "任务等待中断"));
+                executableDetails, "任务等待中断"));
         }
         return new TmsAsyncTaskRecordDTO.BatchProcessResult(successCount.get(), failedCount.get());
     }

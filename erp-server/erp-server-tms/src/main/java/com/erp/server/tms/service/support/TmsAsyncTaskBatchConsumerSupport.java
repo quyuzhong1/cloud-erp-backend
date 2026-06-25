@@ -158,8 +158,8 @@ public class TmsAsyncTaskBatchConsumerSupport {
                 totalSuccess += result.getSuccessCount();
                 totalFailed += result.getFailedCount();
 
-                //限制不能超过一开始记录的子任务数
-                if(totalProcessed >= detailCount ){
+                // 预计总量仅在创建时写入；循环内只回写失败数，结束时由 updateTaskFinally 统计 detailCount
+                if (detailCount > 0 && totalProcessed >= detailCount) {
                     break;
                 }
                 try {
@@ -171,7 +171,6 @@ public class TmsAsyncTaskBatchConsumerSupport {
                     log.error("更新任务进度失败，taskId: {}", taskId, e);
                 }
 
-                handler.afterBatchProcessed(taskId, batchNumber, batchIds, result);
                 lastId = batchIds.get(batchIds.size() - 1);
             }
 
@@ -314,22 +313,19 @@ public class TmsAsyncTaskBatchConsumerSupport {
 
                 totalProcessed += batchDetails.size();
                 totalFailed += result.getFailedCount();
-                //限制不能超过一开始记录的子任务数
-                if(totalProcessed >= detailCount ){
+                // 预计总量仅在创建时写入；循环内只回写失败数，结束时由 updateTaskFinally 统计 detailCount
+                if (detailCount > 0 && totalProcessed >= detailCount) {
                     break;
                 }
 
                 try {
                     asyncTaskRecordService.lambdaUpdate()
-                        .set(TmsAsyncTaskRecordEntity::getDetailCount, totalProcessed)
                         .set(TmsAsyncTaskRecordEntity::getErrorCount, totalFailed)
                         .eq(TmsAsyncTaskRecordEntity::getId, taskId)
                         .update();
                 } catch (Exception e) {
                     log.error("更新任务进度失败，taskId: {}", taskId, e);
                 }
-
-                handler.afterBatchProcessed(taskId, batchNumber, batchDetails, result);
 
                 String lastBusinessId = batchDetails.get(batchDetails.size() - 1).getBusinessId();
                 if (StringUtils.isBlank(lastBusinessId)) {

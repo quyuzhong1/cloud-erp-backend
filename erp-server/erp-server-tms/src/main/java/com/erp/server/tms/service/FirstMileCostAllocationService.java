@@ -179,8 +179,8 @@ public interface FirstMileCostAllocationService extends SuperService<FirstMileCo
     Boolean importExcel(MultipartFile excelFile, HttpServletResponse response);
 
     void asyncResetAllocatedCost(List<FirstMileCostAllocationEntity> entityList, List<FirstMileDeliveryEntity> firstMileDeliveryEntityList, List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList);
-
-    void asyncBatchPushAllocatedCost(String reportDate);
+    
+    BatchResultDTO asyncBatchPushAllocatedCost(String reportDate);
 
     FirstMileCostAllocationDTO.PushAllocatedCostCountDTO pushAllocatedCostCount(FirstMileCostAllocationDTO.IdsDTO dto);
 

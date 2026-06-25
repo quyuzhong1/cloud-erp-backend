@@ -172,7 +172,7 @@ public class TmsAsyncTaskBatchConsumerSupportTest {
     }
 
     @Test
-    public void detailUpdatesDetailCountAndErrorCount() {
+    public void detailUpdatesErrorCountDuringLoop() {
         mockReadyDetailTask(TmsAsyncTaskRecordStatusEnum.PENDING.getCode());
         TmsAsyncTaskDetailEntity detail1 = detail("biz-1");
         TmsAsyncTaskDetailEntity detail2 = detail("biz-2");

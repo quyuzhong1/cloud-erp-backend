@@ -64,8 +64,6 @@ import com.erp.model.tms.entity.TransferDeclareCostAllocationEntity;
 import com.erp.model.tms.entity.TransferDeclareCostAllocationMainEntity;
 import com.erp.model.tms.enums.AllocationFeeTypeEnum;
 import com.erp.model.tms.enums.CostAllocationEnum;
-import com.erp.model.tms.enums.SmallBagCostAllocationBigTableStatusEnum;
-import com.erp.model.tms.enums.SmallBagCostAllocationReportStatusEnum;
 import com.erp.model.tms.enums.TmsAsyncTaskMethodTypeEnum;
 import com.erp.model.tms.enums.TmsAsyncTaskRecordStatusEnum;
 import com.erp.model.tms.enums.TmsB2cDeclareReconciliationStatusEnum;
@@ -279,10 +277,10 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 			if(logisticsChannelEntity != null) {
 				dto.setSupplierName(logisticsChannelEntity.getName());
 			}
-			dto.setReportStatusName(SmallBagCostAllocationReportStatusEnum.getName(dto.getReportStatus()));
+			dto.setReportStatusName(TransferDeclareCostAllocationMainReportStatusEnum.getName(dto.getReportStatus()));
 			String reconciliationStatus = dto.getReconciliationStatus();
 			dto.setReconciliationStatusName(TmsB2cDeclareReconciliationStatusEnum.getName(reconciliationStatus));
-			dto.setBigTableStatusName(SmallBagCostAllocationBigTableStatusEnum.getName(dto.getBigTableStatus()));
+			dto.setBigTableStatusName(TransferDeclareCostAllocationBigTableStatusEnum.getName(dto.getBigTableStatus()));
 			String skuId = dto.getSkuId();
 			dto.setSkuName(skuIdNameMap.get(skuId));
 			String shopId = dto.getShopId();
@@ -727,7 +725,7 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 			throw new ServiceException("中转分摊不存在");
 		}
 		String id = transferDeclareCostAllocationMainEntity.getId();
-		if(SmallBagCostAllocationReportStatusEnum.CONFIRMED.getCode().equals(transferDeclareCostAllocationMainEntity.getReportStatus())) {
+		if(TransferDeclareCostAllocationMainReportStatusEnum.CONFIRMED.getCode().equals(transferDeclareCostAllocationMainEntity.getReportStatus())) {
 			throw new ServiceException("所选分摊费用核算状态必须为【待确认】才可重新下推");
 		}
 		transferDeclareCostAllocationMainService.removeById(id);
@@ -756,7 +754,7 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 		if (ObjectUtil.isEmpty(transferDeclareCostAllocationMainEntity)) {
 			throw new ServiceException("中转分摊不存在");
 		}
-		if(SmallBagCostAllocationReportStatusEnum.CONFIRMED.getCode().equals(transferDeclareCostAllocationMainEntity.getReportStatus())) {
+		if(TransferDeclareCostAllocationMainReportStatusEnum.CONFIRMED.getCode().equals(transferDeclareCostAllocationMainEntity.getReportStatus())) {
 			throw new ServiceException("所选分摊费用核算状态必须为【待确认】才可删除");
 		}
 		transferDeclareCostAllocationMainService.removeById(id);
@@ -867,11 +865,8 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
             .map(detail -> buildTransferDeclarePushTaskDetail(taskId, businessType, detail.getBusinessId(), detail.getBusinessCode()))
             .collect(Collectors.toList());
         asyncTaskDetailRecordService.saveBatchInChunks(addDetails, batchSize);
-        return asyncTaskDetailRecordService.lambdaQuery()
-            .eq(TmsAsyncTaskDetailEntity::getMainId, taskId)
-            .in(TmsAsyncTaskDetailEntity::getBusinessId, businessIds)
-            .orderByAsc(TmsAsyncTaskDetailEntity::getBusinessId)
-            .list();
+        String cursorBusinessId = sourceDetails.get(sourceDetails.size() - 1).getBusinessId();
+        return asyncTaskDetailRecordService.listPendingDetailsWithCursorAnchor(taskId, businessIds, cursorBusinessId);
     }
 
     /**
@@ -910,15 +905,27 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
             log.warn("中转下推分摊僵死ING明细已标记失败，taskId: {}, 数量: {}", taskId, staleFailedCount);
         }
 
-        CountDownLatch latch = new CountDownLatch(taskDetailList.size());
+        List<TmsAsyncTaskDetailEntity> executableDetails = taskDetailList.stream()
+            .filter(d -> Objects.equals(d.getStatus(), TmsAsyncTaskRecordStatusEnum.PENDING.getCode()))
+            .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(executableDetails)) {
+            return new TmsAsyncTaskRecordDTO.BatchProcessResult(0, staleFailedCount);
+        }
+
+        CountDownLatch latch = new CountDownLatch(executableDetails.size());
         AtomicInteger successCount = new AtomicInteger(0);
         AtomicInteger failedCount = new AtomicInteger(staleFailedCount);
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM");
+        List<String> executableBusinessIds = executableDetails.stream()
+            .map(TmsAsyncTaskDetailEntity::getBusinessId)
+            .filter(StringUtils::isNotBlank)
+            .distinct()
+            .collect(Collectors.toList());
         List<TmsB2cDeclareReconciliationDetailEntity> list =
-            tmsB2cDeclareReconciliationDetailService.listAutoGenerateCostByIds(businessIds);
+            tmsB2cDeclareReconciliationDetailService.listAutoGenerateCostByIds(executableBusinessIds);
         Map<String, TmsB2cDeclareReconciliationDetailEntity> map = list.stream()
             .collect(Collectors.toMap(TmsB2cDeclareReconciliationDetailEntity::getId, Function.identity(), (o1, o2) -> o1));
-        for (TmsAsyncTaskDetailEntity detail : taskDetailList) {
+        for (TmsAsyncTaskDetailEntity detail : executableDetails) {
             String taskDetailId = detail.getId();
             String businessId = detail.getBusinessId();
             try {
@@ -957,13 +964,13 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
             if (!completed) {
                 log.warn("中转下推分摊批次执行超时，taskId: {}, timeoutSeconds: {}", taskId, timeoutSeconds);
                 failedCount.addAndGet(asyncTaskDetailRecordService.markUnfinishedBatchDetailsFailed(
-                    taskDetailList, "批次执行超时"));
+                    executableDetails, "批次执行超时"));
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             log.error("中转下推分摊任务等待中断", e);
             failedCount.addAndGet(asyncTaskDetailRecordService.markUnfinishedBatchDetailsFailed(
-                taskDetailList, "任务等待中断"));
+                executableDetails, "任务等待中断"));
         }
         return new TmsAsyncTaskRecordDTO.BatchProcessResult(successCount.get(), failedCount.get());
     }

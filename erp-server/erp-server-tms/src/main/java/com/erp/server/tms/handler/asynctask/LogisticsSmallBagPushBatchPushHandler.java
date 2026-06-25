@@ -24,19 +24,15 @@ import java.util.Objects;
 public class LogisticsSmallBagPushBatchPushHandler
     implements TmsAsyncTaskBatchPushHandler<TmsAsyncTaskRecordDTO.SmallBagPushAllocationPayloadDTO> {
 
-    private final TmsAsyncTaskRecordEntity mqTaskRecord;
     private final LogisticsBillCostAsyncTaskDelegate asyncTaskDelegate;
     private final TmsAsyncTaskRecordService asyncTaskRecordService;
     private final LogisticsBillCostService logisticsBillCostService;
 
     private LogisticsBillCostDTO.SmallBagPushAllocationContext pushContext;
-    private int totalProcessed;
 
-    public LogisticsSmallBagPushBatchPushHandler(TmsAsyncTaskRecordEntity mqTaskRecord,
-                                                 LogisticsBillCostAsyncTaskDelegate asyncTaskDelegate,
+    public LogisticsSmallBagPushBatchPushHandler(LogisticsBillCostAsyncTaskDelegate asyncTaskDelegate,
                                                  TmsAsyncTaskRecordService asyncTaskRecordService,
                                                  LogisticsBillCostService logisticsBillCostService) {
-        this.mqTaskRecord = mqTaskRecord;
         this.asyncTaskDelegate = asyncTaskDelegate;
         this.asyncTaskRecordService = asyncTaskRecordService;
         this.logisticsBillCostService = logisticsBillCostService;
@@ -116,23 +112,5 @@ public class LogisticsSmallBagPushBatchPushHandler
         log.info("第{}批完成，本批成功: {}/失败: {}",
             batchNumber, result.getSuccessCount(), result.getFailedCount());
         return result;
-    }
-
-    @Override
-    public void afterBatchProcessed(String taskId,
-                                    int batchNumber,
-                                    List<String> batchIds,
-                                    TmsAsyncTaskRecordDTO.BatchProcessResult result) {
-        totalProcessed += batchIds.size();
-        if (Objects.isNull(mqTaskRecord.getDetailCount()) || Objects.equals(mqTaskRecord.getDetailCount(), 0)) {
-            try {
-                asyncTaskRecordService.lambdaUpdate()
-                    .set(TmsAsyncTaskRecordEntity::getDetailCount, totalProcessed)
-                    .eq(TmsAsyncTaskRecordEntity::getId, taskId)
-                    .update();
-            } catch (Exception e) {
-                log.error("更新任务进度失败，taskId: {}", taskId, e);
-            }
-        }
     }
 }
