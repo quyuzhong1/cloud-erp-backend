@@ -2012,6 +2012,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 if (cancelMsg.startsWith("外部物流单已取消，本地清理失败")) {
                     throw new ServiceException(cancelMsg);
                 }
+                if (StringUtils.isNotBlank(cancelMsg)) {
+                    throw new ServiceException(cancelMsg);
+                }
                 throw new ServiceException(ApiError.LOGISTICS_CANCEL_NOT_SUPPORTED, code);
             }
             soB2cLogisticsEntity = soB2cLogisticsService.getByMainId(id);

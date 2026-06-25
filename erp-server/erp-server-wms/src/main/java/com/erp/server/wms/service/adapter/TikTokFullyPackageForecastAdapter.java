@@ -201,7 +201,11 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
         if (CollectionUtils.isEmpty(soB2cLogisticsEntityList)) {
             throw new ServiceException("销售订单物流信息未找到");
         }
-        List<String> deliveryCodes = soB2cLogisticsEntityList.stream().map(SoB2cLogisticsEntity::getCode).collect(Collectors.toList());
+        List<String> deliveryCodes = soB2cLogisticsEntityList.stream()
+                .map(SoB2cLogisticsEntity::getCode)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
         List<PackageForecastEntity> packageForecastEntityList = packageForecastMapper.selectBatchIds(dto.getIds());
         List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
         if (CollectionUtils.isEmpty(packageForecastEntityList)) {
@@ -444,10 +448,16 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
             throw new ServiceException("TikTok全托管不支持多店铺打印面单");
         }
         String shopId = shopIds.get(0);
+        boolean shouldPersistLogisticsCode = StringUtils.isBlank(entity.getPlatformPackageNo());
         String logisticsCode = resolvePrintLogisticsCode(entity, shopId);
         String url = tikTokFullService.printLogistics(shopId, logisticsCode);
         try {
             String base64 = PdfUtil.convertPdfUrlToBase64(url, true);
+            if (shouldPersistLogisticsCode) {
+                entity.setPlatformPackageNo(logisticsCode);
+                entity.setPlatformNo(buildPlatformNo(entity.getHandoverNo(), entity.getPlatformPackageNo()));
+                updateForecastOrThrow(entity);
+            }
             return "data:application/pdf;base64," + base64;
         } catch (IOException e) {
             throw new ServiceException(e.getMessage());
@@ -477,11 +487,7 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
         if (CollectionUtils.isEmpty(subLogisticCodeList)) {
             throw new ServiceException(ApiError.COMMON_NOT_FOUND, "TikTok全托管物流子单号");
         }
-        String logisticsCode = String.join(",", subLogisticCodeList);
-        entity.setPlatformPackageNo(logisticsCode);
-        entity.setPlatformNo(buildPlatformNo(entity.getHandoverNo(), entity.getPlatformPackageNo()));
-        updateForecastOrThrow(entity);
-        return logisticsCode;
+        return String.join(",", subLogisticCodeList);
     }
 
     private String buildPlatformNo(String handoverNo, String platformPackageNo) {

@@ -3,6 +3,7 @@ package com.erp.server.dmp.inout.handler.input.task.init;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.business.threadlocal.ThirdWarehouseContext;
+import com.common.core.exception.ServiceException;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
@@ -38,7 +39,7 @@ public class DmpInputShopeeWebhookInitHandler extends DmpInputInitHandler {
             webhookData = payload.getJSONObject("data");
         } catch (Exception e) {
             log.error("虾皮 webhook 数据解析失败，data={}", data, e);
-            return Collections.emptyList();
+            throw new ServiceException("虾皮 webhook 数据解析失败");
         }
         if (Objects.isNull(webhookData)) {
             return Collections.emptyList();

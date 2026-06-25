@@ -510,6 +510,9 @@ public class ShopeePackageForecastAdapter extends AbstractPackageForecastPlatfor
                 .bindingIdList(Collections.singletonList(entity.getPlatformPackageNo()))
                 .build();
         CourierDeliveryWaybillResponse response = shopeeLogisticsService.getCourierDeliveryWaybill(buildBaseRequest(shopId), request);
+        if (Objects.isNull(response) || CollectionUtils.isEmpty(response.getWaybillList())) {
+            throw new ServiceException("虾皮快递寄送交接面单查询失败,bindingId:" + entity.getPlatformPackageNo());
+        }
         CourierDeliveryWaybill waybill = CollectionUtils.emptyIfNull(response.getWaybillList()).stream()
                 .filter(item -> entity.getPlatformPackageNo().equals(item.getBindingId()))
                 .findFirst()

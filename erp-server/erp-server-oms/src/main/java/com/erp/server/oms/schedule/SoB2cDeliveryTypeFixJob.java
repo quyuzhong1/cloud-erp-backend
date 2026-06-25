@@ -52,6 +52,7 @@ public class SoB2cDeliveryTypeFixJob {
             return ReturnT.FAIL;
         }
         long totalUpdated = 0L;
+        long failedPages = 0L;
         XxlJobHelper.log("fixSoB2cDeliveryTypeJob 开始执行，startDate={}，endDate={}，pageSize={}",
                 param.getStartDate(), param.getEndDate(), param.getPageSize());
         for (LocalDate date = param.getStartDate(); !date.isAfter(param.getEndDate()); date = date.plusDays(1)) {
@@ -73,6 +74,7 @@ public class SoB2cDeliveryTypeFixJob {
 
                 Map<String, String> thirdWarehouseSoIdMap = listActiveThirdWarehouseSoIdMap(records);
                 if (thirdWarehouseSoIdMap == null) {
+                    failedPages++;
                     XxlJobHelper.log("fixSoB2cDeliveryTypeJob 日期{} 第{}/{}页三方仓查询失败，跳过该页{}条",
                             date, current, page.getPages(), records.size());
                     if (current >= page.getPages()) {
@@ -93,7 +95,10 @@ public class SoB2cDeliveryTypeFixJob {
             }
             XxlJobHelper.log("fixSoB2cDeliveryTypeJob 日期{}处理完成，当天更新{}条", date, dayUpdated);
         }
-        XxlJobHelper.log("fixSoB2cDeliveryTypeJob 执行完成，总更新{}条", totalUpdated);
+        XxlJobHelper.log("fixSoB2cDeliveryTypeJob 执行完成，总更新{}条，失败页{}页", totalUpdated, failedPages);
+        if (failedPages > 0) {
+            return ReturnT.FAIL;
+        }
         return ReturnT.SUCCESS;
     }
 

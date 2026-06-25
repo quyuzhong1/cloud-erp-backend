@@ -62,6 +62,9 @@ public class PackageForecastPlatformAdapterFactory {
         if (CollectionUtils.isEmpty(soList)) {
             return Optional.empty();
         }
+        if (soList.size() != soIds.size()) {
+            throw new ServiceException("组包预报单销售订单数据不完整");
+        }
         List<String> platformList = soList.stream()
                 .map(SoB2cEntity::getDictPlatform)
                 .filter(StringUtils::isNotBlank)

@@ -534,7 +534,9 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         if (CharSequenceUtil.isNotBlank(base64)) {
             boolean updated = this.lambdaUpdate()
                     .set(PackageForecastEntity::getPrintStatus, PackagePrintStatusEnum.ALREADY.getCode())
+                    .setSql(Objects.nonNull(entity.getVersion()), "version = version + 1")
                     .eq(PackageForecastEntity::getId, id)
+                    .eq(Objects.nonNull(entity.getVersion()), PackageForecastEntity::getVersion, entity.getVersion())
                     .eq(PackageForecastEntity::getIsDeleted, false)
                     .update();
             if (!updated) {
