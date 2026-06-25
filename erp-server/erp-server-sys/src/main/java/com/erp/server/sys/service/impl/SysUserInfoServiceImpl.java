@@ -1425,6 +1425,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.SYS_USER_PWD_KEY, keyName = "uid", unlockAfterTx = true)
     public Boolean changePassword(String uid) {
         if (StringUtils.isBlank(uid)) {
             throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
@@ -1471,7 +1472,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     @Override
     @DistributeLocker(businessType = DistributeKeyConstant.SYS_USER_PWD_KEY, keyName = "uid")
     public Boolean changePassword(String uid, String pwd) {
-        log.info("changePassword：uid：{}，pwd：{}",uid,pwd);
+        log.info("changePassword: uid={}", uid);
         if (StringUtils.isBlank(uid)) {
             throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
         }

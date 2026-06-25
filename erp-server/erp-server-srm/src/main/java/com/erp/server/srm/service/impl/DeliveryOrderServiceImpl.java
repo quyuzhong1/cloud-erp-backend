@@ -2,7 +2,6 @@ package com.erp.server.srm.service.impl;
 
 
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.extra.spring.SpringUtil;
 import com.alibaba.excel.EasyExcelFactory;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -69,6 +68,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.apache.poi.ss.formula.functions.T;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -115,6 +115,9 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
 
     @Resource
     private ScmTaskFeign scmTaskFeign;
+    @Lazy
+    @Resource
+    private DeliveryOrderServiceImpl _this;
 
     @Override
     public PagingVO<DeliveryOrderDTO.ListDTO> paging(PagingDTO<DeliveryOrderDTO.ParamDTO> dto) {
@@ -417,7 +420,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
             try {
                 DeliveryOrderEntity deliveryOrderEntity = builderDeliveryOrder(purchaseOrderEntity, deliveryDTOS);
                 //处理明细列表
-                SpringUtil.getBean(DeliveryOrderServiceImpl.class).handleDeliverOrderDetailList(deliveryOrderEntity.getId(), deliveryDTOS, purchaseOrderDetailList, dtos,
+                _this.handleDeliverOrderDetailList(deliveryOrderEntity.getId(), deliveryDTOS, purchaseOrderDetailList, dtos,
                         deliveryOrderDetailList,receiveList,stockInDetailList,returnOrderDetailList);
             }catch (Exception e){
                 dtos.add(BatchResultDTO.fail(orderId,purchaseOrderEntity.getCode(),e.getMessage()));

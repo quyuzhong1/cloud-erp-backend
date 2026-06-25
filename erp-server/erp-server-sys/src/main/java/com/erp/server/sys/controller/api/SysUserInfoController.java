@@ -202,7 +202,7 @@ public class SysUserInfoController extends BaseController {
      * @param
      * @return
      **/
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "重置用户密码:用户ID={uid},用户密码={pwd}")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "重置用户密码:用户ID={uid}")
     @GetMapping("/changePassword")
     public ApiResult changePassword(@RequestParam("uid") String uid,@RequestParam("pwd") String pwd) {
         Boolean flag = sysUserInfoService.changePassword(uid,pwd);
