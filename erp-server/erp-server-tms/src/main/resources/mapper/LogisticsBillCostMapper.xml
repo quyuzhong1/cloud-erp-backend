@@ -394,6 +394,8 @@
             </foreach>
         </if>
         and lbc.type = #{params.type}
+        and lbc.create_time &gt;= #{params.createTimeStart}
+        and lbc.create_time &lt;= #{params.createTimeEnd}
         and lbc.reconciliation_status is distinct from #{params.reconciliationStatus}
         <if test="params.reconciliationStatus == params.estimateConfirmStatus">
             and lbc.pay_type != #{params.refundPayType}

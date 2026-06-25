@@ -225,7 +225,12 @@ public interface TmsAsyncTaskRecordService extends SuperService<TmsAsyncTaskReco
     TmsAsyncTaskRecordDTO.GenAutoTaskResultDTO genAutoTask();
 
     /**
-     * 异步任务 watchdog：负责超时和孤儿明细清理。
+     * 异步任务 watchdog 兜底清理。
+     * <p>
+     * 由 XXL-JOB {@code TmsAsyncTaskWatchdogJob} 周期性触发，与 {@link #startTask()} 职责分离：
+     * startTask 只派发到期任务，watchdog 只处理消费端未能正常收尾的残留状态。
+     * <p>
+     * 三阶段顺序不可调整——先终止超时主任务，再清理其产生的孤儿明细，最后扫描仍在 ING 的僵死明细。
      */
     void watchdogTask();
 }
