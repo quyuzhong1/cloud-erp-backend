@@ -2091,7 +2091,10 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
      */
     private BigDecimal toCostValue(String amount, Boolean isAbsoluteValue) {
         BigDecimal value = new BigDecimal(amount);
-        return Boolean.TRUE.equals(isAbsoluteValue) ? value.abs() : value;
+        if (Boolean.TRUE.equals(isAbsoluteValue)) {
+            value = value.abs();
+        }
+        return value.setScale(4, RoundingMode.HALF_UP);
     }
 
     /**

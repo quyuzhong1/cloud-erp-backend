@@ -575,7 +575,12 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
 
     private String buildCustomerBillAddressFromReceiver(SoB2cReceiverEntity receiver) {
         if (CharSequenceUtil.isNotBlank(receiver.getInvoiceAddress())) {
-            return receiver.getInvoiceAddress().trim();
+            return joinNonBlankAddress(
+                    receiver.getInvoiceAddress(),
+                    receiver.getCityName(),
+                    receiver.getPostCode(),
+                    resolveReceiverCountry(receiver)
+            );
         }
         if (CharSequenceUtil.isNotBlank(receiver.getFullAddress())) {
             return joinNonBlankAddress(
@@ -583,7 +588,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
                     receiver.getCityName(),
                     receiver.getProvinceName(),
                     receiver.getPostCode(),
-                    receiver.getCountryName()
+                    resolveReceiverCountry(receiver)
             );
         }
         return joinNonBlankAddress(
@@ -592,8 +597,12 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
                 receiver.getCityName(),
                 receiver.getProvinceName(),
                 receiver.getPostCode(),
-                receiver.getCountryName()
+                resolveReceiverCountry(receiver)
         );
+    }
+
+    private String resolveReceiverCountry(SoB2cReceiverEntity receiver) {
+        return CharSequenceUtil.blankToDefault(receiver.getCountry(), CharSequenceUtil.EMPTY).trim();
     }
 
     private String joinNonBlankAddress(String... parts) {
