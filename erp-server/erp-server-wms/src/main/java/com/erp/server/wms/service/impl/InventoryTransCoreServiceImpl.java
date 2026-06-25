@@ -262,7 +262,11 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
                 stockBaseDTO.setOrgId(getOrgIdFromWarehouse(warehouseEntityList,flow.getWarehouseId()));
                 stockBaseDTO.setWarehouseId(flow.getWarehouseId());
                 stockBaseDTO.setWarehouseLocation(warehouseLocation);
-                stockBaseDTO.setInventoryStatus(rule.getInventoryStatus());
+                // 若调用方在 InOutStockDTO 上显式指定了库存状态（如不良品），则优先使用；
+                // 否则回落到交易规则配置的默认状态，保证历史调用链路行为不变。
+                InventoryStatusEnum effectiveStatus = flow.getInventoryStatus() != null
+                        ? flow.getInventoryStatus() : rule.getInventoryStatus();
+                stockBaseDTO.setInventoryStatus(effectiveStatus);
                 InventoryEntity inventoryEntity=inventoryService.getInventory(InventoryTransactionDTO.getInventoryTransactionDTO(stockBaseDTO));
                 transactionDTO.setInventoryId(null==inventoryEntity?null:inventoryEntity.getId());
 
