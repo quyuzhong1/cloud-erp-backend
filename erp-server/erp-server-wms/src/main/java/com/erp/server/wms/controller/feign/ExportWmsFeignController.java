@@ -24,6 +24,7 @@ import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.server.wms.handler.InventoryQueryHandler;
 import com.erp.server.wms.query.*;
 import com.erp.server.wms.service.*;
+import org.springframework.beans.BeanUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -228,6 +229,9 @@ public class ExportWmsFeignController {
 
     @Resource
     private QcApplicationService qcApplicationService;
+
+    @Resource
+    private AfterSalesWarehouseLocationSuggestService afterSalesWarehouseLocationSuggestService;
 
     @PostMapping("/b2cDelivery")
     @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -1369,5 +1373,21 @@ public class ExportWmsFeignController {
     @WebAdvanceQuery(handler = CfgQcUserQueryHandler.class)
     public PagingVO<CfgQcUserDTO.ListDTO> exportCfgQcUser(@RequestBody @Validated PagingDTO<CfgQcUserDTO.ExportDTO> dto) {
         return cfgQcUserService.paging(dto);
+    }
+
+    /**
+     * 导出仓库位置建议售后单
+     */
+    @PostMapping("/exportAfterSalesWarehouseLocationSuggest")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:afterSalesWarehouseLocationSuggest:paging",
+            tableAlias = "awls"
+    )
+    @WebAdvanceQuery(handler = AfterSalesWarehouseLocationSuggestQueryHandler.class)
+    public PagingVO<AfterSalesWarehouseLocationSuggestDto.ListDTO> exportAfterSalesWarehouseLocationSuggest(@RequestBody @Validated PagingDTO<AfterSalesWarehouseLocationSuggestDto.ExportParamDTO> dto) {
+        PagingDTO<AfterSalesWarehouseLocationSuggestDto.SearchParamDTO> wrap = new PagingDTO<>();
+        BeanUtils.copyProperties(dto, wrap);
+        return afterSalesWarehouseLocationSuggestService.paging(wrap);
     }
 }

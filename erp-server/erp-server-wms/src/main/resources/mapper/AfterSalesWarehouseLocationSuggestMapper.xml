@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.AfterSalesWarehouseLocationSuggestMapper">
+
+    <select id="paging" resultType="com.erp.model.wms.entity.AfterSalesWarehouseLocationSuggestEntity">
+        SELECT
+        awls.id,
+        awls.sku_id AS skuId,
+        awls.sku_no AS skuNo,
+        awls.warehouse_id AS warehouseId,
+        awls.warehouse_area_code AS warehouseAreaCode,
+        awls.warehouse_location_code AS warehouseLocationCode,
+        awls.sort,
+        awls.disabled,
+        awls.version,
+        awls.is_deleted AS isDeleted,
+        awls.create_user_id AS createUserId,
+        awls.create_user_name AS createUserName,
+        awls.create_time AS createTime,
+        awls.update_user_id AS updateUserId,
+        awls.update_user_name AS updateUserName,
+        awls.update_time AS updateTime
+        FROM aftersales_warehouse_location_suggest awls
+        <if test="(params.productName != null and params.productName != '') or (params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.default.contains('pd.'))">
+        LEFT JOIN product_detail pd ON pd.id = awls.sku_id AND pd.is_deleted = false
+        </if>
+        WHERE awls.is_deleted = false
+        <if test="params.ids != null and params.ids.size > 0">
+            AND awls.id IN
+            <foreach collection="params.ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        <if test="params.skuNo != null and params.skuNo != ''">
+            AND awls.sku_no LIKE CONCAT('%', #{params.skuNo}, '%')
+        </if>
+        <if test="params.warehouseId != null and params.warehouseId != ''">
+            AND awls.warehouse_id = #{params.warehouseId}
+        </if>
+        <if test="params.productName != null and params.productName != ''">
+            AND pd.name ILIKE CONCAT('%', #{params.productName}::text, '%')
+        </if>
+        <if test="params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.default != ''">
+            AND ${params.sqlMap.default}
+        </if>
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator=",">
+                ${item.field} ${item.sort}
+            </foreach>
+            ,
+        </if>
+        awls.sku_no ASC,
+        awls.create_time DESC
+    </select>
+
+
+
+
+    <insert id="upsertBatch">
+        INSERT INTO aftersales_warehouse_location_suggest (
+        id, sku_id, sku_no, warehouse_id, warehouse_area_code,
+        warehouse_location_code, sort, disabled,
+        version, is_deleted,
+        create_user_id, create_user_name, create_time,
+        update_user_id, update_user_name, update_time
+        ) VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+            #{item.id}, #{item.skuId}, #{item.skuNo}, #{item.warehouseId}, #{item.warehouseAreaCode},
+            #{item.warehouseLocationCode}, #{item.sort}, #{item.disabled},
+            0, false,
+            #{item.createUserId}, #{item.createUserName}, #{item.createTime},
+            #{item.updateUserId}, #{item.updateUserName}, #{item.updateTime}
+            )
+        </foreach>
+        ON CONFLICT (sku_no, warehouse_id, warehouse_location_code)
+        WHERE is_deleted = false
+        DO UPDATE SET
+        sort = EXCLUDED.sort,
+        disabled = EXCLUDED.disabled,
+        warehouse_area_code = EXCLUDED.warehouse_area_code,
+        version = aftersales_warehouse_location_suggest.version + 1,
+        update_user_id = EXCLUDED.update_user_id,
+        update_user_name = EXCLUDED.update_user_name,
+        update_time = EXCLUDED.update_time -- 这里使用传入的最新时间
+    </insert>
+
+
+</mapper>
