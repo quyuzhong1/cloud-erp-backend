@@ -244,8 +244,10 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                             updateStatus.setAddOperationLog(true);
                         }
                     }
-                    // WEGO 物流跟踪号仅针对线下下单同步，线上订单跟踪号由销售平台管理
+                    // WEGO 物流跟踪号仅针对线下下单同步，线上订单跟踪号由销售平台管理；
+                    // transactionSubType 为空时视为线下订单（WEGO 手工建单场景），兜底同步跟踪号
                     if (!OmsPlatformEnum.WE_GO.getCode().equals(dto.getPlatform())
+                            || CharSequenceUtil.isBlank(mainEntity.getTransactionSubType())
                             || OrderSubTypeEnum.OFFLINE_ORDER.getCode().equals(mainEntity.getTransactionSubType())) {
                         updateStatus.setTrackNo(dto.getTrackNo());
                     }
