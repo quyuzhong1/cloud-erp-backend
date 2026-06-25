@@ -2,6 +2,7 @@ package com.sdk.oms.shopify.api.rest;
 
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider;
 import com.github.rholder.retry.*;
@@ -1183,10 +1184,44 @@ public class ShopifyRestClient {
      */
     private ShopifyPage<ShopifyOrder> getOrders(final Response response) {
         try {
-            final ShopifyOrdersRoot shopifyOrderRootResponse = response.readEntity(ShopifyOrdersRoot.class);
+            final String responseBody = ResponseEntityToStringMapper.map(response);
+            final ObjectMapper mapper = ShopifySdkObjectMapper.buildMapper();
+            final ShopifyOrdersRoot shopifyOrderRootResponse = mapper.readValue(responseBody, ShopifyOrdersRoot.class);
+            fillMissingOrderIds(shopifyOrderRootResponse.getOrders(), responseBody, mapper, "orders");
             return mapPagedResponse(shopifyOrderRootResponse.getOrders(), response);
         } catch (ProcessingException e) {
             throw toShopifyOrdersParseException(response, e);
+        } catch (Exception e) {
+            throw new ShopifyClientException("Shopify订单响应解析失败: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Jackson 偶发未将 REST 字段 id 映射到 orderId 时，从原始 JSON 补全，避免 Fastjson 写 Mongo 时丢失 orderId。
+     */
+    private static void fillMissingOrderIds(List<ShopifyOrder> orders, String responseBody, ObjectMapper mapper, String arrayField) {
+        if (orders == null || orders.isEmpty() || StringUtils.isBlank(responseBody)) {
+            return;
+        }
+        try {
+            JsonNode ordersNode = mapper.readTree(responseBody).get(arrayField);
+            if (ordersNode == null || !ordersNode.isArray()) {
+                return;
+            }
+            for (int i = 0; i < orders.size() && i < ordersNode.size(); i++) {
+                ShopifyOrder order = orders.get(i);
+                if (StringUtils.isNotBlank(order.getOrderId())) {
+                    continue;
+                }
+                JsonNode idNode = ordersNode.get(i).get("id");
+                if (idNode != null && !idNode.isNull()) {
+                    order.setOrderId(idNode.asText());
+                    log.warn("[Shopify订单]Jackson未映射id至orderId, 已从原始JSON补全: orderId={}, name={}",
+                            order.getOrderId(), order.getName());
+                }
+            }
+        } catch (Exception e) {
+            log.warn("[Shopify订单]从原始JSON补全orderId失败", e);
         }
     }
 

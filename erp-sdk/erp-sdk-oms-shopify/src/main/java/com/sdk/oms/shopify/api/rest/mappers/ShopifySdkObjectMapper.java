@@ -5,8 +5,6 @@ import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.databind.type.TypeFactory;
-import com.fasterxml.jackson.module.jaxb.JaxbAnnotationIntrospector;
 import com.sdk.oms.shopify.api.rest.model.serializer.LocalDateTimeDeserializer;
 import com.sdk.oms.shopify.api.rest.model.serializer.LocalDateTimeSerializer;
 
@@ -29,13 +27,10 @@ public class ShopifySdkObjectMapper {
 	 * 
 	 */
 	public static ObjectMapper buildMapper() {
-		final AnnotationIntrospector pair =
-				AnnotationIntrospector.pair(new JacksonAnnotationIntrospector(), new JaxbAnnotationIntrospector(TypeFactory.defaultInstance()));
-
 		ObjectMapper objectMapper = JsonMapper.builder().enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES)
 				.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS).configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
 				.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false).configure(MapperFeature.USE_ANNOTATIONS, true)
-				.annotationIntrospector(pair).serializationInclusion(Include.NON_NULL).build();
+				.annotationIntrospector(new JacksonAnnotationIntrospector()).serializationInclusion(Include.NON_NULL).build();
 		SimpleModule shopifyDateTimeModule = new SimpleModule("ShopifyDateTimeModule");
 		shopifyDateTimeModule.addDeserializer(LocalDateTime.class, new LocalDateTimeDeserializer());
 		shopifyDateTimeModule.addSerializer(LocalDateTime.class, new LocalDateTimeSerializer());
