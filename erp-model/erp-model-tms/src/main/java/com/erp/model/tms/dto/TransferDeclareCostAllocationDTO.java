@@ -13,6 +13,7 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
 import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 
 import lombok.Data;
@@ -441,6 +442,20 @@ public class TransferDeclareCostAllocationDTO implements Serializable {
          * 核算期间 yyyy-mm
          */
         private String reportPeriodStr;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ResetIdsDTO extends PermissionsDTO {
+        /**
+         * 核算期间 yyyy-mm
+         */
+        private String reportPeriodStr;
+
+        /**
+         * 表 ids
+         */
+        private List<String> ids;
     }
 
 }

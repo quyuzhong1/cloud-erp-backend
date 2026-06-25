@@ -1,6 +1,7 @@
 package com.erp.model.tms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -451,6 +452,20 @@ public class SmallBagCostAllocationDTO implements Serializable {
          */
         private String reportPeriodStr;
 
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ResetIdsDTO extends PermissionsDTO {
+        /**
+         * 核算期间 yyyy-mm
+         */
+        private String reportPeriodStr;
+
+        /**
+         * 表 ids
+         */
+        private List<String> ids;
     }
 
     /**

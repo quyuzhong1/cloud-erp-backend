@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.TabListDTO;
 import com.erp.model.tms.dto.LogisticsBillDTO;
+import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
 import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
 import com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO;
 import com.erp.model.tms.entity.LogisticsBillEntity;
@@ -115,6 +116,8 @@ public interface LogisticsBillMapper extends BaseMapper<LogisticsBillEntity> {
                                                                              LocalDate startDate, LocalDate endDate,
                                                                              @Param("reconciliationIds") List<String> reconciliationIds,
                                                                              @Param("supplierType") String supplierType);
+
+    List<String> pageWaitReconciliationSupplierIds(@Param("params") TmsAsyncTaskRecordDTO.CursorPageDTO params);
     /**
      * 根据物流跟踪单号或运单号查询物流单详情
      * @author will
