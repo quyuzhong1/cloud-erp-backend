@@ -808,7 +808,11 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
     }
 
     /**
-     * 新中台手动拉取: 亚马逊FBA入库计划货件
+     * 新中台手动拉取: 亚马逊FBA入库计划货件。
+     * <p>
+     * 代码审查说明（问题1）：任务链起步于 {@link DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler}，
+     * 先 {@code listInboundPlans} 再按配置时间窗筛计划，{@code dto.shipmentCodeList} 在后续货件节点才生效。
+     * 旧 {@code getShipments(shipmentIdList)} 可按货件号直查；本链路对「窗口外计划下的指定货件」可能拉不到，属已知限制。
      */
     private boolean newDmpPullInboundPlanShipment(DmpPullShipmentDTO dto, AmazonShopInfoDTO shopInfoDTO) {
         List<String> sameAccountShopIds = shopInfoDTO.getMarketplaceShopIdMap().values()

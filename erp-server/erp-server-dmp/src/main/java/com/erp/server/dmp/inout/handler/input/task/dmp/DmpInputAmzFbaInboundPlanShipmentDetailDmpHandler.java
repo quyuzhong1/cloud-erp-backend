@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.anno.ParamData;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.PannoEnum;
+import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.erp.server.dmp.inout.handler.input.task.init.DmpInputAmzCommonInitHandler;
@@ -69,27 +70,46 @@ public class DmpInputAmzFbaInboundPlanShipmentDetailDmpHandler extends DmpInputD
         Map<String, String> shipmentIdDmpIdMap = new HashMap<>();
         if (CollUtil.isNotEmpty(parentDataList)) {
             for (Map<String, Object> parentData : parentDataList) {
-                Object shipmentIdObj = parentData.get("fba_shipment_id");
                 Object dmpIdObj = parentData.get(BaseEntity.FIELD_ID);
-                if (shipmentIdObj == null || dmpIdObj == null) {
+                if (dmpIdObj == null) {
                     continue;
                 }
-                shipmentIdDmpIdMap.put(shipmentIdObj.toString(), dmpIdObj.toString());
+                String dmpId = dmpIdObj.toString();
+                Object shipmentIdObj = parentData.get("fba_shipment_id");
+                if (shipmentIdObj != null && StringUtils.isNotBlank(shipmentIdObj.toString())) {
+                    shipmentIdDmpIdMap.putIfAbsent(shipmentIdObj.toString(), dmpId);
+                }
             }
         }
+        int unmatchedCount = 0;
         for (Map<String, Object> childData : dmpInputMongoChildEntityList) {
             String shipmentKey = DmpInputAmzCommonInitHandler.firstNonBlankString(childData,
                     "shipmentConfirmationId", "fbaShipmentId", "shipmentId");
             if (StringUtils.isBlank(shipmentKey)) {
+                unmatchedCount++;
                 log.warn("未匹配主表货件ID, 明细货件键为空, inputTaskId={}", inputTaskId);
                 continue;
             }
             String dmpId = shipmentIdDmpIdMap.get(shipmentKey);
             if (StringUtils.isBlank(dmpId)) {
+                unmatchedCount++;
                 log.warn("未匹配主表货件ID, shipmentKey={}, inputTaskId={}", shipmentKey, inputTaskId);
                 continue;
             }
             childData.put(MAIN_ID, dmpId);
         }
+        if (unmatchedCount > 0) {
+            log.warn("FBA入库计划货件明细关联主表失败, unmatchedCount={}, inputTaskId={}", unmatchedCount, inputTaskId);
+            if (isManualInboundPlanShipmentPull()) {
+                throw new ServiceException("手动拉取FBA货件明细关联主表失败, unmatchedCount=" + unmatchedCount
+                        + ", inputTaskId=" + inputTaskId);
+            }
+        }
+    }
+
+    private boolean isManualInboundPlanShipmentPull() {
+        DmpInputTaskEntity startTask = dmpInputTaskService.getById(inputTaskId);
+        DmpInputTaskEntity rootTask = dmpInputTaskService.findRootTaskInChain(startTask);
+        return DmpInputAmzCommonInitHandler.hasManualShipmentCodeFilter(rootTask);
     }
 }

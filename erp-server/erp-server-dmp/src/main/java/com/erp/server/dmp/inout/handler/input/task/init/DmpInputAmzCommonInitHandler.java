@@ -2,6 +2,8 @@ package com.erp.server.dmp.inout.handler.input.task.init;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.utils.RedisUtil;
@@ -53,6 +55,32 @@ public abstract class DmpInputAmzCommonInitHandler extends DmpInputInitHandler {
     protected String resolveAuthShopIdByTaskChain() {
         DmpInputTaskEntity rootTask = resolveRootTaskByTaskChain();
         return rootTask == null ? "" : StringUtils.defaultString(rootTask.getNextLevelId());
+    }
+
+    /**
+     * 根任务 extendJson 是否携带非空 {@code shipmentCodeList}（手动 hotfix / pullInboundPlanShipment 场景）。
+     */
+    protected boolean hasManualShipmentCodeFilter() {
+        return hasManualShipmentCodeFilter(resolveRootTaskByTaskChain());
+    }
+
+    /**
+     * 解析根任务 extendJson（{@link com.erp.model.dmp.dto.DmpPullShipmentDTO} 序列化）中的 shipmentCodeList。
+     */
+    public static boolean hasManualShipmentCodeFilter(DmpInputTaskEntity rootTask) {
+        if (rootTask == null || StringUtils.isBlank(rootTask.getExtendJson())) {
+            return false;
+        }
+        try {
+            JSONObject extendObj = JSONObject.parseObject(rootTask.getExtendJson());
+            if (extendObj == null) {
+                return false;
+            }
+            JSONArray shipmentCodeArray = extendObj.getJSONArray("shipmentCodeList");
+            return CollUtil.isNotEmpty(shipmentCodeArray);
+        } catch (Exception ignore) {
+            return false;
+        }
     }
 
     protected String buildRateLimitKey(AmazonShopInfoDTO shopInfoDTO, AmazonRequestTypeRateLimiterEnum requestType) {

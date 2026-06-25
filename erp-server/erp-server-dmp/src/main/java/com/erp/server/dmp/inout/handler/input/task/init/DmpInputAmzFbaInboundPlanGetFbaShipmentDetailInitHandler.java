@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 基于主任务货件拉取 item 明细 - 拉取FBA货件明细新流程
@@ -69,15 +70,24 @@ public class DmpInputAmzFbaInboundPlanGetFbaShipmentDetailInitHandler extends Dm
 
         FbaInboundApi api = AmazonSpApiInitUtils.create(FbaInboundApi.class, shopInfoDTO, false);
         List<JSONObject> allItemList = new ArrayList<>();
+        boolean manualPull = hasManualShipmentCodeFilter();
+        List<String> failedShipmentIds = new ArrayList<>();
 
         for (Map<String, Object> parentMongo : parentMongoData) {
             String shipmentId = getShipmentId(parentMongo);
             if (StringUtils.isBlank(shipmentId)) {
+                if (manualPull) {
+                    throw new ServiceException("手动拉取FBA货件明细失败: shipmentId为空, taskId=" + dmpInputTaskEntity.getId());
+                }
                 log.warn("跳过明细拉取，原因=shipmentId为空, data={}", JSON.toJSONString(parentMongo));
                 continue;
             }
             String marketplaceId = getMarketplaceId(parentMongo, shopInfoDTO);
             if (StringUtils.isBlank(marketplaceId)) {
+                if (manualPull) {
+                    throw new ServiceException("手动拉取FBA货件明细失败: marketplaceId为空, shipmentId=" + shipmentId
+                            + ", taskId=" + dmpInputTaskEntity.getId());
+                }
                 log.warn("跳过明细拉取，原因=marketplaceId为空, shipmentId={}, data={}", shipmentId, JSON.toJSONString(parentMongo));
                 continue;
             }
@@ -108,10 +118,25 @@ public class DmpInputAmzFbaInboundPlanGetFbaShipmentDetailInitHandler extends Dm
                 if (handleRateLimitAndCheckNeedStop(e, requestType, limitKey, shopInfoDTO, dmpResponse, "FBA入库计划货件明细拉取")) {
                     return Collections.emptyList();
                 }
+                failedShipmentIds.add(shipmentId);
+                if (manualPull) {
+                    throw new ServiceException("手动拉取FBA货件明细失败, shipmentId=" + shipmentId + ", error=" + e.getMessage());
+                }
                 log.warn("跳过明细拉取，shipmentId={}, marketplaceId={}, error={}", shipmentId, marketplaceId, e.getMessage());
             } catch (Exception e) {
+                failedShipmentIds.add(shipmentId);
+                if (manualPull) {
+                    throw new ServiceException("手动拉取FBA货件明细失败, shipmentId=" + shipmentId + ", error=" + e.getMessage());
+                }
                 log.warn("跳过明细拉取，shipmentId={}, marketplaceId={}, error={}", shipmentId, marketplaceId, e.getMessage());
             }
+        }
+
+        if (CollUtil.isNotEmpty(failedShipmentIds)) {
+            log.warn("【FBA入库计划货件明细拉取】部分货件明细失败, platformShopCode={}, failedShipmentIds={}, taskId={}",
+                    shopInfoDTO.getPlatformShopCode(),
+                    failedShipmentIds.stream().distinct().collect(Collectors.joining(",")),
+                    dmpInputTaskEntity.getId());
         }
 
         if (CollUtil.isEmpty(allItemList)) {

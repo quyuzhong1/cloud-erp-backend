@@ -33,7 +33,14 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * FBA InboundPlan 列表拉取 - 拉取FBA货件前置处理器
+ * FBA InboundPlan 列表拉取 - 拉取FBA货件前置处理器。
+ * <p>
+ * 代码审查说明（问题1）：本 Handler 为 Inbound Plan 链路<strong>统一入口</strong>，定时同步与
+ * {@code pullInboundPlanShipment} 手动 hotfix 均先 {@code listInboundPlans}，再按
+ * {@link #parseLookbackMinutes()} 时间窗过滤。手动传入的 {@code shipmentCodeList} 仅在后续
+ * {@code getShipment} 阶段过滤，<strong>无法</strong>像旧版 {@code getShipments(shipmentIdList)}
+ * 那样绕过计划列表直查。若货件所属计划 {@code lastUpdatedAt/createdAt} 超出回溯窗口，手动拉取可能失败；
+ * 需扩大 {@code lookbackMinutes} 或后续迭代专用直拉 Init。
  */
 @Slf4j
 @Service("dmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler")
@@ -89,11 +96,16 @@ public class DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler extends DmpInpu
                     List<InboundPlanSummary> inboundPlans = response != null ? response.getInboundPlans() : null;
                     if (CollUtil.isNotEmpty(inboundPlans)) {
                         for (InboundPlanSummary inboundPlan : inboundPlans) {
-                            OffsetDateTime lastUpdatedAt = inboundPlan.getLastUpdatedAt();
-                            if (lastUpdatedAt == null) {
+                            OffsetDateTime planTime = inboundPlan.getLastUpdatedAt();
+                            if (planTime == null) {
+                                planTime = inboundPlan.getCreatedAt();
+                            }
+                            if (planTime == null) {
+                                log.warn("【FBA入库计划拉取】跳过计划: lastUpdatedAt/createdAt 均为空, inboundPlanId={}",
+                                        inboundPlan.getInboundPlanId());
                                 continue;
                             }
-                            if (lastUpdatedAt.isBefore(thresholdTime)) {
+                            if (planTime.isBefore(thresholdTime)) {
                                 if ("DESC".equals(sortOrder)) {
                                     reachedOlderData = true;
                                     break;
