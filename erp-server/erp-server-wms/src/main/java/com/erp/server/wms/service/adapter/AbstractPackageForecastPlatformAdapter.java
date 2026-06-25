@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
  */
 public abstract class AbstractPackageForecastPlatformAdapter implements PackageForecastPlatformAdapter {
 
-    private static final int BATCH_UPDATE_SIZE = 500;
+    protected static final int BATCH_UPDATE_SIZE = 500;
 
     @Resource
     protected PackageForecastMapper packageForecastMapper;
@@ -116,6 +116,7 @@ public abstract class AbstractPackageForecastPlatformAdapter implements PackageF
         if (CollectionUtils.isEmpty(entityList)) {
             return;
         }
+        // 大批量更新按 500 条分事务提交，避免长事务；调用方需用 BatchResultDTO/日志处理批次间部分成功。
         for (int fromIndex = 0; fromIndex < entityList.size(); fromIndex += BATCH_UPDATE_SIZE) {
             int toIndex = Math.min(fromIndex + BATCH_UPDATE_SIZE, entityList.size());
             List<PackageForecastEntity> batchList = entityList.subList(fromIndex, toIndex);

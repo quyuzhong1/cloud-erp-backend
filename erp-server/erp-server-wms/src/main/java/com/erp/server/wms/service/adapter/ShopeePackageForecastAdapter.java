@@ -201,8 +201,6 @@ public class ShopeePackageForecastAdapter extends AbstractPackageForecastPlatfor
         if (StringUtils.isBlank(base64)) {
             throw new ServiceException("打印失败");
         }
-        entity.setPrintStatus(PackagePrintStatusEnum.ALREADY.getCode());
-        updateForecastOrThrow(entity);
         return withPdfPrefix(base64);
     }
 
@@ -298,8 +296,15 @@ public class ShopeePackageForecastAdapter extends AbstractPackageForecastPlatfor
                     .cursor(cursor)
                     .build();
             FirstMileTrackingNumberListResponse response = shopeeLogisticsService.getTrackNumberList(buildBaseRequest(shopId), request);
-            if (Objects.isNull(response) || CollectionUtils.isEmpty(response.getFirstMileTrackingNumberList())) {
+            if (Objects.isNull(response)) {
                 return;
+            }
+            if (CollectionUtils.isEmpty(response.getFirstMileTrackingNumberList())) {
+                cursor = response.getNextCursor();
+                if (!Boolean.TRUE.equals(response.getMore())) {
+                    cursor = null;
+                }
+                continue;
             }
             FirstMileTrackingNumber number = response.getFirstMileTrackingNumberList().stream()
                     .filter(item -> entity.getTransportNo().equals(item.getFirstMileTrackingNumber()))
@@ -352,6 +357,9 @@ public class ShopeePackageForecastAdapter extends AbstractPackageForecastPlatfor
             }
             throw e;
         }
+        if (Objects.isNull(response)) {
+            throw new ServiceException("Shopee组包上传响应为空");
+        }
 
         Set<String> successKeys = CollectionUtils.emptyIfNull(response.getSuccessList()).stream()
                 .map(item -> orderKey(item.getOrderSn(), item.getPackageNumber()))
@@ -381,6 +389,9 @@ public class ShopeePackageForecastAdapter extends AbstractPackageForecastPlatfor
             ValidatorUtil.validateEntity(generateRequest);
             GenerateFirstMileTrackingNumberResponse generateResponse =
                     shopeeLogisticsService.generateFirstMileTrackingNumber(buildBaseRequest(context.getShopId()), generateRequest);
+            if (Objects.isNull(generateResponse)) {
+                throw new ServiceException("虾皮生成揽收批次号响应为空");
+            }
             trackingNumber = CollectionUtils.emptyIfNull(generateResponse.getFirstMileTrackingNumberList()).stream()
                     .filter(StringUtils::isNotBlank)
                     .findFirst()
@@ -397,6 +408,9 @@ public class ShopeePackageForecastAdapter extends AbstractPackageForecastPlatfor
         ValidatorUtil.validateEntity(request);
         BindFirstMileTrackingNumberResponse response =
                 shopeeLogisticsService.bindFirstMileTrackingNumber(buildBaseRequest(context.getShopId()), request);
+        if (Objects.isNull(response)) {
+            throw new ServiceException("Shopee组包上传响应为空");
+        }
 
         Map<String, String> failReasonMap = CollectionUtils.emptyIfNull(response.getOrderList()).stream()
                 .filter(this::isBindFailed)
@@ -537,6 +551,9 @@ public class ShopeePackageForecastAdapter extends AbstractPackageForecastPlatfor
             ValidatorUtil.validateEntity(request);
             CourierDeliveryTrackingNumberListResponse response =
                     shopeeLogisticsService.getCourierDeliveryTrackingNumberList(buildBaseRequest(shopId), request);
+            if (Objects.isNull(response)) {
+                return Optional.empty();
+            }
             Optional<CourierDeliveryBindingInfo> bindingInfo = CollectionUtils.emptyIfNull(response.getTrackingNumberList()).stream()
                     .filter(item -> entity.getPlatformPackageNo().equals(item.getBindingId()))
                     .findFirst();

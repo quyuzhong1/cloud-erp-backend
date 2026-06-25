@@ -13,7 +13,6 @@ import com.erp.model.wms.dto.PackageForecastDTO;
 import com.erp.model.wms.entity.PackageForecastDetailEntity;
 import com.erp.model.wms.entity.PackageForecastEntity;
 import com.erp.model.wms.enums.PackageForecastCollectModeEnum;
-import com.erp.model.wms.enums.PackagePrintStatusEnum;
 import com.erp.model.wms.enums.PackageUploadStatusEnum;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.sdk.oms.tiktok.dto.tiktok.fully.TikTokFullyLogisticResp;
@@ -46,6 +45,9 @@ import java.util.stream.Collectors;
 @Component
 public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPlatformAdapter {
 
+    private static final String DELIVERY_MODE_SELF = "SELF_DELIVERY";
+    private static final String DELIVERY_MODE_PLATFORM = "PLATFORM_DELIVERY";
+
     @Resource
     private LogisticsFeign logisticsFeign;
 
@@ -75,8 +77,6 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
         if (StringUtils.isBlank(base64)) {
             throw new ServiceException("打印失败");
         }
-        entity.setPrintStatus(PackagePrintStatusEnum.ALREADY.getCode());
-        updateForecastOrThrow(entity);
         return base64;
     }
 
@@ -207,6 +207,10 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
             throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "组包预报单");
         }
         packageForecastEntityList.forEach(this::validateUploadable);
+        List<BatchResultDTO> persistedPlatformResult = buildRetryWithPlatformIdentifierResult(packageForecastEntityList);
+        if (CollectionUtils.isNotEmpty(persistedPlatformResult)) {
+            return persistedPlatformResult;
+        }
         if (CollectionUtils.isEmpty(soB2cEntityList)) {
             throw new ServiceException("销售订单未找到");
         }
@@ -236,13 +240,13 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
         tikTokFullyShippingReq.setSenderContactId(senderContactId);
         validateReserveInfo(dto);
         if (PackageForecastCollectModeEnum.SELF_SEND.getCode().equals(dto.getCollectMode())) {
-            tikTokFullyShippingReq.setDeliveryMode("SELF_DELIVERY");
+            tikTokFullyShippingReq.setDeliveryMode(DELIVERY_MODE_SELF);
             TikTokFullyShippingReq.ReserveInfoDTO reserveInfoDTO = new TikTokFullyShippingReq.ReserveInfoDTO();
             reserveInfoDTO.setPredictedShipTime((int) dto.getDeliveryTime().atStartOfDay().toInstant(ZoneOffset.ofHours(8)).getEpochSecond());
             reserveInfoDTO.setPredictedArrivedTime((int) dto.getArrivedTime().atStartOfDay().toInstant(ZoneOffset.ofHours(8)).getEpochSecond());
             tikTokFullyShippingReq.setReserveInfo(reserveInfoDTO);
         } else {
-            tikTokFullyShippingReq.setDeliveryMode("PLATFORM_DELIVERY");
+            tikTokFullyShippingReq.setDeliveryMode(DELIVERY_MODE_PLATFORM);
             tikTokFullyShippingReq.setShippingBoxQuantity(dto.getTotalBox());
             tikTokFullyShippingReq.setTotalWeight(new TikTokFullyShippingReq.TotalWeightDTO(String.valueOf(dto.getDeliveryWeight()), "GRAM"));
             tikTokFullyShippingReq.setLogistics(new TikTokFullyShippingReq.LogisticsDTO(dto.getLogisticType(), dto.getProviderCode(), dto.getProviderName()));
@@ -343,6 +347,23 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
             }
         }
         return context;
+    }
+
+    private List<BatchResultDTO> buildRetryWithPlatformIdentifierResult(List<PackageForecastEntity> entityList) {
+        PackageForecastEntity persistedPlatformEntity = entityList.stream()
+                .filter(entity -> StringUtils.isNotBlank(entity.getHandoverNo())
+                        || StringUtils.isNotBlank(entity.getPlatformPackageNo())
+                        || StringUtils.isNotBlank(entity.getPlatformNo()))
+                .findFirst()
+                .orElse(null);
+        if (Objects.isNull(persistedPlatformEntity)) {
+            return Collections.emptyList();
+        }
+        String message = "TikTok全托管组包预报已存在平台物流信息，请先同步状态或人工处理后再重试，单号:"
+                + persistedPlatformEntity.getCode();
+        return entityList.stream()
+                .map(entity -> BatchResultDTO.fail(entity.getId(), entity.getCode(), message))
+                .collect(Collectors.toList());
     }
 
     private void validateOrderPlatform(List<SoB2cEntity> soList) {

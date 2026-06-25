@@ -7873,6 +7873,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             thirdWarehouseDelivery = thirdWarehouseDeliveryFeign.getLatestBySoId(entity.getId());
         } catch (Exception e) {
             log.warn("解析订单发货类型时查询三方仓发货单失败, soId: {}, code: {}", entity.getId(), entity.getCode(), e);
+            // 保持历史拉单主流程不因三方仓查询异常中断；历史空值由 fixSoB2cDeliveryTypeJob 补偿修复。
             return OrderLogisticTypeEnum.SELF_SHIPMENT.getCode();
         }
         if (Objects.nonNull(thirdWarehouseDelivery)

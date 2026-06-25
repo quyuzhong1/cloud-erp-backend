@@ -88,6 +88,10 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_PACKAGE_FOR
 @Slf4j
 @Service
 public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecastMapper, PackageForecastEntity> implements PackageForecastService {
+
+    private static final String TIKTOK_DELIVERY_MODE_SELF = "SELF_DELIVERY";
+    private static final String TIKTOK_DELIVERY_MODE_PLATFORM = "PLATFORM_DELIVERY";
+
     @Resource
     private OperateLogService operateLogService;
 
@@ -461,10 +465,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             dto.setCollectAddressId(collectAddressId);
             return firstResultOrThrow(adapter.upload(dto), "上传");
         } catch (Exception e) {
-            entity.setUploadStatus(failure);
-            entity.setRemark("上传失败:" + e.getMessage());
-            this.updateById(entity);
-            log.error("组包预报上传失败>>>>>{}", e);
+            log.error("组包预报上传失败>>>>>", e);
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), "上传失败" + e.getMessage());
         }
 
@@ -1131,9 +1132,9 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         TikTokFullyShippingProviderReq tikTokFullyShippingProviderReq = new TikTokFullyShippingProviderReq();
         tikTokFullyShippingProviderReq.setDeliveryOption(dto.getDeliveryOption());
         if(dto.getCollectMode().equals(PackageForecastCollectModeEnum.SELF_SEND.getCode())){
-            tikTokFullyShippingProviderReq.setDeliveryMode("SELF_DELIVERY");
+            tikTokFullyShippingProviderReq.setDeliveryMode(TIKTOK_DELIVERY_MODE_SELF);
         }else{
-            tikTokFullyShippingProviderReq.setDeliveryMode("PLATFORM_DELIVERY");
+            tikTokFullyShippingProviderReq.setDeliveryMode(TIKTOK_DELIVERY_MODE_PLATFORM);
         }
         tikTokFullyShippingProviderReq.setSenderContactId(dto.getAddressId());
         tikTokFullyShippingProviderReq.setDeliveryOrderCodes(deliveryCodes);

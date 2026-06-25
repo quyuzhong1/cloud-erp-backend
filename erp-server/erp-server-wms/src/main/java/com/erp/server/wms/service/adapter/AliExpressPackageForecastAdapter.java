@@ -18,7 +18,6 @@ import com.erp.model.wms.dto.PackageForecastDTO;
 import com.erp.model.wms.entity.PackageForecastDetailEntity;
 import com.erp.model.wms.entity.PackageForecastEntity;
 import com.erp.model.wms.enums.PackageForecastCollectModeEnum;
-import com.erp.model.wms.enums.PackagePrintStatusEnum;
 import com.erp.model.wms.enums.PackageUploadStatusEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
@@ -131,6 +130,7 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
             return BatchResultDTO.success(entity.getId(), entity.getCode(), "上传成功");
         } catch (Exception e) {
             entity.setUploadStatus(PackageUploadStatusEnum.UPLOAD_FAILURE.getCode());
+            // remark 面向内部排障保留平台/本地失败原因；完整堆栈只写日志。
             entity.setRemark("上传失败:" + e.getMessage());
             try {
                 updateForecastOrThrow(entity);
@@ -201,8 +201,6 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
         if (StringUtils.isBlank(base64)) {
             throw new ServiceException("打印失败");
         }
-        entity.setPrintStatus(PackagePrintStatusEnum.ALREADY.getCode());
-        updateForecastOrThrow(entity);
         return base64;
     }
 
@@ -243,6 +241,7 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
             } catch (Exception e) {
                 log.error("取消上传失败>>>>", e);
                 if (Objects.nonNull(entity)) {
+                    // remark 面向内部排障保留平台/本地失败原因；完整堆栈只写日志。
                     entity.setRemark("取消失败原因:" + e.getMessage());
                     try {
                         updateForecastOrThrow(entity);
@@ -713,7 +712,10 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
             return;
         }
         detailList.forEach(detail -> detail.setHandoverStatus(statusMap.get(detail.getSourceCode())));
-        packageForecastDetailService.updateBatchById(detailList);
+        for (int fromIndex = 0; fromIndex < detailList.size(); fromIndex += BATCH_UPDATE_SIZE) {
+            int toIndex = Math.min(fromIndex + BATCH_UPDATE_SIZE, detailList.size());
+            packageForecastDetailService.updateBatchById(detailList.subList(fromIndex, toIndex));
+        }
     }
 
     private Long parseAliExpressPlatformPackageNo(PackageForecastEntity entity) {

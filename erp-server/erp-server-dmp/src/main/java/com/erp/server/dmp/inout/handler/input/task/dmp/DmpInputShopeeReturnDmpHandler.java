@@ -26,6 +26,7 @@ import java.util.TreeMap;
 public class DmpInputShopeeReturnDmpHandler extends DmpInputDbConvertDmpHandler {
 
     private static final int RETURN_SOLUTION_RETURN_AND_REFUND = 0;
+    // DMP退货主表内部状态字典：1=正常，5=已取消；平台原始状态 CANCELLED 映射为内部已取消。
     private static final String INTERNAL_STATUS_NORMAL = "1";
     private static final String INTERNAL_STATUS_CANCELLED = "5";
     private static final String PLATFORM_STATUS_CANCELLED = "CANCELLED";

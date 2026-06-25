@@ -97,6 +97,7 @@ public class DmpInputShopeeFbsInventoryInitHandler extends DmpInputInitHandler {
                 .pageSize(PAGE_SIZE)
                 .build();
 
+        // DMP Init接口当前要求一次返回初始化数据列表；如后续Shopee FBS库存量级过大，应在调度层按店铺/仓库拆分任务。
         List<DmpInputTaskInitDTO> resultList = new ArrayList<>();
         int pageNo = 1;
         while (true) {

@@ -11,7 +11,6 @@ import com.erp.model.wms.dto.PackageForecastDTO;
 import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.entity.PackageForecastDetailEntity;
 import com.erp.model.wms.entity.PackageForecastEntity;
-import com.erp.model.wms.enums.PackagePrintStatusEnum;
 import com.erp.model.wms.enums.PackageUploadStatusEnum;
 import com.erp.server.wms.service.WmsAttachmentService;
 import com.sdk.oms.tiktok.dto.tiktok.packages.CombinePackageGroupsBean;
@@ -107,8 +106,6 @@ public class TikTokPackageForecastAdapter extends AbstractPackageForecastPlatfor
         if (StringUtils.isBlank(base64)) {
             throw new ServiceException("打印失败");
         }
-        entity.setPrintStatus(PackagePrintStatusEnum.ALREADY.getCode());
-        updateForecastOrThrow(entity);
         return base64;
     }
 

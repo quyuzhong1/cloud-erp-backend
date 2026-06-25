@@ -29,6 +29,8 @@ import java.util.stream.Collectors;
  */
 public abstract class DmpOutputPlatformRefundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler {
 
+    private static final int BATCH_SIZE = 500;
+
     @Resource
     private DmpSoRefundDetailService dmpSoRefundDetailService;
 
@@ -101,10 +103,17 @@ public abstract class DmpOutputPlatformRefundRocketMQTaskHandler extends DmpOutp
         if (CollUtil.isEmpty(missingMainIds)) {
             return;
         }
-        List<DmpSoRefundDetailEntity> detailList = dmpSoRefundDetailService.lambdaQuery()
-                .in(DmpSoRefundDetailEntity::getMainId, missingMainIds)
-                .eq(DmpSoRefundDetailEntity::getIsDeleted, Boolean.FALSE)
-                .list();
+        List<DmpSoRefundDetailEntity> detailList = new ArrayList<>();
+        for (int fromIndex = 0; fromIndex < missingMainIds.size(); fromIndex += BATCH_SIZE) {
+            List<String> batchIds = missingMainIds.subList(fromIndex, Math.min(fromIndex + BATCH_SIZE, missingMainIds.size()));
+            List<DmpSoRefundDetailEntity> batchDetailList = dmpSoRefundDetailService.lambdaQuery()
+                    .in(DmpSoRefundDetailEntity::getMainId, batchIds)
+                    .eq(DmpSoRefundDetailEntity::getIsDeleted, Boolean.FALSE)
+                    .list();
+            if (CollUtil.isNotEmpty(batchDetailList)) {
+                detailList.addAll(batchDetailList);
+            }
+        }
         if (CollUtil.isEmpty(detailList)) {
             return;
         }

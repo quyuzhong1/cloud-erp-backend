@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -44,6 +45,7 @@ public class ShopeeWebhookHandler implements WebhookHandler{
 
     @Override
     public WebhookResult process(String data, Map<String, String> headers, String serviceFlag) {
+        // WebhookController 对非奇门回调统一返回 HTTP 200；这里的 flag/code 作为业务处理结果写入响应体和日志。
         if(StringUtils.isBlank(data)){
             return WebhookResult.isSuccess("fail", 400, "回传数据为空");
         }
@@ -108,28 +110,29 @@ public class ShopeeWebhookHandler implements WebhookHandler{
 
     private DmpCfgInputDetailEntity resolveDetailEntity(String cfgInputId, String platformShopId) {
         String erpShopId = resolveErpShopId(platformShopId);
-        DmpCfgInputDetailEntity matchedDetail = queryDetailByNextLevelId(cfgInputId, erpShopId);
+        List<DmpCfgInputDetailEntity> activeDetails = dmpCfgInputDetailService.lambdaQuery()
+                .eq(DmpCfgInputDetailEntity::getMainId, cfgInputId)
+                .eq(DmpCfgInputDetailEntity::getDisabled, Boolean.FALSE)
+                .list();
+        if (activeDetails == null || activeDetails.isEmpty()) {
+            log.warn("虾皮webhook 未查询到启用的店铺任务明细，cfgInputId={}，platformShopId={}，erpShopId={}",
+                    cfgInputId, platformShopId, erpShopId);
+            return null;
+        }
+        DmpCfgInputDetailEntity matchedDetail = findDetailByNextLevelId(activeDetails, erpShopId);
         if (Objects.isNull(matchedDetail) && !Objects.equals(erpShopId, platformShopId)) {
-            matchedDetail = queryDetailByNextLevelId(cfgInputId, platformShopId);
+            matchedDetail = findDetailByNextLevelId(activeDetails, platformShopId);
         }
         if (Objects.nonNull(matchedDetail)) {
             return matchedDetail;
         }
-        int detailCount = dmpCfgInputDetailService.lambdaQuery()
-                .eq(DmpCfgInputDetailEntity::getMainId, cfgInputId)
-                .eq(DmpCfgInputDetailEntity::getDisabled, Boolean.FALSE)
-                .count();
-        if (detailCount == 1) {
-            DmpCfgInputDetailEntity fallbackDetail = dmpCfgInputDetailService.lambdaQuery()
-                    .eq(DmpCfgInputDetailEntity::getMainId, cfgInputId)
-                    .eq(DmpCfgInputDetailEntity::getDisabled, Boolean.FALSE)
-                    .and(query -> query.isNull(DmpCfgInputDetailEntity::getNextLevelId)
-                            .or()
-                            .eq(DmpCfgInputDetailEntity::getNextLevelId, ""))
-                    .last("limit 1")
-                    .one();
+        if (activeDetails.size() == 1) {
+            DmpCfgInputDetailEntity fallbackDetail = activeDetails.get(0);
             if (Objects.nonNull(fallbackDetail)) {
-                return fallbackDetail;
+                String nextLevelId = fallbackDetail.getNextLevelId();
+                if (StringUtils.isBlank(nextLevelId)) {
+                    return fallbackDetail;
+                }
             }
         }
         log.warn("虾皮webhook 未匹配到店铺任务明细，cfgInputId={}，platformShopId={}，erpShopId={}",
@@ -137,16 +140,14 @@ public class ShopeeWebhookHandler implements WebhookHandler{
         return null;
     }
 
-    private DmpCfgInputDetailEntity queryDetailByNextLevelId(String cfgInputId, String nextLevelId) {
+    private DmpCfgInputDetailEntity findDetailByNextLevelId(List<DmpCfgInputDetailEntity> activeDetails, String nextLevelId) {
         if (StringUtils.isBlank(nextLevelId)) {
             return null;
         }
-        return dmpCfgInputDetailService.lambdaQuery()
-                .eq(DmpCfgInputDetailEntity::getMainId, cfgInputId)
-                .eq(DmpCfgInputDetailEntity::getDisabled, Boolean.FALSE)
-                .eq(DmpCfgInputDetailEntity::getNextLevelId, nextLevelId)
-                .last("limit 1")
-                .one();
+        return activeDetails.stream()
+                .filter(detail -> nextLevelId.equals(detail.getNextLevelId()))
+                .findFirst()
+                .orElse(null);
     }
 
     private String resolveErpShopId(String platformShopId) {
