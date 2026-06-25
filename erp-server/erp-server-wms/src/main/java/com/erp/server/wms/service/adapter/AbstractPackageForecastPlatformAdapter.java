@@ -25,6 +25,8 @@ import java.util.stream.Collectors;
  */
 public abstract class AbstractPackageForecastPlatformAdapter implements PackageForecastPlatformAdapter {
 
+    private static final int BATCH_UPDATE_SIZE = 500;
+
     @Resource
     protected PackageForecastMapper packageForecastMapper;
 
@@ -52,7 +54,7 @@ public abstract class AbstractPackageForecastPlatformAdapter implements PackageF
             return false;
         }
         long platformCount = soList.stream().map(SoB2cEntity::getDictPlatform).distinct().count();
-        if (platformCount > 1 && soList.stream().anyMatch(item -> platform().equals(item.getDictPlatform()))) {
+        if (platformCount > 1) {
             throw new ServiceException("组包预报单明细数据平台不一致");
         }
         return soList.stream().allMatch(item -> platform().equals(item.getDictPlatform()));
@@ -113,12 +115,16 @@ public abstract class AbstractPackageForecastPlatformAdapter implements PackageF
         if (CollectionUtils.isEmpty(entityList)) {
             return;
         }
-        new TransactionTemplate(transactionManager).execute(status -> {
-            for (PackageForecastEntity entity : entityList) {
-                updateForecastOrThrow(entity);
-            }
-            return null;
-        });
+        for (int fromIndex = 0; fromIndex < entityList.size(); fromIndex += BATCH_UPDATE_SIZE) {
+            int toIndex = Math.min(fromIndex + BATCH_UPDATE_SIZE, entityList.size());
+            List<PackageForecastEntity> batchList = entityList.subList(fromIndex, toIndex);
+            new TransactionTemplate(transactionManager).execute(status -> {
+                for (PackageForecastEntity entity : batchList) {
+                    updateForecastOrThrow(entity);
+                }
+                return null;
+            });
+        }
     }
 
     protected String platformName(String platform) {

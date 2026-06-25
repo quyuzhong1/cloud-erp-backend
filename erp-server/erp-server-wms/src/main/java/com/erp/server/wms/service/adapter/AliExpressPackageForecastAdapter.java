@@ -49,6 +49,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.annotation.Resource;
 import java.math.RoundingMode;
@@ -100,7 +101,7 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
                 if (Objects.isNull(entity)) {
                     resultDTOS.add(BatchResultDTO.fail(id, id, "组包预报单不存在, 上传失败"));
                 } else {
-                    resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+                    resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), userFailureMessage("上传")));
                 }
             }
         }
@@ -116,6 +117,17 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
             uploadAliExpress(entity, collectAddressId);
             return BatchResultDTO.success(entity.getId(), entity.getCode(), "上传成功");
         } catch (Exception e) {
+            if (hasAliExpressPlatformIdentifiers(entity)) {
+                try {
+                    entity.setUploadStatus(PackageUploadStatusEnum.UPLOAD_SUCCESS.getCode());
+                    entity.setPlatformNo(buildPlatformNo(entity.getHandoverNo(), entity.getPlatformPackageNo()));
+                    queryAliExpressInfo(entity);
+                    return BatchResultDTO.success(entity.getId(), entity.getCode(), "上传成功");
+                } catch (Exception syncException) {
+                    log.error("速卖通组包预报上传失败后按平台交接单回查补偿失败, id: {}, code: {}, handoverNo: {}, platformPackageNo: {}",
+                            entity.getId(), entity.getCode(), entity.getHandoverNo(), entity.getPlatformPackageNo(), syncException);
+                }
+            }
             entity.setUploadStatus(PackageUploadStatusEnum.UPLOAD_FAILURE.getCode());
             entity.setRemark("上传失败:" + e.getMessage());
             try {
@@ -124,8 +136,17 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
                 log.error("组包预报上传失败后更新失败状态失败, id: {}, code: {}", entity.getId(), entity.getCode(), updateException);
             }
             log.error("组包预报上传失败>>>>>", e);
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "上传失败" + e.getMessage());
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), userFailureMessage("上传"));
         }
+    }
+
+    private boolean hasAliExpressPlatformIdentifiers(PackageForecastEntity entity) {
+        return StringUtils.isNotBlank(entity.getHandoverNo())
+                && StringUtils.isNotBlank(entity.getPlatformPackageNo());
+    }
+
+    private String userFailureMessage(String operation) {
+        return operation + "失败，请查看单据备注或日志";
     }
 
     @Override
@@ -166,9 +187,9 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
                     } catch (Exception updateException) {
                         log.error("组包预报取消失败后更新失败原因失败, id: {}, code: {}", entity.getId(), entity.getCode(), updateException);
                     }
-                    resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), "取消上传失败:" + e.getMessage()));
+                    resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), userFailureMessage("取消上传")));
                 } else {
-                    resultDTOS.add(BatchResultDTO.fail(id, id, e.getMessage()));
+                    resultDTOS.add(BatchResultDTO.fail(id, id, userFailureMessage("取消上传")));
                 }
             }
         }
@@ -271,14 +292,16 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
                 throw new ServiceException("速卖通状态同步data为空");
             }
             HandoverQueryResponse queryResponse = JSONObject.parseObject(baseResult.getData(), HandoverQueryResponse.class);
-            packageForecastEntity.setHandoverStatus(queryResponse.getStatus());
-            packageForecastEntity.setTransportNo(queryResponse.getTrackingNumber());
-            updateForecastOrThrow(packageForecastEntity);
             List<ParcelOrder> parcelOrderList = queryResponse.getParcelOrderList();
-            if (CollectionUtils.isEmpty(parcelOrderList)) {
-                return;
-            }
-            batchUpdateDetailStatus(packageForecastEntity.getId(), parcelOrderList);
+            new TransactionTemplate(transactionManager).execute(status -> {
+                packageForecastEntity.setHandoverStatus(queryResponse.getStatus());
+                packageForecastEntity.setTransportNo(queryResponse.getTrackingNumber());
+                updateForecastOrThrow(packageForecastEntity);
+                if (CollectionUtils.isNotEmpty(parcelOrderList)) {
+                    batchUpdateDetailStatus(packageForecastEntity.getId(), parcelOrderList);
+                }
+                return null;
+            });
         } catch (ApiException e) {
             log.error("接口调用异常记录：{}", e.getErrorMessage());
             throw new ServiceException("速卖通状态同步接口异常:" + e.getErrorMessage());
@@ -323,8 +346,7 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
         if (!hasHandoverNo && !hasPlatformPackageNo) {
             addBigPackage(entity, addressEntity);
         } else if (hasHandoverNo && hasPlatformPackageNo) {
-            log.warn("速卖通组包预报已存在平台交接单信息，本次不重复提交平台, id: {}, code: {}, handoverNo: {}, platformPackageNo: {}",
-                    entity.getId(), entity.getCode(), entity.getHandoverNo(), entity.getPlatformPackageNo());
+            throw new ServiceException("速卖通组包预报已存在平台交接单信息，请先同步状态或人工处理后再重试");
         } else {
             throw new ServiceException("速卖通组包预报已存在部分平台交接单信息，请先同步状态或人工处理后再重试");
         }

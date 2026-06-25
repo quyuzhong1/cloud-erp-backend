@@ -20,7 +20,9 @@ public class PackageForecastPlatformAdapterFactory {
 
     public PackageForecastPlatformAdapterFactory(List<PackageForecastPlatformAdapter> adapterList) {
         adapterMap = CollectionUtils.emptyIfNull(adapterList).stream()
-                .collect(Collectors.toMap(PackageForecastPlatformAdapter::platform, Function.identity(), (left, right) -> left));
+                .collect(Collectors.toMap(PackageForecastPlatformAdapter::platform, Function.identity(), (left, right) -> {
+                    throw new IllegalStateException("重复的平台组包预报适配器: " + left.platform());
+                }));
     }
 
     public Optional<PackageForecastPlatformAdapter> getByPlatform(String platform) {

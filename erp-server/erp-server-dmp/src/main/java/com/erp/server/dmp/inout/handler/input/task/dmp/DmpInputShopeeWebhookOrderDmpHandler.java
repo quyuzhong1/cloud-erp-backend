@@ -23,6 +23,7 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -42,6 +43,7 @@ public class DmpInputShopeeWebhookOrderDmpHandler extends DmpInputDbConvertDmpHa
     private static final ZoneId DEFAULT_ZONE = ZoneId.systemDefault();
     private static final String PLATFORM_ORIGINAL_STATUS = "platformOriginalStatus";
     private static final String DELIVERY_TIME = "deliveryTime";
+    private static final int BATCH_UPDATE_SIZE = 500;
 
     @Autowired
     private DmpSoInfoService dmpSoInfoService;
@@ -82,6 +84,7 @@ public class DmpInputShopeeWebhookOrderDmpHandler extends DmpInputDbConvertDmpHa
                         .eq(DmpSoInfoEntity::getIsDeleted, Boolean.FALSE))
                 .stream()
                 .collect(Collectors.toMap(DmpSoInfoEntity::getThirdCode, Function.identity(), (left, right) -> left));
+        Map<String, DmpSoInfoEntity> updateMap = new LinkedHashMap<>();
         for (Map<String, Object> data : inputMongoEntityList) {
             String status = Objects.toString(data.get(PLATFORM_ORIGINAL_STATUS), "");
             String thirdCode = Objects.toString(data.get("thirdCode"), "");
@@ -99,23 +102,18 @@ public class DmpInputShopeeWebhookOrderDmpHandler extends DmpInputDbConvertDmpHa
             dmpSoInfoEntity.setDeliveryTime(LocalDateTime.ofInstant(Instant.ofEpochSecond(deliveryTime), DEFAULT_ZONE));
             dmpSoInfoEntity.setInputTaskId(inputTaskId);
             dmpSoInfoEntity.setConvertId(convertId);
-            boolean updated = dmpSoInfoService.lambdaUpdate()
-                    .eq(DmpSoInfoEntity::getId, dmpSoInfoEntity.getId())
-                    .eq(DmpSoInfoEntity::getVersion, dmpSoInfoEntity.getVersion())
-                    .set(DmpSoInfoEntity::getPlatformOriginalStatus, dmpSoInfoEntity.getPlatformOriginalStatus())
-                    .set(DmpSoInfoEntity::getDeliveryStatus, dmpSoInfoEntity.getDeliveryStatus())
-                    .set(DmpSoInfoEntity::getOrderStatus, dmpSoInfoEntity.getOrderStatus())
-                    .set(DmpSoInfoEntity::getDeliveryTime, dmpSoInfoEntity.getDeliveryTime())
-                    .set(DmpSoInfoEntity::getInputTaskId, dmpSoInfoEntity.getInputTaskId())
-                    .set(DmpSoInfoEntity::getConvertId, dmpSoInfoEntity.getConvertId())
-                    .update();
-            if (!updated) {
-                log.warn("Webhook订单乐观锁更新失败,thirdCode:{},id:{},version:{}", thirdCode, dmpSoInfoEntity.getId(), dmpSoInfoEntity.getVersion());
-                continue;
-            }
-            resultList.add(dmpSoInfoEntity);
-            changeConvertInputDmpBaseEntityList.add(dmpSoInfoEntity);
+            updateMap.put(dmpSoInfoEntity.getId(), dmpSoInfoEntity);
         }
+        if (CollUtil.isEmpty(updateMap)) {
+            return resultList;
+        }
+        List<DmpSoInfoEntity> updateList = new ArrayList<>(updateMap.values());
+        if (!dmpSoInfoService.updateBatchById(updateList, BATCH_UPDATE_SIZE)) {
+            log.warn("Webhook订单批量更新返回失败,count:{}", updateList.size());
+            return resultList;
+        }
+        resultList.addAll(updateList);
+        changeConvertInputDmpBaseEntityList.addAll(updateList);
         return resultList;
     }
 

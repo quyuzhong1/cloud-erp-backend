@@ -27,9 +27,6 @@ import com.erp.model.wms.enums.PackagePrintStatusEnum;
 import com.erp.model.wms.enums.PackageUploadStatusEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
-import com.erp.rpc.oms.feign.SoB2cFeign;
-import com.erp.server.wms.mapper.PackageForecastMapper;
-import com.erp.server.wms.service.PackageForecastDetailService;
 import com.sdk.tms.shopee.model.base.BaseRequest;
 import com.sdk.tms.shopee.model.firstmile.request.BindFirstMileTrackingNumberRequest;
 import com.sdk.tms.shopee.model.firstmile.request.CourierDeliveryInfo;
@@ -73,7 +70,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.annotation.Resource;
@@ -97,7 +93,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Component
-public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdapter {
+public class ShopeePackageForecastAdapter extends AbstractPackageForecastPlatformAdapter {
 
     private static final String REGION_CN = "CN";
     private static final String PDF_PREFIX = "data:application/pdf;base64,";
@@ -108,18 +104,6 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
     private static final String FIRST_MILE_PACKAGE_HAS_NOT_BIND = "firstmile.package_has_not_bind";
     private static final String SHOPEE_PLATFORM_STATUS_NOT_AVAILABLE = "NOT_AVAILABLE";
     private static final String SHOPEE_PLATFORM_STATUS_DELIVERED = "DELIVERED";
-
-    @Resource
-    private PackageForecastMapper packageForecastMapper;
-
-    @Resource
-    private PackageForecastDetailService packageForecastDetailService;
-
-    @Resource
-    private PlatformTransactionManager transactionManager;
-
-    @Resource
-    private SoB2cFeign soB2cFeign;
 
     @Resource
     private DmpTaskFeign dmpTaskFeign;
@@ -133,27 +117,6 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
     @Override
     public String platform() {
         return PlatformDictEnum.SHOPEE.getCode();
-    }
-
-    @Override
-    public boolean isForecast(List<String> ids) {
-        if (CollectionUtils.isEmpty(ids)) {
-            return false;
-        }
-        List<PackageForecastDetailEntity> detailList = packageForecastDetailService.listDbByMainIds(ids);
-        if (CollectionUtils.isEmpty(detailList)) {
-            return false;
-        }
-        List<String> soIds = detailList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList());
-        List<SoB2cEntity> soList = soB2cFeign.listByIds(soIds);
-        if (CollectionUtils.isEmpty(soList)) {
-            return false;
-        }
-        long platformCount = soList.stream().map(SoB2cEntity::getDictPlatform).distinct().count();
-        if (platformCount > 1 && soList.stream().anyMatch(item -> PlatformDictEnum.SHOPEE.getCode().equals(item.getDictPlatform()))) {
-            throw new ServiceException("组包预报单明细数据平台不一致");
-        }
-        return soList.stream().allMatch(item -> PlatformDictEnum.SHOPEE.getCode().equals(item.getDictPlatform()));
     }
 
     @Override
@@ -747,7 +710,8 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
         return baseRequest;
     }
 
-    private void resetAfterCancel(PackageForecastEntity entity) {
+    @Override
+    protected void resetAfterCancel(PackageForecastEntity entity) {
         entity.setUploadStatus(PackageUploadStatusEnum.WAIT.getCode());
         entity.setHandoverStatus("");
         entity.setTransportNo("");
@@ -755,25 +719,6 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
         entity.setRemark("");
         entity.setPlatformPackageNo("");
         entity.setPrintStatus(PackagePrintStatusEnum.NOT.getCode());
-    }
-
-    private void updateForecastOrThrow(PackageForecastEntity entity) {
-        if (packageForecastMapper.updateById(entity) <= 0) {
-            throw new ServiceException("组包预报单更新失败");
-        }
-    }
-
-    private void updateForecastBatchOrThrow(List<PackageForecastEntity> entities) {
-        if (CollectionUtils.isEmpty(entities)) {
-            return;
-        }
-        TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
-        transactionTemplate.execute(status -> {
-            for (PackageForecastEntity entity : entities) {
-                updateForecastOrThrow(entity);
-            }
-            return null;
-        });
     }
 
     private void updateEntities(List<PackageForecastEntity> entities) {

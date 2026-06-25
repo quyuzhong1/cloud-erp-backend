@@ -7852,6 +7852,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (StringUtils.isBlank(entity.getId())) {
             return OrderLogisticTypeEnum.SELF_SHIPMENT.getCode();
         }
+        if (OrderLogisticTypeEnum.THIRD_WAREHOUSE.getCode().equals(entity.getDeliveryType())
+                && StringUtils.isNotBlank(entity.getShippingOrderNo())) {
+            return entity.getDeliveryType();
+        }
+        if (StringUtils.isNotBlank(entity.getDeliveryType())
+                && !OrderLogisticTypeEnum.THIRD_WAREHOUSE.getCode().equals(entity.getDeliveryType())) {
+            return entity.getDeliveryType();
+        }
         ThirdWarehouseDeliveryEntity thirdWarehouseDelivery;
         try {
             thirdWarehouseDelivery = thirdWarehouseDeliveryFeign.getLatestBySoId(entity.getId());

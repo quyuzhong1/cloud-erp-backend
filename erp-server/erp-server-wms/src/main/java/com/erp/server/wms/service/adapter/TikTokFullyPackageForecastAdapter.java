@@ -89,9 +89,10 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
                     continue;
                 }
                 validateUploaded(entity);
-                tikTokFullyCancel(entity);
+                List<PackageForecastEntity> updateList = tikTokFullyCancel(entity);
                 resetAfterCancel(entity);
-                updateForecastOrThrow(entity);
+                updateList.add(entity);
+                updateForecastBatchOrThrow(updateList);
                 resultDTOS.add(BatchResultDTO.success(entity.getId(), entity.getCode(), "取消上传"));
             } catch (Exception e) {
                 log.error("取消上传失败>>>>", e);
@@ -116,9 +117,9 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
         // TikTok 全托管状态同步保留在原有 syncPackageForecastInfo 任务中。
     }
 
-    public void tikTokFullyCancel(PackageForecastEntity entity) {
+    private List<PackageForecastEntity> tikTokFullyCancel(PackageForecastEntity entity) {
         if (StringUtils.isBlank(entity.getHandoverNo())) {
-            return;
+            return new ArrayList<>();
         }
         List<PackageForecastDetailEntity> detailEntityList = packageForecastDetailService.listDbByMainId(entity.getId());
         List<String> soIds = detailEntityList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList());
@@ -150,8 +151,9 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
             for (PackageForecastEntity packageForecastEntity : sameCodeList) {
                 resetAfterCancel(packageForecastEntity);
             }
-            updateForecastBatchOrThrow(sameCodeList);
+            return sameCodeList;
         }
+        return new ArrayList<>();
     }
 
     private List<BatchResultDTO> doUpload(PackageForecastDTO.UploadDTO dto) {
