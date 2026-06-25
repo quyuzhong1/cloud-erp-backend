@@ -77,8 +77,8 @@ public class DmpInputShopeeReturnDetailInitHandler extends DmpInputInitHandler {
                 .host(cfgAppClientEntity.getUrl())
                 .offset(0)
                 .token(shopAuthEntity.getAccessToken())
-                .shopId(Long.parseLong(shopAuthEntity.getShopeeId()))
-                .partnerId(Long.parseLong(cfgAppClientEntity.getClientId()))
+                .shopId(parseLongOrThrow(shopAuthEntity.getShopeeId(), "Shopee店铺ID"))
+                .partnerId(parseLongOrThrow(cfgAppClientEntity.getClientId(), "Shopee partnerId"))
                 .tmpPartnerKey(cfgAppClientEntity.getClientSecret())
                 .build();
 
@@ -231,5 +231,16 @@ public class DmpInputShopeeReturnDetailInitHandler extends DmpInputInitHandler {
             throw new ServiceException("shopee授权未配置");
         }
         return shopAuthEntityList.get(0);
+    }
+
+    private Long parseLongOrThrow(String value, String fieldName) {
+        if (StringUtils.isBlank(value)) {
+            throw new ServiceException(fieldName + "不能为空");
+        }
+        try {
+            return Long.valueOf(value);
+        } catch (NumberFormatException e) {
+            throw new ServiceException(fieldName + "格式错误");
+        }
     }
 }

@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.TreeMap;
 
 /**
@@ -134,8 +135,9 @@ public class DmpInputShopeeReturnDetailDmpHandler extends DmpInputDoNextDmpHandl
                 }
                 dmpDataMap.put("solutionType", "return_and_refund");
                 Object returnSnObj = dmpDataMap.get("return_sn");
-                if (returnSnObj != null && StringUtils.isNotBlank(platformSku)) {
-                    dmpDataMap.put("thirdDetailId", returnSnObj + "_" + platformSku);
+                String detailKey = resolveThirdDetailKey(dmpDataMap, platformSku);
+                if (returnSnObj != null && StringUtils.isNotBlank(detailKey)) {
+                    dmpDataMap.put("thirdDetailId", returnSnObj + "_" + detailKey);
                 }
                 Object orderSnObj = dmpDataMap.get("order_sn");
                 if (orderSnObj != null) {
@@ -160,15 +162,38 @@ public class DmpInputShopeeReturnDetailDmpHandler extends DmpInputDoNextDmpHandl
     }
 
     private String resolvePlatformSku(Map<String, Object> item) {
-        String modelSku = String.valueOf(item.getOrDefault("model_sku", ""));
+        String modelSku = readString(item, "model_sku");
         if (StringUtils.isNotBlank(modelSku)) {
             return modelSku;
         }
-        String itemSku = String.valueOf(item.getOrDefault("item_sku", ""));
+        String itemSku = readString(item, "item_sku");
         if (StringUtils.isNotBlank(itemSku)) {
             return itemSku;
         }
-        return String.valueOf(item.getOrDefault("variation_sku", ""));
+        return readString(item, "variation_sku");
+    }
+
+    private String resolveThirdDetailKey(Map<String, Object> item, String platformSku) {
+        if (StringUtils.isNotBlank(platformSku)) {
+            return platformSku;
+        }
+        String itemId = readString(item, "item_id");
+        String modelId = readString(item, "model_id");
+        if (StringUtils.isNoneBlank(itemId, modelId)) {
+            return itemId + "_" + modelId;
+        }
+        if (StringUtils.isNotBlank(itemId)) {
+            return itemId;
+        }
+        return modelId;
+    }
+
+    private String readString(Map<String, Object> item, String field) {
+        Object value = item.get(field);
+        if (Objects.isNull(value)) {
+            return "";
+        }
+        return StringUtils.trimToEmpty(String.valueOf(value));
     }
 
     private Integer parseInteger(Object value) {

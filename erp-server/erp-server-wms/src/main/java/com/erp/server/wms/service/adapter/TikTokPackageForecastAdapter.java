@@ -167,17 +167,12 @@ public class TikTokPackageForecastAdapter extends AbstractPackageForecastPlatfor
         if (shopIds.size() > 1) {
             throw new ServiceException("TikTok不支持多店铺取消组包");
         }
-        List<SoB2cDetailEntity> soB2cDetailEntityList = getSoDetailList(soIds, context);
-        String packageId = soB2cDetailEntityList.stream()
-                .map(SoB2cDetailEntity::getPlatformPackageId)
-                .filter(StringUtils::isNotBlank)
-                .findFirst()
-                .orElse(null);
+        String packageId = entity.getPlatformPackageNo();
         if (StringUtils.isBlank(packageId)) {
             throw new ServiceException("TikTok包裹号为空");
         }
         List<String> orderIds = soB2cEntityList.stream().map(SoB2cEntity::getPlatformCode).collect(Collectors.toList());
-        tikTokPackageService.uncombinePackage(shopIds.get(0), entity.getPlatformPackageNo(), orderIds);
+        tikTokPackageService.uncombinePackage(shopIds.get(0), packageId, orderIds);
     }
 
     private String tikTokMergePackage(PackageForecastEntity entity, TikTokForecastContext context) {

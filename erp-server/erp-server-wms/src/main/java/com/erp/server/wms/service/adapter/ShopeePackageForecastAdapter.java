@@ -70,7 +70,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.annotation.Resource;
 import java.io.IOException;
@@ -379,33 +378,43 @@ public class ShopeePackageForecastAdapter extends AbstractPackageForecastPlatfor
     private List<BatchResultDTO> updateUploadResult(ShopeeForecastContext context, Set<String> successKeys,
                                                     Map<String, String> failReasonMap,
                                                     java.util.function.Consumer<PackageForecastEntity> successConsumer) {
-        TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
-        return transactionTemplate.execute(status -> {
-            List<BatchResultDTO> resultList = new ArrayList<>();
-            for (PackageForecastEntity entity : context.getEntityList()) {
-                List<String> orderKeys = context.getForecastOrderKeyMap().get(entity.getId());
-                List<String> failureReasons = CollectionUtils.emptyIfNull(orderKeys).stream()
-                        .filter(failReasonMap::containsKey)
-                        .map(failReasonMap::get)
-                        .collect(Collectors.toList());
-                boolean success = CollectionUtils.isNotEmpty(orderKeys)
-                        && CollectionUtils.isNotEmpty(successKeys)
-                        && failureReasons.isEmpty()
-                        && successKeys.containsAll(orderKeys);
-                if (success) {
-                    successConsumer.accept(entity);
-                    entity.setUploadStatus(PackageUploadStatusEnum.UPLOAD_SUCCESS.getCode());
-                    entity.setRemark("");
-                    resultList.add(BatchResultDTO.success(entity.getId(), entity.getCode(), "上传成功"));
-                } else {
-                    entity.setUploadStatus(PackageUploadStatusEnum.UPLOAD_FAILURE.getCode());
-                    entity.setRemark("上传失败:" + StringUtils.defaultIfBlank(String.join(";", failureReasons), "Shopee返回失败"));
-                    resultList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), entity.getRemark()));
-                }
-                updateForecastOrThrow(entity);
+        List<BatchResultDTO> resultList = new ArrayList<>();
+        for (PackageForecastEntity entity : context.getEntityList()) {
+            List<String> orderKeys = context.getForecastOrderKeyMap().get(entity.getId());
+            List<String> failureReasons = CollectionUtils.emptyIfNull(orderKeys).stream()
+                    .filter(failReasonMap::containsKey)
+                    .map(failReasonMap::get)
+                    .collect(Collectors.toList());
+            boolean success = CollectionUtils.isNotEmpty(orderKeys)
+                    && CollectionUtils.isNotEmpty(successKeys)
+                    && failureReasons.isEmpty()
+                    && successKeys.containsAll(orderKeys);
+            if (success) {
+                successConsumer.accept(entity);
+                entity.setUploadStatus(PackageUploadStatusEnum.UPLOAD_SUCCESS.getCode());
+                entity.setRemark("");
+            } else {
+                entity.setUploadStatus(PackageUploadStatusEnum.UPLOAD_FAILURE.getCode());
+                entity.setRemark("上传失败:" + StringUtils.defaultIfBlank(String.join(";", failureReasons), "Shopee返回失败"));
             }
-            return resultList;
-        });
+            try {
+                updateForecastOrThrow(entity);
+            } catch (Exception e) {
+                log.error("虾皮组包预报上传结果本地更新失败, id: {}, code: {}, platformPackageNo: {}, transportNo: {}",
+                        entity.getId(), entity.getCode(), entity.getPlatformPackageNo(), entity.getTransportNo(), e);
+                String message = success
+                        ? "Shopee平台已绑定成功，本地更新失败，请同步状态或人工处理:" + e.getMessage()
+                        : "上传失败状态更新失败:" + e.getMessage();
+                resultList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), message));
+                continue;
+            }
+            if (success) {
+                resultList.add(BatchResultDTO.success(entity.getId(), entity.getCode(), "上传成功"));
+            } else {
+                resultList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), entity.getRemark()));
+            }
+        }
+        return resultList;
     }
 
     private String printCourierDelivery(PackageForecastEntity entity, String shopId) {

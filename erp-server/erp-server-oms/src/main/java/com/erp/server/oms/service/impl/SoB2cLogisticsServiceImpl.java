@@ -362,7 +362,8 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         try {
             packageNumber = JSONUtil.parseObj(mainEntity.getLabelJson()).getStr("package_number");
         } catch (Exception e) {
-            log.warn("解析Shopee平台仓包裹号失败，orderId={}，labelJson={}", mainEntity.getId(), mainEntity.getLabelJson(), e);
+            log.warn("解析Shopee平台仓包裹号失败，orderId={}，labelJsonPreview={}",
+                    mainEntity.getId(), StringUtils.left(mainEntity.getLabelJson(), 512), e);
             return;
         }
         if (StringUtils.isBlank(packageNumber)) {

@@ -19,7 +19,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -101,28 +100,46 @@ public class ShopeeWebhookHandler implements WebhookHandler{
     }
 
     private DmpCfgInputDetailEntity resolveDetailEntity(String cfgInputId, String platformShopId) {
-        List<DmpCfgInputDetailEntity> detailList = dmpCfgInputDetailService.lambdaQuery()
-                .eq(DmpCfgInputDetailEntity::getMainId, cfgInputId)
-                .eq(DmpCfgInputDetailEntity::getDisabled, Boolean.FALSE)
-                .list();
-        if (detailList.isEmpty()) {
-            return null;
-        }
         String erpShopId = resolveErpShopId(platformShopId);
-        DmpCfgInputDetailEntity matchedDetail = detailList.stream()
-                .filter(detail -> Objects.equals(detail.getNextLevelId(), erpShopId)
-                        || Objects.equals(detail.getNextLevelId(), platformShopId))
-                .findFirst()
-                .orElse(null);
+        DmpCfgInputDetailEntity matchedDetail = queryDetailByNextLevelId(cfgInputId, erpShopId);
+        if (Objects.isNull(matchedDetail) && !Objects.equals(erpShopId, platformShopId)) {
+            matchedDetail = queryDetailByNextLevelId(cfgInputId, platformShopId);
+        }
         if (Objects.nonNull(matchedDetail)) {
             return matchedDetail;
         }
-        if (detailList.size() == 1 && StringUtils.isBlank(detailList.get(0).getNextLevelId())) {
-            return detailList.get(0);
+        int detailCount = dmpCfgInputDetailService.lambdaQuery()
+                .eq(DmpCfgInputDetailEntity::getMainId, cfgInputId)
+                .eq(DmpCfgInputDetailEntity::getDisabled, Boolean.FALSE)
+                .count();
+        if (detailCount == 1) {
+            DmpCfgInputDetailEntity fallbackDetail = dmpCfgInputDetailService.lambdaQuery()
+                    .eq(DmpCfgInputDetailEntity::getMainId, cfgInputId)
+                    .eq(DmpCfgInputDetailEntity::getDisabled, Boolean.FALSE)
+                    .and(query -> query.isNull(DmpCfgInputDetailEntity::getNextLevelId)
+                            .or()
+                            .eq(DmpCfgInputDetailEntity::getNextLevelId, ""))
+                    .last("limit 1")
+                    .one();
+            if (Objects.nonNull(fallbackDetail)) {
+                return fallbackDetail;
+            }
         }
         log.warn("虾皮webhook 未匹配到店铺任务明细，cfgInputId={}，platformShopId={}，erpShopId={}",
                 cfgInputId, platformShopId, erpShopId);
         return null;
+    }
+
+    private DmpCfgInputDetailEntity queryDetailByNextLevelId(String cfgInputId, String nextLevelId) {
+        if (StringUtils.isBlank(nextLevelId)) {
+            return null;
+        }
+        return dmpCfgInputDetailService.lambdaQuery()
+                .eq(DmpCfgInputDetailEntity::getMainId, cfgInputId)
+                .eq(DmpCfgInputDetailEntity::getDisabled, Boolean.FALSE)
+                .eq(DmpCfgInputDetailEntity::getNextLevelId, nextLevelId)
+                .last("limit 1")
+                .one();
     }
 
     private String resolveErpShopId(String platformShopId) {

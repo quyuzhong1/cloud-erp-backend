@@ -30,10 +30,13 @@ import java.io.IOException;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -80,19 +83,29 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
     @Override
     public List<BatchResultDTO> cancel(List<String> ids) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        TikTokFullyForecastContext context = buildContext(ids);
+        Set<String> canceledHandoverNoSet = new HashSet<>();
         for (String id : ids) {
             PackageForecastEntity entity = null;
             try {
-                entity = getForecastOrThrow(id);
+                entity = getForecastOrThrow(id, context);
+                if (StringUtils.isNotBlank(entity.getHandoverNo()) && canceledHandoverNoSet.contains(entity.getHandoverNo())) {
+                    resultDTOS.add(BatchResultDTO.success(entity.getId(), entity.getCode(), "取消上传"));
+                    continue;
+                }
                 if (isCanceled(entity)) {
                     resultDTOS.add(BatchResultDTO.success(entity.getId(), entity.getCode(), "已取消上传"));
                     continue;
                 }
                 validateUploaded(entity);
-                List<PackageForecastEntity> updateList = tikTokFullyCancel(entity);
+                String handoverNo = entity.getHandoverNo();
+                List<PackageForecastEntity> updateList = tikTokFullyCancel(entity, context);
                 resetAfterCancel(entity);
                 updateList.add(entity);
                 updateForecastBatchOrThrow(updateList);
+                if (StringUtils.isNotBlank(handoverNo)) {
+                    canceledHandoverNoSet.add(handoverNo);
+                }
                 resultDTOS.add(BatchResultDTO.success(entity.getId(), entity.getCode(), "取消上传"));
             } catch (Exception e) {
                 log.error("取消上传失败>>>>", e);
@@ -117,13 +130,23 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
         // TikTok 全托管状态同步保留在原有 syncPackageForecastInfo 任务中。
     }
 
-    private List<PackageForecastEntity> tikTokFullyCancel(PackageForecastEntity entity) {
+    private List<PackageForecastEntity> tikTokFullyCancel(PackageForecastEntity entity, TikTokFullyForecastContext context) {
         if (StringUtils.isBlank(entity.getHandoverNo())) {
             return new ArrayList<>();
         }
-        List<PackageForecastDetailEntity> detailEntityList = packageForecastDetailService.listDbByMainId(entity.getId());
-        List<String> soIds = detailEntityList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList());
-        List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
+        List<PackageForecastDetailEntity> detailEntityList = context.getDetailMap().get(entity.getId());
+        if (CollectionUtils.isEmpty(detailEntityList)) {
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "组包预报单明细");
+        }
+        List<String> soIds = detailEntityList.stream()
+                .map(PackageForecastDetailEntity::getSoId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        List<SoB2cEntity> soB2cEntityList = soIds.stream()
+                .map(id -> context.getSoMap().get(id))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
         if (CollectionUtils.isEmpty(soB2cEntityList)) {
             throw new ServiceException("销售订单未找到");
         }
@@ -142,11 +165,10 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
             throw new ServiceException("TikTok不支持多店铺取消组包");
         }
         tikTokFullService.cancelLogistics(shopIds.get(0), entity.getHandoverNo());
-        List<PackageForecastEntity> sameCodeList = packageForecastMapper.selectList(
-                Wrappers.<PackageForecastEntity>lambdaQuery()
-                        .eq(PackageForecastEntity::getHandoverNo, entity.getHandoverNo())
-                        .ne(PackageForecastEntity::getId, entity.getId())
-        );
+        List<PackageForecastEntity> sameCodeList = CollectionUtils.emptyIfNull(context.getSameHandoverMap().get(entity.getHandoverNo()))
+                .stream()
+                .filter(packageForecastEntity -> !entity.getId().equals(packageForecastEntity.getId()))
+                .collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(sameCodeList)) {
             for (PackageForecastEntity packageForecastEntity : sameCodeList) {
                 resetAfterCancel(packageForecastEntity);
@@ -161,7 +183,11 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
         if (CollectionUtils.isEmpty(detailEntityList)) {
             throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "组包预报单明细");
         }
-        List<String> soIds = detailEntityList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList());
+        List<String> soIds = detailEntityList.stream()
+                .map(PackageForecastDetailEntity::getSoId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
         List<SoB2cLogisticsEntity> soB2cLogisticsEntityList = soB2cFeign.listSoB2cLogisticsByMainIdList(soIds);
         if (CollectionUtils.isEmpty(soB2cLogisticsEntityList)) {
             throw new ServiceException("销售订单物流信息未找到");
@@ -217,24 +243,14 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
             reserveInfoDTO.setPredictedPickupLt((int) dto.getEndTime().toInstant(ZoneOffset.ofHours(8)).getEpochSecond());
             tikTokFullyShippingReq.setReserveInfo(reserveInfoDTO);
         }
+        TikTokFullyShippingResp tikTokFullyShippingResp;
         try {
-            TikTokFullyShippingResp tikTokFullyShippingResp = tikTokFullService.shipment(shopIds.get(0), tikTokFullyShippingReq);
+            tikTokFullyShippingResp = tikTokFullService.shipment(shopIds.get(0), tikTokFullyShippingReq);
             if (Objects.isNull(tikTokFullyShippingResp)
                     || Objects.isNull(tikTokFullyShippingResp.getData())
                     || StringUtils.isBlank(tikTokFullyShippingResp.getData().getLogisticsOrder())) {
                 throw new ServiceException(ApiError.COMMON_NOT_FOUND, "TikTok全托管预约发货返回物流单号");
             }
-            String logisticsOrder = tikTokFullyShippingResp.getData().getLogisticsOrder();
-            packageForecastEntityList.forEach(v -> {
-                v.setHandoverNo(logisticsOrder);
-                v.setPlatformNo(buildPlatformNo(v.getHandoverNo(), v.getPlatformPackageNo()));
-                v.setUploadStatus(PackageUploadStatusEnum.UPLOAD_SUCCESS.getCode());
-                v.setCollectMode(dto.getCollectMode());
-                v.setCollectAddressId(dto.getCollectAddressId());
-                v.setCollectAddress(addressName);
-                v.setRemark("");
-            });
-            updateForecastBatchOrThrow(packageForecastEntityList);
         } catch (Exception e) {
             packageForecastEntityList.forEach(v -> {
                 v.setUploadStatus(PackageUploadStatusEnum.UPLOAD_FAILURE.getCode());
@@ -249,9 +265,82 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
                     .map(entity -> BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()))
                     .collect(Collectors.toList());
         }
+        String logisticsOrder = tikTokFullyShippingResp.getData().getLogisticsOrder();
+        packageForecastEntityList.forEach(v -> {
+            v.setHandoverNo(logisticsOrder);
+            v.setPlatformNo(buildPlatformNo(v.getHandoverNo(), v.getPlatformPackageNo()));
+            v.setUploadStatus(PackageUploadStatusEnum.UPLOAD_SUCCESS.getCode());
+            v.setCollectMode(dto.getCollectMode());
+            v.setCollectAddressId(dto.getCollectAddressId());
+            v.setCollectAddress(addressName);
+            v.setRemark("");
+        });
+        try {
+            updateForecastBatchOrThrow(packageForecastEntityList);
+        } catch (Exception e) {
+            log.error("TikTok全托管组包预报平台预约成功后本地更新失败, ids: {}, logisticsOrder: {}",
+                    dto.getIds(), logisticsOrder, e);
+            return packageForecastEntityList.stream()
+                    .map(entity -> BatchResultDTO.fail(entity.getId(), entity.getCode(),
+                            "TikTok平台已预约成功，本地更新失败，请人工处理，物流单号:" + logisticsOrder))
+                    .collect(Collectors.toList());
+        }
         return packageForecastEntityList.stream()
                 .map(entity -> BatchResultDTO.success(entity.getId(), entity.getCode(), "上传成功"))
                 .collect(Collectors.toList());
+    }
+
+    private TikTokFullyForecastContext buildContext(List<String> ids) {
+        TikTokFullyForecastContext context = new TikTokFullyForecastContext();
+        if (CollectionUtils.isEmpty(ids)) {
+            return context;
+        }
+        List<PackageForecastEntity> entityList = packageForecastMapper.selectBatchIds(ids);
+        if (CollectionUtils.isEmpty(entityList)) {
+            return context;
+        }
+        context.setEntityMap(entityList.stream()
+                .collect(Collectors.toMap(PackageForecastEntity::getId, entity -> entity, (left, right) -> left)));
+        List<PackageForecastDetailEntity> detailList = packageForecastDetailService.listDbByMainIds(ids);
+        if (CollectionUtils.isNotEmpty(detailList)) {
+            context.setDetailMap(detailList.stream().collect(Collectors.groupingBy(PackageForecastDetailEntity::getMainId)));
+            List<String> soIds = detailList.stream()
+                    .map(PackageForecastDetailEntity::getSoId)
+                    .filter(StringUtils::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(soIds)) {
+                List<SoB2cEntity> soList = soB2cFeign.listByIds(soIds);
+                if (CollectionUtils.isNotEmpty(soList)) {
+                    context.setSoMap(soList.stream()
+                            .collect(Collectors.toMap(SoB2cEntity::getId, entity -> entity, (left, right) -> left)));
+                }
+            }
+        }
+        List<String> handoverNoList = entityList.stream()
+                .map(PackageForecastEntity::getHandoverNo)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(handoverNoList)) {
+            List<PackageForecastEntity> sameHandoverList = packageForecastMapper.selectList(
+                    Wrappers.<PackageForecastEntity>lambdaQuery()
+                            .in(PackageForecastEntity::getHandoverNo, handoverNoList)
+            );
+            if (CollectionUtils.isNotEmpty(sameHandoverList)) {
+                context.setSameHandoverMap(sameHandoverList.stream()
+                        .collect(Collectors.groupingBy(PackageForecastEntity::getHandoverNo)));
+            }
+        }
+        return context;
+    }
+
+    private PackageForecastEntity getForecastOrThrow(String id, TikTokFullyForecastContext context) {
+        PackageForecastEntity entity = context.getEntityMap().get(id);
+        if (Objects.isNull(entity)) {
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "组包预报单");
+        }
+        return entity;
     }
 
     private List<BatchResultDTO> failUploadResult(PackageForecastDTO.UploadDTO dto, Exception e) {
@@ -360,5 +449,45 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
             return "";
         }
         return StringUtils.defaultString(handoverNo) + "/" + StringUtils.defaultString(platformPackageNo);
+    }
+
+    private static class TikTokFullyForecastContext {
+
+        private Map<String, PackageForecastEntity> entityMap = new HashMap<>();
+        private Map<String, List<PackageForecastDetailEntity>> detailMap = new HashMap<>();
+        private Map<String, SoB2cEntity> soMap = new HashMap<>();
+        private Map<String, List<PackageForecastEntity>> sameHandoverMap = new HashMap<>();
+
+        public Map<String, PackageForecastEntity> getEntityMap() {
+            return entityMap;
+        }
+
+        public void setEntityMap(Map<String, PackageForecastEntity> entityMap) {
+            this.entityMap = entityMap;
+        }
+
+        public Map<String, List<PackageForecastDetailEntity>> getDetailMap() {
+            return detailMap;
+        }
+
+        public void setDetailMap(Map<String, List<PackageForecastDetailEntity>> detailMap) {
+            this.detailMap = detailMap;
+        }
+
+        public Map<String, SoB2cEntity> getSoMap() {
+            return soMap;
+        }
+
+        public void setSoMap(Map<String, SoB2cEntity> soMap) {
+            this.soMap = soMap;
+        }
+
+        public Map<String, List<PackageForecastEntity>> getSameHandoverMap() {
+            return sameHandoverMap;
+        }
+
+        public void setSameHandoverMap(Map<String, List<PackageForecastEntity>> sameHandoverMap) {
+            this.sameHandoverMap = sameHandoverMap;
+        }
     }
 }
