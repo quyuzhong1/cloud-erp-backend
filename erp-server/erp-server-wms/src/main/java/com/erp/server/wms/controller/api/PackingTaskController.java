@@ -2,7 +2,6 @@ package com.erp.server.wms.controller.api;
 
 
 import cn.hutool.core.collection.CollUtil;
-import com.common.business.annotation.DistributeLocker;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
@@ -15,7 +14,6 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
-import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.wms.dto.PackingTaskDTO;
 import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.entity.PackingTaskEntity;
@@ -130,7 +128,6 @@ public class PackingTaskController extends BaseController {
      * @param dto
      * @return com.common.core.controller.vo.ApiResult
      **/
-    @DistributeLocker(businessType = DistributeKeyConstant.WMS_PACKING_TASK_KEY, keyName = "dto.sourceId")
     @PostMapping("/packingSave")
     @LogAction(value = LogActionEnum.INSERT, desc = "装箱任务装箱保存")
     public ApiResult packingSave(@RequestBody @Validated WmsCartonSpecDTO.WmsCartonAdd dto) {

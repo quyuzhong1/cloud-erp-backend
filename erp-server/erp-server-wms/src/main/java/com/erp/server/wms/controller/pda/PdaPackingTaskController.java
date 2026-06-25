@@ -2,7 +2,6 @@ package com.erp.server.wms.controller.pda;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import com.common.business.annotation.DistributeLocker;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
@@ -16,7 +15,6 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
-import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.wms.dto.PackingTaskDTO;
 import com.erp.model.wms.dto.WmsCartonDTO;
 import com.erp.model.wms.dto.WmsCartonSpecDTO;
@@ -154,7 +152,6 @@ public class PdaPackingTaskController extends BaseController {
      * @param dto
      * @return com.common.core.controller.vo.ApiResult
      **/
-    @DistributeLocker(businessType = DistributeKeyConstant.WMS_PACKING_TASK_KEY, keyName = "dto.taskId")
     @PostMapping("/stagingPacking")
     @LogAction(value = LogActionEnum.INSERT, desc = "暂存本箱")
     public ApiResult<WmsCartonDTO.PrintDTO> stagingPacking(@RequestBody @Validated WmsCartonSpecDTO.AddDTO dto) {
@@ -173,7 +170,6 @@ public class PdaPackingTaskController extends BaseController {
      * @param dto
      * @return com.common.core.controller.vo.ApiResult
      **/
-    @DistributeLocker(businessType = DistributeKeyConstant.WMS_PACKING_TASK_KEY, keyName = "dto.taskId")
     @PostMapping("/packingSave")
     @LogAction(value = LogActionEnum.INSERT, desc = "完成并打印本箱")
     public ApiResult<WmsCartonDTO.PrintDTO> pdaPackingSave(@RequestBody @Validated WmsCartonSpecDTO.AddDTO dto) {
@@ -203,7 +199,6 @@ public class PdaPackingTaskController extends BaseController {
      * @param dto
      * @return com.erp.model.wms.dto.FirstMileDeliveryDTO.FirstMileCartonView
      **/
-    @DistributeLocker(businessType = DistributeKeyConstant.WMS_PACKING_TASK_KEY, keyName = "dto.cartonId")
     @PostMapping("/adjustPackingSave")
     public ApiResult<String> adjustPackingSave(@RequestBody @Validated WmsCartonDTO.AdjustSaveDTO dto) {
         String code = packingTaskService.adjustPackingSave(dto);
@@ -228,7 +223,6 @@ public class PdaPackingTaskController extends BaseController {
      * @param dto
      * @return com.erp.model.wms.dto.FirstMileDeliveryDTO.FirstMileCartonView
      **/
-    @DistributeLocker(businessType = DistributeKeyConstant.WMS_PACKING_TASK_KEY, keyName = "dto.specId")
     @PostMapping("/cartonSpecSave")
     public ApiResult<String> cartonSpecSave(@RequestBody @Validated WmsCartonSpecDTO.SpecSaveDTO dto) {
         return packingTaskService.cartonSpecSave(dto);

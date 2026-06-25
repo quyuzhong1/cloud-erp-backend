@@ -349,7 +349,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             throw new ServiceException(ApiError.WH_TRANSFER_DIRECT_NOT_FOUND);
         }
         approveEntity.setIsUserSystem(dto.getIsUserSystem());
-        this.approve(approveEntity,ApproveType.PASS,"", null , Boolean.TRUE, Boolean.FALSE);
+        transferInfoService.approve(approveEntity, ApproveType.PASS, "", null, Boolean.TRUE, Boolean.FALSE);
         return id;
     }
 

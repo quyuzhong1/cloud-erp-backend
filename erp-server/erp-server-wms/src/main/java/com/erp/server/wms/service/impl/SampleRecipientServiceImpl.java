@@ -170,7 +170,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     private DictBasicService dictBasicService;
     @Autowired
     @Lazy
-    private SampleRecipientService _this;
+    private SampleRecipientService service;
 
     // 缓存相关常量
     private static final String CACHE_WAREHOUSE_NAME_TO_ID = "sample_recipient:warehouse_name_to_id:";
@@ -2405,7 +2405,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 
                 try {
                     // 为每个领用单创建一个其他出库单，详情数据为列表数据
-                    BatchResultDTO resultDTO = _this.createOtherOutboundOrderBySourceId(sourceId, items);
+                    BatchResultDTO resultDTO = service.createOtherOutboundOrderBySourceId(sourceId, items);
                     resultDTOS.add(resultDTO);
                     
                 } catch (Exception e) {
