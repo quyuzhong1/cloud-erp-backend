@@ -102,6 +102,8 @@ public enum ModuleTypeEnum {
     PICKING_LISTS("91", "拣货单"),
     CFG_RULE_WAVE("92", "波次规则"),
     WAREHOUSE_LOCATION_REPLENISH("93", "仓位补货"),
+    AFTERSALES_WAREHOUSE_LOCATION_SUGGEST("94", "售后仓位推荐"),
+
 
     CFG_RULE_COMMON("97", "规则设置"),
     REPLENISHMENT_SUGGESTION("98", "补货建议"),
@@ -217,7 +219,8 @@ public enum ModuleTypeEnum {
 
     LOGISTICS_ORDER("168", "物流下单"),
 
-
+    AFTER_SALE_PACK("190", "售后装箱"),
+    FULL_BOX_TRANSFER("191", "整箱移仓"),
 
 
 

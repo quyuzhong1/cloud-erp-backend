@@ -41,6 +41,7 @@ import com.erp.model.wms.dto.pickingstrategy.LocationInventoryResultDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.PackagePrintStatusEnum;
+import com.erp.model.wms.enums.WarehouseLocationMoveOperateTypeEnum;
 import com.erp.model.wms.enums.RequisitionApplicationStatusEnum;
 import com.erp.model.wms.enums.RequisitionApplicationTypeEnum;
 import com.erp.model.wms.enums.RequisitionChangeTypeEnum;
@@ -214,6 +215,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             moveDto.setSourceId(entity.getId());
             moveDto.setSourceCode(code);
             moveDto.setSourceType(SourceTypeEnum.PICKING_LISTS_ADD.getCode());
+            moveDto.setOperateType(WarehouseLocationMoveOperateTypeEnum.PICKING_TRANSFER.getCode());
             moveDto.setDetailList(moveDetailList);
             ApplicationContextUtils.getBean(PickingListsServiceImpl.class).saveAddData(entity, entities, moveDto);
         }
@@ -373,6 +375,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             moveDto.setPcShow(true);
             moveDto.setSourceId(pickingListsEntity.getId());
             moveDto.setSourceType(SourceTypeEnum.PICKING_LISTS_ADD.getCode());
+            moveDto.setOperateType(WarehouseLocationMoveOperateTypeEnum.PICKING_TRANSFER.getCode());
             moveDto.setSourceCode(pickingListsEntity.getCode());
             moveDto.setDetailList(addDTOS);
             //自动生成功能系统标识
@@ -391,6 +394,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             moveDto.setPcShow(true);
             moveDto.setSourceId(pickingListsEntity.getId());
             moveDto.setSourceType(SourceTypeEnum.PICKING_LISTS_SUBTRACT.getCode());
+            moveDto.setOperateType(WarehouseLocationMoveOperateTypeEnum.PICKING_TRANSFER.getCode());
             moveDto.setSourceCode(pickingListsEntity.getCode());
             moveDto.setDetailList(subtractDTOS);
             //自动生成功能系统标识
@@ -793,6 +797,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         dto.setSourceId(id);
         dto.setSourceCode(entity.getCode());
         dto.setSourceType(SourceTypeEnum.PICKING_LISTS_SUBTRACT.getCode());
+        dto.setOperateType(WarehouseLocationMoveOperateTypeEnum.PICKING_TRANSFER.getCode());
         List<WarehouseLocationMoveDetailDTO.AddDTO> moveDetailList = entityList.stream()
                 .map(detail -> {
                     WarehouseLocationMoveDetailDTO.AddDTO moveDetail = new WarehouseLocationMoveDetailDTO.AddDTO();
@@ -1232,6 +1237,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             moveDto.setPcShow(true);
             moveDto.setSourceId(entity.getId());
             moveDto.setSourceType(SourceTypeEnum.PICKING_LISTS_ADD.getCode());
+            moveDto.setOperateType(WarehouseLocationMoveOperateTypeEnum.PICKING_TRANSFER.getCode());
             moveDto.setSourceCode(entity.getCode());
             moveDto.setDetailList(addDTOS);
             //自动生成功能系统标识
@@ -1250,6 +1256,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             moveDto.setPcShow(true);
             moveDto.setSourceId(entity.getId());
             moveDto.setSourceType(SourceTypeEnum.PICKING_LISTS_SUBTRACT.getCode());
+            moveDto.setOperateType(WarehouseLocationMoveOperateTypeEnum.PICKING_TRANSFER.getCode());
             moveDto.setSourceCode(entity.getCode());
             moveDto.setDetailList(subtractDTOS);
             //自动生成功能系统标识

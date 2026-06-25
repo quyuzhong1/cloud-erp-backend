@@ -11,7 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Resource;
 import java.util.Date;
-import java.util.List;
 
 @Slf4j
 public abstract class AbstractFileEventHandler<T> implements FileEventHandler {
@@ -31,9 +30,6 @@ public abstract class AbstractFileEventHandler<T> implements FileEventHandler {
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
         return date + name + excelPath.substring(excelPath.lastIndexOf("."));
     }
-
-    @Deprecated
-    protected abstract List<T> getData(FileTask fileTask);
 
     protected abstract String getExcelPath();
 

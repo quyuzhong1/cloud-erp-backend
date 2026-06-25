@@ -19,5 +19,5 @@ public class OmsExecutorPoolConfig {
 
         return new TraceableExecutorService(service);
     }
-    
+
 }

@@ -59,7 +59,8 @@ public class WorkflowTaskRecordRetryJob {
             return ReturnT.SUCCESS;
         }
 
-        Map<String, List<WorkflowTaskRecordEntity>> map = list.stream().collect(Collectors.groupingBy(WorkflowTaskRecordEntity::getSourceId));
+        Map<String, List<WorkflowTaskRecordEntity>> map = list.stream()
+                .collect(Collectors.groupingBy(e -> e.getSourceType() + ":" + e.getSourceId()));
         for (Map.Entry<String, List<WorkflowTaskRecordEntity>> entry : map.entrySet()) {
             List<WorkflowTaskRecordEntity> workflowTaskRecordEntities = entry.getValue();
             if(CollUtil.isEmpty(workflowTaskRecordEntities)){
@@ -74,7 +75,11 @@ public class WorkflowTaskRecordRetryJob {
             addTaskDTO.setSourceId(entity.getSourceId());
             addTaskDTO.setSourceCode(entity.getSourceCode());
             addTaskDTO.setDictBasicTypeEnum(DictBasicTypeEnum.WORKFLOW_TASK_NODE);
-            addTaskDTO.setSourceTypeEnum(WorkflowTaskRecordTypeEnum.getByName(entity.getSourceType()));
+            addTaskDTO.setSourceTypeEnum(WorkflowTaskRecordTypeEnum.getByCode(entity.getSourceType()));
+            if (Objects.isNull(addTaskDTO.getSourceTypeEnum())) {
+                XxlJobHelper.log(StrUtil.format("任务节点记录补偿重试失败，未知sourceType={}", entity.getSourceType()));
+                continue;
+            }
             addTaskDTO.setTraceId(entity.getTraceId());
             SendResult result = mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.OMS_WORKFLOW_TASK_RECORD_TOPIC, RocketMqTagEnum.OMS_WORKFLOW_TASK_RECORD_TAG.getName(), addTaskDTO, workflowTaskRecordEntities.get(0).getSourceId(),1);
             if (!result.getSendStatus().equals(SendStatus.SEND_OK)) {

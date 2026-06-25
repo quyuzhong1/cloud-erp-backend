@@ -19,6 +19,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -35,6 +36,7 @@ import com.erp.model.wms.enums.WarehouseLocationTypeEnum;
 import com.erp.model.wms.vo.WarehouseLocationExportVo;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.listener.WarehouseLocationExcelListener;
 import com.erp.server.wms.mapper.InventoryMapper;
 import com.erp.server.wms.mapper.WarehouseLocationMapper;
@@ -157,6 +159,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
                     WarehouseLocationStatusEnum warehouseLocationStatus = WarehouseLocationStatusEnum.getByCode(data.getStatus());
                     data.setStatusName(WarehouseLocationStatusEnum.getName(data.getStatus()));
                     data.setCanCheck(Boolean.TRUE);
+                    data.setParentId(warehouseLocation.getParentId());
                     if (Objects.equals(warehouseLocation.getDisabled(), Boolean.TRUE) || Objects.equals(warehouseLocationStatus, WarehouseLocationStatusEnum.STOP)) {
                         data.setCanCheck(Boolean.FALSE);
                     }
@@ -1158,5 +1161,44 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
             this.updateBatchById(updateList);
         }
         return resultDTOList;
+    }
+
+    @Override
+    public List<WarehouseLocationDTO.ViewDto> listByAfterSalesWarehouse(String name) {
+        // 查询东莞售后仓库信息
+        WarehouseEntity warehouseEntity = warehouseMapper.selectOne(Wrappers.lambdaQuery(WarehouseEntity.class)
+                .eq(WarehouseEntity::getKingdeeWarehouseCode, WmsConstant.DG_AFTER_SALES_WAREHOUSE_CODE)
+                .eq(WarehouseEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus())
+                .eq(WarehouseEntity::getDisabled, false)
+        );
+        if (warehouseEntity == null) {
+            throw new ServiceException("东莞售后仓库不存在或者被禁用");
+        }
+        // 查询东莞售后仓库下的仓位信息
+        return baseMapper.listByAfterSalesWarehouse(warehouseEntity.getId(), name);
+    }
+
+    @Override
+    public WarehouseLocationDTO.ViewDto getByCode(String code) {
+        if (CharSequenceUtil.isBlank(code)) {
+            return null;
+        }
+        // 查询仓位是否存在
+        WarehouseLocationEntity entity = baseMapper.selectOne(Wrappers.lambdaQuery(WarehouseLocationEntity.class)
+                .eq(WarehouseLocationEntity::getCode, code)
+                .eq(WarehouseLocationEntity::getDisabled, false)
+        );
+        if (entity == null) {
+            throw new ServiceException("仓位编码【{}】不存在或者被禁用", code);
+        }
+        List<WarehouseLocationDTO.ViewDto> list = this.listByAfterSalesWarehouse(null);
+        // 判断仓位是否属于东莞售后仓库下的仓位
+        if (list.stream().anyMatch(item -> item.getId().equals(entity.getId()))) {
+            WarehouseLocationDTO.ViewDto viewDto = new WarehouseLocationDTO.ViewDto();
+            BeanMapperUtils.copy(entity, viewDto);
+            return viewDto;
+        } else {
+            throw new ServiceException("仓位编码【{}】不属于东莞售后仓库", code);
+        }
     }
 }
