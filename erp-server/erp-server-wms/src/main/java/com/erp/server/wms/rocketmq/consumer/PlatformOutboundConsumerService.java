@@ -627,6 +627,8 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
 
     /**
      * null 表示 dto 关键入参为空，跳过映射校验；true/false 表示映射是否存在。
+     * 映射规则与 OMS {@code SoB2cServiceImpl#fillLogisticsChannelFromThirdShipping} 保持一致；
+     * 若规则变更需同步两处，后续可抽取为 TMS 侧单一查询（见 review #1573）。
      */
     private Boolean resolveThirdWarehouseLogisticsMappingValid(PlatformOutboundDTO dto) {
         String shippingMethod = dto.getShippingMethod();
@@ -645,11 +647,18 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         if (CollUtil.isEmpty(saleChannelList)) {
             return false;
         }
+        if (saleChannelList.size() > 1) {
+            log.warn("三方仓物流渠道映射存在多条销售平台渠道记录，取首条, platform={}, shippingMethod={}, platformWarehouseCode={}, count={}",
+                    thirdWarehousePlatform, shippingMethod, platformWarehouseCode, saleChannelList.size());
+        }
         String channelCode = saleChannelList.get(0).getCode();
         List<LogisticsChannelEntity> channelList = FeignQuery.list(FeignQuery.create(LogisticsChannelEntity.class)
                 .eq(LogisticsChannelEntity::getIsDeleted, false)
                 .eq(LogisticsChannelEntity::getCode, channelCode)
                 .eq(LogisticsChannelEntity::getSourceType, SourceTypeEnum.LOGISTICS_WAREHOUSE.getCode()));
+        if (CollUtil.isNotEmpty(channelList) && channelList.size() > 1) {
+            log.warn("三方仓物流渠道映射存在多条ERP物流渠道记录，取首条, channelCode={}, count={}", channelCode, channelList.size());
+        }
         return CollUtil.isNotEmpty(channelList);
     }
 

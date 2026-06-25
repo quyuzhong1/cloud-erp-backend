@@ -12882,7 +12882,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     /**
-     * 三方仓自动出库：shipping_method + platform_warehouse_code → logistics_sale_channel → logistics_channel
+     * 三方仓自动出库：shipping_method + platform_warehouse_code → logistics_sale_channel → logistics_channel。
+     * 映射规则与 WMS {@code PlatformOutboundConsumerService#resolveThirdWarehouseLogisticsMappingValid} 保持一致；
+     * 若规则变更需同步两处，后续可抽取为 TMS 侧单一查询（见 review #1573）。
      */
     private void fillLogisticsChannelFromThirdShipping(SoB2cLogisticsEntity logisticsEntity,
                                                        String thirdWarehousePlatform,
@@ -12906,6 +12908,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     logisticsEntity.getMainId(), thirdWarehousePlatform, shippingMethod, platformWarehouseCode);
             return;
         }
+        if (saleChannelList.size() > 1) {
+            log.warn("三方仓物流渠道映射存在多条销售平台渠道记录，取首条, mainId={}, platform={}, shippingMethod={}, platformWarehouseCode={}, count={}",
+                    logisticsEntity.getMainId(), thirdWarehousePlatform, shippingMethod, platformWarehouseCode, saleChannelList.size());
+        }
         String channelCode = saleChannelList.get(0).getCode();
         List<LogisticsChannelEntity> channelList = FeignQuery.list(FeignQuery.create(LogisticsChannelEntity.class)
                 .eq(LogisticsChannelEntity::getIsDeleted, false)
@@ -12914,6 +12920,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (CollUtil.isEmpty(channelList)) {
             log.warn("三方仓自动出库未匹配到ERP物流渠道, mainId={}, channelCode={}", logisticsEntity.getMainId(), channelCode);
             return;
+        }
+        if (channelList.size() > 1) {
+            log.warn("三方仓物流渠道映射存在多条ERP物流渠道记录，取首条, mainId={}, channelCode={}, count={}",
+                    logisticsEntity.getMainId(), channelCode, channelList.size());
         }
         LogisticsChannelEntity channel = channelList.get(0);
         logisticsEntity.setLogisticsChannelId(channel.getId());
@@ -12930,9 +12940,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             fillLogisticsChannelFromThirdShipping(logisticsEntity, dto.getThirdWarehousePlatform(),
                     dto.getShippingMethod(), dto.getPlatformWarehouseCode());
         }
+        // 经 self-injection 代理调用，使 @Transactional 生效；该方法 intentionally 不暴露在 SoB2cService 接口
         soB2cService.updateB2cByPlatformOutboundTransactional(dto, logisticsEntity);
     }
 
+    /**
+     * 平台出库回写 B2C 的 DB 更新段；须通过 {@link #soB2cService} 代理调用以触发事务，勿从类内直接 this 调用。
+     */
     @Transactional(rollbackFor = Exception.class)
     public void updateB2cByPlatformOutboundTransactional(SoB2cDTO.B2cByPlatformOutboundDTO dto,
                                                          SoB2cLogisticsEntity logisticsEntity) {
