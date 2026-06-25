@@ -892,7 +892,7 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         if(CharSequenceUtil.isBlank(warehouseId)&& CharSequenceUtil.isBlank(shopId)){
             throw new ServiceException("仓库id不能为空");
         }
-        //店铺不为空代表是fba ，否则是第三方仓
+        // 店铺不为空时走平台仓/FBA/FBS导入，由type区分；否则走第三方仓导入。
         if(CharSequenceUtil.isNotBlank(shopId)){
             return fbaImportFile(excelFile, thirdSkuNoList, shopId, type);
         }else{

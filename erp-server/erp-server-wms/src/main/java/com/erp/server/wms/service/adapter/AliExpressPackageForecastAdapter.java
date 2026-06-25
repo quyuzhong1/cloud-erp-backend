@@ -140,13 +140,21 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
                 // remark 面向内部排障保留平台/本地失败原因；完整堆栈只写日志。
                 entity.setRemark("上传失败:" + e.getMessage());
             }
+            boolean updateSuccess = true;
             try {
                 updateForecastOrThrow(entity);
             } catch (Exception updateException) {
+                updateSuccess = false;
                 log.error("组包预报上传失败后更新状态失败, id: {}, code: {}, hasPlatformInfo: {}",
                         entity.getId(), entity.getCode(), hasPlatformInfo, updateException);
             }
             log.error("组包预报上传失败>>>>>", e);
+            if (hasPlatformInfo) {
+                if (updateSuccess) {
+                    return BatchResultDTO.success(entity.getId(), entity.getCode(), "平台已存在交接单信息，本地状态待同步");
+                }
+                return BatchResultDTO.fail(entity.getId(), entity.getCode(), "平台已存在交接单信息，本地状态更新失败，请人工处理");
+            }
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), userFailureMessage("上传"));
         }
     }

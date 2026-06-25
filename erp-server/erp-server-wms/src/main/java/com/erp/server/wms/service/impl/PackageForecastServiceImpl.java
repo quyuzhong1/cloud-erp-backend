@@ -528,8 +528,8 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
                     .orElseThrow(() -> new ServiceException(platformName(logisticsPlatform) + "平台尚未对接打印"));
             base64 = adapter.print(id);
         } catch (Exception e) {
-            log.error("打印失败>>>>>>>{}", e);
-            throw new ServiceException(e.getMessage());
+            log.error("打印失败>>>>>>>", e);
+            throw new ServiceException("打印失败");
         }
         if (CharSequenceUtil.isNotBlank(base64)) {
             boolean updated = this.lambdaUpdate()
