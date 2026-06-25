@@ -28,11 +28,15 @@ import java.util.*;
 public class SoUtils {
 
     /**
-     * 计算成本毛利
+     * 计算 SKU 成本毛利。
+     * <p>
+     * 口径：销售毛利 = {@code amountLocalCurrency}（折后本位币金额）− 销售总成本；
+     * 销售毛利率 = 销售毛利 ÷ {@code amountLocalCurrency} × 100（分母为本位币折后金额，非原币 {@code saleAmount}）。
+     * 采购单价为 null 或负数时按 0 处理并继续计算（不再提前 return），以便无采购价时仍展示销售金额侧毛利。
      *
-     * @param purchasePrice
-     * @param costParam
-     * @param skuCostProfitResult
+     * @param purchasePrice       采购单价，null/负数视为 0
+     * @param costParam           含 qty、amountLocalCurrency、saleAmount、taxRate
+     * @param skuCostProfitResult 结果容器（入参时 saleCost/saleProfit 等可为初始 0）
      */
     public static SkuCostProfitDTO.SkuCostProfitResult calCostProfit(BigDecimal purchasePrice,
                                                                      SkuCostProfitDTO.SkuCostProfitParam costParam,
@@ -45,17 +49,17 @@ public class SoUtils {
             costParam.setTaxRate(BigDecimal.ZERO);
         }
 
-        // 销售毛利=销售金额(折后)*汇率-总成本（成本为0时按0参与计算）
-        BigDecimal saleAmount = ObjectUtil.defaultIfNull(costParam.getAmountLocalCurrency(), BigDecimal.ZERO);
-        //总成本
+        // 销售毛利 = 折后本位币金额 − 总成本
+        BigDecimal amountLocalCurrency = ObjectUtil.defaultIfNull(costParam.getAmountLocalCurrency(), BigDecimal.ZERO);
         BigDecimal saleCost = skuCostProfitResult.getSaleCost();
 
-        BigDecimal saleProfit = saleAmount.subtract(saleCost).setScale(4, BigDecimal.ROUND_HALF_UP);
+        BigDecimal saleProfit = amountLocalCurrency.subtract(saleCost).setScale(4, BigDecimal.ROUND_HALF_UP);
         skuCostProfitResult.setSaleProfit(saleProfit);
-        // 销售毛利率
-        BigDecimal saleAmountForRate = ObjectUtil.defaultIfNull(costParam.getSaleAmount(), BigDecimal.ZERO);
-        if (saleAmountForRate.compareTo(BigDecimal.ZERO) > 0 && saleAmount.compareTo(BigDecimal.ZERO) > 0) {
-            skuCostProfitResult.setSaleProfitRate(skuCostProfitResult.getSaleProfit().divide(saleAmount, 4, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal("100")));
+        // 销售毛利率：分母为 amountLocalCurrency；saleAmount 仅作分母>0 的前置校验
+        BigDecimal saleAmount = ObjectUtil.defaultIfNull(costParam.getSaleAmount(), BigDecimal.ZERO);
+        if (saleAmount.compareTo(BigDecimal.ZERO) > 0 && amountLocalCurrency.compareTo(BigDecimal.ZERO) > 0) {
+            skuCostProfitResult.setSaleProfitRate(skuCostProfitResult.getSaleProfit()
+                    .divide(amountLocalCurrency, 4, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal("100")));
         }
         return skuCostProfitResult;
     }

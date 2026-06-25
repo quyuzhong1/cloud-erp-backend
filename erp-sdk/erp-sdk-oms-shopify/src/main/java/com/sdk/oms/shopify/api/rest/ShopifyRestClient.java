@@ -1228,11 +1228,14 @@ public class ShopifyRestClient {
     private ShopifyClientException toShopifyOrdersParseException(final Response response, final ProcessingException e) {
         final String responseBody = ResponseEntityToStringMapper.map(response);
         final String bodyPreview = abbreviateResponseBody(responseBody);
-        log.error("Shopify orders response parse failed, status={}, bodyPreview={}", response.getStatus(), bodyPreview, e);
+        final int bodyLength = responseBody == null ? 0 : responseBody.length();
+        log.error("Shopify orders response parse failed, status={}, bodyLength={}", response.getStatus(), bodyLength, e);
+        if (log.isDebugEnabled() && bodyPreview != null) {
+            log.debug("Shopify orders response parse failed bodyPreview={}", bodyPreview);
+        }
         final Throwable rootCause = e.getCause() != null ? e.getCause() : e;
         return new ShopifyClientException(
-                "Shopify订单响应解析失败(HTTP " + response.getStatus() + "): " + rootCause.getMessage()
-                        + (bodyPreview != null ? "，响应片段: " + bodyPreview : ""),
+                "Shopify订单响应解析失败(HTTP " + response.getStatus() + "): " + rootCause.getMessage(),
                 e);
     }
 

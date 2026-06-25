@@ -12902,7 +12902,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 .eq(LogisticsSaleChannelEntity::getIsDeleted, false)
                 .eq(LogisticsSaleChannelEntity::getLogisticsPlatform, thirdWarehousePlatform)
                 .eq(LogisticsSaleChannelEntity::getCode, shippingMethod)
-                .eq(LogisticsSaleChannelEntity::getPlatformWarehouseCode, platformWarehouseCode));
+                .eq(LogisticsSaleChannelEntity::getPlatformWarehouseCode, platformWarehouseCode)
+                .orderByDesc(LogisticsSaleChannelEntity::getUpdateTime));
         if (CollUtil.isEmpty(saleChannelList)) {
             log.warn("三方仓自动出库未匹配到销售平台物流渠道, mainId={}, platform={}, shippingMethod={}, platformWarehouseCode={}",
                     logisticsEntity.getMainId(), thirdWarehousePlatform, shippingMethod, platformWarehouseCode);
@@ -12916,7 +12917,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<LogisticsChannelEntity> channelList = FeignQuery.list(FeignQuery.create(LogisticsChannelEntity.class)
                 .eq(LogisticsChannelEntity::getIsDeleted, false)
                 .eq(LogisticsChannelEntity::getCode, channelCode)
-                .eq(LogisticsChannelEntity::getSourceType, SourceTypeEnum.LOGISTICS_WAREHOUSE.getCode()));
+                .eq(LogisticsChannelEntity::getSourceType, SourceTypeEnum.LOGISTICS_WAREHOUSE.getCode())
+                .orderByDesc(LogisticsChannelEntity::getUpdateTime));
         if (CollUtil.isEmpty(channelList)) {
             log.warn("三方仓自动出库未匹配到ERP物流渠道, mainId={}, channelCode={}", logisticsEntity.getMainId(), channelCode);
             return;

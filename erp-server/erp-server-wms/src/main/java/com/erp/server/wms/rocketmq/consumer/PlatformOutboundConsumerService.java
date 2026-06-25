@@ -643,7 +643,8 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                 .eq(LogisticsSaleChannelEntity::getIsDeleted, false)
                 .eq(LogisticsSaleChannelEntity::getLogisticsPlatform, thirdWarehousePlatform)
                 .eq(LogisticsSaleChannelEntity::getCode, shippingMethod)
-                .eq(LogisticsSaleChannelEntity::getPlatformWarehouseCode, platformWarehouseCode));
+                .eq(LogisticsSaleChannelEntity::getPlatformWarehouseCode, platformWarehouseCode)
+                .orderByDesc(LogisticsSaleChannelEntity::getUpdateTime));
         if (CollUtil.isEmpty(saleChannelList)) {
             return false;
         }
@@ -655,7 +656,8 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         List<LogisticsChannelEntity> channelList = FeignQuery.list(FeignQuery.create(LogisticsChannelEntity.class)
                 .eq(LogisticsChannelEntity::getIsDeleted, false)
                 .eq(LogisticsChannelEntity::getCode, channelCode)
-                .eq(LogisticsChannelEntity::getSourceType, SourceTypeEnum.LOGISTICS_WAREHOUSE.getCode()));
+                .eq(LogisticsChannelEntity::getSourceType, SourceTypeEnum.LOGISTICS_WAREHOUSE.getCode())
+                .orderByDesc(LogisticsChannelEntity::getUpdateTime));
         if (CollUtil.isNotEmpty(channelList) && channelList.size() > 1) {
             log.warn("三方仓物流渠道映射存在多条ERP物流渠道记录，取首条, channelCode={}, count={}", channelCode, channelList.size());
         }
