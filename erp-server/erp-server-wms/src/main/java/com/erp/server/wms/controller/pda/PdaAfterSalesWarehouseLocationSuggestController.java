@@ -59,7 +59,7 @@ public class PdaAfterSalesWarehouseLocationSuggestController extends BaseControl
      * 货品上架：单 SKU + 数量，源仓位可为空仓位，目标仓位扫码录入；生成仓位移动已审核单并写库存流水
      */
     @LogAction(value = LogActionEnum.INSERT, desc = "售后PDA货品上架")
-    @DistributeLocker(keyName = "skuNo,targetWarehouseLocationCode")
+    @DistributeLocker(keyName = "dto.skuNo,dto.targetWarehouseLocationCode")
     @PostMapping("/goodsInfo/submit")
     public ApiResult<String> submitGoodsInfo(@RequestBody @Validated AfterSalesWarehouseLocationSuggestDto.PdaGoodsShelvingSubmitDto dto) {
         //当前只有一个仓库 【东莞售后仓库】
@@ -86,7 +86,7 @@ public class PdaAfterSalesWarehouseLocationSuggestController extends BaseControl
      * 整箱移仓提交：前端累计箱唛查询返回的 sku 展平列表 + 目标仓位；提交前再次按箱唛校验 usageStatus，并校验即时库存可用量
      */
     @LogAction(value = LogActionEnum.INSERT, desc = "售后PDA整箱移仓")
-    @DistributeLocker(keyName = "targetWarehouseLocationCode")
+    @DistributeLocker(keyName = "dto.targetWarehouseLocationCode")
     @PostMapping("/fullBoxInfo/submit")
     public ApiResult<String> submitFullBoxInfo(@RequestBody @Validated AfterSalesWarehouseLocationSuggestDto.PdaFullBoxTransferSubmitDto dto) {
         //当前只有一个仓库 【东莞售后仓库】
