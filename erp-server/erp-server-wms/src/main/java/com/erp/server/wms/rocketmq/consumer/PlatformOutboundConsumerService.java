@@ -31,8 +31,10 @@ import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
+import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
-import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
@@ -44,6 +46,8 @@ import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -116,6 +120,9 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
+
+    @Resource
+    private LogisticsFeign logisticsFeign;
 
     @Resource
     private RedissonClient redissonClient;
@@ -572,6 +579,11 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
             updateDto.setShippingMethod(dto.getShippingMethod());
             updateDto.setThirdWarehousePlatform(dto.getPlatform());
             updateDto.setPlatformWarehouseCode(dto.getWarehouseCode());
+            LogisticsChannelEntity resolvedLogisticsChannel = logisticsChannelContext.getResolvedLogisticsChannel();
+            if (Objects.nonNull(resolvedLogisticsChannel)) {
+                updateDto.setResolvedLogisticsChannelId(resolvedLogisticsChannel.getId());
+                updateDto.setResolvedLogisticsChannelName(resolvedLogisticsChannel.getName());
+            }
             if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dto.getOrderStatus())) {
                 //只有已发货才更新
                 updateDto.setBillStatus(dto.getOrderStatus());
@@ -581,7 +593,14 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                     updateDto.setAddOperationLog(true);
                 }
             }
-            soB2cFeign.updateB2cByPlatformOutbound(updateDto);
+            try {
+                soB2cFeign.updateB2cByPlatformOutbound(updateDto);
+            } catch (Exception e) {
+                log.error("三方仓自动出库: 更新B2C销售订单失败, orderId={}, code={}", mainEntity.getId(), mainEntity.getCode(), e);
+                addRetryPlatformOutboundError(mainEntity.getId(), dto,
+                        "自动生成销售出库单失败：" + (e.getMessage() != null ? e.getMessage() : "更新订单异常"));
+                continue;
+            }
 
             //5.“三方仓发货单”
             ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity = generateThirdWarehouseDelivery(detailList, dto, mainEntity, platformCode,overseasWarehouse.getWarehouseId());
@@ -622,14 +641,20 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                 logisticsByMainId.putIfAbsent(logisticsEntity.getMainId(), logisticsEntity);
             }
         }
-        Boolean mappingValid = resolveThirdWarehouseLogisticsMappingValid(dto);
-        return new ThirdWarehouseLogisticsChannelValidationContext(logisticsByMainId, mappingValid);
+        Boolean mappingValid = null;
+        LogisticsChannelEntity resolvedChannel = resolveThirdWarehouseLogisticsChannel(dto);
+        if (StringUtils.isNotBlank(dto.getShippingMethod())
+                && StringUtils.isNotBlank(dto.getPlatform())
+                && StringUtils.isNotBlank(dto.getWarehouseCode())) {
+            mappingValid = Objects.nonNull(resolvedChannel);
+        }
+        return new ThirdWarehouseLogisticsChannelValidationContext(logisticsByMainId, mappingValid, resolvedChannel);
     }
 
     /**
-     * null 表示 dto 关键入参为空，跳过映射校验；true/false 表示映射是否存在。
+     * 三方仓出库批次内仅解析一次 ERP 物流渠道，供校验与 OMS 回写透传。
      */
-    private Boolean resolveThirdWarehouseLogisticsMappingValid(PlatformOutboundDTO dto) {
+    private LogisticsChannelEntity resolveThirdWarehouseLogisticsChannel(PlatformOutboundDTO dto) {
         String shippingMethod = dto.getShippingMethod();
         String thirdWarehousePlatform = dto.getPlatform();
         String platformWarehouseCode = dto.getWarehouseCode();
@@ -638,20 +663,11 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                 || StringUtils.isBlank(platformWarehouseCode)) {
             return null;
         }
-        List<LogisticsSaleChannelEntity> saleChannelList = FeignQuery.list(FeignQuery.create(LogisticsSaleChannelEntity.class)
-                .eq(LogisticsSaleChannelEntity::getIsDeleted, false)
-                .eq(LogisticsSaleChannelEntity::getLogisticsPlatform, thirdWarehousePlatform)
-                .eq(LogisticsSaleChannelEntity::getCode, shippingMethod)
-                .eq(LogisticsSaleChannelEntity::getPlatformWarehouseCode, platformWarehouseCode));
-        if (CollUtil.isEmpty(saleChannelList)) {
-            return false;
-        }
-        String channelCode = saleChannelList.get(0).getCode();
-        List<LogisticsChannelEntity> channelList = FeignQuery.list(FeignQuery.create(LogisticsChannelEntity.class)
-                .eq(LogisticsChannelEntity::getIsDeleted, false)
-                .eq(LogisticsChannelEntity::getCode, channelCode)
-                .eq(LogisticsChannelEntity::getSourceType, SourceTypeEnum.LOGISTICS_WAREHOUSE.getCode()));
-        return CollUtil.isNotEmpty(channelList);
+        LogisticsChannelDTO.ThirdWarehouseLogisticsMappingDTO mappingQuery = new LogisticsChannelDTO.ThirdWarehouseLogisticsMappingDTO();
+        mappingQuery.setLogisticsPlatform(thirdWarehousePlatform);
+        mappingQuery.setShippingMethod(shippingMethod);
+        mappingQuery.setPlatformWarehouseCode(platformWarehouseCode);
+        return logisticsFeign.resolveThirdWarehouseLogisticsChannel(mappingQuery);
     }
 
     /**
@@ -969,11 +985,15 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         private final Map<String, SoB2cLogisticsEntity> logisticsByMainId;
         /** null 表示跳过映射校验 */
         private final Boolean mappingValid;
+        /** 批次内单次 Feign 解析结果，透传 OMS 避免 N 次重复调用 */
+        private final LogisticsChannelEntity resolvedLogisticsChannel;
 
         private ThirdWarehouseLogisticsChannelValidationContext(Map<String, SoB2cLogisticsEntity> logisticsByMainId,
-                                                                Boolean mappingValid) {
+                                                                Boolean mappingValid,
+                                                                LogisticsChannelEntity resolvedLogisticsChannel) {
             this.logisticsByMainId = logisticsByMainId;
             this.mappingValid = mappingValid;
+            this.resolvedLogisticsChannel = resolvedLogisticsChannel;
         }
 
         public Map<String, SoB2cLogisticsEntity> getLogisticsByMainId() {
@@ -982,6 +1002,10 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
 
         public Boolean getMappingValid() {
             return mappingValid;
+        }
+
+        public LogisticsChannelEntity getResolvedLogisticsChannel() {
+            return resolvedLogisticsChannel;
         }
     }
 

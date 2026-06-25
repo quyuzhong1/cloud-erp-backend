@@ -496,7 +496,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
             discountAmount = Objects.nonNull(soB2cEntity.getTotalDiscount()) ? soB2cEntity.getTotalDiscount() : BigDecimal.ZERO;
         } else {
             invoiceInfoEntity.setStatus(InvoiceInfoStatusEnum.INVOICE_FAILED.getCode());
-            invoiceInfoEntity.setRemark("生成发票失败,亚马逊财务配送报告及买家信息均不存在");
+            invoiceInfoEntity.setRemark("生成发票失败,财务配送报告及买家信息均不存在");
             soB2cEntity.setVatInvoiceStatus(SoB2cVatStatusEnum.INVOICE_FAILED.getCode());
             return;
         }

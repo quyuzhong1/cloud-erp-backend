@@ -24,7 +24,10 @@ public class ShopifySdkObjectMapper {
 
 	/**
 	 * @return ObjectMapper
-	 * 
+	 *
+	 * 仅使用 Jackson 注解内省（非 JAXB）：Shopify REST 模型已用 {@code @JsonProperty}/{@code @JsonDeserialize} 标注，
+	 * LocalDateTime 由 {@link com.sdk.oms.shopify.api.rest.model.serializer.LocalDateTimeDeserializer} 模块处理。
+	 * 预发需回归订单/退款/履约全链路反序列化；若有个别字段仍依赖 JAXB，改为显式 Jackson 注解。
 	 */
 	public static ObjectMapper buildMapper() {
 		ObjectMapper objectMapper = JsonMapper.builder().enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES)

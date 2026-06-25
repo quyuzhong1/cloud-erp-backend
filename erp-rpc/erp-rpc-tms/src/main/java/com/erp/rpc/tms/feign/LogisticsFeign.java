@@ -210,6 +210,12 @@ public interface LogisticsFeign {
     LogisticsSaleChannelEntity getChannelByCodeAndOverseasWarehouseId(@RequestParam("logisticsProductCode")String logisticsProductCode, @RequestParam("transferWarehouseId") String transferWarehouseId);
 
     /**
+     * 三方仓自动出库：shipping_method + platform_warehouse_code 解析 ERP 物流渠道。
+     */
+    @PostMapping("/feign/logistics/resolveThirdWarehouseLogisticsChannel")
+    LogisticsChannelEntity resolveThirdWarehouseLogisticsChannel(@RequestBody LogisticsChannelDTO.ThirdWarehouseLogisticsMappingDTO dto);
+
+    /**
      * @return
      */
     @PostMapping("/feign/logistics/updateTrack")
