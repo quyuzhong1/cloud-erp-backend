@@ -23,7 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.alibaba.fastjson.JSONObject;
-import com.common.business.annotation.DataIdempotent;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.MongoSuperDTO;
@@ -34,6 +34,8 @@ import com.common.business.service.impl.RedisService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.RedisUtil;
 import com.common.core.exception.ServiceException;
+import com.common.message.constant.DistributeKeyConstant;
+import com.common.message.constant.DistributeKeyConstant;
 import com.common.core.utils.MapUtil;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.message.constant.RocketMqTopic;
@@ -171,7 +173,7 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
     }
 
     @Override
-    @DataIdempotent(keyIdName = "reportRedissonKey", waitTime = 120)
+    @DistributeLocker(businessType = DistributeKeyConstant.AMZ_REPORT_TASK_KEY, keyName = "reportRedissonKey", waiteTime = 120, unlockAfterTx = true)
     @Transactional(rollbackFor = Exception.class)
     public void createTask(String reportRedissonKey, String groupId, AmzReportScheduleEntity reportSchedule, OffsetDateTime currentDateTime, Map<String, CfgAmzReportTypeEntity> reportTypeMap) {
         // 请求参数数据开始时间
@@ -254,7 +256,7 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DataIdempotent(keyIdName = "reportRedissonKey", waitTime = 120)
+    @DistributeLocker(businessType = DistributeKeyConstant.AMZ_REPORT_TASK_KEY, keyName = "reportRedissonKey", waiteTime = 120, unlockAfterTx = true)
     public void consumerReportQuery(String reportRedissonKey, AmzReportTaskEntity entity) {
         // 检查当前记录是否已完成或终止?
         boolean hasFinishOrStop = this.checkFinishOrStop(entity.getId());
@@ -362,7 +364,7 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DataIdempotent(keyIdName = "reportRedissonKey")
+    @DistributeLocker(businessType = DistributeKeyConstant.AMZ_REPORT_TASK_KEY, keyName = "reportRedissonKey", unlockAfterTx = true)
     public void consumerReportCreate(String reportRedissonKey, AmzReportTaskEntity entity) {
         // 检查当前记录是否已完成或终止?
         boolean hasFinishOrStop = this.checkFinishOrStop(entity.getId());
@@ -447,7 +449,7 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DataIdempotent(keyIdName = "reportRedissonKey")
+    @DistributeLocker(businessType = DistributeKeyConstant.AMZ_REPORT_TASK_KEY, keyName = "reportRedissonKey", unlockAfterTx = true)
     public void consumerReportDownload(String reportRedissonKey, AmzReportTaskEntity entity) {
         // 检查当前记录是否已完成或终止?
         boolean hasFinishOrStop = this.checkFinishOrStop(entity.getId());
@@ -506,7 +508,7 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
     }
 
     @Override
-    @DataIdempotent(keyIdName = "reportRedissonKey")
+    @DistributeLocker(businessType = DistributeKeyConstant.AMZ_REPORT_TASK_KEY, keyName = "reportRedissonKey")
     public void consumerReportParse(String reportRedissonKey, AmzReportTaskEntity entity) {
         // 检查当前记录是否已完成或终止?
         AmzReportTaskEntity newQueryEntity = getByIdOpt(entity.getId()).orElseThrow(() -> new ServiceException("未找任务记录：id=" + entity.getId()));
@@ -587,7 +589,7 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DataIdempotent(keyIdName = "reportRedissonKey")
+    @DistributeLocker(businessType = DistributeKeyConstant.AMZ_REPORT_TASK_KEY, keyName = "reportRedissonKey", unlockAfterTx = true)
     public void consumerReportDirectQuery(String reportRedissonKey, AmzReportTaskEntity entity) {
         // 检查当前记录是否已完成或终止?
         boolean hasFinishOrStop = this.checkFinishOrStop(entity.getId());
@@ -789,7 +791,7 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
     }
 
     @Override
-    @DataIdempotent(keyIdName = "reportRedissonKey", waitTime = 120)
+    @DistributeLocker(businessType = DistributeKeyConstant.AMZ_REPORT_TASK_KEY, keyName = "reportRedissonKey", waiteTime = 120, unlockAfterTx = true)
     @Transactional(rollbackFor = Exception.class)
     public void checkTask(String reportRedissonKey, String groupId, AmzReportScheduleEntity reportSchedule, OffsetDateTime currentDateTime, Map<String, CfgAmzReportTypeEntity> reportTypeMap) {
         // 请求参数数据开始时间

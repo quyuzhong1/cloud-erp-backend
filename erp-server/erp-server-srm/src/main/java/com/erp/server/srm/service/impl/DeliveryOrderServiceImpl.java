@@ -6,7 +6,7 @@ import com.alibaba.excel.EasyExcelFactory;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.annotation.DataIdempotent;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BaseResultDTO;
@@ -23,6 +23,7 @@ import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.message.constant.DistributeKeyConstant;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
@@ -67,6 +68,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.apache.poi.ss.formula.functions.T;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -113,6 +115,9 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
 
     @Resource
     private ScmTaskFeign scmTaskFeign;
+    @Lazy
+    @Resource
+    private DeliveryOrderServiceImpl service;
 
     @Override
     public PagingVO<DeliveryOrderDTO.ListDTO> paging(PagingDTO<DeliveryOrderDTO.ParamDTO> dto) {
@@ -415,7 +420,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
             try {
                 DeliveryOrderEntity deliveryOrderEntity = builderDeliveryOrder(purchaseOrderEntity, deliveryDTOS);
                 //处理明细列表
-                handleDeliverOrderDetailList(deliveryOrderEntity.getId(), deliveryDTOS, purchaseOrderDetailList, dtos,
+                service.handleDeliverOrderDetailList(deliveryOrderEntity.getId(), deliveryDTOS, purchaseOrderDetailList, dtos,
                         deliveryOrderDetailList,receiveList,stockInDetailList,returnOrderDetailList);
             }catch (Exception e){
                 dtos.add(BatchResultDTO.fail(orderId,purchaseOrderEntity.getCode(),e.getMessage()));
@@ -434,8 +439,8 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
      * @param stockInDetailList
      * @param returnOrderDetailList
      */
-    @DataIdempotent(keyIdName = "deliveryOrderEntity.id")
-    private void handleDeliverOrderDetailList(String mainId, List<DeliveryOrderDTO.AddDeliveryDTO> deliveryDTOS,
+    @DistributeLocker(businessType = DistributeKeyConstant.SRM_DELIVERY_ORDER_KEY, keyName = "mainId")
+    public void handleDeliverOrderDetailList(String mainId, List<DeliveryOrderDTO.AddDeliveryDTO> deliveryDTOS,
                                               List<PurchaseOrderDetailEntity> purchaseOrderDetailList, List<BatchResultDTO> dtos,
                                               List<DeliveryOrderDetailDTO.ListDTO> deliveryOrderDetailList, List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> receiveList,
                                               List<PoInstockDetailEntity> stockInDetailList, List<PoReturnDetailEntity> returnOrderDetailList) {
@@ -666,6 +671,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
      * 修改
      */
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.SRM_DELIVERY_ORDER_KEY, keyName = "updateDTO.id", unlockAfterTx = true)
     @Override
     public Boolean update(DeliveryOrderDTO.UpdateDTO updateDTO) {
         DeliveryOrderEntity old = super.getById(updateDTO.getId());
@@ -801,7 +807,6 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
                 orderEntity.setReceiptStatus(DeliveryOrderEnum.ReceiptStatusEnum.WAIT_CONFIRMED.getCode());
             }
         }
-        DeliveryOrderServiceImpl bean = ApplicationContextUtils.getBean(DeliveryOrderServiceImpl.class);
-        return bean.updateBatchById(deliveryOrderEntityList);
+        return service.updateBatchById(deliveryOrderEntityList);
     }
 }

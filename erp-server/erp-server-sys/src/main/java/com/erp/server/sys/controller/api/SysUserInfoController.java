@@ -1,7 +1,6 @@
 package com.erp.server.sys.controller.api;
 
 
-import com.common.business.annotation.DataIdempotent;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.FindUserDTO;
@@ -204,8 +203,7 @@ public class SysUserInfoController extends BaseController {
      * @param
      * @return
      **/
-    @DataIdempotent(keyIdName = "uid")
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "重置用户密码:用户ID={uid},用户密码={pwd}")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "重置用户密码:用户ID={uid}")
     @GetMapping("/changePassword")
     public ApiResult changePassword(@RequestParam("uid") String uid,@RequestParam("pwd") String pwd) {
         Boolean flag = sysUserInfoService.changePassword(uid,pwd);

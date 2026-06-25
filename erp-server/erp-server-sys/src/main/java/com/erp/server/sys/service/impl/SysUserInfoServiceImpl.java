@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.constant.*;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.UserRequestPermissionsDTO;
@@ -31,6 +32,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.UUID;
 import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
+import com.common.message.constant.DistributeKeyConstant;
 import com.common.message.dto.email.EmailDTO;
 import com.common.message.dto.email.EmailVerifyCodeDTO;
 import com.common.message.service.MailService;
@@ -1426,6 +1428,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.SYS_USER_PWD_KEY, keyName = "uid", unlockAfterTx = true)
     public Boolean changePassword(String uid) {
         if (StringUtils.isBlank(uid)) {
             throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
@@ -1470,8 +1473,9 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     }
 
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.SYS_USER_PWD_KEY, keyName = "uid")
     public Boolean changePassword(String uid, String pwd) {
-        log.info("changePassword：uid：{}，pwd：{}",uid,pwd);
+        log.info("changePassword: uid={}", uid);
         if (StringUtils.isBlank(uid)) {
             throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
         }
