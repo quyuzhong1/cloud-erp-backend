@@ -2,17 +2,29 @@ package com.erp.server.dmp.inout.handler.input.task.init;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import com.common.business.constant.RedisCacheConstants;
+import com.common.business.enums.PlatformDictEnum;
+import com.common.business.utils.RedisUtil;
 import com.common.core.anno.ParamData;
 import com.common.core.enums.PannoEnum;
 import com.common.core.exception.ServiceException;
+import com.erp.model.dmp.dto.AmazonShopInfoDTO;
+import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
+import com.erp.sdk.oms.amz.spapi.client.ApiException;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonRequestTypeRateLimiterEnum;
 import com.erp.sdk.oms.amz.spapi.model.orders.Order;
+import com.erp.server.dmp.inout.dto.response.DmpInputInitResponse;
+import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -25,6 +37,58 @@ import java.util.stream.Collectors;
 @Service
 public abstract class DmpInputAmzCommonInitHandler extends DmpInputInitHandler {
 
+    @Resource
+    protected RedisUtil redisUtil;
+
+    /**
+     * 子任务 nextLevelId 会变成上游 mongoId，沿父任务链回溯拿根任务。
+     */
+    protected DmpInputTaskEntity resolveRootTaskByTaskChain() {
+        return dmpInputTaskService.findRootTaskInChain(dmpInputTaskEntity);
+    }
+
+    /**
+     * 子任务 nextLevelId 会变成上游 mongoId，沿父任务链回溯拿根任务店铺ID。
+     */
+    protected String resolveAuthShopIdByTaskChain() {
+        DmpInputTaskEntity rootTask = resolveRootTaskByTaskChain();
+        return rootTask == null ? "" : StringUtils.defaultString(rootTask.getNextLevelId());
+    }
+
+    protected String buildRateLimitKey(AmazonShopInfoDTO shopInfoDTO, AmazonRequestTypeRateLimiterEnum requestType) {
+        return StrUtil.format(RedisCacheConstants.PLATFORM_RATE_LIMIT, PlatformDictEnum.AMAZON.getCode(),
+                shopInfoDTO.getPlatformShopCode(), requestType.getBusinessTypeName());
+    }
+
+    protected boolean isRateLimited(String limitKey) {
+        return redisUtil.get(limitKey) != null;
+    }
+
+    protected void disableNextStatus(DmpInputTaskResponse dmpResponse) {
+        if (dmpResponse instanceof DmpInputInitResponse) {
+            ((DmpInputInitResponse) dmpResponse).setDoNextStatus(false);
+        }
+    }
+
+    protected void applyRateLimitBackoff(AmazonRequestTypeRateLimiterEnum requestType, String limitKey) {
+        BigDecimal timeout = BigDecimal.ONE.max(BigDecimal.ONE.divide(new BigDecimal(requestType.getRateLimit()), 8, RoundingMode.DOWN));
+        redisUtil.set(limitKey, requestType.getRateLimit(), timeout.longValue());
+    }
+
+    protected boolean handleRateLimitAndCheckNeedStop(ApiException e,
+                                                    AmazonRequestTypeRateLimiterEnum requestType,
+                                                    String limitKey,
+                                                    AmazonShopInfoDTO shopInfoDTO,
+                                                    DmpInputTaskResponse dmpResponse,
+                                                    String businessDesc) {
+        if (e.getCode() != 429) {
+            return false;
+        }
+        applyRateLimitBackoff(requestType, limitKey);
+        log.warn("【{}】platformShopCode={},存在429等待恢复:放弃当前请求任务", businessDesc, shopInfoDTO.getPlatformShopCode());
+        disableNextStatus(dmpResponse);
+        return true;
+    }
 
     /**
      * 获取上一级mongo数据

@@ -68,7 +68,7 @@ import lombok.extern.slf4j.Slf4j;
 public class DmpInputTaskServiceImpl extends SuperServiceImpl<DmpInputTaskMapper, DmpInputTaskEntity> implements DmpInputTaskService {
 
     /**
-     * 链路最大回溯深度，避免脏数据导致的循环。当前业务任务链层级远小于该值，未来若发现日常深度逼近此值需重新评估。
+     * 链路最大回溯深度，避免脏数据 parent_task_id 成环导致死循环。
      */
     private static final int MAX_TASK_CHAIN_DEPTH = 20;
 
@@ -361,9 +361,15 @@ public class DmpInputTaskServiceImpl extends SuperServiceImpl<DmpInputTaskMapper
         }
     }
 
+    /**
+     * 沿 parent_task_id 向上回溯根任务。
+     * <p>
+     * 代码审查说明：DMP 任务链为浅链路（通常远小于 {@link #MAX_TASK_CHAIN_DEPTH}），
+     * 此处 intentionally 逐层 getById，不使用 batch/递归 SQL；请勿报循环查库或 N+1。
+     */
     @Override
     public DmpInputTaskEntity findRootTaskInChain(DmpInputTaskEntity startTask) {
-        if (startTask == null) {
+        if (startTask == null || StringUtils.isBlank(startTask.getId())) {
             return null;
         }
         DmpInputTaskEntity currentTask = startTask;

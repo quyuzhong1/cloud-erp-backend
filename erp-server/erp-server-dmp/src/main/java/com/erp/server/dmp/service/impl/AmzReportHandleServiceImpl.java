@@ -55,6 +55,7 @@ import com.erp.server.dmp.inout.dto.request.DmpInputHotfixCreateRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputCreateResponse;
 import com.erp.server.dmp.inout.handler.factory.DmpInputCreateFactory;
 import com.erp.server.dmp.inout.handler.factory.DmpInputTaskFactory;
+import com.erp.server.dmp.inout.handler.input.task.init.DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.*;
 import com.xxl.job.core.context.XxlJobHelper;
@@ -92,8 +93,9 @@ import java.util.stream.Stream;
 @Slf4j
 @Service
 public class AmzReportHandleServiceImpl implements AmzReportHandleService {
-    private static final String AMZ_FBA_INBOUND_PLAN_SHIPMENT_INIT_HANDLER =
-            "DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler";
+    /**
+     * newDmpPullShipment 可切换的 billType 白名单（cfg_setting 非法值时回退默认）。
+     */
     private static final Set<String> FBA_SHIPMENT_PULL_BILL_TYPE_ALLOW_LIST = new LinkedHashSet<>(
             Arrays.asList(
                     BusinessTypeEnum.FBA_INBOUND_PLANS.getCode(),
@@ -175,7 +177,7 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
                 .eq(CfgSettingEntity::getValue, "1")
                 .count();
         if (count > 0){
-            // 执行新中台拉取逻辑
+            // 新中台分支：billType 见 resolveFbaShipmentPullBillType（默认 fba_inbound_plans，cfg 可回退 fba_shipment）
             return newDmpPullShipment(dto, shopInfoDTO);
         } else {
             // 执行历史逻辑
@@ -688,7 +690,10 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
     }
 
     /**
-     * 新中台拉取逻辑
+     * 新中台 pullShipment 拉取逻辑（需 cfg_setting 开启 new_dmp_pull_switch）。
+     * <p>
+     * billType 由 {@link #resolveFbaShipmentPullBillType()} 解析；专用入库计划入口见
+     * {@link #pullInboundPlanShipment} / {@link #newDmpPullInboundPlanShipment}。
      */
     public boolean newDmpPullShipment(DmpPullShipmentDTO dto, AmazonShopInfoDTO shopInfoDTO) {
         // 当前账号所有店铺ID
@@ -697,7 +702,7 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
                 .map(AmazonShopInfoDTO.ShopNameDTO::getShopId)
                 .distinct()
                 .collect(Collectors.toList());
-        // 校验新中台明细配置
+        // billType 默认 fba_inbound_plans，可通过 cfg_setting 回退 fba_shipment，见 resolveFbaShipmentPullBillType
         String inputBillType = resolveFbaShipmentPullBillType();
         DmpCfgInputEntity inputEntity = dmpCfgInputService.lambdaQuery()
                 .eq(DmpCfgInputEntity::getBillType, inputBillType)
@@ -751,8 +756,13 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
     }
 
     /**
-     * 可通过 cfg_setting 配置 key=fba_shipment_pull_bill_type(type=new_dmp_pull_switch) 动态切换。
-     * 默认使用 fba_inbound_plans；仅允许白名单值，避免误配置。
+     * 解析 newDmpPullShipment 使用的 dmp_cfg_input.billType。
+     * <p>
+     * 代码审查说明：默认 {@link BusinessTypeEnum#FBA_INBOUND_PLANS} 为产品 intentional 变更，
+     * 新中台手动拉货件统一走 Inbound Plan 链路；非破坏性遗漏。回退无需改代码：
+     * cfg_setting key={@link SettingEnum#FBA_SHIPMENT_PULL_BILL_TYPE} 设为 fba_shipment 即可；
+     * 白名单见 {@link #FBA_SHIPMENT_PULL_BILL_TYPE_ALLOW_LIST}。独立入口 {@link #pullInboundPlanShipment}
+     * 固定走入库计划配置。请勿报默认 billType 回归风险。
      */
     private String resolveFbaShipmentPullBillType() {
         String defaultBillType = BusinessTypeEnum.FBA_INBOUND_PLANS.getCode();
@@ -781,8 +791,8 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
                 .distinct()
                 .collect(Collectors.toList());
         DmpCfgInputConvertEntity initConvertEntity = dmpCfgInputConvertService.lambdaQuery()
-                .eq(DmpCfgInputConvertEntity::getInputStatus, "init")
-                .eq(DmpCfgInputConvertEntity::getConvertClass, AMZ_FBA_INBOUND_PLAN_SHIPMENT_INIT_HANDLER)
+                .eq(DmpCfgInputConvertEntity::getInputStatus, DmpInputTaskStatusEnum.INIT.getCode())
+                .eq(DmpCfgInputConvertEntity::getConvertClass, DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler.CONVERT_CLASS)
                 .eq(DmpCfgInputConvertEntity::getDisabled, false)
                 .last(" LIMIT 1 ")
                 .one();

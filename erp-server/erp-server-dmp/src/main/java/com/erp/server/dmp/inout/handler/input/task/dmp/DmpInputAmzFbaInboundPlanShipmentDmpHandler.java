@@ -77,6 +77,8 @@ public class DmpInputAmzFbaInboundPlanShipmentDmpHandler extends DmpInputDbConve
             dmpDataMap.put("platformShipmentStatus", shipmentStatus);
         }
 
+        // referenceId：优先 Amazon Reference ID；部分货件 API 尚未返回 amazonReferenceId 时，
+        // 回退 inboundPlanId 供 WMS 侧计划维度关联。代码审查说明：此为业务兼容兜底，非字段语义混淆。
         String referenceId = getString(mongoData, "amazonReferenceId");
         if (CharSequenceUtil.isBlank(referenceId)) {
             referenceId = getString(mongoData, "inboundPlanId");

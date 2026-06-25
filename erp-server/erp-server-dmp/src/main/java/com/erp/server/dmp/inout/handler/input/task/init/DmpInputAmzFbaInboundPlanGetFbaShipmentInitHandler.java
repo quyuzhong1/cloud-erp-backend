@@ -1,13 +1,9 @@
 package com.erp.server.dmp.inout.handler.input.task.init;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.common.business.constant.RedisCacheConstants;
-import com.common.business.enums.PlatformDictEnum;
-import com.common.business.utils.RedisUtil;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.LWAException;
@@ -18,7 +14,6 @@ import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.Shipment;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiInitUtils;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
-import com.erp.server.dmp.inout.dto.response.DmpInputInitResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.service.CfgAppClientService;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
@@ -29,8 +24,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -48,8 +41,6 @@ import java.util.stream.Collectors;
 @Scope("prototype")
 public class DmpInputAmzFbaInboundPlanGetFbaShipmentInitHandler extends DmpInputAmzCommonInitHandler {
 
-    @Resource
-    private RedisUtil redisUtil;
     @Resource
     private CfgAppClientService cfgAppClientService;
 
@@ -80,7 +71,7 @@ public class DmpInputAmzFbaInboundPlanGetFbaShipmentInitHandler extends DmpInput
 
         AmazonRequestTypeRateLimiterEnum requestType = AmazonRequestTypeRateLimiterEnum.FBA_INBOUND_PLAN_SHIPMENT;
         String limitKey = buildRateLimitKey(shopInfoDTO, requestType);
-        if (redisUtil.get(limitKey) != null) {
+        if (isRateLimited(limitKey)) {
             log.warn("【FBA入库计划货件详情拉取】platformShopCode={},存在429等待恢复:放弃当前请求任务", shopInfoDTO.getPlatformShopCode());
             disableNextStatus(dmpResponse);
             return Collections.emptyList();
@@ -135,8 +126,7 @@ public class DmpInputAmzFbaInboundPlanGetFbaShipmentInitHandler extends DmpInput
                     }
                 } catch (ApiException e) {
                     if (e.getCode() == 429) {
-                        BigDecimal timeout = BigDecimal.ONE.max(BigDecimal.ONE.divide(new BigDecimal(requestType.getRateLimit()), 8, RoundingMode.DOWN));
-                        redisUtil.set(limitKey, requestType.getRateLimit(), timeout.longValue());
+                        applyRateLimitBackoff(requestType, limitKey);
                         if (CollUtil.isNotEmpty(shipmentCodeSet) && CollUtil.isEmpty(shipmentDetailDataMap) && CollUtil.isNotEmpty(allShipmentDetailDataMap)) {
                             log.warn("【FBA入库计划货件详情拉取】platformShopCode={},存在429等待恢复且未命中输入货件号:回退返回当前全量数据,货件数={}",
                                     shopInfoDTO.getPlatformShopCode(),
@@ -247,20 +237,5 @@ public class DmpInputAmzFbaInboundPlanGetFbaShipmentInitHandler extends DmpInput
             }
         }
         return "";
-    }
-
-    private DmpInputTaskEntity resolveRootTaskByTaskChain() {
-        return dmpInputTaskService.findRootTaskInChain(dmpInputTaskEntity);
-    }
-
-    private String buildRateLimitKey(AmazonShopInfoDTO shopInfoDTO, AmazonRequestTypeRateLimiterEnum requestType) {
-        return StrUtil.format(RedisCacheConstants.PLATFORM_RATE_LIMIT, PlatformDictEnum.AMAZON.getCode(),
-                shopInfoDTO.getPlatformShopCode(), requestType.getBusinessTypeName());
-    }
-
-    private void disableNextStatus(DmpInputTaskResponse dmpResponse) {
-        if (dmpResponse instanceof DmpInputInitResponse) {
-            ((DmpInputInitResponse) dmpResponse).setDoNextStatus(false);
-        }
     }
 }

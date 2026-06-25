@@ -5,9 +5,6 @@ import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.common.business.constant.RedisCacheConstants;
-import com.common.business.enums.PlatformDictEnum;
-import com.common.business.utils.RedisUtil;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.LWAException;
@@ -19,7 +16,6 @@ import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.ListInboundPlansRespon
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiInitUtils;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
-import com.erp.server.dmp.inout.dto.response.DmpInputInitResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.service.CfgAppClientService;
 import lombok.extern.slf4j.Slf4j;
@@ -28,8 +24,6 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -44,14 +38,17 @@ import java.util.Map;
 @Slf4j
 @Service("dmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler")
 @Scope("prototype")
-public class DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler extends DmpInputInitHandler {
+public class DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler extends DmpInputAmzCommonInitHandler {
+
+    /**
+     * dmp_cfg_input_convert.convert_class 配置值，与类名保持一致。
+     */
+    public static final String CONVERT_CLASS = DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler.class.getSimpleName();
 
     private static final List<String> DEFAULT_STATUS_LIST = Arrays.asList("ACTIVE", "SHIPPED");
 
     @Resource
     private CfgAppClientService cfgAppClientService;
-    @Resource
-    private RedisUtil redisUtil;
 
     @Override
     public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
@@ -63,7 +60,7 @@ public class DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler extends DmpInpu
 
         AmazonRequestTypeRateLimiterEnum requestType = AmazonRequestTypeRateLimiterEnum.FBA_INBOUND_PLAN;
         String limitKey = buildRateLimitKey(shopInfoDTO, requestType);
-        if (redisUtil.get(limitKey) != null) {
+        if (isRateLimited(limitKey)) {
             log.warn("【FBA入库计划货件拉取】platformShopCode={},存在429等待恢复:放弃当前请求任务", shopInfoDTO.getPlatformShopCode());
             disableNextStatus(dmpResponse);
             return Collections.emptyList();
@@ -232,33 +229,6 @@ public class DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler extends DmpInpu
             return lookbackMinutes > 0 ? lookbackMinutes : defaultLookbackMinutes;
         } catch (Exception ignore) {
             return defaultLookbackMinutes;
-        }
-    }
-
-    private String buildRateLimitKey(AmazonShopInfoDTO shopInfoDTO, AmazonRequestTypeRateLimiterEnum requestType) {
-        return StrUtil.format(RedisCacheConstants.PLATFORM_RATE_LIMIT, PlatformDictEnum.AMAZON.getCode(),
-                shopInfoDTO.getPlatformShopCode(), requestType.getBusinessTypeName());
-    }
-
-    private boolean handleRateLimitAndCheckNeedStop(ApiException e,
-                                                    AmazonRequestTypeRateLimiterEnum requestType,
-                                                    String limitKey,
-                                                    AmazonShopInfoDTO shopInfoDTO,
-                                                    DmpInputTaskResponse dmpResponse,
-                                                    String businessDesc) {
-        if (e.getCode() != 429) {
-            return false;
-        }
-        BigDecimal timeout = BigDecimal.ONE.max(BigDecimal.ONE.divide(new BigDecimal(requestType.getRateLimit()), 8, RoundingMode.DOWN));
-        redisUtil.set(limitKey, requestType.getRateLimit(), timeout.longValue());
-        log.warn("【{}】platformShopCode={},存在429等待恢复:放弃当前请求任务", businessDesc, shopInfoDTO.getPlatformShopCode());
-        disableNextStatus(dmpResponse);
-        return true;
-    }
-
-    private void disableNextStatus(DmpInputTaskResponse dmpResponse) {
-        if (dmpResponse instanceof DmpInputInitResponse) {
-            ((DmpInputInitResponse) dmpResponse).setDoNextStatus(false);
         }
     }
 }
