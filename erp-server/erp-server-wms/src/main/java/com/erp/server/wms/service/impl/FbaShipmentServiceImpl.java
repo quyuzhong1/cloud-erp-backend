@@ -437,6 +437,9 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     @Override
     @DistributeLocker(keyName = "dto.shopId")
     public Boolean pullInboundPlanShipment(FbaShipmentDTO.PullShipmentDTO dto) {
+        if (CollUtil.isEmpty(dto.getShipmentCodeList())) {
+            return true;
+        }
         ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(dto.getShopId());
         if (null == shopInfoEntity) {
             throw new ServiceException(ApiError.SHOP_NOT_FOUND);

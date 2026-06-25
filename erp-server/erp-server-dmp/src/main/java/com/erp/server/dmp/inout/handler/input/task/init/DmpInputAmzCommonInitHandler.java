@@ -72,7 +72,8 @@ public abstract class DmpInputAmzCommonInitHandler extends DmpInputInitHandler {
 
     protected void applyRateLimitBackoff(AmazonRequestTypeRateLimiterEnum requestType, String limitKey) {
         BigDecimal timeout = BigDecimal.ONE.max(BigDecimal.ONE.divide(new BigDecimal(requestType.getRateLimit()), 8, RoundingMode.DOWN));
-        redisUtil.set(limitKey, requestType.getRateLimit(), timeout.longValue());
+        long timeoutSeconds = timeout.setScale(0, RoundingMode.CEILING).longValue();
+        redisUtil.set(limitKey, requestType.getRateLimit(), timeoutSeconds);
     }
 
     protected boolean handleRateLimitAndCheckNeedStop(ApiException e,
@@ -95,7 +96,7 @@ public abstract class DmpInputAmzCommonInitHandler extends DmpInputInitHandler {
      * key 不存在、value 为 null、或 toString() 后空白均跳过；
      * 用于规避 {@code map.getOrDefault(k, def).toString()} 在 value=null 时的 NPE。
      */
-    protected static String firstNonBlankString(Map<String, Object> source, String... keys) {
+    public static String firstNonBlankString(Map<String, Object> source, String... keys) {
         if (source == null || keys == null) {
             return "";
         }

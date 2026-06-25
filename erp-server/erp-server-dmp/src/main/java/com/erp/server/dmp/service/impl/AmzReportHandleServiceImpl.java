@@ -171,20 +171,27 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
             throw new ServiceException("未找到店铺授权:" + shopId);
         }
 
-        return self.pullShipmentTransactional(dto, shopInfoDTO, shopId);
+        if (isNewDmpPullEnabled()) {
+            return self.pullShipmentTransactional(dto, shopInfoDTO, shopId);
+        }
+        // 历史分支：SP-API 在事务外拉取，事务内仅落库/推送
+        List<PlatformAmazonFbaShipmentDTO> amazonFbaShipmentDTOList =
+                fetchOldDmpPullShipmentFromAmazon(dto, shopInfoDTO, shopId);
+        return self.oldDmpPullShipmentPersist(dto, shopInfoDTO, shopId, amazonFbaShipmentDTOList);
     }
 
-    @Transactional(rollbackFor = Exception.class)
-    public Boolean pullShipmentTransactional(DmpPullShipmentDTO dto, AmazonShopInfoDTO shopInfoDTO, String shopId) {
+    private boolean isNewDmpPullEnabled() {
         Integer count = cfgSettingService.lambdaQuery()
                 .eq(CfgSettingEntity::getKey, SourceTypeEnum.FBA_SHIPMENT.getCode())
                 .eq(CfgSettingEntity::getType, SettingEnum.NEW_DMP_PULL_SWITCH_LIST.getType())
                 .eq(CfgSettingEntity::getValue, "1")
                 .count();
-        if (count > 0) {
-            return newDmpPullShipment(dto, shopInfoDTO);
-        }
-        return oldDmpPullShipment(dto, shopInfoDTO, shopId);
+        return count != null && count > 0;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean pullShipmentTransactional(DmpPullShipmentDTO dto, AmazonShopInfoDTO shopInfoDTO, String shopId) {
+        return newDmpPullShipment(dto, shopInfoDTO);
     }
 
     @Override
@@ -206,9 +213,10 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
     }
 
     /**
-     * 历史拉取逻辑
+     * 历史拉取逻辑：事务外调用 Amazon SP-API 拉取货件及明细
      */
-    private boolean oldDmpPullShipment(DmpPullShipmentDTO dto, AmazonShopInfoDTO shopInfoDTO, String shopId) {
+    private List<PlatformAmazonFbaShipmentDTO> fetchOldDmpPullShipmentFromAmazon(
+            DmpPullShipmentDTO dto, AmazonShopInfoDTO shopInfoDTO, String shopId) {
         AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
         try {
             FbaInboundApi api = AmazonSpApiInitUtils.create(FbaInboundApi.class, shopInfoDTO, false);
@@ -216,25 +224,37 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
             String marketplaceId = marketplaceEnum.getMarketplaceId();
             List<String> shipmentStatusList = AmazonFbaShipmentStatusEnum.getAllStatus();
             List<String> shipmentIdList = dto.getShipmentCodeList();
-            // 请求亚马逊接口
             GetShipmentsResponse shipments = api.getShipments(queryType, marketplaceId, shipmentStatusList, shipmentIdList, null, null, null);
 
             InboundShipmentList responseList = shipments.getPayload().getShipmentData();
             if (CollectionUtils.isEmpty(shipments.getPayload().getShipmentData())) {
                 throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_ERROR);
             }
-            // 返回下载源数据
             List<PlatformAmazonFbaShipmentDTO> amazonFbaShipmentDTOList = responseList.stream()
                     .map(e -> new PlatformAmazonFbaShipmentDTO(e, shopId, shopInfoDTO.getName()))
                     .collect(Collectors.toList());
 
-            // 查询FBA货件item
             for (PlatformAmazonFbaShipmentDTO shipmentDTO : amazonFbaShipmentDTOList) {
-                GetShipmentItemsResponse response = api.getShipmentItemsByShipmentId(shipmentDTO.getShipmentInfo().getShipmentId(), marketplaceEnum.getMarketplaceId());
+                GetShipmentItemsResponse response = api.getShipmentItemsByShipmentId(
+                        shipmentDTO.getShipmentInfo().getShipmentId(), marketplaceEnum.getMarketplaceId());
                 InboundShipmentItemList itemData = response.getPayload().getItemData();
                 shipmentDTO.setDetailList(itemData);
             }
+            return amazonFbaShipmentDTOList;
+        } catch (ServiceException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new ServiceException("[Amazon SP-APi] 下载FBA货件失败" + e);
+        }
+    }
 
+    /**
+     * 历史拉取逻辑：事务内落库 Mongo、同步任务并推送 WMS
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean oldDmpPullShipmentPersist(DmpPullShipmentDTO dto, AmazonShopInfoDTO shopInfoDTO, String shopId,
+                                              List<PlatformAmazonFbaShipmentDTO> amazonFbaShipmentDTOList) {
+        try {
             String category = PlatformCategoryEnum.THIRD_SYSTEM.getCode();
             String platform = PlatformDictEnum.AMAZON.getCode();
             String business = BusinessTypeEnum.FBA_SHIPMENT.getCode();
@@ -731,10 +751,7 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
         List<String> inputDetailIds = list.stream().map(BaseEntity::getId).collect(Collectors.toList());
 
         if (!dto.getShipmentCodeList().isEmpty()) {
-            dmpFbaShipmentService.lambdaUpdate()
-                    .set(DmpFbaShipmentEntity::getDataEncrypt,"")
-                    .in(DmpFbaShipmentEntity::getFbaShipmentId,dto.getShipmentCodeList())
-                    .update();
+            clearFbaShipmentDataEncrypt(dto.getShipmentCodeList());
         }
 
         // 创建新中台hotfix任务
@@ -825,6 +842,8 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
         }
         List<String> inputDetailIds = list.stream().map(BaseEntity::getId).collect(Collectors.toList());
 
+        clearFbaShipmentDataEncrypt(dto.getShipmentCodeList());
+
         DmpInputHotfixCreateRequest dmpInputHotfixCreateRequest = new DmpInputHotfixCreateRequest();
         dmpInputHotfixCreateRequest.setCfgInputDetailIdList(inputDetailIds);
         dmpInputHotfixCreateRequest.setCfgInputId(inputEntity.getId());
@@ -832,5 +851,15 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
         dmpInputHotfixCreateRequest.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
         dmpInputCreateFactory.doHotfixInputTask(dmpInputHotfixCreateRequest);
         return true;
+    }
+
+    private void clearFbaShipmentDataEncrypt(List<String> shipmentCodeList) {
+        if (CollectionUtils.isEmpty(shipmentCodeList)) {
+            return;
+        }
+        dmpFbaShipmentService.lambdaUpdate()
+                .set(DmpFbaShipmentEntity::getDataEncrypt, "")
+                .in(DmpFbaShipmentEntity::getFbaShipmentId, shipmentCodeList)
+                .update();
     }
 }

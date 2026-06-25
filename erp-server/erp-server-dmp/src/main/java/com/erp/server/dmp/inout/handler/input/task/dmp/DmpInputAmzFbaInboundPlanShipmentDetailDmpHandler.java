@@ -8,7 +8,9 @@ import com.common.core.entity.BaseEntity;
 import com.common.core.enums.PannoEnum;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
+import com.erp.server.dmp.inout.handler.input.task.init.DmpInputAmzCommonInitHandler;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -23,6 +25,7 @@ import java.util.stream.Collectors;
 /**
  * FBA InboundPlan 货件明细子任务处理器
  */
+@Slf4j
 @Service
 @Scope("prototype")
 public class DmpInputAmzFbaInboundPlanShipmentDetailDmpHandler extends DmpInputDoChildDmpHandler {
@@ -75,11 +78,17 @@ public class DmpInputAmzFbaInboundPlanShipmentDetailDmpHandler extends DmpInputD
             }
         }
         for (Map<String, Object> childData : dmpInputMongoChildEntityList) {
-            Object shipmentIdObj = childData.get("shipmentId");
-            if (shipmentIdObj == null) {
+            String shipmentKey = DmpInputAmzCommonInitHandler.firstNonBlankString(childData,
+                    "shipmentConfirmationId", "fbaShipmentId", "shipmentId");
+            if (StringUtils.isBlank(shipmentKey)) {
+                log.warn("未匹配主表货件ID, 明细货件键为空, inputTaskId={}", inputTaskId);
                 continue;
             }
-            String dmpId = shipmentIdDmpIdMap.get(shipmentIdObj.toString());
+            String dmpId = shipmentIdDmpIdMap.get(shipmentKey);
+            if (StringUtils.isBlank(dmpId)) {
+                log.warn("未匹配主表货件ID, shipmentKey={}, inputTaskId={}", shipmentKey, inputTaskId);
+                continue;
+            }
             childData.put(MAIN_ID, dmpId);
         }
     }

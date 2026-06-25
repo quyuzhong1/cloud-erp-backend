@@ -121,7 +121,7 @@ public class DmpInputAmzFbaInboundPlanGetFbaShipmentDetailInitHandler extends Dm
     }
 
     private String getShipmentId(Map<String, Object> parentMongo) {
-        return firstNonBlankString(parentMongo, "shipmentConfirmationId", "shipmentId");
+        return firstNonBlankString(parentMongo, "shipmentConfirmationId", "fbaShipmentId", "shipmentId");
     }
 
     private String getMarketplaceId(Map<String, Object> parentMongo, AmazonShopInfoDTO shopInfoDTO) {
