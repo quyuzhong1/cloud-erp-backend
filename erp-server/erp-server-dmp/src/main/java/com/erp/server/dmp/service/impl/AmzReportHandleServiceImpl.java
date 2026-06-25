@@ -189,6 +189,10 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
         return count != null && count > 0;
     }
 
+    /**
+     * 审查问题3（intentional）：仅创建 hotfix 任务并同步返回，Amazon 拉取在异步 Init 链执行；
+     * WMS/Feign 侧 success 表示任务已提交，不代表货件已落库，Init fail-fast 异常体现在任务状态。
+     */
     @Transactional(rollbackFor = Exception.class)
     public Boolean pullShipmentTransactional(DmpPullShipmentDTO dto, AmazonShopInfoDTO shopInfoDTO, String shopId) {
         return newDmpPullShipment(dto, shopInfoDTO);
@@ -207,6 +211,9 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
         return self.pullInboundPlanShipmentTransactional(dto, shopInfoDTO);
     }
 
+    /**
+     * 审查问题3（intentional）：同 {@link #pullShipmentTransactional}，hotfix 异步执行，接口返回仅表示任务创建成功。
+     */
     @Transactional(rollbackFor = Exception.class)
     public Boolean pullInboundPlanShipmentTransactional(DmpPullShipmentDTO dto, AmazonShopInfoDTO shopInfoDTO) {
         return newDmpPullInboundPlanShipment(dto, shopInfoDTO);
@@ -244,7 +251,8 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
         } catch (ServiceException e) {
             throw e;
         } catch (Exception e) {
-            throw new ServiceException("[Amazon SP-APi] 下载FBA货件失败" + e);
+            log.error("[Amazon SP-API] 下载FBA货件失败, shopId={}", shopId, e);
+            throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_ERROR);
         }
     }
 
@@ -726,6 +734,7 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
      * {@code shipmentCodeList} 非空时写入 hotfix extendJson，与入库计划入口共用
      * {@link com.erp.server.dmp.inout.handler.input.task.init.DmpInputAmzCommonInitHandler#hasManualShipmentCodeFilter()} fail-fast 策略。
      * 审查问题2（intentional）：billType 为 fba_inbound_plans 时同样受 listInboundPlans + lookbackMinutes 约束。
+     * 审查问题3（intentional）：hotfix 任务异步执行 Init 链，本方法 return true 仅表示任务已创建。
      */
     public boolean newDmpPullShipment(DmpPullShipmentDTO dto, AmazonShopInfoDTO shopInfoDTO) {
         // 当前账号所有店铺ID
@@ -818,6 +827,7 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
      * 旧 {@code getShipments(shipmentIdList)} 可按货件号直查；窗口外计划下的指定货件可能拉不到，勿当缺陷修复。
      * {@code shipmentCodeList} 非空时与 {@link #newDmpPullShipment} 共用
      * {@link com.erp.server.dmp.inout.handler.input.task.init.DmpInputAmzCommonInitHandler#hasManualShipmentCodeFilter()} fail-fast 策略。
+     * 审查问题3（intentional）：同 {@link #newDmpPullShipment}，接口同步返回 true，实际拉取由 hotfix 任务异步完成。
      */
     private boolean newDmpPullInboundPlanShipment(DmpPullShipmentDTO dto, AmazonShopInfoDTO shopInfoDTO) {
         List<String> sameAccountShopIds = shopInfoDTO.getMarketplaceShopIdMap().values()

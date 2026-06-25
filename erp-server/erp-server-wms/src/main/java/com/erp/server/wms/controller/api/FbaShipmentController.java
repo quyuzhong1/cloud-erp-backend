@@ -147,9 +147,9 @@ public class FbaShipmentController extends BaseController {
     }
 
     /**
-     * 拉取货件信息
-     * @param dto
-     * @return com.common.core.controller.vo.ApiResult
+     * 拉取货件信息。
+     * <p>
+     * 审查问题3（intentional）：新中台开启时 DMP 仅创建 hotfix 任务即返回，本接口 success 不表示货件已同步完成。
      */
     @PostMapping("/pullShipment")
     @LogAction(value = LogActionEnum.INSERT, desc = "拉取货件")
@@ -165,7 +165,10 @@ public class FbaShipmentController extends BaseController {
     }
 
     /**
-     * 手动拉取入库计划货件信息
+     * 手动拉取入库计划货件信息。
+     * <p>
+     * 审查问题3（intentional）：DMP hotfix 异步拉取，本接口 success 仅表示任务已提交。
+     *
      * @param dto 请求参数
      * @return com.common.core.controller.vo.ApiResult
      */

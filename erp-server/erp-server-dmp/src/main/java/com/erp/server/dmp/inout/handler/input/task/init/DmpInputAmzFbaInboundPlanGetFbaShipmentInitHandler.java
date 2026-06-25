@@ -39,6 +39,8 @@ import java.util.stream.Collectors;
  * 代码审查说明（审查问题1，intentional）：extendJson 含 shipmentCodeList 但未命中 getShipment 时，
  * 回退落库同批计划下已拉到的全部货件，避免 429/字段映射差异导致手动拉取完全空跑；可能同步计划内其它货件。
  * 此为产品确认的兜底策略，勿当回归修复；变更需产品确认。
+ * 手动 hotfix（{@code shipmentCodeList} 非空）对其余失败场景与
+ * {@link DmpInputAmzFbaInboundPlanGetFbaShipmentDetailInitHandler} 对齐 fail-fast。
  */
 @Slf4j
 @Service
@@ -52,6 +54,9 @@ public class DmpInputAmzFbaInboundPlanGetFbaShipmentInitHandler extends DmpInput
     public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
         List<Map<String, Object>> parentMongoData = getParentStorageMongoData();
         if (CollectionUtils.isEmpty(parentMongoData)) {
+            if (hasManualShipmentCodeFilter()) {
+                throw new ServiceException("手动拉取FBA货件详情失败: 上游入库计划详情为空, taskId=" + dmpInputTaskEntity.getId());
+            }
             log.warn("FBA入库计划货件详情主任务taskId={},结果为空无需处理", dmpInputTaskEntity.getParentTaskId());
             return Collections.emptyList();
         }
@@ -72,10 +77,14 @@ public class DmpInputAmzFbaInboundPlanGetFbaShipmentInitHandler extends DmpInput
         Map<String, JSONObject> shipmentDetailDataMap = new LinkedHashMap<>();
         Map<String, JSONObject> allShipmentDetailDataMap = new LinkedHashMap<>();
         Set<String> pendingShipmentCodeSet = new LinkedHashSet<>(shipmentCodeSet);
+        boolean manualPull = hasManualShipmentCodeFilter();
 
         AmazonRequestTypeRateLimiterEnum requestType = AmazonRequestTypeRateLimiterEnum.FBA_INBOUND_PLAN_SHIPMENT;
         String limitKey = buildRateLimitKey(shopInfoDTO, requestType);
         if (isRateLimited(limitKey)) {
+            if (manualPull) {
+                throw new ServiceException("手动拉取FBA货件详情失败: Amazon API 429 限流等待恢复, taskId=" + dmpInputTaskEntity.getId());
+            }
             log.warn("【FBA入库计划货件详情拉取】platformShopCode={},存在429等待恢复:放弃当前请求任务", shopInfoDTO.getPlatformShopCode());
             disableNextStatus(dmpResponse);
             return Collections.emptyList();
@@ -138,12 +147,24 @@ public class DmpInputAmzFbaInboundPlanGetFbaShipmentInitHandler extends DmpInput
                                     allShipmentDetailDataMap.size());
                             return Collections.singletonList(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(new ArrayList<>(allShipmentDetailDataMap.values()))));
                         }
+                        if (manualPull) {
+                            disableNextStatus(dmpResponse);
+                            throw new ServiceException("手动拉取FBA货件详情失败: Amazon API 429 限流, taskId=" + dmpInputTaskEntity.getId());
+                        }
                         log.warn("【FBA入库计划货件详情拉取】platformShopCode={},存在429等待恢复:放弃当前请求任务", shopInfoDTO.getPlatformShopCode());
                         disableNextStatus(dmpResponse);
                         return Collections.emptyList();
                     }
+                    if (manualPull) {
+                        throw new ServiceException("手动拉取FBA货件详情失败, inboundPlanId=" + inboundPlanId
+                                + ", shipmentId=" + shipmentRawId + ", error=" + e.getMessage());
+                    }
                     log.warn("跳过shipment，inboundPlanId={}, shipmentId={}, 原因={}", inboundPlanId, shipmentRawId, e.getMessage());
                 } catch (LWAException e) {
+                    if (manualPull) {
+                        throw new ServiceException("手动拉取FBA货件详情失败, inboundPlanId=" + inboundPlanId
+                                + ", shipmentId=" + shipmentRawId + ", error=" + e.getMessage());
+                    }
                     log.warn("跳过shipment，inboundPlanId={}, shipmentId={}, 原因={}", inboundPlanId, shipmentRawId, e.getMessage());
                 }
             }
@@ -165,6 +186,9 @@ public class DmpInputAmzFbaInboundPlanGetFbaShipmentInitHandler extends DmpInput
                         shopInfoDTO.getPlatformShopCode(),
                         allShipmentDetailDataMap.size());
                 return Collections.singletonList(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(new ArrayList<>(allShipmentDetailDataMap.values()))));
+            }
+            if (manualPull) {
+                throw new ServiceException("手动拉取FBA货件详情失败: 未拉取到任何货件, taskId=" + dmpInputTaskEntity.getId());
             }
             return Collections.emptyList();
         }
