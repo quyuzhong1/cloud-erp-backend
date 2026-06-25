@@ -24,7 +24,6 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -153,6 +152,9 @@ import static com.common.business.enums.FileTaskEventEnum.IMPORT_WMS_SO_RETURN_I
 public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstockMapper, SoReturnInstockEntity> implements SoReturnInstockService {
 
     private static final int SO_RETURN_INSTOCK_IMPORT_MAX_ROWS = 5000;
+
+    /** 批量更新主表导入行数上限（单事务落库，与新增导入分开限制） */
+    private static final int SO_RETURN_INSTOCK_IMPORT_UPDATE_MAX_ROWS = 500;
 
     private static final int IMPORT_UPDATE_BATCH_SIZE = 500;
 
@@ -2476,7 +2478,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         if (CollectionUtils.isEmpty(excelDateList)) {
             throw new ServiceException(ApiError.FILE_DATA_REQUIRED);
         }
-        assertImportRowLimit(excelDateList.size());
+        assertImportRowLimit(excelDateList.size(), SO_RETURN_INSTOCK_IMPORT_UPDATE_MAX_ROWS);
         List<SoReturnStockUpdateImportExcelDTO> successList = excelListenerUtil.getSuccessList();
         List<SoReturnStockUpdateImportExcelDTO> errorList = excelListenerUtil.getErrorList();
         handleImportSoReturnstockUpdateFile(excelDateList, successList, errorList);
@@ -2498,8 +2500,14 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             log.error("{}格式错误！", bizName, e);
             throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         } catch (ExcelAnalysisException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof ServiceException) {
+                throw (ServiceException) cause;
+            }
             log.error("{}解析失败！", bizName, e);
             throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
+        } catch (ServiceException e) {
+            throw e;
         } catch (Exception e) {
             log.error("{}文件读取失败！", bizName, e);
             throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
@@ -2538,7 +2546,14 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     }
 
     private void assertImportRowLimit(int rowCount) {
-        if (rowCount > SO_RETURN_INSTOCK_IMPORT_MAX_ROWS) {
+        assertImportRowLimit(rowCount, SO_RETURN_INSTOCK_IMPORT_MAX_ROWS);
+    }
+
+    private void assertImportRowLimit(int rowCount, int maxRows) {
+        if (rowCount > maxRows) {
+            if (maxRows == SO_RETURN_INSTOCK_IMPORT_UPDATE_MAX_ROWS) {
+                throw new ServiceException(ApiError.COMMON_IMPORT_SIZE_EXCEED_LIMIT, maxRows);
+            }
             throw new ServiceException(ApiError.FILE_EXCEL_IMPORT_SIZE);
         }
     }
@@ -2723,12 +2738,19 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             markImportUpdateBatchAbortedRows(pendingRows, errorList);
             return;
         }
-        SoReturnInstockServiceImpl self = ApplicationContextUtils.getBean(SoReturnInstockServiceImpl.class);
+        if (appendImportUpdateStatusErrorsBeforePersist(toUpdateList, errorList)) {
+            List<SoReturnStockUpdateImportExcelDTO> pendingRows = toUpdateList.stream()
+                    .map(Pair::getFirst)
+                    .filter(row -> !errorList.contains(row))
+                    .collect(Collectors.toList());
+            markImportUpdateBatchAbortedRows(pendingRows, errorList);
+            return;
+        }
         List<Pair<SoReturnInstockEntity, SoReturnInstockEntity>> updatePairs = toUpdateList.stream()
                 .map(Pair::getSecond)
                 .collect(Collectors.toList());
         try {
-            self.persistAllImportUpdate(updatePairs, monthRateCache);
+            selfService.persistAllImportUpdate(updatePairs, monthRateCache);
         } catch (Exception e) {
             log.error("销售退货入库单批量更新落库失败", e);
             markImportUpdatePersistFailedRows(toUpdateList, errorList, resolveImportPersistErrorMsg(e));
@@ -2740,6 +2762,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
      * review-skip #2: 产品需求 — 批量更新整批单事务原子落库，保证要么全部更新成功要么全部回滚；
      * 主表/明细写库内部已按 IMPORT_UPDATE_BATCH_SIZE(500) 分批 SQL，与外层单事务策略 intentionally 不同
      */
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public void persistAllImportUpdate(List<Pair<SoReturnInstockEntity, SoReturnInstockEntity>> updatePairs,
                                        Map<String, BigDecimal> monthRateCache) {
@@ -2772,6 +2795,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         batchUpdateImportDetails(detailsToUpdate);
     }
 
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public void persistAllImportAdd(List<SoReturnInstockDTO.ImportAddBundle> toAddList) {
         for (SoReturnInstockDTO.ImportAddBundle bundle : toAddList) {
@@ -3062,6 +3086,62 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 errorList.add(row);
             }
             hasError = true;
+        }
+        return hasError;
+    }
+
+    /**
+     * 落库前二次校验单据状态与 version，避免异步任务执行窗口内并发审批/作废导致覆盖
+     *
+     * @return true 表示存在状态/版本冲突，调用方应终止落库
+     */
+    private boolean appendImportUpdateStatusErrorsBeforePersist(
+            List<Pair<SoReturnStockUpdateImportExcelDTO, Pair<SoReturnInstockEntity, SoReturnInstockEntity>>> toUpdateList,
+            List<SoReturnStockUpdateImportExcelDTO> errorList) {
+        List<String> codeList = toUpdateList.stream()
+                .map(item -> item.getFirst().getCode())
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(codeList)) {
+            return false;
+        }
+        Map<String, SoReturnInstockEntity> freshEntityMap = lambdaQuery()
+                .in(SoReturnInstockEntity::getCode, codeList)
+                .list()
+                .stream()
+                .collect(Collectors.toMap(SoReturnInstockEntity::getCode, Function.identity(), (a, b) -> a));
+        boolean hasError = false;
+        for (Pair<SoReturnStockUpdateImportExcelDTO, Pair<SoReturnInstockEntity, SoReturnInstockEntity>> item : toUpdateList) {
+            SoReturnStockUpdateImportExcelDTO row = item.getFirst();
+            SoReturnInstockEntity snapshotEntity = item.getSecond().getFirst();
+            SoReturnInstockEntity entityToUpdate = item.getSecond().getSecond();
+            SoReturnInstockEntity freshEntity = freshEntityMap.get(row.getCode());
+            if (ObjectUtil.isEmpty(freshEntity)) {
+                appendImportUpdateError(row, MessageUtils.getMessage(ApiError.SO_RETURN_INSTOCK_IMPORT_CODE_NOT_FOUND));
+                if (!errorList.contains(row)) {
+                    errorList.add(row);
+                }
+                hasError = true;
+                continue;
+            }
+            if (!isImportUpdateEntityUpdatable(freshEntity)) {
+                appendImportUpdateError(row, MessageUtils.getMessage(ApiError.SO_RETURN_INSTOCK_IMPORT_UPDATE_STATUS_INVALID));
+                if (!errorList.contains(row)) {
+                    errorList.add(row);
+                }
+                hasError = true;
+                continue;
+            }
+            if (!ObjectUtil.equal(snapshotEntity.getVersion(), freshEntity.getVersion())) {
+                appendImportUpdateError(row, MessageUtils.getMessage(ApiError.BILL_DATA_LOCKED));
+                if (!errorList.contains(row)) {
+                    errorList.add(row);
+                }
+                hasError = true;
+                continue;
+            }
+            entityToUpdate.setVersion(freshEntity.getVersion());
         }
         return hasError;
     }
@@ -3769,11 +3849,10 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             return;
         }
 
-        SoReturnInstockServiceImpl self = ApplicationContextUtils.getBean(SoReturnInstockServiceImpl.class);
         List<SoReturnInstockDTO.ImportAddBundle> persistedBundles = new ArrayList<>();
         for (SoReturnInstockDTO.ImportAddBundle bundle : readyToPersistList) {
             try {
-                self.persistAllImportAdd(Collections.singletonList(bundle));
+                selfService.persistAllImportAdd(Collections.singletonList(bundle));
                 persistedBundles.add(bundle);
             } catch (Exception e) {
                 log.error("销售退货入库单导入落库失败", e);
