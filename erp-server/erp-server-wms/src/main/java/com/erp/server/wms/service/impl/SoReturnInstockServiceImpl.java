@@ -153,6 +153,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
     private static final int SO_RETURN_INSTOCK_IMPORT_MAX_ROWS = 5000;
 
+    /** 批量更新主表导入行数上限（单事务落库，与新增导入分开限制） */
+    private static final int SO_RETURN_INSTOCK_IMPORT_UPDATE_MAX_ROWS = 500;
+
     private static final int IMPORT_UPDATE_BATCH_SIZE = 500;
 
     @Lazy
@@ -2475,7 +2478,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         if (CollectionUtils.isEmpty(excelDateList)) {
             throw new ServiceException(ApiError.FILE_DATA_REQUIRED);
         }
-        assertImportRowLimit(excelDateList.size());
+        assertImportRowLimit(excelDateList.size(), SO_RETURN_INSTOCK_IMPORT_UPDATE_MAX_ROWS);
         List<SoReturnStockUpdateImportExcelDTO> successList = excelListenerUtil.getSuccessList();
         List<SoReturnStockUpdateImportExcelDTO> errorList = excelListenerUtil.getErrorList();
         handleImportSoReturnstockUpdateFile(excelDateList, successList, errorList);
@@ -2497,6 +2500,10 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             log.error("{}格式错误！", bizName, e);
             throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         } catch (ExcelAnalysisException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof ServiceException) {
+                throw (ServiceException) cause;
+            }
             log.error("{}解析失败！", bizName, e);
             throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         } catch (ServiceException e) {
@@ -2539,7 +2546,14 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     }
 
     private void assertImportRowLimit(int rowCount) {
-        if (rowCount > SO_RETURN_INSTOCK_IMPORT_MAX_ROWS) {
+        assertImportRowLimit(rowCount, SO_RETURN_INSTOCK_IMPORT_MAX_ROWS);
+    }
+
+    private void assertImportRowLimit(int rowCount, int maxRows) {
+        if (rowCount > maxRows) {
+            if (maxRows == SO_RETURN_INSTOCK_IMPORT_UPDATE_MAX_ROWS) {
+                throw new ServiceException(ApiError.COMMON_IMPORT_SIZE_EXCEED_LIMIT, maxRows);
+            }
             throw new ServiceException(ApiError.FILE_EXCEL_IMPORT_SIZE);
         }
     }

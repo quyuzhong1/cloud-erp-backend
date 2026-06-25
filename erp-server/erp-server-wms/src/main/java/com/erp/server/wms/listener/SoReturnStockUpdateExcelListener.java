@@ -27,8 +27,8 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 public class SoReturnStockUpdateExcelListener extends AnalysisEventListener<SoReturnStockUpdateImportExcelDTO> {
 
-    /** 与 {@link com.erp.server.wms.service.impl.SoReturnInstockServiceImpl} 导入行数上限一致，解析阶段截断避免大文件 OOM */
-    private static final int MAX_IMPORT_ROWS = 5000;
+    /** 与 {@link com.erp.server.wms.service.impl.SoReturnInstockServiceImpl} 批量更新导入行数上限一致，解析阶段截断避免大文件 OOM */
+    private static final int MAX_IMPORT_ROWS = 500;
 
     private final List<SoReturnStockUpdateImportExcelDTO> allList = new ArrayList<>();
 
@@ -39,7 +39,7 @@ public class SoReturnStockUpdateExcelListener extends AnalysisEventListener<SoRe
     @Override
     public void invoke(SoReturnStockUpdateImportExcelDTO importExcelDTO, AnalysisContext analysisContext) {
         if (allList.size() >= MAX_IMPORT_ROWS) {
-            throw new ServiceException(ApiError.FILE_EXCEL_IMPORT_SIZE);
+            throw new ServiceException(ApiError.COMMON_IMPORT_SIZE_EXCEED_LIMIT, MAX_IMPORT_ROWS);
         }
         allList.add(importExcelDTO);
 
