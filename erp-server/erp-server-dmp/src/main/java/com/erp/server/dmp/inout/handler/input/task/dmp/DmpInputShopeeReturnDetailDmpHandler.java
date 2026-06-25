@@ -28,6 +28,7 @@ public class DmpInputShopeeReturnDetailDmpHandler extends DmpInputDoNextDmpHandl
     private static final int RETURN_SOLUTION_RETURN_AND_REFUND = 0;
     private static final int REASON_MAX_LENGTH = 255;
     private static final String PARENT_STORAGE_NAME = "dmp_so_return_info";
+    private static final String SOLUTION_TYPE_RETURN_AND_REFUND = "return_and_refund";
 
     @Override
     protected DmpCfgInputConvertEntity getMainConvertId() {
@@ -122,6 +123,7 @@ public class DmpInputShopeeReturnDetailDmpHandler extends DmpInputDoNextDmpHandl
                 if (StringUtils.isNotBlank(platformSku)) {
                     dmpDataMap.put("skuNo", platformSku);
                 }
+                // Shopee 退货明细中的 amount 字段按平台语义表示数量，不是金额。
                 Object amountObj = dmpDataMap.get("amount");
                 if (amountObj != null) {
                     Integer qty = parseInteger(amountObj);
@@ -133,7 +135,7 @@ public class DmpInputShopeeReturnDetailDmpHandler extends DmpInputDoNextDmpHandl
                 if (itemPriceObj != null) {
                     dmpDataMap.put("sellPrice", itemPriceObj);
                 }
-                dmpDataMap.put("solutionType", "return_and_refund");
+                dmpDataMap.put("solutionType", SOLUTION_TYPE_RETURN_AND_REFUND);
                 Object returnSnObj = dmpDataMap.get("return_sn");
                 String detailKey = resolveThirdDetailKey(dmpDataMap, platformSku);
                 if (returnSnObj != null && StringUtils.isNotBlank(detailKey)) {

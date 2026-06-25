@@ -114,6 +114,7 @@ public class DmpInputShopeeRefundDetailDmpHandler extends DmpInputDoNextDmpHandl
                 if (StringUtils.isNotBlank(platformSku)) {
                     dmpDataMap.put("skuNo", platformSku);
                 }
+                // Shopee 仅退款明细中的 amount 字段按平台语义表示数量，不是金额。
                 Object amountObj = dmpDataMap.get("amount");
                 Integer qty = parseInteger(amountObj);
                 if (qty != null) {

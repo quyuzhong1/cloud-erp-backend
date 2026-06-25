@@ -621,6 +621,7 @@ public class PackageForecastDTO implements Serializable {
         /**
          * 组包预报单 ID 集合
          */
+        @NotEmpty(message = "组包预报单不能为空")
         @Size(min = 1, message = "组包预报单不能为空")
         private List<String> ids;
 

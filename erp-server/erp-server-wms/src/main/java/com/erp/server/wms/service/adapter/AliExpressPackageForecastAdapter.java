@@ -61,6 +61,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 /**
@@ -267,6 +268,19 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
         queryAliExpressInfo(entity);
     }
 
+    @Override
+    public void syncTrackingStatus(List<PackageForecastEntity> entityList,
+                                   BiConsumer<PackageForecastEntity, Exception> errorHandler) {
+        AliExpressBatchContext context = buildBatchContext(entityList, null);
+        for (PackageForecastEntity entity : entityList) {
+            try {
+                queryAliExpressInfo(entity, context);
+            } catch (Exception e) {
+                errorHandler.accept(entity, e);
+            }
+        }
+    }
+
     public PackageForecastDTO.AlExpressHandoverBaseDTO getAlExpressHandoverBase(String logisticsPlatform, String shopId) {
         PackageForecastDTO.AlExpressHandoverBaseDTO alExpressHandoverBaseDTO = new PackageForecastDTO.AlExpressHandoverBaseDTO();
         CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
@@ -320,15 +334,19 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
     }
 
     public void queryAliExpressInfo(PackageForecastEntity packageForecastEntity) {
+        queryAliExpressInfo(packageForecastEntity, null);
+    }
+
+    private void queryAliExpressInfo(PackageForecastEntity packageForecastEntity, AliExpressBatchContext context) {
         PackageForecastDTO.AlExpressHandoverBaseDTO alExpressHandoverBase = null;
         try {
-            List<PackageForecastDetailEntity> forecastDetailList = packageForecastDetailService.listDbByMainId(packageForecastEntity.getId());
-            String shopId = resolveSingleShopId(forecastDetailList);
-            alExpressHandoverBase = this.getAlExpressHandoverBase(platform(), shopId);
+            List<PackageForecastDetailEntity> forecastDetailList = getForecastDetailList(packageForecastEntity.getId(), context);
+            String shopId = resolveSingleShopId(forecastDetailList, context);
+            alExpressHandoverBase = this.getAlExpressHandoverBase(platform(), shopId, context);
         } catch (Exception e) {
             log.error("syncPackageForecastInfo build base error, id: {}, handoverNo: {}",
                     packageForecastEntity.getId(), packageForecastEntity.getHandoverNo(), e);
-            throw new ServiceException("速卖通状态同步初始化失败:" + e.getMessage());
+            throw new ServiceException("速卖通状态同步初始化失败");
         }
         if (Objects.isNull(alExpressHandoverBase)) {
             throw new ServiceException("速卖通状态同步授权信息为空");
@@ -466,6 +484,11 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
         try {
             PackageForecastEntity entity = packageForecastMapper.selectById(id);
             if (Objects.isNull(entity)) {
+                return;
+            }
+            String currentRemark = StringUtils.defaultString(entity.getRemark());
+            if (StringUtils.isNotBlank(currentRemark) && !currentRemark.startsWith("速卖通状态同步失败:")) {
+                log.warn("速卖通组包状态异步同步失败，不覆盖已有业务备注, id: {}, remark: {}", id, currentRemark);
                 return;
             }
             entity.setRemark("速卖通状态同步失败:" + StringUtils.defaultString(message));

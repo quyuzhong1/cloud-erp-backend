@@ -127,7 +127,7 @@ public class SoB2cDeliveryTypeFixJob {
                 .map(SoB2cEntity::getId)
                 .collect(Collectors.toList());
         List<ThirdWarehouseDeliveryEntity> thirdWarehouseDeliveryList = thirdWarehouseDeliveryFeign.listBySourceId(soIds);
-        if (CollectionUtils.isEmpty(thirdWarehouseDeliveryList)) {
+        if (thirdWarehouseDeliveryList == null || thirdWarehouseDeliveryList.isEmpty()) {
             return Collections.emptyMap();
         }
         return thirdWarehouseDeliveryList.stream()

@@ -39,16 +39,11 @@ public class SyncPackageForecastStatusJob {
         for (PackageForecastPlatformAdapter adapter : packageForecastPlatformAdapterFactory.listAdapters()) {
             List<PackageForecastEntity> trackingList = adapter.listSyncTrackingStatus(dateTime);
             if (CollectionUtils.isNotEmpty(trackingList)) {
-                trackingList.forEach(packageForecastEntity -> {
-                    try {
-                        adapter.syncTrackingStatus(packageForecastEntity);
-                        XxlJobHelper.log("syncPackageForecastStatusJob platformTrackingList update : {}", packageForecastEntity.getTransportNo());
-                    } catch (Exception e) {
-                        log.error("syncPackageForecastStatusJob platform sync failed, id: {}, transportNo: {}",
-                                packageForecastEntity.getId(), packageForecastEntity.getTransportNo(), e);
-                        XxlJobHelper.log("syncPackageForecastStatusJob platform sync failed, id: {}, error: {}",
-                                packageForecastEntity.getId(), e.getMessage());
-                    }
+                adapter.syncTrackingStatus(trackingList, (packageForecastEntity, e) -> {
+                    log.error("syncPackageForecastStatusJob platform sync failed, id: {}, transportNo: {}",
+                            packageForecastEntity.getId(), packageForecastEntity.getTransportNo(), e);
+                    XxlJobHelper.log("syncPackageForecastStatusJob platform sync failed, id: {}, error: {}",
+                            packageForecastEntity.getId(), e.getMessage());
                 });
             }
         }

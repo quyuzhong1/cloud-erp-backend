@@ -327,12 +327,14 @@ public class NewPlatformReturnOrderConsumerService extends AbstractNewPlatformCo
 				.filter(so -> matchesReturnDetails(dto.getDetailList(), detailMap.get(so.getId())))
 				.collect(Collectors.toList());
 		if (CollectionUtils.isEmpty(matchedOrders)) {
+			// 多订单明细无法唯一归属时必须暴露为消费失败，由中台任务沉淀后人工介入。
 			throw new ServiceException("Shopee退货未匹配到明细一致的订单,platformOrderNo="
 					+ dto.getPlatformOrderNo() + ",returnNo=" + dto.getPlatformReturnNo());
 		}
 		if (matchedOrders.size() == 1) {
 			return matchedOrders.get(0);
 		}
+		// 多个子订单同时满足 Shopee 退货明细时继续失败，避免自动绑定到错误订单。
 		throw new ServiceException("Shopee退货匹配到多个明细一致的订单,platformOrderNo="
 				+ dto.getPlatformOrderNo() + ",returnNo=" + dto.getPlatformReturnNo());
 	}
@@ -353,6 +355,7 @@ public class NewPlatformReturnOrderConsumerService extends AbstractNewPlatformCo
 				.filter(soDetail -> StringUtils.isNotBlank(soDetail.getPlatformSkuNo()))
 				.collect(Collectors.groupingBy(SoB2cDetailEntity::getPlatformSkuNo,
 						Collectors.summingInt(soDetail -> Objects.isNull(soDetail.getQty()) ? 0 : soDetail.getQty())));
+		// Shopee 支持部分数量退货，这里按 SKU 校验退货数量不超过订单数量。
 		return returnQtyMap.entrySet().stream().allMatch(entry -> {
 			Integer soQty = soQtyMap.get(entry.getKey());
 			return Objects.nonNull(soQty) && entry.getValue() <= soQty;

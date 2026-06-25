@@ -159,13 +159,27 @@ public class ShopeePackageForecastAdapter extends AbstractPackageForecastPlatfor
     public List<PackageForecastDTO.ShopeeTrackingNumberDTO> trackingNumberList(PackageForecastDTO.ShopeeOptionParamDTO dto) {
         ShopeeForecastContext context = buildBaseContext(dto.getIds());
         LocalDate declareDate = Objects.nonNull(dto.getDeclareDate()) ? dto.getDeclareDate() : LocalDate.now();
-        FirstMileTrackingNumberListRequest request = FirstMileTrackingNumberListRequest.builder()
-                .fromDate(declareDate.toString())
-                .toDate(declareDate.toString())
-                .pageSize(50)
-                .build();
-        FirstMileTrackingNumberListResponse response = shopeeLogisticsService.getTrackNumberList(buildBaseRequest(context.getShopId()), request);
-        return toTrackingNumberDTOList(response);
+        BaseRequest baseRequest = buildBaseRequest(context.getShopId());
+        List<FirstMileTrackingNumber> trackingNumberList = new ArrayList<>();
+        String cursor = null;
+        do {
+            FirstMileTrackingNumberListRequest request = FirstMileTrackingNumberListRequest.builder()
+                    .fromDate(declareDate.toString())
+                    .toDate(declareDate.toString())
+                    .pageSize(50)
+                    .cursor(cursor)
+                    .build();
+            FirstMileTrackingNumberListResponse response = shopeeLogisticsService.getTrackNumberList(baseRequest, request);
+            if (Objects.isNull(response)) {
+                break;
+            }
+            trackingNumberList.addAll(CollectionUtils.emptyIfNull(response.getFirstMileTrackingNumberList()));
+            cursor = response.getNextCursor();
+            if (!Boolean.TRUE.equals(response.getMore())) {
+                cursor = null;
+            }
+        } while (StringUtils.isNotBlank(cursor));
+        return toTrackingNumberDTOList(trackingNumberList);
     }
 
     @Override
@@ -204,24 +218,42 @@ public class ShopeePackageForecastAdapter extends AbstractPackageForecastPlatfor
             throw new ServiceException("虾皮平台组包不支持多种揽收模式同时取消组包下单");
         }
         try {
+            Map<String, String> failReasonMap;
             if (hasCourier) {
-                cancelCourierDelivery(context);
+                failReasonMap = cancelCourierDelivery(context);
             } else {
-                cancelFirstMile(context);
+                failReasonMap = cancelFirstMile(context);
             }
-            context.getEntityList().forEach(this::resetAfterCancel);
+            List<BatchResultDTO> resultList = new ArrayList<>(context.getEntityList().size());
+            for (PackageForecastEntity entity : context.getEntityList()) {
+                List<String> orderKeys = context.getForecastOrderKeyMap().get(entity.getId());
+                if (CollectionUtils.isEmpty(orderKeys)) {
+                    entity.setRemark("取消失败原因:组包预报单未匹配到Shopee订单");
+                    resultList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), entity.getRemark()));
+                    continue;
+                }
+                List<String> failureReasons = CollectionUtils.emptyIfNull(orderKeys).stream()
+                        .filter(failReasonMap::containsKey)
+                        .map(failReasonMap::get)
+                        .collect(Collectors.toList());
+                if (CollectionUtils.isEmpty(failureReasons)) {
+                    resetAfterCancel(entity);
+                    resultList.add(BatchResultDTO.success(entity.getId(), entity.getCode(), "取消上传"));
+                } else {
+                    entity.setRemark("取消失败原因:" + String.join(";", failureReasons));
+                    resultList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), entity.getRemark()));
+                }
+            }
             try {
                 updateEntities(context.getEntityList());
             } catch (Exception updateException) {
-                log.error("虾皮组包预报平台取消成功后本地更新失败, ids: {}", ids, updateException);
+                log.error("虾皮组包预报平台取消结果本地更新失败, ids: {}", ids, updateException);
                 return context.getEntityList().stream()
                         .map(entity -> BatchResultDTO.fail(entity.getId(), entity.getCode(),
-                                "Shopee平台已取消绑定，本地更新失败，请同步状态或人工处理:" + updateException.getMessage()))
+                                "Shopee平台取消结果本地更新失败，请同步状态或人工处理:" + updateException.getMessage()))
                         .collect(Collectors.toList());
             }
-            return context.getEntityList().stream()
-                    .map(entity -> BatchResultDTO.success(entity.getId(), entity.getCode(), "取消上传"))
-                    .collect(Collectors.toList());
+            return resultList;
         } catch (Exception e) {
             log.error("虾皮组包预报取消上传失败, ids: {}", ids, e);
             context.getEntityList().forEach(entity -> {
@@ -533,20 +565,23 @@ public class ShopeePackageForecastAdapter extends AbstractPackageForecastPlatfor
         }
     }
 
-    private void cancelCourierDelivery(ShopeeForecastContext context) {
-        cancelByOrder(context);
+    private Map<String, String> cancelCourierDelivery(ShopeeForecastContext context) {
+        return cancelByOrder(context);
     }
 
-    private void cancelFirstMile(ShopeeForecastContext context) {
-        cancelByOrder(context);
+    private Map<String, String> cancelFirstMile(ShopeeForecastContext context) {
+        return cancelByOrder(context);
     }
 
-    private void cancelByOrder(ShopeeForecastContext context) {
+    private Map<String, String> cancelByOrder(ShopeeForecastContext context) {
         UnbindFirstMileTrackingNumberAllRequest request = UnbindFirstMileTrackingNumberAllRequest.builder()
                 .orderList(context.getOrderList())
                 .build();
         UnbindFirstMileTrackingNumberAllResponse response =
                 shopeeLogisticsService.unbindFirstMileTrackingNumberAll(buildBaseRequest(context.getShopId()), request);
+        if (Objects.isNull(response)) {
+            throw new ServiceException("Shopee取消组包响应为空");
+        }
         Set<String> successKeys = CollectionUtils.emptyIfNull(response.getSuccessList()).stream()
                 .map(item -> orderKey(item.getOrderSn(), item.getPackageNumber()))
                 .collect(Collectors.toSet());
@@ -558,15 +593,13 @@ public class ShopeePackageForecastAdapter extends AbstractPackageForecastPlatfor
                 .filter(item -> !isPackageHasNotBind(item))
                 .collect(Collectors.toMap(item -> orderKey(item.getOrderSn(), item.getPackageNumber()),
                         this::buildFailReasonWithOrder, (left, right) -> left));
-        List<String> failureReasons = context.getOrderList().stream()
+        return context.getOrderList().stream()
                 .filter(item -> !successKeys.contains(orderKey(item.getOrderSn(), item.getPackageNumber())))
                 .filter(item -> !notBindKeys.contains(orderKey(item.getOrderSn(), item.getPackageNumber())))
-                .map(item -> failReasonMap.getOrDefault(orderKey(item.getOrderSn(), item.getPackageNumber()),
-                        buildOrderPrefix(item.getOrderSn(), item.getPackageNumber()) + "Shopee返回失败"))
-                .collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(failureReasons)) {
-            throw new ServiceException(String.join(";", failureReasons));
-        }
+                .collect(Collectors.toMap(item -> orderKey(item.getOrderSn(), item.getPackageNumber()),
+                        item -> failReasonMap.getOrDefault(orderKey(item.getOrderSn(), item.getPackageNumber()),
+                                buildOrderPrefix(item.getOrderSn(), item.getPackageNumber()) + "Shopee返回失败"),
+                        (left, right) -> left));
     }
 
     private ShopeeForecastContext buildBaseContext(List<String> ids) {
@@ -986,11 +1019,11 @@ public class ShopeePackageForecastAdapter extends AbstractPackageForecastPlatfor
         return dto;
     }
 
-    private List<PackageForecastDTO.ShopeeTrackingNumberDTO> toTrackingNumberDTOList(FirstMileTrackingNumberListResponse response) {
-        if (Objects.isNull(response) || CollectionUtils.isEmpty(response.getFirstMileTrackingNumberList())) {
+    private List<PackageForecastDTO.ShopeeTrackingNumberDTO> toTrackingNumberDTOList(List<FirstMileTrackingNumber> trackingNumberList) {
+        if (CollectionUtils.isEmpty(trackingNumberList)) {
             return Collections.emptyList();
         }
-        return response.getFirstMileTrackingNumberList().stream()
+        return trackingNumberList.stream()
                 .map(this::toTrackingNumberDTO)
                 .collect(Collectors.toList());
     }

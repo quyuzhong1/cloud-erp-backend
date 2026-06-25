@@ -247,6 +247,7 @@ public class TikTokPackageForecastAdapter extends AbstractPackageForecastPlatfor
         }
         List<SoB2cEntity> soList = soB2cFeign.listByIds(soIds);
         if (CollectionUtils.isNotEmpty(soList)) {
+            validateOrderPlatform(soList);
             context.setSoMap(soList.stream()
                     .collect(Collectors.toMap(SoB2cEntity::getId, Function.identity(), (left, right) -> left)));
         }
@@ -255,6 +256,14 @@ public class TikTokPackageForecastAdapter extends AbstractPackageForecastPlatfor
             context.setSoDetailMap(soDetailList.stream().collect(Collectors.groupingBy(SoB2cDetailEntity::getMainId)));
         }
         return context;
+    }
+
+    private void validateOrderPlatform(List<SoB2cEntity> soList) {
+        boolean hasWrongPlatform = soList.stream()
+                .anyMatch(entity -> !PlatformDictEnum.TIK_TOK.getCode().equals(entity.getDictPlatform()));
+        if (hasWrongPlatform) {
+            throw new ServiceException("仅TikTok普通平台订单可操作");
+        }
     }
 
     private PackageForecastEntity getForecastOrThrow(String id, TikTokForecastContext context) {

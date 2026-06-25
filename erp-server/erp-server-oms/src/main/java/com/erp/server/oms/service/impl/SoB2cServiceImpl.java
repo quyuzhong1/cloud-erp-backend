@@ -7864,7 +7864,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (StringUtils.isNotBlank(shippingOrderNo)) {
             return OrderLogisticTypeEnum.THIRD_WAREHOUSE.getCode();
         }
-        // 平台拉单新增时尚未落库，无 soId，不可能存在三方仓发货记录
+        // 兜底历史/未回填发货方式但已有三方仓发货单的订单；平台拉单新增未落库时无 soId，不可能存在三方仓记录。
         if (StringUtils.isBlank(entity.getId())) {
             return OrderLogisticTypeEnum.SELF_SHIPMENT.getCode();
         }
@@ -7873,9 +7873,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             thirdWarehouseDelivery = thirdWarehouseDeliveryFeign.getLatestBySoId(entity.getId());
         } catch (Exception e) {
             log.warn("解析订单发货类型时查询三方仓发货单失败, soId: {}, code: {}", entity.getId(), entity.getCode(), e);
-            if (StringUtils.isNotBlank(deliveryType)) {
-                return deliveryType;
-            }
             return OrderLogisticTypeEnum.SELF_SHIPMENT.getCode();
         }
         if (Objects.nonNull(thirdWarehouseDelivery)

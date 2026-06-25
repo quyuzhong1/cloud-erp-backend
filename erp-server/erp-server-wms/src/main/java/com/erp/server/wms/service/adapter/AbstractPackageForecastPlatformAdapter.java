@@ -106,6 +106,7 @@ public abstract class AbstractPackageForecastPlatformAdapter implements PackageF
     }
 
     protected void updateForecastOrThrow(PackageForecastEntity entity) {
+        // PackageForecastEntity 继承 BaseEntity，updateById 会携带 @Version 字段做乐观锁校验。
         if (packageForecastMapper.updateById(entity) <= 0) {
             throw new ServiceException("组包预报单更新失败");
         }

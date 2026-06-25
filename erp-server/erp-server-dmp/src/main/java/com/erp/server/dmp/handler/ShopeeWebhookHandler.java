@@ -47,7 +47,7 @@ public class ShopeeWebhookHandler implements WebhookHandler{
         if(StringUtils.isBlank(data)){
             return WebhookResult.isSuccess("fail", 400, "回传数据为空");
         }
-        log.warn("虾皮webhook 获取数据,{}", data);
+        log.warn("虾皮webhook 获取数据,payloadLength={}", safeLength(data));
         try {
             JSONObject json = JSONUtil.parseObj(data);
             Integer code = json.getInt("code");
@@ -57,13 +57,15 @@ public class ShopeeWebhookHandler implements WebhookHandler{
             }
             JSONObject webhookData = json.getJSONObject("data");
             if (Objects.isNull(webhookData)) {
-                log.warn("虾皮webhook data为空，payload={}", data);
+                log.warn("虾皮webhook data为空，payloadLength={}", safeLength(data));
                 return WebhookResult.isSuccess("fail", 400, "data为空");
             }
             String ordersn = webhookData.getStr("ordersn");
             String status = webhookData.getStr("status");
             Long updateTime = webhookData.getLong("update_time");
             String platformShopId = json.getStr("shop_id");
+            log.warn("虾皮webhook 订单状态事件，code={}，ordersn={}，status={}，updateTime={}，shopId={}",
+                    code, ordersn, status, updateTime, platformShopId);
             if (StringUtils.isBlank(ordersn) || StringUtils.isBlank(status) || Objects.isNull(updateTime) || StringUtils.isBlank(platformShopId)) {
                 log.warn("虾皮webhook 关键字段为空，ordersn={}，status={}，updateTime={}，shopId={}",
                         ordersn, status, updateTime, platformShopId);
@@ -89,14 +91,19 @@ public class ShopeeWebhookHandler implements WebhookHandler{
             DmpInputHotfixCreateRequest dmpInputHotfixCreateRequest = new DmpInputHotfixCreateRequest();
             dmpInputHotfixCreateRequest.setCfgInputId(cfgInputEntity.getId());
             dmpInputHotfixCreateRequest.setCfgInputDetailIdList(Collections.singletonList(detailEntity.getId()));
+            // Shopee webhook may replay; duplicate order effects are handled by the downstream DMP import business keys.
             dmpInputCreateFactory.doHotfixInputTask(dmpInputHotfixCreateRequest);
         } catch (Exception e) {
-            log.error("【Shopee Webhook】处理失败，data={}，错误={}", data, e.getMessage(), e);
+            log.error("【Shopee Webhook】处理失败，payloadLength={}，错误={}", safeLength(data), e.getMessage(), e);
             return WebhookResult.isSuccess("fail", 500, "处理失败");
         } finally {
             ThirdWarehouseContext.remove();
         }
         return WebhookResult.isSuccess();
+    }
+
+    private int safeLength(String data) {
+        return data == null ? 0 : data.length();
     }
 
     private DmpCfgInputDetailEntity resolveDetailEntity(String cfgInputId, String platformShopId) {

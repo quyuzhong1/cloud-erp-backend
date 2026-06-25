@@ -90,6 +90,7 @@ public class DmpInputShopeeWebhookOrderDmpHandler extends DmpInputDbConvertDmpHa
             String status = Objects.toString(data.get(PLATFORM_ORIGINAL_STATUS), "");
             String thirdCode = Objects.toString(data.get("thirdCode"), "");
             Long deliveryTime = parseLong(data.get(DELIVERY_TIME));
+            // Shopee webhook 上游只下发发货状态；update_time 在该链路中按发货时间落库。
             if (!SHIPPED_STATUS_LIST.contains(status) || StringUtils.isAnyBlank(thirdCode) || Objects.isNull(deliveryTime)) {
                 continue;
             }

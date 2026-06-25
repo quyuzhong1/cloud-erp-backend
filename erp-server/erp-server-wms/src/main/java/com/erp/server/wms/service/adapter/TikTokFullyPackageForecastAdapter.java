@@ -102,7 +102,15 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
                 List<PackageForecastEntity> updateList = tikTokFullyCancel(entity, context);
                 resetAfterCancel(entity);
                 updateList.add(entity);
-                updateForecastBatchOrThrow(updateList);
+                try {
+                    updateForecastBatchOrThrow(updateList);
+                } catch (Exception updateException) {
+                    log.error("TikTok全托管组包预报平台取消成功后本地更新失败, id: {}, code: {}, handoverNo: {}",
+                            entity.getId(), entity.getCode(), handoverNo, updateException);
+                    resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(),
+                            "TikTok平台已取消，本地更新失败，请同步状态或人工处理:" + updateException.getMessage()));
+                    continue;
+                }
                 if (StringUtils.isNotBlank(handoverNo)) {
                     canceledHandoverNoSet.add(handoverNo);
                 }
@@ -202,6 +210,7 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
         if (CollectionUtils.isEmpty(soB2cEntityList)) {
             throw new ServiceException("销售订单未找到");
         }
+        validateOrderPlatform(soB2cEntityList);
         List<String> shopIds = soB2cEntityList.stream()
                 .map(SoB2cEntity::getShopId)
                 .filter(StringUtils::isNotBlank)
@@ -312,6 +321,7 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
             if (CollectionUtils.isNotEmpty(soIds)) {
                 List<SoB2cEntity> soList = soB2cFeign.listByIds(soIds);
                 if (CollectionUtils.isNotEmpty(soList)) {
+                    validateOrderPlatform(soList);
                     context.setSoMap(soList.stream()
                             .collect(Collectors.toMap(SoB2cEntity::getId, entity -> entity, (left, right) -> left)));
                 }
@@ -333,6 +343,14 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
             }
         }
         return context;
+    }
+
+    private void validateOrderPlatform(List<SoB2cEntity> soList) {
+        boolean hasWrongPlatform = soList.stream()
+                .anyMatch(entity -> !PlatformDictEnum.TIK_TOK_FULLY.getCode().equals(entity.getDictPlatform()));
+        if (hasWrongPlatform) {
+            throw new ServiceException("仅TikTok全托管平台订单可操作");
+        }
     }
 
     private PackageForecastEntity getForecastOrThrow(String id, TikTokFullyForecastContext context) {

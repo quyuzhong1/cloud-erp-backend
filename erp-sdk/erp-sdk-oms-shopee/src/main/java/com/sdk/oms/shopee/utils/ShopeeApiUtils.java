@@ -3,7 +3,6 @@ package com.sdk.oms.shopee.utils;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-import com.common.core.exception.ServiceException;
 import com.common.core.utils.OkHttpUtils;
 import com.sdk.oms.shopee.dto.base.ShopeeAuth;
 import com.sdk.oms.shopee.dto.base.ShopeeResponse;
@@ -59,7 +58,6 @@ public class ShopeeApiUtils {
             sign = String.format("%064x", new BigInteger(1, mac.doFinal(base_string)));
         } catch (Exception e) {
             log.error("虾皮签名生成异常, path: {}, 错误: {}", path, e.getMessage(), e);
-            throw new ServiceException("虾皮签名生成异常:" + e.getMessage());
         }
         return sign;
     }
@@ -83,7 +81,6 @@ public class ShopeeApiUtils {
             sign = String.format("%064x", new BigInteger(1, mac.doFinal(base_string)));
         } catch (Exception e) {
             log.error("虾皮签名生成异常, path: {}, 错误: {}", path, e.getMessage(), e);
-            throw new ServiceException("虾皮签名生成异常:" + e.getMessage());
         }
         return sign;
     }
@@ -103,7 +100,6 @@ public class ShopeeApiUtils {
             sign = String.format("%064x", new BigInteger(1, mac.doFinal(base_string)));
         } catch (Exception e) {
             log.error("虾皮签名生成异常, path: {}, 错误: {}", path, e.getMessage(), e);
-            throw new ServiceException("虾皮签名生成异常:" + e.getMessage());
         }
         return sign;
     }
@@ -128,7 +124,6 @@ public class ShopeeApiUtils {
             resultMap = JSONUtil.toBean(bodyStr, ShopResponse.class);
         } catch (Exception e) {
             log.error("虾皮接口请求异常, method: GET, url: {}, 错误: {}", safeUrl, e.getMessage(), e);
-            throw new ServiceException("虾皮接口请求异常:" + e.getMessage());
         }
 
         return resultMap;
@@ -153,7 +148,6 @@ public class ShopeeApiUtils {
             resultMap = JSONUtil.toBean(bodyStr, MerchantResponse.class);
         } catch (Exception e) {
             log.error("虾皮接口请求异常, method: GET, url: {}, 错误: {}", safeUrl, e.getMessage(), e);
-            throw new ServiceException("虾皮接口请求异常:" + e.getMessage());
         }
 
         return resultMap;
@@ -178,7 +172,6 @@ public class ShopeeApiUtils {
             resultMap = JSONUtil.toBean(bodyStr, ShopeeResponse.class);
         } catch (Exception e) {
             log.error("虾皮接口请求异常, method: GET, url: {}, 错误: {}", safeUrl, e.getMessage(), e);
-            throw new ServiceException("虾皮接口请求异常:" + e.getMessage());
         }
 
         return resultMap;
@@ -204,7 +197,7 @@ public class ShopeeApiUtils {
             return resultMap;
         } catch (Exception e) {
             log.error("虾皮接口请求异常, method: POST, url: {}, 错误: {}", safeUrl, e.getMessage(), e);
-            throw new ServiceException("虾皮接口请求异常:" + e.getMessage());
+            return null;
         }
     }
 
@@ -229,7 +222,6 @@ public class ShopeeApiUtils {
             resultMap = JSONUtil.toBean(bodyStr, ShopeeResponse.class);
         } catch (Exception e) {
             log.error("虾皮接口请求异常, method: POST, url: {}, 错误: {}", safeUrl, e.getMessage(), e);
-            throw new ServiceException("虾皮接口请求异常:" + e.getMessage());
         }
         return resultMap;
     }
@@ -255,7 +247,6 @@ public class ShopeeApiUtils {
             resultMap = JSONUtil.toBean(bodyStr, ShopeeTokenAuth.class);
         } catch (Exception e) {
             log.error("虾皮接口请求异常, method: POST, url: {}, 错误: {}", safeUrl, e.getMessage(), e);
-            throw new ServiceException("虾皮接口请求异常:" + e.getMessage());
         }
 
         return resultMap;
@@ -281,7 +272,6 @@ public class ShopeeApiUtils {
             resultMap = JSONUtil.toBean(bodyStr, ShopeeResponse.class);
         } catch (Exception e) {
             log.error("虾皮接口请求异常, method: POST, url: {}, 错误: {}", safeUrl, e.getMessage(), e);
-            throw new ServiceException("虾皮接口请求异常:" + e.getMessage());
         }
         return resultMap;
     }
