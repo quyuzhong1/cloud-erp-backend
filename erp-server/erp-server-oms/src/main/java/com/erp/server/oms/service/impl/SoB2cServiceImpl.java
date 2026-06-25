@@ -12882,9 +12882,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     /**
-     * 三方仓自动出库：shipping_method + platform_warehouse_code → logistics_sale_channel → logistics_channel。
-     * 映射规则与 WMS {@code PlatformOutboundConsumerService#resolveThirdWarehouseLogisticsMappingValid} 保持一致；
-     * 若规则变更需同步两处，后续可抽取为 TMS 侧单一查询（见 review #1573）。
+     * 三方仓自动出库：shipping_method + platform_warehouse_code → ERP 物流渠道（TMS 统一解析）。
      */
     private void fillLogisticsChannelFromThirdShipping(SoB2cLogisticsEntity logisticsEntity,
                                                        String thirdWarehousePlatform,
@@ -12898,36 +12896,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 || CharSequenceUtil.isBlank(platformWarehouseCode)) {
             return;
         }
-        List<LogisticsSaleChannelEntity> saleChannelList = FeignQuery.list(FeignQuery.create(LogisticsSaleChannelEntity.class)
-                .eq(LogisticsSaleChannelEntity::getIsDeleted, false)
-                .eq(LogisticsSaleChannelEntity::getLogisticsPlatform, thirdWarehousePlatform)
-                .eq(LogisticsSaleChannelEntity::getCode, shippingMethod)
-                .eq(LogisticsSaleChannelEntity::getPlatformWarehouseCode, platformWarehouseCode)
-                .orderByDesc(LogisticsSaleChannelEntity::getUpdateTime));
-        if (CollUtil.isEmpty(saleChannelList)) {
-            log.warn("三方仓自动出库未匹配到销售平台物流渠道, mainId={}, platform={}, shippingMethod={}, platformWarehouseCode={}",
+        LogisticsChannelDTO.ThirdWarehouseLogisticsMappingDTO mappingQuery = new LogisticsChannelDTO.ThirdWarehouseLogisticsMappingDTO();
+        mappingQuery.setLogisticsPlatform(thirdWarehousePlatform);
+        mappingQuery.setShippingMethod(shippingMethod);
+        mappingQuery.setPlatformWarehouseCode(platformWarehouseCode);
+        LogisticsChannelEntity channel = logisticsFeign.resolveThirdWarehouseLogisticsChannel(mappingQuery);
+        if (Objects.isNull(channel)) {
+            log.warn("三方仓自动出库未匹配到ERP物流渠道, mainId={}, platform={}, shippingMethod={}, platformWarehouseCode={}",
                     logisticsEntity.getMainId(), thirdWarehousePlatform, shippingMethod, platformWarehouseCode);
             return;
         }
-        if (saleChannelList.size() > 1) {
-            log.warn("三方仓物流渠道映射存在多条销售平台渠道记录，取首条, mainId={}, platform={}, shippingMethod={}, platformWarehouseCode={}, count={}",
-                    logisticsEntity.getMainId(), thirdWarehousePlatform, shippingMethod, platformWarehouseCode, saleChannelList.size());
-        }
-        String channelCode = saleChannelList.get(0).getCode();
-        List<LogisticsChannelEntity> channelList = FeignQuery.list(FeignQuery.create(LogisticsChannelEntity.class)
-                .eq(LogisticsChannelEntity::getIsDeleted, false)
-                .eq(LogisticsChannelEntity::getCode, channelCode)
-                .eq(LogisticsChannelEntity::getSourceType, SourceTypeEnum.LOGISTICS_WAREHOUSE.getCode())
-                .orderByDesc(LogisticsChannelEntity::getUpdateTime));
-        if (CollUtil.isEmpty(channelList)) {
-            log.warn("三方仓自动出库未匹配到ERP物流渠道, mainId={}, channelCode={}", logisticsEntity.getMainId(), channelCode);
-            return;
-        }
-        if (channelList.size() > 1) {
-            log.warn("三方仓物流渠道映射存在多条ERP物流渠道记录，取首条, mainId={}, channelCode={}, count={}",
-                    logisticsEntity.getMainId(), channelCode, channelList.size());
-        }
-        LogisticsChannelEntity channel = channelList.get(0);
         logisticsEntity.setLogisticsChannelId(channel.getId());
         logisticsEntity.setLogisticsChannelName(channel.getName());
     }

@@ -29,8 +29,8 @@ import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
-import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.wms.dto.OverseasProviderDTO;
@@ -44,6 +44,7 @@ import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -116,6 +117,9 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
+
+    @Resource
+    private LogisticsFeign logisticsFeign;
 
     @Resource
     private RedissonClient redissonClient;
@@ -627,8 +631,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
 
     /**
      * null 表示 dto 关键入参为空，跳过映射校验；true/false 表示映射是否存在。
-     * 映射规则与 OMS {@code SoB2cServiceImpl#fillLogisticsChannelFromThirdShipping} 保持一致；
-     * 若规则变更需同步两处，后续可抽取为 TMS 侧单一查询（见 review #1573）。
+     * 映射解析见 TMS {@link com.erp.server.tms.service.LogisticsChannelService#resolveThirdWarehouseLogisticsChannel}。
      */
     private Boolean resolveThirdWarehouseLogisticsMappingValid(PlatformOutboundDTO dto) {
         String shippingMethod = dto.getShippingMethod();
@@ -639,29 +642,12 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                 || StringUtils.isBlank(platformWarehouseCode)) {
             return null;
         }
-        List<LogisticsSaleChannelEntity> saleChannelList = FeignQuery.list(FeignQuery.create(LogisticsSaleChannelEntity.class)
-                .eq(LogisticsSaleChannelEntity::getIsDeleted, false)
-                .eq(LogisticsSaleChannelEntity::getLogisticsPlatform, thirdWarehousePlatform)
-                .eq(LogisticsSaleChannelEntity::getCode, shippingMethod)
-                .eq(LogisticsSaleChannelEntity::getPlatformWarehouseCode, platformWarehouseCode)
-                .orderByDesc(LogisticsSaleChannelEntity::getUpdateTime));
-        if (CollUtil.isEmpty(saleChannelList)) {
-            return false;
-        }
-        if (saleChannelList.size() > 1) {
-            log.warn("三方仓物流渠道映射存在多条销售平台渠道记录，取首条, platform={}, shippingMethod={}, platformWarehouseCode={}, count={}",
-                    thirdWarehousePlatform, shippingMethod, platformWarehouseCode, saleChannelList.size());
-        }
-        String channelCode = saleChannelList.get(0).getCode();
-        List<LogisticsChannelEntity> channelList = FeignQuery.list(FeignQuery.create(LogisticsChannelEntity.class)
-                .eq(LogisticsChannelEntity::getIsDeleted, false)
-                .eq(LogisticsChannelEntity::getCode, channelCode)
-                .eq(LogisticsChannelEntity::getSourceType, SourceTypeEnum.LOGISTICS_WAREHOUSE.getCode())
-                .orderByDesc(LogisticsChannelEntity::getUpdateTime));
-        if (CollUtil.isNotEmpty(channelList) && channelList.size() > 1) {
-            log.warn("三方仓物流渠道映射存在多条ERP物流渠道记录，取首条, channelCode={}, count={}", channelCode, channelList.size());
-        }
-        return CollUtil.isNotEmpty(channelList);
+        LogisticsChannelDTO.ThirdWarehouseLogisticsMappingDTO mappingQuery = new LogisticsChannelDTO.ThirdWarehouseLogisticsMappingDTO();
+        mappingQuery.setLogisticsPlatform(thirdWarehousePlatform);
+        mappingQuery.setShippingMethod(shippingMethod);
+        mappingQuery.setPlatformWarehouseCode(platformWarehouseCode);
+        LogisticsChannelEntity channel = logisticsFeign.resolveThirdWarehouseLogisticsChannel(mappingQuery);
+        return Objects.nonNull(channel);
     }
 
     /**
