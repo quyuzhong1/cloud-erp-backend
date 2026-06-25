@@ -3821,16 +3821,16 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 // 无已发货的发货单只清理历史异常信息
                 result = true;
             } else {
-                result = this.generateB2cSoOutstock(id);
+                result = soOutstockService.generateB2cSoOutstock(id);
             }
         } else {
             //速卖通平台仓订单的销售出库在处理类生成
             if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(currentEntity.getDictPlatform())) {
                 result = flag;
             } else if (PlatformDictEnum.TIK_TOK.getCode().equals(currentEntity.getDictPlatform())) {
-                result = flag && this.generateB2cSoOutstock(id);
+                result = flag && soOutstockService.generateB2cSoOutstock(id);
             }else{
-                result = this.generateB2cSoOutstock(id);
+                result = soOutstockService.generateB2cSoOutstock(id);
             }
         }
         boolean allResult = result && flag;
@@ -4181,7 +4181,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             generateB2cDTO.setTrackNo(dto.getTrackNo());
             //运单号
             generateB2cDTO.setTransportNo(dto.getTrackNo());
-            this.generateB2cSoOutstock(generateB2cDTO);
+            soOutstockService.generateB2cSoOutstock(generateB2cDTO);
         } catch (Exception e) {
             log.error("销售订单{} 生成销售出库单失败>>>>>>{}", generateB2cDTO.getSoCode(), e.getMessage());
             throw new ServiceException(e.getMessage());

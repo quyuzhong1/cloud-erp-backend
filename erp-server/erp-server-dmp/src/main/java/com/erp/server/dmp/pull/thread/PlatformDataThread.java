@@ -22,9 +22,9 @@ import com.xxl.job.core.context.XxlJobHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
@@ -52,6 +52,9 @@ public class PlatformDataThread {
     private BusinessServiceImpl businessService;
     @Resource
     private MongoService mongoService;
+    @Lazy
+    @Resource
+    private PlatformDataThread platformDataThread;
 
 
     @Async("pullErpOpenApi")
@@ -80,8 +83,12 @@ public class PlatformDataThread {
     }
 
     @Async("pullErpOpenApi")
-    @DistributeLocker(businessType = DistributeKeyConstant.DMP_CLEAN_ORDER_KEY, keyName = "jobTaskDTO.id")
     public void cleanOrder(JobTaskDTO jobTaskDTO) {
+        platformDataThread.cleanOrderWithLock(jobTaskDTO);
+    }
+
+    @DistributeLocker(businessType = DistributeKeyConstant.DMP_CLEAN_ORDER_KEY, keyName = "jobTaskDTO.id")
+    public void cleanOrderWithLock(JobTaskDTO jobTaskDTO) {
         try {
             log.info("发起异步调用平台【{}】", jobTaskDTO.getDictPlatform());
             PlatformApiEnum platformApiEnum = PlatformApiEnum.getEnumByType(jobTaskDTO.getApiCode());

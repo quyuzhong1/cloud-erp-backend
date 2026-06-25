@@ -64,6 +64,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.BeanUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -148,6 +149,10 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
     private DocNoGenHelper docNoGenHelper;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+
+    @Lazy
+    @Resource
+    private WarehouseReceiveService warehouseReceiveService;
 /*
     @Resource
     private SyncKingdeePoReceiveService syncKingdeePoReceiveService;*/
@@ -516,7 +521,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
     @Override
     @Transactional(rollbackFor = Exception.class)
     public WarehouseReceiveEntity addAndSubmit(WarehouseReceiveDTO.AddDTO dto) {
-        WarehouseReceiveEntity entity = this.add(dto);
+        WarehouseReceiveEntity entity = warehouseReceiveService.add(dto);
         if (null == entity) {
             throw new ServiceException(ApiError.BILL_SAVE_FAILED);
         }
@@ -1303,7 +1308,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             }
         }
         dto.setWarehouseReceiveDetailList(addDTOList);
-        return this.add(dto).getId();
+        return warehouseReceiveService.add(dto).getId();
     }
 
     @Override

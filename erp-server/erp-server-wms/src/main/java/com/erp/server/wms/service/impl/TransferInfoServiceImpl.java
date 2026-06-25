@@ -146,6 +146,10 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     @Resource
     private SyncMabangTransferService syncMabangTransferService;
 
+    @Lazy
+    @Resource
+    private TransferInfoService transferInfoService;
+
     @Value("${transfer-sync-to-mb: true}")
     private Boolean transferSyncToMb;
 
@@ -2074,7 +2078,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         }
 
         addDTO.setDetailList(detailAddDtoList);
-        return this.addAndApprove(addDTO);
+        return transferInfoService.addAndApprove(addDTO);
     }
 
     @Override
