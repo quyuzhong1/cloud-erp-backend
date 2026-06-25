@@ -40,6 +40,7 @@ import java.util.Map;
  * {@link #parseLookbackMinutes()} 时间窗过滤。手动 {@code shipmentCodeList} 仅在后续 getShipment 阶段生效，
  * 无法像旧版 {@code getShipments(shipmentIdList)} 绕过计划列表直查；窗口外计划下的货件需扩大 lookbackMinutes
  * 或后续迭代专用直拉 Init。此为架构已知限制，勿当缺陷修复。
+ * 手动 hotfix（{@code shipmentCodeList}）对 429、空计划列表等与后续 Init 节点一致执行 fail-fast。
  */
 @Slf4j
 @Service("dmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler")
@@ -67,9 +68,13 @@ public class DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler extends DmpInpu
             throw new ServiceException("未找到店铺授权:" + shopId);
         }
 
+        boolean manualPull = hasManualShipmentCodeFilter();
         AmazonRequestTypeRateLimiterEnum requestType = AmazonRequestTypeRateLimiterEnum.FBA_INBOUND_PLAN;
         String limitKey = buildRateLimitKey(shopInfoDTO, requestType);
         if (isRateLimited(limitKey)) {
+            if (manualPull) {
+                throw new ServiceException("手动拉取FBA入库计划列表失败: Amazon API 429 限流等待恢复, taskId=" + dmpInputTaskEntity.getId());
+            }
             log.warn("【FBA入库计划货件拉取】platformShopCode={},存在429等待恢复:放弃当前请求任务", shopInfoDTO.getPlatformShopCode());
             disableNextStatus(dmpResponse);
             return Collections.emptyList();
@@ -125,7 +130,15 @@ public class DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler extends DmpInpu
                     }
                     nextToken = response != null && response.getPagination() != null ? response.getPagination().getNextToken() : null;
                 } catch (ApiException e) {
+                    if (e.getCode() == 429 && manualPull) {
+                        applyRateLimitBackoff(requestType, limitKey);
+                        disableNextStatus(dmpResponse);
+                        throw new ServiceException("手动拉取FBA入库计划列表失败: Amazon API 429 限流, taskId=" + dmpInputTaskEntity.getId());
+                    }
                     if (handleRateLimitAndCheckNeedStop(e, requestType, limitKey, shopInfoDTO, dmpResponse, "FBA入库计划列表拉取")) {
+                        if (manualPull) {
+                            throw new ServiceException("手动拉取FBA入库计划列表失败: Amazon API 429 限流, taskId=" + dmpInputTaskEntity.getId());
+                        }
                         return Collections.emptyList();
                     }
                     throw new ServiceException("拉取FBA入库计划列表失败:" + e.getMessage());
@@ -139,6 +152,10 @@ public class DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler extends DmpInpu
         List<InboundPlanSummary> inboundPlanSummaryList = new ArrayList<>(inboundPlanSummaryMap.values());
         if (CollUtil.isEmpty(inboundPlanSummaryList)) {
             log.info("【FBA入库计划货件拉取】platformShopCode={},状态统计={},无符合时间范围的计划", shopInfoDTO.getPlatformShopCode(), JSON.toJSONString(statusCountMap));
+            if (manualPull) {
+                throw new ServiceException("手动拉取FBA入库计划列表失败: 无符合时间范围的计划, lookbackMinutes="
+                        + lookbackMinutes + ", threshold=" + thresholdTime + ", taskId=" + dmpInputTaskEntity.getId());
+            }
             return Collections.emptyList();
         }
 
@@ -158,6 +175,9 @@ public class DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler extends DmpInpu
                 thresholdTime);
 
         if (CollUtil.isEmpty(inboundPlanDataList)) {
+            if (manualPull) {
+                throw new ServiceException("手动拉取FBA入库计划列表失败: 未解析到有效计划ID, taskId=" + dmpInputTaskEntity.getId());
+            }
             return Collections.emptyList();
         }
         return Collections.singletonList(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(inboundPlanDataList)));
