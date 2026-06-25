@@ -26,6 +26,7 @@ public class DmpOutputAmzFbaPlanShipmentRocketMQTaskHandler extends DmpOutputAmz
     public PlatformFbaShipmentDTO convert(DmpFbaShipmentEntity dmpMainEntity,
                                           List<DmpFbaShipmentDetailEntity> dmpDetailEntityList,
                                           String cfgOutputId) {
+        // 审查说明：Inbound Plan 链路仅覆写 shopId；packType 等字段沿用父类 convert（推送 enum code，WMS 侧展示转换）。
         PlatformFbaShipmentDTO dto = super.convert(dmpMainEntity, dmpDetailEntityList, cfgOutputId);
         if (dto == null) {
             return null;

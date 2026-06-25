@@ -88,7 +88,7 @@ public class DmpInputAmzFbaShipmentDmpHandler extends DmpInputDbConvertDmpHandle
                 if (areCasesRequired instanceof Boolean) {
                     // 审查说明（packType 落库格式）：统一写入 AmazonFbaPackTypeEnum.code（CASE_PACKED/INDIVIDUAL），
                     // 不再落库中文「原厂包装/混装」；历史存量/WMS 展示兼容依赖 AmazonFbaPackTypeEnum.toDisplayName/toCode。
-                    // MQ→WMS 推送若需中文展示，须在 Output convert 或 WMS 侧做 toDisplayName，勿假定 DMP 仍存中文。
+                    // MQ→WMS 推送同样传 code，展示转换在 WMS FbaShipmentConverter；见 DmpOutputAmzFbaShipmentRocketMQTaskHandler。
                     AmazonFbaPackTypeEnum packTypeEnum = AmazonFbaPackTypeEnum.fromAreCasesRequired((Boolean) areCasesRequired);
                     dmpDataMap.put("packType", packTypeEnum == null ? "" : packTypeEnum.getCode());
                 } else {

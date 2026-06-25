@@ -366,6 +366,7 @@ public class DmpInputTaskServiceImpl extends SuperServiceImpl<DmpInputTaskMapper
      * <p>
      * 代码审查说明：DMP 任务链为浅链路（通常远小于 {@link #MAX_TASK_CHAIN_DEPTH}），
      * 此处 intentionally 逐层 getById，不使用 batch/递归 SQL；请勿报循环查库或 N+1。
+     * 达到 {@link #MAX_TASK_CHAIN_DEPTH} 仍非根节点时打 warn 便于观测脏链/环链，并返回当前节点供调用方兜底。
      */
     @Override
     public DmpInputTaskEntity findRootTaskInChain(DmpInputTaskEntity startTask) {
@@ -380,6 +381,10 @@ public class DmpInputTaskServiceImpl extends SuperServiceImpl<DmpInputTaskMapper
                 break;
             }
             currentTask = parentTask;
+        }
+        if (StringUtils.isNotBlank(currentTask.getParentTaskId())) {
+            log.warn("DMP任务链回溯达到最大深度, startTaskId={}, currentTaskId={}, parentTaskId={}, maxDepth={}",
+                    startTask.getId(), currentTask.getId(), currentTask.getParentTaskId(), MAX_TASK_CHAIN_DEPTH);
         }
         return currentTask;
     }
