@@ -1,10 +1,11 @@
 package com.erp.server.sys.service;
+
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.sys.dto.PdaVersionDTO;
 import com.erp.model.sys.entity.PdaVersionEntity;
 import com.common.business.service.SuperService;
-
 
 /**
  * <p>
@@ -51,4 +52,30 @@ public interface PdaVersionService extends SuperService<PdaVersionEntity> {
      **/
     Boolean skipVersion(String versionId);
 
+    /**
+     * 更新版本信息
+     * @Author 
+     * @Date 
+     * @param dto
+     * @return java.lang.Boolean
+     **/
+    Boolean update(PdaVersionDTO.UpdateDTO dto);
+
+    /**
+     * 删除版本
+     * @Author 
+     * @Date 
+     * @param id
+     * @return java.lang.Boolean
+     **/
+    BatchResultDTO delete(String id);
+
+    /**
+     * 详情
+     * @Author
+     * @Date
+     * @param id
+     * @return java.lang.Boolean
+     **/
+    PdaVersionDTO.ViewDTO view(String id);
 }

@@ -12,6 +12,7 @@ import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.MessageUtils;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchaseApplicationRefPoDTO;
@@ -42,6 +43,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * <p>
@@ -616,8 +618,20 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
         handleIdList (newList,parentSkuIds,allSkuIds,warehouseIds,supplierIds);
 
         //采购退货单下推数量校验
-        List<String> sourceDetailIds = newList.stream().filter(obj->StringUtils.isNotBlank(obj.getSourceDetailId())).map(SubcontractOrderDetailEntity::getSourceDetailId).collect(Collectors.toList());
-        //采购退货单明细数据
+        List<String> sourceDetailIds = newList.stream()
+                .filter(obj -> StringUtils.isNotBlank(obj.getSourceDetailId()))
+                .flatMap(obj -> {
+                    // 处理带逗号的情况，拆分成多个ID
+                    String sourceDetailId = obj.getSourceDetailId();
+                    if (sourceDetailId.contains(",")) {
+                        return Arrays.stream(sourceDetailId.split(","))
+                                .map(String::trim)
+                                .filter(StringUtils::isNotBlank);
+                    } else {
+                        return Stream.of(sourceDetailId);
+                    }
+                })
+                .collect(Collectors.toList());
         List<PoReturnDetailEntity> sourceDetailList = new ArrayList<>();
         List<SubcontractOrderDetailEntity> refDetailList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(sourceDetailIds)) {
@@ -676,23 +690,45 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
                 continue;
             }
 
+            if (Objects.equals(SubcontractOrderTypeEnum.REPAIR_SUBCONTRACT.getCode(), subcontractOrderEntity.getType())
+                    && StringUtils.isBlank(detailEntity.getParentId())) {
+                if (Objects.isNull(detailEntity.getRepairQty()) || MathUtil.compareTo(detailEntity.getRepairQty(), MathUtil.ZERO) <= MathUtil.ZERO) {
+                    errorMessages.add(MessageUtils.getMessage(ApiError.PO_SUBCONTRACT_REPAIR_QTY_MUST_GT_ZERO, skuVO.getSkuNo()));
+                    continue;
+                }
+            }
+
             //采购退货数量校验
             if (CollectionUtils.isNotEmpty(sourceDetailList)) {
-                //采购退货数量
+                // 处理sourceDetailId可能包含多个值的情况
+                List<String> detailIds = new ArrayList<>();
+                String sourceDetailId = detailEntity.getSourceDetailId();
+                if (sourceDetailId.contains(",")) {
+                    detailIds = Arrays.stream(sourceDetailId.split(","))
+                            .map(String::trim)
+                            .filter(StringUtils::isNotBlank)
+                            .collect(Collectors.toList());
+                } else {
+                    detailIds.add(sourceDetailId);
+                }
+                
+                //采购退货数量（计算所有匹配的采购退货单的总数量）
+                List<String> finalDetailIds = detailIds;
                 Integer returnQty = sourceDetailList.stream()
-                        .filter(obj -> obj.getId().equals(detailEntity.getSourceDetailId()))
-                        .findFirst().flatMap(obj -> Optional.ofNullable(obj.getReturnQty())).orElse(MathUtil.ZERO);
+                        .filter(obj -> finalDetailIds.contains(obj.getId()))
+                        .map(obj -> Optional.ofNullable(obj.getReturnQty()).orElse(MathUtil.ZERO))
+                        .reduce(MathUtil.ZERO, Integer::sum);
 
                 Integer purchaseQty = MathUtil.ZERO;
                 Integer subcontractQty = MathUtil.ZERO;
                 if (CollectionUtils.isNotEmpty(refDetailList)) {
                     subcontractQty = refDetailList.stream()
-                            .filter(obj -> obj.getSourceDetailId().equals(detailEntity.getSourceDetailId()) && !obj.getId().equals(detailEntity.getId()) && StringUtils.isBlank(obj.getParentId()))
+                            .filter(obj -> finalDetailIds.contains(obj.getSourceDetailId()) && !obj.getId().equals(detailEntity.getId()) && StringUtils.isBlank(obj.getParentId()))
                             .map(SubcontractOrderDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
                 }
                 //查询已采购数量
                 if (CollectionUtils.isNotEmpty(purchaseRefList)) {
-                    purchaseQty = purchaseRefList.stream().filter(obj -> detailEntity.getSourceDetailId().equals(obj.getPurchaseApplicationDetailId())).map(PurchaseApplicationRefPoDTO.ListDTO::getPurchaseQty).reduce(0, Integer::sum);
+                    purchaseQty = purchaseRefList.stream().filter(obj -> finalDetailIds.contains(obj.getPurchaseApplicationDetailId())).map(PurchaseApplicationRefPoDTO.ListDTO::getPurchaseQty).reduce(0, Integer::sum);
                 }
 
                 //已下推数量
@@ -889,8 +925,8 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
                             && obj.getSupplierId().equals(entity.getSupplierId())
                             && StrUtil.equals(obj.getPurchaseOrgId(),purchaseOrgId))
                     .findFirst().orElse(null);
-            if (Objects.isNull(viewDTO)){
-                return;
+            if (Objects.isNull(viewDTO)) {
+                throw new ServiceException(ApiError.PURCHASE_PRICE_SKU_NOT_FOUND, entity.getSkuNo(), entity.getQty());
             }
             entity.setCurrency(viewDTO.getCurrency());
             entity.setCurrencySymbol(viewDTO.getCurrencySymbol());
@@ -932,37 +968,58 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
 
         if (StringUtils.isNotBlank(entity.getSourceDetailId())) {
             if (isChild) {
-                PurchasePriceDTO.PriceDTO viewDTO = priceList.stream().filter(obj ->
-                        obj.getSkuId().equals(entity.getSkuId())
-                                && obj.getSupplierId().equals(entity.getSupplierId())
-                                && StrUtil.equals(obj.getPurchaseOrgId(),purchaseOrgId))
-                        .findFirst().orElse(null);
-
-                if (Objects.isNull(viewDTO)){
-                    return;
+                // 优先取采购退货单价格：拆分 sourceDetailId（可能逗号分隔多个）
+                List<String> detailIds = new ArrayList<>();
+                String sourceDetailId = entity.getSourceDetailId();
+                if (sourceDetailId.contains(",")) {
+                    detailIds = Arrays.stream(sourceDetailId.split(","))
+                            .map(String::trim)
+                            .filter(StringUtils::isNotBlank)
+                            .collect(Collectors.toList());
+                } else {
+                    detailIds.add(sourceDetailId);
                 }
 
-                List<PoReturnDetailEntity> poReturnDetails = wmsTaskFeign.listPoReturnDetailByIdList(Collections.singletonList(entity.getSourceDetailId()));
-                PoReturnDetailEntity poReturnDetailEntity = poReturnDetails.get(0);
+                List<PoReturnDetailEntity> poReturnDetails = wmsTaskFeign.listPoReturnDetailByIdList(detailIds);
+                PoReturnDetailEntity poReturnDetailEntity = null;
+                if (CollectionUtils.isNotEmpty(poReturnDetails)) {
+                    poReturnDetailEntity = poReturnDetails.stream()
+                            .filter(obj -> Objects.equals(obj.getSkuId(), entity.getSkuId()))
+                            .findFirst()
+                            .orElse(poReturnDetails.get(0));
+                }
 
-                if (poReturnDetailEntity.getReturnPrice().compareTo(BigDecimal.ZERO) > 0 && Objects.equals(poReturnDetailEntity.getSkuId(),entity.getSkuId())) {
+                // 返修子件价格来源优先级：退货单价（>0） > 采购价目表 > 抛异常
+                if (Objects.nonNull(poReturnDetailEntity)
+                        && Objects.nonNull(poReturnDetailEntity.getReturnPrice())
+                        && poReturnDetailEntity.getReturnPrice().compareTo(BigDecimal.ZERO) > 0) {
                     entity.setCurrency(poReturnDetailEntity.getCurrency());
                     entity.setCurrencySymbol(poReturnDetailEntity.getCurrencySymbol());
                     entity.setPrice(poReturnDetailEntity.getReturnPrice());
-                    entity.setAmount(MathUtil.multiplyWithTwo(poReturnDetailEntity.getReturnPrice(),entity.getQty()));
+                    entity.setAmount(MathUtil.multiplyWithTwo(poReturnDetailEntity.getReturnPrice(), entity.getQty()));
                     if (Objects.nonNull(supplierEntity)) {
-                        entity.setTaxRate(supplierEntity.getTaxRate().compareTo(BigDecimal.ZERO) > 0 ? MathUtil.multiplyWithTwo(supplierEntity.getTaxRate(),MathUtil.BigDecimal_100) : BigDecimal.ZERO);
+                        entity.setTaxRate(supplierEntity.getTaxRate().compareTo(BigDecimal.ZERO) > 0 ? MathUtil.multiplyWithTwo(supplierEntity.getTaxRate(), MathUtil.BigDecimal_100) : BigDecimal.ZERO);
                     }
-                } else {
-                    entity.setCurrency(viewDTO.getCurrency());
-                    entity.setCurrencySymbol(viewDTO.getCurrencySymbol());
-                    entity.setPrice(viewDTO.getTaxPrice());
-                    entity.setTaxRate(viewDTO.getTaxRate());
-                    entity.setAmount(MathUtil.multiplyWithTwo(viewDTO.getTaxPrice(),entity.getQty()));
+                    return;
                 }
+
+                // 退货价为空 → 取采购价目表
+                PurchasePriceDTO.PriceDTO viewDTO = priceList.stream().filter(obj ->
+                        obj.getSkuId().equals(entity.getSkuId())
+                                && obj.getSupplierId().equals(entity.getSupplierId())
+                                && StrUtil.equals(obj.getPurchaseOrgId(), purchaseOrgId))
+                        .findFirst().orElse(null);
+                if (Objects.isNull(viewDTO)) {
+                    throw new ServiceException(ApiError.PURCHASE_PRICE_SKU_NOT_FOUND, entity.getSkuNo(), entity.getQty());
+                }
+                entity.setCurrency(viewDTO.getCurrency());
+                entity.setCurrencySymbol(viewDTO.getCurrencySymbol());
+                entity.setPrice(viewDTO.getTaxPrice());
+                entity.setTaxRate(viewDTO.getTaxRate());
+                entity.setAmount(MathUtil.multiplyWithTwo(viewDTO.getTaxPrice(), entity.getQty()));
             } else {
                 if (Objects.nonNull(supplierEntity)) {
-                    entity.setTaxRate(supplierEntity.getTaxRate().compareTo(BigDecimal.ZERO) > 0 ? MathUtil.multiplyWithTwo(supplierEntity.getTaxRate(),MathUtil.BigDecimal_100) : BigDecimal.ZERO);
+                    entity.setTaxRate(supplierEntity.getTaxRate().compareTo(BigDecimal.ZERO) > 0 ? MathUtil.multiplyWithTwo(supplierEntity.getTaxRate(), MathUtil.BigDecimal_100) : BigDecimal.ZERO);
                 }
             }
 
@@ -974,8 +1031,8 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
                                 && obj.getSupplierId().equals(entity.getSupplierId())
                                 && StrUtil.equals(obj.getPurchaseOrgId(),purchaseOrgId))
                         .findFirst().orElse(null);
-                if (Objects.isNull(viewDTO)){
-                    return;
+                if (Objects.isNull(viewDTO)) {
+                    throw new ServiceException(ApiError.PURCHASE_PRICE_SKU_NOT_FOUND, entity.getSkuNo(), entity.getQty());
                 }
                 entity.setCurrency(viewDTO.getCurrency());
                 entity.setCurrencySymbol(viewDTO.getCurrencySymbol());

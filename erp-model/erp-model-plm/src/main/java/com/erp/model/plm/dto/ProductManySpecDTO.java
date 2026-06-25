@@ -67,6 +67,12 @@ public class ProductManySpecDTO {
     private List<ProductCertificateDTO.ProductAddOrUpdateDTO> productCertificateList;
 
     /**
+     * 关联SKU信息
+     */
+    @Valid
+    private List<ProductRefSkuDTO> productRefSkuList;
+
+    /**
      * 采购备注信息
      */
     @Valid

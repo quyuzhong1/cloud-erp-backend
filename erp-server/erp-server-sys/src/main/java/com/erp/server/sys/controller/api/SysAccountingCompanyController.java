@@ -121,7 +121,20 @@ public class SysAccountingCompanyController extends BaseController {
     public ApiResult<List<SysAccountingCompanyDTO.ListDTO>> list(@RequestParam(value = "name", required = false) String name) {
         List<SysAccountingCompanyDTO.ListDTO> list = sysAccountingCompanyService.getList(name);
         return success(list);
+    }
 
+    /**
+     * 获取组织列表
+     *
+     * @param name 公司名称（模糊查询，非必填）
+     * @return
+     * @author jack
+     * @date
+     */
+    @GetMapping("/listAll")
+    public ApiResult<List<SysAccountingCompanyDTO.ListDTO>> listAll(@RequestParam(value = "name", required = false) String name) {
+        List<SysAccountingCompanyDTO.ListDTO> list = sysAccountingCompanyService.listAll(name);
+        return success(list);
     }
 
 

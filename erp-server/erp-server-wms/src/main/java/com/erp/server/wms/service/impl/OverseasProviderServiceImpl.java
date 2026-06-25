@@ -293,6 +293,8 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
         authorizeViewDTO.setShopAccount(authJson.getOrDefault("shopAccount","").toString());
         authorizeViewDTO.setAppId(authJson.getOrDefault("appId","").toString());
         authorizeViewDTO.setAppSecret(authJson.getOrDefault("appSecret","").toString());
+        authorizeViewDTO.setKey(authJson.getOrDefault("key","").toString());
+        authorizeViewDTO.setEccompanyid(authJson.getOrDefault("eccompanyid","").toString());
         return authorizeViewDTO;
     }
 
@@ -345,6 +347,15 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
             return null;
         }
         return this.getById(overseasProviderWarehouseEntity.getMainId());
+    }
+
+    @Override
+    public String getOwnerCodeByAuthId(String authId) {
+        if (CharSequenceUtil.isBlank(authId)) {
+            return null;
+        }
+        OverseasProviderEntity overseasProviderEntity = this.getById(authId);
+        return Objects.isNull(overseasProviderEntity) ? null : overseasProviderEntity.getOwnerCode();
     }
 
     @Override

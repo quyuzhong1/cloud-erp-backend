@@ -1,6 +1,5 @@
 package com.erp.model.wms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.core.anno.StateEnumValue;
@@ -253,6 +252,14 @@ public class SoB2cDeliveryInterceptDTO implements Serializable {
         @NotBlank(message = "单据类型不能为空")
         @Size(max = 64,message = "单据类型最大长度不能超过64位")
         private String billType;
+        /**
+         * 店铺id
+         */
+        private String shopId;
+        /**
+         * 平台订单编号
+         */
+        private String platformCode;
 
         /**
          * 备注

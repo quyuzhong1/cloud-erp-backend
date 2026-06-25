@@ -59,7 +59,6 @@ public class CfgModuleOperateLogFieldEntity extends BaseEntity<CfgModuleOperateL
     @TableField("enum_class")
     private String enumClass;
 
-
     public static final String FIELD_FIELD = "field";
 
     public static final String FIELD_NAME = "field_name";

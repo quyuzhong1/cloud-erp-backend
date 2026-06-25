@@ -145,13 +145,16 @@ public class KolB2cApplicationDetailExcelListener extends AnalysisEventListener<
         String projectTagName = excelDTO.getProjectTagName();
         if(StringUtils.isNotBlank(projectTagName)){
             List<String> list = Arrays.asList(projectTagName.split(","));
+            List<String> projectTagIdList = new ArrayList<>();
             for (String str : list) {
-                if(!cfgKolOptionMap.containsKey(str.trim())){
-                    errorMsgList.add(StrUtil.format("项目名称【{}】不存在",str));
+                String name = str.trim();
+                if(!cfgKolOptionMap.containsKey(name)){
+                    errorMsgList.add(StrUtil.format("项目名称【{}】不存在", name));
                 }else {
-                    excelDTO.setProjectTag(cfgKolOptionMap.get(projectTagName));
+                    projectTagIdList.add(cfgKolOptionMap.get(name));
                 }
             }
+            excelDTO.setProjectTag(String.join(",", projectTagIdList));
         }
 
         //存在错误数据则直接返回

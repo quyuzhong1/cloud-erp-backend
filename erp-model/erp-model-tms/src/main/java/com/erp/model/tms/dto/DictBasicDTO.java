@@ -4,8 +4,10 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * <p>
@@ -130,4 +132,37 @@ public class DictBasicDTO implements Serializable {
     }
 
 
+    @Data
+    @NoArgsConstructor
+    public static class TreeQueryDTO {
+        @NotEmpty(message = "类型列表不能为空")
+        private List<String> types;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class TreeDTO {
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * 名称
+         */
+        private String name;
+        /**
+         * 编码
+         */
+        private String code;
+        /**
+         * 类型
+         */
+        private String type;
+        /**
+         * 类型名称
+         */
+        private String typeName;
+
+        private List<TreeDTO> children;
+    }
 }

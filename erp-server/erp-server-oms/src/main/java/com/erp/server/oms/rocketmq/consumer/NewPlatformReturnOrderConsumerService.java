@@ -150,6 +150,8 @@ public class NewPlatformReturnOrderConsumerService extends AbstractNewPlatformCo
 		}
 		List<SoReturnInstockEntity> updateList = new ArrayList<>();
 		List<SoReturnInstockDetailEntity> updateDetailList = new ArrayList<>();
+		soB2cReturnEntity.setStatus(SoB2cReturnStatusEnum.RETURNED.code);
+		soB2cReturnService.updateById(soB2cReturnEntity);
 		for (SoB2cReturnDetailEntity soB2cReturnDetailEntity : soB2cReturnDetailEntityList) {
 			SoReturnInstockDetailEntity matched = soReturnInstockDetailEntityList.stream().filter(v->StringUtils.isBlank(v.getSoReturnDetailId()) && v.getSkuId().equals(soB2cReturnDetailEntity.getSkuId())).findFirst().orElse(null);
 			if(Objects.isNull(matched)){
@@ -270,7 +272,7 @@ public class NewPlatformReturnOrderConsumerService extends AbstractNewPlatformCo
 		soB2cReturnEntity.setCurrency(soB2cEntity.getCurrency());
 		soB2cReturnEntity.setType(ReturnTypeEnum.CUSTOMER_RETURNS.getCode());
 		soB2cReturnEntity.setReason(dto.getReason());
-		if (isTikTokPlatform(dto)) {
+		if (isToBeReturn(dto)) {
 			soB2cReturnEntity.setStatus(SoB2cReturnStatusEnum.TO_BE_RETURNED.code);
 			soB2cReturnEntity.setSysReturnTime(null);
 			soB2cReturnEntity.setReturnLogisticCode(org.apache.commons.lang3.StringUtils.defaultString(dto.getTrackingNumber(), ""));
@@ -287,12 +289,13 @@ public class NewPlatformReturnOrderConsumerService extends AbstractNewPlatformCo
 		return soB2cReturnEntity;
 	}
 
-	private boolean isTikTokPlatform(PlatformReturnOrderDTO dto) {
+	private boolean isToBeReturn(PlatformReturnOrderDTO dto) {
 		if (dto == null) {
 			return false;
 		}
 		String platform = org.apache.commons.lang3.StringUtils.defaultIfBlank(dto.getDictPlatform(), dto.getPlatform());
-		return PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(platform);
+		return PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(platform)
+				||PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(platform);
 	}
 
 }

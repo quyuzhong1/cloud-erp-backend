@@ -18,10 +18,12 @@ import com.erp.server.oms.service.SoB2cRefService;
 import com.erp.server.oms.service.SoB2cService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -140,5 +142,13 @@ public class SoB2cRefServiceImpl extends SuperServiceImpl<SoB2cRefMapper, SoB2cR
         List<SoB2cEntity> soB2cEntityList = soB2cService.listByIds(allSplitSoIds);
         List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainIds(allSplitSoIds);
         return new SoB2cRefDTO.SplitCombinationDTO(soB2cEntityList,soB2cDetailEntityList);
+    }
+
+    @Override
+    public List<String> listDeepestTargetIdsBySourceId(String id) {
+        if(StringUtils.isBlank(id)){
+            return new ArrayList<>();
+        }
+        return this.baseMapper.listDeepestTargetIdsBySourceId(id);
     }
 }

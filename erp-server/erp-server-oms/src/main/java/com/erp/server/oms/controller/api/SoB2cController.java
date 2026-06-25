@@ -80,9 +80,6 @@ public class SoB2cController extends BaseController {
     private SoB2cService soB2cService;
 
     @Resource
-    private ShopInfoService shopInfoService;
-
-    @Resource
     private SoB2cErrorService soB2cErrorService;
 
     @Resource
@@ -98,8 +95,6 @@ public class SoB2cController extends BaseController {
     private SoB2cDetailService soB2cDetailService;
     @Resource
     private PlmTaskFeign plmTaskFeign;
-    @Resource
-    private WorkflowFeign workflowFeign;
 
     @Resource
     private SoB2cRuleService soB2cRuleService;
@@ -153,7 +148,6 @@ public class SoB2cController extends BaseController {
     @PostMapping("/paging")
     @WebAdvanceQuery(handler = SoB2cQueryHandler.class)
     public ApiResult<PagingVO<SoB2cDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SoB2cDTO.PagingParamDTO> dto) {
-        dto.getParams().setIsFullyManaged(Boolean.FALSE);
         return success(soB2cService.paging(dto));
     }
     /**
@@ -841,13 +835,16 @@ public class SoB2cController extends BaseController {
         if(dto.getIds().size()>100){
             throw new ServiceException("批量提交发货数据条数不能超过100");
         }
+        Map<String, SoB2cEntity> entityMap = soB2cService.listByIds(dto.getIds()).stream()
+                .collect(Collectors.toMap(SoB2cEntity::getId, entity -> entity, (oldValue, newValue) -> oldValue));
         for (String id : dto.getIds()) {
             BatchResultDTO result;
             try {
+                soB2cService.addSubmitDeliveryClickLog(entityMap.get(id), id);
                 result = soB2cService.submitDelivery(id, dto.getChannelId());
             } catch (Exception e) {
                 log.error("B2C销售订单提交发货失败,id:{}",id, e);
-                SoB2cEntity entity = soB2cService.getById(id);
+                SoB2cEntity entity = entityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     result = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 提交发货失败");
                     resultDTOS.add(result);
@@ -1691,9 +1688,16 @@ public class SoB2cController extends BaseController {
                 resultDTOS.add(result);
                 continue;
             }
-            //订单更换发货SKU操作只能在待提交和审核不通过状态操作
-            if (!(ApproveStatusEnum.WAIT_SUBMIT.equals(entity.getApproveStatus()) || ApproveStatusEnum.REJECT.equals(entity.getApproveStatus()))){
+            //订单更换发货SKU操作只能在待提交、审核不通过或已发货状态操作
+            if (!Boolean.TRUE.equals(soB2cService.allowChangeDeliverySku(entity))){
                 result = BatchResultDTO.fail(dto.getId(), entity.getCode(), StrUtil.format(ApiError.SO_REPLACE_SKU_STATUS_INVALID.getMsg(), entity.getCode()));
+                resultDTOS.add(result);
+                continue;
+            }
+            try {
+                soB2cService.checkGeneratedDeliveryForOperation(entity.getId(), "更换SKU");
+            } catch (Exception e) {
+                result = BatchResultDTO.fail(dto.getId(), entity.getCode(), e.getMessage());
                 resultDTOS.add(result);
                 continue;
             }

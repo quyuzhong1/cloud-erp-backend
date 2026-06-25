@@ -1,6 +1,7 @@
 package com.erp.rpc.plm.feign;
 
 import com.common.business.config.FeignErrorDecoder;
+import com.erp.model.plm.dto.ProductPackDTO;
 import com.erp.model.plm.entity.ProductPackEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,5 +23,5 @@ public interface ProductPackFeign {
     List<ProductPackEntity> listBySkuIds(@RequestBody List<String> skuIds);
 
     @PostMapping("/feign/productPack/listSingleBySkuIds")
-    Map<String, BigDecimal> listSingleBySkuIds(@RequestBody List<String> skuIds);
+    Map<String, BigDecimal> listSingleBySkuIds(@RequestBody ProductPackDTO.ListSingleBySkuIdsParam param);
 }

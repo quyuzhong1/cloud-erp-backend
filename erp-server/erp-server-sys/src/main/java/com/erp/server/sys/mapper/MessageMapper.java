@@ -1,4 +1,7 @@
 package com.erp.server.sys.mapper;
+import com.erp.model.scm.dto.AssetNoticeDTO;
+import com.erp.model.sys.dto.PdaVersionDTO;
+import com.erp.model.sys.dto.SysVersionDTO;
 import com.erp.model.sys.entity.MessageEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
@@ -10,6 +13,7 @@ import org.apache.ibatis.annotations.Param;
 import com.erp.model.sys.dto.MessageDTO;
 import com.common.business.dto.base.ApproveStatusQtyDTO;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -43,4 +47,21 @@ public interface MessageMapper extends BaseMapper<MessageEntity> {
     
     List<MessageDTO.NotReadMessageNum> listNotReadMessageNum(@Param("param") MessageDTO.PdaParamDTO param);
 
+    int getPcSysMessageUnreadCount(@Param("userId") String userId);
+
+    MessageDTO.NoticeDTO getLatestUnreadNotice(@Param("userId") String userId);
+
+    MessageDTO.NoticeDTO getLatestUnreadNoticeByApplication(@Param("userId") String userId, @Param("application") String application);
+
+    MessageDTO.NoticeDTO getLatestUnreadUpgradeNoticeByApplication(@Param("userId") String userId, @Param("application") String application);
+
+    IPage<SysVersionDTO.ListDTO> pagingSysVersion(Page query, @Param("params") SysVersionDTO.PagingParamDTO params);
+
+    IPage<MessageDTO.ListHistoryMessageDTO> pagingHistoryMessage(Page query, @Param("params") MessageDTO.HistoryMessagePagingParamDTO params, @Param("userId") String userId);
+
+    IPage<SysVersionDTO.ListHistoryVersionDTO> pagingHistoryVersion(Page query, @Param("params") SysVersionDTO.HistoryVersionPagingParamDTO params, @Param("userId") String userId);
+
+    SysVersionDTO.LatestVersionDTO getLatestVersion(@Param("userId") String userId);
+
+    LocalDateTime getDatabaseNow();
 }

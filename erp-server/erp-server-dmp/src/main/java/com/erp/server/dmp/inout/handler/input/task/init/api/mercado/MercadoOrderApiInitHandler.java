@@ -3,10 +3,14 @@ package com.erp.server.dmp.inout.handler.input.task.init.api.mercado;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.HttpCommonUtil;
+import com.erp.model.dmp.constant.DmpInputConstant;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputApiInitRequest;
 import com.erp.server.dmp.inout.handler.input.task.init.api.DmpInputApiInitHandler;
@@ -17,13 +21,18 @@ import com.sdk.oms.mercado.dto.MercadoShopInfoDTO;
 import com.sdk.oms.mercado.dto.mercado.order.OrderDTO;
 import com.sdk.oms.mercado.service.MercadoSdkClientService;
 import lombok.extern.slf4j.Slf4j;
+
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.annotation.Resource;
+
+import java.time.OffsetDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -36,7 +45,10 @@ public class MercadoOrderApiInitHandler implements DmpInputApiInitHandler {
 
     @Override
     public List<DmpInputTaskInitDTO> getApiData(DmpInputApiInitRequest dmpInputApiInitRequest) {
-
+    	List<DmpInputTaskInitDTO> dealOrderIdQuery = dealOrderIdQuery(dmpInputApiInitRequest);
+    	if(dealOrderIdQuery != null) {
+    		return dealOrderIdQuery;
+    	}
         List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
 
         String nextLevelId = dmpInputApiInitRequest.getNextLevelId();
@@ -58,6 +70,14 @@ public class MercadoOrderApiInitHandler implements DmpInputApiInitHandler {
 
         Boolean nexflag = true;
 
+        String platformOrderCreateTime = "";
+        String taskExtendJson = dmpInputApiInitRequest.getTaskExtendJson();
+        if(StringUtils.isNotBlank(taskExtendJson)) {
+        	JSONObject parseObject = JSON.parseObject(taskExtendJson);
+            if(parseObject != null) {
+            	platformOrderCreateTime = parseObject.getString(DmpInputConstant.PLATFORM_ORDER_CREATE_TIME);
+            }
+        }
         while (nexflag) {
             int offset = pageSize * pageNo;
 
@@ -70,8 +90,13 @@ public class MercadoOrderApiInitHandler implements DmpInputApiInitHandler {
 //            params.put("seller.id", "1511265855");
 //            params.put("seller.id", shopInfoDTO.getUserId());
             params.put("order.status", "cancelled,paid,invalid");
-            params.put("last_updated.from", dmpInputApiInitRequest.getStartTime());
-            params.put("last_updated.to", dmpInputApiInitRequest.getEndTime());
+            if(StringUtils.isNotBlank(platformOrderCreateTime)) {
+            	params.put("date_created.from", OffsetDateTime.parse(platformOrderCreateTime).plusSeconds(-5));
+                params.put("date_created.to", OffsetDateTime.parse(platformOrderCreateTime).plusSeconds(5));
+            }else {
+            	params.put("last_updated.from", dmpInputApiInitRequest.getStartTime());
+                params.put("last_updated.to", dmpInputApiInitRequest.getEndTime());
+            }
             params.put("limit", pageSize);
             params.put("offset", offset);
             //设置请求头
@@ -131,5 +156,59 @@ public class MercadoOrderApiInitHandler implements DmpInputApiInitHandler {
 
         }
         return dmpInputTaskInitDTOList;
+    }
+    
+    private List<DmpInputTaskInitDTO> dealOrderIdQuery(DmpInputApiInitRequest dmpInputApiInitRequest) {
+    	String extendJson = dmpInputApiInitRequest.getTaskExtendJson();
+    	if(StringUtils.isBlank(extendJson)) {
+            return null;
+        }
+        JSONObject parseObject = JSON.parseObject(extendJson);
+        if(null == parseObject) {
+            return null;
+        }
+        JSONArray jsonArray = parseObject.getJSONArray(DmpInputConstant.ORDER_ID_LIST);
+        if (CollectionUtils.isEmpty(jsonArray)){
+            return null;
+        }
+     	List<String> orderIdList = jsonArray.stream()
+            .map(Object::toString)
+            .collect(Collectors.toList());
+     	parseObject.remove(DmpInputConstant.ORDER_ID_LIST);
+     	
+     	String nextLevelId = dmpInputApiInitRequest.getNextLevelId();
+
+        MercadoShopInfoDTO shopInfoDTO = mercadoSdkClientService.getShopInfoByShopId(nextLevelId);
+        if (ObjectUtil.isEmpty(shopInfoDTO)) {
+            throw new ServiceException("美客多店铺id：" + nextLevelId + "未找到对应的店铺信息");
+        }
+     	
+        //入参
+        HashMap<String, Object> params = new HashMap<>(2);
+
+        //设置请求头
+        Map<String, String> headerMap = new HashMap<>(1);
+        headerMap.put("Authorization", "Bearer " + shopInfoDTO.getAccessToken());
+        
+        List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
+        for(String orderId : orderIdList) {
+        	StringBuffer sb = new StringBuffer();
+            sb.append(MercadoConstant.URL);
+            sb.append("/marketplace/orders/");
+            sb.append(orderId);
+            ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(sb.toString(), JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
+            String jsonStr = JSONUtil.toJsonStr(apiResult.getData());
+            JSONObject resultJson = JSON.parseObject(jsonStr);
+            String date_created = resultJson.getString("date_created");
+            if(StringUtils.isNotBlank(date_created)) {
+            	parseObject.put(DmpInputConstant.PLATFORM_ORDER_CREATE_TIME, date_created);
+            	dmpInputApiInitRequest.setTaskExtendJson(parseObject.toJSONString());
+            	dmpInputTaskInitDTOList.addAll(this.getApiData(dmpInputApiInitRequest));
+            }else {
+            	log.warn("{}未查询到数据，返回报文：{}" , orderId , jsonStr);
+            }
+        }
+        
+     	return dmpInputTaskInitDTOList;
     }
 }

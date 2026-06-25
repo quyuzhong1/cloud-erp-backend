@@ -1,5 +1,6 @@
 package com.erp.server.dmp.controller.feign;
 
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.anno.LogViewService;
@@ -15,6 +16,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -132,6 +134,22 @@ public class AfterSaleFeignController extends BaseController {
     @GetMapping("/view")
     public ApiResult<AfterSaleDTO.ViewDTO> view(@RequestParam("id") String id) {
         return success(afterSaleService.view(id));
+    }
+
+    /**
+     * 获取售后列表
+     *
+     * @param dto BaseIdsDTO.IdsDTO
+     * @return List<AfterSaleDTO.ViewDTO>
+     */
+    @PostMapping("/viewList")
+    ApiResult<List<AfterSaleDTO.ViewDTO>> viewList(@RequestBody BaseIdsDTO.IdsDTO dto) {
+        List<AfterSaleDTO.ViewDTO> viewDTOList = new ArrayList<>();
+        dto.getIds().forEach(id -> {
+            AfterSaleDTO.ViewDTO viewDTO = afterSaleService.view(id);
+            viewDTOList.add(viewDTO);
+        });
+        return success(viewDTOList);
     }
 
 }

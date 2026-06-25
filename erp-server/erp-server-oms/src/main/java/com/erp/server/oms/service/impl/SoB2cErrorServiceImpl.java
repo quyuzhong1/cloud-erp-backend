@@ -92,6 +92,18 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
     @Override
     @DistributeLocker(businessType = DistributeKeyConstant.SO_B2C_DELIVERY_KEY,keyName = "addDTO.mainId",waiteTime = 20)
     public Boolean add(SoB2cErrorDTO.AddDTO addDTO) {
+        return add(addDTO, true);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.SO_B2C_DELIVERY_KEY,keyName = "addDTO.mainId",waiteTime = 20)
+    public Boolean addWithoutSignError(SoB2cErrorDTO.AddDTO addDTO) {
+        return add(addDTO, false);
+    }
+
+    private Boolean add(SoB2cErrorDTO.AddDTO addDTO, boolean addSignError) {
         //记录是否已存在
         SoB2cErrorEntity soB2cErrorEntity = this.getByMainIdAndType(addDTO.getMainId(),addDTO.getType());
         LocalDateTime now = LocalDateTime.now();
@@ -101,7 +113,6 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
         if (Objects.nonNull(soB2cErrorEntity)){
             soB2cErrorEntity.setParamJson(addDTO.getParamJson());
             soB2cErrorEntity.setMessage(addDTO.getMessage());
-            soB2cErrorEntity.setVersion(soB2cErrorEntity.getVersion() + 1);
         }else {
             soB2cErrorEntity = new SoB2cErrorEntity();
             soB2cErrorEntity.setParamJson(addDTO.getParamJson());
@@ -120,7 +131,9 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
         if(!save) {
             throw new ServiceException("B2C销售订单异常单保存失败");
         }
-        soB2cService.addSignError(soB2cErrorEntity.getMainId(),soB2cErrorEntity.getType());
+        if (addSignError) {
+            soB2cService.addSignError(soB2cErrorEntity.getMainId(),soB2cErrorEntity.getType());
+        }
         return true;
     }
 
@@ -175,11 +188,21 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean removeErrorOrder(String mainId, String type) {
+        return removeErrorOrder(mainId, type, true);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean removeErrorOrderWithoutSignError(String mainId, String type) {
+        return removeErrorOrder(mainId, type, false);
+    }
+
+    private Boolean removeErrorOrder(String mainId, String type, boolean removeSignError) {
         SoB2cErrorDTO.DeleteDTO dto=new SoB2cErrorDTO.DeleteDTO();
         dto.setType(type);
         dto.setMainId(mainId);
         Boolean result = baseMapper.deleteB2cError(dto);
-        if(result){
+        if(result && removeSignError){
             soB2cService.removeSignError(dto.getMainId(),dto.getType());
         }
         return result;
@@ -245,6 +268,9 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
 
     @Override
     public List<SoB2cErrorEntity> getByMainIdsAndType(List<String> mainIds, String errorType) {
+        if (CollUtil.isEmpty(mainIds) || CharSequenceUtil.isBlank(errorType)) {
+            return Collections.emptyList();
+        }
         return this.lambdaQuery().in(SoB2cErrorEntity::getMainId, mainIds)
                 .eq(SoB2cErrorEntity::getType, errorType)
                 .orderByDesc(SoB2cErrorEntity::getCreateTime).list();

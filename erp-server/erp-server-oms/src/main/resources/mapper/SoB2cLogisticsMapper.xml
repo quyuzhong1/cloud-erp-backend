@@ -53,6 +53,8 @@
                 track_no = #{item.trackNo}
             </set>
             where code = #{item.transportNo}
+                and is_deleted = false
+                and COALESCE(track_no, '') = ''
                 <if test="item.id != null and item.id != ''">
                     and id = #{item.id}
                 </if>

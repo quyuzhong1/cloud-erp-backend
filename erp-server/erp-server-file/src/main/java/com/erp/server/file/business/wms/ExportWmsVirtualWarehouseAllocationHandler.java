@@ -6,30 +6,21 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDTO;
 import com.erp.rpc.wms.feign.ExportWmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
-import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.List;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_VIRTUAL_WAREHOUSE_ALLOCATION;
 
 
 @Component
 @Slf4j
-public class ExportWmsVirtualWarehouseAllocationHandler extends AbstractPageFileEventHandler<VirtualWarehouseAllocationDTO.ListDTO, VirtualWarehouseAllocationDTO.ExportDTO> {
+public class ExportWmsVirtualWarehouseAllocationHandler extends AbstractPageFileEventHandler<VirtualWarehouseAllocationDTO.ListDTO, VirtualWarehouseAllocationDTO.PagingParamDTO> {
     @Resource
     private ExportWmsFeign exportWmsFeign;
     
 
-    @Override
-    protected List<VirtualWarehouseAllocationDTO.ListDTO> getData(FileTask fileTask) {
-        VirtualWarehouseAllocationDTO.ExportDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<VirtualWarehouseAllocationDTO.ExportDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
 
     @Override
@@ -43,7 +34,15 @@ public class ExportWmsVirtualWarehouseAllocationHandler extends AbstractPageFile
     }
 
     @Override
-    protected PagingVO<VirtualWarehouseAllocationDTO.ListDTO> getPageData(PagingDTO<VirtualWarehouseAllocationDTO.ExportDTO> dto) {
+    protected PagingVO<VirtualWarehouseAllocationDTO.ListDTO> getPageData(PagingDTO<VirtualWarehouseAllocationDTO.PagingParamDTO> dto) {
         return exportWmsFeign.exportVirtualWarehouseAllocation(dto);
+    }
+
+    /**
+     * 分页大小，可重写
+     */
+    @Override
+    public int getPageSize() {
+        return 2000;
     }
 }

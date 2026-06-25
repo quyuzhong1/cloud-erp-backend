@@ -29,12 +29,6 @@
             <scope>compile</scope>
         </dependency>
 
-        <dependency>
-            <groupId>com.cloud.erp</groupId>
-            <artifactId>erp-model-mrp</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
-            <scope>compile</scope>
-        </dependency>
         <!--公共服务结束-->
 
         <dependency>
@@ -50,12 +44,6 @@
             <version>${mapstruct.version}</version>
         </dependency>
 
-        <dependency>
-            <groupId>com.cloud.erp</groupId>
-            <artifactId>erp-rpc-mrp</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
-            <scope>compile</scope>
-        </dependency>
         <dependency>
             <groupId>com.cloud.erp</groupId>
             <artifactId>erp-rpc-sys</artifactId>
@@ -285,6 +273,12 @@
         <dependency>
             <groupId>com.cloud.erp</groupId>
             <artifactId>erp-sdk-wms-zhongbao</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.cloud.erp</groupId>
+            <artifactId>erp-sdk-wms-jitu</artifactId>
             <version>0.0.1-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>

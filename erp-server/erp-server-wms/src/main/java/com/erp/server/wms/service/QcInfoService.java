@@ -334,7 +334,7 @@ public interface QcInfoService extends SuperService<QcInfoEntity> {
 
     QcInfoDTO.ListQcStandardResultDTO listQcStandard(QcInfoDTO.ListQcStandardParamDTO dto);
 
-    PagingVO<QcInfoDTO.OpenPagingViewDTO> qcPaging(PagingDTO<QcInfoDTO.OpenPagingParamDTO> dto);
+    PagingVO<QcInfoDTO.OpenPagingViewDTO> qcPaging(PagingDTO<QcInfoDTO.PagingParamDTO> dto);
 
     QcInfoDTO.ViewDTO qcView(String id);
 }

@@ -1,9 +1,8 @@
 package com.erp.server.oms.controller.feign;
 
+import com.erp.model.oms.dto.SoB2cReturnDetailDTO;
 import com.erp.model.oms.entity.SoB2cReturnDetailEntity;
 import com.erp.model.oms.entity.SoB2cReturnEntity;
-import com.erp.model.oms.entity.SoReturnDetailEntity;
-import com.erp.model.oms.entity.SoReturnEntity;
 import com.erp.server.oms.service.SoB2cReturnDetailService;
 import com.erp.server.oms.service.SoB2cReturnService;
 import org.apache.commons.collections4.CollectionUtils;
@@ -13,6 +12,7 @@ import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("feign/soB2cReturn")
@@ -58,7 +58,35 @@ public class SoB2cReturnFeignController {
      * @return java.lang.Boolean
      **/
     @PostMapping("/listDetailByMainIds")
-    public List<SoB2cReturnDetailEntity> listDetailByMainIds(@RequestBody List<String> mainIds) {
-        return soB2cReturnDetailService.listByMainIds(mainIds);
+    public List<SoB2cReturnDetailDTO.ViewDTO> listDetailByMainIds(@RequestBody List<String> mainIds) {
+        List<SoB2cReturnDetailEntity> detailList = soB2cReturnDetailService.listByMainIds(mainIds);
+        if (CollectionUtils.isEmpty(detailList)) {
+            return Collections.emptyList();
+        }
+        return detailList.stream().map(this::toViewDTO).collect(Collectors.toList());
     }
+
+    /**
+     * Entity 与 ViewDTO 业务字段一一对应（无单价/金额字段，金额由 WMS 侧关联 {@code SoB2cDetailEntity} 计算）。
+     */
+    private SoB2cReturnDetailDTO.ViewDTO toViewDTO(SoB2cReturnDetailEntity entity) {
+        SoB2cReturnDetailDTO.ViewDTO viewDTO = new SoB2cReturnDetailDTO.ViewDTO();
+        viewDTO.setId(entity.getId());
+        viewDTO.setMainId(entity.getMainId());
+        viewDTO.setSkuId(entity.getSkuId());
+        viewDTO.setSkuNo(entity.getSkuNo());
+        viewDTO.setPlatformSkuNo(entity.getPlatformSkuNo());
+        viewDTO.setSaleQty(entity.getSaleQty());
+        viewDTO.setReturnQty(entity.getReturnQty());
+        viewDTO.setRemark(entity.getRemark());
+        viewDTO.setSoDetailId(entity.getSoDetailId());
+        return viewDTO;
+    }
+
+
+    @PostMapping("/updateBatch")
+    void updateBatch(@RequestBody List<SoB2cReturnEntity> list){
+        soB2cReturnService.updateBatchById(list);
+    }
+
 }

@@ -5,15 +5,20 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.constant.UserStateConstants;
 import com.common.business.dto.base.BaseDTO;
+import com.common.business.threadlocal.UserContext;
+import com.common.core.exception.ServiceException;
+import com.common.business.vo.LoginUser;
 import com.erp.model.file.dto.FileDTO;
-import com.erp.server.file.dto.FileTaskParamsDTO;
-import com.erp.server.file.entity.FileTask;
+import com.erp.model.file.dto.FileTaskParamsDTO;
+import com.erp.model.file.entity.FileTask;
 import com.common.business.enums.FileTaskStatusEnum;
 import com.erp.server.file.mapper.FileTaskMapper;
-import com.erp.server.file.vo.FileTaskVO;
+import com.erp.model.file.vo.FileTaskVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -22,6 +27,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -75,6 +81,74 @@ public class FileTaskRepository extends ServiceImpl<FileTaskMapper, FileTask> im
         this.lambdaUpdate()
                 .set(FileTask::getStatus, FileTaskStatusEnum.PENDING.name())
                 .in(FileTask::getId, taskIdList)
+                .update();
+    }
+
+    @Override
+    public List<FileTask> listCleanFileTask(LocalDateTime expireTime, int limit, LocalDateTime lastCreateTime, String lastId) {
+        LambdaQueryChainWrapper<FileTask> query = lambdaQuery()
+                .lt(FileTask::getCreateTime, expireTime)
+                .in(FileTask::getStatus, Arrays.asList(FileTaskStatusEnum.FINISH.name(),
+                        FileTaskStatusEnum.FAIL.name(),
+                        FileTaskStatusEnum.CANCEL.name(),
+                        FileTaskStatusEnum.STOP.name())
+                );
+        // 游标分页：按 (create_time, id) 严格大于上一批已处理到的位置取下一批，替代纯 offset。
+        // 软删成功记录会从结果集移除，offset 语义随之漂移，导致失败记录在同一轮内被反复跳过；
+        // 游标单调推进，无论成功/失败都不回扫已处理记录，失败记录顺延到下次调度重试，不再积压在本轮反复 offset。
+        if (lastCreateTime != null && CharSequenceUtil.isNotBlank(lastId)) {
+            query.and(w -> w.gt(FileTask::getCreateTime, lastCreateTime)
+                    .or(o -> o.eq(FileTask::getCreateTime, lastCreateTime).gt(FileTask::getId, lastId)));
+        }
+        // 用 Page 由框架参数化 LIMIT，替代 .last("limit "+limit) 拼接；关闭 count 查询（游标分页无需总数）。
+        Page<FileTask> page = new Page<>(1, Math.max(1, limit), false);
+        return query.orderByAsc(FileTask::getCreateTime)
+                .orderByAsc(FileTask::getId)
+                .page(page)
+                .getRecords();
+    }
+
+    @Override
+    public Set<String> listProcessingTaskIds() {
+        // 全量加载 PROCESS 的 id 供 cleanFileStorageTmpdir 快照匹配；导出/导入异步执行受 FileTaskContext#fileExecutor 线程池约束，
+        // 集群并发 PROCESS 总量约两百量级，Set 规模有上界，非无界增长（审查勿误报为需分页或时间窗）。
+        List<FileTask> list = lambdaQuery()
+                .select(FileTask::getId)
+                .eq(FileTask::getStatus, FileTaskStatusEnum.PROCESS.name())
+                .list();
+        if (CollUtil.isEmpty(list)) {
+            return Collections.emptySet();
+        }
+        return list.stream()
+                .map(FileTask::getId)
+                .collect(Collectors.toSet());
+    }
+
+    @Override
+    public boolean removeWithAudit(FileTask fileTask, boolean userSystem) {
+        LocalDateTime nowDate = LocalDateTime.now();
+        String userId;
+        String userName;
+        if (userSystem) {
+            userId = UserStateConstants.USER_SYSTEM_ID;
+            userName = UserStateConstants.USER_SYSTEM;
+        } else {
+            LoginUser userInfo = UserContext.getNonLoginUser();
+            if (userInfo == null) {
+                throw new ServiceException("删除文件任务缺少用户信息");
+            }
+            userId = userInfo.getUid();
+            userName = userInfo.getUserName();
+        }
+        // updateById 会排除 @TableLogic 字段，无法写入 is_deleted；改 lambdaUpdate 显式软删并填充审计字段
+        return this.lambdaUpdate()
+                .set(FileTask::getIsDeleted, Boolean.TRUE)
+                .set(FileTask::getUpdateTime, nowDate)
+                .set(FileTask::getUpdateUserId, userId)
+                .set(FileTask::getUpdateUserName, userName)
+                .setSql("version = version + 1")
+                .eq(FileTask::getId, fileTask.getId())
+                .eq(FileTask::getVersion, fileTask.getVersion())
                 .update();
     }
 }

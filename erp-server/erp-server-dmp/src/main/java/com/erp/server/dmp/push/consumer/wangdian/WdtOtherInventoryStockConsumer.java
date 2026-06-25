@@ -20,6 +20,7 @@ import com.common.core.exception.ServiceException;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.DictBasicDTO;
+import com.erp.model.dmp.entity.DictBasicEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.dmp.entity.ThirdWarehouseEntity;
@@ -146,8 +147,8 @@ public class WdtOtherInventoryStockConsumer<T extends DmpSyncTaskIdDTO> extends 
         warnMsgInfo.setTableName("dmp_wdt_warehouse_inventory_record");
         warnMsgInfo.setTableId(inputTaskId);
         warnMsgInfo.setKeyInfo(warnMsg);
-        List<DictBasicDTO.ViewDTO> viewDTOList = dictBasicService.getByKey("wdtUpdateInventoryUser");
-        warnMsgInfo.setUserIdList(CollUtil.isNotEmpty(viewDTOList) ? viewDTOList.stream().map(DictBasicDTO.ViewDTO::getValue).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList()) : new ArrayList<>());
+        List<DictBasicEntity> viewDTOList = dictBasicService.getByKey("wdtUpdateInventoryUser");
+        warnMsgInfo.setUserIdList(CollUtil.isNotEmpty(viewDTOList) ? viewDTOList.stream().map(DictBasicEntity::getValue).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList()) : new ArrayList<>());
         warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
         mqProducerService.sendWarnMsg(warnMsgInfo);
     }

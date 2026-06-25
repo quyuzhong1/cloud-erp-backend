@@ -89,6 +89,17 @@ public class SoB2cLogisticsEntity extends BaseEntity<SoB2cLogisticsEntity> {
     @TableField("weight")
     private BigDecimal weight;
     /**
+     * 重量单位
+     */
+    @TableField("weight_unit")
+    private String weightUnit;
+
+    /**
+     * 长度单位
+     */
+    @TableField("size_unit")
+    private String sizeUnit;
+    /**
      * 包装辅料skuId
      */
     @TableField("accessories_sku_id")
@@ -168,6 +179,17 @@ public class SoB2cLogisticsEntity extends BaseEntity<SoB2cLogisticsEntity> {
      */
     @TableField("push_platform_code")
     private String pushPlatformCode;
+
+    /**
+     * 计划包裹号
+     */
+    @TableField("plan_package_no")
+    private String planPackageNo;
+    /**
+     * 计划供应商id
+     */
+    @TableField("plan_supplier_id")
+    private String planSupplierId;
 
     public static final String MAIN_ID = "main_id";
 

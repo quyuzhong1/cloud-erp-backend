@@ -4,6 +4,7 @@ package com.erp.server.tms.controller.api;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.utils.EnumCacheUtils;
 import com.erp.model.tms.dto.DictBasicDTO;
 import com.erp.server.tms.service.DictBasicService;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 字典表
@@ -44,6 +46,15 @@ public class DictBasicController extends BaseController {
         return result == true ? success() : failure();
     }
 
-
+    /**
+     * 承运商树形结构接口
+     * @param queryDTO
+     * @return
+     */
+    @PostMapping("/carrierTree")
+    public ApiResult<List<DictBasicDTO.TreeDTO>> carrierTree(@RequestBody @Validated DictBasicDTO.TreeQueryDTO queryDTO) {
+        List<DictBasicDTO.TreeDTO> treeDTOS = dictBasicService.carrierTree(queryDTO);
+        return success(treeDTOS);
+    }
 
 }

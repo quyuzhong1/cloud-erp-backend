@@ -64,6 +64,11 @@ public class ProductManyDetailDTO {
     private List<ProductCertificateShowDTO> productCertificateShowDTOList;
 
     /**
+     * 关联SKU信息
+     */
+    private List<ProductRefSkuDTO> productRefSkuList;
+
+    /**
      * 产品选中的变体信息
      */
     private List<ProductVariantOptionEntity> productVariantOptionEntityList;

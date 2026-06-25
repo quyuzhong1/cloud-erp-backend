@@ -6,6 +6,7 @@ import com.common.business.enums.LogisticsPlatformEnum;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.erp.model.tms.enums.LogisticsAuthStatusEnum;
 import com.erp.server.tms.service.LogisticsAuthFieldService;
+import com.erp.server.tms.service.LogisticsChannelService;
 import com.erp.server.tms.service.LogisticsSupplierService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -50,7 +51,7 @@ public class LogisticsAuthController extends BaseController {
     private LogisticsAuthFieldService logisticsAuthFieldService;
 
     @Autowired
-    private LogisticsSupplierService logisticsSupplierService;
+    private LogisticsChannelService logisticsChannelService;
 
     /**
      * 物流授权新增
@@ -83,6 +84,8 @@ public class LogisticsAuthController extends BaseController {
             ApiResult apiResult = logisticsAuthService.authLogistics(logisticsPlatform,authMap);
             if (apiResult.isSuccess()) {
                 logisticsAuthService.syncUpdateSaleChannel(logisticsPlatform,authMap);
+                //校验发货方式是否符合授权要求
+                logisticsChannelService.checkDeliveryType(id,logisticsPlatform);
             } else {
                logisticsAuthService.removeById(id);
                logisticsAuthFieldService.removeByAuthId(id);

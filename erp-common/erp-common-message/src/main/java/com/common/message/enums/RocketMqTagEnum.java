@@ -169,6 +169,11 @@ public enum RocketMqTagEnum {
      */
     DMP_WECHAT_SUBSCRIBE_MSG_TAG(31,RocketMqTagEnum.WECHAT_SUBSCRIBE,"dmp_wechat_subscribe_msg_tag"),
 
+    /**
+     * dmp 异步获取物流下单面单标签
+     */
+    DMP_ASYNC_GET_LOGISTICS_ORDER_LABEL_TAG(32, RocketMqTagEnum.SYNC_TMS,"dmp_async_get_logistics_order_label_tag"),
+
     //---------------------------------金蝶数据同步code从1001开始------------------------------------------------------------------------------------------
 
     /**
@@ -605,12 +610,17 @@ public enum RocketMqTagEnum {
     ASYNC_GET_PLATFORM_LABEL_TAG(10001, RocketMqTagEnum.SYNC_TMS,"async_get_platform_label_tag"),
     /**
      * 异步更新物流获取记录
+     * 注意：原 Track123 专用，现快递100 小包/海运拉取也复用此 tag 推进 update_time 游标（仅刷新时间，与轨迹数据回写无关）
      */
     ASYNC_GET_TRACK123_LOGISTICS_TRACK(10002, RocketMqTagEnum.SYNC_TMS, "async_get_logistics_track"),
     /**
      * tms 费用分摊异步任务
      */
     TMS_PUSH_ALLOCATION_COST_TAG(10003, RocketMqTagEnum.SYNC_TMS, "tms_push_allocation_cost_tag"),
+    /**
+     * tms 异步获取物流下单面单标签
+     */
+    TMS_ASYNC_GET_LOGISTICS_ORDER_LABEL_TAG(10004, RocketMqTagEnum.SYNC_TMS,"tms_async_get_logistics_order_label_tag"),
 
     //-----------------------------旺店通编码从11001开始------------------------------------------------------------------
     /**

@@ -176,7 +176,7 @@ public class QcApplicationSrmServiceImpl extends SuperServiceImpl<QcApplicationM
             addDTO.setSourceId(purchaseOrderEntity.getId());
             addDTO.setSourceCode(purchaseOrderEntity.getCode());
             addDTO.setSourceType(SourceTypeEnum.WAIT_DELIVERY.getCode());
-            addDTO.setPlanQcDate(value.get(0).getPlanQcDate());
+            addDTO.setExpectQcDate(value.get(0).getExpectQcDate());
             addDTO.setWarehouseId(purchaseOrderEntity.getDeliveryWarehouseId());
 
             List<QcApplicationDetailDTO.AddDTO> detailList = new ArrayList<>();
@@ -227,6 +227,10 @@ public class QcApplicationSrmServiceImpl extends SuperServiceImpl<QcApplicationM
 
         // 属性赋值
         for(QcApplicationSrmDTO.ListDTO data : list) {
+            //无值时默认待质检
+            if (CharSequenceUtil.isBlank(data.getQcStatus())) {
+                data.setQcStatus(QcNoticeStatusEnum.WAIT.getCode());
+            }
             //审核状态名称
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             //质检类型名称
