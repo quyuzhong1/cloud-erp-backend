@@ -9,9 +9,11 @@ import com.erp.model.dmp.entity.DmpSoRefundDetailEntity;
 import com.erp.model.dmp.entity.DmpSoRefundInfoEntity;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
+import com.erp.server.dmp.service.DmpSoRefundDetailService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -20,11 +22,15 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * 平台 B2C 退款单通用 MQ 输出：dmp_so_refund_info/detail → PlatformRefundOrderDTO → OMS。
  */
 public abstract class DmpOutputPlatformRefundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler {
+
+    @Resource
+    private DmpSoRefundDetailService dmpSoRefundDetailService;
 
     @Override
     public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
@@ -72,6 +78,8 @@ public abstract class DmpOutputPlatformRefundRocketMQTaskHandler extends DmpOutp
             }
         }
 
+        supplementRefundDetails(changeIds, dmpEntityMap, dmpDetailEntityMap);
+
         Map<String, String> map = new HashMap<>();
         String cfgOutputId = dmpResponse.getDmpCfgOutputEntity().getId();
         for (String changeId : changeIds) {
@@ -81,6 +89,29 @@ public abstract class DmpOutputPlatformRefundRocketMQTaskHandler extends DmpOutp
             }
         }
         return map;
+    }
+
+    private void supplementRefundDetails(Set<String> changeIds,
+                                         Map<String, DmpSoRefundInfoEntity> dmpEntityMap,
+                                         Map<String, List<DmpSoRefundDetailEntity>> dmpDetailEntityMap) {
+        List<String> missingMainIds = changeIds.stream()
+                .filter(dmpEntityMap::containsKey)
+                .filter(id -> CollUtil.isEmpty(dmpDetailEntityMap.get(id)))
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(missingMainIds)) {
+            return;
+        }
+        List<DmpSoRefundDetailEntity> detailList = dmpSoRefundDetailService.lambdaQuery()
+                .in(DmpSoRefundDetailEntity::getMainId, missingMainIds)
+                .eq(DmpSoRefundDetailEntity::getIsDeleted, Boolean.FALSE)
+                .list();
+        if (CollUtil.isEmpty(detailList)) {
+            return;
+        }
+        for (DmpSoRefundDetailEntity detailEntity : detailList) {
+            dmpDetailEntityMap.computeIfAbsent(detailEntity.getMainId(), key -> new ArrayList<>())
+                    .add(detailEntity);
+        }
     }
 
     protected PlatformRefundOrderDTO convert(DmpSoRefundInfoEntity dmpEntity,

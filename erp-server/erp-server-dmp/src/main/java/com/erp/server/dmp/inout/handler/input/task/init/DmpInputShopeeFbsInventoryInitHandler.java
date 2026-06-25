@@ -44,6 +44,8 @@ import java.util.Set;
 public class DmpInputShopeeFbsInventoryInitHandler extends DmpInputInitHandler {
 
     private static final int PAGE_SIZE = 100;
+    private static final int MAX_RETRY_COUNT = 10;
+    private static final long RETRY_SLEEP_MILLIS = 1000L;
     private static final Set<String> WHS_REGIONS = new HashSet<>(Arrays.asList(
             "BR", "CN", "ID", "MY", "MX", "TH", "TW", "PH", "VN", "SG"));
 
@@ -88,8 +90,8 @@ public class DmpInputShopeeFbsInventoryInitHandler extends DmpInputInitHandler {
         SbsInventoryRequest request = SbsInventoryRequest.builder()
                 .host(cfgAppClientEntity.getUrl())
                 .token(shopAuthEntity.getAccessToken())
-                .shopId(Long.parseLong(shopAuthEntity.getShopeeId()))
-                .partnerId(Long.parseLong(cfgAppClientEntity.getClientId()))
+                .shopId(parseLongOrThrow(shopAuthEntity.getShopeeId(), "Shopee店铺ID"))
+                .partnerId(parseLongOrThrow(cfgAppClientEntity.getClientId(), "Shopee应用ClientId"))
                 .tmpPartnerKey(cfgAppClientEntity.getClientSecret())
                 .whsRegion(whsRegion)
                 .pageSize(PAGE_SIZE)
@@ -100,9 +102,6 @@ public class DmpInputShopeeFbsInventoryInitHandler extends DmpInputInitHandler {
         while (true) {
             request.setPageNo(pageNo);
             ShopeeResponse response = execute(request);
-            if (response == null || response.getResponse() == null) {
-                break;
-            }
             JSONObject result = response.getResponse();
             JSONArray itemList = result.getJSONArray("item_list");
             if (CollUtil.isEmpty(itemList)) {
@@ -194,35 +193,58 @@ public class DmpInputShopeeFbsInventoryInitHandler extends DmpInputInitHandler {
     }
 
     private ShopeeResponse execute(SbsInventoryRequest request) {
-        ShopeeResponse response = null;
-        long sleepTime = 1000;
-        int count = 0;
-        while (response == null) {
+        long sleepTime = RETRY_SLEEP_MILLIS;
+        for (int count = 0; count <= MAX_RETRY_COUNT; count++) {
             try {
-                response = shopeeSbsInventoryService.getCurrentInventory(request);
-            } catch (Exception e) {
-                Throwable cause = e.getCause();
-                if (cause instanceof SSLHandshakeException || cause instanceof SocketTimeoutException) {
-                    if (count == 10) {
-                        throw new ServiceException("调用Shopee FBS库存接口重试10次失败");
-                    }
-                    try {
-                        Thread.sleep(sleepTime);
-                    } catch (InterruptedException interruptedException) {
-                        Thread.currentThread().interrupt();
-                    }
-                    sleepTime += 1000;
-                    count++;
-                    continue;
+                ShopeeResponse response = shopeeSbsInventoryService.getCurrentInventory(request);
+                if (response != null && StringUtils.isNotBlank(response.getError())) {
+                    throw new ServiceException("调用Shopee FBS库存接口报错，错误原因：" + response.getMessage());
                 }
-                throw new ServiceException("调用Shopee FBS库存接口报错，错误原因：" + ExceptionUtil.stacktraceToOneLineString(e));
+                if (response != null && response.getResponse() != null) {
+                    return response;
+                }
+                if (count == MAX_RETRY_COUNT) {
+                    throw new ServiceException("调用Shopee FBS库存接口返回为空，重试" + MAX_RETRY_COUNT + "次失败");
+                }
+            } catch (ServiceException e) {
+                throw e;
+            } catch (Exception e) {
+                if (!isRetryable(e) || count == MAX_RETRY_COUNT) {
+                    throw new ServiceException("调用Shopee FBS库存接口报错，错误原因：" + ExceptionUtil.stacktraceToOneLineString(e));
+                }
             }
-            if (response != null && StringUtils.isNotBlank(response.getError())) {
-                throw new ServiceException("调用Shopee FBS库存接口报错，错误原因：" + response.getMessage());
-            }
-            break;
+            sleepQuietly(sleepTime);
+            sleepTime += RETRY_SLEEP_MILLIS;
         }
-        return response;
+        throw new ServiceException("调用Shopee FBS库存接口返回为空");
+    }
+
+    private boolean isRetryable(Exception e) {
+        Throwable cause = e.getCause();
+        return e instanceof SSLHandshakeException
+                || e instanceof SocketTimeoutException
+                || cause instanceof SSLHandshakeException
+                || cause instanceof SocketTimeoutException;
+    }
+
+    private void sleepQuietly(long sleepTime) {
+        try {
+            Thread.sleep(sleepTime);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new ServiceException("调用Shopee FBS库存接口被中断");
+        }
+    }
+
+    private long parseLongOrThrow(String value, String fieldName) {
+        if (StringUtils.isBlank(value)) {
+            throw new ServiceException(fieldName + "为空");
+        }
+        try {
+            return Long.parseLong(value);
+        } catch (NumberFormatException e) {
+            throw new ServiceException(fieldName + "格式错误：" + value);
+        }
     }
 
     private String stringValue(Object value) {

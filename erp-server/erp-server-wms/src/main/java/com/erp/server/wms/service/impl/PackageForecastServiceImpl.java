@@ -333,7 +333,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         String logisticsPlatform = authDTO.getLogisticsPlatform();
         PackageForecastPlatformAdapter adapter = packageForecastPlatformAdapterFactory.getByPlatform(logisticsPlatform)
                 .orElseThrow(() -> new ServiceException(platformName(logisticsPlatform) + "平台尚未对接取消上传"));
-        return adapter.cancel(Collections.singletonList(id)).get(0);
+        return firstResultOrThrow(adapter.cancel(Collections.singletonList(id)), "取消上传");
 
     }
 
@@ -447,7 +447,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             dto.setDeliveryPlatform(logisticsPlatform);
             dto.setCollectMode(collectMode);
             dto.setCollectAddressId(collectAddressId);
-            return adapter.upload(dto).get(0);
+            return firstResultOrThrow(adapter.upload(dto), "上传");
         } catch (Exception e) {
             entity.setUploadStatus(failure);
             entity.setRemark("上传失败:" + e.getMessage());
@@ -457,6 +457,13 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         }
 
 
+    }
+
+    private BatchResultDTO firstResultOrThrow(List<BatchResultDTO> resultList, String operationName) {
+        if (CollectionUtils.isEmpty(resultList)) {
+            throw new ServiceException(operationName + "结果为空");
+        }
+        return resultList.get(0);
     }
 
     @Override
