@@ -927,6 +927,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 } finally {
                     UserContext.clearIsUserSystem();
                 }
+            } else {
+                addDTO.getReceiverDTO().setCustomerId(cutomer.getId());
             }
             //新增买家信息
             soB2cReceiverService.add(addDTO.getReceiverDTO(), soB2cEntity);
@@ -1505,6 +1507,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 CustomerB2CDTO.AddDTO dto = buildB2cCustomerUpdateDTO(updateDTO);
                 String customerId = customerB2cService.add(dto);
                 updateDTO.getReceiverDTO().setCustomerId(customerId);
+            } else {
+                updateDTO.getReceiverDTO().setCustomerId(customer.getId());
             }
             //修改买家信息
             soB2cReceiverService.update(updateDTO.getReceiverDTO(), soB2cEntity);
@@ -12877,9 +12881,60 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return null;
     }
 
+    /**
+     * 三方仓自动出库：优先使用 WMS 已解析并透传的渠道，避免逐单重复 Feign；无透传时再本地解析。
+     */
+    private void applyThirdWarehouseLogisticsChannel(SoB2cLogisticsEntity logisticsEntity,
+                                                     SoB2cDTO.B2cByPlatformOutboundDTO dto) {
+        if (CharSequenceUtil.isNotBlank(logisticsEntity.getLogisticsChannelId())) {
+            return;
+        }
+        if (CharSequenceUtil.isNotBlank(dto.getResolvedLogisticsChannelId())) {
+            logisticsEntity.setLogisticsChannelId(dto.getResolvedLogisticsChannelId());
+            if (CharSequenceUtil.isNotBlank(dto.getResolvedLogisticsChannelName())) {
+                logisticsEntity.setLogisticsChannelName(dto.getResolvedLogisticsChannelName());
+            }
+            return;
+        }
+        if (CharSequenceUtil.isBlank(dto.getShippingMethod())
+                || CharSequenceUtil.isBlank(dto.getThirdWarehousePlatform())
+                || CharSequenceUtil.isBlank(dto.getPlatformWarehouseCode())) {
+            return;
+        }
+        LogisticsChannelDTO.ThirdWarehouseLogisticsMappingDTO mappingQuery = new LogisticsChannelDTO.ThirdWarehouseLogisticsMappingDTO();
+        mappingQuery.setLogisticsPlatform(dto.getThirdWarehousePlatform());
+        mappingQuery.setShippingMethod(dto.getShippingMethod());
+        mappingQuery.setPlatformWarehouseCode(dto.getPlatformWarehouseCode());
+        LogisticsChannelEntity channel = logisticsFeign.resolveThirdWarehouseLogisticsChannel(mappingQuery);
+        if (Objects.isNull(channel)) {
+            throw new ServiceException(StrUtil.format(
+                    "三方仓自动出库未匹配到ERP物流渠道, mainId={}, platform={}, shippingMethod={}, platformWarehouseCode={}",
+                    logisticsEntity.getMainId(), dto.getThirdWarehousePlatform(), dto.getShippingMethod(),
+                    dto.getPlatformWarehouseCode()));
+        }
+        logisticsEntity.setLogisticsChannelId(channel.getId());
+        logisticsEntity.setLogisticsChannelName(channel.getName());
+    }
+
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void updateB2cByPlatformOutbound(SoB2cDTO.B2cByPlatformOutboundDTO dto) {
+        // 三方仓渠道映射依赖 Feign，须在事务外完成，避免长事务占用连接
+        SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsService.getByMainId(dto.getSoB2cId());
+        if (Objects.nonNull(logisticsEntity)) {
+            logisticsEntity.setCode(CharSequenceUtil.isNotBlank(logisticsEntity.getCode()) ? logisticsEntity.getCode() : dto.getTrackNo());
+            logisticsEntity.setTrackNo(CharSequenceUtil.isNotBlank(logisticsEntity.getTrackNo()) ? logisticsEntity.getTrackNo() : dto.getTrackNo());
+            applyThirdWarehouseLogisticsChannel(logisticsEntity, dto);
+        }
+        // 经 self-injection 代理调用，使 @Transactional 生效；该方法 intentionally 不暴露在 SoB2cService 接口
+        soB2cService.updateB2cByPlatformOutboundTransactional(dto, logisticsEntity);
+    }
+
+    /**
+     * 平台出库回写 B2C 的 DB 更新段；须通过 {@link #soB2cService} 代理调用以触发事务，勿从类内直接 this 调用。
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void updateB2cByPlatformOutboundTransactional(SoB2cDTO.B2cByPlatformOutboundDTO dto,
+                                                         SoB2cLogisticsEntity logisticsEntity) {
         lambdaUpdate().eq(SoB2cEntity::getId, dto.getSoB2cId())
                 .set(StringUtils.isNotBlank(dto.getBillStatus()), SoB2cEntity::getBillStatus, dto.getBillStatus())
                 .set(SoB2cEntity::getSoOutstockDate, dto.getSoOutstockDate())
@@ -12894,18 +12949,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 .set(StringUtils.isNotBlank(dto.getWarehouseOrgName()), SoB2cDetailEntity::getWarehouseOrgName, dto.getWarehouseOrgName())
                 .update();
 
-        // 记录跟踪号
-        SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsService.getByMainId(dto.getSoB2cId());
         if (Objects.nonNull(logisticsEntity)) {
-            logisticsEntity.setCode(CharSequenceUtil.isNotBlank(logisticsEntity.getCode()) ? logisticsEntity.getCode() : dto.getTrackNo());
-            logisticsEntity.setTrackNo(CharSequenceUtil.isNotBlank(logisticsEntity.getTrackNo()) ? logisticsEntity.getTrackNo() : dto.getTrackNo());
             soB2cLogisticsService.updateById(logisticsEntity);
         }
 
         if (dto.isAddOperationLog()) {
             operateLogService.addModuleOperateLog("海外仓发货成功", ModuleTypeEnum.SO_B2C.getCode(), dto.getSoB2cId(), "海外仓发货");
         }
-
     }
 
     @Override
