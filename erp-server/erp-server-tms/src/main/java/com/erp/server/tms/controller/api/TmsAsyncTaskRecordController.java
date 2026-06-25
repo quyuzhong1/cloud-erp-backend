@@ -230,32 +230,32 @@ public class TmsAsyncTaskRecordController extends BaseController {
     }
 
 
-    /**
-     * 测试接口：触发自动周期任务生成，返回与 XXL-JOB 相同的执行汇总。
-     */
-    @PostMapping("/genAutoTask")
-    @LogAction(value = LogActionEnum.EXECUTE, desc = "手动触发自动周期任务生成")
-    public ApiResult<TmsAsyncTaskRecordDTO.GenAutoTaskResultDTO> genAutoTask() {
-        return success(tmsAsyncTaskRecordService.genAutoTask());
-    }
-    /**
-     * 测试接口：派发已到期的 AUTO + PENDING 自动任务（与 XXL-JOB TmsAsyncTaskJob 等价）。
-     */
-    @PostMapping("/startTask")
-    @LogAction(value = LogActionEnum.EXECUTE, desc = "手动触发自动任务派发")
-    public ApiResult<Boolean> startTask() {
-        tmsAsyncTaskRecordService.startTask();
-        return success(Boolean.TRUE);
-    }
-    /**
-     * 测试接口：手动触发异步任务 watchdog（超时终止与僵死明细清理）。
-     */
-    @PostMapping("/watchDog")
-    @LogAction(value = LogActionEnum.EXECUTE, desc = "手动触发异步任务watchdog")
-    public ApiResult<Boolean> watchDog() {
-        tmsAsyncTaskRecordService.watchdogTask();
-        return success(Boolean.TRUE);
-    }
+//    /**
+//     * 测试接口：触发自动周期任务生成，返回与 XXL-JOB 相同的执行汇总。
+//     */
+//    @PostMapping("/genAutoTask")
+//    @LogAction(value = LogActionEnum.EXECUTE, desc = "手动触发自动周期任务生成")
+//    public ApiResult<TmsAsyncTaskRecordDTO.GenAutoTaskResultDTO> genAutoTask() {
+//        return success(tmsAsyncTaskRecordService.genAutoTask());
+//    }
+//    /**
+//     * 测试接口：派发已到期的 AUTO + PENDING 自动任务（与 XXL-JOB TmsAsyncTaskJob 等价）。
+//     */
+//    @PostMapping("/startTask")
+//    @LogAction(value = LogActionEnum.EXECUTE, desc = "手动触发自动任务派发")
+//    public ApiResult<Boolean> startTask() {
+//        tmsAsyncTaskRecordService.startTask();
+//        return success(Boolean.TRUE);
+//    }
+//    /**
+//     * 测试接口：手动触发异步任务 watchdog（超时终止与僵死明细清理）。
+//     */
+//    @PostMapping("/watchDog")
+//    @LogAction(value = LogActionEnum.EXECUTE, desc = "手动触发异步任务watchdog")
+//    public ApiResult<Boolean> watchDog() {
+//        tmsAsyncTaskRecordService.watchdogTask();
+//        return success(Boolean.TRUE);
+//    }
 
 
 

@@ -33,7 +33,7 @@ public class TmsAsyncTaskBatchConsumerSupport {
     /**
      * 与未迁移 push 消费保持一致，防止游标异常导致无限循环。
      */
-    private static final int MAX_BATCH_LIMIT = 100_000;
+    private static final int MAX_BATCH_LIMIT = 2000;
 
     @Resource
     private RedissonClient redissonClient;

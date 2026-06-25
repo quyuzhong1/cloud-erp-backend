@@ -529,7 +529,7 @@ public class TmsAsyncTaskRecordDTO implements Serializable {
     /**
      * 尾程费用对账状态变更载荷。
      * <p>
-     * 仅持久化目标状态、确认时间、高级查询与数据权限 SQL；费用归属由 methodType 区分，不写入 payload。
+     * 仅持久化目标状态、确认时间、创建时间范围、高级查询与数据权限 SQL；费用归属由 methodType 区分，不写入 payload。
      */
     @Data
     @NoArgsConstructor
@@ -545,6 +545,16 @@ public class TmsAsyncTaskRecordDTO implements Serializable {
          * 对账确认时间
          */
         private LocalDateTime confirmTime;
+
+        /**
+         * 费用记录创建时间范围起始
+         */
+        private LocalDateTime createTimeStart;
+
+        /**
+         * 费用记录创建时间范围结束
+         */
+        private LocalDateTime createTimeEnd;
 
         /**
          * 页面高级查询生成的 SQL 条件
@@ -833,6 +843,36 @@ public class TmsAsyncTaskRecordDTO implements Serializable {
         public boolean isSuccess() {
             return success;
         }
+    }
+
+    /**
+     * watchdog 单次执行的有界参数：每轮扫描上限、批量更新大小、最大轮数。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class WatchdogRunConfig implements Serializable {
+
+        /** 每轮最多扫描的超时主任务数 */
+        private int mainTaskLimit;
+        /** 每轮最多扫描的明细数 */
+        private int detailLimit;
+        /** 明细批量更新大小 */
+        private int updateBatchSize;
+        /** 每阶段最大轮数 */
+        private int maxRounds;
+    }
+
+    /**
+     * 僵死明细 watchdog 清理的任务类型维度：businessType + methodType。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class WatchdogStaleDetailTaskType implements Serializable {
+
+        private String businessType;
+        private String methodType;
     }
 
 
