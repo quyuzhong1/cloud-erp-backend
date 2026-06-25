@@ -15,6 +15,7 @@ import com.erp.model.dmp.enums.DmpOrderReturnStatusEnum;
 import com.erp.model.dmp.enums.MabangOriginalOrderStatusEnum;
 import com.erp.model.dmp.enums.MabangSourcePlatformEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.erp.oms.aliexpress.dto.response.AliExpressOrder;
 import com.erp.sdk.oms.amz.spapi.client.StringUtil;
@@ -202,6 +203,8 @@ public class ShopifyOrderDmpHandler extends ShopifyDmpHandler {
                 dmpDataMap.put("isCancel", platformCancelled);
                 if (platformCancelled) {
                     dmpDataMap.put("invalidStatus", Boolean.TRUE);
+                    dmpDataMap.put("invalidType", SoB2cInvalidTypeEnum.ENUM_AUTOMATIC.getCode());
+                    dmpDataMap.put("invalidRemark", SoB2cInvalidTypeEnum.PLATFORM_CANCEL_REMARK);
                 } else {
                     dmpDataMap.put("invalidStatus", ShopifyOrderFinancialStatusEnum.VOIDED.getCode().equalsIgnoreCase(financialStatusStr));
                 }
