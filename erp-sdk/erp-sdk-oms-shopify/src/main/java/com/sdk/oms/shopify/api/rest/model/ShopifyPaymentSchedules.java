@@ -19,7 +19,7 @@ public class ShopifyPaymentSchedules {
 	private String currency;
 	@JsonProperty("issued_at")
 	@JsonDeserialize(using = LocalDateTimeDeserializer.class)
-	private LocalDateTime issued_at;
+	private LocalDateTime issuedAt;
 	@JsonProperty("due_at")
 	@JsonDeserialize(using = LocalDateTimeDeserializer.class)
 	private LocalDateTime dueAt;

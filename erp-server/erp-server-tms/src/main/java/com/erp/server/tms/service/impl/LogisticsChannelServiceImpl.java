@@ -995,6 +995,53 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     }
 
     @Override
+    public LogisticsChannelEntity resolveThirdWarehouseLogisticsChannel(LogisticsChannelDTO.ThirdWarehouseLogisticsMappingDTO dto) {
+        if (Objects.isNull(dto)) {
+            return null;
+        }
+        String logisticsPlatform = dto.getLogisticsPlatform();
+        String shippingMethod = dto.getShippingMethod();
+        String platformWarehouseCode = dto.getPlatformWarehouseCode();
+        if (StringUtils.isBlank(shippingMethod)
+                || StringUtils.isBlank(logisticsPlatform)
+                || StringUtils.isBlank(platformWarehouseCode)) {
+            return null;
+        }
+        List<LogisticsSaleChannelEntity> saleChannelList = logisticsSaleChannelService.lambdaQuery()
+                .eq(LogisticsSaleChannelEntity::getIsDeleted, false)
+                .eq(LogisticsSaleChannelEntity::getLogisticsPlatform, logisticsPlatform)
+                .eq(LogisticsSaleChannelEntity::getCode, shippingMethod)
+                .eq(LogisticsSaleChannelEntity::getPlatformWarehouseCode, platformWarehouseCode)
+                .orderByDesc(LogisticsSaleChannelEntity::getUpdateTime)
+                .list();
+        if (CollUtil.isEmpty(saleChannelList)) {
+            log.warn("三方仓物流渠道映射未匹配到销售平台渠道, platform={}, shippingMethod={}, platformWarehouseCode={}",
+                    logisticsPlatform, shippingMethod, platformWarehouseCode);
+            return null;
+        }
+        if (saleChannelList.size() > 1) {
+            log.warn("三方仓物流渠道映射存在多条销售平台渠道记录，取首条, platform={}, shippingMethod={}, platformWarehouseCode={}, count={}",
+                    logisticsPlatform, shippingMethod, platformWarehouseCode, saleChannelList.size());
+        }
+        String channelCode = saleChannelList.get(0).getCode();
+        List<LogisticsChannelEntity> channelList = lambdaQuery()
+                .eq(LogisticsChannelEntity::getIsDeleted, false)
+                .eq(LogisticsChannelEntity::getCode, channelCode)
+                .eq(LogisticsChannelEntity::getSourceType, SourceTypeEnum.LOGISTICS_WAREHOUSE.getCode())
+                .orderByDesc(LogisticsChannelEntity::getUpdateTime)
+                .list();
+        if (CollUtil.isEmpty(channelList)) {
+            log.warn("三方仓物流渠道映射未匹配到ERP物流渠道, channelCode={}", channelCode);
+            return null;
+        }
+        if (channelList.size() > 1) {
+            log.warn("三方仓物流渠道映射存在多条ERP物流渠道记录，取首条, channelCode={}, count={}",
+                    channelCode, channelList.size());
+        }
+        return channelList.get(0);
+    }
+
+    @Override
     public List<LogisticsChannelDTO.SignShipDTO> getScaleChannelByChannelByIds(List<String> logisticsChannelIdList, String dictPlatform) {
         if(CollectionUtils.isEmpty(logisticsChannelIdList)){
             return Collections.emptyList();

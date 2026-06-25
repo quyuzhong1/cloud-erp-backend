@@ -109,7 +109,13 @@ public class EccangOutboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHand
 				}
 				String productSku = row.getString("productSku");
 				if (StringUtils.isBlank(productSku)) {
+					productSku = row.getString("product_sku");
+				}
+				if (StringUtils.isBlank(productSku)) {
 					productSku = row.getString("platformSkuNo");
+				}
+				if (StringUtils.isBlank(productSku)) {
+					productSku = row.getString("platform_sku_no");
 				}
 				if (StringUtils.isBlank(productSku)) {
 					productSku = row.getString("skuNo");
@@ -119,7 +125,13 @@ public class EccangOutboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHand
 					qty = row.getInteger("actualQty");
 				}
 				if (qty == null) {
+					qty = row.getInteger("actual_qty");
+				}
+				if (qty == null) {
 					qty = row.getInteger("qty");
+				}
+				if (qty == null) {
+					qty = parseIntegerValue(row.getString("quantity"));
 				}
 				if (StringUtils.isBlank(productSku)) {
 					continue;
@@ -135,6 +147,17 @@ public class EccangOutboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHand
 			log.error("解析三方仓出库明细 JSON 格式异常, orderCode={}, jsonLen={}, detailListJson={}",
 					orderCode, detailListJson.length(), abbreviateDetailListJson(detailListJson), e);
 			return Collections.emptyList();
+		}
+    }
+
+    private Integer parseIntegerValue(String value) {
+		if (StringUtils.isBlank(value)) {
+			return null;
+		}
+		try {
+			return Integer.parseInt(value.trim());
+		} catch (NumberFormatException e) {
+			return null;
 		}
     }
 

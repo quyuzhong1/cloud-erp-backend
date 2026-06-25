@@ -7,7 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.net.InetSocketAddress;
+import java.util.concurrent.TimeUnit;
 
 /*
  * This class is a Spring Service component which generates Shopify REST client instances with the given shop name and access token, using the API
@@ -36,7 +36,13 @@ public class ShopifyRestClientService {
             System.setProperty("socksProxyHost", "127.0.0.1");
             System.setProperty("socksProxyPort", "7890");
         }
-        return ShopifyRestClient.newBuilder().withSubdomain(shopName).withAccessToken(accessToken).withApiVersion(apiVersion).build();
+        // 订单列表单页最多 250 条，响应体较大；默认 15s 读超时易触发 readEntity 失败
+        return ShopifyRestClient.newBuilder()
+                .withSubdomain(shopName)
+                .withAccessToken(accessToken)
+                .withApiVersion(apiVersion)
+                .withReadTimeout(120, TimeUnit.SECONDS)
+                .build();
     }
 
 }

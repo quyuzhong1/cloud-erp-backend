@@ -1081,11 +1081,14 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
             return;
         }
         List<PackagePlanDetailEntity> detailEntityList = packagePlanDetailService.getBySoId(id);
-        if(CollectionUtils.isNotEmpty(detailEntityList)){
-            packagePlanDetailService.removeByIds(detailEntityList.stream().map(PackagePlanDetailEntity::getId).collect(Collectors.toList()));
+        if (CollectionUtils.isEmpty(detailEntityList)) {
+            return;
         }
-        List<String> mainIds = detailEntityList.stream().map(PackagePlanDetailEntity::getMainId).collect(Collectors.toList());
-        this.lambdaUpdate().in(PackagePlanEntity::getId,mainIds).remove();
+        packagePlanDetailService.removeByIds(detailEntityList.stream().map(PackagePlanDetailEntity::getId).collect(Collectors.toList()));
+        List<String> mainIds = detailEntityList.stream().map(PackagePlanDetailEntity::getMainId).distinct().collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(mainIds)) {
+            this.lambdaUpdate().in(PackagePlanEntity::getId, mainIds).remove();
+        }
     }
 
     @Override
