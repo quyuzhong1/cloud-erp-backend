@@ -173,6 +173,7 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
             throw new ServiceException("TikTok不支持多店铺取消组包");
         }
         tikTokFullService.cancelLogistics(shopIds.get(0), entity.getHandoverNo());
+        // TikTok 全托管同一 handoverNo 可能对应多张组包预报，取消平台交接单后需联动重置同组单据。
         List<PackageForecastEntity> sameCodeList = CollectionUtils.emptyIfNull(context.getSameHandoverMap().get(entity.getHandoverNo()))
                 .stream()
                 .filter(packageForecastEntity -> !entity.getId().equals(packageForecastEntity.getId()))

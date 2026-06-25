@@ -111,9 +111,13 @@ public class NewPlatformReturnOrderConsumerService extends AbstractNewPlatformCo
 			//过滤手工单
 			soB2cEntityList = soB2cEntityList.stream().filter(v-> !SourceTypeEnum.SELF_ADD.getCode().equals(v.getSourceType())).collect(Collectors.toList());
 			if(CollectionUtils.isNotEmpty(soB2cEntityList)){
-				soB2cEntity = resolveSoB2cEntity(dto, soB2cEntityList);
+				SoB2cMatchResult matchResult = resolveSoB2cEntity(dto, soB2cEntityList);
+				if (Objects.nonNull(matchResult)) {
+					soB2cEntity = matchResult.getSoB2cEntity();
+					soB2cDetailEntityList = matchResult.getDetailList();
+				}
 			}
-			if (Objects.nonNull(soB2cEntity)) {
+			if (Objects.nonNull(soB2cEntity) && CollectionUtils.isEmpty(soB2cDetailEntityList)) {
 				soB2cDetailEntityList = soB2cDetailService.listByMainIds(Collections.singletonList(soB2cEntity.getId()));
 			}
 		}
@@ -309,15 +313,15 @@ public class NewPlatformReturnOrderConsumerService extends AbstractNewPlatformCo
 		return PlatformDictEnum.SHOPEE.getCode().equalsIgnoreCase(resolvePlatformCode(dto));
 	}
 
-	private SoB2cEntity resolveSoB2cEntity(PlatformReturnOrderDTO dto, List<SoB2cEntity> soB2cEntityList) {
+	private SoB2cMatchResult resolveSoB2cEntity(PlatformReturnOrderDTO dto, List<SoB2cEntity> soB2cEntityList) {
 		if (CollectionUtils.isEmpty(soB2cEntityList)) {
 			return null;
 		}
 		if (soB2cEntityList.size() == 1) {
-			return soB2cEntityList.get(0);
+			return new SoB2cMatchResult(soB2cEntityList.get(0), Collections.emptyList());
 		}
 		if (!isShopeePlatform(dto)) {
-			return soB2cEntityList.get(0);
+			return new SoB2cMatchResult(soB2cEntityList.get(0), Collections.emptyList());
 		}
 		List<String> soIds = soB2cEntityList.stream().map(SoB2cEntity::getId).collect(Collectors.toList());
 		List<SoB2cDetailEntity> allDetails = soB2cDetailService.listByMainIds(soIds);
@@ -332,11 +336,30 @@ public class NewPlatformReturnOrderConsumerService extends AbstractNewPlatformCo
 					+ dto.getPlatformOrderNo() + ",returnNo=" + dto.getPlatformReturnNo());
 		}
 		if (matchedOrders.size() == 1) {
-			return matchedOrders.get(0);
+			SoB2cEntity matchedOrder = matchedOrders.get(0);
+			return new SoB2cMatchResult(matchedOrder, detailMap.get(matchedOrder.getId()));
 		}
 		// 多个子订单同时满足 Shopee 退货明细时继续失败，避免自动绑定到错误订单。
 		throw new ServiceException("Shopee退货匹配到多个明细一致的订单,platformOrderNo="
 				+ dto.getPlatformOrderNo() + ",returnNo=" + dto.getPlatformReturnNo());
+	}
+
+	private static class SoB2cMatchResult {
+		private final SoB2cEntity soB2cEntity;
+		private final List<SoB2cDetailEntity> detailList;
+
+		private SoB2cMatchResult(SoB2cEntity soB2cEntity, List<SoB2cDetailEntity> detailList) {
+			this.soB2cEntity = soB2cEntity;
+			this.detailList = detailList;
+		}
+
+		private SoB2cEntity getSoB2cEntity() {
+			return soB2cEntity;
+		}
+
+		private List<SoB2cDetailEntity> getDetailList() {
+			return detailList;
+		}
 	}
 
 	private boolean matchesReturnDetails(List<PlatformReturnOrderDTO.Detail> returnDetails, List<SoB2cDetailEntity> soDetails) {

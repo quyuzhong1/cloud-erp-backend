@@ -66,6 +66,7 @@ public class DmpOutputShopeeFbsInventoryRocketMQTaskHandler extends DmpOutputRoc
             }
         }
 
+        // FBS 库存 Init 按店铺维度生成任务，同一输出批次只包含一个店铺。
         String shopId = dmpEntityMap.values().stream()
                 .map(DmpFbsInventoryEntity::getNextLevelId)
                 .filter(StringUtils::isNotBlank)
@@ -162,7 +163,7 @@ public class DmpOutputShopeeFbsInventoryRocketMQTaskHandler extends DmpOutputRoc
 
     @Override
     protected List<String> getSourceCodeKeys() {
-        return Arrays.asList("fbsSku");
+        return Arrays.asList("shopId", "warehouseId", "fbsSku");
     }
 
     private int defaultInt(Integer value) {

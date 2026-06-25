@@ -111,6 +111,7 @@ public class DmpInputShopeeWebhookOrderDmpHandler extends DmpInputDbConvertDmpHa
             return resultList;
         }
         List<DmpSoInfoEntity> updateList = new ArrayList<>(updateMap.values());
+        // DmpSoInfoEntity 当前未启用 @Version 乐观锁；这里以 updateBatchById 返回值作为批量更新结果校验。
         if (!dmpSoInfoService.updateBatchById(updateList, BATCH_UPDATE_SIZE)) {
             throw new ServiceException("Webhook订单批量更新失败,count:" + updateList.size());
         }

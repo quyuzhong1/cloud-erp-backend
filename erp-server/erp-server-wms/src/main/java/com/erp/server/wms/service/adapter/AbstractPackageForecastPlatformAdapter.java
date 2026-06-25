@@ -51,7 +51,10 @@ public abstract class AbstractPackageForecastPlatformAdapter implements PackageF
         List<String> soIds = detailList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList());
         List<SoB2cEntity> soList = soB2cFeign.listByIds(soIds);
         if (CollectionUtils.isEmpty(soList)) {
-            return false;
+            throw new ServiceException("组包预报单销售订单数据异常");
+        }
+        if (soList.size() != soIds.size()) {
+            throw new ServiceException("组包预报单销售订单数据不完整");
         }
         long platformCount = soList.stream().map(SoB2cEntity::getDictPlatform).distinct().count();
         if (platformCount > 1) {

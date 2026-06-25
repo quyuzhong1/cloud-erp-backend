@@ -3,6 +3,7 @@ package com.sdk.oms.shopee.utils;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.OkHttpUtils;
 import com.sdk.oms.shopee.dto.base.ShopeeAuth;
 import com.sdk.oms.shopee.dto.base.ShopeeResponse;
@@ -197,7 +198,7 @@ public class ShopeeApiUtils {
             return resultMap;
         } catch (Exception e) {
             log.error("虾皮接口请求异常, method: POST, url: {}, 错误: {}", safeUrl, e.getMessage(), e);
-            return null;
+            throw new ServiceException("虾皮授权接口请求失败");
         }
     }
 

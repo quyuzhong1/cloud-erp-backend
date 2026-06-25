@@ -130,6 +130,7 @@ public class DmpInputShopeeRefundDmpHandler extends DmpInputDbConvertDmpHandler 
         if (epochSecond == null) {
             return null;
         }
+        // Shopee 订单/退款链路的 epoch 秒统一按 ERP 服务默认时区转换，保持同平台 DMP 处理口径一致。
         return LocalDateTime.ofInstant(Instant.ofEpochSecond(epochSecond), ZoneId.systemDefault());
     }
 

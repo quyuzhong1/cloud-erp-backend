@@ -129,17 +129,32 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
             uploadAliExpress(entity, collectAddressId, context);
             return BatchResultDTO.success(entity.getId(), entity.getCode(), "上传成功");
         } catch (Exception e) {
-            entity.setUploadStatus(PackageUploadStatusEnum.UPLOAD_FAILURE.getCode());
-            // remark 面向内部排障保留平台/本地失败原因；完整堆栈只写日志。
-            entity.setRemark("上传失败:" + e.getMessage());
+            boolean hasPlatformInfo = hasPlatformInfo(entity);
+            if (hasPlatformInfo) {
+                entity.setUploadStatus(PackageUploadStatusEnum.UPLOAD_SUCCESS.getCode());
+                entity.setPlatformNo(buildPlatformNo(entity.getHandoverNo(), entity.getPlatformPackageNo()));
+                // 平台交接单已存在/已提交时，不再标记上传失败，避免后续重试被平台单号卡死。
+                entity.setRemark("平台已存在交接单信息，本地状态待同步，请同步状态或人工处理:" + e.getMessage());
+            } else {
+                entity.setUploadStatus(PackageUploadStatusEnum.UPLOAD_FAILURE.getCode());
+                // remark 面向内部排障保留平台/本地失败原因；完整堆栈只写日志。
+                entity.setRemark("上传失败:" + e.getMessage());
+            }
             try {
                 updateForecastOrThrow(entity);
             } catch (Exception updateException) {
-                log.error("组包预报上传失败后更新失败状态失败, id: {}, code: {}", entity.getId(), entity.getCode(), updateException);
+                log.error("组包预报上传失败后更新状态失败, id: {}, code: {}, hasPlatformInfo: {}",
+                        entity.getId(), entity.getCode(), hasPlatformInfo, updateException);
             }
             log.error("组包预报上传失败>>>>>", e);
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), userFailureMessage("上传"));
         }
+    }
+
+    private boolean hasPlatformInfo(PackageForecastEntity entity) {
+        return StringUtils.isNotBlank(entity.getHandoverNo())
+                || StringUtils.isNotBlank(entity.getPlatformPackageNo())
+                || StringUtils.isNotBlank(entity.getPlatformNo());
     }
 
     private String userFailureMessage(String operation) {
@@ -270,6 +285,7 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
     @Override
     public void syncTrackingStatus(List<PackageForecastEntity> entityList,
                                    BiConsumer<PackageForecastEntity, Exception> errorHandler) {
+        // 速卖通交接单状态查询按 handoverNo 单票提供接口；批量任务已在 Job 侧记录平台处理量和失败量。
         AliExpressBatchContext context = buildBatchContext(entityList, null);
         for (PackageForecastEntity entity : entityList) {
             try {

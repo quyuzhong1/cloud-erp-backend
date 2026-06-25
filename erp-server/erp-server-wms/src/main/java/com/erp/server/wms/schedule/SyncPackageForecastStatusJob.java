@@ -36,17 +36,25 @@ public class SyncPackageForecastStatusJob {
         XxlJobHelper.log("syncPackageForecastStatusJob start : {}", LocalDateTime.now());
         DateTime dateTime = DateUtil.offsetMonth(DateUtil.date(), -3);
         // 默认查询 3 月内的组包数据；各平台统一走适配器，避免速卖通重复同步。
+        int totalCount = 0;
+        int totalFailCount = 0;
         for (PackageForecastPlatformAdapter adapter : packageForecastPlatformAdapterFactory.listAdapters()) {
             List<PackageForecastEntity> trackingList = adapter.listSyncTrackingStatus(dateTime);
             if (CollectionUtils.isNotEmpty(trackingList)) {
+                totalCount += trackingList.size();
+                final int[] platformFailCount = {0};
+                XxlJobHelper.log("syncPackageForecastStatusJob platform: {}, count: {}", adapter.platform(), trackingList.size());
                 adapter.syncTrackingStatus(trackingList, (packageForecastEntity, e) -> {
+                    platformFailCount[0]++;
                     log.error("syncPackageForecastStatusJob platform sync failed, id: {}, transportNo: {}",
                             packageForecastEntity.getId(), packageForecastEntity.getTransportNo(), e);
                     XxlJobHelper.log("syncPackageForecastStatusJob platform sync failed, id: {}, error: {}",
                             packageForecastEntity.getId(), e.getMessage());
                 });
+                totalFailCount += platformFailCount[0];
             }
         }
-        XxlJobHelper.log("syncPackageForecastStatusJob end : {}", LocalDateTime.now());
+        XxlJobHelper.log("syncPackageForecastStatusJob end : {}, total: {}, failed: {}",
+                LocalDateTime.now(), totalCount, totalFailCount);
     }
 }

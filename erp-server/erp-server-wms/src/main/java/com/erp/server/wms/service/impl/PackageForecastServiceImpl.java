@@ -466,10 +466,33 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             return firstResultOrThrow(adapter.upload(dto), "上传");
         } catch (Exception e) {
             log.error("组包预报上传失败>>>>>", e);
+            persistUploadFailureIfNeeded(entity, e);
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), "上传失败" + e.getMessage());
         }
 
 
+    }
+
+    private void persistUploadFailureIfNeeded(PackageForecastEntity entity, Exception e) {
+        if (hasPlatformInfo(entity)) {
+            log.warn("组包预报上传异常但已存在平台信息，不覆盖为上传失败, id: {}, code: {}, handoverNo: {}, platformPackageNo: {}",
+                    entity.getId(), entity.getCode(), entity.getHandoverNo(), entity.getPlatformPackageNo());
+            return;
+        }
+        entity.setUploadStatus(PackageUploadStatusEnum.UPLOAD_FAILURE.getCode());
+        entity.setRemark("上传失败:" + e.getMessage());
+        try {
+            this.updateById(entity);
+        } catch (Exception updateException) {
+            log.error("组包预报上传失败后更新失败状态失败, id: {}, code: {}",
+                    entity.getId(), entity.getCode(), updateException);
+        }
+    }
+
+    private boolean hasPlatformInfo(PackageForecastEntity entity) {
+        return StringUtils.isNotBlank(entity.getHandoverNo())
+                || StringUtils.isNotBlank(entity.getPlatformPackageNo())
+                || StringUtils.isNotBlank(entity.getPlatformNo());
     }
 
     private BatchResultDTO firstResultOrThrow(List<BatchResultDTO> resultList, String operationName) {

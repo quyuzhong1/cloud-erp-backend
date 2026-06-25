@@ -431,7 +431,7 @@ public class ShopeePackageForecastAdapter extends AbstractPackageForecastPlatfor
     private List<BatchResultDTO> updateUploadResult(ShopeeForecastContext context, Set<String> successKeys,
                                                     Map<String, String> failReasonMap,
                                                     java.util.function.Consumer<PackageForecastEntity> successConsumer) {
-        List<BatchResultDTO> resultList = new ArrayList<>();
+        Map<String, Boolean> successMap = new HashMap<>();
         for (PackageForecastEntity entity : context.getEntityList()) {
             List<String> orderKeys = context.getForecastOrderKeyMap().get(entity.getId());
             List<String> failureReasons = CollectionUtils.emptyIfNull(orderKeys).stream()
@@ -450,6 +450,21 @@ public class ShopeePackageForecastAdapter extends AbstractPackageForecastPlatfor
                 entity.setUploadStatus(PackageUploadStatusEnum.UPLOAD_FAILURE.getCode());
                 entity.setRemark("上传失败:" + StringUtils.defaultIfBlank(String.join(";", failureReasons), "Shopee返回失败"));
             }
+            successMap.put(entity.getId(), success);
+        }
+        try {
+            updateForecastBatchOrThrow(context.getEntityList());
+            return buildUploadResult(context.getEntityList(), successMap);
+        } catch (Exception e) {
+            log.error("虾皮组包预报上传结果批量更新失败, size: {}", context.getEntityList().size(), e);
+            return updateUploadResultOneByOne(context.getEntityList(), successMap);
+        }
+    }
+
+    private List<BatchResultDTO> updateUploadResultOneByOne(List<PackageForecastEntity> entityList, Map<String, Boolean> successMap) {
+        List<BatchResultDTO> resultList = new ArrayList<>();
+        for (PackageForecastEntity entity : entityList) {
+            boolean success = Boolean.TRUE.equals(successMap.get(entity.getId()));
             try {
                 updateForecastOrThrow(entity);
             } catch (Exception e) {
@@ -461,13 +476,22 @@ public class ShopeePackageForecastAdapter extends AbstractPackageForecastPlatfor
                 resultList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), message));
                 continue;
             }
-            if (success) {
-                resultList.add(BatchResultDTO.success(entity.getId(), entity.getCode(), "上传成功"));
-            } else {
-                resultList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), entity.getRemark()));
-            }
+            resultList.add(toUploadResult(entity, success));
         }
         return resultList;
+    }
+
+    private List<BatchResultDTO> buildUploadResult(List<PackageForecastEntity> entityList, Map<String, Boolean> successMap) {
+        return entityList.stream()
+                .map(entity -> toUploadResult(entity, Boolean.TRUE.equals(successMap.get(entity.getId()))))
+                .collect(Collectors.toList());
+    }
+
+    private BatchResultDTO toUploadResult(PackageForecastEntity entity, boolean success) {
+        if (success) {
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), "上传成功");
+        }
+        return BatchResultDTO.fail(entity.getId(), entity.getCode(), entity.getRemark());
     }
 
     private String printCourierDelivery(PackageForecastEntity entity, String shopId) {
@@ -687,6 +711,7 @@ public class ShopeePackageForecastAdapter extends AbstractPackageForecastPlatfor
         if (StringUtils.isBlank(packageNumber)) {
             return Optional.empty();
         }
+        // 组包明细当前按 SO 维度关联，历史 label_json 可能以逗号保存 Shopee 包裹号；沿用首个包裹号保持原上传绑定口径。
         return Arrays.stream(packageNumber.split(","))
                 .map(StringUtils::trimToEmpty)
                 .filter(StringUtils::isNotBlank)
@@ -882,21 +907,30 @@ public class ShopeePackageForecastAdapter extends AbstractPackageForecastPlatfor
         if (Objects.isNull(merchantAuth)) {
             return Collections.emptyList();
         }
-        MerchantPrepaidAccountRequest request = MerchantPrepaidAccountRequest.builder()
-                .host(shopBaseRequest.getHost())
-                .accessToken(merchantAuth.getAccessToken())
-                .partnerId(shopBaseRequest.getPartnerId())
-                .partnerKey(shopBaseRequest.getPartnerKey())
-                .merchantId(parseLong(merchantAuth.getShopeeId(), "Shopee merchantId"))
-                .pageNo(1)
-                .pageSize(100)
-                .build();
-        ValidatorUtil.validateEntity(request);
-        MerchantPrepaidAccountListResponse response = shopeeLogisticsService.getMerchantPrepaidAccountList(request);
-        if (Objects.isNull(response) || CollectionUtils.isEmpty(response.getList())) {
-            return Collections.emptyList();
+        List<PackageForecastDTO.ShopeePrepaidAccountDTO> resultList = new ArrayList<>();
+        int pageNo = 1;
+        while (true) {
+            MerchantPrepaidAccountRequest request = MerchantPrepaidAccountRequest.builder()
+                    .host(shopBaseRequest.getHost())
+                    .accessToken(merchantAuth.getAccessToken())
+                    .partnerId(shopBaseRequest.getPartnerId())
+                    .partnerKey(shopBaseRequest.getPartnerKey())
+                    .merchantId(parseLong(merchantAuth.getShopeeId(), "Shopee merchantId"))
+                    .pageNo(pageNo)
+                    .pageSize(100)
+                    .build();
+            ValidatorUtil.validateEntity(request);
+            MerchantPrepaidAccountListResponse response = shopeeLogisticsService.getMerchantPrepaidAccountList(request);
+            if (Objects.isNull(response) || CollectionUtils.isEmpty(response.getList())) {
+                break;
+            }
+            resultList.addAll(response.getList().stream().map(this::toPrepaidAccountDTO).collect(Collectors.toList()));
+            if (!Boolean.TRUE.equals(response.getMore()) || response.getList().size() < 100) {
+                break;
+            }
+            pageNo++;
         }
-        return response.getList().stream().map(this::toPrepaidAccountDTO).collect(Collectors.toList());
+        return resultList;
     }
 
     private ShopAuthEntity findMerchantAuth(String shopId) {

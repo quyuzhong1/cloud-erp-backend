@@ -567,7 +567,7 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
             log.error("配货换渠道外部取消成功但本地清理失败, orderId: {}, code: {}, transportNo: {}",
                     entity.getId(), entity.getCode(), soB2cLogisticsEntity.getCode(), e);
             markThirdLogisticsCancelCleanupFailed(entity, soB2cLogisticsEntity, e);
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "外部物流单已取消，本地清理失败:" + e.getMessage());
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "外部物流单已取消，本地清理失败，请联系管理员处理");
         }
     }
 

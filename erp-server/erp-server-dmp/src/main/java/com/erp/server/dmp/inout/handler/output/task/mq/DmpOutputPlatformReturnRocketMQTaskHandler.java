@@ -30,6 +30,8 @@ import java.util.stream.Collectors;
  */
 public abstract class DmpOutputPlatformReturnRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler {
 
+    private static final int BATCH_SIZE = 500;
+
     @Resource
     private DmpSoReturnDetailService dmpSoReturnDetailService;
 
@@ -102,10 +104,17 @@ public abstract class DmpOutputPlatformReturnRocketMQTaskHandler extends DmpOutp
         if (CollUtil.isEmpty(missingMainIds)) {
             return;
         }
-        List<DmpSoReturnDetailEntity> detailList = dmpSoReturnDetailService.lambdaQuery()
-                .in(DmpSoReturnDetailEntity::getMainId, missingMainIds)
-                .eq(DmpSoReturnDetailEntity::getIsDeleted, Boolean.FALSE)
-                .list();
+        List<DmpSoReturnDetailEntity> detailList = new ArrayList<>();
+        for (int fromIndex = 0; fromIndex < missingMainIds.size(); fromIndex += BATCH_SIZE) {
+            List<String> batchIds = missingMainIds.subList(fromIndex, Math.min(fromIndex + BATCH_SIZE, missingMainIds.size()));
+            List<DmpSoReturnDetailEntity> batchDetailList = dmpSoReturnDetailService.lambdaQuery()
+                    .in(DmpSoReturnDetailEntity::getMainId, batchIds)
+                    .eq(DmpSoReturnDetailEntity::getIsDeleted, Boolean.FALSE)
+                    .list();
+            if (CollUtil.isNotEmpty(batchDetailList)) {
+                detailList.addAll(batchDetailList);
+            }
+        }
         if (CollUtil.isEmpty(detailList)) {
             return;
         }
