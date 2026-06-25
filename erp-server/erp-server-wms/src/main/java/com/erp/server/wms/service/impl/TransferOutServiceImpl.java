@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.ThirdConstants;
@@ -28,6 +29,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.ValidatorUtil;
+import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
@@ -325,6 +327,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
 
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "dto.id", unlockAfterTx = true)
     public BatchResultDTO approve(ApproveOneDTO dto,TransferOutEntity entity) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {

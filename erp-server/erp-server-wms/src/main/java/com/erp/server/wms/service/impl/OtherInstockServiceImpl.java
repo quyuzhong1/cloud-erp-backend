@@ -581,6 +581,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO approve(String id, String type, String comment, Boolean isPushWdt){
         //根据ids查询
         OtherInstockEntity entity = this.getById(id);
@@ -1410,6 +1411,7 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
     }
 
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.OTHER_INSTOCK_APPROVE_KEY, keyName = "updateApprovalStatusDTO.otherInstockEntity.id", unlockAfterTx = true)
     public void updateApproveStatus(OtherInstockDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO) {
          String approveStatus = updateApprovalStatusDTO.getApproveStatus();
         OtherInstockEntity otherInstockEntity = updateApprovalStatusDTO.getOtherInstockEntity();

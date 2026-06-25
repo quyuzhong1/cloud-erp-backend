@@ -31,7 +31,6 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.message.constant.DistributeKeyConstant;
-import com.common.message.constant.DistributeKeyConstant;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
@@ -2447,6 +2446,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     }
 
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.WMS_IMPORT_TASK_KEY, keyName = "dto.taskId")
     public void importSoReturnInstock(BaseDTO.ImportDTO dto) {
         if (ImportTypeEnum.UPDATE.getCode().equalsIgnoreCase(dto.getImportType())) {
             importSoReturnInstockUpdate(dto);
@@ -3648,6 +3648,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.SO_RETURN_INSTOCK_SAVE_KEY, keyName = "soB2cReturnEntity.id", unlockAfterTx = true)
     public BatchResultDTO returnInstockSave(SoB2cReturnEntity soB2cReturnEntity, List<SoB2cReturnDetailDTO.ViewDTO> detailEntityList, List<SoB2cReturnDTO.ReturnInstockDTO> returnInstockDTOS, SoB2cEntity soB2cEntity, List<SoB2cDetailEntity> b2cDetailEntityList) {
         SoB2cReturnDTO.ReturnInstockDTO instockDTO = returnInstockDTOS.get(0);
         WarehouseEntity warehouseEntity = warehouseService.getById(instockDTO.getWarehouseId());

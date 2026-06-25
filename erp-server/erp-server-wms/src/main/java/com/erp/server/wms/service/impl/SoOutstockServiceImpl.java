@@ -3053,6 +3053,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * @date 2023-12-11 16:17
      */
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.SO_OUTSTOCK_GENERATE_KEY, keyName = "soB2cId", unlockAfterTx = true)
     public Boolean generateB2cSoOutstock(String soB2cId) {
         SoOutstockEntity outstock = this.getBySoId(soB2cId);
         if (Objects.isNull(outstock)) {
@@ -3219,6 +3220,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     }
 
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.SO_OUTSTOCK_GENERATE_KEY, keyName = "generateB2cDTO.soId", unlockAfterTx = true)
     public Boolean generateB2cSoOutstock(SoOutstockDTO.GenerateB2cDTO generateB2cDTO) {
         Boolean result = createB2cSoOutstock(generateB2cDTO);
         if (result) {
@@ -3980,6 +3982,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.SO_OUTSTOCK_APPROVE_KEY, keyName = "dto.ids", unlockAfterTx = true)
     public Boolean updateStatus(TmsDeclareBillDTO.UpdateStatusDTO dto) {
         if(CharSequenceUtil.isBlank(dto.getDeclareStatus()) && CharSequenceUtil.isBlank(dto.getLogisticsStatus())){
             return false;
@@ -4086,6 +4089,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     }
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.SO_OUTSTOCK_GENERATE_KEY, keyName = "ids", unlockAfterTx = true)
     public Boolean afreshGenerateB2cOutstock(List<String> ids) {
         Map<String, SoB2cEntity> mainMap = soB2cFeign.listByIds(ids)
                 .stream()
@@ -4437,6 +4441,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     }
 
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.SO_OUTSTOCK_GENERATE_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO handleWdtData(String id) {
         SoOutstockEntity entity = this.soOutstockService.getById(id);
         if (ObjectUtil.isEmpty(entity)) {

@@ -9,6 +9,7 @@ import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -33,6 +34,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.message.constant.DistributeKeyConstant;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.StrUtils;
@@ -345,6 +347,7 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "dto.id", unlockAfterTx = true)
     public BatchResultDTO approve(ApproveOneDTO dto) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
@@ -1108,6 +1111,7 @@ public class SampleInitialLedgerServiceImpl extends SuperServiceImpl<SampleIniti
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.WMS_IMPORT_TASK_KEY, keyName = "dto.taskId", unlockAfterTx = true)
     public void importSampleInitialLedger(BaseDTO.ImportDTO dto) {
         // SKU信息
         List<SkuVO> skuList = plmTaskFeign.listApproveSku();

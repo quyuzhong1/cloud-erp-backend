@@ -15,6 +15,7 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.ThirdConstants;
@@ -34,6 +35,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
+import com.common.message.constant.DistributeKeyConstant;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -584,6 +586,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "dto.id", unlockAfterTx = true)
     public BatchResultDTO approve(ApproveOneDTO dto) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {

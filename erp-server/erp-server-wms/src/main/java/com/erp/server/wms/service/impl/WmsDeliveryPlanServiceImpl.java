@@ -12,6 +12,7 @@ import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ThirdConstants;
 import com.common.business.dto.ApproveDTO;
@@ -26,6 +27,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.message.constant.DistributeKeyConstant;
 import com.common.core.utils.*;
 import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
@@ -323,6 +325,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "dto.id", unlockAfterTx = true)
     public BatchResultDTO approve(ApproveOneDTO dto) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {

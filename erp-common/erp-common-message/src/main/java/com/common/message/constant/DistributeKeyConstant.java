@@ -74,4 +74,22 @@ public class DistributeKeyConstant {
     public static final String AMZ_ORDER_DOWNLOAD_KEY = "AMZ_ORDER_DOWNLOAD";
     /** 销售出库单审核 */
     public static final String SO_OUTSTOCK_APPROVE_KEY = "SO_OUTSTOCK_APPROVE";
+    /** 销售出库单生成 */
+    public static final String SO_OUTSTOCK_GENERATE_KEY = "SO_OUTSTOCK_GENERATE";
+    /** 虚拟库存覆盖 */
+    public static final String WMS_VIRTUAL_OVERRIDE_KEY = "WMS_VIRTUAL_OVERRIDE";
+    /** 其他入库审核状态更新 */
+    public static final String OTHER_INSTOCK_APPROVE_KEY = "OTHER_INSTOCK_APPROVE";
+    /** 其他出库审核状态更新 */
+    public static final String OTHER_OUTSTOCK_APPROVE_KEY = "OTHER_OUTSTOCK_APPROVE";
+    /** 直接调拨审核状态更新 */
+    public static final String TRANSFER_INFO_APPROVE_KEY = "TRANSFER_INFO_APPROVE";
+    /** 调拨申请审核状态更新 */
+    public static final String TRANSFER_APPLICATION_APPROVE_KEY = "TRANSFER_APPLICATION_APPROVE";
+    /** 采购收货新增 */
+    public static final String WAREHOUSE_RECEIVE_ADD_KEY = "WAREHOUSE_RECEIVE_ADD";
+    /** 销售退货入库保存 */
+    public static final String SO_RETURN_INSTOCK_SAVE_KEY = "SO_RETURN_INSTOCK_SAVE";
+    /** WMS 导入任务 */
+    public static final String WMS_IMPORT_TASK_KEY = "WMS_IMPORT_TASK";
 }

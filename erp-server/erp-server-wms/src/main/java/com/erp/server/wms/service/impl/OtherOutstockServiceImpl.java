@@ -13,6 +13,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.DictKindgeeConstant;
@@ -35,6 +36,7 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
+import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.dmp.constant.CfgApiAuthContant;
 import com.erp.model.dmp.dto.CfgApiAuthDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
@@ -511,6 +513,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO approve(String id, String type, String comment) {
         //根据id查询
         OtherOutstockEntity entity = this.getById(id);
@@ -1569,6 +1572,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
     }
 
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.OTHER_OUTSTOCK_APPROVE_KEY, keyName = "updateApprovalStatusDTO.otherOutstockEntity.id", unlockAfterTx = true)
     public void updateApproveStatus(OtherOutstockDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO) {
         String approveStatus = updateApprovalStatusDTO.getApproveStatus();
         OtherOutstockEntity otherOutstockEntity = updateApprovalStatusDTO.getOtherOutstockEntity();
