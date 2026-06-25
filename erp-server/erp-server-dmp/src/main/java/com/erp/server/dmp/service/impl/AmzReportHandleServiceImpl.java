@@ -64,6 +64,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -152,47 +153,52 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
     private DmpInputTaskFactory dmpInputTaskFactory;
     @Resource
     private DmpInoutTaskFeign dmpInoutTaskFeign;
+    @Lazy
+    @Resource
+    private AmzReportHandleServiceImpl self;
 
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    //@GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean pullShipment(DmpPullShipmentDTO dto) {
         if (CollectionUtils.isEmpty(dto.getShipmentCodeList())){
             return true;
         }
 
-        // 获取店铺信息
+        // 获取店铺信息（事务外完成授权/缓存查询，避免长事务）
         String shopId = dto.getShopId();
-        // 获取店铺授权信息
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
         if (null == shopInfoDTO) {
             throw new ServiceException("未找到店铺授权:" + shopId);
         }
 
-        // 查询拉取配置
+        return self.pullShipmentTransactional(dto, shopInfoDTO, shopId);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean pullShipmentTransactional(DmpPullShipmentDTO dto, AmazonShopInfoDTO shopInfoDTO, String shopId) {
         Integer count = cfgSettingService.lambdaQuery()
                 .eq(CfgSettingEntity::getKey, SourceTypeEnum.FBA_SHIPMENT.getCode())
                 .eq(CfgSettingEntity::getType, SettingEnum.NEW_DMP_PULL_SWITCH_LIST.getType())
                 .eq(CfgSettingEntity::getValue, "1")
                 .count();
-        if (count > 0){
-            // 新中台分支：billType 见 resolveFbaShipmentPullBillType（默认 fba_inbound_plans，cfg 可回退 fba_shipment）
+        if (count > 0) {
             return newDmpPullShipment(dto, shopInfoDTO);
-        } else {
-            // 执行历史逻辑
-            return oldDmpPullShipment(dto, shopInfoDTO, shopId);
         }
+        return oldDmpPullShipment(dto, shopInfoDTO, shopId);
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public Boolean pullInboundPlanShipment(DmpPullShipmentDTO dto) {
         String shopId = dto.getShopId();
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
         if (null == shopInfoDTO) {
             throw new ServiceException("未找到店铺授权:" + shopId);
         }
+        return self.pullInboundPlanShipmentTransactional(dto, shopInfoDTO);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean pullInboundPlanShipmentTransactional(DmpPullShipmentDTO dto, AmazonShopInfoDTO shopInfoDTO) {
         return newDmpPullInboundPlanShipment(dto, shopInfoDTO);
     }
 

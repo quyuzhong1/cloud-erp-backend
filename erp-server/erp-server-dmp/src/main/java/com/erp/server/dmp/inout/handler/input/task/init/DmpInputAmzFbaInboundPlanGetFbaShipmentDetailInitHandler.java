@@ -134,27 +134,4 @@ public class DmpInputAmzFbaInboundPlanGetFbaShipmentDetailInitHandler extends Dm
         }
         return marketplaceEnum.getMarketplaceId();
     }
-
-    /**
-     * 按优先级从 Map 中取第一个非空白字符串：
-     * - key 不存在、value 为 null、或 toString() 后空白，均自动跳过；
-     * - 任意 key 命中即返回（已 trim），全部未命中返回空字符串。
-     * 用于规避 {@code map.getOrDefault(k, def).toString()} 在 value=null 时的 NPE。
-     */
-    private static String firstNonBlankString(Map<String, Object> source, String... keys) {
-        if (source == null || keys == null) {
-            return "";
-        }
-        for (String key : keys) {
-            Object value = source.get(key);
-            if (value == null) {
-                continue;
-            }
-            String str = value.toString();
-            if (StringUtils.isNotBlank(str)) {
-                return StringUtils.trimToEmpty(str);
-            }
-        }
-        return "";
-    }
 }

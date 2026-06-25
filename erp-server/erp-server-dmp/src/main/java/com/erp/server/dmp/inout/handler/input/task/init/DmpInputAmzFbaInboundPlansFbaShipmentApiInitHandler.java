@@ -53,6 +53,9 @@ public class DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler extends DmpInpu
     @Override
     public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
         String shopId = dmpInputTaskEntity.getNextLevelId();
+        if (StringUtils.isBlank(shopId)) {
+            throw new ServiceException("未找到店铺授权ID:taskId=" + dmpInputTaskEntity.getId());
+        }
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
         if (shopInfoDTO == null) {
             throw new ServiceException("未找到店铺授权:" + shopId);

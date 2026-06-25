@@ -91,6 +91,28 @@ public abstract class DmpInputAmzCommonInitHandler extends DmpInputInitHandler {
     }
 
     /**
+     * 按优先级从 Map 中取第一个非空白字符串：
+     * key 不存在、value 为 null、或 toString() 后空白均跳过；
+     * 用于规避 {@code map.getOrDefault(k, def).toString()} 在 value=null 时的 NPE。
+     */
+    protected static String firstNonBlankString(Map<String, Object> source, String... keys) {
+        if (source == null || keys == null) {
+            return "";
+        }
+        for (String key : keys) {
+            Object value = source.get(key);
+            if (value == null) {
+                continue;
+            }
+            String str = value.toString();
+            if (StringUtils.isNotBlank(str)) {
+                return StringUtils.trimToEmpty(str);
+            }
+        }
+        return "";
+    }
+
+    /**
      * 获取上一级mongo数据
      */
     protected List<Map<String, Object>> getParentStorageMongoData() {

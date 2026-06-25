@@ -79,7 +79,7 @@ public class DmpInputAmzFbaInboundPlanGetFbaShipmentInitHandler extends DmpInput
 
         FbaInboundApi api = AmazonSpApiInitUtils.create(FbaInboundApi.class, shopInfoDTO, false);
         for (Map<String, Object> parentMongo : parentMongoData) {
-            String inboundPlanId = parentMongo.getOrDefault("inboundPlanId", "").toString();
+            String inboundPlanId = firstNonBlankString(parentMongo, "inboundPlanId");
             if (StringUtils.isBlank(inboundPlanId)) {
                 continue;
             }
