@@ -90,12 +90,21 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
         return PlatformDictEnum.ALI_EXPRESS.getCode();
     }
 
+    private static class AliExpressBatchContext {
+        private Map<String, List<PackageForecastDetailEntity>> detailMap = new HashMap<>();
+        private Map<String, SoB2cEntity> soMap = new HashMap<>();
+        private Map<String, List<SoB2cLogisticsEntity>> logisticsMap = new HashMap<>();
+        private Map<String, PackageForecastDTO.AlExpressHandoverBaseDTO> baseMap = new HashMap<>();
+        private LogisticsAddressEntity addressEntity;
+    }
+
     @Override
     public List<BatchResultDTO> upload(PackageForecastDTO.UploadDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         Map<String, PackageForecastEntity> entityMap = packageForecastMapper.selectBatchIds(dto.getIds())
                 .stream()
                 .collect(Collectors.toMap(PackageForecastEntity::getId, entity -> entity, (left, right) -> left));
+        AliExpressBatchContext context = buildBatchContext(new ArrayList<>(entityMap.values()), dto.getCollectAddressId());
         for (String id : dto.getIds()) {
             PackageForecastEntity entity = entityMap.get(id);
             if (Objects.isNull(entity)) {
@@ -103,7 +112,7 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
                 continue;
             }
             try {
-                resultDTOS.add(uploadOne(entity, dto.getCollectMode(), dto.getCollectAddressId()));
+                resultDTOS.add(uploadOne(entity, dto.getCollectMode(), dto.getCollectAddressId(), context));
             } catch (Exception e) {
                 log.error("组包预报上传失败>>>>>", e);
                 resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), userFailureMessage("上传")));
@@ -112,12 +121,12 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
         return resultDTOS;
     }
 
-    private BatchResultDTO uploadOne(PackageForecastEntity entity, String collectMode, String collectAddressId) {
+    private BatchResultDTO uploadOne(PackageForecastEntity entity, String collectMode, String collectAddressId, AliExpressBatchContext context) {
         validateUploadable(entity);
         try {
             entity.setCollectMode(collectMode);
             entity.setCollectAddressId(collectAddressId);
-            uploadAliExpress(entity, collectAddressId);
+            uploadAliExpress(entity, collectAddressId, context);
             return BatchResultDTO.success(entity.getId(), entity.getCode(), "上传成功");
         } catch (Exception e) {
             entity.setUploadStatus(PackageUploadStatusEnum.UPLOAD_FAILURE.getCode());
@@ -134,6 +143,53 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
 
     private String userFailureMessage(String operation) {
         return operation + "失败，请查看单据备注或日志";
+    }
+
+    private AliExpressBatchContext buildBatchContext(List<PackageForecastEntity> entities, String collectAddressId) {
+        AliExpressBatchContext context = new AliExpressBatchContext();
+        try {
+            if (CollectionUtils.isEmpty(entities)) {
+                return context;
+            }
+            List<String> forecastIds = entities.stream()
+                    .map(PackageForecastEntity::getId)
+                    .filter(StringUtils::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(forecastIds)) {
+                return context;
+            }
+            List<PackageForecastDetailEntity> detailList = packageForecastDetailService.listDbByMainIds(forecastIds);
+            if (CollectionUtils.isNotEmpty(detailList)) {
+                context.detailMap = detailList.stream()
+                        .collect(Collectors.groupingBy(PackageForecastDetailEntity::getMainId));
+                List<String> soIds = detailList.stream()
+                        .map(PackageForecastDetailEntity::getSoId)
+                        .filter(StringUtils::isNotBlank)
+                        .distinct()
+                        .collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(soIds)) {
+                    List<SoB2cEntity> soList = soB2cFeign.listByIds(soIds);
+                    if (CollectionUtils.isNotEmpty(soList)) {
+                        context.soMap = soList.stream()
+                                .collect(Collectors.toMap(SoB2cEntity::getId, entity -> entity, (left, right) -> left));
+                    }
+                    List<SoB2cLogisticsEntity> logisticsList = soB2cFeign.listSoB2cLogisticsByMainIdList(soIds);
+                    if (CollectionUtils.isNotEmpty(logisticsList)) {
+                        context.logisticsMap = logisticsList.stream()
+                                .filter(logistics -> StringUtils.isNotBlank(logistics.getMainId()))
+                                .collect(Collectors.groupingBy(SoB2cLogisticsEntity::getMainId));
+                    }
+                }
+            }
+            if (StringUtils.isNotBlank(collectAddressId)) {
+                context.addressEntity = logisticsFeign.getLogisticsAddressById(collectAddressId);
+            }
+        } catch (Exception e) {
+            log.warn("速卖通组包批量上下文预加载失败，降级为逐单查询", e);
+            return new AliExpressBatchContext();
+        }
+        return context;
     }
 
     @Override
@@ -156,6 +212,7 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
         }
         Map<String, PackageForecastEntity> entityMap = packageForecastMapper.selectBatchIds(ids).stream()
                 .collect(Collectors.toMap(PackageForecastEntity::getId, entity -> entity, (left, right) -> left));
+        AliExpressBatchContext context = buildBatchContext(new ArrayList<>(entityMap.values()), null);
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
         for (String id : ids) {
             PackageForecastEntity entity = entityMap.get(id);
@@ -168,9 +225,19 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
                     continue;
                 }
                 validateUploaded(entity);
-                aliExpressCancel(entity);
+                aliExpressCancel(entity, context);
+                String handoverNo = entity.getHandoverNo();
+                String platformPackageNo = entity.getPlatformPackageNo();
                 resetAfterCancel(entity);
-                updateForecastOrThrow(entity);
+                try {
+                    updateForecastOrThrow(entity);
+                } catch (Exception updateException) {
+                    log.error("速卖通组包预报平台取消成功后本地更新失败, id: {}, code: {}, handoverNo: {}, platformPackageNo: {}",
+                            entity.getId(), entity.getCode(), handoverNo, platformPackageNo, updateException);
+                    resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(),
+                            "速卖通平台已取消成功，本地更新失败，请同步状态或人工处理:" + updateException.getMessage()));
+                    continue;
+                }
                 resultDTOS.add(BatchResultDTO.success(entity.getId(), entity.getCode(), "取消上传"));
             } catch (Exception e) {
                 log.error("取消上传失败>>>>", e);
@@ -302,10 +369,10 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
         }
     }
 
-    private void aliExpressCancel(PackageForecastEntity entity) {
-        List<PackageForecastDetailEntity> forecastDetailList = packageForecastDetailService.listDbByMainId(entity.getId());
-        String shopId = resolveSingleShopId(forecastDetailList);
-        PackageForecastDTO.AlExpressHandoverBaseDTO base = this.getAlExpressHandoverBase(platform(), shopId);
+    private void aliExpressCancel(PackageForecastEntity entity, AliExpressBatchContext context) {
+        List<PackageForecastDetailEntity> forecastDetailList = getForecastDetailList(entity.getId(), context);
+        String shopId = resolveSingleShopId(forecastDetailList, context);
+        PackageForecastDTO.AlExpressHandoverBaseDTO base = getAlExpressHandoverBase(platform(), shopId, context);
         Long platformPackageNo = parseAliExpressPlatformPackageNo(entity);
         CancelRequest cancelRequest = CancelRequest.builder()
                 .userInfo(base.getUserInfo())
@@ -325,11 +392,14 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
         }
     }
 
-    private BatchResultDTO uploadAliExpress(PackageForecastEntity entity, String collectAddressId) {
+    private BatchResultDTO uploadAliExpress(PackageForecastEntity entity, String collectAddressId, AliExpressBatchContext context) {
         if (StringUtils.isBlank(collectAddressId)) {
             throw new ServiceException("揽收地址不能为空");
         }
-        LogisticsAddressEntity addressEntity = logisticsFeign.getLogisticsAddressById(collectAddressId);
+        LogisticsAddressEntity addressEntity = Objects.nonNull(context) ? context.addressEntity : null;
+        if (Objects.isNull(addressEntity)) {
+            addressEntity = logisticsFeign.getLogisticsAddressById(collectAddressId);
+        }
         if (Objects.isNull(addressEntity)) {
             throw new ServiceException("揽收地址不存在");
         }
@@ -338,7 +408,7 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
         boolean hasHandoverNo = StringUtils.isNotBlank(entity.getHandoverNo());
         boolean hasPlatformPackageNo = StringUtils.isNotBlank(entity.getPlatformPackageNo());
         if (!hasHandoverNo && !hasPlatformPackageNo) {
-            addBigPackage(entity, addressEntity);
+            addBigPackage(entity, addressEntity, context);
         } else if (hasHandoverNo && hasPlatformPackageNo) {
             throw new ServiceException("速卖通组包预报已存在平台交接单信息，请先同步状态或人工处理后再重试");
         } else {
@@ -434,14 +504,14 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
         }
     }
 
-    private void addBigPackage(PackageForecastEntity entity, LogisticsAddressEntity logisticsAddress) {
-        List<PackageForecastDetailEntity> forecastDetailList = packageForecastDetailService.listDbByMainId(entity.getId());
-        String shopId = resolveSingleShopId(forecastDetailList);
-        PackageForecastDTO.AlExpressHandoverBaseDTO base = getAlExpressHandoverBase(platform(), shopId);
+    private void addBigPackage(PackageForecastEntity entity, LogisticsAddressEntity logisticsAddress, AliExpressBatchContext context) {
+        List<PackageForecastDetailEntity> forecastDetailList = getForecastDetailList(entity.getId(), context);
+        String shopId = resolveSingleShopId(forecastDetailList, context);
+        PackageForecastDTO.AlExpressHandoverBaseDTO base = getAlExpressHandoverBase(platform(), shopId, context);
 
         List<String> soIdList = forecastDetailList.stream().map(PackageForecastDetailEntity::getSoId).collect(Collectors.toList());
         Map<String, String> authMap = base.getAuthMap();
-        List<SoB2cLogisticsEntity> soB2cLogisticsList = soB2cFeign.listSoB2cLogisticsByMainIdList(soIdList);
+        List<SoB2cLogisticsEntity> soB2cLogisticsList = getSoB2cLogisticsList(soIdList, context);
         if (CollectionUtils.isEmpty(soB2cLogisticsList)) {
             throw new ServiceException("未获取到销售订单物流信息");
         }
@@ -509,6 +579,68 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
             log.error("创建交接单失败>>>>>>{}", e);
             throw new ServiceException(e.getMessage());
         }
+    }
+
+    private List<PackageForecastDetailEntity> getForecastDetailList(String mainId, AliExpressBatchContext context) {
+        if (Objects.nonNull(context) && context.detailMap.containsKey(mainId)) {
+            return context.detailMap.get(mainId);
+        }
+        return packageForecastDetailService.listDbByMainId(mainId);
+    }
+
+    private List<SoB2cLogisticsEntity> getSoB2cLogisticsList(List<String> soIdList, AliExpressBatchContext context) {
+        if (Objects.nonNull(context) && Objects.nonNull(context.logisticsMap) && !context.logisticsMap.isEmpty()) {
+            List<SoB2cLogisticsEntity> logisticsList = new ArrayList<>();
+            for (String soId : soIdList) {
+                List<SoB2cLogisticsEntity> list = context.logisticsMap.get(soId);
+                if (CollectionUtils.isNotEmpty(list)) {
+                    logisticsList.addAll(list);
+                }
+            }
+            return logisticsList;
+        }
+        return soB2cFeign.listSoB2cLogisticsByMainIdList(soIdList);
+    }
+
+    private PackageForecastDTO.AlExpressHandoverBaseDTO getAlExpressHandoverBase(String logisticsPlatform, String shopId,
+                                                                                 AliExpressBatchContext context) {
+        if (Objects.isNull(context)) {
+            return getAlExpressHandoverBase(logisticsPlatform, shopId);
+        }
+        String cacheKey = logisticsPlatform + ":" + shopId;
+        PackageForecastDTO.AlExpressHandoverBaseDTO base = context.baseMap.get(cacheKey);
+        if (Objects.nonNull(base)) {
+            return base;
+        }
+        base = getAlExpressHandoverBase(logisticsPlatform, shopId);
+        context.baseMap.put(cacheKey, base);
+        return base;
+    }
+
+    private String resolveSingleShopId(List<PackageForecastDetailEntity> forecastDetailList, AliExpressBatchContext context) {
+        if (Objects.isNull(context) || Objects.isNull(context.soMap) || context.soMap.isEmpty()) {
+            return resolveSingleShopId(forecastDetailList);
+        }
+        if (CollectionUtils.isEmpty(forecastDetailList)) {
+            throw new ServiceException("组包预报单明细未找到");
+        }
+        List<String> shopIds = forecastDetailList.stream()
+                .map(PackageForecastDetailEntity::getSoId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .map(context.soMap::get)
+                .filter(Objects::nonNull)
+                .map(SoB2cEntity::getShopId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(shopIds)) {
+            throw new ServiceException("销售订单店铺未找到");
+        }
+        if (shopIds.size() > 1) {
+            throw new ServiceException("速卖通不支持多店铺组包预报");
+        }
+        return shopIds.get(0);
     }
 
     private String resolveSingleShopId(List<PackageForecastDetailEntity> forecastDetailList) {

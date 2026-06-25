@@ -310,6 +310,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
 
     /**
      * 取消上传
+     * 平台接口调用不可回滚，不用全局事务包裹远程操作；适配器负责本地更新失败后的补偿提示。
      *
      * @param id
      * @return

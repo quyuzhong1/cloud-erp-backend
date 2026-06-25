@@ -210,7 +210,15 @@ public class ShopeePackageForecastAdapter extends AbstractPackageForecastPlatfor
                 cancelFirstMile(context);
             }
             context.getEntityList().forEach(this::resetAfterCancel);
-            updateEntities(context.getEntityList());
+            try {
+                updateEntities(context.getEntityList());
+            } catch (Exception updateException) {
+                log.error("虾皮组包预报平台取消成功后本地更新失败, ids: {}", ids, updateException);
+                return context.getEntityList().stream()
+                        .map(entity -> BatchResultDTO.fail(entity.getId(), entity.getCode(),
+                                "Shopee平台已取消绑定，本地更新失败，请同步状态或人工处理:" + updateException.getMessage()))
+                        .collect(Collectors.toList());
+            }
             return context.getEntityList().stream()
                     .map(entity -> BatchResultDTO.success(entity.getId(), entity.getCode(), "取消上传"))
                     .collect(Collectors.toList());
@@ -517,6 +525,7 @@ public class ShopeePackageForecastAdapter extends AbstractPackageForecastPlatfor
         if (SHOPEE_PLATFORM_STATUS_NOT_AVAILABLE.equals(status)) {
             throw new ServiceException("虾皮快递寄送绑定ID暂未绑定订单，请稍后重试,bindingId:" + bindingId);
         }
+        // bindingInfo.status 是 Shopee 平台原始状态；枚举 code 对应平台值，可直接比较。
         if (HandoverStatusEnum.SHOPEE_CANCELING.getCode().equals(status)
                 || HandoverStatusEnum.CANCELED_2.getCode().equals(status)) {
             throw new ServiceException("虾皮快递寄送单已取消或取消中,bindingId:" + bindingId

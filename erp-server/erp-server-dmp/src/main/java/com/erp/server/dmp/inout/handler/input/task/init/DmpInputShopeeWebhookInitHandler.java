@@ -48,6 +48,7 @@ public class DmpInputShopeeWebhookInitHandler extends DmpInputInitHandler {
         initData.set("platformCode", webhookData.getStr("ordersn"));
         initData.set("platformOriginalStatus", webhookData.getStr("status"));
         initData.set("updateTime", webhookData.getLong("update_time"));
+        // 上游仅推送已过滤的发货相关状态，此处约定 update_time 即发货时间。
         initData.set("deliveryTime", webhookData.getLong("update_time"));
         initData.set("shopId", payload.getStr("shop_id"));
         initData.set("msgId", payload.getStr("msg_id"));

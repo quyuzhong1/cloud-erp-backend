@@ -1342,6 +1342,7 @@ public class ExportWmsFeignController {
         return awdInventoryService.paging(dto);
     }
 
+    // erp-rpc ExportWmsFeign#exportFbsInventory 的实现端，路径需与 Feign 契约保持一致。
     @PostMapping("/exportFbsInventory")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",

@@ -15,6 +15,7 @@ import org.apache.commons.lang3.StringUtils;
 public enum PackageForecastCollectModeEnum implements EnumMessage {
     TO_HOME("toHome", "上门揽收"),
     SELF_SEND("selfSend", "自送"),
+    // Shopee 组包揽收方式需要持久化并透传平台原始 code，平台接口直接使用这些值。
     SHOPEE_COURIER_DELIVERY("courier_delivery", "快递寄送（平台下单）"),
     SHOPEE_PICKUP("pickup", "非快递寄送"),
     SHOPEE_DROPOFF("dropoff", "集货点"),

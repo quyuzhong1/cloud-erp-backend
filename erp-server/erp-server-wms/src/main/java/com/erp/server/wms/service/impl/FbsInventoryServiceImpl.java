@@ -64,6 +64,7 @@ public class FbsInventoryServiceImpl extends SuperServiceImpl<FbsInventoryMapper
         return baseMapper.summaryNumber(pagingParamDTO.getParams());
     }
 
+    // FBS 库存 MQ 重复消费按业务键做幂等，Service 内部同时按该业务键 upsert。
     @DataIdempotent(keyIdName = "addDTO.shopId,addDTO.warehouseId,addDTO.fbsSku", businessType = "fbsInventoryAdd")
     @Transactional(rollbackFor = Exception.class)
     @Override

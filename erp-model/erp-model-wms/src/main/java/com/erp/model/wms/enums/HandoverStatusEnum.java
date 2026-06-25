@@ -33,7 +33,7 @@ public enum HandoverStatusEnum implements EnumMessage {
     CLOSING("closing","关闭中"),
     CLOSED("closed","已关闭"),
 
-    // Shopee first mile
+    // Shopee first mile：除 DELIVERED 与 TikTok 冲突外，其他状态保留平台原始 code 便于接口回写/校验。
     SHOPEE_ORDER_CREATED("ORDER_CREATED","已提交"),
     SHOPEE_ORDER_RECEIVED("ORDER_RECEIVED","等待快递揽收"),
     SHOPEE_PICKED_UP("PICKED_UP","已揽收"),
