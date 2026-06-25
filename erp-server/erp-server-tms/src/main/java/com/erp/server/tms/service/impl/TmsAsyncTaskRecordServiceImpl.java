@@ -221,7 +221,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
     public String addAutoTask(TmsAsyncTaskRecordDTO.AutoCreateDTO dto){
         String businessType = dto.getBusinessType();
         String methodType = dto.getMethodType();
-        String json = dto.getDataJson();
+        String compactJson = compactTaskDataJson(dto.getDataJson());
         String startTimeStr = dto.getStartTimeStr();
         String effectiveStartTimeStr = StringUtils.isNotBlank(startTimeStr)
             ? startTimeStr
@@ -242,7 +242,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         entity.setCode(code);
         entity.setBusinessType(businessType);
         entity.setMethodType(methodType);
-        entity.setDataJson(json);
+        entity.setDataJson(compactJson);
         //startTimeStr转时间戳LocalDateTime
         LocalDateTime startTime = null;
         if (StringUtils.isNotBlank(startTimeStr)) {

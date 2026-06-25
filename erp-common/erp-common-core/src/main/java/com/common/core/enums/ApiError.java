@@ -211,10 +211,10 @@ public enum ApiError implements Serializable {
     COMMON_NO_SKU(98128,"SKU不存在"),
     COMMON_NOTICE_TIME_AFTER_NOW(98134,"通知时间不能早于当前时间"),
     COMMON_NOW_TYPE_NOT_ALLOW_UPDATE(98135,"立即通知不允许修改"),
-    COMMON_BATCH_PROCESSING(98136,"分批处理中"),
     COMMON_NOT_FOUND_PUSH_DADA(98136,"未找到可下推数据"),
     COMMON_SELECT_DATA_REQUIRED(98137,"请选择要操作的数据"),
     COMMON_DATA_NOT_EXIST(98138,"要操作的数据{0}系统不存在"),
+    COMMON_BATCH_PROCESSING(98139,"分批处理中"),
 
     /**
      * AUTH 授权与登录 相关 2000 - 2200
