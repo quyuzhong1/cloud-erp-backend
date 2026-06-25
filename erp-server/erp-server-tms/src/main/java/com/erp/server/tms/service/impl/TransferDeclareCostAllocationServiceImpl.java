@@ -44,11 +44,9 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
-import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
-import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
 import com.erp.model.tms.dto.TransferDeclareCostAllocationDTO;
@@ -95,9 +93,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -401,7 +397,7 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 	}
 
 	@Override
-	public BatchResultDTO asyncReAllocation(FirstMileCostAllocationDTO.ResetIdsDTO dto) {
+	public BatchResultDTO asyncReAllocation(TransferDeclareCostAllocationDTO.ResetIdsDTO dto) {
 		if (CharSequenceUtil.isBlank(dto.getReportPeriodStr())) {
 			throw new ServiceException("核算期间不能为空");
 		}
@@ -432,7 +428,7 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 	}
 
 	@Override
-	public BatchResultDTO asyncDelete(FirstMileCostAllocationDTO.ResetIdsDTO dto) {
+	public BatchResultDTO asyncDelete(TransferDeclareCostAllocationDTO.ResetIdsDTO dto) {
 		if (CharSequenceUtil.isBlank(dto.getReportPeriodStr())) {
 			throw new ServiceException("核算期间不能为空");
 		}

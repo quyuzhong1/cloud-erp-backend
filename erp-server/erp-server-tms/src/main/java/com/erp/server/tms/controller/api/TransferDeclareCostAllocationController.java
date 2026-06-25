@@ -11,8 +11,6 @@ import javax.annotation.Resource;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
-import com.erp.model.tms.enums.TransferDeclareCostAllocationMainReportStatusEnum;
 import org.springframework.util.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,7 +20,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
-import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -193,7 +190,7 @@ public class TransferDeclareCostAllocationController extends BaseController {
     menuCode = "tms:transferDeclareCostAllocation:reAllocation",
     serviceClass = TransferDeclareCostAllocationService.class,
     keyIdName = "ids")
-    public ApiResult<List<BatchResultDTO>> reAllocation(@RequestBody @Validated FirstMileCostAllocationDTO.ResetIdsDTO dto) {
+    public ApiResult<List<BatchResultDTO>> reAllocation(@RequestBody @Validated TransferDeclareCostAllocationDTO.ResetIdsDTO dto) {
         if (CollUtil.isNotEmpty(dto.getIds())) {
             List<TransferDeclareCostAllocationEntity> entityList = transferDeclareCostAllocationService.listByIds(dto.getIds());
             if (CollectionUtils.isEmpty(entityList)) {
@@ -242,7 +239,7 @@ public class TransferDeclareCostAllocationController extends BaseController {
     menuCode = "tms:transferDeclareCostAllocation:delete",
     serviceClass = TransferDeclareCostAllocationService.class,
     keyIdName = "ids")
-    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated FirstMileCostAllocationDTO.ResetIdsDTO dto) {
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated TransferDeclareCostAllocationDTO.ResetIdsDTO dto) {
         if (CollUtil.isNotEmpty(dto.getIds())) {
             List<TransferDeclareCostAllocationEntity> entityList = transferDeclareCostAllocationService.listByIds(dto.getIds());
             if (CollectionUtils.isEmpty(entityList)) {

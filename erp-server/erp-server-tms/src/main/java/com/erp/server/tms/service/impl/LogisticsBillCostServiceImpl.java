@@ -3207,6 +3207,9 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             pushContext = buildSmallBagPushAllocationContext();
         }
 		LogisticsBillCostEntity entity = getById(id);
+        if(Objects.isNull(entity)){
+            throw new ServiceException("物流费用单不存在");
+        }
 		String reconciliationStatus = entity.getReconciliationStatus();
         if(StringUtils.isBlank(reconciliationStatus)){
             throw new ServiceException("对账状态不能为空");

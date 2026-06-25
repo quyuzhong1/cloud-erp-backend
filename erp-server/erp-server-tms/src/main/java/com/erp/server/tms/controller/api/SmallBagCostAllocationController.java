@@ -11,20 +11,14 @@ import javax.annotation.Resource;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import com.common.business.enums.ConfirmStatusEnum;
-import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
-import com.erp.model.tms.entity.FirstMileCostAllocationEntity;
-import com.erp.model.tms.enums.SmallBagCostAllocationMainReportStatusEnum;
 import org.springframework.util.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
-import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -200,7 +194,7 @@ public class SmallBagCostAllocationController extends BaseController {
     serviceClass = SmallBagCostAllocationService.class,
     tableAlias = "t",
     keyIdName = "ids")
-    public ApiResult<List<BatchResultDTO>> reAllocation(@RequestBody FirstMileCostAllocationDTO.ResetIdsDTO dto) {
+    public ApiResult<List<BatchResultDTO>> reAllocation(@RequestBody SmallBagCostAllocationDTO.ResetIdsDTO dto) {
         if (CollUtil.isNotEmpty(dto.getIds())) {
             List<SmallBagCostAllocationEntity> entityList = smallBagCostAllocationService.listByIds(dto.getIds());
             if (CollectionUtils.isEmpty(entityList)) {
@@ -250,7 +244,7 @@ public class SmallBagCostAllocationController extends BaseController {
     serviceClass = SmallBagCostAllocationService.class,
     tableAlias = "t",
     keyIdName = "ids")
-    public ApiResult<List<BatchResultDTO>> delete(@RequestBody FirstMileCostAllocationDTO.ResetIdsDTO dto) {
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody SmallBagCostAllocationDTO.ResetIdsDTO dto) {
         if (CollUtil.isNotEmpty(dto.getIds())) {
             List<SmallBagCostAllocationEntity> entityList = smallBagCostAllocationService.listByIds(dto.getIds());
             if (CollectionUtils.isEmpty(entityList)) {

@@ -9,7 +9,6 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.TransferDeclareCostAllocationDTO;
 import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
-import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
 import com.erp.model.tms.entity.TmsAsyncTaskRecordEntity;
 import com.erp.model.tms.entity.TransferDeclareCostAllocationEntity;
 import com.erp.model.tms.entity.TransferDeclareCostAllocationMainEntity;
@@ -68,11 +67,11 @@ public interface TransferDeclareCostAllocationService extends SuperService<Trans
      */
     void pushTransferDeclareCostAllocation(TmsAsyncTaskRecordEntity taskRecord);
 
-    BatchResultDTO asyncReAllocation(FirstMileCostAllocationDTO.ResetIdsDTO dto);
+    BatchResultDTO asyncReAllocation(TransferDeclareCostAllocationDTO.ResetIdsDTO dto);
 
     void pushReAllocation(TmsAsyncTaskRecordEntity taskRecord);
 
-    BatchResultDTO asyncDelete(FirstMileCostAllocationDTO.ResetIdsDTO dto);
+    BatchResultDTO asyncDelete(TransferDeclareCostAllocationDTO.ResetIdsDTO dto);
 
     void pushDelete(TmsAsyncTaskRecordEntity taskRecord);
     

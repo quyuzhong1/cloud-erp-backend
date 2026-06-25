@@ -30,7 +30,6 @@ import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.dto.BiSettlementExchangeRateDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
-import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
 import com.erp.model.tms.dto.SmallBagCostAllocationDTO;
 import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
 import com.erp.model.tms.dto.SmallBagCostAllocationDTO.ListDTO;
@@ -574,7 +573,7 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 	}
 
 	@Override
-	public BatchResultDTO asyncReAllocation(FirstMileCostAllocationDTO.ResetIdsDTO dto) {
+	public BatchResultDTO asyncReAllocation(SmallBagCostAllocationDTO.ResetIdsDTO dto) {
 		if (CharSequenceUtil.isBlank(dto.getReportPeriodStr())) {
 			throw new ServiceException("核算期间不能为空");
 		}
@@ -604,7 +603,7 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 	}
 
 	@Override
-	public BatchResultDTO asyncDelete(FirstMileCostAllocationDTO.ResetIdsDTO dto) {
+	public BatchResultDTO asyncDelete(SmallBagCostAllocationDTO.ResetIdsDTO dto) {
 		if (CharSequenceUtil.isBlank(dto.getReportPeriodStr())) {
 			throw new ServiceException("核算期间不能为空");
 		}
