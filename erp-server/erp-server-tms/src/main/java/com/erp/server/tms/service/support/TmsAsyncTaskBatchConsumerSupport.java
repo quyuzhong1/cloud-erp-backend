@@ -99,6 +99,7 @@ public class TmsAsyncTaskBatchConsumerSupport {
             int totalSuccess = 0;
             int totalFailed = 0;
             int batchNumber = 0;
+            int detailCount = Objects.isNull(taskRecord.getDetailCount()) ? 0 : taskRecord.getDetailCount();
 
             log.info("开始分批处理{}，taskId: {}, 批次大小: {}, 预计总数: {}",
                 handler.taskDisplayName(), taskId, batchSize, currentRecord.getDetailCount());
@@ -157,6 +158,10 @@ public class TmsAsyncTaskBatchConsumerSupport {
                 totalSuccess += result.getSuccessCount();
                 totalFailed += result.getFailedCount();
 
+                //限制不能超过一开始记录的子任务数
+                if(totalProcessed >= detailCount ){
+                    break;
+                }
                 try {
                     asyncTaskRecordService.lambdaUpdate()
                         .set(TmsAsyncTaskRecordEntity::getErrorCount, totalFailed)
@@ -251,6 +256,7 @@ public class TmsAsyncTaskBatchConsumerSupport {
             int totalProcessed = 0;
             int totalFailed = 0;
             int batchNumber = 0;
+            int detailCount = Objects.isNull(taskRecord.getDetailCount()) ? 0 : taskRecord.getDetailCount();
 
             log.info("开始分批处理{}，taskId: {}, 批次大小: {}, 预计总数: {}",
                 handler.taskDisplayName(), taskId, batchSize, currentRecord.getDetailCount());
@@ -308,6 +314,10 @@ public class TmsAsyncTaskBatchConsumerSupport {
 
                 totalProcessed += batchDetails.size();
                 totalFailed += result.getFailedCount();
+                //限制不能超过一开始记录的子任务数
+                if(totalProcessed >= detailCount ){
+                    break;
+                }
 
                 try {
                     asyncTaskRecordService.lambdaUpdate()
