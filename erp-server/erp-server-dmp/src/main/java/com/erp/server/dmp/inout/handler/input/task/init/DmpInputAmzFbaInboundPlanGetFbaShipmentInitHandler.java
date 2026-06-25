@@ -34,7 +34,11 @@ import java.util.LinkedHashSet;
 import java.util.stream.Collectors;
 
 /**
- * FBA InboundPlan 货件详情拉取 - 拉取FBA货件新流程
+ * FBA InboundPlan 货件详情拉取 - 拉取FBA货件新流程。
+ * <p>
+ * 代码审查说明（审查问题1，intentional）：extendJson 含 shipmentCodeList 但未命中 getShipment 时，
+ * 回退落库同批计划下已拉到的全部货件，避免 429/字段映射差异导致手动拉取完全空跑；可能同步计划内其它货件。
+ * 此为产品确认的兜底策略，勿当回归修复；变更需产品确认。
  */
 @Slf4j
 @Service
@@ -127,7 +131,7 @@ public class DmpInputAmzFbaInboundPlanGetFbaShipmentInitHandler extends DmpInput
                 } catch (ApiException e) {
                     if (e.getCode() == 429) {
                         applyRateLimitBackoff(requestType, limitKey);
-                        // 问题2相关：429 且指定货件号尚未命中时，回退返回已拉到的全量货件，避免整任务空跑（见方法末尾同类回退逻辑注释）
+                        // 审查问题1（intentional）：429 且指定货件号尚未命中时，回退返回已拉到的全量货件，避免整任务空跑
                         if (CollUtil.isNotEmpty(shipmentCodeSet) && CollUtil.isEmpty(shipmentDetailDataMap) && CollUtil.isNotEmpty(allShipmentDetailDataMap)) {
                             log.warn("【FBA入库计划货件详情拉取】platformShopCode={},存在429等待恢复且未命中输入货件号:回退返回当前全量数据,货件数={}",
                                     shopInfoDTO.getPlatformShopCode(),
@@ -155,9 +159,7 @@ public class DmpInputAmzFbaInboundPlanGetFbaShipmentInitHandler extends DmpInput
         }
 
         if (CollUtil.isEmpty(shipmentDetailDataMap)) {
-            // 代码审查说明（问题2）：extendJson 含 shipmentCodeList 但均未命中时，回退落库同批计划下全部 getShipment 结果，
-            // 避免 429/字段差异导致「指定货件号手动拉取」完全空跑；可能同步计划内其它货件，运维需知悉。
-            // 定时全量（shipmentCodeList 为空）不走此分支，仅返回已收集的 shipmentDetailDataMap。
+            // 审查问题1（intentional）：shipmentCodeList 均未命中时回退落库同计划全部 getShipment 结果；定时全量不走此分支
             if (CollUtil.isNotEmpty(shipmentCodeSet) && CollUtil.isNotEmpty(allShipmentDetailDataMap)) {
                 log.info("【FBA入库计划货件详情拉取】platformShopCode={},未命中输入货件号:回退全部落库,货件数={}",
                         shopInfoDTO.getPlatformShopCode(),

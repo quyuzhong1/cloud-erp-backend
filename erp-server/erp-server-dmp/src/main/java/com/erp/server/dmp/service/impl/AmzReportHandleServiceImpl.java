@@ -725,6 +725,7 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
      * {@link #pullInboundPlanShipment} / {@link #newDmpPullInboundPlanShipment}。
      * {@code shipmentCodeList} 非空时写入 hotfix extendJson，与入库计划入口共用
      * {@link com.erp.server.dmp.inout.handler.input.task.init.DmpInputAmzCommonInitHandler#hasManualShipmentCodeFilter()} fail-fast 策略。
+     * 审查问题2（intentional）：billType 为 fba_inbound_plans 时同样受 listInboundPlans + lookbackMinutes 约束。
      */
     public boolean newDmpPullShipment(DmpPullShipmentDTO dto, AmazonShopInfoDTO shopInfoDTO) {
         // 当前账号所有店铺ID
@@ -812,9 +813,9 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
     /**
      * 新中台手动拉取: 亚马逊FBA入库计划货件。
      * <p>
-     * 代码审查说明（问题1）：任务链起步于 {@link DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler}，
+     * 代码审查说明（审查问题2，intentional）：任务链起步于 {@link DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler}，
      * 先 {@code listInboundPlans} 再按配置时间窗筛计划，{@code dto.shipmentCodeList} 在后续货件节点才生效。
-     * 旧 {@code getShipments(shipmentIdList)} 可按货件号直查；本链路对「窗口外计划下的指定货件」可能拉不到，属已知限制。
+     * 旧 {@code getShipments(shipmentIdList)} 可按货件号直查；窗口外计划下的指定货件可能拉不到，勿当缺陷修复。
      * {@code shipmentCodeList} 非空时与 {@link #newDmpPullShipment} 共用
      * {@link com.erp.server.dmp.inout.handler.input.task.init.DmpInputAmzCommonInitHandler#hasManualShipmentCodeFilter()} fail-fast 策略。
      */

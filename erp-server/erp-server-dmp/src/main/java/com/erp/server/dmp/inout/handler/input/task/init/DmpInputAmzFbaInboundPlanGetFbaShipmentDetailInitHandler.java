@@ -62,7 +62,11 @@ public class DmpInputAmzFbaInboundPlanGetFbaShipmentDetailInitHandler extends Dm
 
         AmazonRequestTypeRateLimiterEnum requestType = AmazonRequestTypeRateLimiterEnum.FBA_SHIPMENT_DETAIL;
         String limitKey = buildRateLimitKey(shopInfoDTO, requestType);
+        boolean manualPull = hasManualShipmentCodeFilter();
         if (isRateLimited(limitKey)) {
+            if (manualPull) {
+                throw new ServiceException("手动拉取FBA货件明细失败: Amazon API 429 限流等待恢复, taskId=" + dmpInputTaskEntity.getId());
+            }
             log.warn("【FBA入库计划货件明细拉取】platformShopCode={},存在429等待恢复:放弃当前请求任务", shopInfoDTO.getPlatformShopCode());
             disableNextStatus(dmpResponse);
             return Collections.emptyList();
@@ -70,7 +74,6 @@ public class DmpInputAmzFbaInboundPlanGetFbaShipmentDetailInitHandler extends Dm
 
         FbaInboundApi api = AmazonSpApiInitUtils.create(FbaInboundApi.class, shopInfoDTO, false);
         List<JSONObject> allItemList = new ArrayList<>();
-        boolean manualPull = hasManualShipmentCodeFilter();
         List<String> failedShipmentIds = new ArrayList<>();
 
         for (Map<String, Object> parentMongo : parentMongoData) {
@@ -115,6 +118,11 @@ public class DmpInputAmzFbaInboundPlanGetFbaShipmentDetailInitHandler extends Dm
                 redisUtil.set(cacheKey, JSON.toJSONString(curItemJsonList), 300);
                 allItemList.addAll(curItemJsonList);
             } catch (ApiException e) {
+                if (e.getCode() == 429 && manualPull) {
+                    applyRateLimitBackoff(requestType, limitKey);
+                    disableNextStatus(dmpResponse);
+                    throw new ServiceException("手动拉取FBA货件明细失败: Amazon API 429 限流, taskId=" + dmpInputTaskEntity.getId());
+                }
                 if (handleRateLimitAndCheckNeedStop(e, requestType, limitKey, shopInfoDTO, dmpResponse, "FBA入库计划货件明细拉取")) {
                     return Collections.emptyList();
                 }

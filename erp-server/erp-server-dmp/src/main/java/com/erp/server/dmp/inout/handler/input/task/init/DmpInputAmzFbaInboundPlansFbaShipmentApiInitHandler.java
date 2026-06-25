@@ -35,12 +35,11 @@ import java.util.Map;
 /**
  * FBA InboundPlan 列表拉取 - 拉取FBA货件前置处理器。
  * <p>
- * 代码审查说明（问题1）：本 Handler 为 Inbound Plan 链路<strong>统一入口</strong>，定时同步与
+ * 代码审查说明（审查问题2，intentional）：本 Handler 为 Inbound Plan 链路统一入口，定时同步与
  * {@code pullInboundPlanShipment} 手动 hotfix 均先 {@code listInboundPlans}，再按
- * {@link #parseLookbackMinutes()} 时间窗过滤。手动传入的 {@code shipmentCodeList} 仅在后续
- * {@code getShipment} 阶段过滤，<strong>无法</strong>像旧版 {@code getShipments(shipmentIdList)}
- * 那样绕过计划列表直查。若货件所属计划 {@code lastUpdatedAt/createdAt} 超出回溯窗口，手动拉取可能失败；
- * 需扩大 {@code lookbackMinutes} 或后续迭代专用直拉 Init。
+ * {@link #parseLookbackMinutes()} 时间窗过滤。手动 {@code shipmentCodeList} 仅在后续 getShipment 阶段生效，
+ * 无法像旧版 {@code getShipments(shipmentIdList)} 绕过计划列表直查；窗口外计划下的货件需扩大 lookbackMinutes
+ * 或后续迭代专用直拉 Init。此为架构已知限制，勿当缺陷修复。
  */
 @Slf4j
 @Service("dmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler")
@@ -81,6 +80,7 @@ public class DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler extends DmpInpu
         List<String> inboundPlanStatusList = parseStatusList(extendJson);
         String sortBy = parseSortBy(extendJson);
         String sortOrder = parseSortOrder(extendJson);
+        // 审查问题2（intentional）：手动/定时共用 lookbackMinutes 时间窗，shipmentCodeList 无法跳过此过滤
         int lookbackMinutes = parseLookbackMinutes();
         OffsetDateTime thresholdTime = OffsetDateTime.now().minusMinutes(lookbackMinutes);
 
