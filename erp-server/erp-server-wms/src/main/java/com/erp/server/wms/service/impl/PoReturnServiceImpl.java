@@ -105,7 +105,7 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_PURCHASE_RE
  * </p>
  *
  * @author Luo_WG
- * @since 2023-04-07
+ * @since 2023-04-07    
  */
 @Slf4j
 @Service
@@ -208,6 +208,10 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     private PurchaseOrderDetailService purchaseOrderDetailService;
     @Resource
     private PurchaseOrderSupplierService purchaseOrderSupplierService;
+    @Resource
+    private AfterSalePackService afterSalePackService;
+    @Resource
+    private AfterSalePackDetailService afterSalePackDetailService;
 
     /**
      * 主页分页查询
@@ -289,6 +293,19 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     @Override
     @Transactional(rollbackFor = Exception.class)
     public PoReturnEntity add(PurchaseReturnOrderDTO.AddDTO dto) {
+        // 整箱退货要求 returnDetailType=pack 且明细带 afterSalePackDetailList，不能与普通 SKU 明细混用。
+        checkReturnDetailType(dto);
+        // 整箱退货的退货数量以后端按箱内 actualQty 汇总为准，不直接使用前端传入的明细 returnQty。
+        fillAfterSalePackReturnQty(dto);
+        // 普通 SKU 退货校验 returnQty > 0；整箱退货由箱明细数量逻辑处理。
+        checkSkuReturnQtyForAdd(dto);
+        // 整箱退货：所有 SKU 明细行必须填写仓位，任意一行为空则拦截。
+        checkPackReturnWarehouseLocationForAdd(dto);
+        // 整箱退货统一不挂采购订单：无论前端是否回传 purchaseOrderId，都强制清空，保持与 PDA 端语义一致。
+        if (CollectionUtils.isNotEmpty(dto.getPurchasePriceDetailList())
+                && CharSequenceUtil.equals(resolveReturnDetailType(dto.getReturnDetailType(), hasAfterSalePackDetailsForAdd(dto)), ReturnDetailTypeEnum.PACK.getCode())) {
+            dto.setPurchaseOrderId(null);
+        }
         FindUserDTO userDTO = new FindUserDTO();
 
         //获取用户信息
@@ -325,6 +342,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         //设置收货单主表
         PoReturnEntity poReturnEntity = new PoReturnEntity();
         BeanMapperUtils.copy(dto, poReturnEntity);
+        poReturnEntity.setReturnDetailType(resolveReturnDetailType(dto.getReturnDetailType(), hasAfterSalePackDetailsForAdd(dto)));
         if (CharSequenceUtil.isBlank(poReturnEntity.getReturnType())){
             poReturnEntity.setReturnType(SourceTypeEnum.SELF_ADD.getCode());
         }
@@ -395,6 +413,8 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
         //保存详情信息
         poReturnDetailService.add(dto, poReturnEntity.getId());
+        // 整箱退货保存后占用售后装箱单，并回写箱明细实退数量和差异数量。
+        syncAfterSalePackForAdd(dto, poReturnEntity);
         //记录明细sku信息日志
         List<PoReturnDetailEntity> detailEntityList = poReturnDetailService.getDetailByMainId(poReturnEntity.getId());
         String skuMsg = detailEntityList.stream()
@@ -403,7 +423,11 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         msg = msg+","+skuMsg;
         //操作日志
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), poReturnEntity.getId(), "新增操作");
-
+        // 整箱退货：单独记录箱唛新增日志，与修改时 addAfterSalePackUpdateLog 保持一致
+        boolean packReturnDetail = CharSequenceUtil.equals(resolveReturnDetailType(dto.getReturnDetailType(), hasAfterSalePackDetailsForAdd(dto)), ReturnDetailTypeEnum.PACK.getCode());
+        if (packReturnDetail) {
+            addAfterSalePackAddLog(dto, poReturnEntity);
+        }
         return poReturnEntity;
     }
 
@@ -419,8 +443,40 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean update(PurchaseReturnOrderDTO.UpdateDTO dto) {
-
         PoReturnEntity oldEntity = this.getById(dto.getId());
+        boolean oldPackReturnDetail = CollectionUtils.isNotEmpty(listUsedAfterSalePack(dto.getId()));
+        String oldReturnDetailType = (CharSequenceUtil.equals(oldEntity.getReturnDetailType(), ReturnDetailTypeEnum.PACK.getCode()) || oldPackReturnDetail)
+                ? ReturnDetailTypeEnum.PACK.getCode() : ReturnDetailTypeEnum.SKU.getCode();
+        String newReturnDetailType = resolveReturnDetailType(dto.getReturnDetailType(), hasAfterSalePackDetailsForUpdate(dto));
+        if (!CharSequenceUtil.equals(oldReturnDetailType, newReturnDetailType)) {
+            if (CharSequenceUtil.equals(oldReturnDetailType, ReturnDetailTypeEnum.PACK.getCode())
+                    && CharSequenceUtil.equals(newReturnDetailType, ReturnDetailTypeEnum.SKU.getCode())) {
+                throw new ServiceException("整箱退货单不允许修改为单个SKU退货");
+            }
+            if (CharSequenceUtil.equals(oldReturnDetailType, ReturnDetailTypeEnum.SKU.getCode())
+                    && CharSequenceUtil.equals(newReturnDetailType, ReturnDetailTypeEnum.PACK.getCode())) {
+                throw new ServiceException("单个SKU退货单不允许修改为整箱退货");
+            }
+            throw new ServiceException("退货明细类型不允许修改");
+        }
+        boolean packReturnDetail = CharSequenceUtil.equals(newReturnDetailType, ReturnDetailTypeEnum.PACK.getCode());
+        List<AfterSalePackDTO.DetailDTO> oldAfterSalePackDetailList = packReturnDetail
+                ? getAfterSalePackDetailMap(dto.getId()).values().stream().flatMap(List::stream).collect(Collectors.toList())
+                : Collections.emptyList();
+        // 修改时仍按整箱/普通 SKU 两种明细类型校验，避免同一退货单混用。
+        checkReturnDetailType(dto);
+        // 整箱退货重新按本次传入的箱内 actualQty 汇总每个 SKU 的 returnQty。
+        fillAfterSalePackReturnQty(dto);
+        // 普通 SKU 退货校验 returnQty > 0；整箱退货不走该校验。
+        checkSkuReturnQtyForUpdate(dto);
+        // 整箱退货：所有 SKU 明细行必须填写仓位，任意一行为空则拦截。
+        checkPackReturnWarehouseLocationForUpdate(dto);
+        // 整箱退货统一不挂采购订单：无论前端是否回传 purchaseOrderId，都强制清空，保持与 PDA 端语义一致。
+        if (packReturnDetail
+                && CollectionUtils.isNotEmpty(dto.getPurchasePriceDetailList())) {
+            dto.setPurchaseOrderId(null);
+        }
+
         //获取用户信息
         FindUserDTO userDTO = sysUserFeign.getUserByUserId(dto.getReturnUserId());
         //获取核算公司
@@ -453,6 +509,8 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         //设置收货单主表
         PoReturnEntity poReturnEntity = new PoReturnEntity();
         BeanMapperUtils.copy(dto, poReturnEntity);
+        poReturnEntity.setReturnDetailType(newReturnDetailType);
+        poReturnEntity.setCode(oldEntity.getCode());
         if (CharSequenceUtil.isNotBlank(dto.getPurchaseOrderId())) {
             //获取采购订单主表信息
             PurchaseOrderEntity purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(dto.getPurchaseOrderId());
@@ -503,7 +561,13 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         operateLogService.addModuleOperateLogByObj(oldEntity, poReturnEntity, ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), poReturnEntity.getId(), "", "");
 
         //更新收货单详情表信息
-        return poReturnDetailService.update(dto, poReturnEntity.getId());
+        Boolean update = poReturnDetailService.update(dto, poReturnEntity.getId());
+        // 后端按“新明细覆盖旧明细”同步售后装箱；前端未传回的旧明细自动按 actualQty=0 释放。
+        syncAfterSalePackForUpdate(dto, poReturnEntity);
+        if (packReturnDetail) {
+            addAfterSalePackUpdateLog(dto, poReturnEntity, oldAfterSalePackDetailList);
+        }
+        return update;
     }
 
     /**
@@ -593,6 +657,8 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryList = inventoryService.listSkuInventory(skuInventoryDTO);
 
         List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(Collections.singletonList(poReturnEntity.getReturnWarehouseId()));
+        Map<String, List<AfterSalePackDTO.DetailDTO>> afterSalePackDetailMap = getAfterSalePackDetailMap(id);
+        viewDTO.setReturnDetailType(CharSequenceUtil.blankToDefault(poReturnEntity.getReturnDetailType(), afterSalePackDetailMap.isEmpty() ? ReturnDetailTypeEnum.SKU.getCode() : ReturnDetailTypeEnum.PACK.getCode()));
 
         for (PoReturnDetailEntity poReturnDetailEntity : detail) {
             Integer stockInQty = stockInDetailEntityList.stream().filter(req -> req.getPurchaseOrderDetailId().equals(poReturnDetailEntity.getPurchaseOrderDetailId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
@@ -633,11 +699,27 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
             WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getCode().equals(detailView.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
             detailView.setWarehouseLocationName(warehouseLocationEntity.getName());
+            // 整箱退货：移除单行箱唛或整箱移除SKU时 actualQty=0，详情接口不应回传这些已移除的箱唛明细。
+            detailView.setAfterSalePackDetailList(filterActiveAfterSalePackDetails(afterSalePackDetailMap.get(detailView.getSkuId())));
 
             detailViewDTOS.add(detailView);
         }
         viewDTO.setPurchasePriceDetailList(detailViewDTOS);
         return viewDTO;
+    }
+
+    /**
+     * 过滤已移除的售后装箱明细：actualQty <= 0 视为「单行移除」或「整箱移除SKU」，详情接口不应回传。
+     * 与 addAfterSalePackAddLog / addAfterSalePackUpdateLog 等位置保持同一判定口径。
+     */
+    private List<AfterSalePackDTO.DetailDTO> filterActiveAfterSalePackDetails(List<AfterSalePackDTO.DetailDTO> detailList) {
+        if (CollectionUtils.isEmpty(detailList)) {
+            return detailList;
+        }
+        return detailList.stream()
+                .filter(Objects::nonNull)
+                .filter(detail -> getAfterSalePackActualQty(detail) > MathUtil.ZERO)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -753,6 +835,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     @Override
     @Transactional(rollbackFor = Exception.class)
     public PoReturnEntity addAndSubmit(PurchaseReturnOrderDTO.AddDTO dto) {
+        // 新增并提交复用 add 的整箱退货逻辑，提交环节不再额外同步售后装箱信息。
         PoReturnEntity entity = this.add(dto);
         if (CharSequenceUtil.isBlank(entity.getId())) {
             throw new ServiceException(ApiError.BILL_SAVE_FAILED);
@@ -1549,6 +1632,8 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         if (count != warehouseReceiveList.size()) {
             throw new ServiceException(ApiError.BILL_VOID_ALLOWED_STATUS_ONLY);
         }
+        // 删除采购退货单时需要处理售后装箱的数据
+        handleAfterSalePack(ids);
 
         //修改状态为待提交
         lambdaUpdate().set(PoReturnEntity::getInvalidStatus, Boolean.TRUE)
@@ -1590,6 +1675,8 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         if (count != warehouseReceiveList.size()) {
             throw new ServiceException(ApiError.BILL_DELETE_ALLOWED_STATUS_ONLY);
         }
+        // 删除采购退货单时需要处理售后装箱的数据
+        handleAfterSalePack(ids);
         //删除详情表
         poReturnDetailService.delete(ids);
 
@@ -1737,6 +1824,655 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 .eq(PoReturnEntity::getId, id)
                 .set(CharSequenceUtil.isNotBlank(syncKingdeeId), PoReturnEntity::getSyncKingdeeId, syncKingdeeId)
                 .update();
+    }
+
+    /**
+     * 新增采购退货单后，同步整箱退货占用状态与箱内实退差异。
+     * 前端需在退货明细的 afterSalePackDetailList 中传入售后装箱明细 id、售后装箱 id 和 actualQty。
+     */
+    private void syncAfterSalePackForAdd(PurchaseReturnOrderDTO.AddDTO dto, PoReturnEntity poReturnEntity) {
+        List<AfterSalePackDTO.DetailDTO> boxDetailList = getAfterSalePackDetailsForAdd(dto);
+        if (CollectionUtils.isEmpty(boxDetailList)) {
+            return;
+        }
+        syncAfterSalePack(boxDetailList, poReturnEntity);
+    }
+
+    private void checkReturnDetailType(PurchaseReturnOrderDTO.AddDTO dto) {
+        if (dto == null || CollectionUtils.isEmpty(dto.getPurchasePriceDetailList())) {
+            return;
+        }
+        checkReturnDetailType(dto.getReturnDetailType(), hasAfterSalePackDetailsForAdd(dto), hasSkuDetailsForAdd(dto));
+    }
+
+    private void checkReturnDetailType(PurchaseReturnOrderDTO.UpdateDTO dto) {
+        if (dto == null || CollectionUtils.isEmpty(dto.getPurchasePriceDetailList())) {
+            return;
+        }
+        checkReturnDetailType(dto.getReturnDetailType(), hasAfterSalePackDetailsForUpdate(dto), hasSkuDetailsForUpdate(dto));
+    }
+
+    private void checkReturnDetailType(String returnDetailType, boolean hasPackDetail, boolean hasSkuDetail) {
+        String detailType = CharSequenceUtil.blankToDefault(returnDetailType, hasPackDetail ? ReturnDetailTypeEnum.PACK.getCode() : ReturnDetailTypeEnum.SKU.getCode());
+        if (!CharSequenceUtil.equals(detailType, ReturnDetailTypeEnum.SKU.getCode()) && !CharSequenceUtil.equals(detailType, ReturnDetailTypeEnum.PACK.getCode())) {
+            throw new ServiceException("退货明细类型错误");
+        }
+        if (hasPackDetail && hasSkuDetail) {
+            throw new ServiceException("同一个采购退货单不能同时存在单个SKU退货和整箱退货");
+        }
+        if (CharSequenceUtil.equals(detailType, ReturnDetailTypeEnum.PACK.getCode()) && !hasPackDetail) {
+            throw new ServiceException("整箱退货必须包含箱唛明细");
+        }
+        if (CharSequenceUtil.equals(detailType, ReturnDetailTypeEnum.SKU.getCode()) && hasPackDetail) {
+            throw new ServiceException("单个SKU退货不能包含箱唛明细");
+        }
+    }
+
+    private void checkSkuReturnQtyForAdd(PurchaseReturnOrderDTO.AddDTO dto) {
+        if (dto == null || CollectionUtils.isEmpty(dto.getPurchasePriceDetailList())
+                || CharSequenceUtil.equals(resolveReturnDetailType(dto.getReturnDetailType(), hasAfterSalePackDetailsForAdd(dto)), ReturnDetailTypeEnum.PACK.getCode())) {
+            return;
+        }
+        List<String> skuNos = dto.getPurchasePriceDetailList().stream()
+                .filter(Objects::nonNull)
+                .filter(detail -> Optional.ofNullable(detail.getReturnQty()).orElse(MathUtil.ZERO) <= MathUtil.ZERO)
+                .map(detail -> CharSequenceUtil.blankToDefault(detail.getSkuNo(), detail.getSkuId()))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(skuNos)) {
+            throw new ServiceException("单个SKU退货实退数量必须大于0，SKU：" + String.join(",", skuNos));
+        }
+    }
+
+    private void checkSkuReturnQtyForUpdate(PurchaseReturnOrderDTO.UpdateDTO dto) {
+        if (dto == null || CollectionUtils.isEmpty(dto.getPurchasePriceDetailList())
+                || CharSequenceUtil.equals(resolveReturnDetailType(dto.getReturnDetailType(), hasAfterSalePackDetailsForUpdate(dto)), ReturnDetailTypeEnum.PACK.getCode())) {
+            return;
+        }
+        List<String> skuNos = dto.getPurchasePriceDetailList().stream()
+                .filter(Objects::nonNull)
+                .filter(detail -> Optional.ofNullable(detail.getReturnQty()).orElse(MathUtil.ZERO) <= MathUtil.ZERO)
+                .map(detail -> CharSequenceUtil.blankToDefault(detail.getSkuNo(), detail.getSkuId()))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(skuNos)) {
+            throw new ServiceException("单个SKU退货实退数量必须大于0，SKU：" + String.join(",", skuNos));
+        }
+    }
+
+    /**
+     * 整箱退货新增时校验：所有 SKU 明细行的仓位必须有值，任意一行为 null（前端未带或多箱仓位不一致时被置空）则抛错。
+     * 空仓位 code 为 ""，属于合法值（同一 SKU 下的所有箱唛均来自空仓位），不能拦截。
+     * 仅整箱退货（returnDetailType=pack 或带有 afterSalePackDetailList）才触发。
+     */
+    private void checkPackReturnWarehouseLocationForAdd(PurchaseReturnOrderDTO.AddDTO dto) {
+        if (dto == null || CollectionUtils.isEmpty(dto.getPurchasePriceDetailList())
+                || !CharSequenceUtil.equals(resolveReturnDetailType(dto.getReturnDetailType(), hasAfterSalePackDetailsForAdd(dto)), ReturnDetailTypeEnum.PACK.getCode())) {
+            return;
+        }
+        List<String> skuNos = dto.getPurchasePriceDetailList().stream()
+                .filter(Objects::nonNull)
+                .filter(detail -> detail.getWarehouseLocation() == null)
+                .map(detail -> CharSequenceUtil.blankToDefault(detail.getSkuNo(), detail.getSkuId()))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(skuNos)) {
+            throw new ServiceException("保存失败，sku【{}】下多个箱唛的退货仓位不一致，需调整成一致的退货仓位", String.join(",", skuNos));
+        }
+    }
+
+    /**
+     * 整箱退货修改时校验：所有 SKU 明细行的仓位必须有值，任意一行为 null（前端未带或多箱仓位不一致时被置空）则抛错。
+     * 空仓位 code 为 ""，属于合法值（同一 SKU 下的所有箱唛均来自空仓位），不能拦截。
+     * 仅整箱退货（returnDetailType=pack 或带有 afterSalePackDetailList）才触发。
+     */
+    private void checkPackReturnWarehouseLocationForUpdate(PurchaseReturnOrderDTO.UpdateDTO dto) {
+        if (dto == null || CollectionUtils.isEmpty(dto.getPurchasePriceDetailList())
+                || !CharSequenceUtil.equals(resolveReturnDetailType(dto.getReturnDetailType(), hasAfterSalePackDetailsForUpdate(dto)), ReturnDetailTypeEnum.PACK.getCode())) {
+            return;
+        }
+        List<String> skuNos = dto.getPurchasePriceDetailList().stream()
+                .filter(Objects::nonNull)
+                .filter(detail -> detail.getWarehouseLocation() == null)
+                .map(detail -> CharSequenceUtil.blankToDefault(detail.getSkuNo(), detail.getSkuId()))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(skuNos)) {
+            throw new ServiceException("保存失败，sku【{}】下多个箱唛的退货仓位不一致，需调整成一致的退货仓位", String.join(",", skuNos));
+        }
+    }
+
+    private String resolveReturnDetailType(String returnDetailType, boolean hasPackDetail) {
+        return CharSequenceUtil.blankToDefault(returnDetailType, hasPackDetail ? ReturnDetailTypeEnum.PACK.getCode() : ReturnDetailTypeEnum.SKU.getCode());
+    }
+
+    private boolean hasAfterSalePackDetailsForAdd(PurchaseReturnOrderDTO.AddDTO dto) {
+        return dto.getPurchasePriceDetailList().stream()
+                .filter(Objects::nonNull)
+                .anyMatch(detail -> CollectionUtils.isNotEmpty(detail.getAfterSalePackDetailList()));
+    }
+
+    private boolean hasAfterSalePackDetailsForUpdate(PurchaseReturnOrderDTO.UpdateDTO dto) {
+        return dto.getPurchasePriceDetailList().stream()
+                .filter(Objects::nonNull)
+                .anyMatch(detail -> CollectionUtils.isNotEmpty(detail.getAfterSalePackDetailList()));
+    }
+
+    private boolean hasSkuDetailsForAdd(PurchaseReturnOrderDTO.AddDTO dto) {
+        return dto.getPurchasePriceDetailList().stream()
+                .filter(Objects::nonNull)
+                .anyMatch(detail -> CollectionUtils.isEmpty(detail.getAfterSalePackDetailList()));
+    }
+
+    private boolean hasSkuDetailsForUpdate(PurchaseReturnOrderDTO.UpdateDTO dto) {
+        return dto.getPurchasePriceDetailList().stream()
+                .filter(Objects::nonNull)
+                .anyMatch(detail -> CollectionUtils.isEmpty(detail.getAfterSalePackDetailList()));
+    }
+
+    /**
+     * 修改采购退货单后，后端兜底按最新明细覆盖旧箱唛明细：
+     * 本次未传回的旧箱唛明细默认按 actualQty=0 处理，确保移除场景也会释放占用。
+     */
+    private void syncAfterSalePackForUpdate(PurchaseReturnOrderDTO.UpdateDTO dto, PoReturnEntity poReturnEntity) {
+        List<AfterSalePackDTO.DetailDTO> oldBoxDetailList = getAfterSalePackDetailMap(poReturnEntity.getId()).values().stream()
+                .flatMap(List::stream)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+        List<AfterSalePackDTO.DetailDTO> newBoxDetailList = getAfterSalePackDetailsForUpdate(dto);
+        if (CollectionUtils.isEmpty(oldBoxDetailList) && CollectionUtils.isEmpty(newBoxDetailList)) {
+            return;
+        }
+        List<AfterSalePackDTO.DetailDTO> syncBoxDetailList = new ArrayList<>();
+        Map<String, Integer> detailIndexMap = new LinkedHashMap<>();
+        for (AfterSalePackDTO.DetailDTO oldDetail : oldBoxDetailList) {
+            AfterSalePackDTO.DetailDTO releaseDetail = new AfterSalePackDTO.DetailDTO();
+            releaseDetail.setId(oldDetail.getId());
+            releaseDetail.setMainId(oldDetail.getMainId());
+            releaseDetail.setCode(oldDetail.getCode());
+            releaseDetail.setSkuId(oldDetail.getSkuId());
+            releaseDetail.setSkuNo(oldDetail.getSkuNo());
+            releaseDetail.setPackQty(oldDetail.getPackQty());
+            releaseDetail.setActualQty(MathUtil.ZERO);
+            syncBoxDetailList.add(releaseDetail);
+            if (CharSequenceUtil.isNotBlank(releaseDetail.getId())) {
+                detailIndexMap.put(releaseDetail.getId(), syncBoxDetailList.size() - 1);
+            }
+        }
+        for (AfterSalePackDTO.DetailDTO newDetail : newBoxDetailList) {
+            if (newDetail == null) {
+                continue;
+            }
+            Integer detailIndex = CharSequenceUtil.isNotBlank(newDetail.getId()) ? detailIndexMap.get(newDetail.getId()) : null;
+            if (detailIndex == null) {
+                syncBoxDetailList.add(newDetail);
+                if (CharSequenceUtil.isNotBlank(newDetail.getId())) {
+                    detailIndexMap.put(newDetail.getId(), syncBoxDetailList.size() - 1);
+                }
+            } else {
+                syncBoxDetailList.set(detailIndex, newDetail);
+            }
+        }
+        syncAfterSalePack(syncBoxDetailList, poReturnEntity);
+    }
+
+    private List<AfterSalePackDTO.DetailDTO> getAfterSalePackDetailsForAdd(PurchaseReturnOrderDTO.AddDTO dto) {
+        if (dto == null || CollectionUtils.isEmpty(dto.getPurchasePriceDetailList())) {
+            return Collections.emptyList();
+        }
+        return dto.getPurchasePriceDetailList().stream()
+                .filter(Objects::nonNull)
+                .flatMap(detail -> Optional.ofNullable(detail.getAfterSalePackDetailList()).orElse(Collections.emptyList()).stream())
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+    }
+
+    private List<AfterSalePackDTO.DetailDTO> getAfterSalePackDetailsForUpdate(PurchaseReturnOrderDTO.UpdateDTO dto) {
+        if (dto == null || CollectionUtils.isEmpty(dto.getPurchasePriceDetailList())) {
+            return Collections.emptyList();
+        }
+        return dto.getPurchasePriceDetailList().stream()
+                .filter(Objects::nonNull)
+                .flatMap(detail -> Optional.ofNullable(detail.getAfterSalePackDetailList()).orElse(Collections.emptyList()).stream())
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+    }
+
+    private void fillAfterSalePackReturnQty(PurchaseReturnOrderDTO.AddDTO dto) {
+        if (dto == null || CollectionUtils.isEmpty(dto.getPurchasePriceDetailList())) {
+            return;
+        }
+        dto.getPurchasePriceDetailList().stream()
+                .filter(Objects::nonNull)
+                .filter(detail -> CollectionUtils.isNotEmpty(detail.getAfterSalePackDetailList()))
+                .forEach(detail -> detail.setReturnQty(sumAfterSalePackActualQty(detail.getAfterSalePackDetailList())));
+    }
+
+    private void fillAfterSalePackReturnQty(PurchaseReturnOrderDTO.UpdateDTO dto) {
+        if (dto == null || CollectionUtils.isEmpty(dto.getPurchasePriceDetailList())) {
+            return;
+        }
+        dto.getPurchasePriceDetailList().stream()
+                .filter(Objects::nonNull)
+                .filter(detail -> CollectionUtils.isNotEmpty(detail.getAfterSalePackDetailList()))
+                .forEach(detail -> detail.setReturnQty(sumAfterSalePackActualQty(detail.getAfterSalePackDetailList())));
+    }
+
+    private Integer sumAfterSalePackActualQty(List<AfterSalePackDTO.DetailDTO> detailList) {
+        return detailList.stream()
+                .filter(Objects::nonNull)
+                .map(this::getAfterSalePackActualQty)
+                .mapToInt(Integer::intValue)
+                .sum();
+    }
+
+    private Integer getAfterSalePackActualQty(AfterSalePackDTO.DetailDTO detail) {
+        return Optional.ofNullable(detail.getActualQty()).orElse(Optional.ofNullable(detail.getPackQty()).orElse(MathUtil.ZERO));
+    }
+
+    private List<AfterSalePackEntity> listUsedAfterSalePack(String poReturnId) {
+        if (CharSequenceUtil.isBlank(poReturnId)) {
+            return Collections.emptyList();
+        }
+        return afterSalePackService.lambdaQuery()
+                .eq(AfterSalePackEntity::getSourceId, poReturnId)
+                .eq(AfterSalePackEntity::getSourceType, SourceTypeEnum.PO_RETURN.getCode())
+                .list();
+    }
+
+    private void syncAfterSalePack(List<AfterSalePackDTO.DetailDTO> newBoxDetailList,
+                                   PoReturnEntity poReturnEntity) {
+        // 按售后装箱主表 id 分组，同一箱内多行 SKU 明细统一更新。
+        Map<String, List<AfterSalePackDTO.DetailDTO>> detailMap = groupAfterSalePackDetail(newBoxDetailList);
+        List<String> newPackIds = new ArrayList<>(detailMap.keySet());
+        if (CollectionUtils.isEmpty(newPackIds)) {
+            return;
+        }
+
+        List<AfterSalePackEntity> packList = afterSalePackService.listByIds(newPackIds);
+        if (packList.size() != newPackIds.size()) {
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "售后装箱单");
+        }
+        Map<String, AfterSalePackEntity> packMap = packList.stream()
+                .collect(Collectors.toMap(AfterSalePackEntity::getId, Function.identity(), (v1, v2) -> v1));
+        List<AfterSalePackDetailEntity> dbDetailList = afterSalePackDetailService.lambdaQuery()
+                .in(AfterSalePackDetailEntity::getMainId, newPackIds)
+                .list();
+        Map<String, AfterSalePackDetailEntity> dbDetailMap = dbDetailList.stream()
+                .collect(Collectors.toMap(AfterSalePackDetailEntity::getId, Function.identity(), (v1, v2) -> v1));
+
+        // 校验箱唛存在、未被其它单据占用、已封箱且已识别移仓记录。
+        validateAfterSalePack(newPackIds, packMap, poReturnEntity);
+
+        List<AfterSalePackDetailEntity> updateDetailList = new ArrayList<>();
+        for (String packId : newPackIds) {
+            List<AfterSalePackDTO.DetailDTO> detailList = detailMap.getOrDefault(packId, Collections.emptyList());
+            updateDetailList.addAll(buildAfterSalePackDetailUpdates(packId, detailList, dbDetailList, dbDetailMap));
+        }
+        // 回写 after_sale_pack_detail.actual_qty / diff_qty。
+        if (CollectionUtils.isNotEmpty(updateDetailList) && !afterSalePackDetailService.updateBatchById(updateDetailList)) {
+            throw new ServiceException("售后装箱明细保存失败");
+        }
+
+        // 回写 after_sale_pack.is_use / is_difference / source_*。
+        List<AfterSalePackEntity> updatePackList = newPackIds.stream()
+                .map(packMap::get)
+                .filter(Objects::nonNull)
+                .map(pack -> buildAfterSalePackUpdate(pack, detailMap.get(pack.getId()), dbDetailList, poReturnEntity))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(updatePackList) && !afterSalePackService.updateBatchById(updatePackList)) {
+            throw new ServiceException("售后装箱单保存失败");
+        }
+    }
+
+    private Map<String, List<AfterSalePackDTO.DetailDTO>> groupAfterSalePackDetail(List<AfterSalePackDTO.DetailDTO> boxDetailList) {
+        if (CollectionUtils.isEmpty(boxDetailList)) {
+            return Collections.emptyMap();
+        }
+        List<AfterSalePackDTO.DetailDTO> invalidDetailList = boxDetailList.stream()
+                .filter(detail -> CharSequenceUtil.isBlank(detail.getMainId()) || CharSequenceUtil.isBlank(detail.getId()))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(invalidDetailList)) {
+            throw new ServiceException("整箱退货明细的箱唛id和箱唛明细id不能为空");
+        }
+        return boxDetailList.stream()
+                .collect(Collectors.groupingBy(AfterSalePackDTO.DetailDTO::getMainId, LinkedHashMap::new, Collectors.toList()));
+    }
+
+    private void validateAfterSalePack(List<String> newPackIds,
+                                       Map<String, AfterSalePackEntity> packMap,
+                                       PoReturnEntity poReturnEntity) {
+        for (String packId : newPackIds) {
+            AfterSalePackEntity pack = packMap.get(packId);
+            if (pack == null) {
+                throw new ServiceException("箱唛已被删除，不可使用");
+            }
+            if (Boolean.TRUE.equals(pack.getIsUse()) && !CharSequenceUtil.equals(pack.getSourceId(), poReturnEntity.getId())) {
+                throw new ServiceException("箱唛【" + pack.getCode() + "】已被其它单据使用，不可重复使用");
+            }
+            if (!AfterSalePackStatusEnum.SEALED_BOX.getCode().equals(pack.getPackStatus())) {
+                throw new ServiceException("箱唛【" + pack.getCode() + "】状态不等于已封箱，不可使用");
+            }
+            if (Boolean.FALSE.equals(pack.getIsMoveWarehouse())) {
+                throw new ServiceException("箱唛【" + pack.getCode() + "】未进行移仓，请完成移仓动作");
+            }
+        }
+    }
+
+    private List<AfterSalePackDetailEntity> buildAfterSalePackDetailUpdates(String packId,
+                                                                            List<AfterSalePackDTO.DetailDTO> detailList,
+                                                                            List<AfterSalePackDetailEntity> dbDetailList,
+                                                                            Map<String, AfterSalePackDetailEntity> dbDetailMap) {
+        if (CollectionUtils.isEmpty(detailList)) {
+            return Collections.emptyList();
+        }
+        Map<String, Integer> actualQtyMap = detailList.stream()
+                .filter(detail -> CharSequenceUtil.isNotBlank(detail.getId()))
+                .collect(Collectors.groupingBy(AfterSalePackDTO.DetailDTO::getId,
+                        Collectors.summingInt(this::getAfterSalePackActualQty)));
+        List<AfterSalePackDetailEntity> updateList = new ArrayList<>();
+        for (AfterSalePackDTO.DetailDTO detailDTO : detailList) {
+            if (CharSequenceUtil.isBlank(detailDTO.getId())) {
+                throw new ServiceException("售后装箱明细id不能为空");
+            }
+            AfterSalePackDetailEntity dbDetail = dbDetailMap.get(detailDTO.getId());
+            if (dbDetail == null || !CharSequenceUtil.equals(dbDetail.getMainId(), packId)) {
+                throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "售后装箱明细");
+            }
+            if (getAfterSalePackActualQty(detailDTO) < 0) {
+                throw new ServiceException("售后装箱明细实际数量不能小于0");
+            }
+        }
+        for (String detailId : actualQtyMap.keySet()) {
+            AfterSalePackDetailEntity dbDetail = dbDetailMap.get(detailId);
+            updateList.add(buildAfterSalePackDetailUpdate(dbDetail, actualQtyMap.get(detailId)));
+        }
+        return updateList;
+    }
+
+    private AfterSalePackDetailEntity buildAfterSalePackDetailUpdate(AfterSalePackDetailEntity dbDetail, Integer actualQty) {
+        Integer packQty = Optional.ofNullable(dbDetail.getPackQty()).orElse(MathUtil.ZERO);
+        AfterSalePackDetailEntity updateEntity = new AfterSalePackDetailEntity();
+        updateEntity.setId(dbDetail.getId());
+        updateEntity.setActualQty(actualQty);
+        updateEntity.setDiffQty(packQty - actualQty);
+        return updateEntity;
+    }
+
+    private AfterSalePackEntity buildAfterSalePackUpdate(AfterSalePackEntity oldPack,
+                                                         List<AfterSalePackDTO.DetailDTO> detailList,
+                                                         List<AfterSalePackDetailEntity> dbDetailList,
+                                                         PoReturnEntity poReturnEntity) {
+        AfterSalePackEntity updateEntity = new AfterSalePackEntity();
+        updateEntity.setId(oldPack.getId());
+        if (CollectionUtils.isEmpty(detailList)) {
+            updateEntity.setIsUse(Boolean.FALSE);
+            updateEntity.setIsDifference(Boolean.FALSE);
+            updateEntity.setSourceId("");
+            updateEntity.setSourceCode("");
+            updateEntity.setSourceType("");
+        } else {
+            Map<String, Integer> actualQtyMap = detailList.stream()
+                    .collect(Collectors.groupingBy(AfterSalePackDTO.DetailDTO::getId,
+                            Collectors.summingInt(this::getAfterSalePackActualQty)));
+            boolean hasActualQty = actualQtyMap.values().stream().anyMatch(qty -> Optional.ofNullable(qty).orElse(MathUtil.ZERO) > MathUtil.ZERO);
+            if (!hasActualQty) {
+                updateEntity.setIsUse(Boolean.FALSE);
+                updateEntity.setIsDifference(Boolean.FALSE);
+                updateEntity.setSourceId("");
+                updateEntity.setSourceCode("");
+                updateEntity.setSourceType("");
+            } else {
+                updateEntity.setIsUse(Boolean.TRUE);
+                updateEntity.setIsDifference(isAfterSalePackDifference(oldPack.getId(), actualQtyMap, dbDetailList));
+                updateEntity.setSourceId(poReturnEntity.getId());
+                updateEntity.setSourceCode(poReturnEntity.getCode());
+                updateEntity.setSourceType(SourceTypeEnum.PO_RETURN.getCode());
+            }
+        }
+        return updateEntity;
+    }
+
+    private Boolean isAfterSalePackDifference(String packId,
+                                              Map<String, Integer> actualQtyMap,
+                                              List<AfterSalePackDetailEntity> dbDetailList) {
+        return dbDetailList.stream()
+                .filter(detail -> CharSequenceUtil.equals(detail.getMainId(), packId))
+                .anyMatch(detail -> {
+                    Integer packQty = Optional.ofNullable(detail.getPackQty()).orElse(MathUtil.ZERO);
+                    Integer actualQty = actualQtyMap.containsKey(detail.getId())
+                            ? actualQtyMap.get(detail.getId())
+                            : Optional.ofNullable(detail.getActualQty()).orElse(packQty);
+                    return !Objects.equals(packQty, actualQty);
+                });
+    }
+
+    private Map<String, List<AfterSalePackDTO.DetailDTO>> getAfterSalePackDetailMap(String poReturnId) {
+        List<AfterSalePackEntity> packList = listUsedAfterSalePack(poReturnId);
+        if (CollectionUtils.isEmpty(packList)) {
+            return Collections.emptyMap();
+        }
+        List<String> packIds = packList.stream().map(AfterSalePackEntity::getId).collect(Collectors.toList());
+        List<AfterSalePackDetailEntity> detailList = afterSalePackDetailService.lambdaQuery()
+                .in(AfterSalePackDetailEntity::getMainId, packIds)
+                .list();
+        if (CollectionUtils.isEmpty(detailList)) {
+            return Collections.emptyMap();
+        }
+        Map<String, AfterSalePackEntity> packMap = packList.stream()
+                .collect(Collectors.toMap(AfterSalePackEntity::getId, Function.identity(), (v1, v2) -> v1));
+        List<String> warehouseLocationIds = detailList.stream()
+                .flatMap(detail -> Stream.of(detail.getOutWarehouseLocationId(), detail.getInWarehouseLocationId()))
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, WarehouseLocationEntity> warehouseLocationMap = CollectionUtils.isEmpty(warehouseLocationIds)
+                ? Collections.emptyMap()
+                : warehouseLocationService.listByIds(warehouseLocationIds).stream()
+                .collect(Collectors.toMap(WarehouseLocationEntity::getId, Function.identity(), (v1, v2) -> v1));
+        return detailList.stream()
+                .map(detail -> buildAfterSalePackDetailDTO(detail, packMap.get(detail.getMainId()), warehouseLocationMap))
+                .collect(Collectors.groupingBy(AfterSalePackDTO.DetailDTO::getSkuId, LinkedHashMap::new, Collectors.toList()));
+    }
+
+    /**
+     * 新增采购退货单时记录整箱退货的箱唛操作日志：
+     * 按箱唛分组，每个箱唛输出一条「扫码箱唛【code】，新增了N条sku【...】」。
+     * 仅记录 actualQty > 0 的明细，与修改时的箱唛日志规则保持一致。
+     */
+    private void addAfterSalePackAddLog(PurchaseReturnOrderDTO.AddDTO dto, PoReturnEntity poReturnEntity) {
+        List<AfterSalePackDTO.DetailDTO> newDetailList = getAfterSalePackDetailsForAdd(dto);
+        if (CollectionUtils.isEmpty(newDetailList)) {
+            return;
+        }
+
+        Set<String> packIds = newDetailList.stream()
+                .map(AfterSalePackDTO.DetailDTO::getMainId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        if (CollectionUtils.isEmpty(packIds)) {
+            return;
+        }
+        Map<String, AfterSalePackEntity> packMap = afterSalePackService.listByIds(packIds).stream()
+                .collect(Collectors.toMap(AfterSalePackEntity::getId, Function.identity(), (v1, v2) -> v1));
+        Map<String, List<AfterSalePackDTO.DetailDTO>> newPackMap = newDetailList.stream()
+                .filter(detail -> CharSequenceUtil.isNotBlank(detail.getMainId()))
+                .collect(Collectors.groupingBy(AfterSalePackDTO.DetailDTO::getMainId, LinkedHashMap::new, Collectors.toList()));
+
+        List<String> logList = new ArrayList<>();
+        for (String packId : packIds) {
+            String packCode = Optional.ofNullable(packMap.get(packId)).map(AfterSalePackEntity::getCode)
+                    .orElseGet(() -> newPackMap.getOrDefault(packId, Collections.emptyList()).stream()
+                            .map(AfterSalePackDTO.DetailDTO::getCode)
+                            .filter(CharSequenceUtil::isNotBlank)
+                            .findFirst()
+                            .orElse(""));
+            List<String> skuNoList = newPackMap.getOrDefault(packId, Collections.emptyList()).stream()
+                    .filter(detail -> getAfterSalePackActualQty(detail) > MathUtil.ZERO)
+                    .map(AfterSalePackDTO.DetailDTO::getSkuNo)
+                    .filter(CharSequenceUtil::isNotBlank)
+                    .distinct()
+                    .map(skuNo -> "sku【" + skuNo + "】")
+                    .collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(skuNoList)) {
+                logList.add(CharSequenceUtil.format("扫码箱唛【{}】，新增了{}条{}", packCode, skuNoList.size(), String.join("，", skuNoList)));
+            }
+        }
+
+        if (CollectionUtils.isNotEmpty(logList)) {
+            operateLogService.addModuleOperateLog(String.join("；", logList), ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), poReturnEntity.getId(), "新增操作");
+        }
+    }
+
+    private void addAfterSalePackUpdateLog(PurchaseReturnOrderDTO.UpdateDTO dto,
+                                           PoReturnEntity poReturnEntity,
+                                           List<AfterSalePackDTO.DetailDTO> oldDetailList) {
+        List<AfterSalePackDTO.DetailDTO> newDetailList = getAfterSalePackDetailsForUpdate(dto);
+        if (CollectionUtils.isEmpty(oldDetailList) && CollectionUtils.isEmpty(newDetailList)) {
+            return;
+        }
+
+        Set<String> packIds = Stream.concat(oldDetailList.stream(), newDetailList.stream())
+                .map(AfterSalePackDTO.DetailDTO::getMainId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        if (CollectionUtils.isEmpty(packIds)) {
+            return;
+        }
+        Map<String, AfterSalePackEntity> packMap = afterSalePackService.listByIds(packIds).stream()
+                .collect(Collectors.toMap(AfterSalePackEntity::getId, Function.identity(), (v1, v2) -> v1));
+        Map<String, AfterSalePackDetailEntity> dbDetailMap = afterSalePackDetailService.lambdaQuery()
+                .in(AfterSalePackDetailEntity::getMainId, packIds)
+                .list()
+                .stream()
+                .collect(Collectors.toMap(AfterSalePackDetailEntity::getId, Function.identity(), (v1, v2) -> v1));
+        Map<String, List<AfterSalePackDTO.DetailDTO>> oldPackMap = oldDetailList.stream()
+                .filter(detail -> CharSequenceUtil.isNotBlank(detail.getMainId()))
+                .collect(Collectors.groupingBy(AfterSalePackDTO.DetailDTO::getMainId, LinkedHashMap::new, Collectors.toList()));
+        Map<String, List<AfterSalePackDTO.DetailDTO>> newPackMap = newDetailList.stream()
+                .filter(detail -> CharSequenceUtil.isNotBlank(detail.getMainId()))
+                .collect(Collectors.groupingBy(AfterSalePackDTO.DetailDTO::getMainId, LinkedHashMap::new, Collectors.toList()));
+
+        List<String> logList = new ArrayList<>();
+        for (String packId : packIds) {
+            String packCode = Optional.ofNullable(packMap.get(packId)).map(AfterSalePackEntity::getCode)
+                    .orElseGet(() -> Stream.concat(oldPackMap.getOrDefault(packId, Collections.emptyList()).stream(), newPackMap.getOrDefault(packId, Collections.emptyList()).stream())
+                            .map(AfterSalePackDTO.DetailDTO::getCode)
+                            .filter(CharSequenceUtil::isNotBlank)
+                            .findFirst()
+                            .orElse(""));
+            Map<String, AfterSalePackDTO.DetailDTO> oldDetailMap = mergeAfterSalePackDetailForLog(oldPackMap.get(packId), dbDetailMap);
+            Map<String, AfterSalePackDTO.DetailDTO> newDetailMap = mergeAfterSalePackDetailForLog(newPackMap.get(packId), dbDetailMap);
+            Map<String, AfterSalePackDTO.DetailDTO> oldActiveDetailMap = oldDetailMap.entrySet().stream()
+                    .filter(entry -> getAfterSalePackActualQty(entry.getValue()) > MathUtil.ZERO)
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (v1, v2) -> v1, LinkedHashMap::new));
+            Map<String, AfterSalePackDTO.DetailDTO> newActiveDetailMap = newDetailMap.entrySet().stream()
+                    .filter(entry -> getAfterSalePackActualQty(entry.getValue()) > MathUtil.ZERO)
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (v1, v2) -> v1, LinkedHashMap::new));
+
+            if (oldActiveDetailMap.isEmpty() && !newActiveDetailMap.isEmpty()) {
+                List<String> skuNoList = newActiveDetailMap.values().stream()
+                        .map(AfterSalePackDTO.DetailDTO::getSkuNo)
+                        .filter(CharSequenceUtil::isNotBlank)
+                        .distinct()
+                        .map(skuNo -> "sku【" + skuNo + "】")
+                        .collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(skuNoList)) {
+                    String operation = oldDetailMap.isEmpty() ? "新增了" : "整箱更新了";
+                    logList.add(CharSequenceUtil.format("扫码箱唛【{}】，{}{}条{}", packCode, operation, skuNoList.size(), String.join("，", skuNoList)));
+                }
+                continue;
+            }
+
+            if (!oldActiveDetailMap.isEmpty() && newActiveDetailMap.isEmpty()) {
+                List<String> removeList = oldActiveDetailMap.values().stream()
+                        .map(detail -> CharSequenceUtil.format("【{}】的箱唛【{}】数量[{}]", detail.getSkuNo(), packCode, getAfterSalePackActualQty(detail)))
+                        .collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(removeList)) {
+                    logList.add(CharSequenceUtil.format("[整箱移除]了箱唛【{}】，同时移除了{}", packCode, String.join("，", removeList)));
+                }
+                continue;
+            }
+
+            List<String> addSkuNoList = newActiveDetailMap.entrySet().stream()
+                    .filter(entry -> !oldActiveDetailMap.containsKey(entry.getKey()))
+                    .map(entry -> entry.getValue().getSkuNo())
+                    .filter(CharSequenceUtil::isNotBlank)
+                    .distinct()
+                    .map(skuNo -> "sku【" + skuNo + "】")
+                    .collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(addSkuNoList)) {
+                logList.add(CharSequenceUtil.format("扫码箱唛【{}】，新增了{}条{}", packCode, addSkuNoList.size(), String.join("，", addSkuNoList)));
+            }
+
+            for (Map.Entry<String, AfterSalePackDTO.DetailDTO> oldEntry : oldActiveDetailMap.entrySet()) {
+                AfterSalePackDTO.DetailDTO newDetail = newDetailMap.get(oldEntry.getKey());
+                AfterSalePackDTO.DetailDTO oldDetail = oldEntry.getValue();
+                Integer oldActualQty = getAfterSalePackActualQty(oldDetail);
+                Integer newActualQty = Optional.ofNullable(newDetail).map(this::getAfterSalePackActualQty).orElse(MathUtil.ZERO);
+                if (oldActualQty > MathUtil.ZERO && newActualQty.equals(MathUtil.ZERO)) {
+                    logList.add(CharSequenceUtil.format("[单行移除]了【{}】的箱唛【{}】数量[{}]", oldDetail.getSkuNo(), packCode, oldActualQty));
+                } else if (oldActualQty > MathUtil.ZERO && newActualQty > MathUtil.ZERO && !Objects.equals(oldActualQty, newActualQty)) {
+                    logList.add(CharSequenceUtil.format("【{}】编辑箱唛【{}】的数量由[{}]变更为[{}]", oldDetail.getSkuNo(), packCode, oldActualQty, newActualQty));
+                }
+            }
+        }
+
+        if (CollectionUtils.isNotEmpty(logList)) {
+            operateLogService.addModuleOperateLog(String.join("；", logList), ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), poReturnEntity.getId(), "编辑操作");
+        }
+    }
+
+    private Map<String, AfterSalePackDTO.DetailDTO> mergeAfterSalePackDetailForLog(List<AfterSalePackDTO.DetailDTO> detailList,
+                                                                                  Map<String, AfterSalePackDetailEntity> dbDetailMap) {
+        if (CollectionUtils.isEmpty(detailList)) {
+            return Collections.emptyMap();
+        }
+        Map<String, AfterSalePackDTO.DetailDTO> detailMap = new LinkedHashMap<>();
+        for (AfterSalePackDTO.DetailDTO detail : detailList) {
+            if (detail == null || CharSequenceUtil.isBlank(detail.getId())) {
+                continue;
+            }
+            AfterSalePackDTO.DetailDTO logDetail = detailMap.computeIfAbsent(detail.getId(), detailId -> {
+                AfterSalePackDTO.DetailDTO item = new AfterSalePackDTO.DetailDTO();
+                AfterSalePackDetailEntity dbDetail = dbDetailMap.get(detailId);
+                item.setId(detailId);
+                item.setMainId(CharSequenceUtil.blankToDefault(detail.getMainId(), Optional.ofNullable(dbDetail).map(AfterSalePackDetailEntity::getMainId).orElse("")));
+                item.setCode(detail.getCode());
+                item.setSkuId(CharSequenceUtil.blankToDefault(detail.getSkuId(), Optional.ofNullable(dbDetail).map(AfterSalePackDetailEntity::getSkuId).orElse("")));
+                item.setSkuNo(CharSequenceUtil.blankToDefault(detail.getSkuNo(), Optional.ofNullable(dbDetail).map(AfterSalePackDetailEntity::getSkuNo).orElse("")));
+                item.setPackQty(Optional.ofNullable(detail.getPackQty()).orElse(Optional.ofNullable(dbDetail).map(AfterSalePackDetailEntity::getPackQty).orElse(MathUtil.ZERO)));
+                item.setActualQty(MathUtil.ZERO);
+                return item;
+            });
+            logDetail.setActualQty(Optional.ofNullable(logDetail.getActualQty()).orElse(MathUtil.ZERO) + getAfterSalePackActualQty(detail));
+        }
+        return detailMap;
+    }
+
+    private AfterSalePackDTO.DetailDTO buildAfterSalePackDetailDTO(AfterSalePackDetailEntity detail,
+                                                                   AfterSalePackEntity pack,
+                                                                   Map<String, WarehouseLocationEntity> warehouseLocationMap) {
+        AfterSalePackDTO.DetailDTO detailDTO = new AfterSalePackDTO.DetailDTO();
+        detailDTO.setId(detail.getId());
+        detailDTO.setMainId(detail.getMainId());
+        if (pack != null) {
+            detailDTO.setCode(pack.getCode());
+        }
+        detailDTO.setSkuId(detail.getSkuId());
+        detailDTO.setSkuNo(detail.getSkuNo());
+        detailDTO.setPackQty(detail.getPackQty());
+        detailDTO.setActualQty(detail.getActualQty());
+        detailDTO.setDiffQty(detail.getDiffQty());
+        detailDTO.setOutWarehouseLocationId(detail.getOutWarehouseLocationId());
+        WarehouseLocationEntity outWarehouseLocation = warehouseLocationMap.get(detail.getOutWarehouseLocationId());
+        if (outWarehouseLocation != null) {
+            detailDTO.setOutWarehouseLocationCode(outWarehouseLocation.getCode());
+            detailDTO.setOutWarehouseLocationName(outWarehouseLocation.getName());
+        }
+        detailDTO.setInWarehouseLocationId(detail.getInWarehouseLocationId());
+        WarehouseLocationEntity inWarehouseLocation = warehouseLocationMap.get(detail.getInWarehouseLocationId());
+        if (inWarehouseLocation != null) {
+            detailDTO.setInWarehouseLocationCode(inWarehouseLocation.getCode());
+            detailDTO.setInWarehouseLocationName(inWarehouseLocation.getName());
+        }
+        return detailDTO;
     }
 
 
@@ -2501,7 +3237,12 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
     @Override
     public String pdaAdd(PurchaseReturnOrderDTO.AddDTO dto) {
-        if (CharSequenceUtil.isNotBlank(dto.getPurchaseOrderId())) {
+        // 整箱退货：所有 SKU 明细行必须填写仓位，任意一行为空则拦截。
+        checkPackReturnWarehouseLocationForAdd(dto);
+        // 整箱退货由 add(...) 内部统一清空 purchaseOrderId，这里仅用作下方 PDA 拆单逻辑的门禁。
+        boolean packReturnDetail = CollectionUtils.isNotEmpty(dto.getPurchasePriceDetailList())
+                && CharSequenceUtil.equals(resolveReturnDetailType(dto.getReturnDetailType(), hasAfterSalePackDetailsForAdd(dto)), ReturnDetailTypeEnum.PACK.getCode());
+        if (!packReturnDetail && CharSequenceUtil.isNotBlank(dto.getPurchaseOrderId())) {
             List<PurchaseReturnOrderDetailDTO.AddDTO> detailList = dto.getPurchasePriceDetailList();
             List<String> orderDetailIds = detailList.stream().map(req -> req.getPurchaseOrderDetailId()).collect(Collectors.toList());
             //根据ids查询采购单详情
@@ -2550,6 +3291,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                         addSkuDTO.setReplenishQty(addDTO.getReplenishQty());
                         addSkuDTO.setDeductAmountQty(addDTO.getDeductAmountQty());
                         addSkuDTO.setSkuNo(addDTO.getSkuNo());
+                        addSkuDTO.setAfterSalePackDetailList(addDTO.getAfterSalePackDetailList());
                         if (returnQty > (stockInQty - alreadyReturnQty) && !detailEntityList.get(detailEntityList.size()-1).getId().equals(entity.getId())) {
                             returnQty = returnQty - (stockInQty - alreadyReturnQty);
                             addSkuDTO.setReturnQty(stockInQty - alreadyReturnQty);
@@ -2574,7 +3316,12 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
     @Override
     public Boolean pdaUpdate(PurchaseReturnOrderDTO.UpdateDTO dto) {
-        if (CharSequenceUtil.isNotBlank(dto.getPurchaseOrderId())) {
+        // 整箱退货：所有 SKU 明细行必须填写仓位，任意一行为空则拦截。
+        checkPackReturnWarehouseLocationForUpdate(dto);
+        // 整箱退货由 update(...) 内部统一清空 purchaseOrderId，这里仅用作下方 PDA 拆单逻辑的门禁。
+        boolean packReturnDetail = CollectionUtils.isNotEmpty(dto.getPurchasePriceDetailList())
+                && CharSequenceUtil.equals(resolveReturnDetailType(dto.getReturnDetailType(), hasAfterSalePackDetailsForUpdate(dto)), ReturnDetailTypeEnum.PACK.getCode());
+        if (!packReturnDetail && CharSequenceUtil.isNotBlank(dto.getPurchaseOrderId())) {
             List<PurchaseReturnOrderDetailDTO.UpdateDTO> detailList = dto.getPurchasePriceDetailList();
             List<String> orderDetailIds = detailList.stream().map(req -> req.getPurchaseOrderDetailId()).collect(Collectors.toList());
             //根据ids查询采购单详情
@@ -2621,6 +3368,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                         updateSkuDTO.setReplenishQty(updateDTO.getReplenishQty());
                         updateSkuDTO.setDeductAmountQty(updateDTO.getDeductAmountQty());
                         updateSkuDTO.setSkuNo(updateDTO.getSkuNo());
+                        updateSkuDTO.setAfterSalePackDetailList(updateDTO.getAfterSalePackDetailList());
                         if (returnQty > (stockInQty - alreadyReturnQty) && !detailEntityList.get(detailEntityList.size()-1).getId().equals(entity.getId())) {
                             returnQty = returnQty - (stockInQty - alreadyReturnQty);
                             updateSkuDTO.setReturnQty(stockInQty - alreadyReturnQty);
@@ -3695,6 +4443,8 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             throw new ServiceException(ApiError.BILL_VOID_ALLOWED_STATUS_ONLY);
         }
         List<String> ids = Collections.singletonList(entity.getId());
+        // 删除采购退货单时需要处理售后装箱的数据
+        handleAfterSalePack(ids);
 
         //修改状态为待提交
         lambdaUpdate().set(PoReturnEntity::getInvalidStatus, Boolean.TRUE)
@@ -3725,6 +4475,8 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             throw new ServiceException(ApiError.BILL_DELETE_ALLOWED_STATUS_ONLY);
         }
         List<String> ids = Collections.singletonList(entity.getId());
+        // 删除采购退货单时需要处理售后装箱的数据
+        handleAfterSalePack(ids);
         //删除详情表
         poReturnDetailService.delete(ids);
 
@@ -3736,6 +4488,44 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
         } else {
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
+        }
+    }
+
+    private void handleAfterSalePack(List<String> ids) {
+        List<AfterSalePackEntity> usedPackList = afterSalePackService.lambdaQuery()
+                .in(AfterSalePackEntity::getSourceId, ids)
+                .eq(AfterSalePackEntity::getSourceType, SourceTypeEnum.PO_RETURN.getCode())
+                .list();
+        if (CollectionUtils.isNotEmpty(usedPackList)) {
+            List<String> packIds = usedPackList.stream().map(AfterSalePackEntity::getId).collect(Collectors.toList());
+            List<AfterSalePackDetailEntity> packDetailList = afterSalePackDetailService.lambdaQuery()
+                    .in(AfterSalePackDetailEntity::getMainId, packIds)
+                    .list();
+            if (CollectionUtils.isNotEmpty(packDetailList)) {
+                List<AfterSalePackDetailEntity> updateDetailList = packDetailList.stream().map(detail -> {
+                    AfterSalePackDetailEntity updateEntity = new AfterSalePackDetailEntity();
+                    updateEntity.setId(detail.getId());
+                    updateEntity.setActualQty(MathUtil.ZERO);
+                    updateEntity.setDiffQty(Optional.ofNullable(detail.getPackQty()).orElse(MathUtil.ZERO));
+                    return updateEntity;
+                }).collect(Collectors.toList());
+                if (!afterSalePackDetailService.updateBatchById(updateDetailList)) {
+                    throw new ServiceException("删除或者作废采购退货单时释放箱唛明细失败");
+                }
+            }
+            List<AfterSalePackEntity> updatePackList = usedPackList.stream().map(pack -> {
+                AfterSalePackEntity updateEntity = new AfterSalePackEntity();
+                updateEntity.setId(pack.getId());
+                updateEntity.setIsUse(Boolean.FALSE);
+                updateEntity.setIsDifference(Boolean.FALSE);
+                updateEntity.setSourceId("");
+                updateEntity.setSourceCode("");
+                updateEntity.setSourceType("");
+                return updateEntity;
+            }).collect(Collectors.toList());
+            if (!afterSalePackService.updateBatchById(updatePackList)) {
+                throw new ServiceException("删除或者作废采购退货单时释放箱唛失败");
+            }
         }
     }
 
