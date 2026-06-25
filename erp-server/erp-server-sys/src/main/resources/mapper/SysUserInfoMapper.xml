@@ -115,8 +115,8 @@ sui.third_auth_type AS thirdAuthType
 
     <select id="findRoleIfExistList" resultType="com.erp.model.sys.dto.UserDTO">
         SELECT sui.uid AS userId,sui.user_name,sui.real_name,sui.mobile,
-        COALESCE((SELECT 1 FROM sys_role_user sru where
-        sru.user_id=sui.uid AND sru.role_id=#{params.flagId} limit 1),0) AS
+        COALESCE((SELECT 1 FROM sys_role_user sru where sru.is_deleted = false
+        AND sru.user_id=sui.uid AND sru.role_id=#{params.flagId} limit 1),0) AS
         flagState
         FROM sys_user_info sui
         WHERE sui.is_deleted = false
@@ -133,7 +133,7 @@ sui.third_auth_type AS thirdAuthType
     <select id="findPostIfExistList" resultType="com.erp.model.sys.dto.UserDTO">
         SELECT sui.uid AS userId,sui.user_name,sui.real_name,sui.mobile,
         COALESCE((SELECT 1 FROM sys_post_user spu
-        where spu.user_id=sui.uid AND spu.post_id=#{params.flagId} limit 1),0) AS flagState
+        where spu.is_deleted = false AND spu.user_id=sui.uid AND spu.post_id=#{params.flagId} limit 1),0) AS flagState
         FROM sys_user_info sui
         WHERE sui.is_deleted = false
         <if test="params.searchKeyword !=null and params.searchKeyword!=''">
@@ -166,6 +166,7 @@ sui.third_auth_type AS thirdAuthType
         last_login_time=#{params.date},
         login_count=(COALESCE(login_count,0)+1)
         WHERE uid=#{params.uid}
+        AND is_deleted = false
     </update>
 
     <select id="getRequestPermissionsList" resultType="com.common.business.dto.UserRequestPermissionsDTO">
@@ -210,6 +211,7 @@ sui.third_auth_type AS thirdAuthType
         LEFT JOIN sys_department_user sdu ON sdu.user_id = sui.uid and sdu.is_deleted = false
         LEFT JOIN sys_department sd ON sd."id" = sdu.department_id and sd.is_deleted = false
         where sui.user_type = 'erp'
+        and sui.is_deleted = false
     </select>
     <select id="getListByRoleIds" resultType="com.common.business.dto.FindUserDTO">
         SELECT
@@ -223,9 +225,9 @@ sui.third_auth_type AS thirdAuthType
             sr."id" roleId,
             sr.role_name
         from sys_user_info sui
-                 LEFT JOIN sys_role_user sru on sui.uid = sru.user_id
-                 LEFT JOIN sys_role sr on sr."id" = sru.role_id
-        where sui.user_type = 'erp' and sr.id in
+                 LEFT JOIN sys_role_user sru on sui.uid = sru.user_id and sru.is_deleted = false
+                 LEFT JOIN sys_role sr on sr."id" = sru.role_id and sr.is_deleted = false
+        where sui.user_type = 'erp' and sui.is_deleted = false and sr.id in
         <foreach collection="roleIds" item="roleId" open="(" separator="," close=")">
             #{roleId}
         </foreach>
@@ -254,6 +256,7 @@ sui.third_auth_type AS thirdAuthType
         from sys_user_info sui
         LEFT JOIN sys_department_user sdu on sui.uid = sdu.user_id and sdu.is_deleted = false
         where sui.user_type = 'erp'
+          and sui.is_deleted = false
         <if test="deptIds != null and deptIds.size() > 0">
             and sdu.department_id in
             <foreach collection="deptIds" item="id" open="(" close=")" separator=",">
@@ -266,7 +269,8 @@ sui.third_auth_type AS thirdAuthType
     <select id="listSonDeptAll" resultType="com.erp.model.sys.dto.SysDepartmentTreeDTO">
         WITH RECURSIVE T ( ID, NAME, parent_id, PATH ) AS (
         SELECT ID,NAME,PARENT_ID,ID::text AS PATH FROM sys_department
-        WHERE name = #{deptName}
+        WHERE is_deleted = false
+        and name = #{deptName}
         UNION ALL
         SELECT st.ID,st.NAME,st.PARENT_ID,T.PATH ||','|| st.ID
         FROM sys_department st JOIN T ON st.PARENT_ID = T.ID
@@ -306,7 +310,8 @@ sui.third_auth_type AS thirdAuthType
                 and sui.uid in (
                  select sru.user_id from sys_role_user sru
                  <where>
-                     sru.role_id in
+                     sru.is_deleted = false
+                     and sru.role_id in
                      <foreach collection="params.roleIdList" item="item" open="(" close=")" separator=",">
                          #{item}
                      </foreach>
@@ -317,7 +322,8 @@ sui.third_auth_type AS thirdAuthType
                 and sui.uid in (
                 select sdu.user_id from sys_department_user sdu
                 <where>
-                    sdu.department_id in
+                    sdu.is_deleted = false
+                    and sdu.department_id in
                     <foreach collection="params.deptIdList" item="item" open="(" close=")" separator=",">
                         #{item}
                     </foreach>
@@ -349,7 +355,7 @@ sui.third_auth_type AS thirdAuthType
         sui.create_user_name,
         sui.create_time
         FROM sys_user_info sui
-        LEFT JOIN sys_user_wechat AS suw ON suw.uid = sui.uid
+        LEFT JOIN sys_user_wechat AS suw ON suw.uid = sui.uid and suw.is_deleted = false
         <where>
         <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
             ${params.sqlMap.default}
@@ -396,7 +402,7 @@ sui.third_auth_type AS thirdAuthType
         sui.create_user_name,
         sui.create_time
         FROM sys_user_info sui
-        LEFT JOIN sys_user_wechat AS suw ON suw.uid = sui.uid
+        LEFT JOIN sys_user_wechat AS suw ON suw.uid = sui.uid and suw.is_deleted = false
         <where>
         <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
             ${params.sqlMap.default}
@@ -462,7 +468,7 @@ sui.third_auth_type AS thirdAuthType
         sui.user_state AS tabFlag,
         count(*)  AS count
         FROM  sys_user_info sui
-        WHERE sui.is_deleted=FALSE
+        WHERE sui.is_deleted = false
             and sui.user_type ='erp'
         AND sui.user_account != ('admin')
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">

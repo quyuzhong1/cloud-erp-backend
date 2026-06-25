@@ -5,6 +5,7 @@ import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.BaseDTO;
 import com.common.business.service.SuperService;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
@@ -18,10 +19,10 @@ import com.erp.model.wms.dto.SoReturnReceiveDTO;
 import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
 import com.erp.wms.aliexpress.model.returnorder.AliexpressReturnInstockDTO;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.multipart.MultipartFile;
-
 import javax.servlet.http.HttpServletResponse;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -356,6 +357,18 @@ public interface SoReturnInstockService extends SuperService<SoReturnInstockEnti
      * 刷新价格字段后的事务写入入口，由实现类通过自身代理调用。
      */
     void persistRefreshedPriceFields(List<SoReturnInstockDetailEntity> detailList);
+
+    /**
+     * 导入批量更新落库，由实现类通过自身代理调用。
+     */
+    void persistAllImportUpdate(List<Pair<SoReturnInstockEntity, SoReturnInstockEntity>> updatePairs,
+                            Map<String, BigDecimal> monthRateCache);
+
+    /**
+     * 导入新增落库，由实现类通过自身代理调用。
+     */
+    void persistAllImportAdd(List<SoReturnInstockDTO.ImportAddBundle> toAddList);
+
     /**
      * 下载模板
      * @author will
@@ -363,16 +376,17 @@ public interface SoReturnInstockService extends SuperService<SoReturnInstockEnti
      * @param response
      * @return void
      */
-    void downloadTemplate(HttpServletResponse response);
+    void downloadTemplate(String importType, HttpServletResponse response);
+
     /**
-     * 导入
-     * @author will
-     * @date 2025/4/24 19:49
-     * @param excelFile
-     * @param response
-     * @return Boolean
+     * 异步导入（importType=add 新增，update 批量更新）
      */
-    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
+    Boolean importFile(BaseDTO.ImportDTO dto);
+
+    /**
+     * 异步导入销售退货入库单
+     */
+    void importSoReturnInstock(BaseDTO.ImportDTO dto);
 
     AliexpressReturnInstockDTO newSyncDataToCaiNiao(SoReturnInstockEntity entity, List<SoReturnInstockDetailEntity> detailEntityList, String syncOperate);
 

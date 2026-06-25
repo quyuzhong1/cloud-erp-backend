@@ -12,6 +12,7 @@ import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.MessageUtils;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchaseApplicationRefPoDTO;
@@ -687,6 +688,14 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
             if (ObjectUtils.isEmpty(skuVO)) {
                 errorMessages.add(StrUtil.format("父级SKU【{}】产品信息不存在", detailEntity.getSkuId()));
                 continue;
+            }
+
+            if (Objects.equals(SubcontractOrderTypeEnum.REPAIR_SUBCONTRACT.getCode(), subcontractOrderEntity.getType())
+                    && StringUtils.isBlank(detailEntity.getParentId())) {
+                if (Objects.isNull(detailEntity.getRepairQty()) || MathUtil.compareTo(detailEntity.getRepairQty(), MathUtil.ZERO) <= MathUtil.ZERO) {
+                    errorMessages.add(MessageUtils.getMessage(ApiError.PO_SUBCONTRACT_REPAIR_QTY_MUST_GT_ZERO, skuVO.getSkuNo()));
+                    continue;
+                }
             }
 
             //采购退货数量校验
