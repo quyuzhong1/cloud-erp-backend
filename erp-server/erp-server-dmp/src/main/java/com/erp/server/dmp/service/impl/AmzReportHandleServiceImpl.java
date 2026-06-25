@@ -189,6 +189,9 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
 
     @Override
     public Boolean pullInboundPlanShipment(DmpPullShipmentDTO dto) {
+        if (CollectionUtils.isEmpty(dto.getShipmentCodeList())) {
+            return true;
+        }
         String shopId = dto.getShopId();
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
         if (null == shopInfoDTO) {

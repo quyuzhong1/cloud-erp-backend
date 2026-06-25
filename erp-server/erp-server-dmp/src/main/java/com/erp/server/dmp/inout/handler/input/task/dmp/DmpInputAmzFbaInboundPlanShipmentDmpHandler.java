@@ -202,7 +202,7 @@ public class DmpInputAmzFbaInboundPlanShipmentDmpHandler extends DmpInputDbConve
     private String resolvePackType(Map<String, Object> mongoData) {
         String packType = getString(mongoData, "packType");
         if (CharSequenceUtil.isNotBlank(packType)) {
-            return packType;
+            return AmazonFbaPackTypeEnum.toCode(packType);
         }
         Object areCasesRequired = mongoData.get("areCasesRequired");
         if (areCasesRequired instanceof Boolean) {

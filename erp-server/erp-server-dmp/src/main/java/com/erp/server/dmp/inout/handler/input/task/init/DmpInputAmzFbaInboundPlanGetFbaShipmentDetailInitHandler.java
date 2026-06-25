@@ -78,7 +78,8 @@ public class DmpInputAmzFbaInboundPlanGetFbaShipmentDetailInitHandler extends Dm
             }
             String marketplaceId = getMarketplaceId(parentMongo, shopInfoDTO);
             if (StringUtils.isBlank(marketplaceId)) {
-                throw new ServiceException("未找到marketplaceId, shipmentId=" + shipmentId);
+                log.warn("跳过明细拉取，原因=marketplaceId为空, shipmentId={}, data={}", shipmentId, JSON.toJSONString(parentMongo));
+                continue;
             }
             String cacheKey = StrUtil.format(RedisCacheConstants.AMZ_SP_API_RESULT_PREFIX, requestType.getBusinessTypeName(), shipmentId);
             Object cacheData = redisUtil.get(cacheKey);

@@ -18,6 +18,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * FBA InboundPlan 货件明细子任务处理器
@@ -39,11 +40,18 @@ public class DmpInputAmzFbaInboundPlanShipmentDetailDmpHandler extends DmpInputD
         if (CollUtil.isEmpty(childTaskList)) {
             return Collections.emptyList();
         }
+        List<String> childTaskIds = childTaskList.stream()
+                .map(DmpInputTaskEntity::getId)
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(childTaskIds)) {
+            return Collections.emptyList();
+        }
         List<ParamData> paramDataList = new ArrayList<>();
         paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID,
                 DmpInputMongoHandler.MONGO_BASE_INPUTTASKID,
-                PannoEnum.EQ,
-                childTaskList.get(0).getId()));
+                PannoEnum.IN,
+                childTaskIds));
         return mongoService.findMongoData(paramDataList, childMongoStorageName);
     }
 

@@ -90,9 +90,15 @@ public class DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler extends DmpInpu
                     if (CollUtil.isNotEmpty(inboundPlans)) {
                         for (InboundPlanSummary inboundPlan : inboundPlans) {
                             OffsetDateTime lastUpdatedAt = inboundPlan.getLastUpdatedAt();
-                            if (lastUpdatedAt == null || lastUpdatedAt.isBefore(thresholdTime)) {
-                                reachedOlderData = true;
-                                break;
+                            if (lastUpdatedAt == null) {
+                                continue;
+                            }
+                            if (lastUpdatedAt.isBefore(thresholdTime)) {
+                                if ("DESC".equals(sortOrder)) {
+                                    reachedOlderData = true;
+                                    break;
+                                }
+                                continue;
                             }
                             String inboundPlanId = inboundPlan.getInboundPlanId();
                             if (StrUtil.isBlank(inboundPlanId)) {
