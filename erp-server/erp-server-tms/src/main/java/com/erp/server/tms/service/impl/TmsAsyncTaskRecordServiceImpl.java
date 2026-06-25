@@ -1,6 +1,5 @@
 package com.erp.server.tms.service.impl;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -612,7 +611,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         List<String> statusList = TmsAsyncTaskRecordStatusEnum.getStatusList();
         // 不存在的状态赋值为0
         List<String> existStatusList = list.stream().map(TmsAsyncTaskRecordDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
-        statusList.parallelStream().forEach(status -> {
+        statusList.stream().forEach(status -> {
             if (!existStatusList.contains(status)) {
                 list.add(new TmsAsyncTaskRecordDTO.TabListDTO(status, "", 0));
             }
@@ -1386,7 +1385,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
                 Collections.singletonList(buildGenAutoTaskFailedItem("全局配置", message)));
         }
 
-        CfgSettingValueDTO.ReconciliationCycleDTO dto = BeanUtil.toBean(
+        CfgSettingValueDTO.ReconciliationCycleDTO dto = JSONUtil.toBean(
                 cfgSettingEntity.getDataJson(),
                 CfgSettingValueDTO.ReconciliationCycleDTO.class
         );
