@@ -195,7 +195,18 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         return true;
     }
 
+    /**
+     * 明细落库后回写主表金额字段。
+     * <p>写库前须从 DB 刷新 version：同一次消费/事务内主表可能已被更新（平台主单 saveOrUpdateEntity、
+     * 全托管 updateAmount 等），内存 version 易滞后；不可对入参 version 简单 +1，因中间写库次数不固定
+     * （+1 在 MP 已回写或多次更新时会与 DB 对不上）。仍依赖 updateById 乐观锁，并发冲突时照常失败。
+     */
     private void updateMainAmountOrThrow(SoB2cEntity soB2cEntity) {
+        SoB2cEntity latest = soB2cService.getById(soB2cEntity.getId());
+        if (ObjectUtils.isEmpty(latest)) {
+            throw new ServiceException(ApiError.SO_B2C_NOT_FOUND);
+        }
+        soB2cEntity.setVersion(latest.getVersion());
         if (!soB2cService.updateById(soB2cEntity)) {
             throw new ServiceException(ApiError.BILL_UPDATE_FAILED);
         }
