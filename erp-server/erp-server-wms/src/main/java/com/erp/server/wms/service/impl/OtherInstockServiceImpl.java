@@ -16,7 +16,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.annotation.DataIdempotent;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.ThirdConstants;
@@ -38,6 +38,7 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
+import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.dmp.constant.CfgApiAuthContant;
 import com.erp.model.dmp.dto.*;
 import com.erp.model.dmp.entity.CfgApiAuthEntity;
@@ -1421,7 +1422,7 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
     }
 
     @Override
-    @DataIdempotent(keyIdName = "dto.thirdCode")
+    @DistributeLocker(businessType = DistributeKeyConstant.OTHER_INSTOCK_WDT_SYNC_KEY, keyName = "dto.thirdCode")
     public void syncWdtPreInstock(DmpSoPrestockInfoDTO.PrestockDTO dto) {
         if(Objects.isNull(dto.getCheckTime())){
             log.warn("{}旺店通审核时间为空",dto.getThirdCode());

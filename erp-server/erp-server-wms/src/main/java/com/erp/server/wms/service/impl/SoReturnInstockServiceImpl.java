@@ -12,7 +12,7 @@ import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.annotation.DataIdempotent;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.ThirdConstants;
@@ -29,6 +29,8 @@ import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.message.constant.DistributeKeyConstant;
+import com.common.message.constant.DistributeKeyConstant;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
@@ -2673,7 +2675,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     }
 
     @Override
-    @DataIdempotent(keyIdName = "entity.code", businessType = "generateLogisticsBill")
+    @DistributeLocker(businessType = DistributeKeyConstant.GENERATE_LOGISTICS_BILL_KEY, keyName = "entity.code")
     public BatchResultDTO generateLogisticsBill(SoReturnInstockEntity entity) {
         String returnLogisticCode = entity.getReturnLogisticCode();
         if (StringUtils.isBlank(returnLogisticCode)) {

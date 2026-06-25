@@ -43,7 +43,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.incrementer.IdentifierGenerator;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.annotation.DataIdempotent;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseDTO;
 import com.common.business.dto.base.BaseResultDTO;
@@ -65,6 +65,7 @@ import com.common.core.constant.SqlConstants;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.message.constant.DistributeKeyConstant;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
@@ -1050,7 +1051,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 
     @Transactional(rollbackFor = Exception.class)
 	@Override
-	@DataIdempotent(keyIdName = "id")
+	@DistributeLocker(businessType = DistributeKeyConstant.TMS_PUSH_ALLOCATION_KEY, keyName = "id", unlockAfterTx = true)
 	public void singPushAllocation(String id, String reportDate , List<TmsB2cDeclareReconciliationDetailEntity> tmsB2cDeclareReconciliationDetailEntityList) {
 		if(CollUtil.isEmpty(tmsB2cDeclareReconciliationDetailEntityList)) {
 			return;

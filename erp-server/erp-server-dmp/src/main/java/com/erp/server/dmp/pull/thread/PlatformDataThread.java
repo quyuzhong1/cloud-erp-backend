@@ -4,9 +4,10 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
-import com.common.business.annotation.DataIdempotent;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.constant.MongoTableNameContant;
 import com.common.business.dto.JobTaskDTO;
+import com.common.message.constant.DistributeKeyConstant;
 import com.common.business.dto.RequestDTO;
 import com.common.business.enums.PlatformApiEnum;
 import com.erp.sdk.oms.amz.spapi.dto.ReportInfoMongoDTO;
@@ -79,7 +80,7 @@ public class PlatformDataThread {
     }
 
     @Async("pullErpOpenApi")
-    @DataIdempotent
+    @DistributeLocker(businessType = DistributeKeyConstant.DMP_CLEAN_ORDER_KEY, keyName = "jobTaskDTO.id")
     public void cleanOrder(JobTaskDTO jobTaskDTO) {
         try {
             log.info("发起异步调用平台【{}】", jobTaskDTO.getDictPlatform());
