@@ -16,6 +16,7 @@ import com.baomidou.mybatisplus.core.incrementer.IdentifierGenerator;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DataIdempotent;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.*;
 import com.common.business.dto.base.BaseResultDTO.AddDTO;
@@ -3143,7 +3144,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
 
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(keyName = "id")
+    @DataIdempotent(keyIdName = "id")
     @Override
     public BatchResultDTO pushAllocation(String id, String reportDate, LogisticsBillCostDTO.SmallBagPushAllocationContext pushContext) {
         if (pushContext == null) {
