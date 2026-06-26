@@ -129,7 +129,7 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
      */
     @Transactional(rollbackFor = Exception.class)
     @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY,
-            keyName = "sourceTypeEnum.code,sourceId", unlockAfterTx = true)
+            keyName = "dto.sourceTypeEnum.code,dto.sourceId", unlockAfterTx = true)
     public void startOrResumeWithLock(WorkflowTaskRecordDTO.AddTaskDTO dto) {
         WorkflowTaskInstanceEntity latest = workflowTaskInstanceService.getLatestBySource(
                 dto.getSourceId(), dto.getSourceTypeEnum().getCode());
