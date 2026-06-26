@@ -190,7 +190,7 @@ public interface WorkflowTaskInstanceService extends SuperService<WorkflowTaskIn
 
     /**
 
-     * 人工重试：委托节点级 forceRetry，可指定 stepId 或 instanceId。
+     * 人工重试：按 instanceId 执行强制重试。
 
      */
 
@@ -215,13 +215,6 @@ public interface WorkflowTaskInstanceService extends SuperService<WorkflowTaskIn
      */
 
     void cancel(WorkflowTaskInstanceDTO.CancelDTO dto);
-
-    /**
-     * 校验当前用户对编排实例的数据权限（创建人/部门范围）。
-     *
-     * @param instanceId 实例 ID
-     */
-    void assertInstanceDataPermission(String instanceId);
 
 }
 

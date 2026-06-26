@@ -16,9 +16,8 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 @RestController
 @RequestMapping("/feign/workflowTaskNode")
-public class WorkflowTaskNodeFeignController extends BaseController implements WorkflowTaskNodeFeign {
+public class WorkflowTaskNodeFeignController extends BaseController {
 
-    @Override
     @PostMapping("/contractEcho")
     public ApiResult<WorkflowTaskRecordDTO.MqResponseDTO> contractEcho(@RequestBody WorkflowTaskRecordDTO.MqRequestDTO dto) {
         WorkflowTaskRecordDTO.MqResponseDTO response = new WorkflowTaskRecordDTO.MqResponseDTO();

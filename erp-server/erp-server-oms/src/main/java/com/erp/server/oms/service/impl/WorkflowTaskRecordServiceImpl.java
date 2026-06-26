@@ -599,7 +599,6 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
             sourceType = dto.getSourceType();
             sourceId = dto.getSourceId();
         }
-        assertForceRetryDataPermission(dto);
         return SpringUtil.getBean(WorkflowTaskRecordServiceImpl.class).forceRetryWithLock(dto, sourceType, sourceId);
     }
 
@@ -609,7 +608,6 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
     @Transactional(rollbackFor = Exception.class)
     @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "sourceType,sourceId", unlockAfterTx = true)
     public WorkflowTaskRecordDTO.ForceRetryResultDTO forceRetryWithLock(WorkflowTaskRecordDTO.ForceRetryDTO dto, String sourceType, String sourceId) {
-        checkForceRetryPermission();
         List<WorkflowTaskRecordEntity> taskList = listForceRetryTasks(dto);
         if (CollUtil.isEmpty(taskList)) {
             throw new ServiceException(ApiError.WF_TASK_RECORD_FORCE_RETRY_NOT_FOUND);
@@ -1055,13 +1053,6 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
         operateLogService.addModuleOperateLog(content, resolveModuleType(first), resolveBusinessId(first), "任务强制重试");
     }
 
-    /**
-     * 对外暴露强制重试权限校验能力。
-     */
-    @Override
-    public void validateForceRetryPermission() {
-        checkForceRetryPermission();
-    }
 
     /** {@inheritDoc} */
     @Override
@@ -1080,45 +1071,6 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
     public String getPreviousSuccessOutputData(WorkflowTaskRecordEntity entity,
                                                Map<Integer, WorkflowTaskRecordEntity> indexTaskMap) {
         return getPreviousSuccessOutputDataInternal(entity, indexTaskMap);
-    }
-
-    /**
-     * 强制重试数据权限兜底：按 instanceId / 节点所属实例 / 最新实例校验数据范围。
-     */
-    private void assertForceRetryDataPermission(WorkflowTaskRecordDTO.ForceRetryDTO dto) {
-        if (CharSequenceUtil.isNotBlank(dto.getInstanceId())) {
-            workflowTaskInstanceService.assertInstanceDataPermission(dto.getInstanceId());
-            return;
-        }
-        if (CharSequenceUtil.isNotBlank(dto.getId())) {
-            WorkflowTaskRecordEntity task = getById(dto.getId());
-            if (task != null && CharSequenceUtil.isNotBlank(task.getInstanceId())) {
-                workflowTaskInstanceService.assertInstanceDataPermission(task.getInstanceId());
-            }
-            return;
-        }
-        if (CharSequenceUtil.isBlank(dto.getSourceType()) || CharSequenceUtil.isBlank(dto.getSourceId())) {
-            return;
-        }
-        WorkflowTaskInstanceEntity instance = workflowTaskInstanceService.getLatestBySource(dto.getSourceId(), dto.getSourceType());
-        if (instance != null) {
-            workflowTaskInstanceService.assertInstanceDataPermission(instance.getId());
-        }
-    }
-
-    /**
-     * 校验当前用户是否拥有人工强制重试权限（超级管理员或菜单权限）。
-     */
-    private void checkForceRetryPermission() {
-        LoginUser loginUser = UserContext.getDefaultLoginUser();
-        if (Objects.nonNull(loginUser) && Boolean.TRUE.equals(loginUser.getIsSupper())) {
-            return;
-        }
-        List<String> permissionList = Objects.isNull(loginUser) ? Collections.emptyList() : loginUser.getPermissionList();
-        if (CollUtil.isNotEmpty(permissionList) && permissionList.contains(FORCE_RETRY_PERMISSION)) {
-            return;
-        }
-        throw new ServiceException(ApiError.WF_TASK_RECORD_FORCE_RETRY_FORBIDDEN);
     }
 
     /**
