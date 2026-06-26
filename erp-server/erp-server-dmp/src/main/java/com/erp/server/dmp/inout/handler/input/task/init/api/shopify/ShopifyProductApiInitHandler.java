@@ -70,8 +70,9 @@ public class ShopifyProductApiInitHandler implements DmpInputApiInitHandler {
         try {
             products = shopifyRestClientService.getShopifyRestClient(shopifyShopDomain, accessToken).getProducts();
         } catch (Exception e) {
+            log.warn("[Shopify产品下载]getProducts失败, shop={}, retry={}, err={}", shopifyShopDomain, count, e.getMessage(), e);
             if (count == 5) {
-                throw new ServiceException(StrUtil.format("调用Shopify={},接口重试{}次失败", "getShopifyRestClient", count));
+                throw new ServiceException(StrUtil.format("调用Shopify={},接口重试{}次失败: {}", "getShopifyRestClient", count, e.getMessage()));
             }
             try {
                 Thread.sleep(sleepTime);
@@ -81,7 +82,7 @@ public class ShopifyProductApiInitHandler implements DmpInputApiInitHandler {
             sleepTime = sleepTime + 1000;
             count = count + 1;
 
-            getShopifyRestClient(shopifyShopDomain, accessToken, count, sleepTime);
+            return getShopifyRestClient(shopifyShopDomain, accessToken, count, sleepTime);
         }
 
         return products;
