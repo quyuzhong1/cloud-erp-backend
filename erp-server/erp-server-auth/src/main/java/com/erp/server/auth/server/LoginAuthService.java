@@ -123,16 +123,19 @@ public class LoginAuthService {
         ipDTO.setDate(new Date());
         ipDTO.setUid(info.getUid());
         sysUserFeign.setLoginIp(ipDTO);
-
+        SysLoginUserVO sysLoginUserVO = new SysLoginUserVO();
         if (loginDTO.getIsTest()) {
             // 创建token（仅缓存用户基础信息，菜单与权限由独立接口获取）
             info.setOverallMenuList(null);
             info.setLeftMenuList(null);
             info.setPermissionList(null);
+        } else {
+            sysLoginUserVO.setOverallMenuList(info.getOverallMenuList());
+            sysLoginUserVO.setPermissionList(info.getPermissionList());
+            sysLoginUserVO.setLeftMenuList(info.getLeftMenuList());
         }
         info.setUserType(loginDTO.getUserType());
         String accessToken = authTokenService.createSlimToken(info);
-        SysLoginUserVO sysLoginUserVO = new SysLoginUserVO();
         sysLoginUserVO.setAccessToken(accessToken);
         sysLoginUserVO.setUserName(info.getUserName());
         sysLoginUserVO.setHeadIcon(info.getHeadIcon());
