@@ -178,9 +178,10 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		SoOutstockEntity soOutstock = null;
 		SoReturnInstockEntity soReturnInstockEntity = null;
 		List<SoReturnInstockDetailEntity> detailEntityList = new ArrayList<>();
-		// WEGO 专属：经新规则解析出的来源单号和平台订单号，在 build 之后覆盖写入
+		// WEGO 专属：经新规则解析出的来源单号、平台订单号和命中的退货单记录，在 build 之后覆盖写入
 		String wegoSourceCode = null;
 		String wegoPlatformOrderCode = null;
+		SoB2cReturnEntity wegoReturn = null;
 		if(CharSequenceUtil.isNotBlank(dto.getOrderReferenceNo())){
 			ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity;
 			if(dto.getOrderReferenceNo().contains(BusinessNoConstant.WFHD)){
@@ -191,9 +192,9 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 					soB2cEntity = soB2cFeign.getSoCode(soCode);
 				}
 			} else if (DmpBasicSystemCodeEnum.WEGO.getCode().equalsIgnoreCase(dto.getPlatform())) {
-				// WEGO：优先查 so_b2c_return（code / platform_return_no / platform_order_no / so_code），
-				// 未命中再查 so_b2c（code / platform_code）
-				SoB2cReturnEntity wegoReturn = findSoB2cReturnByRef(dto.getOrderReferenceNo());
+			// WEGO：优先查 so_b2c_return（code / platform_return_no / platform_order_no / so_code），
+			// 未命中再查 so_b2c（code / platform_code）
+			wegoReturn = findSoB2cReturnByRef(dto.getOrderReferenceNo());
 				if (Objects.nonNull(wegoReturn)) {
 					wegoSourceCode = wegoReturn.getSoCode();
 					wegoPlatformOrderCode = wegoReturn.getPlatformOrderNo();
@@ -281,6 +282,22 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 				}
 				if (CharSequenceUtil.isNotBlank(wegoPlatformOrderCode)) {
 					soReturnInstockEntity.setPlatformOrderCode(wegoPlatformOrderCode);
+				}
+				// 客户信息兜底：so_b2c_return 命中但 soCode 为空导致 soB2cEntity = null 时，
+				// 用 so_b2c_return.shop_id 补充 customerId / customerName
+				if (Objects.isNull(soB2cEntity)
+						&& Objects.nonNull(wegoReturn)
+						&& CharSequenceUtil.isNotBlank(wegoReturn.getShopId())) {
+					ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(wegoReturn.getShopId());
+					if (Objects.nonNull(shopInfo) && CharSequenceUtil.isNotBlank(shopInfo.getCustomerId())) {
+						CustomerInfoEntity customerInfo = customerFeign.getCustomerById(shopInfo.getCustomerId());
+						if (Objects.nonNull(customerInfo)) {
+							soReturnInstockEntity.setCustomerId(shopInfo.getCustomerId());
+							soReturnInstockEntity.setCustomerName(customerInfo.getName());
+							log.info("[WEGO退货入库] 通过 so_b2c_return.shopId={} 补充客户信息 customerId={}",
+									wegoReturn.getShopId(), shopInfo.getCustomerId());
+						}
+					}
 				}
 			}
 		}
