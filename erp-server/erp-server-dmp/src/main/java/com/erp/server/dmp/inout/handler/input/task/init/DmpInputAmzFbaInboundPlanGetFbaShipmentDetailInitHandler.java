@@ -47,6 +47,9 @@ public class DmpInputAmzFbaInboundPlanGetFbaShipmentDetailInitHandler extends Dm
     public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
         List<Map<String, Object>> parentMongoData = getParentStorageMongoData();
         if (CollectionUtils.isEmpty(parentMongoData)) {
+            if (hasManualShipmentCodeFilter()) {
+                throw new ServiceException("手动拉取FBA货件明细失败: 上游货件详情为空, taskId=" + dmpInputTaskEntity.getId());
+            }
             log.warn("FBA入库计划货件明细主任务taskId={},结果为空明细无需处理", dmpInputTaskEntity.getParentTaskId());
             return Collections.emptyList();
         }
