@@ -45,6 +45,7 @@ import java.util.stream.Collectors;
  * 无法像旧版 {@code getShipments(shipmentIdList)} 绕过计划列表直查；窗口外计划下的货件需扩大 lookbackMinutes
  * 或后续迭代专用直拉 Init。此为架构已知限制，勿当缺陷修复。
  * 手动 hotfix（{@code shipmentCodeList}）对 429、空计划列表等与后续 Init 节点一致执行 fail-fast。
+ * lookbackMinutes 时间窗过滤依赖 {@code sortOrder=DESC} 才能提前终止分页；{@link #parseSortOrder(String)} 会将 ASC 回退为 DESC。
  */
 @Slf4j
 @Service("dmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler")
@@ -103,21 +104,15 @@ public class DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler extends DmpInpu
                     List<InboundPlanSummary> inboundPlans = response != null ? response.getInboundPlans() : null;
                     if (CollUtil.isNotEmpty(inboundPlans)) {
                         for (InboundPlanSummary inboundPlan : inboundPlans) {
-                            OffsetDateTime planTime = inboundPlan.getLastUpdatedAt();
-                            if (planTime == null) {
-                                planTime = inboundPlan.getCreatedAt();
-                            }
+                            OffsetDateTime planTime = resolvePlanTime(inboundPlan);
                             if (planTime == null) {
                                 log.warn("【FBA入库计划拉取】跳过计划: lastUpdatedAt/createdAt 均为空, inboundPlanId={}",
                                         inboundPlan.getInboundPlanId());
                                 continue;
                             }
                             if (planTime.isBefore(thresholdTime)) {
-                                if (AmazonInboundPlanSortOrderEnum.DESC.getCode().equals(sortOrder)) {
-                                    reachedOlderData = true;
-                                    break;
-                                }
-                                continue;
+                                reachedOlderData = true;
+                                break;
                             }
                             String inboundPlanId = inboundPlan.getInboundPlanId();
                             if (StrUtil.isBlank(inboundPlanId)) {
@@ -143,9 +138,13 @@ public class DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler extends DmpInpu
                         }
                         return Collections.emptyList();
                     }
-                    throw new ServiceException("拉取FBA入库计划列表失败:" + e.getMessage());
+                    log.error("【FBA入库计划列表拉取】platformShopCode={}, taskId={}, status={}, Amazon API 异常",
+                            shopInfoDTO.getPlatformShopCode(), dmpInputTaskEntity.getId(), status, e);
+                    throw new ServiceException("拉取FBA入库计划列表失败，请稍后重试");
                 } catch (LWAException e) {
-                    throw new ServiceException("拉取FBA入库计划列表失败:" + e.getMessage());
+                    log.error("【FBA入库计划列表拉取】platformShopCode={}, taskId={}, status={}, LWA 授权异常",
+                            shopInfoDTO.getPlatformShopCode(), dmpInputTaskEntity.getId(), status, e);
+                    throw new ServiceException("拉取FBA入库计划列表失败，请稍后重试");
                 }
             } while (StrUtil.isNotBlank(nextToken));
             statusCountMap.put(status, currentStatusCount);
@@ -227,6 +226,9 @@ public class DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler extends DmpInpu
         return sortByEnum == null ? defaultSortBy.getCode() : sortByEnum.getCode();
     }
 
+    /**
+     * lookbackMinutes 时间窗仅在与 DESC 组合时可提前 break；ASC 会从最旧记录起逐页扫描，易触发 429。
+     */
     private String parseSortOrder(String extendJson) {
         AmazonInboundPlanSortOrderEnum defaultSortOrder = AmazonInboundPlanSortOrderEnum.DESC;
         if (StringUtils.isBlank(extendJson)) {
@@ -237,7 +239,26 @@ public class DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler extends DmpInpu
             return defaultSortOrder.getCode();
         }
         AmazonInboundPlanSortOrderEnum sortOrderEnum = AmazonInboundPlanSortOrderEnum.fromCode(extendObj.getString("sortOrder"));
-        return sortOrderEnum == null ? defaultSortOrder.getCode() : sortOrderEnum.getCode();
+        if (sortOrderEnum == null) {
+            return defaultSortOrder.getCode();
+        }
+        if (sortOrderEnum == AmazonInboundPlanSortOrderEnum.ASC) {
+            log.warn("【FBA入库计划拉取】sortOrder=ASC 无法配合 lookbackMinutes 提前终止分页，已回退为 DESC, taskId={}",
+                    dmpInputTaskEntity.getId());
+            return defaultSortOrder.getCode();
+        }
+        return sortOrderEnum.getCode();
+    }
+
+    private OffsetDateTime resolvePlanTime(InboundPlanSummary inboundPlan) {
+        if (inboundPlan == null) {
+            return null;
+        }
+        OffsetDateTime planTime = inboundPlan.getLastUpdatedAt();
+        if (planTime == null) {
+            planTime = inboundPlan.getCreatedAt();
+        }
+        return planTime;
     }
 
     /**
