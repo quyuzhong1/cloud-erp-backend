@@ -13,6 +13,7 @@ import com.sdk.oms.shopify.api.rest.mappers.ShopifySdkObjectMapper;
 import com.sdk.oms.shopify.api.rest.model.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
 
 import javax.ws.rs.ProcessingException;
@@ -1481,7 +1482,12 @@ public class ShopifyRestClient {
         final JacksonJaxbJsonProvider provider = new JacksonJaxbJsonProvider();
         provider.setMapper(mapper);
 
-        return ClientBuilder.newClient().register(provider);
+        // 禁用 Jersey SPI 自动发现，避免 classpath 中 FastjsonProvider 抢占 JSON 反序列化
+        //（Shopify tags 为逗号分隔字符串，需走 Jackson TagsDeserializer）
+        final ClientConfig clientConfig = new ClientConfig();
+        clientConfig.register(provider);
+        clientConfig.property(ClientProperties.FEATURE_AUTO_DISCOVERY_DISABLE, true);
+        return ClientBuilder.newClient(clientConfig);
     }
 
     public class ShopifySdkRetryListener implements RetryListener {
