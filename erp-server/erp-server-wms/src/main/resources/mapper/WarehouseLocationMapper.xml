@@ -443,9 +443,9 @@
         and wa.is_deleted =FALSE
         WHERE
         wl.is_deleted = FALSE
-        AND wl.area_type != 'pickingArea'
+        AND wl.area_type != #{excludeAreaType}
         AND i.qty > 0
-        AND i.dict_inventory_status = 'usable'
+        AND i.dict_inventory_status = #{inventoryStatus}
         <if test="skuNo != null and skuNo != ''">
             AND i.sku_no = #{skuNo}
         </if>
@@ -477,9 +477,9 @@
         and wa.is_deleted =FALSE
         WHERE
         wl.is_deleted = FALSE
-        AND wl.area_type != 'pickingArea'
+        AND wl.area_type != #{excludeAreaType}
         AND i.qty > 0
-        AND i.dict_inventory_status = 'usable'
+        AND i.dict_inventory_status = #{inventoryStatus}
         <if test="warehouseId != null and warehouseId != ''">
             AND wl.warehouse_id = #{warehouseId}
         </if>

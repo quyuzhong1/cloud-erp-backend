@@ -2508,6 +2508,7 @@ revokeDTO.setSourcePlatform(dto.getSourcePlatform());
                     .listWareInventoryQtyBySkuNos(warehouseId, skuNos)
                     .stream()
                     .collect(Collectors.groupingBy(WarehouseLocationDTO.WareInventoryQtyDTO::getSkuNo));
+            // 快建移仓上架位：按产品确认，默认使用拣货策略推荐拣货位，不再读取 PLM SKU 大货区（warehouseLocationLarge）
             Map<String, String> recommendedLocationBySku = new HashMap<>(skuNos.size());
             for (String skuNo : skuNos) {
                 recommendedLocationBySku.put(skuNo, resolveRecommendedPickingLocation(warehouseId, skuNo, allRuleInventories));
@@ -2541,6 +2542,8 @@ revokeDTO.setSourcePlatform(dto.getSourcePlatform());
                         remainingShortage -= moveQty;
                     }
                 }
+                // 源仓位合计不足时，仅返回当前可移的行，不为剩余缺货再生成移仓行（产品确认：补不齐不做专门提示，移仓后再次生成拣货单即可感知）
+                // 无任何可移行时（无源仓位或无推荐上架位）仍补占位行，保证 moves 非空以拦截直接生成拣货单
                 if (moveEntityList.size() == linesBeforeSku) {
                     moveEntityList.add(buildPickToSkuMoveLine(skuId, skuNo, productName, warehouseId, warehouseName,
                             inWarehouseLocation, inWarehouseLocationName,
@@ -2573,7 +2576,9 @@ revokeDTO.setSourcePlatform(dto.getSourcePlatform());
     }
 
     /**
-     * 解析推荐拣货仓位（与 listLocationByRule 排序口径一致）
+     * 解析快建移仓的上架仓位（拣货策略命中的推荐拣货位）。
+     * 排序口径与 {@code CfgRulePackingActionMapper#listLocationByRule} 一致：priority、updateTime desc、index、qty desc。
+     * 不使用 PLM {@code SkuVO#warehouseLocationLarge}，为产品确认的有意变更。
      */
     private String resolveRecommendedPickingLocation(String warehouseId, String skuNo,
                                                      List<CfgRulePickingDTO.CfgRulePickingInventoryDTO> ruleInventories) {
