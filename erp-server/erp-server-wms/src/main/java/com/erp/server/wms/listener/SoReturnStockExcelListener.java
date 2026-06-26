@@ -6,6 +6,8 @@ import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.enums.OrderTypeEnum;
 import com.common.core.enums.CurrencyEnum;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.wms.dto.excel.SoReturnStockImportExcelDTO;
@@ -30,6 +32,8 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 public class SoReturnStockExcelListener extends AnalysisEventListener<SoReturnStockImportExcelDTO> {
 
+    /** 与 {@link com.erp.server.wms.service.impl.SoReturnInstockServiceImpl} 导入行数上限一致，解析阶段截断避免大文件 OOM */
+    private static final int MAX_IMPORT_ROWS = 5000;
 
     /**
      * 导入数据，用于判断导入是否为空
@@ -48,6 +52,9 @@ public class SoReturnStockExcelListener extends AnalysisEventListener<SoReturnSt
 
     @Override
     public void invoke(SoReturnStockImportExcelDTO importExcelDTO, AnalysisContext analysisContext) {
+        if (allList.size() >= MAX_IMPORT_ROWS) {
+            throw new ServiceException(ApiError.FILE_EXCEL_IMPORT_SIZE);
+        }
         //添加数据用于判断是否为空
         allList.add(importExcelDTO);
 
