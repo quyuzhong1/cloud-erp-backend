@@ -8,7 +8,10 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.TransferDeclareCostAllocationDTO;
+import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
+import com.erp.model.tms.entity.TmsAsyncTaskRecordEntity;
 import com.erp.model.tms.entity.TransferDeclareCostAllocationEntity;
+import com.erp.model.tms.entity.TransferDeclareCostAllocationMainEntity;
 
 /**
  * <p>
@@ -43,8 +46,38 @@ public interface TransferDeclareCostAllocationService extends SuperService<Trans
     PagingVO<TransferDeclareCostAllocationDTO.ListDTO> paging(PagingDTO<TransferDeclareCostAllocationDTO.PagingParamDTO> dto);
     
     BatchResultDTO updateReportStatus(String id , String reportDate , String reportStatus);
+
+    /**
+     * 按核算月份异步批量更新核算状态
+     */
+    BatchResultDTO asyncUpdateReportStatus(TransferDeclareCostAllocationDTO.UpdateStatusDTO dto);
+
+    /**
+     * MQ 消费：游标分批批量更新核算状态
+     */
+    void pushUpdateReportStatus(TmsAsyncTaskRecordEntity taskRecord);
+
+    /**
+     * MQ 消费：已迁移的中转下推分摊批次任务。
+     * <p>
+     * 从任务记录解析 {@link TmsAsyncTaskRecordDTO.TransferDeclarePushAllocationPayloadDTO}，
+     * 按 B2C 报关对账审核日期范围游标分批生成费用分摊；单条业务仍委托 {@code singPushAllocation}。
+     *
+     * @param taskRecord MQ 路由后的任务记录，业务载荷从 {@code dataJson} 信封读取
+     */
+    void pushTransferDeclareCostAllocation(TmsAsyncTaskRecordEntity taskRecord);
+
+    BatchResultDTO asyncReAllocation(TransferDeclareCostAllocationDTO.ResetIdsDTO dto);
+
+    void pushReAllocation(TmsAsyncTaskRecordEntity taskRecord);
+
+    BatchResultDTO asyncDelete(TransferDeclareCostAllocationDTO.ResetIdsDTO dto);
+
+    void pushDelete(TmsAsyncTaskRecordEntity taskRecord);
     
     BatchResultDTO reAllocation(String id);
+
+    BatchResultDTO reAllocation(TransferDeclareCostAllocationMainEntity entity);
     
     BatchResultDTO delete(String id);
     

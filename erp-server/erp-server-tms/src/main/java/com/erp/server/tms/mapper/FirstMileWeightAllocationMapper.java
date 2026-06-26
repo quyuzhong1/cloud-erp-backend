@@ -65,7 +65,7 @@ public interface FirstMileWeightAllocationMapper extends BaseMapper<FirstMileWei
      * @author jack
      * @date 2026-04-22
      */
-    List<String> pageFirstMileDeliveryIds(@Param("params") TmsAsyncTaskRecordDTO.PushParamsDTO params);
+    List<String> pageFirstMileDeliveryIds(@Param("params") TmsAsyncTaskRecordDTO.FirstMilePushAllocationQueryDTO params);
 
     /**
      * 统计可下推分摊的总条数
@@ -74,5 +74,5 @@ public interface FirstMileWeightAllocationMapper extends BaseMapper<FirstMileWei
      * @author jack
      * @date 2026-04-22
      */
-    int countFirstMileDeliveryIds(@Param("params") TmsAsyncTaskRecordDTO.PushParamsDTO params);
+    int countFirstMileDeliveryIds(@Param("params") TmsAsyncTaskRecordDTO.FirstMilePushAllocationQueryDTO params);
 }
