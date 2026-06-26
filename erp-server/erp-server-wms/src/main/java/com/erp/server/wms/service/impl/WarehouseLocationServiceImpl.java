@@ -1127,6 +1127,14 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     }
 
     @Override
+    public List<WarehouseLocationDTO.WareInventoryQtyDTO> listWareInventoryQtyBySkuNos(String warehouseId, List<String> skuNos) {
+        if (CharSequenceUtil.isBlank(warehouseId) || CollectionUtils.isEmpty(skuNos)) {
+            return Collections.emptyList();
+        }
+        return warehouseLocationMapper.listWareInventoryQtyBySkuNos(warehouseId, skuNos);
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public List<BatchResultDTO> updateStatusBatch(WarehouseLocationDTO.UpdateStatusDto dto) {
         if(CollectionUtils.isEmpty(dto.getIds())){
