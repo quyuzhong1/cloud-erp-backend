@@ -14,7 +14,6 @@
 - `erp-rpc/**/pom.xml`
 - `erp-server/**/pom.xml`
 - `erp-sdk/**/pom.xml`
-- `erp-chrome/pom.xml`
 
 当前仓库未发现 `package.json` 或前端构建配置，因此不要为本仓库编造前端框架、组件库、路由、状态管理或样式规范。
 
@@ -78,7 +77,6 @@ mvn -pl <module> -am test
 | `erp-server-*` | 各业务域服务实现。 |
 | `erp-sdk-*` | 第三方平台和外部系统 SDK。 |
 | `erp-generator` | 初始化代码生成模板。 |
-| `erp-chrome` | Spring Boot 插件服务，不是前端工程。 |
 
 典型请求链路：
 
