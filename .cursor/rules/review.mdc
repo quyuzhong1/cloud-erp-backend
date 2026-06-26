@@ -30,8 +30,8 @@ Nacos / Seata 1.5.2 / RocketMQ / Redis(Redisson) / XXL-JOB / EasyExcel / MapStru
 
 模块职责说明：
 - `erp-model-*`：仅放 Entity / DTO / VO / Enums，不含业务逻辑
-- `erp-rpc-*`：跨服务 Feign 契约接口（Controller + Feign 实现分离）
-- `erp-server-*`：各域业务服务实现（Controller / Service / Mapper）
+- `erp-rpc-*`：跨服务 Feign **客户端契约**（`@FeignClient` 接口，供调用方使用）
+- `erp-server-*`：各域业务服务实现；其中 `controller/feign/*FeignController` 提供契约对应的 HTTP 端点，**不要求** `implements` rpc 接口
 - `erp-common-*`：公共能力，不承载单一域的私有逻辑
 
 分层约定：
@@ -43,7 +43,7 @@ Nacos / Seata 1.5.2 / RocketMQ / Redis(Redisson) / XXL-JOB / EasyExcel / MapStru
 - 版本号 `version` 字段做乐观锁，禁止物理删除（`is_deleted` 软删）
 
 公共注解（在 Controller 层校验，漏用即为问题）：
-- `@DataPermission`：数据权限，在分页查询、列表查询必须标注
+- `@DataPermission`：数据权限，在paging、edit、delete必须标注
 - `@WebAdvanceQuery(handler = XxxQueryHandler.class)`：高级搜索入口，在分页查询和导出必须标注
 - `@LogAction` + `@LogSystemModule`：操作日志
 
@@ -51,6 +51,26 @@ Nacos / Seata 1.5.2 / RocketMQ / Redis(Redisson) / XXL-JOB / EasyExcel / MapStru
 - `${params.permissionSql}`、`permissionSql` 及 `@DataPermission` 框架注入的权限过滤 SQL 片段，由公共数据权限组件统一生成与校验
 - **不得**将上述权限相关 `${...}` 拼接视为 SQL 注入风险，**不得**就此提出问题或降低评分
 - 仍须检查：接口是否**漏用** `@DataPermission`（注解缺失属于合规问题，与 permissionSql 注入无关）
+
+**数据权限审查边界（必须遵守）：**
+- 数据权限以 **Controller 层 `@DataPermission`** 为唯一标准入口；**不得**因 Service 层删除手写数据权限方法（如 `assertXxxDataPermission`）而单独扣分或要求恢复
+- **不得**建议「Controller + Service 双层重复做同一套数据权限校验」
+- 仅当以下情况才报告数据权限问题：
+  1. paging / edit / delete HTTP 接口**漏用** `@DataPermission`
+  2. `@DataPermission` 的 `serviceClass`、`keyIdName`、`tableField`、`menuCode`、`operationType` 与入参字段或校验实体**不一致**（例如入参仅传 `instanceId` 但 `keyIdName` 仍为 `id`，导致 AOP 跳过校验）
+  3. 存在**绕过 Controller** 的入口（Feign Controller、Job、MQ Consumer 等）直接调用 Service 写操作，且该入口未配置等效的权限控制
+- Service 被已标注 `@DataPermission` 的 Controller 调用时，**视为权限已在入口校验**，不再要求 Service 内重复校验
+- 修复建议应优先指向 **修正 Controller 注解配置** 或 **补齐遗漏入口的注解**，而非恢复 Service 层重复逻辑
+
+**Feign 契约与 FeignController 审查边界（必须遵守）：**
+- `erp-rpc-*` 定义 Feign **调用方**契约（`@FeignClient` + 路径/方法/入参/出参）；`erp-server-*/controller/feign/*FeignController` 提供**服务端** HTTP 实现
+- FeignController **不要求** `implements XxxFeign`，**不得**因删除 `implements`、缺少 `@Override` 而报告问题或要求恢复（本项目多数 FeignController 均未实现 rpc 接口）
+- 跨服务契约是否对齐，以 **URL 路径、HTTP 方法、入参/出参类型** 与 `erp-rpc-*` 中 `@FeignClient` 接口声明是否一致为准，而非是否显式 `implements`
+- 仅当以下情况才报告 Feign 契约相关问题：
+  1. 业务 Service 绕过 `erp-rpc-*` Feign 客户端，直接 HTTP 调用其他服务
+  2. FeignController 的 `@RequestMapping` / 方法映射 / 入参出参与对应 `erp-rpc-*` 契约**不一致**（须能从 diff 或同批变更中对照确认）
+  3. 新增跨服务 API 时，调用方未在 `erp-rpc-*` 补充 Feign 契约，或路径与实现端不匹配
+- **不得**将「FeignController 未 implements 契约接口」单独作为合规问题或扣分项
 
 ---
 
@@ -63,7 +83,7 @@ Nacos / Seata 1.5.2 / RocketMQ / Redis(Redisson) / XXL-JOB / EasyExcel / MapStru
 - Controller 是否继承 `BaseController`，返回是否使用 `ApiResult`
 - 是否把业务逻辑写进 Controller（Controller 应保持薄层，仅做参数接收和响应）
 - erp-model 模块中是否混入了业务逻辑或 Spring Bean 注入
-- 跨服务调用是否通过 `erp-rpc-*` Feign 契约，不得绕过直接 HTTP 调用
+- 跨服务调用是否通过 `erp-rpc-*` 的 Feign 客户端调用，不得绕过；FeignController 端不要求 `implements` 契约接口（见上文「Feign 契约与 FeignController 审查边界」）
 - 新增公共工具/注解是否误放进业务域，应放 `erp-common`
 
 ### 2. 数据库与 SQL
@@ -116,9 +136,10 @@ Nacos / Seata 1.5.2 / RocketMQ / Redis(Redisson) / XXL-JOB / EasyExcel / MapStru
 
 ### 7. Feign 调用
 
-- 是否通过 `erp-rpc-*` 的 Feign 接口调用，不得绕过
+- 调用方是否通过 `erp-rpc-*` 的 Feign 接口调用，不得绕过
 - Feign 返回值是否判空（`ApiResult.getData()` 可能为 null）
 - Feign 调用失败是否有降级或重试策略
+- 服务端 `*FeignController`：仅审查路径/方法/入参与 `erp-rpc-*` 契约是否一致；**不得**要求 `implements XxxFeign`（见「Feign 契约与 FeignController 审查边界」）
 
 ### 8. 性能
 
@@ -164,16 +185,6 @@ Nacos / Seata 1.5.2 / RocketMQ / Redis(Redisson) / XXL-JOB / EasyExcel / MapStru
   必须使用条件句：「若 X，则…」，并注明是基于 diff 中的线索还是推测。
 - 只有当问题的所有关键条件均可从 diff 中直接读取时，才允许以事实语气报告。
 
-### 不确定场景的表述规范（必须遵守）
-
-- 若问题依赖的关键代码（如被调用方法的实现、对应 Entity 定义、缓存写入端逻辑、枚举的实际返回值）**不在本次 diff 中**，
-  问题描述中**不得**以断言语气描述其行为，必须在问题描述中明确标注：
-  > 「XXX 不在本次 diff 中，无法确认；以下为潜在风险，需人工验证。」
-- **禁止将推断出的代码行为**（如「原代码使用了 X」「该枚举返回大写」「原缓存键前缀为全小写」）**以事实语气陈述**；
-  必须使用条件句：「若 X，则…」，并注明是基于 diff 中的线索还是推测。
-- 只有当问题的所有关键条件均可从 diff 中直接读取时，才允许以事实语气报告。
-
-
 ### 问题分级约束（必须遵守）
 
 | 等级 | 判定标准 | 典型例子 |
@@ -194,7 +205,7 @@ Nacos / Seata 1.5.2 / RocketMQ / Redis(Redisson) / XXL-JOB / EasyExcel / MapStru
 
 - 对于**技术选型类问题**（如 JOIN vs 子查询、批量大小阈值、缓存粒度），若该写法在此项目中有合理依据，请说明适用条件和权衡点，不要单方面否定
 - 对于**有多种合法实现方式**的场景，不标注为问题；若确有明显劣势，必须给出量化依据（如「该表数据量超过 100 万行时，NOT IN 会导致全表扫描」）
-- 若某写法已符合本 Prompt 中明确的项目规范，不得在结论中要求回退
+- 若某写法已符合本 Prompt 中明确的项目规范，不得在结论中要求回退（含：FeignController 不 implements 契约接口、数据权限仅在 Controller `@DataPermission` 校验）
 - **低分（60 分以下）必须有严重或高风险问题支撑**，不得为显得严格而人为压低分数
 
 ---
