@@ -113,6 +113,9 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 	@Resource
 	private SoReturnInstockSalesMatchService soReturnInstockSalesMatchService;
 
+	@Resource
+	private SoB2cReturnFeign soB2cReturnFeign;
+
 	@Override
 	public String getBizName() {
 		return "平台退货入库";
@@ -1181,42 +1184,19 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 	/**
 	 * WEGO 退货入库：按参考单号从 so_b2c_return 中查找匹配记录。
 	 * <p>
-	 * 依次用参考单号匹配 code → platform_return_no → platform_order_no → so_code，
-	 * 返回第一条命中记录；全部未命中则返回 null。
+	 * 单次 Feign 调用，DB 层 SQL 以 OR 条件匹配 code / platform_return_no / platform_order_no / so_code，
+	 * 并按以上优先级排序取首条，避免多次远程调用。
 	 */
 	private SoB2cReturnEntity findSoB2cReturnByRef(String referenceNo) {
 		if (CharSequenceUtil.isBlank(referenceNo)) {
 			return null;
 		}
-		// 1. by code
-		List<SoB2cReturnEntity> list = FeignQuery.create(SoB2cReturnEntity.class)
-				.eq(SoB2cReturnEntity::getCode, referenceNo).list();
-		if (CollUtil.isNotEmpty(list)) {
-			log.info("[WEGO退货入库] 参考单号 {} 命中 so_b2c_return.code", referenceNo);
-			return list.get(0);
+		SoB2cReturnEntity result = soB2cReturnFeign.findFirstByReferenceNo(referenceNo);
+		if (Objects.nonNull(result)) {
+			log.info("[WEGO退货入库] 参考单号 {} 命中 so_b2c_return[{}]", referenceNo, result.getId());
+		} else {
+			log.info("[WEGO退货入库] 参考单号 {} 在 so_b2c_return 中未查到匹配记录", referenceNo);
 		}
-		// 2. by platform_return_no
-		list = FeignQuery.create(SoB2cReturnEntity.class)
-				.eq(SoB2cReturnEntity::getPlatformReturnNo, referenceNo).list();
-		if (CollUtil.isNotEmpty(list)) {
-			log.info("[WEGO退货入库] 参考单号 {} 命中 so_b2c_return.platform_return_no", referenceNo);
-			return list.get(0);
-		}
-		// 3. by platform_order_no
-		list = FeignQuery.create(SoB2cReturnEntity.class)
-				.eq(SoB2cReturnEntity::getPlatformOrderNo, referenceNo).list();
-		if (CollUtil.isNotEmpty(list)) {
-			log.info("[WEGO退货入库] 参考单号 {} 命中 so_b2c_return.platform_order_no", referenceNo);
-			return list.get(0);
-		}
-		// 4. by so_code
-		list = FeignQuery.create(SoB2cReturnEntity.class)
-				.eq(SoB2cReturnEntity::getSoCode, referenceNo).list();
-		if (CollUtil.isNotEmpty(list)) {
-			log.info("[WEGO退货入库] 参考单号 {} 命中 so_b2c_return.so_code", referenceNo);
-			return list.get(0);
-		}
-		log.info("[WEGO退货入库] 参考单号 {} 在 so_b2c_return 中未查到匹配记录", referenceNo);
-		return null;
+		return result;
 	}
 }
