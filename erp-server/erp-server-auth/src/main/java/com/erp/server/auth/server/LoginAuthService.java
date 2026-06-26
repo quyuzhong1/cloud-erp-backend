@@ -124,7 +124,7 @@ public class LoginAuthService {
         ipDTO.setUid(info.getUid());
         sysUserFeign.setLoginIp(ipDTO);
 
-        if (!loginDTO.getIsTest()) {
+        if (loginDTO.getIsTest()) {
             // 创建token（仅缓存用户基础信息，菜单与权限由独立接口获取）
             info.setOverallMenuList(null);
             info.setLeftMenuList(null);
