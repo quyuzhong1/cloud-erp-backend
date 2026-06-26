@@ -156,16 +156,20 @@ public class DmpInputAmzFbaInboundPlanGetFbaShipmentInitHandler extends DmpInput
                         return Collections.emptyList();
                     }
                     if (manualPull) {
-                        throw new ServiceException("手动拉取FBA货件详情失败, inboundPlanId=" + inboundPlanId
-                                + ", shipmentId=" + shipmentRawId + ", error=" + e.getMessage());
+                        log.error("【FBA入库计划货件详情拉取】platformShopCode={}, taskId={}, inboundPlanId={}, shipmentId={}, Amazon API 异常",
+                                shopInfoDTO.getPlatformShopCode(), dmpInputTaskEntity.getId(), inboundPlanId, shipmentRawId, e);
+                        throw new ServiceException("手动拉取FBA货件详情失败，请稍后重试, inboundPlanId=" + inboundPlanId
+                                + ", shipmentId=" + shipmentRawId + ", taskId=" + dmpInputTaskEntity.getId());
                     }
-                    log.warn("跳过shipment，inboundPlanId={}, shipmentId={}, 原因={}", inboundPlanId, shipmentRawId, e.getMessage());
+                    log.warn("跳过shipment，inboundPlanId={}, shipmentId={}", inboundPlanId, shipmentRawId, e);
                 } catch (LWAException e) {
                     if (manualPull) {
-                        throw new ServiceException("手动拉取FBA货件详情失败, inboundPlanId=" + inboundPlanId
-                                + ", shipmentId=" + shipmentRawId + ", error=" + e.getMessage());
+                        log.error("【FBA入库计划货件详情拉取】platformShopCode={}, taskId={}, inboundPlanId={}, shipmentId={}, LWA 授权异常",
+                                shopInfoDTO.getPlatformShopCode(), dmpInputTaskEntity.getId(), inboundPlanId, shipmentRawId, e);
+                        throw new ServiceException("手动拉取FBA货件详情失败，请稍后重试, inboundPlanId=" + inboundPlanId
+                                + ", shipmentId=" + shipmentRawId + ", taskId=" + dmpInputTaskEntity.getId());
                     }
-                    log.warn("跳过shipment，inboundPlanId={}, shipmentId={}, 原因={}", inboundPlanId, shipmentRawId, e.getMessage());
+                    log.warn("跳过shipment，inboundPlanId={}, shipmentId={}", inboundPlanId, shipmentRawId, e);
                 }
             }
             if (CollUtil.isNotEmpty(shipmentCodeSet) && CollUtil.isEmpty(pendingShipmentCodeSet)) {
