@@ -355,27 +355,16 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
     @Override
     @Transactional(rollbackFor = Exception.class)
     public WorkflowTaskInstanceDTO.RetryResultDTO retry(WorkflowTaskInstanceDTO.RetryDTO dto) {
-        if (CharSequenceUtil.isAllBlank(dto.getStepId(), dto.getInstanceId())) {
-            throw new ServiceException(ApiError.WF_TASK_RECORD_FORCE_RETRY_PARAM_INCOMPLETE);
-        }
-        if (CharSequenceUtil.isBlank(dto.getStepId()) && CharSequenceUtil.isNotBlank(dto.getInstanceId())) {
-            assertInstanceDataPermission(dto.getInstanceId());
-        }
         WorkflowTaskRecordDTO.ForceRetryDTO forceRetryDTO = new WorkflowTaskRecordDTO.ForceRetryDTO();
-        forceRetryDTO.setId(dto.getStepId());
         forceRetryDTO.setRetryCount(dto.getRetryCount());
         forceRetryDTO.setRemark(dto.getRemark());
-        if (CharSequenceUtil.isNotBlank(dto.getInstanceId())) {
-            forceRetryDTO.setInstanceId(dto.getInstanceId());
+        forceRetryDTO.setInstanceId(dto.getInstanceId());
+        WorkflowTaskInstanceEntity instance = getById(dto.getInstanceId());
+        if (instance == null) {
+            throw new ServiceException(ApiError.WF_TASK_INSTANCE_NOT_FOUND);
         }
-        if (CharSequenceUtil.isNotBlank(dto.getInstanceId()) && CharSequenceUtil.isBlank(dto.getStepId())) {
-            WorkflowTaskInstanceEntity instance = getById(dto.getInstanceId());
-            if (instance == null) {
-                throw new ServiceException(ApiError.WF_TASK_INSTANCE_NOT_FOUND);
-            }
-            forceRetryDTO.setSourceType(instance.getSourceType());
-            forceRetryDTO.setSourceId(instance.getSourceId());
-        }
+        forceRetryDTO.setSourceType(instance.getSourceType());
+        forceRetryDTO.setSourceId(instance.getSourceId());
         WorkflowTaskRecordDTO.ForceRetryResultDTO result = workflowTaskRecordService.forceRetry(forceRetryDTO);
         WorkflowTaskInstanceDTO.RetryResultDTO wrapper = new WorkflowTaskInstanceDTO.RetryResultDTO();
         wrapper.setInstanceId(resolveInstanceId(dto.getInstanceId(), result));
@@ -404,7 +393,6 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
             keyName = "sourceType,sourceId", unlockAfterTx = true)
     public WorkflowTaskInstanceDTO.RetryResultDTO retryFromStepWithLock(WorkflowTaskInstanceDTO.RetryFromStepDTO dto,
                                                                         String sourceType, String sourceId) {
-        workflowTaskRecordService.validateForceRetryPermission();
         WorkflowTaskInstanceEntity instance = getById(dto.getInstanceId());
         if (instance == null) {
             throw new ServiceException(ApiError.WF_TASK_INSTANCE_NOT_FOUND);
@@ -573,36 +561,5 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
             return;
         }
         workflowTaskStepDispatcher.sendDispatchMq(dispatch, messageKey);
-    }
-
-    /**
-     * 校验当前用户对编排实例的数据权限（创建人/部门范围）。
-     */
-    @Override
-    public void assertInstanceDataPermission(String instanceId) {
-        WorkflowTaskInstanceEntity instance = getById(instanceId);
-        if (instance == null) {
-            throw new ServiceException(ApiError.WF_TASK_INSTANCE_NOT_FOUND);
-        }
-        LoginUser loginUser = UserContext.getDefaultLoginUser();
-        if (loginUser != null && Boolean.TRUE.equals(loginUser.getIsSupper())) {
-            return;
-        }
-        if (CharSequenceUtil.isBlank(instance.getCreateUserId())) {
-            return;
-        }
-        if (loginUser == null) {
-            throw new ServiceException(ApiError.HTTP_FORBIDDEN);
-        }
-        List<String> owners = Arrays.asList(instance.getCreateUserId().split(","));
-        List<String> deptUsers = sysUserFeign.getDepUserList(loginUser.getUid());
-        if (CollUtil.isNotEmpty(deptUsers)) {
-            if (owners.stream().anyMatch(deptUsers::contains)) {
-                return;
-            }
-        } else if (owners.contains(loginUser.getUid())) {
-            return;
-        }
-        throw new ServiceException(ApiError.HTTP_FORBIDDEN);
     }
 }

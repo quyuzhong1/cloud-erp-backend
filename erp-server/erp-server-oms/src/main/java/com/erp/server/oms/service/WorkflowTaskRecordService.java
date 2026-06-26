@@ -113,10 +113,6 @@ public interface WorkflowTaskRecordService extends SuperService<WorkflowTaskReco
      */
     WorkflowTaskRecordDTO.ForceRetryResultDTO forceRetry(WorkflowTaskRecordDTO.ForceRetryDTO dto);
 
-    /**
-     * 校验人工强制重试权限（超级管理员或持有 forceRetry 菜单权限）。
-     */
-    void validateForceRetryPermission();
 
     /**
      * 判断节点是否允许强制重试（含 PROCESSING 超时判定）。

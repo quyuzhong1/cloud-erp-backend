@@ -186,14 +186,13 @@ public class WorkflowTaskInstanceDTO implements Serializable {
         private String remark;
     }
 
-    /** 实例级人工重试入参：指定 stepId 或 instanceId 二选一。 */
+    /** 实例级人工重试入参。 */
     @Data
     @NoArgsConstructor
     public static class RetryDTO implements Serializable {
-        /** 编排实例 ID；与 stepId 二选一 */
+        /** 编排实例 ID*/
+        @NotBlank(message = "实例ID不能为空")
         private String instanceId;
-        /** 节点记录 ID；与 instanceId 二选一，优先级更高 */
-        private String stepId;
         /** 重置后的 retry_count，默认 0 */
         private Integer retryCount;
         /** 操作备注，写入节点 remark */

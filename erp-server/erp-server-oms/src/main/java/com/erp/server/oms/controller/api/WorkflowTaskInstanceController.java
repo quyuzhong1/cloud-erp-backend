@@ -14,7 +14,6 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.WorkflowTaskInstanceDTO;
 import com.erp.server.oms.query.WorkflowTaskInstanceQueryHandler;
 import com.erp.server.oms.service.WorkflowTaskInstanceService;
-import com.erp.server.oms.service.WorkflowTaskRecordService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -95,15 +94,15 @@ public class WorkflowTaskInstanceController extends BaseController {
     }
 
     /**
-     * 人工重试失败节点：可指定 stepId 或 instanceId，委托 forceRetry 并返回调度结果。
+     * 人工重试失败节点：instanceId，委托 forceRetry 并返回调度结果。
      */
     @PostMapping("/retry")
     @LogAction(value = LogActionEnum.EXECUTE, desc = "任务编排实例重试")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "oms:workflowTaskRecord:forceRetry",
-            serviceClass = WorkflowTaskRecordService.class,
-            keyIdName = "stepId")
+            serviceClass = WorkflowTaskInstanceService.class,
+            keyIdName = "instanceId")
     public ApiResult<WorkflowTaskInstanceDTO.RetryResultDTO> retry(
             @RequestBody @Validated WorkflowTaskInstanceDTO.RetryDTO dto) {
         return success(workflowTaskInstanceService.retry(dto));
