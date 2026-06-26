@@ -16,6 +16,8 @@ import com.erp.model.sys.entity.*;
 import com.erp.model.sys.vo.MsgChannelConfigDTO;
 import com.erp.model.sys.vo.MsgConfigDTO;
 import com.erp.model.sys.vo.SysCalendarListVO;
+import com.erp.model.sys.vo.SysUserMenuAuthVO;
+import com.erp.model.sys.vo.SysUserPermissionAuthVO;
 import com.erp.model.sys.vo.ThirdUnionDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -40,6 +42,12 @@ public interface SysUserFeign {
 
     /**
      * 账号登录
+     * <p>
+     * 校验账号密码并返回用户基础信息，菜单与权限由独立 Feign 接口获取。
+     * </p>
+     *
+     * @param loginDTO 登录入参
+     * @return 用户基础信息
      */
     @PostMapping("feign/user/accountLogin")
     ApiResult<SysUserDTO> accountLogin(@RequestBody AccountLoginDTO loginDTO);
@@ -124,6 +132,30 @@ public interface SysUserFeign {
      */
     @PostMapping("feign/user/getUserLoginInfo")
     ApiResult<SysUserDTO> getUserLoginInfo(@RequestBody SysFeignDTO.UserLoginInfoDTO dto);
+
+    /**
+     * 获取用户菜单权限
+     * <p>
+     * 供 auth 服务在登录后异步拉取菜单数据。
+     * </p>
+     *
+     * @param dto 用户 ID 及所属系统类型
+     * @return 菜单权限数据（leftMenuList、overallMenuList）
+     */
+    @PostMapping("feign/user/getUserMenuAuth")
+    ApiResult<SysUserMenuAuthVO> getUserMenuAuth(@RequestBody SysFeignDTO.UserLoginInfoDTO dto);
+
+    /**
+     * 获取用户按钮权限编码
+     * <p>
+     * 供 auth 服务在登录后异步拉取按钮权限数据。
+     * </p>
+     *
+     * @param dto 用户 ID 及所属系统类型
+     * @return 按钮权限编码列表
+     */
+    @PostMapping("feign/user/getUserPermissionAuth")
+    ApiResult<SysUserPermissionAuthVO> getUserPermissionAuth(@RequestBody SysFeignDTO.UserLoginInfoDTO dto);
 
     /**
      * 根据第三方平台 以及union id 获取用户id

@@ -19,14 +19,26 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.IpUtils;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.sys.dto.AccountLoginDTO;
+import com.erp.model.sys.dto.SysFeignDTO;
 import com.erp.model.sys.dto.SysLoginIpDTO;
 import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.vo.SysLoginUserVO;
+import com.erp.model.sys.vo.SysUserMenuAuthVO;
+import com.erp.model.sys.vo.SysUserPermissionAuthVO;
 import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 
 import cn.hutool.core.util.StrUtil;
 
+/**
+ * 登录认证服务
+ * <p>
+ * 负责账号登录、Token 校验，以及登录后菜单/按钮权限的独立获取。
+ * </p>
+ *
+ * @Classname LoginAuthService
+ * @Date 2022-07-08
+ */
 @Component
 public class LoginAuthService {
 
@@ -42,6 +54,13 @@ public class LoginAuthService {
     @Resource
     private RedisUtil redisUtil;
 
+    /**
+     * 处理账号登录
+     *
+     * @param loginDTO 登录入参
+     * @param request  HTTP 请求
+     * @return 登录结果（仅包含 Token 和用户基础信息）
+     */
     public ApiResult<SysLoginUserVO> processLogin(AccountLoginDTO loginDTO, HttpServletRequest request) {
         String loginErrorKey = StrUtil.format(RedisCacheConstants.LOGIN_ERROR_KEY, loginDTO.getUserType(), loginDTO.getAccount());
 
@@ -67,6 +86,18 @@ public class LoginAuthService {
         }
     }
     
+    /**
+     * 登录成功后的业务处理
+     * <p>
+     * 校验 SRM 供应商状态、记录登录 IP、创建精简 Token，并组装不含菜单/权限的登录响应。
+     * </p>
+     *
+     * @param apiResult     用户服务返回结果
+     * @param loginDTO      登录入参
+     * @param request       HTTP 请求
+     * @param loginErrorKey 登录失败次数 Redis Key
+     * @return 登录结果
+     */
     private ApiResult<SysLoginUserVO> dealSuccess(ApiResult<SysUserDTO> apiResult , AccountLoginDTO loginDTO , HttpServletRequest request , String loginErrorKey){
         SysUserDTO info = apiResult.getData();
         //SRM校验供应商是否启用
@@ -90,14 +121,15 @@ public class LoginAuthService {
         ipDTO.setUid(info.getUid());
         sysUserFeign.setLoginIp(ipDTO);
 
-        // 创建token
-        String accessToken = authTokenService.createToken(info);
+        // 创建token（仅缓存用户基础信息，菜单与权限由独立接口获取）
+        info.setOverallMenuList(null);
+        info.setLeftMenuList(null);
+        info.setPermissionList(null);
+        info.setUserType(loginDTO.getUserType());
+        String accessToken = authTokenService.createSlimToken(info);
         SysLoginUserVO sysLoginUserVO = new SysLoginUserVO();
         sysLoginUserVO.setAccessToken(accessToken);
-        sysLoginUserVO.setOverallMenuList(info.getOverallMenuList());
-        sysLoginUserVO.setPermissionList(info.getPermissionList());
         sysLoginUserVO.setUserName(info.getUserName());
-        sysLoginUserVO.setLeftMenuList(info.getLeftMenuList());
         sysLoginUserVO.setHeadIcon(info.getHeadIcon());
         sysLoginUserVO.setBindingPlatform(info.getBindingPlatform());
         sysLoginUserVO.setBindingState(info.getBindingState());
@@ -111,6 +143,12 @@ public class LoginAuthService {
         return ApiResult.success(sysLoginUserVO);
     }
 
+    /**
+     * 根据 Token 获取用户信息
+     *
+     * @param token accessToken
+     * @return 用户信息（含菜单与权限，供 getUserByToken 使用）
+     */
     public SysLoginUserVO getByToken(String token) {
         SysLoginUserVO result = new SysLoginUserVO();
         LoginUser loginUser = authTokenService.getLoginUser(token);
@@ -128,5 +166,57 @@ public class LoginAuthService {
         result.setBindingState(sysUser.getBindingState());
         result.setUserId(sysUser.getUid());
         return result;
+    }
+
+    /**
+     * 获取当前登录用户的菜单权限
+     * <p>
+     * 返回 leftMenuList 与 overallMenuList，供前端渲染导航与路由。
+     * </p>
+     *
+     * @param token accessToken
+     * @return 菜单权限数据
+     */
+    public SysUserMenuAuthVO getUserMenus(String token) {
+        LoginUser loginUser = getLoginUserOrThrow(token);
+        ApiResult<SysUserMenuAuthVO> apiResult = sysUserFeign.getUserMenuAuth(
+                new SysFeignDTO.UserLoginInfoDTO(loginUser.getUid(), loginUser.getUserType()));
+        if (apiResult.getCode() != 200) {
+            throw new ServiceException(apiResult.getCode(), apiResult.getMsg());
+        }
+        return apiResult.getData();
+    }
+
+    /**
+     * 获取当前登录用户的按钮权限编码
+     * <p>
+     * 返回 permissionList，供前端控制按钮显示/隐藏。
+     * </p>
+     *
+     * @param token accessToken
+     * @return 按钮权限编码列表
+     */
+    public SysUserPermissionAuthVO getUserPermissions(String token) {
+        LoginUser loginUser = getLoginUserOrThrow(token);
+        ApiResult<SysUserPermissionAuthVO> apiResult = sysUserFeign.getUserPermissionAuth(
+                new SysFeignDTO.UserLoginInfoDTO(loginUser.getUid(), loginUser.getUserType()));
+        if (apiResult.getCode() != 200) {
+            throw new ServiceException(apiResult.getCode(), apiResult.getMsg());
+        }
+        return apiResult.getData();
+    }
+
+    /**
+     * 根据 Token 获取登录用户，不存在则抛出 403
+     *
+     * @param token accessToken
+     * @return 登录用户缓存信息
+     */
+    private LoginUser getLoginUserOrThrow(String token) {
+        LoginUser loginUser = authTokenService.getLoginUser(token);
+        if (Objects.isNull(loginUser)) {
+            throw new ServiceException(ApiError.HTTP_FORBIDDEN);
+        }
+        return loginUser;
     }
 }
