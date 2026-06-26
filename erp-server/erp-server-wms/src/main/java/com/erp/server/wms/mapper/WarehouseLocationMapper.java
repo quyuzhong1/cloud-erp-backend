@@ -96,6 +96,11 @@ public interface WarehouseLocationMapper extends BaseMapper<WarehouseLocationEnt
     WarehouseLocationDTO.WareInventoryQtyDTO getOneWareInventoryQty(@Param("warehouseId") String warehouseId,@Param("skuNo") String skuNo);
 
     /**
+     * 根据SKU批量找出非拣货区的所有仓位，按库存数量降序排序
+     */
+    List<WarehouseLocationDTO.WareInventoryQtyDTO> listWareInventoryQtyBySkuNos(@Param("warehouseId") String warehouseId, @Param("skuNos") List<String> skuNos);
+
+    /**
      * 查询东莞售后仓库下的仓位信息
      *
      * @param warehouseId String

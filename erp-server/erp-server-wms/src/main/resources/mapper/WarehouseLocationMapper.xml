@@ -456,6 +456,42 @@
             limit 1
     </select>
 
+    <select id="listWareInventoryQtyBySkuNos" resultType="com.erp.model.wms.dto.WarehouseLocationDTO$WareInventoryQtyDTO">
+        SELECT
+        DISTINCT
+        wl.ID,
+        wl.warehouse_id,
+        wl.code AS warehouseCode,
+        wl.NAME AS warehouseName,
+        wa.code as warehouseLocationCode,
+        wa.name as warehouseLocationName,
+        i.qty,
+        i.sku_id,
+        i.sku_no
+        FROM
+        warehouse_location AS wl
+        INNER JOIN inventory AS i ON wl.warehouse_id = i.warehouse_id
+        AND i.is_deleted =FALSE
+        INNER join warehouse_location as wa on wa.parent_id = wl.id
+        and i.warehouse_location = wa.code
+        and wa.is_deleted =FALSE
+        WHERE
+        wl.is_deleted = FALSE
+        AND wl.area_type != 'pickingArea'
+        AND i.qty > 0
+        AND i.dict_inventory_status = 'usable'
+        <if test="warehouseId != null and warehouseId != ''">
+            AND wl.warehouse_id = #{warehouseId}
+        </if>
+        <if test="skuNos != null and skuNos.size() > 0">
+            AND i.sku_no IN
+            <foreach collection="skuNos" item="skuNo" open="(" close=")" separator=",">
+                #{skuNo}
+            </foreach>
+        </if>
+        ORDER BY i.sku_no, i.qty DESC
+    </select>
+
     <select id="listByAfterSalesWarehouse" resultType="com.erp.model.wms.dto.WarehouseLocationDTO$ViewDto">
         select wl.id,
         wl.code,
