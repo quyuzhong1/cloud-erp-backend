@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
  * 装箱任务-单据类型
  */
 public enum PickingSourceTypeEnum implements EnumMessage {
+    // FBA 为历史拣货来源编码，保持大写；FBS 与发货计划/要货单类型统一使用小写 fbs。
     FBA("FBA", "FBA"),
     FBS("fbs", "FBS"),
     FBT("fbt", "FBT"),

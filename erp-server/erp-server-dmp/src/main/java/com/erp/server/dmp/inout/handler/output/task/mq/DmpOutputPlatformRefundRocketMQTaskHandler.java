@@ -31,6 +31,8 @@ import java.util.stream.Collectors;
 public abstract class DmpOutputPlatformRefundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler {
 
     private static final int BATCH_SIZE = 500;
+    private static final String STORAGE_REFUND_INFO = "dmp_so_refund_info";
+    private static final String STORAGE_REFUND_DETAIL = "dmp_so_refund_detail";
 
     @Resource
     private DmpSoRefundDetailService dmpSoRefundDetailService;
@@ -51,12 +53,12 @@ public abstract class DmpOutputPlatformRefundRocketMQTaskHandler extends DmpOutp
                 continue;
             }
             String storageName = entry.getKey().getStorageName();
-            if ("dmp_so_refund_info".equals(storageName)) {
+            if (STORAGE_REFUND_INFO.equals(storageName)) {
                 for (BaseEntity entity : value) {
                     DmpSoRefundInfoEntity dmpEntity = (DmpSoRefundInfoEntity) entity;
                     dmpEntityMap.put(dmpEntity.getId(), dmpEntity);
                 }
-            } else if ("dmp_so_refund_detail".equals(storageName)) {
+            } else if (STORAGE_REFUND_DETAIL.equals(storageName)) {
                 for (BaseEntity entity : value) {
                     DmpSoRefundDetailEntity detailEntity = (DmpSoRefundDetailEntity) entity;
                     dmpDetailEntityMap.computeIfAbsent(detailEntity.getMainId(), key -> new ArrayList<>())
@@ -73,11 +75,11 @@ public abstract class DmpOutputPlatformRefundRocketMQTaskHandler extends DmpOutp
                 continue;
             }
             String storageName = entry.getKey().getStorageName();
-            if ("dmp_so_refund_info".equals(storageName)) {
+            if (STORAGE_REFUND_INFO.equals(storageName)) {
                 for (BaseEntity entity : value) {
                     changeIds.add(entity.getId());
                 }
-            } else if ("dmp_so_refund_detail".equals(storageName)) {
+            } else if (STORAGE_REFUND_DETAIL.equals(storageName)) {
                 for (BaseEntity entity : value) {
                     changeIds.add(((DmpSoRefundDetailEntity) entity).getMainId());
                 }

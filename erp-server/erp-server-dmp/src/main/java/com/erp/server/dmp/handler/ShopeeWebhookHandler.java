@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 订单出口回告处理类
@@ -110,9 +111,13 @@ public class ShopeeWebhookHandler implements WebhookHandler{
 
     private DmpCfgInputDetailEntity resolveDetailEntity(String cfgInputId, String platformShopId) {
         String erpShopId = resolveErpShopId(platformShopId);
+        List<String> nextLevelIds = buildDetailNextLevelIds(erpShopId, platformShopId);
         List<DmpCfgInputDetailEntity> activeDetails = dmpCfgInputDetailService.lambdaQuery()
                 .eq(DmpCfgInputDetailEntity::getMainId, cfgInputId)
                 .eq(DmpCfgInputDetailEntity::getDisabled, Boolean.FALSE)
+                .and(wrapper -> wrapper.in(DmpCfgInputDetailEntity::getNextLevelId, nextLevelIds)
+                        .or()
+                        .isNull(DmpCfgInputDetailEntity::getNextLevelId))
                 .list();
         if (activeDetails == null || activeDetails.isEmpty()) {
             log.warn("虾皮webhook 未查询到启用的店铺任务明细，cfgInputId={}，platformShopId={}，erpShopId={}",
@@ -148,6 +153,19 @@ public class ShopeeWebhookHandler implements WebhookHandler{
                 .filter(detail -> nextLevelId.equals(detail.getNextLevelId()))
                 .findFirst()
                 .orElse(null);
+    }
+
+    private List<String> buildDetailNextLevelIds(String erpShopId, String platformShopId) {
+        List<String> nextLevelIds = new java.util.ArrayList<>();
+        if (!StringUtils.isBlank(erpShopId)) {
+            nextLevelIds.add(erpShopId);
+        }
+        if (!StringUtils.isBlank(platformShopId) && !Objects.equals(erpShopId, platformShopId)) {
+            nextLevelIds.add(platformShopId);
+        }
+        // 兼容历史单店铺配置：nextLevelId 为空时作为兜底任务明细。
+        nextLevelIds.add("");
+        return nextLevelIds.stream().distinct().collect(Collectors.toList());
     }
 
     private String resolveErpShopId(String platformShopId) {

@@ -7872,13 +7872,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             return OrderLogisticTypeEnum.SELF_SHIPMENT.getCode();
         }
         ThirdWarehouseDeliveryEntity thirdWarehouseDelivery;
-    try {
-        thirdWarehouseDelivery = thirdWarehouseDeliveryFeign.getLatestBySoId(entity.getId());
-    } catch (Exception e) {
-        log.warn("解析订单发货类型时查询三方仓发货单失败, soId: {}, code: {}", entity.getId(), entity.getCode(), e);
-        // 查询异常不能降级为自发货，否则会写错订单发货类型；交给上游重试/补偿处理。
-        throw new ServiceException("解析订单发货类型失败，请稍后重试");
-    }
+        try {
+            thirdWarehouseDelivery = thirdWarehouseDeliveryFeign.getLatestBySoId(entity.getId());
+        } catch (Exception e) {
+            log.warn("解析订单发货类型时查询三方仓发货单失败, soId: {}, code: {}", entity.getId(), entity.getCode(), e);
+            // 查询异常不能降级为自发货，否则会写错订单发货类型；交给上游重试/补偿处理。
+            throw new ServiceException("解析订单发货类型失败，请稍后重试");
+        }
         if (Objects.nonNull(thirdWarehouseDelivery)
                 && !SoB2cWarehouseDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(thirdWarehouseDelivery.getStatus())) {
             return OrderLogisticTypeEnum.THIRD_WAREHOUSE.getCode();

@@ -86,6 +86,10 @@ public class TikTokPackageForecastAdapter extends AbstractPackageForecastPlatfor
             updateForecastOrThrow(entity);
             return BatchResultDTO.success(entity.getId(), entity.getCode(), "上传成功");
         } catch (Exception e) {
+            if (StringUtils.isNotBlank(entity.getHandoverNo()) || StringUtils.isNotBlank(entity.getPlatformPackageNo())) {
+                log.error("TikTok组包平台已成功但本地更新失败, id: {}, code: {}", entity.getId(), entity.getCode(), e);
+                return BatchResultDTO.fail(entity.getId(), entity.getCode(), "平台已组包，本地状态更新失败，请人工核对");
+            }
             entity.setUploadStatus(PackageUploadStatusEnum.UPLOAD_FAILURE.getCode());
             entity.setRemark("上传失败:" + e.getMessage());
             try {

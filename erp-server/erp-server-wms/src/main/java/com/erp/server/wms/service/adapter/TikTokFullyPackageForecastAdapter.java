@@ -83,7 +83,15 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
     @Override
     public List<BatchResultDTO> cancel(List<String> ids) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-        TikTokFullyForecastContext context = buildContext(ids);
+        TikTokFullyForecastContext context;
+        try {
+            context = buildContext(ids);
+        } catch (Exception e) {
+            log.error("TikTok全托管组包预报取消上传上下文构建失败, ids: {}", ids, e);
+            return CollectionUtils.emptyIfNull(ids).stream()
+                    .map(id -> BatchResultDTO.fail(id, id, e.getMessage()))
+                    .collect(Collectors.toList());
+        }
         Set<String> canceledHandoverNoSet = new HashSet<>();
         for (String id : ids) {
             PackageForecastEntity entity = null;

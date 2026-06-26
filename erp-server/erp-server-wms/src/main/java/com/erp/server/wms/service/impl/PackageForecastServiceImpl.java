@@ -336,6 +336,9 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         try {
             String supplierId = entity.getLogisticsSupplierId();
             LogisticsSupplierDTO.AuthDTO authDTO = logisticsAuthFeign.getAuthBySupplierId(supplierId);
+            if (Objects.isNull(authDTO)) {
+                throw new ServiceException("物流商不存在");
+            }
             String logisticsPlatform = authDTO.getLogisticsPlatform();
             PackageForecastPlatformAdapter adapter = packageForecastPlatformAdapterFactory.getByPlatform(logisticsPlatform)
                     .orElseThrow(() -> new ServiceException(platformName(logisticsPlatform) + "平台尚未对接取消上传"));

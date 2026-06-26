@@ -287,6 +287,7 @@ public class ShopeePackageForecastAdapter extends AbstractPackageForecastPlatfor
         }
         LocalDate fromDate = Objects.nonNull(entity.getBillDate()) ? entity.getBillDate() : LocalDate.now().minusMonths(3);
         LocalDate toDate = LocalDate.now();
+        BaseRequest baseRequest = buildBaseRequest(shopId);
         String cursor = null;
         do {
             FirstMileTrackingNumberListRequest request = FirstMileTrackingNumberListRequest.builder()
@@ -295,7 +296,7 @@ public class ShopeePackageForecastAdapter extends AbstractPackageForecastPlatfor
                     .pageSize(50)
                     .cursor(cursor)
                     .build();
-            FirstMileTrackingNumberListResponse response = shopeeLogisticsService.getTrackNumberList(buildBaseRequest(shopId), request);
+            FirstMileTrackingNumberListResponse response = shopeeLogisticsService.getTrackNumberList(baseRequest, request);
             if (Objects.isNull(response)) {
                 return;
             }
@@ -567,6 +568,7 @@ public class ShopeePackageForecastAdapter extends AbstractPackageForecastPlatfor
         if (fromDate.isAfter(toDate)) {
             fromDate = toDate;
         }
+        BaseRequest baseRequest = buildBaseRequest(shopId);
         String cursor = null;
         do {
             CourierDeliveryTrackingNumberListRequest request = CourierDeliveryTrackingNumberListRequest.builder()
@@ -577,7 +579,7 @@ public class ShopeePackageForecastAdapter extends AbstractPackageForecastPlatfor
                     .build();
             ValidatorUtil.validateEntity(request);
             CourierDeliveryTrackingNumberListResponse response =
-                    shopeeLogisticsService.getCourierDeliveryTrackingNumberList(buildBaseRequest(shopId), request);
+                    shopeeLogisticsService.getCourierDeliveryTrackingNumberList(baseRequest, request);
             if (Objects.isNull(response)) {
                 return Optional.empty();
             }
@@ -827,6 +829,7 @@ public class ShopeePackageForecastAdapter extends AbstractPackageForecastPlatfor
         if (SHOPEE_PLATFORM_STATUS_DELIVERED.equals(status)) {
             return HandoverStatusEnum.SHOPEE_DELIVERED.getCode();
         }
+        // Shopee 头程中间态需保留平台原始值，只有系统已定义的终态在这里映射为内部枚举。
         return status;
     }
 

@@ -11,6 +11,7 @@ import com.erp.model.dmp.entity.DmpSoReturnInfoEntity;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import com.erp.server.dmp.service.DmpSoReturnDetailService;
+import com.erp.server.dmp.service.DmpSoReturnInfoService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 
@@ -34,6 +35,9 @@ public abstract class DmpOutputPlatformReturnRocketMQTaskHandler extends DmpOutp
 
     @Resource
     private DmpSoReturnDetailService dmpSoReturnDetailService;
+
+    @Resource
+    private DmpSoReturnInfoService dmpSoReturnInfoService;
 
     @Override
     public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
@@ -81,6 +85,7 @@ public abstract class DmpOutputPlatformReturnRocketMQTaskHandler extends DmpOutp
             }
         }
 
+        supplementReturnInfos(changeIds, dmpEntityMap);
         supplementReturnDetails(changeIds, dmpEntityMap, dmpDetailEntityMap);
 
         Map<String, String> map = new HashMap<>();
@@ -92,6 +97,30 @@ public abstract class DmpOutputPlatformReturnRocketMQTaskHandler extends DmpOutp
             }
         }
         return map;
+    }
+
+    private void supplementReturnInfos(Set<String> changeIds,
+                                       Map<String, DmpSoReturnInfoEntity> dmpEntityMap) {
+        List<String> missingMainIds = changeIds.stream()
+                .filter(StringUtils::isNotBlank)
+                .filter(id -> !dmpEntityMap.containsKey(id))
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(missingMainIds)) {
+            return;
+        }
+        for (int fromIndex = 0; fromIndex < missingMainIds.size(); fromIndex += BATCH_SIZE) {
+            List<String> batchIds = missingMainIds.subList(fromIndex, Math.min(fromIndex + BATCH_SIZE, missingMainIds.size()));
+            List<DmpSoReturnInfoEntity> batchInfoList = dmpSoReturnInfoService.lambdaQuery()
+                    .in(DmpSoReturnInfoEntity::getId, batchIds)
+                    .eq(DmpSoReturnInfoEntity::getIsDeleted, Boolean.FALSE)
+                    .list();
+            if (CollUtil.isEmpty(batchInfoList)) {
+                continue;
+            }
+            for (DmpSoReturnInfoEntity dmpEntity : batchInfoList) {
+                dmpEntityMap.put(dmpEntity.getId(), dmpEntity);
+            }
+        }
     }
 
     private void supplementReturnDetails(Set<String> changeIds,
