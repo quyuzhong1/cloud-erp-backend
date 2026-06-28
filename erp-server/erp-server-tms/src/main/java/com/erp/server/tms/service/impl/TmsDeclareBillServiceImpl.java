@@ -3257,8 +3257,22 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (CollUtil.isEmpty(result)) {
             return Collections.emptyList();
         }
+        boolean includeSkuInGeneratedMergeKey = sixDimensionMerge || hasBomSplitChild(result);
         DeclarationGenerationService declarationGenerationService = new DeclarationGenerationService();
-        return declarationGenerationService.generateMergeBillDetails(result, viewDTO.getIsMultipleMerge(), sixDimensionMerge);
+        return declarationGenerationService.generateMergeBillDetails(result, viewDTO.getIsMultipleMerge(), includeSkuInGeneratedMergeKey);
+    }
+
+    /**
+     * 判断报关来源明细中是否包含由 BOM 拆分生成的子 SKU 行。
+     *
+     * <p>BOM 子 SKU 行必须将 SKU 纳入合并维度。否则不同子 SKU 在申报属性相同或相近时，
+     * 会被折叠成同一条报关明细，并只保留第一条子 SKU 作为主 SKU。</p>
+     */
+    private boolean hasBomSplitChild(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList) {
+        return CollUtil.isNotEmpty(sourceDetailList)
+                && sourceDetailList.stream()
+                .filter(Objects::nonNull)
+                .anyMatch(item -> StringUtils.isNotBlank(item.getParentSkuId()));
     }
 
     /**
@@ -3390,6 +3404,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             }
             applyDeclareLineDefaults(detailDTO);
             if (Objects.nonNull(productLogisticsDTO)
+                    && StringUtils.isBlank(detailDTO.getParentSkuId())
                     && CombinationDeclareTypeEnums.SPLIT.getCode().equals(productLogisticsDTO.getCombinationDeclareType())
                     && Boolean.TRUE.equals(productLogisticsDTO.getIsCombination())
                     && CollUtil.isNotEmpty(productLogisticsDTO.getChildList())) {
