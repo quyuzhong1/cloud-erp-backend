@@ -124,6 +124,13 @@ public interface DeliveryDeclareDetailMidService extends SuperService<DeliveryDe
      * @return java.lang.Boolean
      */
     Boolean deleteDeliveryDeclareDetailMid(List<String> sourceIds);
+    /**
+     * 更新发货单明细业务单号。
+     *
+     * @param dto 业务单号更新参数
+     * @return 是否处理成功
+     */
+    Boolean updateBusinessCode(TmsDeclareBillDTO.UpdateDeliveryDeclareBusinessCodeDTO dto);
 
     /**
      * 按报关单id恢复中间表为待生成状态

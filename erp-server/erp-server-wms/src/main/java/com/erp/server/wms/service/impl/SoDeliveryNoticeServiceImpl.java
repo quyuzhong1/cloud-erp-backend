@@ -6,6 +6,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -2419,7 +2420,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             return Boolean.FALSE;
         }
         com.erp.model.tms.dto.CfgSettingValueDTO.BillAutoAddDTO cfg =
-                BeanUtil.toBean(cfgSettingEntity.getDataJson(), com.erp.model.tms.dto.CfgSettingValueDTO.BillAutoAddDTO.class);
+                JSONUtil.toBean(cfgSettingEntity.getDataJson(), com.erp.model.tms.dto.CfgSettingValueDTO.BillAutoAddDTO.class);
         return Objects.nonNull(cfg)
                 && Boolean.TRUE.equals(cfg.getIsAutoB2BDeclare())
                 && CharSequenceUtil.equals(cfg.getB2BDeclareGenerateTiming(), billGenerateTimingEnum.getCode());

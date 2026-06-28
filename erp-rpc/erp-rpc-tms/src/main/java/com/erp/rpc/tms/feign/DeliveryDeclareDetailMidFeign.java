@@ -39,4 +39,13 @@ public interface DeliveryDeclareDetailMidFeign {
      */
     @PostMapping("/feign/deliveryDeclareDetailMid/deleteDeliveryDeclareDetailMid")
     Boolean deleteDeliveryDeclareDetailMid(@RequestBody TmsDeclareBillDTO.DeleteDeliveryDeclareDetailMidDTO dto);
+
+    /**
+     * 更新发货单明细业务单号。
+     *
+     * @param dto 业务单号更新参数
+     * @return 是否成功
+     */
+    @PostMapping("/feign/deliveryDeclareDetailMid/updateBusinessCode")
+    Boolean updateBusinessCode(@RequestBody TmsDeclareBillDTO.UpdateDeliveryDeclareBusinessCodeDTO dto);
 }

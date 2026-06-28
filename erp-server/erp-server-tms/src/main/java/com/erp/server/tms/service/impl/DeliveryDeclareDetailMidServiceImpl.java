@@ -348,6 +348,21 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         }
         return lambdaUpdate().in(DeliveryDeclareDetailMidEntity::getSourceId,sourceIds).remove();
     }
+    @Override
+    public Boolean updateBusinessCode(TmsDeclareBillDTO.UpdateDeliveryDeclareBusinessCodeDTO dto) {
+        if (Objects.isNull(dto)
+                || CharSequenceUtil.isBlank(dto.getSourceId())
+                || CharSequenceUtil.isBlank(dto.getBusinessId())
+                || CharSequenceUtil.isBlank(dto.getBusinessCode())) {
+            return Boolean.TRUE;
+        }
+        return lambdaUpdate()
+                .eq(DeliveryDeclareDetailMidEntity::getSourceType, SourceTypeEnum.FIRST_MILE_DELIVERY.getCode())
+                .eq(DeliveryDeclareDetailMidEntity::getSourceId, dto.getSourceId())
+                .eq(DeliveryDeclareDetailMidEntity::getBusinessId, dto.getBusinessId())
+                .set(DeliveryDeclareDetailMidEntity::getBusinessCode, dto.getBusinessCode())
+                .update();
+    }
 
     /**
      * 删除中间表数据。

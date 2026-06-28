@@ -2660,4 +2660,29 @@ public class TmsDeclareBillDTO implements Serializable {
         @NotEmpty(message = "来源id集合不能为空")
         private List<String> sourceIds;
     }
+    /**
+     * 更新发货单明细业务单号参数。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UpdateDeliveryDeclareBusinessCodeDTO {
+        /**
+         * 来源单 ID，例如头程发货单 ID。
+         */
+        @NotBlank(message = "来源单ID不能为空")
+        private String sourceId;
+
+        /**
+         * 业务单 ID，例如海外仓入库单 ID。
+         */
+        @NotBlank(message = "业务单ID不能为空")
+        private String businessId;
+
+        /**
+         * 最新业务单号，例如海外仓入库单号。
+         */
+        @NotBlank(message = "业务单号不能为空")
+        private String businessCode;
+    }
 }
