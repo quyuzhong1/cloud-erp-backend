@@ -31,6 +31,8 @@ import cn.hutool.core.collection.CollUtil;
 @Service
 @Scope("prototype")
 public class DmpInputAliExpressOrderLogisticNextDmpHandler extends DmpInputDoNextDmpHandler{
+
+	private static final String ORDER_DETAIL_CODE = "orderDetail";
 	
 	@Autowired
 	private DmpSoInfoService dmpSoInfoService;
@@ -45,7 +47,9 @@ public class DmpInputAliExpressOrderLogisticNextDmpHandler extends DmpInputDoNex
 
 			paramDataList.add(new ParamData("order_id", "order_id", PannoEnum.IN, orderIdList));
 			paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, PannoEnum.EQ, nextLevelId));
-			List<Map<String, Object>> findMongoData = mongoService.findMongoData(paramDataList, "aliexpress_orderDetail_data");
+			List<Map<String, Object>> findMongoData = mongoService.findMongoData(paramDataList,
+					AliExpressDmpHandlerUtils.getMongoStorageName(dmpBasicSystemEntity, dmpCfgInputService, dmpHandlerCache,
+							dmpCfgInputEntity.getSystemId(), ORDER_DETAIL_CODE));
 			if(CollUtil.isNotEmpty(findMongoData)) {
 				Map<String, Map<String, Object>> orderIdDetailMaps = findMongoData.stream().collect(Collectors.toMap(f -> f.get("order_id").toString(), f -> f));
 				Map<String, String> maidIdThirdCodeMaps = dmpSoInfoService.lambdaQuery()

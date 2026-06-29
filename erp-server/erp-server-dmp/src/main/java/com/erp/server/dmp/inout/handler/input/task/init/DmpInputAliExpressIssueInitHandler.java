@@ -32,6 +32,7 @@ import com.erp.oms.aliexpress.util.ApiException;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
+import com.erp.server.dmp.inout.handler.input.task.dmp.AliExpressDmpHandlerUtils;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 
 import cn.hutool.core.collection.CollUtil;
@@ -47,13 +48,16 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @Scope("prototype")
 public class DmpInputAliExpressIssueInitHandler extends DmpInputInitHandler{
+	private static final String ORDER_CODE = "order";
+
 	@Resource
     private AliExpressOrderService aliExpressOrderService;
 	
 	@Override
 	public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
 		List<Map<String, Object>> findMongoData = null;
-		String parentStorageName = "aliexpress_order_data";
+		String parentStorageName = AliExpressDmpHandlerUtils.getMongoStorageName(dmpBasicSystemEntity, dmpCfgInputService, dmpHandlerCache,
+				dmpCfgInputEntity.getSystemId(), ORDER_CODE);
 		if(StringUtils.isNotBlank(parentStorageName)) {
 			List<ParamData> paramDataList = new ArrayList<>();
 			paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, PannoEnum.EQ, nextLevelId));

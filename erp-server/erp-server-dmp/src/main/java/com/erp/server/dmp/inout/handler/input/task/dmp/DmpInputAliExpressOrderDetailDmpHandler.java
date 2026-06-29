@@ -33,6 +33,7 @@ import cn.hutool.core.collection.CollUtil;
 @Service
 @Scope("prototype")
 public class DmpInputAliExpressOrderDetailDmpHandler extends DmpInputAliExpressOrderDoChildDmpHandler{
+	private static final String SO_OUTSTOCK_CODE = "soOutstock";
 	
 	@Override
 	protected List<Map<String, Object>> afterDoDmpInputMongoChildEntityList(List<Map<String, Object>> dmpInputMongoChildList){
@@ -44,7 +45,9 @@ public class DmpInputAliExpressOrderDetailDmpHandler extends DmpInputAliExpressO
 			List<String> orderIdList = dmpInputMongoChildList.stream().map(f -> f.get("order_id").toString()).collect(Collectors.toList());
 			paramDataList.add(new ParamData("trade_order_no", "trade_order_no", PannoEnum.IN, orderIdList));
 			paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, PannoEnum.EQ, nextLevelId));
-			findMongoData = mongoService.findMongoData(paramDataList, "aliexpress_soOutstock_data");
+			findMongoData = mongoService.findMongoData(paramDataList,
+					AliExpressDmpHandlerUtils.getMongoStorageName(dmpBasicSystemEntity, dmpCfgInputService, dmpHandlerCache,
+							dmpCfgInputEntity.getSystemId(), SO_OUTSTOCK_CODE));
 			Map<String, Map<String, Object>> soOutstockMaps = findMongoData.stream().collect(Collectors.toMap(f -> f.get("trade_order_no").toString(), f -> f , (f1 , f2) -> f2));
 			for(Map<String, Object> dmpInputMongoChild : dmpInputMongoChildList) {
 				AliExpressOrder sourceOrder = JSON.parseObject(JSON.toJSONString(dmpInputMongoChild), AliExpressOrder.class);

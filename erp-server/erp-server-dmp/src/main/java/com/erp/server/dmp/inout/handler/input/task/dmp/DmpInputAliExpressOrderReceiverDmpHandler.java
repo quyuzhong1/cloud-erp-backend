@@ -24,6 +24,9 @@ import cn.hutool.core.collection.CollUtil;
 @Scope("prototype")
 public class DmpInputAliExpressOrderReceiverDmpHandler extends DmpInputAliExpressOrderDoChildDmpHandler{
 
+	private static final String ORDER_CODE = "order";
+	private static final String ORDER_DETAIL_CODE = "orderDetail";
+
 	@Override
 	protected List<Map<String, Object>> afterDoDmpInputMongoChildEntityList(List<Map<String, Object>> dmpInputMongoChildList){
 		if(CollUtil.isNotEmpty(dmpInputMongoChildList)) {
@@ -34,11 +37,15 @@ public class DmpInputAliExpressOrderReceiverDmpHandler extends DmpInputAliExpres
 
 			paramDataList.add(new ParamData("order_id", "order_id", PannoEnum.IN, orderIdList));
 			paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, PannoEnum.EQ, nextLevelId));
-			List<Map<String, Object>> findMongoData = mongoService.findMongoData(paramDataList, "aliexpress_orderDetail_data");
+			List<Map<String, Object>> findMongoData = mongoService.findMongoData(paramDataList,
+					AliExpressDmpHandlerUtils.getMongoStorageName(dmpBasicSystemEntity, dmpCfgInputService, dmpHandlerCache,
+							dmpCfgInputEntity.getSystemId(), ORDER_DETAIL_CODE));
 			if(CollUtil.isNotEmpty(findMongoData)) {
 				orderIdDetailMaps = findMongoData.stream().collect(Collectors.toMap(f -> f.get("order_id").toString(), f -> f));
 			}
-			findMongoData = mongoService.findMongoData(paramDataList, "aliexpress_order_data");
+			findMongoData = mongoService.findMongoData(paramDataList,
+					AliExpressDmpHandlerUtils.getMongoStorageName(dmpBasicSystemEntity, dmpCfgInputService, dmpHandlerCache,
+							dmpCfgInputEntity.getSystemId(), ORDER_CODE));
 			if(CollUtil.isNotEmpty(findMongoData)) {
 				orderIdMaps = findMongoData.stream().collect(Collectors.toMap(f -> f.get("order_id").toString(), f -> f));
 			}

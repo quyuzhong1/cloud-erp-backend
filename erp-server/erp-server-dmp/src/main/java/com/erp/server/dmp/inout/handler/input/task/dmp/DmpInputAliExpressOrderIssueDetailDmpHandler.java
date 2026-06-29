@@ -48,6 +48,7 @@ public class DmpInputAliExpressOrderIssueDetailDmpHandler extends DmpInputAliExp
         boolean isRefundStorage = STORAGE_REFUND_INFO.equals(storageName) || STORAGE_REFUND_DETAIL.equals(storageName);
 		List<Map<String, Object>> resultDmpInputMongoChildList = new ArrayList<>();
 		if(CollUtil.isNotEmpty(dmpInputMongoChildList)) {
+			String sourcePlatform = AliExpressDmpHandlerUtils.getSourcePlatform(dmpBasicSystemEntity);
 			for(Map<String, Object> dmpInputMongoChild : dmpInputMongoChildList) {
 				Boolean receiveGoods = false;
 				Object process_dto_list_obj = dmpInputMongoChild.get("process_dto_list");
@@ -91,7 +92,7 @@ public class DmpInputAliExpressOrderIssueDetailDmpHandler extends DmpInputAliExp
                 String issueReasonName = AliExpressIssueSolutionResolver.pickIssueTextForVarchar(reasonEnglish, reasonChinese);
 
 				resultDmpInputMongoChild.put("buyer_login_id" , dmpInputMongoChild.get("buyer_login_id"));
-                resultDmpInputMongoChild.put("sourcePlatform", "AliExpress");
+                resultDmpInputMongoChild.put("sourcePlatform", sourcePlatform);
 				resultDmpInputMongoChild.put("issue_id" , issueId);
 				resultDmpInputMongoChild.put("skuId" , productId);
 				resultDmpInputMongoChild.put("skuNo" , productId);
