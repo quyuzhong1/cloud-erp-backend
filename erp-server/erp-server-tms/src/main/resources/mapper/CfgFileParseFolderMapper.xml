@@ -34,27 +34,4 @@
         main_id, account_type, account_id, account_code, account_name, sort
     </sql>
 
-    <select id="paging" resultType="com.erp.model.tms.dto.CfgFileParseFolderDTO$ListDTO">
-
-    </select>
-
-    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
-        select approve_status, count(id) from cfg_file_parse_folder where is_deleted = false group by approve_status
-    </select>
-
-    <select id="listExport" resultType="com.erp.model.tms.dto.CfgFileParseFolderDTO$ListDTO">
-
-    </select>
-    <select id="tabList" resultType="com.erp.model.tms.dto.CfgFileParseFolderDTO$TabListDTO">
-        SELECT
-        approve_status AS tabFlag,
-        count(*)  AS count
-        FROM  cfg_file_parse_folder
-        WHERE is_deleted=FALSE
-        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
-            ${params.permissionSql}
-        </if>
-        GROUP BY approve_status
-    </select>
-
 </mapper>

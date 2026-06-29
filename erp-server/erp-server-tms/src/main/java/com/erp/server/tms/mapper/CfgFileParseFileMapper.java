@@ -22,33 +22,4 @@ import java.util.List;
 @Mapper
 public interface CfgFileParseFileMapper extends BaseMapper<CfgFileParseFileEntity> {
 
-    /**
-    * 分页查询
-    * @param query
-    * @param params
-    * @return
-    */
-    IPage<CfgFileParseFileDTO.ListDTO> paging(Page query, @Param("params") CfgFileParseFileDTO.PagingParamDTO params);
-
-    /**
-    * 状态数量
-    * @param params
-    * @return
-    */
-    List<ApproveStatusQtyDTO> listCount(@Param("params") CfgFileParseFileDTO.PagingParamDTO params);
-
-    /**
-    * 导出Excel查询
-    * @param params
-    * @return
-    */
-    List<CfgFileParseFileDTO.ListDTO> listExport(@Param("params") CfgFileParseFileDTO.ExportDTO params);
-
-
-    /**
-    * 获取状态统计
-    * @param searchParam
-    * @return
-    */
-    List<CfgFileParseFileDTO.TabListDTO> tabList(@Param("params") CfgFileParseFileDTO.PagingParamDTO searchParam);
 }
