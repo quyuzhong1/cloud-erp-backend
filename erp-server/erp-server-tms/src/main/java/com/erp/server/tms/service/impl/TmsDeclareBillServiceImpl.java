@@ -638,7 +638,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if(CollectionUtils.isEmpty(list)){
             return;
         }
-        List<DictBasicDTO.ViewDTO> declareTypeDict = dictBasicService.getByKey(DictBasicEnum.DECLARE_DECLARE_TYPE.getType());
+        List<DictBasicEntity> declareTypeDict = dictBasicService.getByKey(DictBasicEnum.DECLARE_DECLARE_TYPE.getType());
 
         if (SourceTypeEnum.B2B_DECLARE_BILL.getCode().equals(type)) {
             // 通过中间表反查 source_id 后批量取 SoDeliveryNotice.carrier_*，
@@ -649,7 +649,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
         list.forEach(v->{
             v.setDeclareStatusName(EnumMessage.getNameByCode(com.erp.model.tms.enums.DeclareStatusEnum.class,v.getDeclareStatus()));
-            DictBasicDTO.ViewDTO declareType = declareTypeDict.stream().filter(e->e.getCode().equals(v.getDeclareType())).findFirst().orElse(new DictBasicDTO.ViewDTO());
+            DictBasicEntity declareType = declareTypeDict.stream().filter(e->e.getCode().equals(v.getDeclareType())).findFirst().orElse(new DictBasicEntity());
             v.setDeclareTypeName(declareType.getName());
         });
     }
@@ -2858,7 +2858,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         // 批量更新数据库
         updateWrapper.eq("id", dto.getId());
         boolean updateFlag = this.update(updateWrapper);
-                
+
         if (!updateFlag) {
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_BATCH_UPDATE_FAILED);
         }
@@ -2908,9 +2908,9 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     /**
      * 设置更新 wrapper 的字段
      */
-    private void setUpdateWrapperField(UpdateWrapper<TmsDeclareBillEntity> updateWrapper, 
-                                       TmsDeclareBillBatchFieldEnum fieldEnum, 
-                                       Object fieldValue, 
+    private void setUpdateWrapperField(UpdateWrapper<TmsDeclareBillEntity> updateWrapper,
+                                       TmsDeclareBillBatchFieldEnum fieldEnum,
+                                       Object fieldValue,
                                        String name) {
         String fieldName = fieldEnum.getCode();
         switch (fieldEnum) {
@@ -3502,18 +3502,18 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> filteredList = mergeDetailList.stream()
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
-        
+
         // 校验过滤后的列表不能为空
         if (CollUtil.isEmpty(filteredList)) {
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_SAVE_REQUIRED);
         }
-        
+
         // 根据合并模式选择不同的处理策略
         if (Boolean.TRUE.equals(isMerge)) {
             // 合并模式：对编辑后的明细进行重新合并计算
             return mergeEditedDetails(filteredList);
         }
-        
+
         // 非合并模式：为所有明细应用默认值
         filteredList.forEach(this::applyMergeDeclareDetailDefaults);
         return filteredList;

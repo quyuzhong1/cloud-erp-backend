@@ -2,6 +2,8 @@ package com.erp.server.plm.service;
 
 import com.common.business.enums.BusinessNoTypeEnum;
 
+import java.util.List;
+
 /**
  * @author Will
  * @version 1.0
@@ -19,6 +21,16 @@ public interface SysCodeService {
      * @return String
      */
     String getSkuNo(String productId,String variantColorProperty);
+
+    /**
+     * @description: 一次性为同一产品生成 count 个连续 skuNo，
+     *               用于替代 insertManySpecAuto 这种"循环单条取号"的高竞争场景
+     * @param productId 产品id
+     * @param count 需要生成的 sku 编号数量
+     * @return List 长度为 count 的 sku 编号列表（已经做过 product_detail 重复兜底）
+     */
+    List<String> getSkuNoBatch(String productId, int count);
+
     /**
      * @description: 生成spuNo
      * @author Will

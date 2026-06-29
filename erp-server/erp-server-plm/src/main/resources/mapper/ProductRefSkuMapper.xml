@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.plm.mapper.ProductRefSkuMapper">
+
+    <select id="listByProductId" resultType="com.erp.model.plm.dto.ProductRefSkuDTO">
+        SELECT prs.id,
+               prs.sku_id AS skuId,
+               owner_pd.sku_no AS skuNo,
+               owner_pd.variant_property AS variantProperty,
+               prs.ref_sku_id AS refSkuId,
+               ref_pd.sku_no AS refSkuNo,
+               ref_pd.name AS refProductName,
+               prs.remark,
+               prs.sort
+        FROM product_ref_sku prs
+                 LEFT JOIN product_detail owner_pd ON owner_pd.id = prs.sku_id AND owner_pd.is_deleted = FALSE
+                 LEFT JOIN product_detail ref_pd ON ref_pd.id = prs.ref_sku_id AND ref_pd.is_deleted = FALSE
+        WHERE prs.is_deleted = FALSE
+          AND prs.product_id = #{productId}
+        ORDER BY COALESCE(prs.sort, 0), prs.create_time, prs.id
+    </select>
+
+    <select id="listBySkuId" resultType="com.erp.model.plm.dto.ProductRefSkuDTO">
+        SELECT prs.id,
+               prs.sku_id AS skuId,
+               owner_pd.sku_no AS skuNo,
+               owner_pd.variant_property AS variantProperty,
+               prs.ref_sku_id AS refSkuId,
+               ref_pd.sku_no AS refSkuNo,
+               ref_pd.name AS refProductName,
+               prs.remark,
+               prs.sort
+        FROM product_ref_sku prs
+                 LEFT JOIN product_detail owner_pd ON owner_pd.id = prs.sku_id AND owner_pd.is_deleted = FALSE
+                 LEFT JOIN product_detail ref_pd ON ref_pd.id = prs.ref_sku_id AND ref_pd.is_deleted = FALSE
+        WHERE prs.is_deleted = FALSE
+          AND prs.sku_id = #{skuId}
+        ORDER BY COALESCE(prs.sort, 0), prs.create_time, prs.id
+    </select>
+
+</mapper>

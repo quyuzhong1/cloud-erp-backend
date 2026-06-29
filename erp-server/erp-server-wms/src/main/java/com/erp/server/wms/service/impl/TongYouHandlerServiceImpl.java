@@ -21,6 +21,7 @@ import com.sdk.wms.tongyou.dto.request.TongYouCreateOutboundReq;
 import com.sdk.wms.tongyou.dto.response.TongYouBaseResp;
 import com.sdk.wms.tongyou.dto.response.TongYouInboundResp;
 import com.sdk.wms.tongyou.dto.response.TongYouOutboundResp;
+import com.sdk.wms.tongyou.dto.response.TongYouQueryOutboundResp;
 import com.sdk.wms.tongyou.service.TongYouService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -229,12 +230,15 @@ public class TongYouHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         authJson.put("deliver_no",queryOutboundReq.getErpOrderCode());
 
         log.warn(getPlatForm().getName()+"查询出库单请求:{}", JSONUtil.toJsonStr(authJson));
-        TongYouBaseResp<String> tongYouBaseResp = tongYouService.getOutboundBill(authJson);
+        TongYouBaseResp<List<TongYouQueryOutboundResp>> tongYouBaseResp = tongYouService.getOutboundBill(authJson);
         log.warn(getPlatForm().getName()+"查询出库单结果:{}", JSONUtil.toJsonStr(tongYouBaseResp));
         if(!isSuccess(tongYouBaseResp.getError())){
             return failure(tongYouBaseResp.getContent());
         }
-        return success(ThirdWarehouseQueryOutboundResponse.builder().shippingOrderNo(tongYouBaseResp.getData()).build());
+        if (CollUtil.isEmpty(tongYouBaseResp.getData())) {
+            return failure("未查询到对应通邮出库单信息");
+        }
+        return success(ThirdWarehouseQueryOutboundResponse.builder().shippingOrderNo(tongYouBaseResp.getData().get(0).getWaybill()).build());
     }
 
     @Override

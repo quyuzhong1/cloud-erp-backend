@@ -243,11 +243,13 @@ public class CfgQueryOptionDTO implements Serializable {
         /**
         * 下拉框显示值
         */
+        @NotBlank(message = "下拉框显示值不能为空")
         private String selectLabel;
 
         /**
         * 下拉框绑定值
         */
+        @NotBlank(message = "下拉框绑定值不能为空")
         private String selectValue;
 
         /**

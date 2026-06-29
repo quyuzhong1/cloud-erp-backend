@@ -1,0 +1,139 @@
+package com.erp.server.wms.controller.pda;
+
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
+import com.common.business.annotation.DistributeLocker;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
+import com.common.core.exception.ServiceException;
+import com.erp.model.wms.dto.AfterSalePackDTO;
+import com.erp.model.wms.dto.AfterSalesWarehouseLocationSuggestDto;
+import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.server.wms.constant.WmsConstant;
+import com.erp.server.wms.service.AfterSalePackService;
+import com.erp.server.wms.service.AfterSalesWarehouseLocationSuggestService;
+import com.erp.server.wms.service.WarehouseLocationMoveService;
+import com.erp.server.wms.service.WarehouseService;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import javax.annotation.Resource;
+import java.util.Collections;
+import java.util.List;
+
+/**
+ * PDA售后推荐仓位管理
+ * @author liuchao
+ * @date 2026/05/09
+ */
+@RestController
+@RequestMapping("/pda/afterSalesWarehouseLocationSuggest")
+@LogSystemModule("PDA售后推荐仓位管理")
+public class PdaAfterSalesWarehouseLocationSuggestController extends BaseController {
+
+    @Resource
+    private AfterSalesWarehouseLocationSuggestService afterSalesWarehouseLocationSuggestService;
+
+    @Resource
+    private WarehouseService warehouseService;
+
+    @Resource
+    private WarehouseLocationMoveService warehouseLocationMoveService;
+
+    @Resource
+    private AfterSalePackService afterSalePackService;
+
+    /**
+     * 按箱唛号查询售后装箱详情（SKU、来源仓位等），与 {@link com.erp.server.wms.service.impl.AfterSalePackServiceImpl#viewByCode(String)} 一致
+     */
+    @PostMapping("/getByCartonCode")
+    public ApiResult<AfterSalePackDTO.ViewDTO> getByCartonCode(
+            @RequestBody @Validated AfterSalesWarehouseLocationSuggestDto.BoxLabelQueryRequestDto dto) {
+        return success(afterSalePackService.viewByCode(CharSequenceUtil.trim(dto.getCartonCode())));
+    }
+
+    /**
+     * 货品上架：单 SKU + 数量，源仓位可为空仓位，目标仓位扫码录入；生成仓位移动已审核单并写库存流水
+     */
+    @LogAction(value = LogActionEnum.INSERT, desc = "售后PDA货品上架")
+    @DistributeLocker(keyName = "dto.skuNo,dto.targetWarehouseLocationCode")
+    @PostMapping("/goodsInfo/submit")
+    public ApiResult<String> submitGoodsInfo(@RequestBody @Validated AfterSalesWarehouseLocationSuggestDto.PdaGoodsShelvingSubmitDto dto) {
+        //当前只有一个仓库 【东莞售后仓库】
+        List<WarehouseDTO.ListDTO> dtos = warehouseService.getDefaultAddData();
+        if (CollUtil.isEmpty(dtos)){
+            throw new ServiceException("请确保存在仓库名称的默认值【东莞售后仓库】的仓库");
+        }else if (dtos.size() > 1){
+            throw new ServiceException("请确保存在仓库名称的默认值【东莞售后仓库】的仓库数量为1");
+        }
+        dto.setWarehouseId(dtos.get(0).getId());
+        //当前只有一个仓位 【空仓位】 默认code为空
+        dto.setSourceWarehouseLocationCode("");
+        //因为当前的源仓位固定是空仓位而且目标仓位不能是源仓位所以限制目标仓位不能是空仓位
+        String targetCode = CharSequenceUtil.trim(dto.getTargetWarehouseLocationCode());
+        if (CharSequenceUtil.isBlank(targetCode)) {
+            throw new ServiceException("移出仓默认”空仓位“，与目标仓不可为同一个");
+        }
+        dto.setTargetWarehouseLocationCode(targetCode);
+
+        return success(warehouseLocationMoveService.submitGoodsInfo(dto));
+    }
+
+    /**
+     * 整箱移仓提交：前端累计箱唛查询返回的 sku 展平列表 + 目标仓位；提交前再次按箱唛校验 usageStatus，并校验即时库存可用量
+     */
+    @LogAction(value = LogActionEnum.INSERT, desc = "售后PDA整箱移仓")
+    @DistributeLocker(keyName = "dto.targetWarehouseLocationCode")
+    @PostMapping("/fullBoxInfo/submit")
+    public ApiResult<String> submitFullBoxInfo(@RequestBody @Validated AfterSalesWarehouseLocationSuggestDto.PdaFullBoxTransferSubmitDto dto) {
+        //当前只有一个仓库 【东莞售后仓库】
+        List<WarehouseDTO.ListDTO> dtos = warehouseService.getDefaultAddData();
+        if (CollUtil.isEmpty(dtos)){
+            throw new ServiceException("请确保存在仓库名称的默认值【东莞售后仓库】的仓库");
+        }else if (dtos.size() > 1){
+            throw new ServiceException("请确保存在仓库名称的默认值【东莞售后仓库】的仓库数量为1");
+        }
+        dto.setWarehouseId(dtos.get(0).getId());
+        return success(warehouseLocationMoveService.submitFullBoxInfo(dto));
+    }
+
+    /**
+     * 根据sku编码获取售后推荐仓位列表
+     * @param dto param
+     * @return result
+     * @author liuchao
+     * @date 2026/05/12
+     */
+    @PostMapping("/listBySkuNoAndWarehouseInfo")
+    public ApiResult<List<AfterSalesWarehouseLocationSuggestDto.PdaListDto>> listBySkuNoAndWarehouseInfo(@RequestBody @Validated AfterSalesWarehouseLocationSuggestDto.PdaSearchDto dto) {
+        //当前只有一个仓库 【东莞售后仓库】
+        List<WarehouseDTO.ListDTO> dtos = warehouseService.getDefaultAddData();
+        if (CollUtil.isEmpty(dtos)){
+            throw new ServiceException("请确保存在仓库名称的默认值【东莞售后仓库】的仓库");
+        }else if (dtos.size() > 1){
+            throw new ServiceException("请确保存在仓库名称的默认值【东莞售后仓库】的仓库数量为1");
+        }
+        dto.setWarehouseId(dtos.get(0).getId());
+        //当前只有一个仓位 【空仓位】 默认code为空
+        dto.setWarehouseLocationCode("");
+        //
+        List<AfterSalesWarehouseLocationSuggestDto.PdaListDto> list  = afterSalesWarehouseLocationSuggestService.getSuggestWarehouseLocationList(dto);
+        return success(list);
+    }
+
+    /**
+     * 获取默认的新增数据的仓库信息
+     *
+     * @return com.common.core.controller.vo.ApiResult
+     * @date 2026-04-30
+     * @author liuchao
+     */
+    @GetMapping("/getDefaultAddWarehouse")
+    public ApiResult<WarehouseDTO.ListDTO> getDefaultAddData() {
+        List<WarehouseDTO.ListDTO> dtos = warehouseService.getDefaultAddData();
+        return CollUtil.isNotEmpty(dtos) ? success(dtos.get(0)) : success();
+    }
+}

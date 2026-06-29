@@ -244,6 +244,14 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      **/
     void exportProduct(ProductSkuExcelDTO productSkuExcelDTO, HttpServletResponse response);
 
+    /**
+     * 导出excel全部字段的sku数据
+     *
+     * @param productSkuExcelDTO productSkuExcelDTO
+     * @param response           response
+     */
+    void exportProductAll(ProductSkuExcelDTO productSkuExcelDTO, HttpServletResponse response);
+
     PagingVO<ProductDetailExcelExportDTO> exportProductDetail(PagingDTO<ProductSkuExcelDTO>productSkuExcelDTO );
 
     /**

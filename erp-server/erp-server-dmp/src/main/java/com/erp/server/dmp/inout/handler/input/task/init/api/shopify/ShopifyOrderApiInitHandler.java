@@ -3,6 +3,7 @@ package com.erp.server.dmp.inout.handler.input.task.init.api.shopify;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.erp.model.dmp.constant.DmpInputConstant;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputApiInitRequest;
 import com.erp.server.dmp.inout.handler.input.task.init.api.DmpInputApiInitHandler;
@@ -28,7 +29,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Scope("prototype")
 public class ShopifyOrderApiInitHandler implements DmpInputApiInitHandler {
-    public static final String ORDER_ID_LIST = "orderIdList";
+    
     @Resource
     private ShopifyRestClientService shopifyRestClientService;
 
@@ -60,6 +61,17 @@ public class ShopifyOrderApiInitHandler implements DmpInputApiInitHandler {
             orders = getByOrderIds(shopInfoDTO, orderIds);
         }
 
+        if (CollectionUtils.isEmpty(orders)) {
+            return Collections.emptyList();
+        }
+        orders.removeIf(order -> {
+            if (StringUtils.isNotBlank(order.getOrderId())) {
+                return false;
+            }
+            log.error("[Shopify订单下载]订单缺少orderId, 跳过写入init/fds: name={}, orderNumber={}",
+                    order.getName(), order.getOrderNumber());
+            return true;
+        });
         if (CollectionUtils.isEmpty(orders)) {
             return Collections.emptyList();
         }
@@ -109,7 +121,7 @@ public class ShopifyOrderApiInitHandler implements DmpInputApiInitHandler {
         if(null == parseObject) {
             return Collections.emptyList();
         }
-        JSONArray jsonArray = parseObject.getJSONArray(ORDER_ID_LIST);
+        JSONArray jsonArray = parseObject.getJSONArray(DmpInputConstant.ORDER_ID_LIST);
         if (CollectionUtils.isEmpty(jsonArray)){
             return Collections.emptyList();
         }

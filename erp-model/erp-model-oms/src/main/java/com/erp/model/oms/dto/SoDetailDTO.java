@@ -210,6 +210,10 @@ public class SoDetailDTO implements Serializable {
          */
         private String mainId;
 
+        /**
+         * 是否过滤计算合计
+         */
+        private Boolean filterCalculate = false;
 
         /**
          * 第三方仓SKU

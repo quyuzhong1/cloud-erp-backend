@@ -22,6 +22,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -80,6 +82,37 @@ public class SysCodeServiceImpl implements SysCodeService {
         return existSKuNo;
     }
 
+    @Override
+    @Transactional
+    public List<String> getSkuNoBatch(String productId, int count) {
+        if (count <= 0) {
+            return Collections.emptyList();
+        }
+        // 复用 getSkuNo 的产品/分类校验逻辑，但只解析一次再批量取号，避免 N 次 Feign+锁
+        ProductInfoEntity entity = productInfoService.getById(productId);
+        if (ObjectUtils.isEmpty(entity)) {
+            throw new ServiceException(ApiError.PRODUCT_NOT_FOUND);
+        }
+        BasicCategoryEntity bestEntity = new BasicCategoryEntity();
+        basicCategoryService.getBestEntity(entity.getCategoryId(), bestEntity);
+        if (ObjectUtils.isEmpty(bestEntity) || StringUtils.isBlank(bestEntity.getCode())) {
+            throw new ServiceException(ApiError.PRODUCT_CATEGORY_CODE_REQUIRED);
+        }
+        SysCodeSkuDTO dto = new SysCodeSkuDTO();
+        dto.setCategory(bestEntity.getCode());
+        dto.setType(BusinessNoTypeEnum.SKU_NO.getCode());
+
+        // 一次远程调用拿到 count 个候选编号
+        List<String> candidates = sysUserFeign.getSkuNoBatch(count, dto);
+        // 兜底：极少数情况下（外部脏数据 / 历史遗留）某个编号已存在 product_detail，
+        // 单独再取一次替换；正常路径 candidates 全部直接可用
+        List<String> result = new ArrayList<>(candidates.size());
+        for (String candidate : candidates) {
+            result.add(isExistSKuNo(candidate, dto));
+        }
+        return result;
+    }
+
 
     @Override
     @Transactional
@@ -114,10 +147,6 @@ public class SysCodeServiceImpl implements SysCodeService {
 
     @Override
     public String getBusinessNo(String businessHead, BusinessNoTypeEnum businessNoTypeEnum) {
-        SysCodeDTO dto = new SysCodeDTO();
-        dto.setCategory(businessHead);
-        dto.setType(businessNoTypeEnum.getCode());
-//        String sysNo = sysUserFeign.getBusinessNo(dto);
         String sysNo = docNoGenHelper.generateCode(businessNoTypeEnum);
         return sysNo;
     }

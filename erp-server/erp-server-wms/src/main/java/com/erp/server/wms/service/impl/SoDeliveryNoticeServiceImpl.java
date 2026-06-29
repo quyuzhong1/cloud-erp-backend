@@ -3,11 +3,11 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import cn.hutool.extra.spring.SpringUtil;
+import com.baomidou.mybatisplus.core.incrementer.IdentifierGenerator;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -170,6 +170,8 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     @Resource
     private SoOutstockDetailService soOutstockDetailService;
 
+    @Resource
+    private IdentifierGenerator identifierGenerator;
 
     @Resource
     private InventoryService inventoryService;
@@ -1734,7 +1736,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         String warehouseId;
         if (CharSequenceUtil.isNotBlank(entity.getTransferWarehouseIds())) {
             List<String> split = StrUtil.split(entity.getTransferWarehouseIds(), ",");
-            batchNo = IdUtil.getSnowflake().nextIdStr();
+            batchNo = identifierGenerator.nextId(new TransferInfoEntity()).toString();
             if (Boolean.FALSE.equals(allNoInventorySku)) {
                 generateTransferInfo(batchNo, entity, entityList, warehouseStagingList, noInventorySkuIds, split);
             }

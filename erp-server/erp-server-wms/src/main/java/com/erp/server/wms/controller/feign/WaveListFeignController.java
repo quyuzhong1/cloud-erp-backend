@@ -22,16 +22,6 @@ public class WaveListFeignController extends BaseController {
     private WaveListService waveListService;
 
     /**
-     * 新增波次
-     */
-    @PostMapping("/add")
-    public BaseResultDTO.AddDTO add(@RequestBody WaveListDTO.AddDTO addDto){
-        return waveListService.add(addDto);
-    }
-
-
-
-    /**
      * 波次状态自动更新
      * @author jack
      * @date 2024/11/28

@@ -14,10 +14,10 @@ import com.erp.model.oms.dto.ExhibitionOrderDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
-import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.SoChangeEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
+import com.erp.model.sys.dto.SysCommonDTO;
 import com.erp.model.wms.dto.B2bThirdDeliveryDTO;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -78,6 +78,9 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @date 2023-05-16 15:01
      */
     SoInfoDTO.ViewDTO view(String id);
+
+    List<SoInfoDTO.FilterCalculateDTO.DetailDTO> filterCalculate(SoInfoDTO.FilterCalculateDTO dto);
+
     /**
      * 打印拣货单
      *
@@ -241,9 +244,8 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @author will
      * @date 2024/11/4 16:28
      * @param id
-     * @param response
      */
-    void exportSoContractPdf(String id,HttpServletResponse response);
+    SysCommonDTO.AttachmentDTO exportSoContractPdf(String id);
 
     /**
      * @param ids

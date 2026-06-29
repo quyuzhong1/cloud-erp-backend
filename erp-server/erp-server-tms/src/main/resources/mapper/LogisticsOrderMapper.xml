@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.tms.mapper.LogisticsOrderMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.tms.entity.LogisticsOrderEntity">
+        <result column="id" property="id"/>
+        <result column="create_user_id" property="createUserId"/>
+        <result column="create_user_name" property="createUserName"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_user_id" property="updateUserId"/>
+        <result column="update_user_name" property="updateUserName"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="version" property="version"/>
+        <result column="is_deleted" property="isDeleted"/>
+        <result column="after_sale_id" property="afterSaleId"/>
+        <result column="code" property="code"/>
+        <result column="status" property="status"/>
+        <result column="label_status" property="labelStatus"/>
+        <result column="exception_type" property="exceptionType"/>
+        <result column="exception_reason" property="exceptionReason"/>
+        <result column="source_code" property="sourceCode"/>
+        <result column="source_type" property="sourceType"/>
+        <result column="logistics_platform" property="logisticsPlatform"/>
+        <result column="logistics_channel_id" property="logisticsChannelId"/>
+        <result column="track_no" property="trackNo"/>
+        <result column="transport_no" property="transportNo"/>
+        <result column="remark" property="remark"/>
+        <result column="receiver" property="receiver"/>
+        <result column="contact_number" property="contactNumber"/>
+        <result column="country" property="country"/>
+        <result column="province" property="province"/>
+        <result column="city" property="city"/>
+        <result column="detailed_address" property="detailedAddress"/>
+        <result column="order_id" property="orderId"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        t.id,
+        t.create_user_id,
+        t.create_user_name,
+        t.create_time,
+        t.update_user_id,
+        t.update_user_name,
+        t.update_time,
+        t.version,
+        t.is_deleted,
+        t.after_sale_id,
+        t.code,
+        t.status,
+        t.label_status,
+        t.exception_type,
+        t.exception_reason,
+        t.source_code,
+        t.source_type,
+        t.logistics_platform,
+        t.logistics_channel_id,
+        t.track_no,
+        t.transport_no,
+        t.remark,
+        t.receiver,
+        t.contact_number,
+        t.country,
+        t.province,
+        t.city,
+        t.detailed_address
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.tms.dto.LogisticsOrderDTO$ListDTO">
+        select
+        <include refid="Base_Column_List"></include>,
+        ct.name as logisticsChannelName,
+        bt.name as logisticsPlatformName
+        from logistics_order t
+        left join logistics_channel ct on t.logistics_channel_id = ct.id and ct.is_deleted = FALSE
+        left join dict_basic bt on t.logistics_platform = bt.code and bt.is_deleted = FALSE and bt."type" = 'logisticsPlatform'
+        where ${params.sqlMap.default}
+          and t.is_deleted = FALSE
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        t.create_time DESC
+    </select>
+
+    <select id="tabList" resultType="com.erp.model.tms.dto.LogisticsOrderDTO$TabListDTO">
+        SELECT
+        status AS tabFlag,
+        count(*) AS count
+        FROM logistics_order
+        WHERE is_deleted = FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY status
+    </select>
+
+    <select id="printLogisticsLabelPreview" resultType="com.erp.model.tms.dto.LogisticsOrderDTO$LogisticsLabelPreviewListDTO">
+        select t.id,
+               t.after_sale_id as afterSaleId,
+               t.code,
+               t.status,
+               t.label_status as labelStatus,
+               t.source_code as sourceCode,
+               t.logistics_platform as logisticsPlatform,
+               t.logistics_channel_id as logisticsChannelId,
+               t.track_no as trackNo,
+               t.transport_no as transportNo,
+               ct.name as logisticsChannelName,
+               bt.name as logisticsPlatformName,
+               t.exception_type as exceptionType,
+               t.exception_reason as exceptionReason
+          from logistics_order t
+          left join logistics_channel ct on t.logistics_channel_id = ct.id and ct.is_deleted = FALSE
+          left join dict_basic bt on t.logistics_platform = bt.code and bt.is_deleted = FALSE and bt."type" = 'logisticsPlatform'
+         where t.is_deleted = FALSE
+         <if test="ids != null and ids.size != ''">
+             and t.id in
+             <foreach collection="ids" item="id" open="(" close=")" separator=",">
+                 #{id}
+             </foreach>
+         </if>
+    </select>
+
+</mapper>

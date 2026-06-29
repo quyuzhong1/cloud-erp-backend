@@ -131,6 +131,13 @@ public interface PurchaseApplicationService extends SuperService<PurchaseApplica
      */
     Boolean exportExcel(PurchaseApplicationDTO.SearchParamDTO dto);
 
+    /**
+     * 全量导出
+     * @param dto
+     * @return Boolean
+     */
+    Boolean exportAllExcel(PurchaseApplicationDTO.SearchParamDTO dto);
+
 
     /**
      * @description: 删除

@@ -287,7 +287,8 @@ public class ProductLogisticsServiceImpl extends ServiceImpl<ProductLogisticsMap
             }
         }
         //处理中文名
-        Map<String,String> declareUnitMap = basicDictService.mapByType("declareUnit");
+        List<BasicDictEntity> declareUnitList = basicDictService.listByType("declareUnit");
+        Map<String,String> declareUnitMap = CollUtil.isNotEmpty(declareUnitList)? declareUnitList.stream().collect(Collectors.toMap(BasicDictEntity::getValue, BasicDictEntity::getName, (v1, v2) -> v1)) : Collections.emptyMap();
         List<String> sourceCountryIdList = productLogisticDTOList.stream().map(ProductDetailDTO.ProductLogisticDTO::getSourceCountry).collect(Collectors.toList());
         List<DictCountryEntity> sourceCountryList = sysDictFeign.listCountryByIds(sourceCountryIdList);
         Map<String,String> sourceCountryMap = sourceCountryList.stream().collect(Collectors.toMap(DictCountryEntity::getId,DictCountryEntity::getNameCn,(v1,v2)->v1));

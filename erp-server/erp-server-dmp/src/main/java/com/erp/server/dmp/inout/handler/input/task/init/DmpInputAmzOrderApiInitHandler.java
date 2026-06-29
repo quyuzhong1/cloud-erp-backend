@@ -11,6 +11,7 @@ import com.common.business.enums.PlatformDictEnum;
 import com.common.business.utils.RedisUtil;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.dmp.constant.DmpInputConstant;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.model.dmp.entity.CfgTimezoneEntity;
 import com.erp.sdk.oms.amz.spapi.api.OrdersV0Api;
@@ -84,7 +85,7 @@ public class DmpInputAmzOrderApiInitHandler extends DmpInputInitHandler {
         boolean hasParseByMarketplaceId = true;
         if (StringUtils.isNotBlank(dmpInputTaskEntity.getExtendJson())){
             JSONObject jsonObject = JSONObject.parseObject(dmpInputTaskEntity.getExtendJson());
-            JSONArray jsonArray = jsonObject.getJSONArray("orderIdList");
+            JSONArray jsonArray = jsonObject.getJSONArray(DmpInputConstant.ORDER_ID_LIST);
             if (CollectionUtils.isNotEmpty(jsonArray)){
                 orderIdList = jsonArray.stream().map(Object::toString).distinct().collect(Collectors.toList());
             }

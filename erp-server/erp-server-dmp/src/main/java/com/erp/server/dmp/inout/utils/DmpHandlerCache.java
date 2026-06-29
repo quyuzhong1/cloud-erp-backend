@@ -16,6 +16,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
+import org.redisson.api.RTopic;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
@@ -23,6 +25,7 @@ import org.springframework.stereotype.Component;
 
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.DorisQuerySettingDTO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.utils.StrUtils;
@@ -112,10 +115,6 @@ public class DmpHandlerCache implements CommandLineRunner{
 	
 	private Map<String, DataSource> dmpCfgDbDataSourceMap;
 	
-	private List<Map<String, Object>> dorisQueryCfgSettingEntityCache;
-	
-	private Map<String , DorisQuerySettingDTO> dorisQueryCfgSettingMappingCache;
-
 	@Autowired
 	private DmpBasicSystemService dmpBasicSystemService;
 	@Autowired
@@ -144,7 +143,10 @@ public class DmpHandlerCache implements CommandLineRunner{
 	private DmpCfgDbService dmpCfgDbService;
 	@Autowired
 	private CfgSettingService cfgSettingService;
-	
+
+	@Autowired
+	private RedissonClient redissonClient;
+
 	public List<DmpBasicSystemEntity> getDmpBasicSystemEntityList(Predicate<? super DmpBasicSystemEntity> paramPredicate) {
 		if(dmpBasicSystemCache == null) {
 			dmpBasicSystemCache = dmpBasicSystemService.lambdaQuery()
@@ -259,16 +261,6 @@ public class DmpHandlerCache implements CommandLineRunner{
 			this.initDataSource();
 		}
 		return dmpCfgDbDataSourceMap.get(dbId);
-	}
-	
-	public DorisQuerySettingDTO getDorisQuerySettingDTO(String requestURI) {
-		if(dorisQueryCfgSettingMappingCache == null) {
-			this.initDorisQueryCfgSetting();
-		}
-		if(!requestURI.startsWith("/")) {
-			requestURI = "/" + requestURI;
-		}
-		return dorisQueryCfgSettingMappingCache.get(requestURI);
 	}
 	
 	public List<OverseasProviderEntity> getOverseasProviderEntityList(Predicate<? super OverseasProviderEntity> paramPredicate) {
@@ -391,9 +383,6 @@ public class DmpHandlerCache implements CommandLineRunner{
 		
 		dmpCfgOutputEntityCache = dmpCfgOutputService.lambdaQuery()
 				.eq(DmpCfgOutputEntity::getDisabled, false).list();
-		
-		this.initDorisQueryCfgSetting();
-		
 		
 		try {
 			overseasProviderEntityCache = FeignQuery.create(OverseasProviderEntity.class)
@@ -575,15 +564,6 @@ public class DmpHandlerCache implements CommandLineRunner{
 				
 			}, 5, freshCacheTime, TimeUnit.SECONDS);
 			
-			Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
-				LambdaQueryWrapper<CfgSettingEntity> updateQueryWrapper = new LambdaQueryWrapper<>();
-				updateQueryWrapper.eq(CfgSettingEntity::getType, SettingEnum.DORIS_QUERY_CFG);
-				updateQueryWrapper.gt(CfgSettingEntity::getUpdateTime, DateUtil.offsetSecond(new Date(), -(freshCacheTime + 1)));
-				List<Map<String , Object>> cfgSettingEntityFreshList = cfgSettingService.listMaps(updateQueryWrapper);
-				if(CollUtil.isNotEmpty(cfgSettingEntityFreshList)) {
-					this.initDorisQueryCfgSetting();
-				}
-			}, 1, freshCacheTime, TimeUnit.SECONDS);
 		}
 	}
 	
@@ -653,31 +633,6 @@ public class DmpHandlerCache implements CommandLineRunner{
 				.eq(DmpCfgDbEntity::getDisabled, false).list());
 	}
 	
-	private synchronized void initDorisQueryCfgSetting() {
-		LambdaQueryWrapper<CfgSettingEntity> queryWrapper = new LambdaQueryWrapper<>();
-		queryWrapper.eq(CfgSettingEntity::getType, SettingEnum.DORIS_QUERY_CFG);
-		queryWrapper.eq(CfgSettingEntity::getStatus, true);
-		dorisQueryCfgSettingEntityCache = cfgSettingService.listMaps(queryWrapper);
-		dorisQueryCfgSettingMappingCache = dorisQueryCfgSettingEntityCache.stream().collect(Collectors.toMap(c -> {
-			String key = c.get("key").toString();
-			if(!key.startsWith("/")) {
-				key = "/" + key;
-			}
-			return key;
-		}, c -> {
-			DorisQuerySettingDTO d = new DorisQuerySettingDTO();
-			String value = c.get("value").toString();
-			if(StringUtils.isNotBlank(value)) {
-				try {
-					d = JSON.parseObject(value, DorisQuerySettingDTO.class);
-				} catch (Exception e) {
-					log.error("转换doris配置查询错误" , e);
-				}
-			}
-			return d;
-		} , (c1 , c2) -> c1));
-	}
-
 
 	/**
 	 * 查询国家信息
@@ -695,7 +650,4 @@ public class DmpHandlerCache implements CommandLineRunner{
 		return list;
 	}
 	
-	public List<Map<String, Object>> getDorisQueryCfgSettingEntityCache(){
-		return dorisQueryCfgSettingEntityCache;
-	}
 }

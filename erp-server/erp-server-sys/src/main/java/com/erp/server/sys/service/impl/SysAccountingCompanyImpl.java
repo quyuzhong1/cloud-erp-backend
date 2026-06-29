@@ -223,6 +223,18 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
         return BeanMapper.copyList(list, SysAccountingCompanyDTO.ListDTO.class);
     }
 
+    @Override
+    public List<SysAccountingCompanyDTO.ListDTO> listAll(String name) {
+        LambdaQueryWrapper<SysAccountingCompanyEntity> queryWrapper = new LambdaQueryWrapper<>();
+        if (StringUtils.isNotBlank(name)) {
+            queryWrapper.like(SysAccountingCompanyEntity::getCompanyName, name);
+        }
+        List<SysAccountingCompanyEntity> list = this.list(queryWrapper);
+        // 按创建时间顺序排，最早的排在最前面
+        list = list.stream().sorted(Comparator.comparing(SysAccountingCompanyEntity::getDisabled)).collect(Collectors.toList());
+        return BeanMapper.copyList(list, SysAccountingCompanyDTO.ListDTO.class);
+    }
+
 
     @Override
     public List<SysAccountingCompanyDTO.ListDTO> listAll(String name) {
@@ -255,6 +267,7 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
                 dto.setName(item.getCompanyName());
                 dto.setCode(item.getCode());
                 dto.setFlagId(item.getKingdeeId());
+                dto.setDisabled(item.getDisabled());
                 resultList.add(dto);
             }
             return resultList;
@@ -266,6 +279,7 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
             dto.setName(item.getCompanyName());
             dto.setCode(item.getCode());
             dto.setFlagId(item.getKingdeeId());
+            dto.setDisabled(item.getDisabled());
             resultList.add(dto);
         }
         return resultList;

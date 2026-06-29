@@ -102,6 +102,8 @@ public enum ModuleTypeEnum {
     PICKING_LISTS("91", "拣货单"),
     CFG_RULE_WAVE("92", "波次规则"),
     WAREHOUSE_LOCATION_REPLENISH("93", "仓位补货"),
+    AFTERSALES_WAREHOUSE_LOCATION_SUGGEST("94", "售后仓位推荐"),
+
 
     CFG_RULE_COMMON("97", "规则设置"),
     REPLENISHMENT_SUGGESTION("98", "补货建议"),
@@ -216,6 +218,10 @@ public enum ModuleTypeEnum {
     CFG_DECLARE_RULE("165", "报关规则配置"),
 
 
+    LOGISTICS_ORDER("168", "物流下单"),
+
+    AFTER_SALE_PACK("190", "售后装箱"),
+    FULL_BOX_TRANSFER("191", "整箱移仓"),
 
 
 
@@ -235,6 +241,7 @@ public enum ModuleTypeEnum {
     CFG_DIFF_STRATEGY("150", "差异策略配置"),
     DELIVERY_BOX_RULE("156", "发货箱规"),
     B2B_THIRD_DELIVERY("157", "B2B三方发货单"),
+    B2B_CUSTOMER_PACKING_LABEL("166", "B2B客户装箱标签"),
     DMP_ADS_ERP_DIFF_OUTSTOCK_SYNC("158", "出库同步差异"),
     DMP_ADS_ERP_DIFF_RETURN_INSTOCK_SYNC("159", "退货同步差异"),
     SO_B2B_DELIVERY_INTERCEPT("165", "B2B发货拦截单"),

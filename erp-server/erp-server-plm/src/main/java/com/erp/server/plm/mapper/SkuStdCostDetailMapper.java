@@ -2,7 +2,6 @@ package com.erp.server.plm.mapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.ApproveStatusQtyDTO;
-import com.common.business.dto.base.BaseIdsDTO;
 import com.erp.model.plm.dto.SkuStdCostDetailDTO;
 import com.erp.model.plm.entity.SkuStdCostDetailEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;

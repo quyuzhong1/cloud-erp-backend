@@ -1,9 +1,12 @@
 package com.erp.server.wms.controller.feign;
 
+import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.AddGroup;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -15,6 +18,7 @@ import com.erp.model.wms.dto.QcInfoDTO;
 import com.erp.model.wms.dto.QcNoticeDTO;
 import com.erp.model.wms.dto.QcResultDTO;
 import com.erp.model.wms.entity.QcInfoEntity;
+import com.erp.server.wms.query.QcInfoQueryHandler;
 import com.erp.server.wms.service.QcInfoService;
 import com.erp.server.wms.service.QcResultService;
 import com.erp.server.wms.service.QcSamplingPlanRefService;
@@ -76,7 +80,13 @@ public class QcInfoFeignController extends BaseController {
      * @return
      */
     @PostMapping("/qcPaging")
-    public ApiResult<PagingVO<QcInfoDTO.OpenPagingViewDTO>> qcPaging(@RequestBody @Validated PagingDTO<QcInfoDTO.OpenPagingParamDTO> dto) {
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "qc_user_id",
+            warehouseTableField = "qb.warehouse_id",
+            menuCode = "wms:qcBill:paging",
+            tableAlias = "qb")
+    @WebAdvanceQuery(handler = QcInfoQueryHandler.class)
+    public ApiResult<PagingVO<QcInfoDTO.OpenPagingViewDTO>> qcPaging(@RequestBody @Validated PagingDTO<QcInfoDTO.PagingParamDTO> dto) {
         PagingVO<QcInfoDTO.OpenPagingViewDTO> pagingVO = qcInfoService.qcPaging(dto);
         return success(pagingVO);
     }

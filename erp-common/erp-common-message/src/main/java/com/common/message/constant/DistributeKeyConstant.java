@@ -50,4 +50,8 @@ public class DistributeKeyConstant {
      * 用于防止同一张报关单被并发修改 / 拆分
      */
     public static final String TMS_DECLARE_BILL_ID_KEY = "TMS_DECLARE_BILL_ID_KEY";
+    /**
+     * TMS 异步任务执行锁（按 taskId 互斥，防 MQ 重投并发）
+     */
+    public static final String TMS_ASYNC_TASK_EXEC_KEY = "TMS_ASYNC_TASK_EXEC";
 }

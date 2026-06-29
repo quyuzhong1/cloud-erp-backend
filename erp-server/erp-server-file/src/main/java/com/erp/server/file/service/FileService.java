@@ -1,5 +1,6 @@
 package com.erp.server.file.service;
 
+import com.erp.model.file.dto.FileDTO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -61,4 +62,12 @@ public interface FileService {
      * @return 文件大小信息列表
      */
     List<com.erp.model.file.dto.FileDTO.FileSizeInfo> getBatchFileSize(List<String> fileUrlList);
+
+    /**
+     * 通过URL上传文件
+     *
+     * @param uploadBase64 FileDTO.UploadBase64
+     * @return String
+     */
+    String uploadFileByUrl(FileDTO.UploadBase64 uploadBase64);
 }

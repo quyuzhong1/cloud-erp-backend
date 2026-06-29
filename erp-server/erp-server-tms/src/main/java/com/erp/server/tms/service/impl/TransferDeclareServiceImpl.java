@@ -12,18 +12,23 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
+import cn.hutool.core.collection.ListUtil;
 import com.common.business.annotation.Idempotent;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.*;
@@ -681,25 +686,45 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     @Override
     public void getOrderByCodeJob() {
         List<TransferDeclareDetailEntity> detailEntities = transferDeclareDetailService.listWaitSyncTransferStatus();
-        List<String> ids = detailEntities.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
-        List<TransferDeclareEntity> transferDeclareEntities = this.listByIds(ids);
-        List<String> transferLogisticsSupplierIds = transferDeclareEntities.stream().map(req -> req.getTransferLogisticsSupplierId()).distinct().collect(Collectors.toList());
+        XxlJobHelper.log("====查询待同步中转状态的订单信息，data.size={}====", detailEntities.size());
+        if (CollUtil.isEmpty(detailEntities)){
+            return;
+        }
+        //拆分list
+        List<List<TransferDeclareDetailEntity>> partition = ListUtil.partition(detailEntities, 100);
+        partition.forEach(this::processTransferStatus);
+    }
 
+    private void processTransferStatus(List<TransferDeclareDetailEntity> detailEntities) {
+        List<String> ids = detailEntities.stream().map(TransferDeclareDetailEntity::getMainId).distinct().collect(Collectors.toList());
+        List<TransferDeclareEntity> transferDeclareEntities = this.listByIds(ids);
+        if (CollUtil.isEmpty(transferDeclareEntities)){
+            return;
+        }
+        Map<String, TransferDeclareEntity> entityMap = transferDeclareEntities.stream().collect(Collectors.toMap(TransferDeclareEntity::getId, Function.identity()));
+        List<String> transferLogisticsSupplierIds = transferDeclareEntities.stream().map(TransferDeclareEntity::getTransferLogisticsSupplierId).distinct().collect(Collectors.toList());
         //查询授权信息
         List<TransferLogisticsAuthEntity> transferLogisticsAuthEntities = transferLogisticsAuthService.listByMainIds(transferLogisticsSupplierIds);
+        if (CollUtil.isEmpty(transferLogisticsAuthEntities)){
+            return;
+        }
+        Map<String, TransferLogisticsAuthEntity> authEntityMap = transferLogisticsAuthEntities.stream().collect(Collectors.toMap(TransferLogisticsAuthEntity::getMainId, Function.identity(), (existing, replacement) -> existing));
         for (TransferDeclareDetailEntity detailEntity : detailEntities) {
-            TransferDeclareEntity transferDeclareEntity = transferDeclareEntities.stream().filter(req -> detailEntity.getMainId().equals(req.getId())).findFirst().orElse(null);
+            TransferDeclareEntity transferDeclareEntity = entityMap.get(detailEntity.getMainId());
             if (ObjectUtil.isEmpty(transferDeclareEntity)) {
                 continue;
             }
-            TransferLogisticsAuthEntity authEntity = transferLogisticsAuthEntities.stream().filter(req -> transferDeclareEntity.getTransferLogisticsSupplierId().equals(req.getMainId())).findFirst().orElse(null);
+            XxlJobHelper.log("====查询订单最新状态，订单号={}====", detailEntity.getSoCode());
+            TransferLogisticsAuthEntity authEntity = authEntityMap.get(transferDeclareEntity.getTransferLogisticsSupplierId());
             if (ObjectUtil.isEmpty(authEntity)) {
                 continue;
             }
             TransferLogisticsService service = transferLogisticsRegistry.getHandler(authEntity.getLogisticsPlatform());
             ApiResult<TransferLogisticsOrderDTO> result = service.getOrderByCode(detailEntity.getSoCode(), authEntity.getId());
-            if (result.getCode() == 200) {
-                if(Objects.nonNull(result.getData()) && Objects.nonNull(result.getData().getOrderStatusEnum())){
+            XxlJobHelper.log("====查询订单最新状态，订单号={}，结果={}====", detailEntity.getSoCode(), JSONUtil.toJsonStr(result));
+            if (result.getCode() == 200 && Objects.nonNull(result.getData()) ) {
+                TransferLogisticsStatusEnum orderStatusEnum = result.getData().getOrderStatusEnum();
+                if(Objects.nonNull(orderStatusEnum) && !detailEntity.getTransferStatus().equals(orderStatusEnum.getCode())){
                     transferDeclareDetailService.updateTransferStatus(detailEntity.getId(), result.getData().getOrderStatusEnum().getCode());
                 }
             }
@@ -1336,99 +1361,4 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 
 
 
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public Boolean addTaskDetailByTransferDeclare(TmsAsyncTaskRecordDTO.PushParamsDTO dto) {
-        String taskId = dto.getTaskId();
-        LocalDateTime startTime = dto.getStartTime();
-        LocalDateTime endTime = dto.getEndTime();
-        List<String> logisticsSupplierIds = dto.getIds();
-        if (null == startTime || null == endTime) {
-            asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),"开始时间或结束时间为空");
-            return true;
-        }
-        List<TmsB2cDeclareReconciliationDetailEntity> list = tmsB2cDeclareReconciliationDetailService.listAutoGenerateCost(startTime.toLocalDate(), endTime.toLocalDate());
-        if(CollUtil.isNotEmpty(logisticsSupplierIds)){
-            list = list.stream().filter(e -> logisticsSupplierIds.contains(e.getLogisticsSupplierId())).collect(Collectors.toList());
-        }
-        if (CollectionUtils.isEmpty(list)) {
-            asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),"b2c报关对账单明细为空");
-            return true;
-        }
-        //记录本次任务数量
-        asyncTaskRecordService.lambdaUpdate().set(TmsAsyncTaskRecordEntity::getDetailCount,list.size()).eq(TmsAsyncTaskRecordEntity::getId, taskId).update();
-
-        List<TmsAsyncTaskDetailEntity> taskDetailList = new ArrayList<>();
-        LocalDateTime now = LocalDateTime.now();
-        for(TmsB2cDeclareReconciliationDetailEntity l : list) {
-            TmsAsyncTaskDetailEntity detail = new TmsAsyncTaskDetailEntity();
-            detail.setMainId(taskId);
-            detail.setBusinessType(SourceTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode());
-            detail.setBusinessId(l.getId());
-//            detail.setBusinessCode(l.getSourceCode());
-            detail.setStatus(TmsAsyncTaskRecordStatusEnum.PENDING.getCode());
-            detail.setCreateTime(now);
-            taskDetailList.add(detail);
-        }
-        asyncTaskDetailRecordService.saveBatch(taskDetailList);
-        return false;
-    }
-
-
-
-    @Override
-    public void pushTransferDeclare(TmsAsyncTaskRecordDTO.PushParamsDTO dto) {
-        String taskId = dto.getTaskId();
-        LocalDateTime startTime = dto.getStartTime();
-        LocalDateTime endTime = dto.getEndTime();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM");
-
-        TmsAsyncTaskRecordEntity tmsAsyncTaskRecordEntity = asyncTaskRecordService.getById(taskId);
-        if(Objects.isNull(tmsAsyncTaskRecordEntity)){
-            log.error("任务记录不存在，taskId: {}", taskId);
-            asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),ApiError.LOGISTICS_PENDING_COST_NOT_FOUND.getMsg());
-            return;
-        }
-
-        List<TmsAsyncTaskDetailEntity> taskDetailList = asyncTaskDetailRecordService.lambdaQuery().eq(TmsAsyncTaskDetailEntity::getMainId, taskId).list();
-        CountDownLatch latch = new CountDownLatch(taskDetailList.size());
-
-        List<TmsB2cDeclareReconciliationDetailEntity> list = tmsB2cDeclareReconciliationDetailService.listAutoGenerateCost(startTime.toLocalDate(), endTime.toLocalDate());
-        Map<String, TmsB2cDeclareReconciliationDetailEntity> map = list.stream().collect(Collectors.toMap(TmsB2cDeclareReconciliationDetailEntity::getId, Function.identity(), (o1, o2) -> o1));
-        for (TmsAsyncTaskDetailEntity detail : taskDetailList) {
-            String taskDetailId = detail.getId();
-            String businessId = detail.getBusinessId();
-            costAllocationPool.execute(() -> {
-                try {
-                    //判断是否超时中止
-                    Integer count = asyncTaskDetailRecordService.lambdaQuery().eq(TmsAsyncTaskDetailEntity::getId, taskDetailId).eq(TmsAsyncTaskDetailEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode()).count();
-                    if(count >0){
-                        asyncTaskDetailRecordService.updateDetail(taskDetailId,
-                                TmsAsyncTaskRecordStatusEnum.ING.getCode(), "");
-
-                        TmsB2cDeclareReconciliationDetailEntity entity = map.get(businessId);
-                        singPushAllocation(entity.getSourceId() , entity.getApproveDate().format(formatter) , Arrays.asList(entity));
-
-                        asyncTaskDetailRecordService.updateDetail(taskDetailId,
-                                TmsAsyncTaskRecordStatusEnum.FINISH.getCode(), "");
-                    }
-                } catch (Exception e) {
-                    log.error("处理任务失败 taskDetailId: {}", taskDetailId, e);
-                    // 统一处理任务失败状态更新
-                    asyncTaskRecordService.updateTaskDetailFailure(taskDetailId, e);
-                } finally {
-                    latch.countDown();
-                }
-            });
-        }
-        try {
-            boolean await = latch.await(tmsAsyncTaskRecordEntity.getExecTimeout(), TimeUnit.SECONDS);// 等待所有任务完成
-            if(await){
-                asyncTaskRecordService.updateTaskFinally(taskId);
-            }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            log.error("任务等待中断", e);
-        }
-    }
 }

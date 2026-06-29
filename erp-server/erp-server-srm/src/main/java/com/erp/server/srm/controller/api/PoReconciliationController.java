@@ -201,4 +201,41 @@ public class PoReconciliationController extends BaseController {
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+
+    /**
+     * 上传发票
+     *
+     * @param dto PoReconciliationDetailDTO.UploadFileDTO
+     * @return String
+     */
+    @PostMapping("/uploadInvoice")
+    @LogAction(value = LogActionEnum.UPLOAD, desc = "上传发票")
+    public ApiResult<String> uploadInvoice(@RequestBody @Validated PoReconciliationDTO.UploadFileDTO dto) {
+        poReconciliationService.uploadInvoice(dto);
+        return success();
+    }
+
+    /**
+     * 查询指定对账单的发票附件列表
+     *
+     * @param dto BaseIdDTO
+     * @return ApiResult<List<InvoiceFileVO>>
+     */
+    @PostMapping("/listInvoice")
+    public ApiResult<List<PoReconciliationDTO.InvoiceFileVO>> listInvoice(@RequestBody @Validated BaseIdDTO dto) {
+        return success(poReconciliationService.listInvoice(dto.getId()));
+    }
+
+    /**
+     * 下载发票
+     *
+     * @param dto BaseIdsDTO.IdsDTO
+     * @return ApiResult<Object>
+     */
+    @PostMapping("/downloadInvoice")
+    @LogAction(value = LogActionEnum.DOWNLOAD, desc = "下载发票")
+    public ApiResult<Object> downloadInvoice(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = poReconciliationService.downloadInvoice(dto.getIds());
+        return success(resultDTOS);
+    }
 }

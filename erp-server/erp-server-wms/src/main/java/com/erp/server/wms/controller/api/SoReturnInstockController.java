@@ -16,9 +16,9 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.SoB2cReturnDTO;
+import com.erp.model.oms.dto.SoB2cReturnDetailDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
-import com.erp.model.oms.entity.SoB2cReturnDetailEntity;
 import com.erp.model.oms.entity.SoB2cReturnEntity;
 import com.erp.model.wms.dto.SoReturnInstockDTO;
 import com.erp.model.wms.dto.SoReturnReceiveDTO;
@@ -32,7 +32,6 @@ import com.erp.server.wms.service.SoReturnInstockService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -482,30 +481,23 @@ public class SoReturnInstockController extends BaseController {
 
 
     /**
-     * 下载模板
-     * @author will
-     * @date 2025/4/24 19:47
-     * @param response
-     * @return ApiResult
+     * 下载模板（importType=add 新增，update 批量更新主表）
      */
     @GetMapping("/downloadTemplate")
-    public ApiResult downloadTemplate(HttpServletResponse response) {
-        soReturnInstockService.downloadTemplate(response);
+    public ApiResult downloadTemplate(@RequestParam(value = "importType", required = false) String importType,
+                                      HttpServletResponse response) {
+        soReturnInstockService.downloadTemplate(importType, response);
         return success();
     }
 
     /**
-     * 导入
-     * @author will
-     * @date 2025/4/24 19:48
-     * @param excelFile
-     * @param response
-     * @return ApiResult
+     * 异步导入（importType=add 新增，update 批量更新主表）
+     * review-skip: 接口由同步 MultipartFile 改为 ImportDTO 异步任务，前端已配合改造，不保留旧 multipart 协议
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入销售退货入库单")
     @PostMapping("/import")
-    public ApiResult exportWarehouse(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        Boolean result = soReturnInstockService.importFile(excelFile, response);
+    public ApiResult importSoReturnInstock(@RequestBody BaseDTO.ImportDTO dto) {
+        Boolean result = soReturnInstockService.importFile(dto);
         return result ? success() : failure();
     }
 
@@ -521,7 +513,7 @@ public class SoReturnInstockController extends BaseController {
         }
         List<String> ids = dtos.stream().map(SoB2cReturnDTO.ReturnInstockDTO::getId).distinct().collect(Collectors.toList());
         List<SoB2cReturnEntity> returnEntityList = soB2cReturnFeign.listByIds(ids);
-        List<SoB2cReturnDetailEntity> returnDetailEntityList = soB2cReturnFeign.listDetailByMainIds(ids);
+        List<SoB2cReturnDetailDTO.ViewDTO> returnDetailEntityList = soB2cReturnFeign.listDetailByMainIds(ids);
         List<String> soIds = returnEntityList.stream().map(SoB2cReturnEntity::getSoId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
         List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
         List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cFeign.listDetailByMainIds(soIds);
@@ -534,7 +526,7 @@ public class SoReturnInstockController extends BaseController {
                 continue;
             }
             SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(e -> e.getId().equals(soB2cReturnEntity.getSoId())).findFirst().orElse(null);
-            List<SoB2cReturnDetailEntity> detailEntityList = returnDetailEntityList.stream().filter(e -> e.getMainId().equals(id)).collect(Collectors.toList());
+            List<SoB2cReturnDetailDTO.ViewDTO> detailEntityList = returnDetailEntityList.stream().filter(e -> e.getMainId().equals(id)).collect(Collectors.toList());
             List<SoB2cDetailEntity> b2cDetailEntityList = soB2cDetailEntityList.stream().filter(e -> e.getMainId().equals(soB2cReturnEntity.getSoId())).collect(Collectors.toList());
             try {
                 resultDTOS.add(soReturnInstockService.returnInstockSave(soB2cReturnEntity,detailEntityList,returnInstockDTOS,soB2cEntity,b2cDetailEntityList));

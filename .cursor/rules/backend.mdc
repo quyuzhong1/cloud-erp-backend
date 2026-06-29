@@ -1,0 +1,24 @@
+---
+description: Backend Java service rules
+globs: ["**/src/main/java/**/*.java", "**/src/main/resources/**/*.yml", "**/src/main/resources/**/*.xml", "**/pom.xml"]
+alwaysApply: false
+---
+
+# Backend Rules
+
+- Follow existing layers: `controller`, `service`, `service/impl`, `mapper`, and `src/main/resources/mapper/*.xml`.
+- Put Web/API controllers under `controller/api`; put service-to-service endpoints under `controller/feign`; use `app` or `pda` only when nearby code uses those client-specific packages.
+- Controllers return `ApiResult` and should use `BaseController` helpers when applicable.
+- Use DTO for request/input objects, VO for response/output objects and system-to-system transfer, and Entity for persistence objects.
+- Keep old API contracts compatible even when historical code uses DTO as output.
+- Service interfaces should follow `SuperService<Entity>` when matching existing CRUD patterns.
+- Service implementations should follow `SuperServiceImpl<Mapper, Entity>` when matching existing CRUD patterns.
+- Mapper interfaces should extend MyBatis-Plus `BaseMapper<Entity>` when matching existing CRUD patterns.
+- Use MyBatis-Plus wrappers for simple queries; put complex SQL and paging SQL in mapper XML.
+- Do not use mapper XML `${...}` with uncontrolled user input.
+- Reuse `GlobalExceptionHandler`, `ServiceException`, and `FeignServiceException`; do not create a separate response or exception system.
+- Reuse existing annotations for logs, permissions, data permissions, idempotency, and distributed locks before adding new mechanisms.
+- Cross-service calls should reuse or extend `erp-rpc-*` Feign contracts and existing Feign configuration.
+- External platform integrations should reuse or extend `erp-sdk-*`.
+- Keep service configuration in `bootstrap.yml` and `bootstrap-{env}.yml` following existing Nacos and Seata patterns.
+- Do not hardcode environment addresses, credentials, tokens, passwords, or secrets in Java code.

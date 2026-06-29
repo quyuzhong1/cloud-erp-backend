@@ -73,6 +73,11 @@ public class CfgLogisticsCostImportEntity extends BaseEntity<CfgLogisticsCostImp
     @TableField("import_type")
     private String importType;
     /**
+    * 识别维度：identify_no=按识别单号,identify_no_supplier=按识别单号+物流商  枚举：CfgLogisticsCostImportIdentifyTypeEnum
+    */
+    @TableField("identify_type")
+    private String identifyType;
+    /**
     * 启用状态
     */
     @TableField("disabled")
@@ -101,6 +106,8 @@ public class CfgLogisticsCostImportEntity extends BaseEntity<CfgLogisticsCostImp
     public static final String COST_TYPE = "cost_type";
 
     public static final String IMPORT_TYPE = "import_type";
+
+    public static final String IDENTIFY_TYPE = "identify_type";
 
     public static final String DISABLED = "disabled";
 

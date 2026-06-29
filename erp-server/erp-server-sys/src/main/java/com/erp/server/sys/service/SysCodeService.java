@@ -5,6 +5,8 @@ import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysCodeSkuDTO;
 import com.erp.model.sys.entity.SysCodeEntity;
 
+import java.util.List;
+
 /**
  * @author Will
  * @version 1.0
@@ -21,6 +23,16 @@ public interface SysCodeService extends IService<SysCodeEntity> {
      * @return String
      */
     String getSkuNo(SysCodeSkuDTO dto);
+
+    /**
+     * @description: 一次性生成 count 个连续的 sku 编号，避免循环调用导致的分布式锁竞争
+     * @author Will
+     * @param dto 编码请求（type、category）
+     * @param count 需要生成的编号数量
+     * @return List 按顺序返回 count 个 sku 编号
+     */
+    List<String> getSkuNoBatch(SysCodeSkuDTO dto, int count);
+
     /**
      * @description: 根据编码信息生成spu编码
      * @author Will

@@ -1,5 +1,6 @@
 package com.erp.server.fms.service;
 
+import com.alibaba.fastjson.JSONObject;
 import com.common.business.service.SuperService;
 import com.erp.model.fms.dto.DictBasicDTO;
 import com.erp.model.fms.entity.DictBasicEntity;
@@ -15,7 +16,9 @@ import java.util.List;
  * @since 2023-03-16
  */
 public interface DictBasicService extends SuperService<DictBasicEntity> {
+    boolean saveJsonObject(JSONObject jsonObject);
 
+    boolean updateJsonObject(List<JSONObject> jsonObjects);
     
     /**
      * 保存或者修改字典信息
@@ -33,7 +36,7 @@ public interface DictBasicService extends SuperService<DictBasicEntity> {
      * @param key
      * @return java.util.List<com.erp.model.fms.dto.DictBasicDTO>
      */
-    List<DictBasicDTO.ListDTO> getByKey(String key);
+    List<DictBasicEntity> getByKey(String key);
 
     
     /**

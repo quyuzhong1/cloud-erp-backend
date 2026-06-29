@@ -55,9 +55,9 @@ public class DropDownListController extends BaseController {
      */
     @GetMapping("/dict/list")
     public ApiResult<List<BaseDropDownDTO.CommonDTO>> list(@RequestParam("key") String key) {
-        List<DictBasicDTO.ViewDTO> list = dictBasicService.getByKey(key);
+        List<DictBasicEntity> list = dictBasicService.getByKey(key);
         //list 根据sort排序
-        list = list.stream().sorted(Comparator.comparingInt(DictBasicDTO.ViewDTO::getSort)).collect(Collectors.toList());
+        list = list.stream().sorted(Comparator.comparingInt(DictBasicEntity::getSort)).collect(Collectors.toList());
         List<BaseDropDownDTO.CommonDTO> result = list.stream()
                 .map(x -> new BaseDropDownDTO.CommonDTO(x.getValue(), x.getName()))
                 .collect(Collectors.toList());

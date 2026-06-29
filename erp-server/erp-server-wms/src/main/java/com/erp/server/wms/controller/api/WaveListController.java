@@ -38,8 +38,8 @@ public class WaveListController extends BaseController {
      */
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            shopTableField = "sbd.shop_id",
-            warehouseTableField = "sbdd.warehouse_id",
+            shopTableField = "wld.shop_id",
+            warehouseTableField = "wld.warehouse_id",
             menuCode = "wms:waveList:paging"
     )
     @WebAdvanceQuery(handler = WaveListAdvanceQueryHandler.class)
@@ -103,8 +103,8 @@ public class WaveListController extends BaseController {
      */
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            shopTableField = "sbd.shop_id",
-            warehouseTableField = "sbdd.warehouse_id",
+            shopTableField = "wld.shop_id",
+            warehouseTableField = "wld.warehouse_id",
             menuCode = "wms:waveList:paging"
     )
     public ApiResult<List<WaveListDTO.TabDTO>> tabList(@RequestBody WaveListDTO.SearchParamDTO paramDTO) {

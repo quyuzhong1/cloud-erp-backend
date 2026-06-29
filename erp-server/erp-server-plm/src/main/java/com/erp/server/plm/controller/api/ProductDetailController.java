@@ -3,6 +3,7 @@ package com.erp.server.plm.controller.api;
 import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.excel.EasyExcel;
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.RequestPermissions;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.ExcelImportFsDTO;
@@ -21,6 +22,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.dto.excel.ProductWarehouseLocationExcelDTO;
+import com.erp.model.plm.validation.PlmProductInfoWarrantyRequired;
 import com.erp.model.plm.entity.*;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.server.plm.service.ProductBrandService;
@@ -46,6 +48,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import javax.validation.groups.Default;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -283,7 +286,7 @@ public class ProductDetailController extends BaseController {
     @LogAction(value = LogActionEnum.UNKNOWN_UPDATE, desc = "产品信息-无规格-新增/修改")
     @PostMapping("/saveOrUpdateNoSpec")
     //@RequestPermissions("plm:product:detail:saveOrUpdateNoSpec")
-    public ApiResult saveOrUpdateNoSpec(@RequestBody @Validated ProductNoSpecDTO productNoSpecDTO) {
+    public ApiResult saveOrUpdateNoSpec(@RequestBody @Validated({Default.class, PlmProductInfoWarrantyRequired.class}) ProductNoSpecDTO productNoSpecDTO) {
         Boolean flag = productDetailService.saveOrUpdateNoSpec(productNoSpecDTO);
         return flag == true ? this.success() : this.failure();
     }
@@ -299,7 +302,7 @@ public class ProductDetailController extends BaseController {
     @LogAction(value = LogActionEnum.UNKNOWN_UPDATE, desc = "产品信息-多规格-新增/修改")
     @PostMapping("/saveOrUpdateManySpec")
     //@RequestPermissions("plm:product:detail:saveOrUpdateManySpec")
-    public ApiResult saveOrUpdateManySpec(@RequestBody @Validated ProductManySpecDTO productManySpecDTO) {
+    public ApiResult saveOrUpdateManySpec(@RequestBody @Validated(Default.class) ProductManySpecDTO productManySpecDTO) {
         Boolean flag = productDetailService.saveOrUpdateManySpec(productManySpecDTO);
         return flag == true ? this.success() : this.failure();
     }
@@ -343,7 +346,7 @@ public class ProductDetailController extends BaseController {
      */
     @LogAction(value = LogActionEnum.INSERT, desc = "产品信息-多规格-添加sku关联")
     @PostMapping("/changeSkuBySpu")
-    public ApiResult<List<ProductDetailEntity>> changeSkuBySpu(@RequestBody @Validated ChangeSkuToSpuDTO changeSkuToSpuDTO) {
+    public ApiResult<List<ProductDetailEntity>> changeSkuBySpu(@RequestBody @Validated({Default.class, PlmProductInfoWarrantyRequired.class}) ChangeSkuToSpuDTO changeSkuToSpuDTO) {
         List<ProductDetailEntity> list = productDetailService.changeSkuBySpu(changeSkuToSpuDTO);
         return this.success(list);
     }
@@ -938,6 +941,23 @@ public class ProductDetailController extends BaseController {
     @WebAdvanceQuery(handler = ProductDetailQueryHandler.class)
     public ApiResult<Boolean> exportProduct(@RequestBody ProductSkuExcelDTO productSkuExcelDTO, HttpServletResponse response) {
         productDetailService.exportProduct(productSkuExcelDTO, response);
+        return success(true);
+    }
+
+    /**
+     * excel导出产品信息（全）
+     *
+     * @param productSkuExcelDTO productSkuExcelDTO
+     * @return com.common.core.vo.ApiResult
+     * @Author Luo_WG
+     * @Date 2022/10/9 11:49
+     **/
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出产品信息（全）")
+    @PostMapping(value = "/exportProductAll")
+    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:product:detail:exportAll", tableAlias = "pd")
+    @WebAdvanceQuery(handler = ProductDetailQueryHandler.class)
+    public ApiResult<Boolean> exportProductAll(@RequestBody ProductSkuExcelDTO productSkuExcelDTO, HttpServletResponse response) {
+        productDetailService.exportProductAll(productSkuExcelDTO, response);
         return success(true);
     }
 

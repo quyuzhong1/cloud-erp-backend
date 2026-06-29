@@ -47,6 +47,8 @@ public interface MessageMapper extends BaseMapper<MessageEntity> {
     
     List<MessageDTO.NotReadMessageNum> listNotReadMessageNum(@Param("param") MessageDTO.PdaParamDTO param);
 
+    int getPcSysMessageUnreadCount(@Param("userId") String userId);
+
     MessageDTO.NoticeDTO getLatestUnreadNotice(@Param("userId") String userId);
 
     MessageDTO.NoticeDTO getLatestUnreadNoticeByApplication(@Param("userId") String userId, @Param("application") String application);
