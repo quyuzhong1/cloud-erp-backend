@@ -4,7 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.annotation.DataIdempotent;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -64,7 +64,7 @@ public class FbsInventoryServiceImpl extends SuperServiceImpl<FbsInventoryMapper
         return baseMapper.summaryNumber(pagingParamDTO.getParams());
     }
 
-    @DataIdempotent(keyIdName = "addDTO.shopId,addDTO.warehouseId,addDTO.fbsSku", businessType = "fbsInventoryAdd")
+    @DistributeLocker(keyName = "addDTO.shopId,addDTO.warehouseId,addDTO.fbsSku", businessType = "fbsInventoryAdd")
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(FbsInventoryDTO.AddDTO addDTO) {
