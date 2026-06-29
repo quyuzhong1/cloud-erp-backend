@@ -100,6 +100,9 @@ public class LoginAuthService {
      */
     private ApiResult<SysLoginUserVO> dealSuccess(ApiResult<SysUserDTO> apiResult , AccountLoginDTO loginDTO , HttpServletRequest request , String loginErrorKey){
         SysUserDTO info = apiResult.getData();
+        if (Objects.isNull(info)) {
+            return ApiResult.error(ApiError.AUTH_LOGIN_FAILED);
+        }
         //SRM校验供应商是否启用
         if(loginDTO.getUserType().equals(UserTypeEnum.SRM.getCode())){
             SupplierEntity supplier = supplierFeign.getSupplierByUid(info.getUid());
@@ -120,14 +123,19 @@ public class LoginAuthService {
         ipDTO.setDate(new Date());
         ipDTO.setUid(info.getUid());
         sysUserFeign.setLoginIp(ipDTO);
-
-        // 创建token（仅缓存用户基础信息，菜单与权限由独立接口获取）
-        info.setOverallMenuList(null);
-        info.setLeftMenuList(null);
-        info.setPermissionList(null);
+        SysLoginUserVO sysLoginUserVO = new SysLoginUserVO();
+        if (loginDTO.getIsTest()) {
+            // 创建token（仅缓存用户基础信息，菜单与权限由独立接口获取）
+            info.setOverallMenuList(null);
+            info.setLeftMenuList(null);
+            info.setPermissionList(null);
+        } else {
+            sysLoginUserVO.setOverallMenuList(info.getOverallMenuList());
+            sysLoginUserVO.setPermissionList(info.getPermissionList());
+            sysLoginUserVO.setLeftMenuList(info.getLeftMenuList());
+        }
         info.setUserType(loginDTO.getUserType());
         String accessToken = authTokenService.createSlimToken(info);
-        SysLoginUserVO sysLoginUserVO = new SysLoginUserVO();
         sysLoginUserVO.setAccessToken(accessToken);
         sysLoginUserVO.setUserName(info.getUserName());
         sysLoginUserVO.setHeadIcon(info.getHeadIcon());
@@ -156,6 +164,9 @@ public class LoginAuthService {
             throw new ServiceException(ApiError.HTTP_FORBIDDEN);
         }
         SysUserDTO sysUser = sysUserFeign.getSysUserById(loginUser.getUid());
+        if (Objects.isNull(sysUser)) {
+            throw new ServiceException(ApiError.AUTH_USER_NOT_FOUND, loginUser.getUid());
+        }
         result.setAccessToken(token);
         result.setOverallMenuList(sysUser.getOverallMenuList());
         result.setPermissionList(sysUser.getPermissionList());
@@ -181,10 +192,7 @@ public class LoginAuthService {
         LoginUser loginUser = getLoginUserOrThrow(token);
         ApiResult<SysUserMenuAuthVO> apiResult = sysUserFeign.getUserMenuAuth(
                 new SysFeignDTO.UserLoginInfoDTO(loginUser.getUid(), loginUser.getUserType()));
-        if (apiResult.getCode() != 200) {
-            throw new ServiceException(apiResult.getCode(), apiResult.getMsg());
-        }
-        return apiResult.getData();
+        return requireFeignData(apiResult);
     }
 
     /**
@@ -200,14 +208,25 @@ public class LoginAuthService {
         LoginUser loginUser = getLoginUserOrThrow(token);
         ApiResult<SysUserPermissionAuthVO> apiResult = sysUserFeign.getUserPermissionAuth(
                 new SysFeignDTO.UserLoginInfoDTO(loginUser.getUid(), loginUser.getUserType()));
-        if (apiResult.getCode() != 200) {
-            throw new ServiceException(apiResult.getCode(), apiResult.getMsg());
-        }
-        return apiResult.getData();
+        return requireFeignData(apiResult);
     }
 
     /**
-     * 根据 Token 获取登录用户，不存在则抛出 403
+     * 校验 Feign 响应：HTTP 200 且 data 非空
+     */
+    private <T> T requireFeignData(ApiResult<T> apiResult) {
+        if (apiResult.getCode() != 200) {
+            throw new ServiceException(apiResult.getCode(), apiResult.getMsg());
+        }
+        T data = apiResult.getData();
+        if (Objects.isNull(data)) {
+            throw new ServiceException(ApiError.AUTH_LOGIN_FAILED);
+        }
+        return data;
+    }
+
+    /**
+     * 根据 Token 获取登录用户，不存在或缺少 userType（历史 Token）则拒绝访问
      *
      * @param token accessToken
      * @return 登录用户缓存信息
@@ -216,6 +235,9 @@ public class LoginAuthService {
         LoginUser loginUser = authTokenService.getLoginUser(token);
         if (Objects.isNull(loginUser)) {
             throw new ServiceException(ApiError.HTTP_FORBIDDEN);
+        }
+        if (StrUtil.isBlank(loginUser.getUserType())) {
+            throw new ServiceException(ApiError.HTTP_UNAUTHORIZED);
         }
         return loginUser;
     }
