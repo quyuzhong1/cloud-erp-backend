@@ -3501,18 +3501,18 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> filteredList = mergeDetailList.stream()
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
-        
+
         // 校验过滤后的列表不能为空
         if (CollUtil.isEmpty(filteredList)) {
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_SAVE_REQUIRED);
         }
-        
+
         // 根据合并模式选择不同的处理策略
         if (Boolean.TRUE.equals(isMerge)) {
             // 合并模式：对编辑后的明细进行重新合并计算
             return mergeEditedDetails(filteredList);
         }
-        
+
         // 非合并模式：为所有明细应用默认值
         filteredList.forEach(this::applyMergeDeclareDetailDefaults);
         return filteredList;
