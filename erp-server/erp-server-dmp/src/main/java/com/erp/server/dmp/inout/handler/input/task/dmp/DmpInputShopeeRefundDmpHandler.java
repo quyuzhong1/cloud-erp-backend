@@ -1,6 +1,7 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
 import com.common.business.enums.PlatformDictEnum;
+import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
@@ -78,9 +79,12 @@ public class DmpInputShopeeRefundDmpHandler extends DmpInputDbConvertDmpHandler 
 
         Object refundAmount = dmpDataMap.get("refund_amount");
         BigDecimal amount = parseBigDecimal(refundAmount);
-        if (amount != null) {
-            dmpDataMap.put("amount", amount);
+        if (amount == null) {
+            throw new ServiceException("Shopee仅退款金额解析失败,returnSn:"
+                    + Objects.toString(dmpDataMap.get("return_sn"), "")
+                    + ",orderSn:" + Objects.toString(dmpDataMap.get("order_sn"), ""));
         }
+        dmpDataMap.put("amount", amount);
         Object currency = dmpDataMap.get("currency");
         if (currency != null) {
             dmpDataMap.put("currencyCode", String.valueOf(currency));

@@ -1,5 +1,6 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
+import com.common.core.exception.ServiceException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
@@ -80,11 +81,15 @@ public class DmpInputShopeeFbsInventoryDmpHandler extends DmpInputDbConvertDmpHa
             dmpDataMap.put(key, ((Number) value).intValue());
             return;
         }
+        String text = String.valueOf(value);
+        if (StringUtils.isBlank(text)) {
+            throwParseException(key, value);
+        }
         try {
-            dmpDataMap.put(key, StringUtils.isBlank(String.valueOf(value)) ? 0 : Integer.parseInt(String.valueOf(value)));
+            dmpDataMap.put(key, Integer.parseInt(text));
         } catch (NumberFormatException e) {
             log.warn("FBS库存字段{}解析失败,value:{}", key, value);
-            dmpDataMap.put(key, 0);
+            throwParseException(key, value);
         }
     }
 
@@ -101,11 +106,19 @@ public class DmpInputShopeeFbsInventoryDmpHandler extends DmpInputDbConvertDmpHa
             dmpDataMap.put(key, BigDecimal.valueOf(((Number) value).doubleValue()));
             return;
         }
+        String text = String.valueOf(value);
+        if (StringUtils.isBlank(text)) {
+            throwParseException(key, value);
+        }
         try {
-            dmpDataMap.put(key, new BigDecimal(String.valueOf(value)));
+            dmpDataMap.put(key, new BigDecimal(text));
         } catch (NumberFormatException e) {
             log.warn("FBS库存字段{}解析失败,value:{}", key, value);
-            dmpDataMap.put(key, BigDecimal.ZERO);
+            throwParseException(key, value);
         }
+    }
+
+    private void throwParseException(String key, Object value) {
+        throw new ServiceException("FBS库存字段" + key + "解析失败,value:" + value);
     }
 }

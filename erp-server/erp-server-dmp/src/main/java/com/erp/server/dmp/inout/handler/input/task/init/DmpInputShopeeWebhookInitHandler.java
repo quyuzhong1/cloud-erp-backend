@@ -38,7 +38,8 @@ public class DmpInputShopeeWebhookInitHandler extends DmpInputInitHandler {
             payload = JSONUtil.parseObj(data);
             webhookData = payload.getJSONObject("data");
         } catch (Exception e) {
-            log.error("虾皮 webhook 数据解析失败，data={}", data, e);
+            log.error("虾皮 webhook 数据解析失败，dataLength:{}, dataHash:{}",
+                    data.length(), Integer.toHexString(data.hashCode()), e);
             throw new ServiceException("虾皮 webhook 数据解析失败");
         }
         if (Objects.isNull(webhookData)) {
