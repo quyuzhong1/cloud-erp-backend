@@ -31,6 +31,7 @@ import com.erp.oms.aliexpress.util.ApiException;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
+import com.erp.server.dmp.inout.handler.input.task.dmp.AliExpressDmpHandlerUtils;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 
 import cn.hutool.core.collection.CollUtil;
@@ -46,6 +47,8 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @Scope("prototype")
 public class DmpInputAliExpressOrderAddressInitHandler extends DmpInputInitHandler{
+	private static final String ORDER_DETAIL_CODE = "orderDetail";
+
 	@Resource
     private AliExpressOrderService aliExpressOrderService;
 	
@@ -66,7 +69,9 @@ public class DmpInputAliExpressOrderAddressInitHandler extends DmpInputInitHandl
 		List<ParamData> paramDataList = new ArrayList<>();
 		List<String> orderIdList = findMongoData.stream().map(f -> f.get("order_id").toString()).collect(Collectors.toList());
 		paramDataList.add(new ParamData("order_id", "order_id", PannoEnum.IN, orderIdList));
-		findMongoData = mongoService.findMongoData(paramDataList, "aliexpress_orderDetail_data");
+		findMongoData = mongoService.findMongoData(paramDataList,
+				AliExpressDmpHandlerUtils.getMongoStorageName(dmpBasicSystemEntity, dmpCfgInputService, dmpHandlerCache,
+						dmpCfgInputEntity.getSystemId(), ORDER_DETAIL_CODE));
 		if(CollUtil.isEmpty(findMongoData)) {
 			return new ArrayList<>();
 		}

@@ -17,7 +17,6 @@ import org.springframework.stereotype.Service;
 import com.common.core.anno.ParamData;
 import com.common.core.enums.PannoEnum;
 import com.erp.model.dmp.entity.DmpSoInfoEntity;
-import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.oms.aliexpress.dto.AliExpressShopInfoDTO;
 import com.erp.oms.aliexpress.service.AliExpressOrderService;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
@@ -41,7 +40,7 @@ public class DmpInputAliExpressOrderIssueDmpHandler extends DmpInputDbConvertDmp
     @Autowired
     private AliExpressOrderService aliExpressOrderService;
 
-	public static final String ALIEXPRESS_ISSUEDETAIL_DATA = "aliexpress_issueDetail_data";
+	private static final String ISSUE_DETAIL_CODE = "issueDetail";
     private static final String STORAGE_RETURN_INFO = "dmp_so_return_info";
     private static final String STORAGE_REFUND_INFO = "dmp_so_refund_info";
 	
@@ -61,10 +60,11 @@ public class DmpInputAliExpressOrderIssueDmpHandler extends DmpInputDbConvertDmp
                             .collect(Collectors.toList()));
 				}
 				Map<String, String> orderIdMaps = new HashMap<>();
+				String sourcePlatform = AliExpressDmpHandlerUtils.getSourcePlatform(dmpBasicSystemEntity);
 				if(CollUtil.isNotEmpty(orders)) {
 					List<DmpSoInfoEntity> list = dmpSoInfoService.lambdaQuery()
 						.in(DmpSoInfoEntity::getThirdCode, orders)
-						.eq(DmpSoInfoEntity::getSourcePlatform, DmpBasicSystemCodeEnum.ALI_EXPRESS.getCode())
+						.eq(DmpSoInfoEntity::getSourcePlatform, sourcePlatform)
 						.eq(DmpSoInfoEntity::getNextLevelId, nextLevelId)
 						.list();
                     if (CollUtil.isEmpty(list)) {
@@ -79,7 +79,9 @@ public class DmpInputAliExpressOrderIssueDmpHandler extends DmpInputDbConvertDmp
                     List<ParamData> paramDataList = new ArrayList<>();
                     paramDataList.add(new ParamData("id", "id", PannoEnum.IN, issueIds));
                     paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, PannoEnum.EQ, nextLevelId));
-                    List<Map<String, Object>> issueDetailList = mongoService.findMongoData(paramDataList, ALIEXPRESS_ISSUEDETAIL_DATA);
+                    List<Map<String, Object>> issueDetailList = mongoService.findMongoData(paramDataList,
+                            AliExpressDmpHandlerUtils.getMongoStorageName(dmpBasicSystemEntity, dmpCfgInputService, dmpHandlerCache,
+                                    dmpCfgInputEntity.getSystemId(), ISSUE_DETAIL_CODE));
                     if (CollUtil.isNotEmpty(issueDetailList)) {
                         for (Map<String, Object> issueDetail : issueDetailList) {
                             String issueId = getIssueId(issueDetail);
@@ -138,7 +140,7 @@ public class DmpInputAliExpressOrderIssueDmpHandler extends DmpInputDbConvertDmp
                                 snapshot.reasonEnglish);
                         String issueReason = AliExpressIssueSolutionResolver.pickIssueTextForVarchar(snapshot.reasonChinese, snapshot.reasonEnglish);
                         v.put("sourceId", sourceId);
-                        v.put("sourcePlatform", "AliExpress");
+                        v.put("sourcePlatform", sourcePlatform);
                         v.put("buyerUserId", buyerUserId);
                         v.put("shopId", nextLevelId);
                         v.put("shopName", finalShopName);

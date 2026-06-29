@@ -51,6 +51,8 @@ public class DmpInputAliExpressOrderDmpHandler extends DmpInputDbConvertDmpHandl
 
 	private static final String BRAZIL_SHIP_FROM = "brazil";
 
+	private static final String ORDER_DETAIL_CODE = "orderDetail";
+
 	@Autowired
 	private DmpSoInfoService dmpSoInfoService;
 	
@@ -71,7 +73,9 @@ public class DmpInputAliExpressOrderDmpHandler extends DmpInputDbConvertDmpHandl
 			}
 			paramDataList.add(new ParamData("order_id", "order_id", PannoEnum.IN, orderIdList));
 			paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, PannoEnum.EQ, nextLevelId));
-			findMongoData = mongoService.findMongoData(paramDataList, "aliexpress_orderDetail_data");
+			findMongoData = mongoService.findMongoData(paramDataList,
+					AliExpressDmpHandlerUtils.getMongoStorageName(dmpBasicSystemEntity, dmpCfgInputService, dmpHandlerCache,
+							dmpCfgInputEntity.getSystemId(), ORDER_DETAIL_CODE));
 			
 			List<DmpSoInfoEntity> list = dmpSoInfoService.lambdaQuery()
 					.in(DmpSoInfoEntity::getThirdCode, orderIdList)

@@ -33,6 +33,7 @@ import com.erp.oms.aliexpress.util.ApiException;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
+import com.erp.server.dmp.inout.handler.input.task.dmp.AliExpressDmpHandlerUtils;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 
 import cn.hutool.core.collection.CollUtil;
@@ -48,6 +49,8 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @Scope("prototype")
 public class DmpInputAliExpressSoOutstockDetailInitHandler extends DmpInputInitHandler{
+	private static final String SO_OUTSTOCK_CODE = "soOutstock";
+
 	@Resource
     private AliExpressOrderService aliExpressOrderService;
 	
@@ -68,7 +71,9 @@ public class DmpInputAliExpressSoOutstockDetailInitHandler extends DmpInputInitH
 		List<ParamData> paramDataList = new ArrayList<>();
 		List<String> orderIdList = findMongoData.stream().map(f -> f.get("order_id").toString()).collect(Collectors.toList());
 		paramDataList.add(new ParamData("trade_order_no", "trade_order_no", PannoEnum.IN, orderIdList));
-		findMongoData = mongoService.findMongoData(paramDataList, "aliexpress_soOutstock_data");
+		findMongoData = mongoService.findMongoData(paramDataList,
+				AliExpressDmpHandlerUtils.getMongoStorageName(dmpBasicSystemEntity, dmpCfgInputService, dmpHandlerCache,
+						dmpCfgInputEntity.getSystemId(), SO_OUTSTOCK_CODE));
 		if(CollUtil.isEmpty(findMongoData)) {
 			return new ArrayList<>();
 		}
