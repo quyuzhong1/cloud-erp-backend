@@ -116,24 +116,18 @@ public class DmpOutputShopeeOrderRocketMQTaskHandler extends DmpOutputRocketMQTa
 			}
 		}
 		
-		Set<String> missingDetailIds = changeIds.stream()
-				.filter(id -> !dmpSoDetailEntityMap.containsKey(id))
-				.collect(Collectors.toSet());
-		if (CollUtil.isNotEmpty(missingDetailIds)) {
+		if (CollUtil.isNotEmpty(changeIds)) {
 			List<DmpSoDetailEntity> detailEntityList = dmpSoDetailService.lambdaQuery()
-					.in(DmpSoDetailEntity::getMainId, missingDetailIds)
+					.in(DmpSoDetailEntity::getMainId, changeIds)
 					.eq(DmpSoDetailEntity::getIsDeleted, Boolean.FALSE)
 					.list();
 			detailEntityList.stream()
 					.collect(Collectors.groupingBy(DmpSoDetailEntity::getMainId))
 					.forEach(dmpSoDetailEntityMap::put);
 		}
-		Set<String> missingReceiverIds = changeIds.stream()
-				.filter(id -> !dmpSoReceiverEntityMap.containsKey(id))
-				.collect(Collectors.toSet());
-		if (CollUtil.isNotEmpty(missingReceiverIds)) {
+		if (CollUtil.isNotEmpty(changeIds)) {
 			List<DmpSoReceiverEntity> receiverEntityList = dmpSoReceiverService.lambdaQuery()
-					.in(DmpSoReceiverEntity::getMainId, missingReceiverIds)
+					.in(DmpSoReceiverEntity::getMainId, changeIds)
 					.eq(DmpSoReceiverEntity::getIsDeleted, Boolean.FALSE)
 					.list();
 			receiverEntityList.stream()

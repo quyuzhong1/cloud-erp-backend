@@ -3256,8 +3256,22 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (CollUtil.isEmpty(result)) {
             return Collections.emptyList();
         }
+        boolean includeSkuInGeneratedMergeKey = sixDimensionMerge || hasBomSplitChild(result);
         DeclarationGenerationService declarationGenerationService = new DeclarationGenerationService();
-        return declarationGenerationService.generateMergeBillDetails(result, viewDTO.getIsMultipleMerge(), sixDimensionMerge);
+        return declarationGenerationService.generateMergeBillDetails(result, viewDTO.getIsMultipleMerge(), includeSkuInGeneratedMergeKey);
+    }
+
+    /**
+     * 判断报关来源明细中是否包含由 BOM 拆分生成的子 SKU 行。
+     *
+     * <p>BOM 子 SKU 行必须将 SKU 纳入合并维度。否则不同子 SKU 在申报属性相同或相近时，
+     * 会被折叠成同一条报关明细，并只保留第一条子 SKU 作为主 SKU。</p>
+     */
+    private boolean hasBomSplitChild(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList) {
+        return CollUtil.isNotEmpty(sourceDetailList)
+                && sourceDetailList.stream()
+                .filter(Objects::nonNull)
+                .anyMatch(item -> StringUtils.isNotBlank(item.getParentSkuId()));
     }
 
     /**
@@ -3389,6 +3403,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             }
             applyDeclareLineDefaults(detailDTO);
             if (Objects.nonNull(productLogisticsDTO)
+                    && StringUtils.isBlank(detailDTO.getParentSkuId())
                     && CombinationDeclareTypeEnums.SPLIT.getCode().equals(productLogisticsDTO.getCombinationDeclareType())
                     && Boolean.TRUE.equals(productLogisticsDTO.getIsCombination())
                     && CollUtil.isNotEmpty(productLogisticsDTO.getChildList())) {
@@ -4396,11 +4411,13 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     }
 
     /**
-     * 构建合并报关来源明细
+     * 由中间表行构建合并报关来源明细（详情/编辑回显）。
+     * <p>需同步映射仓库、销售组织等报关规则匹配字段，供拆分保存二次匹配规则使用。</p>
+     *
+     * @param entity 报关明细中间表行
+     * @return 来源明细 DTO
      * @author jack
      * @date 2026/4/30 16:35
-     * @param entity
-     * @return com.erp.model.tms.dto.TmsDeclareBillDTO.SourceDeliveryDetailDTO
      */
     private TmsDeclareBillDTO.SourceDeliveryDetailDTO buildSourceDeliveryDetailDTO(DeliveryDeclareDetailMidEntity entity) {
         TmsDeclareBillDTO.SourceDeliveryDetailDTO detailDTO = new TmsDeclareBillDTO.SourceDeliveryDetailDTO();
@@ -4422,6 +4439,14 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         detailDTO.setQty(entity.getQty());
         detailDTO.setDeclareCurrency(entity.getCurrency());
         detailDTO.setDeclareCurrencySymbol(entity.getCurrencySymbol());
+        detailDTO.setFromWarehouseId(entity.getFromWarehouseId());
+        detailDTO.setFromWarehouseName(entity.getFromWarehouseName());
+        detailDTO.setDestWarehouseId(entity.getDestWarehouseId());
+        detailDTO.setDestWarehouseName(entity.getDestWarehouseName());
+        detailDTO.setTransferWarehouseIds(entity.getTransferWarehouseIds());
+        detailDTO.setTransferWarehouseNames(entity.getTransferWarehouseNames());
+        detailDTO.setSalesOrgId(entity.getSalesOrgId());
+        detailDTO.setSalesOrgName(entity.getSalesOrgName());
         return detailDTO;
     }
 

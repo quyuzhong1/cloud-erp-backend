@@ -25,11 +25,13 @@ public class DmpInputShopeeRefundDmpHandler extends DmpInputDbConvertDmpHandler 
 
     private static final int RETURN_SOLUTION_REFUND_ONLY = 1;
     private static final String STATUS_REFUND_ACCEPTED = "ACCEPTED";
+    private static final String INTERNAL_STATUS_NORMAL = "1";
     private static final int TEXT_MAX_LENGTH = 255;
 
     @Override
     protected void afterConvertData(Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMaps) {
         super.afterConvertData(dmpInputDataDmpRelationMaps);
+        String parentShopId = resolveParentTaskShopId();
         Iterator<Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>>> iterator =
                 dmpInputDataDmpRelationMaps.entrySet().iterator();
         while (iterator.hasNext()) {
@@ -42,7 +44,7 @@ public class DmpInputShopeeRefundDmpHandler extends DmpInputDbConvertDmpHandler 
                     dataIterator.remove();
                     continue;
                 }
-                fillHeader(dmpDataMap);
+                fillHeader(dmpDataMap, parentShopId);
             }
             if (dmpDataMaps.isEmpty()) {
                 iterator.remove();
@@ -50,10 +52,10 @@ public class DmpInputShopeeRefundDmpHandler extends DmpInputDbConvertDmpHandler 
         }
     }
 
-    private void fillHeader(TreeMap<String, Object> dmpDataMap) {
+    private void fillHeader(TreeMap<String, Object> dmpDataMap, String parentShopId) {
         dmpDataMap.put("sourceSystem", PlatformDictEnum.SHOPEE.getCode());
         dmpDataMap.put("sourcePlatform", PlatformDictEnum.SHOPEE.getCode());
-        String shopId = resolveShopeeShopId(dmpDataMap);
+        String shopId = resolveShopeeShopId(dmpDataMap, parentShopId);
         dmpDataMap.put("shopId", shopId);
         dmpDataMap.put("nextLevelId", shopId);
 
@@ -72,11 +74,12 @@ public class DmpInputShopeeRefundDmpHandler extends DmpInputDbConvertDmpHandler 
         if (StringUtils.isNotBlank(platformStatus)) {
             dmpDataMap.put("platformOriginalStatus", platformStatus);
         }
-        dmpDataMap.put("status", "1");
+        dmpDataMap.put("status", INTERNAL_STATUS_NORMAL);
 
         Object refundAmount = dmpDataMap.get("refund_amount");
-        if (refundAmount != null) {
-            dmpDataMap.put("amount", new BigDecimal(String.valueOf(refundAmount)));
+        BigDecimal amount = parseBigDecimal(refundAmount);
+        if (amount != null) {
+            dmpDataMap.put("amount", amount);
         }
         Object currency = dmpDataMap.get("currency");
         if (currency != null) {
@@ -98,8 +101,8 @@ public class DmpInputShopeeRefundDmpHandler extends DmpInputDbConvertDmpHandler 
 
     private boolean isRefundOnlyClosed(Map<String, Object> dmpDataMap) {
         Object returnSolution = dmpDataMap.get("return_solution");
-        if (returnSolution == null
-                || RETURN_SOLUTION_REFUND_ONLY != Integer.parseInt(String.valueOf(returnSolution))) {
+        Integer returnSolutionValue = parseInteger(returnSolution);
+        if (returnSolutionValue == null || RETURN_SOLUTION_REFUND_ONLY != returnSolutionValue) {
             return false;
         }
         return STATUS_REFUND_ACCEPTED.equalsIgnoreCase(resolvePlatformStatus(dmpDataMap));
@@ -123,7 +126,11 @@ public class DmpInputShopeeRefundDmpHandler extends DmpInputDbConvertDmpHandler 
         if (epochSecondObj == null || StringUtils.isBlank(String.valueOf(epochSecondObj))) {
             return null;
         }
-        long epochSecond = Long.parseLong(String.valueOf(epochSecondObj));
+        Long epochSecond = parseLong(epochSecondObj);
+        if (epochSecond == null) {
+            return null;
+        }
+        // Shopee 订单/退款链路的 epoch 秒统一按 ERP 服务默认时区转换，保持同平台 DMP 处理口径一致。
         return LocalDateTime.ofInstant(Instant.ofEpochSecond(epochSecond), ZoneId.systemDefault());
     }
 
@@ -137,8 +144,7 @@ public class DmpInputShopeeRefundDmpHandler extends DmpInputDbConvertDmpHandler 
     /**
      * 子任务 nextLevelId 为拆单 snowflake，不是 OMS shopId；需继承父任务店铺 ID。
      */
-    private String resolveShopeeShopId(Map<String, Object> dmpDataMap) {
-        String parentShopId = resolveParentTaskShopId();
+    private String resolveShopeeShopId(Map<String, Object> dmpDataMap, String parentShopId) {
         if (StringUtils.isNotBlank(parentShopId)) {
             return parentShopId;
         }
@@ -158,5 +164,38 @@ public class DmpInputShopeeRefundDmpHandler extends DmpInputDbConvertDmpHandler 
             return null;
         }
         return parentTask.getNextLevelId();
+    }
+
+    private Integer parseInteger(Object value) {
+        if (value == null || StringUtils.isBlank(String.valueOf(value))) {
+            return null;
+        }
+        try {
+            return Integer.parseInt(String.valueOf(value));
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private Long parseLong(Object value) {
+        if (value == null || StringUtils.isBlank(String.valueOf(value))) {
+            return null;
+        }
+        try {
+            return Long.parseLong(String.valueOf(value));
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private BigDecimal parseBigDecimal(Object value) {
+        if (value == null || StringUtils.isBlank(String.valueOf(value))) {
+            return null;
+        }
+        try {
+            return new BigDecimal(String.valueOf(value));
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 }

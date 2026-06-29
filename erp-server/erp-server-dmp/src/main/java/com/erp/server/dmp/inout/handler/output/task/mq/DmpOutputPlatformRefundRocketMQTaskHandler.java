@@ -9,9 +9,12 @@ import com.erp.model.dmp.entity.DmpSoRefundDetailEntity;
 import com.erp.model.dmp.entity.DmpSoRefundInfoEntity;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
+import com.erp.server.dmp.service.DmpSoRefundDetailService;
+import com.erp.server.dmp.service.DmpSoRefundInfoService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -20,11 +23,22 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * 平台 B2C 退款单通用 MQ 输出：dmp_so_refund_info/detail → PlatformRefundOrderDTO → OMS。
  */
 public abstract class DmpOutputPlatformRefundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler {
+
+    private static final int BATCH_SIZE = 500;
+    private static final String STORAGE_REFUND_INFO = "dmp_so_refund_info";
+    private static final String STORAGE_REFUND_DETAIL = "dmp_so_refund_detail";
+
+    @Resource
+    private DmpSoRefundDetailService dmpSoRefundDetailService;
+
+    @Resource
+    private DmpSoRefundInfoService dmpSoRefundInfoService;
 
     @Override
     public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
@@ -39,12 +53,12 @@ public abstract class DmpOutputPlatformRefundRocketMQTaskHandler extends DmpOutp
                 continue;
             }
             String storageName = entry.getKey().getStorageName();
-            if ("dmp_so_refund_info".equals(storageName)) {
+            if (STORAGE_REFUND_INFO.equals(storageName)) {
                 for (BaseEntity entity : value) {
                     DmpSoRefundInfoEntity dmpEntity = (DmpSoRefundInfoEntity) entity;
                     dmpEntityMap.put(dmpEntity.getId(), dmpEntity);
                 }
-            } else if ("dmp_so_refund_detail".equals(storageName)) {
+            } else if (STORAGE_REFUND_DETAIL.equals(storageName)) {
                 for (BaseEntity entity : value) {
                     DmpSoRefundDetailEntity detailEntity = (DmpSoRefundDetailEntity) entity;
                     dmpDetailEntityMap.computeIfAbsent(detailEntity.getMainId(), key -> new ArrayList<>())
@@ -61,16 +75,19 @@ public abstract class DmpOutputPlatformRefundRocketMQTaskHandler extends DmpOutp
                 continue;
             }
             String storageName = entry.getKey().getStorageName();
-            if ("dmp_so_refund_info".equals(storageName)) {
+            if (STORAGE_REFUND_INFO.equals(storageName)) {
                 for (BaseEntity entity : value) {
                     changeIds.add(entity.getId());
                 }
-            } else if ("dmp_so_refund_detail".equals(storageName)) {
+            } else if (STORAGE_REFUND_DETAIL.equals(storageName)) {
                 for (BaseEntity entity : value) {
                     changeIds.add(((DmpSoRefundDetailEntity) entity).getMainId());
                 }
             }
         }
+
+        supplementRefundInfos(changeIds, dmpEntityMap);
+        supplementRefundDetails(changeIds, dmpEntityMap, dmpDetailEntityMap);
 
         Map<String, String> map = new HashMap<>();
         String cfgOutputId = dmpResponse.getDmpCfgOutputEntity().getId();
@@ -81,6 +98,60 @@ public abstract class DmpOutputPlatformRefundRocketMQTaskHandler extends DmpOutp
             }
         }
         return map;
+    }
+
+    private void supplementRefundInfos(Set<String> changeIds,
+                                       Map<String, DmpSoRefundInfoEntity> dmpEntityMap) {
+        List<String> missingMainIds = changeIds.stream()
+                .filter(StringUtils::isNotBlank)
+                .filter(id -> !dmpEntityMap.containsKey(id))
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(missingMainIds)) {
+            return;
+        }
+        for (int fromIndex = 0; fromIndex < missingMainIds.size(); fromIndex += BATCH_SIZE) {
+            List<String> batchIds = missingMainIds.subList(fromIndex, Math.min(fromIndex + BATCH_SIZE, missingMainIds.size()));
+            List<DmpSoRefundInfoEntity> batchInfoList = dmpSoRefundInfoService.lambdaQuery()
+                    .in(DmpSoRefundInfoEntity::getId, batchIds)
+                    .eq(DmpSoRefundInfoEntity::getIsDeleted, Boolean.FALSE)
+                    .list();
+            if (CollUtil.isEmpty(batchInfoList)) {
+                continue;
+            }
+            for (DmpSoRefundInfoEntity dmpEntity : batchInfoList) {
+                dmpEntityMap.put(dmpEntity.getId(), dmpEntity);
+            }
+        }
+    }
+
+    private void supplementRefundDetails(Set<String> changeIds,
+                                         Map<String, DmpSoRefundInfoEntity> dmpEntityMap,
+                                         Map<String, List<DmpSoRefundDetailEntity>> dmpDetailEntityMap) {
+        List<String> missingMainIds = changeIds.stream()
+                .filter(dmpEntityMap::containsKey)
+                .filter(id -> CollUtil.isEmpty(dmpDetailEntityMap.get(id)))
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(missingMainIds)) {
+            return;
+        }
+        List<DmpSoRefundDetailEntity> detailList = new ArrayList<>();
+        for (int fromIndex = 0; fromIndex < missingMainIds.size(); fromIndex += BATCH_SIZE) {
+            List<String> batchIds = missingMainIds.subList(fromIndex, Math.min(fromIndex + BATCH_SIZE, missingMainIds.size()));
+            List<DmpSoRefundDetailEntity> batchDetailList = dmpSoRefundDetailService.lambdaQuery()
+                    .in(DmpSoRefundDetailEntity::getMainId, batchIds)
+                    .eq(DmpSoRefundDetailEntity::getIsDeleted, Boolean.FALSE)
+                    .list();
+            if (CollUtil.isNotEmpty(batchDetailList)) {
+                detailList.addAll(batchDetailList);
+            }
+        }
+        if (CollUtil.isEmpty(detailList)) {
+            return;
+        }
+        for (DmpSoRefundDetailEntity detailEntity : detailList) {
+            dmpDetailEntityMap.computeIfAbsent(detailEntity.getMainId(), key -> new ArrayList<>())
+                    .add(detailEntity);
+        }
     }
 
     protected PlatformRefundOrderDTO convert(DmpSoRefundInfoEntity dmpEntity,

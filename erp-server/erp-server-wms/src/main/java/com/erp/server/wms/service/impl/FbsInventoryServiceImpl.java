@@ -72,6 +72,7 @@ public class FbsInventoryServiceImpl extends SuperServiceImpl<FbsInventoryMapper
                 .eq(FbsInventoryEntity::getShopId, addDTO.getShopId())
                 .eq(FbsInventoryEntity::getWarehouseId, addDTO.getWarehouseId())
                 .eq(FbsInventoryEntity::getFbsSku, addDTO.getFbsSku())
+                .eq(FbsInventoryEntity::getIsDeleted, Boolean.FALSE)
                 .one();
         if (Objects.nonNull(existEntity)) {
             boolean update = this.lambdaUpdate()
@@ -119,10 +120,43 @@ public class FbsInventoryServiceImpl extends SuperServiceImpl<FbsInventoryMapper
 
         FbsInventoryEntity entity = new FbsInventoryEntity();
         BeanUtils.copyProperties(addDTO, entity);
+        applyDefaultValues(entity, addDTO);
         if (!super.save(entity)) {
             throw new ServiceException("FBS库存保存失败");
         }
         return new BaseResultDTO.AddDTO(entity.getId(), entity.getId());
+    }
+
+    private void applyDefaultValues(FbsInventoryEntity entity, FbsInventoryDTO.AddDTO addDTO) {
+        entity.setShopName(defaultString(addDTO.getShopName()));
+        entity.setWarehouseName(defaultString(addDTO.getWarehouseName()));
+        entity.setPlatformSku(defaultString(addDTO.getPlatformSku()));
+        entity.setPlatformProductName(defaultString(addDTO.getPlatformProductName()));
+        entity.setSpecName(defaultString(addDTO.getSpecName()));
+        entity.setSkuId(defaultString(addDTO.getSkuId()));
+        entity.setSkuNo(defaultString(addDTO.getSkuNo()));
+        entity.setProductName(defaultString(addDTO.getProductName()));
+        entity.setPurchaseMode(defaultString(addDTO.getPurchaseMode()));
+        entity.setRecommendedReplenishmentQty(defaultInt(addDTO.getRecommendedReplenishmentQty()));
+        entity.setTotalStockQty(defaultInt(addDTO.getTotalStockQty()));
+        entity.setStockedInboundQty(defaultInt(addDTO.getStockedInboundQty()));
+        entity.setTransferAsnInboundQty(defaultInt(addDTO.getTransferAsnInboundQty()));
+        entity.setReservedQty(defaultInt(addDTO.getReservedQty()));
+        entity.setUnsellableQty(defaultInt(addDTO.getUnsellableQty()));
+        entity.setInTransitQty(defaultInt(addDTO.getInTransitQty()));
+        entity.setTurnoverDays(defaultInt(addDTO.getTurnoverDays()));
+        entity.setWarehouseInventoryCoverageDays(defaultInt(addDTO.getWarehouseInventoryCoverageDays()));
+        entity.setLast7DaysSalesQty(defaultInt(addDTO.getLast7DaysSalesQty()));
+        entity.setLast15DaysSalesQty(defaultInt(addDTO.getLast15DaysSalesQty()));
+        entity.setLast30DaysSalesQty(defaultInt(addDTO.getLast30DaysSalesQty()));
+        entity.setLast60DaysSalesQty(defaultInt(addDTO.getLast60DaysSalesQty()));
+        entity.setLast90DaysSalesQty(defaultInt(addDTO.getLast90DaysSalesQty()));
+        entity.setStockAge030Qty(defaultInt(addDTO.getStockAge030Qty()));
+        entity.setStockAge3160Qty(defaultInt(addDTO.getStockAge3160Qty()));
+        entity.setStockAge6190Qty(defaultInt(addDTO.getStockAge6190Qty()));
+        entity.setStockAge91120Qty(defaultInt(addDTO.getStockAge91120Qty()));
+        entity.setStockAge121180Qty(defaultInt(addDTO.getStockAge121180Qty()));
+        entity.setStockAgeOver180Qty(defaultInt(addDTO.getStockAgeOver180Qty()));
     }
 
     private String defaultString(String value) {

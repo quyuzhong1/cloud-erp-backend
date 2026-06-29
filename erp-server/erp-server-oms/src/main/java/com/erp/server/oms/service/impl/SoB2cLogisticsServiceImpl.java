@@ -20,6 +20,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
@@ -30,6 +31,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
+import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
@@ -44,8 +46,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
@@ -77,6 +81,8 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
 
     @Resource
     private LogisticsBillFeign logisticsBillFeign;
+    @Resource
+    private PlatformTransactionManager transactionManager;
 
     @Resource
     private LogisticsFeign logisticsFeign;
@@ -356,7 +362,8 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         try {
             packageNumber = JSONUtil.parseObj(mainEntity.getLabelJson()).getStr("package_number");
         } catch (Exception e) {
-            log.warn("解析Shopee平台仓包裹号失败，orderId={}，labelJson={}", mainEntity.getId(), mainEntity.getLabelJson(), e);
+            log.warn("解析Shopee平台仓包裹号失败，orderId={}，labelJsonPreview={}",
+                    mainEntity.getId(), StringUtils.left(mainEntity.getLabelJson(), 512), e);
             return;
         }
         if (StringUtils.isBlank(packageNumber)) {
@@ -521,7 +528,6 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
     public BatchResultDTO cancelThirdLogisticsRequiresNew(SoB2cEntity entity, String cancelChannelId) {
         SoB2cLogisticsEntity soB2cLogisticsEntity = this.getByMainId(entity.getId());
         if (Objects.isNull(soB2cLogisticsEntity)) {
@@ -544,21 +550,57 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
                 .orderId(entity.getId())
                 .shopId(entity.getShopId())
                 .build();
-        ApiResult cancelResult = logisticsBillFeign.cancelBill(cancelBillDTO);
-        if (!cancelResult.isSuccess() && cancelResult.getCode() != -1) {
+        ApiResult<CancelResponseVO> cancelResult = logisticsBillFeign.cancelBill(cancelBillDTO);
+        if (Objects.isNull(cancelResult)) {
+            log.error("配货换渠道取消物流单失败,单号:【{}/{}】,取消接口返回空", soB2cLogisticsEntity.getCode(),
+                    soB2cLogisticsEntity.getTrackNo());
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "取消物流单失败");
+        }
+        if (!cancelResult.isSuccess() && !Objects.equals(cancelResult.getCode(), -1)) {
             log.error("配货换渠道取消物流单失败,单号:【{}/{}】,{} ", soB2cLogisticsEntity.getCode(),
                     soB2cLogisticsEntity.getTrackNo(), cancelResult.getMsg());
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), cancelResult.getMsg());
         }
-        String msg = CharSequenceUtil.format("取消物流单单号成功,单号:【{}/{}】 ",
-                soB2cLogisticsEntity.getCode(), soB2cLogisticsEntity.getTrackNo());
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "取消物流单");
-        soB2cLogisticsEntity.setCode("");
-        soB2cLogisticsEntity.setTrackNo("");
-        this.updateById(soB2cLogisticsEntity);
-        soB2cLabelService.deleteByMainIds(Collections.singletonList(entity.getId()));
-        soB2cErrorService.removeErrorOrder(entity.getId(), SoB2cErrorTypeEnum.GET_LOGISTICS_LABEL.getCode());
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), "取消成功");
+        try {
+            return clearCanceledThirdLogisticsRequiresNew(entity, soB2cLogisticsEntity);
+        } catch (Exception e) {
+            log.error("配货换渠道外部取消成功但本地清理失败, orderId: {}, code: {}, transportNo: {}",
+                    entity.getId(), entity.getCode(), soB2cLogisticsEntity.getCode(), e);
+            markThirdLogisticsCancelCleanupFailed(entity, soB2cLogisticsEntity, e);
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "外部物流单已取消，本地清理失败，请联系管理员处理");
+        }
+    }
+
+    private void markThirdLogisticsCancelCleanupFailed(SoB2cEntity entity, SoB2cLogisticsEntity logisticsEntity, Exception exception) {
+        try {
+            SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+            addError.setType(SoB2cErrorTypeEnum.GET_LOGISTICS_CODE.getCode());
+            addError.setMainId(entity.getId());
+            addError.setMessage(CharSequenceUtil.format("外部物流单已取消，本地清理失败，请人工确认并清理物流单。物流单号:{},原因:{}",
+                    logisticsEntity.getCode(), exception.getMessage()));
+            soB2cErrorService.add(addError);
+        } catch (Exception markException) {
+            log.error("记录配货换渠道取消物流本地清理失败异常失败, orderId: {}, code: {}",
+                    entity.getId(), entity.getCode(), markException);
+        }
+    }
+
+    private BatchResultDTO clearCanceledThirdLogisticsRequiresNew(SoB2cEntity entity, SoB2cLogisticsEntity soB2cLogisticsEntity) {
+        TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
+        transactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        return transactionTemplate.execute(status -> {
+            String msg = CharSequenceUtil.format("取消物流单单号成功,单号:【{}/{}】 ",
+                    soB2cLogisticsEntity.getCode(), soB2cLogisticsEntity.getTrackNo());
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "取消物流单");
+            soB2cLogisticsEntity.setCode("");
+            soB2cLogisticsEntity.setTrackNo("");
+            if (!this.updateById(soB2cLogisticsEntity)) {
+                throw new ServiceException("物流单本地清理失败，请刷新后重试");
+            }
+            soB2cLabelService.deleteByMainIds(Collections.singletonList(entity.getId()));
+            soB2cErrorService.removeErrorOrder(entity.getId(), SoB2cErrorTypeEnum.GET_LOGISTICS_LABEL.getCode());
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), "取消成功");
+        });
     }
 
     @Override

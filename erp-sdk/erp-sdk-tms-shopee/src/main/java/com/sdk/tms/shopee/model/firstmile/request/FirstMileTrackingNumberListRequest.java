@@ -7,6 +7,7 @@ import lombok.Data;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 
 /**
@@ -25,6 +26,7 @@ public class FirstMileTrackingNumberListRequest implements Serializable {
     @JSONField(name = "to_date")
     private String toDate;
 
+    @NotNull(message = "分页大小不能为空")
     @Min(value = 1, message = "分页大小不能小于1")
     @Max(value = 50, message = "分页大小不能大于50")
     @JSONField(name = "page_size")

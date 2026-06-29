@@ -34,6 +34,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.DictThirdCity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
+import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.third.ThirdWarehouseCancelInboundReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseCreateInboundReq;
@@ -45,6 +46,7 @@ import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.tms.feign.DeliveryDeclareDetailMidFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
 import com.erp.server.wms.handler.ThirdWarehouseRegistry;
@@ -139,6 +141,8 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
 
     @Resource
     private LogisticsFeign logisticsFeign;
+    @Resource
+    private DeliveryDeclareDetailMidFeign deliveryDeclareDetailMidFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -246,6 +250,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 throw new ServiceException("更新单号失败");
             }
         }
+        syncDeclareBusinessCode(mainEntity);
         return new BaseResultDTO.AddDTO(mainEntity.getId(), deliveryEntity.getCode());
     }
 
@@ -477,7 +482,27 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
             }
             log.info("推送第三方仓库编辑结果: ={}", JSONUtil.toJsonStr(resultInfo));
         }
+        syncDeclareBusinessCode(mainEntity);
         return Boolean.TRUE;
+    }
+
+    /**
+     * 同步头程发货单明细中的业务单号。
+     *
+     * <p>头程报关明细生成时会固化海外仓入库单号为业务单号；入库单号后续由第三方回写或编辑变更后，
+     * 需要同步刷新中间表，避免发货单明细仍显示旧值或空值。</p>
+     */
+    private void syncDeclareBusinessCode(OverseasWarehouseInboundEntity inboundEntity) {
+        if (Objects.isNull(inboundEntity)
+                || CharSequenceUtil.isBlank(inboundEntity.getSourceId())
+                || CharSequenceUtil.isBlank(inboundEntity.getId())
+                || CharSequenceUtil.isBlank(inboundEntity.getCode())) {
+            return;
+        }
+        TmsDeclareBillDTO.UpdateDeliveryDeclareBusinessCodeDTO dto =
+                new TmsDeclareBillDTO.UpdateDeliveryDeclareBusinessCodeDTO(
+                        inboundEntity.getSourceId(), inboundEntity.getId(), inboundEntity.getCode());
+        deliveryDeclareDetailMidFeign.updateBusinessCode(dto);
     }
 
     @Override

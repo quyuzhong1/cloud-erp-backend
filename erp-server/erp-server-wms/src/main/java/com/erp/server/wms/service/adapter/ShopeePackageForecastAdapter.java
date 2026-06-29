@@ -16,7 +16,6 @@ import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
-import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.oms.enums.AuthTypeEnum;
 import com.erp.model.wms.dto.PackageForecastDTO;
 import com.erp.model.wms.entity.PackageForecastDetailEntity;
@@ -27,9 +26,6 @@ import com.erp.model.wms.enums.PackagePrintStatusEnum;
 import com.erp.model.wms.enums.PackageUploadStatusEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
-import com.erp.rpc.oms.feign.SoB2cFeign;
-import com.erp.server.wms.mapper.PackageForecastMapper;
-import com.erp.server.wms.service.PackageForecastDetailService;
 import com.sdk.tms.shopee.model.base.BaseRequest;
 import com.sdk.tms.shopee.model.firstmile.request.BindFirstMileTrackingNumberRequest;
 import com.sdk.tms.shopee.model.firstmile.request.CourierDeliveryInfo;
@@ -73,7 +69,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.io.IOException;
@@ -96,7 +91,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Component
-public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdapter {
+public class ShopeePackageForecastAdapter extends AbstractPackageForecastPlatformAdapter {
 
     private static final String REGION_CN = "CN";
     private static final String PDF_PREFIX = "data:application/pdf;base64,";
@@ -105,15 +100,8 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
     private static final String PAYMENT_MONTHLY_CN = "快递账号月结";
     private static final Long SHOPEE_PREPAID_LOGISTICS_PRODUCT_ID = 1010004L;
     private static final String FIRST_MILE_PACKAGE_HAS_NOT_BIND = "firstmile.package_has_not_bind";
-
-    @Resource
-    private PackageForecastMapper packageForecastMapper;
-
-    @Resource
-    private PackageForecastDetailService packageForecastDetailService;
-
-    @Resource
-    private SoB2cFeign soB2cFeign;
+    private static final String SHOPEE_PLATFORM_STATUS_NOT_AVAILABLE = "NOT_AVAILABLE";
+    private static final String SHOPEE_PLATFORM_STATUS_DELIVERED = "DELIVERED";
 
     @Resource
     private DmpTaskFeign dmpTaskFeign;
@@ -130,28 +118,6 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
     }
 
     @Override
-    public boolean isForecast(List<String> ids) {
-        if (CollectionUtils.isEmpty(ids)) {
-            return false;
-        }
-        List<PackageForecastDetailEntity> detailList = packageForecastDetailService.listDbByMainIds(ids);
-        if (CollectionUtils.isEmpty(detailList)) {
-            return false;
-        }
-        List<String> soIds = detailList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList());
-        List<SoB2cEntity> soList = soB2cFeign.listByIds(soIds);
-        if (CollectionUtils.isEmpty(soList)) {
-            return false;
-        }
-        long platformCount = soList.stream().map(SoB2cEntity::getDictPlatform).distinct().count();
-        if (platformCount > 1 && soList.stream().anyMatch(item -> PlatformDictEnum.SHOPEE.getCode().equals(item.getDictPlatform()))) {
-            throw new ServiceException("组包预报单明细数据平台不一致");
-        }
-        return soList.stream().allMatch(item -> PlatformDictEnum.SHOPEE.getCode().equals(item.getDictPlatform()));
-    }
-
-    @Override
-    @Transactional(rollbackFor = Exception.class)
     public List<BatchResultDTO> upload(PackageForecastDTO.UploadDTO dto) {
         ShopeeForecastContext context = buildContext(dto.getIds());
         validateUploadEntities(context);
@@ -193,13 +159,27 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
     public List<PackageForecastDTO.ShopeeTrackingNumberDTO> trackingNumberList(PackageForecastDTO.ShopeeOptionParamDTO dto) {
         ShopeeForecastContext context = buildBaseContext(dto.getIds());
         LocalDate declareDate = Objects.nonNull(dto.getDeclareDate()) ? dto.getDeclareDate() : LocalDate.now();
-        FirstMileTrackingNumberListRequest request = FirstMileTrackingNumberListRequest.builder()
-                .fromDate(declareDate.toString())
-                .toDate(declareDate.toString())
-                .pageSize(50)
-                .build();
-        FirstMileTrackingNumberListResponse response = shopeeLogisticsService.getTrackNumberList(buildBaseRequest(context.getShopId()), request);
-        return toTrackingNumberDTOList(response);
+        BaseRequest baseRequest = buildBaseRequest(context.getShopId());
+        List<FirstMileTrackingNumber> trackingNumberList = new ArrayList<>();
+        String cursor = null;
+        do {
+            FirstMileTrackingNumberListRequest request = FirstMileTrackingNumberListRequest.builder()
+                    .fromDate(declareDate.toString())
+                    .toDate(declareDate.toString())
+                    .pageSize(50)
+                    .cursor(cursor)
+                    .build();
+            FirstMileTrackingNumberListResponse response = shopeeLogisticsService.getTrackNumberList(baseRequest, request);
+            if (Objects.isNull(response)) {
+                break;
+            }
+            trackingNumberList.addAll(CollectionUtils.emptyIfNull(response.getFirstMileTrackingNumberList()));
+            cursor = response.getNextCursor();
+            if (!Boolean.TRUE.equals(response.getMore())) {
+                cursor = null;
+            }
+        } while (StringUtils.isNotBlank(cursor));
+        return toTrackingNumberDTOList(trackingNumberList);
     }
 
     @Override
@@ -221,13 +201,10 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
         if (StringUtils.isBlank(base64)) {
             throw new ServiceException("打印失败");
         }
-        entity.setPrintStatus(PackagePrintStatusEnum.ALREADY.getCode());
-        packageForecastMapper.updateById(entity);
         return withPdfPrefix(base64);
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public List<BatchResultDTO> cancel(List<String> ids) {
         ShopeeForecastContext context = buildContext(ids);
         validateCancelEntities(context);
@@ -239,22 +216,52 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
             throw new ServiceException("虾皮平台组包不支持多种揽收模式同时取消组包下单");
         }
         try {
+            Map<String, String> failReasonMap;
             if (hasCourier) {
-                cancelCourierDelivery(context);
+                failReasonMap = cancelCourierDelivery(context);
             } else {
-                cancelFirstMile(context);
+                failReasonMap = cancelFirstMile(context);
             }
-            context.getEntityList().forEach(this::resetAfterCancel);
-            updateEntities(context.getEntityList());
-            return context.getEntityList().stream()
-                    .map(entity -> BatchResultDTO.success(entity.getId(), entity.getCode(), "取消上传"))
-                    .collect(Collectors.toList());
+            List<BatchResultDTO> resultList = new ArrayList<>(context.getEntityList().size());
+            for (PackageForecastEntity entity : context.getEntityList()) {
+                List<String> orderKeys = context.getForecastOrderKeyMap().get(entity.getId());
+                if (CollectionUtils.isEmpty(orderKeys)) {
+                    entity.setRemark("取消失败原因:组包预报单未匹配到Shopee订单");
+                    resultList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), entity.getRemark()));
+                    continue;
+                }
+                List<String> failureReasons = CollectionUtils.emptyIfNull(orderKeys).stream()
+                        .filter(failReasonMap::containsKey)
+                        .map(failReasonMap::get)
+                        .collect(Collectors.toList());
+                if (CollectionUtils.isEmpty(failureReasons)) {
+                    resetAfterCancel(entity);
+                    resultList.add(BatchResultDTO.success(entity.getId(), entity.getCode(), "取消上传"));
+                } else {
+                    entity.setRemark("取消失败原因:" + String.join(";", failureReasons));
+                    resultList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), entity.getRemark()));
+                }
+            }
+            try {
+                updateEntities(context.getEntityList());
+            } catch (Exception updateException) {
+                log.error("虾皮组包预报平台取消结果本地更新失败, ids: {}", ids, updateException);
+                return context.getEntityList().stream()
+                        .map(entity -> BatchResultDTO.fail(entity.getId(), entity.getCode(),
+                                "Shopee平台取消结果本地更新失败，请同步状态或人工处理:" + updateException.getMessage()))
+                        .collect(Collectors.toList());
+            }
+            return resultList;
         } catch (Exception e) {
             log.error("虾皮组包预报取消上传失败, ids: {}", ids, e);
             context.getEntityList().forEach(entity -> {
                 entity.setRemark("取消失败原因:" + e.getMessage());
-                packageForecastMapper.updateById(entity);
             });
+            try {
+                updateEntities(context.getEntityList());
+            } catch (Exception updateException) {
+                log.error("虾皮组包预报取消失败后更新失败原因失败, ids: {}", ids, updateException);
+            }
             return context.getEntityList().stream()
                     .map(entity -> BatchResultDTO.fail(entity.getId(), entity.getCode(), "取消上传失败:" + e.getMessage()))
                     .collect(Collectors.toList());
@@ -280,6 +287,7 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
         }
         LocalDate fromDate = Objects.nonNull(entity.getBillDate()) ? entity.getBillDate() : LocalDate.now().minusMonths(3);
         LocalDate toDate = LocalDate.now();
+        BaseRequest baseRequest = buildBaseRequest(shopId);
         String cursor = null;
         do {
             FirstMileTrackingNumberListRequest request = FirstMileTrackingNumberListRequest.builder()
@@ -288,9 +296,16 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
                     .pageSize(50)
                     .cursor(cursor)
                     .build();
-            FirstMileTrackingNumberListResponse response = shopeeLogisticsService.getTrackNumberList(buildBaseRequest(shopId), request);
-            if (Objects.isNull(response) || CollectionUtils.isEmpty(response.getFirstMileTrackingNumberList())) {
+            FirstMileTrackingNumberListResponse response = shopeeLogisticsService.getTrackNumberList(baseRequest, request);
+            if (Objects.isNull(response)) {
                 return;
+            }
+            if (CollectionUtils.isEmpty(response.getFirstMileTrackingNumberList())) {
+                cursor = response.getNextCursor();
+                if (!Boolean.TRUE.equals(response.getMore())) {
+                    cursor = null;
+                }
+                continue;
             }
             FirstMileTrackingNumber number = response.getFirstMileTrackingNumberList().stream()
                     .filter(item -> entity.getTransportNo().equals(item.getFirstMileTrackingNumber()))
@@ -299,7 +314,7 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
                 String status = mapShopeeHandoverStatus(number.getStatus());
                 if (StringUtils.isNotBlank(status)) {
                     entity.setHandoverStatus(status);
-                    packageForecastMapper.updateById(entity);
+                    updateForecastOrThrow(entity);
                 }
                 return;
             }
@@ -312,11 +327,15 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
 
     @Override
     public List<PackageForecastEntity> listSyncTrackingStatus(DateTime dateTime) {
-        return packageForecastMapper.getShopeeHandoverList(dateTime);
+        return packageForecastMapper.getShopeeHandoverList(dateTime, PlatformDictEnum.SHOPEE.getCode(),
+                Arrays.asList(
+                        HandoverStatusEnum.SHOPEE_DELIVERED.getCode(),
+                        HandoverStatusEnum.CANCELED_2.getCode()));
     }
 
     private List<BatchResultDTO> uploadCourierDelivery(PackageForecastDTO.UploadDTO dto, ShopeeForecastContext context) {
         validateCourierDeliveryDTO(dto);
+        rejectRetryWithPlatformIdentifiers(context);
         GenerateAndBindFirstMileTrackingNumberRequest request = GenerateAndBindFirstMileTrackingNumberRequest.builder()
                 .shipmentMethod(PackageForecastCollectModeEnum.SHOPEE_COURIER_DELIVERY.getCode())
                 .region(defaultRegion(dto.getRegion()))
@@ -339,6 +358,9 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
             }
             throw e;
         }
+        if (Objects.isNull(response)) {
+            throw new ServiceException("Shopee组包上传响应为空");
+        }
 
         Set<String> successKeys = CollectionUtils.emptyIfNull(response.getSuccessList()).stream()
                 .map(item -> orderKey(item.getOrderSn(), item.getPackageNumber()))
@@ -358,6 +380,7 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
 
     private List<BatchResultDTO> uploadFirstMile(PackageForecastDTO.UploadDTO dto, ShopeeForecastContext context) {
         validateFirstMileDTO(dto);
+        rejectRetryWithPlatformIdentifiers(context);
         String trackingNumber = dto.getFirstMileTrackingNumber();
         if (Boolean.TRUE.equals(dto.getGenerateNewTrackingNumber())) {
             GenerateFirstMileTrackingNumberRequest generateRequest = GenerateFirstMileTrackingNumberRequest.builder()
@@ -367,6 +390,9 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
             ValidatorUtil.validateEntity(generateRequest);
             GenerateFirstMileTrackingNumberResponse generateResponse =
                     shopeeLogisticsService.generateFirstMileTrackingNumber(buildBaseRequest(context.getShopId()), generateRequest);
+            if (Objects.isNull(generateResponse)) {
+                throw new ServiceException("虾皮生成揽收批次号响应为空");
+            }
             trackingNumber = CollectionUtils.emptyIfNull(generateResponse.getFirstMileTrackingNumberList()).stream()
                     .filter(StringUtils::isNotBlank)
                     .findFirst()
@@ -383,6 +409,9 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
         ValidatorUtil.validateEntity(request);
         BindFirstMileTrackingNumberResponse response =
                 shopeeLogisticsService.bindFirstMileTrackingNumber(buildBaseRequest(context.getShopId()), request);
+        if (Objects.isNull(response)) {
+            throw new ServiceException("Shopee组包上传响应为空");
+        }
 
         Map<String, String> failReasonMap = CollectionUtils.emptyIfNull(response.getOrderList()).stream()
                 .filter(this::isBindFailed)
@@ -403,27 +432,67 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
     private List<BatchResultDTO> updateUploadResult(ShopeeForecastContext context, Set<String> successKeys,
                                                     Map<String, String> failReasonMap,
                                                     java.util.function.Consumer<PackageForecastEntity> successConsumer) {
-        List<BatchResultDTO> resultList = new ArrayList<>();
+        Map<String, Boolean> successMap = new HashMap<>();
         for (PackageForecastEntity entity : context.getEntityList()) {
             List<String> orderKeys = context.getForecastOrderKeyMap().get(entity.getId());
-            List<String> failureReasons = orderKeys.stream()
+            List<String> failureReasons = CollectionUtils.emptyIfNull(orderKeys).stream()
                     .filter(failReasonMap::containsKey)
                     .map(failReasonMap::get)
                     .collect(Collectors.toList());
-            boolean success = failureReasons.isEmpty() && (CollectionUtils.isEmpty(successKeys) || successKeys.containsAll(orderKeys));
+            boolean success = CollectionUtils.isNotEmpty(orderKeys)
+                    && CollectionUtils.isNotEmpty(successKeys)
+                    && failureReasons.isEmpty()
+                    && successKeys.containsAll(orderKeys);
             if (success) {
                 successConsumer.accept(entity);
                 entity.setUploadStatus(PackageUploadStatusEnum.UPLOAD_SUCCESS.getCode());
                 entity.setRemark("");
-                resultList.add(BatchResultDTO.success(entity.getId(), entity.getCode(), "上传成功"));
             } else {
                 entity.setUploadStatus(PackageUploadStatusEnum.UPLOAD_FAILURE.getCode());
                 entity.setRemark("上传失败:" + StringUtils.defaultIfBlank(String.join(";", failureReasons), "Shopee返回失败"));
-                resultList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), entity.getRemark()));
             }
-            packageForecastMapper.updateById(entity);
+            successMap.put(entity.getId(), success);
+        }
+        try {
+            updateForecastBatchOrThrow(context.getEntityList());
+            return buildUploadResult(context.getEntityList(), successMap);
+        } catch (Exception e) {
+            log.error("虾皮组包预报上传结果批量更新失败, size: {}", context.getEntityList().size(), e);
+            return updateUploadResultOneByOne(context.getEntityList(), successMap);
+        }
+    }
+
+    private List<BatchResultDTO> updateUploadResultOneByOne(List<PackageForecastEntity> entityList, Map<String, Boolean> successMap) {
+        List<BatchResultDTO> resultList = new ArrayList<>();
+        for (PackageForecastEntity entity : entityList) {
+            boolean success = Boolean.TRUE.equals(successMap.get(entity.getId()));
+            try {
+                updateForecastOrThrow(entity);
+            } catch (Exception e) {
+                log.error("虾皮组包预报上传结果本地更新失败, id: {}, code: {}, platformPackageNo: {}, transportNo: {}",
+                        entity.getId(), entity.getCode(), entity.getPlatformPackageNo(), entity.getTransportNo(), e);
+                String message = success
+                        ? "Shopee平台已绑定成功，本地更新失败，请同步状态或人工处理:" + e.getMessage()
+                        : "上传失败状态更新失败:" + e.getMessage();
+                resultList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), message));
+                continue;
+            }
+            resultList.add(toUploadResult(entity, success));
         }
         return resultList;
+    }
+
+    private List<BatchResultDTO> buildUploadResult(List<PackageForecastEntity> entityList, Map<String, Boolean> successMap) {
+        return entityList.stream()
+                .map(entity -> toUploadResult(entity, Boolean.TRUE.equals(successMap.get(entity.getId()))))
+                .collect(Collectors.toList());
+    }
+
+    private BatchResultDTO toUploadResult(PackageForecastEntity entity, boolean success) {
+        if (success) {
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), "上传成功");
+        }
+        return BatchResultDTO.fail(entity.getId(), entity.getCode(), entity.getRemark());
     }
 
     private String printCourierDelivery(PackageForecastEntity entity, String shopId) {
@@ -436,12 +505,15 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
         String status = mapShopeeHandoverStatus(bindingInfo.getStatus());
         if (StringUtils.isNotBlank(status) && !status.equals(entity.getHandoverStatus())) {
             entity.setHandoverStatus(status);
-            packageForecastMapper.updateById(entity);
+            updateForecastOrThrow(entity);
         }
         CourierDeliveryWaybillRequest request = CourierDeliveryWaybillRequest.builder()
                 .bindingIdList(Collections.singletonList(entity.getPlatformPackageNo()))
                 .build();
         CourierDeliveryWaybillResponse response = shopeeLogisticsService.getCourierDeliveryWaybill(buildBaseRequest(shopId), request);
+        if (Objects.isNull(response) || CollectionUtils.isEmpty(response.getWaybillList())) {
+            throw new ServiceException("虾皮快递寄送交接面单查询失败,bindingId:" + entity.getPlatformPackageNo());
+        }
         CourierDeliveryWaybill waybill = CollectionUtils.emptyIfNull(response.getWaybillList()).stream()
                 .filter(item -> entity.getPlatformPackageNo().equals(item.getBindingId()))
                 .findFirst()
@@ -486,7 +558,7 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
         String status = mapShopeeHandoverStatus(bindingInfoOptional.get().getStatus());
         if (StringUtils.isNotBlank(status)) {
             entity.setHandoverStatus(status);
-            packageForecastMapper.updateById(entity);
+            updateForecastOrThrow(entity);
         }
     }
 
@@ -496,6 +568,7 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
         if (fromDate.isAfter(toDate)) {
             fromDate = toDate;
         }
+        BaseRequest baseRequest = buildBaseRequest(shopId);
         String cursor = null;
         do {
             CourierDeliveryTrackingNumberListRequest request = CourierDeliveryTrackingNumberListRequest.builder()
@@ -506,7 +579,10 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
                     .build();
             ValidatorUtil.validateEntity(request);
             CourierDeliveryTrackingNumberListResponse response =
-                    shopeeLogisticsService.getCourierDeliveryTrackingNumberList(buildBaseRequest(shopId), request);
+                    shopeeLogisticsService.getCourierDeliveryTrackingNumberList(baseRequest, request);
+            if (Objects.isNull(response)) {
+                return Optional.empty();
+            }
             Optional<CourierDeliveryBindingInfo> bindingInfo = CollectionUtils.emptyIfNull(response.getTrackingNumberList()).stream()
                     .filter(item -> entity.getPlatformPackageNo().equals(item.getBindingId()))
                     .findFirst();
@@ -524,29 +600,34 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
     private void validateCourierDeliveryBindingStatus(PackageForecastEntity entity, CourierDeliveryBindingInfo bindingInfo) {
         String status = bindingInfo.getStatus();
         String bindingId = entity.getPlatformPackageNo();
-        if ("NOT_AVAILABLE".equals(status)) {
+        if (SHOPEE_PLATFORM_STATUS_NOT_AVAILABLE.equals(status)) {
             throw new ServiceException("虾皮快递寄送绑定ID暂未绑定订单，请稍后重试,bindingId:" + bindingId);
         }
-        if ("CANCELING".equals(status) || "CANCELED".equals(status)) {
+        // bindingInfo.status 是 Shopee 平台原始状态；枚举 code 对应平台值，可直接比较。
+        if (HandoverStatusEnum.SHOPEE_CANCELING.getCode().equals(status)
+                || HandoverStatusEnum.CANCELED_2.getCode().equals(status)) {
             throw new ServiceException("虾皮快递寄送单已取消或取消中,bindingId:" + bindingId
                     + ",status:" + status + ",reason:" + StringUtils.defaultString(bindingInfo.getReason()));
         }
     }
 
-    private void cancelCourierDelivery(ShopeeForecastContext context) {
-        cancelByOrder(context);
+    private Map<String, String> cancelCourierDelivery(ShopeeForecastContext context) {
+        return cancelByOrder(context);
     }
 
-    private void cancelFirstMile(ShopeeForecastContext context) {
-        cancelByOrder(context);
+    private Map<String, String> cancelFirstMile(ShopeeForecastContext context) {
+        return cancelByOrder(context);
     }
 
-    private void cancelByOrder(ShopeeForecastContext context) {
+    private Map<String, String> cancelByOrder(ShopeeForecastContext context) {
         UnbindFirstMileTrackingNumberAllRequest request = UnbindFirstMileTrackingNumberAllRequest.builder()
                 .orderList(context.getOrderList())
                 .build();
         UnbindFirstMileTrackingNumberAllResponse response =
                 shopeeLogisticsService.unbindFirstMileTrackingNumberAll(buildBaseRequest(context.getShopId()), request);
+        if (Objects.isNull(response)) {
+            throw new ServiceException("Shopee取消组包响应为空");
+        }
         Set<String> successKeys = CollectionUtils.emptyIfNull(response.getSuccessList()).stream()
                 .map(item -> orderKey(item.getOrderSn(), item.getPackageNumber()))
                 .collect(Collectors.toSet());
@@ -558,15 +639,13 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
                 .filter(item -> !isPackageHasNotBind(item))
                 .collect(Collectors.toMap(item -> orderKey(item.getOrderSn(), item.getPackageNumber()),
                         this::buildFailReasonWithOrder, (left, right) -> left));
-        List<String> failureReasons = context.getOrderList().stream()
+        return context.getOrderList().stream()
                 .filter(item -> !successKeys.contains(orderKey(item.getOrderSn(), item.getPackageNumber())))
                 .filter(item -> !notBindKeys.contains(orderKey(item.getOrderSn(), item.getPackageNumber())))
-                .map(item -> failReasonMap.getOrDefault(orderKey(item.getOrderSn(), item.getPackageNumber()),
-                        buildOrderPrefix(item.getOrderSn(), item.getPackageNumber()) + "Shopee返回失败"))
-                .collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(failureReasons)) {
-            throw new ServiceException(String.join(";", failureReasons));
-        }
+                .collect(Collectors.toMap(item -> orderKey(item.getOrderSn(), item.getPackageNumber()),
+                        item -> failReasonMap.getOrDefault(orderKey(item.getOrderSn(), item.getPackageNumber()),
+                                buildOrderPrefix(item.getOrderSn(), item.getPackageNumber()) + "Shopee返回失败"),
+                        (left, right) -> left));
     }
 
     private ShopeeForecastContext buildBaseContext(List<String> ids) {
@@ -637,6 +716,7 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
         if (StringUtils.isBlank(packageNumber)) {
             return Optional.empty();
         }
+        // 组包明细当前按 SO 维度关联，历史 label_json 可能以逗号保存 Shopee 包裹号；沿用首个包裹号保持原上传绑定口径。
         return Arrays.stream(packageNumber.split(","))
                 .map(StringUtils::trimToEmpty)
                 .filter(StringUtils::isNotBlank)
@@ -709,7 +789,10 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
             throw new ServiceException("Shopee应用配置不存在");
         }
         ApiResult<ShopAuthEntity> shopAuthResult = shopInfoFeign.getShopAuthById(shopId);
-        if (Objects.isNull(shopAuthResult) || Objects.isNull(shopAuthResult.getData())) {
+        if (Objects.isNull(shopAuthResult) || !shopAuthResult.isSuccess()) {
+            throw new ServiceException("Shopee店铺授权查询失败");
+        }
+        if (Objects.isNull(shopAuthResult.getData())) {
             throw new ServiceException("Shopee店铺授权不存在");
         }
         ShopAuthEntity shopAuth = shopAuthResult.getData();
@@ -724,7 +807,8 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
         return baseRequest;
     }
 
-    private void resetAfterCancel(PackageForecastEntity entity) {
+    @Override
+    protected void resetAfterCancel(PackageForecastEntity entity) {
         entity.setUploadStatus(PackageUploadStatusEnum.WAIT.getCode());
         entity.setHandoverStatus("");
         entity.setTransportNo("");
@@ -735,19 +819,30 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
     }
 
     private void updateEntities(List<PackageForecastEntity> entities) {
-        for (PackageForecastEntity entity : entities) {
-            packageForecastMapper.updateById(entity);
-        }
+        updateForecastBatchOrThrow(entities);
     }
 
     private String mapShopeeHandoverStatus(String status) {
-        if ("NOT_AVAILABLE".equals(status)) {
+        if (SHOPEE_PLATFORM_STATUS_NOT_AVAILABLE.equals(status)) {
             return "";
         }
-        if ("DELIVERED".equals(status)) {
+        if (SHOPEE_PLATFORM_STATUS_DELIVERED.equals(status)) {
             return HandoverStatusEnum.SHOPEE_DELIVERED.getCode();
         }
+        // Shopee 头程中间态需保留平台原始值，只有系统已定义的终态在这里映射为内部枚举。
         return status;
+    }
+
+    private void rejectRetryWithPlatformIdentifiers(ShopeeForecastContext context) {
+        Optional<PackageForecastEntity> persistedPlatformEntity = context.getEntityList().stream()
+                .filter(entity -> StringUtils.isNotBlank(entity.getPlatformPackageNo())
+                        || StringUtils.isNotBlank(entity.getTransportNo()))
+                .findFirst();
+        if (persistedPlatformEntity.isPresent()) {
+            PackageForecastEntity entity = persistedPlatformEntity.get();
+            throw new ServiceException("虾皮组包预报已存在平台绑定信息，请先同步状态或人工处理后再重试，单号:"
+                    + entity.getCode());
+        }
     }
 
     private String orderKey(String orderSn, String packageNumber) {
@@ -818,49 +913,56 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
         if (Objects.isNull(merchantAuth)) {
             return Collections.emptyList();
         }
-        MerchantPrepaidAccountRequest request = MerchantPrepaidAccountRequest.builder()
-                .host(shopBaseRequest.getHost())
-                .accessToken(merchantAuth.getAccessToken())
-                .partnerId(shopBaseRequest.getPartnerId())
-                .partnerKey(shopBaseRequest.getPartnerKey())
-                .merchantId(parseLong(merchantAuth.getShopeeId(), "Shopee merchantId"))
-                .pageNo(1)
-                .pageSize(100)
-                .build();
-        ValidatorUtil.validateEntity(request);
-        MerchantPrepaidAccountListResponse response = shopeeLogisticsService.getMerchantPrepaidAccountList(request);
-        if (Objects.isNull(response) || CollectionUtils.isEmpty(response.getList())) {
-            return Collections.emptyList();
+        List<PackageForecastDTO.ShopeePrepaidAccountDTO> resultList = new ArrayList<>();
+        int pageNo = 1;
+        while (true) {
+            MerchantPrepaidAccountRequest request = MerchantPrepaidAccountRequest.builder()
+                    .host(shopBaseRequest.getHost())
+                    .accessToken(merchantAuth.getAccessToken())
+                    .partnerId(shopBaseRequest.getPartnerId())
+                    .partnerKey(shopBaseRequest.getPartnerKey())
+                    .merchantId(parseLong(merchantAuth.getShopeeId(), "Shopee merchantId"))
+                    .pageNo(pageNo)
+                    .pageSize(100)
+                    .build();
+            ValidatorUtil.validateEntity(request);
+            MerchantPrepaidAccountListResponse response = shopeeLogisticsService.getMerchantPrepaidAccountList(request);
+            if (Objects.isNull(response) || CollectionUtils.isEmpty(response.getList())) {
+                break;
+            }
+            resultList.addAll(response.getList().stream().map(this::toPrepaidAccountDTO).collect(Collectors.toList()));
+            if (!Boolean.TRUE.equals(response.getMore()) || response.getList().size() < 100) {
+                break;
+            }
+            pageNo++;
         }
-        return response.getList().stream().map(this::toPrepaidAccountDTO).collect(Collectors.toList());
+        return resultList;
     }
 
     private ShopAuthEntity findMerchantAuth(String shopId) {
-        ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(shopId);
-        ApiResult<List<ShopAuthEntity>> merchantAuthResult = shopInfoFeign.getShopListByParam(AuthTypeEnum.MERCHANT.getCode(),
-                AuthStatusEnum.ALREADY.getCode(), PlatformDictEnum.SHOPEE.getCode());
-        if (Objects.isNull(merchantAuthResult) || CollectionUtils.isEmpty(merchantAuthResult.getData())) {
+        List<ShopInfoEntity> relatedShopList = shopInfoFeign.getRelatedByShopId(shopId);
+        if (CollectionUtils.isEmpty(relatedShopList)) {
             return null;
         }
-        List<ShopInfoEntity> merchantShopList = shopInfoFeign.listShopInfoByIds(merchantAuthResult.getData().stream()
-                .map(ShopAuthEntity::getShopId)
+        relatedShopList = relatedShopList.stream()
+                .filter(item -> PlatformDictEnum.SHOPEE.getCode().equals(item.getDictPlatform()))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(relatedShopList)) {
+            return null;
+        }
+        Map<String, ShopInfoEntity> relatedShopMap = relatedShopList.stream()
+                .collect(Collectors.toMap(ShopInfoEntity::getId, Function.identity(), (left, right) -> left));
+        List<ShopAuthEntity> merchantAuthList = shopInfoFeign.listShopAuthByShopIds(relatedShopList.stream()
+                .map(ShopInfoEntity::getId)
                 .filter(StringUtils::isNotBlank)
                 .distinct()
                 .collect(Collectors.toList()));
-        Map<String, ShopInfoEntity> merchantShopMap = CollectionUtils.emptyIfNull(merchantShopList).stream()
-                .collect(Collectors.toMap(ShopInfoEntity::getId, Function.identity(), (left, right) -> left));
-        return merchantAuthResult.getData().stream()
+        return CollectionUtils.emptyIfNull(merchantAuthList).stream()
+                .filter(item -> AuthTypeEnum.MERCHANT.getCode().equals(item.getType()))
                 .filter(item -> StringUtils.isNotBlank(item.getAccessToken()) && StringUtils.isNotBlank(item.getShopeeId()))
-                .filter(item -> hasSameAccount(shopInfo, merchantShopMap.get(item.getShopId())))
+                .filter(item -> Objects.nonNull(relatedShopMap.get(item.getShopId())))
                 .findFirst()
                 .orElse(null);
-    }
-
-    private boolean hasSameAccount(ShopInfoEntity shopInfo, ShopInfoEntity merchantShop) {
-        if (Objects.isNull(shopInfo) || Objects.isNull(merchantShop)) {
-            return false;
-        }
-        return StringUtils.isNotBlank(shopInfo.getAccount()) && shopInfo.getAccount().equals(merchantShop.getAccount());
     }
 
     private Long parseLong(String value, String fieldName) {
@@ -974,11 +1076,11 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
         return dto;
     }
 
-    private List<PackageForecastDTO.ShopeeTrackingNumberDTO> toTrackingNumberDTOList(FirstMileTrackingNumberListResponse response) {
-        if (Objects.isNull(response) || CollectionUtils.isEmpty(response.getFirstMileTrackingNumberList())) {
+    private List<PackageForecastDTO.ShopeeTrackingNumberDTO> toTrackingNumberDTOList(List<FirstMileTrackingNumber> trackingNumberList) {
+        if (CollectionUtils.isEmpty(trackingNumberList)) {
             return Collections.emptyList();
         }
-        return response.getFirstMileTrackingNumberList().stream()
+        return trackingNumberList.stream()
                 .map(this::toTrackingNumberDTO)
                 .collect(Collectors.toList());
     }

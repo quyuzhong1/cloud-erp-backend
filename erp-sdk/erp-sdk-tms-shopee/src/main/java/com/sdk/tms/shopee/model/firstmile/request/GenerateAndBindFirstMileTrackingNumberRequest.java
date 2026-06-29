@@ -23,6 +23,7 @@ public class GenerateAndBindFirstMileTrackingNumberRequest implements Serializab
     @JSONField(name = "shipment_method")
     private String shipmentMethod;
 
+    @NotBlank(message = "发货区域不能为空")
     private String region;
 
     @Valid

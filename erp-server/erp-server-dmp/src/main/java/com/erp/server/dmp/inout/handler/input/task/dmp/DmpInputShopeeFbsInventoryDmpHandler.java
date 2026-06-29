@@ -1,5 +1,6 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -12,6 +13,7 @@ import java.util.TreeMap;
 /**
  * Shopee FBS 库存 DMP 转换
  */
+@Slf4j
 @Service
 @Scope("prototype")
 public class DmpInputShopeeFbsInventoryDmpHandler extends DmpInputDbConvertDmpHandler {
@@ -78,7 +80,12 @@ public class DmpInputShopeeFbsInventoryDmpHandler extends DmpInputDbConvertDmpHa
             dmpDataMap.put(key, ((Number) value).intValue());
             return;
         }
-        dmpDataMap.put(key, StringUtils.isBlank(String.valueOf(value)) ? 0 : Integer.parseInt(String.valueOf(value)));
+        try {
+            dmpDataMap.put(key, StringUtils.isBlank(String.valueOf(value)) ? 0 : Integer.parseInt(String.valueOf(value)));
+        } catch (NumberFormatException e) {
+            log.warn("FBS库存字段{}解析失败,value:{}", key, value);
+            dmpDataMap.put(key, 0);
+        }
     }
 
     private void putDecimal(TreeMap<String, Object> dmpDataMap, String key, Object value) {
@@ -94,6 +101,11 @@ public class DmpInputShopeeFbsInventoryDmpHandler extends DmpInputDbConvertDmpHa
             dmpDataMap.put(key, BigDecimal.valueOf(((Number) value).doubleValue()));
             return;
         }
-        dmpDataMap.put(key, new BigDecimal(String.valueOf(value)));
+        try {
+            dmpDataMap.put(key, new BigDecimal(String.valueOf(value)));
+        } catch (NumberFormatException e) {
+            log.warn("FBS库存字段{}解析失败,value:{}", key, value);
+            dmpDataMap.put(key, BigDecimal.ZERO);
+        }
     }
 }
