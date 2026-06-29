@@ -133,7 +133,9 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
     public void startOrResumeWithLock(WorkflowTaskRecordDTO.AddTaskDTO dto) {
         WorkflowTaskInstanceEntity latest = workflowTaskInstanceService.getLatestBySource(
                 dto.getSourceId(), dto.getSourceTypeEnum().getCode());
-
+        if (latest != null) {
+            dto.setInstanceId(latest.getId());
+        }
         if (latest != null && isTerminalInstance(latest.getStatus())) {
             addTask(dto);
             WorkflowTaskRecordDTO.AddTaskDTO dispatch = buildDispatchDto(
@@ -186,6 +188,9 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
         WorkflowTaskInstanceEntity instance = CharSequenceUtil.isNotBlank(dto.getInstanceId())
                 ? workflowTaskInstanceService.getById(dto.getInstanceId())
                 : latest;
+        if (instance != null) {
+            dto.setInstanceId(instance.getId());
+        }
         WorkflowTaskRecordDTO.AddTaskDTO dispatch = buildDispatchDto(instance, dto);
         if (dispatch.getTargetIndex() == null) {
             dispatch.setTargetIndex(0);
