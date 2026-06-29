@@ -431,6 +431,8 @@
             SELECT
                 sdn.id AS source_id,
                 sdn.code AS source_code,
+                sdn.source_code AS business_code,
+                sdn.create_time AS source_create_time,
                 cd.sku_id,
                 cd.sku_no,
                 SUM(cd.pack_qty)::INTEGER AS qty
@@ -443,7 +445,7 @@
             ON cd.packing_task_id = pt.id
             WHERE sdn.is_deleted = false
             AND sdn.declare_status = 'wait'
-            GROUP BY sdn.id, sdn.code, cd.sku_id, cd.sku_no
+            GROUP BY sdn.id, sdn.code, sdn.source_code, sdn.create_time, cd.sku_id, cd.sku_no
         ),
         has_bom AS MATERIALIZED (
             SELECT
@@ -465,6 +467,8 @@
             qd.source_id AS sourceId,
             qd.source_code AS sourceCode,
             'soDeliveryNotice' AS sourceType,
+            qd.business_code AS businessCode,
+            qd.source_create_time AS sourceCreateTime,
             qd.sku_id AS skuId,
             qd.sku_no AS skuNo,
             '' AS bomVersion,
@@ -490,6 +494,8 @@
             qd.source_id AS sourceId,
             qd.source_code AS sourceCode,
             'soDeliveryNotice' AS sourceType,
+            qd.business_code AS businessCode,
+            qd.source_create_time AS sourceCreateTime,
             hb.sku_id AS skuId,
             hb.sku_no AS skuNo,
             hb.bom_version AS bomVersion,
@@ -511,6 +517,13 @@
         ) as sdnd
         where
         ${params.sqlMap.default}
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        sourceCreateTime DESC, sourceCode ASC, skuNo ASC
     </select>
 
 

@@ -2098,6 +2098,10 @@ public class TmsDeclareBillDTO implements Serializable {
          */
         private String sourceType;
         /**
+         * 业务单号
+         */
+        private String businessCode;
+        /**
          *  来源明细id
          */
         private String sourceDetailId;
