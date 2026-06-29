@@ -127,25 +127,6 @@ public abstract class AbstractRedisUtil {
     }
 
     /**
-     * 原子设置键值（SET key value NX EX ttl）。
-     *
-     * @param key     键
-     * @param value   值
-     * @param timeout 过期时长
-     * @param unit    时间单位
-     * @return true=设置成功（获取到锁）；false=键已存在或设置失败
-     */
-    public boolean setIfAbsent(String key, Object value, long timeout, TimeUnit unit) {
-        try {
-            Boolean result = getRedisTemplate().opsForValue().setIfAbsent(key, value, timeout, unit);
-            return Boolean.TRUE.equals(result);
-        } catch (Exception e) {
-            log.error("redis setIfAbsent 异常, key={}", key, e);
-            return false;
-        }
-    }
-
-    /**
      * 键值递增
      *
      * @param key

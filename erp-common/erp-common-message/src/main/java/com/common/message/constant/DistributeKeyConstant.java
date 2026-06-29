@@ -102,5 +102,4 @@ public class DistributeKeyConstant {
     public static final String SO_RETURN_INSTOCK_SAVE_KEY = "SO_RETURN_INSTOCK_SAVE";
     /** WMS 导入任务 */
     public static final String WMS_IMPORT_TASK_KEY = "WMS_IMPORT_TASK";
-    public static final String GET_REFERENCE_CODE = "GET_REFERENCE_CODE";
 }
