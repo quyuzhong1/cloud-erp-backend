@@ -1,6 +1,7 @@
 package com.erp.server.fms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -10,6 +11,7 @@ import com.common.business.factory.ApproveEndHandlerFactory;
 import com.common.business.handler.AbstractApproveHandler;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.workflow.dto.EndProcessDTO;
 import com.erp.server.fms.service.FmsWorkflowService;
 import org.springframework.stereotype.Service;
@@ -28,6 +30,7 @@ public class FmsWorkflowServiceImpl implements FmsWorkflowService {
     private ApproveEndHandlerFactory approveEndHandlerFactory;
 
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "dto.businessKey,dto.id", unlockAfterTx = true)
     public BatchResultDTO approve(ApproveDTO.ApproveOneDTO dto) {
         String businessKey = dto.getBusinessKey();
         SourceTypeEnum sourceType = SourceTypeEnum.getByCode(businessKey);
@@ -39,6 +42,7 @@ public class FmsWorkflowServiceImpl implements FmsWorkflowService {
     }
 
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "dto.businessKey,dto.businessId", unlockAfterTx = true)
     public Boolean approveEnd(EndProcessDTO dto) {
         String businessKey = dto.getBusinessKey();
         SourceTypeEnum sourceType = SourceTypeEnum.getByCode(businessKey);
@@ -50,6 +54,7 @@ public class FmsWorkflowServiceImpl implements FmsWorkflowService {
     }
 
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "dto.businessKey,dto.id", unlockAfterTx = true)
     public Boolean disApprove(ApproveDTO.DisApproveDTO dto) {
         String businessKey = dto.getBusinessKey();
         SourceTypeEnum sourceType = SourceTypeEnum.getByCode(businessKey);
@@ -61,6 +66,7 @@ public class FmsWorkflowServiceImpl implements FmsWorkflowService {
     }
 
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "dto.businessKey,dto.id", unlockAfterTx = true)
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         String businessKey = dto.getBusinessKey();
         SourceTypeEnum sourceType = SourceTypeEnum.getByCode(businessKey);

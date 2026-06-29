@@ -16,6 +16,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.dto.ApproveDTO;
@@ -34,6 +35,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.DictCityTypeEnum;
 import com.common.core.exception.ServiceException;
+import com.common.message.constant.DistributeKeyConstant;
 import com.common.core.utils.*;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.entity.ApplicationCategoryEntity;
@@ -1842,6 +1844,7 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_UPDATE_APPROVE_STATUS_KEY, keyName = "updateApproveStatusDTO.supplierEntity.id", unlockAfterTx = true)
     public void updateApproveStatus(SupplierDTO.UpdateApproveStatusDTO updateApproveStatusDTO) {
         ApproveStatusEnum approveStatus = updateApproveStatusDTO.getApproveStatus();
         SupplierEntity supplierEntity = updateApproveStatusDTO.getSupplierEntity();

@@ -111,6 +111,7 @@ public class ApproveSyncRecordController extends BaseController {
      * @return ApiResult<List<BatchResultDTO>>
      */
     @PostMapping("/repush")
+    @LogAction(value = LogActionEnum.EXECUTE, desc = "三方推送记录重推")
     public ApiResult<List<BatchResultDTO>> repush(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
@@ -137,6 +138,7 @@ public class ApproveSyncRecordController extends BaseController {
 
 
     @PostMapping("/externalInstance")
+    @LogAction(value = LogActionEnum.EXECUTE, desc = "三方推送外部实例同步")
     public void externalInstance(@RequestBody @Validated ApproveSyncRecordDTO.externalInstanceParamDTO dto) throws ClassNotFoundException {
         approveSyncRecordService.externalInstance(dto);
     }

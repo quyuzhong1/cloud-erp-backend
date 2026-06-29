@@ -2,6 +2,7 @@ package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.constant.ThirdConstants;
 import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.ApproveOneDTO;
@@ -12,6 +13,7 @@ import com.common.business.factory.ApproveEndHandlerFactory;
 import com.common.business.handler.AbstractApproveHandler;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.plm.entity.*;
 import com.erp.model.workflow.dto.EndProcessDTO;
 import com.erp.server.plm.service.*;
@@ -58,6 +60,7 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
     private BomChangeDetailsService bomChangeDetailService;
 
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "dto.businessKey,dto.id", unlockAfterTx = true)
     public BatchResultDTO approve(ApproveDTO.ApproveOneDTO dto) {
         String businessKey = dto.getBusinessKey();
         SourceTypeEnum sourceType = SourceTypeEnum.getByCode(businessKey);
@@ -101,6 +104,7 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
     }
 
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "dto.businessKey,dto.businessId", unlockAfterTx = true)
     public Boolean approveEnd(EndProcessDTO dto) {
         String businessKey = dto.getBusinessKey();
         SourceTypeEnum sourceType = SourceTypeEnum.getByCode(businessKey);
@@ -112,6 +116,7 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
     }
 
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "dto.businessKey,dto.id", unlockAfterTx = true)
     public Boolean disApprove(ApproveDTO.DisApproveDTO dto) {
         String businessKey = dto.getBusinessKey();
         SourceTypeEnum sourceType = SourceTypeEnum.getByCode(businessKey);
@@ -123,6 +128,7 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
     }
 
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "dto.businessKey,dto.id", unlockAfterTx = true)
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         String businessKey = dto.getBusinessKey();
         SourceTypeEnum sourceType = SourceTypeEnum.getByCode(businessKey);

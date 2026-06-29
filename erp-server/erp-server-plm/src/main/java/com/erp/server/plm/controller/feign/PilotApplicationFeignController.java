@@ -1,7 +1,9 @@
 package com.erp.server.plm.controller.feign;
 
 import com.common.business.dto.DmpSyncMqDTO;
+import com.common.core.anno.LogAction;
 import com.common.core.controller.BaseController;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.plm.dto.PilotApplicationDTO;
 import com.erp.model.plm.entity.PilotApplicationEntity;
 import com.erp.server.plm.service.PilotApplicationService;
@@ -33,6 +35,7 @@ public class PilotApplicationFeignController extends BaseController {
      * @param map key:pilotApplicationDetailId value:订单状态
      */
     @PostMapping("/updateDetailByPilotApplicationDetailIds")
+    @LogAction(value = LogActionEnum.UPDATE_STATUS, desc = "试产量产明细订单状态更新")
     public void updateDetailByPilotApplicationDetailIds(@RequestBody Map<String,String> map) {
         pilotApplicationService.updateDetailByPilotApplicationDetailIds(map);
     }
@@ -43,6 +46,7 @@ public class PilotApplicationFeignController extends BaseController {
     }
 
     @PostMapping("/updateApproveStatus")
+    @LogAction(value = LogActionEnum.UPDATE_STATUS, desc = "试产量产审核状态更新")
      public void updateApproveStatus(@RequestBody PilotApplicationDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO) {
         pilotApplicationService.updateApproveStatus(updateApprovalStatusDTO);
     }

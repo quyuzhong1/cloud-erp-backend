@@ -11,6 +11,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
+import com.common.message.constant.DistributeKeyConstant;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
@@ -738,6 +739,7 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
 
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_SUBMIT_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO submit(String id) {
         AssetAcceptEntity entity = getById(id);
         if (ObjectUtil.isEmpty(entity)) {
@@ -772,6 +774,7 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_SUBMIT_KEY, keyName = "dto.id", unlockAfterTx = true)
     public void updateAndSubmit(AssetAcceptDTO.UpdateDTO dto) {
         // 修改
         this.update(dto);
@@ -782,6 +785,7 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_APPROVE_KEY, keyName = "dto.id", unlockAfterTx = true)
     public BatchResultDTO approve(ApproveOneDTO dto) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
@@ -830,6 +834,7 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_APPROVE_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO disApprove(String id) {
         AssetAcceptEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到资产验收单单数据"));
         // 反审核条件判断
@@ -950,6 +955,7 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "dto.id", unlockAfterTx = true)
     public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         String id = dto.getId();
         AssetAcceptEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到资产验收单数据"));
@@ -1445,6 +1451,7 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
     * 更新审核状态
     */
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_UPDATE_APPROVE_STATUS_KEY, keyName = "id", unlockAfterTx = true)
     public void updateApproveStatus(String id, String approveStatus) {
         lambdaUpdate().eq(AssetAcceptEntity::getId, id)
         .set(AssetAcceptEntity::getApproveUserId, "")
