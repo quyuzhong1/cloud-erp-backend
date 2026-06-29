@@ -2,6 +2,7 @@ package com.sdk.oms.shopify.api.rest.model.serializer;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import org.apache.commons.lang3.StringUtils;
@@ -33,6 +34,16 @@ public class TagsDeserializer extends StdDeserializer<Set<String>> {
      */
     @Override
     public Set<String> deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
+        if (p.currentToken() == JsonToken.START_ARRAY) {
+            final Set<String> tags = new HashSet<>();
+            while (p.nextToken() != JsonToken.END_ARRAY) {
+                final String tag = StringUtils.trimToNull(p.getValueAsString());
+                if (tag != null) {
+                    tags.add(tag);
+                }
+            }
+            return tags;
+        }
         String tags = p.getText();
         if (StringUtils.isBlank(tags)) {
             return Collections.emptySet();
