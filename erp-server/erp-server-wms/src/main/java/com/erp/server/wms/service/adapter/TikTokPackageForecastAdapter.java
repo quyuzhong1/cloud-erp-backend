@@ -294,12 +294,18 @@ public class TikTokPackageForecastAdapter extends AbstractPackageForecastPlatfor
     }
 
     private List<SoB2cEntity> getSoList(List<String> soIds, TikTokForecastContext context) {
+        if (CollectionUtils.isEmpty(soIds)) {
+            throw new ServiceException("销售订单未找到");
+        }
         List<SoB2cEntity> soList = soIds.stream()
                 .map(id -> context.getSoMap().get(id))
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
         if (CollectionUtils.isEmpty(soList)) {
             throw new ServiceException("销售订单未找到");
+        }
+        if (soList.size() != soIds.size()) {
+            throw new ServiceException("组包预报单销售订单数据不完整");
         }
         validateOrderPlatform(soList);
         return soList;

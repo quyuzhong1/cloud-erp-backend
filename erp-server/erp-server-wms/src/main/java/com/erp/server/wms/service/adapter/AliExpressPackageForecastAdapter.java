@@ -194,9 +194,13 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
                         .collect(Collectors.toList());
                 if (CollectionUtils.isNotEmpty(soIds)) {
                     List<SoB2cEntity> soList = soB2cFeign.listByIds(soIds);
-                    if (CollectionUtils.isNotEmpty(soList)) {
+                    int soReturnSize = CollectionUtils.isEmpty(soList) ? 0 : soList.size();
+                    if (soReturnSize == soIds.size()) {
                         context.soMap = soList.stream()
                                 .collect(Collectors.toMap(SoB2cEntity::getId, entity -> entity, (left, right) -> left));
+                    } else {
+                        log.warn("速卖通组包批量上下文销售订单数据不完整, forecastSize:{}, soSize:{}, returnSize:{}",
+                                forecastIds.size(), soIds.size(), soReturnSize);
                     }
                     List<SoB2cLogisticsEntity> logisticsList = soB2cFeign.listSoB2cLogisticsByMainIdList(soIds);
                     if (CollectionUtils.isNotEmpty(logisticsList)) {
@@ -673,12 +677,22 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
         if (CollectionUtils.isEmpty(forecastDetailList)) {
             throw new ServiceException("组包预报单明细未找到");
         }
-        List<String> shopIds = forecastDetailList.stream()
+        List<String> soIds = forecastDetailList.stream()
                 .map(PackageForecastDetailEntity::getSoId)
                 .filter(StringUtils::isNotBlank)
                 .distinct()
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(soIds)) {
+            throw new ServiceException("销售订单未找到");
+        }
+        List<SoB2cEntity> soB2cEntityList = soIds.stream()
                 .map(context.soMap::get)
                 .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+        if (soB2cEntityList.size() != soIds.size()) {
+            throw new ServiceException("组包预报单销售订单数据不完整");
+        }
+        List<String> shopIds = soB2cEntityList.stream()
                 .map(SoB2cEntity::getShopId)
                 .filter(StringUtils::isNotBlank)
                 .distinct()
@@ -707,6 +721,9 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
         List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
         if (CollectionUtils.isEmpty(soB2cEntityList)) {
             throw new ServiceException("销售订单未找到");
+        }
+        if (soB2cEntityList.size() != soIds.size()) {
+            throw new ServiceException("组包预报单销售订单数据不完整");
         }
         List<String> shopIds = soB2cEntityList.stream()
                 .map(SoB2cEntity::getShopId)

@@ -45,9 +45,12 @@ import java.util.stream.Collectors;
 @Component
 public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPlatformAdapter {
 
+    // TikTok全托管预约接口枚举值，当前SDK无独立枚举，适配器内集中维护。
     private static final String DELIVERY_MODE_SELF = "SELF_DELIVERY";
     private static final String DELIVERY_MODE_PLATFORM = "PLATFORM_DELIVERY";
-        private static final String UPLOAD_FAILURE_MESSAGE = "上传失败，请稍后重试或联系管理员处理";
+    // TikTok全托管预约接口按平台协议使用北京时间(UTC+8)换算时间戳。
+    private static final ZoneOffset TIKTOK_FULLY_API_ZONE_OFFSET = ZoneOffset.ofHours(8);
+    private static final String UPLOAD_FAILURE_MESSAGE = "上传失败，请稍后重试或联系管理员处理";
     private static final String CANCEL_FAILURE_MESSAGE = "取消上传失败，请稍后重试或联系管理员处理";
 
     @Resource
@@ -257,8 +260,8 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
         if (PackageForecastCollectModeEnum.SELF_SEND.getCode().equals(dto.getCollectMode())) {
             tikTokFullyShippingReq.setDeliveryMode(DELIVERY_MODE_SELF);
             TikTokFullyShippingReq.ReserveInfoDTO reserveInfoDTO = new TikTokFullyShippingReq.ReserveInfoDTO();
-            reserveInfoDTO.setPredictedShipTime((int) dto.getDeliveryTime().atStartOfDay().toInstant(ZoneOffset.ofHours(8)).getEpochSecond());
-            reserveInfoDTO.setPredictedArrivedTime((int) dto.getArrivedTime().atStartOfDay().toInstant(ZoneOffset.ofHours(8)).getEpochSecond());
+            reserveInfoDTO.setPredictedShipTime((int) dto.getDeliveryTime().atStartOfDay().toInstant(TIKTOK_FULLY_API_ZONE_OFFSET).getEpochSecond());
+            reserveInfoDTO.setPredictedArrivedTime((int) dto.getArrivedTime().atStartOfDay().toInstant(TIKTOK_FULLY_API_ZONE_OFFSET).getEpochSecond());
             tikTokFullyShippingReq.setReserveInfo(reserveInfoDTO);
         } else {
             tikTokFullyShippingReq.setDeliveryMode(DELIVERY_MODE_PLATFORM);
@@ -266,9 +269,9 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
             tikTokFullyShippingReq.setTotalWeight(new TikTokFullyShippingReq.TotalWeightDTO(String.valueOf(dto.getDeliveryWeight()), "GRAM"));
             tikTokFullyShippingReq.setLogistics(new TikTokFullyShippingReq.LogisticsDTO(dto.getLogisticType(), dto.getProviderCode(), dto.getProviderName()));
             TikTokFullyShippingReq.ReserveInfoDTO reserveInfoDTO = new TikTokFullyShippingReq.ReserveInfoDTO();
-            reserveInfoDTO.setPredictedPickupTime((int) dto.getCollectDate().atStartOfDay().toInstant(ZoneOffset.ofHours(8)).getEpochSecond());
-            reserveInfoDTO.setPredictedPickupGe((int) dto.getStartTime().toInstant(ZoneOffset.ofHours(8)).getEpochSecond());
-            reserveInfoDTO.setPredictedPickupLt((int) dto.getEndTime().toInstant(ZoneOffset.ofHours(8)).getEpochSecond());
+            reserveInfoDTO.setPredictedPickupTime((int) dto.getCollectDate().atStartOfDay().toInstant(TIKTOK_FULLY_API_ZONE_OFFSET).getEpochSecond());
+            reserveInfoDTO.setPredictedPickupGe((int) dto.getStartTime().toInstant(TIKTOK_FULLY_API_ZONE_OFFSET).getEpochSecond());
+            reserveInfoDTO.setPredictedPickupLt((int) dto.getEndTime().toInstant(TIKTOK_FULLY_API_ZONE_OFFSET).getEpochSecond());
             tikTokFullyShippingReq.setReserveInfo(reserveInfoDTO);
         }
         TikTokFullyShippingResp tikTokFullyShippingResp;
@@ -398,13 +401,14 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
     }
 
     private List<BatchResultDTO> failUploadResult(PackageForecastDTO.UploadDTO dto, Exception e) {
+        String failureMessage = uploadFailureMessage(e);
         List<PackageForecastEntity> entityList = packageForecastMapper.selectBatchIds(dto.getIds());
         Map<String, PackageForecastEntity> entityMap = entityList.stream()
                 .collect(Collectors.toMap(PackageForecastEntity::getId, entity -> entity, (left, right) -> left, LinkedHashMap::new));
         if (CollectionUtils.isNotEmpty(entityList)) {
             entityList.forEach(entity -> {
                 entity.setUploadStatus(PackageUploadStatusEnum.UPLOAD_FAILURE.getCode());
-                entity.setRemark(UPLOAD_FAILURE_MESSAGE);
+                entity.setRemark(failureMessage);
             });
             try {
                 updateForecastBatchOrThrow(entityList);
@@ -416,12 +420,19 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
         for (String id : dto.getIds()) {
             PackageForecastEntity entity = entityMap.get(id);
             if (Objects.isNull(entity)) {
-                resultList.add(BatchResultDTO.fail(id, id, UPLOAD_FAILURE_MESSAGE));
+                resultList.add(BatchResultDTO.fail(id, id, failureMessage));
             } else {
-                resultList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), UPLOAD_FAILURE_MESSAGE));
+                resultList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), failureMessage));
             }
         }
         return resultList;
+    }
+
+    private String uploadFailureMessage(Exception e) {
+        if (e instanceof ServiceException && StringUtils.isNotBlank(e.getMessage())) {
+            return e.getMessage();
+        }
+        return UPLOAD_FAILURE_MESSAGE;
     }
 
     private void validateReserveInfo(PackageForecastDTO.UploadDTO dto) {

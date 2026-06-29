@@ -44,6 +44,7 @@ import java.util.Set;
 public class DmpInputShopeeFbsInventoryInitHandler extends DmpInputInitHandler {
 
     private static final int PAGE_SIZE = 100;
+    private static final int MAX_INIT_ROWS = 50000;
     private static final int MAX_RETRY_COUNT = 10;
     private static final long RETRY_SLEEP_MILLIS = 1000L;
     private static final Set<String> WHS_REGIONS = new HashSet<>(Arrays.asList(
@@ -97,7 +98,7 @@ public class DmpInputShopeeFbsInventoryInitHandler extends DmpInputInitHandler {
                 .pageSize(PAGE_SIZE)
                 .build();
 
-        // DMP Init接口当前要求一次返回初始化数据列表；如后续Shopee FBS库存量级过大，应在调度层按店铺/仓库拆分任务。
+        // DMP Init接口当前要求一次返回初始化数据列表；这里保留硬上限，超量时交由调度层按店铺/仓库拆分任务。
         List<DmpInputTaskInitDTO> resultList = new ArrayList<>();
         int pageNo = 1;
         while (true) {
@@ -187,10 +188,17 @@ public class DmpInputShopeeFbsInventoryInitHandler extends DmpInputInitHandler {
 
                     DmpInputTaskInitDTO dto = new DmpInputTaskInitDTO();
                     dto.setMsg(JSON.toJSONString(row));
-                    resultList.add(dto);
+                    addInitRow(resultList, dto);
                 }
             }
         }
+    }
+
+    private void addInitRow(List<DmpInputTaskInitDTO> resultList, DmpInputTaskInitDTO dto) {
+        if (resultList.size() >= MAX_INIT_ROWS) {
+            throw new ServiceException("Shopee FBS库存初始化数据超过" + MAX_INIT_ROWS + "行，请按店铺/仓库拆分任务后重试");
+        }
+        resultList.add(dto);
     }
 
     private ShopeeResponse execute(SbsInventoryRequest request) {

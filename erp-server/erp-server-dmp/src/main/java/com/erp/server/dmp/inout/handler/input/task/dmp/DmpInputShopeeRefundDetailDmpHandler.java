@@ -117,12 +117,20 @@ public class DmpInputShopeeRefundDetailDmpHandler extends DmpInputDoNextDmpHandl
                 // Shopee 仅退款明细中的 amount 字段按平台语义表示数量，不是金额。
                 Object amountObj = dmpDataMap.get("amount");
                 Integer qty = parseInteger(amountObj);
-                if (qty != null) {
+                if (qty == null) {
+                    dmpDataMap.put("amount", null);
+                    log.warn("Shopee仅退款明细qty解析失败，无法计算退款金额, returnSn:{}, orderSn:{}, platformSku:{}, amount:{}",
+                            dmpDataMap.get("return_sn"), dmpDataMap.get("order_sn"), platformSku, amountObj);
+                } else {
                     dmpDataMap.put("qty", qty);
                     Object itemPriceObj = dmpDataMap.get("item_price");
                     BigDecimal itemPrice = parseBigDecimal(itemPriceObj);
                     if (itemPrice != null) {
                         dmpDataMap.put("amount", itemPrice.multiply(BigDecimal.valueOf(qty)));
+                    } else {
+                        dmpDataMap.put("amount", null);
+                        log.warn("Shopee仅退款明细item_price缺失，无法按qty计算退款金额, returnSn:{}, orderSn:{}, platformSku:{}, qty:{}",
+                                dmpDataMap.get("return_sn"), dmpDataMap.get("order_sn"), platformSku, qty);
                     }
                 }
                 Object returnSnObj = dmpDataMap.get("return_sn");

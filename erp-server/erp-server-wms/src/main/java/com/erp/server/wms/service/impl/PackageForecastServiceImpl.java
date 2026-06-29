@@ -543,7 +543,9 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
                     .eq(PackageForecastEntity::getIsDeleted, false)
                     .update();
             if (!updated) {
-                throw new ServiceException("打印状态更新失败");
+                // 面单已生成时优先返回PDF，打印状态更新失败交由日志/后续同步处理，避免误导用户重复打印。
+                log.warn("组包预报打印成功但本地打印状态更新失败, id: {}, code: {}, version: {}",
+                        id, entity.getCode(), entity.getVersion());
             }
         } else {
             throw new ServiceException("打印失败");

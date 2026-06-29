@@ -7877,6 +7877,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         ThirdWarehouseDeliveryEntity thirdWarehouseDelivery;
         try {
+            // 三方仓发货类型依赖最新发货单兜底，暂不从上游透传，避免扩大订单同步改造面。
             thirdWarehouseDelivery = thirdWarehouseDeliveryFeign.getLatestBySoId(entity.getId());
         } catch (Exception e) {
             log.warn("解析订单发货类型时查询三方仓发货单失败, soId: {}, code: {}", entity.getId(), entity.getCode(), e);

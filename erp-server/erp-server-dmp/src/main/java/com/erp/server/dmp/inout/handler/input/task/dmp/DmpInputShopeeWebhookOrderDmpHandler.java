@@ -100,7 +100,7 @@ public class DmpInputShopeeWebhookOrderDmpHandler extends DmpInputDbConvertDmpHa
             }
             dmpSoInfoEntity.setPlatformOriginalStatus(status);
             dmpSoInfoEntity.setDeliveryStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
-            // Shopee平台仓发货回告只处理已发货订单，DMP侧需推进到已审核态，后续OMS发货同步依赖该状态。
+            // Shopee平台仓发货回告只处理已发货订单；按业务协议不再校验原状态，DMP侧需推进到已审核态供后续OMS同步。
             dmpSoInfoEntity.setOrderStatus(ApproveStatusEnum.APPROVE.getCode());
             dmpSoInfoEntity.setDeliveryTime(LocalDateTime.ofInstant(Instant.ofEpochSecond(deliveryTime), DEFAULT_ZONE));
             dmpSoInfoEntity.setInputTaskId(inputTaskId);

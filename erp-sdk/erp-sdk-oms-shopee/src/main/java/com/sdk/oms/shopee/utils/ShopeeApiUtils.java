@@ -35,6 +35,7 @@ import java.util.regex.Pattern;
 @Slf4j
 public class ShopeeApiUtils {
 
+    // Shopee SDK请求/签名失败统一抛ServiceException，调用方不再按null响应兜底。
     private static final String CONTENT_TYPE = "Content-Type";
     private static final String APPLICATION = "application/json";
     private static final String MASK = "***";
