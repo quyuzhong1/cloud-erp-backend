@@ -470,6 +470,14 @@ public class DeclarationGenerationService {
 
         // 2. 极差切割与聚合赋值
         for (List<DeclarationGenerationDTO.InputDetailDTO> groupItems : groupedByKey.values()) {
+            // 6维度合并（B2B 按客户，SKU 已进合并键）按合并规则不做价差约束：
+            // 同 SKU + 商品编码 + 品名 + 申报要素 + 单位 + 币种 直接聚合为一行。
+            if (includeSkuInMergeKey) {
+                result.add(aggregateGroup(groupItems));
+                continue;
+            }
+
+            // 5维度合并（头程 / B2B 非客户）：同要素分组后按单价极差（折算人民币）≤10 切割。
             // 按单价升序排序以应用滑动窗口
             groupItems.sort(Comparator.comparing(
                     item -> item.getPrice() != null ? item.getPrice() : BigDecimal.ZERO

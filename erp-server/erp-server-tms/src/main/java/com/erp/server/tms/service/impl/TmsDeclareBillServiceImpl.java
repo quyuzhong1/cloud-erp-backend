@@ -3278,7 +3278,10 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (CollUtil.isEmpty(result)) {
             return Collections.emptyList();
         }
-        boolean includeSkuInGeneratedMergeKey = sixDimensionMerge || hasBomSplitChild(result);
+        // 合并维度只由境外收货人类型决定（按客户=6维度含SKU，其余=5维度不含SKU）。
+        // 组合品拆分只是把 SKU 拆到最小颗粒度的前置步骤，与合并维度无关：拆出来的子 SKU
+        // 同样按当前维度参与合并，因此不再因「存在 BOM 子件」就整单强制含 SKU。
+        boolean includeSkuInGeneratedMergeKey = sixDimensionMerge;
         DeclarationGenerationService declarationGenerationService = new DeclarationGenerationService(buildDeclareCurrencyRateMap(result));
         return declarationGenerationService.generateMergeBillDetails(result, viewDTO.getIsMultipleMerge(), includeSkuInGeneratedMergeKey);
     }
@@ -3309,19 +3312,6 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             }
         }
         return rateMap;
-    }
-
-    /**
-     * 判断报关来源明细中是否包含由 BOM 拆分生成的子 SKU 行。
-     *
-     * <p>BOM 子 SKU 行必须将 SKU 纳入合并维度。否则不同子 SKU 在申报属性相同或相近时，
-     * 会被折叠成同一条报关明细，并只保留第一条子 SKU 作为主 SKU。</p>
-     */
-    private boolean hasBomSplitChild(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList) {
-        return CollUtil.isNotEmpty(sourceDetailList)
-                && sourceDetailList.stream()
-                .filter(Objects::nonNull)
-                .anyMatch(item -> StringUtils.isNotBlank(item.getParentSkuId()));
     }
 
     /**
