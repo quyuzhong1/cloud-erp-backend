@@ -18,6 +18,7 @@ import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.oms.dto.PackageDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.enums.PackageStatusEnum;
@@ -27,6 +28,7 @@ import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.entity.TransferLogisticsChannelEntity;
 import com.erp.model.tms.entity.TransferLogisticsSupplierEntity;
+import com.erp.model.tms.entity.TransferLogisticsSupplierEntity;
 import com.erp.model.wms.dto.PackageForecastDTO;
 import com.erp.model.wms.dto.PackageForecastDetailDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
@@ -35,6 +37,7 @@ import com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity;
 import com.erp.model.wms.enums.SoB2cDeliveryInterceptStatusEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.rpc.oms.feign.WorkflowTaskRecordFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.tms.feign.TransferLogisticsFeign;
@@ -43,8 +46,6 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.rocketmq.client.producer.SendResult;
-import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -80,9 +81,8 @@ public class PackageServiceImpl implements PackageService {
 
     @Resource
     private PackageForecastService packageForecastService;
-
     @Resource
-    private MQProducerService mqProducerService;
+    private WorkflowTaskRecordFeign workflowTaskRecordFeign;
 
     @Resource
     private LogisticsBillFeign logisticsBillFeign;
@@ -303,15 +303,40 @@ public class PackageServiceImpl implements PackageService {
                 }
                 //自动发货
                 if (dto.getIsAutoOut()) {
-                    List<String> soIdList = item.getDetailList().stream().filter(v -> !SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(v.getBillStatus())).map(PackageForecastDetailDTO.AddDTO::getSoId).collect(Collectors.toList());
-                    // 异步推送到MQ
-                    soIdList.forEach(soId -> {
-                        SendResult sendResult = mqProducerService.syncClassMsg(RocketMqTopic.ASYNC_MERGE_PACKAGE_DELIVERY_TOPIC, RocketMqTagEnum.ASYNC_MERGE_PACKAGE_DELIVERY_TAG.getName(),
-                                soId, soId);
-                        if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
-                            throw new RuntimeException(CharSequenceUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(sendResult)));
+                    Map<String, String> soIdCodeMap = item.getDetailList().stream()
+                            .filter(v -> !SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(v.getBillStatus()))
+                            .collect(Collectors.toMap(
+                                    PackageForecastDetailDTO.AddDTO::getSoId,
+                                    PackageForecastDetailDTO.AddDTO::getSoCode,
+                                    (a, b) -> a
+                            ));
+                    for (Map.Entry<String, String> soItem : soIdCodeMap.entrySet()) {
+                        String soId = soItem.getKey();
+                        String soCode = soItem.getValue();
+                        try {
+                            WorkflowTaskRecordDTO.StartWorkflowDTO startDTO = new WorkflowTaskRecordDTO.StartWorkflowDTO();
+                            startDTO.setSourceId(soId);
+                            startDTO.setSourceCode(soCode);
+                            Map<String, Object> firstNodeInputData = new HashMap<>();
+                            firstNodeInputData.put("soId", soId);
+                            firstNodeInputData.put("id", soId);
+                            firstNodeInputData.put("sourceCode", soCode);
+                            startDTO.setFirstNodeInputData(firstNodeInputData);
+                            WorkflowTaskRecordDTO.StartWorkflowResultDTO startResult = workflowTaskRecordFeign.startMergePackageDeliveryWorkflow(startDTO);
+                            if (startResult == null || !Boolean.TRUE.equals(startResult.getAccepted())) {
+                                resultDTOList.add(BatchResultDTO.fail(soId, soCode, "自动出库任务受理失败"));
+                                continue;
+                            }
+                            resultDTOList.add(BatchResultDTO.success(
+                                    soId,
+                                    soCode,
+                                    CharSequenceUtil.format("自动出库任务已受理，任务ID:{}", startResult.getInstanceId())
+                            ));
+                        } catch (Exception ex) {
+                            log.error("组包自动出库任务受理失败，soId={}", soId, ex);
+                            resultDTOList.add(BatchResultDTO.fail(soId, soCode, BatchResultDTO.resolveFailMsg(ex)));
                         }
-                    });
+                    }
                 }
             } else {
                 hasDeliveryInterceptMap.forEach((key, val) -> {
