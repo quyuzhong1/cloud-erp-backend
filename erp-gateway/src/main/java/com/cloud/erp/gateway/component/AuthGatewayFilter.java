@@ -79,6 +79,8 @@ public class AuthGatewayFilter implements GlobalFilter, Ordered {
 
     private static final String API_TOKEN_WHITELIST_PATH = "/apiTokenWhitelist";
 
+    private static final String API_SYS_EVENT_TRACKING_PATH = "/api/sys" + AuthPassPath.EVENT_TRACKING_PATH;
+
     private static final String[] API_TOKEN_DENY_PATHS = {
             PERSONAL_CENTER_API_TOKEN_PATH,
             API_TOKEN_WHITELIST_PATH,
@@ -187,7 +189,7 @@ public class AuthGatewayFilter implements GlobalFilter, Ordered {
                 return chain.filter(exchange);
             }
             // 埋点路径解析
-            if (AuthPassPath.EVENT_TRACKING_PATH.contains(uri)) {
+            if (isEventTrackingPath(uri)) {
                 // 解析请求参数token用户
                 parseFormDataToken(exchange, request);
                 return chain.filter(exchange);
@@ -246,6 +248,10 @@ public class AuthGatewayFilter implements GlobalFilter, Ordered {
 
     private Mono<Void> unauthorizedResponse(ServerWebExchange exchange, String msg, Integer code) {
         return ServletUtils.webFluxResponseWriter(exchange.getResponse(), msg, code);
+    }
+
+    private boolean isEventTrackingPath(String uri) {
+        return AuthPassPath.EVENT_TRACKING_PATH.equals(uri) || API_SYS_EVENT_TRACKING_PATH.equals(uri);
     }
 
     private Mono<Void> tryApiTokenAuth(ServerWebExchange exchange, GatewayFilterChain chain,
