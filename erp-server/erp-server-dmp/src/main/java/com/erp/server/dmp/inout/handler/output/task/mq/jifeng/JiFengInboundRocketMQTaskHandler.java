@@ -23,7 +23,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @Scope("prototype")
@@ -106,20 +105,36 @@ public class JiFengInboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandl
     	}
 		platformInboundDTO.setReceivingDataList(receivingDataList);
 		
-		this.groupBySku(platformInboundDTO);
+		this.groupBySku(platformInboundDTO, boxListDTOS);
     	
         return platformInboundDTO;
     }
 
-    private void groupBySku(PlatformInboundDTO dto) {
-        Map<String, Integer> receivedQuantityMap = dto.getReceivingDataList().stream()
-                .collect(Collectors.groupingBy(Receiving::getProductSku, Collectors.summingInt(Receiving::getReceiveQty)));
-
-        List<PlatformInboundDTO.Item> items = receivedQuantityMap.entrySet().stream()
-                .map(entry -> new PlatformInboundDTO.Item(entry.getKey(), entry.getValue()))
-                .collect(Collectors.toList());
-
-        dto.setItems(items);
+    /**
+     * 按 SKU 汇总收货/良品/不良品数量。
+     * <p>
+     * 极风入库单中同一 SKU 满足 {@code putawayCount == goodCount + badCount}，
+     * 因此 {@code receivedQuantity} 仍沿用 {@code putawayCount} 汇总（语义不变），
+     * 额外把 {@code goodCount}/{@code badCount} 汇总进 {@code goodQuantity}/{@code badQuantity}，
+     * 供下游 {@code handlePlatformMessage} 按良品/不良品拆分生成签收记录。
+     */
+    private void groupBySku(PlatformInboundDTO dto, List<JiFengInboundResp.SkuListDTO> skuList) {
+        Map<String, PlatformInboundDTO.Item> itemMap = new LinkedHashMap<>();
+        for (JiFengInboundResp.SkuListDTO skuListDTO : skuList) {
+            int putaway = Objects.isNull(skuListDTO.getPutawayCount()) ? 0 : skuListDTO.getPutawayCount();
+            int good = Objects.isNull(skuListDTO.getGoodCount()) ? 0 : skuListDTO.getGoodCount();
+            int bad = Objects.isNull(skuListDTO.getBadCount()) ? 0 : skuListDTO.getBadCount();
+            PlatformInboundDTO.Item item = itemMap.computeIfAbsent(skuListDTO.getSku(), sku -> {
+                PlatformInboundDTO.Item newItem = new PlatformInboundDTO.Item(sku, 0);
+                newItem.setGoodQuantity(0);
+                newItem.setBadQuantity(0);
+                return newItem;
+            });
+            item.setReceivedQuantity(item.getReceivedQuantity() + putaway);
+            item.setGoodQuantity(item.getGoodQuantity() + good);
+            item.setBadQuantity(item.getBadQuantity() + bad);
+        }
+        dto.setItems(new ArrayList<>(itemMap.values()));
     }
 
 	private String convertStatus(Integer status,List<JiFengInboundResp.SkuListDTO> boxListDTOS) {
