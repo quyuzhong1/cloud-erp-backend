@@ -454,7 +454,10 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         return lambdaUpdate()
                 .eq(DeliveryDeclareDetailMidEntity::getSourceType, SourceTypeEnum.FIRST_MILE_DELIVERY.getCode())
                 .eq(DeliveryDeclareDetailMidEntity::getSourceId, dto.getSourceId())
-                .eq(DeliveryDeclareDetailMidEntity::getBusinessId, dto.getBusinessId())
+                // 报关单先于海外仓入库单生成时，中间表 business_id 为空，若再按 business_id 精确匹配会漏更新，
+                // 导致报关单业务单号滞后为空。头程发货单与海外仓入库单一对一，按来源单匹配并回写
+                // business_id / business_code 即可补齐业务单号。
+                .set(DeliveryDeclareDetailMidEntity::getBusinessId, dto.getBusinessId())
                 .set(DeliveryDeclareDetailMidEntity::getBusinessCode, dto.getBusinessCode())
                 .update();
     }
@@ -569,11 +572,13 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
 
         Map<String, DeliveryDeclareDetailMidEntity> entityMap = entityList.stream()
                 .collect(Collectors.toMap(DeliveryDeclareDetailMidEntity::getId, item -> item, (oldValue, newValue) -> oldValue));
-        return distinctIds.stream()
+        List<DeliveryDeclareDetailMidDTO.MergePreviewDTO> previewList = distinctIds.stream()
                 .map(entityMap::get)
                 .filter(Objects::nonNull)
                 .map(item -> BeanMapperUtils.map(DeliveryDeclareDetailMidDTO.MergePreviewDTO.class, item))
                 .collect(Collectors.toList());
+        fillMergePreviewLatestProductLogistic(previewList, entityMap);
+        return previewList;
     }
 
     /**
@@ -1938,5 +1943,49 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         data.setLatestUnitPrice(productLogisticDTO.getPrice());
         data.setLatestCurrency(productLogisticDTO.getDeclareCurrency());
         data.setLatestCurrencySymbol(productLogisticDTO.getDeclareCurrencySymbol());
+    }
+
+    /**
+     * 填充合并前预览的最新商品物流报关信息。
+     *
+     * <p>中间表保存的是生成明细时的报关快照，商品报关资料被修改后，
+     * 合并前预览需要展示 PLM 最新的海关编码、报关中文名、申报要素和单位。
+     * 头程发货单同步刷新单价和币种；B2B 发货通知单的单价和币种存在客户收货取 SO 的规则，
+     * 此处不覆盖，避免影响 B2B 客户场景。</p>
+     *
+     * @param list 合并前预览明细
+     * @param entityMap 中间表明细映射，用于通过预览明细 id 反查 skuId
+     */
+    private void fillMergePreviewLatestProductLogistic(List<DeliveryDeclareDetailMidDTO.MergePreviewDTO> list,
+                                                       Map<String, DeliveryDeclareDetailMidEntity> entityMap) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        Map<String, ProductDetailDTO.ProductLogisticDTO> productLogisticMap = getProductLogisticsMap(entityMap.values().stream()
+                .map(DeliveryDeclareDetailMidEntity::getSkuId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList()));
+        if (CollUtil.isEmpty(productLogisticMap)) {
+            return;
+        }
+        for (DeliveryDeclareDetailMidDTO.MergePreviewDTO data : list) {
+            DeliveryDeclareDetailMidEntity entity = entityMap.get(data.getId());
+            if (Objects.isNull(entity)) {
+                continue;
+            }
+            ProductDetailDTO.ProductLogisticDTO productLogisticDTO = productLogisticMap.get(entity.getSkuId());
+            if (Objects.isNull(productLogisticDTO)) {
+                continue;
+            }
+            data.setHsCode(CharSequenceUtil.blankToDefault(productLogisticDTO.getCustomsCode(), ""));
+            data.setProductNameCn(CharSequenceUtil.blankToDefault(productLogisticDTO.getDeclareChineseName(), ""));
+            data.setDeclareElement(CharSequenceUtil.blankToDefault(productLogisticDTO.getDeclareElement(), ""));
+            data.setUnit(CharSequenceUtil.blankToDefault(productLogisticDTO.getDeclareUnit(), ""));
+            if (!CharSequenceUtil.equals(data.getSourceType(), SourceTypeEnum.SO_DELIVERY_NOTICE.getCode())) {
+                data.setUnitPrice(productLogisticDTO.getPrice());
+                data.setCurrency(productLogisticDTO.getDeclareCurrency());
+            }
+        }
     }
 }
