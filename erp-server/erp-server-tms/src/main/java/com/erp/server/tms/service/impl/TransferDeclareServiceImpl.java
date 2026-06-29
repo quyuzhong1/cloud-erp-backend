@@ -25,7 +25,6 @@ import java.util.stream.Collectors;
 import javax.annotation.Resource;
 
 import cn.hutool.core.collection.ListUtil;
-import com.common.business.annotation.Idempotent;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
@@ -562,7 +561,6 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     }
     //规则：VJ+字段客户参考号后面的数字202604170002
     //例如：VJ202604170002
-    @Idempotent
     private String getConcatNo() {
         return docNoGenHelper.generateBusinessCode(BusinessNoTypeEnum.CODE_VJ);
     }
@@ -590,7 +588,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         tmsB2cDeclareReconciliationDetailService.add(addDetailList);
     }
 
-    @Idempotent
+    @DistributeLocker(businessType = DistributeKeyConstant.GET_REFERENCE_CODE, keyName = "concatNo")
     private String getReferenceCode(String concatNo) {
         String orderCode = concatNo.replace(BusinessNoTypeEnum.CODE_VJ.getName(), "");
         StringBuilder stringBuffer = new StringBuilder();
