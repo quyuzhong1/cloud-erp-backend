@@ -62,6 +62,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -194,8 +195,100 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
     @Override
     public List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> listSourceByDeclareIdList(List<String> declareBillIdList) {
         List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList = baseMapper.listSourceByDeclareIdList(declareBillIdList);
+        // B2B 目的国与规则匹配字段分步补齐：前者依赖 OMS 客户，后者依赖发货通知单主表。
         fillB2bSourceCountry(sourceDetailList, declareBillIdList);
+        fillB2bSourceRuleMatchFields(sourceDetailList);
         return sourceDetailList;
+    }
+
+    /**
+     * 拆分/合并回读来源明细时，补齐报关规则匹配所需的销售组织、发货仓、中转仓等字段。
+     * <p>SQL 已优先读取中间表及 so_delivery_notice 回退值；若仍缺失，则批量回查 WMS 发货通知单。</p>
+     *
+     * @param sourceDetailList 报关单关联的来源明细
+     */
+    private void fillB2bSourceRuleMatchFields(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList) {
+        if (CollUtil.isEmpty(sourceDetailList)) {
+            return;
+        }
+        List<String> sourceIds = sourceDetailList.stream()
+                .filter(item -> Objects.nonNull(item)
+                        && CharSequenceUtil.equals(item.getSourceType(), SourceTypeEnum.SO_DELIVERY_NOTICE.getCode()))
+                .filter(this::needFillB2bRuleMatchFields)
+                .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getSourceId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(sourceIds)) {
+            return;
+        }
+        List<SoDeliveryNoticeEntity> noticeList = soDeliveryNoticeFeign.listByIds(sourceIds);
+        if (CollUtil.isEmpty(noticeList)) {
+            log.warn("B2B报关来源明细补齐规则匹配字段失败：未查询到发货通知单，sourceIds={}", sourceIds);
+            return;
+        }
+        applyB2bNoticeRuleMatchFields(sourceDetailList, buildB2bNoticeMap(noticeList));
+    }
+
+    /**
+     * 判断 B2B 来源明细是否仍缺少报关规则匹配维度。
+     *
+     * @param detail 来源明细
+     * @return 销售组织、发货仓或中转仓任一为空时返回 true
+     */
+    private boolean needFillB2bRuleMatchFields(TmsDeclareBillDTO.SourceDeliveryDetailDTO detail) {
+        return CharSequenceUtil.isBlank(detail.getSalesOrgId())
+                || CharSequenceUtil.isBlank(detail.getFromWarehouseId())
+                || CharSequenceUtil.isBlank(detail.getTransferWarehouseIds());
+    }
+
+    /**
+     * 将发货通知单主表上的规则匹配维度回填到来源明细（仅填空不覆盖）。
+     *
+     * @param sourceDetailList 来源明细列表
+     * @param noticeMap        来源单 id -> 发货通知单
+     */
+    private void applyB2bNoticeRuleMatchFields(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList,
+                                             Map<String, SoDeliveryNoticeEntity> noticeMap) {
+        if (CollUtil.isEmpty(sourceDetailList) || CollUtil.isEmpty(noticeMap)) {
+            return;
+        }
+        for (TmsDeclareBillDTO.SourceDeliveryDetailDTO detail : sourceDetailList) {
+            if (!CharSequenceUtil.equals(detail.getSourceType(), SourceTypeEnum.SO_DELIVERY_NOTICE.getCode())) {
+                continue;
+            }
+            SoDeliveryNoticeEntity notice = noticeMap.get(detail.getSourceId());
+            if (Objects.isNull(notice)) {
+                continue;
+            }
+            if (CharSequenceUtil.isBlank(detail.getSalesOrgId())) {
+                detail.setSalesOrgId(notice.getSalesOrgId());
+                detail.setSalesOrgName(notice.getSalesOrgName());
+            }
+            if (CharSequenceUtil.isBlank(detail.getFromWarehouseId())) {
+                detail.setFromWarehouseId(notice.getWarehouseId());
+                detail.setFromWarehouseName(notice.getWarehouseName());
+            }
+            if (CharSequenceUtil.isBlank(detail.getTransferWarehouseIds())) {
+                detail.setTransferWarehouseIds(notice.getTransferWarehouseIds());
+            }
+        }
+    }
+
+    /**
+     * 构建发货通知单 id 索引，供 B2B 来源明细批量回填使用。
+     *
+     * @param noticeList 发货通知单列表
+     * @return 来源单 id -> 发货通知单
+     */
+    private Map<String, SoDeliveryNoticeEntity> buildB2bNoticeMap(List<SoDeliveryNoticeEntity> noticeList) {
+        if (CollUtil.isEmpty(noticeList)) {
+            return Collections.emptyMap();
+        }
+        return noticeList.stream()
+                .filter(Objects::nonNull)
+                .filter(item -> CharSequenceUtil.isNotBlank(item.getId()))
+                .collect(Collectors.toMap(SoDeliveryNoticeEntity::getId, Function.identity(), (oldValue, newValue) -> oldValue));
     }
 
     /**
@@ -230,6 +323,8 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
             applyDeclareBillCountryFallback(sourceDetailList, declareBillIdList);
             return;
         }
+        // 与目的国补齐共用同一次发货通知单查询，先回填规则匹配维度，避免拆分链路重复 Feign。
+        applyB2bNoticeRuleMatchFields(sourceDetailList, buildB2bNoticeMap(noticeList));
         List<String> customerIds = noticeList.stream()
                 .map(SoDeliveryNoticeEntity::getCustomerId)
                 .filter(CharSequenceUtil::isNotBlank)
@@ -347,6 +442,21 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
             return  Boolean.TRUE;
         }
         return lambdaUpdate().in(DeliveryDeclareDetailMidEntity::getSourceId,sourceIds).remove();
+    }
+    @Override
+    public Boolean updateBusinessCode(TmsDeclareBillDTO.UpdateDeliveryDeclareBusinessCodeDTO dto) {
+        if (Objects.isNull(dto)
+                || CharSequenceUtil.isBlank(dto.getSourceId())
+                || CharSequenceUtil.isBlank(dto.getBusinessId())
+                || CharSequenceUtil.isBlank(dto.getBusinessCode())) {
+            return Boolean.TRUE;
+        }
+        return lambdaUpdate()
+                .eq(DeliveryDeclareDetailMidEntity::getSourceType, SourceTypeEnum.FIRST_MILE_DELIVERY.getCode())
+                .eq(DeliveryDeclareDetailMidEntity::getSourceId, dto.getSourceId())
+                .eq(DeliveryDeclareDetailMidEntity::getBusinessId, dto.getBusinessId())
+                .set(DeliveryDeclareDetailMidEntity::getBusinessCode, dto.getBusinessCode())
+                .update();
     }
 
     /**
