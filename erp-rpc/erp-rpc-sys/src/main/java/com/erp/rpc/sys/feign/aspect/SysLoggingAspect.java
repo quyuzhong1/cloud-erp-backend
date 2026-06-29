@@ -62,6 +62,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.regex.Pattern;
@@ -101,6 +102,8 @@ public class SysLoggingAspect {
     private static final String BATCH_OPERATION_LOG_DEC = "{}了{}\n id为:{}\n 结果为:{}\n";
     // 自定义描述格式(包含任意{})
     private static final String CUSTOM_MATCH_REGEX = ".*\\{.*\\}.*";
+    /** 重复提交防重窗口（秒） */
+    private static final long IDEMPOTENT_TTL_SECONDS = 3L;
 
     /**
      * 数据缓存
@@ -205,11 +208,10 @@ public class SysLoggingAspect {
     public Object doAround(ProceedingJoinPoint joinPoint) throws Throwable {
         //接口重复提交校验
         String idempotentKey = getIdempotentKey(joinPoint);
-        if (redisUtil.hasKey(idempotentKey)) {
+        // 原子加锁（SET key value NX EX ttl）
+        boolean locked = redisUtil.setIfAbsent(idempotentKey, "1", IDEMPOTENT_TTL_SECONDS, TimeUnit.SECONDS);
+        if (!locked) {
             throw new ServiceException(ApiError.COMMON_DUPLICATE_OPERATION);
-        }else {
-            //如果没有表示不是重复提交并设置key存活的缓存时间
-            redisUtil.set(idempotentKey, "", 3);
         }
         // 处理请求
         Object obj = null;
@@ -274,8 +276,7 @@ public class SysLoggingAspect {
                 // 清除当前缓存
                 LOG_INFO_THREAD_LOCAL.remove();
             }
-            //接口处理完成，清理已添加缓存key
-            redisUtil.del(idempotentKey);
+            // 不主动删除防重key，交由TTL自然过期，保证窗口内重复提交被拦截。
         }
 //        return obj;
     }

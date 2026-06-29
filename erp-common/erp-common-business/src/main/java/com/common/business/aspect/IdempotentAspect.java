@@ -72,16 +72,9 @@ public class IdempotentAspect {
         }
         // 唯一标识（url + 请求方身份 + params）。API Token请求不透传原始Authorization，使用tokenId/用户上下文兜底。
         String submitKey = RedisCacheConstants.IDEM_REDISKEY + MD5Util.toMD5(url + "_" + requesterIdentity + ":" + params);
-        boolean flag = false;
-        //判断缓存中是否有此key
-        if (redisUtil.hasKey(submitKey)) {
-            log.warn("key={},interval={},重复提交", submitKey, interval);
-        } else {
-            //如果没有表示不是重复提交并设置key存活的缓存时间
-            redisUtil.set(submitKey, "", interval);
-            flag = true;
-        }
-        if (flag) {
+        // 原子加锁（SET key value NX EX ttl）
+        boolean locked = redisUtil.setIfAbsent(submitKey, "1", interval, java.util.concurrent.TimeUnit.SECONDS);
+        if (locked) {
             Object result;
             try {
                 result = proceedingJoinPoint.proceed();
@@ -89,11 +82,10 @@ public class IdempotentAspect {
                 /*异常通知方法*/
                 log.warn("异常通知方法>目标方法名{},异常为：{}", method.getName(), e);
                 throw e;
-            } finally {
-                redisUtil.del(submitKey);
             }
             return result;
         } else {
+            log.warn("key={},interval={},重复提交", submitKey, interval);
             throw new ServiceException(ApiError.COMMON_DUPLICATE_OPERATION);
         }
     }
