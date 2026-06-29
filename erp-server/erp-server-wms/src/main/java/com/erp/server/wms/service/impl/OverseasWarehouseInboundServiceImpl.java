@@ -494,7 +494,11 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         TmsDeclareBillDTO.UpdateDeliveryDeclareBusinessCodeDTO dto =
                 new TmsDeclareBillDTO.UpdateDeliveryDeclareBusinessCodeDTO(
                         inboundEntity.getSourceId(), inboundEntity.getId(), inboundEntity.getCode());
-        deliveryDeclareDetailMidFeign.updateBusinessCode(dto);
+        Boolean updated = deliveryDeclareDetailMidFeign.updateBusinessCode(dto);
+        if (!Boolean.TRUE.equals(updated)) {
+            log.warn("同步报关中间表业务单号失败, OverseasWarehouseInboundEntityCode={}, sourceId={}, businessId={}, code={}",
+                    inboundEntity.getCode(), inboundEntity.getSourceId(), inboundEntity.getId(), inboundEntity.getCode());
+        }
     }
 
     @Override
