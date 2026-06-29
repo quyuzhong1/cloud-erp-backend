@@ -3,6 +3,7 @@ package com.sdk.oms.shopee.utils;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.OkHttpUtils;
 import com.sdk.oms.shopee.dto.base.ShopeeAuth;
 import com.sdk.oms.shopee.dto.base.ShopeeResponse;
@@ -22,6 +23,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * @author zdy
@@ -40,6 +42,7 @@ public class ShopeeApiUtils {
             "access_token", "refresh_token", "sign", "partner_key", "tmp_partner_key",
             "secret", "secret_key", "token", "authorization"
     ));
+    private static final List<MaskRule> SENSITIVE_MASK_RULES = buildSensitiveMaskRules();
 
     public static String getPublicSign(String path, long partner_id, String tmp_partner_key) {
         long timest = System.currentTimeMillis() / 1000L;
@@ -56,6 +59,7 @@ public class ShopeeApiUtils {
             sign = String.format("%064x", new BigInteger(1, mac.doFinal(base_string)));
         } catch (Exception e) {
             log.error("虾皮签名生成异常, path: {}, 错误: {}", path, e.getMessage(), e);
+            throw new ServiceException("虾皮签名生成失败");
         }
         return sign;
     }
@@ -79,6 +83,7 @@ public class ShopeeApiUtils {
             sign = String.format("%064x", new BigInteger(1, mac.doFinal(base_string)));
         } catch (Exception e) {
             log.error("虾皮签名生成异常, path: {}, 错误: {}", path, e.getMessage(), e);
+            throw new ServiceException("虾皮签名生成失败");
         }
         return sign;
     }
@@ -98,6 +103,7 @@ public class ShopeeApiUtils {
             sign = String.format("%064x", new BigInteger(1, mac.doFinal(base_string)));
         } catch (Exception e) {
             log.error("虾皮签名生成异常, path: {}, 错误: {}", path, e.getMessage(), e);
+            throw new ServiceException("虾皮签名生成失败");
         }
         return sign;
     }
@@ -193,9 +199,9 @@ public class ShopeeApiUtils {
             log.info("虾皮接口响应, method: POST, url: {}, response: {}", safeUrl, maskSensitiveContent(bodyStr));
             ShopeeAuth resultMap = JSONUtil.toBean(bodyStr, ShopeeAuth.class);
             return resultMap;
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             log.error("虾皮接口请求异常, method: POST, url: {}, 错误: {}", safeUrl, e.getMessage(), e);
-            throw e;
+            throw new ServiceException("虾皮授权接口请求失败");
         }
     }
 
@@ -336,13 +342,32 @@ public class ShopeeApiUtils {
             return null;
         }
         String result = content;
-        for (String key : SENSITIVE_KEYS) {
-            result = result.replaceAll("(?i)(\"" + key + "\"\\s*:\\s*\")([^\"]*)(\")", "$1" + MASK + "$3");
-            result = result.replaceAll("(?i)(\"" + key + "\"\\s*:\\s*)([^,}\\]]+)", "$1\"" + MASK + "\"");
-            result = result.replaceAll("(?i)([?&]" + key + "=)([^&\\s]+)", "$1" + MASK);
-            result = result.replaceAll("(?i)(^" + key + "=)([^&\\s]+)", "$1" + MASK);
+        for (MaskRule rule : SENSITIVE_MASK_RULES) {
+            result = rule.pattern.matcher(result).replaceAll(rule.replacement);
         }
         return result;
+    }
+
+    private static List<MaskRule> buildSensitiveMaskRules() {
+        List<MaskRule> rules = new ArrayList<>();
+        for (String key : SENSITIVE_KEYS) {
+            String quotedKey = Pattern.quote(key);
+            rules.add(new MaskRule(Pattern.compile("(?i)(\"" + quotedKey + "\"\\s*:\\s*\")([^\"]*)(\")"), "$1" + MASK + "$3"));
+            rules.add(new MaskRule(Pattern.compile("(?i)(\"" + quotedKey + "\"\\s*:\\s*)([^,}\\]]+)"), "$1\"" + MASK + "\""));
+            rules.add(new MaskRule(Pattern.compile("(?i)([?&]" + quotedKey + "=)([^&\\s]+)"), "$1" + MASK));
+            rules.add(new MaskRule(Pattern.compile("(?i)(^" + quotedKey + "=)([^&\\s]+)"), "$1" + MASK));
+        }
+        return rules;
+    }
+
+    private static class MaskRule {
+        private final Pattern pattern;
+        private final String replacement;
+
+        private MaskRule(Pattern pattern, String replacement) {
+            this.pattern = pattern;
+            this.replacement = replacement;
+        }
     }
 
     public static String buildUrl(String url, Map<String, Object> urlParams) {

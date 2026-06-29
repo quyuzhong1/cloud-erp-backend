@@ -88,6 +88,10 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_PACKAGE_FOR
 @Slf4j
 @Service
 public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecastMapper, PackageForecastEntity> implements PackageForecastService {
+
+    private static final String TIKTOK_DELIVERY_MODE_SELF = "SELF_DELIVERY";
+    private static final String TIKTOK_DELIVERY_MODE_PLATFORM = "PLATFORM_DELIVERY";
+
     @Resource
     private OperateLogService operateLogService;
 
@@ -310,6 +314,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
 
     /**
      * 取消上传
+     * 平台接口调用不可回滚，不用全局事务包裹远程操作；适配器负责本地更新失败后的补偿提示。
      *
      * @param id
      * @return
@@ -328,12 +333,26 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             throw new ServiceException("仅上传成功可操作");
         }
         //物流商
-        String supplierId = entity.getLogisticsSupplierId();
-        LogisticsSupplierDTO.AuthDTO authDTO = logisticsAuthFeign.getAuthBySupplierId(supplierId);
-        String logisticsPlatform = authDTO.getLogisticsPlatform();
-        PackageForecastPlatformAdapter adapter = packageForecastPlatformAdapterFactory.getByPlatform(logisticsPlatform)
-                .orElseThrow(() -> new ServiceException(platformName(logisticsPlatform) + "平台尚未对接取消上传"));
-        return adapter.cancel(Collections.singletonList(id)).get(0);
+        try {
+            String supplierId = entity.getLogisticsSupplierId();
+            LogisticsSupplierDTO.AuthDTO authDTO = logisticsAuthFeign.getAuthBySupplierId(supplierId);
+            if (Objects.isNull(authDTO)) {
+                throw new ServiceException("物流商不存在");
+            }
+            String logisticsPlatform = authDTO.getLogisticsPlatform();
+            PackageForecastPlatformAdapter adapter = packageForecastPlatformAdapterFactory.getByPlatform(logisticsPlatform)
+                    .orElseThrow(() -> new ServiceException(platformName(logisticsPlatform) + "平台尚未对接取消上传"));
+            return firstResultOrThrow(adapter.cancel(Collections.singletonList(id)), "取消上传");
+        } catch (Exception e) {
+            log.error("组包预报单取消失败, id: {}, code: {}", entity.getId(), entity.getCode(), e);
+            entity.setRemark("取消失败原因:" + e.getMessage());
+            try {
+                this.updateById(entity);
+            } catch (Exception updateException) {
+                log.error("组包预报单取消失败后更新失败原因失败, id: {}, code: {}", entity.getId(), entity.getCode(), updateException);
+            }
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "取消上传失败:" + e.getMessage());
+        }
 
     }
 
@@ -349,7 +368,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             try {
                 cancelResult = this.cancel(id);
             } catch (Exception e) {
-                log.error("组包预报单取消失败===>{}", e.getMessage());
+                log.error("组包预报单取消失败", e);
                 PackageForecastEntity entity = this.getById(id);
                 if (Objects.isNull(entity)) {
                     cancelResult = BatchResultDTO.fail(id, id, "组包预报单不存在, 取消失败");
@@ -447,16 +466,43 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             dto.setDeliveryPlatform(logisticsPlatform);
             dto.setCollectMode(collectMode);
             dto.setCollectAddressId(collectAddressId);
-            return adapter.upload(dto).get(0);
+            return firstResultOrThrow(adapter.upload(dto), "上传");
         } catch (Exception e) {
-            entity.setUploadStatus(failure);
-            entity.setRemark("上传失败:" + e.getMessage());
-            this.updateById(entity);
-            log.error("组包预报上传失败>>>>>{}", e);
+            log.error("组包预报上传失败>>>>>", e);
+            persistUploadFailureIfNeeded(entity, e);
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), "上传失败" + e.getMessage());
         }
 
 
+    }
+
+    private void persistUploadFailureIfNeeded(PackageForecastEntity entity, Exception e) {
+        if (hasPlatformInfo(entity)) {
+            log.warn("组包预报上传异常但已存在平台信息，不覆盖为上传失败, id: {}, code: {}, handoverNo: {}, platformPackageNo: {}",
+                    entity.getId(), entity.getCode(), entity.getHandoverNo(), entity.getPlatformPackageNo());
+            return;
+        }
+        entity.setUploadStatus(PackageUploadStatusEnum.UPLOAD_FAILURE.getCode());
+        entity.setRemark("上传失败:" + e.getMessage());
+        try {
+            this.updateById(entity);
+        } catch (Exception updateException) {
+            log.error("组包预报上传失败后更新失败状态失败, id: {}, code: {}",
+                    entity.getId(), entity.getCode(), updateException);
+        }
+    }
+
+    private boolean hasPlatformInfo(PackageForecastEntity entity) {
+        return StringUtils.isNotBlank(entity.getHandoverNo())
+                || StringUtils.isNotBlank(entity.getPlatformPackageNo())
+                || StringUtils.isNotBlank(entity.getPlatformNo());
+    }
+
+    private BatchResultDTO firstResultOrThrow(List<BatchResultDTO> resultList, String operationName) {
+        if (CollectionUtils.isEmpty(resultList)) {
+            throw new ServiceException(operationName + "结果为空");
+        }
+        return resultList.get(0);
     }
 
     @Override
@@ -485,12 +531,20 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
                     .orElseThrow(() -> new ServiceException(platformName(logisticsPlatform) + "平台尚未对接打印"));
             base64 = adapter.print(id);
         } catch (Exception e) {
-            log.error("打印失败>>>>>>>{}", e);
-            throw new ServiceException(e.getMessage());
+            log.error("打印失败>>>>>>>", e);
+            throw new ServiceException("打印失败");
         }
         if (CharSequenceUtil.isNotBlank(base64)) {
-            entity.setPrintStatus(PackagePrintStatusEnum.ALREADY.getCode());
-            this.updateById(entity);
+            boolean updated = this.lambdaUpdate()
+                    .set(PackageForecastEntity::getPrintStatus, PackagePrintStatusEnum.ALREADY.getCode())
+                    .setSql(Objects.nonNull(entity.getVersion()), "version = version + 1")
+                    .eq(PackageForecastEntity::getId, id)
+                    .eq(Objects.nonNull(entity.getVersion()), PackageForecastEntity::getVersion, entity.getVersion())
+                    .eq(PackageForecastEntity::getIsDeleted, false)
+                    .update();
+            if (!updated) {
+                throw new ServiceException("打印状态更新失败");
+            }
         } else {
             throw new ServiceException("打印失败");
         }
@@ -639,7 +693,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
                 .distinct()
                 .collect(Collectors.toList());
         List<SoB2cEntity> soB2cEntityList = CollectionUtils.isNotEmpty(soIds) ? soB2cFeign.listByIds(soIds) : Collections.emptyList();
-        Map<String, SoB2cEntity> soB2cEntityMap = soB2cEntityList.stream()
+        Map<String, SoB2cEntity> soB2cEntityMap = CollectionUtils.emptyIfNull(soB2cEntityList).stream()
                 .collect(Collectors.toMap(SoB2cEntity::getId, item -> item, (oldValue, newValue) -> oldValue));
         for (PackageForecastDTO.ExportViewDTO item : list) {
             SoB2cEntity soB2cEntity = soB2cEntityMap.get(item.getSoId());
@@ -948,7 +1002,27 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         PackageForecastPlatformAdapter adapter = packageForecastPlatformAdapterFactory.getByPlatform(PlatformDictEnum.TIK_TOK_FULLY.getCode())
                 .orElseThrow(() -> new ServiceException("TikTok全托管平台尚未对接上传"));
         dto.setDeliveryPlatform(PlatformDictEnum.TIK_TOK_FULLY.getCode());
-        return adapter.upload(dto).get(0);
+        List<BatchResultDTO> resultList = adapter.upload(dto);
+        if (CollectionUtils.isEmpty(resultList)) {
+            throw new ServiceException("TikTok全托管上传结果为空");
+        }
+        List<BatchResultDTO> failList = resultList.stream()
+                .filter(result -> !Boolean.TRUE.equals(result.getSuccess()))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(failList)) {
+            String failMsg = failList.stream()
+                    .limit(3)
+                    .map(result -> StringUtils.defaultString(result.getCode(), result.getId()) + ":" + StringUtils.defaultString(result.getMsg()))
+                    .collect(Collectors.joining(";"));
+            return BatchResultDTO.fail(failList.get(0).getId(), failList.get(0).getCode(),
+                    String.format("TikTok全托管上传失败%d条：%s", failList.size(), failMsg));
+        }
+        BatchResultDTO firstResult = resultList.get(0);
+        if (resultList.size() == 1) {
+            return firstResult;
+        }
+        return BatchResultDTO.success(firstResult.getId(), firstResult.getCode(),
+                String.format("TikTok全托管上传成功，共%d条", resultList.size()));
     }
 
     private String platformName(String platform) {
@@ -1086,9 +1160,9 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         TikTokFullyShippingProviderReq tikTokFullyShippingProviderReq = new TikTokFullyShippingProviderReq();
         tikTokFullyShippingProviderReq.setDeliveryOption(dto.getDeliveryOption());
         if(dto.getCollectMode().equals(PackageForecastCollectModeEnum.SELF_SEND.getCode())){
-            tikTokFullyShippingProviderReq.setDeliveryMode("SELF_DELIVERY");
+            tikTokFullyShippingProviderReq.setDeliveryMode(TIKTOK_DELIVERY_MODE_SELF);
         }else{
-            tikTokFullyShippingProviderReq.setDeliveryMode("PLATFORM_DELIVERY");
+            tikTokFullyShippingProviderReq.setDeliveryMode(TIKTOK_DELIVERY_MODE_PLATFORM);
         }
         tikTokFullyShippingProviderReq.setSenderContactId(dto.getAddressId());
         tikTokFullyShippingProviderReq.setDeliveryOrderCodes(deliveryCodes);

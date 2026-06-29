@@ -143,7 +143,7 @@
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
-        <!--是否显示0库存-->
+        <!--历史字段名保留为 isShowZeroInventory，当前语义为 true 时过滤掉 0 库存-->
         <if test="params != null and params.isShowZeroInventory">
             AND NOT (
                 fi.recommended_replenishment_qty = 0

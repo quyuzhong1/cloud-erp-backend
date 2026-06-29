@@ -52,6 +52,7 @@ public class SoB2cDeliveryTypeFixJob {
             return ReturnT.FAIL;
         }
         long totalUpdated = 0L;
+        long failedPages = 0L;
         XxlJobHelper.log("fixSoB2cDeliveryTypeJob 开始执行，startDate={}，endDate={}，pageSize={}",
                 param.getStartDate(), param.getEndDate(), param.getPageSize());
         for (LocalDate date = param.getStartDate(); !date.isAfter(param.getEndDate()); date = date.plusDays(1)) {
@@ -72,6 +73,16 @@ public class SoB2cDeliveryTypeFixJob {
                 }
 
                 Map<String, String> thirdWarehouseSoIdMap = listActiveThirdWarehouseSoIdMap(records);
+                if (thirdWarehouseSoIdMap == null) {
+                    failedPages++;
+                    XxlJobHelper.log("fixSoB2cDeliveryTypeJob 日期{} 第{}/{}页三方仓查询失败，跳过该页{}条",
+                            date, current, page.getPages(), records.size());
+                    if (current >= page.getPages()) {
+                        break;
+                    }
+                    current++;
+                    continue;
+                }
                 int updated = updateDeliveryType(records, thirdWarehouseSoIdMap);
                 dayUpdated += updated;
                 totalUpdated += updated;
@@ -84,7 +95,10 @@ public class SoB2cDeliveryTypeFixJob {
             }
             XxlJobHelper.log("fixSoB2cDeliveryTypeJob 日期{}处理完成，当天更新{}条", date, dayUpdated);
         }
-        XxlJobHelper.log("fixSoB2cDeliveryTypeJob 执行完成，总更新{}条", totalUpdated);
+        XxlJobHelper.log("fixSoB2cDeliveryTypeJob 执行完成，总更新{}条，失败页{}页", totalUpdated, failedPages);
+        if (failedPages > 0) {
+            return ReturnT.FAIL;
+        }
         return ReturnT.SUCCESS;
     }
 
@@ -126,8 +140,19 @@ public class SoB2cDeliveryTypeFixJob {
         List<String> soIds = records.stream()
                 .map(SoB2cEntity::getId)
                 .collect(Collectors.toList());
-        List<ThirdWarehouseDeliveryEntity> thirdWarehouseDeliveryList = thirdWarehouseDeliveryFeign.listBySourceId(soIds);
-        if (CollectionUtils.isEmpty(thirdWarehouseDeliveryList)) {
+        List<ThirdWarehouseDeliveryEntity> thirdWarehouseDeliveryList;
+        try {
+            thirdWarehouseDeliveryList = thirdWarehouseDeliveryFeign.listBySourceId(soIds);
+        } catch (Exception e) {
+            String firstSoId = soIds.get(0);
+            String lastSoId = soIds.get(soIds.size() - 1);
+            XxlJobHelper.log("fixSoB2cDeliveryTypeJob 查询三方仓发货单失败，size={}，firstSoId={}，lastSoId={}，error={}",
+                    soIds.size(), firstSoId, lastSoId, e.getMessage());
+            log.warn("fixSoB2cDeliveryTypeJob 查询三方仓发货单失败, size: {}, firstSoId: {}, lastSoId: {}",
+                    soIds.size(), firstSoId, lastSoId, e);
+            return null;
+        }
+        if (thirdWarehouseDeliveryList == null || thirdWarehouseDeliveryList.isEmpty()) {
             return Collections.emptyMap();
         }
         return thirdWarehouseDeliveryList.stream()

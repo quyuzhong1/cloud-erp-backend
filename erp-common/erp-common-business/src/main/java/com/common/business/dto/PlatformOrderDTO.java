@@ -162,7 +162,7 @@ public class PlatformOrderDTO extends UniqueDto {
     private String labelJson;
 
     /**
-     * 发货类型：selfShipment自发货，platformWarehouse平台仓
+     * 发货类型，取值见 OrderLogisticTypeEnum：selfShipment自发货，platformWarehouse平台仓，thirdWarehouse三方仓
      */
     private String deliveryType;
 

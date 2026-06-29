@@ -45,6 +45,7 @@ import java.util.stream.Collectors;
 public class DmpInputShopeeReturnDetailInitHandler extends DmpInputInitHandler {
 
     private static final int MAX_RETRY = 10;
+    private static final long REQUEST_INTERVAL_MILLIS = 200L;
     private static final String SHOPEE_RETURN_LIST_DATA = "Shopee_returnList_data";
 
     @Resource
@@ -76,19 +77,43 @@ public class DmpInputShopeeReturnDetailInitHandler extends DmpInputInitHandler {
                 .host(cfgAppClientEntity.getUrl())
                 .offset(0)
                 .token(shopAuthEntity.getAccessToken())
-                .shopId(Long.parseLong(shopAuthEntity.getShopeeId()))
-                .partnerId(Long.parseLong(cfgAppClientEntity.getClientId()))
+                .shopId(parseLongOrThrow(shopAuthEntity.getShopeeId(), "Shopee店铺ID"))
+                .partnerId(parseLongOrThrow(cfgAppClientEntity.getClientId(), "Shopee partnerId"))
                 .tmpPartnerKey(cfgAppClientEntity.getClientSecret())
                 .build();
 
         JSONArray detailList = new JSONArray();
-        for (String returnSn : returnSnList) {
-            orderRequest.setOrderSns(returnSn);
-            ShopeeResponse response = executeWithRetry(orderRequest, "退货明细");
-            JSONObject detail = response.getResponse();
-            if (detail != null) {
-                detailList.add(detail);
+        int total = returnSnList.size();
+        int failureCount = 0;
+        List<String> failedReturnSnList = new ArrayList<>();
+        for (int i = 0; i < total; i++) {
+            String returnSn = returnSnList.get(i);
+            if (i == 0 || (i + 1) % 50 == 0 || i + 1 == total) {
+                log.info("Shopee退货明细init进度:{}/{},returnSn:{}", i + 1, total, returnSn);
             }
+            orderRequest.setOrderSns(returnSn);
+            try {
+                ShopeeResponse response = executeWithRetry(orderRequest, "退货明细");
+                JSONObject detail = response.getResponse();
+                if (detail != null) {
+                    detailList.add(detail);
+                }
+            } catch (Exception e) {
+                failureCount++;
+                failedReturnSnList.add(returnSn);
+                log.error("Shopee退货明细init单条查询失败,returnSn:{},shopId:{}", returnSn, shopId, e);
+            }
+            if (i + 1 < total) {
+                sleepBetweenRequests();
+            }
+        }
+        if (detailList.isEmpty() && failureCount == total) {
+            throw new ServiceException("Shopee退货明细全部查询失败");
+        }
+        if (failureCount > 0) {
+            // 退货明细按 return_sn 单条补拉；部分失败不中断整批，保留成功明细入库，失败单号由日志人工补偿。
+            log.warn("Shopee退货明细init部分查询失败,total:{},failureCount:{},failedReturnSnList:{}",
+                    total, failureCount, failedReturnSnList);
         }
 
         DmpInputTaskInitDTO initDTO = new DmpInputTaskInitDTO();
@@ -96,6 +121,15 @@ public class DmpInputShopeeReturnDetailInitHandler extends DmpInputInitHandler {
         List<DmpInputTaskInitDTO> result = new ArrayList<>();
         result.add(initDTO);
         return result;
+    }
+
+    private void sleepBetweenRequests() {
+        try {
+            Thread.sleep(REQUEST_INTERVAL_MILLIS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new ServiceException("调用shopee退货明细接口被中断");
+        }
     }
 
     /**
@@ -198,5 +232,16 @@ public class DmpInputShopeeReturnDetailInitHandler extends DmpInputInitHandler {
             throw new ServiceException("shopee授权未配置");
         }
         return shopAuthEntityList.get(0);
+    }
+
+    private Long parseLongOrThrow(String value, String fieldName) {
+        if (StringUtils.isBlank(value)) {
+            throw new ServiceException(fieldName + "不能为空");
+        }
+        try {
+            return Long.valueOf(value);
+        } catch (NumberFormatException e) {
+            throw new ServiceException(fieldName + "格式错误");
+        }
     }
 }
