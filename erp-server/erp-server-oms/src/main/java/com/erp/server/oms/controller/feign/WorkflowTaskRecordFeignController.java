@@ -2,6 +2,7 @@ package com.erp.server.oms.controller.feign;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import com.common.core.controller.BaseController;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
 import com.erp.model.oms.entity.WorkflowTaskInstanceEntity;
@@ -66,32 +67,18 @@ public class WorkflowTaskRecordFeignController extends BaseController {
         addTaskDTO.setFirstNodeInputData(buildFirstNodeInputData(dto));
         workflowTaskRecordService.startOrResume(addTaskDTO);
 
-        WorkflowTaskInstanceEntity latest = null;
-        if (CharSequenceUtil.isNotBlank(addTaskDTO.getInstanceId())) {
-            latest = workflowTaskInstanceService.getById(addTaskDTO.getInstanceId());
-        }
+        WorkflowTaskInstanceEntity latest = workflowTaskInstanceService.getLatestBySource(
+                dto.getSourceId(), WorkflowTaskRecordTypeEnum.SO_B2C_MERGE_PACKAGE_DELIVERY.getCode());
         if (latest == null) {
-            latest = workflowTaskInstanceService.getLatestBySource(
-                    dto.getSourceId(), WorkflowTaskRecordTypeEnum.SO_B2C_MERGE_PACKAGE_DELIVERY.getCode());
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "组包预报自动出库任务实例");
         }
         WorkflowTaskRecordDTO.StartWorkflowResultDTO resultDTO = new WorkflowTaskRecordDTO.StartWorkflowResultDTO();
         resultDTO.setAccepted(Boolean.TRUE);
-        if (latest != null) {
-            resultDTO.setInstanceId(latest.getId());
-            resultDTO.setSourceId(latest.getSourceId());
-            resultDTO.setSourceCode(latest.getSourceCode());
-            resultDTO.setTraceId(latest.getTraceId());
-            resultDTO.setMessage("任务已受理");
-        } else {
-            // 兜底：调度已受理，但实例查询短暂不可见时不抛错，避免前端误判失败。
-            resultDTO.setInstanceId(addTaskDTO.getInstanceId());
-            resultDTO.setSourceId(dto.getSourceId());
-            resultDTO.setSourceCode(CharSequenceUtil.blankToDefault(dto.getSourceCode(), dto.getSourceId()));
-            resultDTO.setTraceId(addTaskDTO.getTraceId());
-            resultDTO.setMessage("任务已受理，实例信息同步中");
-            log.warn("组包预报自动出库任务已受理但未立即查到实例，sourceId={}, sourceType={}",
-                    dto.getSourceId(), WorkflowTaskRecordTypeEnum.SO_B2C_MERGE_PACKAGE_DELIVERY.getCode());
-        }
+        resultDTO.setInstanceId(latest.getId());
+        resultDTO.setSourceId(latest.getSourceId());
+        resultDTO.setSourceCode(latest.getSourceCode());
+        resultDTO.setTraceId(latest.getTraceId());
+        resultDTO.setMessage("任务已受理");
         return resultDTO;
     }
 
