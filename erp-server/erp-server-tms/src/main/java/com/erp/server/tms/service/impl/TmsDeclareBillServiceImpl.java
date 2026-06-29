@@ -173,6 +173,9 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     private PlmTaskFeign plmTaskFeign;
 
     @Resource
+    private com.erp.rpc.dmp.feign.DmpTaskFeign dmpTaskFeign;
+
+    @Resource
     private SysDictFeign sysDictFeign;
 
     @Resource
@@ -288,10 +291,22 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             declareBillEntity.setShippingFee(Objects.isNull(declareBillEntity.getShippingFee()) ? BigDecimal.ZERO : declareBillEntity.getShippingFee());
             declareBillEntity.setInsuranceFee(Objects.isNull(declareBillEntity.getInsuranceFee()) ? BigDecimal.ZERO : declareBillEntity.getInsuranceFee());
             declareBillEntity.setOtherFee(Objects.isNull(declareBillEntity.getOtherFee()) ? BigDecimal.ZERO : declareBillEntity.getOtherFee());
-            declareBillEntity.setGrossWeight(Objects.isNull(declareBillEntity.getGrossWeight()) ? BigDecimal.ZERO : declareBillEntity.getGrossWeight());
-            //  复用 batchAddMergeDetail 链路里的 calculateSelectedNetWeight，
-            // 按 SKU × qty 真实累加，且已经处理了组合品 SPLIT 拆分。
-            declareBillEntity.setNetWeight(calculateSelectedNetWeight(flattenMergeSourceDetails(mergeDetailList)));
+            // 目的国（地区）取合并明细，与 batchAddMergeDetail 对齐，避免列表/详情目的国家口径不一致。
+            TmsDeclareBillDTO.MergeDeclareBillDetailDTO firstMergeDetail = mergeDetailList.stream()
+                    .filter(Objects::nonNull)
+                    .findFirst()
+                    .orElse(new TmsDeclareBillDTO.MergeDeclareBillDetailDTO());
+            declareBillEntity.setCountry(firstMergeDetail.getToCountry());
+            declareBillEntity.setCountryName(firstMergeDetail.getToCountryName());
+            // 总箱数/毛重/净重按选中箱号重算（复用已加载装箱明细），与编辑/批量保存口径一致，
+            // 修复总毛重恒 0、按 boxNo 去重导致的箱数偏差。
+            List<TmsDeclareBillDTO.PackingDTO> selectedPackingSource = deliveryDTOList.stream()
+                    .filter(v -> CollUtil.isNotEmpty(v.getPackingDTOList()))
+                    .flatMap(v -> v.getPackingDTOList().stream())
+                    .collect(Collectors.toList());
+            TmsDeclareBillDTO.SelectedSkuHeaderDTO headerWeight = new TmsDeclareBillDTO.SelectedSkuHeaderDTO();
+            fillHeaderWeight(headerWeight, flattenMergeSourceDetails(mergeDetailList), selectedPackingSource);
+            applyRecalculatedHeaderWeight(declareBillEntity, headerWeight);
             // 贸易国默认中国香港。
             applyTradingAreaDefault(declareBillEntity);
 
@@ -304,15 +319,6 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             if (CollUtil.isEmpty(detailEntityList)) {
                 throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_SAVE_REQUIRED);
             }
-            Set<String> boxNoSet = mergeDetailList.stream()
-                    .map(TmsDeclareBillDTO.MergeDeclareBillDetailDTO::getSourceDeliveryDetailList)
-                    .filter(CollUtil::isNotEmpty)
-                    .flatMap(Collection::stream)
-                    .filter(Objects::nonNull)
-                    .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getBoxNo)
-                    .filter(StringUtils::isNotBlank)
-                    .collect(Collectors.toSet());
-            declareBillEntity.setBoxQty(boxNoSet.size());
             BaseResultDTO.AddDTO addResult = service.add(declareBillEntity, detailEntityList, SourceTypeEnum.FM_DECLARE_BILL, false);
 
             return extractSourceIdListFromMidList(deliveryDeclareDetailMidService.saveGeneratedMidData(
@@ -1831,10 +1837,15 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (CollUtil.isEmpty(midsByBoxNo)) {
             return Collections.emptyList();
         }
+        // 仅保留当前报关单中间表挂载的「来源单 + 箱号」，并按来源单 + 箱号去重：
+        // 装箱来源是「按来源单查询整张来源单的箱子」，跨来源单同箱号或连接行重复时会多出箱数，
+        // 这里收敛到当前报关单实际挂载的箱号。
+        Set<String> seenBoxKeySet = new HashSet<>();
         return packingList.stream()
                 .filter(Objects::nonNull)
                 .filter(item -> StringUtils.isNotBlank(item.getBoxNo()))
                 .filter(item -> matchesAnyDeclareBillMid(item, midsByBoxNo, declareBusinessBoxKeySet))
+                .filter(item -> seenBoxKeySet.add(buildPackingBoxKey(item)))
                 .collect(Collectors.toList());
     }
 
@@ -1869,10 +1880,9 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (!declareBusinessBoxKeySet.contains(buildBusinessBoxKey(mid.getBusinessCode(), mid.getBoxNo()))) {
             return false;
         }
+        // 必须是同一来源单的同一箱号，避免不同来源单箱号相同（且共享销售出库单）时跨单误匹配导致多出箱数。
         return StringUtils.equals(packing.getSourceId(), mid.getSourceId())
-                || StringUtils.equals(packing.getSourceCode(), mid.getSourceCode())
-                || StringUtils.equals(packing.getSoOutstockCode(), mid.getBusinessCode())
-                || StringUtils.equals(packing.getSoOutstockId(), mid.getBusinessId());
+                || StringUtils.equals(packing.getSourceCode(), mid.getSourceCode());
     }
 
     /**
@@ -1987,9 +1997,29 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             declareBillEntity.setShippingFee(Objects.isNull(declareBillEntity.getShippingFee()) ? BigDecimal.ZERO : declareBillEntity.getShippingFee());
             declareBillEntity.setInsuranceFee(Objects.isNull(declareBillEntity.getInsuranceFee()) ? BigDecimal.ZERO : declareBillEntity.getInsuranceFee());
             declareBillEntity.setOtherFee(Objects.isNull(declareBillEntity.getOtherFee()) ? BigDecimal.ZERO : declareBillEntity.getOtherFee());
-            declareBillEntity.setGrossWeight(Objects.isNull(declareBillEntity.getGrossWeight()) ? BigDecimal.ZERO : declareBillEntity.getGrossWeight());
-            // B2B 同 FM，新合并路径复用 calculateSelectedNetWeight 真实累加净重。
-            declareBillEntity.setNetWeight(calculateSelectedNetWeight(flattenMergeSourceDetails(mergeDetailList)));
+            // 目的国（地区）取合并明细，与 batchAddMergeDetail 对齐：SoOutDTO 不带目的国，
+            // 仅靠 deliveryDTO 拷贝会导致列表/详情目的国家为空。
+            TmsDeclareBillDTO.MergeDeclareBillDetailDTO firstMergeDetail = mergeDetailList.stream()
+                    .filter(Objects::nonNull)
+                    .findFirst()
+                    .orElse(new TmsDeclareBillDTO.MergeDeclareBillDetailDTO());
+            declareBillEntity.setCountry(firstMergeDetail.getToCountry());
+            declareBillEntity.setCountryName(firstMergeDetail.getToCountryName());
+            // 订单类型与 batchAddMergeDetail 对齐：取发货通知单业务类型去重，缺省回退 B2B 订单，
+            // 避免列表「订单类型」为空。
+            String businessType = joinDistinct(deliveryDTOList.stream()
+                    .map(TmsDeclareBillDTO.SoOutDTO::getBusinessType)
+                    .collect(Collectors.toList()));
+            declareBillEntity.setBusinessType(StringUtils.isBlank(businessType) ? OrderTypeEnum.B2B.getCode() : businessType);
+            // 总箱数/毛重/净重按选中箱号重算（复用已加载装箱明细），与编辑/批量保存口径一致，
+            // 修复列表总毛重为空、详情件数/毛重/净重不对、装箱信息箱数偏差。
+            List<TmsDeclareBillDTO.PackingDTO> selectedPackingSource = deliveryDTOList.stream()
+                    .filter(v -> CollUtil.isNotEmpty(v.getPackingDTOList()))
+                    .flatMap(v -> v.getPackingDTOList().stream())
+                    .collect(Collectors.toList());
+            TmsDeclareBillDTO.SelectedSkuHeaderDTO headerWeight = new TmsDeclareBillDTO.SelectedSkuHeaderDTO();
+            fillHeaderWeight(headerWeight, flattenMergeSourceDetails(mergeDetailList), selectedPackingSource);
+            applyRecalculatedHeaderWeight(declareBillEntity, headerWeight);
             // 贸易国默认中国香港。
             applyTradingAreaDefault(declareBillEntity);
 
@@ -2002,15 +2032,6 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             if (CollUtil.isEmpty(detailEntityList)) {
                 throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_SAVE_REQUIRED);
             }
-            Set<String> boxNoSet = mergeDetailList.stream()
-                    .map(TmsDeclareBillDTO.MergeDeclareBillDetailDTO::getSourceDeliveryDetailList)
-                    .filter(CollUtil::isNotEmpty)
-                    .flatMap(Collection::stream)
-                    .filter(Objects::nonNull)
-                    .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getBoxNo)
-                    .filter(StringUtils::isNotBlank)
-                    .collect(Collectors.toSet());
-            declareBillEntity.setBoxQty(boxNoSet.size());
             BaseResultDTO.AddDTO addResult = service.add(declareBillEntity, detailEntityList, SourceTypeEnum.B2B_DECLARE_BILL, false);
 
             return extractSourceIdListFromMidList(deliveryDeclareDetailMidService.saveGeneratedMidData(
@@ -3258,8 +3279,36 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             return Collections.emptyList();
         }
         boolean includeSkuInGeneratedMergeKey = sixDimensionMerge || hasBomSplitChild(result);
-        DeclarationGenerationService declarationGenerationService = new DeclarationGenerationService();
+        DeclarationGenerationService declarationGenerationService = new DeclarationGenerationService(buildDeclareCurrencyRateMap(result));
         return declarationGenerationService.generateMergeBillDetails(result, viewDTO.getIsMultipleMerge(), includeSkuInGeneratedMergeKey);
+    }
+
+    /**
+     * 构建申报币种 -> 折算人民币汇率映射，供合并算法把「单价极差」折算成人民币后再判断是否超过 10RMB。
+     * 取来源明细去重后的申报币种，按当天汇率查 DMP；查不到的币种由算法侧按 1:1 兜底（退化为原币种比较）。
+     */
+    private Map<String, BigDecimal> buildDeclareCurrencyRateMap(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetails) {
+        if (CollUtil.isEmpty(sourceDetails)) {
+            return Collections.emptyMap();
+        }
+        List<String> currencyList = sourceDetails.stream()
+                .filter(Objects::nonNull)
+                .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getDeclareCurrency)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(currencyList)) {
+            return Collections.emptyMap();
+        }
+        String rateDate = LocalDate.now().toString();
+        Map<String, BigDecimal> rateMap = new HashMap<>();
+        for (String currency : currencyList) {
+            BigDecimal rate = dmpTaskFeign.getRate(rateDate, currency);
+            if (Objects.nonNull(rate)) {
+                rateMap.put(currency, rate);
+            }
+        }
+        return rateMap;
     }
 
     /**
@@ -3544,7 +3593,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 sourceDetailList.add(copy);
             }
         }
-        DeclarationGenerationService declarationGenerationService = new DeclarationGenerationService();
+        DeclarationGenerationService declarationGenerationService = new DeclarationGenerationService(buildDeclareCurrencyRateMap(sourceDetailList));
         return flattenMergeDeclareBillList(declarationGenerationService.generateMergeBillDetails(sourceDetailList, Boolean.TRUE, isSixDimensionMerge(sourceDetailList)));
     }
 
@@ -3799,12 +3848,15 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 }
                 DeliveryDeclareDetailMidEntity oldMid = oldKeyMap.get(buildSourceDetailKey(sourceDetail));
                 if (Objects.isNull(oldMid)) {
-                    throw new ServiceException(ApiError.LOGISTICS_DECLARE_SOURCE_BOX_IMMUTABLE);
+                    // 编辑允许新增 SKU/来源明细：原中间表不存在的行视为新增并放行，
+                    // 其「是否已被其它报关单生成」由 validateSourceNotGenerated 兜底校验。
+                    continue;
                 }
-                if (!StringUtils.equals(StringUtils.defaultString(oldMid.getSourceId()), StringUtils.defaultString(sourceDetail.getSourceId()))
-                        || !StringUtils.equals(StringUtils.defaultString(oldMid.getBusinessCode()), StringUtils.defaultString(sourceDetail.getBusinessCode()))
-                        || !StringUtils.equals(StringUtils.defaultString(oldMid.getSkuNo()), StringUtils.defaultString(sourceDetail.getSkuNo()))
-                        || !Objects.equals(Objects.isNull(oldMid.getQty()) ? 0 : oldMid.getQty(), Objects.isNull(sourceDetail.getQty()) ? 0 : sourceDetail.getQty())) {
+                // 已有来源行：来源单/SKU/箱号即匹配键，必然一致；这里只校验数量不可改。
+                // business_code（业务单号）由海外仓入库单后台回写、会随之变化，不参与不可编辑校验，
+                // 避免业务单号刷新后编辑保存误报「不可编辑」。
+                if (!Objects.equals(Objects.isNull(oldMid.getQty()) ? 0 : oldMid.getQty(),
+                        Objects.isNull(sourceDetail.getQty()) ? 0 : sourceDetail.getQty())) {
                     throw new ServiceException(ApiError.LOGISTICS_DECLARE_SOURCE_QTY_IMMUTABLE);
                 }
             }
@@ -4017,6 +4069,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (CollUtil.isEmpty(productDetailList)) {
             return;
         }
+        // 一次性收集所有缺报关信息的 SKU 并统一提示，避免每次只报一个。
+        Set<String> missingMessageSet = new LinkedHashSet<>();
         for (TmsDeclareBillDTO.ProductDetail detail : productDetailList) {
             if (Objects.isNull(detail)) {
                 continue;
@@ -4028,13 +4082,18 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                     detail.getDeclareUnit(),
                     detail.getDeclareCurrency(),
                     detail.getPrice());
-            if (CollUtil.isNotEmpty(missingFields)) {
-                throw new ServiceException(ApiError.LOGISTICS_DECLARE_AUTO_DETAIL_FIELD_REQUIRED,
-                        CharSequenceUtil.blankToDefault(sourceCode, "-"),
-                        CharSequenceUtil.blankToDefault(detail.getSkuNo(),
-                                CharSequenceUtil.blankToDefault(detail.getSkuId(), "-")),
-                        String.join("、", missingFields));
+            if (CollUtil.isEmpty(missingFields)) {
+                continue;
             }
+            missingMessageSet.add(CharSequenceUtil.format("单据【{}】SKU【{}】缺少：{}",
+                    CharSequenceUtil.blankToDefault(sourceCode, "-"),
+                    CharSequenceUtil.blankToDefault(detail.getSkuNo(),
+                            CharSequenceUtil.blankToDefault(detail.getSkuId(), "-")),
+                    String.join("、", missingFields)));
+        }
+        if (CollUtil.isNotEmpty(missingMessageSet)) {
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_AUTO_DETAIL_FIELD_REQUIRED_BATCH,
+                    String.join("；", missingMessageSet));
         }
     }
 
@@ -4050,6 +4109,9 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (CollUtil.isEmpty(mergeDetailList)) {
             return;
         }
+        // 一次性收集所有缺报关信息的 SKU（按「单据 + SKU + 缺失字段」去重），统一提示，
+        // 避免每次只报一个、用户要反复补资料反复下推。
+        Set<String> missingMessageSet = new LinkedHashSet<>();
         for (TmsDeclareBillDTO.MergeDeclareBillDetailDTO detailDTO : mergeDetailList) {
             if (Objects.isNull(detailDTO)) {
                 continue;
@@ -4066,8 +4128,12 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             }
             String sourceCode = resolveMergeDetailSourceCode(detailDTO);
             String skuNo = resolveMergeDetailSkuNo(detailDTO);
-            throw new ServiceException(ApiError.LOGISTICS_DECLARE_AUTO_DETAIL_FIELD_REQUIRED,
-                    sourceCode, skuNo, String.join("、", missingFields));
+            missingMessageSet.add(CharSequenceUtil.format("单据【{}】SKU【{}】缺少：{}",
+                    sourceCode, skuNo, String.join("、", missingFields)));
+        }
+        if (CollUtil.isNotEmpty(missingMessageSet)) {
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_AUTO_DETAIL_FIELD_REQUIRED_BATCH,
+                    String.join("；", missingMessageSet));
         }
     }
 

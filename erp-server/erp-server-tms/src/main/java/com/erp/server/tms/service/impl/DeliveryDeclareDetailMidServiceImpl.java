@@ -454,7 +454,10 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         return lambdaUpdate()
                 .eq(DeliveryDeclareDetailMidEntity::getSourceType, SourceTypeEnum.FIRST_MILE_DELIVERY.getCode())
                 .eq(DeliveryDeclareDetailMidEntity::getSourceId, dto.getSourceId())
-                .eq(DeliveryDeclareDetailMidEntity::getBusinessId, dto.getBusinessId())
+                // 报关单先于海外仓入库单生成时，中间表 business_id 为空，若再按 business_id 精确匹配会漏更新，
+                // 导致报关单业务单号滞后为空。头程发货单与海外仓入库单一对一，按来源单匹配并回写
+                // business_id / business_code 即可补齐业务单号。
+                .set(DeliveryDeclareDetailMidEntity::getBusinessId, dto.getBusinessId())
                 .set(DeliveryDeclareDetailMidEntity::getBusinessCode, dto.getBusinessCode())
                 .update();
     }
