@@ -594,7 +594,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             }
 
             //查询sku是否存在子SKU
-            List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(item.getDeliverySkuId())).collect(Collectors.toList());
+            String bomParentSkuId = resolveBomParentSkuId(item.getSkuId(), item.getDeliverySkuId());
+            List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(bomParentSkuId)).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(sonSkuList)) {
                 item.setBomVersion(sonSkuList.get(MathUtil.ZERO).getBomVersion());
             } else {
@@ -1374,7 +1375,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             }
 
             //查询sku是否存在子SKU
-            List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(item.getDeliverySkuId())).collect(Collectors.toList());
+            String bomParentSkuId = resolveBomParentSkuId(item.getSkuId(), item.getDeliverySkuId());
+            List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(bomParentSkuId)).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(sonSkuList)) {
                 item.setBomVersion(sonSkuList.get(MathUtil.ZERO).getBomVersion());
             } else {
@@ -1408,13 +1410,16 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         List<String> resolved = new ArrayList<>(skuIds.size());
         for (int i = 0; i < skuIds.size(); i++) {
             String deliverySkuId = deliverySkuIds != null && i < deliverySkuIds.size() ? deliverySkuIds.get(i) : null;
-            if (StringUtils.isNotBlank(deliverySkuId)) {
-                resolved.add(deliverySkuId);
-            } else if (StringUtils.isNotBlank(skuIds.get(i))) {
-                resolved.add(skuIds.get(i));
+            String bomParentSkuId = resolveBomParentSkuId(skuIds.get(i), deliverySkuId);
+            if (StringUtils.isNotBlank(bomParentSkuId)) {
+                resolved.add(bomParentSkuId);
             }
         }
         return resolved.stream().distinct().collect(Collectors.toList());
+    }
+
+    private String resolveBomParentSkuId(String skuId, String deliverySkuId) {
+        return StringUtils.isNotBlank(deliverySkuId) ? deliverySkuId : skuId;
     }
 
     /**
