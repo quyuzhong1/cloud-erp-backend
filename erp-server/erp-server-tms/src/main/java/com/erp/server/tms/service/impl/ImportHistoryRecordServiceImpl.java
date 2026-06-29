@@ -499,10 +499,18 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         // 费用项统一查尾程发货；主单 type 在 handleImportData 按匹配到的费用单 entity 解析。
         List<TmsCfgCostEntity> cfgCostList = tmsCfgCostService.listByCostAttribution(DictCostAttributionEnum.LAST_MILE_DELIVERY.getCode());
         List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVos = logisticsBillService.listLogisticsBillByUniqueKey(paramMap);
+        List<String> logisticsBillDetailIdList = CollUtil.isEmpty(logisticsBillVos) ? Collections.emptyList()
+                : logisticsBillVos.stream()
+                .map(LogisticsBillDTO.LogisticsBillVo::getDetailId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        List<LogisticsBillCostEntity> logisticsBillCostList = logisticsBillCostService.listByLogisticsBillDetailIdList(logisticsBillDetailIdList);
+        // listLogisticsBillByUniqueKey 未返回 logisticsBillCostId，须用已查到的费用单 id 预加载存量明细供 checkCategoryCurrency 使用。
         Map<String, List<TmsCostDetailEntity>> mainIdListMap = new HashMap<>();
-        if (CollUtil.isNotEmpty(logisticsBillVos)) {
-            List<String> logisticsBillCostIdList = logisticsBillVos.stream()
-                    .map(LogisticsBillDTO.LogisticsBillVo::getLogisticsBillCostId)
+        if (CollUtil.isNotEmpty(logisticsBillCostList)) {
+            List<String> logisticsBillCostIdList = logisticsBillCostList.stream()
+                    .map(LogisticsBillCostEntity::getId)
                     .filter(CharSequenceUtil::isNotBlank)
                     .distinct()
                     .collect(Collectors.toList());
@@ -514,8 +522,6 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 }
             }
         }
-        List<String> logisticsBillDetailIdList = logisticsBillVos.stream().map(LogisticsBillDTO.LogisticsBillVo::getDetailId).distinct().collect(Collectors.toList());
-        List<LogisticsBillCostEntity> logisticsBillCostList = logisticsBillCostService.listByLogisticsBillDetailIdList(logisticsBillDetailIdList);
         return new ImportHistoryRecordDTO.PreQueryResultDTO(logisticsBillVos, mainIdListMap, logisticsBillCostList, cfgCostList);
     }
 
