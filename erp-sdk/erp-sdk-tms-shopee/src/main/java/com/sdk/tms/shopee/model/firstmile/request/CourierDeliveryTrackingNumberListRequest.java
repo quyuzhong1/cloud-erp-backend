@@ -7,6 +7,7 @@ import lombok.Data;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 
 /**
@@ -27,6 +28,7 @@ public class CourierDeliveryTrackingNumberListRequest implements Serializable {
 
     @Min(value = 1, message = "分页大小不能小于1")
     @Max(value = 50, message = "分页大小不能大于50")
+    @NotNull(message = "分页大小不能为空")
     @JSONField(name = "page_size")
     private Integer pageSize;
 

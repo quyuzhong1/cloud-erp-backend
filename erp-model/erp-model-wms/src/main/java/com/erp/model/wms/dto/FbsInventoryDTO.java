@@ -65,6 +65,7 @@ public class FbsInventoryDTO implements Serializable {
         /**
          * 不显示0库存
          */
+        // 历史字段名保留为 isShowZeroInventory，当前语义为 true 时过滤掉 0 库存。
         private Boolean isShowZeroInventory;
     }
 

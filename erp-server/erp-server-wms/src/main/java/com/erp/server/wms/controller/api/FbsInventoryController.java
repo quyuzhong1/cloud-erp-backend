@@ -68,6 +68,7 @@ public class FbsInventoryController extends BaseController {
             menuCode = "wms:fbsInventory:export",
             tableAlias = "fi"
     )
+    @WebAdvanceQuery(handler = FbsInventoryQueryHandler.class)
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出Excel数据")
     public ApiResult<Void> exportList(@RequestBody @Validated FbsInventoryDTO.ExportDTO dto, HttpServletResponse response) {
         fbsInventoryService.exportList(dto, response);
@@ -86,6 +87,7 @@ public class FbsInventoryController extends BaseController {
             menuCode = "wms:fbsInventory:paging",
             tableAlias = "fi"
     )
+    @WebAdvanceQuery(handler = FbsInventoryQueryHandler.class)
     public ApiResult<FbsInventoryDTO.SummaryNumber> summaryNumber(@RequestBody @Validated PagingDTO<FbsInventoryDTO.PagingParamDTO> pagingParamDTO) {
         FbsInventoryDTO.SummaryNumber result = fbsInventoryService.summaryNumber(pagingParamDTO);
         return success(result);

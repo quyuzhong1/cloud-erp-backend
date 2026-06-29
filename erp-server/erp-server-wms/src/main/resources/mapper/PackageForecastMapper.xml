@@ -156,8 +156,11 @@
         inner join so_b2c sb
             on pfd.so_id = sb.id and sb.is_deleted = false
         where pf.transport_no != ''
-          and sb.dict_platform = 'Shopee'
-          and COALESCE(pf.handover_status, '') not in ('SHOPEE_DELIVERED','CANCELED')
+          and sb.dict_platform = #{platform}
+          and COALESCE(pf.handover_status, '') not in
+          <foreach collection="excludeStatuses" item="status" open="(" separator="," close=")">
+              #{status}
+          </foreach>
           and pf.bill_date > #{dateTime}
           and pf.is_deleted = false
     </select>

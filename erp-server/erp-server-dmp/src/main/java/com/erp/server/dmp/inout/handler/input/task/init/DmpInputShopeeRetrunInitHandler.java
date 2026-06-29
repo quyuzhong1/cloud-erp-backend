@@ -30,6 +30,7 @@ import java.util.List;
 
 /**
  * Shopee 售后列表 init：按更新时间拉取 v2.returns.get_return_list，保留 return_solution=0/1。
+ * solution=1 为仅退款，后续由退款链路分流处理，不进入退货退款明细逻辑。
  */
 @Slf4j
 @Service
@@ -100,8 +101,14 @@ public class DmpInputShopeeRetrunInitHandler extends DmpInputInitHandler {
         if (returnSolution == null) {
             return false;
         }
-        int solution = Integer.parseInt(String.valueOf(returnSolution));
-        return RETURN_SOLUTION_RETURN_AND_REFUND == solution || RETURN_SOLUTION_REFUND_ONLY == solution;
+        try {
+            int solution = Integer.parseInt(String.valueOf(returnSolution));
+            // 退货退款和仅退款都在列表阶段保留，DMP 明细阶段再按业务链路分流。
+            return RETURN_SOLUTION_RETURN_AND_REFUND == solution || RETURN_SOLUTION_REFUND_ONLY == solution;
+        } catch (NumberFormatException e) {
+            log.warn("退货列表return_solution解析失败,value:{}", returnSolution);
+            return false;
+        }
     }
 
     private ShopeeResponse executeWithRetry(OrderRequest orderRequest, String apiName) {

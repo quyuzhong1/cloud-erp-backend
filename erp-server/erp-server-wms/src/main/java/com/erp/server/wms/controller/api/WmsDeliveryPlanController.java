@@ -544,9 +544,8 @@ public class WmsDeliveryPlanController extends BaseController {
         String path = "excel/deliveryPlanDetailFbaTemplate.xlsx";
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
-        try {
-            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
-            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+        try (InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+             XSSFWorkbook wb = new XSSFWorkbook(inputStream)) {
             // 输出Excel文件
             OutputStream output = response.getOutputStream();
             response.reset();
@@ -555,7 +554,7 @@ public class WmsDeliveryPlanController extends BaseController {
                     "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
             response.setContentType("application/msexcel");
             wb.write(output);
-            wb.close();
+            output.flush();
         } catch (Exception e) {
             throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
@@ -570,9 +569,8 @@ public class WmsDeliveryPlanController extends BaseController {
         String path = "excel/deliveryPlanDetailPlatformTemplate.xlsx";
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
-        try {
-            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
-            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+        try (InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+             XSSFWorkbook wb = new XSSFWorkbook(inputStream)) {
             // 输出Excel文件
             OutputStream output = response.getOutputStream();
             response.reset();
@@ -581,7 +579,7 @@ public class WmsDeliveryPlanController extends BaseController {
                     "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
             response.setContentType("application/msexcel");
             wb.write(output);
-            wb.close();
+            output.flush();
         } catch (Exception e) {
             throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }

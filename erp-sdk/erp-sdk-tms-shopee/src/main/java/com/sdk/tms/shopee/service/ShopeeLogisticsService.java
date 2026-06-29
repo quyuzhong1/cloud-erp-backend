@@ -451,7 +451,17 @@ public class ShopeeLogisticsService {
         baseRequest.setPath(PathConstants.POST_GET_FIRST_MILE_WAYBILL_URL);
         baseRequest.setTimestamp(timestamp);
         HashMap<String, Object> paramMap = getOrderCommonParam(baseRequest);
-        return ShopeeApiUtils.sendPostBase64(baseRequest.getHost() + baseRequest.getPath(), paramMap, JSON.toJSONString(request));
+        String waybill = ShopeeApiUtils.sendPostBase64(baseRequest.getHost() + baseRequest.getPath(), paramMap, JSON.toJSONString(request));
+        if (StringUtils.isBlank(waybill)) {
+            throw new ServiceException("虾皮获取头程面单响应为空");
+        }
+        String trimmedWaybill = waybill.trim();
+        if (trimmedWaybill.startsWith("{")) {
+            BaseResponse baseResponse = JSONUtil.toBean(trimmedWaybill, BaseResponse.class);
+            String message = StringUtils.defaultIfBlank(baseResponse.getMessage(), baseResponse.getError());
+            throw new ServiceException("虾皮获取头程面单失败:" + StringUtils.defaultIfBlank(message, trimmedWaybill));
+        }
+        return waybill;
     }
 
     /**

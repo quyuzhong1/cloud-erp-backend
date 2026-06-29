@@ -11,6 +11,8 @@ import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.wms.mapper.PackageForecastMapper;
 import com.erp.server.wms.service.PackageForecastDetailService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.annotation.Resource;
 import java.util.Arrays;
@@ -23,6 +25,8 @@ import java.util.stream.Collectors;
  */
 public abstract class AbstractPackageForecastPlatformAdapter implements PackageForecastPlatformAdapter {
 
+    protected static final int BATCH_UPDATE_SIZE = 500;
+
     @Resource
     protected PackageForecastMapper packageForecastMapper;
 
@@ -31,6 +35,9 @@ public abstract class AbstractPackageForecastPlatformAdapter implements PackageF
 
     @Resource
     protected SoB2cFeign soB2cFeign;
+
+    @Resource
+    protected PlatformTransactionManager transactionManager;
 
     @Override
     public boolean isForecast(List<String> ids) {
@@ -44,10 +51,13 @@ public abstract class AbstractPackageForecastPlatformAdapter implements PackageF
         List<String> soIds = detailList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList());
         List<SoB2cEntity> soList = soB2cFeign.listByIds(soIds);
         if (CollectionUtils.isEmpty(soList)) {
-            return false;
+            throw new ServiceException("组包预报单销售订单数据异常");
+        }
+        if (soList.size() != soIds.size()) {
+            throw new ServiceException("组包预报单销售订单数据不完整");
         }
         long platformCount = soList.stream().map(SoB2cEntity::getDictPlatform).distinct().count();
-        if (platformCount > 1 && soList.stream().anyMatch(item -> platform().equals(item.getDictPlatform()))) {
+        if (platformCount > 1) {
             throw new ServiceException("组包预报单明细数据平台不一致");
         }
         return soList.stream().allMatch(item -> platform().equals(item.getDictPlatform()));
@@ -95,6 +105,31 @@ public abstract class AbstractPackageForecastPlatformAdapter implements PackageF
         entity.setHandoverNo("");
         entity.setRemark("");
         entity.setPlatformPackageNo("");
+        entity.setPlatformNo("");
+    }
+
+    protected void updateForecastOrThrow(PackageForecastEntity entity) {
+        // PackageForecastEntity 继承 BaseEntity，updateById 会携带 @Version 字段做乐观锁校验。
+        if (packageForecastMapper.updateById(entity) <= 0) {
+            throw new ServiceException("组包预报单更新失败");
+        }
+    }
+
+    protected void updateForecastBatchOrThrow(List<PackageForecastEntity> entityList) {
+        if (CollectionUtils.isEmpty(entityList)) {
+            return;
+        }
+        // 大批量更新按 500 条分事务提交，避免长事务；调用方需用 BatchResultDTO/日志处理批次间部分成功。
+        for (int fromIndex = 0; fromIndex < entityList.size(); fromIndex += BATCH_UPDATE_SIZE) {
+            int toIndex = Math.min(fromIndex + BATCH_UPDATE_SIZE, entityList.size());
+            List<PackageForecastEntity> batchList = entityList.subList(fromIndex, toIndex);
+            new TransactionTemplate(transactionManager).execute(status -> {
+                for (PackageForecastEntity entity : batchList) {
+                    updateForecastOrThrow(entity);
+                }
+                return null;
+            });
+        }
     }
 
     protected String platformName(String platform) {

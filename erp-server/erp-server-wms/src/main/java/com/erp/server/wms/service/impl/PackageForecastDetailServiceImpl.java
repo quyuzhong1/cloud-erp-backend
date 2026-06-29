@@ -33,7 +33,9 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -165,19 +167,16 @@ public class PackageForecastDetailServiceImpl extends SuperServiceImpl<PackageFo
         List<PackageForecastDetailDTO.ViewDTO> resultList = BeanMapperUtils.copyList(PackageForecastDetailDTO.ViewDTO.class, detailList);
         List<String> soIdList = detailList.stream().map(PackageForecastDetailEntity::getSoId).collect(Collectors.toList());
         List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIdList);
+        Map<String, SoB2cEntity> soB2cEntityMap = CollectionUtils.emptyIfNull(soB2cEntityList).stream()
+                .collect(Collectors.toMap(SoB2cEntity::getId, Function.identity(), (left, right) -> left));
         for (PackageForecastDetailDTO.ViewDTO item : resultList) {
             String soId = item.getSoId();
-            SoB2cEntity sourceSoB2cEntity = soB2cEntityList.stream()
-                    .filter(req -> req.getId().equals(soId))
-                    .findFirst().orElse(null);
+            SoB2cEntity sourceSoB2cEntity = soB2cEntityMap.get(soId);
             if (ObjectUtil.isNotEmpty(sourceSoB2cEntity)) {
                 item.setPlatformOrderCode(sourceSoB2cEntity.getPlatformCode());
             }
-            SoB2cEntity soB2cEntity = soB2cEntityList.stream()
-                    .filter(req -> req.getId().equals(soId)
-                            && SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(req.getBillStatus()))
-                    .findFirst().orElse(null);
-            if (ObjectUtil.isNotEmpty(soB2cEntity)) {
+            if (ObjectUtil.isNotEmpty(sourceSoB2cEntity)
+                    && SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(sourceSoB2cEntity.getBillStatus())) {
                 item.setOutstockStatusName("已出库");
             } else {
                 item.setOutstockStatusName("未出库");
@@ -257,19 +256,16 @@ public class PackageForecastDetailServiceImpl extends SuperServiceImpl<PackageFo
         List<PackageForecastDetailDTO.ViewDTO> resultList = BeanMapperUtils.copyList(PackageForecastDetailDTO.ViewDTO.class, detailList);
         List<String> soIdList = detailList.stream().map(PackageForecastDetailEntity::getSoId).collect(Collectors.toList());
         List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIdList);
+        Map<String, SoB2cEntity> soB2cEntityMap = CollectionUtils.emptyIfNull(soB2cEntityList).stream()
+                .collect(Collectors.toMap(SoB2cEntity::getId, Function.identity(), (left, right) -> left));
         for (PackageForecastDetailDTO.ViewDTO item : resultList) {
             String soId = item.getSoId();
-            SoB2cEntity sourceSoB2cEntity = soB2cEntityList.stream()
-                    .filter(req -> req.getId().equals(soId))
-                    .findFirst().orElse(null);
+            SoB2cEntity sourceSoB2cEntity = soB2cEntityMap.get(soId);
             if (ObjectUtil.isNotEmpty(sourceSoB2cEntity)) {
                 item.setPlatformOrderCode(sourceSoB2cEntity.getPlatformCode());
             }
-            SoB2cEntity soB2cEntity = soB2cEntityList.stream()
-                    .filter(req -> req.getId().equals(soId)
-                            && SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(req.getBillStatus()))
-                    .findFirst().orElse(null);
-            if (ObjectUtil.isNotEmpty(soB2cEntity)) {
+            if (ObjectUtil.isNotEmpty(sourceSoB2cEntity)
+                    && SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(sourceSoB2cEntity.getBillStatus())) {
                 item.setOutstockStatusName("已出库");
             } else {
                 item.setOutstockStatusName("未出库");

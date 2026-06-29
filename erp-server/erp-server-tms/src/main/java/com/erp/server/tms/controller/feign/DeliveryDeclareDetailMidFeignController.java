@@ -49,4 +49,15 @@ public class DeliveryDeclareDetailMidFeignController {
     public Boolean deleteDeliveryDeclareDetailMid(@RequestBody TmsDeclareBillDTO.DeleteDeliveryDeclareDetailMidDTO dto) {
         return service.deleteDeliveryDeclareDetailMid(dto.getSourceIds());
     }
+
+    /**
+     * 更新发货单明细业务单号。
+     *
+     * @param dto 业务单号更新参数
+     * @return 是否成功
+     */
+    @PostMapping("/updateBusinessCode")
+    public Boolean updateBusinessCode(@RequestBody TmsDeclareBillDTO.UpdateDeliveryDeclareBusinessCodeDTO dto) {
+        return service.updateBusinessCode(dto);
+    }
 }

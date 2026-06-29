@@ -319,7 +319,7 @@ public class SoB2cDeliveryController extends BaseController {
      * @Date 2023/12/13 20:13
      **/
     @PostMapping("/printLogisticsBillConfirm")
-    @Idempotent
+    @LogAction(value = LogActionEnum.PRINT_LOGISTICS_LABEL_CONFIRM, desc = "打印物流面单确认")
     public ApiResult<String> printLogisticsBillConfirm(@RequestBody @Validated SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO dto, HttpServletResponse response) {
         String pdfUrl = soB2cDeliveryService.printLogisticsBillConfirm(dto.getPrintType(),dto.getDetailList(), response);
         return success(pdfUrl);
@@ -334,7 +334,7 @@ public class SoB2cDeliveryController extends BaseController {
      * @Date 2023/12/13 20:13
      **/
     @PostMapping("/printLogisticsBillConfirmPaging")
-    @Idempotent
+    @LogAction(value = LogActionEnum.PRINT_LOGISTICS_LABEL_PREVIEW, desc = "打印物流面单确认分页查询")
     public ApiResult<PagingVO<String>> printLogisticsBillConfirmPaging(@RequestBody @Validated PagingDTO<SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO> dto, HttpServletResponse response) {
         return success(soB2cDeliveryService.printLogisticsBillConfirmPaging(dto, response));
     }
@@ -604,7 +604,7 @@ public class SoB2cDeliveryController extends BaseController {
      * @Date 2025/02/13 20:13
      **/
     @PostMapping("/printSkuBarcodeConfirm")
-    @Idempotent
+    @LogAction(value = LogActionEnum.CONFIRM, desc = "打印SKU条码确认")
     public void printSkuBarcodeConfirm(@RequestBody @Validated SoB2cDeliveryDTO.PrintSkuBarcodeConfirmDTO dto, HttpServletResponse response) {
         soB2cDeliveryService.printSkuBarcodeConfirm(dto, response);
     }

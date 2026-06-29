@@ -3,6 +3,7 @@ package com.erp.server.dmp.inout.handler.input.task.init;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.business.threadlocal.ThirdWarehouseContext;
+import com.common.core.exception.ServiceException;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
@@ -38,7 +39,7 @@ public class DmpInputShopeeWebhookInitHandler extends DmpInputInitHandler {
             webhookData = payload.getJSONObject("data");
         } catch (Exception e) {
             log.error("虾皮 webhook 数据解析失败，data={}", data, e);
-            return Collections.emptyList();
+            throw new ServiceException("虾皮 webhook 数据解析失败");
         }
         if (Objects.isNull(webhookData)) {
             return Collections.emptyList();
@@ -48,6 +49,7 @@ public class DmpInputShopeeWebhookInitHandler extends DmpInputInitHandler {
         initData.set("platformCode", webhookData.getStr("ordersn"));
         initData.set("platformOriginalStatus", webhookData.getStr("status"));
         initData.set("updateTime", webhookData.getLong("update_time"));
+        // 上游仅推送已过滤的发货相关状态，此处约定 update_time 即发货时间。
         initData.set("deliveryTime", webhookData.getLong("update_time"));
         initData.set("shopId", payload.getStr("shop_id"));
         initData.set("msgId", payload.getStr("msg_id"));
