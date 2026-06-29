@@ -16,6 +16,32 @@ public class DeclarationGenerationService {
     private static final BigDecimal MAX_PRICE_TOLERANCE = new BigDecimal("10.00");
 
     /**
+     * 申报币种 -> 折算人民币汇率（1 单位币种 = rate 人民币）。
+     * 单价极差需折算成人民币后再与 {@link #MAX_PRICE_TOLERANCE}（10 RMB）比较，
+     * 否则美金等外币按原币值比较会把人民币价差远超 10 的明细误并到一行。
+     */
+    private final Map<String, BigDecimal> currencyToRmbRateMap;
+
+    public DeclarationGenerationService() {
+        this(Collections.emptyMap());
+    }
+
+    public DeclarationGenerationService(Map<String, BigDecimal> currencyToRmbRateMap) {
+        this.currencyToRmbRateMap = currencyToRmbRateMap == null ? Collections.emptyMap() : currencyToRmbRateMap;
+    }
+
+    /**
+     * 取币种折算人民币汇率：无汇率信息（含人民币本币）按 1:1 处理，退化为原币种极差比较。
+     */
+    private BigDecimal resolveCurrencyRate(String currency) {
+        if (StringUtils.isBlank(currency)) {
+            return BigDecimal.ONE;
+        }
+        BigDecimal rate = currencyToRmbRateMap.get(currency);
+        return (rate == null || rate.signum() <= 0) ? BigDecimal.ONE : rate;
+    }
+
+    /**
      * 按默认五维度规则生成报关单算法结果
      * @author will
      * @date 2026/5/9 15:00
@@ -383,7 +409,7 @@ public class DeclarationGenerationService {
      */
     private String buildMergeRemark(int sourceCount) {
         if (sourceCount > 1) {
-            return "按报关要素分组并校验单价极差<=10后合并";
+            return "按报关要素分组并校验单价极差折算人民币<=10后合并";
         }
         return "未触发合并，保持原单明细";
     }
@@ -449,6 +475,14 @@ public class DeclarationGenerationService {
                     item -> item.getPrice() != null ? item.getPrice() : BigDecimal.ZERO
             ));
 
+            // 同一合并分组币种一致（币种是合并键的一部分），按该币种汇率把极差折算成人民币比较。
+            String groupCurrency = groupItems.stream()
+                    .map(DeclarationGenerationDTO.InputDetailDTO::getDeclarationCurrency)
+                    .filter(StringUtils::isNotBlank)
+                    .findFirst()
+                    .orElse("");
+            BigDecimal groupRate = resolveCurrencyRate(groupCurrency);
+
             List<DeclarationGenerationDTO.InputDetailDTO> currentWindow = new ArrayList<>();
             BigDecimal windowMinPrice = null;
 
@@ -459,8 +493,9 @@ public class DeclarationGenerationService {
                     windowMinPrice = itemPrice;
                     currentWindow.add(item);
                 } else {
-                    // 判断是否超出极差容忍度 (max - min <= 10.00)
-                    if (itemPrice.subtract(windowMinPrice).compareTo(MAX_PRICE_TOLERANCE) > 0) {
+                    // 判断折算人民币后的极差是否超出容忍度 (折算后 max - min <= 10 RMB)
+                    BigDecimal priceGapRmb = itemPrice.subtract(windowMinPrice).multiply(groupRate);
+                    if (priceGapRmb.compareTo(MAX_PRICE_TOLERANCE) > 0) {
                         // 超出极差，结算当前窗口
                         result.add(aggregateGroup(currentWindow));
                         // 开启新窗口
