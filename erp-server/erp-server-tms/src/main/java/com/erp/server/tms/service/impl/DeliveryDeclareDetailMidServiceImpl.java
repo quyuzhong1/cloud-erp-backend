@@ -1376,6 +1376,12 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
                 .filter(CharSequenceUtil::isNotBlank)
                 .distinct()
                 .collect(Collectors.toList());
+        // 来源单 SQL 只返回 transfer_warehouse_ids、不返回名称，这里按 ids 统一查名称 map，
+        // 否则中间表 transfer_warehouse_names 落空，导致列表「中转仓」无值。
+        Map<String, String> transferWarehouseNameMap = getTransferWarehouseNameMap(sourceDetailList.stream()
+                .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getTransferWarehouseIds)
+                .filter(CharSequenceUtil::isNotBlank)
+                .collect(Collectors.toList()));
         List<DeliveryDeclareDetailMidEntity> existingMidList = listBySourceIdList(sourceIds);
         Map<String, DeliveryDeclareDetailMidEntity> existingKeyMap = buildExistingMidKeyMap(existingMidList, sourceType);
         Set<String> sourceKeySet = sourceDetailList.stream()
@@ -1421,13 +1427,13 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
                 DeliveryDeclareDetailMidEntity existingMid = existingKeyMap.get(sourceKey);
                 boolean comboChanged = changedComboGroupKeys.contains(buildSourceBoxParentKey(sourceDetail));
                 if (Objects.nonNull(existingMid) && !comboChanged) {
-                    fillGeneratedMid(existingMid, sourceType, sourceDetail, declareDetail, declareId, declareCode, billDetail.getId());
+                    fillGeneratedMid(existingMid, sourceType, sourceDetail, declareDetail, declareId, declareCode, billDetail.getId(), transferWarehouseNameMap);
                     changedMidList.add(existingMid);
                     removeDuplicateSameKeyMid(sourceType, sourceKey, existingMid.getId(), existingMidList);
                     continue;
                 }
                 DeliveryDeclareDetailMidEntity addMid = new DeliveryDeclareDetailMidEntity();
-                fillGeneratedMid(addMid, sourceType, sourceDetail, declareDetail, declareId, declareCode, billDetail.getId());
+                fillGeneratedMid(addMid, sourceType, sourceDetail, declareDetail, declareId, declareCode, billDetail.getId(), transferWarehouseNameMap);
                 addMidList.add(addMid);
                 changedMidList.add(addMid);
             }
@@ -1602,7 +1608,8 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
                                   TmsDeclareBillDTO.MergeDeclareBillDetailDTO declareDetail,
                                   String declareId,
                                   String declareCode,
-                                  String declareDetailId) {
+                                  String declareDetailId,
+                                  Map<String, String> transferWarehouseNameMap) {
         midEntity.setGenerateStatus(DeliveryDeclareDetailMidGenerateStatusEnum.FINISH.getCode());
         midEntity.setSourceType(sourceType);
         midEntity.setSourceId(sourceDetail.getSourceId());
@@ -1631,8 +1638,10 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         midEntity.setFromWarehouseName(sourceDetail.getFromWarehouseName());
         midEntity.setDestWarehouseId(sourceDetail.getDestWarehouseId());
         midEntity.setDestWarehouseName(sourceDetail.getDestWarehouseName());
-        midEntity.setTransferWarehouseIds(CharSequenceUtil.blankToDefault(sourceDetail.getTransferWarehouseIds(), ""));
-        midEntity.setTransferWarehouseNames(CharSequenceUtil.blankToDefault(sourceDetail.getTransferWarehouseNames(), ""));
+        String transferWarehouseIds = CharSequenceUtil.blankToDefault(sourceDetail.getTransferWarehouseIds(), "");
+        midEntity.setTransferWarehouseIds(transferWarehouseIds);
+        // 来源明细不带中转仓名称，按 ids 解析名称回填，避免列表「中转仓」无值。
+        midEntity.setTransferWarehouseNames(buildTransferWarehouseNames(transferWarehouseIds, transferWarehouseNameMap));
         midEntity.setSalesOrgId(sourceDetail.getSalesOrgId());
         midEntity.setSalesOrgName(sourceDetail.getSalesOrgName());
     }
