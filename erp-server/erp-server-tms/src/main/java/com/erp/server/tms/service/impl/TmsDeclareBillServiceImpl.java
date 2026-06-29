@@ -46,6 +46,8 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.dto.ProductBomHistoryDTO;
 import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.plm.entity.BasicDictEntity;
 import com.erp.model.plm.entity.ProductPackEntity;
@@ -175,6 +177,9 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     private com.erp.rpc.dmp.feign.DmpTaskFeign dmpTaskFeign;
 
     @Resource
+    private com.erp.rpc.plm.feign.ProductBomHistoryFeign productBomHistoryFeign;
+
+    @Resource
     private SysDictFeign sysDictFeign;
 
     @Resource
@@ -273,7 +278,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         TmsDeclareBillDTO.DeliveryDTO deliveryDTO = deliveryDTOList.get(0);
         // 新增页面下推保存逻辑：按前端提交的合并明细直接生成报关单
         if (CollUtil.isNotEmpty(addDTO.getMergeDetailList())) {
-            List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList = prepareSubmittedMergeDetailList(addDTO.getMergeDetailList(), addDTO.getIsMerge());
+            List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList = prepareSubmittedMergeDetailList(addDTO.getMergeDetailList(), addDTO.getIsMerge(), addDTO.getReceiverType());
             validateDeclareMergeDetails(mergeDetailList);
             // 目的国为中国大陆的来源单不生成报关单，任一勾选行命中即整批失败、不入库，
             // 来源单 declare_status 保持 WAIT，错误信息列出所有命中的来源单号。
@@ -490,10 +495,14 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         loadAndAssertUpdateEditableState(updateDTO.getId(), sourceTypeEnum);
         // 重量重算含 WMS/PLM Feign，须在事务外完成（erp-backend-standards：禁止事务内 Feign）。
         List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList =
-                prepareSubmittedMergeDetailList(updateDTO.getMergeDetailList(), updateDTO.getIsMerge());
+                prepareSubmittedMergeDetailList(updateDTO.getMergeDetailList(), updateDTO.getIsMerge(), updateDTO.getReceiverType());
         TmsDeclareBillDTO.SelectedSkuHeaderDTO recalculatedHeaderWeight =
                 computeRecalculatedHeaderWeight(mergeDetailList, sourceTypeEnum);
-        List<String> syncSourceIds = service.updateInTx(updateDTO, sourceTypeEnum, mergeDetailList, recalculatedHeaderWeight);
+        // B2B 提运单号取发货通知单运输单号(track_no)，事务外查好传入，落库到 transport_no。
+        String b2bTransportNo = SourceTypeEnum.B2B_DECLARE_BILL == sourceTypeEnum
+                ? resolveB2bNoticeTransportNo(collectSourceIdSet(mergeDetailList))
+                : null;
+        List<String> syncSourceIds = service.updateInTx(updateDTO, sourceTypeEnum, mergeDetailList, recalculatedHeaderWeight, b2bTransportNo);
         syncSourceDeclareStatusIfNeeded(sourceTypeEnum.getCode(), syncSourceIds);
         return Boolean.TRUE;
     }
@@ -526,7 +535,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     public List<String> updateInTx(TmsDeclareBillDTO.UpdateDTO updateDTO,
                                    SourceTypeEnum sourceTypeEnum,
                                    List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList,
-                                   TmsDeclareBillDTO.SelectedSkuHeaderDTO recalculatedHeaderWeight) {
+                                   TmsDeclareBillDTO.SelectedSkuHeaderDTO recalculatedHeaderWeight,
+                                   String b2bTransportNo) {
         // 事务内以 DB 最新主表为准二次校验，关闭 Feign 重算耗时窗口内的 TOCTOU 并发风险；
         // updateById 携带 @Version 乐观锁，并发修改导致版本不一致时 save=false。
         TmsDeclareBillEntity old = super.getById(updateDTO.getId());
@@ -551,6 +561,10 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
         applyRecalculatedHeaderWeight(tmsDeclareBillEntity, recalculatedHeaderWeight);
         tmsDeclareBillEntity.setCode(old.getCode());
+        // B2B 提运单号以发货通知单 track_no 为准，落库到 transport_no（事务外已查好传入）。
+        if (SourceTypeEnum.B2B_DECLARE_BILL == sourceTypeEnum) {
+            tmsDeclareBillEntity.setTransportNo(StringUtils.defaultString(b2bTransportNo));
+        }
         boolean save = super.updateById(tmsDeclareBillEntity);
         if(!save) {
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_BILL_SAVE_FAILED);
@@ -964,12 +978,15 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             allPackDTOList.forEach(v->v.setSku(v.getBoxDesc()));
             viewDTO.setPackingDTOList(allPackDTOList);
 
-            //物流供应商ids
-            String logisticsSupplierIds = deliveryDTOList.stream().map(TmsDeclareBillDTO.SoOutDTO::getLogisticsSupplierId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.joining(";"));
-            viewDTO.setLogisticsSupplierId(logisticsSupplierIds);
-            //物流供应商名称
-            String logisticsSupplierNames = deliveryDTOList.stream().map(TmsDeclareBillDTO.SoOutDTO::getLogisticsSupplierName).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.joining(";"));
-            viewDTO.setLogisticsSupplierName(logisticsSupplierNames);
+            // 物流商取发货通知单的承运商（carrier）。提运单号已在保存时持久化为发货通知单 track_no，
+            // 由 BeanUtil.copyProperties(entity, viewDTO) 直接带出，这里不再临时查询覆盖。
+            List<SoDeliveryNoticeEntity> b2bNoticeList = CollUtil.isEmpty(listBillSourceDTO.getSourceIdList())
+                    ? Collections.emptyList()
+                    : soDeliveryNoticeFeign.listByIds(listBillSourceDTO.getSourceIdList());
+            String carrierIds = b2bNoticeList.stream().map(SoDeliveryNoticeEntity::getCarrierId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.joining(";"));
+            viewDTO.setLogisticsSupplierId(carrierIds);
+            String carrierNames = b2bNoticeList.stream().map(SoDeliveryNoticeEntity::getCarrierName).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.joining(";"));
+            viewDTO.setLogisticsSupplierName(carrierNames);
             //  运输方式 / 柜号同 FM，按发货通知单关联的 logistics_bill 反查回显。
             String shippingMethods = deliveryDTOList.stream()
                     .map(TmsDeclareBillDTO.SoOutDTO::getShippingMethod)
@@ -983,8 +1000,6 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                     .distinct()
                     .collect(Collectors.joining(";"));
             viewDTO.setShippingMethodName(shippingMethodNames);
-            // B2B 的 transport_no 是页面手动录入，BeanUtil.copyProperties 已经把 entity.transport_no 搬到 viewDTO，
-            // 这里只补 counterNo（来自物流单），二者互不覆盖。
             String counterNos = deliveryDTOList.stream()
                     .map(TmsDeclareBillDTO.SoOutDTO::getCounterNo)
                     .filter(CharSequenceUtil::isNotBlank)
@@ -1980,7 +1995,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         TmsDeclareBillDTO.SoOutDTO deliveryDTO = deliveryDTOList.get(0);
         // 新增页面下推保存逻辑：按前端提交的合并明细直接生成报关单
         if (CollUtil.isNotEmpty(addDTO.getMergeDetailList())) {
-            List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList = prepareSubmittedMergeDetailList(addDTO.getMergeDetailList(), addDTO.getIsMerge());
+            List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList = prepareSubmittedMergeDetailList(addDTO.getMergeDetailList(), addDTO.getIsMerge(), addDTO.getReceiverType());
             validateDeclareMergeDetails(mergeDetailList);
             // 与 FM 对齐，目的国为中国大陆则整批失败，列出命中的来源单号，来源单状态不变。
             validateDestCountryNotMainlandChina(mergeDetailList);
@@ -2010,6 +2025,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                     .map(TmsDeclareBillDTO.SoOutDTO::getBusinessType)
                     .collect(Collectors.toList()));
             declareBillEntity.setBusinessType(StringUtils.isBlank(businessType) ? OrderTypeEnum.B2B.getCode() : businessType);
+            // 提运单号取发货通知单的运输单号(track_no)，落库到 transport_no。
+            declareBillEntity.setTransportNo(resolveB2bNoticeTransportNo(sourceIdList));
             // 总箱数/毛重/净重按选中箱号重算（复用已加载装箱明细），与编辑/批量保存口径一致，
             // 修复列表总毛重为空、详情件数/毛重/净重不对、装箱信息箱数偏差。
             List<TmsDeclareBillDTO.PackingDTO> selectedPackingSource = deliveryDTOList.stream()
@@ -3277,7 +3294,10 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (CollUtil.isEmpty(result)) {
             return Collections.emptyList();
         }
-        boolean includeSkuInGeneratedMergeKey = sixDimensionMerge || hasBomSplitChild(result);
+        // 合并维度只由境外收货人类型决定（按客户=6维度含SKU，其余=5维度不含SKU）。
+        // 组合品拆分只是把 SKU 拆到最小颗粒度的前置步骤，与合并维度无关：拆出来的子 SKU
+        // 同样按当前维度参与合并，因此不再因「存在 BOM 子件」就整单强制含 SKU。
+        boolean includeSkuInGeneratedMergeKey = sixDimensionMerge;
         DeclarationGenerationService declarationGenerationService = new DeclarationGenerationService(buildDeclareCurrencyRateMap(result));
         return declarationGenerationService.generateMergeBillDetails(result, viewDTO.getIsMultipleMerge(), includeSkuInGeneratedMergeKey);
     }
@@ -3311,16 +3331,21 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     }
 
     /**
-     * 判断报关来源明细中是否包含由 BOM 拆分生成的子 SKU 行。
-     *
-     * <p>BOM 子 SKU 行必须将 SKU 纳入合并维度。否则不同子 SKU 在申报属性相同或相近时，
-     * 会被折叠成同一条报关明细，并只保留第一条子 SKU 作为主 SKU。</p>
+     * B2B 报关单提运单号取发货通知单的运输单号(track_no)，多发货通知单去重分号拼接，保存到 tms_declare_bill.transport_no。
      */
-    private boolean hasBomSplitChild(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList) {
-        return CollUtil.isNotEmpty(sourceDetailList)
-                && sourceDetailList.stream()
-                .filter(Objects::nonNull)
-                .anyMatch(item -> StringUtils.isNotBlank(item.getParentSkuId()));
+    private String resolveB2bNoticeTransportNo(Collection<String> sourceIdList) {
+        if (CollUtil.isEmpty(sourceIdList)) {
+            return "";
+        }
+        List<SoDeliveryNoticeEntity> noticeList = soDeliveryNoticeFeign.listByIds(new ArrayList<>(sourceIdList));
+        if (CollUtil.isEmpty(noticeList)) {
+            return "";
+        }
+        return noticeList.stream()
+                .map(SoDeliveryNoticeEntity::getTrackNo)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.joining(";"));
     }
 
     /**
@@ -3545,7 +3570,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
      * @date 2026/5/7 14:08
      */
     private List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> prepareSubmittedMergeDetailList(List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList,
-                                                                                             Boolean isMerge) {
+                                                                                             Boolean isMerge,
+                                                                                             String receiverType) {
         // 过滤掉列表中的null元素
         List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> filteredList = mergeDetailList.stream()
                 .filter(Objects::nonNull)
@@ -3558,8 +3584,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
         // 根据合并模式选择不同的处理策略
         if (Boolean.TRUE.equals(isMerge)) {
-            // 合并模式：对编辑后的明细进行重新合并计算
-            return mergeEditedDetails(filteredList);
+            // 合并模式：按表单境外收货人类型重新拉取源数据并合并
+            return mergeEditedDetails(filteredList, receiverType);
         }
 
         // 非合并模式：为所有明细应用默认值
@@ -3575,10 +3601,12 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
      * @param mergeDetailList
      * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.MergeDeclareBillDetailDTO>
      */
-    private List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeEditedDetails(List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList) {
-        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList = new ArrayList<>();
+    private List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeEditedDetails(List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList,
+                                                                                String receiverType) {
+        // 打平成来源明细（只保留来源身份字段：来源单/箱号/SKU/数量/业务单/目的国 等），
+        // 申报字段(单价/币别/海关编码/申报要素/单位等)不再沿用提交值，统一按类型重新拉取源数据。
+        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> rawSourceList = new ArrayList<>();
         for (TmsDeclareBillDTO.MergeDeclareBillDetailDTO detailDTO : mergeDetailList) {
-            applyMergeDeclareDetailDefaults(detailDTO);
             if (CollUtil.isEmpty(detailDTO.getSourceDeliveryDetailList())) {
                 continue;
             }
@@ -3588,12 +3616,66 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 }
                 TmsDeclareBillDTO.SourceDeliveryDetailDTO copy = new TmsDeclareBillDTO.SourceDeliveryDetailDTO();
                 BeanUtil.copyProperties(sourceDetail, copy);
-                copyDeclareFieldsToSourceDetail(detailDTO, copy);
-                sourceDetailList.add(copy);
+                // 来源明细可能不带目的国码，取合并行的目的国兜底，供 prepareSourceDetailsForDeclarationGeneration 重算与分组。
+                if (StringUtils.isBlank(copy.getCountryId())) {
+                    copy.setCountryId(detailDTO.getToCountry());
+                }
+                rawSourceList.add(copy);
             }
         }
-        DeclarationGenerationService declarationGenerationService = new DeclarationGenerationService(buildDeclareCurrencyRateMap(sourceDetailList));
-        return flattenMergeDeclareBillList(declarationGenerationService.generateMergeBillDetails(sourceDetailList, Boolean.TRUE, isSixDimensionMerge(sourceDetailList)));
+        // 中间表未持久化 parentSkuId，编辑回传的 BOM 拆分子件 parentSkuId 为空；
+        // 按 bom_history_id 反查 BOM 历史父子件回填父 SKU，保证 6维度按客户重取 SO 含税单价时
+        // 能用父 SKU 命中 so_detail（resolveSoDetailSkuId 依赖 parentSkuId）。
+        backfillParentSkuIdByBomHistory(rawSourceList);
+        // 维度按表单境外收货人类型判定：B2B 且按客户=6维度(含SKU)，否则5维度。
+        boolean sixDimensionMerge = isB2bCustomerReceiver(resolveDeclareBillType(rawSourceList), receiverType);
+        // 按类型重新拉取源数据：6维度取SO含税单价/币别，5维度取PLM报关单价/币别，并处理组合品拆分。
+        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> result = prepareSourceDetailsForDeclarationGeneration(rawSourceList, sixDimensionMerge);
+        DeclarationGenerationService declarationGenerationService = new DeclarationGenerationService(buildDeclareCurrencyRateMap(result));
+        return flattenMergeDeclareBillList(declarationGenerationService.generateMergeBillDetails(result, Boolean.TRUE, sixDimensionMerge));
+    }
+
+    /**
+     * 按 bom_history_id 反查 BOM 历史父子件，给缺失 parentSkuId 的 BOM 拆分子件回填父 SKU。
+     * 中间表未存 parentSkuId，编辑重拉时子件需要父 SKU 才能在 6维度按客户场景命中 so_detail 含税单价。
+     */
+    private void backfillParentSkuIdByBomHistory(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList) {
+        if (CollUtil.isEmpty(sourceDetailList)) {
+            return;
+        }
+        List<String> bomHistoryIds = sourceDetailList.stream()
+                .filter(item -> StringUtils.isBlank(item.getParentSkuId()) && StringUtils.isNotBlank(item.getBomHistoryId()))
+                .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getBomHistoryId)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(bomHistoryIds)) {
+            return;
+        }
+        List<BomChildrenSkuDTO> historyList = productBomHistoryFeign.listBomHistoryByIds(
+                new ProductBomHistoryDTO.BomHistoryQueryDTO(bomHistoryIds, null));
+        if (CollUtil.isEmpty(historyList)) {
+            return;
+        }
+        // key = bomHistoryId#子skuId -> 父skuId
+        Map<String, String> childParentMap = historyList.stream()
+                .filter(item -> StringUtils.isNotBlank(item.getBomHistoryId())
+                        && StringUtils.isNotBlank(item.getSkuId())
+                        && StringUtils.isNotBlank(item.getParentSkuId()))
+                .collect(Collectors.toMap(
+                        item -> item.getBomHistoryId() + "#" + item.getSkuId(),
+                        BomChildrenSkuDTO::getParentSkuId,
+                        (a, b) -> a));
+        if (childParentMap.isEmpty()) {
+            return;
+        }
+        sourceDetailList.stream()
+                .filter(item -> StringUtils.isBlank(item.getParentSkuId()) && StringUtils.isNotBlank(item.getBomHistoryId()))
+                .forEach(item -> {
+                    String parentSkuId = childParentMap.get(item.getBomHistoryId() + "#" + item.getSkuId());
+                    if (StringUtils.isNotBlank(parentSkuId)) {
+                        item.setParentSkuId(parentSkuId);
+                    }
+                });
     }
 
     /**
@@ -3619,30 +3701,6 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         }
         mergeDetailList.forEach(this::applyMergeDeclareDetailDefaults);
         return mergeDetailList;
-    }
-
-    /**
-     * 把报关明细字段回填到来源明细
-     * @author will
-     * @date 2026/5/7 14:08
-     * @param detailDTO
-     * @param sourceDetail
-     */
-    private void copyDeclareFieldsToSourceDetail(TmsDeclareBillDTO.MergeDeclareBillDetailDTO detailDTO,
-                                                 TmsDeclareBillDTO.SourceDeliveryDetailDTO sourceDetail) {
-        sourceDetail.setHsCode(detailDTO.getHsCode());
-        sourceDetail.setProductNameCn(detailDTO.getProductNameCn());
-        sourceDetail.setDeclareElement(detailDTO.getDeclareElement());
-        sourceDetail.setUnit(detailDTO.getUnit());
-        sourceDetail.setUnitPrice(detailDTO.getUnitPrice());
-        sourceDetail.setDeclareCurrency(detailDTO.getDeclareCurrency());
-        sourceDetail.setDeclareCurrencySymbol(detailDTO.getDeclareCurrencySymbol());
-        sourceDetail.setSourceCountry(detailDTO.getSourceCountry());
-        sourceDetail.setSourceCountryName(detailDTO.getSourceCountryName());
-        sourceDetail.setCountryId(detailDTO.getToCountry());
-        sourceDetail.setCountryName(detailDTO.getToCountryName());
-        sourceDetail.setSourceCargo(detailDTO.getSourceCargo());
-        sourceDetail.setExemption(detailDTO.getExemption());
     }
 
     /**
