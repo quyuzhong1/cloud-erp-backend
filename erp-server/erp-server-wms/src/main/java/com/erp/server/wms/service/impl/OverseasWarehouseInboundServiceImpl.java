@@ -1284,12 +1284,22 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
             updateDetailEntityMap.put(detailEntity.getId(), detailEntity);
             //如果没有签收数据，在这里封装签收记录
             if (!dto.getHasReceivedData()) {
-                if (isJiFengReceivedFlow && Objects.nonNull(item.getGoodQuantity()) && Objects.nonNull(item.getBadQuantity())) {
-                    // 极风：按良品/不良品累计差量分别落库，有不良品则生成两条记录（良品+不良品）
+                if (isJiFengReceivedFlow) {
+                    // 极风：按良品/不良品累计差量分别落库，有不良品则生成两条记录（良品+不良品）。
+                    // 正常情况下极风 MQ Handler 会把 good/bad 初始化为非空；若任一为空说明上游入口
+                    // 未按约定填充，兜底为「全部良品」以保留不良品区分结构，同时打 warn 暴露异常入口。
+                    Integer goodQuantity = item.getGoodQuantity();
+                    Integer badQuantity = item.getBadQuantity();
+                    if (Objects.isNull(goodQuantity) || Objects.isNull(badQuantity)) {
+                        log.warn("极风入库缺少良品/不良品数量，按全部良品兜底 detailId={}, sku={}, receivedQuantity={}, goodQuantity={}, badQuantity={}",
+                                detailEntity.getId(), detailEntity.getPlatformSkuNo(), item.getReceivedQuantity(), goodQuantity, badQuantity);
+                        goodQuantity = Objects.isNull(item.getReceivedQuantity()) ? 0 : item.getReceivedQuantity();
+                        badQuantity = 0;
+                    }
                     int recordedGood = recordedGoodQtyMap.getOrDefault(detailEntity.getId(), 0);
                     int recordedBad = recordedBadQtyMap.getOrDefault(detailEntity.getId(), 0);
-                    int goodDiff = item.getGoodQuantity() - recordedGood;
-                    int badDiff = item.getBadQuantity() - recordedBad;
+                    int goodDiff = goodQuantity - recordedGood;
+                    int badDiff = badQuantity - recordedBad;
                     if (goodDiff != 0) {
                         insertReceiveEntityList.add(buildReceivedEntity(detailEntity.getId(), goodDiff, dto.getDownloadTime(), Boolean.FALSE));
                     }
