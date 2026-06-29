@@ -33,6 +33,8 @@ public enum AppClientEnum  {
 
     PDD_AUTHORIZE("pddAuthorize","sales","PDD"),
     PDD_ACCESS_TOKEN("pddAccessToken","sales","PDD"),
+    MAGALU_AUTHORIZE("magaluAuthorize","sales","Magalu"),
+    MAGALU_ACCESS_TOKEN("magaluAccessToken","sales","Magalu"),
 
     TIKTOK_FULLY_AUTHORIZE("tikTokAuthorize","sales","TikTokFully"),
     TIKTOK_FULLY_ACCESS_TOKEN("tikTokAccessToken","sales","TikTokFully"),

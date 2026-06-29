@@ -195,6 +195,12 @@
         </dependency>
         <dependency>
             <groupId>com.cloud.erp</groupId>
+            <artifactId>erp-sdk-oms-magalu</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.cloud.erp</groupId>
             <artifactId>erp-sdk-oms-mercado-local</artifactId>
             <version>0.0.1-SNAPSHOT</version>
             <scope>compile</scope>
