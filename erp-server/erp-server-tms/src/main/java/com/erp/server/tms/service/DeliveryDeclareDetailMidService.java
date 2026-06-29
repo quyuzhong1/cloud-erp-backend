@@ -109,11 +109,13 @@ public interface DeliveryDeclareDetailMidService extends SuperService<DeliveryDe
      */
     List<DeliveryDeclareDetailMidEntity> listByDeclareBillIdList(List<String> declareBillIdList);
     /**
-     * 根据报关单ids查询来源信息，包含申报要素
+     * 根据报关单 ids 查询来源信息（含申报要素及报关规则匹配维度）。
+     * <p>拆分/合并保存链路依赖本方法回读销售组织、发货仓、中转仓等字段。</p>
+     *
      * @author will
      * @date 2026/4/23 18:32
-     * @param declareBillIdList
-     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.SourceDeliveryDetailDTO>
+     * @param declareBillIdList 报关单 id 列表
+     * @return 来源明细列表
      */
     List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> listSourceByDeclareIdList(List<String> declareBillIdList);
     /**

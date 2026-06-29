@@ -158,7 +158,11 @@
             </foreach>
     </select>
 
-    <!-- 根据申报单id查询申报单明细及来源单据明细信息 -->
+    <!--
+        根据报关单 id 回查来源明细（拆分/合并保存链路使用）。
+        除商品申报字段外，需带出销售组织、发货仓、中转仓等报关规则匹配维度；
+        B2B 场景优先取中间表落库值，缺失时回退 so_delivery_notice。
+    -->
     <select id="listSourceByDeclareIdList"
             resultType="com.erp.model.tms.dto.TmsDeclareBillDTO$SourceDeliveryDetailDTO">
         select
@@ -185,10 +189,19 @@
         fpl.source_cargo as sourceCargo,
         fpl.exemption as exemption,
         fmd.country_id as countryId,
-        fmd.country_name as countryName
+        fmd.country_name as countryName,
+        COALESCE(NULLIF(dddm.from_warehouse_id, ''), sdn.warehouse_id) as fromWarehouseId,
+        COALESCE(NULLIF(dddm.from_warehouse_name, ''), sdn.warehouse_name) as fromWarehouseName,
+        dddm.dest_warehouse_id as destWarehouseId,
+        dddm.dest_warehouse_name as destWarehouseName,
+        COALESCE(NULLIF(dddm.transfer_warehouse_ids, ''), sdn.transfer_warehouse_ids) as transferWarehouseIds,
+        dddm.transfer_warehouse_names as transferWarehouseNames,
+        COALESCE(NULLIF(dddm.sales_org_id, ''), sdn.sales_org_id) as salesOrgId,
+        COALESCE(NULLIF(dddm.sales_org_name, ''), sdn.sales_org_name) as salesOrgName
         from delivery_declare_detail_mid dddm
         inner join foreign_product_logistics fpl on dddm.sku_id = fpl.sku_id and fpl.is_deleted = false
         left join wms_first_mile_delivery fmd on dddm.source_id = fmd.id and dddm.source_type = 'firstMileDelivery' and fmd.is_deleted = false
+        left join foreign_so_delivery_notice sdn on dddm.source_id = sdn.id and dddm.source_type = 'soDeliveryNotice' and sdn.is_deleted = false
         where  dddm.is_deleted = false
         and dddm.declare_id in
             

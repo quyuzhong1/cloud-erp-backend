@@ -4412,11 +4412,13 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     }
 
     /**
-     * 构建合并报关来源明细
+     * 由中间表行构建合并报关来源明细（详情/编辑回显）。
+     * <p>需同步映射仓库、销售组织等报关规则匹配字段，供拆分保存二次匹配规则使用。</p>
+     *
+     * @param entity 报关明细中间表行
+     * @return 来源明细 DTO
      * @author jack
      * @date 2026/4/30 16:35
-     * @param entity
-     * @return com.erp.model.tms.dto.TmsDeclareBillDTO.SourceDeliveryDetailDTO
      */
     private TmsDeclareBillDTO.SourceDeliveryDetailDTO buildSourceDeliveryDetailDTO(DeliveryDeclareDetailMidEntity entity) {
         TmsDeclareBillDTO.SourceDeliveryDetailDTO detailDTO = new TmsDeclareBillDTO.SourceDeliveryDetailDTO();
@@ -4438,6 +4440,14 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         detailDTO.setQty(entity.getQty());
         detailDTO.setDeclareCurrency(entity.getCurrency());
         detailDTO.setDeclareCurrencySymbol(entity.getCurrencySymbol());
+        detailDTO.setFromWarehouseId(entity.getFromWarehouseId());
+        detailDTO.setFromWarehouseName(entity.getFromWarehouseName());
+        detailDTO.setDestWarehouseId(entity.getDestWarehouseId());
+        detailDTO.setDestWarehouseName(entity.getDestWarehouseName());
+        detailDTO.setTransferWarehouseIds(entity.getTransferWarehouseIds());
+        detailDTO.setTransferWarehouseNames(entity.getTransferWarehouseNames());
+        detailDTO.setSalesOrgId(entity.getSalesOrgId());
+        detailDTO.setSalesOrgName(entity.getSalesOrgName());
         return detailDTO;
     }
 
