@@ -14,6 +14,7 @@ import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.PlatformOrderReceiverDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.enums.ApiError;
@@ -452,10 +453,24 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
                 }
             }
             for (SoB2cEntity soB2cEntity : soB2cList) {
-                //订单只有待提交、审核不通过时允许导入更新
-                if(!soB2cEntity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT) && !soB2cEntity.getApproveStatus().equals(ApproveStatusEnum.REJECT)){
-                    errorMsgList.add("【"+soB2cEntity.getCode() + "】订单只有待提交、审核不通过时允许导入更新");
-                }else{
+                boolean isAmazon = PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(soB2cEntity.getDictPlatform());
+                boolean canImport;
+                if (isAmazon) {
+                    // 亚马逊平台：仅作废、取消状态不允许导入，其余状态均可导入
+                    canImport = !Boolean.TRUE.equals(soB2cEntity.getInvalidStatus())
+                            && !Boolean.TRUE.equals(soB2cEntity.getIsCancel());
+                } else {
+                    // 其他平台：仅待提交、审核不通过时允许导入更新
+                    canImport = ApproveStatusEnum.WAIT_SUBMIT.equals(soB2cEntity.getApproveStatus())
+                            || ApproveStatusEnum.REJECT.equals(soB2cEntity.getApproveStatus());
+                }
+                if (!canImport) {
+                    if (isAmazon) {
+                        errorMsgList.add("【" + soB2cEntity.getCode() + "】已作废或已取消的订单不允许导入更新");
+                    } else {
+                        errorMsgList.add("【" + soB2cEntity.getCode() + "】订单只有待提交、审核不通过时允许导入更新");
+                    }
+                } else {
                     //如果买家名为空，则使用收件人名
                     if (StringUtils.isBlank(excelDTO.getCustomerName())) {
                         excelDTO.setCustomerName(excelDTO.getReceiverName());
