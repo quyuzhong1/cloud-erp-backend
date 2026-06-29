@@ -83,6 +83,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -102,6 +103,8 @@ public class ShopeePackageForecastAdapter extends AbstractPackageForecastPlatfor
     private static final String FIRST_MILE_PACKAGE_HAS_NOT_BIND = "firstmile.package_has_not_bind";
     private static final String SHOPEE_PLATFORM_STATUS_NOT_AVAILABLE = "NOT_AVAILABLE";
     private static final String SHOPEE_PLATFORM_STATUS_DELIVERED = "DELIVERED";
+    private static final int SHOPEE_TRACKING_PAGE_SIZE = 50;
+    private static final long SHOPEE_TRACKING_QUERY_PADDING_DAYS = 1L;
 
     @Resource
     private DmpTaskFeign dmpTaskFeign;
@@ -273,56 +276,51 @@ public class ShopeePackageForecastAdapter extends AbstractPackageForecastPlatfor
         if (Objects.isNull(entity)) {
             return;
         }
-        if (PackageForecastCollectModeEnum.SHOPEE_COURIER_DELIVERY.getCode().equals(entity.getCollectMode())) {
-            syncCourierDeliveryTrackingStatus(entity);
+        Optional<ShopeeTrackingSyncKey> keyOptional = buildTrackingSyncKey(entity);
+        if (!keyOptional.isPresent()) {
             return;
         }
-        if (StringUtils.isBlank(entity.getTransportNo())) {
+        ShopeeTrackingSyncKey key = keyOptional.get();
+        if (PackageForecastCollectModeEnum.SHOPEE_COURIER_DELIVERY.getCode().equals(key.getCollectMode())) {
+            syncCourierDeliveryTrackingStatus(Collections.singletonList(entity), key);
             return;
         }
-        String shopId = entity.getShopId();
-        if (StringUtils.isBlank(shopId)) {
-            ShopeeForecastContext context = buildBaseContext(Collections.singletonList(entity.getId()));
-            shopId = context.getShopId();
+        syncFirstMileTrackingStatus(Collections.singletonList(entity), key);
+    }
+
+    @Override
+    public void syncTrackingStatus(List<PackageForecastEntity> entityList,
+                                   BiConsumer<PackageForecastEntity, Exception> errorHandler) {
+        if (CollectionUtils.isEmpty(entityList)) {
+            return;
         }
-        LocalDate fromDate = Objects.nonNull(entity.getBillDate()) ? entity.getBillDate() : LocalDate.now().minusMonths(3);
-        LocalDate toDate = LocalDate.now();
-        BaseRequest baseRequest = buildBaseRequest(shopId);
-        String cursor = null;
-        do {
-            FirstMileTrackingNumberListRequest request = FirstMileTrackingNumberListRequest.builder()
-                    .fromDate(fromDate.toString())
-                    .toDate(toDate.toString())
-                    .pageSize(50)
-                    .cursor(cursor)
-                    .build();
-            FirstMileTrackingNumberListResponse response = shopeeLogisticsService.getTrackNumberList(baseRequest, request);
-            if (Objects.isNull(response)) {
-                return;
-            }
-            if (CollectionUtils.isEmpty(response.getFirstMileTrackingNumberList())) {
-                cursor = response.getNextCursor();
-                if (!Boolean.TRUE.equals(response.getMore())) {
-                    cursor = null;
-                }
+        Map<ShopeeTrackingSyncKey, List<PackageForecastEntity>> groupMap = new LinkedHashMap<>();
+        for (PackageForecastEntity entity : entityList) {
+            if (Objects.isNull(entity)) {
                 continue;
             }
-            FirstMileTrackingNumber number = response.getFirstMileTrackingNumberList().stream()
-                    .filter(item -> entity.getTransportNo().equals(item.getFirstMileTrackingNumber()))
-                    .findFirst().orElse(null);
-            if (Objects.nonNull(number)) {
-                String status = mapShopeeHandoverStatus(number.getStatus());
-                if (StringUtils.isNotBlank(status)) {
-                    entity.setHandoverStatus(status);
-                    updateForecastOrThrow(entity);
+            try {
+                Optional<ShopeeTrackingSyncKey> keyOptional = buildTrackingSyncKey(entity);
+                if (!keyOptional.isPresent()) {
+                    continue;
                 }
-                return;
+                groupMap.computeIfAbsent(keyOptional.get(), key -> new ArrayList<>()).add(entity);
+            } catch (Exception e) {
+                errorHandler.accept(entity, e);
             }
-            cursor = response.getNextCursor();
-            if (!Boolean.TRUE.equals(response.getMore())) {
-                cursor = null;
+        }
+        for (Map.Entry<ShopeeTrackingSyncKey, List<PackageForecastEntity>> entry : groupMap.entrySet()) {
+            try {
+                ShopeeTrackingSyncKey key = entry.getKey();
+                if (PackageForecastCollectModeEnum.SHOPEE_COURIER_DELIVERY.getCode().equals(key.getCollectMode())) {
+                    syncCourierDeliveryTrackingStatus(entry.getValue(), key);
+                } else {
+                    syncFirstMileTrackingStatus(entry.getValue(), key);
+                }
+            } catch (Exception e) {
+                entry.getValue().forEach(entity -> errorHandler.accept(entity, e));
             }
-        } while (StringUtils.isNotBlank(cursor));
+        }
     }
 
     @Override
@@ -542,59 +540,89 @@ public class ShopeePackageForecastAdapter extends AbstractPackageForecastPlatfor
         return shopeeLogisticsService.getWaybill(buildBaseRequest(shopId), request);
     }
 
-    private void syncCourierDeliveryTrackingStatus(PackageForecastEntity entity) {
+    private Optional<CourierDeliveryBindingInfo> findCourierDeliveryBindingInfo(PackageForecastEntity entity, String shopId) {
         if (StringUtils.isBlank(entity.getPlatformPackageNo())) {
-            return;
+            return Optional.empty();
         }
-        String shopId = entity.getShopId();
-        if (StringUtils.isBlank(shopId)) {
-            ShopeeForecastContext context = buildBaseContext(Collections.singletonList(entity.getId()));
-            shopId = context.getShopId();
-        }
-        Optional<CourierDeliveryBindingInfo> bindingInfoOptional = findCourierDeliveryBindingInfo(entity, shopId);
-        if (!bindingInfoOptional.isPresent()) {
-            return;
-        }
-        String status = mapShopeeHandoverStatus(bindingInfoOptional.get().getStatus());
-        if (StringUtils.isNotBlank(status)) {
-            entity.setHandoverStatus(status);
-            updateForecastOrThrow(entity);
+        ShopeeTrackingQueryRange range = buildTrackingQueryRange(entity);
+        ShopeeTrackingSyncKey key = new ShopeeTrackingSyncKey(shopId,
+                PackageForecastCollectModeEnum.SHOPEE_COURIER_DELIVERY.getCode(),
+                range.getFromDate(), range.getToDate());
+        return Optional.ofNullable(queryCourierDeliveryBindingInfoMap(key).get(entity.getPlatformPackageNo()));
+    }
+
+    private void syncFirstMileTrackingStatus(List<PackageForecastEntity> entityList, ShopeeTrackingSyncKey key) {
+        Map<String, String> statusMap = queryFirstMileTrackingStatusMap(key);
+        for (PackageForecastEntity entity : entityList) {
+            String status = mapShopeeHandoverStatus(statusMap.get(entity.getTransportNo()));
+            if (StringUtils.isNotBlank(status)) {
+                entity.setHandoverStatus(status);
+                updateForecastOrThrow(entity);
+            }
         }
     }
 
-    private Optional<CourierDeliveryBindingInfo> findCourierDeliveryBindingInfo(PackageForecastEntity entity, String shopId) {
-        LocalDate toDate = LocalDate.now();
-        LocalDate fromDate = Objects.nonNull(entity.getBillDate()) ? entity.getBillDate() : toDate.minusMonths(3);
-        if (fromDate.isAfter(toDate)) {
-            fromDate = toDate;
+    private void syncCourierDeliveryTrackingStatus(List<PackageForecastEntity> entityList, ShopeeTrackingSyncKey key) {
+        Map<String, CourierDeliveryBindingInfo> bindingInfoMap = queryCourierDeliveryBindingInfoMap(key);
+        for (PackageForecastEntity entity : entityList) {
+            CourierDeliveryBindingInfo bindingInfo = bindingInfoMap.get(entity.getPlatformPackageNo());
+            if (Objects.isNull(bindingInfo)) {
+                continue;
+            }
+            String status = mapShopeeHandoverStatus(bindingInfo.getStatus());
+            if (StringUtils.isNotBlank(status)) {
+                entity.setHandoverStatus(status);
+                updateForecastOrThrow(entity);
+            }
         }
-        BaseRequest baseRequest = buildBaseRequest(shopId);
+    }
+
+    private Map<String, String> queryFirstMileTrackingStatusMap(ShopeeTrackingSyncKey key) {
+        Map<String, String> resultMap = new HashMap<>();
+        BaseRequest baseRequest = buildBaseRequest(key.getShopId());
+        String cursor = null;
+        do {
+            FirstMileTrackingNumberListRequest request = FirstMileTrackingNumberListRequest.builder()
+                    .fromDate(key.getFromDate().toString())
+                    .toDate(key.getToDate().toString())
+                    .pageSize(SHOPEE_TRACKING_PAGE_SIZE)
+                    .cursor(cursor)
+                    .build();
+            FirstMileTrackingNumberListResponse response = shopeeLogisticsService.getTrackNumberList(baseRequest, request);
+            if (Objects.isNull(response)) {
+                return resultMap;
+            }
+            CollectionUtils.emptyIfNull(response.getFirstMileTrackingNumberList()).stream()
+                    .filter(item -> StringUtils.isNotBlank(item.getFirstMileTrackingNumber()))
+                    .forEach(item -> resultMap.put(item.getFirstMileTrackingNumber(), item.getStatus()));
+            cursor = nextCursor(response.getNextCursor(), response.getMore());
+        } while (StringUtils.isNotBlank(cursor));
+        return resultMap;
+    }
+
+    private Map<String, CourierDeliveryBindingInfo> queryCourierDeliveryBindingInfoMap(ShopeeTrackingSyncKey key) {
+        Map<String, CourierDeliveryBindingInfo> resultMap = new HashMap<>();
+        BaseRequest baseRequest = buildBaseRequest(key.getShopId());
         String cursor = null;
         do {
             CourierDeliveryTrackingNumberListRequest request = CourierDeliveryTrackingNumberListRequest.builder()
-                    .fromDate(fromDate.toString())
-                    .toDate(toDate.toString())
-                    .pageSize(50)
+                    .fromDate(key.getFromDate().toString())
+                    .toDate(key.getToDate().toString())
+                    .pageSize(SHOPEE_TRACKING_PAGE_SIZE)
                     .cursor(cursor)
                     .build();
             ValidatorUtil.validateEntity(request);
             CourierDeliveryTrackingNumberListResponse response =
                     shopeeLogisticsService.getCourierDeliveryTrackingNumberList(baseRequest, request);
             if (Objects.isNull(response)) {
-                return Optional.empty();
+                return resultMap;
             }
-            Optional<CourierDeliveryBindingInfo> bindingInfo = CollectionUtils.emptyIfNull(response.getTrackingNumberList()).stream()
-                    .filter(item -> entity.getPlatformPackageNo().equals(item.getBindingId()))
-                    .findFirst();
-            if (bindingInfo.isPresent()) {
-                return bindingInfo;
-            }
-            cursor = response.getNextCursor();
-            if (!Boolean.TRUE.equals(response.getMore())) {
-                cursor = null;
-            }
+            CollectionUtils.emptyIfNull(response.getTrackingNumberList()).stream()
+                    .filter(item -> StringUtils.isNotBlank(item.getBindingId()))
+                    .forEach(item -> resultMap.put(item.getBindingId(), item));
+            cursor = nextCursor(response.getNextCursor(), response.getMore());
         } while (StringUtils.isNotBlank(cursor));
-        return Optional.empty();
+        return resultMap;
     }
 
     private void validateCourierDeliveryBindingStatus(PackageForecastEntity entity, CourierDeliveryBindingInfo bindingInfo) {
@@ -991,6 +1019,47 @@ public class ShopeePackageForecastAdapter extends AbstractPackageForecastPlatfor
                 && StringUtils.containsIgnoreCase(message, "required");
     }
 
+    private Optional<ShopeeTrackingSyncKey> buildTrackingSyncKey(PackageForecastEntity entity) {
+        boolean courierDelivery = PackageForecastCollectModeEnum.SHOPEE_COURIER_DELIVERY.getCode().equals(entity.getCollectMode());
+        if (courierDelivery && StringUtils.isBlank(entity.getPlatformPackageNo())) {
+            return Optional.empty();
+        }
+        if (!courierDelivery && StringUtils.isBlank(entity.getTransportNo())) {
+            return Optional.empty();
+        }
+        String shopId = entity.getShopId();
+        if (StringUtils.isBlank(shopId)) {
+            ShopeeForecastContext context = buildBaseContext(Collections.singletonList(entity.getId()));
+            shopId = context.getShopId();
+        }
+        ShopeeTrackingQueryRange range = buildTrackingQueryRange(entity);
+        return Optional.of(new ShopeeTrackingSyncKey(shopId, entity.getCollectMode(), range.getFromDate(), range.getToDate()));
+    }
+
+    private ShopeeTrackingQueryRange buildTrackingQueryRange(PackageForecastEntity entity) {
+        LocalDate now = LocalDate.now();
+        LocalDate referenceDate = entity.getBillDate();
+        if (Objects.isNull(referenceDate) && Objects.nonNull(entity.getCreateTime())) {
+            referenceDate = entity.getCreateTime().toLocalDate();
+        }
+        if (Objects.isNull(referenceDate) || referenceDate.isAfter(now)) {
+            referenceDate = now;
+        }
+        LocalDate fromDate = referenceDate.minusDays(SHOPEE_TRACKING_QUERY_PADDING_DAYS);
+        LocalDate toDate = referenceDate.plusDays(SHOPEE_TRACKING_QUERY_PADDING_DAYS);
+        if (toDate.isAfter(now)) {
+            toDate = now;
+        }
+        if (fromDate.isAfter(toDate)) {
+            fromDate = toDate;
+        }
+        return new ShopeeTrackingQueryRange(fromDate, toDate);
+    }
+
+    private String nextCursor(String cursor, Boolean more) {
+        return Boolean.TRUE.equals(more) ? cursor : null;
+    }
+
     private String withPdfPrefix(String base64) {
         if (StringUtils.startsWith(base64, PDF_PREFIX)) {
             return base64;
@@ -1101,5 +1170,19 @@ public class ShopeePackageForecastAdapter extends AbstractPackageForecastPlatfor
         private String shopId;
         private List<FirstMileOrder> orderList;
         private Map<String, List<String>> forecastOrderKeyMap;
+    }
+
+    @Data
+    private static class ShopeeTrackingSyncKey {
+        private final String shopId;
+        private final String collectMode;
+        private final LocalDate fromDate;
+        private final LocalDate toDate;
+    }
+
+    @Data
+    private static class ShopeeTrackingQueryRange {
+        private final LocalDate fromDate;
+        private final LocalDate toDate;
     }
 }

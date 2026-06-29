@@ -128,6 +128,7 @@ public class ShopeeApiUtils {
             resultMap = JSONUtil.toBean(bodyStr, ShopResponse.class);
         } catch (Exception e) {
             log.error("虾皮接口请求异常, method: GET, url: {}, 错误: {}", safeUrl, e.getMessage(), e);
+            throw new ServiceException("虾皮店铺接口请求失败");
         }
 
         return resultMap;
@@ -152,6 +153,7 @@ public class ShopeeApiUtils {
             resultMap = JSONUtil.toBean(bodyStr, MerchantResponse.class);
         } catch (Exception e) {
             log.error("虾皮接口请求异常, method: GET, url: {}, 错误: {}", safeUrl, e.getMessage(), e);
+            throw new ServiceException("虾皮商户接口请求失败");
         }
 
         return resultMap;
@@ -176,6 +178,7 @@ public class ShopeeApiUtils {
             resultMap = JSONUtil.toBean(bodyStr, ShopeeResponse.class);
         } catch (Exception e) {
             log.error("虾皮接口请求异常, method: GET, url: {}, 错误: {}", safeUrl, e.getMessage(), e);
+            throw new ServiceException("虾皮接口请求失败");
         }
 
         return resultMap;
@@ -226,6 +229,7 @@ public class ShopeeApiUtils {
             resultMap = JSONUtil.toBean(bodyStr, ShopeeResponse.class);
         } catch (Exception e) {
             log.error("虾皮接口请求异常, method: POST, url: {}, 错误: {}", safeUrl, e.getMessage(), e);
+            throw new ServiceException("虾皮接口请求失败");
         }
         return resultMap;
     }
@@ -251,6 +255,7 @@ public class ShopeeApiUtils {
             resultMap = JSONUtil.toBean(bodyStr, ShopeeTokenAuth.class);
         } catch (Exception e) {
             log.error("虾皮接口请求异常, method: POST, url: {}, 错误: {}", safeUrl, e.getMessage(), e);
+            throw new ServiceException("虾皮刷新授权接口请求失败");
         }
 
         return resultMap;
@@ -276,6 +281,7 @@ public class ShopeeApiUtils {
             resultMap = JSONUtil.toBean(bodyStr, ShopeeResponse.class);
         } catch (Exception e) {
             log.error("虾皮接口请求异常, method: POST, url: {}, 错误: {}", safeUrl, e.getMessage(), e);
+            throw new ServiceException("虾皮接口请求失败");
         }
         return resultMap;
     }

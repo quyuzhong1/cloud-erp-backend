@@ -340,6 +340,9 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
         authMap.put("clientSecret", cfgAppClient.getClientSecret());
         authMap.put("token", shopAuthEntity.getToken());
         JSONObject jsonObject = JSONObject.parseObject(shopAuthEntity.getExtendData());
+        if (Objects.isNull(jsonObject)) {
+            throw new ServiceException("店铺扩展数据格式异常");
+        }
         String sellerId = jsonObject.getString("sellerId");
         if (StringUtils.isBlank(sellerId)) {
             throw new ServiceException("获取店铺速卖通卖家id失败");

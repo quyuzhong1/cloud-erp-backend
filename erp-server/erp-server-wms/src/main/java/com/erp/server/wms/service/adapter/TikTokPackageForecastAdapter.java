@@ -46,6 +46,9 @@ public class TikTokPackageForecastAdapter extends AbstractPackageForecastPlatfor
     @Resource
     private WmsAttachmentService wmsAttachmentService;
 
+    private static final String UPLOAD_FAILURE_MESSAGE = "上传失败，请稍后重试或联系管理员处理";
+    private static final String CANCEL_FAILURE_MESSAGE = "取消上传失败，请稍后重试或联系管理员处理";
+
     @Override
     public String platform() {
         return PlatformDictEnum.TIK_TOK.getCode();
@@ -65,7 +68,7 @@ public class TikTokPackageForecastAdapter extends AbstractPackageForecastPlatfor
                 if (Objects.isNull(entity)) {
                     resultDTOS.add(BatchResultDTO.fail(id, id, "组包预报单不存在, 上传失败"));
                 } else {
-                    resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+                    resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), UPLOAD_FAILURE_MESSAGE));
                 }
             }
         }
@@ -91,14 +94,14 @@ public class TikTokPackageForecastAdapter extends AbstractPackageForecastPlatfor
                 return BatchResultDTO.fail(entity.getId(), entity.getCode(), "平台已组包，本地状态更新失败，请人工核对");
             }
             entity.setUploadStatus(PackageUploadStatusEnum.UPLOAD_FAILURE.getCode());
-            entity.setRemark("上传失败:" + e.getMessage());
+            entity.setRemark(UPLOAD_FAILURE_MESSAGE);
             try {
                 updateForecastOrThrow(entity);
             } catch (Exception updateException) {
                 log.error("TikTok组包预报上传失败后更新失败状态失败, id: {}, code: {}", entity.getId(), entity.getCode(), updateException);
             }
             log.error("组包预报上传失败>>>>>", e);
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "上传失败" + e.getMessage());
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), UPLOAD_FAILURE_MESSAGE);
         }
     }
 
@@ -133,15 +136,15 @@ public class TikTokPackageForecastAdapter extends AbstractPackageForecastPlatfor
             } catch (Exception e) {
                 log.error("取消上传失败>>>>", e);
                 if (Objects.nonNull(entity)) {
-                    entity.setRemark("取消失败原因:" + e.getMessage());
+                    entity.setRemark(CANCEL_FAILURE_MESSAGE);
                     try {
                         updateForecastOrThrow(entity);
                     } catch (Exception updateException) {
                         log.error("TikTok组包预报取消失败后更新失败原因失败, id: {}, code: {}", entity.getId(), entity.getCode(), updateException);
                     }
-                    resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), "取消上传失败:" + e.getMessage()));
+                    resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), CANCEL_FAILURE_MESSAGE));
                 } else {
-                    resultDTOS.add(BatchResultDTO.fail(id, id, e.getMessage()));
+                    resultDTOS.add(BatchResultDTO.fail(id, id, CANCEL_FAILURE_MESSAGE));
                 }
             }
         }
@@ -248,7 +251,6 @@ public class TikTokPackageForecastAdapter extends AbstractPackageForecastPlatfor
         }
         List<SoB2cEntity> soList = soB2cFeign.listByIds(soIds);
         if (CollectionUtils.isNotEmpty(soList)) {
-            validateOrderPlatform(soList);
             context.setSoMap(soList.stream()
                     .collect(Collectors.toMap(SoB2cEntity::getId, Function.identity(), (left, right) -> left)));
         }
@@ -299,6 +301,7 @@ public class TikTokPackageForecastAdapter extends AbstractPackageForecastPlatfor
         if (CollectionUtils.isEmpty(soList)) {
             throw new ServiceException("销售订单未找到");
         }
+        validateOrderPlatform(soList);
         return soList;
     }
 
@@ -321,7 +324,7 @@ public class TikTokPackageForecastAdapter extends AbstractPackageForecastPlatfor
             String base64 = PdfUtil.base64ForPdf(inputStream);
             return "data:application/pdf;base64," + base64;
         } catch (Exception e) {
-            throw new ServiceException(e.getMessage());
+            throw new ServiceException("打印失败");
         }
     }
 
