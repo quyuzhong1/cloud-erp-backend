@@ -110,7 +110,7 @@ public class ShopeeApiUtils {
             throw new ServiceException("虾皮接口请求异常:" + e.getMessage());
         }
 
-        return resultMap;
+        return requireResponse(resultMap, "虾皮接口响应为空");
     }
 
     /**
@@ -161,7 +161,14 @@ public class ShopeeApiUtils {
             log.error("虾皮接口请求异常, method: POST, url: {}, 错误: {}", safeUrl, e.getMessage(), e);
             throw new ServiceException("虾皮接口请求异常:" + e.getMessage());
         }
-        return resultMap;
+        return requireResponse(resultMap, "虾皮接口响应为空");
+    }
+
+    private static <T> T requireResponse(T response, String message) {
+        if (response == null) {
+            throw new ServiceException(message);
+        }
+        return response;
     }
 
     private static String buildSafeUrl(String url, Map<String, Object> urlParams) {

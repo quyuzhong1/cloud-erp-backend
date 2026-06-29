@@ -482,6 +482,8 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
             }
             return "data:application/pdf;base64," + base64;
         } catch (IOException e) {
+            log.error("TikTok全托管组包预报打印PDF转换失败, id: {}, code: {}, url: {}",
+                    entity.getId(), entity.getCode(), url, e);
             throw new ServiceException("打印失败");
         }
     }

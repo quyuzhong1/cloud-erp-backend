@@ -886,7 +886,7 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
 
     @Override
     public ListingInfoDTO.ImportDTO importFile(MultipartFile excelFile, List<String> thirdSkuNoList, String warehouseId, String shopId, String type, HttpServletResponse response) {
-        if (DeliveryPlanTypeEnum.FBS.getCode().equals(type) && CharSequenceUtil.isBlank(shopId)) {
+        if (DeliveryPlanTypeEnum.FBS.getCode().equalsIgnoreCase(type) && CharSequenceUtil.isBlank(shopId)) {
             throw new ServiceException("FBS发货计划导入店铺不能为空");
         }
         if(CharSequenceUtil.isBlank(warehouseId)&& CharSequenceUtil.isBlank(shopId)){
@@ -894,10 +894,29 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         }
         // 店铺不为空时走平台仓/FBA/FBS导入，由type区分；否则走第三方仓导入。
         if(CharSequenceUtil.isNotBlank(shopId)){
-            return fbaImportFile(excelFile, thirdSkuNoList, shopId, type);
+            return fbaImportFile(excelFile, thirdSkuNoList, shopId, normalizePlatformImportType(type));
         }else{
             return thirdImportFile(excelFile, thirdSkuNoList, warehouseId, shopId);
         }
+    }
+
+    private String normalizePlatformImportType(String type) {
+        if (CharSequenceUtil.isBlank(type) || DeliveryPlanTypeEnum.FBA.getCode().equalsIgnoreCase(type)) {
+            return DeliveryPlanTypeEnum.FBA.getCode();
+        }
+        if (DeliveryPlanTypeEnum.FBS.getCode().equalsIgnoreCase(type)) {
+            return DeliveryPlanTypeEnum.FBS.getCode();
+        }
+        if (DeliveryPlanTypeEnum.FBT.getCode().equalsIgnoreCase(type)) {
+            return DeliveryPlanTypeEnum.FBT.getCode();
+        }
+        if (DeliveryPlanTypeEnum.AWD.getCode().equalsIgnoreCase(type)) {
+            return DeliveryPlanTypeEnum.AWD.getCode();
+        }
+        if (DeliveryPlanTypeEnum.ALIEXPRESS.getCode().equalsIgnoreCase(type)) {
+            return DeliveryPlanTypeEnum.ALIEXPRESS.getCode();
+        }
+        throw new ServiceException("非法发货计划导入类型");
     }
 
     private ListingInfoDTO.ImportDTO thirdImportFile(MultipartFile excelFile, List<String> thirdSkuNoList, String warehouseId, String shopId) {

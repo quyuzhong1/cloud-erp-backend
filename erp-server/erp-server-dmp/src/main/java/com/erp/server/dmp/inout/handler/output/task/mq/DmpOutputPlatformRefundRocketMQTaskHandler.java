@@ -11,6 +11,7 @@ import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import com.erp.server.dmp.service.DmpSoRefundDetailService;
 import com.erp.server.dmp.service.DmpSoRefundInfoService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 
@@ -28,6 +29,7 @@ import java.util.stream.Collectors;
 /**
  * 平台 B2C 退款单通用 MQ 输出：dmp_so_refund_info/detail → PlatformRefundOrderDTO → OMS。
  */
+@Slf4j
 public abstract class DmpOutputPlatformRefundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler {
 
     private static final int BATCH_SIZE = 500;
@@ -92,9 +94,14 @@ public abstract class DmpOutputPlatformRefundRocketMQTaskHandler extends DmpOutp
         Map<String, String> map = new HashMap<>();
         String cfgOutputId = dmpResponse.getDmpCfgOutputEntity().getId();
         for (String changeId : changeIds) {
-            PlatformRefundOrderDTO orderDTO = convert(dmpEntityMap.get(changeId), dmpDetailEntityMap.get(changeId), cfgOutputId);
+            DmpSoRefundInfoEntity dmpEntity = dmpEntityMap.get(changeId);
+            List<DmpSoRefundDetailEntity> dmpDetailList = dmpDetailEntityMap.get(changeId);
+            PlatformRefundOrderDTO orderDTO = convert(dmpEntity, dmpDetailList, cfgOutputId);
             if (orderDTO != null) {
                 map.put(changeId, JSON.toJSONString(orderDTO));
+            } else {
+                log.warn("平台退款MQ输出跳过, changeId:{}, hasInfo:{}, detailSize:{}, cfgOutputId:{}",
+                        changeId, dmpEntity != null, dmpDetailList == null ? 0 : dmpDetailList.size(), cfgOutputId);
             }
         }
         return map;

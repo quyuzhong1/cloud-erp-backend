@@ -477,6 +477,10 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
     }
 
     private void persistUploadFailureIfNeeded(PackageForecastEntity entity, Exception e) {
+        PackageForecastEntity latestEntity = this.getById(entity.getId());
+        if (Objects.nonNull(latestEntity)) {
+            entity = latestEntity;
+        }
         if (hasPlatformInfo(entity)) {
             log.warn("组包预报上传异常但已存在平台信息，不覆盖为上传失败, id: {}, code: {}, handoverNo: {}, platformPackageNo: {}",
                     entity.getId(), entity.getCode(), entity.getHandoverNo(), entity.getPlatformPackageNo());

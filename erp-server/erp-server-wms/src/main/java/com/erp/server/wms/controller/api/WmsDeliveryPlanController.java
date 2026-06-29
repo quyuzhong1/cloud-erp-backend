@@ -527,6 +527,7 @@ public class WmsDeliveryPlanController extends BaseController {
             wb.write(output);
             wb.close();
         } catch (Exception e) {
+            log.error("第三方仓发货计划模板下载失败, path: {}", path, e);
             throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
         return success();
@@ -556,6 +557,7 @@ public class WmsDeliveryPlanController extends BaseController {
             wb.write(output);
             output.flush();
         } catch (Exception e) {
+            log.error("FBA发货计划模板下载失败, path: {}", path, e);
             throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
         return success();
@@ -581,6 +583,7 @@ public class WmsDeliveryPlanController extends BaseController {
             wb.write(output);
             output.flush();
         } catch (Exception e) {
+            log.error("平台发货计划模板下载失败, path: {}", path, e);
             throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
         return success();
