@@ -30,9 +30,11 @@ import java.util.*;
 /**
  * DMP 输入 init 任务处理器：WEGO 2C 出库单状态轮询。
  * <p>
- * 按 dmp 任务的 startTime/endTime（缺省时回退为 [date-1] ~ [date]）作为「完结日期」范围，
- * 调用 2c.order.queryPage finishDateBegin/finishDateEnd 模式拉取已出库订单的最新状态，
- * 与 {@link WegoInboundInitHandler} 保持相同的增量拉取模式。
+ * 按 dmp 任务的 startTime/endTime（缺省时回退为 [date-1] ~ [date]）作为「订单日期」范围，
+ * 调用 2c.order.queryPage orderDateBegin/orderDateEnd 模式拉取订单的最新状态。
+ * <p>
+ * 之所以按订单日期(orderDate)而非完结日期(finishDate)拉取：已取消单(orderStatus=15)在被提前拦截/取消时
+ * WEGO 不一定回填 finishDate，按 finishDate 拉取会漏掉这类单，导致销售订单与三方仓发货单状态无法联动。
  */
 @Slf4j
 @Service
@@ -55,7 +57,7 @@ public class WegoOutboundInitHandler extends DmpInputInitHandler {
     /** 最大翻页保护，避免接口异常导致死循环 */
     private static final int MAX_PAGE_LIMIT = 1000;
 
-    /** finishDateBegin/finishDateEnd 要求的日期时间格式（精确到秒） */
+    /** orderDateBegin/orderDateEnd 要求的日期时间格式（精确到秒） */
     private static final DateTimeFormatter DATETIME_FORMATTER =
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
@@ -90,14 +92,15 @@ public class WegoOutboundInitHandler extends DmpInputInitHandler {
         }
         String authId = provider.getId();
 
-        // 完结日期范围：优先取 dmp 任务注入的时间窗口，缺省时回退为 [date-1 00:00:00] ~ [date 00:00:00]
-        String finishDateBegin = resolveFinishDateBegin();
-        String finishDateEnd   = resolveFinishDateEnd();
+        // 订单日期范围：优先取 dmp 任务注入的时间窗口，缺省时回退为 [date-1 00:00:00] ~ [date 00:00:00]
+        // 按订单日期(orderDate)而非完结日期(finishDate)拉取，避免漏掉无 finishDate 的已取消单
+        String orderDateBegin = resolveOrderDateBegin();
+        String orderDateEnd   = resolveOrderDateEnd();
 
         List<WegoOutboundResp.OutboundOrderDTO> allResult =
-                fetchOutboundPages(appToken, appSecret, finishDateBegin, finishDateEnd, authId);
+                fetchOutboundPages(appToken, appSecret, orderDateBegin, orderDateEnd, authId);
         if (allResult.isEmpty()) {
-            log.info("[WEGO出库] 服务商[id={}] 完结日期[{} ~ {}] 未拉到任何出库单", authId, finishDateBegin, finishDateEnd);
+            log.info("[WEGO出库] 服务商[id={}] 订单日期[{} ~ {}] 未拉到任何出库单", authId, orderDateBegin, orderDateEnd);
             return Collections.emptyList();
         }
 
@@ -107,18 +110,18 @@ public class WegoOutboundInitHandler extends DmpInputInitHandler {
             obj.put("authId", authId);
             obj.put("sourcePlatform", DmpBasicSystemCodeEnum.WEGO.getCode());
         });
-        log.info("[WEGO出库] 服务商[id={}] 完结日期[{} ~ {}] 共拉取={}条", authId, finishDateBegin, finishDateEnd, result.size());
+        log.info("[WEGO出库] 服务商[id={}] 订单日期[{} ~ {}] 共拉取={}条", authId, orderDateBegin, orderDateEnd, result.size());
         DmpInputTaskInitDTO dto = new DmpInputTaskInitDTO();
         dto.setMsg(result.toJSONString());
         return Collections.singletonList(dto);
     }
 
     /**
-     * 按完结日期范围分页拉取出库单；根据响应 pages 字段循环翻页。
+     * 按订单日期范围分页拉取出库单；根据响应 pages 字段循环翻页。
      */
     private List<WegoOutboundResp.OutboundOrderDTO> fetchOutboundPages(
             String appToken, String appSecret,
-            String finishDateBegin, String finishDateEnd, String authId) {
+            String orderDateBegin, String orderDateEnd, String authId) {
         List<WegoOutboundResp.OutboundOrderDTO> orderList = new ArrayList<>();
         int pageNum = 1;
         Integer totalPages = null;
@@ -126,8 +129,8 @@ public class WegoOutboundInitHandler extends DmpInputInitHandler {
             WegoOutboundQueryPageDTO.QueryReqDTO req = new WegoOutboundQueryPageDTO.QueryReqDTO();
             req.setAccessToken(appToken);
             req.setSecret(appSecret);
-            req.setFinishDateBegin(finishDateBegin);
-            req.setFinishDateEnd(finishDateEnd);
+            req.setOrderDateBegin(orderDateBegin);
+            req.setOrderDateEnd(orderDateEnd);
             req.setPageNum(pageNum);
             req.setPageSize(PAGE_SIZE);
             WegoOutboundResp resp;
@@ -149,15 +152,15 @@ public class WegoOutboundInitHandler extends DmpInputInitHandler {
         if (pageNum > MAX_PAGE_LIMIT) {
             log.warn("[WEGO出库] 服务商[id={}] 已达最大翻页上限({})，可能存在未拉取数据", authId, MAX_PAGE_LIMIT);
         }
-        log.info("[WEGO出库] 服务商[id={}] 完结日期[{} ~ {}] 拉取={}条 已翻页={}",
-                authId, finishDateBegin, finishDateEnd, orderList.size(), pageNum);
+        log.info("[WEGO出库] 服务商[id={}] 订单日期[{} ~ {}] 拉取={}条 已翻页={}",
+                authId, orderDateBegin, orderDateEnd, orderList.size(), pageNum);
         return orderList;
     }
 
     /**
-     * 计算「完结开始日期时间」：dmp 任务有 startTime 则取 startTime 当天 00:00:00，否则回退为「昨天 00:00:00」。
+     * 计算「订单开始日期时间」：dmp 任务有 startTime 则取 startTime 当天 00:00:00，否则回退为「昨天 00:00:00」。
      */
-    private String resolveFinishDateBegin() {
+    private String resolveOrderDateBegin() {
         LocalDateTime startTime = dmpInputTaskEntity == null ? null : dmpInputTaskEntity.getStartTime();
         LocalDateTime begin = startTime != null
                 ? startTime.toLocalDate().atStartOfDay()
@@ -166,9 +169,9 @@ public class WegoOutboundInitHandler extends DmpInputInitHandler {
     }
 
     /**
-     * 计算「完结结束日期时间」：dmp 任务有 endTime 则取 endTime 当天 00:00:00，否则回退为「今天 00:00:00」。
+     * 计算「订单结束日期时间」：dmp 任务有 endTime 则取 endTime 当天 00:00:00，否则回退为「今天 00:00:00」。
      */
-    private String resolveFinishDateEnd() {
+    private String resolveOrderDateEnd() {
         LocalDateTime endTime = dmpInputTaskEntity == null ? null : dmpInputTaskEntity.getEndTime();
         LocalDateTime end = endTime != null
                 ? endTime.toLocalDate().atStartOfDay()
