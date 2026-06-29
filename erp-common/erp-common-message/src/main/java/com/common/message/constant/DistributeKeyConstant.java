@@ -52,6 +52,10 @@ public class DistributeKeyConstant {
     public static final String AMZ_REPORT_TASK_KEY = "AMZ_REPORT_TASK";
     /** DMP 拉数任务 */
     public static final String DMP_PULL_TASK_KEY = "DMP_PULL_TASK";
+    /** DMP 推送任务 */
+    public static final String DMP_PUSH_TASK_KEY = "DMP_PUSH_TASK";
+    /** DMP 售后单 */
+    public static final String DMP_AFTER_SALE_KEY = "DMP_AFTER_SALE";
     /** 亚马逊店铺授权 */
     public static final String AMZ_AUTH_KEY = "AMZ_AUTH";
     /** 旺店通虚拟仓推送 */
@@ -70,6 +74,12 @@ public class DistributeKeyConstant {
     public static final String SRM_DELIVERY_ORDER_KEY = "SRM_DELIVERY_ORDER";
     /** 系统用户改密 */
     public static final String SYS_USER_PWD_KEY = "SYS_USER_PWD";
+    /** 系统用户资料 */
+    public static final String SYS_USER_KEY = "SYS_USER";
+    /** 系统用户权限关系 */
+    public static final String SYS_USER_AUTH_KEY = "SYS_USER_AUTH";
+    /** 系统模板默认值 */
+    public static final String SYS_TEMPLATE_DEFAULT_KEY = "SYS_TEMPLATE_DEFAULT";
     /** 亚马逊订单下载 */
     public static final String AMZ_ORDER_DOWNLOAD_KEY = "AMZ_ORDER_DOWNLOAD";
     /** 销售出库单审核 */

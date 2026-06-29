@@ -279,6 +279,7 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
     }
 
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.DMP_PULL_TASK_KEY, keyName = "ids", waiteTime = 60)
     public Boolean batchSync(List<String> ids) {
         List<DmpPullTaskEntity> list = this.listByIds(ids);
         if (CollectionUtils.isEmpty(list)) {
