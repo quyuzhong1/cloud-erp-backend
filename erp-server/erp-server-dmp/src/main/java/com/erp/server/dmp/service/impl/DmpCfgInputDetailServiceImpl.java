@@ -24,6 +24,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.DmpInputFeignDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -37,6 +38,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.dmp.dto.DmpCfgInputDetailDTO;
 import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.dmp.entity.*;
@@ -401,6 +403,7 @@ public class DmpCfgInputDetailServiceImpl extends SuperServiceImpl<DmpCfgInputDe
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.DMP_PULL_TASK_KEY, keyName = "id", waiteTime = 60, unlockAfterTx = true)
     public BatchResultDTO doTask(String id, DmpCfgInputDetailDTO.DoTaskDTO dto, DmpCfgInputEntity dmpCfgInputEntity, DmpCfgInputDetailEntity entity) {
         if (DmpCfgInputExecSystemEnum.DMP.getCode().equals(dmpCfgInputEntity.getExecSystem())){
             // 中台执行
@@ -443,6 +446,7 @@ public class DmpCfgInputDetailServiceImpl extends SuperServiceImpl<DmpCfgInputDe
 
 	@Override
 	@Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.DMP_PULL_TASK_KEY, keyName = "inventoryMonthCheckEnum.code", waiteTime = 60, unlockAfterTx = true)
 	public BatchResultDTO reCreateInventoryMonthCheck(InventoryMonthCheckEnum inventoryMonthCheckEnum, String checkMonth,
 			String sourceSystem) {
 		if(sourceSystem == null) {

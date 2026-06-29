@@ -28,6 +28,10 @@ import com.common.core.enums.ApiError;
 import com.common.core.enums.DictCityTypeEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
+import com.common.message.constant.DistributeKeyConstant;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.KolB2cApplicationAddressImportExcelDTO;
 import com.erp.model.oms.dto.excel.KolB2cApplicationDetailImportExcelDTO;
@@ -682,6 +686,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO submit(String id) {
         KolB2cApplicationEntity entity = getById(id);
         if (ObjectUtil.isEmpty(entity)) {
@@ -725,6 +730,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "dto.id", unlockAfterTx = true)
     public BatchResultDTO approve(ApproveOneDTO dto) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
@@ -857,6 +863,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
     @Override
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO cancel(String id) {
         KolB2cApplicationEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到B2C寄样申请单数据"));
         validateNoApprovedSoB2c(entity, "取消");
