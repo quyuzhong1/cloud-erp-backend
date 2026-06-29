@@ -5,9 +5,6 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.syslog.JavadocReader;
-import com.erp.model.bi.dto.*;
-import com.erp.model.bi.entity.BiDictEntity;
-import com.erp.model.bi.entity.BiSysModuleEntity;
 import com.erp.model.dmp.dto.DmpShopInfoDTO;
 import com.erp.model.oms.dto.CustomerDTO;
 import com.erp.model.oms.dto.SoChangeDTO;
@@ -57,10 +54,6 @@ public class SysLogFieldInsertSqlGenerator {
 
     static {
         targetClassList = Arrays.asList(
-                BiSysModuleEntity.class,
-                BiDictEntity.class,
-                SubjectLayoutDetailsDTO.class,
-                ModuleDTO.class,
                 DmpShopInfoDTO.class,
                 BasicLabelEntity.class,
                 BomDTO.class,
@@ -74,12 +67,6 @@ public class SysLogFieldInsertSqlGenerator {
                 SysAccountingCompanyEntity.class,
                 SysRoleEntity.class,
                 SysUserInfoEntity.class,
-
-                BiTargetCategorySettingDTO.ViewDTO.class,
-                BiTargetNewProductSettingDTO.ViewDTO.class,
-                BiTargetShopSettingDTO.ViewDTO.class,
-                BiTargetSkuSettingDTO.ViewDTO.class,
-                BiTargetStaffSettingDTO.ViewDTO.class,
                 CustomerDTO.ViewDTO.class,
                 SoChangeDTO.ViewDTO.class,
                 SoInfoDTO.ViewDTO.class,

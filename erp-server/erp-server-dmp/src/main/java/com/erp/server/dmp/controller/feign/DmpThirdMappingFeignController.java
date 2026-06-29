@@ -32,6 +32,18 @@ public class DmpThirdMappingFeignController {
     public ThirdWarehouseEntity getBySysId(@RequestParam String sysId, @RequestParam String sysType) {
         return thirdMappingService.getBySysId(sysId, sysType);
     }
+
+    /**
+     * 根据三方仓账号 ID 批量查询三方仓账号信息。
+     *
+     * @param ids 三方仓账号 ID 集合
+     * @return 三方仓账号信息
+     */
+    @PostMapping("/listThirdWarehouseByIds")
+    public List<ThirdWarehouseEntity> listThirdWarehouseByIds(@RequestBody List<String> ids) {
+        return thirdWarehouseService.listByIds(ids);
+    }
+
     @GetMapping("/getListBySysIds")
     public List<ThirdMappingEntity> getListBySysIds(@RequestParam List<String> sysIds){
         return thirdMappingService.getListBySysIds(sysIds);

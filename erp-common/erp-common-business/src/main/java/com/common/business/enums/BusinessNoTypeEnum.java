@@ -165,6 +165,7 @@ public enum BusinessNoTypeEnum {
     CODE_KOLC("KOLC" ,"KOLC","B2C寄样申请单",BusinessNoConstant.KOLC),
     CODE_DZ("DZ" ,"DZ","物流费用导入",BusinessNoConstant.DZ),
     CODE_FYPZ("FYPZ" ,"FYPZ","费用配置",BusinessNoConstant.FYPZ),
+    CODE_WJPZ("WJPZ" ,"WJPZ","月结文件解析配置",BusinessNoConstant.WJPZ),
     CODE_Z("Z", "Z","tms异步任务记录", BusinessNoConstant.Z),
 
     CODE_BG("BG" ,"BG","产品信息变更单",BusinessNoConstant.BG),

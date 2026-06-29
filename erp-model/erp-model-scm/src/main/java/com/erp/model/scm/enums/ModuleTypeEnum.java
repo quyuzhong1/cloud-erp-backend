@@ -204,6 +204,7 @@ public enum ModuleTypeEnum {
     KOL_KOL_SAMPLE_COST("159", "寄样费用单"),
     QC_STANDARD("167", "质检标准"),
     CFG_LOGISTICS_COST_IMPORT("160", "费用配置"),
+    CFG_FILE_PARSE("169", "月结文件解析配置"),
 
     PRODUCT_BU("160", "产品BU线"),
 
