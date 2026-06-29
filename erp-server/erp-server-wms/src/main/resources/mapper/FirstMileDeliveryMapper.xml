@@ -740,7 +740,9 @@
             SELECT
                 fmd.id,
                 fmd.source_id,
-                fmd.code
+                fmd.code,
+                fmd.source_code AS business_code,
+                fmd.create_time AS source_create_time
             FROM first_mile_delivery fmd
             WHERE fmd.is_deleted = false
             AND fmd.declare_status = 'wait'
@@ -749,6 +751,8 @@
             SELECT
                 qd.id AS source_id,
                 qd.code AS source_code,
+                qd.business_code,
+                qd.source_create_time,
                 pt.id AS packing_task_id
             FROM qualified_delivery qd
             INNER JOIN packing_task pt
@@ -759,6 +763,8 @@
             SELECT
                 qd.id AS source_id,
                 qd.code AS source_code,
+                qd.business_code,
+                qd.source_create_time,
                 pt.id AS packing_task_id
             FROM qualified_delivery qd
             INNER JOIN packing_task pt
@@ -773,6 +779,8 @@
             SELECT
                 qt.source_id,
                 qt.source_code,
+                qt.business_code,
+                qt.source_create_time,
                 wcd.sku_id,
                 wcd.sku_no,
                 SUM(COALESCE(wcd.pack_qty, 0))::INTEGER AS qty
@@ -785,17 +793,19 @@
             ON wcd.main_id = wc.id
             AND wcd.is_deleted = false
             AND COALESCE(wcd.pack_qty, 0) > 0
-            GROUP BY qt.source_id, qt.source_code, wcd.sku_id, wcd.sku_no
+            GROUP BY qt.source_id, qt.source_code, qt.business_code, qt.source_create_time, wcd.sku_id, wcd.sku_no
         ),
         qualified_details AS MATERIALIZED (
             SELECT
                 source_id,
                 source_code,
+                business_code,
+                source_create_time,
                 sku_id,
                 sku_no,
                 SUM(qty)::INTEGER AS qty
             FROM carton_detail
-            GROUP BY source_id, source_code, sku_id, sku_no
+            GROUP BY source_id, source_code, business_code, source_create_time, sku_id, sku_no
         ),
         has_bom AS MATERIALIZED (
             SELECT
@@ -822,6 +832,8 @@
             qd.source_id AS sourceId,
             qd.source_code AS sourceCode,
             'firstMileDelivery' AS sourceType,
+            qd.business_code AS businessCode,
+            qd.source_create_time AS sourceCreateTime,
             qd.sku_id AS skuId,
             qd.sku_no AS skuNo,
             '' AS bomVersion,
@@ -849,6 +861,8 @@
             qd.source_id AS sourceId,
             qd.source_code AS sourceCode,
             'firstMileDelivery' AS sourceType,
+            qd.business_code AS businessCode,
+            qd.source_create_time AS sourceCreateTime,
             hb.sku_id AS skuId,
             hb.sku_no AS skuNo,
             hb.bom_version AS bomVersion,
@@ -873,6 +887,13 @@
         ) fmdd
         where
         ${params.sqlMap.default}
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        sourceCreateTime DESC, sourceCode ASC, skuNo ASC
     </select>
 
 
