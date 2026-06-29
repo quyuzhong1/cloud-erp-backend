@@ -188,8 +188,7 @@ public class DmpOutputWdtB2bOrderRocketMQTaskHandler extends DmpOutputRocketMQTa
 			Integer totalQty = dmpSoDetailEntity.getSuiteQty();
 			detailDTO.setQty(totalQty);
 			detailDTO.setTaxRate(dmpSoInfoEntity.getTaxRate());
-			BigDecimal totalTaxPrice = list.stream().map(DmpSoDetailEntity::getSellPriceOrigin).reduce(BigDecimal.ZERO, BigDecimal::add);
-			detailDTO.setTaxPrice(totalTaxPrice);
+			detailDTO.setTaxPrice(getCombineDetailTaxPrice(dmpSoDetailEntity, list));
 			detailDTO.setPrice(detailDTO.getTaxPrice().divide(BigDecimal.ONE.add(detailDTO.getTaxRate().divide(new BigDecimal("100"), 4, RoundingMode.HALF_UP)), 2, RoundingMode.HALF_UP));
 			details.add(detailDTO);
 		});
@@ -204,6 +203,18 @@ public class DmpOutputWdtB2bOrderRocketMQTaskHandler extends DmpOutputRocketMQTa
 			return platformDetailId + "|" + suiteNo;
 		}
 		return suiteNo;
+	}
+
+	private BigDecimal getCombineDetailTaxPrice(DmpSoDetailEntity dmpSoDetailEntity, List<DmpSoDetailEntity> detailList) {
+		Integer suiteQty = dmpSoDetailEntity.getSuiteQty();
+		if (suiteQty != null && suiteQty != 0) {
+			List<BigDecimal> shareAmountList = detailList.stream().map(DmpSoDetailEntity::getAfterAmount).filter(Objects::nonNull).collect(Collectors.toList());
+			if (CollUtil.isNotEmpty(shareAmountList)) {
+				BigDecimal shareAmount = shareAmountList.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+				return shareAmount.divide(new BigDecimal(suiteQty), 4, RoundingMode.HALF_UP);
+			}
+		}
+		return detailList.stream().map(DmpSoDetailEntity::getSellPriceOrigin).reduce(BigDecimal.ZERO, BigDecimal::add);
 	}
 
 	@Override
