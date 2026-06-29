@@ -751,7 +751,7 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         WegoOutboundSaveDTO.WayBillUrl wayBillUrl = null;
         if (hasPlatformLabel) {
             List<WegoOutboundSaveDTO.WayBillFile> files = Collections.singletonList(
-                    WegoOutboundSaveDTO.WayBillFile.builder().fileUrl(req.getLabelUrl()).build());
+                    WegoOutboundSaveDTO.WayBillFile.builder().fileName("面单信息").fileUrl(req.getLabelUrl()).build());
             wayBillUrl = WegoOutboundSaveDTO.WayBillUrl.builder()
                     .logisticsName(req.getShippingMethodName())
                     .trackingNum(req.getTrackingNo())
