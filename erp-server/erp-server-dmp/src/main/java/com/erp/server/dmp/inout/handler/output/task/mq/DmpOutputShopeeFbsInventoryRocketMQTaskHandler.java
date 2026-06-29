@@ -14,6 +14,7 @@ import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -32,6 +33,7 @@ import java.util.Set;
 /**
  * Shopee FBS 库存 MQ 输出
  */
+@Slf4j
 @Service
 @Scope("prototype")
 public class DmpOutputShopeeFbsInventoryRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler {
@@ -98,6 +100,10 @@ public class DmpOutputShopeeFbsInventoryRocketMQTaskHandler extends DmpOutputRoc
         String cfgOutputId = dmpResponse.getDmpCfgOutputEntity().getId();
         for (String changeId : changeIds) {
             DmpFbsInventoryEntity dmpEntity = dmpEntityMap.get(changeId);
+            if (Objects.isNull(dmpEntity)) {
+                log.warn("Shopee FBS库存输出缺少DMP实体, changeId: {}", changeId);
+                continue;
+            }
             FbsInventoryEntity entity = convert(dmpEntity, cfgOutputId, shopInfo, mappingSkuViewList);
             if (entity != null) {
                 map.put(changeId, JSON.toJSONString(entity));

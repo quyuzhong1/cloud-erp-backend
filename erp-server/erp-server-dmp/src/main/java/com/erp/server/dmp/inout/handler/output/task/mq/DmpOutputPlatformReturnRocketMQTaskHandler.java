@@ -32,6 +32,8 @@ import java.util.stream.Collectors;
 public abstract class DmpOutputPlatformReturnRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler {
 
     private static final int BATCH_SIZE = 500;
+    private static final String STORAGE_RETURN_INFO = "dmp_so_return_info";
+    private static final String STORAGE_RETURN_DETAIL = "dmp_so_return_detail";
 
     @Resource
     private DmpSoReturnDetailService dmpSoReturnDetailService;
@@ -52,12 +54,12 @@ public abstract class DmpOutputPlatformReturnRocketMQTaskHandler extends DmpOutp
                 continue;
             }
             String storageName = entry.getKey().getStorageName();
-            if ("dmp_so_return_info".equals(storageName)) {
+            if (STORAGE_RETURN_INFO.equals(storageName)) {
                 for (BaseEntity entity : value) {
                     DmpSoReturnInfoEntity dmpEntity = (DmpSoReturnInfoEntity) entity;
                     dmpEntityMap.put(dmpEntity.getId(), dmpEntity);
                 }
-            } else if ("dmp_so_return_detail".equals(storageName)) {
+            } else if (STORAGE_RETURN_DETAIL.equals(storageName)) {
                 for (BaseEntity entity : value) {
                     DmpSoReturnDetailEntity detailEntity = (DmpSoReturnDetailEntity) entity;
                     dmpDetailEntityMap.computeIfAbsent(detailEntity.getMainId(), key -> new ArrayList<>())
@@ -74,11 +76,11 @@ public abstract class DmpOutputPlatformReturnRocketMQTaskHandler extends DmpOutp
                 continue;
             }
             String storageName = entry.getKey().getStorageName();
-            if ("dmp_so_return_info".equals(storageName)) {
+            if (STORAGE_RETURN_INFO.equals(storageName)) {
                 for (BaseEntity entity : value) {
                     changeIds.add(entity.getId());
                 }
-            } else if ("dmp_so_return_detail".equals(storageName)) {
+            } else if (STORAGE_RETURN_DETAIL.equals(storageName)) {
                 for (BaseEntity entity : value) {
                     changeIds.add(((DmpSoReturnDetailEntity) entity).getMainId());
                 }

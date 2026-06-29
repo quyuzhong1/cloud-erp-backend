@@ -77,6 +77,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -169,7 +170,7 @@ public class ShopeePackageForecastAdapter extends AbstractPackageForecastPlatfor
             FirstMileTrackingNumberListRequest request = FirstMileTrackingNumberListRequest.builder()
                     .fromDate(declareDate.toString())
                     .toDate(declareDate.toString())
-                    .pageSize(50)
+                    .pageSize(SHOPEE_TRACKING_PAGE_SIZE)
                     .cursor(cursor)
                     .build();
             FirstMileTrackingNumberListResponse response = shopeeLogisticsService.getTrackNumberList(baseRequest, request);
@@ -251,14 +252,15 @@ public class ShopeePackageForecastAdapter extends AbstractPackageForecastPlatfor
                 log.error("虾皮组包预报平台取消结果本地更新失败, ids: {}", ids, updateException);
                 return context.getEntityList().stream()
                         .map(entity -> BatchResultDTO.fail(entity.getId(), entity.getCode(),
-                                "Shopee平台取消结果本地更新失败，请同步状态或人工处理:" + updateException.getMessage()))
+                                "Shopee平台取消结果本地更新失败，请同步状态或人工处理"))
                         .collect(Collectors.toList());
             }
             return resultList;
         } catch (Exception e) {
             log.error("虾皮组包预报取消上传失败, ids: {}", ids, e);
+            String failureMessage = userFailureMessage("取消上传", e);
             context.getEntityList().forEach(entity -> {
-                entity.setRemark("取消失败原因:" + e.getMessage());
+                entity.setRemark(failureMessage);
             });
             try {
                 updateEntities(context.getEntityList());
@@ -266,7 +268,7 @@ public class ShopeePackageForecastAdapter extends AbstractPackageForecastPlatfor
                 log.error("虾皮组包预报取消失败后更新失败原因失败, ids: {}", ids, updateException);
             }
             return context.getEntityList().stream()
-                    .map(entity -> BatchResultDTO.fail(entity.getId(), entity.getCode(), "取消上传失败:" + e.getMessage()))
+                    .map(entity -> BatchResultDTO.fail(entity.getId(), entity.getCode(), failureMessage))
                     .collect(Collectors.toList());
         }
     }
@@ -294,13 +296,14 @@ public class ShopeePackageForecastAdapter extends AbstractPackageForecastPlatfor
         if (CollectionUtils.isEmpty(entityList)) {
             return;
         }
+        Map<String, String> trackingShopIdMap = buildTrackingShopIdMap(entityList);
         Map<ShopeeTrackingSyncKey, List<PackageForecastEntity>> groupMap = new LinkedHashMap<>();
         for (PackageForecastEntity entity : entityList) {
             if (Objects.isNull(entity)) {
                 continue;
             }
             try {
-                Optional<ShopeeTrackingSyncKey> keyOptional = buildTrackingSyncKey(entity);
+                Optional<ShopeeTrackingSyncKey> keyOptional = buildTrackingSyncKey(entity, trackingShopIdMap);
                 if (!keyOptional.isPresent()) {
                     continue;
                 }
@@ -470,8 +473,8 @@ public class ShopeePackageForecastAdapter extends AbstractPackageForecastPlatfor
                 log.error("虾皮组包预报上传结果本地更新失败, id: {}, code: {}, platformPackageNo: {}, transportNo: {}",
                         entity.getId(), entity.getCode(), entity.getPlatformPackageNo(), entity.getTransportNo(), e);
                 String message = success
-                        ? "Shopee平台已绑定成功，本地更新失败，请同步状态或人工处理:" + e.getMessage()
-                        : "上传失败状态更新失败:" + e.getMessage();
+                        ? "Shopee平台已绑定成功，本地更新失败，请同步状态或人工处理"
+                        : "上传失败状态更新失败，请稍后重试或联系管理员处理";
                 resultList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), message));
                 continue;
             }
@@ -493,6 +496,13 @@ public class ShopeePackageForecastAdapter extends AbstractPackageForecastPlatfor
         return BatchResultDTO.fail(entity.getId(), entity.getCode(), entity.getRemark());
     }
 
+    private String userFailureMessage(String operationName, Exception e) {
+        if (e instanceof ServiceException && StringUtils.isNotBlank(e.getMessage())) {
+            return operationName + "失败:" + e.getMessage();
+        }
+        return operationName + "失败，请稍后重试或联系管理员处理";
+    }
+
     private String printCourierDelivery(PackageForecastEntity entity, String shopId) {
         if (StringUtils.isBlank(entity.getPlatformPackageNo())) {
             throw new ServiceException("虾皮快递寄送绑定ID为空");
@@ -501,10 +511,6 @@ public class ShopeePackageForecastAdapter extends AbstractPackageForecastPlatfor
                 .orElseThrow(() -> new ServiceException("虾皮快递寄送绑定结果暂未返回，请稍后重试,bindingId:" + entity.getPlatformPackageNo()));
         validateCourierDeliveryBindingStatus(entity, bindingInfo);
         String status = mapShopeeHandoverStatus(bindingInfo.getStatus());
-        if (StringUtils.isNotBlank(status) && !status.equals(entity.getHandoverStatus())) {
-            entity.setHandoverStatus(status);
-            updateForecastOrThrow(entity);
-        }
         CourierDeliveryWaybillRequest request = CourierDeliveryWaybillRequest.builder()
                 .bindingIdList(Collections.singletonList(entity.getPlatformPackageNo()))
                 .build();
@@ -523,11 +529,23 @@ public class ShopeePackageForecastAdapter extends AbstractPackageForecastPlatfor
                     + StringUtils.defaultString(bindingInfo.getFirstMileTrackingNumber()) + ",status:"
                     + StringUtils.defaultString(bindingInfo.getStatus()));
         }
+        String base64;
         try {
-            return PdfUtil.convertPdfUrlToBase64(url, true);
+            base64 = PdfUtil.convertPdfUrlToBase64(url, true);
         } catch (IOException e) {
-            throw new ServiceException("虾皮快递寄送交接面单下载失败:" + e.getMessage());
+            log.error("虾皮快递寄送交接面单下载失败, bindingId: {}", entity.getPlatformPackageNo(), e);
+            throw new ServiceException("虾皮快递寄送交接面单下载失败");
         }
+        if (StringUtils.isNotBlank(status) && !StringUtils.equals(status, entity.getHandoverStatus())) {
+            entity.setHandoverStatus(status);
+            try {
+                updateForecastOrThrow(entity);
+            } catch (Exception e) {
+                log.warn("虾皮快递寄送打印成功但交接状态更新失败, id: {}, code: {}, status: {}",
+                        entity.getId(), entity.getCode(), status, e);
+            }
+        }
+        return base64;
     }
 
     private String printFirstMile(PackageForecastEntity entity, String shopId) {
@@ -553,28 +571,32 @@ public class ShopeePackageForecastAdapter extends AbstractPackageForecastPlatfor
 
     private void syncFirstMileTrackingStatus(List<PackageForecastEntity> entityList, ShopeeTrackingSyncKey key) {
         Map<String, String> statusMap = queryFirstMileTrackingStatusMap(key);
+        List<PackageForecastEntity> changedList = new ArrayList<>();
         for (PackageForecastEntity entity : entityList) {
             String status = mapShopeeHandoverStatus(statusMap.get(entity.getTransportNo()));
-            if (StringUtils.isNotBlank(status)) {
+            if (StringUtils.isNotBlank(status) && !StringUtils.equals(status, entity.getHandoverStatus())) {
                 entity.setHandoverStatus(status);
-                updateForecastOrThrow(entity);
+                changedList.add(entity);
             }
         }
+        updateForecastBatchOrThrow(changedList);
     }
 
     private void syncCourierDeliveryTrackingStatus(List<PackageForecastEntity> entityList, ShopeeTrackingSyncKey key) {
         Map<String, CourierDeliveryBindingInfo> bindingInfoMap = queryCourierDeliveryBindingInfoMap(key);
+        List<PackageForecastEntity> changedList = new ArrayList<>();
         for (PackageForecastEntity entity : entityList) {
             CourierDeliveryBindingInfo bindingInfo = bindingInfoMap.get(entity.getPlatformPackageNo());
             if (Objects.isNull(bindingInfo)) {
                 continue;
             }
             String status = mapShopeeHandoverStatus(bindingInfo.getStatus());
-            if (StringUtils.isNotBlank(status)) {
+            if (StringUtils.isNotBlank(status) && !StringUtils.equals(status, entity.getHandoverStatus())) {
                 entity.setHandoverStatus(status);
-                updateForecastOrThrow(entity);
+                changedList.add(entity);
             }
         }
+        updateForecastBatchOrThrow(changedList);
     }
 
     private Map<String, String> queryFirstMileTrackingStatusMap(ShopeeTrackingSyncKey key) {
@@ -1020,6 +1042,15 @@ public class ShopeePackageForecastAdapter extends AbstractPackageForecastPlatfor
     }
 
     private Optional<ShopeeTrackingSyncKey> buildTrackingSyncKey(PackageForecastEntity entity) {
+        return buildTrackingSyncKey(entity, Collections.emptyMap(), true);
+    }
+
+    private Optional<ShopeeTrackingSyncKey> buildTrackingSyncKey(PackageForecastEntity entity, Map<String, String> trackingShopIdMap) {
+        return buildTrackingSyncKey(entity, trackingShopIdMap, false);
+    }
+
+    private Optional<ShopeeTrackingSyncKey> buildTrackingSyncKey(PackageForecastEntity entity, Map<String, String> trackingShopIdMap,
+                                                                boolean allowSingleFallback) {
         boolean courierDelivery = PackageForecastCollectModeEnum.SHOPEE_COURIER_DELIVERY.getCode().equals(entity.getCollectMode());
         if (courierDelivery && StringUtils.isBlank(entity.getPlatformPackageNo())) {
             return Optional.empty();
@@ -1029,11 +1060,67 @@ public class ShopeePackageForecastAdapter extends AbstractPackageForecastPlatfor
         }
         String shopId = entity.getShopId();
         if (StringUtils.isBlank(shopId)) {
+            shopId = trackingShopIdMap.get(entity.getId());
+        }
+        if (StringUtils.isBlank(shopId) && allowSingleFallback) {
             ShopeeForecastContext context = buildBaseContext(Collections.singletonList(entity.getId()));
             shopId = context.getShopId();
         }
+        if (StringUtils.isBlank(shopId)) {
+            throw new ServiceException("销售订单店铺未找到");
+        }
         ShopeeTrackingQueryRange range = buildTrackingQueryRange(entity);
         return Optional.of(new ShopeeTrackingSyncKey(shopId, entity.getCollectMode(), range.getFromDate(), range.getToDate()));
+    }
+
+    private Map<String, String> buildTrackingShopIdMap(List<PackageForecastEntity> entityList) {
+        List<String> missingShopForecastIds = CollectionUtils.emptyIfNull(entityList).stream()
+                .filter(Objects::nonNull)
+                .filter(entity -> StringUtils.isBlank(entity.getShopId()))
+                .map(PackageForecastEntity::getId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(missingShopForecastIds)) {
+            return Collections.emptyMap();
+        }
+        List<PackageForecastDetailEntity> detailList = packageForecastDetailService.listDbByMainIds(missingShopForecastIds);
+        if (CollectionUtils.isEmpty(detailList)) {
+            return Collections.emptyMap();
+        }
+        List<String> soIds = detailList.stream()
+                .map(PackageForecastDetailEntity::getSoId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(soIds)) {
+            return Collections.emptyMap();
+        }
+        List<SoB2cEntity> soList = soB2cFeign.listByIds(soIds);
+        if (CollectionUtils.isEmpty(soList)) {
+            return Collections.emptyMap();
+        }
+        Map<String, SoB2cEntity> soMap = soList.stream()
+                .collect(Collectors.toMap(SoB2cEntity::getId, Function.identity(), (left, right) -> left));
+        Map<String, Set<String>> forecastShopIdSetMap = new HashMap<>();
+        for (PackageForecastDetailEntity detail : detailList) {
+            SoB2cEntity so = soMap.get(detail.getSoId());
+            if (Objects.isNull(so)
+                    || !PlatformDictEnum.SHOPEE.getCode().equals(so.getDictPlatform())
+                    || StringUtils.isBlank(so.getShopId())) {
+                continue;
+            }
+            forecastShopIdSetMap.computeIfAbsent(detail.getMainId(), id -> new HashSet<>()).add(so.getShopId());
+        }
+        Map<String, String> resultMap = new HashMap<>(forecastShopIdSetMap.size());
+        for (Map.Entry<String, Set<String>> entry : forecastShopIdSetMap.entrySet()) {
+            if (entry.getValue().size() == 1) {
+                resultMap.put(entry.getKey(), entry.getValue().iterator().next());
+            } else {
+                log.warn("Shopee轨迹同步解析到多店铺组包预报单, forecastId: {}, shopIds: {}", entry.getKey(), entry.getValue());
+            }
+        }
+        return resultMap;
     }
 
     private ShopeeTrackingQueryRange buildTrackingQueryRange(PackageForecastEntity entity) {

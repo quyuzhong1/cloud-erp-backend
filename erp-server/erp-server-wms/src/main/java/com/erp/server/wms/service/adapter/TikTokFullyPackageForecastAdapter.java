@@ -283,9 +283,10 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
                 throw new ServiceException(ApiError.COMMON_NOT_FOUND, "TikTok全托管预约发货返回物流单号");
             }
         } catch (Exception e) {
+            String failureMessage = uploadFailureMessage(e);
             packageForecastEntityList.forEach(v -> {
                 v.setUploadStatus(PackageUploadStatusEnum.UPLOAD_FAILURE.getCode());
-                v.setRemark(UPLOAD_FAILURE_MESSAGE);
+                v.setRemark(failureMessage);
             });
             try {
                 updateForecastBatchOrThrow(packageForecastEntityList);
@@ -293,7 +294,7 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
                 log.error("TikTok全托管组包预报上传失败后更新失败状态失败, ids: {}", dto.getIds(), updateException);
             }
             return packageForecastEntityList.stream()
-                    .map(entity -> BatchResultDTO.fail(entity.getId(), entity.getCode(), UPLOAD_FAILURE_MESSAGE))
+                    .map(entity -> BatchResultDTO.fail(entity.getId(), entity.getCode(), failureMessage))
                     .collect(Collectors.toList());
         }
         String logisticsOrder = tikTokFullyShippingResp.getData().getLogisticsOrder();

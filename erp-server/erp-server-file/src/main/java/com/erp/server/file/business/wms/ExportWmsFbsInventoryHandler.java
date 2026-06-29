@@ -3,6 +3,7 @@ package com.erp.server.file.business.wms;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.exception.ServiceException;
 import com.erp.model.wms.dto.FbsInventoryDTO;
 import com.erp.rpc.wms.feign.ExportWmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
@@ -29,7 +30,13 @@ public class ExportWmsFbsInventoryHandler extends AbstractPageFileEventHandler<F
 
     @Override
     protected PagingVO<FbsInventoryDTO.ListDTO> getPageData(PagingDTO<FbsInventoryDTO.PagingParamDTO> dto) {
-        return exportWmsFeign.exportFbsInventory(dto);
+        PagingVO<FbsInventoryDTO.ListDTO> pageData = exportWmsFeign.exportFbsInventory(dto);
+        if (pageData == null) {
+            log.error("FBS库存导出查询返回为空, pageNum: {}, pageSize: {}",
+                    dto == null ? null : dto.getPage(), dto == null ? null : dto.getPageSize());
+            throw new ServiceException("FBS库存导出查询失败");
+        }
+        return pageData;
     }
 
     @Override
