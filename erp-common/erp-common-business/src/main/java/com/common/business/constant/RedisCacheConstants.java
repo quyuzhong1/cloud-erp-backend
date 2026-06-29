@@ -139,6 +139,7 @@ public interface RedisCacheConstants {
     String AUTH_TIKTOK_STATE = "third:tiktok:auth:state:{}";
 
     String AUTH_PDD_STATE = "third:pdd:auth:state:{}";
+    String AUTH_MAGALU_STATE = "third:magalu:auth:state:{}";
     /**
      * 平台token刷新重试次数记录
      * platform-refresh-token:平台名称:店铺ID

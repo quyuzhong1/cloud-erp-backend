@@ -134,6 +134,11 @@ public class ShopAuthorizeDTO implements Serializable {
             this.setPlatformCode(PlatformDictEnum.PDD.getCode());
             return this;
         }
+        // Magalu
+        if (StringUtils.isNotBlank(this.state) && StringUtils.isNotBlank(this.code) && StrUtil.startWith(this.state, PlatformDictEnum.MAGALU.getCode())){
+            this.setPlatformCode(PlatformDictEnum.MAGALU.getCode());
+            return this;
+        }
         // TikTok
         if (StringUtils.isNotBlank(this.state) && StringUtils.isNotBlank(this.code) && StrUtil.startWith(this.state, PlatformDictEnum.TIK_TOK.getCode())){
         	this.setPlatformCode(PlatformDictEnum.TIK_TOK.getCode());
