@@ -506,12 +506,7 @@ public enum ApiError implements Serializable {
     WF_KOL_B2C_SPLIT_DETAIL_INCOMPLETE(4076,"B2C寄样申请单拆分单明细不完整，单号【{0}】，达人【{1}】"),
     WF_KOL_B2C_WAIT_SPLIT_ORDER(4077,"等待拆分单生成"),
     WF_KOL_B2C_WAIT_SUB_TASK_COMPLETE(4078,"等待KOL B2C拆分单子任务完成，已完成{0}/{1}"),
-    WF_TASK_RECORD_TYPE_NOT_FOUND(4080,"任务节点类型不存在"),
-    WF_APPROVE_TASK_NO_NEED_SYNC_ALLOWED_ONLY_FAIL(4063,"仅生成失败状态可设置为无需同步"),
-    WF_APPROVE_SYNC_RECORD_NO_NEED_SYNC_ALLOWED_ONLY_FAIL(4064,"仅推送失败状态可设置为无需同步"),
-    WF_APPROVE_SYNC_RECORD_NOT_FOUND(4065,"三方推送记录不存在"),
-    WF_APPROVE_TASK_NO_NEED_SYNC_NOT_ALLOW_OPERATION(4066,"无需同步状态不允许重新生成或状态获取"),
-    WF_APPROVE_SYNC_RECORD_NO_NEED_SYNC_NOT_ALLOW_REPUSH(4067,"无需同步状态不允许重推"),
+
     /**
      * PROJECT 项目相关 4500 - 5000
      */
