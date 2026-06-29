@@ -507,6 +507,11 @@ public enum ApiError implements Serializable {
     WF_KOL_B2C_WAIT_SPLIT_ORDER(4077,"等待拆分单生成"),
     WF_KOL_B2C_WAIT_SUB_TASK_COMPLETE(4078,"等待KOL B2C拆分单子任务完成，已完成{0}/{1}"),
     WF_TASK_RECORD_TYPE_NOT_FOUND(4080,"任务节点类型不存在"),
+    WF_APPROVE_TASK_NO_NEED_SYNC_ALLOWED_ONLY_FAIL(4063,"仅生成失败状态可设置为无需同步"),
+    WF_APPROVE_SYNC_RECORD_NO_NEED_SYNC_ALLOWED_ONLY_FAIL(4064,"仅推送失败状态可设置为无需同步"),
+    WF_APPROVE_SYNC_RECORD_NOT_FOUND(4065,"三方推送记录不存在"),
+    WF_APPROVE_TASK_NO_NEED_SYNC_NOT_ALLOW_OPERATION(4066,"无需同步状态不允许重新生成或状态获取"),
+    WF_APPROVE_SYNC_RECORD_NO_NEED_SYNC_NOT_ALLOW_REPUSH(4067,"无需同步状态不允许重推"),
     /**
      * PROJECT 项目相关 4500 - 5000
      */
@@ -1987,6 +1992,15 @@ public enum ApiError implements Serializable {
     LOGISTICS_RECON_BILL_REVERT_NO_ELIGIBLE(13676,"没有可回退为待确认的已确认数据"),
     LOGISTICS_RECON_BILL_REVERT_COST_STATUS_FORBIDDEN(13677,"存在已确认关联数据，但物流费用核算状态非待生成或支付状态非未支付（待付款/待退款），无法回退为待确认"),
     ASYNC_TASK_DETAIL_TIMEOUT(13648,"明细执行超时，系统自动标记失败"),
+    CFG_FILE_PARSE_NOT_MONTHLY(13649,"清洗时间仅支持每月"),
+    CFG_FILE_PARSE_FOLDER_REQUIRED(13651,"配置文件夹不能为空"),
+    CFG_FILE_PARSE_FILE_REQUIRED(13652,"文件清洗规则不能为空"),
+    CFG_FILE_PARSE_DUPLICATE(13653,"清洗仓库【{0}】清洗时间【{1}】已存在配置"),
+    CFG_FILE_PARSE_DOWNSTREAM_EXISTS(13654,"配置【{0}】已存在下游清洗或解析任务，不允许删除"),
+    CFG_FILE_PARSE_TEMPLATE_NOT_FOUND(13655,"月结文件解析配置模板不存在"),
+    CFG_FILE_PARSE_EXPORT_TASK_CREATE_FAILED(13656,"月结文件解析配置导出任务创建失败"),
+    CFG_FILE_PARSE_FILE_RULE_INVALID(13657,"第{0}行文件清洗规则不合法：{1}"),
+    CFG_FILE_PARSE_FOLDER_RULE_INVALID(13658,"第{0}行配置文件夹不合法：{1}"),
     /**
      * 财务管理 错误 信息 14000-14500
      */
