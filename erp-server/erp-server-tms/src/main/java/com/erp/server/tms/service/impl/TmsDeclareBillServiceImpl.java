@@ -724,16 +724,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                         .map(finalNoticeMap::get)
                         .filter(Objects::nonNull)
                         .collect(Collectors.toList());
-                String carrierIds = matched.stream()
-                        .map(SoDeliveryNoticeEntity::getCarrierId)
-                        .filter(StringUtils::isNotBlank)
-                        .distinct()
-                        .collect(Collectors.joining(","));
-                String carrierNames = matched.stream()
-                        .map(SoDeliveryNoticeEntity::getCarrierName)
-                        .filter(StringUtils::isNotBlank)
-                        .distinct()
-                        .collect(Collectors.joining(","));
+                String carrierIds = joinB2bNoticeCarrierIds(matched);
+                String carrierNames = joinB2bNoticeCarrierNames(matched);
                 if (StringUtils.isNotBlank(carrierIds)) {
                     v.setLogisticsSupplierId(carrierIds);
                 }
@@ -978,15 +970,10 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             allPackDTOList.forEach(v->v.setSku(v.getBoxDesc()));
             viewDTO.setPackingDTOList(allPackDTOList);
 
-            // 物流商取发货通知单的承运商（carrier）。提运单号已在保存时持久化为发货通知单 track_no，
-            // 由 BeanUtil.copyProperties(entity, viewDTO) 直接带出，这里不再临时查询覆盖。
-            List<SoDeliveryNoticeEntity> b2bNoticeList = CollUtil.isEmpty(listBillSourceDTO.getSourceIdList())
-                    ? Collections.emptyList()
-                    : soDeliveryNoticeFeign.listByIds(listBillSourceDTO.getSourceIdList());
-            String carrierIds = b2bNoticeList.stream().map(SoDeliveryNoticeEntity::getCarrierId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.joining(";"));
-            viewDTO.setLogisticsSupplierId(carrierIds);
-            String carrierNames = b2bNoticeList.stream().map(SoDeliveryNoticeEntity::getCarrierName).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.joining(";"));
-            viewDTO.setLogisticsSupplierName(carrierNames);
+            // B2B 物流商取发货通知单承运商，提运单号取发货通知单 track_no；多来源去重逗号拼接。
+            viewDTO.setLogisticsSupplierId(resolveB2bNoticeCarrierIds(listBillSourceDTO.getSourceIdList()));
+            viewDTO.setLogisticsSupplierName(resolveB2bNoticeCarrierNames(listBillSourceDTO.getSourceIdList()));
+            viewDTO.setTransportNo(resolveB2bNoticeTransportNo(listBillSourceDTO.getSourceIdList()));
             //  运输方式 / 柜号同 FM，按发货通知单关联的 logistics_bill 反查回显。
             String shippingMethods = deliveryDTOList.stream()
                     .map(TmsDeclareBillDTO.SoOutDTO::getShippingMethod)
@@ -1574,6 +1561,11 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         }
 
         fillHeaderLogistics(headerDTO, logisticsBillList);
+        if (SourceTypeEnum.B2B_DECLARE_BILL == sourceTypeEnum) {
+            headerDTO.setLogisticsSupplierId(resolveB2bNoticeCarrierIds(sourceIdList));
+            headerDTO.setLogisticsSupplierName(resolveB2bNoticeCarrierNames(sourceIdList));
+            headerDTO.setTransportNo(resolveB2bNoticeTransportNo(sourceIdList));
+        }
         fillHeaderWeight(headerDTO, selectedDetailList, packingDTOList);
         return headerDTO;
     }
@@ -3330,22 +3322,51 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         return rateMap;
     }
 
-    /**
-     * B2B 报关单提运单号取发货通知单的运输单号(track_no)，多发货通知单去重分号拼接，保存到 tms_declare_bill.transport_no。
-     */
-    private String resolveB2bNoticeTransportNo(Collection<String> sourceIdList) {
+    private List<SoDeliveryNoticeEntity> listB2bNoticeBySourceIds(Collection<String> sourceIdList) {
         if (CollUtil.isEmpty(sourceIdList)) {
-            return "";
+            return Collections.emptyList();
         }
         List<SoDeliveryNoticeEntity> noticeList = soDeliveryNoticeFeign.listByIds(new ArrayList<>(sourceIdList));
-        if (CollUtil.isEmpty(noticeList)) {
-            return "";
-        }
-        return noticeList.stream()
+        return CollUtil.isEmpty(noticeList) ? Collections.emptyList() : noticeList;
+    }
+
+    private String joinB2bNoticeCarrierIds(Collection<SoDeliveryNoticeEntity> noticeList) {
+        return joinDistinct(noticeList.stream()
+                .map(SoDeliveryNoticeEntity::getCarrierId)
+                .collect(Collectors.toList()));
+    }
+
+    private String joinB2bNoticeCarrierNames(Collection<SoDeliveryNoticeEntity> noticeList) {
+        return joinDistinct(noticeList.stream()
+                .map(SoDeliveryNoticeEntity::getCarrierName)
+                .collect(Collectors.toList()));
+    }
+
+    private String joinB2bNoticeTrackNos(Collection<SoDeliveryNoticeEntity> noticeList) {
+        return joinDistinct(noticeList.stream()
                 .map(SoDeliveryNoticeEntity::getTrackNo)
-                .filter(StringUtils::isNotBlank)
-                .distinct()
-                .collect(Collectors.joining(";"));
+                .collect(Collectors.toList()));
+    }
+
+    /**
+     * B2B 报关单承运商 id 取发货通知单 carrier_id，多发货通知单去重逗号拼接。
+     */
+    private String resolveB2bNoticeCarrierIds(Collection<String> sourceIdList) {
+        return joinB2bNoticeCarrierIds(listB2bNoticeBySourceIds(sourceIdList));
+    }
+
+    /**
+     * B2B 报关单承运商名称取发货通知单 carrier_name，多发货通知单去重逗号拼接。
+     */
+    private String resolveB2bNoticeCarrierNames(Collection<String> sourceIdList) {
+        return joinB2bNoticeCarrierNames(listB2bNoticeBySourceIds(sourceIdList));
+    }
+
+    /**
+     * B2B 报关单提运单号取发货通知单 track_no，多发货通知单去重逗号拼接，保存到 tms_declare_bill.transport_no。
+     */
+    private String resolveB2bNoticeTransportNo(Collection<String> sourceIdList) {
+        return joinB2bNoticeTrackNos(listB2bNoticeBySourceIds(sourceIdList));
     }
 
     /**
