@@ -19,6 +19,7 @@ import com.erp.oms.aliexpress.api.IopRequest;
 import com.erp.oms.aliexpress.api.IopResponse;
 import com.erp.oms.aliexpress.enums.Protocol;
 import com.erp.oms.aliexpress.util.ApiException;
+import com.erp.oms.aliexpress.util.Constants;
 
 import cn.hutool.core.exceptions.ExceptionUtil;
 
@@ -43,6 +44,7 @@ public final class AliExpressOverseasManagedProductHelper {
 	public static SellerRelation resolveSellerRelation(IopClient client, String token) {
 		IopRequest request = new IopRequest();
 		request.setApiName(SELLER_RELATION_API);
+		request.setHttpMethod(Constants.METHOD_GET);
 		request.addApiParameter("business_type", LOCAL_SERVICE);
 		request.addApiParameter("simplify", "true");
 		IopResponse response = execute(client, request, token, SELLER_RELATION_API);
