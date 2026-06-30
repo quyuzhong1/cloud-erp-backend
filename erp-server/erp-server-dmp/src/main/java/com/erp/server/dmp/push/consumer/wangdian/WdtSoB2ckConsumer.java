@@ -18,6 +18,7 @@ import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.oms.dto.KolB2cApplicationApproveCallbackDTO;
 import com.erp.model.oms.dto.KolB2cApplicationCancelCallbackDTO;
 import com.erp.rpc.oms.feign.OmsTaskFeign;
 import com.erp.server.dmp.push.service.CommonService;
@@ -77,6 +78,8 @@ public class WdtSoB2ckConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatf
     @Override
     public void updateSyncTaskStatus(DmpSyncMqDTO.ParamDTO paramDTO) {
         dmpPushTaskService.updateStatus(paramDTO);
+        DmpPushTaskEntity dmpPushTaskEntity = dmpPushTaskService.getById(paramDTO.getDmpSyncTaskId());
+        notifyKolB2cApprovePushResult(dmpPushTaskEntity, paramDTO);
         if (!StringUtils.equals(paramDTO.getSyncStatus(), SyncStatusEnum.FAILED_SYNC.getCode())) {
             CANCEL_FAIL_CALLBACK_HANDLED.remove();
             return;
@@ -86,7 +89,6 @@ public class WdtSoB2ckConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatf
                 log.info("旺店通B2C取消失败回调OMS跳过重复触发: dmpSyncTaskId={}", paramDTO.getDmpSyncTaskId());
                 return;
             }
-            DmpPushTaskEntity dmpPushTaskEntity = dmpPushTaskService.getById(paramDTO.getDmpSyncTaskId());
             log.info("旺店通B2C取消失败回调OMS开始(按同步任务): dmpSyncTaskId={}, responseMsg={}",
                     paramDTO.getDmpSyncTaskId(), StringUtils.defaultString(paramDTO.getResponseMsg()));
             notifyKolB2cCancelPushFail(dmpPushTaskEntity, paramDTO.getDmpSyncTaskId(), paramDTO.getResponseMsg());
@@ -187,6 +189,68 @@ public class WdtSoB2ckConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatf
             log.error("推送旺店通失败:{}", e.getMessage(), e);
             throw e;
         }
+    }
+
+    private void notifyKolB2cApprovePushResult(DmpPushTaskEntity dmpPushTaskEntity, DmpSyncMqDTO.ParamDTO paramDTO) {
+        if (ObjectUtils.isEmpty(dmpPushTaskEntity)) {
+            log.warn("旺店通B2C审批下推回调OMS跳过，未找到推送任务: dmpSyncTaskId={}", paramDTO.getDmpSyncTaskId());
+            return;
+        }
+        if (!isKolB2cApprovePushTask(dmpPushTaskEntity)) {
+            return;
+        }
+        if (StringUtils.equals(paramDTO.getSyncStatus(), SyncStatusEnum.SUCCESS_SYNC.getCode())) {
+            notifyKolB2cApprovePushSuccess(dmpPushTaskEntity, paramDTO.getDmpSyncTaskId(), paramDTO.getResponseMsg());
+            return;
+        }
+        if (StringUtils.equals(paramDTO.getSyncStatus(), SyncStatusEnum.FAILED_SYNC.getCode())) {
+            notifyKolB2cApprovePushFail(dmpPushTaskEntity, paramDTO.getDmpSyncTaskId(), paramDTO.getResponseMsg());
+        }
+    }
+
+    private boolean isKolB2cApprovePushTask(DmpPushTaskEntity dmpPushTaskEntity) {
+        return ObjectUtils.isNotEmpty(dmpPushTaskEntity)
+                && StringUtils.equals(dmpPushTaskEntity.getSourceType(), SourceTypeEnum.WDT_SO_B2C.getCode())
+                && StringUtils.equals(dmpPushTaskEntity.getSyncOperate(), SyncOperateEnum.OPERATE_APPROVE.getCode());
+    }
+
+    private void notifyKolB2cApprovePushSuccess(DmpPushTaskEntity dmpPushTaskEntity, String dmpSyncTaskId, String responseMsg) {
+        KolB2cApplicationApproveCallbackDTO dto = buildKolB2cApproveCallbackDTO(dmpPushTaskEntity, dmpSyncTaskId, responseMsg);
+        try {
+            log.info("旺店通B2C审批下推成功回调OMS开始: dmpSyncTaskId={}, sourceId={}, sourceCode={}",
+                    dmpSyncTaskId, dto.getSubOrderId(), dto.getSubOrderCode());
+            omsTaskFeign.handleKolB2cApprovePushSuccess(dto);
+            log.info("旺店通B2C审批下推成功回调OMS完成: dmpSyncTaskId={}, sourceId={}, sourceCode={}",
+                    dmpSyncTaskId, dto.getSubOrderId(), dto.getSubOrderCode());
+        } catch (Exception e) {
+            log.warn("旺店通B2C审批下推成功回调OMS失败: dmpSyncTaskId={}, sourceId={}, sourceCode={}, err={}",
+                    dmpSyncTaskId, dmpPushTaskEntity.getSourceId(), dmpPushTaskEntity.getSourceCode(), e.getMessage(), e);
+        }
+    }
+
+    private void notifyKolB2cApprovePushFail(DmpPushTaskEntity dmpPushTaskEntity, String dmpSyncTaskId, String responseMsg) {
+        KolB2cApplicationApproveCallbackDTO dto = buildKolB2cApproveCallbackDTO(dmpPushTaskEntity, dmpSyncTaskId, responseMsg);
+        try {
+            log.info("旺店通B2C审批下推失败回调OMS开始: dmpSyncTaskId={}, sourceId={}, sourceCode={}",
+                    dmpSyncTaskId, dto.getSubOrderId(), dto.getSubOrderCode());
+            omsTaskFeign.handleKolB2cApprovePushFail(dto);
+            log.info("旺店通B2C审批下推失败回调OMS完成: dmpSyncTaskId={}, sourceId={}, sourceCode={}",
+                    dmpSyncTaskId, dto.getSubOrderId(), dto.getSubOrderCode());
+        } catch (Exception e) {
+            log.warn("旺店通B2C审批下推失败回调OMS失败: dmpSyncTaskId={}, sourceId={}, sourceCode={}, err={}",
+                    dmpSyncTaskId, dmpPushTaskEntity.getSourceId(), dmpPushTaskEntity.getSourceCode(), e.getMessage(), e);
+        }
+    }
+
+    private KolB2cApplicationApproveCallbackDTO buildKolB2cApproveCallbackDTO(DmpPushTaskEntity dmpPushTaskEntity,
+                                                                              String dmpSyncTaskId,
+                                                                              String responseMsg) {
+        KolB2cApplicationApproveCallbackDTO dto = new KolB2cApplicationApproveCallbackDTO();
+        dto.setSubOrderId(dmpPushTaskEntity.getSourceId());
+        dto.setSubOrderCode(dmpPushTaskEntity.getSourceCode());
+        dto.setSyncTaskId(dmpSyncTaskId);
+        dto.setResponseMsg(responseMsg);
+        return dto;
     }
 
     private void notifyKolB2cCancelPushSuccess(String dmpSyncTaskId, PushSelf2Request request, String responseMsg) {

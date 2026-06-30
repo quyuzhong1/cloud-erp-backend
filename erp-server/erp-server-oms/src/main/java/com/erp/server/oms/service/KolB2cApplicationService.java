@@ -5,6 +5,7 @@ import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.AddressParseDTO;
+import com.erp.model.oms.dto.KolB2cApplicationApproveCallbackDTO;
 import com.erp.model.oms.dto.KolB2cApplicationCancelCallbackDTO;
 import com.erp.model.oms.dto.KolB2cApplicationDTO;
 import com.erp.model.oms.dto.KolSubB2cApplicationDTO;
@@ -172,6 +173,18 @@ public interface KolB2cApplicationService extends SuperService<KolB2cApplication
      * @param dto callback payload
      */
     void handleDomesticCancelPushFail(KolB2cApplicationCancelCallbackDTO dto);
+
+    /**
+     * Handle domestic approve success callback after DMP push success.
+     * @param dto callback payload
+     */
+    void handleDomesticApprovePushSuccess(KolB2cApplicationApproveCallbackDTO dto);
+
+    /**
+     * Handle domestic approve fail callback after DMP push fail.
+     * @param dto callback payload
+     */
+    void handleDomesticApprovePushFail(KolB2cApplicationApproveCallbackDTO dto);
 
     /**
      * 撤销
