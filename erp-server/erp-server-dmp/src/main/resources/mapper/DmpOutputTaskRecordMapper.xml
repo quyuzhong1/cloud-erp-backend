@@ -81,16 +81,16 @@ LEFT JOIN dmp_cfg_output h ON t.main_id = h.id
     <select id="paging" resultType="com.erp.model.dmp.dto.DmpOutputTaskRecordDTO$PagingDTO">
         SELECT
         t.id,
-        l.name AS sourcePlatformName,
-        i.name AS targetPlatformName,
-        k.name AS sourceTypeName,
-        t.source_code AS sourceCode,
-        t.status AS status,
-        t.create_time,
-        t.update_time AS lastSyncTime,
-        t.response_data AS returnMsg,
-        t.is_need_sync AS isNeedSync,
-        CASE WHEN dcob.id IS NOT NULL and dcob.field_value != '' THEN TRUE ELSE FALSE END AS isBlack
+        COALESCE(l.name, '') AS "sourcePlatformName",
+        COALESCE(i.name, '') AS "targetPlatformName",
+        COALESCE(k.name, '') AS "sourceTypeName",
+        t.source_code AS "sourceCode",
+        t.status AS "status",
+        t.create_time AS "createTime",
+        t.update_time AS "lastSyncTime",
+        t.response_data AS "returnMsg",
+        t.is_need_sync AS "isNeedSync",
+        CASE WHEN dcob.id IS NOT NULL and dcob.field_value != '' THEN TRUE ELSE FALSE END AS "isBlack"
         FROM dmp_output_task_record t
         LEFT JOIN dmp_output_task g ON t.main_id = g.id
         LEFT JOIN dmp_cfg_output h ON g.cfg_output_id = h.id
@@ -119,16 +119,16 @@ LEFT JOIN dmp_cfg_output h ON t.main_id = h.id
     <select id="hisPaging" resultType="com.erp.model.dmp.dto.DmpOutputTaskRecordDTO$PagingDTO">
         SELECT
         t.id,
-        l.name AS sourcePlatformName,
-        i.name AS targetPlatformName,
-        k.name AS sourceTypeName,
-        t.source_code AS sourceCode,
-        t.status AS status,
-        t.create_time,
-        t.update_time AS lastSyncTime,
-        t.response_data AS returnMsg,
-        t.is_need_sync AS isNeedSync,
-        CASE WHEN dcob.id IS NOT NULL and dcob.field_value != '' THEN TRUE ELSE FALSE END AS isBlack
+        COALESCE(l.name, '') AS "sourcePlatformName",
+        COALESCE(i.name, '') AS "targetPlatformName",
+        COALESCE(k.name, '') AS "sourceTypeName",
+        t.source_code AS "sourceCode",
+        t.status AS "status",
+        t.create_time AS "createTime",
+        t.update_time AS "lastSyncTime",
+        t.response_data AS "returnMsg",
+        t.is_need_sync AS "isNeedSync",
+        CASE WHEN dcob.id IS NOT NULL and dcob.field_value != '' THEN TRUE ELSE FALSE END AS "isBlack"
         FROM dmp_output_task_record_his t
         LEFT JOIN dmp_output_task_his g ON t.main_id = g.id
         LEFT JOIN dmp_cfg_output h ON g.cfg_output_id = h.id
@@ -156,16 +156,16 @@ LEFT JOIN dmp_cfg_output h ON t.main_id = h.id
     
     <select id="blackPaging" resultType="com.erp.model.dmp.dto.DmpOutputTaskRecordDTO$PagingDTO">
         select 
-	t.id,t.create_time,
-        l.name AS sourcePlatformName,
-        i.name AS targetPlatformName,
-        k.name AS sourceTypeName,
-        t.field_value AS sourceCode,
-        t.status AS status,
-        t.update_time AS lastSyncTime,
-        ('黑名单原因：' || t.remark) AS returnMsg,
-        t.is_need_sync AS isNeedSync,
-        TRUE isBlack
+	t.id,t.create_time AS "createTime",
+        COALESCE(l.name, '') AS "sourcePlatformName",
+        COALESCE(i.name, '') AS "targetPlatformName",
+        COALESCE(k.name, '') AS "sourceTypeName",
+        t.field_value AS "sourceCode",
+        t.status AS "status",
+        t.update_time AS "lastSyncTime",
+        ('黑名单原因：' || t.remark) AS "returnMsg",
+        t.is_need_sync AS "isNeedSync",
+        TRUE AS "isBlack"
 from 
 (select id,main_id,create_time,field_value,remark,cfg_output_id,source_code,t4.update_time,status,is_need_sync from dmp_cfg_output_black t1 
 left join 
@@ -193,15 +193,15 @@ LEFT JOIN dmp_cfg_output h ON t.main_id = h.id
     <select id="listExportExcel" resultType="com.erp.model.dmp.dto.DmpOutputTaskRecordDTO$PagingDTO">
         SELECT
         t.id,
-        l."name" AS sourcePlatformName,
-        i.name AS targetPlatformName,
-        k.name AS sourceTypeName,
-        t.source_code AS sourceCode,
-        t.status AS status,
-        t.create_time,
-        t.update_time AS lastSyncTime,
-        t.response_data AS returnMsg,
-        t.is_need_sync AS isNeedSync
+        COALESCE(l."name", '') AS "sourcePlatformName",
+        COALESCE(i.name, '') AS "targetPlatformName",
+        COALESCE(k.name, '') AS "sourceTypeName",
+        t.source_code AS "sourceCode",
+        t.status AS "status",
+        t.create_time AS "createTime",
+        t.update_time AS "lastSyncTime",
+        t.response_data AS "returnMsg",
+        t.is_need_sync AS "isNeedSync"
         FROM dmp_output_task_record t
         LEFT JOIN dmp_output_task g ON t.main_id = g.id
         LEFT JOIN dmp_cfg_output h ON g.cfg_output_id = h.id

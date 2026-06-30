@@ -264,6 +264,7 @@ public class AliExpressOrder implements Serializable {
                 || "WAIT_SELLER_EXAMINE_MONEY".equals(orderStatus)
                 // 完结已发货
                 || finishShipped(logisticInfoListObj)
+                || (isPlatformWarehouseOrder && finishHasDelivery(logisticInfoListObj))
         ) {
             return SoB2cBillStatusEnum.ENUM_SHIPPED.getCode();
         }
@@ -289,6 +290,28 @@ public class AliExpressOrder implements Serializable {
                 .map(e -> JSON.parseObject(JSON.toJSONString(e)))
                 .anyMatch(e -> "received".equalsIgnoreCase(e.getString("receive_status")));
         return "FINISH".equalsIgnoreCase(orderStatus) && existReceive;
+    }
+
+    /**
+     * 平台仓 FINISH 历史数据如已有平台物流发货信息，按已发货处理。
+     */
+    public boolean finishHasDelivery(Object logisticInfoListObj) {
+        if (null == logisticInfoListObj) {
+            return false;
+        }
+        JSONArray logisticInfoArray = JSON.parseArray(JSON.toJSONString(logisticInfoListObj));
+        if (CollectionUtils.isEmpty(logisticInfoArray)) {
+            return false;
+        }
+        boolean existDelivery = logisticInfoArray.stream()
+                .map(e -> JSON.parseObject(JSON.toJSONString(e)))
+                .anyMatch(e -> StringUtils.isNotBlank(e.getString("logistics_no"))
+                        || StringUtils.isNotBlank(e.getString("logisticsNo"))
+                        || StringUtils.isNotBlank(e.getString("gmt_send"))
+                        || StringUtils.isNotBlank(e.getString("gmtSend"))
+                        || StringUtils.isNotBlank(e.getString("delivery_time"))
+                        || StringUtils.isNotBlank(e.getString("deliveryTime")));
+        return "FINISH".equalsIgnoreCase(orderStatus) && existDelivery;
     }
 
     /**

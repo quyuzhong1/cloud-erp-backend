@@ -28,6 +28,7 @@ import com.erp.oms.aliexpress.dto.request.OrderRequest;
 import com.erp.oms.aliexpress.dto.response.*;
 import com.erp.oms.aliexpress.enums.Protocol;
 import com.erp.oms.aliexpress.util.ApiException;
+import com.erp.oms.aliexpress.util.Constants;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.tms.aliexpress.model.query.request.QueryShipmentOrder;
@@ -600,6 +601,7 @@ public class AliExpressOrderService {
         IopClient client = new IopClientImpl(shopInfoDTO.getBaseUrl(), shopInfoDTO.getClientId(), shopInfoDTO.getClientSecret());
         IopRequest request = new IopRequest();
         request.setApiName(AliexpressConstants.SELLER_RELATION_QUERY);
+        request.setHttpMethod(Constants.METHOD_GET);
         request.addApiParameter("business_type", "LOCAL_SERVICE");
         request.addApiParameter("simplify", "true");
         IopResponse response = client.execute(request, shopInfoDTO.getToken(), Protocol.TOP);
