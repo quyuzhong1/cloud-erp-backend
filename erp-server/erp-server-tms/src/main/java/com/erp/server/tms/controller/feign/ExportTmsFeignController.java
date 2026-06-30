@@ -89,6 +89,8 @@ public class ExportTmsFeignController {
     @Resource
     private CfgLogisticsCostImportService cfgLogisticsCostImportService;
     @Resource
+    private CfgFileParseService cfgFileParseService;
+    @Resource
     private TmsAsyncTaskRecordService tmsAsyncTaskRecordService;
 
     @Resource
@@ -434,6 +436,12 @@ public class ExportTmsFeignController {
     @WebAdvanceQuery(handler = CfgLogisticsCostImportQueryHandler.class)
     public PagingVO<CfgLogisticsCostImportDTO.ListDTO> exportTmsCfgLogisticsCost(@RequestBody PagingDTO<CfgLogisticsCostImportDTO.PagingParamDTO> dto) {
         return cfgLogisticsCostImportService.paging(dto);
+    }
+
+    @PostMapping("/exportTmsCfgFileParse")
+    @WebAdvanceQuery(handler = CfgFileParseQueryHandler.class)
+    public PagingVO<CfgFileParseDTO.ListDTO> exportTmsCfgFileParse(@RequestBody PagingDTO<CfgFileParseDTO.ExportDTO> dto) {
+        return cfgFileParseService.exportPaging(dto);
     }
 
 

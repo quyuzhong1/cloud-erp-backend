@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.tms.mapper.CfgFileParseMapper">
+
+    <resultMap id="BaseResultMap" type="com.erp.model.tms.entity.CfgFileParseEntity">
+        <result column="id" property="id"/>
+        <result column="create_user_id" property="createUserId"/>
+        <result column="create_user_name" property="createUserName"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_user_id" property="updateUserId"/>
+        <result column="update_user_name" property="updateUserName"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="version" property="version"/>
+        <result column="is_deleted" property="isDeleted"/>
+        <result column="code" property="code"/>
+        <result column="name" property="name"/>
+        <result column="period_type" property="periodType"/>
+        <result column="dict_platform" property="dictPlatform"/>
+        <result column="dict_platform_name" property="dictPlatformName"/>
+        <result column="folder_type" property="folderType"/>
+        <result column="disabled" property="disabled"/>
+        <result column="remark" property="remark"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        code,
+        name,
+        period_type,
+        dict_platform,
+        dict_platform_name,
+        folder_type,
+        disabled,
+        remark
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.tms.dto.CfgFileParseDTO$ListDTO">
+        SELECT
+        cfp.id,
+        cfp.code,
+        cfp.name,
+        cfp.period_type AS periodType,
+        cfp.dict_platform AS dictPlatform,
+        cfp.dict_platform_name AS dictPlatformName,
+        cfp.folder_type AS folderType,
+        cff.business_type AS businessType,
+        cff.type AS type,
+        cff.file_keyword AS fileKeyword,
+        cfp.disabled,
+        cfp.remark,
+        cfp.create_user_id AS createUserId,
+        cfp.create_user_name AS createUserName,
+        cfp.create_time AS createTime,
+        cfp.update_user_id AS updateUserId,
+        cfp.update_user_name AS updateUserName,
+        cfp.update_time AS updateTime
+        FROM cfg_file_parse cfp
+        LEFT JOIN cfg_file_parse_file cff ON cff.main_id = cfp.id AND cff.is_deleted = FALSE
+        WHERE cfp.is_deleted = FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        <if test="params != null and params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.default != ''">
+            AND ${params.sqlMap.default}
+        </if>
+        ORDER BY
+        <if test="params != null and params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        cfp.create_time DESC,
+        cff.sort ASC
+    </select>
+
+    <select id="exportPaging" resultType="com.erp.model.tms.dto.CfgFileParseDTO$ListDTO">
+        SELECT
+        cfp.id,
+        cfp.code,
+        cfp.name,
+        cfp.period_type AS periodType,
+        cfp.dict_platform AS dictPlatform,
+        cfp.dict_platform_name AS dictPlatformName,
+        cfp.folder_type AS folderType,
+        cff.business_type AS businessType,
+        cff.type AS type,
+        cff.file_keyword AS fileKeyword,
+        cfp.disabled,
+        cfp.remark,
+        cfp.create_user_id AS createUserId,
+        cfp.create_user_name AS createUserName,
+        cfp.create_time AS createTime,
+        cfp.update_user_id AS updateUserId,
+        cfp.update_user_name AS updateUserName,
+        cfp.update_time AS updateTime
+        FROM cfg_file_parse cfp
+        LEFT JOIN cfg_file_parse_file cff ON cff.main_id = cfp.id AND cff.is_deleted = FALSE
+        WHERE cfp.is_deleted = FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        <if test="params != null and params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.default != ''">
+            AND ${params.sqlMap.default}
+        </if>
+        <if test="params != null and params.ids != null and params.ids.size > 0">
+            AND cfp.id IN
+            <foreach collection="params.ids" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+        ORDER BY
+        <if test="params != null and params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        cfp.create_time DESC,
+        cff.sort ASC
+    </select>
+
+    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
+        SELECT
+        CASE WHEN disabled THEN 'disabled' ELSE 'enabled' END AS approveStatus,
+        COUNT(id) AS count
+        FROM cfg_file_parse
+        WHERE is_deleted = FALSE
+        GROUP BY CASE WHEN disabled THEN 'disabled' ELSE 'enabled' END
+    </select>
+
+    <select id="tabList" resultType="com.erp.model.tms.dto.CfgFileParseDTO$TabListDTO">
+        SELECT
+        CASE WHEN cfp.disabled THEN 'disabled' ELSE 'enabled' END AS tabFlag,
+        CASE WHEN cfp.disabled THEN '停用' ELSE '启用' END AS tabFlagName,
+        COUNT(cfp.id) AS count
+        FROM cfg_file_parse cfp
+        WHERE cfp.is_deleted = FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY CASE WHEN cfp.disabled THEN 'disabled' ELSE 'enabled' END,CASE WHEN cfp.disabled THEN '停用' ELSE '启用' END
+    </select>
+
+</mapper>

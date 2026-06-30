@@ -285,4 +285,5 @@ public interface BusinessNoConstant {
     String BOX = "BOX";
 
     String WLD = "WLD";
+    String WJPZ = "WJPZ";
 }
