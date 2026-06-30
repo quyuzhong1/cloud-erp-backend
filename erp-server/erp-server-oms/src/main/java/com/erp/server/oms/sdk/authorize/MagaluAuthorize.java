@@ -32,6 +32,7 @@ import com.sdk.oms.magalu.service.MagaluService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.formula.functions.T;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
@@ -72,6 +73,7 @@ public class MagaluAuthorize implements IShopAuthorizeService<T> {
     private MQProducerService mqProducerService;
 
     @Resource
+    @Lazy
     private MagaluService magaluService;
 
     @Override
