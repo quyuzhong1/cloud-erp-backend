@@ -54,15 +54,15 @@ public class WorkflowTaskInstanceDTO implements Serializable {
     public static class ListDTO implements Serializable {
         /** 编排实例 ID */
         private String instanceId;
-        /** 业务类型编码 */
+        /** 业务类型编码 [可排序] */
         private String sourceType;
         /** 业务类型名称 */
         private String sourceTypeName;
         /** 来源业务主键 */
         private String sourceId;
-        /** 来源单号 */
+        /** 来源单号 [可排序] */
         private String sourceCode;
-        /** 实例状态编码 */
+        /** 实例状态编码 [可排序] */
         private String status;
         /** 实例状态名称 */
         private String statusName;
@@ -80,9 +80,9 @@ public class WorkflowTaskInstanceDTO implements Serializable {
         private Integer retryCount;
         /** 链路追踪 ID */
         private String traceId;
-        /** 创建时间 */
+        /** 创建时间 [可排序] */
         private LocalDateTime createTime;
-        /** 更新时间 */
+        /** 更新时间 [可排序] */
         private LocalDateTime updateTime;
         /** 触发人姓名 */
         private String createUserName;
@@ -193,7 +193,7 @@ public class WorkflowTaskInstanceDTO implements Serializable {
         /** 编排实例 ID*/
         @NotBlank(message = "实例ID不能为空")
         private String instanceId;
-        /** 重置后的 retry_count，默认 0 */
+        /** 重置后的 retry_count；不传时默认当前值 +1 */
         private Integer retryCount;
         /** 操作备注，写入节点 remark */
         private String remark;
@@ -209,7 +209,7 @@ public class WorkflowTaskInstanceDTO implements Serializable {
         /** 起始节点序号，fromIndex 及之后节点重置为 pending 后重跑 */
         @Min(0)
         private Integer fromIndex;
-        /** 重置后的 retry_count，默认 0 */
+        /** 重置后的 retry_count；不传时默认当前值 +1 */
         private Integer retryCount;
         /** 操作备注 */
         private String remark;
@@ -286,5 +286,23 @@ public class WorkflowTaskInstanceDTO implements Serializable {
         private String instanceId;
         /** 底层 forceRetry 执行结果 */
         private WorkflowTaskRecordDTO.ForceRetryResultDTO forceRetryResult;
+    }
+    @Data
+    @NoArgsConstructor
+    public static class TabListDTO {
+        /**
+         * 类型
+         */
+        private String tabFlag;
+
+        /**
+         * 类型名称
+         */
+        private String tabFlagName;
+
+        /**
+         * 数量
+         */
+        private Integer count;
     }
 }

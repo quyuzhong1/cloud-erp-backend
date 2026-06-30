@@ -78,7 +78,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        wti.update_time DESC
+        wti.create_time DESC
     </select>
 
     <select id="viewHeader" resultType="com.erp.model.oms.dto.WorkflowTaskInstanceDTO$ViewDTO">
@@ -235,6 +235,16 @@
         </if>
         GROUP BY wtr.source_type, wtr.dict_basic_id, db.name, wtr.target_service
         ORDER BY failedCount DESC, lastOccurTime DESC
+    </select>
+    <select id="tabList" resultType="com.erp.model.oms.dto.WorkflowTaskInstanceDTO$TabListDTO">
+        SELECT wti.status as tabFlag,
+               count(wti.status) as count
+        FROM workflow_task_instance wti
+        where wti.is_deleted =false
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY wti.status
     </select>
 
 </mapper>

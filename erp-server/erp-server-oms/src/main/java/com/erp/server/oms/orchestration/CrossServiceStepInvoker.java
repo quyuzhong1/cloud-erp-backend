@@ -55,7 +55,8 @@ public class CrossServiceStepInvoker {
         entity.setStatus(WorkflowTaskRecordStatusEnum.PROCESSING.getCode());
         entity.setStartTime(LocalDateTime.now());
         workflowTaskRecordService.updateById(entity);
-
+        //重新查询记录
+        entity = workflowTaskRecordService.getById(entity.getId());
         String traceId = TraceContext.traceId();
         WorkflowTaskNodeConfigDTO config = nodeConfig == null ? WorkflowTaskNodeConfigParser.parse(entity.getClassPath()) : nodeConfig;
         String classPath = config.getClassPath();
