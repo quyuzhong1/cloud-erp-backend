@@ -24,7 +24,6 @@
         <module>erp-rpc</module>
         <module>erp-sdk</module>
         <module>erp-server</module>
-        <module>erp-chrome</module>
     </modules>
 
     <properties>

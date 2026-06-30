@@ -24,6 +24,11 @@ public class TeMuSoOutStockDetailDTO implements Serializable {
     private String platformSkuNo;
 
     /**
+     * 平台子单号
+     */
+    private String platformSubSoCode;
+
+    /**
      * 数量
      */
     private Integer qty;

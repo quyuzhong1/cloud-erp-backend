@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.TabListDTO;
 import com.erp.model.tms.dto.LogisticsBillDTO;
+import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
 import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
 import com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO;
 import com.erp.model.tms.entity.LogisticsBillEntity;
@@ -64,14 +65,6 @@ public interface LogisticsBillMapper extends BaseMapper<LogisticsBillEntity> {
      *@date 2023-11-16
      */
     IPage<LogisticsBillDTO.PagingVO> paging(Page query,@Param("params")LogisticsBillDTO.PagingParamDTO params);
-    /**
-     * 导出
-     *@parms dto
-     *@return 
-     *@author yl
-     *@date 2023-11-16
-     */
-    Page<LogisticsBillDTO.PagingVO> listExport(@Param("page") Page<LogisticsBillDTO.PagingVO> page, @Param("params")LogisticsBillDTO.PagingParamDTO dto);
 
     /**
      * 获取物流单基础信息 根据跟踪号
@@ -123,6 +116,8 @@ public interface LogisticsBillMapper extends BaseMapper<LogisticsBillEntity> {
                                                                              LocalDate startDate, LocalDate endDate,
                                                                              @Param("reconciliationIds") List<String> reconciliationIds,
                                                                              @Param("supplierType") String supplierType);
+
+    List<String> pageWaitReconciliationSupplierIds(@Param("params") TmsAsyncTaskRecordDTO.CursorPageDTO params);
     /**
      * 根据物流跟踪单号或运单号查询物流单详情
      * @author will

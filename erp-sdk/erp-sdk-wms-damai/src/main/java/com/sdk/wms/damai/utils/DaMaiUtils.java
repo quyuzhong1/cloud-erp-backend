@@ -2,14 +2,26 @@ package com.sdk.wms.damai.utils;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
+import cn.hutool.core.text.CharSequenceUtil;
+import com.common.core.exception.ThirdWarehouseEmptyResponseException;
 import com.sdk.wms.damai.dto.response.DaMaiBaseResp;
 import com.sdk.wms.damai.dto.response.DaMaiPageBaseResp;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 
 @Slf4j
-@Component
 public class DaMaiUtils {
+
+    private static final String EMPTY_RESPONSE_MESSAGE = "大卖接口返回为空";
+
+    private static void assertResponseNotBlank(String jsonStr) {
+        if (CharSequenceUtil.isBlank(jsonStr)) {
+            throw new ThirdWarehouseEmptyResponseException(EMPTY_RESPONSE_MESSAGE);
+        }
+    }
+
+    private DaMaiUtils() {
+        throw new IllegalStateException("Utility DaMaiUtils class");
+    }
 
     /**
      * 解析 JSON 字符串，返回 JiFengBaseResp<T>
@@ -19,7 +31,14 @@ public class DaMaiUtils {
      */
     public static <T> DaMaiBaseResp<T> parseToResp(String jsonStr, Class<T> clazz) {
         try {
-            return JSON.parseObject(jsonStr, new TypeReference<DaMaiBaseResp<T>>(clazz) {});
+            assertResponseNotBlank(jsonStr);
+            DaMaiBaseResp<T> resp = JSON.parseObject(jsonStr, new TypeReference<DaMaiBaseResp<T>>(clazz) {});
+            if (resp == null) {
+                throw new ThirdWarehouseEmptyResponseException(EMPTY_RESPONSE_MESSAGE);
+            }
+            return resp;
+        } catch (ThirdWarehouseEmptyResponseException e) {
+            throw e;
         } catch (Exception e) {
             log.error("JSON 解析失败,原始值：{}，异常: ", jsonStr,e);
             return DaMaiBaseResp.error("JSON 解析失败,原始值：{}，异常: {}", jsonStr,e);
@@ -34,7 +53,14 @@ public class DaMaiUtils {
      */
     public static <T> DaMaiBaseResp<T> parseToResp(String jsonStr, TypeReference<DaMaiBaseResp<T>> typeRef) {
         try {
-            return JSON.parseObject(jsonStr, typeRef);
+            assertResponseNotBlank(jsonStr);
+            DaMaiBaseResp<T> resp = JSON.parseObject(jsonStr, typeRef);
+            if (resp == null) {
+                throw new ThirdWarehouseEmptyResponseException(EMPTY_RESPONSE_MESSAGE);
+            }
+            return resp;
+        } catch (ThirdWarehouseEmptyResponseException e) {
+            throw e;
         } catch (Exception e) {
             log.error("JSON 解析失败,原始值：{}，异常: ", jsonStr,e);
             return DaMaiBaseResp.error("JSON 解析失败,原始值：{}，异常:{} ", jsonStr,e);
@@ -50,7 +76,14 @@ public class DaMaiUtils {
      */
     public static <T> DaMaiPageBaseResp<T> parsePageToResp(String jsonStr, Class<T> clazz) {
         try {
-            return JSON.parseObject(jsonStr, new TypeReference<DaMaiPageBaseResp<T>>(clazz) {});
+            assertResponseNotBlank(jsonStr);
+            DaMaiPageBaseResp<T> resp = JSON.parseObject(jsonStr, new TypeReference<DaMaiPageBaseResp<T>>(clazz) {});
+            if (resp == null) {
+                throw new ThirdWarehouseEmptyResponseException(EMPTY_RESPONSE_MESSAGE);
+            }
+            return resp;
+        } catch (ThirdWarehouseEmptyResponseException e) {
+            throw e;
         } catch (Exception e) {
             log.error("JSON 解析失败,原始值：{}，异常: ", jsonStr,e);
             return DaMaiPageBaseResp.error("JSON 解析失败,原始值：{}，异常: {}", jsonStr,e);
@@ -65,7 +98,14 @@ public class DaMaiUtils {
      */
     public static <T> DaMaiPageBaseResp<T> parsePageToResp(String jsonStr, TypeReference<DaMaiPageBaseResp<T>> typeRef) {
         try {
-            return JSON.parseObject(jsonStr, typeRef);
+            assertResponseNotBlank(jsonStr);
+            DaMaiPageBaseResp<T> resp = JSON.parseObject(jsonStr, typeRef);
+            if (resp == null) {
+                throw new ThirdWarehouseEmptyResponseException(EMPTY_RESPONSE_MESSAGE);
+            }
+            return resp;
+        } catch (ThirdWarehouseEmptyResponseException e) {
+            throw e;
         } catch (Exception e) {
             log.error("JSON 解析失败,原始值：{}，异常: ", jsonStr,e);
             return DaMaiPageBaseResp.error("JSON 解析失败,原始值：{}，异常:{} ", jsonStr,e);

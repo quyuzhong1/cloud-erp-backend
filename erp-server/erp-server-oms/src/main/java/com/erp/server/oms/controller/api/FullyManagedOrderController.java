@@ -105,7 +105,7 @@ public class FullyManagedOrderController extends BaseController {
     @WebAdvanceQuery(handler = FullyManagedQueryHandler.class)
     public ApiResult<PagingVO<SoB2cDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SoB2cDTO.PagingParamDTO> dto) {
         dto.getParams().setIsFullyManaged(Boolean.TRUE);
-        return success(soB2cService.paging(dto));
+        return success(soB2cService.fullyManagedPaging(dto));
     }
 
     /**

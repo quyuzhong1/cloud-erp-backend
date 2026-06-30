@@ -7,6 +7,7 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.CurrencyUtil;
 import com.erp.model.dmp.dto.DictBasicDTO;
+import com.erp.model.dmp.entity.DictBasicEntity;
 import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.dmp.entity.ThirdShopEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
@@ -51,7 +52,7 @@ public class DmpInputLxOrderDmpHandler extends DmpInputDbConvertDmpHandler {
     protected void afterConvertData(Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMaps) {
         log.debug("DmpInputLxOrderDmpHandler 处理完成: taskId={}", dmpInputTaskEntity.getId());
         // 领星平台来源
-        List<DictBasicDTO.ViewDTO> dictbaseList = dictBasicService.getByKey("lingxingPlatformCode");
+        List<DictBasicEntity> dictbaseList = dictBasicService.getByKey("lingxingPlatformCode");
         // 店铺和映射
         List<ThirdShopEntity> shopList = thirdShopService.lambdaQuery()
                 .eq(ThirdShopEntity::getSysType, DmpBasicSystemCodeEnum.LING_XING.getCode())
@@ -112,7 +113,7 @@ public class DmpInputLxOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                         platformCodeStr = platformInfoMap.getOrDefault("platform_code", "").toString();
                         if (StringUtils.isNotBlank(platformCodeStr)) {
                             String finalPlatformCodeStr = platformCodeStr;
-                            DictBasicDTO.ViewDTO viewDTO = dictbaseList.stream().filter(e -> e.getValue().equalsIgnoreCase(finalPlatformCodeStr)).findFirst().orElse(null);
+                            DictBasicEntity viewDTO = dictbaseList.stream().filter(e -> e.getValue().equalsIgnoreCase(finalPlatformCodeStr)).findFirst().orElse(null);
                             if (null == viewDTO) {
                                 ServiceException.runError("dmp字典未找到领星平台：" + platformCodeStr);
                             }

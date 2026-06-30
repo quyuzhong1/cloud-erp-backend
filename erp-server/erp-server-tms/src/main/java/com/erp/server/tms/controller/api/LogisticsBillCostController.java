@@ -131,7 +131,7 @@ public class LogisticsBillCostController extends BaseController {
         serviceClass = LogisticsBillCostService.class,
         keyIdName = "id")
     public ApiResult<Object>update(@RequestBody @Validated LogisticsBillCostDTO.UpdateDTO dto) {
-        logisticsBillCostService.update(dto,Boolean.FALSE);
+        logisticsBillCostService.update(dto,Boolean.FALSE, null);
         return success();
     }
     
@@ -157,12 +157,22 @@ public class LogisticsBillCostController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "状态变更:idList={idList}")
     @PostMapping("/updateReconciliationStatus")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+    @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            shopTableField = "lb.shop_id",
             menuCode = "tms:logisticsBillCost:updateReconciliationStatus",
-            serviceClass = LogisticsBillCostService.class,
-            keyIdName = "id")
+            tableAlias = "lbc"
+    )
+    @WebAdvanceQuery(handler = LogisticsBillCostQueryHandler.class)
     public ApiResult<List<BatchResultDTO>> updateReconciliationStatus(@RequestBody @Validated LogisticsBillCostDTO.UpdateStatusDTO dto) {
+        dto.setType(DictCostAttributionEnum.SELF_DELIVER.getCode());
+        if (CollUtil.isEmpty(dto.getIds())) {
+            // 全量高级查询场景不回传海量ID，改由后端按查询条件创建异步任务。
+            List<BatchResultDTO> resultDTOS = new ArrayList<>(1);
+            resultDTOS.add(logisticsBillCostService.batchAsyncUpdateReconciliationStatus(dto));
+            return success(resultDTOS);
+        }
+        logisticsBillCostService.checkUpdateReconciliationStatusPermission(dto);
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
             BatchResultDTO submit;
@@ -285,7 +295,7 @@ public class LogisticsBillCostController extends BaseController {
          serviceClass = LogisticsBillCostService.class,
          keyIdName = "id")
      public ApiResult<Object> addPayAndRefund(@RequestBody @Validated List<LogisticsBillCostDTO.AddDataDTO> dtoList) {
-         logisticsBillCostService.addPayAndRefund(dtoList);
+         logisticsBillCostService.addPayAndRefund(dtoList, null);
          return success();
      }
      
@@ -369,18 +379,16 @@ public class LogisticsBillCostController extends BaseController {
      keyIdName = "id")
      public ApiResult<List<BatchResultDTO>> pushAllocation(@RequestBody @Validated PushDTO dto) {
          if(CollUtil.isEmpty(dto.getIds())){
-             dto.setType(DictCostAttributionEnum.SELF_DELIVER.getCode());
-
-             TmsAsyncTaskRecordDTO.PushParamsDTO pushDTO = new TmsAsyncTaskRecordDTO.PushParamsDTO();
-             BeanMapper.copy(dto,pushDTO);
-             logisticsBillCostService.batchAsyncPushAllocation(pushDTO);
+             TmsAsyncTaskRecordDTO.SmallBagPushAllocationPayloadDTO payload =
+                     new TmsAsyncTaskRecordDTO.SmallBagPushAllocationPayloadDTO(dto.getReportDate(), DictCostAttributionEnum.SELF_DELIVER.getCode());
+             logisticsBillCostService.batchAsyncPushAllocation(payload);
              return success();
          }else {
              List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
              for (String id : dto.getIds()) {
                  BatchResultDTO submit;
                  try {
-                     submit = logisticsBillCostService.pushAllocation(id,dto.getReportDate());
+                     submit = logisticsBillCostService.pushAllocation(id, dto.getReportDate(), null);
                  }catch (Exception e){
                      log.error("尾程费用(自发货) 状态变更",e);
                      LogisticsBillCostEntity entity = logisticsBillCostService.getById(id);

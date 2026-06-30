@@ -133,6 +133,7 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     @Override
     public ApiResult<ThirdWarehouseQueryOutboundResponse> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
         OutboundB2cCreateRequest createRequest = OverseasWarehouseInboundConverter.INSTANCE.b2coutboundDtoToZhongbao(createOutboundReq);
+        setB2cDto(createOutboundReq, createRequest);
         //设置拣货类型
         setPickType(createOutboundReq, createRequest);
         //设置附件
@@ -183,6 +184,19 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             return base64.split(",")[1];
         }
     }
+    private void setB2cDto(ThirdWarehouseCreateOutboundReq createOutboundReq, OutboundB2cCreateRequest createRequest) {
+        String salePlatform = CharSequenceUtil.blankToDefault(
+                PlatformDictEnum.getNameByCode(createOutboundReq.getPlatform()),
+                createOutboundReq.getPlatform());
+        if (CharSequenceUtil.isBlank(createOutboundReq.getShopName()) && CharSequenceUtil.isBlank(salePlatform)) {
+            return;
+        }
+        createRequest.setB2cDto(OutboundB2cCreateRequest.B2cDto.builder()
+                .platformStore(createOutboundReq.getShopName())
+                .salePlatform(salePlatform)
+                .build());
+    }
+
     private static void setPickType(ThirdWarehouseCreateOutboundReq createOutboundReq, OutboundB2cCreateRequest createRequest) {
         List<ThirdWarehouseCreateOutboundReq.Item> items = createOutboundReq.getItems();
         /**

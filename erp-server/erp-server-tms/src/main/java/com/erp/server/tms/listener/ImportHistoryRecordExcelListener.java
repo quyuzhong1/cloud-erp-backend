@@ -17,6 +17,7 @@ import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.tms.dto.ImportHistoryRecordDTO;
 import com.erp.model.tms.entity.CfgLogisticsCostImportDetailEntity;
 import com.erp.model.tms.entity.CfgLogisticsCostImportEntity;
+import com.erp.model.tms.enums.CfgLogisticsCostImportBusinessTypeEnum;
 import com.erp.model.tms.enums.ImportHistoryRecordProcessingTypeEnum;
 import com.erp.model.tms.enums.ImportHistoryRecordStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -30,11 +31,7 @@ import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -119,14 +116,20 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
      */
     @Override
     public void invoke(Map<Integer,String>  map, AnalysisContext analysisContext) {
+        //无表头数据报错
+        if (ObjectUtil.isEmpty(headMap)) {
+            throw new ServiceException(ApiError.COMMON_FILE_HEAD_READ_HEAD_FAIL);
+        }
+        //忽略公式错误值(#REF!/#VALUE! 等)，统一按空处理，避免脏单元格被录入或参与匹配
+        sanitizeErrorCellValues(map);
+        //整行无任何有效数据则跳过（含 EasyExcel 解析 .xls 公式错误单元格时多产生的幽灵空行），不计入进度也不写入清洗结果
+        if (isBlankDataRow(map)) {
+            return;
+        }
         count += 1;
         //已经导入的数据跳过进度
         if (Objects.nonNull(importCount) && count < importCount){
             return;
-        }
-        //无表头数据报错
-        if (ObjectUtil.isEmpty(headMap)) {
-            throw new ServiceException(ApiError.COMMON_FILE_HEAD_READ_HEAD_FAIL);
         }
 
         //当导入的最后一列数据都是空时map无值导致表头size和map.size不一致，所以需要添加表头一致的数据
@@ -143,6 +146,69 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
             successList.clear();
             updateTask(count);
         }
+    }
+
+    /**
+     * Excel 公式错误值集合（POI 读取公式错误单元格时返回的文本），这些值按空处理。
+     */
+    private static final Set<String> EXCEL_ERROR_VALUES = new HashSet<>(Arrays.asList(
+            "#REF!", "#VALUE!", "#DIV/0!", "#NAME?", "#N/A", "#NUM!", "#NULL!",
+            "#GETTING_DATA", "#SPILL!", "#CALC!"));
+
+    /**
+     * 配置的有效字段列在 headMap 中的列下标集合，解析表头后初始化一次。
+     * 判断一行是否为有效数据行时，只看导入配置中已映射的 sourceField 列，
+     * 而不是看整行所有单元格——因为源文件里 核对/差异 等跨表公式列会被一路向下填充到很大的行范围，
+     * 在没有真实数据的行上仍会被算出 0、0.8 等结果或 #REF! 错误值，
+     * 仅凭「整行是否全空」无法识别这类幽灵行，必须以配置的有效字段列是否有值为准。
+     */
+    private Set<Integer> effectiveColumnKeys = Collections.emptySet();
+
+    /**
+     * 将单元格中的 Excel 公式错误值清成空字符串。
+     * 典型场景：源文件「核对/差异」等列是跨表公式，引用的表缺失后整列变成 #REF!，
+     * EasyExcel 解析 .xls 时会因这些错误单元格额外吐出只含该列、其余全空的幽灵行。
+     */
+    private void sanitizeErrorCellValues(Map<Integer,String> map) {
+        if (map == null || map.isEmpty()) {
+            return;
+        }
+        for (Map.Entry<Integer,String> entry : map.entrySet()) {
+            String value = entry.getValue();
+            if (value == null) {
+                continue;
+            }
+            if (EXCEL_ERROR_VALUES.contains(value.trim().toUpperCase(Locale.ROOT))) {
+                entry.setValue("");
+            }
+        }
+    }
+
+    /**
+     * 判断当前行是否没有任何有效业务数据。
+     * 以导入配置中已映射的有效字段列（sourceField）是否有值为准：
+     * 只要任一有效字段列有值即视为有效数据行；有效字段列全空则视为幽灵/空行跳过。
+     * 这样可以正确剔除 核对/差异 等公式列被填充到空行区、算出 0 或脏值而产生的幽灵行，
+     * 且不依赖写死的列名关键字。若未能解析到任何有效字段列（兜底），退回到「整行是否全空」的判断。
+     */
+    private boolean isBlankDataRow(Map<Integer,String> map) {
+        if (map == null || map.isEmpty()) {
+            return true;
+        }
+        if (CollectionUtils.isNotEmpty(effectiveColumnKeys)) {
+            for (Integer key : effectiveColumnKeys) {
+                if (CharSequenceUtil.isNotBlank(map.get(key))) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        for (String value : map.values()) {
+            if (CharSequenceUtil.isNotBlank(value)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -228,7 +294,7 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
         //添加导入历史记录表数据
         ImportHistoryRecordDTO.AddOrUpdateDTO addOrUpdateDTO = new ImportHistoryRecordDTO.AddOrUpdateDTO();
         addOrUpdateDTO.setReconciliationMonth(importDTO.getReconciliationMonth());
-        addOrUpdateDTO.setBusinessType(costImportEntity.getBusinessType());
+        addOrUpdateDTO.setBusinessType(CfgLogisticsCostImportBusinessTypeEnum.LAST_MILE_DELIVERY.getCode());
         addOrUpdateDTO.setFileUrl(importDTO.getFileUrl());
         addOrUpdateDTO.setFileName(importDTO.getFileName());
         //清洗结果
@@ -266,6 +332,29 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
         map.put(size + 1,ERROR_MSG);
         this.headMap = map;
         this.headList = headList;
+        //根据导入配置解析有效字段列下标，供空行/幽灵行判断使用
+        this.effectiveColumnKeys = resolveEffectiveColumnKeys(map);
+    }
+
+    /**
+     * 根据导入配置解析有效字段列在表头中的列下标集合。
+     * 有效字段来自 cfgImportDetailList 中所有已配置 sourceField 的映射项，按 sourceField 与表头名称匹配，不依赖写死列名。
+     */
+    private Set<Integer> resolveEffectiveColumnKeys(Map<Integer,String> headMap) {
+        if (ObjectUtil.isEmpty(headMap) || CollectionUtils.isEmpty(cfgImportDetailList)) {
+            return Collections.emptySet();
+        }
+        Set<Integer> keys = new HashSet<>();
+        for (CfgLogisticsCostImportDetailEntity cfgDetail : cfgImportDetailList) {
+            if (cfgDetail == null || CharSequenceUtil.isBlank(cfgDetail.getSourceField())) {
+                continue;
+            }
+            Integer columnIndex = getMapKey(headMap, cfgDetail.getSourceField());
+            if (columnIndex != null) {
+                keys.add(columnIndex);
+            }
+        }
+        return keys;
     }
 
     private void writeMatchResult(List<JSONObject> batchMatchList) {

@@ -283,4 +283,6 @@ public interface BusinessNoConstant {
     String Z="Z";
 
     String WLD = "WLD";
+    // 箱码
+    String BOX = "BOX";
 }

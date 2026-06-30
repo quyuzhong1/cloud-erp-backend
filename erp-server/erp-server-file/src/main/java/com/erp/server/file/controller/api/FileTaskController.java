@@ -12,10 +12,10 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.server.file.context.FileTaskContext;
-import com.erp.server.file.dto.FileTaskDTO;
-import com.erp.server.file.dto.FileTaskParamsDTO;
-import com.erp.server.file.entity.FileTask;
-import com.erp.server.file.vo.FileTaskVO;
+import com.erp.model.file.dto.FileTaskDTO;
+import com.erp.model.file.dto.FileTaskParamsDTO;
+import com.erp.model.file.entity.FileTask;
+import com.erp.model.file.vo.FileTaskVO;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 

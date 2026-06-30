@@ -243,6 +243,10 @@ public class AdsErpInventoryDiffDTO implements Serializable {
          */
         private LocalDateTime finishTime;
 
+        /**
+         * 执行状态
+         */
+        private String execStatusName;
 
         /**
          * 审核状态名称

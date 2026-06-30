@@ -4,26 +4,20 @@ package com.erp.server.tms.rocketmq;
 import cn.hutool.core.collection.CollUtil;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
-import com.erp.model.oms.dto.SoB2cDTO;
-import com.erp.model.oms.dto.SoB2cLabelDTO;
-import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
-import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.tms.service.LogisticsBillDetailService;
-import com.erp.server.tms.service.LogisticsBillService;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
- * 异步更新物流更新时间
+ * 异步更新物流更新时间（轨迹拉取游标推进）
+ * 原 Track123 专用，现快递100 小包/海运拉取也复用此消费者：按 billDetailId 将 update_time 刷为 now，
+ * 使本批单据在 ORDER BY update_time 的待拉取队列中轮到队尾，避免重复拉取与积压。
  */
 @Service
 @RocketMQMessageListener(topic = RocketMqTopic.TMS_123_LOGISTICS_TRACK,

@@ -164,7 +164,7 @@ public interface ExportWmsFeign {
     PagingVO<SoDeliveryNoticeChangeDTO.ListDTO> exportSoDeliveryNoticeChange(@RequestBody PagingDTO<SoDeliveryNoticeChangeDTO.PagingParamDTO> dto);
 
     @PostMapping("/feign/export/soOutStock")
-    PagingVO<SoOutstockDTO.PagingViewDTO> exportSoOutStock(@RequestBody PagingDTO<SoOutstockDTO.ExportDTO> dto);
+    PagingVO<SoOutstockDTO.PagingViewDTO> exportSoOutStock(@RequestBody PagingDTO<SoOutstockDTO.PagingParamDTO> dto);
 
     @PostMapping("/feign/export/soReturnInStock")
     PagingVO<SoReturnInstockDTO.PagingView> exportSoReturnInStock(@RequestBody PagingDTO<SoReturnInstockDTO.PagingParam> dto);
@@ -446,4 +446,10 @@ public interface ExportWmsFeign {
      */
     @PostMapping("/feign/export/exportQcApplication")
     PagingVO<QcApplicationDTO.ListDTO> exportQcApplication(PagingDTO<QcApplicationDTO.PagingParamDTO> dto);
+
+    @PostMapping("/feign/export/exportCfgQcUser")
+    PagingVO<CfgQcUserDTO.ListDTO> exportCfgQcUser(@RequestBody PagingDTO<CfgQcUserDTO.ExportDTO> dto);
+
+    @PostMapping("/feign/export/exportAfterSalesWarehouseLocationSuggest")
+    public PagingVO<AfterSalesWarehouseLocationSuggestDto.ListDTO> exportAfterSalesWarehouseLocationSuggest(@RequestBody @Validated PagingDTO<AfterSalesWarehouseLocationSuggestDto.ExportParamDTO> dto);
 }

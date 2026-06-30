@@ -7,6 +7,8 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.constant.DictCityConstants;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.DmpThirdCityDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.entity.ThirdMappingEntity;
@@ -22,9 +24,13 @@ import com.erp.server.oms.rocketmq.sync.wangdian.SyncWangDianSoB2cService;
 import com.erp.server.oms.service.*;
 import com.sdk.wangdian.sdk.api.sales.dto.PushSelf2Request;
 import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
@@ -32,9 +38,13 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class SyncWangDianSoB2cServiceImpl implements SyncWangDianSoB2cService {
 
+    @Resource
+    @Lazy
+    private SyncWangDianSoB2cService self;
     @Resource
     private OmsPushMsgService omsPushMsgService;
     @Resource
@@ -48,11 +58,28 @@ public class SyncWangDianSoB2cServiceImpl implements SyncWangDianSoB2cService {
 
     private static DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public DmpPushTaskEntity syncDataToWangDian(KolSubB2cApplicationDTO.PushDTO pushDTO,Map<String, SkuVO> skuMap ) {
-        PushSelf2Request request = newSyncKolB2c(pushDTO, skuMap, SyncOperateEnum.OPERATE_APPROVE.getCode());
+        saveApproveMsgToWangDian(pushDTO, skuMap);
+        return null;
+    }
+
+    @Override
+    public Boolean saveApproveMsgToWangDian(KolSubB2cApplicationDTO.PushDTO pushDTO, Map<String, SkuVO> skuMap) {
         KolSubB2cApplicationEntity entity = pushDTO.getEntity();
+        if (existApprovePushMsg(entity.getId())) {
+            return Boolean.FALSE;
+        }
+        PushSelf2Request request = newSyncKolB2c(pushDTO, skuMap, SyncOperateEnum.OPERATE_APPROVE.getCode());
+        return self.saveApproveMsgToWangDian(pushDTO, request);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean saveApproveMsgToWangDian(KolSubB2cApplicationDTO.PushDTO pushDTO, PushSelf2Request request) {
+        KolSubB2cApplicationEntity entity = pushDTO.getEntity();
+        if (existApprovePushMsg(entity.getId())) {
+            return Boolean.FALSE;
+        }
         OmsPushMsgEntity omsPushMsgEntity = new OmsPushMsgEntity();
         omsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.WDT.getCode());
         omsPushMsgEntity.setSourceType(SourceTypeEnum.WDT_SO_B2C.getCode());
@@ -60,8 +87,25 @@ public class SyncWangDianSoB2cServiceImpl implements SyncWangDianSoB2cService {
         omsPushMsgEntity.setSourceCode(entity.getCode());
         omsPushMsgEntity.setSyncOperate(SyncOperateEnum.OPERATE_APPROVE.getCode());
         omsPushMsgEntity.setPushData(JSON.toJSONString(request));
-        omsPushMsgService.save(omsPushMsgEntity);
-        return  null ;
+        try {
+            omsPushMsgService.save(omsPushMsgEntity);
+        } catch (DuplicateKeyException e) {
+            log.warn("旺店通B2C审核推送消息已存在，按幂等成功处理，sourceId={}, sourceCode={}", entity.getId(), entity.getCode(), e);
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
+    }
+
+    private boolean existApprovePushMsg(String sourceId) {
+        OmsPushMsgEntity exist = omsPushMsgService.lambdaQuery()
+                .eq(OmsPushMsgEntity::getTargetPlatform, DmpBasicSystemCodeEnum.WDT.getCode())
+                .eq(OmsPushMsgEntity::getSourceType, SourceTypeEnum.WDT_SO_B2C.getCode())
+                .eq(OmsPushMsgEntity::getSourceId, sourceId)
+                .eq(OmsPushMsgEntity::getSyncOperate, SyncOperateEnum.OPERATE_APPROVE.getCode())
+                .eq(OmsPushMsgEntity::getIsDeleted, false)
+                .last("limit 1")
+                .one();
+        return Objects.nonNull(exist);
     }
 
     @Override
@@ -92,7 +136,10 @@ public class SyncWangDianSoB2cServiceImpl implements SyncWangDianSoB2cService {
         if (skuMap == null || skuMap.isEmpty()) {
             List<String> skuIds = pushDTO.getDetailList().stream().map(KolSubB2cApplicationDetailEntity::getSkuId).distinct().collect(Collectors.toList());
             List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
-            skuMap = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
+            skuMap = CollUtil.emptyIfNull(skuList).stream()
+                    .filter(Objects::nonNull)
+                    .filter(e -> StringUtils.isNotBlank(e.getSkuId()))
+                    .collect(Collectors.toMap(SkuVO::getSkuId, Function.identity(), (o1, o2) -> o1));
         }
 
         PushSelf2Request request = new PushSelf2Request();
@@ -202,7 +249,7 @@ public class SyncWangDianSoB2cServiceImpl implements SyncWangDianSoB2cService {
         rawTradeList.add(rawTrade);
 
         for (KolSubB2cApplicationDetailEntity detailEntity : detailList) {
-            SkuVO skuVO = skuMap.get(detailEntity.getSkuId());
+            SkuVO skuVO = getRequiredSku(skuMap, detailEntity);
             PushSelf2Request.RawTradeOrder rawTradeOrder = new PushSelf2Request.RawTradeOrder();
             rawTradeOrder.setTid(entity.getCode());
             rawTradeOrder.setOid(detailEntity.getId());
@@ -237,6 +284,14 @@ public class SyncWangDianSoB2cServiceImpl implements SyncWangDianSoB2cService {
         request.setRawTradeList(rawTradeList);
         request.setRawTradeOrderList(rawTradeOrderList);
         return request;
+    }
+
+    private SkuVO getRequiredSku(Map<String, SkuVO> skuMap, KolSubB2cApplicationDetailEntity detailEntity) {
+        SkuVO skuVO = Objects.isNull(skuMap) ? null : skuMap.get(detailEntity.getSkuId());
+        if (Objects.nonNull(skuVO)) {
+            return skuVO;
+        }
+        throw new ServiceException(ApiError.COMMON_SKU_NOT_EXIST_OR_NOT_APPROVE, detailEntity.getSkuNo());
     }
 
     private String getAddressName(Map<String, String> thirdAddressMap, String addressId, String fallbackName) {

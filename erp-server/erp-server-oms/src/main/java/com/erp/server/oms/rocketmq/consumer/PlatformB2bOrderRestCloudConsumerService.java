@@ -135,6 +135,7 @@ public class PlatformB2bOrderRestCloudConsumerService extends AbstractRestCloudP
 			dto.setCountryId(customerAddressEntity.getCountryId());
 			dto.setCountryName(customerAddressEntity.getCountryName());
 		}
+		customerInfoService.applyB2bOrderCustomerDefaults(dto, customerInfo);
 
 		dto.setDictPlatform(customerInfo.getPlatformType());
 		dto.setAddressType(CustomerAddressTypeEnum.FORWARDER.getCode());
@@ -196,6 +197,7 @@ public class PlatformB2bOrderRestCloudConsumerService extends AbstractRestCloudP
 				dto.setTelNumber(customerAddressEntity.getTelNumber());
 			}
 			dto.setIsDeclare(false);
+			customerInfoService.applyB2bOrderCustomerDefaults(dto, customerInfo);
 		}
 		//过滤掉明细已删除和已作废
 		if(CollectionUtils.isNotEmpty(dto.getDetail())) {
@@ -258,6 +260,5 @@ public class PlatformB2bOrderRestCloudConsumerService extends AbstractRestCloudP
 			}
 		}
 	}
-
 
 }
