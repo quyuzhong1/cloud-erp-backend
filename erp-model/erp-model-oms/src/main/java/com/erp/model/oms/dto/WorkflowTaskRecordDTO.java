@@ -177,7 +177,7 @@ public class WorkflowTaskRecordDTO implements Serializable {
         private String instanceId;
 
         /**
-         * 重置后的 retry_count，默认 0
+         * 重置后的 retry_count；不传时默认当前值 +1
          */
         private Integer retryCount;
 

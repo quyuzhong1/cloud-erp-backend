@@ -3,6 +3,7 @@ package com.erp.server.oms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.PermissionsDTO;
 import com.erp.model.oms.dto.WorkflowTaskInstanceDTO;
 import com.erp.model.oms.entity.WorkflowTaskInstanceEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -26,4 +27,6 @@ public interface WorkflowTaskInstanceMapper extends BaseMapper<WorkflowTaskInsta
     List<WorkflowTaskInstanceDTO.StepDTO> listStepsByInstanceIds(@Param("instanceIds") List<String> instanceIds);
 
     List<WorkflowTaskInstanceDTO.ErrorReportDTO> errorReport(@Param("params") WorkflowTaskInstanceDTO.ErrorReportParamDTO params);
+
+    List<WorkflowTaskInstanceDTO.TabListDTO> tabList(@Param("params") PermissionsDTO dto);
 }

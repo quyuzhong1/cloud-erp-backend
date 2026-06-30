@@ -8,12 +8,14 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.MathUtil;
 import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.oms.dto.WorkflowTaskInstanceDTO;
 import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
@@ -437,10 +439,13 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
         for (WorkflowTaskRecordEntity step : steps) {
             String remark = workflowTaskRecordService.formatForceRetryRemark(step.getRemark(), dto.getRemark());
             String refreshedInputData = workflowTaskRecordService.getPreviousSuccessOutputData(step, indexTaskMap);
+            Integer resetRetryCount = dto.getRetryCount() == null
+                    ? Optional.ofNullable(step.getRetryCount()).orElse(0) + 1
+                    : dto.getRetryCount();
             workflowTaskRecordService.lambdaUpdate()
                     .eq(WorkflowTaskRecordEntity::getId, step.getId())
                     .set(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.PENDING.getCode())
-                    .set(WorkflowTaskRecordEntity::getRetryCount, Optional.ofNullable(dto.getRetryCount()).orElse(0))
+                    .set(WorkflowTaskRecordEntity::getRetryCount, resetRetryCount)
                     .set(WorkflowTaskRecordEntity::getLastError, "")
                     .set(WorkflowTaskRecordEntity::getRemark, remark)
                     .set(CharSequenceUtil.isNotBlank(refreshedInputData),
@@ -473,6 +478,26 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
     @Transactional(rollbackFor = Exception.class)
     public void cancel(WorkflowTaskInstanceDTO.CancelDTO dto) {
         markCancelled(dto.getInstanceId(), dto.getRemark());
+    }
+
+    @Override
+    public List<WorkflowTaskInstanceDTO.TabListDTO> tabList(PermissionsDTO dto) {
+        List<WorkflowTaskInstanceDTO.TabListDTO> list = baseMapper.tabList(dto);
+        List<WorkflowTaskInstanceDTO.TabListDTO> newList = new ArrayList<>();
+        Arrays.stream(WorkflowTaskInstanceStatusEnum.values()).forEach(statusEnum -> {
+            WorkflowTaskInstanceDTO.TabListDTO exists = list.stream().filter(item -> statusEnum.getCode().equals(item.getTabFlag())).findFirst().orElse(null);
+            if (exists == null) {
+                WorkflowTaskInstanceDTO.TabListDTO emptyItem = new WorkflowTaskInstanceDTO.TabListDTO();
+                emptyItem.setTabFlag(statusEnum.getCode());
+                emptyItem.setTabFlagName(statusEnum.getName());
+                emptyItem.setCount(MathUtil.ZERO);
+                newList.add(emptyItem);
+            }else {
+                exists.setTabFlagName(statusEnum.getName());
+                newList.add(exists);
+            }
+        });
+        return newList;
     }
 
     private String resolveInstanceId(String instanceId, WorkflowTaskRecordDTO.ForceRetryResultDTO result) {

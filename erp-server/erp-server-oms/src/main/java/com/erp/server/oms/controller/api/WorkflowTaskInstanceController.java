@@ -3,6 +3,7 @@ package com.erp.server.oms.controller.api;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -11,6 +12,7 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.WorkflowTaskInstanceDTO;
 import com.erp.server.oms.query.WorkflowTaskInstanceQueryHandler;
 import com.erp.server.oms.service.WorkflowTaskInstanceService;
@@ -38,6 +40,22 @@ public class WorkflowTaskInstanceController extends BaseController {
 
     @Resource
     private WorkflowTaskInstanceService workflowTaskInstanceService;
+
+    /**
+     * 获取 tab列表
+     *
+     * @return
+     */
+    @PostMapping("/tabList")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "oms:workflowTaskInstance:paging",
+            tableAlias = "wti"
+    )
+    public ApiResult<List<WorkflowTaskInstanceDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
+        List<WorkflowTaskInstanceDTO.TabListDTO> tabList = workflowTaskInstanceService.tabList(dto);
+        return success(tabList);
+    }
 
     /**
      * 实例分页：支持高级搜索、数据权限与进度/错误摘要展示。

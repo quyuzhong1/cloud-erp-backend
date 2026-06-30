@@ -4,6 +4,7 @@ package com.erp.server.oms.service;
 
 import com.common.business.dto.base.PagingDTO;
 
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 
 import com.common.business.vo.PagingVO;
@@ -216,5 +217,11 @@ public interface WorkflowTaskInstanceService extends SuperService<WorkflowTaskIn
 
     void cancel(WorkflowTaskInstanceDTO.CancelDTO dto);
 
+    /**
+     * tab汇总
+     * @param dto
+     * @return
+     */
+    List<WorkflowTaskInstanceDTO.TabListDTO> tabList(PermissionsDTO dto);
 }
 
