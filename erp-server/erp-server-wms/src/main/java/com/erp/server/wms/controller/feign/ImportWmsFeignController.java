@@ -15,8 +15,6 @@ import com.erp.server.wms.service.SampleBackInfoService;
 import com.erp.server.wms.service.SampleInitialLedgerService;
 import com.erp.server.wms.service.SampleTransferInfoService;
 import com.erp.server.wms.service.SampleAdjustmentInfoService;
-import com.erp.server.wms.service.WarehouseLocationMappingService;
-import com.erp.server.wms.service.CfgQcUserService;
 import com.erp.server.wms.service.CfgQcUserService;
 import com.erp.server.wms.service.SoReturnInstockService;
 import com.erp.server.wms.service.WarehouseLocationMappingService;
@@ -53,9 +51,6 @@ public class ImportWmsFeignController {
 
     @Resource
     private SampleAdjustmentInfoService sampleAdjustmentInfoService;
-
-    @Resource
-    private WarehouseLocationMappingService warehouseLocationMappingService;
 
     @Resource
     private CfgQcUserService cfgQcUserService;
@@ -156,20 +151,6 @@ public class ImportWmsFeignController {
             sampleAdjustmentInfoService.importSampleAdjustment(dto);
         } catch (Exception e) {
             log.error("导入样品调整单失败", e);
-            BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
-            importResultDTO.setTaskId(dto.getTaskId());
-            importResultDTO.setStatus(FileTaskStatusEnum.FAIL.getCode());
-            importResultDTO.setRemark(e.getMessage().length() > 490 ? e.getMessage().substring(0, 490) : e.getMessage());
-            downloadTaskFeign.updateTask(importResultDTO);
-        }
-    }
-
-    @PostMapping("/importWarehouseLocationMapping")
-    public void importWarehouseLocationMapping(@RequestBody BaseDTO.ImportDTO dto) {
-        try {
-            warehouseLocationMappingService.importWarehouseLocationMapping(dto);
-        } catch (Exception e) {
-            log.error("导入仓位绑定失败", e);
             BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
             importResultDTO.setTaskId(dto.getTaskId());
             importResultDTO.setStatus(FileTaskStatusEnum.FAIL.getCode());
