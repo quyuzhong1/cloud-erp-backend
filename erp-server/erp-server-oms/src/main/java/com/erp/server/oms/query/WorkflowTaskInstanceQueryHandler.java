@@ -20,7 +20,8 @@ public class WorkflowTaskInstanceQueryHandler extends AbstractQueryHandler {
     }
 
     private String getTabSql(Object value) {
-        if (CharSequenceUtil.isNotBlank(value.toString()) && !"all".equals(value.toString())) {
+        String tabValue = value == null ? null : value.toString();
+        if (CharSequenceUtil.isNotBlank(tabValue) && !"all".equals(tabValue)) {
             super.buildDefaultDTO("wti.status", value);
         }
         return super.getSplicingSQL();
