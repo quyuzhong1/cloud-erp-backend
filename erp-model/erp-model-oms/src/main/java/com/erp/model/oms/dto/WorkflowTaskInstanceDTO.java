@@ -289,7 +289,7 @@ public class WorkflowTaskInstanceDTO implements Serializable {
     }
     @Data
     @NoArgsConstructor
-    public static class TabListDTO {
+    public static class TabListDTO implements Serializable {
         /**
          * 类型
          */
