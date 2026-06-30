@@ -116,6 +116,21 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
     private static final String TASK_DATA_B2C_CODE = "b2cCode";
     private static final String TASK_DATA_WDT_PUSH_MSG = "wdtPushMsg";
     private static final String TASK_DATA_WDT_PUSH_MSG_SKIPPED = "wdtPushMsgSkipped";
+    private static final List<String> APPROVE_PUSH_CREATING_SKIP_BILL_STATUSES = Arrays.asList(
+            KolB2cApplicationDocumentStatusEnum.CREATED.getCode(),
+            KolB2cApplicationDocumentStatusEnum.CREATE_FAIL.getCode(),
+            KolB2cApplicationDocumentStatusEnum.CANCELING.getCode(),
+            KolB2cApplicationDocumentStatusEnum.CANCELED.getCode(),
+            KolB2cApplicationDocumentStatusEnum.CANCEL_FAIL.getCode());
+    private static final List<String> APPROVE_PUSH_SUCCESS_SKIP_BILL_STATUSES = Arrays.asList(
+            KolB2cApplicationDocumentStatusEnum.CANCELING.getCode(),
+            KolB2cApplicationDocumentStatusEnum.CANCELED.getCode(),
+            KolB2cApplicationDocumentStatusEnum.CANCEL_FAIL.getCode());
+    private static final List<String> APPROVE_PUSH_FAIL_SKIP_BILL_STATUSES = Arrays.asList(
+            KolB2cApplicationDocumentStatusEnum.CREATED.getCode(),
+            KolB2cApplicationDocumentStatusEnum.CANCELING.getCode(),
+            KolB2cApplicationDocumentStatusEnum.CANCELED.getCode(),
+            KolB2cApplicationDocumentStatusEnum.CANCEL_FAIL.getCode());
 
     @Resource
     private OperateLogService operateLogService;
@@ -1066,6 +1081,106 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.KOL_B2C_APPLICATION.getCode(), mainEntity.getId(), "取消回调");
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void handleDomesticApprovePushSuccess(KolB2cApplicationApproveCallbackDTO dto) {
+        if (ObjectUtil.isEmpty(dto)) {
+            return;
+        }
+        KolSubB2cApplicationEntity subEntity = getKolSubB2cApplicationByCallback(dto);
+        if (ObjectUtil.isEmpty(subEntity)) {
+            log.warn("处理中台B2C审批下推成功回调失败，拆分单不存在: subOrderId={}, subOrderCode={}, syncTaskId={}",
+                    dto.getSubOrderId(), dto.getSubOrderCode(), dto.getSyncTaskId());
+            return;
+        }
+        KolB2cApplicationEntity mainEntity = super.getByIdOpt(subEntity.getSourceId()).orElse(null);
+        if (ObjectUtil.isEmpty(mainEntity)) {
+            log.warn("处理中台B2C审批下推成功回调失败，主单不存在: subOrderId={}, subOrderCode={}, mainId={}, syncTaskId={}",
+                    dto.getSubOrderId(), dto.getSubOrderCode(), subEntity.getSourceId(), dto.getSyncTaskId());
+            return;
+        }
+        String billStatus = resolveBillStatus(mainEntity.getBillStatus(), mainEntity.getApproveStatus());
+        if (APPROVE_PUSH_SUCCESS_SKIP_BILL_STATUSES.contains(billStatus)) {
+            return;
+        }
+        boolean subNeedUpdate = !Objects.equals(KolSubB2cApplicationOrderStatusEnum.APPROVE.getCode(), subEntity.getOrderStatus());
+        if (!subNeedUpdate && Objects.equals(billStatus, KolB2cApplicationDocumentStatusEnum.CREATED.getCode())) {
+            return;
+        }
+        if (subNeedUpdate) {
+            KolSubB2cApplicationEntity updateSubEntity = new KolSubB2cApplicationEntity();
+            updateSubEntity.setId(subEntity.getId());
+            updateSubEntity.setOrderStatus(KolSubB2cApplicationOrderStatusEnum.APPROVE.getCode());
+            kolSubB2cApplicationService.updateById(updateSubEntity);
+        }
+        List<KolSubB2cApplicationEntity> subList = kolSubB2cApplicationService.lambdaQuery()
+                .eq(KolSubB2cApplicationEntity::getSourceId, mainEntity.getId())
+                .eq(KolSubB2cApplicationEntity::getIsDeleted, false)
+                .list();
+        boolean allApproved = CollUtil.isNotEmpty(subList) && subList.stream()
+                .allMatch(sub -> Objects.equals(KolSubB2cApplicationOrderStatusEnum.APPROVE.getCode(), sub.getOrderStatus()));
+        if (allApproved) {
+            updateBillStatusIfNotIn(mainEntity.getId(), KolB2cApplicationDocumentStatusEnum.CREATED.getCode(),
+                    APPROVE_PUSH_SUCCESS_SKIP_BILL_STATUSES);
+        }
+        String callbackMsg = StringUtils.substring(StrUtil.blankToDefault(dto.getResponseMsg(), ""), 0, 200);
+        String msg;
+        if (allApproved) {
+            msg = StrUtil.format("中台审批下推成功回调，拆分单【{}】状态更新为【{}】，主单【{}】状态更新为【{}】{}",
+                    subEntity.getCode(),
+                    KolSubB2cApplicationOrderStatusEnum.APPROVE.getName(),
+                    mainEntity.getCode(),
+                    KolB2cApplicationDocumentStatusEnum.CREATED.getName(),
+                    StringUtils.isNotBlank(callbackMsg) ? StrUtil.format("，回调结果：【{}】", callbackMsg) : "");
+        } else {
+            long approvedCount = Optional.ofNullable(subList).orElse(Collections.emptyList()).stream()
+                    .filter(sub -> Objects.equals(KolSubB2cApplicationOrderStatusEnum.APPROVE.getCode(), sub.getOrderStatus()))
+                    .count();
+            msg = StrUtil.format("中台审批下推成功回调，拆分单【{}】状态更新为【{}】，主单【{}】保持【{}】，待其余拆分单回调完成（{}/{}）{}",
+                    subEntity.getCode(),
+                    KolSubB2cApplicationOrderStatusEnum.APPROVE.getName(),
+                    mainEntity.getCode(),
+                    KolB2cApplicationDocumentStatusEnum.getName(billStatus),
+                    approvedCount,
+                    CollUtil.size(subList),
+                    StringUtils.isNotBlank(callbackMsg) ? StrUtil.format("，回调结果：【{}】", callbackMsg) : "");
+        }
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.KOL_B2C_APPLICATION.getCode(), mainEntity.getId(), "审批下推回调");
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void handleDomesticApprovePushFail(KolB2cApplicationApproveCallbackDTO dto) {
+        if (ObjectUtil.isEmpty(dto)) {
+            return;
+        }
+        KolSubB2cApplicationEntity subEntity = getKolSubB2cApplicationByCallback(dto);
+        if (ObjectUtil.isEmpty(subEntity)) {
+            log.warn("处理中台B2C审批下推失败回调失败，拆分单不存在: subOrderId={}, subOrderCode={}, syncTaskId={}",
+                    dto.getSubOrderId(), dto.getSubOrderCode(), dto.getSyncTaskId());
+            return;
+        }
+        KolB2cApplicationEntity mainEntity = super.getByIdOpt(subEntity.getSourceId()).orElse(null);
+        if (ObjectUtil.isEmpty(mainEntity)) {
+            log.warn("处理中台B2C审批下推失败回调失败，主单不存在: subOrderId={}, subOrderCode={}, mainId={}, syncTaskId={}",
+                    dto.getSubOrderId(), dto.getSubOrderCode(), subEntity.getSourceId(), dto.getSyncTaskId());
+            return;
+        }
+        String billStatus = resolveBillStatus(mainEntity.getBillStatus(), mainEntity.getApproveStatus());
+        if (APPROVE_PUSH_FAIL_SKIP_BILL_STATUSES.contains(billStatus)) {
+            return;
+        }
+        String failReason = StringUtils.substring(StrUtil.blankToDefault(dto.getResponseMsg(), "中台审批下推失败"), 0, 500);
+        updateBillStatusIfNotIn(mainEntity.getId(), KolB2cApplicationDocumentStatusEnum.CREATE_FAIL.getCode(),
+                APPROVE_PUSH_FAIL_SKIP_BILL_STATUSES);
+        String msg = StrUtil.format("中台审批下推失败回调，拆分单【{}】推送失败，主单【{}】状态更新为【{}】，原因：【{}】",
+                subEntity.getCode(),
+                mainEntity.getCode(),
+                KolB2cApplicationDocumentStatusEnum.CREATE_FAIL.getName(),
+                failReason);
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.KOL_B2C_APPLICATION.getCode(), mainEntity.getId(), "审批下推回调");
+    }
+
     /**
      * 撤销
      */
@@ -1259,8 +1374,11 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
             }
             if (Boolean.TRUE.equals(entity.getIsInternational())) {
                 updateKolSubStatus(entity.getId());
+                updateBillStatus(entity.getId(), KolB2cApplicationDocumentStatusEnum.CREATED.getCode());
+            } else {
+                updateBillStatusIfNotIn(entity.getId(), KolB2cApplicationDocumentStatusEnum.CREATING.getCode(),
+                        APPROVE_PUSH_CREATING_SKIP_BILL_STATUSES);
             }
-            updateBillStatus(entity.getId(), KolB2cApplicationDocumentStatusEnum.CREATED.getCode());
             Map<String, Object> data = new HashMap<>();
             data.put(TASK_DATA_KOL_ID, entity.getId());
             data.put(TASK_DATA_KOL_CODE, entity.getCode());
@@ -1465,6 +1583,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
                 UserContext.setIsUserSystem(true);
                 List<KolSubB2cApplicationDTO.PushDTO> pushDTOS = kolSubB2cApplicationService.generateSplitOrderIdempotent(entity, list);
                 pushSoB2c(entity,pushDTOS, partnerMap, partnerAddressMap);
+                updateBillStatus(entity.getId(), KolB2cApplicationDocumentStatusEnum.CREATED.getCode());
             }finally {
                 UserContext.clearIsUserSystem();
             }
@@ -1481,8 +1600,9 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
             for (KolSubB2cApplicationDTO.PushDTO pushDTO : pushDTOS) {
                 syncWangDianSoB2cService.syncDataToWangDian(pushDTO, skuMap);
             }
+            updateBillStatusIfNotIn(entity.getId(), KolB2cApplicationDocumentStatusEnum.CREATING.getCode(),
+                    APPROVE_PUSH_CREATING_SKIP_BILL_STATUSES);
         }
-        updateBillStatus(entity.getId(), KolB2cApplicationDocumentStatusEnum.CREATED.getCode());
     }
 
     private void registerLegacyApproveEndPush(KolB2cApplicationEntity entity) {
@@ -1995,6 +2115,15 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
                 .update(new KolB2cApplicationEntity());
     }
 
+    private void updateBillStatusIfNotIn(String id, String billStatus, Collection<String> skippedStatuses) {
+        lambdaUpdate().eq(KolB2cApplicationEntity::getId, id)
+                .and(wrapper -> wrapper.isNull(KolB2cApplicationEntity::getBillStatus)
+                        .or()
+                        .notIn(CollUtil.isNotEmpty(skippedStatuses), KolB2cApplicationEntity::getBillStatus, skippedStatuses))
+                .set(KolB2cApplicationEntity::getBillStatus, billStatus)
+                .update(new KolB2cApplicationEntity());
+    }
+
     private LoginUser buildCancelCallbackUser(KolB2cApplicationEntity entity) {
         LoginUser userInfo = new LoginUser();
         userInfo.setUid(StrUtil.blankToDefault(entity.getCancelUserId(), "0"));
@@ -2006,17 +2135,28 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         if (ObjectUtil.isEmpty(dto)) {
             return null;
         }
-        if (StringUtils.isNotBlank(dto.getSubOrderId())) {
-            KolSubB2cApplicationEntity subEntity = kolSubB2cApplicationService.getByIdOpt(dto.getSubOrderId()).orElse(null);
+        return getKolSubB2cApplicationByCallback(dto.getSubOrderId(), dto.getSubOrderCode());
+    }
+
+    private KolSubB2cApplicationEntity getKolSubB2cApplicationByCallback(KolB2cApplicationApproveCallbackDTO dto) {
+        if (ObjectUtil.isEmpty(dto)) {
+            return null;
+        }
+        return getKolSubB2cApplicationByCallback(dto.getSubOrderId(), dto.getSubOrderCode());
+    }
+
+    private KolSubB2cApplicationEntity getKolSubB2cApplicationByCallback(String subOrderId, String subOrderCode) {
+        if (StringUtils.isNotBlank(subOrderId)) {
+            KolSubB2cApplicationEntity subEntity = kolSubB2cApplicationService.getByIdOpt(subOrderId).orElse(null);
             if (ObjectUtil.isNotEmpty(subEntity)) {
                 return subEntity;
             }
         }
-        if (StringUtils.isBlank(dto.getSubOrderCode())) {
+        if (StringUtils.isBlank(subOrderCode)) {
             return null;
         }
         return kolSubB2cApplicationService.lambdaQuery()
-                .eq(KolSubB2cApplicationEntity::getCode, dto.getSubOrderCode())
+                .eq(KolSubB2cApplicationEntity::getCode, subOrderCode)
                 .eq(KolSubB2cApplicationEntity::getIsDeleted, false)
                 .last("limit 1")
                 .one();
