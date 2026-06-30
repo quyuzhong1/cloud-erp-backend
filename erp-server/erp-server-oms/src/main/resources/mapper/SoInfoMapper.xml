@@ -313,6 +313,7 @@
         sd.delivery_sku_no as skuNo,
         sd.platform_sku_no,
         sd.frozen_qty as frozenQty,
+        sd.delivery_qty as outstockQty,
         sd.is_close,
         sd.box_qty AS salesQty,
         sd.per_box_qty as perBoxQty,

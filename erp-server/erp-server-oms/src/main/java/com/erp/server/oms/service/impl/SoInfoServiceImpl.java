@@ -2610,14 +2610,17 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         for (SoInfoDTO.GenerateDeliveryView view : viewList) {
             ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(view.getSkuId())).findFirst().orElse(new ProductDetailEntity());
             view.setProductName(productDetailEntity.getName());
-            view.setDeliveryQty(view.getSalesQty() - view.getAlreadyDeliveryQty());
+            // 锁定数量（已锁库存）
+            Integer frozenQty = ObjectUtil.defaultIfNull(view.getFrozenQty(), MathUtil.ZERO);
+            // 销售数量
+            Integer salesQty = ObjectUtil.defaultIfNull(view.getSalesQty(), MathUtil.ZERO);
+            // 发货数量默认填充已锁库存（锁定数量）
+            view.setDeliveryQty(frozenQty);
             view.setPlanDeliveryDate(view.getRequireDate());
             String customerName = customerList.stream().filter(c -> c.getId().equals(view.getCustomerId())).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             view.setCustomerName(customerName);
-            if(view.getDeliveryQty()>0){
-                resultList.add(view);
-            }
+            resultList.add(view);
 
             //发货通知数量
             List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailEntityList = soDeliveryNoticeDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(view.getDetailId())).collect(Collectors.toList());
@@ -2625,6 +2628,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 Integer effectiveNoticeQty = soDeliveryNoticeDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(view.getDetailId())).map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
                 effectiveNoticeQty = effectiveNoticeQty * view.getPerBoxQty();
                 view.setEffectiveNoticeQty(effectiveNoticeQty);
+                // 待发货通知数量 = 销售数量 - 累计发货通知数量 - 锁定数量
+                view.setWaitNoticeQty(salesQty - effectiveNoticeQty - frozenQty);
             }
 
         }
