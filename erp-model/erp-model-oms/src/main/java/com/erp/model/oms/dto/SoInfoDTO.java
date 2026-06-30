@@ -741,6 +741,18 @@ public class SoInfoDTO implements Serializable {
          * 经营类型
          */
         private String warehouseManageType;
+
+        /**
+         * 可发货状态
+         * 0=无货可发(锁定数量=0)，1=部分可发(0<锁定数量<销售数量)，2=全量可发(锁定数量=销售数量)
+         * {@link com.erp.model.oms.enums.ShipableStatusEnum}
+         */
+        private Integer shipableStatus;
+
+        /**
+         * 可发货状态名称
+         */
+        private String shipableStatusName;
     }
 
     /**

@@ -14,12 +14,14 @@ import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.server.oms.constant.OmsConstant;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.oms.enums.ShipableStatusEnum;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -54,17 +56,37 @@ public class SoInfoQueryHandler extends AbstractQueryHandler {
             return " (si.remark "+compareCodeSplicingValueSql+" or sod.remark "+ compareCodeSplicingValueSql +") ";
         }
         /**
-         * 虚拟仓是否缺货
+         * 可发货状态：0=无货可发(锁定数量=0)，1=部分可发(0<锁定数量<销售数量)，2=全量可发(锁定数量=销售数量)
+         * 锁定数量=sod.frozen_qty，销售数量=sod.box_qty
          */
-        if("isVirtualScarce".equals(field)){
-            return getQueryAllSql();
-        }
-
-        /**
-         * 虚拟仓是否缺货
-         */
-        if("isVirtualOutStock".equals(field)){
-            return getQueryAllSql();
+        if ("shipableStatus".equals(field)) {
+            List<String> statusList = new ArrayList<>();
+            if (value instanceof Collection) {
+                for (Object obj : (Collection<?>) value) {
+                    if (obj != null) {
+                        statusList.add(obj.toString());
+                    }
+                }
+            } else if (value != null) {
+                statusList.add(value.toString());
+            }
+            if (CollectionUtils.isEmpty(statusList)) {
+                return getQueryAllSql();
+            }
+            List<String> conditions = new ArrayList<>();
+            for (String status : statusList) {
+                if (ShipableStatusEnum.NONE.getCode().toString().equals(status)) {
+                    conditions.add("COALESCE(sod.frozen_qty,0) = 0");
+                } else if (ShipableStatusEnum.PART.getCode().toString().equals(status)) {
+                    conditions.add("(COALESCE(sod.frozen_qty,0) > 0 and COALESCE(sod.frozen_qty,0) < COALESCE(sod.box_qty,0))");
+                } else if (ShipableStatusEnum.ALL.getCode().toString().equals(status)) {
+                    conditions.add("(COALESCE(sod.frozen_qty,0) > 0 and COALESCE(sod.frozen_qty,0) >= COALESCE(sod.box_qty,0))");
+                }
+            }
+            if (CollectionUtils.isEmpty(conditions)) {
+                return getQueryEmptySql();
+            }
+            return " (" + String.join(" or ", conditions) + ") ";
         }
         /**
          * SPU编号查询
