@@ -925,12 +925,12 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             allPackDTOList.forEach(v->v.setSku(v.getBoxDesc()));
             viewDTO.setPackingDTOList(allPackDTOList);
 
-            //物流供应商ids
-            String logisticsSupplierIds = deliveryDTOList.stream().map(TmsDeclareBillDTO.DeliveryDTO::getLogisticsSupplierId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.joining(";"));
-            viewDTO.setLogisticsSupplierId(logisticsSupplierIds);
-            //物流供应商名称
-            String logisticsSupplierNames = deliveryDTOList.stream().map(TmsDeclareBillDTO.DeliveryDTO::getLogisticsSupplierName).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.joining(";"));
-            viewDTO.setLogisticsSupplierName(logisticsSupplierNames);
+            viewDTO.setLogisticsSupplierId(joinDistinct(deliveryDTOList.stream()
+                    .map(TmsDeclareBillDTO.DeliveryDTO::getLogisticsSupplierId)
+                    .collect(Collectors.toList())));
+            viewDTO.setLogisticsSupplierName(joinDistinct(deliveryDTOList.stream()
+                    .map(TmsDeclareBillDTO.DeliveryDTO::getLogisticsSupplierName)
+                    .collect(Collectors.toList())));
             // 运输方式 / 柜号都不再落 tms_declare_bill，详情时按发货单关联的 logistics_bill 反查回显。
             // 多发货单合并时用 ";" 拼接（与 supplier 的处理保持一致）。
             String shippingMethods = deliveryDTOList.stream()
@@ -970,10 +970,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             allPackDTOList.forEach(v->v.setSku(v.getBoxDesc()));
             viewDTO.setPackingDTOList(allPackDTOList);
 
-            // B2B 物流商取发货通知单承运商，提运单号取发货通知单 track_no；多来源去重逗号拼接。
-            viewDTO.setLogisticsSupplierId(resolveB2bNoticeCarrierIds(listBillSourceDTO.getSourceIdList()));
-            viewDTO.setLogisticsSupplierName(resolveB2bNoticeCarrierNames(listBillSourceDTO.getSourceIdList()));
-            viewDTO.setTransportNo(resolveB2bNoticeTransportNo(listBillSourceDTO.getSourceIdList()));
+            applyB2bNoticeLogistics(viewDTO, listBillSourceDTO.getSourceIdList());
             //  运输方式 / 柜号同 FM，按发货通知单关联的 logistics_bill 反查回显。
             String shippingMethods = deliveryDTOList.stream()
                     .map(TmsDeclareBillDTO.SoOutDTO::getShippingMethod)
@@ -1143,18 +1140,25 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (CollectionUtils.isEmpty(detailEntityList)) {
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_STATUS_DETAIL_REQUIRED, "产品明细");
         }
-        validateDeclareDetailField(detailEntityList, TmsDeclareBillDetailEntity::getDeclareCurrency, "币制");
-        validateDeclareDetailField(detailEntityList, TmsDeclareBillDetailEntity::getSourceCountry, "原产国(地区)");
-        validateDeclareDetailField(detailEntityList, TmsDeclareBillDetailEntity::getToCountry, "最终目的国(地区)");
-        validateDeclareDetailField(detailEntityList, TmsDeclareBillDetailEntity::getSourceCargo, "境内货源地");
-        validateDeclareDetailField(detailEntityList, TmsDeclareBillDetailEntity::getExemption, "征免");
+        validateDeclareDetailField(detailEntityList, TmsDeclareBillDetailEntity::getDeclareCurrency, "币制", true);
+        validateDeclareDetailField(detailEntityList, TmsDeclareBillDetailEntity::getSourceCountry, "原产国(地区)", false);
+        validateDeclareDetailField(detailEntityList, TmsDeclareBillDetailEntity::getToCountry, "最终目的国(地区)", true);
+        validateDeclareDetailField(detailEntityList, TmsDeclareBillDetailEntity::getSourceCargo, "境内货源地", true);
+        validateDeclareDetailField(detailEntityList, TmsDeclareBillDetailEntity::getExemption, "征免", true);
     }
 
     private void validateDeclareDetailField(List<TmsDeclareBillDetailEntity> detailEntityList, Function<TmsDeclareBillDetailEntity, String> getter, String fieldName) {
+        validateDeclareDetailField(detailEntityList, getter, fieldName, true);
+    }
+
+    private void validateDeclareDetailField(List<TmsDeclareBillDetailEntity> detailEntityList, Function<TmsDeclareBillDetailEntity, String> getter, String fieldName, boolean requireConsistent) {
         for (TmsDeclareBillDetailEntity detailEntity : detailEntityList) {
             if (StringUtils.isBlank(getter.apply(detailEntity))) {
                 throw new ServiceException(ApiError.LOGISTICS_DECLARE_STATUS_DETAIL_REQUIRED, fieldName);
             }
+        }
+        if (!requireConsistent) {
+            return;
         }
         Set<String> valueSet = detailEntityList.stream().map(getter).collect(Collectors.toSet());
         if (valueSet.size() > 1) {
@@ -1562,9 +1566,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
         fillHeaderLogistics(headerDTO, logisticsBillList);
         if (SourceTypeEnum.B2B_DECLARE_BILL == sourceTypeEnum) {
-            headerDTO.setLogisticsSupplierId(resolveB2bNoticeCarrierIds(sourceIdList));
-            headerDTO.setLogisticsSupplierName(resolveB2bNoticeCarrierNames(sourceIdList));
-            headerDTO.setTransportNo(resolveB2bNoticeTransportNo(sourceIdList));
+            applyB2bNoticeLogistics(headerDTO, sourceIdList);
         }
         fillHeaderWeight(headerDTO, selectedDetailList, packingDTOList);
         return headerDTO;
@@ -3349,6 +3351,28 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     }
 
     /**
+     * B2B 详情/表头物流：一次 Feign 取发货通知单，回填承运商与提运单号。
+     * 提运单号优先保留已落库值，为空时再取 track_no。
+     */
+    private void applyB2bNoticeLogistics(TmsDeclareBillDTO.ViewDTO viewDTO, Collection<String> sourceIdList) {
+        List<SoDeliveryNoticeEntity> noticeList = listB2bNoticeBySourceIds(sourceIdList);
+        viewDTO.setLogisticsSupplierId(joinB2bNoticeCarrierIds(noticeList));
+        viewDTO.setLogisticsSupplierName(joinB2bNoticeCarrierNames(noticeList));
+        if (StringUtils.isBlank(viewDTO.getTransportNo())) {
+            viewDTO.setTransportNo(joinB2bNoticeTrackNos(noticeList));
+        }
+    }
+
+    private void applyB2bNoticeLogistics(TmsDeclareBillDTO.SelectedSkuHeaderDTO headerDTO, Collection<String> sourceIdList) {
+        List<SoDeliveryNoticeEntity> noticeList = listB2bNoticeBySourceIds(sourceIdList);
+        headerDTO.setLogisticsSupplierId(joinB2bNoticeCarrierIds(noticeList));
+        headerDTO.setLogisticsSupplierName(joinB2bNoticeCarrierNames(noticeList));
+        if (StringUtils.isBlank(headerDTO.getTransportNo())) {
+            headerDTO.setTransportNo(joinB2bNoticeTrackNos(noticeList));
+        }
+    }
+
+    /**
      * B2B 报关单承运商 id 取发货通知单 carrier_id，多发货通知单去重逗号拼接。
      */
     private String resolveB2bNoticeCarrierIds(Collection<String> sourceIdList) {
@@ -3816,7 +3840,6 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_SOURCE_DUPLICATE, rowNo);
             }
             validateSourceValue(detailDTO.getDeclareCurrency(), sourceDetail.getDeclareCurrency(), rowNo, "币制");
-            validateSourceValue(detailDTO.getSourceCountry(), sourceDetail.getSourceCountry(), rowNo, "原产国(地区)");
             validateSourceValue(detailDTO.getToCountry(), sourceDetail.getCountryId(), rowNo, "最终目的国(地区)");
             validateSourceValue(detailDTO.getSourceCargo(), defaultSourceCargo(sourceDetail.getSourceCargo()), rowNo, "境内货源地");
             validateSourceValue(detailDTO.getExemption(), defaultExemption(sourceDetail.getExemption()), rowNo, "征免");
