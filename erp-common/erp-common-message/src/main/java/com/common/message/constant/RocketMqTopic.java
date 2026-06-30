@@ -151,16 +151,6 @@ public class RocketMqTopic {
     public static final String WMS_VIRTUAL_DETAIL_MSG_TOPIC = "${spring.cloud.nacos.discovery.namespace}-wms_virtual_detail_msg_topic";
 
     /**
-     * 头程发货单自动生成报关明细
-     */
-    public static final String WMS_FIRST_MILE_DECLARE_AUTO_GENERATE_TOPIC = "${spring.cloud.nacos.discovery.namespace}-wms_first_mile_declare_auto_generate_topic";
-
-    /**
-     * B2B发货通知单自动生成报关明细
-     */
-    public static final String WMS_B2B_DECLARE_AUTO_GENERATE_TOPIC = "${spring.cloud.nacos.discovery.namespace}-wms_b2b_declare_auto_generate_topic";
-
-    /**
      * 同步track123 物流轨迹更新记录
      * 注意：原 Track123 专用，现快递100 小包/海运拉取也复用此 topic 推进 update_time 游标（仅刷新时间，与轨迹数据回写无关）
      */

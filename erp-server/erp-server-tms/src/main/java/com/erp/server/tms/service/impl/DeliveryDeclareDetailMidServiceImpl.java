@@ -683,6 +683,12 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
             log.warn("自动生成报关明细中间表失败：来源类型不支持，sourceType={}", sourceType);
             return Boolean.FALSE;
         }
+        List<String> sourceIds = sourceDetailList.stream()
+                .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getSourceId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        deleteDeliveryDeclareDetailMid(sourceIds);
         List<TmsDeclareBillDTO.MergeDeclareBillDTO> mergeDeclareBillList = tmsDeclareBillService.autoMergeDeclareBillView(
                 new TmsDeclareBillDTO.AutoMergeDeclareBillViewDTO(Boolean.FALSE, sourceDetailList));
         if (CollUtil.isEmpty(mergeDeclareBillList)) {

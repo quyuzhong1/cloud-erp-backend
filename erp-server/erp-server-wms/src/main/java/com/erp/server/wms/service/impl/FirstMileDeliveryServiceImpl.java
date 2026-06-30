@@ -220,8 +220,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     @Resource
     private MQProducerService<NoticeMsgInfoDTO> mqProducerService;
     @Resource
-    private MQProducerService<AutoGenerateBillDTO> firstMileDeclareMqProducerService;
-    @Resource
     private FbaShipmentPackingService fbaShipmentPackingService;
     @Lazy
     @Resource
@@ -236,6 +234,9 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     private SysDictFeign sysDictFeign;
     @Resource
     private ThirdNoticePushRecordFeign thirdNoticePushRecordFeign;
+    @Lazy
+    @Resource
+    private FirstMileDeliveryService firstMileDeliveryService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -339,28 +340,28 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 .checkCfg(Boolean.TRUE)
                 .build();
         try {
-            sendFirstMileDeclareAutoGenerateTask(autoGenerateBillDTO, entity.getCode());
+            submitFirstMileDeclareAutoGenerateAfterCommit(autoGenerateBillDTO);
         } catch (Exception e) {
             log.error("头程发货单{}提交后发送自动生成报关明细任务失败：{}", entity.getCode(), e.getMessage(), e);
         }
     }
 
     /**
-     * 发送头程报关自动生成任务。
+     * 事务提交后异步执行头程报关自动生成任务。
      *
      * @param dto 自动生成参数
-     * @param code 头程发货单号
      */
-    private void sendFirstMileDeclareAutoGenerateTask(AutoGenerateBillDTO dto, String code) {
-        SendResult sendResult = firstMileDeclareMqProducerService.syncClassMsg(
-                RocketMqTopic.WMS_FIRST_MILE_DECLARE_AUTO_GENERATE_TOPIC,
-                RocketMqTagEnum.WMS_FIRST_MILE_DECLARE_AUTO_GENERATE_TAG.getName(),
-                dto,
-                dto.getId());
-        if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
-            throw new ServiceException(CharSequenceUtil.format("头程发货单{}发送自动生成报关明细任务失败：{}", code, JSONUtil.toJsonStr(sendResult)));
+    private void submitFirstMileDeclareAutoGenerateAfterCommit(AutoGenerateBillDTO dto) {
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                @Override
+                public void afterCommit() {
+                    firstMileDeliveryService.asyncConsumeDeclareAutoGenerateTask(dto);
+                }
+            });
+            return;
         }
-        log.info("头程发货单{}已发送自动生成报关明细任务", code);
+        firstMileDeliveryService.asyncConsumeDeclareAutoGenerateTask(dto);
     }
 
     /**
@@ -432,15 +433,28 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     }
 
     /**
-     * 检查头程申报自动生成配置
-     * <p>
-     * 根据指定的单据生成时机枚举，检查系统配置是否允许自动生成头程申报单。
-     * 需要满足以下条件：
-     * 1. 单据生成时机枚举不为空
-     * 2. 自动开单配置存在且未禁用
-     * 3. 配置中启用了自动头程申报功能
-     * 4. 配置的头程申报生成时机与传入的时机匹配
-     * </p>
+     * 异步消费头程报关自动生成任务。
+     *
+     * @param dto 自动生成参数
+     */
+    @Override
+    @Async("wmsErpExecutor")
+    public void asyncConsumeDeclareAutoGenerateTask(AutoGenerateBillDTO dto) {
+        log.info("头程发货单自动生成报关明细异步任务开始，dto={}", JSONUtil.toJsonStr(dto));
+        try {
+            Boolean result = firstMileDeliveryService.consumeDeclareAutoGenerateTask(dto);
+            if (!Boolean.TRUE.equals(result)) {
+                log.error("头程发货单自动生成报关明细异步任务处理失败，dto={}", JSONUtil.toJsonStr(dto));
+                return;
+            }
+            log.info("头程发货单自动生成报关明细异步任务完成，id={}", dto.getId());
+        } catch (Exception e) {
+            log.error("头程发货单自动生成报关明细异步任务异常，dto={}", JSONUtil.toJsonStr(dto), e);
+        }
+    }
+
+    /**
+     * 检查头程申报自动生成配置。
      *
      * @param billGenerateTimingEnum 单据生成时机枚举，用于匹配配置中的生成时机
      * @return Boolean.TRUE表示满足自动生成条件，Boolean.FALSE表示不满足
@@ -2729,7 +2743,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         return result;
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean updateStatus(FirstMileDeliveryDTO.UpdateStatusDTO dto) {
