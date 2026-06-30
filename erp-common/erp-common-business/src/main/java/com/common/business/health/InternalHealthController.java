@@ -36,7 +36,6 @@ public class InternalHealthController extends BaseController {
     private static final String RELEASE_ACTIVE_VERSION = "release.active-version";
     private static final String RELEASE_COLOR = "release.color";
     private static final String RELEASE_VERSION = "release.version";
-    private static final String RELEASE_MQ_CONSUMER_ENABLED = "release.mq.consumer.enabled";
     private static final String RELEASE_XXL_JOB_ENABLED = "release.xxl.job.enabled";
 
     @Resource
@@ -83,11 +82,8 @@ public class InternalHealthController extends BaseController {
         body.put("activeVersion", environment.getProperty(RELEASE_ACTIVE_VERSION));
         body.put("releaseColor", environment.getProperty(RELEASE_COLOR));
         body.put("releaseVersion", environment.getProperty(RELEASE_VERSION));
-        body.put("mqConsumerEnabled", environment.getProperty(RELEASE_MQ_CONSUMER_ENABLED, Boolean.class, true));
         body.put("xxlJobEnabled", environment.getProperty(RELEASE_XXL_JOB_ENABLED, Boolean.class, true));
         body.put("currentReleaseActive", isCurrentReleaseActive());
-        body.put("effectiveMqConsumerEnabled", environment.getProperty(RELEASE_MQ_CONSUMER_ENABLED, Boolean.class, true)
-                && isCurrentReleaseActive());
         body.put("effectiveXxlJobEnabled", environment.getProperty(RELEASE_XXL_JOB_ENABLED, Boolean.class, true)
                 && isCurrentReleaseActive());
         return ResponseEntity.ok(body);

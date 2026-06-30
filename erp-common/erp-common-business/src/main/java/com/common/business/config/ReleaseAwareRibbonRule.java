@@ -72,6 +72,7 @@ public class ReleaseAwareRibbonRule extends AbstractLoadBalancerRule {
         }
 
         List<Server> matched = new ArrayList<>();
+        boolean hasComparableMetadata = false;
         for (Server server : servers) {
             Map<String, String> metadata = getMetadata(server);
             if (metadata.isEmpty()) {
@@ -84,11 +85,19 @@ public class ReleaseAwareRibbonRule extends AbstractLoadBalancerRule {
             }
             String releaseColor = firstText(metadata, "release.color", "release-color", "releaseColor", "color");
             String releaseVersion = firstText(metadata, "release.version", "release-version", "releaseVersion", "version");
+            if (hasComparableReleaseMetadata(activeColor, activeVersion, releaseColor, releaseVersion)) {
+                hasComparableMetadata = true;
+            }
             if (matchesRelease(activeColor, activeVersion, releaseColor, releaseVersion)) {
                 matched.add(server);
             }
         }
 
+        if (matched.isEmpty() && !hasComparableMetadata) {
+            log.warn("No release metadata found for client={}, fallback to reachable servers, activeColor={}, activeVersion={}",
+                    clientName, activeColor, activeVersion);
+            return servers;
+        }
         return matched;
     }
 
@@ -184,6 +193,12 @@ public class ReleaseAwareRibbonRule extends AbstractLoadBalancerRule {
             }
         }
         return hasComparableMetadata;
+    }
+
+    private boolean hasComparableReleaseMetadata(String activeColor, String activeVersion,
+                                                 String releaseColor, String releaseVersion) {
+        return (hasText(activeColor) && hasText(releaseColor))
+                || (hasText(activeVersion) && hasText(releaseVersion));
     }
 
     private String normalizeServiceName(String serviceName) {
