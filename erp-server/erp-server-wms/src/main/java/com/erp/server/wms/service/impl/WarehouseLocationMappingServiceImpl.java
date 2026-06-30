@@ -299,7 +299,7 @@ public class WarehouseLocationMappingServiceImpl extends SuperServiceImpl<Wareho
     private LambdaQueryWrapper<WarehouseLocationMappingEntity> buildQueryWrapper(WarehouseLocationMappingDTO.SearchDTO params) {
         LambdaQueryWrapper<WarehouseLocationMappingEntity> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(CharSequenceUtil.isNotBlank(params.getSysWarehouseId()), WarehouseLocationMappingEntity::getSysWarehouseId, params.getSysWarehouseId())
-                .eq(CharSequenceUtil.isNotBlank(params.getSysWarehouseLocation()), WarehouseLocationMappingEntity::getSysWarehouseLocation, params.getSysWarehouseLocation())
+                .eq(params.getSysWarehouseLocation() != null, WarehouseLocationMappingEntity::getSysWarehouseLocation, params.getSysWarehouseLocation())
                 .eq(CharSequenceUtil.isNotBlank(params.getDictPlatform()), WarehouseLocationMappingEntity::getDictPlatform, params.getDictPlatform())
                 .like(CharSequenceUtil.isNotBlank(params.getThirdWarehouseLocation()), WarehouseLocationMappingEntity::getThirdWarehouseLocation, params.getThirdWarehouseLocation());
         if (params.getSqlMap() != null && CharSequenceUtil.isNotBlank(params.getSqlMap().get("default"))) {
@@ -315,7 +315,11 @@ public class WarehouseLocationMappingServiceImpl extends SuperServiceImpl<Wareho
         Set<String> warehouseIds = records.stream().map(WarehouseLocationMappingEntity::getSysWarehouseId).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toSet());
         Map<String, WarehouseEntity> warehouseMap = warehouseIds.isEmpty() ? Collections.emptyMap() : warehouseMapper.selectBatchIds(warehouseIds).stream()
                 .collect(Collectors.toMap(WarehouseEntity::getId, Function.identity(), (v1, v2) -> v1));
-        List<String> locationCodes = records.stream().map(WarehouseLocationMappingEntity::getSysWarehouseLocation).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<String> locationCodes = records.stream()
+                .map(WarehouseLocationMappingEntity::getSysWarehouseLocation)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
         Map<String, WarehouseLocationEntity> locationMap = warehouseIds.isEmpty() || locationCodes.isEmpty() ? Collections.emptyMap()
                 : warehouseLocationService.listByWarehouseIdsAndCodeList(new ArrayList<>(warehouseIds), locationCodes).stream()
                 .collect(Collectors.toMap(item -> buildKey(item.getWarehouseId(), item.getCode()), Function.identity(), (v1, v2) -> v1));
@@ -395,7 +399,8 @@ public class WarehouseLocationMappingServiceImpl extends SuperServiceImpl<Wareho
         }
         String platform = validateImportPlatform(row.getDictPlatformName(), errorList);
         WarehouseEntity warehouse = validateImportWarehouse(row.getSysWarehouseName(), errorList);
-        WarehouseLocationEntity location = warehouse == null ? null : validateImportLocation(warehouse.getId(), row.getSysWarehouseLocation(), errorList);
+        WarehouseLocationEntity location = warehouse == null ? null
+                : validateImportLocation(warehouse.getId(), row.getSysWarehouseLocation() == null ? "" : row.getSysWarehouseLocation(), errorList);
         if (CharSequenceUtil.isBlank(row.getThirdWarehouseLocation())) {
             errorList.add("绑定仓位编码不能为空");
         } else if (row.getThirdWarehouseLocation().length() > 50) {
@@ -502,24 +507,24 @@ public class WarehouseLocationMappingServiceImpl extends SuperServiceImpl<Wareho
     }
 
     private WarehouseLocationEntity validateLocation(String warehouseId, String sysWarehouseLocation) {
-        if (CharSequenceUtil.isBlank(sysWarehouseLocation)) {
+        if (sysWarehouseLocation == null) {
             throw new ServiceException("仓位编码不能为空");
         }
         WarehouseLocationEntity location = warehouseLocationService.findByWarehouseIdAndCode(warehouseId, sysWarehouseLocation);
         if (location == null || Boolean.TRUE.equals(location.getIsDeleted())) {
-            throw new ServiceException(CharSequenceUtil.format("仓位【{}】不存在", sysWarehouseLocation));
+            throw new ServiceException(CharSequenceUtil.format("仓位【{}】不存在", formatLocationDisplay(sysWarehouseLocation)));
         }
         return location;
     }
 
     private WarehouseLocationEntity validateImportLocation(String warehouseId, String sysWarehouseLocation, List<String> errorList) {
-        if (CharSequenceUtil.isBlank(sysWarehouseLocation)) {
+        if (sysWarehouseLocation == null) {
             errorList.add("仓位编码不能为空");
             return null;
         }
         WarehouseLocationEntity location = warehouseLocationService.findByWarehouseIdAndCode(warehouseId, sysWarehouseLocation);
         if (location == null || Boolean.TRUE.equals(location.getIsDeleted())) {
-            errorList.add(CharSequenceUtil.format("仓位【{}】不存在", sysWarehouseLocation));
+            errorList.add(CharSequenceUtil.format("仓位【{}】不存在", formatLocationDisplay(sysWarehouseLocation)));
         }
         return location;
     }
@@ -568,13 +573,13 @@ public class WarehouseLocationMappingServiceImpl extends SuperServiceImpl<Wareho
             boolean sameThirdLocation = Objects.equals(currentEntity.getThirdWarehouseLocation(), other.getThirdWarehouseLocation());
             if (sameSysLocation && sameThirdLocation) {
                 addMessage(errorList, messageSet, CharSequenceUtil.format("仓位【{}】不允许同时绑定相同第三方系统【{}】相同仓位【{}】",
-                        currentEntity.getSysWarehouseLocation(), getPlatformName(currentEntity.getDictPlatform()), currentEntity.getThirdWarehouseLocation()));
+                        formatLocationDisplay(currentEntity.getSysWarehouseLocation()), getPlatformName(currentEntity.getDictPlatform()), currentEntity.getThirdWarehouseLocation()));
             } else if (!sameSysLocation && sameThirdLocation) {
                 addMessage(errorList, messageSet, CharSequenceUtil.format("仓位【{}】已绑定第三方系统【{}】仓位【{}】，请绑定其他仓位",
-                        other.getSysWarehouseLocation(), getPlatformName(currentEntity.getDictPlatform()), other.getThirdWarehouseLocation()));
+                        formatLocationDisplay(other.getSysWarehouseLocation()), getPlatformName(currentEntity.getDictPlatform()), other.getThirdWarehouseLocation()));
             } else if (sameSysLocation) {
                 addMessage(errorList, messageSet, CharSequenceUtil.format("仓位【{}】已绑定第三方系统【{}】仓位【{}】，请解绑后再绑定",
-                        currentEntity.getSysWarehouseLocation(), getPlatformName(currentEntity.getDictPlatform()), other.getThirdWarehouseLocation()));
+                        formatLocationDisplay(currentEntity.getSysWarehouseLocation()), getPlatformName(currentEntity.getDictPlatform()), other.getThirdWarehouseLocation()));
             }
         }
     }
@@ -606,7 +611,11 @@ public class WarehouseLocationMappingServiceImpl extends SuperServiceImpl<Wareho
 
     private String buildLogContent(String operate, WarehouseLocationMappingEntity entity) {
         return CharSequenceUtil.format("{}仓位绑定：仓位【{}】第三方系统【{}】仓位【{}】",
-                operate, entity.getSysWarehouseLocation(), getPlatformName(entity.getDictPlatform()), entity.getThirdWarehouseLocation());
+                operate, formatLocationDisplay(entity.getSysWarehouseLocation()), getPlatformName(entity.getDictPlatform()), entity.getThirdWarehouseLocation());
+    }
+
+    private String formatLocationDisplay(String sysWarehouseLocation) {
+        return CharSequenceUtil.isBlank(sysWarehouseLocation) ? "空仓位" : sysWarehouseLocation;
     }
 
     private String getPlatformName(String dictPlatform) {
