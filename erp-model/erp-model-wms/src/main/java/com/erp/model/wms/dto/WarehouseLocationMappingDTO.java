@@ -24,9 +24,8 @@ public class WarehouseLocationMappingDTO implements Serializable {
     @NoArgsConstructor
     public static class DetailDTO implements Serializable {
         /**
-         * 仓位编码
+         * 仓位编码（空仓位 code 为 ""，属于合法值；仅 null 视为缺失）
          */
-        @NotBlank(message = "仓位编码不能为空")
         private String sysWarehouseLocation;
 
         /**
