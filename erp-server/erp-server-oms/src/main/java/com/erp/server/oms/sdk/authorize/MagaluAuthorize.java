@@ -223,7 +223,11 @@ public class MagaluAuthorize implements IShopAuthorizeService<T> {
             return String.format(template, cfgAppClient.getClientId(), urlEncode(cfgAppClient.getRedirectUrl()), urlEncode(scope), urlEncode(state));
         }
         if (placeholderCount == 3) {
-            return String.format(template, cfgAppClient.getClientId(), urlEncode(cfgAppClient.getRedirectUrl()), urlEncode(state));
+            String authorizeUrl = String.format(template, cfgAppClient.getClientId(), urlEncode(cfgAppClient.getRedirectUrl()), urlEncode(state));
+            if (StringUtils.isBlank(scope)) {
+                return authorizeUrl;
+            }
+            return authorizeUrl + (authorizeUrl.contains("?") ? "&" : "?") + "scope=" + urlEncode(scope);
         }
         return appendAuthorizeQuery(template, cfgAppClient.getClientId(), cfgAppClient.getRedirectUrl(), scope, state);
     }
@@ -286,6 +290,7 @@ public class MagaluAuthorize implements IShopAuthorizeService<T> {
                 .setClientId(cfgAppClient.getClientId())
                 .setClientSecret(cfgAppClient.getClientSecret())
                 .setBaseUrl(cfgAppClient.getUrl())
+                .setApiBaseUrl(getApiBaseUrl(cfgAppClient))
                 .setRedirectUrl(cfgAppClient.getRedirectUrl())
                 .setAccessToken(tokenDTO.getAccessToken())
                 .setRefreshToken(tokenDTO.getRefreshToken())
@@ -298,6 +303,15 @@ public class MagaluAuthorize implements IShopAuthorizeService<T> {
 
     private Integer getExpiresIn(MagaluTokenDTO tokenDTO) {
         return Objects.isNull(tokenDTO.getExpiresIn()) ? 0 : tokenDTO.getExpiresIn();
+    }
+
+    private String getApiBaseUrl(CfgAppClientEntity cfgAppClient) {
+        Map<String, Object> extendData = cfgAppClient.getExtendData();
+        if (extendData == null || Objects.isNull(extendData.get("apiBaseUrl"))) {
+            return "https://api.magalu.com";
+        }
+        String apiBaseUrl = extendData.get("apiBaseUrl").toString();
+        return StringUtils.isBlank(apiBaseUrl) ? "https://api.magalu.com" : apiBaseUrl;
     }
 
     private LocalDateTime getTokenExpireTime(Integer expiresIn) {

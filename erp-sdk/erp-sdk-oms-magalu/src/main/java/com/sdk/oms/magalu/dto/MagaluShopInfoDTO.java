@@ -21,6 +21,8 @@ public class MagaluShopInfoDTO implements Serializable {
 
     private String baseUrl;
 
+    private String apiBaseUrl;
+
     private String redirectUrl;
 
     private String accessToken;
