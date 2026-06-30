@@ -19,6 +19,7 @@ import com.erp.server.wms.service.WarehouseLocationMappingService;
 import com.erp.server.wms.service.CfgQcUserService;
 import com.erp.server.wms.service.CfgQcUserService;
 import com.erp.server.wms.service.SoReturnInstockService;
+import com.erp.server.wms.service.WarehouseLocationMappingService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -61,6 +62,9 @@ public class ImportWmsFeignController {
 
     @Resource
     private SoReturnInstockService soReturnInstockService;
+
+    @Resource
+    private WarehouseLocationMappingService warehouseLocationMappingService;
 
     @PostMapping("/sampleRecipient")
     public void importSampleRecipient(@RequestBody BaseDTO.ImportDTO dto) {
@@ -211,5 +215,19 @@ public class ImportWmsFeignController {
             msg = MessageUtils.getMessage(ApiError.SO_RETURN_INSTOCK_IMPORT_TASK_FAILED);
         }
         return msg.length() > 490 ? msg.substring(0, 490) : msg;
+    }
+
+    @PostMapping("/importWarehouseLocationMapping")
+    public void importWarehouseLocationMapping(@RequestBody BaseDTO.ImportDTO dto) {
+        try {
+            warehouseLocationMappingService.importWarehouseLocationMapping(dto);
+        } catch (Exception e) {
+            log.error("导入仓位绑定失败", e);
+            BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+            importResultDTO.setTaskId(dto.getTaskId());
+            importResultDTO.setStatus(FileTaskStatusEnum.FAIL.getCode());
+            importResultDTO.setRemark(e.getMessage().length() > 490 ? e.getMessage().substring(0, 490) : e.getMessage());
+            downloadTaskFeign.updateTask(importResultDTO);
+        }
     }
 }
