@@ -4,6 +4,7 @@ import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONUtil;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.IdUtils;
 import com.common.core.utils.ValidatorUtil;
 import com.common.core.utils.date.LocalDateUtil;
@@ -45,7 +46,7 @@ public class MQProducerService<T> {
 
     private RocketMQTemplate getRocketMQTemplate() {
         if (rocketMQTemplate == null) {
-            throw new IllegalStateException("RocketMQTemplate is not available. Please configure rocketmq.producer.group for MQ producer modules.");
+            throw new ServiceException("RocketMQTemplate 不可用，请配置 rocketmq.producer.group");
         }
         return rocketMQTemplate;
     }
