@@ -1739,9 +1739,19 @@ public class TmsDeclareBillDTO implements Serializable {
         private String toArea;
 
         /**
+         * 运抵区名称
+         */
+        private String toAreaName;
+
+        /**
          * 运抵港
          */
         private String toPort;
+
+        /**
+         * 运抵港名称
+         */
+        private String toPortName;
 
         /**
          * 出境口岸
