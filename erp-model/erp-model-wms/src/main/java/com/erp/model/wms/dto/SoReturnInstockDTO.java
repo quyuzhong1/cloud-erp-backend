@@ -192,6 +192,14 @@ public class SoReturnInstockDTO {
          */
         private String platformOrderCode;
         /**
+         * 平台（B2C取售后单平台，否则取客户归属平台，可能为空）
+         */
+        private String dictPlatform;
+        /**
+         * 平台名称
+         */
+        private String dictPlatformName;
+        /**
          * 销售员
          */
         private String sellerName;
@@ -669,6 +677,14 @@ public class SoReturnInstockDTO {
          */
         private String returnLogisticCode;
         /**
+         * 平台（B2C取售后单平台，否则取客户归属平台，可能为空）
+         */
+        private String dictPlatform;
+        /**
+         * 平台名称
+         */
+        private String dictPlatformName;
+        /**
          * 明细信息
          */
         private List<SoReturnInstockDetailDTO.View> detailList;
@@ -685,6 +701,139 @@ public class SoReturnInstockDTO {
          * 币种符号
          */
         private String currencySymbol;
+    }
+
+    /**
+     * 退货物流单号反查售后单-预填出参（命中多个时以列表返回供前端选择）
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ReturnLogisticPrefill {
+        /**
+         * 退货单id
+         */
+        private String soReturnId;
+        /**
+         * 退货订单号
+         */
+        private String soReturnCode;
+        /**
+         * 单据类型（B2B/B2C）
+         */
+        private String type;
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+        /**
+         * 退货客户id
+         */
+        private String customerId;
+        /**
+         * 退货客户名称
+         */
+        private String customerName;
+        /**
+         * 销售组织id
+         */
+        private String salesOrgId;
+        /**
+         * 销售组织名称
+         */
+        private String salesOrgName;
+        /**
+         * 销售部门id
+         */
+        private String salesDeptId;
+        /**
+         * 销售部门名称
+         */
+        private String salesDeptName;
+        /**
+         * 销售员id
+         */
+        private String sellerId;
+        /**
+         * 销售员名称
+         */
+        private String sellerName;
+        /**
+         * 币种
+         */
+        private String currency;
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
+        /**
+         * 店铺id
+         */
+        private String shopId;
+        /**
+         * 平台订单编号
+         */
+        private String platformOrderCode;
+        /**
+         * 退货物流单号
+         */
+        private String returnLogisticCode;
+        /**
+         * 售后单创建时间（用于排序/前端展示）
+         */
+        private LocalDateTime createTime;
+        /**
+         * 明细信息（仅B2C售后单带出）
+         */
+        private List<PrefillDetail> detailList;
+    }
+
+    /**
+     * 退货物流单号反查售后单-预填明细
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PrefillDetail {
+        /**
+         * 退货单明细id
+         */
+        private String soReturnDetailId;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * sku编号
+         */
+        private String skuNo;
+        /**
+         * 平台sku
+         */
+        private String platformSkuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * 销售数量
+         */
+        private Integer salesQty;
+        /**
+         * 应退数量
+         */
+        private Integer mustQty;
+    }
+
+    /**
+     * 退货物流单号反查售后单-入参
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ReturnLogisticQuery {
+        /**
+         * 退货物流单号
+         */
+        @NotBlank(message = "退货物流单号不能为空")
+        private String returnLogisticCode;
     }
 
     /**

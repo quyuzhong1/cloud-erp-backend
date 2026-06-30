@@ -1425,6 +1425,18 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     }
 
     @Override
+    public List<SoReturnEntity> listByReturnLogisticCode(String returnLogisticCode) {
+        if (StringUtils.isBlank(returnLogisticCode)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery()
+                .eq(SoReturnEntity::getReturnLogisticCode, returnLogisticCode)
+                .eq(SoReturnEntity::getInvalidStatus, Boolean.FALSE)
+                .orderByDesc(SoReturnEntity::getCreateTime)
+                .list();
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public void addByPlatform(SoReturnEntity soReturn, List<SoReturnDetailEntity> soB2cReturnDetailEntityList) {
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_THDD);

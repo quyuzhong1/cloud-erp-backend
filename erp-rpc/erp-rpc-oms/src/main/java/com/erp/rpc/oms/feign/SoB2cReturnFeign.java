@@ -23,6 +23,14 @@ public interface SoB2cReturnFeign {
     List<SoB2cReturnEntity> listByIds(@RequestBody List<String> ids);
 
     /**
+     * 根据退货物流单号查询B2C销售退货单（可能多条，按创建时间倒序）
+     * @param returnLogisticCode 退货物流单号
+     * @return java.util.List<com.erp.model.oms.entity.SoB2cReturnEntity>
+     **/
+    @PostMapping("feign/soB2cReturn/listByReturnLogisticCode")
+    List<SoB2cReturnEntity> listByReturnLogisticCode(@RequestBody String returnLogisticCode);
+
+    /**
      * 根据详情id查询详情表信息
      * @Author zdy
      * @Date 2023/5/15 18:17
