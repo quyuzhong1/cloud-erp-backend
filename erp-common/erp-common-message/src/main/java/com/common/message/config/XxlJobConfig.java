@@ -57,7 +57,8 @@ public class XxlJobConfig {
             return null;
         }
         log.info(">>>>>>>>>>> xxl-job config init.");
-        log.info(">>>>>>>>>>> xxl-job [adminAddress]={},[appname]={},[accessToken]={}", adminAddresses, appname, accessToken);
+        log.info(">>>>>>>>>>> xxl-job [adminAddress]={},[appname]={},[accessTokenConfigured]={}",
+                adminAddresses, appname, hasText(accessToken));
         XxlJobSpringExecutor xxlJobSpringExecutor = new ReleaseControlledXxlJobSpringExecutor();
         xxlJobSpringExecutor.setAdminAddresses(adminAddresses);
         xxlJobSpringExecutor.setAppname(appname);

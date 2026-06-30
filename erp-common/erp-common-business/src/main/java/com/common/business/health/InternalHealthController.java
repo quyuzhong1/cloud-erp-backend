@@ -31,6 +31,7 @@ public class InternalHealthController extends BaseController {
     private static final String REASON_APPLICATION_NOT_READY = "APPLICATION_NOT_READY";
     private static final String REASON_PRE_STOPPING = "PRE_STOPPING";
     private static final String REASON_PRE_STOP_FORBIDDEN = "PRE_STOP_FORBIDDEN";
+    private static final String REASON_RELEASE_STATE_FORBIDDEN = "RELEASE_STATE_FORBIDDEN";
     private static final String RELEASE_ACTIVE_COLOR = "release.active-color";
     private static final String RELEASE_ACTIVE_VERSION = "release.active-version";
     private static final String RELEASE_COLOR = "release.color";
@@ -72,7 +73,11 @@ public class InternalHealthController extends BaseController {
     }
 
     @GetMapping("/release-state")
-    public ResponseEntity<Map<String, Object>> releaseState() {
+    public ResponseEntity<Map<String, Object>> releaseState(HttpServletRequest request) {
+        if (!isLoopbackRequest(request)) {
+            return response(HttpStatus.FORBIDDEN, STATUS_DOWN, REASON_RELEASE_STATE_FORBIDDEN,
+                    "release-state only accepts loopback requests");
+        }
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("activeColor", environment.getProperty(RELEASE_ACTIVE_COLOR));
         body.put("activeVersion", environment.getProperty(RELEASE_ACTIVE_VERSION));
