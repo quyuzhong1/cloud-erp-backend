@@ -6,9 +6,7 @@ import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.handler.AbstractApproveHandler;
-import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.plm.entity.MoldInfoEntity;
-import com.erp.server.plm.service.BomInfoService;
 import com.erp.server.plm.service.MoldInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -30,7 +28,7 @@ public class MoldInfoApproveHandler extends AbstractApproveHandler {
 
     @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
-        BatchResultDTO resultDTO = moldInfoService.cancelProcess(dto.getId());
+        BatchResultDTO resultDTO = moldInfoService.cancelProcess(dto);
         return resultDTO.getSuccess();
     }
 

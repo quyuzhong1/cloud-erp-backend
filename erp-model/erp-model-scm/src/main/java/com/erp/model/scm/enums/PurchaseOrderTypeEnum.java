@@ -11,6 +11,7 @@ public enum PurchaseOrderTypeEnum {
     ENUM_PURCHASE("CGDD01_SYS", "标准采购订单"),
     ENUM_SUBCONTRACT("CGDD02_SYS", "委外采购订单"),
     ENUM_RETURN("CGDD06-SYS", "补货采购订单"),
+    ENUM_REPAIR("CGDD99_SYS", "返修采购订单"),
             ;
 
     private String code;

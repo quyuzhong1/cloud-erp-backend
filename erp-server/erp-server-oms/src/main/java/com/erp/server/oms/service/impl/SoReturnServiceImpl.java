@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ThirdConstants;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -30,7 +31,7 @@ import com.common.business.constant.RedisCacheConstants;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
-import com.erp.model.bi.entity.BiSettlementExchangeRateEntity;
+import com.erp.model.dmp.entity.BiSettlementExchangeRateEntity;
 import com.erp.model.dmp.entity.BiReturnOrderInfoEntity;
 import com.erp.model.dmp.entity.BiReturnOrderItemEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
@@ -1116,7 +1117,8 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     @Override
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
-    public Boolean cancelProcess(List<String> ids) {
+    public Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto) {
+        List<String> ids = dto.getIds();
         List<SoReturnEntity> entityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
             throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
@@ -1306,9 +1308,18 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     }
 
     @Override
-    public List<SoReturnEntity> listSoReturnByApproveStatus() {
+    public PagingVO<SoReturnDTO.SoReturnListVO> listSoReturnByApproveStatus(PagingDTO<SoReturnDTO.ApproveStatusPagingParam> dto) {
+        SoReturnDTO.ApproveStatusPagingParam params = dto.getParams();
+        if (Objects.nonNull(params) && Objects.nonNull(params.getKeyword()) && params.getKeyword().length() > 50) {
+            params.setKeyword(CharSequenceUtil.sub(params.getKeyword(), 0, 50));
+        }
         String permissionSql = authDataFeign.getWarehousePermissionSql("sr.warehouse_id");
-        return baseMapper.listSoReturnByApproveStatus(ApproveStatusEnum.APPROVE.getStatus(), permissionSql);
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage<SoReturnEntity> pageData = baseMapper.listSoReturnByApproveStatus(query, params, ApproveStatusEnum.APPROVE.getStatus(), permissionSql);
+        List<SoReturnDTO.SoReturnListVO> records = pageData.getRecords().stream()
+                .map(SoReturnConverter.INSTANCE::toListVO)
+                .collect(Collectors.toList());
+        return new PagingVO<>(records, (int) pageData.getTotal(), (int) pageData.getSize(), (int) pageData.getCurrent());
     }
 
     @Override

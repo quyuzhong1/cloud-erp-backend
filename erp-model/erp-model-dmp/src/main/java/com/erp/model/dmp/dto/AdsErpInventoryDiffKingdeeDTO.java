@@ -1,22 +1,18 @@
 package com.erp.model.dmp.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
-
-import java.util.List;
-
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
-import javax.validation.constraints.NotEmpty;
-
-import com.common.business.dto.AdvanceQueryDTO;
-
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -103,6 +99,16 @@ public class AdsErpInventoryDiffKingdeeDTO implements Serializable {
          * 来源平台：gyy，kingdee，mabang
          */
         private String sourceSystem;
+
+        /**
+         * 核对平台
+         */
+        private String checkPlatform;
+
+        /**
+         * 核对平台名称
+         */
+        private String checkPlatformName;
 
         /**
          * 核对周期（YYYY-MM）
@@ -257,6 +263,16 @@ public class AdsErpInventoryDiffKingdeeDTO implements Serializable {
          * 创建人名称
          */
         private String createUserName;
+        
+        /**
+         * 数据生成时间（业务生成时间）
+         */
+        private LocalDateTime finishTime;
+
+        /**
+         * 执行状态
+         */
+        private String execStatusName;
 
     }
 
@@ -270,6 +286,7 @@ public class AdsErpInventoryDiffKingdeeDTO implements Serializable {
         /**
          * 生成月份:格式:202511
          */
+        @NotBlank(message = "核算周期不能为空")
         private String checkMonth;
 
     }

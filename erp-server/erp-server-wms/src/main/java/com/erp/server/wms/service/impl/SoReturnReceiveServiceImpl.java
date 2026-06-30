@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ThirdConstants;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -27,7 +28,6 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.BillTypeEnum;
-import com.erp.model.wms.enums.ReturnTypeEnum;
 import com.erp.model.oms.enums.SoReturnChangeListTypeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.ProductVO;
@@ -41,6 +41,7 @@ import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.QcTypeEnum;
 import com.erp.model.wms.enums.ReturnReasonEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.model.wms.enums.ReturnTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
@@ -138,23 +139,36 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         if (CollectionUtils.isEmpty(pageData.getRecords())) {
             return new PagingVO(new Page());
         }
-        //明细数据
-        List<SoReturnReceiveDTO.PagingView> records = pageData.getRecords();
+        fillList(pageData.getRecords());
+        return new PagingVO(pageData);
+    }
+
+    private void fillList(List<SoReturnReceiveDTO.PagingView> records) {
+        if (CollUtil.isEmpty(records)) {
+            return;
+        }
         //获取sku的id集合
-        List<String> skuIdList = records.stream().map(SoReturnReceiveDTO.PagingView::getSkuId).collect(Collectors.toList());
+        List<String> skuIdList = records.stream().map(SoReturnReceiveDTO.PagingView::getSkuId).distinct().collect(Collectors.toList());
         //根据ids查询sku信息
-        List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
+        List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(skuIdList);
+        Map<String, String> skuMap = CollUtil.isNotEmpty(skuVOS) ? skuVOS.stream().collect(Collectors.toMap(SkuVO::getSkuId, SkuVO::getSkuName)) : Collections.emptyMap();
         //获取退货单id
         List<String> returnMainIds = records.stream().map(SoReturnReceiveDTO.PagingView::getSourceId).distinct().collect(Collectors.toList());
         //退货单详情
         List<SoReturnDetailEntity> returnDetailEntityList = soReturnFeign.listDetailByMainIds(returnMainIds);
+        Map<String, String> sourceDetailMap = CollUtil.isNotEmpty(returnDetailEntityList) ? returnDetailEntityList.stream().collect(Collectors.toMap(SoReturnDetailEntity::getId, SoReturnDetailEntity::getSourceDetailId)) : Collections.emptyMap();
         //销售单详情id集合
         List<String> detailIds = returnDetailEntityList.stream().map(SoReturnDetailEntity::getSourceDetailId).collect(Collectors.toList());
         List<String> returnDetailIds = records.stream().map(SoReturnReceiveDTO.PagingView::getSourceDetailId).collect(Collectors.toList());
-        List<SoB2cReturnDetailEntity> soB2cReturnDetailEntityList = FeignQuery.getByIds(SoB2cReturnDetailEntity.class,returnDetailIds);
+        List<SoB2cReturnDetailEntity> soB2cReturnDetailEntityList = CollUtil.isNotEmpty(returnDetailIds) ? FeignQuery.getByIds(SoB2cReturnDetailEntity.class,returnDetailIds) : Collections.emptyList();
+        Map<String, Integer> saleQtyMap = CollUtil.isNotEmpty(soB2cReturnDetailEntityList) ? soB2cReturnDetailEntityList.stream().collect(Collectors.toMap(SoB2cReturnDetailEntity::getId, SoB2cReturnDetailEntity::getSaleQty)) : Collections.emptyMap();
         //获取销售单详情信息
         List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(detailIds);
-        List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
+        Map<String, Integer> detailQtyMap = CollUtil.isNotEmpty(soDetailEntities) ? soDetailEntities.stream().collect(Collectors.toMap(SoDetailEntity::getId, SoDetailEntity::getQty)) : Collections.emptyMap();
+
+        List<String> customerIds = records.stream().map(SoReturnReceiveDTO.PagingView::getCustomerId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomerByIds(customerIds);
+        Map<String, String> customerMap = CollUtil.isNotEmpty(customerInfoEntities) ? customerInfoEntities.stream().collect(Collectors.toMap(CustomerInfoEntity::getId, CustomerInfoEntity::getName)) : Collections.emptyMap();
 
         //查询审核流程
         List<String> ids = records.stream().map(SoReturnReceiveDTO.PagingView::getId).distinct().collect(Collectors.toList());
@@ -163,38 +177,30 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         if (200 != listApiResult.getCode()) {
             throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(),listApiResult.getMsg()));
         }
-
+        Map<String, String> approveNameMap = listApiResult.getData().stream().collect(Collectors.groupingBy(ProcessManagementDTO.CurApproveInfoDTO::getBusinessId, Collectors.mapping(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName, Collectors.joining(","))));
 
         if (CollectionUtils.isNotEmpty(records)) {
             records.forEach(obj -> {
                 obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
                 obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
-                ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(obj.getSkuId())).findFirst().orElse(new ProductDetailEntity());
-                obj.setProductName(productDetailEntity.getName());
-                CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(obj.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
-                obj.setCustomerName(customerInfoEntity.getName());
+                obj.setReturnTypeDictName(ReturnTypeEnum.getName(obj.getReturnTypeDict()));
+                obj.setProductName(skuMap.get(obj.getSkuId()));
+                obj.setCustomerName(customerMap.get(obj.getCustomerId()));
                 if("B2C".equals(obj.getType())){
-                    obj.setReturnTypeDictName(ReturnTypeEnum.getName(obj.getReturnTypeDict()));
-                    SoB2cReturnDetailEntity soB2cReturnDetailEntity = soB2cReturnDetailEntityList.stream().filter(v->v.getId().equals(obj.getSourceDetailId())).findFirst().orElse(new SoB2cReturnDetailEntity());
-                    obj.setSalesQty(soB2cReturnDetailEntity.getSaleQty());
+                    obj.setSalesQty(saleQtyMap.get(obj.getSourceDetailId()));
                 }else{
-                    SoReturnDetailEntity soReturnDetailEntity = returnDetailEntityList.stream().filter(detail -> detail.getId().equals(obj.getSourceDetailId())).findFirst().orElse(new SoReturnDetailEntity());
-                    SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(soReturnDetailEntity.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
-                    obj.setSalesQty(soDetailEntity.getQty());
-                    obj.setReturnTypeDictName(ReturnTypeEnum.getName(obj.getReturnTypeDict()));
+                    String sourceDetailId = sourceDetailMap.getOrDefault(obj.getSourceDetailId(), CharSequenceUtil.EMPTY);
+                    obj.setSalesQty(detailQtyMap.get(sourceDetailId));
                 }
                 //最新审核人
-                if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
-                    String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(obj.getId()) && CharSequenceUtil.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
-                   obj.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,obj.getApproveUserName()));
-                }
+                obj.setApproveUserName(CharSequenceUtil.blankToDefault(approveNameMap.get(obj.getId()),obj.getApproveUserName()));
             });
         }
-        return new PagingVO(pageData);
     }
+
     private String getPermissionSql(String permissionSql) {
         //构造店铺权限
-        String shopPermissionSql = authDataFeign.getShopPermissionSql("sb.shop_id");
+        String shopPermissionSql = authDataFeign.getShopPermissionSql("srr.shop_id");
         if (CharSequenceUtil.isAllNotBlank(permissionSql,shopPermissionSql)){
             permissionSql = permissionSql + " AND ((srr.type = 'B2C' " + shopPermissionSql + ") OR (srr.type = 'B2B') OR (srr.type = 'AfterSale'))";
         }else if (CharSequenceUtil.isNotBlank(shopPermissionSql)){
@@ -285,6 +291,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
                     entity.setSourceCode(soB2cReturnEntity.getCode());
                     entity.setSoCode(soB2cReturnEntity.getSoCode());
                     entity.setSoId(soB2cReturnEntity.getSoId());
+                    entity.setShopId(soB2cReturnEntity.getShopId());
                 }
             }else{
                 //获取退货单信息
@@ -733,7 +740,8 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
     @Override
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
-    public Boolean cancelProcess(List<String> ids) {
+    public Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto) {
+        List<String> ids = dto.getIds();
         List<SoReturnReceiveEntity> entityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
             throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
@@ -1088,53 +1096,6 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         operateLogService.batchAddModuleOperateLog("反审核了一个销售退货通知单【%s】", ModuleTypeEnum.SO_RETURN_NOTICE.getCode(), pairList, "反审核操作");
 
         return Boolean.TRUE;
-    }
-
-    @Override
-    public PagingVO<SoReturnReceiveDTO.PagingView> exportSoReturnReceive(PagingDTO<SoReturnReceiveDTO.PagingParam> dto) {
-        dto.getParams().setPermissionSql(getPermissionSql(dto.getPermissionSql()));
-        Page<SoReturnReceiveDTO.PagingView> pagingViews = baseMapper.soReturnReceiveExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
-        //获取sku的id集合
-        List<String> skuIdList = pagingViews.getRecords().stream().map(SoReturnReceiveDTO.PagingView::getSkuId).collect(Collectors.toList());
-        //根据ids查询sku信息
-        List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
-        //获取退货单id
-        List<String> returnMainIds = pagingViews.getRecords().stream().map(SoReturnReceiveDTO.PagingView::getSourceId).distinct().collect(Collectors.toList());
-        //退货单详情
-        List<SoReturnDetailEntity> returnDetailEntityList = soReturnFeign.listDetailByMainIds(returnMainIds);
-        //销售单详情id集合
-        List<String> detailIds = returnDetailEntityList.stream().map(SoReturnDetailEntity::getSourceDetailId).collect(Collectors.toList());
-        //获取销售单详情信息
-        List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(detailIds);
-
-        //查询审核流程
-        List<String> ids = pagingViews.getRecords().stream().map(SoReturnReceiveDTO.PagingView::getId).distinct().collect(Collectors.toList());
-        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = ids.stream().map(obj -> new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SO_RETURN_RECEIVE.getCode(), obj)).collect(Collectors.toCollection(ValidList::new));
-        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
-        if (200 != listApiResult.getCode()) {
-            throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(),listApiResult.getMsg()));
-        }
-
-        List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
-        for (SoReturnReceiveDTO.PagingView pagingView : pagingViews.getRecords()) {
-            pagingView.setApproveStatusName(ApproveStatusEnum.getName(pagingView.getApproveStatus()));
-            pagingView.setInvalidStatusName(InvalidStatusEnum.getName(pagingView.getInvalidStatus()));
-            pagingView.setReturnTypeDictName(ReturnTypeEnum.getName(pagingView.getReturnTypeDict()));
-            ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(pagingView.getSkuId())).findFirst().orElse(new ProductDetailEntity());
-            SoReturnDetailEntity soReturnDetailEntity = returnDetailEntityList.stream().filter(detail -> detail.getId().equals(pagingView.getSourceDetailId())).findFirst().orElse(new SoReturnDetailEntity());
-            SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(soReturnDetailEntity.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
-            pagingView.setProductName(productDetailEntity.getName());
-            pagingView.setSalesQty(soDetailEntity.getQty());
-            CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(pagingView.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
-            pagingView.setCustomerName(customerInfoEntity.getName());
-
-            //最新审核人
-            if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
-                String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(pagingView.getId()) && CharSequenceUtil.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
-                pagingView.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,pagingView.getApproveUserName()));
-            }
-        }
-        return new PagingVO<>(pagingViews);
     }
 
     @Override

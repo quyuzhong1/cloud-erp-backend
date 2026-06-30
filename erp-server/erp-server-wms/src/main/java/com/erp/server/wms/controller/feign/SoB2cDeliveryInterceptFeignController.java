@@ -100,6 +100,22 @@ public class SoB2cDeliveryInterceptFeignController extends BaseController {
     }
 
     /**
+     * API拦截成功
+     **/
+    @PostMapping("/apiHandleSuccess")
+    public BatchResultDTO apiHandleSuccess(@RequestParam("id") String id, @RequestParam(value = "remark", required = false) String remark) {
+        return soB2cDeliveryInterceptService.apiHandleSuccess(id, remark);
+    }
+
+    /**
+     * API拦截失败
+     **/
+    @PostMapping("/apiHandleFailure")
+    public BatchResultDTO apiHandleFailure(@RequestParam("id") String id, @RequestParam(value = "remark", required = false) String remark) {
+        return soB2cDeliveryInterceptService.apiHandleFailure(id, remark);
+    }
+
+    /**
      * 发货拦截结果确认
      * @Author Luo_WG
      * @Date 2024/1/16 18:56

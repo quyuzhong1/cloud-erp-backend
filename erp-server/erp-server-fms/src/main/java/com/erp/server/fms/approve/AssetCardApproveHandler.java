@@ -33,7 +33,7 @@ public class AssetCardApproveHandler extends AbstractApproveHandler {
 
     @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
-        BatchResultDTO resultDTO = assetCardService.cancelProcess(dto.getId());
+        BatchResultDTO resultDTO = assetCardService.cancelProcess(dto);
         return resultDTO.getSuccess();
     }
 

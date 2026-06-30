@@ -11,6 +11,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.UserStateConstants;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -630,15 +631,21 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             return;
         }
         addDTO.setDetailList(addDetailDTOs);
-        BaseResultDTO.AddDTO add = qcNoticeService.add(addDTO);
-        String id = add.getId();
-        //提交
-        qcNoticeService.submit(id);
-        ApproveOneDTO approveOneDTO = new ApproveOneDTO();
-        approveOneDTO.setType(ApproveTypeEnum.PASS.getStatus());
-        approveOneDTO.setId(id);
-        //审核
-        qcNoticeService.approve(approveOneDTO);
+
+        try {
+            UserContext.setIsUserSystem(true);
+            BaseResultDTO.AddDTO add = qcNoticeService.add(addDTO);
+            String id = add.getId();
+            //提交
+            qcNoticeService.submit(id);
+            ApproveOneDTO approveOneDTO = new ApproveOneDTO();
+            approveOneDTO.setType(ApproveTypeEnum.PASS.getStatus());
+            approveOneDTO.setId(id);
+            //审核
+            qcNoticeService.approve(approveOneDTO);
+        }finally {
+            UserContext.clearIsUserSystem();
+        }
     }
 
     /**
@@ -713,7 +720,8 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean cancelProcess(List<String> ids) {
+    public Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto) {
+        List<String> ids = dto.getIds();
         List<WarehouseReceiveEntity> warehouseReceiveList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
             throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);

@@ -1,12 +1,13 @@
 package com.erp.server.oms.service;
+
+import com.common.business.dto.ApproveDTO;
+import com.common.business.dto.base.*;
+import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.ExhibitionOrderDTO;
 import com.erp.model.oms.dto.ExhibitionOrderImportExcelDTO;
 import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
-import com.erp.model.oms.entity.ExhibitionOrderDetailEntity;
 import com.erp.model.oms.entity.ExhibitionOrderEntity;
-import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.erp.model.oms.dto.ExhibitionOrderDTO;
-import com.common.business.vo.PagingVO;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -124,10 +125,10 @@ public interface ExhibitionOrderService extends SuperService<ExhibitionOrderEnti
     * 撤销
     * @author jack
     * @date: 2025-08-29
-    * @param id
+    * @param dto
     * @return
     */
-    BatchResultDTO cancelProcess(String id);
+   BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto);
 
     /**
     * 导出Excel

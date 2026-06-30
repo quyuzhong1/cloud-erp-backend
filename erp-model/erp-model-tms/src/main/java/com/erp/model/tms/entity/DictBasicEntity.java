@@ -56,7 +56,7 @@ public class DictBasicEntity extends BaseEntity<DictBasicEntity> {
     /**
      * 排序字段
      */
-    @TableField("index")
+    @TableField("\"index\"")
     private Integer index;
     
     /**

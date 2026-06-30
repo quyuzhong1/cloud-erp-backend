@@ -1,5 +1,6 @@
 package com.common.business.constant;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -22,6 +23,9 @@ public class BusinessCommonConstants {
     
     // 命名空间
     private static String SPRING_NACOS_NAMESPACE;
+    
+    // 是否开启动态数据源
+    private static Boolean DYNAMIC_ENABLED = false;
 
     // 开发环境
     public static final String DEV = "dev";
@@ -37,6 +41,13 @@ public class BusinessCommonConstants {
     @Value("${spring.cloud.nacos.discovery.namespace:dev}")
     private void setSpringNacosNamespace(String springNacosNamespace) {
     	BusinessCommonConstants.SPRING_NACOS_NAMESPACE = springNacosNamespace;
+    }
+    
+    @Value("${spring.datasource.dynamic.enabled:false}")
+    private void setDynamicEnabled(String dynamicEnabled) {
+    	if(StringUtils.isNotBlank(dynamicEnabled)) {
+    		BusinessCommonConstants.DYNAMIC_ENABLED = Boolean.valueOf(dynamicEnabled);
+    	}
     }
 
     /**
@@ -60,5 +71,12 @@ public class BusinessCommonConstants {
      */
     public static boolean isArchive() {
         return SPRING_NACOS_NAMESPACE.toLowerCase().contains(ARCHIVE);
+    }
+    
+    /**
+     * 效验是否开启动态数据源
+     */
+    public static boolean isDynamicEnabled() {
+        return DYNAMIC_ENABLED;
     }
 }

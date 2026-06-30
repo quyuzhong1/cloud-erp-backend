@@ -41,7 +41,6 @@
             ro.so_id as soId,
             ro.status,
             ro.refund_amount as refundAmount,
-            concat(ro.refund_amount , ro.currency) as completeRefundAmount,
             ro.currency,
             ro.reason,
             ro.refund_time as refundTime,

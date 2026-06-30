@@ -1,11 +1,14 @@
 package com.erp.server.wms.service;
+
+import com.common.business.dto.ApproveDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.ClientTypeEnum;
+import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.SampleRecipientDTO;
 import com.erp.model.wms.dto.excel.SampleRecipientExcelDTO;
 import com.erp.model.wms.entity.SampleRecipientEntity;
-import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.erp.model.wms.dto.SampleRecipientDTO;
-import com.common.business.vo.PagingVO;
+
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
@@ -141,12 +144,12 @@ public interface SampleRecipientService extends SuperService<SampleRecipientEnti
      * 撤销
      * @author wuhaotian
      * @date: 2025-08-21
-     * @param id
+     * @param dto
      * @param clientType
      * @return
      */
-    BatchResultDTO cancelProcess(String id, ClientTypeEnum clientType);
-    BatchResultDTO cancelProcess(String id);
+    BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto, ClientTypeEnum clientType);
+   BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto);
 
     /**
     * 导出Excel

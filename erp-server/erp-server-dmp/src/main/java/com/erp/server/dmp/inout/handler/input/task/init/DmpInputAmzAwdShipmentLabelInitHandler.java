@@ -112,12 +112,7 @@ public class DmpInputAmzAwdShipmentLabelInitHandler extends DmpInputAmzCommonIni
                 ShipmentLabels inboundShipmentLabels = api.getInboundShipmentLabels(shipmentId, "PLAIN_PAPER", "PDF");
                 String labelUrl = "";
                 if (CharSequenceUtil.isNotBlank(inboundShipmentLabels.getLabelDownloadURL())){
-                    String pdfUrlToBase64 = PdfUtil.convertPdfUrlToBase64(inboundShipmentLabels.getLabelDownloadURL(), true);
-                    FileDTO.UploadBase64 uploadBase64 = FileDTO.UploadBase64.builder()
-                            .fileName(shipmentId + ".pdf")
-                            .base64(pdfUrlToBase64)
-                            .build();
-                    labelUrl = fileFeign.uploadFileByBase64(uploadBase64);
+                    labelUrl = PdfUtil.convertPdfUrlToErpUrl(inboundShipmentLabels.getLabelDownloadURL(), true);
                 }
                 JSONObject jsonObject = (JSONObject) JSON.toJSON(inboundShipmentLabels);
                 jsonObject.put("shipment_id",shipmentId);

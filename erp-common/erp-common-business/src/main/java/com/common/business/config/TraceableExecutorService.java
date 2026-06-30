@@ -1,16 +1,16 @@
 package com.common.business.config;
-import org.apache.skywalking.apm.toolkit.trace.CallableWrapper;
-import org.apache.skywalking.apm.toolkit.trace.RunnableWrapper;
+
+import org.apache.skywalking.apm.toolkit.trace.Trace;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 /**
- * 可自动传递 SkyWalking Trace 上下文的线程池包装器
- * 将所有任务提交方法（execute, submit, invokeAll, invokeAny）中的 Runnable/Callable 进行包装，
- * 确保子线程能够继承父线程的 TraceId。
+ * 支持 SkyWalking 独立链路追踪的线程池包装器
+ * 每个子线程任务都会生成全新的 TraceId（不继承父线程）
  */
 public class TraceableExecutorService implements ExecutorService {
 
@@ -20,29 +20,57 @@ public class TraceableExecutorService implements ExecutorService {
         this.delegate = delegate;
     }
 
+    // ========== @Trace 方法：为任务创建全新的 Trace 链路 ==========
+
+    /**
+     * 为 Runnable 任务创建全新的 Trace 链路
+     */
+    @Trace(operationName = "async-runnable")
+    private void runWithNewTrace(Runnable task) {
+        task.run();
+    }
+
+    /**
+     * 为 Callable 任务创建全新的 Trace 链路
+     */
+    @Trace(operationName = "async-callable")
+    private <T> T callWithNewTrace(Callable<T> task) throws Exception {
+        return task.call();
+    }
+
+    // ========== 核心任务提交方法（包装为独立链路） ==========
+
     @Override
     public void execute(Runnable command) {
-        delegate.execute(RunnableWrapper.of(command));
+        // 包装：在子线程中通过 @Trace 方法执行
+        delegate.execute(() -> runWithNewTrace(command));
     }
 
     @Override
     public Future<?> submit(Runnable task) {
-        return delegate.submit(RunnableWrapper.of(task));
+        // 将 Runnable 包装为 Callable，内部调用 @Trace 方法
+        return delegate.submit(() -> {
+            runWithNewTrace(task);
+            return null;
+        });
     }
 
     @Override
     public <T> Future<T> submit(Runnable task, T result) {
-        return delegate.submit(RunnableWrapper.of(task), result);
+        return delegate.submit(() -> {
+            runWithNewTrace(task);
+            return result;
+        });
     }
 
     @Override
     public <T> Future<T> submit(Callable<T> task) {
-        return delegate.submit(CallableWrapper.of(task));
+        return delegate.submit(() -> callWithNewTrace(task));
     }
 
     @Override
     public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks) throws InterruptedException {
-        // 包装每个 Callable
+        // 包装每个 Callable，使其在独立 Trace 中执行
         Collection<Callable<T>> wrappedTasks = wrapCallableCollection(tasks);
         return delegate.invokeAll(wrappedTasks);
     }
@@ -66,6 +94,8 @@ public class TraceableExecutorService implements ExecutorService {
         Collection<Callable<T>> wrappedTasks = wrapCallableCollection(tasks);
         return delegate.invokeAny(wrappedTasks, timeout, unit);
     }
+
+    // ========== 委托方法（直接透传） ==========
 
     @Override
     public void shutdown() {
@@ -92,11 +122,15 @@ public class TraceableExecutorService implements ExecutorService {
         return delegate.awaitTermination(timeout, unit);
     }
 
-    // 辅助方法：包装 Callable 集合
+    // ========== 辅助方法 ==========
+
+    /**
+     * 包装 Callable 集合，使每个任务在独立的 Trace 中执行
+     */
     private <T> Collection<Callable<T>> wrapCallableCollection(Collection<? extends Callable<T>> tasks) {
         List<Callable<T>> wrapped = new ArrayList<>(tasks.size());
         for (Callable<T> task : tasks) {
-            wrapped.add(CallableWrapper.of(task));
+            wrapped.add(() -> callWithNewTrace(task));
         }
         return wrapped;
     }

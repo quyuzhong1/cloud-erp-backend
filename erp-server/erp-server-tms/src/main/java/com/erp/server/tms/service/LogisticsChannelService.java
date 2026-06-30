@@ -286,4 +286,23 @@ public interface LogisticsChannelService extends SuperService<LogisticsChannelEn
     List<BaseDropDownDTO.DisabledDTO> listWithAll(String logisticsSupplierId);
 
     List<LogisticsChannelDTO.BaseDTO> listChannelInfoByName(List<String> channelNames);
+
+    /**
+     * 根据物流平台查询物流渠道信息
+     *
+     * @param dto LogisticsSupplierDTO.SelectDTO
+     * @return List<LogisticsSupplierDTO.ListChildTreeDTO>
+     */
+    List<LogisticsSupplierDTO.ListChildTreeDTO> listChannelByPlatform(LogisticsSupplierDTO.SelectDTO dto);
+
+    void checkDeliveryType(String id, String logisticsPlatform);
+
+    /**
+     * 三方仓自动出库：shipping_method + platform_warehouse_code → logistics_sale_channel → logistics_channel。
+     * OMS 写库与 WMS 校验共用此实现。
+     *
+     * @param dto 查询条件；任一关键字段为空时返回 null
+     * @return 匹配到的 ERP 物流渠道；未匹配返回 null
+     */
+    LogisticsChannelEntity resolveThirdWarehouseLogisticsChannel(LogisticsChannelDTO.ThirdWarehouseLogisticsMappingDTO dto);
 }

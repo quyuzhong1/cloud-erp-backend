@@ -3,8 +3,12 @@ package com.erp.server.plm.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.DynamicExcelDTO;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.ExcelImportFsDTO;
-import com.common.business.dto.base.*;
+import com.common.business.dto.base.ApproveOneDTO;
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.erp.model.plm.dto.*;
@@ -240,6 +244,14 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      **/
     void exportProduct(ProductSkuExcelDTO productSkuExcelDTO, HttpServletResponse response);
 
+    /**
+     * 导出excel全部字段的sku数据
+     *
+     * @param productSkuExcelDTO productSkuExcelDTO
+     * @param response           response
+     */
+    void exportProductAll(ProductSkuExcelDTO productSkuExcelDTO, HttpServletResponse response);
+
     PagingVO<ProductDetailExcelExportDTO> exportProductDetail(PagingDTO<ProductSkuExcelDTO>productSkuExcelDTO );
 
     /**
@@ -465,10 +477,10 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * 取消流程
      * @Author Luo_WG
      * @Date 2023/6/14 17:28
-     * @param id
+     * @param dto
      * @return java.lang.Boolean
      **/
-    BatchResultDTO cancelProcess(String id);
+   BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto);
 
     /**
      * 批量删除

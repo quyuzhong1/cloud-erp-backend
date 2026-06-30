@@ -1,26 +1,28 @@
 package com.erp.server.wms.service;
 
 import com.common.business.dto.base.ApproveOneDTO;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.BaseDTO;
 import com.common.business.service.SuperService;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SoB2cReturnDTO;
+import com.erp.model.oms.dto.SoB2cReturnDetailDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
-import com.erp.model.oms.entity.SoB2cReturnDetailEntity;
 import com.erp.model.oms.entity.SoB2cReturnEntity;
 import com.erp.model.wms.dto.SoReturnInstockDTO;
 import com.erp.model.wms.dto.SoReturnReceiveDTO;
 import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
 import com.erp.wms.aliexpress.model.returnorder.AliexpressReturnInstockDTO;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.multipart.MultipartFile;
-
 import javax.servlet.http.HttpServletResponse;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -140,10 +142,10 @@ public interface SoReturnInstockService extends SuperService<SoReturnInstockEnti
      * 取消流程
      * @Author Luo_WG
      * @Date 2023/4/13 18:58
-     * @param ids ids
+     * @param dto ids
      * @return java.lang.Boolean
      **/
-    Boolean cancelProcess(List<String> ids);
+    Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto);
 
     /**
      * 批量作废
@@ -168,11 +170,11 @@ public interface SoReturnInstockService extends SuperService<SoReturnInstockEnti
      * @description: 原子批量删除销售退货入库单
      * @author Will
      * @date: 2023/5/17 15:15
-     * @param ids
+     * @param entity
      * @param returnDetails
      * @return List<BatchResultDTO>
      */
-    List<BatchResultDTO> deleteByIds(List<String> ids, boolean returnDetails);
+    BatchResultDTO deleteByIds(SoReturnInstockEntity entity, List<SoReturnInstockDetailEntity> returnDetails);
 
     /**
      * 删除单个实体
@@ -338,8 +340,6 @@ public interface SoReturnInstockService extends SuperService<SoReturnInstockEnti
      **/
     Boolean pdaUpdateAndSubmit(SoReturnInstockDTO.Update dto);
 
-    PagingVO<SoReturnInstockDTO.PagingView> exportSoReturnInStock(PagingDTO<SoReturnInstockDTO.PagingParam> dto);
-
     PagingVO<SoReturnInstockDTO.SearchDTO> pagingSelect(PagingDTO<SoReturnInstockDTO.SelectDTO> searchDTO);
 
     SoReturnInstockEntity getByThirdCode(String thirdCode);
@@ -349,22 +349,44 @@ public interface SoReturnInstockService extends SuperService<SoReturnInstockEnti
 
     List<SoReturnInstockEntity> queryToSdy(LocalDate toLocalDate, LocalDate toLocalDate1, Integer pageSize, int offset);
     /**
+     * 重算销售退货入库单价格字段，不重新推送金蝶。
+     */
+    void refreshPriceFields(List<String> ids);
+
+    /**
+     * 刷新价格字段后的事务写入入口，由实现类通过自身代理调用。
+     */
+    void persistRefreshedPriceFields(List<SoReturnInstockDetailEntity> detailList);
+
+    /**
+     * 导入批量更新落库，由实现类通过自身代理调用。
+     */
+    void persistAllImportUpdate(List<Pair<SoReturnInstockEntity, SoReturnInstockEntity>> updatePairs,
+                            Map<String, BigDecimal> monthRateCache);
+
+    /**
+     * 导入新增落库，由实现类通过自身代理调用。
+     */
+    void persistAllImportAdd(List<SoReturnInstockDTO.ImportAddBundle> toAddList);
+
+    /**
      * 下载模板
      * @author will
      * @date 2025/4/24 19:48
      * @param response
      * @return void
      */
-    void downloadTemplate(HttpServletResponse response);
+    void downloadTemplate(String importType, HttpServletResponse response);
+
     /**
-     * 导入
-     * @author will
-     * @date 2025/4/24 19:49
-     * @param excelFile
-     * @param response
-     * @return Boolean
+     * 异步导入（importType=add 新增，update 批量更新）
      */
-    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
+    Boolean importFile(BaseDTO.ImportDTO dto);
+
+    /**
+     * 异步导入销售退货入库单
+     */
+    void importSoReturnInstock(BaseDTO.ImportDTO dto);
 
     AliexpressReturnInstockDTO newSyncDataToCaiNiao(SoReturnInstockEntity entity, List<SoReturnInstockDetailEntity> detailEntityList, String syncOperate);
 
@@ -378,7 +400,7 @@ public interface SoReturnInstockService extends SuperService<SoReturnInstockEnti
      * @param b2cDetailEntityList
      * @return
      */
-    BatchResultDTO returnInstockSave(SoB2cReturnEntity soB2cReturnEntity, List<SoB2cReturnDetailEntity> detailEntityList, List<SoB2cReturnDTO.ReturnInstockDTO> returnInstockDTOS, SoB2cEntity soB2cEntity, List<SoB2cDetailEntity> b2cDetailEntityList);
+    BatchResultDTO returnInstockSave(SoB2cReturnEntity soB2cReturnEntity, List<SoB2cReturnDetailDTO.ViewDTO> detailEntityList, List<SoB2cReturnDTO.ReturnInstockDTO> returnInstockDTOS, SoB2cEntity soB2cEntity, List<SoB2cDetailEntity> b2cDetailEntityList);
 
     /**
      * 根据ID列表获取实体Map

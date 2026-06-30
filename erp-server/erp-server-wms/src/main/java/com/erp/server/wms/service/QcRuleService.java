@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -99,10 +100,10 @@ public interface QcRuleService extends SuperService<QcRuleEntity> {
      * 撤销流程
      * @author yl
      * @date 2023-04-13 15:33
-     * @param ids
+     * @param dto
      * @return java.lang.Boolean
      */
-    Boolean cancelProcess(List<String> ids);
+    Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto);
 
     /**
      * 删除质检规则

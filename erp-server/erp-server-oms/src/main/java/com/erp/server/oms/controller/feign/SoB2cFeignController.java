@@ -642,6 +642,11 @@ public class SoB2cFeignController extends BaseController {
          soB2cLogisticsService.updateTrackNoByTransportNo(trackDTOS);
         return Boolean.TRUE;
     }
+
+    @PostMapping("/updateTrackNoByTransportNoWithResult")
+    public List<BatchResultDTO> updateTrackNoByTransportNoWithResult(@RequestBody List<LogisticsBillDTO.TrackDTO> trackDTOS) {
+        return soB2cLogisticsService.updateTrackNoByTransportNoWithResult(trackDTOS);
+    }
     /**
      * 根据销售订单更新跟踪单号
      * @param soId
@@ -1022,5 +1027,17 @@ public class SoB2cFeignController extends BaseController {
     @PostMapping("/updateB2cByPlatformOutbound")
     public void updateB2cByPlatformOutbound(@RequestBody SoB2cDTO.B2cByPlatformOutboundDTO b2cByPlatformOutboundDTO){
         soB2cService.updateB2cByPlatformOutbound(b2cByPlatformOutboundDTO);
+    }
+
+    /**
+     * 轻量查询B2C订单拦截标识（仅返回 id + isIntercept）。
+     * 当前专门服务于 WMS 的 SoOutstockServiceImpl.fillPaging 导出场景，避免导出时拉取完整订单字段。
+     *
+     * @param soIds B2C订单ID集合
+     * @return 仅包含 id 与 isIntercept 的订单数据
+     */
+    @PostMapping("/listIdAndInterceptByIds")
+    public List<SoB2cEntity> listIdAndInterceptByIds(@RequestBody List<String> soIds) {
+        return soB2cService.listIdAndInterceptByIds(soIds);
     }
 }

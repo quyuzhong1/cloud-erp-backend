@@ -8,6 +8,7 @@ package com.erp.server.plm.controller.api;/**
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -171,7 +172,7 @@ public class LogisticsProductController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO cancelResult;
             try {
-                cancelResult = logisticsProductService.cancelProcess(id);
+                cancelResult = logisticsProductService.cancelProcess(new ApproveDTO.CancelProcessDTO(id));
             }catch (Exception e){
                 log.error("物流产品撤回流程失败",e);
                 ProductLogisticsEntity entity = productLogisticsService.getEntityById(id);

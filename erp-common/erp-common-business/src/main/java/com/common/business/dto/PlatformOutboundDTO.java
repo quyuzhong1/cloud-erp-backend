@@ -1,17 +1,18 @@
 package com.common.business.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.WarehousePlatformTypeEnum;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
- *  平台入库单DTO,所有平台订单通用数据，转换为此类后发送mq统一消费处理
- *
+ * 平台入库单DTO,所有平台订单通用数据，转换为此类后发送mq统一消费处理
  **/
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -57,22 +58,63 @@ public class PlatformOutboundDTO extends UniqueDto {
     private String abnormalProblemReason;
 
     /**
-     *平台订单号
+     * 平台订单号
      */
     private String swOrderNumber;
 
     /**
-     *仓库代码
+     * 仓库代码
      */
     private String warehouseCode;
 
     /**
-     *运输方式
+     * 运输方式
      */
     private String shippingMethod;
 
     /**
-     *承运商
+     * 承运商
      */
     private String carrierName;
+
+    /**
+     * 出库明细
+     */
+    private List<Item> items;
+
+    /**
+     * 签收批次
+     */
+    private List<Receiving> receivingDataList;
+
+    @Data
+    @ToString
+    @EqualsAndHashCode
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Item {
+        /**
+         * 平台SKU
+         */
+        private String productSku;
+
+        /**
+         * 实收/出库数量
+         */
+        private Integer actualQty;
+    }
+
+    @Data
+    @ToString
+    @EqualsAndHashCode
+    public static class Receiving {
+
+        //SKU
+        private String productSku;
+
+        //签收数量
+        private Integer actualQty;
+        //批次号
+        private String batchCode;
+    }
 }

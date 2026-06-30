@@ -148,7 +148,7 @@ public class WarehouseEntity extends BaseEntity<WarehouseEntity> {
     /**
      * 排序
      */
-    @TableField("index")
+    @TableField("\"index\"")
     private Integer index;
     
     /**

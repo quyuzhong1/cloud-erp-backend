@@ -311,5 +311,13 @@ public class KolPartnerInfoController extends BaseController {
         return success(kolPartnerInfoService.addressParse(dto));
     }
 
+    /**
+     * 批量地址解析
+     */
+    @PostMapping("/batchAddressParse")
+    public ApiResult<List<AddressParseDTO.BatchParseResultDTO>> batchAddressParse(@RequestBody @Validated List<AddressParseDTO.BatchParseRequestDTO> dtoList) {
+        return success(kolPartnerInfoService.batchAddressParse(dtoList));
+    }
+
 
 }

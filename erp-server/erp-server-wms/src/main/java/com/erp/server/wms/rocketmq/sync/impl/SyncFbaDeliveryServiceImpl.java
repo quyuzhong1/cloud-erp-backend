@@ -3,6 +3,7 @@ package com.erp.server.wms.rocketmq.sync.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.toolkit.StringPool;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.utils.RedisUtil;
@@ -40,7 +41,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -133,7 +137,7 @@ public class SyncFbaDeliveryServiceImpl implements SyncFbaDeliveryService {
                 machineInfoService.disApprove(machineInfoEntity);
             } else if (Objects.equals(approveStatusEnum, ApproveStatusEnum.APPROVE_ING)) {
                 // 撤销
-                machineInfoService.cancelProcess(Collections.singletonList(machineInfoEntity.getId()));
+                machineInfoService.cancelProcess(new ApproveDTO.BatchCancelProcessDTO(Collections.singletonList(machineInfoEntity.getId())));
             }
             if(!Objects.equals(machineInfoEntity.getInvalidStatus(), InvalidStatusEnum.VOIDED.getStatus())) {
                 // 作废

@@ -1,6 +1,18 @@
 package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
+import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.constant.ApproveType;
+import com.common.business.dto.ApproveDTO;
 import cn.hutool.core.collection.CollectionUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
@@ -23,6 +35,7 @@ import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.sys.feign.SysFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.listener.ProductChangeExcelListener;
+import com.erp.server.plm.rocketmq.sync.wangdian.SyncWangDianProductDetailService;
 import com.erp.server.plm.service.*;
 import io.seata.common.util.StringUtils;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -39,6 +52,8 @@ import jnr.ffi.annotations.In;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.plm.dto.ProductChangeDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -82,6 +97,9 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
     private DocNoGenHelper docNoGenHelper;
     @Resource
     private WorkflowFeign workflowFeign;
+
+    @Resource
+    private SyncWangDianProductDetailService syncWangDianProductDetailService;
 
     @Resource
     private ProductChangeDetailService productChangeDetailService;
@@ -590,6 +608,9 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
             case PRODUCT_GRADE:
                 oldValue = productInfoEntity.getGradeId();
                 break;
+            case WARRANTY_PERIOD:
+                oldValue = productInfoEntity.getWarrantyPeriod();
+                break;
             case SALE_CHANNEL:
                 oldValue = productInfoEntity.getSalesChannel();
                 break;
@@ -852,10 +873,12 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
     * 撤销
     */
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public BatchResultDTO cancelProcess(String id) {
-        ProductChangeEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到产品变更信息单数据"));
+    public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto) {
+        String id = dto.getId();
+        ProductChangeEntity entity = this.getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException("未找到产品变更信息单数据");
+        }
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus().getStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
             throw new ServiceException(ApiError.WF_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
@@ -866,6 +889,7 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "产品变更信息单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PRODUCT_CHANGE.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+        revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.PRODUCT_CHANGE.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
@@ -892,9 +916,54 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
             updateSkuChange(entity,detailEntityList,productDetailEntity);
             //推送金蝶
             productDetailService.sendSinglePushTask(productDetailEntity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+
+            syncDataToWangDianAfterCommit(productDetailEntity);
         }
 
         return Boolean.TRUE;
+    }
+
+    private void syncDataToWangDianAfterCommit(ProductDetailEntity productDetailEntity) {
+        // approveEnd 带 @Transactional，无事务上下文说明 AOP 失效，抛异常暴露配置问题而非静默写脏补偿。
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            log.error("产品变更审批缺少事务上下文，旺店通同步异常, productDetailId={}", productDetailEntity.getId());
+            throw new ServiceException("系统配置异常，请联系管理员");
+        }
+        runAfterTransactionCommit(() -> syncWangDianProductDetailWithFallback(productDetailEntity));
+    }
+
+    private void saveWangDianSyncPendingPushMsg(ProductDetailEntity productDetailEntity, String reason) {
+        try {
+            syncWangDianProductDetailService.saveSyncErrorPushMsg(productDetailEntity,
+                    String.format("【%s】产品变更审批后待同步旺店通（%s）", productDetailEntity.getSkuNo(), reason));
+        } catch (Exception ex) {
+            log.error("产品变更审批后同步旺店补偿消息写入失败, productDetailId={}", productDetailEntity.getId(), ex);
+        }
+    }
+
+    private void syncWangDianProductDetailWithFallback(ProductDetailEntity productDetailEntity) {
+        try {
+            syncWangDianProductDetailService.syncDataToWangDian(productDetailEntity);
+        } catch (Exception e) {
+            // 失败写 plm_push_msg 补偿；站内信/企微通知不在本 MR 范围。
+            log.error("产品变更审批后同步旺店失败, productDetailId={}", productDetailEntity.getId(), e);
+            saveWangDianSyncPendingPushMsg(productDetailEntity, "同步失败");
+        }
+    }
+
+    /** 外部同步统一在事务提交后执行；回调异常仅记录日志，避免影响事务框架。 */
+    private void runAfterTransactionCommit(Runnable action) {
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                try {
+                    action.run();
+                } catch (Exception e) {
+                    log.error("事务提交后回调执行失败", e);
+                    // 回调内 syncWangDianProductDetailWithFallback 已有补偿；告警通道不在本 MR 范围。
+                }
+            }
+        });
     }
 
     public void updateSkuChange(ProductChangeEntity entity, List<ProductChangeDetailEntity> detailEntityList,ProductDetailEntity productDetailEntity) {
@@ -1093,6 +1162,11 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
                     ProductBrandEntity productBrandEntity = productBrandEntities.stream().filter(e -> Objects.equals(e.getId(), brandId)).findFirst().orElse(new ProductBrandEntity());
                     productInfoEntity.setBrandId(brandId);
                     productInfoEntity.setBrandName(productBrandEntity.getName());
+                    infoChanged = true;
+                    break;
+                case WARRANTY_PERIOD:
+                    String warrantyPeriod = (String) newValue;
+                    productInfoEntity.setWarrantyPeriod(warrantyPeriod);
                     infoChanged = true;
                     break;
                 case PRODUCT_GRADE:
@@ -1655,6 +1729,12 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
                 convertedNew = basicDictList.stream().filter(e -> Objects.equals(e.getId(), newValue)).findFirst()
                         .map(BasicDictEntity::getName).orElse(newValue);
                 convertedOld = basicDictList.stream().filter(e -> Objects.equals(e.getId(), oldValue)).findFirst()
+                        .map(BasicDictEntity::getName).orElse(oldValue);
+                break;
+            case WARRANTY_PERIOD:
+                convertedNew = basicDictList.stream().filter(e -> Objects.equals(e.getValue(), newValue)).findFirst()
+                        .map(BasicDictEntity::getName).orElse(newValue);
+                convertedOld = basicDictList.stream().filter(e -> Objects.equals(e.getValue(), oldValue)).findFirst()
                         .map(BasicDictEntity::getName).orElse(oldValue);
                 break;
 

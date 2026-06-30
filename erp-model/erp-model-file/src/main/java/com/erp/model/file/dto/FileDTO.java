@@ -23,6 +23,9 @@ public class FileDTO {
     public static class UploadBase64{
         private String base64;
         private String fileName;
+
+        private String url;
+        private String token;
     }
 
     /**

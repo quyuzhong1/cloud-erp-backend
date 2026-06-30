@@ -379,11 +379,7 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 logisticsOperateService.pullOperateLog(logisticsGetLabelVO.getOrderId(),
                         logisticsGetLabelVO.getDeliveryNo(), BusinessTypeEnum.GET_LABEL_LIST.getCode(), LogisticsPlatformEnum.DSF.getCode(),
                         RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), JSONUtil.toJsonStr(responseMsg));
-                FileDTO.UploadBase64 uploadBase64 = FileDTO.UploadBase64.builder()
-                        .base64(PdfUtil.convertPdfUrlToBase64(responseMsg.getData().toString(),true))
-                        .fileName(logisticsGetLabelVO.getDeliveryNo() + ".pdf")
-                        .build();
-                String url = fileFeign.uploadFileByBase64(uploadBase64);
+                String url = PdfUtil.convertPdfUrlToErpUrl(responseMsg.getData().toString(),true);
                 response = LogisticsPrintLabelResponse.builder()
                         .deliveryNoList(logisticsQueryVO.stream().map(LogisticsGetLabelVO::getDeliveryNo).collect(Collectors.toList()))
                         .labelUrl(url).build();

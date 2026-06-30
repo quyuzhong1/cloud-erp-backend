@@ -72,39 +72,57 @@ public class ShopifyOrderExtensionsApiInitHandler extends DmpInputInitHandler {
 
 
         for (Map<String, Object> findMongoDatum : findMongoData) {
-            //特定国家需要查询税号
-
             Object shippingAddressObj = findMongoDatum.get("shippingAddress");
-            if (ObjectUtils.isNotEmpty(shippingAddressObj)) {
-                Map<String, Object> shippingAddressMap = (Map<String, Object>) shippingAddressObj;
-
-                Object country = shippingAddressMap.get("countryCode");
-                log.error("ShopifyOrderTransactionsApiInitHandler国家：" + country + "  是否计算" + countryTaxMap.containsKey(country));
-                if (countryTaxMap.containsKey(country)) {
-                    String taxTitle = countryTaxMap.get(country);
-//                    System.setProperty("socksProxyHost", "127.0.0.1");
-//                    System.setProperty("socksProxyPort", "7890");
-                    ShopifyGraphQLClient shopifyGraphQLClient = shopifyGraphQLClientService.getShopifyGraphQLClient(shopInfoDTO.getShopDomain(), shopInfoDTO.getAccessToken());
-                    ShopifyOrderResponse order = shopifyGraphQLClient.getOrderLocalizationExtensions(findMongoDatum.get("orderId").toString());
-
-                    List<ShopifyOrderResponse.Data.Node.LocalizationExtensions.Nodes> nodes = Optional.of(order)
-                            .map(ShopifyOrderResponse::getData)
-                            .map(ShopifyOrderResponse.Data::getNode)
-                            .map(ShopifyOrderResponse.Data.Node::getLocalizationExtensions)
-                            .map(ShopifyOrderResponse.Data.Node.LocalizationExtensions::getNodes)
-                            .orElse(new ArrayList<>());
-                    String taxNo = nodes.stream().filter(v -> taxTitle.equals(v.getTitle())).map(v -> v.getValue()).findFirst().orElse("");
-                    order.setOrderId(findMongoDatum.get("orderId").toString());
-                    order.setTaxNo(taxNo);
-
-                    log.error("ShopifyOrderTransactionsApiInitHandler返回值：" + order);
-                    DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
-                    dmpInputTaskInitDTO.setMsg(JSONArray.toJSONString(order));
-                    dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);
-                }
-
+            if (ObjectUtils.isEmpty(shippingAddressObj)) {
+                continue;
             }
+            Map<String, Object> shippingAddressMap = (Map<String, Object>) shippingAddressObj;
+            String country = String.valueOf(shippingAddressMap.get("countryCode"));
+            if (!countryTaxMap.containsKey(country)) {
+                continue;
+            }
+            String orderId = resolveShopifyOrderId(findMongoDatum);
+            if (StringUtils.isBlank(orderId)) {
+                log.warn("[Shopify订单拓展信息]跳过缺少orderId/id的订单, parentTaskId={}, mongoKeys={}",
+                        dmpInputTaskEntity.getParentTaskId(), findMongoDatum.keySet());
+                continue;
+            }
+            String taxTitle = countryTaxMap.get(country);
+            ShopifyGraphQLClient shopifyGraphQLClient = shopifyGraphQLClientService.getShopifyGraphQLClient(
+                    shopInfoDTO.getShopDomain(), shopInfoDTO.getAccessToken());
+            ShopifyOrderResponse order = shopifyGraphQLClient.getOrderLocalizationExtensions(orderId);
+            if (order == null) {
+                log.warn("[Shopify订单拓展信息]GraphQL查询失败, orderId={}, shopId={}", orderId, shopInfoDTO.getId());
+                continue;
+            }
+            List<ShopifyOrderResponse.Data.Node.LocalizationExtensions.Nodes> nodes = Optional.of(order)
+                    .map(ShopifyOrderResponse::getData)
+                    .map(ShopifyOrderResponse.Data::getNode)
+                    .map(ShopifyOrderResponse.Data.Node::getLocalizationExtensions)
+                    .map(ShopifyOrderResponse.Data.Node.LocalizationExtensions::getNodes)
+                    .orElse(new ArrayList<>());
+            String taxNo = nodes.stream()
+                    .filter(v -> taxTitle.equals(v.getTitle()))
+                    .map(ShopifyOrderResponse.Data.Node.LocalizationExtensions.Nodes::getValue)
+                    .findFirst()
+                    .orElse("");
+            order.setOrderId(orderId);
+            order.setTaxNo(taxNo);
+
+            DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
+            dmpInputTaskInitDTO.setMsg(JSONArray.toJSONString(order));
+            dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);
         }
         return dmpInputTaskInitDTOList;
+    }
+
+    private static String resolveShopifyOrderId(Map<String, Object> mongoOrder) {
+        for (String key : Arrays.asList("orderId", "id", "order_id")) {
+            Object value = mongoOrder.get(key);
+            if (value != null && StringUtils.isNotBlank(value.toString())) {
+                return value.toString();
+            }
+        }
+        return null;
     }
 }

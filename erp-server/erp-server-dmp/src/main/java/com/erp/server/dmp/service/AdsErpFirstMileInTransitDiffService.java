@@ -1,14 +1,14 @@
 package com.erp.server.dmp.service;
-import com.erp.model.dmp.entity.doris.AdsErpFirstMileInTransitDiffEntity;
+
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.erp.model.dmp.dto.AdsErpFirstMileInTransitDiffDTO;
 import com.common.business.vo.PagingVO;
+import com.erp.model.dmp.dto.AdsErpFirstMileInTransitDiffDTO;
+import com.erp.model.dmp.entity.doris.AdsErpFirstMileInTransitDiffEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
 
 /**
  * <p>
@@ -68,4 +68,5 @@ public interface AdsErpFirstMileInTransitDiffService extends SuperService<AdsErp
      * 更新备注
      */
     BatchResultDTO updateRemark(String id,  String remark);
+
 }

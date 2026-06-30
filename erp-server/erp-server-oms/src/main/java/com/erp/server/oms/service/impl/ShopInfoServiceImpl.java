@@ -1093,11 +1093,11 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 
     @Override
     public List<ShopDTO.ListTreeDTO> listTree(Boolean showByAuth) {
-        List<DictBasicDTO.ViewDTO> list = dictBasicService.getByKey(DictBasicTypeEnum.SALES_PLATFORM.getType());
+        List<DictBasicEntity> list = dictBasicService.getByKey(DictBasicTypeEnum.SALES_PLATFORM.getType());
         if (CollectionUtils.isEmpty(list)) {
             return Collections.emptyList();
         }
-        List<String> platformList = list.stream().map(DictBasicDTO.ViewDTO::getValue).collect(Collectors.toList());
+        List<String> platformList = list.stream().map(DictBasicEntity::getValue).collect(Collectors.toList());
         String permissionSql = null;
         if (Objects.nonNull(showByAuth) && showByAuth){
             permissionSql = authDataFeign.getShopPermissionSql("si.id");
@@ -1105,7 +1105,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         List<ShopInfoEntity> shopInfoList = this.listByPlatformList(platformList,permissionSql);
 
         List<ShopDTO.ListTreeDTO> resultList = new ArrayList<>();
-        for (DictBasicDTO.ViewDTO viewDTO : list) {
+        for (DictBasicEntity viewDTO : list) {
             //平台信息
             ShopDTO.ListTreeDTO listTreeDTO = new ShopDTO.ListTreeDTO();
             listTreeDTO.setId(viewDTO.getId());

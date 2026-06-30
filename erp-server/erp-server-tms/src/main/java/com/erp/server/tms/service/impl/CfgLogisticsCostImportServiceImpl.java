@@ -13,6 +13,7 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.FileTaskStatusEnum;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.UnitEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.ApplicationContextUtils;
@@ -35,8 +36,10 @@ import com.erp.model.tms.dto.excel.CfgLogisticsCostExcelDTO;
 import com.erp.model.tms.entity.CfgLogisticsCostImportDetailEntity;
 import com.erp.model.tms.entity.CfgLogisticsCostImportEntity;
 import com.erp.model.tms.entity.CfgLogisticsCostImportFieldEntity;
+import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.tms.entity.TmsCfgCostEntity;
 import com.erp.model.tms.enums.*;
+import com.erp.server.tms.util.CfgLogisticsCostImportEtlRuleHelper;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -96,15 +99,24 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
     private TmsCfgCostService tmsCfgCostService;
 
     private final static String costItem = "费用项明细";
+    private final static String PAY_TYPE_FIELD = "payType";
+    private final static String CURRENCY_FIELD = "currency";
+    private final static String LOGISTICS_WEIGHT_UNIT_FIELD = "logisticsWeightUnit";
+    @Override
+    public BaseResultDTO.AddDTO add(CfgLogisticsCostImportDTO.AddDTO dto) {
+        Set<String> validCurrencyKeys = loadValidCurrencyKeySet();
+        return ApplicationContextUtils.getBean(CfgLogisticsCostImportServiceImpl.class).addInTransaction(dto, validCurrencyKeys);
+    }
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
-    @Override
-    public BaseResultDTO.AddDTO add(CfgLogisticsCostImportDTO.AddDTO dto) {
-        //校验是否已存在（配置生成单据+平台+识别名称+费用来源+sheet 为唯一）
-        isExist(dto.getBusinessType(), dto.getDictPlatform(), dto.getName(), dto.getSheetName(),dto.getCostType(),"");
+    public BaseResultDTO.AddDTO addInTransaction(CfgLogisticsCostImportDTO.AddDTO dto, Set<String> validCurrencyKeys) {
+        dto.setBusinessType(DictCostAttributionEnum.LAST_MILE_DELIVERY.getCode());
+        //校验是否已存在（配置生成单据+平台+识别名称+费用来源+sheet+识别维度 为唯一）
+        validateIdentifyType(dto.getIdentifyType());
+        isExist(dto.getBusinessType(), dto.getDictPlatform(), dto.getName(), dto.getSheetName(), dto.getCostType(), dto.getIdentifyType(), "");
         // 验证明细列表
-        validateDetailList(dto.getDetailList());
+        validateDetailList(dto.getBusinessType(), dto.getDetailList(), validCurrencyKeys);
 
 
         dto.setImportType(String.join(",", dto.getImportTypeList()));
@@ -114,6 +126,8 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
         // 生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_FYPZ);
         cfgLogisticsCostImportEntity.setCode(code);
+
+
         boolean save = super.save(cfgLogisticsCostImportEntity);
         if(!save) {
             throw new ServiceException("费用项配置保存失败");
@@ -171,18 +185,25 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
         return new BaseResultDTO.AddDTO(cfgLogisticsCostImportEntity.getId(), code);
     }
 
+    @Override
+    public Boolean update(CfgLogisticsCostImportDTO.UpdateDTO dto) {
+        Set<String> validCurrencyKeys = loadValidCurrencyKeySet();
+        return ApplicationContextUtils.getBean(CfgLogisticsCostImportServiceImpl.class).updateInTransaction(dto, validCurrencyKeys);
+    }
+
     /**
     * 修改
     */
     @DistributeLocker(keyName = "dto.getId()")
     @Transactional(rollbackFor = Exception.class)
-    @Override
-    public Boolean update(CfgLogisticsCostImportDTO.UpdateDTO dto) {
-        //校验是否已存在（配置生成单据+平台+识别名称+费用来源+sheet 为唯一）
-        isExist(dto.getBusinessType(), dto.getDictPlatform(), dto.getName(), dto.getSheetName(),dto.getCostType(),dto.getId());
+    public Boolean updateInTransaction(CfgLogisticsCostImportDTO.UpdateDTO dto, Set<String> validCurrencyKeys) {
+        dto.setBusinessType(DictCostAttributionEnum.LAST_MILE_DELIVERY.getCode());
+        //校验是否已存在（配置生成单据+平台+识别名称+费用来源+sheet+识别维度 为唯一）
+        validateIdentifyType(dto.getIdentifyType());
+        isExist(dto.getBusinessType(), dto.getDictPlatform(), dto.getName(), dto.getSheetName(), dto.getCostType(), dto.getIdentifyType(), dto.getId());
 
         // 验证明细列表
-        validateDetailList(dto.getDetailList());
+        validateDetailList(dto.getBusinessType(), dto.getDetailList(), validCurrencyKeys);
 
         CfgLogisticsCostImportEntity old = super.getById(dto.getId());
         old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "费用项配置"));
@@ -277,18 +298,19 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
         }
         List<CfgLogisticsCostImportDetailEntity> newDetailList = BeanMapper.copyList(detailList, CfgLogisticsCostImportDetailEntity.class);
         List<CfgLogisticsCostImportDetailEntity> oldDetailList = cfgLogisticsCostImportDetailService.lambdaQuery().eq(CfgLogisticsCostImportDetailEntity::getMainId, id).list();
-        commonService.updateDetail(id,ModuleTypeEnum.CFG_LOGISTICS_COST_IMPORT.getCode(),cfgLogisticsCostImportDetailService, newDetailList, oldDetailList,Arrays.asList("sourceField","sourceDetailField"));
+        commonService.updateDetail(id,ModuleTypeEnum.CFG_LOGISTICS_COST_IMPORT.getCode(),cfgLogisticsCostImportDetailService, newDetailList, oldDetailList,Arrays.asList("targetFieldName","sourceField","sourceDetailField","defaultValue","etlRuleListStorage"));
         return Boolean.TRUE;
     }
 
-    //校验是否已存在（配置生成单据+平台+识别名称+费用来源+sheet 为唯一）
-    private void isExist(String businessType,String dictPlatform,String name,String sheetName,String costType,String id) {
+    //校验是否已存在（配置生成单据+平台+识别名称+费用来源+sheet+识别维度 为唯一）
+    private void isExist(String businessType, String dictPlatform, String name, String sheetName, String costType, String identifyType, String id) {
         Integer count = lambdaQuery()
                 .eq(CfgLogisticsCostImportEntity::getBusinessType, businessType)
                 .eq(CfgLogisticsCostImportEntity::getDictPlatform, dictPlatform)
                 .eq(CfgLogisticsCostImportEntity::getName, name)
                 .eq(CfgLogisticsCostImportEntity::getSheetName, sheetName)
                 .eq(CfgLogisticsCostImportEntity::getCostType, costType)
+                .eq(CfgLogisticsCostImportEntity::getIdentifyType, identifyType)
                 //若id不为空则作为参数
                 .ne(StringUtils.isNotBlank(id), CfgLogisticsCostImportEntity::getId, id)
                 .count();
@@ -297,30 +319,184 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
         }
     }
 
+    private void validateIdentifyType(String identifyType) {
+        if (!CfgLogisticsCostImportIdentifyTypeEnum.isValidCode(identifyType)) {
+            throw new ServiceException("识别维度不合法");
+        }
+    }
+
+    @Override
+    public Set<String> loadValidCurrencyKeySet() {
+        return buildValidCurrencyKeySet(sysUserFeign.currencyList());
+    }
+
     /**
      * 验证明细列表数据的有效性
      */
-    private void validateDetailList(List<CfgLogisticsCostImportDetailDTO.UpdateDTO> detailList) {
+    @Override
+    public void validateDetailList(String businessType, List<CfgLogisticsCostImportDetailDTO.UpdateDTO> detailList, Set<String> validCurrencyKeys) {
         validateAtLeastOneUniqueKey(detailList);
         validateMainItemDuplicates(detailList);
         validateCostItemFields(detailList);
-        validateLogisticsCostImportUniqueFields(detailList);
+        normalizeEtlRuleList(detailList);
+        validateLogisticsCostImportUniqueFields(businessType, detailList, validCurrencyKeys);
+    }
+
+    /**
+     * 规范字段清洗规则。
+     *
+     * @param detailList 明细列表
+     * @return 无
+     * @throws ServiceException 字段清洗规则不合法时抛出
+     * @author jack
+     * @date 2026/05/22
+     */
+    private void normalizeEtlRuleList(List<CfgLogisticsCostImportDetailDTO.UpdateDTO> detailList) {
+        if (CollUtil.isEmpty(detailList)) {
+            return;
+        }
+        int rowIndex = 1;
+        for (CfgLogisticsCostImportDetailDTO.UpdateDTO updateDTO : detailList) {
+            List<CfgLogisticsCostImportDetailDTO.EtlRuleDTO> ruleList = updateDTO.getEtlRuleList();
+            updateDTO.setIsAbsoluteValue(false);
+            if (CollUtil.isEmpty(ruleList)) {
+                updateDTO.setEtlRuleList(Collections.emptyList());
+                updateDTO.setEtlRuleListStorage(CfgLogisticsCostImportEtlRuleHelper.EMPTY_ETL_RULE_LIST);
+                rowIndex++;
+                continue;
+            }
+            int ruleIndex = 1;
+            for (CfgLogisticsCostImportDetailDTO.EtlRuleDTO ruleDTO : ruleList) {
+                CfgLogisticsCostImportEtlRuleHelper.validateEtlRule(ruleDTO, rowIndex, ruleIndex++);
+            }
+            CfgLogisticsCostImportEtlRuleHelper.normalizeIndexes(ruleList);
+            updateDTO.setEtlRuleListStorage(CfgLogisticsCostImportEtlRuleHelper.buildStorage(ruleList));
+            rowIndex++;
+        }
     }
 
     /**
      * 验证字段是否允许作为识别单号
      */
-    private void validateLogisticsCostImportUniqueFields(List<CfgLogisticsCostImportDetailDTO.UpdateDTO> detailList) {
+    private void validateLogisticsCostImportUniqueFields(String businessType, List<CfgLogisticsCostImportDetailDTO.UpdateDTO> detailList, Set<String> validCurrencyKeys) {
+        //费用项
+        List<CfgLogisticsCostImportFieldEntity> list = cfgLogisticsCostImportFieldService.lambdaQuery().eq(CfgLogisticsCostImportFieldEntity::getBusinessType,businessType).list();
+        if(CollUtil.isEmpty(list)){
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC,"配置单据类型下费用项");
+        }else{
+            Map<String, CfgLogisticsCostImportFieldEntity> map = list.stream().collect(Collectors.toMap(CfgLogisticsCostImportFieldEntity::getId, Function.identity(), (o1, o2) -> o1));
+            if (CollUtil.isEmpty(validCurrencyKeys)) {
+                throw new ServiceException("货币字典加载失败，请稍后重试");
+            }
+            int i = 1;
+            for (CfgLogisticsCostImportDetailDTO.UpdateDTO updateDTO : detailList) {
+                String targetFieldId = updateDTO.getTargetFieldId();
+                CfgLogisticsCostImportFieldEntity entity = map.get(targetFieldId);
+//                if(Objects.isNull(entity)) throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, CfgLogisticsCostImportBusinessTypeEnum.getName(businessType)+"类型第"+i+"行数大臣单据字段");
+                if(Objects.isNull(entity)) throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, updateDTO.getTargetFieldName()+"单据字段");
+                validateDefaultValue(updateDTO, entity, i, validCurrencyKeys);
+                i++;
+            }
+        }
+
         //校验字段是否可以唯一
         List<String> uniqueKeyTargetFieldIds = detailList.stream().filter(e -> e.getIsUniqueKey()).map(CfgLogisticsCostImportDetailDTO.UpdateDTO::getTargetFieldId).collect(Collectors.toList());
         if(CollUtil.isNotEmpty(uniqueKeyTargetFieldIds)){
-            List<CfgLogisticsCostImportFieldEntity> uniqueKeyTargetField = cfgLogisticsCostImportFieldService.listByIds(uniqueKeyTargetFieldIds).stream().filter(e -> !e.getIsUniqueField()).collect(Collectors.toList());;
+            List<CfgLogisticsCostImportFieldEntity> uniqueKeyTargetField = list.stream().filter(e -> uniqueKeyTargetFieldIds.contains(e.getId())).filter(e -> !e.getIsUniqueField()).collect(Collectors.toList());;
             if(CollUtil.isNotEmpty(uniqueKeyTargetField)){
                 //uniqueKeyTargetField中的fieldName字段，使用英文逗号拼接成一个字符串
                 String uniqueKeyTargetFieldName = uniqueKeyTargetField.stream().map(CfgLogisticsCostImportFieldEntity::getFieldName).collect(Collectors.joining(","));
                 throw new ServiceException(ApiError.LOGISTICS_BILL_UNIQUE_FIELD_NOT_ALLOWED,uniqueKeyTargetFieldName);
             }
         }
+    }
+
+    /**
+     * 校验默认值配置
+     */
+    private void validateDefaultValue(CfgLogisticsCostImportDetailDTO.UpdateDTO updateDTO, CfgLogisticsCostImportFieldEntity fieldEntity, int index, Set<String> validCurrencyKeys) {
+        String field = fieldEntity.getField();
+        String fieldName = fieldEntity.getFieldName();
+        String sourceField = updateDTO.getSourceField();
+        String defaultValue = updateDTO.getDefaultValue();
+        boolean defaultValueField = isDefaultValueField(field);
+
+        if (Boolean.TRUE.equals(updateDTO.getIsUniqueKey())) {
+            // 唯一识别字段必须来自 Excel 实际抬头，避免默认值造成多行误匹配。
+            if (StringUtils.isBlank(sourceField)) {
+                throw new ServiceException("第" + index + "行唯一识别字段的物流商抬头字段不能为空");
+            }
+            if (StringUtils.isNotBlank(defaultValue)) {
+                throw new ServiceException("第" + index + "行唯一识别字段不允许配置默认值");
+            }
+        }
+
+        if (StringUtils.isBlank(sourceField)) {
+            if (!defaultValueField) {
+                throw new ServiceException("第" + index + "行【" + fieldName + "】物流商抬头字段不能为空");
+            }
+            if (StringUtils.isBlank(defaultValue)) {
+                throw new ServiceException("第" + index + "行【" + fieldName + "】默认值不能为空");
+            }
+            validateDefaultValueCode(field, fieldName, defaultValue, index, validCurrencyKeys);
+            return;
+        }
+
+        if (StringUtils.isNotBlank(defaultValue)) {
+            throw new ServiceException("第" + index + "行【" + fieldName + "】已配置物流商抬头字段，不允许填写默认值");
+        }
+    }
+
+    /**
+     * 判断字段是否允许配置默认值
+     */
+    private boolean isDefaultValueField(String field) {
+        return Objects.equals(PAY_TYPE_FIELD, field)
+                || Objects.equals(CURRENCY_FIELD, field)
+                || Objects.equals(LOGISTICS_WEIGHT_UNIT_FIELD, field);
+    }
+
+    /**
+     * 校验默认值编码
+     */
+    private void validateDefaultValueCode(String field, String fieldName, String defaultValue, int index, Set<String> validCurrencyKeys) {
+        if (Objects.equals(PAY_TYPE_FIELD, field) && StringUtils.isBlank(logisticsPayTypeEnum.getByName(defaultValue))) {
+            throw new ServiceException("第" + index + "行【" + fieldName + "】默认值不合法");
+        }
+        if (Objects.equals(CURRENCY_FIELD, field) && !validCurrencyKeys.contains(normalizeCurrencyKey(defaultValue))) {
+            throw new ServiceException("第" + index + "行【" + fieldName + "】默认值不合法");
+        }
+        if (Objects.equals(LOGISTICS_WEIGHT_UNIT_FIELD, field) && !isValidWeightUnit(defaultValue)) {
+            throw new ServiceException("第" + index + "行【" + fieldName + "】默认值不合法");
+        }
+    }
+
+    private boolean isValidWeightUnit(String defaultValue) {
+        return Arrays.stream(UnitEnum.WeightUnitEnum.values())
+                .anyMatch(weightUnit -> Objects.equals(weightUnit.getCode(), defaultValue));
+    }
+
+    private Set<String> buildValidCurrencyKeySet(List<DictCurrencyEntity> dictCurrencyList) {
+        if (CollUtil.isEmpty(dictCurrencyList)) {
+            return Collections.emptySet();
+        }
+        Set<String> validKeys = new HashSet<>();
+        for (DictCurrencyEntity entity : dictCurrencyList) {
+            if (Objects.isNull(entity) || Boolean.TRUE.equals(entity.getDisabled())) {
+                continue;
+            }
+            if (StringUtils.isNotBlank(entity.getId())) {
+                validKeys.add(normalizeCurrencyKey(entity.getId()));
+            }
+            if (StringUtils.isNotBlank(entity.getName())) {
+                validKeys.add(normalizeCurrencyKey(entity.getName()));
+            }
+        }
+        return validKeys;
+    }
+
+    private String normalizeCurrencyKey(String value) {
+        return value == null ? "" : value.trim().toUpperCase(Locale.ROOT);
     }
 
     /**
@@ -417,6 +593,7 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
         List<CfgLogisticsCostImportDetailEntity> detailList = cfgLogisticsCostImportDetailService.lambdaQuery().eq(CfgLogisticsCostImportDetailEntity::getMainId, id).list();
         detailList.forEach(e -> {
             e.setTargetFieldTypeName(CfgLogisticsCostImportFieldFieldTypeEnum.getName(e.getTargetFieldType()));
+            e.setEtlRuleList(CfgLogisticsCostImportEtlRuleHelper.parseStorage(e.getEtlRuleListStorage()));
         });
         //detailList根据Integer index字段排序
         detailList.sort(Comparator.comparingInt(CfgLogisticsCostImportDetailEntity::getIndex));
@@ -427,14 +604,16 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
     private void fillOne(CfgLogisticsCostImportDTO.ViewDTO data) {
         if (Objects.nonNull(data)) {
             //费用配置-配置单据
-            List<DictBasicDTO.ViewDTO> dictBasicEntities = dictBasicService.getByKey(DictBasicEnum.CFG_COST_BUSINESSKEY.getType());
-            DictBasicDTO.ViewDTO viewDTO = dictBasicEntities.stream().filter(e -> e.getCode().equals(data.getBusinessType())).findFirst().orElse(new DictBasicDTO.ViewDTO());
+            List<com.erp.model.tms.entity.DictBasicEntity> dictBasicEntities = dictBasicService.getByKey(DictBasicEnum.CFG_COST_BUSINESSKEY.getType());
+            com.erp.model.tms.entity.DictBasicEntity viewDTO = dictBasicEntities.stream().filter(e -> e.getCode().equals(data.getBusinessType())).findFirst().orElse(new com.erp.model.tms.entity.DictBasicEntity());
             // 属性赋值
             data.setBusinessTypeName(viewDTO.getName());
 
             data.setCfgTypeName(CfgLogisticsCostImportCfgTypeEnum.getName(data.getCfgType()));
 
             data.setCostTypeName(CfgLogisticsCostImportCostTypeEnum.getName(data.getCostType()));
+
+            data.setIdentifyTypeName(CfgLogisticsCostImportIdentifyTypeEnum.getName(data.getIdentifyType()));
 
             String importType = data.getImportType();
             if(StringUtils.isNotBlank(importType)){
@@ -477,8 +656,8 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
         }
 
        //费用配置-配置单据
-       List<DictBasicDTO.ViewDTO> dictBasicEntities = dictBasicService.getByKey(DictBasicEnum.CFG_COST_BUSINESSKEY.getType());
-       Map<String, String> map = dictBasicEntities.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getCode, DictBasicDTO.ViewDTO::getName, (o1, o2) -> o1));
+       List<com.erp.model.tms.entity.DictBasicEntity> dictBasicEntities = dictBasicService.getByKey(DictBasicEnum.CFG_COST_BUSINESSKEY.getType());
+       Map<String, String> map = dictBasicEntities.stream().collect(Collectors.toMap(com.erp.model.tms.entity.DictBasicEntity::getCode, com.erp.model.tms.entity.DictBasicEntity::getName, (o1, o2) -> o1));
        //物流商
        List<BaseDropDownDTO.DisabledDTO> logisticsSupplierList = logisticsSupplierService.listAllShort(false);
        Map<String, String> logisticsSupplierMap = logisticsSupplierList.stream().collect(Collectors.toMap(BaseDropDownDTO.DisabledDTO::getCode, BaseDropDownDTO.DisabledDTO::getValue, (o1, o2) -> o1));
@@ -496,6 +675,8 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
 
             data.setCostTypeName(CfgLogisticsCostImportCostTypeEnum.getName(data.getCostType()));
 
+            data.setIdentifyTypeName(CfgLogisticsCostImportIdentifyTypeEnum.getName(data.getIdentifyType()));
+
             String importType = data.getImportType();
             if(StringUtils.isNotBlank(importType)){
                 data.setImportTypeName(Arrays.stream(importType.split(","))
@@ -512,6 +693,7 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
             data.setDictPlatformName(dictPlatformName);
 
             data.setDisabledName(data.getDisabled() ? "停用" : "启用");
+            data.setEtlRuleList(CfgLogisticsCostImportEtlRuleHelper.parseStorage(data.getEtlRuleListStorage()));
         }
    }
 
@@ -553,9 +735,6 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void importCfgLogisticsCost(BaseDTO.ImportDTO dto) {
-        //费用配置-配置单据
-        List<DictBasicDTO.ViewDTO> dictBasicEntities = dictBasicService.getByKey(DictBasicEnum.CFG_COST_BUSINESSKEY.getType());
-        Map<String, String> dictBasicMap = dictBasicEntities.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getName, DictBasicDTO.ViewDTO::getCode, (o1, o2) -> o1));
         //物流商
         List<BaseDropDownDTO.DisabledDTO> logisticsSupplierList = logisticsSupplierService.listAllShort(false);
         Map<String, String> logisticsSupplierMap = logisticsSupplierList.stream().collect(Collectors.toMap(BaseDropDownDTO.DisabledDTO::getValue, BaseDropDownDTO.DisabledDTO::getCode, (o1, o2) -> o1));
@@ -563,11 +742,14 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
         List<DictBasicEntity> salesPlatformList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType()).list();
         Map<String, String> salesPlatformMap = salesPlatformList.stream().collect(Collectors.toMap(DictBasicEntity::getName, DictBasicEntity::getValue, (o1, o2) -> o1));
         //目标字段
-        List<CfgLogisticsCostImportFieldEntity> list = cfgLogisticsCostImportFieldService.list();
-        Map<String, List<CfgLogisticsCostImportFieldEntity>> fieldMap = list.stream().collect(Collectors.groupingBy(CfgLogisticsCostImportFieldEntity::getBusinessType));
+        List<CfgLogisticsCostImportFieldEntity> fieldEntities = cfgLogisticsCostImportFieldService.lambdaQuery()
+                .eq(CfgLogisticsCostImportFieldEntity::getBusinessType,DictCostAttributionEnum.LAST_MILE_DELIVERY.getCode())
+                .eq(CfgLogisticsCostImportFieldEntity::getIsDeleted,false)
+                .list();
         //费用项
+        // 费用配置导入时，尾程自发货/三方发货费用项统一从“尾程发货”归属预加载。
         Map<String, List<TmsCfgCostEntity>> tmsCfgCostGroup = tmsCfgCostService.lambdaQuery()
-                .in(TmsCfgCostEntity::getDictCostAttribution,Arrays.asList(DictCostAttributionEnum.SELF_DELIVER.getCode(),DictCostAttributionEnum.LAST_MILE.getCode())).list()
+                .eq(TmsCfgCostEntity::getDictCostAttribution, DictCostAttributionEnum.LAST_MILE_DELIVERY.getCode()).list()
                 .stream().collect(Collectors.groupingBy(TmsCfgCostEntity::getDictCostAttribution));
 
         //用户
@@ -584,7 +766,7 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
             UserContext.setLoginUser(user);
         }
         CfgLogisticsCostExcelListener excelListenerUtil = new CfgLogisticsCostExcelListener(dto.getTaskId(),dto.getImportType(),dto.getImportCount(),
-                dictBasicMap,logisticsSupplierMap, salesPlatformMap , fieldMap, tmsCfgCostGroup,userList);
+                logisticsSupplierMap, salesPlatformMap , fieldEntities, tmsCfgCostGroup,userList);
         try {
             byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
             EasyExcel.read(new ByteArrayInputStream(bytes), CfgLogisticsCostExcelDTO.class, excelListenerUtil).sheet(0).doRead();

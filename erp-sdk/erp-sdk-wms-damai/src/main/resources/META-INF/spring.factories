@@ -1,4 +1,3 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-   com.sdk.wms.damai.service.DaMaiService,\
-   com.sdk.wms.damai.utils.DaMaiUtils
+   com.sdk.wms.damai.service.DaMaiService
 

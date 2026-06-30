@@ -60,5 +60,9 @@ public class SysMenuDTO  implements Serializable {
 
     private List<SysMenuDTO> childrenList;
 
+    /**
+     * 是否在归档系统可见
+     */
+    private Boolean isArchiveDisplay;
 
 }

@@ -1,6 +1,6 @@
 package com.erp.server.wms.service;
 
-import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -10,8 +10,6 @@ import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.wms.dto.PoInstockDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.entity.*;
-import io.seata.spring.annotation.GlobalTransactional;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -150,13 +148,13 @@ public interface PoInstockService extends SuperService<PoInstockEntity> {
     BatchResultDTO disApprove(PoInstockEntity entity, List<PoReturnEntity> returnEntityList, List<SubcontractIssueEntity> issueEntityList);
 
     /**
-     * @param ids
+     * @param dto
      * @return Boolean
      * @description: 取消流程
      * @author Will
      * @date: 2023/4/12 11:59
      */
-    Boolean cancelProcess(List<String> ids);
+    Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto);
 
     /**
      * @param dto

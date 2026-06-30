@@ -1,5 +1,6 @@
 package com.erp.server.oms.rocketmq.consumer;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.message.constant.RocketMqNewConsumerGroup;
@@ -10,6 +11,8 @@ import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.dto.ThirdWarehouseCreateOutboundPushDTO;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.SoB2cErrorService;
 import com.erp.server.oms.service.impl.SoB2cServiceImpl;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +38,9 @@ public class NewPlatformThirdWarehouseDeliveryService extends AbstractNewPlatfor
     private SoB2cServiceImpl soB2cService;
     @Resource
     private SoB2cErrorService soB2cErrorService;
+    @Resource
+    private OperateLogService operateLogService;
+
     @Override
     public String getBizName() {
         return "创建三方仓出库单";
@@ -52,6 +58,7 @@ public class NewPlatformThirdWarehouseDeliveryService extends AbstractNewPlatfor
             soB2cService.thirdWarehouseCreateOutStock(body.getEntity(), body.getWarehouseId(), body.getWarehouseManageType(), body.getLogisticsEntity(), body.getOverseasProviderWarehouse(), body.getDetailList(), body.getNewChannelId());
         } catch (Exception e) {
             log.error("B2C订单【{}】下出库单异常>>>{}", body.getEntity().getCode(), e.getMessage());
+            addSubmitDeliveryFailLog(body, e);
             SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
             addError.setType(SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode());
             addError.setParamJson("");
@@ -61,6 +68,14 @@ public class NewPlatformThirdWarehouseDeliveryService extends AbstractNewPlatfor
             soB2cErrorService.add(addError);
             //失败还原订单状态
             soB2cService.updateBillStatus(body.getEntity().getId(), SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION);
+        }
+    }
+
+    private void addSubmitDeliveryFailLog(ThirdWarehouseCreateOutboundPushDTO body, Exception e) {
+        try {
+            operateLogService.addModuleOperateLogRequiresNew(CharSequenceUtil.format("B2C销售订单【{}】异步提交发货失败，原因：{}", body.getEntity().getCode(), e.getMessage()), ModuleTypeEnum.SO_B2C.getCode(), body.getEntity().getId(), "提交发货");
+        } catch (Exception logEx) {
+            log.warn("B2C销售订单异步提交发货失败日志写入失败,soId:{}", body.getEntity().getId(), logEx);
         }
     }
 }

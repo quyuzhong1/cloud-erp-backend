@@ -3,6 +3,7 @@ package com.erp.server.oms.controller.api;
 
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -276,7 +277,7 @@ public class CustomerInfoController extends BaseController {
             serviceClass = CustomerInfoService.class,
             keyIdName = "ids")
     public ApiResult<Object> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean result = customerInfoService.cancelProcess(dto.getIds());
+        Boolean result = customerInfoService.cancelProcess(new ApproveDTO.BatchCancelProcessDTO(dto.getIds()));
         return Boolean.TRUE.equals(result) ? success() : failure();
     }
 

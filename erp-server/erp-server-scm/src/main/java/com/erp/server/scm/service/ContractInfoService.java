@@ -1,11 +1,13 @@
 package com.erp.server.scm.service;
-import com.erp.model.scm.entity.ContractInfoEntity;
-import com.common.business.service.SuperService;
+
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
-import com.erp.model.scm.dto.ContractInfoDTO;
+import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.scm.dto.ContractInfoDTO;
+import com.erp.model.scm.entity.ContractInfoEntity;
+
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.constraints.NotNull;
 import java.util.List;
 
 /**
@@ -103,10 +105,10 @@ public interface ContractInfoService extends SuperService<ContractInfoEntity> {
     * 撤销
     * @author will
     * @date: 2025-06-16
-    * @param id
+    * @param dto
     * @return
     */
-    BatchResultDTO cancelProcess(String id);
+   BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto);
 
     /**
     * 导出Excel

@@ -259,8 +259,8 @@ public enum SourceTypeEnum {
     THIRD_WAREHOUSE_EDIT_INBOUND_BILL("thirdWarehouseEditInboundBill", "第三方仓编辑入库单","dmp_push_task"),
     THIRD_WAREHOUSE_CANCEL_INBOUND_BILL("thirdWarehouseCancelInboundBill", "第三方仓取消入库单","dmp_push_task"),
     THIRD_WAREHOUSE_APPROVE_INBOUND_BILL("thirdWarehouseApproveInboundBill", "第三方仓审核入库单","dmp_push_task"),
-    THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL("thirdWarehouseCreateOutboundBill", "第三方仓创建出库单","dmp_push_task"),
-    THIRD_WAREHOUSE_CREATE_FBA_OUTBOUND_BILL("thirdWarehouseCreateFbaOutboundBill", "B2B第三方仓创建出库单","dmp_push_task"),
+    THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL("B2CThirdWarehouseCreateOutboundBill", "B2C第三方仓创建出库单","dmp_push_task"),
+    THIRD_WAREHOUSE_CREATE_FBA_OUTBOUND_BILL("B2BThirdWarehouseCreateOutboundBill", "B2B第三方仓创建出库单","dmp_push_task"),
     THIRD_WAREHOUSE_CANCEL_OUTBOUND_BILL("thirdWarehouseCancelOutboundBill", "第三方仓取消出库单","dmp_push_task"),
     THIRD_WAREHOUSE_QUERY_OUTBOUND_BILL("thirdWarehouseQueryOutboundBill", "第三方仓查询出库单","dmp_push_task"),
     THIRD_WAREHOUSE_CALCULATE_FEE("thirdWarehouseCalculateFee", "第三方仓运费试算","dmp_push_task"),
@@ -330,7 +330,10 @@ public enum SourceTypeEnum {
 
 
     //售后申请
-    AFTER_SALE("afterSale", "售后申请","after_sale"),
+    AFTER_SALE("afterSale", "寄修申请","after_sale"),
+
+    // 售后装箱
+    AFTER_SALE_PACK("afterSalePack", "售后装箱","after_sale_pack"),
     ;
 
     /**
@@ -394,6 +397,16 @@ public enum SourceTypeEnum {
 
     public static SourceTypeEnum getByCode(String code) {
         return Arrays.stream(SourceTypeEnum.values()).filter(r -> Objects.equals(r.getCode(), code)).findFirst().orElse(null);
+    }
+
+    /**
+     * 是否盘点类来源（盘盈/盘亏/盘盈盘亏单）。
+     * 盘点类业务在审核可分配库存时不参与校验，统一在此判定，避免各业务实现散落重复逻辑。
+     */
+    public static boolean isStocktaking(String code) {
+        return Objects.equals(STOCKTAKING_PROFIT_LOSS.getCode(), code)
+                || Objects.equals(STOCKTAKING_PROFIT.getCode(), code)
+                || Objects.equals(STOCKTAKING_LOSS.getCode(), code);
     }
     public static List<String> pickingLists() {
         return Arrays.asList(PICKING_LISTS_ADD.getCode(), PICKING_LISTS_SUBTRACT.getCode());

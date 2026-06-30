@@ -1,10 +1,12 @@
 package com.erp.server.wms.service;
-import com.erp.model.wms.entity.SubcontractReturnEntity;
-import com.common.business.service.SuperService;
+
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
-import com.erp.model.wms.dto.SubcontractReturnDTO;
+import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import javax.servlet.http.HttpServletResponse;
+import com.erp.model.wms.dto.SubcontractReturnDTO;
+import com.erp.model.wms.entity.SubcontractReturnEntity;
+
 import java.util.List;
 
 /**
@@ -129,10 +131,10 @@ public interface SubcontractReturnService extends SuperService<SubcontractReturn
     * 撤销
     * @author zdy
     * @date: 2024-09-15
-    * @param id
+    * @param dto
     * @return
     */
-    BatchResultDTO cancelProcess(String id);
+   BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto);
 
     /**
     * 导出Excel

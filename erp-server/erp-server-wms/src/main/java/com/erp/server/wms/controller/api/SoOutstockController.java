@@ -5,6 +5,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.DataAttributeEnum;
@@ -32,6 +33,9 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.io.IOException;
 import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * 销售出库-销售出库单
@@ -84,7 +88,7 @@ public class SoOutstockController extends BaseController {
     )
     @WebAdvanceQuery(handler = SoOutstockQueryHandler.class)
     public ApiResult<PagingVO<SoOutstockDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<SoOutstockDTO.PagingParamDTO> dto) {
-    	PagingVO<SoOutstockDTO.PagingViewDTO> pagingVO = soOutstockService.paging(dto);
+    	PagingVO<SoOutstockDTO.PagingViewDTO> pagingVO = soOutstockService.paging(dto,Boolean.FALSE);
         return success(pagingVO);
     }
 
@@ -355,7 +359,7 @@ public class SoOutstockController extends BaseController {
             serviceClass = SoOutstockService.class,
             keyIdName = "ids")
     public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean result = soOutstockService.cancelProcess(dto.getIds());
+        Boolean result = soOutstockService.cancelProcess(new ApproveDTO.BatchCancelProcessDTO(dto.getIds()));
         return result ? success() : failure();
     }
 
@@ -403,7 +407,7 @@ public class SoOutstockController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出销售出库单")
     @PostMapping("/export")
-    public ApiResult exportWarehouse(@RequestBody @Valid SoOutstockDTO.ExportDTO dto) {
+    public ApiResult exportWarehouse(@RequestBody @Valid SoOutstockDTO.PagingParamDTO dto) {
         Boolean result = soOutstockService.exportExcel(dto);
         return result ? success() : failure();
     }
@@ -561,6 +565,22 @@ public class SoOutstockController extends BaseController {
     public ApiResult<Object> exportLogisticsHandover(@RequestBody @Valid BaseIdsDTO.IdsDTO idsDTO, HttpServletResponse response) throws IOException {
         soOutstockService.exportLogisticsHandover(idsDTO,response);
         return success();
+    }
+
+    /**
+     * 更新出库日期
+     */
+    @PostMapping("/updateOutstockDate")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "更新出库日期")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id,seller_id",
+            menuCode = "wms:so:outstock:updateOutstockDate",
+            serviceClass = SoOutstockService.class,
+            keyIdName = "id"
+    )
+    public ApiResult<List<BatchResultDTO>> updateOutstockDate(@RequestBody @Valid List<SoOutstockDTO.UpdateOutstockDateDTO> updateOutstockDateDTOList) {
+        List<BatchResultDTO> batchResultDTOList = soOutstockService.updateOutstockDate(updateOutstockDateDTOList);
+        return batchResultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(batchResultDTOList) : failure(batchResultDTOList);
     }
 
 }

@@ -10,6 +10,7 @@ import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -602,7 +603,8 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO cancelProcess(String id) {
+    public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto) {
+        String id = dto.getId();
         MouldInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到模具数据"));
         // 审核中的数据允许撤销
         if (!Objects.equals(ApproveStatusEnum.APPROVE_ING.getStatus(), entity.getStatus())) {
@@ -610,6 +612,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
         }
         String userId = UserContext.getDefaultLoginUser().getUid();
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+        revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         revokeDTO.setBusinessId(id);
         revokeDTO.setBusinessKey(SourceTypeEnum.MOULD_INFO.getCode());
         revokeDTO.setUserId(userId);

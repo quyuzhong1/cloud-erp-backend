@@ -2,12 +2,14 @@ package com.erp.rpc.dmp.feign;
 
 
 import com.common.business.config.FeignErrorDecoder;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.dmp.dto.AfterSaleDTO;
 import com.erp.model.dmp.dto.AfterSaleProgressDTO;
 import com.erp.model.dmp.dto.ThridUserInfoDTO;
+import com.erp.model.dmp.entity.AfterSaleEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -87,4 +89,7 @@ public interface AfterSaleFeign {
 
     @GetMapping("/view")
     ApiResult<AfterSaleDTO.ViewDTO> view(@RequestParam("id") String id);
+
+    @PostMapping("/viewList")
+    ApiResult<List<AfterSaleDTO.ViewDTO>> viewList(@RequestBody BaseIdsDTO.IdsDTO dto);
 }

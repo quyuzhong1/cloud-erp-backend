@@ -12,6 +12,7 @@ import org.apache.ibatis.annotations.Param;
 import com.erp.model.dmp.dto.AfterSaleDTO;
 import com.common.business.dto.base.ApproveStatusQtyDTO;
 
+import javax.validation.constraints.NotEmpty;
 import java.util.List;
 
 /**
@@ -58,4 +59,12 @@ public interface AfterSaleMapper extends BaseMapper<AfterSaleEntity> {
     List<AfterSaleProgressDTO.RepairRecordListDTO> getRepairProgress(@Param("params")AfterSaleDTO.ProgressDTO params);
 
     List<AfterSaleProgressDTO.RepairHistoryListDTO> getRepairHistory(@Param("params")AfterSaleDTO.ThridUserDTO params);
+
+    /**
+    * 获取下单预览信息
+     *
+    * @param ids List<String>
+    * @return List<AfterSaleDTO.OrderInfoDTO>
+    */
+    List<AfterSaleDTO.OrderInfoDTO> getPlaceOrderPreview(@Param("ids") List<String> ids);
 }

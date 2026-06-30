@@ -1,6 +1,11 @@
 package com.erp.server.oms.service;
 
 import com.common.business.dto.base.*;
+import com.common.business.dto.ApproveDTO;
+import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SoInfoDTO;
@@ -117,7 +122,7 @@ public interface SoReturnService extends SuperService<SoReturnEntity> {
      * 批量反审核
      * @Author Luo_WG
      * @Date 2023/5/10 16:46
-     * @param ids
+     * @param entity
      * @return java.lang.Boolean
      **/
     BatchResultDTO disApprove(SoReturnEntity entity);
@@ -126,10 +131,10 @@ public interface SoReturnService extends SuperService<SoReturnEntity> {
      * 取消流程
      * @Author Luo_WG
      * @Date 2023/5/10 16:46
-     * @param ids
+     * @param dto
      * @return java.lang.Boolean
      **/
-    Boolean cancelProcess(List<String> ids);
+    Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto);
 
     /**
      * 批量作废
@@ -183,7 +188,7 @@ public interface SoReturnService extends SuperService<SoReturnEntity> {
      * @Date 2023/5/11 11:20
      * @return java.util.List<com.erp.model.oms.dto.SoReturnDTO.GenerateSoReturnNoticeView>
      **/
-    List<SoReturnEntity> listSoReturnByApproveStatus();
+    PagingVO<SoReturnDTO.SoReturnListVO> listSoReturnByApproveStatus(PagingDTO<SoReturnDTO.ApproveStatusPagingParam> dto);
 
     /**
      * 根据退货单id查询退货单信息

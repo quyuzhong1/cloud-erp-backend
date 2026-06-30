@@ -1,68 +1,66 @@
 package com.erp.server.fms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
+import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.*;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
-
-import cn.hutool.core.util.StrUtil;
+import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.*;
 import com.erp.model.fms.dto.*;
 import com.erp.model.fms.dto.excel.AssetDisposalImportExcelDTO;
 import com.erp.model.fms.entity.*;
 import com.erp.model.fms.enums.AssetDisposalDetailInvoiceTypeEnum;
 import com.erp.model.fms.enums.AssetDisposalDisposalMethodEnum;
 import com.erp.model.fms.enums.DisposalStatusEnum;
+import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
 import com.erp.server.fms.listener.AssetDisposalExcelListener;
+import com.erp.server.fms.mapper.AssetDisposalMapper;
 import com.erp.server.fms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
-import com.common.business.annotation.DistributeLocker;
-import com.common.business.dto.base.BaseResultDTO;
-import com.erp.server.fms.mapper.AssetDisposalMapper;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.common.core.exception.ServiceException;
-import com.common.business.config.DocNoGenHelper;
-import com.common.core.controller.vo.ApiResult;
-import cn.hutool.core.util.ObjectUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.workflow.dto.ProcessManagementDTO;
-import com.erp.rpc.workflow.WorkflowFeign;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import cn.hutool.core.collection.CollUtil;
-import com.erp.model.scm.enums.InvalidStatusEnum;
-import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.time.LocalDateTime;
-import javax.annotation.Resource;
-import java.util.stream.Collectors;
 import java.util.*;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_FMS_ASSET_DISPOSAL;
 import static com.common.business.enums.FileTaskEventEnum.IMPORT_FMS_ASSET_DISPOSAL;
@@ -1014,7 +1012,8 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO cancelProcess(String id) {
+    public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto) {
+        String id = dto.getId();
         AssetDisposalEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到资产处置单主单数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
@@ -1031,6 +1030,7 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "资产处置单主单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_DISPOSAL.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+        revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.ASSET_DISPOSAL.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());

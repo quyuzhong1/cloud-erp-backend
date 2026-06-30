@@ -7,13 +7,10 @@ import com.erp.model.oms.dto.CustomerB2bSellerChangeDTO;
 import com.erp.model.oms.dto.excel.CustomerB2bSellerExcelDTO;
 import com.erp.rpc.oms.feign.ExportOmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
-import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.List;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_CUSTOMER_B2B_SELLER_CHANGE;
 
@@ -23,12 +20,6 @@ public class ExportOmsCustomerB2BSellerChangeHandler extends AbstractPageFileEve
 
     @Resource
     private ExportOmsFeign exportOmsFeign;
-    @Override
-    protected List<CustomerB2bSellerExcelDTO> getData(FileTask fileTask) {
-        CustomerB2bSellerChangeDTO.ParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<CustomerB2bSellerChangeDTO.ParamDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected PagingVO<CustomerB2bSellerExcelDTO> getPageData(PagingDTO<CustomerB2bSellerChangeDTO.ParamDTO> dto) {

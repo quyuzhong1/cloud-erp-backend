@@ -267,9 +267,7 @@ public class ShopeeLogisticsService {
         if (StringUtils.isNotBlank(packageNumber)){
             paramMap.put("package_number", packageNumber);
         }
-        System.out.println(JSONUtil.toJsonStr(paramMap));
         BaseResponse baseResponse = ShopeeApiUtils.sendGet(baseRequest.getHost() + path, paramMap);
-        System.out.println(JSONUtil.toJsonStr(baseResponse));
         if (Objects.isNull(baseResponse) || Objects.isNull(baseResponse.getResponse())) {
             log.error(ERR_BF, baseResponse);
             throw new ServiceException(CharSequenceUtil.format(ERR_MSG_GET, orderSn,baseResponse));

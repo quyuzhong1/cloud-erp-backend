@@ -1,5 +1,6 @@
 package com.erp.server.scm.service;
 
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -109,10 +110,10 @@ public interface PurchasePriceChangeService extends SuperService<PurchasePriceCh
      * 取消流程
      * @author yl
      * @date 2023-03-28 16:56
-     * @param ids
+     * @param dto
      * @return java.lang.Boolean
      */
-    Boolean cancelProcess(List<String> ids);
+    Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto);
 
     /**
      * 分页获取采购价目变更数据

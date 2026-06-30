@@ -16,6 +16,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.FileTemplateConstant;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -78,6 +79,7 @@ import com.erp.rpc.sys.feign.AuthDataFeign;
 import com.erp.rpc.sys.feign.FileTemplateFeign;
 import com.erp.rpc.sys.feign.SysPostFeign;
 import com.erp.server.wms.convert.RequisitionApplicationConverter;
+import com.erp.server.wms.convert.WmsAttachmentConverter;
 import com.erp.server.wms.listener.RequisitionApplicationDetailExcelListener;
 import com.erp.server.wms.mapper.RequisitionApplicationMapper;
 import com.erp.server.wms.service.*;
@@ -225,6 +227,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     private WmsCartonService wmsCartonService;
     @Resource
     private WmsCartonDetailService wmsCartonDetailService;
+    @Resource
+    private WmsAttachmentService wmsAttachmentService;
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -246,6 +250,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         }
         // 新增明细
         requisitionApplicationDetailService.add(addDTO, requisitionApplicationEntity.getId());
+        //新增附件
+        wmsAttachmentService.batchSave(addDTO.getAttachmentList(), ModuleTypeEnum.REQUISITION_APPLICATION.getCode(), requisitionApplicationEntity.getId());
         // 操作日志
         String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "要货申请" , requisitionApplicationEntity.getId());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REQUISITION_APPLICATION.getCode(), requisitionApplicationEntity.getId(), "新增操作");
@@ -282,6 +288,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         }
         // 修改明细数据（包含增删改）
         requisitionApplicationDetailService.update(updateDTO, requisitionApplicationEntity.getId());
+        //更新附件
+        wmsAttachmentService.batchSave(updateDTO.getAttachmentList(), ModuleTypeEnum.REQUISITION_APPLICATION.getCode(), requisitionApplicationEntity.getId());
         return Boolean.TRUE;
     }
 
@@ -336,6 +344,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         List<RequisitionApplicationDetailEntity> requisitionApplicationDetailEntities = requisitionApplicationDetailService.listByMainIds(Collections.singletonList(id));
         // 数据填充处理
         fillOne(data, requisitionApplicationDetailEntities);
+        //附件
+        data.setAttachmentList(WmsAttachmentConverter.INSTANCE.entityListToAttachDTOList(wmsAttachmentService.getByBusinessId(id, ModuleTypeEnum.REQUISITION_APPLICATION.getCode())));
         return data;
     }
 
@@ -963,7 +973,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO cancelProcess(String id) {
+    public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto) {
+        String id = dto.getId();
         RequisitionApplicationEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到要货申请单数据"));
 /*        // 只有待处理的单据允许撤销
         if (!Objects.equals(entity.getStatus(), RequisitionApplicationStatusEnum.WAIT_HANDLE.getStatus())) {
@@ -1018,6 +1029,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "头程发货单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REQUISITION_APPLICATION.getCode(), entity.getId(), "取消流程操作");
 /*        ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+revokeDTO.setSourcePlatform(dto.getSourcePlatform());
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.FBA_DELIVERY.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());

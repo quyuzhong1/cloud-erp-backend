@@ -1,9 +1,12 @@
 package com.erp.server.oms.service;
-import com.erp.model.oms.entity.CustomerCreditApplyEntity;
-import com.common.business.service.SuperService;
+
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
-import com.erp.model.oms.dto.CustomerCreditApplyDTO;
+import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.CustomerCreditApplyDTO;
+import com.erp.model.oms.entity.CustomerCreditApplyEntity;
+
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
@@ -120,10 +123,10 @@ public interface CustomerCreditApplyService extends SuperService<CustomerCreditA
     * 撤销
     * @author lrp
     * @date: 2025-08-28
-    * @param id
+    * @param dto
     * @return
     */
-    BatchResultDTO cancelProcess(String id);
+   BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto);
 
     /**
     * 导出Excel

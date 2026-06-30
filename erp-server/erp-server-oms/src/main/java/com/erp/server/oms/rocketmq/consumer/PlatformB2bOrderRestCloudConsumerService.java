@@ -141,6 +141,7 @@ public class PlatformB2bOrderRestCloudConsumerService extends AbstractRestCloudP
 		if (StringUtils.isBlank(dto.getReceiveAccount()) && StringUtils.isNotBlank(customerInfo.getDefaultReceiveAccount())) {
 			dto.setReceiveAccount(customerInfo.getDefaultReceiveAccount());
 		}
+		customerInfoService.applyB2bOrderCustomerDefaults(dto, customerInfo);
 
 		dto.setDictPlatform(customerInfo.getPlatformType());
 		dto.setAddressType(CustomerAddressTypeEnum.FORWARDER.getCode());
@@ -208,6 +209,7 @@ public class PlatformB2bOrderRestCloudConsumerService extends AbstractRestCloudP
 			if (StringUtils.isBlank(dto.getReceiveAccount()) && StringUtils.isNotBlank(customerInfo.getDefaultReceiveAccount())) {
 				dto.setReceiveAccount(customerInfo.getDefaultReceiveAccount());
 			}
+			customerInfoService.applyB2bOrderCustomerDefaults(dto, customerInfo);
 		}
 		//过滤掉明细已删除和已作废
 		if(CollectionUtils.isNotEmpty(dto.getDetail())) {
@@ -270,6 +272,5 @@ public class PlatformB2bOrderRestCloudConsumerService extends AbstractRestCloudP
 			}
 		}
 	}
-
 
 }

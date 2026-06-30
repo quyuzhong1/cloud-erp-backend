@@ -14,6 +14,7 @@ import com.erp.model.dmp.entity.DmpCfgApiEntity;
 import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
+import com.erp.server.dmp.inout.dto.response.DmpInputInitResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.inout.handler.input.task.init.DmpInputInitHandler;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
@@ -43,7 +44,11 @@ import java.util.*;
 public class MercadoLocalOrdeShipmentInitHandler extends DmpInputInitHandler {
 	@Resource
 	private MercadoLocalSdkClientService mercadoLocalSdkClientService;
-	
+	@Resource
+	private MercadoLocalRateLimitHelper rateLimitHelper;
+
+	private static final String BIZ_TYPE = MercadoLocalRateLimitHelper.BIZ_SHIPMENT;
+
 	@Override
 	public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
 
@@ -58,12 +63,21 @@ public class MercadoLocalOrdeShipmentInitHandler extends DmpInputInitHandler {
 			return new ArrayList<>();
 		}
 
-		List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
-
 		MercadoShopInfoDTO shopInfoDTO = mercadoLocalSdkClientService.getShopInfoByShopId(findMongoData.get(0).get("nextLevelId").toString());
 		if (ObjectUtil.isEmpty(shopInfoDTO)) {
 			throw new ServiceException("美客多店铺id：" + this.nextLevelId + "未找到对应的店铺信息");
 		}
+		String userId = String.valueOf(shopInfoDTO.getUserId());
+
+		// 入口检查限流退避标记，命中则软退
+		if (rateLimitHelper.isLimited(userId, BIZ_TYPE)) {
+			log.warn("【美客多本土站-shipments】userId={} 处于限流退避中，跳过本轮 inputTaskId={}",
+					userId, dmpInputTaskEntity == null ? null : dmpInputTaskEntity.getId());
+			((DmpInputInitResponse) dmpResponse).setDoNextStatus(false);
+			return Collections.emptyList();
+		}
+
+		List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
 
 		//平台接口地址
 		String url = MercadoConstant.URL;
@@ -77,8 +91,21 @@ public class MercadoLocalOrdeShipmentInitHandler extends DmpInputInitHandler {
 			if(Objects.isNull(id)|| id.toString().equals("0")){
 				continue;
 			}
+			String shippingId = id.toString();
 
-			String path = dmpCfgApiEntity.getApiType().replace("{shippingId}", shipping.get("id").toString());
+			// 优先复用结果缓存（按 inputTaskId 隔离 + 600s 任务生命周期档位）：
+			// shipment 状态会变（ready_to_ship → shipped → delivered），但 key 带 inputTaskId 后
+			// 跨任务天然 miss，下个调度周期的新 inputTask 会重新拉真实状态；
+			// 命中窗口最多就是当前任务从首次软退到最终完成，最坏滞后 ≈ 任务生命周期 + 1 个调度周期。
+			String cached = rateLimitHelper.getResultCache(dmpInputTaskEntity.getId(), userId, BIZ_TYPE, shippingId);
+			if (StringUtils.isNotBlank(cached)) {
+				DmpInputTaskInitDTO dto = new DmpInputTaskInitDTO();
+				dto.setMsg(cached);
+				dmpInputTaskInitDTOList.add(dto);
+				continue;
+			}
+
+			String path = dmpCfgApiEntity.getApiType().replace("{shippingId}", shippingId);
 
 			//入参
 			HashMap<String, Object> orderParams = new HashMap<>(1);
@@ -88,26 +115,16 @@ public class MercadoLocalOrdeShipmentInitHandler extends DmpInputInitHandler {
 			orderHeaderMap.put("Authorization", "Bearer " + shopInfoDTO.getAccessToken());
 			orderHeaderMap.put("x-format-new", "true");
 
-			//拉取数据
-			ApiResult apiResult = new ApiResult();
-			Object data = null;
-			long sleepTime = 1000;
-			int count = 0;
-			while(ObjectUtil.isEmpty(data)) {
-				apiResult = HttpCommonUtil.sendOkHttpApiResult(url + path, JSONUtil.toJsonStr(orderParams), null, orderHeaderMap, RequestMethod.GET);
-				if(apiResult.getMsg().equalsIgnoreCase("Read timed out")) {
-					if(count == 10) {
-						throw new ServiceException("调用美客多" + url + path + "接口重试" + count + "失败");
-					}
-					try {
-						Thread.sleep(sleepTime);
-					} catch (InterruptedException e) {
-						Thread.currentThread().interrupt();
-					}
-					sleepTime = sleepTime + 1000;
-					count = count + 1;
-				}
-				data = apiResult.getData();
+			ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(url + path,
+					JSONUtil.toJsonStr(orderParams), null, orderHeaderMap, RequestMethod.GET);
+
+			if (rateLimitHelper.isRateLimitedCode(apiResult.getCode())
+					|| (apiResult.getMsg() != null && apiResult.getMsg().equalsIgnoreCase("Read timed out"))) {
+				rateLimitHelper.markLimited(userId, BIZ_TYPE, MercadoLocalRateLimitHelper.DEFAULT_BACKOFF_SECONDS);
+				log.warn("【美客多本土站-shipments】触发限流/超时，写入退避标记。userId={}, code={}, msg={}, url={}",
+						userId, apiResult.getCode(), apiResult.getMsg(), url + path);
+				((DmpInputInitResponse) dmpResponse).setDoNextStatus(false);
+				return Collections.emptyList();
 			}
 
 			if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
@@ -115,27 +132,31 @@ public class MercadoLocalOrdeShipmentInitHandler extends DmpInputInitHandler {
 				throw new RuntimeException(CharSequenceUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
 						url + path, orderParams.toString(), JSONUtil.toJsonStr(apiResult)));
 			}
+			if (ObjectUtil.isEmpty(apiResult.getData())) {
+				continue;
+			}
 
 			//解析数据
 			ObjectMapper objectMapper = new ObjectMapper();
-			ShipmentViewDTO shipmentViewDTO = null;
+			ShipmentViewDTO shipmentViewDTO;
 			try {
 				shipmentViewDTO = objectMapper.readValue(JSONUtil.toJsonStr(apiResult.getData()), ShipmentViewDTO.class);
 			} catch (JsonProcessingException e) {
-				System.out.println(e.getMessage());
-				e.printStackTrace();
-				log.error("美客多shipments/'shippingId'/接口数据解析错误，数据={}", apiResult.getData());
+				log.error("美客多shipments/'shippingId'/接口数据解析错误，数据={}", apiResult.getData(), e);
 				throw new RuntimeException(CharSequenceUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}" ,e.getMessage() +
 						url + path, orderParams.toString(), JSONUtil.toJsonStr(apiResult)));
 			}
 			if (ObjectUtil.isEmpty(shipmentViewDTO)) {
-				return Collections.emptyList();
+				continue;
 			}
 
+			String resultJson = JSONArray.toJSONString(Collections.singletonList(shipmentViewDTO));
 			DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
-			dmpInputTaskInitDTO.setMsg(JSONArray.toJSONString(Arrays.asList(shipmentViewDTO)));
+			dmpInputTaskInitDTO.setMsg(resultJson);
 			dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);
 
+			rateLimitHelper.setResultCache(dmpInputTaskEntity.getId(), userId, BIZ_TYPE, shippingId, resultJson,
+					MercadoLocalRateLimitHelper.CACHE_SECONDS_TASK_LIFE);
 		}
 
 		return dmpInputTaskInitDTOList;
@@ -146,7 +167,6 @@ public class MercadoLocalOrdeShipmentInitHandler extends DmpInputInitHandler {
 	public static void main(String[] args) {
 
 		String dataJsonString = "{\"gross_amount\":3.99,\"currency_id\":\"USD\",\"receiver\":{\"user_id\":24384856,\"cost\":0,\"compensation\":0,\"save\":0,\"discounts\":[{\"rate\":1,\"type\":\"ratio\",\"promoted_amount\":4.99}],\"compensations\":[]},\"senders\":[{\"user_id\":2198665353,\"cost\":3.99,\"compensation\":0,\"save\":0,\"discounts\":[],\"compensations\":[]}]}";
-		//解析数据
 		ObjectMapper objectMapper = new ObjectMapper();
 		ShipmentViewDTO shipmentViewDTO = null;
 		try {

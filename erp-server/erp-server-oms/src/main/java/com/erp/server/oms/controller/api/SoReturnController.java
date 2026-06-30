@@ -3,6 +3,7 @@ package com.erp.server.oms.controller.api;
 
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
@@ -297,7 +298,7 @@ public class SoReturnController extends BaseController {
             serviceClass = SoReturnService.class,
             keyIdName = "ids")
     public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = soReturnService.cancelProcess(dto.getIds());
+        Boolean flag = soReturnService.cancelProcess(new ApproveDTO.BatchCancelProcessDTO(dto.getIds()));
         return flag == true ? success() : failure();
     }
 
@@ -373,10 +374,15 @@ public class SoReturnController extends BaseController {
      * @Date 2023/4/13 18:59
      * @return com.common.core.controller.vo.ApiResult
      **/
-    @GetMapping(value = "/listSoReturnByApproveStatus")
-    public ApiResult<List<SoReturnEntity>> listSoReturnByApproveStatus() {
-        List<SoReturnEntity> entityList = soReturnService.listSoReturnByApproveStatus();
-        return success(entityList);
+    @PostMapping(value = "/listSoReturnByApproveStatus")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            warehouseTableField = "sr.warehouse_id",
+            menuCode = "oms:soReturn:paging",
+            tableAlias = "sr"
+    )
+    public ApiResult<PagingVO<SoReturnDTO.SoReturnListVO>> listSoReturnByApproveStatus(@RequestBody @Validated PagingDTO<SoReturnDTO.ApproveStatusPagingParam> dto) {
+        return success(soReturnService.listSoReturnByApproveStatus(dto));
     }
 
     /**

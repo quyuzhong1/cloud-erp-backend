@@ -3,6 +3,7 @@ package com.common.business.mapper;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
@@ -33,5 +34,34 @@ public interface BaseDataMapper {
 	 @Select("select type,${queryFieldName},${returnFieldName} from ${tableName} where type in (${queryTypeField})")
 	 List<Map<String, Object>> queryValueByType(@Param("tableName") String tableName, @Param("queryFieldName") String queryFieldName,
 			 @Param("returnFieldName") String returnFieldName , @Param("queryTypeField") String queryTypeField);
+
+	 @Select("select * from ${tableName} where ${extendQuerySql}")
+	 List<Map<String, Object>> queryDbBySql(@Param("tableName") String tableName, @Param("extendQuerySql") String extendQuerySql);
+	 
+	 /**
+	  * 按时间字段批量删除过期数据，返回实际删除行数
+	  *
+	  * @param tableName          表名
+	  * @param timeField          时间字段
+	  * @param retentionDay       保留天数
+	  * @param limitCount         一次限制条数
+	  * @param extSql 扩展sql语句
+	  * @return 删除行数
+	  */
+	 @Delete("<script>"
+			 + "DELETE FROM ${tableName} WHERE id IN ("
+			 + "  SELECT id FROM ${tableName}"
+			 + "  WHERE ${timeField} &lt; current_date - (${retentionDay} || ' day')::interval"
+			 + "  <if test=\"extSql != null and extSql != ''\">"
+			 + "    AND ${extSql}"
+			 + "  </if>"
+			 + "  LIMIT ${limitCount}"
+			 + ")"
+			 + "</script>")
+	 int deleteArchiveData(@Param("tableName") String tableName,
+						   @Param("timeField") String timeField,
+						   @Param("retentionDay") int retentionDay,
+						   @Param("limitCount") int limitCount,
+						   @Param("extSql") String extSql);
 
 }

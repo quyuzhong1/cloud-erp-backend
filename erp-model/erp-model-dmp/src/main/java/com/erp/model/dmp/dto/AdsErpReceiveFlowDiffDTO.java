@@ -100,7 +100,14 @@ public class AdsErpReceiveFlowDiffDTO implements Serializable {
       	/**
            * 核算周期
            */
+          @NotBlank(message = "核算周期不能为空")
           private String checkMonth;
+
+          /**
+           * 核对仓库,http://172.16.100.11:3002/project/119/interface/api/39485
+           */
+          @NotBlank(message = "核对仓库不能为空")
+          private String sourceSystem;
       }
       
       @Data
@@ -122,16 +129,6 @@ public class AdsErpReceiveFlowDiffDTO implements Serializable {
       @NoArgsConstructor
       @AllArgsConstructor
       public static class ExportParamDTO extends PagingParamDTO{
-      	/**
-           * 主键id
-           */
-          private List<String> ids;
-      }
-      
-      @Data
-      @NoArgsConstructor
-      @AllArgsConstructor
-      public static class UpdateErpDTO extends PagingParamDTO{
       	/**
            * 主键id
            */
@@ -182,12 +179,30 @@ public class AdsErpReceiveFlowDiffDTO implements Serializable {
         private String bizCode;
 
         /**
-         * 平台库存SKU数量
+         * 平台库存SKU
          */
-         private String stockSkuQty;
+        private String stockSku;
 
         /**
-        * 平台ERP_SKU数量
+         * 平台库存SKU数量
+         */
+        private String stockQty;
+
+        /**
+         * 平台库存SKU*数量
+         */
+         private String stockSkuQty;
+        /**
+         * 平台ERP_SKU
+         */
+        private String platformSkuNo;
+        /**
+         * 平台ERP_SKU数量
+         */
+        private String platformQty;
+
+        /**
+        * 平台ERP_SKU*数量
         */
         private String platformSkuQty;
 
@@ -226,9 +241,19 @@ public class AdsErpReceiveFlowDiffDTO implements Serializable {
         private String transferInfoCode;
 
         /**
-        * ERP_SKU数量
-        */
+         * ERP_SKU
+         */
+        private String skuNo;
+
+        /**
+         * ERP_SKU数量
+         */
         private String skuQty;
+
+        /**
+        * ERP_SKU*数量
+        */
+        private String qty;
 
         /**
         * ERP仓库名称

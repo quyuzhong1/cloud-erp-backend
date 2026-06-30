@@ -20,6 +20,10 @@ public class TransferLogisticsCreateInboundReq {
      * 客户参考号
      */
     private String referenceCode;
+    /**
+     * 合同协议号
+     */
+    private String concatNo;
 
     /**
      * 是否提货：0否 1是

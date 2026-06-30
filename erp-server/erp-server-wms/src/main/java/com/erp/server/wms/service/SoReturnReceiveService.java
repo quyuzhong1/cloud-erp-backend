@@ -1,6 +1,7 @@
 package com.erp.server.wms.service;
 
 import com.common.business.dto.base.ApproveOneDTO;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -127,10 +128,10 @@ public interface SoReturnReceiveService extends SuperService<SoReturnReceiveEnti
      * 取消流程
      * @Author Luo_WG
      * @Date 2023/4/13 18:58
-     * @param ids ids
+     * @param dto
      * @return java.lang.Boolean
      **/
-    Boolean cancelProcess(List<String> ids);
+    Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto);
 
     /**
      * 批量作废
@@ -258,8 +259,6 @@ public interface SoReturnReceiveService extends SuperService<SoReturnReceiveEnti
      * @return java.lang.Boolean
      **/
     Boolean pdaDisApprove(List<String> ids);
-
-    PagingVO<SoReturnReceiveDTO.PagingView> exportSoReturnReceive(PagingDTO<SoReturnReceiveDTO.PagingParam> dto);
 
     /**
      * 根据ID列表获取实体Map

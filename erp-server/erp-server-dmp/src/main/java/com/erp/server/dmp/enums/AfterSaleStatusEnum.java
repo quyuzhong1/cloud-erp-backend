@@ -14,7 +14,7 @@ import java.util.Arrays;
 public enum AfterSaleStatusEnum implements EnumMessage {
     APPROVE_ING("approveIng","审核中","客服审核"),
     TO_BE_RETURNED("toBeReturned","待寄回","客户寄件"),
-    AFTER_SALES_RECEIVED("afterSalesReceived","售后签收","售后签收"),
+    AFTER_SALES_RECEIVED("afterSalesReceived","待售后签收","待售后签收"),
     REPAIR("repair","检测/维修中","检测/维修中"),
     TO_BE_SHIPPED("toBeShipped","待寄出","已完成"),
     TERMINATED("terminated","已终止","已终止")

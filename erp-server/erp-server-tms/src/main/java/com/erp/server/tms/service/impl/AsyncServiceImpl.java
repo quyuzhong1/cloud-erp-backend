@@ -50,6 +50,7 @@ public class AsyncServiceImpl implements AsyncService {
             String logisticsPlatform = authMap.get(LOGISTICS_PLATFORM);
             if (LogisticsPlatformEnum.TIK_TOK_FULLY.getCode().equals(logisticsPlatform)
                     || LogisticsPlatformEnum.AMZ_MULTI_CHANNEL.getCode().equals(logisticsPlatform)
+                    || LogisticsPlatformEnum.JI_TU.getCode().equals(logisticsPlatform)
                     || LogisticsPlatformEnum.WILDBERRIES.getCode().equals(logisticsPlatform)){
                 return;
             }

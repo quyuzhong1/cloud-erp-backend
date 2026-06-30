@@ -726,6 +726,12 @@ public class TmsFirstMileLogisticDTO implements Serializable {
         private String outstockId;
 
         /**
+         * 业务来源ID，部分发货单的装箱任务按该字段关联
+         */
+        @ExcelIgnore
+        private String sourceId;
+
+        /**
          * 来源单号(发货单号)
          */
         @ExcelProperty(value = "来源单号(发货单号)")
@@ -1065,6 +1071,16 @@ public class TmsFirstMileLogisticDTO implements Serializable {
         private Map<String,String> sqlMap;
 
         private String orderType;
+
+        /**
+         * 高级查询命中装箱状态时，启用原SQL字段以支持筛选
+         */
+        private Boolean usePackingStatusSql;
+
+        /**
+         * 高级查询命中重量分摊状态时，启用原SQL字段以支持筛选
+         */
+        private Boolean useWeightAllocationStatusSql;
     }
 
     /**

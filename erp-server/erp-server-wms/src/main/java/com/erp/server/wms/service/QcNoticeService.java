@@ -1,5 +1,7 @@
 package com.erp.server.wms.service;
 
+import com.common.business.dto.ApproveDTO;
+
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
@@ -47,6 +49,11 @@ public interface QcNoticeService extends SuperService<QcNoticeEntity> {
     * @return PagingVO<QcNoticeDTO.ListDTO>>
     */
     PagingVO<QcNoticeDTO.ListDTO> paging(PagingDTO<QcNoticeDTO.PagingParamDTO> pagingParamDTO);
+
+    /**
+     * 分页列表查询（仅单头，OpenAPI / App 端）
+     */
+    PagingVO<QcNoticeDTO.ListDTO> pagingHeader(PagingDTO<QcNoticeDTO.PagingParamDTO> pagingParamDTO);
 
     /**
     * 状态统计
@@ -126,10 +133,10 @@ public interface QcNoticeService extends SuperService<QcNoticeEntity> {
     * 撤销
     * @author jack
     * @date: 2025-04-21
-    * @param id
+    * @param dto
     * @return
     */
-    BatchResultDTO cancelProcess(String id);
+   BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto);
 
     /**
     * 作废
@@ -184,4 +191,22 @@ public interface QcNoticeService extends SuperService<QcNoticeEntity> {
      * @return  List<QcNoticeEntity>
      */
     List<QcNoticeEntity> listBySourceId(String sourceId);
+
+    /**
+    * 批量更新质检员-弹窗数据查询
+    * @author wtr
+    * @date: 2026-06-01
+    * @param dto 明细id列表
+    * @return 每行包含质检通知单号、质检类型、下游质检单号、SKU、供应商、当前质检员
+    */
+    List<QcNoticeDTO.UpdateQcUserViewDTO> updateQcUserView(QcNoticeDTO.UpdateQcUserViewParamDTO dto);
+
+    /**
+    * 更新质检员（单条：校验与 Feign 无事务，落库见 persistUpdateQcUser）
+    * @author wtr
+    * @date: 2026-05-28
+    * @param dto 明细质检员 {detailId, qcUserId}
+    * @return BatchResultDTO
+    */
+    BatchResultDTO updateQcUser(QcNoticeDTO.UpdateQcUserDTO dto);
 }

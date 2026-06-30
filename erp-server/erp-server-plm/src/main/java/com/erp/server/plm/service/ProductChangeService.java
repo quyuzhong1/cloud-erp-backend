@@ -1,4 +1,11 @@
 package com.erp.server.plm.service;
+
+import com.baomidou.mybatisplus.extension.service.IService;
+import com.common.business.dto.ApproveDTO;
+import com.common.business.dto.base.ApproveOneDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.erp.model.plm.dto.excel.ProductChangeImportExcelDTO;
 import com.erp.model.plm.entity.*;
 import com.common.business.service.SuperService;
@@ -120,16 +127,14 @@ public interface ProductChangeService extends SuperService<ProductChangeEntity> 
     * @return
     */
     BatchResultDTO delete(String id);
-
     /**
-    * 撤销
-    * @author lrp
-    * @date: 2026-02-03
-    * @param id
-    * @return
-    */
-    BatchResultDTO cancelProcess(String id);
-
+     * 取消流程
+     * @author will
+     * @date 2025/5/19 09:20
+     * @param dto
+     * @return BatchResultDTO
+     */
+   BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto);
     /**
     * 审核通过回调方法
     * @param dto

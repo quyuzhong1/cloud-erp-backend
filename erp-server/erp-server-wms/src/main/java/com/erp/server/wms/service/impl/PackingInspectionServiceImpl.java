@@ -237,7 +237,9 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
             if (scanSkuInfo.getScannedQty().equals(scanSkuInfo.getSaleQty())) {
                 waitScanList.remove(scanSkuInfo);
             }
-        } else if (!entity.getIsInspection()) {
+        } else if(entity.getIsInspection()){
+            throw new ServiceException("订单已验货，无法重复验货");
+        }
             // 只有未验货的订单才能进行整体验货
             // 判断是否全部扫描完成
             if (CollectionUtils.isEmpty(viewDTO.getWaitScanSkuList())) {
@@ -284,7 +286,6 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
                         entity.getCode());
                 operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "包装验货");
             }
-        }
 
         //数据存redis
         this.saveViewDTO(entity.getId(), viewDTO);

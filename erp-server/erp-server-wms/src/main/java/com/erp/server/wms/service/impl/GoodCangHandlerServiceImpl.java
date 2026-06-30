@@ -10,7 +10,10 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.third.*;
+import com.erp.model.wms.enums.B2bPackingLabelSizeEnum;
+import com.erp.model.wms.enums.B2bPackingTypeEnum;
 import com.erp.model.wms.enums.B2bThirdWarehouseCancelResultEnum;
+import com.erp.model.wms.enums.ThirdWarehouseFileTypeEnum;
 import com.erp.model.wms.enums.ThirdWarehouseCancelResultEnum;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
 import com.erp.server.wms.convert.ThirdWarehouseConverter;
@@ -37,7 +40,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
-    private static final String GOOD_CANG_ORDER_ATTACHMENT = "ORDER_ATTACHMENT";
+    private static final String GOOD_CANG_DEFAULT_PACKING_TYPE = B2bPackingTypeEnum.WAREHOUSE_SELF.getCode();
 
     @Resource
     private GoodCangService goodCangService;
@@ -169,14 +172,13 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     public ApiResult<ThirdWarehouseUploadFileResponse> uploadFile(@Valid ThirdWarehouseUploadFileReq uploadFileReq){
-        GoodCangUploadFileReq goodCangUploadFileReq = GOOD_CANG_ORDER_ATTACHMENT.equalsIgnoreCase(uploadFileReq.getFileType())
+        GoodCangUploadFileReq goodCangUploadFileReq = isGoodCangB2bAttachment(uploadFileReq.getFileType())
                 ? ThirdWarehouseConverter.INSTANCE.reqToGoodCangB2bAttachmentUploadFileReq(uploadFileReq)
                 : ThirdWarehouseConverter.INSTANCE.reqToGoodCangUploadFileReq(uploadFileReq);
         if(CharSequenceUtil.isNotBlank(uploadFileReq.getFileType())){
             goodCangUploadFileReq.setUseFor(uploadFileReq.getFileType());
         }
-        if(GOOD_CANG_ORDER_ATTACHMENT.equalsIgnoreCase(uploadFileReq.getFileType())
-                && CharSequenceUtil.isNotBlank(uploadFileReq.getFileName())){
+        if(isGoodCangB2bAttachment(uploadFileReq.getFileType()) && CharSequenceUtil.isNotBlank(uploadFileReq.getFileName())){
             goodCangUploadFileReq.setFileName(uploadFileReq.getFileName());
             goodCangUploadFileReq.setFile(cleanB2bAttachmentBase64(goodCangUploadFileReq.getFile(), uploadFileReq.getFileName()));
         }
@@ -190,6 +192,12 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         ThirdWarehouseUploadFileResponse resToThirdWarehouseResponse = ThirdWarehouseConverter.INSTANCE.goodCangResToThirdWarehouseUploadFileResponse(goodCangUploadFileResp);
         return isSuccess(response.getAsk(), response.getMessage()) ? success(resToThirdWarehouseResponse) : failure(response.getMessage());
 
+    }
+
+    private boolean isGoodCangB2bAttachment(String fileType) {
+        return ThirdWarehouseFileTypeEnum.ORDER_ATTACHMENT.getCode().equalsIgnoreCase(fileType)
+                || ThirdWarehouseFileTypeEnum.ORDER_PACKING_ATTACHMENT.getCode().equalsIgnoreCase(fileType)
+                || ThirdWarehouseFileTypeEnum.SHIPMENT_LABEL_ATTACHMENT.getCode().equalsIgnoreCase(fileType);
     }
     @Override
     public ApiResult<ThirdWarehouseUploadOrderLabelResponse> uploadOrderLabel(@Valid ThirdWarehouseUploadOrderLabelReq uploadFileReq){
@@ -237,36 +245,71 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     @Override
     protected ApiResult<List<ThirdWarehouseQueryFbaOutboundResponse>> queryFbaOutboundBill(ThirdWarehouseQueryFbaOutboundReq req) {
         List<ThirdWarehouseQueryFbaOutboundResponse> responses = new ArrayList<>();
-        GoodCangGetOutBoundReq goodCangGetOutBoundReq = GoodCangGetOutBoundReq.builder()
-                .orderCodeArr(req.getPlatformOrderCodeList())
-                .page(1)
-                .pageSize(20)
-                .build();
+        String failureMsg = null;
+        if (CollUtil.isNotEmpty(req.getPlatformOrderCodeList())) {
+            GoodCangGetOutBoundReq goodCangGetOutBoundReq = GoodCangGetOutBoundReq.builder()
+                    .orderCodeArr(req.getPlatformOrderCodeList())
+                    .page(1)
+                    .pageSize(20)
+                    .build();
 
-        GoodCangResponse<List<GoodCangOutboundResp>> response = goodCangService.getOutboundBatch(goodCangGetOutBoundReq);
-        if (Objects.isNull(response)) {
-            return failure("谷仓查询订单响应为空");
+            GoodCangResponse<List<GoodCangOutboundResp>> response = goodCangService.getOutboundBatch(goodCangGetOutBoundReq);
+            if (Objects.isNull(response)) {
+                failureMsg = "谷仓查询订单响应为空";
+            } else if(!isSuccess(response.getAsk(), response.getMessage())){
+                failureMsg = response.getMessage();
+            } else if (CollUtil.isNotEmpty(response.getData())) {
+                for (GoodCangOutboundResp goodCangOrderDTO : response.getData()) {
+                    responses.add(buildFbaOutboundResponse(goodCangOrderDTO));
+                }
+                return success(responses);
+            } else {
+                failureMsg = CharSequenceUtil.blankToDefault(response.getMessage(), "未查询到谷仓订单");
+            }
+            log.warn(getPlatForm().getName() + "按谷仓订单号未查询到B2B订单, orderCode={}, response={}", req.getPlatformOrderCodeList(), JSONUtil.toJsonStr(response));
         }
-        if(!isSuccess(response.getAsk(), response.getMessage())){
-            return failure(response.getMessage());
+
+        if (CollUtil.isEmpty(req.getErpOrderCodeList())) {
+            return failure(CharSequenceUtil.blankToDefault(failureMsg, "未查询到谷仓订单"));
         }
-        List<GoodCangOutboundResp> data = response.getData();
-        if(CollUtil.isEmpty(data)){
-            log.warn(getPlatForm().getName() + "按参考号未查询到B2B订单, referenceNo={}, response={}", req.getPlatformOrderCodeList(), JSONUtil.toJsonStr(response));
-            return failure(CharSequenceUtil.blankToDefault(response.getMessage(), "未查询到谷仓订单"));
+        for (String referenceNo : req.getErpOrderCodeList()) {
+            GoodCangResponse<GoodCangOrderDTO> response = goodCangService.getOrderByRefCode(referenceNo);
+            if (Objects.isNull(response) || !isSuccess(response.getAsk(), response.getMessage()) || Objects.isNull(response.getData())) {
+                log.warn(getPlatForm().getName() + "按参考号未查询到B2B订单, referenceNo={}, response={}", referenceNo, JSONUtil.toJsonStr(response));
+                continue;
+            }
+            responses.add(buildFbaOutboundResponse(response.getData(), referenceNo));
         }
-        for (GoodCangOutboundResp goodCangOrderDTO : data) {
-            String code = goodCangOrderDTO.getOrderCode();
-            ThirdWarehouseQueryFbaOutboundResponse res = new ThirdWarehouseQueryFbaOutboundResponse();
-            res.setCode(code);
-            res.setPlatformOrderCode(goodCangOrderDTO.getOrderCode());
-            res.setTrackNo(goodCangOrderDTO.getTrackNo());
-            res.setDeliveryTimeStr(String.valueOf(goodCangOrderDTO.getOutBoundTime()));
-            res.setPlatformOriginalStatus(goodCangOrderDTO.getOrderStatus());
-            res.setStatus(GoodCangEnums.B2BOrderStatusEnum.getErpOrderStatus(goodCangOrderDTO.getOrderStatus()));
-            responses.add(res);
-        }
-        return success(responses);
+        return CollUtil.isNotEmpty(responses) ? success(responses) : failure(CharSequenceUtil.blankToDefault(failureMsg, "未查询到谷仓订单"));
+    }
+
+    private ThirdWarehouseQueryFbaOutboundResponse buildFbaOutboundResponse(GoodCangOutboundResp goodCangOrderDTO) {
+        ThirdWarehouseQueryFbaOutboundResponse res = new ThirdWarehouseQueryFbaOutboundResponse();
+        res.setCode(goodCangOrderDTO.getReferenceNo());
+        res.setPlatformOrderCode(goodCangOrderDTO.getOrderCode());
+        res.setTrackNo(goodCangOrderDTO.getTrackNo());
+        res.setDeliveryTimeStr(Objects.nonNull(goodCangOrderDTO.getOutBoundTime()) ? goodCangOrderDTO.getOutBoundTime().toString() : null);
+        res.setPlatformOriginalStatus(goodCangOrderDTO.getOrderStatus());
+        res.setStatus(GoodCangEnums.B2BOrderStatusEnum.getErpOrderStatus(goodCangOrderDTO.getOrderStatus()));
+        return res;
+    }
+
+    private ThirdWarehouseQueryFbaOutboundResponse buildFbaOutboundResponse(GoodCangOrderDTO goodCangOrderDTO, String referenceNo) {
+        ThirdWarehouseQueryFbaOutboundResponse res = new ThirdWarehouseQueryFbaOutboundResponse();
+        res.setCode(CharSequenceUtil.blankToDefault(goodCangOrderDTO.getReferenceNo(), referenceNo));
+        res.setPlatformOrderCode(goodCangOrderDTO.getOrderCode());
+        res.setTrackNo(goodCangOrderDTO.getTrackingNo());
+        res.setDeliveryTimeStr(goodCangOrderDTO.getDateShipping());
+        res.setPlatformCreateTimeStr(goodCangOrderDTO.getDateCreate());
+        res.setPlatformUpdateTimeStr(goodCangOrderDTO.getDateModify());
+        res.setPlatformOriginalStatus(goodCangOrderDTO.getOrderStatus());
+        res.setStatus(GoodCangEnums.B2BOrderStatusEnum.getErpOrderStatus(goodCangOrderDTO.getOrderStatus()));
+        res.setErrorType(goodCangOrderDTO.getAbnormalProblemReason());
+        res.setSwOrderNumber(goodCangOrderDTO.getPlatformOrderCode());
+        res.setWarehouseCode(goodCangOrderDTO.getWarehouseCode());
+        res.setShippingMethod(goodCangOrderDTO.getShippingMethod());
+        res.setCarrierName(goodCangOrderDTO.getCarrierName());
+        return res;
     }
 
     @Override
@@ -450,7 +493,8 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     private GoodCangCreateB2bReq buildB2bOrderReq(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
         GoodCangCreateB2bReq goodCangCreateB2bReq = new GoodCangCreateB2bReq();
         goodCangCreateB2bReq.setReferenceNo(createOutboundReq.getReferenceNo());
-        goodCangCreateB2bReq.setPackingType("0");
+        String packingType = CharSequenceUtil.blankToDefault(createOutboundReq.getPackingType(), GOOD_CANG_DEFAULT_PACKING_TYPE);
+        goodCangCreateB2bReq.setPackingType(packingType);
         goodCangCreateB2bReq.setVerify(1);
         goodCangCreateB2bReq.setWarehouseCode(createOutboundReq.getThirdWarehouseCode());
         goodCangCreateB2bReq.setRecipientInfo(GoodCangCreateB2bReq.RecipientInfo.builder()
@@ -465,8 +509,58 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                         .isInsurance(createOutboundReq.getIsInsurance()?1:0)
                         .isSignature(createOutboundReq.getIsSignature()?1:0)
                         .smCode(createOutboundReq.getChannelCode()).build());
+        List<GoodCangCreateB2bReq.Item> itemList = buildGoodCangB2bItemList(createOutboundReq);
+        Integer boxMarkNum = createOutboundReq.getLabelsPerBox() != null ? createOutboundReq.getLabelsPerBox() : 0;
+        goodCangCreateB2bReq.setWarehouseService(GoodCangCreateB2bReq.WarehouseService.builder()
+                        .boxMarkNum(boxMarkNum)
+                        .isChangeLabel(0)
+                        .itemList(itemList)
+                        .packingList(buildGoodCangB2bPackingList(createOutboundReq))
+                        .build());
+        Integer packingFileId = parseAttachmentId(createOutboundReq.getFileId(), "装箱清单附件ID");
+        goodCangCreateB2bReq.setOtherInfo(GoodCangCreateB2bReq.OtherInfo.builder()
+                        .orderDesc(createOutboundReq.getRemark())
+                        .packingFileId(packingFileId)
+                        .build());
+        return goodCangCreateB2bReq;
+    }
+
+    private Integer parseAttachmentId(String attachmentId, String fieldName) {
+        if (CharSequenceUtil.isBlank(attachmentId) || "null".equalsIgnoreCase(attachmentId.trim())) {
+            return null;
+        }
+        try {
+            return Integer.valueOf(attachmentId);
+        } catch (NumberFormatException e) {
+            // ServiceException(String, Object...) 内部使用 CharSequenceUtil.format，{} 占位符会正确替换。
+            throw new ServiceException("B2B三方发货单{}格式错误：{}", fieldName, attachmentId);
+        }
+    }
+
+    private List<GoodCangCreateB2bReq.Item> buildGoodCangB2bItemList(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
+        String packingType = CharSequenceUtil.blankToDefault(createOutboundReq.getPackingType(), GOOD_CANG_DEFAULT_PACKING_TYPE);
+        if (!GOOD_CANG_DEFAULT_PACKING_TYPE.equals(packingType) && CollUtil.isNotEmpty(createOutboundReq.getPackingDetailList())) {
+            Map<String, Integer> qtyBySku = new LinkedHashMap<>();
+            for (ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem packingItem : createOutboundReq.getPackingDetailList()) {
+                if (CharSequenceUtil.isBlank(packingItem.getWarehousePlatformSku()) || packingItem.getPackingQty() == null) {
+                    continue;
+                }
+                qtyBySku.merge(packingItem.getWarehousePlatformSku(), packingItem.getPackingQty(), Integer::sum);
+            }
+            List<GoodCangCreateB2bReq.Item> itemList = new ArrayList<>();
+            for (Map.Entry<String, Integer> entry : qtyBySku.entrySet()) {
+                GoodCangCreateB2bReq.Item productItem = new GoodCangCreateB2bReq.Item();
+                productItem.setProductSku(entry.getKey());
+                productItem.setQuantity(entry.getValue());
+                itemList.add(productItem);
+            }
+            if (CollUtil.isEmpty(itemList)) {
+                throw new ServiceException("装箱明细中无有效SKU，无法构建出库商品列表");
+            }
+            return itemList;
+        }
         List<GoodCangCreateB2bReq.Item> itemList = new ArrayList<>();
-        for (ThirdWarehouseCreateFbaOutboundReq.Item item : createOutboundReq.getItems()){
+        for (ThirdWarehouseCreateFbaOutboundReq.Item item : createOutboundReq.getItems()) {
             GoodCangCreateB2bReq.Item productItem = new GoodCangCreateB2bReq.Item();
             productItem.setProductSku(item.getWarehousePlatformSku());
             Integer quantity = item.getDeliveryQty();
@@ -478,15 +572,71 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             productItem.setQuantity(quantity);
             itemList.add(productItem);
         }
-        goodCangCreateB2bReq.setWarehouseService(GoodCangCreateB2bReq.WarehouseService.builder()
-                        .boxMarkNum(0)
-                        .isChangeLabel(0)
-                        .itemList(itemList).build());
-        goodCangCreateB2bReq.setOtherInfo(GoodCangCreateB2bReq.OtherInfo.builder()
-                        .orderDesc(createOutboundReq.getRemark())
-                        .packingFileId(StringUtils.isNotBlank(createOutboundReq.getFileId())?Integer.valueOf(createOutboundReq.getFileId()):null)
-                        .build());
-        return goodCangCreateB2bReq;
+        return itemList;
+    }
+
+    private List<GoodCangCreateB2bReq.Packing> buildGoodCangB2bPackingList(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
+        String packingType = CharSequenceUtil.blankToDefault(createOutboundReq.getPackingType(), GOOD_CANG_DEFAULT_PACKING_TYPE);
+        if (GOOD_CANG_DEFAULT_PACKING_TYPE.equals(packingType) || CollUtil.isEmpty(createOutboundReq.getPackingDetailList())) {
+            return null;
+        }
+        boolean preStagedBox = B2bPackingTypeEnum.PRE_STAGED_BOX.getCode().equals(packingType);
+        boolean customerSpecified = B2bPackingTypeEnum.CUSTOMER_SPECIFIED.getCode().equals(packingType);
+        Map<Integer, List<ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem>> detailByBox = createOutboundReq.getPackingDetailList().stream()
+                .filter(e -> Objects.nonNull(e.getBoxSeq()))
+                .collect(Collectors.groupingBy(ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem::getBoxSeq, LinkedHashMap::new, Collectors.toList()));
+        List<GoodCangCreateB2bReq.Packing> packingList = new ArrayList<>();
+        for (Map.Entry<Integer, List<ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem>> entry : detailByBox.entrySet()) {
+            List<ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem> boxItems = entry.getValue();
+            ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem boxHead = boxItems.get(0);
+            List<GoodCangCreateB2bReq.PackingLine> packingLineList = buildGoodCangPackingLineList(packingType, boxItems);
+            List<GoodCangCreateB2bReq.ShipmentFile> shipmentFileList = buildGoodCangShipmentFileList(boxHead);
+            packingList.add(GoodCangCreateB2bReq.Packing.builder()
+                    .boxMark(CharSequenceUtil.blankToDefault(boxHead.getBoxMarkRefNo(), ""))
+                    .boxNo(preStagedBox ? null : entry.getKey())
+                    .boxRefMark(customerSpecified ? null : CharSequenceUtil.blankToDefault(boxHead.getBoxMarkNo(), ""))
+                    // GoodCang rejects top-level shipment_file_id when shipment_file_list is present.
+                    .shipmentFileId(null)
+                    .shipmentFileList(shipmentFileList)
+                    .logisticsFileId(null)
+                    .customsFileId(null)
+                    .packingLineList(packingLineList)
+                    .build());
+        }
+        return packingList;
+    }
+
+    private List<GoodCangCreateB2bReq.ShipmentFile> buildGoodCangShipmentFileList(ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem boxHead) {
+        if (CollUtil.isNotEmpty(boxHead.getShipmentFileList())) {
+            return boxHead.getShipmentFileList().stream()
+                    .filter(e -> Objects.nonNull(e.getShipmentFileId()))
+                    .map(e -> GoodCangCreateB2bReq.ShipmentFile.builder()
+                            .labellingRequire(CharSequenceUtil.blankToDefault(boxHead.getLabelingRequirement(), ""))
+                            .labelSize(B2bPackingLabelSizeEnum.getGoodCangCode(boxHead.getLabelSize()))
+                            .shipmentFileId(e.getShipmentFileId())
+                            .build())
+                    .collect(Collectors.toList());
+        }
+        GoodCangCreateB2bReq.ShipmentFile shipmentFile = GoodCangCreateB2bReq.ShipmentFile.builder()
+                .labellingRequire(CharSequenceUtil.blankToDefault(boxHead.getLabelingRequirement(), ""))
+                .labelSize(B2bPackingLabelSizeEnum.getGoodCangCode(boxHead.getLabelSize()))
+                .shipmentFileId(boxHead.getShipmentFileId())
+                .build();
+        return Collections.singletonList(shipmentFile);
+    }
+
+    private List<GoodCangCreateB2bReq.PackingLine> buildGoodCangPackingLineList(String packingType,
+                                                                               List<ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem> boxItems) {
+        if (B2bPackingTypeEnum.PRE_STAGED_BOX.getCode().equals(packingType)) {
+            return null;
+        }
+        return boxItems.stream()
+                .filter(e -> CharSequenceUtil.isNotBlank(e.getWarehousePlatformSku()) && Objects.nonNull(e.getPackingQty()))
+                .map(e -> GoodCangCreateB2bReq.PackingLine.builder()
+                        .productSku(e.getWarehousePlatformSku())
+                        .quantity(e.getPackingQty())
+                        .build())
+                .collect(Collectors.toList());
     }
 
     public boolean isSuccess(String ask, String message){

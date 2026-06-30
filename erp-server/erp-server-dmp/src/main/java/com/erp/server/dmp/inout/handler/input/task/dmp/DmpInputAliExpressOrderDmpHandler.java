@@ -47,6 +47,10 @@ import cn.hutool.core.collection.CollUtil;
 @Scope("prototype")
 public class DmpInputAliExpressOrderDmpHandler extends DmpInputDbConvertDmpHandler{
 
+	private static final String SHIPS_FROM_ATTRIBUTE = "ships from";
+
+	private static final String BRAZIL_SHIP_FROM = "brazil";
+
 	@Autowired
 	private DmpSoInfoService dmpSoInfoService;
 	
@@ -212,7 +216,9 @@ public class DmpInputAliExpressOrderDmpHandler extends DmpInputDbConvertDmpHandl
 								List<OrderItemDetail.ChildSku> skuList = childSkus.getChildSkus();
 								if (CollUtil.isNotEmpty(skuList)) {
 									for (OrderItemDetail.ChildSku sku : skuList) {
-                                        if ("Ships From".equals(sku.getPName()) && "brazil".equals(sku.getPValue())) {
+                                        String attributeName = StringUtils.lowerCase(StringUtils.trimToEmpty(sku.getPName()));
+                                        String shipFrom = StringUtils.lowerCase(StringUtils.trimToEmpty(sku.getPValue()));
+                                        if (SHIPS_FROM_ATTRIBUTE.equals(attributeName) && BRAZIL_SHIP_FROM.equals(shipFrom)) {
                                             isNeedNfe = true;
                                             break;
                                         }
