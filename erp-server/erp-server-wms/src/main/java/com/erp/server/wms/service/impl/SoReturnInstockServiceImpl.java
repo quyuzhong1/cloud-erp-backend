@@ -740,21 +740,6 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             viewDTO.setExchangeRate(detailEntity.getExchangeRate());
             detailViewDTOS.add(detailView);
         }
-        //头部仓库字段在主单不落库，从明细回填
-        SoReturnInstockDetailEntity firstWarehouseDetail = detailEntityList.stream()
-                .filter(d -> CharSequenceUtil.isNotBlank(d.getWarehouseId()))
-                .findFirst().orElse(null);
-        if (firstWarehouseDetail != null) {
-            viewDTO.setWarehouseId(firstWarehouseDetail.getWarehouseId());
-            if (CharSequenceUtil.isNotBlank(firstWarehouseDetail.getWarehouseName())) {
-                viewDTO.setWarehouseName(firstWarehouseDetail.getWarehouseName());
-            } else {
-                List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Collections.singletonList(firstWarehouseDetail.getWarehouseId()));
-                if (CollectionUtils.isNotEmpty(warehouseList)) {
-                    viewDTO.setWarehouseName(warehouseList.get(0).getName());
-                }
-            }
-        }
         viewDTO.setDetailList(detailViewDTOS);
         return viewDTO;
     }
