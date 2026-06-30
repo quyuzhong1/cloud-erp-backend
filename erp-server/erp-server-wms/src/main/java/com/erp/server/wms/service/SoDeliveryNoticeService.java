@@ -86,6 +86,13 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
     Boolean consumeDeclareAutoGenerateTask(AutoGenerateBillDTO dto);
 
     /**
+     * Asynchronously handles B2B declaration auto generation.
+     *
+     * @param dto auto generation parameter
+     */
+    void asyncConsumeDeclareAutoGenerateTask(AutoGenerateBillDTO dto);
+
+    /**
      * 修改
      * @Author Luo_WG
      * @Date 2023/4/13 14:51

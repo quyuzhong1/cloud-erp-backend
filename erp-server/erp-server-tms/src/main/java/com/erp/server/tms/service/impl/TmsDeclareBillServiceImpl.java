@@ -1198,7 +1198,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
     public List<BatchResultDTO> delete(TmsDeclareBillDTO.DeleteDTO dto) {
         List<TmsDeclareBillEntity> entityList = this.listByIds(dto.getIds());
         List<BatchResultDTO> resultList = new ArrayList<>();
@@ -4740,6 +4740,9 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_SOURCE_DETAIL_NOT_FOUND_FOR_SAVE);
         }
         Set<String> sourceIdSet = collectSourceIdSet(mergeDetailList);
+
+        //下推中间表和报关单前按源单整单删除（防止中间表数据重复）
+        deliveryDeclareDetailMidService.deleteDeliveryDeclareDetailMid(new ArrayList<>(sourceIdSet));
 
         List<DeliveryDeclareDetailMidEntity> existsMidList = deliveryDeclareDetailMidService.lambdaQuery()
                 .eq(DeliveryDeclareDetailMidEntity::getSourceType, sourceType)
