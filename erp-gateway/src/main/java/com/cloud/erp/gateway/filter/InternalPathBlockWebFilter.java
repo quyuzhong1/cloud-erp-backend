@@ -4,6 +4,7 @@ import com.cloud.erp.gateway.utils.ServletUtils;
 import com.common.core.enums.ApiError;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.Ordered;
 import org.springframework.core.env.Environment;
 import org.springframework.http.server.reactive.ServerHttpRequest;
@@ -22,6 +23,7 @@ import java.net.UnknownHostException;
  */
 @Slf4j
 @Component
+@ConditionalOnProperty(prefix = "erp.internal-health", name = "enabled", havingValue = "true")
 public class InternalPathBlockWebFilter implements WebFilter, Ordered {
 
     private static final String INTERNAL_PATH_PREFIX = "/internal/";

@@ -1,6 +1,7 @@
 package com.cloud.erp.gateway.controller;
 
 import com.cloud.erp.gateway.component.GatewayReadinessState;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +21,7 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/internal")
+@ConditionalOnProperty(prefix = "erp.internal-health", name = "enabled", havingValue = "true")
 public class GatewayInternalHealthController {
 
     private static final String STATUS_UP = "UP";
