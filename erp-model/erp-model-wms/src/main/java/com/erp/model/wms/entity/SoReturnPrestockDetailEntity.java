@@ -1,0 +1,196 @@
+package com.erp.model.wms.entity;
+
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.core.entity.BaseEntity;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Accessors;
+
+import java.io.Serializable;
+
+/**
+ * <p>
+ * 预入库单详情表
+ * </p>
+ *
+ * @author auto
+ * @since 2026-06-30
+ */
+@Getter
+@Setter
+@Accessors(chain = true)
+@TableName("so_return_prestock_detail")
+public class SoReturnPrestockDetailEntity extends BaseEntity<SoReturnPrestockDetailEntity> {
+
+    public static final String MAIN_ID = "main_id";
+    public static final String PARENT_DETAIL_ID = "parent_detail_id";
+    public static final String AFTER_SALE_ID = "after_sale_id";
+    public static final String AFTER_SALE_CODE = "after_sale_code";
+    public static final String PLATFORM_ORDER_CODE = "platform_order_code";
+    public static final String DICT_PLATFORM = "dict_platform";
+    public static final String SO_ID = "so_id";
+    public static final String SO_CODE = "so_code";
+    public static final String SO_RETURN_ID = "so_return_id";
+    public static final String SO_RETURN_CODE = "so_return_code";
+    public static final String RETURN_INSTOCK_ID = "return_instock_id";
+    public static final String RETURN_INSTOCK_CODE = "return_instock_code";
+    public static final String SHOP_ID = "shop_id";
+    public static final String SHOP_NAME = "shop_name";
+    public static final String SKU_ID = "sku_id";
+    public static final String SKU_NO = "sku_no";
+    public static final String PRODUCT_NAME = "product_name";
+    public static final String RETURN_QTY = "return_qty";
+    public static final String RECEIVE_QTY = "receive_qty";
+    public static final String CLAIMED_QTY = "claimed_qty";
+    public static final String LINK_STATUS = "link_status";
+    public static final String SALES_ORG_ID = "sales_org_id";
+    public static final String SALES_DEPT_ID = "sales_dept_id";
+    /**
+     * 主表 ID（so_return_prestock.id）
+     */
+    @TableField("main_id")
+    private String mainId;
+    /**
+     * 拆分来源详情行 ID；原始创建时为空字符串，拆分行记录原行 ID
+     */
+    @TableField("parent_detail_id")
+    private String parentDetailId;
+    /**
+     * 售后单 ID
+     */
+    @TableField("after_sale_id")
+    private String afterSaleId;
+    /**
+     * 售后单号
+     */
+    @TableField("after_sale_code")
+    private String afterSaleCode;
+    /**
+     * 平台订单号
+     */
+    @TableField("platform_order_code")
+    private String platformOrderCode;
+
+    // ===================== 常量字段 =====================
+    /**
+     * 平台字典值（与 AfterSaleEntity.dict_platform 一致）
+     */
+    @TableField("dict_platform")
+    private String dictPlatform;
+    /**
+     * 销售单 ID
+     */
+    @TableField("so_id")
+    private String soId;
+    /**
+     * 销售单号
+     */
+    @TableField("so_code")
+    private String soCode;
+    /**
+     * 退货单 ID（OMS so_return.id）；通过大范围模糊匹配找出可匹配的售后单后，选定确认关联时写入
+     */
+    @TableField("so_return_id")
+    private String soReturnId;
+    /**
+     * 退货单号（OMS so_return.code）；选定后即为该明细行的关联退货单
+     */
+    @TableField("so_return_code")
+    private String soReturnCode;
+    /**
+     * 生成的退货入库单 ID；认领关联成功后，由系统生成并回写
+     */
+    @TableField("return_instock_id")
+    private String returnInstockId;
+    /**
+     * 生成的退货入库单号；认领关联成功后，由系统生成并回写（对齐：SoB2cReturnEntity.return_instock_code）
+     */
+    @TableField("return_instock_code")
+    private String returnInstockCode;
+    /**
+     * 店铺 ID
+     */
+    @TableField("shop_id")
+    private String shopId;
+    /**
+     * 店铺名称
+     */
+    @TableField("shop_name")
+    private String shopName;
+    /**
+     * SKU ID
+     */
+    @TableField("sku_id")
+    private String skuId;
+    /**
+     * SKU 编码
+     */
+    @TableField("sku_no")
+    private String skuNo;
+    /**
+     * 产品名称
+     */
+    @TableField("product_name")
+    private String productName;
+    /**
+     * 产品图片 URL
+     */
+    @TableField("product_image_url")
+    private String productImageUrl;
+    /**
+     * EAN 码
+     */
+    @TableField("ean")
+    private String ean;
+    /**
+     * 退货数量
+     */
+    @TableField("return_qty")
+    private Integer returnQty;
+    /**
+     * 实际收货数量
+     */
+    @TableField("receive_qty")
+    private Integer receiveQty;
+    /**
+     * 已认领数量
+     */
+    @TableField("claimed_qty")
+    private Integer claimedQty;
+    /**
+     * 关联状态：UNLINKED=未关联，LINKED=已关联
+     */
+    @TableField("link_status")
+    private String linkStatus;
+    /**
+     * 销售组织 ID
+     */
+    @TableField("sales_org_id")
+    private String salesOrgId;
+    /**
+     * 销售组织名称
+     */
+    @TableField("sales_org_name")
+    private String salesOrgName;
+    /**
+     * 销售部门 ID
+     */
+    @TableField("sales_dept_id")
+    private String salesDeptId;
+    /**
+     * 销售部门名称
+     */
+    @TableField("sales_dept_name")
+    private String salesDeptName;
+    /**
+     * 备注
+     */
+    @TableField("remark")
+    private String remark;
+
+    @Override
+    public Serializable pkVal() {
+        return null;
+    }
+}
