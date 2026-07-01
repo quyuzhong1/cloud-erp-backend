@@ -4835,10 +4835,6 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_SOURCE_DETAIL_NOT_FOUND_FOR_SAVE);
         }
         Set<String> sourceIdSet = collectSourceIdSet(mergeDetailList);
-
-        //下推中间表和报关单前按源单整单删除（防止中间表数据重复）
-        deliveryDeclareDetailMidService.deleteDeliveryDeclareDetailMid(new ArrayList<>(sourceIdSet));
-
         List<DeliveryDeclareDetailMidEntity> existsMidList = deliveryDeclareDetailMidService.lambdaQuery()
                 .eq(DeliveryDeclareDetailMidEntity::getSourceType, sourceType)
                 .in(CollUtil.isNotEmpty(sourceIdSet), DeliveryDeclareDetailMidEntity::getSourceId, sourceIdSet)
@@ -4909,6 +4905,10 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 }
             }
         }
+
+        // 校验完成后再按源单整单删除旧中间表，避免幂等命中 return 或校验抛错时误删历史关联。
+        // 旧报关单 id 已在 existsMidList 中缓存，删除中间表不会影响后续新单落库。
+        deliveryDeclareDetailMidService.deleteDeliveryDeclareDetailMid(new ArrayList<>(sourceIdSet));
 
         List<DeliveryDeclareDetailMidEntity> changedMidList = new ArrayList<>();
         for (TmsDeclareBillDTO.MergeDeclareBillDTO mergeDeclareBillDTO : list) {
