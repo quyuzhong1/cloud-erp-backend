@@ -73,6 +73,7 @@ import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.LWAException;
 import com.erp.sdk.oms.amz.spapi.api.AwdApi;
 import com.erp.sdk.oms.amz.spapi.api.FbaInboundApi;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonFbaLabelTypeEnum;
 import com.erp.sdk.oms.amz.spapi.model.awd.ShipmentLabels;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.GetLabelsResponse;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.ShipmentStatus;
@@ -2731,7 +2732,8 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             }
             try {
                 FbaInboundApi api = AmazonSpApiInitUtils.create(FbaInboundApi.class, shopInfoDTO, false);
-                GetLabelsResponse response = api.getLabels(entity.getFbaShipmentId(), pageType, "BARCODE_2D", null, null, null, pageSize, 0);
+                GetLabelsResponse response = api.getLabels(entity.getFbaShipmentId(), pageType,
+                        AmazonFbaLabelTypeEnum.BARCODE_2D.getCode(), null, null, null, pageSize, 0);
                 if (CharSequenceUtil.isNotBlank(response.getPayload().getDownloadURL())){
                     labelUrl = PdfUtil.convertPdfUrlToErpUrl(response.getPayload().getDownloadURL(), true);
                 }
