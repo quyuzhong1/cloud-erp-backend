@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.enums.CurrencyEnum;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.BasicDictEntity;
@@ -154,6 +155,7 @@ public class ProductLogisticsServiceImpl extends ServiceImpl<ProductLogisticsMap
     public Boolean saveOrUpdate(ProductLogisticsDTO productLogisticsDTO) {
         ProductLogisticsEntity logisticsEntity = new ProductLogisticsEntity();
         BeanMapper.copy(productLogisticsDTO, logisticsEntity);
+        logisticsEntity.setDeclareUnit(convertDeclareUnitToValue(logisticsEntity.getDeclareUnit()));
         //物流属性
         if (StrUtil.isNotBlank(productLogisticsDTO.getProductPropertyId())) {
             List<BasicDictEntity> propertytList = basicDictService.listByType(BasicDictTypeEnum.DECLARE_PROPERTY.getCode());
@@ -195,7 +197,9 @@ public class ProductLogisticsServiceImpl extends ServiceImpl<ProductLogisticsMap
         List<ProductLogisticsEntity> oldList = this.lambdaQuery().in(ProductLogisticsEntity::getSkuId, skuIdList).list();
         //物流属性
         List<BasicDictEntity> propertytList = basicDictService.listByType(BasicDictTypeEnum.DECLARE_PROPERTY.getCode());
+        List<BasicDictEntity> declareUnitList = listDeclareUnitDict();
         for (ProductLogisticsEntity productLogisticsEntity : list) {
+            productLogisticsEntity.setDeclareUnit(convertDeclareUnitToValue(productLogisticsEntity.getDeclareUnit(), declareUnitList));
             //物流属性名称
             if (StrUtil.isNotBlank(productLogisticsEntity.getProductPropertyId())) {
                 List<String> propertyIdList = Arrays.stream(productLogisticsEntity.getProductPropertyId().split(",")).collect(Collectors.toList());
@@ -211,6 +215,48 @@ public class ProductLogisticsServiceImpl extends ServiceImpl<ProductLogisticsMap
         boolean result = service.saveOrUpdateBatch(list);
         this.saveOrUpdateParentPropertyIdByChildSkuId(skuIdList);
         return result;
+    }
+
+    @Override
+    public String convertDeclareUnitToValue(String declareUnit) {
+        return convertDeclareUnitToValue(declareUnit, listDeclareUnitDict());
+    }
+
+    @Override
+    public String convertDeclareUnitToValue(String declareUnit, List<BasicDictEntity> declareUnitList) {
+        if (StrUtil.isBlank(declareUnit)) {
+            return declareUnit;
+        }
+        String unit = declareUnit.trim();
+        List<BasicDictEntity> valueMatchedList = declareUnitList.stream()
+                .filter(item -> StrUtil.equals(unit, StrUtil.trim(item.getValue())))
+                .collect(Collectors.toList());
+        if (valueMatchedList.size() == 1) {
+            return valueMatchedList.get(0).getValue().trim();
+        }
+        if (valueMatchedList.size() > 1) {
+            throw new ServiceException("报关单位【{}】字典配置不唯一，请检查", unit);
+        }
+
+        List<BasicDictEntity> nameMatchedList = declareUnitList.stream()
+                .filter(item -> StrUtil.equals(unit, StrUtil.trim(item.getName())))
+                .collect(Collectors.toList());
+        if (nameMatchedList.size() == 1) {
+            String value = nameMatchedList.get(0).getValue();
+            if (StrUtil.isBlank(value)) {
+                throw new ServiceException("报关单位【{}】字典配置不唯一，请检查", unit);
+            }
+            return value.trim();
+        }
+        if (nameMatchedList.size() > 1) {
+            throw new ServiceException("报关单位【{}】字典配置不唯一，请检查", unit);
+        }
+        throw new ServiceException("报关单位【{}】不存在，请检查", unit);
+    }
+
+    private List<BasicDictEntity> listDeclareUnitDict() {
+        List<BasicDictEntity> declareUnitList = basicDictService.listByType(BasicDictTypeEnum.DECLARE_UNIT.getCode());
+        return CollectionUtils.isEmpty(declareUnitList) ? Collections.emptyList() : declareUnitList;
     }
 
     /**

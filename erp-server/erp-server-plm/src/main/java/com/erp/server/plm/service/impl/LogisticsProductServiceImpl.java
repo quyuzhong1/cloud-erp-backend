@@ -319,6 +319,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         BeanMapper.copy(oldEntity, productLogistics);
 
         BeanMapper.copy(declareInfo, productLogistics);
+        productLogistics.setDeclareUnit(productLogisticsService.convertDeclareUnitToValue(productLogistics.getDeclareUnit()));
         // 如果 productPropertyId 有值但 productProperty 为空，需要根据 productPropertyId 重新生成 productProperty
         if (StringUtils.isNotBlank(productLogistics.getProductPropertyId())) {
             List<BasicDictEntity> propertytList = basicDictService.listByType(BasicDictTypeEnum.DECLARE_PROPERTY.getCode());
@@ -910,6 +911,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         List<SkuVO> skuList = productDetailService.getSkuBySkuNos(skuNoList);
         List<String> skuIdList = skuList.stream().map(SkuVO::getSkuId).collect(Collectors.toList());
         List<ProductLogisticsEntity> productLogisticsList = productLogisticsService.listBySkuIdList(skuIdList);
+        List<BasicDictEntity> declareUnitList = basicDictService.listByType(BasicDictTypeEnum.DECLARE_UNIT.getCode());
         Map<String, List<LogisticsProductExcelDTO>> map = successList.stream().collect(Collectors.groupingBy(LogisticsProductExcelDTO::getSkuNo));
         for (Map.Entry<String, List<LogisticsProductExcelDTO>> entry : map.entrySet()) {
             String skuNo = entry.getKey();
@@ -973,6 +975,12 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                     newLogistics.setDeclareUnit(isBlank(newLogistics.getDeclareUnit()) ? dictHsCodeEntity.getFirstDeclareUnit() : newLogistics.getDeclareUnit());
 
                     newLogistics.setDeclareElement(isBlank(newLogistics.getDeclareElement()) ? dictHsCodeEntity.getDeclareElement() : newLogistics.getDeclareElement());
+                }
+
+                try {
+                    newLogistics.setDeclareUnit(productLogisticsService.convertDeclareUnitToValue(newLogistics.getDeclareUnit(), declareUnitList));
+                } catch (ServiceException e) {
+                    errorMsgList.add(e.getMessage());
                 }
 
                 newLogistics.setFirstQty(isBlank(item.getFirstQtyStr()) ? newLogistics.getFirstQty() : new BigDecimal(item.getFirstQtyStr()));
