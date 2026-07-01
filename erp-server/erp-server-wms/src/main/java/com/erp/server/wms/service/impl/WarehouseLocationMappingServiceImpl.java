@@ -69,6 +69,8 @@ public class WarehouseLocationMappingServiceImpl extends SuperServiceImpl<Wareho
 
     private static final String IMPORT_EVENT = "IMPORT_WMS_WAREHOUSE_LOCATION_MAPPING";
 
+    private static final String BIND_WAREHOUSE_EMPTY_MSG = "绑定仓库为空，请确认仓库与第三方系统的绑定关系";
+
     @Resource
     private WarehouseService warehouseService;
 
@@ -377,6 +379,7 @@ public class WarehouseLocationMappingServiceImpl extends SuperServiceImpl<Wareho
     private List<Candidate> buildCandidates(WarehouseLocationMappingDTO.AddDTO dto) {
         String platform = validatePlatform(dto.getDictPlatform());
         WarehouseEntity warehouse = validateWarehouse(dto.getSysWarehouseId());
+        validateBindWarehouse(warehouse.getId(), platform);
         List<Candidate> candidates = new ArrayList<>(dto.getDetailList().size());
         for (WarehouseLocationMappingDTO.DetailDTO detailDTO : dto.getDetailList()) {
             WarehouseLocationEntity location = validateLocation(warehouse.getId(), detailDTO.getSysWarehouseLocation());
@@ -410,8 +413,13 @@ public class WarehouseLocationMappingServiceImpl extends SuperServiceImpl<Wareho
             row.setErrorMsg(String.join("；", errorList));
             return new Candidate(new WarehouseLocationMappingEntity(), row);
         }
-        if (warehouse == null || location == null) {
+        if (warehouse == null || location == null || CharSequenceUtil.isBlank(platform)) {
             row.setErrorMsg("导入数据校验失败");
+            return new Candidate(new WarehouseLocationMappingEntity(), row);
+        }
+        validateImportBindWarehouse(warehouse.getId(), platform, errorList);
+        if (CollectionUtils.isNotEmpty(errorList)) {
+            row.setErrorMsg(String.join("；", errorList));
             return new Candidate(new WarehouseLocationMappingEntity(), row);
         }
         WarehouseLocationMappingEntity entity = new WarehouseLocationMappingEntity();
@@ -421,6 +429,18 @@ public class WarehouseLocationMappingServiceImpl extends SuperServiceImpl<Wareho
         entity.setSysWarehouseLocation(location.getCode());
         entity.setThirdWarehouseLocation(row.getThirdWarehouseLocation());
         return new Candidate(entity, row);
+    }
+
+    private void validateBindWarehouse(String warehouseId, String platform) {
+        if (dmpThirdMappingFeign.getBySysId(warehouseId, platform) == null) {
+            throw new ServiceException(BIND_WAREHOUSE_EMPTY_MSG);
+        }
+    }
+
+    private void validateImportBindWarehouse(String warehouseId, String platform, List<String> errorList) {
+        if (dmpThirdMappingFeign.getBySysId(warehouseId, platform) == null) {
+            errorList.add(BIND_WAREHOUSE_EMPTY_MSG);
+        }
     }
 
     private void validateRequired(List<Candidate> candidates) {
@@ -534,10 +554,11 @@ public class WarehouseLocationMappingServiceImpl extends SuperServiceImpl<Wareho
             return;
         }
         List<WarehouseLocationMappingEntity> existList = listExisting(candidates, excludeId);
+        Map<String, String> bindWarehouseNameMap = buildBindWarehouseNameMap(candidates);
         for (Candidate candidate : candidates) {
             errorMap.computeIfAbsent(candidate, key -> new ArrayList<>());
-            validateDuplicateWithList(candidate, candidates, errorMap.get(candidate), true);
-            validateDuplicateWithList(candidate, wrapExisting(existList), errorMap.get(candidate), false);
+            validateDuplicateWithList(candidate, candidates, errorMap.get(candidate), true, bindWarehouseNameMap);
+            validateDuplicateWithList(candidate, wrapExisting(existList), errorMap.get(candidate), false, bindWarehouseNameMap);
         }
     }
 
@@ -558,8 +579,10 @@ public class WarehouseLocationMappingServiceImpl extends SuperServiceImpl<Wareho
         return existList.stream().map(entity -> new Candidate(entity, null)).collect(Collectors.toList());
     }
 
-    private void validateDuplicateWithList(Candidate current, List<Candidate> candidateList, List<String> errorList, boolean sameBatch) {
+    private void validateDuplicateWithList(Candidate current, List<Candidate> candidateList, List<String> errorList,
+                                         boolean sameBatch, Map<String, String> bindWarehouseNameMap) {
         WarehouseLocationMappingEntity currentEntity = current.getEntity();
+        String bindWarehouseName = resolveBindWarehouseName(currentEntity.getSysWarehouseId(), currentEntity.getDictPlatform(), bindWarehouseNameMap);
         Set<String> messageSet = new HashSet<>(errorList);
         for (Candidate candidate : candidateList) {
             WarehouseLocationMappingEntity other = candidate.getEntity();
@@ -571,17 +594,47 @@ public class WarehouseLocationMappingServiceImpl extends SuperServiceImpl<Wareho
             }
             boolean sameSysLocation = Objects.equals(currentEntity.getSysWarehouseLocation(), other.getSysWarehouseLocation());
             boolean sameThirdLocation = Objects.equals(currentEntity.getThirdWarehouseLocation(), other.getThirdWarehouseLocation());
+            String platformName = getPlatformName(currentEntity.getDictPlatform());
             if (sameSysLocation && sameThirdLocation) {
-                addMessage(errorList, messageSet, CharSequenceUtil.format("仓位【{}】不允许同时绑定相同第三方系统【{}】相同仓位【{}】",
-                        formatLocationDisplay(currentEntity.getSysWarehouseLocation()), getPlatformName(currentEntity.getDictPlatform()), currentEntity.getThirdWarehouseLocation()));
+                addMessage(errorList, messageSet, CharSequenceUtil.format("仓位【{}】不允许同时绑定相同第三方系统【{}】相同仓库【{}】仓位【{}】",
+                        formatLocationDisplay(currentEntity.getSysWarehouseLocation()), platformName, bindWarehouseName, currentEntity.getThirdWarehouseLocation()));
             } else if (!sameSysLocation && sameThirdLocation) {
-                addMessage(errorList, messageSet, CharSequenceUtil.format("仓位【{}】已绑定第三方系统【{}】仓位【{}】，请绑定其他仓位",
-                        formatLocationDisplay(other.getSysWarehouseLocation()), getPlatformName(currentEntity.getDictPlatform()), other.getThirdWarehouseLocation()));
+                addMessage(errorList, messageSet, CharSequenceUtil.format("仓位【{}】已绑定第三方系统【{}】仓库【{}】仓位【{}】，请绑定其他仓位",
+                        formatLocationDisplay(currentEntity.getSysWarehouseLocation()), platformName, bindWarehouseName, other.getThirdWarehouseLocation()));
             } else if (sameSysLocation) {
-                addMessage(errorList, messageSet, CharSequenceUtil.format("仓位【{}】已绑定第三方系统【{}】仓位【{}】，请解绑后再绑定",
-                        formatLocationDisplay(currentEntity.getSysWarehouseLocation()), getPlatformName(currentEntity.getDictPlatform()), other.getThirdWarehouseLocation()));
+                addMessage(errorList, messageSet, CharSequenceUtil.format("仓位【{}】已绑定第三方系统【{}】仓库【{}】仓位【{}】，请解绑后再绑定",
+                        formatLocationDisplay(currentEntity.getSysWarehouseLocation()), platformName, bindWarehouseName, other.getThirdWarehouseLocation()));
             }
         }
+    }
+
+    private Map<String, String> buildBindWarehouseNameMap(List<Candidate> candidates) {
+        Map<String, String> bindWarehouseNameMap = new HashMap<>();
+        candidates.stream()
+                .map(candidate -> buildKey(candidate.getEntity().getSysWarehouseId(), candidate.getEntity().getDictPlatform()))
+                .distinct()
+                .forEach(key -> bindWarehouseNameMap.put(key, resolveBindWarehouseName(key, bindWarehouseNameMap)));
+        return bindWarehouseNameMap;
+    }
+
+    private String resolveBindWarehouseName(String warehouseId, String platform, Map<String, String> bindWarehouseNameMap) {
+        return resolveBindWarehouseName(buildKey(warehouseId, platform), bindWarehouseNameMap);
+    }
+
+    private String resolveBindWarehouseName(String key, Map<String, String> bindWarehouseNameMap) {
+        if (bindWarehouseNameMap.containsKey(key)) {
+            return bindWarehouseNameMap.get(key);
+        }
+        String[] split = key.split("#", 2);
+        if (split.length < 2 || CharSequenceUtil.isBlank(split[0]) || CharSequenceUtil.isBlank(split[1])) {
+            bindWarehouseNameMap.put(key, "");
+            return "";
+        }
+        ThirdWarehouseEntity thirdWarehouse = dmpThirdMappingFeign.getBySysId(split[0], split[1]);
+        String bindWarehouseName = thirdWarehouse == null ? ""
+                : CharSequenceUtil.blankToDefault(thirdWarehouse.getName(), thirdWarehouse.getCode());
+        bindWarehouseNameMap.put(key, bindWarehouseName);
+        return bindWarehouseName;
     }
 
     private boolean sameSysWarehouseAndPlatform(WarehouseLocationMappingEntity current, WarehouseLocationMappingEntity other) {
