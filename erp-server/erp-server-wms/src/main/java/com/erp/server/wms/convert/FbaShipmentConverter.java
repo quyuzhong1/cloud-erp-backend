@@ -22,6 +22,8 @@ public interface FbaShipmentConverter {
     FbaShipmentConverter INSTANCE = Mappers.getMapper(FbaShipmentConverter.class);
 
     @Mapping(target = "detailList", ignore = true)
+    // 审查问题2（intentional）：DMP/MQ 落库 packType 为 enum code；展示层统一 toDisplayName，兼容历史中文存量
+    @Mapping(target = "packType", expression = "java(com.erp.sdk.oms.amz.spapi.enums.AmazonFbaPackTypeEnum.toDisplayName(shipmentEntity.getPackType()))")
     FbaShipmentDTO.ViewDTO fbaShipmentToViewDTO(FbaShipmentEntity shipmentEntity);
 
     @Mapping(target = "productName", ignore = true)
@@ -225,5 +227,6 @@ public interface FbaShipmentConverter {
 
     @Mapping(target = "detailList", ignore = true)
     @Mapping(target = "id", source = "entity.id")
+    @Mapping(target = "packType", expression = "java(com.erp.sdk.oms.amz.spapi.enums.AmazonFbaPackTypeEnum.toDisplayName(entity.getPackType()))")
     FbaShipmentDTO.ViewAwdDTO awdShipmentToViewDTO(FbaShipmentEntity entity, FbaShipmentExtendEntity fbaShipmentExtendEntity);
 }
