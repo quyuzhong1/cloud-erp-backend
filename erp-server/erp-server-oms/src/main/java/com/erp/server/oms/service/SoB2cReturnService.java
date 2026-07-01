@@ -67,6 +67,13 @@ public interface SoB2cReturnService extends SuperService<SoB2cReturnEntity> {
 
     SoB2cReturnEntity getByPlatformReturnCode(String platformReturnNo);
 
+    /**
+     * 根据退货物流单号查询B2C销售退货单（可能多条，按创建时间倒序）
+     * @param returnLogisticCode 退货物流单号
+     * @return java.util.List<com.erp.model.oms.entity.SoB2cReturnEntity>
+     */
+    List<SoB2cReturnEntity> listByReturnLogisticCode(String returnLogisticCode);
+
     void addByPlatform(SoB2cReturnEntity soB2cReturnEntity, List<SoB2cReturnDetailEntity> soB2cReturnDetailEntityList);
 
     List<SoB2cReturnDTO.ReturnLogisticsDTO> logisticsCodePreview(List<String> ids);

@@ -53,6 +53,7 @@ import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
 import com.erp.model.oms.enums.BillTypeEnum;
+import com.erp.model.oms.enums.ShipableStatusEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.LogisticsProductDTO;
@@ -941,39 +942,14 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<String> fieldList = CollectionUtils.isEmpty(params.getAdvanceQueryDTOList()) ? new ArrayList<>() :  params.getAdvanceQueryDTOList().stream().map(AdvanceQueryDTO::getField).collect(Collectors.toList());
         params.setFieldList(fieldList);
 
-        //是否虚拟仓缺货
-        List<AdvanceQueryDTO> advanceQueryDTOList = dto.getParams().getAdvanceQueryDTOList();
-        Boolean isVirtualOutStock = (Boolean)advanceQueryDTOList.stream().filter(v->"isVirtualOutStock".equals(v.getField())).findAny().orElse(new AdvanceQueryDTO()).getValue();
-        Boolean isOutStock = (Boolean)advanceQueryDTOList.stream().filter(v->"isVirtualScarce".equals(v.getField())).findAny().orElse(new AdvanceQueryDTO()).getValue();
-        if(Objects.nonNull(isVirtualOutStock) || Objects.nonNull(isOutStock)){
-            //查询全部数据，过滤出有缺货
-            Page query = new Page(1,Integer.MAX_VALUE,false);
-            IPage pageData = baseMapper.paging(query, params);
-            List<SoInfoDTO.PagingViewDTO> list = pageData.getRecords();
-            if (CollectionUtils.isEmpty(list)) {
-                return new PagingVO<>(pageData);
-            }
-            fillPagingDb(list);
-            if(Objects.nonNull(isVirtualOutStock)){
-                list = list.stream().filter(v -> v.getIsVirtualScarce()!= null && v.getIsVirtualScarce().equals(isVirtualOutStock)).collect(Collectors.toList());
-            }
-            if(Objects.nonNull(isOutStock)){
-                list = list.stream().filter(v -> v.getIsScarce()!= null && v.getIsScarce().equals(isOutStock)).collect(Collectors.toList());
-            }
-            Page result = new Page(dto.getCurrPage(), dto.getPageSize(),list.size());
-            list = com.common.business.utils.CollectionUtils.paginateList(list,dto.getPageSize(),dto.getCurrPage());
-            result.setRecords(list);
-            return new PagingVO<>(result);
-        }else {
-            Page<T> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
-            IPage pageData = baseMapper.paging(query, params);
-            List<SoInfoDTO.PagingViewDTO> list = pageData.getRecords();
-            if (CollectionUtils.isEmpty(list)) {
-                return new PagingVO<>(pageData);
-            }
-            fillPagingDb(list);
+        Page<T> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
+        IPage pageData = baseMapper.paging(query, params);
+        List<SoInfoDTO.PagingViewDTO> list = pageData.getRecords();
+        if (CollectionUtils.isEmpty(list)) {
             return new PagingVO<>(pageData);
         }
+        fillPagingDb(list);
+        return new PagingVO<>(pageData);
     }
 
     /**
@@ -1133,6 +1109,20 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             item.setWarehouseName(matchedWarehouse.map(WarehouseEntity::getName).orElse(""));
             item.setWarehouseManageType(matchedWarehouse.map(WarehouseEntity::getWarehouseManageType).orElse(""));
 
+            //可发货状态：依据锁定数量(冻结数量)与销售数量(发货箱数)关系判定
+            Integer lockQty = ObjectUtil.defaultIfNull(item.getFrozenQty(), MathUtil.ZERO);
+            Integer saleBoxQty = ObjectUtil.defaultIfNull(item.getBoxQty(), MathUtil.ZERO);
+            Integer shipableStatus;
+            if (lockQty <= MathUtil.ZERO) {
+                shipableStatus = ShipableStatusEnum.NONE.getCode();
+            } else if (lockQty >= saleBoxQty) {
+                shipableStatus = ShipableStatusEnum.ALL.getCode();
+            } else {
+                shipableStatus = ShipableStatusEnum.PART.getCode();
+            }
+            item.setShipableStatus(shipableStatus);
+            item.setShipableStatusName(ShipableStatusEnum.getName(shipableStatus));
+
             //存在虚拟仓库则判断是否缺货
             if (StrUtil.isNotBlank(item.getVirtualWarehouseId())) {
 
@@ -1153,7 +1143,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 handleVirtualBomScarce(bomChildrenList, virtualInventoryList, virtuaParamScarceDTO,approveNoticeQty+b2bBoxQty);
                 item.setVirtualUsableQty(virtuaParamScarceDTO.getVirtualUsableQty());
                 item.setChildScarceList(virtuaParamScarceDTO.getChildScarceList());
-                item.setIsVirtualScarce(virtuaParamScarceDTO.getIsVirtualScarce());
                 item.setVirtualScarceQty(ObjectUtil.isEmpty(virtuaParamScarceDTO.getVirtualScarceQty()) ? MathUtil.ZERO : virtuaParamScarceDTO.getVirtualScarceQty());
             }
             //申请数量
@@ -1231,8 +1220,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 item.setRemainingNoticeQty(remainingNoticeQty > 0 ? remainingNoticeQty : 0);
             }
 
-            //缺货标识
-            item.setIsScarce(scarceQty > 0);
             /**
              * 已出库数量
              * 新增时默认为0
@@ -1309,7 +1296,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
             if (ignoreInventorySkuIds.contains(deliverySkuId)) {
                 log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库，不做库存验证", deliverySkuId, item.getDeliverySkuNo());
-                item.setIsScarce(Boolean.FALSE);
                 item.setScarceQty(0);
             }
         }
@@ -2616,14 +2602,17 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         for (SoInfoDTO.GenerateDeliveryView view : viewList) {
             ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(view.getSkuId())).findFirst().orElse(new ProductDetailEntity());
             view.setProductName(productDetailEntity.getName());
-            view.setDeliveryQty(view.getSalesQty() - view.getAlreadyDeliveryQty());
+            // 锁定数量（已锁库存）
+            Integer frozenQty = ObjectUtil.defaultIfNull(view.getFrozenQty(), MathUtil.ZERO);
+            // 销售数量
+            Integer salesQty = ObjectUtil.defaultIfNull(view.getSalesQty(), MathUtil.ZERO);
+            // 发货数量默认填充已锁库存（锁定数量）
+            view.setDeliveryQty(frozenQty);
             view.setPlanDeliveryDate(view.getRequireDate());
             String customerName = customerList.stream().filter(c -> c.getId().equals(view.getCustomerId())).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             view.setCustomerName(customerName);
-            if(view.getDeliveryQty()>0){
-                resultList.add(view);
-            }
+            resultList.add(view);
 
             //发货通知数量
             List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailEntityList = soDeliveryNoticeDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(view.getDetailId())).collect(Collectors.toList());
@@ -2631,6 +2620,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 Integer effectiveNoticeQty = soDeliveryNoticeDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(view.getDetailId())).map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
                 effectiveNoticeQty = effectiveNoticeQty * view.getPerBoxQty();
                 view.setEffectiveNoticeQty(effectiveNoticeQty);
+                // 待发货通知数量 = 销售数量 - 累计发货通知数量 - 锁定数量
+                view.setWaitNoticeQty(salesQty - effectiveNoticeQty - frozenQty);
             }
 
         }

@@ -283,6 +283,7 @@ public interface BusinessNoConstant {
     String Z="Z";
     // 箱码
     String BOX = "BOX";
+    String YRK = "YRK";
 
     String WLD = "WLD";
     String WJPZ = "WJPZ";

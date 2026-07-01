@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.SoReturnPrestockMapper">
+
+    <!--
+        分页查询：主表基本信息
+        - ${params.sqlMap.default}  : 由 @WebAdvanceQuery QueryHandler 注入的高级搜索 SQL 条件
+        - ${params.permissionSql}   : 由 @DataPermission 框架注入的数据权限 SQL，不得视为注入风险
+        - ${item.field}/${item.sort}: 排序字段由 @WebAdvanceQuery 框架白名单校验，不得视为注入风险
+    -->
+    <select id="paging" resultType="com.erp.model.wms.dto.SoReturnPrestockDTO$PagingView">
+        SELECT
+            srp.id,
+            srp.code,
+            srp.type,
+            srp.return_logistic_code  AS returnLogisticCode,
+            srp.link_status           AS linkStatus,
+            srp.inventory_org_name    AS inventoryOrgName,
+            srp.warehouse_name        AS warehouseName,
+            srp.return_instock_time   AS returnInstockTime,
+            srp.operate_time          AS operateTime,
+            srp.source_type           AS sourceType,
+            srp.create_user_name      AS createUserName,
+            srp.create_time           AS createTime
+        FROM so_return_prestock srp
+        WHERE ${params.sqlMap.default}
+          AND srp.is_deleted = FALSE
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        srp.return_instock_time DESC
+    </select>
+
+</mapper>

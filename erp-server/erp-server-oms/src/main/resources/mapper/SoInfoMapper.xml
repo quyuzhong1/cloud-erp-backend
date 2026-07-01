@@ -97,13 +97,6 @@
         where btd.is_deleted = false and btd.status != 'cancelDelivery' group by btdd.so_detail_id
         ) btdd on sod.id = btdd.source_detail_id
         </if>
-        <if test="params.fieldList != null and params.fieldList.size > 0 and ( params.fieldList.contains('isVirtualScarce') or params.fieldList.contains('isVirtualOutStock') or params.fieldList.contains('remainingNoticeQty'))">
-            left join (
-            select sum(vi.qty) as virtualQty ,vi.sku_id,vi.virtual_warehouse_id,vi.warehouse_id  from virtual_inventory vi where vi.is_deleted = false  and vi.dict_inventory_status = 'usable' group by vi.sku_id,vi.virtual_warehouse_id
-            ,vi.warehouse_id
-            ) vi on vi.sku_id = sod.sku_id and si.virtual_warehouse_id = vi.virtual_warehouse_id
-            and si.warehouse_id = vi.warehouse_id
-        </if>
         WHERE
         ${params.sqlMap.default}
         and  sod.is_deleted=false
@@ -132,7 +125,7 @@
         LEFT JOIN so_detail sod
         ON sod.main_id =si.id AND si.is_deleted=false
         left join customer_info ci on si.customer_id = ci.id and ci.is_deleted = false
-        <if test="params.fieldList != null and params.fieldList.size > 0 and ( params.fieldList.contains('isVirtualScarce') or params.fieldList.contains('isVirtualOutStock') or params.fieldList.contains('remainingNoticeQty') )">
+        <if test="params.fieldList != null and params.fieldList.size > 0 and params.fieldList.contains('remainingNoticeQty')">
             left join (
             select sum(sdnd.delivery_qty) as deliveryQty ,sdnd.source_detail_id  from so_delivery_notice sdn left join so_delivery_notice_detail sdnd on sdn.id = sdnd.main_id and sdnd.is_deleted = false
             where sdn.is_deleted = false and sdn.approve_status = 'approve' group by sdnd.source_detail_id
@@ -141,11 +134,6 @@
             select sum(btdd.delivery_qty) as deliveryQty ,btdd.so_detail_id as source_detail_id  from foreign_b2b_third_delivery btd left join foreign_b2b_third_delivery_detail btdd on btd.id = btdd.main_id and btdd.is_deleted = false
             where btd.is_deleted = false and btd.status != 'cancelDelivery' group by btdd.so_detail_id
             ) btdd on sod.id = btdd.source_detail_id
-            left join (
-            select sum(vi.qty) as virtualQty ,vi.sku_id,vi.virtual_warehouse_id,vi.warehouse_id  from virtual_inventory vi where vi.is_deleted = false  and vi.dict_inventory_status = 'usable' group by vi.sku_id,vi.virtual_warehouse_id
-            ,vi.warehouse_id
-            ) vi on vi.sku_id = sod.sku_id and si.virtual_warehouse_id = vi.virtual_warehouse_id
-            and si.warehouse_id = vi.warehouse_id
         </if>
         WHERE ${params.sqlMap.default}
         and  sod.is_deleted=false
@@ -162,16 +150,11 @@
         LEFT JOIN so_detail sod
         ON sod.main_id =si.id AND si.is_deleted=false
         left join customer_info ci on si.customer_id = ci.id and ci.is_deleted = false
-        <if test="params.fieldList != null and params.fieldList.size > 0 and ( params.fieldList.contains('isVirtualScarce') or params.fieldList.contains('isVirtualOutStock') or params.fieldList.contains('remainingNoticeQty')  )">
+        <if test="params.fieldList != null and params.fieldList.size > 0 and params.fieldList.contains('remainingNoticeQty')">
             left join (
             select sum(sdnd.delivery_qty) as deliveryQty ,sdnd.source_detail_id  from so_delivery_notice sdn left join so_delivery_notice_detail sdnd on sdn.id = sdnd.main_id and sdnd.is_deleted = false
             where sdn.is_deleted = false and sdn.approve_status = 'approve' group by sdnd.source_detail_id
             ) sdnd on sod.id = sdnd.source_detail_id
-            left join (
-            select sum(vi.qty) as virtualQty ,vi.sku_id,vi.virtual_warehouse_id,vi.warehouse_id  from virtual_inventory vi where vi.is_deleted = false  and vi.dict_inventory_status = 'usable' group by vi.sku_id,vi.virtual_warehouse_id
-            ,vi.warehouse_id
-            ) vi on vi.sku_id = sod.sku_id and si.virtual_warehouse_id = vi.virtual_warehouse_id
-            and si.warehouse_id = vi.warehouse_id
         </if>
         WHERE ${params.sqlMap.default}
         and sod.is_deleted=false
@@ -275,7 +258,7 @@
         left join customer_info ci on si.customer_id = ci.id and ci.is_deleted = false
         left join customer_address ca on ca.id = si.receive_address_id and ca.is_deleted = false
         left join foreign_dict_partition fdp on fdp.id = si.partition_id and fdp.is_deleted = false
-        <if test="params.fieldList != null and params.fieldList.size > 0 and ( params.fieldList.contains('isVirtualScarce') or params.fieldList.contains('isVirtualOutStock') or params.fieldList.contains('remainingNoticeQty') )">
+        <if test="params.fieldList != null and params.fieldList.size > 0 and params.fieldList.contains('remainingNoticeQty')">
             left join (
             select sum(sdnd.delivery_qty) as deliveryQty ,sdnd.source_detail_id  from so_delivery_notice sdn left join so_delivery_notice_detail sdnd on sdn.id = sdnd.main_id and sdnd.is_deleted = false
             where sdn.is_deleted = false and sdn.approve_status = 'approve' group by sdnd.source_detail_id
@@ -284,11 +267,6 @@
             select sum(btdd.delivery_qty * btdd.per_box_qty) as deliveryQty ,btdd.so_detail_id as source_detail_id  from foreign_b2b_third_delivery btd left join foreign_b2b_third_delivery_detail btdd on btd.id = btdd.main_id and btdd.is_deleted = false
             where btd.is_deleted = false and btd.status != 'cancelDelivery' group by btdd.so_detail_id
             ) btdd on sod.id = btdd.source_detail_id
-            left join (
-            select sum(vi.qty) as virtualQty ,vi.sku_id,vi.virtual_warehouse_id,vi.warehouse_id  from virtual_inventory vi where vi.is_deleted = false  and vi.dict_inventory_status = 'usable' group by vi.sku_id,vi.virtual_warehouse_id
-            ,vi.warehouse_id
-            ) vi on vi.sku_id = sod.sku_id and si.virtual_warehouse_id = vi.virtual_warehouse_id
-            and si.warehouse_id = vi.warehouse_id
         </if>
         WHERE ${params.sqlMap.default}
         and  sod.is_deleted=false
@@ -339,6 +317,7 @@
         sd.delivery_sku_no as skuNo,
         sd.platform_sku_no,
         sd.frozen_qty as frozenQty,
+        sd.delivery_qty as outstockQty,
         sd.is_close,
         sd.box_qty AS salesQty,
         sd.per_box_qty as perBoxQty,

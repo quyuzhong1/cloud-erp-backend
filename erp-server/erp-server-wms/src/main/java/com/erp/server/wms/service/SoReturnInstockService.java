@@ -52,6 +52,13 @@ public interface SoReturnInstockService extends SuperService<SoReturnInstockEnti
     List<SoReturnInstockDTO.StatusCountDTO> listCount(PermissionsDTO dto);
 
     /**
+     * 根据退货物流单号反查B2B/B2C售后单并组装预填信息（命中多个时返回列表供前端选择）
+     * @param returnLogisticCode 退货物流单号
+     * @return java.util.List<com.erp.model.wms.dto.SoReturnInstockDTO.ReturnLogisticPrefill>
+     **/
+    List<SoReturnInstockDTO.ReturnLogisticPrefill> queryByReturnLogisticCode(String returnLogisticCode);
+
+    /**
      * 新增
      * @Author Luo_WG
      * @Date 2023/4/13 11:03

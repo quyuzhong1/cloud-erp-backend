@@ -375,6 +375,17 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
     }
 
     @Override
+    public List<SoB2cReturnEntity> listByReturnLogisticCode(String returnLogisticCode) {
+        if (StringUtils.isBlank(returnLogisticCode)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery()
+                .eq(SoB2cReturnEntity::getReturnLogisticCode, returnLogisticCode)
+                .orderByDesc(SoB2cReturnEntity::getCreateTime)
+                .list();
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public void addByPlatform(SoB2cReturnEntity soB2cReturnEntity, List<SoB2cReturnDetailEntity> soB2cReturnDetailEntityList) {
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.THD);

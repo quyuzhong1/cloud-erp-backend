@@ -15,6 +15,13 @@ public class SoDeliveryNoticeChangeHandler extends AbstractQueryHandler {
                 return "(select  COALESCE(sum(a.delivery_qty),0) from so_delivery_notice_detail a where a.source_detail_id = sd.id and a.is_deleted = false) != sd.qty";
             }
         }
+        if("isLockInventory".equals(field)){
+            if((Boolean) value){
+                return "COALESCE(sd.frozen_qty, 0) > 0";
+            }else{
+                return "COALESCE(sd.frozen_qty, 0) = 0";
+            }
+        }
         return null;
     }
 
