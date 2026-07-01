@@ -734,16 +734,50 @@
         select
             *
         from (
-        WITH qualified_delivery AS MATERIALIZED (
+        WITH qualified_delivery_base AS MATERIALIZED (
             SELECT
                 fmd.id,
                 fmd.source_id,
                 fmd.code,
-                fmd.source_code AS business_code,
+                fmd.demand_type,
                 fmd.create_time AS source_create_time
             FROM first_mile_delivery fmd
             WHERE fmd.is_deleted = false
             AND fmd.declare_status = 'wait'
+        ),
+        fba_business_code AS MATERIALIZED (
+            SELECT
+                fdd.main_id,
+                MIN(fdd.fba_shipment_code) AS business_code
+            FROM first_mile_delivery_detail fdd
+            INNER JOIN qualified_delivery_base qb
+                ON qb.id = fdd.main_id
+            WHERE fdd.is_deleted = false
+            AND fdd.fba_shipment_code IS NOT NULL
+            AND fdd.fba_shipment_code != ''
+            GROUP BY fdd.main_id
+        ),
+        overseas_business_code AS MATERIALIZED (
+            SELECT
+                owi.source_id,
+                MIN(owi.code) AS business_code
+            FROM overseas_warehouse_inbound owi
+            INNER JOIN qualified_delivery_base qb
+                ON qb.id = owi.source_id
+            WHERE owi.is_deleted = false
+            AND owi.instock_status != 'canceled'
+            GROUP BY owi.source_id
+        ),
+        qualified_delivery AS MATERIALIZED (
+            SELECT
+                qb.id,
+                qb.source_id,
+                qb.code,
+                COALESCE(NULLIF(obc.business_code, ''), fbc.business_code) AS business_code,
+                qb.source_create_time
+            FROM qualified_delivery_base qb
+            LEFT JOIN fba_business_code fbc ON fbc.main_id = qb.id
+            LEFT JOIN overseas_business_code obc ON obc.source_id = qb.id
         ),
         qualified_task AS MATERIALIZED (
             SELECT
@@ -929,13 +963,10 @@
         fmd.code as sourceCode,
         'firstMileDelivery' as sourceType,
         CASE
-        WHEN fmd.demand_type = 'demandOverseasWarehouse' THEN
-        owi.ID ELSE fba.id
+        WHEN NULLIF(owi.code, '') IS NOT NULL THEN owi.ID
+        ELSE fba.id
         END AS businessId,
-        CASE
-        WHEN fmd.demand_type = 'demandOverseasWarehouse' THEN
-        owi.code ELSE fba.fba_shipment_code
-        END AS businessCode,
+        COALESCE(NULLIF(owi.code, ''), fba.fba_shipment_code) AS businessCode,
         cd.sku_id as skuId,
         cd.sku_no as skuNo,
         fmd.country_id as countryId,
