@@ -85,6 +85,7 @@ public class GatewayInternalHealthController {
             return Mono.just(ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(body(STATUS_DOWN, REASON_PRE_STOP_FORBIDDEN)));
         }
+        // Gateway 入口摘流依赖 K8s readiness；若未来让内部服务通过 Nacos 发现 Gateway，需要补充注册中心下线逻辑。
         readinessState.markPreStopping();
         return Mono.just(ResponseEntity.ok(body(STATUS_PRE_STOPPING, REASON_PRE_STOPPING)));
     }

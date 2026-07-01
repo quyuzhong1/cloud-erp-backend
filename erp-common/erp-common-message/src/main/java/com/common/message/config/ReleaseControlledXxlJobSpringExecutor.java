@@ -26,6 +26,7 @@ public class ReleaseControlledXxlJobSpringExecutor extends XxlJobSpringExecutor
     private static final String ENVIRONMENT_CHANGE_EVENT = "org.springframework.cloud.context.environment.EnvironmentChangeEvent";
 
     private final AtomicBoolean executorStarted = new AtomicBoolean(false);
+    private final AtomicBoolean executorDestroyed = new AtomicBoolean(false);
     private Environment environment;
 
     @Override
@@ -91,12 +92,16 @@ public class ReleaseControlledXxlJobSpringExecutor extends XxlJobSpringExecutor
     }
 
     private void startExecutor() {
+        if (executorDestroyed.get()) {
+            log.warn(">>>>>>>>>>> xxl-job executor has been destroyed, skip restart in same JVM. Please rebuild pod.");
+            return;
+        }
         if (!executorStarted.compareAndSet(false, true)) {
             return;
         }
         try {
             super.afterSingletonsInstantiated();
-            log.warn(">>>>>>>>>>> xxl-job executor started by {}=true.", XXL_JOB_ENABLED_KEY);
+            log.info(">>>>>>>>>>> xxl-job executor started by {}=true.", XXL_JOB_ENABLED_KEY);
         } catch (RuntimeException e) {
             executorStarted.set(false);
             throw e;
@@ -107,7 +112,11 @@ public class ReleaseControlledXxlJobSpringExecutor extends XxlJobSpringExecutor
         if (!executorStarted.compareAndSet(true, false)) {
             return;
         }
-        super.destroy();
-        log.warn(">>>>>>>>>>> xxl-job executor stopped by {}=false.", XXL_JOB_ENABLED_KEY);
+        try {
+            super.destroy();
+        } finally {
+            executorDestroyed.set(true);
+        }
+        log.info(">>>>>>>>>>> xxl-job executor stopped by {}=false.", XXL_JOB_ENABLED_KEY);
     }
 }

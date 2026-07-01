@@ -155,6 +155,7 @@ public class NacosSelfRegistrationChecker {
             log.warn("Skip updating Nacos instance enabled status, nacos server address is blank");
             return false;
         }
+        // 该 OpenAPI 不复用 Nacos SDK 的鉴权上下文；开启 Nacos 鉴权的环境必须先验证 pre-stop 下线结果。
         String requestUrl = buildUpdateInstanceUrl(serverAddr, registrationInfo, enabled);
         HttpURLConnection connection = (HttpURLConnection) new URL(requestUrl).openConnection();
         connection.setRequestMethod("PUT");
