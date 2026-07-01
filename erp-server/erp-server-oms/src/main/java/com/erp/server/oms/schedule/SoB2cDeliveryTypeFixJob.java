@@ -66,7 +66,7 @@ public class SoB2cDeliveryTypeFixJob {
             while (true) {
                 Page<SoB2cEntity> page = soB2cService.lambdaQuery()
                         .select(SoB2cEntity::getId, SoB2cEntity::getCode, SoB2cEntity::getDictPlatform,
-                                SoB2cEntity::getLabelJson, SoB2cEntity::getDeliveryType)
+                                SoB2cEntity::getLabelJson, SoB2cEntity::getDeliveryType, SoB2cEntity::getShippingOrderNo)
                         .ge(SoB2cEntity::getCreateTime, date.atStartOfDay())
                         .lt(SoB2cEntity::getCreateTime, date.plusDays(1).atStartOfDay())
                         .page(new Page<>(current, param.getPageSize()));
@@ -232,6 +232,9 @@ public class SoB2cDeliveryTypeFixJob {
     private String resolveDeliveryType(SoB2cEntity entity, Map<String, String> thirdWarehouseSoIdMap) {
         if (entity.hasPlatformWarehouseOrder()) {
             return OrderLogisticTypeEnum.PLATFORM_WAREHOUSE.getCode();
+        }
+        if (StringUtils.isNotBlank(entity.getShippingOrderNo())) {
+            return OrderLogisticTypeEnum.THIRD_WAREHOUSE.getCode();
         }
         if (thirdWarehouseSoIdMap.containsKey(entity.getId())) {
             return OrderLogisticTypeEnum.THIRD_WAREHOUSE.getCode();

@@ -380,12 +380,61 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
                     Wrappers.<PackageForecastEntity>lambdaQuery()
                             .in(PackageForecastEntity::getHandoverNo, handoverNoList)
             );
+            sameHandoverList = filterTikTokFullyForecasts(sameHandoverList);
             if (CollectionUtils.isNotEmpty(sameHandoverList)) {
                 context.setSameHandoverMap(sameHandoverList.stream()
                         .collect(Collectors.groupingBy(PackageForecastEntity::getHandoverNo)));
             }
         }
         return context;
+    }
+
+    private List<PackageForecastEntity> filterTikTokFullyForecasts(List<PackageForecastEntity> forecastList) {
+        if (CollectionUtils.isEmpty(forecastList)) {
+            return Collections.emptyList();
+        }
+        List<String> forecastIds = forecastList.stream()
+                .map(PackageForecastEntity::getId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        List<PackageForecastDetailEntity> detailList = packageForecastDetailService.listDbByMainIds(forecastIds);
+        if (CollectionUtils.isEmpty(detailList)) {
+            return Collections.emptyList();
+        }
+        List<String> soIds = detailList.stream()
+                .map(PackageForecastDetailEntity::getSoId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(soIds)) {
+            return Collections.emptyList();
+        }
+        List<SoB2cEntity> soList = soB2cFeign.listByIds(soIds);
+        if (CollectionUtils.isEmpty(soList)) {
+            return Collections.emptyList();
+        }
+        Map<String, SoB2cEntity> soMap = soList.stream()
+                .collect(Collectors.toMap(SoB2cEntity::getId, entity -> entity, (left, right) -> left));
+        Map<String, List<PackageForecastDetailEntity>> detailMap = detailList.stream()
+                .collect(Collectors.groupingBy(PackageForecastDetailEntity::getMainId));
+        Set<String> tikTokFullyForecastIds = new HashSet<>();
+        for (Map.Entry<String, List<PackageForecastDetailEntity>> entry : detailMap.entrySet()) {
+            boolean samePlatform = true;
+            for (PackageForecastDetailEntity detail : entry.getValue()) {
+                SoB2cEntity so = soMap.get(detail.getSoId());
+                if (Objects.isNull(so) || !PlatformDictEnum.TIK_TOK_FULLY.getCode().equals(so.getDictPlatform())) {
+                    samePlatform = false;
+                    break;
+                }
+            }
+            if (samePlatform) {
+                tikTokFullyForecastIds.add(entry.getKey());
+            }
+        }
+        return forecastList.stream()
+                .filter(entity -> tikTokFullyForecastIds.contains(entity.getId()))
+                .collect(Collectors.toList());
     }
 
     private List<BatchResultDTO> buildRetryWithPlatformIdentifierResult(List<PackageForecastEntity> entityList) {
