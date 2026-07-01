@@ -3,6 +3,7 @@ package com.erp.server.dmp.inout.handler.input.task.dmp;
 import cn.hutool.core.collection.CollUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
+import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -125,12 +126,12 @@ public class DmpInputShopeeReturnDetailDmpHandler extends DmpInputDoNextDmpHandl
                 }
                 // Shopee 退货明细中的 amount 字段按平台语义表示数量，不是金额。
                 Object amountObj = dmpDataMap.get("amount");
-                if (amountObj != null) {
-                    Integer qty = parseInteger(amountObj);
-                    if (qty != null) {
-                        dmpDataMap.put("qty", qty);
-                    }
+                Integer qty = parseInteger(amountObj);
+                if (qty == null) {
+                    throw new ServiceException("Shopee退货明细数量解析失败,returnSn:{},orderSn:{},platformSku:{}",
+                            dmpDataMap.get("return_sn"), dmpDataMap.get("order_sn"), platformSku);
                 }
+                dmpDataMap.put("qty", qty);
                 Object itemPriceObj = dmpDataMap.get("item_price");
                 if (itemPriceObj != null) {
                     dmpDataMap.put("sellPrice", itemPriceObj);

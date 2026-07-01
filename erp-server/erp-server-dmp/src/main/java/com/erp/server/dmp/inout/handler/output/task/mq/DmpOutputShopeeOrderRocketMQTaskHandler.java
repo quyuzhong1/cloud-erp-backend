@@ -45,6 +45,8 @@ import cn.hutool.core.collection.CollUtil;
 @Scope("prototype")
 public class DmpOutputShopeeOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler{
 
+	private static final int BATCH_SIZE = 500;
+
 	@Autowired
 	private DmpSoDetailService dmpSoDetailService;
 	@Autowired
@@ -116,24 +118,8 @@ public class DmpOutputShopeeOrderRocketMQTaskHandler extends DmpOutputRocketMQTa
 			}
 		}
 		
-		if (CollUtil.isNotEmpty(changeIds)) {
-			List<DmpSoDetailEntity> detailEntityList = dmpSoDetailService.lambdaQuery()
-					.in(DmpSoDetailEntity::getMainId, changeIds)
-					.eq(DmpSoDetailEntity::getIsDeleted, Boolean.FALSE)
-					.list();
-			detailEntityList.stream()
-					.collect(Collectors.groupingBy(DmpSoDetailEntity::getMainId))
-					.forEach(dmpSoDetailEntityMap::put);
-		}
-		if (CollUtil.isNotEmpty(changeIds)) {
-			List<DmpSoReceiverEntity> receiverEntityList = dmpSoReceiverService.lambdaQuery()
-					.in(DmpSoReceiverEntity::getMainId, changeIds)
-					.eq(DmpSoReceiverEntity::getIsDeleted, Boolean.FALSE)
-					.list();
-			receiverEntityList.stream()
-					.collect(Collectors.groupingBy(DmpSoReceiverEntity::getMainId))
-					.forEach(dmpSoReceiverEntityMap::put);
-		}
+		supplementOrderDetails(changeIds, dmpSoDetailEntityMap);
+		supplementOrderReceivers(changeIds, dmpSoReceiverEntityMap);
 
 		Map<String, String> map = new HashMap<>();
 		String cfgOutputId = dmpResponse.getDmpCfgOutputEntity().getId();
@@ -145,6 +131,44 @@ public class DmpOutputShopeeOrderRocketMQTaskHandler extends DmpOutputRocketMQTa
 			}
 		}
 		return map;
+	}
+
+	private void supplementOrderDetails(Set<String> changeIds, Map<String, List<DmpSoDetailEntity>> dmpSoDetailEntityMap) {
+		if (CollUtil.isEmpty(changeIds)) {
+			return;
+		}
+		List<String> idList = changeIds.stream().filter(StringUtils::isNotBlank).collect(Collectors.toList());
+		for (int fromIndex = 0; fromIndex < idList.size(); fromIndex += BATCH_SIZE) {
+			List<String> batchIds = idList.subList(fromIndex, Math.min(fromIndex + BATCH_SIZE, idList.size()));
+			List<DmpSoDetailEntity> detailEntityList = dmpSoDetailService.lambdaQuery()
+					.in(DmpSoDetailEntity::getMainId, batchIds)
+					.eq(DmpSoDetailEntity::getIsDeleted, Boolean.FALSE)
+					.list();
+			if (CollUtil.isNotEmpty(detailEntityList)) {
+				detailEntityList.stream()
+						.collect(Collectors.groupingBy(DmpSoDetailEntity::getMainId))
+						.forEach(dmpSoDetailEntityMap::put);
+			}
+		}
+	}
+
+	private void supplementOrderReceivers(Set<String> changeIds, Map<String, List<DmpSoReceiverEntity>> dmpSoReceiverEntityMap) {
+		if (CollUtil.isEmpty(changeIds)) {
+			return;
+		}
+		List<String> idList = changeIds.stream().filter(StringUtils::isNotBlank).collect(Collectors.toList());
+		for (int fromIndex = 0; fromIndex < idList.size(); fromIndex += BATCH_SIZE) {
+			List<String> batchIds = idList.subList(fromIndex, Math.min(fromIndex + BATCH_SIZE, idList.size()));
+			List<DmpSoReceiverEntity> receiverEntityList = dmpSoReceiverService.lambdaQuery()
+					.in(DmpSoReceiverEntity::getMainId, batchIds)
+					.eq(DmpSoReceiverEntity::getIsDeleted, Boolean.FALSE)
+					.list();
+			if (CollUtil.isNotEmpty(receiverEntityList)) {
+				receiverEntityList.stream()
+						.collect(Collectors.groupingBy(DmpSoReceiverEntity::getMainId))
+						.forEach(dmpSoReceiverEntityMap::put);
+			}
+		}
 	}
 
 	private PlatformOrderDTO convert(DmpSoInfoEntity dmpSoInfoEntity , List<DmpSoDetailEntity> dmpSoDetailEntityList , List<DmpSoReceiverEntity> dmpSoReceiverEntityList, String cfgOutputId) {

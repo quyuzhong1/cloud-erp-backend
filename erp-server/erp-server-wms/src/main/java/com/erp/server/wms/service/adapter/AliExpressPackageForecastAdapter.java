@@ -115,7 +115,7 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
                 resultDTOS.add(uploadOne(entity, dto.getCollectMode(), dto.getCollectAddressId(), context));
             } catch (Exception e) {
                 log.error("组包预报上传失败>>>>>", e);
-                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), userFailureMessage("上传")));
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), operationFailureMessage(e, "上传")));
             }
         }
         return resultDTOS;
@@ -155,7 +155,7 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
                 }
                 return BatchResultDTO.fail(entity.getId(), entity.getCode(), "平台已存在交接单信息，本地状态更新失败，请人工处理");
             }
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), userFailureMessage("上传"));
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), operationFailureMessage(e, "上传"));
         }
     }
 
@@ -167,6 +167,13 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
 
     private String userFailureMessage(String operation) {
         return operation + "失败，请查看单据备注或日志";
+    }
+
+    private String operationFailureMessage(Exception e, String operation) {
+        if (e instanceof ServiceException && StringUtils.isNotBlank(e.getMessage())) {
+            return e.getMessage();
+        }
+        return userFailureMessage(operation);
     }
 
     private AliExpressBatchContext buildBatchContext(List<PackageForecastEntity> entities, String collectAddressId) {
@@ -194,9 +201,13 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
                         .collect(Collectors.toList());
                 if (CollectionUtils.isNotEmpty(soIds)) {
                     List<SoB2cEntity> soList = soB2cFeign.listByIds(soIds);
-                    if (CollectionUtils.isNotEmpty(soList)) {
+                    int soReturnSize = CollectionUtils.isEmpty(soList) ? 0 : soList.size();
+                    if (soReturnSize == soIds.size()) {
                         context.soMap = soList.stream()
                                 .collect(Collectors.toMap(SoB2cEntity::getId, entity -> entity, (left, right) -> left));
+                    } else {
+                        log.warn("速卖通组包批量上下文销售订单数据不完整, forecastSize:{}, soSize:{}, returnSize:{}",
+                                forecastIds.size(), soIds.size(), soReturnSize);
                     }
                     List<SoB2cLogisticsEntity> logisticsList = soB2cFeign.listSoB2cLogisticsByMainIdList(soIds);
                     if (CollectionUtils.isNotEmpty(logisticsList)) {
@@ -271,9 +282,9 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
                     } catch (Exception updateException) {
                         log.error("组包预报取消失败后更新失败原因失败, id: {}, code: {}", entity.getId(), entity.getCode(), updateException);
                     }
-                    resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), userFailureMessage("取消上传")));
+                    resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), operationFailureMessage(e, "取消上传")));
                 } else {
-                    resultDTOS.add(BatchResultDTO.fail(id, id, userFailureMessage("取消上传")));
+                    resultDTOS.add(BatchResultDTO.fail(id, id, operationFailureMessage(e, "取消上传")));
                 }
             }
         }
@@ -340,6 +351,9 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
         authMap.put("clientSecret", cfgAppClient.getClientSecret());
         authMap.put("token", shopAuthEntity.getToken());
         JSONObject jsonObject = JSONObject.parseObject(shopAuthEntity.getExtendData());
+        if (Objects.isNull(jsonObject)) {
+            throw new ServiceException("店铺扩展数据格式异常");
+        }
         String sellerId = jsonObject.getString("sellerId");
         if (StringUtils.isBlank(sellerId)) {
             throw new ServiceException("获取店铺速卖通卖家id失败");
@@ -670,12 +684,22 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
         if (CollectionUtils.isEmpty(forecastDetailList)) {
             throw new ServiceException("组包预报单明细未找到");
         }
-        List<String> shopIds = forecastDetailList.stream()
+        List<String> soIds = forecastDetailList.stream()
                 .map(PackageForecastDetailEntity::getSoId)
                 .filter(StringUtils::isNotBlank)
                 .distinct()
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(soIds)) {
+            throw new ServiceException("销售订单未找到");
+        }
+        List<SoB2cEntity> soB2cEntityList = soIds.stream()
                 .map(context.soMap::get)
                 .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+        if (soB2cEntityList.size() != soIds.size()) {
+            throw new ServiceException("组包预报单销售订单数据不完整");
+        }
+        List<String> shopIds = soB2cEntityList.stream()
                 .map(SoB2cEntity::getShopId)
                 .filter(StringUtils::isNotBlank)
                 .distinct()
@@ -704,6 +728,9 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
         List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
         if (CollectionUtils.isEmpty(soB2cEntityList)) {
             throw new ServiceException("销售订单未找到");
+        }
+        if (soB2cEntityList.size() != soIds.size()) {
+            throw new ServiceException("组包预报单销售订单数据不完整");
         }
         List<String> shopIds = soB2cEntityList.stream()
                 .map(SoB2cEntity::getShopId)

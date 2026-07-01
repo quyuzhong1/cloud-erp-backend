@@ -100,14 +100,20 @@ public class DmpInputAmzFbaInboundPlanFbaShipmentInitHandler extends DmpInputAmz
                     return Collections.emptyList();
                 }
                 if (manualPull) {
-                    throw new ServiceException("手动拉取FBA入库计划详情失败, inboundPlanId=" + inboundPlanId + ", error=" + e.getMessage());
+                    log.error("【FBA入库计划详情拉取】platformShopCode={}, taskId={}, inboundPlanId={}, Amazon API 异常",
+                            shopInfoDTO.getPlatformShopCode(), dmpInputTaskEntity.getId(), inboundPlanId, e);
+                    throw new ServiceException("手动拉取FBA入库计划详情失败，请稍后重试, inboundPlanId=" + inboundPlanId
+                            + ", taskId=" + dmpInputTaskEntity.getId());
                 }
-                log.warn("跳过inboundPlanId={}, 原因={}", inboundPlanId, e.getMessage());
+                log.warn("跳过inboundPlanId={}", inboundPlanId, e);
             } catch (LWAException e) {
                 if (manualPull) {
-                    throw new ServiceException("手动拉取FBA入库计划详情失败, inboundPlanId=" + inboundPlanId + ", error=" + e.getMessage());
+                    log.error("【FBA入库计划详情拉取】platformShopCode={}, taskId={}, inboundPlanId={}, LWA 授权异常",
+                            shopInfoDTO.getPlatformShopCode(), dmpInputTaskEntity.getId(), inboundPlanId, e);
+                    throw new ServiceException("手动拉取FBA入库计划详情失败，请稍后重试, inboundPlanId=" + inboundPlanId
+                            + ", taskId=" + dmpInputTaskEntity.getId());
                 }
-                log.warn("跳过inboundPlanId={}, 原因={}", inboundPlanId, e.getMessage());
+                log.warn("跳过inboundPlanId={}", inboundPlanId, e);
             }
         }
 

@@ -91,6 +91,8 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
 
     private static final String TIKTOK_DELIVERY_MODE_SELF = "SELF_DELIVERY";
     private static final String TIKTOK_DELIVERY_MODE_PLATFORM = "PLATFORM_DELIVERY";
+    private static final String UPLOAD_FAILURE_MESSAGE = "上传失败，请查看日志或联系管理员处理";
+    private static final String CANCEL_FAILURE_MESSAGE = "取消上传失败，请查看日志或联系管理员处理";
 
     @Resource
     private OperateLogService operateLogService;
@@ -345,13 +347,14 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             return firstResultOrThrow(adapter.cancel(Collections.singletonList(id)), "取消上传");
         } catch (Exception e) {
             log.error("组包预报单取消失败, id: {}, code: {}", entity.getId(), entity.getCode(), e);
-            entity.setRemark("取消失败原因:" + e.getMessage());
+            String failureMessage = operationFailureMessage(e, CANCEL_FAILURE_MESSAGE);
+            entity.setRemark(failureMessage);
             try {
                 this.updateById(entity);
             } catch (Exception updateException) {
                 log.error("组包预报单取消失败后更新失败原因失败, id: {}, code: {}", entity.getId(), entity.getCode(), updateException);
             }
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "取消上传失败:" + e.getMessage());
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), failureMessage);
         }
 
     }
@@ -373,7 +376,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
                 if (Objects.isNull(entity)) {
                     cancelResult = BatchResultDTO.fail(id, id, "组包预报单不存在, 取消失败");
                 } else {
-                    cancelResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+                    cancelResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), operationFailureMessage(e, CANCEL_FAILURE_MESSAGE));
                 }
             }
             resultDTOS.add(cancelResult);
@@ -425,7 +428,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
                 if (Objects.isNull(entity)) {
                     uploadResult = BatchResultDTO.fail(id, id, "组包预报单不存在, 上传失败");
                 } else {
-                    uploadResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+                    uploadResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), operationFailureMessage(e, UPLOAD_FAILURE_MESSAGE));
                 }
             }
             resultDTOS.add(uploadResult);
@@ -470,20 +473,24 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         } catch (Exception e) {
             log.error("组包预报上传失败>>>>>", e);
             persistUploadFailureIfNeeded(entity, e);
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "上传失败" + e.getMessage());
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), operationFailureMessage(e, UPLOAD_FAILURE_MESSAGE));
         }
 
 
     }
 
     private void persistUploadFailureIfNeeded(PackageForecastEntity entity, Exception e) {
+        PackageForecastEntity latestEntity = this.getById(entity.getId());
+        if (Objects.nonNull(latestEntity)) {
+            entity = latestEntity;
+        }
         if (hasPlatformInfo(entity)) {
             log.warn("组包预报上传异常但已存在平台信息，不覆盖为上传失败, id: {}, code: {}, handoverNo: {}, platformPackageNo: {}",
                     entity.getId(), entity.getCode(), entity.getHandoverNo(), entity.getPlatformPackageNo());
             return;
         }
         entity.setUploadStatus(PackageUploadStatusEnum.UPLOAD_FAILURE.getCode());
-        entity.setRemark("上传失败:" + e.getMessage());
+        entity.setRemark(operationFailureMessage(e, UPLOAD_FAILURE_MESSAGE));
         try {
             this.updateById(entity);
         } catch (Exception updateException) {
@@ -496,6 +503,13 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         return StringUtils.isNotBlank(entity.getHandoverNo())
                 || StringUtils.isNotBlank(entity.getPlatformPackageNo())
                 || StringUtils.isNotBlank(entity.getPlatformNo());
+    }
+
+    private String operationFailureMessage(Exception e, String defaultMessage) {
+        if (e instanceof ServiceException && StringUtils.isNotBlank(e.getMessage())) {
+            return e.getMessage();
+        }
+        return defaultMessage;
     }
 
     private BatchResultDTO firstResultOrThrow(List<BatchResultDTO> resultList, String operationName) {
@@ -532,6 +546,9 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             base64 = adapter.print(id);
         } catch (Exception e) {
             log.error("打印失败>>>>>>>", e);
+            if (e instanceof ServiceException && StringUtils.isNotBlank(e.getMessage())) {
+                throw (ServiceException) e;
+            }
             throw new ServiceException("打印失败");
         }
         if (CharSequenceUtil.isNotBlank(base64)) {
@@ -543,7 +560,9 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
                     .eq(PackageForecastEntity::getIsDeleted, false)
                     .update();
             if (!updated) {
-                throw new ServiceException("打印状态更新失败");
+                // 面单已生成时优先返回PDF，打印状态更新失败交由日志/后续同步处理，避免误导用户重复打印。
+                log.warn("组包预报打印成功但本地打印状态更新失败, id: {}, code: {}, version: {}",
+                        id, entity.getCode(), entity.getVersion());
             }
         } else {
             throw new ServiceException("打印失败");

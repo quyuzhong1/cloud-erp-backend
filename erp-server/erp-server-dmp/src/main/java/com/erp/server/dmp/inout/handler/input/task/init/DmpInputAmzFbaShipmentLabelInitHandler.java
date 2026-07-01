@@ -15,6 +15,7 @@ import com.erp.model.file.dto.FileDTO;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.sdk.oms.amz.spapi.api.FbaInboundApi;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonFbaLabelPageTypeEnum;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonFbaLabelTypeEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonRequestTypeRateLimiterEnum;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.GetLabelsResponse;
@@ -102,7 +103,8 @@ public class DmpInputAmzFbaShipmentLabelInitHandler extends DmpInputAmzCommonIni
             try {
                 // 查询FBA货件item
 
-                GetLabelsResponse response = api.getLabels(shipmentId, AmazonFbaLabelPageTypeEnum.PLAIN_PAPER.getCode(), "BARCODE_2D", null, null, null, 100, 0);
+                GetLabelsResponse response = api.getLabels(shipmentId, AmazonFbaLabelPageTypeEnum.PLAIN_PAPER.getCode(),
+                        AmazonFbaLabelTypeEnum.BARCODE_2D.getCode(), null, null, null, 100, 0);
                 String labelUrl = "";
                 if (Objects.nonNull(response) && Objects.nonNull(response.getPayload())){
                     String downloadURL = response.getPayload().getDownloadURL();

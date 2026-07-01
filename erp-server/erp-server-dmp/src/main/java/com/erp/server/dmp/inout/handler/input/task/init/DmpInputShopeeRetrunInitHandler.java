@@ -40,6 +40,7 @@ public class DmpInputShopeeRetrunInitHandler extends DmpInputInitHandler {
     private static final int RETURN_SOLUTION_RETURN_AND_REFUND = 0;
     private static final int RETURN_SOLUTION_REFUND_ONLY = 1;
     private static final int MAX_RETRY = 10;
+    private static final int MAX_INIT_ROWS = 50000;
 
     @Resource
     private CfgAppClientService cfgAppClientService;
@@ -82,6 +83,9 @@ public class DmpInputShopeeRetrunInitHandler extends DmpInputInitHandler {
                 JSONObject returnItem = pageReturns.getJSONObject(i);
                 if (isSupportedReturnSolution(returnItem)) {
                     returnItems.add(returnItem);
+                    if (returnItems.size() > MAX_INIT_ROWS) {
+                        throw new ServiceException("Shopee退货列表init数据超过" + MAX_INIT_ROWS + "条，请按时间窗口或店铺拆分任务");
+                    }
                 }
             }
         }

@@ -1,6 +1,7 @@
 package com.erp.server.dmp.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
@@ -96,6 +97,10 @@ import java.util.stream.Stream;
 public class AmzReportHandleServiceImpl implements AmzReportHandleService {
     /**
      * newDmpPullShipment 可切换的 billType 白名单（cfg_setting 非法值时回退默认）。
+     * <p>
+     * 审查问题2（intentional）：默认 billType 为 {@link BusinessTypeEnum#FBA_INBOUND_PLANS}，
+     * 非代码遗漏；回退旧链路仅需 cfg_setting，无需改代码。发布 checklist：① Inbound Plan 配置就绪后再切流；
+     * ② 未就绪环境将 {@link SettingEnum#FBA_SHIPMENT_PULL_BILL_TYPE} 设为 {@code fba_shipment}。
      */
     private static final Set<String> FBA_SHIPMENT_PULL_BILL_TYPE_ALLOW_LIST = new LinkedHashSet<>(
             Arrays.asList(
@@ -103,6 +108,8 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
                     BusinessTypeEnum.FBA_SHIPMENT.getCode()
             )
     );
+
+    private static final int CLEAR_FBA_SHIPMENT_DATA_ENCRYPT_BATCH_SIZE = 500;
 
     @Resource
     private MongoService mongoService;
@@ -171,6 +178,7 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
             throw new ServiceException("未找到店铺授权:" + shopId);
         }
 
+        // 审查问题2（intentional）：新 DMP 开启时 billType 见 resolveFbaShipmentPullBillType，默认走 Inbound Plan 链路
         if (isNewDmpPullEnabled()) {
             return self.pullShipmentTransactional(dto, shopInfoDTO, shopId);
         }
@@ -782,11 +790,11 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
     /**
      * 解析 newDmpPullShipment 使用的 dmp_cfg_input.billType。
      * <p>
-     * 代码审查说明：默认 {@link BusinessTypeEnum#FBA_INBOUND_PLANS} 为产品 intentional 变更，
-     * 新中台手动拉货件统一走 Inbound Plan 链路；非破坏性遗漏。回退无需改代码：
-     * cfg_setting key={@link SettingEnum#FBA_SHIPMENT_PULL_BILL_TYPE} 设为 fba_shipment 即可；
-     * 白名单见 {@link #FBA_SHIPMENT_PULL_BILL_TYPE_ALLOW_LIST}。独立入口 {@link #pullInboundPlanShipment}
-     * 固定走入库计划配置。请勿报默认 billType 回归风险。
+     * 审查问题2（intentional）：默认 {@link BusinessTypeEnum#FBA_INBOUND_PLANS} 为产品确认变更，
+     * 新中台 WMS {@code pullShipment} 与 Inbound Plan 定时同步共用 listInboundPlans + lookbackMinutes 约束。
+     * 回退旧 {@code fba_shipment} 链路：cfg_setting {@link SettingEnum#FBA_SHIPMENT_PULL_BILL_TYPE}={@code fba_shipment}，
+     * 无需改代码；白名单见 {@link #FBA_SHIPMENT_PULL_BILL_TYPE_ALLOW_LIST}。
+     * 专用入库计划入口 {@link #pullInboundPlanShipment} 固定 billType，不受本配置影响。
      */
     private String resolveFbaShipmentPullBillType() {
         String defaultBillType = BusinessTypeEnum.FBA_INBOUND_PLANS.getCode();
@@ -814,6 +822,8 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
      * {@code shipmentCodeList} 非空时与 {@link #newDmpPullShipment} 共用
      * {@link com.erp.server.dmp.inout.handler.input.task.init.DmpInputAmzCommonInitHandler#hasManualShipmentCodeFilter()} fail-fast 策略。
      * 审查问题3（intentional）：同 {@link #newDmpPullShipment}，接口同步返回 true，实际拉取由 hotfix 任务异步完成。
+     * 审查问题4（intentional）：{@code initConvertEntity} 查询使用 LIMIT 1，依赖 dmp_cfg_input_convert 中
+     * {@link DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler#CONVERT_CLASS} 对应记录生产唯一；发布前须 SQL 核对，勿当代码缺陷修复。
      */
     private boolean newDmpPullInboundPlanShipment(DmpPullShipmentDTO dto, AmazonShopInfoDTO shopInfoDTO) {
         List<String> sameAccountShopIds = shopInfoDTO.getMarketplaceShopIdMap().values()
@@ -825,6 +835,7 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
                 .eq(DmpCfgInputConvertEntity::getInputStatus, DmpInputTaskStatusEnum.INIT.getCode())
                 .eq(DmpCfgInputConvertEntity::getConvertClass, DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler.CONVERT_CLASS)
                 .eq(DmpCfgInputConvertEntity::getDisabled, false)
+                // 审查问题4：配置唯一性由运维保证，见方法 JavaDoc
                 .last(" LIMIT 1 ")
                 .one();
         if (null == initConvertEntity) {
@@ -862,9 +873,11 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
         if (CollectionUtils.isEmpty(shipmentCodeList)) {
             return;
         }
-        dmpFbaShipmentService.lambdaUpdate()
-                .set(DmpFbaShipmentEntity::getDataEncrypt, "")
-                .in(DmpFbaShipmentEntity::getFbaShipmentId, shipmentCodeList)
-                .update();
+        for (List<String> batch : CollUtil.split(shipmentCodeList, CLEAR_FBA_SHIPMENT_DATA_ENCRYPT_BATCH_SIZE)) {
+            dmpFbaShipmentService.lambdaUpdate()
+                    .set(DmpFbaShipmentEntity::getDataEncrypt, "")
+                    .in(DmpFbaShipmentEntity::getFbaShipmentId, batch)
+                    .update();
+        }
     }
 }

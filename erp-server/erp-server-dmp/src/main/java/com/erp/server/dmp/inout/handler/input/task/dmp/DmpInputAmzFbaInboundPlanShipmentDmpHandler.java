@@ -109,7 +109,7 @@ public class DmpInputAmzFbaInboundPlanShipmentDmpHandler extends DmpInputDbConve
         }
 
         String packType = resolvePackType(mongoData);
-        // 审查说明（packType 落库格式）：见 {@link DmpInputAmzFbaShipmentDmpHandler} 同类注释，Inbound Plan 链路同样归一化 enum code。
+        // 审查问题2（intentional）：落库 enum code；WMS 展示兼容见 FbaShipmentConverter.toDisplayName，与 DmpInputAmzFbaShipmentDmpHandler 一致。
         if (CharSequenceUtil.isNotBlank(packType)) {
             dmpDataMap.put("packType", packType);
         } else {

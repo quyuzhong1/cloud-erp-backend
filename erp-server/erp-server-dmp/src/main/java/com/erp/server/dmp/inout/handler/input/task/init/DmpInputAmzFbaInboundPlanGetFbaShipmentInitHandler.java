@@ -36,11 +36,12 @@ import java.util.stream.Collectors;
 /**
  * FBA InboundPlan 货件详情拉取 - 拉取FBA货件新流程。
  * <p>
- * 代码审查说明（审查问题1，intentional）：extendJson 含 shipmentCodeList 但未命中 getShipment 时，
- * 回退落库同批计划下已拉到的全部货件，避免 429/字段映射差异导致手动拉取完全空跑；可能同步计划内其它货件。
- * 此为产品确认的兜底策略，勿当回归修复；变更需产品确认。
- * 手动 hotfix（{@code shipmentCodeList} 非空）对其余失败场景与
- * {@link DmpInputAmzFbaInboundPlanGetFbaShipmentDetailInitHandler} 对齐 fail-fast。
+ * 审查问题3（intentional）：手动 hotfix（根任务 extendJson 含 {@code shipmentCodeList}）在列表/详情/429 等
+ * 多数 Init 节点执行 fail-fast；本节点在「已 getShipment 成功但 shipmentConfirmationId 与输入货件号未精确匹配」
+ * 或「429 且尚未命中指定号但同计划已有全量 getShipment 结果」时，回退落库同计划下已拉到的全部货件，
+ * 避免字段映射差异/限流导致手动拉取完全空跑，可能同步计划内其它货件。此为产品确认的兜底策略，勿当缺陷修复。
+ * 若 {@code allShipmentDetailDataMap} 为空（计划下无任何 getShipment 结果），手动场景仍 fail-fast。
+ * 定时全量同步不走回退分支。变更需产品确认。
  */
 @Slf4j
 @Service
@@ -140,7 +141,7 @@ public class DmpInputAmzFbaInboundPlanGetFbaShipmentInitHandler extends DmpInput
                 } catch (ApiException e) {
                     if (e.getCode() == 429) {
                         applyRateLimitBackoff(requestType, limitKey);
-                        // 审查问题1（intentional）：429 且指定货件号尚未命中时，回退返回已拉到的全量货件，避免整任务空跑
+                        // 审查问题3（intentional）：429 且指定货件号尚未命中时，回退返回已拉到的全量货件，避免整任务空跑（见类注释）
                         if (CollUtil.isNotEmpty(shipmentCodeSet) && CollUtil.isEmpty(shipmentDetailDataMap) && CollUtil.isNotEmpty(allShipmentDetailDataMap)) {
                             log.warn("【FBA入库计划货件详情拉取】platformShopCode={},存在429等待恢复且未命中输入货件号:回退返回当前全量数据,货件数={}",
                                     shopInfoDTO.getPlatformShopCode(),
@@ -156,16 +157,20 @@ public class DmpInputAmzFbaInboundPlanGetFbaShipmentInitHandler extends DmpInput
                         return Collections.emptyList();
                     }
                     if (manualPull) {
-                        throw new ServiceException("手动拉取FBA货件详情失败, inboundPlanId=" + inboundPlanId
-                                + ", shipmentId=" + shipmentRawId + ", error=" + e.getMessage());
+                        log.error("【FBA入库计划货件详情拉取】platformShopCode={}, taskId={}, inboundPlanId={}, shipmentId={}, Amazon API 异常",
+                                shopInfoDTO.getPlatformShopCode(), dmpInputTaskEntity.getId(), inboundPlanId, shipmentRawId, e);
+                        throw new ServiceException("手动拉取FBA货件详情失败，请稍后重试, inboundPlanId=" + inboundPlanId
+                                + ", shipmentId=" + shipmentRawId + ", taskId=" + dmpInputTaskEntity.getId());
                     }
-                    log.warn("跳过shipment，inboundPlanId={}, shipmentId={}, 原因={}", inboundPlanId, shipmentRawId, e.getMessage());
+                    log.warn("跳过shipment，inboundPlanId={}, shipmentId={}", inboundPlanId, shipmentRawId, e);
                 } catch (LWAException e) {
                     if (manualPull) {
-                        throw new ServiceException("手动拉取FBA货件详情失败, inboundPlanId=" + inboundPlanId
-                                + ", shipmentId=" + shipmentRawId + ", error=" + e.getMessage());
+                        log.error("【FBA入库计划货件详情拉取】platformShopCode={}, taskId={}, inboundPlanId={}, shipmentId={}, LWA 授权异常",
+                                shopInfoDTO.getPlatformShopCode(), dmpInputTaskEntity.getId(), inboundPlanId, shipmentRawId, e);
+                        throw new ServiceException("手动拉取FBA货件详情失败，请稍后重试, inboundPlanId=" + inboundPlanId
+                                + ", shipmentId=" + shipmentRawId + ", taskId=" + dmpInputTaskEntity.getId());
                     }
-                    log.warn("跳过shipment，inboundPlanId={}, shipmentId={}, 原因={}", inboundPlanId, shipmentRawId, e.getMessage());
+                    log.warn("跳过shipment，inboundPlanId={}, shipmentId={}", inboundPlanId, shipmentRawId, e);
                 }
             }
             if (CollUtil.isNotEmpty(shipmentCodeSet) && CollUtil.isEmpty(pendingShipmentCodeSet)) {
@@ -174,13 +179,14 @@ public class DmpInputAmzFbaInboundPlanGetFbaShipmentInitHandler extends DmpInput
         }
 
         if (CollUtil.isNotEmpty(shipmentCodeSet) && CollUtil.isNotEmpty(pendingShipmentCodeSet)) {
+            // 审查问题3：未命中时若 allShipmentDetailDataMap 非空将走下方回退分支，否则 manualPull fail-fast
             log.info("【FBA入库计划货件详情拉取】platformShopCode={},输入货件号均未命中getShipment结果, shipmentCodeList={}",
                     shopInfoDTO.getPlatformShopCode(),
                     JSON.toJSONString(pendingShipmentCodeSet));
         }
 
         if (CollUtil.isEmpty(shipmentDetailDataMap)) {
-            // 审查问题1（intentional）：shipmentCodeList 均未命中时回退落库同计划全部 getShipment 结果；定时全量不走此分支
+            // 审查问题3（intentional）：shipmentCodeList 均未命中但同计划已有 getShipment 结果时回退全量落库；定时全量不走此分支
             if (CollUtil.isNotEmpty(shipmentCodeSet) && CollUtil.isNotEmpty(allShipmentDetailDataMap)) {
                 log.info("【FBA入库计划货件详情拉取】platformShopCode={},未命中输入货件号:回退全部落库,货件数={}",
                         shopInfoDTO.getPlatformShopCode(),

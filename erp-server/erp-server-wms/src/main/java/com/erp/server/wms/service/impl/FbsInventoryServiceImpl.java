@@ -1,6 +1,5 @@
 package com.erp.server.wms.service.impl;
 
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -47,9 +46,6 @@ public class FbsInventoryServiceImpl extends SuperServiceImpl<FbsInventoryMapper
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page<FbsInventoryDTO.ListDTO> query = new Page<>(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         IPage<FbsInventoryDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
-        if (CollUtil.isEmpty(pageData.getRecords())) {
-            return new PagingVO<>(pageData);
-        }
         return new PagingVO<>(pageData);
     }
 
@@ -64,7 +60,8 @@ public class FbsInventoryServiceImpl extends SuperServiceImpl<FbsInventoryMapper
         return baseMapper.summaryNumber(pagingParamDTO.getParams());
     }
 
-    @DistributeLocker(keyName = "addDTO.shopId,addDTO.warehouseId,addDTO.fbsSku", businessType = "fbsInventoryAdd")
+    // FBS 库存 MQ 重复消费按业务键加分布式锁串行处理，Service 内部同时按该业务键 upsert。
+    @DistributeLocker(businessType = "fbsInventoryAdd", keyName = "addDTO.shopId,addDTO.warehouseId,addDTO.fbsSku", unlockAfterTx = true)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(FbsInventoryDTO.AddDTO addDTO) {

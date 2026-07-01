@@ -131,15 +131,21 @@ public class DmpInputAmzFbaInboundPlanGetFbaShipmentDetailInitHandler extends Dm
                 }
                 failedShipmentIds.add(shipmentId);
                 if (manualPull) {
-                    throw new ServiceException("手动拉取FBA货件明细失败, shipmentId=" + shipmentId + ", error=" + e.getMessage());
+                    log.error("【FBA入库计划货件明细拉取】platformShopCode={}, taskId={}, shipmentId={}, marketplaceId={}, Amazon API 异常",
+                            shopInfoDTO.getPlatformShopCode(), dmpInputTaskEntity.getId(), shipmentId, marketplaceId, e);
+                    throw new ServiceException("手动拉取FBA货件明细失败，请稍后重试, shipmentId=" + shipmentId
+                            + ", taskId=" + dmpInputTaskEntity.getId());
                 }
-                log.warn("跳过明细拉取，shipmentId={}, marketplaceId={}, error={}", shipmentId, marketplaceId, e.getMessage());
+                log.warn("跳过明细拉取，shipmentId={}, marketplaceId={}", shipmentId, marketplaceId, e);
             } catch (Exception e) {
                 failedShipmentIds.add(shipmentId);
                 if (manualPull) {
-                    throw new ServiceException("手动拉取FBA货件明细失败, shipmentId=" + shipmentId + ", error=" + e.getMessage());
+                    log.error("【FBA入库计划货件明细拉取】platformShopCode={}, taskId={}, shipmentId={}, marketplaceId={}, 拉取异常",
+                            shopInfoDTO.getPlatformShopCode(), dmpInputTaskEntity.getId(), shipmentId, marketplaceId, e);
+                    throw new ServiceException("手动拉取FBA货件明细失败，请稍后重试, shipmentId=" + shipmentId
+                            + ", taskId=" + dmpInputTaskEntity.getId());
                 }
-                log.warn("跳过明细拉取，shipmentId={}, marketplaceId={}, error={}", shipmentId, marketplaceId, e.getMessage());
+                log.warn("跳过明细拉取，shipmentId={}, marketplaceId={}", shipmentId, marketplaceId, e);
             }
         }
 

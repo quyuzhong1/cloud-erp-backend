@@ -52,6 +52,14 @@ import java.util.stream.Collectors;
 @Scope("prototype")
 public class DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler extends DmpInputAmzCommonInitHandler {
 
+    private static final int LIST_INBOUND_PLANS_PAGE_SIZE = 30;
+
+    /** 连续无时间戳计划达到该阈值时停止分页，避免 listInboundPlans 过量调用 */
+    private static final int MAX_CONSECUTIVE_NULL_PLAN_TIME = LIST_INBOUND_PLANS_PAGE_SIZE * 3;
+
+    /** 连续整页均无有效时间戳时停止分页 */
+    private static final int MAX_PAGES_WITHOUT_VALID_PLAN_TIME = 3;
+
     /**
      * dmp_cfg_input_convert.convert_class 配置值，与类名保持一致。
      */
@@ -98,18 +106,32 @@ public class DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler extends DmpInpu
             String nextToken = null;
             int currentStatusCount = 0;
             boolean reachedOlderData = false;
+            boolean stopPagination = false;
+            int consecutiveNullPlanTime = 0;
+            int pagesWithoutValidPlanTime = 0;
             do {
                 try {
-                    ListInboundPlansResponse response = api.listInboundPlans(30, nextToken, status, sortBy, sortOrder);
+                    ListInboundPlansResponse response = api.listInboundPlans(
+                            LIST_INBOUND_PLANS_PAGE_SIZE, nextToken, status, sortBy, sortOrder);
                     List<InboundPlanSummary> inboundPlans = response != null ? response.getInboundPlans() : null;
+                    boolean pageHasValidPlanTime = false;
                     if (CollUtil.isNotEmpty(inboundPlans)) {
                         for (InboundPlanSummary inboundPlan : inboundPlans) {
                             OffsetDateTime planTime = resolvePlanTime(inboundPlan);
                             if (planTime == null) {
+                                consecutiveNullPlanTime++;
                                 log.warn("【FBA入库计划拉取】跳过计划: lastUpdatedAt/createdAt 均为空, inboundPlanId={}",
                                         inboundPlan.getInboundPlanId());
+                                if (consecutiveNullPlanTime >= MAX_CONSECUTIVE_NULL_PLAN_TIME) {
+                                    log.warn("【FBA入库计划拉取】连续{}条计划无时间戳，停止分页, status={}, taskId={}",
+                                            consecutiveNullPlanTime, status, dmpInputTaskEntity.getId());
+                                    stopPagination = true;
+                                    break;
+                                }
                                 continue;
                             }
+                            consecutiveNullPlanTime = 0;
+                            pageHasValidPlanTime = true;
                             if (planTime.isBefore(thresholdTime)) {
                                 reachedOlderData = true;
                                 break;
@@ -122,8 +144,18 @@ public class DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler extends DmpInpu
                             inboundPlanSummaryMap.putIfAbsent(inboundPlanId, inboundPlan);
                         }
                     }
-                    if (reachedOlderData) {
+                    if (reachedOlderData || stopPagination) {
                         break;
+                    }
+                    if (CollUtil.isNotEmpty(inboundPlans) && !pageHasValidPlanTime) {
+                        pagesWithoutValidPlanTime++;
+                        if (pagesWithoutValidPlanTime >= MAX_PAGES_WITHOUT_VALID_PLAN_TIME) {
+                            log.warn("【FBA入库计划拉取】连续{}页计划均无有效时间戳，停止分页, status={}, taskId={}",
+                                    pagesWithoutValidPlanTime, status, dmpInputTaskEntity.getId());
+                            break;
+                        }
+                    } else if (pageHasValidPlanTime) {
+                        pagesWithoutValidPlanTime = 0;
                     }
                     nextToken = response != null && response.getPagination() != null ? response.getPagination().getNextToken() : null;
                 } catch (ApiException e) {

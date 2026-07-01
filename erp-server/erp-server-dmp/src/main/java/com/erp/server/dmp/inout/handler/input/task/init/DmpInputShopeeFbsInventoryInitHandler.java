@@ -1,7 +1,6 @@
 package com.erp.server.dmp.inout.handler.input.task.init;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import com.alibaba.fastjson.JSON;
@@ -44,6 +43,7 @@ import java.util.Set;
 public class DmpInputShopeeFbsInventoryInitHandler extends DmpInputInitHandler {
 
     private static final int PAGE_SIZE = 100;
+    private static final int MAX_INIT_ROWS = 50000;
     private static final int MAX_RETRY_COUNT = 10;
     private static final long RETRY_SLEEP_MILLIS = 1000L;
     private static final Set<String> WHS_REGIONS = new HashSet<>(Arrays.asList(
@@ -97,7 +97,7 @@ public class DmpInputShopeeFbsInventoryInitHandler extends DmpInputInitHandler {
                 .pageSize(PAGE_SIZE)
                 .build();
 
-        // DMP Init接口当前要求一次返回初始化数据列表；如后续Shopee FBS库存量级过大，应在调度层按店铺/仓库拆分任务。
+        // DMP Init接口当前要求一次返回初始化数据列表；这里保留硬上限，超量时交由调度层按店铺/仓库拆分任务。
         List<DmpInputTaskInitDTO> resultList = new ArrayList<>();
         int pageNo = 1;
         while (true) {
@@ -187,10 +187,17 @@ public class DmpInputShopeeFbsInventoryInitHandler extends DmpInputInitHandler {
 
                     DmpInputTaskInitDTO dto = new DmpInputTaskInitDTO();
                     dto.setMsg(JSON.toJSONString(row));
-                    resultList.add(dto);
+                    addInitRow(resultList, dto);
                 }
             }
         }
+    }
+
+    private void addInitRow(List<DmpInputTaskInitDTO> resultList, DmpInputTaskInitDTO dto) {
+        if (resultList.size() >= MAX_INIT_ROWS) {
+            throw new ServiceException("Shopee FBS库存初始化数据超过" + MAX_INIT_ROWS + "行，请按店铺/仓库拆分任务后重试");
+        }
+        resultList.add(dto);
     }
 
     private ShopeeResponse execute(SbsInventoryRequest request) {
@@ -211,7 +218,8 @@ public class DmpInputShopeeFbsInventoryInitHandler extends DmpInputInitHandler {
                 throw e;
             } catch (Exception e) {
                 if (!isRetryable(e) || count == MAX_RETRY_COUNT) {
-                    throw new ServiceException("调用Shopee FBS库存接口报错，错误原因：" + ExceptionUtil.stacktraceToOneLineString(e));
+                    log.error("调用Shopee FBS库存接口报错", e);
+                    throw new ServiceException(e, "调用Shopee FBS库存接口报错");
                 }
             }
             sleepQuietly(sleepTime);
@@ -259,10 +267,14 @@ public class DmpInputShopeeFbsInventoryInitHandler extends DmpInputInitHandler {
         if (value instanceof Number) {
             return ((Number) value).intValue();
         }
+        String text = String.valueOf(value);
+        if (StringUtils.isBlank(text)) {
+            throw new ServiceException("Shopee FBS库存整数字段解析失败,value:" + value);
+        }
         try {
-            return Integer.parseInt(String.valueOf(value));
-        } catch (NumberFormatException e) {
-            return 0;
+            return new BigDecimal(text).intValueExact();
+        } catch (ArithmeticException | NumberFormatException e) {
+            throw new ServiceException("Shopee FBS库存整数字段解析失败,value:" + value);
         }
     }
 
@@ -276,10 +288,14 @@ public class DmpInputShopeeFbsInventoryInitHandler extends DmpInputInitHandler {
         if (value instanceof Number) {
             return BigDecimal.valueOf(((Number) value).doubleValue());
         }
+        String text = String.valueOf(value);
+        if (StringUtils.isBlank(text)) {
+            throw new ServiceException("Shopee FBS库存小数字段解析失败,value:" + value);
+        }
         try {
-            return new BigDecimal(String.valueOf(value));
+            return new BigDecimal(text);
         } catch (NumberFormatException e) {
-            return BigDecimal.ZERO;
+            throw new ServiceException("Shopee FBS库存小数字段解析失败,value:" + value);
         }
     }
 }

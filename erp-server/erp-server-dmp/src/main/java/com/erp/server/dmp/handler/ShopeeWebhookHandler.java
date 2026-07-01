@@ -41,7 +41,7 @@ public class ShopeeWebhookHandler implements WebhookHandler{
 
     @Override
     public void verify(String data, Map<String, String> headers, String serviceFlag) {
-        // Shopee webhook signature verification is handled before dispatch.
+        // 业务确认 Shopee Webhook 当前无需签名校验，保留空实现以兼容统一 WebhookHandler 流程。
     }
 
     @Override

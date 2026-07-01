@@ -12,6 +12,7 @@ import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import com.erp.server.dmp.service.DmpSoReturnDetailService;
 import com.erp.server.dmp.service.DmpSoReturnInfoService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 
@@ -29,9 +30,12 @@ import java.util.stream.Collectors;
 /**
  * 平台 B2C 退货单通用 MQ 输出：dmp_so_return_info/detail → PlatformReturnOrderDTO → OMS。
  */
+@Slf4j
 public abstract class DmpOutputPlatformReturnRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler {
 
     private static final int BATCH_SIZE = 500;
+    private static final String STORAGE_RETURN_INFO = "dmp_so_return_info";
+    private static final String STORAGE_RETURN_DETAIL = "dmp_so_return_detail";
 
     @Resource
     private DmpSoReturnDetailService dmpSoReturnDetailService;
@@ -52,12 +56,12 @@ public abstract class DmpOutputPlatformReturnRocketMQTaskHandler extends DmpOutp
                 continue;
             }
             String storageName = entry.getKey().getStorageName();
-            if ("dmp_so_return_info".equals(storageName)) {
+            if (STORAGE_RETURN_INFO.equals(storageName)) {
                 for (BaseEntity entity : value) {
                     DmpSoReturnInfoEntity dmpEntity = (DmpSoReturnInfoEntity) entity;
                     dmpEntityMap.put(dmpEntity.getId(), dmpEntity);
                 }
-            } else if ("dmp_so_return_detail".equals(storageName)) {
+            } else if (STORAGE_RETURN_DETAIL.equals(storageName)) {
                 for (BaseEntity entity : value) {
                     DmpSoReturnDetailEntity detailEntity = (DmpSoReturnDetailEntity) entity;
                     dmpDetailEntityMap.computeIfAbsent(detailEntity.getMainId(), key -> new ArrayList<>())
@@ -74,11 +78,11 @@ public abstract class DmpOutputPlatformReturnRocketMQTaskHandler extends DmpOutp
                 continue;
             }
             String storageName = entry.getKey().getStorageName();
-            if ("dmp_so_return_info".equals(storageName)) {
+            if (STORAGE_RETURN_INFO.equals(storageName)) {
                 for (BaseEntity entity : value) {
                     changeIds.add(entity.getId());
                 }
-            } else if ("dmp_so_return_detail".equals(storageName)) {
+            } else if (STORAGE_RETURN_DETAIL.equals(storageName)) {
                 for (BaseEntity entity : value) {
                     changeIds.add(((DmpSoReturnDetailEntity) entity).getMainId());
                 }
@@ -91,9 +95,14 @@ public abstract class DmpOutputPlatformReturnRocketMQTaskHandler extends DmpOutp
         Map<String, String> map = new HashMap<>();
         String cfgOutputId = dmpResponse.getDmpCfgOutputEntity().getId();
         for (String changeId : changeIds) {
-            PlatformReturnOrderDTO orderDTO = convert(dmpEntityMap.get(changeId), dmpDetailEntityMap.get(changeId), cfgOutputId);
+            DmpSoReturnInfoEntity dmpEntity = dmpEntityMap.get(changeId);
+            List<DmpSoReturnDetailEntity> dmpDetailList = dmpDetailEntityMap.get(changeId);
+            PlatformReturnOrderDTO orderDTO = convert(dmpEntity, dmpDetailList, cfgOutputId);
             if (orderDTO != null) {
                 map.put(changeId, JSON.toJSONString(orderDTO));
+            } else {
+                log.warn("平台退货MQ输出转换结果为空, changeId: {}, cfgOutputId: {}, hasReturnInfo: {}, detailSize: {}",
+                        changeId, cfgOutputId, dmpEntity != null, dmpDetailList == null ? 0 : dmpDetailList.size());
             }
         }
         return map;

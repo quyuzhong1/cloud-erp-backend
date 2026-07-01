@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import com.alibaba.fastjson.JSON;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.entity.BaseEntity;
+import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpFbsInventoryEntity;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
@@ -14,6 +15,8 @@ import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
+import com.erp.server.dmp.service.DmpFbsInventoryService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -28,18 +31,25 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Shopee FBS 库存 MQ 输出
  */
+@Slf4j
 @Service
 @Scope("prototype")
 public class DmpOutputShopeeFbsInventoryRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler {
+
+    private static final String STORAGE_FBS_INVENTORY = "dmp_fbs_inventory";
+    private static final int BATCH_SIZE = 500;
 
     @Resource
     private SkuMappingFeign skuMappingFeign;
     @Resource
     private ShopInfoFeign shopInfoFeign;
+    @Resource
+    private DmpFbsInventoryService dmpFbsInventoryService;
 
     @Override
     public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
@@ -47,7 +57,7 @@ public class DmpOutputShopeeFbsInventoryRocketMQTaskHandler extends DmpOutputRoc
                 dmpRequest.getConvertInputDmpBaseEntityListMaps();
         Map<String, DmpFbsInventoryEntity> dmpEntityMap = new HashMap<>();
         for (Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> entry : convertInputDmpBaseEntityListMaps.entrySet()) {
-            if (!"dmp_fbs_inventory".equals(entry.getKey().getStorageName()) || CollUtil.isEmpty(entry.getValue())) {
+            if (!STORAGE_FBS_INVENTORY.equals(entry.getKey().getStorageName()) || CollUtil.isEmpty(entry.getValue())) {
                 continue;
             }
             for (BaseEntity entity : entry.getValue()) {
@@ -58,7 +68,7 @@ public class DmpOutputShopeeFbsInventoryRocketMQTaskHandler extends DmpOutputRoc
 
         Set<String> changeIds = new HashSet<>();
         for (Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> entry : dmpRequest.getChangeConvertInputDmpBaseEntityListMaps().entrySet()) {
-            if (!"dmp_fbs_inventory".equals(entry.getKey().getStorageName()) || CollUtil.isEmpty(entry.getValue())) {
+            if (!STORAGE_FBS_INVENTORY.equals(entry.getKey().getStorageName()) || CollUtil.isEmpty(entry.getValue())) {
                 continue;
             }
             for (BaseEntity entity : entry.getValue()) {
@@ -66,14 +76,23 @@ public class DmpOutputShopeeFbsInventoryRocketMQTaskHandler extends DmpOutputRoc
             }
         }
 
-        // FBS 库存 Init 按店铺维度生成任务，同一输出批次只包含一个店铺。
-        String shopId = dmpEntityMap.values().stream()
+        supplementFbsInventories(changeIds, dmpEntityMap);
+
+        List<DmpFbsInventoryEntity> currentDmpEntityList = changeIds.stream()
+                .map(dmpEntityMap::get)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+        List<String> shopIds = currentDmpEntityList.stream()
                 .map(DmpFbsInventoryEntity::getNextLevelId)
                 .filter(StringUtils::isNotBlank)
-                .findFirst()
-                .orElse("");
+                .distinct()
+                .collect(Collectors.toList());
+        if (shopIds.size() > 1) {
+            throw new ServiceException("Shopee FBS库存输出批次包含多个店铺，请按店铺拆分任务");
+        }
+        String shopId = CollUtil.isEmpty(shopIds) ? "" : shopIds.get(0);
         List<String> platformSkuNoList = new ArrayList<>();
-        for (DmpFbsInventoryEntity value : dmpEntityMap.values()) {
+        for (DmpFbsInventoryEntity value : currentDmpEntityList) {
             if (StringUtils.isNotBlank(value.getPlatformSku())) {
                 platformSkuNoList.add(value.getPlatformSku());
             } else if (StringUtils.isNotBlank(value.getFbsSku())) {
@@ -98,12 +117,39 @@ public class DmpOutputShopeeFbsInventoryRocketMQTaskHandler extends DmpOutputRoc
         String cfgOutputId = dmpResponse.getDmpCfgOutputEntity().getId();
         for (String changeId : changeIds) {
             DmpFbsInventoryEntity dmpEntity = dmpEntityMap.get(changeId);
+            if (Objects.isNull(dmpEntity)) {
+                log.warn("Shopee FBS库存输出缺少DMP实体, changeId: {}", changeId);
+                continue;
+            }
             FbsInventoryEntity entity = convert(dmpEntity, cfgOutputId, shopInfo, mappingSkuViewList);
             if (entity != null) {
                 map.put(changeId, JSON.toJSONString(entity));
             }
         }
         return map;
+    }
+
+    private void supplementFbsInventories(Set<String> changeIds, Map<String, DmpFbsInventoryEntity> dmpEntityMap) {
+        List<String> missingIds = changeIds.stream()
+                .filter(StringUtils::isNotBlank)
+                .filter(changeId -> !dmpEntityMap.containsKey(changeId))
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(missingIds)) {
+            return;
+        }
+        for (int fromIndex = 0; fromIndex < missingIds.size(); fromIndex += BATCH_SIZE) {
+            List<String> batchIds = missingIds.subList(fromIndex, Math.min(fromIndex + BATCH_SIZE, missingIds.size()));
+            List<DmpFbsInventoryEntity> inventoryList = dmpFbsInventoryService.lambdaQuery()
+                    .in(DmpFbsInventoryEntity::getId, batchIds)
+                    .eq(DmpFbsInventoryEntity::getIsDeleted, Boolean.FALSE)
+                    .list();
+            if (CollUtil.isEmpty(inventoryList)) {
+                continue;
+            }
+            for (DmpFbsInventoryEntity inventory : inventoryList) {
+                dmpEntityMap.put(inventory.getId(), inventory);
+            }
+        }
     }
 
     public FbsInventoryEntity convert(DmpFbsInventoryEntity dmpEntity, String cfgOutputId,

@@ -199,7 +199,7 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     @TableField("label_json")
     private String labelJson;
     /**
-     * 发货类型：selfShipment自发货，platformWarehouse平台仓
+     * 发货类型：selfShipment自发货，platformWarehouse平台仓，thirdWarehouse第三方仓，transitWarehouse中转仓
      */
     @TableField("delivery_type")
     private String deliveryType;

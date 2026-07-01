@@ -46,6 +46,10 @@ public class TikTokPackageForecastAdapter extends AbstractPackageForecastPlatfor
     @Resource
     private WmsAttachmentService wmsAttachmentService;
 
+    private static final String UPLOAD_FAILURE_MESSAGE = "上传失败，请稍后重试或联系管理员处理";
+    private static final String CANCEL_FAILURE_MESSAGE = "取消上传失败，请稍后重试或联系管理员处理";
+    private static final String CANCEL_LOCAL_UPDATE_FAILURE_MESSAGE = "平台已取消，本地状态更新失败，请人工核对";
+
     @Override
     public String platform() {
         return PlatformDictEnum.TIK_TOK.getCode();
@@ -65,7 +69,7 @@ public class TikTokPackageForecastAdapter extends AbstractPackageForecastPlatfor
                 if (Objects.isNull(entity)) {
                     resultDTOS.add(BatchResultDTO.fail(id, id, "组包预报单不存在, 上传失败"));
                 } else {
-                    resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+                    resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), uploadFailureMessage(e)));
                 }
             }
         }
@@ -90,16 +94,31 @@ public class TikTokPackageForecastAdapter extends AbstractPackageForecastPlatfor
                 log.error("TikTok组包平台已成功但本地更新失败, id: {}, code: {}", entity.getId(), entity.getCode(), e);
                 return BatchResultDTO.fail(entity.getId(), entity.getCode(), "平台已组包，本地状态更新失败，请人工核对");
             }
+            String failureMessage = uploadFailureMessage(e);
             entity.setUploadStatus(PackageUploadStatusEnum.UPLOAD_FAILURE.getCode());
-            entity.setRemark("上传失败:" + e.getMessage());
+            entity.setRemark(failureMessage);
             try {
                 updateForecastOrThrow(entity);
             } catch (Exception updateException) {
                 log.error("TikTok组包预报上传失败后更新失败状态失败, id: {}, code: {}", entity.getId(), entity.getCode(), updateException);
             }
             log.error("组包预报上传失败>>>>>", e);
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "上传失败" + e.getMessage());
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), failureMessage);
         }
+    }
+
+    private String uploadFailureMessage(Exception e) {
+        if (e instanceof ServiceException && StringUtils.isNotBlank(e.getMessage())) {
+            return e.getMessage();
+        }
+        return UPLOAD_FAILURE_MESSAGE;
+    }
+
+    private String cancelFailureMessage(Exception e) {
+        if (e instanceof ServiceException && StringUtils.isNotBlank(e.getMessage())) {
+            return e.getMessage();
+        }
+        return CANCEL_FAILURE_MESSAGE;
     }
 
     @Override
@@ -119,6 +138,7 @@ public class TikTokPackageForecastAdapter extends AbstractPackageForecastPlatfor
         TikTokForecastContext context = buildContext(ids);
         for (String id : ids) {
             PackageForecastEntity entity = null;
+            boolean platformCanceled = false;
             try {
                 entity = getForecastOrThrow(id, context);
                 if (isCanceled(entity)) {
@@ -127,21 +147,28 @@ public class TikTokPackageForecastAdapter extends AbstractPackageForecastPlatfor
                 }
                 validateUploaded(entity);
                 tikTokCancel(entity, context);
+                platformCanceled = true;
                 resetAfterCancel(entity);
                 updateForecastOrThrow(entity);
                 resultDTOS.add(BatchResultDTO.success(entity.getId(), entity.getCode(), "取消上传"));
             } catch (Exception e) {
+                if (platformCanceled && Objects.nonNull(entity)) {
+                    log.error("TikTok组包平台已取消但本地更新失败, id: {}, code: {}", entity.getId(), entity.getCode(), e);
+                    resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), CANCEL_LOCAL_UPDATE_FAILURE_MESSAGE));
+                    continue;
+                }
                 log.error("取消上传失败>>>>", e);
+                String failureMessage = cancelFailureMessage(e);
                 if (Objects.nonNull(entity)) {
-                    entity.setRemark("取消失败原因:" + e.getMessage());
+                    entity.setRemark(failureMessage);
                     try {
                         updateForecastOrThrow(entity);
                     } catch (Exception updateException) {
                         log.error("TikTok组包预报取消失败后更新失败原因失败, id: {}, code: {}", entity.getId(), entity.getCode(), updateException);
                     }
-                    resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), "取消上传失败:" + e.getMessage()));
+                    resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), failureMessage));
                 } else {
-                    resultDTOS.add(BatchResultDTO.fail(id, id, e.getMessage()));
+                    resultDTOS.add(BatchResultDTO.fail(id, id, failureMessage));
                 }
             }
         }
@@ -248,7 +275,6 @@ public class TikTokPackageForecastAdapter extends AbstractPackageForecastPlatfor
         }
         List<SoB2cEntity> soList = soB2cFeign.listByIds(soIds);
         if (CollectionUtils.isNotEmpty(soList)) {
-            validateOrderPlatform(soList);
             context.setSoMap(soList.stream()
                     .collect(Collectors.toMap(SoB2cEntity::getId, Function.identity(), (left, right) -> left)));
         }
@@ -292,6 +318,9 @@ public class TikTokPackageForecastAdapter extends AbstractPackageForecastPlatfor
     }
 
     private List<SoB2cEntity> getSoList(List<String> soIds, TikTokForecastContext context) {
+        if (CollectionUtils.isEmpty(soIds)) {
+            throw new ServiceException("销售订单未找到");
+        }
         List<SoB2cEntity> soList = soIds.stream()
                 .map(id -> context.getSoMap().get(id))
                 .filter(Objects::nonNull)
@@ -299,6 +328,10 @@ public class TikTokPackageForecastAdapter extends AbstractPackageForecastPlatfor
         if (CollectionUtils.isEmpty(soList)) {
             throw new ServiceException("销售订单未找到");
         }
+        if (soList.size() != soIds.size()) {
+            throw new ServiceException("组包预报单销售订单数据不完整");
+        }
+        validateOrderPlatform(soList);
         return soList;
     }
 
@@ -321,7 +354,7 @@ public class TikTokPackageForecastAdapter extends AbstractPackageForecastPlatfor
             String base64 = PdfUtil.base64ForPdf(inputStream);
             return "data:application/pdf;base64," + base64;
         } catch (Exception e) {
-            throw new ServiceException(e.getMessage());
+            throw new ServiceException("打印失败");
         }
     }
 

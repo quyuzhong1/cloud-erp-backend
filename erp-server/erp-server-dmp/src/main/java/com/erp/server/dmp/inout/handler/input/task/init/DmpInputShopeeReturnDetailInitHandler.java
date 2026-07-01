@@ -1,7 +1,6 @@
 package com.erp.server.dmp.inout.handler.input.task.init;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -45,6 +44,9 @@ import java.util.stream.Collectors;
 public class DmpInputShopeeReturnDetailInitHandler extends DmpInputInitHandler {
 
     private static final int MAX_RETRY = 10;
+    private static final int MAX_INIT_ROWS = 50000;
+    private static final int RETURN_SOLUTION_RETURN_AND_REFUND = 0;
+    // Shopee退货明细接口按 return_sn 单条查询；固定间隔用于保护平台限流，不在 init 内并发打满。
     private static final long REQUEST_INTERVAL_MILLIS = 200L;
     private static final String SHOPEE_RETURN_LIST_DATA = "Shopee_returnList_data";
 
@@ -61,12 +63,16 @@ public class DmpInputShopeeReturnDetailInitHandler extends DmpInputInitHandler {
         }
 
         List<String> returnSnList = parentMongoData.stream()
+                .filter(this::isReturnAndRefund)
                 .map(item -> Objects.toString(item.get("return_sn"), ""))
                 .filter(StringUtils::isNotBlank)
                 .distinct()
                 .collect(Collectors.toList());
         if (CollUtil.isEmpty(returnSnList)) {
             return new ArrayList<>();
+        }
+        if (returnSnList.size() > MAX_INIT_ROWS) {
+            throw new ServiceException("Shopee退货明细init数据超过" + MAX_INIT_ROWS + "条，请按时间窗口或店铺拆分任务");
         }
 
         String shopId = resolveShopeeShopId(parentMongoData);
@@ -97,6 +103,10 @@ public class DmpInputShopeeReturnDetailInitHandler extends DmpInputInitHandler {
                 JSONObject detail = response.getResponse();
                 if (detail != null) {
                     detailList.add(detail);
+                } else {
+                    failureCount++;
+                    failedReturnSnList.add(returnSn);
+                    log.warn("Shopee退货明细init接口返回明细为空,returnSn:{},shopId:{}", returnSn, shopId);
                 }
             } catch (Exception e) {
                 failureCount++;
@@ -111,9 +121,11 @@ public class DmpInputShopeeReturnDetailInitHandler extends DmpInputInitHandler {
             throw new ServiceException("Shopee退货明细全部查询失败");
         }
         if (failureCount > 0) {
-            // 退货明细按 return_sn 单条补拉；部分失败不中断整批，保留成功明细入库，失败单号由日志人工补偿。
+            // 退货明细按 return_sn 单条补拉；部分失败直接抛出，保留DMP任务失败态以便重跑/补偿。
+            String failedReturnSnText = StringUtils.abbreviate(String.join(",", failedReturnSnList), 1000);
             log.warn("Shopee退货明细init部分查询失败,total:{},failureCount:{},failedReturnSnList:{}",
-                    total, failureCount, failedReturnSnList);
+                    total, failureCount, failedReturnSnText);
+            throw new ServiceException("Shopee退货明细部分查询失败，失败数量:" + failureCount + "，失败单号:" + failedReturnSnText);
         }
 
         DmpInputTaskInitDTO initDTO = new DmpInputTaskInitDTO();
@@ -121,6 +133,19 @@ public class DmpInputShopeeReturnDetailInitHandler extends DmpInputInitHandler {
         List<DmpInputTaskInitDTO> result = new ArrayList<>();
         result.add(initDTO);
         return result;
+    }
+
+    private boolean isReturnAndRefund(Map<String, Object> item) {
+        Object returnSolution = item.get("return_solution");
+        if (returnSolution == null || StringUtils.isBlank(String.valueOf(returnSolution))) {
+            return false;
+        }
+        try {
+            return RETURN_SOLUTION_RETURN_AND_REFUND == Integer.parseInt(String.valueOf(returnSolution));
+        } catch (NumberFormatException e) {
+            log.warn("Shopee退货明细init过滤return_solution解析失败,value:{}", returnSolution);
+            return false;
+        }
     }
 
     private void sleepBetweenRequests() {
@@ -207,7 +232,8 @@ public class DmpInputShopeeReturnDetailInitHandler extends DmpInputInitHandler {
             if (cause instanceof SSLHandshakeException || cause instanceof SocketTimeoutException) {
                 return null;
             }
-            throw new ServiceException("调用shopee退货明细接口报错，错误原因：" + ExceptionUtil.stacktraceToOneLineString(e));
+            log.error("调用shopee退货明细接口报错", e);
+            throw new ServiceException(e, "调用shopee退货明细接口报错");
         }
     }
 

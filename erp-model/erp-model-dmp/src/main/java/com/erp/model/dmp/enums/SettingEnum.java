@@ -60,6 +60,11 @@ public enum SettingEnum {
 
     NEW_DMP_PUSH_SWTICH_LIST("push_swtich", SettingEnum.NEW_DMP_PUSH_SWTICH, "新中台推送开关"),
     NEW_DMP_PULL_SWITCH_LIST("pull_switch", SettingEnum.NEW_DMP_PULL_SWITCH, "新中台拉取开关"),
+    /**
+     * 审查问题2（intentional）：控制 {@code newDmpPullShipment} 使用的 dmp_cfg_input.billType。
+     * 未配置时默认 {@code fba_inbound_plans}；暂不切 Inbound Plan 链路的环境请显式设为 {@code fba_shipment}。
+     * 切换前须确保对应 billType 的 dmp_cfg_input 全链路配置已上线。
+     */
     FBA_SHIPMENT_PULL_BILL_TYPE("fba_shipment_pull_bill_type", SettingEnum.NEW_DMP_PULL_SWITCH, "newDmp pullShipment使用的billType配置"),
 
     //支持推送仓位的金蝶仓库

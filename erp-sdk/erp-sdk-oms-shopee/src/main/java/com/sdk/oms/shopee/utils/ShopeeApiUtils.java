@@ -35,6 +35,7 @@ import java.util.regex.Pattern;
 @Slf4j
 public class ShopeeApiUtils {
 
+    // Shopee SDK请求/签名失败统一抛ServiceException，调用方不再按null响应兜底。
     private static final String CONTENT_TYPE = "Content-Type";
     private static final String APPLICATION = "application/json";
     private static final String MASK = "***";
@@ -128,9 +129,10 @@ public class ShopeeApiUtils {
             resultMap = JSONUtil.toBean(bodyStr, ShopResponse.class);
         } catch (Exception e) {
             log.error("虾皮接口请求异常, method: GET, url: {}, 错误: {}", safeUrl, e.getMessage(), e);
+            throw new ServiceException("虾皮店铺接口请求失败");
         }
 
-        return resultMap;
+        return requireResponse(resultMap, "虾皮店铺接口响应为空");
     }
     /**
      * GET 请求
@@ -152,9 +154,10 @@ public class ShopeeApiUtils {
             resultMap = JSONUtil.toBean(bodyStr, MerchantResponse.class);
         } catch (Exception e) {
             log.error("虾皮接口请求异常, method: GET, url: {}, 错误: {}", safeUrl, e.getMessage(), e);
+            throw new ServiceException("虾皮商户接口请求失败");
         }
 
-        return resultMap;
+        return requireResponse(resultMap, "虾皮商户接口响应为空");
     }
     /**
      * GET 请求
@@ -176,9 +179,10 @@ public class ShopeeApiUtils {
             resultMap = JSONUtil.toBean(bodyStr, ShopeeResponse.class);
         } catch (Exception e) {
             log.error("虾皮接口请求异常, method: GET, url: {}, 错误: {}", safeUrl, e.getMessage(), e);
+            throw new ServiceException("虾皮接口请求失败");
         }
 
-        return resultMap;
+        return requireResponse(resultMap, "虾皮接口响应为空");
     }
     /**
      * 发送请求到沃尔玛获取令牌token
@@ -194,15 +198,16 @@ public class ShopeeApiUtils {
         String url = buildUrl(baseUrl, urlParams);
         String safeUrl = buildSafeUrl(baseUrl, urlParams);
         log.info("虾皮接口请求, method: POST, url: {}, body: {}", safeUrl, maskLogBody(params));
+        ShopeeAuth resultMap = null;
         try {
             String bodyStr = OkHttpUtils.doPostJson(url, params, headers);
             log.info("虾皮接口响应, method: POST, url: {}, response: {}", safeUrl, maskSensitiveContent(bodyStr));
-            ShopeeAuth resultMap = JSONUtil.toBean(bodyStr, ShopeeAuth.class);
-            return resultMap;
+            resultMap = JSONUtil.toBean(bodyStr, ShopeeAuth.class);
         } catch (Exception e) {
             log.error("虾皮接口请求异常, method: POST, url: {}, 错误: {}", safeUrl, e.getMessage(), e);
             throw new ServiceException("虾皮授权接口请求失败");
         }
+        return requireResponse(resultMap, "虾皮授权接口响应为空");
     }
 
     /**
@@ -226,8 +231,9 @@ public class ShopeeApiUtils {
             resultMap = JSONUtil.toBean(bodyStr, ShopeeResponse.class);
         } catch (Exception e) {
             log.error("虾皮接口请求异常, method: POST, url: {}, 错误: {}", safeUrl, e.getMessage(), e);
+            throw new ServiceException("虾皮接口请求失败");
         }
-        return resultMap;
+        return requireResponse(resultMap, "虾皮接口响应为空");
     }
 
     /**
@@ -251,9 +257,10 @@ public class ShopeeApiUtils {
             resultMap = JSONUtil.toBean(bodyStr, ShopeeTokenAuth.class);
         } catch (Exception e) {
             log.error("虾皮接口请求异常, method: POST, url: {}, 错误: {}", safeUrl, e.getMessage(), e);
+            throw new ServiceException("虾皮刷新授权接口请求失败");
         }
 
-        return resultMap;
+        return requireResponse(resultMap, "虾皮刷新授权接口响应为空");
     }
     /**
      * 虾皮标记发货 post请求
@@ -276,8 +283,17 @@ public class ShopeeApiUtils {
             resultMap = JSONUtil.toBean(bodyStr, ShopeeResponse.class);
         } catch (Exception e) {
             log.error("虾皮接口请求异常, method: POST, url: {}, 错误: {}", safeUrl, e.getMessage(), e);
+            throw new ServiceException("虾皮接口请求失败");
         }
-        return resultMap;
+        return requireResponse(resultMap, "虾皮接口响应为空");
+    }
+
+    private static <T> T requireResponse(T response, String message) {
+        if (response == null) {
+            // Shopee SDK 当前采用失败即抛 ServiceException 的契约，调用方不再按 null 响应兜底。
+            throw new ServiceException(message);
+        }
+        return response;
     }
 
     private static String buildSafeUrl(String url, Map<String, Object> urlParams) {

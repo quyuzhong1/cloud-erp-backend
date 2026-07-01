@@ -3,6 +3,7 @@ package com.erp.server.dmp.inout.handler.input.task.dmp;
 import cn.hutool.core.collection.CollUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
+import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -117,14 +118,18 @@ public class DmpInputShopeeRefundDetailDmpHandler extends DmpInputDoNextDmpHandl
                 // Shopee 仅退款明细中的 amount 字段按平台语义表示数量，不是金额。
                 Object amountObj = dmpDataMap.get("amount");
                 Integer qty = parseInteger(amountObj);
-                if (qty != null) {
-                    dmpDataMap.put("qty", qty);
-                    Object itemPriceObj = dmpDataMap.get("item_price");
-                    BigDecimal itemPrice = parseBigDecimal(itemPriceObj);
-                    if (itemPrice != null) {
-                        dmpDataMap.put("amount", itemPrice.multiply(BigDecimal.valueOf(qty)));
-                    }
+                if (qty == null) {
+                    throw new ServiceException("Shopee仅退款明细数量解析失败,returnSn:{},orderSn:{},platformSku:{}",
+                            dmpDataMap.get("return_sn"), dmpDataMap.get("order_sn"), platformSku);
                 }
+                dmpDataMap.put("qty", qty);
+                Object itemPriceObj = dmpDataMap.get("item_price");
+                BigDecimal itemPrice = parseBigDecimal(itemPriceObj);
+                if (itemPrice == null) {
+                    throw new ServiceException("Shopee仅退款明细单价缺失,returnSn:{},orderSn:{},platformSku:{}",
+                            dmpDataMap.get("return_sn"), dmpDataMap.get("order_sn"), platformSku);
+                }
+                dmpDataMap.put("amount", itemPrice.multiply(BigDecimal.valueOf(qty)));
                 Object returnSnObj = dmpDataMap.get("return_sn");
                 if (returnSnObj != null && StringUtils.isNotBlank(platformSku)) {
                     dmpDataMap.put("thirdDetailId", returnSnObj + "_" + platformSku);

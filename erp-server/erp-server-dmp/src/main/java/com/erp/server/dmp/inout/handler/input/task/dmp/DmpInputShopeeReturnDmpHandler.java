@@ -1,6 +1,7 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
 import com.common.business.enums.PlatformDictEnum;
+import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -59,6 +60,7 @@ public class DmpInputShopeeReturnDmpHandler extends DmpInputDbConvertDmpHandler 
 
     private void fillHeader(TreeMap<String, Object> dmpDataMap) {
         dmpDataMap.put("sourceSystem", PlatformDictEnum.SHOPEE.getCode());
+        dmpDataMap.put("sourcePlatform", PlatformDictEnum.SHOPEE.getCode());
         String shopId = resolveShopeeShopId(dmpDataMap);
         dmpDataMap.put("shopId", shopId);
         dmpDataMap.put("nextLevelId", shopId);
@@ -73,9 +75,11 @@ public class DmpInputShopeeReturnDmpHandler extends DmpInputDbConvertDmpHandler 
         Object refundAmount = dmpDataMap.get("refund_amount");
         if (refundAmount != null) {
             BigDecimal amount = parseBigDecimal(refundAmount);
-            if (amount != null) {
-                dmpDataMap.put("allAmount", amount);
+            if (amount == null) {
+                throw new ServiceException("Shopee退货主表金额解析失败,returnSn:{},orderSn:{}",
+                        dmpDataMap.get("return_sn"), dmpDataMap.get("order_sn"));
             }
+            dmpDataMap.put("allAmount", amount);
         }
         Object currency = dmpDataMap.get("currency");
         if (currency != null) {
