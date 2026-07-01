@@ -1,5 +1,6 @@
 package com.cloud.erp.gateway.component;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.context.event.EventListener;
@@ -11,6 +12,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Gateway 本地 readiness 状态，不检查后端服务、Nacos、Redis 等外部依赖。
  */
 @Component
+@ConditionalOnProperty(prefix = "erp.internal-health", name = "enabled", havingValue = "true")
 public class GatewayReadinessState {
 
     private final AtomicBoolean applicationReady = new AtomicBoolean(false);
