@@ -1065,7 +1065,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (CollUtil.isEmpty(sourceDeliveryDetailList)) {
             throw new ServiceException(ApiError.COMMON_NOT_FOUND_PUSH_DADA);
         }
-        handleBeforeDeclareData(sourceDeliveryDetailList);
+        handleBeforeDeclareData(sourceDeliveryDetailList, dto.getIsMultipleMerge());
         return sourceDeliveryDetailList;
     }
 
@@ -1107,7 +1107,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
      * @date 2026/4/27 17:32
      * @param list
      */
-    private void handleBeforeDeclareData (List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> list) {
+    private void handleBeforeDeclareData(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> list, Boolean isMultipleMerge) {
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
@@ -1126,8 +1126,13 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         List<DictCurrencyEntity> dictCurrencyList = sysUserFeign.currencyList();
         Map<String, String> currencyMap = CollUtil.isEmpty(dictCurrencyList) ? new HashMap<>() : dictCurrencyList.stream().collect(Collectors.toMap(DictCurrencyEntity::getId,item -> item.getName()));
 
-        boolean customerReceiver = Boolean.TRUE.equals(tmsDeclareBillFeign.isB2bCustomerReceiver(list));
-        Map<String, SoDetailEntity> soDetailMap = customerReceiver ? loadSoDetailMapForB2bMinDeclare(list) : Collections.emptyMap();
+        Map<String, Boolean> customerReceiverBySource = resolveCustomerReceiverBySource(list, isMultipleMerge);
+        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> customerReceiverDetails = list.stream()
+                .filter(item -> Boolean.TRUE.equals(customerReceiverBySource.get(resolveB2bSourceGroupKey(item))))
+                .collect(Collectors.toList());
+        Map<String, SoDetailEntity> soDetailMap = CollUtil.isEmpty(customerReceiverDetails)
+                ? Collections.emptyMap()
+                : loadSoDetailMapForB2bMinDeclare(customerReceiverDetails);
 
         for (TmsDeclareBillDTO.SourceDeliveryDetailDTO deliveryDetailDTO : list) {
             ProductLogisticsEntity productLogisticsEntity = logisticsMap.get(deliveryDetailDTO.getSkuId());
@@ -1138,6 +1143,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 deliveryDetailDTO.setUnit(productLogisticsEntity.getDeclareUnit());
                 deliveryDetailDTO.setUnitName(declareUnitNameMap.get(productLogisticsEntity.getDeclareUnit()));
 
+                boolean customerReceiver = Boolean.TRUE.equals(customerReceiverBySource.get(resolveB2bSourceGroupKey(deliveryDetailDTO)));
                 SoDetailEntity soDetailEntity = soDetailMap.get(buildSoDetailKey(deliveryDetailDTO.getBusinessId(), deliveryDetailDTO.resolveSoDetailSkuId()));
                 if (customerReceiver && Objects.nonNull(soDetailEntity)) {
                     deliveryDetailDTO.setUnitPrice(MathUtil.preferNonNull(soDetailEntity.getTaxPrice(), soDetailEntity.getPrice()));
@@ -1153,6 +1159,40 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             }
             fillB2bPreviewBusinessTypeDefault(deliveryDetailDTO);
         }
+    }
+
+    /**
+     * 合并报关时整批校验收货人类型一致；独立报关时按来源单分别匹配报关配置。
+     * <p>isMultipleMerge 为 null 时按「合并」处理，与 TMS autoMergeDeclareBillView 的口径保持一致，
+     * 避免前置数据准备与后续合并生成走不同分支导致单价/币别错位。
+     */
+    private Map<String, Boolean> resolveCustomerReceiverBySource(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> list,
+                                                                 Boolean isMultipleMerge) {
+        Map<String, List<TmsDeclareBillDTO.SourceDeliveryDetailDTO>> sourceGroupMap = list.stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.groupingBy(this::resolveB2bSourceGroupKey, LinkedHashMap::new, Collectors.toList()));
+        Map<String, Boolean> customerReceiverBySource = new LinkedHashMap<>();
+        if (!Boolean.FALSE.equals(isMultipleMerge)) {
+            boolean customerReceiver = Boolean.TRUE.equals(tmsDeclareBillFeign.isB2bCustomerReceiver(list));
+            sourceGroupMap.keySet().forEach(sourceKey -> customerReceiverBySource.put(sourceKey, customerReceiver));
+            return customerReceiverBySource;
+        }
+        // 独立报关：一次远程调用拿到每个来源单的判定结果，避免按来源逐个发起 Feign 调用。
+        Map<String, Boolean> remoteResultMap = Optional.ofNullable(tmsDeclareBillFeign.isB2bCustomerReceiverBySource(list))
+                .orElseGet(Collections::emptyMap);
+        sourceGroupMap.keySet().forEach(sourceKey ->
+                customerReceiverBySource.put(sourceKey, Boolean.TRUE.equals(remoteResultMap.get(sourceKey))));
+        return customerReceiverBySource;
+    }
+
+    private String resolveB2bSourceGroupKey(TmsDeclareBillDTO.SourceDeliveryDetailDTO detailDTO) {
+        if (Objects.isNull(detailDTO)) {
+            return "";
+        }
+        // 与 TMS resolveSourceGroupKeyForMerge 保持一致：sourceId > businessId > sourceCode，
+        // 否则批量接口返回的来源 key 取不到对应判定结果。
+        return StringUtils.defaultString(StringUtils.firstNonBlank(
+                detailDTO.getSourceId(), detailDTO.getBusinessId(), detailDTO.getSourceCode()));
     }
 
     private void fillB2bPreviewBusinessTypeDefault(TmsDeclareBillDTO.SourceDeliveryDetailDTO detailDTO) {

@@ -15,6 +15,7 @@ import com.erp.model.tms.entity.TmsDeclareBillEntity;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -200,6 +201,12 @@ public interface TmsDeclareBillService extends SuperService<TmsDeclareBillEntity
      * B2B 报关单且境外收货人为客户时返回 true（与合并预览 sixDimensionMerge 口径一致）。
      */
     Boolean isB2bCustomerReceiver(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList);
+
+    /**
+     * 独立报关：按来源单分组各自判定收货人类型，返回「来源 key -> 是否按客户分发」。
+     * 供调用方一次远程调用拿到全部来源的判定结果，避免按来源逐个调用。
+     */
+    Map<String, Boolean> isB2bCustomerReceiverBySource(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList);
 
     /**
      * 自动生成报关单链路（DeliveryDeclareDetailMid 中间表自动生成、batchAddMergeDetail 等）
