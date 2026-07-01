@@ -190,13 +190,19 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
             throw new ServiceException(ApiError.COMMON_COMPANY_NOT_FOUND);
         }
         Map<String, JSONObject> skuJsonCache = new HashMap<>();
+        // 同一 BOM 内多条子行可能对应相同 SKU（跨父行或同父行重复子料），记录已匹配的 SCM 子行避免重复消费
+        Set<String> usedChildDetailIds = new HashSet<>();
         int entryIndex = 0;
         //原数据行
         for (int i = 0; i < ppBomEntries.size(); i++) {
             JSONObject srcEntry = ppBomEntries.getJSONObject(i);
             JSONObject skuJson = resolveSkuJson(skuApiUtils, platformId, srcEntry, skuJsonCache);
             String skuNumber = extractSkuNumber(skuJson);
-            SubcontractOrderDetailEntity matchedDetail = matchChangeChildDetail(skuNumber, convertContext);
+            SubcontractOrderDetailEntity matchedDetail = matchChangeChildDetail(skuNumber, srcEntry, view,
+                    convertContext, usedChildDetailIds);
+            if (matchedDetail != null && StringUtils.isNotBlank(matchedDetail.getId())) {
+                usedChildDetailIds.add(matchedDetail.getId());
+            }
             JSONObject stockFields = resolveScmStockFields(matchedDetail, convertContext.getDetailStockFieldMap());
             JSONObject changeBeforPpBom = createChangeBeforePpBomEntry(view, srcEntry, bomBillNo,
                     subcontractOrder.getCode(), sysAccountingCompany, entryIndex, skuJson, stockFields);
@@ -792,20 +798,34 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         return stockFields == null ? new JSONObject() : stockFields;
     }
 
+    /**
+     * 构建委外用料清单变更单转换上下文。
+     * <p>
+     * 父行匹配分两阶段：
+     * <ol>
+     *   <li>优先按金蝶 BOM 头 {@code SubReqEntryId}/{@code SubReqEntrySeq} 定位当前用料清单所属父行；</li>
+     *   <li>若分录行号无法命中（如 SCM 父行尚未回写 {@code kingdeeDetailId}），回退至 SKU + 供应商 + 返修数量匹配。</li>
+     * </ol>
+     * 业务上允许不同父行下存在相同子料 SKU，因此不能仅按 SKU 聚合全部子行。
+     */
     private RepairBomConvertContext buildRepairBomConvertContext(JSONObject view,
             List<SubcontractOrderDetailEntity> subcontractOrderDetails, Map<String, Object> map) {
         Map<String, JSONObject> detailStockFieldMap = buildDetailStockFieldMap(map);
         List<RepairBomConvertContext.ParentChildGroup> matchedGroups = new ArrayList<>();
 
-        List<SubcontractOrderDetailEntity> parentList = subcontractOrderDetails.stream()
-                .filter(item -> StringUtils.isBlank(item.getParentId()))
-                .collect(Collectors.toList());
-        List<SubcontractOrderDetailEntity> childList = subcontractOrderDetails.stream()
-                .filter(item -> StringUtils.isNotBlank(item.getParentId()))
-                .collect(Collectors.toList());
+        List<SubcontractOrderDetailEntity> parentList = new ArrayList<>();
+        List<SubcontractOrderDetailEntity> childList = new ArrayList<>();
+        for (SubcontractOrderDetailEntity detail : subcontractOrderDetails) {
+            if (StringUtils.isBlank(detail.getParentId())) {
+                parentList.add(detail);
+            } else {
+                childList.add(detail);
+            }
+        }
+        Map<String, Integer> parentEntrySeqMap = buildParentEntrySeqMap(parentList);
 
         if (CollectionUtils.isEmpty(parentList)) {
-            return new RepairBomConvertContext(detailStockFieldMap, matchedGroups);
+            return new RepairBomConvertContext(detailStockFieldMap, matchedGroups, parentEntrySeqMap);
         }
 
         List<String> supplierIds = parentList.stream()
@@ -840,17 +860,18 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         JSONObject materialId = view.getJSONObject("MaterialID");
         JSONObject supplierId = view.getJSONObject("SupplierId");
         if (materialId == null || supplierId == null) {
-            return new RepairBomConvertContext(detailStockFieldMap, matchedGroups);
+            return new RepairBomConvertContext(detailStockFieldMap, matchedGroups, parentEntrySeqMap);
         }
         String viewSkuNo = materialId.get("Number") == null ? null : materialId.get("Number").toString();
         JSONArray valueArray = supplierId.getJSONArray("Name");
         if (valueArray == null || valueArray.isEmpty()) {
-            return new RepairBomConvertContext(detailStockFieldMap, matchedGroups);
+            return new RepairBomConvertContext(detailStockFieldMap, matchedGroups, parentEntrySeqMap);
         }
         JSONObject firstElement = valueArray.getJSONObject(0);
         String supplierName = firstElement.get("Value") == null ? null : firstElement.get("Value").toString();
         Integer kingdeeQty = parseKingdeeQtyInt(view.get("Qty"));
 
+        List<RepairBomConvertContext.ParentChildGroup> skuMatchedGroups = new ArrayList<>();
         for (SubcontractOrderDetailEntity parentDetail : parentList) {
             SupplierEntity supplier = supplierMap.get(parentDetail.getSupplierId());
             ProductDetailEntity productDetail = productMap.get(parentDetail.getSkuId());
@@ -862,27 +883,105 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
                 }
                 throw new ServiceException(ApiError.PRODUCT_SKU_NOT_FOUND, parentDetail.getSkuNo());
             }
-            if (Objects.equals(viewSkuNo, productDetail.getSkuNo())
-                    && Objects.equals(supplierName, supplier.getName())
-                    && Objects.equals(kingdeeQty, parentDetail.getRepairQty())) {
-                List<SubcontractOrderDetailEntity> filterChildList = childList.stream()
-                        .filter(item -> Objects.equals(item.getParentId(), parentDetail.getId()))
-                        .collect(Collectors.toList());
-                if (!CollectionUtils.isEmpty(filterChildList)) {
-                    matchedGroups.add(new RepairBomConvertContext.ParentChildGroup(parentDetail, filterChildList));
-                }
+            if (!Objects.equals(viewSkuNo, productDetail.getSkuNo())
+                    || !Objects.equals(supplierName, supplier.getName())
+                    || !Objects.equals(kingdeeQty, parentDetail.getRepairQty())) {
+                continue;
+            }
+            List<SubcontractOrderDetailEntity> filterChildList = childList.stream()
+                    .filter(item -> Objects.equals(item.getParentId(), parentDetail.getId()))
+                    .collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(filterChildList)) {
+                continue;
+            }
+            RepairBomConvertContext.ParentChildGroup group =
+                    new RepairBomConvertContext.ParentChildGroup(parentDetail, filterChildList);
+            // skuMatchedGroups：宽松匹配结果，供分录行号未命中时回退
+            skuMatchedGroups.add(group);
+            // matchedGroups：严格匹配，仅保留与当前金蝶 BOM 分录对应的父行
+            if (matchesViewParentLine(parentDetail, view, parentEntrySeqMap)) {
+                matchedGroups.add(group);
             }
         }
-        return new RepairBomConvertContext(detailStockFieldMap, matchedGroups);
+        // 分录行号与 SCM 未对齐时（如 kingdeeDetailId 缺失），避免 matchedGroups 为空导致变更单无明细
+        if (CollectionUtils.isEmpty(matchedGroups) && !CollectionUtils.isEmpty(skuMatchedGroups)) {
+            log.warn("委外用料清单变更单按分录行号未命中父行，回退至SKU/供应商/数量匹配，viewSubReqEntryId={}, viewSubReqEntrySeq={}",
+                    extractJsonString(view, "SubReqEntryId"), parseKingdeeQtyInt(view.get("SubReqEntrySeq")));
+            matchedGroups.addAll(skuMatchedGroups);
+        }
+        return new RepairBomConvertContext(detailStockFieldMap, matchedGroups, parentEntrySeqMap);
     }
 
-    private SubcontractOrderDetailEntity matchChangeChildDetail(String skuNumber, RepairBomConvertContext convertContext) {
+    /**
+     * 构建 SCM 父行 detailId 与金蝶委外订单分录行号（SubReqEntrySeq）的映射。
+     * <p>
+     * 行号按 {@code subcontractOrderDetails} 遍历顺序从 1 起编，与金蝶 {@code SubReqEntrySeq} 语义一致；
+     * 当父行 {@code kingdeeDetailId} 尚未回写时，作为 {@link #matchesViewParentLine} 的兜底匹配依据。
+     */
+    private Map<String, Integer> buildParentEntrySeqMap(List<SubcontractOrderDetailEntity> parentList) {
+        if (CollectionUtils.isEmpty(parentList)) {
+            return Collections.emptyMap();
+        }
+        Map<String, Integer> parentEntrySeqMap = new HashMap<>();
+        for (int i = 0; i < parentList.size(); i++) {
+            SubcontractOrderDetailEntity parentDetail = parentList.get(i);
+            if (parentDetail != null && StringUtils.isNotBlank(parentDetail.getId())) {
+                parentEntrySeqMap.put(parentDetail.getId(), i + 1);
+            }
+        }
+        return parentEntrySeqMap;
+    }
+
+    /**
+     * 判断 SCM 父行是否为当前金蝶 BOM 所属委外订单分录。
+     * <p>
+     * 匹配优先级：{@code SubReqEntryId}（对应 SCM {@code kingdeeDetailId}） &gt; {@code SubReqEntrySeq}。
+     * 金蝶 BOM 头未携带分录标识时返回 {@code true}，保持与历史逻辑兼容。
+     */
+    private boolean matchesViewParentLine(SubcontractOrderDetailEntity parentDetail, JSONObject view,
+            Map<String, Integer> parentEntrySeqMap) {
+        String viewSubReqEntryId = extractJsonString(view, "SubReqEntryId");
+        Integer viewSubReqEntrySeq = parseKingdeeQtyInt(view.get("SubReqEntrySeq"));
+        // 无分录标识：无法进一步收窄，沿用 SKU/供应商/数量维度的全部命中父行
+        if (StringUtils.isBlank(viewSubReqEntryId) && viewSubReqEntrySeq == null) {
+            return true;
+        }
+        // 优先用金蝶分录内码与 SCM 已回写的 kingdeeDetailId 精确匹配
+        if (StringUtils.isNotBlank(viewSubReqEntryId) && StringUtils.isNotBlank(parentDetail.getKingdeeDetailId())) {
+            return Objects.equals(viewSubReqEntryId, parentDetail.getKingdeeDetailId());
+        }
+        // 兜底：按委外订单分录行号匹配
+        if (viewSubReqEntrySeq != null && parentEntrySeqMap != null) {
+            Integer parentSeq = parentEntrySeqMap.get(parentDetail.getId());
+            return Objects.equals(viewSubReqEntrySeq, parentSeq);
+        }
+        return false;
+    }
+
+    /**
+     * 将金蝶 BOM 子行映射到 SCM 委外订单子明细，用于回填仓库/仓位。
+     * <p>
+     * 消歧策略（依次降级）：
+     * <ol>
+     *   <li>按 {@link #resolveParentGroup} 限定父行范围；</li>
+     *   <li>按 SKU 过滤，并排除 {@code usedChildDetailIds} 中已匹配的行；</li>
+     *   <li>按金蝶应发数量（MustQty/StdQty）与 SCM 子行 qty 对齐；</li>
+     *   <li>仍有多条候选时取首条并打 warn，不再抛 3517（业务允许跨父行/同父行重复子料 SKU）。</li>
+     * </ol>
+     */
+    private SubcontractOrderDetailEntity matchChangeChildDetail(String skuNumber, JSONObject srcEntry, JSONObject view,
+            RepairBomConvertContext convertContext, Set<String> usedChildDetailIds) {
         if (StringUtils.isBlank(skuNumber) || convertContext == null
                 || CollectionUtils.isEmpty(convertContext.getChangeChildDetails())) {
             return null;
         }
-        List<SubcontractOrderDetailEntity> candidates = convertContext.getChangeChildDetails().stream()
+        RepairBomConvertContext.ParentChildGroup parentGroup = resolveParentGroup(srcEntry, view, convertContext);
+        List<SubcontractOrderDetailEntity> searchScope = parentGroup == null
+                ? convertContext.getChangeChildDetails()
+                : parentGroup.getChildDetails();
+        List<SubcontractOrderDetailEntity> candidates = searchScope.stream()
                 .filter(item -> Objects.equals(skuNumber, item.getSkuNo()))
+                .filter(item -> usedChildDetailIds == null || !usedChildDetailIds.contains(item.getId()))
                 .collect(Collectors.toList());
         if (CollectionUtils.isEmpty(candidates)) {
             return null;
@@ -890,35 +989,94 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         if (candidates.size() == 1) {
             return candidates.get(0);
         }
-        SubcontractOrderDetailEntity matched = null;
-        for (RepairBomConvertContext.ParentChildGroup group : convertContext.getMatchedGroups()) {
-            List<SubcontractOrderDetailEntity> groupCandidates = group.getChildDetails().stream()
-                    .filter(item -> Objects.equals(skuNumber, item.getSkuNo()))
-                    .collect(Collectors.toList());
-            if (CollectionUtils.isEmpty(groupCandidates)) {
-                continue;
-            }
-            if (groupCandidates.size() > 1) {
-                throw buildAmbiguousChildDetailException(skuNumber, groupCandidates, "同父行");
-            }
-            if (matched != null) {
-                throw buildAmbiguousChildDetailException(skuNumber, candidates, "跨父行");
-            }
-            matched = groupCandidates.get(0);
+        List<SubcontractOrderDetailEntity> qtyMatched = filterChildDetailByKingdeeQty(candidates, srcEntry);
+        if (qtyMatched.size() == 1) {
+            return qtyMatched.get(0);
         }
-        if (matched != null) {
-            return matched;
-        }
-        throw buildAmbiguousChildDetailException(skuNumber, candidates, "变更范围");
+        // 同父行重复 SKU 且数量也无法区分时，按候选顺序取首条（usedChildDetailIds 保证逐行不重复消费）
+        List<SubcontractOrderDetailEntity> pickFrom = qtyMatched.size() > 1 ? qtyMatched : candidates;
+        log.warn("委外用料清单变更单子行SKU存在多条候选，按未消费顺序取首条，skuNo={}, detailIds={}",
+                skuNumber, pickFrom.stream().map(SubcontractOrderDetailEntity::getId).collect(Collectors.joining(",")));
+        return pickFrom.get(0);
     }
 
-    private ServiceException buildAmbiguousChildDetailException(String skuNumber,
-            List<SubcontractOrderDetailEntity> candidates, String scope) {
-        String detailIds = candidates.stream()
-                .map(SubcontractOrderDetailEntity::getId)
-                .collect(Collectors.joining(","));
-        log.warn("委外用料清单变更单{}存在无法唯一匹配的子行，skuNo={}, detailIds={}", scope, skuNumber, detailIds);
-        return new ServiceException(ApiError.DMP_KINGDEE_SUBCONTRACT_BOM_CHILD_MATCH_AMBIGUOUS, scope, skuNumber, detailIds);
+    /**
+     * 根据金蝶 BOM 分录行上的委外订单分录标识，定位对应的 SCM 父行分组。
+     * <p>
+     * 仅当 {@code matchedGroups} 存在多个父行时才需要消歧；单组时直接返回。
+     * 分录标识优先取 {@code srcEntry}，缺失时回退至 BOM 头 {@code view}。
+     */
+    private RepairBomConvertContext.ParentChildGroup resolveParentGroup(JSONObject srcEntry, JSONObject view,
+            RepairBomConvertContext convertContext) {
+        List<RepairBomConvertContext.ParentChildGroup> groups = convertContext.getMatchedGroups();
+        if (CollectionUtils.isEmpty(groups)) {
+            return null;
+        }
+        if (groups.size() == 1) {
+            return groups.get(0);
+        }
+        String subReqEntryId = extractJsonString(srcEntry, "SubReqEntryId");
+        if (StringUtils.isBlank(subReqEntryId)) {
+            subReqEntryId = extractJsonString(view, "SubReqEntryId");
+        }
+        if (StringUtils.isNotBlank(subReqEntryId)) {
+            for (RepairBomConvertContext.ParentChildGroup group : groups) {
+                SubcontractOrderDetailEntity parentDetail = group.getParentDetail();
+                if (parentDetail != null && Objects.equals(subReqEntryId, parentDetail.getKingdeeDetailId())) {
+                    return group;
+                }
+            }
+        }
+        Integer subReqEntrySeq = parseKingdeeQtyInt(srcEntry == null ? null : srcEntry.get("SubReqEntrySeq"));
+        if (subReqEntrySeq == null && view != null) {
+            subReqEntrySeq = parseKingdeeQtyInt(view.get("SubReqEntrySeq"));
+        }
+        if (subReqEntrySeq != null) {
+            Map<String, Integer> parentEntrySeqMap = convertContext.getParentEntrySeqMap();
+            for (RepairBomConvertContext.ParentChildGroup group : groups) {
+                SubcontractOrderDetailEntity parentDetail = group.getParentDetail();
+                if (parentDetail == null) {
+                    continue;
+                }
+                Integer parentSeq = parentEntrySeqMap.get(parentDetail.getId());
+                if (Objects.equals(subReqEntrySeq, parentSeq)) {
+                    return group;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 按金蝶应发数量过滤 SCM 子行候选，用于同父行下重复 SKU 的二次消歧。
+     * <p>
+     * 优先取 {@code MustQty}，缺失时取 {@code StdQty}；若无数量字段或过滤后为空，返回原候选列表。
+     */
+    private List<SubcontractOrderDetailEntity> filterChildDetailByKingdeeQty(
+            List<SubcontractOrderDetailEntity> candidates, JSONObject srcEntry) {
+        if (CollectionUtils.isEmpty(candidates) || srcEntry == null) {
+            return candidates;
+        }
+        Integer kingdeeQty = parseKingdeeQtyInt(srcEntry.get("MustQty"));
+        if (kingdeeQty == null) {
+            kingdeeQty = parseKingdeeQtyInt(srcEntry.get("StdQty"));
+        }
+        if (kingdeeQty == null) {
+            return candidates;
+        }
+        Integer finalKingdeeQty = kingdeeQty;
+        List<SubcontractOrderDetailEntity> qtyMatched = candidates.stream()
+                .filter(item -> item.getQty() != null && Objects.equals(finalKingdeeQty, item.getQty()))
+                .collect(Collectors.toList());
+        return CollectionUtils.isEmpty(qtyMatched) ? candidates : qtyMatched;
+    }
+
+    private String extractJsonString(JSONObject json, String key) {
+        if (json == null || json.get(key) == null) {
+            return null;
+        }
+        String value = json.get(key).toString().trim();
+        return StringUtils.isBlank(value) ? null : value;
     }
 
     private JSONObject resolveSkuJson(KingdeeApiUtils skuApiUtils, String platformId, JSONObject srcEntry,
