@@ -338,7 +338,7 @@ public class FsInstancesServiceImpl implements FsInstancesService {
     /**
      * 原始的回调方法，保持不变。
      */
-    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_FS_CALLBACK_KEY, keyName = "entity.bussinessKey,entity.bussinessId", unlockAfterTx = true)
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "entity.bussinessId", unlockAfterTx = true)
     public void handleCallback(ApproveTaskInfoEntity entity, String approveStatus, String userId, LocalDateTime approveTime,String comment) {
         EndProcessDTO processDTO = new EndProcessDTO();
         processDTO.setBusinessKey(entity.getBussinessKey());

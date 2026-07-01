@@ -16,6 +16,7 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -439,7 +440,7 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.BILL_SUBMIT_KEY, keyName = "id", unlockAfterTx = true)
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO submit(String id,  boolean isNeedProcess) {
         AssetCardEntity entity = getById(id);
         if (ObjectUtil.isEmpty(entity)) {
@@ -470,14 +471,14 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
         // 新增
         BaseResultDTO.AddDTO result = this.add(dto);
         // 提交
-        this.submit(result.getId(), true);
+        ApplicationContextUtils.getBean(AssetCardServiceImpl.class).submit(result.getId(), true);
         return result;
     }
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.BILL_SUBMIT_KEY, keyName = "dto.id", unlockAfterTx = true)
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "dto.id", unlockAfterTx = true)
     public void updateAndSubmit(AssetCardDTO.UpdateDTO dto) {
         // 修改
         this.update(dto);
@@ -488,7 +489,7 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.BILL_APPROVE_KEY, keyName = "dto.id", unlockAfterTx = true)
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "dto.id", unlockAfterTx = true)
     public BatchResultDTO approve(ApproveOneDTO dto) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
@@ -537,7 +538,7 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.BILL_APPROVE_KEY, keyName = "id", unlockAfterTx = true)
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO disApprove(String id) {
         AssetCardEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到资产卡片主单单数据"));
         // 反审核条件判断
@@ -710,7 +711,7 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "dto.id", unlockAfterTx = true)
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "dto.id", unlockAfterTx = true)
     public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         String id = dto.getId();
         AssetCardEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到资产卡片主单数据"));
@@ -915,7 +916,7 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
     * 更新审核状态
     */
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.BILL_UPDATE_APPROVE_STATUS_KEY, keyName = "id", unlockAfterTx = true)
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "id", unlockAfterTx = true)
     public void updateApproveStatus(String id, String approveStatus) {
         lambdaUpdate().eq(AssetCardEntity::getId, id)
         .set(AssetCardEntity::getApproveUserId, "")

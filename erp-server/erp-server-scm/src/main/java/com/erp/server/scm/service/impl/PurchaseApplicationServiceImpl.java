@@ -1626,7 +1626,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
     }
 
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.BILL_UPDATE_APPROVE_STATUS_KEY, keyName = "one.id", unlockAfterTx = true)
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "one.id", unlockAfterTx = true)
     public void updateApproveStatus(PurchaseApplicationEntity one, String approveStatus) {
         String userId = sysUserFeign.getUserByThird(ThirdpartyPlatformEnum.FS.getCode(), one.getApproveUserId()).getUserId();
         //更新审核状态

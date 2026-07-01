@@ -1190,7 +1190,7 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    @DistributeLocker(businessType = DistributeKeyConstant.BILL_UPDATE_APPROVE_STATUS_KEY, keyName = "updateApprovalStatusDTO.purchasePricechangeEntity.id", unlockAfterTx = true)
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "updateApprovalStatusDTO.purchasePricechangeEntity.id", unlockAfterTx = true)
     public void updateApproveStatus(PurchasePriceChangeDTO.UpdateApprovalStatusDTO  updateApprovalStatusDTO) {
         PurchasePriceChangeEntity entity = updateApprovalStatusDTO.getPurchasePricechangeEntity();
         ApproveStatusEnum approveStatus = updateApprovalStatusDTO.getApproveStatus();

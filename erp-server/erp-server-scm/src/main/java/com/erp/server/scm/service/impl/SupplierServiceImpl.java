@@ -1974,7 +1974,7 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.BILL_UPDATE_APPROVE_STATUS_KEY, keyName = "updateApproveStatusDTO.supplierEntity.id", unlockAfterTx = true)
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "updateApproveStatusDTO.supplierEntity.id", unlockAfterTx = true)
     public void updateApproveStatus(SupplierDTO.UpdateApproveStatusDTO updateApproveStatusDTO) {
         ApproveStatusEnum approveStatus = updateApproveStatusDTO.getApproveStatus();
         SupplierEntity supplierEntity = updateApproveStatusDTO.getSupplierEntity();

@@ -1145,7 +1145,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    @DistributeLocker(businessType = DistributeKeyConstant.BILL_UPDATE_APPROVE_STATUS_KEY, keyName = "updateApprovalStatusDTO.purchasePriceEntity.id", unlockAfterTx = true)
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "updateApprovalStatusDTO.purchasePriceEntity.id", unlockAfterTx = true)
     public void updateApproveStatus(PurchasePriceDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO) {
         ApproveStatusEnum approveStatus = updateApprovalStatusDTO.getApproveStatus();
         PurchasePriceEntity purchasePriceEntity = updateApprovalStatusDTO.getPurchasePriceEntity();
