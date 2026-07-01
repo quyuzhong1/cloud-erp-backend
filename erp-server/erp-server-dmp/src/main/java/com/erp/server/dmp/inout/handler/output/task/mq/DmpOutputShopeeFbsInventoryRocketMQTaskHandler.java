@@ -131,7 +131,10 @@ public class DmpOutputShopeeFbsInventoryRocketMQTaskHandler extends DmpOutputRoc
         }
         for (int fromIndex = 0; fromIndex < missingIds.size(); fromIndex += BATCH_SIZE) {
             List<String> batchIds = missingIds.subList(fromIndex, Math.min(fromIndex + BATCH_SIZE, missingIds.size()));
-            List<DmpFbsInventoryEntity> inventoryList = dmpFbsInventoryService.listByIds(batchIds);
+            List<DmpFbsInventoryEntity> inventoryList = dmpFbsInventoryService.lambdaQuery()
+                    .in(DmpFbsInventoryEntity::getId, batchIds)
+                    .eq(DmpFbsInventoryEntity::getIsDeleted, Boolean.FALSE)
+                    .list();
             if (CollUtil.isEmpty(inventoryList)) {
                 continue;
             }

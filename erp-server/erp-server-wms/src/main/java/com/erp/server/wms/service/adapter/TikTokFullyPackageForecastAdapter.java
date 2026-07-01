@@ -99,22 +99,26 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
                     .map(id -> BatchResultDTO.fail(id, StringUtils.defaultIfBlank(codeMap.get(id), id), failureMessage))
                     .collect(Collectors.toList());
         }
-        Set<String> canceledHandoverNoSet = new HashSet<>();
+        Set<String> platformCanceledHandoverNoSet = new HashSet<>();
         for (String id : ids) {
             PackageForecastEntity entity = null;
             try {
                 entity = getForecastOrThrow(id, context);
-                if (StringUtils.isNotBlank(entity.getHandoverNo()) && canceledHandoverNoSet.contains(entity.getHandoverNo())) {
-                    resultDTOS.add(BatchResultDTO.success(entity.getId(), entity.getCode(), "取消上传"));
-                    continue;
-                }
                 if (isCanceled(entity)) {
                     resultDTOS.add(BatchResultDTO.success(entity.getId(), entity.getCode(), "已取消上传"));
                     continue;
                 }
                 validateUploaded(entity);
                 String handoverNo = entity.getHandoverNo();
-                List<PackageForecastEntity> updateList = tikTokFullyCancel(entity, context);
+                List<PackageForecastEntity> updateList;
+                if (StringUtils.isNotBlank(handoverNo) && platformCanceledHandoverNoSet.contains(handoverNo)) {
+                    updateList = buildSameHandoverCancelList(entity, context);
+                } else {
+                    updateList = tikTokFullyCancel(entity, context);
+                    if (StringUtils.isNotBlank(handoverNo)) {
+                        platformCanceledHandoverNoSet.add(handoverNo);
+                    }
+                }
                 resetAfterCancel(entity);
                 updateList.add(entity);
                 try {
@@ -125,9 +129,6 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
                     resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(),
                             "TikTok平台已取消，本地更新失败，请同步状态或人工处理"));
                     continue;
-                }
-                if (StringUtils.isNotBlank(handoverNo)) {
-                    canceledHandoverNoSet.add(handoverNo);
                 }
                 resultDTOS.add(BatchResultDTO.success(entity.getId(), entity.getCode(), "取消上传"));
             } catch (Exception e) {
@@ -189,6 +190,10 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
             throw new ServiceException("TikTok不支持多店铺取消组包");
         }
         tikTokFullService.cancelLogistics(shopIds.get(0), entity.getHandoverNo());
+        return buildSameHandoverCancelList(entity, context);
+    }
+
+    private List<PackageForecastEntity> buildSameHandoverCancelList(PackageForecastEntity entity, TikTokFullyForecastContext context) {
         // TikTok 全托管同一 handoverNo 可能对应多张组包预报，取消平台交接单后需联动重置同组单据。
         List<PackageForecastEntity> sameCodeList = CollectionUtils.emptyIfNull(context.getSameHandoverMap().get(entity.getHandoverNo()))
                 .stream()
