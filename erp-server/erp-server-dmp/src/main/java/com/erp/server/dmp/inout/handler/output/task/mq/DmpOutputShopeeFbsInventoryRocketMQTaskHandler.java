@@ -38,6 +38,8 @@ import java.util.Set;
 @Scope("prototype")
 public class DmpOutputShopeeFbsInventoryRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler {
 
+    private static final String STORAGE_FBS_INVENTORY = "dmp_fbs_inventory";
+
     @Resource
     private SkuMappingFeign skuMappingFeign;
     @Resource
@@ -49,7 +51,7 @@ public class DmpOutputShopeeFbsInventoryRocketMQTaskHandler extends DmpOutputRoc
                 dmpRequest.getConvertInputDmpBaseEntityListMaps();
         Map<String, DmpFbsInventoryEntity> dmpEntityMap = new HashMap<>();
         for (Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> entry : convertInputDmpBaseEntityListMaps.entrySet()) {
-            if (!"dmp_fbs_inventory".equals(entry.getKey().getStorageName()) || CollUtil.isEmpty(entry.getValue())) {
+            if (!STORAGE_FBS_INVENTORY.equals(entry.getKey().getStorageName()) || CollUtil.isEmpty(entry.getValue())) {
                 continue;
             }
             for (BaseEntity entity : entry.getValue()) {
@@ -60,7 +62,7 @@ public class DmpOutputShopeeFbsInventoryRocketMQTaskHandler extends DmpOutputRoc
 
         Set<String> changeIds = new HashSet<>();
         for (Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> entry : dmpRequest.getChangeConvertInputDmpBaseEntityListMaps().entrySet()) {
-            if (!"dmp_fbs_inventory".equals(entry.getKey().getStorageName()) || CollUtil.isEmpty(entry.getValue())) {
+            if (!STORAGE_FBS_INVENTORY.equals(entry.getKey().getStorageName()) || CollUtil.isEmpty(entry.getValue())) {
                 continue;
             }
             for (BaseEntity entity : entry.getValue()) {

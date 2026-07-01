@@ -48,6 +48,7 @@ public class TikTokPackageForecastAdapter extends AbstractPackageForecastPlatfor
 
     private static final String UPLOAD_FAILURE_MESSAGE = "上传失败，请稍后重试或联系管理员处理";
     private static final String CANCEL_FAILURE_MESSAGE = "取消上传失败，请稍后重试或联系管理员处理";
+    private static final String CANCEL_LOCAL_UPDATE_FAILURE_MESSAGE = "平台已取消，本地状态更新失败，请人工核对";
 
     @Override
     public String platform() {
@@ -122,6 +123,7 @@ public class TikTokPackageForecastAdapter extends AbstractPackageForecastPlatfor
         TikTokForecastContext context = buildContext(ids);
         for (String id : ids) {
             PackageForecastEntity entity = null;
+            boolean platformCanceled = false;
             try {
                 entity = getForecastOrThrow(id, context);
                 if (isCanceled(entity)) {
@@ -130,10 +132,16 @@ public class TikTokPackageForecastAdapter extends AbstractPackageForecastPlatfor
                 }
                 validateUploaded(entity);
                 tikTokCancel(entity, context);
+                platformCanceled = true;
                 resetAfterCancel(entity);
                 updateForecastOrThrow(entity);
                 resultDTOS.add(BatchResultDTO.success(entity.getId(), entity.getCode(), "取消上传"));
             } catch (Exception e) {
+                if (platformCanceled && Objects.nonNull(entity)) {
+                    log.error("TikTok组包平台已取消但本地更新失败, id: {}, code: {}", entity.getId(), entity.getCode(), e);
+                    resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), CANCEL_LOCAL_UPDATE_FAILURE_MESSAGE));
+                    continue;
+                }
                 log.error("取消上传失败>>>>", e);
                 if (Objects.nonNull(entity)) {
                     entity.setRemark(CANCEL_FAILURE_MESSAGE);

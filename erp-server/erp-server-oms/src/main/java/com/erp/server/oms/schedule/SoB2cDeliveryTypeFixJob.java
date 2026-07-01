@@ -3,6 +3,7 @@ package com.erp.server.oms.schedule;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.core.exception.ServiceException;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.OrderLogisticTypeEnum;
 import com.erp.model.wms.entity.ThirdWarehouseDeliveryEntity;
@@ -36,6 +37,8 @@ public class SoB2cDeliveryTypeFixJob {
 
     private static final long DEFAULT_PAGE_SIZE = 1000L;
     private static final int FEIGN_BATCH_SIZE = 500;
+    private static final int THIRD_WAREHOUSE_FEIGN_MAX_RETRY = 3;
+    private static final long THIRD_WAREHOUSE_FEIGN_RETRY_INTERVAL_MS = 1000L;
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     @Resource
@@ -148,7 +151,7 @@ public class SoB2cDeliveryTypeFixJob {
         try {
             for (int i = 0; i < soIds.size(); i += FEIGN_BATCH_SIZE) {
                 List<String> batchSoIds = soIds.subList(i, Math.min(i + FEIGN_BATCH_SIZE, soIds.size()));
-                List<ThirdWarehouseDeliveryEntity> batchList = thirdWarehouseDeliveryFeign.listBySourceId(batchSoIds);
+                List<ThirdWarehouseDeliveryEntity> batchList = listThirdWarehouseDeliveryWithRetry(batchSoIds);
                 if (CollectionUtils.isNotEmpty(batchList)) {
                     thirdWarehouseDeliveryList.addAll(batchList);
                 }
@@ -169,6 +172,35 @@ public class SoB2cDeliveryTypeFixJob {
                 .filter(entity -> StringUtils.isNotBlank(entity.getSoId()))
                 .filter(entity -> !SoB2cWarehouseDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(entity.getStatus()))
                 .collect(Collectors.toMap(ThirdWarehouseDeliveryEntity::getSoId, ThirdWarehouseDeliveryEntity::getId, (v1, v2) -> v1));
+    }
+
+    private List<ThirdWarehouseDeliveryEntity> listThirdWarehouseDeliveryWithRetry(List<String> batchSoIds) {
+        Exception lastException = null;
+        for (int attempt = 1; attempt <= THIRD_WAREHOUSE_FEIGN_MAX_RETRY; attempt++) {
+            try {
+                return thirdWarehouseDeliveryFeign.listBySourceId(batchSoIds);
+            } catch (Exception e) {
+                lastException = e;
+                if (attempt >= THIRD_WAREHOUSE_FEIGN_MAX_RETRY) {
+                    break;
+                }
+                XxlJobHelper.log("fixSoB2cDeliveryTypeJob 查询三方仓发货单失败，第{}次重试，batchSize={}，error={}",
+                        attempt, batchSoIds.size(), e.getMessage());
+                log.warn("fixSoB2cDeliveryTypeJob 查询三方仓发货单失败, attempt: {}, batchSize: {}",
+                        attempt, batchSoIds.size(), e);
+                sleepBeforeThirdWarehouseRetry();
+            }
+        }
+        throw new ServiceException(lastException, "查询三方仓发货单失败");
+    }
+
+    private void sleepBeforeThirdWarehouseRetry() {
+        try {
+            Thread.sleep(THIRD_WAREHOUSE_FEIGN_RETRY_INTERVAL_MS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new ServiceException(e, "查询三方仓发货单重试被中断");
+        }
     }
 
     private int updateDeliveryType(List<SoB2cEntity> records, Map<String, String> thirdWarehouseSoIdMap) {
