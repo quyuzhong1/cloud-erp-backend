@@ -32,6 +32,7 @@ public class DmpInputShopeeRefundDmpHandler extends DmpInputDbConvertDmpHandler 
     @Override
     protected void afterConvertData(Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMaps) {
         super.afterConvertData(dmpInputDataDmpRelationMaps);
+        // 父任务店铺在同一批次内固定，循环外解析一次，避免每条仅退款记录重复查父任务。
         String parentShopId = resolveParentTaskShopId();
         Iterator<Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>>> iterator =
                 dmpInputDataDmpRelationMaps.entrySet().iterator();

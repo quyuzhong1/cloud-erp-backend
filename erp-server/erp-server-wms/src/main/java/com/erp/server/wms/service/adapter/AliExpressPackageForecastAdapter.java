@@ -115,7 +115,7 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
                 resultDTOS.add(uploadOne(entity, dto.getCollectMode(), dto.getCollectAddressId(), context));
             } catch (Exception e) {
                 log.error("组包预报上传失败>>>>>", e);
-                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), userFailureMessage("上传")));
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), operationFailureMessage(e, "上传")));
             }
         }
         return resultDTOS;
@@ -155,7 +155,7 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
                 }
                 return BatchResultDTO.fail(entity.getId(), entity.getCode(), "平台已存在交接单信息，本地状态更新失败，请人工处理");
             }
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), userFailureMessage("上传"));
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), operationFailureMessage(e, "上传"));
         }
     }
 
@@ -167,6 +167,13 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
 
     private String userFailureMessage(String operation) {
         return operation + "失败，请查看单据备注或日志";
+    }
+
+    private String operationFailureMessage(Exception e, String operation) {
+        if (e instanceof ServiceException && StringUtils.isNotBlank(e.getMessage())) {
+            return e.getMessage();
+        }
+        return userFailureMessage(operation);
     }
 
     private AliExpressBatchContext buildBatchContext(List<PackageForecastEntity> entities, String collectAddressId) {
@@ -275,9 +282,9 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
                     } catch (Exception updateException) {
                         log.error("组包预报取消失败后更新失败原因失败, id: {}, code: {}", entity.getId(), entity.getCode(), updateException);
                     }
-                    resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), userFailureMessage("取消上传")));
+                    resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), operationFailureMessage(e, "取消上传")));
                 } else {
-                    resultDTOS.add(BatchResultDTO.fail(id, id, userFailureMessage("取消上传")));
+                    resultDTOS.add(BatchResultDTO.fail(id, id, operationFailureMessage(e, "取消上传")));
                 }
             }
         }
