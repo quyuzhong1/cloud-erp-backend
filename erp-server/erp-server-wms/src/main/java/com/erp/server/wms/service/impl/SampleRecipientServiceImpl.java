@@ -14,6 +14,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
+import com.common.message.constant.DistributeKeyConstant;
 import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
@@ -168,7 +169,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     private CfgQueryOptionFeign cfgQueryOptionFeign;
     @Autowired
     private DictBasicService dictBasicService;
-    @Autowired
+    @Resource
     @Lazy
     private SampleRecipientService service;
 
