@@ -1,6 +1,5 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp.jifeng;
 
-import com.alibaba.fastjson.JSON;
 import com.erp.server.dmp.inout.handler.input.task.dmp.DmpInputDbConvertDmpHandler;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
@@ -32,24 +31,39 @@ public class JiFengOutBoundDmpHandler extends DmpInputDbConvertDmpHandler {
 			for(TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
 				dmpDataMap.put("referenceNo", mongoData.get("erpNo"));
 			}
-		    if(mongoData.containsKey("shippedTime") && Objects.nonNull(mongoData.get("shippedTime"))){
-				String shippedTimeStr = String.valueOf(mongoData.get("shippedTime"));
-				DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-				// 解析为 LocalDateTime 对象
-				LocalDateTime shippedTime = LocalDateTime.parse(shippedTimeStr, formatter);
-				for(TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
-					dmpDataMap.put("dateShipping", shippedTime);
-				}
-			}
-			if(mongoData.containsKey("createTime") && Objects.nonNull(mongoData.get("createTime"))){
-				String createTimeStr = String.valueOf(mongoData.get("createTime"));
-				DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-				// 解析为 LocalDateTime 对象
-				LocalDateTime createTime = LocalDateTime.parse(createTimeStr, formatter);
-				for(TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
-					dmpDataMap.put("platformCreateTime", createTime);
-				}
+		    putDateTimeIfPresent(dmpDataMaps, "dateShipping", mongoData.get("shippedTime"));
+			putDateTimeIfPresent(dmpDataMaps, "platformCreateTime", mongoData.get("createTime"));
+		}
+	}
+
+	private void putDateTimeIfPresent(List<TreeMap<String, Object>> dmpDataMaps, String key, Object value) {
+		if (Objects.isNull(value)) {
+			return;
+		}
+		LocalDateTime dateTime = parseDateTime(String.valueOf(value));
+		if (Objects.nonNull(dateTime)) {
+			for (TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
+				dmpDataMap.put(key, dateTime);
 			}
 		}
+	}
+
+	private LocalDateTime parseDateTime(String dateTimeStr) {
+		if (StringUtils.isBlank(dateTimeStr)) {
+			return null;
+		}
+		try {
+			return LocalDateTime.parse(dateTimeStr, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+		} catch (Exception ignored) {
+		}
+		try {
+			return LocalDateTime.parse(dateTimeStr, DateTimeFormatter.ISO_DATE_TIME);
+		} catch (Exception ignored) {
+		}
+		try {
+			return LocalDateTime.parse(dateTimeStr, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+		} catch (Exception ignored) {
+		}
+		return null;
 	}
 }
