@@ -185,6 +185,11 @@ public class PackageForecastController extends BaseController {
      * @return
      */
     @PostMapping("/cancel")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:packageForecast:update",
+            serviceClass = PackageForecastService.class,
+            keyIdName = "ids")
     @LogAction(value = LogActionEnum.CANCEL, desc = "组包预报单取消")
     public ApiResult<List<BatchResultDTO>> cancel(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = packageForecastService.cancel(dto.getIds());
@@ -210,6 +215,11 @@ public class PackageForecastController extends BaseController {
      * @return
      */
     @PostMapping("/upload")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:packageForecast:update",
+            serviceClass = PackageForecastService.class,
+            keyIdName = "ids")
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "上传组包预报")
     public ApiResult<List<BatchResultDTO>> upload(@RequestBody @Valid PackageForecastDTO.UploadDTO dto) {
         List<BatchResultDTO> resultDTOS = packageForecastService.upload(dto);
