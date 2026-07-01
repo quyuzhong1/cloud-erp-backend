@@ -1276,6 +1276,9 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
 
     @Override
     public List<SoReturnInstockDetailEntity> listDetailBySourceIds(List<String> sourceIds) {
+        if (CollUtil.isEmpty(sourceIds)) {
+            return new ArrayList<>();
+        }
         return baseMapper.listDetailBySourceIds(sourceIds);
     }
 
