@@ -168,6 +168,11 @@ public class RocketMqNewTag {
     public static final String DMP_AWD_INVENTORY_TO_WMS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_awd_inventory_to_wms_tag";
 
     /**
+     * 新中台FBS库存
+     */
+    public static final String DMP_FBS_INVENTORY_TO_WMS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_fbs_inventory_to_wms_tag";
+
+    /**
      * 新中台推送产品上架时间
      */
     public static final String DMP_PRODUCT_LISTING_TO_PLM_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_product_listing_to_plm_tag";
