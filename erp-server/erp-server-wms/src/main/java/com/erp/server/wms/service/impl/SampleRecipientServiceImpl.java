@@ -12,9 +12,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
-import com.common.message.constant.DistributeKeyConstant;
 import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
@@ -168,9 +166,9 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     private CfgQueryOptionFeign cfgQueryOptionFeign;
     @Autowired
     private DictBasicService dictBasicService;
-    @Resource
+    @Autowired
     @Lazy
-    private SampleRecipientService service;
+    private SampleRecipientService _this;
 
     // 缓存相关常量
     private static final String CACHE_WAREHOUSE_NAME_TO_ID = "sample_recipient:warehouse_name_to_id:";
@@ -720,7 +718,6 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "dto.id", unlockAfterTx = false)
     public BatchResultDTO approve(ApproveOneDTO dto, ClientTypeEnum clientType) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
@@ -750,7 +747,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO approve(ApproveOneDTO dto) {
-        return service.approve(dto, ClientTypeEnum.WEB);
+        return this.approve(dto,ClientTypeEnum.WEB);
     }
 
     /**
@@ -2405,7 +2402,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 
                 try {
                     // 为每个领用单创建一个其他出库单，详情数据为列表数据
-                    BatchResultDTO resultDTO = service.createOtherOutboundOrderBySourceId(sourceId, items);
+                    BatchResultDTO resultDTO = _this.createOtherOutboundOrderBySourceId(sourceId, items);
                     resultDTOS.add(resultDTO);
                     
                 } catch (Exception e) {
@@ -2717,7 +2714,6 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.WMS_IMPORT_TASK_KEY, keyName = "dto.taskId", unlockAfterTx = true)
     public void importSampleRecipient(BaseDTO.ImportDTO dto) {
         // SKU信息
         List<SkuVO> skuList = plmTaskFeign.listApproveSku();

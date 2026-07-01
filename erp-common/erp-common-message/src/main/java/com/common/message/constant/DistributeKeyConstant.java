@@ -17,10 +17,6 @@ public class DistributeKeyConstant {
     public static final String INVOICE_INFO_KEY = "INVOICE_INFO_KEY";
     // 工作流接口分布式锁KEY
     public static final String WORKFLOW_LOCK_KEY = "WORKFLOW_LOCK_KEY";
-    /** 单据生命周期统一锁：提交、审批、撤销、回调状态更新使用同一业务 id 互斥（WMS/OMS 入口层） */
-    public static final String BILL_BUSINESS_LOCK_KEY = "BILL_BUSINESS_LOCK";
-    /** WMS 导入任务 */
-    public static final String WMS_IMPORT_TASK_KEY = "WMS_IMPORT_TASK";
     public static final String FIRST_MILE_WEIGHT_ALLOCATION_KEY = "FIRST_MILE_WEIGHT_ALLOCATION_KEY";
     /**
      * B2B销售订单key
