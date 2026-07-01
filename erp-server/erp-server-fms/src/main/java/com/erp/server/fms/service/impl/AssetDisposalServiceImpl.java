@@ -429,7 +429,7 @@ public class AssetDisposalServiceImpl extends SuperServiceImpl<AssetDisposalMapp
         // 修改
         this.update(dto);
         // 提交
-        this.submit(dto.getId());
+        ApplicationContextUtils.getBean(AssetDisposalServiceImpl.class).submit(dto.getId());
     }
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)

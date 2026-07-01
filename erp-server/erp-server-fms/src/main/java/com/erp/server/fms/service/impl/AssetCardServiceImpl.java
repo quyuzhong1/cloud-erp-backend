@@ -483,7 +483,7 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
         // 修改
         this.update(dto);
         // 提交
-        this.submit(dto.getId(), true);
+        ApplicationContextUtils.getBean(AssetCardServiceImpl.class).submit(dto.getId(), true);
     }
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)

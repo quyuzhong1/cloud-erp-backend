@@ -261,7 +261,7 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
         // 修改
         this.update(dto);
         // 提交
-        this.submit(dto.getId());
+        ApplicationContextUtils.getBean(AssetProfitLossServiceImpl.class).submit(dto.getId());
     }
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
