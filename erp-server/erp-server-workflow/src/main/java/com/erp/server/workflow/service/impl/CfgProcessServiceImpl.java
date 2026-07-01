@@ -307,7 +307,7 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "dto.businessId", unlockAfterTx = true)
+    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "dto.businessKey,dto.businessId", unlockAfterTx = true)
     public void startThirdProcess(CfgProcessDTO.StartDTO dto) {
         log.info("开始创建飞书审批实例,启动参数为:{}", dto);
         //查询approvalCode

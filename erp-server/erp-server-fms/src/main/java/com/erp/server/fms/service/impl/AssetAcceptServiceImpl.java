@@ -779,7 +779,7 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         // 修改
         this.update(dto);
         // 提交
-        this.submit(dto.getId());
+        ApplicationContextUtils.getBean(AssetAcceptServiceImpl.class).submit(dto.getId());
     }
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)

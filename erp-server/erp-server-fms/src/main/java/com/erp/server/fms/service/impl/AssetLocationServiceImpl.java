@@ -299,7 +299,7 @@ public class AssetLocationServiceImpl extends SuperServiceImpl<AssetLocationMapp
         // 修改
         this.update(dto);
         // 提交
-        this.submit(dto.getId(), true);
+        ApplicationContextUtils.getBean(AssetLocationServiceImpl.class).submit(dto.getId(), true);
     }
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)

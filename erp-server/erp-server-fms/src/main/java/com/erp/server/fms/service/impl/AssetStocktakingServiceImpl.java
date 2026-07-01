@@ -539,7 +539,7 @@ public class AssetStocktakingServiceImpl extends SuperServiceImpl<AssetStocktaki
         // 修改
         this.update(dto);
         // 提交
-        this.submit(dto.getId());
+        ApplicationContextUtils.getBean(AssetStocktakingServiceImpl.class).submit(dto.getId());
     }
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
