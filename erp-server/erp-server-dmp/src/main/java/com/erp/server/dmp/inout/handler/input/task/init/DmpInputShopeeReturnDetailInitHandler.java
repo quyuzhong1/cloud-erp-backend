@@ -45,6 +45,7 @@ public class DmpInputShopeeReturnDetailInitHandler extends DmpInputInitHandler {
 
     private static final int MAX_RETRY = 10;
     private static final int MAX_INIT_ROWS = 50000;
+    private static final int RETURN_SOLUTION_RETURN_AND_REFUND = 0;
     // Shopee退货明细接口按 return_sn 单条查询；固定间隔用于保护平台限流，不在 init 内并发打满。
     private static final long REQUEST_INTERVAL_MILLIS = 200L;
     private static final String SHOPEE_RETURN_LIST_DATA = "Shopee_returnList_data";
@@ -62,6 +63,7 @@ public class DmpInputShopeeReturnDetailInitHandler extends DmpInputInitHandler {
         }
 
         List<String> returnSnList = parentMongoData.stream()
+                .filter(this::isReturnAndRefund)
                 .map(item -> Objects.toString(item.get("return_sn"), ""))
                 .filter(StringUtils::isNotBlank)
                 .distinct()
@@ -131,6 +133,19 @@ public class DmpInputShopeeReturnDetailInitHandler extends DmpInputInitHandler {
         List<DmpInputTaskInitDTO> result = new ArrayList<>();
         result.add(initDTO);
         return result;
+    }
+
+    private boolean isReturnAndRefund(Map<String, Object> item) {
+        Object returnSolution = item.get("return_solution");
+        if (returnSolution == null || StringUtils.isBlank(String.valueOf(returnSolution))) {
+            return false;
+        }
+        try {
+            return RETURN_SOLUTION_RETURN_AND_REFUND == Integer.parseInt(String.valueOf(returnSolution));
+        } catch (NumberFormatException e) {
+            log.warn("Shopee退货明细init过滤return_solution解析失败,value:{}", returnSolution);
+            return false;
+        }
     }
 
     private void sleepBetweenRequests() {

@@ -69,7 +69,7 @@ public class TikTokPackageForecastAdapter extends AbstractPackageForecastPlatfor
                 if (Objects.isNull(entity)) {
                     resultDTOS.add(BatchResultDTO.fail(id, id, "组包预报单不存在, 上传失败"));
                 } else {
-                    resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), UPLOAD_FAILURE_MESSAGE));
+                    resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), uploadFailureMessage(e)));
                 }
             }
         }
@@ -94,16 +94,24 @@ public class TikTokPackageForecastAdapter extends AbstractPackageForecastPlatfor
                 log.error("TikTok组包平台已成功但本地更新失败, id: {}, code: {}", entity.getId(), entity.getCode(), e);
                 return BatchResultDTO.fail(entity.getId(), entity.getCode(), "平台已组包，本地状态更新失败，请人工核对");
             }
+            String failureMessage = uploadFailureMessage(e);
             entity.setUploadStatus(PackageUploadStatusEnum.UPLOAD_FAILURE.getCode());
-            entity.setRemark(UPLOAD_FAILURE_MESSAGE);
+            entity.setRemark(failureMessage);
             try {
                 updateForecastOrThrow(entity);
             } catch (Exception updateException) {
                 log.error("TikTok组包预报上传失败后更新失败状态失败, id: {}, code: {}", entity.getId(), entity.getCode(), updateException);
             }
             log.error("组包预报上传失败>>>>>", e);
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), UPLOAD_FAILURE_MESSAGE);
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), failureMessage);
         }
+    }
+
+    private String uploadFailureMessage(Exception e) {
+        if (e instanceof ServiceException && StringUtils.isNotBlank(e.getMessage())) {
+            return e.getMessage();
+        }
+        return UPLOAD_FAILURE_MESSAGE;
     }
 
     @Override

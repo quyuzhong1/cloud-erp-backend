@@ -175,6 +175,7 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
         if (CollectionUtils.isEmpty(soB2cEntityList)) {
             throw new ServiceException("销售订单未找到");
         }
+        validateSalesOrderCoverage(soIds, soB2cEntityList);
         List<String> shopIds = soB2cEntityList.stream()
                 .map(SoB2cEntity::getShopId)
                 .filter(StringUtils::isNotBlank)
@@ -222,6 +223,7 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
         if (CollectionUtils.isEmpty(soB2cLogisticsEntityList)) {
             throw new ServiceException("销售订单物流信息未找到");
         }
+        validateLogisticsCoverage(soIds, soB2cLogisticsEntityList);
         List<String> deliveryCodes = soB2cLogisticsEntityList.stream()
                 .map(SoB2cLogisticsEntity::getCode)
                 .filter(StringUtils::isNotBlank)
@@ -240,6 +242,7 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
         if (CollectionUtils.isEmpty(soB2cEntityList)) {
             throw new ServiceException("销售订单未找到");
         }
+        validateSalesOrderCoverage(soIds, soB2cEntityList);
         validateOrderPlatform(soB2cEntityList);
         List<String> shopIds = soB2cEntityList.stream()
                 .map(SoB2cEntity::getShopId)
@@ -457,6 +460,27 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
         return entityList.stream()
                 .map(entity -> BatchResultDTO.fail(entity.getId(), entity.getCode(), message))
                 .collect(Collectors.toList());
+    }
+
+    private void validateSalesOrderCoverage(List<String> soIds, List<SoB2cEntity> soB2cEntityList) {
+        Set<String> existingSoIds = CollectionUtils.emptyIfNull(soB2cEntityList).stream()
+                .map(SoB2cEntity::getId)
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.toSet());
+        if (!existingSoIds.containsAll(soIds)) {
+            throw new ServiceException("组包预报单销售订单数据不完整");
+        }
+    }
+
+    private void validateLogisticsCoverage(List<String> soIds, List<SoB2cLogisticsEntity> soB2cLogisticsEntityList) {
+        Set<String> logisticsSoIds = CollectionUtils.emptyIfNull(soB2cLogisticsEntityList).stream()
+                .filter(item -> StringUtils.isNotBlank(item.getMainId()))
+                .filter(item -> StringUtils.isNotBlank(item.getCode()))
+                .map(SoB2cLogisticsEntity::getMainId)
+                .collect(Collectors.toSet());
+        if (!logisticsSoIds.containsAll(soIds)) {
+            throw new ServiceException("销售订单物流信息不完整");
+        }
     }
 
     private void validateOrderPlatform(List<SoB2cEntity> soList) {

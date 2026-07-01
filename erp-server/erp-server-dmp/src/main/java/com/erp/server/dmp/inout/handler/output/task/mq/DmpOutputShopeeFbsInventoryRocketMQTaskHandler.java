@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import com.alibaba.fastjson.JSON;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.entity.BaseEntity;
+import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpFbsInventoryEntity;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
@@ -77,14 +78,21 @@ public class DmpOutputShopeeFbsInventoryRocketMQTaskHandler extends DmpOutputRoc
 
         supplementFbsInventories(changeIds, dmpEntityMap);
 
-        // FBS 库存 Init 按店铺维度生成任务，同一输出批次只包含一个店铺。
-        String shopId = dmpEntityMap.values().stream()
+        List<DmpFbsInventoryEntity> currentDmpEntityList = changeIds.stream()
+                .map(dmpEntityMap::get)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+        List<String> shopIds = currentDmpEntityList.stream()
                 .map(DmpFbsInventoryEntity::getNextLevelId)
                 .filter(StringUtils::isNotBlank)
-                .findFirst()
-                .orElse("");
+                .distinct()
+                .collect(Collectors.toList());
+        if (shopIds.size() > 1) {
+            throw new ServiceException("Shopee FBS库存输出批次包含多个店铺，请按店铺拆分任务");
+        }
+        String shopId = CollUtil.isEmpty(shopIds) ? "" : shopIds.get(0);
         List<String> platformSkuNoList = new ArrayList<>();
-        for (DmpFbsInventoryEntity value : dmpEntityMap.values()) {
+        for (DmpFbsInventoryEntity value : currentDmpEntityList) {
             if (StringUtils.isNotBlank(value.getPlatformSku())) {
                 platformSkuNoList.add(value.getPlatformSku());
             } else if (StringUtils.isNotBlank(value.getFbsSku())) {

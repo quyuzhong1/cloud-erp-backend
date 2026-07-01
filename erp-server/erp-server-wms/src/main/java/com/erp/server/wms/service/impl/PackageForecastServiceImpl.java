@@ -375,7 +375,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
                 if (Objects.isNull(entity)) {
                     cancelResult = BatchResultDTO.fail(id, id, "组包预报单不存在, 取消失败");
                 } else {
-                    cancelResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), CANCEL_FAILURE_MESSAGE);
+                    cancelResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), operationFailureMessage(e, CANCEL_FAILURE_MESSAGE));
                 }
             }
             resultDTOS.add(cancelResult);
@@ -427,7 +427,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
                 if (Objects.isNull(entity)) {
                     uploadResult = BatchResultDTO.fail(id, id, "组包预报单不存在, 上传失败");
                 } else {
-                    uploadResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), UPLOAD_FAILURE_MESSAGE);
+                    uploadResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), operationFailureMessage(e, UPLOAD_FAILURE_MESSAGE));
                 }
             }
             resultDTOS.add(uploadResult);
@@ -502,6 +502,13 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         return StringUtils.isNotBlank(entity.getHandoverNo())
                 || StringUtils.isNotBlank(entity.getPlatformPackageNo())
                 || StringUtils.isNotBlank(entity.getPlatformNo());
+    }
+
+    private String operationFailureMessage(Exception e, String defaultMessage) {
+        if (e instanceof ServiceException && StringUtils.isNotBlank(e.getMessage())) {
+            return e.getMessage();
+        }
+        return defaultMessage;
     }
 
     private BatchResultDTO firstResultOrThrow(List<BatchResultDTO> resultList, String operationName) {
