@@ -488,7 +488,7 @@ public class SoReturnPrestockServiceImpl
              .setRemark(CharSequenceUtil.emptyToDefault(dto.getRemark(), ""));
             return d;
         }).collect(Collectors.toList());
-        soReturnPrestockDetailService.saveBatch(entities);
+        soReturnPrestockDetailService.saveBatch(entities, 500);
     }
 
     /**
