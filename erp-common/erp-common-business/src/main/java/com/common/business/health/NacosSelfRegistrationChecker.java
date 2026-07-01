@@ -45,12 +45,15 @@ public class NacosSelfRegistrationChecker {
     public static final String REASON_NACOS_NOT_HEALTHY = "NACOS_NOT_HEALTHY";
 
     private static final String DEFAULT_GROUP = "DEFAULT_GROUP";
+    private static final int DEFAULT_QUERY_QUEUE_CAPACITY = 16;
 
     private final NacosDiscoveryProperties discoveryProperties;
     private final Environment environment;
     private final ObjectProvider<Registration> registrationProvider;
     private final ThreadPoolExecutor queryExecutor;
     private final AtomicLong lastWarnTime = new AtomicLong(0L);
+    private final AtomicLong lastCheckTime = new AtomicLong(0L);
+    private volatile CheckResult cachedCheckResult;
 
     @Value("${erp.internal-health.nacos-check-timeout-ms:1000}")
     private long nacosCheckTimeoutMs;
@@ -58,22 +61,31 @@ public class NacosSelfRegistrationChecker {
     @Value("${erp.internal-health.warn-interval-ms:30000}")
     private long warnIntervalMs;
 
+    @Value("${erp.internal-health.nacos-check-cache-ms:500}")
+    private long nacosCheckCacheMs;
+
     public NacosSelfRegistrationChecker(NacosDiscoveryProperties discoveryProperties, Environment environment,
                                         ObjectProvider<Registration> registrationProvider) {
         this.discoveryProperties = discoveryProperties;
         this.environment = environment;
         this.registrationProvider = registrationProvider;
         this.queryExecutor = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS,
-                new ArrayBlockingQueue<>(1), new DaemonThreadFactory());
+                new ArrayBlockingQueue<>(DEFAULT_QUERY_QUEUE_CAPACITY), new DaemonThreadFactory());
     }
 
     public CheckResult checkSelfRegistration() {
+        CheckResult cachedResult = getCachedCheckResult();
+        if (cachedResult != null) {
+            return cachedResult;
+        }
         RegistrationInfo registrationInfo = resolveRegistrationInfo();
         if (!registrationInfo.hasRequiredInfo()) {
-            return CheckResult.notReady(REASON_NACOS_NOT_REGISTERED, "local nacos registration info is incomplete");
+            return cacheCheckResult(CheckResult.notReady(REASON_NACOS_NOT_REGISTERED,
+                    "local nacos registration info is incomplete"));
         }
-        return executeWithTimeout(() -> doCheckSelfRegistration(registrationInfo), CheckResult.notReady(
-                REASON_NACOS_NOT_REGISTERED, "nacos query timeout or failed"));
+        CheckResult checkResult = executeWithTimeout(() -> doCheckSelfRegistration(registrationInfo),
+                CheckResult.notReady(REASON_NACOS_NOT_REGISTERED, "nacos query timeout or failed"));
+        return cacheCheckResult(checkResult);
     }
 
     public boolean deregisterSelf() {
@@ -254,6 +266,27 @@ public class NacosSelfRegistrationChecker {
     private boolean isCurrentInstance(Instance instance, RegistrationInfo registrationInfo) {
         return StringUtils.equals(instance.getIp(), registrationInfo.getIp())
                 && instance.getPort() == registrationInfo.getPort();
+    }
+
+    private CheckResult getCachedCheckResult() {
+        if (nacosCheckCacheMs <= 0) {
+            return null;
+        }
+        CheckResult cachedResult = cachedCheckResult;
+        if (cachedResult == null) {
+            return null;
+        }
+        long lastCheck = lastCheckTime.get();
+        if (System.currentTimeMillis() - lastCheck <= nacosCheckCacheMs) {
+            return cachedResult;
+        }
+        return null;
+    }
+
+    private CheckResult cacheCheckResult(CheckResult checkResult) {
+        cachedCheckResult = checkResult;
+        lastCheckTime.set(System.currentTimeMillis());
+        return checkResult;
     }
 
     private <T> T executeWithTimeout(Callable<T> callable, T fallback) {

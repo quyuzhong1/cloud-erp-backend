@@ -1,6 +1,5 @@
 package com.common.business.health;
 
-import com.common.core.controller.BaseController;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.core.env.Environment;
@@ -23,7 +22,7 @@ import java.util.Map;
 @RequestMapping("/internal")
 @ConditionalOnWebApplication
 @ConditionalOnProperty(prefix = "erp.internal-health", name = "enabled", havingValue = "true")
-public class InternalHealthController extends BaseController {
+public class InternalHealthController {
 
     private static final String STATUS_UP = "UP";
     private static final String STATUS_DOWN = "DOWN";
@@ -31,11 +30,11 @@ public class InternalHealthController extends BaseController {
     private static final String REASON_APPLICATION_NOT_READY = "APPLICATION_NOT_READY";
     private static final String REASON_PRE_STOPPING = "PRE_STOPPING";
     private static final String REASON_PRE_STOP_FORBIDDEN = "PRE_STOP_FORBIDDEN";
+    private static final String REASON_RELEASE_STATE_FORBIDDEN = "RELEASE_STATE_FORBIDDEN";
     private static final String RELEASE_ACTIVE_COLOR = "release.active-color";
     private static final String RELEASE_ACTIVE_VERSION = "release.active-version";
     private static final String RELEASE_COLOR = "release.color";
     private static final String RELEASE_VERSION = "release.version";
-    private static final String RELEASE_MQ_CONSUMER_ENABLED = "release.mq.consumer.enabled";
     private static final String RELEASE_XXL_JOB_ENABLED = "release.xxl.job.enabled";
 
     @Resource
@@ -72,17 +71,18 @@ public class InternalHealthController extends BaseController {
     }
 
     @GetMapping("/release-state")
-    public ResponseEntity<Map<String, Object>> releaseState() {
+    public ResponseEntity<Map<String, Object>> releaseState(HttpServletRequest request) {
+        if (!isLoopbackRequest(request)) {
+            return response(HttpStatus.FORBIDDEN, STATUS_DOWN, REASON_RELEASE_STATE_FORBIDDEN,
+                    "release-state only accepts loopback requests");
+        }
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("activeColor", environment.getProperty(RELEASE_ACTIVE_COLOR));
         body.put("activeVersion", environment.getProperty(RELEASE_ACTIVE_VERSION));
         body.put("releaseColor", environment.getProperty(RELEASE_COLOR));
         body.put("releaseVersion", environment.getProperty(RELEASE_VERSION));
-        body.put("mqConsumerEnabled", environment.getProperty(RELEASE_MQ_CONSUMER_ENABLED, Boolean.class, true));
         body.put("xxlJobEnabled", environment.getProperty(RELEASE_XXL_JOB_ENABLED, Boolean.class, true));
         body.put("currentReleaseActive", isCurrentReleaseActive());
-        body.put("effectiveMqConsumerEnabled", environment.getProperty(RELEASE_MQ_CONSUMER_ENABLED, Boolean.class, true)
-                && isCurrentReleaseActive());
         body.put("effectiveXxlJobEnabled", environment.getProperty(RELEASE_XXL_JOB_ENABLED, Boolean.class, true)
                 && isCurrentReleaseActive());
         return ResponseEntity.ok(body);

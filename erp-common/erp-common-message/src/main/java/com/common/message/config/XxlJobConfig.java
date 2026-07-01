@@ -6,7 +6,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Condition;
+import org.springframework.context.annotation.ConditionContext;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.type.AnnotatedTypeMetadata;
 
 /**
  * 公共 XXL-JOB 执行器配置。
@@ -43,21 +47,14 @@ public class XxlJobConfig {
     @Value("${xxl.job.executor.logretentiondays:30}")
     private int logRetentionDays;
 
-    @Value("${spring.cloud.nacos.discovery.namespace:dev}")
-    private String namespace;
-
+    // 保留 dev/archive 和配置缺失时不注册执行器的语义，避免 @Bean 方法返回 null。
     @Bean
     @ConditionalOnMissingBean(XxlJobSpringExecutor.class)
+    @Conditional(XxlJobExecutorCondition.class)
     public XxlJobSpringExecutor xxlJobExecutor() {
-        if (DEV.equalsIgnoreCase(namespace) || isArchiveNamespace()) {
-            return null;
-        }
-        if (!hasText(adminAddresses) || !hasText(appname)) {
-            log.info(">>>>>>>>>>> xxl-job config skipped because admin addresses or appname is empty.");
-            return null;
-        }
         log.info(">>>>>>>>>>> xxl-job config init.");
-        log.info(">>>>>>>>>>> xxl-job [adminAddress]={},[appname]={},[accessToken]={}", adminAddresses, appname, accessToken);
+        log.info(">>>>>>>>>>> xxl-job [adminAddress]={},[appname]={},[accessTokenConfigured]={}",
+                adminAddresses, appname, hasText(accessToken));
         XxlJobSpringExecutor xxlJobSpringExecutor = new ReleaseControlledXxlJobSpringExecutor();
         xxlJobSpringExecutor.setAdminAddresses(adminAddresses);
         xxlJobSpringExecutor.setAppname(appname);
@@ -70,11 +67,24 @@ public class XxlJobConfig {
         return xxlJobSpringExecutor;
     }
 
-    private boolean isArchiveNamespace() {
+    private static boolean isArchiveNamespace(String namespace) {
         return namespace != null && namespace.toLowerCase().contains(ARCHIVE);
     }
 
-    private boolean hasText(String value) {
+    private static boolean hasText(String value) {
         return value != null && !value.trim().isEmpty();
+    }
+
+    public static class XxlJobExecutorCondition implements Condition {
+
+        @Override
+        public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
+            String namespace = context.getEnvironment().getProperty("spring.cloud.nacos.discovery.namespace", DEV);
+            if (DEV.equalsIgnoreCase(namespace) || isArchiveNamespace(namespace)) {
+                return false;
+            }
+            return hasText(context.getEnvironment().getProperty("xxl.job.admin.addresses"))
+                    && hasText(context.getEnvironment().getProperty("xxl.job.executor.appname"));
+        }
     }
 }

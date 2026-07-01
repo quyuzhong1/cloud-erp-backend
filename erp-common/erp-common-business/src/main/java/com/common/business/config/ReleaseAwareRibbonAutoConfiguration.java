@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 @ConditionalOnClass({IRule.class, RibbonClients.class})
-@ConditionalOnProperty(prefix = "release.ribbon", name = "enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(prefix = "release.ribbon", name = "enabled", havingValue = "true", matchIfMissing = false)
 @RibbonClients(defaultConfiguration = ReleaseAwareRibbonRuleConfiguration.class)
 public class ReleaseAwareRibbonAutoConfiguration {
 }

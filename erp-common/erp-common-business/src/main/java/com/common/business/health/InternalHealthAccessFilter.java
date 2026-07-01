@@ -1,28 +1,32 @@
-package com.cloud.erp.gateway.filter;
+package com.common.business.health;
 
-import com.cloud.erp.gateway.utils.ServletUtils;
-import com.common.core.enums.ApiError;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.core.Ordered;
 import org.springframework.core.env.Environment;
-import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
-import org.springframework.web.server.ServerWebExchange;
-import org.springframework.web.server.WebFilter;
-import org.springframework.web.server.WebFilterChain;
-import reactor.core.publisher.Mono;
 
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 
 /**
- * 阻止外部用户访问 Gateway 本地探针路径，K8s 需通过容器内 127.0.0.1 探测。
+ * 保护业务服务内部探针路径，避免集群内任意工作负载读取发布/就绪细节。
  */
 @Slf4j
 @Component
-public class InternalPathBlockWebFilter implements WebFilter, Ordered {
+@ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
+@ConditionalOnProperty(prefix = "erp.internal-health", name = "enabled", havingValue = "true")
+public class InternalHealthAccessFilter implements Filter, Ordered {
 
     private static final String INTERNAL_PATH_PREFIX = "/internal/";
     private static final String LIVE_PATH = "/internal/live";
@@ -33,29 +37,33 @@ public class InternalPathBlockWebFilter implements WebFilter, Ordered {
 
     private final Environment environment;
 
-    public InternalPathBlockWebFilter(Environment environment) {
+    public InternalHealthAccessFilter(Environment environment) {
         this.environment = environment;
     }
 
     @Override
-    public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
-        ServerHttpRequest request = exchange.getRequest();
-        String path = request.getPath().value();
+    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
+            throws IOException, ServletException {
+        if (!(request instanceof HttpServletRequest) || !(response instanceof HttpServletResponse)) {
+            chain.doFilter(request, response);
+            return;
+        }
+
+        HttpServletRequest httpRequest = (HttpServletRequest) request;
+        String path = getPathWithinApplication(httpRequest);
         if (!StringUtils.startsWith(path, INTERNAL_PATH_PREFIX)) {
-            return chain.filter(exchange);
+            chain.doFilter(request, response);
+            return;
         }
 
-        String remoteAddress = getRemoteAddress(request);
-        if (isLoopback(remoteAddress)) {
-            return chain.filter(exchange);
-        }
-        if (isProbePath(path) && isAllowedProbeAddress(remoteAddress)) {
-            return chain.filter(exchange);
+        String remoteAddress = httpRequest.getRemoteAddr();
+        if (isLoopback(remoteAddress) || (isProbePath(path) && isAllowedProbeAddress(remoteAddress))) {
+            chain.doFilter(request, response);
+            return;
         }
 
-        log.warn("Blocked external internal path access, path: {}, remoteAddress: {}", path, remoteAddress);
-        return ServletUtils.webFluxResponseWriter(exchange.getResponse(), "Not Found",
-                ApiError.HTTP_NOT_FOUND.getCode());
+        log.warn("Blocked internal health path access, path: {}, remoteAddress: {}", path, remoteAddress);
+        ((HttpServletResponse) response).sendError(HttpServletResponse.SC_NOT_FOUND);
     }
 
     @Override
@@ -63,22 +71,23 @@ public class InternalPathBlockWebFilter implements WebFilter, Ordered {
         return Ordered.HIGHEST_PRECEDENCE;
     }
 
-    private String getRemoteAddress(ServerHttpRequest request) {
-        InetSocketAddress remoteAddress = request.getRemoteAddress();
-        if (remoteAddress == null || remoteAddress.getAddress() == null) {
-            return null;
+    private boolean isProbePath(String path) {
+        return LIVE_PATH.equals(path) || READY_PATH.equals(path);
+    }
+
+    private String getPathWithinApplication(HttpServletRequest request) {
+        String requestUri = request.getRequestURI();
+        String contextPath = request.getContextPath();
+        if (hasText(contextPath) && StringUtils.startsWith(requestUri, contextPath)) {
+            return requestUri.substring(contextPath.length());
         }
-        return remoteAddress.getAddress().getHostAddress();
+        return requestUri;
     }
 
     private boolean isLoopback(String remoteAddress) {
         return "127.0.0.1".equals(remoteAddress)
                 || "0:0:0:0:0:0:0:1".equals(remoteAddress)
                 || "::1".equals(remoteAddress);
-    }
-
-    private boolean isProbePath(String path) {
-        return LIVE_PATH.equals(path) || READY_PATH.equals(path);
     }
 
     private boolean isAllowedProbeAddress(String remoteAddress) {

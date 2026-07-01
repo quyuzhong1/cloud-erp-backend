@@ -6,6 +6,7 @@ import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.ReactiveDiscoveryClient;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.Ordered;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
@@ -29,16 +30,20 @@ import static org.springframework.cloud.gateway.support.ServerWebExchangeUtils.a
  * Gateway lb:// 转发前按发布版本选择实例，避免外部入口跨蓝绿版本转发。
  */
 @Component
+@ConditionalOnProperty(prefix = "release.gateway", name = "enabled", havingValue = "true")
 public class ReleaseAwareGatewayLoadBalancerFilter implements GlobalFilter, Ordered {
 
     private static final Logger log = LoggerFactory.getLogger(ReleaseAwareGatewayLoadBalancerFilter.class);
     private static final String ACTIVE_COLOR_KEY = "release.active-color";
     private static final String ACTIVE_VERSION_KEY = "release.active-version";
+    private static final String INSTANCE_CACHE_TTL_MS_KEY = "release.gateway.instance-cache-ttl-ms";
+    private static final long DEFAULT_INSTANCE_CACHE_TTL_MS = 1000L;
     private static final int ORDER_BEFORE_GATEWAY_LOAD_BALANCER = 10050;
 
     private final ReactiveDiscoveryClient discoveryClient;
     private final Environment environment;
     private final ConcurrentHashMap<String, AtomicInteger> positions = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, CachedInstances> instanceCache = new ConcurrentHashMap<>();
 
     public ReleaseAwareGatewayLoadBalancerFilter(ReactiveDiscoveryClient discoveryClient, Environment environment) {
         this.discoveryClient = discoveryClient;
@@ -63,8 +68,7 @@ public class ReleaseAwareGatewayLoadBalancerFilter implements GlobalFilter, Orde
             return chain.filter(exchange);
         }
 
-        return discoveryClient.getInstances(serviceId)
-                .collectList()
+        return getInstances(serviceId)
                 .flatMap(instances -> filterAndRoute(exchange, chain, requestUrl, serviceId, instances, activeColor, activeVersion));
     }
 
@@ -73,11 +77,37 @@ public class ReleaseAwareGatewayLoadBalancerFilter implements GlobalFilter, Orde
         return ORDER_BEFORE_GATEWAY_LOAD_BALANCER;
     }
 
+    private Mono<List<ServiceInstance>> getInstances(String serviceId) {
+        long ttlMs = getInstanceCacheTtlMs();
+        if (ttlMs <= 0) {
+            return discoveryClient.getInstances(serviceId).collectList();
+        }
+
+        long now = System.currentTimeMillis();
+        CachedInstances cachedInstances = instanceCache.get(serviceId);
+        if (cachedInstances != null && cachedInstances.expireAt > now) {
+            return Mono.just(cachedInstances.instances);
+        }
+
+        return discoveryClient.getInstances(serviceId)
+                .collectList()
+                .doOnNext(instances -> instanceCache.put(serviceId,
+                        new CachedInstances(Collections.unmodifiableList(new ArrayList<>(instances)),
+                                System.currentTimeMillis() + ttlMs)));
+    }
+
+    private long getInstanceCacheTtlMs() {
+        Long ttlMs = environment.getProperty(INSTANCE_CACHE_TTL_MS_KEY, Long.class, DEFAULT_INSTANCE_CACHE_TTL_MS);
+        return ttlMs == null ? DEFAULT_INSTANCE_CACHE_TTL_MS : ttlMs;
+    }
+
     private Mono<Void> filterAndRoute(ServerWebExchange exchange, GatewayFilterChain chain, URI requestUrl,
                                       String serviceId, List<ServiceInstance> instances,
                                       String activeColor, String activeVersion) {
         ReleaseMatchResult matchResult = filterByRelease(instances, activeColor, activeVersion);
         if (matchResult.matchedInstances.isEmpty()) {
+            // filterByRelease 已对「无 release 元数据」的老实例做兼容回退；走到这里表示存在
+            // 可比较 release 元数据但没有命中 active 发布版本，网关侧返回 503，避免跨蓝绿版本转发。
             log.warn("No active release instance found for gateway service={}, activeColor={}, activeVersion={}",
                     serviceId, activeColor, activeVersion);
             exchange.getResponse().setStatusCode(HttpStatus.SERVICE_UNAVAILABLE);
@@ -97,6 +127,7 @@ public class ReleaseAwareGatewayLoadBalancerFilter implements GlobalFilter, Orde
         }
 
         List<ServiceInstance> matched = new ArrayList<>();
+        boolean hasComparableMetadata = false;
         for (ServiceInstance instance : instances) {
             Map<String, String> metadata = instance.getMetadata();
             if (metadata == null || metadata.isEmpty()) {
@@ -104,9 +135,18 @@ public class ReleaseAwareGatewayLoadBalancerFilter implements GlobalFilter, Orde
             }
             String releaseColor = firstText(metadata, "release.color", "release-color", "releaseColor", "color");
             String releaseVersion = firstText(metadata, "release.version", "release-version", "releaseVersion", "version");
+            if (hasComparableReleaseMetadata(activeColor, activeVersion, releaseColor, releaseVersion)) {
+                hasComparableMetadata = true;
+            }
             if (matchesRelease(activeColor, activeVersion, releaseColor, releaseVersion)) {
                 matched.add(instance);
             }
+        }
+        if (matched.isEmpty() && !hasComparableMetadata) {
+            // 兼容未接入 release 元数据的存量实例：没有任何可比较标签时不强制切流。
+            log.warn("No release metadata found for gateway activeColor={}, activeVersion={}, fallback to all instances",
+                    activeColor, activeVersion);
+            return new ReleaseMatchResult(instances);
         }
         return new ReleaseMatchResult(matched);
     }
@@ -157,6 +197,12 @@ public class ReleaseAwareGatewayLoadBalancerFilter implements GlobalFilter, Orde
         return hasComparableMetadata;
     }
 
+    private boolean hasComparableReleaseMetadata(String activeColor, String activeVersion,
+                                                 String releaseColor, String releaseVersion) {
+        return (hasText(activeColor) && hasText(releaseColor))
+                || (hasText(activeVersion) && hasText(releaseVersion));
+    }
+
     private boolean hasText(String value) {
         return value != null && !value.trim().isEmpty();
     }
@@ -166,6 +212,16 @@ public class ReleaseAwareGatewayLoadBalancerFilter implements GlobalFilter, Orde
 
         private ReleaseMatchResult(List<ServiceInstance> matchedInstances) {
             this.matchedInstances = matchedInstances;
+        }
+    }
+
+    private static class CachedInstances {
+        private final List<ServiceInstance> instances;
+        private final long expireAt;
+
+        private CachedInstances(List<ServiceInstance> instances, long expireAt) {
+            this.instances = instances;
+            this.expireAt = expireAt;
         }
     }
 }
