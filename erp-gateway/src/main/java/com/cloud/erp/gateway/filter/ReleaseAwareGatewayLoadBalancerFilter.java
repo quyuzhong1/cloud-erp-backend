@@ -148,6 +148,7 @@ public class ReleaseAwareGatewayLoadBalancerFilter
         for (ServiceInstance instance : instances) {
             Map<String, String> metadata = instance.getMetadata();
             if (metadata == null || metadata.isEmpty()) {
+                // 仅当整个实例列表都没有 release 元数据时才兼容回退；混合场景下无标签实例不参与兜底，避免跨色转发。
                 continue;
             }
             // release 元数据别名需与 ReleaseAwareRibbonRule 保持一致，避免入口流量和 Feign 调用切色语义不同。

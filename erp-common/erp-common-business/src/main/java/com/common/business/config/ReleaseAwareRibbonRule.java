@@ -79,6 +79,7 @@ public class ReleaseAwareRibbonRule extends AbstractLoadBalancerRule {
         for (Server server : servers) {
             Map<String, String> metadata = getMetadata(server);
             if (metadata.isEmpty()) {
+                // 仅当整个实例列表都没有 release 元数据时才兼容回退；混合场景下无标签实例不参与兜底，避免跨色调用。
                 continue;
             }
             if (!matchesService(metadata)) {
