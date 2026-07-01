@@ -1,6 +1,5 @@
 package com.common.business.health;
 
-import com.common.core.controller.BaseController;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.core.env.Environment;
@@ -23,7 +22,7 @@ import java.util.Map;
 @RequestMapping("/internal")
 @ConditionalOnWebApplication
 @ConditionalOnProperty(prefix = "erp.internal-health", name = "enabled", havingValue = "true")
-public class InternalHealthController extends BaseController {
+public class InternalHealthController {
 
     private static final String STATUS_UP = "UP";
     private static final String STATUS_DOWN = "DOWN";

@@ -36,11 +36,14 @@ public class ReleaseAwareGatewayLoadBalancerFilter implements GlobalFilter, Orde
     private static final Logger log = LoggerFactory.getLogger(ReleaseAwareGatewayLoadBalancerFilter.class);
     private static final String ACTIVE_COLOR_KEY = "release.active-color";
     private static final String ACTIVE_VERSION_KEY = "release.active-version";
+    private static final String INSTANCE_CACHE_TTL_MS_KEY = "release.gateway.instance-cache-ttl-ms";
+    private static final long DEFAULT_INSTANCE_CACHE_TTL_MS = 1000L;
     private static final int ORDER_BEFORE_GATEWAY_LOAD_BALANCER = 10050;
 
     private final ReactiveDiscoveryClient discoveryClient;
     private final Environment environment;
     private final ConcurrentHashMap<String, AtomicInteger> positions = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, CachedInstances> instanceCache = new ConcurrentHashMap<>();
 
     public ReleaseAwareGatewayLoadBalancerFilter(ReactiveDiscoveryClient discoveryClient, Environment environment) {
         this.discoveryClient = discoveryClient;
@@ -65,14 +68,37 @@ public class ReleaseAwareGatewayLoadBalancerFilter implements GlobalFilter, Orde
             return chain.filter(exchange);
         }
 
-        return discoveryClient.getInstances(serviceId)
-                .collectList()
+        return getInstances(serviceId)
                 .flatMap(instances -> filterAndRoute(exchange, chain, requestUrl, serviceId, instances, activeColor, activeVersion));
     }
 
     @Override
     public int getOrder() {
         return ORDER_BEFORE_GATEWAY_LOAD_BALANCER;
+    }
+
+    private Mono<List<ServiceInstance>> getInstances(String serviceId) {
+        long ttlMs = getInstanceCacheTtlMs();
+        if (ttlMs <= 0) {
+            return discoveryClient.getInstances(serviceId).collectList();
+        }
+
+        long now = System.currentTimeMillis();
+        CachedInstances cachedInstances = instanceCache.get(serviceId);
+        if (cachedInstances != null && cachedInstances.expireAt > now) {
+            return Mono.just(cachedInstances.instances);
+        }
+
+        return discoveryClient.getInstances(serviceId)
+                .collectList()
+                .doOnNext(instances -> instanceCache.put(serviceId,
+                        new CachedInstances(Collections.unmodifiableList(new ArrayList<>(instances)),
+                                System.currentTimeMillis() + ttlMs)));
+    }
+
+    private long getInstanceCacheTtlMs() {
+        Long ttlMs = environment.getProperty(INSTANCE_CACHE_TTL_MS_KEY, Long.class, DEFAULT_INSTANCE_CACHE_TTL_MS);
+        return ttlMs == null ? DEFAULT_INSTANCE_CACHE_TTL_MS : ttlMs;
     }
 
     private Mono<Void> filterAndRoute(ServerWebExchange exchange, GatewayFilterChain chain, URI requestUrl,
@@ -186,6 +212,16 @@ public class ReleaseAwareGatewayLoadBalancerFilter implements GlobalFilter, Orde
 
         private ReleaseMatchResult(List<ServiceInstance> matchedInstances) {
             this.matchedInstances = matchedInstances;
+        }
+    }
+
+    private static class CachedInstances {
+        private final List<ServiceInstance> instances;
+        private final long expireAt;
+
+        private CachedInstances(List<ServiceInstance> instances, long expireAt) {
+            this.instances = instances;
+            this.expireAt = expireAt;
         }
     }
 }
