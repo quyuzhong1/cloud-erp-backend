@@ -28,6 +28,10 @@ public class GatewayReadinessState {
         preStopping.set(true);
     }
 
+    public void markPreStopping() {
+        preStopping.set(true);
+    }
+
     public boolean isReady() {
         return applicationReady.get() && !preStopping.get();
     }

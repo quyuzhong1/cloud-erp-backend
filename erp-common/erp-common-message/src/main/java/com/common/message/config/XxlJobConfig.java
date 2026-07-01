@@ -13,7 +13,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.type.AnnotatedTypeMetadata;
 
 /**
- * 公共 XXL-JOB 执行器配置。
+ * 公共 XXL-JOB 执行器配置，替代各业务模块原本重复的 XxlJobConfig。
+ * 业务服务启动类已扫描 com.common 包，dev/archive 和配置缺失时继续不注册执行器。
  */
 @Configuration
 @ConditionalOnClass(XxlJobSpringExecutor.class)

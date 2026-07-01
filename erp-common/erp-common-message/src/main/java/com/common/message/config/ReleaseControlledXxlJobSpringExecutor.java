@@ -12,6 +12,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 蓝绿发布时通过 Nacos 动态控制 XXL-JOB 执行器注册，避免新旧版本同时执行定时任务。
+ * 发布流程按「新色首次启用、旧色停止后退出」使用；回滚应重建 Pod，不依赖同一 JVM 内反复停启。
  */
 public class ReleaseControlledXxlJobSpringExecutor extends XxlJobSpringExecutor
         implements EnvironmentAware, ApplicationListener<ApplicationEvent> {

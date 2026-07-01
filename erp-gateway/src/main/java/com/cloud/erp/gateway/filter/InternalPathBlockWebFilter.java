@@ -30,6 +30,7 @@ public class InternalPathBlockWebFilter implements WebFilter, Ordered {
     private static final String LIVE_PATH = "/internal/live";
     private static final String READY_PATH = "/internal/ready";
     private static final String ALLOWED_PROBE_CIDRS_KEY = "erp.internal-health.allowed-probe-cidrs";
+    // 默认值优先兼容 K8s 节点/探针来源；生产可通过 Nacos 收窄为实际 kubelet 或网关探针网段。
     private static final String DEFAULT_ALLOWED_PROBE_CIDRS =
             "10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,100.64.0.0/10,169.254.0.0/16";
 

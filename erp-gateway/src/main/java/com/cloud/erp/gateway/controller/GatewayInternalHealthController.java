@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
@@ -26,8 +27,11 @@ public class GatewayInternalHealthController {
 
     private static final String STATUS_UP = "UP";
     private static final String STATUS_DOWN = "DOWN";
+    private static final String STATUS_PRE_STOPPING = "PRE_STOPPING";
     private static final String REASON_READY = "READY";
     private static final String REASON_APPLICATION_NOT_READY = "APPLICATION_NOT_READY";
+    private static final String REASON_PRE_STOPPING = "PRE_STOPPING";
+    private static final String REASON_PRE_STOP_FORBIDDEN = "PRE_STOP_FORBIDDEN";
     private static final String REASON_RELEASE_STATE_FORBIDDEN = "RELEASE_STATE_FORBIDDEN";
     private static final String RELEASE_ACTIVE_COLOR = "release.active-color";
     private static final String RELEASE_ACTIVE_VERSION = "release.active-version";
@@ -69,6 +73,16 @@ public class GatewayInternalHealthController {
         body.put("xxlJobEnabled", environment.getProperty(RELEASE_XXL_JOB_ENABLED, Boolean.class, true));
         body.put("currentReleaseActive", isCurrentReleaseActive());
         return Mono.just(ResponseEntity.ok(body));
+    }
+
+    @PostMapping("/pre-stop")
+    public Mono<ResponseEntity<Map<String, Object>>> preStop(ServerHttpRequest request) {
+        if (!isLoopbackRequest(request)) {
+            return Mono.just(ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(body(STATUS_DOWN, REASON_PRE_STOP_FORBIDDEN)));
+        }
+        readinessState.markPreStopping();
+        return Mono.just(ResponseEntity.ok(body(STATUS_PRE_STOPPING, REASON_PRE_STOPPING)));
     }
 
     private boolean isCurrentReleaseActive() {
