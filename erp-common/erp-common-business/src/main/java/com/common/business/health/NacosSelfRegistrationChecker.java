@@ -69,6 +69,7 @@ public class NacosSelfRegistrationChecker {
         this.discoveryProperties = discoveryProperties;
         this.environment = environment;
         this.registrationProvider = registrationProvider;
+        // 专用有界单线程池隔离 Nacos 查询超时，避免 readiness 调用线程被注册中心阻塞拖住。
         this.queryExecutor = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS,
                 new ArrayBlockingQueue<>(DEFAULT_QUERY_QUEUE_CAPACITY), new DaemonThreadFactory());
     }
@@ -264,6 +265,7 @@ public class NacosSelfRegistrationChecker {
     }
 
     private boolean isCurrentInstance(Instance instance, RegistrationInfo registrationInfo) {
+        // 当前 K8s/Nacos 部署约定使用具体 Pod IP 注册；若环境切成 hostname 注册，应先统一 discovery.ip。
         return StringUtils.equals(instance.getIp(), registrationInfo.getIp())
                 && instance.getPort() == registrationInfo.getPort();
     }

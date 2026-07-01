@@ -2,11 +2,13 @@ package com.cloud.erp.gateway.filter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.ReactiveDiscoveryClient;
+import org.springframework.cloud.context.environment.EnvironmentChangeEvent;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.ApplicationListener;
 import org.springframework.core.Ordered;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
@@ -31,7 +33,8 @@ import static org.springframework.cloud.gateway.support.ServerWebExchangeUtils.a
  */
 @Component
 @ConditionalOnProperty(prefix = "release.gateway", name = "enabled", havingValue = "true")
-public class ReleaseAwareGatewayLoadBalancerFilter implements GlobalFilter, Ordered {
+public class ReleaseAwareGatewayLoadBalancerFilter
+        implements GlobalFilter, Ordered, ApplicationListener<EnvironmentChangeEvent> {
 
     private static final Logger log = LoggerFactory.getLogger(ReleaseAwareGatewayLoadBalancerFilter.class);
     private static final String ACTIVE_COLOR_KEY = "release.active-color";
@@ -75,6 +78,20 @@ public class ReleaseAwareGatewayLoadBalancerFilter implements GlobalFilter, Orde
     @Override
     public int getOrder() {
         return ORDER_BEFORE_GATEWAY_LOAD_BALANCER;
+    }
+
+    @Override
+    public void onApplicationEvent(EnvironmentChangeEvent event) {
+        if (event == null || event.getKeys() == null) {
+            return;
+        }
+        if (event.getKeys().contains(ACTIVE_COLOR_KEY)
+                || event.getKeys().contains(ACTIVE_VERSION_KEY)
+                || event.getKeys().contains(INSTANCE_CACHE_TTL_MS_KEY)) {
+            // 发布控制配置热刷新时立即丢弃发现缓存，避免切色窗口内继续使用旧实例快照。
+            instanceCache.clear();
+            log.warn("Cleared gateway release instance cache after release config changed: {}", event.getKeys());
+        }
     }
 
     private Mono<List<ServiceInstance>> getInstances(String serviceId) {
@@ -133,6 +150,7 @@ public class ReleaseAwareGatewayLoadBalancerFilter implements GlobalFilter, Orde
             if (metadata == null || metadata.isEmpty()) {
                 continue;
             }
+            // release 元数据别名需与 ReleaseAwareRibbonRule 保持一致，避免入口流量和 Feign 调用切色语义不同。
             String releaseColor = firstText(metadata, "release.color", "release-color", "releaseColor", "color");
             String releaseVersion = firstText(metadata, "release.version", "release-version", "releaseVersion", "version");
             if (hasComparableReleaseMetadata(activeColor, activeVersion, releaseColor, releaseVersion)) {

@@ -52,11 +52,15 @@ public class GatewayInternalHealthController {
 
     @GetMapping("/ready")
     public Mono<ResponseEntity<Map<String, Object>>> ready() {
-        if (readinessState.isReady()) {
-            return Mono.just(ResponseEntity.ok(body(STATUS_UP, REASON_READY)));
+        if (!readinessState.isApplicationReady()) {
+            return Mono.just(ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(body(STATUS_DOWN, REASON_APPLICATION_NOT_READY)));
         }
-        return Mono.just(ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                .body(body(STATUS_DOWN, REASON_APPLICATION_NOT_READY)));
+        if (readinessState.isPreStopping()) {
+            return Mono.just(ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(body(STATUS_DOWN, REASON_PRE_STOPPING)));
+        }
+        return Mono.just(ResponseEntity.ok(body(STATUS_UP, REASON_READY)));
     }
 
     @GetMapping("/release-state")

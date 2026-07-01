@@ -86,6 +86,7 @@ public class ReleaseAwareRibbonRule extends AbstractLoadBalancerRule {
                         server, clientName, metadata);
                 continue;
             }
+            // release 元数据别名需与 Gateway 入口负载均衡保持一致，避免入口流量和 Feign 调用切色语义不同。
             String releaseColor = firstText(metadata, "release.color", "release-color", "releaseColor", "color");
             String releaseVersion = firstText(metadata, "release.version", "release-version", "releaseVersion", "version");
             if (hasComparableReleaseMetadata(activeColor, activeVersion, releaseColor, releaseVersion)) {
