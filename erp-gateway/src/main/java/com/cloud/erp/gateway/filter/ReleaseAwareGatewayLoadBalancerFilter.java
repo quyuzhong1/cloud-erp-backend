@@ -80,6 +80,8 @@ public class ReleaseAwareGatewayLoadBalancerFilter implements GlobalFilter, Orde
                                       String activeColor, String activeVersion) {
         ReleaseMatchResult matchResult = filterByRelease(instances, activeColor, activeVersion);
         if (matchResult.matchedInstances.isEmpty()) {
+            // filterByRelease 已对「无 release 元数据」的老实例做兼容回退；走到这里表示存在
+            // 可比较 release 元数据但没有命中 active 发布版本，网关侧返回 503，避免跨蓝绿版本转发。
             log.warn("No active release instance found for gateway service={}, activeColor={}, activeVersion={}",
                     serviceId, activeColor, activeVersion);
             exchange.getResponse().setStatusCode(HttpStatus.SERVICE_UNAVAILABLE);
@@ -115,6 +117,7 @@ public class ReleaseAwareGatewayLoadBalancerFilter implements GlobalFilter, Orde
             }
         }
         if (matched.isEmpty() && !hasComparableMetadata) {
+            // 兼容未接入 release 元数据的存量实例：没有任何可比较标签时不强制切流。
             log.warn("No release metadata found for gateway activeColor={}, activeVersion={}, fallback to all instances",
                     activeColor, activeVersion);
             return new ReleaseMatchResult(instances);

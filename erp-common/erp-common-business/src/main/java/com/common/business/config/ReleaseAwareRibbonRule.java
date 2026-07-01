@@ -46,6 +46,8 @@ public class ReleaseAwareRibbonRule extends AbstractLoadBalancerRule {
         List<Server> reachableServers = loadBalancer.getReachableServers();
         List<Server> candidates = filterByRelease(reachableServers);
         if (candidates.isEmpty()) {
+            // filterByRelease 已对「无 release 元数据」的老实例做兼容回退；走到这里表示存在
+            // 可比较 release 元数据但没有命中 active 发布版本，故意 fail-closed，避免跨蓝绿版本调用。
             log.warn("No active release instance found for client={}, loadBalancer={}, activeColor={}, activeVersion={}, reachableServers={}",
                     clientName, loadBalancer, getActiveColor(), getActiveVersion(), reachableServers);
             return null;
@@ -94,6 +96,7 @@ public class ReleaseAwareRibbonRule extends AbstractLoadBalancerRule {
         }
 
         if (matched.isEmpty() && !hasComparableMetadata) {
+            // 兼容未接入 release 元数据的存量实例：没有任何可比较标签时不强制切流。
             log.warn("No release metadata found for client={}, fallback to reachable servers, activeColor={}, activeVersion={}",
                     clientName, activeColor, activeVersion);
             return servers;

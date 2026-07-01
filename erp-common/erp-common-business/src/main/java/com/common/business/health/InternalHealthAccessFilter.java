@@ -16,6 +16,8 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 /**
  * 保护业务服务内部探针路径，避免集群内任意工作负载读取发布/就绪细节。
@@ -116,32 +118,69 @@ public class InternalHealthAccessFilter implements Filter, Ordered {
         String prefixText = StringUtils.substringAfter(cidr, "/");
         try {
             int prefix = Integer.parseInt(prefixText);
-            if (prefix < 0 || prefix > 32) {
-                return false;
-            }
-            long remote = ipv4ToLong(remoteAddress);
-            long networkValue = ipv4ToLong(network);
-            long mask = prefix == 0 ? 0L : (0xffffffffL << (32 - prefix)) & 0xffffffffL;
-            return (remote & mask) == (networkValue & mask);
-        } catch (NumberFormatException ex) {
+            return matchesInetCidr(remoteAddress, network, prefix);
+        } catch (NumberFormatException | UnknownHostException ex) {
             return false;
         }
     }
 
-    private long ipv4ToLong(String address) {
-        String[] parts = StringUtils.split(address, '.');
-        if (parts == null || parts.length != 4) {
-            throw new NumberFormatException("invalid ipv4 address");
+    private boolean matchesInetCidr(String remoteAddress, String network, int prefix) throws UnknownHostException {
+        if (!isIpLiteral(remoteAddress) || !isIpLiteral(network)) {
+            return false;
         }
-        long result = 0L;
+        byte[] remoteBytes = InetAddress.getByName(remoteAddress).getAddress();
+        byte[] networkBytes = InetAddress.getByName(network).getAddress();
+        if (remoteBytes.length != networkBytes.length) {
+            return false;
+        }
+        int maxPrefix = remoteBytes.length * 8;
+        if (prefix < 0 || prefix > maxPrefix) {
+            return false;
+        }
+        int fullBytes = prefix / 8;
+        for (int i = 0; i < fullBytes; i++) {
+            if (remoteBytes[i] != networkBytes[i]) {
+                return false;
+            }
+        }
+        int remainingBits = prefix % 8;
+        if (remainingBits == 0) {
+            return true;
+        }
+        int mask = (0xff << (8 - remainingBits)) & 0xff;
+        return (remoteBytes[fullBytes] & mask) == (networkBytes[fullBytes] & mask);
+    }
+
+    private boolean isIpLiteral(String address) {
+        if (!hasText(address)) {
+            return false;
+        }
+        if (StringUtils.contains(address, ":")) {
+            return true;
+        }
+        return isStrictIpv4(address);
+    }
+
+    private boolean isStrictIpv4(String address) {
+        String[] parts = address.split("\\.", -1);
+        if (parts.length != 4) {
+            return false;
+        }
         for (String part : parts) {
+            if (!hasText(part)) {
+                return false;
+            }
+            for (int i = 0; i < part.length(); i++) {
+                if (!Character.isDigit(part.charAt(i))) {
+                    return false;
+                }
+            }
             int value = Integer.parseInt(part);
             if (value < 0 || value > 255) {
-                throw new NumberFormatException("invalid ipv4 address");
+                return false;
             }
-            result = (result << 8) + value;
         }
-        return result;
+        return true;
     }
 
     private boolean hasText(String value) {
