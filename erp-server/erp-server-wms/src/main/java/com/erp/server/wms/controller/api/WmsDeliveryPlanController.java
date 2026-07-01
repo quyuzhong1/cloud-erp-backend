@@ -542,7 +542,7 @@ public class WmsDeliveryPlanController extends BaseController {
      */
     @GetMapping("/exportFbaTemplate")
     public ApiResult exportFbaTemplate(HttpServletRequest request, HttpServletResponse response) {
-        String path = "excel/deliveryPlanDetailFbaTemplate.xlsx";
+        String path = "classpath:excel/deliveryPlanDetailFbaTemplate.xlsx";
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
         try (InputStream inputStream = resourceLoader.getResource(path).getInputStream();
@@ -568,7 +568,7 @@ public class WmsDeliveryPlanController extends BaseController {
      */
     @GetMapping("/exportPlatformTemplate")
     public ApiResult exportPlatformTemplate(HttpServletRequest request, HttpServletResponse response) {
-        String path = "excel/deliveryPlanDetailPlatformTemplate.xlsx";
+        String path = "classpath:excel/deliveryPlanDetailPlatformTemplate.xlsx";
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
         try (InputStream inputStream = resourceLoader.getResource(path).getInputStream();
