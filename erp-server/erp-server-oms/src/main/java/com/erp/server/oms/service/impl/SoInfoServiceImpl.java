@@ -2616,13 +2616,14 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
             //发货通知数量
             List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailEntityList = soDeliveryNoticeDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(view.getDetailId())).collect(Collectors.toList());
+            Integer effectiveNoticeQty = MathUtil.ZERO;
             if (CollectionUtils.isNotEmpty(soDeliveryNoticeDetailEntityList)) {
-                Integer effectiveNoticeQty = soDeliveryNoticeDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(view.getDetailId())).map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
-                effectiveNoticeQty = effectiveNoticeQty * view.getPerBoxQty();
-                view.setEffectiveNoticeQty(effectiveNoticeQty);
-                // 待发货通知数量 = 销售数量 - 累计发货通知数量 - 锁定数量
-                view.setWaitNoticeQty(salesQty - effectiveNoticeQty - frozenQty);
+                effectiveNoticeQty = soDeliveryNoticeDetailEntityList.stream().map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
             }
+            effectiveNoticeQty = effectiveNoticeQty * view.getPerBoxQty();
+            view.setEffectiveNoticeQty(effectiveNoticeQty);
+            // 待发货通知数量 = 销售数量 - 累计发货通知数量 - 锁定数量
+            view.setWaitNoticeQty(salesQty - effectiveNoticeQty - frozenQty);
 
         }
         if(CollectionUtils.isEmpty(resultList)){
