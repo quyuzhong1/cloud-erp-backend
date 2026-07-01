@@ -6,6 +6,7 @@ import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.ReactiveDiscoveryClient;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.Ordered;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
@@ -29,6 +30,7 @@ import static org.springframework.cloud.gateway.support.ServerWebExchangeUtils.a
  * Gateway lb:// 转发前按发布版本选择实例，避免外部入口跨蓝绿版本转发。
  */
 @Component
+@ConditionalOnProperty(prefix = "release.gateway", name = "enabled", havingValue = "true")
 public class ReleaseAwareGatewayLoadBalancerFilter implements GlobalFilter, Ordered {
 
     private static final Logger log = LoggerFactory.getLogger(ReleaseAwareGatewayLoadBalancerFilter.class);
@@ -97,6 +99,7 @@ public class ReleaseAwareGatewayLoadBalancerFilter implements GlobalFilter, Orde
         }
 
         List<ServiceInstance> matched = new ArrayList<>();
+        boolean hasComparableMetadata = false;
         for (ServiceInstance instance : instances) {
             Map<String, String> metadata = instance.getMetadata();
             if (metadata == null || metadata.isEmpty()) {
@@ -104,9 +107,17 @@ public class ReleaseAwareGatewayLoadBalancerFilter implements GlobalFilter, Orde
             }
             String releaseColor = firstText(metadata, "release.color", "release-color", "releaseColor", "color");
             String releaseVersion = firstText(metadata, "release.version", "release-version", "releaseVersion", "version");
+            if (hasComparableReleaseMetadata(activeColor, activeVersion, releaseColor, releaseVersion)) {
+                hasComparableMetadata = true;
+            }
             if (matchesRelease(activeColor, activeVersion, releaseColor, releaseVersion)) {
                 matched.add(instance);
             }
+        }
+        if (matched.isEmpty() && !hasComparableMetadata) {
+            log.warn("No release metadata found for gateway activeColor={}, activeVersion={}, fallback to all instances",
+                    activeColor, activeVersion);
+            return new ReleaseMatchResult(instances);
         }
         return new ReleaseMatchResult(matched);
     }
@@ -155,6 +166,12 @@ public class ReleaseAwareGatewayLoadBalancerFilter implements GlobalFilter, Orde
             }
         }
         return hasComparableMetadata;
+    }
+
+    private boolean hasComparableReleaseMetadata(String activeColor, String activeVersion,
+                                                 String releaseColor, String releaseVersion) {
+        return (hasText(activeColor) && hasText(releaseColor))
+                || (hasText(activeVersion) && hasText(releaseVersion));
     }
 
     private boolean hasText(String value) {
