@@ -2962,8 +2962,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 updateWrapper.set(fieldName, Objects.toString(fieldValue, ""));
                 break;
             case SENDER_ID:
-                updateWrapper.set(fieldName, "");
-                updateWrapper.set("sender_name", "");
+                updateWrapper.set(fieldName, fieldValue);
+                updateWrapper.set("sender_name", name);
                 break;
             case RECEIVER_ID:
                 String str = Objects.toString(fieldValue, "");
@@ -4644,6 +4644,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         midEntity.setContractNo(declareCode);
         midEntity.setSkuId(StringUtils.defaultString(sourceDetail.getSkuId()));
         midEntity.setSkuNo(StringUtils.defaultString(sourceDetail.getSkuNo()));
+        midEntity.setParentSkuId(StringUtils.defaultString(sourceDetail.getParentSkuId()));
         midEntity.setBomHistoryId(StringUtils.defaultString(sourceDetail.getBomHistoryId()));
         midEntity.setBomVersion(StringUtils.defaultString(sourceDetail.getBomVersion()));
         midEntity.setCurrency(StringUtils.defaultString(declareDetail.getDeclareCurrency()));

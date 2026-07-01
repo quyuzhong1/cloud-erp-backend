@@ -164,6 +164,14 @@ public interface FirstMileDeliveryMapper extends BaseMapper<FirstMileDeliveryEnt
      */
     List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> listBeforePushFmDeclare(@Param("ids") List<String> ids);
     /**
+     * 查询合后前数据
+     * @author will
+     * @date 2026/4/27 17:39
+     * @param ids 头程发货单id集合
+     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.SourceDeliveryDetailDTO>
+     */
+    List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> listAfterPushFmDeclare(@Param("ids") List<String> ids);
+    /**
      * 查询B2B报关按箱号最小维度来源明细
      * @author will
      * @date 2026/5/9 16:12
