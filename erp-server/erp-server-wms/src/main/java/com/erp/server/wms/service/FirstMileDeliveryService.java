@@ -59,13 +59,6 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
     Boolean consumeDeclareAutoGenerateTask(AutoGenerateBillDTO dto);
 
     /**
-     * Asynchronously handles first mile declaration auto generation.
-     *
-     * @param dto auto generation parameter
-     */
-    void asyncConsumeDeclareAutoGenerateTask(AutoGenerateBillDTO dto);
-
-    /**
     * 修改
     * @author Luo_WG
     * @date: 2023-10-30

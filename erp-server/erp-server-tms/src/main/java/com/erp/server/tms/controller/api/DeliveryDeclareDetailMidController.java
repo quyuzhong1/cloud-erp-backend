@@ -145,7 +145,7 @@ public class DeliveryDeclareDetailMidController extends BaseController {
      */
     @PostMapping("/batchAddMergeDetail")
     public ApiResult<Object> batchAddMergeDetail(@RequestBody @Valid ValidList<TmsDeclareBillDTO.MergeDeclareBillDTO> list)  {
-        return success(deliveryDeclareDetailMidService.batchAddMergeDetail(list.getList()));
+        return success(deliveryDeclareDetailMidService.batchAddMergeDetail(list.getList(),true));
     }
 
 
