@@ -52,8 +52,7 @@ public class NacosSelfRegistrationChecker {
     private final ObjectProvider<Registration> registrationProvider;
     private final ThreadPoolExecutor queryExecutor;
     private final AtomicLong lastWarnTime = new AtomicLong(0L);
-    private final AtomicLong lastCheckTime = new AtomicLong(0L);
-    private volatile CheckResult cachedCheckResult;
+    private volatile CachedCheckResult cachedCheckResult;
 
     @Value("${erp.internal-health.nacos-check-timeout-ms:1000}")
     private long nacosCheckTimeoutMs;
@@ -275,20 +274,18 @@ public class NacosSelfRegistrationChecker {
         if (nacosCheckCacheMs <= 0) {
             return null;
         }
-        CheckResult cachedResult = cachedCheckResult;
+        CachedCheckResult cachedResult = cachedCheckResult;
         if (cachedResult == null) {
             return null;
         }
-        long lastCheck = lastCheckTime.get();
-        if (System.currentTimeMillis() - lastCheck <= nacosCheckCacheMs) {
-            return cachedResult;
+        if (System.currentTimeMillis() - cachedResult.checkTime <= nacosCheckCacheMs) {
+            return cachedResult.checkResult;
         }
         return null;
     }
 
     private CheckResult cacheCheckResult(CheckResult checkResult) {
-        cachedCheckResult = checkResult;
-        lastCheckTime.set(System.currentTimeMillis());
+        cachedCheckResult = new CachedCheckResult(checkResult, System.currentTimeMillis());
         return checkResult;
     }
 
@@ -402,6 +399,17 @@ public class NacosSelfRegistrationChecker {
 
         public String getMessage() {
             return message;
+        }
+    }
+
+    private static class CachedCheckResult {
+
+        private final CheckResult checkResult;
+        private final long checkTime;
+
+        private CachedCheckResult(CheckResult checkResult, long checkTime) {
+            this.checkResult = checkResult;
+            this.checkTime = checkTime;
         }
     }
 
