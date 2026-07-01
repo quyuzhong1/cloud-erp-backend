@@ -271,6 +271,7 @@ public class ProcessManagementController extends BaseController {
      * @return ApiResult<List<BatchResultDTO>>
      */
     @PostMapping("/processPass")
+    @LogAction(value = LogActionEnum.APPROVE, desc = "流程管理强制通过")
     public ApiResult<List<BatchResultDTO>> processPass(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -300,6 +301,7 @@ public class ProcessManagementController extends BaseController {
      * @return ApiResult<List<BatchResultDTO>>
      */
     @PostMapping("/processReject")
+    @LogAction(value = LogActionEnum.REJECT, desc = "流程管理强制驳回")
     public ApiResult<List<BatchResultDTO>> processReject(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -329,6 +331,7 @@ public class ProcessManagementController extends BaseController {
      * @return ApiResult<List<BatchResultDTO>>
      */
     @PostMapping("/processRestore")
+    @LogAction(value = LogActionEnum.EXECUTE, desc = "流程管理恢复")
     public ApiResult<List<BatchResultDTO>> processRestore(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -358,6 +361,7 @@ public class ProcessManagementController extends BaseController {
      * @return ApiResult<List<BatchResultDTO>>
      */
     @PostMapping("/processSuspend")
+    @LogAction(value = LogActionEnum.UPDATE_STATUS, desc = "流程管理暂停")
     public ApiResult<List<BatchResultDTO>> processSuspend(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {

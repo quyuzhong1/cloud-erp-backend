@@ -117,6 +117,7 @@ public class MoldInfoController extends BaseController {
     * @return ApiResult<Void>
     */
     @PostMapping("/addAndSubmit")
+    @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "模具档案新增并提交")
     public ApiResult<BaseResultDTO.AddDTO> addAndSubmit(@RequestBody @Validated MoldInfoDTO.AddDTO dto) {
         BaseResultDTO.AddDTO result = moldInfoService.addAndSubmit(dto);
         return success(result);
@@ -130,6 +131,7 @@ public class MoldInfoController extends BaseController {
     * @return ApiResult<Void>
     */
     @PostMapping("/updateAndSubmit")
+    @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "模具档案修改并提交")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "plm:moldInfo:updateAndSubmit",

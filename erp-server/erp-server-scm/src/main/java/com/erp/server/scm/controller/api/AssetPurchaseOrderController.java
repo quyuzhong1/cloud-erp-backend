@@ -132,6 +132,7 @@ public class AssetPurchaseOrderController extends BaseController {
     * @return ApiResult<Void>
     */
     @PostMapping("/addAndSubmit")
+    @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "资产采购订单新增并提交")
     public ApiResult<BaseResultDTO.AddDTO> addAndSubmit(@RequestBody @Validated AssetPurchaseOrderDTO.AddDTO dto) {
         BaseResultDTO.AddDTO result = assetPurchaseOrderService.addAndSubmit(dto);
         return success(result);
@@ -145,6 +146,7 @@ public class AssetPurchaseOrderController extends BaseController {
     * @return ApiResult<Void>
     */
     @PostMapping("/updateAndSubmit")
+    @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "资产采购订单修改并提交")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "scm:assetPurchaseOrder:updateAndSubmit",

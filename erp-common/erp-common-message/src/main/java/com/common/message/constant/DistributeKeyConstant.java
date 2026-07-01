@@ -17,6 +17,28 @@ public class DistributeKeyConstant {
     public static final String INVOICE_INFO_KEY = "INVOICE_INFO_KEY";
     // 工作流接口分布式锁KEY
     public static final String WORKFLOW_LOCK_KEY = "WORKFLOW_LOCK_KEY";
+    /** 飞书审批回调 */
+    public static final String WORKFLOW_FS_CALLBACK_KEY = "WORKFLOW_FS_CALLBACK";
+    /** 第三方流程启动 */
+    public static final String WORKFLOW_THIRD_START_KEY = "WORKFLOW_THIRD_START";
+    /** 流程定义变更 */
+    public static final String WORKFLOW_DEFINITION_CHANGE_KEY = "WORKFLOW_DEFINITION_CHANGE";
+    /** 单据提交 */
+    public static final String BILL_SUBMIT_KEY = "BILL_SUBMIT";
+    /** 单据审核 */
+    public static final String BILL_APPROVE_KEY = "BILL_APPROVE";
+    /** 单据审批状态Feign/MQ回调更新 */
+    public static final String BILL_UPDATE_APPROVE_STATUS_KEY = "BILL_UPDATE_APPROVE_STATUS";
+    /** 采购订单QC合格数量更新 */
+    public static final String SCM_PO_QC_QTY_KEY = "SCM_PO_QC_QTY";
+    /** 采购订单到货状态更新 */
+    public static final String SCM_PO_ARRIVAL_STATUS_KEY = "SCM_PO_ARRIVAL_STATUS";
+    /** SRM采购订单确认 */
+    public static final String SCM_SRM_ORDER_CONFIRM_KEY = "SCM_SRM_ORDER_CONFIRM";
+    /** 采购订单生成送货单 */
+    public static final String SCM_PO_GENERATE_DELIVERY_KEY = "SCM_PO_GENERATE_DELIVERY";
+    /** 采购订单供应商确认 */
+    public static final String SCM_PO_SUPPLIER_CONFIRM_KEY = "SCM_PO_SUPPLIER_CONFIRM";
     public static final String FIRST_MILE_WEIGHT_ALLOCATION_KEY = "FIRST_MILE_WEIGHT_ALLOCATION_KEY";
     /**
      * B2B销售订单key

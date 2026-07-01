@@ -3,6 +3,8 @@ package com.erp.server.fms.controller.api;
 
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.anno.LogAction;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.fms.dto.DictBasicDTO;
 import com.erp.model.fms.entity.DictBasicEntity;
 import com.erp.server.fms.service.DictBasicService;
@@ -34,6 +36,7 @@ public class DictBasicController extends BaseController {
      * @return
      */
     @PostMapping("/saveOrUpdateBatch")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "字典管理批量保存")
     public ApiResult saveOrUpdate(@RequestBody @Validated List<DictBasicDTO.ListDTO> dto) {
         Boolean result = dictBasicService.saveOrUpdateDict(dto);
         return result == true ? success() : failure();

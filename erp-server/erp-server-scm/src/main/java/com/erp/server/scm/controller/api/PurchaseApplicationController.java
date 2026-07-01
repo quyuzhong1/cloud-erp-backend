@@ -583,6 +583,7 @@ public class PurchaseApplicationController extends BaseController {
      * @return ApiResult<BatchResultDTO>
      */
     @PostMapping("/pushPurchaseApplication")
+    @LogAction(value = LogActionEnum.EXECUTE, desc = "下推采购申请单")
     public ApiResult<BatchResultDTO> pushPurchaseApplication(@RequestBody @Validated SoB2cDTO.PushPurchaseApplicationDTO dto) {
         Boolean flag = purchaseApplicationService.pushPurchaseApplication(dto);
         return flag ? success() : failure();

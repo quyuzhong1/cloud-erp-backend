@@ -1,6 +1,8 @@
 package com.erp.server.fms.controller.feign;
 
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.anno.LogAction;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.fms.dto.AssetAcceptDTO;
 import com.erp.model.scm.dto.AssetPurchaseOrderDTO;
 import com.erp.server.fms.service.AssetAcceptDetailService;
@@ -53,6 +55,7 @@ public class AssetAceptFeignController {
      * @return
      */
     @PostMapping("/generateAssetAccept")
+    @LogAction(value = LogActionEnum.INSERT, desc = "下推生成资产验收单")
     public Boolean generateAssetAccept(@RequestBody List<AssetPurchaseOrderDTO.GenerateAssetAcceptDTO> dtoList){
         return assetAcceptService.generateAssetAccept(dtoList);
     }
