@@ -819,6 +819,8 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
      * {@code shipmentCodeList} 非空时与 {@link #newDmpPullShipment} 共用
      * {@link com.erp.server.dmp.inout.handler.input.task.init.DmpInputAmzCommonInitHandler#hasManualShipmentCodeFilter()} fail-fast 策略。
      * 审查问题3（intentional）：同 {@link #newDmpPullShipment}，接口同步返回 true，实际拉取由 hotfix 任务异步完成。
+     * 审查问题4（intentional）：{@code initConvertEntity} 查询使用 LIMIT 1，依赖 dmp_cfg_input_convert 中
+     * {@link DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler#CONVERT_CLASS} 对应记录生产唯一；发布前须 SQL 核对，勿当代码缺陷修复。
      */
     private boolean newDmpPullInboundPlanShipment(DmpPullShipmentDTO dto, AmazonShopInfoDTO shopInfoDTO) {
         List<String> sameAccountShopIds = shopInfoDTO.getMarketplaceShopIdMap().values()
@@ -830,6 +832,7 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
                 .eq(DmpCfgInputConvertEntity::getInputStatus, DmpInputTaskStatusEnum.INIT.getCode())
                 .eq(DmpCfgInputConvertEntity::getConvertClass, DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler.CONVERT_CLASS)
                 .eq(DmpCfgInputConvertEntity::getDisabled, false)
+                // 审查问题4：配置唯一性由运维保证，见方法 JavaDoc
                 .last(" LIMIT 1 ")
                 .one();
         if (null == initConvertEntity) {

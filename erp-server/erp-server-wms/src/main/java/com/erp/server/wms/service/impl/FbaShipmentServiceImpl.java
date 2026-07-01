@@ -435,6 +435,10 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         return true;
     }
 
+    /**
+     * 审查问题5（intentional）：未加 {@code @Transactional}，与 {@link #pullShipment} 差异可接受——
+     * 本方法仅 Feign 调 DMP 创建 hotfix，无 WMS 本地写库；{@code pullShipment} 的 {@code @Transactional} 为历史遗留，功能等价。
+     */
     @Override
     @DistributeLocker(keyName = "dto.shopId")
     public Boolean pullInboundPlanShipment(FbaShipmentDTO.PullShipmentDTO dto) {

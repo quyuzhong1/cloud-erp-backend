@@ -25,6 +25,12 @@ import java.util.stream.Collectors;
 
 /**
  * FBA InboundPlan 货件明细子任务处理器
+ * <p>
+ * 审查问题1（intentional）：{@code listMaps} 返回 PostgreSQL 列名 {@code fba_shipment_id}（蛇形），
+ * 与 {@link com.erp.model.dmp.entity.DmpFbaShipmentEntity#FBA_SHIPMENT_ID} 及
+ * {@link DmpInputAmzAwdShipmentDetailDmpHandler} 等项目内同类 Handler 一致；子表 mongo 侧用
+ * {@code shipmentConfirmationId/fbaShipmentId/shipmentId} 取<strong>货件号值</strong>匹配，非 Map key 命名混用。
+ * DMP 落库前 TreeMap 写 {@code fbaShipmentId} 为转换层字段名，入库后读回为 {@code fba_shipment_id}，属预期行为。
  */
 @Slf4j
 @Service
@@ -75,6 +81,7 @@ public class DmpInputAmzFbaInboundPlanShipmentDetailDmpHandler extends DmpInputD
                     continue;
                 }
                 String dmpId = dmpIdObj.toString();
+                // 审查问题1：listMaps 键为 DB 列名 fba_shipment_id，勿改为 fbaShipmentId
                 Object shipmentIdObj = parentData.get("fba_shipment_id");
                 if (shipmentIdObj != null && StringUtils.isNotBlank(shipmentIdObj.toString())) {
                     shipmentIdDmpIdMap.putIfAbsent(shipmentIdObj.toString(), dmpId);
