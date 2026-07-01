@@ -1,0 +1,125 @@
+package com.erp.server.dmp.inout.handler.input.task.dmp;
+
+import cn.hutool.core.collection.CollUtil;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.core.anno.ParamData;
+import com.common.core.entity.BaseEntity;
+import com.common.core.enums.PannoEnum;
+import com.common.core.exception.ServiceException;
+import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
+import com.erp.model.dmp.entity.DmpInputTaskEntity;
+import com.erp.server.dmp.inout.handler.input.task.init.DmpInputAmzCommonInitHandler;
+import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+/**
+ * FBA InboundPlan 货件明细子任务处理器
+ * <p>
+ * 审查问题1（intentional）：{@code listMaps} 返回 PostgreSQL 列名 {@code fba_shipment_id}（蛇形），
+ * 与 {@link com.erp.model.dmp.entity.DmpFbaShipmentEntity#FBA_SHIPMENT_ID} 及
+ * {@link DmpInputAmzAwdShipmentDetailDmpHandler} 等项目内同类 Handler 一致；子表 mongo 侧用
+ * {@code shipmentConfirmationId/fbaShipmentId/shipmentId} 取<strong>货件号值</strong>匹配，非 Map key 命名混用。
+ * DMP 落库前 TreeMap 写 {@code fbaShipmentId} 为转换层字段名，入库后读回为 {@code fba_shipment_id}，属预期行为。
+ */
+@Slf4j
+@Service
+@Scope("prototype")
+public class DmpInputAmzFbaInboundPlanShipmentDetailDmpHandler extends DmpInputDoChildDmpHandler {
+
+    @Override
+    protected List<Map<String, Object>> getDmpInputMongoChildEntityList(List<Map<String, Object>> dmpInputMongoEntityList, String childMongoStorageName) {
+        String childCfgInputId = this.getDmpCfgInputChildId();
+        if (StringUtils.isBlank(childCfgInputId)) {
+            return Collections.emptyList();
+        }
+        List<DmpInputTaskEntity> childTaskList = dmpInputTaskService.lambdaQuery()
+                .eq(DmpInputTaskEntity::getParentTaskId, inputTaskId)
+                .eq(DmpInputTaskEntity::getCfgInputId, childCfgInputId)
+                .list();
+        if (CollUtil.isEmpty(childTaskList)) {
+            return Collections.emptyList();
+        }
+        List<String> childTaskIds = childTaskList.stream()
+                .map(DmpInputTaskEntity::getId)
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(childTaskIds)) {
+            return Collections.emptyList();
+        }
+        List<ParamData> paramDataList = new ArrayList<>();
+        paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID,
+                DmpInputMongoHandler.MONGO_BASE_INPUTTASKID,
+                PannoEnum.IN,
+                childTaskIds));
+        return mongoService.findMongoData(paramDataList, childMongoStorageName);
+    }
+
+    @Override
+    protected void putDmpId(List<Map<String, Object>> dmpInputMongoChildEntityList) {
+        DmpCfgInputConvertEntity mainConvertId = this.getMainConvertId();
+        String parentStorageName = mainConvertId.getStorageName();
+        ServiceImpl parentServiceImpl = this.getServiceImpl(parentStorageName);
+        QueryWrapper<?> wrapper = new QueryWrapper<>();
+        wrapper.eq(INPUT_TASK_ID, inputTaskId);
+        List<Map<String, Object>> parentDataList = parentServiceImpl.listMaps(wrapper);
+        Map<String, String> shipmentIdDmpIdMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(parentDataList)) {
+            for (Map<String, Object> parentData : parentDataList) {
+                Object dmpIdObj = parentData.get(BaseEntity.FIELD_ID);
+                if (dmpIdObj == null) {
+                    continue;
+                }
+                String dmpId = dmpIdObj.toString();
+                // 审查问题1：listMaps 键为 DB 列名 fba_shipment_id，勿改为 fbaShipmentId
+                Object shipmentIdObj = parentData.get("fba_shipment_id");
+                if (shipmentIdObj != null && StringUtils.isNotBlank(shipmentIdObj.toString())) {
+                    shipmentIdDmpIdMap.putIfAbsent(shipmentIdObj.toString(), dmpId);
+                }
+            }
+        }
+        // 审查说明（非手动场景关联主表失败）：未匹配明细不写入 MAIN_ID；
+        // 父类 DmpInputDoChildDmpHandler.convertData 在 MAIN_ID 为空时会 continue，不会落库，不会产生无主明细。
+        // 定时同步场景仅 warn 并汇总 unmatchedCount 便于监控；手动拉取要求强一致，直接 fail-fast。
+        int unmatchedCount = 0;
+        for (Map<String, Object> childData : dmpInputMongoChildEntityList) {
+            String shipmentKey = DmpInputAmzCommonInitHandler.firstNonBlankString(childData,
+                    "shipmentConfirmationId", "fbaShipmentId", "shipmentId");
+            if (StringUtils.isBlank(shipmentKey)) {
+                unmatchedCount++;
+                log.warn("未匹配主表货件ID, 明细货件键为空, inputTaskId={}", inputTaskId);
+                continue;
+            }
+            String dmpId = shipmentIdDmpIdMap.get(shipmentKey);
+            if (StringUtils.isBlank(dmpId)) {
+                unmatchedCount++;
+                log.warn("未匹配主表货件ID, shipmentKey={}, inputTaskId={}", shipmentKey, inputTaskId);
+                continue;
+            }
+            childData.put(MAIN_ID, dmpId);
+        }
+        if (unmatchedCount > 0) {
+            log.warn("FBA入库计划货件明细关联主表失败, unmatchedCount={}, inputTaskId={}", unmatchedCount, inputTaskId);
+            if (isManualInboundPlanShipmentPull()) {
+                throw new ServiceException("手动拉取FBA货件明细关联主表失败, unmatchedCount=" + unmatchedCount
+                        + ", inputTaskId=" + inputTaskId);
+            }
+        }
+    }
+
+    private boolean isManualInboundPlanShipmentPull() {
+        DmpInputTaskEntity startTask = dmpInputTaskService.getById(inputTaskId);
+        DmpInputTaskEntity rootTask = dmpInputTaskService.findRootTaskInChain(startTask);
+        return DmpInputAmzCommonInitHandler.hasManualShipmentCodeFilter(rootTask);
+    }
+}
