@@ -96,6 +96,10 @@ import java.util.stream.Stream;
 public class AmzReportHandleServiceImpl implements AmzReportHandleService {
     /**
      * newDmpPullShipment 可切换的 billType 白名单（cfg_setting 非法值时回退默认）。
+     * <p>
+     * 审查问题2（intentional）：默认 billType 为 {@link BusinessTypeEnum#FBA_INBOUND_PLANS}，
+     * 非代码遗漏；回退旧链路仅需 cfg_setting，无需改代码。发布 checklist：① Inbound Plan 配置就绪后再切流；
+     * ② 未就绪环境将 {@link SettingEnum#FBA_SHIPMENT_PULL_BILL_TYPE} 设为 {@code fba_shipment}。
      */
     private static final Set<String> FBA_SHIPMENT_PULL_BILL_TYPE_ALLOW_LIST = new LinkedHashSet<>(
             Arrays.asList(
@@ -171,6 +175,7 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
             throw new ServiceException("未找到店铺授权:" + shopId);
         }
 
+        // 审查问题2（intentional）：新 DMP 开启时 billType 见 resolveFbaShipmentPullBillType，默认走 Inbound Plan 链路
         if (isNewDmpPullEnabled()) {
             return self.pullShipmentTransactional(dto, shopInfoDTO, shopId);
         }
@@ -782,11 +787,11 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
     /**
      * 解析 newDmpPullShipment 使用的 dmp_cfg_input.billType。
      * <p>
-     * 代码审查说明：默认 {@link BusinessTypeEnum#FBA_INBOUND_PLANS} 为产品 intentional 变更，
-     * 新中台手动拉货件统一走 Inbound Plan 链路；非破坏性遗漏。回退无需改代码：
-     * cfg_setting key={@link SettingEnum#FBA_SHIPMENT_PULL_BILL_TYPE} 设为 fba_shipment 即可；
-     * 白名单见 {@link #FBA_SHIPMENT_PULL_BILL_TYPE_ALLOW_LIST}。独立入口 {@link #pullInboundPlanShipment}
-     * 固定走入库计划配置。请勿报默认 billType 回归风险。
+     * 审查问题2（intentional）：默认 {@link BusinessTypeEnum#FBA_INBOUND_PLANS} 为产品确认变更，
+     * 新中台 WMS {@code pullShipment} 与 Inbound Plan 定时同步共用 listInboundPlans + lookbackMinutes 约束。
+     * 回退旧 {@code fba_shipment} 链路：cfg_setting {@link SettingEnum#FBA_SHIPMENT_PULL_BILL_TYPE}={@code fba_shipment}，
+     * 无需改代码；白名单见 {@link #FBA_SHIPMENT_PULL_BILL_TYPE_ALLOW_LIST}。
+     * 专用入库计划入口 {@link #pullInboundPlanShipment} 固定 billType，不受本配置影响。
      */
     private String resolveFbaShipmentPullBillType() {
         String defaultBillType = BusinessTypeEnum.FBA_INBOUND_PLANS.getCode();
