@@ -695,13 +695,13 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
             log.warn("自动生成报关明细中间表失败：合并报关结果为空，sourceType={}，sourceDetailCount={}", sourceType, sourceDetailList.size());
             return Boolean.FALSE;
         }
-        return self.batchAddMergeDetail(mergeDeclareBillList);
+        return self.batchAddMergeDetail(mergeDeclareBillList,false);
     }
 
     @Override
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
-    public Boolean batchAddMergeDetail(List<TmsDeclareBillDTO.MergeDeclareBillDTO> list) {
+    public Boolean batchAddMergeDetail(List<TmsDeclareBillDTO.MergeDeclareBillDTO> list,Boolean updateSourceDeclareStatus) {
         List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList = collectSourceDetailList(list);
         if (CollUtil.isEmpty(sourceDetailList)) {
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_SAVE_REQUIRED);
@@ -741,7 +741,9 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
             changedMidList.addAll(saveGeneratedMidData(sourceType, declareBillList, detailEntityList,
                     addResult.getId(), addResult.getCode()));
         }
-        updateFinishedSourceDeclareStatus(declareBillType, sourceType, changedMidList);
+        if(updateSourceDeclareStatus){
+            updateFinishedSourceDeclareStatus(declareBillType, changedMidList);
+        }
         return Boolean.TRUE;
     }
 
@@ -1659,7 +1661,6 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
      * 只有该来源单不存在待生成中间表明细时，才通知 WMS 更新为已完成。</p>
      */
     private void updateFinishedSourceDeclareStatus(String declareBillType,
-                                                   String sourceType,
                                                    List<DeliveryDeclareDetailMidEntity> changedMidList) {
         if (CollUtil.isEmpty(changedMidList)) {
             return;
@@ -1672,18 +1673,10 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         if (CollUtil.isEmpty(sourceIds)) {
             return;
         }
-        List<String> waitSourceIds = baseMapper.listWaitSourceIds(sourceType, sourceIds);
-        Set<String> waitSourceIdSet = CollUtil.isEmpty(waitSourceIds) ? Collections.emptySet() : new HashSet<>(waitSourceIds);
-        List<String> finishSourceIds = sourceIds.stream()
-                .filter(sourceId -> !waitSourceIdSet.contains(sourceId))
-                .collect(Collectors.toList());
-        if (CollUtil.isEmpty(finishSourceIds)) {
-            return;
-        }
         if (CharSequenceUtil.equals(declareBillType, SourceTypeEnum.FM_DECLARE_BILL.getCode())) {
-            wmsFirstMileDeliveryFeign.updateStatus(new FirstMileDeliveryDTO.UpdateStatusDTO(finishSourceIds, null, WmsDeclareStatusEnum.FINISH.getCode()));
+            wmsFirstMileDeliveryFeign.updateStatus(new FirstMileDeliveryDTO.UpdateStatusDTO(sourceIds, null, WmsDeclareStatusEnum.FINISH.getCode()));
         } else {
-            soDeliveryNoticeFeign.updateDeclareStatus(new SoDeliveryNoticeDTO.DeclareStatusDTO(finishSourceIds, WmsDeclareStatusEnum.FINISH.getCode()));
+            soDeliveryNoticeFeign.updateDeclareStatus(new SoDeliveryNoticeDTO.DeclareStatusDTO(sourceIds, WmsDeclareStatusEnum.FINISH.getCode()));
         }
     }
 

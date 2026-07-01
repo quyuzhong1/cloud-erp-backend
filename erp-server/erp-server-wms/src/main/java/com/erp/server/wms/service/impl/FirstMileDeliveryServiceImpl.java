@@ -177,8 +177,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     @Resource
     private WmsCartonSpecService wmsCartonSpecService;
     @Resource
-    private WmsCartonService wmsCartonService;
-    @Resource
     private WmsCartonDetailService wmsCartonDetailService;
     @Lazy
     @Resource
@@ -202,17 +200,9 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     private PackingTaskService packingTaskService;
     @Resource
     private CfgRuleOutService cfgRuleOutService;
-    @Resource
-    private PickingListsService pickingListsService;
-    @Resource
-    private PickingDetailService pickingDetailService;
-    @Resource
-    private CfgRulePickingStagingService cfgRulePickingStagingService;
     @Lazy
     @Resource
     private RequisitionApplicationService requisitionApplicationService;
-    @Resource
-    private RequisitionApplicationDetailService requisitionApplicationDetailService;
     @Resource
     private CfgSettingService cfgSettingService;
     @Resource
@@ -231,14 +221,12 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     @Resource
     private CfgQueryOptionFeign cfgQueryOptionFeign;
     @Resource
-    private WmsWarehouseFeign wmsWarehouseFeign;
-    @Resource
     private SysDictFeign sysDictFeign;
     @Resource
     private ThirdNoticePushRecordFeign thirdNoticePushRecordFeign;
     @Lazy
     @Resource
-    private FirstMileDeliveryService firstMileDeliveryService;
+    FirstMileDeliveryService self;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -286,8 +274,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 } catch (InterruptedException e) {
                     log.error("自动生成报关明细中间表等待异常：{}", e.getMessage());
                 }
-                FirstMileDeliveryServiceImpl bean = ApplicationContextUtils.getBean(FirstMileDeliveryServiceImpl.class);
-                bean.autoGenerateByPacked(firstMileDeliveryEntity, BillGenerateTimingEnum.AFTER_ADD);
+                self.autoGenerateByPacked(firstMileDeliveryEntity, BillGenerateTimingEnum.AFTER_ADD);
+
             }
         });
         return new BaseResultDTO.AddDTO(firstMileDeliveryEntity.getId(), code);
@@ -335,35 +323,18 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         if (!checkFirstMileDeclareAutoGenerateCfg(billGenerateTimingEnum)) {
             return;
         }
-        AutoGenerateBillDTO autoGenerateBillDTO = AutoGenerateBillDTO.builder()
+        AutoGenerateBillDTO dto = AutoGenerateBillDTO.builder()
                 .id(entity.getId())
                 .billGenerateTimingEnum(billGenerateTimingEnum)
                 .sourceTypeEnum(SourceTypeEnum.FIRST_MILE_DELIVERY)
                 .checkCfg(Boolean.TRUE)
                 .build();
         try {
-            submitFirstMileDeclareAutoGenerateAfterCommit(autoGenerateBillDTO);
+            FirstMileDeliveryService bean = ApplicationContextUtils.getBean(FirstMileDeliveryService.class);
+            bean.consumeDeclareAutoGenerateTask(dto);
         } catch (Exception e) {
             log.error("头程发货单{}提交后发送自动生成报关明细任务失败：{}", entity.getCode(), e.getMessage(), e);
         }
-    }
-
-    /**
-     * 事务提交后异步执行头程报关自动生成任务。
-     *
-     * @param dto 自动生成参数
-     */
-    private void submitFirstMileDeclareAutoGenerateAfterCommit(AutoGenerateBillDTO dto) {
-        if (TransactionSynchronizationManager.isSynchronizationActive()) {
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-                @Override
-                public void afterCommit() {
-                    firstMileDeliveryService.asyncConsumeDeclareAutoGenerateTask(dto);
-                }
-            });
-            return;
-        }
-        firstMileDeliveryService.asyncConsumeDeclareAutoGenerateTask(dto);
     }
 
     /**
@@ -431,27 +402,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             return Boolean.TRUE;
         } finally {
             UserContext.setIsUserSystem(originalValue);
-        }
-    }
-
-    /**
-     * 异步消费头程报关自动生成任务。
-     *
-     * @param dto 自动生成参数
-     */
-    @Override
-    @Async("wmsErpExecutor")
-    public void asyncConsumeDeclareAutoGenerateTask(AutoGenerateBillDTO dto) {
-        log.info("头程发货单自动生成报关明细异步任务开始，dto={}", JSONUtil.toJsonStr(dto));
-        try {
-            Boolean result = firstMileDeliveryService.consumeDeclareAutoGenerateTask(dto);
-            if (!Boolean.TRUE.equals(result)) {
-                log.error("头程发货单自动生成报关明细异步任务处理失败，dto={}", JSONUtil.toJsonStr(dto));
-                return;
-            }
-            log.info("头程发货单自动生成报关明细异步任务完成，id={}", dto.getId());
-        } catch (Exception e) {
-            log.error("头程发货单自动生成报关明细异步任务异常，dto={}", JSONUtil.toJsonStr(dto), e);
         }
     }
 

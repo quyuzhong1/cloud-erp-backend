@@ -3276,10 +3276,29 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         return isSixDimensionMerge(sourceDetailList);
     }
 
+    @Override
+    public Map<String, Boolean> isB2bCustomerReceiverBySource(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList) {
+        if (CollUtil.isEmpty(sourceDetailList)) {
+            return Collections.emptyMap();
+        }
+        // 独立报关：按来源单分组各自判定收货人类型，整批一次返回「来源 key -> 是否按客户分发」，
+        // 避免调用方按来源逐个发起 Feign 远程调用。来源 key 与 resolveSourceGroupKeyForMerge 保持一致。
+        Map<String, List<TmsDeclareBillDTO.SourceDeliveryDetailDTO>> sourceGroupMap = sourceDetailList.stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.groupingBy(this::resolveSourceGroupKeyForMerge, LinkedHashMap::new, Collectors.toList()));
+        Map<String, Boolean> customerReceiverBySource = new LinkedHashMap<>();
+        sourceGroupMap.forEach((sourceKey, sourceGroup) ->
+                customerReceiverBySource.put(sourceKey, isSixDimensionMerge(sourceGroup)));
+        return customerReceiverBySource;
+    }
+
     private List<TmsDeclareBillDTO.MergeDeclareBillDTO> autoMergeDeclareBillView(TmsDeclareBillDTO.AutoMergeDeclareBillViewDTO viewDTO,
                                                                                 Boolean includeSkuInMergeKey) {
         if (CollectionUtils.isEmpty(viewDTO.getSourceDeliveryDetailList())) {
             return Collections.emptyList();
+        }
+        if (Boolean.FALSE.equals(viewDTO.getIsMultipleMerge())) {
+            return autoMergeDeclareBillViewBySource(viewDTO.getSourceDeliveryDetailList(), includeSkuInMergeKey);
         }
         boolean sixDimensionMerge = Objects.isNull(includeSkuInMergeKey) ? isSixDimensionMerge(viewDTO.getSourceDeliveryDetailList()) : includeSkuInMergeKey;
 
@@ -3294,6 +3313,81 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         boolean includeSkuInGeneratedMergeKey = sixDimensionMerge;
         DeclarationGenerationService declarationGenerationService = new DeclarationGenerationService(buildDeclareCurrencyRateMap(result));
         return declarationGenerationService.generateMergeBillDetails(result, viewDTO.getIsMultipleMerge(), includeSkuInGeneratedMergeKey);
+    }
+
+    /**
+     * 独立报关：按来源单分别匹配报关配置并生成报关单预览，不要求多来源收货人类型一致。
+     * <p>外层按来源单分组只用于「各来源各自判定合并维度 sixDimensionMerge」，从而避开整批的境外收货人类型
+     * 一致性校验；报关明细的实际切分仍由 {@link DeclarationGenerationService#generateMergeBillDetails}
+     * 在 isMerge=false 时按来源单内部完成。
+     * <p>单价/币别会在 {@link #prepareSourceDetailsForDeclarationGeneration} 中被改写，故先完成全部分组的预处理，
+     * 再用预处理后明细的并集整批构建一次汇率表并复用，避免同币种跨来源重复查汇率。
+     */
+    private List<TmsDeclareBillDTO.MergeDeclareBillDTO> autoMergeDeclareBillViewBySource(
+            List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDeliveryDetailList,
+            Boolean includeSkuInMergeKey) {
+        Map<String, List<TmsDeclareBillDTO.SourceDeliveryDetailDTO>> sourceGroupMap = sourceDeliveryDetailList.stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.groupingBy(this::resolveSourceGroupKeyForMerge, LinkedHashMap::new, Collectors.toList()));
+
+        List<PreparedDeclareSourceGroup> preparedGroupList = new ArrayList<>();
+        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> allPreparedDetailList = new ArrayList<>();
+        for (List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceGroup : sourceGroupMap.values()) {
+            boolean sixDimensionMerge = Objects.isNull(includeSkuInMergeKey)
+                    ? isSixDimensionMerge(sourceGroup)
+                    : includeSkuInMergeKey;
+            List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> preparedList = prepareSourceDetailsForDeclarationGeneration(sourceGroup, sixDimensionMerge);
+            if (CollUtil.isEmpty(preparedList)) {
+                continue;
+            }
+            boolean includeSkuInGeneratedMergeKey = Objects.isNull(includeSkuInMergeKey) ? sixDimensionMerge : includeSkuInMergeKey;
+            preparedGroupList.add(new PreparedDeclareSourceGroup(preparedList, includeSkuInGeneratedMergeKey));
+            allPreparedDetailList.addAll(preparedList);
+        }
+        if (preparedGroupList.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        DeclarationGenerationService declarationGenerationService =
+                new DeclarationGenerationService(buildDeclareCurrencyRateMap(allPreparedDetailList));
+        List<TmsDeclareBillDTO.MergeDeclareBillDTO> mergeResultList = new ArrayList<>();
+        for (PreparedDeclareSourceGroup preparedGroup : preparedGroupList) {
+            mergeResultList.addAll(declarationGenerationService.generateMergeBillDetails(
+                    preparedGroup.getPreparedDetailList(), Boolean.FALSE, preparedGroup.isIncludeSkuInMergeKey()));
+        }
+        return mergeResultList;
+    }
+
+    private String resolveSourceGroupKeyForMerge(TmsDeclareBillDTO.SourceDeliveryDetailDTO sourceDetail) {
+        if (Objects.isNull(sourceDetail)) {
+            return "";
+        }
+        // 与 DeclarationGenerationService#resolveShipmentKey 对齐：sourceId > businessId > sourceCode，
+        // 保证 sourceId 缺失时仍按同一发货单维度分组。
+        return StringUtils.defaultString(StringUtils.firstNonBlank(
+                sourceDetail.getSourceId(), sourceDetail.getBusinessId(), sourceDetail.getSourceCode()));
+    }
+
+    /**
+     * 独立报关预处理结果：保存某个来源单预处理后的明细及其合并维度，供整批构建汇率表后统一生成报关单。
+     */
+    private static class PreparedDeclareSourceGroup {
+        private final List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> preparedDetailList;
+        private final boolean includeSkuInMergeKey;
+
+        private PreparedDeclareSourceGroup(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> preparedDetailList,
+                                           boolean includeSkuInMergeKey) {
+            this.preparedDetailList = preparedDetailList;
+            this.includeSkuInMergeKey = includeSkuInMergeKey;
+        }
+
+        private List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> getPreparedDetailList() {
+            return preparedDetailList;
+        }
+
+        private boolean isIncludeSkuInMergeKey() {
+            return includeSkuInMergeKey;
+        }
     }
 
     /**

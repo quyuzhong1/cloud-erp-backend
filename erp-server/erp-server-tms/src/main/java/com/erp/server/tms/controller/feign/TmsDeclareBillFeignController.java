@@ -79,4 +79,12 @@ public class TmsDeclareBillFeignController {
     Boolean isB2bCustomerReceiver(@RequestBody List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList) {
         return tmsDeclareBillService.isB2bCustomerReceiver(sourceDetailList);
     }
+
+    /**
+     * 独立报关：按来源单分组判断境外收货人是否按客户分发，返回「来源 key -> 是否按客户分发」。
+     */
+    @PostMapping("/isB2bCustomerReceiverBySource")
+    java.util.Map<String, Boolean> isB2bCustomerReceiverBySource(@RequestBody List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList) {
+        return tmsDeclareBillService.isB2bCustomerReceiverBySource(sourceDetailList);
+    }
 }
