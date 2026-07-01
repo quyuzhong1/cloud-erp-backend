@@ -1836,7 +1836,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
     }
 
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.BILL_UPDATE_APPROVE_STATUS_KEY, keyName = "updateApprovalStatusDTO.subcontractOrderEntity.id", unlockAfterTx = true)
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "updateApprovalStatusDTO.subcontractOrderEntity.id", unlockAfterTx = true)
     public void updateApproveStatus(SubcontractOrderDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO) {
          String approveStatus = updateApprovalStatusDTO.getApproveStatus();
          SubcontractOrderEntity subcontractOrderEntity = updateApprovalStatusDTO.getSubcontractOrderEntity();
