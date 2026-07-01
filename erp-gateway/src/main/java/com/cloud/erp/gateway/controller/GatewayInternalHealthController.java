@@ -76,6 +76,8 @@ public class GatewayInternalHealthController {
         body.put("releaseVersion", environment.getProperty(RELEASE_VERSION));
         body.put("xxlJobEnabled", environment.getProperty(RELEASE_XXL_JOB_ENABLED, Boolean.class, true));
         body.put("currentReleaseActive", isCurrentReleaseActive());
+        body.put("effectiveXxlJobEnabled", environment.getProperty(RELEASE_XXL_JOB_ENABLED, Boolean.class, true)
+                && isCurrentReleaseActive());
         return Mono.just(ResponseEntity.ok(body));
     }
 
@@ -93,14 +95,14 @@ public class GatewayInternalHealthController {
     private boolean isCurrentReleaseActive() {
         String activeColor = environment.getProperty(RELEASE_ACTIVE_COLOR);
         String localColor = environment.getProperty(RELEASE_COLOR);
-        if (hasText(activeColor) && hasText(localColor)) {
-            return activeColor.equalsIgnoreCase(localColor);
+        if (hasText(activeColor) && (!hasText(localColor) || !activeColor.equalsIgnoreCase(localColor))) {
+            return false;
         }
 
         String activeVersion = environment.getProperty(RELEASE_ACTIVE_VERSION);
         String localVersion = environment.getProperty(RELEASE_VERSION);
-        if (hasText(activeVersion) && hasText(localVersion)) {
-            return activeVersion.equalsIgnoreCase(localVersion);
+        if (hasText(activeVersion) && (!hasText(localVersion) || !activeVersion.equalsIgnoreCase(localVersion))) {
+            return false;
         }
 
         return true;

@@ -199,20 +199,20 @@ public class ReleaseAwareGatewayLoadBalancerFilter
     }
 
     private boolean matchesRelease(String activeColor, String activeVersion, String releaseColor, String releaseVersion) {
-        boolean hasComparableMetadata = false;
-        if (hasText(activeColor) && hasText(releaseColor)) {
-            hasComparableMetadata = true;
-            if (!activeColor.equalsIgnoreCase(releaseColor)) {
+        boolean hasActiveRule = false;
+        if (hasText(activeColor)) {
+            hasActiveRule = true;
+            if (!hasText(releaseColor) || !activeColor.equalsIgnoreCase(releaseColor)) {
                 return false;
             }
         }
-        if (hasText(activeVersion) && hasText(releaseVersion)) {
-            hasComparableMetadata = true;
-            if (!activeVersion.equalsIgnoreCase(releaseVersion)) {
+        if (hasText(activeVersion)) {
+            hasActiveRule = true;
+            if (!hasText(releaseVersion) || !activeVersion.equalsIgnoreCase(releaseVersion)) {
                 return false;
             }
         }
-        return hasComparableMetadata;
+        return hasActiveRule;
     }
 
     private boolean hasComparableReleaseMetadata(String activeColor, String activeVersion,

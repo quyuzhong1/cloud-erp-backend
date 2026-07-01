@@ -66,14 +66,14 @@ public class ReleaseControlledXxlJobSpringExecutor extends XxlJobSpringExecutor
     private boolean isCurrentReleaseActive() {
         String activeColor = environment.getProperty(ACTIVE_COLOR_KEY);
         String localColor = environment.getProperty(LOCAL_COLOR_KEY);
-        if (hasText(activeColor) && hasText(localColor)) {
-            return activeColor.equalsIgnoreCase(localColor);
+        if (hasText(activeColor) && (!hasText(localColor) || !activeColor.equalsIgnoreCase(localColor))) {
+            return false;
         }
 
         String activeVersion = environment.getProperty(ACTIVE_VERSION_KEY);
         String localVersion = environment.getProperty(LOCAL_VERSION_KEY);
-        if (hasText(activeVersion) && hasText(localVersion)) {
-            return activeVersion.equalsIgnoreCase(localVersion);
+        if (hasText(activeVersion) && (!hasText(localVersion) || !activeVersion.equalsIgnoreCase(localVersion))) {
+            return false;
         }
 
         return true;

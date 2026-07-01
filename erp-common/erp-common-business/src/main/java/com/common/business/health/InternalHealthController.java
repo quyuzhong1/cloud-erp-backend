@@ -116,14 +116,16 @@ public class InternalHealthController {
     private boolean isCurrentReleaseActive() {
         String activeColor = environment.getProperty(RELEASE_ACTIVE_COLOR);
         String localColor = environment.getProperty(RELEASE_COLOR);
-        if (hasText(activeColor) && hasText(localColor)) {
-            return activeColor.equalsIgnoreCase(localColor);
+        boolean hasActiveColor = hasText(activeColor);
+        if (hasActiveColor && (!hasText(localColor) || !activeColor.equalsIgnoreCase(localColor))) {
+            return false;
         }
 
         String activeVersion = environment.getProperty(RELEASE_ACTIVE_VERSION);
         String localVersion = environment.getProperty(RELEASE_VERSION);
-        if (hasText(activeVersion) && hasText(localVersion)) {
-            return activeVersion.equalsIgnoreCase(localVersion);
+        boolean hasActiveVersion = hasText(activeVersion);
+        if (hasActiveVersion && (!hasText(localVersion) || !activeVersion.equalsIgnoreCase(localVersion))) {
+            return false;
         }
 
         return true;
