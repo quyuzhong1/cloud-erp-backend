@@ -35,6 +35,7 @@ import java.util.stream.Collectors;
 public class SoB2cDeliveryTypeFixJob {
 
     private static final long DEFAULT_PAGE_SIZE = 1000L;
+    private static final int FEIGN_BATCH_SIZE = 500;
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     @Resource
@@ -140,9 +141,18 @@ public class SoB2cDeliveryTypeFixJob {
         List<String> soIds = records.stream()
                 .map(SoB2cEntity::getId)
                 .collect(Collectors.toList());
-        List<ThirdWarehouseDeliveryEntity> thirdWarehouseDeliveryList;
+        if (CollectionUtils.isEmpty(soIds)) {
+            return Collections.emptyMap();
+        }
+        List<ThirdWarehouseDeliveryEntity> thirdWarehouseDeliveryList = new ArrayList<>();
         try {
-            thirdWarehouseDeliveryList = thirdWarehouseDeliveryFeign.listBySourceId(soIds);
+            for (int i = 0; i < soIds.size(); i += FEIGN_BATCH_SIZE) {
+                List<String> batchSoIds = soIds.subList(i, Math.min(i + FEIGN_BATCH_SIZE, soIds.size()));
+                List<ThirdWarehouseDeliveryEntity> batchList = thirdWarehouseDeliveryFeign.listBySourceId(batchSoIds);
+                if (CollectionUtils.isNotEmpty(batchList)) {
+                    thirdWarehouseDeliveryList.addAll(batchList);
+                }
+            }
         } catch (Exception e) {
             String firstSoId = soIds.get(0);
             String lastSoId = soIds.get(soIds.size() - 1);

@@ -93,8 +93,9 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
             context = buildContext(ids);
         } catch (Exception e) {
             log.error("TikTok全托管组包预报取消上传上下文构建失败, ids: {}", ids, e);
+            Map<String, String> codeMap = loadForecastCodeMap(ids);
             return CollectionUtils.emptyIfNull(ids).stream()
-                    .map(id -> BatchResultDTO.fail(id, id, CANCEL_FAILURE_MESSAGE))
+                    .map(id -> BatchResultDTO.fail(id, StringUtils.defaultIfBlank(codeMap.get(id), id), CANCEL_FAILURE_MESSAGE))
                     .collect(Collectors.toList());
         }
         Set<String> canceledHandoverNoSet = new HashSet<>();
@@ -320,6 +321,23 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
         return packageForecastEntityList.stream()
                 .map(entity -> BatchResultDTO.success(entity.getId(), entity.getCode(), "上传成功"))
                 .collect(Collectors.toList());
+    }
+
+    private Map<String, String> loadForecastCodeMap(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return Collections.emptyMap();
+        }
+        try {
+            List<PackageForecastEntity> entityList = packageForecastMapper.selectBatchIds(ids);
+            Map<String, String> codeMap = new HashMap<>();
+            for (PackageForecastEntity entity : CollectionUtils.emptyIfNull(entityList)) {
+                codeMap.put(entity.getId(), entity.getCode());
+            }
+            return codeMap;
+        } catch (Exception e) {
+            log.warn("TikTok全托管组包预报取消失败后补全单号失败, ids: {}", ids, e);
+            return Collections.emptyMap();
+        }
     }
 
     private TikTokFullyForecastContext buildContext(List<String> ids) {

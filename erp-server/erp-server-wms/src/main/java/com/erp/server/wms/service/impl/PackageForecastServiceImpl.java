@@ -91,6 +91,8 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
 
     private static final String TIKTOK_DELIVERY_MODE_SELF = "SELF_DELIVERY";
     private static final String TIKTOK_DELIVERY_MODE_PLATFORM = "PLATFORM_DELIVERY";
+    private static final String UPLOAD_FAILURE_MESSAGE = "上传失败，请查看日志或联系管理员处理";
+    private static final String CANCEL_FAILURE_MESSAGE = "取消上传失败，请查看日志或联系管理员处理";
 
     @Resource
     private OperateLogService operateLogService;
@@ -345,13 +347,13 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             return firstResultOrThrow(adapter.cancel(Collections.singletonList(id)), "取消上传");
         } catch (Exception e) {
             log.error("组包预报单取消失败, id: {}, code: {}", entity.getId(), entity.getCode(), e);
-            entity.setRemark("取消失败原因:" + e.getMessage());
+            entity.setRemark(CANCEL_FAILURE_MESSAGE);
             try {
                 this.updateById(entity);
             } catch (Exception updateException) {
                 log.error("组包预报单取消失败后更新失败原因失败, id: {}, code: {}", entity.getId(), entity.getCode(), updateException);
             }
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "取消上传失败:" + e.getMessage());
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), CANCEL_FAILURE_MESSAGE);
         }
 
     }
@@ -373,7 +375,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
                 if (Objects.isNull(entity)) {
                     cancelResult = BatchResultDTO.fail(id, id, "组包预报单不存在, 取消失败");
                 } else {
-                    cancelResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+                    cancelResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), CANCEL_FAILURE_MESSAGE);
                 }
             }
             resultDTOS.add(cancelResult);
@@ -425,7 +427,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
                 if (Objects.isNull(entity)) {
                     uploadResult = BatchResultDTO.fail(id, id, "组包预报单不存在, 上传失败");
                 } else {
-                    uploadResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+                    uploadResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), UPLOAD_FAILURE_MESSAGE);
                 }
             }
             resultDTOS.add(uploadResult);
@@ -470,7 +472,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         } catch (Exception e) {
             log.error("组包预报上传失败>>>>>", e);
             persistUploadFailureIfNeeded(entity, e);
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "上传失败" + e.getMessage());
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), UPLOAD_FAILURE_MESSAGE);
         }
 
 
@@ -487,7 +489,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             return;
         }
         entity.setUploadStatus(PackageUploadStatusEnum.UPLOAD_FAILURE.getCode());
-        entity.setRemark("上传失败:" + e.getMessage());
+        entity.setRemark(UPLOAD_FAILURE_MESSAGE);
         try {
             this.updateById(entity);
         } catch (Exception updateException) {

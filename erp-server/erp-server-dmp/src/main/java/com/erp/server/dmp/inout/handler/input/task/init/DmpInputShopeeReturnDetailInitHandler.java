@@ -45,6 +45,7 @@ import java.util.stream.Collectors;
 public class DmpInputShopeeReturnDetailInitHandler extends DmpInputInitHandler {
 
     private static final int MAX_RETRY = 10;
+    private static final int MAX_INIT_ROWS = 50000;
     private static final long REQUEST_INTERVAL_MILLIS = 200L;
     private static final String SHOPEE_RETURN_LIST_DATA = "Shopee_returnList_data";
 
@@ -67,6 +68,9 @@ public class DmpInputShopeeReturnDetailInitHandler extends DmpInputInitHandler {
                 .collect(Collectors.toList());
         if (CollUtil.isEmpty(returnSnList)) {
             return new ArrayList<>();
+        }
+        if (returnSnList.size() > MAX_INIT_ROWS) {
+            throw new ServiceException("Shopee退货明细init数据超过" + MAX_INIT_ROWS + "条，请按时间窗口或店铺拆分任务");
         }
 
         String shopId = resolveShopeeShopId(parentMongoData);

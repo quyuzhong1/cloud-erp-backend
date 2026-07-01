@@ -267,10 +267,14 @@ public class DmpInputShopeeFbsInventoryInitHandler extends DmpInputInitHandler {
         if (value instanceof Number) {
             return ((Number) value).intValue();
         }
+        String text = String.valueOf(value);
+        if (StringUtils.isBlank(text)) {
+            throw new ServiceException("Shopee FBS库存整数字段解析失败,value:" + value);
+        }
         try {
-            return Integer.parseInt(String.valueOf(value));
-        } catch (NumberFormatException e) {
-            return 0;
+            return new BigDecimal(text).intValueExact();
+        } catch (ArithmeticException | NumberFormatException e) {
+            throw new ServiceException("Shopee FBS库存整数字段解析失败,value:" + value);
         }
     }
 
@@ -284,10 +288,14 @@ public class DmpInputShopeeFbsInventoryInitHandler extends DmpInputInitHandler {
         if (value instanceof Number) {
             return BigDecimal.valueOf(((Number) value).doubleValue());
         }
+        String text = String.valueOf(value);
+        if (StringUtils.isBlank(text)) {
+            throw new ServiceException("Shopee FBS库存小数字段解析失败,value:" + value);
+        }
         try {
-            return new BigDecimal(String.valueOf(value));
+            return new BigDecimal(text);
         } catch (NumberFormatException e) {
-            return BigDecimal.ZERO;
+            throw new ServiceException("Shopee FBS库存小数字段解析失败,value:" + value);
         }
     }
 }
