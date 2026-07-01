@@ -613,7 +613,7 @@ public class ShopeePackageForecastAdapter extends AbstractPackageForecastPlatfor
                     .build();
             FirstMileTrackingNumberListResponse response = shopeeLogisticsService.getTrackNumberList(baseRequest, request);
             if (Objects.isNull(response)) {
-                return resultMap;
+                throw new ServiceException("Shopee头程轨迹同步接口响应为空");
             }
             CollectionUtils.emptyIfNull(response.getFirstMileTrackingNumberList()).stream()
                     .filter(item -> StringUtils.isNotBlank(item.getFirstMileTrackingNumber()))
@@ -638,7 +638,7 @@ public class ShopeePackageForecastAdapter extends AbstractPackageForecastPlatfor
             CourierDeliveryTrackingNumberListResponse response =
                     shopeeLogisticsService.getCourierDeliveryTrackingNumberList(baseRequest, request);
             if (Objects.isNull(response)) {
-                return resultMap;
+                throw new ServiceException("Shopee快递寄送轨迹同步接口响应为空");
             }
             CollectionUtils.emptyIfNull(response.getTrackingNumberList()).stream()
                     .filter(item -> StringUtils.isNotBlank(item.getBindingId()))

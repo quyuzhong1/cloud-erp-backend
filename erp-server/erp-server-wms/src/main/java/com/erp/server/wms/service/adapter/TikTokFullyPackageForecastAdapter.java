@@ -93,9 +93,10 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
             context = buildContext(ids);
         } catch (Exception e) {
             log.error("TikTok全托管组包预报取消上传上下文构建失败, ids: {}", ids, e);
+            String failureMessage = cancelFailureMessage(e);
             Map<String, String> codeMap = loadForecastCodeMap(ids);
             return CollectionUtils.emptyIfNull(ids).stream()
-                    .map(id -> BatchResultDTO.fail(id, StringUtils.defaultIfBlank(codeMap.get(id), id), CANCEL_FAILURE_MESSAGE))
+                    .map(id -> BatchResultDTO.fail(id, StringUtils.defaultIfBlank(codeMap.get(id), id), failureMessage))
                     .collect(Collectors.toList());
         }
         Set<String> canceledHandoverNoSet = new HashSet<>();
@@ -131,16 +132,17 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
                 resultDTOS.add(BatchResultDTO.success(entity.getId(), entity.getCode(), "取消上传"));
             } catch (Exception e) {
                 log.error("取消上传失败>>>>", e);
+                String failureMessage = cancelFailureMessage(e);
                 if (Objects.nonNull(entity)) {
-                    entity.setRemark(CANCEL_FAILURE_MESSAGE);
+                    entity.setRemark(failureMessage);
                     try {
                         updateForecastOrThrow(entity);
                     } catch (Exception updateException) {
                         log.error("TikTok全托管组包预报取消失败后更新失败原因失败, id: {}, code: {}", entity.getId(), entity.getCode(), updateException);
                     }
-                    resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), CANCEL_FAILURE_MESSAGE));
+                    resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), failureMessage));
                 } else {
-                    resultDTOS.add(BatchResultDTO.fail(id, id, CANCEL_FAILURE_MESSAGE));
+                    resultDTOS.add(BatchResultDTO.fail(id, id, failureMessage));
                 }
             }
         }
@@ -452,6 +454,13 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
             return e.getMessage();
         }
         return UPLOAD_FAILURE_MESSAGE;
+    }
+
+    private String cancelFailureMessage(Exception e) {
+        if (e instanceof ServiceException && StringUtils.isNotBlank(e.getMessage())) {
+            return e.getMessage();
+        }
+        return CANCEL_FAILURE_MESSAGE;
     }
 
     private void validateReserveInfo(PackageForecastDTO.UploadDTO dto) {

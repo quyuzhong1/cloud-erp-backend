@@ -14,6 +14,7 @@ import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
+import com.erp.server.dmp.service.DmpFbsInventoryService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
@@ -29,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Shopee FBS 库存 MQ 输出
@@ -39,11 +41,14 @@ import java.util.Set;
 public class DmpOutputShopeeFbsInventoryRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler {
 
     private static final String STORAGE_FBS_INVENTORY = "dmp_fbs_inventory";
+    private static final int BATCH_SIZE = 500;
 
     @Resource
     private SkuMappingFeign skuMappingFeign;
     @Resource
     private ShopInfoFeign shopInfoFeign;
+    @Resource
+    private DmpFbsInventoryService dmpFbsInventoryService;
 
     @Override
     public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
@@ -69,6 +74,8 @@ public class DmpOutputShopeeFbsInventoryRocketMQTaskHandler extends DmpOutputRoc
                 changeIds.add(entity.getId());
             }
         }
+
+        supplementFbsInventories(changeIds, dmpEntityMap);
 
         // FBS 库存 Init 按店铺维度生成任务，同一输出批次只包含一个店铺。
         String shopId = dmpEntityMap.values().stream()
@@ -112,6 +119,26 @@ public class DmpOutputShopeeFbsInventoryRocketMQTaskHandler extends DmpOutputRoc
             }
         }
         return map;
+    }
+
+    private void supplementFbsInventories(Set<String> changeIds, Map<String, DmpFbsInventoryEntity> dmpEntityMap) {
+        List<String> missingIds = changeIds.stream()
+                .filter(StringUtils::isNotBlank)
+                .filter(changeId -> !dmpEntityMap.containsKey(changeId))
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(missingIds)) {
+            return;
+        }
+        for (int fromIndex = 0; fromIndex < missingIds.size(); fromIndex += BATCH_SIZE) {
+            List<String> batchIds = missingIds.subList(fromIndex, Math.min(fromIndex + BATCH_SIZE, missingIds.size()));
+            List<DmpFbsInventoryEntity> inventoryList = dmpFbsInventoryService.listByIds(batchIds);
+            if (CollUtil.isEmpty(inventoryList)) {
+                continue;
+            }
+            for (DmpFbsInventoryEntity inventory : inventoryList) {
+                dmpEntityMap.put(inventory.getId(), inventory);
+            }
+        }
     }
 
     public FbsInventoryEntity convert(DmpFbsInventoryEntity dmpEntity, String cfgOutputId,
