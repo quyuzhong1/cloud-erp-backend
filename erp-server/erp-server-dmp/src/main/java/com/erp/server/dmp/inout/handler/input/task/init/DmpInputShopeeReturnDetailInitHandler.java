@@ -1,7 +1,6 @@
 package com.erp.server.dmp.inout.handler.input.task.init;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -46,6 +45,7 @@ public class DmpInputShopeeReturnDetailInitHandler extends DmpInputInitHandler {
 
     private static final int MAX_RETRY = 10;
     private static final int MAX_INIT_ROWS = 50000;
+    // Shopee退货明细接口按 return_sn 单条查询；固定间隔用于保护平台限流，不在 init 内并发打满。
     private static final long REQUEST_INTERVAL_MILLIS = 200L;
     private static final String SHOPEE_RETURN_LIST_DATA = "Shopee_returnList_data";
 
@@ -101,6 +101,10 @@ public class DmpInputShopeeReturnDetailInitHandler extends DmpInputInitHandler {
                 JSONObject detail = response.getResponse();
                 if (detail != null) {
                     detailList.add(detail);
+                } else {
+                    failureCount++;
+                    failedReturnSnList.add(returnSn);
+                    log.warn("Shopee退货明细init接口返回明细为空,returnSn:{},shopId:{}", returnSn, shopId);
                 }
             } catch (Exception e) {
                 failureCount++;
@@ -213,7 +217,8 @@ public class DmpInputShopeeReturnDetailInitHandler extends DmpInputInitHandler {
             if (cause instanceof SSLHandshakeException || cause instanceof SocketTimeoutException) {
                 return null;
             }
-            throw new ServiceException("调用shopee退货明细接口报错，错误原因：" + ExceptionUtil.stacktraceToOneLineString(e));
+            log.error("调用shopee退货明细接口报错", e);
+            throw new ServiceException(e, "调用shopee退货明细接口报错");
         }
     }
 

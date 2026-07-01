@@ -166,6 +166,7 @@ public class ShopeeApiUtils {
 
     private static <T> T requireResponse(T response, String message) {
         if (response == null) {
+            // Shopee TMS SDK 当前采用失败即抛 ServiceException 的契约，调用方不再按 null 响应兜底。
             throw new ServiceException(message);
         }
         return response;

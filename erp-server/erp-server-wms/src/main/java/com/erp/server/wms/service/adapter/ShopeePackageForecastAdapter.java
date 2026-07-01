@@ -123,6 +123,7 @@ public class ShopeePackageForecastAdapter extends AbstractPackageForecastPlatfor
 
     @Override
     public List<BatchResultDTO> upload(PackageForecastDTO.UploadDTO dto) {
+        // Shopee 上传按整批平台接口提交；平台调用后异常不直接批量写 UPLOAD_FAILURE，避免覆盖平台侧可能已成功的状态。
         ShopeeForecastContext context = buildContext(dto.getIds());
         validateUploadEntities(context);
         if (PackageForecastCollectModeEnum.SHOPEE_COURIER_DELIVERY.getCode().equals(dto.getCollectMode())) {
@@ -702,6 +703,7 @@ public class ShopeePackageForecastAdapter extends AbstractPackageForecastPlatfor
         if (CollectionUtils.isEmpty(ids)) {
             throw new ServiceException("组包预报单不能为空");
         }
+        // 选项/上传/取消共用该上下文；入口权限和单据存在性由上层流程兜底，这里按已命中的单据构建平台上下文。
         List<PackageForecastEntity> entityList = packageForecastMapper.selectBatchIds(ids);
         if (CollectionUtils.isEmpty(entityList)) {
             throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "组包预报单");

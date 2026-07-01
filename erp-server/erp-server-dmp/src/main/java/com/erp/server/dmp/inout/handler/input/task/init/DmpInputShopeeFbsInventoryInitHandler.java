@@ -1,7 +1,6 @@
 package com.erp.server.dmp.inout.handler.input.task.init;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import com.alibaba.fastjson.JSON;
@@ -219,7 +218,8 @@ public class DmpInputShopeeFbsInventoryInitHandler extends DmpInputInitHandler {
                 throw e;
             } catch (Exception e) {
                 if (!isRetryable(e) || count == MAX_RETRY_COUNT) {
-                    throw new ServiceException("调用Shopee FBS库存接口报错，错误原因：" + ExceptionUtil.stacktraceToOneLineString(e));
+                    log.error("调用Shopee FBS库存接口报错", e);
+                    throw new ServiceException(e, "调用Shopee FBS库存接口报错");
                 }
             }
             sleepQuietly(sleepTime);
