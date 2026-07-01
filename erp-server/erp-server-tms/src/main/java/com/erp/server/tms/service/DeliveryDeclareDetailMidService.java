@@ -170,7 +170,7 @@ public interface DeliveryDeclareDetailMidService extends SuperService<DeliveryDe
      */
     Boolean autoGenerateMidData(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> list);
 
-    Boolean batchAddMergeDetail(List<TmsDeclareBillDTO.MergeDeclareBillDTO> list);
+    Boolean batchAddMergeDetail(List<TmsDeclareBillDTO.MergeDeclareBillDTO> list,Boolean updateSourceDeclareStatus);
 
     /**
      * 保存报关单生成后的中间表数据，复用待生成行，避免重复插入。
