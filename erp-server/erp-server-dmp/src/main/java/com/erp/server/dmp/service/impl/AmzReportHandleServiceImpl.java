@@ -1,6 +1,7 @@
 package com.erp.server.dmp.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
@@ -107,6 +108,8 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
                     BusinessTypeEnum.FBA_SHIPMENT.getCode()
             )
     );
+
+    private static final int CLEAR_FBA_SHIPMENT_DATA_ENCRYPT_BATCH_SIZE = 500;
 
     @Resource
     private MongoService mongoService;
@@ -870,9 +873,11 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
         if (CollectionUtils.isEmpty(shipmentCodeList)) {
             return;
         }
-        dmpFbaShipmentService.lambdaUpdate()
-                .set(DmpFbaShipmentEntity::getDataEncrypt, "")
-                .in(DmpFbaShipmentEntity::getFbaShipmentId, shipmentCodeList)
-                .update();
+        for (List<String> batch : CollUtil.split(shipmentCodeList, CLEAR_FBA_SHIPMENT_DATA_ENCRYPT_BATCH_SIZE)) {
+            dmpFbaShipmentService.lambdaUpdate()
+                    .set(DmpFbaShipmentEntity::getDataEncrypt, "")
+                    .in(DmpFbaShipmentEntity::getFbaShipmentId, batch)
+                    .update();
+        }
     }
 }
