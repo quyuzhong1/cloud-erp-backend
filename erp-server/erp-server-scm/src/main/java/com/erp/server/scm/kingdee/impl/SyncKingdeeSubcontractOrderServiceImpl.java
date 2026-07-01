@@ -27,6 +27,7 @@ import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.scm.entity.ScmPushMsgEntity;
 import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
+import com.erp.model.scm.util.SubcontractOrderKingdeeLineSeqUtils;
 import com.erp.model.scm.entity.SubcontractOrderEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.SubcontractOrderTypeEnum;
@@ -167,8 +168,8 @@ public class SyncKingdeeSubcontractOrderServiceImpl implements SyncKingdeeSubcon
 
         //采购明细
         List<SubcontractOrderDetailEntity> details = subcontractOrderDetailService.listByMainId(entity.getId());
-        //父级数据
-        List<SubcontractOrderDetailEntity> parentList = details.stream().filter(obj -> StringUtils.isBlank(obj.getParentId())).collect(Collectors.toList());
+        //父级数据（与 BOM parentLineSeq 使用相同排序，保证 SubReqEntrySeq 对齐）
+        List<SubcontractOrderDetailEntity> parentList = SubcontractOrderKingdeeLineSeqUtils.sortParentDetails(details);
         if (CollectionUtils.isEmpty(parentList)) {
             throw new ServiceException(ApiError.PO_SUBCONTRACT_DETAIL_NOT_FOUND);
         }
@@ -199,9 +200,14 @@ public class SyncKingdeeSubcontractOrderServiceImpl implements SyncKingdeeSubcon
         }
 
         List<JSONObject> list = new ArrayList<>();
+        Map<String, Integer> parentLineSeqMap = SubcontractOrderKingdeeLineSeqUtils.buildParentLineSeqMap(details);
         for (SubcontractOrderDetailEntity detailEntity : parentList) {
             JSONObject jsonObject = new JSONObject();
             jsonObject.set("detailId",detailEntity.getId());
+            Integer parentLineSeq = parentLineSeqMap.get(detailEntity.getId());
+            if (parentLineSeq != null) {
+                jsonObject.set("parentLineSeq", parentLineSeq);
+            }
             jsonObject.set("skuNo",detailEntity.getSkuNo());
             jsonObject.set("qty",detailEntity.getQty() == 0 ? detailEntity.getRepairQty() : detailEntity.getQty());
             jsonObject.set("planDeliveryDate",LocalDateTimeUtil.format(detailEntity.getPlanDeliveryDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
