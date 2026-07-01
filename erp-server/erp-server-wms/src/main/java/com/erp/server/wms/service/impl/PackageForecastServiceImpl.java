@@ -347,13 +347,14 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             return firstResultOrThrow(adapter.cancel(Collections.singletonList(id)), "取消上传");
         } catch (Exception e) {
             log.error("组包预报单取消失败, id: {}, code: {}", entity.getId(), entity.getCode(), e);
-            entity.setRemark(CANCEL_FAILURE_MESSAGE);
+            String failureMessage = operationFailureMessage(e, CANCEL_FAILURE_MESSAGE);
+            entity.setRemark(failureMessage);
             try {
                 this.updateById(entity);
             } catch (Exception updateException) {
                 log.error("组包预报单取消失败后更新失败原因失败, id: {}, code: {}", entity.getId(), entity.getCode(), updateException);
             }
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), CANCEL_FAILURE_MESSAGE);
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), failureMessage);
         }
 
     }
@@ -472,7 +473,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         } catch (Exception e) {
             log.error("组包预报上传失败>>>>>", e);
             persistUploadFailureIfNeeded(entity, e);
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), UPLOAD_FAILURE_MESSAGE);
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), operationFailureMessage(e, UPLOAD_FAILURE_MESSAGE));
         }
 
 
@@ -489,7 +490,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             return;
         }
         entity.setUploadStatus(PackageUploadStatusEnum.UPLOAD_FAILURE.getCode());
-        entity.setRemark(UPLOAD_FAILURE_MESSAGE);
+        entity.setRemark(operationFailureMessage(e, UPLOAD_FAILURE_MESSAGE));
         try {
             this.updateById(entity);
         } catch (Exception updateException) {
@@ -545,6 +546,9 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             base64 = adapter.print(id);
         } catch (Exception e) {
             log.error("打印失败>>>>>>>", e);
+            if (e instanceof ServiceException && StringUtils.isNotBlank(e.getMessage())) {
+                throw (ServiceException) e;
+            }
             throw new ServiceException("打印失败");
         }
         if (CharSequenceUtil.isNotBlank(base64)) {

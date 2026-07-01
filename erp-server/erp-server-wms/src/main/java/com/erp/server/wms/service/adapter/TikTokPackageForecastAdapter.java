@@ -114,6 +114,13 @@ public class TikTokPackageForecastAdapter extends AbstractPackageForecastPlatfor
         return UPLOAD_FAILURE_MESSAGE;
     }
 
+    private String cancelFailureMessage(Exception e) {
+        if (e instanceof ServiceException && StringUtils.isNotBlank(e.getMessage())) {
+            return e.getMessage();
+        }
+        return CANCEL_FAILURE_MESSAGE;
+    }
+
     @Override
     public String print(String id) {
         PackageForecastEntity entity = getForecastOrThrow(id);
@@ -151,16 +158,17 @@ public class TikTokPackageForecastAdapter extends AbstractPackageForecastPlatfor
                     continue;
                 }
                 log.error("取消上传失败>>>>", e);
+                String failureMessage = cancelFailureMessage(e);
                 if (Objects.nonNull(entity)) {
-                    entity.setRemark(CANCEL_FAILURE_MESSAGE);
+                    entity.setRemark(failureMessage);
                     try {
                         updateForecastOrThrow(entity);
                     } catch (Exception updateException) {
                         log.error("TikTok组包预报取消失败后更新失败原因失败, id: {}, code: {}", entity.getId(), entity.getCode(), updateException);
                     }
-                    resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), CANCEL_FAILURE_MESSAGE));
+                    resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), failureMessage));
                 } else {
-                    resultDTOS.add(BatchResultDTO.fail(id, id, CANCEL_FAILURE_MESSAGE));
+                    resultDTOS.add(BatchResultDTO.fail(id, id, failureMessage));
                 }
             }
         }

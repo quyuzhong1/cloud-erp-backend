@@ -60,6 +60,7 @@ public class DmpInputShopeeReturnDmpHandler extends DmpInputDbConvertDmpHandler 
 
     private void fillHeader(TreeMap<String, Object> dmpDataMap) {
         dmpDataMap.put("sourceSystem", PlatformDictEnum.SHOPEE.getCode());
+        dmpDataMap.put("sourcePlatform", PlatformDictEnum.SHOPEE.getCode());
         String shopId = resolveShopeeShopId(dmpDataMap);
         dmpDataMap.put("shopId", shopId);
         dmpDataMap.put("nextLevelId", shopId);
