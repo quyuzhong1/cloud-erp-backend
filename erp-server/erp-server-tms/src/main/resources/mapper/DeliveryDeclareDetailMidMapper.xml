@@ -23,6 +23,7 @@
        <result column="contract_no" property="contractNo" />
        <result column="sku_id" property="skuId" />
        <result column="sku_no" property="skuNo" />
+       <result column="parent_sku_id" property="parentSkuId" />
        <result column="bom_history_id" property="bomHistoryId" />
        <result column="bom_version" property="bomVersion" />
        <result column="currency" property="currency" />
@@ -70,6 +71,7 @@
         dddm.contract_no AS contractNo,
         dddm.sku_id AS skuId,
         dddm.sku_no AS skuNo,
+        dddm.parent_sku_id AS parentSkuId,
         dddm.bom_history_id AS bomHistoryId,
         dddm.bom_version AS bomVersion,
         dddm.currency AS currency,
@@ -175,6 +177,7 @@
         dddm.box_no as boxNo,
         dddm.sku_id as skuId,
         dddm.sku_no as skuNo,
+        dddm.parent_sku_id as parentSkuId,
         dddm.bom_history_id as bomHistoryId,
         dddm.bom_version as bomVersion,
         fpl.customs_code as hsCode,

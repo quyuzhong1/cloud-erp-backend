@@ -159,16 +159,6 @@ public interface DeliveryDeclareDetailMidService extends SuperService<DeliveryDe
      */
     Boolean restoreWaitGenerateByIds(List<String> ids);
 
-    /**
-     * 自动生成报关明细中间表
-     *
-     * @param dto 自动生成参数
-     * @return 是否生成成功
-     * @throws com.common.core.exception.ServiceException 自动生成失败时抛出
-     * @author jack
-     * @date 2026-04-29
-     */
-    Boolean autoGenerateMidData(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> list);
 
     Boolean batchAddMergeDetail(List<TmsDeclareBillDTO.MergeDeclareBillDTO> list,Boolean updateSourceDeclareStatus);
 

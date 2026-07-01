@@ -25,8 +25,8 @@ public interface DeliveryDeclareDetailMidFeign {
      * @author jack
      * @date 2026-04-29
      */
-    @PostMapping("/feign/deliveryDeclareDetailMid/autoGenerateMidData")
-    Boolean autoGenerateMidData(@RequestBody TmsDeclareBillDTO.AutoGenerateMidDataDTO dto);
+    @PostMapping("/feign/deliveryDeclareDetailMid/batchAddMergeDetail")
+    Boolean batchAddMergeDetail(@RequestBody TmsDeclareBillDTO.AutoGenerateMidDataDTO dto);
 
     /**
      * 删除报关明细中间表数据

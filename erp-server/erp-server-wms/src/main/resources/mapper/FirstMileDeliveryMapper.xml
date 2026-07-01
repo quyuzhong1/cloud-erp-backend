@@ -808,6 +808,7 @@
         has_bom AS MATERIALIZED (
             SELECT
                 fpbi.id AS bom_id,
+                fpbh.id AS bom_history_id,
                 fpbi.bom_version,
                 fpbs.parent_sku_id,
                 fpbs.parent_sku_no,
@@ -817,6 +818,10 @@
             FROM foreign_product_bom_info fpbi
             JOIN foreign_product_bom_sku fpbs
             ON fpbi.id = fpbs.bom_id
+            LEFT JOIN foreign_product_bom_history fpbh
+            ON fpbh.bom_id = fpbi.id
+            AND fpbh.bom_version = fpbi.bom_version
+            AND fpbh.is_deleted = false
             WHERE fpbi.is_deleted = false
             AND fpbs.is_deleted = false
             AND EXISTS (
@@ -834,6 +839,8 @@
             qd.source_create_time AS sourceCreateTime,
             qd.sku_id AS skuId,
             qd.sku_no AS skuNo,
+            '' AS bomId,
+            '' AS bomHistoryId,
             '' AS bomVersion,
             fpl.customs_code AS customsCode,
             fpl.declare_chinese_name AS declareChineseName,
@@ -863,6 +870,8 @@
             qd.source_create_time AS sourceCreateTime,
             hb.sku_id AS skuId,
             hb.sku_no AS skuNo,
+            hb.bom_id AS bomId,
+            hb.bom_history_id AS bomHistoryId,
             hb.bom_version AS bomVersion,
             fpl_child.customs_code AS customsCode,
             fpl_child.declare_chinese_name AS declareChineseName,
@@ -899,26 +908,26 @@
     <select id="listBeforePushFmDeclare"
             resultType="com.erp.model.tms.dto.TmsDeclareBillDTO$SourceDeliveryDetailDTO">
         WITH carton_detail AS (
-            SELECT
-                wc.packing_task_id,
-                wc.box_no,
-                wcd.sku_id,
-                wcd.sku_no,
-                COALESCE(wcd.fn_sku, '') AS fn_sku,
-                SUM(COALESCE(wcd.pack_qty, 0))::INTEGER AS pack_qty
-            FROM wms_carton wc
-            INNER JOIN wms_carton_detail wcd
-            ON wcd.main_id = wc.id
-            AND wcd.is_deleted = false
-            AND COALESCE(wcd.pack_qty, 0) > 0
-            WHERE wc.is_deleted = false
-            AND wc.box_no IS NOT NULL
-            GROUP BY wc.packing_task_id, wc.box_no, wcd.sku_id, wcd.sku_no, COALESCE(wcd.fn_sku, '')
+        SELECT
+        wc.packing_task_id,
+        wc.box_no,
+        wcd.sku_id,
+        wcd.sku_no,
+        COALESCE(wcd.fn_sku, '') AS fn_sku,
+        SUM(COALESCE(wcd.pack_qty, 0))::INTEGER AS pack_qty
+        FROM wms_carton wc
+        INNER JOIN wms_carton_detail wcd
+        ON wcd.main_id = wc.id
+        AND wcd.is_deleted = false
+        AND COALESCE(wcd.pack_qty, 0) > 0
+        WHERE wc.is_deleted = false
+        AND wc.box_no IS NOT NULL
+        GROUP BY wc.packing_task_id, wc.box_no, wcd.sku_id, wcd.sku_no, COALESCE(wcd.fn_sku, '')
         )
         select
-            fmd.id as sourceId,
-            fmd.code as sourceCode,
-            'firstMileDelivery' as sourceType,
+        fmd.id as sourceId,
+        fmd.code as sourceCode,
+        'firstMileDelivery' as sourceType,
         CASE
         WHEN fmd.demand_type = 'demandOverseasWarehouse' THEN
         owi.ID ELSE fba.id
@@ -928,27 +937,27 @@
         owi.code ELSE fba.fba_shipment_code
         END AS businessCode,
         cd.sku_id as skuId,
-            cd.sku_no as skuNo,
-            fmd.country_id as countryId,
-            fmd.country_name as countryName,
-            cd.pack_qty as qty,
-            cd.box_no as boxNo,
-            fmd.delivery_warehouse_id as fromWarehouseId,
-            fmd.delivery_warehouse_name as fromWarehouseName,
-            fmd.dest_warehouse_id as destWarehouseId,
-            fmd.dest_warehouse_name as destWarehouseName,
-            fmd.transfer_warehouse_ids as transferWarehouseIds
+        cd.sku_no as skuNo,
+        fmd.country_id as countryId,
+        fmd.country_name as countryName,
+        cd.pack_qty as qty,
+        cd.box_no as boxNo,
+        fmd.delivery_warehouse_id as fromWarehouseId,
+        fmd.delivery_warehouse_name as fromWarehouseName,
+        fmd.dest_warehouse_id as destWarehouseId,
+        fmd.dest_warehouse_name as destWarehouseName,
+        fmd.transfer_warehouse_ids as transferWarehouseIds
         from first_mile_delivery fmd
         inner join packing_task pt on (pt.source_id = fmd.id or pt.source_id = fmd.source_id) and pt.is_deleted = false and pt.packing_status = 'packed'
         inner join carton_detail cd
         on pt.id = cd.packing_task_id
         and exists (
-            select 1
-            from packing_task_detail ptd
-            where ptd.is_deleted = false
-            and ptd.main_id = pt.id
-            and ptd.sku_id = cd.sku_id
-            and (COALESCE(ptd.fn_sku, '') = '' or cd.fn_sku = COALESCE(ptd.fn_sku, ''))
+        select 1
+        from packing_task_detail ptd
+        where ptd.is_deleted = false
+        and ptd.main_id = pt.id
+        and ptd.sku_id = cd.sku_id
+        and (COALESCE(ptd.fn_sku, '') = '' or cd.fn_sku = COALESCE(ptd.fn_sku, ''))
         )
         left join overseas_warehouse_inbound owi on owi.source_id = fmd.id and owi.instock_status != 'canceled'  and owi.is_deleted = false
         left join (
@@ -963,6 +972,168 @@
             #{id}
         </foreach>
         ORDER BY fmd.code, cd.box_no, cd.sku_no
+    </select>
+
+
+    <!-- 查询合并后头程报关单 -->
+    <select id="listAfterPushFmDeclare"
+            resultType="com.erp.model.tms.dto.TmsDeclareBillDTO$SourceDeliveryDetailDTO">
+        WITH carton_detail AS (
+        SELECT
+        wc.packing_task_id,
+        wc.box_no,
+        wcd.sku_id,
+        wcd.sku_no,
+        COALESCE(wcd.fn_sku, '') AS fn_sku,
+        SUM(COALESCE(wcd.pack_qty, 0))::INTEGER AS pack_qty
+        FROM wms_carton wc
+        INNER JOIN wms_carton_detail wcd
+        ON wcd.main_id = wc.id
+        AND wcd.is_deleted = false
+        AND COALESCE(wcd.pack_qty, 0) > 0
+        WHERE wc.is_deleted = false
+        AND wc.box_no IS NOT NULL
+        GROUP BY wc.packing_task_id, wc.box_no, wcd.sku_id, wcd.sku_no, COALESCE(wcd.fn_sku, '')
+        ),
+        has_bom AS MATERIALIZED (
+        SELECT
+        fpbi.id AS bom_id,
+        fpbh.id AS bom_history_id,
+        fpbi.bom_version,
+        fpbs.parent_sku_id,
+        fpbs.parent_sku_no,
+        fpbs.sku_id,
+        fpbs.sku_no,
+        fpbs.quantity
+        FROM foreign_product_bom_info fpbi
+        JOIN foreign_product_bom_sku fpbs
+        ON fpbi.id = fpbs.bom_id
+        LEFT JOIN foreign_product_bom_history fpbh
+        ON fpbh.bom_id = fpbi.id
+        AND fpbh.bom_version = fpbi.bom_version
+        AND fpbh.is_deleted = false
+        WHERE fpbi.is_deleted = false
+        AND fpbs.is_deleted = false
+        AND fpbi.state = 4
+        )
+        SELECT * FROM (
+        SELECT
+        fmd.id as sourceId,
+        fmd.code as sourceCode,
+        'firstMileDelivery' as sourceType,
+        CASE
+        WHEN fmd.demand_type = 'demandOverseasWarehouse' THEN
+        owi.ID ELSE fba.id
+        END AS businessId,
+        CASE
+        WHEN fmd.demand_type = 'demandOverseasWarehouse' THEN
+        owi.code ELSE fba.fba_shipment_code
+        END AS businessCode,
+        cd.sku_id as skuId,
+        cd.sku_no as skuNo,
+        '' AS parentSkuId,
+        '' AS bomId,
+        '' AS bomHistoryId,
+        '' AS bomVersion,
+        cd.fn_sku AS platformSkuNo,
+        fmd.country_id as countryId,
+        fmd.country_name as countryName,
+        cd.pack_qty as qty,
+        cd.box_no as boxNo,
+        fmd.delivery_warehouse_id as fromWarehouseId,
+        fmd.delivery_warehouse_name as fromWarehouseName,
+        fmd.dest_warehouse_id as destWarehouseId,
+        fmd.dest_warehouse_name as destWarehouseName,
+        fmd.transfer_warehouse_ids as transferWarehouseIds
+        from first_mile_delivery fmd
+        inner join packing_task pt on (pt.source_id = fmd.id or pt.source_id = fmd.source_id) and pt.is_deleted = false and pt.packing_status = 'packed'
+        inner join carton_detail cd
+        on pt.id = cd.packing_task_id
+        and exists (
+        select 1
+        from packing_task_detail ptd
+        where ptd.is_deleted = false
+        and ptd.main_id = pt.id
+        and ptd.sku_id = cd.sku_id
+        and (COALESCE(ptd.fn_sku, '') = '' or cd.fn_sku = COALESCE(ptd.fn_sku, ''))
+        )
+        left join overseas_warehouse_inbound owi on owi.source_id = fmd.id and owi.instock_status != 'canceled'  and owi.is_deleted = false
+        left join (
+        select
+        DISTINCT fmdd.main_id, fmdd.fba_shipment_code ,fs.id
+        from first_mile_delivery_detail fmdd
+        INNER JOIN fba_shipment fs on fmdd.fba_shipment_code = fs.code and fs.is_deleted = false
+        where fmdd.is_deleted= false and fmdd.fba_shipment_code != ''
+        ) as fba on fba.main_id = fmd.id
+        LEFT JOIN has_bom hb ON hb.parent_sku_id = cd.sku_id
+        LEFT JOIN foreign_product_logistics fpl_parent
+        ON fpl_parent.sku_id = cd.sku_id
+        AND fpl_parent.is_deleted = false
+        where fmd.is_deleted = false and fmd.declare_status = 'wait' and fmd.id in
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        AND (hb.bom_id IS NULL OR fpl_parent.combination_declare_type = 'combine')
+        UNION ALL
+        SELECT
+        fmd.id as sourceId,
+        fmd.code as sourceCode,
+        'firstMileDelivery' as sourceType,
+        CASE
+        WHEN fmd.demand_type = 'demandOverseasWarehouse' THEN
+        owi.ID ELSE fba.id
+        END AS businessId,
+        CASE
+        WHEN fmd.demand_type = 'demandOverseasWarehouse' THEN
+        owi.code ELSE fba.fba_shipment_code
+        END AS businessCode,
+        hb.sku_id as skuId,
+        hb.sku_no as skuNo,
+        hb.parent_sku_id AS parentSkuId,
+        hb.bom_id AS bomId,
+        hb.bom_history_id AS bomHistoryId,
+        hb.bom_version AS bomVersion,
+        cd.fn_sku AS platformSkuNo,
+        fmd.country_id as countryId,
+        fmd.country_name as countryName,
+        cd.pack_qty * hb.quantity as qty,
+        cd.box_no as boxNo,
+        fmd.delivery_warehouse_id as fromWarehouseId,
+        fmd.delivery_warehouse_name as fromWarehouseName,
+        fmd.dest_warehouse_id as destWarehouseId,
+        fmd.dest_warehouse_name as destWarehouseName,
+        fmd.transfer_warehouse_ids as transferWarehouseIds
+        from first_mile_delivery fmd
+        inner join packing_task pt on (pt.source_id = fmd.id or pt.source_id = fmd.source_id) and pt.is_deleted = false and pt.packing_status = 'packed'
+        inner join carton_detail cd
+        on pt.id = cd.packing_task_id
+        and exists (
+        select 1
+        from packing_task_detail ptd
+        where ptd.is_deleted = false
+        and ptd.main_id = pt.id
+        and ptd.sku_id = cd.sku_id
+        and (COALESCE(ptd.fn_sku, '') = '' or cd.fn_sku = COALESCE(ptd.fn_sku, ''))
+        )
+        left join overseas_warehouse_inbound owi on owi.source_id = fmd.id and owi.instock_status != 'canceled'  and owi.is_deleted = false
+        left join (
+        select
+        DISTINCT fmdd.main_id, fmdd.fba_shipment_code ,fs.id
+        from first_mile_delivery_detail fmdd
+        INNER JOIN fba_shipment fs on fmdd.fba_shipment_code = fs.code and fs.is_deleted = false
+        where fmdd.is_deleted= false and fmdd.fba_shipment_code != ''
+        ) as fba on fba.main_id = fmd.id
+        INNER JOIN has_bom hb ON hb.parent_sku_id = cd.sku_id
+        INNER JOIN foreign_product_logistics fpl_parent
+        ON fpl_parent.sku_id = cd.sku_id
+        AND fpl_parent.is_deleted = false
+        AND fpl_parent.combination_declare_type = 'split'
+        where fmd.is_deleted = false and fmd.declare_status = 'wait' and fmd.id in
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        ) sn
+        ORDER BY sourceCode, boxNo, skuNo
     </select>
 
     <!-- 查询头程报关按箱号最小维度来源明细 -->
@@ -988,6 +1159,7 @@
                has_bom AS MATERIALIZED (
               SELECT
               fpbi.id AS bom_id,
+              fpbh.id AS bom_history_id,
               fpbi.bom_version,
               fpbs.parent_sku_id,
               fpbs.parent_sku_no,
@@ -996,6 +1168,10 @@
               FROM foreign_product_bom_info fpbi
               JOIN foreign_product_bom_sku fpbs
               ON fpbi.id = fpbs.bom_id
+              LEFT JOIN foreign_product_bom_history fpbh
+              ON fpbh.bom_id = fpbi.id
+              AND fpbh.bom_version = fpbi.bom_version
+              AND fpbh.is_deleted = false
               WHERE fpbi.is_deleted = false
               AND fpbs.is_deleted = false and fpbi.state = 4
       )
@@ -1009,6 +1185,8 @@
             cd.sku_id AS skuId,
             cd.sku_no AS skuNo,
             '' AS parentSkuId,
+            '' AS bomId,
+            '' AS bomHistoryId,
             '' AS bomVersion,
             cd.pack_qty AS qty,
             cd.box_no AS boxNo,
@@ -1043,6 +1221,8 @@
             hb.sku_id AS skuId,                     -- 子SKU ID
             hb.sku_no AS skuNo,                     -- 子SKU 编码
             hb.parent_sku_id AS parentSkuId,
+            hb.bom_id AS bomId,
+            hb.bom_history_id AS bomHistoryId,
             hb.bom_version AS bomVersion,
             cd.pack_qty AS qty,                     -- 原箱数量（每个子SKU继承相同数量）
             cd.box_no AS boxNo,

@@ -88,6 +88,11 @@ public class DeliveryDeclareDetailMidEntity extends BaseEntity<DeliveryDeclareDe
     @TableField("sku_no")
     private String skuNo;
     /**
+    * 父级SKU ID
+    */
+    @TableField("parent_sku_id")
+    private String parentSkuId;
+    /**
     * 币种
     */
     @TableField("currency")
@@ -224,6 +229,8 @@ public class DeliveryDeclareDetailMidEntity extends BaseEntity<DeliveryDeclareDe
     public static final String SKU_ID = "sku_id";
 
     public static final String SKU_NO = "sku_no";
+
+    public static final String PARENT_SKU_ID = "parent_sku_id";
 
     public static final String CURRENCY = "currency";
 

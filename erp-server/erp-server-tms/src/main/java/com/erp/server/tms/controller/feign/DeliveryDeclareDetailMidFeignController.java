@@ -31,9 +31,9 @@ public class DeliveryDeclareDetailMidFeignController {
      * @author jack
      * @date 2026-04-29
      */
-    @PostMapping("/autoGenerateMidData")
-    public Boolean autoGenerateMidData(@RequestBody TmsDeclareBillDTO.AutoGenerateMidDataDTO dto) {
-        return service.autoGenerateMidData(dto.getSourceDetailList());
+    @PostMapping("/batchAddMergeDetail")
+    public Boolean batchAddMergeDetail(@RequestBody TmsDeclareBillDTO.AutoGenerateMidDataDTO dto) {
+        return service.batchAddMergeDetail(dto.getMergeDeclareBillDTOS(),false);
     }
 
     /**

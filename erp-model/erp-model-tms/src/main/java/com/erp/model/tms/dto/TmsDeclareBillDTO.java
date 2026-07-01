@@ -2457,6 +2457,10 @@ public class TmsDeclareBillDTO implements Serializable {
          */
         private String parentSkuId;
         /**
+         * bom主表ID（product_bom_info）
+         */
+        private String bomId;
+        /**
          * bomSku历史的主键id（product_bom_history）
          */
         private String bomHistoryId;
@@ -2658,7 +2662,7 @@ public class TmsDeclareBillDTO implements Serializable {
          * 来源明细列表
          */
         @NotEmpty(message = "来源明细列表不能为空")
-        private List<SourceDeliveryDetailDTO> sourceDetailList;
+        private List<TmsDeclareBillDTO.MergeDeclareBillDTO> mergeDeclareBillDTOS;
     }
 
     /**
