@@ -29,30 +29,43 @@ public class RepairBomConvertContext {
     private final String bomBillNo;
     /** 子行 detailId -> 同父行内行号（childLineSeq，从 1 起），用于同 SKU 子行消歧 */
     private final Map<String, Integer> childLineSeqMap;
+    /** 委外订单全部子行，供匹配失败时判断 MQ 是否已携带仓库字段 */
+    private final List<SubcontractOrderDetailEntity> allChildDetails;
 
     public RepairBomConvertContext(Map<String, JSONObject> detailStockFieldMap,
             List<ParentChildGroup> matchedGroups) {
-        this(detailStockFieldMap, matchedGroups, Collections.emptyMap(), null, Collections.emptyMap());
+        this(detailStockFieldMap, matchedGroups, Collections.emptyMap(), null, Collections.emptyMap(),
+                Collections.emptyList());
     }
 
     public RepairBomConvertContext(Map<String, JSONObject> detailStockFieldMap,
             List<ParentChildGroup> matchedGroups, Map<String, Integer> parentEntrySeqMap) {
-        this(detailStockFieldMap, matchedGroups, parentEntrySeqMap, null, Collections.emptyMap());
+        this(detailStockFieldMap, matchedGroups, parentEntrySeqMap, null, Collections.emptyMap(),
+                Collections.emptyList());
     }
 
     public RepairBomConvertContext(Map<String, JSONObject> detailStockFieldMap,
             List<ParentChildGroup> matchedGroups, Map<String, Integer> parentEntrySeqMap, String bomBillNo) {
-        this(detailStockFieldMap, matchedGroups, parentEntrySeqMap, bomBillNo, Collections.emptyMap());
+        this(detailStockFieldMap, matchedGroups, parentEntrySeqMap, bomBillNo, Collections.emptyMap(),
+                Collections.emptyList());
+    }
+
+    public RepairBomConvertContext(Map<String, JSONObject> detailStockFieldMap,
+            List<ParentChildGroup> matchedGroups, Map<String, Integer> parentEntrySeqMap, String bomBillNo,
+            Map<String, Integer> childLineSeqMap) {
+        this(detailStockFieldMap, matchedGroups, parentEntrySeqMap, bomBillNo, childLineSeqMap,
+                Collections.emptyList());
     }
 
     /**
      * @param parentEntrySeqMap SCM 父行与金蝶 SubReqEntrySeq 的映射，优先来自 MQ list 的 parentLineSeq
      * @param bomBillNo 委外用料清单编号
      * @param childLineSeqMap SCM 子行与同父行内 childLineSeq 的映射
+     * @param allChildDetails 委外订单全部子行明细
      */
     public RepairBomConvertContext(Map<String, JSONObject> detailStockFieldMap,
             List<ParentChildGroup> matchedGroups, Map<String, Integer> parentEntrySeqMap, String bomBillNo,
-            Map<String, Integer> childLineSeqMap) {
+            Map<String, Integer> childLineSeqMap, List<SubcontractOrderDetailEntity> allChildDetails) {
         this.detailStockFieldMap = detailStockFieldMap == null ? Collections.emptyMap() : detailStockFieldMap;
         this.matchedGroups = matchedGroups == null
                 ? Collections.emptyList()
@@ -72,6 +85,13 @@ public class RepairBomConvertContext {
         this.parentEntrySeqMap = parentEntrySeqMap == null ? Collections.emptyMap() : parentEntrySeqMap;
         this.bomBillNo = bomBillNo;
         this.childLineSeqMap = childLineSeqMap == null ? Collections.emptyMap() : childLineSeqMap;
+        if (allChildDetails == null || allChildDetails.isEmpty()) {
+            this.allChildDetails = Collections.emptyList();
+        } else {
+            this.allChildDetails = Collections.unmodifiableList(allChildDetails.stream()
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList()));
+        }
     }
 
     public Map<String, JSONObject> getDetailStockFieldMap() {
@@ -100,6 +120,10 @@ public class RepairBomConvertContext {
 
     public Map<String, Integer> getChildLineSeqMap() {
         return childLineSeqMap;
+    }
+
+    public List<SubcontractOrderDetailEntity> getAllChildDetails() {
+        return allChildDetails;
     }
 
     public static class ParentChildGroup {
