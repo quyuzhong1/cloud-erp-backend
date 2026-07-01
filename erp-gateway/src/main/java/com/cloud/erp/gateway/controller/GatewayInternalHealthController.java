@@ -4,12 +4,14 @@ import com.cloud.erp.gateway.component.GatewayReadinessState;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.Resource;
+import java.net.InetSocketAddress;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -24,6 +26,7 @@ public class GatewayInternalHealthController {
     private static final String STATUS_DOWN = "DOWN";
     private static final String REASON_READY = "READY";
     private static final String REASON_APPLICATION_NOT_READY = "APPLICATION_NOT_READY";
+    private static final String REASON_RELEASE_STATE_FORBIDDEN = "RELEASE_STATE_FORBIDDEN";
     private static final String RELEASE_ACTIVE_COLOR = "release.active-color";
     private static final String RELEASE_ACTIVE_VERSION = "release.active-version";
     private static final String RELEASE_COLOR = "release.color";
@@ -51,7 +54,11 @@ public class GatewayInternalHealthController {
     }
 
     @GetMapping("/release-state")
-    public Mono<ResponseEntity<Map<String, Object>>> releaseState() {
+    public Mono<ResponseEntity<Map<String, Object>>> releaseState(ServerHttpRequest request) {
+        if (!isLoopbackRequest(request)) {
+            return Mono.just(ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(body(STATUS_DOWN, REASON_RELEASE_STATE_FORBIDDEN)));
+        }
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("activeColor", environment.getProperty(RELEASE_ACTIVE_COLOR));
         body.put("activeVersion", environment.getProperty(RELEASE_ACTIVE_VERSION));
@@ -76,6 +83,21 @@ public class GatewayInternalHealthController {
         }
 
         return true;
+    }
+
+    private boolean isLoopbackRequest(ServerHttpRequest request) {
+        String remoteAddress = getRemoteAddress(request);
+        return "127.0.0.1".equals(remoteAddress)
+                || "0:0:0:0:0:0:0:1".equals(remoteAddress)
+                || "::1".equals(remoteAddress);
+    }
+
+    private String getRemoteAddress(ServerHttpRequest request) {
+        InetSocketAddress remoteAddress = request.getRemoteAddress();
+        if (remoteAddress == null || remoteAddress.getAddress() == null) {
+            return null;
+        }
+        return remoteAddress.getAddress().getHostAddress();
     }
 
     private boolean hasText(String value) {
