@@ -498,7 +498,7 @@ public class WmsDeliveryPlanController extends BaseController {
      **/
     @PostMapping("/importDetailFile")
     public ApiResult<ListingInfoDTO.ImportDTO> importFile(@ModelAttribute @Validated ExcelImportDTO.CommonDTO excelImportDTO, HttpServletResponse response) {
-        ListingInfoDTO.ImportDTO list = wmsDeliveryPlanService.importFile(excelImportDTO.getExcelFile(), excelImportDTO.getThirdSkuNoList(),excelImportDTO.getWarehouseId(),excelImportDTO.getShopId() , response);
+        ListingInfoDTO.ImportDTO list = wmsDeliveryPlanService.importFile(excelImportDTO.getExcelFile(), excelImportDTO.getThirdSkuNoList(), excelImportDTO.getWarehouseId(), excelImportDTO.getShopId(), excelImportDTO.getType(), response);
         return success(list);
     }
 
@@ -527,6 +527,7 @@ public class WmsDeliveryPlanController extends BaseController {
             wb.write(output);
             wb.close();
         } catch (Exception e) {
+            log.error("第三方仓发货计划模板下载失败, path: {}", path, e);
             throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
         return success();
@@ -544,9 +545,8 @@ public class WmsDeliveryPlanController extends BaseController {
         String path = "classpath:excel/deliveryPlanDetailFbaTemplate.xlsx";
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
-        try {
-            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
-            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+        try (InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+             XSSFWorkbook wb = new XSSFWorkbook(inputStream)) {
             // 输出Excel文件
             OutputStream output = response.getOutputStream();
             response.reset();
@@ -555,8 +555,35 @@ public class WmsDeliveryPlanController extends BaseController {
                     "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
             response.setContentType("application/msexcel");
             wb.write(output);
-            wb.close();
+            output.flush();
         } catch (Exception e) {
+            log.error("FBA发货计划模板下载失败, path: {}", path, e);
+            throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
+        }
+        return success();
+    }
+
+    /**
+     * 下载平台发货计划模板
+     */
+    @GetMapping("/exportPlatformTemplate")
+    public ApiResult exportPlatformTemplate(HttpServletRequest request, HttpServletResponse response) {
+        String path = "classpath:excel/deliveryPlanDetailPlatformTemplate.xlsx";
+        String excelName = "template.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try (InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+             XSSFWorkbook wb = new XSSFWorkbook(inputStream)) {
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            output.flush();
+        } catch (Exception e) {
+            log.error("平台发货计划模板下载失败, path: {}", path, e);
             throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
         return success();

@@ -154,6 +154,15 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
               soB2cDetailService.updateWarehouseIdByMainId(mainEntity.getId(),warehouseId,true);
             }
         }
+        //虾皮平台仓订单默认使用店铺绑定平台仓，不覆盖已有仓库
+        if (isWarehouseEmpty
+                && hasPlatformWarehouse
+                && PlatformDictEnum.SHOPEE.getCode().equals(mainEntity.getDictPlatform())) {
+            String warehouseId = resultDTO.getShopWarehouseId();
+            if(StringUtils.isNotBlank(warehouseId)){
+              soB2cDetailService.updateWarehouseIdByMainId(mainEntity.getId(),warehouseId,false);
+            }
+        }
 
         Boolean retryFlag = false;
         // 跳过未作废的自发货无地址的订单
