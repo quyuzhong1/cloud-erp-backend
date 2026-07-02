@@ -364,14 +364,14 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                             ""
                     );
                     soB2cFeign.addSoB2cError(addError);
-                    //异步取消海外仓订单（大臣拦截成功后会将销售订单更新为配货中）
-                    asyncService.asyncCancelThirdWarehouseOrder(mainEntity, dto.getAbnormalProblemReason());
-                    // WEGO 出库异常：三方仓发货单 → 取消发货
-                    if (OmsPlatformEnum.WE_GO.getCode().equals(dto.getPlatform())
-                            && Objects.nonNull(thirdWarehouseDeliveryEntity)) {
-                        thirdWarehouseDeliveryEntity.setStatus(SoB2cWarehouseDeliveryStatusEnum.CANCEL_DELIVERY.getStatus());
-                        operateLogService.addModuleOperateLog("状态变更为取消发货", ModuleTypeEnum.THIRD_WAREHOUSE_DELIVERY.getCode(), thirdWarehouseDeliveryEntity.getId(), "状态变更");
-                        thirdWarehouseDeliveryService.updateById(thirdWarehouseDeliveryEntity);
+                    if (OmsPlatformEnum.WE_GO.getCode().equals(dto.getPlatform())) {
+                        // WEGO 出库异常：三方仓发货单保持"待处理"、销售订单保持"待发货"，不做自动截单/状态变更，
+                        // 需人工至 WEGO 海外仓后台确认包裹/库存是否可找到后手动取消，只有 WEGO 后台才能真正取消出库异常单
+                        operateLogService.addModuleOperateLog("三方仓出库异常，需人工至WEGO后台确认后手动取消，异常信息：" + dto.getAbnormalProblemReason(),
+                                ModuleTypeEnum.SO_B2C.getCode(), mainEntity.getId(), "出库异常");
+                    } else {
+                        //异步取消海外仓订单（大臣拦截成功后会将销售订单更新为配货中）
+                        asyncService.asyncCancelThirdWarehouseOrder(mainEntity, dto.getAbnormalProblemReason());
                     }
                 }
                 if (SoB2cBillStatusEnum.ENUM_DISUSE.getCode().equals(dto.getOrderStatus())) {
