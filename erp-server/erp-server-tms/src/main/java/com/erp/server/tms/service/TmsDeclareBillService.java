@@ -228,4 +228,16 @@ public interface TmsDeclareBillService extends SuperService<TmsDeclareBillEntity
      * @param mergeDetailList 合并后明细列表（已展平）
      */
     void validateDestCountryNotMainlandChina(List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList);
+
+    /**
+     * 校验「同一箱的全部明细必须在同一张报关单」。以 WMS 装箱数据为准取整箱全集，
+     * 本次提交涉及到的每个箱号，其在来源单据中的全部明细都必须在提交范围内，
+     * 否则说明该箱被拆分到多张报关单（或漏选），抛
+     * {@link com.common.core.enums.ApiError#LOGISTICS_DECLARE_BOX_NOT_FULL_SELECTED}，
+     * 提示来源单号 + 箱号 + 缺失 SKU。适用于下推保存 / 合并保存 / 编辑保存等入口。
+     *
+     * @param sourceType 来源单类型（firstMileDelivery / soDeliveryNotice）
+     * @param submittedSourceDetails 本次提交的来源明细（已展平）
+     */
+    void validateSameBoxAllInOneBill(String sourceType, List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> submittedSourceDetails);
 }

@@ -286,6 +286,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             validateDestCountryNotMainlandChina(mergeDetailList);
             Set<String> sourceKeySet = collectSourceKeySet(mergeDetailList);
             validateSourceNotGenerated(sourceKeySet, collectSourceIdSet(mergeDetailList), SourceTypeEnum.FIRST_MILE_DELIVERY.getCode(), null);
+            // 同一箱的全部明细必须在同一张报关单（以 WMS 装箱数据为准）。
+            validateSameBoxAllInOneBill(SourceTypeEnum.FIRST_MILE_DELIVERY.getCode(), flattenMergeSourceDetails(mergeDetailList));
 
             TmsDeclareBillEntity declareBillEntity = new TmsDeclareBillEntity();
             BeanMapperUtils.copy(addDTO, declareBillEntity);
@@ -497,6 +499,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         // 重量重算含 WMS/PLM Feign，须在事务外完成（erp-backend-standards：禁止事务内 Feign）。
         List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList =
                 prepareSubmittedMergeDetailList(updateDTO.getMergeDetailList(), updateDTO.getIsMerge(), updateDTO.getReceiverType());
+        // 同一箱的全部明细必须在同一张报关单（以 WMS 装箱数据为准），Feign 须在事务外调用。
+        validateSameBoxAllInOneBill(resolveDeclareSourceType(sourceTypeEnum.getCode()), flattenMergeSourceDetails(mergeDetailList));
         TmsDeclareBillDTO.SelectedSkuHeaderDTO recalculatedHeaderWeight =
                 computeRecalculatedHeaderWeight(mergeDetailList, sourceTypeEnum);
         // B2B 提运单号取发货通知单运输单号(track_no)，事务外查好传入，落库到 transport_no。
@@ -1996,6 +2000,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             validateDestCountryNotMainlandChina(mergeDetailList);
             Set<String> sourceKeySet = collectSourceKeySet(mergeDetailList);
             validateSourceNotGenerated(sourceKeySet, collectSourceIdSet(mergeDetailList), SourceTypeEnum.SO_DELIVERY_NOTICE.getCode(), null);
+            // 同一箱的全部明细必须在同一张报关单（以 WMS 装箱数据为准）。
+            validateSameBoxAllInOneBill(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode(), flattenMergeSourceDetails(mergeDetailList));
 
             TmsDeclareBillEntity declareBillEntity = new TmsDeclareBillEntity();
             BeanMapperUtils.copy(addDTO, declareBillEntity);
@@ -3068,6 +3074,9 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
         List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDeliveryDetailList = deliveryDeclareDetailMidService.listSourceByDeclareIdList(Collections.singletonList(declareBillEntity.getId()));
 
+        // 拆分保存：同一箱的全部明细必须整箱落在同一票，不能拆到不同票。
+        validateSplitSameBoxInOneGroup(sourceDeliveryDetailList, declareDTO.getSplitDeclareDTOList());
+
         //删除原本的报关单
         deleteDeclareBillById(declareBillEntity.getId());
 
@@ -3136,6 +3145,9 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (CollUtil.isEmpty(sourceDeliveryDetailList)) {
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_SOURCE_DETAIL_NOT_FOUND_FOR_SAVE);
         }
+
+        // 拆分保存：同一箱的全部明细必须整箱落在同一票，不能拆到不同票。
+        validateSplitSameBoxInOneGroup(sourceDeliveryDetailList, declareDTO.getSplitDeclareDTOList());
 
         // 与头程拆分一致：先删原报关单及其中间表关联，再按票生成新报关单，避免原单残留导致中间表重复挂载、事务变长。
         deleteDeclareBillById(originalDeclareBillId);
@@ -3253,6 +3265,68 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         for (List<TmsDeclareBillDTO.SplitDeclareDTO> splitGroup : splitDeclareGroupList) {
             if (CollUtil.isEmpty(splitGroup)) {
                 throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
+            }
+        }
+    }
+
+    /**
+     * 拆分保存校验：同一箱的全部明细必须整箱落在同一票。
+     * 以原报关单来源明细为整箱全集（创建/合并/编辑入口已保证整箱完整），
+     * 拆分只是重新分票，因此校验：任一箱号不得跨票，且每票内出现的箱号必须整箱完整。
+     * @param billSourceDetails 原报关单来源明细（整箱全集）
+     * @param splitGroupList 拆分分组（外层每组一票）
+     */
+    private void validateSplitSameBoxInOneGroup(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> billSourceDetails,
+                                                List<List<TmsDeclareBillDTO.SplitDeclareDTO>> splitGroupList) {
+        if (CollUtil.isEmpty(billSourceDetails) || CollUtil.isEmpty(splitGroupList)) {
+            return;
+        }
+        // 整箱全集：箱号 -> 明细唯一键集合，以及明细唯一键 -> SKU 展示、箱号样例。
+        Map<String, Set<String>> fullBoxKeyMap = new LinkedHashMap<>();
+        Map<String, String> detailKeySkuNoMap = new HashMap<>();
+        Map<String, TmsDeclareBillDTO.SourceDeliveryDetailDTO> boxSampleMap = new HashMap<>();
+        for (TmsDeclareBillDTO.SourceDeliveryDetailDTO sd : billSourceDetails) {
+            if (Objects.isNull(sd) || StringUtils.isBlank(sd.getBoxNo())) {
+                continue;
+            }
+            String boxKey = buildDeclareBoxKey(sd);
+            String detailKey = buildSourceDetailKey(sd);
+            fullBoxKeyMap.computeIfAbsent(boxKey, k -> new HashSet<>()).add(detailKey);
+            detailKeySkuNoMap.putIfAbsent(detailKey, StringUtils.defaultString(sd.getSkuNo()));
+            boxSampleMap.putIfAbsent(boxKey, sd);
+        }
+        Map<String, Integer> boxTicketIndexMap = new HashMap<>();
+        for (int i = 0; i < splitGroupList.size(); i++) {
+            List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> groupSource =
+                    filterSplitSourceDetailGroup(billSourceDetails, splitGroupList.get(i));
+            Map<String, Set<String>> groupBoxKeyMap = new LinkedHashMap<>();
+            for (TmsDeclareBillDTO.SourceDeliveryDetailDTO sd : groupSource) {
+                if (Objects.isNull(sd) || StringUtils.isBlank(sd.getBoxNo())) {
+                    continue;
+                }
+                String boxKey = buildDeclareBoxKey(sd);
+                Integer existTicket = boxTicketIndexMap.putIfAbsent(boxKey, i + 1);
+                if (Objects.nonNull(existTicket) && existTicket != i + 1) {
+                    throw new ServiceException(ApiError.LOGISTICS_DECLARE_BOX_SINGLE_BILL_REQUIRED, existTicket, i + 1);
+                }
+                groupBoxKeyMap.computeIfAbsent(boxKey, k -> new HashSet<>()).add(buildSourceDetailKey(sd));
+            }
+            for (Map.Entry<String, Set<String>> entry : groupBoxKeyMap.entrySet()) {
+                Set<String> fullKeySet = fullBoxKeyMap.get(entry.getKey());
+                if (CollUtil.isEmpty(fullKeySet) || entry.getValue().containsAll(fullKeySet)) {
+                    continue;
+                }
+                List<String> missingSkuNos = fullKeySet.stream()
+                        .filter(key -> !entry.getValue().contains(key))
+                        .map(detailKeySkuNoMap::get)
+                        .filter(StringUtils::isNotBlank)
+                        .distinct()
+                        .collect(Collectors.toList());
+                TmsDeclareBillDTO.SourceDeliveryDetailDTO sample = boxSampleMap.get(entry.getKey());
+                throw new ServiceException(ApiError.LOGISTICS_DECLARE_BOX_NOT_FULL_SELECTED,
+                        StringUtils.defaultString(sample.getSourceCode()),
+                        StringUtils.defaultString(sample.getBoxNo()),
+                        String.join("、", missingSkuNos));
             }
         }
     }
@@ -4019,6 +4093,87 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         }
     }
 
+    @Override
+    public void validateSameBoxAllInOneBill(String sourceType, List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> submittedSourceDetails) {
+        if (CollUtil.isEmpty(submittedSourceDetails)) {
+            return;
+        }
+        List<String> sourceIdList = submittedSourceDetails.stream()
+                .filter(Objects::nonNull)
+                .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getSourceId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(sourceIdList)) {
+            return;
+        }
+        // 以 WMS 装箱数据为准取整箱全集（返回来源单全部箱号 + 明细行）。
+        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> fullBoxDetailList = loadFullBoxSourceDetail(sourceType, sourceIdList);
+        if (CollUtil.isEmpty(fullBoxDetailList)) {
+            return;
+        }
+        // 本次提交覆盖到的箱号，以及箱内明细唯一键（来源单|箱号|SKU）。
+        Set<String> submittedBoxKeySet = submittedSourceDetails.stream()
+                .filter(item -> Objects.nonNull(item) && StringUtils.isNotBlank(item.getBoxNo()))
+                .map(this::buildDeclareBoxKey)
+                .collect(Collectors.toSet());
+        Set<String> submittedDetailKeySet = submittedSourceDetails.stream()
+                .filter(item -> Objects.nonNull(item) && StringUtils.isNotBlank(item.getBoxNo()))
+                .map(this::buildSourceDetailKey)
+                .collect(Collectors.toSet());
+        // 遍历整箱全集，找出「本次提交涉及该箱、但箱内某些明细未在提交范围内」的缺失行。
+        Map<String, List<String>> missingSkuMap = new LinkedHashMap<>();
+        Map<String, TmsDeclareBillDTO.SourceDeliveryDetailDTO> boxSampleMap = new HashMap<>();
+        for (TmsDeclareBillDTO.SourceDeliveryDetailDTO fullDetail : fullBoxDetailList) {
+            if (Objects.isNull(fullDetail) || StringUtils.isBlank(fullDetail.getBoxNo())) {
+                continue;
+            }
+            String boxKey = buildDeclareBoxKey(fullDetail);
+            if (!submittedBoxKeySet.contains(boxKey)) {
+                continue;
+            }
+            if (submittedDetailKeySet.contains(buildSourceDetailKey(fullDetail))) {
+                continue;
+            }
+            missingSkuMap.computeIfAbsent(boxKey, k -> new ArrayList<>()).add(StringUtils.defaultString(fullDetail.getSkuNo()));
+            boxSampleMap.putIfAbsent(boxKey, fullDetail);
+        }
+        if (CollUtil.isEmpty(missingSkuMap)) {
+            return;
+        }
+        Map.Entry<String, List<String>> firstMissing = missingSkuMap.entrySet().iterator().next();
+        TmsDeclareBillDTO.SourceDeliveryDetailDTO sample = boxSampleMap.get(firstMissing.getKey());
+        String missingSkuNos = firstMissing.getValue().stream()
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.joining("、"));
+        throw new ServiceException(ApiError.LOGISTICS_DECLARE_BOX_NOT_FULL_SELECTED,
+                StringUtils.defaultString(sample.getSourceCode()),
+                StringUtils.defaultString(sample.getBoxNo()),
+                missingSkuNos);
+    }
+
+    /**
+     * 以 WMS 装箱数据为准，加载来源单据的整箱全集明细（含全部箱号 / SKU 行）。
+     * @param sourceType 来源单类型
+     * @param sourceIdList 来源单据 id 集合
+     * @return 整箱全集来源明细
+     */
+    private List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> loadFullBoxSourceDetail(String sourceType, List<String> sourceIdList) {
+        if (CollUtil.isEmpty(sourceIdList)) {
+            return Collections.emptyList();
+        }
+        if (SourceTypeEnum.FIRST_MILE_DELIVERY.getCode().equals(sourceType)) {
+            return wmsFirstMileDeliveryFeign.listBeforePushFmDeclare(
+                    new TmsDeclareBillDTO.PushDeclareBeforeParamDTO(Boolean.TRUE, sourceIdList));
+        }
+        if (SourceTypeEnum.SO_DELIVERY_NOTICE.getCode().equals(sourceType)) {
+            return soDeliveryNoticeFeign.listBeforePushB2bDeclare(
+                    new TmsDeclareBillDTO.PushDeclareBeforeParamDTO(Boolean.TRUE, sourceIdList));
+        }
+        return Collections.emptyList();
+    }
+
     /**
      * 校验编辑时来源字段不可修改
      * @author will
@@ -4780,9 +4935,33 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             unlockAfterTx = true
     )
     public Boolean batchAddMergeDetail(String type, List<TmsDeclareBillDTO.MergeDeclareBillDTO> list) {
+        // 同一箱的全部明细必须在同一张报关单（以 WMS 装箱数据为准），Feign 须在本地事务外调用。
+        validateSameBoxAllInOneBill(resolveDeclareSourceType(type), collectMergeSourceDetails(list));
         List<String> syncSourceIds = service.batchAddMergeDetailInTx(type, list);
         syncSourceDeclareStatusIfNeeded(type, syncSourceIds);
         return Boolean.TRUE;
+    }
+
+    /**
+     * 从批量合并入参中展平所有来源明细。
+     * @param list 批量合并报关单入参
+     * @return 展平后的来源明细
+     */
+    private List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> collectMergeSourceDetails(List<TmsDeclareBillDTO.MergeDeclareBillDTO> list) {
+        if (CollUtil.isEmpty(list)) {
+            return Collections.emptyList();
+        }
+        return list.stream()
+                .filter(Objects::nonNull)
+                .map(TmsDeclareBillDTO.MergeDeclareBillDTO::getDeclareBillList)
+                .filter(CollUtil::isNotEmpty)
+                .flatMap(Collection::stream)
+                .filter(Objects::nonNull)
+                .map(TmsDeclareBillDTO.MergeDeclareBillDetailDTO::getSourceDeliveryDetailList)
+                .filter(CollUtil::isNotEmpty)
+                .flatMap(Collection::stream)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
     }
 
     // 合并保存仅写 TMS 单库（WMS 回写已移到事务外），用本地事务即可，

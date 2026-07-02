@@ -654,6 +654,8 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         }
         validateSameBoxFullSelectedBySourceDetail(sourceDetailList);
         String sourceType = resolveMidSourceType(sourceDetailList);
+        // 同一箱的全部明细必须在同一张报关单（以 WMS 装箱数据为准）。
+        tmsDeclareBillService.validateSameBoxAllInOneBill(sourceType, sourceDetailList);
         validatePreviewSourceConsistent(sourceType, sourceDetailList);
         String declareBillType = resolveDeclareBillType(sourceType);
         validateLatestProductLogistics(sourceDetailList);
