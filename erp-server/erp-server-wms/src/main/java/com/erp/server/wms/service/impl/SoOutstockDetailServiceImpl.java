@@ -893,19 +893,27 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             detailEntity.setCurrencySymbol(soDetailEntity.getCurrencySymbol());
             BigDecimal allAmountLocalCurrency = calculateB2bAllAmountLocalCurrency(soDetailEntity, detailEntity.getActualQty());
             detailEntity.setAllAmountLocalCurrency(allAmountLocalCurrency);
-            detailEntity.setTaxAmount(divideAmount(allAmountLocalCurrency, defaultExchangeRate(soDetailEntity.getExchangeRate()), RoundingMode.HALF_UP));
+            detailEntity.setTaxAmount(calculateB2bTaxAmount(soDetailEntity, detailEntity.getActualQty()));
             detailEntity.setRemark(soDetailEntity.getRemark());
             detailEntity.setCustomerPO(soDetailEntity.getCustomerPO());
         }
     }
 
     private BigDecimal calculateB2bAllAmountLocalCurrency(SoDetailEntity soDetailEntity, Integer actualQty) {
+        return calculateB2bProportionalAmount(soDetailEntity, actualQty, soDetailEntity.getAllAmountLocalCurrency());
+    }
+
+    private BigDecimal calculateB2bTaxAmount(SoDetailEntity soDetailEntity, Integer actualQty) {
+        return calculateB2bProportionalAmount(soDetailEntity, actualQty, soDetailEntity.getTaxAmount());
+    }
+
+    private BigDecimal calculateB2bProportionalAmount(SoDetailEntity soDetailEntity, Integer actualQty, BigDecimal totalAmount) {
         BigDecimal salesQty = getB2bSalesQty(soDetailEntity);
         if (MathUtil.compareTo(salesQty, BigDecimal.ZERO) == 0) {
             return BigDecimal.ZERO.setScale(4, RoundingMode.DOWN);
         }
         BigDecimal qty = BigDecimal.valueOf(Objects.nonNull(actualQty) ? actualQty : 0);
-        return MathUtil.nvl(soDetailEntity.getAllAmountLocalCurrency(), BigDecimal.ZERO)
+        return MathUtil.nvl(totalAmount, BigDecimal.ZERO)
                 .divide(salesQty, 12, RoundingMode.HALF_UP)
                 .multiply(qty)
                 .setScale(4, RoundingMode.DOWN);
@@ -1224,13 +1232,6 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
                 .setScale(4, roundingMode);
     }
 
-    private BigDecimal divideAmount(BigDecimal amount, BigDecimal divisor, RoundingMode roundingMode) {
-        if (MathUtil.compareTo(divisor, BigDecimal.ZERO) == 0) {
-            return BigDecimal.ZERO.setScale(4, roundingMode);
-        }
-        return MathUtil.nvl(amount, BigDecimal.ZERO).divide(divisor, 4, roundingMode);
-    }
-
     private BigDecimal defaultExchangeRate(BigDecimal exchangeRate) {
         if (Objects.isNull(exchangeRate) || BigDecimal.ZERO.compareTo(exchangeRate) == 0) {
             return BigDecimal.ONE;
@@ -1344,7 +1345,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             detailEntity.setAmount(amount);
             BigDecimal allAmountLocalCurrency = calculateB2bAllAmountLocalCurrency(soDetailEntity, detailEntity.getActualQty());
             detailEntity.setAllAmountLocalCurrency(allAmountLocalCurrency);
-            detailEntity.setTaxAmount(divideAmount(allAmountLocalCurrency, exchangeRate, RoundingMode.HALF_UP));
+            detailEntity.setTaxAmount(calculateB2bTaxAmount(soDetailEntity, detailEntity.getActualQty()));
             updateList.add(detailEntity);
         }
         if(CollectionUtils.isNotEmpty(updateList)){
