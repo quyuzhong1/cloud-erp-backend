@@ -218,6 +218,9 @@ public class MercadoLocalOrderApiInitHandler implements DmpInputApiInitHandler {
         return dateTime.format(MERCADO_ORDER_SEARCH_OFFSET);
     }
 
+    /**
+     * date_last_updated 区间参数：固定 pattern 含秒/毫秒，非 OffsetDateTime#toString，不会出现秒位省略问题。
+     */
     private String dateToStr(LocalDateTime dateTime) {
 
         OffsetDateTime utcTime = dateTime
@@ -267,6 +270,7 @@ public class MercadoLocalOrderApiInitHandler implements DmpInputApiInitHandler {
         headerMap.put("Authorization", "Bearer " + shopInfoDTO.getAccessToken());
 
         List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
+        List<String> failedOrderIds = new ArrayList<>();
         for(String orderId : orderIdList) {
             if (StringUtils.isNotBlank(inputTaskId)) {
                 String cached = rateLimitHelper.getResultCache(inputTaskId, userId,
@@ -286,19 +290,22 @@ public class MercadoLocalOrderApiInitHandler implements DmpInputApiInitHandler {
             ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(sb.toString(), JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
             if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
                 log.warn("{}查询订单失败，返回 responseMap={}", orderId, JSONUtil.toJsonStr(apiResult));
+                failedOrderIds.add(orderId);
                 continue;
             }
             if (ObjectUtil.isEmpty(apiResult.getData())) {
                 log.warn("{}未查询到数据", orderId);
+                failedOrderIds.add(orderId);
                 continue;
             }
             String jsonStr = JSONUtil.toJsonStr(apiResult.getData());
             JSONObject resultJson = JSON.parseObject(jsonStr);
             if (resultJson == null || StringUtils.isBlank(resultJson.getString("date_created"))) {
             	log.warn("{}未查询到数据，返回报文：{}" , orderId , jsonStr);
+                failedOrderIds.add(orderId);
                 continue;
             }
-            // orderIdList 补拉：GET /orders/{id} 已含完整订单，无需再调 orders/search（省 1 次外网 RTT，且绕开 date_created 窗口检索）
+            // orderIdList 补拉：GET /orders/{id} 与 search results[] 元素为同一 Order 资源，包装为单元素 JSONArray 供下游复用
             String resultMsg = JSONArray.toJSONString(Collections.singletonList(resultJson));
             DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
             dmpInputTaskInitDTO.setMsg(resultMsg);
@@ -309,33 +316,11 @@ public class MercadoLocalOrderApiInitHandler implements DmpInputApiInitHandler {
                         orderId, resultMsg, MercadoLocalRateLimitHelper.CACHE_SECONDS_TASK_LIFE);
             }
         }
-        
-     	return dmpInputTaskInitDTOList.isEmpty() ? null : dmpInputTaskInitDTOList;
-    }
-
-    public static void main(String[] args) {
-    	String orderId = "2000017111607582";
-    	Map<String, String> headerMap = new HashMap<>(1);
-        headerMap.put("Authorization", "Bearer APP_USR-8670168511142898-063020-2b267602019a8ccfefb6151de5b82a1b-3264615033");
-    	ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult("https://api.mercadolibre.com/orders/" + orderId, null, null, headerMap, RequestMethod.GET);
-    	String jsonStr = JSONUtil.toJsonStr(apiResult.getData());
-        JSONObject resultJson = JSON.parseObject(jsonStr);
-        String date_created = resultJson.getString("date_created");
-        if(StringUtils.isNotBlank(date_created)) {
-        	LocalDateTime localDateTime = OffsetDateTime.parse(date_created).toLocalDateTime();
-        	StringBuffer sb = new StringBuffer();
-            sb.append("https://api.mercadolibre.com/orders/search?seller=3264615033&limit=50");
-            OffsetDateTime orderCreated = OffsetDateTime.parse(date_created);
-            sb.append("&order.date_created.from=");
-            sb.append(formatMercadoOrderSearchDateTime(orderCreated.plusSeconds(-5)));
-            sb.append("&order.date_created.to=");
-            sb.append(formatMercadoOrderSearchDateTime(orderCreated.plusSeconds(5)));
-            sb.append("&order.status=");
-            sb.append("cancelled,paid,invalid");
-        	apiResult = HttpCommonUtil.sendOkHttpApiResult(sb.toString(), null, null, headerMap, RequestMethod.GET);
-        	System.out.println(JSONUtil.toJsonStr(apiResult.getData()));
-        }else {
-        	log.warn("{}返回报文：{}" , orderId , jsonStr);
+        if (!failedOrderIds.isEmpty()) {
+            throw new ServiceException(StrUtil.format(
+                    "美客多本土站-orderIdList补拉失败，失败订单：{}", String.join(",", failedOrderIds)));
         }
-	}
+        // orderIdList 模式始终返回 List（含空列表），避免 null 被误判为「非补拉模式」而落入分页检索
+     	return dmpInputTaskInitDTOList;
+    }
 }
