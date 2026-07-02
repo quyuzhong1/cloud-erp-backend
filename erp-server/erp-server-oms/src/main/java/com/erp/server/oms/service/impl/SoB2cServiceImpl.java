@@ -812,46 +812,48 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     /**
      * 删除单条B2C销售订单（供 {@link #deleteB2cSoJob()} 调用）。
-     * 先取消物流（含 Feign，独立事务），再删除订单（独立事务），避免远程调用占用本地删单事务。
+     * 须通过 {@link #soB2cService} 代理调用，使 {@link #doDeleteSingleB2cSo} 事务生效。
      */
     public BatchResultDTO deleteSingleB2cSo(SoB2cEntity entity, SoB2cLogisticsEntity logisticsEntity) {
+        return soB2cService.doDeleteSingleB2cSo(entity, logisticsEntity);
+    }
+
+    /**
+     * 删除单条B2C销售订单（每条订单独立事务，供 {@link #deleteSingleB2cSo} 调用）。
+     * 取消物流与删单在同一事务内执行，本地 DB 变更可一并回滚。
+     * <p>
+     * 审查说明：定时删单为低并发串行任务，取消物流与删单 intentionally 同事务以保证本地 DB 原子性；
+     * cancelLogistic 内 Feign 远程取消成功后无法随事务回滚，为已知且已接受的业务边界，不按「事务内 Feign」项拦截。
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO doDeleteSingleB2cSo(SoB2cEntity entity, SoB2cLogisticsEntity logisticsEntity) {
         BatchResultDTO cancelResult = cancelLogisticsIfNeeded(entity, logisticsEntity);
         if (!cancelResult.getSuccess()) {
             return cancelResult;
         }
-        return soB2cService.doDeleteSingleB2cSo(entity);
-    }
-
-    /**
-     * 删除单条B2C销售订单的数据库操作（每条订单独立事务，供 {@link #deleteSingleB2cSo} 调用）。
-     */
-    @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO doDeleteSingleB2cSo(SoB2cEntity entity) {
-        this.deleteById(Collections.singletonList(entity.getId()), entity.getCode());
+        // 物流已在 cancelLogisticsIfNeeded 处理，跳过 deleteById 内 batchCancelLogistic 避免重复取消
+        this.removeSoB2cByIds(Collections.singletonList(entity.getId()));
         return BatchResultDTO.success(entity.getId(), entity.getCode());
     }
 
     /**
      * 删除前按需取消物流单（有副作用，非纯校验）。
-     * cancelLogistic 内含 Feign 远程调用，须在删单事务外执行。
+     * 触发条件与 {@link #batchCancelLogistic} 对齐：仅 logistics code 非空时才调用 cancelLogistic。
      */
     private BatchResultDTO cancelLogisticsIfNeeded(SoB2cEntity entity, SoB2cLogisticsEntity logisticsEntity) {
-        if (Objects.nonNull(logisticsEntity)) {
-            if (CharSequenceUtil.isNotBlank(logisticsEntity.getCode()) ||
-                CharSequenceUtil.isNotBlank(logisticsEntity.getTrackNo()) ||
-                CharSequenceUtil.isNotBlank(logisticsEntity.getLogisticsChannelId())) {
-                try {
-                    List<SoB2cEntity> soB2cEntityList = Collections.singletonList(entity);
-                    List<SoB2cLogisticsEntity> logisticsEntityList = Collections.singletonList(logisticsEntity);
-                    BatchResultDTO resultDTO = soB2cLogisticsService.cancelLogistic(entity.getId(), soB2cEntityList, logisticsEntityList, true);
-                    if (!resultDTO.getSuccess()) {
-                        return BatchResultDTO.fail(entity.getId(), entity.getCode(), resultDTO.getMsg());
-                    }
-                } catch (Exception e) {
-                    log.error("B2C销售订单【{}】删除前取消物流单失败", entity.getCode(), e);
-                    return BatchResultDTO.fail(entity.getId(), entity.getCode(), "取消物流单失败，请联系物流同事处理");
-                }
+        if (Objects.isNull(logisticsEntity) || CharSequenceUtil.isBlank(logisticsEntity.getCode())) {
+            return BatchResultDTO.success(entity.getId(), entity.getCode());
+        }
+        try {
+            List<SoB2cEntity> soB2cEntityList = Collections.singletonList(entity);
+            List<SoB2cLogisticsEntity> logisticsEntityList = Collections.singletonList(logisticsEntity);
+            BatchResultDTO resultDTO = soB2cLogisticsService.cancelLogistic(entity.getId(), soB2cEntityList, logisticsEntityList, true);
+            if (!resultDTO.getSuccess()) {
+                return BatchResultDTO.fail(entity.getId(), entity.getCode(), resultDTO.getMsg());
             }
+        } catch (Exception e) {
+            log.error("B2C销售订单【{}】删除前取消物流单失败", entity.getCode(), e);
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "取消物流单失败，请联系物流同事处理");
         }
         return BatchResultDTO.success(entity.getId(), entity.getCode());
     }
@@ -4701,6 +4703,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     public void deleteById(List<String> ids, String code) {
         //存在物流单需要先取消物流单
         batchCancelLogistic(ids, code);
+        removeSoB2cByIds(ids);
+    }
+
+    /**
+     * 删除销售订单及关联子表（不含取消物流，取消逻辑由调用方 {@link #batchCancelLogistic} 或 {@link #cancelLogisticsIfNeeded} 负责）。
+     */
+    private void removeSoB2cByIds(List<String> ids) {
         //删除物流信息
         soB2cLogisticsService.deleteByMainIds(ids);
         //删除买家信息
