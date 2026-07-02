@@ -154,7 +154,7 @@ public class ShopifyShipOrder extends AbstractShipOrder {
             // 捆绑拆分会合并关联子单物流标发，每个渠道都需配置 Shopify 平台映射
             for (SoB2cLogisticsEntity logisticsEntity : soB2cLogisticsEntityList) {
                 if (StringUtils.isBlank(logisticsEntity.getLogisticsChannelId())) {
-                    continue;
+                    throw new ServiceException("操作失败，关联子单物流渠道为空（捆绑拆分需所有关联子单均配置物流渠道）");
                 }
                 if (!channelShipMap.containsKey(logisticsEntity.getLogisticsChannelId())) {
                     String channelName = StringUtils.defaultIfBlank(logisticsEntity.getLogisticsChannelName(), logisticsEntity.getLogisticsChannelId());

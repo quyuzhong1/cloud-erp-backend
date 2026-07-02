@@ -316,6 +316,10 @@ public class MercadoLocalOrderApiInitHandler implements DmpInputApiInitHandler {
             }
         }
         if (!failedOrderIds.isEmpty()) {
+            if (dmpInputTaskInitDTOList.isEmpty()) {
+                throw new ServiceException(StrUtil.format(
+                        "美客多本土站-orderIdList补拉全部失败，失败订单：{}", String.join(",", failedOrderIds)));
+            }
             log.warn("美客多本土站-orderIdList补拉部分失败，失败订单：{}", String.join(",", failedOrderIds));
         }
         // orderIdList 模式始终返回 List（含空列表），避免 null 被误判为「非补拉模式」而落入分页检索
