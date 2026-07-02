@@ -405,6 +405,7 @@ public enum ApiError implements Serializable {
     DMP_THIRD_WAREHOUSE_WAREHOUSE_OPERATION_MISSING_ENUM(3514,"缺少必要的仓库操作类型【{0}】"),
     DMP_THIRD_WAREHOUSE_WAREHOUSE_OPERATION_VALUE_EMPTY(3515,"仓库操作类型或描述不能为空"),
     DMP_KINGDEE_SUBORDER_NOT_ALLOW_DISAPPROVE(3516,"请操作金蝶反审核至待提交后执行反审核"),
+    /** 3517 语义（2026-03）：父行分录无法唯一匹配；参数 {单号},{候选父行数}。子行硬歧义不抛此码，监控「跳过仓库回填」error 日志 */
     DMP_KINGDEE_SUBCONTRACT_BOM_PARENT_MATCH_AMBIGUOUS(3517,"委外用料清单变更单{0}按分录行号无法唯一匹配父行，候选父行数={1}"),
 
     /**
