@@ -1,8 +1,8 @@
-ï»¿<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.erp.server.tms.mapper.CfgFileParseFolderMapper">
-    <!-- é€šç”¨æŸ¥è¯¢æ˜ å°„ç»“æœ -->
-    <resultMap id="BaseResultMap" type="com.erp.model.tms.entity.CfgFileParseFolderEntity">
+<mapper namespace="com.erp.server.dmp.mapper.CfgFileParseFolderMapper">
+    <!-- Í¨ÓÃ²éÑ¯Ó³Éä½á¹û -->
+    <resultMap id="BaseResultMap" type="com.erp.model.dmp.entity.CfgFileParseFolderEntity">
        <result column="id" property="id" />
        <result column="create_user_id" property="createUserId" />
        <result column="create_user_name" property="createUserName" />
@@ -20,7 +20,7 @@
        <result column="sort" property="sort" />
     </resultMap>
 
-    <!-- é€šç”¨æŸ¥è¯¢ç»“æœåˆ— -->
+    <!-- Í¨ÓÃ²éÑ¯½á¹ûÁĞ -->
     <sql id="Base_Column_List">
         id,
         create_user_id,

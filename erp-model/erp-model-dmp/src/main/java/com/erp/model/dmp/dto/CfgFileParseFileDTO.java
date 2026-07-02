@@ -1,10 +1,10 @@
-package com.erp.model.tms.dto;
+package com.erp.model.dmp.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.dto.base.SuperDTO;
 import com.common.core.anno.StateEnumValue;
-import com.erp.model.tms.enums.CfgFileParseFileTypeEnum;
+import com.erp.model.dmp.enums.CfgFileParseFileTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

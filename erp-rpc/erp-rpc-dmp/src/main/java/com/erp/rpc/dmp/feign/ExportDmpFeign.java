@@ -56,6 +56,9 @@ public interface ExportDmpFeign {
     @PostMapping("/feign/export/exportDmpOutputTask")
     PagingVO<DmpOutputTaskDTO.ListDTO> exportDmpOutputTask(@RequestBody @Validated PagingDTO<DmpOutputTaskDTO.ExportDTO> dto);
 
+    @PostMapping("/feign/export/exportDmpCfgFileParse")
+    PagingVO<CfgFileParseDTO.ListDTO> exportDmpCfgFileParse(@RequestBody PagingDTO<CfgFileParseDTO.ExportDTO> dto);
+
     @PostMapping("/feign/export/exportRestcloudPushTask")
     PagingVO<DmpOutputTaskRecordDTO.PagingDTO> exportRestcloudPushTask(@RequestBody PagingDTO<DmpOutputTaskRecordDTO.ExpotParamDTO> dto);
 

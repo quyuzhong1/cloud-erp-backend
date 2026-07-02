@@ -1,4 +1,4 @@
-package com.erp.model.tms.entity;
+package com.erp.model.dmp.entity;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;

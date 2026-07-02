@@ -1,4 +1,4 @@
-package com.erp.model.tms.enums;
+package com.erp.model.dmp.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.core.constant.EnumMessage;
@@ -6,14 +6,13 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
 
 /**
- * 月结文件解析配置数据来源枚举。
+ * 月结文件解析配置清洗时间枚举。
  *
  * @author jack
  * @since 2026-06-29
  */
-public enum CfgFileParseFileTypeEnum implements EnumMessage {
-    API("api", "API"),
-    EXCEL("excel", "Excel");
+public enum CfgFileParsePeriodTypeEnum implements EnumMessage {
+    MONTHLY("monthly", "每月");
 
     /**
      * 编码。
@@ -26,7 +25,7 @@ public enum CfgFileParseFileTypeEnum implements EnumMessage {
      */
     private final String name;
 
-    CfgFileParseFileTypeEnum(String code, String name) {
+    CfgFileParsePeriodTypeEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
@@ -51,7 +50,7 @@ public enum CfgFileParseFileTypeEnum implements EnumMessage {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (CfgFileParseFileTypeEnum item : CfgFileParseFileTypeEnum.values()) {
+        for (CfgFileParsePeriodTypeEnum item : CfgFileParsePeriodTypeEnum.values()) {
             if (code.equals(item.getCode())) {
                 return item.getName();
             }

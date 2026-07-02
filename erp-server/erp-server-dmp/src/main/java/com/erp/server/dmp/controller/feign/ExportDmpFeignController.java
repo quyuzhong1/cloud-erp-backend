@@ -50,6 +50,8 @@ public class ExportDmpFeignController {
     @Resource
     private DmpOutputTaskService dmpOutputTaskService;
     @Resource
+    private CfgFileParseService cfgFileParseService;
+    @Resource
     private AdsPushTaskService adsPushTaskService;
     @Resource
     private CfgDiffStrategyService cfgDiffStrategyService;
@@ -162,6 +164,12 @@ public class ExportDmpFeignController {
     @WebAdvanceQuery(handler = DmpOutputTaskQueryHandler.class)
     public PagingVO<DmpOutputTaskDTO.ListDTO> exportDmpOutputTask(@RequestBody @Validated PagingDTO<DmpOutputTaskDTO.PagingParamDTO> dto) {
         return dmpOutputTaskService.paging(dto);
+    }
+
+    @PostMapping("/exportDmpCfgFileParse")
+    @WebAdvanceQuery(handler = CfgFileParseQueryHandler.class)
+    public PagingVO<CfgFileParseDTO.ListDTO> exportDmpCfgFileParse(@RequestBody PagingDTO<CfgFileParseDTO.ExportDTO> dto) {
+        return cfgFileParseService.exportPaging(dto);
     }
 
     @PostMapping("/exportRestcloudPushTask")

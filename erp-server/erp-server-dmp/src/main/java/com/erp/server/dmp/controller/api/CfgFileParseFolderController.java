@@ -1,4 +1,4 @@
-package com.erp.server.tms.controller.api;
+package com.erp.server.dmp.controller.api;
 
 
 import lombok.extern.slf4j.Slf4j;
@@ -14,7 +14,7 @@ import com.common.business.dto.base.*;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.common.core.controller.BaseController;
-import com.erp.server.tms.service.CfgFileParseFileService;
+import com.erp.server.dmp.service.CfgFileParseFolderService;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
@@ -22,22 +22,24 @@ import com.common.business.dto.ApproveDTO;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
-import com.erp.model.tms.dto.CfgFileParseFileDTO;
+import com.erp.model.dmp.dto.CfgFileParseFolderDTO;
 import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 import java.util.stream.Collectors;
-import com.erp.model.tms.entity.CfgFileParseFileEntity;
+import com.erp.model.dmp.entity.CfgFileParseFolderEntity;
 
 /**
- * 清洗配置-文件识别规则子表
+ * 清洗配置-文件夹映射子表
  *
  * @author jack
  * @since 2026-06-29
  */
 @Slf4j
 @RestController
-@LogSystemModule("清洗配置-文件识别规则子表")
-@RequestMapping("/cfgFileParseFile")
-public class CfgFileParseFileController extends BaseController {
+@LogSystemModule("清洗配置-文件夹映射子表")
+@RequestMapping("/cfgFileParseFolder")
+public class CfgFileParseFolderController extends BaseController {
+
+
 
 }
