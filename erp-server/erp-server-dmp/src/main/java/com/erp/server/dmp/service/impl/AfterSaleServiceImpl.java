@@ -241,7 +241,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 .orderByDesc(DmpSoInfoEntity::getCreateTime)
                 .last("limit 1")
                 .one();
-        // 直接根据店铺匹配，不需要平台正确
+        // 【需求】优先按旺店通订单店铺匹配售后人员：dmp_so_info.shopId → third_shop → third_mapping → 系统店铺
         if (Objects.nonNull(dmpSoInfoEntity)) {
             List<CfgAfterPlatformShopDTO.CsAgentDTO> csAgentDTOList = cfgAfterPlatformShopService.matchCsAgent(addDTO.getDictPlatform(), dmpSoInfoEntity.getShopId());
             if (!csAgentDTOList.isEmpty()) {
@@ -255,6 +255,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 afterSaleEntity.setCsAgentName(names);
             }
         } else {
+            // 【需求】未找到旺店通订单时，按平台兜底匹配售后人员
             log.warn("未找到旺店通订单，按平台兜底匹配售后人员，platformCode={}", platformCode);
             ThirdMappingEntity thirdMapping = thirdMappingService.lambdaQuery()
                     .eq(ThirdMappingEntity::getThirdSysType, ThirdMappingSystemEnum.ERP.getCode())
