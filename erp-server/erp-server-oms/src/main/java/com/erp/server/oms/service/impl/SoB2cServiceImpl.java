@@ -356,6 +356,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Resource
     private TransferLogisticsFeign transferLogisticsFeign;
 
+    /**
+     * 自注入代理，供同类内需要独立事务的方法（如 {@link #doDeleteSingleB2cSo}）通过代理调用，
+     * 使 {@code @Transactional} 生效。禁止改为 {@code this.xxx()} 或直接注入非代理对象。
+     */
     @Resource
     @Lazy
     private SoB2cServiceImpl soB2cService;
@@ -781,7 +785,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<String> successCodeList = new ArrayList<>();
         List<String> skipCodeList = new ArrayList<>();
 
-        // 每个订单一个独立事务，单条失败不影响其他订单
+        // 每个订单一个独立事务，单条失败不影响其他订单；须通过 soB2cService 代理调用，不可使用 this
         for (SoB2cEntity entity : toDeleteList) {
             try {
                 BatchResultDTO result = soB2cService.deleteSingleB2cSo(entity, logisticsMap.get(entity.getId()));
@@ -807,20 +811,31 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     /**
-     * 删除单条B2C销售订单（每条订单独立事务，供 {@link #deleteB2cSoJob()} 调用）。
-     * 必须通过 Spring 代理（注入的 soB2cService）调用，否则事务失效。
+     * 删除单条B2C销售订单（供 {@link #deleteB2cSoJob()} 调用）。
+     * 先取消物流（含 Feign，独立事务），再删除订单（独立事务），避免远程调用占用本地删单事务。
+     */
+    public BatchResultDTO deleteSingleB2cSo(SoB2cEntity entity, SoB2cLogisticsEntity logisticsEntity) {
+        BatchResultDTO cancelResult = cancelLogisticsIfNeeded(entity, logisticsEntity);
+        if (!cancelResult.getSuccess()) {
+            return cancelResult;
+        }
+        return soB2cService.doDeleteSingleB2cSo(entity);
+    }
+
+    /**
+     * 删除单条B2C销售订单的数据库操作（每条订单独立事务，供 {@link #deleteSingleB2cSo} 调用）。
      */
     @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO deleteSingleB2cSo(SoB2cEntity entity, SoB2cLogisticsEntity logisticsEntity) {
-        BatchResultDTO validateResult = validateForDelete(entity, logisticsEntity);
-        if (!validateResult.getSuccess()) {
-            return validateResult;
-        }
+    public BatchResultDTO doDeleteSingleB2cSo(SoB2cEntity entity) {
         this.deleteById(Collections.singletonList(entity.getId()), entity.getCode());
         return BatchResultDTO.success(entity.getId(), entity.getCode());
     }
 
-    private BatchResultDTO validateForDelete(SoB2cEntity entity, SoB2cLogisticsEntity logisticsEntity) {
+    /**
+     * 删除前按需取消物流单（有副作用，非纯校验）。
+     * cancelLogistic 内含 Feign 远程调用，须在删单事务外执行。
+     */
+    private BatchResultDTO cancelLogisticsIfNeeded(SoB2cEntity entity, SoB2cLogisticsEntity logisticsEntity) {
         if (Objects.nonNull(logisticsEntity)) {
             if (CharSequenceUtil.isNotBlank(logisticsEntity.getCode()) ||
                 CharSequenceUtil.isNotBlank(logisticsEntity.getTrackNo()) ||
@@ -833,7 +848,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         return BatchResultDTO.fail(entity.getId(), entity.getCode(), resultDTO.getMsg());
                     }
                 } catch (Exception e) {
-                    log.error("B2C销售订单【{}】校验删除条件时取消物流单失败", entity.getCode(), e);
+                    log.error("B2C销售订单【{}】删除前取消物流单失败", entity.getCode(), e);
                     return BatchResultDTO.fail(entity.getId(), entity.getCode(), "取消物流单失败，请联系物流同事处理");
                 }
             }
