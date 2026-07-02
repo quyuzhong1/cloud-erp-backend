@@ -36,7 +36,7 @@ import com.erp.rpc.dmp.feign.DmpBasicSystemFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.server.dmp.mapper.CfgFileParseMapper;
-import com.erp.server.dmp.service.CommonService;
+import com.erp.server.dmp.push.service.CommonService;
 import com.erp.server.dmp.service.CfgFileParseFileService;
 import com.erp.server.dmp.service.CfgFileParseFolderService;
 import com.erp.server.dmp.service.CfgFileParseService;
