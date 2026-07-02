@@ -47,7 +47,7 @@ public class ReleaseAwareRibbonRule extends AbstractLoadBalancerRule {
         List<Server> candidates = filterByRelease(reachableServers);
         if (candidates.isEmpty()) {
             // filterByRelease 已对「无 release 元数据」的老实例做兼容回退；走到这里表示存在
-            // 可比较 release 元数据但没有命中 active 发布版本，故意 fail-closed，避免跨蓝绿版本调用。
+            // 存在 release 元数据但没有命中 active 发布版本，故意 fail-closed，避免跨蓝绿版本调用。
             // 这里依赖发布流程保证 active-color/version 先于流量切换配置正确，不在代码内自动降级混调。
             log.warn("No active release instance found for client={}, loadBalancer={}, activeColor={}, activeVersion={}, reachableServers={}",
                     clientName, loadBalancer, getActiveColor(), getActiveVersion(), reachableServers);
@@ -71,11 +71,12 @@ public class ReleaseAwareRibbonRule extends AbstractLoadBalancerRule {
         String activeColor = getActiveColor();
         String activeVersion = getActiveVersion();
         if (!hasText(activeColor) && !hasText(activeVersion)) {
+            // 未配置发布规则时保持原始 Ribbon 行为，避免非蓝绿环境因实例已带标签而被误拦截。
             return servers;
         }
 
         List<Server> matched = new ArrayList<>();
-        boolean hasComparableMetadata = false;
+        boolean hasReleaseMetadata = false;
         for (Server server : servers) {
             Map<String, String> metadata = getMetadata(server);
             if (metadata.isEmpty()) {
@@ -90,16 +91,16 @@ public class ReleaseAwareRibbonRule extends AbstractLoadBalancerRule {
             // release 元数据别名需与 Gateway 入口负载均衡保持一致，避免入口流量和 Feign 调用切色语义不同。
             String releaseColor = firstText(metadata, "release.color", "release-color", "releaseColor", "color");
             String releaseVersion = firstText(metadata, "release.version", "release-version", "releaseVersion");
-            if (hasComparableReleaseMetadata(activeColor, activeVersion, releaseColor, releaseVersion)) {
-                hasComparableMetadata = true;
+            if (hasAnyReleaseMetadata(releaseColor, releaseVersion)) {
+                hasReleaseMetadata = true;
             }
             if (matchesRelease(activeColor, activeVersion, releaseColor, releaseVersion)) {
                 matched.add(server);
             }
         }
 
-        if (matched.isEmpty() && !hasComparableMetadata) {
-            // 兼容未接入 release 元数据的存量实例：没有任何可比较标签时不强制切流。
+        if (matched.isEmpty() && !hasReleaseMetadata) {
+            // 兼容未接入 release 元数据的存量实例：没有任何 release 标签时不强制切流。
             log.warn("No release metadata found for client={}, fallback to reachable servers, activeColor={}, activeVersion={}",
                     clientName, activeColor, activeVersion);
             return servers;
@@ -201,10 +202,8 @@ public class ReleaseAwareRibbonRule extends AbstractLoadBalancerRule {
         return hasActiveRule;
     }
 
-    private boolean hasComparableReleaseMetadata(String activeColor, String activeVersion,
-                                                 String releaseColor, String releaseVersion) {
-        return (hasText(activeColor) && hasText(releaseColor))
-                || (hasText(activeVersion) && hasText(releaseVersion));
+    private boolean hasAnyReleaseMetadata(String releaseColor, String releaseVersion) {
+        return hasText(releaseColor) || hasText(releaseVersion);
     }
 
     private String normalizeServiceName(String serviceName) {

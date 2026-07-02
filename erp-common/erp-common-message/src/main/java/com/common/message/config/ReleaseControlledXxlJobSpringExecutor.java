@@ -23,6 +23,7 @@ public class ReleaseControlledXxlJobSpringExecutor extends XxlJobSpringExecutor
     private static final String LOCAL_COLOR_KEY = "release.color";
     private static final String ACTIVE_VERSION_KEY = "release.active-version";
     private static final String LOCAL_VERSION_KEY = "release.version";
+    // common-message 不直接绑定 spring-cloud-context；用类名识别 Nacos 刷新事件，避免公共消息模块新增传递依赖。
     private static final String ENVIRONMENT_CHANGE_EVENT = "org.springframework.cloud.context.environment.EnvironmentChangeEvent";
 
     private final AtomicBoolean executorStarted = new AtomicBoolean(false);

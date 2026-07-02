@@ -124,7 +124,7 @@ public class ReleaseAwareGatewayLoadBalancerFilter
         ReleaseMatchResult matchResult = filterByRelease(instances, activeColor, activeVersion);
         if (matchResult.matchedInstances.isEmpty()) {
             // filterByRelease 已对「无 release 元数据」的老实例做兼容回退；走到这里表示存在
-            // 可比较 release 元数据但没有命中 active 发布版本，网关侧返回 503，避免跨蓝绿版本转发。
+            // 存在 release 元数据但没有命中 active 发布版本，网关侧返回 503，避免跨蓝绿版本转发。
             log.warn("No active release instance found for gateway service={}, activeColor={}, activeVersion={}",
                     serviceId, activeColor, activeVersion);
             exchange.getResponse().setStatusCode(HttpStatus.SERVICE_UNAVAILABLE);
@@ -142,9 +142,13 @@ public class ReleaseAwareGatewayLoadBalancerFilter
         if (instances == null || instances.isEmpty()) {
             return new ReleaseMatchResult(Collections.emptyList());
         }
+        if (!hasText(activeColor) && !hasText(activeVersion)) {
+            // 未配置发布规则时保持原始负载均衡行为，避免非蓝绿环境因实例已带标签而被误拦截。
+            return new ReleaseMatchResult(instances);
+        }
 
         List<ServiceInstance> matched = new ArrayList<>();
-        boolean hasComparableMetadata = false;
+        boolean hasReleaseMetadata = false;
         for (ServiceInstance instance : instances) {
             Map<String, String> metadata = instance.getMetadata();
             if (metadata == null || metadata.isEmpty()) {
@@ -154,15 +158,15 @@ public class ReleaseAwareGatewayLoadBalancerFilter
             // release 元数据别名需与 ReleaseAwareRibbonRule 保持一致，避免入口流量和 Feign 调用切色语义不同。
             String releaseColor = firstText(metadata, "release.color", "release-color", "releaseColor", "color");
             String releaseVersion = firstText(metadata, "release.version", "release-version", "releaseVersion");
-            if (hasComparableReleaseMetadata(activeColor, activeVersion, releaseColor, releaseVersion)) {
-                hasComparableMetadata = true;
+            if (hasAnyReleaseMetadata(releaseColor, releaseVersion)) {
+                hasReleaseMetadata = true;
             }
             if (matchesRelease(activeColor, activeVersion, releaseColor, releaseVersion)) {
                 matched.add(instance);
             }
         }
-        if (matched.isEmpty() && !hasComparableMetadata) {
-            // 兼容未接入 release 元数据的存量实例：没有任何可比较标签时不强制切流。
+        if (matched.isEmpty() && !hasReleaseMetadata) {
+            // 兼容未接入 release 元数据的存量实例：没有任何 release 标签时不强制切流。
             log.warn("No release metadata found for gateway activeColor={}, activeVersion={}, fallback to all instances",
                     activeColor, activeVersion);
             return new ReleaseMatchResult(instances);
@@ -216,10 +220,8 @@ public class ReleaseAwareGatewayLoadBalancerFilter
         return hasActiveRule;
     }
 
-    private boolean hasComparableReleaseMetadata(String activeColor, String activeVersion,
-                                                 String releaseColor, String releaseVersion) {
-        return (hasText(activeColor) && hasText(releaseColor))
-                || (hasText(activeVersion) && hasText(releaseVersion));
+    private boolean hasAnyReleaseMetadata(String releaseColor, String releaseVersion) {
+        return hasText(releaseColor) || hasText(releaseVersion);
     }
 
     private boolean hasText(String value) {
