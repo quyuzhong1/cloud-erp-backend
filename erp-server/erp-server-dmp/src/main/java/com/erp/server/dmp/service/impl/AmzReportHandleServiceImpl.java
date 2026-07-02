@@ -165,6 +165,12 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
     private AmzReportHandleServiceImpl self;
 
 
+    /**
+     * 手动拉取 FBA 货件（WMS {@code pullShipment} Feign 入口）。
+     * <p>
+     * 审查问题6（intentional）：新 DMP 分支 success 仅表示 NORMAL 任务已创建并提交线程池异步执行，
+     * 不代表 Amazon 货件已同步落库；Init fail-fast 体现在 dmp_input_task 状态，前端应提示「任务已提交，请稍后刷新」。
+     */
     @Override
     public Boolean pullShipment(DmpPullShipmentDTO dto) {
         if (CollectionUtils.isEmpty(dto.getShipmentCodeList())){
@@ -180,7 +186,10 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
 
         // 审查问题2（intentional）：新 DMP 开启时 billType 见 resolveFbaShipmentPullBillType，默认走 Inbound Plan 链路
         if (isNewDmpPullEnabled()) {
-            return self.pullShipmentTransactional(dto, shopInfoDTO, shopId);
+            // 审查问题6（intentional）：事务内仅创建任务；事务提交后再异步执行，避免 dealInputTask 读未提交数据
+            List<DmpInputTaskEntity> createdTaskList = self.pullShipmentTransactional(dto, shopInfoDTO, shopId);
+            submitInputTaskAsync(createdTaskList);
+            return true;
         }
         // 历史分支：SP-API 在事务外拉取，事务内仅落库/推送
         List<PlatformAmazonFbaShipmentDTO> amazonFbaShipmentDTOList =
@@ -198,14 +207,22 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
     }
 
     /**
-     * 审查问题3（intentional）：仅创建 hotfix 任务并同步返回，Amazon 拉取在异步 Init 链执行；
-     * WMS/Feign 侧 success 表示任务已提交，不代表货件已落库，Init fail-fast 异常体现在任务状态。
+     * 事务内仅创建 NORMAL 类型输入任务并返回创建结果；Amazon 拉取由调用方在事务提交后异步触发。
+     * <p>
+     * 审查问题6（intentional）：WMS/Feign 侧 success 表示任务已提交线程池，不代表货件已落库；
+     * Init fail-fast（未命中货件号、429 限流等）体现在 dmp_input_task 状态，前端应提示「任务已提交，请稍后刷新」。
      */
     @Transactional(rollbackFor = Exception.class)
-    public Boolean pullShipmentTransactional(DmpPullShipmentDTO dto, AmazonShopInfoDTO shopInfoDTO, String shopId) {
+    public List<DmpInputTaskEntity> pullShipmentTransactional(DmpPullShipmentDTO dto, AmazonShopInfoDTO shopInfoDTO, String shopId) {
         return newDmpPullShipment(dto, shopInfoDTO);
     }
 
+    /**
+     * 手动拉取 FBA 入库计划货件（WMS {@code pullInboundPlanShipment} Feign 入口）。
+     * <p>
+     * 审查问题6（intentional）：同 {@link #pullShipment} 新 DMP 分支，接口 success 仅表示任务已创建并提交异步执行，
+     * 不代表 Amazon 货件已同步落库；拉取结果请查看 DMP 任务状态或稍后刷新 WMS 货件列表。
+     */
     @Override
     public Boolean pullInboundPlanShipment(DmpPullShipmentDTO dto) {
         if (CollectionUtils.isEmpty(dto.getShipmentCodeList())) {
@@ -216,14 +233,17 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
         if (null == shopInfoDTO) {
             throw new ServiceException("未找到店铺授权:" + shopId);
         }
-        return self.pullInboundPlanShipmentTransactional(dto, shopInfoDTO);
+        // 审查问题6（intentional）：事务内仅创建任务；事务提交后再异步执行，避免 dealInputTask 读未提交数据
+        List<DmpInputTaskEntity> createdTaskList = self.pullInboundPlanShipmentTransactional(dto, shopInfoDTO);
+        submitInputTaskAsync(createdTaskList);
+        return true;
     }
 
     /**
-     * 审查问题3（intentional）：同 {@link #pullShipmentTransactional}，hotfix 异步执行，接口返回仅表示任务创建成功。
+     * 事务内仅创建 NORMAL 类型输入任务并返回创建结果；实际执行由调用方在事务提交后异步触发。
      */
     @Transactional(rollbackFor = Exception.class)
-    public Boolean pullInboundPlanShipmentTransactional(DmpPullShipmentDTO dto, AmazonShopInfoDTO shopInfoDTO) {
+    public List<DmpInputTaskEntity> pullInboundPlanShipmentTransactional(DmpPullShipmentDTO dto, AmazonShopInfoDTO shopInfoDTO) {
         return newDmpPullInboundPlanShipment(dto, shopInfoDTO);
     }
 
@@ -746,9 +766,9 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
      * {@code shipmentCodeList} 非空时写入 hotfix extendJson，与入库计划入口共用
      * {@link com.erp.server.dmp.inout.handler.input.task.init.DmpInputAmzCommonInitHandler#hasManualShipmentCodeFilter()} fail-fast 策略。
      * 审查问题2（intentional）：billType 为 fba_inbound_plans 时同样受 listInboundPlans + lookbackMinutes 约束。
-     * 审查问题3（intentional）：hotfix 任务异步执行 Init 链，本方法 return true 仅表示任务已创建。
+     * 本方法仅创建 NORMAL 类型任务并返回创建结果，异步执行由 {@link #submitInputTaskAsync} 在事务提交后触发。
      */
-    public boolean newDmpPullShipment(DmpPullShipmentDTO dto, AmazonShopInfoDTO shopInfoDTO) {
+    public List<DmpInputTaskEntity> newDmpPullShipment(DmpPullShipmentDTO dto, AmazonShopInfoDTO shopInfoDTO) {
         // 当前账号所有店铺ID
         List<String> sameAccountShopIds = shopInfoDTO.getMarketplaceShopIdMap().values()
                 .stream()
@@ -783,8 +803,8 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
         dmpInputHotfixCreateRequest.setCfgInputId(inputEntity.getId());
         dmpInputHotfixCreateRequest.setDetailExtendJson(JSON.toJSONString(dto));
         dmpInputHotfixCreateRequest.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
-        dmpInputCreateFactory.doHotfixInputTask(dmpInputHotfixCreateRequest);
-        return true;
+        DmpInputCreateResponse dmpInputCreateResponse = dmpInputCreateFactory.createHotfixInputTask(dmpInputHotfixCreateRequest);
+        return dmpInputCreateResponse.getAfterDmpInputTaskEntityList();
     }
 
     /**
@@ -821,11 +841,11 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
      * 旧 {@code getShipments(shipmentIdList)} 可按货件号直查；窗口外计划下的指定货件可能拉不到，勿当缺陷修复。
      * {@code shipmentCodeList} 非空时与 {@link #newDmpPullShipment} 共用
      * {@link com.erp.server.dmp.inout.handler.input.task.init.DmpInputAmzCommonInitHandler#hasManualShipmentCodeFilter()} fail-fast 策略。
-     * 审查问题3（intentional）：同 {@link #newDmpPullShipment}，接口同步返回 true，实际拉取由 hotfix 任务异步完成。
+     * 本方法仅创建 NORMAL 类型任务并返回创建结果，异步执行由 {@link #submitInputTaskAsync} 在事务提交后触发。
      * 审查问题4（intentional）：{@code initConvertEntity} 查询使用 LIMIT 1，依赖 dmp_cfg_input_convert 中
      * {@link DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler#CONVERT_CLASS} 对应记录生产唯一；发布前须 SQL 核对，勿当代码缺陷修复。
      */
-    private boolean newDmpPullInboundPlanShipment(DmpPullShipmentDTO dto, AmazonShopInfoDTO shopInfoDTO) {
+    private List<DmpInputTaskEntity> newDmpPullInboundPlanShipment(DmpPullShipmentDTO dto, AmazonShopInfoDTO shopInfoDTO) {
         List<String> sameAccountShopIds = shopInfoDTO.getMarketplaceShopIdMap().values()
                 .stream()
                 .map(AmazonShopInfoDTO.ShopNameDTO::getShopId)
@@ -865,8 +885,35 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
         dmpInputHotfixCreateRequest.setCfgInputId(inputEntity.getId());
         dmpInputHotfixCreateRequest.setDetailExtendJson(JSON.toJSONString(dto));
         dmpInputHotfixCreateRequest.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
-        dmpInputCreateFactory.doHotfixInputTask(dmpInputHotfixCreateRequest);
-        return true;
+        DmpInputCreateResponse dmpInputCreateResponse = dmpInputCreateFactory.createHotfixInputTask(dmpInputHotfixCreateRequest);
+        return dmpInputCreateResponse.getAfterDmpInputTaskEntityList();
+    }
+
+    /**
+     * 事务提交后将已创建的输入任务提交线程池异步执行，与 UAT 早期 pullShipment 及
+     * {@link com.erp.server.dmp.controller.feign.DmpInoutTaskFeignController} 模式一致。
+     * <p>
+     * 仅对 execSystem=DMP 的任务立即异步执行，非 DMP（如 RestCloud）由其自身调度执行。
+     * <p>
+     * 审查问题5（intentional）：{@code createdTaskList} 为空或无非 DMP 可执行任务时静默 return，
+     * 与 DmpInoutTaskFeignController 一致；配置校验已在 create 前完成，Amazon 店铺正常路径下应有 DMP 任务。
+     * 若 execSystem 为 RestCloud，任务由 RestCloud 侧调度，本方法不立即 execute 属预期行为。
+     */
+    private void submitInputTaskAsync(List<DmpInputTaskEntity> createdTaskList) {
+        if (CollUtil.isEmpty(createdTaskList)) {
+            return;
+        }
+        for (DmpInputTaskEntity dmpInputTaskEntity : createdTaskList) {
+            if (!CharSequenceUtil.equals(dmpInputTaskEntity.getExecSystem(), DmpCfgInputExecSystemEnum.DMP.getCode())) {
+                continue;
+            }
+            dmpInputExecutorPool.execute(() -> {
+                DmpInputFinishRequest dmpInputFinishRequest = new DmpInputFinishRequest();
+                dmpInputFinishRequest.setInputTaskId(dmpInputTaskEntity.getId());
+                dmpInputFinishRequest.setExecTimeout(dmpInputTaskEntity.getExecTimeout());
+                dmpInputTaskFactory.dealInputTask(dmpInputFinishRequest);
+            });
+        }
     }
 
     private void clearFbaShipmentDataEncrypt(List<String> shipmentCodeList) {
