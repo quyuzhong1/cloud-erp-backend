@@ -2030,11 +2030,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             //销售单价(本位币)
             item.setCnyPrice(MathUtil.multiplyWithTwo(price, exchangeRate,4));
 
-            // 含税单价优先价税合计/实发数量，避免不含税单价反算含税时的精度丢失
-            BigDecimal taxPrice = resolvePagingTaxUnitPrice(price, taxRate, item.getTaxAmount(), item.getActualQty());
+            // B2C 落库 tax_amount=价税合计；B2B 落库 tax_amount=行税额，需与不含税单价相加
+            BigDecimal taxPrice = resolvePagingTaxUnitPrice(price, taxRate, item.getTaxAmount(), item.getActualQty(), item.getOrderType());
             item.setTaxPrice(taxPrice);
             //含税单价(本位币)
-            item.setCnyTaxPrice(resolvePagingCnyTaxUnitPrice(taxPrice, exchangeRate, item.getAllAmountLocalCurrency(), item.getActualQty()));
+            item.setCnyTaxPrice(resolvePagingCnyTaxUnitPrice(taxPrice, exchangeRate, item.getCnyPrice(),
+                    item.getAllAmountLocalCurrency(), item.getActualQty(), item.getOrderType()));
             item.setCurrency(item.getCurrency());
             item.setCurrencySymbol(item.getCurrencySymbol());
 
@@ -2059,29 +2060,38 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     }
 
     /**
-     * 列表含税单价：优先价税合计/实发数量（与落库金额一致），否则回退为不含税单价*(1+税率)。
+     * 列表含税单价：B2C 优先价税合计/实发数量；B2B 优先不含税单价+行税额/实发数量；否则回退为不含税单价*(1+税率)。
      */
-    private BigDecimal resolvePagingTaxUnitPrice(BigDecimal price, BigDecimal taxRate, BigDecimal taxAmount, Integer actualQty) {
+    private BigDecimal resolvePagingTaxUnitPrice(BigDecimal price, BigDecimal taxRate, BigDecimal taxAmount,
+                                                 Integer actualQty, String orderType) {
         if (Objects.nonNull(taxAmount) && Objects.nonNull(actualQty) && actualQty > 0
                 && taxAmount.compareTo(BigDecimal.ZERO) > 0) {
-            return MathUtil.divide(taxAmount, BigDecimal.valueOf(actualQty), 4);
+            BigDecimal perQtyAmount = MathUtil.divide(taxAmount, BigDecimal.valueOf(actualQty), 4);
+            if (BillTypeEnum.B2C.getCode().equals(orderType)) {
+                return perQtyAmount;
+            }
+            return MathUtil.add(Objects.nonNull(price) ? price : BigDecimal.ZERO, perQtyAmount).setScale(4, RoundingMode.HALF_UP);
         }
         if (Objects.isNull(price)) {
             return BigDecimal.ZERO;
         }
         BigDecimal flagTaxRate = MathUtil.divide(Objects.nonNull(taxRate) ? taxRate : BigDecimal.ZERO, MathUtil.BigDecimal_100);
-        BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
-        return MathUtil.multiplyWithTwo(price, multiplyTax, 4);
+        return MathUtil.getTaxValue(price, flagTaxRate, 4);
     }
 
     /**
-     * 列表含税单价(本位币)：优先价税合计本位币/实发数量，否则回退为含税单价*汇率。
+     * 列表含税单价(本位币)：B2C 优先价税合计本位币/实发数量；B2B 优先销售单价(本位币)+税额本位币/实发数量；否则回退为含税单价*汇率。
      */
-    private BigDecimal resolvePagingCnyTaxUnitPrice(BigDecimal taxPrice, BigDecimal exchangeRate,
-                                                    BigDecimal allAmountLocalCurrency, Integer actualQty) {
+    private BigDecimal resolvePagingCnyTaxUnitPrice(BigDecimal taxPrice, BigDecimal exchangeRate, BigDecimal cnyPrice,
+                                                    BigDecimal allAmountLocalCurrency, Integer actualQty, String orderType) {
         if (Objects.nonNull(allAmountLocalCurrency) && Objects.nonNull(actualQty) && actualQty > 0
                 && allAmountLocalCurrency.compareTo(BigDecimal.ZERO) > 0) {
-            return MathUtil.divide(allAmountLocalCurrency, BigDecimal.valueOf(actualQty), 4);
+            BigDecimal perQtyLocalAmount = MathUtil.divide(allAmountLocalCurrency, BigDecimal.valueOf(actualQty), 4);
+            if (BillTypeEnum.B2C.getCode().equals(orderType)) {
+                return perQtyLocalAmount;
+            }
+            return MathUtil.add(Objects.nonNull(cnyPrice) ? cnyPrice : BigDecimal.ZERO, perQtyLocalAmount)
+                    .setScale(4, RoundingMode.HALF_UP);
         }
         return MathUtil.multiplyWithTwo(taxPrice, exchangeRate, 4);
     }
