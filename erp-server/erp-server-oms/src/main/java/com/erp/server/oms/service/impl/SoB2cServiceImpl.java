@@ -763,13 +763,23 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             return;
         }
 
+        // 循环外批量预取物流单，避免逐条 getByMainId 造成 N+1 查询
+        List<String> deleteIdList = toDeleteList.stream().map(SoB2cEntity::getId).collect(Collectors.toList());
+        Map<String, SoB2cLogisticsEntity> logisticsMap = new HashMap<>(deleteIdList.size());
+        int batchSize = 1000;
+        for (int i = 0; i < deleteIdList.size(); i += batchSize) {
+            List<String> batchIds = deleteIdList.subList(i, Math.min(i + batchSize, deleteIdList.size()));
+            soB2cLogisticsService.listByMainIds(batchIds).forEach(logisticsEntity ->
+                    logisticsMap.putIfAbsent(logisticsEntity.getMainId(), logisticsEntity));
+        }
+
         List<String> successCodeList = new ArrayList<>();
         List<String> skipCodeList = new ArrayList<>();
 
         // 每个订单一个独立事务，单条失败不影响其他订单
         for (SoB2cEntity entity : toDeleteList) {
             try {
-                BatchResultDTO result = soB2cService.deleteSingleB2cSo(entity);
+                BatchResultDTO result = soB2cService.deleteSingleB2cSo(entity, logisticsMap.get(entity.getId()));
                 if (result.getSuccess()) {
                     successCodeList.add(entity.getCode());
                 } else {
@@ -796,8 +806,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * 必须通过 Spring 代理（注入的 soB2cService）调用，否则事务失效。
      */
     @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO deleteSingleB2cSo(SoB2cEntity entity) {
-        BatchResultDTO validateResult = validateForDelete(entity);
+    public BatchResultDTO deleteSingleB2cSo(SoB2cEntity entity, SoB2cLogisticsEntity logisticsEntity) {
+        BatchResultDTO validateResult = validateForDelete(entity, logisticsEntity);
         if (!validateResult.getSuccess()) {
             return validateResult;
         }
@@ -805,8 +815,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return BatchResultDTO.success(entity.getId(), entity.getCode());
     }
 
-    private BatchResultDTO validateForDelete(SoB2cEntity entity) {
-        SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsService.getByMainId(entity.getId());
+    private BatchResultDTO validateForDelete(SoB2cEntity entity, SoB2cLogisticsEntity logisticsEntity) {
         if (Objects.nonNull(logisticsEntity)) {
             if (CharSequenceUtil.isNotBlank(logisticsEntity.getCode()) ||
                 CharSequenceUtil.isNotBlank(logisticsEntity.getTrackNo()) ||
