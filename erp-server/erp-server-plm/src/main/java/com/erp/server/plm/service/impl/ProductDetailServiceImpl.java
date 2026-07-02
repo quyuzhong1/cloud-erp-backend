@@ -5458,6 +5458,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<BasicDictEntity> dictList = basicDictService.listByType(BasicDictTypeEnum.INSURANCE_PROPERTY.getCode());
         Map<String, BasicDictEntity>  insurancePropertyMap = dictList.stream()
                 .collect(Collectors.toMap(BasicDictEntity::getName, entity -> entity));
+        List<BasicDictEntity> declareUnitList = basicDictService.listByType(BasicDictTypeEnum.DECLARE_UNIT.getCode());
 
         // 获取国家列表并缓存
         List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
@@ -5663,6 +5664,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     } else {
                         declarePropertyList.add(declareProperty);
                     }
+                }
+            }
+
+            if (StringUtils.isNotBlank(dto.getDeclareUnit())) {
+                try {
+                    dto.setDeclareUnit(productLogisticsService.convertDeclareUnitToValue(dto.getDeclareUnit(), declareUnitList));
+                } catch (ServiceException e) {
+                    errorMsgList.add(e.getMessage());
                 }
             }
 
@@ -6388,6 +6397,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<BasicDictEntity> dictList = basicDictService.listByType(BasicDictTypeEnum.INSURANCE_PROPERTY.getCode());
         Map<String, BasicDictEntity>  insurancePropertyMap = dictList.stream()
                 .collect(Collectors.toMap(BasicDictEntity::getName, entity -> entity));
+        List<BasicDictEntity> declareUnitList = basicDictService.listByType(BasicDictTypeEnum.DECLARE_UNIT.getCode());
 
         // 获取国家列表并缓存
         List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
@@ -6548,6 +6558,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     }
                 }
 
+            }
+
+            if (StringUtils.isNotBlank(dto.getDeclareUnit())) {
+                try {
+                    dto.setDeclareUnit(productLogisticsService.convertDeclareUnitToValue(dto.getDeclareUnit(), declareUnitList));
+                } catch (ServiceException e) {
+                    errorMsgList.add(e.getMessage());
+                }
             }
 
             //保险属性 ,导入新增：不填则默认为无
