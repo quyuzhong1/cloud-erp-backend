@@ -149,7 +149,20 @@ public class ShopifyShipOrder extends AbstractShipOrder {
                     channelIds,
                     PlatformDictEnum.SHOPIFY.getCode()
             );
-
+            // 捆绑拆分会合并关联子单物流标发，每个渠道都需配置 Shopify 平台映射
+            for (SoB2cLogisticsEntity logisticsEntity : soB2cLogisticsEntityList) {
+                if (StringUtils.isBlank(logisticsEntity.getLogisticsChannelId())) {
+                    continue;
+                }
+                boolean hasShopifyMapping = tmsScaleChannelShipDTOList.stream()
+                        .anyMatch(e -> logisticsEntity.getLogisticsChannelId().equals(e.getLogisticsChannelId()));
+                if (!hasShopifyMapping) {
+                    String channelName = StringUtils.defaultIfBlank(logisticsEntity.getLogisticsChannelName(), logisticsEntity.getLogisticsChannelId());
+                    throw new ServiceException(CharSequenceUtil.format(
+                            "操作失败，物流渠道【{}】未配置Shopify平台标发映射（捆绑拆分需所有关联子单渠道均配置）",
+                            channelName));
+                }
+            }
 
             // 需要根据配送服务分组请求参数
             for (ShopifyFulfillmentOrder fulfillmentOrder : fulfillmentOrdersFromOrderList) {
@@ -179,10 +192,19 @@ public class ShopifyShipOrder extends AbstractShipOrder {
                 //获取渠道标发单号
                 List<String> trackingNumberList = new ArrayList<>();
                 for (SoB2cLogisticsEntity soB2cLogisticsEntity : soB2cLogisticsEntityList) {
+                    if (StringUtils.isBlank(soB2cLogisticsEntity.getLogisticsChannelId())) {
+                        continue;
+                    }
                     LogisticsChannelDTO.SignShipDTO tmsScaleChannelShipDTO = tmsScaleChannelShipDTOList.stream()
                             .filter(e -> e.getLogisticsChannelId().equals(soB2cLogisticsEntity.getLogisticsChannelId()))
                             .findFirst()
                             .orElse(null);
+                    if (tmsScaleChannelShipDTO == null) {
+                        String channelName = StringUtils.defaultIfBlank(soB2cLogisticsEntity.getLogisticsChannelName(), soB2cLogisticsEntity.getLogisticsChannelId());
+                        throw new ServiceException(CharSequenceUtil.format(
+                                "操作失败，物流渠道【{}】未配置Shopify平台标发映射",
+                                channelName));
+                    }
                     String standardOrderType = tmsScaleChannelShipDTO.checkAndGetOrderDeliveryMarkType();
                     String trackingNumber = CharSequenceUtil.equals(OrderDeliveryMarkTypeEnum.TRANSPORT_NO.getCode(),standardOrderType)
                             ? soB2cLogisticsEntity.getCode() : soB2cLogisticsEntity.getTrackNo();
