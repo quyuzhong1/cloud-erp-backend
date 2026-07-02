@@ -294,6 +294,7 @@ public class DeclarationGenerationService {
                         .productNameCn(first.getProductNameCn())
                         .declareElement(first.getDeclareElement())
                         .unit(first.getUnit())
+                        .unitName(first.getUnitName())
                         .unitPrice(detail.getUnitPrice())
                         .qty(detail.getTotalQuantity())
                         .totalAmount(totalAmount)

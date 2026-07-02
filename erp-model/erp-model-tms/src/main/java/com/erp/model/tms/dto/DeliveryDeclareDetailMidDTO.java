@@ -399,6 +399,10 @@ public class DeliveryDeclareDetailMidDTO implements Serializable {
          * 单位
          */
         private String unit;
+        /**
+         * 单位mingc
+         */
+        private String unitName;
 
         /**
          * 出口申报单价
