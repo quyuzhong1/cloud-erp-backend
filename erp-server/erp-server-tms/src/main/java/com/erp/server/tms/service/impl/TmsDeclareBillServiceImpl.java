@@ -3401,19 +3401,55 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (Boolean.FALSE.equals(viewDTO.getIsMultipleMerge())) {
             return autoMergeDeclareBillViewBySource(viewDTO.getSourceDeliveryDetailList(), includeSkuInMergeKey);
         }
-        boolean sixDimensionMerge = Objects.isNull(includeSkuInMergeKey) ? isSixDimensionMerge(viewDTO.getSourceDeliveryDetailList()) : includeSkuInMergeKey;
 
-        // sixDimensionMerge=true (B2B 按客户分发) 时，单价/币别/币别符号取 so_detail 销售含税单价及对应币种。
-        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> result = prepareSourceDetailsForDeclarationGeneration(viewDTO.getSourceDeliveryDetailList(), sixDimensionMerge);
-        if (CollUtil.isEmpty(result)) {
+        // 调用方已显式指定合并维度：整批按同一维度合并（不再按收货人类型判定，也不做跨单一致性校验）。
+        if (Objects.nonNull(includeSkuInMergeKey)) {
+            List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> result =
+                    prepareSourceDetailsForDeclarationGeneration(viewDTO.getSourceDeliveryDetailList(), includeSkuInMergeKey);
+            if (CollUtil.isEmpty(result)) {
+                return Collections.emptyList();
+            }
+            DeclarationGenerationService declarationGenerationService = new DeclarationGenerationService(buildDeclareCurrencyRateMap(result));
+            return declarationGenerationService.generateMergeBillDetails(result, viewDTO.getIsMultipleMerge(), includeSkuInMergeKey);
+        }
+
+        // 合并维度由境外收货人类型决定（按客户=6维度含SKU，其余=5维度不含SKU）。
+        // 收货人类型只要求「同一张报关单内一致」，不同类型应拆成不同报关单：
+        // 因此按来源单各自判定的合并维度分组，同维度组内跨来源合并，不同维度分别生成，避免整批跨单误判「收货人类型必须一致」。
+        Map<String, Boolean> sixDimensionBySource = isB2bCustomerReceiverBySource(viewDTO.getSourceDeliveryDetailList());
+        Map<Boolean, List<TmsDeclareBillDTO.SourceDeliveryDetailDTO>> sourceByDimension = new LinkedHashMap<>();
+        for (TmsDeclareBillDTO.SourceDeliveryDetailDTO sourceDetail : viewDTO.getSourceDeliveryDetailList()) {
+            if (Objects.isNull(sourceDetail)) {
+                continue;
+            }
+            boolean sixDimensionMerge = Boolean.TRUE.equals(sixDimensionBySource.get(resolveSourceGroupKeyForMerge(sourceDetail)));
+            sourceByDimension.computeIfAbsent(sixDimensionMerge, k -> new ArrayList<>()).add(sourceDetail);
+        }
+
+        List<PreparedDeclareSourceGroup> preparedGroupList = new ArrayList<>();
+        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> allPreparedDetailList = new ArrayList<>();
+        for (Map.Entry<Boolean, List<TmsDeclareBillDTO.SourceDeliveryDetailDTO>> entry : sourceByDimension.entrySet()) {
+            boolean sixDimensionMerge = Boolean.TRUE.equals(entry.getKey());
+            List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> preparedList =
+                    prepareSourceDetailsForDeclarationGeneration(entry.getValue(), sixDimensionMerge);
+            if (CollUtil.isEmpty(preparedList)) {
+                continue;
+            }
+            preparedGroupList.add(new PreparedDeclareSourceGroup(preparedList, sixDimensionMerge));
+            allPreparedDetailList.addAll(preparedList);
+        }
+        if (preparedGroupList.isEmpty()) {
             return Collections.emptyList();
         }
-        // 合并维度只由境外收货人类型决定（按客户=6维度含SKU，其余=5维度不含SKU）。
-        // 组合品拆分只是把 SKU 拆到最小颗粒度的前置步骤，与合并维度无关：拆出来的子 SKU
-        // 同样按当前维度参与合并，因此不再因「存在 BOM 子件」就整单强制含 SKU。
-        boolean includeSkuInGeneratedMergeKey = sixDimensionMerge;
-        DeclarationGenerationService declarationGenerationService = new DeclarationGenerationService(buildDeclareCurrencyRateMap(result));
-        return declarationGenerationService.generateMergeBillDetails(result, viewDTO.getIsMultipleMerge(), includeSkuInGeneratedMergeKey);
+
+        DeclarationGenerationService declarationGenerationService =
+                new DeclarationGenerationService(buildDeclareCurrencyRateMap(allPreparedDetailList));
+        List<TmsDeclareBillDTO.MergeDeclareBillDTO> mergeResultList = new ArrayList<>();
+        for (PreparedDeclareSourceGroup preparedGroup : preparedGroupList) {
+            mergeResultList.addAll(declarationGenerationService.generateMergeBillDetails(
+                    preparedGroup.getPreparedDetailList(), viewDTO.getIsMultipleMerge(), preparedGroup.isIncludeSkuInMergeKey()));
+        }
+        return mergeResultList;
     }
 
     /**
@@ -3830,6 +3866,9 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
         // 非合并模式：为所有明细应用默认值
         filteredList.forEach(this::applyMergeDeclareDetailDefaults);
+        // 与合并/下推口径保持一致：BOM 拆分子件缺失 parentSkuId 时按 bom_history_id 回填父 SKU，
+        // 兜底历史数据中间表 parent_sku_id 为空的场景，保证 validateSameBoxAllInOneBill 按装箱父件对齐。
+        backfillParentSkuIdByBomHistory(flattenMergeSourceDetails(filteredList));
         return filteredList;
     }
 
@@ -4930,6 +4969,10 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         detailDTO.setBoxNo(entity.getBoxNo());
         detailDTO.setSkuId(entity.getSkuId());
         detailDTO.setSkuNo(entity.getSkuNo());
+        // 中间表已持久化 parent_sku_id（组合品拆分子件的装箱父件），编辑回显必须回读，
+        // 否则子件 parentSkuId 为空，编辑保存时 validateSameBoxAllInOneBill 会用子 SKU 去比对
+        // WMS 整箱的装箱父件，误判整箱缺失（缺失SKU：父级SKU）。与下推/合并回填父件的口径保持一致。
+        detailDTO.setParentSkuId(entity.getParentSkuId());
         detailDTO.setBomHistoryId(entity.getBomHistoryId());
         detailDTO.setBomVersion(entity.getBomVersion());
         detailDTO.setHsCode(entity.getHsCode());
