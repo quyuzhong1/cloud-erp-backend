@@ -1,5 +1,6 @@
 package com.erp.server.wms.wdt;
 
+import com.erp.model.wms.dto.VirtualWarehouseAllocationDTO;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationDetailEntity;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationEntity;
 import com.erp.model.wms.entity.VirtualWarehousePushHandleDetailEntity;
@@ -23,8 +24,16 @@ public interface SyncWdtVirtualWarehousePushOrderService {
      * @param operateCode      操作代码: 审核/反审核
      * @return void
      */
-    void saveTaskList(List<VirtualWarehousePushHandleDetailEntity> handleDetailList,List<String> transferIdList,
-                                         String sourceCode, String operateCode, String sourceType);
+    void saveTaskList(List<VirtualWarehousePushHandleDetailEntity> handleDetailList, List<String> transferIdList,
+                      String sourceCode, String operateCode, String sourceType);
+
+    /**
+     * 新增分货提交前校验旺店通实体仓可用库存。
+     * 调入虚拟仓未绑定旺店通不校验；已绑定且未借调时校验分货实体仓库存；借调且借调仓已绑定时校验分货实体仓+借调仓库存；借调仓未绑定则跳过。
+     */
+    void checkAllocationWdtInventory(VirtualWarehouseAllocationEntity allocationEntity,
+                                     List<VirtualWarehouseAllocationDetailEntity> detailEntityList,
+                                     List<VirtualWarehouseAllocationDTO.TransferWarehouseDTO> transferWarehouseList);
 
     String saveWdtInventoryTask(VirtualWarehouseAllocationEntity allocationEntity, List<VirtualWarehouseAllocationDetailEntity> detailEntityList);
 }

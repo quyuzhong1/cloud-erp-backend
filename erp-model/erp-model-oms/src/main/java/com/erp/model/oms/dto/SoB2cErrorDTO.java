@@ -323,4 +323,14 @@ public class SoB2cErrorDTO implements Serializable {
         private String typeName;
 
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class MainIdsDTO {
+        private List<String> mainIds;
+        /**
+         * 异常类型
+         */
+        private String type;
+    }
 }

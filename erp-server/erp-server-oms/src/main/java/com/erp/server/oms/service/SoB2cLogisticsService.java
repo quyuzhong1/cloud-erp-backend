@@ -176,6 +176,12 @@ public interface SoB2cLogisticsService extends SuperService<SoB2cLogisticsEntity
     void updateTrackNoByTransportNo(List<LogisticsBillDTO.TrackDTO> trackDTOS);
 
     /**
+     * 根据运单号逐条更新跟踪号，并返回每条处理结果
+     * @param trackDTOS
+     */
+    List<BatchResultDTO> updateTrackNoByTransportNoWithResult(List<LogisticsBillDTO.TrackDTO> trackDTOS);
+
+    /**
      * 更新物流预估费用
      *
      * @param b2cSoId

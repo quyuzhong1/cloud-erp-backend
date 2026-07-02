@@ -2,7 +2,6 @@ package com.erp.model.scm.dto;
 
 import cn.hutool.json.JSONArray;
 import com.common.core.anno.StateEnumValue;
-import com.erp.model.mrp.dto.PurchaseSuggestMergeDTO;
 import com.erp.model.plm.enums.FirstMassProductTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -132,7 +131,7 @@ public class PurchaseApplicationDetailDTO implements Serializable {
         /**
          * 采购建议合并id集合
          */
-        private List<PurchaseSuggestMergeDTO.PushSourceDTO> sourceJsonList;
+//        private List<PurchaseSuggestMergeDTO.PushSourceDTO> sourceJsonList;
     }
 
     @Data

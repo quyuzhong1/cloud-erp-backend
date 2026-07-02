@@ -202,7 +202,7 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @param dto
      * @return com.common.business.vo.PagingVO<com.erp.model.wms.dto.SoOutstockDTO.PagingViewDTO>
      */
-    PagingVO<SoOutstockDTO.PagingViewDTO> paging(PagingDTO<SoOutstockDTO.PagingParamDTO> dto);
+    PagingVO<SoOutstockDTO.PagingViewDTO> paging(PagingDTO<SoOutstockDTO.PagingParamDTO> dto,Boolean isExport);
     
     
     /**
@@ -213,7 +213,7 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @author yl
      * @date 2023-05-22 11:41
      */
-    Boolean exportExcel(SoOutstockDTO.ExportDTO dto);
+    Boolean exportExcel(SoOutstockDTO.PagingParamDTO dto);
 
     
     /**
@@ -576,11 +576,7 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @param list
      */
     void deleteTransferInfo(List<SoOutstockEntity> list);
-
-    PagingVO<SoOutstockDTO.PagingViewDTO> exportSoOutStock(PagingDTO<SoOutstockDTO.ExportDTO> dto);
-
-    PagingVO<DynamicExcelDTO> exportDynamicSoOutStock(PagingDTO<SoOutstockDTO.ExportDTO> dto);
-    
+    PagingVO<DynamicExcelDTO> exportDynamicSoOutStock(PagingDTO<SoOutstockDTO.PagingParamDTO> dto);
     List<SoOutstockEntity> queryToSdy(LocalDate startDate, LocalDate endDate, Integer pageSize, Integer offset);
     /**
      * 修复旺店通数据

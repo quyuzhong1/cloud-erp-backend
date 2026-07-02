@@ -7,13 +7,10 @@ import com.erp.model.wms.dto.FbaShipmentDTO;
 import com.erp.model.wms.dto.FbaShipmentPackingDTO;
 import com.erp.rpc.wms.feign.ExportWmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
-import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.List;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_FBA_SHIPMENT_PACKING;
 
@@ -33,12 +30,6 @@ public class ExportWmsFbaShipmentPackingHandler extends AbstractPageFileEventHan
         return EXPORT_WMS_FBA_SHIPMENT_PACKING;
     }
 
-    @Override
-    protected List<FbaShipmentPackingDTO.ViewDTO> getData(FileTask fileTask) {
-        FbaShipmentDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<FbaShipmentDTO.PagingParamDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
 
     @Override

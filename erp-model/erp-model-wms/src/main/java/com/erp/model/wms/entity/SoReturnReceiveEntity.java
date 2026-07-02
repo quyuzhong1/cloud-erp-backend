@@ -198,6 +198,11 @@ public class SoReturnReceiveEntity extends BaseEntity<SoReturnReceiveEntity> {
      */
     @TableField("so_id")
     private String soId;
+    /**
+     * 店铺id
+     */
+    @TableField("shop_id")
+    private String shopId;
 
     /**
      * 退货物流单号
