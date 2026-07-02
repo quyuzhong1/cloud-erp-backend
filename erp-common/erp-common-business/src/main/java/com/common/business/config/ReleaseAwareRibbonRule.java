@@ -46,8 +46,8 @@ public class ReleaseAwareRibbonRule extends AbstractLoadBalancerRule {
         List<Server> reachableServers = loadBalancer.getReachableServers();
         List<Server> candidates = filterByRelease(reachableServers);
         if (candidates.isEmpty()) {
-            // filterByRelease 已对「无 release 元数据」的老实例做兼容回退；走到这里表示存在
-            // 存在 release 元数据但没有命中 active 发布版本，故意 fail-closed，避免跨蓝绿版本调用。
+            // filterByRelease 已对「无 release 元数据」的老实例做兼容回退；走到这里说明已检测到
+            // release 元数据但没有命中 active 发布版本，故意 fail-closed，避免跨蓝绿版本调用。
             // 这里依赖发布流程保证 active-color/version 先于流量切换配置正确，不在代码内自动降级混调。
             log.warn("No active release instance found for client={}, loadBalancer={}, activeColor={}, activeVersion={}, reachableServers={}",
                     clientName, loadBalancer, getActiveColor(), getActiveVersion(), reachableServers);

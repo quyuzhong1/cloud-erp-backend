@@ -29,6 +29,7 @@ public class InternalHealthController {
     private static final String STATUS_PRE_STOPPING = "PRE_STOPPING";
     private static final String REASON_APPLICATION_NOT_READY = "APPLICATION_NOT_READY";
     private static final String REASON_PRE_STOPPING = "PRE_STOPPING";
+    private static final String REASON_PRE_STOP_NACOS_FAILED = "PRE_STOP_NACOS_FAILED";
     private static final String REASON_PRE_STOP_FORBIDDEN = "PRE_STOP_FORBIDDEN";
     private static final String REASON_RELEASE_STATE_FORBIDDEN = "RELEASE_STATE_FORBIDDEN";
     private static final String RELEASE_ACTIVE_COLOR = "release.active-color";
@@ -97,10 +98,14 @@ public class InternalHealthController {
         readinessState.markPreStopping();
         boolean disabled = nacosSelfRegistrationChecker.setSelfEnabled(false);
         boolean deregistered = nacosSelfRegistrationChecker.deregisterSelf();
-        Map<String, Object> body = body(STATUS_PRE_STOPPING, REASON_PRE_STOPPING, "application is pre-stopping");
+        boolean nacosReleased = disabled || deregistered;
+        Map<String, Object> body = body(STATUS_PRE_STOPPING,
+                nacosReleased ? REASON_PRE_STOPPING : REASON_PRE_STOP_NACOS_FAILED,
+                nacosReleased ? "application is pre-stopping" : "application is pre-stopping but Nacos downline failed");
         body.put("nacosDisabled", disabled);
         body.put("nacosDeregistered", deregistered);
-        return ResponseEntity.ok(body);
+        // readiness 已先行摘除；只有 Nacos 两条下线路径都失败时返回 503，让调用方能感知直连注册中心摘流失败。
+        return ResponseEntity.status(nacosReleased ? HttpStatus.OK : HttpStatus.SERVICE_UNAVAILABLE).body(body);
     }
 
     private ResponseEntity<Map<String, Object>> response(HttpStatus status, String healthStatus, String reason,
