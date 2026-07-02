@@ -83,7 +83,7 @@ public class NacosSelfRegistrationChecker {
             return cacheCheckResult(CheckResult.notReady(REASON_NACOS_NOT_REGISTERED,
                     "local nacos registration info is incomplete"));
         }
-        CheckResult checkResult = executeWithTimeout(() -> doCheckSelfRegistration(registrationInfo),
+        CheckResult checkResult = executeCheckWithTimeout(() -> doCheckSelfRegistration(registrationInfo),
                 CheckResult.notReady(REASON_NACOS_NOT_REGISTERED, "nacos query timeout or failed"));
         return cacheCheckResult(checkResult);
     }
@@ -287,6 +287,36 @@ public class NacosSelfRegistrationChecker {
     private CheckResult cacheCheckResult(CheckResult checkResult) {
         cachedCheckResult = new CachedCheckResult(checkResult, System.currentTimeMillis());
         return checkResult;
+    }
+
+    private CheckResult getLastCachedCheckResult() {
+        CachedCheckResult cachedResult = cachedCheckResult;
+        return cachedResult == null ? null : cachedResult.checkResult;
+    }
+
+    private CheckResult executeCheckWithTimeout(Callable<CheckResult> callable, CheckResult fallback) {
+        Future<CheckResult> future;
+        try {
+            future = queryExecutor.submit(callable);
+        } catch (RejectedExecutionException ex) {
+            warnThrottled("Nacos self registration check is busy", ex);
+            CheckResult cachedResult = getLastCachedCheckResult();
+            return cachedResult == null ? fallback : cachedResult;
+        }
+        try {
+            return future.get(nacosCheckTimeoutMs, TimeUnit.MILLISECONDS);
+        } catch (TimeoutException ex) {
+            future.cancel(true);
+            warnThrottled("Nacos self registration check timed out", ex);
+            return fallback;
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+            warnThrottled("Nacos self registration check was interrupted", ex);
+            return fallback;
+        } catch (ExecutionException ex) {
+            warnThrottled("Nacos self registration check failed", ex);
+            return fallback;
+        }
     }
 
     private <T> T executeWithTimeout(Callable<T> callable, T fallback) {

@@ -153,7 +153,7 @@ public class ReleaseAwareGatewayLoadBalancerFilter
             }
             // release 元数据别名需与 ReleaseAwareRibbonRule 保持一致，避免入口流量和 Feign 调用切色语义不同。
             String releaseColor = firstText(metadata, "release.color", "release-color", "releaseColor", "color");
-            String releaseVersion = firstText(metadata, "release.version", "release-version", "releaseVersion", "version");
+            String releaseVersion = firstText(metadata, "release.version", "release-version", "releaseVersion");
             if (hasComparableReleaseMetadata(activeColor, activeVersion, releaseColor, releaseVersion)) {
                 hasComparableMetadata = true;
             }
