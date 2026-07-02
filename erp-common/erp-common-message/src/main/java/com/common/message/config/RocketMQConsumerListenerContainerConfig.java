@@ -35,4 +35,5 @@ public class RocketMQConsumerListenerContainerConfig implements BeanPostProcesso
         }
         return bean;
     }
+
 }
