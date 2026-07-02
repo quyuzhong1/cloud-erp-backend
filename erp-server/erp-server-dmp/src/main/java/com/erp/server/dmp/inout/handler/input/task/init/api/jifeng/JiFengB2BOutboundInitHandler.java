@@ -21,6 +21,7 @@ import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.inout.handler.input.task.init.DmpInputInitHandler;
 import com.erp.server.dmp.inout.utils.DmpHandlerCache;
+import com.sdk.wms.jifeng.constants.JiFengRespCode;
 import com.sdk.wms.jifeng.dto.response.JiFengB2BOutboundResp;
 import com.sdk.wms.jifeng.dto.response.JiFengBaseResp;
 import com.sdk.wms.jifeng.dto.response.JiFengOutboundResp;
@@ -45,8 +46,6 @@ import java.util.stream.Collectors;
 @Slf4j
 @Scope("prototype")
 public class JiFengB2BOutboundInitHandler extends DmpInputInitHandler {
-
-	private static final int JIFENG_ORDER_NOT_FOUND_CODE = 70000;
 
 	@Resource
     private DmpHandlerCache dmpHandlerCache;
@@ -115,7 +114,7 @@ public class JiFengB2BOutboundInitHandler extends DmpInputInitHandler {
 						throw new ServiceException("极风获取B2B订单数据失败，响应结果为空");
 					}
 				}
-				if (isOrderNotFoundInWarehouse(resp)) {
+				if (JiFengRespCode.isOrderNotFoundInWarehouse(resp)) {
 					log.warn("极风B2B订单在仓库中不存在，跳过，erpNo:{}, code:{}, msg:{}", code, resp.getCode(), resp.getMessage());
 					continue;
 				}
@@ -147,10 +146,6 @@ public class JiFengB2BOutboundInitHandler extends DmpInputInitHandler {
 						ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode()
 				))
 				.list();
-	}
-
-	private boolean isOrderNotFoundInWarehouse(JiFengBaseResp<?> resp) {
-		return resp.getCode() == JIFENG_ORDER_NOT_FOUND_CODE;
 	}
 
 }
