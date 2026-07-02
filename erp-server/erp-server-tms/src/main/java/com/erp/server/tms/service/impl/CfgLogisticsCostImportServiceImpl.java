@@ -281,7 +281,7 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
                 updateDTO.setMainId(id);
             }
             //只有费用项明细时，才能有明细字段信息
-            if(StringUtils.isNotBlank(updateDTO.getTargetField()) && Objects.equals(updateDTO.getTargetField(), costItem)){
+            if(StringUtils.isNotBlank(updateDTO.getTargetField()) && Objects.equals(updateDTO.getTargetField(), "costItem")){
                 TmsCfgCostEntity tmsCfgCostEntity = cfgCostMap.get(updateDTO.getTargetDetailFieldId());
                 if(Objects.nonNull(tmsCfgCostEntity)){
                     updateDTO.setTargetDetailField(tmsCfgCostEntity.getDictCostCategory());
