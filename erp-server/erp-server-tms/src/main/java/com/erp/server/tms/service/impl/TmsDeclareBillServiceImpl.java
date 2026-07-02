@@ -3028,6 +3028,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             splitDeclareDTO.setId(id);
             splitDeclareDTO.setBoxNo(value.get(0).getBoxNo());
             splitDeclareDTO.setSourceId(value.get(0).getSourceId());
+            splitDeclareDTO.setSourceCode(value.get(0).getSourceCode());
             splitDeclareDTO.setBusinessCode(value.stream().map(DeliveryDeclareDetailMidEntity::getBusinessCode).filter(StringUtils::isNotBlank).findFirst().orElse(""));
             //sku信息描述格式：skuNo*qty,skuNo*qty
             String skuDesc = value.stream().map(obj -> CharSequenceUtil.format("{}*{}", obj.getSkuNo(), obj.getQty())).collect(Collectors.joining(","));
@@ -3222,7 +3223,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     }
 
     /**
-     * 按拆分选择的来源单据、箱号和 SKU 过滤来源明细。
+     * 按拆分选择的来源单据 + 箱号整箱过滤来源明细（拆分为整箱维度）。
      *
      * @param sourceDeliveryDetailList 原报关单来源明细
      * @param splitDeclareDTO 拆分选择
@@ -3230,14 +3231,11 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
      */
     private List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> filterSplitSourceDetail(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDeliveryDetailList,
                                                                                    TmsDeclareBillDTO.SplitDeclareDTO splitDeclareDTO) {
-        Set<String> skuIdSet = Optional.ofNullable(splitDeclareDTO.getSkuDetailList()).orElse(Collections.emptyList()).stream()
-                .map(TmsDeclareBillDTO.SplitDetailDTO::getSkuId)
-                .filter(StringUtils::isNotBlank)
-                .collect(Collectors.toSet());
+        // 拆分是整箱维度：按来源单+箱号整箱取明细，不再用前端回传的 skuId 快照二次过滤，
+        // 避免快照与保存时实际箱内明细不一致（如期间又生成/编辑过）导致箱内漏行、拆分后少数据。
         return Optional.ofNullable(sourceDeliveryDetailList).orElse(Collections.emptyList()).stream()
                 .filter(obj -> CharSequenceUtil.equals(obj.getSourceId(), splitDeclareDTO.getSourceId()))
                 .filter(obj -> CharSequenceUtil.equals(obj.getBoxNo(), splitDeclareDTO.getBoxNo()))
-                .filter(obj -> CollUtil.isEmpty(skuIdSet) || skuIdSet.contains(obj.getSkuId()))
                 .collect(Collectors.toList());
     }
 
@@ -3280,9 +3278,10 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (CollUtil.isEmpty(billSourceDetails) || CollUtil.isEmpty(splitGroupList)) {
             return;
         }
-        // 整箱全集：箱号 -> 明细唯一键集合，以及明细唯一键 -> SKU 展示、箱号样例。
+        // 整箱全集：箱号 -> 明细唯一键集合，以及明细唯一键 -> SKU 展示 / 箱号、箱号样例。
         Map<String, Set<String>> fullBoxKeyMap = new LinkedHashMap<>();
-        Map<String, String> detailKeySkuNoMap = new HashMap<>();
+        Map<String, String> detailKeySkuNoMap = new LinkedHashMap<>();
+        Map<String, String> detailKeyBoxKeyMap = new HashMap<>();
         Map<String, TmsDeclareBillDTO.SourceDeliveryDetailDTO> boxSampleMap = new HashMap<>();
         for (TmsDeclareBillDTO.SourceDeliveryDetailDTO sd : billSourceDetails) {
             if (Objects.isNull(sd) || StringUtils.isBlank(sd.getBoxNo())) {
@@ -3292,9 +3291,11 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             String detailKey = buildSourceDetailKey(sd);
             fullBoxKeyMap.computeIfAbsent(boxKey, k -> new HashSet<>()).add(detailKey);
             detailKeySkuNoMap.putIfAbsent(detailKey, StringUtils.defaultString(sd.getSkuNo()));
+            detailKeyBoxKeyMap.putIfAbsent(detailKey, boxKey);
             boxSampleMap.putIfAbsent(boxKey, sd);
         }
         Map<String, Integer> boxTicketIndexMap = new HashMap<>();
+        Set<String> coveredDetailKeySet = new HashSet<>();
         for (int i = 0; i < splitGroupList.size(); i++) {
             List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> groupSource =
                     filterSplitSourceDetailGroup(billSourceDetails, splitGroupList.get(i));
@@ -3308,6 +3309,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 if (Objects.nonNull(existTicket) && existTicket != i + 1) {
                     throw new ServiceException(ApiError.LOGISTICS_DECLARE_BOX_SINGLE_BILL_REQUIRED, existTicket, i + 1);
                 }
+                coveredDetailKeySet.add(buildSourceDetailKey(sd));
                 groupBoxKeyMap.computeIfAbsent(boxKey, k -> new HashSet<>()).add(buildSourceDetailKey(sd));
             }
             for (Map.Entry<String, Set<String>> entry : groupBoxKeyMap.entrySet()) {
@@ -3327,6 +3329,28 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                         StringUtils.defaultString(sample.getBoxNo()),
                         String.join("、", missingSkuNos));
             }
+        }
+        // 覆盖完整性兜底：原报关单每条来源明细都必须被分配到某一票，
+        // 防止「同业务单跨来源单相同箱号」等场景下整箱漏分（前端合并/漏传）导致拆分后静默丢数据。
+        if (!coveredDetailKeySet.containsAll(detailKeySkuNoMap.keySet())) {
+            String missingBoxKey = detailKeySkuNoMap.keySet().stream()
+                    .filter(key -> !coveredDetailKeySet.contains(key))
+                    .map(detailKeyBoxKeyMap::get)
+                    .filter(StringUtils::isNotBlank)
+                    .findFirst()
+                    .orElse(null);
+            Set<String> missingBoxFullKeySet = missingBoxKey == null ? Collections.emptySet() : fullBoxKeyMap.getOrDefault(missingBoxKey, Collections.emptySet());
+            List<String> missingSkuNos = missingBoxFullKeySet.stream()
+                    .filter(key -> !coveredDetailKeySet.contains(key))
+                    .map(detailKeySkuNoMap::get)
+                    .filter(StringUtils::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.toList());
+            TmsDeclareBillDTO.SourceDeliveryDetailDTO sample = boxSampleMap.get(missingBoxKey);
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_SPLIT_DETAIL_MISSING,
+                    Objects.isNull(sample) ? "" : StringUtils.defaultString(sample.getSourceCode()),
+                    Objects.isNull(sample) ? "" : StringUtils.defaultString(sample.getBoxNo()),
+                    String.join("、", missingSkuNos));
         }
     }
 
@@ -4111,16 +4135,18 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (CollUtil.isEmpty(fullBoxDetailList)) {
             return;
         }
-        // 本次提交覆盖到的箱号，以及箱内明细唯一键（来源单|箱号|SKU）。
+        // 本次提交覆盖到的箱号，以及箱内明细唯一键。
+        // 明细键按「装箱父件」维度（parentSkuId ?: skuId）比对：组合品拆分后报文是子件（带 parentSkuId），
+        // 而 WMS 整箱返回的是装箱父件，用父件维度两边才对齐，避免把「已拆成子件的组合品」误判为整箱缺失。
         Set<String> submittedBoxKeySet = submittedSourceDetails.stream()
                 .filter(item -> Objects.nonNull(item) && StringUtils.isNotBlank(item.getBoxNo()))
                 .map(this::buildDeclareBoxKey)
                 .collect(Collectors.toSet());
         Set<String> submittedDetailKeySet = submittedSourceDetails.stream()
                 .filter(item -> Objects.nonNull(item) && StringUtils.isNotBlank(item.getBoxNo()))
-                .map(this::buildSourceDetailKey)
+                .map(this::buildSourceBoxPackedSkuKey)
                 .collect(Collectors.toSet());
-        // 遍历整箱全集，找出「本次提交涉及该箱、但箱内某些明细未在提交范围内」的缺失行。
+        // 遍历整箱全集，找出「本次提交涉及该箱、但箱内某些装箱父件未在提交范围内」的缺失行。
         Map<String, List<String>> missingSkuMap = new LinkedHashMap<>();
         Map<String, TmsDeclareBillDTO.SourceDeliveryDetailDTO> boxSampleMap = new HashMap<>();
         for (TmsDeclareBillDTO.SourceDeliveryDetailDTO fullDetail : fullBoxDetailList) {
@@ -4131,7 +4157,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             if (!submittedBoxKeySet.contains(boxKey)) {
                 continue;
             }
-            if (submittedDetailKeySet.contains(buildSourceDetailKey(fullDetail))) {
+            if (submittedDetailKeySet.contains(buildSourceBoxPackedSkuKey(fullDetail))) {
                 continue;
             }
             missingSkuMap.computeIfAbsent(boxKey, k -> new ArrayList<>()).add(StringUtils.defaultString(fullDetail.getSkuNo()));
@@ -4150,6 +4176,14 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 StringUtils.defaultString(sample.getSourceCode()),
                 StringUtils.defaultString(sample.getBoxNo()),
                 missingSkuNos);
+    }
+
+    /**
+     * 整箱完整性校验用的明细键：来源单|箱号|装箱父件（parentSkuId ?: skuId）。
+     * 组合品拆分后报文是子件（带 parentSkuId），WMS 整箱返回装箱父件，用父件维度两边才能对齐。
+     */
+    private String buildSourceBoxPackedSkuKey(TmsDeclareBillDTO.SourceDeliveryDetailDTO detailDTO) {
+        return CharSequenceUtil.join("|", buildDeclareBoxKey(detailDTO), detailDTO.resolveSoDetailSkuId());
     }
 
     /**
@@ -5460,6 +5494,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             splitDeclareDTO.setId(id);
             splitDeclareDTO.setBoxNo(value.get(0).getBoxNo());
             splitDeclareDTO.setSourceId(value.get(0).getSourceId());
+            splitDeclareDTO.setSourceCode(value.get(0).getSourceCode());
             splitDeclareDTO.setBusinessCode(value.stream().map(DeliveryDeclareDetailMidEntity::getBusinessCode).filter(StringUtils::isNotBlank).findFirst().orElse(""));
             //sku信息描述格式：skuNo*qty,skuNo*qty
             String skuDesc = value.stream().map(obj -> CharSequenceUtil.format("{}*{}", obj.getSkuNo(), obj.getQty())).collect(Collectors.joining(","));
