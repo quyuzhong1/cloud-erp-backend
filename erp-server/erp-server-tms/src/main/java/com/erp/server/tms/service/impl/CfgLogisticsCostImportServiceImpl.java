@@ -283,11 +283,20 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
                 updateDTO.setTargetFieldType(fieldEntity.getFieldType());
                 updateDTO.setMainId(id);
             }
-
-            TmsCfgCostEntity tmsCfgCostEntity = cfgCostMap.get(updateDTO.getTargetDetailFieldId());
-            if(Objects.nonNull(tmsCfgCostEntity)){
-                updateDTO.setTargetDetailField(tmsCfgCostEntity.getDictCostCategory());
-                updateDTO.setTargetDetailFieldName(tmsCfgCostEntity.getCostName());
+            //只有费用项明细时，才能有明细字段信息
+            if(StringUtils.isNotBlank(updateDTO.getTargetField()) && Objects.equals(updateDTO.getTargetField(), costItem)){
+                TmsCfgCostEntity tmsCfgCostEntity = cfgCostMap.get(updateDTO.getTargetDetailFieldId());
+                if(Objects.nonNull(tmsCfgCostEntity)){
+                    updateDTO.setTargetDetailField(tmsCfgCostEntity.getDictCostCategory());
+                    updateDTO.setTargetDetailFieldName(tmsCfgCostEntity.getCostName());
+                }else {
+                    updateDTO.setTargetDetailField("");
+                    updateDTO.setTargetDetailFieldName("");
+                }
+            }else{
+                updateDTO.setTargetDetailFieldId("");
+                updateDTO.setTargetDetailField("");
+                updateDTO.setTargetDetailFieldName("");
             }
             updateDTO.setIndex(index++);
         }
