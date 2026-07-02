@@ -1936,6 +1936,7 @@ public enum ApiError implements Serializable {
     LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_RECEIVER_TYPE_CONFLICT(13705,"境外收货人类型不一致，不能合并预览"),
     LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_RULE_NOT_FOUND_FOR_SOURCE(13706,"来源单【{0}】未找到匹配的报关规则"),
     LOGISTICS_DECLARE_AUTO_DETAIL_FIELD_REQUIRED_BATCH(13707,"以下SKU缺少报关信息，请先到PLM物流产品资料完善后再生成报关单：{0}"),
+    LOGISTICS_DECLARE_SPLIT_DETAIL_MISSING(13708,"拆分未覆盖全部明细，来源单【{0}】箱号【{1}】未分配到任何一票，缺失SKU：{2}"),
 
 
     LOGISTICS_ORDER_NOT_CANCEL(13645,"物流单据不是已取消或者下单失败状态，不能编辑"),

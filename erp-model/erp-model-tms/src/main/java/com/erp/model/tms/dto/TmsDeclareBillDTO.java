@@ -2234,6 +2234,10 @@ public class TmsDeclareBillDTO implements Serializable {
          */
         private String sourceId;
         /**
+         *  来源单号（发货通知单号），用于区分同一业务单下不同来源单的相同箱号
+         */
+        private String sourceCode;
+        /**
          *  业务单号
          */
         private String businessCode;
