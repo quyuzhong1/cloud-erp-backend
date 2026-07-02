@@ -745,17 +745,13 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
      * 无法稳定落到同一张单上。</p>
      */
     private void validatePreviewSourceConsistent(String sourceType, List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList) {
-        Set<String> countrySet = sourceDetailList.stream()
-                .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getCountryId)
-                .filter(CharSequenceUtil::isNotBlank)
-                .collect(Collectors.toSet());
-        if (countrySet.size() > 1) {
-            throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_COUNTRY_CONFLICT);
-        }
-        boolean hasBlankCountry = sourceDetailList.stream()
-                .anyMatch(item -> CharSequenceUtil.isBlank(item.getCountryId()));
-        if (hasBlankCountry && countrySet.size() != 1) {
-            throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_COUNTRY_CONFLICT);
+        try {
+            tmsDeclareBillService.validateMergeCountryByBusinessCode(sourceDetailList);
+        } catch (ServiceException ex) {
+            if (Objects.equals(ex.getCode(), ApiError.LOGISTICS_DECLARE_MERGE_COUNTRY_MISMATCH.getCode())) {
+                throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_COUNTRY_CONFLICT);
+            }
+            throw ex;
         }
 
         String declareBillType = resolveDeclareBillType(sourceType);
@@ -859,16 +855,16 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
             return;
         }
         Set<String> selectedIdSet = new HashSet<>(selectedIds);
-        // 按来源ID+箱号分组，构建每个箱子对应的明细列表映射关系
-        // 只处理状态为"待生成"且存在来源ID和箱号的明细记录
+        // 按业务单号+箱号分组，构建每个箱子对应的明细列表映射关系
+        // 只处理状态为"待生成"且存在箱号的明细记录
         Map<String, List<DeliveryDeclareDetailMidEntity>> boxGroupMap = sourceMidList.stream()
                 .filter(item -> CharSequenceUtil.equals(item.getGenerateStatus(), DeliveryDeclareDetailMidGenerateStatusEnum.WAIT.getCode()))
-                .filter(item -> CharSequenceUtil.isNotBlank(item.getSourceId()) && CharSequenceUtil.isNotBlank(item.getBoxNo()))
+                .filter(item -> CharSequenceUtil.isNotBlank(item.getBoxNo()))
                 .collect(Collectors.groupingBy(this::buildSourceBoxKey));
 
         // 提取已选中的明细所涉及的箱子标识集合
         Set<String> selectedBoxKeys = selectedMidList.stream()
-                .filter(item -> CharSequenceUtil.isNotBlank(item.getSourceId()) && CharSequenceUtil.isNotBlank(item.getBoxNo()))
+                .filter(item -> CharSequenceUtil.isNotBlank(item.getBoxNo()))
                 .map(this::buildSourceBoxKey)
                 .collect(Collectors.toSet());
 
@@ -891,7 +887,8 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
             if (CollUtil.isNotEmpty(missingSkuNoList)) {
                 DeliveryDeclareDetailMidEntity firstMid = boxMidList.get(0);
                 throw new ServiceException(ApiError.LOGISTICS_DECLARE_BOX_NOT_FULL_SELECTED,
-                        firstMid.getSourceCode(), firstMid.getBoxNo(), String.join("、", missingSkuNoList));
+                        CharSequenceUtil.blankToDefault(firstMid.getBusinessCode(), firstMid.getSourceCode()),
+                        firstMid.getBoxNo(), String.join("、", missingSkuNoList));
             }
         }
     }
@@ -935,7 +932,9 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
     }
 
     private String buildSourceBoxKey(DeliveryDeclareDetailMidEntity mid) {
-        return CharSequenceUtil.join("|", mid.getSourceId(), mid.getBoxNo());
+        String businessKey = CharSequenceUtil.blankToDefault(mid.getBusinessCode(),
+                CharSequenceUtil.blankToDefault(mid.getSourceId(), mid.getBusinessId()));
+        return CharSequenceUtil.join("|", StringUtils.defaultString(businessKey), StringUtils.defaultString(mid.getBoxNo()));
     }
 
     private Map<String, TmsDeclareBillDTO.SourceDeliveryDetailDTO> buildSourceContextBySourceId(
@@ -955,10 +954,13 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         }
         List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList = new ArrayList<>();
         // 只借用 WMS 来源明细补齐国家、仓库、组织等上下文字段，最终选择范围仍由中间表勾选行控制。
+        // 合并/编辑场景来源单可能已是 finish，需允许查询 wait + finish。
+        TmsDeclareBillDTO.PushDeclareBeforeParamDTO paramDTO = new TmsDeclareBillDTO.PushDeclareBeforeParamDTO(
+                Boolean.TRUE, sourceIds, Boolean.FALSE);
         if (Objects.equals(sourceType, SourceTypeEnum.FIRST_MILE_DELIVERY.getCode())) {
-            sourceDetailList = wmsFirstMileDeliveryFeign.listBeforePushFmDeclare(new TmsDeclareBillDTO.PushDeclareBeforeParamDTO(Boolean.TRUE, sourceIds));
+            sourceDetailList = wmsFirstMileDeliveryFeign.listBeforePushFmDeclare(paramDTO);
         } else if (Objects.equals(sourceType, SourceTypeEnum.SO_DELIVERY_NOTICE.getCode())) {
-            sourceDetailList = soDeliveryNoticeFeign.listBeforePushB2bDeclare(new TmsDeclareBillDTO.PushDeclareBeforeParamDTO(Boolean.TRUE, sourceIds));
+            sourceDetailList = soDeliveryNoticeFeign.listBeforePushB2bDeclare(paramDTO);
         }
         if (CollUtil.isEmpty(sourceDetailList)) {
             return Collections.emptyMap();
