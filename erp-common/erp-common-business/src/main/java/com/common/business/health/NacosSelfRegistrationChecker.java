@@ -1,7 +1,6 @@
 package com.common.business.health;
 
 import com.alibaba.cloud.nacos.NacosDiscoveryProperties;
-import com.alibaba.fastjson.JSON;
 import com.alibaba.nacos.api.naming.NamingService;
 import com.alibaba.nacos.api.naming.pojo.Instance;
 import lombok.extern.slf4j.Slf4j;
@@ -14,10 +13,6 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PreDestroy;
-import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLEncoder;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,8 +47,7 @@ public class NacosSelfRegistrationChecker {
     private final ObjectProvider<Registration> registrationProvider;
     private final ThreadPoolExecutor queryExecutor;
     private final AtomicLong lastWarnTime = new AtomicLong(0L);
-    private final AtomicLong lastCheckTime = new AtomicLong(0L);
-    private volatile CheckResult cachedCheckResult;
+    private volatile CachedCheckResult cachedCheckResult;
 
     @Value("${erp.internal-health.nacos-check-timeout-ms:1000}")
     private long nacosCheckTimeoutMs;
@@ -69,6 +63,7 @@ public class NacosSelfRegistrationChecker {
         this.discoveryProperties = discoveryProperties;
         this.environment = environment;
         this.registrationProvider = registrationProvider;
+        // 专用有界单线程池隔离 Nacos 查询超时，避免 readiness 调用线程被注册中心阻塞拖住。
         this.queryExecutor = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS,
                 new ArrayBlockingQueue<>(DEFAULT_QUERY_QUEUE_CAPACITY), new DaemonThreadFactory());
     }
@@ -83,7 +78,7 @@ public class NacosSelfRegistrationChecker {
             return cacheCheckResult(CheckResult.notReady(REASON_NACOS_NOT_REGISTERED,
                     "local nacos registration info is incomplete"));
         }
-        CheckResult checkResult = executeWithTimeout(() -> doCheckSelfRegistration(registrationInfo),
+        CheckResult checkResult = executeCheckWithTimeout(() -> doCheckSelfRegistration(registrationInfo),
                 CheckResult.notReady(REASON_NACOS_NOT_REGISTERED, "nacos query timeout or failed"));
         return cacheCheckResult(checkResult);
     }
@@ -114,7 +109,7 @@ public class NacosSelfRegistrationChecker {
                     registrationInfo);
             return false;
         }
-        Boolean success = executeWithTimeout(() -> updateInstanceEnabled(registrationInfo, enabled), Boolean.FALSE);
+        Boolean success = executeWithTimeout(() -> updateInstanceEnabledBySdk(registrationInfo, enabled), Boolean.FALSE);
         if (!success) {
             log.warn("Failed to update Nacos instance enabled={} : {}", enabled, registrationInfo);
         }
@@ -148,57 +143,20 @@ public class NacosSelfRegistrationChecker {
         return CheckResult.notReady(REASON_NACOS_NOT_REGISTERED, "current ip and port not found in nacos");
     }
 
-    private boolean updateInstanceEnabled(RegistrationInfo registrationInfo, boolean enabled) throws IOException {
-        String serverAddr = resolveNacosServerAddr();
-        if (StringUtils.isBlank(serverAddr)) {
-            log.warn("Skip updating Nacos instance enabled status, nacos server address is blank");
-            return false;
-        }
-        String requestUrl = buildUpdateInstanceUrl(serverAddr, registrationInfo, enabled);
-        HttpURLConnection connection = (HttpURLConnection) new URL(requestUrl).openConnection();
-        connection.setRequestMethod("PUT");
-        connection.setConnectTimeout((int) nacosCheckTimeoutMs);
-        connection.setReadTimeout((int) nacosCheckTimeoutMs);
-        connection.setDoOutput(true);
-        int responseCode = connection.getResponseCode();
-        connection.disconnect();
-        return responseCode >= 200 && responseCode < 300;
-    }
-
-    private String resolveNacosServerAddr() {
-        String serverAddr = StringUtils.defaultIfBlank(discoveryProperties.getServerAddr(),
-                environment.getProperty("spring.cloud.nacos.discovery.server-addr"));
-        if (StringUtils.isBlank(serverAddr)) {
-            return null;
-        }
-        String firstServerAddr = StringUtils.substringBefore(serverAddr, ",");
-        if (StringUtils.startsWithIgnoreCase(firstServerAddr, "http://")
-                || StringUtils.startsWithIgnoreCase(firstServerAddr, "https://")) {
-            return firstServerAddr;
-        }
-        return "http://" + firstServerAddr;
-    }
-
-    private String buildUpdateInstanceUrl(String serverAddr, RegistrationInfo registrationInfo, boolean enabled)
-            throws IOException {
-        StringBuilder builder = new StringBuilder(serverAddr);
-        if (!serverAddr.endsWith("/")) {
-            builder.append('/');
-        }
-        builder.append("nacos/v1/ns/instance")
-                .append("?serviceName=").append(encode(registrationInfo.getServiceName()))
-                .append("&groupName=").append(encode(registrationInfo.getGroupName()))
-                .append("&ip=").append(encode(registrationInfo.getIp()))
-                .append("&port=").append(registrationInfo.getPort())
-                .append("&enabled=").append(enabled);
-        if (StringUtils.isNotBlank(registrationInfo.getNamespace())) {
-            builder.append("&namespaceId=").append(encode(registrationInfo.getNamespace()));
-        }
-        Map<String, String> metadata = resolveMetadata(registrationInfo);
-        if (!metadata.isEmpty()) {
-            builder.append("&metadata=").append(encode(JSON.toJSONString(metadata)));
-        }
-        return builder.toString();
+    private boolean updateInstanceEnabledBySdk(RegistrationInfo registrationInfo, boolean enabled) throws Exception {
+        NamingService namingService = discoveryProperties.namingServiceInstance();
+        Instance instance = new Instance();
+        instance.setIp(registrationInfo.getIp());
+        instance.setPort(registrationInfo.getPort());
+        instance.setEnabled(enabled);
+        instance.setHealthy(true);
+        instance.setWeight(discoveryProperties.getWeight());
+        instance.setClusterName(discoveryProperties.getClusterName());
+        instance.setEphemeral(discoveryProperties.isEphemeral());
+        instance.setMetadata(resolveMetadata(registrationInfo));
+        // Nacos 1.3.3 公开 SDK 没有 updateInstance；同 IP/端口 registerInstance 会走 SDK 鉴权并覆盖实例属性。
+        namingService.registerInstance(registrationInfo.getServiceName(), registrationInfo.getGroupName(), instance);
+        return true;
     }
 
     private Map<String, String> resolveMetadata(RegistrationInfo registrationInfo) {
@@ -259,11 +217,8 @@ public class NacosSelfRegistrationChecker {
         return null;
     }
 
-    private String encode(String value) throws IOException {
-        return URLEncoder.encode(value, "UTF-8");
-    }
-
     private boolean isCurrentInstance(Instance instance, RegistrationInfo registrationInfo) {
+        // 当前 K8s/Nacos 部署约定使用具体 Pod IP 注册；若环境切成 hostname 注册，应先统一 discovery.ip。
         return StringUtils.equals(instance.getIp(), registrationInfo.getIp())
                 && instance.getPort() == registrationInfo.getPort();
     }
@@ -272,21 +227,48 @@ public class NacosSelfRegistrationChecker {
         if (nacosCheckCacheMs <= 0) {
             return null;
         }
-        CheckResult cachedResult = cachedCheckResult;
+        CachedCheckResult cachedResult = cachedCheckResult;
         if (cachedResult == null) {
             return null;
         }
-        long lastCheck = lastCheckTime.get();
-        if (System.currentTimeMillis() - lastCheck <= nacosCheckCacheMs) {
-            return cachedResult;
+        if (System.currentTimeMillis() - cachedResult.checkTime <= nacosCheckCacheMs) {
+            return cachedResult.checkResult;
         }
         return null;
     }
 
     private CheckResult cacheCheckResult(CheckResult checkResult) {
-        cachedCheckResult = checkResult;
-        lastCheckTime.set(System.currentTimeMillis());
+        cachedCheckResult = new CachedCheckResult(checkResult, System.currentTimeMillis());
         return checkResult;
+    }
+
+    private CheckResult executeCheckWithTimeout(Callable<CheckResult> callable, CheckResult fallback) {
+        Future<CheckResult> future;
+        try {
+            future = queryExecutor.submit(callable);
+        } catch (RejectedExecutionException ex) {
+            warnThrottled("Nacos self registration check is busy", ex);
+            return getFreshCachedOrFallback(fallback);
+        }
+        try {
+            return future.get(nacosCheckTimeoutMs, TimeUnit.MILLISECONDS);
+        } catch (TimeoutException ex) {
+            future.cancel(true);
+            warnThrottled("Nacos self registration check timed out", ex);
+            return getFreshCachedOrFallback(fallback);
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+            warnThrottled("Nacos self registration check was interrupted", ex);
+            return fallback;
+        } catch (ExecutionException ex) {
+            warnThrottled("Nacos self registration check failed", ex);
+            return fallback;
+        }
+    }
+
+    private CheckResult getFreshCachedOrFallback(CheckResult fallback) {
+        CheckResult cachedResult = getCachedCheckResult();
+        return cachedResult == null ? fallback : cachedResult;
     }
 
     private <T> T executeWithTimeout(Callable<T> callable, T fallback) {
@@ -399,6 +381,17 @@ public class NacosSelfRegistrationChecker {
 
         public String getMessage() {
             return message;
+        }
+    }
+
+    private static class CachedCheckResult {
+
+        private final CheckResult checkResult;
+        private final long checkTime;
+
+        private CachedCheckResult(CheckResult checkResult, long checkTime) {
+            this.checkResult = checkResult;
+            this.checkTime = checkTime;
         }
     }
 

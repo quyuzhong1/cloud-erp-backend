@@ -4,6 +4,7 @@ import com.cloud.erp.gateway.utils.ServletUtils;
 import com.common.core.enums.ApiError;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.Ordered;
 import org.springframework.core.env.Environment;
 import org.springframework.http.server.reactive.ServerHttpRequest;
@@ -22,12 +23,15 @@ import java.net.UnknownHostException;
  */
 @Slf4j
 @Component
+@ConditionalOnProperty(prefix = "erp.internal-health", name = "enabled", havingValue = "true")
 public class InternalPathBlockWebFilter implements WebFilter, Ordered {
 
     private static final String INTERNAL_PATH_PREFIX = "/internal/";
     private static final String LIVE_PATH = "/internal/live";
     private static final String READY_PATH = "/internal/ready";
     private static final String ALLOWED_PROBE_CIDRS_KEY = "erp.internal-health.allowed-probe-cidrs";
+    // 默认值优先兼容 K8s 节点/探针来源，不代表生产最小权限；
+    // 生产/UAT 应通过 Nacos 收窄为实际 kubelet 或网关探针网段。
     private static final String DEFAULT_ALLOWED_PROBE_CIDRS =
             "10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,100.64.0.0/10,169.254.0.0/16";
 

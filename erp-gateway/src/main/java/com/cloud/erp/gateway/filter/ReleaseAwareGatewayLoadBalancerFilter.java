@@ -2,11 +2,13 @@ package com.cloud.erp.gateway.filter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.ReactiveDiscoveryClient;
+import org.springframework.cloud.context.environment.EnvironmentChangeEvent;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.ApplicationListener;
 import org.springframework.core.Ordered;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
@@ -31,7 +33,8 @@ import static org.springframework.cloud.gateway.support.ServerWebExchangeUtils.a
  */
 @Component
 @ConditionalOnProperty(prefix = "release.gateway", name = "enabled", havingValue = "true")
-public class ReleaseAwareGatewayLoadBalancerFilter implements GlobalFilter, Ordered {
+public class ReleaseAwareGatewayLoadBalancerFilter
+        implements GlobalFilter, Ordered, ApplicationListener<EnvironmentChangeEvent> {
 
     private static final Logger log = LoggerFactory.getLogger(ReleaseAwareGatewayLoadBalancerFilter.class);
     private static final String ACTIVE_COLOR_KEY = "release.active-color";
@@ -77,6 +80,20 @@ public class ReleaseAwareGatewayLoadBalancerFilter implements GlobalFilter, Orde
         return ORDER_BEFORE_GATEWAY_LOAD_BALANCER;
     }
 
+    @Override
+    public void onApplicationEvent(EnvironmentChangeEvent event) {
+        if (event == null || event.getKeys() == null) {
+            return;
+        }
+        if (event.getKeys().contains(ACTIVE_COLOR_KEY)
+                || event.getKeys().contains(ACTIVE_VERSION_KEY)
+                || event.getKeys().contains(INSTANCE_CACHE_TTL_MS_KEY)) {
+            // 发布控制配置热刷新时立即丢弃发现缓存，避免切色窗口内继续使用旧实例快照。
+            instanceCache.clear();
+            log.warn("Cleared gateway release instance cache after release config changed: {}", event.getKeys());
+        }
+    }
+
     private Mono<List<ServiceInstance>> getInstances(String serviceId) {
         long ttlMs = getInstanceCacheTtlMs();
         if (ttlMs <= 0) {
@@ -106,8 +123,8 @@ public class ReleaseAwareGatewayLoadBalancerFilter implements GlobalFilter, Orde
                                       String activeColor, String activeVersion) {
         ReleaseMatchResult matchResult = filterByRelease(instances, activeColor, activeVersion);
         if (matchResult.matchedInstances.isEmpty()) {
-            // filterByRelease 已对「无 release 元数据」的老实例做兼容回退；走到这里表示存在
-            // 可比较 release 元数据但没有命中 active 发布版本，网关侧返回 503，避免跨蓝绿版本转发。
+            // filterByRelease 已对「无 release 元数据」的老实例做兼容回退；走到这里说明已检测到
+            // release 元数据但没有命中 active 发布版本，网关侧返回 503，避免跨蓝绿版本转发。
             log.warn("No active release instance found for gateway service={}, activeColor={}, activeVersion={}",
                     serviceId, activeColor, activeVersion);
             exchange.getResponse().setStatusCode(HttpStatus.SERVICE_UNAVAILABLE);
@@ -125,25 +142,31 @@ public class ReleaseAwareGatewayLoadBalancerFilter implements GlobalFilter, Orde
         if (instances == null || instances.isEmpty()) {
             return new ReleaseMatchResult(Collections.emptyList());
         }
+        if (!hasText(activeColor) && !hasText(activeVersion)) {
+            // 未配置发布规则时保持原始负载均衡行为，避免非蓝绿环境因实例已带标签而被误拦截。
+            return new ReleaseMatchResult(instances);
+        }
 
         List<ServiceInstance> matched = new ArrayList<>();
-        boolean hasComparableMetadata = false;
+        boolean hasReleaseMetadata = false;
         for (ServiceInstance instance : instances) {
             Map<String, String> metadata = instance.getMetadata();
             if (metadata == null || metadata.isEmpty()) {
+                // 仅当整个实例列表都没有 release 元数据时才兼容回退；混合场景下无标签实例不参与兜底，避免跨色转发。
                 continue;
             }
+            // 兼容存量部署已写入的裸 color/version；新实例会由 NacosReleaseMetadataInitializer 同步写入 release 前缀。
             String releaseColor = firstText(metadata, "release.color", "release-color", "releaseColor", "color");
             String releaseVersion = firstText(metadata, "release.version", "release-version", "releaseVersion", "version");
-            if (hasComparableReleaseMetadata(activeColor, activeVersion, releaseColor, releaseVersion)) {
-                hasComparableMetadata = true;
+            if (hasAnyReleaseMetadata(releaseColor, releaseVersion)) {
+                hasReleaseMetadata = true;
             }
             if (matchesRelease(activeColor, activeVersion, releaseColor, releaseVersion)) {
                 matched.add(instance);
             }
         }
-        if (matched.isEmpty() && !hasComparableMetadata) {
-            // 兼容未接入 release 元数据的存量实例：没有任何可比较标签时不强制切流。
+        if (matched.isEmpty() && !hasReleaseMetadata) {
+            // 兼容未接入 release 元数据的存量实例：没有任何 release 标签时不强制切流。
             log.warn("No release metadata found for gateway activeColor={}, activeVersion={}, fallback to all instances",
                     activeColor, activeVersion);
             return new ReleaseMatchResult(instances);
@@ -181,26 +204,24 @@ public class ReleaseAwareGatewayLoadBalancerFilter implements GlobalFilter, Orde
     }
 
     private boolean matchesRelease(String activeColor, String activeVersion, String releaseColor, String releaseVersion) {
-        boolean hasComparableMetadata = false;
-        if (hasText(activeColor) && hasText(releaseColor)) {
-            hasComparableMetadata = true;
-            if (!activeColor.equalsIgnoreCase(releaseColor)) {
+        boolean hasActiveRule = false;
+        if (hasText(activeColor)) {
+            hasActiveRule = true;
+            if (!hasText(releaseColor) || !activeColor.equalsIgnoreCase(releaseColor)) {
                 return false;
             }
         }
-        if (hasText(activeVersion) && hasText(releaseVersion)) {
-            hasComparableMetadata = true;
-            if (!activeVersion.equalsIgnoreCase(releaseVersion)) {
+        if (hasText(activeVersion)) {
+            hasActiveRule = true;
+            if (!hasText(releaseVersion) || !activeVersion.equalsIgnoreCase(releaseVersion)) {
                 return false;
             }
         }
-        return hasComparableMetadata;
+        return hasActiveRule;
     }
 
-    private boolean hasComparableReleaseMetadata(String activeColor, String activeVersion,
-                                                 String releaseColor, String releaseVersion) {
-        return (hasText(activeColor) && hasText(releaseColor))
-                || (hasText(activeVersion) && hasText(releaseVersion));
+    private boolean hasAnyReleaseMetadata(String releaseColor, String releaseVersion) {
+        return hasText(releaseColor) || hasText(releaseVersion);
     }
 
     private boolean hasText(String value) {

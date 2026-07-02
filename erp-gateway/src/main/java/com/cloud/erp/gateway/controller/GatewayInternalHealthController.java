@@ -1,11 +1,13 @@
 package com.cloud.erp.gateway.controller;
 
 import com.cloud.erp.gateway.component.GatewayReadinessState;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
@@ -20,12 +22,16 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/internal")
+@ConditionalOnProperty(prefix = "erp.internal-health", name = "enabled", havingValue = "true")
 public class GatewayInternalHealthController {
 
     private static final String STATUS_UP = "UP";
     private static final String STATUS_DOWN = "DOWN";
+    private static final String STATUS_PRE_STOPPING = "PRE_STOPPING";
     private static final String REASON_READY = "READY";
     private static final String REASON_APPLICATION_NOT_READY = "APPLICATION_NOT_READY";
+    private static final String REASON_PRE_STOPPING = "PRE_STOPPING";
+    private static final String REASON_PRE_STOP_FORBIDDEN = "PRE_STOP_FORBIDDEN";
     private static final String REASON_RELEASE_STATE_FORBIDDEN = "RELEASE_STATE_FORBIDDEN";
     private static final String RELEASE_ACTIVE_COLOR = "release.active-color";
     private static final String RELEASE_ACTIVE_VERSION = "release.active-version";
@@ -46,11 +52,15 @@ public class GatewayInternalHealthController {
 
     @GetMapping("/ready")
     public Mono<ResponseEntity<Map<String, Object>>> ready() {
-        if (readinessState.isReady()) {
-            return Mono.just(ResponseEntity.ok(body(STATUS_UP, REASON_READY)));
+        if (!readinessState.isApplicationReady()) {
+            return Mono.just(ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(body(STATUS_DOWN, REASON_APPLICATION_NOT_READY)));
         }
-        return Mono.just(ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                .body(body(STATUS_DOWN, REASON_APPLICATION_NOT_READY)));
+        if (readinessState.isPreStopping()) {
+            return Mono.just(ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(body(STATUS_DOWN, REASON_PRE_STOPPING)));
+        }
+        return Mono.just(ResponseEntity.ok(body(STATUS_UP, REASON_READY)));
     }
 
     @GetMapping("/release-state")
@@ -66,20 +76,33 @@ public class GatewayInternalHealthController {
         body.put("releaseVersion", environment.getProperty(RELEASE_VERSION));
         body.put("xxlJobEnabled", environment.getProperty(RELEASE_XXL_JOB_ENABLED, Boolean.class, true));
         body.put("currentReleaseActive", isCurrentReleaseActive());
+        body.put("effectiveXxlJobEnabled", environment.getProperty(RELEASE_XXL_JOB_ENABLED, Boolean.class, true)
+                && isCurrentReleaseActive());
         return Mono.just(ResponseEntity.ok(body));
+    }
+
+    @PostMapping("/pre-stop")
+    public Mono<ResponseEntity<Map<String, Object>>> preStop(ServerHttpRequest request) {
+        if (!isLoopbackRequest(request)) {
+            return Mono.just(ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(body(STATUS_DOWN, REASON_PRE_STOP_FORBIDDEN)));
+        }
+        // Gateway 入口摘流依赖 K8s readiness；若未来让内部服务通过 Nacos 发现 Gateway，需要补充注册中心下线逻辑。
+        readinessState.markPreStopping();
+        return Mono.just(ResponseEntity.ok(body(STATUS_PRE_STOPPING, REASON_PRE_STOPPING)));
     }
 
     private boolean isCurrentReleaseActive() {
         String activeColor = environment.getProperty(RELEASE_ACTIVE_COLOR);
         String localColor = environment.getProperty(RELEASE_COLOR);
-        if (hasText(activeColor) && hasText(localColor)) {
-            return activeColor.equalsIgnoreCase(localColor);
+        if (hasText(activeColor) && (!hasText(localColor) || !activeColor.equalsIgnoreCase(localColor))) {
+            return false;
         }
 
         String activeVersion = environment.getProperty(RELEASE_ACTIVE_VERSION);
         String localVersion = environment.getProperty(RELEASE_VERSION);
-        if (hasText(activeVersion) && hasText(localVersion)) {
-            return activeVersion.equalsIgnoreCase(localVersion);
+        if (hasText(activeVersion) && (!hasText(localVersion) || !activeVersion.equalsIgnoreCase(localVersion))) {
+            return false;
         }
 
         return true;

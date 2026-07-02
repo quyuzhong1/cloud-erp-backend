@@ -12,6 +12,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 蓝绿发布时通过 Nacos 动态控制 XXL-JOB 执行器注册，避免新旧版本同时执行定时任务。
+ * 发布流程按「新色首次启用、旧色停止后退出」使用；回滚应重建 Pod，不依赖同一 JVM 内反复停启。
  */
 public class ReleaseControlledXxlJobSpringExecutor extends XxlJobSpringExecutor
         implements EnvironmentAware, ApplicationListener<ApplicationEvent> {
@@ -22,9 +23,11 @@ public class ReleaseControlledXxlJobSpringExecutor extends XxlJobSpringExecutor
     private static final String LOCAL_COLOR_KEY = "release.color";
     private static final String ACTIVE_VERSION_KEY = "release.active-version";
     private static final String LOCAL_VERSION_KEY = "release.version";
+    // common-message 不直接绑定 spring-cloud-context；用类名识别 Nacos 刷新事件，避免公共消息模块新增传递依赖。
     private static final String ENVIRONMENT_CHANGE_EVENT = "org.springframework.cloud.context.environment.EnvironmentChangeEvent";
 
     private final AtomicBoolean executorStarted = new AtomicBoolean(false);
+    private final AtomicBoolean executorDestroyed = new AtomicBoolean(false);
     private Environment environment;
 
     @Override
@@ -64,14 +67,14 @@ public class ReleaseControlledXxlJobSpringExecutor extends XxlJobSpringExecutor
     private boolean isCurrentReleaseActive() {
         String activeColor = environment.getProperty(ACTIVE_COLOR_KEY);
         String localColor = environment.getProperty(LOCAL_COLOR_KEY);
-        if (hasText(activeColor) && hasText(localColor)) {
-            return activeColor.equalsIgnoreCase(localColor);
+        if (hasText(activeColor) && (!hasText(localColor) || !activeColor.equalsIgnoreCase(localColor))) {
+            return false;
         }
 
         String activeVersion = environment.getProperty(ACTIVE_VERSION_KEY);
         String localVersion = environment.getProperty(LOCAL_VERSION_KEY);
-        if (hasText(activeVersion) && hasText(localVersion)) {
-            return activeVersion.equalsIgnoreCase(localVersion);
+        if (hasText(activeVersion) && (!hasText(localVersion) || !activeVersion.equalsIgnoreCase(localVersion))) {
+            return false;
         }
 
         return true;
@@ -90,12 +93,16 @@ public class ReleaseControlledXxlJobSpringExecutor extends XxlJobSpringExecutor
     }
 
     private void startExecutor() {
+        if (executorDestroyed.get()) {
+            log.warn(">>>>>>>>>>> xxl-job executor has been destroyed, skip restart in same JVM. Please rebuild pod.");
+            return;
+        }
         if (!executorStarted.compareAndSet(false, true)) {
             return;
         }
         try {
             super.afterSingletonsInstantiated();
-            log.warn(">>>>>>>>>>> xxl-job executor started by {}=true.", XXL_JOB_ENABLED_KEY);
+            log.info(">>>>>>>>>>> xxl-job executor started by {}=true.", XXL_JOB_ENABLED_KEY);
         } catch (RuntimeException e) {
             executorStarted.set(false);
             throw e;
@@ -106,7 +113,11 @@ public class ReleaseControlledXxlJobSpringExecutor extends XxlJobSpringExecutor
         if (!executorStarted.compareAndSet(true, false)) {
             return;
         }
-        super.destroy();
-        log.warn(">>>>>>>>>>> xxl-job executor stopped by {}=false.", XXL_JOB_ENABLED_KEY);
+        try {
+            super.destroy();
+        } finally {
+            executorDestroyed.set(true);
+        }
+        log.info(">>>>>>>>>>> xxl-job executor stopped by {}=false.", XXL_JOB_ENABLED_KEY);
     }
 }
