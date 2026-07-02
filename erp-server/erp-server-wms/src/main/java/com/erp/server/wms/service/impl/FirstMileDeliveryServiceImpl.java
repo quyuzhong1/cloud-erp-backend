@@ -3252,7 +3252,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
     @Override
     public List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> listBeforePushFmDeclare(TmsDeclareBillDTO.PushDeclareBeforeParamDTO dto) {
-        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> list = baseMapper.listBeforePushFmDeclare(dto.getIds());
+        boolean onlyWaitDeclareStatus = dto.getOnlyWaitDeclareStatus() == null || Boolean.TRUE.equals(dto.getOnlyWaitDeclareStatus());
+        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> list = baseMapper.listBeforePushFmDeclare(dto.getIds(), onlyWaitDeclareStatus);
         if (CollUtil.isEmpty(list)) {
             throw new ServiceException(ApiError.COMMON_NOT_FOUND_PUSH_DADA);
         }

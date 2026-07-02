@@ -2601,7 +2601,6 @@ public class TmsDeclareBillDTO implements Serializable {
     @Data
     @Builder
     @NoArgsConstructor
-    @AllArgsConstructor
     public static class PushDeclareBeforeParamDTO {
         /**
          *  是否合并,true是，false否
@@ -2612,6 +2611,22 @@ public class TmsDeclareBillDTO implements Serializable {
          */
         @NotEmpty(message = "选择ids不能为空")
         private List<String> ids;
+        /**
+         * 是否仅查询 declare_status = wait 的来源单。
+         * 下推/新增默认为 true；编辑/合并/同箱校验等场景传 false，允许 wait + finish。
+         */
+        private Boolean onlyWaitDeclareStatus = true;
+
+        public PushDeclareBeforeParamDTO(Boolean isMultipleMerge, List<String> ids) {
+            this.isMultipleMerge = isMultipleMerge;
+            this.ids = ids;
+        }
+
+        public PushDeclareBeforeParamDTO(Boolean isMultipleMerge, List<String> ids, Boolean onlyWaitDeclareStatus) {
+            this.isMultipleMerge = isMultipleMerge;
+            this.ids = ids;
+            this.onlyWaitDeclareStatus = onlyWaitDeclareStatus;
+        }
     }
 
     @Data

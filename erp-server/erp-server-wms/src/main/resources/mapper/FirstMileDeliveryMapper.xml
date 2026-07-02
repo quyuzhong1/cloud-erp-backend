@@ -1000,7 +1000,16 @@
         INNER JOIN fba_shipment fs on fmdd.fba_shipment_code = fs.code and fs.is_deleted = false
         where fmdd.is_deleted= false and fmdd.fba_shipment_code != ''
         ) as fba on fba.main_id = fmd.id
-        where fmd.is_deleted = false and fmd.declare_status = 'wait' and fmd.id in
+        where fmd.is_deleted = false
+        <choose>
+            <when test="onlyWaitDeclareStatus != null and onlyWaitDeclareStatus == false">
+                and fmd.declare_status in ('wait', 'finish')
+            </when>
+            <otherwise>
+                and fmd.declare_status = 'wait'
+            </otherwise>
+        </choose>
+        and fmd.id in
         <foreach collection="ids" item="id" open="(" separator="," close=")">
             #{id}
         </foreach>

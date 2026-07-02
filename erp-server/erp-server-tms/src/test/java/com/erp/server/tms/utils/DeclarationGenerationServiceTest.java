@@ -64,9 +64,33 @@ public class DeclarationGenerationServiceTest {
         assertNoBoxSplitAcrossBills(bills);
     }
 
+    @Test
+    public void shouldKeepSameBusinessBoxAcrossSourceIdsInSingleDeclaration() {
+        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetails = new ArrayList<>();
+        for (int i = 0; i < 25; i++) {
+            sourceDetails.add(buildSourceDetail("SRC-A", "BOX-1", "SKU-A-" + i, "HS001", "BIZ001"));
+        }
+        for (int i = 0; i < 25; i++) {
+            sourceDetails.add(buildSourceDetail("SRC-B", "BOX-1", "SKU-B-" + i, "HS001", "BIZ001"));
+        }
+
+        List<TmsDeclareBillDTO.MergeDeclareBillDTO> bills = service.generateMergeBillDetails(sourceDetails, true, true);
+
+        // 同一业务单号同一箱号（跨来源单）属于同一整箱簇，即使 50 行超过 48 也必须保留在同一票。
+        Assert.assertEquals(1, bills.size());
+        assertNoBoxSplitAcrossBills(bills);
+    }
+
     private TmsDeclareBillDTO.SourceDeliveryDetailDTO buildSourceDetail(String sourceId, String boxNo, String skuId, String hsCode) {
+        TmsDeclareBillDTO.SourceDeliveryDetailDTO detail = buildSourceDetail(sourceId, boxNo, skuId, hsCode, sourceId);
+        return detail;
+    }
+
+    private TmsDeclareBillDTO.SourceDeliveryDetailDTO buildSourceDetail(String sourceId, String boxNo, String skuId,
+                                                                          String hsCode, String businessCode) {
         TmsDeclareBillDTO.SourceDeliveryDetailDTO detail = new TmsDeclareBillDTO.SourceDeliveryDetailDTO();
         detail.setSourceId(sourceId);
+        detail.setBusinessCode(businessCode);
         detail.setBoxNo(boxNo);
         detail.setSkuId(skuId);
         detail.setSkuNo(skuId);
@@ -81,13 +105,18 @@ public class DeclarationGenerationServiceTest {
         return detail;
     }
 
+    private String buildBusinessBoxKey(TmsDeclareBillDTO.SourceDeliveryDetailDTO source) {
+        String businessKey = org.apache.commons.lang3.StringUtils.defaultIfBlank(source.getBusinessCode(), source.getSourceId());
+        return businessKey + "|" + source.getBoxNo();
+    }
+
     private void assertNoBoxSplitAcrossBills(List<TmsDeclareBillDTO.MergeDeclareBillDTO> bills) {
         Set<String> seenBoxKeys = new HashSet<>();
         for (int billIndex = 0; billIndex < bills.size(); billIndex++) {
             TmsDeclareBillDTO.MergeDeclareBillDTO bill = bills.get(billIndex);
             Set<String> boxKeysInBill = bill.getDeclareBillList().stream()
                     .flatMap(detail -> detail.getSourceDeliveryDetailList().stream())
-                    .map(source -> source.getSourceId() + "|" + source.getBoxNo())
+                    .map(this::buildBusinessBoxKey)
                     .collect(Collectors.toSet());
             for (String boxKey : boxKeysInBill) {
                 if (seenBoxKeys.contains(boxKey)) {
@@ -100,7 +129,7 @@ public class DeclarationGenerationServiceTest {
                 for (TmsDeclareBillDTO.MergeDeclareBillDTO otherBill : bills) {
                     boolean containsBox = otherBill.getDeclareBillList().stream()
                             .flatMap(detail -> detail.getSourceDeliveryDetailList().stream())
-                            .anyMatch(source -> boxKey.equals(source.getSourceId() + "|" + source.getBoxNo()));
+                            .anyMatch(source -> boxKey.equals(buildBusinessBoxKey(source)));
                     if (containsBox) {
                         billCount++;
                     }

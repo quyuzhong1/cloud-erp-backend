@@ -3218,12 +3218,13 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         }
         TmsDeclareBillEntity firstDeclareBill = tmsDeclareBillList.get(0);
         List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDeliveryDetailList = deliveryDeclareDetailMidService.listSourceByDeclareIdList(ids);
+        validateMergeCountryByBusinessCode(sourceDeliveryDetailList);
         return autoMergeDeclareBillView(new TmsDeclareBillDTO.AutoMergeDeclareBillViewDTO(Boolean.TRUE,sourceDeliveryDetailList),
                 isB2bCustomerReceiver(firstDeclareBill.getType(), firstDeclareBill.getReceiverType()));
     }
 
     /**
-     * 按拆分选择的来源单据 + 箱号整箱过滤来源明细（拆分为整箱维度）。
+     * 按拆分选择的业务单号 + 箱号整箱过滤来源明细（拆分为整箱维度）。
      *
      * @param sourceDeliveryDetailList 原报关单来源明细
      * @param splitDeclareDTO 拆分选择
@@ -3231,11 +3232,13 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
      */
     private List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> filterSplitSourceDetail(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDeliveryDetailList,
                                                                                    TmsDeclareBillDTO.SplitDeclareDTO splitDeclareDTO) {
-        // 拆分是整箱维度：按来源单+箱号整箱取明细，不再用前端回传的 skuId 快照二次过滤，
-        // 避免快照与保存时实际箱内明细不一致（如期间又生成/编辑过）导致箱内漏行、拆分后少数据。
+        // 拆分是整箱维度：按业务单号+箱号整箱取明细（同业务单跨来源单相同箱号视为同一箱），
+        // 不再用前端回传的 skuId 快照二次过滤，避免快照与保存时实际箱内明细不一致导致漏行。
+        String splitBusinessKey = resolveBusinessCodeForBoxKey(splitDeclareDTO.getBusinessCode(),
+                splitDeclareDTO.getSourceId(), null);
         return Optional.ofNullable(sourceDeliveryDetailList).orElse(Collections.emptyList()).stream()
-                .filter(obj -> CharSequenceUtil.equals(obj.getSourceId(), splitDeclareDTO.getSourceId()))
                 .filter(obj -> CharSequenceUtil.equals(obj.getBoxNo(), splitDeclareDTO.getBoxNo()))
+                .filter(obj -> CharSequenceUtil.equals(resolveBusinessCodeForBoxKey(obj), splitBusinessKey))
                 .collect(Collectors.toList());
     }
 
@@ -3325,7 +3328,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                         .collect(Collectors.toList());
                 TmsDeclareBillDTO.SourceDeliveryDetailDTO sample = boxSampleMap.get(entry.getKey());
                 throw new ServiceException(ApiError.LOGISTICS_DECLARE_BOX_NOT_FULL_SELECTED,
-                        StringUtils.defaultString(sample.getSourceCode()),
+                        resolveBusinessCodeDisplay(sample),
                         StringUtils.defaultString(sample.getBoxNo()),
                         String.join("、", missingSkuNos));
             }
@@ -3348,7 +3351,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                     .collect(Collectors.toList());
             TmsDeclareBillDTO.SourceDeliveryDetailDTO sample = boxSampleMap.get(missingBoxKey);
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_SPLIT_DETAIL_MISSING,
-                    Objects.isNull(sample) ? "" : StringUtils.defaultString(sample.getSourceCode()),
+                    Objects.isNull(sample) ? "" : resolveBusinessCodeDisplay(sample),
                     Objects.isNull(sample) ? "" : StringUtils.defaultString(sample.getBoxNo()),
                     String.join("、", missingSkuNos));
         }
@@ -3966,18 +3969,36 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_MERGE_SKU_LIMIT_EXCEEDED, maxDetailCount);
         }
         validateDuplicateSkuRows(mergeDetailList);
-        Set<String> countrySet = new HashSet<>();
         Set<String> sourceDetailKeySet = new HashSet<>();
         for (int i = 0; i < mergeDetailList.size(); i++) {
             TmsDeclareBillDTO.MergeDeclareBillDetailDTO detailDTO = mergeDetailList.get(i);
             int rowNo = i + 1;
             applyMergeDeclareDetailDefaults(detailDTO);
             validateDeclareDetailRequired(detailDTO, rowNo);
-            validateDeclareDetailSources(detailDTO, rowNo, countrySet, sourceDetailKeySet);
+            validateDeclareDetailSources(detailDTO, rowNo, sourceDetailKeySet);
         }
-        if (countrySet.size() > 1) {
-            throw new ServiceException(ApiError.LOGISTICS_DECLARE_MERGE_COUNTRY_MISMATCH);
+        // 汇总各合并行的来源明细做「按业务单号校验国家」；来源行 countryId 可能为空，
+        // 用所属合并行 toCountry 回填一份副本，保留旧的按目的国判断国家一致的能力（不改动原对象）。
+        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> allSourceDetails = new ArrayList<>();
+        for (TmsDeclareBillDTO.MergeDeclareBillDetailDTO detailDTO : mergeDetailList) {
+            if (Objects.isNull(detailDTO) || CollUtil.isEmpty(detailDTO.getSourceDeliveryDetailList())) {
+                continue;
+            }
+            for (TmsDeclareBillDTO.SourceDeliveryDetailDTO sourceDetail : detailDTO.getSourceDeliveryDetailList()) {
+                if (Objects.isNull(sourceDetail)) {
+                    continue;
+                }
+                if (StringUtils.isNotBlank(sourceDetail.getCountryId())) {
+                    allSourceDetails.add(sourceDetail);
+                    continue;
+                }
+                TmsDeclareBillDTO.SourceDeliveryDetailDTO copy = new TmsDeclareBillDTO.SourceDeliveryDetailDTO();
+                BeanUtil.copyProperties(sourceDetail, copy);
+                copy.setCountryId(detailDTO.getToCountry());
+                allSourceDetails.add(copy);
+            }
         }
+        validateMergeCountryByBusinessCode(allSourceDetails);
     }
 
     /**
@@ -4011,12 +4032,10 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
      * @date 2026/5/7 14:08
      * @param detailDTO
      * @param rowNo
-     * @param countrySet
      * @param sourceDetailKeySet
      */
     private void validateDeclareDetailSources(TmsDeclareBillDTO.MergeDeclareBillDetailDTO detailDTO,
                                               int rowNo,
-                                              Set<String> countrySet,
                                               Set<String> sourceDetailKeySet) {
         int sourceQty = 0;
         List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList = mergeSourceDetailsInSameDeclareDetail(detailDTO.getSourceDeliveryDetailList());
@@ -4035,7 +4054,6 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             validateSourceValue(detailDTO.getToCountry(), sourceDetail.getCountryId(), rowNo, "最终目的国(地区)");
             validateSourceValue(detailDTO.getSourceCargo(), defaultSourceCargo(sourceDetail.getSourceCargo()), rowNo, "境内货源地");
             validateSourceValue(detailDTO.getExemption(), defaultExemption(sourceDetail.getExemption()), rowNo, "征免");
-            countrySet.add(StringUtils.defaultIfBlank(sourceDetail.getCountryId(), detailDTO.getToCountry()));
             sourceQty += Objects.isNull(sourceDetail.getQty()) ? 0 : sourceDetail.getQty();
         }
         if (!Objects.equals(detailDTO.getQty(), sourceQty)) {
@@ -4173,13 +4191,44 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 .distinct()
                 .collect(Collectors.joining("、"));
         throw new ServiceException(ApiError.LOGISTICS_DECLARE_BOX_NOT_FULL_SELECTED,
-                StringUtils.defaultString(sample.getSourceCode()),
+                resolveBusinessCodeDisplay(sample),
                 StringUtils.defaultString(sample.getBoxNo()),
                 missingSkuNos);
     }
 
+    @Override
+    public void validateMergeCountryByBusinessCode(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList) {
+        if (CollUtil.isEmpty(sourceDetailList)) {
+            return;
+        }
+        Map<String, Set<String>> countryByBusinessCode = new LinkedHashMap<>();
+        for (TmsDeclareBillDTO.SourceDeliveryDetailDTO detail : sourceDetailList) {
+            if (Objects.isNull(detail)) {
+                continue;
+            }
+            // 目的国以来源行 countryId 为准；缺失则跳过，避免把「未取到国家」误当成一个独立国家导致误报不一致。
+            String countryId = StringUtils.trimToNull(detail.getCountryId());
+            if (StringUtils.isBlank(countryId)) {
+                continue;
+            }
+            countryByBusinessCode.computeIfAbsent(resolveBusinessCodeForBoxKey(detail), k -> new HashSet<>())
+                    .add(countryId);
+        }
+        for (Set<String> countries : countryByBusinessCode.values()) {
+            if (countries.size() > 1) {
+                throw new ServiceException(ApiError.LOGISTICS_DECLARE_MERGE_COUNTRY_MISMATCH);
+            }
+        }
+        Set<String> distinctCountries = countryByBusinessCode.values().stream()
+                .flatMap(Set::stream)
+                .collect(Collectors.toSet());
+        if (distinctCountries.size() > 1) {
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_MERGE_COUNTRY_MISMATCH);
+        }
+    }
+
     /**
-     * 整箱完整性校验用的明细键：来源单|箱号|装箱父件（parentSkuId ?: skuId）。
+     * 整箱完整性校验用的明细键：业务单号|箱号|装箱父件（parentSkuId ?: skuId）。
      * 组合品拆分后报文是子件（带 parentSkuId），WMS 整箱返回装箱父件，用父件维度两边才能对齐。
      */
     private String buildSourceBoxPackedSkuKey(TmsDeclareBillDTO.SourceDeliveryDetailDTO detailDTO) {
@@ -4196,13 +4245,13 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (CollUtil.isEmpty(sourceIdList)) {
             return Collections.emptyList();
         }
+        TmsDeclareBillDTO.PushDeclareBeforeParamDTO paramDTO = new TmsDeclareBillDTO.PushDeclareBeforeParamDTO(
+                Boolean.TRUE, sourceIdList, Boolean.FALSE);
         if (SourceTypeEnum.FIRST_MILE_DELIVERY.getCode().equals(sourceType)) {
-            return wmsFirstMileDeliveryFeign.listBeforePushFmDeclare(
-                    new TmsDeclareBillDTO.PushDeclareBeforeParamDTO(Boolean.TRUE, sourceIdList));
+            return wmsFirstMileDeliveryFeign.listBeforePushFmDeclare(paramDTO);
         }
         if (SourceTypeEnum.SO_DELIVERY_NOTICE.getCode().equals(sourceType)) {
-            return soDeliveryNoticeFeign.listBeforePushB2bDeclare(
-                    new TmsDeclareBillDTO.PushDeclareBeforeParamDTO(Boolean.TRUE, sourceIdList));
+            return soDeliveryNoticeFeign.listBeforePushB2bDeclare(paramDTO);
         }
         return Collections.emptyList();
     }
@@ -4968,8 +5017,10 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             unlockAfterTx = true
     )
     public Boolean batchAddMergeDetail(String type, List<TmsDeclareBillDTO.MergeDeclareBillDTO> list) {
+        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> allSourceDetails = collectMergeSourceDetails(list);
+        validateMergeCountryByBusinessCode(allSourceDetails);
         // 同一箱的全部明细必须在同一张报关单（以 WMS 装箱数据为准），Feign 须在本地事务外调用。
-        validateSameBoxAllInOneBill(resolveDeclareSourceType(type), collectMergeSourceDetails(list));
+        validateSameBoxAllInOneBill(resolveDeclareSourceType(type), allSourceDetails);
         List<String> syncSourceIds = service.batchAddMergeDetailInTx(type, list);
         syncSourceDeclareStatusIfNeeded(type, syncSourceIds);
         return Boolean.TRUE;
@@ -5375,15 +5426,35 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     }
 
     /**
-     * 构建报关箱号校验键
+     * 构建报关箱号校验键：业务单号|箱号（businessCode 缺失时回退 sourceId / businessId）。
      * @author will
      * @date 2026/5/7 16:29
      * @param sourceDetail
      * @return java.lang.String
      */
     private String buildDeclareBoxKey(TmsDeclareBillDTO.SourceDeliveryDetailDTO sourceDetail) {
-        String sourceKey = StringUtils.defaultIfBlank(sourceDetail.getSourceId(), sourceDetail.getBusinessId());
-        return CharSequenceUtil.join("|", StringUtils.defaultString(sourceKey), StringUtils.defaultString(sourceDetail.getBoxNo()));
+        return buildBusinessBoxKey(resolveBusinessCodeForBoxKey(sourceDetail), sourceDetail.getBoxNo());
+    }
+
+    /**
+     * 解析同箱/同业务维度键；businessCode 为空时回退 sourceId，再回退 businessId。
+     */
+    private String resolveBusinessCodeForBoxKey(TmsDeclareBillDTO.SourceDeliveryDetailDTO sourceDetail) {
+        if (Objects.isNull(sourceDetail)) {
+            return "";
+        }
+        return resolveBusinessCodeForBoxKey(sourceDetail.getBusinessCode(), sourceDetail.getSourceId(), sourceDetail.getBusinessId());
+    }
+
+    private String resolveBusinessCodeForBoxKey(String businessCode, String sourceId, String businessId) {
+        return StringUtils.defaultIfBlank(businessCode, StringUtils.defaultIfBlank(sourceId, businessId));
+    }
+
+    private String resolveBusinessCodeDisplay(TmsDeclareBillDTO.SourceDeliveryDetailDTO sourceDetail) {
+        if (Objects.isNull(sourceDetail)) {
+            return "";
+        }
+        return StringUtils.defaultIfBlank(sourceDetail.getBusinessCode(), sourceDetail.getSourceCode());
     }
 
     private List<String> extractSourceIdListFromMidList(List<DeliveryDeclareDetailMidEntity> addMidList) {
