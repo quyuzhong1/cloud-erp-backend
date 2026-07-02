@@ -1074,7 +1074,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (CollUtil.isEmpty(sourceDeliveryDetailList)) {
             throw new ServiceException(ApiError.COMMON_NOT_FOUND_PUSH_DADA);
         }
-        handleBeforeDeclareData(sourceDeliveryDetailList, dto.getIsMultipleMerge());
+        handleBeforeDeclareData(sourceDeliveryDetailList);
         return sourceDeliveryDetailList;
     }
 
@@ -1116,7 +1116,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
      * @date 2026/4/27 17:32
      * @param list
      */
-    private void handleBeforeDeclareData(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> list, Boolean isMultipleMerge) {
+    private void handleBeforeDeclareData(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> list) {
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
@@ -1135,7 +1135,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         List<DictCurrencyEntity> dictCurrencyList = sysUserFeign.currencyList();
         Map<String, String> currencyMap = CollUtil.isEmpty(dictCurrencyList) ? new HashMap<>() : dictCurrencyList.stream().collect(Collectors.toMap(DictCurrencyEntity::getId,item -> item.getName()));
 
-        Map<String, Boolean> customerReceiverBySource = resolveCustomerReceiverBySource(list, isMultipleMerge);
+        Map<String, Boolean> customerReceiverBySource = resolveCustomerReceiverBySource(list);
         List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> customerReceiverDetails = list.stream()
                 .filter(item -> Boolean.TRUE.equals(customerReceiverBySource.get(resolveB2bSourceGroupKey(item))))
                 .collect(Collectors.toList());
@@ -1171,22 +1171,16 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     }
 
     /**
-     * 合并报关时整批校验收货人类型一致；独立报关时按来源单分别匹配报关配置。
-     * <p>isMultipleMerge 为 null 时按「合并」处理，与 TMS autoMergeDeclareBillView 的口径保持一致，
-     * 避免前置数据准备与后续合并生成走不同分支导致单价/币别错位。
+     * 按来源单分别判定境外收货人类型（客户 / 核算公司）。
+     * <p>与 TMS autoMergeDeclareBillView 完全对齐：无论合并报关还是独立报关，收货人类型都按来源单各自匹配报关配置，
+     * 从而保证「合并前」预览的单价/币别与「合并后」逐行一致——客户取销售订单、核算公司取物流产品。
+     * 一次远程调用拿到每个来源单的判定结果，避免按来源逐个发起 Feign 调用。
      */
-    private Map<String, Boolean> resolveCustomerReceiverBySource(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> list,
-                                                                 Boolean isMultipleMerge) {
+    private Map<String, Boolean> resolveCustomerReceiverBySource(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> list) {
         Map<String, List<TmsDeclareBillDTO.SourceDeliveryDetailDTO>> sourceGroupMap = list.stream()
                 .filter(Objects::nonNull)
                 .collect(Collectors.groupingBy(this::resolveB2bSourceGroupKey, LinkedHashMap::new, Collectors.toList()));
         Map<String, Boolean> customerReceiverBySource = new LinkedHashMap<>();
-        if (!Boolean.FALSE.equals(isMultipleMerge)) {
-            boolean customerReceiver = Boolean.TRUE.equals(tmsDeclareBillFeign.isB2bCustomerReceiver(list));
-            sourceGroupMap.keySet().forEach(sourceKey -> customerReceiverBySource.put(sourceKey, customerReceiver));
-            return customerReceiverBySource;
-        }
-        // 独立报关：一次远程调用拿到每个来源单的判定结果，避免按来源逐个发起 Feign 调用。
         Map<String, Boolean> remoteResultMap = Optional.ofNullable(tmsDeclareBillFeign.isB2bCustomerReceiverBySource(list))
                 .orElseGet(Collections::emptyMap);
         sourceGroupMap.keySet().forEach(sourceKey ->

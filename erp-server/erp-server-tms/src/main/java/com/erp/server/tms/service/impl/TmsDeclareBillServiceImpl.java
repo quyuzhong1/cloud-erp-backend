@@ -5061,7 +5061,15 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     )
     public Boolean batchAddMergeDetail(String type, List<TmsDeclareBillDTO.MergeDeclareBillDTO> list) {
         List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> allSourceDetails = collectMergeSourceDetails(list);
-        validateMergeCountryByBusinessCode(allSourceDetails);
+        // 国家一致性按「单张预览报关单」维度校验：预览已按目的国拆分成多张报关单（每张 MergeDeclareBillDTO 一个国家），
+        // 若把整批展平在一起校验，会把不同报关单的不同国家误判为「不同业务单号必须归属同一个国家」，
+        // 导致合并/独立下推只要涉及多个国家就必然报错。这里逐张报关单单独校验。
+        if (CollUtil.isNotEmpty(list)) {
+            list.stream()
+                    .filter(Objects::nonNull)
+                    .forEach(bill -> validateMergeCountryByBusinessCode(
+                            collectMergeSourceDetails(Collections.singletonList(bill))));
+        }
         // 同一箱的全部明细必须在同一张报关单（以 WMS 装箱数据为准），Feign 须在本地事务外调用。
         validateSameBoxAllInOneBill(resolveDeclareSourceType(type), allSourceDetails);
         List<String> syncSourceIds = service.batchAddMergeDetailInTx(type, list);
