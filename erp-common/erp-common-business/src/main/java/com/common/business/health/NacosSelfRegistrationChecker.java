@@ -300,15 +300,14 @@ public class NacosSelfRegistrationChecker {
             future = queryExecutor.submit(callable);
         } catch (RejectedExecutionException ex) {
             warnThrottled("Nacos self registration check is busy", ex);
-            CheckResult cachedResult = getLastCachedCheckResult();
-            return cachedResult == null ? fallback : cachedResult;
+            return getLastCachedOrFallback(fallback);
         }
         try {
             return future.get(nacosCheckTimeoutMs, TimeUnit.MILLISECONDS);
         } catch (TimeoutException ex) {
             future.cancel(true);
             warnThrottled("Nacos self registration check timed out", ex);
-            return fallback;
+            return getLastCachedOrFallback(fallback);
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
             warnThrottled("Nacos self registration check was interrupted", ex);
@@ -317,6 +316,11 @@ public class NacosSelfRegistrationChecker {
             warnThrottled("Nacos self registration check failed", ex);
             return fallback;
         }
+    }
+
+    private CheckResult getLastCachedOrFallback(CheckResult fallback) {
+        CheckResult cachedResult = getLastCachedCheckResult();
+        return cachedResult == null ? fallback : cachedResult;
     }
 
     private <T> T executeWithTimeout(Callable<T> callable, T fallback) {
