@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import cn.hutool.core.text.CharSequenceUtil;
+import com.common.core.enums.ApiError;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.utils.RedisUtil;
@@ -24,6 +25,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +38,7 @@ public class MagaluService {
     private static final String DEFAULT_API_BASE_URL = "https://api.magalu.com";
     private static final String TOKEN_PATH = "/oauth/token";
     private static final String SKU_LIST_PATH = "/seller/v1/portfolios/skus";
+    private static final String ORDER_LIST_PATH = "/seller/v1/orders";
     private static final int PAGE_SIZE = 100;
 
     @Resource
@@ -96,6 +99,7 @@ public class MagaluService {
                 .setClientSecret(cfgAppClient.getClientSecret())
                 .setBaseUrl(cfgAppClient.getUrl())
                 .setApiBaseUrl(getApiBaseUrl(cfgAppClient))
+                .setChannelId(getChannelId(cfgAppClient))
                 .setRedirectUrl(cfgAppClient.getRedirectUrl())
                 .setAccessToken(shopAuth.getAccessToken())
                 .setRefreshToken(shopAuth.getRefreshToken());
@@ -125,14 +129,35 @@ public class MagaluService {
         String url = trimEndSlash(getApiBaseUrl(shopInfoDTO)) + addStartSlash(path);
         Map<String, Object> params = new HashMap<>(4);
         params.put("limit", limit);
-        params.put("offset", offset);
+        params.put("_offset", offset);
 
-        Map<String, String> headerMap = new HashMap<>(2);
-        headerMap.put("Authorization", "Bearer " + shopInfoDTO.getAccessToken());
-        headerMap.put("Accept", "application/json");
-
-        String response = OkHttpUtils.doGet(url, params, headerMap);
+        String response = OkHttpUtils.doGet(url, params, buildApiHeaders(shopInfoDTO));
         return parseSkuList(response);
+    }
+
+    public List<JSONObject> listOrderPage(MagaluShopInfoDTO shopInfoDTO, String apiPath, int offset, int limit, String startTime, String endTime) {
+        String path = StringUtils.isBlank(apiPath) ? ORDER_LIST_PATH : apiPath;
+        String url = trimEndSlash(getApiBaseUrl(shopInfoDTO)) + addStartSlash(path);
+        Map<String, Object> params = new HashMap<>(8);
+        params.put("limit", limit);
+        params.put("_offset", offset);
+        if (StringUtils.isNotBlank(startTime)) {
+            params.put("updated_at__ge", startTime);
+        }
+        if (StringUtils.isNotBlank(endTime)) {
+            params.put("updated_at__le", endTime);
+        }
+
+        String response = OkHttpUtils.doGet(url, params, buildApiHeaders(shopInfoDTO));
+        return parseDataList(response);
+    }
+
+    public JSONObject getOrderDetail(MagaluShopInfoDTO shopInfoDTO, String apiPath, String orderCode) {
+        String path = StringUtils.defaultIfBlank(apiPath, ORDER_LIST_PATH + "/{code}");
+        path = path.replace("{code}", orderCode).replace("{id}", orderCode);
+        String url = trimEndSlash(getApiBaseUrl(shopInfoDTO)) + addStartSlash(path);
+        String response = OkHttpUtils.doGet(url, new HashMap<>(), buildApiHeaders(shopInfoDTO));
+        return JSON.parseObject(response);
     }
 
     private MagaluTokenDTO requestToken(String baseUrl, Map<String, Object> params, String action) {
@@ -150,8 +175,21 @@ public class MagaluService {
     }
 
     private List<JSONObject> parseSkuList(String response) {
-        Object parsed = JSON.parse(response);
-        JSONArray dataArray = findDataArray(parsed);
+        JSONArray dataArray = findDataArray(JSON.parse(response));
+        List<JSONObject> resultList = new ArrayList<>();
+        if (dataArray == null) {
+            return resultList;
+        }
+        for (Object item : dataArray) {
+            if (item instanceof JSONObject) {
+                resultList.add((JSONObject) item);
+            }
+        }
+        return resultList;
+    }
+
+    private List<JSONObject> parseDataList(String response) {
+        JSONArray dataArray = findDataArray(JSON.parse(response));
         List<JSONObject> resultList = new ArrayList<>();
         if (dataArray == null) {
             return resultList;
@@ -205,8 +243,47 @@ public class MagaluService {
         return StringUtils.isBlank(apiBaseUrl) ? DEFAULT_API_BASE_URL : apiBaseUrl;
     }
 
+    private String getChannelId(CfgAppClientEntity cfgAppClient) {
+        Map<String, Object> extendData = cfgAppClient.getExtendData();
+        if (extendData == null || Objects.isNull(extendData.get("channelId"))) {
+            return "";
+        }
+        return extendData.get("channelId").toString();
+    }
+
     private String getApiBaseUrl(MagaluShopInfoDTO shopInfoDTO) {
         return StringUtils.isBlank(shopInfoDTO.getApiBaseUrl()) ? DEFAULT_API_BASE_URL : shopInfoDTO.getApiBaseUrl();
+    }
+
+    private Map<String, String> buildApiHeaders(MagaluShopInfoDTO shopInfoDTO) {
+        Map<String, String> headerMap = new HashMap<>(4);
+        headerMap.put("Authorization", "Bearer " + shopInfoDTO.getAccessToken());
+        headerMap.put("Accept", "application/json");
+        String tenantId = getTenantId(shopInfoDTO.getAccessToken());
+        if (StringUtils.isNotBlank(tenantId)) {
+            headerMap.put("X-Tenant-Id", tenantId);
+        }
+        if (StringUtils.isNotBlank(shopInfoDTO.getChannelId())) {
+            headerMap.put("X-Channel-Id", shopInfoDTO.getChannelId());
+        }
+        return headerMap;
+    }
+
+    private String getTenantId(String accessToken) {
+        if (StringUtils.isBlank(accessToken)) {
+            return "";
+        }
+        String[] parts = accessToken.split("\\.");
+        if (parts.length < 2) {
+            return "";
+        }
+        try {
+            String payload = new String(Base64.getUrlDecoder().decode(parts[1]), "UTF-8");
+            JSONObject payloadJson = JSON.parseObject(payload);
+            return payloadJson.getString("tenant");
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.SHOP_AUTH_REQUIRED);
+        }
     }
 
     private long getCacheSeconds(Integer expiresIn) {
