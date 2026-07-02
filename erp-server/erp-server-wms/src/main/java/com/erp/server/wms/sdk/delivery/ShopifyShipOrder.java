@@ -192,9 +192,6 @@ public class ShopifyShipOrder extends AbstractShipOrder {
                 //获取渠道标发单号
                 List<String> trackingNumberList = new ArrayList<>();
                 for (SoB2cLogisticsEntity soB2cLogisticsEntity : soB2cLogisticsEntityList) {
-                    if (StringUtils.isBlank(soB2cLogisticsEntity.getLogisticsChannelId())) {
-                        continue;
-                    }
                     // 渠道映射已在上方批量校验，此处直接取 Map 避免重复判空
                     LogisticsChannelDTO.SignShipDTO tmsScaleChannelShipDTO = channelShipMap.get(soB2cLogisticsEntity.getLogisticsChannelId());
                     String standardOrderType = tmsScaleChannelShipDTO.checkAndGetOrderDeliveryMarkType();
