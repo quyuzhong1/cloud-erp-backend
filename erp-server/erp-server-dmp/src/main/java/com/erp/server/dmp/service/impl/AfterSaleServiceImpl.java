@@ -237,8 +237,10 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         String platformCode = addDTO.getPlatformCode();
         DmpSoInfoEntity dmpSoInfoEntity = dmpSoInfoService.lambdaQuery()
                 .eq(DmpSoInfoEntity::getPlatformCode, platformCode)
+                .eq(DmpSoInfoEntity::getSourceSystem, PlatformDictEnum.WDT.getCode())
+                .eq(DmpSoInfoEntity::getInvalidStatus, Boolean.FALSE)
                 .orderByDesc(DmpSoInfoEntity::getCreateTime)
-                .last(" limit 1 ")
+                .last("limit 1")
                 .one();
         // 【需求】优先按旺店通订单店铺匹配售后人员：dmp_so_info.shopId → third_shop → third_mapping → 系统店铺
         if (Objects.nonNull(dmpSoInfoEntity)) {
