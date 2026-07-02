@@ -24,6 +24,7 @@ import com.erp.model.scm.dto.SubcontractBOMDTO;
 import com.erp.model.scm.entity.ScmPushMsgEntity;
 import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
 import com.erp.model.scm.entity.SubcontractOrderEntity;
+import com.erp.model.scm.util.SubcontractOrderKingdeeLineSeqUtils;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
@@ -193,12 +194,28 @@ public class SyncKingdeeSubcontractBOMServiceImpl implements SyncKingdeeSubcontr
                 .filter(item -> StringUtils.isNotBlank(item.getId()))
                 .collect(Collectors.toMap(SubcontractOrderDetailEntity::getId, item -> item, (oldValue, newValue) -> oldValue));
 
+        Map<String, Integer> parentLineSeqMap =
+                SubcontractOrderKingdeeLineSeqUtils.buildParentLineSeqMap(subcontractOrderDetailList);
+        Map<String, Integer> childLineSeqMap =
+                SubcontractOrderKingdeeLineSeqUtils.buildChildLineSeqMap(subcontractOrderDetailList);
+
         List<JSONObject> list = new ArrayList<>();
         List<String> skippedWarehouseDetails = new ArrayList<>();
         for (SubcontractOrderDetailEntity subcontractOrderDetailEntity : subcontractOrderDetailList) {
             JSONObject jsonObject = new JSONObject();
             jsonObject.set("detailId", subcontractOrderDetailEntity.getId());
             jsonObject.set("parentId", subcontractOrderDetailEntity.getParentId());
+            String parentDetailId = StringUtils.isBlank(subcontractOrderDetailEntity.getParentId())
+                    ? subcontractOrderDetailEntity.getId()
+                    : subcontractOrderDetailEntity.getParentId();
+            Integer parentLineSeq = parentLineSeqMap.get(parentDetailId);
+            if (parentLineSeq != null) {
+                jsonObject.set("parentLineSeq", parentLineSeq);
+            }
+            Integer childLineSeq = childLineSeqMap.get(subcontractOrderDetailEntity.getId());
+            if (childLineSeq != null) {
+                jsonObject.set("childLineSeq", childLineSeq);
+            }
             //产品编码
             jsonObject.set("FMaterialID", subcontractOrderDetailEntity.getSkuNo());
             String warehouseId = subcontractOrderDetailEntity.getWarehouseId();
