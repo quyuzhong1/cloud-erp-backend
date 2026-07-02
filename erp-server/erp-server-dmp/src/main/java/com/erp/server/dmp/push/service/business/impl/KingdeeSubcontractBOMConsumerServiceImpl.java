@@ -849,6 +849,10 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
     /**
      * 构建委外用料清单变更单转换上下文。
      * <p>
+     * 本链路仅服务返修委外：普通委外订单类型不会触发委外用料清单变更单推送，故父行数量口径与
+     * 委外订单推送金蝶不同——订单推送用 {@code qty}（为 0 时回退 {@code repairQty}），变更单父行宽松匹配
+     * 固定使用 {@code repairQty} 与金蝶 BOM 头 {@code Qty} 对齐。
+     * <p>
      * 父行匹配分两阶段：
      * <ol>
      *   <li>优先按金蝶 BOM 头 {@code SubReqEntryId}/{@code SubReqEntrySeq} 定位当前用料清单所属父行；</li>
@@ -934,6 +938,7 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
                 }
                 throw new ServiceException(ApiError.PRODUCT_SKU_NOT_FOUND, parentDetail.getSkuNo());
             }
+            // 返修委外专用：金蝶 BOM 头 Qty 与 SCM repairQty 对齐；勿改为 qty/repairQty 回退（普通委外不走变更单）
             if (!Objects.equals(viewSkuNo, productDetail.getSkuNo())
                     || !Objects.equals(supplierName, supplier.getName())
                     || !Objects.equals(kingdeeQty, parentDetail.getRepairQty())) {
