@@ -261,7 +261,6 @@ public class MercadoLocalOrderApiInitHandler implements DmpInputApiInitHandler {
         String userId = String.valueOf(shopInfoDTO.getUserId());
         String inputTaskId = dmpInputApiInitRequest.getInputTaskId();
 
-
         //入参
         HashMap<String, Object> params = new HashMap<>(2);
 
