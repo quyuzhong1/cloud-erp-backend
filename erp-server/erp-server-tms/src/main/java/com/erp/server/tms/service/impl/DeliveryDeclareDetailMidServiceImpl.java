@@ -33,6 +33,7 @@ import com.erp.model.tms.enums.DeclareStatusEnum;
 import com.erp.model.tms.enums.DeclareSupervisionMethodEnum;
 import com.erp.model.tms.enums.DeclareTransactionMethodEnum;
 import com.erp.model.tms.enums.DeliveryDeclareDetailMidGenerateStatusEnum;
+import com.erp.model.tms.enums.CfgDeclareRuleReceiverTypeEnum;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -653,6 +654,8 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         }
         validateSameBoxFullSelectedBySourceDetail(sourceDetailList);
         String sourceType = resolveMidSourceType(sourceDetailList);
+        // 同一箱的全部明细必须在同一张报关单（以 WMS 装箱数据为准）。
+        tmsDeclareBillService.validateSameBoxAllInOneBill(sourceType, sourceDetailList);
         validatePreviewSourceConsistent(sourceType, sourceDetailList);
         String declareBillType = resolveDeclareBillType(sourceType);
         validateLatestProductLogistics(sourceDetailList);
@@ -1238,12 +1241,61 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_RULE_NOT_FOUND_FOR_SOURCE, sourceCode);
         }
         entity.setSenderId(cfgDeclareRule.getSenderId());
-        entity.setReceiverId(cfgDeclareRule.getReceiverId());
         entity.setSenderName(cfgDeclareRule.getSenderName());
-        entity.setReceiverName(cfgDeclareRule.getReceiverName());
         entity.setSenderType(cfgDeclareRule.getSenderType());
-        entity.setReceiverType(cfgDeclareRule.getReceiverType());
+        fillDeclareBillReceiver(declareBillType, sourceDetailList, cfgDeclareRule, entity);
         return entity;
+    }
+
+    /**
+     * 填充自动生成报关单的境外收货人。
+     *
+     * <p>默认使用申报规则中的收货人配置；B2B 按客户申报时，规则中的 byCustomer/按客户 只是占位值，
+     * 需要按来源发货通知单回填实际客户信息，保持与批量保存报关单入口一致。</p>
+     */
+    private void fillDeclareBillReceiver(String declareBillType,
+                                         List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList,
+                                         CfgDeclareRuleEntity cfgDeclareRule,
+                                         TmsDeclareBillEntity entity) {
+        // 先写规则值作为兜底，后续查不到客户时保留 byCustomer/按客户。
+        entity.setReceiverId(cfgDeclareRule.getReceiverId());
+        entity.setReceiverName(cfgDeclareRule.getReceiverName());
+        entity.setReceiverType(cfgDeclareRule.getReceiverType());
+
+        if (!CharSequenceUtil.equals(SourceTypeEnum.B2B_DECLARE_BILL.getCode(), declareBillType)
+                || !CharSequenceUtil.equals(CfgDeclareRuleReceiverTypeEnum.BY_CUSTOMER.getCode(), cfgDeclareRule.getReceiverType())
+                || CollUtil.isEmpty(sourceDetailList)) {
+            return;
+        }
+
+        // 按来源顺序选择第一条带客户的发货通知单，避免多来源场景下结果不稳定。
+        List<String> sourceIdList = sourceDetailList.stream()
+                .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getSourceId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(sourceIdList)) {
+            return;
+        }
+
+        List<SoDeliveryNoticeEntity> noticeList = soDeliveryNoticeFeign.listByIds(sourceIdList);
+        if (CollUtil.isEmpty(noticeList)) {
+            return;
+        }
+        Map<String, SoDeliveryNoticeEntity> noticeMap = noticeList.stream()
+                .filter(Objects::nonNull)
+                .filter(item -> CharSequenceUtil.isNotBlank(item.getId()))
+                .collect(Collectors.toMap(SoDeliveryNoticeEntity::getId, Function.identity(), (oldValue, newValue) -> oldValue));
+
+        for (String sourceId : sourceIdList) {
+            SoDeliveryNoticeEntity notice = noticeMap.get(sourceId);
+            if (Objects.isNull(notice) || CharSequenceUtil.isBlank(notice.getCustomerId())) {
+                continue;
+            }
+            entity.setReceiverId(notice.getCustomerId());
+            entity.setReceiverName(notice.getCustomerName());
+            return;
+        }
     }
 
     private String resolveBusinessType(String declareBillType, List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList) {
