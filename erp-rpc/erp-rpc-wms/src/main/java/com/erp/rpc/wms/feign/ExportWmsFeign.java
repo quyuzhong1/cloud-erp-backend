@@ -438,6 +438,14 @@ public interface ExportWmsFeign {
     PagingVO<AwdInventoryDTO.ListDTO> exportAwdInventory(@RequestBody @Validated PagingDTO<AwdInventoryDTO.PagingParamDTO> dto);
 
     /**
+     * 导出FBS库存
+     * @param dto
+     * @return
+     */
+    @PostMapping("/feign/export/exportFbsInventory")
+    PagingVO<FbsInventoryDTO.ListDTO> exportFbsInventory(@RequestBody @Validated PagingDTO<FbsInventoryDTO.PagingParamDTO> dto);
+
+    /**
      * 质检申请单导出
      * @author will
      * @date 2026/3/24 10:41
@@ -446,4 +454,10 @@ public interface ExportWmsFeign {
      */
     @PostMapping("/feign/export/exportQcApplication")
     PagingVO<QcApplicationDTO.ListDTO> exportQcApplication(PagingDTO<QcApplicationDTO.PagingParamDTO> dto);
+
+    @PostMapping("/feign/export/exportCfgQcUser")
+    PagingVO<CfgQcUserDTO.ListDTO> exportCfgQcUser(@RequestBody PagingDTO<CfgQcUserDTO.ExportDTO> dto);
+
+    @PostMapping("/feign/export/exportAfterSalesWarehouseLocationSuggest")
+    public PagingVO<AfterSalesWarehouseLocationSuggestDto.ListDTO> exportAfterSalesWarehouseLocationSuggest(@RequestBody @Validated PagingDTO<AfterSalesWarehouseLocationSuggestDto.ExportParamDTO> dto);
 }

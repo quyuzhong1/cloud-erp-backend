@@ -1,0 +1,108 @@
+package com.erp.server.file.core.multisheet;
+
+import com.common.core.exception.ServiceException;
+import com.erp.server.file.core.AbstractFileEventHandler;
+import com.erp.server.file.core.ExportTempFilesHandler;
+import com.erp.model.file.entity.FileTask;
+import com.erp.server.file.handler.FileRegistry;
+import com.fasterxml.jackson.databind.JavaType;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.ResolvableType;
+
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Type;
+
+/**
+ * 多 sheet 导出公共样板：
+ * 参数解析、临时文件、上传与清理统一在父类实现，子类仅负责分页取数与写入策略。
+ */
+@Slf4j
+public abstract class AbstractMultiSheetPageFileEventHandler<P> extends AbstractFileEventHandler<Object> {
+
+    @Override
+    public final void handle(FileTask fileTask) {
+        P params = resolveExportParams(fileTask);
+        String excelPath = getExcelPath(params);
+        String displayName = buildDownloadFileName(fileTask, excelPath);
+        // 复用统一导出模板：流式上传（streamUploadFile），避免整文件入内存导致大文件 OOM 与上传失败被静默写入空 url
+        ExportTempFilesHandler.exportToTempAndUpload(fileTask, ".xlsx", displayName,
+                outFile -> writeAllSheets(outFile, params, excelPath));
+    }
+
+    /**
+     * 由策略子类实现具体写入路径，返回主 sheet 行数（用于 fileTask.count）。
+     */
+    protected abstract int writeAllSheets(File outFile, P params, String excelPath) throws IOException;
+
+    /**
+     * 按导出参数选择模板。
+     */
+    protected abstract String getExcelPath(P params);
+
+    protected MultiSheetTemplateWriter newWriter(String excelPath) {
+        return new MultiSheetTemplateWriter(
+                excelPath,
+                maxDataRowsPerSheet(),
+                maxTemplateDataSheets(),
+                maxRowsPerXlsxSheetHardLimit(),
+                getWriteHandler());
+    }
+
+    @SuppressWarnings("unchecked")
+    protected P resolveExportParams(FileTask fileTask) {
+        Type paramType = resolveExportParamType(getClass());
+        if (paramType == null) {
+            throw new ServiceException(getClass().getName()
+                    + " 无法推断导出参数类型 P，请确保直接继承 AbstractMultiSheetPageFileEventHandler<P> 并指定具体 P，或重写 resolveExportParams");
+        }
+        JavaType javaType = getObjectMapper().getTypeFactory().constructType(paramType);
+        return (P) readValue(fileTask.getMetaInfo(), javaType);
+    }
+
+    /**
+     * 解析当前 Handler 实现的 {@link AbstractMultiSheetPageFileEventHandler} 类型参数 P，解析不到返回 {@code null}。
+     */
+    static Type resolveExportParamType(Class<?> handlerClass) {
+        // 用 forClass(baseType, implementationClass) 让 Spring 跨中间继承层（如 AbstractMasterDerivedSheetHandler<P,M>）
+        // 把类型变量 P 绑定到具体类型；返回值必须用 resolve()（已绑定的具体 Class），不能用 getType()。
+        // 注意：getType() 返回的是声明处的原始 Type，跨继承层时即未解析的 TypeVariable（如 "P"），
+        // Jackson constructType 会退回 Object 并把 metaInfo 反序列化成 LinkedHashMap，最终在 getExcelPath 处抛 ClassCastException
+        // ——这正是本类历史 BUG 的根因。本仓库所有导出 Handler 的 P 均为非参数化 DTO，resolve() 不存在嵌套泛型丢失问题；
+        // 若将来出现参数化 P（如 PagingDTO<T>），应改为由 ResolvableType 递归构造 Jackson JavaType，而非退回 getType()。
+        ResolvableType param = ResolvableType.forClass(AbstractMultiSheetPageFileEventHandler.class, handlerClass).getGeneric(0);
+        if (param == ResolvableType.NONE || param.resolve() == null) {
+            return null;
+        }
+        return param.resolve();
+    }
+
+    protected int getPageSize() {
+        return FileRegistry.exportPageSize();
+    }
+
+    protected int getFirstPage() {
+        return 1;
+    }
+
+    protected int reservedTemplateHeaderRows() {
+        return 0;
+    }
+
+    protected int maxDataRowsPerSheet() {
+        return Math.max(1, FileRegistry.sheetMaxRowsOrDefault() - reservedTemplateHeaderRows());
+    }
+
+    protected int maxTemplateDataSheets() {
+        return FileRegistry.maxSheetNumOrDefault();
+    }
+
+    protected int maxRowsPerXlsxSheetHardLimit() {
+        return Math.max(1, 1_048_576 - reservedTemplateHeaderRows() - 1);
+    }
+
+    @Override
+    public final String getExcelPath() {
+        throw new UnsupportedOperationException("多sheet导出请使用 getExcelPath(P)");
+    }
+}

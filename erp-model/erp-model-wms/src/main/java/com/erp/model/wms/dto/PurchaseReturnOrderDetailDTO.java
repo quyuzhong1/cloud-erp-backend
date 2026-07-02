@@ -8,6 +8,7 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * 收货明细DTO
@@ -49,7 +50,7 @@ public class PurchaseReturnOrderDetailDTO {
          * 实退数量
          */
         @NotNull(message = "实退数量不能为空")
-        @Min(value = 1, message = "实退数量最小值为1")
+        @Min(value = 0, message = "实退数量最小值为0")
         @Max(value = 999999999, message = "实退数量最大值为999999999")
         private Integer returnQty;
 
@@ -105,6 +106,12 @@ public class PurchaseReturnOrderDetailDTO {
          * 采购订单仓位
          */
         private String purchaseWarehouseLocation;
+
+        /**
+         * 整箱退货明细。
+         * returnDetailType=pack 时必传；后端按该列表 actualQty 合计回填本行 returnQty。
+         */
+        private List<AfterSalePackDTO.DetailDTO> afterSalePackDetailList;
     }
 
     /**
@@ -142,7 +149,7 @@ public class PurchaseReturnOrderDetailDTO {
          * 实退数量
          */
         @NotNull(message = "实退数量不能为空")
-        @Min(value = 1, message = "实退数量最小值为1")
+        @Min(value = 0, message = "实退数量最小值为0")
         @Max(value = 999999999, message = "实退数量最大值为999999999")
         private Integer returnQty;
 
@@ -192,6 +199,12 @@ public class PurchaseReturnOrderDetailDTO {
          * 仓位
          */
         private String warehouseLocation;
+
+        /**
+         * 整箱退货明细。
+         * returnDetailType=pack 时必传；单行或 SKU 移除时需把对应明细传回并将 actualQty 置 0。
+         */
+        private List<AfterSalePackDTO.DetailDTO> afterSalePackDetailList;
     }
 
     /**
@@ -324,6 +337,12 @@ public class PurchaseReturnOrderDetailDTO {
          * 一级供应商名称
          */
         private String mainSupplierName;
+
+        /**
+         * 整箱退货明细。
+         * 按 SKU 聚合返回本单占用的售后装箱明细，供前端编辑整箱退货数量和差异。
+         */
+        private List<AfterSalePackDTO.DetailDTO> afterSalePackDetailList;
     }
 
 }

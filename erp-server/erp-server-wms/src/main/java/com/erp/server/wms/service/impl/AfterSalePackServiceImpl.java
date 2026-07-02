@@ -1,0 +1,1054 @@
+package com.erp.server.wms.service.impl;
+
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
+import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.*;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.PagingVO;
+import com.common.core.entity.BaseEntity;
+import com.common.core.enums.ApiError;
+import com.common.core.enums.LogActionEnum;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.AfterSalePackDTO;
+import com.erp.model.wms.dto.AfterSalePackDetailDTO;
+import com.erp.model.wms.entity.*;
+import com.erp.rpc.plm.feign.ProductDetailFeign;
+import com.erp.server.wms.constant.WmsConstant;
+import com.erp.server.wms.mapper.AfterSalePackMapper;
+import com.erp.server.wms.service.*;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.annotation.Resource;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+/**
+ * <p>
+ * 售后装箱表 服务实现类
+ * </p>
+ *
+ * @author lei.nie
+ * @since 2026-05-12
+ */
+@Slf4j
+@Service
+public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapper, AfterSalePackEntity> implements AfterSalePackService {
+
+    private static final String AFTER_SALE_PACK_LOCK_KEY = "AFTER_SALE_PACK";
+    private static final String EMPTY_WAREHOUSE_LOCATION_NAME = "空仓位";
+
+    @Resource
+    private OperateLogService operateLogService;
+
+    @Resource
+    private DocNoGenHelper docNoGenHelper;
+
+    @Resource
+    private ProductDetailFeign productDetailFeign;
+
+    @Resource
+    private AfterSalePackDetailService afterSalePackDetailService;
+
+    @Resource
+    private PoReturnService poReturnService;
+
+    @Resource
+    private WarehouseLocationService warehouseLocationService;
+
+    @Resource
+    private WarehouseService warehouseService;
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public List<String> boxCodeApplication(AfterSalePackDTO.BoxCodeApplicationDTO dto) {
+        if (dto.getApplicationQty() == null || dto.getApplicationQty() <= 0) {
+            throw new ServiceException("申请数量需大于0");
+        } else if (dto.getApplicationQty() > 100) {
+            throw new ServiceException("申请数量不能大于100");
+        }
+        List<AfterSalePackEntity> afterSalePackEntityList = new ArrayList<>();
+        List<String> result = new ArrayList<>();
+        for (int i = 0; i < dto.getApplicationQty(); i++) {
+            String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_BOX);
+            result.add(code);
+            AfterSalePackEntity afterSalePackEntity = new AfterSalePackEntity();
+            afterSalePackEntity.setCode(code);
+            afterSalePackEntity.setType(dto.getType());
+            afterSalePackEntity.setIsUse(Boolean.FALSE);
+            afterSalePackEntity.setIsDifference(Boolean.FALSE);
+            afterSalePackEntity.setIsMoveWarehouse(Boolean.FALSE);
+            afterSalePackEntity.setPackStatus(AfterSalePackStatusEnum.WAIT_PACKING.getCode());
+            afterSalePackEntity.setSkuSpeciesQty(0);
+            afterSalePackEntity.setTotalQty(0);
+            afterSalePackEntityList.add(afterSalePackEntity);
+        }
+        boolean save = super.saveBatch(afterSalePackEntityList);
+        if (!save) {
+            throw new ServiceException("箱唛单保存失败");
+        }
+        for (AfterSalePackEntity afterSalePackEntity : afterSalePackEntityList) {
+            // 操作日志
+            String msg = StrUtil.format("用户【{}】新增【箱唛】号为【{}】", UserContext.getDefaultLoginUser().getUserName(), afterSalePackEntity.getCode());
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.AFTER_SALE_PACK.getCode(), afterSalePackEntity.getId(), "新增操作");
+        }
+        return result;
+    }
+
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public BaseResultDTO.AddDTO add(AfterSalePackDTO.AddDTO addDTO) {
+        AfterSalePackEntity afterSalePackEntity = new AfterSalePackEntity();
+        BeanMapperUtils.copy(addDTO, afterSalePackEntity);
+        log.info("开始新增箱唛");
+        // 生成单号
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_BOX);
+        afterSalePackEntity.setCode(code);
+        afterSalePackEntity.setIsUse(Boolean.FALSE);
+        afterSalePackEntity.setIsDifference(Boolean.FALSE);
+        afterSalePackEntity.setIsMoveWarehouse(Boolean.FALSE);
+        // 处理装箱明细数据
+        if (CollectionUtils.isNotEmpty(addDTO.getDetailList())) {
+            afterSalePackEntity.setPackStatus(AfterSalePackStatusEnum.PENDING.getCode());
+        } else {
+            afterSalePackEntity.setSkuSpeciesQty(0);
+            afterSalePackEntity.setTotalQty(0);
+            afterSalePackEntity.setPackStatus(AfterSalePackStatusEnum.WAIT_PACKING.getCode());
+        }
+        boolean save = super.save(afterSalePackEntity);
+        if (!save) {
+            throw new ServiceException("箱唛保存失败");
+        }
+        if (CollectionUtils.isNotEmpty(addDTO.getDetailList())) {
+            handleAfterSalePackDetail(addDTO.getDetailList(), afterSalePackEntity);
+            if (!super.updateById(afterSalePackEntity)) {
+                throw new ServiceException("箱唛保存失败");
+            }
+        }
+        // 操作日志
+        String msg = StrUtil.format("用户【{}】新增【箱唛】号为【{}】", UserContext.getDefaultLoginUser().getUserName(), afterSalePackEntity.getCode());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.AFTER_SALE_PACK.getCode(), afterSalePackEntity.getId(), "新增操作");
+        return new BaseResultDTO.AddDTO(afterSalePackEntity.getId(), code);
+    }
+
+    private void handleAfterSalePackDetail(List<AfterSalePackDetailDTO.UpdateDTO> detailList, AfterSalePackEntity afterSalePackEntity) {
+        checkDetailList(detailList);
+        // 查询sku信息
+        List<String> skuNos = detailList.stream().map(AfterSalePackDetailDTO.UpdateDTO::getSkuNo).distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> productList = productDetailFeign.listBySkuNos(skuNos);
+        productList = Optional.ofNullable(productList).orElse(Collections.emptyList());
+        Set<String> skuNoSet = productList.stream().map(ProductDetailEntity::getSkuNo).filter(Objects::nonNull).collect(Collectors.toSet());
+        List<String> skuNotInProduct = detailList.stream()
+                .map(AfterSalePackDetailDTO.UpdateDTO::getSkuNo)
+                .filter(Objects::nonNull)
+                .filter(skuNo -> !skuNoSet.contains(skuNo))
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(skuNotInProduct)) {
+            throw new ServiceException("箱唛保存失败，以下SKU不存在：" + String.join(",", skuNotInProduct));
+        }
+        // 查询东莞售后仓库信息
+        WarehouseEntity warehouseEntity = warehouseService.lambdaQuery()
+                .eq(WarehouseEntity::getKingdeeWarehouseCode, WmsConstant.DG_AFTER_SALES_WAREHOUSE_CODE)
+                .eq(WarehouseEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus())
+                .eq(WarehouseEntity::getDisabled, false)
+                .one();
+        if (warehouseEntity == null) {
+            throw new ServiceException("东莞售后仓库不存在或者被禁用");
+        }
+        // 查询仓位信息：空仓位的 code 真正存为 ""，前端也以 "" 表示空仓位，统一按 code 匹配，无需再按 name 兜底查询。
+        List<String> warehouseLocationCodes = detailList.stream()
+                .map(AfterSalePackDetailDTO.UpdateDTO::getOutWarehouseLocationCode)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        List<WarehouseLocationEntity> warehouseLocationEntityList = warehouseLocationService.lambdaQuery()
+                .in(WarehouseLocationEntity::getCode, warehouseLocationCodes)
+                .eq(WarehouseLocationEntity::getDisabled, false)
+                .eq(WarehouseLocationEntity::getWarehouseId, warehouseEntity.getId())
+                .list();
+        Map<String, WarehouseLocationEntity> warehouseLocationMap = warehouseLocationEntityList.stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.toMap(
+                        location -> CharSequenceUtil.emptyIfNull(location.getCode()),
+                        item -> item,
+                        (v1, v2) -> v1));
+        List<String> notExistWarehouseLocationCodeList = detailList.stream()
+                .map(AfterSalePackDetailDTO.UpdateDTO::getOutWarehouseLocationCode)
+                .filter(Objects::nonNull)
+                .filter(outWarehouseLocationCode -> !warehouseLocationMap.containsKey(outWarehouseLocationCode))
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(notExistWarehouseLocationCodeList)) {
+            // 空仓位 code 为 ""，错误提示里替换为可读名称，避免输出空字符串。
+            String displayCodes = notExistWarehouseLocationCodeList.stream()
+                    .map(code -> StringUtils.isBlank(code) ? EMPTY_WAREHOUSE_LOCATION_NAME : code)
+                    .collect(Collectors.joining(","));
+            throw new ServiceException("箱唛保存失败，以下仓位不存在：" + displayCodes);
+        }
+        Map<String, ProductDetailEntity> productMap = productList.stream().collect(Collectors.toMap(ProductDetailEntity::getSkuNo, item -> item, (v1, v2) -> v1));
+        // 查询售后装箱明细信息
+        List<AfterSalePackDetailEntity> afterSalePackDetailEntityList = afterSalePackDetailService.lambdaQuery().eq(AfterSalePackDetailEntity::getMainId, afterSalePackEntity.getId()).list();
+        Map<String, AfterSalePackDetailEntity> existingDetailMap = afterSalePackDetailEntityList.stream().collect(Collectors.toMap(BaseEntity::getId, item -> item, (v1, v2) -> v1));
+        Map<String, AfterSalePackDetailEntity> oldDetailMap = afterSalePackDetailEntityList.stream()
+                .map(item -> BeanMapperUtils.map(AfterSalePackDetailEntity.class, item))
+                .collect(Collectors.toMap(BaseEntity::getId, item -> item, (v1, v2) -> v1));
+        Set<String> retainDetailIds = detailList.stream().map(AfterSalePackDetailDTO.UpdateDTO::getId).filter(StringUtils::isNotBlank).collect(Collectors.toSet());
+        Set<String> processedDetailIds = new HashSet<>(retainDetailIds);
+        Map<String, Deque<AfterSalePackDetailEntity>> matchDetailMap = afterSalePackDetailEntityList.stream()
+                .filter(detail -> !retainDetailIds.contains(detail.getId()))
+                .collect(Collectors.groupingBy(detail -> buildDetailMatchKey(detail.getSkuNo(), detail.getOutWarehouseLocationId()),
+                        Collectors.toCollection(ArrayDeque::new)));
+        List<AfterSalePackDetailEntity> detailEntityList = new ArrayList<>();
+        List<AfterSalePackDetailEntity> updateList = new ArrayList<>();
+        for (AfterSalePackDetailDTO.UpdateDTO dto : detailList) {
+            ProductDetailEntity productDetailEntity = productMap.get(dto.getSkuNo());
+            WarehouseLocationEntity warehouseLocationEntity = warehouseLocationMap.get(dto.getOutWarehouseLocationCode());
+            if (StringUtils.isNotBlank(dto.getId())) {
+                AfterSalePackDetailEntity detailEntity = existingDetailMap.get(dto.getId());
+                if (ObjectUtil.isNull(detailEntity)) {
+                    throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "箱唛明细");
+                }
+                detailEntity.setSkuId(productDetailEntity.getId());
+                detailEntity.setSkuNo(dto.getSkuNo());
+                detailEntity.setOutWarehouseLocationId(warehouseLocationEntity.getId());
+                detailEntity.setPackQty(dto.getPackQty());
+                detailEntityList.add(detailEntity);
+                updateList.add(detailEntity);
+                processedDetailIds.add(detailEntity.getId());
+            } else {
+                String detailMatchKey = buildDetailMatchKey(dto.getSkuNo(), warehouseLocationEntity.getId());
+                Deque<AfterSalePackDetailEntity> matchQueue = matchDetailMap.get(detailMatchKey);
+                AfterSalePackDetailEntity matchedDetailEntity = CollectionUtils.isNotEmpty(matchQueue) ? matchQueue.pollFirst() : null;
+                if (matchedDetailEntity != null) {
+                    matchedDetailEntity.setSkuId(productDetailEntity.getId());
+                    matchedDetailEntity.setSkuNo(dto.getSkuNo());
+                    matchedDetailEntity.setOutWarehouseLocationId(warehouseLocationEntity.getId());
+                    matchedDetailEntity.setPackQty(dto.getPackQty());
+                    detailEntityList.add(matchedDetailEntity);
+                    updateList.add(matchedDetailEntity);
+                    processedDetailIds.add(matchedDetailEntity.getId());
+                } else {
+                    AfterSalePackDetailEntity afterSalePackDetailEntity = new AfterSalePackDetailEntity();
+                    BeanMapperUtils.copy(dto, afterSalePackDetailEntity);
+                    afterSalePackDetailEntity.setMainId(afterSalePackEntity.getId());
+                    afterSalePackDetailEntity.setSkuId(productDetailEntity.getId());
+                    afterSalePackDetailEntity.setOutWarehouseLocationId(warehouseLocationEntity.getId());
+                    detailEntityList.add(afterSalePackDetailEntity);
+                }
+            }
+        }
+        List<String> deleteDetailList = afterSalePackDetailEntityList.stream()
+                .map(AfterSalePackDetailEntity::getId)
+                .filter(Objects::nonNull)
+                .filter(id -> !processedDetailIds.contains(id))
+                .distinct()
+                .collect(Collectors.toList());
+        fillPackSummary(detailList, afterSalePackEntity);
+        if (!afterSalePackDetailService.saveOrUpdateBatch(detailEntityList)) {
+            throw new ServiceException("箱唛明细保存失败");
+        }
+        if (CollectionUtils.isNotEmpty(deleteDetailList) && !afterSalePackDetailService.removeByIds(deleteDetailList)) {
+            throw new ServiceException("箱唛明细删除失败");
+        }
+        // 新增/移除明细日志：按“仓位 -> SKU集合”对比，避免SKU与仓位变更判断错位。
+        Map<String, String> warehouseLocationDisplayMap = buildWarehouseLocationDisplayMap(afterSalePackDetailEntityList, detailEntityList, warehouseLocationMap);
+        logAfterSalePackDetailChange(afterSalePackEntity.getId(), afterSalePackDetailEntityList, detailEntityList, warehouseLocationDisplayMap);
+        // 修改的：日志对比时将仓位ID替换成仓位编码，避免操作日志中展示原始ID。
+        // 注意：上方 warehouseLocationDisplayMap 来自“已被就地改写的列表”，旧仓位ID不在其中；
+        // 为避免影响其他逻辑，这里单独再构建一份仅用于字段级日志的旧/新仓位ID->编码映射。
+        Map<String, String> logWarehouseLocationDisplayMap = buildLogWarehouseLocationDisplayMap(oldDetailMap, updateList);
+        for (AfterSalePackDetailEntity update : updateList) {
+            AfterSalePackDetailEntity old = oldDetailMap.get(update.getId());
+            if (old != null) {
+                AfterSalePackDetailEntity oldForLog = convertWarehouseLocationIdToDisplay(old, logWarehouseLocationDisplayMap);
+                AfterSalePackDetailEntity newForLog = convertWarehouseLocationIdToDisplay(update, logWarehouseLocationDisplayMap);
+                String msg = StringUtils.isNotBlank(old.getSkuNo()) ? StrUtil.format("skuNo:【{}】 ", old.getSkuNo()) : "";
+                operateLogService.addModuleOperateLogByObj(oldForLog, newForLog, ModuleTypeEnum.AFTER_SALE_PACK.getCode(), afterSalePackEntity.getId(), "", msg);
+            }
+        }
+    }
+
+    /**
+     * 仅供字段级操作日志使用：根据被更新明细的旧/新拣货仓位ID，单独构建一份 ID->仓位编码 映射。
+     * 与全局 warehouseLocationDisplayMap 隔离，避免改动其他逻辑。
+     */
+    private Map<String, String> buildLogWarehouseLocationDisplayMap(Map<String, AfterSalePackDetailEntity> oldDetailMap,
+                                                                    List<AfterSalePackDetailEntity> updateList) {
+        if (CollectionUtils.isEmpty(updateList)) {
+            return Collections.emptyMap();
+        }
+        Set<String> locationIdSet = new HashSet<>();
+        for (AfterSalePackDetailEntity update : updateList) {
+            if (update == null) {
+                continue;
+            }
+            if (StringUtils.isNotBlank(update.getOutWarehouseLocationId())) {
+                locationIdSet.add(update.getOutWarehouseLocationId());
+            }
+            AfterSalePackDetailEntity old = oldDetailMap.get(update.getId());
+            if (old != null && StringUtils.isNotBlank(old.getOutWarehouseLocationId())) {
+                locationIdSet.add(old.getOutWarehouseLocationId());
+            }
+        }
+        if (locationIdSet.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        List<WarehouseLocationEntity> warehouseLocationEntityList = warehouseLocationService.listByIds(locationIdSet);
+        if (CollectionUtils.isEmpty(warehouseLocationEntityList)) {
+            return Collections.emptyMap();
+        }
+        Map<String, String> displayMap = new HashMap<>();
+        for (WarehouseLocationEntity warehouseLocationEntity : warehouseLocationEntityList) {
+            if (warehouseLocationEntity != null && StringUtils.isNotBlank(warehouseLocationEntity.getId())) {
+                displayMap.put(warehouseLocationEntity.getId(), buildWarehouseLocationDisplay(warehouseLocationEntity));
+            }
+        }
+        return displayMap;
+    }
+
+    /**
+     * 拷贝一份明细实体，仅用于操作日志字段对比：把拣货仓位ID替换成仓位编码/名称，
+     * 避免污染原实体的真实ID字段，同时让日志展示业务编码而非内部ID。
+     */
+    private AfterSalePackDetailEntity convertWarehouseLocationIdToDisplay(AfterSalePackDetailEntity source,
+                                                                          Map<String, String> warehouseLocationDisplayMap) {
+        AfterSalePackDetailEntity copy = BeanMapperUtils.map(AfterSalePackDetailEntity.class, source);
+        if (copy == null) {
+            return null;
+        }
+        if (StringUtils.isNotBlank(source.getOutWarehouseLocationId())) {
+            copy.setOutWarehouseLocationId(getWarehouseLocationDisplay(source.getOutWarehouseLocationId(), warehouseLocationDisplayMap));
+        }
+        return copy;
+    }
+
+    private String buildDetailMatchKey(String skuNo, String outWarehouseLocationId) {
+        return CharSequenceUtil.trimToEmpty(skuNo) + "#" + CharSequenceUtil.trimToEmpty(outWarehouseLocationId);
+    }
+
+    private void logAfterSalePackDetailChange(String mainId,
+                                              List<AfterSalePackDetailEntity> oldDetailList,
+                                              List<AfterSalePackDetailEntity> newDetailList,
+                                              Map<String, String> warehouseLocationDisplayMap) {
+        Map<String, Set<String>> oldWarehouseSkuMap = buildWarehouseSkuMap(oldDetailList);
+        Map<String, Set<String>> newWarehouseSkuMap = buildWarehouseSkuMap(newDetailList);
+        List<Pair<String, String>> removePairList = new ArrayList<>();
+        for (Map.Entry<String, Set<String>> oldEntry : oldWarehouseSkuMap.entrySet()) {
+            String warehouseLocationId = oldEntry.getKey();
+            Set<String> oldSkuSet = oldEntry.getValue();
+            Set<String> newSkuSet = newWarehouseSkuMap.get(warehouseLocationId);
+            String warehouseDisplay = getWarehouseLocationDisplay(warehouseLocationId, warehouseLocationDisplayMap);
+            List<String> removeSkuList = oldSkuSet.stream()
+                    .filter(skuNo -> newSkuSet == null || !newSkuSet.contains(skuNo))
+                    .collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(removeSkuList)) {
+                removePairList.add(new Pair<>(mainId, buildWarehouseSkuContent(warehouseDisplay, new LinkedHashSet<>(removeSkuList))));
+            }
+        }
+        List<Pair<String, String>> addPairList = new ArrayList<>();
+        for (Map.Entry<String, Set<String>> newEntry : newWarehouseSkuMap.entrySet()) {
+            String warehouseLocationId = newEntry.getKey();
+            Set<String> newSkuSet = newEntry.getValue();
+            Set<String> oldSkuSet = oldWarehouseSkuMap.get(warehouseLocationId);
+            String warehouseDisplay = getWarehouseLocationDisplay(warehouseLocationId, warehouseLocationDisplayMap);
+            List<String> addSkuList = newSkuSet.stream()
+                    .filter(skuNo -> oldSkuSet == null || !oldSkuSet.contains(skuNo))
+                    .collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(addSkuList)) {
+                addPairList.add(new Pair<>(mainId, buildWarehouseSkuContent(warehouseDisplay, new LinkedHashSet<>(addSkuList))));
+            }
+        }
+        removePairList = distinctOperateLogPairList(removePairList);
+        addPairList = distinctOperateLogPairList(addPairList);
+        if (CollectionUtils.isNotEmpty(removePairList)) {
+            operateLogService.batchAddModuleOperateLog("移除了一条仓位及其SKU明细【%s】", ModuleTypeEnum.AFTER_SALE_PACK.getCode(), removePairList, "编辑操作");
+        }
+        if (CollectionUtils.isNotEmpty(addPairList)) {
+            operateLogService.batchAddModuleOperateLog("新增了一条仓位及其SKU明细【%s】", ModuleTypeEnum.AFTER_SALE_PACK.getCode(), addPairList, "编辑操作");
+        }
+    }
+
+    private List<Pair<String, String>> distinctOperateLogPairList(List<Pair<String, String>> pairList) {
+        if (CollectionUtils.isEmpty(pairList)) {
+            return Collections.emptyList();
+        }
+        Set<String> distinctKeySet = new LinkedHashSet<>();
+        List<Pair<String, String>> result = new ArrayList<>();
+        for (Pair<String, String> pair : pairList) {
+            if (pair == null) {
+                continue;
+            }
+            String key = CharSequenceUtil.trimToEmpty(pair.getKey());
+            String value = CharSequenceUtil.trimToEmpty(pair.getValue());
+            String distinctKey = key + "#" + value;
+            if (distinctKeySet.add(distinctKey)) {
+                result.add(new Pair<>(key, value));
+            }
+        }
+        return result;
+    }
+
+    private Map<String, Set<String>> buildWarehouseSkuMap(List<AfterSalePackDetailEntity> detailList) {
+        Map<String, Set<String>> warehouseSkuMap = new LinkedHashMap<>();
+        for (AfterSalePackDetailEntity detailEntity : detailList) {
+            if (detailEntity == null || StringUtils.isBlank(detailEntity.getOutWarehouseLocationId()) || StringUtils.isBlank(detailEntity.getSkuNo())) {
+                continue;
+            }
+            warehouseSkuMap.computeIfAbsent(detailEntity.getOutWarehouseLocationId(), key -> new LinkedHashSet<>()).add(detailEntity.getSkuNo());
+        }
+        return warehouseSkuMap;
+    }
+
+    private Map<String, String> buildWarehouseLocationDisplayMap(List<AfterSalePackDetailEntity> oldDetailList,
+                                                                 List<AfterSalePackDetailEntity> newDetailList,
+                                                                 Map<String, WarehouseLocationEntity> warehouseLocationMap) {
+        Map<String, String> warehouseLocationDisplayMap = new HashMap<>();
+        if (warehouseLocationMap != null) {
+            for (WarehouseLocationEntity warehouseLocationEntity : warehouseLocationMap.values()) {
+                if (warehouseLocationEntity != null && StringUtils.isNotBlank(warehouseLocationEntity.getId())) {
+                    warehouseLocationDisplayMap.put(warehouseLocationEntity.getId(), buildWarehouseLocationDisplay(warehouseLocationEntity));
+                }
+            }
+        }
+        Set<String> allWarehouseLocationIdSet = Stream.concat(oldDetailList.stream(), newDetailList.stream())
+                .map(AfterSalePackDetailEntity::getOutWarehouseLocationId)
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.toSet());
+        List<String> missingWarehouseLocationIdList = allWarehouseLocationIdSet.stream()
+                .filter(locationId -> !warehouseLocationDisplayMap.containsKey(locationId))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(missingWarehouseLocationIdList)) {
+            List<WarehouseLocationEntity> warehouseLocationEntityList = warehouseLocationService.listByIds(missingWarehouseLocationIdList);
+            for (WarehouseLocationEntity warehouseLocationEntity : warehouseLocationEntityList) {
+                if (warehouseLocationEntity != null && StringUtils.isNotBlank(warehouseLocationEntity.getId())) {
+                    warehouseLocationDisplayMap.put(warehouseLocationEntity.getId(), buildWarehouseLocationDisplay(warehouseLocationEntity));
+                }
+            }
+        }
+        return warehouseLocationDisplayMap;
+    }
+
+    private String buildWarehouseLocationDisplay(WarehouseLocationEntity warehouseLocationEntity) {
+        if (warehouseLocationEntity == null) {
+            return "";
+        }
+        if (StringUtils.isNotBlank(warehouseLocationEntity.getCode())) {
+            return warehouseLocationEntity.getCode();
+        }
+        if (StringUtils.isNotBlank(warehouseLocationEntity.getName())) {
+            return warehouseLocationEntity.getName();
+        }
+        return CharSequenceUtil.emptyIfNull(warehouseLocationEntity.getId());
+    }
+
+    private String getWarehouseLocationDisplay(String warehouseLocationId, Map<String, String> warehouseLocationDisplayMap) {
+        String warehouseDisplay = warehouseLocationDisplayMap.get(warehouseLocationId);
+        if (StringUtils.isNotBlank(warehouseDisplay)) {
+            return warehouseDisplay;
+        }
+        return CharSequenceUtil.emptyIfNull(warehouseLocationId);
+    }
+
+    private String buildWarehouseSkuContent(String warehouseDisplay, Set<String> skuSet) {
+        String skuContent = CollectionUtils.isEmpty(skuSet) ? "" : String.join("、", skuSet);
+        return StrUtil.format("仓位：{}，SKU：{}", CharSequenceUtil.emptyIfNull(warehouseDisplay), skuContent);
+    }
+
+    private void fillPackSummary(List<AfterSalePackDetailDTO.UpdateDTO> detailList, AfterSalePackEntity afterSalePackEntity) {
+        afterSalePackEntity.setSkuSpeciesQty((int) detailList.stream()
+                .map(AfterSalePackDetailDTO.UpdateDTO::getSkuNo)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .count());
+        afterSalePackEntity.setTotalQty(detailList.stream()
+                .map(AfterSalePackDetailDTO.UpdateDTO::getPackQty)
+                .filter(Objects::nonNull)
+                .mapToInt(Integer::intValue)
+                .sum());
+    }
+
+    private void checkDetailList(List<AfterSalePackDetailDTO.UpdateDTO> detailList) {
+        // 校验所有的拣货仓位都不能为空：空仓位的 code 为 "" 属于合法值，仅当字段缺失（null）时拦截。
+        if (detailList.stream().anyMatch(detail -> detail.getOutWarehouseLocationCode() == null)) {
+            throw new ServiceException("箱唛明细拣货仓位不能为空");
+        }
+        for (AfterSalePackDetailDTO.UpdateDTO detail : detailList) {
+            if (StringUtils.isBlank(detail.getSkuNo())) {
+                throw new ServiceException("箱唛明细SKU不能为空");
+            }
+            if (detail.getOutWarehouseLocationCode() == null) {
+                throw new ServiceException("箱唛明细拣货仓位不能为空");
+            }
+            if (detail.getPackQty() == null || detail.getPackQty() <= 0) {
+                throw new ServiceException("箱唛明细装箱数量需大于0");
+            }
+        }
+    }
+
+    private void removeDetailByMainId(String mainId) {
+        List<AfterSalePackDetailEntity> detailList = afterSalePackDetailService.lambdaQuery()
+                .eq(AfterSalePackDetailEntity::getMainId, mainId)
+                .list();
+        if (CollectionUtils.isNotEmpty(detailList)) {
+            List<String> ids = detailList.stream().map(AfterSalePackDetailEntity::getId).collect(Collectors.toList());
+            if (!afterSalePackDetailService.removeByIds(ids)) {
+                throw new ServiceException("箱唛明细删除失败");
+            }
+        }
+    }
+
+    /**
+     * 修改
+     */
+    @DistributeLocker(businessType = AFTER_SALE_PACK_LOCK_KEY, keyName = "addOrUpdateDTO.id")
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public Boolean update(AfterSalePackDTO.UpdateDTO addOrUpdateDTO) {
+        AfterSalePackEntity old = super.getById(addOrUpdateDTO.getId());
+        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "箱唛"));
+        // 箱唛状态等于复审中或者已封箱状态，不可修改
+        if (AfterSalePackStatusEnum.UNDER_REVIEW.getCode().equals(old.getPackStatus()) || AfterSalePackStatusEnum.SEALED_BOX.getCode().equals(old.getPackStatus())) {
+            throw new ServiceException("箱唛状态等于复审中或者已封箱状态，不可修改");
+        }
+        if (Boolean.TRUE.equals(old.getIsUse())) {
+            throw new ServiceException("该箱唛已被单据使用，不可修改");
+        }
+        AfterSalePackEntity afterSalePackEntity = BeanMapperUtils.map(AfterSalePackEntity.class, addOrUpdateDTO);
+        afterSalePackEntity.setCode(old.getCode());
+        log.info("编辑 开始修改箱唛数据，单号：【{}】", old.getCode());
+        // 处理装箱明细数据
+        if (CollectionUtils.isNotEmpty(addOrUpdateDTO.getDetailList())) {
+            handleAfterSalePackDetail(addOrUpdateDTO.getDetailList(), afterSalePackEntity);
+            afterSalePackEntity.setPackStatus(AfterSalePackStatusEnum.PENDING.getCode());
+        } else {
+            removeDetailByMainId(afterSalePackEntity.getId());
+            operateLogService.addModuleOperateLog("全部移除sku;", ModuleTypeEnum.AFTER_SALE_PACK.getCode(), afterSalePackEntity.getId(), "编辑操作");
+            afterSalePackEntity.setSkuSpeciesQty(0);
+            afterSalePackEntity.setTotalQty(0);
+            afterSalePackEntity.setPackStatus(AfterSalePackStatusEnum.WAIT_PACKING.getCode());
+        }
+        boolean save = super.updateById(afterSalePackEntity);
+        if (!save) {
+            throw new ServiceException("箱唛保存失败");
+        }
+        // 记录主单操作日志
+        log.info("编辑 开始记录箱唛日志数据，单号：【{}】", afterSalePackEntity.getCode());
+        String msg = "";
+        operateLogService.addModuleOperateLogByObj(old, afterSalePackEntity, ModuleTypeEnum.AFTER_SALE_PACK.getCode(), afterSalePackEntity.getId(), msg);
+        return Boolean.TRUE;
+    }
+
+    @DistributeLocker(businessType = AFTER_SALE_PACK_LOCK_KEY, keyName = "addOrUpdateDTO.id")
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public Boolean submit(AfterSalePackDTO.UpdateDTO addOrUpdateDTO) {
+        // 如果明细行数据为空，不可提交
+        if (CollectionUtils.isEmpty(addOrUpdateDTO.getDetailList())) {
+            throw new ServiceException("请添加箱唛明细");
+        }
+        AfterSalePackEntity old = super.getById(addOrUpdateDTO.getId());
+        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "箱唛"));
+        // 箱唛状态等于复审中或者已封箱状态，不可提交审核
+        if (AfterSalePackStatusEnum.UNDER_REVIEW.getCode().equals(old.getPackStatus()) || AfterSalePackStatusEnum.SEALED_BOX.getCode().equals(old.getPackStatus())) {
+            throw new ServiceException("箱唛状态等于复审中或者已封箱状态，不可提交审核");
+        }
+        if (Boolean.TRUE.equals(old.getIsUse())) {
+            throw new ServiceException("该箱唛已被单据使用，不可提交审核");
+        }
+        AfterSalePackEntity afterSalePackEntity = BeanMapperUtils.map(AfterSalePackEntity.class, addOrUpdateDTO);
+        afterSalePackEntity.setCode(old.getCode());
+        log.info("确定提审 开始修改箱唛数据，单号：【{}】", old.getCode());
+        // 处理装箱明细数据
+        if (CollectionUtils.isNotEmpty(addOrUpdateDTO.getDetailList())) {
+            handleAfterSalePackDetail(addOrUpdateDTO.getDetailList(), afterSalePackEntity);
+        }
+        afterSalePackEntity.setPackStatus(AfterSalePackStatusEnum.UNDER_REVIEW.getCode());
+        boolean save = super.updateById(afterSalePackEntity);
+        if (!save) {
+            throw new ServiceException("箱唛确定提审失败");
+        }
+        // 记录主单操作日志
+        log.info("确定提审 开始记录箱唛日志数据，单号：【{}】", afterSalePackEntity.getCode());
+        String msg = StrUtil.format("用户【{}】确定提审单号为【{}】的【{}】单据", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "箱唛");
+        operateLogService.addModuleOperateLogByObj(old, afterSalePackEntity, ModuleTypeEnum.AFTER_SALE_PACK.getCode(), afterSalePackEntity.getId(), "");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.AFTER_SALE_PACK.getCode(), afterSalePackEntity.getId(), "确定提审");
+        return Boolean.TRUE;
+    }
+
+    @DistributeLocker(businessType = AFTER_SALE_PACK_LOCK_KEY, keyName = "addOrUpdateDTO.id")
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public Boolean reject(AfterSalePackDTO.UpdateDTO addOrUpdateDTO) {
+        AfterSalePackEntity afterSalePackEntity = super.getById(addOrUpdateDTO.getId());
+        afterSalePackEntity = Optional.ofNullable(afterSalePackEntity).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "箱唛"));
+        // 箱唛状态不等于复审中，不可驳回复审
+        if (!AfterSalePackStatusEnum.UNDER_REVIEW.getCode().equals(afterSalePackEntity.getPackStatus())) {
+            throw new ServiceException("箱唛状态等于【{}】状态，不可复核驳回", AfterSalePackStatusEnum.getByCode(afterSalePackEntity.getPackStatus()));
+        }
+        if (Boolean.TRUE.equals(afterSalePackEntity.getIsUse())) {
+            throw new ServiceException("该箱唛已被单据使用，不可复核驳回");
+        }
+        log.info("复核驳回 开始修改箱唛数据，单号：【{}】", afterSalePackEntity.getCode());
+        afterSalePackEntity.setPackStatus(AfterSalePackStatusEnum.REVIEW_REJECT.getCode());
+        afterSalePackEntity.setRejectDescription(addOrUpdateDTO.getRejectDescription());
+        afterSalePackEntity.setRemark(addOrUpdateDTO.getRejectDescription());
+        boolean save = super.updateById(afterSalePackEntity);
+        if (!save) {
+            throw new ServiceException("箱唛复核驳回失败");
+        }
+        // 记录主单操作日志
+        log.info("复核驳回 开始记录箱唛日志数据，单号：【{}】", afterSalePackEntity.getCode());
+        String msg = StrUtil.format("用户【{}】复核驳回单号为【{}】的【{}】单据，驳回原因：【{}】", UserContext.getDefaultLoginUser().getUserName(), afterSalePackEntity.getCode(), "箱唛", addOrUpdateDTO.getRejectDescription());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.AFTER_SALE_PACK.getCode(), afterSalePackEntity.getId(), "复核驳回");
+        return Boolean.TRUE;
+    }
+
+    @DistributeLocker(businessType = AFTER_SALE_PACK_LOCK_KEY, keyName = "addOrUpdateDTO.id")
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public Boolean confirm(AfterSalePackDTO.UpdateDTO addOrUpdateDTO) {
+        // 如果明细行数据为空，不可确定并封箱
+        if (CollectionUtils.isEmpty(addOrUpdateDTO.getDetailList())) {
+            throw new ServiceException("请添加箱唛明细");
+        }
+        AfterSalePackEntity old = super.getById(addOrUpdateDTO.getId());
+        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "箱唛"));
+        // 箱唛状态不等于复审中，不可确定并封箱
+        if (!AfterSalePackStatusEnum.UNDER_REVIEW.getCode().equals(old.getPackStatus())) {
+            throw new ServiceException("箱唛状态不等于复审中，不可确定并封箱");
+        }
+        if (Boolean.TRUE.equals(old.getIsUse())) {
+            throw new ServiceException("该箱唛已被单据使用，不可确定并封箱");
+        }
+        AfterSalePackEntity afterSalePackEntity = BeanMapperUtils.map(AfterSalePackEntity.class, addOrUpdateDTO);
+        afterSalePackEntity.setCode(old.getCode());
+        log.info("确定并封箱 开始修改箱唛数据，单号：【{}】", old.getCode());
+        // 处理装箱明细数据
+        if (CollectionUtils.isNotEmpty(addOrUpdateDTO.getDetailList())) {
+            handleAfterSalePackDetail(addOrUpdateDTO.getDetailList(), afterSalePackEntity);
+        }
+        afterSalePackEntity.setPackStatus(AfterSalePackStatusEnum.SEALED_BOX.getCode());
+        boolean save = super.updateById(afterSalePackEntity);
+        if (!save) {
+            throw new ServiceException("箱唛确定并封箱失败");
+        }
+        // 记录主单操作日志
+        log.info("确定并封箱 开始记录箱唛日志数据，单号：【{}】", afterSalePackEntity.getCode());
+        String msg = StrUtil.format("用户【{}】确定并封箱单号为【{}】的【{}】单据", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "箱唛");
+        operateLogService.addModuleOperateLogByObj(old, afterSalePackEntity, ModuleTypeEnum.AFTER_SALE_PACK.getCode(), afterSalePackEntity.getId(), "");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.AFTER_SALE_PACK.getCode(), afterSalePackEntity.getId(), "确定并封箱");
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public PagingVO<AfterSalePackDTO.ListDTO> paging(PagingDTO<AfterSalePackDTO.PagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page<AfterSalePackDTO.ListDTO> query = new Page<>(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<AfterSalePackDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
+        if (CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO<>(pageData);
+        }
+        // 数据处理
+        fillList(pageData.getRecords());
+        return new PagingVO<>(pageData);
+    }
+
+    @Override
+    public AfterSalePackDTO.ViewDTO view(String id) {
+        AfterSalePackEntity afterSalePackEntity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "箱唛"));
+        AfterSalePackDTO.ViewDTO data = BeanMapperUtils.map(AfterSalePackDTO.ViewDTO.class, afterSalePackEntity);
+        data.setTypeName(AfterSalePackTypeEnum.getByCode(data.getType()));
+        data.setIsUseName(BooleanEnum.getByCode(data.getIsUse()));
+        data.setIsDifferenceName(BooleanEnum.getByCode(data.getIsDifference()));
+        data.setPackStatusName(AfterSalePackStatusEnum.getByCode(data.getPackStatus()));
+        data.setIsMoveWarehouseName(BooleanEnum.getByCode(data.getIsMoveWarehouse()));
+        // 查询采购退货信息
+        PoReturnEntity poReturnEntity = poReturnService.getById(data.getSourceId());
+        if (ObjectUtil.isNotEmpty(poReturnEntity)) {
+            data.setSupplierId(poReturnEntity.getSupplierId());
+            data.setSupplierName(poReturnEntity.getSupplierName());
+        }
+        // 查询明细数据
+        List<AfterSalePackDetailEntity> afterSalePackDetailEntityList = afterSalePackDetailService.lambdaQuery()
+                .eq(AfterSalePackDetailEntity::getMainId, id)
+                .list();
+        if (CollectionUtils.isNotEmpty(afterSalePackDetailEntityList)) {
+            List<String> warehouseLocationIds = afterSalePackDetailEntityList.stream()
+                    .flatMap(detail -> Stream.of(detail.getOutWarehouseLocationId(), detail.getInWarehouseLocationId()))
+                    .filter(StringUtils::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.toList());
+            Map<String, WarehouseLocationEntity> warehouseLocationMap = getWarehouseLocationMapByIds(warehouseLocationIds);
+            List<AfterSalePackDetailDTO.ViewDTO> viewDTOList = new ArrayList<>();
+            for (AfterSalePackDetailEntity afterSalePackDetailEntity : afterSalePackDetailEntityList) {
+                AfterSalePackDetailDTO.ViewDTO viewDTO = new AfterSalePackDetailDTO.ViewDTO();
+                BeanMapperUtils.copy(afterSalePackDetailEntity, viewDTO);
+                WarehouseLocationEntity outWarehouseLocationEntity = warehouseLocationMap.get(afterSalePackDetailEntity.getOutWarehouseLocationId());
+                if (ObjectUtil.isNotEmpty(outWarehouseLocationEntity)) {
+                    // 空仓位 code 即为 ""，与新增/编辑的入参约定保持一致，不再用名称兜底以免回写时校验不上。
+                    viewDTO.setOutWarehouseLocationCode(CharSequenceUtil.emptyIfNull(outWarehouseLocationEntity.getCode()));
+                    viewDTO.setOutWarehouseLocationName(outWarehouseLocationEntity.getName());
+                }
+                WarehouseLocationEntity inWarehouseLocationEntity = warehouseLocationMap.get(afterSalePackDetailEntity.getInWarehouseLocationId());
+                if (ObjectUtil.isNotEmpty(inWarehouseLocationEntity)) {
+                    // 空仓位 code 即为 ""，与出库仓位保持同一约定，不再用名称兜底以免回写时校验不上。
+                    viewDTO.setInWarehouseLocationCode(CharSequenceUtil.emptyIfNull(inWarehouseLocationEntity.getCode()));
+                    viewDTO.setInWarehouseLocationName(inWarehouseLocationEntity.getName());
+                }
+                viewDTOList.add(viewDTO);
+            }
+            data.setDetailViewDTOList(viewDTOList);
+        }
+        return data;
+    }
+
+    private Map<String, WarehouseLocationEntity> getWarehouseLocationMapByIds(List<String> warehouseLocationIds) {
+        if (CollectionUtils.isEmpty(warehouseLocationIds)) {
+            return Collections.emptyMap();
+        }
+        return warehouseLocationService.listByIds(warehouseLocationIds).stream()
+                .collect(Collectors.toMap(WarehouseLocationEntity::getId, item -> item, (v1, v2) -> v1));
+    }
+
+    /**
+     * 分页查询、导出 数据处理
+     */
+    private void fillList(List<AfterSalePackDTO.ListDTO> list) {
+        if (CollUtil.isEmpty(list)) {
+            return;
+        }
+        // 属性赋值
+        for (AfterSalePackDTO.ListDTO data : list) {
+            data.setTypeName(AfterSalePackTypeEnum.getByCode(data.getType()));
+            data.setIsUseName(BooleanEnum.getByCode(data.getIsUse()));
+            data.setIsDifferenceName(BooleanEnum.getByCode(data.getIsDifference()));
+            data.setPackStatusName(AfterSalePackStatusEnum.getByCode(data.getPackStatus()));
+            data.setIsMoveWarehouseName(BooleanEnum.getByCode(data.getIsMoveWarehouse()));
+        }
+    }
+
+    @Override
+    @DistributeLocker(businessType = AFTER_SALE_PACK_LOCK_KEY, keyName = "dto.ids")
+    @Transactional(rollbackFor = Exception.class)
+    public List<BatchResultDTO> delete(BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>();
+        List<AfterSalePackEntity> afterSalePackEntityList = super.listByIds(dto.getIds());
+        Map<String, AfterSalePackEntity> map = afterSalePackEntityList.stream().collect(Collectors.toMap(BaseEntity::getId, item -> item));
+        for (String id : dto.getIds()) {
+            AfterSalePackEntity afterSalePackEntity = map.get(id);
+            BatchResultDTO deleteResult;
+            if (ObjectUtil.isEmpty(afterSalePackEntity)) {
+                deleteResult = BatchResultDTO.fail(id, id, "该箱唛不存在或已被删除, 删除失败");
+            } else if (Boolean.TRUE.equals(afterSalePackEntity.getIsUse())) {
+                deleteResult = BatchResultDTO.fail(id, afterSalePackEntity.getCode(), "该箱唛已被单据使用, 删除失败");
+            } else if (AfterSalePackStatusEnum.UNDER_REVIEW.getCode().equals(afterSalePackEntity.getPackStatus())
+                    || AfterSalePackStatusEnum.SEALED_BOX.getCode().equals(afterSalePackEntity.getPackStatus())) {
+                deleteResult = BatchResultDTO.fail(id, afterSalePackEntity.getCode(), "箱唛状态等于复审中或者已封箱状态, 删除失败");
+            } else {
+                // 删除数据
+                if (!this.removeById(id)) {
+                    throw new ServiceException("箱唛删除失败");
+                }
+                // 删除明细数据
+                removeDetailByMainId(id);
+                deleteResult = BatchResultDTO.success(id, afterSalePackEntity.getCode(), "删除成功");
+            }
+            resultDTOS.add(deleteResult);
+        }
+        return resultDTOS;
+    }
+
+    @Override
+    public AfterSalePackDTO.ViewDTO viewByCode(String code) {
+        AfterSalePackEntity afterSalePackEntity = this.lambdaQuery()
+                .eq(AfterSalePackEntity::getCode, code)
+                .one();
+        if (ObjectUtil.isEmpty(afterSalePackEntity)) {
+            throw new ServiceException("识别箱唛失败，请核实箱唛准确性");
+        }
+        return this.view(afterSalePackEntity.getId());
+    }
+
+    @Override
+    public List<AfterSalePackDTO.ViewDTO> viewByCodes(List<String> codes) {
+        if (CollectionUtils.isEmpty(codes)) {
+            return Collections.emptyList();
+        }
+        List<String> distinctCodes = codes.stream()
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(distinctCodes)) {
+            return Collections.emptyList();
+        }
+        List<AfterSalePackEntity> afterSalePackEntityList = this.lambdaQuery()
+                .in(AfterSalePackEntity::getCode, distinctCodes)
+                .list();
+        Map<String, AfterSalePackEntity> entityMap = afterSalePackEntityList.stream()
+                .collect(Collectors.toMap(AfterSalePackEntity::getCode, item -> item, (v1, v2) -> v1));
+        List<String> notExistCodes = distinctCodes.stream()
+                .filter(code -> !entityMap.containsKey(code))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(notExistCodes)) {
+            throw new ServiceException("未找到箱唛数据：" + String.join(",", notExistCodes));
+        }
+        List<AfterSalePackEntity> orderedEntityList = distinctCodes.stream()
+                .map(entityMap::get)
+                .collect(Collectors.toList());
+
+        List<String> mainIds = orderedEntityList.stream()
+                .map(AfterSalePackEntity::getId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        List<AfterSalePackDetailEntity> afterSalePackDetailEntityList = afterSalePackDetailService.lambdaQuery()
+                .in(AfterSalePackDetailEntity::getMainId, mainIds)
+                .list();
+
+        List<String> outWarehouseLocationIds = afterSalePackDetailEntityList.stream()
+                .map(AfterSalePackDetailEntity::getOutWarehouseLocationId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, WarehouseLocationEntity> outWarehouseLocationMap = CollectionUtils.isEmpty(outWarehouseLocationIds)
+                ? Collections.emptyMap()
+                : warehouseLocationService.listByIds(outWarehouseLocationIds).stream()
+                .collect(Collectors.toMap(WarehouseLocationEntity::getId, item -> item, (v1, v2) -> v1));
+
+        List<String> inWarehouseLocationIds = afterSalePackDetailEntityList.stream()
+                .map(AfterSalePackDetailEntity::getInWarehouseLocationId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, WarehouseLocationEntity> inWarehouseLocationMap = CollectionUtils.isEmpty(inWarehouseLocationIds)
+                ? Collections.emptyMap()
+                : warehouseLocationService.listByIds(inWarehouseLocationIds).stream()
+                .collect(Collectors.toMap(WarehouseLocationEntity::getId, item -> item, (v1, v2) -> v1));
+
+        Map<String, List<AfterSalePackDetailDTO.ViewDTO>> detailMap = new HashMap<>(16);
+        for (AfterSalePackDetailEntity afterSalePackDetailEntity : afterSalePackDetailEntityList) {
+            AfterSalePackDetailDTO.ViewDTO viewDTO = new AfterSalePackDetailDTO.ViewDTO();
+            BeanMapperUtils.copy(afterSalePackDetailEntity, viewDTO);
+            WarehouseLocationEntity outWarehouseLocationEntity = outWarehouseLocationMap.get(afterSalePackDetailEntity.getOutWarehouseLocationId());
+            if (ObjectUtil.isNotEmpty(outWarehouseLocationEntity)) {
+                viewDTO.setOutWarehouseLocationCode(outWarehouseLocationEntity.getCode());
+                viewDTO.setOutWarehouseLocationName(outWarehouseLocationEntity.getName());
+            }
+            WarehouseLocationEntity inWarehouseLocationEntity = inWarehouseLocationMap.get(afterSalePackDetailEntity.getInWarehouseLocationId());
+            if (ObjectUtil.isNotEmpty(inWarehouseLocationEntity)) {
+                viewDTO.setInWarehouseLocationCode(inWarehouseLocationEntity.getCode());
+                viewDTO.setInWarehouseLocationName(inWarehouseLocationEntity.getName());
+            }
+            detailMap.computeIfAbsent(afterSalePackDetailEntity.getMainId(), key -> new ArrayList<>()).add(viewDTO);
+        }
+
+        List<String> sourceIds = orderedEntityList.stream()
+                .map(AfterSalePackEntity::getSourceId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, PoReturnEntity> poReturnMap = CollectionUtils.isEmpty(sourceIds)
+                ? Collections.emptyMap()
+                : poReturnService.listByIds(sourceIds).stream()
+                .collect(Collectors.toMap(PoReturnEntity::getId, item -> item, (v1, v2) -> v1));
+
+        List<AfterSalePackDTO.ViewDTO> resultList = new ArrayList<>();
+        for (AfterSalePackEntity afterSalePackEntity : orderedEntityList) {
+            AfterSalePackDTO.ViewDTO data = BeanMapperUtils.map(AfterSalePackDTO.ViewDTO.class, afterSalePackEntity);
+            data.setTypeName(AfterSalePackTypeEnum.getByCode(data.getType()));
+            PoReturnEntity poReturnEntity = poReturnMap.get(data.getSourceId());
+            if (ObjectUtil.isNotEmpty(poReturnEntity)) {
+                data.setSupplierId(poReturnEntity.getSupplierId());
+                data.setSupplierName(poReturnEntity.getSupplierName());
+            }
+            data.setDetailViewDTOList(detailMap.get(data.getId()));
+            resultList.add(data);
+        }
+        return resultList;
+    }
+
+    @Override
+    public List<AfterSalePackDTO.ViewDTO> viewByIds(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return Collections.emptyList();
+        }
+        List<String> distinctIds = ids.stream()
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(distinctIds)) {
+            return Collections.emptyList();
+        }
+        // 1. 批量查主表，保持入参顺序，数据库中不存在的 ID 静默跳过
+        List<AfterSalePackEntity> entityList = this.listByIds(distinctIds);
+        Map<String, AfterSalePackEntity> entityMap = entityList.stream()
+                .collect(Collectors.toMap(AfterSalePackEntity::getId, item -> item, (v1, v2) -> v1));
+        List<AfterSalePackEntity> orderedEntityList = distinctIds.stream()
+                .filter(entityMap::containsKey)
+                .map(entityMap::get)
+                .collect(Collectors.toList());
+
+        // 2. 一次性批量查所有明细，避免 N+1
+        List<String> mainIds = orderedEntityList.stream()
+                .map(AfterSalePackEntity::getId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        List<AfterSalePackDetailEntity> afterSalePackDetailEntityList = afterSalePackDetailService.lambdaQuery()
+                .in(AfterSalePackDetailEntity::getMainId, mainIds)
+                .list();
+
+        // 3. 批量查仓位（移出 + 移入），转 Map 供组装时 O(1) 查找
+        List<String> outWarehouseLocationIds = afterSalePackDetailEntityList.stream()
+                .map(AfterSalePackDetailEntity::getOutWarehouseLocationId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, WarehouseLocationEntity> outWarehouseLocationMap = CollectionUtils.isEmpty(outWarehouseLocationIds)
+                ? Collections.emptyMap()
+                : warehouseLocationService.listByIds(outWarehouseLocationIds).stream()
+                .collect(Collectors.toMap(WarehouseLocationEntity::getId, item -> item, (v1, v2) -> v1));
+
+        List<String> inWarehouseLocationIds = afterSalePackDetailEntityList.stream()
+                .map(AfterSalePackDetailEntity::getInWarehouseLocationId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, WarehouseLocationEntity> inWarehouseLocationMap = CollectionUtils.isEmpty(inWarehouseLocationIds)
+                ? Collections.emptyMap()
+                : warehouseLocationService.listByIds(inWarehouseLocationIds).stream()
+                .collect(Collectors.toMap(WarehouseLocationEntity::getId, item -> item, (v1, v2) -> v1));
+
+        // 4. 按 mainId 分组明细，并回填仓位 code/name
+        Map<String, List<AfterSalePackDetailDTO.ViewDTO>> detailMap = new HashMap<>(16);
+        for (AfterSalePackDetailEntity detail : afterSalePackDetailEntityList) {
+            AfterSalePackDetailDTO.ViewDTO viewDTO = new AfterSalePackDetailDTO.ViewDTO();
+            BeanMapperUtils.copy(detail, viewDTO);
+            WarehouseLocationEntity outLoc = outWarehouseLocationMap.get(detail.getOutWarehouseLocationId());
+            if (ObjectUtil.isNotEmpty(outLoc)) {
+                viewDTO.setOutWarehouseLocationCode(outLoc.getCode());
+                viewDTO.setOutWarehouseLocationName(outLoc.getName());
+            }
+            WarehouseLocationEntity inLoc = inWarehouseLocationMap.get(detail.getInWarehouseLocationId());
+            if (ObjectUtil.isNotEmpty(inLoc)) {
+                viewDTO.setInWarehouseLocationCode(inLoc.getCode());
+                viewDTO.setInWarehouseLocationName(inLoc.getName());
+            }
+            detailMap.computeIfAbsent(detail.getMainId(), key -> new ArrayList<>()).add(viewDTO);
+        }
+
+        // 5. 批量查采购退货，补充供应商信息
+        List<String> sourceIds = orderedEntityList.stream()
+                .map(AfterSalePackEntity::getSourceId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, PoReturnEntity> poReturnMap = CollectionUtils.isEmpty(sourceIds)
+                ? Collections.emptyMap()
+                : poReturnService.listByIds(sourceIds).stream()
+                .collect(Collectors.toMap(PoReturnEntity::getId, item -> item, (v1, v2) -> v1));
+
+        // 6. 组装最终 ViewDTO
+        List<AfterSalePackDTO.ViewDTO> resultList = new ArrayList<>();
+        for (AfterSalePackEntity entity : orderedEntityList) {
+            AfterSalePackDTO.ViewDTO data = BeanMapperUtils.map(AfterSalePackDTO.ViewDTO.class, entity);
+            data.setTypeName(AfterSalePackTypeEnum.getByCode(data.getType()));
+            PoReturnEntity poReturnEntity = poReturnMap.get(data.getSourceId());
+            if (ObjectUtil.isNotEmpty(poReturnEntity)) {
+                data.setSupplierId(poReturnEntity.getSupplierId());
+                data.setSupplierName(poReturnEntity.getSupplierName());
+            }
+            data.setDetailViewDTOList(detailMap.get(data.getId()));
+            resultList.add(data);
+        }
+        return resultList;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void markBoxesAsMoved(List<String> ids, String targetWarehouseLocationId) {
+        if (CollUtil.isEmpty(ids)) {
+            return;
+        }
+        if (StringUtils.isBlank(targetWarehouseLocationId)) {
+            throw new ServiceException("移入仓位不能为空");
+        }
+        this.lambdaUpdate()
+                .in(AfterSalePackEntity::getId, ids)
+                .set(AfterSalePackEntity::getIsMoveWarehouse, true)
+                .update();
+        afterSalePackDetailService.lambdaUpdate()
+                .in(AfterSalePackDetailEntity::getMainId, ids)
+                .set(AfterSalePackDetailEntity::getInWarehouseLocationId, targetWarehouseLocationId)
+                .update();
+    }
+
+    @Override
+    @DistributeLocker(businessType = AFTER_SALE_PACK_LOCK_KEY, keyName = "dto.ids")
+    @Transactional(rollbackFor = Exception.class)
+    public List<BatchResultDTO> batchSubmit(BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>();
+        List<AfterSalePackEntity> afterSalePackEntityList = super.listByIds(dto.getIds());
+        Map<String, AfterSalePackEntity> map = afterSalePackEntityList.stream().collect(Collectors.toMap(BaseEntity::getId, item -> item));
+        Set<String> mainIdsWithDetail = afterSalePackDetailService.lambdaQuery()
+                .in(AfterSalePackDetailEntity::getMainId, dto.getIds())
+                .list()
+                .stream()
+                .map(AfterSalePackDetailEntity::getMainId)
+                .collect(Collectors.toSet());
+        for (String id : dto.getIds()) {
+            AfterSalePackEntity afterSalePackEntity = map.get(id);
+            BatchResultDTO submitResult;
+            if (ObjectUtil.isEmpty(afterSalePackEntity)) {
+                submitResult = BatchResultDTO.fail(id, id, "该箱唛不存在或已被删除, 提交失败");
+            } else if (Boolean.TRUE.equals(afterSalePackEntity.getIsUse())) {
+                submitResult = BatchResultDTO.fail(id, afterSalePackEntity.getCode(), "该箱唛已被单据使用, 不可提交审核");
+            } else if (AfterSalePackStatusEnum.UNDER_REVIEW.getCode().equals(afterSalePackEntity.getPackStatus())
+                    || AfterSalePackStatusEnum.SEALED_BOX.getCode().equals(afterSalePackEntity.getPackStatus())) {
+                submitResult = BatchResultDTO.fail(id, afterSalePackEntity.getCode(), "箱唛状态等于复审中或者已封箱状态，不可提交审核");
+            } else if (!mainIdsWithDetail.contains(id)) {
+                submitResult = BatchResultDTO.fail(id, afterSalePackEntity.getCode(), "没有箱唛明细，不可提交审核");
+            } else {
+                log.info("确定提审 开始修改箱唛数据，单号：【{}】", afterSalePackEntity.getCode());
+                afterSalePackEntity.setPackStatus(AfterSalePackStatusEnum.UNDER_REVIEW.getCode());
+                boolean save = super.updateById(afterSalePackEntity);
+                if (!save) {
+                    throw new ServiceException("箱唛确定提审失败");
+                }
+                // 记录主单操作日志
+                log.info("确定提审 开始记录箱唛日志数据，单号：【{}】", afterSalePackEntity.getCode());
+                String msg = StrUtil.format("用户【{}】确定提审单号为【{}】的【{}】单据", UserContext.getDefaultLoginUser().getUserName(), afterSalePackEntity.getCode(), "箱唛");
+                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.AFTER_SALE_PACK.getCode(), afterSalePackEntity.getId(), "确定提审");
+                submitResult = BatchResultDTO.success(id, afterSalePackEntity.getCode(), "提交审核成功");
+            }
+            resultDTOS.add(submitResult);
+        }
+        return resultDTOS;
+    }
+
+}

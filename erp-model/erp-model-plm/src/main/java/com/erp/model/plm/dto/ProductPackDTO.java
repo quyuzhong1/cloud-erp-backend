@@ -1,9 +1,12 @@
 package com.erp.model.plm.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * @Description: 产品包装信息请求参数
@@ -83,5 +86,22 @@ public class ProductPackDTO implements Serializable {
      * 修改人id
      */
     private String updateUserId;
+
+    /**
+     * 按 skuId 批量解析单品/组合品单位毛重查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ListSingleBySkuIdsParam implements Serializable {
+        /**
+         * 待解析单位毛重的 skuId 列表
+         */
+        private List<String> skuIds;
+        /**
+         * BOM 审核状态，用于组合品子件查询（如已归档 BomStateEnum.AUDIT_PASS = 4）
+         */
+        private Integer state;
+    }
 
 }

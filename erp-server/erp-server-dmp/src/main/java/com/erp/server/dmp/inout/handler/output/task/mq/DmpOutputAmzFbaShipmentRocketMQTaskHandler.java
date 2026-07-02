@@ -118,6 +118,8 @@ public class DmpOutputAmzFbaShipmentRocketMQTaskHandler extends DmpOutputRocketM
 //        platformFbaShipmentDTO.setShopName();?
         platformFbaShipmentDTO.setPlatformUpdateTime(java.time.LocalDateTime.now(java.time.ZoneId.systemDefault()));
         platformFbaShipmentDTO.setShipmentCreateTime(java.time.LocalDateTime.now(java.time.ZoneId.systemDefault()));
+        // 审查说明（packType MQ 推送格式）：与 DMP 落库一致，推送 AmazonFbaPackTypeEnum.code（CASE_PACKED/INDIVIDUAL），
+        // 不在 Output 层转中文；WMS 落库后由 FbaShipmentConverter.toDisplayName 做展示转换，勿在此处重复转换。
         platformFbaShipmentDTO.setPackType(dmpMainEntity.getPackType());
         platformFbaShipmentDTO.setDeliveryFromAddress(dmpMainEntity.getDeliveryFromAddress());
         platformFbaShipmentDTO.setIsSta(dmpMainEntity.getIsSta());

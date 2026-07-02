@@ -127,6 +127,12 @@ public class QcNoticeEntity extends BaseEntity<QcNoticeEntity> {
     /**
      * 期望质检日期
      */
+    @TableField("expect_qc_date")
+    private LocalDate expectQcDate;
+
+    /**
+     * 计划质检日期
+     */
     @TableField("plan_qc_date")
     private LocalDate planQcDate;
 

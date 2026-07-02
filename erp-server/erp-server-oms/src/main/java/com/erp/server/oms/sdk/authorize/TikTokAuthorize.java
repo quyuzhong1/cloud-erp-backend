@@ -143,6 +143,9 @@ public class TikTokAuthorize implements IShopAuthorizeService<T> {
         if (StringUtils.isBlank(code)) {
             throw new ServiceException(ApiError.SHOP_AUTHORIZE_CODE_REQUIRED);
         }
+        if (StringUtils.isBlank(shopInfo.getDictCountryCode())) {
+            throw new ServiceException(ApiError.SHOP_COUNTRY_CODE_REQUIRED);
+        }
         AppClientEnum appClient = AppClientEnum.TIKTOK_ACCESS_TOKEN;
         CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
         findDTO.setBusinessType(appClient.getBusinessType());
@@ -157,6 +160,7 @@ public class TikTokAuthorize implements IShopAuthorizeService<T> {
         paramMap.put("clientSecret", cfgAppClient.getClientSecret());
         paramMap.put("baseUrl", cfgAppClient.getUrl());
         paramMap.put("code", dto.getCode());
+        paramMap.put("targetRegion", shopInfo.getDictCountryCode().trim());
 
         TokenDTO tokenDTO = tikTokSdkClientService.sendTikTokPostToken(paramMap);
         if (ObjectUtil.isEmpty(tokenDTO)) {

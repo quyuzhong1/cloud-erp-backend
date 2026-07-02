@@ -44,7 +44,7 @@ public interface WmsTaskFeign {
      * 查询所有审核通过并启用的仓库
      */
     @GetMapping("feign/warehouse/listApproveWarehouse")
-    List<WarehouseDTO.UpdateDTO> listApproveWarehouse();
+    List<WarehouseDTO.ListDTO> listApproveWarehouse();
 
     /**
      * 根据采购订单明细ids查询收货明细
