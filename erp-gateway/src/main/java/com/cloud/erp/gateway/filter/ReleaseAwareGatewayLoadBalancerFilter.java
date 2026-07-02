@@ -155,9 +155,9 @@ public class ReleaseAwareGatewayLoadBalancerFilter
                 // 仅当整个实例列表都没有 release 元数据时才兼容回退；混合场景下无标签实例不参与兜底，避免跨色转发。
                 continue;
             }
-            // release 元数据别名需与 ReleaseAwareRibbonRule 保持一致；裸 color 由注册初始化器归一化为 release 前缀后再参与路由。
-            String releaseColor = firstText(metadata, "release.color", "release-color", "releaseColor");
-            String releaseVersion = firstText(metadata, "release.version", "release-version", "releaseVersion");
+            // 兼容存量部署已写入的裸 color/version；新实例会由 NacosReleaseMetadataInitializer 同步写入 release 前缀。
+            String releaseColor = firstText(metadata, "release.color", "release-color", "releaseColor", "color");
+            String releaseVersion = firstText(metadata, "release.version", "release-version", "releaseVersion", "version");
             if (hasAnyReleaseMetadata(releaseColor, releaseVersion)) {
                 hasReleaseMetadata = true;
             }
