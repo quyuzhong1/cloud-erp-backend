@@ -1,6 +1,7 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp.jifeng;
 
 import com.erp.server.dmp.inout.handler.input.task.dmp.DmpInputDbConvertDmpHandler;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,7 @@ import java.util.TreeMap;
  * @author Administrator
  *
  */
+@Slf4j
 @Service
 @Scope("prototype")
 public class JiFengOutBoundDmpHandler extends DmpInputDbConvertDmpHandler {
@@ -64,6 +66,7 @@ public class JiFengOutBoundDmpHandler extends DmpInputDbConvertDmpHandler {
 			return LocalDateTime.parse(dateTimeStr, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
 		} catch (Exception ignored) {
 		}
+		log.warn("JiFeng出库时间解析失败，原始值={}", dateTimeStr);
 		return null;
 	}
 }

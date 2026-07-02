@@ -149,6 +149,8 @@ public class ShopifyShipOrder extends AbstractShipOrder {
                     channelIds,
                     PlatformDictEnum.SHOPIFY.getCode()
             );
+            Map<String, LogisticsChannelDTO.SignShipDTO> channelShipMap = tmsScaleChannelShipDTOList.stream()
+                    .collect(Collectors.toMap(LogisticsChannelDTO.SignShipDTO::getLogisticsChannelId, Function.identity(), (a, b) -> a));
             // 捆绑拆分会合并关联子单物流标发，每个渠道都需配置 Shopify 平台映射
             for (SoB2cLogisticsEntity logisticsEntity : soB2cLogisticsEntityList) {
                 if (StringUtils.isBlank(logisticsEntity.getLogisticsChannelId())) {
@@ -195,16 +197,8 @@ public class ShopifyShipOrder extends AbstractShipOrder {
                     if (StringUtils.isBlank(soB2cLogisticsEntity.getLogisticsChannelId())) {
                         continue;
                     }
-                    LogisticsChannelDTO.SignShipDTO tmsScaleChannelShipDTO = tmsScaleChannelShipDTOList.stream()
-                            .filter(e -> e.getLogisticsChannelId().equals(soB2cLogisticsEntity.getLogisticsChannelId()))
-                            .findFirst()
-                            .orElse(null);
-                    if (tmsScaleChannelShipDTO == null) {
-                        String channelName = StringUtils.defaultIfBlank(soB2cLogisticsEntity.getLogisticsChannelName(), soB2cLogisticsEntity.getLogisticsChannelId());
-                        throw new ServiceException(CharSequenceUtil.format(
-                                "操作失败，物流渠道【{}】未配置Shopify平台标发映射",
-                                channelName));
-                    }
+                    // 渠道映射已在上方批量校验，此处直接取 Map 避免重复判空
+                    LogisticsChannelDTO.SignShipDTO tmsScaleChannelShipDTO = channelShipMap.get(soB2cLogisticsEntity.getLogisticsChannelId());
                     String standardOrderType = tmsScaleChannelShipDTO.checkAndGetOrderDeliveryMarkType();
                     String trackingNumber = CharSequenceUtil.equals(OrderDeliveryMarkTypeEnum.TRANSPORT_NO.getCode(),standardOrderType)
                             ? soB2cLogisticsEntity.getCode() : soB2cLogisticsEntity.getTrackNo();
