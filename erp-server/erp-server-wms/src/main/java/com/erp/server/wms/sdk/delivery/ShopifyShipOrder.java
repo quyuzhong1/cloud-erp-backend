@@ -156,9 +156,7 @@ public class ShopifyShipOrder extends AbstractShipOrder {
                 if (StringUtils.isBlank(logisticsEntity.getLogisticsChannelId())) {
                     continue;
                 }
-                boolean hasShopifyMapping = tmsScaleChannelShipDTOList.stream()
-                        .anyMatch(e -> logisticsEntity.getLogisticsChannelId().equals(e.getLogisticsChannelId()));
-                if (!hasShopifyMapping) {
+                if (!channelShipMap.containsKey(logisticsEntity.getLogisticsChannelId())) {
                     String channelName = StringUtils.defaultIfBlank(logisticsEntity.getLogisticsChannelName(), logisticsEntity.getLogisticsChannelId());
                     throw new ServiceException(CharSequenceUtil.format(
                             "操作失败，物流渠道【{}】未配置Shopify平台标发映射（捆绑拆分需所有关联子单渠道均配置）",

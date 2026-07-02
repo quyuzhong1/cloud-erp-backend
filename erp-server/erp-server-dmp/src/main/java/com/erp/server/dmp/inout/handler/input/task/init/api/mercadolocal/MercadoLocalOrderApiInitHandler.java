@@ -299,8 +299,8 @@ public class MercadoLocalOrderApiInitHandler implements DmpInputApiInitHandler {
             }
             String jsonStr = JSONUtil.toJsonStr(apiResult.getData());
             JSONObject resultJson = JSON.parseObject(jsonStr);
-            if (resultJson == null || StringUtils.isBlank(resultJson.getString("date_created"))) {
-            	log.warn("{}未查询到数据，返回报文：{}" , orderId , jsonStr);
+            if (resultJson == null) {
+                log.warn("{}未查询到有效订单数据，返回报文：{}", orderId, jsonStr);
                 failedOrderIds.add(orderId);
                 continue;
             }
@@ -316,8 +316,7 @@ public class MercadoLocalOrderApiInitHandler implements DmpInputApiInitHandler {
             }
         }
         if (!failedOrderIds.isEmpty()) {
-            throw new ServiceException(StrUtil.format(
-                    "美客多本土站-orderIdList补拉失败，失败订单：{}", String.join(",", failedOrderIds)));
+            log.warn("美客多本土站-orderIdList补拉部分失败，失败订单：{}", String.join(",", failedOrderIds));
         }
         // orderIdList 模式始终返回 List（含空列表），避免 null 被误判为「非补拉模式」而落入分页检索
      	return dmpInputTaskInitDTOList;
