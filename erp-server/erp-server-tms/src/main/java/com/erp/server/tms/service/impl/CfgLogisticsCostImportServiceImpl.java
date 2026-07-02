@@ -34,7 +34,6 @@ import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.CfgLogisticsCostImportDTO;
 import com.erp.model.tms.dto.CfgLogisticsCostImportDetailDTO;
-import com.erp.model.tms.dto.DictBasicDTO;
 import com.erp.model.tms.dto.excel.CfgLogisticsCostExcelDTO;
 import com.erp.model.tms.entity.CfgLogisticsCostImportDetailEntity;
 import com.erp.model.tms.entity.CfgLogisticsCostImportEntity;
@@ -101,7 +100,8 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
     @Resource
     private TmsCfgCostService tmsCfgCostService;
 
-    private final static String costItem = "费用项明细";
+    private final static String COST_ITEM_NAME = "费用项明细";
+    private final static String COST_ITEM = "costItem";
     private final static String PAY_TYPE_FIELD = "payType";
     private final static String CURRENCY_FIELD = "currency";
     private final static String LOGISTICS_WEIGHT_UNIT_FIELD = "logisticsWeightUnit";
@@ -172,7 +172,7 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
             addDTO.setIndex(index++);
         }
         //校验费用项明细
-        List<CfgLogisticsCostImportDetailDTO.UpdateDTO> itemList = detailList.stream().filter(e -> StringUtils.isNotBlank(e.getTargetFieldName()) && Objects.equals(e.getTargetFieldName(), costItem)).collect(Collectors.toList());
+        List<CfgLogisticsCostImportDetailDTO.UpdateDTO> itemList = detailList.stream().filter(e -> StringUtils.isNotBlank(e.getTargetFieldName()) && Objects.equals(e.getTargetFieldName(), COST_ITEM_NAME)).collect(Collectors.toList());
         if(CollUtil.isNotEmpty(itemList)){
             long count = itemList.stream().map(CfgLogisticsCostImportDetailDTO.UpdateDTO::getSourceDetailField).filter(StringUtils::isNotBlank).count();
             if(count!=0 && count != itemList.size()){
@@ -284,7 +284,7 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
                 updateDTO.setMainId(id);
             }
             //只有费用项明细时，才能有明细字段信息
-            if(StringUtils.isNotBlank(updateDTO.getTargetField()) && Objects.equals(updateDTO.getTargetField(), "costItem")){
+            if(StringUtils.isNotBlank(updateDTO.getTargetField()) && Objects.equals(updateDTO.getTargetField(), COST_ITEM)){
                 TmsCfgCostEntity tmsCfgCostEntity = cfgCostMap.get(updateDTO.getTargetDetailFieldId());
                 if(Objects.nonNull(tmsCfgCostEntity)){
                     updateDTO.setTargetDetailField(tmsCfgCostEntity.getDictCostCategory());
@@ -301,7 +301,7 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
             updateDTO.setIndex(index++);
         }
         //校验费用项明细
-        List<CfgLogisticsCostImportDetailDTO.UpdateDTO> itemList = detailList.stream().filter(e -> StringUtils.isNotBlank(e.getTargetFieldName()) && Objects.equals(e.getTargetFieldName(), costItem)).collect(Collectors.toList());
+        List<CfgLogisticsCostImportDetailDTO.UpdateDTO> itemList = detailList.stream().filter(e -> StringUtils.isNotBlank(e.getTargetFieldName()) && Objects.equals(e.getTargetFieldName(), COST_ITEM_NAME)).collect(Collectors.toList());
         if(CollUtil.isNotEmpty(itemList)){
             long count = itemList.stream().map(CfgLogisticsCostImportDetailDTO.UpdateDTO::getSourceDetailField).filter(StringUtils::isNotBlank).count();
             if(count!=0 && count != itemList.size()){
@@ -529,7 +529,7 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
      */
     private void validateMainItemDuplicates(List<CfgLogisticsCostImportDetailDTO.UpdateDTO> detailList) {
         Map<String, List<CfgLogisticsCostImportDetailDTO.UpdateDTO>> groupedByFieldName = detailList.stream()
-                .filter(dto -> !costItem.equals(dto.getTargetFieldName()))
+                .filter(dto -> !COST_ITEM_NAME.equals(dto.getTargetFieldName()))
                 .collect(Collectors.groupingBy(CfgLogisticsCostImportDetailDTO.UpdateDTO::getTargetFieldName));
 
         groupedByFieldName.entrySet().stream()
@@ -550,7 +550,7 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
         }
 
         List<CfgLogisticsCostImportDetailDTO.UpdateDTO> costItems = detailList.stream()
-                .filter(dto -> "costItem".equals(dto.getTargetField()))
+                .filter(dto -> COST_ITEM.equals(dto.getTargetField()))
                 .collect(Collectors.toList());
 
         if (CollUtil.isNotEmpty(costItems)) {
