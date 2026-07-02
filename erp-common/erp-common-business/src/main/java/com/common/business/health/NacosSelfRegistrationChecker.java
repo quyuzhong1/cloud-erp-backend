@@ -1,7 +1,6 @@
 package com.common.business.health;
 
 import com.alibaba.cloud.nacos.NacosDiscoveryProperties;
-import com.alibaba.fastjson.JSON;
 import com.alibaba.nacos.api.naming.NamingService;
 import com.alibaba.nacos.api.naming.pojo.Instance;
 import lombok.extern.slf4j.Slf4j;
@@ -14,10 +13,6 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PreDestroy;
-import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLEncoder;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -114,7 +109,7 @@ public class NacosSelfRegistrationChecker {
                     registrationInfo);
             return false;
         }
-        Boolean success = executeWithTimeout(() -> updateInstanceEnabled(registrationInfo, enabled), Boolean.FALSE);
+        Boolean success = executeWithTimeout(() -> updateInstanceEnabledBySdk(registrationInfo, enabled), Boolean.FALSE);
         if (!success) {
             log.warn("Failed to update Nacos instance enabled={} : {}", enabled, registrationInfo);
         }
@@ -148,58 +143,20 @@ public class NacosSelfRegistrationChecker {
         return CheckResult.notReady(REASON_NACOS_NOT_REGISTERED, "current ip and port not found in nacos");
     }
 
-    private boolean updateInstanceEnabled(RegistrationInfo registrationInfo, boolean enabled) throws IOException {
-        String serverAddr = resolveNacosServerAddr();
-        if (StringUtils.isBlank(serverAddr)) {
-            log.warn("Skip updating Nacos instance enabled status, nacos server address is blank");
-            return false;
-        }
-        // 该 OpenAPI 不复用 Nacos SDK 的鉴权上下文；开启 Nacos 鉴权的环境必须先验证 pre-stop 下线结果。
-        String requestUrl = buildUpdateInstanceUrl(serverAddr, registrationInfo, enabled);
-        HttpURLConnection connection = (HttpURLConnection) new URL(requestUrl).openConnection();
-        connection.setRequestMethod("PUT");
-        connection.setConnectTimeout((int) nacosCheckTimeoutMs);
-        connection.setReadTimeout((int) nacosCheckTimeoutMs);
-        connection.setDoOutput(true);
-        int responseCode = connection.getResponseCode();
-        connection.disconnect();
-        return responseCode >= 200 && responseCode < 300;
-    }
-
-    private String resolveNacosServerAddr() {
-        String serverAddr = StringUtils.defaultIfBlank(discoveryProperties.getServerAddr(),
-                environment.getProperty("spring.cloud.nacos.discovery.server-addr"));
-        if (StringUtils.isBlank(serverAddr)) {
-            return null;
-        }
-        String firstServerAddr = StringUtils.substringBefore(serverAddr, ",");
-        if (StringUtils.startsWithIgnoreCase(firstServerAddr, "http://")
-                || StringUtils.startsWithIgnoreCase(firstServerAddr, "https://")) {
-            return firstServerAddr;
-        }
-        return "http://" + firstServerAddr;
-    }
-
-    private String buildUpdateInstanceUrl(String serverAddr, RegistrationInfo registrationInfo, boolean enabled)
-            throws IOException {
-        StringBuilder builder = new StringBuilder(serverAddr);
-        if (!serverAddr.endsWith("/")) {
-            builder.append('/');
-        }
-        builder.append("nacos/v1/ns/instance")
-                .append("?serviceName=").append(encode(registrationInfo.getServiceName()))
-                .append("&groupName=").append(encode(registrationInfo.getGroupName()))
-                .append("&ip=").append(encode(registrationInfo.getIp()))
-                .append("&port=").append(registrationInfo.getPort())
-                .append("&enabled=").append(enabled);
-        if (StringUtils.isNotBlank(registrationInfo.getNamespace())) {
-            builder.append("&namespaceId=").append(encode(registrationInfo.getNamespace()));
-        }
-        Map<String, String> metadata = resolveMetadata(registrationInfo);
-        if (!metadata.isEmpty()) {
-            builder.append("&metadata=").append(encode(JSON.toJSONString(metadata)));
-        }
-        return builder.toString();
+    private boolean updateInstanceEnabledBySdk(RegistrationInfo registrationInfo, boolean enabled) throws Exception {
+        NamingService namingService = discoveryProperties.namingServiceInstance();
+        Instance instance = new Instance();
+        instance.setIp(registrationInfo.getIp());
+        instance.setPort(registrationInfo.getPort());
+        instance.setEnabled(enabled);
+        instance.setHealthy(true);
+        instance.setWeight(discoveryProperties.getWeight());
+        instance.setClusterName(discoveryProperties.getClusterName());
+        instance.setEphemeral(discoveryProperties.isEphemeral());
+        instance.setMetadata(resolveMetadata(registrationInfo));
+        // Nacos 1.3.3 公开 SDK 没有 updateInstance；同 IP/端口 registerInstance 会走 SDK 鉴权并覆盖实例属性。
+        namingService.registerInstance(registrationInfo.getServiceName(), registrationInfo.getGroupName(), instance);
+        return true;
     }
 
     private Map<String, String> resolveMetadata(RegistrationInfo registrationInfo) {
@@ -258,10 +215,6 @@ public class NacosSelfRegistrationChecker {
             }
         }
         return null;
-    }
-
-    private String encode(String value) throws IOException {
-        return URLEncoder.encode(value, "UTF-8");
     }
 
     private boolean isCurrentInstance(Instance instance, RegistrationInfo registrationInfo) {
