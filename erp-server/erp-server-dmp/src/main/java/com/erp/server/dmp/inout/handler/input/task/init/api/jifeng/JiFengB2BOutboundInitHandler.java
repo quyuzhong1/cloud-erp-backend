@@ -46,6 +46,8 @@ import java.util.stream.Collectors;
 @Scope("prototype")
 public class JiFengB2BOutboundInitHandler extends DmpInputInitHandler {
 
+	private static final int JIFENG_ORDER_NOT_FOUND_CODE = 70000;
+
 	@Resource
     private DmpHandlerCache dmpHandlerCache;
 
@@ -99,31 +101,30 @@ public class JiFengB2BOutboundInitHandler extends DmpInputInitHandler {
 				.distinct()
 				.collect(Collectors.toList());
 		for (String code : codeList) {
-			JiFengBaseResp<JiFengB2BOutboundResp> resp = jiFengService.getB2BOrder(overseasProviderEntity.getAuthJson(),code);
-			if(Objects.isNull(resp)){
-				log.warn("极风获取B2B订单数据失败，响应结果为空");
+			JiFengBaseResp<JiFengB2BOutboundResp> resp = jiFengService.getB2BOrder(overseasProviderEntity.getAuthJson(), code);
+			if (Objects.isNull(resp)) {
+				log.warn("极风获取B2B订单数据失败，响应结果为空，erpNo:{}", code);
 				throw new ServiceException("极风获取B2B订单数据失败，响应结果为空");
 			}
-			if(resp.getCode() != 0){
-				if(resp.getMessage().contains("Invalid ACCESS TOKEN")){
+			if (resp.getCode() != 0) {
+				if (StringUtils.contains(resp.getMessage(), "Invalid ACCESS TOKEN")) {
 					overseasProviderEntity = overseasProviderFeign.refreshToken(overseasProviderEntity);
-					resp = jiFengService.getB2BOrder(overseasProviderEntity.getAuthJson(),code);
-					if(Objects.isNull(resp)){
-						log.warn("极风获取B2B订单数据失败，响应结果为空");
+					resp = jiFengService.getB2BOrder(overseasProviderEntity.getAuthJson(), code);
+					if (Objects.isNull(resp)) {
+						log.warn("极风获取B2B订单数据失败，响应结果为空，erpNo:{}", code);
 						throw new ServiceException("极风获取B2B订单数据失败，响应结果为空");
 					}
-					if(resp.getCode() != 0){
-						log.warn("极风获取B2B数据失败，code:{},msg:{}",resp.getCode(),resp.getMessage());
-						throw new ServiceException("极风获取B2B订单数据失败，code:"+resp.getCode()+",msg:"+resp.getMessage());
-					}
-					resultList.add(resp.getData());
-				}else{
-					log.warn("极风获取B2B数据失败，code:{},msg:{}",resp.getCode(),resp.getMessage());
-					throw new ServiceException("极风获取B2B订单数据失败，code:"+resp.getCode()+",msg:"+resp.getMessage());
 				}
-			}else{
-				resultList.add(resp.getData());
+				if (isOrderNotFoundInWarehouse(resp)) {
+					log.warn("极风B2B订单在仓库中不存在，跳过，erpNo:{}, code:{}, msg:{}", code, resp.getCode(), resp.getMessage());
+					continue;
+				}
+				if (resp.getCode() != 0) {
+					log.warn("极风获取B2B数据失败，erpNo:{}, code:{}, msg:{}", code, resp.getCode(), resp.getMessage());
+					throw new ServiceException("极风获取B2B订单数据失败，code:" + resp.getCode() + ",msg:" + resp.getMessage());
+				}
 			}
+			resultList.add(resp.getData());
 		}
 
 		DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
@@ -141,13 +142,15 @@ public class JiFengB2BOutboundInitHandler extends DmpInputInitHandler {
 				.in(B2bThirdDeliveryEntity::getDeliveryWarehouseId, warehouseIds)
 				.notIn(B2bThirdDeliveryEntity::getStatus, Arrays.asList(
 						ThirdDeliveryStatusEnum.CREATING.getCode(),
+						ThirdDeliveryStatusEnum.FAILED.getCode(),
 						ThirdDeliveryStatusEnum.SHIPPED.getCode(),
 						ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode()
 				))
 				.list();
 	}
 
-
-
+	private boolean isOrderNotFoundInWarehouse(JiFengBaseResp<?> resp) {
+		return resp.getCode() == JIFENG_ORDER_NOT_FOUND_CODE;
+	}
 
 }
