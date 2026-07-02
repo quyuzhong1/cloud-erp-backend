@@ -1990,6 +1990,7 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
             data.setProductNameCn(CharSequenceUtil.blankToDefault(productLogisticDTO.getDeclareChineseName(), ""));
             data.setDeclareElement(CharSequenceUtil.blankToDefault(productLogisticDTO.getDeclareElement(), ""));
             data.setUnit(CharSequenceUtil.blankToDefault(productLogisticDTO.getDeclareUnit(), ""));
+            data.setUnitName(CharSequenceUtil.blankToDefault(productLogisticDTO.getDeclareUnitName(), ""));
             if (!CharSequenceUtil.equals(data.getSourceType(), SourceTypeEnum.SO_DELIVERY_NOTICE.getCode())) {
                 data.setUnitPrice(productLogisticDTO.getPrice());
                 data.setCurrency(productLogisticDTO.getDeclareCurrency());
