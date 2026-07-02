@@ -22,7 +22,7 @@ import com.erp.model.wms.dto.AwdInventoryDTO;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * 
+ * AWD库存
  *
  * @author wtr
  * @since 2025-12-26
