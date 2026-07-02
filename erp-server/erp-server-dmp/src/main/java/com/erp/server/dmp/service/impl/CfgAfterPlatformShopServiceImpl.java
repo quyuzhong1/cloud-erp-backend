@@ -269,13 +269,31 @@ public class CfgAfterPlatformShopServiceImpl extends SuperServiceImpl<CfgAfterPl
     }
 
 
+    /**
+     * 匹配售后客服人员。
+     * <p>
+     * 【需求】优先按店铺匹配（不考虑平台），匹配链路：
+     * dmp_so_info.shopId → third_shop.code（旺店通店铺编号）
+     * → third_shop.id → third_mapping.third_info_id（third_sys_type=wdt, type=shop）
+     * → third_mapping.sys_id → cfg_after_platform_shop 中 ERP 系统店铺
+     * </p>
+     * <p>
+     * 等价 SQL：
+     * SELECT * FROM third_mapping
+     * WHERE third_sys_type = 'wdt' AND type = 'shop'
+     * AND third_info_id IN (SELECT id FROM third_shop WHERE sys_type = 'wdt' AND code = ?)
+     * </p>
+     * <p>
+     * 店铺匹配失败或 shopId 为空时，再按平台兜底匹配。
+     * </p>
+     */
     public List<CfgAfterPlatformShopDTO.CsAgentDTO> matchCsAgent(String dictPlatform, String shopId) {
         List<CfgAfterPlatformShopDTO.CsAgentDTO> csAgentDTOList = new ArrayList<>();
 
-        // 优先只按店铺匹配（不考虑平台）
-        // 旺店通店铺编号 -> third_shop.code -> third_mapping.third_info_id -> ERP店铺sys_id
+        // 【需求】优先只按店铺匹配（不考虑平台）
         if (StringUtils.isNotBlank(shopId)) {
             ThirdMappingEntity thirdMapping = null;
+            // dmp_so_info.shopId 对应 third_shop.code
             ThirdShopEntity thirdShop = thirdShopService.lambdaQuery()
                     .eq(ThirdShopEntity::getSysType, PlatformDictEnum.WDT.getCode())
                     .eq(ThirdShopEntity::getCode, shopId)
@@ -284,10 +302,11 @@ public class CfgAfterPlatformShopServiceImpl extends SuperServiceImpl<CfgAfterPl
                     .last("limit 1")
                     .one();
             if (Objects.nonNull(thirdShop)) {
+                // third_shop.id 关联 third_mapping.third_info_id，找到 ERP 系统店铺
                 thirdMapping = thirdMappingService.lambdaQuery()
                         .eq(ThirdMappingEntity::getThirdSysType, PlatformDictEnum.WDT.getCode())
                         .eq(ThirdMappingEntity::getType, ThirdSysTypeEnum.SHOP.getCode())
-                        .eq(ThirdMappingEntity::getThirdId, thirdShop.getShopId())
+                        .eq(ThirdMappingEntity::getThirdInfoId, thirdShop.getId())
                         .eq(ThirdMappingEntity::getDisabled, Boolean.FALSE)
                         .orderByDesc(ThirdMappingEntity::getCreateTime)
                         .last("limit 1")
@@ -306,7 +325,7 @@ public class CfgAfterPlatformShopServiceImpl extends SuperServiceImpl<CfgAfterPl
                         continue;
                     }
 
-                    // 遍历 shops,匹配 shopId
+                    // 遍历 shops，匹配 third_mapping.sys_id 对应的 ERP 系统店铺
                     for (CfgAfterPlatformShopDTO.Shop shop : shopJsonDTO.getShops()) {
                         if (Objects.equals(shop.getId(), thirdMapping.getSysId())) {
                             CfgAfterPlatformShopDTO.CsAgentJsonDTO csAgentJsonDTO = JSONUtil.toBean(
@@ -322,7 +341,7 @@ public class CfgAfterPlatformShopServiceImpl extends SuperServiceImpl<CfgAfterPl
             }
         }
 
-        // 如果店铺匹配失败，或 shopId 为空，则按 平台 匹配
+        // 【需求】店铺匹配失败或 shopId 为空时，按平台兜底匹配
         if (Objects.nonNull(dictPlatform)) {
             List<CfgAfterPlatformShopEntity> platformList = this.lambdaQuery()
                     .eq(CfgAfterPlatformShopEntity::getDictPlatform, dictPlatform)
