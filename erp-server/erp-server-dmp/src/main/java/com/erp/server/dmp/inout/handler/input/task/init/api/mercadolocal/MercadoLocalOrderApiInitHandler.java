@@ -218,6 +218,9 @@ public class MercadoLocalOrderApiInitHandler implements DmpInputApiInitHandler {
         return dateTime.format(MERCADO_ORDER_SEARCH_OFFSET);
     }
 
+    /**
+     * date_last_updated 区间参数：固定 pattern 含秒/毫秒，非 OffsetDateTime#toString，不会出现秒位省略问题。
+     */
     private String dateToStr(LocalDateTime dateTime) {
 
         OffsetDateTime utcTime = dateTime
@@ -301,7 +304,7 @@ public class MercadoLocalOrderApiInitHandler implements DmpInputApiInitHandler {
                 failedOrderIds.add(orderId);
                 continue;
             }
-            // orderIdList 补拉：GET /orders/{id} 已含完整订单，无需再调 orders/search（省 1 次外网 RTT，且绕开 date_created 窗口检索）
+            // orderIdList 补拉：GET /orders/{id} 与 search results[] 元素为同一 Order 资源，包装为单元素 JSONArray 供下游复用
             String resultMsg = JSONArray.toJSONString(Collections.singletonList(resultJson));
             DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
             dmpInputTaskInitDTO.setMsg(resultMsg);

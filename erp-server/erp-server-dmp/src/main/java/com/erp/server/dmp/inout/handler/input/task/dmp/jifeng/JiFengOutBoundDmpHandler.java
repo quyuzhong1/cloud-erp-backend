@@ -1,5 +1,6 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp.jifeng;
 
+import com.common.core.exception.ServiceException;
 import com.erp.server.dmp.inout.handler.input.task.dmp.DmpInputDbConvertDmpHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -33,20 +34,24 @@ public class JiFengOutBoundDmpHandler extends DmpInputDbConvertDmpHandler {
 			for(TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
 				dmpDataMap.put("referenceNo", mongoData.get("erpNo"));
 			}
-		    putDateTimeIfPresent(dmpDataMaps, "dateShipping", mongoData.get("shippedTime"));
-			putDateTimeIfPresent(dmpDataMaps, "platformCreateTime", mongoData.get("createTime"));
+		    putDateTimeIfPresent(dmpDataMaps, "dateShipping", mongoData.get("shippedTime"), mongoData.get("erpNo"));
+			putDateTimeIfPresent(dmpDataMaps, "platformCreateTime", mongoData.get("createTime"), mongoData.get("erpNo"));
 		}
 	}
 
-	private void putDateTimeIfPresent(List<TreeMap<String, Object>> dmpDataMaps, String key, Object value) {
+	private void putDateTimeIfPresent(List<TreeMap<String, Object>> dmpDataMaps, String key, Object value, Object referenceNo) {
 		if (Objects.isNull(value)) {
 			return;
 		}
-		LocalDateTime dateTime = parseDateTime(String.valueOf(value));
-		if (Objects.nonNull(dateTime)) {
-			for (TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
-				dmpDataMap.put(key, dateTime);
-			}
+		String dateTimeStr = String.valueOf(value);
+		LocalDateTime dateTime = parseDateTime(dateTimeStr);
+		if (Objects.isNull(dateTime)) {
+			log.error("JiFeng出库时间解析失败，referenceNo={}，字段={}，原始值={}", referenceNo, key, dateTimeStr);
+			throw new ServiceException(String.format("JiFeng出库时间解析失败，referenceNo=%s，字段=%s，原始值=%s",
+					referenceNo, key, dateTimeStr));
+		}
+		for (TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
+			dmpDataMap.put(key, dateTime);
 		}
 	}
 
@@ -66,7 +71,6 @@ public class JiFengOutBoundDmpHandler extends DmpInputDbConvertDmpHandler {
 			return LocalDateTime.parse(dateTimeStr, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
 		} catch (Exception ignored) {
 		}
-		log.warn("JiFeng出库时间解析失败，原始值={}", dateTimeStr);
 		return null;
 	}
 }
