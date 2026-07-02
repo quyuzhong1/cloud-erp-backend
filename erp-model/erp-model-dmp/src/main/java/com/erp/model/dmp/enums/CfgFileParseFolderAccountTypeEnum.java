@@ -1,4 +1,4 @@
-package com.erp.model.tms.enums;
+package com.erp.model.dmp.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.core.constant.EnumMessage;
@@ -6,13 +6,14 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
 
 /**
- * 月结文件解析配置清洗时间枚举。
+ * 月结文件解析配置文件夹账号类型枚举。
  *
  * @author jack
  * @since 2026-06-29
  */
-public enum CfgFileParsePeriodTypeEnum implements EnumMessage {
-    MONTHLY("monthly", "每月");
+public enum CfgFileParseFolderAccountTypeEnum implements EnumMessage {
+    THIRD_WAREHOUSE("thirdWarehouse", "三方仓账号"),
+    SHOP("shop", "店铺");
 
     /**
      * 编码。
@@ -25,7 +26,7 @@ public enum CfgFileParsePeriodTypeEnum implements EnumMessage {
      */
     private final String name;
 
-    CfgFileParsePeriodTypeEnum(String code, String name) {
+    CfgFileParseFolderAccountTypeEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
@@ -50,7 +51,7 @@ public enum CfgFileParsePeriodTypeEnum implements EnumMessage {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (CfgFileParsePeriodTypeEnum item : CfgFileParsePeriodTypeEnum.values()) {
+        for (CfgFileParseFolderAccountTypeEnum item : CfgFileParseFolderAccountTypeEnum.values()) {
             if (code.equals(item.getCode())) {
                 return item.getName();
             }

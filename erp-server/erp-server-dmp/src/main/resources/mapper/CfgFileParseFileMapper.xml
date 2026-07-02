@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.erp.server.tms.mapper.CfgFileParseFileMapper">
+<mapper namespace="com.erp.server.dmp.mapper.CfgFileParseFileMapper">
     <!-- 通用查询映射结果 -->
-    <resultMap id="BaseResultMap" type="com.erp.model.tms.entity.CfgFileParseFileEntity">
+    <resultMap id="BaseResultMap" type="com.erp.model.dmp.entity.CfgFileParseFileEntity">
        <result column="id" property="id" />
        <result column="create_user_id" property="createUserId" />
        <result column="create_user_name" property="createUserName" />
@@ -21,7 +21,7 @@
        <result column="sort" property="sort" />
     </resultMap>
 
-    <!-- 通用查询结果列 -->
+    <!-- 通用查询结果�?-->
     <sql id="Base_Column_List">
         id,
         create_user_id,

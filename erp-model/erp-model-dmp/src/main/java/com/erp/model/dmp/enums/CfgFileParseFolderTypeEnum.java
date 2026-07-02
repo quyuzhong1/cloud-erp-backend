@@ -1,4 +1,4 @@
-package com.erp.model.tms.enums;
+package com.erp.model.dmp.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.core.constant.EnumMessage;
@@ -6,14 +6,14 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
 
 /**
- * 月结文件解析配置文件夹账号类型枚举。
+ * 月结文件解析配置文件夹类型枚举。
  *
  * @author jack
  * @since 2026-06-29
  */
-public enum CfgFileParseFolderAccountTypeEnum implements EnumMessage {
-    THIRD_WAREHOUSE("thirdWarehouse", "三方仓账号"),
-    SHOP("shop", "店铺");
+public enum CfgFileParseFolderTypeEnum implements EnumMessage {
+    PLATFORM_THIRD_WAREHOUSE("platformThirdWarehouse", "年月 > 平台 + 三方仓账号"),
+    PLATFORM_SHOP("platformShop", "年月 > 平台 + 店铺");
 
     /**
      * 编码。
@@ -26,7 +26,7 @@ public enum CfgFileParseFolderAccountTypeEnum implements EnumMessage {
      */
     private final String name;
 
-    CfgFileParseFolderAccountTypeEnum(String code, String name) {
+    CfgFileParseFolderTypeEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
@@ -51,7 +51,7 @@ public enum CfgFileParseFolderAccountTypeEnum implements EnumMessage {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (CfgFileParseFolderAccountTypeEnum item : CfgFileParseFolderAccountTypeEnum.values()) {
+        for (CfgFileParseFolderTypeEnum item : CfgFileParseFolderTypeEnum.values()) {
             if (code.equals(item.getCode())) {
                 return item.getName();
             }

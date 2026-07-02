@@ -1,4 +1,4 @@
-package com.erp.server.tms.controller.api;
+package com.erp.server.dmp.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
@@ -16,10 +16,10 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
-import com.erp.model.tms.dto.CfgFileParseDTO;
-import com.erp.model.tms.entity.CfgFileParseEntity;
-import com.erp.server.tms.query.CfgFileParseQueryHandler;
-import com.erp.server.tms.service.CfgFileParseService;
+import com.erp.model.dmp.dto.CfgFileParseDTO;
+import com.erp.model.dmp.entity.CfgFileParseEntity;
+import com.erp.server.dmp.query.CfgFileParseQueryHandler;
+import com.erp.server.dmp.service.CfgFileParseService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -72,7 +72,7 @@ public class CfgFileParseController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "月结文件解析配置修改")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "tms:cfgFileParse:update",
+            menuCode = "dmp:cfgFileParse:update",
             serviceClass = CfgFileParseService.class,
             keyIdName = "id")
     public ApiResult<?> update(@RequestBody @Validated CfgFileParseDTO.UpdateDTO dto) {
@@ -89,7 +89,7 @@ public class CfgFileParseController extends BaseController {
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "tms:cfgFileParse:paging",
+            menuCode = "dmp:cfgFileParse:paging",
             tableAlias = "cfp"
     )
     public ApiResult<List<CfgFileParseDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
@@ -106,7 +106,7 @@ public class CfgFileParseController extends BaseController {
     @WebAdvanceQuery(handler = CfgFileParseQueryHandler.class)
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "tms:cfgFileParse:paging",
+            menuCode = "dmp:cfgFileParse:paging",
             tableAlias = "cfp"
     )
     public ApiResult<PagingVO<CfgFileParseDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<CfgFileParseDTO.PagingParamDTO> dto) {
@@ -123,7 +123,7 @@ public class CfgFileParseController extends BaseController {
     @LogViewService
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "tms:cfgFileParse:view",
+            menuCode = "dmp:cfgFileParse:view",
             serviceClass = CfgFileParseService.class,
             keyIdName = "id")
     public ApiResult<CfgFileParseDTO.ViewDTO> view(@RequestParam("id") String id) {
@@ -140,7 +140,7 @@ public class CfgFileParseController extends BaseController {
     @WebAdvanceQuery(handler = CfgFileParseQueryHandler.class)
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "tms:cfgFileParse:export",
+            menuCode = "dmp:cfgFileParse:export",
             tableAlias = "cfp"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "月结文件解析配置导出")
@@ -158,7 +158,7 @@ public class CfgFileParseController extends BaseController {
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "tms:cfgFileParse:delete",
+            menuCode = "dmp:cfgFileParse:delete",
             serviceClass = CfgFileParseService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.DELETE, desc = "月结文件解析配置批量删除")
@@ -195,7 +195,7 @@ public class CfgFileParseController extends BaseController {
     @PostMapping("/updateDisabled")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "tms:cfgFileParse:updateDisabled",
+            menuCode = "dmp:cfgFileParse:updateDisabled",
             serviceClass = CfgFileParseService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.UPDATE, desc = "月结文件解析配置批量更新启用状态")

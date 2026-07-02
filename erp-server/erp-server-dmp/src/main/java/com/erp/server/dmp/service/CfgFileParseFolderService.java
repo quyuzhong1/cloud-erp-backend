@@ -1,8 +1,8 @@
-package com.erp.server.tms.service;
-import com.erp.model.tms.entity.CfgFileParseFolderEntity;
+package com.erp.server.dmp.service;
+import com.erp.model.dmp.entity.CfgFileParseFolderEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
-import com.erp.model.tms.dto.CfgFileParseFolderDTO;
+import com.erp.model.dmp.dto.CfgFileParseFolderDTO;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.ApproveDTO;
 import javax.servlet.http.HttpServletResponse;

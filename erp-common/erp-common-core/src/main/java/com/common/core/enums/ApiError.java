@@ -417,6 +417,15 @@ public enum ApiError implements Serializable {
     DMP_THIRD_WAREHOUSE_WAREHOUSE_OPERATION_VALUE_EMPTY(3515,"仓库操作类型或描述不能为空"),
     DMP_KINGDEE_SUBORDER_NOT_ALLOW_DISAPPROVE(3516,"请操作金蝶反审核至待提交后执行反审核"),
     DMP_KINGDEE_SUBCONTRACT_BOM_PARENT_MATCH_AMBIGUOUS(3517,"委外用料清单变更单{0}按分录行号无法唯一匹配父行，候选父行数={1}"),
+    CFG_FILE_PARSE_NOT_MONTHLY(3517,"清洗时间仅支持每月"),
+    CFG_FILE_PARSE_FOLDER_REQUIRED(3518,"配置文件夹不能为空"),
+    CFG_FILE_PARSE_FILE_REQUIRED(3519,"文件清洗规则不能为空"),
+    CFG_FILE_PARSE_DUPLICATE(3520,"清洗仓库【{0}】清洗时间【{1}】已存在配置"),
+    CFG_FILE_PARSE_DOWNSTREAM_EXISTS(3521,"配置【{0}】已存在下游清洗或解析任务，不允许删除"),
+    CFG_FILE_PARSE_TEMPLATE_NOT_FOUND(3522,"月结文件解析配置模板不存在"),
+    CFG_FILE_PARSE_EXPORT_TASK_CREATE_FAILED(3523,"月结文件解析配置导出任务创建失败"),
+    CFG_FILE_PARSE_FILE_RULE_INVALID(3524,"第{0}行文件清洗规则不合法：{1}"),
+    CFG_FILE_PARSE_FOLDER_RULE_INVALID(3525,"第{0}行配置文件夹不合法：{1}"),
 
     /**
      * 工作流错误 workflow 4000 - 4500
@@ -1987,15 +1996,7 @@ public enum ApiError implements Serializable {
     LOGISTICS_RECON_BILL_REVERT_NO_ELIGIBLE(13676,"没有可回退为待确认的已确认数据"),
     LOGISTICS_RECON_BILL_REVERT_COST_STATUS_FORBIDDEN(13677,"存在已确认关联数据，但物流费用核算状态非待生成或支付状态非未支付（待付款/待退款），无法回退为待确认"),
     ASYNC_TASK_DETAIL_TIMEOUT(13648,"明细执行超时，系统自动标记失败"),
-    CFG_FILE_PARSE_NOT_MONTHLY(13649,"清洗时间仅支持每月"),
-    CFG_FILE_PARSE_FOLDER_REQUIRED(13651,"配置文件夹不能为空"),
-    CFG_FILE_PARSE_FILE_REQUIRED(13652,"文件清洗规则不能为空"),
-    CFG_FILE_PARSE_DUPLICATE(13653,"清洗仓库【{0}】清洗时间【{1}】已存在配置"),
-    CFG_FILE_PARSE_DOWNSTREAM_EXISTS(13654,"配置【{0}】已存在下游清洗或解析任务，不允许删除"),
-    CFG_FILE_PARSE_TEMPLATE_NOT_FOUND(13655,"月结文件解析配置模板不存在"),
-    CFG_FILE_PARSE_EXPORT_TASK_CREATE_FAILED(13656,"月结文件解析配置导出任务创建失败"),
-    CFG_FILE_PARSE_FILE_RULE_INVALID(13657,"第{0}行文件清洗规则不合法：{1}"),
-    CFG_FILE_PARSE_FOLDER_RULE_INVALID(13658,"第{0}行配置文件夹不合法：{1}"),
+
     /**
      * 财务管理 错误 信息 14000-14500
      */

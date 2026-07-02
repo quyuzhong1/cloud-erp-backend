@@ -1,4 +1,4 @@
-package com.erp.server.tms.service.impl;
+package com.erp.server.dmp.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
@@ -22,26 +22,26 @@ import com.erp.model.dmp.entity.DmpBasicSystemEntity;
 import com.erp.model.dmp.entity.ThirdWarehouseEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.tms.dto.CfgFileParseDTO;
-import com.erp.model.tms.dto.CfgFileParseFileDTO;
-import com.erp.model.tms.dto.CfgFileParseFolderDTO;
-import com.erp.model.tms.entity.CfgFileParseEntity;
-import com.erp.model.tms.entity.CfgFileParseFileEntity;
-import com.erp.model.tms.entity.CfgFileParseFolderEntity;
-import com.erp.model.tms.enums.CfgFileParseFileTypeEnum;
-import com.erp.model.tms.enums.CfgFileParseFolderAccountTypeEnum;
-import com.erp.model.tms.enums.CfgFileParseFolderTypeEnum;
-import com.erp.model.tms.enums.CfgFileParsePeriodTypeEnum;
+import com.erp.model.dmp.dto.CfgFileParseDTO;
+import com.erp.model.dmp.dto.CfgFileParseFileDTO;
+import com.erp.model.dmp.dto.CfgFileParseFolderDTO;
+import com.erp.model.dmp.entity.CfgFileParseEntity;
+import com.erp.model.dmp.entity.CfgFileParseFileEntity;
+import com.erp.model.dmp.entity.CfgFileParseFolderEntity;
+import com.erp.model.dmp.enums.CfgFileParseFileTypeEnum;
+import com.erp.model.dmp.enums.CfgFileParseFolderAccountTypeEnum;
+import com.erp.model.dmp.enums.CfgFileParseFolderTypeEnum;
+import com.erp.model.dmp.enums.CfgFileParsePeriodTypeEnum;
 import com.erp.rpc.dmp.feign.DmpBasicSystemFeign;
-import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
-import com.erp.server.tms.mapper.CfgFileParseMapper;
-import com.erp.server.tms.service.CommonService;
-import com.erp.server.tms.service.CfgFileParseFileService;
-import com.erp.server.tms.service.CfgFileParseFolderService;
-import com.erp.server.tms.service.CfgFileParseService;
-import com.erp.server.tms.service.OperateLogService;
+import com.erp.server.dmp.mapper.CfgFileParseMapper;
+import com.erp.server.dmp.service.CommonService;
+import com.erp.server.dmp.service.CfgFileParseFileService;
+import com.erp.server.dmp.service.CfgFileParseFolderService;
+import com.erp.server.dmp.service.CfgFileParseService;
+import com.erp.server.dmp.service.OperateLogService;
+import com.erp.server.dmp.service.ThirdWarehouseService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -75,11 +75,11 @@ public class CfgFileParseServiceImpl extends SuperServiceImpl<CfgFileParseMapper
     @Resource
     private ShopInfoFeign shopInfoFeign;
     @Resource
-    private DmpThirdMappingFeign dmpThirdMappingFeign;
-    @Resource
     private DmpBasicSystemFeign dmpBasicSystemFeign;
     @Resource
     private CommonService commonService;
+    @Resource
+    private ThirdWarehouseService thirdWarehouseService;
 
     /**
      * 新增月结文件解析配置。
@@ -179,7 +179,7 @@ public class CfgFileParseServiceImpl extends SuperServiceImpl<CfgFileParseMapper
     @Override
     public Boolean exportList(CfgFileParseDTO.ExportDTO dto) {
         try {
-            downloadTaskFeign.saveDownloadTask("月结文件解析配置导出", FileTaskEventEnum.EXPORT_TMS_CFG_FILE_PARSE.getCode(), dto);
+            downloadTaskFeign.saveDownloadTask("月结文件解析配置导出", FileTaskEventEnum.EXPORT_DMP_CFG_FILE_PARSE.getCode(), dto);
             return Boolean.TRUE;
         } catch (Exception e) {
             log.error("创建月结文件解析配置导出任务失败", e);
@@ -425,7 +425,7 @@ public class CfgFileParseServiceImpl extends SuperServiceImpl<CfgFileParseMapper
         if (CollUtil.isEmpty(thirdWarehouseIds)) {
             return Collections.emptyMap();
         }
-        List<ThirdWarehouseEntity> thirdWarehouseList = dmpThirdMappingFeign.listThirdWarehouseByIds(thirdWarehouseIds);
+        List<ThirdWarehouseEntity> thirdWarehouseList = thirdWarehouseService.listByIds(thirdWarehouseIds);
         if (CollUtil.isEmpty(thirdWarehouseList)) {
             return Collections.emptyMap();
         }

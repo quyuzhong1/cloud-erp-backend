@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.erp.server.tms.mapper.CfgFileParseMapper">
+<mapper namespace="com.erp.server.dmp.mapper.CfgFileParseMapper">
 
-    <resultMap id="BaseResultMap" type="com.erp.model.tms.entity.CfgFileParseEntity">
+    <resultMap id="BaseResultMap" type="com.erp.model.dmp.entity.CfgFileParseEntity">
         <result column="id" property="id"/>
         <result column="create_user_id" property="createUserId"/>
         <result column="create_user_name" property="createUserName"/>
@@ -42,7 +42,7 @@
         remark
     </sql>
 
-    <select id="paging" resultType="com.erp.model.tms.dto.CfgFileParseDTO$ListDTO">
+    <select id="paging" resultType="com.erp.model.dmp.dto.CfgFileParseDTO$ListDTO">
         SELECT
         cfp.id,
         cfp.code,
@@ -81,7 +81,7 @@
         cff.sort ASC
     </select>
 
-    <select id="exportPaging" resultType="com.erp.model.tms.dto.CfgFileParseDTO$ListDTO">
+    <select id="exportPaging" resultType="com.erp.model.dmp.dto.CfgFileParseDTO$ListDTO">
         SELECT
         cfp.id,
         cfp.code,
@@ -135,7 +135,7 @@
         GROUP BY CASE WHEN disabled THEN 'disabled' ELSE 'enabled' END
     </select>
 
-    <select id="tabList" resultType="com.erp.model.tms.dto.CfgFileParseDTO$TabListDTO">
+    <select id="tabList" resultType="com.erp.model.dmp.dto.CfgFileParseDTO$TabListDTO">
         SELECT
         CASE WHEN cfp.disabled THEN 'disabled' ELSE 'enabled' END AS tabFlag,
         CASE WHEN cfp.disabled THEN '停用' ELSE '启用' END AS tabFlagName,

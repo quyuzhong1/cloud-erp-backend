@@ -1,4 +1,4 @@
-package com.erp.server.tms.service;
+package com.erp.server.dmp.service;
 
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -6,8 +6,8 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.erp.model.tms.dto.CfgFileParseDTO;
-import com.erp.model.tms.entity.CfgFileParseEntity;
+import com.erp.model.dmp.dto.CfgFileParseDTO;
+import com.erp.model.dmp.entity.CfgFileParseEntity;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;

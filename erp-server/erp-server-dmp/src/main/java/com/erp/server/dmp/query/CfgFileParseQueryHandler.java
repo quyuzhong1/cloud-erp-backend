@@ -1,4 +1,4 @@
-package com.erp.server.tms.query;
+package com.erp.server.dmp.query;
 
 import com.common.business.enums.QueryDataTypeEnum;
 import com.common.business.query.AbstractQueryHandler;
