@@ -108,6 +108,10 @@ public class CfgFileParseDTO implements Serializable {
          */
         private String folderType;
         /**
+         * 明细id
+         */
+        private String detailId;
+        /**
          * 文件夹类型名称。
          */
         private String folderTypeName;

@@ -51,6 +51,7 @@
         cfp.dict_platform AS dictPlatform,
         cfp.dict_platform_name AS dictPlatformName,
         cfp.folder_type AS folderType,
+        cff.id AS detailId,
         cff.business_type AS businessType,
         cff.type AS type,
         cff.file_keyword AS fileKeyword,
