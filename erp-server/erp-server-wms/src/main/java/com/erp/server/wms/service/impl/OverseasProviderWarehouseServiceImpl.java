@@ -3,6 +3,8 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -40,6 +42,7 @@ import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.server.wms.convert.OverseasWarehouseConverter;
 import com.erp.server.wms.mapper.OverseasProviderWarehouseMapper;
 import com.erp.server.wms.service.*;
@@ -442,6 +445,80 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
         return lambdaQuery()
                 .eq(OverseasProviderWarehouseEntity::getMainId, mainId)
                 .list();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public int[] syncFromWego(String mainId, JSONArray wegoWarehouseList) {
+        if (CharSequenceUtil.isBlank(mainId)) {
+            return new int[]{0, 0, 0};
+        }
+        JSONArray apiList = Objects.isNull(wegoWarehouseList) ? new JSONArray() : wegoWarehouseList;
+
+        List<OverseasProviderWarehouseEntity> existingList = lambdaQuery()
+                .eq(OverseasProviderWarehouseEntity::getMainId, mainId)
+                .list();
+        Set<String> existingCodeSet = existingList.stream()
+                .map(OverseasProviderWarehouseEntity::getPlatformWarehouseCode)
+                .filter(CharSequenceUtil::isNotBlank)
+                .collect(Collectors.toSet());
+
+        Set<String> apiWarehouseCodes = new HashSet<>();
+        List<OverseasProviderWarehouseEntity> toInsert = new ArrayList<>();
+        for (int i = 0; i < apiList.size(); i++) {
+            JSONObject wh = apiList.getJSONObject(i);
+            if (Objects.isNull(wh)) {
+                continue;
+            }
+            String warehouseCode = wh.getString("warehouseCode");
+            if (CharSequenceUtil.isBlank(warehouseCode)) {
+                log.warn("[WEGO仓库同步] mainId={} 跳过 warehouseCode 为空的记录: {}", mainId, wh);
+                continue;
+            }
+            apiWarehouseCodes.add(warehouseCode);
+            // DB 已存在的记录不做任何处理，仅参与后续过期判定
+            if (existingCodeSet.contains(warehouseCode)) {
+                continue;
+            }
+            AmazonMarketplaceEnum marketPlaceEnum = AmazonMarketplaceEnum.getByCountryCode(wh.getString("warehouseRegion"));
+            OverseasProviderWarehouseEntity insert = new OverseasProviderWarehouseEntity();
+            insert.setMainId(mainId);
+            insert.setPlatformWarehouseCode(warehouseCode);
+            insert.setPlatformWarehouseName(wh.getString("warehouseName"));
+            insert.setCountry(wh.getString("warehouseRegion"));
+            insert.setCountryName(marketPlaceEnum.getName());
+            insert.setDisabled(Boolean.TRUE);
+            toInsert.add(insert);
+        }
+
+        // 处理「DB有、API无」的过期记录：warehouse_id 为空软删，否则禁用
+        List<String> toDeleteIds = new ArrayList<>();
+        List<OverseasProviderWarehouseEntity> toDisable = new ArrayList<>();
+        for (OverseasProviderWarehouseEntity exist : existingList) {
+            String code = exist.getWarehouseCode();
+            if (CharSequenceUtil.isBlank(code) || apiWarehouseCodes.contains(code)) {
+                continue;
+            }
+            if (CharSequenceUtil.isBlank(exist.getWarehouseId())) {
+                toDeleteIds.add(exist.getId());
+            } else if (!Boolean.TRUE.equals(exist.getDisabled())) {
+                OverseasProviderWarehouseEntity update = new OverseasProviderWarehouseEntity();
+                update.setId(exist.getId());
+                update.setDisabled(Boolean.TRUE);
+                toDisable.add(update);
+            }
+        }
+
+        if (CollUtil.isNotEmpty(toInsert)) {
+            this.saveBatch(toInsert);
+        }
+        if (CollUtil.isNotEmpty(toDeleteIds)) {
+            this.removeByIds(toDeleteIds);
+        }
+        if (CollUtil.isNotEmpty(toDisable)) {
+            this.updateBatchById(toDisable);
+        }
+        return new int[]{toInsert.size(), toDeleteIds.size(), toDisable.size()};
     }
 
     private List<String> getShopIdBySite(String site) {

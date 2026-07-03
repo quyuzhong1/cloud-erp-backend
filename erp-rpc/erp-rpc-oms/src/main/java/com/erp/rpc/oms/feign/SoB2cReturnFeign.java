@@ -5,8 +5,10 @@ import com.erp.model.oms.dto.SoB2cReturnDetailDTO;
 import com.erp.model.oms.entity.SoB2cReturnDetailEntity;
 import com.erp.model.oms.entity.SoB2cReturnEntity;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -62,4 +64,11 @@ public interface SoB2cReturnFeign {
 
     @PostMapping("feign/soB2cReturn/updateBatch")
     void updateBatch(@RequestBody List<SoB2cReturnEntity> list);
+
+    /**
+     * WEGO 退货入库：用参考单号一次命中 so_b2c_return，
+     * 按 code / platform_return_no / platform_order_no / so_code OR 匹配，返回优先级最高的首条记录。
+     */
+    @GetMapping("feign/soB2cReturn/findFirstByReferenceNo")
+    SoB2cReturnEntity findFirstByReferenceNo(@RequestParam("referenceNo") String referenceNo);
 }

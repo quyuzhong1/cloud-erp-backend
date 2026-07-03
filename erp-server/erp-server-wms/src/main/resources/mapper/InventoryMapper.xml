@@ -119,7 +119,8 @@
             SUM(CASE WHEN it.dict_inventory_status = 'frozen' THEN it.qty ELSE 0 END) AS frozenQty,
             SUM(CASE WHEN it.dict_inventory_status = 'inTransit' THEN it.qty ELSE 0 END) AS intransitQty,
             SUM(CASE WHEN it.dict_inventory_status = 'waitQc' THEN it.qty ELSE 0 END) AS waitqcQty,
-            SUM(CASE WHEN it.dict_inventory_status IN ('usable', 'frozen') THEN it.qty ELSE 0 END) AS realQty
+            SUM(CASE WHEN it.dict_inventory_status = 'defectiveProduct' THEN it.qty ELSE 0 END) AS defectiveProductQty,
+            SUM(CASE WHEN it.dict_inventory_status IN ('usable', 'frozen', 'defectiveProduct') THEN it.qty ELSE 0 END) AS realQty
         FROM inventory it
         LEFT JOIN product_detail pd ON pd.id = it.sku_id AND pd.is_deleted = FALSE
         LEFT JOIN product_info pi ON pd.product_id = pi.id AND pi.is_deleted = FALSE
@@ -872,7 +873,8 @@
             ppu.second_supplier AS secondSupplier,
             SUM(CASE WHEN it.dict_inventory_status = 'usable' THEN it.qty ELSE 0 END) AS usableQty,
             SUM(CASE WHEN it.dict_inventory_status = 'frozen' THEN it.qty ELSE 0 END) AS frozenQty,
-            SUM(CASE WHEN it.dict_inventory_status IN ('usable', 'frozen') THEN it.qty ELSE 0 END) AS realQty,
+            SUM(CASE WHEN it.dict_inventory_status = 'defectiveProduct' THEN it.qty ELSE 0 END) AS defectiveProductQty,
+            SUM(CASE WHEN it.dict_inventory_status IN ('usable', 'frozen', 'defectiveProduct') THEN it.qty ELSE 0 END) AS realQty,
             wl.area_code AS warehouseArea
         FROM inventory it
         LEFT JOIN product_detail pd ON pd.id = it.sku_id AND pd.is_deleted = FALSE
@@ -963,7 +965,8 @@
         ppu.second_supplier AS secondSupplier,
             SUM(CASE WHEN it.dict_inventory_status = 'usable' THEN it.qty ELSE 0 END) AS usableQty,
             SUM(CASE WHEN it.dict_inventory_status = 'frozen' THEN it.qty ELSE 0 END) AS frozenQty,
-            SUM(CASE WHEN it.dict_inventory_status IN ('usable', 'frozen') THEN it.qty ELSE 0 END) AS realQty,
+            SUM(CASE WHEN it.dict_inventory_status = 'defectiveProduct' THEN it.qty ELSE 0 END) AS defectiveProductQty,
+            SUM(CASE WHEN it.dict_inventory_status IN ('usable', 'frozen', 'defectiveProduct') THEN it.qty ELSE 0 END) AS realQty,
             it.warehouse_location AS warehouseLocation
         FROM inventory it
         LEFT JOIN product_detail pd ON pd.id = it.sku_id AND pd.is_deleted = FALSE

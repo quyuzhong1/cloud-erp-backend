@@ -497,6 +497,16 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         OverseasProviderWarehouseEntity toEntity = overseasProviderWarehouseService.getByWarehouseId(deliveryEntity.getDestWarehouseId());
 
         // 校验参数
+        if (OmsPlatformEnum.WE_GO.getCode().equalsIgnoreCase(dictPlatform)) {
+            // WEGO 平台目的仓只支持「自发头程」入库类型
+            if (!OverseasInstockTypeEnum.SELF_HEADWAY.equals(commonDTO.getInstockType())) {
+                throw new ServiceException("目的仓平台授权为WEGO时，入库类型只能为【自发头程】");
+            }
+            // WEGO入库单需提供物流跟踪号
+            if (CharSequenceUtil.isBlank(commonDTO.getTrackingNo())) {
+                throw new ServiceException("WEGO入库单需提供物流跟踪号");
+            }
+        }
         // 入库类型=自发头程
         if (OverseasInstockTypeEnum.SELF_HEADWAY.equals(commonDTO.getInstockType())) {
             if (null == commonDTO.getLogisticsMethod()) {
@@ -1273,11 +1283,25 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 .filter(v -> StringUtil.isNotBlank(v.getFlowId()))
                 .map(v -> v.getFlowId() + v.getCreateUserId())
                 .collect(Collectors.toSet());
+        // WEGO：DMP 层 thirdId 全局唯一，多次部分签收会推全量 instocks，必须按 flow_id 强幂等
+        Set<String> wegoFlowIdSet = receivedEntityList.stream()
+                .filter(v -> StringUtil.isNotBlank(v.getFlowId()))
+                .map(OverseasWarehouseInboundReceivedEntity::getFlowId)
+                .collect(Collectors.toCollection(HashSet::new));
         //有签收记录直接保存，没有签收记录判断签收数量与数据库是否一致，不一致的话用签收数量-数据库签收数量
         if (dto.getHasReceivedData() && CollectionUtils.isNotEmpty(dto.getReceivingDataList())) {
             //判断是否存在，通过明细id+数量+时间
             for (PlatformInboundDTO.Receiving receiving : dto.getReceivingDataList()) {
                 OverseasWarehouseInboundDetailEntity detailEntity = detailEntityMap.get(receiving.getProductSku());
+                // 平台回写的签收 sku 在本地入库明细中找不到时（如 wego 海外仓收到计划外不良品），
+                // 单独跳过本条流水并落 warn 日志，避免一条异常 NPE 把整批签收记录连同事务回滚掉。
+                if (detailEntity == null) {
+                    log.warn("[海外仓签收] 单号={} 平台={} 流水sku={} 在本地入库明细中找不到，已跳过该流水",
+                            StringUtil.isBlank(dto.getReceivingCode()) ? dto.getSourceCode() : dto.getReceivingCode(),
+                            dto.getPlatform(),
+                            receiving.getProductSku());
+                    continue;
+                }
                 String detailId = detailEntity.getId();
                 if (StringUtil.isBlank(detailId)) {
                     continue;
@@ -1298,6 +1322,22 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                     if (!receivedKeySet.add(key)) {
                         continue;
                     }
+                } else if (OmsPlatformEnum.WE_GO.getCode().equalsIgnoreCase(dto.getPlatform())) {
+                    // wego 在 WegoInboundRocketMQTaskHandler 为每条流水生成的 thirdId 为
+                    // inOrderDetailId_batch_createTime_sku，在仓库侧已经唯一定位一次上架操作。
+                    // 多次部分签收场景下 wego 每次会推全量 instocks 列表，必须按 flow_id 去重，
+                    // 否则同一条批次会被反复落 overseas_warehouse_inbound_received，导致调拨/状态计算重复触发。
+                    // 兜底：极端情况下 thirdId 缺失时降级到 (detailId,qty,time) 弱去重，避免完全丢数据。
+                    if (StringUtil.isNotBlank(receiving.getThirdId())) {
+                        if (!wegoFlowIdSet.add(receiving.getThirdId())) {
+                            continue;
+                        }
+                    } else {
+                        String key = detailId + receiving.getReceiveQty() + LocalDateTimeUtil.formatNormal(receiving.getReceiveTime());
+                        if (!receivedKeySet.add(key)) {
+                            continue;
+                        }
+                    }
                 } else {
                     String key = detailId + receiving.getReceiveQty() + LocalDateTimeUtil.formatNormal(receiving.getReceiveTime());
                     if (!receivedKeySet.add(key)) {
@@ -1315,6 +1355,12 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 receivedEntity.setSourceType(SignSourceTypeEnum.API.getCode());
                 receivedEntity.setFlowId(StringUtil.isBlank(receiving.getThirdId()) ? "" : receiving.getThirdId());
                 receivedEntity.setCreateUserId(dto.getAuthId());
+                // WEGO 等平台会回传签收人 / 不良品标记；其他平台默认为空，保持原行为
+                if (StringUtil.isNotBlank(receiving.getReceiveUser())) {
+                    receivedEntity.setReceiveUser(receiving.getReceiveUser());
+                }
+                receivedEntity.setDefectiveProductFlag(
+                        Boolean.TRUE.equals(receiving.getDefectiveProductFlag()));
                 insertReceiveEntityList.add(receivedEntity);
                 if (isDaMaiReceivedFlow) {
                     Integer thisSignQty = Optional.ofNullable(receiving.getReceiveQty()).orElse(0);

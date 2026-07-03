@@ -32,8 +32,10 @@ import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.TransferDeclareDetailEntity;
 import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
+import com.erp.model.wms.entity.ThirdWarehouseDeliveryEntity;
 import com.erp.model.wms.enums.ShipmentMarkTypeEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
+import com.erp.model.wms.enums.SoB2cWarehouseDeliveryStatusEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.oms.feign.SoMultiChannelFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
@@ -82,6 +84,9 @@ public class AsyncServiceImpl implements AsyncService {
 
     @Resource
     private OperateLogService operateLogService;
+
+    @Resource
+    private ThirdWarehouseDeliveryService thirdWarehouseDeliveryService;
 
     @Resource
     private SoOutstockService soOutstockService;
@@ -322,7 +327,8 @@ public class AsyncServiceImpl implements AsyncService {
      */
     @Override
     @Async("wmsErpExecutor")
-    public void asyncCancelThirdWarehouseOrder(SoB2cEntity mainEntity,String abnormalProblemReason) {
+    public void asyncCancelThirdWarehouseOrder(SoB2cEntity mainEntity, String abnormalProblemReason,
+                                                ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity) {
         if(mainEntity.getIsIntercept()){
             return;
         }
@@ -341,6 +347,12 @@ public class AsyncServiceImpl implements AsyncService {
                 mainEntity.setShippingOrderNo("");
                 soB2cFeign.updateStatus(mainEntity);
                 operateLogDTO.setContent("三方仓出库异常，三方仓出库单已自动取消,异常信息："+ abnormalProblemReason);
+                //拦截确认成功后才同步更新三方仓发货单状态，避免与异步拦截结果的时序不一致
+                if (Objects.nonNull(thirdWarehouseDeliveryEntity)) {
+                    thirdWarehouseDeliveryEntity.setStatus(SoB2cWarehouseDeliveryStatusEnum.CANCEL_DELIVERY.getStatus());
+                    thirdWarehouseDeliveryService.updateById(thirdWarehouseDeliveryEntity);
+                    operateLogService.addModuleOperateLog("状态变更为取消发货", ModuleTypeEnum.THIRD_WAREHOUSE_DELIVERY.getCode(), thirdWarehouseDeliveryEntity.getId(), "状态变更");
+                }
             }else{
                 operateLogDTO.setContent("三方仓出库异常，三方仓出库单自动取消失败,异常信息："+ abnormalProblemReason);
             }

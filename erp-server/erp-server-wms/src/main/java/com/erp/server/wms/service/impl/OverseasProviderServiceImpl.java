@@ -19,6 +19,7 @@ import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
@@ -188,10 +189,19 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
                 .anyMatch(v -> Objects.equals(v.getAuthJson(), dto.getAuthJson()))){
             throw new ServiceException("相同授权信息已授权，无法重复授权");
         }
-        ThirdWarehouseService thirdWarehouseService = thirdWarehouseRegistry.getHandlerByAuthId(dto.getId());
-        boolean result = thirdWarehouseService.authorize(dto);
-        if(result){
-            OverseasProviderEntity entity = this.getById(dto.getId());
+        boolean result;
+        OverseasProviderEntity entity = this.getById(dto.getId());
+        if (Objects.isNull(entity)) {
+            throw new ServiceException(ApiError.WH_OVERSEAS_PROVIDER_NOT_FOUND);
+        }
+        // WEGO的三方海外仓不需要调用授权接口
+        if (OmsPlatformEnum.WE_GO.getCode().equals(entity.getCode())) {
+            result = true;
+        } else {
+            ThirdWarehouseService thirdWarehouseService = thirdWarehouseRegistry.getHandlerByAuthId(dto.getId());
+            result = thirdWarehouseService.authorize(dto);
+        }
+        if (result) {
             entity.setId(dto.getId());
             entity.setAuthTime(LocalDateTime.now());
             entity.setAuthStatus(AuthStatusEnum.ALREADY.getCode());

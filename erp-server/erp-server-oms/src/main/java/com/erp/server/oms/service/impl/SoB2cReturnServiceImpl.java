@@ -869,4 +869,9 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
     private void handleData(SoB2cReturnEntity soB2cReturnEntity) {
     // TODO 验证数据 & 数据赋值
     }
+
+    @Override
+    public SoB2cReturnEntity findFirstByReferenceNo(String referenceNo) {
+        return baseMapper.findFirstByReferenceNo(referenceNo);
+    }
 }

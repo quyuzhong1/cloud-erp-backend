@@ -125,6 +125,14 @@ public interface SkuMappingMapper extends BaseMapper<SkuMappingEntity> {
     List<SkuMappingDTO.PagingViewDTO> listByAccountAndDictPlatform(@Param("params") ListingInfoDTO.QueryPlatformDTO params);
 
     List<SkuMappingDTO.ProductSkuInfoDTO> listSkuBySkuNos(@Param("params")SkuMappingDTO.SkuParamDTO params);
+
+    /**
+     * 统计各海外仓未匹配SKU数量
+     * @param dto 查询条件（warehouseId/shopId/dictPlatform 均可为空）
+     * @return 按仓库分组的未匹配数量列表
+     */
+    List<SkuMappingDTO.UnmatchCountDTO> countUnmatchedGroupByWarehouse(@Param("params") SkuMappingDTO.UnmatchQueryDTO dto);
+
     /**
      * b2b平台分页列表
      * @author will

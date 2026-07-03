@@ -1124,7 +1124,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                             && !OmsPlatformEnum.OMS_IML.getCode().equals(providerEntity.getCode())
                             && !OmsPlatformEnum.ZHONG_BAO.getCode().equals(providerEntity.getCode())
                             && !OmsPlatformEnum.JI_TU.getCode().equals(providerEntity.getCode())
-                            && !OmsPlatformEnum.TONG_YOU.getCode().equals(providerEntity.getCode())) {
+                            && !OmsPlatformEnum.TONG_YOU.getCode().equals(providerEntity.getCode())
+                            && !OmsPlatformEnum.WE_GO.getCode().equals(providerEntity.getCode())) {
                         // 推送第三方发货单审核通过
                         ApiResult<String> resultInfo = overseasWarehouseInboundService.pullThirdOverseasPlatform(providerEntity, inboundEntity, detailEntityList, OverseasVerifyEnum.PASS.getCode());
                         if (200 != resultInfo.getCode()) {

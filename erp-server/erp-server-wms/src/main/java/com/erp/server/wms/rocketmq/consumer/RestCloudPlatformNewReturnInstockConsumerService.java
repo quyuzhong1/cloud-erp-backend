@@ -37,6 +37,7 @@ import com.erp.model.oms.entity.SoB2cReturnDetailEntity;
 import com.erp.model.wms.dto.SoReturnPrestockDTO;
 import com.erp.model.wms.dto.SoReturnPrestockDetailDTO;
 import com.erp.model.wms.entity.*;
+import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.*;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -120,6 +121,7 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 
 	@Resource
 	private DmpTaskFeign dmpTaskFeign;
+
 
 	@Override
 	public String getBizName() {
