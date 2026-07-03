@@ -3206,25 +3206,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (CollUtil.isEmpty(deliveryDeclareDetailMidList)) {
             throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC,"报关明细关联信息");
         }
-
-        List<TmsDeclareBillDTO.SplitDeclareDTO> splitDeclareDTOList = new ArrayList<>();
-        Map<String, List<DeliveryDeclareDetailMidEntity>> map = deliveryDeclareDetailMidList.stream().collect(Collectors.groupingBy(obj -> obj.getSourceId().concat(obj.getBoxNo())));
-        for ( Map.Entry<String, List<DeliveryDeclareDetailMidEntity>> entry : map.entrySet()) {
-            TmsDeclareBillDTO.SplitDeclareDTO splitDeclareDTO = new TmsDeclareBillDTO.SplitDeclareDTO();
-            List<DeliveryDeclareDetailMidEntity> value = entry.getValue();
-            splitDeclareDTO.setId(id);
-            splitDeclareDTO.setBoxNo(value.get(0).getBoxNo());
-            splitDeclareDTO.setSourceId(value.get(0).getSourceId());
-            splitDeclareDTO.setSourceCode(value.get(0).getSourceCode());
-            splitDeclareDTO.setBusinessCode(value.stream().map(DeliveryDeclareDetailMidEntity::getBusinessCode).filter(StringUtils::isNotBlank).findFirst().orElse(""));
-            //sku信息描述格式：skuNo*qty,skuNo*qty
-            String skuDesc = value.stream().map(obj -> CharSequenceUtil.format("{}*{}", obj.getSkuNo(), obj.getQty())).collect(Collectors.joining(","));
-            splitDeclareDTO.setSkuDesc(skuDesc);
-            List<TmsDeclareBillDTO.SplitDetailDTO> splitDetailDTOList = value.stream().map(obj -> new TmsDeclareBillDTO.SplitDetailDTO(obj.getSkuId(), obj.getSkuNo(), obj.getQty())).collect(Collectors.toList());
-            splitDeclareDTO.setSkuDetailList(splitDetailDTOList);
-            splitDeclareDTOList.add(splitDeclareDTO);
-        }
-        return splitDeclareDTOList;
+        return buildSplitDeclareDTOList(id, deliveryDeclareDetailMidList);
     }
 
     @Override
@@ -5804,26 +5786,52 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (CollUtil.isEmpty(deliveryDeclareDetailMidList)) {
             throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC,"报关明细关联信息");
         }
+        return buildSplitDeclareDTOList(id, deliveryDeclareDetailMidList);
+    }
 
-
+    /**
+     * 构建拆分报关明细列表：按业务单号+箱号整箱分组（与拆分保存口径一致）。
+     */
+    private List<TmsDeclareBillDTO.SplitDeclareDTO> buildSplitDeclareDTOList(String id,
+                                                                             List<DeliveryDeclareDetailMidEntity> deliveryDeclareDetailMidList) {
         List<TmsDeclareBillDTO.SplitDeclareDTO> splitDeclareDTOList = new ArrayList<>();
-        Map<String, List<DeliveryDeclareDetailMidEntity>> map = deliveryDeclareDetailMidList.stream().collect(Collectors.groupingBy(obj -> obj.getSourceId().concat(obj.getBoxNo())));
-        for ( Map.Entry<String, List<DeliveryDeclareDetailMidEntity>> entry : map.entrySet()) {
+        Map<String, List<DeliveryDeclareDetailMidEntity>> map = deliveryDeclareDetailMidList.stream()
+                .filter(obj -> Objects.nonNull(obj) && StringUtils.isNotBlank(obj.getBoxNo()))
+                .collect(Collectors.groupingBy(this::buildMidDeclareBoxKey, LinkedHashMap::new, Collectors.toList()));
+        for (Map.Entry<String, List<DeliveryDeclareDetailMidEntity>> entry : map.entrySet()) {
             TmsDeclareBillDTO.SplitDeclareDTO splitDeclareDTO = new TmsDeclareBillDTO.SplitDeclareDTO();
             List<DeliveryDeclareDetailMidEntity> value = entry.getValue();
+            DeliveryDeclareDetailMidEntity first = value.get(0);
             splitDeclareDTO.setId(id);
-            splitDeclareDTO.setBoxNo(value.get(0).getBoxNo());
-            splitDeclareDTO.setSourceId(value.get(0).getSourceId());
-            splitDeclareDTO.setSourceCode(value.get(0).getSourceCode());
-            splitDeclareDTO.setBusinessCode(value.stream().map(DeliveryDeclareDetailMidEntity::getBusinessCode).filter(StringUtils::isNotBlank).findFirst().orElse(""));
-            //sku信息描述格式：skuNo*qty,skuNo*qty
-            String skuDesc = value.stream().map(obj -> CharSequenceUtil.format("{}*{}", obj.getSkuNo(), obj.getQty())).collect(Collectors.joining(","));
+            splitDeclareDTO.setBoxNo(first.getBoxNo());
+            splitDeclareDTO.setSourceId(first.getSourceId());
+            splitDeclareDTO.setSourceCode(value.stream()
+                    .map(DeliveryDeclareDetailMidEntity::getSourceCode)
+                    .filter(StringUtils::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.joining(",")));
+            splitDeclareDTO.setBusinessCode(resolveBusinessCodeForBoxKey(first.getBusinessCode(), first.getSourceId(), first.getBusinessId()));
+            // sku信息描述格式：skuNo*qty,skuNo*qty
+            String skuDesc = value.stream()
+                    .map(obj -> CharSequenceUtil.format("{}*{}", obj.getSkuNo(), obj.getQty()))
+                    .collect(Collectors.joining(","));
             splitDeclareDTO.setSkuDesc(skuDesc);
-            List<TmsDeclareBillDTO.SplitDetailDTO> splitDetailDTOList = value.stream().map(obj -> new TmsDeclareBillDTO.SplitDetailDTO(obj.getSkuId(), obj.getSkuNo(), obj.getQty())).collect(Collectors.toList());
+            List<TmsDeclareBillDTO.SplitDetailDTO> splitDetailDTOList = value.stream()
+                    .map(obj -> new TmsDeclareBillDTO.SplitDetailDTO(obj.getSkuId(), obj.getSkuNo(), obj.getQty()))
+                    .collect(Collectors.toList());
             splitDeclareDTO.setSkuDetailList(splitDetailDTOList);
             splitDeclareDTOList.add(splitDeclareDTO);
         }
         return splitDeclareDTOList;
+    }
+
+    private String buildMidDeclareBoxKey(DeliveryDeclareDetailMidEntity mid) {
+        if (Objects.isNull(mid)) {
+            return "";
+        }
+        return buildBusinessBoxKey(
+                resolveBusinessCodeForBoxKey(mid.getBusinessCode(), mid.getSourceId(), mid.getBusinessId()),
+                mid.getBoxNo());
     }
 
 
