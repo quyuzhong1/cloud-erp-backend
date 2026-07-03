@@ -2134,6 +2134,14 @@ public class TmsDeclareBillDTO implements Serializable {
         /**
          *  bom版本
          */
+        private String bomId;
+        /**
+         *  bom版本
+         */
+        private String bomHistoryId;
+        /**
+         *  bom版本
+         */
         private String bomVersion;
 
         /**

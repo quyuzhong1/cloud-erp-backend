@@ -1229,6 +1229,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         List<TmsDeclareBillDTO.MergeDeclareBillDTO> mergeList = tmsDeclareBillFeign.autoMergeDeclareBillView(
                 new TmsDeclareBillDTO.AutoMergeDeclareBillViewDTO(dto.getIsMultipleMerge(), list));
         fillB2bPreviewBusinessType(mergeList);
+        // 合并预览的单价/币别由 TMS 填充，境外收货人=客户时可能未取到销售订单价；
+        // 这里用与不合并路径一致的 WMS 本地口径（客户取 SO 含税单价/币别）纠正，保证两条路径一致。
+        reapplyB2bPreviewSoPriceCurrency(mergeList);
         return mergeList;
     }
 
@@ -1476,6 +1479,93 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 .mergeRemark("")
                 .sourceDeliveryDetailList(detailGroup)
                 .build();
+    }
+
+    /**
+     * 合并预览单价/币别纠正：合并路径由 TMS autoMergeDeclareBillView 填充单价/币别，
+     * 境外收货人=客户时可能未取到销售订单价（sixDimensionMerge 判定或 SO 命中差异导致回退到物流产品价）。
+     * 这里按来源单收货人类型，用与不合并路径 fillB2bMinDeclareInfo 完全一致的口径：
+     * 客户 → 取 SO 含税单价/币别（BOM 拆分子 SKU 通过 resolveSoDetailSkuId 回退父 SKU），核算公司 → 保留 TMS 填充的物流产品价。
+     * 覆盖「合并前」来源明细后，同步纠正「合并后」明细行，保证两者一致。
+     */
+    private void reapplyB2bPreviewSoPriceCurrency(List<TmsDeclareBillDTO.MergeDeclareBillDTO> mergeList) {
+        if (CollUtil.isEmpty(mergeList)) {
+            return;
+        }
+        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> allSourceList = mergeList.stream()
+                .filter(Objects::nonNull)
+                .filter(bill -> CollUtil.isNotEmpty(bill.getDeclareBillList()))
+                .flatMap(bill -> bill.getDeclareBillList().stream())
+                .filter(Objects::nonNull)
+                .filter(detail -> CollUtil.isNotEmpty(detail.getSourceDeliveryDetailList()))
+                .flatMap(detail -> detail.getSourceDeliveryDetailList().stream())
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(allSourceList)) {
+            return;
+        }
+        Map<String, Boolean> customerReceiverBySource = resolveCustomerReceiverBySource(allSourceList);
+        if (customerReceiverBySource.values().stream().noneMatch(Boolean.TRUE::equals)) {
+            // 全部为核算公司：物流产品价由 TMS 填充即为正确口径，无需覆盖。
+            return;
+        }
+        Map<String, SoDetailEntity> soDetailMap = loadSoDetailMapForB2bMinDeclare(allSourceList);
+        if (CollUtil.isEmpty(soDetailMap)) {
+            return;
+        }
+        List<DictCurrencyEntity> dictCurrencyList = sysUserFeign.currencyList();
+        Map<String, String> currencyMap = CollUtil.isEmpty(dictCurrencyList)
+                ? new HashMap<>()
+                : dictCurrencyList.stream().collect(Collectors.toMap(DictCurrencyEntity::getId, DictCurrencyEntity::getName, (a, b) -> a));
+
+        for (TmsDeclareBillDTO.MergeDeclareBillDTO bill : mergeList) {
+            if (Objects.isNull(bill) || CollUtil.isEmpty(bill.getDeclareBillList())) {
+                continue;
+            }
+            for (TmsDeclareBillDTO.MergeDeclareBillDetailDTO detail : bill.getDeclareBillList()) {
+                if (Objects.isNull(detail) || CollUtil.isEmpty(detail.getSourceDeliveryDetailList())) {
+                    continue;
+                }
+                boolean lineChanged = false;
+                for (TmsDeclareBillDTO.SourceDeliveryDetailDTO source : detail.getSourceDeliveryDetailList()) {
+                    if (Objects.isNull(source)
+                            || !Boolean.TRUE.equals(customerReceiverBySource.get(resolveB2bSourceGroupKey(source)))) {
+                        continue;
+                    }
+                    SoDetailEntity soDetailEntity = soDetailMap.get(buildSoDetailKey(source.getBusinessId(), source.resolveSoDetailSkuId()));
+                    if (Objects.isNull(soDetailEntity)) {
+                        continue;
+                    }
+                    source.setUnitPrice(MathUtil.preferNonNull(soDetailEntity.getTaxPrice(), soDetailEntity.getPrice()));
+                    source.setDeclareCurrency(soDetailEntity.getCurrency());
+                    source.setDeclareCurrencySymbol(soDetailEntity.getCurrencySymbol());
+                    source.setDeclareCurrencyName(currencyMap.get(soDetailEntity.getCurrency()));
+                    lineChanged = true;
+                }
+                if (lineChanged) {
+                    syncB2bMergeLinePriceCurrency(detail);
+                }
+            }
+        }
+    }
+
+    /**
+     * 用「合并前」来源明细(已纠正)同步「合并后」明细行的单价/币别/总价，口径与 buildB2bMinMergeDeclareBillDetail 一致
+     * (单价/币别取合并集合第一条，总价按各来源单价×数量累加)。
+     */
+    private void syncB2bMergeLinePriceCurrency(TmsDeclareBillDTO.MergeDeclareBillDetailDTO detail) {
+        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> group = detail.getSourceDeliveryDetailList();
+        TmsDeclareBillDTO.SourceDeliveryDetailDTO first = group.get(0);
+        detail.setUnitPrice(first.getUnitPrice());
+        detail.setDeclareCurrency(first.getDeclareCurrency());
+        detail.setDeclareCurrencyName(first.getDeclareCurrencyName());
+        detail.setDeclareCurrencySymbol(first.getDeclareCurrencySymbol());
+        BigDecimal totalAmount = group.stream()
+                .filter(Objects::nonNull)
+                .map(item -> MathUtil.multiplyWithFour(item.getUnitPrice(),
+                        BigDecimal.valueOf(item.getQty() == null ? 0 : item.getQty())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        detail.setTotalAmount(totalAmount);
     }
 
     @Override

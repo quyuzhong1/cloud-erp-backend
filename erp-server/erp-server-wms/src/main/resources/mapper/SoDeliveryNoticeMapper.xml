@@ -830,7 +830,7 @@
         AND wc.packing_task_id IN (SELECT id FROM target_packing_task)
         GROUP BY wc.packing_task_id, wc.box_no, wcd.sku_id, wcd.sku_no, COALESCE(wcd.fn_sku, '')
         ),
-        has_bom AS NOT MATERIALIZED (
+        has_bom AS MATERIALIZED (
         SELECT
             fpbi.id AS bom_id,
             fpbh.id AS bom_history_id,
@@ -849,6 +849,15 @@
         AND fpbh.is_deleted = false
         WHERE fpbi.is_deleted = false
         AND fpbs.is_deleted = false and fpbi.state = 4
+        AND EXISTS (SELECT 1 FROM carton_detail cd WHERE cd.sku_id = fpbs.parent_sku_id)
+        ),
+        fpl_cache AS MATERIALIZED (
+        -- foreign_product_logistics 是 FDW 外部表，原按行远程扫描；
+        -- 这里一次性批量取回本次父件的申报类型（仅 split 判定用），改为本地 join。
+        SELECT fpl.sku_id, fpl.combination_declare_type
+        FROM foreign_product_logistics fpl
+        WHERE fpl.is_deleted = false
+        AND fpl.sku_id IN (SELECT sku_id FROM carton_detail)
         )
         -- 分支1：不需要拆分的明细（无BOM 或 combination_declare_type = 'combine'）
         SELECT
@@ -893,9 +902,8 @@
                 SELECT 1 FROM has_bom hb WHERE hb.parent_sku_id = cd.sku_id
             )
             OR NOT EXISTS (
-                SELECT 1 FROM foreign_product_logistics fpl_parent
+                SELECT 1 FROM fpl_cache fpl_parent
                 WHERE fpl_parent.sku_id = cd.sku_id
-                AND fpl_parent.is_deleted = false
                 AND fpl_parent.combination_declare_type = 'split'
             )
         )
@@ -931,9 +939,8 @@
         ON cd.packing_task_id = pt.id
         INNER JOIN has_bom hb
         ON hb.parent_sku_id = cd.sku_id
-        INNER JOIN foreign_product_logistics fpl_parent
+        INNER JOIN fpl_cache fpl_parent
         ON fpl_parent.sku_id = cd.sku_id
-        AND fpl_parent.is_deleted = false
         AND fpl_parent.combination_declare_type = 'split'   -- 仅父件为拆分类型才展开子件
         LEFT JOIN customer_info ci
         ON ci.id = sdn.customer_id
