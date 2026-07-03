@@ -47,6 +47,7 @@ import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.server.wms.service.*;
+import com.sdk.wms.wego.enums.WegoEnums;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.redisson.api.RLock;
@@ -366,7 +367,11 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                             ""
                     );
                     soB2cFeign.addSoB2cError(addError);
-                    if (OmsPlatformEnum.WE_GO.getCode().equals(dto.getPlatform())) {
+                    // WEGO 出库单"出库异常"（WegoEnums.OrderStatusEnum.OUTBOUND_EXCEPTION，状态码13）需人工至WEGO后台手动取消，
+                    // 与"提交失败"（状态码1）区分处理，二者在ERP侧都会映射为同一个 exception 状态，需依赖 thirdOrderStatus 区分来源
+                    boolean isWegoOutboundException = OmsPlatformEnum.WE_GO.getCode().equals(dto.getPlatform())
+                            && WegoEnums.OrderStatusEnum.OUTBOUND_EXCEPTION.getName().equals(dto.getThirdOrderStatus());
+                    if (isWegoOutboundException) {
                         // WEGO 出库异常：三方仓发货单保持"待处理"、销售订单保持"待发货"，不做自动截单/状态变更，
                         // 需人工至 WEGO 海外仓后台确认包裹/库存是否可找到后手动取消，只有 WEGO 后台才能真正取消出库异常单
                         operateLogService.addModuleOperateLog("三方仓出库异常，需人工至WEGO后台确认后手动取消，异常信息：" + dto.getAbnormalProblemReason(),
@@ -374,6 +379,13 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                     } else {
                         //异步取消海外仓订单（大臣拦截成功后会将销售订单更新为配货中）
                         asyncService.asyncCancelThirdWarehouseOrder(mainEntity, dto.getAbnormalProblemReason());
+                        // WEGO 提交失败：触发拦截后直至WEGO确认取消，三方仓发货单 → 取消发货
+                        if (OmsPlatformEnum.WE_GO.getCode().equals(dto.getPlatform())
+                                && Objects.nonNull(thirdWarehouseDeliveryEntity)) {
+                            thirdWarehouseDeliveryEntity.setStatus(SoB2cWarehouseDeliveryStatusEnum.CANCEL_DELIVERY.getStatus());
+                            operateLogService.addModuleOperateLog("状态变更为取消发货", ModuleTypeEnum.THIRD_WAREHOUSE_DELIVERY.getCode(), thirdWarehouseDeliveryEntity.getId(), "状态变更");
+                            thirdWarehouseDeliveryService.updateById(thirdWarehouseDeliveryEntity);
+                        }
                     }
                 }
                 if (SoB2cBillStatusEnum.ENUM_DISUSE.getCode().equals(dto.getOrderStatus())) {
