@@ -15,15 +15,23 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.oms.enums.BillTypeEnum;
+import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.sys.entity.SysAccountingCompanyEntity;
+import com.erp.model.wms.dto.SoReturnInstockDTO;
+import com.erp.model.wms.dto.SoReturnInstockDetailDTO;
 import com.erp.model.wms.dto.SoReturnPrestockDTO;
 import com.erp.model.wms.dto.SoReturnPrestockDetailDTO;
 import com.erp.model.wms.entity.SoReturnPrestockDetailEntity;
 import com.erp.model.wms.entity.SoReturnPrestockEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.PrestockLinkStatusEnum;
 import com.erp.model.wms.enums.PrestockSourceTypeEnum;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.SoReturnPrestockMapper;
 import com.erp.server.wms.service.SoReturnPrestockDetailService;
 import com.erp.server.wms.service.SoReturnPrestockService;
+import com.erp.server.wms.service.WarehouseService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
@@ -32,7 +40,9 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -50,6 +60,8 @@ public class SoReturnPrestockServiceImpl
 
     private static final String SO_RETURN_PRESTOCK_OVERSEAS_LOCK_KEY = "SO_RETURN_PRESTOCK_OVERSEAS";
 
+    private static final String SO_RETURN_PRESTOCK_HEADLESS_LOCK_KEY = "SO_RETURN_PRESTOCK_HEADLESS";
+
     private static final String SO_RETURN_PRESTOCK_DETAIL_LINK_LOCK_KEY = "SO_RETURN_PRESTOCK_DETAIL_LINK";
 
     @Resource
@@ -57,6 +69,15 @@ public class SoReturnPrestockServiceImpl
 
     @Resource
     private SoReturnPrestockDetailService soReturnPrestockDetailService;
+
+    @Resource
+    private WarehouseService warehouseService;
+
+    @Resource
+    private SysUserFeign sysUserFeign;
+
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
 
     // ===================== 分页查询 =====================
 
@@ -78,37 +99,9 @@ public class SoReturnPrestockServiceImpl
     @Override
     @Transactional(rollbackFor = Exception.class)
     public String add(SoReturnPrestockDTO.Add dto) {
-        if (CollUtil.isEmpty(dto.getDetailList())) {
-            throw new ServiceException(ApiError.COMMON_PARAM_REQUIRED, "详情行");
-        }
         // 物流单号唯一性校验
         checkLogisticCodeUnique(dto.getReturnLogisticCode(), null);
-
-        LocalDateTime now = LocalDateTime.now();
-        SoReturnPrestockEntity entity = new SoReturnPrestockEntity()
-                .setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_YRK))
-                .setType(dto.getType())
-                .setReturnLogisticCode(dto.getReturnLogisticCode())
-                .setLinkStatus(PrestockLinkStatusEnum.UNLINKED.getStatus())
-                .setSourceId(CharSequenceUtil.emptyToDefault(dto.getSourceId(), ""))
-                .setSourceCode(CharSequenceUtil.emptyToDefault(dto.getSourceCode(), ""))
-                .setSourceType(PrestockSourceTypeEnum.MANUAL.getStatus())
-                .setThirdCode(CharSequenceUtil.emptyToDefault(dto.getThirdCode(), ""))
-                .setInventoryOrgId(dto.getInventoryOrgId())
-                .setInventoryOrgName(CharSequenceUtil.emptyToDefault(dto.getInventoryOrgName(), ""))
-                .setWarehouseId(dto.getWarehouseId())
-                .setWarehouseName(CharSequenceUtil.emptyToDefault(dto.getWarehouseName(), ""))
-                .setReturnTypeDict(CharSequenceUtil.emptyToDefault(dto.getReturnTypeDict(), ""))
-                .setReturnInstockTime(now)
-                .setOperateTime(now)
-                .setRemark(CharSequenceUtil.emptyToDefault(dto.getRemark(), ""));
-        save(entity);
-
-        // 保存详情行
-        if (CollUtil.isNotEmpty(dto.getDetailList())) {
-            saveDetailList(entity.getId(), dto.getDetailList());
-        }
-        return entity.getId();
+        return buildAndPersist(dto, dto.getReturnLogisticCode(), PrestockSourceTypeEnum.MANUAL.getStatus());
     }
 
     // ===================== 修改 =====================
@@ -200,9 +193,11 @@ public class SoReturnPrestockServiceImpl
             splitDetail(detail, dto.getLinkQty());
         }
 
-        // 更新当前行关联信息
+        // 更新当前行关联信息；platformOrderCode、dictPlatform 均取自本次关联的售后单自身，而非本行数据来源渠道
         detail.setAfterSaleId(dto.getAfterSaleId())
               .setAfterSaleCode(dto.getAfterSaleCode())
+              .setPlatformOrderCode(CharSequenceUtil.emptyToDefault(dto.getPlatformOrderCode(), ""))
+              .setDictPlatform(dto.getDictPlatform())
               .setSoId(CharSequenceUtil.emptyToDefault(dto.getSoId(), ""))
               .setSoCode(CharSequenceUtil.emptyToDefault(dto.getSoCode(), ""))
               .setSoReturnId(CharSequenceUtil.emptyToDefault(dto.getSoReturnId(), ""))
@@ -249,9 +244,10 @@ public class SoReturnPrestockServiceImpl
             splitDetail(detail, dto.getLinkQty());
         }
 
+        // dictPlatform 取自本次关联店铺自身所属平台，而非本行数据来源渠道
         detail.setShopId(dto.getShopId())
               .setShopName(CharSequenceUtil.emptyToDefault(dto.getShopName(), ""))
-              .setDictPlatform(CharSequenceUtil.emptyToDefault(dto.getDictPlatform(), ""))
+              .setDictPlatform(dto.getDictPlatform())
               .setSalesOrgId(CharSequenceUtil.emptyToDefault(dto.getSalesOrgId(), ""))
               .setSalesOrgName(CharSequenceUtil.emptyToDefault(dto.getSalesOrgName(), ""))
               .setSalesDeptId(CharSequenceUtil.emptyToDefault(dto.getSalesDeptId(), ""))
@@ -294,9 +290,6 @@ public class SoReturnPrestockServiceImpl
     @DistributeLocker(businessType = SO_RETURN_PRESTOCK_OVERSEAS_LOCK_KEY, keyName = "dto.returnLogisticCode")
     @Transactional(rollbackFor = Exception.class)
     public String createFromOverseasWh(SoReturnPrestockDTO.Add dto) {
-        if (CollUtil.isEmpty(dto.getDetailList())) {
-            throw new ServiceException(ApiError.COMMON_PARAM_REQUIRED, "详情行");
-        }
         // 幂等：同一物流单号已存在则直接返回
         SoReturnPrestockEntity existing = lambdaQuery()
                 .eq(SoReturnPrestockEntity::getReturnLogisticCode, dto.getReturnLogisticCode())
@@ -306,16 +299,74 @@ public class SoReturnPrestockServiceImpl
             log.info("预入库单已存在，物流单号：{}，跳过创建", dto.getReturnLogisticCode());
             return existing.getId();
         }
+        return buildAndPersist(dto, dto.getReturnLogisticCode(), PrestockSourceTypeEnum.OVERSEAS_WH.getStatus());
+    }
 
+    // ===================== 无物流单号+无参考单号自动创建（系统内部） =====================
+
+    @Override
+    @DistributeLocker(businessType = SO_RETURN_PRESTOCK_HEADLESS_LOCK_KEY, keyName = "dto.thirdCode")
+    @Transactional(rollbackFor = Exception.class)
+    public String createFromOverseasWhHeadless(SoReturnPrestockDTO.Add dto) {
+        // 幂等：同一第三方/平台退货单号已存在则直接返回（此场景没有物流单号可用作幂等键）
+        if (CharSequenceUtil.isNotBlank(dto.getThirdCode())) {
+            SoReturnPrestockEntity existing = lambdaQuery()
+                    .eq(SoReturnPrestockEntity::getThirdCode, dto.getThirdCode())
+                    .eq(SoReturnPrestockEntity::getIsDeleted, false)
+                    .one();
+            if (Objects.nonNull(existing)) {
+                log.info("预入库单已存在（无头件），第三方单号：{}，跳过创建", dto.getThirdCode());
+                return existing.getId();
+            }
+        } else {
+            log.warn("无头件预入库单缺少第三方单号，跳过幂等校验，可能重复生成");
+        }
+        return buildAndPersist(dto, "", PrestockSourceTypeEnum.OVERSEAS_WH.getStatus());
+    }
+
+    // ===================== 由退货入库单新增/修改表单参数创建（人工触发） =====================
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public String addFromReturnInstockAdd(SoReturnInstockDTO.Add dto) {
+        checkCustomerAndLogisticCodeForPrestock(dto.getCustomerId(), dto.getReturnLogisticCode());
+        List<SoReturnPrestockDetailDTO.Add> detailList = buildPrestockDetailListFromInstockAdd(dto.getDetailList());
+        SoReturnPrestockDTO.Add prestockAdd = buildPrestockAddFromInstockParams(
+                dto.getType(), dto.getReturnLogisticCode(), dto.getThirdCode(), dto.getWarehouseId(),
+                dto.getSoReturnCode(), detailList);
+        return add(prestockAdd);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public String addFromReturnInstockUpdate(SoReturnInstockDTO.Update dto) {
+        checkCustomerAndLogisticCodeForPrestock(dto.getCustomerId(), dto.getReturnLogisticCode());
+        List<SoReturnPrestockDetailDTO.Add> detailList = buildPrestockDetailListFromInstockUpdate(dto.getDetailList());
+        SoReturnPrestockDTO.Add prestockAdd = buildPrestockAddFromInstockParams(
+                dto.getType(), dto.getReturnLogisticCode(), null, dto.getWarehouseId(),
+                dto.getSoReturnCode(), detailList);
+        return add(prestockAdd);
+    }
+
+    // ===================== 私有辅助方法 =====================
+
+    /**
+     * 构建预入库单主表并落库，随后保存详情行；由 {@link #add}、{@link #createFromOverseasWh}、
+     * {@link #createFromOverseasWhHeadless} 在各自完成幂等/唯一性校验后调用。
+     */
+    private String buildAndPersist(SoReturnPrestockDTO.Add dto, String returnLogisticCode, String sourceType) {
+        if (CollUtil.isEmpty(dto.getDetailList())) {
+            throw new ServiceException(ApiError.COMMON_PARAM_REQUIRED, "预入库单详情行");
+        }
         LocalDateTime now = LocalDateTime.now();
         SoReturnPrestockEntity entity = new SoReturnPrestockEntity()
                 .setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_YRK))
                 .setType(dto.getType())
-                .setReturnLogisticCode(dto.getReturnLogisticCode())
+                .setReturnLogisticCode(CharSequenceUtil.emptyToDefault(returnLogisticCode, ""))
                 .setLinkStatus(PrestockLinkStatusEnum.UNLINKED.getStatus())
                 .setSourceId(CharSequenceUtil.emptyToDefault(dto.getSourceId(), ""))
                 .setSourceCode(CharSequenceUtil.emptyToDefault(dto.getSourceCode(), ""))
-                .setSourceType(PrestockSourceTypeEnum.OVERSEAS_WH.getStatus())
+                .setSourceType(sourceType)
                 .setThirdCode(CharSequenceUtil.emptyToDefault(dto.getThirdCode(), ""))
                 .setInventoryOrgId(dto.getInventoryOrgId())
                 .setInventoryOrgName(CharSequenceUtil.emptyToDefault(dto.getInventoryOrgName(), ""))
@@ -327,13 +378,9 @@ public class SoReturnPrestockServiceImpl
                 .setRemark(CharSequenceUtil.emptyToDefault(dto.getRemark(), ""));
         save(entity);
 
-        if (CollUtil.isNotEmpty(dto.getDetailList())) {
-            saveDetailList(entity.getId(), dto.getDetailList());
-        }
+        saveDetailList(entity.getId(), dto.getDetailList());
         return entity.getId();
     }
-
-    // ===================== 私有辅助方法 =====================
 
     /**
      * 物流单号唯一性校验（新增时 updateId 为 null，修改时传入当前记录 ID）
@@ -374,9 +421,9 @@ public class SoReturnPrestockServiceImpl
                 .setReceiveQty(splitReceiveQty)
                 .setClaimedQty(0)
                 .setLinkStatus(PrestockLinkStatusEnum.UNLINKED.getStatus())
-                .setPlatformOrderCode(original.getPlatformOrderCode())
-                .setDictPlatform(original.getDictPlatform())
-                // 剩余未关联部分，关联相关字段清空，等待后续单独关联
+                // 剩余未关联部分，关联相关字段清空（含 platformOrderCode、dictPlatform，均仅由关联操作写入），等待后续单独关联
+                .setPlatformOrderCode("")
+                .setDictPlatform("")
                 .setAfterSaleId("").setAfterSaleCode("")
                 .setSoId("").setSoCode("")
                 .setSoReturnId("").setSoReturnCode("")
@@ -483,8 +530,9 @@ public class SoReturnPrestockServiceImpl
              .setShopId("").setShopName("")
              .setSalesOrgId("").setSalesOrgName("")
              .setSalesDeptId("").setSalesDeptName("")
-             .setPlatformOrderCode(CharSequenceUtil.emptyToDefault(dto.getPlatformOrderCode(), ""))
-             .setDictPlatform(CharSequenceUtil.emptyToDefault(dto.getDictPlatform(), ""))
+             // 新增时尚未关联售后单/店铺，平台订单号、平台字典值均未知，留空；由后续关联操作写入
+             .setPlatformOrderCode("")
+             .setDictPlatform("")
              .setRemark(CharSequenceUtil.emptyToDefault(dto.getRemark(), ""));
             return d;
         }).collect(Collectors.toList());
@@ -528,6 +576,121 @@ public class SoReturnPrestockServiceImpl
         v.setSalesDeptName(e.getSalesDeptName());
         v.setRemark(e.getRemark());
         return v;
+    }
+
+    /**
+     * 校验由退货入库单表单发起创建预入库单的前提条件：
+     * 退货客户为空（否则应直接保存退货入库单，创建预入库单没有意义）；退货物流单号非空（预入库单以物流单号唯一）
+     */
+    private void checkCustomerAndLogisticCodeForPrestock(String customerId, String returnLogisticCode) {
+        if (CharSequenceUtil.isNotBlank(customerId)) {
+            throw new ServiceException("退货客户不为空时无法创建预入库单，请直接保存退货入库单");
+        }
+        if (CharSequenceUtil.isBlank(returnLogisticCode)) {
+            throw new ServiceException("退货物流单号不能为空");
+        }
+    }
+
+    /**
+     * 由【新增退货入库单】表单参数组装预入库单详情行；产品名称/图片/EAN 通过 SKU ID 批量补齐
+     */
+    private List<SoReturnPrestockDetailDTO.Add> buildPrestockDetailListFromInstockAdd(
+            List<SoReturnInstockDetailDTO.Add> instockDetailList) {
+        if (CollUtil.isEmpty(instockDetailList)) {
+            throw new ServiceException(ApiError.COMMON_PARAM_REQUIRED, "产品明细");
+        }
+        Map<String, SkuVO> skuVOMap = listSkuVOMap(instockDetailList.stream()
+                .map(SoReturnInstockDetailDTO.Add::getSkuId).collect(Collectors.toList()));
+        return instockDetailList.stream().map(d -> {
+            if (Objects.isNull(d.getRealQty()) || d.getRealQty() <= 0) {
+                throw new ServiceException("退货数量必须大于0：" + d.getSkuNo());
+            }
+            SkuVO skuVO = skuVOMap.getOrDefault(d.getSkuId(), new SkuVO());
+            SoReturnPrestockDetailDTO.Add detail = new SoReturnPrestockDetailDTO.Add();
+            detail.setSkuId(d.getSkuId());
+            detail.setSkuNo(d.getSkuNo());
+            detail.setProductName(skuVO.getSkuName());
+            detail.setProductImageUrl(skuVO.getSkuImagesUrl());
+            detail.setEan(skuVO.getEan());
+            detail.setReturnQty(d.getRealQty());
+            detail.setReceiveQty(d.getReceiveQty());
+            detail.setRemark(d.getRemark());
+            return detail;
+        }).collect(Collectors.toList());
+    }
+
+    /**
+     * 由【修改退货入库单】表单参数组装预入库单详情行；产品名称/图片/EAN 通过 SKU ID 批量补齐
+     */
+    private List<SoReturnPrestockDetailDTO.Add> buildPrestockDetailListFromInstockUpdate(
+            List<SoReturnInstockDetailDTO.Update> instockDetailList) {
+        if (CollUtil.isEmpty(instockDetailList)) {
+            throw new ServiceException(ApiError.COMMON_PARAM_REQUIRED, "产品明细");
+        }
+        Map<String, SkuVO> skuVOMap = listSkuVOMap(instockDetailList.stream()
+                .map(SoReturnInstockDetailDTO.Update::getSkuId).collect(Collectors.toList()));
+        return instockDetailList.stream().map(d -> {
+            if (Objects.isNull(d.getRealQty()) || d.getRealQty() <= 0) {
+                throw new ServiceException("退货数量必须大于0：" + d.getSkuNo());
+            }
+            SkuVO skuVO = skuVOMap.getOrDefault(d.getSkuId(), new SkuVO());
+            SoReturnPrestockDetailDTO.Add detail = new SoReturnPrestockDetailDTO.Add();
+            detail.setSkuId(d.getSkuId());
+            detail.setSkuNo(d.getSkuNo());
+            detail.setProductName(skuVO.getSkuName());
+            detail.setProductImageUrl(skuVO.getSkuImagesUrl());
+            detail.setEan(skuVO.getEan());
+            detail.setReturnQty(d.getRealQty());
+            detail.setReceiveQty(d.getReceiveQty());
+            detail.setRemark(d.getRemark());
+            return detail;
+        }).collect(Collectors.toList());
+    }
+
+    /**
+     * 按 SKU ID 批量查询产品信息，返回 skuId -> SkuVO 映射（查询失败或未命中时对应位置不进入 Map，由调用方兜底空对象）
+     */
+    private Map<String, SkuVO> listSkuVOMap(List<String> skuIds) {
+        List<String> distinctSkuIds = skuIds.stream().filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        if (CollUtil.isEmpty(distinctSkuIds)) {
+            return Collections.emptyMap();
+        }
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(distinctSkuIds);
+        if (CollUtil.isEmpty(skuVOList)) {
+            return Collections.emptyMap();
+        }
+        return skuVOList.stream().collect(Collectors.toMap(SkuVO::getSkuId, v -> v, (a, b) -> a));
+    }
+
+    /**
+     * 组装预入库单新增入参：库存组织/仓库信息通过仓库 ID 反查补齐；来源类型固定为 MANUAL（人工在退货入库单表单发起）
+     */
+    private SoReturnPrestockDTO.Add buildPrestockAddFromInstockParams(String type, String returnLogisticCode,
+            String thirdCode, String warehouseId, String soReturnCode, List<SoReturnPrestockDetailDTO.Add> detailList) {
+        if (CharSequenceUtil.isBlank(warehouseId)) {
+            throw new ServiceException("仓库不能为空");
+        }
+        WarehouseEntity warehouse = warehouseService.getById(warehouseId);
+        if (Objects.isNull(warehouse)) {
+            throw new ServiceException(ApiError.COMMON_NOT_FOUND, "仓库");
+        }
+        String inventoryOrgName = "";
+        if (CharSequenceUtil.isNotBlank(warehouse.getOrgId())) {
+            SysAccountingCompanyEntity company = sysUserFeign.getCompanyById(warehouse.getOrgId());
+            inventoryOrgName = Objects.nonNull(company) ? company.getCompanyName() : "";
+        }
+
+        SoReturnPrestockDTO.Add prestockAdd = new SoReturnPrestockDTO.Add();
+        prestockAdd.setReturnLogisticCode(returnLogisticCode);
+        prestockAdd.setType(type);
+        prestockAdd.setInventoryOrgId(warehouse.getOrgId());
+        prestockAdd.setInventoryOrgName(inventoryOrgName);
+        prestockAdd.setWarehouseId(warehouse.getId());
+        prestockAdd.setWarehouseName(warehouse.getName());
+        prestockAdd.setThirdCode(CharSequenceUtil.emptyToDefault(thirdCode, ""));
+        prestockAdd.setRemark(CharSequenceUtil.isNotBlank(soReturnCode) ? "原退货订单号：" + soReturnCode : "");
+        prestockAdd.setDetailList(detailList);
+        return prestockAdd;
     }
 
     /**

@@ -52,12 +52,6 @@ public class SoReturnPrestockDetailDTO {
         /** 实际收货数量 */
         private Integer receiveQty;
 
-        /** 平台订单号 */
-        private String platformOrderCode;
-
-        /** 平台字典值 */
-        private String dictPlatform;
-
         /** 备注 */
         private String remark;
     }
@@ -110,6 +104,19 @@ public class SoReturnPrestockDetailDTO {
 
         /** 售后单号 */
         private String afterSaleCode;
+
+        /**
+         * 平台订单号；取自所关联的《B2C/B2B售后订单》自身的平台订单号，不代表本行数据的来源渠道。
+         * 由前端在选定售后单后，将该售后单自身的 platform_order_code 一并回传
+         */
+        private String platformOrderCode;
+
+        /**
+         * 平台字典值；取自所关联的《B2C/B2B售后订单》的平台字段，不代表本行数据的来源渠道。
+         * 由前端在选定售后单后，将该售后单自身的 dict_platform 一并回传
+         */
+        @NotBlank(message = "平台不能为空")
+        private String dictPlatform;
 
         /** 销售单 ID */
         private String soId;
@@ -167,7 +174,11 @@ public class SoReturnPrestockDetailDTO {
         /** 店铺名称 */
         private String shopName;
 
-        /** 平台字典值 */
+        /**
+         * 平台字典值；取自所关联店铺自身所属的平台，不代表本行数据的来源渠道。
+         * 由前端在选定店铺后，将该店铺自身的 dict_platform 一并回传
+         */
+        @NotBlank(message = "平台不能为空")
         private String dictPlatform;
 
         /** 销售组织 ID */
@@ -209,10 +220,16 @@ public class SoReturnPrestockDetailDTO {
         /** 售后单号 */
         private String afterSaleCode;
 
-        /** 平台订单号 */
+        /**
+         * 平台订单号；由关联售后单操作写入，取自所关联售后单自身的平台订单号；
+         * 关联店铺或未关联前为空（店铺不对应具体订单）
+         */
         private String platformOrderCode;
 
-        /** 平台字典值 */
+        /**
+         * 平台字典值；由关联操作写入——关联售后单时取售后单的平台，关联店铺时取店铺所属平台；
+         * 未关联前为空
+         */
         private String dictPlatform;
 
         /** 销售单 ID */

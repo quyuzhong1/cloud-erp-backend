@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 
+import com.common.business.dto.PlatformReturnInstockDTO;
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -18,6 +19,7 @@ import com.erp.model.wms.dto.SoReturnInstockDTO;
 import com.erp.model.wms.dto.SoReturnReceiveDTO;
 import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.wms.aliexpress.model.returnorder.AliexpressReturnInstockDTO;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -353,6 +355,17 @@ public interface SoReturnInstockService extends SuperService<SoReturnInstockEnti
     SoReturnInstockEntity getBySourceId(String sourceId);
 
     void addByThirdWarehouse(SoReturnInstockEntity soReturnInstockEntity, List<SoReturnInstockDetailEntity> detailEntityList);
+
+    /**
+     * 按退货物流单号 + SKU 匹配《B2B/B2C 售后单-退货单》中未入库/部分入库的明细行，
+     * 为匹配上的部分按售后单分组生成已审核退货入库单；返回未能匹配的剩余明细（数量已扣减），
+     * 供调用方继续走后续分支处理。保证：入参明细 = 本方法生成的退货入库单明细 ∪ 返回的剩余明细。
+     *
+     * @param dto             平台退货入库消息（须已确认 returnLogisticCode 非空）
+     * @param warehouseEntity 已解析好的仓库信息
+     * @return 未能匹配上的剩余明细（数量已扣减，可能为空列表表示全部匹配完成）
+     */
+    List<PlatformReturnInstockDTO.Detail> matchAndCreateByReturnLogisticCode(PlatformReturnInstockDTO dto, WarehouseEntity warehouseEntity);
 
     List<SoReturnInstockEntity> queryToSdy(LocalDate toLocalDate, LocalDate toLocalDate1, Integer pageSize, int offset);
     /**

@@ -74,6 +74,13 @@ public interface SoB2cReturnService extends SuperService<SoB2cReturnEntity> {
      */
     List<SoB2cReturnEntity> listByReturnLogisticCode(String returnLogisticCode);
 
+    /**
+     * 按平台订单号/平台退货单号/销售单号/退货单号中任一字段匹配参考单号（一次查询，字段间为 OR 关系）
+     * @param referenceNo 参考单号
+     * @return 命中的退货单列表
+     */
+    List<SoB2cReturnEntity> listByAnyReferenceNo(String referenceNo);
+
     void addByPlatform(SoB2cReturnEntity soB2cReturnEntity, List<SoB2cReturnDetailEntity> soB2cReturnDetailEntityList);
 
     List<SoB2cReturnDTO.ReturnLogisticsDTO> logisticsCodePreview(List<String> ids);
