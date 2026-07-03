@@ -849,6 +849,7 @@ public enum ApiError implements Serializable {
     SHOP_COUNTRY_CODE_REQUIRED(8021,"店铺未配置国家，无法完成授权"),
     SHOP_TIKTOK_AUTHORIZED_SHOPS_EMPTY(8022,"TikTok授权失败：未获取到平台授权站点"),
     SHOP_TIKTOK_REGION_NOT_MATCH(8023,"TikTok授权失败：店铺国家[{0}]在平台授权站点中不存在，可用站点：{1}"),
+    FBA_SHIPMENT_COUNTRY_NOT_FOUND(8024,"暂未查询到货件国家，请稍后重新拉取"),
 
 
     /**
