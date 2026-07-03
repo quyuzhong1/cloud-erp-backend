@@ -38,7 +38,6 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.constant.EnumMessage;
 import com.common.core.dto.ExcelData;
 import com.common.core.enums.ApiError;
-import com.common.core.enums.CurrencyEnum;
 import com.common.core.excel.*;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -93,11 +92,13 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.ss.util.RegionUtil;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -190,8 +191,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
     @Resource
     private CfgSettingService cfgSettingService;
-    @Resource
-    private DownloadTaskFeign downloadTaskFeign;
+
     @Autowired
     private SoDeliveryNoticeFeign soDeliveryNoticeFeign;
 
@@ -1379,9 +1379,6 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 .update();
     }
 
-    private void fillExport(List<TmsDeclareBillDTO.ExportDTO> list) {
-        fillExport(list, loadDeclareExportAccountingCompanyMap(list));
-    }
 
     private void fillExport(List<TmsDeclareBillDTO.ExportDTO> list,
                             Map<String, SysAccountingCompanyEntity> accountingCompanyMap) {
@@ -1408,6 +1405,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         List<String> sourceCountryIdList = allExportProductDetailList.stream().map(TmsDeclareBillDTO.ExportProductDetail::getSourceCountry).collect(Collectors.toList());
         List<DictCountryEntity> sourceCountryList = sysDictFeign.listCountryByIds(sourceCountryIdList);
         Map<String,String> sourceCountryMap = sourceCountryList.stream().collect(Collectors.toMap(DictCountryEntity::getId,DictCountryEntity::getNameCn,(v1,v2)->v1));
+        Map<String, DictCurrencyEntity> currencyMap = loadCurrencyMap();
         List<String> exportCountryIdList = list.stream()
                 .flatMap(e -> Arrays.asList(e.getTradingArea(), e.getToArea()).stream())
                 .filter(StringUtils::isNotBlank)
@@ -1423,8 +1421,10 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         for (TmsDeclareBillDTO.ExportDTO exportDTO : list) {
             String tradingAreaName = exportCountryNameMap.getOrDefault(exportDTO.getTradingArea(), exportDTO.getTradingArea());
             String toAreaName = exportCountryNameMap.getOrDefault(exportDTO.getToArea(), exportDTO.getToArea());
+            String toPortName = exportCountryNameMap.getOrDefault(exportDTO.getToPort(), exportDTO.getToPort());
             exportDTO.setTradingAreaName(tradingAreaName);
             exportDTO.setToAreaName(toAreaName);
+            exportDTO.setToPortName(toPortName);
             SysAccountingCompanyEntity senderCompanyEntity = allAccountingCompanyMap.get(exportDTO.getSenderId());
             if(Objects.nonNull(senderCompanyEntity)){
                 exportDTO.setSenderCode(senderCompanyEntity.getCode()+"("+senderCompanyEntity.getCompanyHsCode()+")");
@@ -1450,7 +1450,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 TmsDeclareBillDTO.ExportProductDetail detail = exportProductDetailList.get(i);
                 detail.setRowNum(i+1);
                 detail.setTotalPrice(detail.getPrice().multiply(new BigDecimal(detail.getQty())));
-                detail.setDeclareCurrencyName(CurrencyEnum.getNameByCode(detail.getDeclareCurrency()));
+                DictCurrencyEntity currency = currencyMap.get(detail.getDeclareCurrency());
+                detail.setDeclareCurrencyName(Objects.isNull(currency) ? "" : Objects.toString(currency.getName(), ""));
                 BasicDictEntity unitDTO = sysDictBasicEntityList.stream().filter(v->v.getValue().equals(detail.getDeclareUnit())).findFirst().orElse(new BasicDictEntity());
                 detail.setDeclareUnitName(unitDTO.getName());
                 detail.setSourceCountryName(sourceCountryMap.get(detail.getSourceCountry()));
@@ -2199,6 +2200,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                         ProductPackEntity::getSkuId,
                         e -> Objects.isNull(e.getNetWeight()) ? BigDecimal.ZERO : e.getNetWeight(),
                         (v1, v2) -> v1));
+        Map<String, DictCurrencyEntity> currencyMap = loadCurrencyMap();
 
         // 装箱明细 sheet：sourceCode -> packing_task -> wms_carton_spec -> wms_carton_detail
 //        List<String> allDeliveryCodeList = list.stream()
@@ -2287,8 +2289,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             SysAccountingCompanyEntity sellerCompany = companyMap.get(exportDTO.getSenderId());
             String sellerAddress = Objects.isNull(sellerCompany) ? "" : Objects.toString(sellerCompany.getCompanyAddress(), "");
             String sellerMobile = Objects.isNull(sellerCompany) ? "" : Objects.toString(sellerCompany.getContactMobile(), "");
-            exportDTO.setContractInfo(buildContractInfo(exportDTO, sellerAddress,sellerMobile, buyerAddress));
-            exportDTO.setInvoiceInfo(buildInvoiceInfo(exportDTO));
+            exportDTO.setContractInfo(buildContractInfo(exportDTO, sellerAddress,sellerMobile, buyerAddress, currencyMap));
+            exportDTO.setInvoiceInfo(buildInvoiceInfo(exportDTO, currencyMap));
 
             // 装箱单 sheet：明细按报关商品维度循环，主表 + TOTAL 合计
             List<TmsDeclareBillDTO.PackingListItem> packingListItemList =
@@ -2445,7 +2447,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     private TmsDeclareBillDTO.ContractInfo buildContractInfo(TmsDeclareBillDTO.ExportDTO exportDTO,
                                                              String sellerAddress,
                                                              String sellerMobile,
-                                                             String buyerAddress) {
+                                                             String buyerAddress,
+                                                             Map<String, DictCurrencyEntity> currencyMap) {
         TmsDeclareBillDTO.ContractInfo contractInfo = new TmsDeclareBillDTO.ContractInfo();
         contractInfo.setSellerName(Objects.toString(exportDTO.getSenderName(), ""));
         contractInfo.setSellerAddress(sellerAddress);
@@ -2463,6 +2466,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
         String currency = resolveContractCurrency(exportDTO, productDetailList);
         contractInfo.setCurrency(currency);
+        DictCurrencyEntity currencyEntity = currencyMap.get(currency);
+        contractInfo.setCurrencyName(Objects.isNull(currencyEntity) ? "" : Objects.toString(currencyEntity.getName(), ""));
 
         BigDecimal totalAmount = Objects.isNull(exportDTO.getTotalPrice()) ? BigDecimal.ZERO : exportDTO.getTotalPrice();
         totalAmount = totalAmount.setScale(MathUtil.scale, RoundingMode.HALF_UP);
@@ -2481,7 +2486,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
      *   <li>币别符号取明细首行 declareCurrency 对应符号；多币别日志由合同 sheet 统一输出，避免重复 warn</li>
      * </ul>
      */
-    private TmsDeclareBillDTO.InvoiceInfo buildInvoiceInfo(TmsDeclareBillDTO.ExportDTO exportDTO) {
+    private TmsDeclareBillDTO.InvoiceInfo buildInvoiceInfo(TmsDeclareBillDTO.ExportDTO exportDTO,
+                                                           Map<String, DictCurrencyEntity> currencyMap) {
         TmsDeclareBillDTO.InvoiceInfo invoiceInfo = new TmsDeclareBillDTO.InvoiceInfo();
         invoiceInfo.setSellerName(Objects.toString(exportDTO.getSenderName(), ""));
         invoiceInfo.setBuyerName(Objects.toString(exportDTO.getReceiverName(), ""));
@@ -2501,7 +2507,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         invoiceInfo.setTotalQty(totalQty);
         invoiceInfo.setTotalAmount(totalAmount.setScale(MathUtil.scale, RoundingMode.HALF_UP));
-        invoiceInfo.setCurrencySymbol(resolveInvoiceCurrencySymbol(productDetailList));
+        invoiceInfo.setCurrencySymbol(resolveInvoiceCurrencySymbol(productDetailList, currencyMap));
         return invoiceInfo;
     }
 
@@ -2532,7 +2538,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
      *
      * <p>多币别异常日志由合同 sheet 统一输出；发票仅取首行币别符号，避免重复日志。</p>
      */
-    private String resolveInvoiceCurrencySymbol(List<TmsDeclareBillDTO.ExportProductDetail> productDetailList) {
+    private String resolveInvoiceCurrencySymbol(List<TmsDeclareBillDTO.ExportProductDetail> productDetailList,
+                                                Map<String, DictCurrencyEntity> currencyMap) {
         if (CollectionUtils.isEmpty(productDetailList)) {
             return "";
         }
@@ -2540,7 +2547,14 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (StringUtils.isBlank(currencyCode)) {
             return "";
         }
-        return Objects.toString(CurrencyEnum.getSymbolByCode(currencyCode), "");
+        DictCurrencyEntity currencyEntity = currencyMap.get(currencyCode);
+        return Objects.isNull(currencyEntity) ? "" : Objects.toString(currencyEntity.getSymbol(), "");
+    }
+
+    private Map<String, DictCurrencyEntity> loadCurrencyMap() {
+        return  sysUserFeign.currencyList()
+                .stream()
+                .collect(Collectors.toMap(DictCurrencyEntity::getId, Function.identity(), (v1, v2) -> v1));
     }
 
     /**
@@ -2994,12 +3008,21 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             }
         }
         sheet.addMergedRegion(target);
+        applyThinBorderToMergedRegion(sheet, target);
     }
 
     private void replaceMergedRegion(Sheet sheet, int firstRow, int lastRow, int firstCol, int lastCol) {
         CellRangeAddress target = new CellRangeAddress(firstRow, lastRow, firstCol, lastCol);
         removeIntersectingMergedRegions(sheet, target);
         sheet.addMergedRegion(target);
+        applyThinBorderToMergedRegion(sheet, target);
+    }
+
+    private void applyThinBorderToMergedRegion(Sheet sheet, CellRangeAddress region) {
+        RegionUtil.setBorderTop(BorderStyle.THIN, region, sheet);
+        RegionUtil.setBorderBottom(BorderStyle.THIN, region, sheet);
+        RegionUtil.setBorderLeft(BorderStyle.THIN, region, sheet);
+        RegionUtil.setBorderRight(BorderStyle.THIN, region, sheet);
     }
 
     private void removeIntersectingMergedRegions(Sheet sheet, CellRangeAddress target) {
@@ -3205,25 +3228,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (CollUtil.isEmpty(deliveryDeclareDetailMidList)) {
             throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC,"报关明细关联信息");
         }
-
-        List<TmsDeclareBillDTO.SplitDeclareDTO> splitDeclareDTOList = new ArrayList<>();
-        Map<String, List<DeliveryDeclareDetailMidEntity>> map = deliveryDeclareDetailMidList.stream().collect(Collectors.groupingBy(obj -> obj.getSourceId().concat(obj.getBoxNo())));
-        for ( Map.Entry<String, List<DeliveryDeclareDetailMidEntity>> entry : map.entrySet()) {
-            TmsDeclareBillDTO.SplitDeclareDTO splitDeclareDTO = new TmsDeclareBillDTO.SplitDeclareDTO();
-            List<DeliveryDeclareDetailMidEntity> value = entry.getValue();
-            splitDeclareDTO.setId(id);
-            splitDeclareDTO.setBoxNo(value.get(0).getBoxNo());
-            splitDeclareDTO.setSourceId(value.get(0).getSourceId());
-            splitDeclareDTO.setSourceCode(value.get(0).getSourceCode());
-            splitDeclareDTO.setBusinessCode(value.stream().map(DeliveryDeclareDetailMidEntity::getBusinessCode).filter(StringUtils::isNotBlank).findFirst().orElse(""));
-            //sku信息描述格式：skuNo*qty,skuNo*qty
-            String skuDesc = value.stream().map(obj -> CharSequenceUtil.format("{}*{}", obj.getSkuNo(), obj.getQty())).collect(Collectors.joining(","));
-            splitDeclareDTO.setSkuDesc(skuDesc);
-            List<TmsDeclareBillDTO.SplitDetailDTO> splitDetailDTOList = value.stream().map(obj -> new TmsDeclareBillDTO.SplitDetailDTO(obj.getSkuId(), obj.getSkuNo(), obj.getQty())).collect(Collectors.toList());
-            splitDeclareDTO.setSkuDetailList(splitDetailDTOList);
-            splitDeclareDTOList.add(splitDeclareDTO);
-        }
-        return splitDeclareDTOList;
+        return buildSplitDeclareDTOList(id, deliveryDeclareDetailMidList);
     }
 
     @Override
@@ -5803,26 +5808,52 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (CollUtil.isEmpty(deliveryDeclareDetailMidList)) {
             throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC,"报关明细关联信息");
         }
+        return buildSplitDeclareDTOList(id, deliveryDeclareDetailMidList);
+    }
 
-
+    /**
+     * 构建拆分报关明细列表：按业务单号+箱号整箱分组（与拆分保存口径一致）。
+     */
+    private List<TmsDeclareBillDTO.SplitDeclareDTO> buildSplitDeclareDTOList(String id,
+                                                                             List<DeliveryDeclareDetailMidEntity> deliveryDeclareDetailMidList) {
         List<TmsDeclareBillDTO.SplitDeclareDTO> splitDeclareDTOList = new ArrayList<>();
-        Map<String, List<DeliveryDeclareDetailMidEntity>> map = deliveryDeclareDetailMidList.stream().collect(Collectors.groupingBy(obj -> obj.getSourceId().concat(obj.getBoxNo())));
-        for ( Map.Entry<String, List<DeliveryDeclareDetailMidEntity>> entry : map.entrySet()) {
+        Map<String, List<DeliveryDeclareDetailMidEntity>> map = deliveryDeclareDetailMidList.stream()
+                .filter(obj -> Objects.nonNull(obj) && StringUtils.isNotBlank(obj.getBoxNo()))
+                .collect(Collectors.groupingBy(this::buildMidDeclareBoxKey, LinkedHashMap::new, Collectors.toList()));
+        for (Map.Entry<String, List<DeliveryDeclareDetailMidEntity>> entry : map.entrySet()) {
             TmsDeclareBillDTO.SplitDeclareDTO splitDeclareDTO = new TmsDeclareBillDTO.SplitDeclareDTO();
             List<DeliveryDeclareDetailMidEntity> value = entry.getValue();
+            DeliveryDeclareDetailMidEntity first = value.get(0);
             splitDeclareDTO.setId(id);
-            splitDeclareDTO.setBoxNo(value.get(0).getBoxNo());
-            splitDeclareDTO.setSourceId(value.get(0).getSourceId());
-            splitDeclareDTO.setSourceCode(value.get(0).getSourceCode());
-            splitDeclareDTO.setBusinessCode(value.stream().map(DeliveryDeclareDetailMidEntity::getBusinessCode).filter(StringUtils::isNotBlank).findFirst().orElse(""));
-            //sku信息描述格式：skuNo*qty,skuNo*qty
-            String skuDesc = value.stream().map(obj -> CharSequenceUtil.format("{}*{}", obj.getSkuNo(), obj.getQty())).collect(Collectors.joining(","));
+            splitDeclareDTO.setBoxNo(first.getBoxNo());
+            splitDeclareDTO.setSourceId(first.getSourceId());
+            splitDeclareDTO.setSourceCode(value.stream()
+                    .map(DeliveryDeclareDetailMidEntity::getSourceCode)
+                    .filter(StringUtils::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.joining(",")));
+            splitDeclareDTO.setBusinessCode(resolveBusinessCodeForBoxKey(first.getBusinessCode(), first.getSourceId(), first.getBusinessId()));
+            // sku信息描述格式：skuNo*qty,skuNo*qty
+            String skuDesc = value.stream()
+                    .map(obj -> CharSequenceUtil.format("{}*{}", obj.getSkuNo(), obj.getQty()))
+                    .collect(Collectors.joining(","));
             splitDeclareDTO.setSkuDesc(skuDesc);
-            List<TmsDeclareBillDTO.SplitDetailDTO> splitDetailDTOList = value.stream().map(obj -> new TmsDeclareBillDTO.SplitDetailDTO(obj.getSkuId(), obj.getSkuNo(), obj.getQty())).collect(Collectors.toList());
+            List<TmsDeclareBillDTO.SplitDetailDTO> splitDetailDTOList = value.stream()
+                    .map(obj -> new TmsDeclareBillDTO.SplitDetailDTO(obj.getSkuId(), obj.getSkuNo(), obj.getQty()))
+                    .collect(Collectors.toList());
             splitDeclareDTO.setSkuDetailList(splitDetailDTOList);
             splitDeclareDTOList.add(splitDeclareDTO);
         }
         return splitDeclareDTOList;
+    }
+
+    private String buildMidDeclareBoxKey(DeliveryDeclareDetailMidEntity mid) {
+        if (Objects.isNull(mid)) {
+            return "";
+        }
+        return buildBusinessBoxKey(
+                resolveBusinessCodeForBoxKey(mid.getBusinessCode(), mid.getSourceId(), mid.getBusinessId()),
+                mid.getBoxNo());
     }
 
 
