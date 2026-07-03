@@ -412,40 +412,42 @@
     <select id="listNotGenerateB2bDetailPaging"
             resultType="com.erp.model.tms.dto.TmsDeclareBillDTO$NotGenerateDetailDTO">
         select * from (
-        WITH carton_detail AS MATERIALIZED (
-            SELECT
-                wc.packing_task_id,
-                wcd.sku_id,
-                wcd.sku_no,
-                SUM(COALESCE(wcd.pack_qty, 0))::INTEGER AS pack_qty
-            FROM wms_carton wc
-            INNER JOIN wms_carton_detail wcd
-            ON wcd.main_id = wc.id
-            AND wcd.is_deleted = false
-            AND COALESCE(wcd.pack_qty, 0) > 0
-            WHERE wc.is_deleted = false
-            AND wc.box_no IS NOT NULL
-            GROUP BY wc.packing_task_id, wcd.sku_id, wcd.sku_no
-        ),
-        qualified_details AS MATERIALIZED (
+        WITH qualified_task AS (
+            -- 先锁定 declare_status='wait' 的发货通知单对应的已装箱 packing_task，
+            -- 避免对整张 wms_carton_detail 全表聚合（原 carton_detail 无来源过滤是性能瓶颈）。
             SELECT
                 sdn.id AS source_id,
                 sdn.code AS source_code,
                 sdn.source_code AS business_code,
                 sdn.create_time AS source_create_time,
-                cd.sku_id,
-                cd.sku_no,
-                SUM(cd.pack_qty)::INTEGER AS qty
+                pt.id AS packing_task_id
             FROM so_delivery_notice sdn
             INNER JOIN packing_task pt
             ON pt.source_id = sdn.id
             AND pt.is_deleted = false
             AND pt.packing_status = 'packed'
-            INNER JOIN carton_detail cd
-            ON cd.packing_task_id = pt.id
             WHERE sdn.is_deleted = false
             AND sdn.declare_status = 'wait'
-            GROUP BY sdn.id, sdn.code, sdn.source_code, sdn.create_time, cd.sku_id, cd.sku_no
+        ),
+        qualified_details AS MATERIALIZED (
+            SELECT
+                qt.source_id,
+                qt.source_code,
+                qt.business_code,
+                qt.source_create_time,
+                wcd.sku_id,
+                wcd.sku_no,
+                SUM(COALESCE(wcd.pack_qty, 0))::INTEGER AS qty
+            FROM qualified_task qt
+            INNER JOIN wms_carton wc
+            ON wc.packing_task_id = qt.packing_task_id
+            AND wc.is_deleted = false
+            AND wc.box_no IS NOT NULL
+            INNER JOIN wms_carton_detail wcd
+            ON wcd.main_id = wc.id
+            AND wcd.is_deleted = false
+            AND COALESCE(wcd.pack_qty, 0) > 0
+            GROUP BY qt.source_id, qt.source_code, qt.business_code, qt.source_create_time, wcd.sku_id, wcd.sku_no
         ),
         has_bom AS MATERIALIZED (
             SELECT
@@ -467,6 +469,33 @@
             WHERE fpbi.is_deleted = false
             AND fpbs.is_deleted = false
             AND fpbi.state = 4
+            AND EXISTS (
+                SELECT 1 FROM qualified_details qd WHERE qd.sku_id = fpbs.parent_sku_id
+            )
+        ),
+        fpl_cache AS MATERIALIZED (
+            -- foreign_product_logistics 是 FDW 外部表，原来在分支里按行 nested-loop 远程扫描（上万次）。
+            -- 这里一次性批量取回本次需要的 SKU（父件 + BOM 子件），后续改为本地 hash join。
+            SELECT
+                fpl.sku_id,
+                fpl.combination_declare_type,
+                fpl.customs_code,
+                fpl.declare_chinese_name,
+                fpl.declare_element,
+                fpl.declare_unit,
+                fpl.declare_price,
+                fpl.declare_currency,
+                fpl.declare_currency_symbol,
+                fpl.source_country,
+                fpl.source_cargo,
+                fpl.exemption
+            FROM foreign_product_logistics fpl
+            WHERE fpl.is_deleted = false
+            AND fpl.sku_id IN (
+                SELECT sku_id FROM qualified_details
+                UNION
+                SELECT sku_id FROM has_bom
+            )
         )
         -- ========== 分支 1：无 BOM 或组合申报类型为 'combine' ==========
         SELECT
@@ -493,7 +522,7 @@
             fpl.source_cargo AS sourceCargo,
             fpl.exemption
         FROM qualified_details qd
-        LEFT JOIN foreign_product_logistics fpl ON fpl.sku_id = qd.sku_id AND fpl.is_deleted = false
+        LEFT JOIN fpl_cache fpl ON fpl.sku_id = qd.sku_id
         WHERE (NOT EXISTS (SELECT 1 FROM has_bom hb WHERE hb.parent_sku_id = qd.sku_id)
         OR fpl.combination_declare_type IS DISTINCT FROM 'split')
         UNION ALL
@@ -522,9 +551,9 @@
             fpl_child.source_cargo AS sourceCargo,
             fpl_child.exemption
         FROM qualified_details qd
-        JOIN foreign_product_logistics fpl_parent ON fpl_parent.sku_id = qd.sku_id AND fpl_parent.is_deleted = false AND fpl_parent.combination_declare_type = 'split'
+        JOIN fpl_cache fpl_parent ON fpl_parent.sku_id = qd.sku_id AND fpl_parent.combination_declare_type = 'split'
         JOIN has_bom hb ON hb.parent_sku_id = qd.sku_id
-        JOIN foreign_product_logistics fpl_child  ON fpl_child.sku_id = hb.sku_id AND fpl_child.is_deleted = false
+        JOIN fpl_cache fpl_child  ON fpl_child.sku_id = hb.sku_id
         ) as sdnd
         where
         ${params.sqlMap.default}
@@ -612,7 +641,18 @@
     <!-- `b2b订单下推发货通知单时，查询b2b订单的发货明细，作为发货通知单的来源单据明细展示` -->
     <select id="listAfterPushB2bDeclare"
             resultType="com.erp.model.tms.dto.TmsDeclareBillDTO$SourceDeliveryDetailDTO">
-        WITH carton_detail AS (
+        WITH target_packing_task AS (
+        -- 先锁定本次 ids 对应的已装箱 packing_task，避免 carton_detail 全表聚合
+        SELECT pt.id
+        FROM packing_task pt
+        INNER JOIN so_delivery_notice sdn ON sdn.id = pt.source_id AND sdn.is_deleted = false AND sdn.declare_status = 'wait'
+        WHERE pt.is_deleted = false AND pt.packing_status = 'packed'
+        AND sdn.id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        ),
+        carton_detail AS (
         SELECT
         wc.packing_task_id,
         wc.box_no,
@@ -627,6 +667,7 @@
         AND COALESCE(wcd.pack_qty, 0) > 0
         WHERE wc.is_deleted = false
         AND wc.box_no IS NOT NULL
+        AND wc.packing_task_id IN (SELECT id FROM target_packing_task)
         GROUP BY wc.packing_task_id, wc.box_no, wcd.sku_id, wcd.sku_no, COALESCE(wcd.fn_sku, '')
         ),
         has_bom AS MATERIALIZED (
@@ -649,6 +690,15 @@
         WHERE fpbi.is_deleted = false
         AND fpbs.is_deleted = false
         AND fpbi.state = 4
+        AND EXISTS (SELECT 1 FROM carton_detail cd WHERE cd.sku_id = fpbs.parent_sku_id)
+        ),
+        fpl_cache AS MATERIALIZED (
+        -- foreign_product_logistics 是 FDW 外部表，原按行 nested-loop 远程扫描；
+        -- 这里一次性批量取回本次父件的申报类型（仅 split 判定用），改为本地 join。
+        SELECT fpl.sku_id, fpl.combination_declare_type
+        FROM foreign_product_logistics fpl
+        WHERE fpl.is_deleted = false
+        AND fpl.sku_id IN (SELECT sku_id FROM carton_detail)
         )
         SELECT * FROM (
         SELECT
@@ -690,9 +740,8 @@
         left join customer_info ci on sdn.customer_id = ci.id and ci.is_deleted = false
         left join so_outstock so on sdn.id = so.source_id and so.is_deleted = false
         LEFT JOIN has_bom hb ON hb.parent_sku_id = cd.sku_id
-        LEFT JOIN foreign_product_logistics fpl_parent
+        LEFT JOIN fpl_cache fpl_parent
         ON fpl_parent.sku_id = cd.sku_id
-        AND fpl_parent.is_deleted = false
         where sdn.is_deleted = false and sdn.declare_status = 'wait' and sdn.id in
         <foreach collection="ids" item="id" open="(" separator="," close=")">
             #{id}
@@ -736,9 +785,8 @@
         and (COALESCE(ptd.fn_sku, '') = '' or cd.fn_sku = COALESCE(ptd.fn_sku, ''))
         )
         INNER JOIN has_bom hb ON hb.parent_sku_id = cd.sku_id
-        INNER JOIN foreign_product_logistics fpl_parent
+        INNER JOIN fpl_cache fpl_parent
         ON fpl_parent.sku_id = cd.sku_id
-        AND fpl_parent.is_deleted = false
         AND fpl_parent.combination_declare_type = 'split'
         left join customer_info ci on sdn.customer_id = ci.id and ci.is_deleted = false
         left join so_outstock so on sdn.id = so.source_id and so.is_deleted = false
@@ -844,11 +892,11 @@
             NOT EXISTS (
                 SELECT 1 FROM has_bom hb WHERE hb.parent_sku_id = cd.sku_id
             )
-            OR EXISTS (
+            OR NOT EXISTS (
                 SELECT 1 FROM foreign_product_logistics fpl_parent
                 WHERE fpl_parent.sku_id = cd.sku_id
                 AND fpl_parent.is_deleted = false
-                AND fpl_parent.combination_declare_type = 'combine'
+                AND fpl_parent.combination_declare_type = 'split'
             )
         )
         UNION ALL
@@ -884,9 +932,9 @@
         INNER JOIN has_bom hb
         ON hb.parent_sku_id = cd.sku_id
         INNER JOIN foreign_product_logistics fpl_parent
-        ON fpl_parent.sku_id = hb.sku_id
+        ON fpl_parent.sku_id = cd.sku_id
         AND fpl_parent.is_deleted = false
-        AND fpl_parent.combination_declare_type = 'split'   -- 仅拆分类型
+        AND fpl_parent.combination_declare_type = 'split'   -- 仅父件为拆分类型才展开子件
         LEFT JOIN customer_info ci
         ON ci.id = sdn.customer_id
         AND ci.is_deleted = false

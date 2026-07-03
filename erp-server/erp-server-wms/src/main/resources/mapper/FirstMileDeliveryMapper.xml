@@ -852,6 +852,30 @@
                 FROM qualified_details qd
                 WHERE qd.sku_id = fpbs.parent_sku_id
             )
+        ),
+        fpl_cache AS MATERIALIZED (
+            -- foreign_product_logistics 是 FDW 外部表，原按行 nested-loop 远程扫描（上万次）。
+            -- 这里一次性批量取回本次需要的 SKU（父件 + BOM 子件），后续改为本地 hash join。
+            SELECT
+                fpl.sku_id,
+                fpl.combination_declare_type,
+                fpl.customs_code,
+                fpl.declare_chinese_name,
+                fpl.declare_element,
+                fpl.declare_unit,
+                fpl.declare_price,
+                fpl.declare_currency,
+                fpl.declare_currency_symbol,
+                fpl.source_country,
+                fpl.source_cargo,
+                fpl.exemption
+            FROM foreign_product_logistics fpl
+            WHERE fpl.is_deleted = false
+            AND fpl.sku_id IN (
+                SELECT sku_id FROM qualified_details
+                UNION
+                SELECT sku_id FROM has_bom
+            )
         )
         -- ========== 分支 1：无 BOM 或组合申报类型为 'combine' ==========
         SELECT
@@ -878,9 +902,8 @@
             fpl.source_cargo AS sourceCargo,
             fpl.exemption
         FROM qualified_details qd
-        LEFT JOIN foreign_product_logistics fpl
+        LEFT JOIN fpl_cache fpl
         ON fpl.sku_id = qd.sku_id
-        AND fpl.is_deleted = false
         WHERE (NOT EXISTS (SELECT 1 FROM has_bom hb WHERE hb.parent_sku_id = qd.sku_id)
         OR fpl.combination_declare_type IS DISTINCT FROM 'split')
         UNION ALL
@@ -909,14 +932,12 @@
             fpl_child.source_cargo AS sourceCargo,
             fpl_child.exemption
             FROM qualified_details qd
-            JOIN foreign_product_logistics fpl_parent
+            JOIN fpl_cache fpl_parent
             ON fpl_parent.sku_id = qd.sku_id
-            AND fpl_parent.is_deleted = false
             AND fpl_parent.combination_declare_type = 'split'
             JOIN has_bom hb ON hb.parent_sku_id = qd.sku_id
-            JOIN foreign_product_logistics fpl_child
+            JOIN fpl_cache fpl_child
             ON fpl_child.sku_id = hb.sku_id
-            AND fpl_child.is_deleted = false
         ) fmdd
         where
         ${params.sqlMap.default}
@@ -1010,7 +1031,19 @@
     <!-- 查询合并后头程报关单 -->
     <select id="listAfterPushFmDeclare"
             resultType="com.erp.model.tms.dto.TmsDeclareBillDTO$SourceDeliveryDetailDTO">
-        WITH carton_detail AS (
+        WITH target_packing_task AS (
+        -- 先锁定本次 ids 对应的已装箱 packing_task，避免 carton_detail 全表聚合
+        SELECT DISTINCT pt.id
+        FROM packing_task pt
+        INNER JOIN first_mile_delivery fmd
+        ON (pt.source_id = fmd.id OR pt.source_id = fmd.source_id) AND fmd.is_deleted = false AND fmd.declare_status = 'wait'
+        WHERE pt.is_deleted = false AND pt.packing_status = 'packed'
+        AND fmd.id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        ),
+        carton_detail AS (
         SELECT
         wc.packing_task_id,
         wc.box_no,
@@ -1025,6 +1058,7 @@
         AND COALESCE(wcd.pack_qty, 0) > 0
         WHERE wc.is_deleted = false
         AND wc.box_no IS NOT NULL
+        AND wc.packing_task_id IN (SELECT id FROM target_packing_task)
         GROUP BY wc.packing_task_id, wc.box_no, wcd.sku_id, wcd.sku_no, COALESCE(wcd.fn_sku, '')
         ),
         has_bom AS MATERIALIZED (
@@ -1047,6 +1081,15 @@
         WHERE fpbi.is_deleted = false
         AND fpbs.is_deleted = false
         AND fpbi.state = 4
+        AND EXISTS (SELECT 1 FROM carton_detail cd WHERE cd.sku_id = fpbs.parent_sku_id)
+        ),
+        fpl_cache AS MATERIALIZED (
+        -- foreign_product_logistics 是 FDW 外部表，原按行 nested-loop 远程扫描；
+        -- 这里一次性批量取回本次父件的申报类型（仅 split 判定用），改为本地 join。
+        SELECT fpl.sku_id, fpl.combination_declare_type
+        FROM foreign_product_logistics fpl
+        WHERE fpl.is_deleted = false
+        AND fpl.sku_id IN (SELECT sku_id FROM carton_detail)
         )
         SELECT * FROM (
         SELECT
@@ -1095,9 +1138,8 @@
         where fmdd.is_deleted= false and fmdd.fba_shipment_code != ''
         ) as fba on fba.main_id = fmd.id
         LEFT JOIN has_bom hb ON hb.parent_sku_id = cd.sku_id
-        LEFT JOIN foreign_product_logistics fpl_parent
+        LEFT JOIN fpl_cache fpl_parent
         ON fpl_parent.sku_id = cd.sku_id
-        AND fpl_parent.is_deleted = false
         where fmd.is_deleted = false and fmd.declare_status = 'wait' and fmd.id in
         <foreach collection="ids" item="id" open="(" separator="," close=")">
             #{id}
@@ -1150,9 +1192,8 @@
         where fmdd.is_deleted= false and fmdd.fba_shipment_code != ''
         ) as fba on fba.main_id = fmd.id
         INNER JOIN has_bom hb ON hb.parent_sku_id = cd.sku_id
-        INNER JOIN foreign_product_logistics fpl_parent
+        INNER JOIN fpl_cache fpl_parent
         ON fpl_parent.sku_id = cd.sku_id
-        AND fpl_parent.is_deleted = false
         AND fpl_parent.combination_declare_type = 'split'
         where fmd.is_deleted = false and fmd.declare_status = 'wait' and fmd.id in
         <foreach collection="ids" item="id" open="(" separator="," close=")">
@@ -1243,7 +1284,7 @@
         WHERE fmd.is_deleted = false AND fmd.declare_status = 'wait'
         AND (
         hb.sku_id IS NOT NULL                                             -- 拆分子件
-        OR fpl.combination_declare_type = 'combine'                          -- 组合但合并申报，保留父件
+        OR fpl.combination_declare_type IS DISTINCT FROM 'split'             -- 父件非拆分(combine/空值)，保留父件
         OR NOT EXISTS (SELECT 1 FROM has_bom hb2 WHERE hb2.parent_sku_id = cd.sku_id)  -- 无BOM，普通件
         )
         ) sn
