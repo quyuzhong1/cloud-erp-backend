@@ -28,6 +28,7 @@ import com.erp.model.dmp.dto.CfgFileParseFolderDTO;
 import com.erp.model.dmp.entity.CfgFileParseEntity;
 import com.erp.model.dmp.entity.CfgFileParseFileEntity;
 import com.erp.model.dmp.entity.CfgFileParseFolderEntity;
+import com.erp.model.dmp.entity.DictBasicEntity;
 import com.erp.model.dmp.enums.CfgFileParseFileTypeEnum;
 import com.erp.model.dmp.enums.CfgFileParseFolderAccountTypeEnum;
 import com.erp.model.dmp.enums.CfgFileParseFolderTypeEnum;
@@ -40,6 +41,7 @@ import com.erp.server.dmp.push.service.CommonService;
 import com.erp.server.dmp.service.CfgFileParseFileService;
 import com.erp.server.dmp.service.CfgFileParseFolderService;
 import com.erp.server.dmp.service.CfgFileParseService;
+import com.erp.server.dmp.service.DictBasicService;
 import com.erp.server.dmp.service.OperateLogService;
 import com.erp.server.dmp.service.ThirdWarehouseService;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -62,6 +64,8 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class CfgFileParseServiceImpl extends SuperServiceImpl<CfgFileParseMapper, CfgFileParseEntity> implements CfgFileParseService {
+    private static final String CFG_FILE_PARSE_FILE_BUSINESS_TYPE = "cfgFileParseFileBusinessType";
+
     @Resource
     private OperateLogService operateLogService;
     @Resource
@@ -80,6 +84,8 @@ public class CfgFileParseServiceImpl extends SuperServiceImpl<CfgFileParseMapper
     private CommonService commonService;
     @Resource
     private ThirdWarehouseService thirdWarehouseService;
+    @Resource
+    private DictBasicService dictBasicService;
 
     /**
      * 新增月结文件解析配置。
@@ -574,12 +580,16 @@ public class CfgFileParseServiceImpl extends SuperServiceImpl<CfgFileParseMapper
         if (CollUtil.isEmpty(list)) {
             return;
         }
+        Map<String, String> businessTypeNameMap = dictBasicService.getByKey(CFG_FILE_PARSE_FILE_BUSINESS_TYPE)
+                .stream()
+                .filter(item -> StringUtils.isNotBlank(item.getValue()))
+                .collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName, (first, second) -> first));
         list.forEach(item -> {
             item.setPeriodTypeName(CfgFileParsePeriodTypeEnum.getName(item.getPeriodType()));
             item.setFolderTypeName(CfgFileParseFolderTypeEnum.getName(item.getFolderType()));
             item.setDisabledName(Boolean.TRUE.equals(item.getDisabled()) ? "停用" : "启用");
             item.setTypeName(CfgFileParseFileTypeEnum.getName(item.getType()));
-            item.setBusinessTypeName(SourceTypeEnum.getName(item.getBusinessType()));
+            item.setBusinessTypeName(businessTypeNameMap.get(item.getBusinessType()));
         });
     }
 
