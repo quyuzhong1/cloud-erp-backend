@@ -377,15 +377,11 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                         operateLogService.addModuleOperateLog("三方仓出库异常，需人工至WEGO后台确认后手动取消，异常信息：" + dto.getAbnormalProblemReason(),
                                 ModuleTypeEnum.SO_B2C.getCode(), mainEntity.getId(), "出库异常");
                     } else {
-                        //异步取消海外仓订单（大臣拦截成功后会将销售订单更新为配货中）
-                        asyncService.asyncCancelThirdWarehouseOrder(mainEntity, dto.getAbnormalProblemReason());
-                        // WEGO 提交失败：触发拦截后直至WEGO确认取消，三方仓发货单 → 取消发货
-                        if (OmsPlatformEnum.WE_GO.getCode().equals(dto.getPlatform())
-                                && Objects.nonNull(thirdWarehouseDeliveryEntity)) {
-                            thirdWarehouseDeliveryEntity.setStatus(SoB2cWarehouseDeliveryStatusEnum.CANCEL_DELIVERY.getStatus());
-                            operateLogService.addModuleOperateLog("状态变更为取消发货", ModuleTypeEnum.THIRD_WAREHOUSE_DELIVERY.getCode(), thirdWarehouseDeliveryEntity.getId(), "状态变更");
-                            thirdWarehouseDeliveryService.updateById(thirdWarehouseDeliveryEntity);
-                        }
+                        //异步取消海外仓订单（拦截确认成功后会将销售订单更新为配货中；
+                        //若为WEGO"提交失败"场景，同样在拦截确认成功后才将三方仓发货单更新为取消发货，避免与异步结果时序不一致）
+                        ThirdWarehouseDeliveryEntity wegoDeliveryEntity = OmsPlatformEnum.WE_GO.getCode().equals(dto.getPlatform())
+                                ? thirdWarehouseDeliveryEntity : null;
+                        asyncService.asyncCancelThirdWarehouseOrder(mainEntity, dto.getAbnormalProblemReason(), wegoDeliveryEntity);
                     }
                 }
                 if (SoB2cBillStatusEnum.ENUM_DISUSE.getCode().equals(dto.getOrderStatus())) {
