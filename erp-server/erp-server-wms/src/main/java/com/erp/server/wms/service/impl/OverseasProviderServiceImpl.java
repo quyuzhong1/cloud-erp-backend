@@ -475,6 +475,15 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
     }
 
     @Override
+    public List<OverseasProviderDTO.ListThirdWarehouseDTO> listThirdWarehouse() {
+        List<OverseasProviderEntity> entities = list();
+        if (CollUtil.isEmpty(entities)) {
+            return Collections.emptyList();
+        }
+        return BeanUtil.copyToList(entities,OverseasProviderDTO.ListThirdWarehouseDTO.class);
+    }
+
+    @Override
     public OverseasProviderEntity getByPlatformCodeAndShortName(String sysType, String thirdShortName) {
         if(StringUtils.isBlank(sysType) || StringUtils.isBlank(thirdShortName)){
             return null;

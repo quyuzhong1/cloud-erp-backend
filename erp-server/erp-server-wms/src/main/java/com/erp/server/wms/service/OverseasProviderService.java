@@ -134,4 +134,6 @@ public interface OverseasProviderService extends SuperService<OverseasProviderEn
     String getOwnerCodeByAuthId(String authId);
 
     OverseasProviderEntity refreshToken(OverseasProviderEntity entity);
+
+    List<OverseasProviderDTO.ListThirdWarehouseDTO> listThirdWarehouse();
 }

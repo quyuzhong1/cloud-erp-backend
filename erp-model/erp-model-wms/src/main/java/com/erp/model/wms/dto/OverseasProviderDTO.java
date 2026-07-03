@@ -426,6 +426,10 @@ public class OverseasProviderDTO implements Serializable {
          */
         private String authStatusName;
         /**
+         * 账号
+         */
+        private String platformAccount;
+        /**
          * 授权时间
          */
         private LocalDateTime authTime;
@@ -517,5 +521,34 @@ public class OverseasProviderDTO implements Serializable {
          * 禁用状态
          */
         private Boolean disabled;
+    }
+
+    /**
+     * 修改
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListThirdWarehouseDTO {
+
+        /**
+         * id
+         */
+        private String id;
+        /**
+         * 三方仓编码
+         */
+        private String code;
+        /**
+         * 三方仓名称
+         */
+        private String name;
+        /**
+         * 仓库简称
+         */
+        private String shortName;
+        /**
+         * 平台账号
+         */
+        private String platformAccount;
     }
 }
