@@ -240,18 +240,6 @@ public class TmsB2BDeclareBillController extends BaseController {
         return success();
     }
 
-//    /**
-//     * 导出B2B报关单报关信息
-//     */
-//    @PostMapping("/exportDeclare")
-//    @LogAction(value = LogActionEnum.EXPORT, desc = "导出B2B报关单报关信息")
-//    @WebAdvanceQuery(handler = TmsB2BDeclareQueryHandler.class)
-//    public ApiResult<Object>exportDeclare(@RequestBody @Valid TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) throws IOException {
-//        pagingParamDTO.setType(SourceTypeEnum.B2B_DECLARE_BILL.getCode());
-//        tmsDeclareBillService.exportDeclare(pagingParamDTO,response);
-//        return success();
-//    }
-
     /**
      * 导出报关 - 多 sheet 版（报关单 + 合同；发票 / 装箱单 / 装箱明细 后续补充）
      *
@@ -260,10 +248,10 @@ public class TmsB2BDeclareBillController extends BaseController {
      */
     @PostMapping("/exportDeclare")
     @LogAction(value = LogActionEnum.EXPORT, desc = "多sheet导出B2B报关单报关信息")
-    @WebAdvanceQuery(handler = TmsFmDeclareQueryHandler.class)
+    @WebAdvanceQuery(handler = TmsB2BDeclareQueryHandler.class)
     public ApiResult<Object> exportDeclare(@RequestBody @Valid TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) throws IOException {
         pagingParamDTO.setType(SourceTypeEnum.B2B_DECLARE_BILL.getCode());
-        tmsDeclareBillService.exportDeclareMulti(pagingParamDTO, response);
+        tmsDeclareBillService.exportDeclare(pagingParamDTO, response);
         return success();
     }
 

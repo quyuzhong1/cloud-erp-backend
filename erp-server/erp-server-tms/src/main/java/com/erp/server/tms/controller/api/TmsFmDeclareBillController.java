@@ -19,8 +19,6 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.tms.entity.TmsDeclareBillEntity;
 import com.erp.model.tms.enums.DeclareStatusEnum;
-import com.erp.model.wms.enums.PackingTaskStatusEnum;
-import com.erp.model.wms.enums.WmsDeclareStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.tms.query.TmsFmDeclareQueryHandler;
 import com.erp.server.tms.service.TmsDeclareBillService;
@@ -213,25 +211,6 @@ public class TmsFmDeclareBillController extends BaseController {
     }
 
     /**
-     * 导出报关
-     */
-/*    @PostMapping("/exportDeclare")
-    @LogAction(value = LogActionEnum.EXPORT, desc = "导出头程报关单报关信息")
-    public ApiResult<Object>exportDeclare(@RequestBody @Valid TmsDeclareBillDTO.PagingParamDTO pagingParamDTO){
-        downloadTaskFeign.saveDownloadTask("头程报关单导出", EXPORT_TMS_TMS_FM_DECLARE_BILL_DECLARE.getCode(), pagingParamDTO);
-        return success();
-    }*/
-
-//    @PostMapping("/exportDeclareMulti")
-//    @LogAction(value = LogActionEnum.EXPORT, desc = "导出头程报关单报关信息")
-//    @WebAdvanceQuery(handler = TmsFmDeclareQueryHandler.class)
-//    public ApiResult<Object>exportDeclare(@RequestBody @Valid TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) throws IOException {
-//        pagingParamDTO.setType(SourceTypeEnum.FM_DECLARE_BILL.getCode());
-//        tmsDeclareBillService.exportDeclare(pagingParamDTO,response);
-//        return success();
-//    }
-
-    /**
      * 导出报关 - 多 sheet 版（报关单 + 合同；发票 / 装箱单 / 装箱明细 后续补充）
      *
      * <p>与 {@link #exportDeclare} 业务口径一致，仅产物形态不同：单条 → 含多 sheet 的 xlsx；多条 → ZIP 包，
@@ -242,7 +221,7 @@ public class TmsFmDeclareBillController extends BaseController {
     @WebAdvanceQuery(handler = TmsFmDeclareQueryHandler.class)
     public ApiResult<Object> exportDeclare(@RequestBody @Valid TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) throws IOException {
         pagingParamDTO.setType(SourceTypeEnum.FM_DECLARE_BILL.getCode());
-        tmsDeclareBillService.exportDeclareMulti(pagingParamDTO, response);
+        tmsDeclareBillService.exportDeclare(pagingParamDTO, response);
         return success();
     }
 

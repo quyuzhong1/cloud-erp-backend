@@ -1,7 +1,6 @@
 package com.erp.server.tms.service;
 
 import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -85,7 +84,6 @@ public interface TmsDeclareBillService extends SuperService<TmsDeclareBillEntity
 
     PagingVO<TmsDeclareBillDTO.PagingVO> export(PagingDTO<TmsDeclareBillDTO.PagingParamDTO> dto);
 
-    void exportDeclare(TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) throws IOException;
 
     /**
      * 多 sheet 报关单导出
@@ -101,7 +99,7 @@ public interface TmsDeclareBillService extends SuperService<TmsDeclareBillEntity
      * @param pagingParamDTO 查询参数
      * @param response       响应流
      */
-    void exportDeclareMulti(TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) throws IOException;
+    void exportDeclare(TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) throws IOException;
     /**
      * 更新备注
      * @author will
