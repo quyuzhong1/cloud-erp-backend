@@ -24,8 +24,17 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.math.BigDecimal;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +49,9 @@ public class MagaluService {
     private static final String SKU_LIST_PATH = "/seller/v1/portfolios/skus";
     private static final String ORDER_LIST_PATH = "/seller/v1/orders";
     private static final String SHIPPING_LABEL_PATH = "/seller/v1/logistics/shipping-labels";
+    private static final String DELIVERY_INVOICE_PATH = "/seller/v1/deliveries/{id}/invoices";
+    private static final String DELIVERY_INVOICE_UPDATE_PATH = "/seller/v1/deliveries/{id}/invoices/{key}";
+    private static final String DELIVERY_SHIPPING_PATH = "/seller/v1/deliveries/{id}/shippings";
     private static final int PAGE_SIZE = 100;
 
     @Resource
@@ -185,6 +197,53 @@ public class MagaluService {
         return JSON.parseObject(response);
     }
 
+    public JSONObject markDeliveryShipped(MagaluShopInfoDTO shopInfoDTO, String deliveryId,
+                                          String shippedAt, String estimatedDeliveryAt, String trackingNo) {
+        String path = DELIVERY_SHIPPING_PATH.replace("{id}", deliveryId);
+        String url = trimEndSlash(getApiBaseUrl(shopInfoDTO)) + path;
+        Map<String, Object> body = new HashMap<>(4);
+
+        Map<String, Object> channel = new HashMap<>(1);
+        channel.put("id", shopInfoDTO.getChannelId());
+        body.put("channel", channel);
+
+        Map<String, Object> dates = new HashMap<>(2);
+        dates.put("shipped_at", shippedAt);
+        dates.put("estimated_delivery_at", estimatedDeliveryAt);
+        body.put("dates", dates);
+
+        if (StringUtils.isNotBlank(trackingNo)) {
+            body.put("tracking_url", "https://www.track123.com/cn/track?trackNos=" + trackingNo);
+        }
+        String response = OkHttpUtils.doPostJson(url, body, buildApiHeaders(shopInfoDTO));
+        return parseResponseObject(response);
+    }
+
+    public JSONObject createDeliveryInvoice(MagaluShopInfoDTO shopInfoDTO, String deliveryId, BigDecimal amount,
+                                            String issuedAt, String issuer, String key, String xml) {
+        String path = DELIVERY_INVOICE_PATH.replace("{id}", deliveryId);
+        String url = trimEndSlash(getApiBaseUrl(shopInfoDTO)) + path;
+        String response = OkHttpUtils.doPostJson(url, buildDeliveryInvoiceBody(shopInfoDTO, amount, issuedAt, issuer, key, xml, true),
+                buildApiHeaders(shopInfoDTO));
+        return parseResponseObject(response);
+    }
+
+    public JSONObject updateDeliveryInvoice(MagaluShopInfoDTO shopInfoDTO, String deliveryId, String key,
+                                            BigDecimal amount, String issuedAt, String xml) {
+        String path = DELIVERY_INVOICE_UPDATE_PATH.replace("{id}", deliveryId).replace("{key}", key);
+        String url = trimEndSlash(getApiBaseUrl(shopInfoDTO)) + path;
+        String response = requestJson("PUT", url, buildDeliveryInvoiceBody(shopInfoDTO, amount, issuedAt, null, null, xml, false),
+                buildApiHeaders(shopInfoDTO));
+        return parseResponseObject(response);
+    }
+
+    public List<JSONObject> listDeliveryInvoices(MagaluShopInfoDTO shopInfoDTO, String deliveryId) {
+        String path = DELIVERY_INVOICE_PATH.replace("{id}", deliveryId);
+        String url = trimEndSlash(getApiBaseUrl(shopInfoDTO)) + path;
+        String response = OkHttpUtils.doGet(url, new HashMap<>(), buildApiHeaders(shopInfoDTO));
+        return parseDataList(response);
+    }
+
     private MagaluTokenDTO requestToken(String baseUrl, Map<String, Object> params, String action) {
         String url = trimEndSlash(baseUrl) + TOKEN_PATH;
         Map<String, String> headerMap = new HashMap<>(2);
@@ -197,6 +256,79 @@ public class MagaluService {
             throw new ServiceException("Magalu" + action + "失败,response=" + response);
         }
         return tokenDTO;
+    }
+
+    private Map<String, Object> buildDeliveryInvoiceBody(MagaluShopInfoDTO shopInfoDTO, BigDecimal amount,
+                                                         String issuedAt, String issuer, String key, String xml,
+                                                         boolean includeCreateFields) {
+        Map<String, Object> body = new HashMap<>(8);
+        body.put("amount", amount);
+        Map<String, Object> channel = new HashMap<>(2);
+        channel.put("id", shopInfoDTO.getChannelId());
+        channel.put("extras", Collections.emptyMap());
+        body.put("channel", channel);
+        body.put("issued_at", issuedAt);
+        body.put("xml", xml);
+        if (includeCreateFields) {
+            body.put("issuer", issuer);
+            body.put("key", key);
+        }
+        return body;
+    }
+
+    private JSONObject parseResponseObject(String response) {
+        if (StringUtils.isBlank(response)) {
+            return new JSONObject();
+        }
+        JSONObject jsonObject = JSON.parseObject(response);
+        if (jsonObject == null) {
+            return new JSONObject();
+        }
+        String slug = jsonObject.getString("slug");
+        String message = jsonObject.getString("message");
+        if (StringUtils.isNotBlank(slug) && StringUtils.isNotBlank(message)) {
+            throw new ServiceException("Magalu接口返回失败:" + message);
+        }
+        return jsonObject;
+    }
+
+    private String requestJson(String method, String url, Map<String, Object> body, Map<String, String> headers) {
+        HttpURLConnection connection = null;
+        try {
+            connection = (HttpURLConnection) new URL(url).openConnection();
+            connection.setRequestMethod(method);
+            connection.setConnectTimeout(10 * 1000);
+            connection.setReadTimeout(30 * 1000);
+            connection.setDoOutput(true);
+            connection.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+            if (headers != null) {
+                for (Map.Entry<String, String> entry : headers.entrySet()) {
+                    connection.setRequestProperty(entry.getKey(), entry.getValue());
+                }
+            }
+            byte[] payload = JSON.toJSONString(body).getBytes(StandardCharsets.UTF_8);
+            try (OutputStream outputStream = connection.getOutputStream()) {
+                outputStream.write(payload);
+            }
+            InputStream inputStream = connection.getResponseCode() >= 400 ? connection.getErrorStream() : connection.getInputStream();
+            if (inputStream == null) {
+                return "";
+            }
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
+                StringBuilder builder = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    builder.append(line);
+                }
+                return builder.toString();
+            }
+        } catch (Exception e) {
+            throw new ServiceException("Magalu接口请求失败:" + e.getMessage());
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
     }
 
     private List<JSONObject> parseSkuList(String response) {
