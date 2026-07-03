@@ -197,22 +197,20 @@ public class LogisticsReconServiceImpl
         if (list == null) {
             list = new ArrayList<>();
         }
-        if (CollUtil.isNotEmpty(list)) {
-            list.forEach(obj -> obj.setTabFlagName(LogisticsReconCheckStatusEnum.getName(obj.getTabFlag())));
-        }
-        // 不存在的状态补 0
-        List<String> existStatus = list.stream()
-                .map(LogisticsReconDTO.TabListDTO::getTabFlag)
-                .collect(Collectors.toList());
+        Map<String, Integer> countMap = list.stream()
+                .collect(Collectors.toMap(LogisticsReconDTO.TabListDTO::getTabFlag,
+                        LogisticsReconDTO.TabListDTO::getCount, Integer::sum));
+        List<LogisticsReconDTO.TabListDTO> result = new ArrayList<>();
+        int totalCount = LogisticsReconCheckStatusEnum.getStatusList().stream()
+                .mapToInt(status -> countMap.getOrDefault(status, 0))
+                .sum();
+        result.add(new LogisticsReconDTO.TabListDTO("all", "全部", totalCount));
         for (String status : LogisticsReconCheckStatusEnum.getStatusList()) {
-            if (!existStatus.contains(status)) {
-                list.add(new LogisticsReconDTO.TabListDTO(status,
-                        LogisticsReconCheckStatusEnum.getName(status), 0));
-            }
+            result.add(new LogisticsReconDTO.TabListDTO(status,
+                    LogisticsReconCheckStatusEnum.getName(status),
+                    countMap.getOrDefault(status, 0)));
         }
-        list.add(new LogisticsReconDTO.TabListDTO("all", "全部",
-                list.stream().mapToInt(LogisticsReconDTO.TabListDTO::getCount).sum()));
-        return list;
+        return result;
     }
 
     @Override
@@ -1692,6 +1690,9 @@ public class LogisticsReconServiceImpl
 
     // ============================== 合并 & 匹配 ==============================
 
+    /**
+     * 批量提交对账单自动匹配：校验主单状态 → 认领费用项（matching）→ 分片提交线程池异步执行。
+     */
     @Override
     public List<BatchResultDTO> batchMatch(LogisticsReconDTO.BatchMatchDTO dto) {
         // 异步：仅做校验 + 认领（置 matching）+ 提交线程池，立即返回；匹配结果异步写回 detail_sub
@@ -1776,6 +1777,9 @@ public class LogisticsReconServiceImpl
         }
     }
 
+    /**
+     * 对账单整批匹配（同步）：按 scopeSubIds 分片调用 {@link #doMatchSubsChunk}，单片失败仅回写该分片。
+     */
     @Override
     public void doMatchByMain(String mainId, List<String> scopeSubIds) {
         if (CollUtil.isEmpty(scopeSubIds)) {
@@ -1799,6 +1803,10 @@ public class LogisticsReconServiceImpl
         }
     }
 
+    /**
+     * 匹配单个费用项分片：加载 matching 状态的费用项 → 调用 {@link #executeReconMatch} →
+     * {@link #commitReconMatchResult} 回写关联与匹配状态。
+     */
     @Override
     public void doMatchSubsChunk(String mainId, List<String> detailSubIds) {
         if (CollUtil.isEmpty(detailSubIds)) {
@@ -1960,6 +1968,9 @@ public class LogisticsReconServiceImpl
         }
     }
 
+    /**
+     * 提交匹配结果（独立事务）：成功行写 ref 关联并置 matched，失败行置 failed + 原因。
+     */
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void commitReconMatchResult(String mainId, String matchType,

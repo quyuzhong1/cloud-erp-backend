@@ -512,14 +512,14 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         // 费用项统一查尾程发货；主单 type 在 handleImportData 按匹配到的费用单 entity 解析。
         List<TmsCfgCostEntity> cfgCostList = tmsCfgCostService.listByCostAttribution(DictCostAttributionEnum.LAST_MILE_DELIVERY.getCode());
         List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVos = batchListLogisticsBillByUniqueKey(paramMap);
-        List<String> logisticsBillDetailIdList = CollUtil.isEmpty(logisticsBillVos) ? Collections.emptyList()
-                : logisticsBillVos.stream()
+
+        List<String> logisticsBillDetailIdList = logisticsBillVos.stream()
                 .map(LogisticsBillDTO.LogisticsBillVo::getDetailId)
                 .filter(CharSequenceUtil::isNotBlank)
                 .distinct()
                 .collect(Collectors.toList());
         List<LogisticsBillCostEntity> logisticsBillCostList = batchListByLogisticsBillDetailIds(logisticsBillDetailIdList);
-        // listLogisticsBillByUniqueKey 未返回 logisticsBillCostId，须用已查到的费用单 id 预加载存量明细供 checkCategoryCurrency 使用。
+
         Map<String, List<TmsCostDetailEntity>> mainIdListMap = new HashMap<>();
         if (CollUtil.isNotEmpty(logisticsBillCostList)) {
             List<String> logisticsBillCostIdList = logisticsBillCostList.stream()
@@ -766,6 +766,9 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 .collect(Collectors.toList()));
     }
 
+    /**
+     * 收集手动/导入匹配行中用户实际填写的识别字段名（去重），用于按填写字段预查物流单。
+     */
     private List<String> collectProvidedIdentifyFields(List<LogisticsReconMatchDTO.MatchRowDTO> rows) {
         if (CollUtil.isEmpty(rows)) {
             return Collections.emptyList();
@@ -811,6 +814,9 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 .collect(Collectors.toList()));
     }
 
+    /**
+     * 校验物流单是否满足手动匹配提供的全部识别字段（填写几个字段则要求全部一致；platformCode 走专用匹配规则）。
+     */
     private boolean matchesProvidedIdentifyValues(Map<String, String> identifyValues, LogisticsBillDTO.LogisticsBillVo logisticsBillVo) {
         return identifyValues.entrySet().stream()
                 .filter(entry -> CharSequenceUtil.isNotBlank(entry.getKey()) && CharSequenceUtil.isNotBlank(entry.getValue()))
@@ -1215,6 +1221,10 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         return new ArrayList<>(confirmMap.values());
     }
 
+    /**
+     * 物流商对账匹配编排入口：预查 → 按识别号分组 → 复用导入匹配/分摊 → 落库 → 生成关联 ref。
+     * <p>分组结果会经 {@link #fanOutReconMatchResults} 展开为逐费用项（detailSubId）粒度，供对账回写。</p>
+     */
     @Override
     public List<LogisticsReconMatchDTO.MatchResultDTO> reconMatchAndGenerate(LogisticsReconMatchDTO.MatchContextDTO ctx) {
         List<LogisticsReconMatchDTO.MatchResultDTO> results = new ArrayList<>();
@@ -1471,6 +1481,9 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         return merged;
     }
 
+    /**
+     * 对账匹配落库（独立短事务），与 reconMatchAndGenerate 中的 Feign 预查询分离，避免长事务。
+     */
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void persistReconMatchImportData(List<LogisticsBillCostDTO.ImportDataDTO> importDataList,
@@ -1637,10 +1650,8 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
     }
 
     /**
-     * 从落库数据汇总命中/生成的物流费用单关联（用于对账关联关系表回写）。
-     */
-    /**
-     * 汇总本批匹配成功行涉及的物流费用单 id，一次性分批加载费用明细，避免逐行查库。
+     * 汇总本批匹配成功分组涉及的物流费用单 id，一次性分批加载费用明细（key = logistics_bill_cost.id），
+     * 供 {@link #buildReconBillRefs} 绑定 tms_cost_detail.id，避免逐行查库。
      */
     private Map<String, List<TmsCostDetailEntity>> buildReconBillRefCostDetailMap(
             Map<String, LogisticsBillCostDTO.ImportDataDTO> rowImportDataMap) {
@@ -1667,6 +1678,17 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         return batchLoadCostDetailByBillCostIds(new ArrayList<>(billCostIds));
     }
 
+    /**
+     * 构造对账关联 ref 列表，供 {@code LogisticsReconServiceImpl#writeReconMatchResult} 写入
+     * {@code logistics_recon_ref_logistics_bill}。
+     * <p>先汇总 handleImportData 产出的更新/新增费用单，再按合并行内每个费用项（detailSubId）× 每张费用单
+     * 生成一条 ref；实际类型费用明细按 cfgCostId 绑定 tmsCostDetailId。</p>
+     *
+     * @param row            合并后的对账匹配行（含全部费用项）
+     * @param importDataDTO  本分组匹配落库数据（更新/新增物流费用单）
+     * @param costDetailMap  预加载的费用明细，key = logistics_bill_cost.id
+     * @return 逐费用项粒度的关联 ref；无费用单或无费用项时返回空列表
+     */
     private List<LogisticsReconMatchDTO.BillRefDTO> buildReconBillRefs(LogisticsReconMatchDTO.MatchRowDTO row,
                                                                        LogisticsBillCostDTO.ImportDataDTO importDataDTO,
                                                                        List<TmsCfgCostEntity> cfgCostList,
