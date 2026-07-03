@@ -106,6 +106,8 @@ public class MagaluOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
         orderDTO.setPlatformOrderCreateTime(main.getPlatformCreateTime());
         orderDTO.setPlatformCode(main.getPlatformCode());
         orderDTO.setSellerOrderCode(main.getThirdCode());
+        orderDTO.setThirdSystem(MAGALU_PLATFORM);
+        orderDTO.setThirdCode(main.getThirdCode());
         orderDTO.setDictPlatform(MAGALU_PLATFORM);
         orderDTO.setShopId(main.getShopId());
         orderDTO.setInvalidStatus(main.getInvalidStatus());
@@ -126,7 +128,7 @@ public class MagaluOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
         orderDTO.setIsIntercept(false);
         orderDTO.setInterceptRemark("");
         orderDTO.setSourceType(SOURCE_TYPE_SO_B2C);
-        orderDTO.setSourceId(main.getPlatformCode());
+        orderDTO.setSourceId(main.getThirdCode());
         orderDTO.setSourceCode(main.getThirdCode());
         orderDTO.setAbnormalType("");
         orderDTO.setSyncKingdeeStatus("0");

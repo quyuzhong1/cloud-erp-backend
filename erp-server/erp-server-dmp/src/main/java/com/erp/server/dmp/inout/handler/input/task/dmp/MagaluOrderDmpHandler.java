@@ -65,7 +65,7 @@ public class MagaluOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                 Map<String, Object> row = baseRow(order);
                 String orderCode = stringValue(order.get("code"));
                 String deliveryId = stringValue(delivery.get("id"));
-                String platformCode = buildPlatformCode(orderCode, deliveryId);
+                String thirdCode = buildDeliveryUniqueCode(orderCode, deliveryId);
                 Map<String, Object> amounts = mapValue(order.get("amounts"));
                 Map<String, Object> deliveryAmounts = mapValue(delivery.get("amounts"));
                 Map<String, Object> shipping = mapValue(delivery.get("shipping"));
@@ -76,8 +76,8 @@ public class MagaluOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                 row.put("platformUpdateTime", parseTime(order.get("updated_at")));
                 row.put("sourcePlatform", MAGALU_PLATFORM);
                 row.put("sourceSystem", MAGALU_PLATFORM);
-                row.put("thirdCode", orderCode);
-                row.put("platformCode", platformCode);
+                row.put("thirdCode", thirdCode);
+                row.put("platformCode", orderCode);
                 row.put("invalidStatus", isCancel(order.get("status")));
                 row.put("isCancel", isCancel(order.get("status")));
                 row.put("orderStatus", convertOrderStatus(order.get("status")));
@@ -118,7 +118,7 @@ public class MagaluOrderDmpHandler extends DmpInputDbConvertDmpHandler {
             List<Map<String, Object>> deliveryList = listMap(order.get("deliveries"));
             for (Map<String, Object> delivery : deliveryList) {
                 String deliveryId = stringValue(delivery.get("id"));
-                String mainId = mainIdMap.get(buildPlatformCode(orderCode, deliveryId));
+                String mainId = mainIdMap.get(buildDeliveryUniqueCode(orderCode, deliveryId));
                 if (StringUtils.isBlank(mainId)) {
                     continue;
                 }
@@ -168,7 +168,7 @@ public class MagaluOrderDmpHandler extends DmpInputDbConvertDmpHandler {
             String orderCode = stringValue(order.get("code"));
             for (Map<String, Object> delivery : listMap(order.get("deliveries"))) {
                 String deliveryId = stringValue(delivery.get("id"));
-                String mainId = mainIdMap.get(buildPlatformCode(orderCode, deliveryId));
+                String mainId = mainIdMap.get(buildDeliveryUniqueCode(orderCode, deliveryId));
                 if (StringUtils.isBlank(mainId)) {
                     continue;
                 }
@@ -211,7 +211,7 @@ public class MagaluOrderDmpHandler extends DmpInputDbConvertDmpHandler {
             }
             for (BaseEntity entity : entry.getValue()) {
                 DmpSoInfoEntity soInfo = (DmpSoInfoEntity) entity;
-                result.put(soInfo.getPlatformCode(), soInfo.getId());
+                result.put(soInfo.getThirdCode(), soInfo.getId());
             }
         }
         return result;
@@ -231,7 +231,7 @@ public class MagaluOrderDmpHandler extends DmpInputDbConvertDmpHandler {
         return row;
     }
 
-    private String buildPlatformCode(String orderCode, String deliveryId) {
+    private String buildDeliveryUniqueCode(String orderCode, String deliveryId) {
         if (StringUtils.isBlank(deliveryId)) {
             return orderCode;
         }
