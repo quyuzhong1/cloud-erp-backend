@@ -466,6 +466,7 @@
             AND fpbh.is_deleted = false
             WHERE fpbi.is_deleted = false
             AND fpbs.is_deleted = false
+            AND fpbi.state = 4
         )
         -- ========== 分支 1：无 BOM 或组合申报类型为 'combine' ==========
         SELECT
