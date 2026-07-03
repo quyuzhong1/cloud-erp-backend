@@ -362,9 +362,9 @@ public class CfgFileParseServiceImpl extends SuperServiceImpl<CfgFileParseMapper
         Map<String, ShopInfoEntity> shopMap = buildShopMap(folderList);
         Map<String, ThirdWarehouseEntity> thirdWarehouseMap = buildThirdWarehouseMap(folderList);
         for (CfgFileParseFolderDTO.UpdateDTO item : folderList) {
-            if (CfgFileParseFolderAccountTypeEnum.SHOP.getCode().equals(item.getAccountType())) {
+            if (CfgFileParseFolderAccountTypeEnum.PLATFORM_SHOP.getCode().equals(item.getAccountType())) {
                 fillShopAccountInfo(item, shopMap);
-            } else if (CfgFileParseFolderAccountTypeEnum.THIRD_WAREHOUSE.getCode().equals(item.getAccountType())) {
+            } else if (CfgFileParseFolderAccountTypeEnum.PLATFORM_THIRD_WAREHOUSE.getCode().equals(item.getAccountType())) {
                 fillThirdWarehouseAccountInfo(item, thirdWarehouseMap);
             }
         }
@@ -377,7 +377,7 @@ public class CfgFileParseServiceImpl extends SuperServiceImpl<CfgFileParseMapper
      */
     private Map<String, ShopInfoEntity> buildShopMap(List<CfgFileParseFolderDTO.UpdateDTO> folderList) {
         List<String> shopIds = folderList.stream()
-                .filter(item -> CfgFileParseFolderAccountTypeEnum.SHOP.getCode().equals(item.getAccountType()))
+                .filter(item -> CfgFileParseFolderAccountTypeEnum.PLATFORM_SHOP.getCode().equals(item.getAccountType()))
                 .map(CfgFileParseFolderDTO.UpdateDTO::getAccountId)
                 .filter(StringUtils::isNotBlank)
                 .distinct()
@@ -417,7 +417,7 @@ public class CfgFileParseServiceImpl extends SuperServiceImpl<CfgFileParseMapper
      */
     private Map<String, ThirdWarehouseEntity> buildThirdWarehouseMap(List<CfgFileParseFolderDTO.UpdateDTO> folderList) {
         List<String> thirdWarehouseIds = folderList.stream()
-                .filter(item -> CfgFileParseFolderAccountTypeEnum.THIRD_WAREHOUSE.getCode().equals(item.getAccountType()))
+                .filter(item -> CfgFileParseFolderAccountTypeEnum.PLATFORM_THIRD_WAREHOUSE.getCode().equals(item.getAccountType()))
                 .map(CfgFileParseFolderDTO.UpdateDTO::getAccountId)
                 .filter(StringUtils::isNotBlank)
                 .distinct()

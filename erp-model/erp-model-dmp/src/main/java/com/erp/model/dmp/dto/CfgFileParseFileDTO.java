@@ -176,7 +176,6 @@ public class CfgFileParseFileDTO implements Serializable {
          * 枚举下拉：CfgFileParseFileTypeEnum，api=API，excel=Excel。
          */
         @NotBlank(message = "数据来源不能为空")
-        @StateEnumValue(clazz = CfgFileParseFileTypeEnum.class, message = "数据来源录入有误")
         @Size(max = 20, message = "数据来源最大长度不能超过20位")
         private String type;
         /**
@@ -192,7 +191,6 @@ public class CfgFileParseFileDTO implements Serializable {
         /**
          * 默认开始行，API 时为 0。
          */
-        @NotNull(message = "默认开始行不能为空")
         private Integer headerRow;
         /**
          * 排序号。
