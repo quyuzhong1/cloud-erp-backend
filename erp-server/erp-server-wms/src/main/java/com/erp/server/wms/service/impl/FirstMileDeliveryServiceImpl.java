@@ -154,6 +154,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     private MachineInfoService machineInfoService;
     @Resource
     private InventoryService inventoryService;
+    @Lazy
     @Resource
     private FbaShipmentService fbaShipmentService;
     @Resource
