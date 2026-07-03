@@ -883,8 +883,7 @@
         LEFT JOIN foreign_product_logistics fpl
         ON fpl.sku_id = qd.sku_id
         AND fpl.is_deleted = false
-        WHERE (NOT EXISTS (SELECT 1 FROM has_bom hb WHERE hb.parent_sku_id = qd.sku_id)
-        OR fpl.combination_declare_type = 'combine')
+        WHERE fpl.combination_declare_type = 'combine'
         UNION ALL
         -- ========== 分支 2：有 BOM 且组合申报类型为 'split' ==========
         SELECT
@@ -911,11 +910,14 @@
             fpl_child.source_cargo AS sourceCargo,
             fpl_child.exemption
             FROM qualified_details qd
+            JOIN foreign_product_logistics fpl_parent
+            ON fpl_parent.sku_id = qd.sku_id
+            AND fpl_parent.is_deleted = false
+            AND fpl_parent.combination_declare_type = 'split'
             JOIN has_bom hb ON hb.parent_sku_id = qd.sku_id
             JOIN foreign_product_logistics fpl_child
             ON fpl_child.sku_id = hb.sku_id
             AND fpl_child.is_deleted = false
-            AND fpl_child.combination_declare_type = 'split'
         ) fmdd
         where
         ${params.sqlMap.default}
