@@ -24,6 +24,7 @@ import com.sdk.wms.tongyou.dto.response.TongYouInboundResp;
 import com.sdk.wms.tongyou.dto.response.TongYouOutboundResp;
 import com.sdk.wms.tongyou.dto.response.TongYouQueryOutboundBillResp;
 import com.sdk.wms.tongyou.dto.response.TongYouQueryOutboundResp;
+import com.sdk.wms.tongyou.enums.TongYouOutboundStatusEnum;
 import com.sdk.wms.tongyou.service.TongYouService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -48,6 +49,8 @@ import java.util.Map;
 @Service
 @Validated
 public class TongYouHandlerServiceImpl extends AbstractThirdWarehouseHandler {
+    private static final String TONGYOU_ORDER_NOT_EXISTS = "订单不存在";
+    private static final String TONGYOU_ORDER_DELETED = "已删除";
 
     @Resource
     private TongYouService tongYouService;
@@ -299,7 +302,8 @@ public class TongYouHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     private boolean isCancelDeletedResult(String errorMsg) {
-        return containsAny(errorMsg, "订单不存在", "已删除");
+        // 通邮查询接口在已取消/已删除场景按文案返回，当前无独立错误码可用。
+        return containsAny(errorMsg, TONGYOU_ORDER_NOT_EXISTS, TONGYOU_ORDER_DELETED);
     }
 
     private String getCancelResultText(TongYouBaseResp<String> cancelResp) {
@@ -312,44 +316,11 @@ public class TongYouHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     private String getOutboundStatusText(String status) {
-        if (CharSequenceUtil.isBlank(status)) {
-            return "未知";
-        }
-        String statusName;
-        switch (status) {
-            case "0":
-                statusName = "草稿箱";
-                break;
-            case "1":
-                statusName = "待确认";
-                break;
-            case "2":
-                statusName = "待发货";
-                break;
-            case "3":
-                statusName = "已打包";
-                break;
-            case "4":
-                statusName = "已发货";
-                break;
-            case "5":
-                statusName = "审核不通过";
-                break;
-            case "6":
-                statusName = "已签收";
-                break;
-            default:
-                statusName = "";
-                break;
-        }
-        if (CharSequenceUtil.isBlank(statusName)) {
-            return status;
-        }
-        return CharSequenceUtil.format("{}({})", statusName, status);
+        return TongYouOutboundStatusEnum.getDisplayText(status);
     }
 
     private boolean isShippedOutboundStatus(String status) {
-        return CharSequenceUtil.equals(status, "4") || CharSequenceUtil.equals(status, "6");
+        return TongYouOutboundStatusEnum.isShippedStatus(status);
     }
 
     private boolean containsCancelOrder(Object result, String orderCode) {
