@@ -846,6 +846,7 @@
             AND fpbh.is_deleted = false
             WHERE fpbi.is_deleted = false
             AND fpbs.is_deleted = false
+            AND fpbi.state = 4
             AND EXISTS (
                 SELECT 1
                 FROM qualified_details qd
