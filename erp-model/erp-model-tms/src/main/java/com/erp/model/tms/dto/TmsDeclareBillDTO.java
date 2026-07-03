@@ -722,6 +722,7 @@ public class TmsDeclareBillDTO implements Serializable {
          * 运抵港
          */
         private String toPort;
+        private String toPortName;
 
         /**
          * 出境口岸
@@ -881,6 +882,8 @@ public class TmsDeclareBillDTO implements Serializable {
          * <p>多明细行币别不一致时，取首行币别并打印 warn 日志。</p>
          */
         private String currency;
+
+        private String currencyName;
 
         /**
          * 合同总值（保留 4 位小数）

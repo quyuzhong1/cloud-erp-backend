@@ -20,7 +20,9 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.ProductBomHistoryDTO;
@@ -40,6 +42,7 @@ import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.enums.WmsDeclareStatusEnum;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import com.erp.rpc.oms.feign.CustomerFeign;
+import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.plm.feign.ProductBomHistoryFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
@@ -85,6 +88,8 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
     private SoDeliveryNoticeFeign soDeliveryNoticeFeign;
     @Resource
     private CustomerFeign customerFeign;
+    @Resource
+    private SoInfoFeign soInfoFeign;
     @Resource
     private SysDictFeign sysDictFeign;
     @Resource
@@ -1977,6 +1982,7 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         if (CollUtil.isEmpty(productLogisticMap)) {
             return;
         }
+        Map<String, SoDetailEntity> b2bCustomerSoDetailMap = buildB2bCustomerSoDetailMap(entityMap.values());
         for (DeliveryDeclareDetailMidDTO.MergePreviewDTO data : list) {
             DeliveryDeclareDetailMidEntity entity = entityMap.get(data.getId());
             if (Objects.isNull(entity)) {
@@ -1991,10 +1997,75 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
             data.setDeclareElement(CharSequenceUtil.blankToDefault(productLogisticDTO.getDeclareElement(), ""));
             data.setUnit(CharSequenceUtil.blankToDefault(productLogisticDTO.getDeclareUnit(), ""));
             data.setUnitName(CharSequenceUtil.blankToDefault(productLogisticDTO.getDeclareUnitName(), ""));
-            if (!CharSequenceUtil.equals(data.getSourceType(), SourceTypeEnum.SO_DELIVERY_NOTICE.getCode())) {
+            SoDetailEntity soDetail = b2bCustomerSoDetailMap.get(buildSoDetailKey(entity));
+            if (Objects.nonNull(soDetail)) {
+                data.setUnitPrice(MathUtil.preferNonNull(soDetail.getTaxPrice(), soDetail.getPrice()));
+                data.setCurrency(soDetail.getCurrency());
+            } else {
                 data.setUnitPrice(productLogisticDTO.getPrice());
                 data.setCurrency(productLogisticDTO.getDeclareCurrency());
             }
         }
+    }
+
+    private Map<String, SoDetailEntity> buildB2bCustomerSoDetailMap(Collection<DeliveryDeclareDetailMidEntity> entityList) {
+        List<DeliveryDeclareDetailMidEntity> b2bEntityList = entityList.stream()
+                .filter(Objects::nonNull)
+                .filter(item -> CharSequenceUtil.equals(item.getSourceType(), SourceTypeEnum.SO_DELIVERY_NOTICE.getCode()))
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(b2bEntityList) || !isB2bCustomerReceiverForMergePreview(b2bEntityList)) {
+            return Collections.emptyMap();
+        }
+        List<String> businessIds = b2bEntityList.stream()
+                .map(DeliveryDeclareDetailMidEntity::getBusinessId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(businessIds)) {
+            return Collections.emptyMap();
+        }
+        List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByMainIds(businessIds);
+        if (CollUtil.isEmpty(soDetailList)) {
+            return Collections.emptyMap();
+        }
+        return soDetailList.stream()
+                .filter(Objects::nonNull)
+                .filter(item -> CharSequenceUtil.isNotBlank(item.getMainId()) && CharSequenceUtil.isNotBlank(item.getSkuId()))
+                .collect(Collectors.toMap(item -> buildSoDetailKey(item.getMainId(), item.getSkuId()),
+                        Function.identity(), (oldValue, newValue) -> oldValue));
+    }
+
+    private boolean isB2bCustomerReceiverForMergePreview(List<DeliveryDeclareDetailMidEntity> entityList) {
+        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList = entityList.stream()
+                .map(this::buildRuleMatchSourceDetailFromMid)
+                .collect(Collectors.toList());
+        String receiverType = cfgDeclareRuleService.resolveConsistentReceiverType(
+                SourceTypeEnum.B2B_DECLARE_BILL.getCode(),
+                sourceDetailList,
+                this::buildDeclareRuleMatchParamMap,
+                ApiError.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_RULE_NOT_FOUND_FOR_SOURCE,
+                ApiError.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_RECEIVER_TYPE_CONFLICT);
+        return CharSequenceUtil.equals(CfgDeclareRuleReceiverTypeEnum.BY_CUSTOMER.getCode(), receiverType);
+    }
+
+    private TmsDeclareBillDTO.SourceDeliveryDetailDTO buildRuleMatchSourceDetailFromMid(DeliveryDeclareDetailMidEntity entity) {
+        TmsDeclareBillDTO.SourceDeliveryDetailDTO detailDTO = new TmsDeclareBillDTO.SourceDeliveryDetailDTO();
+        detailDTO.setSourceId(entity.getSourceId());
+        detailDTO.setSourceCode(entity.getSourceCode());
+        detailDTO.setSourceType(entity.getSourceType());
+        detailDTO.setCountryId("");
+        detailDTO.setFromWarehouseId(entity.getFromWarehouseId());
+        detailDTO.setTransferWarehouseIds(entity.getTransferWarehouseIds());
+        detailDTO.setSalesOrgId(entity.getSalesOrgId());
+        return detailDTO;
+    }
+
+    private String buildSoDetailKey(DeliveryDeclareDetailMidEntity entity) {
+        return buildSoDetailKey(entity.getBusinessId(),
+                CharSequenceUtil.blankToDefault(entity.getParentSkuId(), entity.getSkuId()));
+    }
+
+    private String buildSoDetailKey(String businessId, String skuId) {
+        return CharSequenceUtil.blankToDefault(businessId, "") + "#" + CharSequenceUtil.blankToDefault(skuId, "");
     }
 }
