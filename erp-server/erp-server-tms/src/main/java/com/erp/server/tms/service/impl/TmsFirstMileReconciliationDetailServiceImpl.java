@@ -1644,10 +1644,10 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         List<TmsFirstMileReconciliationDetailDTO.ListDTO> viewDTOList = BeanMapperUtils.copyList(TmsFirstMileReconciliationDetailDTO.ListDTO.class, oldDetailList);
         // 补充基础信息
         this.fillDetailList(viewDTOList, currency, currencyView);
-        // 按分组Map<物流运单号, 当前明细数组>
+        // 按分组Map<来源单号, 当前明细数组>
         Map<String, List<TmsFirstMileReconciliationDetailDTO.ListDTO>> oldDbGroupMap = viewDTOList
                 .stream()
-                .collect(Collectors.groupingBy(TmsFirstMileReconciliationDetailDTO.ListDTO::getTransportNo));
+                .collect(Collectors.groupingBy(TmsFirstMileReconciliationDetailDTO.ListDTO::getRelationCode));
 
         //配置信息
         Map<String, CfgReconciliationFieldDTO.ErpFieldDropDownDTO> cfgErpFieldMap = cfgReconciliationFieldService.erpFieldList(Collections.singletonList(CfgReconciliationTypeEnum.FIRST_MILE.getCode()))
@@ -2110,16 +2110,16 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 .stream()
                 .collect(Collectors.groupingBy(CfgReconciliationFieldDTO.ErpFieldDropDownDTO::getSourceType));
         
-        Map<String, List<FirstMileReconciliationStandardExcelDTO>> transportNoMaps = successList.stream().collect(Collectors.groupingBy(FirstMileReconciliationStandardExcelDTO::getTransportNo));
+        Map<String, List<FirstMileReconciliationStandardExcelDTO>> sourceCodeMaps = successList.stream().collect(Collectors.groupingBy(FirstMileReconciliationStandardExcelDTO::getSourceCode));
         successList = new ArrayList<>();
-        Map<String, TmsFirstMileReconciliationDetailEntity> transportNoDetailMap = lambdaQuery().in(TmsFirstMileReconciliationDetailEntity::getTransportNo, transportNoMaps.keySet())
-        		.ne(TmsFirstMileReconciliationDetailEntity::getMainId, mainEntity.getId())
-        		.eq(TmsFirstMileReconciliationDetailEntity::getType, "actual").list()
-        		.stream().collect(Collectors.toMap(TmsFirstMileReconciliationDetailEntity::getTransportNo, t -> t , (t1 , t2) -> t1));
+        Map<String, TmsFirstMileReconciliationDetailEntity> sourceCodeDetailMap = lambdaQuery().in(TmsFirstMileReconciliationDetailEntity::getRelationCode, sourceCodeMaps.keySet())
+                .ne(TmsFirstMileReconciliationDetailEntity::getMainId, mainEntity.getId())
+                .eq(TmsFirstMileReconciliationDetailEntity::getType, "actual").list()
+                .stream().collect(Collectors.toMap(TmsFirstMileReconciliationDetailEntity::getRelationCode, t -> t , (t1 , t2) -> t1));
         
-        for(Map.Entry<String, List<FirstMileReconciliationStandardExcelDTO>> transportNoMap : transportNoMaps.entrySet()) {
-        	String key = transportNoMap.getKey();
-        	List<FirstMileReconciliationStandardExcelDTO> value = transportNoMap.getValue();
+        for(Map.Entry<String, List<FirstMileReconciliationStandardExcelDTO>> sourceCodeMap : sourceCodeMaps.entrySet()) {
+            String key = sourceCodeMap.getKey();
+            List<FirstMileReconciliationStandardExcelDTO> value = sourceCodeMap.getValue();
         	successList.addAll(value.stream().filter(v -> cfgErpFieldMap.get(v.getCostName()) == null).collect(Collectors.toList()));
         	Map<String, List<FirstMileReconciliationStandardExcelDTO>> dictMaps = value.stream().filter(v -> cfgErpFieldMap.get(v.getCostName()) != null).collect(Collectors.groupingBy(v -> cfgErpFieldMap.get(v.getCostName()).getSourceCodeValue()));
         	for(Map.Entry<String, List<FirstMileReconciliationStandardExcelDTO>> dictMap : dictMaps.entrySet()) {
@@ -2127,7 +2127,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         		List<FirstMileReconciliationStandardExcelDTO> dictList = dictMap.getValue();
         		String currency = dictList.get(0).getCurrency();
         		if(dictList.stream().allMatch(d -> currency.equals(d.getCurrency()))) {
-        			TmsFirstMileReconciliationDetailEntity tmsFirstMileReconciliationDetailEntity = transportNoDetailMap.get(key);
+                    TmsFirstMileReconciliationDetailEntity tmsFirstMileReconciliationDetailEntity = sourceCodeDetailMap.get(key);
         			boolean isValiDate = true;
         			if(tmsFirstMileReconciliationDetailEntity != null) {
         				String confirmedCurrency = "CNY";
@@ -2161,9 +2161,9 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         }
         for (FirstMileReconciliationStandardExcelDTO excelDTO : successList) {
             // 对应物流单
-            List<TmsFirstMileReconciliationDetailDTO.ListDTO> sourceDetailDTO = sourceLogisticList.stream().filter(e -> Objects.nonNull(e) && Objects.equals(excelDTO.getTransportNo(),e.getTransportNo())).collect(Collectors.toList());
+            List<TmsFirstMileReconciliationDetailDTO.ListDTO> sourceDetailDTO = sourceLogisticList.stream().filter(e -> Objects.nonNull(e) && Objects.equals(excelDTO.getSourceCode(),e.getRelationCode())).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(sourceDetailDTO)) {
-                excelDTO.setErrorMsg(CharSequenceUtil.format("未找到物流运单号【{}】的物流单", excelDTO.getTransportNo()));
+                excelDTO.setErrorMsg(CharSequenceUtil.format("未找到来源单号【{}】的物流单", excelDTO.getSourceCode()));
                 errorList.add(excelDTO);
                 continue;
             }
@@ -2171,9 +2171,9 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             List<TmsFirstMileReconciliationDetailEntity> detailEntityList = this.listBySourceIds(sourceIds, DetailReconciliationTypeEnum.ACTUAL.getCode(), mainEntity.getSupplierType(), mainEntity.getLogisticsSupplierId());
             detailEntityList = detailEntityList.stream().filter(e -> Objects.equals(e.getMainId(), mainEntity.getId())).collect(Collectors.toList());
             // 先从结果集获取
-            List<TmsFirstMileReconciliationDetailDTO.ListDTO> currentTrackNoList = resultMap.get(excelDTO.getTransportNo());
+            List<TmsFirstMileReconciliationDetailDTO.ListDTO> currentTrackNoList = resultMap.get(excelDTO.getSourceCode());
             if (null == currentTrackNoList) {
-                currentTrackNoList = oldDbGroupMap.get(excelDTO.getTransportNo());
+                currentTrackNoList = oldDbGroupMap.get(excelDTO.getSourceCode());
                 if (CollectionUtils.isEmpty(currentTrackNoList)) {
                     // 生成当前物流单的所有明细
                     List<TmsFirstMileReconciliationDetailEntity> finalDetailEntityList = detailEntityList;
@@ -2245,7 +2245,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 // 添加明细信息
                 actualListDTO.setUpdateList(new LinkedList<>(updateListMap.values()));
                 // 添加到当前结果
-                resultMap.put(excelDTO.getTransportNo(), Arrays.asList(estimatedListDTO, actualListDTO, diffListDTO));
+                resultMap.put(excelDTO.getSourceCode(), Arrays.asList(estimatedListDTO, actualListDTO, diffListDTO));
             }
         }
     }
