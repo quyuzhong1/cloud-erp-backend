@@ -1853,13 +1853,28 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         // 仅保留当前报关单中间表挂载的「来源单 + 箱号」，并按来源单 + 箱号去重：
         // 装箱来源是「按来源单查询整张来源单的箱子」，跨来源单同箱号或连接行重复时会多出箱数，
         // 这里收敛到当前报关单实际挂载的箱号。
-        Set<String> seenBoxKeySet = new HashSet<>();
-        return packingList.stream()
+        // 注意：头程(FM)装箱查询 boxDesc 是「每个装箱 SKU 一行」，同一箱有多个 SKU 时会返回多行，
+        // 单纯按箱去重只会保留首行导致装箱 SKU 不全；这里把同一箱的各行 boxDesc 聚合成完整装箱 SKU。
+        Map<String, TmsDeclareBillDTO.PackingDTO> boxRepMap = new LinkedHashMap<>();
+        Map<String, List<String>> boxDescMap = new LinkedHashMap<>();
+        packingList.stream()
                 .filter(Objects::nonNull)
                 .filter(item -> StringUtils.isNotBlank(item.getBoxNo()))
                 .filter(item -> matchesAnyDeclareBillMid(item, midsByBoxNo, declareBusinessBoxKeySet))
-                .filter(item -> seenBoxKeySet.add(buildPackingBoxKey(item)))
-                .collect(Collectors.toList());
+                .forEach(item -> {
+                    String boxKey = buildPackingBoxKey(item);
+                    boxRepMap.putIfAbsent(boxKey, item);
+                    if (StringUtils.isNotBlank(item.getBoxDesc())) {
+                        boxDescMap.computeIfAbsent(boxKey, k -> new ArrayList<>()).add(item.getBoxDesc());
+                    }
+                });
+        boxRepMap.forEach((boxKey, rep) -> {
+            List<String> boxDescList = boxDescMap.get(boxKey);
+            if (CollUtil.isNotEmpty(boxDescList)) {
+                rep.setBoxDesc(boxDescList.stream().distinct().collect(Collectors.joining(",")));
+            }
+        });
+        return new ArrayList<>(boxRepMap.values());
     }
 
     /**
