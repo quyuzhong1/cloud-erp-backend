@@ -1685,7 +1685,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         List<String> afterSaleIdList = dto.getOrderInfoDTOList().stream().map(AfterSaleDTO.OrderInfoDTO::getId).filter(ObjectUtil::isNotEmpty).collect(Collectors.toList());
         List<AfterSaleEntity> afterSaleEntityList = super.listByIds(afterSaleIdList);
         // 根据id和code分组
-        Map<String, AfterSaleEntity> afterSaleEntityMap = afterSaleEntityList.stream().collect(Collectors.toMap(AfterSaleEntity::getId, w -> w));
+        Map<String, AfterSaleEntity> afterSaleEntityMap = afterSaleEntityList.stream().collect(Collectors.toMap(AfterSaleEntity::getId, Function.identity(), (v1, v2) -> v1));
         // 查询售后进度记录
         List<AfterSaleProgressEntity> afterSaleProgressList = afterSaleProgressService.lambdaQuery()
                 .in(AfterSaleProgressEntity::getMainId, afterSaleIdList)
@@ -1727,7 +1727,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         }
         // 调用物流下单服务
         List<AfterSaleDTO.LogisticsOrderResultDTO> resultDTOList = logisticsOrderFeign.addBatch(entityList);
-        Map<String, AfterSaleDTO.LogisticsOrderResultDTO> resultDTOMap = resultDTOList.stream().collect(Collectors.toMap(AfterSaleDTO.LogisticsOrderResultDTO::getAfterSaleId, w -> w));
+        Map<String, AfterSaleDTO.LogisticsOrderResultDTO> resultDTOMap = resultDTOList.stream().collect(Collectors.toMap(AfterSaleDTO.LogisticsOrderResultDTO::getAfterSaleId, Function.identity(), (v1, v2) -> v1));
         // 更新运单号
         List<AfterSaleEntity> updateAfterSaleList = new ArrayList<>();
         List<AfterSaleProgressEntity> progressEntityList = new ArrayList<>();
@@ -1829,7 +1829,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 }
             }
         }
-        Map<String, AfterSaleEntity> apiMap = apiList.stream().collect(Collectors.toMap(AfterSaleEntity::getId, w -> w));
+        Map<String, AfterSaleEntity> apiMap = apiList.stream().collect(Collectors.toMap(AfterSaleEntity::getId, Function.identity(), (v1, v2) -> v1));
         if (CollectionUtils.isNotEmpty(apiList)) {
             List<String> codeList = apiList.stream().map(AfterSaleEntity::getCode).collect(Collectors.toList());
             List<AfterSaleDTO.LogisticsOrderResultDTO> resultDTOList = logisticsOrderFeign.batchCancel(codeList);
@@ -2011,11 +2011,13 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         // 查询面单信息
         List<DmpAttachmentEntity> attachmentList = attachmentService.list(new QueryWrapper<DmpAttachmentEntity>().lambda()
                 .in(DmpAttachmentEntity::getBusinessId, dto.getIds())
-                .eq(DmpAttachmentEntity::getType, "after_sale_label"));
+                .eq(DmpAttachmentEntity::getType, "after_sale_label")
+                .orderByDesc(DmpAttachmentEntity::getCreateTime));
         if (CollectionUtils.isEmpty(attachmentList)) {
             throw new ServiceException("无可打印的物流面单");
         }
-        Map<String, String> baseMap = attachmentList.stream().collect(Collectors.toMap(DmpAttachmentEntity::getBusinessId, DmpAttachmentEntity::getAttachUrl));
+        // 同一业务id可能存在多条面单记录，按创建时间倒序后保留最新一条
+        Map<String, String> baseMap = attachmentList.stream().collect(Collectors.toMap(DmpAttachmentEntity::getBusinessId, DmpAttachmentEntity::getAttachUrl, (v1, v2) -> v1));
         List<String> urlList = dto.getIds().stream().map(e -> baseMap.getOrDefault(e, null)).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
         try {
             return fileFeign.mergeFiles(urlList);
@@ -2038,7 +2040,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         List<AfterSaleDTO.LogisticsOrderResultDTO> resultDTOList = logisticsOrderFeign.batchGetLabel(logisticsLabelDTOS);
         log.info("调用TMS获取顺丰面单结束：{}", JSON.toJSONString(resultDTOList));
         List<AfterSaleEntity> afterSaleEntityList = super.listByIds(afterSaleIdList);
-        Map<String, AfterSaleEntity> afterSaleEntityMap = afterSaleEntityList.stream().collect(Collectors.toMap(AfterSaleEntity::getId, v -> v));
+        Map<String, AfterSaleEntity> afterSaleEntityMap = afterSaleEntityList.stream().collect(Collectors.toMap(AfterSaleEntity::getId, Function.identity(), (v1, v2) -> v1));
         List<BatchResultDTO> batchResultDTOList = new ArrayList<>();
         List<DmpAttachmentEntity> saveList = new ArrayList<>();
         for (AfterSaleDTO.LogisticsOrderResultDTO resultDTO : resultDTOList) {
