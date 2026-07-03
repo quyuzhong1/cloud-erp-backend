@@ -881,7 +881,8 @@
         LEFT JOIN foreign_product_logistics fpl
         ON fpl.sku_id = qd.sku_id
         AND fpl.is_deleted = false
-        WHERE fpl.combination_declare_type = 'combine'
+        WHERE (NOT EXISTS (SELECT 1 FROM has_bom hb WHERE hb.parent_sku_id = qd.sku_id)
+        OR fpl.combination_declare_type IS DISTINCT FROM 'split')
         UNION ALL
         -- ========== 分支 2：有 BOM 且组合申报类型为 'split' ==========
         SELECT
