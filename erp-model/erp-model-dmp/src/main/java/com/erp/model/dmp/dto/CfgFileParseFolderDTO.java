@@ -165,8 +165,6 @@ public class CfgFileParseFolderDTO implements Serializable {
          * 账号类型。
          * 枚举下拉：CfgFileParseFolderAccountTypeEnum，thirdWarehouse=三方仓账号，shop=店铺。
          */
-        @NotBlank(message = "账号类型不能为空")
-        @StateEnumValue(clazz = CfgFileParseFolderAccountTypeEnum.class, message = "账号类型录入有误")
         @Size(max = 20, message = "账号类型最大长度不能超过20位")
         private String accountType;
         /**
@@ -187,7 +185,6 @@ public class CfgFileParseFolderDTO implements Serializable {
         /**
          * 排序号。
          */
-        @NotNull(message = "排序号不能为空")
         private Integer sort;
     }
 }

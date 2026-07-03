@@ -12,8 +12,8 @@ import org.apache.commons.lang3.StringUtils;
  * @since 2026-06-29
  */
 public enum CfgFileParseFolderAccountTypeEnum implements EnumMessage {
-    THIRD_WAREHOUSE("thirdWarehouse", "三方仓账号"),
-    SHOP("shop", "店铺");
+    PLATFORM_THIRD_WAREHOUSE("platformThirdWarehouse", "三方仓账号"),
+    PLATFORM_SHOP("platformShop", "店铺");
 
     /**
      * 编码。
