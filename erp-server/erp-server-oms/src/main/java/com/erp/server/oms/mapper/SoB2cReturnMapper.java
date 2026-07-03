@@ -7,6 +7,7 @@ import com.erp.model.oms.dto.listAddDetailViewDTO;
 import com.erp.model.oms.entity.SoB2cReturnDetailEntity;
 import com.erp.model.oms.entity.SoB2cReturnEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.erp.model.oms.dto.SoReturnDTO;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -38,4 +39,12 @@ public interface SoB2cReturnMapper extends BaseMapper<SoB2cReturnEntity> {
     List<SoB2cReturnDTO.ReturnInstockDTO> selectReturnInstockPreview(@Param("detailIds") List<String> detailIds);
 
     List<SoDetailDTO.AddDetailView> listAddDetailView(@Param("dto") listAddDetailViewDTO dto);
+
+    /**
+     * 预入库-关联售后单：分页查询 B2C 售后单（so_b2c_return），按 sku 过滤
+     * @param query 分页
+     * @param params 过滤参数
+     * @return com.baomidou.mybatisplus.core.metadata.IPage<com.erp.model.oms.dto.SoReturnDTO.LinkAfterSaleView>
+     */
+    IPage<SoReturnDTO.LinkAfterSaleView> pagingLinkAfterSaleB2C(Page query, @Param("params") SoReturnDTO.LinkAfterSalePagingParam params);
 }

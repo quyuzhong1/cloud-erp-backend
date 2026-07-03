@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ThirdConstants;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.base.*;
@@ -39,7 +40,9 @@ import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.BillTypeEnum;
+import com.erp.model.oms.enums.SoB2cReturnReasonEnum;
 import com.erp.model.oms.enums.SoReturnChangeListTypeEnum;
+import com.erp.model.oms.enums.SoReturnInstockStatusEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -62,7 +65,9 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.*;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.convert.SoReturnConverter;
+import com.erp.server.oms.mapper.SoB2cReturnMapper;
 import com.erp.server.oms.mapper.SoReturnMapper;
+import com.erp.server.oms.query.LinkAfterSaleQueryContext;
 import com.erp.server.oms.query.SoReturnQueryHandler;
 import com.erp.server.oms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -163,6 +168,10 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     private RedisUtil redisUtil;
     @Resource
     private AuthDataFeign authDataFeign;
+    @Resource
+    private ShopInfoService shopInfoService;
+    @Resource
+    private SoB2cReturnMapper soB2cReturnMapper;
 
 
     @Override
@@ -225,6 +234,21 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
                 obj.setCustomerName(customerInfoEntity.getName());
                 Integer returnInStockQty = soReturnInstockDetailEntityList.stream().filter(detail -> obj.getDetailId().equals(detail.getSoReturnDetailId())  ).map(SoReturnInstockDetailEntity::getRealQty).reduce(MathUtil.ZERO, Integer::sum);
                 obj.setReturnInStockQty(returnInStockQty);
+                //入库状态：退货数量与实退入库数量比较
+                int inStockQty = returnInStockQty;
+                int returnQty = Objects.isNull(obj.getReturnQty()) ? MathUtil.ZERO : obj.getReturnQty();
+                SoReturnInstockStatusEnum instockStatusEnum;
+                if (inStockQty == 0) {
+                    instockStatusEnum = SoReturnInstockStatusEnum.NOT;
+                } else if (inStockQty < returnQty) {
+                    instockStatusEnum = SoReturnInstockStatusEnum.PARTIAL;
+                } else if (inStockQty == returnQty) {
+                    instockStatusEnum = SoReturnInstockStatusEnum.INSTOCKED;
+                } else {
+                    instockStatusEnum = SoReturnInstockStatusEnum.BEYOND;
+                }
+                obj.setInstockStatus(instockStatusEnum.getCode());
+                obj.setInstockStatusName(instockStatusEnum.getName());
 
                 //最新审核人
                 if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
@@ -234,6 +258,75 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
             });
         }
         return new PagingVO(pageData);
+    }
+
+    @Override
+    public PagingVO<SoReturnDTO.LinkAfterSaleView> pagingLinkAfterSale(PagingDTO<SoReturnDTO.LinkAfterSalePagingParam> dto) {
+        SoReturnDTO.LinkAfterSalePagingParam params = dto.getParams();
+        try {
+            Page<SoReturnDTO.LinkAfterSaleView> query = new Page<>(dto.getPage(), dto.getPageSize());
+            //单据类型经高级查询传入：优先取高级查询处理类写入的上下文，兜底扫描高级查询条件
+            String billType = resolveLinkAfterSaleBillType(params);
+            //售后单据类型分流：B2B 查 so_return，B2C 查 so_b2c_return
+            boolean isB2b = BillTypeEnum.B2B.getCode().equals(billType);
+            IPage<SoReturnDTO.LinkAfterSaleView> pageData = isB2b
+                    ? this.baseMapper.pagingLinkAfterSaleB2B(query, params)
+                    : soB2cReturnMapper.pagingLinkAfterSaleB2C(query, params);
+            List<SoReturnDTO.LinkAfterSaleView> records = pageData.getRecords();
+            if (CollectionUtils.isEmpty(records)) {
+                return new PagingVO<>(pageData);
+            }
+            //B2C 需要根据店铺 id 批量查询店铺名称（避免循环内单条查询）
+            Map<String, String> shopNameMap = Collections.emptyMap();
+            if (!isB2b) {
+                List<String> shopIds = records.stream().map(SoReturnDTO.LinkAfterSaleView::getShopId)
+                        .filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(shopIds)) {
+                    shopNameMap = shopInfoService.listByIds(shopIds).stream()
+                            .collect(Collectors.toMap(ShopInfoEntity::getId, ShopInfoEntity::getName, (a, b) -> a));
+                }
+            }
+            for (SoReturnDTO.LinkAfterSaleView view : records) {
+                view.setType(billType);
+                view.setTypeName(BillTypeEnum.getName(billType));
+                //退货类型名称：字典枚举优先，兜底原值
+                view.setReturnTypeName(CharSequenceUtil.blankToDefault(ReturnTypeEnum.getName(view.getReturnType()), view.getReturnType()));
+                //退货原因名称：先 ReturnReasonEnum，再 B2C 退货原因枚举，最后兜底原值
+                String reasonName = ReturnReasonEnum.getName(view.getReturnReason());
+                if (StringUtils.isBlank(reasonName)) {
+                    reasonName = CharSequenceUtil.blankToDefault(SoB2cReturnReasonEnum.getName(view.getReturnReason()), view.getReturnReason());
+                }
+                view.setReturnReasonName(reasonName);
+                if (!isB2b) {
+                    view.setPlatformName(PlatformDictEnum.getNameByCode(view.getPlatform()));
+                    view.setShopName(shopNameMap.get(view.getShopId()));
+                }
+            }
+            return new PagingVO<>(pageData);
+        } finally {
+            //清理高级查询处理类写入的上下文，避免线程复用脏值
+            LinkAfterSaleQueryContext.remove();
+        }
+    }
+
+    /**
+     * 解析关联售后单查询的单据类型：优先取高级查询处理类写入的上下文，兜底扫描高级查询条件中 type 字段（BillTypeEnum）。
+     * @param params 关联售后单分页入参
+     * @return java.lang.String 单据类型编码（B2B / B2C）
+     */
+    private String resolveLinkAfterSaleBillType(SoReturnDTO.LinkAfterSalePagingParam params) {
+        String billType = LinkAfterSaleQueryContext.getBillType();
+        if (StringUtils.isNotBlank(billType)) {
+            return billType;
+        }
+        if (params != null && CollectionUtils.isNotEmpty(params.getAdvanceQueryDTOList())) {
+            for (AdvanceQueryDTO advanceQueryDTO : params.getAdvanceQueryDTOList()) {
+                if ("type".equals(advanceQueryDTO.getField()) && advanceQueryDTO.getValue() != null) {
+                    return advanceQueryDTO.getValue().toString();
+                }
+            }
+        }
+        return params == null ? null : params.getType();
     }
 
     @Override
