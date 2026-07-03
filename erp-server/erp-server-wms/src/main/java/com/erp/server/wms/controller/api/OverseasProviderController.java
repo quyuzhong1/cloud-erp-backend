@@ -232,4 +232,12 @@ public class OverseasProviderController extends BaseController {
         List<OverseasProviderDTO.ListDTO> list = overseasProviderService.listAuthorizedThirdWarehouse();
         return success(list);
     }
+    /**
+     * 下拉方仓
+     */
+    @PostMapping("/listThirdWarehouse")
+    public ApiResult<List<OverseasProviderDTO.ListThirdWarehouseDTO>> listThirdWarehouse() {
+        List<OverseasProviderDTO.ListThirdWarehouseDTO> list = overseasProviderService.listThirdWarehouse();
+        return success(list);
+    }
 }
