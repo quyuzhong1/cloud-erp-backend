@@ -1236,6 +1236,7 @@
         LEFT JOIN foreign_product_bom_history fpbh
         ON fpbh.bom_id = fpbi.id AND fpbh.bom_version = fpbi.bom_version AND fpbh.is_deleted = false
         WHERE fpbi.is_deleted = false AND fpbs.is_deleted = false AND fpbi.state = 4
+        AND EXISTS (SELECT 1 FROM carton_detail cd WHERE cd.sku_id = fpbs.parent_sku_id)
         ),
         fm_business AS (               -- 业务id/业务单号统一算一次（口径同 listBeforePushFmDeclare）
         SELECT fmd.id AS fmd_id,
@@ -1250,6 +1251,13 @@
         INNER JOIN fba_shipment fs ON fmdd.fba_shipment_code = fs.code AND fs.is_deleted = false
         WHERE fmdd.is_deleted = false AND fmdd.fba_shipment_code != ''
         ) fba ON fba.main_id = fmd.id
+        ),
+        fpl_cache AS MATERIALIZED (
+        -- foreign_product_logistics 是 FDW 外部表，原按行远程扫描；批量取回父件申报类型（仅 split 判定用）
+        SELECT fpl.sku_id, fpl.combination_declare_type
+        FROM foreign_product_logistics fpl
+        WHERE fpl.is_deleted = false
+        AND fpl.sku_id IN (SELECT sku_id FROM carton_detail)
         )
         SELECT * FROM (
         SELECT
@@ -1278,8 +1286,8 @@
         AND pt.is_deleted = false AND pt.packing_status = 'packed'
         INNER JOIN carton_detail cd ON cd.packing_task_id = pt.id
         INNER JOIN fm_business b ON b.fmd_id = fmd.id
-        LEFT JOIN foreign_product_logistics fpl
-        ON fpl.sku_id = cd.sku_id AND fpl.is_deleted = false
+        LEFT JOIN fpl_cache fpl
+        ON fpl.sku_id = cd.sku_id
         -- 仅“拆分类型组合品”才展开成子件；其余不匹配 -> hb 为空 -> 保留原箱父件
         LEFT JOIN has_bom hb
         ON hb.parent_sku_id = cd.sku_id AND fpl.combination_declare_type = 'split'
