@@ -417,7 +417,8 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
                 || LogisticsPlatformEnum.TIK_TOK.getCode().equals(logisticsPlatform)
                 || LogisticsPlatformEnum.MERCADOLIBRE.getCode().equals(logisticsPlatform)
                 || LogisticsPlatformEnum.MERCADOLIBRE_LOCAL.getCode().equals(logisticsPlatform)
-                || LogisticsPlatformEnum.WILDBERRIES.getCode().equals(logisticsPlatform)){
+                || LogisticsPlatformEnum.WILDBERRIES.getCode().equals(logisticsPlatform)
+                || LogisticsPlatformEnum.MAGALU.getCode().equals(logisticsPlatform)){
             LogisticsService service = logisticsRegistry.getHandler(logisticsPlatform);
             return service.getLogisticsAuthConfigByShopId(shopId);
         }else {

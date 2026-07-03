@@ -691,6 +691,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 && !LogisticsPlatformEnum.MERCADOLIBRE_LOCAL.getCode().equals(logisticsPlatform)
                 && !LogisticsPlatformEnum.TIK_TOK_FULLY.getCode().equals(logisticsPlatform)
                 && !LogisticsPlatformEnum.WILDBERRIES.getCode().equals(logisticsPlatform)
+                && !LogisticsPlatformEnum.MAGALU.getCode().equals(logisticsPlatform)
                 && !LogisticsPlatformEnum.AMZ_MULTI_CHANNEL.getCode().equals(logisticsPlatform)) {
             throw new ServiceException(ApiError.LOGISTICS_SALES_CHANNEL_NOT_CONFIGURED, logisticsChannel.getName());
         }

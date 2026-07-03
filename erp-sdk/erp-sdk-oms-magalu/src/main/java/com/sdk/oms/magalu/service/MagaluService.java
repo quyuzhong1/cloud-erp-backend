@@ -39,6 +39,7 @@ public class MagaluService {
     private static final String TOKEN_PATH = "/oauth/token";
     private static final String SKU_LIST_PATH = "/seller/v1/portfolios/skus";
     private static final String ORDER_LIST_PATH = "/seller/v1/orders";
+    private static final String SHIPPING_LABEL_PATH = "/seller/v1/logistics/shipping-labels";
     private static final int PAGE_SIZE = 100;
 
     @Resource
@@ -157,6 +158,30 @@ public class MagaluService {
         path = path.replace("{code}", orderCode).replace("{id}", orderCode);
         String url = trimEndSlash(getApiBaseUrl(shopInfoDTO)) + addStartSlash(path);
         String response = OkHttpUtils.doGet(url, new HashMap<>(), buildApiHeaders(shopInfoDTO));
+        return JSON.parseObject(response);
+    }
+
+    public JSONObject createShippingLabel(MagaluShopInfoDTO shopInfoDTO, List<String> deliveryIdList, String format, String type) {
+        String url = trimEndSlash(getApiBaseUrl(shopInfoDTO)) + SHIPPING_LABEL_PATH;
+        Map<String, Object> body = new HashMap<>(4);
+        Map<String, Object> channel = new HashMap<>(1);
+        channel.put("id", shopInfoDTO.getChannelId());
+        body.put("channel", channel);
+
+        List<Map<String, Object>> deliveries = new ArrayList<>();
+        for (String deliveryId : deliveryIdList) {
+            Map<String, Object> delivery = new HashMap<>(1);
+            delivery.put("id", deliveryId);
+            deliveries.add(delivery);
+        }
+        body.put("deliveries", deliveries);
+
+        Map<String, Object> label = new HashMap<>(2);
+        label.put("format", StringUtils.defaultIfBlank(format, "pdf"));
+        label.put("type", StringUtils.defaultIfBlank(type, "full"));
+        body.put("label", label);
+
+        String response = OkHttpUtils.doPostJson(url, body, buildApiHeaders(shopInfoDTO));
         return JSON.parseObject(response);
     }
 
