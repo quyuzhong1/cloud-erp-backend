@@ -710,11 +710,13 @@ public class TmsDeclareBillDTO implements Serializable {
          * 贸易国
          */
         private String tradingArea;
+        private String tradingAreaName;
 
         /**
          * 运抵区
          */
         private String toArea;
+        private String toAreaName;
 
         /**
          * 运抵港
@@ -1041,6 +1043,11 @@ public class TmsDeclareBillDTO implements Serializable {
          * 总金额（保留 4 位小数）
          */
         private BigDecimal totalPrice;
+
+        /**
+         * SKU 编码，多个时用英文逗号分隔
+         */
+        private String skuNo;
     }
 
     /**

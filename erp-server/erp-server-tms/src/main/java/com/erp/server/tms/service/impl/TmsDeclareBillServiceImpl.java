@@ -94,6 +94,12 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.DataFormatter;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.ClassPathResource;
@@ -1403,15 +1409,30 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         List<String> sourceCountryIdList = allExportProductDetailList.stream().map(TmsDeclareBillDTO.ExportProductDetail::getSourceCountry).collect(Collectors.toList());
         List<DictCountryEntity> sourceCountryList = sysDictFeign.listCountryByIds(sourceCountryIdList);
         Map<String,String> sourceCountryMap = sourceCountryList.stream().collect(Collectors.toMap(DictCountryEntity::getId,DictCountryEntity::getNameCn,(v1,v2)->v1));
+        List<String> exportCountryIdList = list.stream()
+                .flatMap(e -> Arrays.asList(e.getTradingArea(), e.getToArea()).stream())
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, String> exportCountryNameMap = CollectionUtils.isEmpty(exportCountryIdList)
+                ? Collections.emptyMap()
+                : Optional.ofNullable(sysDictFeign.listCountryByIds(exportCountryIdList))
+                .orElse(Collections.emptyList())
+                .stream()
+                .collect(Collectors.toMap(DictCountryEntity::getId, DictCountryEntity::getNameCn, (v1, v2) -> v1));
 
         for (TmsDeclareBillDTO.ExportDTO exportDTO : list) {
+            String tradingAreaName = exportCountryNameMap.getOrDefault(exportDTO.getTradingArea(), exportDTO.getTradingArea());
+            String toAreaName = exportCountryNameMap.getOrDefault(exportDTO.getToArea(), exportDTO.getToArea());
+            exportDTO.setTradingAreaName(tradingAreaName);
+            exportDTO.setToAreaName(toAreaName);
             SysAccountingCompanyEntity senderCompanyEntity = allAccountingCompanyMap.get(exportDTO.getSenderId());
             if(Objects.nonNull(senderCompanyEntity)){
-                exportDTO.setSenderCode(senderCompanyEntity.getUsciCode()+"("+senderCompanyEntity.getCompanyHsCode()+")");
+                exportDTO.setSenderCode(senderCompanyEntity.getCode()+"("+senderCompanyEntity.getCompanyHsCode()+")");
             }
             SysAccountingCompanyEntity receiverCompanyEntity = allAccountingCompanyMap.get(exportDTO.getReceiverId());
             if(Objects.nonNull(receiverCompanyEntity)){
-                exportDTO.setReceiverCode(receiverCompanyEntity.getUsciCode()+"("+receiverCompanyEntity.getCompanyHsCode()+")");
+                exportDTO.setReceiverCode(receiverCompanyEntity.getCode()+"("+receiverCompanyEntity.getCompanyHsCode()+")");
             }
 
             LogisticsBillEntity logisticsBillEntity = logisticsBillEntityList.stream().filter(v->v.getOutstockCode().equals(exportDTO.getSourceCode())).findFirst().orElse(new LogisticsBillEntity());
@@ -2100,44 +2121,6 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
     @Override
     public void exportDeclare(TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) throws IOException {
-        pagingParamDTO.setExportDeclareStatus(Arrays.asList(DeclareStatusEnum.DECLARED.getCode(), DeclareStatusEnum.WAIT.getCode(), DeclareStatusEnum.CONFIRMED.getCode()));
-        List<TmsDeclareBillDTO.ExportDTO> list = baseMapper.exportDeclare(pagingParamDTO);
-        if(CollectionUtils.isEmpty(list)){
-            return;
-        }
-        fillExport(list);
-        String excelPath = "excel/declareExport.xlsx";
-        String name = "报关单导出";
-        //超过一行数据压缩成zip
-        if(list.size() == 1){
-            TmsDeclareBillDTO.ExportDTO exportDTO = list.get(0);
-            // 导出数据
-            StringBuffer sb = new StringBuffer();
-            String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-            sb.append(date).append(name);
-            try {
-                new ExcelPrintUtils().patchExport(exportDTO.getProductDetailList(),exportDTO, response, sb.toString(), excelPath);
-            } catch (Exception e) {
-                throw new ServiceException(ApiError.FILE_EXPORT_FAILED);
-            }
-        }else{
-            List<ExcelData> excelDataList = new ArrayList<>();
-            int temp = 1;
-            for (TmsDeclareBillDTO.ExportDTO exportDTO : list) {
-                ExcelData excelData = new ExcelData();
-                excelData.setData(exportDTO);
-                excelData.setDetailList(exportDTO.getProductDetailList());
-                excelData.setFilename("报关单"+exportDTO.getCode()+".xlsx");
-                excelDataList.add(excelData);
-                temp++;
-            }
-            ExcelPrintUtils.exportZipStream(excelDataList,response,excelPath,"报关单"+DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP));
-        }
-    }
-
-
-    @Override
-    public void exportDeclareMulti(TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) throws IOException {
         // 复用单 sheet 导出的状态过滤口径，保持业务边界一致
         pagingParamDTO.setExportDeclareStatus(Arrays.asList(DeclareStatusEnum.DECLARED.getCode(), DeclareStatusEnum.WAIT.getCode(), DeclareStatusEnum.CONFIRMED.getCode()));
         List<TmsDeclareBillDTO.ExportDTO> list = baseMapper.exportDeclare(pagingParamDTO);
@@ -2226,30 +2209,45 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 //                .collect(Collectors.toList());
         String type = list.stream().map(TmsDeclareBillDTO.ExportDTO::getType).filter(StringUtils::isNotBlank).findFirst().orElse("");
         List<String> allSourceCodeList = new ArrayList<>();
+        Map<String, List<String>> declareIdToPackingSourceCodesMap = new HashMap<>();
 
         if(Objects.equals(type,SourceTypeEnum.FM_DECLARE_BILL.getCode())){
             //获取头程发货单号
             List<String> collect = list.stream()
                     .map(TmsDeclareBillDTO.ExportDTO::getSourceCode)
                     .filter(StringUtils::isNotBlank)
+                    .flatMap(sourceCode -> splitCommaValues(sourceCode).stream())
                     .distinct()
                     .collect(Collectors.toList());
             List<FirstMileDeliveryEntity> firstMileDeliveryEntities = FeignQuery.create(FirstMileDeliveryEntity.class)
                     .in(FirstMileDeliveryEntity::getCode, collect)
                     .eq(FirstMileDeliveryEntity::getIsDeleted,false)
                     .list();
-            allSourceCodeList = firstMileDeliveryEntities.stream().map(FirstMileDeliveryEntity::getSourceCode).collect(Collectors.toList());
+            allSourceCodeList = firstMileDeliveryEntities.stream()
+                    .map(FirstMileDeliveryEntity::getSourceCode)
+                    .filter(StringUtils::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.toList());
 
             Map<String, String> firstMileDeliveryMap = firstMileDeliveryEntities.stream().collect(Collectors.toMap(e -> e.getCode(), e -> e.getSourceCode(), (o1, o2) -> o1));
             for (TmsDeclareBillDTO.ExportDTO exportDTO : list) {
-                exportDTO.setSourceCode(firstMileDeliveryMap.get(exportDTO.getSourceCode()));
+                List<String> packingSourceCodes = splitCommaValues(exportDTO.getSourceCode()).stream()
+                        .map(firstMileDeliveryMap::get)
+                        .filter(StringUtils::isNotBlank)
+                        .distinct()
+                        .collect(Collectors.toList());
+                declareIdToPackingSourceCodesMap.put(exportDTO.getId(), packingSourceCodes);
+                exportDTO.setSourceCode(CollUtil.isEmpty(packingSourceCodes) ? null : String.join(",", packingSourceCodes));
             }
         }else {
-            allSourceCodeList = list.stream()
-                .map(TmsDeclareBillDTO.ExportDTO::getSourceCode)
-                .filter(StringUtils::isNotBlank)
-                .distinct()
-                .collect(Collectors.toList());
+            for (TmsDeclareBillDTO.ExportDTO exportDTO : list) {
+                declareIdToPackingSourceCodesMap.put(exportDTO.getId(), splitCommaValues(exportDTO.getSourceCode()));
+            }
+            allSourceCodeList = declareIdToPackingSourceCodesMap.values().stream()
+                    .filter(CollUtil::isNotEmpty)
+                    .flatMap(Collection::stream)
+                    .distinct()
+                    .collect(Collectors.toList());
         }
 
         // sourceCode -> taskIdList，用于按 sourceCode 归集 cartonSpecView
@@ -2300,14 +2298,19 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
             // 装箱明细 sheet：按 sourceCode -> task -> carton -> SKU 三层展开
             List<WmsCartonSpecDTO.WmsCartonSpecView> currentViewList = Collections.emptyList();
-            List<String> currentTaskIdList = sourceCodeToTaskIdsMap.getOrDefault(exportDTO.getSourceCode(), Collections.emptyList());
+            List<String> currentTaskIdList = declareIdToPackingSourceCodesMap.getOrDefault(exportDTO.getId(), Collections.emptyList()).stream()
+                    .map(sourceCodeToTaskIdsMap::get)
+                    .filter(CollUtil::isNotEmpty)
+                    .flatMap(Collection::stream)
+                    .distinct()
+                    .collect(Collectors.toList());
             if (CollUtil.isNotEmpty(currentTaskIdList) && !taskIdToCartonViewMap.isEmpty()) {
                 currentViewList = currentTaskIdList.stream()
                         .map(taskIdToCartonViewMap::get)
                         .filter(Objects::nonNull)
                         .collect(Collectors.toList());
             }
-            exportDTO.setPackingDetailItemList(buildPackingDetailItemList(exportDTO.getSourceCode(), currentViewList, taskIdToSourceCodeMap));
+            exportDTO.setPackingDetailItemList(buildPackingDetailItemList(exportDTO.getBusinessCode(), currentViewList, taskIdToSourceCodeMap));
         }
     }
 
@@ -2577,6 +2580,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             item.setDeclareUnitName(Objects.toString(detail.getDeclareUnitName(), ""));
             item.setPrice(Objects.isNull(detail.getPrice()) ? BigDecimal.ZERO : detail.getPrice().setScale(MathUtil.scale, RoundingMode.HALF_UP));
             item.setTotalPrice(Objects.isNull(detail.getTotalPrice()) ? BigDecimal.ZERO : detail.getTotalPrice().setScale(MathUtil.scale, RoundingMode.HALF_UP));
+            item.setSkuNo(normalizeSkuNo(detail.getSkuNo()));
             return item;
         }).collect(Collectors.toList());
     }
@@ -2672,7 +2676,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
      * 单号优先取 view.sourceCode；为空时按 taskId 反查 packing_task.source_code，
      * 仍取不到时回退当前 ExportDTO.sourceCode，确保单元格不空。</p>
      */
-    private List<TmsDeclareBillDTO.PackingDetailItem> buildPackingDetailItemList(String fallbackSourceCode,
+    private List<TmsDeclareBillDTO.PackingDetailItem> buildPackingDetailItemList(String businessCode,
                                                                                  List<WmsCartonSpecDTO.WmsCartonSpecView> viewList,
                                                                                  Map<String, String> taskIdToSourceCodeMap) {
         if (CollectionUtils.isEmpty(viewList)) {
@@ -2683,21 +2687,22 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             if (Objects.isNull(view) || CollectionUtils.isEmpty(view.getWmsCartonList())) {
                 continue;
             }
-            String sourceCode = StringUtils.isNotBlank(view.getSourceCode())
-                    ? view.getSourceCode()
-                    : taskIdToSourceCodeMap.getOrDefault(view.getTaskId(), Objects.toString(fallbackSourceCode, ""));
             for (WmsCartonSpecDTO.ViewDTO carton : view.getWmsCartonList()) {
                 if (Objects.isNull(carton) || CollectionUtils.isEmpty(carton.getDetailList())) {
                     continue;
                 }
+                boolean firstDetailInCarton = true;
                 for (WmsCartonDetailDTO.ViewDTO detail : carton.getDetailList()) {
                     TmsDeclareBillDTO.PackingDetailItem item = new TmsDeclareBillDTO.PackingDetailItem();
-                    item.setSourceCode(sourceCode);
+                    item.setSourceCode(Objects.toString(businessCode, ""));
                     item.setBoxNo(carton.getBoxNo());
                     item.setSkuNo(Objects.toString(detail.getSkuNo(), ""));
                     item.setPackQty(detail.getPackQty());
-                    item.setGrossWeight(Objects.isNull(carton.getPackageWeight()) ? BigDecimal.ZERO : carton.getPackageWeight());
+                    item.setGrossWeight(firstDetailInCarton
+                            ? (Objects.isNull(carton.getPackageWeight()) ? BigDecimal.ZERO : carton.getPackageWeight())
+                            : null);
                     result.add(item);
+                    firstDetailInCarton = false;
                 }
             }
         }
@@ -2708,8 +2713,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
      * 金额转中文大写，含币别中文名前缀
      */
     private String toAmountUpper(String currencyName, BigDecimal amount) {
-        String chinese = Convert.digitToChinese(amount.doubleValue());
-        return StringUtils.isBlank(currencyName) ? chinese : currencyName + " " + chinese;
+        return Convert.digitToChinese(amount.doubleValue());
     }
 
     /**
@@ -2729,7 +2733,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             registerCommonConverters(excelWriter);
             fillMultiSheetForOne(excelWriter, exportDTO);
             excelWriter.finish();
-            xlsxBytes = entryOut.toByteArray();
+            xlsxBytes = normalizeDeclareSheet(entryOut.toByteArray(), exportDTO);
         } catch (Exception e) {
             log.error("多 sheet 报关单导出失败, 单号【{}】", exportDTO.getCode(), e);
             throw new ServiceException(ApiError.FILE_EXPORT_FAILED);
@@ -2768,7 +2772,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 registerCommonConverters(excelWriter);
                 fillMultiSheetForOne(excelWriter, exportDTO);
                 excelWriter.finish();
-                entryMap.put(declareCode, entryOut.toByteArray());
+                entryMap.put(declareCode, normalizeDeclareSheet(entryOut.toByteArray(), exportDTO));
             } catch (Exception e) {
                 failedCodes.add(declareCode);
                 log.error("多 sheet 报关单 ZIP 导出 - 单条渲染失败, 单号【{}】", declareCode, e);
@@ -2850,6 +2854,173 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     /**
      * 注册 EasyExcel 常用 Converter（与 ExcelPrintUtils 保持一致）
      */
+    /**
+     * 修正报关单 sheet 模板填充后的明细区结构。
+     *
+     * <p>sheet0 必须使用 forceNewRow 才能把 TOTAL 和页脚下推；EasyExcel 在此模板下会额外复制一行空白明细样式，
+     * 并且非首行的横向合并区域可能落到空白行。这里在内存 xlsx 写出前做一次局部清理。</p>
+     */
+    private byte[] normalizeDeclareSheet(byte[] xlsxBytes, TmsDeclareBillDTO.ExportDTO exportDTO) throws IOException {
+        int detailSize = CollectionUtils.isEmpty(exportDTO.getProductDetailList()) ? 0 : exportDTO.getProductDetailList().size();
+        try (XSSFWorkbook workbook = new XSSFWorkbook(new ByteArrayInputStream(xlsxBytes));
+             ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+            if (detailSize > 1) {
+                Sheet declareSheet = workbook.getSheetAt(0);
+                removeBlankDeclareDetailRows(declareSheet, detailSize);
+                mergeDeclareDetailRows(declareSheet, detailSize);
+                mergeInvoiceMarkNo(workbook.getSheetAt(2), detailSize);
+            }
+            int packingListDetailSize = Objects.isNull(exportDTO.getPackingListInfo())
+                    || CollectionUtils.isEmpty(exportDTO.getPackingListInfo().getItemList())
+                    ? 0
+                    : exportDTO.getPackingListInfo().getItemList().size();
+            if (packingListDetailSize > 1) {
+                Sheet packingListSheet = workbook.getSheetAt(3);
+                removeBlankPackingListDetailRows(packingListSheet, packingListDetailSize);
+                mergePackingListSummaryColumns(packingListSheet, packingListDetailSize);
+            }
+            workbook.write(outputStream);
+            return outputStream.toByteArray();
+        }
+    }
+
+    private void removeBlankDeclareDetailRows(Sheet sheet, int detailSize) {
+        int firstDetailRowIndex = 17;
+        int totalRowIndex = firstDetailRowIndex + detailSize;
+        while (totalRowIndex <= sheet.getLastRowNum()) {
+            Row row = sheet.getRow(totalRowIndex);
+            if (isDeclareTotalRow(row)) {
+                return;
+            }
+            if (!isBlankDeclareDetailStyleRow(row)) {
+                return;
+            }
+            removeMergedRegionsInRow(sheet, totalRowIndex);
+            removeRowAndShiftUp(sheet, totalRowIndex);
+        }
+    }
+
+    private void removeBlankPackingListDetailRows(Sheet sheet, int detailSize) {
+        int firstDetailRowIndex = 8;
+        int totalRowIndex = firstDetailRowIndex + detailSize;
+        while (totalRowIndex <= sheet.getLastRowNum()) {
+            Row row = sheet.getRow(totalRowIndex);
+            if (isPackingListTotalRow(row)) {
+                return;
+            }
+            if (!isBlankRow(row, 0, 5)) {
+                return;
+            }
+            removeMergedRegionsInRow(sheet, totalRowIndex);
+            removeRowAndShiftUp(sheet, totalRowIndex);
+        }
+    }
+
+    private boolean isDeclareTotalRow(Row row) {
+        if (Objects.isNull(row)) {
+            return false;
+        }
+        Cell firstCell = row.getCell(0);
+        String value = new DataFormatter().formatCellValue(firstCell);
+        return "TOTAL".equalsIgnoreCase(StringUtils.trim(value));
+    }
+
+    private boolean isPackingListTotalRow(Row row) {
+        if (Objects.isNull(row)) {
+            return false;
+        }
+        Cell firstCell = row.getCell(0);
+        String value = new DataFormatter().formatCellValue(firstCell);
+        return StringUtils.containsIgnoreCase(value, "TOTAL");
+    }
+
+    private boolean isBlankDeclareDetailStyleRow(Row row) {
+        return isBlankRow(row, 0, 18);
+    }
+
+    private boolean isBlankRow(Row row, int firstCol, int lastCol) {
+        if (Objects.isNull(row)) {
+            return false;
+        }
+        DataFormatter formatter = new DataFormatter();
+        for (int i = firstCol; i <= lastCol; i++) {
+            Cell cell = row.getCell(i);
+            if (StringUtils.isNotBlank(formatter.formatCellValue(cell))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private void removeRowAndShiftUp(Sheet sheet, int rowIndex) {
+        Row row = sheet.getRow(rowIndex);
+        if (Objects.nonNull(row)) {
+            sheet.removeRow(row);
+        }
+        int lastRowNum = sheet.getLastRowNum();
+        if (rowIndex < lastRowNum) {
+            sheet.shiftRows(rowIndex + 1, lastRowNum, -1, true, false);
+        }
+    }
+
+    private void mergeDeclareDetailRows(Sheet sheet, int detailSize) {
+        int firstDetailRowIndex = 17;
+        for (int rowIndex = firstDetailRowIndex; rowIndex < firstDetailRowIndex + detailSize; rowIndex++) {
+            addMergedRegionIfAbsent(sheet, rowIndex, 10, 11);
+            addMergedRegionIfAbsent(sheet, rowIndex, 13, 14);
+            addMergedRegionIfAbsent(sheet, rowIndex, 15, 16);
+            addMergedRegionIfAbsent(sheet, rowIndex, 17, 18);
+        }
+    }
+
+    private void mergeInvoiceMarkNo(Sheet sheet, int detailSize) {
+        int firstDetailRowIndex = 4;
+        int lastDetailRowIndex = firstDetailRowIndex + detailSize - 1;
+        replaceMergedRegion(sheet, firstDetailRowIndex, lastDetailRowIndex, 0, 0);
+    }
+
+    private void mergePackingListSummaryColumns(Sheet sheet, int detailSize) {
+        int firstDetailRowIndex = 8;
+        int lastDetailRowIndex = firstDetailRowIndex + detailSize - 1;
+        replaceMergedRegion(sheet, firstDetailRowIndex, lastDetailRowIndex, 0, 0);
+        replaceMergedRegion(sheet, firstDetailRowIndex, lastDetailRowIndex, 2, 2);
+        replaceMergedRegion(sheet, firstDetailRowIndex, lastDetailRowIndex, 4, 4);
+    }
+
+    private void addMergedRegionIfAbsent(Sheet sheet, int rowIndex, int firstCol, int lastCol) {
+        CellRangeAddress target = new CellRangeAddress(rowIndex, rowIndex, firstCol, lastCol);
+        for (CellRangeAddress mergedRegion : sheet.getMergedRegions()) {
+            if (mergedRegion.intersects(target)) {
+                return;
+            }
+        }
+        sheet.addMergedRegion(target);
+    }
+
+    private void replaceMergedRegion(Sheet sheet, int firstRow, int lastRow, int firstCol, int lastCol) {
+        CellRangeAddress target = new CellRangeAddress(firstRow, lastRow, firstCol, lastCol);
+        removeIntersectingMergedRegions(sheet, target);
+        sheet.addMergedRegion(target);
+    }
+
+    private void removeIntersectingMergedRegions(Sheet sheet, CellRangeAddress target) {
+        for (int i = sheet.getNumMergedRegions() - 1; i >= 0; i--) {
+            CellRangeAddress region = sheet.getMergedRegion(i);
+            if (region.intersects(target)) {
+                sheet.removeMergedRegion(i);
+            }
+        }
+    }
+
+    private void removeMergedRegionsInRow(Sheet sheet, int rowIndex) {
+        for (int i = sheet.getNumMergedRegions() - 1; i >= 0; i--) {
+            CellRangeAddress region = sheet.getMergedRegion(i);
+            if (region.getFirstRow() == rowIndex && region.getLastRow() == rowIndex) {
+                sheet.removeMergedRegion(i);
+            }
+        }
+    }
+
     private void registerCommonConverters(ExcelWriter excelWriter) {
         LocalDateTimeConverter dateTimeConverter = new LocalDateTimeConverter();
         excelWriter.writeContext().currentWriteHolder().converterMap()
@@ -4405,6 +4576,17 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 .filter(StringUtils::isNotBlank)
                 .sorted()
                 .collect(Collectors.joining(","));
+    }
+
+    private List<String> splitCommaValues(String value) {
+        if (StringUtils.isBlank(value)) {
+            return Collections.emptyList();
+        }
+        return Arrays.stream(value.split(","))
+                .map(StringUtils::trimToEmpty)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
     }
 
     /**
