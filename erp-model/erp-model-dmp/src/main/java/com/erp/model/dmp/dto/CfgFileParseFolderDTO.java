@@ -159,20 +159,17 @@ public class CfgFileParseFolderDTO implements Serializable {
         /**
          * 月结文件解析配置主表 ID。
          */
-        @Size(max = 19, message = "月结文件解析配置主表ID最大长度不能超过19位")
         private String mainId;
         /**
          * 账号类型。
          * 枚举下拉：CfgFileParseFolderAccountTypeEnum，thirdWarehouse=三方仓账号，shop=店铺。
          */
-        @Size(max = 20, message = "账号类型最大长度不能超过20位")
         private String accountType;
         /**
          * 账号或店铺 ID。
          * 联动下拉：accountType=thirdWarehouse 时选择三方仓账号，accountType=shop 时选择店铺；提交所选账号或店铺的 ID。
          */
         @NotBlank(message = "账号或店铺ID不能为空")
-        @Size(max = 19, message = "账号或店铺ID最大长度不能超过19位")
         private String accountId;
         /**
          * 账号或店铺编码。

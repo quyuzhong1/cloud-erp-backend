@@ -163,7 +163,6 @@ public class CfgFileParseFileDTO implements Serializable {
         /**
          * 月结文件解析配置主表 ID。
          */
-        @Size(max = 19, message = "月结文件解析配置主表ID最大长度不能超过19位")
         private String mainId;
         /**
          * 单据类型。
@@ -176,17 +175,14 @@ public class CfgFileParseFileDTO implements Serializable {
          * 枚举下拉：CfgFileParseFileTypeEnum，api=API，excel=Excel。
          */
         @NotBlank(message = "数据来源不能为空")
-        @Size(max = 20, message = "数据来源最大长度不能超过20位")
         private String type;
         /**
          * 识别名称，Excel 表格名称或 API 名称。
          */
-        @Size(max = 50, message = "识别名称最大长度不能超过50位")
         private String fileKeyword;
         /**
          * Excel sheet 名称，API 时可为空。
          */
-        @Size(max = 50, message = "Excel sheet名称最大长度不能超过50位")
         private String sheetName;
         /**
          * 默认开始行，API 时为 0。
