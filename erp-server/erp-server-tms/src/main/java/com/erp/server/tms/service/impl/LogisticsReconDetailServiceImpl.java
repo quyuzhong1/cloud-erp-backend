@@ -122,21 +122,20 @@ public class LogisticsReconDetailServiceImpl
         if (list == null) {
             list = new ArrayList<>();
         }
-        if (CollUtil.isNotEmpty(list)) {
-            list.forEach(obj -> obj.setTabFlagName(LogisticsReconDetailMatchStatusEnum.getName(obj.getTabFlag())));
-        }
-        List<String> existStatus = list.stream()
-                .map(LogisticsReconDetailDTO.TabListDTO::getTabFlag)
-                .collect(Collectors.toList());
+        Map<String, Integer> countMap = list.stream()
+                .collect(Collectors.toMap(LogisticsReconDetailDTO.TabListDTO::getTabFlag,
+                        LogisticsReconDetailDTO.TabListDTO::getCount, Integer::sum));
+        List<LogisticsReconDetailDTO.TabListDTO> result = new ArrayList<>();
+        int totalCount = LogisticsReconDetailMatchStatusEnum.getStatusList().stream()
+                .mapToInt(status -> countMap.getOrDefault(status, 0))
+                .sum();
+        result.add(new LogisticsReconDetailDTO.TabListDTO("all", "全部", totalCount));
         for (String status : LogisticsReconDetailMatchStatusEnum.getStatusList()) {
-            if (!existStatus.contains(status)) {
-                list.add(new LogisticsReconDetailDTO.TabListDTO(status,
-                        LogisticsReconDetailMatchStatusEnum.getName(status), 0));
-            }
+            result.add(new LogisticsReconDetailDTO.TabListDTO(status,
+                    LogisticsReconDetailMatchStatusEnum.getName(status),
+                    countMap.getOrDefault(status, 0)));
         }
-        list.add(new LogisticsReconDetailDTO.TabListDTO("all", "全部",
-                list.stream().mapToInt(LogisticsReconDetailDTO.TabListDTO::getCount).sum()));
-        return list;
+        return result;
     }
 
     @Override

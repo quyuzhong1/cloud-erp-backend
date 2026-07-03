@@ -197,22 +197,20 @@ public class LogisticsReconServiceImpl
         if (list == null) {
             list = new ArrayList<>();
         }
-        if (CollUtil.isNotEmpty(list)) {
-            list.forEach(obj -> obj.setTabFlagName(LogisticsReconCheckStatusEnum.getName(obj.getTabFlag())));
-        }
-        // 不存在的状态补 0
-        List<String> existStatus = list.stream()
-                .map(LogisticsReconDTO.TabListDTO::getTabFlag)
-                .collect(Collectors.toList());
+        Map<String, Integer> countMap = list.stream()
+                .collect(Collectors.toMap(LogisticsReconDTO.TabListDTO::getTabFlag,
+                        LogisticsReconDTO.TabListDTO::getCount, Integer::sum));
+        List<LogisticsReconDTO.TabListDTO> result = new ArrayList<>();
+        int totalCount = LogisticsReconCheckStatusEnum.getStatusList().stream()
+                .mapToInt(status -> countMap.getOrDefault(status, 0))
+                .sum();
+        result.add(new LogisticsReconDTO.TabListDTO("all", "全部", totalCount));
         for (String status : LogisticsReconCheckStatusEnum.getStatusList()) {
-            if (!existStatus.contains(status)) {
-                list.add(new LogisticsReconDTO.TabListDTO(status,
-                        LogisticsReconCheckStatusEnum.getName(status), 0));
-            }
+            result.add(new LogisticsReconDTO.TabListDTO(status,
+                    LogisticsReconCheckStatusEnum.getName(status),
+                    countMap.getOrDefault(status, 0)));
         }
-        list.add(new LogisticsReconDTO.TabListDTO("all", "全部",
-                list.stream().mapToInt(LogisticsReconDTO.TabListDTO::getCount).sum()));
-        return list;
+        return result;
     }
 
     @Override
@@ -2170,9 +2168,6 @@ public class LogisticsReconServiceImpl
         }
     }
 
-    /**
-     * 手动匹配（同步）：按用户填写的 ERP 单号覆盖识别字段，逐费用项调用 {@link #executeReconMatch} 并回写结果。
-     */
     @Override
     public List<BatchResultDTO> matchDetailSubsByErp(String mainId, List<LogisticsReconMatchDTO.SubErpInputDTO> inputs, String matchType) {
         List<BatchResultDTO> results = new ArrayList<>(inputs.size());
