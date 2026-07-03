@@ -297,14 +297,12 @@ public class CfgFileParseDTO implements Serializable {
          * 枚举下拉：CfgFileParsePeriodTypeEnum，当前仅支持 monthly=每月，默认 monthly。
          */
         @StateEnumValue(clazz = CfgFileParsePeriodTypeEnum.class, message = "清洗时间仅支持每月")
-        @Size(max = 20, message = "清洗时间最大长度不能超过20位")
         private String periodType;
         /**
          * 清洗仓库编码。
          * 下拉接口：/dmp/dmpBasicSystem/listDmpBasicSystem，提交 code。
          */
         @NotBlank(message = "清洗仓库编码不能为空")
-        @Size(max = 32, message = "清洗仓库编码最大长度不能超过32位")
         private String dictPlatform;
         /**
          * 清洗仓库名称。
@@ -316,7 +314,6 @@ public class CfgFileParseDTO implements Serializable {
          */
         @NotBlank(message = "文件夹类型不能为空")
         @StateEnumValue(clazz = CfgFileParseFolderTypeEnum.class, message = "文件夹类型录入有误")
-        @Size(max = 50, message = "文件夹类型最大长度不能超过50位")
         private String folderType;
         /**
          * 是否停用，false=启用，true=停用。
