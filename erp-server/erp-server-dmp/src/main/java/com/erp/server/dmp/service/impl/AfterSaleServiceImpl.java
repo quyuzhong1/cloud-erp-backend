@@ -72,6 +72,7 @@ import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.tms.feign.LogisticsOrderFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
+import com.erp.server.dmp.constant.DmpConstant;
 import com.erp.server.dmp.enums.AfterSaleStatusEnum;
 import com.erp.server.dmp.enums.OutboundTrackNoTypeEnum;
 import com.erp.server.dmp.mapper.AfterSaleMapper;
@@ -1193,7 +1194,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         Map<String, LogisticsOrderDTO.ListDTO> listDTOMap = dtoList.stream().collect(Collectors.toMap(LogisticsOrderDTO.ListDTO::getTrackNo, Function.identity(), (v1, v2) -> v1));
         // 查询附件信息
         List<String> idList = list.stream().map(AfterSaleDTO.ListDTO::getId).collect(Collectors.toList());
-        List<DmpAttachmentEntity> attachmentList = attachmentService.lambdaQuery().in(DmpAttachmentEntity::getBusinessId, idList).eq(DmpAttachmentEntity::getType, "after_sale_label").list();
+        List<DmpAttachmentEntity> attachmentList = attachmentService.lambdaQuery().in(DmpAttachmentEntity::getBusinessId, idList).eq(DmpAttachmentEntity::getType, DmpConstant.AFTER_SALE_LABEL).list();
         Map<String, DmpAttachmentEntity> attachmentMap = attachmentList.stream().collect(Collectors.toMap(DmpAttachmentEntity::getBusinessId, Function.identity(), (v1, v2) -> v1));
         // 查询国家信息
         List<String> countryIdList = dtoList.stream().map(LogisticsOrderDTO.ListDTO::getCountry).collect(Collectors.toList());
@@ -1805,7 +1806,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 .eq(AfterSaleProgressEntity::getNode, AfterSaleStatusEnum.TO_BE_SHIPPED.getCode())
                 .list();
         Map<String, AfterSaleProgressEntity> afterSaleProgressMap = afterSaleProgressList.stream().collect(Collectors.toMap(AfterSaleProgressEntity::getMainId, Function.identity(), (v1, v2) -> v1));
-        List<DmpAttachmentEntity> attachmentList = attachmentService.lambdaQuery().in(DmpAttachmentEntity::getBusinessId, afterSaleIdList).eq(DmpAttachmentEntity::getType, "after_sale_label").list();
+        List<DmpAttachmentEntity> attachmentList = attachmentService.lambdaQuery().in(DmpAttachmentEntity::getBusinessId, afterSaleIdList).eq(DmpAttachmentEntity::getType, DmpConstant.AFTER_SALE_LABEL).list();
         Map<String, DmpAttachmentEntity> attachmentMap = attachmentList.stream().collect(Collectors.toMap(DmpAttachmentEntity::getBusinessId, Function.identity(), (v1, v2) -> v1));
         // 筛选出单据类型不是API的
         List<AfterSaleEntity> manualList = list.stream().filter(item -> !OutboundTrackNoTypeEnum.API.getCode().equals(item.getType())).collect(Collectors.toList());
@@ -1890,14 +1891,14 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         if (!StringUtils.endsWithIgnoreCase(dto.getAttachName(), ".pdf")) {
             throw new ServiceException("仅支持上传PDF格式的文件");
         }
-        DmpAttachmentEntity attachmentEntity = attachmentService.lambdaQuery().eq(DmpAttachmentEntity::getBusinessId, dto.getId()).eq(DmpAttachmentEntity::getType, "after_sale_label").one();
+        DmpAttachmentEntity attachmentEntity = attachmentService.lambdaQuery().eq(DmpAttachmentEntity::getBusinessId, dto.getId()).eq(DmpAttachmentEntity::getType, DmpConstant.AFTER_SALE_LABEL).one();
         if (Objects.nonNull(attachmentEntity)) {
             attachmentService.removeById(attachmentEntity.getId());
         }
         DmpAttachmentEntity dmpAttachmentEntity = new DmpAttachmentEntity();
         dmpAttachmentEntity.setAttachName(dto.getAttachName());
         dmpAttachmentEntity.setAttachUrl(dto.getAttachUrl());
-        dmpAttachmentEntity.setType("after_sale_label");
+        dmpAttachmentEntity.setType(DmpConstant.AFTER_SALE_LABEL);
         dmpAttachmentEntity.setBusinessId(entity.getId());
         attachmentService.save(dmpAttachmentEntity);
         // 更新面单状态
@@ -1961,7 +1962,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         // 查询面单信息
         List<DmpAttachmentEntity> attachmentList = attachmentService.list(new QueryWrapper<DmpAttachmentEntity>().lambda()
                 .in(DmpAttachmentEntity::getBusinessId, dto.getIds())
-                .eq(DmpAttachmentEntity::getType, "after_sale_label"));
+                .eq(DmpAttachmentEntity::getType, DmpConstant.AFTER_SALE_LABEL));
         List<String> bussinessIdList = attachmentList.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getAttachUrl())).map(DmpAttachmentEntity::getBusinessId).distinct().collect(Collectors.toList());
         List<String> notPrintCodes = list.stream().filter(e -> !bussinessIdList.contains(e.getId())).map(AfterSaleDTO.OrderInfoDTO::getCode).distinct().collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(notPrintCodes)) {
@@ -2018,7 +2019,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         // 查询面单信息
         List<DmpAttachmentEntity> attachmentList = attachmentService.list(new QueryWrapper<DmpAttachmentEntity>().lambda()
                 .in(DmpAttachmentEntity::getBusinessId, dto.getIds())
-                .eq(DmpAttachmentEntity::getType, "after_sale_label")
+                .eq(DmpAttachmentEntity::getType, DmpConstant.AFTER_SALE_LABEL)
                 .orderByDesc(DmpAttachmentEntity::getCreateTime));
         if (CollectionUtils.isEmpty(attachmentList)) {
             throw new ServiceException("无可打印的物流面单");
@@ -2042,7 +2043,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         List<String> afterSaleIdList = logisticsLabelDTOS.stream().map(LogisticsOrderDTO.LogisticsLabelDTO::getAfterSaleId).collect(Collectors.toList());
         List<DmpAttachmentEntity> attachmentList = attachmentService.list(new QueryWrapper<DmpAttachmentEntity>().lambda()
                 .in(DmpAttachmentEntity::getBusinessId, afterSaleIdList)
-                .eq(DmpAttachmentEntity::getType, "after_sale_label"));
+                .eq(DmpAttachmentEntity::getType, DmpConstant.AFTER_SALE_LABEL));
         Map<String, DmpAttachmentEntity> attachmentMap = attachmentList.stream().collect(Collectors.toMap(DmpAttachmentEntity::getBusinessId, Function.identity(), (v1, v2) -> v1));
         List<AfterSaleDTO.LogisticsOrderResultDTO> resultDTOList = logisticsOrderFeign.batchGetLabel(logisticsLabelDTOS);
         log.info("调用TMS获取顺丰面单结束：{}", JSON.toJSONString(resultDTOList));
@@ -2058,7 +2059,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 }
                 DmpAttachmentEntity attachmentEntity = new DmpAttachmentEntity();
                 attachmentEntity.setBusinessId(resultDTO.getAfterSaleId());
-                attachmentEntity.setType("after_sale_label");
+                attachmentEntity.setType(DmpConstant.AFTER_SALE_LABEL);
                 attachmentEntity.setAttachName(resultDTO.getTrackNo() + ".pdf");
                 attachmentEntity.setAttachUrl(resultDTO.getUrl());
                 saveList.add(attachmentEntity);
