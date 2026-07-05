@@ -885,6 +885,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
         //查询单位名称
         List<BasicDictEntity> declareUnitList = FeignQuery.create(BasicDictEntity.class).eq(BasicDictEntity::getType, "declareUnit").list();
+        Map<String, String> declareUnitMap = declareUnitList.stream().collect(Collectors.toMap(BasicDictEntity::getValue, BasicDictEntity::getName, (v1, v2) -> v1));
+
         List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList = detailEntityList.stream().map(detailEntity -> {
             TmsDeclareBillDTO.MergeDeclareBillDetailDTO mergeDetailDTO = new TmsDeclareBillDTO.MergeDeclareBillDetailDTO();
             mergeDetailDTO.setId(detailEntity.getId());
@@ -895,10 +897,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             mergeDetailDTO.setDeclareElement(detailEntity.getDeclareElement());
             mergeDetailDTO.setUnit(detailEntity.getDeclareUnit());
             //报关单位名称
-            BasicDictEntity unitEntity = declareUnitList.stream().filter(v -> v.getValue().equals(mergeDetailDTO.getUnit())).findFirst().orElse(null);
-            if (Objects.nonNull(unitEntity)) {
-                mergeDetailDTO.setUnitName(unitEntity.getName());
-            }
+            mergeDetailDTO.setUnitName(declareUnitMap.getOrDefault(mergeDetailDTO.getUnit(), ""));
             mergeDetailDTO.setUnitPrice(Objects.isNull(detailEntity.getPrice()) ? BigDecimal.ZERO : detailEntity.getPrice());
             mergeDetailDTO.setQty(Objects.isNull(detailEntity.getQty()) ? 0 : detailEntity.getQty());
             if (Objects.nonNull(detailEntity.getPrice()) && Objects.nonNull(detailEntity.getQty())) {
