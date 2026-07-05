@@ -152,6 +152,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     private MachineInfoService machineInfoService;
     @Resource
     private InventoryService inventoryService;
+    @Lazy
     @Resource
     private FbaShipmentService fbaShipmentService;
     @Resource
@@ -914,9 +915,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             detailAddDto.setInWarehouseId(warehouseEntity.getId());
             detailAddDto.setInWarehouseLocation("");
             detailAddDto.setSourceDetailId(detailEntity.getId());
-            //如果是备货海外仓
-            if (FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode().equals(entity.getDemandType())
-            ||FbaDemandTypeEnum.DEMAND_ALIEXPRESS.getCode().equals(entity.getDemandType())) {
+            //如果是备货海外仓/FBS/速卖通
+            if (isOverseasInboundDemandType(entity.getDemandType())) {
                 //查询已下推的入库单获取入库单号
                 OverseasWarehouseInboundEntity overseasWarehouseInboundEntity = overseasWarehouseInboundEntities.stream()
                         .filter(req -> req.getSourceId().equals(entity.getId())
@@ -1254,9 +1254,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                     }
                 }
 
-                //如果是备货海外仓
-                if (FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode().equals(entity.getDemandType())
-                        || FbaDemandTypeEnum.DEMAND_ALIEXPRESS.getCode().equals(entity.getDemandType())) {
+                //如果是备货海外仓/FBS/速卖通
+                if (isOverseasInboundDemandType(entity.getDemandType())) {
                     //查询是否下推了入库单
                     OverseasWarehouseInboundEntity inboundEntity = overseasWarehouseInboundService.getBySourceId(entity.getId(), OverseasInstockStatusEnum.CANCELED.getCode());
                     if (ObjectUtil.isEmpty(inboundEntity)) {
@@ -1478,9 +1477,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             }
             detailAddDto.setInWarehouseLocation("");
             detailAddDto.setSourceDetailId(detailEntity.getId());
-            //如果是备货海外仓
-            if (FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode().equals(entity.getDemandType())
-            ||FbaDemandTypeEnum.DEMAND_ALIEXPRESS.getCode().equals(entity.getDemandType())) {
+            //如果是备货海外仓/FBS/速卖通
+            if (isOverseasInboundDemandType(entity.getDemandType())) {
                 //查询已下推的入库单获取入库单号
                 OverseasWarehouseInboundEntity overseasWarehouseInboundEntity = overseasWarehouseInboundEntities.stream()
                         .filter(req -> req.getSourceId().equals(entity.getId())
@@ -2266,6 +2264,12 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         return sonItemList;
     }
 
+    private boolean isOverseasInboundDemandType(String demandType) {
+        return FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode().equals(demandType)
+                || FbaDemandTypeEnum.DEMAND_FBS_WAREHOUSE.getCode().equals(demandType)
+                || FbaDemandTypeEnum.DEMAND_ALIEXPRESS.getCode().equals(demandType);
+    }
+
     @Override
     public OverseasWarehouseInboundDTO.ViewDTO getGenerateOverseasWarehouseInboundView(String id) {
         FirstMileDeliveryEntity entity = this.getById(id);
@@ -2273,9 +2277,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_NOT_FOUND);
         }
 
-        //只有备货类型等于备货海外仓时，才可以下推入库单，否则提示：只有备货海外仓的发货单允许下推入库单
-        if (!FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode().equals(entity.getDemandType())
-        && !FbaDemandTypeEnum.DEMAND_ALIEXPRESS.getCode().equals(entity.getDemandType())) {
+        //只有备货第三方仓/FBS/速卖通时，才可以下推入库单
+        if (!isOverseasInboundDemandType(entity.getDemandType())) {
             throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_ONLY_FOR_OVERSEAS_WAREHOUSE);
         }
 

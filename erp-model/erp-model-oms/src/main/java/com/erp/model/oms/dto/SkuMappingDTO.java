@@ -158,6 +158,11 @@ public class SkuMappingDTO implements Serializable {
 
         private String type;
 
+        /**
+         * 店铺Id（FBS发货计划等场景按店铺过滤平台SKU）
+         */
+        private String shopId;
+
     }
 
 
@@ -589,6 +594,11 @@ public class SkuMappingDTO implements Serializable {
          * 产品名称
          */
         private String productName;
+
+        /**
+         * 单箱数量（箱规）
+         */
+        private Integer boxQty;
 
         /**
          * 卖家sku no

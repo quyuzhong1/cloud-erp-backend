@@ -1998,7 +1998,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             BigDecimal taxRate = item.getTaxRate();
             BigDecimal price = item.getPrice();
             item.setPrice(price);
-            BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
             //汇率
             BigDecimal exchangeRate = item.getExchangeRate();
             if (Objects.isNull(exchangeRate)) {
@@ -2007,13 +2006,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             //销售单价(本位币)
             item.setCnyPrice(MathUtil.multiplyWithTwo(price, exchangeRate,4));
 
-            //含税单价=销售单价*（税率+1）
-            BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
-            //含税单价
-            BigDecimal taxPrice = MathUtil.multiplyWithTwo(price, multiplyTax,4);
+            // B2C 列表含税单价优先 tax_amount/实发数量；B2B 统一按不含税单价*(1+税率)，不读 tax_amount
+            BigDecimal taxPrice = resolvePagingTaxUnitPrice(price, taxRate, item.getTaxAmount(), item.getActualQty(), item.getOrderType());
             item.setTaxPrice(taxPrice);
             //含税单价(本位币)
-            item.setCnyTaxPrice(MathUtil.multiplyWithTwo(taxPrice, exchangeRate,4));
+            item.setCnyTaxPrice(resolvePagingCnyTaxUnitPrice(taxPrice, exchangeRate,
+                    item.getAllAmountLocalCurrency(), item.getActualQty(), item.getOrderType()));
             item.setCurrency(item.getCurrency());
             item.setCurrencySymbol(item.getCurrencySymbol());
 
@@ -2035,6 +2033,36 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             //最新审核人
             item.setApproveUserName(CharSequenceUtil.blankToDefault(approveNameMap.get(item.getId()),item.getApproveUserName()));
         }
+    }
+
+    /**
+     * 列表含税单价：B2C 优先价税合计/实发数量；B2B 统一不含税单价*(1+税率)，不读 tax_amount。
+     */
+    private BigDecimal resolvePagingTaxUnitPrice(BigDecimal price, BigDecimal taxRate, BigDecimal taxAmount,
+                                                 Integer actualQty, String orderType) {
+        if (BillTypeEnum.B2C.getCode().equals(orderType)
+                && Objects.nonNull(taxAmount) && Objects.nonNull(actualQty) && actualQty > 0
+                && taxAmount.compareTo(BigDecimal.ZERO) > 0) {
+            return MathUtil.divide(taxAmount, BigDecimal.valueOf(actualQty), 4);
+        }
+        if (Objects.isNull(price)) {
+            return BigDecimal.ZERO;
+        }
+        BigDecimal flagTaxRate = MathUtil.divide(Objects.nonNull(taxRate) ? taxRate : BigDecimal.ZERO, MathUtil.BigDecimal_100);
+        return MathUtil.getTaxValue(price, flagTaxRate, 4);
+    }
+
+    /**
+     * 列表含税单价(本位币)：B2C 优先价税合计本位币/实发数量；B2B 统一含税单价*汇率，不读 all_amount_local_currency。
+     */
+    private BigDecimal resolvePagingCnyTaxUnitPrice(BigDecimal taxPrice, BigDecimal exchangeRate,
+                                                    BigDecimal allAmountLocalCurrency, Integer actualQty, String orderType) {
+        if (BillTypeEnum.B2C.getCode().equals(orderType)
+                && Objects.nonNull(allAmountLocalCurrency) && Objects.nonNull(actualQty) && actualQty > 0
+                && allAmountLocalCurrency.compareTo(BigDecimal.ZERO) > 0) {
+            return MathUtil.divide(allAmountLocalCurrency, BigDecimal.valueOf(actualQty), 4);
+        }
+        return MathUtil.multiplyWithTwo(taxPrice, exchangeRate, 4);
     }
 
     /**

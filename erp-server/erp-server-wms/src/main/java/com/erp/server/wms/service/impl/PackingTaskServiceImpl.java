@@ -2245,6 +2245,8 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         String sourceType;
         if (FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode().equals(demandType)){
             sourceType =  PickingSourceTypeEnum.THIRD.getCode();
+        }else if (FbaDemandTypeEnum.DEMAND_FBS_WAREHOUSE.getCode().equals(demandType)){
+            sourceType = PickingSourceTypeEnum.FBS.getCode();
         }else if (FbaDemandTypeEnum.DEMAND_FBT_WAREHOUSE.getCode().equals(demandType)){
             sourceType = PickingSourceTypeEnum.FBT.getCode();
         }else if (FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode().equals(demandType)){
@@ -2576,6 +2578,8 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             sourceType =  PickingSourceTypeEnum.THIRD.getCode();
         }else if (RequisitionApplicationTypeEnum.FBA.getCode().equals(type)){
             sourceType = PickingSourceTypeEnum.FBA.getCode();
+        }else if (RequisitionApplicationTypeEnum.FBS.getCode().equals(type)){
+            sourceType = PickingSourceTypeEnum.FBS.getCode();
         }else if (RequisitionApplicationTypeEnum.FBT.getCode().equals(type)){
             sourceType = PickingSourceTypeEnum.FBT.getCode();
         }else if (RequisitionApplicationTypeEnum.AWD.getCode().equals(type)){
