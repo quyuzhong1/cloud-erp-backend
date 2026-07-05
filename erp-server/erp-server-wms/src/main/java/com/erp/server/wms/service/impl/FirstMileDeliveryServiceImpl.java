@@ -328,8 +328,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 .checkCfg(Boolean.TRUE)
                 .build();
         try {
-            FirstMileDeliveryService bean = ApplicationContextUtils.getBean(FirstMileDeliveryService.class);
-            bean.consumeDeclareAutoGenerateTask(dto);
+            self.consumeDeclareAutoGenerateTask(dto);
         } catch (Exception e) {
             log.error("头程发货单{}提交后发送自动生成报关明细任务失败：{}", entity.getCode(), e.getMessage(), e);
         }
