@@ -2,9 +2,11 @@ package com.erp.server.auth.controller.openapi;
 
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.dmp.dto.CfgFileParseOpenApiDTO;
 import com.erp.model.oms.dto.CustomerCreditApplyDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.tms.dto.ImportHistoryRecordDTO;
+import com.erp.rpc.dmp.feign.CfgFileParseFeign;
 import com.erp.rpc.oms.feign.CustomerCreditFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.tms.feign.ImprotHistoryRecordFeign;
@@ -30,6 +32,8 @@ public class RestCloudOpenApi {
     private SoInfoFeign soInfoFeign;
     @Resource
     private ImprotHistoryRecordFeign improtHistoryRecordFeign;
+    @Resource
+    private CfgFileParseFeign cfgFileParseFeign;
 
     @OpenApi("updateCustomerCredit")
     public ApiResult<String> updateCustomerCredit(@Valid CustomerCreditApplyDTO.UpdateStatusDTO dto) {
@@ -61,6 +65,17 @@ public class RestCloudOpenApi {
     @OpenApi("preprocessingImportExcel")
     public ApiResult<List<BatchResultDTO>>  preprocessingImportExcel(@Valid ImportHistoryRecordDTO.ImportDTO dto) {
         return improtHistoryRecordFeign.preprocessingImportExcel(dto);
+    }
+
+    /**
+     * 查询启用月结文件解析配置并生成文件夹路径。
+     *
+     * @param dto 查询参数
+     * @return 月结配置文件夹生成结果
+     */
+    @OpenApi("generateMonthlyFileParseFolders")
+    public ApiResult<List<CfgFileParseOpenApiDTO.ConfigDTO>> generateMonthlyFileParseFolders(@Valid CfgFileParseOpenApiDTO.QueryDTO dto) {
+        return cfgFileParseFeign.generateMonthlyFileParseFolders(dto);
     }
 
 }

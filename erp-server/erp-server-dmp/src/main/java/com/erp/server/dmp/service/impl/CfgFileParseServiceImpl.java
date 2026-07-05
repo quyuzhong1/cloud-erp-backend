@@ -25,6 +25,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.dmp.dto.CfgFileParseDTO;
 import com.erp.model.dmp.dto.CfgFileParseFileDTO;
 import com.erp.model.dmp.dto.CfgFileParseFolderDTO;
+import com.erp.model.dmp.dto.CfgFileParseOpenApiDTO;
 import com.erp.model.dmp.entity.CfgFileParseEntity;
 import com.erp.model.dmp.entity.CfgFileParseFileEntity;
 import com.erp.model.dmp.entity.CfgFileParseFolderEntity;
@@ -44,13 +45,17 @@ import com.erp.server.dmp.service.CfgFileParseService;
 import com.erp.server.dmp.service.DictBasicService;
 import com.erp.server.dmp.service.OperateLogService;
 import com.erp.server.dmp.service.ThirdWarehouseService;
-import io.seata.spring.annotation.GlobalTransactional;
+import com.erp.server.dmp.utils.RestCloudApiUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -65,6 +70,8 @@ import java.util.stream.Collectors;
 @Service
 public class CfgFileParseServiceImpl extends SuperServiceImpl<CfgFileParseMapper, CfgFileParseEntity> implements CfgFileParseService {
     private static final String CFG_FILE_PARSE_FILE_BUSINESS_TYPE = "cfgFileParseFileBusinessType";
+    private static final String GENERATE_MONTHLY_FILE_PARSE_FOLDERS_URL = "ods_erp/generateMonthlyFileParseFolders";
+    private static final DateTimeFormatter MONTH_FORMATTER = DateTimeFormatter.ofPattern("yyyy年MM月");
 
     @Resource
     private OperateLogService operateLogService;
@@ -92,7 +99,6 @@ public class CfgFileParseServiceImpl extends SuperServiceImpl<CfgFileParseMapper
      * @param dto 新增参数
      * @return 新增结果
      */
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(CfgFileParseDTO.AddDTO dto) {
@@ -110,6 +116,7 @@ public class CfgFileParseServiceImpl extends SuperServiceImpl<CfgFileParseMapper
         saveChildren(entity.getId(), dto.getFolderList(), dto.getFileList());
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", getUserName(), "月结文件解析配置", entity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_FILE_PARSE.getCode(), entity.getId(), "新增操作");
+        registerGenerateMonthlyFileParseFoldersAfterCommit(entity.getId());
         return new BaseResultDTO.AddDTO(entity.getId(), code);
     }
 
@@ -119,7 +126,6 @@ public class CfgFileParseServiceImpl extends SuperServiceImpl<CfgFileParseMapper
      * @return 是否成功
      */
     @DistributeLocker(keyName = "dto.getId()")
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(CfgFileParseDTO.UpdateDTO dto) {
@@ -140,6 +146,7 @@ public class CfgFileParseServiceImpl extends SuperServiceImpl<CfgFileParseMapper
         String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", getUserName(), old.getCode(), "月结文件解析配置");
         operateLogService.addModuleOperateLogByObj(old, entity, ModuleTypeEnum.CFG_FILE_PARSE.getCode(), entity.getId(),
                 msg);
+        registerGenerateMonthlyFileParseFoldersAfterCommit(entity.getId());
         return Boolean.TRUE;
     }
 
@@ -261,6 +268,43 @@ public class CfgFileParseServiceImpl extends SuperServiceImpl<CfgFileParseMapper
         data.setFolderList(queryFolderList(id));
         data.setFileList(queryFileList(id));
         return data;
+    }
+
+    /**
+     * 查询启用月结配置并生成文件夹路径。
+     *
+     * @param dto 查询参数
+     * @return 月结配置文件夹生成结果
+     */
+    @Override
+    public List<CfgFileParseOpenApiDTO.ConfigDTO> generateMonthlyFileParseFolders(CfgFileParseOpenApiDTO.QueryDTO dto) {
+        CfgFileParseOpenApiDTO.QueryDTO queryDTO = Optional.ofNullable(dto).orElse(new CfgFileParseOpenApiDTO.QueryDTO());
+        String month = StringUtils.isBlank(queryDTO.getMonth()) ? LocalDate.now().format(MONTH_FORMATTER) : queryDTO.getMonth();
+        List<CfgFileParseEntity> configList = lambdaQuery()
+                .eq(StringUtils.isNotBlank(queryDTO.getCfgFileParseId()), CfgFileParseEntity::getId, queryDTO.getCfgFileParseId())
+                .eq(CfgFileParseEntity::getDisabled, Boolean.FALSE)
+                .orderByDesc(CfgFileParseEntity::getCreateTime)
+                .list();
+        if (CollUtil.isEmpty(configList)) {
+            return Collections.emptyList();
+        }
+        List<String> mainIds = configList.stream().map(CfgFileParseEntity::getId).collect(Collectors.toList());
+        Map<String, List<CfgFileParseFolderEntity>> folderMap = cfgFileParseFolderService.lambdaQuery()
+                .in(CfgFileParseFolderEntity::getMainId, mainIds)
+                .orderByAsc(CfgFileParseFolderEntity::getSort)
+                .list()
+                .stream()
+                .collect(Collectors.groupingBy(CfgFileParseFolderEntity::getMainId));
+        Map<String, List<CfgFileParseFileEntity>> fileRuleMap = cfgFileParseFileService.lambdaQuery()
+                .in(CfgFileParseFileEntity::getMainId, mainIds)
+                .eq(CfgFileParseFileEntity::getType, CfgFileParseFileTypeEnum.EXCEL.getCode())
+                .orderByAsc(CfgFileParseFileEntity::getSort)
+                .list()
+                .stream()
+                .collect(Collectors.groupingBy(CfgFileParseFileEntity::getMainId));
+        return configList.stream()
+                .map(config -> buildOpenApiConfigDTO(config, month, folderMap.get(config.getId()), fileRuleMap.get(config.getId())))
+                .collect(Collectors.toList());
     }
 
 
@@ -558,6 +602,126 @@ public class CfgFileParseServiceImpl extends SuperServiceImpl<CfgFileParseMapper
                 .orderByAsc(CfgFileParseFileEntity::getSort)
                 .list();
         return BeanMapper.copyList(list, CfgFileParseFileDTO.UpdateDTO.class);
+    }
+
+    /**
+     * 组装 OpenAPI 月结配置返回对象。
+     *
+     * @param config 主配置
+     * @param month 文件夹年月
+     * @param folderList 文件夹配置
+     * @param fileRuleList Excel 文件规则
+     * @return OpenAPI 返回对象
+     */
+    private CfgFileParseOpenApiDTO.ConfigDTO buildOpenApiConfigDTO(CfgFileParseEntity config, String month,
+                                                                    List<CfgFileParseFolderEntity> folderList,
+                                                                    List<CfgFileParseFileEntity> fileRuleList) {
+        CfgFileParseOpenApiDTO.ConfigDTO dto = new CfgFileParseOpenApiDTO.ConfigDTO();
+        dto.setConfigId(config.getId());
+        dto.setConfigCode(config.getCode());
+        dto.setName(config.getName());
+        dto.setPeriodType(config.getPeriodType());
+        dto.setDictPlatform(config.getDictPlatform());
+        dto.setDictPlatformName(config.getDictPlatformName());
+        dto.setFolderType(config.getFolderType());
+        dto.setMonth(month);
+        dto.setFolderList(buildOpenApiFolderList(config, month, folderList));
+        dto.setFileRuleList(buildOpenApiFileRuleList(fileRuleList));
+        return dto;
+    }
+
+    /**
+     * 生成 OpenAPI 文件夹路径列表。
+     *
+     * @param config 主配置
+     * @param month 文件夹年月
+     * @param folderList 文件夹配置
+     * @return 文件夹路径列表
+     */
+    private List<CfgFileParseOpenApiDTO.FolderDTO> buildOpenApiFolderList(CfgFileParseEntity config, String month,
+                                                                           List<CfgFileParseFolderEntity> folderList) {
+        if (CollUtil.isEmpty(folderList)) {
+            return Collections.emptyList();
+        }
+        return folderList.stream().map(folder -> {
+            CfgFileParseOpenApiDTO.FolderDTO dto = new CfgFileParseOpenApiDTO.FolderDTO();
+            dto.setAccountType(folder.getAccountType());
+            dto.setAccountId(folder.getAccountId());
+            dto.setAccountCode(folder.getAccountCode());
+            dto.setAccountName(folder.getAccountName());
+            dto.setSort(folder.getSort());
+            dto.setFolderPath(buildFolderPath(month, config.getDictPlatformName(), folder.getAccountName(), folder.getAccountCode()));
+            return dto;
+        }).collect(Collectors.toList());
+    }
+
+    /**
+     * 生成文件夹路径，规则：{month}/{dictPlatformName}/{accountName}&&{accountCode}。
+     *
+     * @param month 文件夹年月
+     * @param dictPlatformName 清洗仓库/平台名称
+     * @param accountName 账号或店铺名称
+     * @param accountCode 账号或店铺编码
+     * @return 文件夹路径
+     */
+    private String buildFolderPath(String month, String dictPlatformName, String accountName, String accountCode) {
+        return String.join("/",
+                StringUtils.defaultString(month),
+                StringUtils.defaultString(dictPlatformName),
+                StringUtils.defaultString(accountName) + "&&" + StringUtils.defaultString(accountCode));
+    }
+
+    /**
+     * 组装 Excel 文件识别规则列表。
+     *
+     * @param fileRuleList 文件规则
+     * @return Excel 文件识别规则列表
+     */
+    private List<CfgFileParseOpenApiDTO.FileRuleDTO> buildOpenApiFileRuleList(List<CfgFileParseFileEntity> fileRuleList) {
+        if (CollUtil.isEmpty(fileRuleList)) {
+            return Collections.emptyList();
+        }
+        return fileRuleList.stream().map(fileRule -> {
+            CfgFileParseOpenApiDTO.FileRuleDTO dto = new CfgFileParseOpenApiDTO.FileRuleDTO();
+            dto.setBusinessType(fileRule.getBusinessType());
+            dto.setType(fileRule.getType());
+            dto.setFileKeyword(fileRule.getFileKeyword());
+            dto.setSheetName(fileRule.getSheetName());
+            dto.setHeaderRow(fileRule.getHeaderRow());
+            dto.setSort(fileRule.getSort());
+            return dto;
+        }).collect(Collectors.toList());
+    }
+
+    /**
+     * 新增提交成功后通知 RestCloud 生成当前配置的月结文件夹。
+     *
+     * @param cfgFileParseId 月结文件解析配置 ID
+     */
+    @Override
+    public void registerGenerateMonthlyFileParseFoldersAfterCommit(String cfgFileParseId) {
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                @Override
+                public void afterCommit() {
+                    requestGenerateMonthlyFileParseFolders(cfgFileParseId);
+                }
+            });
+            return;
+        }
+        requestGenerateMonthlyFileParseFolders(cfgFileParseId);
+    }
+
+    /**
+     * 调用 RestCloud 生成月结文件夹。
+     *
+     * @param cfgFileParseId 月结文件解析配置 ID
+     */
+    private void requestGenerateMonthlyFileParseFolders(String cfgFileParseId) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("cfgFileParseId", cfgFileParseId);
+        params.put("data", Arrays.asList(cfgFileParseId));
+        RestCloudApiUtil.syncRequestRestCloud(GENERATE_MONTHLY_FILE_PARSE_FOLDERS_URL, params);
     }
 
     /**
