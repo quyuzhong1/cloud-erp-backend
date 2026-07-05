@@ -7,6 +7,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.CfgFileParseDTO;
+import com.erp.model.dmp.dto.CfgFileParseOpenApiDTO;
 import com.erp.model.dmp.entity.CfgFileParseEntity;
 
 import javax.servlet.http.HttpServletResponse;
@@ -92,4 +93,14 @@ public interface CfgFileParseService extends SuperService<CfgFileParseEntity> {
      * @return 处理结果
      */
     BatchResultDTO updateDisabled(String id, Boolean disabled);
+
+    /**
+     * 查询启用月结配置并生成文件夹路径。
+     *
+     * @param dto 查询参数
+     * @return 月结配置文件夹生成结果
+     */
+    List<CfgFileParseOpenApiDTO.ConfigDTO> generateMonthlyFileParseFolders(CfgFileParseOpenApiDTO.QueryDTO dto);
+
+    void registerGenerateMonthlyFileParseFoldersAfterCommit(String cfgFileParseId);
 }
