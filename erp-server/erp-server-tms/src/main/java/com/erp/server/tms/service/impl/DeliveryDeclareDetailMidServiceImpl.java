@@ -650,7 +650,7 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
     }
 
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+//    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     public Boolean batchAddMergeDetail(List<TmsDeclareBillDTO.MergeDeclareBillDTO> list,Boolean updateSourceDeclareStatus) {
         List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList = collectSourceDetailList(list);
