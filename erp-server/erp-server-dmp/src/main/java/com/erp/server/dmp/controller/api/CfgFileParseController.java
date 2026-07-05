@@ -17,6 +17,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.dmp.dto.CfgFileParseDTO;
+import com.erp.model.dmp.dto.CfgFileParseOpenApiDTO;
 import com.erp.model.dmp.entity.CfgFileParseEntity;
 import com.erp.server.dmp.query.CfgFileParseQueryHandler;
 import com.erp.server.dmp.service.CfgFileParseService;
@@ -221,6 +222,20 @@ public class CfgFileParseController extends BaseController {
             resultDTOS.add(updateResult);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+
+    @GetMapping("/registerGenerateMonthlyFileParseFoldersAfterCommit")
+    public void registerGenerateMonthlyFileParseFoldersAfterCommit(@RequestParam("id") String id) {
+        cfgFileParseService.registerGenerateMonthlyFileParseFoldersAfterCommit(id);
+    }
+
+
+    /**
+     */
+    @PostMapping("/generateMonthlyFileParseFolders")
+    public ApiResult<List<CfgFileParseOpenApiDTO.ConfigDTO>> generateMonthlyFileParseFolders(@RequestBody @Validated CfgFileParseOpenApiDTO.QueryDTO dto) {
+        return success(cfgFileParseService.generateMonthlyFileParseFolders(dto));
     }
 
 }
