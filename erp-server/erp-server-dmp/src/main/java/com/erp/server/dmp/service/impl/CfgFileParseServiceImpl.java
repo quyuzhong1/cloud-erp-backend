@@ -58,6 +58,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -72,6 +73,7 @@ public class CfgFileParseServiceImpl extends SuperServiceImpl<CfgFileParseMapper
     private static final String CFG_FILE_PARSE_FILE_BUSINESS_TYPE = "cfgFileParseFileBusinessType";
     private static final String GENERATE_MONTHLY_FILE_PARSE_FOLDERS_URL = "ods_erp/generateMonthlyFileParseFolders";
     private static final DateTimeFormatter MONTH_FORMATTER = DateTimeFormatter.ofPattern("yyyy年MM月");
+    private static final Pattern MONTH_PATTERN = Pattern.compile("^\\d{4}年(0[1-9]|1[0-2])月$");
 
     @Resource
     private OperateLogService operateLogService;
@@ -279,7 +281,7 @@ public class CfgFileParseServiceImpl extends SuperServiceImpl<CfgFileParseMapper
     @Override
     public List<CfgFileParseOpenApiDTO.ConfigDTO> generateMonthlyFileParseFolders(CfgFileParseOpenApiDTO.QueryDTO dto) {
         CfgFileParseOpenApiDTO.QueryDTO queryDTO = Optional.ofNullable(dto).orElse(new CfgFileParseOpenApiDTO.QueryDTO());
-        String month = StringUtils.isBlank(queryDTO.getMonth()) ? LocalDate.now().format(MONTH_FORMATTER) : queryDTO.getMonth();
+        String month = resolveMonth(queryDTO.getMonth());
         List<CfgFileParseEntity> configList = lambdaQuery()
                 .eq(StringUtils.isNotBlank(queryDTO.getCfgFileParseId()), CfgFileParseEntity::getId, queryDTO.getCfgFileParseId())
                 .eq(CfgFileParseEntity::getDisabled, Boolean.FALSE)
@@ -291,12 +293,14 @@ public class CfgFileParseServiceImpl extends SuperServiceImpl<CfgFileParseMapper
         List<String> mainIds = configList.stream().map(CfgFileParseEntity::getId).collect(Collectors.toList());
         Map<String, List<CfgFileParseFolderEntity>> folderMap = cfgFileParseFolderService.lambdaQuery()
                 .in(CfgFileParseFolderEntity::getMainId, mainIds)
+                .eq(CfgFileParseFolderEntity::getIsDeleted, Boolean.FALSE)
                 .orderByAsc(CfgFileParseFolderEntity::getSort)
                 .list()
                 .stream()
                 .collect(Collectors.groupingBy(CfgFileParseFolderEntity::getMainId));
         Map<String, List<CfgFileParseFileEntity>> fileRuleMap = cfgFileParseFileService.lambdaQuery()
                 .in(CfgFileParseFileEntity::getMainId, mainIds)
+                .eq(CfgFileParseFileEntity::getIsDeleted, Boolean.FALSE)
                 .eq(CfgFileParseFileEntity::getType, CfgFileParseFileTypeEnum.EXCEL.getCode())
                 .orderByAsc(CfgFileParseFileEntity::getSort)
                 .list()
@@ -698,6 +702,22 @@ public class CfgFileParseServiceImpl extends SuperServiceImpl<CfgFileParseMapper
      *
      * @param cfgFileParseId 月结文件解析配置 ID
      */
+    /**
+     * 解析并校验文件夹年月。
+     *
+     * @param month 文件夹年月
+     * @return 合法年月，格式：yyyy年MM月
+     */
+    private String resolveMonth(String month) {
+        if (StringUtils.isBlank(month)) {
+            return LocalDate.now().format(MONTH_FORMATTER);
+        }
+        if (!MONTH_PATTERN.matcher(month).matches()) {
+            throw new ServiceException("文件夹年月格式错误，正确格式示例：2026年07月");
+        }
+        return month;
+    }
+
     @Override
     public void registerGenerateMonthlyFileParseFoldersAfterCommit(String cfgFileParseId) {
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
@@ -720,8 +740,16 @@ public class CfgFileParseServiceImpl extends SuperServiceImpl<CfgFileParseMapper
     private void requestGenerateMonthlyFileParseFolders(String cfgFileParseId) {
         Map<String, Object> params = new HashMap<>();
         params.put("cfgFileParseId", cfgFileParseId);
-        params.put("data", Arrays.asList(cfgFileParseId));
-        RestCloudApiUtil.syncRequestRestCloud(GENERATE_MONTHLY_FILE_PARSE_FOLDERS_URL, params);
+        Map<String, Object> data = new HashMap<>();
+        data.put("cfgFileParseId", cfgFileParseId);
+        params.put("data", Arrays.asList(data));
+        try {
+            log.info("通知 RestCloud 生成月结文件夹，cfgFileParseId：{}，url：{}", cfgFileParseId, GENERATE_MONTHLY_FILE_PARSE_FOLDERS_URL);
+            RestCloudApiUtil.syncRequestRestCloud(GENERATE_MONTHLY_FILE_PARSE_FOLDERS_URL, params);
+        } catch (Exception e) {
+            log.error("通知 RestCloud 生成月结文件夹失败，cfgFileParseId：{}，url：{}，params：{}",
+                    cfgFileParseId, GENERATE_MONTHLY_FILE_PARSE_FOLDERS_URL, params, e);
+        }
     }
 
     /**
