@@ -292,7 +292,7 @@ public interface SoReturnService extends SuperService<SoReturnEntity> {
     /**
      * 预入库-关联售后单：分页查询候选售后单
      * <p>根据入参售后单据类型分流：B2B 查 so_return，B2C 查 so_b2c_return；
-     * 按仓库信息、选择的 sku 过滤，且仅查询当前月数据。</p>
+     * 按仓库信息、选择的 sku 过滤</p>
      * @param dto 分页与过滤参数
      * @return com.common.business.vo.PagingVO<com.erp.model.oms.dto.SoReturnDTO.LinkAfterSaleView>
      */

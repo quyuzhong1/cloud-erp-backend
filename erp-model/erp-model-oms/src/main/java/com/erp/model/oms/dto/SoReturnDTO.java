@@ -1003,7 +1003,7 @@ public class SoReturnDTO {
 
     /**
      * 预入库-关联售后单：分页查询入参
-     * <p>由预入库列表行携带的售后单据类型、仓库信息、选择的 sku 组合过滤，仅查询当前月数据。</p>
+     * <p>由预入库列表行携带的售后单据类型、仓库信息、选择的 sku 组合过滤。</p>
      */
     @EqualsAndHashCode(callSuper = true)
     @Data

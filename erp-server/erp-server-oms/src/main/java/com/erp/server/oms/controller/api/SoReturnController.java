@@ -76,7 +76,7 @@ public class SoReturnController extends BaseController {
     /**
      * 预入库-关联售后单：分页查询候选售后单
      * <p>预入库列表点击"关联售后单"时调用：根据该行的售后单据类型（B2B 查 so_return / B2C 查 so_b2c_return）、
-     * 仓库信息、选择的 sku 过滤，且仅查询当前月数据。</p>
+     * 仓库信息、选择的 sku 过滤</p>
      * @param dto dto
      * @return com.common.core.controller.vo.ApiResult<com.common.business.vo.PagingVO<com.erp.model.oms.dto.SoReturnDTO.LinkAfterSaleView>>
      **/

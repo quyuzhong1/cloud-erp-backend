@@ -526,6 +526,7 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 		}
 		SysAccountingCompanyEntity company = sysUserFeign.getCompanyById(warehouseEntity.getOrgId());
 		SoReturnPrestockDTO.Add addDTO = new SoReturnPrestockDTO.Add();
+		// 完全无参考号可匹配，无法判断真实业务类型，按历史惯例默认落为B2C，后续人工在预入库单列表页可自行修正
 		addDTO.setType(BillTypeEnum.B2C.getCode());
 		addDTO.setReturnLogisticCode("");
 		addDTO.setReturnTypeDict(dto.getReturnType());
