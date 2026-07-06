@@ -193,6 +193,8 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		if (Objects.isNull(overseasProviderWarehouseEntity) || CharSequenceUtil.isBlank(overseasProviderWarehouseEntity.getWarehouseId())) {
 			log.error("[海外仓退货入库-无头件] 仓库信息缺失，跳过生成预入库单：platform={}, warehouseCode={}, thirdCode={}",
 					dto.getPlatform(), dto.getWarehouseCode(), dto.getPlatformReturnOrderNo());
+			// TODO 已知限制：艾姆勒IML/统佑等平台的仓库解析依赖订单出库明细，当前未支持，消息将被跳过且不重试；
+			// 后续补充「留空仓库」分支后需要重新评估是否需要落地补偿表/告警，而不是仅记录日志
 			return;
 		}
 		WarehouseEntity warehouseEntity = warehouseService.getById(overseasProviderWarehouseEntity.getWarehouseId());

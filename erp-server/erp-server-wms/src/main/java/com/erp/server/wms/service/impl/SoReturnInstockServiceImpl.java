@@ -1331,12 +1331,14 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 warehouseKeeperName = userList.get(0).getUserName();
             }
         }
-        // 海外仓退货存在未关联订单，允许修改客户
+        // 海外仓退货存在未关联订单，允许修改客户；此处查询的customerInfo在下方计算dictPlatform时会复用，避免重复Feign调用
+        CustomerInfoEntity customerInfoFromEdit = null;
         if (SourceTypeEnum.THIRD_WAREHOUSE_RETURN_INSTOCK.getCode().equalsIgnoreCase(entity.getSourceType()) || SourceTypeEnum.SELF_ADD.getCode().equalsIgnoreCase(entity.getSourceType())) {
-            CustomerInfoEntity customerInfo = customerFeign.getCustomerById(dto.getCustomerId());
-            if (null == customerInfo) {
+            customerInfoFromEdit = customerFeign.getCustomerById(dto.getCustomerId());
+            if (null == customerInfoFromEdit) {
                 ServiceException.runError(ApiError.CUSTOMER_NOT_FOUND);
             }
+            CustomerInfoEntity customerInfo = customerInfoFromEdit;
             entity.setCustomerId(dto.getCustomerId());
             entity.setCustomerName(customerInfo.getName());
             entity.setSellerId(customerInfo.getSellerId());
@@ -1376,8 +1378,10 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         //平台：B2C取售后单平台，否则取客户归属平台（可能为空）；客户/类型在上方"海外仓退货"分支可能已变更，此处按更新后的entity重新计算
         SoB2cReturnEntity soB2cReturnEntityForPlatform = BillTypeEnum.B2C.getCode().equals(entity.getType()) && CharSequenceUtil.isNotBlank(entity.getSoReturnId())
                 ? FeignQuery.getById(SoB2cReturnEntity.class, entity.getSoReturnId()) : null;
-        CustomerInfoEntity customerInfoForPlatform = CharSequenceUtil.isNotBlank(entity.getCustomerId())
-                ? customerFeign.getCustomerById(entity.getCustomerId()) : new CustomerInfoEntity();
+        //上方"海外仓退货允许改客户"分支已按相同客户id查询过customerInfo，此处直接复用，避免重复Feign调用
+        CustomerInfoEntity customerInfoForPlatform = Objects.nonNull(customerInfoFromEdit) && customerInfoFromEdit.getId().equals(entity.getCustomerId())
+                ? customerInfoFromEdit
+                : (CharSequenceUtil.isNotBlank(entity.getCustomerId()) ? customerFeign.getCustomerById(entity.getCustomerId()) : new CustomerInfoEntity());
         entity.setDictPlatform(resolveDictPlatform(entity.getType(),
                 Objects.nonNull(soB2cReturnEntityForPlatform) ? soB2cReturnEntityForPlatform.getDictPlatform() : null,
                 customerInfoForPlatform.getPlatformType()));
