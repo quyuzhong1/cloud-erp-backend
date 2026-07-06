@@ -246,4 +246,12 @@ public interface TmsDeclareBillService extends SuperService<TmsDeclareBillEntity
      * @param sourceDetailList 来源明细（已展平）
      */
     void validateMergeCountryByBusinessCode(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList);
+
+    /**
+     * 按中间表生成状态回写来源单报关状态：存在已生成明细则来源单为已生成，否则为未生成。
+     *
+     * @param declareBillType 报关单类型（fmDeclareBill / b2bDeclareBill）
+     * @param sourceIdList    待回写的来源单 id 集合
+     */
+    void syncSourceDeclareStatusBySourceIds(String declareBillType, List<String> sourceIdList);
 }
