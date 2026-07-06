@@ -89,6 +89,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.common.core.utils.MathUtil.removeSignAndSpace;
@@ -106,6 +108,7 @@ public class NfeInvoiceService {
     private static final String SHOPEE_BR_FREIGHT_ERROR_MSG = "虾皮巴西店铺不支持含买家运费开票";
     private static final int DANFE_SIMPLE_HEIGHT_MM = 150;
     private static final int DANFE_SIMPLE_WIDTH_MM = 100;
+    private static final Pattern NFE_ACCESS_KEY_PATTERN = Pattern.compile("\\b\\d{44}\\b");
     private static final OkHttpClient OK_HTTP_CLIENT = new OkHttpClient.Builder()
             .connectTimeout(10, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
@@ -413,6 +416,9 @@ public class NfeInvoiceService {
             responseData = tfFiscalService.createInvoiceV2(createInvoiceDTO, companyToken);
             log.warn("开具发票（新接口V2）响应, 销售订单：{}, status:{}", soB2cEntity.getCode(), responseData.getStatus());
         }catch (Exception e){
+            if (handleDuplicateIssuedInvoice(soB2cEntity, invoiceSettingDetail, invoiceAddress, sellerTaxNo, companyName, e)) {
+                return Boolean.TRUE;
+            }
             log.error("创建发票失败,返回信息:{}", e.getMessage(), e);
             InvoiceInfoEntity invoiceInfoEntity = invoiceInfoService.getInvoicingBySoId(soB2cEntity.getId());
             invoiceInfoEntity.setCfgId(invoiceSettingDetail.getId());
@@ -537,6 +543,86 @@ public class NfeInvoiceService {
                 );
             }
             return Boolean.FALSE;
+        }
+    }
+
+    /**
+     * 第三方创建发票请求可能在ERP侧超时，但税局侧已经落票；重试时会返回重复开票并带44位chave。
+     * 这种场景不能继续按失败处理，否则ERP状态会停留在开票失败。
+     */
+    private boolean handleDuplicateIssuedInvoice(SoB2cEntity soB2cEntity,
+                                                 CfgInvoiceSettingDetailEntity invoiceSettingDetail,
+                                                 String invoiceAddress,
+                                                 String sellerTaxNo,
+                                                 String companyName,
+                                                 Exception exception) {
+        String message = exception.getMessage();
+        String accessKey = extractDuplicateIssuedAccessKey(message);
+        if (CharSequenceUtil.isBlank(accessKey)) {
+            return false;
+        }
+
+        InvoiceInfoEntity invoiceInfoEntity = invoiceInfoService.getInvoicingBySoId(soB2cEntity.getId());
+        if (invoiceInfoEntity == null) {
+            log.warn("NF-e重复开票补偿失败，未找到开票中的发票记录，销售订单：{}，accessKey：{}", soB2cEntity.getCode(), accessKey);
+            return false;
+        }
+
+        invoiceInfoEntity.setCfgId(invoiceSettingDetail.getId());
+        invoiceInfoEntity.setStatus(InvoiceInfoStatusEnum.INVOICE_SUCCESS.getCode());
+        invoiceInfoEntity.setUploadStatus(resolveNfeSuccessUploadStatus(soB2cEntity));
+        invoiceInfoEntity.setQueryKey(accessKey);
+        invoiceInfoEntity.setPlatformInvoiceNo(accessKey);
+        fillInvoiceNoByAccessKey(invoiceInfoEntity, accessKey);
+        invoiceInfoEntity.setRemark(message);
+        invoiceInfoEntity.setInvoiceAddress(invoiceAddress);
+        invoiceInfoEntity.setSellerTaxNo(sellerTaxNo);
+        invoiceInfoEntity.setCompanyName(companyName);
+        invoiceInfoService.updateNfeStatusById(invoiceInfoEntity);
+        operateLogService.addModuleOperateLog(
+                CharSequenceUtil.format("第三方返回NF-e重复开票，订单已开票，按开票成功补偿，访问密钥：{}", accessKey),
+                ModuleTypeEnum.INVOICE_INFO.getCode(),
+                soB2cEntity.getId(),
+                "开票成功"
+        );
+        log.warn("NF-e重复开票按成功补偿，销售订单：{}，accessKey：{}", soB2cEntity.getCode(), accessKey);
+        return true;
+    }
+
+    private String extractDuplicateIssuedAccessKey(String message) {
+        if (!isDuplicateIssuedInvoiceMessage(message)) {
+            return CharSequenceUtil.EMPTY;
+        }
+        Matcher matcher = NFE_ACCESS_KEY_PATTERN.matcher(message);
+        return matcher.find() ? matcher.group() : CharSequenceUtil.EMPTY;
+    }
+
+    private boolean isDuplicateIssuedInvoiceMessage(String message) {
+        if (CharSequenceUtil.isBlank(message)) {
+            return false;
+        }
+        String lowerMessage = message.toLowerCase(Locale.ROOT);
+        boolean duplicate = lowerMessage.contains("duplicada") || lowerMessage.contains("duplicado") || message.contains("重复");
+        boolean issued = lowerMessage.contains("já foi emitido") || lowerMessage.contains("ja foi emitido")
+                || message.contains("已经开票") || lowerMessage.contains("chave de acesso") || message.contains("访问密钥");
+        return duplicate && issued;
+    }
+
+    private String resolveNfeSuccessUploadStatus(SoB2cEntity soB2cEntity) {
+        return PlatformDictEnum.ALI_EXPRESS.getCode().equals(soB2cEntity.getDictPlatform())
+                ? InvoiceInfoUploadStatusEnum.NOT_NEED_UPLOAD.getCode()
+                : InvoiceInfoUploadStatusEnum.WAIT_UPLOAD.getCode();
+    }
+
+    private void fillInvoiceNoByAccessKey(InvoiceInfoEntity invoiceInfoEntity, String accessKey) {
+        if (accessKey.length() != 44) {
+            return;
+        }
+        try {
+            invoiceInfoEntity.setNo(Integer.valueOf(accessKey.substring(22, 25)));
+            invoiceInfoEntity.setStartCode(String.valueOf(Integer.valueOf(accessKey.substring(25, 34))));
+        } catch (NumberFormatException e) {
+            log.warn("解析NF-e访问密钥中的发票序号失败，accessKey：{}", accessKey, e);
         }
     }
 
