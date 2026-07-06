@@ -46,6 +46,8 @@ public class SoReturnPrestockDetailEntity extends BaseEntity<SoReturnPrestockDet
     public static final String LINK_STATUS = "link_status";
     public static final String SALES_ORG_ID = "sales_org_id";
     public static final String SALES_DEPT_ID = "sales_dept_id";
+    public static final String SELLER_ID = "seller_id";
+    public static final String SELLER_NAME = "seller_name";
     /**
      * 主表 ID（so_return_prestock.id）
      */
@@ -187,6 +189,16 @@ public class SoReturnPrestockDetailEntity extends BaseEntity<SoReturnPrestockDet
      */
     @TableField("sales_dept_name")
     private String salesDeptName;
+    /**
+     * 销售员 ID
+     */
+    @TableField("seller_id")
+    private String sellerId;
+    /**
+     * 销售员名称
+     */
+    @TableField("seller_name")
+    private String sellerName;
     /**
      * 备注
      */
