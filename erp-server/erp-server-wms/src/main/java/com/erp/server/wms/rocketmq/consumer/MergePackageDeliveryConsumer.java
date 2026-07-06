@@ -93,10 +93,11 @@ public class MergePackageDeliveryConsumer implements RocketMQListener<String> {
         if (null != retryCountObj) {
             retryCount = (Integer) retryCountObj;
             if (retryCount > 200) {
-                String msg = CharSequenceUtil.format("【组包处理消费】销售单【{}】重试次数超过100终止消费", curDeliveryEntity.getSoCode());
+                String msg = CharSequenceUtil.format("【组包处理消费】销售单【{}】生成销售出库单重试次数超过200终止消费", curDeliveryEntity.getSoCode());
                 log.warn(msg);
                 String soB2cId = curDeliveryEntity.getSourceId();
-                String type = SoB2cErrorTypeEnum.SIGN_DELIVERY.getCode();
+                // 出库/调拨链路失败，勿用 signDelivery，避免 asyncShipOrder 成功路径误删异常
+                String type = SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode();
                 String paramJson = JSONUtil.toJsonStr(curDeliveryEntity);
                 SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
                 addError.setType(type);
