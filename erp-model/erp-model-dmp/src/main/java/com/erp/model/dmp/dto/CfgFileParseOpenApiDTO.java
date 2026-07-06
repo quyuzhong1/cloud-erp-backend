@@ -98,7 +98,7 @@ public class CfgFileParseOpenApiDTO implements Serializable {
         private String accountName;
         private Integer sort;
         /**
-         * 文件夹路径：{month}/{dictPlatformName}/{accountName}&&{accountCode}
+         * 文件夹路径：{month}/{dictPlatformName}&&{accountName}
          */
         private String folderPath;
     }
