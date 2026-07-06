@@ -240,6 +240,10 @@ public class SoReturnInstockDTO {
          */
         private Integer realQty;
         /**
+         * 剩余应退货数量 = 应退数量(mustQty) - 历史已入库实退数量(realQty)累计（含本次）
+         */
+        private Integer remainMustQty;
+        /**
          * 入库日期
          */
         private LocalDate billDate;

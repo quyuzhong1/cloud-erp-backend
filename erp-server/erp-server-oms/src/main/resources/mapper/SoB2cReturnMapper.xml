@@ -256,5 +256,43 @@
         </if>
     </select>
 
+    <!-- 预入库-关联售后单：B2C 售后单（so_b2c_return），按仓库、sku 过滤 -->
+    <!-- so_b2c_return 无仓库字段，通过 so_detail_id 关联 B2C 销售订单明细 so_b2c_detail 取仓库 -->
+    <select id="pagingLinkAfterSaleB2C" resultType="com.erp.model.oms.dto.SoReturnDTO$LinkAfterSaleView">
+        SELECT
+            sbr.id,
+            sbrd.id AS detailId,
+            sbr.code AS afterSaleCode,
+            sbr.platform_return_no AS platformReturnNo,
+            sbr.platform_order_no AS platformOrderNo,
+            sbr.so_code AS soCode,
+            sbr.dict_platform AS platform,
+            sbr.shop_id AS shopId,
+            sbr.type AS returnType,
+            sbr.reason AS returnReason,
+            sbrd.sku_id AS skuId,
+            sbrd.sku_no AS skuNo,
+            sbrd.return_qty AS returnQty,
+            sbd.warehouse_name AS warehouseName
+        FROM so_b2c_return_detail sbrd
+        INNER JOIN so_b2c_return sbr ON sbrd.main_id = sbr.id AND sbrd.is_deleted = FALSE
+        LEFT JOIN so_b2c_detail sbd ON sbrd.so_detail_id = sbd.id AND sbd.is_deleted = FALSE
+        WHERE
+        ${params.sqlMap.default}
+        AND sbr.is_deleted = FALSE
+        <if test="params.skuNoList != null and params.skuNoList.size > 0">
+            AND sbrd.sku_no IN
+            <foreach collection="params.skuNoList" item="skuNo" open="(" separator="," close=")">
+                #{skuNo}
+            </foreach>
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        sbr.create_time DESC
+    </select>
 
 </mapper>

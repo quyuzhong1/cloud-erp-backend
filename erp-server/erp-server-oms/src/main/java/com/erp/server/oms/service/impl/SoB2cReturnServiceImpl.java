@@ -386,6 +386,19 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
     }
 
     @Override
+    public List<SoB2cReturnEntity> listByAnyReferenceNo(String referenceNo) {
+        if (StringUtils.isBlank(referenceNo)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery()
+                .eq(SoB2cReturnEntity::getPlatformOrderNo, referenceNo)
+                .or().eq(SoB2cReturnEntity::getPlatformReturnNo, referenceNo)
+                .or().eq(SoB2cReturnEntity::getSoCode, referenceNo)
+                .or().eq(SoB2cReturnEntity::getCode, referenceNo)
+                .list();
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public void addByPlatform(SoB2cReturnEntity soB2cReturnEntity, List<SoB2cReturnDetailEntity> soB2cReturnDetailEntityList) {
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.THD);

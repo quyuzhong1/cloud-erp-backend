@@ -5,6 +5,7 @@ import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.erp.model.oms.entity.SoReturnEntity;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
@@ -346,6 +347,14 @@ public class SoReturnDTO {
          * 退货入库
          */
         private Integer returnInStockQty;
+        /**
+         * 入库状态：not 未入库，partial 部分入库，instocked 已入库，beyond 超出退货
+         */
+        private String instockStatus;
+        /**
+         * 入库状态名称
+         */
+        private String instockStatusName;
         /**
          * 单位
          */
@@ -990,5 +999,117 @@ public class SoReturnDTO {
          */
         private BigDecimal exchangeRate;
 
+    }
+
+    /**
+     * 预入库-关联售后单：分页查询入参
+     * <p>由预入库列表行携带的售后单据类型、仓库信息、选择的 sku 组合过滤，仅查询当前月数据。</p>
+     */
+    @EqualsAndHashCode(callSuper = true)
+    @Data
+    @NoArgsConstructor
+    public static class LinkAfterSalePagingParam extends SortDTO {
+        /**
+         * 选择的 sku 编码集合
+         */
+        private List<String> skuNoList;
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
+    }
+
+    /**
+     * 预入库-关联售后单：分页查询出参（B2B / B2C 统一结构）
+     */
+    @Data
+    @NoArgsConstructor
+    public static class LinkAfterSaleView {
+        /**
+         * 售后单 id
+         */
+        private String id;
+        /**
+         * 售后单明细 id
+         */
+        private String detailId;
+        /**
+         * 售后单号
+         */
+        private String afterSaleCode;
+        /**
+         * 平台退货单号（B2C）
+         */
+        private String platformReturnNo;
+        /**
+         * 平台订单编号
+         */
+        private String platformOrderNo;
+        /**
+         * 销售单号
+         */
+        private String soCode;
+        /**
+         * 平台字典值（B2C）
+         */
+        private String platform;
+        /**
+         * 平台名称
+         */
+        private String platformName;
+        /**
+         * 店铺 id（B2C）
+         */
+        private String shopId;
+        /**
+         * 店铺名称
+         */
+        private String shopName;
+        /**
+         * 单据类型：B2B / B2C
+         */
+        private String type;
+        /**
+         * 单据类型名称
+         */
+        private String typeName;
+        /**
+         * 收货仓库名称
+         */
+        private String warehouseName;
+        /**
+         * 退货类型字典值
+         */
+        private String returnType;
+        /**
+         * 退货类型名称
+         */
+        private String returnTypeName;
+        /**
+         * 退货原因字典值
+         */
+        private String returnReason;
+        /**
+         * 退货原因名称
+         */
+        private String returnReasonName;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * sku 编码
+         */
+        private String skuNo;
+        /**
+         * 退货数量
+         */
+        private Integer returnQty;
     }
 }

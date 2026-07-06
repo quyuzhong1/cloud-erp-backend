@@ -3,9 +3,12 @@ package com.erp.model.wms.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
+import java.util.List;
 
 /**
  * 预入库单详情 DTO
@@ -28,37 +31,47 @@ public class SoReturnPrestockDetailDTO {
     @NoArgsConstructor
     public static class Add {
 
-        /** SKU ID */
+        /**
+         * SKU ID
+         */
         private String skuId;
 
-        /** SKU 编码 */
+        /**
+         * SKU 编码
+         */
         @NotBlank(message = "SKU编码不能为空")
         private String skuNo;
 
-        /** 产品名称 */
+        /**
+         * 产品名称
+         */
         private String productName;
 
-        /** 产品图片 URL */
+        /**
+         * 产品图片 URL
+         */
         private String productImageUrl;
 
-        /** EAN 码 */
+        /**
+         * EAN 码
+         */
         private String ean;
 
-        /** 退货数量 */
+        /**
+         * 退货数量
+         */
         @NotNull(message = "退货数量不能为空")
         @Min(value = 1, message = "退货数量必须大于0")
         private Integer returnQty;
 
-        /** 实际收货数量 */
+        /**
+         * 实际收货数量
+         */
         private Integer receiveQty;
 
-        /** 平台订单号 */
-        private String platformOrderCode;
-
-        /** 平台字典值 */
-        private String dictPlatform;
-
-        /** 备注 */
+        /**
+         * 备注
+         */
         private String remark;
     }
 
@@ -71,18 +84,26 @@ public class SoReturnPrestockDetailDTO {
     @NoArgsConstructor
     public static class Update {
 
-        /** 详情行 ID */
+        /**
+         * 详情行 ID
+         */
         @NotBlank(message = "详情行ID不能为空")
         private String id;
 
-        /** 版本号（乐观锁，必传，用于校验数据是否已被他人修改） */
+        /**
+         * 版本号（乐观锁，必传，用于校验数据是否已被他人修改）
+         */
         @NotNull(message = "版本号不能为空")
         private Integer version;
 
-        /** 实际收货数量 */
+        /**
+         * 实际收货数量
+         */
         private Integer receiveQty;
 
-        /** 备注 */
+        /**
+         * 备注
+         */
         private String remark;
     }
 
@@ -95,92 +116,325 @@ public class SoReturnPrestockDetailDTO {
     @NoArgsConstructor
     public static class LinkAfterSale {
 
-        /** 详情行 ID */
+        /**
+         * 详情行 ID
+         */
         @NotBlank(message = "详情行ID不能为空")
         private String detailId;
 
-        /** 本次关联数量（≤ 当前行 return_qty）*/
+        /**
+         * 本次关联数量（≤ 当前行 return_qty）
+         */
         @NotNull(message = "关联数量不能为空")
         @Min(value = 1, message = "关联数量必须大于0")
         private Integer linkQty;
 
-        /** 售后单 ID */
+        /**
+         * 售后单 ID
+         */
         @NotBlank(message = "售后单ID不能为空")
         private String afterSaleId;
 
-        /** 售后单号 */
+        /**
+         * 售后单号
+         */
         private String afterSaleCode;
 
-        /** 销售单 ID */
+        /**
+         * 平台订单号；取自所关联的《B2C/B2B售后订单》自身的平台订单号，不代表本行数据的来源渠道。
+         * 由前端在选定售后单后，将该售后单自身的 platform_order_code 一并回传
+         */
+        private String platformOrderCode;
+
+        /**
+         * 平台字典值；取自所关联的《B2C/B2B售后订单》的平台字段，不代表本行数据的来源渠道。
+         * 由前端在选定售后单后，将该售后单自身的 dict_platform 一并回传
+         */
+        @NotBlank(message = "平台不能为空")
+        private String dictPlatform;
+
+        /**
+         * 销售单 ID
+         */
         private String soId;
 
-        /** 销售单号 */
+        /**
+         * 销售单号
+         */
         private String soCode;
 
-        /** 退货单 ID（OMS so_return.id）；大范围模糊匹配选定后写入 */
+        /**
+         * 退货单 ID（OMS so_return.id）；大范围模糊匹配选定后写入
+         */
         private String soReturnId;
 
-        /** 退货单号（OMS so_return.code） */
+        /**
+         * 退货单号（OMS so_return.code）
+         */
         private String soReturnCode;
 
-        /** 店铺 ID */
+        /**
+         * 店铺 ID
+         */
         private String shopId;
 
-        /** 店铺名称 */
+        /**
+         * 店铺名称
+         */
         private String shopName;
 
-        /** 销售组织 ID */
+        /**
+         * 销售组织 ID
+         */
         private String salesOrgId;
 
-        /** 销售组织名称 */
+        /**
+         * 销售组织名称
+         */
         private String salesOrgName;
 
-        /** 销售部门 ID */
+        /**
+         * 销售部门 ID
+         */
         private String salesDeptId;
 
-        /** 销售部门名称 */
+        /**
+         * 销售部门名称
+         */
         private String salesDeptName;
+    }
+
+    // ===================== 确认关联售后单（批量） =====================
+
+    /**
+     * 确认关联售后单入参（预入库单维度批量关联）。
+     * <p>页面点击"确定关联"时提交：afterSaleList 为在候选售后单列表
+     * （{@code SoReturnController.pagingLinkAfterSale}）中勾选的售后单明细行。
+     * 服务端按 SKU 将本次勾选的退货明细数量与预入库单未关联明细数量比较：</p>
+     * <ul>
+     *   <li>数量种类完全一致：完成关联；</li>
+     *   <li>预入库单明细多于退货明细：仅关联能匹配的 SKU（部分关联）；</li>
+     *   <li>退货明细超过预入库单（SKU 种类或数量超出）：整批拒绝，提示调配售后退货单后再关联。</li>
+     * </ul>
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ConfirmLinkAfterSale {
+
+        /**
+         * 预入库单主表 ID（so_return_prestock.id）
+         */
+        @NotBlank(message = "预入库单ID不能为空")
+        private String mainId;
+
+        /**
+         * 本次勾选的候选售后单明细行列表
+         */
+        @NotEmpty(message = "关联的售后单不能为空")
+        @Valid
+        private List<AfterSaleItem> afterSaleList;
+    }
+
+    /**
+     * 勾选的候选售后单明细行；字段来源于 {@code SoReturnDTO.LinkAfterSaleView}。
+     */
+    @Data
+    @NoArgsConstructor
+    public static class AfterSaleItem {
+
+        /**
+         * 售后单（退货单）ID；对应 {@code LinkAfterSaleView.id}（so_return.id / so_b2c_return.id）。
+         * 本域中"售后单"即 OMS 退货单，故同时写入 afterSaleId 与 soReturnId
+         */
+        @NotBlank(message = "售后单ID不能为空")
+        private String afterSaleId;
+
+        /**
+         * 售后单号（退货单号）；对应 {@code LinkAfterSaleView.afterSaleCode}
+         */
+        private String afterSaleCode;
+
+        /**
+         * 售后单明细 ID；对应 {@code LinkAfterSaleView.detailId}，仅作溯源
+         */
+        private String detailId;
+
+        /**
+         * 销售单号；对应 {@code LinkAfterSaleView.soCode}
+         */
+        private String soCode;
+
+        /**
+         * 平台订单号；对应 {@code LinkAfterSaleView.platformOrderNo}
+         */
+        private String platformOrderCode;
+
+        /**
+         * 平台字典值；对应 {@code LinkAfterSaleView.platform}（B2B 售后单为空）
+         */
+        private String dictPlatform;
+
+        /**
+         * 店铺/客户 ID；对应 {@code LinkAfterSaleView.shopId}（B2B 为客户 ID）
+         */
+        private String shopId;
+
+        /**
+         * 店铺/客户 名称；对应 {@code LinkAfterSaleView.shopName}（B2B 为客户名称）
+         */
+        private String shopName;
+
+        /**
+         * 退货类型字典值；对应 {@code LinkAfterSaleView.returnType}，生成退货入库单时带入明细
+         */
+        private String returnType;
+
+        /**
+         * 退货原因字典值；对应 {@code LinkAfterSaleView.returnReason}，生成退货入库单时带入明细
+         */
+        private String returnReason;
+
+        /**
+         * SKU 编码；用于与预入库单未关联明细行按 SKU 匹配
+         */
+        @NotBlank(message = "SKU编码不能为空")
+        private String skuNo;
+
+        /**
+         * 本条售后单退货数量；对应 {@code LinkAfterSaleView.returnQty}
+         */
+        @NotNull(message = "退货数量不能为空")
+        @Min(value = 1, message = "退货数量必须大于0")
+        private Integer returnQty;
     }
 
     // ===================== 关联店铺 =====================
 
     /**
-     * 关联店铺入参；支持将一条详情行的部分数量关联到店铺（触发拆行）
+     * 批量关联店铺入参；ids 为预入库单主表 ID 列表，支持一次选中多张预入库单关联到同一店铺。
+     * B2B 与 B2C 关联的店铺不同，服务端会校验所选预入库单的单据类型必须一致。
      */
     @Data
     @NoArgsConstructor
     public static class LinkShop {
 
-        /** 详情行 ID */
-        @NotBlank(message = "详情行ID不能为空")
-        private String detailId;
+        /**
+         * 待关联的预入库单主表 ID 列表
+         */
+        @NotEmpty(message = "预入库单不能为空")
+        private List<String> ids;
 
-        /** 本次关联数量（≤ 当前行 return_qty）*/
-        @NotNull(message = "关联数量不能为空")
-        @Min(value = 1, message = "关联数量必须大于0")
-        private Integer linkQty;
-
-        /** 店铺 ID */
+        /**
+         * 店铺 ID
+         */
         @NotBlank(message = "店铺ID不能为空")
         private String shopId;
 
-        /** 店铺名称 */
+        /**
+         * 店铺名称
+         */
         private String shopName;
 
-        /** 平台字典值 */
+        /**
+         * 平台字典值；取自所关联店铺自身所属的平台，不代表本行数据的来源渠道。
+         * 由前端在选定店铺后，将该店铺自身的 dict_platform 一并回传
+         */
+        private String dictPlatform;
+    }
+
+    // ===================== 确认关联店铺（明细维度，逐行选店铺 + 认领数量） =====================
+
+    /**
+     * 确认关联店铺入参（预入库单维度，明细逐行选择店铺）。
+     * <p>页面点击"确定关联"时提交：shopList 为在产品明细中逐行选择了店铺的未关联行，
+     * 每行填写认领数量（默认 = 当前行退货数量）。与批量关联店铺 {@link LinkShop} 不同：
+     * LinkShop 是把整张预入库单的未关联行整体关联到同一店铺；本接口允许同一张预入库单内
+     * 不同明细行分别关联到不同店铺，并支持按认领数量拆行。</p>
+     * <ul>
+     *   <li>仅未关联行可参与关联；未在 shopList 中出现（未选择店铺）的行保持未关联；</li>
+     *   <li>认领数量 = 退货数量：整行关联；认领数量 &lt; 退货数量：拆行，认领部分独立成行并关联，剩余保持未关联；</li>
+     *   <li>关联相同店铺的行合并生成一张《退货入库单》。</li>
+     * </ul>
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ConfirmLinkShop {
+
+        /**
+         * 预入库单主表 ID（so_return_prestock.id）
+         */
+        @NotBlank(message = "预入库单ID不能为空")
+        private String mainId;
+
+        /**
+         * 本次逐行选择了店铺的明细行列表（仅包含已选店铺的行）
+         */
+        @NotEmpty(message = "关联的明细行不能为空")
+        @Valid
+        private List<ShopItem> shopList;
+    }
+
+    /**
+     * 逐行关联店铺明细项；每行对应预入库单一条未关联明细行。
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ShopItem {
+
+        /**
+         * 预入库单明细行 ID（so_return_prestock_detail.id）
+         */
+        @NotBlank(message = "详情行ID不能为空")
+        private String detailId;
+
+        /**
+         * 认领数量（默认 = 当前行退货数量，≤ 当前行退货数量）；
+         * 小于退货数量时触发拆行，认领部分独立成行并关联
+         */
+        @NotNull(message = "认领数量不能为空")
+        @Min(value = 1, message = "认领数量必须大于0")
+        private Integer claimedQty;
+
+        /**
+         * 店铺 ID
+         */
+        @NotBlank(message = "店铺ID不能为空")
+        private String shopId;
+
+        /**
+         * 店铺名称
+         */
+        private String shopName;
+
+        /**
+         * 平台字典值；取自所关联店铺自身所属平台，由前端在选定店铺后回传
+         */
         private String dictPlatform;
 
-        /** 销售组织 ID */
+        /**
+         * 销售组织 ID；选定店铺后由前端自动带出并回传
+         */
         private String salesOrgId;
 
-        /** 销售组织名称 */
+        /**
+         * 销售组织名称
+         */
         private String salesOrgName;
 
-        /** 销售部门 ID */
+        /**
+         * 销售部门 ID；选定店铺后由前端自动带出并回传
+         */
         private String salesDeptId;
 
-        /** 销售部门名称 */
+        /**
+         * 销售部门名称
+         */
         private String salesDeptName;
+
+        /**
+         * 销售员 ID；选定店铺后由前端自动带出并回传，生成退货入库单时带入
+         */
+        private String sellerId;
     }
 
     // ===================== 详情展示 =====================
@@ -194,94 +448,156 @@ public class SoReturnPrestockDetailDTO {
 
         private String id;
 
-        /** 版本号（乐观锁，修改时需原样带回） */
+        /**
+         * 版本号（乐观锁，修改时需原样带回）
+         */
         private Integer version;
 
-        /** 主表 ID */
+        /**
+         * 主表 ID
+         */
         private String mainId;
 
-        /** 拆分来源详情行 ID */
+        /**
+         * 拆分来源详情行 ID
+         */
         private String parentDetailId;
 
-        /** 售后单 ID */
+        /**
+         * 售后单 ID
+         */
         private String afterSaleId;
 
-        /** 售后单号 */
+        /**
+         * 售后单号
+         */
         private String afterSaleCode;
 
-        /** 平台订单号 */
+        /**
+         * 平台订单号；由关联售后单操作写入，取自所关联售后单自身的平台订单号；
+         * 关联店铺或未关联前为空（店铺不对应具体订单）
+         */
         private String platformOrderCode;
 
-        /** 平台字典值 */
+        /**
+         * 平台字典值；由关联操作写入——关联售后单时取售后单的平台，关联店铺时取店铺所属平台；
+         * 未关联前为空
+         */
         private String dictPlatform;
 
-        /** 销售单 ID */
+        /**
+         * 销售单 ID
+         */
         private String soId;
 
-        /** 销售单号 */
+        /**
+         * 销售单号
+         */
         private String soCode;
 
-        /** 退货单 ID（OMS so_return.id） */
+        /**
+         * 退货单 ID（OMS so_return.id）
+         */
         private String soReturnId;
 
-        /** 退货单号（OMS so_return.code） */
+        /**
+         * 退货单号（OMS so_return.code）
+         */
         private String soReturnCode;
 
-        /** 生成的退货入库单 ID；认领关联成功后系统回写 */
+        /**
+         * 生成的退货入库单 ID；认领关联成功后系统回写
+         */
         private String returnInstockId;
 
-        /** 生成的退货入库单号；认领关联成功后系统回写 */
+        /**
+         * 生成的退货入库单号；认领关联成功后系统回写
+         */
         private String returnInstockCode;
 
-        /** 店铺 ID */
+        /**
+         * 店铺 ID
+         */
         private String shopId;
 
-        /** 店铺名称 */
+        /**
+         * 店铺名称
+         */
         private String shopName;
 
-        /** SKU ID */
+        /**
+         * SKU ID
+         */
         private String skuId;
 
-        /** SKU 编码 */
+        /**
+         * SKU 编码
+         */
         private String skuNo;
 
-        /** 产品名称 */
+        /**
+         * 产品名称
+         */
         private String productName;
 
-        /** 产品图片 URL */
+        /**
+         * 产品图片 URL
+         */
         private String productImageUrl;
 
-        /** EAN 码 */
+        /**
+         * EAN 码
+         */
         private String ean;
 
-        /** 退货数量 */
+        /**
+         * 退货数量
+         */
         private Integer returnQty;
 
-        /** 实际收货数量 */
+        /**
+         * 实际收货数量
+         */
         private Integer receiveQty;
 
-        /** 已认领数量 */
+        /**
+         * 已认领数量
+         */
         private Integer claimedQty;
 
-        /** 关联状态 */
+        /**
+         * 关联状态
+         */
         private String linkStatus;
 
-        /** 关联状态名称 */
+        /**
+         * 关联状态名称
+         */
         private String linkStatusName;
 
-        /** 销售组织 ID */
+        /**
+         * 销售组织 ID
+         */
         private String salesOrgId;
 
-        /** 销售组织名称 */
+        /**
+         * 销售组织名称
+         */
         private String salesOrgName;
 
-        /** 销售部门 ID */
+        /**
+         * 销售部门 ID
+         */
         private String salesDeptId;
 
-        /** 销售部门名称 */
+        /**
+         * 销售部门名称
+         */
         private String salesDeptName;
 
-        /** 备注 */
+        /**
+         * 备注
+         */
         private String remark;
     }
 }
