@@ -284,6 +284,7 @@ public class CfgFileParseServiceImpl extends SuperServiceImpl<CfgFileParseMapper
         String month = resolveMonth(queryDTO.getMonth());
         List<CfgFileParseEntity> configList = lambdaQuery()
                 .eq(StringUtils.isNotBlank(queryDTO.getCfgFileParseId()), CfgFileParseEntity::getId, queryDTO.getCfgFileParseId())
+                .eq(StringUtils.isNotBlank(queryDTO.getDictPlatform()), CfgFileParseEntity::getDictPlatform, queryDTO.getDictPlatform())
                 .eq(CfgFileParseEntity::getDisabled, Boolean.FALSE)
                 .orderByDesc(CfgFileParseEntity::getCreateTime)
                 .list();
@@ -302,6 +303,7 @@ public class CfgFileParseServiceImpl extends SuperServiceImpl<CfgFileParseMapper
                 .in(CfgFileParseFileEntity::getMainId, mainIds)
                 .eq(CfgFileParseFileEntity::getIsDeleted, Boolean.FALSE)
                 .eq(CfgFileParseFileEntity::getType, CfgFileParseFileTypeEnum.EXCEL.getCode())
+                .eq(StringUtils.isNotBlank(queryDTO.getBusinessType()), CfgFileParseFileEntity::getBusinessType, queryDTO.getBusinessType())
                 .orderByAsc(CfgFileParseFileEntity::getSort)
                 .list()
                 .stream()
@@ -654,7 +656,7 @@ public class CfgFileParseServiceImpl extends SuperServiceImpl<CfgFileParseMapper
             dto.setAccountCode(folder.getAccountCode());
             dto.setAccountName(folder.getAccountName());
             dto.setSort(folder.getSort());
-            dto.setFolderPath(buildFolderPath(month, config.getDictPlatformName(), folder.getAccountName(), folder.getAccountCode()));
+            dto.setFolderPath(buildFolderPath(month, config.getDictPlatformName(), folder.getAccountName()));
             return dto;
         }).collect(Collectors.toList());
     }
@@ -665,14 +667,12 @@ public class CfgFileParseServiceImpl extends SuperServiceImpl<CfgFileParseMapper
      * @param month 文件夹年月
      * @param dictPlatformName 清洗仓库/平台名称
      * @param accountName 账号或店铺名称
-     * @param accountCode 账号或店铺编码
      * @return 文件夹路径
      */
-    private String buildFolderPath(String month, String dictPlatformName, String accountName, String accountCode) {
+    private String buildFolderPath(String month, String dictPlatformName, String accountName) {
         return String.join("/",
                 StringUtils.defaultString(month),
-                StringUtils.defaultString(dictPlatformName),
-                StringUtils.defaultString(accountName) + "&&" + StringUtils.defaultString(accountCode));
+                StringUtils.defaultString(dictPlatformName) + "&&" + StringUtils.defaultString(accountName));
     }
 
     /**

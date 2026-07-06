@@ -25,6 +25,14 @@ public class CfgFileParseOpenApiDTO implements Serializable {
          */
         private String cfgFileParseId;
         /**
+         * 月结文件解析配置--生成仓库
+         */
+        private String dictPlatform;
+        /**
+         * 月结文件解析配置--单据类型
+         */
+        private String businessType;
+        /**
          * 文件夹年月，格式示例：2026年07月。为空时默认当前年月。
          */
         private String month;
@@ -90,7 +98,7 @@ public class CfgFileParseOpenApiDTO implements Serializable {
         private String accountName;
         private Integer sort;
         /**
-         * 文件夹路径：{month}/{dictPlatformName}/{accountName}&&{accountCode}
+         * 文件夹路径：{month}/{dictPlatformName}&&{accountName}
          */
         private String folderPath;
     }
