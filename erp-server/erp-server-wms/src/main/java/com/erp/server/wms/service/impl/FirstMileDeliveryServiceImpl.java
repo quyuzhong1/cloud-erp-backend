@@ -396,6 +396,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             if (!Boolean.TRUE.equals(autoGenerateResult)) {
                 throw new ServiceException(CharSequenceUtil.format("头程发货单{}自动生成报关明细中间表返回失败", entity.getCode()));
             }
+            self.updateStatus(new FirstMileDeliveryDTO.UpdateStatusDTO(Arrays.asList(entity.getId()), null, WmsDeclareStatusEnum.FINISH.getCode()));
             log.info("头程发货单{}自动生成报关明细中间表成功", entity.getCode());
             return Boolean.TRUE;
         } finally {
