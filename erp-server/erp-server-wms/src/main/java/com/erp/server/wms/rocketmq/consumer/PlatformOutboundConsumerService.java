@@ -30,10 +30,10 @@ import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.oms.enums.OrderSubTypeEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.plm.dto.BomChildrenSkuDTO;
-import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
@@ -194,7 +194,6 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         // 3. 获取分布式锁（阻塞等待）
         String lockKey = "lock:third:outbound:" + referenceNo;
         RLock lock = redissonClient.getLock(lockKey);
-
 
         try {
             // 尝试加锁，最多等待 30 秒；获取锁后租期自动续期（-1 表示看门狗自动续期）

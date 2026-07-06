@@ -1502,7 +1502,7 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         if (CollectionUtils.isEmpty(accountingCompanyList)) {
             throw new ServiceException(ApiError.COMMON_COMPANY_NOT_FOUND);
         }
-        List<SysDepartmentEntity> sysDepartmentEntity = sysUserFeign.getDeptByIds(Collections.singletonList("1675799739955679233"));
+        List<SysDepartmentEntity> sysDepartmentEntity = sysUserFeign.getDeptByIds(Collections.singletonList(WmsConstant.DEFAULT_WAREHOUSING_DEPT_ID));
         if (CollectionUtils.isEmpty(sysDepartmentEntity)) {
             throw new ServiceException("获取不到仓储部门信息");
         }

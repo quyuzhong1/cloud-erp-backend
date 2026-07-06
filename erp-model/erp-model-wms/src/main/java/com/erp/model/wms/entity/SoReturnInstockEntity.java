@@ -239,6 +239,12 @@ public class SoReturnInstockEntity extends BaseEntity<SoReturnInstockEntity> {
     @TableField("shop_id")
     private String shopId;
 
+    /**
+     * 平台字典值：B2C取售后单平台，否则取客户归属平台，可能为空
+     */
+    @TableField("dict_platform")
+    private String dictPlatform;
+
     @TableField(exist = false)
     private List<SoReturnInstockDetailEntity> detailEntityList;
 

@@ -67,14 +67,18 @@ public class SoReturnPrestockDetailEntity extends BaseEntity<SoReturnPrestockDet
     @TableField("after_sale_code")
     private String afterSaleCode;
     /**
-     * 平台订单号
+     * 平台订单号；不代表本行数据的来源渠道，而是由【关联售后单】操作写入，
+     * 取自所关联售后单（B2C/B2B售后订单）自身的平台订单号；
+     * 关联店铺或未关联前为空字符串（店铺不对应具体订单）
      */
     @TableField("platform_order_code")
     private String platformOrderCode;
 
     // ===================== 常量字段 =====================
     /**
-     * 平台字典值（与 AfterSaleEntity.dict_platform 一致）
+     * 平台字典值；不代表本行数据的来源渠道，而是由【关联】操作决定：
+     * 关联售后单时取该售后单（B2C/B2B售后订单）自身的 dict_platform；
+     * 关联店铺时取该店铺所属的平台；未关联前为空字符串
      */
     @TableField("dict_platform")
     private String dictPlatform;
