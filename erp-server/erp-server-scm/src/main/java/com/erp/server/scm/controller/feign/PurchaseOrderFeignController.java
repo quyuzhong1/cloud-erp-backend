@@ -249,7 +249,6 @@ public class PurchaseOrderFeignController {
      * @Date 2023/4/20 18:51
      **/
     @PostMapping("/updatePoArrivalStatus")
-    @LogAction(value = LogActionEnum.UPDATE_STATUS, desc = "采购订单更新到货状态")
     public Boolean updatePoArrivalStatus(@RequestBody PurchaseOrderDetailEntity entity) {
         return purchaseOrderDetailService.updatePoArrivalStatus(entity);
     }
