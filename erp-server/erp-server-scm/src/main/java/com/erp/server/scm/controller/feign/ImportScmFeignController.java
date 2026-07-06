@@ -2,8 +2,6 @@ package com.erp.server.scm.controller.feign;
 
 import com.common.business.dto.base.BaseDTO;
 import com.common.business.enums.FileTaskStatusEnum;
-import com.common.core.anno.LogAction;
-import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.plm.enums.SkuStdCostImportTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -44,7 +42,6 @@ public class ImportScmFeignController {
     }
 
     @PostMapping("/importAssetNotice")
-    @LogAction(value = LogActionEnum.IMPORT, desc = "资产通知单导入")
     public void importAssetNotice(@RequestBody BaseDTO.ImportDTO dto) {
         try {
             assetNoticeService.importAssetNotice(dto);
@@ -55,7 +52,6 @@ public class ImportScmFeignController {
     }
 
     @PostMapping("/importAssetPurchaseOrder")
-    @LogAction(value = LogActionEnum.IMPORT, desc = "资产采购订单导入")
     public void importAssetPurchaseOrder(@RequestBody BaseDTO.ImportDTO dto) {
         try {
             assetPurchaseOrderService.importAssetPurchaseOrder(dto);
