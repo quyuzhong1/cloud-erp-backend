@@ -269,6 +269,10 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
             Page<SoReturnDTO.LinkAfterSaleView> query = new Page<>(dto.getPage(), dto.getPageSize());
             //单据类型经高级查询传入：优先取高级查询处理类写入的上下文，兜底扫描高级查询条件
             String billType = resolveLinkAfterSaleBillType(params);
+            //单据类型为空时不得默认 B2C，避免 B2B 预入库查到错误候选集导致误关联
+            if (StringUtils.isBlank(billType)) {
+                throw new ServiceException("单据类型不能为空");
+            }
             //售后单据类型分流：B2B 查 so_return，B2C 查 so_b2c_return
             boolean isB2b = BillTypeEnum.B2B.getCode().equals(billType);
             IPage<SoReturnDTO.LinkAfterSaleView> pageData = isB2b
