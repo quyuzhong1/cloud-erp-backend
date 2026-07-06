@@ -326,7 +326,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
                 }
             }
         }
-        return params == null ? null : params.getType();
+        return null;
     }
 
     @Override
