@@ -5454,9 +5454,23 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             }
         }
 
-        // 校验完成后再按源单整单删除旧中间表，避免幂等命中 return 或校验抛错时误删历史关联。
-        // 旧报关单 id 已在 existsMidList 中缓存，删除中间表不会影响后续新单落库。
-        deliveryDeclareDetailMidService.deleteDeliveryDeclareDetailMid(new ArrayList<>(sourceIdSet));
+        // 校验完成后再删除旧中间表，避免幂等命中 return 或校验抛错时误删历史关联。
+        if (splitSave) {
+            // 拆分保存按票多轮调用：同一来源单的多张票共用 sourceId，
+            // 若按整个 sourceId 删除中间表，会把本来源其它票刚生成的中间表一并删掉，
+            // 导致除最后一票外的报关单丢失中间表（业务单号/来源单号/数量等全部为空，看起来只有主表）。
+            // 因此这里只删除本票涉及来源明细对应的旧中间表（原报关单及其中间表已在拆分入口整单删除）。
+            List<String> obsoleteMidIds = existsMidList.stream()
+                    .map(DeliveryDeclareDetailMidEntity::getId)
+                    .filter(StringUtils::isNotBlank)
+                    .collect(Collectors.toList());
+            if (CollUtil.isNotEmpty(obsoleteMidIds)) {
+                deliveryDeclareDetailMidService.removeByIds(obsoleteMidIds);
+            }
+        } else {
+            // 旧报关单 id 已在 existsMidList 中缓存，删除中间表不会影响后续新单落库。
+            deliveryDeclareDetailMidService.deleteDeliveryDeclareDetailMid(new ArrayList<>(sourceIdSet));
+        }
 
         List<DeliveryDeclareDetailMidEntity> changedMidList = new ArrayList<>();
         for (TmsDeclareBillDTO.MergeDeclareBillDTO mergeDeclareBillDTO : list) {
