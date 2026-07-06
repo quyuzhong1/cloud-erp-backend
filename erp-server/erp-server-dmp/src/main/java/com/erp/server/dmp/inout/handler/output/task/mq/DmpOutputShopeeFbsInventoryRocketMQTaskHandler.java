@@ -1,0 +1,218 @@
+package com.erp.server.dmp.inout.handler.output.task.mq;
+
+import cn.hutool.core.collection.CollUtil;
+import com.alibaba.fastjson.JSON;
+import com.common.business.enums.PlatformDictEnum;
+import com.common.core.entity.BaseEntity;
+import com.common.core.exception.ServiceException;
+import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
+import com.erp.model.dmp.entity.DmpFbsInventoryEntity;
+import com.erp.model.oms.dto.ListingInfoParamDTO;
+import com.erp.model.oms.dto.SkuMappingDTO;
+import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.wms.entity.FbsInventoryEntity;
+import com.erp.rpc.oms.feign.ShopInfoFeign;
+import com.erp.rpc.oms.feign.SkuMappingFeign;
+import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
+import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
+import com.erp.server.dmp.service.DmpFbsInventoryService;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Service;
+
+import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+/**
+ * Shopee FBS 库存 MQ 输出
+ */
+@Slf4j
+@Service
+@Scope("prototype")
+public class DmpOutputShopeeFbsInventoryRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler {
+
+    private static final String STORAGE_FBS_INVENTORY = "dmp_fbs_inventory";
+    private static final int BATCH_SIZE = 500;
+
+    @Resource
+    private SkuMappingFeign skuMappingFeign;
+    @Resource
+    private ShopInfoFeign shopInfoFeign;
+    @Resource
+    private DmpFbsInventoryService dmpFbsInventoryService;
+
+    @Override
+    public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
+        Map<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMaps =
+                dmpRequest.getConvertInputDmpBaseEntityListMaps();
+        Map<String, DmpFbsInventoryEntity> dmpEntityMap = new HashMap<>();
+        for (Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> entry : convertInputDmpBaseEntityListMaps.entrySet()) {
+            if (!STORAGE_FBS_INVENTORY.equals(entry.getKey().getStorageName()) || CollUtil.isEmpty(entry.getValue())) {
+                continue;
+            }
+            for (BaseEntity entity : entry.getValue()) {
+                DmpFbsInventoryEntity dmpEntity = (DmpFbsInventoryEntity) entity;
+                dmpEntityMap.put(dmpEntity.getId(), dmpEntity);
+            }
+        }
+
+        Set<String> changeIds = new HashSet<>();
+        for (Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> entry : dmpRequest.getChangeConvertInputDmpBaseEntityListMaps().entrySet()) {
+            if (!STORAGE_FBS_INVENTORY.equals(entry.getKey().getStorageName()) || CollUtil.isEmpty(entry.getValue())) {
+                continue;
+            }
+            for (BaseEntity entity : entry.getValue()) {
+                changeIds.add(entity.getId());
+            }
+        }
+
+        supplementFbsInventories(changeIds, dmpEntityMap);
+
+        List<DmpFbsInventoryEntity> currentDmpEntityList = changeIds.stream()
+                .map(dmpEntityMap::get)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+        List<String> shopIds = currentDmpEntityList.stream()
+                .map(DmpFbsInventoryEntity::getNextLevelId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (shopIds.size() > 1) {
+            throw new ServiceException("Shopee FBS库存输出批次包含多个店铺，请按店铺拆分任务");
+        }
+        String shopId = CollUtil.isEmpty(shopIds) ? "" : shopIds.get(0);
+        List<String> platformSkuNoList = new ArrayList<>();
+        for (DmpFbsInventoryEntity value : currentDmpEntityList) {
+            if (StringUtils.isNotBlank(value.getPlatformSku())) {
+                platformSkuNoList.add(value.getPlatformSku());
+            } else if (StringUtils.isNotBlank(value.getFbsSku())) {
+                platformSkuNoList.add(value.getFbsSku());
+            }
+        }
+
+        List<SkuMappingDTO.MappingSkuViewDTO> mappingSkuViewList = Collections.emptyList();
+        if (StringUtils.isNotBlank(shopId) && CollUtil.isNotEmpty(platformSkuNoList)) {
+            ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
+            listingInfoParamDTO.setPlatformSkuNoList(platformSkuNoList);
+            listingInfoParamDTO.setPlatform(PlatformDictEnum.SHOPEE.getCode());
+            listingInfoParamDTO.setShopIdList(Collections.singletonList(shopId));
+            mappingSkuViewList = skuMappingFeign.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
+            if (mappingSkuViewList == null) {
+                mappingSkuViewList = Collections.emptyList();
+            }
+        }
+        ShopInfoEntity shopInfo = StringUtils.isBlank(shopId) ? null : shopInfoFeign.getShopInfoById(shopId);
+
+        Map<String, String> map = new HashMap<>();
+        String cfgOutputId = dmpResponse.getDmpCfgOutputEntity().getId();
+        for (String changeId : changeIds) {
+            DmpFbsInventoryEntity dmpEntity = dmpEntityMap.get(changeId);
+            if (Objects.isNull(dmpEntity)) {
+                log.warn("Shopee FBS库存输出缺少DMP实体, changeId: {}", changeId);
+                continue;
+            }
+            FbsInventoryEntity entity = convert(dmpEntity, cfgOutputId, shopInfo, mappingSkuViewList);
+            if (entity != null) {
+                map.put(changeId, JSON.toJSONString(entity));
+            }
+        }
+        return map;
+    }
+
+    private void supplementFbsInventories(Set<String> changeIds, Map<String, DmpFbsInventoryEntity> dmpEntityMap) {
+        List<String> missingIds = changeIds.stream()
+                .filter(StringUtils::isNotBlank)
+                .filter(changeId -> !dmpEntityMap.containsKey(changeId))
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(missingIds)) {
+            return;
+        }
+        for (int fromIndex = 0; fromIndex < missingIds.size(); fromIndex += BATCH_SIZE) {
+            List<String> batchIds = missingIds.subList(fromIndex, Math.min(fromIndex + BATCH_SIZE, missingIds.size()));
+            List<DmpFbsInventoryEntity> inventoryList = dmpFbsInventoryService.lambdaQuery()
+                    .in(DmpFbsInventoryEntity::getId, batchIds)
+                    .eq(DmpFbsInventoryEntity::getIsDeleted, Boolean.FALSE)
+                    .list();
+            if (CollUtil.isEmpty(inventoryList)) {
+                continue;
+            }
+            for (DmpFbsInventoryEntity inventory : inventoryList) {
+                dmpEntityMap.put(inventory.getId(), inventory);
+            }
+        }
+    }
+
+    public FbsInventoryEntity convert(DmpFbsInventoryEntity dmpEntity, String cfgOutputId,
+                                      ShopInfoEntity shopInfo, List<SkuMappingDTO.MappingSkuViewDTO> mappingSkuViewList) {
+        if (this.validateDataBlack(dmpEntity, cfgOutputId)) {
+            return null;
+        }
+        FbsInventoryEntity entity = new FbsInventoryEntity();
+        entity.setShopId(StringUtils.defaultString(dmpEntity.getNextLevelId()));
+        entity.setShopName(shopInfo == null ? "" : StringUtils.defaultString(shopInfo.getName()));
+        entity.setWarehouseId(StringUtils.defaultString(dmpEntity.getWarehouseId()));
+        entity.setWarehouseName(StringUtils.defaultString(dmpEntity.getWarehouseName()));
+        entity.setPlatformSku(StringUtils.defaultString(dmpEntity.getPlatformSku()));
+        entity.setPlatformProductName(StringUtils.defaultString(dmpEntity.getPlatformProductName()));
+        entity.setFbsSku(StringUtils.defaultString(dmpEntity.getFbsSku()));
+        entity.setSpecName(StringUtils.defaultString(dmpEntity.getSpecName()));
+        entity.setPurchaseMode(StringUtils.defaultString(dmpEntity.getPurchaseMode()));
+        entity.setRecommendedReplenishmentQty(defaultInt(dmpEntity.getRecommendedReplenishmentQty()));
+        entity.setTotalStockQty(defaultInt(dmpEntity.getTotalStockQty()));
+        entity.setStockedInboundQty(defaultInt(dmpEntity.getStockedInboundQty()));
+        entity.setTransferAsnInboundQty(defaultInt(dmpEntity.getTransferAsnInboundQty()));
+        entity.setReservedQty(defaultInt(dmpEntity.getReservedQty()));
+        entity.setUnsellableQty(defaultInt(dmpEntity.getUnsellableQty()));
+        entity.setInTransitQty(defaultInt(dmpEntity.getInTransitQty()));
+        entity.setTurnoverDays(defaultInt(dmpEntity.getTurnoverDays()));
+        entity.setWarehouseInventoryCoverageDays(defaultInt(dmpEntity.getWarehouseInventoryCoverageDays()));
+        entity.setDailyAvgSalesQty(dmpEntity.getDailyAvgSalesQty() == null ? java.math.BigDecimal.ZERO : dmpEntity.getDailyAvgSalesQty());
+        entity.setLast7DaysSalesQty(defaultInt(dmpEntity.getLast7DaysSalesQty()));
+        entity.setLast15DaysSalesQty(defaultInt(dmpEntity.getLast15DaysSalesQty()));
+        entity.setLast30DaysSalesQty(defaultInt(dmpEntity.getLast30DaysSalesQty()));
+        entity.setLast60DaysSalesQty(defaultInt(dmpEntity.getLast60DaysSalesQty()));
+        entity.setLast90DaysSalesQty(defaultInt(dmpEntity.getLast90DaysSalesQty()));
+        entity.setStockAge030Qty(defaultInt(dmpEntity.getStockAge030Qty()));
+        entity.setStockAge3160Qty(defaultInt(dmpEntity.getStockAge3160Qty()));
+        entity.setStockAge6190Qty(defaultInt(dmpEntity.getStockAge6190Qty()));
+        entity.setStockAge91120Qty(defaultInt(dmpEntity.getStockAge91120Qty()));
+        entity.setStockAge121180Qty(defaultInt(dmpEntity.getStockAge121180Qty()));
+        entity.setStockAgeOver180Qty(defaultInt(dmpEntity.getStockAgeOver180Qty()));
+        entity.setPlatformUpdateTime(dmpEntity.getPlatformUpdateTime());
+
+        SkuMappingDTO.MappingSkuViewDTO mappingSkuViewDTO = mappingSkuViewList.stream()
+                .filter(item -> StringUtils.equals(item.getPlatformSkuNo(), dmpEntity.getPlatformSku())
+                        || StringUtils.equals(item.getPlatformSkuNo(), dmpEntity.getFbsSku()))
+                .findFirst()
+                .orElse(null);
+        if (Objects.nonNull(mappingSkuViewDTO)) {
+            entity.setSkuId(StringUtils.defaultString(mappingSkuViewDTO.getProductSkuId()));
+            entity.setSkuNo(StringUtils.defaultString(mappingSkuViewDTO.getProductSkuNo()));
+            entity.setProductName(StringUtils.defaultString(mappingSkuViewDTO.getProductName()));
+        } else {
+            entity.setSkuId("");
+            entity.setSkuNo("");
+            entity.setProductName("");
+        }
+        return entity;
+    }
+
+    @Override
+    protected List<String> getSourceCodeKeys() {
+        return Arrays.asList("shopId", "warehouseId", "fbsSku");
+    }
+
+    private int defaultInt(Integer value) {
+        return java.util.Optional.ofNullable(value).orElse(0);
+    }
+}

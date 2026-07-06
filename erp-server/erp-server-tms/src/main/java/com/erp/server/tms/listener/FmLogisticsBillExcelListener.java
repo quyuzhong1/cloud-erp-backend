@@ -184,10 +184,6 @@ public class FmLogisticsBillExcelListener extends AnalysisEventListener<FmLogist
                 errorList.add(excelDTO);
                 continue;
             }
-            estimatedBillList.stream().filter(v->v.getLogisticsBillId().equals(entity.getId())).findFirst().ifPresent(v->{
-                excelDTO.setErrorMsg("暂估账单已确认，不能更新信息");
-                errorList.add(excelDTO);
-            });
             if(CharSequenceUtil.isNotBlank(excelDTO.getErrorMsg())){
                 continue;
             }

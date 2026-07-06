@@ -214,6 +214,7 @@ public enum ApiError implements Serializable {
     COMMON_NOT_FOUND_PUSH_DADA(98136,"未找到可下推数据"),
     COMMON_SELECT_DATA_REQUIRED(98137,"请选择要操作的数据"),
     COMMON_DATA_NOT_EXIST(98138,"要操作的数据{0}系统不存在"),
+    COMMON_BATCH_PROCESSING(98139,"分批处理中"),
 
     /**
      * AUTH 授权与登录 相关 2000 - 2200
@@ -1857,6 +1858,7 @@ public enum ApiError implements Serializable {
     LOGISTICS_ORDER_NOT_CANCEL(13645,"物流单据不是已取消或者下单失败状态，不能编辑"),
     LOGISTICS_ORDER_CANNOT_EDIT(13646,"该单据不能再当前页面编辑"),
     LOGISTICS_CHANNEL_CODE_EMPTY(13647,"渠道代码为空或者格式不正确"),
+    ASYNC_TASK_DETAIL_TIMEOUT(13648,"明细执行超时，系统自动标记失败"),
     /**
      * 财务管理 错误 信息 14000-14500
      */

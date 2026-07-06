@@ -26,6 +26,7 @@ import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
+import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
@@ -53,13 +54,18 @@ import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
 import com.erp.server.tms.convert.TmsFirstMileReconciliationConverter;
 import com.erp.server.tms.listener.FirstMileReconciliationConfigExcelListener;
 import com.erp.server.tms.listener.FirstMileReconciliationStandardExcelListener;
+import com.erp.server.tms.handler.asynctask.FirstMileReconciliationPushDetailHandler;
 import com.erp.server.tms.mapper.TmsFirstMileReconciliationDetailMapper;
 import com.erp.server.tms.service.*;
+import com.erp.server.tms.service.asynctask.TmsFirstMileReconciliationAsyncTaskDelegate;
+import com.erp.server.tms.service.support.TmsAsyncTaskBatchConsumerSupport;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.jetbrains.annotations.NotNull;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -82,7 +88,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -99,7 +107,8 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_TMS_FIRST_M
  */
 @Slf4j
 @Service
-public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImpl<TmsFirstMileReconciliationDetailMapper, TmsFirstMileReconciliationDetailEntity> implements TmsFirstMileReconciliationDetailService {
+public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImpl<TmsFirstMileReconciliationDetailMapper, TmsFirstMileReconciliationDetailEntity>
+    implements TmsFirstMileReconciliationDetailService, TmsFirstMileReconciliationAsyncTaskDelegate {
     @Resource
     private OperateLogService operateLogService;
     @Resource
@@ -153,6 +162,13 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
     @Autowired
     @Qualifier("costAllocationPool")
     private ExecutorService costAllocationPool;
+    @Resource
+    private RedissonClient redissonClient;
+    @Resource
+    private TmsAsyncTaskBatchConsumerSupport tmsAsyncTaskBatchConsumerSupport;
+
+    @Resource
+    private FirstMileReconciliationPushDetailHandler firstMileReconciliationPushDetailHandler;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -2853,121 +2869,168 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
     }
 
 
-    @Transactional(rollbackFor = Exception.class)
+    private TmsAsyncTaskDetailEntity buildTaskDetail(String taskId, String businessType, String businessId, String businessCode) {
+        TmsAsyncTaskDetailEntity detail = new TmsAsyncTaskDetailEntity();
+        detail.setMainId(taskId);
+        detail.setBusinessType(businessType);
+        detail.setBusinessId(businessId);
+        detail.setBusinessCode(businessCode);
+        detail.setStatus(TmsAsyncTaskRecordStatusEnum.PENDING.getCode());
+        detail.setCreateTime(LocalDateTime.now());
+        return detail;
+    }
+
+    /**
+     * 消费已迁移的头程对账下推异步任务。
+     * <p>
+     * 加 Redisson 任务锁防 MQ 重投重复执行；正常路径按供应商游标分页，
+     * {@code FAILED_ONLY} 重试改读来源任务失败明细游标。
+     *
+     * @param taskRecord MQ 消息体，持久化载荷从 {@code dataJson} 信封解析
+     */
     @Override
-    public boolean addTaskDetailByFirstMileReconciliation(TmsAsyncTaskRecordDTO.PushParamsDTO dto) {
-        String taskId = dto.getTaskId();
-        LocalDate startDate = dto.getStartDate();
-        LocalDate endDate = dto.getEndDate();
-        String transportNo ="";
-        List<String> logisticsSupplierIds = dto.getIds();
-        if (null == startDate || null == endDate) {
-            asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),"开始时间或结束时间为空");
-            return true;
-        }
-        // 查询周期内已签收未对账的物流单
-        List<TmsFirstMileReconciliationDetailDTO.ListDTO> detailList = tmsFirstMileLogisticService.listAutoGenerateFirstMileReconciliation(startDate, endDate,transportNo);
-        if(CollUtil.isNotEmpty(logisticsSupplierIds)){
-            detailList = detailList.stream().filter(e -> logisticsSupplierIds.contains(e.getLogisticsSupplierId())).collect(Collectors.toList());
-        }
-
-        List<TmsFirstMileReconciliationDetailDTO.ListDTO> list = detailList.stream().filter(e -> Objects.isNull(e.getSupplierType())).collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(list)) {
-            asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),"周期内已签收未对账的物流单为空");
-            return true;
-        }
-        // 根据物流商
-        Map<String, List<TmsFirstMileReconciliationDetailDTO.ListDTO>> map = list
-                .stream()
-                .filter(e -> StringUtils.isNotBlank(e.getCurrency()))
-                .collect(Collectors.groupingBy(TmsFirstMileReconciliationDetailDTO.ListDTO::getLogisticsSupplierId));
-        //记录本次任务数量
-        asyncTaskRecordService.lambdaUpdate().set(TmsAsyncTaskRecordEntity::getDetailCount,map.size()).eq(TmsAsyncTaskRecordEntity::getId, taskId).update();
-
-        List<TmsAsyncTaskDetailEntity> taskDetailList = new ArrayList<>();
-        LocalDateTime now = LocalDateTime.now();
-        for (Map.Entry<String, List<TmsFirstMileReconciliationDetailDTO.ListDTO>> entry : map.entrySet()) {
-            String logisticsSupplierId = entry.getKey();
-            TmsAsyncTaskDetailEntity detail = new TmsAsyncTaskDetailEntity();
-            detail.setMainId(taskId);
-            detail.setBusinessType(SourceTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode());
-            detail.setBusinessId(logisticsSupplierId);
-//            detail.setBusinessCode(firstMileDeliveryEntity.getCode());
-            detail.setStatus(TmsAsyncTaskRecordStatusEnum.PENDING.getCode());
-            detail.setCreateTime(now);
-            taskDetailList.add(detail);
-        }
-        asyncTaskDetailRecordService.saveBatch(taskDetailList);
-        return false;
+    public void pushFirstMileReconciliation(TmsAsyncTaskRecordEntity taskRecord) {
+        tmsAsyncTaskBatchConsumerSupport.executePreparedDetails(taskRecord, firstMileReconciliationPushDetailHandler);
     }
 
     @Override
-    public void pushFirstMileReconciliation(TmsAsyncTaskRecordDTO.PushParamsDTO dto) {
-        String taskId = dto.getTaskId();
-        LocalDate startDate = dto.getStartDate();
-        LocalDate endDate = dto.getEndDate();
-        String transportNo ="";
+    public List<TmsAsyncTaskDetailEntity> prepareFirstMileReconciliationBatchDetails(String taskId, String businessType,
+                                                                                      String retryMode, String retrySourceTaskId,
+                                                                                      LocalDate startDate, LocalDate endDate,
+                                                                                      String cursor, int batchSize) {
+        List<TmsAsyncTaskDetailEntity> sourceDetails;
+        if (TmsAsyncTaskRecordDTO.RETRY_MODE_FAILED_ONLY.equals(retryMode)) {
+            sourceDetails = asyncTaskDetailRecordService.listFailedDetailsByCursor(retrySourceTaskId, cursor, batchSize);
+        } else {
+            List<String> supplierIds = tmsFirstMileLogisticService.pageAutoGenerateFirstMileReconciliationSupplierIds(
+                startDate, endDate, null, cursor, batchSize);
+            sourceDetails = supplierIds.stream()
+                .map(supplierId -> buildTaskDetail(taskId, businessType, supplierId, null))
+                .collect(Collectors.toList());
+        }
+        if (CollUtil.isEmpty(sourceDetails)) {
+            return Collections.emptyList();
+        }
+        return saveAndListFirstMileReconciliationBatchDetails(taskId, businessType, sourceDetails, batchSize);
+    }
 
+    private List<TmsAsyncTaskDetailEntity> saveAndListFirstMileReconciliationBatchDetails(String taskId, String businessType, List<TmsAsyncTaskDetailEntity> sourceDetails, int batchSize) {
+        List<String> businessIds = sourceDetails.stream()
+                .map(TmsAsyncTaskDetailEntity::getBusinessId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(businessIds)) {
+            return Collections.emptyList();
+        }
+        List<String> existingBusinessIds = asyncTaskDetailRecordService.listExistingBusinessIds(taskId, businessIds);
+        Set<String> existingSet = new HashSet<>(existingBusinessIds);
+        List<TmsAsyncTaskDetailEntity> addDetails = sourceDetails.stream()
+                .filter(detail -> StringUtils.isNotBlank(detail.getBusinessId()))
+                .filter(detail -> !existingSet.contains(detail.getBusinessId()))
+                .map(detail -> buildTaskDetail(taskId, businessType, detail.getBusinessId(), detail.getBusinessCode()))
+                .collect(Collectors.toList());
+        asyncTaskDetailRecordService.saveBatchInChunks(addDetails, batchSize);
+        String cursorBusinessId = sourceDetails.get(sourceDetails.size() - 1).getBusinessId();
+        return asyncTaskDetailRecordService.listPendingDetailsWithCursorAnchor(taskId, businessIds, cursorBusinessId);
+    }
 
-        TmsAsyncTaskRecordEntity tmsAsyncTaskRecordEntity = asyncTaskRecordService.getById(taskId);
-        if(Objects.isNull(tmsAsyncTaskRecordEntity)){
-            log.error("任务记录不存在，taskId: {}", taskId);
-            asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),ApiError.LOGISTICS_PENDING_COST_NOT_FOUND.getMsg());
-            return;
+    @Override
+    public TmsAsyncTaskRecordDTO.BatchProcessResult executeFirstMileReconciliationBatch(String taskId,
+                                                                                         List<TmsAsyncTaskDetailEntity> taskDetailList,
+                                                                                         LocalDate startDate,
+                                                                                         LocalDate endDate,
+                                                                                         int timeoutSeconds,
+                                                                                         int staleDetailSeconds) {
+        if (CollUtil.isEmpty(taskDetailList)) {
+            return new TmsAsyncTaskRecordDTO.BatchProcessResult(0, 0);
+        }
+        List<String> businessIds = taskDetailList.stream()
+            .map(TmsAsyncTaskDetailEntity::getBusinessId)
+            .filter(StringUtils::isNotBlank)
+            .distinct()
+            .collect(Collectors.toList());
+        LocalDateTime staleBefore = LocalDateTime.now().minusSeconds(staleDetailSeconds);
+        List<TmsAsyncTaskDetailEntity> existingDetails = asyncTaskDetailRecordService.lambdaQuery()
+            .eq(TmsAsyncTaskDetailEntity::getMainId, taskId)
+            .in(TmsAsyncTaskDetailEntity::getBusinessId, businessIds)
+            .list();
+        Set<String> staleIngBusinessIds = existingDetails.stream()
+            .filter(d -> Objects.equals(d.getStatus(), TmsAsyncTaskRecordStatusEnum.ING.getCode()))
+            .filter(d -> asyncTaskRecordService.isStaleIngDetail(d, staleBefore))
+            .map(TmsAsyncTaskDetailEntity::getBusinessId)
+            .filter(StringUtils::isNotBlank)
+            .collect(Collectors.toSet());
+        int staleFailedCount = asyncTaskDetailRecordService.markStaleIngDetailsFailed(
+            taskId, staleIngBusinessIds, staleBefore, ApiError.ASYNC_TASK_DETAIL_TIMEOUT.getMsg());
+        if (staleFailedCount > 0) {
+            log.warn("头程对账僵死ING明细已标记失败，taskId: {}, 数量: {}", taskId, staleFailedCount);
         }
 
-        List<TmsAsyncTaskDetailEntity> taskDetailList = asyncTaskDetailRecordService.lambdaQuery().eq(TmsAsyncTaskDetailEntity::getMainId, taskId).list();
+        List<TmsAsyncTaskDetailEntity> executableDetails = taskDetailList.stream()
+            .filter(d -> Objects.equals(d.getStatus(), TmsAsyncTaskRecordStatusEnum.PENDING.getCode()))
+            .collect(Collectors.toList());
+        if (CollUtil.isEmpty(executableDetails)) {
+            return new TmsAsyncTaskRecordDTO.BatchProcessResult(0, staleFailedCount);
+        }
 
-        // 查询周期内已签收未对账的物流单
-        List<TmsFirstMileReconciliationDetailDTO.ListDTO> detailList = tmsFirstMileLogisticService.listAutoGenerateFirstMileReconciliation(startDate, endDate,transportNo);
+        List<String> supplierIds = executableDetails.stream().map(TmsAsyncTaskDetailEntity::getBusinessId).distinct().collect(Collectors.toList());
+        List<TmsFirstMileReconciliationDetailDTO.ListDTO> detailList = tmsFirstMileLogisticService.listAutoGenerateFirstMileReconciliationBySuppliers(startDate, endDate, supplierIds);
         List<TmsFirstMileReconciliationDetailDTO.ListDTO> list = detailList.stream().filter(e -> Objects.isNull(e.getSupplierType())).collect(Collectors.toList());
-
-        // 根据物流商
         Map<String, List<TmsFirstMileReconciliationDetailDTO.ListDTO>> map = list
                 .stream()
                 .filter(e -> StringUtils.isNotBlank(e.getCurrency()))
                 .collect(Collectors.groupingBy(TmsFirstMileReconciliationDetailDTO.ListDTO::getLogisticsSupplierId));
         List<String> billIds = list.stream().filter(Objects::nonNull).map(TmsFirstMileReconciliationDetailDTO.ListDTO::getSourceId).distinct().collect(Collectors.toList());
-        List<String> supplierIds = list.stream().filter(Objects::nonNull).map(TmsFirstMileReconciliationDetailDTO.ListDTO::getLogisticsSupplierId).distinct().collect(Collectors.toList());
         List<LogisticsSupplierEntity> logisticsSupplierEntityList = logisticsSupplierService.listByIds(supplierIds);
         Map<String, String> supplierMap = logisticsSupplierEntityList.stream().collect(Collectors.toMap(LogisticsSupplierEntity::getId, LogisticsSupplierEntity::getSupplierName));
         List<TmsFirstMileReconciliationDetailEntity> detailEntityList = this.listBySourceIds(billIds, DetailReconciliationTypeEnum.ACTUAL.getCode(), SupplierTypeEnum.LOGISTICS.getCode(), null);
-
-        CountDownLatch latch = new CountDownLatch(detailList.size());
-        for (TmsAsyncTaskDetailEntity detail : taskDetailList) {
+        CountDownLatch latch = new CountDownLatch(executableDetails.size());
+        AtomicInteger successCount = new AtomicInteger(0);
+        AtomicInteger failedCount = new AtomicInteger(staleFailedCount);
+        for (TmsAsyncTaskDetailEntity detail : executableDetails) {
             String taskDetailId = detail.getId();
             String businessId = detail.getBusinessId();
-            costAllocationPool.execute(() -> {
-                try {
-                    //判断是否超时中止
-                    Integer count = asyncTaskDetailRecordService.lambdaQuery().eq(TmsAsyncTaskDetailEntity::getId, taskDetailId).eq(TmsAsyncTaskDetailEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode()).count();
-                    if(count >0){
-                        asyncTaskDetailRecordService.updateDetail(taskDetailId,
-                                TmsAsyncTaskRecordStatusEnum.ING.getCode(), "");
-
+            try {
+                costAllocationPool.execute(() -> {
+                    try {
+                        if (!asyncTaskDetailRecordService.tryClaimDetailForExecution(taskDetailId)) {
+                            log.debug("任务明细[{}]状态已变更，跳过", taskDetailId);
+                            return;
+                        }
                         processSingleTask(map, businessId, startDate, endDate, supplierMap, detailEntityList);
-
                         asyncTaskDetailRecordService.updateDetail(taskDetailId,
                                 TmsAsyncTaskRecordStatusEnum.FINISH.getCode(), "");
+                        successCount.incrementAndGet();
+                    } catch (Exception e) {
+                        log.error("处理任务失败 taskDetailId: {}", taskDetailId, e);
+                        asyncTaskRecordService.updateTaskDetailFailure(taskDetailId, e);
+                        failedCount.incrementAndGet();
+                    } finally {
+                        latch.countDown();
                     }
-                } catch (Exception e) {
-                    log.error("处理任务失败 taskDetailId: {}", taskDetailId, e);
-                    // 统一处理任务失败状态更新
-                    asyncTaskRecordService.updateTaskDetailFailure(taskDetailId, e);
-                } finally {
-                    latch.countDown();
-                }
-            });
+                });
+            } catch (RejectedExecutionException ex) {
+                log.error("任务提交失败 taskDetailId: {}", taskDetailId, ex);
+                asyncTaskRecordService.updateTaskDetailFailure(taskDetailId, ex);
+                failedCount.incrementAndGet();
+                latch.countDown();
+            }
         }
         try {
-            boolean await = latch.await(tmsAsyncTaskRecordEntity.getExecTimeout(), TimeUnit.SECONDS);// 等待所有任务完成
-            if(await){
-                asyncTaskRecordService.updateTaskFinally(taskId);
+            boolean completed = latch.await(timeoutSeconds, TimeUnit.SECONDS);
+            if (!completed) {
+                log.warn("头程对账批次执行超时，taskId: {}, timeoutSeconds: {}", taskDetailList.get(0).getMainId(), timeoutSeconds);
+                failedCount.addAndGet(asyncTaskDetailRecordService.markUnfinishedBatchDetailsFailed(
+                    executableDetails, "批次执行超时"));
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             log.error("任务等待中断", e);
+            failedCount.addAndGet(asyncTaskDetailRecordService.markUnfinishedBatchDetailsFailed(
+                executableDetails, "任务等待中断"));
         }
+        return new TmsAsyncTaskRecordDTO.BatchProcessResult(successCount.get(), failedCount.get());
     }
 
     private void processSingleTask(Map<String, List<TmsFirstMileReconciliationDetailDTO.ListDTO>> map, String businessId, LocalDate startDate, LocalDate endDate, Map<String, String> supplierMap, List<TmsFirstMileReconciliationDetailEntity> detailEntityList) {
@@ -3173,4 +3236,5 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         }
         return lambdaQuery().in(TmsFirstMileReconciliationDetailEntity::getRelationCode, relationCodeList).list();
     }
+
 }

@@ -253,7 +253,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         // 仓库权限
         String warehousePermissionSql = authDataFeign.getWarehousePermissionSql("odp.to_warehouse_id");
         warehousePermissionSql = CharSequenceUtil.isBlank(warehousePermissionSql)? " AND 1=1 " : warehousePermissionSql;
-        return CharSequenceUtil.format("{} and (((odp.type = 'fba' or odp.type = 'fbt' or odp.type = 'awd') {}) or (odp.type = 'thirdWarehouse' {}) or (odp.type = 'AliExpress' {}))", permissionSql, shopPermissionSql, warehousePermissionSql,shopPermissionSql);
+        return CharSequenceUtil.format("{} and (((odp.type = 'fba' or odp.type = 'fbs' or odp.type = 'fbt' or odp.type = 'awd') {}) or (odp.type = 'thirdWarehouse' {}) or (odp.type = 'AliExpress' {}))", permissionSql, shopPermissionSql, warehousePermissionSql,shopPermissionSql);
     }
 
     @Override
@@ -693,6 +693,11 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
                 viewDTO.setTypeName(RequisitionApplicationTypeEnum.FBA.getName());
                 viewDTO.setChannelId(viewDTO.getShopId());
                 viewDTO.setChannelName(viewDTO.getShopName());
+            }else if(DeliveryPlanTypeEnum.FBS.getCode().equals(viewDTO.getDeliveryPlanType())){
+                viewDTO.setType(RequisitionApplicationTypeEnum.FBS.getCode());
+                viewDTO.setTypeName(RequisitionApplicationTypeEnum.FBS.getName());
+                viewDTO.setChannelId(viewDTO.getShopId());
+                viewDTO.setChannelName(viewDTO.getShopName());
             }else if(DeliveryPlanTypeEnum.FBT.getCode().equals(viewDTO.getDeliveryPlanType())){
                 viewDTO.setType(RequisitionApplicationTypeEnum.FBT.getCode());
                 viewDTO.setTypeName(RequisitionApplicationTypeEnum.FBT.getName());
@@ -875,17 +880,46 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         return generateDeliver(list, Boolean.TRUE);
     }
 
+    private static final String FBS_DELIVERY_PLAN_ERROR_FILE_NAME = "FBS发货计划错误数据.xlsx";
+
     @Override
     public ListingInfoDTO.ImportDTO importFile(MultipartFile excelFile, List<String> thirdSkuNoList, String warehouseId, String shopId, HttpServletResponse response) {
+        return importFile(excelFile, thirdSkuNoList, warehouseId, shopId, null, response);
+    }
+
+    @Override
+    public ListingInfoDTO.ImportDTO importFile(MultipartFile excelFile, List<String> thirdSkuNoList, String warehouseId, String shopId, String type, HttpServletResponse response) {
+        if (DeliveryPlanTypeEnum.FBS.getCode().equalsIgnoreCase(type) && CharSequenceUtil.isBlank(shopId)) {
+            throw new ServiceException("FBS发货计划导入店铺不能为空");
+        }
         if(CharSequenceUtil.isBlank(warehouseId)&& CharSequenceUtil.isBlank(shopId)){
             throw new ServiceException("仓库id不能为空");
         }
-        //店铺不为空代表是fba ，否则是第三方仓
+        // 店铺不为空时走平台仓/FBA/FBS导入，由type区分；否则走第三方仓导入。
         if(CharSequenceUtil.isNotBlank(shopId)){
-            return fbaImportFile(excelFile, thirdSkuNoList, shopId);
+            return fbaImportFile(excelFile, thirdSkuNoList, shopId, normalizePlatformImportType(type));
         }else{
             return thirdImportFile(excelFile, thirdSkuNoList, warehouseId, shopId);
         }
+    }
+
+    private String normalizePlatformImportType(String type) {
+        if (CharSequenceUtil.isBlank(type) || DeliveryPlanTypeEnum.FBA.getCode().equalsIgnoreCase(type)) {
+            return DeliveryPlanTypeEnum.FBA.getCode();
+        }
+        if (DeliveryPlanTypeEnum.FBS.getCode().equalsIgnoreCase(type)) {
+            return DeliveryPlanTypeEnum.FBS.getCode();
+        }
+        if (DeliveryPlanTypeEnum.FBT.getCode().equalsIgnoreCase(type)) {
+            return DeliveryPlanTypeEnum.FBT.getCode();
+        }
+        if (DeliveryPlanTypeEnum.AWD.getCode().equalsIgnoreCase(type)) {
+            return DeliveryPlanTypeEnum.AWD.getCode();
+        }
+        if (DeliveryPlanTypeEnum.ALIEXPRESS.getCode().equalsIgnoreCase(type)) {
+            return DeliveryPlanTypeEnum.ALIEXPRESS.getCode();
+        }
+        throw new ServiceException("非法发货计划导入类型");
     }
 
     private ListingInfoDTO.ImportDTO thirdImportFile(MultipartFile excelFile, List<String> thirdSkuNoList, String warehouseId, String shopId) {
@@ -930,9 +964,12 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         return importDTO;
     }
 
-    private ListingInfoDTO.ImportDTO fbaImportFile(MultipartFile excelFile, List<String> thirdSkuNoList, String shopId) {
+    private ListingInfoDTO.ImportDTO fbaImportFile(MultipartFile excelFile, List<String> thirdSkuNoList, String shopId, String type) {
         //查询店铺id下的SKU信息
         List<ListingInfoWithSkuMappingDTO> listingWithSkuMappingDTOList = skuMappingFeign.listByErpSkuIdAndType(new ArrayList<>(),"","", shopId);
+        if (DeliveryPlanTypeEnum.FBS.getCode().equals(type)) {
+            return platformImportFile(excelFile, thirdSkuNoList, listingWithSkuMappingDTOList);
+        }
         DeliveryPlanDetailPdaExcelListener excelListenerUtil = new DeliveryPlanDetailPdaExcelListener(thirdSkuNoList,listingWithSkuMappingDTOList);
         try {
             EasyExcel.read(excelFile.getInputStream(), DeliveryPlanDetailPdaExportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
@@ -959,6 +996,40 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
             File file = ExcelUtil.exportFile(fileName, "error", errorList, DeliveryPlanDetailPdaExportExcelDTO.class);
             if (file != null && !file.isDirectory()) {
                 url = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+        this.fillData(successList);
+        importDTO.setSuccessList(successList);
+        importDTO.setErrorUrl(url);
+        return importDTO;
+    }
+
+    private ListingInfoDTO.ImportDTO platformImportFile(MultipartFile excelFile, List<String> thirdSkuNoList, List<ListingInfoWithSkuMappingDTO> listingWithSkuMappingDTOList) {
+        DeliveryPlanDetailExcelListener excelListenerUtil = new DeliveryPlanDetailExcelListener(thirdSkuNoList, listingWithSkuMappingDTOList, "", Boolean.TRUE);
+        try {
+            EasyExcel.read(excelFile.getInputStream(), DeliveryPlanDetailExportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (IOException e) {
+            log.error("导入错误！", e);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
+        }
+        //验证导入数据是否为空
+        List<DeliveryPlanDetailExportExcelDTO> excelDateList = excelListenerUtil.getAllList();
+        if (CollectionUtils.isEmpty(excelDateList)) {
+            throw new ServiceException(ApiError.FILE_DATA_REQUIRED);
+        }
+        ListingInfoDTO.ImportDTO importDTO = new ListingInfoDTO.ImportDTO();
+        //导入数据处理
+        List<ListingInfoDTO.PageDTO> successList = excelListenerUtil.getSuccessList();
+        //导出错误数据
+        List<DeliveryPlanDetailExportExcelDTO> errorList = excelListenerUtil.getErrorList();
+        String url = "";
+        if (CollUtil.isNotEmpty(errorList)) {
+            File file = ExcelUtil.exportFile(FBS_DELIVERY_PLAN_ERROR_FILE_NAME, "error", errorList, DeliveryPlanDetailExportExcelDTO.class);
+            if (file != null && !file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, FBS_DELIVERY_PLAN_ERROR_FILE_NAME);
             }
         }
         this.fillData(successList);
@@ -1324,7 +1395,8 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         if (CharSequenceUtil.isNotBlank(fromWarehouseName)){
             wmsDeliveryPlanEntity.setFromWarehouseName(fromWarehouseName);
         }
-        if(DeliveryPlanTypeEnum.FBA.getCode().equals(wmsDeliveryPlanEntity.getType()) || DeliveryPlanTypeEnum.FBT.getCode().equals(wmsDeliveryPlanEntity.getType())
+        if(DeliveryPlanTypeEnum.FBA.getCode().equals(wmsDeliveryPlanEntity.getType()) || DeliveryPlanTypeEnum.FBS.getCode().equals(wmsDeliveryPlanEntity.getType())
+                || DeliveryPlanTypeEnum.FBT.getCode().equals(wmsDeliveryPlanEntity.getType())
                 || DeliveryPlanTypeEnum.AWD.getCode().equals(wmsDeliveryPlanEntity.getType())
                 || DeliveryPlanTypeEnum.ALIEXPRESS.getCode().equals(wmsDeliveryPlanEntity.getType())){
             if(CharSequenceUtil.isBlank(wmsDeliveryPlanEntity.getShopId())){

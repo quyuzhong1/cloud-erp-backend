@@ -21,6 +21,10 @@ public enum SoB2cInvalidTypeEnum {
     ENUM_AUTOMATIC("automatic",  "自动作废"),
 
     ;
+
+    /** 平台取消自动作废原因 */
+    public static final String PLATFORM_CANCEL_REMARK = "平台取消";
+
     /**
      * 类型
      */
