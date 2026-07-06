@@ -388,10 +388,10 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
             return Collections.emptyList();
         }
         return lambdaQuery()
-                .eq(SoB2cReturnEntity::getPlatformOrderNo, referenceNo)
-                .or().eq(SoB2cReturnEntity::getPlatformReturnNo, referenceNo)
-                .or().eq(SoB2cReturnEntity::getSoCode, referenceNo)
-                .or().eq(SoB2cReturnEntity::getCode, referenceNo)
+                .and(w -> w.eq(SoB2cReturnEntity::getPlatformOrderNo, referenceNo)
+                        .or().eq(SoB2cReturnEntity::getPlatformReturnNo, referenceNo)
+                        .or().eq(SoB2cReturnEntity::getSoCode, referenceNo)
+                        .or().eq(SoB2cReturnEntity::getCode, referenceNo))
                 .list();
     }
 
@@ -868,10 +868,5 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
     */
     private void handleData(SoB2cReturnEntity soB2cReturnEntity) {
     // TODO 验证数据 & 数据赋值
-    }
-
-    @Override
-    public SoB2cReturnEntity findFirstByReferenceNo(String referenceNo) {
-        return baseMapper.findFirstByReferenceNo(referenceNo);
     }
 }

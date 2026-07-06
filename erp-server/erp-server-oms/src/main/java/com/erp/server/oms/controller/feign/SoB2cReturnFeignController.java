@@ -109,13 +109,4 @@ public class SoB2cReturnFeignController {
         soB2cReturnService.updateBatchById(list);
     }
 
-    /**
-     * WEGO 退货入库：用参考单号一次命中 so_b2c_return，
-     * 按 code / platform_return_no / platform_order_no / so_code OR 匹配，返回优先级最高的首条记录。
-     */
-    @GetMapping("/findFirstByReferenceNo")
-    public SoB2cReturnEntity findFirstByReferenceNo(@RequestParam("referenceNo") String referenceNo) {
-        return soB2cReturnService.findFirstByReferenceNo(referenceNo);
-    }
-
 }

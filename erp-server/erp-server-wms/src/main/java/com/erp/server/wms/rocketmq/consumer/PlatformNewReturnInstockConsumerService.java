@@ -243,12 +243,18 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 		if (CollectionUtils.isEmpty(incomingSkuIds)) {
 			return null;
 		}
+		// 批量一次性取全部候选单明细，避免逐个候选单发起Feign查询
+		List<String> candidateIds = candidates.stream().map(SoB2cReturnEntity::getId).collect(Collectors.toList());
+		List<SoB2cReturnDetailEntity> allDetails = FeignQuery.create(SoB2cReturnDetailEntity.class)
+				.in(SoB2cReturnDetailEntity::getMainId, candidateIds).list();
+		Map<String, List<SoB2cReturnDetailEntity>> detailsByMainId = allDetails.stream()
+				.collect(Collectors.groupingBy(SoB2cReturnDetailEntity::getMainId));
+
 		List<SoB2cReturnEntity> sorted = candidates.stream()
 				.sorted(Comparator.comparing(v -> SoB2cReturnStatusEnum.TO_BE_RETURNED.getCode().equals(v.getStatus()) ? 0 : 1))
 				.collect(Collectors.toList());
 		for (SoB2cReturnEntity candidate : sorted) {
-			List<SoB2cReturnDetailEntity> detailList = FeignQuery.create(SoB2cReturnDetailEntity.class)
-					.eq(SoB2cReturnDetailEntity::getMainId, candidate.getId()).list();
+			List<SoB2cReturnDetailEntity> detailList = detailsByMainId.getOrDefault(candidate.getId(), Collections.emptyList());
 			boolean skuMatched = detailList.stream()
 					.anyMatch(d -> StringUtils.isNotBlank(d.getSkuId()) && incomingSkuIds.contains(d.getSkuId()));
 			if (skuMatched) {
@@ -957,19 +963,4 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 				.orElse(mappingDTOList.get(0));
 	}
 
-	/**
-	 * 通过参考单号在 so_b2c_return 中多字段匹配退货单（WEGO 专属）
-	 */
-	private SoB2cReturnEntity findSoB2cReturnByRef(String referenceNo) {
-		if (CharSequenceUtil.isBlank(referenceNo)) {
-			return null;
-		}
-		SoB2cReturnEntity result = soB2cReturnFeign.findFirstByReferenceNo(referenceNo);
-		if (Objects.nonNull(result)) {
-			log.info("[WEGO退货入库] 参考单号 {} 命中 so_b2c_return[{}]", referenceNo, result.getId());
-		} else {
-			log.info("[WEGO退货入库] 参考单号 {} 在 so_b2c_return 中未查到匹配记录", referenceNo);
-		}
-		return result;
-	}
 }

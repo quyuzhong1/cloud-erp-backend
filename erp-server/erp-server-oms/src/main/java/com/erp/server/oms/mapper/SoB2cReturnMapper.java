@@ -47,9 +47,4 @@ public interface SoB2cReturnMapper extends BaseMapper<SoB2cReturnEntity> {
      * @return com.baomidou.mybatisplus.core.metadata.IPage<com.erp.model.oms.dto.SoReturnDTO.LinkAfterSaleView>
      */
     IPage<SoReturnDTO.LinkAfterSaleView> pagingLinkAfterSaleB2C(Page query, @Param("params") SoReturnDTO.LinkAfterSalePagingParam params);
-
-    /**
-     * WEGO 退货入库：用参考单号一次查询，按 code/platform_return_no/platform_order_no/so_code OR 匹配，返回优先级最高的首条记录。
-     */
-    SoB2cReturnEntity findFirstByReferenceNo(@Param("referenceNo") String referenceNo);
 }
