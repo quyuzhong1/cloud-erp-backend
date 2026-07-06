@@ -238,7 +238,7 @@ public class CustomerCreditApplyServiceImpl extends SuperServiceImpl<CustomerCre
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "id", unlockAfterTx = true)
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO submit(String id) {
         CustomerCreditApplyEntity entity = getById(id);
         if (ObjectUtil.isEmpty(entity)) {
@@ -357,7 +357,7 @@ public class CustomerCreditApplyServiceImpl extends SuperServiceImpl<CustomerCre
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "id", unlockAfterTx = true)
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO delete(String id) {
         CustomerCreditApplyEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到客户授信数据"));
         // 只有待提交数据允许删除

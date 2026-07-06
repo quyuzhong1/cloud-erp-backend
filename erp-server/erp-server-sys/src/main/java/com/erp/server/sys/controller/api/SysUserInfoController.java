@@ -123,7 +123,7 @@ public class SysUserInfoController extends BaseController {
             menuCode = "sys:user:batchRefUserIdByShop",
             serviceClass = SysUserInfoService.class,
             keyIdName = "uid")
-    @DistributeLocker(businessType = DistributeKeyConstant.SYS_USER_AUTH_KEY, keyName = "refParamseDTO.uid", unlockAfterTx = true)
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "批量操作-分配店铺/仓库/权限")
     public ApiResult batchRefUserIdByShop(@RequestBody @Validated SysUserInfoDTO.RefParamseDTO refParamseDTO) {
         refParamseDTO.setRefType("shop");
         sysUserInfoService.batchRefUserIdByType(refParamseDTO);
@@ -139,7 +139,7 @@ public class SysUserInfoController extends BaseController {
             menuCode = "sys:user:batchRefUserIdByWarehouse",
             serviceClass = SysUserInfoService.class,
             keyIdName = "uid")
-    @DistributeLocker(businessType = DistributeKeyConstant.SYS_USER_AUTH_KEY, keyName = "refParamseDTO.uid", unlockAfterTx = true)
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "批量操作-分配店铺/仓库/权限")
     public ApiResult batchRefUserIdByWarehouse(@RequestBody @Validated SysUserInfoDTO.RefParamseDTO refParamseDTO) {
         refParamseDTO.setRefType("warehouse");
         sysUserInfoService.batchRefUserIdByType(refParamseDTO);
@@ -155,7 +155,7 @@ public class SysUserInfoController extends BaseController {
             menuCode = "sys:user:batchRefUserIdByRole",
             serviceClass = SysUserInfoService.class,
             keyIdName = "uid")
-    @DistributeLocker(businessType = DistributeKeyConstant.SYS_USER_AUTH_KEY, keyName = "refParamseDTO.uid", unlockAfterTx = true)
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "批量操作-分配店铺/仓库/权限")
     public ApiResult batchRefUserIdByRole(@RequestBody @Validated SysUserInfoDTO.RefParamseDTO refParamseDTO) {
         refParamseDTO.setRefType("role");
         sysUserInfoService.batchRefUserIdByType(refParamseDTO);

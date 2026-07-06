@@ -312,7 +312,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.WMS_PACKING_TASK_KEY, keyName = "dto.sourceId")
+    @DistributeLocker(businessType = DistributeKeyConstant.WMS_PACKING_TASK_KEY, keyName = "dto.sourceId",unlockAfterTx = true)
     public Boolean packingSave(WmsCartonSpecDTO.WmsCartonAdd dto, Boolean isAddCarton) {
         PackingTaskEntity packingTask = this.getById(dto.getTaskId());
         if (Objects.isNull(packingTask)){
@@ -1420,7 +1420,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.WMS_PACKING_TASK_KEY, keyName = "addDTO.taskId")
+    @DistributeLocker(businessType = DistributeKeyConstant.WMS_PACKING_TASK_KEY, keyName = "addDTO.taskId", unlockAfterTx = true)
     public WmsCartonDTO.PrintDTO stagingPacking(WmsCartonSpecDTO.AddDTO addDTO) {
         if (Objects.isNull(addDTO.getBoxQty())){
             addDTO.setBoxQty(MathUtil.ONE);
@@ -1544,7 +1544,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.WMS_PACKING_TASK_KEY, keyName = "dto.cartonId")
+    @DistributeLocker(businessType = DistributeKeyConstant.WMS_PACKING_TASK_KEY, keyName = "dto.cartonId",unlockAfterTx = true)
     public String adjustPackingSave(WmsCartonDTO.AdjustSaveDTO dto) {
         PackingTaskEntity packingTaskEntity = this.getById(dto.getTaskId());
         if (ObjectUtils.isEmpty(packingTaskEntity)) {

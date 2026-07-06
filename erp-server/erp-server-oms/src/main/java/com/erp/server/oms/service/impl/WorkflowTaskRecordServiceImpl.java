@@ -864,12 +864,11 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
     private void resetForceRetryTask(WorkflowTaskRecordEntity entity, WorkflowTaskRecordDTO.ForceRetryDTO dto, Map<Integer, WorkflowTaskRecordEntity> indexTaskMap) {
         String remark = appendForceRetryRemark(entity.getRemark(), dto.getRemark());
         String refreshedInputData = getPreviousSuccessOutputDataInternal(entity, indexTaskMap);
-        Integer resetRetryCount = resolveResetRetryCount(entity.getRetryCount(), dto.getRetryCount());
         if (CharSequenceUtil.isNotBlank(refreshedInputData)) {
             this.lambdaUpdate()
                     .eq(WorkflowTaskRecordEntity::getId, entity.getId())
                     .set(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.PENDING.getCode())
-                    .set(WorkflowTaskRecordEntity::getRetryCount, resetRetryCount)
+                    .set(WorkflowTaskRecordEntity::getRetryCount, Optional.ofNullable(dto.getRetryCount()).orElse(0))
                     .set(WorkflowTaskRecordEntity::getLastError, "")
                     .set(WorkflowTaskRecordEntity::getRemark, remark)
                     .set(WorkflowTaskRecordEntity::getInputData, refreshedInputData)
@@ -879,20 +878,10 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
         this.lambdaUpdate()
                 .eq(WorkflowTaskRecordEntity::getId, entity.getId())
                 .set(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.PENDING.getCode())
-                .set(WorkflowTaskRecordEntity::getRetryCount, resetRetryCount)
+                .set(WorkflowTaskRecordEntity::getRetryCount, Optional.ofNullable(dto.getRetryCount()).orElse(0))
                 .set(WorkflowTaskRecordEntity::getLastError, "")
                 .set(WorkflowTaskRecordEntity::getRemark, remark)
                 .update();
-    }
-
-    /**
-     * 人工重试未显式传 retryCount 时，默认在当前值基础上 +1。
-     */
-    private Integer resolveResetRetryCount(Integer currentRetryCount, Integer requestedRetryCount) {
-        if (requestedRetryCount != null) {
-            return requestedRetryCount;
-        }
-        return Optional.ofNullable(currentRetryCount).orElse(0) + 1;
     }
 
     /**
