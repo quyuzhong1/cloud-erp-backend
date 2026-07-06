@@ -150,6 +150,7 @@ public class MagaluOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                     row.put("afterAmount", money(amounts.get("total"), amounts.get("normalizer")));
                     row.put("discountAmount", money(mapValue(amounts.get("discount")).get("total"), amounts.get("normalizer")));
                     row.put("shippingCost", money(mapValue(amounts.get("freight")).get("total"), amounts.get("normalizer")));
+                    row.put("saleFee", money(mapValue(amounts.get("commission")).get("total"), amounts.get("normalizer")));
                     row.put("currencyCode", firstNotBlank(stringValue(amounts.get("currency")), stringValue(unitPrice.get("currency"))));
                     row.put("platformPackageId", deliveryId);
                     row.put("platformStatus", stringValue(delivery.get("status")));
