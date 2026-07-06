@@ -14,6 +14,7 @@ import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
@@ -694,8 +695,13 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
             changedMidList.addAll(saveGeneratedMidData(sourceType, declareBillList, detailEntityList,
                     addResult.getId(), addResult.getCode()));
         }
-        if(updateSourceDeclareStatus){
-            updateFinishedSourceDeclareStatus(declareBillType, changedMidList);
+        if (updateSourceDeclareStatus) {
+            List<String> sourceIds = changedMidList.stream()
+                    .map(DeliveryDeclareDetailMidEntity::getSourceId)
+                    .filter(CharSequenceUtil::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.toList());
+            tmsDeclareBillService.syncSourceDeclareStatusBySourceIds(declareBillType, sourceIds);
         }
         return Boolean.TRUE;
     }
@@ -1322,12 +1328,16 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
                     .distinct()
                     .collect(Collectors.joining(","));
         }
-        return tmsDeclareBillService.getCanGenerateSoOut(TmsDeclareBillDTO.QuerySourceDTO.builder().ids(sourceIds).build())
-                .stream()
-                .map(TmsDeclareBillDTO.SoOutDTO::getBusinessType)
-                .filter(CharSequenceUtil::isNotBlank)
-                .distinct()
-                .collect(Collectors.joining(","));
+        if (CharSequenceUtil.equals(declareBillType, SourceTypeEnum.B2B_DECLARE_BILL.getCode())) {
+            String businessType = tmsDeclareBillService.getCanGenerateSoOut(TmsDeclareBillDTO.QuerySourceDTO.builder().ids(sourceIds).build())
+                    .stream()
+                    .map(TmsDeclareBillDTO.SoOutDTO::getBusinessType)
+                    .filter(CharSequenceUtil::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.joining(","));
+            return CharSequenceUtil.isBlank(businessType) ? OrderTypeEnum.B2B.getCode() : businessType;
+        }
+        return "";
     }
 
     private Map<String, String> buildDeclareRuleMatchParamMap(String declareBillType,
@@ -1657,32 +1667,6 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         midEntity.setTransferWarehouseNames(buildTransferWarehouseNames(transferWarehouseIds, transferWarehouseNameMap));
         midEntity.setSalesOrgId(sourceDetail.getSalesOrgId());
         midEntity.setSalesOrgName(sourceDetail.getSalesOrgName());
-    }
-
-    /**
-     * 按来源单完整性更新报关状态。
-     *
-     * <p>中间表支持明细维度下推后，来源单不能因本次部分明细生成就置为 finish；
-     * 只有该来源单不存在待生成中间表明细时，才通知 WMS 更新为已完成。</p>
-     */
-    private void updateFinishedSourceDeclareStatus(String declareBillType,
-                                                   List<DeliveryDeclareDetailMidEntity> changedMidList) {
-        if (CollUtil.isEmpty(changedMidList)) {
-            return;
-        }
-        List<String> sourceIds = changedMidList.stream()
-                .map(DeliveryDeclareDetailMidEntity::getSourceId)
-                .filter(CharSequenceUtil::isNotBlank)
-                .distinct()
-                .collect(Collectors.toList());
-        if (CollUtil.isEmpty(sourceIds)) {
-            return;
-        }
-        if (CharSequenceUtil.equals(declareBillType, SourceTypeEnum.FM_DECLARE_BILL.getCode())) {
-            wmsFirstMileDeliveryFeign.updateStatus(new FirstMileDeliveryDTO.UpdateStatusDTO(sourceIds, null, WmsDeclareStatusEnum.FINISH.getCode()));
-        } else {
-            soDeliveryNoticeFeign.updateDeclareStatus(new SoDeliveryNoticeDTO.DeclareStatusDTO(sourceIds, WmsDeclareStatusEnum.FINISH.getCode()));
-        }
     }
 
     private TmsDeclareBillDTO.SourceDeliveryDetailDTO resolveSourceContext(DeliveryDeclareDetailMidEntity mid,

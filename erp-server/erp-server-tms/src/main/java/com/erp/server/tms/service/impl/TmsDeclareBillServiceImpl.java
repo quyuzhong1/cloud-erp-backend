@@ -1248,7 +1248,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     }
 
     /**
-     * 对恢复为待生成的来源单据回写待报关状态。
+     * 对恢复为待生成的来源单据，按中间表现状重新回写报关状态。
      *
      * @param deliveryDeclareDetailMidList 本次恢复的中间表明细
      */
@@ -1256,57 +1256,25 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (CollUtil.isEmpty(deliveryDeclareDetailMidList)) {
             return;
         }
-        // 头程来源只在不存在其它已生成中间表时回写为待报关。
-        List<String> fmSourceIdList = deliveryDeclareDetailMidList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceType(), SourceTypeEnum.FIRST_MILE_DELIVERY.getCode()))
-                .map(DeliveryDeclareDetailMidEntity::getSourceId).distinct().collect(Collectors.toList());
-        fmSourceIdList = filterNoGeneratedSourceIds(fmSourceIdList, SourceTypeEnum.FIRST_MILE_DELIVERY.getCode());
-        if(CollectionUtils.isNotEmpty(fmSourceIdList)){
-            FirstMileDeliveryDTO.UpdateStatusDTO updateStatusDTO = new FirstMileDeliveryDTO.UpdateStatusDTO();
-            updateStatusDTO.setIds(fmSourceIdList);
-            updateStatusDTO.setDeclareStatus(WmsDeclareStatusEnum.WAIT.code);
-            wmsFirstMileDeliveryFeign.updateStatus(updateStatusDTO);
-        }
-
-        // B2B来源只在不存在其它已生成中间表时回写为待报关。
-        List<String> b2bSourceIdList = deliveryDeclareDetailMidList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceType(), SourceTypeEnum.SO_DELIVERY_NOTICE.getCode()))
-                .map(DeliveryDeclareDetailMidEntity::getSourceId).distinct().collect(Collectors.toList());
-        b2bSourceIdList = filterNoGeneratedSourceIds(b2bSourceIdList, SourceTypeEnum.SO_DELIVERY_NOTICE.getCode());
-        if(CollectionUtils.isNotEmpty(b2bSourceIdList)){
-            SoDeliveryNoticeDTO.DeclareStatusDTO updateStatusDTO = new SoDeliveryNoticeDTO.DeclareStatusDTO();
-            updateStatusDTO.setIds(b2bSourceIdList);
-            updateStatusDTO.setDeclareStatus(WmsDeclareStatusEnum.WAIT.code);
-            soDeliveryNoticeFeign.updateDeclareStatus(updateStatusDTO);
-        }
-    }
-
-    /**
-     * 过滤仍存在已生成中间表的来源单据。
-     *
-     * @param sourceIds 候选来源单据id集合
-     * @param sourceType 来源类型
-     * @return 可回写待报关状态的来源单据id集合
-     */
-    private List<String> filterNoGeneratedSourceIds(List<String> sourceIds, String sourceType) {
-        if (CollectionUtils.isEmpty(sourceIds)) {
-            return Collections.emptyList();
-        }
-        // 查询同来源单据下是否仍有已生成报关信息。
-        List<DeliveryDeclareDetailMidEntity> generatedMidList = deliveryDeclareDetailMidService.lambdaQuery()
-                .in(DeliveryDeclareDetailMidEntity::getSourceId, sourceIds)
-                .eq(DeliveryDeclareDetailMidEntity::getSourceType, sourceType)
-                .eq(DeliveryDeclareDetailMidEntity::getGenerateStatus, DeliveryDeclareDetailMidGenerateStatusEnum.FINISH.getCode())
-                .list();
-        if (CollUtil.isEmpty(generatedMidList)) {
-            return sourceIds;
-        }
-        // 有已生成记录的来源单据不能回写待报关。
-        Set<String> generatedSourceIdSet = generatedMidList.stream()
+        List<String> fmSourceIdList = deliveryDeclareDetailMidList.stream()
+                .filter(obj -> CharSequenceUtil.equals(obj.getSourceType(), SourceTypeEnum.FIRST_MILE_DELIVERY.getCode()))
                 .map(DeliveryDeclareDetailMidEntity::getSourceId)
                 .filter(StringUtils::isNotBlank)
-                .collect(Collectors.toSet());
-        return sourceIds.stream()
-                .filter(sourceId -> !generatedSourceIdSet.contains(sourceId))
+                .distinct()
                 .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(fmSourceIdList)) {
+            syncSourceDeclareStatusIfNeeded(SourceTypeEnum.FM_DECLARE_BILL.getCode(), fmSourceIdList);
+        }
+
+        List<String> b2bSourceIdList = deliveryDeclareDetailMidList.stream()
+                .filter(obj -> CharSequenceUtil.equals(obj.getSourceType(), SourceTypeEnum.SO_DELIVERY_NOTICE.getCode()))
+                .map(DeliveryDeclareDetailMidEntity::getSourceId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(b2bSourceIdList)) {
+            syncSourceDeclareStatusIfNeeded(SourceTypeEnum.B2B_DECLARE_BILL.getCode(), b2bSourceIdList);
+        }
     }
 
     /**
@@ -2063,12 +2031,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                     .orElse(new TmsDeclareBillDTO.MergeDeclareBillDetailDTO());
             declareBillEntity.setCountry(firstMergeDetail.getToCountry());
             declareBillEntity.setCountryName(firstMergeDetail.getToCountryName());
-            // 订单类型与 batchAddMergeDetail 对齐：取发货通知单业务类型去重，缺省回退 B2B 订单，
-            // 避免列表「订单类型」为空。
-            String businessType = joinDistinct(deliveryDTOList.stream()
-                    .map(TmsDeclareBillDTO.SoOutDTO::getBusinessType)
-                    .collect(Collectors.toList()));
-            declareBillEntity.setBusinessType(StringUtils.isBlank(businessType) ? OrderTypeEnum.B2B.getCode() : businessType);
+            // 订单类型与 batchAddMergeDetail 对齐：取来源单/出库单 businessType 去重，缺省 B2B 订单。
+            applyB2bDeclareBusinessType(declareBillEntity, deliveryDTOList, flattenMergeSourceDetails(mergeDetailList));
             // 提运单号取发货通知单的运输单号(track_no)，落库到 transport_no。
             declareBillEntity.setTransportNo(resolveB2bNoticeTransportNo(sourceIdList));
             // 总箱数/毛重/净重按选中箱号重算（复用已加载装箱明细），与编辑/批量保存口径一致，
@@ -2092,11 +2056,18 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             if (CollUtil.isEmpty(detailEntityList)) {
                 throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_SAVE_REQUIRED);
             }
+            if (StringUtils.isBlank(declareBillEntity.getBusinessType())) {
+                declareBillEntity.setBusinessType(OrderTypeEnum.B2B.getCode());
+            }
             BaseResultDTO.AddDTO addResult = service.add(declareBillEntity, detailEntityList, SourceTypeEnum.B2B_DECLARE_BILL, false);
 
-            return extractSourceIdListFromMidList(deliveryDeclareDetailMidService.saveGeneratedMidData(
+            List<String> syncSourceIds = extractSourceIdListFromMidList(deliveryDeclareDetailMidService.saveGeneratedMidData(
                     SourceTypeEnum.SO_DELIVERY_NOTICE.getCode(), mergeDetailList, detailEntityList,
                     addResult.getId(), addResult.getCode()));
+            if (CollUtil.isEmpty(syncSourceIds)) {
+                syncSourceIds = sourceIdList;
+            }
+            return syncSourceIds;
         }
 
         TmsDeclareBillEntity baseTmsDeclareBillEntity = new TmsDeclareBillEntity();
@@ -5673,6 +5644,29 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     }
 
     /**
+     * B2B 新增保存：订单类型取来源明细/发货通知关联出库单的 businessType 去重，缺省 B2B 订单。
+     */
+    private void applyB2bDeclareBusinessType(TmsDeclareBillEntity declareBillEntity,
+                                             List<TmsDeclareBillDTO.SoOutDTO> deliveryDTOList,
+                                             List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList) {
+        List<String> businessTypeList = new ArrayList<>();
+        if (CollUtil.isNotEmpty(sourceDetailList)) {
+            sourceDetailList.stream()
+                    .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getBusinessType)
+                    .filter(StringUtils::isNotBlank)
+                    .forEach(businessTypeList::add);
+        }
+        if (CollUtil.isNotEmpty(deliveryDTOList)) {
+            deliveryDTOList.stream()
+                    .map(TmsDeclareBillDTO.SoOutDTO::getBusinessType)
+                    .filter(StringUtils::isNotBlank)
+                    .forEach(businessTypeList::add);
+        }
+        String businessType = joinDistinct(businessTypeList);
+        declareBillEntity.setBusinessType(StringUtils.isBlank(businessType) ? OrderTypeEnum.B2B.getCode() : businessType);
+    }
+
+    /**
      * 填充批量保存报关单业务类型
      * @author will
      * @date 2026/5/7 16:29
@@ -5777,54 +5771,72 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public void syncSourceDeclareStatusBySourceIds(String declareBillType, List<String> sourceIdList) {
+        syncSourceDeclareStatusIfNeeded(declareBillType, sourceIdList);
+    }
+
     /**
-     * TMS 全局事务提交后回写 WMS 来源单报关状态（不参与 Seata 全局事务）。
+     * TMS 事务提交后回写 WMS 来源单报关状态（不参与 Seata 全局事务）。
+     * 规则：存在已生成（finish）中间表明细 → 来源单已生成；全部为 wait 或无中间表 → 来源单未生成。
      */
     private void syncSourceDeclareStatusIfNeeded(String type, List<String> sourceIdList) {
         if (CollUtil.isEmpty(sourceIdList)) {
             return;
         }
-        List<String> finishSourceIds = resolveFinishSourceIds(type, sourceIdList);
-        if (CollUtil.isEmpty(finishSourceIds)) {
-            log.info("来源单仍存在待生成报关明细，跳过回写报关状态，declareBillType={}，sourceIds={}", type, sourceIdList);
-            return;
+        String sourceType = resolveDeclareSourceType(type);
+        List<String> finishSourceIds = resolveSourceIdsWithGeneratedMid(sourceType, sourceIdList);
+        Set<String> finishSourceIdSet = new HashSet<>(finishSourceIds);
+        List<String> waitSourceIds = sourceIdList.stream()
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .filter(sourceId -> !finishSourceIdSet.contains(sourceId))
+                .collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(finishSourceIds)) {
+            log.info("回写来源单报关状态为已生成，declareBillType={}，sourceIds={}", type, finishSourceIds);
+            service.syncSourceDeclareStatusRemote(type, finishSourceIds, WmsDeclareStatusEnum.FINISH.getCode());
         }
-        service.syncSourceDeclareStatusRemote(type, finishSourceIds);
+        if (CollUtil.isNotEmpty(waitSourceIds)) {
+            log.info("回写来源单报关状态为未生成，declareBillType={}，sourceIds={}", type, waitSourceIds);
+            service.syncSourceDeclareStatusRemote(type, waitSourceIds, WmsDeclareStatusEnum.WAIT.getCode());
+        }
     }
 
     /**
      * 回写 WMS 来源单报关状态（不参与 Seata 全局事务）。
      */
-    public void syncSourceDeclareStatusRemote(String type, List<String> finishSourceIds) {
-        if (CollUtil.isEmpty(finishSourceIds)) {
+    public void syncSourceDeclareStatusRemote(String type, List<String> sourceIds, String declareStatus) {
+        if (CollUtil.isEmpty(sourceIds)) {
             return;
         }
-        log.info("回写来源单报关状态为已生成，declareBillType={}，sourceIds={}", type, finishSourceIds);
         if (CharSequenceUtil.equals(type, SourceTypeEnum.FM_DECLARE_BILL.getCode())) {
-            FirstMileDeliveryDTO.UpdateStatusDTO dto = new FirstMileDeliveryDTO.UpdateStatusDTO(finishSourceIds, null, WmsDeclareStatusEnum.FINISH.getCode());
-            assertSourceDeclareStatusUpdated(wmsFirstMileDeliveryFeign.updateStatus(dto), "头程来源单", finishSourceIds);
+            FirstMileDeliveryDTO.UpdateStatusDTO dto = new FirstMileDeliveryDTO.UpdateStatusDTO(sourceIds, null, declareStatus);
+            assertSourceDeclareStatusUpdated(wmsFirstMileDeliveryFeign.updateStatus(dto), "头程来源单", sourceIds);
             return;
         }
-        SoDeliveryNoticeDTO.DeclareStatusDTO dto = new SoDeliveryNoticeDTO.DeclareStatusDTO(finishSourceIds, WmsDeclareStatusEnum.FINISH.getCode());
-        assertSourceDeclareStatusUpdated(soDeliveryNoticeFeign.updateDeclareStatus(dto), "B2B发货通知单", finishSourceIds);
+        SoDeliveryNoticeDTO.DeclareStatusDTO dto = new SoDeliveryNoticeDTO.DeclareStatusDTO(sourceIds, declareStatus);
+        assertSourceDeclareStatusUpdated(soDeliveryNoticeFeign.updateDeclareStatus(dto), "B2B发货通知单", sourceIds);
     }
 
-    private List<String> resolveFinishSourceIds(String type, List<String> sourceIdList) {
+    /**
+     * 查询存在已生成中间表明细的来源单 id（同一来源单存在任意 finish 明细即视为已生成）。
+     */
+    private List<String> resolveSourceIdsWithGeneratedMid(String sourceType, List<String> sourceIdList) {
         if (CollUtil.isEmpty(sourceIdList)) {
             return Collections.emptyList();
         }
-        String sourceType = resolveDeclareSourceType(type);
-        List<DeliveryDeclareDetailMidEntity> waitMidList = deliveryDeclareDetailMidService.lambdaQuery()
+        List<DeliveryDeclareDetailMidEntity> finishMidList = deliveryDeclareDetailMidService.lambdaQuery()
                 .eq(DeliveryDeclareDetailMidEntity::getSourceType, sourceType)
-                .eq(DeliveryDeclareDetailMidEntity::getGenerateStatus, DeliveryDeclareDetailMidGenerateStatusEnum.WAIT.getCode())
+                .eq(DeliveryDeclareDetailMidEntity::getGenerateStatus, DeliveryDeclareDetailMidGenerateStatusEnum.FINISH.getCode())
                 .in(DeliveryDeclareDetailMidEntity::getSourceId, sourceIdList)
                 .list();
-        Set<String> waitSourceIdSet = waitMidList.stream()
+        if (CollUtil.isEmpty(finishMidList)) {
+            return Collections.emptyList();
+        }
+        return finishMidList.stream()
                 .map(DeliveryDeclareDetailMidEntity::getSourceId)
                 .filter(CharSequenceUtil::isNotBlank)
-                .collect(Collectors.toSet());
-        return sourceIdList.stream()
-                .filter(sourceId -> !waitSourceIdSet.contains(sourceId))
+                .distinct()
                 .collect(Collectors.toList());
     }
 
