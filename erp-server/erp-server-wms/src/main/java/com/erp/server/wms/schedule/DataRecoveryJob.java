@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.OrderTypeEnum;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
 import com.erp.model.wms.entity.TransferInfoEntity;
@@ -129,6 +130,36 @@ public class DataRecoveryJob {
         }
     }
 
+    /**
+     * B2B 销售出库单金额字段重算。
+     * 参数示例：{"startDate":"2026-06-01","endDate":"2026-06-30","isPushKingdee":false,"pushKingdeeOnlySynced":true,"approveOnly":true,"pageSize":500}
+     */
+    @XxlJob("b2bSoOutstockAmountFieldsRefresh")
+    public void b2bSoOutstockAmountFieldsRefresh() {
+        JSONObject param = parseJobParam();
+        List<String> ids = param.getBeanList("ids", String.class);
+        Boolean isPushKingdee = param.getBool("isPushKingdee", Boolean.FALSE);
+        Boolean pushKingdeeOnlySynced = param.getBool("pushKingdeeOnlySynced", Boolean.FALSE);
+        Boolean approveOnly = param.getBool("approveOnly", Boolean.TRUE);
+        Integer pageSize = param.getInt("pageSize", DEFAULT_PAGE_SIZE);
+        LocalDate startDate = parseDate(param.getStr("startDate"));
+        LocalDate endDate = parseDate(param.getStr("endDate"));
+        if (CollUtil.isNotEmpty(ids)) {
+            List<SoOutstockEntity> b2bOutstockList = soOutstockService.listByIds(ids).stream()
+                    .filter(item -> OrderTypeEnum.B2B.getCode().equals(item.getOrderType()))
+                    .filter(item -> !Boolean.TRUE.equals(approveOnly) || ApproveStatusEnum.APPROVE.getStatus().equals(item.getApproveStatus()))
+                    .collect(Collectors.toList());
+            if (CollUtil.isEmpty(b2bOutstockList)) {
+                XxlJobHelper.log("未找到需要重算的B2B销售出库单，原始数量={}", ids.size());
+                return;
+            }
+            refreshB2bAmountFields(b2bOutstockList, isPushKingdee, pushKingdeeOnlySynced);
+            XxlJobHelper.log("B2B销售出库金额字段重算完成，原始数量={}，B2B数量={}", ids.size(), b2bOutstockList.size());
+            return;
+        }
+        refreshB2bSoOutstockAmount(startDate, endDate, pageSize, approveOnly, isPushKingdee, pushKingdeeOnlySynced);
+    }
+
     private JSONObject parseJobParam() {
         String jobParam = XxlJobHelper.getJobParam();
         if (CharSequenceUtil.isBlank(jobParam)) {
@@ -150,12 +181,20 @@ public class DataRecoveryJob {
 
     private void refreshSoOutstockAmount(LocalDate startDate, LocalDate endDate, Integer pageSize,
                                          Boolean approveOnly, Boolean isPushKingdee) {
+        refreshSoOutstockAmount(startDate, endDate, pageSize, approveOnly, isPushKingdee, null);
+    }
+
+    private void refreshSoOutstockAmount(LocalDate startDate, LocalDate endDate, Integer pageSize,
+                                         Boolean approveOnly, Boolean isPushKingdee, String orderType) {
         int currentPage = 1;
         while (true) {
             LambdaQueryWrapper<SoOutstockEntity> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.select(SoOutstockEntity::getId);
             if (Boolean.TRUE.equals(approveOnly)) {
                 queryWrapper.eq(SoOutstockEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus());
+            }
+            if (CharSequenceUtil.isNotBlank(orderType)) {
+                queryWrapper.eq(SoOutstockEntity::getOrderType, orderType);
             }
             if (Objects.nonNull(startDate)) {
                 queryWrapper.ge(SoOutstockEntity::getBillDate, startDate);
@@ -170,12 +209,65 @@ public class DataRecoveryJob {
                 break;
             }
             soOutstockService.refreshAmountFields(ids, isPushKingdee);
-            XxlJobHelper.log("销售出库金额字段重算完成，当前页={}，数量={}", currentPage, ids.size());
+            XxlJobHelper.log("销售出库金额字段重算完成，orderType={}，当前页={}，数量={}", orderType, currentPage, ids.size());
             if (currentPage >= page.getPages()) {
                 break;
             }
             currentPage++;
         }
+    }
+
+    private void refreshB2bSoOutstockAmount(LocalDate startDate, LocalDate endDate, Integer pageSize,
+                                            Boolean approveOnly, Boolean isPushKingdee, Boolean pushKingdeeOnlySynced) {
+        int currentPage = 1;
+        while (true) {
+            LambdaQueryWrapper<SoOutstockEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.select(SoOutstockEntity::getId, SoOutstockEntity::getSyncKingdeeId);
+            queryWrapper.eq(SoOutstockEntity::getOrderType, OrderTypeEnum.B2B.getCode());
+            if (Boolean.TRUE.equals(approveOnly)) {
+                queryWrapper.eq(SoOutstockEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus());
+            }
+            if (Objects.nonNull(startDate)) {
+                queryWrapper.ge(SoOutstockEntity::getBillDate, startDate);
+            }
+            if (Objects.nonNull(endDate)) {
+                queryWrapper.le(SoOutstockEntity::getBillDate, endDate);
+            }
+            queryWrapper.orderByAsc(SoOutstockEntity::getId);
+            IPage<SoOutstockEntity> page = soOutstockService.page(new Page<>(currentPage, getPageSize(pageSize)), queryWrapper);
+            List<SoOutstockEntity> soOutstockList = page.getRecords();
+            if (CollUtil.isEmpty(soOutstockList)) {
+                break;
+            }
+            refreshB2bAmountFields(soOutstockList, isPushKingdee, pushKingdeeOnlySynced);
+            XxlJobHelper.log("B2B销售出库金额字段重算完成，当前页={}，数量={}", currentPage, soOutstockList.size());
+            if (currentPage >= page.getPages()) {
+                break;
+            }
+            currentPage++;
+        }
+    }
+
+    private void refreshB2bAmountFields(List<SoOutstockEntity> soOutstockList, Boolean isPushKingdee, Boolean pushKingdeeOnlySynced) {
+        List<String> ids = soOutstockList.stream().map(SoOutstockEntity::getId).collect(Collectors.toList());
+        if (CollUtil.isEmpty(ids)) {
+            return;
+        }
+        if (!Boolean.TRUE.equals(isPushKingdee) || !Boolean.TRUE.equals(pushKingdeeOnlySynced)) {
+            soOutstockService.refreshAmountFields(ids, isPushKingdee);
+            return;
+        }
+        soOutstockService.refreshAmountFields(ids, Boolean.FALSE);
+        List<String> syncedIds = soOutstockList.stream()
+                .filter(item -> CharSequenceUtil.isNotBlank(item.getSyncKingdeeId()))
+                .map(SoOutstockEntity::getId)
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(syncedIds)) {
+            XxlJobHelper.log("本批次没有已推送金蝶的B2B销售出库单，仅重算ERP金额，数量={}", ids.size());
+            return;
+        }
+        soOutstockService.refreshAmountFields(syncedIds, Boolean.TRUE);
+        XxlJobHelper.log("本批次ERP金额重算数量={}，已推送金蝶单据重推数量={}", ids.size(), syncedIds.size());
     }
 
     private void refreshSoReturnInstockPrice(LocalDate startDate, LocalDate endDate, Integer pageSize,

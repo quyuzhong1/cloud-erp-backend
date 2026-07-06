@@ -93,4 +93,26 @@ public interface FirstMileCostAllocationMapper extends BaseMapper<FirstMileCostA
      * @return
      */
     List<FirstMileCostAllocationEntity> listByReportPeriodMonth(@Param("reportPeriodMonth") LocalDate reportPeriodMonth, @Param("reportStatus") String reportStatus);
+
+    /**
+     * 游标分批查分摊表ID
+     */
+    List<String> pageIdsByReportPeriodMonth(@Param("reportPeriodMonth") LocalDate reportPeriodMonth,
+                                            @Param("status") String status,
+                                            @Param("lastId") String lastId,
+                                            @Param("batchSize") int batchSize);
+
+    /**
+     * COUNT 预估总量，与游标查询同过滤条件
+     */
+    Integer countByReportPeriodMonth(@Param("reportPeriodMonth") LocalDate reportPeriodMonth,
+                                     @Param("status") String status);
+
+    List<String> pageIdsForReAllocation(@Param("reportPeriodMonth") LocalDate reportPeriodMonth,
+                                        @Param("status") String status,
+                                        @Param("lastId") String lastId,
+                                        @Param("batchSize") int batchSize);
+
+    Integer countForReAllocation(@Param("reportPeriodMonth") LocalDate reportPeriodMonth,
+                                 @Param("status") String status);
 }

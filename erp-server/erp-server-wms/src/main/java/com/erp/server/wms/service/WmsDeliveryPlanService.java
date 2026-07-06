@@ -234,6 +234,8 @@ public interface WmsDeliveryPlanService extends SuperService<WmsDeliveryPlanEnti
      **/
     ListingInfoDTO.ImportDTO importFile(MultipartFile excelFile, List<String> thirdSkuNoList, String warehouseId, String shopId, HttpServletResponse response);
 
+    ListingInfoDTO.ImportDTO importFile(MultipartFile excelFile, List<String> thirdSkuNoList, String warehouseId, String shopId, String type, HttpServletResponse response);
+
     /**
      * 修改发货状态
      * @Author Luo_WG

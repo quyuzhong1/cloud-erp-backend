@@ -6,13 +6,10 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.B2bThirdDeliveryDTO;
 import com.erp.rpc.wms.feign.ExportWmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
-import com.erp.model.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.List;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_B2B_THIRD_DELIVERY_REPORT;
 
@@ -33,11 +30,6 @@ public class ExportWmsB2bThirdDeliveryHandler extends AbstractPageFileEventHandl
         return exportWmsFeign.exportB2bThirdDelivery(dto);
     }
 
-    @Override
-    protected List<B2bThirdDeliveryDTO.PagingViewDTO> getData(FileTask fileTask) {
-        B2bThirdDeliveryDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<B2bThirdDeliveryDTO.PagingParamDTO>() {});
-        return listSeqData(dto);
-    }
 
     @Override
     protected String getExcelPath() {

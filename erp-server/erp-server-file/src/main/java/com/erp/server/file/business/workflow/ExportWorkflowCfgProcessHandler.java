@@ -6,13 +6,10 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.workflow.dto.CfgProcessDTO;
 import com.erp.rpc.workflow.ExportWorkflowFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
-import com.erp.model.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.List;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_PROCESS_CFG_PROCESS;
 
@@ -27,12 +24,6 @@ public class ExportWorkflowCfgProcessHandler extends AbstractPageFileEventHandle
     @Resource
     private ExportWorkflowFeign exportWorkflowFeign;
 
-    @Override
-    protected List<CfgProcessDTO.ProcessViewDTO> getData(FileTask fileTask) {
-        CfgProcessDTO.SearchParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<CfgProcessDTO.SearchParamDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected PagingVO<CfgProcessDTO.ProcessViewDTO> getPageData(PagingDTO<CfgProcessDTO.SearchParamDTO> dto) {

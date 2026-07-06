@@ -6,13 +6,10 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.AdsErpOutstockDiffFlowDetailDTO;
 import com.erp.rpc.dmp.feign.ExportDmpFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
-import com.erp.model.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.List;
 
 /**
  * 朔源查询-库存流水
@@ -31,11 +28,6 @@ public class ExportAdsErpOutstockDetailSelfHandler extends AbstractPageFileEvent
         return exportDmpFeign.exportAdsErpOutstockDetailSelf(dto);
     }
 
-    @Override
-    protected List<AdsErpOutstockDiffFlowDetailDTO.SourceSelfDTO> getData(FileTask fileTask) {
-        AdsErpOutstockDiffFlowDetailDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<AdsErpOutstockDiffFlowDetailDTO.PagingParamDTO>() {});
-        return listSeqData(dto);
-    }
 
     @Override
     protected String getExcelPath() {

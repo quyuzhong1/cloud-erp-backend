@@ -7,6 +7,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.plm.dto.ProductDetailShowDTO;
+import com.erp.model.plm.dto.ProductSearchDTO;
 import com.erp.model.plm.dto.ProductSkuDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -34,4 +35,10 @@ public interface PlmFeign {
      */
     @PostMapping("/feign/productDetail/list")
     ApiResult<PagingVO<ProductDetailShowDTO>> productDetailList(@RequestBody @Valid PagingDTO<ProductSkuDTO> pagingDTO);
+
+    /**
+     * 根据 SKU 编号批量查询 SKU 信息
+     */
+    @PostMapping("/feign/productDetail/listSkuBySkuNos")
+    ApiResult<List<ProductSearchDTO.SkuListDTO>> listSkuBySkuNos(@RequestBody @Valid ProductSearchDTO.SkuParamDTO skuParamDTO);
 }

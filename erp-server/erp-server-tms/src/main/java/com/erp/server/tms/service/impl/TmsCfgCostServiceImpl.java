@@ -252,7 +252,8 @@ public class TmsCfgCostServiceImpl extends SuperServiceImpl<TmsCfgCostMapper, Tm
            return;
        }
        //字典数据
-        List<DictBasicEntity> basicList = dictBasicService.getByKeyList(Arrays.asList(DictBasicEnum.DICT_COST_CATEGORY.getType(), DictBasicEnum.DICT_COST_ATTRIBUTION.getType()));
+        List<DictBasicEntity> basicList = dictBasicService.lambdaQuery()
+                .in(DictBasicEntity::getType,Arrays.asList(DictBasicEnum.DICT_COST_CATEGORY.getType(), DictBasicEnum.DICT_COST_ATTRIBUTION.getType())).list();
 
         for (TmsCfgCostDTO.ListDTO listDTO : list) {
 

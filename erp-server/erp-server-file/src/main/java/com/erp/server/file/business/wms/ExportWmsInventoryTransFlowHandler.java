@@ -6,13 +6,10 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.rpc.wms.feign.ExportWmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
-import com.erp.model.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.List;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_INVENTORY_TRANS_FLOW;
 
@@ -23,12 +20,6 @@ public class ExportWmsInventoryTransFlowHandler extends AbstractPageFileEventHan
     @Resource
     private ExportWmsFeign exportWmsFeign;
 
-    @Override
-    protected List<InventoryDTO.TransFlowPagingViewDTO> getData(FileTask fileTask) {
-        InventoryDTO.ExportInvFlowSearchParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<InventoryDTO.ExportInvFlowSearchParamDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected PagingVO<InventoryDTO.TransFlowPagingViewDTO> getPageData(PagingDTO<InventoryDTO.ExportInvFlowSearchParamDTO> dto) {

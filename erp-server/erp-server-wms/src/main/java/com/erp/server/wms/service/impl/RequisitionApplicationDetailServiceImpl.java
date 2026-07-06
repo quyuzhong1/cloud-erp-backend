@@ -89,6 +89,7 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
             }
         } else if (RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode().equals(type)
         ||RequisitionApplicationTypeEnum.ALIEXPRESS.getCode().equals(type)
+        ||RequisitionApplicationTypeEnum.FBS.getCode().equals(type)
         ||RequisitionApplicationTypeEnum.FBT.getCode().equals(type)) {
             Map<String, List<RequisitionApplicationDetailEntity>> thirdPartyGroup = list.stream()
                     .collect(Collectors.groupingBy(detail -> detail.getPlatformSku() + detail.getSkuNo()));
@@ -158,6 +159,7 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
             }
         } else if (RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode().equals(type)
         ||RequisitionApplicationTypeEnum.ALIEXPRESS.getCode().equals(type)
+        ||RequisitionApplicationTypeEnum.FBS.getCode().equals(type)
         ||RequisitionApplicationTypeEnum.FBT.getCode().equals(type)) {
             Map<String, List<RequisitionApplicationDetailEntity>> thirdPartyGroup = list.stream()
                     .collect(Collectors.groupingBy(detail -> detail.getPlatformSku() + detail.getSkuNo()));
@@ -298,7 +300,8 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
-        if (!RequisitionApplicationTypeEnum.FBT.getCode().equals(type)) {
+        if (!RequisitionApplicationTypeEnum.FBT.getCode().equals(type)
+                && !RequisitionApplicationTypeEnum.FBS.getCode().equals(type)) {
             return;
         }
         for (RequisitionApplicationDetailEntity detailEntity : list) {

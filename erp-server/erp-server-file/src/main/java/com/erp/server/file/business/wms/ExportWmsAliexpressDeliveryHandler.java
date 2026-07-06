@@ -6,13 +6,10 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.AliexpressDeliveryDTO;
 import com.erp.rpc.wms.feign.ExportWmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
-import com.erp.model.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.List;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_ALIEXPRESS_DELIVERY_EXPORT;
 
@@ -33,12 +30,6 @@ public class ExportWmsAliexpressDeliveryHandler extends AbstractPageFileEventHan
         return EXPORT_WMS_ALIEXPRESS_DELIVERY_EXPORT;
     }
 
-    @Override
-    protected List<AliexpressDeliveryDTO.ListDTO> getData(FileTask fileTask) {
-        AliexpressDeliveryDTO.SearchParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<AliexpressDeliveryDTO.SearchParamDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
 
     @Override

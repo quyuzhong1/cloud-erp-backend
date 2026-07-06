@@ -197,6 +197,12 @@ public class FileManagementServiceImpl extends SuperServiceImpl<FileManagementMa
             entity.setId(CollUtil.isNotEmpty(countDTOS) ? countDTOS.get(0).getId() : null);
             entity.setCode(CollUtil.isNotEmpty(countDTOS) ? countDTOS.get(0).getCode() : null);
             entityList.add(entity);
+        } else if (WmsFileTypeEnum.PACKAGING_COLOR_DIFF_STANDARD.getCode().equals(fileType)
+                || WmsFileTypeEnum.PACKAGING_DESIGN_STANDARD.getCode().equals(fileType)
+                || WmsFileTypeEnum.PACKAGING_INSPECTION_STANDARD.getCode().equals(fileType)) {
+            // 包装色差判定标准、包装设计标准、包装检验标准
+            // 不关联SKU、不关联品类，直接保存
+            entityList.add(entity);
         }
         return entityList;
     }

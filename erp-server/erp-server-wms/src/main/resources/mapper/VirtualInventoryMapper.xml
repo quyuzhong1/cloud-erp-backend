@@ -284,42 +284,71 @@
 
     <!-- 库存差异列表数量 -->
     <select id="diffPagingCount" resultType="java.lang.Integer">
-        select count(0) from (
-            select
-            vi.sku_id,vi.warehouse_id,
-            COALESCE(sum(vi.qty),0) as virtualQty,
-            (select  COALESCE(sum(qty),0) from inventory where is_deleted = false and sku_id = vi.sku_id and warehouse_id = vi.warehouse_id and dict_inventory_status = 'usable') as usableQty,
-            (select  COALESCE(sum(qty),0) from inventory where is_deleted = false and sku_id = vi.sku_id and warehouse_id = vi.warehouse_id and dict_inventory_status = 'frozen') as frozenQty
-        from virtual_inventory vi
+        SELECT count(0) FROM (
+            SELECT
+                vi.sku_id,
+                vi.warehouse_id,
+                COALESCE(SUM(vi.qty), 0)             AS virtualQty,
+                COALESCE(inv.usableQty, 0)           AS usableQty,
+                COALESCE(inv.frozenQty, 0)           AS frozenQty
+            FROM virtual_inventory vi
+            LEFT JOIN (
+                SELECT
+                    sku_id,
+                    warehouse_id,
+                    SUM(CASE WHEN dict_inventory_status = 'usable' THEN qty ELSE 0 END) AS usableQty,
+                    SUM(CASE WHEN dict_inventory_status = 'frozen' THEN qty ELSE 0 END) AS frozenQty
+                FROM inventory
+                WHERE is_deleted = false
+                  AND dict_inventory_status IN ('usable', 'frozen')
+                GROUP BY sku_id, warehouse_id
+            ) inv ON inv.sku_id = vi.sku_id AND inv.warehouse_id = vi.warehouse_id
             <where>
-               vi.is_deleted = false
+                vi.is_deleted = false
                 <if test="params.permissionSql != null and params.permissionSql != ''">
                     ${params.permissionSql}
                 </if>
             </where>
-            group by vi.sku_id,vi.warehouse_id
-            ) a where virtualQty > usableQty + frozenQty;
+            GROUP BY vi.sku_id, vi.warehouse_id, inv.usableQty, inv.frozenQty
+        ) a
+        WHERE a.virtualQty > a.usableQty + a.frozenQty
     </select>
 
     <!-- 库存差异明细分页查询 -->
     <select id="diffDetailPaging" resultType="com.erp.model.wms.dto.VirtualInventoryDiffDTO$ListDetailQtyDTO">
-        select
-            vi.sku_id as skuId,
-            vi.warehouse_id as warehouseId,
-            vi.virtual_warehouse_id as virtualWarehouseId,
-            COALESCE(sum(vi.qty),0) as virtualQty,
-            (select COALESCE(sum(qty),0) from virtual_inventory where is_deleted = false and virtual_warehouse_id = vi.virtual_warehouse_id and sku_id = vi.sku_id and warehouse_id = vi.warehouse_id and dict_inventory_status = 'usable') as virtualUsableQty,
-            (select COALESCE(sum(qty),0) from virtual_inventory where is_deleted = false and virtual_warehouse_id = vi.virtual_warehouse_id and sku_id = vi.sku_id and warehouse_id = vi.warehouse_id and dict_inventory_status = 'frozen') as virtualFrozenQty
-        from virtual_inventory vi
+        SELECT
+            vi.sku_id           AS skuId,
+            vi.warehouse_id     AS warehouseId,
+            vi.virtual_warehouse_id AS virtualWarehouseId,
+            COALESCE(SUM(vi.qty), 0)          AS virtualQty,
+            COALESCE(viAgg.usableQty, 0)      AS virtualUsableQty,
+            COALESCE(viAgg.frozenQty, 0)      AS virtualFrozenQty
+        FROM virtual_inventory vi
+        LEFT JOIN (
+            SELECT
+                virtual_warehouse_id,
+                sku_id,
+                warehouse_id,
+                SUM(CASE WHEN dict_inventory_status = 'usable' THEN qty ELSE 0 END) AS usableQty,
+                SUM(CASE WHEN dict_inventory_status = 'frozen' THEN qty ELSE 0 END) AS frozenQty
+            FROM virtual_inventory
+            WHERE is_deleted = false
+              AND sku_id = #{params.skuId}
+              AND warehouse_id = #{params.warehouseId}
+              AND dict_inventory_status IN ('usable', 'frozen')
+            GROUP BY virtual_warehouse_id, sku_id, warehouse_id
+        ) viAgg ON viAgg.virtual_warehouse_id = vi.virtual_warehouse_id
+               AND viAgg.sku_id = vi.sku_id
+               AND viAgg.warehouse_id = vi.warehouse_id
         <where>
             vi.is_deleted = false
-            and vi.sku_id = #{params.skuId} and vi.warehouse_id = #{params.warehouseId}
+            AND vi.sku_id = #{params.skuId} AND vi.warehouse_id = #{params.warehouseId}
             <if test="params.permissionSql != null and params.permissionSql != ''">
                 ${params.permissionSql}
             </if>
         </where>
-        group by vi.virtual_warehouse_id,vi.sku_id,vi.warehouse_id
-        order by
+        GROUP BY vi.virtual_warehouse_id, vi.sku_id, vi.warehouse_id, viAgg.usableQty, viAgg.frozenQty
+        ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
                 ${item.field} ${item.sort}
@@ -438,13 +467,17 @@
                 ${params.permissionSql}
             </if>
         </where>
-        order by
-        <if test="params.sortList != null and params.sortList.size > 0">
-            <foreach collection="params.sortList" item="item" separator="," close=",">
-                ${item.field} ${item.sort}
-            </foreach>
-        </if>
-        diff.id asc,diff.virtualWarehouseId asc
+        <!--
+            导出分组依赖（勿随意调整）：
+            erp-server-file ExportWmsVirtualInventoryDiffHandler 按 skuId+warehouseId 连续分组并组内置空展示字段，
+            failOnNonContinuousSheetGroup=true 时若同组非相邻将快速失败。
+            导出维度(SKU+实体仓+虚拟仓)与列表 diffPaging(SKU+实体仓)不同但共用 SearchParamDTO；列表维度的用户 sortList
+            不适用于导出（列集/语义不同，如 createTime 在导出不存在、virtualQty 语义不同），Service 层 exportListDiffExportData
+            已清空 sortList，故此处固定排序、不拼接用户排序，导出维度自己说了算：
+            diff.id 为 Inventory CTE 按 sku_id+warehouse_id 聚合的 min(id)，diff.id asc 保证同 SKU+实体仓连续，
+            diff.virtualWarehouseId asc 为组内稳定排序。
+        -->
+        order by diff.id asc, diff.virtualWarehouseId asc
     </select>
 
 

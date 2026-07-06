@@ -6,13 +6,10 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.VirtualInventoryAgeDTO;
 import com.erp.rpc.wms.feign.ExportWmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
-import com.erp.model.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.List;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_VIRTUAL_HIS_INVENTORY_AGE;
 
@@ -23,12 +20,6 @@ public class ExportWmsVirtualHisInventoryAgeHandler extends AbstractPageFileEven
     @Resource
     private ExportWmsFeign exportWmsFeign;
 
-    @Override
-    protected List<VirtualInventoryAgeDTO.HisInventoryAgeDTO> getData(FileTask fileTask) {
-        VirtualInventoryAgeDTO.HisInventoryAgeParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<VirtualInventoryAgeDTO.HisInventoryAgeParamDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDTO> getPageData(PagingDTO<VirtualInventoryAgeDTO.HisInventoryAgeParamDTO> dto) {

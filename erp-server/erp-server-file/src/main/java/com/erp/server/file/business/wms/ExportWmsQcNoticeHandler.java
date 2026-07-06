@@ -6,12 +6,9 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.QcNoticeDTO;
 import com.erp.rpc.wms.feign.ExportWmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
-import com.erp.model.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
-import java.util.List;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_QC_NOTICE_REPORT;
 
 /**
@@ -31,11 +28,6 @@ public class ExportWmsQcNoticeHandler extends AbstractPageFileEventHandler<QcNot
         return exportWmsFeign.exportQcNotice(dto);
     }
 
-    @Override
-    protected List<QcNoticeDTO.ListDTO> getData(FileTask fileTask) {
-        QcNoticeDTO.ExportDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<QcNoticeDTO.ExportDTO>() {});
-        return listSeqData(dto);
-    }
 
     @Override
     protected String getExcelPath() {

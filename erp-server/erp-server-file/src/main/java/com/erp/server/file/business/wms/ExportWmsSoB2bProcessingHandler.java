@@ -6,13 +6,10 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.SoB2bProcessingDTO;
 import com.erp.rpc.wms.feign.ExportWmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
-import com.erp.model.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.List;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SO_B2B_PROCESSING;
 
@@ -23,12 +20,6 @@ public class ExportWmsSoB2bProcessingHandler extends AbstractPageFileEventHandle
     @Resource
     private ExportWmsFeign exportWmsFeign;
 
-    @Override
-    protected List<SoB2bProcessingDTO.ListDTO> getData(FileTask fileTask) {
-        SoB2bProcessingDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<SoB2bProcessingDTO.PagingParamDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected PagingVO<SoB2bProcessingDTO.ListDTO> getPageData(PagingDTO<SoB2bProcessingDTO.PagingParamDTO> dto) {

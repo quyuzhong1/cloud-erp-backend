@@ -1,6 +1,5 @@
 package com.erp.server.file.business.dmp;
 
-import java.util.List;
 
 import javax.annotation.Resource;
 
@@ -12,8 +11,6 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.AdsErpDiffReturnInstockSyncDTO;
 import com.erp.rpc.dmp.feign.ExportDmpFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
-import com.erp.model.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -34,11 +31,6 @@ public class ExportAdsErpDiffReturnInstockSyncHandler extends AbstractPageFileEv
         return exportDmpFeign.exportAdsErpDiffReturnInstockSync(dto);
     }
 
-    @Override
-    protected List<AdsErpDiffReturnInstockSyncDTO.ListDTO> getData(FileTask fileTask) {
-        AdsErpDiffReturnInstockSyncDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<AdsErpDiffReturnInstockSyncDTO.PagingParamDTO>() {});
-        return listSeqData(dto);
-    }
 
     @Override
     protected String getExcelPath() {

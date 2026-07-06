@@ -198,48 +198,31 @@ public class DmpInputShopeeOrderDmpHandler extends DmpInputChildDataToParentDmpH
 		            dmpDataMap.put("extendData", labelJsonObject.toJSONString());
 				}
 				
-				Object ship_by_date = dmpDataMap.get("ship_by_date");
-				if(ship_by_date != null) {
-					Long shipByDate = Long.valueOf(ship_by_date.toString());
-					if(shipByDate.compareTo(0L) > 0) {
-						Instant instant = Instant.ofEpochSecond(shipByDate);
-						dmpDataMap.put("deliveryTime", LocalDateTime.ofInstant(instant, zone));
-					}
+				Long deliveryTime = parseEpochSeconds(dmpDataMap.get("pickup_done_time"), "pickup_done_time");
+				if (deliveryTime == null) {
+					deliveryTime = parseEpochSeconds(dmpDataMap.get("ship_by_date"), "ship_by_date");
 				}
-				
-				Object create_time = dmpDataMap.get("create_time");
-				if(create_time != null) {
-					Long createTime = Long.valueOf(create_time.toString());
-					if(createTime.compareTo(0L) > 0) {
-						Instant instant = Instant.ofEpochSecond(createTime);
-						dmpDataMap.put("platformCreateTime", LocalDateTime.ofInstant(instant, zone));
-					}
-				}else{
-					create_time = detailMaps.get("create_time");
-					if(create_time != null) {
-						Long createTime = Long.valueOf(create_time.toString());
-						if(createTime.compareTo(0L) > 0) {
-							Instant instant = Instant.ofEpochSecond(createTime);
-							dmpDataMap.put("platformCreateTime", LocalDateTime.ofInstant(instant, zone));
-						}
-					}
+				if (deliveryTime == null) {
+					deliveryTime = parseEpochSeconds(detailMaps.get("ship_by_date"), "ship_by_date");
 				}
-				Object update_time = dmpDataMap.get("update_time");
-				if(update_time != null) {
-					Long updateTime = Long.valueOf(update_time.toString());
-					if(updateTime.compareTo(0L) > 0) {
-						Instant instant = Instant.ofEpochSecond(updateTime);
-						dmpDataMap.put("platformUpdateTime", LocalDateTime.ofInstant(instant, zone));
-					}
-				}else{
-					update_time = detailMaps.get("update_time");
-					if(update_time != null) {
-						Long updateTime = Long.valueOf(update_time.toString());
-						if(updateTime.compareTo(0L) > 0) {
-							Instant instant = Instant.ofEpochSecond(updateTime);
-							dmpDataMap.put("platformUpdateTime", LocalDateTime.ofInstant(instant, zone));
-						}
-					}
+				if (deliveryTime != null) {
+					dmpDataMap.put("deliveryTime", LocalDateTime.ofInstant(Instant.ofEpochSecond(deliveryTime), zone));
+				}
+
+				Long createTime = parseEpochSeconds(dmpDataMap.get("create_time"), "create_time");
+				if (createTime == null) {
+					createTime = parseEpochSeconds(detailMaps.get("create_time"), "create_time");
+				}
+				if (createTime != null) {
+					dmpDataMap.put("platformCreateTime", LocalDateTime.ofInstant(Instant.ofEpochSecond(createTime), zone));
+				}
+
+				Long updateTime = parseEpochSeconds(dmpDataMap.get("update_time"), "update_time");
+				if (updateTime == null) {
+					updateTime = parseEpochSeconds(detailMaps.get("update_time"), "update_time");
+				}
+				if (updateTime != null) {
+					dmpDataMap.put("platformUpdateTime", LocalDateTime.ofInstant(Instant.ofEpochSecond(updateTime), zone));
 				}
 				
 				List<Map<String, Object>> escrowMapsList = orderSnEscrowMaps.get(dmpDataMap.getOrDefault("thirdCode", "").toString());
@@ -329,5 +312,18 @@ public class DmpInputShopeeOrderDmpHandler extends DmpInputChildDataToParentDmpH
 			ServiceException.runError("解析到未知的配送信息deliveryType=" + infoNeededJsonString);
 		}
 		return deliveryType;
+	}
+
+	private Long parseEpochSeconds(Object value, String fieldName) {
+		if (value == null) {
+			return null;
+		}
+		try {
+			long epochSeconds = Long.parseLong(value.toString());
+			return epochSeconds > 0L ? epochSeconds : null;
+		} catch (NumberFormatException e) {
+			log.warn("【Shopee订单】{} 格式异常，值={}，跳过时间转换", fieldName, value);
+			return null;
+		}
 	}
 }

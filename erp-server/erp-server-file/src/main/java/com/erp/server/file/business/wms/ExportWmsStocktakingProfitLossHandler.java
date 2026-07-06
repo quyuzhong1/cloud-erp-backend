@@ -6,13 +6,10 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.StocktakingProfitLossDTO;
 import com.erp.rpc.wms.feign.ExportWmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
-import com.erp.model.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.List;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_STOCKTAKING_PROFIT_LOSS;
 
@@ -32,12 +29,6 @@ public class ExportWmsStocktakingProfitLossHandler extends AbstractPageFileEvent
         return EXPORT_WMS_STOCKTAKING_PROFIT_LOSS;
     }
 
-    @Override
-    protected List<StocktakingProfitLossDTO.ExportViewDTO> getData(FileTask fileTask) {
-        StocktakingProfitLossDTO.ExportDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<StocktakingProfitLossDTO.ExportDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
 
     @Override

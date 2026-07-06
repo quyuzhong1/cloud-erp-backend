@@ -6,9 +6,7 @@ import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.VirtualInventoryAgeDTO;
 import com.erp.rpc.wms.feign.ExportWmsFeign;
-import com.erp.server.file.core.AbstractDynamicHeadersFileEventHandler;
-import com.erp.model.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
+import com.erp.server.file.core.dynamic.AbstractDynamicHeadersFileEventHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -24,12 +22,6 @@ public class ExportWmsVirtualInventoryAgeHandler extends AbstractDynamicHeadersF
     private ExportWmsFeign exportWmsFeign;
 
 
-    @Override
-    protected DynamicExcelDTO getData(FileTask fileTask) {
-        VirtualInventoryAgeDTO.SearchParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<VirtualInventoryAgeDTO.SearchParamDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected PagingVO<DynamicExcelDTO> getPageData(PagingDTO<VirtualInventoryAgeDTO.SearchParamDTO> dto) {
