@@ -1705,8 +1705,6 @@ public class LogisticsReconServiceImpl
                 if (!LogisticsReconCheckStatusEnum.CONFIRMED.getCode().equals(entity.getCheckStatus())) {
                     throw new ServiceException(ApiError.LOGISTICS_RECON_ONLY_CONFIRMED_ALLOW_MATCH);
                 }
-                // 超时兜底：重置长时间卡在匹配中的费用项，避免异步任务异常后无法再次触发
-                resetStaleMatchingSubs(mainId);
                 int submittedChunkCount = 0;
                 while (true) {
                     List<String> claimedIds = logisticsReconDetailSubService
@@ -1856,7 +1854,7 @@ public class LogisticsReconServiceImpl
     }
 
     /**
-     * 刷新匹配中费用项的更新时间，避免长任务被 resetStaleMatchingSubs 误判超时。
+     * 刷新匹配中费用项的更新时间（心跳），避免在跑的长任务被认领逻辑误判超时而遭抢占重试。
      */
     private void touchMatchingSubsUpdateTime(List<String> detailSubIds) {
         LocalDateTime now = LocalDateTime.now();
@@ -1869,23 +1867,6 @@ public class LogisticsReconServiceImpl
                     .set(LogisticsReconDetailSubEntity::getUpdateTime, now)
                     .update();
         }
-    }
-
-    /**
-     * 重置长时间处于匹配中且未更新的费用项（异步任务异常兜底）。
-     */
-    @Override
-    public void resetStaleMatchingSubs(String mainId) {
-        LocalDateTime threshold = LocalDateTime.now().minusMinutes(MATCHING_STALE_MINUTES);
-        logisticsReconDetailSubService.lambdaUpdate()
-                .eq(LogisticsReconDetailSubEntity::getMainId, mainId)
-                .eq(LogisticsReconDetailSubEntity::getMatchStatus,
-                        LogisticsReconDetailMatchStatusEnum.MATCHING.getCode())
-                .lt(LogisticsReconDetailSubEntity::getUpdateTime, threshold)
-                .set(LogisticsReconDetailSubEntity::getMatchStatus,
-                        LogisticsReconDetailMatchStatusEnum.FAILED.getCode())
-                .set(LogisticsReconDetailSubEntity::getMatchFailReason, "匹配超时，请重新匹配")
-                .update();
     }
 
     /** 认领匹配时可覆盖的前置 match_status（未匹配 / 失败） */
@@ -2962,11 +2943,6 @@ public class LogisticsReconServiceImpl
      * 整单匹配时每批处理的费用项数量（小事务分片）。
      */
     private static final int MATCH_CHUNK_SIZE = 500;
-
-    /**
-     * 匹配中状态超时分钟数，超时后允许重置为失败并重新触发匹配。
-     */
-    private static final long MATCHING_STALE_MINUTES = 120;
 
     // ============================== private ==============================
 

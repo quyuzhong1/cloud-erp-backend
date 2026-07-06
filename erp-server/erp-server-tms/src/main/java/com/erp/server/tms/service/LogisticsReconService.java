@@ -166,11 +166,6 @@ public interface LogisticsReconService extends SuperService<LogisticsReconEntity
     void markReconMatchFailed(String mainId, List<String> detailSubIds, String reason);
 
     /**
-     * 重置长时间处于匹配中且未更新的费用项（异步任务异常兜底）。
-     */
-    void resetStaleMatchingSubs(String mainId);
-
-    /**
      * 刷新费用项确认状态汇总（短事务）
      */
     void refreshDetailSubReconciliationStatusInTx(String mainId);
