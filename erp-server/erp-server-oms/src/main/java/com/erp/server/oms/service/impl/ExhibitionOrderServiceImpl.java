@@ -715,14 +715,15 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
     @Override
     public PagingVO<ExhibitionOrderDTO.ListDTO> paging(PagingDTO<ExhibitionOrderDTO.PagingParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
-        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize(), false);
         IPage<ExhibitionOrderDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
+        Long total = Optional.ofNullable(this.baseMapper.pagingCount(pagingParamDTO.getParams())).orElse(0L);
         if (CollUtil.isEmpty(pageData.getRecords())) {
-            return new PagingVO(pageData);
+            return new PagingVO<>(pageData.getRecords(), total.intValue(), pagingParamDTO.getPageSize(), pagingParamDTO.getCurrPage());
         }
         // 数据处理
         fillList(pageData.getRecords());
-        return new PagingVO(pageData);
+        return new PagingVO<>(pageData.getRecords(), total.intValue(), pagingParamDTO.getPageSize(), pagingParamDTO.getCurrPage());
     }
 
     @Override
@@ -916,13 +917,8 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         //判断上一次的审核的任务是否已经全部执行成功
-        Integer count = workflowTaskRecordService.lambdaQuery().eq(WorkflowTaskRecordEntity::getSourceId, id)
-                .eq(WorkflowTaskRecordEntity::getSourceType, WorkflowTaskRecordTypeEnum.EXHIBITION_ORDER_APPROVE)
-                .ne(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.SUCCESS.getCode())
-                .count();
-        if(count > 0){
-            throw new ServiceException("上一次审核任务未执行完成，无法进行反审核");
-        }
+        validatePreviousWorkflowTaskFinished(id, WorkflowTaskRecordTypeEnum.EXHIBITION_ORDER_APPROVE,
+                "上一次审核任务未执行完成，无法进行反审核");
 
         //任务节点记录表
         workflowTaskRecordService.lambdaUpdate().set(WorkflowTaskRecordEntity::getIsDeleted, true)
@@ -932,6 +928,11 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
 
         List<SoInfoEntity> list = soInfoService.lambdaQuery().eq(SoInfoEntity::getSourceId, id).list();
         if(CollUtil.isNotEmpty(list)){
+            // 同一单据同一任务节点只能存在一组未删除记录；再次反审核前清理上一轮已完成的反审核任务。
+            validatePreviousWorkflowTaskFinished(id, WorkflowTaskRecordTypeEnum.EXHIBITION_ORDER_DISAPPROVE,
+                    "上一次反审核任务未执行完成，无法再次反审核");
+            workflowTaskRecordService.removeBySourceIdAndSourceType(id, WorkflowTaskRecordTypeEnum.EXHIBITION_ORDER_DISAPPROVE.getCode());
+
             WorkflowTaskRecordDTO.AddTaskDTO addTaskDTO = new WorkflowTaskRecordDTO.AddTaskDTO();
             addTaskDTO.setSourceId(entity.getId());
             addTaskDTO.setSourceCode(entity.getCode());
@@ -966,6 +967,18 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "展会订单信息");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.EXHIBITION_ORDER.getCode(), entity.getId(), "反审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
+    }
+
+    private void validatePreviousWorkflowTaskFinished(String sourceId, WorkflowTaskRecordTypeEnum sourceTypeEnum, String errorMsg) {
+        Integer count = workflowTaskRecordService.lambdaQuery()
+                .eq(WorkflowTaskRecordEntity::getSourceId, sourceId)
+                .eq(WorkflowTaskRecordEntity::getSourceType, sourceTypeEnum)
+                .eq(WorkflowTaskRecordEntity::getIsDeleted, false)
+                .ne(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.SUCCESS.getCode())
+                .count();
+        if(count > 0){
+            throw new ServiceException(errorMsg);
+        }
     }
 
     private Boolean validateDisApprove(ExhibitionOrderEntity entity) {
