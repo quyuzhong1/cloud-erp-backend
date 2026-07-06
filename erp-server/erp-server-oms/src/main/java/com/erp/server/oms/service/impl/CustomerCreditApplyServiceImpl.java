@@ -7,6 +7,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.AttachDTO;
@@ -26,6 +27,7 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
+import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.oms.dto.CustomerCreditApplyDTO;
 import com.erp.model.oms.entity.CustomerCreditApplyEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
@@ -236,6 +238,7 @@ public class CustomerCreditApplyServiceImpl extends SuperServiceImpl<CustomerCre
 
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO submit(String id) {
         CustomerCreditApplyEntity entity = getById(id);
         if (ObjectUtil.isEmpty(entity)) {
@@ -276,6 +279,7 @@ public class CustomerCreditApplyServiceImpl extends SuperServiceImpl<CustomerCre
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "dto.id", unlockAfterTx = true)
     public BatchResultDTO approve(ApproveOneDTO dto) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
@@ -353,6 +357,7 @@ public class CustomerCreditApplyServiceImpl extends SuperServiceImpl<CustomerCre
 
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO delete(String id) {
         CustomerCreditApplyEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到客户授信数据"));
         // 只有待提交数据允许删除
@@ -373,6 +378,7 @@ public class CustomerCreditApplyServiceImpl extends SuperServiceImpl<CustomerCre
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "dto.id", unlockAfterTx = true)
     public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         String id = dto.getId();
         CustomerCreditApplyEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到客户授信数据"));

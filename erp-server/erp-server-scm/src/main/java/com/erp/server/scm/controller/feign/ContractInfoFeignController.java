@@ -56,6 +56,7 @@ public class ContractInfoFeignController extends BaseController {
      * @return
      */
     @PostMapping("/updateContractNameByTempId")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "合同管理更新合同名称")
     public void updateContractNameByTempId(@RequestBody ContractInfoDTO.UpdateContractNameDTO dto){
         contractInfoService.lambdaUpdate()
                 .set(ContractInfoEntity::getName, dto.getName())

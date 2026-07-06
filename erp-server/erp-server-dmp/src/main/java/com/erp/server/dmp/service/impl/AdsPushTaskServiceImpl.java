@@ -38,6 +38,7 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.dmp.dto.AdsPushTaskDTO;
 import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO;
 import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO.ExpotParamDTO;
@@ -245,6 +246,7 @@ public class AdsPushTaskServiceImpl extends SuperServiceImpl<AdsPushTaskMapper, 
 	}
 
 	@Override
+	@DistributeLocker(businessType = DistributeKeyConstant.DMP_PUSH_TASK_KEY, keyName = "ids", waiteTime = 60)
 	public Boolean batchSync(List<String> ids) {
 		lambdaUpdate().set(AdsPushTaskEntity::getPushStatus, "push")
         	.set(AdsPushTaskEntity::getStatus, DmpOutputTaskRecordStatusEnum.INIT.getCode())

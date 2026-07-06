@@ -3,8 +3,10 @@ package com.erp.server.fms.service.impl;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.message.constant.DistributeKeyConstant;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.fms.entity.AssetAcceptDetailEntity;
 import com.erp.model.fms.entity.AssetAcceptEntity;
@@ -90,6 +92,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
     }
 
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.KINGDEE_SYNC_KEY, keyName = "params.code,params.businessId", unlockAfterTx = true)
     public void updateBusinessSyncKingdeeStatus(Map<String, Object> params) {
         //模块类型编码
         //模块类型编码

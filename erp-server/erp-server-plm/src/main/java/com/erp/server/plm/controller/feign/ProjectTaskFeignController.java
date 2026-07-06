@@ -1,5 +1,7 @@
 package com.erp.server.plm.controller.feign;
 
+import com.common.core.anno.LogAction;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.entity.TaskFollowerEntity;
 import com.erp.model.sys.dto.SysUserInfoDTO;
@@ -41,6 +43,7 @@ public class ProjectTaskFeignController {
      * @param sysUserInfoDTO
      */
     @PostMapping("/updateProjectTaskChargeName")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "项目任务负责人名称更新")
     public void updateProjectTaskChargeName(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO) {
         projectTaskService.updateProjectTaskChargeName(sysUserInfoDTO);
     }
@@ -74,6 +77,7 @@ public class ProjectTaskFeignController {
      * @return void
      */
     @PostMapping("/approvalTaskPass")
+    @LogAction(value = LogActionEnum.APPROVE, desc = "项目任务审核回调通过")
     public void approvalTaskPass(@RequestBody String processId){
          projectTaskService.approvalTaskPass(processId);
     }
@@ -86,6 +90,7 @@ public class ProjectTaskFeignController {
      * @return void
      */
     @PostMapping("/approvalTaskSchedulePass")
+    @LogAction(value = LogActionEnum.APPROVE, desc = "项目排期审核回调通过")
     public void approvalTaskSchedulePass(@RequestBody ProcessPassDTO dto){
         projectPlanService.processPass(dto);
     }
