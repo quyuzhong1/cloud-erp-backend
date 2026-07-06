@@ -206,59 +206,56 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 			dto.setProductDetailList(remaining);
 		}
 		if (CharSequenceUtil.isNotBlank(dto.getOrderReferenceNo())) {
-			if (dto.getOrderReferenceNo().contains(BusinessNoConstant.WFHD)) {
-				// 参考单号为三方仓发货单号（含WFHD前缀）：按三方仓发货单查询对应销售订单
-				handleWfhdReferenceNo(dto, warehouseEntity);
+			// 先按参考单号匹配售后单/退货单/销售订单，匹配不到再尝试按三方仓发货单号匹配，两者均无匹配则生成无关联预入库单
+			if (handleReferenceNoAfterSaleMatch(dto, warehouseEntity)) {
 				return;
-			} else {
-				// 参考单号不含WFHD：依次尝试匹配售后单/退货单、销售订单，均匹配不到则生成无关联预入库单
-				handleReferenceNoAfterSaleMatch(dto, warehouseEntity);
+			}
+			if (handleWfhdReferenceNo(dto, warehouseEntity)) {
 				return;
 			}
 		}
-		// 既无物流单号也无参考单号：生成预入库单
+		// 参考单号无匹配或无参考单号：生成预入库单
 		this.createSoReturnPrestockHeadless(dto, warehouseEntity);
 	}
 
 	/**
-	 * 参考单号为三方仓发货单号（含WFHD前缀）：按三方仓发货单查询对应B2C销售订单，
-	 * 命中则按已有销售订单流程生成已审核退货入库单，否则生成无关联预入库单
+	 * 按三方仓发货单号查询对应B2C销售订单，命中则生成已审核退货入库单并返回 true，否则返回 false
 	 */
-	private void handleWfhdReferenceNo(PlatformReturnInstockDTO dto, WarehouseEntity warehouseEntity) {
+	private boolean handleWfhdReferenceNo(PlatformReturnInstockDTO dto, WarehouseEntity warehouseEntity) {
 		ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity = thirdWarehouseDeliveryService.getLatestByCode(dto.getOrderReferenceNo());
 		if (Objects.nonNull(thirdWarehouseDeliveryEntity) && CharSequenceUtil.isNotBlank(thirdWarehouseDeliveryEntity.getSoCode())) {
 			SoB2cEntity soB2cEntity = soB2cFeign.getSoCode(thirdWarehouseDeliveryEntity.getSoCode());
 			if (Objects.nonNull(soB2cEntity)) {
 				generateInstockBySo(dto, warehouseEntity, soB2cEntity);
-				return;
+				return true;
 			}
 		}
-		this.createSoReturnPrestockHeadless(dto, warehouseEntity);
+		return false;
 	}
 
 	/**
-	 * 参考单号不含WFHD：先按参考单号匹配《B2C售后单-退货单》，找不到再匹配《B2B/B2C销售订单》，都找不到则生成无关联预入库单（三无包裹）
+	 * 按参考单号依次匹配《B2C售后单-退货单》、《B2B/B2C销售订单》，命中则生成退货入库单并返回 true，均未匹配返回 false
 	 */
-	private void handleReferenceNoAfterSaleMatch(PlatformReturnInstockDTO dto, WarehouseEntity warehouseEntity) {
+	private boolean handleReferenceNoAfterSaleMatch(PlatformReturnInstockDTO dto, WarehouseEntity warehouseEntity) {
 		List<SoB2cReturnEntity> candidates = matchB2cReturnCandidates(dto.getOrderReferenceNo());
 		SoB2cReturnEntity matchedReturn = CollectionUtils.isEmpty(candidates) ? null : pickReturnBySkuMatch(candidates, dto);
 		if (Objects.nonNull(matchedReturn)) {
 			if (generateInstockByMatchedReturn(dto, warehouseEntity, matchedReturn)) {
-				return;
+				return true;
 			}
 		}
 		Set<String> incomingSkuIds = resolveSkuIds(dto);
 		SoB2cEntity soB2cEntity = matchB2cSoByReferenceNo(dto.getOrderReferenceNo(), incomingSkuIds);
 		if (Objects.nonNull(soB2cEntity)) {
 			generateInstockBySo(dto, warehouseEntity, soB2cEntity);
-			return;
+			return true;
 		}
 		SoInfoEntity soInfoEntity = matchB2bSoByReferenceNo(dto.getOrderReferenceNo(), incomingSkuIds);
 		if (Objects.nonNull(soInfoEntity)) {
 			generateInstockBySoInfo(dto, warehouseEntity, soInfoEntity);
-			return;
+			return true;
 		}
-		this.createSoReturnPrestockHeadless(dto, warehouseEntity);
+		return false;
 	}
 
 	/**
