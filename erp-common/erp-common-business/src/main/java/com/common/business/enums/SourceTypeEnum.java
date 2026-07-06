@@ -301,6 +301,7 @@ public enum SourceTypeEnum {
     WDT_VIRTUAL_WAREHOUSE("wdt_virtual_warehouse", "旺店通虚拟仓基础数据", "dmp_pull_task"),
     WDT_SHOP("wdt_shop", "旺店通店铺基础数据", "dmp_pull_task"),
     WDT_SO_PRESTOCK("wdt_so_prestock", "旺店通预入库", "dmp_so_prestock_info"),
+    SO_RETURN_PRESTOCK("soReturnPrestock", "预入库单", "so_return_prestock"),
 
     QIMEN_SO_OUT_STOCK("qimen_so_out_stock", "奇门销售出库单", "dmp_pull_task"),
     QIMEN_RETURN_ORDER("qimen_return_order", "奇门销售退货入库单", "dmp_pull_task"),

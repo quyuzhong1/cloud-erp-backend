@@ -10,6 +10,7 @@ import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -17,18 +18,25 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
+import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.wms.dto.SoReturnInstockDTO;
 import com.erp.model.wms.dto.SoReturnInstockDetailDTO;
 import com.erp.model.wms.dto.SoReturnPrestockDTO;
 import com.erp.model.wms.dto.SoReturnPrestockDetailDTO;
+import com.erp.model.wms.entity.OtherInstockDetailEntity;
+import com.erp.model.wms.entity.OtherInstockEntity;
 import com.erp.model.wms.entity.SoReturnPrestockDetailEntity;
 import com.erp.model.wms.entity.SoReturnPrestockEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.enums.InstockTypeEnum;
+import com.erp.model.wms.enums.InventoryDirectionEnum;
 import com.erp.model.wms.enums.PrestockLinkStatusEnum;
 import com.erp.model.wms.enums.PrestockSourceTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.mapper.SoReturnPrestockMapper;
+import com.erp.server.wms.service.OtherInstockService;
 import com.erp.server.wms.service.SoReturnPrestockDetailService;
 import com.erp.server.wms.service.SoReturnPrestockService;
 import com.erp.server.wms.service.WarehouseService;
@@ -78,6 +86,9 @@ public class SoReturnPrestockServiceImpl
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
+
+    @Resource
+    private OtherInstockService otherInstockService;
 
     // ===================== 分页查询 =====================
 
@@ -334,7 +345,9 @@ public class SoReturnPrestockServiceImpl
         SoReturnPrestockDTO.Add prestockAdd = buildPrestockAddFromInstockParams(
                 dto.getType(), dto.getReturnLogisticCode(), dto.getThirdCode(), dto.getWarehouseId(),
                 dto.getSoReturnCode(), detailList);
-        return add(prestockAdd);
+        String prestockId = add(prestockAdd);
+        generateOtherInstockForPrestock(prestockId, prestockAdd);
+        return prestockId;
     }
 
     @Override
@@ -345,7 +358,9 @@ public class SoReturnPrestockServiceImpl
         SoReturnPrestockDTO.Add prestockAdd = buildPrestockAddFromInstockParams(
                 dto.getType(), dto.getReturnLogisticCode(), null, dto.getWarehouseId(),
                 dto.getSoReturnCode(), detailList);
-        return add(prestockAdd);
+        String prestockId = add(prestockAdd);
+        generateOtherInstockForPrestock(prestockId, prestockAdd);
+        return prestockId;
     }
 
     // ===================== 私有辅助方法 =====================
@@ -691,6 +706,61 @@ public class SoReturnPrestockServiceImpl
         prestockAdd.setRemark(CharSequenceUtil.isNotBlank(soReturnCode) ? "原退货订单号：" + soReturnCode : "");
         prestockAdd.setDetailList(detailList);
         return prestockAdd;
+    }
+
+    /**
+     * 由退货入库单表单发起创建预入库单后，同时生成并自动审核一张"其它入库单"（三无退货预入库类型），
+     * 使预入库真正增加库存；写法参照旺店通预入库范式 {@code OtherInstockServiceImpl#buildWdtPreStock}，
+     * 走同一个 {@code addAndApprove} 入口完成新增、提交、审核并触发库存联动，与退货入库单原有库存联动方式互不干扰。
+     * 其它入库生成失败需要预入库单一并回滚，异常直接向上抛出，由调用方的事务统一处理。
+     */
+    private void generateOtherInstockForPrestock(String prestockId, SoReturnPrestockDTO.Add prestockAdd) {
+        SoReturnPrestockEntity prestockEntity = getByIdOrThrow(prestockId);
+        Map<String, SkuVO> skuVOMap = listSkuVOMap(prestockAdd.getDetailList().stream()
+                .map(SoReturnPrestockDetailDTO.Add::getSkuId).collect(Collectors.toList()));
+        // 按创建顺序与刚组装的入参详情行一一对应，用于回填 sourceDetailId 溯源到预入库单具体明细行
+        List<SoReturnPrestockDetailEntity> persistedDetailList = soReturnPrestockDetailService.listByMainId(prestockId);
+        List<SysDepartmentEntity> deptList = sysUserFeign.getDeptByIds(Collections.singletonList(WmsConstant.DEFAULT_WAREHOUSING_DEPT_ID));
+        if (CollectionUtils.isEmpty(deptList)) {
+            throw new ServiceException("获取不到仓储部门信息");
+        }
+        SysDepartmentEntity dept = deptList.get(0);
+
+        OtherInstockEntity otherInstockEntity = new OtherInstockEntity();
+        otherInstockEntity.setBillDate(prestockEntity.getReturnInstockTime().toLocalDate());
+        otherInstockEntity.setInventoryDirection(InventoryDirectionEnum.ORDINARY.getCode());
+        otherInstockEntity.setWarehouseId(prestockAdd.getWarehouseId());
+        otherInstockEntity.setWarehouseName(prestockAdd.getWarehouseName());
+        otherInstockEntity.setOrgId(prestockAdd.getInventoryOrgId());
+        otherInstockEntity.setOrgName(prestockAdd.getInventoryOrgName());
+        otherInstockEntity.setDeptId(dept.getId());
+        otherInstockEntity.setDeptName(dept.getName());
+        otherInstockEntity.setType(InstockTypeEnum.THREE_NO_PRODUCT_PRE_INSTOCK.getCode());
+        otherInstockEntity.setReturnLogisticCode(prestockAdd.getReturnLogisticCode());
+        otherInstockEntity.setThirdCode(CharSequenceUtil.emptyToDefault(prestockAdd.getThirdCode(), ""));
+        otherInstockEntity.setSourceType(SourceTypeEnum.SO_RETURN_PRESTOCK.getCode());
+        otherInstockEntity.setSourceId(prestockId);
+        otherInstockEntity.setSourceCode(prestockEntity.getCode());
+        otherInstockEntity.setRemark(CharSequenceUtil.format("预入库单【{}】自动生成", prestockEntity.getCode()));
+
+        List<OtherInstockDetailEntity> detailEntityList = new ArrayList<>();
+        List<SoReturnPrestockDetailDTO.Add> addDetailList = prestockAdd.getDetailList();
+        for (int i = 0; i < addDetailList.size(); i++) {
+            SoReturnPrestockDetailDTO.Add detail = addDetailList.get(i);
+            SkuVO skuVO = skuVOMap.getOrDefault(detail.getSkuId(), new SkuVO());
+            OtherInstockDetailEntity detailEntity = new OtherInstockDetailEntity();
+            detailEntity.setSkuId(detail.getSkuId());
+            detailEntity.setSkuNo(detail.getSkuNo());
+            detailEntity.setActualQty(detail.getReturnQty());
+            detailEntity.setUnit(skuVO.getUnitName());
+            detailEntity.setRemark(detail.getRemark());
+            if (i < persistedDetailList.size()) {
+                detailEntity.setSourceDetailId(persistedDetailList.get(i).getId());
+            }
+            detailEntityList.add(detailEntity);
+        }
+        otherInstockEntity.setDetailEntityList(detailEntityList);
+        otherInstockService.addAndApprove(otherInstockEntity, false);
     }
 
     /**

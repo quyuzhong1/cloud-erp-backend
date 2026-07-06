@@ -204,6 +204,15 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                     if (receiveQty < detailDto.getRealQty() + realQty) {
                         throw new ServiceException(ApiError.SO_DELIVERY_RETURN_SIGN_TOTAL_QTY_EXCEEDS, skuVO.getSkuNo());
                     }
+                    //剩余应退货数量：应退数量取退货单明细自身的退货数量(so_return_detail.return_qty)，而非本行签收数量(receiveQty，语义是签收数量而非应退数量，仅用于上面的超发校验)；
+                    //未关联退货单明细（soReturnDetailId为空）时无法确定应退数量，留空
+                    if (StringUtils.isNotBlank(detailDto.getSoReturnDetailId())) {
+                        Integer mustQty = soReturnDetailEntities.stream()
+                                .filter(req -> req.getId().equals(detailDto.getSoReturnDetailId()))
+                                .map(SoReturnDetailEntity::getReturnQty)
+                                .reduce(MathUtil.ZERO, Integer::sum);
+                        detailEntity.setRemainMustQty(mustQty - (realQty + detailDto.getRealQty()));
+                    }
                 }else if(Boolean.FALSE.equals(detailDto.getIsChildSkuNo()) //子sku不做数量校验
                             && StringUtils.isNotBlank(detailDto.getSoReturnDetailId())){
                     SoReturnDetailEntity soReturnDetailEntity = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSoReturnDetailId())).findFirst().orElse(null);
@@ -238,6 +247,8 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                     if (receiveQty < detailDto.getRealQty() + realQty) {
                         throw new ServiceException(ApiError.SO_RETURN_QTY_EXCEEDS_EXPECTED, skuVO.getSkuNo());
                     }
+                    //剩余应退货数量 = 应退数量(receiveQty，此分支下即退货单明细自身的退货数量 so_return_detail.return_qty) - 历史已入库实退数量(realQty)累计（含本次）
+                    detailEntity.setRemainMustQty(receiveQty - (realQty + detailDto.getRealQty()));
                 }
                 list.add(detailEntity);
             }
@@ -254,6 +265,8 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             List<String> skuIds = dto.getDetailList().stream().map(SoReturnInstockDetailDTO.Add::getSkuId).collect(Collectors.toList());
             List<SkuVO> skuInfoByIds = plmTaskFeign.listSkuProductByIds(skuIds);
             List<SoReturnDetailEntity> soReturnDetailEntities = soReturnFeign.listDetailByIds(returnDetailIds);
+            //B2C售后单明细自身的退货数量，即"应退数量"的权威来源（与 view() 展示口径一致），不同于下面用于签收超发校验的签收数量(receiveQty)
+            List<SoB2cReturnDetailEntity> soB2cReturnDetailEntityList = FeignQuery.getByIds(SoB2cReturnDetailEntity.class, returnDetailIds);
             SoB2cReturnEntity soB2cReturnEntity = FeignQuery.getById(SoB2cReturnEntity.class,dto.getSoReturnId());
             List<SoB2cDetailEntity> soB2cDetailEntityList = new ArrayList<>();
             List<String> returnIds = soReturnDetailEntities.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
@@ -314,6 +327,13 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                     if (Objects.isNull(detailDto.getIsCheckReceiveQty()) || detailDto.getIsCheckReceiveQty()){
                         throw new ServiceException(ApiError.SO_DELIVERY_RETURN_SIGN_TOTAL_QTY_EXCEEDS, skuVO.getSkuNo());
                     }
+                }
+                //剩余应退货数量：应退数量取售后单明细自身的退货数量(so_b2c_return_detail.return_qty)，不是上面用于超发校验的签收数量(receiveQty)；
+                //未匹配到售后单明细（如soReturnDetailId为空或数据缺失）时无法确定应退数量，留空
+                SoB2cReturnDetailEntity soB2cReturnDetailEntity = soB2cReturnDetailEntityList.stream()
+                        .filter(v -> v.getId().equals(detailDto.getSoReturnDetailId())).findFirst().orElse(null);
+                if (Objects.nonNull(soB2cReturnDetailEntity)) {
+                    detailEntity.setRemainMustQty(soB2cReturnDetailEntity.getReturnQty() - (realQty + detailDto.getRealQty()));
                 }
                 if("B2C".equals(dto.getType())){
                     if(Objects.nonNull(soB2cReturnEntity)){
@@ -442,6 +462,8 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             detailEntity.setSkuNo(skuVO.getSkuNo());
             detailEntity.setRealQty(detailDto.getRealQty());
             detailEntity.setReceiveQty(detailDto.getReceiveQty());
+            //此单未关联任何退货单/售后单（notReturnOrderAdd 场景），没有权威的"应退数量"来源可用，remainMustQty 留空，
+            //不用签收数量(receiveQty)兜底计算——签收数量是签收环节确认收到的数量，语义上不等于应退数量
             detailEntity.setWarehouseLocation(detailDto.getWarehouseLocation());
             detailEntity.setRemark(detailDto.getRemark());
             detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
@@ -631,7 +653,17 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                     }
                     if (receiveQty < detailDto.getRealQty() + realQty) {
                         throw new ServiceException(ApiError.SO_DELIVERY_RETURN_SIGN_TOTAL_QTY_EXCEEDS, skuVO.getSkuNo());
-                    }else if(realQty > 0 && receiveQty == detailDto.getRealQty() + realQty){
+                    }
+                    //剩余应退货数量：应退数量取退货单明细自身的退货数量(so_return_detail.return_qty)，不是上面用于超发校验的签收数量(receiveQty)；
+                    //未匹配到退货单明细时无法确定应退数量，留空
+                    Integer mustQty = soReturnDetailEntities.stream()
+                            .filter(req -> req.getId().equals(detailDto.getSoReturnDetailId()))
+                            .map(SoReturnDetailEntity::getReturnQty)
+                            .findFirst().orElse(null);
+                    if (Objects.nonNull(mustQty)) {
+                        detailEntity.setRemainMustQty(mustQty - (realQty + detailDto.getRealQty()));
+                    }
+                    if(realQty > 0 && receiveQty == detailDto.getRealQty() + realQty){
                         BigDecimal returnAmount = soReturnReceiveDetailEntity.getReturnAmount();
                         BigDecimal taxReturnAmount = soReturnReceiveDetailEntity.getTaxReturnAmount();
                         BigDecimal returnAmountLocalCurrency = soReturnReceiveDetailEntity.getReturnAmountLocalCurrency();
@@ -681,7 +713,10 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                     }
                     if (returnQty < detailDto.getRealQty() + realQty) {
                         throw new ServiceException(ApiError.SO_RETURN_QTY_EXCEEDS_EXPECTED, skuVO.getSkuNo());
-                    }else if(realQty > 0 && returnQty == detailDto.getRealQty() + realQty){
+                    }
+                    //剩余应退货数量 = 应退数量(returnQty，即退货单明细自身的退货数量 so_return_detail.return_qty) - 历史已入库实退数量(realQty)累计（含本次）
+                    detailEntity.setRemainMustQty(returnQty - (realQty + detailDto.getRealQty()));
+                    if(realQty > 0 && returnQty == detailDto.getRealQty() + realQty){
                         BigDecimal returnAmount = soReturnDetailEntity.getReturnAmount();
                         BigDecimal taxReturnAmount = soReturnDetailEntity.getTaxReturnAmount();
                         BigDecimal returnAmountLocalCurrency = soReturnDetailEntity.getReturnAmountLocalCurrency();
@@ -788,6 +823,13 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 detailEntity.setSkuNo(skuVO.getSkuNo());
                 detailEntity.setRealQty(detailDto.getRealQty());
                 detailEntity.setReceiveQty(detailDto.getReceiveQty());
+                //剩余应退货数量：应退数量取售后单明细自身的退货数量(so_b2c_return_detail.return_qty)，不是上面用于超发校验的签收数量(receiveQty)；
+                //未匹配到售后单明细时无法确定应退数量，留空
+                SoB2cReturnDetailEntity soB2cReturnDetailEntity = soB2cReturnDetailEntityList.stream()
+                        .filter(v -> v.getId().equals(detailDto.getSoReturnDetailId())).findFirst().orElse(null);
+                if (Objects.nonNull(soB2cReturnDetailEntity)) {
+                    detailEntity.setRemainMustQty(soB2cReturnDetailEntity.getReturnQty() - (realQty + detailDto.getRealQty()));
+                }
                 detailEntity.setWarehouseLocation(detailDto.getWarehouseLocation());
                 detailEntity.setRemark(detailDto.getRemark());
                 detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
@@ -872,6 +914,8 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 detailEntity.setSkuNo(skuVO.getSkuNo());
                 detailEntity.setRealQty(detailDto.getRealQty());
                 detailEntity.setReceiveQty(detailDto.getReceiveQty());
+                //此单未关联任何退货单/售后单（无 soReturnId 场景），没有权威的"应退数量"来源可用，remainMustQty 留空，
+                //不用签收数量(receiveQty)兜底计算——签收数量是签收环节确认收到的数量，语义上不等于应退数量
                 detailEntity.setWarehouseLocation(detailDto.getWarehouseLocation());
                 detailEntity.setRemark(detailDto.getRemark());
                 detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
@@ -979,6 +1023,8 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             detailEntity.setSkuNo(skuVO.getSkuNo());
             detailEntity.setRealQty(detailDto.getRealQty());
             detailEntity.setReceiveQty(detailDto.getReceiveQty());
+            //此单未关联任何退货单/售后单（notReturnOrderUpdate 场景），没有权威的"应退数量"来源可用，remainMustQty 留空，
+            //不用签收数量(receiveQty)兜底计算——签收数量是签收环节确认收到的数量，语义上不等于应退数量
             detailEntity.setWarehouseLocation(detailDto.getWarehouseLocation());
             detailEntity.setRemark(detailDto.getRemark());
             detailEntity.setSourceDetailId(detailDto.getSourceDetailId());

@@ -388,10 +388,10 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
                 obj.setProductName(skuMap.get(obj.getSkuId()));
                 obj.setCustomerName(customerMap.get(obj.getCustomerId()));
-                //平台：B2C取售后单平台，否则取客户归属平台（可能为空）
-                String platform = BillTypeEnum.B2C.getCode().equals(obj.getType()) ? b2cReturnPlatformMap.get(obj.getSoReturnId()) : null;
+                //平台：优先取新增/修改时已落库的dict_platform；老数据为空时按原有逻辑临时计算兜底
+                String platform = obj.getDictPlatform();
                 if (CharSequenceUtil.isBlank(platform)) {
-                    platform = customerPlatformMap.get(obj.getCustomerId());
+                    platform = resolveDictPlatform(obj.getType(), b2cReturnPlatformMap.get(obj.getSoReturnId()), customerPlatformMap.get(obj.getCustomerId()));
                 }
                 obj.setDictPlatform(platform);
                 obj.setDictPlatformName(CharSequenceUtil.isNotBlank(platform) ? PlatformDictEnum.getNameByCode(platform) : null);
@@ -422,6 +422,17 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 obj.setType(BillTypeEnum.getName(obj.getType()));
             });
         }
+    }
+
+    /**
+     * 计算平台字典值：B2C取售后单自身平台，否则（B2B或B2C售后单未取到平台时）取客户归属平台，可能为空
+     */
+    private String resolveDictPlatform(String type, String soB2cReturnDictPlatform, String customerPlatformType) {
+        String platform = BillTypeEnum.B2C.getCode().equals(type) ? soB2cReturnDictPlatform : null;
+        if (CharSequenceUtil.isBlank(platform)) {
+            platform = customerPlatformType;
+        }
+        return platform;
     }
 
     private String getPermissionSql(String permissionSql) {
@@ -484,10 +495,12 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
         //退货单id
         String soReturnId = dto.getSoReturnId();
+        //B2C售后单，用于平台字段计算（B2C取售后单平台）
+        SoB2cReturnEntity soB2cReturnEntity = null;
         //当退货单不为空的时候
         if (CharSequenceUtil.isNotBlank(soReturnId)) {
             if ("B2C".equals(dto.getType())) {
-                SoB2cReturnEntity soB2cReturnEntity = FeignQuery.getById(SoB2cReturnEntity.class, dto.getSoReturnId());
+                soB2cReturnEntity = FeignQuery.getById(SoB2cReturnEntity.class, dto.getSoReturnId());
                 dto.setShopId(soB2cReturnEntity.getShopId());
                 //获取销售单信息
                 SoB2cEntity soB2cEntity = FeignQuery.getById(SoB2cEntity.class, soB2cReturnEntity.getSoId());
@@ -587,6 +600,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         entity.setCustomerId(dto.getCustomerId());
         CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(dto.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
         entity.setCustomerName(customerInfoEntity.getName());
+        //平台：B2C取售后单平台，否则取客户归属平台（可能为空）
+        entity.setDictPlatform(resolveDictPlatform(dto.getType(), Objects.nonNull(soB2cReturnEntity) ? soB2cReturnEntity.getDictPlatform() : null, customerInfoEntity.getPlatformType()));
         entity.setWarehouseKeeperId(dto.getWarehouseKeeperId());
         String warehouseKeeperUserName = userList.stream().filter(d -> d.getUserId().equals(dto.getWarehouseKeeperId())).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getUserName())).orElse("");
@@ -1335,6 +1350,14 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         entity.setInventoryOrgName(warehouseOrgName);
         entity.setBillDate(dto.getBillDate());
         entity.setType(dto.getType());
+        //平台：B2C取售后单平台，否则取客户归属平台（可能为空）；客户/类型在上方"海外仓退货"分支可能已变更，此处按更新后的entity重新计算
+        SoB2cReturnEntity soB2cReturnEntityForPlatform = BillTypeEnum.B2C.getCode().equals(entity.getType()) && CharSequenceUtil.isNotBlank(entity.getSoReturnId())
+                ? FeignQuery.getById(SoB2cReturnEntity.class, entity.getSoReturnId()) : null;
+        CustomerInfoEntity customerInfoForPlatform = CharSequenceUtil.isNotBlank(entity.getCustomerId())
+                ? customerFeign.getCustomerById(entity.getCustomerId()) : new CustomerInfoEntity();
+        entity.setDictPlatform(resolveDictPlatform(entity.getType(),
+                Objects.nonNull(soB2cReturnEntityForPlatform) ? soB2cReturnEntityForPlatform.getDictPlatform() : null,
+                customerInfoForPlatform.getPlatformType()));
         if (!entity.getReturnLogisticCode().equals(dto.getReturnLogisticCode())) {
             operateLogService.addModuleOperateLog(CharSequenceUtil.format("退货物流单号从{}修改为{}", entity.getReturnLogisticCode(), dto.getReturnLogisticCode()), ModuleTypeEnum.SO_RETURN_INSTOCK.getCode(), entity.getId(), "编辑");
         }
@@ -1374,10 +1397,10 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
         CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(entity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
         viewDTO.setCustomerName(customerInfoEntity.getName());
-        //平台：B2C取售后单平台，否则取客户归属平台（可能为空）
-        String platform = BillTypeEnum.B2C.getCode().equals(entity.getType()) && Objects.nonNull(soB2cReturnEntity) ? soB2cReturnEntity.getDictPlatform() : null;
+        //平台：优先取新增/修改时已落库的dict_platform（已由BeanMapperUtils.copy(entity, viewDTO)带出）；老数据为空时按原有逻辑临时计算兜底
+        String platform = viewDTO.getDictPlatform();
         if (CharSequenceUtil.isBlank(platform)) {
-            platform = customerInfoEntity.getPlatformType();
+            platform = resolveDictPlatform(entity.getType(), Objects.nonNull(soB2cReturnEntity) ? soB2cReturnEntity.getDictPlatform() : null, customerInfoEntity.getPlatformType());
         }
         viewDTO.setDictPlatform(platform);
         viewDTO.setDictPlatformName(CharSequenceUtil.isNotBlank(platform) ? PlatformDictEnum.getNameByCode(platform) : null);
