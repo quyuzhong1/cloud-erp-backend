@@ -14,6 +14,7 @@ import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
@@ -1327,12 +1328,16 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
                     .distinct()
                     .collect(Collectors.joining(","));
         }
-        return tmsDeclareBillService.getCanGenerateSoOut(TmsDeclareBillDTO.QuerySourceDTO.builder().ids(sourceIds).build())
-                .stream()
-                .map(TmsDeclareBillDTO.SoOutDTO::getBusinessType)
-                .filter(CharSequenceUtil::isNotBlank)
-                .distinct()
-                .collect(Collectors.joining(","));
+        if (CharSequenceUtil.equals(declareBillType, SourceTypeEnum.B2B_DECLARE_BILL.getCode())) {
+            String businessType = tmsDeclareBillService.getCanGenerateSoOut(TmsDeclareBillDTO.QuerySourceDTO.builder().ids(sourceIds).build())
+                    .stream()
+                    .map(TmsDeclareBillDTO.SoOutDTO::getBusinessType)
+                    .filter(CharSequenceUtil::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.joining(","));
+            return CharSequenceUtil.isBlank(businessType) ? OrderTypeEnum.B2B.getCode() : businessType;
+        }
+        return "";
     }
 
     private Map<String, String> buildDeclareRuleMatchParamMap(String declareBillType,
