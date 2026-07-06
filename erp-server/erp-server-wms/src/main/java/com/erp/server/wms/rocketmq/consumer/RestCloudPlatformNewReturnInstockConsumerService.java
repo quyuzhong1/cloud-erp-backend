@@ -1589,25 +1589,4 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		
 		return detailEntityList;
 	}
-
-
-
-	/**
-	 * WEGO 退货入库：按参考单号从 so_b2c_return 中查找匹配记录。
-	 * <p>
-	 * 单次 Feign 调用，DB 层 SQL 以 OR 条件匹配 code / platform_return_no / platform_order_no / so_code，
-	 * 并按以上优先级排序取首条，避免多次远程调用。
-	 */
-	private SoB2cReturnEntity findSoB2cReturnByRef(String referenceNo) {
-		if (CharSequenceUtil.isBlank(referenceNo)) {
-			return null;
-		}
-		SoB2cReturnEntity result = soB2cReturnFeign.findFirstByReferenceNo(referenceNo);
-		if (Objects.nonNull(result)) {
-			log.info("[WEGO退货入库] 参考单号 {} 命中 so_b2c_return[{}]", referenceNo, result.getId());
-		} else {
-			log.info("[WEGO退货入库] 参考单号 {} 在 so_b2c_return 中未查到匹配记录", referenceNo);
-		}
-		return result;
-	}
 }
