@@ -611,9 +611,10 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
      * 带锁执行强制重试：重置 eligible 节点、同步实例状态并发送单步 MQ。
      */
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "sourceType,sourceId", unlockAfterTx = true)
-    public WorkflowTaskRecordDTO.ForceRetryResultDTO forceRetryWithLock(WorkflowTaskRecordDTO.ForceRetryDTO dto, String sourceType, String sourceId) {
-        List<WorkflowTaskRecordEntity> taskList = listForceRetryTasks(dto);
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "sourceType,sourceId", unlockAfterTx = true)
+    public WorkflowTaskRecordDTO.ForceRetryResultDTO forceRetryWithLock(WorkflowTaskRecordDTO.ForceRetryDTO dto, String sourceType, String sourceId, WorkflowTaskRecordEntity lockTask) {
+        checkForceRetryPermission();
+        List<WorkflowTaskRecordEntity> taskList = listForceRetryTasks(dto, lockTask);
         if (CollUtil.isEmpty(taskList)) {
             throw new ServiceException(ApiError.WF_TASK_RECORD_FORCE_RETRY_NOT_FOUND);
         }
@@ -1069,7 +1070,17 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
         operateLogService.addModuleOperateLog(content, resolveModuleType(first), resolveBusinessId(first), "任务强制重试");
     }
 
-
+    private void checkForceRetryPermission() {
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
+        if (Objects.nonNull(loginUser) && Boolean.TRUE.equals(loginUser.getIsSupper())) {
+            return;
+        }
+        List<String> permissionList = Objects.isNull(loginUser) ? Collections.emptyList() : loginUser.getPermissionList();
+        if (CollUtil.isNotEmpty(permissionList) && permissionList.contains(FORCE_RETRY_PERMISSION)) {
+            return;
+        }
+        throw new ServiceException(ApiError.WF_TASK_RECORD_FORCE_RETRY_FORBIDDEN);
+    }
     /** {@inheritDoc} */
     @Override
     public boolean isStepForceRetryAllowed(WorkflowTaskRecordEntity entity) {

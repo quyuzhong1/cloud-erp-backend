@@ -200,6 +200,7 @@ public class PdaPackingTaskController extends BaseController {
      * @return com.erp.model.wms.dto.FirstMileDeliveryDTO.FirstMileCartonView
      **/
     @PostMapping("/adjustPackingSave")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "PDA调整装箱保存")
     public ApiResult<String> adjustPackingSave(@RequestBody @Validated WmsCartonDTO.AdjustSaveDTO dto) {
         String code = packingTaskService.adjustPackingSave(dto);
         return success(code);

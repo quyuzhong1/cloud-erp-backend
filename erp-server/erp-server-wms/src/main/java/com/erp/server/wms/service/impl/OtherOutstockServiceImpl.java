@@ -513,7 +513,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "id", unlockAfterTx = true)
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO approve(String id, String type, String comment) {
         //根据id查询
         OtherOutstockEntity entity = this.getById(id);

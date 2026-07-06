@@ -246,7 +246,7 @@ public class AdsPushTaskServiceImpl extends SuperServiceImpl<AdsPushTaskMapper, 
 	}
 
 	@Override
-    @DistributeLocker(businessType = DistributeKeyConstant.DMP_PUSH_TASK_KEY, keyName = "ids", waiteTime = 60)
+	@DistributeLocker(businessType = DistributeKeyConstant.DMP_PUSH_TASK_KEY, keyName = "ids", waiteTime = 60)
 	public Boolean batchSync(List<String> ids) {
 		lambdaUpdate().set(AdsPushTaskEntity::getPushStatus, "push")
         	.set(AdsPushTaskEntity::getStatus, DmpOutputTaskRecordStatusEnum.INIT.getCode())

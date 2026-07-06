@@ -2734,7 +2734,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     }
 
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.WMS_IMPORT_TASK_KEY, keyName = "dto.taskId")
+    @DistributeLocker(businessType = DistributeKeyConstant.WMS_IMPORT_TASK_KEY, keyName = "dto.taskId",unlockAfterTx = true)
     public void importSoReturnInstock(BaseDTO.ImportDTO dto) {
         if (ImportTypeEnum.UPDATE.getCode().equalsIgnoreCase(dto.getImportType())) {
             importSoReturnInstockUpdate(dto);

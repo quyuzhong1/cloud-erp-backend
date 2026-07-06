@@ -290,7 +290,7 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "id", unlockAfterTx = true)
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO approve(String id, List<RequisitionApplicationChangeDTO.ApproveView> approveViewList, String type) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(type);
         RequisitionApplicationChangeEntity entity = getById(id);

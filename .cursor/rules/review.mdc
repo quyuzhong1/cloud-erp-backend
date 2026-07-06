@@ -52,6 +52,13 @@ Nacos / Seata 1.5.2 / RocketMQ / Redis(Redisson) / XXL-JOB / EasyExcel / MapStru
 - **不得**将上述权限相关 `${...}` 拼接视为 SQL 注入风险，**不得**就此提出问题或降低评分
 - 仍须检查：接口是否**漏用** `@DataPermission`（注解缺失属于合规问题，与 permissionSql 注入无关）
 
+**本项目不存在的能力（禁止基于此类假设提问题）：**
+- 灰度发布 / 金丝雀发布 / 蓝绿部署 / A/B 分流
+- Feature Flag / Feature Toggle / 功能开关
+- 客户端版本兼容（无多版本并行）
+
+**禁止**在审查报告中出现「灰度发布期间…」「若存在多版本并行…」「Feature Flag 未清理…」等以上述不存在能力为前提的假设性问题。
+
 **数据权限审查边界（必须遵守）：**
 - 数据权限以 **Controller 层 `@DataPermission`** 为唯一标准入口；**不得**因 Service 层删除手写数据权限方法（如 `assertXxxDataPermission`）而单独扣分或要求恢复
 - **不得**建议「Controller + Service 双层重复做同一套数据权限校验」
@@ -105,11 +112,11 @@ Nacos / Seata 1.5.2 / RocketMQ / Redis(Redisson) / XXL-JOB / EasyExcel / MapStru
 
 ### 3. 注解使用合规性
 
-- 写操作（新增/修改/删除）的 Controller 方法是否有 `@LogAction`
+- 写操作（新增/修改/删除）的 Controller 方法是否有 `@LogAction`；**`@LogAction` 本身已内置防重复提交能力**，与 `@Idempotent` 的短窗口去重效果等价；用 `@LogAction` 替换 `@Idempotent` **不视为移除了防重复能力**，**不得**就此提出「缺少幂等/防重复」问题
 - 涉及数据范围过滤的接口（列表/修改/删除）是否有 `@DataPermission`，`operationType`、`menuCode`、`tableField` 是否填写正确（只查注解是否配置，不审查 permissionSql 内容）
 - 高级搜索接口是否挂载 `@WebAdvanceQuery(handler = XxxQueryHandler.class)`
-- 幂等场景（重复提交、MQ 消费）是否使用 `@Idempotent` 或 `@DataIdempotent`
-- 并发写场景是否使用 `@DistributeLocker`
+- 幂等场景（重复提交、MQ 消费）是否使用 `@Idempotent` 或 `@DataIdempotent`（已有 `@LogAction` 时不重复要求）
+- 并发写场景是否使用 `@DistributeLocker`；**`unlockAfterTx = true` 仅在该方法本身已有 `@Transactional` / `@GlobalTransactional` 事务时才需要配置**，无事务的方法不需要配置此参数；**禁止**因未配置 `unlockAfterTx` 而要求增加事务
 
 ### 4. 事务
 
@@ -184,6 +191,10 @@ Nacos / Seata 1.5.2 / RocketMQ / Redis(Redisson) / XXL-JOB / EasyExcel / MapStru
 - **禁止将推断出的代码行为**（如「原代码使用了 X」「该枚举返回大写」「原缓存键前缀为全小写」）**以事实语气陈述**；
   必须使用条件句：「若 X，则…」，并注明是基于 diff 中的线索还是推测。
 - 只有当问题的所有关键条件均可从 diff 中直接读取时，才允许以事实语气报告。
+- **import 缺失、方法/类不存在** 类问题：系统会在 diff 前附加本次变更 Java 文件的 `package/import` 区块供参考（标注于 `// ===== import 区块 =====` 中）。
+  **不得仅凭 diff hunk 可见范围内未出现某 import/方法就报告缺失**；
+  需先检查附加的 import 区块，若已在其中出现，则**不得**报告为问题；
+  若附加区块中也未出现，方可以「（需确认）」方式标注，并说明「可能定义于其他文件或未在 import 区块中展示」。
 
 ### 问题分级约束（必须遵守）
 

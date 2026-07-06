@@ -687,7 +687,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     @Override
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "entity.id", unlockAfterTx = true)
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "entity.id", unlockAfterTx = true)
     public BatchResultDTO submit(SoReturnEntity entity,Boolean isNeedProcess) {
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
@@ -787,7 +787,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     @Override
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "entity.id", unlockAfterTx = true)
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "entity.id", unlockAfterTx = true)
     public BatchResultDTO approve(BaseApproveParamDTO baseApproveParamDTO, SoReturnEntity entity) {
         List<SoReturnEntity> entityList = Arrays.asList(entity);
         //判断是否是审核中的状态
@@ -1086,7 +1086,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     @Override
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "entity.id", unlockAfterTx = true)
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "entity.id", unlockAfterTx = true)
     public BatchResultDTO disApprove(SoReturnEntity entity) {
         //已审核支持反审核
         if(!entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())){
@@ -1122,7 +1122,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     @Override
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "dto.ids", unlockAfterTx = true)
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "dto.ids", unlockAfterTx = true)
     public Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto) {
         List<String> ids = dto.getIds();
         List<SoReturnEntity> entityList = this.listByIds(ids);
@@ -1164,7 +1164,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     @Override
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "ids", unlockAfterTx = true)
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "ids", unlockAfterTx = true)
     public Boolean invalid(List<String> ids, String remark) {
         List<SoReturnEntity> entityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
@@ -1194,7 +1194,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "ids", unlockAfterTx = true)
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "ids", unlockAfterTx = true)
     public Boolean delete(List<String> ids) {
         List<SoReturnEntity> entityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
@@ -1217,7 +1217,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "ids", unlockAfterTx = true)
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "ids", unlockAfterTx = true)
     public List<BatchResultDTO> delete(List<String> ids, boolean returnDetails) {
         List<SoReturnEntity> entityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {

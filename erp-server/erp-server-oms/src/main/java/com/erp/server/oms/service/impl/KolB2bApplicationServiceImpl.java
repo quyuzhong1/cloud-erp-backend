@@ -280,7 +280,7 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "id", unlockAfterTx = true)
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO submit(String id) {
         KolB2bApplicationEntity entity = getById(id);
         if (ObjectUtil.isEmpty(entity)) {
@@ -598,7 +598,7 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "list.id", unlockAfterTx = true)
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "list.id", unlockAfterTx = true)
     public Boolean generateSoInfo(ValidList<KolB2bApplicationDTO.GenerateSoInfoDTO> list) {
         if (CollUtil.isEmpty(list)) {
             throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);

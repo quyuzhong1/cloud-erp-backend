@@ -87,7 +87,7 @@ public class DmpPullTaskHistoryServiceImpl extends ServiceImpl<DmpPullTaskHistor
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.DMP_PULL_TASK_KEY, keyName = "ids", waiteTime = 60)
+    @DistributeLocker(businessType = DistributeKeyConstant.DMP_PULL_TASK_KEY, keyName = "ids", waiteTime = 60, unlockAfterTx = true)
     public Boolean batchSync(List<String> ids) {
         List<DmpPullTaskHistoryEntity> list = this.listByIds(ids);
         if (CollectionUtils.isEmpty(list)) {

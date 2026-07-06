@@ -68,16 +68,12 @@ public class DistributeKeyConstant {
      * TMS 异步任务执行锁（按 taskId 互斥，防 MQ 重投并发）
      */
     public static final String TMS_ASYNC_TASK_EXEC_KEY = "TMS_ASYNC_TASK_EXEC";
-    /**
-     * 物流商对账单变更锁（确认 / 校验切换 / 匹配 / 解绑 / 删除按对账单 mainId 互斥）
-     */
-    public static final String TMS_LOGISTICS_RECON_KEY = "TMS_LOGISTICS_RECON";
     /** 金蝶/WMS 同步 */
     public static final String KINGDEE_SYNC_KEY = "KINGDEE_SYNC";
     /** 出库单保存物流单 */
-    public static final String SAVE_LOGISTICS_BILL_KEY = "saveLogisticsBill";
+    public static final String SAVE_LOGISTICS_BILL_KEY = "SAVE_LOGISTICS_BILL_KEY";
     /** 退货入库生成物流单 */
-    public static final String GENERATE_LOGISTICS_BILL_KEY = "generateLogisticsBill";
+    public static final String GENERATE_LOGISTICS_BILL_KEY = "GENERATE_LOGISTICS_BILL_KEY";
     /** 平台数据生成 B2C 出库单 */
     public static final String PLATFORM_GENERATE_SO_OUTSTOCK_KEY = "PLATFORM_GENERATE_SO_OUTSTOCK";
     /** 旺店通其他入库同步 */
@@ -144,4 +140,8 @@ public class DistributeKeyConstant {
     public static final String SO_RETURN_INSTOCK_SAVE_KEY = "SO_RETURN_INSTOCK_SAVE";
     /** WMS 导入任务 */
     public static final String WMS_IMPORT_TASK_KEY = "WMS_IMPORT_TASK";
+    /**
+     * 物流商对账单变更锁（确认 / 校验切换 / 匹配 / 解绑 / 删除按对账单 mainId 互斥）
+     */
+    public static final String TMS_LOGISTICS_RECON_KEY = "TMS_LOGISTICS_RECON";
 }
