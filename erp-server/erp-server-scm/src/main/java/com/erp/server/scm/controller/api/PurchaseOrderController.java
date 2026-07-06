@@ -753,6 +753,7 @@ public class PurchaseOrderController extends BaseController {
      * @return ApiResult<List<ViewSubcontractPoDTO>>
      */
     @PostMapping("/supplierConfirm")
+    @LogAction(value = LogActionEnum.CONFIRM, desc = "采购订单供应商确认")
     public ApiResult<List<BatchResultDTO>> supplierConfirm(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {

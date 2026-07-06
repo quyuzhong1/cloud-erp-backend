@@ -487,6 +487,7 @@ public class PurchasePriceChangeController extends BaseController {
      * @return
      */
     @PostMapping("/updateHistoryDb")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "采购调价表历史数据更新")
     public ApiResult<?> tempUpdateHistoryDb() {
         purchasePriceChangeService.tempUpdateHistoryDb();
         return success();
