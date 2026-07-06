@@ -48,12 +48,14 @@ import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.wms.feign.WmsWarehouseFeign;
 import com.erp.server.oms.listener.B2CManualDeliveryExcelListener;
+import com.erp.server.oms.listener.B2CManualDeliveryParseExcelListener;
 import com.erp.server.oms.mapper.SoB2cMapper;
 import com.erp.server.oms.service.*;
 import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -162,6 +164,109 @@ public class SoB2cImportServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cE
         String excelName = "b2c手动发货.xlsx";
 
         com.common.core.utils.ExcelUtil.downloadTemplate(path, excelName, response);
+    }
+
+    @Override
+    public SoB2cDTO.ManualDeliveryImportParseDTO parseManualDeliveryExcel(MultipartFile excelFile) {
+        B2CManualDeliveryParseExcelListener excelListener = new B2CManualDeliveryParseExcelListener();
+        try {
+            EasyExcel.read(excelFile.getInputStream(), B2CManualDeliveryImportExcelDTO.class, excelListener).sheet(0).doRead();
+        } catch (ExcelCommonException e) {
+            log.error("手动发货 Excel 解析格式错误", e);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
+        } catch (Exception e) {
+            log.error("手动发货 Excel 解析失败", e);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
+        }
+
+        List<B2CManualDeliveryImportExcelDTO> parseSuccessList = excelListener.getSuccessList();
+        List<B2CManualDeliveryImportExcelDTO> errorList = new ArrayList<>(excelListener.getErrorList());
+        List<SoB2cDTO.ManualDeliveryImportParseItemDTO> successList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(parseSuccessList)) {
+            successList.addAll(buildManualDeliveryParseItems(parseSuccessList, errorList));
+        }
+
+        String errorUrl = "";
+        if (CollectionUtils.isNotEmpty(errorList)) {
+            String fileName = "B2C手动发货解析错误信息.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, B2CManualDeliveryImportExcelDTO.class);
+            if (file != null && !file.isDirectory()) {
+                errorUrl = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+
+        SoB2cDTO.ManualDeliveryImportParseDTO parseDTO = new SoB2cDTO.ManualDeliveryImportParseDTO();
+        parseDTO.setSuccessList(successList);
+        parseDTO.setErrorUrl(errorUrl);
+        return parseDTO;
+    }
+
+    private List<SoB2cDTO.ManualDeliveryImportParseItemDTO> buildManualDeliveryParseItems(List<B2CManualDeliveryImportExcelDTO> parseSuccessList,
+                                                                                          List<B2CManualDeliveryImportExcelDTO> errorList) {
+        List<String> codeList = parseSuccessList.stream().map(B2CManualDeliveryImportExcelDTO::getCode).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        List<SoB2cEntity> soB2cEntityList = CollectionUtils.isEmpty(codeList) ? Collections.emptyList() : this.lambdaQuery().in(SoB2cEntity::getCode, codeList).list();
+        Map<String, SoB2cEntity> soB2cEntityMap = soB2cEntityList.stream().collect(Collectors.toMap(SoB2cEntity::getCode, e -> e, (o1, o2) -> o1));
+
+        List<String> warehouseNameList = parseSuccessList.stream().map(B2CManualDeliveryImportExcelDTO::getWarehouseName).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        List<WarehouseEntity> warehouseEntityList = CollectionUtils.isEmpty(warehouseNameList) ? Collections.emptyList()
+                : FeignQuery.create(WarehouseEntity.class).in(WarehouseEntity::getName, warehouseNameList).list();
+        Map<String, WarehouseEntity> warehouseEntityMap = warehouseEntityList.stream().collect(Collectors.toMap(WarehouseEntity::getName, e -> e, (o1, o2) -> o1));
+
+        List<String> channelNameList = parseSuccessList.stream().map(B2CManualDeliveryImportExcelDTO::getChannelName).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        List<LogisticsChannelDTO.BaseDTO> channelEntities = CollectionUtils.isEmpty(channelNameList) ? Collections.emptyList() : logisticsFeign.listChannelInfoByName(channelNameList);
+        Map<String, List<LogisticsChannelDTO.BaseDTO>> channelMap = channelEntities.stream().collect(Collectors.groupingBy(LogisticsChannelDTO.BaseDTO::getName));
+
+        Set<String> handleCodes = new HashSet<>();
+        List<SoB2cDTO.ManualDeliveryImportParseItemDTO> successList = new ArrayList<>();
+        for (B2CManualDeliveryImportExcelDTO excelDTO : parseSuccessList) {
+            List<String> errorMsgList = new ArrayList<>();
+            SoB2cEntity soB2cEntity = soB2cEntityMap.get(excelDTO.getCode());
+            if (Objects.isNull(soB2cEntity)) {
+                errorMsgList.add("订单编号在系统中不存在");
+            }
+            WarehouseEntity warehouseEntity = warehouseEntityMap.get(excelDTO.getWarehouseName());
+            if (Objects.isNull(warehouseEntity)) {
+                errorMsgList.add("仓库名称在系统中不存在");
+            } else if (Boolean.TRUE.equals(warehouseEntity.getDisabled())) {
+                errorMsgList.add("仓库未启用");
+            }
+            List<LogisticsChannelDTO.BaseDTO> matchingChannels = channelMap.getOrDefault(excelDTO.getChannelName(), Collections.emptyList());
+            LogisticsChannelDTO.BaseDTO baseDTO = matchingChannels.stream().filter(e -> !Boolean.TRUE.equals(e.getDisabled())).findFirst().orElse(null);
+            if (CollectionUtils.isEmpty(matchingChannels)) {
+                errorMsgList.add("物流渠道在系统中不存在");
+            } else if (Objects.isNull(baseDTO)) {
+                errorMsgList.add("物流渠道未启用");
+            }
+            if (handleCodes.contains(excelDTO.getCode())) {
+                errorMsgList.add("订单编号存在重复");
+            }
+            handleCodes.add(excelDTO.getCode());
+
+            if (CollectionUtils.isNotEmpty(errorMsgList)) {
+                excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList.stream().distinct().collect(Collectors.toList())));
+                errorList.add(excelDTO);
+                continue;
+            }
+
+            List<String> platformOrderNo = StringUtils.isNotBlank(soB2cEntity.getPlatformCode())
+                    ? Collections.singletonList(soB2cEntity.getPlatformCode())
+                    : Collections.emptyList();
+            successList.add(SoB2cDTO.ManualDeliveryImportParseItemDTO.builder()
+                    .id(soB2cEntity.getId())
+                    .warehouseId(warehouseEntity.getId())
+                    .logisticsChannelId(baseDTO.getId())
+                    .deliveryTime(excelDTO.getDeliveryTime())
+                    .trackNo(excelDTO.getTransportNo())
+                    .actualDeliveryCode(excelDTO.getActualDeliveryCode())
+                    .platformShipFlag(StringUtils.isNotBlank(excelDTO.getPlatformShipFlag()) && "是".equals(excelDTO.getPlatformShipFlag()))
+                    .logisticsChannelCode(baseDTO.getCode())
+                    .code(soB2cEntity.getCode())
+                    .platformOrderNo(platformOrderNo)
+                    .warehouseName(warehouseEntity.getName())
+                    .logisticsChannelName(baseDTO.getName())
+                    .build());
+        }
+        return successList;
     }
 
     @Override

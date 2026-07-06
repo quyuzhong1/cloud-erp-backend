@@ -2,8 +2,10 @@ package com.erp.server.oms.service;
 
 import com.common.business.dto.base.BaseDTO;
 import com.common.business.service.SuperService;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.excel.B2CManualDeliveryImportExcelDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -18,6 +20,8 @@ public interface SoB2cImportService extends SuperService<SoB2cEntity> {
     void importB2cManualDelivery(BaseDTO.ImportDTO dto);
 
     void downloadManualDeliveryTemplate(HttpServletResponse response);
+
+    SoB2cDTO.ManualDeliveryImportParseDTO parseManualDeliveryExcel(MultipartFile excelFile);
 
     void handleManualDeliveryImportSuccessList(List<B2CManualDeliveryImportExcelDTO> successList, List<String> errorNoList, List<B2CManualDeliveryImportExcelDTO> errorList2);
 }

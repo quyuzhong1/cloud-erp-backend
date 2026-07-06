@@ -59,6 +59,7 @@ public final class SoUtils {
         headMap.put("addressTypeName", "地址类型");
         headMap.put("receiveConditionName", "收款条件");
         headMap.put("deliveryStatusName", "发货状态");
+        headMap.put("spuNo", "SPU");
         headMap.put("skuNo", "sku");
         headMap.put("productName", "产品名称");
         headMap.put("customerSkuNo", "客户SKU");
