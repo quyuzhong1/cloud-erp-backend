@@ -201,6 +201,49 @@ public class SoB2cDTO implements Serializable {
 
         private String logisticsChannelCode;
     }
+
+    /**
+     * 手动发货 Excel 解析结果
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ManualDeliveryImportParseDTO {
+
+        /**
+         * 解析成功数据
+         */
+        private List<ManualDeliveryImportParseItemDTO> successList;
+
+        /**
+         * 错误 Excel 地址
+         */
+        private String errorUrl;
+    }
+
+    /**
+     * 手动发货 Excel 解析明细，字段与 {@link DeliveryWithNotOutboundDTO} 一致，并补充前端展示字段
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class ManualDeliveryImportParseItemDTO {
+
+        private String id;
+        private String warehouseId;
+        private String logisticsChannelId;
+        private LocalDateTime deliveryTime;
+        private String trackNo;
+        private String actualDeliveryCode;
+        private Boolean platformShipFlag;
+        private String logisticsChannelCode;
+        private String code;
+        private List<String> platformOrderNo;
+        private String warehouseName;
+        private String logisticsChannelName;
+    }
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor

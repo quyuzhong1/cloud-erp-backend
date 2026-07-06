@@ -1849,6 +1849,14 @@ public class SoB2cController extends BaseController {
 
 
     /**
+     * 解析手动发货 Excel 数据
+     */
+    @PostMapping("/parseManualDeliveryExcel")
+    public ApiResult<SoB2cDTO.ManualDeliveryImportParseDTO> parseManualDeliveryExcel(@RequestParam(value = "excelFile") MultipartFile excelFile) {
+        return success(soB2cImportService.parseManualDeliveryExcel(excelFile));
+    }
+
+    /**
      * 导入手动发货Excel数据
      */
     @PostMapping("/importManualDelivery")
