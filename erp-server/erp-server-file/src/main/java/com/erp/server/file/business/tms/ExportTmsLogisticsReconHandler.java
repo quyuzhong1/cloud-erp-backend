@@ -6,8 +6,6 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.LogisticsReconDTO;
 import com.erp.rpc.tms.feign.ExportTmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
-import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -38,14 +36,6 @@ public class ExportTmsLogisticsReconHandler
     @Override
     public FileTaskEventEnum getEvent() {
         return EXPORT_TMS_LOGISTICS_RECON;
-    }
-
-    @Override
-    protected List<LogisticsReconDTO.ListDTO> getData(FileTask fileTask) {
-        LogisticsReconDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(),
-                new TypeReference<LogisticsReconDTO.PagingParamDTO>() {
-                });
-        return listSeqData(dto);
     }
 
     @Override
