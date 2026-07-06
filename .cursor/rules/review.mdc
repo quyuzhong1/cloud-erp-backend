@@ -112,10 +112,10 @@ Nacos / Seata 1.5.2 / RocketMQ / Redis(Redisson) / XXL-JOB / EasyExcel / MapStru
 
 ### 3. 注解使用合规性
 
-- 写操作（新增/修改/删除）的 Controller 方法是否有 `@LogAction`
+- 写操作（新增/修改/删除）的 Controller 方法是否有 `@LogAction`；**`@LogAction` 本身已内置防重复提交能力**，与 `@Idempotent` 的短窗口去重效果等价；用 `@LogAction` 替换 `@Idempotent` **不视为移除了防重复能力**，**不得**就此提出「缺少幂等/防重复」问题
 - 涉及数据范围过滤的接口（列表/修改/删除）是否有 `@DataPermission`，`operationType`、`menuCode`、`tableField` 是否填写正确（只查注解是否配置，不审查 permissionSql 内容）
 - 高级搜索接口是否挂载 `@WebAdvanceQuery(handler = XxxQueryHandler.class)`
-- 幂等场景（重复提交、MQ 消费）是否使用 `@Idempotent` 或 `@DataIdempotent`
+- 幂等场景（重复提交、MQ 消费）是否使用 `@Idempotent` 或 `@DataIdempotent`（已有 `@LogAction` 时不重复要求）
 - 并发写场景是否使用 `@DistributeLocker`；**`unlockAfterTx = true` 仅在该方法本身已有 `@Transactional` / `@GlobalTransactional` 事务时才需要配置**，无事务的方法不需要配置此参数；**禁止**因未配置 `unlockAfterTx` 而要求增加事务
 
 ### 4. 事务
