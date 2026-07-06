@@ -896,7 +896,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     // ===================== matchAndCreateByReturnLogisticCode：按退货物流单号匹配售后单并生成退货入库单 =====================
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public List<PlatformReturnInstockDTO.Detail> matchAndCreateByReturnLogisticCode(PlatformReturnInstockDTO dto, WarehouseEntity warehouseEntity) {
         List<PlatformReturnInstockDTO.Detail> details = dto.getProductDetailList();
         if (CollUtil.isEmpty(details)) {
@@ -927,6 +927,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 .collect(Collectors.toMap(SoReturnEntity::getId, Function.identity(), (a, b) -> a));
         Map<String, SoB2cReturnEntity> b2cReturnMap = validB2cReturnList.stream()
                 .collect(Collectors.toMap(SoB2cReturnEntity::getId, Function.identity(), (a, b) -> a));
+        // 批量预取B2B候选售后单对应客户的平台归属，用于回填退货入库单dictPlatform
+        Map<String, CustomerInfoEntity> b2bCustomerInfoMap = buildCustomerInfoMapByIds(
+                b2bReturnList.stream().map(SoReturnEntity::getCustomerId).collect(Collectors.toList()));
 
         List<ReturnGapDetail> gapDetails = buildReturnGapDetails(b2bReturnList, validB2cReturnList);
         if (CollUtil.isEmpty(gapDetails)) {
@@ -1011,7 +1014,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             List<SoReturnInstockDetailEntity> detailEntityList = entry.getValue();
             SoReturnEntity b2bReturn = b2bReturnMap.get(mainId);
             if (Objects.nonNull(b2bReturn)) {
-                SoReturnInstockEntity instockEntity = buildInstockEntityFromB2bReturn(dto, warehouseEntity, company, b2bReturn);
+                SoReturnInstockEntity instockEntity = buildInstockEntityFromB2bReturn(dto, warehouseEntity, company, b2bReturn, b2bCustomerInfoMap);
                 this.addByThirdWarehouse(instockEntity, detailEntityList);
                 continue;
             }
@@ -1175,10 +1178,24 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     }
 
     /**
+     * 按客户id批量查询客户档案，忽略空白id，找不到的id不出现在返回结果中
+     */
+    private Map<String, CustomerInfoEntity> buildCustomerInfoMapByIds(List<String> customerIds) {
+        List<String> distinctIds = customerIds.stream().filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        if (CollUtil.isEmpty(distinctIds)) {
+            return Collections.emptyMap();
+        }
+        return FeignQuery.getByIds(CustomerInfoEntity.class, distinctIds).stream()
+                .filter(e -> CharSequenceUtil.isNotBlank(e.getId()))
+                .collect(Collectors.toMap(CustomerInfoEntity::getId, Function.identity(), (a, b) -> a));
+    }
+
+    /**
      * 由匹配到的B2B售后单构建退货入库单主表：客户/组织/销售员等字段直接取自售后单自身
      */
     private SoReturnInstockEntity buildInstockEntityFromB2bReturn(PlatformReturnInstockDTO dto, WarehouseEntity warehouseEntity,
-                                                                    SysAccountingCompanyEntity company, SoReturnEntity b2bReturn) {
+                                                                    SysAccountingCompanyEntity company, SoReturnEntity b2bReturn,
+                                                                    Map<String, CustomerInfoEntity> customerInfoMap) {
         SoReturnInstockEntity entity = new SoReturnInstockEntity();
         entity.setApproveStatus(ApproveStatusEnum.APPROVE_ING.getStatus());
         entity.setApproveTime(LocalDateTime.now());
@@ -1208,6 +1225,10 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         entity.setCurrency(b2bReturn.getCurrency());
         entity.setCurrencySymbol(CharSequenceUtil.isNotBlank(b2bReturn.getCurrencySymbol())
                 ? b2bReturn.getCurrencySymbol() : CurrencyEnum.getSymbolByCode(b2bReturn.getCurrency()));
+        // 平台：B2B无自身平台字段，取客户归属平台（可能为空）
+        CustomerInfoEntity customerInfo = customerInfoMap.get(b2bReturn.getCustomerId());
+        entity.setDictPlatform(resolveDictPlatform(entity.getType(), null,
+                Objects.nonNull(customerInfo) ? customerInfo.getPlatformType() : null));
         return entity;
     }
 
@@ -1255,6 +1276,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         }
         entity.setSellerId(customerInfo.getSellerId());
         entity.setSellerName(customerInfo.getSellerName());
+        // 平台：B2C取售后单自身平台，否则取客户归属平台（可能为空）
+        entity.setDictPlatform(resolveDictPlatform(entity.getType(), b2cReturn.getDictPlatform(), customerInfo.getPlatformType()));
         return entity;
     }
 
