@@ -11,7 +11,6 @@ import lombok.NoArgsConstructor;
 import javax.validation.Valid;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
@@ -1011,21 +1010,6 @@ public class SoReturnDTO {
     @NoArgsConstructor
     public static class LinkAfterSalePagingParam extends SortDTO {
         /**
-         * 售后单据类型：B2B / B2C（BillTypeEnum）；B2B 查 so_return，B2C 查 so_b2c_return
-         */
-        private String type;
-
-        /**
-         * 仓库 id（B2B 按 so_return.warehouse_id 过滤；B2C 按关联的 so_b2c_detail.warehouse_id 过滤）
-         */
-        private String warehouseId;
-
-        /**
-         * 仓库名称（结果中"收货仓库"字段兜底回显值）
-         */
-        private String warehouseName;
-
-        /**
          * 选择的 sku 编码集合
          */
         private List<String> skuNoList;
@@ -1058,7 +1042,7 @@ public class SoReturnDTO {
         /**
          * 售后单号
          */
-        private String code;
+        private String afterSaleCode;
         /**
          * 平台退货单号（B2C）
          */

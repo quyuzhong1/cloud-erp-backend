@@ -227,7 +227,7 @@
         SELECT
             sbr.id,
             sbrd.id AS detailId,
-            sbr.code,
+            sbr.code AS afterSaleCode,
             sbr.platform_return_no AS platformReturnNo,
             sbr.platform_order_no AS platformOrderNo,
             sbr.so_code AS soCode,

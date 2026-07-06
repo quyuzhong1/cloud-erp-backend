@@ -42,6 +42,7 @@ public enum SourceTypeEnum {
     SO_RETURN_NOTICE("soReturnNotice", "销售退货通知单","so_return_notice"),
     SO_RETURN_RECEIVE("soReturnReceive", "销售退货签收单","so_return_receive"),
     SO_RETURN_INSTOCK("soReturnInstock", "销售退货入库单","so_return_instock"),
+    SO_RETURN_PRESTOCK("soReturnPrestock", "退货预入库单","so_return_prestock"),
     SO_DELIVERY_NOTICE("soDeliveryNotice", "销售发货通知单","so_delivery_notice"),
     SO_DELIVERY_NOTICE_CHANGE("soDeliveryNoticeChange", "销售发货通知变更单","so_delivery_notice_change"),
     TRANSFER_OUT("transferOut", "分布式调出单","transfer_out"),
@@ -301,7 +302,6 @@ public enum SourceTypeEnum {
     WDT_VIRTUAL_WAREHOUSE("wdt_virtual_warehouse", "旺店通虚拟仓基础数据", "dmp_pull_task"),
     WDT_SHOP("wdt_shop", "旺店通店铺基础数据", "dmp_pull_task"),
     WDT_SO_PRESTOCK("wdt_so_prestock", "旺店通预入库", "dmp_so_prestock_info"),
-    SO_RETURN_PRESTOCK("soReturnPrestock", "预入库单", "so_return_prestock"),
 
     QIMEN_SO_OUT_STOCK("qimen_so_out_stock", "奇门销售出库单", "dmp_pull_task"),
     QIMEN_RETURN_ORDER("qimen_return_order", "奇门销售退货入库单", "dmp_pull_task"),
