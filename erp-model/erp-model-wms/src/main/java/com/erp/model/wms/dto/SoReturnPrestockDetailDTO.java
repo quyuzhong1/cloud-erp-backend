@@ -202,6 +202,16 @@ public class SoReturnPrestockDetailDTO {
          * 销售部门名称
          */
         private String salesDeptName;
+
+        /**
+         * 销售员 ID
+         */
+        private String sellerId;
+
+        /**
+         * 销售员名称
+         */
+        private String sellerName;
     }
 
     // ===================== 确认关联售后单（批量） =====================
@@ -311,8 +321,8 @@ public class SoReturnPrestockDetailDTO {
     // ===================== 关联店铺 =====================
 
     /**
-     * 批量关联店铺入参；ids 为预入库单主表 ID 列表，支持一次选中多张预入库单关联到同一店铺。
-     * B2B 与 B2C 关联的店铺不同，服务端会校验所选预入库单的单据类型必须一致。
+     * 批量关联店铺入参；ids 为预入库单主表 ID 列表，支持一次选中多张预入库单关联到同一店铺，
+     * 不区分 B2B / B2C 单据类型。
      */
     @Data
     @NoArgsConstructor
@@ -340,6 +350,36 @@ public class SoReturnPrestockDetailDTO {
          * 由前端在选定店铺后，将该店铺自身的 dict_platform 一并回传
          */
         private String dictPlatform;
+
+        /**
+         * 销售组织 ID；选定店铺后由前端自动带出并回传
+         */
+        private String salesOrgId;
+
+        /**
+         * 销售组织名称
+         */
+        private String salesOrgName;
+
+        /**
+         * 销售部门 ID；选定店铺后由前端自动带出并回传
+         */
+        private String salesDeptId;
+
+        /**
+         * 销售部门名称
+         */
+        private String salesDeptName;
+
+        /**
+         * 销售员 ID；选定店铺后由前端自动带出并回传
+         */
+        private String sellerId;
+
+        /**
+         * 销售员名称
+         */
+        private String sellerName;
     }
 
     // ===================== 确认关联店铺（明细维度，逐行选店铺 + 认领数量） =====================
@@ -435,6 +475,11 @@ public class SoReturnPrestockDetailDTO {
          * 销售员 ID；选定店铺后由前端自动带出并回传，生成退货入库单时带入
          */
         private String sellerId;
+
+        /**
+         * 销售员名称；选定店铺后由前端自动带出并回传
+         */
+        private String sellerName;
     }
 
     // ===================== 详情展示 =====================
@@ -594,6 +639,16 @@ public class SoReturnPrestockDetailDTO {
          * 销售部门名称
          */
         private String salesDeptName;
+
+        /**
+         * 销售员 ID
+         */
+        private String sellerId;
+
+        /**
+         * 销售员名称
+         */
+        private String sellerName;
 
         /**
          * 备注
