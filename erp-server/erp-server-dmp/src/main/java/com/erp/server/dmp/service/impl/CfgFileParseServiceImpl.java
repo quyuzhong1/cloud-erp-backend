@@ -284,6 +284,7 @@ public class CfgFileParseServiceImpl extends SuperServiceImpl<CfgFileParseMapper
         String month = resolveMonth(queryDTO.getMonth());
         List<CfgFileParseEntity> configList = lambdaQuery()
                 .eq(StringUtils.isNotBlank(queryDTO.getCfgFileParseId()), CfgFileParseEntity::getId, queryDTO.getCfgFileParseId())
+                .eq(StringUtils.isNotBlank(queryDTO.getDictPlatform()), CfgFileParseEntity::getDictPlatform, queryDTO.getDictPlatform())
                 .eq(CfgFileParseEntity::getDisabled, Boolean.FALSE)
                 .orderByDesc(CfgFileParseEntity::getCreateTime)
                 .list();
@@ -302,6 +303,7 @@ public class CfgFileParseServiceImpl extends SuperServiceImpl<CfgFileParseMapper
                 .in(CfgFileParseFileEntity::getMainId, mainIds)
                 .eq(CfgFileParseFileEntity::getIsDeleted, Boolean.FALSE)
                 .eq(CfgFileParseFileEntity::getType, CfgFileParseFileTypeEnum.EXCEL.getCode())
+                .eq(StringUtils.isNotBlank(queryDTO.getBusinessType()), CfgFileParseFileEntity::getBusinessType, queryDTO.getBusinessType())
                 .orderByAsc(CfgFileParseFileEntity::getSort)
                 .list()
                 .stream()
