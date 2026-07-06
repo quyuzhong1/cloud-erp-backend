@@ -80,6 +80,18 @@ public class SoReturnPrestockServiceImpl
 
     private static final String SO_RETURN_PRESTOCK_LINK_LOCK_KEY = "SO_RETURN_PRESTOCK_LINK";
 
+    /**
+     * 单次确认关联最多允许生成的退货入库单数量（按售后单/店铺分组数）。
+     * confirmLinkAfterSale/confirmLinkShop 在同一个事务内循环调用 SoReturnInstockService#add 落库，
+     * 分组数过多会导致长事务、锁等待时间变长；超过阈值直接拒绝并提示分批操作，而不做架构级两阶段重构。
+     */
+    private static final int LINK_GROUP_MAX_SIZE = 50;
+
+    /**
+     * 确认关联循环耗时告警阈值（毫秒），超过该阈值仅记录警告日志，便于后续评估是否需要拆分事务，不阻断业务
+     */
+    private static final long LINK_LOOP_WARN_THRESHOLD_MS = 3000L;
+
     @Resource
     private DocNoGenHelper docNoGenHelper;
 
@@ -249,6 +261,15 @@ public class SoReturnPrestockServiceImpl
     public BatchResultDTO confirmLinkAfterSale(SoReturnPrestockDetailDTO.ConfirmLinkAfterSale dto) {
         SoReturnPrestockEntity main = getByIdOrThrow(dto.getMainId());
 
+        // B2C售后单平台字典值为必填（B2B售后单无平台概念，允许为空，故不能在DTO层统一加@NotBlank）
+        if (BillTypeEnum.B2C.getCode().equals(main.getType())) {
+            boolean anyDictPlatformBlank = dto.getAfterSaleList().stream()
+                    .anyMatch(item -> CharSequenceUtil.isBlank(item.getDictPlatform()));
+            if (anyDictPlatformBlank) {
+                throw new ServiceException("B2C售后单平台信息不能为空");
+            }
+        }
+
         // 仅在未关联的明细行范围内进行匹配，避免覆盖已关联售后单的行
         List<SoReturnPrestockDetailEntity> unlinked = soReturnPrestockDetailService.listByMainId(dto.getMainId())
                 .stream()
@@ -351,6 +372,11 @@ public class SoReturnPrestockServiceImpl
         // 按售后单 ID 分组，保持关联顺序便于排查
         Map<String, List<LinkedDetailPair>> pairsByAfterSale = linkedPairs.stream()
                 .collect(Collectors.groupingBy(p -> p.item.getAfterSaleId(), LinkedHashMap::new, Collectors.toList()));
+        if (pairsByAfterSale.size() > LINK_GROUP_MAX_SIZE) {
+            throw new ServiceException("本次关联涉及售后单数量过多（" + pairsByAfterSale.size()
+                    + "个），单次事务内生成退货入库单数量超限，请分批关联");
+        }
+        long loopStart = System.currentTimeMillis();
         for (List<LinkedDetailPair> pairs : pairsByAfterSale.values()) {
             SoReturnPrestockDetailDTO.AfterSaleItem head = pairs.get(0).item;
             SoReturnInstockDTO.Add add = new SoReturnInstockDTO.Add();
@@ -381,6 +407,11 @@ public class SoReturnPrestockServiceImpl
             for (LinkedDetailPair pair : pairs) {
                 pair.detail.setReturnInstockId(instockId).setReturnInstockCode(instockCode);
             }
+        }
+        long loopCost = System.currentTimeMillis() - loopStart;
+        if (loopCost > LINK_LOOP_WARN_THRESHOLD_MS) {
+            log.warn("[预入库单确认关联售后单]生成退货入库单耗时过长：预入库单={}，分组数={}，耗时={}ms",
+                    main.getCode(), pairsByAfterSale.size(), loopCost);
         }
     }
 
@@ -609,6 +640,11 @@ public class SoReturnPrestockServiceImpl
         // 按店铺 ID 分组，保持关联顺序便于排查
         Map<String, List<LinkedShopPair>> pairsByShop = linkedPairs.stream()
                 .collect(Collectors.groupingBy(p -> p.item.getShopId(), LinkedHashMap::new, Collectors.toList()));
+        if (pairsByShop.size() > LINK_GROUP_MAX_SIZE) {
+            throw new ServiceException("本次关联涉及店铺数量过多（" + pairsByShop.size()
+                    + "个），单次事务内生成退货入库单数量超限，请分批关联");
+        }
+        long loopStart = System.currentTimeMillis();
         for (List<LinkedShopPair> pairs : pairsByShop.values()) {
             SoReturnPrestockDetailDTO.ShopItem head = pairs.get(0).item;
             SoReturnInstockDTO.Add add = new SoReturnInstockDTO.Add();
@@ -636,6 +672,11 @@ public class SoReturnPrestockServiceImpl
             for (LinkedShopPair pair : pairs) {
                 pair.detail.setReturnInstockId(instockId).setReturnInstockCode(instockCode);
             }
+        }
+        long loopCost = System.currentTimeMillis() - loopStart;
+        if (loopCost > LINK_LOOP_WARN_THRESHOLD_MS) {
+            log.warn("[预入库单确认关联店铺]生成退货入库单耗时过长：预入库单={}，分组数={}，耗时={}ms",
+                    main.getCode(), pairsByShop.size(), loopCost);
         }
     }
 
@@ -1100,8 +1141,11 @@ public class SoReturnPrestockServiceImpl
         SoReturnPrestockEntity prestockEntity = getByIdOrThrow(prestockId);
         Map<String, SkuVO> skuVOMap = listSkuVOMap(prestockAdd.getDetailList().stream()
                 .map(SoReturnPrestockDetailDTO.Add::getSkuId).collect(Collectors.toList()));
-        // 按创建顺序与刚组装的入参详情行一一对应，用于回填 sourceDetailId 溯源到预入库单具体明细行
-        List<SoReturnPrestockDetailEntity> persistedDetailList = soReturnPrestockDetailService.listByMainId(prestockId);
+        // 按 skuId 分组后组内按创建顺序（create_time + id 兜底排序）与入参详情行配对，用于回填 sourceDetailId
+        // 溯源到预入库单具体明细行；相比整体按下标对齐，同 SKU 场景下即使排序偶发抖动也不会跨SKU错配
+        Map<String, Deque<SoReturnPrestockDetailEntity>> persistedDetailQueueBySkuId = soReturnPrestockDetailService.listByMainId(prestockId)
+                .stream()
+                .collect(Collectors.groupingBy(SoReturnPrestockDetailEntity::getSkuId, Collectors.toCollection(LinkedList::new)));
         List<SysDepartmentEntity> deptList = sysUserFeign.getDeptByIds(Collections.singletonList(WmsConstant.DEFAULT_WAREHOUSING_DEPT_ID));
         if (CollectionUtils.isEmpty(deptList)) {
             throw new ServiceException("获取不到仓储部门信息");
@@ -1127,8 +1171,7 @@ public class SoReturnPrestockServiceImpl
 
         List<OtherInstockDetailEntity> detailEntityList = new ArrayList<>();
         List<SoReturnPrestockDetailDTO.Add> addDetailList = prestockAdd.getDetailList();
-        for (int i = 0; i < addDetailList.size(); i++) {
-            SoReturnPrestockDetailDTO.Add detail = addDetailList.get(i);
+        for (SoReturnPrestockDetailDTO.Add detail : addDetailList) {
             SkuVO skuVO = skuVOMap.getOrDefault(detail.getSkuId(), new SkuVO());
             OtherInstockDetailEntity detailEntity = new OtherInstockDetailEntity();
             detailEntity.setSkuId(detail.getSkuId());
@@ -1136,13 +1179,20 @@ public class SoReturnPrestockServiceImpl
             detailEntity.setActualQty(detail.getReturnQty());
             detailEntity.setUnit(skuVO.getUnitName());
             detailEntity.setRemark(detail.getRemark());
-            if (i < persistedDetailList.size()) {
-                detailEntity.setSourceDetailId(persistedDetailList.get(i).getId());
+            Deque<SoReturnPrestockDetailEntity> persistedQueue = persistedDetailQueueBySkuId.get(detail.getSkuId());
+            if (Objects.nonNull(persistedQueue) && !persistedQueue.isEmpty()) {
+                detailEntity.setSourceDetailId(persistedQueue.pollFirst().getId());
             }
             detailEntityList.add(detailEntity);
         }
         otherInstockEntity.setDetailEntityList(detailEntityList);
+        long start = System.currentTimeMillis();
         otherInstockService.addAndApprove(otherInstockEntity, false);
+        long cost = System.currentTimeMillis() - start;
+        if (cost > LINK_LOOP_WARN_THRESHOLD_MS) {
+            log.warn("[预入库单联动生成其它入库单]addAndApprove耗时过长：预入库单={}，明细行数={}，耗时={}ms",
+                    prestockEntity.getCode(), detailEntityList.size(), cost);
+        }
     }
 
     /**

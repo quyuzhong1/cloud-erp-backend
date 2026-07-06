@@ -28,6 +28,9 @@ public class SoReturnPrestockDetailServiceImpl
                 .eq(SoReturnPrestockDetailEntity::getMainId, mainId)
                 .eq(SoReturnPrestockDetailEntity::getIsDeleted, false)
                 .orderByAsc(SoReturnPrestockDetailEntity::getCreateTime)
+                // create_time 精度不足，同批次saveBatch插入的明细行可能时间相同；补充id作为稳定的二级排序键
+                // （ASSIGN_ID为单线程顺序生成，与insert顺序一致），避免排序结果因数据库并列排序不稳定而错位
+                .orderByAsc(SoReturnPrestockDetailEntity::getId)
                 .list();
     }
 
@@ -40,6 +43,7 @@ public class SoReturnPrestockDetailServiceImpl
                 .in(SoReturnPrestockDetailEntity::getMainId, mainIds)
                 .eq(SoReturnPrestockDetailEntity::getIsDeleted, false)
                 .orderByAsc(SoReturnPrestockDetailEntity::getCreateTime)
+                .orderByAsc(SoReturnPrestockDetailEntity::getId)
                 .list();
     }
 

@@ -496,7 +496,7 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		SoReturnInstockEntity soReturnInstockEntity = new SoReturnInstockEntity();
 		soReturnInstockEntity.setApproveTime(LocalDateTime.now());
 		soReturnInstockEntity.setApproveStatus(ApproveStatusEnum.APPROVE_ING.getStatus());
-		soReturnInstockEntity.setBillDate(dto.getPutawayTime().toLocalDate());
+		soReturnInstockEntity.setBillDate(dto.getPutawayLocalDate());
 		soReturnInstockEntity.setInventoryOrgId(warehouseEntity.getOrgId());
 		SysAccountingCompanyEntity company = sysUserFeign.getCompanyById(warehouseEntity.getOrgId());
 		soReturnInstockEntity.setInventoryOrgName(company.getCompanyName());
@@ -852,7 +852,7 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 			soReturnInstockEntity.setApproveTime(LocalDateTime.now());
 			soReturnInstockEntity.setApproveStatus(ApproveStatusEnum.APPROVE_ING.getStatus());
 		}
-		soReturnInstockEntity.setBillDate(dto.getPutawayTime().toLocalDate());
+		soReturnInstockEntity.setBillDate(dto.getPutawayLocalDate());
 		soReturnInstockEntity.setInventoryOrgId(warehouseEntity.getOrgId());
 		soReturnInstockEntity.setReturnLogisticCode(dto.getReturnLogisticCode());
 		soReturnInstockEntity.setSourceId(dto.getSourceId());
@@ -907,7 +907,7 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 			soReturnInstockEntity.setApproveTime(LocalDateTime.now());
 			soReturnInstockEntity.setApproveStatus(ApproveStatusEnum.APPROVE_ING.getStatus());
 		}
-		soReturnInstockEntity.setBillDate(dto.getPutawayTime().toLocalDate());
+		soReturnInstockEntity.setBillDate(dto.getPutawayLocalDate());
 		soReturnInstockEntity.setInventoryOrgId(warehouseEntity.getOrgId());
 		soReturnInstockEntity.setReturnLogisticCode(dto.getReturnLogisticCode());
 		soReturnInstockEntity.setSourceId(dto.getSourceId());
@@ -979,10 +979,8 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 			soReturnInstockEntity.setApproveTime(LocalDateTime.now());
 			soReturnInstockEntity.setApproveStatus(ApproveStatusEnum.APPROVE_ING.getStatus());
 		}
-		// 入库日期取关单时间
-		if (dto.getPutawayTime() != null) {
-			soReturnInstockEntity.setBillDate(dto.getPutawayTime().toLocalDate());
-		}
+		// 入库日期取关单时间，为空兜底当前日期
+		soReturnInstockEntity.setBillDate(dto.getPutawayLocalDate());
 		// 库存组织
 		soReturnInstockEntity.setInventoryOrgId(warehouseEntity.getOrgId());
 		// 组织信息
@@ -1339,7 +1337,7 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		SoReturnInstockEntity soReturnInstockEntity = new SoReturnInstockEntity();
 		soReturnInstockEntity.setApproveTime(LocalDateTime.now());
 		soReturnInstockEntity.setApproveStatus(ApproveStatusEnum.APPROVE_ING.getStatus());
-		soReturnInstockEntity.setBillDate(dto.getPutawayTime().toLocalDate());
+		soReturnInstockEntity.setBillDate(dto.getPutawayLocalDate());
 		soReturnInstockEntity.setInventoryOrgId(warehouseEntity.getOrgId());
 		//组织信息
 		SysAccountingCompanyEntity company = sysUserFeign.getCompanyById(warehouseEntity.getOrgId());
@@ -1408,10 +1406,10 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		}
 		WarehouseEntity warehouseEntity = checkAndGetWarehouseByShopInfo(shopInfoEntity);
 		// 查询是否已关账
-		LocalDate closedLocalDate = inventoryClosedRecordService.checkClosed(warehouseEntity.getOrgId(), dto.getPutawayTime().toLocalDate());
+		LocalDate closedLocalDate = inventoryClosedRecordService.checkClosed(warehouseEntity.getOrgId(), dto.getPutawayLocalDate());
 		if (null != closedLocalDate) {
 			// 已关账
-			log.warn("[退货入库单消费]:当前退货入库单消费日期【{}】因关账【{}】停止生成：单号={}", dto.getPutawayTime().toLocalDate(), closedLocalDate, dto.getPlatformOrderNo());
+			log.warn("[退货入库单消费]:当前退货入库单消费日期【{}】因关账【{}】停止生成：单号={}", dto.getPutawayLocalDate(), closedLocalDate, dto.getPlatformOrderNo());
 			return;
 		}
 		List<SoReturnInstockDetailEntity> detailEntityList = this.buildPlatformSoReturnInstockDetailWithoutSoB2c(dto, warehouseEntity, shopInfoEntity, shopIds);
@@ -1436,10 +1434,10 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		}
 		WarehouseEntity warehouseEntity = checkAndGetWarehouseByShopInfo(shopInfoEntity);
 		// 查询是否已关账
-		LocalDate closedLocalDate = inventoryClosedRecordService.checkClosed(warehouseEntity.getOrgId(), dto.getPutawayTime().toLocalDate());
+		LocalDate closedLocalDate = inventoryClosedRecordService.checkClosed(warehouseEntity.getOrgId(), dto.getPutawayLocalDate());
 		if (null != closedLocalDate) {
 			// 已关账
-			log.warn("[退货入库单消费]:当前退货入库单消费日期【{}】因关账【{}】停止生成：单号={}", dto.getPutawayTime().toLocalDate(), closedLocalDate, dto.getPlatformOrderNo());
+			log.warn("[退货入库单消费]:当前退货入库单消费日期【{}】因关账【{}】停止生成：单号={}", dto.getPutawayLocalDate(), closedLocalDate, dto.getPlatformOrderNo());
 			return;
 		}
 
