@@ -713,14 +713,15 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
     @Override
     public PagingVO<ExhibitionOrderDTO.ListDTO> paging(PagingDTO<ExhibitionOrderDTO.PagingParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
-        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize(), false);
         IPage<ExhibitionOrderDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
+        Long total = Optional.ofNullable(this.baseMapper.pagingCount(pagingParamDTO.getParams())).orElse(0L);
         if (CollUtil.isEmpty(pageData.getRecords())) {
-            return new PagingVO(pageData);
+            return new PagingVO<>(pageData.getRecords(), total.intValue(), pagingParamDTO.getPageSize(), pagingParamDTO.getCurrPage());
         }
         // 数据处理
         fillList(pageData.getRecords());
-        return new PagingVO(pageData);
+        return new PagingVO<>(pageData.getRecords(), total.intValue(), pagingParamDTO.getPageSize(), pagingParamDTO.getCurrPage());
     }
 
     @Override
