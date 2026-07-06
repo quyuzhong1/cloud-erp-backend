@@ -3433,12 +3433,36 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                                                                                    TmsDeclareBillDTO.SplitDeclareDTO splitDeclareDTO) {
         // 拆分是整箱维度：按业务单号+箱号整箱取明细（同业务单跨来源单相同箱号视为同一箱），
         // 不再用前端回传的 skuId 快照二次过滤，避免快照与保存时实际箱内明细不一致导致漏行。
-        String splitBusinessKey = resolveBusinessCodeForBoxKey(splitDeclareDTO.getBusinessCode(),
-                splitDeclareDTO.getSourceId(), null);
+        String splitBusinessKey = resolveSplitBusinessKey(splitDeclareDTO, sourceDeliveryDetailList);
         return Optional.ofNullable(sourceDeliveryDetailList).orElse(Collections.emptyList()).stream()
                 .filter(obj -> CharSequenceUtil.equals(obj.getBoxNo(), splitDeclareDTO.getBoxNo()))
                 .filter(obj -> CharSequenceUtil.equals(resolveBusinessCodeForBoxKey(obj), splitBusinessKey))
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * 解析拆分项的业务单号匹配键，使其与来源明细侧 {@link #resolveBusinessCodeForBoxKey} 口径一致。
+     * 前端保存时可能只回传 sourceId 而漏传 businessCode，导致拆分侧回退到 sourceId、
+     * 而来源明细侧仍用 businessCode，两边键不一致过滤为空。此处在 businessCode 为空时，
+     * 用已加载的来源明细按 sourceId 反查真实 businessCode（无需额外查库），再拼匹配键。
+     *
+     * @param splitDeclareDTO 拆分选择
+     * @param sourceDeliveryDetailList 原报关单来源明细（含 sourceId 与 businessCode）
+     * @return 与来源明细一致的业务单号匹配键
+     */
+    private String resolveSplitBusinessKey(TmsDeclareBillDTO.SplitDeclareDTO splitDeclareDTO,
+                                           List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDeliveryDetailList) {
+        String businessCode = splitDeclareDTO.getBusinessCode();
+        if (StringUtils.isBlank(businessCode) && StringUtils.isNotBlank(splitDeclareDTO.getSourceId())) {
+            businessCode = Optional.ofNullable(sourceDeliveryDetailList).orElse(Collections.emptyList()).stream()
+                    .filter(obj -> CharSequenceUtil.equals(obj.getSourceId(), splitDeclareDTO.getSourceId()))
+                    .filter(obj -> CharSequenceUtil.equals(obj.getBoxNo(), splitDeclareDTO.getBoxNo()))
+                    .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getBusinessCode)
+                    .filter(StringUtils::isNotBlank)
+                    .findFirst()
+                    .orElse(null);
+        }
+        return resolveBusinessCodeForBoxKey(businessCode, splitDeclareDTO.getSourceId(), null);
     }
 
     /**
