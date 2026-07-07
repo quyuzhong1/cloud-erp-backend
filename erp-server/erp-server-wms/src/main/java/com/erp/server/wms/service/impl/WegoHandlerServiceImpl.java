@@ -548,7 +548,9 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
         String wegoOrderNo = extractStringResult(resp);
         if (CharSequenceUtil.isBlank(wegoOrderNo)) {
-            log.warn("{}创建出库单成功但未提取到出库单号, resp={}", getPlatForm().getName(), JSONUtil.toJsonStr(resp));
+            log.error("{}创建出库单接口返回 success 但未提取到出库单号, resp={}",
+                    getPlatForm().getName(), JSONUtil.toJsonStr(resp));
+            return failure("WEGO创建出库单成功但未返回出库单号，请检查接口响应或联系WEGO排查");
         }
         return success(ThirdWarehouseQueryOutboundResponse.builder().shippingOrderNo(wegoOrderNo).build());
     }

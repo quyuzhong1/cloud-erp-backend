@@ -94,12 +94,13 @@ public class WegoSkuInitHandler extends DmpInputInitHandler {
                 response = wegoOpenApiService.querySku(reqDTO);
             } catch (Exception e) {
                 log.error("[WEGO SKU] 服务商[id={}]调用异常，pageNum={}", authId, pageNum, e);
-                break;
+                throw new ServiceException("WEGO SKU：分页调用异常，pageNum=" + pageNum
+                        + "，已拉取=" + allSkuList.size() + "条，数据不完整，任务中止", e);
             }
 
             JSONObject pageResult = extractPageResult(response, authId);
             if (pageResult == null) {
-                break;
+                throw new ServiceException("WEGO SKU：第" + pageNum + "页响应解析失败，数据不完整，任务中止");
             }
 
             JSONArray list = pageResult.getJSONArray("list");
