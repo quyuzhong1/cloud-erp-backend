@@ -193,7 +193,7 @@ public class WegoOpenApiService {
         try {
             return response.toJavaObject(WegoInboundResp.class);
         } catch (Exception ex) {
-            log.error("[WEGO分页查询入库单] 响应JSON转换WegoInboundResp失败, response={}", response, ex);
+            log.error("[WEGO分页查询入库单] 响应JSON转换WegoInboundResp失败, response={}", safeResponseLog(response), ex);
             throw new ServiceException("WEGO 分页查询入库单接口响应转换失败: " + ex.getMessage());
         }
     }
@@ -273,18 +273,23 @@ public class WegoOpenApiService {
      * <p>
      * 注意：该接口响应的 {@code result} 字段是数组，与 queryPage 的分页对象结构不同，
      * 此处直接解包为 {@link WegoOutboundResp.OutboundOrderDTO} 列表返回，避免 FastJSON 同名字段冲突。
+     * <p>
+     * 与 {@link #query2cOrderPage} / {@link #queryInorderPage} 保持一致：接口返回
+     * {@code success=false} 视为真实失败，抛出 {@link ServiceException}，不在 SDK 层静默降级为
+     * "无数据"，避免调用方（如 Handler 的 {@code queryOutboundBill}）误判单据不存在或未变化。
+     * 仅当接口调用成功但 {@code result} 为空数组时，才代表"未查询到匹配单据"并返回空列表。
      *
      * @param dto 查询请求，包含 accessToken / secret / noList（WEGO 出库单号列表）
-     * @return 出库单详情列表；失败或无数据时返回空列表
+     * @return 出库单详情列表；调用成功但无匹配单据时返回空列表；接口失败时抛出 ServiceException
      */
     public List<WegoOutboundResp.OutboundOrderDTO> search2cOrder(@Valid WegoOutboundSearchDTO.SearchReqDTO dto) {
         Map<String, Object> bizParams = new HashMap<>();
         bizParams.put("noList", JSON.toJSON(dto.getNoList()));
         JSONObject response = doQuery(dto.getAccessToken(), dto.getSecret(),
                 WeGoConstants.TWO_C_ORDER_SEARCH, bizParams, "查询2C出库单");
-        if (response == null || !Boolean.TRUE.equals(response.getBoolean("success"))) {
-            log.warn("[WEGO查询2C出库单] 接口返回失败或无响应, {}", safeResponseLog(response));
-            return Collections.emptyList();
+        if (!Boolean.TRUE.equals(response.getBoolean("success"))) {
+            log.error("[WEGO查询2C出库单] 接口返回失败, {}", safeResponseLog(response));
+            throw new ServiceException("WEGO 查询2C出库单接口失败: " + response.getString("errorMsg"));
         }
         JSONArray resultArray = response.getJSONArray("result");
         if (resultArray == null || resultArray.isEmpty()) {
@@ -309,8 +314,14 @@ public class WegoOpenApiService {
      * <p>
      * WEGO 限制：单次最多返回 100 条（pageSize ≤ 100）。
      *
+     * <p>
+     * 与 {@link #queryInorderPage} 保持一致：本方法不在 SDK 层吞掉 {@code success=false}，
+     * 只要底层有响应即正常解析并返回（{@code success/errorCode/errorMsg} 原样带出），
+     * 由调用方根据 {@link WegoOutboundResp#getSuccess()} 判断是否需要中止任务，
+     * 避免"接口失败"被静默当作"无数据"。
+     *
      * @param dto 分页查询请求（pageNum / pageSize 必填，其余过滤条件可选）
-     * @return 分页结果（{@code result} 为分页对象）；接口返回失败或无响应时返回 null，解析失败时抛出 ServiceException
+     * @return 分页结果（含 success/errorCode/errorMsg 及 result 分页对象）；无响应时返回 null，解析失败时抛出 ServiceException
      */
     public WegoOutboundResp query2cOrderPage(@Valid WegoOutboundQueryPageDTO.QueryReqDTO dto) {
         Map<String, Object> bizParams = new HashMap<>();
@@ -325,8 +336,8 @@ public class WegoOpenApiService {
         putIfNotNull(bizParams, "orderDateEnd", dto.getOrderDateEnd());
         JSONObject response = doQuery(dto.getAccessToken(), dto.getSecret(),
                 WeGoConstants.TWO_C_ORDER_QUERY_PAGE, bizParams, "分页查询2C出库单");
-        if (response == null || !Boolean.TRUE.equals(response.getBoolean("success"))) {
-            log.warn("[WEGO分页查询2C出库单] 接口返回失败或无响应, {}", safeResponseLog(response));
+        if (response == null) {
+            log.warn("[WEGO分页查询2C出库单] 接口无响应, {}", safeResponseLog(response));
             return null;
         }
         try {
@@ -367,6 +378,11 @@ public class WegoOpenApiService {
      * <p>
      * 调用方根据 {@link WegoReturnOrderResp.PageResultDTO#getPages()} 判断总页数，
      * 当 {@code pageNum >= pages} 或 {@code emptyFlag == true} 时结束分页。
+     * <p>
+     * 与 {@link #queryInorderPage} / {@link #query2cOrderPage} 保持一致：本方法不在 SDK 层吞掉
+     * {@code success=false}，只要底层有响应即正常解析并返回（{@code success/errorCode/errorMsg} 原样带出），
+     * 由调用方根据 {@link WegoReturnOrderResp#getSuccess()} 判断是否需要中止任务，
+     * 避免"接口失败"被静默当作"无数据"或误报为"无响应"而丢失 errorCode/errorMsg。
      *
      * @param accessToken      WEGO accessToken
      * @param secret           WEGO secret（用于签名）
@@ -374,7 +390,7 @@ public class WegoOpenApiService {
      * @param arrivalDateEnd   到仓日期结束（YYYY-MM-DD，可为 null）
      * @param pageNum          页码（从 1 开始）
      * @param pageSize         每页数量（最大 100）
-     * @return 分页结果；接口返回失败或无响应时返回 null，解析失败时抛出 ServiceException
+     * @return 分页结果（含 success/errorCode/errorMsg 及 result 分页对象）；无响应时返回 null，解析失败时抛出 ServiceException
      */
     public WegoReturnOrderResp queryReturnOrderPage(String accessToken, String secret,
                                                      String arrivalDateBegin, String arrivalDateEnd,
@@ -386,8 +402,8 @@ public class WegoOpenApiService {
         putIfNotNull(bizParams, "arrivalDateEnd", arrivalDateEnd);
         JSONObject response = doQuery(accessToken, secret,
                 WeGoConstants.RETURN_ORDER_QUERY_PAGE, bizParams, "分页查询退货订单");
-        if (response == null || !Boolean.TRUE.equals(response.getBoolean("success"))) {
-            log.warn("[WEGO分页查询退货订单] 接口返回失败或无响应, {}", safeResponseLog(response));
+        if (response == null) {
+            log.warn("[WEGO分页查询退货订单] 接口无响应, {}", safeResponseLog(response));
             return null;
         }
         try {

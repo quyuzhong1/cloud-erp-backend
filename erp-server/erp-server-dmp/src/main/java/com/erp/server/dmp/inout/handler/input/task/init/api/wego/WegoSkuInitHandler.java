@@ -94,12 +94,13 @@ public class WegoSkuInitHandler extends DmpInputInitHandler {
                 response = wegoOpenApiService.querySku(reqDTO);
             } catch (Exception e) {
                 log.error("[WEGO SKU] 服务商[id={}]调用异常，pageNum={}", authId, pageNum, e);
-                break;
+                throw new ServiceException("WEGO SKU：分页调用异常，pageNum=" + pageNum
+                        + "，已拉取=" + allSkuList.size() + "条，数据不完整，任务中止", e);
             }
 
             JSONObject pageResult = extractPageResult(response, authId);
             if (pageResult == null) {
-                break;
+                throw new ServiceException("WEGO SKU：第" + pageNum + "页响应解析失败，数据不完整，任务中止");
             }
 
             JSONArray list = pageResult.getJSONArray("list");
@@ -128,7 +129,9 @@ public class WegoSkuInitHandler extends DmpInputInitHandler {
         }
 
         if (pageNum > MAX_PAGE_LIMIT) {
-            log.warn("[WEGO SKU] 服务商[id={}]已达最大翻页上限({})，可能存在未拉取数据", authId, MAX_PAGE_LIMIT);
+            log.error("[WEGO SKU] 服务商[id={}]已达最大翻页上限({})，存在未拉取数据，任务中止", authId, MAX_PAGE_LIMIT);
+            throw new ServiceException("WEGO SKU：已达最大翻页上限(" + MAX_PAGE_LIMIT
+                    + ")，已拉取=" + allSkuList.size() + "条，数据不完整，任务中止");
         }
         log.info("[WEGO SKU] 服务商[id={}] 共拉取SKU={}条，页数={}", authId, allSkuList.size(), pageNum);
 

@@ -290,8 +290,6 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
      * <ol>
      *     <li>装箱清单（{@code wms_carton_detail}）— 通过发货单 code 反查 sourceId 后调用
      *         {@link WmsCartonDetailService#boxInfoBySourceIds(List)}；</li>
-     *     <li>兜底：上层 {@link ThirdWarehouseCreateInboundReq#getItems()}（来自
-     *         {@code OverseasWarehouseInboundServiceImpl#entityToCreateInboundBill}）。</li>
      * </ol>
      */
     private List<WegoInOrderSaveDTO.Detail> buildDetails(ThirdWarehouseCreateInboundReq createInboundReq) {
@@ -345,6 +343,11 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         boxMap.forEach((boxNo, list) -> {
             WmsCartonSpecDTO.PackingItemDTO first = list.get(0);
             List<WegoInOrderSaveDTO.Product> products = buildProductsFromPackingList(list);
+            if (CollUtil.isEmpty(products) || sumSkuQty(products) <= 0) {
+                log.warn("[WEGO入库] 箱内无有效SKU明细, 发货单号={}, boxNo={}", first.getSourceCode(), boxNo);
+                throw new ServiceException("装箱清单箱内无有效SKU明细, 发货单号="
+                        + first.getSourceCode() + ", 箱号=" + boxNo);
+            }
             WegoInOrderSaveDTO.Detail detail = WegoInOrderSaveDTO.Detail.builder()
                     .inOrderDetailId(null)
                     .boxQty(1)
@@ -359,6 +362,10 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                     .build();
             details.add(detail);
         });
+        if (CollUtil.isEmpty(details)) {
+            log.warn("[WEGO入库] 装箱清单缺少有效箱号，无法构造入库明细，packingItems={}", packingItems.size());
+            throw new ServiceException("装箱清单缺少箱号");
+        }
         return details;
     }
 
@@ -521,6 +528,10 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         }
 
         WegoOutboundSaveDTO.SaveReqDTO request = buildOutboundSaveDto(createOutboundReq, null, accessToken, secret);
+        if (CollUtil.isEmpty(request.getProducts())) {
+            log.warn("{}创建出库单明细为空, referenceNo={}", getPlatForm().getName(), createOutboundReq.getReferenceNo());
+            throw new ServiceException("出库明细不能为空");
+        }
         log.warn("{}创建出库单请求:{}", getPlatForm().getName(), toLogSafeJson(request));
         JSONObject resp = wegoOpenApiService.save2cOrder(request);
         log.warn("{}创建出库单结果:{}", getPlatForm().getName(), JSONUtil.toJsonStr(resp));
@@ -548,7 +559,9 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
         String wegoOrderNo = extractStringResult(resp);
         if (CharSequenceUtil.isBlank(wegoOrderNo)) {
-            log.warn("{}创建出库单成功但未提取到出库单号, resp={}", getPlatForm().getName(), JSONUtil.toJsonStr(resp));
+            log.error("{}创建出库单接口返回 success 但未提取到出库单号, resp={}",
+                    getPlatForm().getName(), JSONUtil.toJsonStr(resp));
+            return failure("WEGO创建出库单成功但未返回出库单号，请检查接口响应或联系WEGO排查");
         }
         return success(ThirdWarehouseQueryOutboundResponse.builder().shippingOrderNo(wegoOrderNo).build());
     }
@@ -673,8 +686,18 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                     .build();
 
             WegoOutboundResp pageResp = wegoOpenApiService.query2cOrderPage(pageReq);
-            if (pageResp == null || pageResp.getResult() == null
-                    || CollUtil.isEmpty(pageResp.getResult().getList())) {
+            if (pageResp == null) {
+                log.error("{}queryPage 降级查询接口响应为空, referenceCode={}, pageNum={}",
+                        getPlatForm().getName(), referenceCode, pageNum);
+                throw new ServiceException("WEGO查询出库单降级查询接口响应为空，referenceCode=" + referenceCode);
+            }
+            if (!Boolean.TRUE.equals(pageResp.getSuccess())) {
+                log.error("{}queryPage 降级查询接口返回失败: errorCode={}, errorMsg={}, referenceCode={}, pageNum={}",
+                        getPlatForm().getName(), pageResp.getErrorCode(), pageResp.getErrorMsg(), referenceCode, pageNum);
+                throw new ServiceException("WEGO查询出库单降级查询接口返回失败: errorCode=" + pageResp.getErrorCode()
+                        + ", errorMsg=" + pageResp.getErrorMsg());
+            }
+            if (pageResp.getResult() == null || CollUtil.isEmpty(pageResp.getResult().getList())) {
                 log.warn("{}queryPage 降级查询第{}页无数据，停止翻页, referenceCode={}",
                         getPlatForm().getName(), pageNum, referenceCode);
                 break;
@@ -742,6 +765,10 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     private WegoOutboundSaveDTO.SaveReqDTO buildOutboundSaveDto(
             ThirdWarehouseCreateOutboundReq req, String wegoOrderNo,
             String accessToken, String secret) {
+
+        if (CollUtil.isEmpty(req.getItems())) {
+            throw new ServiceException("出库明细不能为空");
+        }
 
         ThirdWarehouseCreateOutboundReq.ReceiverInfo receiver = req.getReceiverInfo();
 

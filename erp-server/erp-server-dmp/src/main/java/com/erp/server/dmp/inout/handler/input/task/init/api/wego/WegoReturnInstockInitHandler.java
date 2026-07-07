@@ -177,7 +177,9 @@ public class WegoReturnInstockInitHandler extends DmpInputInitHandler {
         }
 
         if (pageNum > MAX_PAGE_LIMIT) {
-            log.warn("[WEGO退货入库] 服务商[id={}] 已达最大翻页上限({})", authId, MAX_PAGE_LIMIT);
+            log.error("[WEGO退货入库] 服务商[id={}] 已达最大翻页上限({})，存在未拉取数据，任务中止", authId, MAX_PAGE_LIMIT);
+            throw new ServiceException("WEGO退货入库：已达最大翻页上限(" + MAX_PAGE_LIMIT
+                    + ")，已拉取=" + result.size() + "条，数据不完整，任务中止");
         }
         log.info("[WEGO退货入库] 服务商[id={}] 到仓日期[{} ~ {}] 共拉到已处理退货单={}条, 翻页={}",
                 authId, arrivalDateBegin, arrivalDateEnd, result.size(), pageNum);

@@ -1562,7 +1562,8 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
         }
     }
     /**
-     * 海外仓SKU未匹配预警通知：每个有未匹配SKU的仓库单独发一张飞书卡片
+     * 海外仓SKU未匹配预警通知：按 skuType 维度汇总各分组（仓库/平台/客户）未匹配SKU数量，
+     * 聚合为一张飞书卡片统一发送（卡片正文按分组逐行列出，见 {@code NoticeMsgConstant.FS_SKU_MAPPING_*_CONTENT}）
      * @param skuType RuleTypeEnum code：platform / warehouse / customer / b2bPlatform
      * @author lc
      */

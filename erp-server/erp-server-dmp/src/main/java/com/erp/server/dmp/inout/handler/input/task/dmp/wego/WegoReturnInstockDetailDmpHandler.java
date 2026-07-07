@@ -32,7 +32,7 @@ import java.util.TreeMap;
 @Scope("prototype")
 public class WegoReturnInstockDetailDmpHandler extends DmpInputDoNextDmpHandler {
 
-    /** WEGO API 实际入库明细字段（优先使用） */
+    /** WEGO API 实际入库明细字段（{@code queryProducts} 为空时的兜底，见 {@link #getDetailList}） */
     private static final String MONGO_KEY_INSTOCK_PRODUCTS = "instockProducts";
 
     /** WEGO API 预计入库明细字段（实际明细为空时的回退） */
