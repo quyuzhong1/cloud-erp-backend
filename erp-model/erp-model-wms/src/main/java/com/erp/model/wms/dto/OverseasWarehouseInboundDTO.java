@@ -1052,9 +1052,9 @@ public class OverseasWarehouseInboundDTO implements Serializable {
         private List<@NotBlank(message = "id不能为空") String> ids;
 
         /**
-         * 箱唛类型：thirdWarehouseCartonLabel=三方仓箱唛，transferCartonLabel=中转箱唛
+         * 文件类型：thirdWarehouseCartonLabel=三方仓箱唛，transferCartonLabel=中转箱唛，handoverFile=交接单
          */
-        @NotBlank(message = "箱唛类型不能为空")
+        @NotBlank(message = "文件类型不能为空")
         private String labelType;
     }
 
@@ -1072,7 +1072,7 @@ public class OverseasWarehouseInboundDTO implements Serializable {
         private String code;
 
         /**
-         * 箱唛类型
+         * 文件类型
          */
         private String labelType;
 
@@ -1092,9 +1092,9 @@ public class OverseasWarehouseInboundDTO implements Serializable {
         private String id;
 
         /**
-         * 箱唛类型：thirdWarehouseCartonLabel=三方仓箱唛，transferCartonLabel=中转箱唛
+         * 文件类型：thirdWarehouseCartonLabel=三方仓箱唛，transferCartonLabel=中转箱唛，handoverFile=交接单
          */
-        @NotBlank(message = "箱唛类型不能为空")
+        @NotBlank(message = "文件类型不能为空")
         private String labelType;
 
         /**
@@ -1119,9 +1119,9 @@ public class OverseasWarehouseInboundDTO implements Serializable {
         private String code;
 
         /**
-         * 箱唛类型：thirdWarehouseCartonLabel=三方仓箱唛，transferCartonLabel=中转箱唛
+         * 文件类型：thirdWarehouseCartonLabel=三方仓箱唛，transferCartonLabel=中转箱唛，handoverFile=交接单
          */
-        @NotBlank(message = "箱唛类型不能为空")
+        @NotBlank(message = "文件类型不能为空")
         private String labelType;
     }
 }

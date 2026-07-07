@@ -81,8 +81,10 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_OVERSEAS_WA
 public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<OverseasWarehouseInboundMapper, OverseasWarehouseInboundEntity> implements OverseasWarehouseInboundService {
     private static final String THIRD_WAREHOUSE_CARTON_LABEL = "thirdWarehouseCartonLabel";
     private static final String TRANSFER_CARTON_LABEL = "transferCartonLabel";
+    private static final String HANDOVER_FILE = "handoverFile";
     private static final String OVERSEAS_INBOUND_THIRD_CARTON_LABEL_TYPE = "overseasInboundThirdCartonLabel";
     private static final String OVERSEAS_INBOUND_TRANSFER_CARTON_LABEL_TYPE = "overseasInboundTransferCartonLabel";
+    private static final String OVERSEAS_INBOUND_HANDOVER_FILE_TYPE = "overseasInboundHandoverFile";
 
     @Resource
     private OperateLogService operateLogService;
@@ -1549,7 +1551,10 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         if (TRANSFER_CARTON_LABEL.equals(labelType)) {
             return OVERSEAS_INBOUND_TRANSFER_CARTON_LABEL_TYPE;
         }
-        throw new ServiceException("箱唛类型不正确");
+        if (HANDOVER_FILE.equals(labelType)) {
+            return OVERSEAS_INBOUND_HANDOVER_FILE_TYPE;
+        }
+        throw new ServiceException("文件类型不正确");
     }
 
     private String getCartonLabelName(String labelType) {
@@ -1559,7 +1564,10 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         if (TRANSFER_CARTON_LABEL.equals(labelType)) {
             return "中转箱唛";
         }
-        throw new ServiceException("箱唛类型不正确");
+        if (HANDOVER_FILE.equals(labelType)) {
+            return "交接单";
+        }
+        throw new ServiceException("文件类型不正确");
     }
 
     /**
