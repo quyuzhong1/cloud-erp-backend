@@ -677,8 +677,18 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                     .build();
 
             WegoOutboundResp pageResp = wegoOpenApiService.query2cOrderPage(pageReq);
-            if (pageResp == null || pageResp.getResult() == null
-                    || CollUtil.isEmpty(pageResp.getResult().getList())) {
+            if (pageResp == null) {
+                log.error("{}queryPage 降级查询接口响应为空, referenceCode={}, pageNum={}",
+                        getPlatForm().getName(), referenceCode, pageNum);
+                throw new ServiceException("WEGO查询出库单降级查询接口响应为空，referenceCode=" + referenceCode);
+            }
+            if (!Boolean.TRUE.equals(pageResp.getSuccess())) {
+                log.error("{}queryPage 降级查询接口返回失败: errorCode={}, errorMsg={}, referenceCode={}, pageNum={}",
+                        getPlatForm().getName(), pageResp.getErrorCode(), pageResp.getErrorMsg(), referenceCode, pageNum);
+                throw new ServiceException("WEGO查询出库单降级查询接口返回失败: errorCode=" + pageResp.getErrorCode()
+                        + ", errorMsg=" + pageResp.getErrorMsg());
+            }
+            if (pageResp.getResult() == null || CollUtil.isEmpty(pageResp.getResult().getList())) {
                 log.warn("{}queryPage 降级查询第{}页无数据，停止翻页, referenceCode={}",
                         getPlatForm().getName(), pageNum, referenceCode);
                 break;

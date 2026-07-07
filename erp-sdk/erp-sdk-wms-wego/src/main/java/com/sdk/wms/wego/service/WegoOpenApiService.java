@@ -309,8 +309,14 @@ public class WegoOpenApiService {
      * <p>
      * WEGO 限制：单次最多返回 100 条（pageSize ≤ 100）。
      *
+     * <p>
+     * 与 {@link #queryInorderPage} 保持一致：本方法不在 SDK 层吞掉 {@code success=false}，
+     * 只要底层有响应即正常解析并返回（{@code success/errorCode/errorMsg} 原样带出），
+     * 由调用方根据 {@link WegoOutboundResp#getSuccess()} 判断是否需要中止任务，
+     * 避免"接口失败"被静默当作"无数据"。
+     *
      * @param dto 分页查询请求（pageNum / pageSize 必填，其余过滤条件可选）
-     * @return 分页结果（{@code result} 为分页对象）；接口返回失败或无响应时返回 null，解析失败时抛出 ServiceException
+     * @return 分页结果（含 success/errorCode/errorMsg 及 result 分页对象）；无响应时返回 null，解析失败时抛出 ServiceException
      */
     public WegoOutboundResp query2cOrderPage(@Valid WegoOutboundQueryPageDTO.QueryReqDTO dto) {
         Map<String, Object> bizParams = new HashMap<>();
@@ -325,8 +331,8 @@ public class WegoOpenApiService {
         putIfNotNull(bizParams, "orderDateEnd", dto.getOrderDateEnd());
         JSONObject response = doQuery(dto.getAccessToken(), dto.getSecret(),
                 WeGoConstants.TWO_C_ORDER_QUERY_PAGE, bizParams, "分页查询2C出库单");
-        if (response == null || !Boolean.TRUE.equals(response.getBoolean("success"))) {
-            log.warn("[WEGO分页查询2C出库单] 接口返回失败或无响应, {}", safeResponseLog(response));
+        if (response == null) {
+            log.warn("[WEGO分页查询2C出库单] 接口无响应, {}", safeResponseLog(response));
             return null;
         }
         try {
