@@ -696,11 +696,6 @@ public class SoDeliveryNoticeController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.lang.Object>
      */
     @PostMapping("/listBeforePushB2bDeclare")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "tms:tmsB2BDeclareBill:batchAddMergeDetail",
-            serviceClass = SoDeliveryNoticeService.class,
-            keyIdName = "ids")
     public ApiResult<List<TmsDeclareBillDTO.SourceDeliveryDetailDTO>> listBeforePushB2bDeclare(@RequestBody @Valid TmsDeclareBillDTO.PushDeclareBeforeParamDTO dto)  {
         return success(soDeliveryNoticeService.listBeforePushB2bDeclare(dto));
     }

@@ -1435,7 +1435,11 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             for (int i = 0; i < exportProductDetailList.size(); i++) {
                 TmsDeclareBillDTO.ExportProductDetail detail = exportProductDetailList.get(i);
                 detail.setRowNum(i+1);
-                detail.setTotalPrice(detail.getPrice().multiply(new BigDecimal(detail.getQty())));
+                if (Objects.nonNull(detail.getPrice()) && Objects.nonNull(detail.getQty())) {
+                    detail.setTotalPrice(detail.getPrice().multiply(BigDecimal.valueOf(detail.getQty())));
+                } else {
+                    detail.setTotalPrice(BigDecimal.ZERO);
+                }
                 DictCurrencyEntity currency = currencyMap.get(detail.getDeclareCurrency());
                 detail.setDeclareCurrencyName(Objects.isNull(currency) ? "" : Objects.toString(currency.getName(), ""));
                 BasicDictEntity unitDTO = sysDictBasicEntityList.stream().filter(v->v.getValue().equals(detail.getDeclareUnit())).findFirst().orElse(new BasicDictEntity());
@@ -1532,7 +1536,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     @Override
     public TmsDeclareBillDTO.SelectedSkuHeaderDTO querySelectedSkuHeader(TmsDeclareBillDTO.SelectedSkuHeaderParamDTO dto,
                                                                          SourceTypeEnum sourceTypeEnum) {
-        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> selectedDetailList = dto.getSourceDeliveryDetailList().stream()
+        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> selectedDetailList =
+                Optional.ofNullable(dto.getSourceDeliveryDetailList()).orElse(Collections.emptyList()).stream()
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
         if (CollUtil.isEmpty(selectedDetailList)) {

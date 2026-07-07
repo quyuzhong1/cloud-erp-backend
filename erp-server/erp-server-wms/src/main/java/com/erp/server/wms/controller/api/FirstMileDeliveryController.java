@@ -776,11 +776,6 @@ public class FirstMileDeliveryController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.lang.Object>
      */
     @PostMapping("/listBeforePushFmDeclare")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "tms:tmsFmDeclareBill:batchAddMergeDetail",
-            serviceClass = FirstMileDeliveryService.class,
-            keyIdName = "ids")
     public ApiResult<List<TmsDeclareBillDTO.SourceDeliveryDetailDTO>> listBeforePushFmDeclare(@RequestBody @Valid TmsDeclareBillDTO.PushDeclareBeforeParamDTO dto)  {
         return success(firstMileDeliveryService.listBeforePushFmDeclare(dto));
     }

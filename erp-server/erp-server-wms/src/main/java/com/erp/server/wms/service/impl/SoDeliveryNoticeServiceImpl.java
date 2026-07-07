@@ -1042,13 +1042,17 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (!CharSequenceUtil.equals(deliveryNoticeEntity.getDeclareStatus(), WmsDeclareStatusEnum.WAIT.getCode())) {
             throw new ServiceException(ApiError.BILL_DECLARE_STATUS_GENERATED_NOT_CHANGE_TO_NO_DECLARE,deliveryNoticeEntity.getCode());
         }
-        deliveryNoticeEntity.setDeclareStatus(WmsDeclareStatusEnum.NONE.getCode());
-        super.updateById(deliveryNoticeEntity);
 
         //删除tms发货明细数据
         TmsDeclareBillDTO.DeleteDeliveryDeclareDetailMidDTO deleteDTO = new TmsDeclareBillDTO.DeleteDeliveryDeclareDetailMidDTO();
         deleteDTO.setSourceIds(Collections.singletonList(id));
-        tmsDeclareBillFeign.deleteDeliveryDeclareDetailMid(deleteDTO);
+        Boolean delete = tmsDeclareBillFeign.deleteDeliveryDeclareDetailMid(deleteDTO);
+        if (!delete) {
+            return  BatchResultDTO.fail(deliveryNoticeEntity.getId(), deliveryNoticeEntity.getCode(), "删除发货明细中间表失败");
+        }
+
+        deliveryNoticeEntity.setDeclareStatus(WmsDeclareStatusEnum.NONE.getCode());
+        super.updateById(deliveryNoticeEntity);
 
         //操作日志
         operateLogService.addModuleOperateLog("发货单设置无需推送", ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), deliveryNoticeEntity.getId(), "更新报关状态");

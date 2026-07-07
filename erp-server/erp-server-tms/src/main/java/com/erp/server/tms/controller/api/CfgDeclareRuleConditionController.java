@@ -107,25 +107,4 @@ public class CfgDeclareRuleConditionController extends BaseController {
     public ApiResult<CfgDeclareRuleConditionDTO.ViewDTO> view(@RequestParam("id") String id) {
         return success(cfgDeclareRuleConditionService.view(id));
     }
-
-    /**
-    * 导出Excel数据
-    * @author jack
-    * @date:  2026-04-20
-    * @param dto
-    * @param response
-    * @return
-    */
-    @PostMapping("/export")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "tms:cfgDeclareRuleCondition:export",
-            tableAlias = ""
-    )
-    @LogAction(value = LogActionEnum.EXPORT, desc = "报关规则条件表导出Excel数据")
-    public void exportList(@RequestBody @Validated CfgDeclareRuleConditionDTO.ExportDTO dto, HttpServletResponse response) {
-        cfgDeclareRuleConditionService.exportList(dto, response);
-    }
-
-
 }

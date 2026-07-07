@@ -925,7 +925,7 @@
             hb.bom_id AS bomId,
             hb.bom_history_id AS bomHistoryId,
             hb.bom_version AS bomVersion,
-            cd.pack_qty * quantity AS qty,                     -- 原箱数量（每个子SKU继承相同数量）
+            cd.pack_qty * hb.quantity AS qty,                     -- 箱内父件数量 * BOM 子件用量
             cd.box_no AS boxNo,
             ci.country_id AS countryId,
             sdn.warehouse_id AS fromWarehouseId,
