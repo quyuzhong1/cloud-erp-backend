@@ -20,12 +20,12 @@ public class Kuaidi100ServiceTest {
     @Test
     public void buildKuaidi100SubscribeParamWithMobile() {
         Kuaidi100SubscribeParam param = kuaidi100Service.buildKuaidi100SubscribeParam(
-                "YuanTong", "YT123", "appKey", "https://erp.test/webhook/receive/kuaidi100", true, "13800138000");
+                "YuanTong", "YT123", "appKey", "https://erp.test/webhook/kuaidi100/push", true, "13800138000");
 
         assertEquals("yuantong", param.getCompany());
         assertEquals("YT123", param.getNumber());
         assertEquals("appKey", param.getKey());
-        assertEquals("https://erp.test/webhook/receive/kuaidi100", param.getParameters().getCallbackurl());
+        assertEquals("https://erp.test/webhook/kuaidi100/push", param.getParameters().getCallbackurl());
         assertEquals("", param.getParameters().getSalt());
         assertEquals("4", param.getParameters().getResultv2());
         assertEquals("13800138000", param.getParameters().getPhone());
@@ -34,7 +34,7 @@ public class Kuaidi100ServiceTest {
     @Test
     public void buildKuaidi100SubscribeParamWithoutMobile() {
         Kuaidi100SubscribeParam param = kuaidi100Service.buildKuaidi100SubscribeParam(
-                "YTO", "YT123", "appKey", "https://erp.test/webhook/receive/kuaidi100", false, "13800138000");
+                "YTO", "YT123", "appKey", "https://erp.test/webhook/kuaidi100/push", false, "13800138000");
 
         assertEquals("yto", param.getCompany());
         assertNull(param.getParameters().getPhone());
