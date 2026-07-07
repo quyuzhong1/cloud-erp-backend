@@ -343,6 +343,11 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         boxMap.forEach((boxNo, list) -> {
             WmsCartonSpecDTO.PackingItemDTO first = list.get(0);
             List<WegoInOrderSaveDTO.Product> products = buildProductsFromPackingList(list);
+            if (CollUtil.isEmpty(products) || sumSkuQty(products) <= 0) {
+                log.warn("[WEGO入库] 箱内无有效SKU明细, 发货单号={}, boxNo={}", first.getSourceCode(), boxNo);
+                throw new ServiceException("装箱清单箱内无有效SKU明细, 发货单号="
+                        + first.getSourceCode() + ", 箱号=" + boxNo);
+            }
             WegoInOrderSaveDTO.Detail detail = WegoInOrderSaveDTO.Detail.builder()
                     .inOrderDetailId(null)
                     .boxQty(1)
@@ -523,6 +528,10 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         }
 
         WegoOutboundSaveDTO.SaveReqDTO request = buildOutboundSaveDto(createOutboundReq, null, accessToken, secret);
+        if (CollUtil.isEmpty(request.getProducts())) {
+            log.warn("{}创建出库单明细为空, referenceNo={}", getPlatForm().getName(), createOutboundReq.getReferenceNo());
+            throw new ServiceException("出库明细不能为空");
+        }
         log.warn("{}创建出库单请求:{}", getPlatForm().getName(), toLogSafeJson(request));
         JSONObject resp = wegoOpenApiService.save2cOrder(request);
         log.warn("{}创建出库单结果:{}", getPlatForm().getName(), JSONUtil.toJsonStr(resp));
