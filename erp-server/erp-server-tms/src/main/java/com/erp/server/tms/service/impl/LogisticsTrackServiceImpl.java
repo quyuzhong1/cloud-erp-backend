@@ -10,6 +10,7 @@ import com.common.business.dto.base.BaseDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.enums.FileTaskStatusEnum;
 import com.common.business.enums.LogisticsPlatformEnum;
+import com.common.business.enums.LogisticsTransportTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.enums.ApiError;
@@ -37,6 +38,7 @@ import com.erp.server.tms.service.LogisticsService;
 import com.erp.server.tms.service.LogisticsTrackService;
 import com.erp.server.tms.service.OperateLogService;
 import com.google.common.collect.Lists;
+import com.sdk.tms.kuaidi100.service.Kuaidi100Service;
 import com.sdk.tms.track123.dto.PlatformTrackDTO;
 import io.seata.common.util.StringUtils;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -77,6 +79,8 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
     private FileFeign fileFeign;
     @Resource
     private LogisticsRegistry logisticsRegistry;
+    @Resource
+    private Kuaidi100Service kuaidi100Service;
     private final static DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
@@ -243,6 +247,64 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
         if (Objects.nonNull(maxTrack)){
             maxTrack.setOrderStatus(trackStatus);
             logisticsBillDetailService.updateLogisticsBillDetailByTrackNo(maxTrack);
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void webhookByKuaidi100(LogisticsTrackDTO.Kuaidi100WebHookDTO dto) {
+        if (Objects.isNull(dto) || Objects.isNull(dto.getLastResult())
+                || CharSequenceUtil.isBlank(dto.getLastResult().getNu())
+                || CollectionUtils.isEmpty(dto.getLastResult().getData())) {
+            log.info("webhook接收到快递100数据格式无有效轨迹记录：{}", dto);
+            return;
+        }
+        String trackNo = dto.getLastResult().getNu();
+        String trackStatus = kuaidi100Service.convertTrackStatus(dto.getLastResult().getState());
+        List<LogisticsTrackEntity> newList = dto.getLastResult().getData().stream()
+                .map(detail -> buildKuaidi100TrackEntity(trackNo, trackStatus, detail))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(newList)) {
+            log.info("webhook接收到快递100数据轨迹明细无有效时间或内容：{}", dto);
+            return;
+        }
+        newList.forEach(e -> e.setMd5(getDataMd5(e)));
+        this.saveIncrementTrackData(trackNo, newList);
+        LogisticsTrackEntity maxTrack = newList.stream().max(Comparator.comparing(LogisticsTrackEntity::getTrackTime)).orElse(null);
+        if (Objects.nonNull(maxTrack)) {
+            maxTrack.setOrderStatus(trackStatus);
+            logisticsBillDetailService.updateLogisticsBillDetailByTrackNo(maxTrack);
+        }
+    }
+
+    private LogisticsTrackEntity buildKuaidi100TrackEntity(String trackNo, String trackStatus, LogisticsTrackDTO.Kuaidi100TrackDetailDTO detail) {
+        if (Objects.isNull(detail) || CharSequenceUtil.isBlank(detail.getContext())) {
+            return null;
+        }
+        LocalDateTime trackTime = parseKuaidi100TrackTime(detail.getTime());
+        if (Objects.isNull(trackTime)) {
+            return null;
+        }
+        LogisticsTrackEntity entity = new LogisticsTrackEntity();
+        entity.setTrackNo(trackNo);
+        entity.setTrackTime(trackTime);
+        entity.setStatus(trackStatus);
+        entity.setContent(detail.getContext());
+        entity.setAddress(detail.getAreaName());
+        entity.setTransportType(LogisticsTransportTypeEnum.EXPRESS_DELIVERY.getCode());
+        return entity;
+    }
+
+    private LocalDateTime parseKuaidi100TrackTime(String time) {
+        if (CharSequenceUtil.isBlank(time)) {
+            return null;
+        }
+        try {
+            return LocalDateTime.parse(time, TIME_FORMAT);
+        } catch (Exception e) {
+            log.warn("快递100回调轨迹时间解析失败：{}", time, e);
+            return null;
         }
     }
 

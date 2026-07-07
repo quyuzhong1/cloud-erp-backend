@@ -302,6 +302,44 @@ public class LogisticsTrackDTO implements Serializable {
         private String md5;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class Kuaidi100WebHookDTO {
+        private String rawParam;
+        private String sign;
+        private String status;
+        private String billstatus;
+        private String message;
+        private Kuaidi100LastResultDTO lastResult;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class Kuaidi100LastResultDTO {
+        private String message;
+        private String nu;
+        private String ischeck;
+        private String com;
+        private String status;
+        private String state;
+        private String condition;
+        private List<Kuaidi100TrackDetailDTO> data;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class Kuaidi100TrackDetailDTO {
+        private String time;
+        private String ftime;
+        private String context;
+        private String status;
+        private String areaCode;
+        private String areaName;
+        private String areaCenter;
+        private String areaPinYin;
+        private String areaUrls;
+    }
+
 
 
     @Data

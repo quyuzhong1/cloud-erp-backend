@@ -7,6 +7,7 @@ import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.nacos.api.utils.StringUtils;
+import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
@@ -30,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -173,6 +175,27 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
         }
         CfgSettingEntity entity = baseMapper.getByKey(key);
         return entity;
+    }
+
+    @Override
+    public String getPcLinkByEnv() {
+        String url = "";
+        CfgSettingEntity cfgSetting = lambdaQuery().eq(CfgSettingEntity::getKey, "envUrl").one();
+        if (cfgSetting != null && cfgSetting.getDataJson() != null) {
+            Map<String, Object> dataJson = cfgSetting.getDataJson();
+            boolean uat = BusinessCommonConstants.hasProfile("uat");
+            boolean dev = BusinessCommonConstants.hasProfile("dev");
+            boolean test = BusinessCommonConstants.hasProfile("test");
+            boolean prod = BusinessCommonConstants.hasProfile("prod");
+            if (uat) {
+                url = String.valueOf(dataJson.get("uat"));
+            } else if (dev || test) {
+                url = String.valueOf(dataJson.get("test"));
+            } else if (prod) {
+                url = String.valueOf(dataJson.get("prod"));
+            }
+        }
+        return url;
     }
 
     /**

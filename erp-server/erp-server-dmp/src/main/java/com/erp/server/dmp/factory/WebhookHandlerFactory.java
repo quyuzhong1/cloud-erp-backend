@@ -19,6 +19,7 @@ public class WebhookHandlerFactory {
 
     public WebhookHandlerFactory() {
         handlerMap.put("track123", new Track123WebhookHandler());
+        handlerMap.put("kuaidi100", new Kuaidi100WebhookHandler());
         handlerMap.put("outbound", new OrderOutboundHandler());
         handlerMap.put("inbound", new InboundHandler());
         handlerMap.put("returnInstock", new ReturnInstockHandler());

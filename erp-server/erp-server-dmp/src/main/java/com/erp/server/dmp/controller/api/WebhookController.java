@@ -3,6 +3,7 @@ package com.erp.server.dmp.controller.api;
 import com.common.business.dto.WebhookResult;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
+import com.erp.model.dmp.dto.Kuaidi100WebhookResponseDTO;
 import com.erp.model.dmp.enums.WebhookServiceEnum;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.server.dmp.factory.WebhookHandlerFactory;
@@ -64,18 +65,29 @@ public class WebhookController extends BaseController {
         String service = getService(serviceFlag, headers, data);
         // 根据不同平台的Webhook内容做处理
         WebhookHandler handler = webhookHandlerFactory.getHandler(service);
-        //安全校验
-        handler.verify(data, headers, serviceFlag);
-        //业务处理
-        WebhookResult result = handler.process(data, headers, serviceFlag);
-        log.info("========接收到webhook接口请求=======end");
-        // 返回 ResponseEntity，支持 JSON 和 XML
-        return getWebhookResultResponseEntity(result, serviceFlag);
+        try {
+            //安全校验
+            handler.verify(data, headers, serviceFlag);
+            //业务处理
+            WebhookResult result = handler.process(data, headers, serviceFlag);
+            log.info("========接收到webhook接口请求=======end");
+            // 返回 ResponseEntity，支持 JSON 和 XML
+            return getWebhookResultResponseEntity(result, serviceFlag);
+        } catch (Exception e) {
+            log.error("webhook处理异常，serviceFlag：{}", serviceFlag, e);
+            if (WebhookServiceEnum.KUAIDI100.getCode().equals(serviceFlag)) {
+                return ResponseEntity.ok(Kuaidi100WebhookResponseDTO.failure("500", e.getMessage()));
+            }
+            throw e;
+        }
     }
 
     private static ResponseEntity<?> getWebhookResultResponseEntity(WebhookResult result, String serviceFlag) {
         if (WebhookServiceEnum.QIMEN_CALL_BACK.getCode().equals(serviceFlag)){
             return ResponseEntity.ok().body(result.toXml());
+        }else if (WebhookServiceEnum.KUAIDI100.getCode().equals(serviceFlag)){
+            Object data = result == null ? null : result.getData();
+            return ResponseEntity.ok(data == null ? Kuaidi100WebhookResponseDTO.success() : data);
         }else {
             return ResponseEntity.ok(result);
         }
