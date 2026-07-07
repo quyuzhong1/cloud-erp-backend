@@ -48,6 +48,8 @@ public class MagaluService {
     private static final String TOKEN_PATH = "/oauth/token";
     private static final String SKU_LIST_PATH = "/seller/v1/portfolios/skus";
     private static final String ORDER_LIST_PATH = "/seller/v1/orders";
+    private static final String TICKET_LIST_PATH = "/seller/v1/tickets";
+    private static final String TICKET_ACTIVITIES_PATH = "/seller/v1/tickets/{id}/activities";
     private static final String SHIPPING_LABEL_PATH = "/seller/v1/logistics/shipping-labels";
     private static final String DELIVERY_INVOICE_PATH = "/seller/v1/deliveries/{id}/invoices";
     private static final String DELIVERY_INVOICE_UPDATE_PATH = "/seller/v1/deliveries/{id}/invoices/{key}";
@@ -168,6 +170,33 @@ public class MagaluService {
     public JSONObject getOrderDetail(MagaluShopInfoDTO shopInfoDTO, String apiPath, String orderCode) {
         String path = StringUtils.defaultIfBlank(apiPath, ORDER_LIST_PATH + "/{code}");
         path = path.replace("{code}", orderCode).replace("{id}", orderCode);
+        String url = trimEndSlash(getApiBaseUrl(shopInfoDTO)) + addStartSlash(path);
+        String response = OkHttpUtils.doGet(url, new HashMap<>(), buildApiHeaders(shopInfoDTO));
+        return JSON.parseObject(response);
+    }
+
+    public List<JSONObject> listTicketPage(MagaluShopInfoDTO shopInfoDTO, String apiPath, int offset, int limit, String startTime, String endTime) {
+        String path = StringUtils.isBlank(apiPath) ? TICKET_LIST_PATH : apiPath;
+        String url = trimEndSlash(getApiBaseUrl(shopInfoDTO)) + addStartSlash(path);
+        Map<String, Object> params = new HashMap<>(8);
+        params.put("limit", limit);
+        params.put("_offset", offset);
+        if (StringUtils.isNotBlank(startTime)) {
+            params.put("updated_at__gte", startTime);
+        }
+        if (StringUtils.isNotBlank(endTime)) {
+            params.put("updated_at__lte", endTime);
+        }
+
+        String response = OkHttpUtils.doGet(url, params, buildApiHeaders(shopInfoDTO));
+        return parseDataList(response);
+    }
+
+    public JSONObject getTicketActivities(MagaluShopInfoDTO shopInfoDTO, String ticketId) {
+        if (StringUtils.isBlank(ticketId)) {
+            return new JSONObject();
+        }
+        String path = TICKET_ACTIVITIES_PATH.replace("{id}", ticketId).replace("{ticket_id}", ticketId);
         String url = trimEndSlash(getApiBaseUrl(shopInfoDTO)) + addStartSlash(path);
         String response = OkHttpUtils.doGet(url, new HashMap<>(), buildApiHeaders(shopInfoDTO));
         return JSON.parseObject(response);
