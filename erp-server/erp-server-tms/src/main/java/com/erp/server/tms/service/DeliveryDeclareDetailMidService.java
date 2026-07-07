@@ -90,16 +90,6 @@ public interface DeliveryDeclareDetailMidService extends SuperService<DeliveryDe
      */
     List<TmsDeclareBillDTO.MergeDeclareBillDTO> mergeAfterPreview(List<String> ids);
 
-
-    /**
-    * 导出Excel
-    * @author jack
-    * @date: 2026-04-27
-    * @param dto
-    * @param response
-    * @return
-    */
-    void exportList(DeliveryDeclareDetailMidDTO.ExportDTO dto, HttpServletResponse response);
     /**
      * 根据报关单id查询
      * @author will

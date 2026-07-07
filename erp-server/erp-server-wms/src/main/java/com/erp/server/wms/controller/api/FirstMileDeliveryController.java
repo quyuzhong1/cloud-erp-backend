@@ -780,7 +780,7 @@ public class FirstMileDeliveryController extends BaseController {
             tableField = "create_user_id",
             menuCode = "tms:tmsFmDeclareBill:batchAddMergeDetail",
             serviceClass = FirstMileDeliveryService.class,
-            keyIdName = "id")
+            keyIdName = "ids")
     public ApiResult<List<TmsDeclareBillDTO.SourceDeliveryDetailDTO>> listBeforePushFmDeclare(@RequestBody @Valid TmsDeclareBillDTO.PushDeclareBeforeParamDTO dto)  {
         return success(firstMileDeliveryService.listBeforePushFmDeclare(dto));
     }
@@ -794,6 +794,11 @@ public class FirstMileDeliveryController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<List<TmsDeclareBillDTO.SourceDeliveryDetailDTO>>
      */
     @PostMapping("/listAfterPushFmDeclare")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:tmsFmDeclareBill:batchAddMergeDetail",
+            serviceClass = FirstMileDeliveryService.class,
+            keyIdName = "ids")
     public ApiResult<List<TmsDeclareBillDTO.MergeDeclareBillDTO>> listAfterPushFmDeclare(@RequestBody @Valid TmsDeclareBillDTO.PushDeclareBeforeParamDTO dto)  {
         return success(firstMileDeliveryService.listAfterPushFmDeclare(dto));
     }

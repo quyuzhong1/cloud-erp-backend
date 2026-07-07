@@ -173,28 +173,6 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
     }
 
     @Override
-    public void exportList(DeliveryDeclareDetailMidDTO.ExportDTO param, HttpServletResponse response) {
-        List<DeliveryDeclareDetailMidDTO.ListDTO> list = this.baseMapper.listExport(param);
-        if(CollUtil.isEmpty(list)) {
-           return;
-        }
-        // 数据处理
-        fillList(list);
-
-        // 导出数据
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/deliveryDeclareDetailMid.xlsx";
-        String name = "报关明细中间单导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.FILE_EXPORT_FAILED);
-        }
-    }
-
-    @Override
     public List<DeliveryDeclareDetailMidEntity> listByDeclareBillIdList(List<String> declareBillIdList) {
         return baseMapper.listByDeclareBillIdList(declareBillIdList);
     }

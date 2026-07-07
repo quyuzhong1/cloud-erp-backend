@@ -91,24 +91,6 @@ public class CfgDeclareRuleConditionController extends BaseController {
     }
 
     /**
-    * 列表查询
-    * @author jack
-    * @date: 2026-04-20
-    * @param dto
-    * @return ApiResult<PagingVO<CfgDeclareRuleConditionDTO.ListDTO>>
-    */
-    @PostMapping("/paging")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "tms:cfgDeclareRuleCondition:paging",
-            tableAlias = ""
-    )
-    public ApiResult<PagingVO<CfgDeclareRuleConditionDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<CfgDeclareRuleConditionDTO.PagingParamDTO> dto) {
-        return success(cfgDeclareRuleConditionService.paging(dto));
-    }
-
-
-    /**
     * 详情
     * @author jack
     * @date:  2026-04-20

@@ -637,6 +637,11 @@ public class SoDeliveryNoticeController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "报关状态更新")
     @PostMapping(value = "/updateDeclareStatus")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:soDeliveryNotice:updateDeclareStatus",
+            serviceClass = SoDeliveryNoticeService.class,
+            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> updateDeclareStatus(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         List<SoDeliveryNoticeEntity> entityList = soDeliveryNoticeService.listByIds(dto.getIds());
@@ -709,6 +714,11 @@ public class SoDeliveryNoticeController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<List<TmsDeclareBillDTO.SourceDeliveryDetailDTO>>
      */
     @PostMapping("/listAfterPushB2bDeclare")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:tmsB2BDeclareBill:batchAddMergeDetail",
+            serviceClass = SoDeliveryNoticeService.class,
+            keyIdName = "ids")
     public ApiResult<List<TmsDeclareBillDTO.MergeDeclareBillDTO>> listAfterPushB2bDeclare(@RequestBody @Valid TmsDeclareBillDTO.PushDeclareBeforeParamDTO dto)  {
         return success(soDeliveryNoticeService.listAfterPushB2bDeclare(dto));
     }

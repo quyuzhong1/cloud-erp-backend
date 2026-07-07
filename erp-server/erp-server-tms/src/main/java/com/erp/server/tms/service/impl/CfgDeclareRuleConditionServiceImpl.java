@@ -106,20 +106,6 @@ public class CfgDeclareRuleConditionServiceImpl extends SuperServiceImpl<CfgDecl
         return Boolean.TRUE;
     }
 
-
-    @Override
-    public PagingVO<CfgDeclareRuleConditionDTO.ListDTO> paging(PagingDTO<CfgDeclareRuleConditionDTO.PagingParamDTO> pagingParamDTO) {
-        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
-        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
-        IPage<CfgDeclareRuleConditionDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
-        if(CollUtil.isEmpty(pageData.getRecords())) {
-           return new PagingVO(pageData);
-        }
-        // 数据处理
-        fillList(pageData.getRecords());
-        return new PagingVO(pageData);
-    }
-
     @Override
     public List<CfgDeclareRuleConditionDTO.TabListDTO> tabList(PermissionsDTO param) {
         CfgDeclareRuleConditionDTO.PagingParamDTO searchParam = new CfgDeclareRuleConditionDTO.PagingParamDTO();
@@ -140,27 +126,6 @@ public class CfgDeclareRuleConditionServiceImpl extends SuperServiceImpl<CfgDecl
         return list;
     }
 
-    @Override
-    public void exportList(CfgDeclareRuleConditionDTO.ExportDTO param, HttpServletResponse response) {
-        List<CfgDeclareRuleConditionDTO.ListDTO> list = this.baseMapper.listExport(param);
-        if(CollUtil.isEmpty(list)) {
-           return;
-        }
-        // 数据处理
-        fillList(list);
-
-        // 导出数据
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/cfgDeclareRuleCondition.xlsx";
-        String name = "报关规则条件单导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.FILE_EXPORT_FAILED);
-        }
-    }
     /**
     * 新增修改处理数据
     */
@@ -184,16 +149,4 @@ public class CfgDeclareRuleConditionServiceImpl extends SuperServiceImpl<CfgDecl
         }
     }
 
-   /**
-    * 分页查询、导出 数据处理
-   */
-   private void fillList(List<CfgDeclareRuleConditionDTO.ListDTO> list) {
-        if(CollUtil.isEmpty(list)) {
-            return;
-        }
-        // 属性赋值
-        for(CfgDeclareRuleConditionDTO.ListDTO data : list) {
-        // TODO 其他如需要显示名称的字段赋值
-        }
-   }
 }

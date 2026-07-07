@@ -36,7 +36,6 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.constant.EnumMessage;
-import com.common.core.dto.ExcelData;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.*;
 import com.common.core.exception.ServiceException;
@@ -56,7 +55,6 @@ import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.tms.dto.CfgSettingDTO;
 import com.erp.model.tms.dto.CfgSettingValueDTO;
-import com.erp.model.tms.dto.DictBasicDTO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
@@ -71,7 +69,6 @@ import com.erp.model.wms.enums.FbaDemandTypeEnum;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.model.wms.enums.PackingTaskStatusEnum;
 import com.erp.model.wms.enums.WmsDeclareStatusEnum;
-import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.model.oms.entity.SoDetailEntity;
@@ -1216,31 +1213,48 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     public List<BatchResultDTO> delete(TmsDeclareBillDTO.DeleteDTO dto) {
         List<TmsDeclareBillEntity> entityList = this.listByIds(dto.getIds());
         List<BatchResultDTO> resultList = new ArrayList<>();
-        List<String> removeIds = new ArrayList<>();
+        List<String> candidateIds = new ArrayList<>();
         for (TmsDeclareBillEntity entity : entityList) {
-            if(!entity.getDeclareStatus().equals(com.erp.model.tms.enums.DeclareStatusEnum.WAIT.getCode())){
-                resultList.add(BatchResultDTO.fail(entity.getId(),entity.getCode(),"只有待确认的单据才能删除"));
+            if (!entity.getDeclareStatus().equals(com.erp.model.tms.enums.DeclareStatusEnum.WAIT.getCode())) {
+                resultList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), "只有待确认的单据才能删除"));
                 continue;
             }
-            resultList.add(BatchResultDTO.success(entity.getId(),entity.getCode(),"删除成功"));
+            candidateIds.add(entity.getId());
+        }
+        if (CollectionUtils.isEmpty(candidateIds)) {
+            return resultList;
+        }
+        List<DeliveryDeclareDetailMidEntity> deliveryDeclareDetailMidList =
+                deliveryDeclareDetailMidService.listByDeclareBillIdList(candidateIds);
+        Set<String> declareIdsWithMid = deliveryDeclareDetailMidList.stream()
+                .map(DeliveryDeclareDetailMidEntity::getDeclareId)
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.toSet());
+
+        List<String> removeIds = new ArrayList<>();
+        for (TmsDeclareBillEntity entity : entityList) {
+            if (!candidateIds.contains(entity.getId())) {
+                continue;
+            }
+            if (!declareIdsWithMid.contains(entity.getId())) {
+                resultList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), "缺少来源明细关联，无法删除"));
+                continue;
+            }
             removeIds.add(entity.getId());
+            resultList.add(BatchResultDTO.success(entity.getId(), entity.getCode(), "删除成功"));
         }
         if (CollectionUtils.isEmpty(removeIds)) {
             return resultList;
         }
-        //查询中间表数据
-        List<DeliveryDeclareDetailMidEntity> deliveryDeclareDetailMidList = deliveryDeclareDetailMidService.listByDeclareBillIdList(removeIds);
-        if (CollUtil.isEmpty(deliveryDeclareDetailMidList)) {
-            throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_NOT_FOUND);
-        }
-        if(CollectionUtils.isNotEmpty(removeIds)){
-            this.removeByIds(removeIds);
-        }
+        this.removeByIds(removeIds);
         //删除明细数据
         detailService.deleteDetailByMainIdList(removeIds);
         //中间表恢复为待生成，不删除历史来源明细
         deliveryDeclareDetailMidService.restoreWaitGenerateByDeclareBillIds(removeIds);
-        updateWaitStatusForNoGeneratedSources(deliveryDeclareDetailMidList);
+        List<DeliveryDeclareDetailMidEntity> removedMidList = deliveryDeclareDetailMidList.stream()
+                .filter(item -> removeIds.contains(item.getDeclareId()))
+                .collect(Collectors.toList());
+        updateWaitStatusForNoGeneratedSources(removedMidList);
         return resultList;
     }
 
@@ -3244,13 +3258,15 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_SPLIT_WAIT_STATUS_REQUIRED);
         }
 
-        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDeliveryDetailList = deliveryDeclareDetailMidService.listSourceByDeclareIdList(Collections.singletonList(declareBillEntity.getId()));
+        String splitBaseCode = declareBillEntity.getCode();
+        String originalDeclareBillId = declareBillEntity.getId();
+        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDeliveryDetailList = deliveryDeclareDetailMidService.listSourceByDeclareIdList(Collections.singletonList(originalDeclareBillId));
 
         // 拆分保存：同一箱的全部明细必须整箱落在同一票，不能拆到不同票。
         validateSplitSameBoxInOneGroup(sourceDeliveryDetailList, declareDTO.getSplitDeclareDTOList());
 
         //删除原本的报关单
-        deleteDeclareBillById(declareBillEntity.getId());
+        deleteDeclareBillById(originalDeclareBillId);
 
         for (List<TmsDeclareBillDTO.SplitDeclareDTO> splitGroup : declareDTO.getSplitDeclareDTOList()) {
             List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> batchSourceList = filterSplitSourceDetailGroup(sourceDeliveryDetailList, splitGroup);
@@ -3260,6 +3276,10 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             //保存合并数据（合同协议号按新增规则自动生成）
             batchAddMergeDetail(SourceTypeEnum.FM_DECLARE_BILL.getCode(), mergeDeclareBillDTOS, Boolean.TRUE, Boolean.FALSE);
         }
+        String splitMsg = CharSequenceUtil.format("拆分报关单：拆分为{}{}", declareDTO.getSplitDeclareDTOList().size(), "票");
+        operateLogService.addModuleOperateLog(splitMsg, SourceTypeEnum.FM_DECLARE_BILL.getCode(), originalDeclareBillId, "拆分操作");
+        log.info("头程拆分报关完成，原报关单id={}，code={}，拆分数={}", originalDeclareBillId, splitBaseCode,
+                declareDTO.getSplitDeclareDTOList().size());
         return extractSourceIdListFromSourceDetails(sourceDeliveryDetailList);
     }
 
