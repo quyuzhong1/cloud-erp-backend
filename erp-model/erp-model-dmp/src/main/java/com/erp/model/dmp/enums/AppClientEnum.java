@@ -21,6 +21,8 @@ public enum AppClientEnum  {
     SHOPEE_ACCESS_TOKEN("shopAccessToken","sales","shopee"),
     ALI_EXPRESS_AUTHORIZE("aliExpressAuthorize","sales","AliExpress"),
     ALI_EXPRESS_TOKEN("aliExpressToken","sales","AliExpress"),
+    ALI_EXPRESS_OVERSEAS_MANAGED_AUTHORIZE("aliExpressAuthorize","sales","AliExpressOverseasManaged"),
+    ALI_EXPRESS_OVERSEAS_MANAGED_TOKEN("aliExpressToken","sales","AliExpressOverseasManaged"),
     AMAZON_AUTHORIZE("amazonAuthorize","sales","Amazon"),
     AMAZON_ACCESS_TOKEN("amazonAccessToken","sales","Amazon"),
     MERCADO_AUTHORIZE("mercadoAuthorize","sales","mercadolibre"),
@@ -40,6 +42,7 @@ public enum AppClientEnum  {
     // 物流平台
     TRACK123_AUTHORIZE("track123Authorize","logistics","TRACK123"),
     ALI_EXPRESS_LOGISTICS("aliExpressAuthorize","logistics","AliExpress"),
+    ALI_EXPRESS_OVERSEAS_MANAGED_LOGISTICS("aliExpressAuthorize","logistics","AliExpressOverseasManaged"),
     BAO_HONG_AUTHORIZE("baoHongAuthorize","logistics","baoHong"),
     KUAIDI100_AUTHORIZE("kuaidi100Authorize","logistics","KUAIDI100"),
 
