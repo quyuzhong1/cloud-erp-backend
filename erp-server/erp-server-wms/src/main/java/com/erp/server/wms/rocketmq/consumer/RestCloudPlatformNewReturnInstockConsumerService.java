@@ -131,6 +131,11 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 	@Override
 	public void handle(String data) {
 		PlatformReturnInstockDTO dto = JSONUtil.toBean(data, PlatformReturnInstockDTO.class);
+		if (Objects.isNull(dto.getPutawayTime())) {
+			// putawayTime缺失将由getPutawayLocalDate()兜底createTime/当前日期，此处打日志便于后续核对单据日期是否与真实业务日期一致
+			log.warn("[平台退货入库]上架完成时间(putawayTime)缺失，将兜底createTime/当前日期：platform={}，平台单号={}，平台退货单号={}",
+					dto.getPlatform(), dto.getPlatformOrderNo(), dto.getPlatformReturnOrderNo());
+		}
 		if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dto.getPlatform()) || PlatformDictEnum.NASDAQ_JD.getCode().equalsIgnoreCase(dto.getPlatform())){
 			String thisPlatform = PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dto.getPlatform()) ?  PlatformDictEnum.AMAZON.getCode() : PlatformDictEnum.NASDAQ_JD.getCode();
 			dto.setPlatform(thisPlatform);
