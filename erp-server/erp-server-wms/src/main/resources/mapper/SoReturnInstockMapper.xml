@@ -10,6 +10,7 @@
         srid.source_detail_id AS sourceDetailId,
         srid.so_return_detail_id AS soReturnDetailId,
         sri.so_return_id as soReturnId,
+        sri.so_return_code AS soReturnCode,
         sri.code,
         sri.source_code AS sourceCode,
         sri.platform_order_code AS platformOrderCode,
