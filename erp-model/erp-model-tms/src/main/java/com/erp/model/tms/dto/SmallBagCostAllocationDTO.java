@@ -424,6 +424,14 @@ public class SmallBagCostAllocationDTO implements Serializable {
     	 * 平台订单号
     	 */
         private String platformCode;
+        /**
+         * 销售平台
+         */
+        private String salesPlatform;
+        /**
+         * 销售平台名称
+         */
+        private String salesPlatformName;
     }
     
     /**
