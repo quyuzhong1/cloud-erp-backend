@@ -755,8 +755,14 @@ public class FirstMileDeliveryController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.lang.Object>
      */
     @PostMapping("/listNotGenerateFmDetailPaging")
-    @LogAction(value = LogActionEnum.INSERT, desc = "添加产品明细")
     @WebAdvanceQuery
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            shopTableField = "fd.shop_id",
+            warehouseTableField = "fd.delivery_warehouse_id,fd.dest_warehouse_id",
+            menuCode = "wms:fbaDelivery:paging",
+            tableAlias = "fd"
+    )
     public ApiResult<PagingVO<TmsDeclareBillDTO.NotGenerateDetailDTO>> listNotGenerateFmDetailPaging(@RequestBody @Valid PagingDTO<TmsDeclareBillDTO.NotGenerateParamDTO> dto)  {
         PagingVO<TmsDeclareBillDTO.NotGenerateDetailDTO> pagingVO = firstMileDeliveryService.listNotGenerateFmDetailPaging(dto);
         return success(pagingVO);
@@ -770,6 +776,11 @@ public class FirstMileDeliveryController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.lang.Object>
      */
     @PostMapping("/listBeforePushFmDeclare")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:tmsFmDeclareBill:batchAddMergeDetail",
+            serviceClass = FirstMileDeliveryService.class,
+            keyIdName = "id")
     public ApiResult<List<TmsDeclareBillDTO.SourceDeliveryDetailDTO>> listBeforePushFmDeclare(@RequestBody @Valid TmsDeclareBillDTO.PushDeclareBeforeParamDTO dto)  {
         return success(firstMileDeliveryService.listBeforePushFmDeclare(dto));
     }

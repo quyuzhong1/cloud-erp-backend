@@ -736,14 +736,18 @@
         from (
         WITH qualified_delivery_base AS MATERIALIZED (
             SELECT
-                fmd.id,
-                fmd.source_id,
-                fmd.code,
-                fmd.demand_type,
-                fmd.create_time AS source_create_time
-            FROM first_mile_delivery fmd
-            WHERE fmd.is_deleted = false
-            AND fmd.declare_status = 'wait'
+                fd.id,
+                fd.source_id,
+                fd.code,
+                fd.demand_type,
+                fd.create_time AS source_create_time
+            FROM first_mile_delivery fd
+            WHERE fd.is_deleted = false
+            AND fd.declare_status = 'wait'
+            <!--数据权限-->
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
         ),
         fba_business_code AS (
             SELECT

@@ -713,15 +713,11 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                         .distinct()
                         .collect(Collectors.toList());
                 if (CollectionUtils.isNotEmpty(allSourceIds)) {
-                    try {
-                        List<SoDeliveryNoticeEntity> notices = soDeliveryNoticeFeign.listByIds(allSourceIds);
-                        if (CollUtil.isNotEmpty(notices)) {
-                            noticeMap = notices.stream()
-                                    .filter(n -> StringUtils.isNotBlank(n.getId()))
-                                    .collect(Collectors.toMap(SoDeliveryNoticeEntity::getId, n -> n, (a, b) -> a));
-                        }
-                    } catch (Exception e) {
-                        log.warn("B2B 报关单列表填充承运商失败: {}", e.getMessage());
+                    List<SoDeliveryNoticeEntity> notices = soDeliveryNoticeFeign.listByIds(allSourceIds);
+                    if (CollUtil.isNotEmpty(notices)) {
+                        noticeMap = notices.stream()
+                                .filter(n -> StringUtils.isNotBlank(n.getId()))
+                                .collect(Collectors.toMap(SoDeliveryNoticeEntity::getId, n -> n, (a, b) -> a));
                     }
                 }
             }
@@ -1204,13 +1200,13 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     }
 
     private void updateDeclareStatus(TmsDeclareBillEntity entity, String declareStatus, LocalDate declareConfirmDate, String declareUserId, String declareUserName) {
-        this.lambdaUpdate()
-                .eq(TmsDeclareBillEntity::getId, entity.getId())
-                .set(TmsDeclareBillEntity::getDeclareStatus, declareStatus)
-                .set(TmsDeclareBillEntity::getDeclareConfirmDate, Objects.isNull(declareConfirmDate) ? null : declareConfirmDate)
-                .set(TmsDeclareBillEntity::getDeclareUserId, Objects.isNull(declareUserId) ? "" : declareUserId)
-                .set(TmsDeclareBillEntity::getDeclareUserName, Objects.isNull(declareUserName) ? "" : declareUserName)
-                .update(new TmsDeclareBillEntity());
+        entity.setDeclareStatus(declareStatus);
+        entity.setDeclareConfirmDate(declareConfirmDate);
+        entity.setDeclareUserId(Objects.isNull(declareUserId) ? "" : declareUserId);
+        entity.setDeclareUserName(Objects.isNull(declareUserName) ? "" : declareUserName);
+        if (!super.updateById(entity)) {
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_BILL_SAVE_FAILED);
+        }
     }
 
 
@@ -2531,7 +2527,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     }
 
     private Map<String, DictCurrencyEntity> loadCurrencyMap() {
-        return  sysUserFeign.currencyList()
+        return Optional.ofNullable(sysUserFeign.currencyList())
+                .orElse(Collections.emptyList())
                 .stream()
                 .collect(Collectors.toMap(DictCurrencyEntity::getId, Function.identity(), (v1, v2) -> v1));
     }
@@ -3082,12 +3079,15 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             //设置参数
             setUpdateWrapperField(updateWrapper, fieldEnum, fieldValue, name);
         }
-        // 批量更新数据库
-        updateWrapper.eq("id", dto.getId());
-        boolean updateFlag = this.update(updateWrapper);
+        // 批量更新数据库（携带 version，与 updateInTx 一致走乐观锁）
+        TmsDeclareBillEntity updateEntity = new TmsDeclareBillEntity();
+        updateEntity.setId(old.getId());
+        updateEntity.setVersion(old.getVersion());
+        updateWrapper.eq("id", old.getId());
+        boolean updateFlag = this.update(updateEntity, updateWrapper);
 
         if (!updateFlag) {
-            throw new ServiceException(ApiError.LOGISTICS_DECLARE_BATCH_UPDATE_FAILED);
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_BILL_SAVE_FAILED);
         }
 
         TmsDeclareBillEntity newEntity = getById(dto.getId());
@@ -5847,8 +5847,9 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (Boolean.TRUE.equals(updateResult)) {
             return;
         }
+        String sourceIdText = CollUtil.isEmpty(sourceIds) ? "" : String.join("、", sourceIds);
         log.error("回写{}报关状态失败，sourceIds={}", sourceLabel, sourceIds);
-        throw new ServiceException(CharSequenceUtil.format("回写{}报关状态失败，sourceIds={}", sourceLabel, sourceIds));
+        throw new ServiceException(ApiError.LOGISTICS_DECLARE_SOURCE_STATUS_SYNC_FAILED, sourceLabel, sourceIdText);
     }
 
     @Override

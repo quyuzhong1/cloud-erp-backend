@@ -23,6 +23,7 @@ import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.entity.PackingTaskEntity;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import com.erp.server.wms.query.SoDeliveryNoticeQueryHandler;
+import com.erp.server.wms.service.FirstMileDeliveryService;
 import com.erp.server.wms.service.PackingTaskService;
 import com.erp.server.wms.service.SoDeliveryNoticeService;
 import lombok.extern.slf4j.Slf4j;
@@ -671,6 +672,12 @@ public class SoDeliveryNoticeController extends BaseController {
     @PostMapping("/listNotGenerateB2bDetailPaging")
     @LogAction(value = LogActionEnum.INSERT, desc = "添加产品明细")
     @WebAdvanceQuery
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            warehouseTableField = "sdn.warehouse_id",
+            menuCode = "wms:soDeliveryNotice:paging",
+            tableAlias = "sdn"
+    )
     public ApiResult<PagingVO<TmsDeclareBillDTO.NotGenerateDetailDTO>> listNotGenerateB2bDetailPaging(@RequestBody @Valid PagingDTO<TmsDeclareBillDTO.NotGenerateParamDTO> dto)  {
         PagingVO<TmsDeclareBillDTO.NotGenerateDetailDTO> pagingVO = soDeliveryNoticeService.listNotGenerateB2bDetailPaging(dto);
         return success(pagingVO);
@@ -684,6 +691,11 @@ public class SoDeliveryNoticeController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.lang.Object>
      */
     @PostMapping("/listBeforePushB2bDeclare")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:tmsB2BDeclareBill:batchAddMergeDetail",
+            serviceClass = SoDeliveryNoticeService.class,
+            keyIdName = "ids")
     public ApiResult<List<TmsDeclareBillDTO.SourceDeliveryDetailDTO>> listBeforePushB2bDeclare(@RequestBody @Valid TmsDeclareBillDTO.PushDeclareBeforeParamDTO dto)  {
         return success(soDeliveryNoticeService.listBeforePushB2bDeclare(dto));
     }

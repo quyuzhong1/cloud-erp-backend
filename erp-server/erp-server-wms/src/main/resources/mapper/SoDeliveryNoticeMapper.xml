@@ -428,6 +428,10 @@
             AND pt.packing_status = 'packed'
             WHERE sdn.is_deleted = false
             AND sdn.declare_status = 'wait'
+            <!--数据权限-->
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
         ),
         qualified_details AS MATERIALIZED (
             SELECT
