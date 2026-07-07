@@ -269,7 +269,7 @@ public class SoReturnPrestockServiceImpl
 
     @Override
     @DistributeLocker(businessType = SO_RETURN_PRESTOCK_LINK_LOCK_KEY, keyName = "dto.mainId")
-    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO confirmLinkAfterSale(SoReturnPrestockDetailDTO.ConfirmLinkAfterSale dto) {
         SoReturnPrestockEntity main = getByIdOrThrow(dto.getMainId());
 
@@ -300,16 +300,19 @@ public class SoReturnPrestockServiceImpl
                 .collect(Collectors.groupingBy(SoReturnPrestockDetailDTO.AfterSaleItem::getSkuNo,
                         Collectors.summingInt(i -> Objects.nonNull(i.getReturnQty()) ? i.getReturnQty() : 0)));
 
-        // 退货明细超过预入库单（SKU 种类或数量超出）→ 整批拒绝，提示调配售后退货单后再关联
+        // 退货明细超过预入库单（SKU 种类或数量超出）→ 属于异常包裹（当时为三无包裹无法准确关联），
+        // 说明关联的源头售后单有误，整批拒绝并引导改走「关联店铺」流程
         for (Map.Entry<String, Integer> entry : afterSaleQtyMap.entrySet()) {
             Integer available = prestockQtyMap.get(entry.getKey());
             if (Objects.isNull(available)) {
                 return BatchResultDTO.fail(main.getId(), main.getCode(),
-                        "退货单SKU明细数量超过预入库单（SKU种类超出：" + entry.getKey() + "），请调配售后退货单后再关联");
+                        "退货单SKU明细数量超过预入库单（SKU种类超出：" + entry.getKey()
+                                + "），可能为异常包裹或关联的售后单有误，请改用「关联店铺」进行关联");
             }
             if (entry.getValue() > available) {
                 return BatchResultDTO.fail(main.getId(), main.getCode(),
-                        "退货单SKU明细数量超过预入库单（SKU数量超出：" + entry.getKey() + "），请调配售后退货单后再关联");
+                        "退货单SKU明细数量超过预入库单（SKU数量超出：" + entry.getKey()
+                                + "），可能为异常包裹或关联的售后单有误，请改用「关联店铺」进行关联");
             }
         }
 
@@ -326,12 +329,19 @@ public class SoReturnPrestockServiceImpl
         // 联动处理：为本次已关联的 SKU 按售后单分组生成《退货入库单》，并把生成的入库单号回写到对应明细行（内存）
         generateReturnInstock(main, linkedPairs);
 
-        // 统一落库本次关联的明细行（含关联信息 + 退货入库单回写），再刷新主表关联状态
+        // 统一落库本次关联的明细行（含关联信息 + 退货入库单回写）
         for (LinkedDetailPair pair : linkedPairs) {
             if (!soReturnPrestockDetailService.updateById(pair.detail)) {
                 throw new ServiceException("预入库单详情行数据已被修改，请刷新后重试");
             }
         }
+
+        // 平账联动：反向冲抵预入库单创建时生成的原整单普通(增库存)其他入库单，
+        // 并为本次仍未关联的 SKU 重新生成普通(增库存)其他入库单占位（均直接已审核）；
+        // 需在本次关联明细行落库后调用，以便按最新关联状态计算未关联占位明细
+        reconcileOtherInstockForPrestock(main, resolveWarehousingDept());
+
+        // 刷新主表关联状态（全部已关联→LINKED，混合→PARTIAL）
         refreshMainLinkStatus(main.getId());
 
         // SKU 种类与数量完全一致→完成关联；否则为预入库单明细多于退货明细的部分关联
@@ -371,6 +381,7 @@ public class SoReturnPrestockServiceImpl
     /**
      * 联动生成《退货入库单》：将本次已关联的明细行按售后单（退货单）分组，每个售后单生成一张退货入库单
      * （复用 {@link SoReturnInstockService#add}，由其按 soReturnId + type 反查客户/组织/价格等信息并落库、生成单号），
+     * 生成后直接提交并审核通过（不走审批流，置为已审核并触发退货入库库存联动），
      * 随后把生成的退货入库单 ID/单号回写到本组各预入库单明细行（内存，由调用方统一落库）。
      */
     private void generateReturnInstock(SoReturnPrestockEntity main, List<LinkedDetailPair> linkedPairs) {
@@ -413,6 +424,8 @@ public class SoReturnPrestockServiceImpl
                     .collect(Collectors.toList()));
 
             String instockId = soReturnInstockService.add(add);
+            // 关联售后单生成的退货入库单直接提交并审核通过（不走审批流），置为已审核并触发退货入库库存联动
+            approveReturnInstock(instockId);
             SoReturnInstockEntity instock = soReturnInstockService.getById(instockId);
             String instockCode = Objects.nonNull(instock) ? instock.getCode() : "";
             // 回写退货入库单号到本组预入库单明细行
@@ -465,7 +478,8 @@ public class SoReturnPrestockServiceImpl
 
     /**
      * 将勾选的售后单明细信息写入预入库单明细行并置为已关联。
-     * <p>本域"售后单"即 OMS 退货单，故 afterSale 与 soReturn 同源；销售单 ID、销售组织/部门
+     * <p>本域"售后单"即 OMS 退货单，故 afterSale 与 soReturn 同源；原销售单 ID/单号取自候选售后单列表
+     * 出参（B2B=so_return.source_id/source_code，B2C=so_b2c_return.so_id/so_code）；销售组织/部门
      * 不在候选售后单列表出参中，留空由后续认领流程补齐。</p>
      */
     private void applyAfterSaleToDetail(SoReturnPrestockDetailEntity row,
@@ -474,7 +488,7 @@ public class SoReturnPrestockServiceImpl
            .setAfterSaleCode(CharSequenceUtil.emptyToDefault(item.getAfterSaleCode(), ""))
            .setPlatformOrderCode(CharSequenceUtil.emptyToDefault(item.getPlatformOrderCode(), ""))
            .setDictPlatform(CharSequenceUtil.emptyToDefault(item.getDictPlatform(), ""))
-           .setSoId("")
+           .setSoId(CharSequenceUtil.emptyToDefault(item.getSoId(), ""))
            .setSoCode(CharSequenceUtil.emptyToDefault(item.getSoCode(), ""))
            .setSoReturnId(item.getAfterSaleId())
            .setSoReturnCode(CharSequenceUtil.emptyToDefault(item.getAfterSaleCode(), ""))

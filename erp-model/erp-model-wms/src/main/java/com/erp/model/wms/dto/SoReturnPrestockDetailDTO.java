@@ -271,6 +271,11 @@ public class SoReturnPrestockDetailDTO {
         private String detailId;
 
         /**
+         * 销售单 ID；对应 {@code LinkAfterSaleView.soId}（B2B 为 so_return.source_id，B2C 为 so_b2c_return.so_id）
+         */
+        private String soId;
+
+        /**
          * 销售单号；对应 {@code LinkAfterSaleView.soCode}
          */
         private String soCode;

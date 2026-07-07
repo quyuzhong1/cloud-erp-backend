@@ -1052,6 +1052,10 @@ public class SoReturnDTO {
          */
         private String platformOrderNo;
         /**
+         * 销售单 ID
+         */
+        private String soId;
+        /**
          * 销售单号
          */
         private String soCode;
