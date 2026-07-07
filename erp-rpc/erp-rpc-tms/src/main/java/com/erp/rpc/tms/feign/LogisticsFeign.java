@@ -141,6 +141,14 @@ public interface LogisticsFeign {
     @PostMapping("/feign/logistics/webhookByTrack123")
     void webhookByTrack123(@RequestBody LogisticsTrackDTO.TrackWebHookDTO dto);
 
+    /**
+     * 接收快递100物流轨迹订阅回调数据
+     *
+     * @param dto 快递100回调数据
+     */
+    @PostMapping("/feign/logistics/webhookByKuaidi100")
+    void webhookByKuaidi100(@RequestBody LogisticsTrackDTO.Kuaidi100WebHookDTO dto);
+
     @GetMapping("/feign/logistics/estimateIsOutOfRangeDelivery")
     Boolean estimateIsOutOfRangeDelivery(@RequestParam("logisticsChannelId")String logisticsChannelId, @RequestParam("country")String country, @RequestParam("postCode")String postCode);
 
