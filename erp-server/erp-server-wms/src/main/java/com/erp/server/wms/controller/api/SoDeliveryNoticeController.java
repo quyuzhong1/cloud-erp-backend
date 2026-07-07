@@ -675,7 +675,6 @@ public class SoDeliveryNoticeController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.lang.Object>
      */
     @PostMapping("/listNotGenerateB2bDetailPaging")
-    @LogAction(value = LogActionEnum.INSERT, desc = "添加产品明细")
     @WebAdvanceQuery
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
