@@ -2,8 +2,6 @@ package com.erp.server.plm.controller.feign;
 
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BatchResultDTO;
-import com.common.core.anno.LogAction;
-import com.common.core.enums.LogActionEnum;
 import com.erp.model.plm.dto.PilotApplicationDTO;
 import com.erp.model.plm.dto.TaskOperateDTO;
 import com.erp.model.plm.entity.ProjectTaskEntity;
@@ -60,7 +58,6 @@ public class PlmWorkOptionFeignController {
      * @return 新增结果
      */
     @PostMapping("/bomInfoApprove")
-    @LogAction(value = LogActionEnum.APPROVE, desc = "BOM审核通过")
     public Boolean bomInfoApprove(@RequestBody @Validated ApproveOneDTO dto) {
         BatchResultDTO resultDTO =  bomInfoService.approve(dto);
         return resultDTO.getSuccess();
@@ -72,7 +69,6 @@ public class PlmWorkOptionFeignController {
      * @return ApiResult
      */
     @PostMapping("/productDetailApprove")
-    @LogAction(value = LogActionEnum.APPROVE, desc = "产品信息审核通过")
     public Boolean productDetailApprove(@RequestBody @Validated ApproveOneDTO dto) {
         BatchResultDTO resultDTO = productDetailService.approve(dto,Boolean.TRUE);
         return resultDTO.getSuccess();
@@ -83,7 +79,6 @@ public class PlmWorkOptionFeignController {
      * @return
      */
     @PostMapping("/projectTaskApprovalPass")
-    @LogAction(value = LogActionEnum.APPROVE, desc = "项目任务审核通过")
     public Boolean projectTaskApprovalPass(@RequestBody @Validated TaskOperateDTO dto) {
         Boolean result = taskService.approvalPass(dto);
         return result;
@@ -94,7 +89,6 @@ public class PlmWorkOptionFeignController {
      * @return
      */
     @PostMapping("/projectTaskApprovalNoPass")
-    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "项目任务审核不通过")
     public Boolean projectTaskApprovalNoPass(@RequestBody @Validated TaskOperateDTO dto) {
         Boolean result = taskService.approvalReject(dto);
         return result;
@@ -117,7 +111,6 @@ public class PlmWorkOptionFeignController {
      * @return 新增结果
      */
     @PostMapping("/bomChangeApprove")
-    @LogAction(value = LogActionEnum.APPROVE, desc = "BOM变更审核通过")
     public void bomChangeApprove(@RequestBody @Validated ApproveOneDTO dto) {
         bomChangeService.approve(dto);
     }
@@ -129,7 +122,6 @@ public class PlmWorkOptionFeignController {
      * @return 新增结果
      */
     @PostMapping("/pilotApprovalPass")
-    @LogAction(value = LogActionEnum.APPROVE, desc = "试产量产审核通过")
     public void pilotApprovalPass(@RequestBody @Validated ApproveOneDTO dto) {
         PilotApplicationDTO.ApproveDTO approveDTO = new PilotApplicationDTO.ApproveDTO();
         pilotApplicationService.approve(dto, approveDTO);
@@ -142,7 +134,6 @@ public class PlmWorkOptionFeignController {
      * @return ApiResult
      */
     @PostMapping("/moldInfoApprove")
-    @LogAction(value = LogActionEnum.APPROVE, desc = "模具档案审核通过")
     public Boolean moldInfoApprove(@RequestBody @Validated ApproveOneDTO dto) {
         BatchResultDTO resultDTO = moldInfoService.approve(dto);
         return resultDTO.getSuccess();
@@ -153,7 +144,6 @@ public class PlmWorkOptionFeignController {
      * @return ApiResult
      */
     @PostMapping("/moldRefSkuApprove")
-    @LogAction(value = LogActionEnum.APPROVE, desc = "模具关联SKU审核通过")
     public Boolean moldRefSkuApprove(@RequestBody @Validated ApproveOneDTO dto) {
         BatchResultDTO resultDTO = moldRefSkuService.approve(dto);
         return resultDTO.getSuccess();
