@@ -1,8 +1,6 @@
 package com.erp.server.scm.controller.feign;
 
 import com.common.business.dto.base.BatchResultDTO;
-import com.common.core.anno.LogAction;
-import com.common.core.enums.LogActionEnum;
 import com.erp.model.scm.dto.PurchaseApplicationDTO;
 import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
 import com.erp.model.scm.entity.PurchaseApplicationEntity;
@@ -39,7 +37,6 @@ public class PurchaseApplicationFeignController {
      * @author: tanmujin
      */
     @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "采购申请单新增")
     BatchResultDTO add(@RequestBody @Validated PurchaseApplicationDTO.AddDTO dto){
         PurchaseApplicationEntity entity = purchaseApplicationService.add(dto);
         return BatchResultDTO.success(entity.getId(), entity.getCode());
@@ -52,7 +49,6 @@ public class PurchaseApplicationFeignController {
      * @return BatchResultDTO
      */
     @PostMapping("/addAndApprove")
-    @LogAction(value = LogActionEnum.INSERT, desc = "采购申请单新增并审核")
     BatchResultDTO addAndApprove(@RequestBody @Validated PurchaseApplicationDTO.InsertDTO dto){
         PurchaseApplicationEntity entity = purchaseApplicationService.addAndApprove(dto);
         return BatchResultDTO.success(entity.getId(), entity.getCode());
@@ -74,7 +70,6 @@ public class PurchaseApplicationFeignController {
      * 创建并提交
      */
     @PostMapping("/addAndSubmit")
-    @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "采购申请单新增并提交")
     BatchResultDTO addAndSubmit(@RequestBody @Validated PurchaseApplicationDTO.AddDTO dto){
         return purchaseApplicationService.addAndSubmit(dto);
     }
@@ -101,13 +96,11 @@ public class PurchaseApplicationFeignController {
     }
 
     @PostMapping("/updateApproveStatus")
-    @LogAction(value = LogActionEnum.UPDATE_STATUS, desc = "采购申请单更新审核状态")
     void updateApproveStatus(PurchaseApplicationEntity one, String approveStatus){
          purchaseApplicationService.updateApproveStatus(one, approveStatus);
     }
 
      @PostMapping ("/updatePA")
-     @LogAction(value = LogActionEnum.UPDATE, desc = "采购申请单更新")
      void updatePA(PurchaseApplicationDTO.updatePADTO updateDTO){
           purchaseApplicationService.updatePA(updateDTO);
      }
