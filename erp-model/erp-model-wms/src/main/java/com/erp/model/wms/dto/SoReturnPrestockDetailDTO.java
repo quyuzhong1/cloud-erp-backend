@@ -76,6 +76,44 @@ public class SoReturnPrestockDetailDTO {
         private String remark;
     }
 
+    // ===================== 由退货入库单表单创建 =====================
+
+    /**
+     * 由退货入库单表单创建预入库单-详情行入参
+     */
+    @Data
+    @NoArgsConstructor
+    public static class FromInstock {
+
+        /**
+         * SKU ID
+         */
+        private String skuId;
+
+        /**
+         * SKU 编码
+         */
+        @NotBlank(message = "SKU编码不能为空")
+        private String skuNo;
+
+        /**
+         * 实退数量
+         */
+        @NotNull(message = "实退数量不能为空")
+        @Min(value = 1, message = "退货数量必须大于0")
+        private Integer realQty;
+
+        /**
+         * 实际收货数量
+         */
+        private Integer receiveQty;
+
+        /**
+         * 备注
+         */
+        private String remark;
+    }
+
     // ===================== 修改 =====================
 
     /**

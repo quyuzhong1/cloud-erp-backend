@@ -1314,7 +1314,15 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		}
 		List<SoReturnInstockDetailEntity> detailEntityList = new ArrayList<>();
 		for (PlatformReturnInstockDTO.Detail detail : details) {
-			SoB2cDetailEntity detailEntity = soDetailEntityList.stream().filter(e -> e.getPlatformSkuNo().equalsIgnoreCase(detail.getProductSku())).findFirst().orElse(null);
+			// 优先匹配 platformSkuNo（平台/销售渠道SKU），未命中时按 warehouseSkuNo（仓库SKU）兜底——
+			// 部分海外仓来源平台回传的 productSku 实际是仓库侧SKU而非平台SKU
+			SoB2cDetailEntity detailEntity = soDetailEntityList.stream()
+					.filter(e -> StringUtils.isNotBlank(e.getPlatformSkuNo()) && e.getPlatformSkuNo().equalsIgnoreCase(detail.getProductSku()))
+					.findFirst()
+					.orElseGet(() -> soDetailEntityList.stream()
+							.filter(e -> StringUtils.isNotBlank(e.getWarehouseSkuNo()) && e.getWarehouseSkuNo().equalsIgnoreCase(detail.getProductSku()))
+							.findFirst()
+							.orElse(null));
 			if(null == detailEntity){
 				ServiceException.runError("找不到销售订单明细:{}", dto.getPlatformOrderNo());
 			}

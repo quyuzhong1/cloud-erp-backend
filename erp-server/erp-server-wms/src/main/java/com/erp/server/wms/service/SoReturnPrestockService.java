@@ -4,7 +4,6 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.erp.model.wms.dto.SoReturnInstockDTO;
 import com.erp.model.wms.dto.SoReturnPrestockDTO;
 import com.erp.model.wms.dto.SoReturnPrestockDetailDTO;
 import com.erp.model.wms.entity.SoReturnPrestockEntity;
@@ -133,23 +132,14 @@ public interface SoReturnPrestockService extends SuperService<SoReturnPrestockEn
     String createFromOverseasWhHeadless(SoReturnPrestockDTO.Add dto);
 
     /**
-     * 由【退货入库单-新增】表单参数创建预入库单
+     * 由【退货入库单】新增/修改表单参数创建预入库单
      * <p>前提：退货客户（customerId）必须为空，否则应直接保存退货入库单，创建预入库单没有意义；
      * 退货物流单号必须非空（预入库单以物流单号唯一）。</p>
      *
-     * @param dto 与退货入库单新增接口相同的入参
+     * @param dto 预入库单专属入参（与退货入库单表单 DTO 解耦）
      * @return 新建预入库单的 ID
      */
-    String addFromReturnInstockAdd(SoReturnInstockDTO.Add dto);
-
-    /**
-     * 由【退货入库单-修改】表单参数创建预入库单
-     * <p>前提同 {@link #addFromReturnInstockAdd}；仅使用表单字段值新建预入库单，不影响原退货入库单记录。</p>
-     *
-     * @param dto 与退货入库单修改接口相同的入参
-     * @return 新建预入库单的 ID
-     */
-    String addFromReturnInstockUpdate(SoReturnInstockDTO.Update dto);
+    String addFromReturnInstock(SoReturnPrestockDTO.FromInstock dto);
 
     /**
      * 强制关闭剩余未认领的预入库单（定时任务调用，每月1号23:50执行）。

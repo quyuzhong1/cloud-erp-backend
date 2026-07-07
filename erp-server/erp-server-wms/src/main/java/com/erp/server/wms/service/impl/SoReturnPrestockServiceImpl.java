@@ -997,24 +997,11 @@ public class SoReturnPrestockServiceImpl
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public String addFromReturnInstockAdd(SoReturnInstockDTO.Add dto) {
+    public String addFromReturnInstock(SoReturnPrestockDTO.FromInstock dto) {
         checkCustomerAndLogisticCodeForPrestock(dto.getCustomerId(), dto.getReturnLogisticCode());
-        List<SoReturnPrestockDetailDTO.Add> detailList = buildPrestockDetailListFromInstockAdd(dto.getDetailList());
+        List<SoReturnPrestockDetailDTO.Add> detailList = buildPrestockDetailListFromInstock(dto.getDetailList());
         SoReturnPrestockDTO.Add prestockAdd = buildPrestockAddFromInstockParams(
                 dto.getType(), dto.getReturnLogisticCode(), dto.getThirdCode(), dto.getWarehouseId(),
-                dto.getSoReturnCode(), detailList);
-        String prestockId = add(prestockAdd);
-        generateOtherInstockForPrestock(prestockId, prestockAdd);
-        return prestockId;
-    }
-
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public String addFromReturnInstockUpdate(SoReturnInstockDTO.Update dto) {
-        checkCustomerAndLogisticCodeForPrestock(dto.getCustomerId(), dto.getReturnLogisticCode());
-        List<SoReturnPrestockDetailDTO.Add> detailList = buildPrestockDetailListFromInstockUpdate(dto.getDetailList());
-        SoReturnPrestockDTO.Add prestockAdd = buildPrestockAddFromInstockParams(
-                dto.getType(), dto.getReturnLogisticCode(), null, dto.getWarehouseId(),
                 dto.getSoReturnCode(), detailList);
         String prestockId = add(prestockAdd);
         generateOtherInstockForPrestock(prestockId, prestockAdd);
@@ -1357,43 +1344,15 @@ public class SoReturnPrestockServiceImpl
     }
 
     /**
-     * 由【新增退货入库单】表单参数组装预入库单详情行；产品名称/图片/EAN 通过 SKU ID 批量补齐
+     * 由【退货入库单表单】参数组装预入库单详情行；产品名称/图片/EAN 通过 SKU ID 批量补齐
      */
-    private List<SoReturnPrestockDetailDTO.Add> buildPrestockDetailListFromInstockAdd(
-            List<SoReturnInstockDetailDTO.Add> instockDetailList) {
+    private List<SoReturnPrestockDetailDTO.Add> buildPrestockDetailListFromInstock(
+            List<SoReturnPrestockDetailDTO.FromInstock> instockDetailList) {
         if (CollUtil.isEmpty(instockDetailList)) {
             throw new ServiceException(ApiError.COMMON_PARAM_REQUIRED, "产品明细");
         }
         Map<String, SkuVO> skuVOMap = listSkuVOMap(instockDetailList.stream()
-                .map(SoReturnInstockDetailDTO.Add::getSkuId).collect(Collectors.toList()));
-        return instockDetailList.stream().map(d -> {
-            if (Objects.isNull(d.getRealQty()) || d.getRealQty() <= 0) {
-                throw new ServiceException("退货数量必须大于0：" + d.getSkuNo());
-            }
-            SkuVO skuVO = skuVOMap.getOrDefault(d.getSkuId(), new SkuVO());
-            SoReturnPrestockDetailDTO.Add detail = new SoReturnPrestockDetailDTO.Add();
-            detail.setSkuId(d.getSkuId());
-            detail.setSkuNo(d.getSkuNo());
-            detail.setProductName(skuVO.getSkuName());
-            detail.setProductImageUrl(skuVO.getSkuImagesUrl());
-            detail.setEan(skuVO.getEan());
-            detail.setReturnQty(d.getRealQty());
-            detail.setReceiveQty(d.getReceiveQty());
-            detail.setRemark(d.getRemark());
-            return detail;
-        }).collect(Collectors.toList());
-    }
-
-    /**
-     * 由【修改退货入库单】表单参数组装预入库单详情行；产品名称/图片/EAN 通过 SKU ID 批量补齐
-     */
-    private List<SoReturnPrestockDetailDTO.Add> buildPrestockDetailListFromInstockUpdate(
-            List<SoReturnInstockDetailDTO.Update> instockDetailList) {
-        if (CollUtil.isEmpty(instockDetailList)) {
-            throw new ServiceException(ApiError.COMMON_PARAM_REQUIRED, "产品明细");
-        }
-        Map<String, SkuVO> skuVOMap = listSkuVOMap(instockDetailList.stream()
-                .map(SoReturnInstockDetailDTO.Update::getSkuId).collect(Collectors.toList()));
+                .map(SoReturnPrestockDetailDTO.FromInstock::getSkuId).collect(Collectors.toList()));
         return instockDetailList.stream().map(d -> {
             if (Objects.isNull(d.getRealQty()) || d.getRealQty() <= 0) {
                 throw new ServiceException("退货数量必须大于0：" + d.getSkuNo());

@@ -701,9 +701,28 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 	}
 
 	/**
-	 * 构建 平台SKU -> 就近出库单出库明细 的映射。
+	 * 解析销售订单明细可用于匹配第三方SKU的候选值：platformSkuNo（平台/销售渠道SKU）与
+	 * warehouseSkuNo（仓库SKU）均纳入，二者均为空时返回空列表。
+	 */
+	private static List<String> resolveSkuMatchKeys(SoB2cDetailEntity e) {
+		List<String> keys = new ArrayList<>(2);
+		if (StringUtils.isNotBlank(e.getPlatformSkuNo())) {
+			keys.add(e.getPlatformSkuNo());
+		}
+		if (StringUtils.isNotBlank(e.getWarehouseSkuNo()) && !keys.contains(e.getWarehouseSkuNo())) {
+			keys.add(e.getWarehouseSkuNo());
+		}
+		return keys;
+	}
+
+	/**
+	 * 构建 第三方SKU -> 就近出库单出库明细 的映射。
 	 * 在该订单已审核且未作废、出库日期(bill_date)<=退货日期(含当天)的出库单中，
-	 * 取出库日期最近(倒序首条)且包含该平台SKU的出库明细，以其实际出库SKU为准。
+	 * 取出库日期最近(倒序首条)且包含该第三方SKU的出库明细，以其实际出库SKU为准。
+	 * <p>
+	 * 匹配键优先取销售订单明细的 platformSkuNo（平台/销售渠道SKU）；部分海外仓来源平台
+	 * （如WEGO，属于第三方仓库服务商而非销售渠道）回传的 productSku 实际是仓库侧SKU，
+	 * 因此同时把 warehouseSkuNo 纳入匹配键，platformSkuNo 未命中时可用 warehouseSkuNo 兜底。
 	 */
 	private Map<String, SoOutstockDetailEntity> buildNearestOutstockSkuMap(PlatformReturnInstockDTO dto, SoB2cEntity soB2cEntity, List<SoB2cDetailEntity> soDetailEntityList) {
 		LocalDate returnDate = dto.getPutawayLocalDate();
@@ -732,32 +751,38 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
         if (CollectionUtils.isEmpty(outstockDetailList)) {
 			return Collections.emptyMap();
 		}
-		// 销售订单明细id -> 平台SKU
-		Map<String, String> soDetailIdToPlatformSku = soDetailEntityList.stream()
-				.filter(e -> StringUtils.isNotBlank(e.getId()) && StringUtils.isNotBlank(e.getPlatformSkuNo()))
-                .collect(Collectors.toMap(
-                        SoB2cDetailEntity::getId,
-                        SoB2cDetailEntity::getPlatformSkuNo,
-                        (a, b) -> {
-                            log.warn("【平台退货入库】销售订单明细重复SKU: platformSkuA={}, platformSkuB={}", a, b);
-                            return a;
-                        }
-                ));
+		// 销售订单明细id -> 候选第三方SKU集合（platformSkuNo优先，warehouseSkuNo兜底）
+		Map<String, List<String>> soDetailIdToSkuKeys = soDetailEntityList.stream()
+				.filter(e -> StringUtils.isNotBlank(e.getId()))
+				.collect(Collectors.toMap(
+						SoB2cDetailEntity::getId,
+						PlatformNewReturnInstockConsumerService::resolveSkuMatchKeys,
+						(a, b) -> a
+				));
 
-        // 平台SKU -> 出库明细，按出库单出库日期倒序，保留最近一张(首次写入即最近)
+        // 第三方SKU -> 出库明细，按出库单出库日期倒序，保留最近一张(首次写入即最近)
 		Map<String, SoOutstockDetailEntity> nearestOutstockSkuMap = new HashMap<>();
 		outstockDetailList.stream()
-				.filter(d -> StringUtils.isNotBlank(d.getSoDetailId()) && soDetailIdToPlatformSku.containsKey(d.getSoDetailId()))
+				.filter(d -> StringUtils.isNotBlank(d.getSoDetailId()) && soDetailIdToSkuKeys.containsKey(d.getSoDetailId()))
 				.sorted(Comparator.comparing((SoOutstockDetailEntity d) -> outstockBillDateMap.getOrDefault(d.getMainId(), LocalDate.MIN)).reversed())
-				.forEach(d -> nearestOutstockSkuMap.putIfAbsent(soDetailIdToPlatformSku.get(d.getSoDetailId()), d));
+				.forEach(d -> soDetailIdToSkuKeys.get(d.getSoDetailId())
+						.forEach(key -> nearestOutstockSkuMap.putIfAbsent(key, d)));
 		return nearestOutstockSkuMap;
 	}
 
 	/**
-	 * 兜底：按销售订单明细的平台SKU映射取入库SKU（原逻辑）。
+	 * 兜底：按销售订单明细的第三方SKU映射取入库SKU（原逻辑）。
+	 * 优先匹配 platformSkuNo（平台/销售渠道SKU），未命中时按 warehouseSkuNo（仓库SKU）兜底匹配——
+	 * 部分海外仓来源平台（如WEGO）回传的 productSku 实际是仓库侧SKU而非平台SKU。
 	 */
 	private SoReturnInstockDetailEntity buildFallbackDetailBySoB2c(PlatformReturnInstockDTO.Detail detail, List<SoB2cDetailEntity> soDetailEntityList, WarehouseEntity warehouseEntity, PlatformReturnInstockDTO dto) {
-		SoB2cDetailEntity detailEntity = soDetailEntityList.stream().filter(e -> e.getPlatformSkuNo().equalsIgnoreCase(detail.getProductSku())).findFirst().orElse(null);
+		SoB2cDetailEntity detailEntity = soDetailEntityList.stream()
+				.filter(e -> StringUtils.isNotBlank(e.getPlatformSkuNo()) && e.getPlatformSkuNo().equalsIgnoreCase(detail.getProductSku()))
+				.findFirst()
+				.orElseGet(() -> soDetailEntityList.stream()
+						.filter(e -> StringUtils.isNotBlank(e.getWarehouseSkuNo()) && e.getWarehouseSkuNo().equalsIgnoreCase(detail.getProductSku()))
+						.findFirst()
+						.orElse(null));
 		if (null == detailEntity) {
             ServiceException.runError("找不到销售订单明细:订单={}, 平台SKU={}", dto.getPlatformOrderNo(), detail.getProductSku());
         }

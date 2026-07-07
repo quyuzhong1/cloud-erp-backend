@@ -13,7 +13,6 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
-import com.erp.model.wms.dto.SoReturnInstockDTO;
 import com.erp.model.wms.dto.SoReturnPrestockDTO;
 import com.erp.model.wms.dto.SoReturnPrestockDetailDTO;
 import com.erp.server.wms.query.SoReturnPrestockQueryHandler;
@@ -69,23 +68,13 @@ public class SoReturnPrestockController extends BaseController {
     }
 
     /**
-     * 由【退货入库单-新增】表单参数创建预入库单
+     * 由退货入库单表单参数创建预入库单
      * <p>前提：退货客户为空（否则应直接保存退货入库单）；退货物流单号非空。</p>
      */
-    @LogAction(value = LogActionEnum.INSERT, desc = "由退货入库单新增页发起-新增预入库单")
-    @PostMapping("/saveFromInstockAdd")
-    public ApiResult<String> saveFromInstockAdd(@RequestBody @Validated SoReturnInstockDTO.Add dto) {
-        return success(soReturnPrestockService.addFromReturnInstockAdd(dto));
-    }
-
-    /**
-     * 由【退货入库单-修改】表单参数创建预入库单
-     * <p>前提同上；仅使用表单字段值新建预入库单，不影响原退货入库单记录。</p>
-     */
-    @LogAction(value = LogActionEnum.INSERT, desc = "由退货入库单修改页发起-新增预入库单")
-    @PostMapping("/saveFromInstockUpdate")
-    public ApiResult<String> saveFromInstockUpdate(@RequestBody @Validated SoReturnInstockDTO.Update dto) {
-        return success(soReturnPrestockService.addFromReturnInstockUpdate(dto));
+    @LogAction(value = LogActionEnum.INSERT, desc = "由退货入库单表单发起-新增预入库单")
+    @PostMapping("/saveFromInstock")
+    public ApiResult<String> saveFromInstock(@RequestBody @Validated SoReturnPrestockDTO.FromInstock dto) {
+        return success(soReturnPrestockService.addFromReturnInstock(dto));
     }
 
     /**
