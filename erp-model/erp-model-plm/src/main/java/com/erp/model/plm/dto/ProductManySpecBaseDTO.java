@@ -3,6 +3,7 @@ package com.erp.model.plm.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.List;
@@ -201,4 +202,19 @@ public class ProductManySpecBaseDTO implements Serializable{
      * 应用分类id List
      */
     private List<String> applicationCategoryNameList;
+
+    /**
+     * 客户定制附件
+     */
+    private List<AttachmentDTO.AttachDTO> customizedAttachmentList;
+
+    /**
+     * 产品说明书
+     */
+    private List<AttachmentDTO.AttachDTO> instructionAttachmentList;
+
+    /**
+     * 产品质保期
+     */
+    private String warrantyPeriod;
 }

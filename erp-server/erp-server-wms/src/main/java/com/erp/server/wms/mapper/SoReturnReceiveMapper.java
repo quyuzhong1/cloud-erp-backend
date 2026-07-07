@@ -39,16 +39,6 @@ public interface SoReturnReceiveMapper extends BaseMapper<SoReturnReceiveEntity>
      * @return java.lang.Integer
      **/
     Integer listCount(@Param("params") SoReturnReceiveDTO.PagingParam pagingParam);
-
-    /**
-     * 导出查询
-     * @Author Luo_WG
-     * @Date 2023/5/18 9:52
-     * @param dto dto
-     * @return java.util.List<com.erp.model.wms.dto.SoReturnReceiveDTO.PagingView>
-     **/
-    Page<SoReturnReceiveDTO.PagingView> soReturnReceiveExportExcel(@Param("page") Page<SoReturnReceiveDTO.PagingView> page, @Param("params") SoReturnReceiveDTO.PagingParam dto);
-
     /**
      * 下推质检单查询
      * @Author Luo_WG

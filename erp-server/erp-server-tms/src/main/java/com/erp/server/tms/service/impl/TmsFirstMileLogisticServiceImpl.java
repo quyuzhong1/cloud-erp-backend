@@ -293,7 +293,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         Boolean originalValue = UserContext.getIsUserSystem();
         UserContext.setIsUserSystem(Boolean.TRUE);
         try {
-             logisticsBillCostService.add(costAddDTO);
+             logisticsBillCostService.add(costAddDTO, null);
         } finally {
             //恢复系统标识
             UserContext.setIsUserSystem(originalValue);
@@ -474,7 +474,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             costDetailList.add(dto);
         }
         updateCostDTO.setCostDetailList(costDetailList);
-        logisticsBillCostService.update(updateCostDTO,Boolean.FALSE);
+        logisticsBillCostService.update(updateCostDTO,Boolean.FALSE, null);
 
         //更新发货单物流状态
         if(!oldOutstockId.equals(updateDTO.getOutstockId())){
@@ -2101,6 +2101,34 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                 null,
                 CharSequenceUtil.isNotBlank(transportNo) ? Collections.singletonList(transportNo) : null,
                 null,
+                startDate,
+                endDate,
+                null,null);
+    }
+
+    @Override
+    public List<String> pageAutoGenerateFirstMileReconciliationSupplierIds(LocalDate startDate, LocalDate endDate, List<String> logisticsSupplierIds, String lastSupplierId, int batchSize) {
+        TmsAsyncTaskRecordDTO.CursorPageDTO pageDTO = new TmsAsyncTaskRecordDTO.CursorPageDTO();
+        pageDTO.setOrderType(OrderTypeEnum.FIRST_MILE.getCode());
+        pageDTO.setReconciliationStatus(ReconciliationStatusEnum.TO_BE_GENERATED.getCode());
+        pageDTO.setTrackStatus(FmLogisticTrackStatusEnum.SIGN.getCode());
+        pageDTO.setIds(logisticsSupplierIds);
+        pageDTO.setStartDate(startDate);
+        pageDTO.setEndDate(endDate);
+        pageDTO.setLastId(lastSupplierId);
+        pageDTO.setBatchSize(batchSize);
+        return this.baseMapper.pageWaitReconciliationSupplierIds(pageDTO);
+    }
+
+    @Override
+    public List<TmsFirstMileReconciliationDetailDTO.ListDTO> listAutoGenerateFirstMileReconciliationBySuppliers(LocalDate startDate, LocalDate endDate, List<String> logisticsSupplierIds) {
+        return this.baseMapper.waitReconciliationList(
+                OrderTypeEnum.FIRST_MILE.getCode(),
+                ReconciliationStatusEnum.TO_BE_GENERATED.getCode(),
+                FmLogisticTrackStatusEnum.SIGN.getCode(),
+                null,
+                null,
+                logisticsSupplierIds,
                 startDate,
                 endDate,
                 null,null);

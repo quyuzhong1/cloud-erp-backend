@@ -7,6 +7,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -142,6 +143,25 @@ public class CfgSettingDTO implements Serializable {
          * 是否推送仓位
          */
         private Boolean isPush;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ShippedTimeZoneSettingDTO {
+        /**
+         * 需要转换时区的仓库编码
+         */
+        private List<String> warehouseCodes = Collections.emptyList();
+
+        /**
+         * 原始时间所属时区
+         */
+        private String sourceZone;
+
+        /**
+         * 目标时区 UTC 偏移小时
+         */
+        private Integer targetOffsetHours;
     }
     
 }

@@ -1,11 +1,9 @@
 package com.erp.server.wms.controller.feign;
 
-import com.common.business.annotation.DataIdempotent;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
-import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.wms.dto.SoB2cDeliveryInterceptDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity;
@@ -40,7 +38,6 @@ public class SoB2cDeliveryInterceptFeignController extends BaseController {
      * @return com.common.business.dto.base.BaseResultDTO.AddDTO
      **/
     @PostMapping("/add")
-    @DataIdempotent(keyIdName = "dto.sourceCode",businessType = DistributeKeyConstant.SO_B2C_DELIVERY_INTERCEPT_KEY)
     public BaseResultDTO.AddDTO add(@RequestBody SoB2cDeliveryInterceptDTO.AddDTO dto) {
         BaseResultDTO.AddDTO add = soB2cDeliveryInterceptService.add(dto);
         return add;
@@ -97,6 +94,22 @@ public class SoB2cDeliveryInterceptFeignController extends BaseController {
     public Boolean updateHandleStatus(@RequestParam("sourceIds") List<String> sourceIds, @RequestParam("status") String status) {
         Boolean flag = soB2cDeliveryInterceptService.updateHandleStatus(sourceIds, status);
         return flag;
+    }
+
+    /**
+     * API拦截成功
+     **/
+    @PostMapping("/apiHandleSuccess")
+    public BatchResultDTO apiHandleSuccess(@RequestParam("id") String id, @RequestParam(value = "remark", required = false) String remark) {
+        return soB2cDeliveryInterceptService.apiHandleSuccess(id, remark);
+    }
+
+    /**
+     * API拦截失败
+     **/
+    @PostMapping("/apiHandleFailure")
+    public BatchResultDTO apiHandleFailure(@RequestParam("id") String id, @RequestParam(value = "remark", required = false) String remark) {
+        return soB2cDeliveryInterceptService.apiHandleFailure(id, remark);
     }
 
     /**

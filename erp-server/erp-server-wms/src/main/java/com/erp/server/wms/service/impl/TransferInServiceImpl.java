@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.SearchType;
@@ -25,6 +26,8 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.MathUtil;
+import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -105,6 +108,8 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
 
     @Resource
     private InventoryTransCoreService inventoryTransCoreService;
+    @Resource
+    private InventoryService inventoryService;
 
     @Resource
     private DocNoGenHelper docNoGenHelper;
@@ -395,6 +400,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "dto.id", unlockAfterTx = true)
     public BatchResultDTO approve(ApproveOneDTO dto, TransferInEntity entity) {
         if (!CharSequenceUtil.equals(ApproveStatusEnum.APPROVE_ING.getStatus(),entity.getApproveStatus().getCode())) {
             throw new ServiceException(ApiError.WF_APPROVE_ALLOWED_STATUS_ONLY);
@@ -473,6 +479,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         }
         return Boolean.TRUE;
     }
+
 
     //如果来源是质检通知单的，则回填质检通知单的上架数量和上架状态
     private void updateQcNoticePutaway(TransferInEntity transferInEntity, Boolean approve) {

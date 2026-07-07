@@ -1,6 +1,8 @@
 package com.erp.server.scm.controller.feign;
 
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.core.anno.LogAction;
+import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.entity.PurchasePriceEntity;
@@ -71,6 +73,7 @@ public class PurchasePriceFeignController {
     }
 
      @PostMapping("/updateApproveStatus")
+    @LogAction(value = LogActionEnum.UPDATE_STATUS, desc = "采购价目更新审核状态")
     public void updateApproveStatus(@RequestBody PurchasePriceDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO) {
         purchasePriceService.updateApproveStatus(updateApprovalStatusDTO);
      }

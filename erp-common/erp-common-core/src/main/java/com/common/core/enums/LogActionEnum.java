@@ -50,6 +50,7 @@ public enum LogActionEnum {
     GET_LOGISTICS_LABEL("getLogisticsLabel", "获取物流面单",true),
     PRINT_LOGISTICS_LABEL_PREVIEW("printLogisticsLabelPreview", "打印物流面单预览",true),
     PRINT_LOGISTICS_LABEL_CONFIRM("printLogisticsLabelConfirm", "打印物流面单确认",true),
+    REJECT("reject", "驳回",true),
     ;
 
     @EnumValue

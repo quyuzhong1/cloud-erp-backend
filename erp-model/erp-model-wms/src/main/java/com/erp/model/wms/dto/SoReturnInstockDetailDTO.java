@@ -332,5 +332,20 @@ public class SoReturnInstockDetailDTO {
          */
         private BigDecimal exchangeRate;
 
+        /**
+         *单价
+         */
+        private BigDecimal price;
+
+        /**
+         *税率
+         */
+        private BigDecimal taxRate;
+
+        /**
+         *含税单价
+         */
+        private BigDecimal taxPrice;
+
     }
 }

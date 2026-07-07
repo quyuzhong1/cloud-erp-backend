@@ -79,6 +79,7 @@ import com.erp.rpc.sys.feign.AuthDataFeign;
 import com.erp.rpc.sys.feign.FileTemplateFeign;
 import com.erp.rpc.sys.feign.SysPostFeign;
 import com.erp.server.wms.convert.RequisitionApplicationConverter;
+import com.erp.server.wms.convert.WmsAttachmentConverter;
 import com.erp.server.wms.listener.RequisitionApplicationDetailExcelListener;
 import com.erp.server.wms.mapper.RequisitionApplicationMapper;
 import com.erp.server.wms.service.*;
@@ -226,6 +227,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     private WmsCartonService wmsCartonService;
     @Resource
     private WmsCartonDetailService wmsCartonDetailService;
+    @Resource
+    private WmsAttachmentService wmsAttachmentService;
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -247,6 +250,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         }
         // 新增明细
         requisitionApplicationDetailService.add(addDTO, requisitionApplicationEntity.getId());
+        //新增附件
+        wmsAttachmentService.batchSave(addDTO.getAttachmentList(), ModuleTypeEnum.REQUISITION_APPLICATION.getCode(), requisitionApplicationEntity.getId());
         // 操作日志
         String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "要货申请" , requisitionApplicationEntity.getId());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REQUISITION_APPLICATION.getCode(), requisitionApplicationEntity.getId(), "新增操作");
@@ -283,6 +288,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         }
         // 修改明细数据（包含增删改）
         requisitionApplicationDetailService.update(updateDTO, requisitionApplicationEntity.getId());
+        //更新附件
+        wmsAttachmentService.batchSave(updateDTO.getAttachmentList(), ModuleTypeEnum.REQUISITION_APPLICATION.getCode(), requisitionApplicationEntity.getId());
         return Boolean.TRUE;
     }
 
@@ -325,7 +332,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         // 仓库权限
         String warehousePermissionSql = authDataFeign.getWarehousePermissionSql("ra.channel_id");
         warehousePermissionSql = CharSequenceUtil.isBlank(warehousePermissionSql)? " AND 1=1 " : warehousePermissionSql;
-        return CharSequenceUtil.format(" and (((ra.type = 'fba' or ra.type = 'awd' or ra.type = 'fbt' or ra.type = 'AliExpress') {}) or (ra.type = 'thirdWarehouse' {}) or (ra.channel_id = ''))", shopPermissionSql, warehousePermissionSql);
+        return CharSequenceUtil.format(" and (((ra.type = 'fba' or ra.type = 'fbs' or ra.type = 'awd' or ra.type = 'fbt' or ra.type = 'AliExpress') {}) or (ra.type = 'thirdWarehouse' {}) or (ra.channel_id = ''))", shopPermissionSql, warehousePermissionSql);
     }
 
     @Override
@@ -337,6 +344,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         List<RequisitionApplicationDetailEntity> requisitionApplicationDetailEntities = requisitionApplicationDetailService.listByMainIds(Collections.singletonList(id));
         // 数据填充处理
         fillOne(data, requisitionApplicationDetailEntities);
+        //附件
+        data.setAttachmentList(WmsAttachmentConverter.INSTANCE.entityListToAttachDTOList(wmsAttachmentService.getByBusinessId(id, ModuleTypeEnum.REQUISITION_APPLICATION.getCode())));
         return data;
     }
 
@@ -1276,6 +1285,7 @@ revokeDTO.setSourcePlatform(dto.getSourcePlatform());
             viewDTO.setCountry(wmsDeliveryPlanEntity.getCountry());
 
             if (RequisitionApplicationTypeEnum.FBA.getCode().equals(viewDTO.getType()) ||
+                    RequisitionApplicationTypeEnum.FBS.getCode().equals(viewDTO.getType()) ||
                     RequisitionApplicationTypeEnum.FBT.getCode().equals(viewDTO.getType()) ||
                     RequisitionApplicationTypeEnum.AWD.getCode().equals(viewDTO.getType()) ||
                     RequisitionApplicationTypeEnum.ALIEXPRESS.getCode().equals(viewDTO.getType())) {
@@ -2073,6 +2083,8 @@ revokeDTO.setSourcePlatform(dto.getSourcePlatform());
             //备货类型
             if(RequisitionApplicationTypeEnum.FBA.getCode().equals(view.getType())){
                 addDTO.setDemandType(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode());
+            }else if (RequisitionApplicationTypeEnum.FBS.getCode().equals(view.getType())){
+                addDTO.setDemandType(FbaDemandTypeEnum.DEMAND_FBS_WAREHOUSE.getCode());
             }else if (RequisitionApplicationTypeEnum.FBT.getCode().equals(view.getType())){
                 addDTO.setDemandType(FbaDemandTypeEnum.DEMAND_FBT_WAREHOUSE.getCode());
             }else if (RequisitionApplicationTypeEnum.AWD.getCode().equals(view.getType())){
@@ -2609,6 +2621,7 @@ revokeDTO.setSourcePlatform(dto.getSourcePlatform());
             }
             String channelName = "";
             if((RequisitionApplicationTypeEnum.FBA.getCode().equals(requisitionApplicationEntity.getType())
+                    || RequisitionApplicationTypeEnum.FBS.getCode().equals(requisitionApplicationEntity.getType())
                     || RequisitionApplicationTypeEnum.FBT.getCode().equals(requisitionApplicationEntity.getType())
                     || RequisitionApplicationTypeEnum.AWD.getCode().equals(requisitionApplicationEntity.getType()))
                     || RequisitionApplicationTypeEnum.ALIEXPRESS.getCode().equals(requisitionApplicationEntity.getType())){

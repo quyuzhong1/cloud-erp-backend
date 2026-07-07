@@ -103,6 +103,8 @@ public interface SoB2cDetailService extends SuperService<SoB2cDetailEntity> {
      */
     Boolean updateWarehouse(List<SoB2cDetailEntity> detailList);
 
+    Boolean rollbackWarehouseBatch(List<SoB2cDetailEntity> detailList);
+
 
     /**
      * 平台订单明细更新或保存

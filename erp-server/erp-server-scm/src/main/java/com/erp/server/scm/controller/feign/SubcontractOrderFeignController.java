@@ -1,6 +1,8 @@
 package com.erp.server.scm.controller.feign;
 
 import com.common.business.dto.base.ApproveOneDTO;
+import com.common.core.anno.LogAction;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.scm.dto.SubcontractOrderDTO;
 import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
 import com.erp.model.scm.entity.SubcontractOrderEntity;
@@ -97,6 +99,7 @@ public class SubcontractOrderFeignController {
      * @Date 2023/7/12 12:55
      **/
     @PostMapping("/subcontractOrderApprove")
+    @LogAction(value = LogActionEnum.APPROVE, desc = "委外订单审核")
     public Boolean subcontractOrderApprove(@RequestBody ApproveOneDTO dto) {
         subcontractOrderService.approve(dto);
         return Boolean.TRUE;
@@ -120,6 +123,7 @@ public class SubcontractOrderFeignController {
     }
 
     @PostMapping("/updateApproveStatus")
+    @LogAction(value = LogActionEnum.UPDATE_STATUS, desc = "委外订单更新审核状态")
     public void updateApproveStatus(@RequestBody SubcontractOrderDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO) {
         subcontractOrderService.updateApproveStatus(updateApprovalStatusDTO);
     }

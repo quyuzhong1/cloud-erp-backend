@@ -8,6 +8,8 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.AdsErpInventoryDiffFlowDTO;
 import com.erp.model.dmp.dto.AdsErpInventoryDiffFlowDetailDTO;
 import com.erp.model.dmp.entity.doris.AdsErpInventoryDiffFlowEntity;
+import com.erp.server.dmp.enums.InventoryMonthCheckEnum;
+
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -82,8 +84,6 @@ public interface AdsErpInventoryDiffFlowService extends SuperService<AdsErpInven
     
     AdsErpInventoryDiffFlowDTO.TotalDTO total(PagingDTO<AdsErpInventoryDiffFlowDTO.PagingParamDTO> dto);
     
-    Boolean reCreate(AdsErpInventoryDiffFlowDTO.ReCreateDTO dto);
-    
     Boolean updateRemark(AdsErpInventoryDiffFlowDTO.UpdateRemarkDTO dto);
     
     Boolean exportExcel(AdsErpInventoryDiffFlowDTO.ExpotParamDTO dto);
@@ -121,4 +121,7 @@ public interface AdsErpInventoryDiffFlowService extends SuperService<AdsErpInven
      * @return Boolean
      */
     Boolean exportSourceSelf(AdsErpInventoryDiffFlowDetailDTO.PagingParamDTO dto);
+    
+    void updateReCreateInventoryMonthCheck(InventoryMonthCheckEnum inventoryMonthCheckEnum, String checkMonth,
+			String sourceSystem);
 }

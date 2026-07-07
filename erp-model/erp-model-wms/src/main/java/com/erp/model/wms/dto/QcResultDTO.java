@@ -106,7 +106,6 @@ public class QcResultDTO {
 
 
         /**
-         * 不良现象
          * 选择不良的时候必填
          */
         @Size(max = 250, message = "最大250个字符")
@@ -121,6 +120,26 @@ public class QcResultDTO {
          * 质检附件名称集合
          */
         private List<String> qcAttachmentNameList;
+
+        /**
+         * 产品实物图片地址集合（从产品信息移动到质检信息）
+         */
+        private List<String> productRealImageUrlList;
+
+        /**
+         * 产品实物图片名称集合
+         */
+        private List<String> productRealImageNameList;
+
+        /**
+         * 箱唛图片地址集合（从产品信息移动到质检信息）
+         */
+        private List<String> boxImageUrlList;
+
+        /**
+         * 箱唛图片名称集合
+         */
+        private List<String> boxImageNameList;
 
 
         /**
@@ -271,6 +290,26 @@ public class QcResultDTO {
          * 质检附件名称集合
          */
         private List<String> qcAttachmentNameList;
+
+        /**
+         * 产品实物图片地址集合（从产品信息移动到质检信息）
+         */
+        private List<String> productRealImageUrlList;
+
+        /**
+         * 产品实物图片名称集合
+         */
+        private List<String> productRealImageNameList;
+
+        /**
+         * 箱唛图片地址集合（从产品信息移动到质检信息）
+         */
+        private List<String> boxImageUrlList;
+
+        /**
+         * 箱唛图片名称集合
+         */
+        private List<String> boxImageNameList;
 
 
         /**
@@ -596,6 +635,11 @@ public class QcResultDTO {
          *  总数量
          */
         private Integer totalQty;
+        /**
+         * 质检类型
+         * QcTypeEnum
+         */
+        private String qcType;
 
     }
 
@@ -628,5 +672,23 @@ public class QcResultDTO {
          */
         private Integer totalQty;
 
+    }
+
+    /**
+     * 批量保存产品实物 / 箱唛图片入参
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ProductBoxImageItem {
+
+        private String qcResultId;
+
+        private List<String> productImgUrlList;
+
+        private List<String> productImgNameList;
+
+        private List<String> boxImgUrlList;
+
+        private List<String> boxImgNameList;
     }
 }

@@ -16,17 +16,7 @@ public interface WaveListService extends SuperService<WaveListEntity> {
      * 新增
      */
     BaseResultDTO.AddDTO add(WaveListDTO.AddDTO dto);
-    /**
-     * 统计发货批次的数量
-     */
-    int countDelivery(PermissionsDTO param);
 
-    /**
-     * 根据状态获取
-     * @param status
-     * @return
-     */
-    List<String> listDeliveryIdByStatus(String status);
 
     /**
      * 通过波次号/拣货车号查询波次
@@ -94,24 +84,10 @@ public interface WaveListService extends SuperService<WaveListEntity> {
     ApiResult printFinish(BaseIdsDTO.IdsDTO idsDTO);
 
     /**
-     * 高级查询查波次表的发货单id
-     * @param compareCodeSplicingValueSql 拼好的sql
-     */
-    List<String> listDeliveryIdBySql(String compareCodeSplicingValueSql);
-
-    /**
      * 打印拣货单
      * @param ids 波次号
      */
     SoB2cDeliveryDTO.PrintPickingMainDTO printPickingBill(List<String> ids);
-    /**
-     * 更新波次列表状态
-     * @author will
-     * @date 2024/7/9 17:36
-     * @param waveId
-     * @param status
-     */
-    Boolean updateStatusById(String waveId, String status);
     /**
      * 根据拣货车编码集合查询
      * @author will

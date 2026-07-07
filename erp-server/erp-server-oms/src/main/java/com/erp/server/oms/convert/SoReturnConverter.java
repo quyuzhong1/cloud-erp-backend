@@ -2,6 +2,7 @@ package com.erp.server.oms.convert;
 
 import com.erp.model.dmp.entity.BiReturnOrderInfoEntity;
 import com.erp.model.dmp.entity.BiReturnOrderItemEntity;
+import com.erp.model.oms.dto.SoReturnDTO;
 import com.erp.model.oms.entity.SoReturnDetailEntity;
 import com.erp.model.oms.entity.SoReturnEntity;
 import org.mapstruct.Mapper;
@@ -47,4 +48,6 @@ public interface SoReturnConverter {
             @Mapping(target = "originalSkuNo", source = "skuNo")
     })
     BiReturnOrderItemEntity soReturnOrderToDmpReturnItem(SoReturnDetailEntity soReturnDetailEntity);
+
+    SoReturnDTO.SoReturnListVO toListVO(SoReturnEntity soReturnEntity);
 }

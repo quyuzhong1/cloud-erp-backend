@@ -14,6 +14,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.constant.FileTemplateConstant;
@@ -32,6 +33,7 @@ import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
+import com.common.message.constant.DistributeKeyConstant;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.msg.constant.NoticeMsgConstant;
 import com.erp.model.msg.dto.NoticeMsgInfoDTO;
@@ -298,6 +300,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.WMS_PACKING_TASK_KEY, keyName = "dto.sourceId",unlockAfterTx = true)
     public Boolean packingSave(WmsCartonSpecDTO.WmsCartonAdd dto, Boolean isAddCarton) {
         PackingTaskEntity packingTask = this.getById(dto.getTaskId());
         if (Objects.isNull(packingTask)){
@@ -1158,7 +1161,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     @Transactional(rollbackFor = Exception.class)
     public WmsCartonDTO.PrintDTO pdaPackingSave(WmsCartonSpecDTO.AddDTO dto) {
         dto.setPackingStatus(PackingTaskStatusEnum.COMPLETED.getCode());
-        return this.stagingPacking(dto);
+        return service.stagingPacking(dto);
     }
 
     @Override
@@ -1367,6 +1370,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.WMS_PACKING_TASK_KEY, keyName = "addDTO.taskId", unlockAfterTx = true)
     public WmsCartonDTO.PrintDTO stagingPacking(WmsCartonSpecDTO.AddDTO addDTO) {
         if (Objects.isNull(addDTO.getBoxQty())){
             addDTO.setBoxQty(MathUtil.ONE);
@@ -1490,6 +1494,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.WMS_PACKING_TASK_KEY, keyName = "dto.cartonId",unlockAfterTx = true)
     public String adjustPackingSave(WmsCartonDTO.AdjustSaveDTO dto) {
         PackingTaskEntity packingTaskEntity = this.getById(dto.getTaskId());
         if (ObjectUtils.isEmpty(packingTaskEntity)) {
@@ -1702,6 +1707,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     }
 
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.WMS_PACKING_TASK_KEY, keyName = "dto.specId")
     public ApiResult<String> cartonSpecSave(WmsCartonSpecDTO.SpecSaveDTO dto) {
         WmsCartonSpecEntity old = wmsCartonSpecService.getById(dto.getSpecId());
         if (Objects.isNull(old)){
@@ -2190,6 +2196,8 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         String sourceType;
         if (FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode().equals(demandType)){
             sourceType =  PickingSourceTypeEnum.THIRD.getCode();
+        }else if (FbaDemandTypeEnum.DEMAND_FBS_WAREHOUSE.getCode().equals(demandType)){
+            sourceType = PickingSourceTypeEnum.FBS.getCode();
         }else if (FbaDemandTypeEnum.DEMAND_FBT_WAREHOUSE.getCode().equals(demandType)){
             sourceType = PickingSourceTypeEnum.FBT.getCode();
         }else if (FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode().equals(demandType)){
@@ -2521,6 +2529,8 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             sourceType =  PickingSourceTypeEnum.THIRD.getCode();
         }else if (RequisitionApplicationTypeEnum.FBA.getCode().equals(type)){
             sourceType = PickingSourceTypeEnum.FBA.getCode();
+        }else if (RequisitionApplicationTypeEnum.FBS.getCode().equals(type)){
+            sourceType = PickingSourceTypeEnum.FBS.getCode();
         }else if (RequisitionApplicationTypeEnum.FBT.getCode().equals(type)){
             sourceType = PickingSourceTypeEnum.FBT.getCode();
         }else if (RequisitionApplicationTypeEnum.AWD.getCode().equals(type)){

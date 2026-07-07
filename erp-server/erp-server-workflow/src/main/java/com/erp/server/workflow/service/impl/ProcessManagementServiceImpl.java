@@ -12,6 +12,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.UserStateConstants;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -30,6 +31,7 @@ import com.common.core.constant.SqlConstants;
 import com.common.core.entity.ConditionElement;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.message.constant.DistributeKeyConstant;
 import com.common.core.server.rule.SpElServer;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.DeduplicationUtil;
@@ -122,6 +124,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     public static final String LAST_APPROVER = "lastApprover";
     public static final String LAST_TASK_MANAGEMENT_ID = "lastTaskManagementId";
     public static final String APPROVE_TYPE = "approveType";
+    private static final int CUR_APPROVER_BATCH_SIZE = 1000;
     // 流程管理服务
     @Resource
     private ProcessManagementService processManagementService;
@@ -1638,6 +1641,43 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         return resultList;
     }
 
+    @Override
+    public List<ProcessManagementDTO.CurApproveSimpleDTO> batchCurApproverSimple(ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList) {
+        if (CollectionUtils.isEmpty(dtoList)) {
+            return Collections.emptyList();
+        }
+        Map<String, ProcessManagementDTO.HistoryActivityDTO> paramMap = dtoList
+                .stream()
+                .collect(Collectors.toMap(
+                        k -> CharSequenceUtil.format("{}_{}", k.getBusinessId(), k.getBusinessKey()),
+                        e -> e,
+                        (oldValue, newValue) -> oldValue,
+                        LinkedHashMap::new));
+        List<ProcessManagementDTO.CurApproveInfoDTO> resultList = listCurApproverInBatch(new ArrayList<>(paramMap.values()));
+        Map<String, String> approveNameMap = new HashMap<>(resultList.size());
+        for (ProcessManagementDTO.CurApproveInfoDTO item : resultList) {
+            if (CharSequenceUtil.isBlank(item.getCurApproveName())) {
+                continue;
+            }
+            String key = CharSequenceUtil.format("{}_{}", item.getBusinessId(), item.getBusinessKey());
+            approveNameMap.merge(key, item.getCurApproveName(), (oldValue, newValue) -> {
+                if (CharSequenceUtil.isBlank(oldValue)) {
+                    return newValue;
+                }
+                if (CharSequenceUtil.isBlank(newValue)) {
+                    return oldValue;
+                }
+                return oldValue + "," + newValue;
+            });
+        }
+        List<ProcessManagementDTO.CurApproveSimpleDTO> simpleList = new ArrayList<>(paramMap.size());
+        paramMap.forEach((key, value) -> simpleList.add(new ProcessManagementDTO.CurApproveSimpleDTO(
+                value.getBusinessId(),
+                approveNameMap.get(key)
+        )));
+        return simpleList;
+    }
+
 
     @Override
     public List<ProcessManagementDTO.CurApproveInfoDTO> batchCurApproverByApprove(ValidList<ProcessManagementDTO.ApproveActivityDTO> dtoList) {
@@ -1722,6 +1762,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     @Override
     @Transactional(rollbackFor =  Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO processPass(String id) {
         ProcessManagementEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
@@ -1798,6 +1839,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     @Override
     @Transactional(rollbackFor =  Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO processReject(String id) {
         ProcessManagementEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
@@ -1849,6 +1891,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
 
     @Override
     @Transactional(rollbackFor =  Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO processRestore(String id) {
         ProcessManagementEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
@@ -1899,6 +1942,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
 
     @Override
     @Transactional(rollbackFor =  Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO processSuspend(String id) {
         ProcessManagementEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
@@ -2124,5 +2168,25 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 curApproveInfoDTO.setCurApproveName(curApproveName);
             }
         }
+    }
+
+    /**
+     * 分批查询当前审批人，控制单次SQL IN参数规模
+     */
+    private List<ProcessManagementDTO.CurApproveInfoDTO> listCurApproverInBatch(List<ProcessManagementDTO.HistoryActivityDTO> dtoList) {
+        if (CollUtil.isEmpty(dtoList)) {
+            return Collections.emptyList();
+        }
+        List<ProcessManagementDTO.CurApproveInfoDTO> resultList = new ArrayList<>();
+        for (int i = 0; i < dtoList.size(); i += CUR_APPROVER_BATCH_SIZE) {
+            int end = Math.min(i + CUR_APPROVER_BATCH_SIZE, dtoList.size());
+            ValidList<ProcessManagementDTO.HistoryActivityDTO> subList = new ValidList<>();
+            subList.addAll(dtoList.subList(i, end));
+            List<ProcessManagementDTO.CurApproveInfoDTO> partList = baseMapper.listApproverByBusiness(subList);
+            if (CollUtil.isNotEmpty(partList)) {
+                resultList.addAll(partList);
+            }
+        }
+        return resultList;
     }
 }

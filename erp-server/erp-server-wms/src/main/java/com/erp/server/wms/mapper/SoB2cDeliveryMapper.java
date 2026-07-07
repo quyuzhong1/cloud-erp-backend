@@ -44,14 +44,6 @@ public interface SoB2cDeliveryMapper extends BaseMapper<SoB2cDeliveryEntity> {
      **/
     IPage<SoB2cDeliveryDTO.ListDTO> paging(Page query, @Param("params") SoB2cDeliveryDTO.PagingParamDTO params);
 
-    /**
-     * 列表查询
-     * @param params
-     * @return
-     */
-    List<SoB2cDeliveryDTO.ListDTO> list(@Param("params") SoB2cDeliveryDTO.PagingParamDTO params);
-    Page<SoB2cDeliveryDTO.ListDTO> list(@Param("page") Page<SoB2cDeliveryDTO.ListDTO> page, @Param("params") SoB2cDeliveryDTO.PagingParamDTO params);
-
     List<SoB2cDeliveryDTO.CancelShipmentDTO> cancelShipmentView(@Param("ids") List<String> ids);
 
     int countShipmentMark(@Param("params") PermissionsDTO params);

@@ -15,6 +15,7 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.ThirdConstants;
@@ -33,6 +34,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
+import com.common.message.constant.DistributeKeyConstant;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
@@ -806,21 +808,32 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                     dto.setCurrencySymbol(dto.getCurrencySymbol());
                     dto.setAmount(MathUtil.multiplyWithTwo(dto.getRepairPrice(),dto.getRepairQty()).setScale(4, RoundingMode.DOWN));
                 } else if (!dto.getIsGift() && StringUtils.isNotBlank(dto.getSupplierId()) && CharSequenceUtil.isNotBlank(dto.getParentId()) && MathUtil.compareTo(dto.getQty(), MathUtil.ZERO) > 0){
-                    //委外返修子行
-                    PurchasePriceDTO.PriceDTO viewDTO = viewDTOList.stream().filter(obj ->
-                            obj.getSkuId().equals(dto.getSkuId())
-                                    && obj.getSupplierId().equals(dto.getSupplierId())
-                                    && obj.getQty().equals(dto.getQty())
-                                    && CharSequenceUtil.equals(obj.getPurchaseOrgId(),dto.getPurchaseOrgId()))
-                            .findFirst().orElse(null);
-                    if (ObjUtil.isEmpty(viewDTO)) {
-                        throw new ServiceException("SKU【{}】未找到数量【{}】的供应商报价信息",skuVO.getSkuNo(),dto.getQty());
+                    //委外返修子行：价格取委外明细，税率/币种优先取明细，缺失则从价目表补全
+                    BigDecimal price = Objects.nonNull(dto.getPrice()) ? dto.getPrice() : BigDecimal.ZERO;
+                    if (price.compareTo(BigDecimal.ZERO) == 0) {
+                        throw new ServiceException(ApiError.PO_SUBCONTRACT_REPAIR_SUB_LINE_PRICE_REQUIRED, skuVO.getSkuNo());
                     }
-                    dto.setPrice(viewDTO.getTaxPrice());
-                    dto.setTaxRate(viewDTO.getTaxRate());
-                    dto.setCurrency(viewDTO.getCurrency());
-                    dto.setCurrencySymbol(viewDTO.getCurrencySymbol());
-                    dto.setAmount(MathUtil.multiplyWithTwo(viewDTO.getTaxPrice(),dto.getQty()).setScale(4, RoundingMode.DOWN));
+                    if (Objects.isNull(dto.getTaxRate()) || StringUtils.isBlank(dto.getCurrency())) {
+                        PurchasePriceDTO.PriceDTO viewDTO = viewDTOList.stream().filter(obj ->
+                                        obj.getSkuId().equals(dto.getSkuId())
+                                                && obj.getSupplierId().equals(dto.getSupplierId())
+                                                && obj.getQty().equals(dto.getQty())
+                                                && CharSequenceUtil.equals(obj.getPurchaseOrgId(), dto.getPurchaseOrgId()))
+                                .findFirst().orElse(null);
+                        if (ObjUtil.isNotEmpty(viewDTO)) {
+                            if (Objects.isNull(dto.getTaxRate())) {
+                                dto.setTaxRate(viewDTO.getTaxRate());
+                            }
+                            if (StringUtils.isBlank(dto.getCurrency())) {
+                                dto.setCurrency(viewDTO.getCurrency());
+                                dto.setCurrencySymbol(viewDTO.getCurrencySymbol());
+                            }
+                        }
+                    }
+                    if (Objects.isNull(dto.getTaxRate()) || StringUtils.isBlank(dto.getCurrency())) {
+                        throw new ServiceException(ApiError.PO_SUBCONTRACT_REPAIR_SUB_LINE_TAX_RATE_OR_CURRENCY_REQUIRED, skuVO.getSkuNo());
+                    }
+                    dto.setAmount(MathUtil.multiplyWithTwo(price, dto.getQty()).setScale(4, RoundingMode.DOWN));
                 }
             }
 
@@ -845,6 +858,9 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                          .map(PurchaseOrderDTO.ListDTO::getPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);
             }
             if (Objects.equals(SubcontractOrderTypeEnum.REPAIR_SUBCONTRACT.getCode(),dto.getType()) && StringUtils.isBlank(dto.getParentId())) {
+                if (Objects.isNull(dto.getRepairQty()) || MathUtil.compareTo(dto.getRepairQty(), MathUtil.ZERO) <= MathUtil.ZERO) {
+                    throw new ServiceException(ApiError.PO_SUBCONTRACT_REPAIR_QTY_MUST_GT_ZERO, skuVO.getSkuNo());
+                }
                 dto.setApplyQty(dto.getRepairQty() - purchaseQty);
             } else {
                 dto.setApplyQty(dto.getQty() - purchaseQty);
@@ -1820,6 +1836,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
     }
 
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "updateApprovalStatusDTO.subcontractOrderEntity.id", unlockAfterTx = true)
     public void updateApproveStatus(SubcontractOrderDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO) {
          String approveStatus = updateApprovalStatusDTO.getApproveStatus();
          SubcontractOrderEntity subcontractOrderEntity = updateApprovalStatusDTO.getSubcontractOrderEntity();

@@ -34,6 +34,7 @@ import com.erp.model.wms.dto.excel.VirtualAdjustDetailExcelDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
+import com.erp.model.wms.entity.DictBasicEntity;
 import com.erp.model.wms.entity.VirtualAdjustDetailEntity;
 import com.erp.model.wms.entity.VirtualAdjustEntity;
 import com.erp.model.wms.enums.inventory.InventoryInOutEnum;
@@ -669,7 +670,7 @@ public class VirtualAdjustServiceImpl extends SuperServiceImpl<VirtualAdjustMapp
             return;
         }
         //获取字典配置是否校验
-        List<DictBasicDTO.ListDTO> dictList = dictBasicService.getByKey("virtualAdjustCheck");
+        List<DictBasicEntity> dictList = dictBasicService.getByKey("virtualAdjustCheck");
         if (CollUtil.isEmpty(dictList) || "false".equals(dictList.get(0).getValue())){
             return;
         }

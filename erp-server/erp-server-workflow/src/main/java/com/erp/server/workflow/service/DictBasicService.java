@@ -42,5 +42,13 @@ public interface DictBasicService extends SuperService<DictBasicEntity> {
 
     Map<String,DictBasicEntity> getMapByType(String type);
 
+    /**
+     * 根据key list 获取对应数据
+     * @author yl
+     * @date 2023-03-20 14:24
+     * @param typeList
+     * @return java.util.List<DictBasicEntity>
+     */
+    List<DictBasicEntity> getByKeyList(List<String> typeList);
 
 }

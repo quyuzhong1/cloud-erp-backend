@@ -22,6 +22,10 @@
        <result column="field_name" property="fieldName" />
        <result column="field_type" property="fieldType" />
        <result column="is_unique_field" property="isUniqueField" />
+       <result column="query_option_id" property="queryOptionId" />
+       <result column="option_list" property="optionList" />
+       <result column="unit_type" property="unitType" />
+       <result column="standard_unit" property="standardUnit" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -44,7 +48,11 @@ clcif.parent_id AS parentId,
 clcif.field AS field,
 clcif.field_name AS fieldName,
 clcif.field_type AS fieldType,
-clcif.is_unique_field AS isUniqueField
+clcif.is_unique_field AS isUniqueField,
+clcif.query_option_id AS queryOptionId,
+clcif.option_list AS optionList,
+clcif.unit_type AS unitType,
+clcif.standard_unit AS standardUnit
     </sql>
 
     <select id="listByBusinessType" resultType="com.erp.model.tms.dto.CfgLogisticsCostImportFieldDTO$ListDTO">
@@ -57,14 +65,14 @@ clcif.is_unique_field AS isUniqueField
     </select>
 
     <select id="findTree" resultType="com.erp.model.tms.dto.CfgLogisticsCostImportFieldDTO$TreeDTO">
-        WITH RECURSIVE T ( ID, field,field_name,field_type, parent_id, PATH ) AS (
-            SELECT ID,field,field_name,field_type,PARENT_ID,ID::text AS PATH FROM cfg_logistics_cost_import_field
+        WITH RECURSIVE T ( ID, field,field_name,field_type, parent_id, query_option_id, option_list, unit_type, standard_unit, PATH ) AS (
+            SELECT ID,field,field_name,field_type,PARENT_ID,query_option_id,option_list,unit_type,standard_unit,ID::text AS PATH FROM cfg_logistics_cost_import_field
             WHERE parent_id = '0' and business_type = #{businessType}
             UNION ALL
-            SELECT st.ID,st.field,st.field_name,st.field_type,st.PARENT_ID,T.PATH ||','|| st.ID
+            SELECT st.ID,st.field,st.field_name,st.field_type,st.PARENT_ID,st.query_option_id,st.option_list,st.unit_type,st.standard_unit,T.PATH ||','|| st.ID
             FROM cfg_logistics_cost_import_field st JOIN T ON st.PARENT_ID = T.ID
         )
-        SELECT ID,field,field_name,field_type,PARENT_ID,PATH FROM T ORDER BY 	PATH;
+        SELECT ID,field,field_name,field_type,PARENT_ID,query_option_id AS queryOptionId,option_list AS optionList,unit_type AS unitType,standard_unit AS standardUnit,PATH FROM T ORDER BY 	PATH;
     </select>
 
 </mapper>

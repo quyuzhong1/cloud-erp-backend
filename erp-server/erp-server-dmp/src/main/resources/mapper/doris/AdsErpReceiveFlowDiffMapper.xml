@@ -86,8 +86,8 @@
 
 	<select id="total" resultType="com.erp.model.dmp.dto.AdsErpReceiveFlowDiffDTO$TotalDTO">
         select
-        IFNULL(sum( CASE WHEN platform_bill_name IS NOT NULL AND platform_bill_name != '' THEN 1 ELSE 0 END ), 0) AS totalPlatformQty,
-        IFNULL(sum( CASE WHEN bill_name IS NOT NULL AND bill_name != '' THEN 1 ELSE 0 END ),0) AS totalErpQty,
+        IFNULL(sum( abs( stock_qty ) ),0) AS totalPlatformQty,
+        IFNULL(sum( abs( qty ) ),0) AS totalErpQty,
         IFNULL(sum( abs( diff_qty ) ),0) AS totalDiffQty
         from ads_erp_receive_flow_diff t
         WHERE ${params.sqlMap.default}

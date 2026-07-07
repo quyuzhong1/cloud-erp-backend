@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -15,6 +16,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.message.constant.DistributeKeyConstant;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -189,8 +191,8 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
             Map<String, List<CfgRuleConditionDTO.ConditionElementDTO>> oldGroup = oldConditionList.stream().collect(Collectors.groupingBy(CfgRuleConditionDTO.ConditionElementDTO::getRuleId));
 
             //单据类型
-            List<DictBasicDTO.ViewDTO> thirdNoticeBusinessType = dictBasicService.listByType("thirdNoticeBusinessType");
-            Map<String, String> businessTypeMap = thirdNoticeBusinessType.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getValue, DictBasicDTO.ViewDTO::getName,(o1,o2) -> o1));
+            List<DictBasicEntity> thirdNoticeBusinessType = dictBasicService.listByType("thirdNoticeBusinessType");
+            Map<String, String> businessTypeMap = thirdNoticeBusinessType.stream().collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName,(o1,o2) -> o1));
 
             for (CfgThirdNoticeEntity oldEntity : oldList) {
                 List<CfgRuleConditionDTO.ConditionElementDTO> conditionElementDTOS = oldGroup.get(oldEntity);
@@ -290,6 +292,7 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.SYS_USER_AUTH_KEY, keyName = "addOrUpdateDTO.id", unlockAfterTx = true)
     public Boolean update(CfgThirdNoticeDTO.UpdateDTO addOrUpdateDTO) {
         //校验通知人员不能全部为空
         List<String> roleTypeList = addOrUpdateDTO.getRoleTypeList();
@@ -446,8 +449,8 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
 
     private void fillList(List<CfgThirdNoticeDTO.ListDTO> records) {
         //单据类型
-        List<DictBasicDTO.ViewDTO> thirdNoticeBusinessType = dictBasicService.listByType("thirdNoticeBusinessType");
-        Map<String, String> businessTypeMap = thirdNoticeBusinessType.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getValue, DictBasicDTO.ViewDTO::getName,(o1,o2) -> o1));
+        List<DictBasicEntity> thirdNoticeBusinessType = dictBasicService.listByType("thirdNoticeBusinessType");
+        Map<String, String> businessTypeMap = thirdNoticeBusinessType.stream().collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName,(o1,o2) -> o1));
         //飞书
         for (CfgThirdNoticeDTO.ListDTO record : records) {
             record.setBusinessTypeName(businessTypeMap.getOrDefault(record.getBusinessType(),""));
@@ -524,7 +527,7 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
         data.setApplyScopeName(CfgThirdNoticeApplyScopeEnum.getName(entity.getApplyScope()));
 
         //单据类型
-        List<DictBasicDTO.ViewDTO> thirdNoticeBusinessType = dictBasicService.listByType("thirdNoticeBusinessType");
+        List<DictBasicEntity> thirdNoticeBusinessType = dictBasicService.listByType("thirdNoticeBusinessType");
         thirdNoticeBusinessType.stream().filter(e -> e.getValue().equals(entity.getBusinessType())).findFirst().ifPresent(e -> data.setBusinessTypeName(e.getName()));
 
         String method = data.getMethod();
@@ -594,8 +597,8 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
                 .eq(CfgApproveSyncFieldMapEntity::getMainId, id)
                 .update();
         //单据类型
-        List<DictBasicDTO.ViewDTO> thirdNoticeBusinessType = dictBasicService.listByType("thirdNoticeBusinessType");
-        Map<String, String> businessTypeMap = thirdNoticeBusinessType.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getValue, DictBasicDTO.ViewDTO::getName,(o1,o2) -> o1));
+        List<DictBasicEntity> thirdNoticeBusinessType = dictBasicService.listByType("thirdNoticeBusinessType");
+        Map<String, String> businessTypeMap = thirdNoticeBusinessType.stream().collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName,(o1,o2) -> o1));
         // 删除日志数据
         String msg = StrUtil.format("用户【{}】操作【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), "三方通知配置");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_THIRD_NOTICE.getCode(), entity.getId(), "删除三方通知配置数据");
@@ -603,6 +606,7 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
     }
 
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.SYS_USER_AUTH_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO enable(String id, Boolean noticeStatus) {
         CfgThirdNoticeEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到三方通知配置数据"));
         if(!entity.getNoticeStatus().equals(noticeStatus)){

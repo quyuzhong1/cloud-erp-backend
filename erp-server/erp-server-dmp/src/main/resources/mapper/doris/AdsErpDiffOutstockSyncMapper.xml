@@ -99,6 +99,7 @@
         t.platform_warehouse_name platformWarehouseName,
         t.warehouse_name warehouseName,
         t.platform_bill_date platformBillDate,
+        t.platform_track_no as platformTrackNo,
         t.bill_name billName,
         t.bill_status_name billStatusName,
         t.shop_name shopName,
@@ -111,6 +112,7 @@
         t.sku_qty skuQty,
         t.erp_warehouse_name erpWarehouseName,
         t.bill_date billDate,
+        t.track_no as trackNo,
         t.diff_qty diffQty, 
         t.diff_tag_name diffTagName, 
         t.diff_desc diffDesc,
@@ -157,8 +159,8 @@
 
 	<select id="total" resultType="com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO$TotalDTO">
         select
-        IFNULL(sum( CASE WHEN platform_bill_name IS NOT NULL AND platform_bill_name != '' THEN 1 ELSE 0 END ), 0) AS totalPlatformQty,
-        IFNULL(sum( CASE WHEN bill_name IS NOT NULL AND bill_name != '' THEN 1 ELSE 0 END ),0) AS totalErpQty,
+        IFNULL(sum( abs( stock_qty ) ),0) AS totalPlatformQty,
+        IFNULL(sum( abs( qty ) ),0) AS totalErpQty,
         IFNULL(sum( abs( diff_qty ) ),0) AS totalDiffQty
         from ads_erp_diff_outstock_sync t
         WHERE ${params.sqlMap.default}

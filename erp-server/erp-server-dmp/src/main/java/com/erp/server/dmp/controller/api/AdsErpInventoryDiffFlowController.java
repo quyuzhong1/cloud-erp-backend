@@ -1,26 +1,6 @@
 package com.erp.server.dmp.controller.api;
 
 
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
-
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.core.io.DefaultResourceLoader;
-import org.springframework.core.io.ResourceLoader;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
-
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
@@ -32,10 +12,24 @@ import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.AdsErpInventoryDiffFlowDTO;
+import com.erp.server.dmp.enums.InventoryMonthCheckEnum;
 import com.erp.server.dmp.query.AdsErpInventoryDiffFlowQueryHandler;
 import com.erp.server.dmp.service.AdsErpInventoryDiffFlowService;
-
+import com.erp.server.dmp.service.DmpCfgInputDetailService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 
 /**
  * 第三方仓流水差异表
@@ -51,6 +45,9 @@ public class AdsErpInventoryDiffFlowController extends BaseController {
 
     @Resource
     private AdsErpInventoryDiffFlowService adsErpInventoryDiffFlowService;
+
+    @Resource
+    private DmpCfgInputDetailService dmpCfgInputDetailService;
 
     /**
     * 列表查询
@@ -88,7 +85,8 @@ public class AdsErpInventoryDiffFlowController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "第三方仓流水差异表重新生成")
     @PostMapping(value = "/reCreate")
     public ApiResult<Boolean> reCreate(@RequestBody @Validated AdsErpInventoryDiffFlowDTO.ReCreateDTO dto) {
-        return success(adsErpInventoryDiffFlowService.reCreate(dto));
+        dmpCfgInputDetailService.reCreateInventoryMonthCheck(InventoryMonthCheckEnum.ADS_ERP_INVENTORY_DIFF_FLOW, dto.getCheckMonth(), dto.getSourceSystem());
+        return success(Boolean.TRUE);
     }
     
     /**

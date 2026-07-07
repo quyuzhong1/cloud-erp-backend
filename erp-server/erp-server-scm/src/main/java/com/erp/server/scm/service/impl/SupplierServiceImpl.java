@@ -16,6 +16,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.dto.ApproveDTO;
@@ -34,6 +35,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.DictCityTypeEnum;
 import com.common.core.exception.ServiceException;
+import com.common.message.constant.DistributeKeyConstant;
 import com.common.core.utils.*;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.entity.ApplicationCategoryEntity;
@@ -234,10 +236,8 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         String supplierId = IdWorker.getIdStr();
         SupplierEntity addEntity = BeanUtil.toBean(dto, SupplierEntity.class);
 
-        List<String> keyList = new ArrayList<>(1);
-        keyList.add(DictBasicEnum.SUPPLIER_CATEGORY.getType());
         //根据 key list 获取到对应数据
-        List<DictBasicEntity> dictBasicList = dictBasicService.getByKeyList(keyList);
+        List<DictBasicEntity> dictBasicList = dictBasicService.getByKey(DictBasicEnum.SUPPLIER_CATEGORY.getType());
         String categoryId = dto.getCategoryId();
         String categoryName = dictBasicList.stream().filter(d -> d.getId().equals(categoryId)).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
@@ -408,9 +408,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         String productCategoryNames = supplier.getProductCategoryJson().stream().map(obj -> getProductCategoryName(productCategoryList,obj,Boolean.TRUE)).collect(Collectors.joining(","));
         result.setProductCategoryNames(productCategoryNames);
         //根据 key list 获取到对应数据
-        List<String> keyList = new ArrayList<>(1);
-        keyList.add(DictBasicEnum.SUPPLIER_CATEGORY.getType());
-        List<DictBasicEntity> dictBasicList = dictBasicService.getByKeyList(keyList);
+        List<DictBasicEntity> dictBasicList = dictBasicService.getByKey(DictBasicEnum.SUPPLIER_CATEGORY.getType());
         Map<String, DictBasicEntity> dictMap = CollUtil.isEmpty(dictBasicList) ? new HashMap<>() : dictBasicList.stream().collect(Collectors.toMap(DictBasicEntity::getId, Function.identity()));
         result.setCategoryName(getCategoryName(dictMap,result.getCategoryId(),Boolean.TRUE));
         //根据供应商id 查询 联系人信息
@@ -517,10 +515,8 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             FindUserDTO user = sysUserFeign.getUserByUserId(purchaseUserId);
             supplier.setPurchaseUserName(user != null ? user.getUserName() : "");
         }
-        List<String> keyList = new ArrayList<>(1);
-        keyList.add(DictBasicEnum.SUPPLIER_CATEGORY.getType());
         //根据 key list 获取到对应数据
-        List<DictBasicEntity> dictBasicList = dictBasicService.getByKeyList(keyList);
+        List<DictBasicEntity> dictBasicList = dictBasicService.getByKey(DictBasicEnum.SUPPLIER_CATEGORY.getType());
         String categoryId = dto.getCategoryId();
         String categoryName = dictBasicList.stream().filter(d -> d.getId().equals(categoryId)).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
@@ -1413,6 +1409,11 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         if (CollUtil.isEmpty(supplierList)) {
             return Maps.newHashMap();
         }
+        List<String> keyList = new ArrayList<>(5);
+        keyList.add(DictBasicEnum.CERTIFICATE.getType());
+        //根据 key list 获取到对应数据
+        List<DictBasicEntity> dictBasicList = dictBasicService.getByKeyList(keyList);
+
         Map<String, SupplierEntity> supplierEntityMap = supplierList.stream().collect(Collectors.toMap(SupplierEntity::getId, Function.identity()));
 
         Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = Maps.newHashMapWithExpectedSize(supplierEntityMap.size());
@@ -1422,6 +1423,16 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             supplierSimpleDTO.setCode(sup.getCode());
             supplierSimpleDTO.setName(sup.getName());
             supplierSimpleDTO.setDisabled(sup.getDisabled());
+            supplierSimpleDTO.setCertificateJson(sup.getCertificateJson());
+            //体系认证名称
+            String certificateJson = CollUtil.emptyIfNull(sup.getCertificateJson()).stream()
+                    .map(obj -> dictBasicList.stream()
+                            .filter(e -> CharSequenceUtil.equals(obj.toString(), e.getValue())
+                                    && CharSequenceUtil.equals(e.getType(), DictBasicEnum.CERTIFICATE.getType()))
+                            .map(DictBasicEntity::getName)
+                            .findFirst().orElse(""))
+                    .collect(Collectors.joining(","));
+            supplierSimpleDTO.setCertificateNames(certificateJson);
             supplierMap.put(id, supplierSimpleDTO);
         });
         return supplierMap;
@@ -1833,6 +1844,7 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "updateApproveStatusDTO.supplierEntity.id", unlockAfterTx = true)
     public void updateApproveStatus(SupplierDTO.UpdateApproveStatusDTO updateApproveStatusDTO) {
         ApproveStatusEnum approveStatus = updateApproveStatusDTO.getApproveStatus();
         SupplierEntity supplierEntity = updateApproveStatusDTO.getSupplierEntity();
@@ -2428,6 +2440,16 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
                     return map;
                 })
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public SupplierDTO.SupplierBaseInfoDTO getBaseInfo(String id) {
+        SupplierEntity supplier = this.getById(id);
+        if (Objects.isNull(supplier)) {
+            throw new ServiceException(ApiError.SUPPLIER_NOT_FOUND);
+        }
+        SupplierDTO.SupplierBaseInfoDTO result = BeanUtil.toBean(supplier, SupplierDTO.SupplierBaseInfoDTO.class);
+        return result;
     }
 
 

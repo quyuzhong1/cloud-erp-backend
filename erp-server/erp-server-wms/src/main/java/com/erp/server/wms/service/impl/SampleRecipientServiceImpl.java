@@ -12,6 +12,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
@@ -42,6 +43,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.message.constant.DistributeKeyConstant;
 import org.springframework.beans.BeanUtils;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.ProductDetailDTO;
@@ -168,7 +170,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     private DictBasicService dictBasicService;
     @Autowired
     @Lazy
-    private SampleRecipientService _this;
+    private SampleRecipientService service;
 
     // 缓存相关常量
     private static final String CACHE_WAREHOUSE_NAME_TO_ID = "sample_recipient:warehouse_name_to_id:";
@@ -718,6 +720,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "dto.id", unlockAfterTx = true)
     public BatchResultDTO approve(ApproveOneDTO dto, ClientTypeEnum clientType) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
@@ -747,7 +750,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO approve(ApproveOneDTO dto) {
-        return this.approve(dto,ClientTypeEnum.WEB);
+        return service.approve(dto, ClientTypeEnum.WEB);
     }
 
     /**
@@ -772,9 +775,9 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         approveDTO.getVariablesMap().put("totalQty", totalQty);
         
         // 确保usageCn变量不为null，使用字典服务获取样品用途名称
-        List<DictBasicDTO.ListDTO> dictList = dictBasicService.getByKey(DictBasicEnum.SAMPLE_USAGE.getKey());
+        List<DictBasicEntity> dictList = dictBasicService.getByKey(DictBasicEnum.SAMPLE_USAGE.getKey());
         Map<String, String> usageMap = dictList.stream()
-                .collect(Collectors.toMap(DictBasicDTO.ListDTO::getValue, DictBasicDTO.ListDTO::getName, (v1, v2) -> v1));
+                .collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName, (v1, v2) -> v1));
         String usageCn = usageMap.getOrDefault(entity.getUsage(), "");
         if (StringUtils.isBlank(usageCn)) {
             log.warn("usageCn is blank for entity usage: {}", entity.getUsage());
@@ -1291,9 +1294,9 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
         startDTO.getVariablesMap().put("totalQty", totalQty);
 
         // 确保usageCn变量不为null，使用字典服务获取样品用途名称
-        List<DictBasicDTO.ListDTO> dictList = dictBasicService.getByKey(DictBasicEnum.SAMPLE_USAGE.getKey());
+        List<DictBasicEntity> dictList = dictBasicService.getByKey(DictBasicEnum.SAMPLE_USAGE.getKey());
         Map<String, String> usageMap = dictList.stream()
-                .collect(Collectors.toMap(DictBasicDTO.ListDTO::getValue, DictBasicDTO.ListDTO::getName, (v1, v2) -> v1));
+                .collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName, (v1, v2) -> v1));
         String usageCn = usageMap.getOrDefault(entity.getUsage(), "");
         if (StringUtils.isBlank(usageCn)) {
             log.warn("usageCn is blank for entity usage: {}", entity.getUsage());
@@ -1426,9 +1429,9 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 .collect(Collectors.toMap(FindUserDTO::getUserId, FindUserDTO::getUserName, (existing, replacement) -> existing));
 
         // 查询样品用途字典并转换为Map
-        List<DictBasicDTO.ListDTO> usageDictList = dictBasicService.getByKey(DictBasicEnum.SAMPLE_USAGE.getKey());
+        List<DictBasicEntity> usageDictList = dictBasicService.getByKey(DictBasicEnum.SAMPLE_USAGE.getKey());
         Map<String, String> usageNameMap = usageDictList.stream()
-                .collect(Collectors.toMap(DictBasicDTO.ListDTO::getValue, DictBasicDTO.ListDTO::getName, (v1, v2) -> v1));
+                .collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName, (v1, v2) -> v1));
 
         // 属性赋值
         for(SampleRecipientDTO.ListDTO data : list) {
@@ -2402,7 +2405,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
                 
                 try {
                     // 为每个领用单创建一个其他出库单，详情数据为列表数据
-                    BatchResultDTO resultDTO = _this.createOtherOutboundOrderBySourceId(sourceId, items);
+                    BatchResultDTO resultDTO = service.createOtherOutboundOrderBySourceId(sourceId, items);
                     resultDTOS.add(resultDTO);
                     
                 } catch (Exception e) {
@@ -2561,9 +2564,9 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
             addDTO.setRemark(sampleRecipient.getUsageDesc()); // 备注
             // 用途：从字典获取中文名称
             if (StringUtils.isNotBlank(sampleRecipient.getUsage())) {
-                List<DictBasicDTO.ListDTO> usageDictList = dictBasicService.getByKey(DictBasicEnum.SAMPLE_USAGE.getKey());
+                List<DictBasicEntity> usageDictList = dictBasicService.getByKey(DictBasicEnum.SAMPLE_USAGE.getKey());
                 Map<String, String> usageNameMap = usageDictList.stream()
-                        .collect(Collectors.toMap(DictBasicDTO.ListDTO::getValue, DictBasicDTO.ListDTO::getName, (v1, v2) -> v1));
+                        .collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName, (v1, v2) -> v1));
                 String usageCn = usageNameMap.getOrDefault(sampleRecipient.getUsage(), sampleRecipient.getUsage());
                 addDTO.setUsage(usageCn);
             } else {
@@ -2714,6 +2717,7 @@ public class SampleRecipientServiceImpl extends SuperServiceImpl<SampleRecipient
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.WMS_IMPORT_TASK_KEY, keyName = "dto.taskId", unlockAfterTx = true)
     public void importSampleRecipient(BaseDTO.ImportDTO dto) {
         // SKU信息
         List<SkuVO> skuList = plmTaskFeign.listApproveSku();

@@ -14,6 +14,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.FindUserDTO;
@@ -35,6 +36,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.server.rule.SpElServer;
 import com.common.core.utils.BeanMapper;
+import com.common.message.constant.DistributeKeyConstant;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -186,9 +188,9 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
 
     private void fillList(List<ThirdNoticePushRecordDTO.ListDTO> records) {
 
-        List<DictBasicDTO.ViewDTO> viewDTOS = dictBasicService.listByType("thirdNoticeBusinessType");
+        List<DictBasicEntity> viewDTOS = dictBasicService.listByType("thirdNoticeBusinessType");
 
-        Map<String, String> map = viewDTOS.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getValue, DictBasicDTO.ViewDTO::getName, (o1, o2) -> o1));
+        Map<String, String> map = viewDTOS.stream().collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName, (o1, o2) -> o1));
 
         for (ThirdNoticePushRecordDTO.ListDTO record : records) {
 
@@ -238,6 +240,7 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.SYS_USER_AUTH_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO repush(String id) {
         ThirdNoticePushRecordEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到三方通知推送记录数据"));
         if(entity.getStatus().equals(ThirdNoticePushRecordStatusEnum.SUCCESS.getCode())){

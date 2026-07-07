@@ -35,15 +35,6 @@ public class SoOutstockQueryHandler extends AbstractQueryHandler {
     private CustomerFeign customerFeign;
 
     @Resource
-    private LogisticsBillFeign logisticsBillFeign;
-
-    @Resource
-    private SoInfoFeign soInfoFeign;
-
-    @Resource
-    private SoB2cFeign soB2cFeign;
-
-    @Resource
     private SysPartitionFeign sysPartitionFeign;
 
     @Override
@@ -84,80 +75,6 @@ public class SoOutstockQueryHandler extends AbstractQueryHandler {
 
             }
         }
-        if("ci.platform_type".equals(field)){
-        	List<String> list = com.common.business.utils.CollectionUtils.convertStrClzToList(value);
-            List<CustomerInfoEntity> customerList = FeignQuery.create(CustomerInfoEntity.class).in(CustomerInfoEntity::getPlatformType, list).list();
-            if (CollectionUtils.isEmpty(customerList)) {
-                return getQueryAllSql();
-            }
-            List<String> customerIds = customerList.stream().map(v->v.getId()).collect(Collectors.toList());
-            super.buildDefaultDTO("so.customer_id", customerIds);
-        }
-
-        /**
-         * 军区编码查询
-         */
-        if("partitionCode".equals(field)){
-            String queryField = "code";
-            List<AdvanceQueryDTO> advanceQueryDTOList = new ArrayList<>();
-            QueryConditionEnum queryConditionEnum = AdvanceQueryContext.getCompareCode();
-            if(queryConditionEnum.equals(QueryConditionEnum.EQ) || queryConditionEnum.equals(QueryConditionEnum.IN_LIST) || queryConditionEnum.equals(QueryConditionEnum.CONTAINS)
-                    || queryConditionEnum.equals(QueryConditionEnum.STARTS_WITH) ||  queryConditionEnum.equals(QueryConditionEnum.ENDS_WITH)){
-                AdvanceQueryDTO advanceQueryDTO = AdvanceQueryDTO.buildSplicingSQLDTO(queryField,queryConditionEnum,value,QueryDataTypeEnum.STRING);
-                advanceQueryDTOList.add(advanceQueryDTO);
-                AdvanceQueryContainer advanceQueryContainer = AdvanceQueryContainer.builder().advanceQueryDTOList(advanceQueryDTOList).build();
-                List<DictPartitionEntity> partitionEntities = sysPartitionFeign.listByAdvanceQuery(advanceQueryContainer);
-                List<String> partitionIds = partitionEntities.stream().map(DictPartitionEntity::getId).distinct().collect(Collectors.toList());
-                if(CollectionUtils.isEmpty(partitionIds)){
-                    return this.getQueryEmptySql();
-                }
-                super.buildSplicingSQLDTO("COALESCE(si.partition_id, sbr.partition_id)",QueryConditionEnum.IN_LIST,partitionIds, QueryDataTypeEnum.STRING);
-            }
-            if(queryConditionEnum.equals(QueryConditionEnum.NE) || queryConditionEnum.equals(QueryConditionEnum.NOT_IN_LIST) || queryConditionEnum.equals(QueryConditionEnum.NOT_CONTAINS)){
-                AdvanceQueryDTO advanceQueryDTO = AdvanceQueryDTO.buildSplicingSQLDTO(queryField,QueryConditionEnum.IN_LIST,value,QueryDataTypeEnum.STRING);
-                advanceQueryDTOList.add(advanceQueryDTO);
-                AdvanceQueryContainer advanceQueryContainer = AdvanceQueryContainer.builder().advanceQueryDTOList(advanceQueryDTOList).build();
-                List<DictPartitionEntity> partitionEntities = sysPartitionFeign.listByAdvanceQuery(advanceQueryContainer);
-                List<String> partitionIds = partitionEntities.stream().map(DictPartitionEntity::getId).distinct().collect(Collectors.toList());
-                if(CollectionUtils.isEmpty(partitionIds)){
-                    return this.getQueryAllSql();
-                }
-                super.buildSplicingSQLDTO("COALESCE(si.partition_id, sbr.partition_id)",QueryConditionEnum.NOT_IN_LIST,partitionIds,QueryDataTypeEnum.STRING);
-            }
-        }
-
-        /**
-         * 军区名称查询
-         */
-        if("partitionName".equals(field)){
-            String queryField = "name";
-            List<AdvanceQueryDTO> advanceQueryDTOList = new ArrayList<>();
-            QueryConditionEnum queryConditionEnum = AdvanceQueryContext.getCompareCode();
-            if(queryConditionEnum.equals(QueryConditionEnum.EQ) || queryConditionEnum.equals(QueryConditionEnum.IN_LIST) || queryConditionEnum.equals(QueryConditionEnum.CONTAINS)
-                    || queryConditionEnum.equals(QueryConditionEnum.STARTS_WITH) ||  queryConditionEnum.equals(QueryConditionEnum.ENDS_WITH)){
-                AdvanceQueryDTO advanceQueryDTO = AdvanceQueryDTO.buildSplicingSQLDTO(queryField,queryConditionEnum,value,QueryDataTypeEnum.STRING);
-                advanceQueryDTOList.add(advanceQueryDTO);
-                AdvanceQueryContainer advanceQueryContainer = AdvanceQueryContainer.builder().advanceQueryDTOList(advanceQueryDTOList).build();
-                List<DictPartitionEntity> partitionEntities = sysPartitionFeign.listByAdvanceQuery(advanceQueryContainer);
-                List<String> partitionIds = partitionEntities.stream().map(DictPartitionEntity::getId).distinct().collect(Collectors.toList());
-                if(CollectionUtils.isEmpty(partitionIds)){
-                    return this.getQueryEmptySql();
-                }
-                super.buildSplicingSQLDTO("COALESCE(si.partition_id, sbr.partition_id)",QueryConditionEnum.IN_LIST,partitionIds, QueryDataTypeEnum.STRING);
-            }
-            if(queryConditionEnum.equals(QueryConditionEnum.NE) || queryConditionEnum.equals(QueryConditionEnum.NOT_IN_LIST) || queryConditionEnum.equals(QueryConditionEnum.NOT_CONTAINS)){
-                AdvanceQueryDTO advanceQueryDTO = AdvanceQueryDTO.buildSplicingSQLDTO(queryField,QueryConditionEnum.IN_LIST,value,QueryDataTypeEnum.STRING);
-                advanceQueryDTOList.add(advanceQueryDTO);
-                AdvanceQueryContainer advanceQueryContainer = AdvanceQueryContainer.builder().advanceQueryDTOList(advanceQueryDTOList).build();
-                List<DictPartitionEntity> partitionEntities = sysPartitionFeign.listByAdvanceQuery(advanceQueryContainer);
-                List<String> partitionIds = partitionEntities.stream().map(DictPartitionEntity::getId).distinct().collect(Collectors.toList());
-                if(CollectionUtils.isEmpty(partitionIds)){
-                    return this.getQueryAllSql();
-                }
-                super.buildSplicingSQLDTO("COALESCE(si.partition_id, sbr.partition_id)",QueryConditionEnum.NOT_IN_LIST,partitionIds,QueryDataTypeEnum.STRING);
-            }
-        }
-
         return null;
     }
 }

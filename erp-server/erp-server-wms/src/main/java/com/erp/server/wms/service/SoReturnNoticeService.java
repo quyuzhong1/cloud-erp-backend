@@ -215,8 +215,6 @@ public interface SoReturnNoticeService extends SuperService<SoReturnNoticeEntity
     List<SoReturnNoticeEntity> listBySourceId(List<String> sourceIds);
 
 
-    PagingVO<SoReturnNoticeDTO.PagingView> exportSoReturnNotice(PagingDTO<SoReturnNoticeDTO.PagingParam> dto);
-
     void generateSoB2cReturnNotice(List<SoB2cReturnDTO.GenerateSoReturnNoticeView> list);
 
     BigDecimal calLocalCurrency(BigDecimal exchangeRate, BigDecimal returnAmount);

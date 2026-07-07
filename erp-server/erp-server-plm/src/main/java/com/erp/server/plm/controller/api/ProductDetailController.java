@@ -22,6 +22,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.dto.excel.ProductWarehouseLocationExcelDTO;
+import com.erp.model.plm.validation.PlmProductInfoWarrantyRequired;
 import com.erp.model.plm.entity.*;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.server.plm.service.ProductBrandService;
@@ -47,6 +48,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import javax.validation.groups.Default;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -125,6 +127,7 @@ public class ProductDetailController extends BaseController {
      * @Author Luo_WG
      * @Date 2023/6/25 10:06
      **/
+    @LogAction(value = LogActionEnum.INSERT, desc = "产品管理添加产品国外海关编码")
     @PostMapping("/addProductCustoms")
     public ApiResult addProductCustoms() {
         Boolean flag = productCustomsService.addProductCustoms();
@@ -284,7 +287,7 @@ public class ProductDetailController extends BaseController {
     @LogAction(value = LogActionEnum.UNKNOWN_UPDATE, desc = "产品信息-无规格-新增/修改")
     @PostMapping("/saveOrUpdateNoSpec")
     //@RequestPermissions("plm:product:detail:saveOrUpdateNoSpec")
-    public ApiResult saveOrUpdateNoSpec(@RequestBody @Validated ProductNoSpecDTO productNoSpecDTO) {
+    public ApiResult saveOrUpdateNoSpec(@RequestBody @Validated({Default.class, PlmProductInfoWarrantyRequired.class}) ProductNoSpecDTO productNoSpecDTO) {
         Boolean flag = productDetailService.saveOrUpdateNoSpec(productNoSpecDTO);
         return flag == true ? this.success() : this.failure();
     }
@@ -300,7 +303,7 @@ public class ProductDetailController extends BaseController {
     @LogAction(value = LogActionEnum.UNKNOWN_UPDATE, desc = "产品信息-多规格-新增/修改")
     @PostMapping("/saveOrUpdateManySpec")
     //@RequestPermissions("plm:product:detail:saveOrUpdateManySpec")
-    public ApiResult saveOrUpdateManySpec(@RequestBody @Validated ProductManySpecDTO productManySpecDTO) {
+    public ApiResult saveOrUpdateManySpec(@RequestBody @Validated(Default.class) ProductManySpecDTO productManySpecDTO) {
         Boolean flag = productDetailService.saveOrUpdateManySpec(productManySpecDTO);
         return flag == true ? this.success() : this.failure();
     }
@@ -344,7 +347,7 @@ public class ProductDetailController extends BaseController {
      */
     @LogAction(value = LogActionEnum.INSERT, desc = "产品信息-多规格-添加sku关联")
     @PostMapping("/changeSkuBySpu")
-    public ApiResult<List<ProductDetailEntity>> changeSkuBySpu(@RequestBody @Validated ChangeSkuToSpuDTO changeSkuToSpuDTO) {
+    public ApiResult<List<ProductDetailEntity>> changeSkuBySpu(@RequestBody @Validated({Default.class, PlmProductInfoWarrantyRequired.class}) ChangeSkuToSpuDTO changeSkuToSpuDTO) {
         List<ProductDetailEntity> list = productDetailService.changeSkuBySpu(changeSkuToSpuDTO);
         return this.success(list);
     }
@@ -1453,6 +1456,7 @@ public class ProductDetailController extends BaseController {
     /**
      * 首次推送sku到旺店通
      */
+    @LogAction(value = LogActionEnum.UPDATE, desc = "产品管理首次推送SKU到旺店通")
     @GetMapping("/initProductToWangDian")
     public ApiResult<String> initProductToWangDian(@RequestParam(required = false) List<String> ids){
         productDetailService.initProductToWangDian(ids);
@@ -1462,6 +1466,7 @@ public class ProductDetailController extends BaseController {
     /**
      * 首次推送sku到领星
      */
+    @LogAction(value = LogActionEnum.UPDATE, desc = "产品管理首次推送SKU到领星")
     @GetMapping("/initProductToLingXing")
     public ApiResult<String> initProductToLingXing(@RequestParam(required = false) List<String> ids){
         productDetailService.initProductToLingXing(ids);
@@ -1477,6 +1482,7 @@ public class ProductDetailController extends BaseController {
      * @Date 2024/5/08 11:46
      * @Desc 历史数据sku 增加默认值 并且把已存在目的国海关编码值移到custom中
      **/
+    @LogAction(value = LogActionEnum.UPDATE, desc = "产品管理初始化目的国海关信息")
     @PostMapping("/initProductCustom")
     public ApiResult initProductCustom(@RequestBody(required = false) List<String> skuIds) {
         productDetailService.initProductCustom(skuIds);
@@ -1498,6 +1504,7 @@ public class ProductDetailController extends BaseController {
      * @param dto
      * @return
      */
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "产品管理目的国申报价重算")
     @PostMapping("/resetDestDeclarePrice")
     public ApiResult<List<BatchResultDTO>> resetDestDeclarePrice(@RequestBody @Validated BaseIdsDTO.IdsDTO dto){
         List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
@@ -1541,6 +1548,7 @@ public class ProductDetailController extends BaseController {
      * @Author jack
      * @Date 2025-07-25
      **/
+    @LogAction(value = LogActionEnum.UPDATE, desc = "产品管理上传SKU图片")
     @PostMapping("/uploadProductImage")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "charge_id",
@@ -1558,6 +1566,7 @@ public class ProductDetailController extends BaseController {
      * @Author jack
      * @Date 2025-07-25
      **/
+    @LogAction(value = LogActionEnum.IMPORT, desc = "产品管理导入ZIP图片")
     @PostMapping(value = "/importZip")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "charge_id",

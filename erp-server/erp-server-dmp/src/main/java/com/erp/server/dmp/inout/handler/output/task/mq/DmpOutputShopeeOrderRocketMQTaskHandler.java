@@ -9,8 +9,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -32,6 +34,8 @@ import com.erp.model.dmp.entity.DmpSoReceiverEntity;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
+import com.erp.server.dmp.service.DmpSoDetailService;
+import com.erp.server.dmp.service.DmpSoReceiverService;
 import com.sdk.oms.shopee.enums.OrderStatusEnum;
 
 import cn.hutool.core.collection.CollUtil;
@@ -39,6 +43,13 @@ import cn.hutool.core.collection.CollUtil;
 @Service
 @Scope("prototype")
 public class DmpOutputShopeeOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler{
+
+	private static final int BATCH_SIZE = 500;
+
+	@Autowired
+	private DmpSoDetailService dmpSoDetailService;
+	@Autowired
+	private DmpSoReceiverService dmpSoReceiverService;
 
 	@Override
 	public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
@@ -106,6 +117,9 @@ public class DmpOutputShopeeOrderRocketMQTaskHandler extends DmpOutputRocketMQTa
 			}
 		}
 		
+		supplementOrderDetails(changeIds, dmpSoDetailEntityMap);
+		supplementOrderReceivers(changeIds, dmpSoReceiverEntityMap);
+
 		Map<String, String> map = new HashMap<>();
 		String cfgOutputId = dmpResponse.getDmpCfgOutputEntity().getId();
 		for(String changId : changeIds) {
@@ -116,6 +130,44 @@ public class DmpOutputShopeeOrderRocketMQTaskHandler extends DmpOutputRocketMQTa
 			}
 		}
 		return map;
+	}
+
+	private void supplementOrderDetails(Set<String> changeIds, Map<String, List<DmpSoDetailEntity>> dmpSoDetailEntityMap) {
+		if (CollUtil.isEmpty(changeIds)) {
+			return;
+		}
+		List<String> idList = changeIds.stream().filter(StringUtils::isNotBlank).collect(Collectors.toList());
+		for (int fromIndex = 0; fromIndex < idList.size(); fromIndex += BATCH_SIZE) {
+			List<String> batchIds = idList.subList(fromIndex, Math.min(fromIndex + BATCH_SIZE, idList.size()));
+			List<DmpSoDetailEntity> detailEntityList = dmpSoDetailService.lambdaQuery()
+					.in(DmpSoDetailEntity::getMainId, batchIds)
+					.eq(DmpSoDetailEntity::getIsDeleted, Boolean.FALSE)
+					.list();
+			if (CollUtil.isNotEmpty(detailEntityList)) {
+				detailEntityList.stream()
+						.collect(Collectors.groupingBy(DmpSoDetailEntity::getMainId))
+						.forEach(dmpSoDetailEntityMap::put);
+			}
+		}
+	}
+
+	private void supplementOrderReceivers(Set<String> changeIds, Map<String, List<DmpSoReceiverEntity>> dmpSoReceiverEntityMap) {
+		if (CollUtil.isEmpty(changeIds)) {
+			return;
+		}
+		List<String> idList = changeIds.stream().filter(StringUtils::isNotBlank).collect(Collectors.toList());
+		for (int fromIndex = 0; fromIndex < idList.size(); fromIndex += BATCH_SIZE) {
+			List<String> batchIds = idList.subList(fromIndex, Math.min(fromIndex + BATCH_SIZE, idList.size()));
+			List<DmpSoReceiverEntity> receiverEntityList = dmpSoReceiverService.lambdaQuery()
+					.in(DmpSoReceiverEntity::getMainId, batchIds)
+					.eq(DmpSoReceiverEntity::getIsDeleted, Boolean.FALSE)
+					.list();
+			if (CollUtil.isNotEmpty(receiverEntityList)) {
+				receiverEntityList.stream()
+						.collect(Collectors.groupingBy(DmpSoReceiverEntity::getMainId))
+						.forEach(dmpSoReceiverEntityMap::put);
+			}
+		}
 	}
 
 	private PlatformOrderDTO convert(DmpSoInfoEntity dmpSoInfoEntity , List<DmpSoDetailEntity> dmpSoDetailEntityList , List<DmpSoReceiverEntity> dmpSoReceiverEntityList, String cfgOutputId) {
@@ -224,6 +276,7 @@ public class DmpOutputShopeeOrderRocketMQTaskHandler extends DmpOutputRocketMQTa
 	            .postCode(dmpSoReceiverEntity.getPostCode())
 	            .firstAddress(dmpSoReceiverEntity.getFullAddress())
 	            .fullAddress(dmpSoReceiverEntity.getFullAddress())
+	            .receiverTaxNo(dmpSoReceiverEntity.getReceiverTaxNo())
 	            .build();
         	orderDTO.setReceiver(receiver);
         }
@@ -326,7 +379,7 @@ public class DmpOutputShopeeOrderRocketMQTaskHandler extends DmpOutputRocketMQTa
         			PlatformOrderLogisticsDTO dto = PlatformOrderLogisticsDTO.builder()
 //                          .code(p.getPackageNumber())
                           .name(LogisticsPlatformEnum.SHOPEE.getName())
-//                          .deliveryTime(dmpSoInfoEntity.getDeliveryTime())
+                          .deliveryTime(dmpSoInfoEntity.getDeliveryTime())
 //                          .logisticsChannelName(p.getShippingCarrier())
                           .estimatedShippingCost(dmpSoInfoEntity.getEstimatedShippingFee())
                           .actualShippingCost(dmpSoInfoEntity.getActualShippingFee())

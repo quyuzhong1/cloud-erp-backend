@@ -74,6 +74,7 @@ public enum SourceTypeEnum {
     FBA_SHIPMENT("fbaShipment", "FBA货件","fba_shipment"),
     AWD_SHIPMENT("awdShipment", "AWD货件","fba_shipment"),
     FBA_SHIPMENT_DETAIL("fbaShipmentDetail", "FBA货件明细","fba_shipment_detail"),
+    FBA_INBOUND_PLANS("fbaInboundPlans", "FBA入库货件列表","fba_inbound_plans"),
     FIRST_MILE_DELIVERY("firstMileDelivery", "头程发货单", "first_mile_delivery"),
     //当前仓可用减少，中转仓冻结增加
     FIRST_MILE_DELIVERY_TRANSFER_TO_THIRD("firstMileDeliveryTransferToThird", "头程发货单-中转（三方仓发三方仓）", "first_mile_delivery"),
@@ -331,6 +332,9 @@ public enum SourceTypeEnum {
 
     //售后申请
     AFTER_SALE("afterSale", "寄修申请","after_sale"),
+
+    // 售后装箱
+    AFTER_SALE_PACK("afterSalePack", "售后装箱","after_sale_pack"),
     ;
 
     /**
@@ -394,6 +398,16 @@ public enum SourceTypeEnum {
 
     public static SourceTypeEnum getByCode(String code) {
         return Arrays.stream(SourceTypeEnum.values()).filter(r -> Objects.equals(r.getCode(), code)).findFirst().orElse(null);
+    }
+
+    /**
+     * 是否盘点类来源（盘盈/盘亏/盘盈盘亏单）。
+     * 盘点类业务在审核可分配库存时不参与校验，统一在此判定，避免各业务实现散落重复逻辑。
+     */
+    public static boolean isStocktaking(String code) {
+        return Objects.equals(STOCKTAKING_PROFIT_LOSS.getCode(), code)
+                || Objects.equals(STOCKTAKING_PROFIT.getCode(), code)
+                || Objects.equals(STOCKTAKING_LOSS.getCode(), code);
     }
     public static List<String> pickingLists() {
         return Arrays.asList(PICKING_LISTS_ADD.getCode(), PICKING_LISTS_SUBTRACT.getCode());
