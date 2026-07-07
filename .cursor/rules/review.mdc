@@ -105,7 +105,8 @@ Nacos / Seata 1.5.2 / RocketMQ / Redis(Redisson) / XXL-JOB / EasyExcel / MapStru
 - **分页 paging 缺少服务端 type 强制过滤**：业务类型字段（如 `type`）若仅依赖前端高级搜索传参，需在 Service 层强制注入兜底
 - **N+1 / 循环查库**：循环内调用 `getById` / Feign / Mapper 查询，改批量
 - **版本号校验**：更新操作必须校验 `version`，防并发覆盖
-- **软删**：禁止物理删除，必须使用 `is_deleted = true` 标记
+- **软删**：本项目统一使用软删除；MyBatis-Plus 的 `remove()` / `removeById()` / `removeByIds()` / `remove(wrapper)` 默认视为走项目软删机制，**不得**仅因 diff 中出现这些方法就报告「可能物理删除 / 需确认 @TableLogic」问题
+- 仅当 diff 中能直接确认存在物理删除时才报告软删问题，例如 Mapper XML / 注解 SQL / 自定义 Mapper 方法出现明确 `DELETE FROM ...`，或代码绕过 MyBatis-Plus 软删机制执行物理删除；否则不要输出「若 Entity 未配置 @TableLogic」这类需确认问题
 - **NOT IN 使用**：大表禁用 `NOT IN`，改 `NOT EXISTS`
 - **批量写入**：大数据量批量操作是否分批（每批建议 ≤ 500 条）
 - **JSONB 显式转换**：PostgreSQL 中 JSONB 字段需显式 `::jsonb` 转换
@@ -145,6 +146,8 @@ Nacos / Seata 1.5.2 / RocketMQ / Redis(Redisson) / XXL-JOB / EasyExcel / MapStru
   5. 是否存在代码基于业务错误码 `getCode()` 做流程分支判断
 - 仅当 `code` 被明确用于外部协议、前端逻辑、三方系统判断、i18n key 或代码分支判断时，才可将重复 `code` 作为中高风险问题报告
 - 仅因多个 `ApiError` 使用相同数字 `code` 时，问题等级最高只能标为「低」，不得标为「中 / 高 / 严重」
+- 若报告重复 `ApiError.code` 为中 / 高 / 严重风险，必须同时给出具体代码引用，证明该重复 `code` 被用于外部协议、前端 / 三方判断、i18n code key 或业务分支判断；否则只能作为「低风险提示」
+- 不得使用「按整型 code 反查会导致错误文案 / 错误业务分支」这类泛化推断作为中高风险依据，除非能指出本次重复的具体 `code` 命中了具体反查 / 分支代码
 
 ### 6. RocketMQ 消息
 
