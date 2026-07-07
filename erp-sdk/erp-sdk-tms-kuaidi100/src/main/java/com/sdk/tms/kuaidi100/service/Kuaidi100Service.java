@@ -105,7 +105,6 @@ public class Kuaidi100Service {
                                                                String callbackUrl, Boolean isPushMobile, String mobile) {
         Kuaidi100SubscribeParam.Parameters parameters = Kuaidi100SubscribeParam.Parameters.builder()
                 .callbackurl(callbackUrl)
-                .salt("")
                 .resultv2("4")
                 .build();
         if (isPushMobile && StringUtils.isNotBlank(mobile)) {
