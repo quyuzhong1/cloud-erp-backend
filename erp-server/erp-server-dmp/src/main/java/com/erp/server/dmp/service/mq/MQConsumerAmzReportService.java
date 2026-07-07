@@ -3,7 +3,6 @@ package com.erp.server.dmp.service.mq;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-import com.common.business.annotation.DataIdempotent;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;

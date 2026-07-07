@@ -1,17 +1,12 @@
 package com.erp.model.oms.dto;
 
-import com.common.business.dto.ReceiverDTO;
 import com.common.business.dto.UniqueDto;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
-import com.erp.model.wms.dto.third.ThirdWarehouseAuth;
 import lombok.*;
-import lombok.experimental.SuperBuilder;
 
-import javax.validation.constraints.NotBlank;
-import java.io.Serializable;
 import java.util.List;
 
 /**

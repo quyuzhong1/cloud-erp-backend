@@ -1,6 +1,8 @@
 package com.erp.server.fms.controller.feign;
 
 import com.common.business.dto.DmpSyncMqDTO;
+import com.common.core.anno.LogAction;
+import com.common.core.enums.LogActionEnum;
 import com.erp.server.fms.service.SyncTaskService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -25,6 +27,7 @@ public class FmsSyncKingdeeFeignController {
      * @return void
      */
     @PostMapping("/updateBusinessSyncKingdeeStatus")
+    @LogAction(value = LogActionEnum.UPDATE_STATUS, desc = "更新金蝶同步状态")
     public void updateBusinessSyncKingdeeStatus(@RequestBody Map<String, Object> params) {
         syncTaskService.updateBusinessSyncKingdeeStatus(params);
     }
@@ -35,6 +38,7 @@ public class FmsSyncKingdeeFeignController {
      * @return
      */
     @PostMapping("/newFindDataSendSyncTask")
+    @LogAction(value = LogActionEnum.EXECUTE, desc = "发送金蝶同步任务")
     public Map<String, Map<String, Object>> newFindDataSendSyncTask(@RequestBody DmpSyncMqDTO.SyncParamDTO syncParamDTO) {
         return syncTaskService.newFindDataSendSyncTask(syncParamDTO);
     }

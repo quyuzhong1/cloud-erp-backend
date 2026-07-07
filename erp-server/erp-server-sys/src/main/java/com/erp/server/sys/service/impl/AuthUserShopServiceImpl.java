@@ -4,12 +4,14 @@ package com.erp.server.sys.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.nacos.common.utils.StringUtils;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.service.impl.RedisService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.utils.SqlUtils;
+import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.ShopAuthTypeEnum;
 import com.erp.model.sys.dto.AuthUserShopDTO;
@@ -137,6 +139,7 @@ public class AuthUserShopServiceImpl extends SuperServiceImpl<AuthUserShopMapper
     @Override
     @Transactional(rollbackFor = Exception.class)
     @CacheEvict(value = "cache:sys:shopAuth:getShopUserList", key = "#uid")
+    @DistributeLocker(businessType = DistributeKeyConstant.SYS_USER_AUTH_KEY, keyName = "uid", unlockAfterTx = true)
     public void batchSaveOrUpdate(String uid, List<String> shopIdList, String shopAuthType, boolean ifAdd) {
         if (CharSequenceUtil.isBlank(uid)) {
             return;
