@@ -1491,7 +1491,12 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         if (CollUtil.isEmpty(importDataList)) {
             return;
         }
-        importBatchAddOrUpdate(importDataList, processingType);
+        List<ImportHistoryRecordDTO.ImportConfirmDTO> confirmList =
+                importBatchAddOrUpdate(importDataList, processingType);
+        if (CharSequenceUtil.equals(ImportHistoryRecordProcessingTypeEnum.CONFIRM_IMPORT.getCode(), processingType)
+                && CollUtil.isNotEmpty(confirmList)) {
+            logisticsBillCostService.batchConfirmImport(confirmList, ReconciliationStatusEnum.CONFIRMED.getCode());
+        }
     }
 
     /**

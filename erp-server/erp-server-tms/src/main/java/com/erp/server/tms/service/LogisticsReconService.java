@@ -132,17 +132,19 @@ public interface LogisticsReconService extends SuperService<LogisticsReconEntity
      * @date 2026/6/12
      * @param mainId 对账单 id
      * @param scopeSubIds 本次整批匹配认领的费用项 id（仅处理该集合，避免与手动/导入匹配交叉）
+     * @param isConfirm 是否确认匹配上的物流费用数据
      * @return void
      */
-    void doMatchByMain(String mainId, List<String> scopeSubIds);
+    void doMatchByMain(String mainId, List<String> scopeSubIds, boolean isConfirm);
 
     /**
      * 对账单整批匹配的单批执行（分片小事务）：处理指定费用项 id 中仍处于匹配中的记录。
      *
      * @param mainId       对账单 id
      * @param detailSubIds 本批费用项 id
+     * @param isConfirm    是否确认匹配上的物流费用数据
      */
-    void doMatchSubsChunk(String mainId, List<String> detailSubIds);
+    void doMatchSubsChunk(String mainId, List<String> detailSubIds, boolean isConfirm);
 
     /**
      * 提交手动匹配异步任务（按对账单分组、认领 matching 后提交线程池），立即返回。
