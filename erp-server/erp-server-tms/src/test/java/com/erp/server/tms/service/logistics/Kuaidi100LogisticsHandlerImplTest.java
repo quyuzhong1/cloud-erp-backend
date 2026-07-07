@@ -61,7 +61,7 @@ public class Kuaidi100LogisticsHandlerImplTest {
         assertEquals("400", result.getData().get(2).getCode());
         ArgumentCaptor<Kuaidi100SubscribeParam> captor = ArgumentCaptor.forClass(Kuaidi100SubscribeParam.class);
         verify(kuaidi100Service, org.mockito.Mockito.times(3)).subscribe(captor.capture());
-        assertEquals("https://erp.test/webhook/receive/kuaidi100", captor.getAllValues().get(0).getParameters().getCallbackurl());
+        assertEquals("https://erp.test/webhook/kuaidi100/push", captor.getAllValues().get(0).getParameters().getCallbackurl());
         assertEquals("", captor.getAllValues().get(0).getParameters().getSalt());
     }
 

@@ -12,6 +12,7 @@ import java.util.Collections;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.startsWith;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -53,5 +54,40 @@ public class WebhookControllerTest {
         assertFalse(actualBody.getResult());
         assertEquals("500", actualBody.getReturnCode());
         assertEquals("bad sign", actualBody.getMessage());
+    }
+
+    @Test
+    public void receiveKuaidi100Push_success_returnsOfficialResponseBody() {
+        WebhookHandlerFactory factory = mock(WebhookHandlerFactory.class);
+        WebhookHandler handler = mock(WebhookHandler.class);
+        when(factory.getHandler("kuaidi100")).thenReturn(handler);
+        WebhookResult<Kuaidi100WebhookResponseDTO> webhookResult = new WebhookResult<>();
+        webhookResult.setData(Kuaidi100WebhookResponseDTO.success());
+        when(handler.process(startsWith("param=%7B%22status%22"), org.mockito.Mockito.eq(Collections.emptyMap()), org.mockito.Mockito.eq("kuaidi100")))
+                .thenReturn(webhookResult);
+        WebhookController controller = new WebhookController(factory);
+
+        Kuaidi100WebhookResponseDTO response = controller.receiveKuaidi100Push("{\"status\":\"polling\"}", "ABC123");
+
+        assertTrue(response.getResult());
+        assertEquals("200", response.getReturnCode());
+        assertEquals("成功", response.getMessage());
+        verify(handler).verify(startsWith("param=%7B%22status%22"), org.mockito.Mockito.eq(Collections.emptyMap()), org.mockito.Mockito.eq("kuaidi100"));
+    }
+
+    @Test
+    public void receiveKuaidi100Push_handlerThrows_returnsOfficialFailureBody() {
+        WebhookHandlerFactory factory = mock(WebhookHandlerFactory.class);
+        WebhookHandler handler = mock(WebhookHandler.class);
+        when(factory.getHandler("kuaidi100")).thenReturn(handler);
+        doThrow(new RuntimeException("bad sign"))
+                .when(handler).verify(startsWith("param=%7B%22status%22"), org.mockito.Mockito.eq(Collections.emptyMap()), org.mockito.Mockito.eq("kuaidi100"));
+        WebhookController controller = new WebhookController(factory);
+
+        Kuaidi100WebhookResponseDTO response = controller.receiveKuaidi100Push("{\"status\":\"polling\"}", "BAD");
+
+        assertFalse(response.getResult());
+        assertEquals("500", response.getReturnCode());
+        assertEquals("bad sign", response.getMessage());
     }
 }
