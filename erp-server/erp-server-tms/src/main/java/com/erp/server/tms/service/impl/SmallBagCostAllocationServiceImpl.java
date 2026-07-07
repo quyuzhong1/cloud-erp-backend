@@ -51,7 +51,7 @@ import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 /**
@@ -99,9 +99,9 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
     @Resource
     private DmpTaskFeign dmpTaskFeign;
 
-	@Autowired
+	@Resource
 	@Qualifier("costAllocationPool")
-	private ExecutorService costAllocationPool;
+	private ThreadPoolExecutor costAllocationPool;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
