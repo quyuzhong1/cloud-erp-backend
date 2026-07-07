@@ -176,8 +176,10 @@ public class WegoInventoryInitHandler extends DmpInputInitHandler {
         }
 
         if (pageNum > MAX_PAGE_LIMIT) {
-            log.warn("[WEGO库存] 服务商[id={}] 仓库[{}]已达最大翻页上限({})，可能存在未拉取数据",
+            log.error("[WEGO库存] 服务商[id={}] 仓库[{}]已达最大翻页上限({})，存在未拉取数据，任务中止",
                     authId, warehouseCode, MAX_PAGE_LIMIT);
+            throw new ServiceException("WEGO库存：仓库[" + warehouseCode + "] 已达最大翻页上限(" + MAX_PAGE_LIMIT
+                    + ")，已拉取=" + inventoryList.size() + "条，数据不完整，任务中止");
         }
         log.info("[WEGO库存] 服务商[id={}] 仓库[{}] 共拉取库存明细={}条，页数={}",
                 authId, warehouseCode, inventoryList.size(), pageNum);

@@ -290,8 +290,6 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
      * <ol>
      *     <li>装箱清单（{@code wms_carton_detail}）— 通过发货单 code 反查 sourceId 后调用
      *         {@link WmsCartonDetailService#boxInfoBySourceIds(List)}；</li>
-     *     <li>兜底：上层 {@link ThirdWarehouseCreateInboundReq#getItems()}（来自
-     *         {@code OverseasWarehouseInboundServiceImpl#entityToCreateInboundBill}）。</li>
      * </ol>
      */
     private List<WegoInOrderSaveDTO.Detail> buildDetails(ThirdWarehouseCreateInboundReq createInboundReq) {
@@ -359,6 +357,10 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                     .build();
             details.add(detail);
         });
+        if (CollUtil.isEmpty(details)) {
+            log.warn("[WEGO入库] 装箱清单缺少有效箱号，无法构造入库明细，packingItems={}", packingItems.size());
+            throw new ServiceException("装箱清单缺少箱号");
+        }
         return details;
     }
 

@@ -156,7 +156,9 @@ public class WegoOutboundInitHandler extends DmpInputInitHandler {
             pageNum++;
         }
         if (pageNum > MAX_PAGE_LIMIT) {
-            log.warn("[WEGO出库] 服务商[id={}] 已达最大翻页上限({})，可能存在未拉取数据", authId, MAX_PAGE_LIMIT);
+            log.error("[WEGO出库] 服务商[id={}] 已达最大翻页上限({})，存在未拉取数据，任务中止", authId, MAX_PAGE_LIMIT);
+            throw new ServiceException("WEGO出库：已达最大翻页上限(" + MAX_PAGE_LIMIT
+                    + ")，已拉取=" + orderList.size() + "条，数据不完整，任务中止");
         }
         log.info("[WEGO出库] 服务商[id={}] 订单日期[{} ~ {}] 拉取={}条 已翻页={}",
                 authId, orderDateBegin, orderDateEnd, orderList.size(), pageNum);
