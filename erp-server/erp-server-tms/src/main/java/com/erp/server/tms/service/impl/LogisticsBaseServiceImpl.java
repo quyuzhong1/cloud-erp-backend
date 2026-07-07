@@ -889,7 +889,16 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
         JSONObject root = JSON.parseObject(body);
         JSONObject payload = root.getJSONObject(OVERSEAS_MANAGED_ADDRESS_RESPONSE_KEY);
         if (Objects.isNull(payload)) {
-            payload = root;
+            payload = root.getJSONObject("error_response");
+            if (Objects.nonNull(payload)) {
+                JSONObject result = new JSONObject();
+                result.put("errorCode", firstNotBlank(payload.getString("sub_code"), payload.getString("code")));
+                result.put("errorMessage", firstNotBlank(payload.getString("sub_msg"), payload.getString("msg")));
+                payload.put("result", result);
+                putIfAbsent(payload, "request_id", root.getString("request_id"));
+            } else {
+                payload = root;
+            }
         } else {
             putIfAbsent(payload, "code", root.getString("code"));
             putIfAbsent(payload, "request_id", root.getString("request_id"));

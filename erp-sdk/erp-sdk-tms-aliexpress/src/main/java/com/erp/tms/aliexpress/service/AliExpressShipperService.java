@@ -34,6 +34,8 @@ import java.util.Objects;
 @Slf4j
 @Component
 public class AliExpressShipperService {
+    private static final int OVERSEAS_MANAGED_ADDRESS_LOG_BODY_LIMIT = 2000;
+
     private void validate(String appKey,String appSecret,String token,String url){
         if (StringUtils.isBlank(appKey) || StringUtils.isBlank(appSecret) || StringUtils.isBlank(token) ) throw new ServiceException("授权信息不能为空");
     }
@@ -267,7 +269,30 @@ public class AliExpressShipperService {
         request.addApiParameter("addressType", addressType);
         request.addApiParameter("locale", locale);
         request.addApiParameter("simplify", "true");
-        return client.execute(request, token, Protocol.TOP);
+        log.warn("速卖通海外托管卖家地址请求: api={}, appClientId={}, clientId={}, url={}, shopId={}, apiParams={}",
+                request.getApiName(), authMap.get("id"), appKey, url, authMap.get("shopId"), request.getApiParams());
+        try {
+            IopResponse response = client.execute(request, token, Protocol.TOP);
+            log.warn("速卖通海外托管卖家地址响应: api={}, appClientId={}, clientId={}, shopId={}, addressType={}, body={}",
+                    request.getApiName(), authMap.get("id"), appKey, authMap.get("shopId"), addressType,
+                    abbreviateOverseasManagedAddressBody(Objects.nonNull(response) ? response.getBody() : null));
+            return response;
+        } catch (ApiException e) {
+            log.error("速卖通海外托管卖家地址异常: api={}, appClientId={}, clientId={}, shopId={}, apiParams={}, message={}",
+                    request.getApiName(), authMap.get("id"), appKey, authMap.get("shopId"), request.getApiParams(), e.getMessage());
+            throw e;
+        }
+    }
+
+    private String abbreviateOverseasManagedAddressBody(String body) {
+        if (StringUtils.isBlank(body)) {
+            return "";
+        }
+        String value = body.replaceAll("(?i)(\"(?:token|access_token|refresh_token|client_secret|clientSecret)\"\\s*:\\s*\")[^\"]*(\")", "$1***$2");
+        if (value.length() <= OVERSEAS_MANAGED_ADDRESS_LOG_BODY_LIMIT) {
+            return value;
+        }
+        return value.substring(0, OVERSEAS_MANAGED_ADDRESS_LOG_BODY_LIMIT) + "...";
     }
 
     public IopResponse getLogisticsService(Map<String, String> authMap, QueryLogisticsRequest queryLogisticsRequest) throws ApiException {
