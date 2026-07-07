@@ -2,9 +2,12 @@ package com.erp.server.dmp.inout.handler.input.task.dmp;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
+import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.entity.DmpProductInfoEntity;
+import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.server.dmp.inout.dto.request.DmpInputDmpRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputMongoResponse;
+import com.erp.server.dmp.service.CfgAppClientService;
 import com.erp.server.dmp.service.DmpProductInfoService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
@@ -32,13 +35,19 @@ import java.util.TreeMap;
 public class MagaluProductDmpHandler extends DmpInputDbConvertDmpHandler {
 
     private static final String MAGALU_PLATFORM = "Magalu";
-    /** Magazine Luiza 渠道，仅同步该渠道 Listing */
-    private static final String MAGALU_CHANNEL_ID = "9fe0d853-732b-4e4a-a0b0-cff988ed043d";
     private static final String STORAGE_PRODUCT_INFO = "dmp_product_info";
     private static final String STORAGE_SKU_INFO = "dmp_sku_info";
+    /** 飞书文档规格示例：颜色：白色，尺寸：M */
+    private static final String SPEC_NAME_VALUE_SEPARATOR = "：";
+    private static final String SPEC_ITEM_SEPARATOR = "，";
 
     @Resource
     private DmpProductInfoService dmpProductInfoService;
+
+    @Resource
+    private CfgAppClientService cfgAppClientService;
+
+    private String magaluChannelId;
 
     @Override
     public List<Map<String, Object>> convertMongoToDmp(DmpInputDmpRequest dmpRequest, DmpInputMongoResponse dmpResponse) {
@@ -97,7 +106,7 @@ public class MagaluProductDmpHandler extends DmpInputDbConvertDmpHandler {
             row.put("spuNo", spuId);
             row.put("spuName", stringValue(sku.get("title")));
             row.put("sourceId", spuId);
-            row.put("platformUpdateTime", parseTime(firstNotBlank(sku.get("updated_at"), sku.get("updater"))));
+            row.put("platformUpdateTime", parsePlatformUpdateTime(sku));
             productMap.put(spuId, row);
         }
         return new ArrayList<>(productMap.values());
@@ -118,7 +127,7 @@ public class MagaluProductDmpHandler extends DmpInputDbConvertDmpHandler {
             row.put("skuNo", platformSku);
             row.put("name", stringValue(sku.get("title")));
             row.put("status", mapListingStatus(sku.get("status")));
-            row.put("platformUpdateTime", parseTime(firstNotBlank(sku.get("updated_at"), sku.get("updater"))));
+            row.put("platformUpdateTime", parsePlatformUpdateTime(sku));
             row.put("imageUrls", extractImageUrl(sku));
             // categoryName 暂存规格文本，供 MagaluProductRocketMQTaskHandler 写入 productSpec
             row.put("categoryName", buildAttributesSpec(sku));
@@ -155,16 +164,40 @@ public class MagaluProductDmpHandler extends DmpInputDbConvertDmpHandler {
     }
 
     private boolean matchMagaluChannel(Map<String, Object> sku) {
+        String channelId = resolveMagaluChannelId();
+        if (StringUtils.isBlank(channelId)) {
+            return false;
+        }
         List<Map<String, Object>> channels = listMap(sku.get("channels"));
         if (CollUtil.isEmpty(channels)) {
             return false;
         }
         for (Map<String, Object> channel : channels) {
-            if (MAGALU_CHANNEL_ID.equalsIgnoreCase(stringValue(channel.get("id")))) {
+            if (channelId.equalsIgnoreCase(stringValue(channel.get("id")))) {
                 return true;
             }
         }
         return false;
+    }
+
+    private String resolveMagaluChannelId() {
+        if (StringUtils.isNotBlank(magaluChannelId)) {
+            return magaluChannelId;
+        }
+        AppClientEnum appClientEnum = AppClientEnum.MAGALU_ACCESS_TOKEN;
+        CfgAppClientEntity cfgAppClient = cfgAppClientService.lambdaQuery()
+                .eq(CfgAppClientEntity::getBusinessType, appClientEnum.getBusinessType())
+                .eq(CfgAppClientEntity::getDictPlatform, appClientEnum.getPlatform())
+                .eq(CfgAppClientEntity::getPlatformType, appClientEnum.getPlatformType())
+                .eq(CfgAppClientEntity::getIsDeleted, false)
+                .last("limit 1")
+                .one();
+        if (cfgAppClient == null || cfgAppClient.getExtendData() == null) {
+            return "";
+        }
+        Object channelId = cfgAppClient.getExtendData().get("channelId");
+        magaluChannelId = channelId == null ? "" : channelId.toString();
+        return magaluChannelId;
     }
 
     private String resolveSpuId(Map<String, Object> sku) {
@@ -185,6 +218,7 @@ public class MagaluProductDmpHandler extends DmpInputDbConvertDmpHandler {
                 return "3";
             case "UNDER_REVIEW":
             case "DELETING":
+            case "NEW":
                 return "5";
             case "DELETED":
                 return "7";
@@ -203,10 +237,10 @@ public class MagaluProductDmpHandler extends DmpInputDbConvertDmpHandler {
             String name = stringValue(attribute.get("name"));
             String value = stringValue(firstNotBlank(attribute.get("value"), attribute.get("value_name")));
             if (StringUtils.isNotBlank(name) && StringUtils.isNotBlank(value)) {
-                parts.add(name + ":" + value);
+                parts.add(name + SPEC_NAME_VALUE_SEPARATOR + value);
             }
         }
-        return String.join(",", parts);
+        return String.join(SPEC_ITEM_SEPARATOR, parts);
     }
 
     private void fillPackageDimensions(Map<String, Object> row, Map<String, Object> sku) {
@@ -218,12 +252,21 @@ public class MagaluProductDmpHandler extends DmpInputDbConvertDmpHandler {
             row.put("packageLength", dimensionNumber(dimension.get("length")));
             row.put("packageWidth", dimensionNumber(dimension.get("width")));
             row.put("packageHeight", dimensionNumber(dimension.get("height")));
+            row.put("grossWeight", dimensionNumber(dimension.get("weight")));
             String unit = dimensionUnit(dimension.get("length"));
             if (StringUtils.isNotBlank(unit)) {
                 row.put("packageUnit", unit);
             }
+            String weightUnit = dimensionUnit(dimension.get("weight"));
+            if (StringUtils.isNotBlank(weightUnit)) {
+                row.put("weightUnit", weightUnit);
+            }
             break;
         }
+    }
+
+    private LocalDateTime parsePlatformUpdateTime(Map<String, Object> sku) {
+        return parseTime(firstNotBlank(sku.get("updated_at"), sku.get("updater"), sku.get("created_at")));
     }
 
     private BigDecimal dimensionNumber(Object dimensionObj) {
@@ -259,6 +302,11 @@ public class MagaluProductDmpHandler extends DmpInputDbConvertDmpHandler {
         }
         try {
             return OffsetDateTime.parse(text).toLocalDateTime();
+        } catch (Exception ignored) {
+            // 沙箱 created_at 可能无时区，如 2026-07-02T03:34:23.516000
+        }
+        try {
+            return LocalDateTime.parse(text);
         } catch (Exception e) {
             return null;
         }

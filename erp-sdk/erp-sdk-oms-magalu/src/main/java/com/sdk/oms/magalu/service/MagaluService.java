@@ -143,7 +143,7 @@ public class MagaluService {
         String path = StringUtils.isBlank(apiPath) ? SKU_LIST_PATH : apiPath;
         String url = trimEndSlash(getApiBaseUrl(shopInfoDTO)) + addStartSlash(path);
         Map<String, Object> params = new HashMap<>(4);
-        params.put("limit", limit);
+        params.put("_limit", limit);
         params.put("_offset", offset);
 
         String response = OkHttpUtils.doGet(url, params, buildApiHeaders(shopInfoDTO));
