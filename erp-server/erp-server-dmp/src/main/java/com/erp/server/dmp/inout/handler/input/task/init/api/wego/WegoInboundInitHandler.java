@@ -149,7 +149,8 @@ public class WegoInboundInitHandler extends DmpInputInitHandler {
 
             WegoInboundResp.PageResultDTO pageResult = extractPageResult(resp, authId);
             if (pageResult == null) {
-                break;
+                throw new ServiceException("WEGO入库：第" + pageNum + "页响应解析失败，已拉取页数=" + (pageNum - 1)
+                        + "，数据不完整，任务中止");
             }
 
             List<WegoInboundResp.InorderDTO> list = pageResult.getList();
@@ -181,14 +182,14 @@ public class WegoInboundInitHandler extends DmpInputInitHandler {
     }
 
     /**
-     * 校验 WEGO 接口响应：success=true 才返回 result，否则抛出业务异常或返回 null。
+     * 校验 WEGO 接口响应：success=true 且 result 非空才返回分页对象，否则抛出业务异常。
      *
-     * @return 分页对象，失败时返回 null
+     * @return 分页对象，非空
      */
     private WegoInboundResp.PageResultDTO extractPageResult(WegoInboundResp resp, String authId) {
         if (resp == null) {
             log.error("[WEGO入库] 服务商[id={}] 接口响应为空", authId);
-            return null;
+            throw new ServiceException("WEGO入库分页查询接口响应为空");
         }
         if (!Boolean.TRUE.equals(resp.getSuccess())) {
             log.error("[WEGO入库] 服务商[id={}] 接口返回失败: errorCode={}, errorMsg={}",
@@ -196,7 +197,12 @@ public class WegoInboundInitHandler extends DmpInputInitHandler {
             throw new ServiceException("WEGO入库分页查询接口返回失败: errorCode=" + resp.getErrorCode()
                     + ", errorMsg=" + resp.getErrorMsg());
         }
-        return resp.getResult();
+        WegoInboundResp.PageResultDTO result = resp.getResult();
+        if (result == null) {
+            log.error("[WEGO入库] 服务商[id={}] 接口 success=true 但 result 为空", authId);
+            throw new ServiceException("WEGO入库分页查询接口 success=true 但 result 为空");
+        }
+        return result;
     }
 
     /**
