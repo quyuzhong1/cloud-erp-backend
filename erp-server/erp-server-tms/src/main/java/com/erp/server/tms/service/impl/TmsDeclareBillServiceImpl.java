@@ -3067,6 +3067,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     @Transactional(rollbackFor = Exception.class)
     public Boolean updateBatchFiled(TmsDeclareBillDTO.BatchUpdateFieldDTO dto, SourceTypeEnum sourceTypeEnum) {
         TmsDeclareBillEntity old = getById(dto.getId());
+        //校验报关单信息
+        assertUpdateEditableState(old, sourceTypeEnum);
         UpdateWrapper<TmsDeclareBillEntity> updateWrapper = new UpdateWrapper<>();
         List<TmsDeclareBillDTO.BatchUpdateFieldListDTO> fieldList = dto.getFieldList();
         for (TmsDeclareBillDTO.BatchUpdateFieldListDTO batchUpdateFieldListDTO : fieldList) {

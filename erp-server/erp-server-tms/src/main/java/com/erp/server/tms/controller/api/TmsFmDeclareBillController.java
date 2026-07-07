@@ -377,6 +377,7 @@ public class TmsFmDeclareBillController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.lang.Object>
      */
     @PostMapping("/batchAddMergeDetail")
+    @LogAction(value = LogActionEnum.INSERT, desc = "头程报关单保存合并明细")
     public ApiResult<Object> batchAddMergeDetail(@RequestBody @Valid ValidList<TmsDeclareBillDTO.MergeDeclareBillDTO> list)  {
         return success(tmsDeclareBillService.batchAddMergeDetail(SourceTypeEnum.FM_DECLARE_BILL.getCode(),list.getList()));
     }
