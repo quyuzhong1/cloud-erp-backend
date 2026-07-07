@@ -140,21 +140,27 @@ public class WarehouseLocationMappingServiceImpl extends SuperServiceImpl<Wareho
         WarehouseLocationMappingDTO.AddDTO addDTO = new WarehouseLocationMappingDTO.AddDTO();
         addDTO.setSysWarehouseId(dto.getSysWarehouseId());
         addDTO.setDictPlatform(dto.getDictPlatform());
-        WarehouseLocationMappingDTO.DetailDTO detailDTO = new WarehouseLocationMappingDTO.DetailDTO();
-        detailDTO.setSysWarehouseLocation(dto.getSysWarehouseLocation());
-        detailDTO.setThirdWarehouseLocation(dto.getThirdWarehouseLocation());
-        addDTO.setDetailList(Collections.singletonList(detailDTO));
+        addDTO.setDetailList(dto.getDetailList());
 
         List<Candidate> candidates = buildCandidates(addDTO);
-        Candidate candidate = candidates.get(0);
-        candidate.getEntity().setId(dto.getId());
         Map<Candidate, List<String>> errorMap = new LinkedHashMap<>();
         validateDuplicate(candidates, dto.getId(), errorMap);
         throwIfError(errorMap);
 
-        this.updateById(candidate.getEntity());
-        operateLogService.addModuleOperateLog(buildLogContent("编辑", candidate.getEntity()),
+        Candidate updateCandidate = candidates.get(0);
+        updateCandidate.getEntity().setId(dto.getId());
+        this.updateById(updateCandidate.getEntity());
+        operateLogService.addModuleOperateLog(buildLogContent("编辑", updateCandidate.getEntity()),
                 ModuleTypeEnum.WAREHOUSE_LOCATION_MAPPING.getCode(), dto.getId(), "编辑操作", user.getUid(), user.getUserName());
+
+        if (candidates.size() > 1) {
+            List<WarehouseLocationMappingEntity> addList = candidates.subList(1, candidates.size()).stream()
+                    .map(Candidate::getEntity)
+                    .collect(Collectors.toList());
+            this.saveBatch(addList);
+            addList.forEach(entity -> operateLogService.addModuleOperateLog(buildLogContent("新增", entity),
+                    ModuleTypeEnum.WAREHOUSE_LOCATION_MAPPING.getCode(), entity.getId(), "编辑新增操作", user.getUid(), user.getUserName()));
+        }
     }
 
     @Transactional(rollbackFor = Exception.class)
