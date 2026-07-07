@@ -2700,6 +2700,8 @@ public class TmsDeclareBillDTO implements Serializable {
          */
         @NotEmpty(message = "来源明细列表不能为空")
         private List<TmsDeclareBillDTO.MergeDeclareBillDTO> mergeDeclareBillDTOS;
+
+        private String sourceType;
     }
 
     /**

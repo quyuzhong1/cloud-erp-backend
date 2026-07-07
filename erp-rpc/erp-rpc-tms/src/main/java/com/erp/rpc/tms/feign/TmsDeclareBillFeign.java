@@ -2,7 +2,6 @@ package com.erp.rpc.tms.feign;
 
 import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.base.BatchResultDTO;
-import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.tms.entity.TmsDeclareBillEntity;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -49,6 +48,9 @@ public interface TmsDeclareBillFeign {
      **/
     @PostMapping("/feign/tmsDeclareBill/autoMergeDeclareBillView")
     List<TmsDeclareBillDTO.MergeDeclareBillDTO> autoMergeDeclareBillView(@RequestBody TmsDeclareBillDTO.AutoMergeDeclareBillViewDTO viewDTO);
+
+    @PostMapping("/feign/tmsDeclareBill/batchAddMergeDetail")
+    Boolean batchAddMergeDetail(@RequestBody TmsDeclareBillDTO.AutoGenerateMidDataDTO dto);
 
     /**
      * B2B 报关合并预览：判断境外收货人是否按客户分发。
