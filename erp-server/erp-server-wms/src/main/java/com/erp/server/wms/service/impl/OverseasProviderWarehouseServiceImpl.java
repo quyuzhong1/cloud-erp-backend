@@ -495,7 +495,7 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
         List<String> toDeleteIds = new ArrayList<>();
         List<OverseasProviderWarehouseEntity> toDisable = new ArrayList<>();
         for (OverseasProviderWarehouseEntity exist : existingList) {
-            String code = exist.getWarehouseCode();
+            String code = exist.getPlatformWarehouseCode();
             if (CharSequenceUtil.isBlank(code) || apiWarehouseCodes.contains(code)) {
                 continue;
             }
