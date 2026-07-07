@@ -195,6 +195,11 @@ public class TmsB2BDeclareBillController extends BaseController {
      */
     @PostMapping("/confirmDeclareStatus")
     @LogAction(value = LogActionEnum.CONFIRM, desc = "B2B报关单报关状态更新")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:tmsB2BDeclareBill:confirmDeclareStatus",
+            serviceClass = TmsDeclareBillService.class,
+            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> confirmDeclareStatus(@RequestBody @Validated TmsDeclareBillDTO.ConfirmDeclareStatusDTO dto) {
         List<BatchResultDTO> resultList = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -303,7 +308,7 @@ public class TmsB2BDeclareBillController extends BaseController {
             tableField = "create_user_id",
             menuCode = "tms:tmsB2BDeclareBill:updateBatchFiled",
             serviceClass = TmsDeclareBillService.class,
-            keyIdName = "id")
+            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> updateBatchFiled(@RequestBody @Validated TmsDeclareBillDTO.BatchUpdateFieldDTO dto) {
         if (ObjectUtil.isEmpty(dto.getIds())) {
             throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
