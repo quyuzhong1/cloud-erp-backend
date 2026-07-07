@@ -221,23 +221,6 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     @Resource
     private VirtualWarehousePushHandleDetailService virtualWarehousePushHandleDetailService;
 
-    /**
-     * 海外仓入库主表服务，仅用于在「海外仓签收下推调拨单审核」时反查 {@code dict_platform}
-     * 区分平台。{@link OverseasWarehouseInboundServiceImpl} 已注入本类，使用 {@link Lazy}
-     * 切断启动期循环依赖。
-     */
-    @Lazy
-    @Resource
-    private OverseasWarehouseInboundService overseasWarehouseInboundService;
-
-    /**
-     * 海外仓签收记录服务，用于在审核海外仓下推调拨单时反查每条调拨明细对应的签收记录，
-     * 进而拿到 {@code defective_product_flag} 决定库存流水的 {@code dict_inventory_status}。
-     */
-    @Resource
-    private OverseasWarehouseInboundReceivedService overseasWarehouseInboundReceivedService;
-
-
     @Override
     public PagingVO<TransferInfoDTO.ListDTO> paging(PagingDTO<TransferInfoDTO.SearchParamDTO> pagingDTO) {
         pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
