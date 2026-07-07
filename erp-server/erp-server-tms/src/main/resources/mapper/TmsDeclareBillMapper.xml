@@ -316,6 +316,7 @@
     <!-- 根据申报单id查询来源单信息 -->
     <select id="listSourceByDeclareBillId" resultType="com.erp.model.tms.dto.TmsDeclareBillDTO$BillSourceDTO">
         select
+            DISTINCT
             dddm.source_id,
             dddm.source_type,
             dddm.source_code,
