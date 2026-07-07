@@ -214,6 +214,8 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 						wegoPlatformOrderCode = soB2cEntity.getPlatformCode();
 					}
 				}
+			}else {
+				soB2cEntity = soB2cFeign.getSoCode(dto.getOrderReferenceNo());
 			}
 			if(Objects.nonNull(soB2cEntity)){
 				soOutstock = soOutstockService.getBySoId(soB2cEntity.getId());

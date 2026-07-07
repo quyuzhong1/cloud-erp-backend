@@ -141,12 +141,12 @@ public class WegoReturnInstockInitHandler extends DmpInputInitHandler {
             } catch (Exception e) {
                 log.error("[WEGO退货入库] 服务商[id={}] 到仓日期[{} ~ {}] 调用异常, pageNum={}",
                         authId, arrivalDateBegin, arrivalDateEnd, pageNum, e);
-                break;
+                throw new ServiceException("WEGO 退货入库分页查询调用异常, pageNum=" + pageNum + ": " + e.getMessage(), e);
             }
 
             if (resp == null) {
                 log.error("[WEGO退货入库] 服务商[id={}] 接口响应为空, pageNum={}", authId, pageNum);
-                break;
+                throw new ServiceException("WEGO 退货入库分页查询接口响应为空, pageNum=" + pageNum);
             }
             if (!Boolean.TRUE.equals(resp.getSuccess())) {
                 log.error("[WEGO退货入库] 服务商[id={}] 接口返回失败: errorCode={}, errorMsg={}",
@@ -156,7 +156,7 @@ public class WegoReturnInstockInitHandler extends DmpInputInitHandler {
             }
             WegoReturnOrderResp.PageResultDTO page = resp.getResult();
             if (page == null) {
-                break;
+                throw new ServiceException("WEGO 退货入库分页查询接口 result 为空, pageNum=" + pageNum);
             }
             if (totalPages == null) {
                 totalPages = page.getPages();
