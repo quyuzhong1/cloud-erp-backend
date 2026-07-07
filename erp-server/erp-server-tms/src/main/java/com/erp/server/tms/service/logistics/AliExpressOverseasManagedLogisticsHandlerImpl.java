@@ -344,7 +344,7 @@ public class AliExpressOverseasManagedLogisticsHandlerImpl extends AbstractLogis
 
     private CfgAppClientEntity getAliExpressLogisticsClient() {
         CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
-        AppClientEnum appClientEnum = AppClientEnum.ALI_EXPRESS_LOGISTICS;
+        AppClientEnum appClientEnum = AppClientEnum.ALI_EXPRESS_OVERSEAS_MANAGED_LOGISTICS;
         findDTO.setBusinessType(appClientEnum.getBusinessType());
         findDTO.setDictPlatform(appClientEnum.getPlatform());
         findDTO.setPlatformType(appClientEnum.getPlatformType());

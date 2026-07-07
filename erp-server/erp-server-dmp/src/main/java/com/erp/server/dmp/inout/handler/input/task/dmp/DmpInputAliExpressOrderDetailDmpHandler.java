@@ -33,10 +33,10 @@ import cn.hutool.core.collection.CollUtil;
 @Service
 @Scope("prototype")
 public class DmpInputAliExpressOrderDetailDmpHandler extends DmpInputAliExpressOrderDoChildDmpHandler{
-	private static final String SO_OUTSTOCK_CODE = "soOutstock";
 
 	private static final String SHIPS_FROM_ATTRIBUTE = "ships from";
-
+	private static final String SO_OUTSTOCK_CODE = "soOutstock";
+	
 	@Override
 	protected List<Map<String, Object>> afterDoDmpInputMongoChildEntityList(List<Map<String, Object>> dmpInputMongoChildList){
 		List<Map<String, Object>> dmpInputMongoChildEntityList = new ArrayList<>();

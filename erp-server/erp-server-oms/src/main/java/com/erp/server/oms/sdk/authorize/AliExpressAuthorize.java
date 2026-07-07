@@ -88,7 +88,7 @@ public class AliExpressAuthorize implements IShopAuthorizeService<T> {
         } else {
             shopInfo = shopInfoEntityList.get(0);
         }
-        AppClientEnum appClient = AppClientEnum.ALI_EXPRESS_AUTHORIZE;
+        AppClientEnum appClient = getAuthorizeAppClient(shopInfo.getDictPlatform());
         CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
         findDTO.setBusinessType(appClient.getBusinessType());
         findDTO.setDictPlatform(appClient.getPlatform());
@@ -145,7 +145,7 @@ public class AliExpressAuthorize implements IShopAuthorizeService<T> {
         if (StringUtils.isBlank(code)) {
             throw new ServiceException(ApiError.SHOP_AUTHORIZE_CODE_REQUIRED);
         }
-        AppClientEnum appClient = AppClientEnum.ALI_EXPRESS_TOKEN;
+        AppClientEnum appClient = getTokenAppClient(shopInfo.getDictPlatform());
         CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
         findDTO.setBusinessType(appClient.getBusinessType());
         findDTO.setDictPlatform(appClient.getPlatform());
@@ -259,9 +259,17 @@ public class AliExpressAuthorize implements IShopAuthorizeService<T> {
      * 刷新token
      */
     public Boolean refreshToken(RefreshShopTokenDTO dto){
-        //先获取授权店铺 然后根据授权店铺进行
+        ShopAuthEntity authEntity = shopAuthService.getByShopId(dto.getShopId());
+        if (ObjectUtil.isEmpty(authEntity)) {
+            return Boolean.FALSE;
+        }
+        String platformCode = dto.getPlatformCode();
+        if (StringUtils.isBlank(platformCode)) {
+            ShopInfoEntity shopInfo = shopInfoService.getById(authEntity.getShopId());
+            platformCode = Objects.nonNull(shopInfo) ? shopInfo.getDictPlatform() : "";
+        }
         CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
-        AppClientEnum appClientEnum = AppClientEnum.ALI_EXPRESS_TOKEN;
+        AppClientEnum appClientEnum = getTokenAppClient(platformCode);
         findDTO.setBusinessType(appClientEnum.getBusinessType());
         findDTO.setDictPlatform(appClientEnum.getPlatform());
         findDTO.setPlatformType(appClientEnum.getPlatformType());
@@ -272,11 +280,6 @@ public class AliExpressAuthorize implements IShopAuthorizeService<T> {
         String clientId = cfgAppClient.getClientId();
         String baseUrl= cfgAppClient.getUrl();
         String clientSecret=cfgAppClient.getClientSecret();
-
-        ShopAuthEntity authEntity = shopAuthService.getByShopId(dto.getShopId());
-        if (ObjectUtil.isEmpty(authEntity)) {
-            return Boolean.FALSE;
-        }
         RefreshTokenRequest request = RefreshTokenRequest.builder().
                 baseUrl(baseUrl).
                 refreshToken(authEntity.getRefreshToken()).
@@ -349,6 +352,18 @@ public class AliExpressAuthorize implements IShopAuthorizeService<T> {
                 mqProducerService.sendWarnMsg(warnMsgInfo);
             }
         }
+    }
+
+    private AppClientEnum getAuthorizeAppClient(String platformCode) {
+        return isOverseasManaged(platformCode) ? AppClientEnum.ALI_EXPRESS_OVERSEAS_MANAGED_AUTHORIZE : AppClientEnum.ALI_EXPRESS_AUTHORIZE;
+    }
+
+    private AppClientEnum getTokenAppClient(String platformCode) {
+        return isOverseasManaged(platformCode) ? AppClientEnum.ALI_EXPRESS_OVERSEAS_MANAGED_TOKEN : AppClientEnum.ALI_EXPRESS_TOKEN;
+    }
+
+    private boolean isOverseasManaged(String platformCode) {
+        return PlatformDictEnum.ALI_EXPRESS_OVERSEAS_MANAGED.getCode().equalsIgnoreCase(platformCode);
     }
 
 

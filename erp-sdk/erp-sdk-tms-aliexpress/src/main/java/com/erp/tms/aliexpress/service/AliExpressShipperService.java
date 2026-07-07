@@ -16,6 +16,7 @@ import com.erp.tms.aliexpress.model.order.response.BaseResult;
 import com.erp.tms.aliexpress.model.order.response.OrderResult;
 import com.erp.tms.aliexpress.model.query.request.QueryLogisticsRequest;
 import com.erp.tms.aliexpress.util.ApiException;
+import com.erp.tms.aliexpress.util.Constants;
 import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -34,10 +35,22 @@ import java.util.Objects;
 @Slf4j
 @Component
 public class AliExpressShipperService {
-    private static final int OVERSEAS_MANAGED_ADDRESS_LOG_BODY_LIMIT = 2000;
+    private static final int ALIEXPRESS_LOG_BODY_LIMIT = 2000;
 
     private void validate(String appKey,String appSecret,String token,String url){
-        if (StringUtils.isBlank(appKey) || StringUtils.isBlank(appSecret) || StringUtils.isBlank(token) ) throw new ServiceException("授权信息不能为空");
+        StringBuilder missing = new StringBuilder();
+        if (StringUtils.isBlank(appKey)) {
+            missing.append("clientId,");
+        }
+        if (StringUtils.isBlank(appSecret)) {
+            missing.append("clientSecret,");
+        }
+        if (StringUtils.isBlank(token)) {
+            missing.append("token,");
+        }
+        if (missing.length() > 0) {
+            throw new ServiceException("授权信息不能为空：" + missing.substring(0, missing.length() - 1));
+        }
     }
     public ChannelResult getChanelList(Map<String, String> authMap) throws ApiException {
         String appKey = authMap.get("clientId");
@@ -275,7 +288,7 @@ public class AliExpressShipperService {
             IopResponse response = client.execute(request, token, Protocol.TOP);
             log.warn("速卖通海外托管卖家地址响应: api={}, appClientId={}, clientId={}, shopId={}, addressType={}, body={}",
                     request.getApiName(), authMap.get("id"), appKey, authMap.get("shopId"), addressType,
-                    abbreviateOverseasManagedAddressBody(Objects.nonNull(response) ? response.getBody() : null));
+                    abbreviateAliExpressBody(Objects.nonNull(response) ? response.getBody() : null));
             return response;
         } catch (ApiException e) {
             log.error("速卖通海外托管卖家地址异常: api={}, appClientId={}, clientId={}, shopId={}, apiParams={}, message={}",
@@ -284,15 +297,15 @@ public class AliExpressShipperService {
         }
     }
 
-    private String abbreviateOverseasManagedAddressBody(String body) {
+    private String abbreviateAliExpressBody(String body) {
         if (StringUtils.isBlank(body)) {
             return "";
         }
         String value = body.replaceAll("(?i)(\"(?:token|access_token|refresh_token|client_secret|clientSecret)\"\\s*:\\s*\")[^\"]*(\")", "$1***$2");
-        if (value.length() <= OVERSEAS_MANAGED_ADDRESS_LOG_BODY_LIMIT) {
+        if (value.length() <= ALIEXPRESS_LOG_BODY_LIMIT) {
             return value;
         }
-        return value.substring(0, OVERSEAS_MANAGED_ADDRESS_LOG_BODY_LIMIT) + "...";
+        return value.substring(0, ALIEXPRESS_LOG_BODY_LIMIT) + "...";
     }
 
     public IopResponse getLogisticsService(Map<String, String> authMap, QueryLogisticsRequest queryLogisticsRequest) throws ApiException {
@@ -327,9 +340,22 @@ public class AliExpressShipperService {
         IopClient client = new IopClientImpl(url, appKey, appSecret);
         IopRequest request = new IopRequest();
         request.setApiName("global.seller.relation.query");
+        request.setHttpMethod(Constants.METHOD_GET);
         request.addApiParameter("business_type", businessType);
         request.addApiParameter("simplify", "true");
-        return client.execute(request, token, Protocol.TOP);
+        log.warn("速卖通seller关系请求: api={}, method={}, appClientId={}, clientId={}, url={}, shopId={}, businessType={}, apiParams={}",
+                request.getApiName(), request.getHttpMethod(), authMap.get("id"), appKey, url, authMap.get("shopId"), businessType, request.getApiParams());
+        try {
+            IopResponse response = client.execute(request, token, Protocol.TOP);
+            log.warn("速卖通seller关系响应: api={}, method={}, appClientId={}, clientId={}, shopId={}, businessType={}, body={}",
+                    request.getApiName(), request.getHttpMethod(), authMap.get("id"), appKey, authMap.get("shopId"), businessType,
+                    abbreviateAliExpressBody(Objects.nonNull(response) ? response.getBody() : null));
+            return response;
+        } catch (ApiException e) {
+            log.error("速卖通seller关系异常: api={}, method={}, appClientId={}, clientId={}, shopId={}, businessType={}, apiParams={}, message={}",
+                    request.getApiName(), request.getHttpMethod(), authMap.get("id"), appKey, authMap.get("shopId"), businessType, request.getApiParams(), e.getMessage());
+            throw e;
+        }
     }
 
     public IopResponse getOverseasManagedShippingService(Map<String, String> authMap,
