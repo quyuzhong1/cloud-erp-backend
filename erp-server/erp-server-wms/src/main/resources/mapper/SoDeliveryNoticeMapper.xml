@@ -575,7 +575,28 @@
     <!-- `b2b订单下推发货通知单时，查询b2b订单的发货明细，作为发货通知单的来源单据明细展示` -->
     <select id="listBeforePushB2bDeclare"
             resultType="com.erp.model.tms.dto.TmsDeclareBillDTO$SourceDeliveryDetailDTO">
-        WITH carton_detail AS (
+        WITH target_packing_task AS (
+        SELECT pt.id
+        FROM packing_task pt
+        INNER JOIN so_delivery_notice sdn
+        ON sdn.id = pt.source_id
+        AND sdn.is_deleted = false
+        WHERE pt.is_deleted = false
+        AND pt.packing_status = 'packed'
+        <choose>
+            <when test="onlyWaitDeclareStatus != null and onlyWaitDeclareStatus == false">
+                AND sdn.declare_status IN ('wait', 'finish')
+            </when>
+            <otherwise>
+                AND sdn.declare_status = 'wait'
+            </otherwise>
+        </choose>
+        AND sdn.id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        ),
+        carton_detail AS (
         SELECT
         wc.packing_task_id,
         wc.box_no,
@@ -590,6 +611,7 @@
         AND COALESCE(wcd.pack_qty, 0) > 0
         WHERE wc.is_deleted = false
         AND wc.box_no IS NOT NULL
+        AND wc.packing_task_id IN (SELECT id FROM target_packing_task)
         GROUP BY wc.packing_task_id, wc.box_no, wcd.sku_id, wcd.sku_no, COALESCE(wcd.fn_sku, '')
         )
         select

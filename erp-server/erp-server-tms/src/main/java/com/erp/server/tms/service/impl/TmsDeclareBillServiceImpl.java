@@ -372,13 +372,6 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             tmsDeclareBillEntity.setNetWeight(productDetailList.stream().filter(v->Objects.nonNull(v.getNetWeight())).map(v->v.getNetWeight().multiply(new BigDecimal(v.getQty())).divide(new BigDecimal(1000),4, RoundingMode.HALF_UP)).reduce(BigDecimal.ZERO, BigDecimal::add));
             service.add(tmsDeclareBillEntity,detailEntityList,SourceTypeEnum.FIRST_MILE_DELIVERY,false);
         }
-        //更新发货单的报关状态
-        if (!Boolean.TRUE.equals(addDTO.getIsAuto())) {
-            FirstMileDeliveryDTO.UpdateStatusDTO dto = new FirstMileDeliveryDTO.UpdateStatusDTO();
-            dto.setIds(sourceIdList);
-            dto.setDeclareStatus(WmsDeclareStatusEnum.FINISH.getCode());
-            wmsFirstMileDeliveryFeign.updateStatus(dto);
-        }
         return Collections.emptyList();
     }
 

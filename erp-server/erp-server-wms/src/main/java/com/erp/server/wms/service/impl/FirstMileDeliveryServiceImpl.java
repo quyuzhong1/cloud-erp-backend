@@ -298,14 +298,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         if (CollectionUtils.isNotEmpty(taskEntityList)) {
             boolean packed = taskEntityList.stream().allMatch(taskEntity -> taskEntity.getPackingStatus().equals(PackingTaskStatusEnum.PACKED.getCode()));
             if(packed){
-                try {
-                    if(WmsDeclareStatusEnum.WAIT.equals(entity.getDeclareStatus())){
-                        registerFirstMileDeclareAutoGenerateTask(entity, billGenerateTimingEnum);
-                    }
-                }catch (Exception e){
-                    log.error("头程发货单{}登记自动生成报关明细任务失败：{}", entity.getCode(), e.getMessage(), e);
-                    throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_AUTO_GENERATE_FAILED,
-                            "头程发货单", entity.getCode(), e.getMessage());
+                if(WmsDeclareStatusEnum.WAIT.equals(entity.getDeclareStatus())){
+                    registerFirstMileDeclareAutoGenerateTask(entity, billGenerateTimingEnum);
                 }
             }
         }
@@ -2575,6 +2569,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     }
 
     @Override
+    @Transactional
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
     public Boolean generateStatusUpdate(FirstMileDeliveryDTO.GenerateStatusUpdateDTO dto) {
         if (CollectionUtils.isEmpty(dto.getIds()) || CollectionUtils.isEmpty(dto.getBillTypes())) {
             return false;
