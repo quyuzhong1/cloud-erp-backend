@@ -8,6 +8,7 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.util.List;
 
 /**
@@ -270,6 +271,11 @@ public class SoReturnPrestockDetailDTO {
         private String detailId;
 
         /**
+         * 销售单 ID；对应 {@code LinkAfterSaleView.soId}（B2B 为 so_return.source_id，B2C 为 so_b2c_return.so_id）
+         */
+        private String soId;
+
+        /**
          * 销售单号；对应 {@code LinkAfterSaleView.soCode}
          */
         private String soCode;
@@ -330,8 +336,11 @@ public class SoReturnPrestockDetailDTO {
 
         /**
          * 待关联的预入库单主表 ID 列表
+         * <p>单次批量关联在同一全局事务内会为每张预入库单生成退货入库单、平账其他入库单并做多次入库审核，
+         * 属于重事务操作，限制单次处理数量以控制全局事务时长与锁持有范围。</p>
          */
         @NotEmpty(message = "预入库单不能为空")
+        @Size(max = 50, message = "单次最多关联50张预入库单，请分批操作")
         private List<String> ids;
 
         /**

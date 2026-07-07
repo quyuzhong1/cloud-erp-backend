@@ -232,6 +232,7 @@
             sbr.code AS afterSaleCode,
             sbr.platform_return_no AS platformReturnNo,
             sbr.platform_order_no AS platformOrderNo,
+            sbr.so_id AS soId,
             sbr.so_code AS soCode,
             sbr.dict_platform AS platform,
             sbr.shop_id AS shopId,

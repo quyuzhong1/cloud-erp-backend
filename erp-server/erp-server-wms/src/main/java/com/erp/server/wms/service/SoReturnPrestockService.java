@@ -150,4 +150,19 @@ public interface SoReturnPrestockService extends SuperService<SoReturnPrestockEn
      * @return 新建预入库单的 ID
      */
     String addFromReturnInstockUpdate(SoReturnInstockDTO.Update dto);
+
+    /**
+     * 强制关闭剩余未认领的预入库单（定时任务调用，每月1号23:50执行）。
+     * <p>处理范围：仍存在未关联（UNLINKED）明细的预入库单（主表关联状态为未关联或部分关联，且未删除）。</p>
+     * <p>处理逻辑：</p>
+     * <ul>
+     *   <li>将这些预入库单下关联状态为「未关联」的明细行 link_status 更新为「强制关闭」（已关联明细保持不变）；</li>
+     *   <li>按明细最新关联状态联动刷新主表关联状态：明细全部已关联→已关联；全部强制关闭→强制关闭；
+     *       部分已关联部分强制关闭→部分关联。</li>
+     * </ul>
+     * <p>强制关闭后，该预入库单及其明细不再允许关联店铺、关联售后单等操作。</p>
+     *
+     * @return 本次实际强制关闭处理的预入库单数量
+     */
+    int forceCloseUnclaimedPrestock();
 }

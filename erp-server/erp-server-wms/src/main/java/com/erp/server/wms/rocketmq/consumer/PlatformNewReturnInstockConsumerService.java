@@ -981,10 +981,10 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 		ShopInfoEntity shopInfoEntity = resolveSalesShopInfo(shopList, soB2cEntity, dto);
 		WarehouseEntity warehouseEntity = checkAndGetWarehouseByShopInfo(shopInfoEntity);
 		// 查询是否已关账
-		LocalDate closedLocalDate = inventoryClosedRecordService.checkClosed(warehouseEntity.getOrgId(), dto.getPutawayLocalDate());
+		LocalDate closedLocalDate = inventoryClosedRecordService.checkClosed(warehouseEntity.getOrgId(), dto.getPutawayTime().toLocalDate());
 		if (null != closedLocalDate) {
 			// 已关账
-			log.warn("[退货入库单消费]:当前退货入库单消费日期【{}】因关账【{}】停止生成：单号={}", dto.getPutawayLocalDate(), closedLocalDate, dto.getPlatformOrderNo());
+			log.warn("[退货入库单消费]:当前退货入库单消费日期【{}】因关账【{}】停止生成：单号={}", dto.getPutawayTime().toLocalDate(), closedLocalDate, dto.getPlatformOrderNo());
 			return;
 		}
 

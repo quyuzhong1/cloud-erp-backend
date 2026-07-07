@@ -144,7 +144,14 @@ public class SoReturnPrestockController extends BaseController {
      * <p>页面点击"确定关联"时调用：afterSaleList 为在候选售后单列表
      * （{@code SoReturnController.pagingLinkAfterSale}）中勾选的售后单明细行。
      * 服务端按 SKU 比较本次勾选退货明细与预入库单未关联明细数量：完全一致则完成关联；
-     * 预入库单明细多于退货明细则仅关联对应 SKU（部分关联）；退货明细超出预入库单则整批拒绝。</p>
+     * 预入库单明细多于退货明细则仅关联对应 SKU（部分关联）；退货明细超出预入库单（异常包裹/源头单有误）
+     * 则整批拒绝并引导改走「关联店铺」。</p>
+     * <p>联动处理：</p>
+     * <ol>
+     *   <li>本次关联数量 &lt; 明细行退货数量时按 SKU 拆行（一行已关联、一行未关联）。</li>
+     *   <li>已关联 SKU 按售后单分组生成《退货入库单》，生成后直接已审核。</li>
+     *   <li>其他入库平账：反向冲抵原整单普通(增库存)其他入库单，再为本次仍未关联的 SKU 重新生成普通(增库存)其他入库单占位，均直接已审核。</li>
+     * </ol>
      */
     @LogAction(value = LogActionEnum.UPDATE, desc = "确认关联售后单")
     @PostMapping("/confirmLinkAfterSale")
