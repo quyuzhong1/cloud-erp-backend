@@ -1,14 +1,30 @@
 package com.erp.server.dmp.service.impl;
 
 
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.ObjUtil;
-import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+
 import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.DmpInputFeignDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -22,6 +38,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.dmp.dto.DmpCfgInputDetailDTO;
 import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.dmp.entity.DmpBasicSystemEntity;
@@ -38,19 +55,21 @@ import com.erp.server.dmp.enums.InventoryMonthCheckEnum;
 import com.erp.server.dmp.inout.dto.request.DmpInputHotfixCreateRequest;
 import com.erp.server.dmp.inout.handler.factory.DmpInputCreateFactory;
 import com.erp.server.dmp.mapper.DmpCfgInputDetailMapper;
-import com.erp.server.dmp.service.*;
+import com.erp.server.dmp.service.AdsErpInventoryDiffFlowService;
+import com.erp.server.dmp.service.DmpBasicSystemService;
+import com.erp.server.dmp.service.DmpCfgInputDetailService;
+import com.erp.server.dmp.service.DmpCfgInputService;
+import com.erp.server.dmp.service.DmpCfgOutputDetailService;
+import com.erp.server.dmp.service.DmpInputTaskService;
+import com.erp.server.dmp.service.OperateLogService;
+
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
-import java.time.LocalDateTime;
-import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 /**
  * <p>
  * 拉取调度 服务实现类
@@ -78,6 +97,8 @@ public class DmpCfgInputDetailServiceImpl extends SuperServiceImpl<DmpCfgInputDe
     private DmpInputCreateFactory dmpInputCreateFactory;
     @Resource
     private DmpInputTaskService dmpInputTaskService;
+    @Resource
+    private AdsErpInventoryDiffFlowService adsErpInventoryDiffFlowService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -364,6 +385,7 @@ public class DmpCfgInputDetailServiceImpl extends SuperServiceImpl<DmpCfgInputDe
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.DMP_PULL_TASK_KEY, keyName = "id", waiteTime = 60, unlockAfterTx = true)
     public BatchResultDTO doTask(String id, DmpCfgInputDetailDTO.DoTaskDTO dto, DmpCfgInputEntity dmpCfgInputEntity, DmpCfgInputDetailEntity entity) {
         if (DmpCfgInputExecSystemEnum.DMP.getCode().equals(dmpCfgInputEntity.getExecSystem())){
             // 中台执行
@@ -406,6 +428,7 @@ public class DmpCfgInputDetailServiceImpl extends SuperServiceImpl<DmpCfgInputDe
 
 	@Override
 	@Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.DMP_PULL_TASK_KEY, keyName = "inventoryMonthCheckEnum.code", waiteTime = 60, unlockAfterTx = true)
 	public BatchResultDTO reCreateInventoryMonthCheck(InventoryMonthCheckEnum inventoryMonthCheckEnum, String checkMonth,
 			String sourceSystem) {
 		if(sourceSystem == null) {
@@ -458,6 +481,20 @@ public class DmpCfgInputDetailServiceImpl extends SuperServiceImpl<DmpCfgInputDe
 		dto.setDetailExtendJson(JSON.toJSONString(map));
 		dto.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
 		
-		return doTask(id, dto, dmpCfgInputEntity, dmpCfgInputDetailEntity);
+		BatchResultDTO doTask = doTask(id, dto, dmpCfgInputEntity, dmpCfgInputDetailEntity);
+		
+		String finSourceSystem = sourceSystem;
+		if (TransactionSynchronizationManager.isActualTransactionActive()) {
+			TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+				@Override
+	            public void afterCommit() {
+	            	adsErpInventoryDiffFlowService.updateReCreateInventoryMonthCheck(inventoryMonthCheckEnum, finCheckMonth, finSourceSystem);
+	            }
+	        });
+		}else {
+			// 无事务时直接调用
+			adsErpInventoryDiffFlowService.updateReCreateInventoryMonthCheck(inventoryMonthCheckEnum, finCheckMonth, finSourceSystem);
+		}
+		return doTask;
 	}
 }

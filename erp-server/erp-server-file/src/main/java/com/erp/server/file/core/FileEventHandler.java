@@ -3,7 +3,7 @@ package com.erp.server.file.core;
 
 import com.alibaba.excel.write.handler.WriteHandler;
 import com.common.business.enums.FileTaskEventEnum;
-import com.erp.server.file.entity.FileTask;
+import com.erp.model.file.entity.FileTask;
 
 import java.util.Collections;
 import java.util.List;

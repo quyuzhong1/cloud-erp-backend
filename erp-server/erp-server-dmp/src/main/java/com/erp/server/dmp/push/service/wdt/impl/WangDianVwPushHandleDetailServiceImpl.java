@@ -8,11 +8,12 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.business.annotation.DataIdempotent;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.WdtSearchHandelDetailDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
+import com.common.message.constant.DistributeKeyConstant;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
@@ -59,7 +60,7 @@ public class WangDianVwPushHandleDetailServiceImpl implements WangDianVwPushHand
     private static String SEARCH_VIRTUAL_WAREHOUSE_URL = "setting.strategy.VirtualWarehouse.orderSearch";
 
     @Override
-    @DataIdempotent(keyIdName = "pushDTOS.virtual_warehouse_no", waitTime = 10)
+    @DistributeLocker(businessType = DistributeKeyConstant.WDT_VW_PUSH_KEY, keyName = "pushDTOS.virtual_warehouse_no", waiteTime = 10)
     public ApiResult<?> executeConsumer(VwPushHandelDetailPushDTO pushDTOS) {
         PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(PlatformEnum.WANGDIAN.getDesc());
         if (ObjectUtils.isEmpty(platformEntity)) {

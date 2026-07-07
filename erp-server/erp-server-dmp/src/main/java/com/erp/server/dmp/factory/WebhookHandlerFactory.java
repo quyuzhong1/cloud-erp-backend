@@ -25,6 +25,7 @@ public class WebhookHandlerFactory {
         handlerMap.put("jituOverseasInbound", new JituOverseasInboundHandler());
         handlerMap.put("jituOutbound", new JituOutboundHandler());
         handlerMap.put("qimenCallback", new QimenCallbackHandler());
+        handlerMap.put("shopee", new ShopeeWebhookHandler());
     }
 
     public WebhookHandler getHandler(String service) {

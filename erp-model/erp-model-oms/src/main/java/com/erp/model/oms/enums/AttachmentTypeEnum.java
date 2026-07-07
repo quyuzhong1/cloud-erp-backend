@@ -10,7 +10,8 @@ import org.apache.commons.lang3.StringUtils;
  */
 public enum AttachmentTypeEnum implements EnumMessage {
     INVOICE_INFO_XML("invoice_info_xml", "开票清单xml附件"),
-    INVOICE_INFO_PDF("invoice_info_pdf", "开票清单pdf附件")
+    INVOICE_INFO_PDF("invoice_info_pdf", "开票清单pdf附件"),
+    INVOICE_INFO_PNG("invoice_info_png", "开票清单png附件")
     ;
     /**
      * 类型

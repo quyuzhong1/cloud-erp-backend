@@ -3,7 +3,10 @@ package com.erp.server.fms.controller.api;
 
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.anno.LogAction;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.fms.dto.DictBasicDTO;
+import com.erp.model.fms.entity.DictBasicEntity;
 import com.erp.server.fms.service.DictBasicService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -33,6 +36,7 @@ public class DictBasicController extends BaseController {
      * @return
      */
     @PostMapping("/saveOrUpdateBatch")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "字典管理批量保存")
     public ApiResult saveOrUpdate(@RequestBody @Validated List<DictBasicDTO.ListDTO> dto) {
         Boolean result = dictBasicService.saveOrUpdateDict(dto);
         return result == true ? success() : failure();
@@ -45,8 +49,8 @@ public class DictBasicController extends BaseController {
      * @return
      */
     @GetMapping("/list")
-    public ApiResult<List<DictBasicDTO.ListDTO>> list(@RequestParam("key") String key) {
-        List<DictBasicDTO.ListDTO> list = dictBasicService.getByKey(key);
+    public ApiResult<List<DictBasicEntity>> list(@RequestParam("key") String key) {
+        List<DictBasicEntity> list = dictBasicService.getByKey(key);
         return success(list);
     }
 
@@ -54,7 +58,6 @@ public class DictBasicController extends BaseController {
     /**
      * 字典通用下拉列表
      * @param type 字典类型
-     * @param remark 备注
      * @return
      */
     @GetMapping("/drop/down")

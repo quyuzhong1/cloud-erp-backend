@@ -15,6 +15,7 @@ import com.erp.model.tms.dto.CfgSettingDTO;
 import com.erp.model.tms.dto.CfgSettingValueDTO;
 import com.erp.model.tms.dto.DictBasicDTO;
 import com.erp.model.tms.entity.CfgSettingEntity;
+import com.erp.model.tms.entity.DictBasicEntity;
 import com.erp.model.tms.enums.*;
 import com.erp.model.wms.enums.ReconciliationTypeEnum;
 import com.erp.server.tms.mapper.CfgSettingMapper;
@@ -64,7 +65,7 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
     @Override
     public CfgSettingDTO.ViewDTO view() {
         CfgSettingDTO.ViewDTO viewDTO = new CfgSettingDTO.ViewDTO();
-        List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(DictBasicEnum.CFG_SETTING.getType());
+        List<DictBasicEntity> dictList = dictBasicService.getByKey(DictBasicEnum.CFG_SETTING.getType());
         if (CollectionUtils.isEmpty(dictList)) {
             return viewDTO;
         }
@@ -179,14 +180,14 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
     */
     private List<CfgSettingEntity> handleData(CfgSettingDTO.AddDTO addDTO) {
         List<CfgSettingEntity> list = new ArrayList<>();
-        List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(DictBasicEnum.CFG_SETTING.getType());
+        List<DictBasicEntity> dictList = dictBasicService.getByKey(DictBasicEnum.CFG_SETTING.getType());
         if (CollectionUtils.isEmpty(dictList)) {
             throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
         }
         //查询已有配置信息
         List<CfgSettingEntity> cfgSettingList = listCfgSetting();
 
-        for (DictBasicDTO.ViewDTO listDTO : dictList) {
+        for (DictBasicEntity listDTO : dictList) {
             //添加数据
             CfgSettingEntity entity = handleAddEnum(listDTO, addDTO,cfgSettingList);
             if (Objects.nonNull(entity)){
@@ -203,7 +204,7 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
      * @param addDTO
      * @param cfgSettingList
      */
-    private CfgSettingEntity handleAddEnum (DictBasicDTO.ViewDTO viewDTO, CfgSettingDTO.AddDTO addDTO, List<CfgSettingEntity> cfgSettingList) {
+    private CfgSettingEntity handleAddEnum (DictBasicEntity viewDTO, CfgSettingDTO.AddDTO addDTO, List<CfgSettingEntity> cfgSettingList) {
         CfgSettingEntity entity = new CfgSettingEntity();
         //系统配置json
         JSONObject jsonObject = new JSONObject();

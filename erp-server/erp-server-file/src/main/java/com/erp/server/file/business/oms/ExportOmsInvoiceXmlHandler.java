@@ -8,7 +8,7 @@ import com.erp.model.oms.dto.InvoiceInfoDTO;
 import com.erp.model.oms.enums.AttachmentTypeEnum;
 import com.erp.rpc.oms.feign.ExportOmsFeign;
 import com.erp.server.file.core.FileEventHandler;
-import com.erp.server.file.entity.FileTask;
+import com.erp.model.file.entity.FileTask;
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

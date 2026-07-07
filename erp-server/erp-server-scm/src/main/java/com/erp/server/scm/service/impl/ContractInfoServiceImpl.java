@@ -7,6 +7,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
@@ -19,6 +20,7 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.message.constant.DistributeKeyConstant;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.FastDFSClientUtil;
@@ -26,6 +28,7 @@ import com.common.core.utils.StrUtils;
 import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.dto.ContractInfoDTO;
 import com.erp.model.scm.dto.DictBasicDTO;
+import com.erp.model.scm.entity.DictBasicEntity;
 import com.erp.model.scm.entity.ScmAttachmentEntity;
 import com.erp.model.scm.entity.ContractInfoEntity;
 import com.erp.model.scm.entity.SupplierEntity;
@@ -389,8 +392,8 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
         if(CollUtil.isEmpty(list)) {
             return;
         }
-        List<DictBasicDTO> typeList = dictBasicService.getByKey(DictBasicEnum.CONTRACT_TYPE.getType());
-        Map<String, String> typeMap = CollUtil.isEmpty(typeList) ? new HashMap<>() : typeList.stream().collect(Collectors.toMap(DictBasicDTO::getValue, DictBasicDTO::getName));
+        List<DictBasicEntity> typeList = dictBasicService.getByKey(DictBasicEnum.CONTRACT_TYPE.getType());
+        Map<String, String> typeMap = CollUtil.isEmpty(typeList) ? new HashMap<>() : typeList.stream().collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName));
 
         //获取到附件信息
         List<String> ids = list.stream().map(ContractInfoDTO.ListDTO::getId).collect(Collectors.toList());
@@ -511,8 +514,8 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
             return;
         }
 
-        List<DictBasicDTO> typeList = dictBasicService.getByKey(DictBasicEnum.CONTRACT_TYPE.getType());
-        Map<String, String> typeMap = CollUtil.isEmpty(typeList) ? new HashMap<>() : typeList.stream().collect(Collectors.toMap(DictBasicDTO::getValue, DictBasicDTO::getName));
+        List<DictBasicEntity> typeList = dictBasicService.getByKey(DictBasicEnum.CONTRACT_TYPE.getType());
+        Map<String, String> typeMap = CollUtil.isEmpty(typeList) ? new HashMap<>() : typeList.stream().collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName));
 
         data.setStatusName(ContractInfoStatusEnum.getName(data.getStatus()));
         data.setTypeName(typeMap.get(data.getType()));
@@ -837,6 +840,7 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
     * 更新审核状态
     */
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "id", unlockAfterTx = true)
     public void updateApproveStatus(String id, String approveStatus) {
         lambdaUpdate().eq(ContractInfoEntity::getId, id)
         .set(ContractInfoEntity::getApproveStatus, approveStatus)

@@ -27,6 +27,11 @@ public interface KolSubB2cApplicationService extends SuperService<KolSubB2cAppli
     * @return
     */
     List<KolSubB2cApplicationDTO.PushDTO> generateSplitOrder(KolB2cApplicationEntity entity, List<KolB2cApplicationDetailEntity> list);
+
+    /**
+     * 幂等生成或复用拆分单。
+     */
+    List<KolSubB2cApplicationDTO.PushDTO> generateSplitOrderIdempotent(KolB2cApplicationEntity entity, List<KolB2cApplicationDetailEntity> list);
     /**
      * 根据来源id查询关联单据
      * @author jack

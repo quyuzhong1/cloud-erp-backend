@@ -26,16 +26,51 @@ public class PurchaseOrderQueryHandler extends AbstractQueryHandler {
 
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
-        if("so.code".equals(field)){
-            value = "'"+value+"'";
-            return "case when  subString ( " + value + ",1,2) != 'PL' then po.source_code "+ compareCodeSplicingValueSql +
-                    " else EXISTS ( select pa.id from purchase_application pa left join purchase_application_ref_po parp on parp.is_deleted = false and pa.id = parp.purchase_application_id " +
-                    " where parp.purchase_order_id = po.id and pa.code "+ compareCodeSplicingValueSql +" ) end";
+        if ("so.code".equals(field) || "po.source_code".equals(field)) {
+            return buildSourceCodeSql(compareCodeSplicingValueSql);
         }
         if("tab".equals(field)){
            return getTabSql(value);
         }
         return null;
+    }
+
+    /**
+     * 来源单号：与列表展示一致，覆盖采购申请(ref表)、主表source_code(退货/委外)、委外单联表兜底。
+     * 子查询内 boolean 字段不用「别名.字段」写法，避免 wrapFieldsWithLower 对 boolean 执行 LOWER() 报错。
+     * 子查询 code 需显式 LOWER(code)，否则 compare 值为 like LOWER('%x%') 时列未转小写会匹配失败；
+     * source_type 比较两侧均 LOWER，避免 wrapFieldsWithLower 只包裹字段导致与字面量大小写不一致。
+     */
+    private String buildSourceCodeSql(String compareCodeSplicingValueSql) {
+        String codeCompareSql = buildCodeCompareSql(compareCodeSplicingValueSql);
+        String subcontractSourceType = SourceTypeEnum.SUBCONTRACT_ORDER.getCode();
+        return "("
+                + "po.source_code " + compareCodeSplicingValueSql
+                + " OR EXISTS ("
+                + " SELECT 1 FROM purchase_application_ref_po"
+                + " WHERE purchase_order_id = po.id"
+                + " AND is_deleted = false"
+                + " AND purchase_application_id IN ("
+                + " SELECT id FROM purchase_application WHERE is_deleted = false AND " + codeCompareSql
+                + " )"
+                + " )"
+                + " OR (LOWER(po.source_type) = LOWER('" + subcontractSourceType + "')"
+                + " AND EXISTS ("
+                + " SELECT 1 FROM subcontract_order WHERE id = po.source_id"
+                + " AND is_deleted = false AND " + codeCompareSql
+                + " ))"
+                + ")";
+    }
+
+    /**
+     * 子查询内 code 无表别名，wrapFieldsWithLower 不会自动包裹列名，like 类条件需手动 LOWER(code) 与值侧对齐。
+     */
+    private String buildCodeCompareSql(String compareCodeSplicingValueSql) {
+        String trimmed = compareCodeSplicingValueSql.trim();
+        if (trimmed.startsWith("like") || trimmed.startsWith("not like")) {
+            return "LOWER(code) " + compareCodeSplicingValueSql;
+        }
+        return "code " + compareCodeSplicingValueSql;
     }
 
 

@@ -10,6 +10,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.dto.ApproveDTO;
@@ -20,6 +21,7 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
@@ -28,6 +30,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
+import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.oms.dto.DictBasicDTO;
@@ -209,6 +212,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         thirdWarehouseDeliveryEntity.setStatus(SoB2cWarehouseDeliveryStatusEnum.WAIT_HANDLE.getStatus());
         thirdWarehouseDeliveryEntity.setSoCode(soMultiChannelEntity.getSoCode());
         thirdWarehouseDeliveryEntity.setSoId(soMultiChannelEntity.getSoId());
+        thirdWarehouseDeliveryEntity.setShopId(soMultiChannelEntity.getShopId());
         thirdWarehouseDeliveryEntity.setCode(soMultiChannelEntity.getDeliveryCode());
         thirdWarehouseDeliveryEntity.setDictPlatform(soMultiChannelEntity.getDictPlatform());
         thirdWarehouseDeliveryEntity.setPlatformCode(soMultiChannelEntity.getPlatformCode());
@@ -313,6 +317,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
 
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO submit(String id) {
         SoMultiChannelEntity entity = getById(id);
         if (ObjectUtil.isEmpty(entity)) {
@@ -357,6 +362,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "dto.id", unlockAfterTx = true)
     public BatchResultDTO approve(ApproveOneDTO dto) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if (Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
@@ -408,6 +414,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO disApprove(String id) {
         SoMultiChannelEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到多渠道订单主单单数据"));
         // 反审核条件判断
@@ -447,6 +454,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
 
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO delete(String id) {
         SoMultiChannelEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到多渠道订单主单数据"));
         // 只有待提交数据允许删除
@@ -476,6 +484,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "dto.id", unlockAfterTx = true)
     public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         String id = dto.getId();
         SoMultiChannelEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到多渠道订单主单数据"));
@@ -614,6 +623,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "entity.id", unlockAfterTx = true)
     public BatchResultDTO reCreate(SoMultiChannelEntity entity) {
         if (!(ApproveStatusEnum.APPROVE.equals(entity.getApproveStatus()) && (CreateStatusEnum.FAILED.getCode().equals(entity.getCreateStatus()) || CreateStatusEnum.WAIT.getCode().equals(entity.getCreateStatus())))) {
             return BatchResultDTO.fail(entity.getId(), entity.getDeliveryCode(), "只允许审核通过，创建失败或待创建的单据重新创建");
@@ -633,6 +643,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
 
     @Override
     @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
+    @DistributeLocker(businessType = DistributeKeyConstant.SO_B2C_ORDER_KEY, keyName = "entity.soId", waiteTime = 60, unlockAfterTx = true)
     public BatchResultDTO deliveryIntercept(SoMultiChannelEntity entity, Boolean isCancel, Boolean isValidate, String remark) {
         if (Objects.isNull(entity) || CharSequenceUtil.isBlank(entity.getSoId())) {
             return BatchResultDTO.fail("", "", "销售订单不存在不进行拦截");
@@ -1140,7 +1151,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
             return;
         }
         //平台信息
-        List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(DictBasicTypeEnum.SALES_PLATFORM.getType());
+        List<DictBasicEntity> dictList = dictBasicService.getByKey(DictBasicTypeEnum.SALES_PLATFORM.getType());
         List<String> skuIds = soViewDTOS.stream().map(SoMultiChannelDTO.SoViewDTO::getSkuId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<String> skuNos = soViewDTOS.stream().map(SoMultiChannelDTO.SoViewDTO::getSkuNo).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         // 商品信息
@@ -1231,7 +1242,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         }
         //平台信息
         String type = DictBasicTypeEnum.SALES_PLATFORM.getType();
-        List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(type);
+        List<DictBasicEntity> dictList = dictBasicService.getByKey(type);
         // 属性赋值
         data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
         data.setCreateStatusName(CreateStatusEnum.getName(data.getCreateStatus()));
@@ -1306,9 +1317,16 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         }
         //平台信息
         String type = DictBasicTypeEnum.SALES_PLATFORM.getType();
-        List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(type);
+        List<DictBasicEntity> dictList = dictBasicService.getByKey(type);
+        Map<String, String> dictMap = CollUtil.isNotEmpty(dictList) ? dictList.stream().collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName)) : Collections.emptyMap();
         List<String> ids = list.stream().map(SoMultiChannelDTO.ListDTO::getId).distinct().collect(Collectors.toList());
-        List<ProcessTaskManagementEntity> processTaskManagementEntities = workflowFeign.listProcessByBusinessId(ids);
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = ids.stream().map(obj -> new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SO_OUTSTOCK.getCode(), obj)).collect(Collectors.toCollection(ValidList::new));
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
+        if (200 != listApiResult.getCode()) {
+            throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(),listApiResult.getMsg()));
+        }
+        Map<String, String> approveNameMap = listApiResult.getData().stream().collect(Collectors.groupingBy(ProcessManagementDTO.CurApproveInfoDTO::getBusinessId, Collectors.mapping(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName, Collectors.joining(","))));
+
         // 属性赋值
         for (SoMultiChannelDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
@@ -1318,13 +1336,9 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
             data.setDeliveryStatusName(data.getDeliveryStatus());
             data.setOutstockStatusName(OutstockStatusEnum.getName(data.getOutstockStatus()));
             //平台类型名称
-            String dictPlatformName = dictList.stream().filter(obj -> obj.getValue().equals(data.getDictPlatform())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-            data.setDictPlatformName(dictPlatformName);
-            String deliveryPlatformName = dictList.stream().filter(obj -> obj.getValue().equals(data.getDeliveryPlatform())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-            data.setDeliveryPlatformName(deliveryPlatformName);
-            List<String> curApproveName = processTaskManagementEntities.stream().filter(req -> req.getBusinessId().equals(data.getId()) && req.getTaskStatus().equals(ApproveStatusEnum.APPROVE_ING)).map(ProcessTaskManagementEntity::getCurApproveName).distinct().collect(Collectors.toList());
-            String userName = StringUtils.join(curApproveName, ",");
-            data.setApproveUserName(userName);
+            data.setDictPlatformName(dictMap.getOrDefault(data.getDictPlatform(), ""));
+            data.setDeliveryPlatformName(dictMap.getOrDefault(data.getDeliveryPlatform(), ""));
+            data.setApproveUserName(CharSequenceUtil.blankToDefault(approveNameMap.get(data.getId()),data.getApproveUserName()));
         }
     }
 
@@ -1358,8 +1372,8 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
             throw new ServiceException("未找到物流渠道信息");
         }
         //校验物流渠道编码 防止配错
-        List<DictBasicDTO.ViewDTO> dtoList = dictBasicService.getByKey("multiChannelLogiticsCode");
-        List<String> codeList = dtoList.stream().map(DictBasicDTO.ViewDTO::getValue).collect(Collectors.toList());
+        List<DictBasicEntity> dtoList = dictBasicService.getByKey("multiChannelLogiticsCode");
+        List<String> codeList = dtoList.stream().map(DictBasicEntity::getValue).collect(Collectors.toList());
         if (!codeList.contains(logisticsChannelEntity.getCode())) {
             throw new ServiceException("物流渠道【{}】不支持创建多渠道订单", logisticsChannelEntity.getCode());
         }

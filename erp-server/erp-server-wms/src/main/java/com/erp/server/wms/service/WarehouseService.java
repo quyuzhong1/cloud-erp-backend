@@ -297,4 +297,6 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
     boolean checkOpenCloseTime(WarehouseEntity warehouseEntity);
 
     List<WarehouseDTO.UpdateDTO> listWarehouseNameByIds(List<String> warehouseIds);
+
+    List<WarehouseDTO.ListDTO> getDefaultAddData();
 }

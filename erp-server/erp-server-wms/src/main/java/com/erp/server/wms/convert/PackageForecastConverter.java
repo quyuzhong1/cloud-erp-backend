@@ -2,6 +2,7 @@ package com.erp.server.wms.convert;
 
 import com.erp.model.tms.dto.TransferDeclareDetailDTO;
 import com.erp.model.tms.entity.LogisticsAddressEntity;
+import com.erp.model.wms.dto.PackageForecastDTO;
 import com.erp.model.wms.entity.PackageForecastDetailEntity;
 import com.erp.server.wms.convert.tool.TypeConversionWorker;
 import com.erp.tms.aliexpress.model.handover.AddressBase;
@@ -58,4 +59,15 @@ public interface PackageForecastConverter {
             @Mapping(target = "country", source = "country"),
     })
     AddressBase convertAddressBase(LogisticsAddressEntity logisticsAddress);
+
+
+    @Mapping(target = "detailId", source = "id")
+    @Mapping(target = "minPackageTransportNo", source = "transportNo")
+    @Mapping(target = "minPackageHandoverStatusName", expression = "java(com.erp.model.wms.enums.HandoverSubStatusEnum.getByCode(entity.getHandoverStatus()))")
+    @Mapping(target = "minPackageHandoverStatus", source = "handoverStatus")
+    @Mapping(target = "outstockStatusName", expression = "java(cn.hutool.core.text.CharSequenceUtil.isNotEmpty(entity.getSoId()) ? \"已出库\" : \"未出库\")")
+    @Mapping(target = "trackNo", expression = "java(cn.hutool.core.text.CharSequenceUtil.isBlank(entity.getTrackNo()) ? entity.getTransportNo() : entity.getTrackNo())")
+    @Mapping(target = "weightStr", expression = "java(entity.getWeight() + entity.getWeightUnit())")
+    PackageForecastDTO.PagingDetailViewDTO convertPagingDetailView(PackageForecastDetailEntity entity);
+    List<PackageForecastDTO.PagingDetailViewDTO> convertPagingDetailViewList(List<PackageForecastDetailEntity> detailEntities);
 }

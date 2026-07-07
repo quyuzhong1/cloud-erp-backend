@@ -201,6 +201,15 @@ public class LogisticsFeignController {
     private LogisticsSaleChannelEntity getChannelByCodeAndOverseasWarehouseId(@RequestParam("logisticsProductCode")String logisticsProductCode, @RequestParam("transferWarehouseId") String transferWarehouseId) {
         return logisticsChannelService.getChannelByCodeAndOverseasWarehouseId(logisticsProductCode, transferWarehouseId);
     }
+
+    /**
+     * 三方仓自动出库：shipping_method + platform_warehouse_code 解析 ERP 物流渠道。
+     */
+    @PostMapping("/resolveThirdWarehouseLogisticsChannel")
+    public LogisticsChannelEntity resolveThirdWarehouseLogisticsChannel(@RequestBody LogisticsChannelDTO.ThirdWarehouseLogisticsMappingDTO dto) {
+        return logisticsChannelService.resolveThirdWarehouseLogisticsChannel(dto);
+    }
+
     /**
      * 根据地址类型获取地址列表
      *
@@ -310,6 +319,16 @@ public class LogisticsFeignController {
     @PostMapping("/getSkuCostInCNY")
     public List<InventorySkuCostDTO.SkuCostCNYDTO> getSkuCostInCNY(@RequestBody InventorySkuCostDTO.SkuCostCNYQueryDTO queryDTO) {
         return inventorySkuCostService.getSkuCostInCNY(queryDTO);
+    }
+
+    /**
+     * PLM标准成本专用：按核算月份取最新已审核SKU成本（人民币）
+     * @param queryDTO
+     * @return
+     */
+    @PostMapping("/getSkuCostInCNYForStdCost")
+    public List<InventorySkuCostDTO.SkuCostCNYDTO> getSkuCostInCNYForStdCost(@RequestBody InventorySkuCostDTO.SkuCostCNYQueryDTO queryDTO) {
+        return inventorySkuCostService.getSkuCostInCNYForStdCost(queryDTO);
     }
     /**
      * @return

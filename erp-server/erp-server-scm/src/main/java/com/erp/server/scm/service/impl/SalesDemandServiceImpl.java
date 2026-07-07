@@ -364,8 +364,6 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
     public SalesDemandDetailDTO.ImportDTO importFile(MultipartFile excelFile, List<String> skuIds, HttpServletResponse response) {
         //查询所有审核通过的sku
         List<SkuVO> skuList = plmTaskFeign.listApproveSku();
-        //查询所有审核通过并启用的仓库
-        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listApproveWarehouse();
 
         SalesDemandExcelListener excelListenerUtil = new SalesDemandExcelListener(skuList, wmsTaskFeign, skuIds);
         try {

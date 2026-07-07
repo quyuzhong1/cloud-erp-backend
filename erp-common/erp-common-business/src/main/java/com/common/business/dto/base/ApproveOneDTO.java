@@ -60,6 +60,11 @@ public class ApproveOneDTO extends PermissionsDTO {
     private LocalDate deliveryDate;
 
     /**
+     * 计划质检日期(外验质检类型质检通知单审核)
+     */
+    private LocalDate planQcDate;
+
+    /**
      * 流程参数map
      */
     private Map<String,Object> variablesMap;

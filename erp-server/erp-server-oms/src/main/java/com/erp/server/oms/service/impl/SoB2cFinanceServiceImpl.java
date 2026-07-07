@@ -157,7 +157,10 @@ public class SoB2cFinanceServiceImpl extends SuperServiceImpl<SoB2cFinanceMapper
         SoB2cDTO.FinancialParamDTO paramDTO = new SoB2cDTO.FinancialParamDTO();
         paramDTO.setId(mainEntity.getId());
         paramDTO.setIsCny(CurrencyEnum.CNY.getCurrencyCode().equalsIgnoreCase(financeDTO.getCurrency()));
-        paramDTO.setSoB2cEntity(mainEntity);
+        paramDTO.setShippingFee(mainEntity.getShippingFee());
+        paramDTO.setShopId(mainEntity.getShopId());
+        paramDTO.setExchangeRate(mainEntity.getExchangeRate());
+        paramDTO.setCurrency(mainEntity.getCurrency());
         paramDTO.setSoB2cLogisticsEntity(logisticsEntity);
         paramDTO.setSoB2cDetailList(detailList);
         paramDTO.setSoB2cFinanceEntity(newEntity);

@@ -952,8 +952,8 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 			soReturnInstockEntity.setSoCode(soB2cEntity.getCode());
 			soReturnInstockEntity.setSoId(soB2cEntity.getId());
 			soReturnInstockEntity.setShopId(soB2cEntity.getShopId());
-			// 平台订单编号
-			soReturnInstockEntity.setPlatformOrderCode(soB2cEntity.getPlatformCode());
+			// 平台订单编号：销售订单平台单号为空时用平台消息单号兜底
+			soReturnInstockEntity.setPlatformOrderCode(CharSequenceUtil.isNotBlank(soB2cEntity.getPlatformCode()) ? soB2cEntity.getPlatformCode() : dto.getPlatformOrderNo());
 			// 币种
 			soReturnInstockEntity.setCurrency(soB2cEntity.getCurrency());
 		} else if (Objects.nonNull(soInfoEntity)){
@@ -978,6 +978,8 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 			// 销售订单信息
 			soReturnInstockEntity.setSoCode(soInfoEntity.getCode());
 			soReturnInstockEntity.setSoId(soInfoEntity.getId());
+			// 平台订单编号，与B2C分支保持一致：销售订单平台单号为空时用平台消息单号兜底
+			soReturnInstockEntity.setPlatformOrderCode(CharSequenceUtil.isNotBlank(soInfoEntity.getPlatformOrderCode()) ? soInfoEntity.getPlatformOrderCode() : dto.getPlatformOrderNo());
 			// 币种
 			soReturnInstockEntity.setCurrency(soInfoEntity.getCurrency());
 			soReturnInstockEntity.setCurrencySymbol(soInfoEntity.getCurrencySymbol());

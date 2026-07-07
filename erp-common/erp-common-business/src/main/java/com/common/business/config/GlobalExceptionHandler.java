@@ -51,7 +51,6 @@ import java.util.Objects;
         "com.erp.server.tms.controller.api",
         "com.erp.server.srm.controller.api",
         "com.erp.server.dmp.controller.api",
-        "com.erp.server.mrp.controller.api",
         "com.erp.server.file.controller.api",
 
         "com.erp.server.scm.controller.pda",

@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.ThirdConstants;
@@ -30,6 +31,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductSaleEntity;
@@ -314,9 +316,9 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         List<TransferApplicationDetailDTO.ViewDTO> viewDetailList = BeanMapperUtils.copyList(TransferApplicationDetailDTO.ViewDTO.class, detailList);
 
         //调拨方向
-        List<DictBasicDTO.ListDTO> transferDirectionList = dictBasicService.getByKey(DictBasicEnum.TRANSFER_DIRECTION.getKey());
+        List<DictBasicEntity> transferDirectionList = dictBasicService.getByKey(DictBasicEnum.TRANSFER_DIRECTION.getKey());
         if (CollectionUtils.isNotEmpty(transferDirectionList)) {
-            String name = transferDirectionList.stream().filter(obj -> obj.getValue().equals(viewDTO.getTransferDirection())).map(DictBasicDTO.ListDTO::getName).findFirst().orElse(null);
+            String name = transferDirectionList.stream().filter(obj -> obj.getValue().equals(viewDTO.getTransferDirection())).map(DictBasicEntity::getName).findFirst().orElse(null);
             viewDTO.setTransferDirectionName(name);
         }
 
@@ -481,6 +483,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "entity.id", unlockAfterTx = true)
     public BatchResultDTO approve(TransferApplicationEntity entity, String type, String comment, Boolean isNeedProcess){
         //审核中允许审核
         if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
@@ -960,6 +963,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
     }
 
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.TRANSFER_APPLICATION_APPROVE_KEY, keyName = "updateApprovalStatusDTO.transferApplicationEntity.id", unlockAfterTx = true)
     public void updateApproveStatus(TransferApplicationDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO) {
         String approveStatus = updateApprovalStatusDTO.getApproveStatus();
         TransferApplicationEntity transferApplicationEntity = updateApprovalStatusDTO.getTransferApplicationEntity();
@@ -988,7 +992,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(skuIds);
 
         //调拨方向
-        List<DictBasicDTO.ListDTO> transferDirectionList = dictBasicService.getByKey(DictBasicEnum.TRANSFER_DIRECTION.getKey());
+        List<DictBasicEntity> transferDirectionList = dictBasicService.getByKey(DictBasicEnum.TRANSFER_DIRECTION.getKey());
 
         //直接调拨明细
         List<TransferInfoDetailEntity> transferInfoDetailList = transferInfoDetailService.listSourceDetailIds(sourceDetailIds);
@@ -1029,7 +1033,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
             }
             //调拨方向名称
             if (CollectionUtils.isNotEmpty(transferDirectionList)) {
-                String transferDirectionName = transferDirectionList.stream().filter(e -> e.getValue().equals(dto.getTransferDirection())).map(DictBasicDTO.ListDTO::getName).findFirst().orElse("");
+                String transferDirectionName = transferDirectionList.stream().filter(e -> e.getValue().equals(dto.getTransferDirection())).map(DictBasicEntity::getName).findFirst().orElse("");
                 dto.setTransferDirectionName(transferDirectionName);
             }
 
@@ -1149,7 +1153,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         List<ProductSaleEntity> productSaleEntityList = FeignQuery.create(ProductSaleEntity.class).in(ProductSaleEntity::getSkuId,ids).list();
 
         //调拨方向
-        List<DictBasicDTO.ListDTO> transferDirectionList = dictBasicService.getByKey(DictBasicEnum.TRANSFER_DIRECTION.getKey());
+        List<DictBasicEntity> transferDirectionList = dictBasicService.getByKey(DictBasicEnum.TRANSFER_DIRECTION.getKey());
         if (CollectionUtils.isEmpty(transferDirectionList)) {
             throw new ServiceException(ApiError.WH_TRANSFER_DIRECTION_NOT_FOUND);
         }
@@ -1182,7 +1186,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
             String saleStateName = productSaleEntityList.stream().filter(e -> CharSequenceUtil.equals(e.getSkuId(), obj.getSkuId())).findFirst().map(e -> SaleStateEnum.getNameByCode(e.getSaleState())).orElse("");
             obj.setSaleStateName(saleStateName);
             //调拨方向名称
-            String transferDirectionName = transferDirectionList.stream().filter(e -> e.getValue().equals(obj.getTransferDirection())).map(DictBasicDTO.ListDTO::getName).findFirst().orElse("");
+            String transferDirectionName = transferDirectionList.stream().filter(e -> e.getValue().equals(obj.getTransferDirection())).map(DictBasicEntity::getName).findFirst().orElse("");
             if (CharSequenceUtil.isBlank(transferDirectionName)) {
                 throw new ServiceException(ApiError.WH_TRANSFER_DIRECTION_NOT_FOUND);
             }

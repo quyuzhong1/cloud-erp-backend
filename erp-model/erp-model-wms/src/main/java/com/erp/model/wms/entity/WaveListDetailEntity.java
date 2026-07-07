@@ -44,6 +44,18 @@ public class WaveListDetailEntity extends BaseEntity<WaveListDetailEntity> imple
     private String soCode;
 
     /**
+     * 店铺id
+     */
+    @TableField("shop_id")
+    private String shopId;
+
+    /**
+     * 仓库id
+     */
+    @TableField("warehouse_id")
+    private String warehouseId;
+
+    /**
      * 发货id
      */
     @TableField("delivery_id")

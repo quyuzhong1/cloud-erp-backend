@@ -14,7 +14,7 @@ import com.baomidou.mybatisplus.core.incrementer.IdentifierGenerator;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.annotation.DataIdempotent;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.FileTemplateConstant;
 import com.common.business.constant.RedisCacheConstants;
@@ -37,6 +37,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
+import com.common.message.constant.DistributeKeyConstant;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
@@ -236,6 +237,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     private ExecutorService printLabelPool;
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.SO_B2C_DELIVERY_KEY, keyName = "addDTO.soCode", unlockAfterTx = true)
     @Override
     public SoB2cDeliveryEntity add(SoB2cDeliveryDTO.AddDTO addDTO) {
         SoB2cDeliveryEntity existEntity = this.getNotCancelBySoId(addDTO.getSourceId());
@@ -300,7 +302,16 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 dto.setFromWarehouseCountry(deliveryWarehouse.getCountry());
             }
         }
-        dto.setSalesOrgId(soB2cEntity.getOrgId());
+        //销售组织根据订单所属店铺的销售组织赋值
+        String shopId = soB2cEntity.getShopId();
+        ShopInfoEntity shopInfo = CharSequenceUtil.isNotBlank(shopId) ? shopInfoFeign.getShopInfoById(shopId) : null;
+        if (Objects.isNull(shopInfo)){
+            throw new ServiceException(ApiError.SHOP_NOT_FOUND);
+        }
+        if (StringUtils.isBlank(shopInfo.getSalesOrgId())){
+            log.warn("匹配b2c订单={}的中转规则，订单所属店铺销售组织信息={}", soB2cEntity.getCode(), shopInfo.getSalesOrgId());
+        }
+        dto.setSalesOrgId(shopInfo.getSalesOrgId());
         dto.setDictPlatform(soB2cEntity.getDictPlatform());
         CfgRuleOutDTO.MatchTransferResultDTO matchTransferResultDTO = cfgRuleOutService.matchTransferRule(dto);
         if (Objects.nonNull(matchTransferResultDTO) && Objects.nonNull(matchTransferResultDTO.getIsTransit()) && matchTransferResultDTO.getIsTransit()){
@@ -471,6 +482,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @Override
     @GlobalTransactional
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO falseDelivery(String id) {
         SoB2cDeliveryEntity entity = this.getById(id);
         if (PlatformDictEnum.TIK_TOK_FULLY.getCode().equals(entity.getDictPlatform())){
@@ -696,6 +708,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     }
 
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "id")
     public BatchResultDTO printPickingCancel(String id) {
         SoB2cDeliveryEntity soB2cDeliveryEntity = this.getById(id);
         if (ObjectUtil.isEmpty(soB2cDeliveryEntity)) {
@@ -1143,6 +1156,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     }
 
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "id")
     public String printLogisticsBillConfirmById(String id, HttpServletResponse response) {
 //        SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO dto = new SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO();
 //        dto.setPrintType(SoB2cDeliveryPrintTypeEnum.LOGISTICS_BILL.getCode());
@@ -1332,6 +1346,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     }
 
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "entity.id")
     public BatchResultDTO updateTransferWarehouse(SoB2cDeliveryEntity entity, List<String> changeIds) {
         //无需校验单据状态，关联的调拨单必须非审核通过、或者无关联的调拨单
         List<TransferInfoEntity> transferInfoEntities = transferInfoService.listBySourceId(entity.getId());
@@ -1830,7 +1845,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
      * @return
      */
     @Override
-    @DataIdempotent(keyIdName = "id")
+    @DistributeLocker(businessType = DistributeKeyConstant.SO_B2C_DELIVERY_KEY, keyName = "id")
     public BatchResultDTO delivery(String id, String deliveryType, LocalDate deliveryDate) {
         //手工发货
         String manual = DeliverTypeEnum.MANUAL.getCode();
@@ -1910,6 +1925,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     }
 
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "id")
     public BatchResultDTO finishPrint(String id) {
         SoB2cDeliveryEntity soB2cDeliveryEntity = this.getById(id);
         if (ObjectUtil.isEmpty(soB2cDeliveryEntity)) {
@@ -2710,23 +2726,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         return BatchResultDTO.success(soB2cDeliveryEntity.getId(), soB2cDeliveryEntity.getCode(), "操作成功");
     }
 
-    @Override
-    public PagingVO<SoB2cDeliveryDTO.ListDTO> exportB2cDelivery(PagingDTO<SoB2cDeliveryDTO.PagingParamDTO> dto) {
-        DynamicDataSourceTypeEnum dynamicDataSourceTypeEnum = DynamicDataSourceThreadLocal.get();
-        if(dynamicDataSourceTypeEnum == null) {
-            dynamicDataSourceTypeEnum = DynamicDataSourceTypeEnum.POSTGRES;
-        }
-        dto.getParams().setDynamicDataSource(dynamicDataSourceTypeEnum.getCode());
-        dto.getParams().setPermissionSql(dto.getPermissionSql());
-        Page<SoB2cDeliveryDTO.ListDTO> page = this.baseMapper.list(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
-        if (CollUtil.isEmpty(page.getRecords())) {
-            throw new ServiceException(ApiError.FILE_EXPORT_DATA_EMPTY);
-        }
-        // 数据处理
-        fillList(page.getRecords());
-        return new PagingVO<>(page);
-    }
-
     /**
      * 虚拟仓从冻结出库
      * @author will
@@ -3079,22 +3078,26 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     private void fillList(List<SoB2cDeliveryDTO.ListDTO> records) {
         List<String> skuIds = records.stream().map(SoB2cDeliveryDTO.ListDTO::getSkuId).distinct().collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIds);
-        Map<String, String> skuNameMap = skuVOList.stream().collect(Collectors.toMap(SkuVO::getSkuId, SkuVO::getSkuName, (v1, v2) -> v1));
+        Map<String, String> skuNameMap = CollUtil.isNotEmpty(skuVOList) ? skuVOList.stream().collect(Collectors.toMap(SkuVO::getSkuId, SkuVO::getSkuName, (v1, v2) -> v1)) : Collections.emptyMap();
 
         //查询订单
         List<String> soIds = records.stream().map(SoB2cDeliveryDTO.ListDTO::getSourceId).distinct().collect(Collectors.toList());
         List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIds);
-        Map<String, SoB2cEntity> soB2cEntityMap = soB2cEntities.stream().collect(Collectors.toMap(SoB2cEntity::getId, Function.identity(), (v1, v2) -> v1));
+        Map<String, SoB2cEntity> soB2cEntityMap = CollUtil.isNotEmpty(soB2cEntities) ? soB2cEntities.stream().collect(Collectors.toMap(SoB2cEntity::getId, Function.identity(), (v1, v2) -> v1)) : Collections.emptyMap();
+        //查询拦截信息
         List<String> ids = records.stream().map(SoB2cDeliveryDTO.ListDTO::getId).distinct().collect(Collectors.toList());
         List<SoB2cDeliveryInterceptEntity> soB2cDeliveryInterceptEntityList = soB2cDeliveryInterceptService.listByDeliveryIds(ids);
-        Map<String, String> interceptMap = soB2cDeliveryInterceptEntityList.stream().collect(Collectors.toMap(SoB2cDeliveryInterceptEntity::getDeliveryId, SoB2cDeliveryInterceptEntity::getId, (v1, v2) -> v1));
+        Map<String, String> interceptMap = CollUtil.isNotEmpty(soB2cDeliveryInterceptEntityList) ? soB2cDeliveryInterceptEntityList.stream().collect(Collectors.toMap(SoB2cDeliveryInterceptEntity::getDeliveryId, SoB2cDeliveryInterceptEntity::getId, (v1, v2) -> v1)) : Collections.emptyMap();
+        //查询拣货信息
         List<PickingListsDTO.SourceView> views = pickingListsService.listBySourceIds(ids);
         List<WaveListDTO.WaveDeliveryDTO> deliveryList = waveListService.listByDeliverIds(ids);
-        Map<String, String> waveCodeMap = deliveryList.stream().collect(Collectors.toMap(WaveListDTO.WaveDeliveryDTO::getDeliveryId, WaveListDTO.WaveDeliveryDTO::getWaveCode, (v1, v2) -> v1));
+        Map<String, String> waveCodeMap = CollUtil.isNotEmpty(deliveryList) ? deliveryList.stream().collect(Collectors.toMap(WaveListDTO.WaveDeliveryDTO::getDeliveryId, WaveListDTO.WaveDeliveryDTO::getWaveCode, (v1, v2) -> v1)) : Collections.emptyMap();
+        //查询物流信息
         List<SoB2cLogisticsEntity> soB2cLogisticsEntities = soB2cFeign.listSoB2cLogisticsByMainIdList(soIds);
-        Map<String, SoB2cLogisticsEntity> logisticsEntityMap = soB2cLogisticsEntities.stream().collect(Collectors.toMap(SoB2cLogisticsEntity::getMainId, Function.identity(), (v1, v2) -> v1));
+        Map<String, SoB2cLogisticsEntity> logisticsEntityMap = CollUtil.isNotEmpty(soB2cLogisticsEntities) ? soB2cLogisticsEntities.stream().collect(Collectors.toMap(SoB2cLogisticsEntity::getMainId, Function.identity(), (v1, v2) -> v1)) : Collections.emptyMap();
+        //查询物流面单信息
         List<SoB2cLabelEntity> b2cLabelEntityList = soB2cFeign.listSoB2cLabelByMainIdList(soIds);
-        Map<String, String> labelMap = b2cLabelEntityList.stream().collect(Collectors.toMap(SoB2cLabelEntity::getMainId, SoB2cLabelEntity::getLogisticsLabelUrl, (v1, v2) -> v1));
+        Map<String, String> labelMap = CollUtil.isNotEmpty(b2cLabelEntityList) ? b2cLabelEntityList.stream().collect(Collectors.toMap(SoB2cLabelEntity::getMainId, SoB2cLabelEntity::getLogisticsLabelUrl, (v1, v2) -> v1)) : Collections.emptyMap();
         //中转仓map
         List<String> warehouseIds = records.stream().filter(req -> CharSequenceUtil.isNotBlank(req.getTransferWarehouseIds()))
                 .flatMap(req -> Arrays.stream(req.getTransferWarehouseIds().split(",")))

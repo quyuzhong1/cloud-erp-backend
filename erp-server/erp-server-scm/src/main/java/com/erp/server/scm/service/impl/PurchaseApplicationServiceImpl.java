@@ -16,6 +16,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ThirdConstants;
 import com.common.business.dto.ApproveDTO;
@@ -33,10 +34,10 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
+import com.common.message.constant.DistributeKeyConstant;
 import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
-import com.erp.model.mrp.dto.PurchaseSuggestMergeDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
@@ -602,8 +603,6 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
     public PurchaseApplicationDetailDTO.ImportDTO importFile(MultipartFile excelFile,List<String> skuIds, HttpServletResponse response) {
         //查询所有审核通过的sku
         List<SkuVO> skuList = plmTaskFeign.listApproveSku();
-        //查询所有审核通过并启用的仓库
-        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listApproveWarehouse();
         //查询所有启用核算公司
         List<BaseIdDTO> companyList = sysUserFeign.listAccountingCompany();
         PurchaseApplicationExcelListener excelListenerUtil = new PurchaseApplicationExcelListener(skuList,wmsTaskFeign,skuIds,companyList);
@@ -1421,13 +1420,6 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 obj.setWaitQty(obj.getApplyQty() - (Objects.isNull(obj.getRealPurchaseQty())?0:obj.getRealPurchaseQty()));
             }
             obj.setFirstMassProductName(FirstMassProductTypeEnum.getName(obj.getFirstMassProduct()));
-            //采购建议数据
-            if (SourceTypeEnum.PURCHASE_SUGGESTION_MERGE.getCode().equals(obj.getSourceType())) {
-                List<PurchaseSuggestMergeDTO.PushSourceDTO> pushSourceList = BeanUtil.copyToList(obj.getSourceJson(), PurchaseSuggestMergeDTO.PushSourceDTO.class);
-                String codes = pushSourceList.stream().map(PurchaseSuggestMergeDTO.PushSourceDTO::getCode).distinct().collect(Collectors.joining(","));
-                obj.setSourceCode(codes);
-            }
-
             //最新审核人
             if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
                 String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(obj.getId()) && CharSequenceUtil.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
@@ -1636,6 +1628,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
     }
 
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "one.id", unlockAfterTx = true)
     public void updateApproveStatus(PurchaseApplicationEntity one, String approveStatus) {
         String userId = sysUserFeign.getUserByThird(ThirdpartyPlatformEnum.FS.getCode(), one.getApproveUserId()).getUserId();
         //更新审核状态

@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
+import com.common.message.constant.DistributeKeyConstant;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
@@ -17,6 +18,7 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -227,10 +229,11 @@ public class AssetLocationServiceImpl extends SuperServiceImpl<AssetLocationMapp
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO submit(String id) {
-        return submit(id, true);
+        return ApplicationContextUtils.getBean(AssetLocationServiceImpl.class).submit(id, true);
     }
 
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO submit(String id, boolean isNeedProcess) {
         AssetLocationEntity entity = getById(id);
         if (ObjectUtil.isEmpty(entity)) {
@@ -260,7 +263,7 @@ public class AssetLocationServiceImpl extends SuperServiceImpl<AssetLocationMapp
         // 新增
         BaseResultDTO.AddDTO result = this.add(dto);
         // 提交
-        this.submit(result.getId(), true);
+        ApplicationContextUtils.getBean(AssetLocationServiceImpl.class).submit(result.getId(), true);
         return result;
     }
 
@@ -270,7 +273,7 @@ public class AssetLocationServiceImpl extends SuperServiceImpl<AssetLocationMapp
     public BaseResultDTO.AddDTO addAndSubmitAndApprove(AssetLocationDTO.AddDTO dto) {
         // 新增并提交（自动审核链路不启动流程）
         BaseResultDTO.AddDTO result = this.add(dto);
-        this.submit(result.getId(), false);
+        ApplicationContextUtils.getBean(AssetLocationServiceImpl.class).submit(result.getId(), false);
         // 审核（系统用户，绕过创建人和审核人不能一致校验）
         Boolean originalValue = UserContext.getIsUserSystem();
         LoginUser originalLoginUser = UserContext.getLoginUser();
@@ -280,7 +283,7 @@ public class AssetLocationServiceImpl extends SuperServiceImpl<AssetLocationMapp
             ApproveOneDTO approveOneDTO = new ApproveOneDTO(result.getId(), ApproveTypeEnum.PASS.getStatus(), "");
             approveOneDTO.setIsUserSystem(Boolean.TRUE);
             approveOneDTO.setIsNeedProcess(Boolean.FALSE);
-            this.approve(approveOneDTO);
+            ApplicationContextUtils.getBean(AssetLocationServiceImpl.class).approve(approveOneDTO);
         } finally {
             UserContext.setLoginUser(originalLoginUser);
             UserContext.setIsUserSystem(originalValue);
@@ -291,16 +294,18 @@ public class AssetLocationServiceImpl extends SuperServiceImpl<AssetLocationMapp
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "dto.id", unlockAfterTx = true)
     public void updateAndSubmit(AssetLocationDTO.UpdateDTO dto) {
         // 修改
         this.update(dto);
         // 提交
-        this.submit(dto.getId());
+        ApplicationContextUtils.getBean(AssetLocationServiceImpl.class).submit(dto.getId(), true);
     }
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "dto.id", unlockAfterTx = true)
     public BatchResultDTO approve(ApproveOneDTO dto) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
@@ -353,6 +358,7 @@ public class AssetLocationServiceImpl extends SuperServiceImpl<AssetLocationMapp
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO disApprove(String id) {
         AssetLocationEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到资产位置单单数据"));
         // 反审核条件判断
@@ -422,6 +428,7 @@ public class AssetLocationServiceImpl extends SuperServiceImpl<AssetLocationMapp
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "dto.id", unlockAfterTx = true)
     public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         String id = dto.getId();
         AssetLocationEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到资产位置单数据"));
@@ -539,6 +546,7 @@ public class AssetLocationServiceImpl extends SuperServiceImpl<AssetLocationMapp
     * 更新审核状态
     */
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "id", unlockAfterTx = true)
     public void updateApproveStatus(String id, String approveStatus) {
         lambdaUpdate().eq(AssetLocationEntity::getId, id)
         .set(AssetLocationEntity::getApproveUserId, "")

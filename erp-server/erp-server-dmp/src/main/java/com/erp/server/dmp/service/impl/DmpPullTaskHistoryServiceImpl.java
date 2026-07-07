@@ -7,12 +7,14 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.message.constant.DistributeKeyConstant;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.DmpPullTaskDTO;
 import com.erp.model.dmp.entity.DmpPullTaskEntity;
@@ -85,6 +87,7 @@ public class DmpPullTaskHistoryServiceImpl extends ServiceImpl<DmpPullTaskHistor
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.DMP_PULL_TASK_KEY, keyName = "ids", waiteTime = 60, unlockAfterTx = true)
     public Boolean batchSync(List<String> ids) {
         List<DmpPullTaskHistoryEntity> list = this.listByIds(ids);
         if (CollectionUtils.isEmpty(list)) {
