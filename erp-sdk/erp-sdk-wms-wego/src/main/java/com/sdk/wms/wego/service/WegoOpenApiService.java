@@ -273,18 +273,23 @@ public class WegoOpenApiService {
      * <p>
      * 注意：该接口响应的 {@code result} 字段是数组，与 queryPage 的分页对象结构不同，
      * 此处直接解包为 {@link WegoOutboundResp.OutboundOrderDTO} 列表返回，避免 FastJSON 同名字段冲突。
+     * <p>
+     * 与 {@link #query2cOrderPage} / {@link #queryInorderPage} 保持一致：接口返回
+     * {@code success=false} 视为真实失败，抛出 {@link ServiceException}，不在 SDK 层静默降级为
+     * "无数据"，避免调用方（如 Handler 的 {@code queryOutboundBill}）误判单据不存在或未变化。
+     * 仅当接口调用成功但 {@code result} 为空数组时，才代表"未查询到匹配单据"并返回空列表。
      *
      * @param dto 查询请求，包含 accessToken / secret / noList（WEGO 出库单号列表）
-     * @return 出库单详情列表；失败或无数据时返回空列表
+     * @return 出库单详情列表；调用成功但无匹配单据时返回空列表；接口失败时抛出 ServiceException
      */
     public List<WegoOutboundResp.OutboundOrderDTO> search2cOrder(@Valid WegoOutboundSearchDTO.SearchReqDTO dto) {
         Map<String, Object> bizParams = new HashMap<>();
         bizParams.put("noList", JSON.toJSON(dto.getNoList()));
         JSONObject response = doQuery(dto.getAccessToken(), dto.getSecret(),
                 WeGoConstants.TWO_C_ORDER_SEARCH, bizParams, "查询2C出库单");
-        if (response == null || !Boolean.TRUE.equals(response.getBoolean("success"))) {
-            log.warn("[WEGO查询2C出库单] 接口返回失败或无响应, {}", safeResponseLog(response));
-            return Collections.emptyList();
+        if (!Boolean.TRUE.equals(response.getBoolean("success"))) {
+            log.error("[WEGO查询2C出库单] 接口返回失败, {}", safeResponseLog(response));
+            throw new ServiceException("WEGO 查询2C出库单接口失败: " + response.getString("errorMsg"));
         }
         JSONArray resultArray = response.getJSONArray("result");
         if (resultArray == null || resultArray.isEmpty()) {

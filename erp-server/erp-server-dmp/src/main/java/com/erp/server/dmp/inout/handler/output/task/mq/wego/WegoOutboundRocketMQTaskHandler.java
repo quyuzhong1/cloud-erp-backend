@@ -11,7 +11,7 @@ import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import com.erp.server.dmp.inout.handler.output.task.mq.DmpOutputRocketMQTaskHandler;
 import com.sdk.wms.wego.enums.WegoEnums;
-import io.seata.common.util.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 

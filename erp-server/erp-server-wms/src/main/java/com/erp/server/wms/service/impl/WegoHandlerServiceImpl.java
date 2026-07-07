@@ -757,6 +757,10 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             ThirdWarehouseCreateOutboundReq req, String wegoOrderNo,
             String accessToken, String secret) {
 
+        if (CollUtil.isEmpty(req.getItems())) {
+            throw new ServiceException("出库明细不能为空");
+        }
+
         ThirdWarehouseCreateOutboundReq.ReceiverInfo receiver = req.getReceiverInfo();
 
         // 有 labelUrl 时用平台指定面单（wayBillType=1），否则由 WEGO 生成（wayBillType=0）
