@@ -94,6 +94,11 @@ public class WegoInventoryInitHandler extends DmpInputInitHandler {
 
         for (OverseasProviderWarehouseEntity warehouse : warehouseList) {
             String warehouseCode = warehouse.getPlatformWarehouseCode();
+            if (StringUtils.isBlank(warehouseCode)) {
+                log.warn("[WEGO库存] 服务商[id={}] 仓库[id={}]platformWarehouseCode为空，跳过",
+                        authId, warehouse.getId());
+                continue;
+            }
             String warehouseName = warehouse.getPlatformWarehouseName();
             List<Object> warehouseInventory = fetchInventoryByWarehouse(appToken, appSecret, warehouseCode, authId, warehouseName);
             allInventory.addAll(warehouseInventory);

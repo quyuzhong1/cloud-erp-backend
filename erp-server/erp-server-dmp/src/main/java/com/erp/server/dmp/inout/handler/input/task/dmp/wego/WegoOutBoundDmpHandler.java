@@ -3,6 +3,7 @@ package com.erp.server.dmp.inout.handler.input.task.dmp.wego;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.WarehousePlatformTypeEnum;
 import com.erp.server.dmp.inout.handler.input.task.dmp.DmpInputDbConvertDmpHandler;
 import com.erp.server.dmp.inout.handler.input.task.dmp.jifeng.JiFengOutBoundDmpHandler;
@@ -90,7 +91,7 @@ public class WegoOutBoundDmpHandler extends DmpInputDbConvertDmpHandler {
                     dmpDataMap.put(DMP_KEY_ORDER_STATUS, orderStatus);
                 }
                 dmpDataMap.put(DMP_KEY_WAREHOUSE_PLATFORM_TYPE, WarehousePlatformTypeEnum.OVERSEAS_WAREHOUSE.getCode());
-                dmpDataMap.put(DMP_KEY_ORDER_TYPE, "B2C");
+                dmpDataMap.put(DMP_KEY_ORDER_TYPE, OrderTypeEnum.B2C.getCode());
             }
         }
     }

@@ -486,7 +486,7 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
             insert.setPlatformWarehouseCode(warehouseCode);
             insert.setPlatformWarehouseName(wh.getString("warehouseName"));
             insert.setCountry(wh.getString("warehouseRegion"));
-            insert.setCountryName(marketPlaceEnum.getName());
+            insert.setCountryName(marketPlaceEnum != null ? marketPlaceEnum.getName() : wh.getString("warehouseRegion"));
             insert.setDisabled(Boolean.TRUE);
             toInsert.add(insert);
         }

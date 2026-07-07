@@ -935,7 +935,7 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         if (Integer.valueOf(WEGO_ERROR_CODE_INTERCEPTED).equals(errorCode)) {
             return true;
         }
-        // 场景2：WEGO 后台手动取消后返回 success=false + errorMsg="操作成功!"
+        // 场景2：WEGO 后台手动取消后返回 success=false + errorMsg包含"操作成功!"
         String errorMsg = resp.getString(RESP_FIELD_ERROR_MSG);
         return CharSequenceUtil.isNotBlank(errorMsg) && errorMsg.contains(WEGO_INTERCEPT_IDEMPOTENT_KEYWORD);
     }

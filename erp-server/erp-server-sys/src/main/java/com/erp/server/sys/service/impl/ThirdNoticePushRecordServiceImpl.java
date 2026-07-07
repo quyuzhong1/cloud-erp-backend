@@ -1573,6 +1573,10 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
         List<CfgRuleConditionEntity> ruleList = cfgRuleConditionService.lambdaQuery()
                 .eq(CfgRuleConditionEntity::getRuleId, noticeEntity.getId())
                 .list();
+        if (StringUtils.isBlank(skuType)) {
+            log.warn("SKU未匹配预警: skuType 为空，跳过查询, 配置id:{}", noticeEntity.getId());
+            return;
+        }
         SkuMappingDTO.UnmatchQueryDTO queryDTO = new SkuMappingDTO.UnmatchQueryDTO();
         queryDTO.setType(skuType);
         if (CollUtil.isNotEmpty(ruleList)) {
