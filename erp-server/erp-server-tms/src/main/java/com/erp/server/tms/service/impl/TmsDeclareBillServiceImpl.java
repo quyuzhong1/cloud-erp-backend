@@ -519,8 +519,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         String b2bTransportNo = SourceTypeEnum.B2B_DECLARE_BILL == sourceTypeEnum
                 ? resolveB2bNoticeTransportNo(collectSourceIdSet(mergeDetailList))
                 : null;
-        List<String> syncSourceIds = service.updateInTx(updateDTO, sourceTypeEnum, mergeDetailList, recalculatedHeaderWeight, b2bTransportNo);
-        syncSourceDeclareStatusIfNeeded(sourceTypeEnum.getCode(), syncSourceIds);
+        // 全局事务内：写 TMS 单库 + 中间表 + 回写 WMS 来源单报关状态，保证本地库与远端来源单状态强一致。
+        service.updateInTx(updateDTO, sourceTypeEnum, mergeDetailList, recalculatedHeaderWeight, b2bTransportNo);
         return Boolean.TRUE;
     }
 
@@ -546,14 +546,16 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         }
     }
 
-    // 编辑保存仅写 TMS 单库（WMS 回写已移到事务外），用本地事务即可，
-    // 不再使用 @GlobalTransactional 避免 Seata XA prepare 分支失败。
+    // 编辑保存写 TMS 单库 + 中间表，并回写 WMS 来源单报关状态；
+    // Feign 重量重算/装箱校验已全部前置到事务外，事务内仅剩快速 DML + 一次 WMS 回写，
+    // 用 Seata 全局事务保证「本地库写入」与「远端来源单状态回写」强一致。
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
     @Transactional(rollbackFor = Exception.class)
-    public List<String> updateInTx(TmsDeclareBillDTO.UpdateDTO updateDTO,
-                                   SourceTypeEnum sourceTypeEnum,
-                                   List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList,
-                                   TmsDeclareBillDTO.SelectedSkuHeaderDTO recalculatedHeaderWeight,
-                                   String b2bTransportNo) {
+    public void updateInTx(TmsDeclareBillDTO.UpdateDTO updateDTO,
+                           SourceTypeEnum sourceTypeEnum,
+                           List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList,
+                           TmsDeclareBillDTO.SelectedSkuHeaderDTO recalculatedHeaderWeight,
+                           String b2bTransportNo) {
         // 事务内以 DB 最新主表为准二次校验，关闭 Feign 重算耗时窗口内的 TOCTOU 并发风险；
         // updateById 携带 @Version 乐观锁，并发修改导致版本不一致时 save=false。
         TmsDeclareBillEntity old = super.getById(updateDTO.getId());
@@ -607,7 +609,9 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         log.info("编辑 开始记录报关单日志数据，单号：【{}】", tmsDeclareBillEntity.getCode());
         String msg = CharSequenceUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), tmsDeclareBillEntity.getCode(), "报关单");
         operateLogService.addModuleOperateLogByObj(old, tmsDeclareBillEntity, sourceTypeEnum.getCode(), tmsDeclareBillEntity.getId(), msg);
-        return extractSourceIdListFromMidList(addMidList);
+        // 编辑可能移除部分来源明细，需按中间表现状回写：仍生成的来源单 → finish，被移除释放的 → wait，
+        // 故沿用 syncSourceDeclareStatusIfNeeded（含 finish/wait 两批），不能改为 finish-only。
+        syncSourceDeclareStatusIfNeeded(sourceTypeEnum.getCode(), extractSourceIdListFromMidList(addMidList));
     }
 
     @Override
@@ -3256,50 +3260,81 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (CollUtil.isEmpty(declareDTO.getSplitDeclareDTOList())) {
             return Boolean.TRUE;
         }
-        List<String> syncSourceIds = service.batchAddSplitFmDetailInTx(declareDTO);
-        syncSourceDeclareStatusIfNeeded(SourceTypeEnum.FM_DECLARE_BILL.getCode(), syncSourceIds);
+        validateSplitDeclareGroups(declareDTO.getSplitDeclareDTOList());
+        TmsDeclareBillEntity declareBillEntity = loadAndAssertSplitDeclareBill(
+                declareDTO.getId(), SourceTypeEnum.FM_DECLARE_BILL, ApiError.LOGISTICS_DECLARE_FM_SPLIT_ADD_FORBIDDEN);
+        String originalDeclareBillId = declareBillEntity.getId();
+        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDeliveryDetailList =
+                deliveryDeclareDetailMidService.listSourceByDeclareIdList(Collections.singletonList(originalDeclareBillId));
+        // 拆分保存：同一箱的全部明细必须整箱落在同一票，不能拆到不同票。
+        validateSplitSameBoxInOneGroup(sourceDeliveryDetailList, declareDTO.getSplitDeclareDTOList());
+        List<TmsDeclareBillDTO.SplitPreparedBillData> preparedBills = prepareFmSplitBills(declareDTO, sourceDeliveryDetailList);
+        service.batchAddSplitFmDetailInGlobalTx(declareDTO, sourceDeliveryDetailList, preparedBills);
         return Boolean.TRUE;
     }
 
-    // 拆分保存仅写 TMS 单库（WMS 回写已移到事务外），用本地事务即可，
-    // 不再使用 @GlobalTransactional 避免 Seata XA prepare 分支失败。
+    // 拆分保存写 TMS 单库 + 中间表，并回写 WMS 来源单报关状态；自动合并预览/实体构建已前置到事务外，
+    // 事务内仅删除原单、落新单并回写 WMS，用 Seata 全局事务保证本地库与远端来源单状态强一致。
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
     @Transactional(rollbackFor = Exception.class)
-    public List<String> batchAddSplitFmDetailInTx(TmsDeclareBillDTO.AddSplitDeclareDTO declareDTO) {
+    public void batchAddSplitFmDetailInGlobalTx(TmsDeclareBillDTO.AddSplitDeclareDTO declareDTO,
+                                                List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDeliveryDetailList,
+                                                List<TmsDeclareBillDTO.SplitPreparedBillData> preparedBills) {
         validateSplitDeclareGroups(declareDTO.getSplitDeclareDTOList());
-        TmsDeclareBillEntity declareBillEntity = super.getById(declareDTO.getId());
-        if (ObjectUtil.isEmpty(declareBillEntity)) {
-            throw new ServiceException(ApiError.LOGISTICS_DECLARE_INFO_NOT_FOUND);
-        }
-        if (!CharSequenceUtil.equals(declareBillEntity.getType(), SourceTypeEnum.FM_DECLARE_BILL.getCode())) {
-            throw new ServiceException(ApiError.LOGISTICS_DECLARE_FM_SPLIT_ADD_FORBIDDEN);
-        }
-        if (!CharSequenceUtil.equals(declareBillEntity.getDeclareStatus(), DeclareStatusEnum.WAIT.getCode())) {
-            throw new ServiceException(ApiError.LOGISTICS_DECLARE_SPLIT_WAIT_STATUS_REQUIRED);
-        }
-
+        TmsDeclareBillEntity declareBillEntity = loadAndAssertSplitDeclareBill(
+                declareDTO.getId(), SourceTypeEnum.FM_DECLARE_BILL, ApiError.LOGISTICS_DECLARE_FM_SPLIT_ADD_FORBIDDEN);
         String splitBaseCode = declareBillEntity.getCode();
         String originalDeclareBillId = declareBillEntity.getId();
-        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDeliveryDetailList = deliveryDeclareDetailMidService.listSourceByDeclareIdList(Collections.singletonList(originalDeclareBillId));
-
-        // 拆分保存：同一箱的全部明细必须整箱落在同一票，不能拆到不同票。
-        validateSplitSameBoxInOneGroup(sourceDeliveryDetailList, declareDTO.getSplitDeclareDTOList());
 
         //删除原本的报关单
         deleteDeclareBillById(originalDeclareBillId);
 
-        for (List<TmsDeclareBillDTO.SplitDeclareDTO> splitGroup : declareDTO.getSplitDeclareDTOList()) {
-            List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> batchSourceList = filterSplitSourceDetailGroup(sourceDeliveryDetailList, splitGroup);
-            List<TmsDeclareBillDTO.MergeDeclareBillDTO> mergeDeclareBillDTOS = autoMergeDeclareBillView(
-                    new TmsDeclareBillDTO.AutoMergeDeclareBillViewDTO(Boolean.TRUE, batchSourceList), Boolean.FALSE);
-
+        for (TmsDeclareBillDTO.SplitPreparedBillData preparedBill : preparedBills) {
             //保存合并数据（合同协议号按新增规则自动生成）
-            batchAddMergeDetail(SourceTypeEnum.FM_DECLARE_BILL.getCode(), mergeDeclareBillDTOS, Boolean.TRUE, Boolean.FALSE);
+            saveBatchMergeBills(SourceTypeEnum.FM_DECLARE_BILL.getCode(),
+                    preparedBill.getMergeDeclareBillList(), preparedBill.getPreparedBillList(), Boolean.TRUE, Boolean.FALSE);
         }
         String splitMsg = CharSequenceUtil.format("拆分报关单：拆分为{}{}", declareDTO.getSplitDeclareDTOList().size(), "票");
         operateLogService.addModuleOperateLog(splitMsg, SourceTypeEnum.FM_DECLARE_BILL.getCode(), originalDeclareBillId, "拆分操作");
         log.info("头程拆分报关完成，原报关单id={}，code={}，拆分数={}", originalDeclareBillId, splitBaseCode,
                 declareDTO.getSplitDeclareDTOList().size());
-        return extractSourceIdListFromSourceDetails(sourceDeliveryDetailList);
+        syncDeclareGeneratedSourceStatus(SourceTypeEnum.FM_DECLARE_BILL.getCode(), extractSourceIdListFromSourceDetails(sourceDeliveryDetailList));
+    }
+
+    /**
+     * 校验拆分原报关单存在、类型匹配且处于待确认状态。
+     */
+    private TmsDeclareBillEntity loadAndAssertSplitDeclareBill(String declareBillId,
+                                                               SourceTypeEnum expectedType,
+                                                               ApiError typeMismatchError) {
+        TmsDeclareBillEntity declareBillEntity = super.getById(declareBillId);
+        if (ObjectUtil.isEmpty(declareBillEntity)) {
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_INFO_NOT_FOUND);
+        }
+        if (!CharSequenceUtil.equals(declareBillEntity.getType(), expectedType.getCode())) {
+            throw new ServiceException(typeMismatchError);
+        }
+        if (!CharSequenceUtil.equals(declareBillEntity.getDeclareStatus(), DeclareStatusEnum.WAIT.getCode())) {
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_SPLIT_WAIT_STATUS_REQUIRED);
+        }
+        return declareBillEntity;
+    }
+
+    /**
+     * 头程拆分保存事务外预构建：按拆分组完成自动合并预览与报关单主/明细实体构建。
+     */
+    private List<TmsDeclareBillDTO.SplitPreparedBillData> prepareFmSplitBills(TmsDeclareBillDTO.AddSplitDeclareDTO declareDTO,
+                                                                             List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDeliveryDetailList) {
+        List<TmsDeclareBillDTO.SplitPreparedBillData> preparedBills = new ArrayList<>(declareDTO.getSplitDeclareDTOList().size());
+        for (List<TmsDeclareBillDTO.SplitDeclareDTO> splitGroup : declareDTO.getSplitDeclareDTOList()) {
+            List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> batchSourceList = filterSplitSourceDetailGroup(sourceDeliveryDetailList, splitGroup);
+            List<TmsDeclareBillDTO.MergeDeclareBillDTO> mergeDeclareBillDTOS = autoMergeDeclareBillView(
+                    new TmsDeclareBillDTO.AutoMergeDeclareBillViewDTO(Boolean.TRUE, batchSourceList), Boolean.FALSE);
+            preparedBills.add(new TmsDeclareBillDTO.SplitPreparedBillData(
+                    mergeDeclareBillDTOS,
+                    prepareBatchMergeBills(SourceTypeEnum.FM_DECLARE_BILL.getCode(), mergeDeclareBillDTOS)));
+        }
+        return preparedBills;
     }
 
 
@@ -3326,63 +3361,80 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (CollUtil.isEmpty(declareDTO.getSplitDeclareDTOList())) {
             return Boolean.TRUE;
         }
-        List<String> syncSourceIds = service.batchAddSplitB2bDetailInTx(declareDTO);
-        syncSourceDeclareStatusIfNeeded(SourceTypeEnum.B2B_DECLARE_BILL.getCode(), syncSourceIds);
-        return Boolean.TRUE;
-    }
-
-    // 拆分保存仅写 TMS 单库（WMS 回写已移到事务外），用本地事务即可，
-    // 不再使用 @GlobalTransactional 避免 Seata XA prepare 分支失败。
-    @Transactional(rollbackFor = Exception.class)
-    public List<String> batchAddSplitB2bDetailInTx(TmsDeclareBillDTO.AddSplitDeclareDTO declareDTO) {
         validateSplitDeclareGroups(declareDTO.getSplitDeclareDTOList());
-        TmsDeclareBillEntity declareBillEntity = super.getById(declareDTO.getId());
-        if (ObjectUtil.isEmpty(declareBillEntity)) {
-            throw new ServiceException(ApiError.LOGISTICS_DECLARE_INFO_NOT_FOUND);
-        }
-        if (!CharSequenceUtil.equals(declareBillEntity.getType(), SourceTypeEnum.B2B_DECLARE_BILL.getCode())) {
-            throw new ServiceException(ApiError.LOGISTICS_DECLARE_B2B_SPLIT_ADD_FORBIDDEN);
-        }
-        if (!CharSequenceUtil.equals(declareBillEntity.getDeclareStatus(), DeclareStatusEnum.WAIT.getCode())) {
-            throw new ServiceException(ApiError.LOGISTICS_DECLARE_SPLIT_WAIT_STATUS_REQUIRED);
-        }
-
-        String splitBaseCode = declareBillEntity.getCode();
+        TmsDeclareBillEntity declareBillEntity = loadAndAssertSplitDeclareBill(
+                declareDTO.getId(), SourceTypeEnum.B2B_DECLARE_BILL, ApiError.LOGISTICS_DECLARE_B2B_SPLIT_ADD_FORBIDDEN);
         String originalDeclareBillId = declareBillEntity.getId();
-        log.info("B2B拆分报关开始，原报关单id={}，code={}，拆分数={}", originalDeclareBillId, splitBaseCode,
-                declareDTO.getSplitDeclareDTOList().size());
-        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDeliveryDetailList = deliveryDeclareDetailMidService.listSourceByDeclareIdList(Collections.singletonList(originalDeclareBillId));
+        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDeliveryDetailList =
+                deliveryDeclareDetailMidService.listSourceByDeclareIdList(Collections.singletonList(originalDeclareBillId));
         log.info("B2B拆分报关加载来源明细完成，原报关单id={}，来源明细数={}", originalDeclareBillId, sourceDeliveryDetailList.size());
         if (CollUtil.isEmpty(sourceDeliveryDetailList)) {
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_SOURCE_DETAIL_NOT_FOUND_FOR_SAVE);
         }
-
         // 拆分保存：同一箱的全部明细必须整箱落在同一票，不能拆到不同票。
         validateSplitSameBoxInOneGroup(sourceDeliveryDetailList, declareDTO.getSplitDeclareDTOList());
+        List<TmsDeclareBillDTO.SplitPreparedBillData> preparedBills = prepareB2bSplitBills(declareDTO, declareBillEntity, sourceDeliveryDetailList);
+        service.batchAddSplitB2bDetailInGlobalTx(declareDTO, sourceDeliveryDetailList, preparedBills);
+        return Boolean.TRUE;
+    }
+
+    // 拆分保存写 TMS 单库 + 中间表，并回写 WMS 来源单报关状态；自动合并预览/实体构建已前置到事务外，
+    // 事务内仅删除原单、落新单并回写 WMS，用 Seata 全局事务保证本地库与远端来源单状态强一致。
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
+    @Transactional(rollbackFor = Exception.class)
+    public void batchAddSplitB2bDetailInGlobalTx(TmsDeclareBillDTO.AddSplitDeclareDTO declareDTO,
+                                                 List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDeliveryDetailList,
+                                                 List<TmsDeclareBillDTO.SplitPreparedBillData> preparedBills) {
+        validateSplitDeclareGroups(declareDTO.getSplitDeclareDTOList());
+        TmsDeclareBillEntity declareBillEntity = loadAndAssertSplitDeclareBill(
+                declareDTO.getId(), SourceTypeEnum.B2B_DECLARE_BILL, ApiError.LOGISTICS_DECLARE_B2B_SPLIT_ADD_FORBIDDEN);
+        String splitBaseCode = declareBillEntity.getCode();
+        String originalDeclareBillId = declareBillEntity.getId();
+        log.info("B2B拆分报关开始，原报关单id={}，code={}，拆分数={}", originalDeclareBillId, splitBaseCode,
+                declareDTO.getSplitDeclareDTOList().size());
 
         // 与头程拆分一致：先删原报关单及其中间表关联，再按票生成新报关单，避免原单残留导致中间表重复挂载、事务变长。
         deleteDeclareBillById(originalDeclareBillId);
         log.info("B2B拆分报关已删除原报关单，原报关单id={}，code={}", originalDeclareBillId, splitBaseCode);
 
         int groupIndex = 0;
-        for (List<TmsDeclareBillDTO.SplitDeclareDTO> splitGroup : declareDTO.getSplitDeclareDTOList()) {
+        for (TmsDeclareBillDTO.SplitPreparedBillData preparedBill : preparedBills) {
             groupIndex++;
-            List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> batchSourceList = filterSplitSourceDetailGroup(sourceDeliveryDetailList, splitGroup);
-            log.info("B2B拆分报关第{}票过滤来源明细完成，原报关单id={}，本票明细数={}", groupIndex, originalDeclareBillId, batchSourceList.size());
-            List<TmsDeclareBillDTO.MergeDeclareBillDTO> mergeDeclareBillDTOS = autoMergeDeclareBillView(
-                    new TmsDeclareBillDTO.AutoMergeDeclareBillViewDTO(Boolean.TRUE, batchSourceList),
-                    isB2bCustomerReceiver(declareBillEntity.getType(), declareBillEntity.getReceiverType()));
-            log.info("B2B拆分报关第{}票合并预览完成，原报关单id={}，合并结果数={}", groupIndex, originalDeclareBillId, mergeDeclareBillDTOS.size());
-
             //保存合并数据（合同协议号按新增规则自动生成）
-            batchAddMergeDetail(SourceTypeEnum.B2B_DECLARE_BILL.getCode(), mergeDeclareBillDTOS, Boolean.TRUE, Boolean.FALSE);
+            saveBatchMergeBills(SourceTypeEnum.B2B_DECLARE_BILL.getCode(),
+                    preparedBill.getMergeDeclareBillList(), preparedBill.getPreparedBillList(), Boolean.TRUE, Boolean.FALSE);
             log.info("B2B拆分报关第{}票保存完成，原报关单id={}", groupIndex, originalDeclareBillId);
         }
         String splitMsg = CharSequenceUtil.format("拆分报关单：拆分为{}{}", declareDTO.getSplitDeclareDTOList().size(), "票");
         operateLogService.addModuleOperateLog(splitMsg, SourceTypeEnum.B2B_DECLARE_BILL.getCode(), originalDeclareBillId, "拆分操作");
         log.info("B2B拆分报关完成，原报关单id={}，code={}，拆分数={}", originalDeclareBillId, splitBaseCode,
                 declareDTO.getSplitDeclareDTOList().size());
-        return extractSourceIdListFromSourceDetails(sourceDeliveryDetailList);
+        syncDeclareGeneratedSourceStatus(SourceTypeEnum.B2B_DECLARE_BILL.getCode(), extractSourceIdListFromSourceDetails(sourceDeliveryDetailList));
+    }
+
+    /**
+     * B2B 拆分保存事务外预构建：按拆分组完成自动合并预览与报关单主/明细实体构建。
+     */
+    private List<TmsDeclareBillDTO.SplitPreparedBillData> prepareB2bSplitBills(TmsDeclareBillDTO.AddSplitDeclareDTO declareDTO,
+                                                                              TmsDeclareBillEntity declareBillEntity,
+                                                                              List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDeliveryDetailList) {
+        List<TmsDeclareBillDTO.SplitPreparedBillData> preparedBills = new ArrayList<>(declareDTO.getSplitDeclareDTOList().size());
+        int groupIndex = 0;
+        for (List<TmsDeclareBillDTO.SplitDeclareDTO> splitGroup : declareDTO.getSplitDeclareDTOList()) {
+            groupIndex++;
+            List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> batchSourceList = filterSplitSourceDetailGroup(sourceDeliveryDetailList, splitGroup);
+            log.info("B2B拆分报关第{}票过滤来源明细完成，原报关单id={}，本票明细数={}",
+                    groupIndex, declareBillEntity.getId(), batchSourceList.size());
+            List<TmsDeclareBillDTO.MergeDeclareBillDTO> mergeDeclareBillDTOS = autoMergeDeclareBillView(
+                    new TmsDeclareBillDTO.AutoMergeDeclareBillViewDTO(Boolean.TRUE, batchSourceList),
+                    isB2bCustomerReceiver(declareBillEntity.getType(), declareBillEntity.getReceiverType()));
+            log.info("B2B拆分报关第{}票合并预览完成，原报关单id={}，合并结果数={}",
+                    groupIndex, declareBillEntity.getId(), mergeDeclareBillDTOS.size());
+            preparedBills.add(new TmsDeclareBillDTO.SplitPreparedBillData(
+                    mergeDeclareBillDTOS,
+                    prepareBatchMergeBills(SourceTypeEnum.B2B_DECLARE_BILL.getCode(), mergeDeclareBillDTOS)));
+        }
+        return preparedBills;
     }
 
     @Override
@@ -5318,8 +5370,11 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         }
         // 同一箱的全部明细必须在同一张报关单（以 WMS 装箱数据为准），Feign 须在本地事务外调用。
         validateSameBoxAllInOneBill(resolveDeclareSourceType(type), allSourceDetails);
-        List<String> syncSourceIds = service.batchAddMergeDetailInTx(type, list);
-        syncSourceDeclareStatusIfNeeded(type, syncSourceIds);
+        // 事务外完成 Feign 读取 + 实体构建（querySelectedSkuHeader / 业务类型 / 收货人 等远程调用）。
+        // XA 模式下严禁在已打开的分支事务内调用 Feign，否则分支执行超时会导致 prepare 失败。
+        List<TmsDeclareBillDTO.BatchMergeBillData> preparedBills = prepareBatchMergeBills(type, list);
+        // 全局事务内：写 TMS 单库 + 中间表 + 回写 WMS 来源单报关状态，保证本地库与远端来源单状态强一致。
+        service.batchAddMergeDetailInGlobalTx(type, list, preparedBills);
         return Boolean.TRUE;
     }
 
@@ -5345,27 +5400,26 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 .collect(Collectors.toList());
     }
 
-    // 合并保存仅写 TMS 单库（WMS 回写已移到事务外），用本地事务即可，
-    // 不再使用 @GlobalTransactional 避免 Seata XA prepare 分支失败。
+    // 合并保存写 TMS 单库 + 中间表，并回写 WMS 来源单报关状态；Feign 读取/实体构建已前置到事务外，
+    // 事务内仅剩 DB 现状校验 + 快速 DML + 一次 WMS 回写，用 Seata 全局事务保证本地库与远端来源单状态强一致。
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
     @Transactional(rollbackFor = Exception.class)
-    public List<String> batchAddMergeDetailInTx(String type, List<TmsDeclareBillDTO.MergeDeclareBillDTO> list) {
-        return batchAddMergeDetail(type, list, Boolean.FALSE, Boolean.FALSE);
+    public void batchAddMergeDetailInGlobalTx(String type, List<TmsDeclareBillDTO.MergeDeclareBillDTO> list,
+                                              List<TmsDeclareBillDTO.BatchMergeBillData> preparedBills) {
+        List<String> syncSourceIds = saveBatchMergeBills(type, list, preparedBills, Boolean.FALSE, Boolean.FALSE);
+        // 合并保存为「生成」语义，只回写已生成(finish)，不回写 WAIT。
+        syncDeclareGeneratedSourceStatus(type, syncSourceIds);
     }
 
     /**
-     * 批量保存合并报关明细。
-     *
-     * @param splitSave 拆分保存时为 true：跳过「已生成」拦截并延后 WMS 回写；合同协议号由 {@link #generateContractCode} 按新增规则生成
-     * @return 待回写 WMS 的来源单 id；拆分多轮调用时返回空列表，由拆分入口统一回写
+     * 事务外预构建批量合并报关单：完成 Feign 读取（重量重算/业务类型/收货人）与主、明细实体构建，
+     * 不做任何 DB 写入，供全局事务内的 {@link #saveBatchMergeBills} 消费，避免 XA 分支内调用 Feign。
      */
-    private List<String> batchAddMergeDetail(String type, List<TmsDeclareBillDTO.MergeDeclareBillDTO> list,
-                                        boolean splitSave,
-                                        boolean idempotent) {
+    private List<TmsDeclareBillDTO.BatchMergeBillData> prepareBatchMergeBills(String type,
+                                                                             List<TmsDeclareBillDTO.MergeDeclareBillDTO> list) {
         if (CollUtil.isEmpty(list)) {
             throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
         }
-        String declareBillType = type;
-        String sourceType = resolveDeclareSourceType(declareBillType);
         List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList = list.stream()
                 .filter(Objects::nonNull)
                 .map(TmsDeclareBillDTO.MergeDeclareBillDTO::getDeclareBillList)
@@ -5377,12 +5431,57 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_SAVE_REQUIRED);
         }
         // 先按"单据 + SKU + 缺哪些报关字段"提示缺失，便于使用方一次性看到要补哪些 PLM 资料；
-        // 之后再走 validateBatchMergeDeclareBills 的明细维度/票/箱号等校验。
+        // 之后再走 validateBatchMergeDeclareBills 的明细维度/票/箱号等校验（均为纯内存校验）。
         validateAutoMergeDeclareDetailRequired(mergeDetailList);
         // 目的国为中国大陆的来源单整批失败，错误信息列出所有命中的来源单号，
         // 不进入入库流程；来源单 declare_status 不动，仍保持 WAIT。
         validateDestCountryNotMainlandChina(mergeDetailList);
         validateBatchMergeDeclareBills(list);
+
+        List<TmsDeclareBillDTO.BatchMergeBillData> preparedBills = new ArrayList<>(list.size());
+        for (TmsDeclareBillDTO.MergeDeclareBillDTO mergeDeclareBillDTO : list) {
+            if (Objects.isNull(mergeDeclareBillDTO) || CollUtil.isEmpty(mergeDeclareBillDTO.getDeclareBillList())) {
+                continue;
+            }
+            List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> declareBillList = mergeDeclareBillDTO.getDeclareBillList();
+            List<TmsDeclareBillDetailEntity> detailEntityList = new ArrayList<>(declareBillList.size());
+            for (TmsDeclareBillDTO.MergeDeclareBillDetailDTO detailDTO : declareBillList) {
+                TmsDeclareBillDetailEntity detailEntity = new TmsDeclareBillDetailEntity();
+                mapMergeDeclareDetailToEntity(detailDTO, detailEntity);
+                detailEntityList.add(detailEntity);
+            }
+            if (CollUtil.isEmpty(detailEntityList)) {
+                continue;
+            }
+            TmsDeclareBillEntity declareBillEntity = new TmsDeclareBillEntity();
+            // 数据处理（含 querySelectedSkuHeader / 业务类型 / 收货人等 Feign），须在事务外执行。
+            fillBatchDeclareBillEntity(type, declareBillList, declareBillEntity);
+            preparedBills.add(new TmsDeclareBillDTO.BatchMergeBillData(declareBillList, declareBillEntity, detailEntityList));
+        }
+        return preparedBills;
+    }
+
+    /**
+     * 全局事务内保存批量合并报关明细：DB 现状校验（幂等/已生成拦截、删除旧单及旧中间表）+ 落库 + 中间表。
+     * 报关单主/明细实体由 {@link #prepareBatchMergeBills} 事务外预构建后传入，事务内不再调用 Feign。
+     *
+     * @param splitSave 拆分保存时为 true：跳过「已生成」拦截并延后 WMS 回写；合同协议号由 {@link #generateContractCode} 按新增规则生成
+     * @return 待回写 WMS 的来源单 id；拆分多轮调用时返回空列表，由拆分入口统一回写
+     */
+    private List<String> saveBatchMergeBills(String type,
+                                             List<TmsDeclareBillDTO.MergeDeclareBillDTO> list,
+                                             List<TmsDeclareBillDTO.BatchMergeBillData> preparedBills,
+                                             boolean splitSave,
+                                             boolean idempotent) {
+        String declareBillType = type;
+        String sourceType = resolveDeclareSourceType(declareBillType);
+        List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList = list.stream()
+                .filter(Objects::nonNull)
+                .map(TmsDeclareBillDTO.MergeDeclareBillDTO::getDeclareBillList)
+                .filter(CollUtil::isNotEmpty)
+                .flatMap(Collection::stream)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
 
         Set<String> sourceKeySet = mergeDetailList.stream()
                 .map(TmsDeclareBillDTO.MergeDeclareBillDetailDTO::getSourceDeliveryDetailList)
@@ -5486,31 +5585,13 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         }
 
         List<DeliveryDeclareDetailMidEntity> changedMidList = new ArrayList<>();
-        for (TmsDeclareBillDTO.MergeDeclareBillDTO mergeDeclareBillDTO : list) {
-            if (Objects.isNull(mergeDeclareBillDTO) || CollUtil.isEmpty(mergeDeclareBillDTO.getDeclareBillList())) {
-                continue;
-            }
-            List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> declareBillList = mergeDeclareBillDTO.getDeclareBillList();
-            List<TmsDeclareBillDetailEntity> detailEntityList = new ArrayList<>(declareBillList.size());
-            for (TmsDeclareBillDTO.MergeDeclareBillDetailDTO detailDTO : declareBillList) {
-                TmsDeclareBillDetailEntity detailEntity = new TmsDeclareBillDetailEntity();
-                mapMergeDeclareDetailToEntity(detailDTO, detailEntity);
-                detailEntityList.add(detailEntity);
-            }
-            if (CollUtil.isEmpty(detailEntityList)) {
-                continue;
-            }
-
-            TmsDeclareBillEntity declareBillEntity = new TmsDeclareBillEntity();
-            //数据处理
-            fillBatchDeclareBillEntity(declareBillType, declareBillList, declareBillEntity);
-
-            BaseResultDTO.AddDTO addResult = add(declareBillEntity, detailEntityList, SourceTypeEnum.getEnum(declareBillType), false);
-
+        for (TmsDeclareBillDTO.BatchMergeBillData billData : preparedBills) {
+            BaseResultDTO.AddDTO addResult = add(billData.getDeclareBillEntity(), billData.getDetailEntityList(),
+                    SourceTypeEnum.getEnum(declareBillType), false);
             changedMidList.addAll(deliveryDeclareDetailMidService.saveGeneratedMidData(
-                    sourceType, declareBillList, detailEntityList, addResult.getId(), addResult.getCode()));
+                    sourceType, billData.getDeclareBillList(), billData.getDetailEntityList(), addResult.getId(), addResult.getCode()));
         }
-        // 拆分保存多轮调用时延后统一回写来源单报关状态，由拆分入口在全局事务提交后一次 Feign 回写 WMS。
+        // 拆分保存多轮调用时延后统一回写来源单报关状态，由拆分入口在同一个全局事务内一次 Feign 回写 WMS。
         if (splitSave) {
             return Collections.emptyList();
         }

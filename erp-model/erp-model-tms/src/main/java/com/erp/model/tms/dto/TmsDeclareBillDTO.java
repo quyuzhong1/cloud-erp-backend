@@ -2829,4 +2829,50 @@ public class TmsDeclareBillDTO implements Serializable {
          */
         private List<TmsDeclareBillDetailEntity> detailEntityList;
     }
+
+    /**
+     * 批量合并保存（下推合并/独立保存、拆分保存复用）时，单张报关单的「事务外预构建」数据。
+     * <p>
+     * 主/明细实体连同其对应的合并明细在事务外完成 Feign 构建后放入本对象，
+     * 全局事务内仅据此做 add + saveGeneratedMidData，避免 XA 分支内调用 Feign。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class BatchMergeBillData {
+        /**
+         * 本票对应的合并明细列表（用于中间表 saveGeneratedMidData 与明细行匹配）。
+         */
+        private List<MergeDeclareBillDetailDTO> declareBillList;
+
+        /**
+         * 待落库的报关单主表实体。
+         */
+        private TmsDeclareBillEntity declareBillEntity;
+
+        /**
+         * 待落库的报关单明细实体列表（与 declareBillList 一一对应）。
+         */
+        private List<TmsDeclareBillDetailEntity> detailEntityList;
+    }
+
+    /**
+     * 拆分保存时，单票拆分结果的「事务外预构建」数据。
+     * <p>
+     * 拆分入口先在事务外完成自动合并预览与报关单实体构建；全局事务内只消费本对象删除原单并落新单。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SplitPreparedBillData {
+        /**
+         * 本票自动合并预览结果。
+         */
+        private List<MergeDeclareBillDTO> mergeDeclareBillList;
+
+        /**
+         * 本票预构建的报关单主/明细实体。
+         */
+        private List<BatchMergeBillData> preparedBillList;
+    }
 }
