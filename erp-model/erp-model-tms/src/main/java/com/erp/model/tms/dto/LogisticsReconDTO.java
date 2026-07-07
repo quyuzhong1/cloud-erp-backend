@@ -432,6 +432,11 @@ public class LogisticsReconDTO implements Serializable {
         private String userId;
 
         /**
+         * 操作人姓名（提交导入时捕获，importCheck 异步回写校验人时使用）
+         */
+        private String userName;
+
+        /**
          * 导入过程缓存：Excel rowNo → 已落库明细 id（与库表 main_id + row_no 一致；导入不合并）
          */
         private Map<String, String> importDetailKeyMap;
@@ -551,6 +556,11 @@ public class LogisticsReconDTO implements Serializable {
          */
         @NotEmpty(message = "对账单id集合不能为空")
         private List<String> ids;
+
+        /**
+         * 是否确认
+         */
+        private Boolean isConfirm = false;
     }
 
     /**

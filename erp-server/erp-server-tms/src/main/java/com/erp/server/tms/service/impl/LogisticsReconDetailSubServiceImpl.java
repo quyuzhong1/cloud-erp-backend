@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import cn.hutool.core.util.StrUtil;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -47,6 +48,12 @@ public class LogisticsReconDetailSubServiceImpl
     private static final List<String> MAIN_CLAIM_FROM_STATUSES = Arrays.asList(
             LogisticsReconDetailMatchStatusEnum.UNMATCHED.getCode(),
             LogisticsReconDetailMatchStatusEnum.FAILED.getCode());
+
+    /**
+     * matching 超时分钟数：超过则视为崩溃/中断遗留，允许被重新认领直接抢占重试。
+     * 在跑的任务由每个 chunk 刷新 update_time 续期，只要单 chunk 执行时长不超过该值即不会被误抢占。
+     */
+    private static final long MATCHING_STALE_MINUTES = 120;
 
     @Override
     public List<LogisticsReconDetailSubDTO.ListDTO> listByDetailIds(Collection<String> detailIds) {
@@ -193,8 +200,11 @@ public class LogisticsReconDetailSubServiceImpl
     }
 
     /**
-     * 单批认领整单可匹配费用项：短事务内先查候选 id，再 FOR UPDATE 原子认领。
-     * 排除 reconciliation_status=confirmed 的费用项。
+     * 单批认领整单可匹配费用项：单条 {@code FOR UPDATE} 原子认领并置为 matching。
+     * <p>可认领范围：未匹配 / 失败，以及 update_time 已超时的 matching（崩溃 / 中断遗留，直接抢占重试，
+     * 不再需要独立的超时重置动作）。排除 reconciliation_status=confirmed 的费用项。</p>
+     * <p>认领时刷新 update_time 作为心跳起点；行锁在事务提交前持有，并发认领会阻塞后重判条件，
+     * 避免"重置→再认领"两步之间的抢占窗口。</p>
      *
      * @param mainId    对账单 id
      * @param batchSize 单批认领上限
@@ -207,21 +217,33 @@ public class LogisticsReconDetailSubServiceImpl
             return Collections.emptyList();
         }
         int limit = batchSize > 0 ? Math.min(batchSize, UPDATE_BATCH_SIZE) : UPDATE_BATCH_SIZE;
-        List<String> candidateBatch = lambdaQuery()
+        LocalDateTime staleThreshold = LocalDateTime.now().minusMinutes(MATCHING_STALE_MINUTES);
+        List<String> lockedIds = lambdaQuery()
                 .eq(LogisticsReconDetailSubEntity::getMainId, mainId)
-                .in(LogisticsReconDetailSubEntity::getMatchStatus, MAIN_CLAIM_FROM_STATUSES)
                 .ne(LogisticsReconDetailSubEntity::getReconciliationStatus,
                         LogisticsReconReconciliationStatusEnum.CONFIRMED.getCode())
+                .and(w -> w
+                        .in(LogisticsReconDetailSubEntity::getMatchStatus, MAIN_CLAIM_FROM_STATUSES)
+                        .or(q -> q
+                                .eq(LogisticsReconDetailSubEntity::getMatchStatus,
+                                        LogisticsReconDetailMatchStatusEnum.MATCHING.getCode())
+                                .lt(LogisticsReconDetailSubEntity::getUpdateTime, staleThreshold)))
                 .select(LogisticsReconDetailSubEntity::getId)
                 .orderByAsc(LogisticsReconDetailSubEntity::getId)
-                .last("LIMIT " + limit)
+                .last("LIMIT " + limit + " FOR UPDATE")
                 .list().stream()
                 .map(LogisticsReconDetailSubEntity::getId)
                 .collect(Collectors.toList());
-        if (CollUtil.isEmpty(candidateBatch)) {
+        if (CollUtil.isEmpty(lockedIds)) {
             return Collections.emptyList();
         }
-        return batchClaimMatchStatus(candidateBatch,
-                LogisticsReconDetailMatchStatusEnum.MATCHING.getCode(), null, MAIN_CLAIM_FROM_STATUSES);
+        lambdaUpdate()
+                .in(LogisticsReconDetailSubEntity::getId, lockedIds)
+                .set(LogisticsReconDetailSubEntity::getMatchStatus,
+                        LogisticsReconDetailMatchStatusEnum.MATCHING.getCode())
+                .set(LogisticsReconDetailSubEntity::getMatchFailReason, "")
+                .set(LogisticsReconDetailSubEntity::getUpdateTime, LocalDateTime.now())
+                .update();
+        return lockedIds;
     }
 }
