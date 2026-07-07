@@ -25,11 +25,7 @@ import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * dmp 输入 init 任务基础处理器：WEGO 海外仓入库单 api 拉取实现。
@@ -148,7 +144,7 @@ public class WegoInboundInitHandler extends DmpInputInitHandler {
             } catch (Exception e) {
                 log.error("[WEGO入库] 服务商[id={}] 上架日期[{} ~ {}] 调用异常，pageNum={}",
                         authId, upDateBegin, upDateEnd, pageNum, e);
-                break;
+                throw new ServiceException("WEGO入库：queryInorderPage 分页拉取异常，已拉取页数=" + (pageNum - 1) + "，数据不完整，任务中止");
             }
 
             WegoInboundResp.PageResultDTO pageResult = extractPageResult(resp, authId);
