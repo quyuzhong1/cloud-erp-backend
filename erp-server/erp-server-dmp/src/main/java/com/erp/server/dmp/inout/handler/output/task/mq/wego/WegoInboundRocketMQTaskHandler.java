@@ -154,7 +154,8 @@ public class WegoInboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
         platformInboundDTO.setPlatform(sourcePlatform);
         platformInboundDTO.setProvider(sourcePlatform);
 
-        List<WegoInboundResp.InstockDTO> instockList = parseInstockList(dmpThirdInboundEntity.getDetailListJson());
+        List<WegoInboundResp.InstockDTO> instockList =
+                parseInstockList(dmpThirdInboundEntity.getId(), dmpThirdInboundEntity.getDetailListJson());
 
         // 入库单状态：用 inorder.status 优先映射；instockList 仅作为「是否已经有上架明细」的辅助判断
         platformInboundDTO.setReceivingStatus(this.convertStatus(
@@ -184,9 +185,14 @@ public class WegoInboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
     /**
      * 反序列化 {@code detail_list_json} 为 WEGO 入库批次明细列表。
      * <p>
-     * 失败返回空列表，避免 NPE；上层会兜底为「无签收流水」继续推送状态。
+     * 解析失败返回空列表，避免 NPE；上层会兜底为「无签收流水」继续推送状态。
+     * 由于此时可能造成签收流水丢失且难以排查，务必记录 warn 日志（含入库 id 与 json 摘要），
+     * 便于后续按 id 定位损坏的 {@code detail_list_json} 并人工补偿。
+     *
+     * @param inboundId      DMP 层第三方入库实体 id，仅用于日志定位
+     * @param detailListJson 待解析的 {@code detail_list_json}
      */
-    private List<WegoInboundResp.InstockDTO> parseInstockList(String detailListJson) {
+    private List<WegoInboundResp.InstockDTO> parseInstockList(String inboundId, String detailListJson) {
         if (StringUtils.isBlank(detailListJson)) {
             return new ArrayList<>();
         }
@@ -195,6 +201,9 @@ public class WegoInboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
                     JSON.parseArray(detailListJson, WegoInboundResp.InstockDTO.class);
             return list == null ? new ArrayList<>() : list;
         } catch (Exception e) {
+            log.warn("[WEGO入库] 解析 detail_list_json 失败，将按「无签收流水」兜底推送，可能丢失签收数据，请人工核对。"
+                            + "inboundId={}, jsonLength={}, jsonSummary={}",
+                    inboundId, detailListJson.length(), StringUtils.abbreviate(detailListJson, 500), e);
             return new ArrayList<>();
         }
     }
