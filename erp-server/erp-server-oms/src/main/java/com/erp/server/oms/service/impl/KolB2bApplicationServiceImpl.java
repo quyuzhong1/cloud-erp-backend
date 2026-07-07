@@ -34,6 +34,7 @@ import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
+import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.KolB2bApplicationImportExcelDTO;
 import com.erp.model.oms.entity.*;
@@ -279,6 +280,7 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
 
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO submit(String id) {
         KolB2bApplicationEntity entity = getById(id);
         if (ObjectUtil.isEmpty(entity)) {
@@ -326,6 +328,7 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "dto.id", unlockAfterTx = true)
     public BatchResultDTO approve(ApproveOneDTO dto) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
@@ -595,6 +598,7 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "list.id", unlockAfterTx = true)
     public Boolean generateSoInfo(ValidList<KolB2bApplicationDTO.GenerateSoInfoDTO> list) {
         if (CollUtil.isEmpty(list)) {
             throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);

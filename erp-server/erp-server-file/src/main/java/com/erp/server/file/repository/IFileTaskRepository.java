@@ -71,11 +71,11 @@ public interface IFileTaskRepository extends IService<FileTask> {
     /**
      * 逻辑删除文件任务，并同步填充更新时间与更新人。
      * <p>MyBatis-Plus 的 {@code removeById(id)} 走 {@code @TableLogic} 仅置 {@code is_deleted=1}，
-     * 不经过实体对象，不会触发 {@code updateFill} 的审计填充。此处复用已加载实体走 {@code updateById}，
-     * 由 {@code ErpObjectHandler.updateFill} 填充 {@code update_time}/{@code update_user_id}/{@code update_user_name}，
-     * 并借助实体上的 {@code version} 实现乐观锁。
-     * <p>通过实体上的 {@code isUserSystem} 标识让拦截器记录系统用户：定时任务等无登录态的系统操作传 {@code true}，
-     * 由拦截器（{@code MetaUtil.getIsUserSystem}）将更新人填充为系统用户；用户操作传 {@code false}，取当前登录人。
+     * 不经过实体对象，不会触发 {@code updateFill} 的审计填充；{@code updateById} 又会排除
+     * {@code @TableLogic} 字段，无法写入 {@code is_deleted}。此处使用 {@code lambdaUpdate}
+     * 显式置 {@code is_deleted=1} 并填充审计字段，同时借助 {@code version} 实现乐观锁。
+     * <p>{@code userSystem} 为 {@code true} 时记录为系统用户（定时任务等无登录态场景），
+     * 为 {@code false} 时取当前登录人。
      *
      * @param fileTask   已加载的文件任务实体（需携带 {@code id} 与 {@code version}）
      * @param userSystem 是否系统操作（{@code true} 记录为系统用户）

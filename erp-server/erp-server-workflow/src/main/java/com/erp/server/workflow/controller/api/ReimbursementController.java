@@ -2,6 +2,8 @@ package com.erp.server.workflow.controller.api;
 
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.anno.LogAction;
+import com.common.core.enums.LogActionEnum;
 import com.common.business.dto.base.BaseIdDTO;
 import com.erp.model.workflow.dto.*;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
@@ -40,6 +42,7 @@ public class ReimbursementController extends BaseController {
 
     //删除流程
     @PostMapping("/removeProcess")
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除流程")
     public ApiResult<Objects> removeProcess(@RequestParam(value = "deploymentId")  String  deploymentId) {
         repositoryService.deleteDeployment(deploymentId);
         return success();
@@ -48,6 +51,7 @@ public class ReimbursementController extends BaseController {
 
     //启动流程
     @PostMapping("/startProcess")
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "启动流程")
     public ApiResult<Objects> startProcess(@RequestBody @Validated StartProcessDTO dto) {
         workflowService.startProcess(dto);
         return success();
@@ -62,6 +66,7 @@ public class ReimbursementController extends BaseController {
 
     //审批通过任务
     @PostMapping("/taskPass")
+    @LogAction(value = LogActionEnum.APPROVE, desc = "任务审核通过")
     public ApiResult<Objects> taskPass(@RequestBody @Validated ApproveProcessDTO dto) {
        processTaskService.taskPass(dto);
        return success();
@@ -70,6 +75,7 @@ public class ReimbursementController extends BaseController {
 
     // 删除任务 不一定删除成功
     @PostMapping("/removeTask")
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除任务")
     public ApiResult<Objects> removeTask(String taskId) {
         processTaskService.removeTask(taskId);
         return success();
@@ -78,6 +84,7 @@ public class ReimbursementController extends BaseController {
 
     //驳回到上一级
     @PostMapping("/rejectGoBack")
+    @LogAction(value = LogActionEnum.REJECT, desc = "驳回到上一级")
     public ApiResult<Objects> rejectGoBack(@RequestBody @Validated ApproveProcessDTO dto) {
         workflowService.rejectGoBackProcess(dto);
         return success();
@@ -85,6 +92,7 @@ public class ReimbursementController extends BaseController {
 
     //驳回到起点
     @PostMapping("/rejectOrigin")
+    @LogAction(value = LogActionEnum.REJECT, desc = "驳回到起点")
     public ApiResult<Objects> rejectOrigin(@RequestBody @Validated ApproveProcessDTO dto) {
         workflowService.rejectOriginProcess(dto);
         return success();
@@ -92,6 +100,7 @@ public class ReimbursementController extends BaseController {
 
     //撤销流程
     @PostMapping("/withDraw")
+    @LogAction(value = LogActionEnum.CANCEL, desc = "撤销流程")
     public ApiResult<Objects> withDraw(@RequestBody @Validated ApproveProcessDTO dto) {
         workflowService.withDrawProcess(dto);
         return success();
@@ -99,6 +108,7 @@ public class ReimbursementController extends BaseController {
 
     //撤回流程
     @PostMapping("/fetchBack")
+    @LogAction(value = LogActionEnum.CANCEL, desc = "撤回流程")
     public ApiResult<Objects> fetchBackProcess(@RequestBody @Validated ApproveProcessDTO dto) {
         workflowService.fetchBackProcess(dto);
         return success();

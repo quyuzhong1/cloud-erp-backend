@@ -147,9 +147,9 @@ public class FbaShipmentController extends BaseController {
     }
 
     /**
-     * 拉取货件信息
-     * @param dto
-     * @return com.common.core.controller.vo.ApiResult
+     * 拉取货件信息。
+     * <p>
+     * 审查说明（审查问题4，intentional）：新中台开启时 DMP 仅创建 hotfix 任务即返回，success 不表示货件已同步落库。
      */
     @PostMapping("/pullShipment")
     @LogAction(value = LogActionEnum.INSERT, desc = "拉取货件")
@@ -159,6 +159,27 @@ public class FbaShipmentController extends BaseController {
             UserContext.setIsUserSystem(true);
             flag = fbaShipmentService.pullShipment(dto);
         }finally {
+            UserContext.clearIsUserSystem();
+        }
+        return flag ? success() : failure();
+    }
+
+    /**
+     * 手动拉取入库计划货件信息。
+     * <p>
+     * 审查说明（审查问题4，intentional）：DMP hotfix 异步拉取，success 仅表示任务已提交。
+     *
+     * @param dto 请求参数
+     * @return com.common.core.controller.vo.ApiResult
+     */
+    @PostMapping("/pullInboundPlanShipment")
+    @LogAction(value = LogActionEnum.INSERT, desc = "拉取入库计划货件")
+    public ApiResult pullInboundPlanShipment(@RequestBody @Validated FbaShipmentDTO.PullShipmentDTO dto) {
+        Boolean flag;
+        try {
+            UserContext.setIsUserSystem(true);
+            flag = fbaShipmentService.pullInboundPlanShipment(dto);
+        } finally {
             UserContext.clearIsUserSystem();
         }
         return flag ? success() : failure();

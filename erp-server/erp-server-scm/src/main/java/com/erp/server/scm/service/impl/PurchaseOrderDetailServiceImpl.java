@@ -10,6 +10,7 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SubcontractTypeEnum;
@@ -19,6 +20,7 @@ import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
+import com.common.message.constant.DistributeKeyConstant;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.MessageUtils;
@@ -510,10 +512,11 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
                             continue;
                         }
                         Integer qty = Objects.nonNull(addDTO.getPurchaseQty()) ? addDTO.getPurchaseQty() : MathUtil.ZERO;
-                        if (Objects.isNull(sourceDetail.getTaxRate()) || StrUtil.isBlank(sourceDetail.getCurrency())) {
-                            errorList.add(MessageUtils.getMessage(ApiError.PO_SUBCONTRACT_REPAIR_SUB_LINE_TAX_RATE_OR_CURRENCY_REQUIRED, addDTO.getSkuNo()));
-                            continue;
-                        }
+                        // 委外来源明细 currency/taxRate 可能为空，暂跳过校验，避免下推采购订单被拦截
+//                        if (Objects.isNull(sourceDetail.getTaxRate()) || StrUtil.isBlank(sourceDetail.getCurrency())) {
+//                            errorList.add(MessageUtils.getMessage(ApiError.PO_SUBCONTRACT_REPAIR_SUB_LINE_TAX_RATE_OR_CURRENCY_REQUIRED, addDTO.getSkuNo()));
+//                            continue;
+//                        }
                         addDTO.setTaxPrice(price);
                         addDTO.setTaxRate(sourceDetail.getTaxRate());
                         addDTO.setCurrency(sourceDetail.getCurrency());
@@ -531,6 +534,18 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
                             String purchasePriceError = MessageUtils.getMessage(ApiError.PURCHASE_PRICE_SKU_NOT_FOUND, addDTO.getSkuNo(), addDTO.getPurchaseQty());
                             errorList.add(purchasePriceError);
                         }
+                    }
+                } else if (CharSequenceUtil.isBlank(entity.getSubcontractType())) {
+                    // 普通采购单（如采购申请下推）：按价目表补全单价、税率、币别、金额
+                    if (Objects.nonNull(viewDTO)) {
+                        addDTO.setCurrency(viewDTO.getCurrency());
+                        addDTO.setCurrencySymbol(viewDTO.getCurrencySymbol());
+                        addDTO.setTaxPrice(viewDTO.getTaxPrice());
+                        addDTO.setTaxRate(viewDTO.getTaxRate());
+                        addDTO.setPurchaseAmount(MathUtil.multiplyWithTwo(viewDTO.getTaxPrice(), addDTO.getPurchaseQty()));
+                    } else {
+                        String purchasePriceError = MessageUtils.getMessage(ApiError.PURCHASE_PRICE_SKU_NOT_FOUND, addDTO.getSkuNo(), addDTO.getPurchaseQty());
+                        errorList.add(purchasePriceError);
                     }
                 }
             }else if (PurchaseOrderTypeEnum.ENUM_RETURN.getCode().equals(entity.getType())){
@@ -694,6 +709,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.SCM_PO_ARRIVAL_STATUS_KEY, keyName = "entity.id", unlockAfterTx = true)
     public Boolean updatePoArrivalStatus(PurchaseOrderDetailEntity entity) {
 
         //更新采购订单交货状态

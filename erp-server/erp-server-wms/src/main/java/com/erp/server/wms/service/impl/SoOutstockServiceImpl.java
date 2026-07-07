@@ -24,7 +24,6 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.annotation.DataIdempotent;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.RedisCacheConstants;
@@ -44,6 +43,7 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.dto.ExcelData;
 import com.common.core.dto.SheetData;
+import com.common.message.constant.DistributeKeyConstant;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
@@ -766,7 +766,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
-    @DataIdempotent(keyIdName = "dto.id")
+    @DistributeLocker(businessType = DistributeKeyConstant.SO_OUTSTOCK_APPROVE_KEY, keyName = "dto.id", unlockAfterTx = true)
     public BatchResultDTO approve(ApproveOneDTO dto) {
         SoOutstockEntity entity = this.getById(dto.getId());
         if (Objects.isNull(entity)) {
@@ -1222,7 +1222,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DataIdempotent(keyIdName = "entity.code" , businessType = "saveLogisticsBill")
+    @DistributeLocker(businessType = DistributeKeyConstant.SAVE_LOGISTICS_BILL_KEY, keyName = "entity.code", unlockAfterTx = true)
     public void saveLogisticsBill(SoOutstockEntity entity) {
     		if(CollUtil.isNotEmpty(FeignQuery.create(LogisticsBillEntity.class).eq(LogisticsBillEntity::getIsDeleted,Boolean.FALSE).eq(LogisticsBillEntity::getOutstockId, entity.getId()).list())) {
     			throw new ServiceException("小包物流单已生成");
@@ -2022,7 +2022,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             BigDecimal taxRate = item.getTaxRate();
             BigDecimal price = item.getPrice();
             item.setPrice(price);
-            BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
             //汇率
             BigDecimal exchangeRate = item.getExchangeRate();
             if (Objects.isNull(exchangeRate)) {
@@ -2031,13 +2030,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             //销售单价(本位币)
             item.setCnyPrice(MathUtil.multiplyWithTwo(price, exchangeRate,4));
 
-            //含税单价=销售单价*（税率+1）
-            BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
-            //含税单价
-            BigDecimal taxPrice = MathUtil.multiplyWithTwo(price, multiplyTax,4);
+            // B2C 列表含税单价优先 tax_amount/实发数量；B2B 统一按不含税单价*(1+税率)，不读 tax_amount
+            BigDecimal taxPrice = resolvePagingTaxUnitPrice(price, taxRate, item.getTaxAmount(), item.getActualQty(), item.getOrderType());
             item.setTaxPrice(taxPrice);
             //含税单价(本位币)
-            item.setCnyTaxPrice(MathUtil.multiplyWithTwo(taxPrice, exchangeRate,4));
+            item.setCnyTaxPrice(resolvePagingCnyTaxUnitPrice(taxPrice, exchangeRate,
+                    item.getAllAmountLocalCurrency(), item.getActualQty(), item.getOrderType()));
             item.setCurrency(item.getCurrency());
             item.setCurrencySymbol(item.getCurrencySymbol());
 
@@ -2059,6 +2057,36 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             //最新审核人
             item.setApproveUserName(CharSequenceUtil.blankToDefault(approveNameMap.get(item.getId()),item.getApproveUserName()));
         }
+    }
+
+    /**
+     * 列表含税单价：B2C 优先价税合计/实发数量；B2B 统一不含税单价*(1+税率)，不读 tax_amount。
+     */
+    private BigDecimal resolvePagingTaxUnitPrice(BigDecimal price, BigDecimal taxRate, BigDecimal taxAmount,
+                                                 Integer actualQty, String orderType) {
+        if (BillTypeEnum.B2C.getCode().equals(orderType)
+                && Objects.nonNull(taxAmount) && Objects.nonNull(actualQty) && actualQty > 0
+                && taxAmount.compareTo(BigDecimal.ZERO) > 0) {
+            return MathUtil.divide(taxAmount, BigDecimal.valueOf(actualQty), 4);
+        }
+        if (Objects.isNull(price)) {
+            return BigDecimal.ZERO;
+        }
+        BigDecimal flagTaxRate = MathUtil.divide(Objects.nonNull(taxRate) ? taxRate : BigDecimal.ZERO, MathUtil.BigDecimal_100);
+        return MathUtil.getTaxValue(price, flagTaxRate, 4);
+    }
+
+    /**
+     * 列表含税单价(本位币)：B2C 优先价税合计本位币/实发数量；B2B 统一含税单价*汇率，不读 all_amount_local_currency。
+     */
+    private BigDecimal resolvePagingCnyTaxUnitPrice(BigDecimal taxPrice, BigDecimal exchangeRate,
+                                                    BigDecimal allAmountLocalCurrency, Integer actualQty, String orderType) {
+        if (BillTypeEnum.B2C.getCode().equals(orderType)
+                && Objects.nonNull(allAmountLocalCurrency) && Objects.nonNull(actualQty) && actualQty > 0
+                && allAmountLocalCurrency.compareTo(BigDecimal.ZERO) > 0) {
+            return MathUtil.divide(allAmountLocalCurrency, BigDecimal.valueOf(actualQty), 4);
+        }
+        return MathUtil.multiplyWithTwo(taxPrice, exchangeRate, 4);
     }
 
     /**
@@ -3053,6 +3081,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * @date 2023-12-11 16:17
      */
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.SO_OUTSTOCK_GENERATE_KEY, keyName = "soB2cId", unlockAfterTx = true)
     public Boolean generateB2cSoOutstock(String soB2cId) {
         SoOutstockEntity outstock = this.getBySoId(soB2cId);
         if (Objects.isNull(outstock)) {
@@ -3219,6 +3248,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     }
 
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.SO_OUTSTOCK_GENERATE_KEY, keyName = "generateB2cDTO.soId", unlockAfterTx = true)
     public Boolean generateB2cSoOutstock(SoOutstockDTO.GenerateB2cDTO generateB2cDTO) {
         Boolean result = createB2cSoOutstock(generateB2cDTO);
         if (result) {
@@ -3819,16 +3849,16 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 // 无已发货的发货单只清理历史异常信息
                 result = true;
             } else {
-                result = this.generateB2cSoOutstock(id);
+                result = soOutstockService.generateB2cSoOutstock(id);
             }
         } else {
             //速卖通平台仓订单的销售出库在处理类生成
             if (isAliExpressApiPlatform(currentEntity.getDictPlatform())) {
                 result = flag;
             } else if (PlatformDictEnum.TIK_TOK.getCode().equals(currentEntity.getDictPlatform())) {
-                result = flag && this.generateB2cSoOutstock(id);
+                result = flag && soOutstockService.generateB2cSoOutstock(id);
             }else{
-                result = this.generateB2cSoOutstock(id);
+                result = soOutstockService.generateB2cSoOutstock(id);
             }
         }
         boolean allResult = result && flag;
@@ -3984,6 +4014,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.SO_OUTSTOCK_APPROVE_KEY, keyName = "dto.ids", unlockAfterTx = true)
     public Boolean updateStatus(TmsDeclareBillDTO.UpdateStatusDTO dto) {
         if(CharSequenceUtil.isBlank(dto.getDeclareStatus()) && CharSequenceUtil.isBlank(dto.getLogisticsStatus())){
             return false;
@@ -4016,7 +4047,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * @return
      */
     @Override
-    @DataIdempotent(keyIdName = "redissonKey", waitTime = 10)
+    @DistributeLocker(businessType = DistributeKeyConstant.PLATFORM_GENERATE_SO_OUTSTOCK_KEY, keyName = "redissonKey", waiteTime = 10)
     public Boolean generateB2cSoOutstockByPlatformData(PlatformGenerateSoOutstockDTO platformGenerateSoOutstockDTO, String redissonKey) {
         List<PlatformDeliveryDetailDTO> platformDeliveryDetailDTO = platformGenerateSoOutstockDTO.getPlatformDeliveryDetailDTOList();
         if(CollectionUtils.isEmpty(platformDeliveryDetailDTO)){
@@ -4090,6 +4121,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     }
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.SO_OUTSTOCK_GENERATE_KEY, keyName = "ids", unlockAfterTx = true)
     public Boolean afreshGenerateB2cOutstock(List<String> ids) {
         Map<String, SoB2cEntity> mainMap = soB2cFeign.listByIds(ids)
                 .stream()
@@ -4181,7 +4213,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             generateB2cDTO.setTrackNo(dto.getTrackNo());
             //运单号
             generateB2cDTO.setTransportNo(dto.getTrackNo());
-            this.generateB2cSoOutstock(generateB2cDTO);
+            soOutstockService.generateB2cSoOutstock(generateB2cDTO);
         } catch (Exception e) {
             log.error("销售订单{} 生成销售出库单失败>>>>>>{}", generateB2cDTO.getSoCode(), e.getMessage());
             throw new ServiceException(e.getMessage());
@@ -4441,6 +4473,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     }
 
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.SO_OUTSTOCK_GENERATE_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO handleWdtData(String id) {
         SoOutstockEntity entity = this.soOutstockService.getById(id);
         if (ObjectUtil.isEmpty(entity)) {

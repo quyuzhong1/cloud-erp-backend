@@ -5,9 +5,14 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.common.business.annotation.DistributeLocker;
+import com.common.business.threadlocal.UserContext;
+import com.common.message.constant.DistributeKeyConstant;
+import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
@@ -15,21 +20,29 @@ import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
+import com.erp.model.oms.entity.KolSubB2cApplicationEntity;
 import com.erp.model.oms.entity.WorkflowTaskRecordEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.WorkflowTaskRecordStatusEnum;
 import com.erp.model.oms.enums.WorkflowTaskRecordTypeEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.oms.mapper.WorkflowTaskRecordMapper;
 import com.erp.server.oms.service.DictBasicService;
+import com.erp.server.oms.service.KolSubB2cApplicationService;
+import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.WorkflowTaskRecordService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.xxl.job.core.context.XxlJobHelper;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import javax.annotation.Resource;
@@ -46,12 +59,19 @@ import javax.annotation.Resource;
 @Service
 public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTaskRecordMapper, WorkflowTaskRecordEntity> implements WorkflowTaskRecordService {
 
+    private static final String FORCE_RETRY_PERMISSION = "oms:workflowTaskRecord:forceRetry";
 
     @Resource
     private DictBasicService dictBasicService;
 
     @Resource
     private MQProducerService mqProducerService;
+
+    @Resource
+    private OperateLogService operateLogService;
+
+    @Resource
+    private KolSubB2cApplicationService kolSubB2cApplicationService;
 
     /**
      * 添加工作流任务记录
@@ -63,8 +83,49 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
     @Override
     @Transactional(rollbackFor = Exception.class)
     public List<WorkflowTaskRecordEntity> addTask(WorkflowTaskRecordDTO.AddTaskDTO dto) {
+        List<WorkflowTaskRecordEntity> entities = buildTaskEntities(dto);
+        // 批量保存所有实体。数据库唯一索引生效后，并发创建命中唯一冲突时让事务回滚，补偿任务会复用已提交记录。
+        try {
+            saveBatch(entities);
+            return entities;
+        } catch (DuplicateKeyException e) {
+            log.warn("任务节点已存在，sourceType={}, sourceId={}", dto.getSourceTypeEnum().getCode(), dto.getSourceId(), e);
+            throw new ServiceException(ApiError.WF_TASK_RECORD_DUPLICATE);
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public List<WorkflowTaskRecordEntity> addMissingTask(WorkflowTaskRecordDTO.AddTaskDTO dto, List<WorkflowTaskRecordEntity> existTasks) {
+        List<WorkflowTaskRecordEntity> allTaskEntities = buildTaskEntities(dto);
+        List<WorkflowTaskRecordEntity> mergedExistTasks = new ArrayList<>(listBySourceId(dto.getSourceId(), dto.getSourceTypeEnum().getCode()));
+        mergedExistTasks.addAll(CollUtil.emptyIfNull(existTasks));
+        Map<Integer, WorkflowTaskRecordEntity> existTaskMap = buildIndexTaskMap(mergedExistTasks);
+        Set<Integer> existIndexSet = existTaskMap.keySet();
+        List<WorkflowTaskRecordEntity> missingEntities = allTaskEntities.stream()
+                .filter(e -> !existIndexSet.contains(e.getIndex()))
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(missingEntities)) {
+            return Collections.emptyList();
+        }
+        for (WorkflowTaskRecordEntity missingEntity : missingEntities) {
+            String previousOutputData = getPreviousSuccessOutputData(missingEntity, existTaskMap);
+            if (CharSequenceUtil.isNotBlank(previousOutputData)) {
+                missingEntity.setInputData(previousOutputData);
+            }
+        }
+        try {
+            saveBatch(missingEntities);
+            return missingEntities;
+        } catch (DuplicateKeyException e) {
+            log.warn("任务节点补齐命中唯一约束，sourceType={}, sourceId={}", dto.getSourceTypeEnum().getCode(), dto.getSourceId(), e);
+            throw new ServiceException(ApiError.WF_TASK_RECORD_DUPLICATE);
+        }
+    }
+
+    private List<WorkflowTaskRecordEntity> buildTaskEntities(WorkflowTaskRecordDTO.AddTaskDTO dto) {
         //查询字典表 type = workflowTaskNode
-        List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByType(dto.getDictBasicTypeEnum().getType(),dto.getSourceTypeEnum().getCode());
+        List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByType(dto.getDictBasicTypeEnum().getType(), dto.getSourceTypeEnum().getCode());
         if(CollUtil.isEmpty(dictList)){
             throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC,dto.getSourceTypeEnum().getName());
         }
@@ -94,8 +155,6 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
             }
             entities.add(entity);
         }
-        // 批量保存所有实体
-        saveBatch(entities);
         return entities;
     }
 
@@ -111,13 +170,17 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
         if (CollectionUtil.isEmpty(list)) {
             return ;
         }
-        Map<String, List<WorkflowTaskRecordEntity>> map = list.stream().collect(Collectors.groupingBy(WorkflowTaskRecordEntity::getSourceId));
+        Map<String, List<WorkflowTaskRecordEntity>> map = list.stream()
+                .collect(Collectors.groupingBy(e -> e.getSourceType() + ":" + e.getSourceId()));
         for (Map.Entry<String, List<WorkflowTaskRecordEntity>> entry : map.entrySet()) {
             List<WorkflowTaskRecordEntity> workflowTaskRecordEntities = entry.getValue();
             if(CollUtil.isEmpty(workflowTaskRecordEntities)){
                 continue;
             }
-            long count = workflowTaskRecordEntities.stream().filter(e -> Objects.equals(e.getStatus(), WorkflowTaskRecordStatusEnum.FAILED.getCode()) && e.getRetryCount() > 3).count();
+            long count = workflowTaskRecordEntities.stream()
+                    .filter(e -> Objects.equals(e.getStatus(), WorkflowTaskRecordStatusEnum.FAILED.getCode())
+                            && e.getRetryCount() >= TASK_TERMINAL_RETRY_COUNT)
+                    .count();
             if(count > 0){
                 continue;
             }
@@ -126,7 +189,11 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
             addTaskDTO.setSourceId(entity.getSourceId());
             addTaskDTO.setSourceCode(entity.getSourceCode());
             addTaskDTO.setDictBasicTypeEnum(DictBasicTypeEnum.WORKFLOW_TASK_NODE);
-            addTaskDTO.setSourceTypeEnum(WorkflowTaskRecordTypeEnum.getByName(entity.getSourceType()));
+            addTaskDTO.setSourceTypeEnum(WorkflowTaskRecordTypeEnum.getByCode(entity.getSourceType()));
+            if (Objects.isNull(addTaskDTO.getSourceTypeEnum())) {
+                log.warn("任务节点记录补偿重试失败，未知sourceType={}", entity.getSourceType());
+                continue;
+            }
             addTaskDTO.setTraceId(entity.getTraceId());
             SendResult result = mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.OMS_WORKFLOW_TASK_RECORD_TOPIC, RocketMqTagEnum.OMS_WORKFLOW_TASK_RECORD_TAG.getName(), addTaskDTO, workflowTaskRecordEntities.get(0).getSourceId(),1);
             if (!result.getSendStatus().equals(SendStatus.SEND_OK)) {
@@ -138,6 +205,77 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
     @Override
     public List<WorkflowTaskRecordDTO.TaskErrorReportDTO> getTaskErrorReport() {
         return  baseMapper.getTaskErrorReport();
+    }
+
+    @Override
+    public WorkflowTaskRecordDTO.ForceRetryResultDTO forceRetry(WorkflowTaskRecordDTO.ForceRetryDTO dto) {
+        if (Objects.isNull(dto)) {
+            throw new ServiceException(ApiError.WF_TASK_RECORD_FORCE_RETRY_PARAM_REQUIRED);
+        }
+        checkForceRetryPermission();
+        String sourceType;
+        String sourceId;
+        WorkflowTaskRecordEntity lockTask = null;
+        if (CharSequenceUtil.isNotBlank(dto.getId())) {
+            lockTask = getById(dto.getId());
+            if (Objects.isNull(lockTask)) {
+                throw new ServiceException(ApiError.WF_TASK_RECORD_FORCE_RETRY_NOT_FOUND);
+            }
+            sourceType = lockTask.getSourceType();
+            sourceId = lockTask.getSourceId();
+        } else {
+            if (CharSequenceUtil.isBlank(dto.getSourceType()) || CharSequenceUtil.isBlank(dto.getSourceId())) {
+                throw new ServiceException(ApiError.WF_TASK_RECORD_FORCE_RETRY_PARAM_INCOMPLETE);
+            }
+            sourceType = dto.getSourceType();
+            sourceId = dto.getSourceId();
+        }
+        return SpringUtil.getBean(WorkflowTaskRecordServiceImpl.class).forceRetryWithLock(dto, sourceType, sourceId, lockTask);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "sourceType,sourceId", unlockAfterTx = true)
+    public WorkflowTaskRecordDTO.ForceRetryResultDTO forceRetryWithLock(WorkflowTaskRecordDTO.ForceRetryDTO dto, String sourceType, String sourceId, WorkflowTaskRecordEntity lockTask) {
+        checkForceRetryPermission();
+        List<WorkflowTaskRecordEntity> taskList = listForceRetryTasks(dto, lockTask);
+        if (CollUtil.isEmpty(taskList)) {
+            throw new ServiceException(ApiError.WF_TASK_RECORD_FORCE_RETRY_NOT_FOUND);
+        }
+        Map<String, List<WorkflowTaskRecordEntity>> taskGroup = taskList.stream()
+                .collect(Collectors.groupingBy(e -> e.getSourceType() + ":" + e.getSourceId()));
+        int resetCount = 0;
+        int mqCount = 0;
+        boolean retryByNodeId = CharSequenceUtil.isNotBlank(dto.getId());
+        for (List<WorkflowTaskRecordEntity> groupTasks : taskGroup.values()) {
+            List<WorkflowTaskRecordEntity> resetTasks = groupTasks.stream()
+                    .filter(e -> !retryByNodeId || Objects.equals(e.getId(), dto.getId()))
+                    .filter(this::allowForceRetry)
+                    .collect(Collectors.toList());
+            if (CollUtil.isEmpty(resetTasks)) {
+                continue;
+            }
+            Map<Integer, WorkflowTaskRecordEntity> indexTaskMap = buildIndexTaskMap(groupTasks);
+            resetForceRetryTasks(resetTasks, dto, indexTaskMap);
+            resetCount += resetTasks.size();
+            WorkflowTaskRecordEntity firstTask = groupTasks.stream()
+                    .min(Comparator.comparing(WorkflowTaskRecordEntity::getIndex))
+                    .orElse(resetTasks.get(0));
+            registerForceRetryMq(firstTask);
+            mqCount++;
+        }
+        if (resetCount == 0) {
+            throw new ServiceException(ApiError.WF_TASK_RECORD_FORCE_RETRY_NO_ELIGIBLE);
+        }
+        addForceRetryLog(dto, taskList, resetCount, mqCount);
+
+        WorkflowTaskRecordEntity first = taskList.get(0);
+        WorkflowTaskRecordDTO.ForceRetryResultDTO resultDTO = new WorkflowTaskRecordDTO.ForceRetryResultDTO();
+        resultDTO.setSourceType(first.getSourceType());
+        resultDTO.setSourceId(first.getSourceId());
+        resultDTO.setResetCount(resetCount);
+        resultDTO.setScheduledMqCount(mqCount);
+        resultDTO.setMqCount(mqCount);
+        return resultDTO;
     }
 
     @Override
@@ -157,6 +295,276 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
         }
         return this.lambdaQuery().eq(WorkflowTaskRecordEntity::getSourceId,soId)
                 .eq(WorkflowTaskRecordEntity::getSourceType,sourceType)
+                .eq(WorkflowTaskRecordEntity::getIsDeleted, false)
                 .list();
+    }
+
+    @Override
+    public WorkflowTaskRecordEntity getActiveTask(String sourceId, String sourceType, Integer index) {
+        if (CharSequenceUtil.isBlank(sourceId) || CharSequenceUtil.isBlank(sourceType) || Objects.isNull(index)) {
+            return null;
+        }
+        return this.lambdaQuery()
+                .eq(WorkflowTaskRecordEntity::getSourceId, sourceId)
+                .eq(WorkflowTaskRecordEntity::getSourceType, sourceType)
+                .eq(WorkflowTaskRecordEntity::getIndex, index)
+                .eq(WorkflowTaskRecordEntity::getIsDeleted, false)
+                .orderByDesc(WorkflowTaskRecordEntity::getCreateTime)
+                .last("limit 1")
+                .one();
+    }
+
+    @Override
+    public Boolean resetStaleProcessingTask(String id) {
+        if (CharSequenceUtil.isBlank(id)) {
+            return Boolean.FALSE;
+        }
+        WorkflowTaskRecordEntity entity = getById(id);
+        if (Objects.isNull(entity)
+                || !Objects.equals(entity.getStatus(), WorkflowTaskRecordStatusEnum.PROCESSING.getCode())) {
+            return Boolean.FALSE;
+        }
+        LocalDateTime updateTime = entity.getUpdateTime();
+        if (Objects.nonNull(updateTime)
+                && updateTime.plusMinutes(TASK_PROCESSING_TIMEOUT_MINUTES).isAfter(LocalDateTime.now())) {
+            return Boolean.FALSE;
+        }
+        return this.lambdaUpdate()
+                .eq(WorkflowTaskRecordEntity::getId, id)
+                .eq(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.PROCESSING.getCode())
+                .set(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.PENDING.getCode())
+                .update();
+    }
+
+    @Override
+    public Boolean claimTask(String id, String fromStatus) {
+        if (CharSequenceUtil.isBlank(id) || CharSequenceUtil.isBlank(fromStatus)) {
+            return Boolean.FALSE;
+        }
+        return this.lambdaUpdate()
+                .eq(WorkflowTaskRecordEntity::getId, id)
+                .eq(WorkflowTaskRecordEntity::getStatus, fromStatus)
+                .set(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.PROCESSING.getCode())
+                .update();
+    }
+
+    private List<WorkflowTaskRecordEntity> listForceRetryTasks(WorkflowTaskRecordDTO.ForceRetryDTO dto, WorkflowTaskRecordEntity lockTask) {
+        if (CharSequenceUtil.isNotBlank(dto.getId())) {
+            WorkflowTaskRecordEntity entity = lockTask;
+            return Objects.isNull(entity) ? Collections.emptyList() : listBySourceId(entity.getSourceId(), entity.getSourceType());
+        }
+        if (CharSequenceUtil.isBlank(dto.getSourceType()) || CharSequenceUtil.isBlank(dto.getSourceId())) {
+            throw new ServiceException(ApiError.WF_TASK_RECORD_FORCE_RETRY_PARAM_INCOMPLETE);
+        }
+        return listBySourceId(dto.getSourceId(), dto.getSourceType());
+    }
+
+    private void resetForceRetryTasks(List<WorkflowTaskRecordEntity> resetTasks, WorkflowTaskRecordDTO.ForceRetryDTO dto, Map<Integer, WorkflowTaskRecordEntity> indexTaskMap) {
+        List<ForceRetryResetPlan> resetPlans = CollUtil.emptyIfNull(resetTasks).stream()
+                .map(entity -> new ForceRetryResetPlan(entity, appendForceRetryRemark(entity.getRemark(), dto.getRemark()), getPreviousSuccessOutputData(entity, indexTaskMap)))
+                .collect(Collectors.toList());
+        Map<String, List<ForceRetryResetPlan>> batchPlanMap = resetPlans.stream()
+                .filter(plan -> CharSequenceUtil.isBlank(plan.refreshedInputData))
+                .collect(Collectors.groupingBy(plan -> StrUtil.nullToEmpty(plan.remark)));
+        for (Map.Entry<String, List<ForceRetryResetPlan>> entry : batchPlanMap.entrySet()) {
+            List<String> ids = entry.getValue().stream()
+                    .map(plan -> plan.entity.getId())
+                    .collect(Collectors.toList());
+            batchResetForceRetryTasks(ids, dto, entry.getKey());
+        }
+        resetPlans.stream()
+                .filter(plan -> CharSequenceUtil.isNotBlank(plan.refreshedInputData))
+                .forEach(plan -> resetForceRetryTask(plan, dto));
+    }
+
+    private void batchResetForceRetryTasks(List<String> ids, WorkflowTaskRecordDTO.ForceRetryDTO dto, String remark) {
+        if (CollUtil.isEmpty(ids)) {
+            return;
+        }
+        this.lambdaUpdate()
+                .in(WorkflowTaskRecordEntity::getId, ids)
+                .set(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.PENDING.getCode())
+                .set(WorkflowTaskRecordEntity::getRetryCount, Optional.ofNullable(dto.getRetryCount()).orElse(0))
+                .set(WorkflowTaskRecordEntity::getLastError, "")
+                .set(WorkflowTaskRecordEntity::getRemark, remark)
+                .update();
+    }
+
+    private void resetForceRetryTask(ForceRetryResetPlan plan, WorkflowTaskRecordDTO.ForceRetryDTO dto) {
+        this.lambdaUpdate()
+                .eq(WorkflowTaskRecordEntity::getId, plan.entity.getId())
+                .set(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.PENDING.getCode())
+                .set(WorkflowTaskRecordEntity::getRetryCount, Optional.ofNullable(dto.getRetryCount()).orElse(0))
+                .set(WorkflowTaskRecordEntity::getLastError, "")
+                .set(WorkflowTaskRecordEntity::getRemark, plan.remark)
+                .set(WorkflowTaskRecordEntity::getInputData, plan.refreshedInputData)
+                .update();
+    }
+
+    private Map<Integer, WorkflowTaskRecordEntity> buildIndexTaskMap(List<WorkflowTaskRecordEntity> taskList) {
+        return CollUtil.emptyIfNull(taskList).stream()
+                .filter(Objects::nonNull)
+                .filter(e -> Objects.nonNull(e.getIndex()))
+                .filter(e -> !Boolean.TRUE.equals(e.getIsDeleted()))
+                .collect(Collectors.toMap(WorkflowTaskRecordEntity::getIndex, e -> e, (o1, o2) -> o1));
+    }
+
+    private String getPreviousSuccessOutputData(WorkflowTaskRecordEntity entity, Map<Integer, WorkflowTaskRecordEntity> indexTaskMap) {
+        if (Objects.isNull(entity)
+                || Objects.isNull(entity.getIndex())
+                || entity.getIndex() <= 0
+                || Objects.isNull(indexTaskMap)) {
+            return null;
+        }
+        WorkflowTaskRecordEntity previousTask = indexTaskMap.get(entity.getIndex() - 1);
+        if (Objects.isNull(previousTask)
+                || !Objects.equals(previousTask.getStatus(), WorkflowTaskRecordStatusEnum.SUCCESS.getCode())
+                || Boolean.TRUE.equals(previousTask.getIsDeleted())) {
+            return null;
+        }
+        return previousTask.getOutputData();
+    }
+
+    private boolean allowForceRetry(WorkflowTaskRecordEntity entity) {
+        if (Objects.equals(entity.getStatus(), WorkflowTaskRecordStatusEnum.SUCCESS.getCode())) {
+            return false;
+        }
+        if (!Objects.equals(entity.getStatus(), WorkflowTaskRecordStatusEnum.PROCESSING.getCode())) {
+            return true;
+        }
+        LocalDateTime updateTime = entity.getUpdateTime();
+        return Objects.nonNull(updateTime) && updateTime.plusMinutes(TASK_PROCESSING_TIMEOUT_MINUTES).isBefore(LocalDateTime.now());
+    }
+
+    private String appendForceRetryRemark(String oldRemark, String remark) {
+        String operator = UserContext.getDefaultLoginUser().getUserName();
+        String current = StrUtil.format("人工强制重试，操作人：{}，备注：{}", operator, StrUtil.blankToDefault(remark, ""));
+        if (CharSequenceUtil.isBlank(oldRemark)) {
+            return current;
+        }
+        return oldRemark + "\n" + current;
+    }
+
+    private Boolean sendForceRetryMq(WorkflowTaskRecordEntity entity) {
+        WorkflowTaskRecordTypeEnum sourceTypeEnum = WorkflowTaskRecordTypeEnum.getByCode(entity.getSourceType());
+        if (Objects.isNull(sourceTypeEnum)) {
+            log.warn("任务节点人工强制重试失败，未知sourceType={}", entity.getSourceType());
+            return Boolean.FALSE;
+        }
+        WorkflowTaskRecordDTO.AddTaskDTO addTaskDTO = new WorkflowTaskRecordDTO.AddTaskDTO();
+        addTaskDTO.setSourceId(entity.getSourceId());
+        addTaskDTO.setSourceCode(entity.getSourceCode());
+        addTaskDTO.setDictBasicTypeEnum(DictBasicTypeEnum.WORKFLOW_TASK_NODE);
+        addTaskDTO.setSourceTypeEnum(sourceTypeEnum);
+        addTaskDTO.setTraceId(entity.getTraceId());
+        SendResult result = mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.OMS_WORKFLOW_TASK_RECORD_TOPIC, RocketMqTagEnum.OMS_WORKFLOW_TASK_RECORD_TAG.getName(), addTaskDTO, entity.getSourceId(), 1);
+        if (!result.getSendStatus().equals(SendStatus.SEND_OK)) {
+            throw new ServiceException(ApiError.WF_TASK_RECORD_MQ_SEND_FAILED, JSONUtil.toJsonStr(result));
+        }
+        return Boolean.TRUE;
+    }
+
+    private void registerForceRetryMq(WorkflowTaskRecordEntity entity) {
+        if (TransactionSynchronizationManager.isActualTransactionActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                @Override
+                public void afterCommit() {
+                    try {
+                        sendForceRetryMq(entity);
+                    } catch (Exception e) {
+                        log.error("任务节点人工强制重试事务提交后发送MQ失败，sourceType={}, sourceId={}, traceId={}",
+                                entity.getSourceType(), entity.getSourceId(), entity.getTraceId(), e);
+                        try {
+                            markForceRetryMqSendFailed(entity, e);
+                        } catch (Exception updateException) {
+                            log.error("任务节点人工强制重试MQ失败状态回写异常，sourceType={}, sourceId={}, traceId={}",
+                                    entity.getSourceType(), entity.getSourceId(), entity.getTraceId(), updateException);
+                        }
+                    }
+                }
+            });
+            return;
+        }
+        sendForceRetryMq(entity);
+    }
+
+    private void markForceRetryMqSendFailed(WorkflowTaskRecordEntity entity, Exception e) {
+        if (Objects.isNull(entity) || CharSequenceUtil.isBlank(entity.getSourceId()) || CharSequenceUtil.isBlank(entity.getSourceType())) {
+            return;
+        }
+        WorkflowTaskRecordEntity taskEntity = this.lambdaQuery()
+                .eq(WorkflowTaskRecordEntity::getSourceId, entity.getSourceId())
+                .eq(WorkflowTaskRecordEntity::getSourceType, entity.getSourceType())
+                .eq(WorkflowTaskRecordEntity::getIsDeleted, false)
+                .ne(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.SUCCESS.getCode())
+                .orderByAsc(WorkflowTaskRecordEntity::getIndex)
+                .last("limit 1")
+                .one();
+        if (Objects.isNull(taskEntity)) {
+            return;
+        }
+        String errorMsg = StrUtil.format("任务节点人工强制重试MQ发送失败，traceId={}，error={}",
+                entity.getTraceId(),
+                Objects.nonNull(e.getMessage()) ? e.getMessage() : e.getClass().getSimpleName());
+        this.lambdaUpdate()
+                .eq(WorkflowTaskRecordEntity::getId, taskEntity.getId())
+                .set(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.FAILED.getCode())
+                .set(WorkflowTaskRecordEntity::getLastError, errorMsg)
+                .set(WorkflowTaskRecordEntity::getRetryCount, Optional.ofNullable(taskEntity.getRetryCount()).orElse(0) + 1)
+                .update();
+    }
+
+    private void addForceRetryLog(WorkflowTaskRecordDTO.ForceRetryDTO dto, List<WorkflowTaskRecordEntity> taskList, int resetCount, int mqCount) {
+        WorkflowTaskRecordEntity first = taskList.get(0);
+        String content = StrUtil.format("用户【{}】人工强制重试任务节点，sourceType=【{}】，sourceId=【{}】，重置节点数=【{}】，调度MQ数=【{}】，备注=【{}】",
+                UserContext.getDefaultLoginUser().getUserName(),
+                first.getSourceType(),
+                first.getSourceId(),
+                resetCount,
+                mqCount,
+                StrUtil.blankToDefault(dto.getRemark(), ""));
+        operateLogService.addModuleOperateLog(content, resolveModuleType(first), resolveBusinessId(first), "任务强制重试");
+    }
+
+    private void checkForceRetryPermission() {
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
+        if (Objects.nonNull(loginUser) && Boolean.TRUE.equals(loginUser.getIsSupper())) {
+            return;
+        }
+        List<String> permissionList = Objects.isNull(loginUser) ? Collections.emptyList() : loginUser.getPermissionList();
+        if (CollUtil.isNotEmpty(permissionList) && permissionList.contains(FORCE_RETRY_PERMISSION)) {
+            return;
+        }
+        throw new ServiceException(ApiError.WF_TASK_RECORD_FORCE_RETRY_FORBIDDEN);
+    }
+
+    private String resolveModuleType(WorkflowTaskRecordEntity entity) {
+        if (Objects.equals(entity.getSourceType(), WorkflowTaskRecordTypeEnum.KOL_B2C_APPLICATION_APPROVE.getCode())
+                || Objects.equals(entity.getSourceType(), WorkflowTaskRecordTypeEnum.KOL_B2C_SUB_APPROVE.getCode())) {
+            return ModuleTypeEnum.KOL_B2C_APPLICATION.getCode();
+        }
+        return null;
+    }
+
+    private String resolveBusinessId(WorkflowTaskRecordEntity entity) {
+        if (Objects.equals(entity.getSourceType(), WorkflowTaskRecordTypeEnum.KOL_B2C_SUB_APPROVE.getCode())) {
+            KolSubB2cApplicationEntity subEntity = kolSubB2cApplicationService.getById(entity.getSourceId());
+            if (Objects.nonNull(subEntity) && CharSequenceUtil.isNotBlank(subEntity.getSourceId())) {
+                return subEntity.getSourceId();
+            }
+        }
+        return entity.getSourceId();
+    }
+
+    private static class ForceRetryResetPlan {
+        private final WorkflowTaskRecordEntity entity;
+        private final String remark;
+        private final String refreshedInputData;
+
+        private ForceRetryResetPlan(WorkflowTaskRecordEntity entity, String remark, String refreshedInputData) {
+            this.entity = entity;
+            this.remark = remark;
+            this.refreshedInputData = refreshedInputData;
+        }
     }
 }

@@ -18,6 +18,7 @@ import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import com.erp.server.dmp.inout.utils.DmpMappingUtils;
+import com.erp.server.dmp.inout.utils.TikTokOrderDetailUtils;
 import com.erp.server.dmp.service.DmpCfgOutputConvertMappingService;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -242,10 +243,11 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
      */
     public static List<PlatformOrderDetailDTO> parseDetailDto(DmpSoInfoEntity dmpSoInfoEntity, List<DmpSoDetailEntity> dmpSoDetailEntities) {
         //相同的sku和packageId合并去重
-        Map<String, List<DmpSoDetailEntity>> collect = dmpSoDetailEntities.stream().collect(Collectors.groupingBy(req -> req.getPlatformSku() + req.getPlatformPackageId()));
+        Map<String, List<DmpSoDetailEntity>> collect = dmpSoDetailEntities.stream()
+                .collect(Collectors.groupingBy(req -> req.getPlatformSku() + TikTokOrderDetailUtils.defaultString(req.getPlatformPackageId())));
 
-        return collect.entrySet().stream()
-                .map(e -> intPlatformOrderDetailDTO(dmpSoInfoEntity, e.getValue(), e.getKey()))
+        return collect.values().stream()
+                .map(list -> intPlatformOrderDetailDTO(dmpSoInfoEntity, list))
                 .collect(Collectors.toList());
     }
 
@@ -253,7 +255,7 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
     /**
      * 转换明细
      */
-    private static PlatformOrderDetailDTO intPlatformOrderDetailDTO(DmpSoInfoEntity dmpSoInfoEntity, List<DmpSoDetailEntity> soDetailEntityList, String sourceDetailId) {
+    private static PlatformOrderDetailDTO intPlatformOrderDetailDTO(DmpSoInfoEntity dmpSoInfoEntity, List<DmpSoDetailEntity> soDetailEntityList) {
         PlatformOrderDetailDTO detailDTO = new PlatformOrderDetailDTO();
         if (CollectionUtil.isEmpty(soDetailEntityList)) {
             return detailDTO;
@@ -265,9 +267,6 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
         detailDTO.setSkuId("");
         // skuNo
         detailDTO.setSkuNo("");
-
-        //平台明细行号
-        detailDTO.setPlatformLineNumber("");
 
         // 平台sku编号
         detailDTO.setPlatformSkuNo(soDetailEntity.getPlatformSku());
@@ -298,16 +297,16 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
         // 含税成本（本位币）
         detailDTO.setTaxCost(BigDecimal.ZERO);
 
-        // 来源明细id
-        detailDTO.setSourceDetailId(sourceDetailId);
-
         List<String> thirdDetailIdList = soDetailEntityList.stream()
                 .map(DmpSoDetailEntity::getThirdDetailId)
+                .filter(StringUtils::isNotBlank)
                 .sorted()
                 .collect(Collectors.toList());
 
-        // 平台明细行
-        detailDTO.setPlatformLineNumber(String.join(",", thirdDetailIdList));
+        // 来源明细id / 平台明细行号：统一用 third_detail_id，避免 packageId 补全后 key 漂移
+        String sourceDetailId = TikTokOrderDetailUtils.buildSourceDetailId(soDetailEntity, thirdDetailIdList);
+        detailDTO.setSourceDetailId(sourceDetailId);
+        detailDTO.setPlatformLineNumber(sourceDetailId);
 
         // 当前明细标签
         Map<String, Object> lableMap = new HashMap<>();
@@ -334,7 +333,6 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
         detailDTO.setPlatformPackageId(soDetailEntity.getPlatformPackageId());
         return detailDTO;
     }
-
 
     /**
      * 买家信息字段处理

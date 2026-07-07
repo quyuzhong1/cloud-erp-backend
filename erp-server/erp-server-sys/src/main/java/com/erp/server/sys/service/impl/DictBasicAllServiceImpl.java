@@ -1,15 +1,13 @@
 package com.erp.server.sys.service.impl;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
+import com.common.business.constant.RedisCacheConstants;
+import com.common.business.utils.RedisUtil;
+import com.common.core.enums.ApiError;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,6 +67,9 @@ public class DictBasicAllServiceImpl implements DictBasicAllService {
 	
 	@Autowired
 	protected IdentifierGenerator identifierGenerator;
+
+	@Resource
+	private RedisUtil redisUtil;
 	
 	private static final Map<String, Map<String, String>> systemCodeDiffFieldMap = new HashMap<>();
 	static {
@@ -82,8 +83,8 @@ public class DictBasicAllServiceImpl implements DictBasicAllService {
 		systemCodeDiffFieldMap.put(SystemCodeEnum.SRM.getCode(), srmTmsMrpMap);
 		systemCodeDiffFieldMap.put(SystemCodeEnum.TMS.getCode(), srmTmsMrpMap);
 	}
-	
-    @Transactional(rollbackFor = Exception.class)
+
+	@Transactional(rollbackFor = Exception.class)
 	@Override
 	public BaseResultDTO.AddDTO add(AddDTO dto) {
 		String systemCode = dto.getSystemCode();
@@ -169,7 +170,6 @@ public class DictBasicAllServiceImpl implements DictBasicAllService {
 		if(CollUtil.isNotEmpty(list)) {
 			throw new ServiceException(type + "类型下的"+ value +"值在" + systemCode + "系统已存在");
 		}
-		
 		PagingDTO<DictBasicAllDTO.PagingParamDTO> pageDto = new PagingDTO<>();
 	   	pageDto.setPageSize(-1);
 	   	DictBasicAllDTO.PagingParamDTO pDto = new DictBasicAllDTO.PagingParamDTO();
@@ -184,8 +184,9 @@ public class DictBasicAllServiceImpl implements DictBasicAllService {
 	   	PagingVO<ViewDTO> paging = paging(pageDto);
 	   	List<ViewDTO> pagingList = paging.getList();
 	   	DictBasicEntity oldEntity = BeanUtil.copyProperties(pagingList.get(0), DictBasicEntity.class);
-	   	
+		// updateJsonObject 无 @CacheEvict，由调用方统一负责缓存清除（见 DictBasicServiceImpl.updateJsonObject 注释）
 		FeignQuery.invoke(this.getServiceClass(systemCode), "updateJsonObject", Arrays.asList(Arrays.asList(this.getEntityMap(dto))));
+		redisUtil.del(CharSequenceUtil.format(RedisCacheConstants.BASE_DICT_BASIC_BY_TYPE, systemCode, type));
 		String msg = CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), id, "字典数据");
 		paging = paging(pageDto);
 	   	pagingList = paging.getList();
@@ -201,6 +202,20 @@ public class DictBasicAllServiceImpl implements DictBasicAllService {
 		String opType = dto.getOpType();
 		String opTypeName = "";
 		List<String> ids = dto.getIds();
+		if(CollUtil.isEmpty(ids)) {
+			throw new ServiceException(ApiError.COMMON_SELECT_DATA_REQUIRED);
+		}
+		FeignBuilder feignBuilder = FeignBuilder.create(this.getEntityClass(systemCode)).in("id", ids);
+		List list = FeignQuery.list(feignBuilder);
+		if(CollUtil.isEmpty(list)) {
+			throw new ServiceException(ApiError.COMMON_DATA_NOT_EXIST,systemCode);
+		}
+		//转换成按照id、type的map形式
+		Map<String, String> typeMap = new HashMap<>(ids.size());
+		for(Object obj : list) {
+			Map<String, Object> beanMap = BeanUtil.beanToMap(obj);
+			typeMap.put((String) beanMap.get("id"), (String) beanMap.get("type"));
+		}
 		List<Map<String, Object>> param = new ArrayList<>(ids.size());
         if("delete".equals(opType)) {
         	opTypeName = "批量删除";
@@ -209,6 +224,7 @@ public class DictBasicAllServiceImpl implements DictBasicAllService {
         	for(String id : ids) {
     			Map<String, Object> p = new HashMap<>();
     			p.put("id", id);
+				p.put("type", typeMap.get(id));
     			if("able".equals(opType)) {
     				p.put("status", true);
     				opTypeName = "批量启用，启用状态由{停用}改为{启用}";
@@ -218,9 +234,13 @@ public class DictBasicAllServiceImpl implements DictBasicAllService {
     			}
     			param.add(p);
     		}
-        	FeignQuery.invoke(this.getServiceClass(systemCode), "updateJsonObject", Arrays.asList(param));
+			// updateJsonObject 无 @CacheEvict，由调用方统一负责缓存清除（见 DictBasicServiceImpl.updateJsonObject 注释）
+        	FeignQuery.invoke(this.getServiceClass(systemCode), "updateJsonObject", Collections.singletonList(param));
         }
-		
+		//手动删除redis缓存
+		typeMap.values().stream().distinct().forEach(type -> {
+			redisUtil.del(CharSequenceUtil.format(RedisCacheConstants.BASE_DICT_BASIC_BY_TYPE, systemCode, type));
+		});
 		for(String id : ids) {
 			operateLogService.addModuleOperateLog(opTypeName, ModuleTypeEnum.DICT_BASIC.getCode(), id, "状态变更");
 		}

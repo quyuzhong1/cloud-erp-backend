@@ -12,13 +12,17 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -43,7 +47,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.incrementer.IdentifierGenerator;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.annotation.DataIdempotent;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseDTO;
 import com.common.business.dto.base.BaseResultDTO;
@@ -65,6 +69,7 @@ import com.common.core.constant.SqlConstants;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.message.constant.DistributeKeyConstant;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
@@ -1050,7 +1055,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 
     @Transactional(rollbackFor = Exception.class)
 	@Override
-	@DataIdempotent(keyIdName = "id")
+	@DistributeLocker(businessType = DistributeKeyConstant.TMS_PUSH_ALLOCATION_KEY, keyName = "id", unlockAfterTx = true)
 	public void singPushAllocation(String id, String reportDate , List<TmsB2cDeclareReconciliationDetailEntity> tmsB2cDeclareReconciliationDetailEntityList) {
 		if(CollUtil.isEmpty(tmsB2cDeclareReconciliationDetailEntityList)) {
 			return;
@@ -1357,99 +1362,4 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 
 
 
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public Boolean addTaskDetailByTransferDeclare(TmsAsyncTaskRecordDTO.PushParamsDTO dto) {
-        String taskId = dto.getTaskId();
-        LocalDateTime startTime = dto.getStartTime();
-        LocalDateTime endTime = dto.getEndTime();
-        List<String> logisticsSupplierIds = dto.getIds();
-        if (null == startTime || null == endTime) {
-            asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),"开始时间或结束时间为空");
-            return true;
-        }
-        List<TmsB2cDeclareReconciliationDetailEntity> list = tmsB2cDeclareReconciliationDetailService.listAutoGenerateCost(startTime.toLocalDate(), endTime.toLocalDate());
-        if(CollUtil.isNotEmpty(logisticsSupplierIds)){
-            list = list.stream().filter(e -> logisticsSupplierIds.contains(e.getLogisticsSupplierId())).collect(Collectors.toList());
-        }
-        if (CollectionUtils.isEmpty(list)) {
-            asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),"b2c报关对账单明细为空");
-            return true;
-        }
-        //记录本次任务数量
-        asyncTaskRecordService.lambdaUpdate().set(TmsAsyncTaskRecordEntity::getDetailCount,list.size()).eq(TmsAsyncTaskRecordEntity::getId, taskId).update();
-
-        List<TmsAsyncTaskDetailEntity> taskDetailList = new ArrayList<>();
-        LocalDateTime now = LocalDateTime.now();
-        for(TmsB2cDeclareReconciliationDetailEntity l : list) {
-            TmsAsyncTaskDetailEntity detail = new TmsAsyncTaskDetailEntity();
-            detail.setMainId(taskId);
-            detail.setBusinessType(SourceTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode());
-            detail.setBusinessId(l.getId());
-//            detail.setBusinessCode(l.getSourceCode());
-            detail.setStatus(TmsAsyncTaskRecordStatusEnum.PENDING.getCode());
-            detail.setCreateTime(now);
-            taskDetailList.add(detail);
-        }
-        asyncTaskDetailRecordService.saveBatch(taskDetailList);
-        return false;
-    }
-
-
-
-    @Override
-    public void pushTransferDeclare(TmsAsyncTaskRecordDTO.PushParamsDTO dto) {
-        String taskId = dto.getTaskId();
-        LocalDateTime startTime = dto.getStartTime();
-        LocalDateTime endTime = dto.getEndTime();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM");
-
-        TmsAsyncTaskRecordEntity tmsAsyncTaskRecordEntity = asyncTaskRecordService.getById(taskId);
-        if(Objects.isNull(tmsAsyncTaskRecordEntity)){
-            log.error("任务记录不存在，taskId: {}", taskId);
-            asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),ApiError.LOGISTICS_PENDING_COST_NOT_FOUND.getMsg());
-            return;
-        }
-
-        List<TmsAsyncTaskDetailEntity> taskDetailList = asyncTaskDetailRecordService.lambdaQuery().eq(TmsAsyncTaskDetailEntity::getMainId, taskId).list();
-        CountDownLatch latch = new CountDownLatch(taskDetailList.size());
-
-        List<TmsB2cDeclareReconciliationDetailEntity> list = tmsB2cDeclareReconciliationDetailService.listAutoGenerateCost(startTime.toLocalDate(), endTime.toLocalDate());
-        Map<String, TmsB2cDeclareReconciliationDetailEntity> map = list.stream().collect(Collectors.toMap(TmsB2cDeclareReconciliationDetailEntity::getId, Function.identity(), (o1, o2) -> o1));
-        for (TmsAsyncTaskDetailEntity detail : taskDetailList) {
-            String taskDetailId = detail.getId();
-            String businessId = detail.getBusinessId();
-            costAllocationPool.execute(() -> {
-                try {
-                    //判断是否超时中止
-                    Integer count = asyncTaskDetailRecordService.lambdaQuery().eq(TmsAsyncTaskDetailEntity::getId, taskDetailId).eq(TmsAsyncTaskDetailEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode()).count();
-                    if(count >0){
-                        asyncTaskDetailRecordService.updateDetail(taskDetailId,
-                                TmsAsyncTaskRecordStatusEnum.ING.getCode(), "");
-
-                        TmsB2cDeclareReconciliationDetailEntity entity = map.get(businessId);
-                        singPushAllocation(entity.getSourceId() , entity.getApproveDate().format(formatter) , Arrays.asList(entity));
-
-                        asyncTaskDetailRecordService.updateDetail(taskDetailId,
-                                TmsAsyncTaskRecordStatusEnum.FINISH.getCode(), "");
-                    }
-                } catch (Exception e) {
-                    log.error("处理任务失败 taskDetailId: {}", taskDetailId, e);
-                    // 统一处理任务失败状态更新
-                    asyncTaskRecordService.updateTaskDetailFailure(taskDetailId, e);
-                } finally {
-                    latch.countDown();
-                }
-            });
-        }
-        try {
-            boolean await = latch.await(tmsAsyncTaskRecordEntity.getExecTimeout(), TimeUnit.SECONDS);// 等待所有任务完成
-            if(await){
-                asyncTaskRecordService.updateTaskFinally(taskId);
-            }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            log.error("任务等待中断", e);
-        }
-    }
 }

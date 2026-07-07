@@ -33,8 +33,10 @@ import cn.hutool.core.collection.CollUtil;
 @Service
 @Scope("prototype")
 public class DmpInputAliExpressOrderDetailDmpHandler extends DmpInputAliExpressOrderDoChildDmpHandler{
+
+	private static final String SHIPS_FROM_ATTRIBUTE = "ships from";
 	private static final String SO_OUTSTOCK_CODE = "soOutstock";
-	
+
 	@Override
 	protected List<Map<String, Object>> afterDoDmpInputMongoChildEntityList(List<Map<String, Object>> dmpInputMongoChildList){
 		List<Map<String, Object>> dmpInputMongoChildEntityList = new ArrayList<>();
@@ -111,8 +113,9 @@ public class DmpInputAliExpressOrderDetailDmpHandler extends DmpInputAliExpressO
 								List<OrderItemDetail.ChildSku> skuList = childSkus.getChildSkus();
 								if (CollUtil.isNotEmpty(skuList)) {
 									for (OrderItemDetail.ChildSku sku : skuList) {
-										if ("Ships From".equals(sku.getPName())) {
-											c.put("variantProperty",sku.getPValue());
+										String attributeName = StringUtils.lowerCase(StringUtils.trimToEmpty(sku.getPName()));
+										if (SHIPS_FROM_ATTRIBUTE.equals(attributeName)) {
+											c.put("variantProperty", StringUtils.lowerCase(StringUtils.trimToEmpty(sku.getPValue())));
 										}
 									}
 								}

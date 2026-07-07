@@ -128,7 +128,10 @@ public class DmpInputBaseInitHandler extends DmpInputInitHandler{
 			dmpInputApiInitRequest.setStartTime(startTime);
 			dmpInputApiInitRequest.setEndTime(endTime);
 			dmpInputApiInitRequest.setTaskExtendJson(null == dmpInputTaskEntity ? "" : dmpInputTaskEntity.getExtendJson());
-			
+			if (dmpInputTaskEntity != null) {
+				dmpInputApiInitRequest.setInputTaskId(dmpInputTaskEntity.getId());
+			}
+
 			return dmpInputApiInitHandler.getApiData(dmpInputApiInitRequest);
 		}else if(DmpCfgInputTypeEnum.DB.getCode().equals(type)) {
 			

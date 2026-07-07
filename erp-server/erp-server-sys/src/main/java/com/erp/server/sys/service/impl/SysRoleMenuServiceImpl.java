@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.annotation.DistributeLocker;
+import com.common.message.constant.DistributeKeyConstant;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.constant.BusinessCommonConstants;
@@ -80,6 +82,7 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
      */
     @Override
     @Transactional
+    @DistributeLocker(businessType = DistributeKeyConstant.SYS_USER_AUTH_KEY, keyName = "batchDTO.roleId", unlockAfterTx = true)
     public boolean batchSaveRoleMenu(SysRoleMenuBatchDTO batchDTO) {
         Set<SysRoleMenuDataScopeDTO> menuIds = batchDTO.getMenuIdList();
         String roleId = batchDTO.getRoleId();

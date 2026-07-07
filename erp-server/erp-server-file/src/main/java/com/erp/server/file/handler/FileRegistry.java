@@ -26,9 +26,14 @@ import java.util.Objects;
 public class FileRegistry {
 
     /**
-     * Excel2007 单 sheet 物理行上限（含表头），{@code sheetMaxRows} 配置不得超过该值。
+     * Excel2007 单 sheet 物理行上限（含表头），{@code sheetMaxRows} / {@code singleSheetMaxRows} 配置不得超过该值。
      */
     private static final int SHEET_MAX_ROWS_UPPER = 1_048_576;
+
+    /**
+     * 单 sheet 分组/动态表头导出默认行数上限（含表头），与 {@code file.storage.singleSheetMaxRows} 缺省值一致。
+     */
+    private static final int SINGLE_SHEET_MAX_ROWS_DEFAULT = 200_000;
 
     /**
      * 分页每页条数上限，防止运维误配极大值导致单次 Feign/内存峰值过大或超时。
@@ -95,6 +100,17 @@ public class FileRegistry {
     private static Long maxTemplateExpandBytes;
 
     /**
+     * 单 sheet 分组报表导出时，单 sheet 最大行数（含表头），默认 200000，配置上限 {@link #SHEET_MAX_ROWS_UPPER}（1048576）。
+     * 供 {@link com.erp.server.file.core.AbstractSingleSheetGroupPageFileEventHandler} 使用；
+     * 多 sheet 分组报表见 {@link com.erp.server.file.core.AbstractMultiSheetGroupPageFileEventHandler}（沿用 {@link #sheetMaxRows}）。
+     * <p>
+     * 该配置项及对应单 sheet 分组能力尚未上线生产，默认值可按部署环境通过 {@code file.storage.singleSheetMaxRows} 调整，
+     * 与多 sheet 场景的 {@link #sheetMaxRows} 语义不同，勿合并为同一配置项。
+     */
+    @Getter
+    private static Integer singleSheetMaxRows;
+
+    /**
      * 动态表头导出每页条数。动态表头单行 DynamicExcelDTO 体积通常大于固定模板行对象，
      * 沿用更保守的批次（默认 1000）控制 Feign/内存峰值与超时，避免大宽表导出回归。
      */
@@ -129,6 +145,12 @@ public class FileRegistry {
     public void setMaxTemplateExpandBytes(Long maxTemplateExpandBytes){
         FileRegistry.maxTemplateExpandBytes = clampUpperLong("file.storage.maxTemplateExpandBytes",
                 maxTemplateExpandBytes, MAX_TEMPLATE_EXPAND_BYTES_UPPER);
+    }
+
+    @Value("${file.storage.singleSheetMaxRows:200000}")
+    public void setSingleSheetMaxRows(Integer singleSheetMaxRows) {
+        FileRegistry.singleSheetMaxRows = clampUpper("file.storage.singleSheetMaxRows", singleSheetMaxRows,
+                SHEET_MAX_ROWS_UPPER);
     }
 
     @Value("${file.storage.dynamicExportPageSize:1000}")
@@ -192,6 +214,14 @@ public class FileRegistry {
     public static long maxTemplateExpandBytesOrDefault() {
         Long configured = maxTemplateExpandBytes;
         return configured == null || configured < 1 ? 314572800L : configured;
+    }
+
+    /**
+     * 单 sheet 分组报表导出时的 sheet 行数上限（含表头），未注入或非法（&lt;1）时回退 {@link #SINGLE_SHEET_MAX_ROWS_DEFAULT}（200000）。
+     */
+    public static int singleSheetMaxRowsOrDefault() {
+        Integer configured = singleSheetMaxRows;
+        return configured == null || configured < 1 ? SINGLE_SHEET_MAX_ROWS_DEFAULT : configured;
     }
 
     /**

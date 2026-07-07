@@ -539,6 +539,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             //需要删除的明细id
             List<String> deleteSoDetailIdList = soChangeDetailList.stream().filter(s -> s.getChangeType().equals(deleteType)).
                     map(SoChangeDetailEntity::getSoDetailId).collect(Collectors.toList());
+            checkDeleteAllSoDetail(list, soChangeDetailList, deleteSoDetailIdList);
             //关闭的销售订单id
             List<String> closeSoDetailIdList = soChangeDetailList.stream().filter(s -> s.getChangeType().equals(terminate)).
                     map(SoChangeDetailEntity::getSoDetailId).collect(Collectors.toList());
@@ -636,6 +637,40 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             soDetailService.removeByIds(deleteSoDetailIdList);
         }
 
+    }
+
+    private void checkDeleteAllSoDetail(List<SoChangeEntity> soChangeList, List<SoChangeDetailEntity> soChangeDetailList, List<String> deleteSoDetailIdList) {
+        if (CollectionUtils.isEmpty(soChangeList) || CollectionUtils.isEmpty(deleteSoDetailIdList)) {
+            return;
+        }
+        Map<String, String> changeSoIdMap = soChangeList.stream().collect(Collectors.toMap(SoChangeEntity::getId, SoChangeEntity::getSoId, (a, b) -> a));
+        List<String> soIdList = soChangeDetailList.stream()
+                .filter(item -> SoChangeTypeEnum.DELETE.equals(item.getChangeType()))
+                .filter(item -> changeSoIdMap.containsKey(item.getMainId()))
+                .map(item -> changeSoIdMap.get(item.getMainId()))
+                .distinct()
+                .collect(Collectors.toList());
+        List<SoDetailEntity> soDetailList = soDetailService.listBaseByMainIdList(soIdList);
+
+        Map<String, Long> addCountMap = soChangeDetailList.stream()
+                .filter(item -> SoChangeTypeEnum.ADD.equals(item.getChangeType()))
+                .filter(item -> changeSoIdMap.containsKey(item.getMainId()))
+                .collect(Collectors.groupingBy(item -> changeSoIdMap.get(item.getMainId()), Collectors.counting()));
+        Map<String, Set<String>> deleteDetailIdMap = soChangeDetailList.stream()
+                .filter(item -> SoChangeTypeEnum.DELETE.equals(item.getChangeType()))
+                .filter(item -> CharSequenceUtil.isNotBlank(item.getSoDetailId()))
+                .filter(item -> changeSoIdMap.containsKey(item.getMainId()))
+                .collect(Collectors.groupingBy(item -> changeSoIdMap.get(item.getMainId()),
+                        Collectors.mapping(SoChangeDetailEntity::getSoDetailId, Collectors.toSet())));
+
+        for (String soId : soIdList) {
+            long currentCount = soDetailList.stream().filter(item -> CharSequenceUtil.equals(item.getMainId(), soId)).count();
+            int deleteCount = deleteDetailIdMap.getOrDefault(soId, Collections.emptySet()).size();
+            long addCount = addCountMap.getOrDefault(soId, 0L);
+            if (currentCount - deleteCount + addCount <= 0) {
+                throw new ServiceException(ApiError.SO_CHANGE_DELETE_ALL_DETAIL_FORBIDDEN);
+            }
+        }
     }
 
 

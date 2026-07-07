@@ -199,6 +199,9 @@ public class ShopifyOrder {
     }
 
     public Boolean convertInvalidStatus() {
+        if (this.cancelledAt != null) {
+            return Boolean.TRUE;
+        }
         return ShopifyOrderFinancialStatusEnum.VOIDED.getCode().equalsIgnoreCase(this.financialStatus);
     }
 
@@ -226,17 +229,10 @@ public class ShopifyOrder {
     }
 
     /**
-     * 退款/明细退款视为平台取消(暂不包含部分退款)
+     * 平台取消：仅依据 cancelled_at 是否有值
      */
-    public Boolean convertIsCancel(boolean isDetailRefund) {
-        // 明细退款
-        if (isDetailRefund){
-            return true;
-        }
-        return "refunded".equalsIgnoreCase(this.fulfillmentStatus)
-//                || "partially_refunded".equalsIgnoreCase(this.fulfillmentStatus)
-                || "refunded".equalsIgnoreCase(this.financialStatus);
-//                || "partially_refunded".equalsIgnoreCase(this.financialStatus);
+    public Boolean convertIsCancel() {
+        return this.cancelledAt != null;
     }
 
 

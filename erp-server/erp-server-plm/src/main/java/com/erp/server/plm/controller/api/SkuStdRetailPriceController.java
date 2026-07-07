@@ -193,6 +193,7 @@ public class SkuStdRetailPriceController extends BaseController {
     */
     @PostMapping("/batchDelete")
     @LogViewService
+    @LogAction(value = LogActionEnum.DELETE, desc = "SKU标准零售价批量删除")
     public ApiResult<Boolean> batchDelete(@RequestBody @Validated IdsDTO ids) {
     	List<SkuStdRetailPriceEntity> listByIds = skuStdRetailPriceService.listByIds(ids.getIds());
     	if(CollUtil.isNotEmpty(listByIds)) {

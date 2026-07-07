@@ -201,6 +201,15 @@ public class LogisticsFeignController {
     private LogisticsSaleChannelEntity getChannelByCodeAndOverseasWarehouseId(@RequestParam("logisticsProductCode")String logisticsProductCode, @RequestParam("transferWarehouseId") String transferWarehouseId) {
         return logisticsChannelService.getChannelByCodeAndOverseasWarehouseId(logisticsProductCode, transferWarehouseId);
     }
+
+    /**
+     * 三方仓自动出库：shipping_method + platform_warehouse_code 解析 ERP 物流渠道。
+     */
+    @PostMapping("/resolveThirdWarehouseLogisticsChannel")
+    public LogisticsChannelEntity resolveThirdWarehouseLogisticsChannel(@RequestBody LogisticsChannelDTO.ThirdWarehouseLogisticsMappingDTO dto) {
+        return logisticsChannelService.resolveThirdWarehouseLogisticsChannel(dto);
+    }
+
     /**
      * 根据地址类型获取地址列表
      *

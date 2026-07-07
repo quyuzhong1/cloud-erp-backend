@@ -607,6 +607,47 @@
         </where>
     </select>
 
+    <select id="pageWaitReconciliationSupplierIds" resultType="java.lang.String">
+        SELECT distinct lb.logistics_supplier_id
+        from
+        logistics_bill lb
+        left join logistics_bill_cost lbc on lb.id = lbc.logistics_bill_id AND lbc.is_deleted = FALSE
+        left join logistics_bill_detail lbd on lbd.main_id = lb.id AND lbd.is_deleted = FALSE
+        left JOIN tms_first_mile_reconciliation tfmr on lbc.reconciliation_id = tfmr.id and tfmr.is_deleted = FALSE
+        <where>
+            and lb.is_deleted = false
+            and lb.logistics_supplier_id is not null
+            and lb.logistics_supplier_id != ''
+            and lbc.currency is not null
+            and lbc.currency != ''
+            and tfmr.supplier_type is null
+            <if test="params.orderType!=null and params.orderType!=''">
+                and lb.order_type = #{params.orderType}
+            </if>
+            <if test="params.reconciliationStatus!=null and params.reconciliationStatus!=''">
+                and lbc.reconciliation_status = #{params.reconciliationStatus}
+            </if>
+            <if test="params.trackStatus!=null and params.trackStatus!=''">
+                and lbd.track_status = #{params.trackStatus}
+            </if>
+            <if test="params.startDate != null and params.endDate != null ">
+                and lbd.sign_time >= #{params.startDate}
+                and (#{params.endDate}::TIMESTAMP + INTERVAL '1 DAY') > lbd.sign_time
+            </if>
+            <if test="params.ids != null and params.ids.size() > 0 ">
+                and lb.logistics_supplier_id in
+                <foreach collection="params.ids" item="logisticsSupplierId" open="(" separator="," close=")">
+                    #{logisticsSupplierId}
+                </foreach>
+            </if>
+            <if test="params.lastId != null and params.lastId != ''">
+                and lb.logistics_supplier_id &gt; #{params.lastId}
+            </if>
+        </where>
+        order by lb.logistics_supplier_id asc
+        limit #{params.batchSize}
+    </select>
+
     <!-- 根据物流跟踪单号或运单号查询物流单详情 -->
     <select id="getByTrackNoOrTransportNo" resultType="com.erp.model.tms.dto.LogisticsBillDTO$BaseDTO">
         SELECT
