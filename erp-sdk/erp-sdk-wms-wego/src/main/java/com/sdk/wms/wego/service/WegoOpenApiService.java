@@ -287,6 +287,10 @@ public class WegoOpenApiService {
         bizParams.put("noList", JSON.toJSON(dto.getNoList()));
         JSONObject response = doQuery(dto.getAccessToken(), dto.getSecret(),
                 WeGoConstants.TWO_C_ORDER_SEARCH, bizParams, "查询2C出库单");
+        if (response == null) {
+            log.error("[WEGO查询2C出库单] 接口无响应");
+            throw new ServiceException("WEGO 查询2C出库单接口无响应");
+        }
         if (!Boolean.TRUE.equals(response.getBoolean("success"))) {
             log.error("[WEGO查询2C出库单] 接口返回失败, {}", safeResponseLog(response));
             throw new ServiceException("WEGO 查询2C出库单接口失败: " + response.getString("errorMsg"));
