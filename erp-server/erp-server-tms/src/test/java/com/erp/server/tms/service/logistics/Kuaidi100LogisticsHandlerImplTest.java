@@ -108,6 +108,72 @@ public class Kuaidi100LogisticsHandlerImplTest {
         verify(kuaidi100Service, never()).subscribe(any(Kuaidi100SubscribeParam.class));
     }
 
+    @Test
+    public void registerLogisticsNumberMissingAuthKeyReturnsFailuresWithoutSubscribe() throws Exception {
+        Kuaidi100LogisticsHandlerImpl handler = new Kuaidi100LogisticsHandlerImpl();
+        Kuaidi100Service kuaidi100Service = mock(Kuaidi100Service.class);
+        CfgSettingService cfgSettingService = mock(CfgSettingService.class);
+        setField(handler, "kuaidi100Service", kuaidi100Service);
+        setField(handler, "cfgSettingService", cfgSettingService);
+        doReturn("https://erp.test").when(cfgSettingService).getPcLinkByEnv();
+
+        ApiResult<List<RegisterResponseVO>> result = handler.registerLogisticsNumber(RegisterTrackVO.builder()
+                .authMap(Collections.emptyMap())
+                .logisticsRegisterVOS(Collections.singletonList(registerVO("YT001")))
+                .build());
+
+        assertTrue(result.isSuccess());
+        assertFalse(result.getData().get(0).getTrackStatus());
+        assertEquals("AUTH_KEY_EMPTY", result.getData().get(0).getCode());
+        verify(kuaidi100Service, never()).subscribe(any(Kuaidi100SubscribeParam.class));
+    }
+
+    @Test
+    public void registerLogisticsNumberSubscribeReturnsNullReturnsSubscribeException() throws Exception {
+        Kuaidi100LogisticsHandlerImpl handler = new Kuaidi100LogisticsHandlerImpl();
+        Kuaidi100Service kuaidi100Service = spy(new Kuaidi100Service());
+        CfgSettingService cfgSettingService = mock(CfgSettingService.class);
+        LogisticsOperateService logisticsOperateService = mock(LogisticsOperateService.class);
+        setField(handler, "kuaidi100Service", kuaidi100Service);
+        setField(handler, "cfgSettingService", cfgSettingService);
+        setField(handler, "logisticsOperateService", logisticsOperateService);
+        doReturn("https://erp.test").when(cfgSettingService).getPcLinkByEnv();
+        doReturn(null).when(kuaidi100Service).subscribe(any(Kuaidi100SubscribeParam.class));
+
+        ApiResult<List<RegisterResponseVO>> result = handler.registerLogisticsNumber(RegisterTrackVO.builder()
+                .authMap(authMap())
+                .logisticsRegisterVOS(Collections.singletonList(registerVO("YT001")))
+                .build());
+
+        assertTrue(result.isSuccess());
+        assertFalse(result.getData().get(0).getTrackStatus());
+        assertEquals("SUBSCRIBE_EXCEPTION", result.getData().get(0).getCode());
+    }
+
+    @Test
+    public void registerLogisticsNumberSubscribeThrowsExceptionReturnsSubscribeException() throws Exception {
+        Kuaidi100LogisticsHandlerImpl handler = new Kuaidi100LogisticsHandlerImpl();
+        Kuaidi100Service kuaidi100Service = spy(new Kuaidi100Service());
+        CfgSettingService cfgSettingService = mock(CfgSettingService.class);
+        LogisticsOperateService logisticsOperateService = mock(LogisticsOperateService.class);
+        setField(handler, "kuaidi100Service", kuaidi100Service);
+        setField(handler, "cfgSettingService", cfgSettingService);
+        setField(handler, "logisticsOperateService", logisticsOperateService);
+        doReturn("https://erp.test").when(cfgSettingService).getPcLinkByEnv();
+        org.mockito.Mockito.doThrow(new RuntimeException("network error"))
+                .when(kuaidi100Service).subscribe(any(Kuaidi100SubscribeParam.class));
+
+        ApiResult<List<RegisterResponseVO>> result = handler.registerLogisticsNumber(RegisterTrackVO.builder()
+                .authMap(authMap())
+                .logisticsRegisterVOS(Collections.singletonList(registerVO("YT001")))
+                .build());
+
+        assertTrue(result.isSuccess());
+        assertFalse(result.getData().get(0).getTrackStatus());
+        assertEquals("SUBSCRIBE_EXCEPTION", result.getData().get(0).getCode());
+        assertEquals("network error", result.getData().get(0).getMsg());
+    }
+
     private LogisticsRegisterVO registerVO(String trackNo) {
         return LogisticsRegisterVO.builder()
                 .trackNo(trackNo)

@@ -70,6 +70,19 @@ public class LogisticsTrackServiceImplKuaidi100Test {
     }
 
     @Test
+    public void webhookByKuaidi100BlankTrackNoDoesNotSave() throws Exception {
+        LogisticsTrackServiceImpl service = spy(new LogisticsTrackServiceImpl());
+        LogisticsBillDetailService billDetailService = mock(LogisticsBillDetailService.class);
+        setField(service, "kuaidi100Service", new Kuaidi100Service());
+        setField(service, "logisticsBillDetailService", billDetailService);
+
+        service.webhookByKuaidi100(dto("", "3", Collections.singletonList(detail("2026-07-07 12:00:00", "signed", "Shanghai"))));
+
+        verify(service, never()).saveIncrementTrackData(anyString(), anyList());
+        verify(billDetailService, never()).updateLogisticsBillDetailByTrackNo(any(LogisticsTrackEntity.class));
+    }
+
+    @Test
     public void webhookByKuaidi100InvalidTrackDetailDoesNotSave() throws Exception {
         LogisticsTrackServiceImpl service = spy(new LogisticsTrackServiceImpl());
         LogisticsBillDetailService billDetailService = mock(LogisticsBillDetailService.class);
@@ -77,6 +90,19 @@ public class LogisticsTrackServiceImplKuaidi100Test {
         setField(service, "logisticsBillDetailService", billDetailService);
 
         service.webhookByKuaidi100(dto("YT123", "3", Collections.singletonList(detail("bad-time", "signed", "Shanghai"))));
+
+        verify(service, never()).saveIncrementTrackData(anyString(), anyList());
+        verify(billDetailService, never()).updateLogisticsBillDetailByTrackNo(any(LogisticsTrackEntity.class));
+    }
+
+    @Test
+    public void webhookByKuaidi100BlankContextDoesNotSave() throws Exception {
+        LogisticsTrackServiceImpl service = spy(new LogisticsTrackServiceImpl());
+        LogisticsBillDetailService billDetailService = mock(LogisticsBillDetailService.class);
+        setField(service, "kuaidi100Service", new Kuaidi100Service());
+        setField(service, "logisticsBillDetailService", billDetailService);
+
+        service.webhookByKuaidi100(dto("YT123", "3", Collections.singletonList(detail("2026-07-07 12:00:00", "", "Shanghai"))));
 
         verify(service, never()).saveIncrementTrackData(anyString(), anyList());
         verify(billDetailService, never()).updateLogisticsBillDetailByTrackNo(any(LogisticsTrackEntity.class));
