@@ -511,6 +511,9 @@ public class SoReturnPrestockServiceImpl
         Map<String, List<SoReturnPrestockDetailEntity>> detailMap = allDetails.stream()
                 .collect(Collectors.groupingBy(SoReturnPrestockDetailEntity::getMainId));
 
+        // 仓储部门为固定兜底部门，批量入口下会被多张单反复用到，事务内一次性预取，避免循环内逐单发起 Feign 调用
+        SysDepartmentEntity warehousingDept = resolveWarehousingDept();
+
         // 逐张预入库单独立处理：多张预入库单即使关联同一店铺，也各自成单（各自生成退货入库单与平账其他入库单），
         // 不合并为"一个关联单"。仅关联尚未关联的明细行，避免覆盖已关联售后单/店铺的行
         List<BatchResultDTO> results = new ArrayList<>(mains.size());
@@ -548,7 +551,7 @@ public class SoReturnPrestockServiceImpl
             }
 
             // 平账：反向冲抵当前有效的普通(增库存)其他入库单；整单关联无剩余未关联行，故不再生成未关联占位单（均已审核）
-            reconcileOtherInstockForPrestock(main);
+            reconcileOtherInstockForPrestock(main, warehousingDept);
 
             // 联动刷新主表关联状态（全部已关联→LINKED，混合→PARTIAL）与操作时间
             refreshMainLinkStatus(main.getId());
@@ -590,8 +593,10 @@ public class SoReturnPrestockServiceImpl
      *       确保剩余未关联 SKU 的库存仍被正确占用；无剩余未关联行（如整单关联）时不生成。</li>
      * </ol>
      * 该方法需在本次关联明细行落库后调用，以便按最新的关联状态计算未关联占位明细。
+     *
+     * @param warehousingDept 已预取的仓储兜底部门，供生成未关联占位其他入库单使用，避免在此方法内重复发起 Feign 调用
      */
-    private void reconcileOtherInstockForPrestock(SoReturnPrestockEntity main) {
+    private void reconcileOtherInstockForPrestock(SoReturnPrestockEntity main, SysDepartmentEntity warehousingDept) {
         // 1. 反向平账：冲抵当前仍有效（未被反向过）的普通(增库存)其他入库单
         List<OtherInstockEntity> ordinaryList = otherInstockService.lambdaQuery()
                 .eq(OtherInstockEntity::getSourceId, main.getId())
@@ -608,6 +613,10 @@ public class SoReturnPrestockServiceImpl
                     .list();
             Set<String> reversedCodes = reversedList.stream().map(OtherInstockEntity::getRemark)
                     .filter(CharSequenceUtil::isNotBlank).collect(Collectors.toSet());
+            // 一次性批量查询本单所有待反向普通单的明细，避免循环内逐单查库（N+1）
+            List<String> ordinaryIds = ordinaryList.stream().map(OtherInstockEntity::getId).collect(Collectors.toList());
+            Map<String, List<OtherInstockDetailEntity>> ordinaryDetailMap = otherInstockDetailService.listByMainIds(ordinaryIds)
+                    .stream().collect(Collectors.groupingBy(OtherInstockDetailEntity::getMainId));
             for (OtherInstockEntity ordinary : ordinaryList) {
                 if (reversedCodes.contains(ordinary.getCode())) {
                     // 该普通单已被反向过，跳过
@@ -618,7 +627,7 @@ public class SoReturnPrestockServiceImpl
                 opposite.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
                 opposite.setSyncKingdeeId("");
                 opposite.setInventoryDirection(InventoryDirectionEnum.RETURN_GOODS.getCode());
-                List<OtherInstockDetailEntity> dbDetailList = otherInstockDetailService.listByMainId(ordinary.getId());
+                List<OtherInstockDetailEntity> dbDetailList = ordinaryDetailMap.getOrDefault(ordinary.getId(), Collections.emptyList());
                 opposite.setDetailEntityList(OtherInStockConverter.INSTANCE.copyDetailList(dbDetailList));
                 // remark 记录被反向的原普通单单号，作为幂等标记
                 opposite.setRemark(ordinary.getCode());
@@ -632,26 +641,35 @@ public class SoReturnPrestockServiceImpl
                 .filter(d -> !Boolean.TRUE.equals(d.getIsDeleted()))
                 .filter(d -> !PrestockLinkStatusEnum.LINKED.getStatus().equals(d.getLinkStatus()))
                 .collect(Collectors.toList());
-        generateOrdinaryOtherInstockForDetails(main, unlinkedList);
+        generateOrdinaryOtherInstockForDetails(main, unlinkedList, warehousingDept);
     }
 
     /**
-     * 为预入库单指定的明细行生成一张普通(增库存)其他入库单占位并直接已审核，写法参照
-     * {@code generateOtherInstockForPrestock}（预入库单创建时生成占位入库的范式）。明细行为空时不生成。
+     * 预取系统内部自动入库使用的仓储兜底部门（{@link WmsConstant#DEFAULT_WAREHOUSING_DEPT_ID}）。
+     * 部门为固定 ID，批量关联场景下由调用方在进入明细循环前调用一次并向下复用，避免事务内逐单发起 Feign 调用。
      */
-    private void generateOrdinaryOtherInstockForDetails(SoReturnPrestockEntity main,
-            List<SoReturnPrestockDetailEntity> details) {
-        if (CollUtil.isEmpty(details)) {
-            return;
-        }
-        Map<String, SkuVO> skuVOMap = listSkuVOMap(details.stream()
-                .map(SoReturnPrestockDetailEntity::getSkuId).collect(Collectors.toList()));
+    private SysDepartmentEntity resolveWarehousingDept() {
         List<SysDepartmentEntity> deptList = sysUserFeign.getDeptByIds(
                 Collections.singletonList(WmsConstant.DEFAULT_WAREHOUSING_DEPT_ID));
         if (CollectionUtils.isEmpty(deptList)) {
             throw new ServiceException("获取不到仓储部门信息");
         }
-        SysDepartmentEntity dept = deptList.get(0);
+        return deptList.get(0);
+    }
+
+    /**
+     * 为预入库单指定的明细行生成一张普通(增库存)其他入库单占位并直接已审核，写法参照
+     * {@code generateOtherInstockForPrestock}（预入库单创建时生成占位入库的范式）。明细行为空时不生成。
+     *
+     * @param dept 已由调用方预取的仓储兜底部门，作为占位单归属部门，避免在此方法内重复发起 Feign 调用
+     */
+    private void generateOrdinaryOtherInstockForDetails(SoReturnPrestockEntity main,
+            List<SoReturnPrestockDetailEntity> details, SysDepartmentEntity dept) {
+        if (CollUtil.isEmpty(details)) {
+            return;
+        }
+        Map<String, SkuVO> skuVOMap = listSkuVOMap(details.stream()
+                .map(SoReturnPrestockDetailEntity::getSkuId).collect(Collectors.toList()));
 
         OtherInstockEntity entity = new OtherInstockEntity();
         entity.setBillDate(Objects.nonNull(main.getReturnInstockTime())
@@ -769,7 +787,7 @@ public class SoReturnPrestockServiceImpl
         }
 
         // 平账联动：反向冲抵原整单普通(增库存)其他入库单，并为本次仍未关联的 SKU 重新生成普通占位单（均已审核）
-        reconcileOtherInstockForPrestock(main);
+        reconcileOtherInstockForPrestock(main, resolveWarehousingDept());
 
         // 刷新主表关联状态（全部已关联→LINKED，部分→PARTIAL）
         refreshMainLinkStatus(main.getId());
