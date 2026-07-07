@@ -37,6 +37,8 @@ public class MagaluOrderDmpHandler extends DmpInputDbConvertDmpHandler {
     private static final String STORAGE_SO_DETAIL = "dmp_so_detail";
     private static final String STORAGE_SO_RECEIVER = "dmp_so_receiver";
     private static final String MAGALU_PLATFORM = "Magalu";
+    /** 飞书 3.3.4：发货单 status=new 时不拉取 */
+    private static final String DELIVERY_STATUS_NEW = "new";
 
     @Override
     public List<Map<String, Object>> convertMongoToDmp(DmpInputDmpRequest dmpRequest, DmpInputMongoResponse dmpResponse) {
@@ -62,15 +64,19 @@ public class MagaluOrderDmpHandler extends DmpInputDbConvertDmpHandler {
         for (Map<String, Object> order : orderList) {
             List<Map<String, Object>> deliveryList = listMap(order.get("deliveries"));
             for (Map<String, Object> delivery : deliveryList) {
+                if (shouldSkipDelivery(delivery)) {
+                    continue;
+                }
                 Map<String, Object> row = baseRow(order);
                 String orderCode = stringValue(order.get("code"));
                 String deliveryId = stringValue(delivery.get("id"));
                 String thirdCode = buildDeliveryUniqueCode(orderCode, deliveryId);
-                Map<String, Object> amounts = mapValue(order.get("amounts"));
                 Map<String, Object> deliveryAmounts = mapValue(delivery.get("amounts"));
                 Map<String, Object> shipping = mapValue(delivery.get("shipping"));
                 Map<String, Object> provider = mapValue(shipping.get("provider"));
                 Map<String, Object> payment = firstMap(order.get("payments"));
+                Object deliveryStatus = delivery.get("status");
+                BigDecimal amountNormalizer = decimalValue(deliveryAmounts.get("normalizer"));
 
                 row.put("platformCreateTime", parseTime(order.get("created_at")));
                 row.put("platformUpdateTime", parseTime(order.get("updated_at")));
@@ -78,24 +84,25 @@ public class MagaluOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                 row.put("sourceSystem", MAGALU_PLATFORM);
                 row.put("thirdCode", thirdCode);
                 row.put("platformCode", orderCode);
-                row.put("invalidStatus", isCancel(order.get("status")));
-                row.put("isCancel", isCancel(order.get("status")));
-                row.put("orderStatus", convertOrderStatus(order.get("status")));
-                row.put("deliveryStatus", convertDeliveryStatus(delivery.get("status")));
+                row.put("invalidStatus", isCancel(deliveryStatus));
+                row.put("isCancel", isCancel(deliveryStatus));
+                row.put("orderStatus", convertOrderStatus(deliveryStatus));
+                row.put("deliveryStatus", convertDeliveryStatus(deliveryStatus));
                 row.put("returnStatus", "");
-                row.put("platformOriginalStatus", stringValue(order.get("status")));
+                row.put("platformOriginalStatus", stringValue(deliveryStatus));
                 row.put("shopId", row.get("nextLevelId"));
                 row.put("shopName", "");
-                row.put("payTime", parseTime(order.get("purchased_at")));
+                row.put("payTime", parseTime(firstNotBlank(order.get("approved_at"), order.get("purchased_at"))));
                 row.put("payStatus", CollUtil.isNotEmpty(listMap(order.get("payments"))));
-                row.put("payMethod", stringValue(payment.get("method")));
-                row.put("currencyCode", firstNotBlank(stringValue(amounts.get("currency")), stringValue(deliveryAmounts.get("currency"))));
+                row.put("payMethod", firstNotBlank(stringValue(payment.get("type")), stringValue(payment.get("method"))));
+                row.put("currencyCode", stringValue(deliveryAmounts.get("currency")));
                 row.put("exchangeRate", BigDecimal.ONE);
-                row.put("payAmount", money(amounts.get("total"), amounts.get("normalizer")));
-                row.put("allAmount", money(amounts.get("total"), amounts.get("normalizer")));
-                row.put("shippingAmount", money(mapValue(amounts.get("freight")).get("total"), amounts.get("normalizer")));
-                row.put("platformCost", money(mapValue(amounts.get("commission")).get("total"), amounts.get("normalizer")));
-                row.put("totalTaxFee", money(mapValue(amounts.get("tax")).get("total"), amounts.get("normalizer")));
+                row.put("payAmount", money(deliveryAmounts.get("total"), amountNormalizer));
+                row.put("allAmount", money(deliveryAmounts.get("total"), amountNormalizer));
+                row.put("shippingAmount", money(mapValue(deliveryAmounts.get("freight")).get("total"), amountNormalizer));
+                row.put("totalDiscount", money(mapValue(deliveryAmounts.get("discount")).get("total"), amountNormalizer));
+                row.put("platformCost", money(mapValue(deliveryAmounts.get("commission")).get("total"), amountNormalizer));
+                row.put("totalTaxFee", money(mapValue(deliveryAmounts.get("tax")).get("total"), amountNormalizer));
                 row.put("deliveryTime", null);
                 row.put("logisticsCode", stringValue(delivery.get("code")));
                 row.put("logisticsName", firstNotBlank(stringValue(provider.get("description")), stringValue(provider.get("name"))));
@@ -117,6 +124,9 @@ public class MagaluOrderDmpHandler extends DmpInputDbConvertDmpHandler {
             String orderCode = stringValue(order.get("code"));
             List<Map<String, Object>> deliveryList = listMap(order.get("deliveries"));
             for (Map<String, Object> delivery : deliveryList) {
+                if (shouldSkipDelivery(delivery)) {
+                    continue;
+                }
                 String deliveryId = stringValue(delivery.get("id"));
                 String mainId = mainIdMap.get(buildDeliveryUniqueCode(orderCode, deliveryId));
                 if (StringUtils.isBlank(mainId)) {
@@ -168,6 +178,9 @@ public class MagaluOrderDmpHandler extends DmpInputDbConvertDmpHandler {
             Map<String, Object> customer = mapValue(order.get("customer"));
             String orderCode = stringValue(order.get("code"));
             for (Map<String, Object> delivery : listMap(order.get("deliveries"))) {
+                if (shouldSkipDelivery(delivery)) {
+                    continue;
+                }
                 String deliveryId = stringValue(delivery.get("id"));
                 String mainId = mainIdMap.get(buildDeliveryUniqueCode(orderCode, deliveryId));
                 if (StringUtils.isBlank(mainId)) {
@@ -176,13 +189,14 @@ public class MagaluOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                 Map<String, Object> shipping = mapValue(delivery.get("shipping"));
                 Map<String, Object> recipient = mapValue(shipping.get("recipient"));
                 Map<String, Object> address = mapValue(recipient.get("address"));
+                String receiverPhone = firstNotBlank(resolvePhone(recipient), resolvePhone(customer));
                 Map<String, Object> row = baseRow(order);
                 row.put("mainId", mainId);
                 row.put("country", stringValue(address.get("country")));
                 row.put("buyerId", stringValue(customer.get("document_number")));
                 row.put("buyerName", stringValue(customer.get("name")));
                 row.put("receiverName", firstNotBlank(stringValue(recipient.get("name")), stringValue(customer.get("name"))));
-                row.put("receiverTelNumber", firstNotBlank(stringValue(recipient.get("phone")), stringValue(customer.get("phone"))));
+                row.put("receiverTelNumber", receiverPhone);
                 row.put("postCode", stringValue(address.get("zipcode")));
                 row.put("province", stringValue(address.get("state")));
                 row.put("city", stringValue(address.get("city")));
@@ -190,7 +204,7 @@ public class MagaluOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                 row.put("mainStreet", concatAddress(address));
                 row.put("secondStreet", stringValue(address.get("complement")));
                 row.put("fullAddress", fullAddress(address));
-                row.put("mainPhone", firstNotBlank(stringValue(recipient.get("phone")), stringValue(customer.get("phone"))));
+                row.put("mainPhone", receiverPhone);
                 row.put("receiverTaxNo", firstNotBlank(stringValue(recipient.get("document_number")), stringValue(customer.get("document_number"))));
                 row.put("email", stringValue(customer.get("email")));
                 row.put("taxidType", firstNotBlank(stringValue(recipient.get("customer_type")), stringValue(customer.get("customer_type"))));
@@ -243,21 +257,66 @@ public class MagaluOrderDmpHandler extends DmpInputDbConvertDmpHandler {
         return firstNotBlank(deliveryId, "") + "_" + firstNotBlank(lineNo, "") + "_" + firstNotBlank(sku, "");
     }
 
+    private boolean shouldSkipDelivery(Map<String, Object> delivery) {
+        return DELIVERY_STATUS_NEW.equalsIgnoreCase(stringValue(delivery.get("status")));
+    }
+
     private boolean isCancel(Object statusObj) {
         String status = stringValue(statusObj);
         return "cancelled".equalsIgnoreCase(status) || "canceled".equalsIgnoreCase(status);
     }
 
     private String convertOrderStatus(Object statusObj) {
-        return isCancel(statusObj) ? ApproveStatusEnum.WAIT_SUBMIT.getCode() : ApproveStatusEnum.WAIT_SUBMIT.getCode();
+        String status = stringValue(statusObj);
+        if ("shipped".equalsIgnoreCase(status)
+                || "delivered".equalsIgnoreCase(status)
+                || "finished".equalsIgnoreCase(status)) {
+            return ApproveStatusEnum.APPROVE.getCode();
+        }
+        return ApproveStatusEnum.WAIT_SUBMIT.getCode();
     }
 
     private String convertDeliveryStatus(Object statusObj) {
         String status = stringValue(statusObj);
-        if ("shipped".equalsIgnoreCase(status) || "delivered".equalsIgnoreCase(status)) {
+        if ("shipped".equalsIgnoreCase(status)
+                || "delivered".equalsIgnoreCase(status)
+                || "finished".equalsIgnoreCase(status)) {
             return SoB2cBillStatusEnum.ENUM_SHIPPED.getCode();
         }
+        if ("cancelled".equalsIgnoreCase(status) || "canceled".equalsIgnoreCase(status)) {
+            return SoB2cBillStatusEnum.ENUM_DISUSE.getCode();
+        }
+        if ("frozen".equalsIgnoreCase(status)) {
+            return SoB2cBillStatusEnum.ENUM_FROZEN.getCode();
+        }
         return SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode();
+    }
+
+    private String resolvePhone(Map<String, Object> person) {
+        if (person == null || person.isEmpty()) {
+            return "";
+        }
+        String directPhone = stringValue(person.get("phone"));
+        if (StringUtils.isNotBlank(directPhone)) {
+            return directPhone;
+        }
+        List<Map<String, Object>> phones = listMap(person.get("phones"));
+        if (CollUtil.isEmpty(phones)) {
+            return "";
+        }
+        Map<String, Object> selected = phones.get(0);
+        for (Map<String, Object> phone : phones) {
+            if ("mobile".equalsIgnoreCase(stringValue(phone.get("type")))) {
+                selected = phone;
+                break;
+            }
+        }
+        String areaCode = stringValue(selected.get("area_code"));
+        String number = stringValue(selected.get("number"));
+        if (StringUtils.isNotBlank(areaCode) && StringUtils.isNotBlank(number)) {
+            return areaCode + "-" + number;
+        }
+        return firstNotBlank(number, areaCode);
     }
 
     private LocalDateTime parseTime(Object value) {
@@ -267,6 +326,11 @@ public class MagaluOrderDmpHandler extends DmpInputDbConvertDmpHandler {
         }
         try {
             return OffsetDateTime.parse(text).toLocalDateTime();
+        } catch (Exception ignored) {
+            // 沙箱时间可能无时区
+        }
+        try {
+            return LocalDateTime.parse(text);
         } catch (Exception e) {
             return null;
         }
@@ -319,6 +383,10 @@ public class MagaluOrderDmpHandler extends DmpInputDbConvertDmpHandler {
         extend.put("magaluDeliveryCode", delivery.get("code"));
         extend.put("sourceChannel", order.get("source_channel"));
         extend.put("deliveryShipping", delivery.get("shipping"));
+        Map<String, Object> shipping = mapValue(delivery.get("shipping"));
+        Map<String, Object> provider = mapValue(shipping.get("provider"));
+        Map<String, Object> providerExtras = mapValue(provider.get("extras"));
+        extend.put("isMle", providerExtras.get("is_mle"));
         return extend;
     }
 
@@ -346,10 +414,14 @@ public class MagaluOrderDmpHandler extends DmpInputDbConvertDmpHandler {
         }
     }
 
-    private String firstNotBlank(String... values) {
-        for (String value : values) {
-            if (StringUtils.isNotBlank(value)) {
-                return value;
+    private String firstNotBlank(Object... values) {
+        for (Object value : values) {
+            if (value == null) {
+                continue;
+            }
+            String text = stringValue(value);
+            if (StringUtils.isNotBlank(text)) {
+                return text;
             }
         }
         return "";
