@@ -14,6 +14,7 @@ public enum PrestockLinkStatusEnum implements EnumMessage {
     UNLINKED("UNLINKED", "未关联"),
     PARTIAL("PARTIAL", "部分关联"),
     LINKED("LINKED", "已关联"),
+    FORCE_CLOSE("FORCE_CLOSE", "强制关闭"),
     ;
 
     @EnumValue

@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -98,6 +99,12 @@ public class SoReturnPrestockServiceImpl
      * 确认关联循环耗时告警阈值（毫秒），超过该阈值仅记录警告日志，便于后续评估是否需要拆分事务，不阻断业务
      */
     private static final long LINK_LOOP_WARN_THRESHOLD_MS = 3000L;
+
+    /**
+     * 强制关闭未认领预入库单时，单批处理的预入库单数量上限。
+     * 用于控制 in 语句参数规模与批量更新粒度，避免单次事务锁范围过大。
+     */
+    private static final int FORCE_CLOSE_BATCH_SIZE = 500;
 
     @Resource
     private DocNoGenHelper docNoGenHelper;
@@ -224,6 +231,9 @@ public class SoReturnPrestockServiceImpl
         if (PrestockLinkStatusEnum.LINKED.getStatus().equals(detail.getLinkStatus())) {
             return BatchResultDTO.fail(detail.getId(), detail.getSkuNo(), "该行已关联，请先解除关联");
         }
+        if (PrestockLinkStatusEnum.FORCE_CLOSE.getStatus().equals(detail.getLinkStatus())) {
+            return BatchResultDTO.fail(detail.getId(), detail.getSkuNo(), "该行已强制关闭，不可再关联");
+        }
         if (Objects.isNull(dto.getLinkQty()) || dto.getLinkQty() <= 0) {
             return BatchResultDTO.fail(detail.getId(), detail.getSkuNo(), "关联数量必须大于0");
         }
@@ -272,6 +282,9 @@ public class SoReturnPrestockServiceImpl
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO confirmLinkAfterSale(SoReturnPrestockDetailDTO.ConfirmLinkAfterSale dto) {
         SoReturnPrestockEntity main = getByIdOrThrow(dto.getMainId());
+        if (PrestockLinkStatusEnum.FORCE_CLOSE.getStatus().equals(main.getLinkStatus())) {
+            return BatchResultDTO.fail(main.getId(), main.getCode(), "该预入库单已强制关闭，不可再关联");
+        }
 
         // B2C售后单平台字典值为必填（B2B售后单无平台概念，允许为空，故不能在DTO层统一加@NotBlank）
         if (BillTypeEnum.B2C.getCode().equals(main.getType())) {
@@ -282,10 +295,10 @@ public class SoReturnPrestockServiceImpl
             }
         }
 
-        // 仅在未关联的明细行范围内进行匹配，避免覆盖已关联售后单的行
+        // 仅在未关联的明细行范围内进行匹配，避免覆盖已关联售后单或已强制关闭的行
         List<SoReturnPrestockDetailEntity> unlinked = soReturnPrestockDetailService.listByMainId(dto.getMainId())
                 .stream()
-                .filter(d -> !PrestockLinkStatusEnum.LINKED.getStatus().equals(d.getLinkStatus()))
+                .filter(d -> PrestockLinkStatusEnum.UNLINKED.getStatus().equals(d.getLinkStatus()))
                 .collect(Collectors.toList());
         if (CollUtil.isEmpty(unlinked)) {
             return BatchResultDTO.fail(main.getId(), main.getCode(), "该预入库单无可关联的明细行");
@@ -537,12 +550,17 @@ public class SoReturnPrestockServiceImpl
                 results.add(BatchResultDTO.fail(main.getId(), main.getCode(), "该预入库单已关联，不可重复关联"));
                 continue;
             }
+            // 已强制关闭的预入库单不可再关联
+            if (PrestockLinkStatusEnum.FORCE_CLOSE.getStatus().equals(main.getLinkStatus())) {
+                results.add(BatchResultDTO.fail(main.getId(), main.getCode(), "该预入库单已强制关闭，不可再关联"));
+                continue;
+            }
             List<SoReturnPrestockDetailEntity> unlinked = detailMap.getOrDefault(main.getId(), Collections.emptyList())
                     .stream()
-                    .filter(d -> !PrestockLinkStatusEnum.LINKED.getStatus().equals(d.getLinkStatus()))
+                    .filter(d -> PrestockLinkStatusEnum.UNLINKED.getStatus().equals(d.getLinkStatus()))
                     .collect(Collectors.toList());
             if (CollUtil.isEmpty(unlinked)) {
-                results.add(BatchResultDTO.fail(main.getId(), main.getCode(), "无可关联的明细行（均已关联）"));
+                results.add(BatchResultDTO.fail(main.getId(), main.getCode(), "无可关联的明细行（均已关联或已强制关闭）"));
                 continue;
             }
             // 整单关联：每条未关联明细行默认整行数量全部关联到本次选定的同一店铺（不拆行）
@@ -747,6 +765,9 @@ public class SoReturnPrestockServiceImpl
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO confirmLinkShop(SoReturnPrestockDetailDTO.ConfirmLinkShop dto) {
         SoReturnPrestockEntity main = getByIdOrThrow(dto.getMainId());
+        if (PrestockLinkStatusEnum.FORCE_CLOSE.getStatus().equals(main.getLinkStatus())) {
+            return BatchResultDTO.fail(main.getId(), main.getCode(), "该预入库单已强制关闭，不可再关联");
+        }
 
         // 本单全部明细，按 ID 建索引，便于按 detailId 定位并校验归属
         Map<String, SoReturnPrestockDetailEntity> detailMap = soReturnPrestockDetailService.listByMainId(dto.getMainId())
@@ -768,6 +789,9 @@ public class SoReturnPrestockServiceImpl
             }
             if (PrestockLinkStatusEnum.LINKED.getStatus().equals(detail.getLinkStatus())) {
                 return BatchResultDTO.fail(detail.getId(), detail.getSkuNo(), "该行已关联，请先解除关联");
+            }
+            if (PrestockLinkStatusEnum.FORCE_CLOSE.getStatus().equals(detail.getLinkStatus())) {
+                return BatchResultDTO.fail(detail.getId(), detail.getSkuNo(), "该行已强制关闭，不可再关联");
             }
             int returnQty = Objects.nonNull(detail.getReturnQty()) ? detail.getReturnQty() : 0;
             int claimQty = Objects.nonNull(item.getClaimedQty()) ? item.getClaimedQty() : returnQty;
@@ -995,6 +1019,91 @@ public class SoReturnPrestockServiceImpl
         String prestockId = add(prestockAdd);
         generateOtherInstockForPrestock(prestockId, prestockAdd);
         return prestockId;
+    }
+
+    // ===================== 强制关闭剩余未认领预入库单（定时任务） =====================
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public int forceCloseUnclaimedPrestock() {
+        // 查询仍存在未认领明细的预入库单：主表关联状态为未关联或部分关联，排除已关联、已强制关闭、已删除
+        List<SoReturnPrestockEntity> mains = lambdaQuery()
+                .in(SoReturnPrestockEntity::getLinkStatus,
+                        PrestockLinkStatusEnum.UNLINKED.getStatus(),
+                        PrestockLinkStatusEnum.PARTIAL.getStatus())
+                .eq(SoReturnPrestockEntity::getIsDeleted, false)
+                .list();
+        if (CollUtil.isEmpty(mains)) {
+            log.info("[预入库单强制关闭]无待处理的未认领预入库单");
+            return 0;
+        }
+        List<String> mainIds = mains.stream().map(SoReturnPrestockEntity::getId).collect(Collectors.toList());
+
+        LocalDateTime now = LocalDateTime.now();
+        int processedCount = 0;
+        // 分批处理，控制 in 参数规模与批量更新粒度
+        for (List<String> batchIds : ListUtil.split(mainIds, FORCE_CLOSE_BATCH_SIZE)) {
+            processedCount += forceCloseBatch(batchIds, now);
+        }
+        log.info("[预入库单强制关闭]本次处理预入库单数量：{}", processedCount);
+        return processedCount;
+    }
+
+    /**
+     * 强制关闭一批预入库单：将其下「未关联」明细行 link_status 置为「强制关闭」（已关联明细不变），
+     * 再按明细最新关联状态重算并批量回写主表关联状态。均为集合式批量更新，避免逐行查改。
+     *
+     * @return 本批处理的预入库单数量
+     */
+    private int forceCloseBatch(List<String> mainIds, LocalDateTime operateTime) {
+        // 明细：仅将「未关联」行强制关闭，已关联行保持不变
+        soReturnPrestockDetailService.lambdaUpdate()
+                .in(SoReturnPrestockDetailEntity::getMainId, mainIds)
+                .eq(SoReturnPrestockDetailEntity::getLinkStatus, PrestockLinkStatusEnum.UNLINKED.getStatus())
+                .eq(SoReturnPrestockDetailEntity::getIsDeleted, false)
+                .set(SoReturnPrestockDetailEntity::getLinkStatus, PrestockLinkStatusEnum.FORCE_CLOSE.getStatus())
+                .update();
+
+        // 主表：按明细最新关联状态分组回写（全部已关联→已关联；全部强制关闭→强制关闭；混合→部分关联）
+        Map<String, List<SoReturnPrestockDetailEntity>> detailMap = soReturnPrestockDetailService.listByMainIds(mainIds)
+                .stream().collect(Collectors.groupingBy(SoReturnPrestockDetailEntity::getMainId));
+        List<String> toLinked = new ArrayList<>();
+        List<String> toPartial = new ArrayList<>();
+        List<String> toForceClose = new ArrayList<>();
+        for (String mainId : mainIds) {
+            List<SoReturnPrestockDetailEntity> details = detailMap.get(mainId);
+            if (CollUtil.isEmpty(details)) {
+                continue;
+            }
+            long linkedCount = details.stream()
+                    .filter(d -> PrestockLinkStatusEnum.LINKED.getStatus().equals(d.getLinkStatus()))
+                    .count();
+            if (linkedCount == details.size()) {
+                toLinked.add(mainId);
+            } else if (linkedCount == 0) {
+                toForceClose.add(mainId);
+            } else {
+                toPartial.add(mainId);
+            }
+        }
+        batchUpdateMainLinkStatus(toLinked, PrestockLinkStatusEnum.LINKED.getStatus(), operateTime);
+        batchUpdateMainLinkStatus(toPartial, PrestockLinkStatusEnum.PARTIAL.getStatus(), operateTime);
+        batchUpdateMainLinkStatus(toForceClose, PrestockLinkStatusEnum.FORCE_CLOSE.getStatus(), operateTime);
+        return mainIds.size();
+    }
+
+    /**
+     * 按 ID 集合批量更新主表关联状态与操作时间
+     */
+    private void batchUpdateMainLinkStatus(List<String> ids, String linkStatus, LocalDateTime operateTime) {
+        if (CollUtil.isEmpty(ids)) {
+            return;
+        }
+        lambdaUpdate()
+                .in(SoReturnPrestockEntity::getId, ids)
+                .set(SoReturnPrestockEntity::getLinkStatus, linkStatus)
+                .set(SoReturnPrestockEntity::getOperateTime, operateTime)
+                .update();
     }
 
     // ===================== 私有辅助方法 =====================
