@@ -1,7 +1,5 @@
 package com.erp.server.plm.controller.feign;
 
-import com.common.core.anno.LogAction;
-import com.common.core.enums.LogActionEnum;
 import com.erp.model.plm.dto.ProductPackDTO;
 import com.erp.model.plm.entity.ProductPackEntity;
 import com.erp.server.plm.service.ProductPackService;
@@ -35,7 +33,6 @@ public class ProductPackFeignController {
      * @param productPackList
      */
     @PostMapping("/backFillPackaging")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "产品包装信息回填")
     public void backFillPackaging(@RequestBody List<ProductPackDTO> productPackList) {
         productPackService.backFillPackaging(productPackList);
     }
