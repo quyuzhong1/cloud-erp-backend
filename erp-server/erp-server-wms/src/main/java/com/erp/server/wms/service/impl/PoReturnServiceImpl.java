@@ -1025,8 +1025,11 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             log.info(CharSequenceUtil.format("退货单【{}】未找到关联采购订单", entity.getCode()));
             return null;
         }
-        //不是委外订单(成品)不进行下面操作
-        if (!PurchaseOrderTypeEnum.ENUM_SUBCONTRACT.getCode().equals(purchaseOrderEntity.getType()) || !SubcontractTypeEnum.ENUM_PARENT.getCode().equals(purchaseOrderEntity.getSubcontractType())){
+        //不是委外订单(成品)不进行下面操作（委外采购订单、返修采购订单均属于委外成品单据）
+        boolean isSubcontractParentOrder = (PurchaseOrderTypeEnum.ENUM_SUBCONTRACT.getCode().equals(purchaseOrderEntity.getType())
+                || PurchaseOrderTypeEnum.ENUM_REPAIR.getCode().equals(purchaseOrderEntity.getType()))
+                && SubcontractTypeEnum.ENUM_PARENT.getCode().equals(purchaseOrderEntity.getSubcontractType());
+        if (!isSubcontractParentOrder){
             return null;
         }
         //质检退货类型退货单无需自动生成
