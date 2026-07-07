@@ -134,6 +134,18 @@ Nacos / Seata 1.5.2 / RocketMQ / Redis(Redisson) / XXL-JOB / EasyExcel / MapStru
 - catch 块是否吞掉异常（只打日志不上报）
 - 异常信息是否泄露内部堆栈或 SQL 细节
 
+#### ApiError 审查边界
+
+- `ApiError.code` 当前不作为对外稳定契约，也不作为前端 / 三方系统 / i18n 识别错误的唯一标识；业务错误枚举中出现相同 `code` 可作为「低风险提示」说明，但不作为必须修复问题，不因此影响合并判断
+- 审查 `ApiError` 时重点关注：
+  1. 枚举常量命名是否符合业务域前缀和语义
+  2. 错误文案是否准确、可理解
+  3. 国际化占位符是否统一使用 `{0}` / `{1}`，且调用参数数量匹配
+  4. 是否错误修改已有枚举常量的语义
+  5. 是否存在代码基于业务错误码 `getCode()` 做流程分支判断
+- 仅当 `code` 被明确用于外部协议、前端逻辑、三方系统判断、i18n key 或代码分支判断时，才可将重复 `code` 作为中高风险问题报告
+- 仅因多个 `ApiError` 使用相同数字 `code` 时，问题等级最高只能标为「低」，不得标为「中 / 高 / 严重」
+
 ### 6. RocketMQ 消息
 
 - Topic / Tag / ConsumerGroup 是否使用 `RocketMqTopic` / `RocketMqNewTag` / `RocketMqConsumerGroup` 等常量类，禁止硬编码字符串
