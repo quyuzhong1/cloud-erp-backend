@@ -37,6 +37,20 @@ public class Kuaidi100WebhookHandlerTest {
         handler.verify(formBody(callbackParam(), "BAD_SIGN"), Collections.emptyMap(), "kuaidi100");
     }
 
+    @Test(expected = ServiceException.class)
+    public void verify_missingParam_throwsServiceException() {
+        Kuaidi100WebhookHandler handler = new Kuaidi100WebhookHandler();
+
+        handler.verify("sign=SIGN", Collections.emptyMap(), "kuaidi100");
+    }
+
+    @Test(expected = ServiceException.class)
+    public void verify_missingSign_throwsServiceException() throws Exception {
+        Kuaidi100WebhookHandler handler = new Kuaidi100WebhookHandler();
+
+        handler.verify("param=" + URLEncoder.encode(callbackParam(), StandardCharsets.UTF_8.name()), Collections.emptyMap(), "kuaidi100");
+    }
+
     @Test
     public void processParsesFormBodyAndForwardsDto() throws Exception {
         Kuaidi100WebhookHandler handler = new Kuaidi100WebhookHandler();
@@ -58,6 +72,15 @@ public class Kuaidi100WebhookHandlerTest {
         assertEquals("signed", dto.getLastResult().getData().get(0).getContext());
         assertTrue(result.getData().getResult());
         assertEquals("200", result.getData().getReturnCode());
+    }
+
+    @Test(expected = ServiceException.class)
+    public void process_missingLastResult_throwsServiceException() throws Exception {
+        Kuaidi100WebhookHandler handler = new Kuaidi100WebhookHandler();
+        String param = "{\"status\":\"polling\",\"message\":\"ok\"}";
+        String sign = DigestUtils.md5Hex(param.getBytes(StandardCharsets.UTF_8)).toUpperCase();
+
+        handler.process(formBody(param, sign), Collections.emptyMap(), "kuaidi100");
     }
 
     private String callbackParam() {
