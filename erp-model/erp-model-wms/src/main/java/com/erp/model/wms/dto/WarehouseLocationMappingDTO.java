@@ -61,8 +61,7 @@ public class WarehouseLocationMappingDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    @EqualsAndHashCode(callSuper = true)
-    public static class UpdateDTO extends DetailDTO {
+    public static class UpdateDTO implements Serializable {
         /**
          * 主键ID
          */
@@ -81,6 +80,17 @@ public class WarehouseLocationMappingDTO implements Serializable {
         @NotBlank(message = "第三方系统不能为空")
         private String dictPlatform;
 
+        /**
+         * 绑定仓库ID，仅用于页面展示
+         */
+        private String bindWarehouseId;
+
+        /**
+         * 绑定明细
+         */
+        @Valid
+        @NotEmpty(message = "绑定明细不能为空")
+        private List<DetailDTO> detailList;
     }
 
     @Data
