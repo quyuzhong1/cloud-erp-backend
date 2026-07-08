@@ -289,9 +289,6 @@ public class MagaluService {
         return parseResponseObject(response);
     }
 
-    /**
-     * 沙箱创建样例订单，参见 Magalu /v1/samples/orders。
-     */
     public JSONObject createSandboxSampleOrder(MagaluShopInfoDTO shopInfoDTO, String sku, int quantity, String paymentMethod) {
         if (StringUtils.isBlank(shopInfoDTO.getChannelId())) {
             throw new ServiceException("Magalu渠道ID未配置");
@@ -321,6 +318,49 @@ public class MagaluService {
 
         String response = OkHttpUtils.doPostJson(url, body, buildApiHeaders(shopInfoDTO));
         return parseResponseObject(response);
+    }
+
+    /**
+     * 沙箱确认样例订单支付，使 deliveries.status 从 new 进入 approved 等可拉取状态。
+     */
+    public JSONObject confirmSandboxSampleOrder(MagaluShopInfoDTO shopInfoDTO, String orderId) {
+        if (StringUtils.isBlank(orderId)) {
+            throw new ServiceException("Magalu沙箱订单ID不能为空");
+        }
+        String base = trimEndSlash(getApiBaseUrl(shopInfoDTO));
+        Map<String, String> headers = buildApiHeaders(shopInfoDTO);
+        String[] paths = new String[]{
+                "/v1/samples/orders/" + orderId + "/payments/confirm",
+                "/v1/samples/orders/" + orderId + "/confirm",
+                "/v1/samples/orders/" + orderId + "/payments/confirmation"
+        };
+        ServiceException lastError = null;
+        for (String path : paths) {
+            try {
+                Map<String, Object> emptyBody = new HashMap<>(1);
+                String response = OkHttpUtils.doPostJson(base + path, emptyBody, headers);
+                JSONObject result = parseResponseObject(response);
+                if (result != null && !result.isEmpty()) {
+                    return result;
+                }
+            } catch (ServiceException e) {
+                lastError = e;
+                log.warn("Magalu沙箱确认支付失败 path={}, msg={}", path, e.getMessage());
+            }
+        }
+        Map<String, Object> paymentBody = new HashMap<>(4);
+        paymentBody.put("method", "pix");
+        paymentBody.put("status", "approved");
+        try {
+            String response = OkHttpUtils.doPostJson(base + "/v1/samples/orders/" + orderId + "/payments",
+                    Collections.singletonList(paymentBody), headers);
+            return parseResponseObject(response);
+        } catch (ServiceException e) {
+            if (lastError != null) {
+                throw lastError;
+            }
+            throw e;
+        }
     }
 
     private MagaluTokenDTO requestToken(String baseUrl, Map<String, Object> params, String action) {

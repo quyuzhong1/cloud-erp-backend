@@ -1,0 +1,23 @@
+---
+description: Non-critical operation logs must not affect business flows
+globs: **/*.java
+alwaysApply: false
+---
+
+# Non-Critical Operation Logs
+
+Operation logs added for audit, click tracking, or diagnostic context must not block the main business flow.
+
+- Wrap best-effort log writes in an internal `try-catch`, especially when using `REQUIRES_NEW`, database writes, Feign calls, or MQ-side compensation logs.
+- Log write failures with `log.warn(...)`; do not let them bubble into Controller batch results or MQ consumer retry paths unless the log itself is the business objective.
+- In batch loops, avoid extra per-item queries only for logging. Reuse entities already loaded for the main operation, or batch load them once and pass the entity/code into the log method.
+
+Example:
+
+```java
+try {
+    operateLogService.addModuleOperateLogRequiresNew(message, moduleType, bizId, action);
+} catch (Exception e) {
+    log.warn("operation log write failed,bizId:{}", bizId, e);
+}
+```

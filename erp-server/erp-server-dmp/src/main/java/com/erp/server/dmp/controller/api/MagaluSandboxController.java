@@ -6,6 +6,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.sdk.oms.magalu.dto.MagaluShopInfoDTO;
 import com.sdk.oms.magalu.service.MagaluService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -21,6 +22,7 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/magalu/sandbox")
+@Slf4j
 public class MagaluSandboxController extends BaseController {
 
     @Resource
@@ -43,9 +45,25 @@ public class MagaluSandboxController extends BaseController {
         String paymentMethod = StringUtils.defaultIfBlank(request.get("paymentMethod"), "pix");
         JSONObject onboarding = magaluService.putSandboxOnboarding(shopInfoDTO);
         JSONObject order = magaluService.createSandboxSampleOrder(shopInfoDTO, sku, quantity, paymentMethod);
-        Map<String, Object> result = new LinkedHashMap<>(4);
+        JSONObject confirm = null;
+        JSONObject detail = null;
+        String orderId = order == null ? "" : firstNotBlank(order.getString("id"), "");
+        String orderCode = order == null ? "" : firstNotBlank(order.getString("code"), "");
+        if (StringUtils.isNotBlank(orderId)) {
+            try {
+                confirm = magaluService.confirmSandboxSampleOrder(shopInfoDTO, orderId);
+            } catch (Exception e) {
+                log.warn("Magalu沙箱确认支付异常 orderId={}, msg={}", orderId, e.getMessage());
+            }
+            if (StringUtils.isNotBlank(orderCode)) {
+                detail = magaluService.getOrderDetail(shopInfoDTO, null, orderCode);
+            }
+        }
+        Map<String, Object> result = new LinkedHashMap<>(8);
         result.put("onboarding", onboarding);
         result.put("order", order);
+        result.put("confirm", confirm);
+        result.put("detail", detail);
         return success(new JSONObject(result));
     }
 
@@ -58,5 +76,17 @@ public class MagaluSandboxController extends BaseController {
             throw new ServiceException("Magalu店铺授权信息不存在");
         }
         return shopInfoDTO;
+    }
+
+    private String firstNotBlank(String... values) {
+        if (values == null) {
+            return "";
+        }
+        for (String value : values) {
+            if (StringUtils.isNotBlank(value)) {
+                return value;
+            }
+        }
+        return "";
     }
 }

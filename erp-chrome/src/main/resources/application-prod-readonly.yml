@@ -1,0 +1,45 @@
+# ============================================================
+# 生产环境只读 Profile
+# 启动方式: java -jar xxx.jar --spring.profiles.active=prod-readonly
+# 或在 application.yml 中设置 spring.profiles.active: prod-readonly
+# ============================================================
+# 警告：此配置仅连接生产库，用于数据查询排查，禁止执行写操作
+# ============================================================
+
+spring:
+  datasource:
+    url: jdbc:postgresql://172.16.100.10:5432/erp-chrome-prod?useSSL=false&serverTimezone=GMT%2B8&readOnly=true&defaultReadOnly=true&options=-c%20default_transaction_read_only=on
+    driver-class-name: org.postgresql.Driver
+    username: postgres
+    password: Ke4Na2kRUzHbXIMw
+    type: com.alibaba.druid.pool.DruidDataSource
+    druid:
+      initial-size: 1
+      min-idle: 1
+      maxActive: 2
+      maxWait: 60000
+      timeBetweenEvictionRunsMillis: 60000
+      minEvictableIdleTimeMillis: 300000
+      validationQuery: SELECT 1
+      testWhileIdle: true
+      testOnBorrow: false
+      testOnReturn: false
+      poolPreparedStatements: true
+      maxPoolPreparedStatementPerConnectionSize: 20
+      asyncInit: true
+      connectionProperties: druid.stat.mergeSql\=true;druid.stat.slowSqlMillis\=5000;defaultReadOnly=true
+
+server:
+  port: 7041
+
+mybatis-plus:
+  global-config:
+    db-config:
+      logic-delete-value: 0
+      logic-not-delete-value: 1
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+logging:
+  level:
+    com.gyy: DEBUG
