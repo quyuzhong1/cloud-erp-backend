@@ -2,6 +2,8 @@ package com.erp.server.workflow.controller.api;
 
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.anno.LogAction;
+import com.common.core.enums.LogActionEnum;
 import com.common.business.dto.base.WorkflowProcessIdDTO;
 import com.erp.model.workflow.dto.FindProcessDTO;
 import com.erp.model.workflow.dto.WorkflowBusinessDTO;
@@ -49,6 +51,7 @@ public class WorkflowBusinessController extends BaseController {
      * @return
      */
     @PostMapping("/save")
+    @LogAction(value = LogActionEnum.INSERT, desc = "保存流程信息")
     public ApiResult<Object> saveProcess(@RequestBody WorkflowBusinessDTO dto) {
         Boolean flag = workflowBusinessService.saveBusiness(dto);
         return Boolean.TRUE.equals(flag) ? success() : failure();

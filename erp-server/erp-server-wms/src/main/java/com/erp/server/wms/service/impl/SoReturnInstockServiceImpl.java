@@ -14,7 +14,7 @@ import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.annotation.DataIdempotent;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.ThirdConstants;
@@ -30,6 +30,7 @@ import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.message.constant.DistributeKeyConstant;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
@@ -2445,6 +2446,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     }
 
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.WMS_IMPORT_TASK_KEY, keyName = "dto.taskId",unlockAfterTx = true)
     public void importSoReturnInstock(BaseDTO.ImportDTO dto) {
         if (ImportTypeEnum.UPDATE.getCode().equalsIgnoreCase(dto.getImportType())) {
             importSoReturnInstockUpdate(dto);
@@ -3646,6 +3648,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.SO_RETURN_INSTOCK_SAVE_KEY, keyName = "soB2cReturnEntity.id", unlockAfterTx = true)
     public BatchResultDTO returnInstockSave(SoB2cReturnEntity soB2cReturnEntity, List<SoB2cReturnDetailDTO.ViewDTO> detailEntityList, List<SoB2cReturnDTO.ReturnInstockDTO> returnInstockDTOS, SoB2cEntity soB2cEntity, List<SoB2cDetailEntity> b2cDetailEntityList) {
         SoB2cReturnDTO.ReturnInstockDTO instockDTO = returnInstockDTOS.get(0);
         WarehouseEntity warehouseEntity = warehouseService.getById(instockDTO.getWarehouseId());
@@ -3881,7 +3884,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     }
 
     @Override
-    @DataIdempotent(keyIdName = "entity.code", businessType = "generateLogisticsBill")
+    @DistributeLocker(businessType = DistributeKeyConstant.GENERATE_LOGISTICS_BILL_KEY, keyName = "entity.code")
     public BatchResultDTO generateLogisticsBill(SoReturnInstockEntity entity) {
         String returnLogisticCode = entity.getReturnLogisticCode();
         if (StringUtils.isBlank(returnLogisticCode)) {

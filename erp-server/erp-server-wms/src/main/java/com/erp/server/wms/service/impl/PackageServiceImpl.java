@@ -4,12 +4,17 @@ import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import com.common.business.annotation.DataIdempotent;
+import cn.hutool.json.JSONUtil;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.UnitEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.message.constant.DistributeKeyConstant;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.oms.dto.PackageDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
@@ -265,7 +270,7 @@ public class PackageServiceImpl implements PackageService {
      * @return
      */
     @Override
-    @DataIdempotent(keyIdName = "dto.ids",businessType = "mergePackage")
+    @DistributeLocker(businessType = DistributeKeyConstant.PACKAGE_MERGE_KEY, keyName = "dto.ids", unlockAfterTx = true)
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public List<BatchResultDTO> mergePackage(PackageDTO.MergePackageDTO dto) {

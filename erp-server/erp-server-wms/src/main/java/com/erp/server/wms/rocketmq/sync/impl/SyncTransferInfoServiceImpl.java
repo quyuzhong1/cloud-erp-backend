@@ -5,7 +5,7 @@ import cn.hutool.core.util.ObjUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.business.annotation.DataIdempotent;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
@@ -15,6 +15,7 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.ThirdPartySystemEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.message.constant.DistributeKeyConstant;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
 import com.erp.model.dmp.dto.DmpTransferInfoDTO;
@@ -65,7 +66,7 @@ public class SyncTransferInfoServiceImpl implements SyncTransferInfoService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DataIdempotent(keyIdName = "entity.code", leaseTime = 30, waitTime = 20)
+    @DistributeLocker(businessType = DistributeKeyConstant.KINGDEE_SYNC_KEY, keyName = "entity.code", waiteTime = 20, unlockAfterTx = true)
     public void syncKingdeeTransferInfo(DmpTransferInfoDTO entity) {
 
         TransferInfoDTO.ViewDTO oldTransferInfo = transferInfoService.viewTransferInfoByCode(entity.getCode());

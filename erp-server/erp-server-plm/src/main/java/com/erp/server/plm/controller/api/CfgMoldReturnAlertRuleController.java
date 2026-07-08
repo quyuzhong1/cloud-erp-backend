@@ -76,6 +76,7 @@ public class CfgMoldReturnAlertRuleController extends BaseController {
      * @return ApiResult<List<BatchResultDTO>>
      */
     @PostMapping("/batchAdd")
+    @LogAction(value = LogActionEnum.INSERT, desc = "模具返还预警规则批量新增")
     public ApiResult<List<BatchResultDTO>> batchAdd(@RequestBody @Validated CfgMoldReturnAlertRuleDTO.BatchAddDTO dto) {
         List<CfgMoldReturnAlertRuleDTO.AddDTO> addList = dto.getList();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(addList.size());

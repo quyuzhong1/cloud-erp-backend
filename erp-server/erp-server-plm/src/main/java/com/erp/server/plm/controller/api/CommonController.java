@@ -155,6 +155,7 @@ public class CommonController extends BaseController {
      * @Date 2022/10/11 11:52
      **/
     @PostMapping("/saveOrUpdateOperateRecord")
+    @LogAction(value = LogActionEnum.INSERT, desc = "产品操作日志新增或更新")
     public ApiResult<Object> saveOrUpdateOperateRecord(@RequestBody ProductOperateRecordDTO dto) {
         Boolean flag = productOperateRecordService.saveOrUpdate(dto);
         return flag == true ? this.success() : this.failure();
@@ -169,6 +170,7 @@ public class CommonController extends BaseController {
      * @Date 2022/10/11 11:52
      **/
     @PostMapping("/saveOrUpdateOperateRecordBatch")
+    @LogAction(value = LogActionEnum.INSERT, desc = "产品操作日志批量新增或更新")
     public ApiResult<Object> saveOrUpdateOperateRecordBatch(@RequestBody List<ProductOperateRecordDTO> dto) {
         Boolean flag = productOperateRecordService.saveOrUpdateBatch(dto);
         return flag == true ? this.success() : this.failure();

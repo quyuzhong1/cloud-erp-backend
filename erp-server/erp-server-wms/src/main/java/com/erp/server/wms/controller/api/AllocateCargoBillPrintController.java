@@ -1,11 +1,12 @@
 package com.erp.server.wms.controller.api;
 
 
-import com.common.business.annotation.Idempotent;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.AllocateCargoBillPrintDTO;
 import com.erp.server.wms.service.AllocateCargoBillPrintService;
 import lombok.extern.slf4j.Slf4j;
@@ -48,7 +49,7 @@ public class AllocateCargoBillPrintController extends BaseController {
      * @see BaseResultDTO.AddDTO
      */
     @GetMapping("/print")
-    @Idempotent
+    @LogAction(value = LogActionEnum.PRINT_LOGISTICS_LABEL_CONFIRM, desc = "配货单打印")
     public void print(@RequestParam("waveId") String waveId, HttpServletResponse response){
          allocateCargoBillPrintService.print(waveId, response);
     }

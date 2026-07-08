@@ -2,4 +2,5 @@ org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
   com.common.business.config.RedisConfig,\
   com.common.business.service.impl.RedisLock,\
   com.common.business.service.impl.RedisService,\
-  com.common.business.config.RedisConfigProperties
+  com.common.business.config.RedisConfigProperties,\
+  com.common.business.config.ReleaseAwareRibbonAutoConfiguration
