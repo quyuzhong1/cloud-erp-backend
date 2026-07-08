@@ -1141,7 +1141,10 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
         return dto;
     }
 
-    /** 事务提交后再发 MQ，避免消费端读不到未提交节点。 */
+    /**
+     * 事务提交后再发 MQ，避免消费端读不到未提交节点。
+     * <p>MQ 发送失败时，新开独立事务将目标节点与实例标记为 FAILED，确保 Job 下次可扫到并补偿。</p>
+     */
     private void registerDispatchAfterCommit(WorkflowTaskRecordDTO.AddTaskDTO dispatch, String messageKey) {
         if (TransactionSynchronizationManager.isActualTransactionActive()) {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
@@ -1152,6 +1155,16 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
                     } catch (Exception ex) {
                         log.error("任务编排 MQ 发送失败（事务已提交），sourceId={}, instanceId={}, targetIndex={}",
                                 dispatch.getSourceId(), dispatch.getInstanceId(), dispatch.getTargetIndex(), ex);
+                        // 新开独立事务：回写节点 + 实例为 FAILED，让 Job 下次补偿重发
+                        try {
+                            workflowTaskInstanceService.markDispatchMqFailed(
+                                    dispatch.getInstanceId(),
+                                    dispatch.getTargetIndex(),
+                                    "调度MQ发送失败: " + ex.getMessage());
+                        } catch (Exception markEx) {
+                            log.error("MQ失败回写节点/实例状态异常，instanceId={}, targetIndex={}，需人工核查",
+                                    dispatch.getInstanceId(), dispatch.getTargetIndex(), markEx);
+                        }
                     }
                 }
             });

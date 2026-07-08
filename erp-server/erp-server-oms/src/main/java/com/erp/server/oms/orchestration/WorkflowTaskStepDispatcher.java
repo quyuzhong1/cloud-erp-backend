@@ -170,8 +170,18 @@ public class WorkflowTaskStepDispatcher {
         }
 
         if (!isInstanceActive(instance.getId())) {
-            log.info("编排实例已取消或终态，终止后续调度，instanceId={}", instance.getId());
-            // 节点状态已在内存中准备好但尚未落库，若实例已终态则节点保持 PROCESSING（由超时机制重置）
+            log.info("编排实例已取消或终态，节点结果仅归档不链式调度，instanceId={}", instance.getId());
+            // Feign 调用已完成、远端可能已执行；将节点最终状态落库（归档），
+            // 避免节点长期停留 PROCESSING 导致超时后被误判为需重试（重复执行风险）
+            WorkflowTaskRecordEntity pendingNode = result.getPendingNode();
+            if (pendingNode != null) {
+                try {
+                    workflowTaskRecordService.updateById(pendingNode);
+                } catch (Exception ex) {
+                    log.warn("实例已终态，节点状态归档失败（不影响业务），instanceId={}, index={}",
+                            instance.getId(), targetIndex, ex);
+                }
+            }
             return;
         }
 
@@ -197,20 +207,22 @@ public class WorkflowTaskStepDispatcher {
             WorkflowTaskRecordEntity pendingNode = result.getPendingNode();
             WorkflowTaskRecordEntity next = indexMap.get(targetIndex + 1);
             if (next == null) {
-                // 最后一个节点：原子写节点 SUCCESS + 实例 SUCCESS
+                // 末节点：原子写节点 SUCCESS + 实例 SUCCESS，两步同在一个事务，消除中间态
                 if (pendingNode != null) {
-                    workflowTaskInstanceService.persistNodeAndSyncInstance(
-                            pendingNode, instance.getId(), targetIndex, steps.size(),
-                            result.getOutcome(), null);
+                    workflowTaskInstanceService.persistLastNodeSuccess(
+                            pendingNode, instance.getId(), targetIndex, steps.size());
+                } else {
+                    markInstanceSuccess(instance, steps);
                 }
-                markInstanceSuccess(instance, steps);
                 return;
             }
-            // 中间节点：先原子写节点 SUCCESS（不改实例 currentIndex），再链式调度下一节点
+            // 中间节点：原子写当前节点 SUCCESS + 下一节点 inputData，MQ 在事务提交后发送
             if (pendingNode != null) {
-                workflowTaskRecordService.updateById(pendingNode);
-            }
-            if (CharSequenceUtil.isNotBlank(result.getOutputDataJson())) {
+                workflowTaskInstanceService.persistMiddleNodeSuccess(
+                        pendingNode,
+                        CharSequenceUtil.isNotBlank(result.getOutputDataJson()) ? next : null,
+                        result.getOutputDataJson());
+            } else if (CharSequenceUtil.isNotBlank(result.getOutputDataJson())) {
                 next.setInputData(result.getOutputDataJson());
                 workflowTaskRecordService.updateById(next);
             }

@@ -292,16 +292,21 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void markCancelled(String instanceId, String remark) {
-        WorkflowTaskInstanceEntity instance = getById(instanceId);
-        if (instance == null) {
+        WorkflowTaskInstanceEntity fresh = getById(instanceId);
+        if (fresh == null) {
             throw new ServiceException(ApiError.WF_TASK_INSTANCE_NOT_FOUND);
         }
-        this.lambdaUpdate()
+        boolean updated = this.lambdaUpdate()
                 .eq(WorkflowTaskInstanceEntity::getId, instanceId)
+                .eq(WorkflowTaskInstanceEntity::getVersion, fresh.getVersion())
                 .set(WorkflowTaskInstanceEntity::getStatus, WorkflowTaskInstanceStatusEnum.CANCELLED.getCode())
                 .set(WorkflowTaskInstanceEntity::getLastError, CharSequenceUtil.blankToDefault(remark, "已取消"))
                 .set(WorkflowTaskInstanceEntity::getFinishTime, LocalDateTime.now())
+                .set(WorkflowTaskInstanceEntity::getVersion, fresh.getVersion() + 1)
                 .update();
+        if (!updated) {
+            log.warn("markCancelled 并发冲突，instanceId={}, version={}", instanceId, fresh.getVersion());
+        }
         workflowTaskRecordService.lambdaUpdate()
                 .eq(WorkflowTaskRecordEntity::getInstanceId, instanceId)
                 .ne(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.SUCCESS.getCode())
@@ -561,7 +566,7 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
 
     /**
      * {@inheritDoc}
-     * <p>在同一事务内持久化节点最终状态 + 实例状态，保证两表写操作的原子性。</p>
+     * <p>仅用于 FAILED / WAITING 结果；SUCCESS 路径请使用 {@link #persistLastNodeSuccess} 或 {@link #persistMiddleNodeSuccess}。</p>
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -571,16 +576,42 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
                                            int totalSteps,
                                            StepInvokeResult.Outcome outcome,
                                            String lastError) {
-        // 1. 持久化节点状态
         workflowTaskRecordService.updateById(node);
-        // 2. 同步实例状态
         if (StepInvokeResult.Outcome.WAITING.equals(outcome)) {
             markWaiting(instanceId, currentIndex, lastError);
         } else if (StepInvokeResult.Outcome.FAILED.equals(outcome)) {
             markFailed(instanceId, currentIndex, lastError);
-        } else if (StepInvokeResult.Outcome.SUCCESS.equals(outcome)) {
-            // SUCCESS 路径：节点写库；实例状态（markRunning/markSuccess）由 dispatch 后续逻辑处理
-            // 此处仅落库节点，不改变实例 currentIndex（由调用方在事务外处理）
+        }
+        // SUCCESS 路径由专用方法处理，此处不兜底，避免歧义
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void persistLastNodeSuccess(WorkflowTaskRecordEntity node,
+                                       String instanceId,
+                                       int maxIndex,
+                                       int totalSteps) {
+        // 同一事务：节点 SUCCESS 落库 + 实例 SUCCESS 落库，消除两步写库之间的中间态
+        workflowTaskRecordService.updateById(node);
+        markSuccess(instanceId, maxIndex, totalSteps);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void persistMiddleNodeSuccess(WorkflowTaskRecordEntity currentNode,
+                                         WorkflowTaskRecordEntity nextNode,
+                                         String nextInputData) {
+        // 同一事务：当前节点 SUCCESS + 下一节点 inputData 回填
+        workflowTaskRecordService.updateById(currentNode);
+        if (nextNode != null && CharSequenceUtil.isNotBlank(nextInputData)) {
+            nextNode.setInputData(nextInputData);
+            workflowTaskRecordService.updateById(nextNode);
         }
     }
 
