@@ -77,6 +77,7 @@ import lombok.Synchronized;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -95,6 +96,7 @@ import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -128,6 +130,9 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     private FirstMileDeliveryService firstMileDeliveryService;
     @Resource
     private OverseasWarehouseInboundService overseasWarehouseInboundService;
+    @Resource
+    @Qualifier("wmsTaskExecutorPool")
+    private ExecutorService wmsTaskExecutorPool;
     @Resource
     private SoDeliveryNoticeService soDeliveryNoticeService;
     @Resource
@@ -486,7 +491,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             } catch (Exception e) {
                 log.error("装箱后自动生成报关单失败，装箱任务id={}", id, e);
             }
-        });
+        }, wmsTaskExecutorPool);
     }
 
 

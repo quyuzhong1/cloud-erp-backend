@@ -178,12 +178,20 @@
         from delivery_declare_detail_mid
         where is_deleted = false and source_type = 'soDeliveryNotice'
         group by declare_id
+        ),
+        detail_sku_agg as (
+        select
+            main_id,
+            count(distinct sku_id) as goods_qty
+        from tms_declare_bill_detail
+        where is_deleted = false
+        group by main_id
         )
         SELECT
             db.id,
             db.declare_confirm_date as declareConfirmDate,
             db.code,
-            (select count(distinct dbd.sku_id) from tms_declare_bill_detail dbd where dbd.is_deleted = false and dbd.main_id = db.id) as goodsQty,
+            COALESCE(dsa.goods_qty, 0) as goodsQty,
             db.declare_status as declareStatus,
             db.business_type as businessType,
             db.country,
@@ -204,6 +212,7 @@
             dn.salesOrgName
         from  tms_declare_bill db
         left join delivery_notice dn on db.id = dn.declare_id
+        left join detail_sku_agg dsa on db.id = dsa.main_id
         where
         ${params.sqlMap.default}
         and db.is_deleted = false
@@ -234,12 +243,20 @@
         from delivery_declare_detail_mid
         where is_deleted = false and source_type = 'firstMileDelivery'
         group by declare_id
+        ),
+        detail_sku_agg as (
+        select
+            main_id,
+            count(distinct sku_id) as goods_qty
+        from tms_declare_bill_detail
+        where is_deleted = false
+        group by main_id
         )
         SELECT
             db.id,
             db.declare_confirm_date as declareConfirmDate,
             db.code,
-            (select count(distinct dbd.sku_id) from tms_declare_bill_detail dbd where dbd.is_deleted = false and dbd.main_id = db.id) as goodsQty,
+            COALESCE(dsa.goods_qty, 0) as goodsQty,
             db.declare_status as declareStatus,
             db.business_type as businessType,
             db.country,
@@ -260,6 +277,7 @@
             dn.transferWarehouseName
         from  tms_declare_bill db
         left join first_mile_delivery dn on db.id = dn.declare_id
+        left join detail_sku_agg dsa on db.id = dsa.main_id
         where
         ${params.sqlMap.default}
         and db.is_deleted = false

@@ -68,6 +68,8 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
     private SysFeign sysFeign;
     @Resource
     private SpElServer spElServer;
+    @Resource
+    private CfgDeclareRuleServiceImpl service;
 
     /**
      * 批量保存报关规则。
@@ -82,8 +84,6 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
      * @param dto 规则类型及规则主从数据列表
      */
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    @Transactional(rollbackFor = Exception.class)
     public Boolean add(CfgDeclareRuleDTO.SaveListDTO dto) {
         List<CfgDeclareRuleDTO.SaveDTO> saveList = Optional.ofNullable(dto.getList()).orElse(Collections.emptyList());
         List<CfgDeclareRuleEntity> existingRules = this.lambdaQuery()
@@ -108,12 +108,31 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
         fillCompanyNames(saveEntities);
 
         List<String> deleteRuleIds = getDeleteRuleIds(existingRules, saveList);
+        service.addInGlobalTx(saveList, saveEntities, existingRuleMap, deleteRuleIds);
+        return Boolean.TRUE;
+    }
+
+    /**
+     * 在全局事务内完成报关规则本地写库。
+     *
+     * <p>调用方已完成 Feign 读取、规则校验、公司名称补齐和实体构建，本方法仅处理本地规则主从表删除、保存及操作日志。</p>
+     *
+     * @param saveList 本次提交的规则 DTO 列表
+     * @param saveEntities 已构建并补齐名称的规则实体列表
+     * @param existingRuleMap 已存在规则映射，用于更新和删除日志
+     * @param deleteRuleIds 本次需删除的旧规则 ID 列表
+     */
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    @Transactional(rollbackFor = Exception.class)
+    public void addInGlobalTx(List<CfgDeclareRuleDTO.SaveDTO> saveList,
+                              List<CfgDeclareRuleEntity> saveEntities,
+                              Map<String, CfgDeclareRuleEntity> existingRuleMap,
+                              List<String> deleteRuleIds) {
         removeRules(deleteRuleIds, existingRuleMap);
 
         for (int i = 0; i < saveList.size(); i++) {
             persistRule(saveEntities.get(i), saveList.get(i), existingRuleMap);
         }
-        return Boolean.TRUE;
     }
 
     /**
@@ -341,9 +360,12 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
                                                   List<CfgDeclareRuleDTO.SaveDTO> saveList,
                                                   Set<String> uniqueConditionFields,
                                                   Map<String, CfgConditionDTO.CommonDTO> conditionConfigMap) {
+        Map<String, Map<String, String>> conditionValueNameMap =
+                buildConditionValueNameMap(collectDtoConditionValueMap(saveList, uniqueConditionFields));
         Set<String> uniqueKeySet = new HashSet<>();
         for (CfgDeclareRuleDTO.SaveDTO saveDTO : saveList) {
-            addDtoConditionUniqueKeys(ruleType, saveDTO.getDetailList(), uniqueConditionFields, uniqueKeySet, conditionConfigMap);
+            addDtoConditionUniqueKeys(ruleType, saveDTO.getDetailList(), uniqueConditionFields, uniqueKeySet,
+                    conditionConfigMap, conditionValueNameMap);
         }
     }
 
@@ -365,8 +387,6 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
         }
         List<CfgConditionDTO.CommonDTO> conditionConfigList = cfgConditionService.listByType(entity.getRuleType());
         Map<String, CfgConditionDTO.CommonDTO> conditionConfigMap = buildConditionConfigMap(conditionConfigList);
-        Set<String> uniqueKeySet = new HashSet<>();
-        addEntityConditionUniqueKeys(entity.getRuleType(), newDetails, uniqueConditionFields, uniqueKeySet, conditionConfigMap);
 
         List<String> otherRuleIds = this.lambdaQuery()
                 .eq(CfgDeclareRuleEntity::getRuleType, entity.getRuleType())
@@ -375,15 +395,23 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
                 .stream()
                 .map(CfgDeclareRuleEntity::getId)
                 .collect(Collectors.toList());
-        if (CollUtil.isEmpty(otherRuleIds)) {
-            return;
-        }
 
-        List<CfgDeclareRuleConditionEntity> otherDetails = cfgDeclareRuleConditionService.lambdaQuery()
-                .in(CfgDeclareRuleConditionEntity::getRuleId, otherRuleIds)
-                .in(CfgDeclareRuleConditionEntity::getField, uniqueConditionFields)
-                .list();
-        checkEntityConditionUniqueKeys(entity.getRuleType(), otherDetails, uniqueConditionFields, uniqueKeySet, conditionConfigMap);
+        List<CfgDeclareRuleConditionEntity> otherDetails = CollUtil.isEmpty(otherRuleIds)
+                ? Collections.emptyList()
+                : cfgDeclareRuleConditionService.lambdaQuery()
+                        .in(CfgDeclareRuleConditionEntity::getRuleId, otherRuleIds)
+                        .in(CfgDeclareRuleConditionEntity::getField, uniqueConditionFields)
+                        .list();
+
+        Map<String, Set<String>> conditionValueMap = collectEntityConditionValueMap(newDetails, uniqueConditionFields);
+        mergeConditionValueMap(conditionValueMap, collectEntityConditionValueMap(otherDetails, uniqueConditionFields));
+        Map<String, Map<String, String>> conditionValueNameMap = buildConditionValueNameMap(conditionValueMap);
+
+        Set<String> uniqueKeySet = new HashSet<>();
+        addEntityConditionUniqueKeys(entity.getRuleType(), newDetails, uniqueConditionFields, uniqueKeySet,
+                conditionConfigMap, conditionValueNameMap);
+        checkEntityConditionUniqueKeys(entity.getRuleType(), otherDetails, uniqueConditionFields, uniqueKeySet,
+                conditionConfigMap, conditionValueNameMap);
     }
 
     /**
@@ -395,13 +423,14 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
                                            List<? extends CfgDeclareRuleConditionDTO.CommonDTO> detailList,
                                            Set<String> uniqueConditionFields,
                                            Set<String> uniqueKeySet,
-                                           Map<String, CfgConditionDTO.CommonDTO> conditionConfigMap) {
+                                           Map<String, CfgConditionDTO.CommonDTO> conditionConfigMap,
+                                           Map<String, Map<String, String>> conditionValueNameMap) {
         if (CollUtil.isEmpty(detailList)) {
             return;
         }
         for (CfgDeclareRuleConditionDTO.CommonDTO detail : detailList) {
             addConditionUniqueKeys(ruleType, detail.getField(), detail.getCompare(), detail.getValue(),
-                    uniqueConditionFields, uniqueKeySet, conditionConfigMap);
+                    uniqueConditionFields, uniqueKeySet, conditionConfigMap, conditionValueNameMap);
         }
     }
 
@@ -414,13 +443,14 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
                                               List<CfgDeclareRuleConditionEntity> detailList,
                                               Set<String> uniqueConditionFields,
                                               Set<String> uniqueKeySet,
-                                              Map<String, CfgConditionDTO.CommonDTO> conditionConfigMap) {
+                                              Map<String, CfgConditionDTO.CommonDTO> conditionConfigMap,
+                                              Map<String, Map<String, String>> conditionValueNameMap) {
         if (CollUtil.isEmpty(detailList)) {
             return;
         }
         for (CfgDeclareRuleConditionEntity detail : detailList) {
             addConditionUniqueKeys(ruleType, detail.getField(), detail.getCompare(), detail.getValue(),
-                    uniqueConditionFields, uniqueKeySet, conditionConfigMap);
+                    uniqueConditionFields, uniqueKeySet, conditionConfigMap, conditionValueNameMap);
         }
     }
 
@@ -431,13 +461,14 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
                                                 List<CfgDeclareRuleConditionEntity> detailList,
                                                 Set<String> uniqueConditionFields,
                                                 Set<String> uniqueKeySet,
-                                                Map<String, CfgConditionDTO.CommonDTO> conditionConfigMap) {
+                                                Map<String, CfgConditionDTO.CommonDTO> conditionConfigMap,
+                                                Map<String, Map<String, String>> conditionValueNameMap) {
         if (CollUtil.isEmpty(detailList)) {
             return;
         }
         for (CfgDeclareRuleConditionEntity detail : detailList) {
             checkConditionUniqueKeys(ruleType, detail.getField(), detail.getCompare(), detail.getValue(),
-                    uniqueConditionFields, uniqueKeySet, conditionConfigMap);
+                    uniqueConditionFields, uniqueKeySet, conditionConfigMap, conditionValueNameMap);
         }
     }
 
@@ -475,20 +506,25 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
 
     private void addConditionUniqueKeys(String ruleType, String field, String compare, String value,
                                         Set<String> uniqueConditionFields, Set<String> uniqueKeySet,
-                                        Map<String, CfgConditionDTO.CommonDTO> conditionConfigMap) {
-        handleConditionUniqueKeys(ruleType, field, compare, value, uniqueConditionFields, uniqueKeySet, true, conditionConfigMap);
+                                        Map<String, CfgConditionDTO.CommonDTO> conditionConfigMap,
+                                        Map<String, Map<String, String>> conditionValueNameMap) {
+        handleConditionUniqueKeys(ruleType, field, compare, value, uniqueConditionFields, uniqueKeySet, true,
+                conditionConfigMap, conditionValueNameMap);
     }
 
     private void checkConditionUniqueKeys(String ruleType, String field, String compare, String value,
                                           Set<String> uniqueConditionFields, Set<String> uniqueKeySet,
-                                          Map<String, CfgConditionDTO.CommonDTO> conditionConfigMap) {
-        handleConditionUniqueKeys(ruleType, field, compare, value, uniqueConditionFields, uniqueKeySet, false, conditionConfigMap);
+                                          Map<String, CfgConditionDTO.CommonDTO> conditionConfigMap,
+                                          Map<String, Map<String, String>> conditionValueNameMap) {
+        handleConditionUniqueKeys(ruleType, field, compare, value, uniqueConditionFields, uniqueKeySet, false,
+                conditionConfigMap, conditionValueNameMap);
     }
 
     private void handleConditionUniqueKeys(String ruleType, String field, String compare, String value,
                                            Set<String> uniqueConditionFields,
                                            Set<String> uniqueKeySet, boolean addKey,
-                                           Map<String, CfgConditionDTO.CommonDTO> conditionConfigMap) {
+                                           Map<String, CfgConditionDTO.CommonDTO> conditionConfigMap,
+                                           Map<String, Map<String, String>> conditionValueNameMap) {
         String conditionField = StringUtils.trimToEmpty(field);
         if (!uniqueConditionFields.contains(conditionField)) {
             return;
@@ -502,7 +538,7 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
             if (duplicate) {
                 throw new ServiceException(ApiError.LOGISTICS_DECLARE_RULE_CONDITION_DUPLICATE,
                         resolveConditionFieldDisplayName(conditionField, conditionConfigMap),
-                        resolveConditionValueDisplayName(conditionField, itemValue));
+                        resolveConditionValueDisplayName(conditionField, itemValue, conditionValueNameMap));
             }
         }
     }
@@ -516,42 +552,193 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
         return conditionField;
     }
 
-    private String resolveConditionValueDisplayName(String conditionField, String itemValue) {
+    private String resolveConditionValueDisplayName(String conditionField,
+                                                    String itemValue,
+                                                    Map<String, Map<String, String>> conditionValueNameMap) {
         if (StrUtil.isBlank(itemValue)) {
             return itemValue;
         }
-        if (StrUtil.endWithIgnoreCase(conditionField, "WarehouseId")) {
-            WarehouseEntity warehouse = FeignQuery.getById(WarehouseEntity.class, itemValue);
-            if (warehouse != null && StrUtil.isNotBlank(warehouse.getName())) {
-                return warehouse.getName();
-            }
+        Map<String, String> valueNameMap = conditionValueNameMap.get(conditionField);
+        if (CollUtil.isEmpty(valueNameMap)) {
             return itemValue;
         }
-        if (StrUtil.equals(conditionField, "salesOrgId")) {
-            ApiResult<List<SysAccountingCompanyDTO.ListDTO>> companyResult = sysFeign.companyList("");
-            if (companyResult != null && companyResult.isSuccess() && CollUtil.isNotEmpty(companyResult.getData())) {
-                return companyResult.getData().stream()
-                        .filter(company -> StrUtil.equals(company.getId(), itemValue))
-                        .map(SysAccountingCompanyDTO.ListDTO::getCompanyName)
-                        .filter(StrUtil::isNotBlank)
-                        .findFirst()
-                        .orElse(itemValue);
-            }
-            return itemValue;
+        return StrUtil.blankToDefault(valueNameMap.get(itemValue), itemValue);
+    }
+
+    /**
+     * 从本次提交的保存 DTO 中收集唯一性校验字段值，用于在重复校验报错前一次性预加载显示名称。
+     */
+    private Map<String, Set<String>> collectDtoConditionValueMap(List<CfgDeclareRuleDTO.SaveDTO> saveList,
+                                                                 Set<String> uniqueConditionFields) {
+        Map<String, Set<String>> conditionValueMap = new HashMap<>();
+        if (CollUtil.isEmpty(saveList)) {
+            return conditionValueMap;
         }
-        if (StrUtil.equals(conditionField, "countryCode")) {
-            ApiResult<List<DictCountryDTO.ListDTO>> countryResult = sysFeign.countryList();
-            if (countryResult != null && countryResult.isSuccess() && CollUtil.isNotEmpty(countryResult.getData())) {
-                return countryResult.getData().stream()
-                        .filter(country -> StrUtil.equals(country.getId(), itemValue))
-                        .map(DictCountryDTO.ListDTO::getNameCn)
-                        .filter(StrUtil::isNotBlank)
-                        .findFirst()
-                        .orElse(itemValue);
-            }
-            return itemValue;
+        for (CfgDeclareRuleDTO.SaveDTO saveDTO : saveList) {
+            collectCommonConditionValues(saveDTO.getDetailList(), uniqueConditionFields, conditionValueMap);
         }
-        return itemValue;
+        return conditionValueMap;
+    }
+
+    /**
+     * 从已持久化的条件实体中收集唯一性校验字段值，用于更新场景的冲突校验。
+     */
+    private Map<String, Set<String>> collectEntityConditionValueMap(List<CfgDeclareRuleConditionEntity> detailList,
+                                                                    Set<String> uniqueConditionFields) {
+        Map<String, Set<String>> conditionValueMap = new HashMap<>();
+        if (CollUtil.isEmpty(detailList)) {
+            return conditionValueMap;
+        }
+        for (CfgDeclareRuleConditionEntity detail : detailList) {
+            collectConditionValue(detail.getField(), detail.getValue(), uniqueConditionFields, conditionValueMap);
+        }
+        return conditionValueMap;
+    }
+
+    /**
+     * 将 DTO 明细中的条件值追加到共享的「字段 -> 值集合」映射中。
+     */
+    private void collectCommonConditionValues(List<? extends CfgDeclareRuleConditionDTO.CommonDTO> detailList,
+                                              Set<String> uniqueConditionFields,
+                                              Map<String, Set<String>> conditionValueMap) {
+        if (CollUtil.isEmpty(detailList)) {
+            return;
+        }
+        for (CfgDeclareRuleConditionDTO.CommonDTO detail : detailList) {
+            collectConditionValue(detail.getField(), detail.getValue(), uniqueConditionFields, conditionValueMap);
+        }
+    }
+
+    /**
+     * 展开英文逗号分隔的条件值，并仅记录参与唯一性校验的字段。
+     */
+    private void collectConditionValue(String field,
+                                       String value,
+                                       Set<String> uniqueConditionFields,
+                                       Map<String, Set<String>> conditionValueMap) {
+        String conditionField = StringUtils.trimToEmpty(field);
+        if (!uniqueConditionFields.contains(conditionField)) {
+            return;
+        }
+        List<String> valueList = splitMatchValues(value);
+        if (CollUtil.isEmpty(valueList)) {
+            return;
+        }
+        conditionValueMap.computeIfAbsent(conditionField, key -> new HashSet<>()).addAll(valueList);
+    }
+
+    /**
+     * 合并已收集的条件值，并保持字段维度下的值去重。
+     */
+    private void mergeConditionValueMap(Map<String, Set<String>> target, Map<String, Set<String>> source) {
+        if (CollUtil.isEmpty(source)) {
+            return;
+        }
+        source.forEach((field, valueSet) -> {
+            if (CollUtil.isNotEmpty(valueSet)) {
+                target.computeIfAbsent(field, key -> new HashSet<>()).addAll(valueSet);
+            }
+        });
+    }
+
+    /**
+     * 构建重复校验错误提示所需的「字段 -> 值 -> 显示名称」映射。
+     *
+     * <p>远程查询统一集中在这里执行，避免在逐条件值重复校验循环内调用 Feign。</p>
+     */
+    private Map<String, Map<String, String>> buildConditionValueNameMap(Map<String, Set<String>> conditionValueMap) {
+        if (CollUtil.isEmpty(conditionValueMap)) {
+            return Collections.emptyMap();
+        }
+        Map<String, Map<String, String>> conditionValueNameMap = new HashMap<>();
+        loadCompanyNameMap(conditionValueMap, conditionValueNameMap);
+        loadCountryNameMap(conditionValueMap, conditionValueNameMap);
+        loadWarehouseNameMap(conditionValueMap, conditionValueNameMap);
+        return conditionValueNameMap;
+    }
+
+    /**
+     * 为销售组织条件值加载核算公司名称。
+     */
+    private void loadCompanyNameMap(Map<String, Set<String>> conditionValueMap,
+                                    Map<String, Map<String, String>> conditionValueNameMap) {
+        Set<String> companyIds = conditionValueMap.get("salesOrgId");
+        if (CollUtil.isEmpty(companyIds)) {
+            return;
+        }
+        ApiResult<List<SysAccountingCompanyDTO.ListDTO>> companyResult = sysFeign.companyList("");
+        if (companyResult == null || !companyResult.isSuccess() || CollUtil.isEmpty(companyResult.getData())) {
+            return;
+        }
+        Map<String, String> companyNameMap = companyResult.getData().stream()
+                .filter(Objects::nonNull)
+                .filter(company -> companyIds.contains(company.getId()))
+                .filter(company -> StrUtil.isNotBlank(company.getCompanyName()))
+                .collect(Collectors.toMap(SysAccountingCompanyDTO.ListDTO::getId,
+                        SysAccountingCompanyDTO.ListDTO::getCompanyName,
+                        (left, right) -> left,
+                        HashMap::new));
+        if (CollUtil.isNotEmpty(companyNameMap)) {
+            conditionValueNameMap.put("salesOrgId", companyNameMap);
+        }
+    }
+
+    /**
+     * 为国家编码条件值加载国家中文名称。
+     */
+    private void loadCountryNameMap(Map<String, Set<String>> conditionValueMap,
+                                    Map<String, Map<String, String>> conditionValueNameMap) {
+        Set<String> countryIds = conditionValueMap.get("countryCode");
+        if (CollUtil.isEmpty(countryIds)) {
+            return;
+        }
+        ApiResult<List<DictCountryDTO.ListDTO>> countryResult = sysFeign.countryList();
+        if (countryResult == null || !countryResult.isSuccess() || CollUtil.isEmpty(countryResult.getData())) {
+            return;
+        }
+        Map<String, String> countryNameMap = countryResult.getData().stream()
+                .filter(Objects::nonNull)
+                .filter(country -> countryIds.contains(country.getId()))
+                .filter(country -> StrUtil.isNotBlank(country.getNameCn()))
+                .collect(Collectors.toMap(DictCountryDTO.ListDTO::getId,
+                        DictCountryDTO.ListDTO::getNameCn,
+                        (left, right) -> left,
+                        HashMap::new));
+        if (CollUtil.isNotEmpty(countryNameMap)) {
+            conditionValueNameMap.put("countryCode", countryNameMap);
+        }
+    }
+
+    /**
+     * 为所有以 {@code WarehouseId} 结尾的唯一性校验字段加载仓库名称。
+     */
+    private void loadWarehouseNameMap(Map<String, Set<String>> conditionValueMap,
+                                      Map<String, Map<String, String>> conditionValueNameMap) {
+        Set<String> warehouseIds = conditionValueMap.entrySet().stream()
+                .filter(entry -> StrUtil.endWithIgnoreCase(entry.getKey(), "WarehouseId"))
+                .flatMap(entry -> entry.getValue().stream())
+                .collect(Collectors.toSet());
+        if (CollUtil.isEmpty(warehouseIds)) {
+            return;
+        }
+        List<WarehouseEntity> warehouseList = FeignQuery.getByIds(WarehouseEntity.class, new ArrayList<>(warehouseIds));
+        if (CollUtil.isEmpty(warehouseList)) {
+            return;
+        }
+        Map<String, String> warehouseNameMap = warehouseList.stream()
+                .filter(Objects::nonNull)
+                .filter(warehouse -> StrUtil.isNotBlank(warehouse.getId()))
+                .filter(warehouse -> StrUtil.isNotBlank(warehouse.getName()))
+                .collect(Collectors.toMap(WarehouseEntity::getId,
+                        WarehouseEntity::getName,
+                        (left, right) -> left,
+                        HashMap::new));
+        if (CollUtil.isEmpty(warehouseNameMap)) {
+            return;
+        }
+        conditionValueMap.keySet().stream()
+                .filter(field -> StrUtil.endWithIgnoreCase(field, "WarehouseId"))
+                .forEach(field -> conditionValueNameMap.put(field, warehouseNameMap));
     }
 
     /**
