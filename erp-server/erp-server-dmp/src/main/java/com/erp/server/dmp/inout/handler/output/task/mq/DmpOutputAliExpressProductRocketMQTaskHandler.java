@@ -20,6 +20,7 @@ import com.common.core.entity.BaseEntity;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpProductInfoEntity;
 import com.erp.model.dmp.entity.DmpSkuInfoEntity;
+import com.erp.model.oms.enums.ListingInfoPlatformStatusEnum;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 
@@ -133,7 +134,7 @@ public class DmpOutputAliExpressProductRocketMQTaskHandler extends DmpOutputRock
         product.setPlatformUpdateTime(dmpSkuInfoEntity.getPlatformUpdateTime());
         product.setPlatformSkuId(dmpSkuInfoEntity.getSkuId());
         product.setPlatformParentSpuNo(dmpSkuInfoEntity.getPlatformParentSpuNo());
-        product.setPlatformStatus(dmpSkuInfoEntity.getStatus());
+        product.setPlatformStatus(convertPlatformStatus(dmpSkuInfoEntity.getStatus()));
 
         // 平台唯一标识=平台skuId + 店铺ID
         String uniqueId = StrUtil.format("{}_{}", dmpSkuInfoEntity.getSkuId(), dmpProductInfoEntity.getNextLevelId());
@@ -154,6 +155,41 @@ public class DmpOutputAliExpressProductRocketMQTaskHandler extends DmpOutputRock
 
 	private String buildPackingItem(String name, Object value, String unit) {
 		return value == null ? "" : StrUtil.format("{}:{}{}", name, value, unit);
+	}
+
+	private String convertPlatformStatus(String status) {
+		if (StringUtils.isBlank(status)) {
+			return "";
+		}
+		if ("1".equals(status)
+				|| "在售".equals(status)
+				|| "active".equalsIgnoreCase(status)
+				|| "onSelling".equalsIgnoreCase(status)) {
+			return ListingInfoPlatformStatusEnum.ACTIVE.getCode();
+		}
+		if ("3".equals(status)
+				|| "4".equals(status)
+				|| "已下架".equals(status)
+				|| "卖完下架".equals(status)
+				|| "inactive".equalsIgnoreCase(status)
+				|| "offSelling".equalsIgnoreCase(status)) {
+			return ListingInfoPlatformStatusEnum.INACTIVE.getCode();
+		}
+		if ("5".equals(status)
+				|| "未上架".equals(status)
+				|| "incomplete".equalsIgnoreCase(status)
+				|| "draft".equalsIgnoreCase(status)) {
+			return ListingInfoPlatformStatusEnum.INCOMPLETE.getCode();
+		}
+		if ("delete".equalsIgnoreCase(status) || "deleted".equalsIgnoreCase(status)) {
+			return ListingInfoPlatformStatusEnum.DELETE.getCode();
+		}
+		for (ListingInfoPlatformStatusEnum statusEnum : ListingInfoPlatformStatusEnum.values()) {
+			if (statusEnum.getCode().equalsIgnoreCase(status)) {
+				return statusEnum.getCode();
+			}
+		}
+		return status;
 	}
 
     @Override
