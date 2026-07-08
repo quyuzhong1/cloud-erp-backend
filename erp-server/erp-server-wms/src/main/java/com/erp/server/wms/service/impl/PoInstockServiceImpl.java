@@ -2207,7 +2207,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                     if (Objects.isNull(subcontractOrder)) {
                         throw new ServiceException(ApiError.PO_SUBCONTRACT_ORDER_NOT_FOUND);
                     }
-                    Integer quantity = SubcontractRepairHelper.resolveChildSkuQuantityWithBomVersion(
+                    Integer quantity = SubcontractRepairHelper.resolveChildSkuQuantityWithBomVersionOrThrow(
                             subcontractOrder, detailEntity.getSkuId(), childSubDetail, bomList);
                     addDetailDTO.setIssueQty(detailEntity.getStockInQty() * quantity);
                     addDetailDTO.setWarehouseId(childSubDetail.getWarehouseId());

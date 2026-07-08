@@ -33,7 +33,7 @@ public final class SubcontractRepairHelper {
 
     public static boolean needBomLookup(Collection<SubcontractOrderEntity> subcontractOrderList) {
         if (CollUtil.isEmpty(subcontractOrderList)) {
-            return true;
+            return false;
         }
         return subcontractOrderList.stream().anyMatch(SubcontractRepairHelper::needBomLookup);
     }
@@ -54,7 +54,7 @@ public final class SubcontractRepairHelper {
     }
 
     /**
-     * 解析父子 SKU 用量（匹配 BOM 版本）：返修委外固定为 1，普通委外从 BOM 获取，未匹配抛异常。
+     * 解析父子 SKU 用量（匹配 BOM 版本）：返修委外固定为 1，普通委外从 BOM 获取，未匹配返回 0。
      */
     public static Integer resolveChildSkuQuantityWithBomVersion(SubcontractOrderEntity subcontractOrderEntity,
                                                               SubcontractOrderDetailEntity parentDetailEntity,
@@ -65,12 +65,27 @@ public final class SubcontractRepairHelper {
     }
 
     /**
-     * 解析父子 SKU 用量（匹配 BOM 版本，父级 SKU 由入参指定）：返修委外固定为 1，普通委外从 BOM 获取，未匹配抛异常。
+     * 解析父子 SKU 用量（匹配 BOM 版本，父级 SKU 由入参指定）：返修委外固定为 1，普通委外从 BOM 获取，未匹配返回 0。
      */
     public static Integer resolveChildSkuQuantityWithBomVersion(SubcontractOrderEntity subcontractOrderEntity,
                                                               String parentSkuId,
                                                               SubcontractOrderDetailEntity childDetailEntity,
                                                               List<BomChildrenSkuDTO> bomList) {
+        if (isRepairSubcontract(subcontractOrderEntity)) {
+            return MathUtil.ONE;
+        }
+        return findBomChild(bomList, childDetailEntity.getBomVersion(), parentSkuId, childDetailEntity.getSkuId())
+                .map(BomChildrenSkuDTO::getQuantity)
+                .orElse(MathUtil.ZERO);
+    }
+
+    /**
+     * 解析父子 SKU 用量（匹配 BOM 版本，父级 SKU 由入参指定）：返修委外固定为 1，普通委外从 BOM 获取，未匹配抛异常。
+     */
+    public static Integer resolveChildSkuQuantityWithBomVersionOrThrow(SubcontractOrderEntity subcontractOrderEntity,
+                                                                       String parentSkuId,
+                                                                       SubcontractOrderDetailEntity childDetailEntity,
+                                                                       List<BomChildrenSkuDTO> bomList) {
         if (isRepairSubcontract(subcontractOrderEntity)) {
             return MathUtil.ONE;
         }
