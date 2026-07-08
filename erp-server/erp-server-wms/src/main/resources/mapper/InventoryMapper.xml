@@ -445,7 +445,7 @@
                 SUM(CASE WHEN qty > 0 THEN qty END) AS todayStockInQty,
                 SUM(CASE WHEN qty &lt; 0 THEN qty END) AS todayDeliveryQty
             FROM "transaction_flow"
-            WHERE create_time &gt;= date_trunc('day', NOW()::timestamp)
+            WHERE create_time >= date_trunc('day', NOW()::timestamp)
             AND create_time &lt; date_trunc('day', NOW()::timestamp) + interval '1 day'
             AND is_unapproved = FALSE
             <if test="status != null and status != ''">
