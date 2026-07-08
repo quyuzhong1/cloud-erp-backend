@@ -1564,7 +1564,9 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
     private void sendSkuMappingUnmatchNotice(CfgThirdNoticeEntity noticeEntity, String post, String roleType,
                                               String specificPerson, String title, String content,
                                               LocalDateTime now, int delayLevel, String skuType) {
-        // 1. 读取规则条件，构造过滤参数（warehouseId / shopId / dictPlatform）
+        // 1. 读取规则条件，构造过滤参数（warehouseId / authId / shopId / dictPlatform）
+        // 注意：warehouseId 对应 ERP 仓库维度（sm.warehouse_id），authId 对应海外仓服务商/授权账号维度（li.auth_id）；
+        // skuType=warehouse 时统计按 authId 维度分组，需使用 authId 过滤，而非 warehouseId
         List<CfgRuleConditionEntity> ruleList = cfgRuleConditionService.lambdaQuery()
                 .eq(CfgRuleConditionEntity::getRuleId, noticeEntity.getId())
                 .list();
@@ -1578,6 +1580,8 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
             for (CfgRuleConditionEntity rule : ruleList) {
                 if ("warehouseId".equals(rule.getField())) {
                     queryDTO.setWarehouseId(rule.getValue());
+                } else if ("authId".equals(rule.getField())) {
+                    queryDTO.setAuthId(rule.getValue());
                 } else if ("shopId".equals(rule.getField())) {
                     queryDTO.setShopId(rule.getValue());
                 } else if ("dictPlatform".equals(rule.getField())) {

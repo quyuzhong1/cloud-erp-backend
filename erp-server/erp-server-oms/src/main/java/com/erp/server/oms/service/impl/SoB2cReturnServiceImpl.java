@@ -855,6 +855,10 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
 
     @Override
     public SoB2cReturnEntity findFirstByReferenceNo(String referenceNo) {
+        // 空参不下发SQL：referenceNo为空时OR多字段匹配无意义，且防止误匹配某些字段为空字符串的历史脏数据
+        if (StringUtils.isBlank(referenceNo)) {
+            return null;
+        }
         return baseMapper.findFirstByReferenceNo(referenceNo);
     }
 }

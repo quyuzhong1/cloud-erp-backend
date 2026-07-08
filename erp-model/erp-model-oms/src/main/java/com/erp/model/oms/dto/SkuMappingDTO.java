@@ -1849,8 +1849,10 @@ public class SkuMappingDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class UnmatchQueryDTO {
-        /** 海外仓ID，为空时查询所有仓库 */
+        /** ERP仓库ID（sm.warehouse_id），仅用于非warehouse类型按ERP仓库维度过滤，为空时不过滤 */
         private String warehouseId;
+        /** 海外仓服务商/授权账号ID（li.auth_id，对应overseas_provider），type=warehouse时按此维度过滤，为空时查询所有海外仓 */
+        private String authId;
         /** 店铺ID，为空时不过滤 */
         private String shopId;
         /** 平台字典值，为空时不过滤 */
