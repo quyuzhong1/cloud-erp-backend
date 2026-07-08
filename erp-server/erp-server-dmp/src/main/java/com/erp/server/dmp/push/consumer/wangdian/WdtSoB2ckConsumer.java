@@ -205,10 +205,16 @@ public class WdtSoB2ckConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatf
 
     private boolean shouldNotifyKolB2cApproveByRequest(String dmpSyncTaskId) {
         if (StringUtils.isBlank(dmpSyncTaskId)) {
-            return true;
+            // dmpSyncTaskId 为空时无法确认推送任务来源，不触发审批回调，避免误通知
+            log.debug("shouldNotifyKolB2cApproveByRequest 跳过：dmpSyncTaskId 为空");
+            return false;
         }
         DmpPushTaskEntity dmpPushTaskEntity = dmpPushTaskService.getById(dmpSyncTaskId);
-        return ObjectUtils.isEmpty(dmpPushTaskEntity);
+        if (ObjectUtils.isEmpty(dmpPushTaskEntity)) {
+            log.warn("旺店通B2C审批下推回调OMS跳过，未找到推送任务: dmpSyncTaskId={}", dmpSyncTaskId);
+            return false;
+        }
+        return isKolB2cApprovePushTask(dmpPushTaskEntity);
     }
 
     private void notifyKolB2cApprovePushResult(DmpPushTaskEntity dmpPushTaskEntity, DmpSyncMqDTO.ParamDTO paramDTO) {
