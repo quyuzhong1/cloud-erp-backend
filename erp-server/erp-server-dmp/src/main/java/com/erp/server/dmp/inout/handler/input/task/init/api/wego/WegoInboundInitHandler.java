@@ -75,7 +75,8 @@ public class WegoInboundInitHandler extends DmpInputInitHandler {
                 .eq(OverseasProviderEntity::getCode, DmpBasicSystemCodeEnum.WEGO.getCode())
                 .list();
         if (CollUtil.isEmpty(overseasProviderEntityList)) {
-            throw new ServiceException("WEGO授权信息不存在");
+            log.warn("[WEGO库存] 无已授权的WEGO服务商配置，跳过");
+            return Collections.emptyList();
         }
         OverseasProviderEntity overseasProviderEntity = overseasProviderEntityList.stream()
                 .filter(e -> e.getId().equalsIgnoreCase(dmpInputTaskEntity.getNextLevelId()))
