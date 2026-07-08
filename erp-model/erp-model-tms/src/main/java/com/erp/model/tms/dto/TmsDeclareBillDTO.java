@@ -2327,7 +2327,7 @@ public class TmsDeclareBillDTO implements Serializable {
         private String id;
 
         /**
-         *  业务单号+箱号
+         * 业务单号
          */
         private String businessDesc;
 

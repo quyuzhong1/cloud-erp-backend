@@ -338,6 +338,11 @@ public class TmsFmDeclareBillController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.SplitDeclareDTO>>
      */
     @PostMapping("/listSplitFmDetail")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:tmsFmDeclareBill:batchAddSplitFmDetail",
+            serviceClass = TmsDeclareBillService.class,
+            keyIdName = "id")
     public ApiResult<List<TmsDeclareBillDTO.SplitDeclareDTO>> listSplitFmDetail(@RequestBody @Valid BaseIdDTO dto)  {
         List<TmsDeclareBillDTO.SplitDeclareDTO> list = tmsDeclareBillService.listSplitFmDetail(dto.getId());
         return success(list);
