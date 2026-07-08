@@ -1,6 +1,8 @@
 package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import com.erp.model.tms.dto.TmsDeclareBillDTO;
+import com.erp.model.tms.entity.*;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -93,9 +95,9 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
     private TmsDeclareBillService tmsDeclareBillService;
     @Resource
     private CfgDeclareRuleService cfgDeclareRuleService;
-    @Lazy
-    @Resource
-    private DeliveryDeclareDetailMidService self;
+    //展示专用：报关单尚未生成
+    private static final String NOT_GENERATED = "not";
+    private static final String NOT_GENERATED_NAME = "待生成";
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -619,7 +621,7 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean batchAddMergeDetail(List<TmsDeclareBillDTO.MergeDeclareBillDTO> list,Boolean updateSourceDeclareStatus) {
+    public Boolean batchAddMergeDetail(List<TmsDeclareBillDTO.MergeDeclareBillDTO> list, Boolean updateSourceDeclareStatus) {
         List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList = collectSourceDetailList(list);
         if (CollUtil.isEmpty(sourceDetailList)) {
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_SAVE_REQUIRED);
@@ -832,10 +834,35 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
             return;
         }
         Set<String> selectedIdSet = new HashSet<>(selectedIds);
+        List<String> declareIds = sourceMidList.stream()
+                .map(DeliveryDeclareDetailMidEntity::getDeclareId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, TmsDeclareBillEntity> declareBillMap = Collections.emptyMap();
+        if (CollUtil.isNotEmpty(declareIds)) {
+            declareBillMap = tmsDeclareBillService.lambdaQuery()
+                    .in(TmsDeclareBillEntity::getId, declareIds)
+                    .list()
+                    .stream()
+                    .collect(Collectors.toMap(TmsDeclareBillEntity::getId, item -> item, (oldValue, newValue) -> oldValue));
+        }
         // 按业务单号+箱号分组，构建每个箱子对应的明细列表映射关系
-        // 只处理状态为"待生成"且存在箱号的明细记录
+        // 只处理状态为"待生成"或已生成但关联报关单仍为待确认，且存在箱号的明细记录
+        Map<String, TmsDeclareBillEntity> finalDeclareBillMap = declareBillMap;
         Map<String, List<DeliveryDeclareDetailMidEntity>> boxGroupMap = sourceMidList.stream()
-                .filter(item -> CharSequenceUtil.equals(item.getGenerateStatus(), DeliveryDeclareDetailMidGenerateStatusEnum.WAIT.getCode()))
+                .filter(item -> {
+                    if (CharSequenceUtil.equals(item.getGenerateStatus(), DeliveryDeclareDetailMidGenerateStatusEnum.WAIT.getCode())) {
+                        return true;
+                    }
+                    if (!CharSequenceUtil.equals(item.getGenerateStatus(), DeliveryDeclareDetailMidGenerateStatusEnum.FINISH.getCode())
+                            || CharSequenceUtil.isBlank(item.getDeclareId())) {
+                        return false;
+                    }
+                    TmsDeclareBillEntity declareBill = finalDeclareBillMap.get(item.getDeclareId());
+                    return Objects.nonNull(declareBill)
+                            && CharSequenceUtil.equals(declareBill.getDeclareStatus(), DeclareStatusEnum.WAIT.getCode());
+                })
                 .filter(item -> CharSequenceUtil.isNotBlank(item.getBoxNo()))
                 .collect(Collectors.groupingBy(this::buildSourceBoxKey));
 
@@ -1792,8 +1819,8 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
             if(StringUtils.isNotBlank(data.getDeclareStatus())){
                 data.setDeclareStatusName(DeclareStatusEnum.getName(data.getDeclareStatus()));
             }else {
-                data.setDeclareStatus(DeclareStatusEnum.NOT_GENERATED.getCode());
-                data.setDeclareStatusName(DeclareStatusEnum.NOT_GENERATED.getName());
+                data.setDeclareStatus(NOT_GENERATED);
+                data.setDeclareStatusName(NOT_GENERATED_NAME);
             }
             data.setGenerateStatusName(DeliveryDeclareDetailMidGenerateStatusEnum.getName(data.getGenerateStatus()));
             if (CharSequenceUtil.isBlank(data.getTransferWarehouseNames())) {
