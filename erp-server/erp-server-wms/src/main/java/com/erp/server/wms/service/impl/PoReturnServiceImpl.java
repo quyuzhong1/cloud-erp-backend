@@ -69,6 +69,7 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeReturnOrderService;
 import com.erp.server.wms.mapper.PoReturnMapper;
 import com.erp.server.wms.service.*;
+import com.erp.server.wms.util.SubcontractRepairHelper;
 import com.erp.server.wms.wdt.SyncWdtOtherInStockService;
 import com.erp.server.wms.wdt.SyncWdtOtherOutStockService;
 import com.google.common.collect.Lists;
@@ -1214,10 +1215,9 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             if (Objects.isNull(parentSubcontractOrder)){
                 throw new ServiceException(CharSequenceUtil.format("采购订单【{}】中SKU【{}】在委外订单【{}】未找到成品子单明细", orderEntity.getCode(), detail.getSkuNo(),subcontractOrderEntity.getCode()));
             }
-            //父级SKU和子级SKU之间的用量
-            Integer quantity = bomList.stream()
-                    .filter(obj -> subcontractOrderDetailEntity.getBomVersion().equals(obj.getBomVersion()) && obj.getSkuId().equals(subcontractOrderDetailEntity.getSkuId()) && obj.getParentSkuId().equals(parentSubcontractOrder.getSkuId()))
-                    .map(BomChildrenSkuDTO::getQuantity).findFirst().orElse(MathUtil.ZERO);
+            //父级SKU和子级SKU之间的用量（返修委外订单不依赖BOM，用量固定为1）
+            Integer quantity = SubcontractRepairHelper.resolveChildSkuQuantityWithBomVersion(
+                    subcontractOrderEntity, parentSubcontractOrder, subcontractOrderDetailEntity, bomList);
             //成品退货单明细记录
             PoReturnDetailEntity poReturnDetailEntity = poReturnDetailList.stream().filter(e -> Objects.nonNull(e) && e.getSkuId().equals(parentSubcontractOrder.getSkuId())).findFirst().orElse(null);
             if (Objects.isNull(poReturnDetailEntity)){
@@ -1296,10 +1296,9 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             if (Objects.isNull(parentSubcontractOrder)){
                 throw new ServiceException(CharSequenceUtil.format("采购订单【{}】中SKU【{}】在委外订单【{}】未找到成品子单明细", orderEntity.getCode(), detail.getSkuNo(),subcontractOrderEntity.getCode()));
             }
-            //父级SKU和子级SKU之间的用量
-            Integer quantity = bomList.stream()
-                    .filter(obj -> subcontractOrderDetailEntity.getBomVersion().equals(obj.getBomVersion()) && obj.getSkuId().equals(subcontractOrderDetailEntity.getSkuId()) && obj.getParentSkuId().equals(parentSubcontractOrder.getSkuId()))
-                    .map(BomChildrenSkuDTO::getQuantity).findFirst().orElse(MathUtil.ZERO);
+            //父级SKU和子级SKU之间的用量（返修委外订单不依赖BOM，用量固定为1）
+            Integer quantity = SubcontractRepairHelper.resolveChildSkuQuantityWithBomVersion(
+                    subcontractOrderEntity, parentSubcontractOrder, subcontractOrderDetailEntity, bomList);
             //获取退货单明细记录
             PoReturnDetailEntity poReturnDetailEntity = poReturnDetailList.stream().filter(e -> Objects.nonNull(e) && e.getSkuId().equals(parentSubcontractOrder.getSkuId())).findFirst().orElse(null);
             if (Objects.isNull(poReturnDetailEntity)){
