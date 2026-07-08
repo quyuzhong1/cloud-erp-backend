@@ -264,7 +264,9 @@ public class AliExpressOrderService {
      * @date 2023-11-29 12:13
      */
     public AliExpressShopInfoDTO getShopInfoByShopId(String shopId) {
-        String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.ALI_EXPRESS.getCode(), shopId);
+        ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(shopId);
+        String dictPlatform = resolveAliExpressPlatform(shopInfoEntity);
+        String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, dictPlatform, shopId);
         // 缓存获取
         Object tokenObj = redisUtil.get(tokenKey);
         if (null != tokenObj) {
@@ -277,7 +279,7 @@ public class AliExpressOrderService {
         }
             ShopAuthEntity shopAuthEntity = shopInfoFeign.getShopAuthByShopId(shopId);
             CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
-            AppClientEnum appClientEnum = AppClientEnum.ALI_EXPRESS_TOKEN;
+            AppClientEnum appClientEnum = resolveAliExpressTokenAppClient(dictPlatform);
             findDTO.setBusinessType(appClientEnum.getBusinessType());
             findDTO.setDictPlatform(appClientEnum.getPlatform());
             findDTO.setPlatformType(appClientEnum.getPlatformType());
@@ -291,20 +293,33 @@ public class AliExpressOrderService {
             result.setClientId(cfgAppClient.getClientId());
             result.setClientSecret(cfgAppClient.getClientSecret());
             result.setId(shopId);
-            ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(shopId);
             if (Objects.nonNull(shopInfoEntity)) {
                 result.setName(shopInfoEntity.getName());
                 result.setDictPlatform(shopInfoEntity.getDictPlatform());
             }
+            if (StrUtil.isBlank(result.getDictPlatform())) {
+                result.setDictPlatform(dictPlatform);
+            }
             if (Objects.nonNull(shopAuthEntity)) {
                 result.setToken(shopAuthEntity.getToken());
-                if (StrUtil.isBlank(result.getDictPlatform())) {
-                    result.setDictPlatform(shopAuthEntity.getDictPlatform());
-                }
                 redisUtil.set(tokenKey, result, shopAuthEntity.getExpiresIn());
             }
 
             return result;
+    }
+
+    private String resolveAliExpressPlatform(ShopInfoEntity shopInfoEntity) {
+        if (Objects.nonNull(shopInfoEntity) && StrUtil.isNotBlank(shopInfoEntity.getDictPlatform())) {
+            return shopInfoEntity.getDictPlatform();
+        }
+        return PlatformDictEnum.ALI_EXPRESS.getCode();
+    }
+
+    private AppClientEnum resolveAliExpressTokenAppClient(String dictPlatform) {
+        if (PlatformDictEnum.ALI_EXPRESS_OVERSEAS_MANAGED.getCode().equalsIgnoreCase(dictPlatform)) {
+            return AppClientEnum.ALI_EXPRESS_OVERSEAS_MANAGED_TOKEN;
+        }
+        return AppClientEnum.ALI_EXPRESS_TOKEN;
     }
 
 
