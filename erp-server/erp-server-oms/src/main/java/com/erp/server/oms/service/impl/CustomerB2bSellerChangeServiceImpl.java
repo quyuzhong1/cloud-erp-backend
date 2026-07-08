@@ -188,7 +188,7 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult<Object>(ApiError.HTTP_UNKNOWN.getCode(), listApiResult.getMsg()));
+                throw new ServiceException(ApiError.WF_CUR_APPROVER_QUERY_FAILED, listApiResult.getMsg());
             }
         }
         for (CustomerB2bSellerChangeDTO.ListDTO re : listDTOList.getRecords()) {
@@ -554,7 +554,7 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult<Object>(ApiError.HTTP_UNKNOWN.getCode(), listApiResult.getMsg()));
+                throw new ServiceException(ApiError.WF_CUR_APPROVER_QUERY_FAILED, listApiResult.getMsg());
             }
         }
         for (CustomerB2bSellerExcelDTO customerB2bSellerExcelDTO : page.getRecords()) {

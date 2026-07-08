@@ -195,6 +195,13 @@ public enum ApiError implements Serializable {
     COMMON_SYSTEM_CATEGORY_DELETE_FORBIDDEN(1108,"系统分类不允许删除"),
     COMMON_SYSTEM_CATEGORY_UPDATE_FORBIDDEN(1109,"系统分类不允许编辑"),
     COMMON_DELETE_CHILD_NODE_EXISTS(1110,"存在子节点，无法删除"),
+    COMMON_REMOTE_SERVICE_ERROR(1118,"{0}服务调用失败：{1}"),
+    COMMON_REMOTE_RESPONSE_EMPTY(1119,"{0}服务返回为空"),
+    COMMON_REMOTE_RESPONSE_INVALID(1120,"{0}服务返回格式异常：{1}"),
+    COMMON_THIRD_PARTY_API_FAILED(1121,"{0}接口调用失败：{1}"),
+    COMMON_LARK_USER_INFO_FAILED(1122,"获取飞书用户信息失败：{0}"),
+    COMMON_LARK_UNION_ID_NOT_FOUND(1123,"未获取到用户UnionId"),
+    COMMON_LARK_UNION_ID_FETCH_FAILED(1124,"获取飞书用户UnionId失败：{0}"),
     COMMON_CONTRACT_NOT_BINDING(98127,"无关联合同，请在合同管理页面关联后打印"),
 
     COMMON_NO_DELIVERY_SKU(98128,"没有发货的SKU"),
@@ -498,6 +505,7 @@ public enum ApiError implements Serializable {
     WF_KOL_B2C_SPLIT_DETAIL_INCOMPLETE(4076,"B2C寄样申请单拆分单明细不完整，单号【{0}】，达人【{1}】"),
     WF_KOL_B2C_WAIT_SPLIT_ORDER(4077,"等待拆分单生成"),
     WF_KOL_B2C_WAIT_SUB_TASK_COMPLETE(4078,"等待KOL B2C拆分单子任务完成，已完成{0}/{1}"),
+    WF_CUR_APPROVER_QUERY_FAILED(4079,"查询当前审批人失败：{0}"),
     /**
      * PROJECT 项目相关 4500 - 5000
      */
