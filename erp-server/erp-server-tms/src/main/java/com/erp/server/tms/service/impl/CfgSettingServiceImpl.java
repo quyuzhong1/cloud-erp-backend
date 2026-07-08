@@ -81,6 +81,7 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
 
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public  BaseResultDTO.AddDTO addByKey(CfgSettingDTO.AddByKeyDTO addDTO) {
         // 数据处理
         CfgSettingEnum cfgSettingEnum = CfgSettingEnum.getEnum(addDTO.getKey());

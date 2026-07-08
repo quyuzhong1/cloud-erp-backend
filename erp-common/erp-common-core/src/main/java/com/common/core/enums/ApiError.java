@@ -1944,6 +1944,7 @@ public enum ApiError implements Serializable {
     SO_DELIVERY_NOTICE_CUSTOMER_COUNTRY_INCONSISTENT(13710,"所选发货通知单客户国家不一致"),
     COMMON_COUNTRY_INFO_NOT_FOUND(13711,"国家信息不存在"),
     LOGISTICS_DECLARE_B2B_SO_DETAIL_NOT_FOUND(13712,"来源单【{0}】SKU【{1}】未找到销售订单明细，无法按客户分发规则取价"),
+    LOGISTICS_DECLARE_B2B_CUSTOMER_RECEIVER_NOT_FOUND(13713,"未找到来源单客户信息，无法按客户分发规则设置报关收货人"),
 
 
     LOGISTICS_ORDER_NOT_CANCEL(13645,"物流单据不是已取消或者下单失败状态，不能编辑"),

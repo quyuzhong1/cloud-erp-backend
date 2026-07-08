@@ -3220,13 +3220,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     private void parseBatchFieldValue(TmsDeclareBillBatchFieldEnum fieldEnum, Object values) {
         if (TmsDeclareBillBatchFieldEnum.DECLARE_DATE.equals(fieldEnum)
                 || TmsDeclareBillBatchFieldEnum.EXPORT_DATE.equals(fieldEnum)) {
-            if (Objects.isNull(values)) {
-            }
-            if (values instanceof LocalDate) {
-            }
             String dateStr = Objects.toString(values, "");
-            if (StringUtils.isBlank(dateStr)) {
-            }
             try {
                 LocalDate.parse(dateStr);
             } catch (Exception e) {
@@ -3236,13 +3230,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (TmsDeclareBillBatchFieldEnum.SHIPPING_FEE.equals(fieldEnum)
                 || TmsDeclareBillBatchFieldEnum.INSURANCE_FEE.equals(fieldEnum)
                 || TmsDeclareBillBatchFieldEnum.OTHER_FEE.equals(fieldEnum)) {
-            if (Objects.isNull(values)) {
-            }
-            if (values instanceof BigDecimal) {
-            }
             String valueStr = Objects.toString(values, "").trim();
-            if (StringUtils.isBlank(valueStr)) {
-            }
             try {
                 new BigDecimal(valueStr);
             } catch (Exception e) {
@@ -5819,12 +5807,12 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 .distinct()
                 .collect(Collectors.toList());
         if (CollUtil.isEmpty(sourceIdList)) {
-            return;
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_B2B_CUSTOMER_RECEIVER_NOT_FOUND);
         }
 
         List<SoDeliveryNoticeEntity> noticeList = soDeliveryNoticeFeign.listByIds(sourceIdList);
         if (CollUtil.isEmpty(noticeList)) {
-            return;
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_B2B_CUSTOMER_RECEIVER_NOT_FOUND);
         }
         Map<String, SoDeliveryNoticeEntity> noticeMap = noticeList.stream()
                 .filter(Objects::nonNull)
@@ -5840,6 +5828,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             declareBillEntity.setReceiverName(notice.getCustomerName());
             return;
         }
+        throw new ServiceException(ApiError.LOGISTICS_DECLARE_B2B_CUSTOMER_RECEIVER_NOT_FOUND);
     }
 
     /**

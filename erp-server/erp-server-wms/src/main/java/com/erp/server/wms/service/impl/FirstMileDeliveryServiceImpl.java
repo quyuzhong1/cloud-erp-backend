@@ -270,11 +270,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
             public void afterCommit() {
-                try {
-                    Thread.sleep(2000);
-                } catch (InterruptedException e) {
-                    log.error("自动生成报关明细中间表等待异常：{}", e.getMessage());
-                }
                 self.autoGenerateByPacked(firstMileDeliveryEntity, BillGenerateTimingEnum.AFTER_ADD);
 
             }
