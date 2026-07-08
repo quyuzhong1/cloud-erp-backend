@@ -29,6 +29,8 @@ import java.util.Map;
 @Component
 @Validated
 public class TongYouService {
+    private static final String TOKEN_JSON_PATTERN = "(\"token\"\\s*:\\s*\")[^\"]*(\")";
+    private static final String TOKEN_MASK = "******";
 
     private String getPreUrl(){
         if (BusinessCommonConstants.hasProfile("prod")) {
@@ -36,6 +38,14 @@ public class TongYouService {
         } else {
             return "https://www.jia-wms.com/";
         }
+    }
+
+    private String toLogJson(Object body) {
+        return maskTokenJson(JSONObject.toJSONString(body));
+    }
+
+    private String maskTokenJson(String jsonString) {
+        return jsonString == null ? null : jsonString.replaceAll(TOKEN_JSON_PATTERN, "$1" + TOKEN_MASK + "$2");
     }
 
     /**
@@ -84,7 +94,7 @@ public class TongYouService {
     public TongYouBaseResp<List<TongYouInboundResp>> getInboundBill(Map<String, Object> authJson){
         Map<String, String> headerMap = new HashMap<>();
         String path = "hwc_api/hwc_order_tc.php";
-        log.warn("通邮 getInboundBill request:{}",JSONObject.toJSONString(authJson));
+        log.warn("通邮 getInboundBill request:{}",toLogJson(authJson));
         String bodyStr = OkHttpUtils.doPostJson(getPreUrl()+path,authJson, headerMap);
         return TongYouUtils.parseToTongYouResp(bodyStr, new TypeReference<TongYouBaseResp<List<TongYouInboundResp>>>() {});
 
@@ -93,13 +103,12 @@ public class TongYouService {
     /**
      * 查询出库单
      */
-    public TongYouBaseResp<List<TongYouQueryOutboundResp>> getOutboundBill(Map<String, Object> authJson){
+    public TongYouQueryOutboundBillResp getOutboundBill(Map<String, Object> authJson){
         Map<String, String> headerMap = new HashMap<>();
         String path = "hwc_api/hwc_order.php";
-        log.warn("通邮 getOutboundBill request:{}",JSONObject.toJSONString(authJson));
+        log.warn("通邮 getOutboundBill request:{}",toLogJson(authJson));
         String bodyStr = OkHttpUtils.doPostJson(getPreUrl()+path,authJson, headerMap);
-        return TongYouUtils.parseToTongYouListResp(bodyStr, TongYouQueryOutboundResp.class,
-                new TypeReference<TongYouBaseResp<List<TongYouQueryOutboundResp>>>() {});
+        return TongYouUtils.parseToTongYouQueryOutboundResp(bodyStr);
     }
 
     /**
@@ -113,9 +122,9 @@ public class TongYouService {
         Object object = ThirdWarehouseContext.getAuthMap().get("appToken");
         tongYouCreateInboundReq.setToken(ObjectUtil.isEmpty(object) ? "" : object.toString());
 
-        log.warn("通邮 createInboundBill request:{}",JSONObject.toJSONString(tongYouCreateInboundReq));
+        log.warn("通邮 createInboundBill request:{}",toLogJson(tongYouCreateInboundReq));
         String bodyStr = OkHttpUtils.doPostJson(getPreUrl()+path,JSONObject.toJSONString(tongYouCreateInboundReq), headerMap);
-        ThirdWarehouseContext.setRequestJson(JSONObject.toJSONString(tongYouCreateInboundReq));
+        ThirdWarehouseContext.setRequestJson(toLogJson(tongYouCreateInboundReq));
         TongYouBaseResp<TongYouInboundResp> respDto = TongYouUtils.parseToTongYouResp(bodyStr, TongYouInboundResp.class);
         ThirdWarehouseContext.setResponseJson(bodyStr);
         return respDto;
@@ -127,12 +136,12 @@ public class TongYouService {
     public TongYouBaseResp<TongYouOutboundResp> createOutboundBill(@Valid TongYouCreateOutboundReq tongYouCreateOutboundReq){
         String path = "hwc_api/add_order.php";
         Map<String, String> headerMap = new HashMap<>();
-        ThirdWarehouseContext.setRequestJson(JSONObject.toJSONString(tongYouCreateOutboundReq));
+        ThirdWarehouseContext.setRequestJson(toLogJson(tongYouCreateOutboundReq));
         //密钥
         Object object = ThirdWarehouseContext.getAuthMap().get("appToken");
         tongYouCreateOutboundReq.setToken(ObjectUtil.isEmpty(object) ? "" : object.toString());
         String jsonString = JSONObject.toJSONString(Collections.singletonList(tongYouCreateOutboundReq));
-        log.warn("通邮 createOutboundBill request:{}",jsonString);
+        log.warn("通邮 createOutboundBill request:{}",maskTokenJson(jsonString));
         String bodyStr = OkHttpUtils.doPostJson(getPreUrl()+path,jsonString, headerMap);
         TongYouBaseResp<TongYouOutboundResp> respDto = TongYouUtils.parseToTongYouResp(bodyStr, TongYouOutboundResp.class);
         ThirdWarehouseContext.setResponseJson(bodyStr);
@@ -142,7 +151,7 @@ public class TongYouService {
     /**
      * 取消出库单
      */
-    public TongYouBaseResp<String> cancelOutboundBill(@Valid ThirdWarehouseCancelOutboundReq TongYouCancelOutboundReq){
+    public TongYouCancelOutboundResp cancelOutboundBill(@Valid ThirdWarehouseCancelOutboundReq TongYouCancelOutboundReq){
         String path = "hwc_api/hwc_deliver_del.php";
         Map<String, String> headerMap = new HashMap<>();
         Map<String,Object> bodyMap = new HashMap<>();
@@ -151,11 +160,11 @@ public class TongYouService {
         bodyMap.put("token",ObjectUtil.isEmpty(object) ? "" : object.toString());
         bodyMap.put("deliver_list", Collections.singletonList(TongYouCancelOutboundReq.getErpOrderCode()));
 
-        log.warn("通邮 cancelOutboundBill request:{}",JSONObject.toJSONString(bodyMap));
+        log.warn("通邮 cancelOutboundBill request:{}",toLogJson(bodyMap));
 
-        ThirdWarehouseContext.setRequestJson(JSONObject.toJSONString(bodyMap));
+        ThirdWarehouseContext.setRequestJson(toLogJson(bodyMap));
         String bodyStr = OkHttpUtils.doPostJson(getPreUrl()+path,bodyMap, headerMap);
-        TongYouBaseResp<String> respDto = TongYouUtils.parseToTongYouResp(bodyStr, String.class);
+        TongYouCancelOutboundResp respDto = TongYouUtils.parseToTongYouCancelOutboundResp(bodyStr);
         ThirdWarehouseContext.setResponseJson(bodyStr);
         return respDto;
     }
@@ -167,7 +176,7 @@ public class TongYouService {
     public TongYouBaseResp<TongYouOutboundResp> createReturnInboundBill(@Valid TongYouCreateOutboundReq TongYouCreateOutboundReq){
         String path = "hwc_api/hwc_order_tc.php";
         Map<String, String> headerMap = new HashMap<>();
-        ThirdWarehouseContext.setRequestJson(JSONObject.toJSONString(TongYouCreateOutboundReq));
+        ThirdWarehouseContext.setRequestJson(toLogJson(TongYouCreateOutboundReq));
         String bodyStr = OkHttpUtils.doPostJson(getPreUrl()+path,JSONObject.toJSONString(TongYouCreateOutboundReq), headerMap);
         TongYouBaseResp<TongYouOutboundResp> respDto = TongYouUtils.parseToTongYouResp(bodyStr, TongYouOutboundResp.class);
         ThirdWarehouseContext.setResponseJson(bodyStr);

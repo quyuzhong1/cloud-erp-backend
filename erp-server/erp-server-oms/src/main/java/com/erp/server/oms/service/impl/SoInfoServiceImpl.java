@@ -1768,6 +1768,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    @DistributeLocker(businessType = DistributeKeyConstant.SO_B2B_ORDER_KEY, keyName = "entity.id", waiteTime = 60, unlockAfterTx = true)
     public BatchResultDTO approve(BaseApproveParamDTO dto, SoInfoEntity entity) {
         String ingStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
         if(!ingStatus.equals(entity.getApproveStatus().getStatus())){
@@ -1884,6 +1885,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    @DistributeLocker(businessType = DistributeKeyConstant.SO_B2B_ORDER_KEY, keyName = "entity.id", waiteTime = 60, unlockAfterTx = true)
     public BatchResultDTO disApprove(SoInfoEntity entity, List<SoChangeEntity> soChangeEntityList) {
         List<String> ids = Arrays.asList(entity.getId());
         List<SoInfoEntity> list = Arrays.asList(entity);
@@ -2008,6 +2010,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    @DistributeLocker(businessType = DistributeKeyConstant.SO_B2B_ORDER_KEY, keyName = "dto.ids", waiteTime = 60, unlockAfterTx = true)
     public Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto) {
         List<String> ids = dto.getIds();
         List<SoInfoEntity> list = this.listByIds(ids);
@@ -2044,6 +2047,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    @DistributeLocker(businessType = DistributeKeyConstant.SO_B2B_ORDER_KEY, keyName = "ids", waiteTime = 60, unlockAfterTx = true)
     public List<BatchResultDTO>  deleteByIds(List<String> ids) {
         List<SoInfoEntity> list = this.listByIds(ids);
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
@@ -2135,6 +2139,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    @DistributeLocker(businessType = DistributeKeyConstant.SO_B2B_ORDER_KEY, keyName = "ids", waiteTime = 60, unlockAfterTx = true)
     public Boolean invalid(List<String> ids, String remark) {
         List<SoInfoEntity> list = this.listByIds(ids);
         String waitSubmitStatus = BillApproveStatusEnum.WAIT_SUBMIT.getStatus();

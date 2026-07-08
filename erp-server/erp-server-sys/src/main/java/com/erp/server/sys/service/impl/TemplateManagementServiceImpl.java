@@ -6,6 +6,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -33,6 +34,7 @@ import com.common.business.threadlocal.UserContext;
 import com.erp.server.sys.service.OperateLogService;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
+import com.common.message.constant.DistributeKeyConstant;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -77,6 +79,7 @@ public class TemplateManagementServiceImpl extends SuperServiceImpl<TemplateMana
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.SYS_TEMPLATE_DEFAULT_KEY, keyName = "addDTO.type", unlockAfterTx = true)
     public BaseResultDTO.AddDTO add(TemplateManagementDTO.AddDTO addDTO) {
         if(addDTO.getBizType().equals(TemplateManagementBizTypeEnum.PURCHASEFRAMEWORK.getCode())){
             throw new ServiceException("采购框架合同无法创建模板");
@@ -119,6 +122,7 @@ public class TemplateManagementServiceImpl extends SuperServiceImpl<TemplateMana
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.SYS_TEMPLATE_DEFAULT_KEY, keyName = "addOrUpdateDTO.type", unlockAfterTx = true)
     public Boolean update(TemplateManagementDTO.UpdateDTO addOrUpdateDTO) {
         if(addOrUpdateDTO.getBizType().equals(TemplateManagementBizTypeEnum.PURCHASEFRAMEWORK.getCode())){
             throw new ServiceException("采购框架合同无法创建模板");

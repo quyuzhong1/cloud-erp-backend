@@ -6,7 +6,6 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
@@ -21,17 +20,10 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.PdfUtil;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
-import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.FastDFSClientUtil;
-import com.erp.model.dmp.dto.CfgAppClientDTO;
-import com.erp.model.dmp.entity.CfgAppClientEntity;
-import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.oms.dto.SoB2cDTO;
-import com.erp.model.oms.entity.ShopAuthEntity;
-import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.enums.PackageStatusEnum;
@@ -39,7 +31,6 @@ import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.*;
-import com.erp.model.tms.entity.LogisticsAddressEntity;
 import com.erp.model.tms.entity.TransferDeclareDetailEntity;
 import com.erp.model.tms.entity.TransferDeclareEntity;
 import com.erp.model.tms.enums.LogisticsAddressTypeEnum;
@@ -49,49 +40,28 @@ import com.erp.model.wms.dto.PackageForecastDetailDTO;
 import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
-import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
-import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.tms.feign.ForecastFeign;
 import com.erp.rpc.tms.feign.LogisticsAuthFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.tms.feign.TransferDeclareFeign;
-import com.erp.server.wms.constant.PackageForecastConstant;
 import com.erp.server.wms.convert.PackageForecastConverter;
 import com.erp.server.wms.mapper.PackageForecastMapper;
 import com.erp.server.wms.service.*;
-import com.erp.tms.aliexpress.api.IopResponse;
-import com.erp.tms.aliexpress.model.handover.*;
-import com.erp.tms.aliexpress.model.handover.request.CancelRequest;
-import com.erp.tms.aliexpress.model.handover.request.CommitRequest;
-import com.erp.tms.aliexpress.model.handover.request.HandoverQueryRequest;
-import com.erp.tms.aliexpress.model.handover.request.PdfRequest;
-import com.erp.tms.aliexpress.model.handover.response.BaseResponse;
-import com.erp.tms.aliexpress.model.handover.response.HandoverCommitResult;
-import com.erp.tms.aliexpress.model.handover.response.HandoverQueryResponse;
-import com.erp.tms.aliexpress.model.handover.response.PdfResponse;
-import com.erp.tms.aliexpress.model.order.response.BaseResult;
-import com.erp.tms.aliexpress.model.order.response.ErrorResponse;
-import com.erp.tms.aliexpress.service.AliExpressHandoverService;
-import com.erp.tms.aliexpress.util.ApiException;
+import com.erp.server.wms.service.adapter.AliExpressPackageForecastAdapter;
+import com.erp.server.wms.service.adapter.PackageForecastPlatformAdapter;
+import com.erp.server.wms.service.adapter.PackageForecastPlatformAdapterFactory;
 import com.sdk.oms.tiktok.dto.tiktok.fully.TikTokFullyShippingProviderReq;
 import com.sdk.oms.tiktok.dto.tiktok.fully.TikTokFullyShippingProviderResp;
-import com.sdk.oms.tiktok.dto.tiktok.fully.TikTokFullyShippingReq;
-import com.sdk.oms.tiktok.dto.tiktok.fully.TikTokFullyShippingResp;
 import com.sdk.oms.tiktok.dto.tiktok.order.FullyDeliveryOrderDTO;
-import com.sdk.oms.tiktok.dto.tiktok.packages.CombinePackageGroupsBean;
-import com.sdk.oms.tiktok.dto.tiktok.packages.CombinePackagePramDTO;
-import com.sdk.oms.tiktok.dto.tiktok.split.CombinePackageViewDTO;
 import com.sdk.oms.tiktok.service.TikTokFullService;
-import com.sdk.oms.tiktok.service.TikTokPackageService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import sun.misc.BASE64Decoder;
@@ -99,13 +69,10 @@ import sun.misc.BASE64Decoder;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.*;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_PACKAGE_FORECAST;
@@ -121,6 +88,12 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_PACKAGE_FOR
 @Slf4j
 @Service
 public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecastMapper, PackageForecastEntity> implements PackageForecastService {
+
+    private static final String TIKTOK_DELIVERY_MODE_SELF = "SELF_DELIVERY";
+    private static final String TIKTOK_DELIVERY_MODE_PLATFORM = "PLATFORM_DELIVERY";
+    private static final String UPLOAD_FAILURE_MESSAGE = "上传失败，请查看日志或联系管理员处理";
+    private static final String CANCEL_FAILURE_MESSAGE = "取消上传失败，请查看日志或联系管理员处理";
+
     @Resource
     private OperateLogService operateLogService;
 
@@ -146,23 +119,9 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
     private SoB2cFeign soB2cFeign;
 
     @Resource
-    private DmpTaskFeign dmpTaskFeign;
-
-    @Resource
-    private ShopInfoFeign shopInfoFeign;
-
-    @Resource
-    private AliExpressHandoverService aliExpressHandoverService;
-
-    @Resource
-    private TikTokPackageService tikTokPackageService;
-
-    @Resource
     private SoB2cDeliveryService soB2cDeliveryService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
-    @Resource(name ="packAsyncExecutor")
-    private ThreadPoolTaskExecutor packAsyncExecutor;
 
     @Resource
     private WmsAttachmentService wmsAttachmentService;
@@ -172,6 +131,12 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
 
     @Resource
     private DictBasicService dictBasicService;
+
+    @Resource
+    private PackageForecastPlatformAdapterFactory packageForecastPlatformAdapterFactory;
+
+    @Resource
+    private AliExpressPackageForecastAdapter aliExpressPackageForecastAdapter;
 
     @Resource
     @Lazy
@@ -266,6 +231,11 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         List<String> ids = list.stream().map(PackageForecastDTO.PagingViewDTO::getId).distinct().collect(Collectors.toList());
         List<PackageForecastDetailEntity> allDetailEntityList = packageForecastDetailService.listDbByMainIds(ids);
         Map<String, List<PackageForecastDetailEntity>> forecastDetailMap = CollUtil.isNotEmpty(allDetailEntityList) ? allDetailEntityList.stream().collect(Collectors.groupingBy(PackageForecastDetailEntity::getMainId)) : Collections.emptyMap();
+        List<String> soIds = CollectionUtils.emptyIfNull(allDetailEntityList).stream().map(PackageForecastDetailEntity::getSoId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        List<SoB2cEntity> soB2cEntityList = CollectionUtils.isNotEmpty(soIds) ? soB2cFeign.listByIds(soIds) : Collections.emptyList();
+        Map<String, String> platformOrderCodeMap = CollUtil.isNotEmpty(soB2cEntityList) ? soB2cEntityList.stream()
+                .filter(item -> StringUtils.isNotBlank(item.getId()))
+                .collect(Collectors.toMap(SoB2cEntity::getId, item -> StringUtils.defaultString(item.getPlatformCode()), (left, right) -> left)) : Collections.emptyMap();
         List<String> soCodes = allDetailEntityList.stream().map(PackageForecastDetailEntity::getSoCode).distinct().collect(Collectors.toList());
         List<TransferDeclareDetailEntity> transferDeclareDetailEntityList = transferDeclareFeign.listBySoCodeList(soCodes);
         Map<String, String> detailSoCodeMap = CollUtil.isNotEmpty(transferDeclareDetailEntityList) ? transferDeclareDetailEntityList.stream().collect(Collectors.toMap(
@@ -279,7 +249,9 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             List<PackageForecastDetailEntity> detailEntityList = forecastDetailMap.get(item.getId());
             if (CollUtil.isNotEmpty(detailEntityList)){
                 String soCode = detailEntityList.stream().map(PackageForecastDetailEntity::getSoCode).filter(StringUtils::isNotBlank).findFirst().orElse("");
-                item.setDetailViewDTOList(PackageForecastConverter.INSTANCE.convertPagingDetailViewList(detailEntityList));
+                List<PackageForecastDTO.PagingDetailViewDTO> detailViewDTOList = PackageForecastConverter.INSTANCE.convertPagingDetailViewList(detailEntityList);
+                detailViewDTOList.forEach(detail -> detail.setPlatformOrderCode(platformOrderCodeMap.getOrDefault(detail.getSoId(), "")));
+                item.setDetailViewDTOList(detailViewDTOList);
                 item.setTransferDeclareCode(declareEntityMap.getOrDefault(detailSoCodeMap.getOrDefault(soCode, ""), ""));
             }
             item.setUploadStatusName(PackageUploadStatusEnum.getName(item.getUploadStatus()));
@@ -344,13 +316,12 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
 
     /**
      * 取消上传
+     * 平台接口调用不可回滚，不用全局事务包裹远程操作；适配器负责本地更新失败后的补偿提示。
      *
      * @param id
      * @return
      */
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO cancel(String id) {
         PackageForecastEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
@@ -364,130 +335,53 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             throw new ServiceException("仅上传成功可操作");
         }
         //物流商
-        String supplierId = entity.getLogisticsSupplierId();
-        LogisticsSupplierDTO.AuthDTO authDTO = logisticsAuthFeign.getAuthBySupplierId(supplierId);
-        String logisticsPlatform = authDTO.getLogisticsPlatform();
         try {
-            //如果这里是速卖通的话就 对接平台
-            if (logisticsPlatform.equals(PlatformDictEnum.ALI_EXPRESS.getCode())) {
-                aliExpressCancel(logisticsPlatform, entity);
+            String supplierId = entity.getLogisticsSupplierId();
+            LogisticsSupplierDTO.AuthDTO authDTO = logisticsAuthFeign.getAuthBySupplierId(supplierId);
+            if (Objects.isNull(authDTO)) {
+                throw new ServiceException("物流商不存在");
             }
-            if (logisticsPlatform.equals(PlatformDictEnum.TIK_TOK.getCode())) {
-                tikTokCancel(entity);
-            }
-            if (logisticsPlatform.equals(PlatformDictEnum.TIK_TOK_FULLY.getCode())) {
-                tikTokFullyCancel(entity);
-            }
-            entity.setUploadStatus(PackageUploadStatusEnum.CANCEL.getCode());
-            entity.setHandoverStatus("");
-            entity.setTransportNo("");
-            entity.setHandoverNo("");
-            entity.setRemark("");
-            entity.setPlatformPackageNo("");
-            entity.setPlatformNo(entity.getHandoverNo() + "/" + entity.getPlatformPackageNo());
-            this.updateById(entity);
-            return BatchResultDTO.success(entity.getId(), entity.getCode(), "取消上传");
+            String logisticsPlatform = authDTO.getLogisticsPlatform();
+            PackageForecastPlatformAdapter adapter = packageForecastPlatformAdapterFactory.getByPlatform(logisticsPlatform)
+                    .orElseThrow(() -> new ServiceException(platformName(logisticsPlatform) + "平台尚未对接取消上传"));
+            return firstResultOrThrow(adapter.cancel(Collections.singletonList(id)), "取消上传");
         } catch (Exception e) {
-            entity.setRemark("取消失败原因:" + e.getMessage());
-            this.updateById(entity);
-            log.error("取消上传失败>>>>", e);
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "取消上传失败:"+e.getMessage());
-        }
-
-    }
-    @Transactional(rollbackFor = Exception.class)
-    public void tikTokFullyCancel(PackageForecastEntity entity) {
-        if(StringUtils.isBlank(entity.getHandoverNo())){
-            return;
-        }
-        List<PackageForecastDetailEntity> detailEntityList = packageForecastDetailService.listDbByMainId(entity.getId());
-        List<String> soIds = detailEntityList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList());
-        List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
-        List<String> shopIds = soB2cEntityList.stream().map(SoB2cEntity::getShopId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
-        if(entity.getCollectMode().equals(PackageForecastCollectModeEnum.SELF_SEND.getCode())){
-            throw new ServiceException("商家自配方式不支持取消组包");
-        }
-        if(CollectionUtils.isEmpty(shopIds)){
-            throw new ServiceException("销售订单店铺未找到");
-        }
-        if (shopIds.size() > 1){
-            throw new ServiceException("TikTok不支持多店铺取消组包");
-        }
-        tikTokFullService.cancelLogistics(shopIds.get(0), entity.getHandoverNo());
-        //将相同组包号的数据都取消
-        List<PackageForecastEntity> sameCodeList = lambdaQuery().eq(PackageForecastEntity::getHandoverNo, entity.getHandoverNo())
-                .ne(PackageForecastEntity::getId, entity.getId())
-                .list();
-        if(CollectionUtils.isNotEmpty(sameCodeList)){
-            for (PackageForecastEntity packageForecastEntity : sameCodeList) {
-                packageForecastEntity.setUploadStatus(PackageUploadStatusEnum.CANCEL.getCode());
-                packageForecastEntity.setHandoverStatus("");
-                packageForecastEntity.setTransportNo("");
-                packageForecastEntity.setHandoverNo("");
-                packageForecastEntity.setRemark("");
-                packageForecastEntity.setPlatformPackageNo("");
-                packageForecastEntity.setPlatformNo(packageForecastEntity.getHandoverNo() + "/" + packageForecastEntity.getPlatformPackageNo());
+            log.error("组包预报单取消失败, id: {}, code: {}", entity.getId(), entity.getCode(), e);
+            String failureMessage = operationFailureMessage(e, CANCEL_FAILURE_MESSAGE);
+            entity.setRemark(failureMessage);
+            try {
+                this.updateById(entity);
+            } catch (Exception updateException) {
+                log.error("组包预报单取消失败后更新失败原因失败, id: {}, code: {}", entity.getId(), entity.getCode(), updateException);
             }
-            this.updateBatchById(sameCodeList);
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), failureMessage);
         }
+
     }
 
-    private void tikTokCancel(PackageForecastEntity entity) {
-        List<PackageForecastDetailEntity> detailEntityList = packageForecastDetailService.listDbByMainId(entity.getId());
-        List<String> soIds = detailEntityList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList());
-        List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
-        List<String> shopIds = soB2cEntityList.stream().map(SoB2cEntity::getShopId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
-        if(CollectionUtils.isEmpty(shopIds)){
-            throw new ServiceException("销售订单店铺未找到");
+    @Override
+    public List<BatchResultDTO> cancel(List<String> ids) {
+        Optional<PackageForecastPlatformAdapter> adapterOptional = packageForecastPlatformAdapterFactory.getByForecastIds(ids);
+        if (adapterOptional.isPresent()) {
+            return adapterOptional.get().cancel(ids);
         }
-        if (shopIds.size() > 1){
-            throw new ServiceException("TikTok不支持多店铺取消组包");
-        }
-        List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cFeign.listDetailByMainIds(soIds);
-        String packageId = soB2cDetailEntityList.stream().map(SoB2cDetailEntity::getPlatformPackageId).filter(StringUtils::isNotBlank).findFirst().orElse(null);
-        if (StringUtils.isBlank(packageId)){
-            throw new ServiceException("TikTok包裹号为空");
-        }
-        List<String> orderIds = soB2cEntityList.stream().map(SoB2cEntity::getPlatformCode).collect(Collectors.toList());
-        tikTokPackageService.uncombinePackage(shopIds.get(0),entity.getPlatformPackageNo(),orderIds);
-    }
-
-
-    /**
-     * 速卖通取消上传
-     *
-     * @param logisticsPlatform
-     * @param entity
-     */
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    public void aliExpressCancel(String logisticsPlatform, PackageForecastEntity entity) {
-        List<PackageForecastDetailEntity> forecastDetailList = packageForecastDetailService.listDbByMainId(entity.getId());
-        List<String> soIds = forecastDetailList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList());
-        List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
-        List<String> shopIds = soB2cEntityList.stream().map(SoB2cEntity::getShopId).collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(shopIds)){
-            throw new ServiceException("销售订单店铺未找到");
-        }
-        PackageForecastDTO.AlExpressHandoverBaseDTO base = this.getAlExpressHandoverBase(logisticsPlatform, shopIds.get(0));
-//        PackageForecastDTO.AlExpressHandoverBaseDTO base = getAlExpressHandoverBase(logisticsPlatform);
-        CancelRequest cancelRequest = CancelRequest.builder().
-                userInfo(base.getUserInfo()).client(base.getClient()).
-                handoverContentId(Long.valueOf(entity.getPlatformPackageNo())).
-                build();
-        try {
-            IopResponse iopResponse = aliExpressHandoverService.cancel(base.getAuthMap(), cancelRequest);
-            BaseResult baseResult = JSONObject.parseObject(iopResponse.getBody(), BaseResult.class);
-            ErrorResponse errorResponse = baseResult.getErrorResponse();
-            //表示失败了
-            if (Objects.nonNull(errorResponse)) {
-                throw new ServiceException(errorResponse.getSubMsg());
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        for (String id : ids) {
+            BatchResultDTO cancelResult;
+            try {
+                cancelResult = this.cancel(id);
+            } catch (Exception e) {
+                log.error("组包预报单取消失败", e);
+                PackageForecastEntity entity = this.getById(id);
+                if (Objects.isNull(entity)) {
+                    cancelResult = BatchResultDTO.fail(id, id, "组包预报单不存在, 取消失败");
+                } else {
+                    cancelResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), operationFailureMessage(e, CANCEL_FAILURE_MESSAGE));
+                }
             }
-        } catch (ApiException e) {
-            log.error("取消上传交接单失败>>>>>>{}", e);
-            throw new ServiceException(e.getMessage());
+            resultDTOS.add(cancelResult);
         }
-
-
+        return resultDTOS;
     }
 
     /**
@@ -497,113 +391,52 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
      */
     @Override
     public PackageForecastDTO.AlExpressHandoverBaseDTO getAlExpressHandoverBase(String logisticsPlatform, String shopId) {
-
-        PackageForecastDTO.AlExpressHandoverBaseDTO alExpressHandoverBaseDTO = new PackageForecastDTO.AlExpressHandoverBaseDTO();
-        CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
-        AppClientEnum appClientEnum = AppClientEnum.ALI_EXPRESS_TOKEN;
-        findDTO.setBusinessType(appClientEnum.getBusinessType());
-        findDTO.setDictPlatform(logisticsPlatform);
-        findDTO.setPlatformType(appClientEnum.getPlatformType());
-        CfgAppClientEntity cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
-        ApiResult<List<ShopAuthEntity>> shopAuthResult = shopInfoFeign.getAuthShopByPlatformType(logisticsPlatform);
-        if (!shopAuthResult.isSuccess()) {
-            throw new ServiceException("获取店铺token失败");
-        }
-        String sellerIdFlag = PackageForecastConstant.SELLER_ID;
-        List<ShopAuthEntity> shopAuthList = shopAuthResult.getData().stream().filter(s -> s.getExtendData().contains(sellerIdFlag) && shopId.equals(s.getShopId())).collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(shopAuthList)) {
-            throw new ServiceException("获取店铺速卖通卖家id失败");
-        }
-        if (Objects.isNull(cfgAppClient)) {
-            throw new ServiceException("未找到对应平台");
-        }
-        ShopAuthEntity shopAuthEntity = shopAuthList.get(0);
-        Map<String, String> authMap = new HashMap<>(4);
-        authMap.put("clientId", cfgAppClient.getClientId());
-        authMap.put("clientSecret", cfgAppClient.getClientSecret());
-        authMap.put("token", shopAuthEntity.getToken());
-        JSONObject jsonObject = JSONObject.parseObject(shopAuthEntity.getExtendData());
-        //买家id
-        String sellerId = jsonObject.getString("sellerId");
-        String client = PackageForecastConstant.CLIENT;
-        UserInfo userInfo = UserInfo.builder().topUserKey(sellerId).build();
-        alExpressHandoverBaseDTO.setClient(client);
-        alExpressHandoverBaseDTO.setAuthMap(authMap);
-        alExpressHandoverBaseDTO.setUserInfo(userInfo);
-        alExpressHandoverBaseDTO.setLocale("zh_CN");
-        return alExpressHandoverBaseDTO;
+        return aliExpressPackageForecastAdapter.getAlExpressHandoverBase(logisticsPlatform, shopId);
     }
 
     @Override
     public List<PackageForecastEntity> getAliExpressHandoverList(DateTime dateTime) {
-        return baseMapper.getAliExpressHandoverList(dateTime);
+        return aliExpressPackageForecastAdapter.listSyncTrackingStatus(dateTime);
     }
 
     @Async
     public void syncAliExpressInfo(PackageForecastEntity packageForecastEntity){
-        queryAliExpressInfo(packageForecastEntity);
+        aliExpressPackageForecastAdapter.syncTrackingStatus(packageForecastEntity);
     }
 
     @Override
     public void queryAliExpressInfo(PackageForecastEntity packageForecastEntity) {
-
-        PackageForecastDTO.AlExpressHandoverBaseDTO alExpressHandoverBase = null;
-        try {
-            List<PackageForecastDetailEntity> forecastDetailList = packageForecastDetailService.listDbByMainId(packageForecastEntity.getId());
-            List<String> soIds = forecastDetailList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList());
-            List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
-            List<String> shopIds = soB2cEntityList.stream().map(SoB2cEntity::getShopId).collect(Collectors.toList());
-            if (CollectionUtils.isEmpty(shopIds)){
-                throw new ServiceException("销售订单店铺未找到");
-            }
-            alExpressHandoverBase = this.getAlExpressHandoverBase(LogisticsPlatformEnum.ALI_EXPRESS.getCode(), shopIds.get(0));
-        }catch (Exception e){
-            log.error("syncPackageForecastInfo error : {}", e.getMessage());
-        }
-        if (Objects.isNull(alExpressHandoverBase)){
-            return;
-        }
-        HandoverQueryRequest handoverQueryRequest = HandoverQueryRequest.builder()
-                .client(alExpressHandoverBase.getClient())
-                .locale("zh_CN")
-                .orderCode(packageForecastEntity.getHandoverNo())
-                .userInfo(alExpressHandoverBase.getUserInfo())
-                .build();
-        try {
-            IopResponse response = aliExpressHandoverService.queryContent(alExpressHandoverBase.getAuthMap(), handoverQueryRequest);
-            if (StringUtils.isEmpty(response.getBody())) {
-                return;
-            }
-            BaseResponse baseResponse = JSONObject.parseObject(response.getBody(), BaseResponse.class);
-            if (StringUtils.isEmpty(baseResponse.getResult())) {
-                return;
-            }
-            BaseResult baseResult = JSONObject.parseObject(baseResponse.getResult(), BaseResult.class);
-            if (StringUtils.isEmpty(baseResult.getData())) {
-                return;
-            }
-            HandoverQueryResponse queryResponse = JSONObject.parseObject(baseResult.getData(), HandoverQueryResponse.class);
-            packageForecastEntity.setHandoverStatus(queryResponse.getStatus());
-            packageForecastEntity.setTransportNo(queryResponse.getTrackingNumber());
-            baseMapper.updateById(packageForecastEntity);
-            //更新明细表
-            List<ParcelOrder> parcelOrderList = queryResponse.getParcelOrderList();
-            if (CollectionUtils.isEmpty(parcelOrderList)) {
-                return;
-            }
-            parcelOrderList.forEach(parcelOrder -> {
-                packageForecastDetailService.updateStatusByOrderCode(parcelOrder.getOrderCode(), parcelOrder.getStatus());
-            });
-        } catch (ApiException e) {
-            log.error("接口调用异常记录：{}",e.getErrorMessage());
-        }
+        aliExpressPackageForecastAdapter.syncTrackingStatus(packageForecastEntity);
     }
 
 
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    public List<BatchResultDTO> upload(PackageForecastDTO.UploadDTO dto) {
+        Optional<PackageForecastPlatformAdapter> adapterOptional = packageForecastPlatformAdapterFactory.getByPlatform(dto.getDeliveryPlatform());
+        if (adapterOptional.isPresent()) {
+            return adapterOptional.get().upload(dto);
+        }
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO uploadResult;
+            try {
+                uploadResult = upload(id, dto.getCollectMode(), dto.getCollectAddressId());
+            } catch (Exception e) {
+                log.error("组包预报上传失败===>{}", e);
+                PackageForecastEntity entity = this.getById(id);
+                if (Objects.isNull(entity)) {
+                    uploadResult = BatchResultDTO.fail(id, id, "组包预报单不存在, 上传失败");
+                } else {
+                    uploadResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), operationFailureMessage(e, UPLOAD_FAILURE_MESSAGE));
+                }
+            }
+            resultDTOS.add(uploadResult);
+        }
+        return resultDTOS;
+    }
+
+    @Override
     public BatchResultDTO upload(String id, String collectMode, String collectAddressId) {
         PackageForecastEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
@@ -628,83 +461,64 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             throw new ServiceException("物流商不存在");
         }
         try {
-            entity.setUploadStatus(PackageUploadStatusEnum.UPLOAD_SUCCESS.getCode());
-            entity.setCollectMode(collectMode);
-            entity.setCollectAddressId(collectAddressId);
             String logisticsPlatform = authDTO.getLogisticsPlatform();
-            //如果这里是速卖通的话就 对接平台
-            if (logisticsPlatform.equals(PlatformDictEnum.ALI_EXPRESS.getCode())) {
-                if(StringUtils.isBlank(collectAddressId)){
-                    throw new ServiceException("揽收地址不能为空");
-                }
-                //物流地址
-                LogisticsAddressEntity addressEntity = logisticsFeign.getLogisticsAddressById(collectAddressId);
-                if (Objects.isNull(addressEntity)) {
-                    throw new ServiceException("揽收地址不存在");
-                }
-                String addressName = addressEntity.getName();
-                entity.setCollectAddress(addressName);
-                addBigPackage(logisticsPlatform, entity, addressEntity);
-                //针对待揽收状态  异步拉取速卖通的数据
-                CompletableFuture.runAsync(() -> {
-                    this.syncAliExpressInfo(entity);
-                }, packAsyncExecutor);
-                this.updateById(entity);
-                return BatchResultDTO.success(entity.getId(), entity.getCode(), "上传成功");
-            }else if (logisticsPlatform.equals(PlatformDictEnum.TIK_TOK.getCode())) {
-                String newPackageId = this.tikTokMergePackage(entity);
-                entity.setHandoverNo(newPackageId);
-                entity.setUploadStatus(PackageUploadStatusEnum.UPLOAD_SUCCESS.getCode());
-                entity.setPlatformNo(entity.getHandoverNo() + "/" + entity.getPlatformPackageNo());
-                this.updateById(entity);
-                return BatchResultDTO.success(entity.getId(), entity.getCode(), "上传成功");
-            }else{
-                entity.setUploadStatus(failure);
-                entity.setRemark("上传失败:" + PlatformDictEnum.getByCode(logisticsPlatform).getName()+"平台尚未对接上传");
-                this.updateById(entity);
-                return BatchResultDTO.fail(entity.getId(), entity.getCode(), "上传失败" + PlatformDictEnum.getByCode(logisticsPlatform).getName()+"平台尚未对接上传");
-            }
+            PackageForecastPlatformAdapter adapter = packageForecastPlatformAdapterFactory.getByPlatform(logisticsPlatform)
+                    .orElseThrow(() -> new ServiceException(platformName(logisticsPlatform) + "平台尚未对接上传"));
+            PackageForecastDTO.UploadDTO dto = new PackageForecastDTO.UploadDTO();
+            dto.setIds(Collections.singletonList(id));
+            dto.setDeliveryPlatform(logisticsPlatform);
+            dto.setCollectMode(collectMode);
+            dto.setCollectAddressId(collectAddressId);
+            return firstResultOrThrow(adapter.upload(dto), "上传");
         } catch (Exception e) {
-            entity.setUploadStatus(failure);
-            entity.setRemark("上传失败:" + e.getMessage());
+            log.error("组包预报上传失败>>>>>", e);
+            persistUploadFailureIfNeeded(entity, e);
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), operationFailureMessage(e, UPLOAD_FAILURE_MESSAGE));
+        }
+
+
+    }
+
+    private void persistUploadFailureIfNeeded(PackageForecastEntity entity, Exception e) {
+        PackageForecastEntity latestEntity = this.getById(entity.getId());
+        if (Objects.nonNull(latestEntity)) {
+            entity = latestEntity;
+        }
+        if (hasPlatformInfo(entity)) {
+            log.warn("组包预报上传异常但已存在平台信息，不覆盖为上传失败, id: {}, code: {}, handoverNo: {}, platformPackageNo: {}",
+                    entity.getId(), entity.getCode(), entity.getHandoverNo(), entity.getPlatformPackageNo());
+            return;
+        }
+        entity.setUploadStatus(PackageUploadStatusEnum.UPLOAD_FAILURE.getCode());
+        entity.setRemark(operationFailureMessage(e, UPLOAD_FAILURE_MESSAGE));
+        try {
             this.updateById(entity);
-            log.error("组包预报上传失败>>>>>{}", e);
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "上传失败" + e.getMessage());
+        } catch (Exception updateException) {
+            log.error("组包预报上传失败后更新失败状态失败, id: {}, code: {}",
+                    entity.getId(), entity.getCode(), updateException);
         }
-
-
     }
 
-    private String tikTokMergePackage(PackageForecastEntity entity) {
-        List<PackageForecastDetailEntity> detailEntityList = packageForecastDetailService.listDbByMainId(entity.getId());
-        List<String> soIds = detailEntityList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList());
-        List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
-        List<String> shopIds = soB2cEntityList.stream().map(SoB2cEntity::getShopId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
-        if(CollectionUtils.isEmpty(shopIds)){
-            throw new ServiceException("销售订单店铺未找到");
-        }
-        if (shopIds.size() > 1){
-            throw new ServiceException("TikTok不支持多店铺组包预报");
-        }
-        List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cFeign.listDetailByMainIds(soIds);
-        String packageId = soB2cDetailEntityList.stream().map(SoB2cDetailEntity::getPlatformPackageId).filter(StringUtils::isNotBlank).findFirst().orElse(null);
-        if (StringUtils.isBlank(packageId)){
-            throw new ServiceException("TikTok包裹号为空");
-        }
-        List<String> orderIds = soB2cEntityList.stream().map(SoB2cEntity::getPlatformCode).collect(Collectors.toList());
-        CombinePackagePramDTO combinePackagePramDTO = new CombinePackagePramDTO();
-        List<CombinePackageGroupsBean> combinePackageGroupsBeanList = new ArrayList<>();
-        CombinePackageGroupsBean combinePackageGroupsBean = new CombinePackageGroupsBean();
-        combinePackageGroupsBean.setId(packageId);
-        combinePackageGroupsBean.setOrderIds(orderIds);
-        combinePackageGroupsBeanList.add(combinePackageGroupsBean);
-        combinePackagePramDTO.setCombinablePackages(combinePackageGroupsBeanList);
-        CombinePackageViewDTO combinePackageViewDTO = tikTokPackageService.combinePackage(shopIds.get(0),combinePackagePramDTO);
-        if(combinePackageViewDTO.getCode()!=0){
-            throw new ServiceException("TIKTOK组包失败，{}",combinePackageViewDTO.getMessage());
-        }
-        return combinePackageViewDTO.getData().getPackages().get(0).getId();
+    private boolean hasPlatformInfo(PackageForecastEntity entity) {
+        return StringUtils.isNotBlank(entity.getHandoverNo())
+                || StringUtils.isNotBlank(entity.getPlatformPackageNo())
+                || StringUtils.isNotBlank(entity.getPlatformNo());
     }
+
+    private String operationFailureMessage(Exception e, String defaultMessage) {
+        if (e instanceof ServiceException && StringUtils.isNotBlank(e.getMessage())) {
+            return e.getMessage();
+        }
+        return defaultMessage;
+    }
+
+    private BatchResultDTO firstResultOrThrow(List<BatchResultDTO> resultList, String operationName) {
+        if (CollectionUtils.isEmpty(resultList)) {
+            throw new ServiceException(operationName + "结果为空");
+        }
+        return resultList.get(0);
+    }
+
     @Override
     public String print(String id) {
         PackageForecastEntity entity = this.getById(id);
@@ -727,170 +541,33 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         String logisticsPlatform = authDTO.getLogisticsPlatform();
         String base64 = "";
         try {
-            //如果这里是速卖通的话就 对接平台
-            if (logisticsPlatform.equals(PlatformDictEnum.ALI_EXPRESS.getCode())) {
-                base64 = aliExpressPrint(logisticsPlatform, entity);
-            }else if(logisticsPlatform.equals(PlatformDictEnum.TIK_TOK.getCode())){
-                List<WmsAttachmentDTO.UpdateDTO> updateDTOS = wmsAttachmentService.getByBusinessIds(Collections.singletonList(id));
-                if (CollectionUtils.isNotEmpty(updateDTOS)) {
-                    WmsAttachmentDTO.UpdateDTO updateDTO = updateDTOS.get(0);
-                    String url = updateDTO.getAttachUrl();
-                    InputStream inputStream = FastDFSClientUtil.getInputStream(url);
-                    base64 = PdfUtil.base64ForPdf(inputStream);
-                    String prefix = "data:application/pdf;base64,";
-                    base64 = prefix + base64;
-                }else{
-                    return "";
-                }
-            }else if(logisticsPlatform.equals(PlatformDictEnum.TIK_TOK_FULLY.getCode())){
-                if(StringUtils.isBlank(entity.getPlatformPackageNo())){
-                    throw new ServiceException("TikTok全托管平台的物流子单（包裹号）不能为空");
-                }
-                List<PackageForecastDetailEntity> forecastDetailList = packageForecastDetailService.listDbByMainId(entity.getId());
-                List<String> soIds = forecastDetailList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList());
-                List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
-                List<String> shopIds = soB2cEntityList.stream().map(SoB2cEntity::getShopId).collect(Collectors.toList());
-                if (CollectionUtils.isEmpty(shopIds)){
-                    throw new ServiceException("销售订单店铺未找到");
-                }
-                String url = tikTokFullService.printLogistics(soB2cEntityList.get(0).getShopId(), entity.getPlatformPackageNo());
-                base64 = PdfUtil.convertPdfUrlToBase64(url,true);
-                String prefix = "data:application/pdf;base64,";
-                base64 = prefix + base64;
-            }
+            PackageForecastPlatformAdapter adapter = packageForecastPlatformAdapterFactory.getByPlatform(logisticsPlatform)
+                    .orElseThrow(() -> new ServiceException(platformName(logisticsPlatform) + "平台尚未对接打印"));
+            base64 = adapter.print(id);
         } catch (Exception e) {
-            log.error("打印失败>>>>>>>{}", e);
-            throw new ServiceException(e.getMessage());
+            log.error("打印失败>>>>>>>", e);
+            if (e instanceof ServiceException && StringUtils.isNotBlank(e.getMessage())) {
+                throw (ServiceException) e;
+            }
+            throw new ServiceException("打印失败");
         }
         if (CharSequenceUtil.isNotBlank(base64)) {
-            entity.setPrintStatus(PackagePrintStatusEnum.ALREADY.getCode());
-            this.updateById(entity);
+            boolean updated = this.lambdaUpdate()
+                    .set(PackageForecastEntity::getPrintStatus, PackagePrintStatusEnum.ALREADY.getCode())
+                    .setSql(Objects.nonNull(entity.getVersion()), "version = version + 1")
+                    .eq(PackageForecastEntity::getId, id)
+                    .eq(Objects.nonNull(entity.getVersion()), PackageForecastEntity::getVersion, entity.getVersion())
+                    .eq(PackageForecastEntity::getIsDeleted, false)
+                    .update();
+            if (!updated) {
+                // 面单已生成时优先返回PDF，打印状态更新失败交由日志/后续同步处理，避免误导用户重复打印。
+                log.warn("组包预报打印成功但本地打印状态更新失败, id: {}, code: {}, version: {}",
+                        id, entity.getCode(), entity.getVersion());
+            }
         } else {
             throw new ServiceException("打印失败");
         }
         return base64;
-    }
-
-
-    /**
-     * 速卖通打印
-     *
-     * @param logisticsPlatform
-     * @param entity
-     */
-    public String aliExpressPrint(String logisticsPlatform, PackageForecastEntity entity) {
-        List<PackageForecastDetailEntity> forecastDetailList = packageForecastDetailService.listDbByMainId(entity.getId());
-        List<String> soIds = forecastDetailList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList());
-        List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
-        List<String> shopIds = soB2cEntityList.stream().map(SoB2cEntity::getShopId).collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(shopIds)){
-            throw new ServiceException("销售订单店铺未找到");
-        }
-        PackageForecastDTO.AlExpressHandoverBaseDTO base = getAlExpressHandoverBase(logisticsPlatform, shopIds.get(0));
-        PdfRequest pdfRequest = PdfRequest.builder()
-                .client(base.getClient())
-                .handoverContentId(Long.valueOf(entity.getPlatformPackageNo()))
-                .locale("zh_CN")
-                .type(1)
-                .userInfo(base.getUserInfo())
-                .build();
-        try {
-            IopResponse response = aliExpressHandoverService.getPdf(base.getAuthMap(), pdfRequest);
-            BaseResponse baseResponse = JSONObject.parseObject(response.getBody(), BaseResponse.class);
-            BaseResult baseResult = JSONObject.parseObject(baseResponse.getResult(), BaseResult.class);
-            if (StringUtils.isNotEmpty(baseResult.getErrorMsg()) || StringUtils.isEmpty(baseResult.getData())) {
-                throw new ServiceException(baseResult.getErrorMsg());
-            }
-            PdfResponse pdfResponse = JSONObject.parseObject(baseResult.getData(), PdfResponse.class);
-            String prefix = "data:application/pdf;base64,";
-            String base64Str = prefix + pdfResponse.getBody();
-            return base64Str;
-        } catch (ApiException e) {
-            log.error("速卖通打印失败>>>{}", e);
-            throw new ServiceException(e.getMessage());
-        }
-
-    }
-
-    /**
-     * 速卖通组包
-     *
-     * @param logisticsPlatform
-     * @param entity
-     * @param logisticsAddress
-     */
-    public void addBigPackage(String logisticsPlatform, PackageForecastEntity entity, LogisticsAddressEntity logisticsAddress) {
-        List<PackageForecastDetailEntity> forecastDetailList = packageForecastDetailService.listDbByMainId(entity.getId());
-        List<String> soIds = forecastDetailList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList());
-        List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
-        List<String> shopIds = soB2cEntityList.stream().map(SoB2cEntity::getShopId).distinct().collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(shopIds)){
-            throw new ServiceException("销售订单店铺未找到");
-        }
-        if (shopIds.size() > 1){
-            throw new ServiceException("速卖通不支持多店铺组包预报");
-        }
-        PackageForecastDTO.AlExpressHandoverBaseDTO base = getAlExpressHandoverBase(logisticsPlatform, shopIds.get(0));
-
-        List<String> soIdList = forecastDetailList.stream().map(PackageForecastDetailEntity::getSoId).collect(Collectors.toList());
-        Map<String, String> authMap = base.getAuthMap();
-        //根据销售订单获取销售物流信息
-        List<SoB2cLogisticsEntity> soB2cLogisticsList = soB2cFeign.listSoB2cLogisticsByMainIdList(soIdList);
-        List<String> orderCodeList = soB2cLogisticsList.stream().map(SoB2cLogisticsEntity::getCode).filter(StringUtils::isNotBlank).collect(Collectors.toList());
-        if (orderCodeList.size() != forecastDetailList.size()) {
-            throw new ServiceException("未获取到小包第三方交易号");
-        }
-        List<SellerParcelOrder> sellerParcelOrderList = new ArrayList<>(1);
-        String topUserKey = base.getUserInfo().getTopUserKey();
-        packageForecastDetailService.updateBatchById(forecastDetailList);
-        SellerParcelOrder parcelOrder = new SellerParcelOrder();
-        parcelOrder.setSellerId(topUserKey);
-        parcelOrder.setOrderCodeList(orderCodeList);
-        sellerParcelOrderList.add(parcelOrder);
-
-        //揽收地址基础信息
-        AddressBase addressBase = PackageForecastConverter.INSTANCE.convertAddressBase(logisticsAddress);
-        //揽收地址信息
-        AddressInfo addressInfo = PackageForecastConverter.INSTANCE.convertAddressInfo(logisticsAddress);
-        addressInfo.setAddress(addressBase);
-        /**
-         * 要创建交接单的小包编码集合
-         */
-        String type = PackageForecastConstant.CAINIAO_PICKUP;
-        String collectMode = entity.getCollectMode();
-        String selfSend = PackageForecastCollectModeEnum.SELF_SEND.getCode();
-        if (selfSend.equals(collectMode)) {
-            type = PackageForecastConstant.SELF_SEND;
-        }
-        String client = PackageForecastConstant.CLIENT;
-        CommitRequest commitRequest = CommitRequest.builder().pickInfo(addressInfo).
-                skipInvalidParcel(Boolean.FALSE).
-                orderCodeList(orderCodeList).
-                handoverOrderId("").
-                appointmentType("bigbag").
-                weight(entity.getTotalPackageWeight().setScale(0, RoundingMode.HALF_UP)).
-                weightUnit(entity.getWeightUnit()).userInfo(base.getUserInfo()).
-                sellerParcelOrderList(sellerParcelOrderList).
-                type(type).client(client).locale(base.getLocale()).build();
-        try {
-            IopResponse iopResponse = aliExpressHandoverService.commit(authMap, commitRequest);
-            BaseResult baseResult = JSONObject.parseObject(iopResponse.getBody(), BaseResult.class);
-            if (Objects.nonNull(baseResult.getErrorResponse())) {
-                throw new ServiceException(baseResult.getErrorResponse().getSubMsg());
-            }
-            HandoverCommitResult handoverCommitResult = JSONObject.parseObject(baseResult.getResult(), HandoverCommitResult.class);
-            if (Objects.nonNull(handoverCommitResult) && handoverCommitResult.getSuccess()) {
-                entity.setHandoverNo(handoverCommitResult.getResponse().getHandoverContentCode());
-                entity.setPlatformPackageNo(String.valueOf(handoverCommitResult.getResponse().getHandoverContentId()));
-                entity.setPlatformNo(entity.getHandoverNo() + "/" + entity.getPlatformPackageNo());
-                entity.setRemark("");
-            }
-        } catch (ApiException e) {
-            log.error("创建交接单失败>>>>>>{}", e);
-            throw new ServiceException(e.getMessage());
-        }
-
-
     }
 
 
@@ -1029,7 +706,19 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
      * @param list
      */
     private void fillExportPaging(List<PackageForecastDTO.ExportViewDTO> list) {
+        List<String> soIds = list.stream()
+                .map(PackageForecastDTO.ExportViewDTO::getSoId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        List<SoB2cEntity> soB2cEntityList = CollectionUtils.isNotEmpty(soIds) ? soB2cFeign.listByIds(soIds) : Collections.emptyList();
+        Map<String, SoB2cEntity> soB2cEntityMap = CollectionUtils.emptyIfNull(soB2cEntityList).stream()
+                .collect(Collectors.toMap(SoB2cEntity::getId, item -> item, (oldValue, newValue) -> oldValue));
         for (PackageForecastDTO.ExportViewDTO item : list) {
+            SoB2cEntity soB2cEntity = soB2cEntityMap.get(item.getSoId());
+            if (Objects.nonNull(soB2cEntity)) {
+                item.setPlatformOrderCode(soB2cEntity.getPlatformCode());
+            }
             String uploadStatus = item.getUploadStatus();
             String uploadStatusName = PackageUploadStatusEnum.getName(uploadStatus);
             item.setUploadStatusName(uploadStatusName);
@@ -1287,8 +976,9 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         String platform = allSoB2cEntityList.get(0).getDictPlatform();
         if(!platform.equals(PlatformDictEnum.TIK_TOK_FULLY.getCode())
                 && !platform.equals(PlatformDictEnum.ALI_EXPRESS.getCode())
-                && !platform.equals(PlatformDictEnum.TIK_TOK.getCode())){
-            throw new ServiceException("非tiktok,tiktok全托管，速卖通平台无需上传");
+                && !platform.equals(PlatformDictEnum.TIK_TOK.getCode())
+                && !platform.equals(PlatformDictEnum.SHOPEE.getCode())){
+            throw new ServiceException("非tiktok,tiktok全托管，速卖通，Shopee平台无需上传");
         }
         return platform;
     }
@@ -1327,62 +1017,36 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO uploadTikTokFully(PackageForecastDTO.UploadDTO dto) {
-        List<PackageForecastDetailEntity> detailEntityList = packageForecastDetailService.listDbByMainIds(dto.getIds());
-        List<String> soIds = detailEntityList.stream().map(PackageForecastDetailEntity::getSoId).collect(Collectors.toList());
-        List<SoB2cLogisticsEntity> soB2cLogisticsEntityList = soB2cFeign.listSoB2cLogisticsByMainIdList(soIds);
-        List<String> deliveryCodes = soB2cLogisticsEntityList.stream().map(SoB2cLogisticsEntity::getCode).collect(Collectors.toList());
-        List<PackageForecastEntity> packageForecastEntityList = this.listByIds(dto.getIds());
-        List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
-        TikTokFullyShippingReq tikTokFullyShippingReq = new TikTokFullyShippingReq();
-        tikTokFullyShippingReq.setDeliveryOrderCodes(deliveryCodes);
-        //物流地址
-        LogisticsAddressEntity addressEntity = logisticsFeign.getLogisticsAddressById(dto.getCollectAddressId());
-        if (Objects.isNull(addressEntity)) {
-            throw new ServiceException("揽收地址不存在");
+        PackageForecastPlatformAdapter adapter = packageForecastPlatformAdapterFactory.getByPlatform(PlatformDictEnum.TIK_TOK_FULLY.getCode())
+                .orElseThrow(() -> new ServiceException("TikTok全托管平台尚未对接上传"));
+        dto.setDeliveryPlatform(PlatformDictEnum.TIK_TOK_FULLY.getCode());
+        List<BatchResultDTO> resultList = adapter.upload(dto);
+        if (CollectionUtils.isEmpty(resultList)) {
+            throw new ServiceException("TikTok全托管上传结果为空");
         }
-        String addressName = addressEntity.getName();
-        tikTokFullyShippingReq.setSenderContactId(dto.getAddressId());
-        if(dto.getCollectMode().equals(PackageForecastCollectModeEnum.SELF_SEND.getCode())){
-            tikTokFullyShippingReq.setDeliveryMode("SELF_DELIVERY");
-            TikTokFullyShippingReq.ReserveInfoDTO reserveInfoDTO = new TikTokFullyShippingReq.ReserveInfoDTO();
-            reserveInfoDTO.setPredictedShipTime((int) dto.getDeliveryTime().atStartOfDay().toInstant(ZoneOffset.ofHours(8)).getEpochSecond());
-            reserveInfoDTO.setPredictedArrivedTime((int) dto.getArrivedTime().atStartOfDay().toInstant(ZoneOffset.ofHours(8)).getEpochSecond());
-            tikTokFullyShippingReq.setReserveInfo(reserveInfoDTO);
-        }else{
-            tikTokFullyShippingReq.setDeliveryMode("PLATFORM_DELIVERY");
-            tikTokFullyShippingReq.setShippingBoxQuantity(dto.getTotalBox());
-            tikTokFullyShippingReq.setTotalWeight(new TikTokFullyShippingReq.TotalWeightDTO(String.valueOf(dto.getDeliveryWeight()),"GRAM"));
-            tikTokFullyShippingReq.setLogistics(new TikTokFullyShippingReq.LogisticsDTO(dto.getLogisticType(),dto.getProviderCode(),dto.getProviderName()));
-            TikTokFullyShippingReq.ReserveInfoDTO reserveInfoDTO = new TikTokFullyShippingReq.ReserveInfoDTO();
-            reserveInfoDTO.setPredictedPickupTime((int) dto.getCollectDate().atStartOfDay().toInstant(ZoneOffset.ofHours(8)).getEpochSecond());
-            reserveInfoDTO.setPredictedPickupGe((int) dto.getStartTime().toInstant(ZoneOffset.ofHours(8)).getEpochSecond());
-            reserveInfoDTO.setPredictedPickupLt((int) dto.getEndTime().toInstant(ZoneOffset.ofHours(8)).getEpochSecond());
-            tikTokFullyShippingReq.setReserveInfo(reserveInfoDTO);
+        List<BatchResultDTO> failList = resultList.stream()
+                .filter(result -> !Boolean.TRUE.equals(result.getSuccess()))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(failList)) {
+            String failMsg = failList.stream()
+                    .limit(3)
+                    .map(result -> StringUtils.defaultString(result.getCode(), result.getId()) + ":" + StringUtils.defaultString(result.getMsg()))
+                    .collect(Collectors.joining(";"));
+            return BatchResultDTO.fail(failList.get(0).getId(), failList.get(0).getCode(),
+                    String.format("TikTok全托管上传失败%d条：%s", failList.size(), failMsg));
         }
-        try {
-            TikTokFullyShippingResp tikTokFullyShippingResp = tikTokFullService.shipment(soB2cEntityList.get(0).getShopId(),tikTokFullyShippingReq);
-            packageForecastEntityList.forEach(v-> {
-                v.setHandoverNo(tikTokFullyShippingResp.getData().getLogisticsOrder());
-                v.setUploadStatus(PackageUploadStatusEnum.UPLOAD_SUCCESS.getCode());
-                v.setCollectMode(dto.getCollectMode());
+        BatchResultDTO firstResult = resultList.get(0);
+        if (resultList.size() == 1) {
+            return firstResult;
+        }
+        return BatchResultDTO.success(firstResult.getId(), firstResult.getCode(),
+                String.format("TikTok全托管上传成功，共%d条", resultList.size()));
+    }
 
-                v.setCollectAddressId(dto.getCollectAddressId());
-                v.setCollectAddress(addressName);
-                v.setRemark("");
-                v.setPlatformNo(v.getHandoverNo() + "/" + v.getPlatformPackageNo());
-                this.updateBatchById(packageForecastEntityList);
-            });
-        }catch (Exception e){
-            packageForecastEntityList.forEach(v-> {
-                v.setUploadStatus(PackageUploadStatusEnum.UPLOAD_FAILURE.getCode());
-                v.setRemark(e.getMessage());
-            });
-            this.updateBatchById(packageForecastEntityList);
-            return BatchResultDTO.fail(dto.getIds().get(0), packageForecastEntityList.get(0).getCode(), e.getMessage());
-        }
-        return BatchResultDTO.success();
+    private String platformName(String platform) {
+        PlatformDictEnum platformDictEnum = PlatformDictEnum.getByCode(platform);
+        return Objects.nonNull(platformDictEnum) ? platformDictEnum.getName() : platform;
     }
 
     @Override
@@ -1515,9 +1179,9 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         TikTokFullyShippingProviderReq tikTokFullyShippingProviderReq = new TikTokFullyShippingProviderReq();
         tikTokFullyShippingProviderReq.setDeliveryOption(dto.getDeliveryOption());
         if(dto.getCollectMode().equals(PackageForecastCollectModeEnum.SELF_SEND.getCode())){
-            tikTokFullyShippingProviderReq.setDeliveryMode("SELF_DELIVERY");
+            tikTokFullyShippingProviderReq.setDeliveryMode(TIKTOK_DELIVERY_MODE_SELF);
         }else{
-            tikTokFullyShippingProviderReq.setDeliveryMode("PLATFORM_DELIVERY");
+            tikTokFullyShippingProviderReq.setDeliveryMode(TIKTOK_DELIVERY_MODE_PLATFORM);
         }
         tikTokFullyShippingProviderReq.setSenderContactId(dto.getAddressId());
         tikTokFullyShippingProviderReq.setDeliveryOrderCodes(deliveryCodes);

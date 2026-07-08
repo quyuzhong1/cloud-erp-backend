@@ -14,7 +14,7 @@ import com.baomidou.mybatisplus.core.incrementer.IdentifierGenerator;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.annotation.DataIdempotent;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.FileTemplateConstant;
 import com.common.business.constant.RedisCacheConstants;
@@ -37,6 +37,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
+import com.common.message.constant.DistributeKeyConstant;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
@@ -236,6 +237,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     private ExecutorService printLabelPool;
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.SO_B2C_DELIVERY_KEY, keyName = "addDTO.soCode", unlockAfterTx = true)
     @Override
     public SoB2cDeliveryEntity add(SoB2cDeliveryDTO.AddDTO addDTO) {
         SoB2cDeliveryEntity existEntity = this.getNotCancelBySoId(addDTO.getSourceId());
@@ -480,6 +482,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @Override
     @GlobalTransactional
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO falseDelivery(String id) {
         SoB2cDeliveryEntity entity = this.getById(id);
         if (PlatformDictEnum.TIK_TOK_FULLY.getCode().equals(entity.getDictPlatform())){
@@ -705,6 +708,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     }
 
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "id")
     public BatchResultDTO printPickingCancel(String id) {
         SoB2cDeliveryEntity soB2cDeliveryEntity = this.getById(id);
         if (ObjectUtil.isEmpty(soB2cDeliveryEntity)) {
@@ -1152,6 +1156,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     }
 
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "id")
     public String printLogisticsBillConfirmById(String id, HttpServletResponse response) {
 //        SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO dto = new SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO();
 //        dto.setPrintType(SoB2cDeliveryPrintTypeEnum.LOGISTICS_BILL.getCode());
@@ -1341,6 +1346,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     }
 
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "entity.id")
     public BatchResultDTO updateTransferWarehouse(SoB2cDeliveryEntity entity, List<String> changeIds) {
         //无需校验单据状态，关联的调拨单必须非审核通过、或者无关联的调拨单
         List<TransferInfoEntity> transferInfoEntities = transferInfoService.listBySourceId(entity.getId());
@@ -1839,7 +1845,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
      * @return
      */
     @Override
-    @DataIdempotent(keyIdName = "id")
+    @DistributeLocker(businessType = DistributeKeyConstant.SO_B2C_DELIVERY_KEY, keyName = "id")
     public BatchResultDTO delivery(String id, String deliveryType, LocalDate deliveryDate) {
         //手工发货
         String manual = DeliverTypeEnum.MANUAL.getCode();
@@ -1920,6 +1926,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     }
 
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "id")
     public BatchResultDTO finishPrint(String id) {
         SoB2cDeliveryEntity soB2cDeliveryEntity = this.getById(id);
         if (ObjectUtil.isEmpty(soB2cDeliveryEntity)) {

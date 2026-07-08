@@ -2,7 +2,6 @@ package com.erp.server.wms.controller.pda;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import com.common.business.annotation.DataIdempotent;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
@@ -153,7 +152,6 @@ public class PdaPackingTaskController extends BaseController {
      * @param dto
      * @return com.common.core.controller.vo.ApiResult
      **/
-    @DataIdempotent(keyIdName = "dto.taskId")
     @PostMapping("/stagingPacking")
     @LogAction(value = LogActionEnum.INSERT, desc = "暂存本箱")
     public ApiResult<WmsCartonDTO.PrintDTO> stagingPacking(@RequestBody @Validated WmsCartonSpecDTO.AddDTO dto) {
@@ -172,7 +170,6 @@ public class PdaPackingTaskController extends BaseController {
      * @param dto
      * @return com.common.core.controller.vo.ApiResult
      **/
-    @DataIdempotent(keyIdName = "dto.taskId")
     @PostMapping("/packingSave")
     @LogAction(value = LogActionEnum.INSERT, desc = "完成并打印本箱")
     public ApiResult<WmsCartonDTO.PrintDTO> pdaPackingSave(@RequestBody @Validated WmsCartonSpecDTO.AddDTO dto) {
@@ -202,8 +199,8 @@ public class PdaPackingTaskController extends BaseController {
      * @param dto
      * @return com.erp.model.wms.dto.FirstMileDeliveryDTO.FirstMileCartonView
      **/
-    @DataIdempotent(keyIdName = "dto.cartonId")
     @PostMapping("/adjustPackingSave")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "PDA调整装箱保存")
     public ApiResult<String> adjustPackingSave(@RequestBody @Validated WmsCartonDTO.AdjustSaveDTO dto) {
         String code = packingTaskService.adjustPackingSave(dto);
         return success(code);
@@ -227,7 +224,6 @@ public class PdaPackingTaskController extends BaseController {
      * @param dto
      * @return com.erp.model.wms.dto.FirstMileDeliveryDTO.FirstMileCartonView
      **/
-    @DataIdempotent(keyIdName = "dto.specId")
     @PostMapping("/cartonSpecSave")
     public ApiResult<String> cartonSpecSave(@RequestBody @Validated WmsCartonSpecDTO.SpecSaveDTO dto) {
         return packingTaskService.cartonSpecSave(dto);

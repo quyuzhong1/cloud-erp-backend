@@ -12,6 +12,7 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -22,6 +23,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastDFSClientUtil;
+import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.sys.dto.DictCityDTO;
 import com.erp.model.sys.dto.DictCountryDTO;
@@ -129,6 +131,7 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
     @Override
     @Transactional(rollbackFor = Exception.class)
     @CacheEvict(cacheNames = RedisCacheConstants.SYS_COUNTRY_BY_ID, key = "#dto.id")
+    @DistributeLocker(businessType = DistributeKeyConstant.KINGDEE_SYNC_KEY, keyName = "dto.id", unlockAfterTx = true)
     public Boolean update(DictCountryDTO.UpdateDTO dto) {
         String id=dto.getId();
         DictCountryEntity entity = this.getById(id);
@@ -490,6 +493,7 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
     @Override
     @Transactional(rollbackFor = Exception.class)
     @CacheEvict(cacheNames = RedisCacheConstants.SYS_COUNTRY_BY_ID, key = "#id")
+    @DistributeLocker(businessType = DistributeKeyConstant.KINGDEE_SYNC_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO delete(String id) {
         DictCountryEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
