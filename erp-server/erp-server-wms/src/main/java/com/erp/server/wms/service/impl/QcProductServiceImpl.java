@@ -162,9 +162,7 @@ public class QcProductServiceImpl extends SuperServiceImpl<QcProductMapper, QcPr
                 productView.setBoxHeight(productPackVO.getBoxHeight());
                 productView.setProductNetWeight(productPackVO.getProductNetWeight());
                 productView.setBoxWeight(productPackVO.getBoxWeight());
-                if (productPackVO.getBoxQty() != null) {
-                    productView.setBoxQty(productPackVO.getBoxQty().intValue());
-                }
+                productView.setBoxQty(productPackVO.getBoxQty());
             } else {
                 productView.setSkuNo(product.getSkuNo());
                 productView.setProductGrade(product.getProductGrade());
