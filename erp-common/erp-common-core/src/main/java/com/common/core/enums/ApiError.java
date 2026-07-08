@@ -1368,6 +1368,8 @@ public enum ApiError implements Serializable {
     SO_B2C_LOGISTICS_PLATFORM_REQUIRED(10691,"B2C销售订单【{0}】物流下单平台不能为空"),
     SO_B2C_MULTI_CHANNEL_FORBIDDEN(10692,"B2C销售订单【{0}】不支持设置多个销售渠道"),
     SO_B2C_SPLIT_KOL_FORBIDDEN(10727,"销售订单由寄样申请单生成，无法拆单"),
+    SO_B2C_MAGALU_SPLIT_FORBIDDEN(10728,"magalu平台订单不支持拆单"),
+    SO_B2C_MAGALU_MERGE_FORBIDDEN(10729,"magalu平台订单不支持合并"),
     SO_DETAIL_SKU_ALL_EMPTY_FORBIDDEN(10693,"销售订单【{0}】明细中sku不能全部为空"),
     SO_REPLACE_SKU_STATUS_INVALID(10694,"销售订单【{0}】只能在待提交、审核不通过或已发货状态更换发货SKU"),
     SO_B2B_SALESMAN_CHANGE(10695,"b2b客户销售员变更单" ),
@@ -1965,6 +1967,13 @@ public enum ApiError implements Serializable {
     LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_RULE_NOT_FOUND_FOR_SOURCE(13706,"来源单【{0}】未找到匹配的报关规则"),
     LOGISTICS_DECLARE_AUTO_DETAIL_FIELD_REQUIRED_BATCH(13707,"以下SKU缺少报关信息，请先到PLM物流产品资料完善后再生成报关单：{0}"),
     LOGISTICS_DECLARE_SPLIT_DETAIL_MISSING(13708,"拆分未覆盖全部明细，业务单号【{0}】箱号【{1}】未分配到任何一票，缺失SKU：{2}"),
+    LOGISTICS_DECLARE_SOURCE_STATUS_SYNC_FAILED(13709,"回写{0}报关状态失败，sourceIds={1}"),
+    LOGISTICS_DECLARE_DETAIL_MID_SAVE_FAILED(13710,"报关明细中间表保存失败"),
+    LOGISTICS_DECLARE_DETAIL_MID_NOT_EXIST(13711,"报关明细中间表不存在"),
+    LOGISTICS_DECLARE_DETAIL_MID_UPDATE_FAILED(13712,"报关明细中间表更新失败"),
+    SO_DELIVERY_NOTICE_CUSTOMER_COUNTRY_INCONSISTENT(13710,"所选发货通知单客户国家不一致"),
+    COMMON_COUNTRY_INFO_NOT_FOUND(13711,"国家信息不存在"),
+    LOGISTICS_DECLARE_B2B_SO_DETAIL_NOT_FOUND(13712,"来源单【{0}】SKU【{1}】未找到销售订单明细，无法按客户分发规则取价"),
 
 
     LOGISTICS_RECON_IMPORT_TEMPLATE_NOT_RECOGNIZED(13648,"无法识别导入模板，请检查配置是否正确"),
@@ -1998,6 +2007,7 @@ public enum ApiError implements Serializable {
     LOGISTICS_RECON_BILL_REVERT_NO_ELIGIBLE(13676,"没有可回退为待确认的已确认数据"),
     LOGISTICS_RECON_BILL_REVERT_COST_STATUS_FORBIDDEN(13677,"存在已确认关联数据，但物流费用核算状态非待生成或支付状态非未支付（待付款/待退款），无法回退为待确认"),
     ASYNC_TASK_DETAIL_TIMEOUT(13648,"明细执行超时，系统自动标记失败"),
+    LOGISTICS_SALES_PLATFORM_REQUIRED(13649,"销售平台不能为空"),
 
     /**
      * 财务管理 错误 信息 14000-14500

@@ -137,6 +137,12 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
             dto.setInstanceId(latest.getId());
         }
         if (latest != null && isTerminalInstance(latest.getStatus())) {
+            List<WorkflowTaskRecordEntity> existingTasks = listBySourceId(dto.getSourceId(), dto.getSourceTypeEnum().getCode());
+            if (CollUtil.isNotEmpty(existingTasks)) {
+                log.info("编排实例已终态且节点记录仍存在，跳过重复创建，sourceType={}, sourceId={}, instanceId={}, status={}",
+                        dto.getSourceTypeEnum().getCode(), dto.getSourceId(), latest.getId(), latest.getStatus());
+                return;
+            }
             addTask(dto);
             WorkflowTaskRecordDTO.AddTaskDTO dispatch = buildDispatchDto(
                     workflowTaskInstanceService.getById(dto.getInstanceId()), dto);

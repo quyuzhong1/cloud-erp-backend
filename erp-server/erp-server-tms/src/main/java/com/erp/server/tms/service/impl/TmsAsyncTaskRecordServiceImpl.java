@@ -132,7 +132,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
             .in(TmsAsyncTaskRecordEntity::getStatus,Arrays.asList(TmsAsyncTaskRecordStatusEnum.ING.getCode(), TmsAsyncTaskRecordStatusEnum.PENDING.getCode()))
             .list();
 
-        //仅头程/小包费用分摊防重维度需要不同月份
+        //仅头程/小包费用分摊防重维度需要不同月份；小包下推还需区分销售平台集合
         if (CollUtil.isNotEmpty(runningTasks)) {
             String reportDate = extractReportDate(compactJson);
             if (StringUtils.isBlank(reportDate)) {
@@ -140,7 +140,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
                 throw new ServiceException("存在进行中的异步任务，请稍后重试或联系管理员");
             }
             Optional<TmsAsyncTaskRecordEntity> periodConflict = runningTasks.stream()
-                    .filter(task -> reportDate.equals(extractReportDate(task.getDataJson())))
+                    .filter(task -> isSameSmallBagPushScope(compactJson, task.getDataJson()))
                     .findFirst();
             if (periodConflict.isPresent()) {
                 TmsAsyncTaskRecordEntity conflict = periodConflict.get();
@@ -197,6 +197,24 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         TmsAsyncTaskRecordDTO.FirstMilePushAllocationPayloadDTO firstMilePayload =
                 parseEnvelopePayload(envelope, TmsAsyncTaskRecordDTO.FirstMilePushAllocationPayloadDTO.class);
         return firstMilePayload == null ? null : trimToNull(firstMilePayload.getReportDate());
+    }
+
+    private boolean isSameSmallBagPushScope(String jsonA, String jsonB) {
+        return Objects.equals(extractReportDate(jsonA), extractReportDate(jsonB))
+            && CollUtil.isEqualList(extractSalesPlatformList(jsonA), extractSalesPlatformList(jsonB));
+    }
+
+    private List<String> extractSalesPlatformList(String json) {
+        TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope = parseEnvelope(json);
+        if (envelope == null) {
+            return Collections.emptyList();
+        }
+        TmsAsyncTaskRecordDTO.SmallBagPushAllocationPayloadDTO smallBagPayload =
+            parseEnvelopePayload(envelope, TmsAsyncTaskRecordDTO.SmallBagPushAllocationPayloadDTO.class);
+        if (smallBagPayload == null || CollUtil.isEmpty(smallBagPayload.getSalesPlatformList())) {
+            return Collections.emptyList();
+        }
+        return smallBagPayload.getSalesPlatformList();
     }
 
     private static String trimToNull(String value) {

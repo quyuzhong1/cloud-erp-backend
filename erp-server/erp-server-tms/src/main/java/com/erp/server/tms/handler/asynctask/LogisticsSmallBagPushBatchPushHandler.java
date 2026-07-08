@@ -1,5 +1,6 @@
 package com.erp.server.tms.handler.asynctask;
 
+import cn.hutool.core.collection.CollUtil;
 import com.common.business.vo.LoginUser;
 import com.erp.model.tms.dto.CfgSettingValueDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
@@ -58,6 +59,9 @@ public class LogisticsSmallBagPushBatchPushHandler
         if (StringUtils.isBlank(payload.getReportDate())) {
             return "核算日期为空";
         }
+        if (CollUtil.isEmpty(payload.getSalesPlatformList())) {
+            return "销售平台不能为空";
+        }
         if (StringUtils.isBlank(payload.getType())) {
             return "费用类型不能为空";
         }
@@ -81,9 +85,12 @@ public class LogisticsSmallBagPushBatchPushHandler
                                      int batchSize,
                                      TmsAsyncTaskRecordEntity taskRecord) {
         BatchBusinessIdProvider defaultProvider = (cursor, size) -> {
-            LogisticsBillCostDTO.CanPushAllocationPageQueryDTO query =
-                new LogisticsBillCostDTO.CanPushAllocationPageQueryDTO(
-                    payload.getReportDate(), payload.getType(), cursor, size, null);
+            LogisticsBillCostDTO.CanPushAllocationPageQueryDTO query = new LogisticsBillCostDTO.CanPushAllocationPageQueryDTO();
+            query.setReportDate(payload.getReportDate());
+            query.setType(payload.getType());
+            query.setLastId(cursor);
+            query.setBatchSize(size);
+            query.setSalesPlatformList(payload.getSalesPlatformList());
             return logisticsBillCostService.pageByCanPushAllocation(query);
         };
         return asyncTaskRecordService.pageBatchBusinessIds(

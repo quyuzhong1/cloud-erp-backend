@@ -7,6 +7,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.ThirdNoticePushRecordEntity;
 import com.erp.server.sys.service.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.annotation.Resource;
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("/feign/thirdNoticePushRecord")
 public class ThirdNoticePushRecordFeignController {
@@ -44,11 +46,17 @@ public class ThirdNoticePushRecordFeignController {
      */
     @PostMapping("/batchSendMqRecordConsumer")
     public Boolean batchSendMqRecordConsumer(@RequestBody ThirdNoticePushRecordDTO.BatchSendMqRecordConsumerDTO dto) {
+        boolean success = true;
         if (dto != null && CollUtil.isNotEmpty(dto.getJsonStrList())) {
             for (String jsonStr : dto.getJsonStrList()) {
-                thirdNoticePushRecordService.sendMqRecordConsumer(jsonStr);
+                try {
+                    thirdNoticePushRecordService.sendMqRecordConsumer(jsonStr);
+                } catch (Exception e) {
+                    success = false;
+                    log.error("batchSendMqRecordConsumer failed, jsonStr={}", jsonStr, e);
+                }
             }
         }
-        return true;
+        return success;
     }
 }

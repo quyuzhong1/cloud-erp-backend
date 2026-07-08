@@ -23,26 +23,11 @@ import java.util.List;
 public interface CfgDeclareRuleConditionMapper extends BaseMapper<CfgDeclareRuleConditionEntity> {
 
     /**
-    * 分页查询
-    * @param query
-    * @param params
-    * @return
-    */
-    IPage<CfgDeclareRuleConditionDTO.ListDTO> paging(Page query, @Param("params") CfgDeclareRuleConditionDTO.PagingParamDTO params);
-
-    /**
     * 状态数量
     * @param params
     * @return
     */
     List<ApproveStatusQtyDTO> listCount(@Param("params") CfgDeclareRuleConditionDTO.PagingParamDTO params);
-
-    /**
-    * 导出Excel查询
-    * @param params
-    * @return
-    */
-    List<CfgDeclareRuleConditionDTO.ListDTO> listExport(@Param("params") CfgDeclareRuleConditionDTO.ExportDTO params);
 
 
     /**

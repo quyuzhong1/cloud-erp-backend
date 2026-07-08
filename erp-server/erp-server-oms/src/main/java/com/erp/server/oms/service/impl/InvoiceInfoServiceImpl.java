@@ -677,7 +677,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         String uploadStatus = InvoiceInfoUploadStatusEnum.UPLOAD_SUCCESS.getCode();
         String remark = "";
         try  {
-            nfeInvoiceService.uploadNfeInvoice(soB2cEntity);
+            uploadStatus = nfeInvoiceService.uploadNfeInvoice(soB2cEntity);
         } catch (Exception e) {
             log.error("上传文件失败，返回信息{}", e.getMessage());
             uploadStatus = InvoiceInfoUploadStatusEnum.UPLOAD_FAILED.getCode();
@@ -795,6 +795,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         List<InvoiceInfoEntity> invoiceInfoEntityList = lambdaQuery().eq(InvoiceInfoEntity::getInvoiceType,InvoiceInfoInvoiceTypeEnum.VAT.getCode()).eq(InvoiceInfoEntity::getUploadStatus, InvoiceInfoUploadStatusEnum.UPLOADING.getCode()).list();
         invoiceInfoEntityList = invoiceInfoEntityList.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getQueryId()) && CharSequenceUtil.isNotBlank(e.getShopId())).collect(Collectors.toList());
         if(CollectionUtils.isEmpty(invoiceInfoEntityList)){
+            queryMagaluUploadingInvoice();
             return;
         }
         invoiceInfoEntityList = invoiceInfoEntityList.stream()
@@ -839,6 +840,59 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
                 updateList.add(invoiceInfoEntity);
             }finally {
                 TimeUnit.SECONDS.sleep(90);
+            }
+        }
+        if (CollectionUtils.isNotEmpty(updateList)){
+            service.updateBatchById(updateList);
+        }
+        if(CollectionUtils.isNotEmpty(updateSoB2cList)){
+            soB2cService.updateBatchById(updateSoB2cList);
+        }
+        queryMagaluUploadingInvoice();
+    }
+
+    private void queryMagaluUploadingInvoice() {
+        List<InvoiceInfoEntity> invoiceInfoEntityList = listNfeUploading().stream()
+                .limit(30)
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(invoiceInfoEntityList)) {
+            return;
+        }
+        List<String> soIds = invoiceInfoEntityList.stream().map(InvoiceInfoEntity::getSoId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<SoB2cEntity> soB2cEntityList = soB2cService.listByIds(soIds);
+        List<InvoiceInfoEntity> updateList = new ArrayList<>();
+        List<SoB2cEntity> updateSoB2cList = new ArrayList<>();
+        for (InvoiceInfoEntity invoiceInfoEntity : invoiceInfoEntityList) {
+            SoB2cEntity soB2cEntity = soB2cEntityList.stream()
+                    .filter(e -> CharSequenceUtil.isNotBlank(invoiceInfoEntity.getSoId()) && invoiceInfoEntity.getSoId().equals(e.getId()))
+                    .findFirst()
+                    .orElse(null);
+            if (ObjUtil.isEmpty(soB2cEntity) || !PlatformDictEnum.MAGALU.getCode().equalsIgnoreCase(soB2cEntity.getDictPlatform())) {
+                continue;
+            }
+            try {
+                String uploadStatus = nfeInvoiceService.queryMagaluInvoiceUploadStatus(soB2cEntity, invoiceInfoEntity);
+                invoiceInfoEntity.setUploadStatus(uploadStatus);
+                if (InvoiceInfoUploadStatusEnum.UPLOAD_SUCCESS.getCode().equals(uploadStatus)) {
+                    invoiceInfoEntity.setRemark("");
+                    soB2cEntity.setNfeInvoiceStatus(SoB2cNfeStatusEnum.UPLOAD_SUCCESS.getCode());
+                    updateSoB2cList.add(soB2cEntity);
+                }
+                updateList.add(invoiceInfoEntity);
+            } catch (Exception e) {
+                log.error("{}Magalu查询发票异常", soB2cEntity.getCode(), e);
+                String errorMsg = e.getMessage();
+                if (CharSequenceUtil.contains(errorMsg, "Magalu发票校验失败")) {
+                    invoiceInfoEntity.setUploadStatus(InvoiceInfoUploadStatusEnum.UPLOAD_FAILED.getCode());
+                    invoiceInfoEntity.setRemark(errorMsg);
+                    soB2cEntity.setNfeInvoiceStatus(SoB2cNfeStatusEnum.UPLOAD_FAILURE.getCode());
+                    updateSoB2cList.add(soB2cEntity);
+                } else {
+                    invoiceInfoEntity.setUploadStatus(InvoiceInfoUploadStatusEnum.UPLOADING.getCode());
+                    invoiceInfoEntity.setRemark("Magalu查询发票结果异常" + errorMsg);
+                }
+                invoiceInfoEntity.setQueryResult(errorMsg);
+                updateList.add(invoiceInfoEntity);
             }
         }
         if (CollectionUtils.isNotEmpty(updateList)){

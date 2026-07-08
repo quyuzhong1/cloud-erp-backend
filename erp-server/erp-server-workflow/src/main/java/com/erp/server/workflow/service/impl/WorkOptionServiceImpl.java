@@ -588,7 +588,11 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 plmTaskFeign.moldRefSkuApprove(moldRefSkuApproveDTO);
                 break;
             default:
-                throw new ServiceException(ApiError.WF_APPROVE_FAILED);
+                BatchResultDTO plmApproveResult = workflowFeignApprove(entity, dto);
+                if (Boolean.FALSE.equals(plmApproveResult.getSuccess())) {
+                    throw new ServiceException(plmApproveResult.getMsg());
+                }
+                break;
         }
         return Boolean.TRUE;
     }
@@ -639,7 +643,8 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 scmTaskFeign.assetPurchaseChangeApprove(baseApproveParamDTO);
                 break;
             default:
-                throw new ServiceException(ApiError.WF_APPROVE_FAILED);
+                resultDTOList.add(workflowFeignApprove(entity, dto));
+                break;
         }
         BatchResultDTO resultDTO = resultDTOList.stream().filter(req -> !req.getSuccess()).findFirst().orElse(null);
         if (resultDTO != null) {
@@ -728,7 +733,8 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 resultDTOList = wmsTaskFeign.soOutstockApprove(baseApproveParamDTO);
                 break;
             default:
-                throw new ServiceException(ApiError.WF_APPROVE_FAILED);
+                resultDTOList.add(workflowFeignApprove(entity, dto));
+                break;
         }
         BatchResultDTO resultDTO = resultDTOList.stream().filter(req -> !req.getSuccess()).findFirst().orElse(null);
         if (resultDTO != null) {
@@ -766,7 +772,8 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 resultDTOList = fmsTaskFeign.assetDisposalApprove(baseApproveParamDTO);
                 break;
             default:
-                throw new ServiceException(ApiError.WF_APPROVE_FAILED);
+                resultDTOList.add(workflowFeignApprove(entity, dto));
+                break;
         }
         BatchResultDTO resultDTO = resultDTOList.stream().filter(req -> !req.getSuccess()).findFirst().orElse(null);
         if (resultDTO != null) {
@@ -788,12 +795,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
             throw new ServiceException(ApiError.WF_MENU_FEIGN_CLASS_NOT_FOUND);
         }
         BaseWorkflowService feignService = SpringUtil.getBean(feignBeanName);
-        ApproveDTO.ApproveOneDTO approveOneDTO = new ApproveDTO.ApproveOneDTO();
-        approveOneDTO.setId(dto.getId());
-        approveOneDTO.setType(dto.getType());
-        approveOneDTO.setComment(dto.getComment());
-        approveOneDTO.setBusinessKey(entity.getBusinessKey());
-        approveOneDTO.setIsNeedProcess(Boolean.TRUE);
+        ApproveDTO.ApproveOneDTO approveOneDTO = buildApproveOneDTO(entity, dto);
         switch (SourceTypeEnum.getByCode(entity.getBusinessKey())) {
             case SO_INFO:
                 resultDTOList = soInfoFeign.approve(baseApproveParamDTO);
@@ -834,12 +836,33 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 resultDTOList.add(feignService.approve(approveOneDTO));
                 break;
             default:
-                throw new ServiceException(ApiError.WF_APPROVE_FAILED);
+                resultDTOList.add(feignService.approve(approveOneDTO));
+                break;
         }
         BatchResultDTO resultDTO = resultDTOList.stream().filter(req -> !req.getSuccess()).findFirst().orElse(null);
         if (resultDTO != null) {
             throw new ServiceException(resultDTO.getMsg());
         }
         return Boolean.TRUE;
+    }
+
+    private BatchResultDTO workflowFeignApprove(ProcessManagementEntity entity, ApproveParamDTO dto) {
+        WorkMenuEntity menuEntity = workMenuService.getByModuleCode(entity.getBusinessKey());
+        String feignBeanName = menuEntity.getFeignBeanName();
+        if (CharSequenceUtil.isBlank(feignBeanName)) {
+            throw new ServiceException(ApiError.WF_MENU_FEIGN_CLASS_NOT_FOUND);
+        }
+        BaseWorkflowService feignService = SpringUtil.getBean(feignBeanName);
+        return feignService.approve(buildApproveOneDTO(entity, dto));
+    }
+
+    private ApproveDTO.ApproveOneDTO buildApproveOneDTO(ProcessManagementEntity entity, ApproveParamDTO dto) {
+        ApproveDTO.ApproveOneDTO approveOneDTO = new ApproveDTO.ApproveOneDTO();
+        approveOneDTO.setId(dto.getId());
+        approveOneDTO.setType(dto.getType());
+        approveOneDTO.setComment(dto.getComment());
+        approveOneDTO.setBusinessKey(entity.getBusinessKey());
+        approveOneDTO.setIsNeedProcess(Boolean.TRUE);
+        return approveOneDTO;
     }
 }

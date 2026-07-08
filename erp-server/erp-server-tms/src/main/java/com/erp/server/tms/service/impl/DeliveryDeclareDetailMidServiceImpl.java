@@ -1,11 +1,8 @@
 package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import com.common.core.excel.ExcelPrintUtils;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.tms.entity.*;
-import io.seata.spring.annotation.GlobalTransactional;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -24,23 +21,18 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
-import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.ProductBomHistoryDTO;
 import com.erp.model.plm.dto.ProductDetailDTO;
+import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.DeliveryDeclareDetailMidDTO;
-import com.erp.model.tms.enums.DeclareDeclareTypeEnum;
-import com.erp.model.tms.enums.DeclareNatureLevyEnum;
-import com.erp.model.tms.enums.DeclarePackTypeEnum;
-import com.erp.model.tms.enums.DeclareStatusEnum;
-import com.erp.model.tms.enums.DeclareSupervisionMethodEnum;
-import com.erp.model.tms.enums.DeclareTransactionMethodEnum;
-import com.erp.model.tms.enums.DeliveryDeclareDetailMidGenerateStatusEnum;
-import com.erp.model.tms.enums.CfgDeclareRuleReceiverTypeEnum;
-import com.erp.model.wms.dto.FirstMileDeliveryDTO;
-import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
+import com.erp.model.tms.dto.TmsDeclareBillDTO;
+import com.erp.model.tms.entity.CfgDeclareRuleEntity;
+import com.erp.model.tms.entity.DeliveryDeclareDetailMidEntity;
+import com.erp.model.tms.entity.TmsDeclareBillDetailEntity;
+import com.erp.model.tms.entity.TmsDeclareBillEntity;
+import com.erp.model.tms.enums.*;
 import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.model.wms.enums.WmsDeclareStatusEnum;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
@@ -63,7 +55,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
@@ -107,6 +98,9 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
     @Lazy
     @Resource
     private DeliveryDeclareDetailMidService self;
+    //展示专用：报关单尚未生成
+    private static final String NOT_GENERATED = "not";
+    private static final String NOT_GENERATED_NAME = "待生成";
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -115,7 +109,7 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         handleData(entity);
         boolean save = super.save(entity);
         if (!save) {
-            throw new ServiceException(ApiError.BILL_SAVE_FAIL, "报关明细中间表");
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_SAVE_FAILED);
         }
         operateLogService.addModuleOperateLog("新增报关明细中间表",
                 null, entity.getId(), "新增操作");
@@ -128,13 +122,13 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
     public Boolean update(DeliveryDeclareDetailMidDTO.UpdateDTO addOrUpdateDTO) {
         DeliveryDeclareDetailMidEntity old = super.getById(addOrUpdateDTO.getId());
         if (Objects.isNull(old)) {
-            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "报关明细中间表");
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_NOT_EXIST);
         }
         DeliveryDeclareDetailMidEntity entity = BeanMapperUtils.map(DeliveryDeclareDetailMidEntity.class, addOrUpdateDTO);
         handleData(entity);
         boolean save = super.updateById(entity);
         if (!save) {
-            throw new ServiceException(ApiError.BILL_UPDATE_FAILED);
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_UPDATE_FAILED);
         }
         operateLogService.addModuleOperateLogByObj(old, entity, null, entity.getId(), "更新报关明细中间表");
         return Boolean.TRUE;
@@ -170,28 +164,6 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         finish.setTabFlagName(DeliveryDeclareDetailMidGenerateStatusEnum.FINISH.getName());
         result.add(finish);
         return result;
-    }
-
-    @Override
-    public void exportList(DeliveryDeclareDetailMidDTO.ExportDTO param, HttpServletResponse response) {
-        List<DeliveryDeclareDetailMidDTO.ListDTO> list = this.baseMapper.listExport(param);
-        if(CollUtil.isEmpty(list)) {
-           return;
-        }
-        // 数据处理
-        fillList(list);
-
-        // 导出数据
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/deliveryDeclareDetailMid.xlsx";
-        String name = "报关明细中间单导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.FILE_EXPORT_FAILED);
-        }
     }
 
     @Override
@@ -540,7 +512,7 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
     @Override
     public DeliveryDeclareDetailMidDTO.ViewDTO view(String id) {
         DeliveryDeclareDetailMidEntity entity = super.getByIdOpt(id)
-                .orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "报关明细中间表"));
+                .orElseThrow(() -> new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_NOT_EXIST));
         DeliveryDeclareDetailMidDTO.ViewDTO viewDTO = BeanMapperUtils.map(DeliveryDeclareDetailMidDTO.ViewDTO.class, entity);
         if (CharSequenceUtil.isBlank(viewDTO.getTransferWarehouseNames())) {
             viewDTO.setTransferWarehouseNames(getTransferWarehouseNames(viewDTO.getTransferWarehouseIds()));
@@ -651,9 +623,7 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
     }
 
     @Override
-//    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    @Transactional(rollbackFor = Exception.class)
-    public Boolean batchAddMergeDetail(List<TmsDeclareBillDTO.MergeDeclareBillDTO> list,Boolean updateSourceDeclareStatus) {
+    public Boolean batchAddMergeDetail(List<TmsDeclareBillDTO.MergeDeclareBillDTO> list, Boolean updateSourceDeclareStatus) {
         List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList = collectSourceDetailList(list);
         if (CollUtil.isEmpty(sourceDetailList)) {
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_SAVE_REQUIRED);
@@ -680,7 +650,60 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         // 错误信息列出所有命中的来源单号，来源单 declare_status 保持 WAIT，等使用方调整目的国后再触发。
         tmsDeclareBillService.validateDestCountryNotMainlandChina(latestDetailList);
 
+        List<TmsDeclareBillDTO.BatchMergeBillData> preparedBills = prepareBatchMergeBills(declareBillType, latestMergeList);
+        self.batchAddMergeDetailInTx(sourceType, declareBillType, preparedBills, updateSourceDeclareStatus);
+        return Boolean.TRUE;
+    }
+
+    /**
+     * 批量保存合并报关单的事务内写库阶段。
+     *
+     * <p>入口方法已在事务外完成 Feign 查询、合并重算、规则匹配和实体构建；本方法必须通过
+     * {@code self.batchAddMergeDetailInTx(...)} 代理调用，确保事务只包住本地写库和必要的来源状态回写。</p>
+     *
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void batchAddMergeDetailInTx(String sourceType,
+                                        String declareBillType,
+                                        List<TmsDeclareBillDTO.BatchMergeBillData> preparedBills,
+                                        Boolean updateSourceDeclareStatus) {
         List<DeliveryDeclareDetailMidEntity> changedMidList = new ArrayList<>();
+        for (TmsDeclareBillDTO.BatchMergeBillData preparedBill : preparedBills) {
+            if (Objects.isNull(preparedBill) || CollUtil.isEmpty(preparedBill.getDeclareBillList())) {
+                continue;
+            }
+            List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> declareBillList = preparedBill.getDeclareBillList();
+            List<TmsDeclareBillDetailEntity> detailEntityList = preparedBill.getDetailEntityList();
+            TmsDeclareBillEntity declareBillEntity = preparedBill.getDeclareBillEntity();
+            BaseResultDTO.AddDTO addResult = tmsDeclareBillService.add(declareBillEntity, detailEntityList,
+                    SourceTypeEnum.getEnum(declareBillType), false);
+            changedMidList.addAll(saveGeneratedMidData(sourceType, declareBillList, detailEntityList,
+                    addResult.getId(), addResult.getCode()));
+        }
+        if (Boolean.TRUE.equals(updateSourceDeclareStatus)) {
+            List<String> sourceIds = changedMidList.stream()
+                    .map(DeliveryDeclareDetailMidEntity::getSourceId)
+                    .filter(CharSequenceUtil::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.toList());
+            tmsDeclareBillService.syncSourceDeclareStatusBySourceIds(declareBillType, sourceIds);
+        }
+    }
+
+    /**
+     * 事务外预构建批量合并报关单写库数据。
+     *
+     * <p>该方法会调用 {@link #buildDeclareBillEntity(String, List)}，其中包含报关头信息重算、
+     * 规则匹配和收货人填充等可能触发远程查询的逻辑，因此必须在事务外执行。</p>
+     *
+     * @param declareBillType 报关单类型
+     * @param latestMergeList 保存前重新计算得到的最新合并结果
+     * @return 可直接进入写库阶段的报关单主表、明细实体及合并明细映射
+     */
+    private List<TmsDeclareBillDTO.BatchMergeBillData> prepareBatchMergeBills(String declareBillType,
+                                                                             List<TmsDeclareBillDTO.MergeDeclareBillDTO> latestMergeList) {
+        List<TmsDeclareBillDTO.BatchMergeBillData> preparedBills = new ArrayList<>();
         for (TmsDeclareBillDTO.MergeDeclareBillDTO mergeDeclareBillDTO : latestMergeList) {
             if (Objects.isNull(mergeDeclareBillDTO) || CollUtil.isEmpty(mergeDeclareBillDTO.getDeclareBillList())) {
                 continue;
@@ -690,20 +713,9 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
                     .map(this::buildDeclareBillDetailEntity)
                     .collect(Collectors.toList());
             TmsDeclareBillEntity declareBillEntity = buildDeclareBillEntity(declareBillType, declareBillList);
-            BaseResultDTO.AddDTO addResult = tmsDeclareBillService.add(declareBillEntity, detailEntityList,
-                    SourceTypeEnum.getEnum(declareBillType), false);
-            changedMidList.addAll(saveGeneratedMidData(sourceType, declareBillList, detailEntityList,
-                    addResult.getId(), addResult.getCode()));
+            preparedBills.add(new TmsDeclareBillDTO.BatchMergeBillData(declareBillList, declareBillEntity, detailEntityList));
         }
-        if (updateSourceDeclareStatus) {
-            List<String> sourceIds = changedMidList.stream()
-                    .map(DeliveryDeclareDetailMidEntity::getSourceId)
-                    .filter(CharSequenceUtil::isNotBlank)
-                    .distinct()
-                    .collect(Collectors.toList());
-            tmsDeclareBillService.syncSourceDeclareStatusBySourceIds(declareBillType, sourceIds);
-        }
-        return Boolean.TRUE;
+        return preparedBills;
     }
 
     @Override
@@ -866,10 +878,35 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
             return;
         }
         Set<String> selectedIdSet = new HashSet<>(selectedIds);
+        List<String> declareIds = sourceMidList.stream()
+                .map(DeliveryDeclareDetailMidEntity::getDeclareId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, TmsDeclareBillEntity> declareBillMap = Collections.emptyMap();
+        if (CollUtil.isNotEmpty(declareIds)) {
+            declareBillMap = tmsDeclareBillService.lambdaQuery()
+                    .in(TmsDeclareBillEntity::getId, declareIds)
+                    .list()
+                    .stream()
+                    .collect(Collectors.toMap(TmsDeclareBillEntity::getId, item -> item, (oldValue, newValue) -> oldValue));
+        }
         // 按业务单号+箱号分组，构建每个箱子对应的明细列表映射关系
-        // 只处理状态为"待生成"且存在箱号的明细记录
+        // 只处理状态为"待生成"或已生成但关联报关单仍为待确认，且存在箱号的明细记录
+        Map<String, TmsDeclareBillEntity> finalDeclareBillMap = declareBillMap;
         Map<String, List<DeliveryDeclareDetailMidEntity>> boxGroupMap = sourceMidList.stream()
-                .filter(item -> CharSequenceUtil.equals(item.getGenerateStatus(), DeliveryDeclareDetailMidGenerateStatusEnum.WAIT.getCode()))
+                .filter(item -> {
+                    if (CharSequenceUtil.equals(item.getGenerateStatus(), DeliveryDeclareDetailMidGenerateStatusEnum.WAIT.getCode())) {
+                        return true;
+                    }
+                    if (!CharSequenceUtil.equals(item.getGenerateStatus(), DeliveryDeclareDetailMidGenerateStatusEnum.FINISH.getCode())
+                            || CharSequenceUtil.isBlank(item.getDeclareId())) {
+                        return false;
+                    }
+                    TmsDeclareBillEntity declareBill = finalDeclareBillMap.get(item.getDeclareId());
+                    return Objects.nonNull(declareBill)
+                            && CharSequenceUtil.equals(declareBill.getDeclareStatus(), DeclareStatusEnum.WAIT.getCode());
+                })
                 .filter(item -> CharSequenceUtil.isNotBlank(item.getBoxNo()))
                 .collect(Collectors.groupingBy(this::buildSourceBoxKey));
 
@@ -1826,8 +1863,8 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
             if(StringUtils.isNotBlank(data.getDeclareStatus())){
                 data.setDeclareStatusName(DeclareStatusEnum.getName(data.getDeclareStatus()));
             }else {
-                data.setDeclareStatus("not");
-                data.setDeclareStatusName("待生成");
+                data.setDeclareStatus(NOT_GENERATED);
+                data.setDeclareStatusName(NOT_GENERATED_NAME);
             }
             data.setGenerateStatusName(DeliveryDeclareDetailMidGenerateStatusEnum.getName(data.getGenerateStatus()));
             if (CharSequenceUtil.isBlank(data.getTransferWarehouseNames())) {

@@ -73,6 +73,7 @@ public class LogisticsAuthController extends BaseController {
                 ||LogisticsPlatformEnum.MERCADOLIBRE_LOCAL.getCode().equals(logisticsPlatform)
                 ||LogisticsPlatformEnum.MERCADOLIBRE.getCode().equals(logisticsPlatform)
                 ||LogisticsPlatformEnum.WILDBERRIES.getCode().equals(logisticsPlatform)
+                ||LogisticsPlatformEnum.MAGALU.getCode().equals(logisticsPlatform)
                 ||LogisticsPlatformEnum.AMZ_MULTI_CHANNEL.getCode().equals(logisticsPlatform)){
             authMap = logisticsAuthService.addShopAuth(authMap, logisticsPlatform);
         }
@@ -133,7 +134,8 @@ public class LogisticsAuthController extends BaseController {
         String logisticsPlatform = dto.getLogisticsPlatform();
         String id = result.getId();
         if (StringUtils.isNotBlank(id)) {
-            if (LogisticsPlatformEnum.SHOPEE.getCode().equals(logisticsPlatform)){
+            if (LogisticsPlatformEnum.SHOPEE.getCode().equals(logisticsPlatform)
+                    || LogisticsPlatformEnum.MAGALU.getCode().equals(logisticsPlatform)){
                 authMap = logisticsAuthService.addShopAuth(authMap, logisticsPlatform);
             }
             //先进行授权是否成功鉴权

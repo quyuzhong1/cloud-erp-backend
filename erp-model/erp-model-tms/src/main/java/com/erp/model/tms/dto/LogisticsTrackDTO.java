@@ -210,6 +210,10 @@ public class LogisticsTrackDTO implements Serializable {
          * 注册状态
          */
         private Integer registerStatus;
+        /**
+         * 是否需要进行物流轨迹查询
+         */
+        private Boolean trackEnable;
 
     }
 
