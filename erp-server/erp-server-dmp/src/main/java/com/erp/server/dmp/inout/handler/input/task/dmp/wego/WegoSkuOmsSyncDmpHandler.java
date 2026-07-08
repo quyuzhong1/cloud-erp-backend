@@ -85,15 +85,15 @@ public class WegoSkuOmsSyncDmpHandler extends DmpInputBaseDmpHandler {
             return new ArrayList<>();
         }
 
-        // 查询 provider 绑定的系统仓库：
+        // 查询 provider 绑定的系统仓库（按 authId 精确查询，避免每次全表扫描 listAllMatch）：
         //   - Feign 调用抛异常 → 直接上抛，终止本次同步，避免写入空 warehouse_id 的脏数据，等待任务重试
         //   - 调用成功但未找到绑定仓库 → 属于配置缺失，跳过同步并 warn，同样不写脏数据
-        List<OverseasProviderDTO.ListWithWarehouseDTO> allProviders = overseasProviderFeign.listAllMatch();
+        List<OverseasProviderDTO.ListWithWarehouseDTO> matchedProviders = overseasProviderFeign.listMatchByMainId(authId);
         String warehouseId = "";
         String warehouseName = "";
-        if (CollUtil.isNotEmpty(allProviders)) {
-            for (OverseasProviderDTO.ListWithWarehouseDTO p : allProviders) {
-                if (authId.equals(p.getId()) && p.getWarehouseId() != null && !p.getWarehouseId().isEmpty()) {
+        if (CollUtil.isNotEmpty(matchedProviders)) {
+            for (OverseasProviderDTO.ListWithWarehouseDTO p : matchedProviders) {
+                if (p.getWarehouseId() != null && !p.getWarehouseId().isEmpty()) {
                     warehouseId = p.getWarehouseId();
                     warehouseName = p.getWarehouseName() != null ? p.getWarehouseName() : "";
                     break;
