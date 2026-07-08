@@ -1659,8 +1659,22 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         map.put(TASK_DATA_SUB_CODE, subEntity.getCode());
         addTaskDTO.setFirstNodeInputData(map);
         addWorkflowTaskIfAbsent(addTaskDTO, existTasks);
+        List<WorkflowTaskRecordEntity> currentTasks = workflowTaskRecordService.listBySourceId(
+                subEntity.getId(), WorkflowTaskRecordTypeEnum.KOL_B2C_SUB_APPROVE.getCode());
+        if (isWorkflowTaskAllSuccess(currentTasks)) {
+            log.info("KOL B2C拆分单子任务已全部成功，跳过重复调度，subId={}, subCode={}", subEntity.getId(), subEntity.getCode());
+            return;
+        }
         // 子流程也走统一恢复入口，兼容历史节点补建 instance 后的当前节点重试。
         workflowTaskRecordService.startOrResume(addTaskDTO);
+    }
+
+    private boolean isWorkflowTaskAllSuccess(List<WorkflowTaskRecordEntity> tasks) {
+        return CollUtil.isNotEmpty(tasks)
+                && tasks.stream()
+                .filter(Objects::nonNull)
+                .filter(e -> !Boolean.TRUE.equals(e.getIsDeleted()))
+                .allMatch(e -> Objects.equals(e.getStatus(), WorkflowTaskRecordStatusEnum.SUCCESS.getCode()));
     }
 
     private void addWorkflowTaskIfAbsent(WorkflowTaskRecordDTO.AddTaskDTO addTaskDTO, List<WorkflowTaskRecordEntity> existTasks) {
