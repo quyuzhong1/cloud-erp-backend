@@ -2,7 +2,11 @@ package com.erp.server.dmp.inout.handler.input.task.dmp;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.json.JSONUtil;
+import com.common.core.entity.BaseEntity;
+import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
+import com.erp.model.dmp.entity.DmpSoRefundInfoEntity;
 import com.erp.server.dmp.inout.dto.request.DmpInputDmpRequest;
+import com.erp.server.dmp.inout.dto.response.DmpInputDmpResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputMongoResponse;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import org.apache.commons.lang3.StringUtils;
@@ -14,6 +18,7 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,7 +46,7 @@ public class MagaluRefundDmpHandler extends DmpInputDbConvertDmpHandler {
             return buildRefundInfoRows(payloadList);
         }
         if (STORAGE_REFUND_DETAIL.equals(storageName)) {
-            return buildRefundDetailRows(payloadList);
+            return buildRefundDetailRows(payloadList, buildMainIdMap(dmpResponse));
         }
         return payloadList;
     }
@@ -98,7 +103,7 @@ public class MagaluRefundDmpHandler extends DmpInputDbConvertDmpHandler {
         return resultList;
     }
 
-    private List<Map<String, Object>> buildRefundDetailRows(List<Map<String, Object>> payloadList) {
+    private List<Map<String, Object>> buildRefundDetailRows(List<Map<String, Object>> payloadList, Map<String, String> mainIdMap) {
         List<Map<String, Object>> resultList = new ArrayList<>();
         for (Map<String, Object> payload : payloadList) {
             Map<String, Object> ticket = mapValue(payload.get("ticket"));
@@ -122,6 +127,13 @@ public class MagaluRefundDmpHandler extends DmpInputDbConvertDmpHandler {
             String ticketCode = stringValue(ticket.get("code"));
             String ticketId = stringValue(ticket.get("id"));
             String thirdCode = firstNotBlank(ticketCode, ticketId);
+            String mainId = mainIdMap.get(thirdCode);
+            if (StringUtils.isBlank(mainId)) {
+                mainId = mainIdMap.get(ticketCode);
+            }
+            if (StringUtils.isBlank(mainId)) {
+                mainId = thirdCode;
+            }
 
             for (Map<String, Object> item : items) {
                 Map<String, Object> row = baseRow(ticket);
@@ -129,8 +141,8 @@ public class MagaluRefundDmpHandler extends DmpInputDbConvertDmpHandler {
                 String sku = firstNotBlank(stringValue(info.get("sku")), stringValue(item.get("sku")));
                 String lineId = firstNotBlank(stringValue(item.get("id")), sku);
 
-                row.put("thirdCode", thirdCode); // for linking if needed
-                row.put("mainId", thirdCode); // will be resolved by framework or use thirdCode as temp
+                row.put("thirdCode", thirdCode);
+                row.put("mainId", mainId);
                 row.put("thirdDetailId", buildDetailId(ticketId, lineId, sku));
                 row.put("platformDetailId", buildDetailId(ticketId, lineId, sku));
                 row.put("skuId", "");
@@ -143,6 +155,24 @@ public class MagaluRefundDmpHandler extends DmpInputDbConvertDmpHandler {
             }
         }
         return resultList;
+    }
+
+    private Map<String, String> buildMainIdMap(DmpInputMongoResponse dmpResponse) {
+        if (!(dmpResponse instanceof DmpInputDmpResponse)) {
+            return Collections.emptyMap();
+        }
+        Map<String, String> result = new HashMap<>();
+        DmpInputDmpResponse response = (DmpInputDmpResponse) dmpResponse;
+        for (Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> entry : response.getConvertInputDmpBaseEntityListMaps().entrySet()) {
+            if (!STORAGE_REFUND_INFO.equals(entry.getKey().getStorageName())) {
+                continue;
+            }
+            for (BaseEntity entity : entry.getValue()) {
+                DmpSoRefundInfoEntity refundInfo = (DmpSoRefundInfoEntity) entity;
+                result.put(refundInfo.getThirdCode(), refundInfo.getId());
+            }
+        }
+        return result;
     }
 
     private Map<String, Object> baseRow(Map<String, Object> source) {

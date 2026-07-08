@@ -14,9 +14,7 @@
             CASE
                 WHEN wti.total_steps IS NULL OR wti.total_steps = 0 THEN 0
                 ELSE LEAST(100, FLOOR(
-                    (SELECT COUNT(1) FROM workflow_task_record wtr
-                     WHERE wtr.instance_id = wti.id AND wtr.is_deleted = false AND wtr.status = 'success') * 100.0
-                    / wti.total_steps))
+                    COALESCE(sc.success_count, 0) * 100.0 / wti.total_steps))
             END AS progressPercent,
             db.name AS currentNodeName,
             wti.last_error AS lastError,
@@ -33,6 +31,12 @@
         LEFT JOIN dict_basic db
             ON db.id = wtr_cur.dict_basic_id
             AND db.is_deleted = false
+        LEFT JOIN (
+            SELECT instance_id, COUNT(1) AS success_count
+            FROM workflow_task_record
+            WHERE is_deleted = false AND status = 'success'
+            GROUP BY instance_id
+        ) sc ON sc.instance_id = wti.id
         <where>
             ${params.sqlMap.default}
             <if test="params.permissionSql != null and params.permissionSql != ''">

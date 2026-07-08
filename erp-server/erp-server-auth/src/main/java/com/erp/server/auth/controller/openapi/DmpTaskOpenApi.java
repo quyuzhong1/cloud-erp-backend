@@ -49,4 +49,13 @@ public class DmpTaskOpenApi {
         log.warn("DmpTaskOpenApi createInputTaskTask receive param:{}", createDTOList);
         return ApiResult.success(dmpInoutTaskFeign.doInputTask(Collections.singletonList(createDTOList)));
     }
+
+    /**
+     * Magalu 沙箱造单
+     */
+    @OpenApi("createMagaluSandboxOrder")
+    public ApiResult<java.util.Map<String, Object>> createMagaluSandboxOrder(@RequestBody java.util.Map<String, String> request) {
+        log.warn("DmpTaskOpenApi createMagaluSandboxOrder receive param:{}", request);
+        return dmpInoutTaskFeign.createMagaluSandboxOrder(request);
+    }
 }

@@ -254,6 +254,11 @@ public class TmsB2BDeclareBillController extends BaseController {
     @PostMapping("/exportDeclare")
     @LogAction(value = LogActionEnum.EXPORT, desc = "多sheet导出B2B报关单报关信息")
     @WebAdvanceQuery(handler = TmsB2BDeclareQueryHandler.class)
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "tms:tmsB2BDeclareBill:exportDeclare",
+            tableAlias = "db"
+    )
     public ApiResult<Object> exportDeclare(@RequestBody @Valid TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) throws IOException {
         pagingParamDTO.setType(SourceTypeEnum.B2B_DECLARE_BILL.getCode());
         tmsDeclareBillService.exportDeclare(pagingParamDTO, response);

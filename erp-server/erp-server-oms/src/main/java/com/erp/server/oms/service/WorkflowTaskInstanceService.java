@@ -223,5 +223,23 @@ public interface WorkflowTaskInstanceService extends SuperService<WorkflowTaskIn
      * @return
      */
     List<WorkflowTaskInstanceDTO.TabListDTO> tabList(PermissionsDTO dto);
+
+    /**
+     * 原子持久化节点最终状态并同步实例状态（节点 FAILED 或 WAITING 时使用）。
+     * <p>在同一事务内完成节点 updateById + 实例 status 更新，避免两步写库之间出现中间态。</p>
+     *
+     * @param node          内存中已准备好最终状态的节点实体（尚未落库）
+     * @param instanceId    对应编排实例 ID
+     * @param currentIndex  当前节点序号
+     * @param totalSteps    实例节点总数
+     * @param outcome       节点结果：FAILED 或 WAITING
+     * @param lastError     错误摘要，用于写入实例 last_error
+     */
+    void persistNodeAndSyncInstance(WorkflowTaskRecordEntity node,
+                                    String instanceId,
+                                    int currentIndex,
+                                    int totalSteps,
+                                    com.erp.server.oms.orchestration.StepInvokeResult.Outcome outcome,
+                                    String lastError);
 }
 

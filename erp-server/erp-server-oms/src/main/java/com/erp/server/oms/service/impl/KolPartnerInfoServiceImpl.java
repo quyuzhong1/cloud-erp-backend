@@ -1043,11 +1043,8 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
     private void applyPlatformImportUpdate(KolPartnerInfoImportExcelDTO.UpdateExcelDTO item,
                                            KolPartnerInfoDTO.UpdateDTO updateDTO,
                                            List<String> errorMsgList) {
-        if (!hasPlatformImportUpdateValue(item)) {
-            return;
-        }
+        // 合作平台为空时不更新平台明细，不报错
         if (StringUtils.isBlank(item.getPlatformName())) {
-            errorMsgList.add("合作平台不能为空");
             return;
         }
         KolCooperationPlatformDTO.UpdateDTO platformDTO = updateDTO.getKolCooperationPlatformDTOList().stream()
@@ -1075,15 +1072,6 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
         }
     }
 
-    private boolean hasPlatformImportUpdateValue(KolPartnerInfoImportExcelDTO.UpdateExcelDTO item) {
-        return StringUtils.isNotBlank(item.getPlatformName())
-                || StringUtils.isNotBlank(item.getPlatformAccountId())
-                || StringUtils.isNotBlank(item.getPlatformAccountName())
-                || Objects.nonNull(item.getFollowerCount())
-                || StringUtils.isNotBlank(item.getHomepageUrl())
-                || StringUtils.isNotBlank(item.getPlatformRemark());
-    }
-
     private void applyAddressImportUpdate(KolPartnerInfoImportExcelDTO.UpdateExcelDTO item,
                                           KolPartnerInfoDTO.UpdateDTO updateDTO,
                                           Map<String, String> dictCountryMap,
@@ -1091,11 +1079,8 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
                                           Map<String, String> cityMap,
                                           Map<String, String> districtMap,
                                           List<String> errorMsgList) {
-        if (!hasAddressImportUpdateValue(item)) {
-            return;
-        }
+        // 联系人为空时不更新地址明细，不报错
         if (StringUtils.isBlank(item.getContactPerson())) {
-            errorMsgList.add("联系人不能为空");
             return;
         }
         KolAddressInfoDTO.UpdateDTO addressDTO = updateDTO.getKolAddressInfoDTOList().stream()
@@ -1181,20 +1166,6 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
         }
     }
 
-    private boolean hasAddressImportUpdateValue(KolPartnerInfoImportExcelDTO.UpdateExcelDTO item) {
-        return StringUtils.isNotBlank(item.getAddressCountryName())
-                || StringUtils.isNotBlank(item.getProvince())
-                || StringUtils.isNotBlank(item.getCity())
-                || StringUtils.isNotBlank(item.getDistrict())
-                || StringUtils.isNotBlank(item.getDetailAddress())
-                || StringUtils.isNotBlank(item.getContactPerson())
-                || StringUtils.isNotBlank(item.getContactPersonPhone())
-                || StringUtils.isNotBlank(item.getZipCode())
-                || StringUtils.isNotBlank(item.getReceiverTaxNo())
-                || StringUtils.isNotBlank(item.getIsDefaultName())
-                || StringUtils.isNotBlank(item.getDisabledName())
-                || StringUtils.isNotBlank(item.getAddressRemark());
-    }
     private Map<String, String> getCfgKolOptionNameMap(List<CfgKolOptionEntity> cfgKolOptionEntities, CfgKolOptionTypeEnum optionTypeEnum) {
         if (CollUtil.isEmpty(cfgKolOptionEntities)) {
             return Collections.emptyMap();

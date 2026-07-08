@@ -25,6 +25,9 @@ public interface WorkflowTaskRecordService extends SuperService<WorkflowTaskReco
     /** 节点终态失败判定阈值（retryCount 达到后不再自动补偿） */
     int TASK_TERMINAL_RETRY_COUNT = AUTO_RETRY_MAX_COUNT;
 
+    /** WAITING 节点超时小时数：超过该时长后自动转为终态失败，防止流程永久挂起 */
+    int TASK_WAITING_TIMEOUT_HOURS = 24;
+
     List<WorkflowTaskRecordEntity> addTask(WorkflowTaskRecordDTO.AddTaskDTO dto);
 
     /**

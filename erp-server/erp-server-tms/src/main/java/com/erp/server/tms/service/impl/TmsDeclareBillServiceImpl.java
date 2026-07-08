@@ -20,7 +20,6 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.constant.RedisCacheConstants;
-import com.common.message.constant.DistributeKeyConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -43,7 +42,9 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
+import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.ProductBomHistoryDTO;
 import com.erp.model.plm.dto.ProductDetailDTO;
@@ -71,7 +72,6 @@ import com.erp.model.wms.enums.PackingTaskStatusEnum;
 import com.erp.model.wms.enums.WmsDeclareStatusEnum;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
-import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.plm.feign.ProductPackFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
@@ -84,17 +84,12 @@ import com.erp.server.tms.mapper.TmsDeclareBillMapper;
 import com.erp.server.tms.service.*;
 import com.erp.server.tms.utils.DeclarationGenerationService;
 import com.erp.server.tms.utils.DeclareMergeDefaults;
-import com.google.common.collect.Lists;
 import freemarker.template.utility.StringUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.ss.usermodel.BorderStyle;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.DataFormatter;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.RegionUtil;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -1085,8 +1080,9 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (ObjectUtil.isEmpty(dataJson)) {
             return new ArrayList<>();
         }
-        List<TmsDeclareBillDTO.BatchUpdateFieldDropDownDTO> data = JSONUtil.toList(dataJson.getJSONArray("data"), TmsDeclareBillDTO.BatchUpdateFieldDropDownDTO.class).stream().filter(e -> e.getType().contains(type)).collect(Collectors.toList());;
-        return data;
+        return JSONUtil.toList(dataJson.getJSONArray("data"), TmsDeclareBillDTO.BatchUpdateFieldDropDownDTO.class).stream()
+                .filter(e -> StringUtils.isNotBlank(e.getType()) && e.getType().contains(type))
+                .collect(Collectors.toList());
     }
 
     /**
@@ -1271,9 +1267,20 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
     public List<BatchResultDTO> delete(TmsDeclareBillDTO.DeleteDTO dto) {
+        TmsDeclareBillDTO.DeletePreparedData prepared = prepareDeleteData(dto);
+        if (CollectionUtils.isEmpty(prepared.getRemoveIds())) {
+            return prepared.getResultList();
+        }
+        // 全局事务内更新
+        service.deleteInGlobalTx(prepared);
+        return prepared.getResultList();
+    }
+
+    /**
+     * 事务外完成删除校验与中间表查询，全局事务内仅消费本对象做本地库删除。
+     */
+    private TmsDeclareBillDTO.DeletePreparedData prepareDeleteData(TmsDeclareBillDTO.DeleteDTO dto) {
         List<TmsDeclareBillEntity> entityList = this.listByIds(dto.getIds());
         List<BatchResultDTO> resultList = new ArrayList<>();
         List<String> candidateIds = new ArrayList<>();
@@ -1285,7 +1292,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             candidateIds.add(entity.getId());
         }
         if (CollectionUtils.isEmpty(candidateIds)) {
-            return resultList;
+            return new TmsDeclareBillDTO.DeletePreparedData(Collections.emptyList(), Collections.emptyList(), resultList);
         }
         List<DeliveryDeclareDetailMidEntity> deliveryDeclareDetailMidList =
                 deliveryDeclareDetailMidService.listByDeclareBillIdList(candidateIds);
@@ -1307,18 +1314,25 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             resultList.add(BatchResultDTO.success(entity.getId(), entity.getCode(), "删除成功"));
         }
         if (CollectionUtils.isEmpty(removeIds)) {
-            return resultList;
+            return new TmsDeclareBillDTO.DeletePreparedData(Collections.emptyList(), Collections.emptyList(), resultList);
         }
-        this.removeByIds(removeIds);
-        //删除明细数据
-        detailService.deleteDetailByMainIdList(removeIds);
-        //中间表恢复为待生成，不删除历史来源明细
-        deliveryDeclareDetailMidService.restoreWaitGenerateByDeclareBillIds(removeIds);
         List<DeliveryDeclareDetailMidEntity> removedMidList = deliveryDeclareDetailMidList.stream()
                 .filter(item -> removeIds.contains(item.getDeclareId()))
                 .collect(Collectors.toList());
-        updateWaitStatusForNoGeneratedSources(removedMidList);
-        return resultList;
+        return new TmsDeclareBillDTO.DeletePreparedData(removeIds, removedMidList, resultList);
+    }
+
+    /**
+     * 全局事务内删除报关单主/明细并恢复中间表为待生成；不包含 WMS Feign 回写。
+     */
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteInGlobalTx(TmsDeclareBillDTO.DeletePreparedData prepared) {
+        List<String> removeIds = prepared.getRemoveIds();
+        this.removeByIds(removeIds);
+        detailService.deleteDetailByMainIdList(removeIds);
+        deliveryDeclareDetailMidService.restoreWaitGenerateByDeclareBillIds(removeIds);
+        updateWaitStatusForNoGeneratedSources(prepared.getRemovedMidList());
     }
 
     /**
@@ -3201,13 +3215,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     private void parseBatchFieldValue(TmsDeclareBillBatchFieldEnum fieldEnum, Object values) {
         if (TmsDeclareBillBatchFieldEnum.DECLARE_DATE.equals(fieldEnum)
                 || TmsDeclareBillBatchFieldEnum.EXPORT_DATE.equals(fieldEnum)) {
-            if (Objects.isNull(values)) {
-            }
-            if (values instanceof LocalDate) {
-            }
             String dateStr = Objects.toString(values, "");
-            if (StringUtils.isBlank(dateStr)) {
-            }
             try {
                 LocalDate.parse(dateStr);
             } catch (Exception e) {
@@ -3217,13 +3225,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (TmsDeclareBillBatchFieldEnum.SHIPPING_FEE.equals(fieldEnum)
                 || TmsDeclareBillBatchFieldEnum.INSURANCE_FEE.equals(fieldEnum)
                 || TmsDeclareBillBatchFieldEnum.OTHER_FEE.equals(fieldEnum)) {
-            if (Objects.isNull(values)) {
-            }
-            if (values instanceof BigDecimal) {
-            }
             String valueStr = Objects.toString(values, "").trim();
-            if (StringUtils.isBlank(valueStr)) {
-            }
             try {
                 new BigDecimal(valueStr);
             } catch (Exception e) {
@@ -5800,12 +5802,12 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 .distinct()
                 .collect(Collectors.toList());
         if (CollUtil.isEmpty(sourceIdList)) {
-            return;
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_B2B_CUSTOMER_RECEIVER_NOT_FOUND);
         }
 
         List<SoDeliveryNoticeEntity> noticeList = soDeliveryNoticeFeign.listByIds(sourceIdList);
         if (CollUtil.isEmpty(noticeList)) {
-            return;
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_B2B_CUSTOMER_RECEIVER_NOT_FOUND);
         }
         Map<String, SoDeliveryNoticeEntity> noticeMap = noticeList.stream()
                 .filter(Objects::nonNull)
@@ -5821,6 +5823,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             declareBillEntity.setReceiverName(notice.getCustomerName());
             return;
         }
+        throw new ServiceException(ApiError.LOGISTICS_DECLARE_B2B_CUSTOMER_RECEIVER_NOT_FOUND);
     }
 
     /**
@@ -5973,7 +5976,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     }
 
     /**
-     * TMS 事务提交后回写 WMS 来源单报关状态（不参与 Seata 全局事务）。
+     * 回写 WMS 来源单报关状态；删除场景在全局事务提交后调用，避免 Feign 占用全局事务。
      * 规则：存在已生成（finish）中间表明细 → 来源单已生成；全部为 wait 或无中间表 → 来源单未生成。
      */
     private void syncSourceDeclareStatusIfNeeded(String type, List<String> sourceIdList) {

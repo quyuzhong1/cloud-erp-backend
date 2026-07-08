@@ -2060,6 +2060,13 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList = entityList.stream()
                 .map(this::buildRuleMatchSourceDetailFromMid)
                 .collect(Collectors.toList());
+        List<String> declareBillIdList = entityList.stream()
+                .map(DeliveryDeclareDetailMidEntity::getDeclareId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        fillB2bSourceCountry(sourceDetailList, declareBillIdList);
+        fillB2bSourceRuleMatchFields(sourceDetailList);
         String receiverType = cfgDeclareRuleService.resolveConsistentReceiverType(
                 SourceTypeEnum.B2B_DECLARE_BILL.getCode(),
                 sourceDetailList,
@@ -2071,10 +2078,10 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
 
     private TmsDeclareBillDTO.SourceDeliveryDetailDTO buildRuleMatchSourceDetailFromMid(DeliveryDeclareDetailMidEntity entity) {
         TmsDeclareBillDTO.SourceDeliveryDetailDTO detailDTO = new TmsDeclareBillDTO.SourceDeliveryDetailDTO();
+        detailDTO.setDeclareId(entity.getDeclareId());
         detailDTO.setSourceId(entity.getSourceId());
         detailDTO.setSourceCode(entity.getSourceCode());
         detailDTO.setSourceType(entity.getSourceType());
-        detailDTO.setCountryId("");
         detailDTO.setFromWarehouseId(entity.getFromWarehouseId());
         detailDTO.setTransferWarehouseIds(entity.getTransferWarehouseIds());
         detailDTO.setSalesOrgId(entity.getSalesOrgId());

@@ -225,6 +225,11 @@ public class TmsFmDeclareBillController extends BaseController {
     @PostMapping("/exportDeclare")
     @LogAction(value = LogActionEnum.EXPORT, desc = "多sheet导出头程报关单报关信息")
     @WebAdvanceQuery(handler = TmsFmDeclareQueryHandler.class)
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "tms:tmsFmDeclareBill:exportDeclare",
+            tableAlias = "db"
+    )
     public ApiResult<Object> exportDeclare(@RequestBody @Valid TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) throws IOException {
         pagingParamDTO.setType(SourceTypeEnum.FM_DECLARE_BILL.getCode());
         tmsDeclareBillService.exportDeclare(pagingParamDTO, response);

@@ -2,7 +2,11 @@ package com.erp.server.dmp.inout.handler.input.task.dmp;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.json.JSONUtil;
+import com.common.core.entity.BaseEntity;
+import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
+import com.erp.model.dmp.entity.DmpSoReturnInfoEntity;
 import com.erp.server.dmp.inout.dto.request.DmpInputDmpRequest;
+import com.erp.server.dmp.inout.dto.response.DmpInputDmpResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputMongoResponse;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import org.apache.commons.lang3.StringUtils;
@@ -14,6 +18,7 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -156,12 +161,20 @@ public class MagaluReturnDmpHandler extends DmpInputDbConvertDmpHandler {
     }
 
     private Map<String, String> buildMainIdMap(DmpInputMongoResponse dmpResponse) {
-        if (dmpResponse == null) {
+        if (!(dmpResponse instanceof DmpInputDmpResponse)) {
             return Collections.emptyMap();
         }
-        Map<String, String> result = new java.util.HashMap<>();
-        // 简化：detail 阶段如果 info 已处理，可由框架提供；此处优先用 raw 数据里的 thirdCode 做兜底匹配
-        // 如果框架传入的是带已转换实体的 response，可扩展获取
+        Map<String, String> result = new HashMap<>();
+        DmpInputDmpResponse response = (DmpInputDmpResponse) dmpResponse;
+        for (Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> entry : response.getConvertInputDmpBaseEntityListMaps().entrySet()) {
+            if (!STORAGE_RETURN_INFO.equals(entry.getKey().getStorageName())) {
+                continue;
+            }
+            for (BaseEntity entity : entry.getValue()) {
+                DmpSoReturnInfoEntity returnInfo = (DmpSoReturnInfoEntity) entity;
+                result.put(returnInfo.getThirdCode(), returnInfo.getId());
+            }
+        }
         return result;
     }
 
