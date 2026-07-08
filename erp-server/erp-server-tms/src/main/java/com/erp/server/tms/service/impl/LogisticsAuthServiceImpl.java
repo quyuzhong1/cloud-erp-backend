@@ -59,6 +59,8 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapper, LogisticsAuthEntity> implements LogisticsAuthService {
+    private static final String MAGALU_SHOP_PLATFORM = "Magalu";
+
     @Resource
     private OperateLogService operateLogService;
     @Resource
@@ -183,6 +185,9 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
 
     @Override
     public ApiResult<Object>authLogistics(String logisticsPlatform, Map<String, String> authConfig) {
+        if (LogisticsPlatformEnum.MAGALU.getCode().equals(logisticsPlatform)) {
+            return ApiResult.success();
+        }
         LogisticsService service = logisticsRegistry.getHandler(logisticsPlatform);
         if (Objects.isNull(service)){
             return ApiResult.error(-1,"功能未开发");
@@ -228,6 +233,8 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
                 result = shopInfoFeign.getShopListByParam("", AuthStatusEnum.ALREADY.getCode(),LogisticsPlatformEnum.AMAZON.getCode());
             }else if(LogisticsPlatformEnum.WILDBERRIES.getCode().equals(logisticsPlatform)){
                 result = shopInfoFeign.getShopListByParam("", AuthStatusEnum.ALREADY.getCode(),LogisticsPlatformEnum.WILDBERRIES.getCode());
+            }else if(LogisticsPlatformEnum.MAGALU.getCode().equals(logisticsPlatform)){
+                result = shopInfoFeign.getShopListByParam("", AuthStatusEnum.ALREADY.getCode(), MAGALU_SHOP_PLATFORM);
             }else{
                 throw new ServiceException("不支持的平台，请联系IT处理");
             }
@@ -242,6 +249,7 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
         if(LogisticsPlatformEnum.MERCADOLIBRE.getCode().equals(logisticsPlatform)
                 || LogisticsPlatformEnum.MERCADOLIBRE_LOCAL.getCode().equals(logisticsPlatform)
                 || LogisticsPlatformEnum.WILDBERRIES.getCode().equals(logisticsPlatform)
+                || LogisticsPlatformEnum.MAGALU.getCode().equals(logisticsPlatform)
                 || LogisticsPlatformEnum.AMZ_MULTI_CHANNEL.getCode().equals(logisticsPlatform)) {
 
             String shopAccount = authMap.get("shopAccount");
@@ -269,6 +277,11 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
         if (LogisticsPlatformEnum.WILDBERRIES.getCode().equals(logisticsPlatform)){
             authMap.put("shopId",shopAuthEntity.getShopeeId());
             authMap.put("token",shopAuthEntity.getAccessToken());
+            return authMap;
+        }
+        if (LogisticsPlatformEnum.MAGALU.getCode().equals(logisticsPlatform)){
+            authMap.put("shopId", shopAuthEntity.getShopId());
+            authMap.put("token", shopAuthEntity.getAccessToken());
             return authMap;
         }
         //根据主店铺获取子店铺token
@@ -405,7 +418,8 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
                 || LogisticsPlatformEnum.TIK_TOK.getCode().equals(logisticsPlatform)
                 || LogisticsPlatformEnum.MERCADOLIBRE.getCode().equals(logisticsPlatform)
                 || LogisticsPlatformEnum.MERCADOLIBRE_LOCAL.getCode().equals(logisticsPlatform)
-                || LogisticsPlatformEnum.WILDBERRIES.getCode().equals(logisticsPlatform)){
+                || LogisticsPlatformEnum.WILDBERRIES.getCode().equals(logisticsPlatform)
+                || LogisticsPlatformEnum.MAGALU.getCode().equals(logisticsPlatform)){
             LogisticsService service = logisticsRegistry.getHandler(logisticsPlatform);
             return service.getLogisticsAuthConfigByShopId(shopId);
         }else {

@@ -52,7 +52,8 @@ public class AsyncServiceImpl implements AsyncService {
             if (LogisticsPlatformEnum.TIK_TOK_FULLY.getCode().equals(logisticsPlatform)
                     || LogisticsPlatformEnum.AMZ_MULTI_CHANNEL.getCode().equals(logisticsPlatform)
                     || LogisticsPlatformEnum.JI_TU.getCode().equals(logisticsPlatform)
-                    || LogisticsPlatformEnum.WILDBERRIES.getCode().equals(logisticsPlatform)){
+                    || LogisticsPlatformEnum.WILDBERRIES.getCode().equals(logisticsPlatform)
+                    || LogisticsPlatformEnum.MAGALU.getCode().equals(logisticsPlatform)){
                 return;
             }
             //虾皮的授权 调整

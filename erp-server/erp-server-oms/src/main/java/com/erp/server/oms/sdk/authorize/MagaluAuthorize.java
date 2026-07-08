@@ -291,6 +291,7 @@ public class MagaluAuthorize implements IShopAuthorizeService<T> {
                 .setClientSecret(cfgAppClient.getClientSecret())
                 .setBaseUrl(cfgAppClient.getUrl())
                 .setApiBaseUrl(getApiBaseUrl(cfgAppClient))
+                .setChannelId(getChannelId(cfgAppClient))
                 .setRedirectUrl(cfgAppClient.getRedirectUrl())
                 .setAccessToken(tokenDTO.getAccessToken())
                 .setRefreshToken(tokenDTO.getRefreshToken())
@@ -312,6 +313,14 @@ public class MagaluAuthorize implements IShopAuthorizeService<T> {
         }
         String apiBaseUrl = extendData.get("apiBaseUrl").toString();
         return StringUtils.isBlank(apiBaseUrl) ? "https://api.magalu.com" : apiBaseUrl;
+    }
+
+    private String getChannelId(CfgAppClientEntity cfgAppClient) {
+        Map<String, Object> extendData = cfgAppClient.getExtendData();
+        if (extendData == null || Objects.isNull(extendData.get("channelId"))) {
+            return "";
+        }
+        return extendData.get("channelId").toString();
     }
 
     private LocalDateTime getTokenExpireTime(Integer expiresIn) {

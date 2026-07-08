@@ -4512,6 +4512,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (CharSequenceUtil.isNotBlank(codeStr)) {
             throw new ServiceException(ApiError.SO_B2C_WILDBERRIES_NOT_ALLOWED, codeStr);
         }
+        String magaluCodeStr = list.stream().filter(e -> PlatformDictEnum.MAGALU.getCode().equals(e.getDictPlatform())).map(SoB2cEntity::getCode).distinct().collect(Collectors.joining(","));
+        if (CharSequenceUtil.isNotBlank(magaluCodeStr)) {
+            throw new ServiceException(ApiError.SO_B2C_MAGALU_MERGE_FORBIDDEN);
+        }
         // 销售明细
         List<SoB2cDetailEntity> soB2cDetailList = soB2cDetailService.listByMainIds(ids);
         if (CollUtil.isEmpty(soB2cDetailList)) {

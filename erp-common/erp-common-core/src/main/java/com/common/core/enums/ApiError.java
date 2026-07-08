@@ -1368,6 +1368,8 @@ public enum ApiError implements Serializable {
     SO_B2C_LOGISTICS_PLATFORM_REQUIRED(10691,"B2C销售订单【{0}】物流下单平台不能为空"),
     SO_B2C_MULTI_CHANNEL_FORBIDDEN(10692,"B2C销售订单【{0}】不支持设置多个销售渠道"),
     SO_B2C_SPLIT_KOL_FORBIDDEN(10727,"销售订单由寄样申请单生成，无法拆单"),
+    SO_B2C_MAGALU_SPLIT_FORBIDDEN(10728,"magalu平台订单不支持拆单"),
+    SO_B2C_MAGALU_MERGE_FORBIDDEN(10729,"magalu平台订单不支持合并"),
     SO_DETAIL_SKU_ALL_EMPTY_FORBIDDEN(10693,"销售订单【{0}】明细中sku不能全部为空"),
     SO_REPLACE_SKU_STATUS_INVALID(10694,"销售订单【{0}】只能在待提交、审核不通过或已发货状态更换发货SKU"),
     SO_B2B_SALESMAN_CHANGE(10695,"b2b客户销售员变更单" ),
