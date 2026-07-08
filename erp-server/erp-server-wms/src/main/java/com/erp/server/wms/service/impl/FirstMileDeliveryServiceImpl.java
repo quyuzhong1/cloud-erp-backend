@@ -393,7 +393,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             if (!Boolean.TRUE.equals(autoGenerateResult)) {
                 throw new ServiceException(CharSequenceUtil.format("头程发货单{}自动生成报关明细中间表返回失败", entity.getCode()));
             }
-            self.updateStatus(new FirstMileDeliveryDTO.UpdateStatusDTO(Arrays.asList(entity.getId()), null, WmsDeclareStatusEnum.FINISH.getCode()));
             log.info("头程发货单{}自动生成报关明细中间表成功", entity.getCode());
             return Boolean.TRUE;
         } finally {
@@ -3242,7 +3241,14 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     @Override
     public List<TmsDeclareBillDTO.MergeDeclareBillDTO> listAfterPushFmDeclare(TmsDeclareBillDTO.PushDeclareBeforeParamDTO dto) {
         List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> list = baseMapper.listAfterPushFmDeclare(dto.getIds());
-        return tmsDeclareBillFeign.autoMergeDeclareBillView(new TmsDeclareBillDTO.AutoMergeDeclareBillViewDTO(dto.getIsMultipleMerge(),list));
+        if (CollUtil.isEmpty(list)) {
+            throw new ServiceException(ApiError.COMMON_NOT_FOUND_PUSH_DADA);
+        }
+        List<TmsDeclareBillDTO.MergeDeclareBillDTO> mergeDeclareBillList = tmsDeclareBillFeign.autoMergeDeclareBillView(new TmsDeclareBillDTO.AutoMergeDeclareBillViewDTO(dto.getIsMultipleMerge(), list));
+        if (CollUtil.isEmpty(mergeDeclareBillList)) {
+            throw new ServiceException(ApiError.COMMON_NOT_FOUND_PUSH_DADA);
+        }
+        return mergeDeclareBillList;
     }
 
     @Override

@@ -2547,7 +2547,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         BigDecimal totalAmount = Objects.isNull(exportDTO.getTotalPrice()) ? BigDecimal.ZERO : exportDTO.getTotalPrice();
         totalAmount = totalAmount.setScale(MathUtil.scale, RoundingMode.HALF_UP);
         contractInfo.setTotalAmount(totalAmount);
-        contractInfo.setTotalAmountUpper(toAmountUpper(currency, totalAmount));
+        contractInfo.setTotalAmountUpper(toAmountUpper( totalAmount));
         return contractInfo;
     }
 
@@ -2801,7 +2801,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     /**
      * 金额转中文大写，含币别中文名前缀
      */
-    private String toAmountUpper(String currencyName, BigDecimal amount) {
+    private String toAmountUpper(BigDecimal amount) {
         return Convert.digitToChinese(amount.doubleValue());
     }
 

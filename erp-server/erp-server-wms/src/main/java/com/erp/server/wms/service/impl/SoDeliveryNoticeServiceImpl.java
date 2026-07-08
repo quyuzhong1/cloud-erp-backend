@@ -1230,8 +1230,14 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     @Override
     public List<TmsDeclareBillDTO.MergeDeclareBillDTO> listAfterPushB2bDeclare(TmsDeclareBillDTO.PushDeclareBeforeParamDTO dto) {
         List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> list = baseMapper.listAfterPushB2bDeclare(dto.getIds());
+        if (CollUtil.isEmpty(list)) {
+            throw new ServiceException(ApiError.COMMON_NOT_FOUND_PUSH_DADA);
+        }
         List<TmsDeclareBillDTO.MergeDeclareBillDTO> mergeList = tmsDeclareBillFeign.autoMergeDeclareBillView(
                 new TmsDeclareBillDTO.AutoMergeDeclareBillViewDTO(dto.getIsMultipleMerge(), list));
+        if (CollUtil.isEmpty(mergeList)) {
+            throw new ServiceException(ApiError.COMMON_NOT_FOUND_PUSH_DADA);
+        }
         fillB2bPreviewBusinessType(mergeList);
         // 合并预览的单价/币别由 TMS 填充，境外收货人=客户时可能未取到销售订单价；
         // 这里用与不合并路径一致的 WMS 本地口径（客户取 SO 含税单价/币别）纠正，保证两条路径一致。
@@ -2460,7 +2466,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_AUTO_GENERATE_FAILED,
                         SourceTypeEnum.SO_DELIVERY_NOTICE.getName(), entity.getCode(), "返回失败");
             }
-            soDeliveryNoticeService.updateDeclareStatus(new SoDeliveryNoticeDTO.DeclareStatusDTO(Arrays.asList(entity.getId()), WmsDeclareStatusEnum.FINISH.getCode()));
             log.info("B2B发货通知单{}自动生成报关明细中间表成功", entity.getCode());
             return Boolean.TRUE;
         } finally {

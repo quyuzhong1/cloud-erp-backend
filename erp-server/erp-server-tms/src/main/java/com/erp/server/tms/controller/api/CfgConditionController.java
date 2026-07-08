@@ -1,8 +1,11 @@
 package com.erp.server.tms.controller.api;
 
 
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.CfgConditionDTO;
 import com.erp.server.tms.service.CfgConditionService;
 import org.springframework.validation.annotation.Validated;
@@ -20,6 +23,7 @@ import java.util.List;
  * @since 2026-04-22
  */
 @RestController
+@LogSystemModule("规则条件配置")
 @RequestMapping("/cfg-condition")
 public class CfgConditionController extends BaseController {
 
@@ -31,6 +35,7 @@ public class CfgConditionController extends BaseController {
      * @param dto 规则条件
      */
     @PostMapping("/add")
+    @LogAction(value = LogActionEnum.INSERT, desc = "规则条件配置新增")
     public ApiResult<String> add(@RequestBody @Validated CfgConditionDTO.AddDTO dto) {
         cfConditionService.add(dto);
         return success();
@@ -40,6 +45,7 @@ public class CfgConditionController extends BaseController {
      * @param dto 规则条件
      */
     @PostMapping("/update")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "规则条件配置编辑")
     public ApiResult<String> update(@RequestBody @Validated CfgConditionDTO.UpdateDTO dto) {
         cfConditionService.update(dto);
         return success();
