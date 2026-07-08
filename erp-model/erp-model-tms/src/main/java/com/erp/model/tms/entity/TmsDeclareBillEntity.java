@@ -81,7 +81,7 @@ public class TmsDeclareBillEntity extends BaseEntity<TmsDeclareBillEntity> {
     /**
     * 报关确认日期
     */
-    @TableField(value = "declar_confirm_date", updateStrategy = FieldStrategy.IGNORED)
+    @TableField(value = "declare_confirm_date", updateStrategy = FieldStrategy.IGNORED)
     private LocalDate declareConfirmDate;
     /**
     * 报关确认人id

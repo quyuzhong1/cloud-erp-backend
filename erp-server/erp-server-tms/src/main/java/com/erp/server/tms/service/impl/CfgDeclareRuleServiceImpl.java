@@ -179,7 +179,7 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
                     customerChildList(isShowCustomerId,name)));
             return result;
         }
-        throw new ServiceException("type must be fmDeclareBill or b2bDeclareBill");
+        throw new ServiceException(ApiError.LOGISTICS_DECLARE_RULE_TYPE_INVALID);
     }
 
     /**
@@ -308,10 +308,10 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
         Set<String> uniqueKeySet = new HashSet<>();
         for (CfgDeclareRuleDTO.SaveDTO item : saveList) {
             if (!StrUtil.equals(ruleType, item.getRuleType())) {
-                throw new ServiceException("request ruleType does not match item ruleType");
+                throw new ServiceException(ApiError.LOGISTICS_DECLARE_RULE_TYPE_MISMATCH);
             }
             if (CollUtil.isEmpty(item.getDetailList())) {
-                throw new ServiceException("detailList can not be empty");
+                throw new ServiceException(ApiError.COMMON_PARAM_REQUIRED, "detailList");
             }
             if (StrUtil.isNotBlank(item.getId())) {
                 CfgDeclareRuleEntity existingRule = existingRuleMap.get(item.getId());
@@ -319,7 +319,7 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
                     throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "CfgDeclareRule");
                 }
                 if (!StrUtil.equals(ruleType, existingRule.getRuleType())) {
-                    throw new ServiceException("cross-ruleType update is not allowed");
+                    throw new ServiceException(ApiError.LOGISTICS_DECLARE_RULE_CROSS_TYPE_UPDATE_FORBIDDEN);
                 }
             }
 
@@ -369,50 +369,6 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
         }
     }
 
-    /**
-     * 校验修改后的报关规则条件组合唯一。
-     *
-     * <p>update 只校验当前规则新条件与其它规则是否冲突，不拦截其它历史规则之间已存在的重复数据。
-     * 重复判定维度：条件选项 + 比较符 + 条件值。</p>
-     *
-     * @param entity 当前规则主表数据
-     * @param newDetails 当前规则新的条件明细
-     * @param uniqueConditionFields 需要校验单值唯一的条件字段
-     */
-    private void validateUpdateUniqueConditions(CfgDeclareRuleEntity entity,
-                                                List<CfgDeclareRuleConditionEntity> newDetails,
-                                                Set<String> uniqueConditionFields) {
-        if (CollUtil.isEmpty(uniqueConditionFields)) {
-            return;
-        }
-        List<CfgConditionDTO.CommonDTO> conditionConfigList = cfgConditionService.listByType(entity.getRuleType());
-        Map<String, CfgConditionDTO.CommonDTO> conditionConfigMap = buildConditionConfigMap(conditionConfigList);
-
-        List<String> otherRuleIds = this.lambdaQuery()
-                .eq(CfgDeclareRuleEntity::getRuleType, entity.getRuleType())
-                .ne(CfgDeclareRuleEntity::getId, entity.getId())
-                .list()
-                .stream()
-                .map(CfgDeclareRuleEntity::getId)
-                .collect(Collectors.toList());
-
-        List<CfgDeclareRuleConditionEntity> otherDetails = CollUtil.isEmpty(otherRuleIds)
-                ? Collections.emptyList()
-                : cfgDeclareRuleConditionService.lambdaQuery()
-                        .in(CfgDeclareRuleConditionEntity::getRuleId, otherRuleIds)
-                        .in(CfgDeclareRuleConditionEntity::getField, uniqueConditionFields)
-                        .list();
-
-        Map<String, Set<String>> conditionValueMap = collectEntityConditionValueMap(newDetails, uniqueConditionFields);
-        mergeConditionValueMap(conditionValueMap, collectEntityConditionValueMap(otherDetails, uniqueConditionFields));
-        Map<String, Map<String, String>> conditionValueNameMap = buildConditionValueNameMap(conditionValueMap);
-
-        Set<String> uniqueKeySet = new HashSet<>();
-        addEntityConditionUniqueKeys(entity.getRuleType(), newDetails, uniqueConditionFields, uniqueKeySet,
-                conditionConfigMap, conditionValueNameMap);
-        checkEntityConditionUniqueKeys(entity.getRuleType(), otherDetails, uniqueConditionFields, uniqueKeySet,
-                conditionConfigMap, conditionValueNameMap);
-    }
 
     /**
      * 将 DTO 条件明细中的单值唯一字段写入唯一键集合。
@@ -932,12 +888,6 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
         }
     }
 
-    private void saveRuleConditions(String ruleId, List<CfgDeclareRuleConditionDTO.AddDTO> detailList) {
-        List<CfgDeclareRuleConditionEntity> conditions = buildConditionEntities(ruleId, detailList, false);
-        if (CollUtil.isNotEmpty(conditions)) {
-            cfgDeclareRuleConditionService.saveBatch(conditions);
-        }
-    }
 
     private void removeRules(List<String> deleteRuleIds, Map<String, CfgDeclareRuleEntity> existingRuleMap) {
         if (CollUtil.isEmpty(deleteRuleIds)) {
@@ -953,21 +903,6 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
                 .forEach(this::addDeleteLog);
     }
 
-    private void validateUniqueWithDb(CfgDeclareRuleEntity entity) {
-        if (!ObjectUtil.isAllNotEmpty(entity.getRuleType(), entity.getSenderId(), entity.getReceiverId())) {
-            return;
-        }
-        CfgDeclareRuleEntity exist = this.lambdaQuery()
-                .eq(CfgDeclareRuleEntity::getRuleType, entity.getRuleType())
-                .eq(CfgDeclareRuleEntity::getSenderId, entity.getSenderId())
-                .eq(CfgDeclareRuleEntity::getReceiverId, entity.getReceiverId())
-                .ne(StrUtil.isNotBlank(entity.getId()), CfgDeclareRuleEntity::getId, entity.getId())
-                .last("LIMIT 1")
-                .one();
-        if (exist != null) {
-            throw new ServiceException(ApiError.LOGISTICS_DECLARE_RULE_SENDER_RECEIVER_DUPLICATE);
-        }
-    }
 
     private void fillCompanyNames(List<CfgDeclareRuleEntity> ruleList) {
         if (CollUtil.isEmpty(ruleList)) {
@@ -1011,37 +946,24 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
     }
 
     private void addCreateLog(CfgDeclareRuleEntity entity) {
-        String msg = StrUtil.format("User [{}] created cfg declare rule [{}]",
+        String msg = StrUtil.format("用户 [{}] 创建报关规则 [{}]",
                 UserContext.getDefaultLoginUser().getUserName(), entity.getId());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_DECLARE_RULE.getCode(), entity.getId(), "create");
     }
 
     private void addUpdateLog(CfgDeclareRuleEntity oldEntity, CfgDeclareRuleEntity newEntity) {
-        String msg = StrUtil.format("User [{}] updated cfg declare rule [{}]",
+        String msg = StrUtil.format("用户 [{}] 更新报关规则 [{}]",
                 UserContext.getDefaultLoginUser().getUserName(), newEntity.getId());
         operateLogService.addModuleOperateLogByObj(oldEntity, newEntity,
                 ModuleTypeEnum.CFG_DECLARE_RULE.getCode(), newEntity.getId(), msg);
     }
 
     private void addDeleteLog(CfgDeclareRuleEntity entity) {
-        String msg = StrUtil.format("User [{}] deleted cfg declare rule [{}]",
+        String msg = StrUtil.format("用户 [{}] 删除报关规则 [{}]",
                 UserContext.getDefaultLoginUser().getUserName(), entity.getId());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_DECLARE_RULE.getCode(), entity.getId(), "delete");
     }
 
-    private void fillList(List<CfgDeclareRuleDTO.ListDTO> list) {
-        for (CfgDeclareRuleDTO.ListDTO data : list) {
-            if (StrUtil.isNotEmpty(data.getRuleType())) {
-                if ("fmDeclareBill".equals(data.getRuleType())) {
-                    data.setRuleTypeName("\u5934\u7a0b\u62a5\u5173\u5355");
-                } else if ("b2bDeclareBill".equals(data.getRuleType())) {
-                    data.setRuleTypeName("B2B\u62a5\u5173\u5355");
-                }
-            }
-            data.setSenderTypeName(CfgDeclareRuleSenderTypeEnum.getName(data.getSenderType()));
-            data.setReceiverTypeName(CfgDeclareRuleReceiverTypeEnum.getName(data.getReceiverType()));
-        }
-    }
 
     private BaseDropDownDTO.Tree buildDropDown(String type,
                                                String code,
@@ -1059,7 +981,7 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
     private List<BaseDropDownDTO.ChildTree> accountingCompanyChildList(String name) {
         ApiResult<List<SysAccountingCompanyDTO.ListDTO>> companyResult = sysFeign.companyListAll(name);
         if (companyResult == null || !companyResult.isSuccess()) {
-            throw new ServiceException("load accounting company list failed");
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_RULE_ACCOUNTING_COMPANY_LOAD_FAILED);
         }
         return Optional.ofNullable(companyResult.getData())
                 .orElse(Collections.emptyList())

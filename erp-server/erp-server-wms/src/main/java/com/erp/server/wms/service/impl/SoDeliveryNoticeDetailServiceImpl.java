@@ -339,6 +339,9 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
 
     @Override
     public List<TmsDeclareBillDTO.SoOutDTO> listPackingDetailByIdList(TmsDeclareBillDTO.QuerySourceDTO querySourceDTO) {
+        if (querySourceDTO == null || CollUtil.isEmpty(querySourceDTO.getIds())) {
+            return Collections.emptyList();
+        }
         List<TmsDeclareBillDTO.PackingDTO> packingDetailList =  baseMapper.listPackingDetailByIdList(querySourceDTO.getIds());
         if (CollUtil.isEmpty(packingDetailList)) {
             return Collections.emptyList();
