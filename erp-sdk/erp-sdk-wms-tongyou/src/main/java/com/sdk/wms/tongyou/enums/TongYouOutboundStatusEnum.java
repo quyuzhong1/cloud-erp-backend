@@ -18,6 +18,7 @@ public enum TongYouOutboundStatusEnum {
     SHIPPED("4", "已发货", true),
     REVIEW_FAILED("5", "审核不通过", false),
     SIGNED("6", "已签收", true),
+    INTERCEPTED("7", "已拦截", false),
     ;
 
     private static final String UNKNOWN_STATUS_TEXT = "未知";
