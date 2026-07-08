@@ -324,10 +324,19 @@ public class MagaluService {
      * 沙箱确认样例订单支付，使 deliveries.status 从 new 进入 approved 等可拉取状态。
      */
     public JSONObject confirmSandboxSampleOrder(MagaluShopInfoDTO shopInfoDTO, String orderId) {
+        return confirmSandboxSampleOrder(shopInfoDTO, orderId, null);
+    }
+
+    /**
+     * 沙箱确认支付；若平台异步流转，可按 orderCode 轮询详情直至包裹状态离开 new。
+     */
+    public JSONObject confirmSandboxSampleOrder(MagaluShopInfoDTO shopInfoDTO, String orderId, String orderCode) {
         if (StringUtils.isBlank(orderId)) {
             throw new ServiceException("Magalu沙箱订单ID不能为空");
         }
-        String base = trimEndSlash(getApiBaseUrl(shopInfoDTO));
+        List<String> bases = new ArrayList<>(2);
+        addUniqueBaseUrl(bases, trimEndSlash(getApiBaseUrl(shopInfoDTO)));
+        addUniqueBaseUrl(bases, DEFAULT_API_BASE_URL);
         Map<String, String> headers = buildApiHeaders(shopInfoDTO);
         String[] paths = new String[]{
                 "/v1/samples/orders/" + orderId + "/payments/confirm",
@@ -335,32 +344,99 @@ public class MagaluService {
                 "/v1/samples/orders/" + orderId + "/payments/confirmation"
         };
         ServiceException lastError = null;
-        for (String path : paths) {
+        for (String base : bases) {
+            for (String path : paths) {
+                try {
+                    Map<String, Object> emptyBody = new HashMap<>(1);
+                    String response = OkHttpUtils.doPostJson(base + path, emptyBody, headers);
+                    JSONObject result = parseResponseObject(response);
+                    if (!isMagaluApiError(result)) {
+                        return result;
+                    }
+                    log.warn("Magalu沙箱确认支付返回错误 base={}, path={}, result={}", base, path, result);
+                } catch (ServiceException e) {
+                    lastError = e;
+                    log.warn("Magalu沙箱确认支付失败 base={}, path={}, msg={}", base, path, e.getMessage());
+                }
+            }
+            Map<String, Object> paymentBody = new HashMap<>(4);
+            paymentBody.put("method", "pix");
+            paymentBody.put("status", "approved");
             try {
-                Map<String, Object> emptyBody = new HashMap<>(1);
-                String response = OkHttpUtils.doPostJson(base + path, emptyBody, headers);
+                String response = OkHttpUtils.doPostJson(base + "/v1/samples/orders/" + orderId + "/payments",
+                        Collections.singletonList(paymentBody), headers);
                 JSONObject result = parseResponseObject(response);
-                if (result != null && !result.isEmpty()) {
+                if (!isMagaluApiError(result)) {
                     return result;
                 }
+                log.warn("Magalu沙箱补充支付返回错误 base={}, result={}", base, result);
             } catch (ServiceException e) {
                 lastError = e;
-                log.warn("Magalu沙箱确认支付失败 path={}, msg={}", path, e.getMessage());
+                log.warn("Magalu沙箱补充支付失败 base={}, msg={}", base, e.getMessage());
             }
         }
-        Map<String, Object> paymentBody = new HashMap<>(4);
-        paymentBody.put("method", "pix");
-        paymentBody.put("status", "approved");
-        try {
-            String response = OkHttpUtils.doPostJson(base + "/v1/samples/orders/" + orderId + "/payments",
-                    Collections.singletonList(paymentBody), headers);
-            return parseResponseObject(response);
-        } catch (ServiceException e) {
-            if (lastError != null) {
-                throw lastError;
+        if (StringUtils.isNotBlank(orderCode)) {
+            JSONObject polled = pollSandboxOrderUntilPullable(shopInfoDTO, orderCode, 12, 5000);
+            if (polled != null) {
+                return polled;
             }
-            throw e;
         }
+        if (lastError != null) {
+            throw lastError;
+        }
+        throw new ServiceException("Magalu沙箱确认支付失败，订单仍处于new状态");
+    }
+
+    private JSONObject pollSandboxOrderUntilPullable(MagaluShopInfoDTO shopInfoDTO, String orderCode, int maxAttempts, long intervalMs) {
+        for (int i = 0; i < maxAttempts; i++) {
+            JSONObject detail = getOrderDetail(shopInfoDTO, null, orderCode);
+            if (isSandboxDeliveryPullable(detail)) {
+                JSONObject result = new JSONObject();
+                result.put("polled", true);
+                result.put("attempt", i + 1);
+                result.put("detail", detail);
+                return result;
+            }
+            if (i < maxAttempts - 1) {
+                try {
+                    Thread.sleep(intervalMs);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new ServiceException("Magalu沙箱轮询订单状态被中断");
+                }
+            }
+        }
+        return null;
+    }
+
+    private boolean isSandboxDeliveryPullable(JSONObject detail) {
+        if (detail == null || detail.isEmpty()) {
+            return false;
+        }
+        JSONArray deliveries = detail.getJSONArray("deliveries");
+        if (deliveries == null || deliveries.isEmpty()) {
+            return false;
+        }
+        for (int i = 0; i < deliveries.size(); i++) {
+            JSONObject delivery = deliveries.getJSONObject(i);
+            String status = delivery == null ? "" : StringUtils.defaultString(delivery.getString("status"));
+            if (StringUtils.isNotBlank(status) && !"new".equalsIgnoreCase(status)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isMagaluApiError(JSONObject result) {
+        return result != null
+                && (result.containsKey("errorCode") || StringUtils.isNotBlank(result.getString("slug")));
+    }
+
+    private void addUniqueBaseUrl(List<String> bases, String baseUrl) {
+        if (StringUtils.isBlank(baseUrl) || bases.contains(baseUrl)) {
+            return;
+        }
+        bases.add(baseUrl);
     }
 
     private MagaluTokenDTO requestToken(String baseUrl, Map<String, Object> params, String action) {
