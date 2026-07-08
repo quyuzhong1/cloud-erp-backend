@@ -822,12 +822,20 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
         if (CollUtil.isEmpty(runningInstances)) {
             return;
         }
+        // 批量查询所有实例的步骤，避免 N+1（每个实例单独 list → 全量 IN 查询后内存分组）
+        List<String> instanceIds = runningInstances.stream()
+                .map(WorkflowTaskInstanceEntity::getId)
+                .collect(Collectors.toList());
+        List<WorkflowTaskRecordEntity> allSteps = this.lambdaQuery()
+                .in(WorkflowTaskRecordEntity::getInstanceId, instanceIds)
+                .eq(WorkflowTaskRecordEntity::getIsDeleted, false)
+                .orderByAsc(WorkflowTaskRecordEntity::getIndex)
+                .list();
+        Map<String, List<WorkflowTaskRecordEntity>> stepsByInstance = allSteps.stream()
+                .collect(Collectors.groupingBy(WorkflowTaskRecordEntity::getInstanceId));
+
         for (WorkflowTaskInstanceEntity instance : runningInstances) {
-            List<WorkflowTaskRecordEntity> steps = this.lambdaQuery()
-                    .eq(WorkflowTaskRecordEntity::getInstanceId, instance.getId())
-                    .eq(WorkflowTaskRecordEntity::getIsDeleted, false)
-                    .orderByAsc(WorkflowTaskRecordEntity::getIndex)
-                    .list();
+            List<WorkflowTaskRecordEntity> steps = stepsByInstance.getOrDefault(instance.getId(), Collections.emptyList());
             if (CollUtil.isEmpty(steps)) {
                 continue;
             }

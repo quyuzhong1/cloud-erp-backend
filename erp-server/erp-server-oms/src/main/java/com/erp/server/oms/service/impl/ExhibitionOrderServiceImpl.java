@@ -187,6 +187,8 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
     @Resource
     private WorkflowTaskRecordService workflowTaskRecordService;
     @Resource
+    private WorkflowTaskInstanceService workflowTaskInstanceService;
+    @Resource
     private MQProducerService mqProducerService;
 
     private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -970,13 +972,27 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
     }
 
     private void validatePreviousWorkflowTaskFinished(String sourceId, WorkflowTaskRecordTypeEnum sourceTypeEnum, String errorMsg) {
+        // 优先按实例化模型校验，避免历史轮次残留节点误拦新一轮操作
+        WorkflowTaskInstanceEntity latestInstance = workflowTaskInstanceService.getLatestBySource(sourceId, sourceTypeEnum.getCode());
+        if (latestInstance != null) {
+            // 实例已终态（成功/已取消）则认为前置任务已完成，允许继续
+            if (WorkflowTaskInstanceStatusEnum.SUCCESS.getCode().equals(latestInstance.getStatus())
+                    || WorkflowTaskInstanceStatusEnum.CANCELLED.getCode().equals(latestInstance.getStatus())) {
+                return;
+            }
+            // 实例未终态（RUNNING/FAILED/WAITING），前置任务未完成
+            throw new ServiceException(errorMsg);
+        }
+        // 无实例（历史数据），兜底按节点逻辑判断，仅校验无 instanceId 的 legacy 节点
         Integer count = workflowTaskRecordService.lambdaQuery()
                 .eq(WorkflowTaskRecordEntity::getSourceId, sourceId)
-                .eq(WorkflowTaskRecordEntity::getSourceType, sourceTypeEnum)
+                .eq(WorkflowTaskRecordEntity::getSourceType, sourceTypeEnum.getCode())
                 .eq(WorkflowTaskRecordEntity::getIsDeleted, false)
                 .ne(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.SUCCESS.getCode())
+                .and(w -> w.isNull(WorkflowTaskRecordEntity::getInstanceId)
+                        .or().eq(WorkflowTaskRecordEntity::getInstanceId, ""))
                 .count();
-        if(count > 0){
+        if (count > 0) {
             throw new ServiceException(errorMsg);
         }
     }

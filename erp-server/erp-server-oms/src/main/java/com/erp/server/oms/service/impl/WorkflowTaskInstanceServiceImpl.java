@@ -305,7 +305,9 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
                 .set(WorkflowTaskInstanceEntity::getVersion, fresh.getVersion() + 1)
                 .update();
         if (!updated) {
+            // 并发取消冲突：实例已被其他请求更新，跳过子节点批量修改，避免实例/节点状态不一致
             log.warn("markCancelled 并发冲突，instanceId={}, version={}", instanceId, fresh.getVersion());
+            return;
         }
         workflowTaskRecordService.lambdaUpdate()
                 .eq(WorkflowTaskRecordEntity::getInstanceId, instanceId)

@@ -22,8 +22,15 @@ public interface WorkflowTaskRecordService extends SuperService<WorkflowTaskReco
     /** 自动补偿（Job）最大重试次数，超过后仅允许人工 forceRetry */
     int AUTO_RETRY_MAX_COUNT = 3;
 
-    /** 节点终态失败判定阈值（retryCount 达到后不再自动补偿） */
-    int TASK_TERMINAL_RETRY_COUNT = AUTO_RETRY_MAX_COUNT;
+    /**
+     * 节点终态失败判定阈值：retryCount 达到此值时视为终态，不再自动补偿。
+     * <p>
+     * 与实际写库逻辑保持一致：{@link CrossServiceStepInvoker#prepareTerminalFailed} 和
+     * {@code markKolB2cSubApproveTaskFailed} 均将 retryCount 提升至 {@code AUTO_RETRY_MAX_COUNT + 1}（=4）。
+     * Job 跳过条件为 {@code retryCount > AUTO_RETRY_MAX_COUNT}（>3），故终态阈值应与之对齐为 4。
+     * </p>
+     */
+    int TASK_TERMINAL_RETRY_COUNT = AUTO_RETRY_MAX_COUNT + 1;
 
     /** WAITING 节点超时小时数：超过该时长后自动转为终态失败，防止流程永久挂起 */
     int TASK_WAITING_TIMEOUT_HOURS = 24;

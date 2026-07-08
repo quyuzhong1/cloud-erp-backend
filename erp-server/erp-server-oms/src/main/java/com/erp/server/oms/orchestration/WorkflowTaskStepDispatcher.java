@@ -366,20 +366,20 @@ public class WorkflowTaskStepDispatcher {
     }
 
     /**
-     * 将超时的 WAITING 节点标记为终态失败，retryCount 提升至阈值以上后同步实例状态。
+     * 将超时的 WAITING 节点标记为终态失败，通过 persistNodeAndSyncInstance 原子写节点 + 实例状态，
+     * 避免两步写库之间出现「节点已失败、实例仍 waiting/running」的中间态。
      */
     private void markWaitingTimedOut(WorkflowTaskRecordEntity step, WorkflowTaskInstanceEntity instance) {
         int terminal = WorkflowTaskRecordService.AUTO_RETRY_MAX_COUNT + 1;
         String errorMsg = "WAITING 超时（超过 " + WorkflowTaskRecordService.TASK_WAITING_TIMEOUT_HOURS + " 小时未收到回调）";
-        workflowTaskRecordService.lambdaUpdate()
-                .eq(WorkflowTaskRecordEntity::getId, step.getId())
-                .set(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.FAILED.getCode())
-                .set(WorkflowTaskRecordEntity::getLastError, errorMsg)
-                .set(WorkflowTaskRecordEntity::getRetryCount,
-                        Math.max(Optional.ofNullable(step.getRetryCount()).orElse(0) + 1, terminal))
-                .set(WorkflowTaskRecordEntity::getEndTime, LocalDateTime.now())
-                .update();
-        workflowTaskInstanceService.markFailed(instance.getId(), step.getIndex(), errorMsg);
+        // 在内存中准备节点终态字段（不提前写 DB）
+        step.setStatus(WorkflowTaskRecordStatusEnum.FAILED.getCode());
+        step.setLastError(errorMsg);
+        step.setRetryCount(Math.max(Optional.ofNullable(step.getRetryCount()).orElse(0) + 1, terminal));
+        step.setEndTime(LocalDateTime.now());
+        // 原子写：节点 FAILED + 实例 FAILED（同一事务）
+        workflowTaskInstanceService.persistNodeAndSyncInstance(
+                step, instance.getId(), step.getIndex(), 0, StepInvokeResult.Outcome.FAILED, errorMsg);
     }
 
     private boolean isInstanceActive(String instanceId) {
