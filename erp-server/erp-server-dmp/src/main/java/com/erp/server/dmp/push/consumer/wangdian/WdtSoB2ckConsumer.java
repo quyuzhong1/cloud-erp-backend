@@ -1,7 +1,6 @@
 package com.erp.server.dmp.push.consumer.wangdian;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -74,14 +73,23 @@ public class WdtSoB2ckConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatf
      * 标记当前线程是否已经通过请求体tid完成过取消失败回调，避免后续状态回写阶段重复回调。
      */
     private static final ThreadLocal<Boolean> CANCEL_FAIL_CALLBACK_HANDLED = new ThreadLocal<>();
+    /**
+     * 标记当前线程是否已经通过请求体完成过审批回调，避免后续状态回写阶段重复回调 OMS。
+     */
+    private static final ThreadLocal<Boolean> APPROVE_CALLBACK_HANDLED = new ThreadLocal<>();
 
     @Override
     public void updateSyncTaskStatus(DmpSyncMqDTO.ParamDTO paramDTO) {
         dmpPushTaskService.updateStatus(paramDTO);
         DmpPushTaskEntity dmpPushTaskEntity = dmpPushTaskService.getById(paramDTO.getDmpSyncTaskId());
-        notifyKolB2cApprovePushResult(dmpPushTaskEntity, paramDTO);
+        if (Boolean.TRUE.equals(APPROVE_CALLBACK_HANDLED.get())) {
+            log.info("旺店通B2C审批回调OMS跳过重复触发: dmpSyncTaskId={}", paramDTO.getDmpSyncTaskId());
+        } else {
+            notifyKolB2cApprovePushResult(dmpPushTaskEntity, paramDTO);
+        }
         if (!StringUtils.equals(paramDTO.getSyncStatus(), SyncStatusEnum.FAILED_SYNC.getCode())) {
             CANCEL_FAIL_CALLBACK_HANDLED.remove();
+            APPROVE_CALLBACK_HANDLED.remove();
             return;
         }
         try {
@@ -94,6 +102,7 @@ public class WdtSoB2ckConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatf
             notifyKolB2cCancelPushFail(dmpPushTaskEntity, paramDTO.getDmpSyncTaskId(), paramDTO.getResponseMsg());
         } finally {
             CANCEL_FAIL_CALLBACK_HANDLED.remove();
+            APPROVE_CALLBACK_HANDLED.remove();
         }
     }
 
@@ -110,6 +119,7 @@ public class WdtSoB2ckConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatf
     @Override
     public ApiResult<?> handle(Object ext) {
         CANCEL_FAIL_CALLBACK_HANDLED.remove();
+        APPROVE_CALLBACK_HANDLED.remove();
         String dmpSyncTaskId = JSONUtil.parseObj(ext).getStr("dmpSyncTaskId");
         PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(PlatformEnum.WANGDIAN.getDesc());
         if (ObjectUtils.isEmpty(platformEntity)) {
@@ -281,6 +291,7 @@ public class WdtSoB2ckConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatf
         try {
             log.info("旺店通B2C审批下推成功回调OMS开始(按请求报文): dmpSyncTaskId={}, subOrderCode={}", dmpSyncTaskId, subOrderCode);
             omsTaskFeign.handleKolB2cApprovePushSuccess(dto);
+            APPROVE_CALLBACK_HANDLED.set(Boolean.TRUE);
             log.info("旺店通B2C审批下推成功回调OMS完成(按请求报文): dmpSyncTaskId={}, subOrderCode={}", dmpSyncTaskId, subOrderCode);
         } catch (Exception e) {
             log.warn("旺店通B2C审批下推成功回调OMS失败(按请求报文): dmpSyncTaskId={}, subOrderCode={}, err={}",
@@ -301,6 +312,7 @@ public class WdtSoB2ckConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatf
         try {
             log.info("旺店通B2C审批下推失败回调OMS开始(按请求报文): dmpSyncTaskId={}, subOrderCode={}", dmpSyncTaskId, subOrderCode);
             omsTaskFeign.handleKolB2cApprovePushFail(dto);
+            APPROVE_CALLBACK_HANDLED.set(Boolean.TRUE);
             log.info("旺店通B2C审批下推失败回调OMS完成(按请求报文): dmpSyncTaskId={}, subOrderCode={}", dmpSyncTaskId, subOrderCode);
         } catch (Exception e) {
             log.warn("旺店通B2C审批下推失败回调OMS失败(按请求报文): dmpSyncTaskId={}, subOrderCode={}, err={}",
