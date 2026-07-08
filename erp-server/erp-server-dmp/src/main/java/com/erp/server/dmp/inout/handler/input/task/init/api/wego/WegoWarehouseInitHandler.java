@@ -77,7 +77,11 @@ public class WegoWarehouseInitHandler extends DmpInputInitHandler {
         if (!Boolean.TRUE.equals(resp.getBoolean("success"))) {
             // token 失效场景：刷新 token 后重试一次（与 jifeng 保持一致的容错策略）
             if (isTokenInvalid(resp)) {
-                overseasProviderEntity = overseasProviderFeign.refreshToken(overseasProviderEntity);
+                OverseasProviderEntity refreshed = overseasProviderFeign.refreshToken(overseasProviderEntity);
+                if (refreshed == null) {
+                    throw new ServiceException("WEGO刷新token失败, authId:" + overseasProviderEntity.getId());
+                }
+                overseasProviderEntity = refreshed;
                 resp = callWarehouseList(overseasProviderEntity);
                 if (resp == null) {
                     return Collections.emptyList();

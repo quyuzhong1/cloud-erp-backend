@@ -79,4 +79,33 @@ public enum WegoEnums {
                     .orElse(null);
         }
     }
+
+    /**
+     * WEGO 库存类型枚举（来自 WEGO 官方文档 {@code inventoryType} 字段）。
+     */
+    @Getter
+    public enum InventoryTypeEnum {
+        C2("0", "2C库存"),
+        B2("1", "2B库存"),
+        DEFECTIVE("3", "不良品"),
+        ;
+
+        private final String code;
+        private final String name;
+
+        InventoryTypeEnum(String code, String name) {
+            this.code = code;
+            this.name = name;
+        }
+
+        /**
+         * 判断给定的 WEGO {@code inventoryType} 值是否为不良品。
+         *
+         * @param code WEGO inventoryType 转字符串后的值
+         * @return 是否为不良品库存类型
+         */
+        public static boolean isDefective(String code) {
+            return DEFECTIVE.getCode().equals(code);
+        }
+    }
 }
