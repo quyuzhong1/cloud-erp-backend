@@ -237,7 +237,6 @@ public class LogisticsReconServiceImpl
         data.setTotalAmountStr(formatAmount(entity.getTotalAmount(), currencySymbol(entity.getCurrency())));
         data.setCheckStatus(entity.getCheckStatus());
         data.setCheckStatusName(LogisticsReconCheckStatusEnum.getName(entity.getCheckStatus()));
-        fillViewStatus(data, baseMapper.selectStatusStatsById(id));
         return data;
     }
 
@@ -2963,22 +2962,6 @@ public class LogisticsReconServiceImpl
 
     // ============================== private ==============================
 
-    /**
-     * 详情页状态回填（对账状态 / 匹配状态，与列表 fillList 派生逻辑一致）
-     */
-    private void fillViewStatus(LogisticsReconDTO.ViewDTO data, LogisticsReconDTO.ListDTO stats) {
-        if (data == null || stats == null) {
-            return;
-        }
-        int matchCount = stats.getMatchCount() == null ? 0 : stats.getMatchCount();
-        int costCount = stats.getCostCount() == null ? 0 : stats.getCostCount();
-        String matchStatus = LogisticsReconMatchStatusEnum.resolve(matchCount, costCount);
-        data.setMatchStatus(matchStatus);
-        data.setMatchStatusName(LogisticsReconMatchStatusEnum.getName(matchStatus));
-        data.setReconciliationStatus(stats.getReconciliationStatus());
-        data.setReconciliationStatusName(
-                LogisticsReconReconciliationStatusEnum.getName(stats.getReconciliationStatus()));
-    }
 
     /**
      * 列表名称回填
