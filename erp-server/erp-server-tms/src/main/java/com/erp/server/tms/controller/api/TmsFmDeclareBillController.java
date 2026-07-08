@@ -210,6 +210,7 @@ public class TmsFmDeclareBillController extends BaseController {
      */
     @PostMapping("/export")
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出头程报关单")
+    @WebAdvanceQuery(handler = TmsFmDeclareQueryHandler.class)
     public ApiResult<Object>export(@RequestBody @Valid TmsDeclareBillDTO.PagingParamDTO pagingParamDTO) {
         downloadTaskFeign.saveDownloadTask("头程报关单导出", EXPORT_TMS_TMS_FM_DECLARE_BILL.getCode(), pagingParamDTO);
         return success();

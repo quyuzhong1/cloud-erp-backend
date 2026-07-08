@@ -5137,6 +5137,14 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         boolean b2bCustomerBomSplitChild = sixDimensionMerge
                 && isB2bSourceDetail(detailDTO)
                 && StringUtils.isNotBlank(detailDTO.getParentSkuId());
+        if (sixDimensionMerge
+                && isB2bSourceDetail(detailDTO)
+                && Objects.isNull(soDetailEntity)
+                && !b2bCustomerBomSplitChild) {
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_B2B_SO_DETAIL_NOT_FOUND,
+                    CharSequenceUtil.blankToDefault(detailDTO.getSourceCode(), detailDTO.getBusinessCode()),
+                    CharSequenceUtil.blankToDefault(detailDTO.getSkuNo(), detailDTO.getSkuId()));
+        }
 
         if (sixDimensionMerge && Objects.nonNull(soDetailEntity)) {
             // B2B 客户：取 SO 含税单价/币别（BOM 拆分子 SKU 通过 resolveSoDetailSkuId 回退父 SKU）。
