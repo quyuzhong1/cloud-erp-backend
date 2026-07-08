@@ -1015,13 +1015,37 @@ public class SoReturnPrestockServiceImpl
     @Transactional(rollbackFor = Exception.class)
     public String addFromReturnInstock(SoReturnPrestockDTO.FromInstock dto) {
         checkCustomerAndLogisticCodeForPrestock(dto.getCustomerId(), dto.getReturnLogisticCode());
+        String warehouseId = resolveWarehouseIdFromInstock(dto.getWarehouseId(), dto.getDetailList());
         List<SoReturnPrestockDetailDTO.Add> detailList = buildPrestockDetailListFromInstock(dto.getDetailList());
         SoReturnPrestockDTO.Add prestockAdd = buildPrestockAddFromInstockParams(
-                dto.getType(), dto.getReturnLogisticCode(), dto.getThirdCode(), dto.getWarehouseId(),
+                dto.getType(), dto.getReturnLogisticCode(), dto.getThirdCode(), warehouseId,
                 dto.getSoReturnCode(), detailList);
         String prestockId = add(prestockAdd);
         generateOtherInstockForPrestock(prestockId, prestockAdd);
         return prestockId;
+    }
+
+    /**
+     * 解析创建预入库单所用的仓库 ID：优先取表单主表仓库；退货入库单表单按明细行填写仓库，
+     * 主表未直接传入时按明细行 warehouseId 汇总推导（预入库单主表仅支持单一仓库，明细行仓库不一致时拒绝创建）
+     */
+    private String resolveWarehouseIdFromInstock(String mainWarehouseId,
+            List<SoReturnPrestockDetailDTO.FromInstock> detailList) {
+        if (CharSequenceUtil.isNotBlank(mainWarehouseId)) {
+            return mainWarehouseId;
+        }
+        List<String> distinctWarehouseIds = CollUtil.emptyIfNull(detailList).stream()
+                .map(SoReturnPrestockDetailDTO.FromInstock::getWarehouseId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (distinctWarehouseIds.isEmpty()) {
+            throw new ServiceException("仓库不能为空");
+        }
+        if (distinctWarehouseIds.size() > 1) {
+            throw new ServiceException("退货入库明细仓库不一致，无法生成预入库单");
+        }
+        return distinctWarehouseIds.get(0);
     }
 
     // ===================== 强制关闭剩余未认领预入库单（定时任务） =====================

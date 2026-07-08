@@ -193,8 +193,10 @@ public class SoReturnPrestockDTO {
         /** 第三方单据编号 */
         private String thirdCode;
 
-        /** 签收仓库 ID */
-        @NotBlank(message = "仓库不能为空")
+        /**
+         * 签收仓库 ID；可不传，未传时服务端会按 {@code detailList} 各行的 warehouseId 推导
+         * （退货入库单表单按明细行填写仓库）；最终仍取不到仓库时报错
+         */
         private String warehouseId;
 
         /** 售后单据类型：B2B / B2C */

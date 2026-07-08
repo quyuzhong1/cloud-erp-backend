@@ -109,6 +109,13 @@ public class SoReturnPrestockDetailDTO {
         private Integer receiveQty;
 
         /**
+         * 仓库 ID；退货入库单表单按明细行填写仓库，预入库单主表仅支持单一仓库。
+         * 主表 {@code SoReturnPrestockDTO.FromInstock#warehouseId} 未直接传入时，
+         * 由服务端汇总本字段推导主表仓库
+         */
+        private String warehouseId;
+
+        /**
          * 备注
          */
         private String remark;
