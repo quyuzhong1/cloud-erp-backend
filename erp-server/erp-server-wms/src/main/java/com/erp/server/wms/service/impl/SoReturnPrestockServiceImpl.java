@@ -106,6 +106,12 @@ public class SoReturnPrestockServiceImpl
      */
     private static final int FORCE_CLOSE_BATCH_SIZE = 500;
 
+    /** so_return_prestock_detail.product_name 列长度上限（varchar(255)） */
+    private static final int PRODUCT_NAME_MAX_LENGTH = 255;
+
+    /** so_return_prestock_detail.product_image_url 列长度上限（varchar(500)） */
+    private static final int PRODUCT_IMAGE_URL_MAX_LENGTH = 500;
+
     @Resource
     private DocNoGenHelper docNoGenHelper;
 
@@ -1401,14 +1407,27 @@ public class SoReturnPrestockServiceImpl
             SoReturnPrestockDetailDTO.Add detail = new SoReturnPrestockDetailDTO.Add();
             detail.setSkuId(d.getSkuId());
             detail.setSkuNo(d.getSkuNo());
-            detail.setProductName(skuVO.getSkuName());
-            detail.setProductImageUrl(skuVO.getSkuImagesUrl());
+            detail.setProductName(CharSequenceUtil.sub(skuVO.getSkuName(), 0, PRODUCT_NAME_MAX_LENGTH));
+            detail.setProductImageUrl(firstDisplayImageUrl(skuVO.getSkuImagesUrl()));
             detail.setEan(skuVO.getEan());
             detail.setReturnQty(d.getRealQty());
             detail.setReceiveQty(d.getReceiveQty());
             detail.setRemark(d.getRemark());
             return detail;
         }).collect(Collectors.toList());
+    }
+
+    /**
+     * PLM 返回的 SKU 图片字段（images_url）可能是多张图片以逗号拼接的字符串，
+     * 而预入库单明细 product_image_url 列长度有限（varchar(500)），直接整串写入在图片较多时
+     * 会触发 "value too long"；此处仅取第一张图作为展示图，并按列长度兜底截断
+     */
+    private String firstDisplayImageUrl(String imagesUrl) {
+        if (CharSequenceUtil.isBlank(imagesUrl)) {
+            return "";
+        }
+        String firstUrl = CharSequenceUtil.subBefore(imagesUrl, ",", false);
+        return CharSequenceUtil.sub(firstUrl, 0, PRODUCT_IMAGE_URL_MAX_LENGTH);
     }
 
     /**
