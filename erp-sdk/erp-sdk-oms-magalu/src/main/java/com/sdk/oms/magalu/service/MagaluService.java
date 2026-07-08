@@ -179,7 +179,7 @@ public class MagaluService {
         String path = StringUtils.isBlank(apiPath) ? TICKET_LIST_PATH : apiPath;
         String url = trimEndSlash(getApiBaseUrl(shopInfoDTO)) + addStartSlash(path);
         Map<String, Object> params = new HashMap<>(8);
-        params.put("limit", limit);
+        params.put("_limit", limit);
         params.put("_offset", offset);
         if (StringUtils.isNotBlank(startTime)) {
             params.put("updated_at__gte", startTime);
