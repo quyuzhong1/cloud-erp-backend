@@ -1047,7 +1047,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         TmsDeclareBillDTO.DeleteDeliveryDeclareDetailMidDTO deleteDTO = new TmsDeclareBillDTO.DeleteDeliveryDeclareDetailMidDTO();
         deleteDTO.setSourceIds(Collections.singletonList(id));
         Boolean delete = tmsDeclareBillFeign.deleteDeliveryDeclareDetailMid(deleteDTO);
-        if (!delete) {
+        if (!Boolean.TRUE.equals(delete)) {
             return  BatchResultDTO.fail(deliveryNoticeEntity.getId(), deliveryNoticeEntity.getCode(), "删除发货明细中间表失败");
         }
 

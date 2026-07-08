@@ -10,6 +10,8 @@ public enum DeclareStatusEnum implements EnumMessage {
     //增加一个‘已确认’的枚举
     CONFIRMED("confirmed","已确认"),
     DECLARED("declared","已报关"),
+    //展示专用：报关单尚未生成
+    NOT_GENERATED("not","待生成"),
     ;
 
     /**

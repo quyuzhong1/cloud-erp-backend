@@ -1803,8 +1803,8 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
             if(StringUtils.isNotBlank(data.getDeclareStatus())){
                 data.setDeclareStatusName(DeclareStatusEnum.getName(data.getDeclareStatus()));
             }else {
-                data.setDeclareStatus("not");
-                data.setDeclareStatusName("待生成");
+                data.setDeclareStatus(DeclareStatusEnum.NOT_GENERATED.getCode());
+                data.setDeclareStatusName(DeclareStatusEnum.NOT_GENERATED.getName());
             }
             data.setGenerateStatusName(DeliveryDeclareDetailMidGenerateStatusEnum.getName(data.getGenerateStatus()));
             if (CharSequenceUtil.isBlank(data.getTransferWarehouseNames())) {
