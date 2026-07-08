@@ -70,7 +70,6 @@ import java.util.stream.Collectors;
 @LogisticsPlatformType(LogisticsPlatformEnum.KUAIDI100)
 public class Kuaidi100LogisticsHandlerImpl extends AbstractLogisticsHandler {
 
-    private static final String KUAIDI100_CALLBACK_PATH = "/webhook/kuaidi100/push";
     private static final String KUAIDI100_SUBSCRIBE_SUCCESS_CODE = "200";
     private static final String KUAIDI100_DUPLICATE_SUBSCRIBE_CODE = "501";
     private static final String ENV_URL_EMPTY_CODE = "ENV_URL_EMPTY";
@@ -293,7 +292,7 @@ public class Kuaidi100LogisticsHandlerImpl extends AbstractLogisticsHandler {
         if (StrUtil.isBlank(pcLinkByEnv) || "null".equalsIgnoreCase(pcLinkByEnv)) {
             return "";
         }
-        return StrUtil.removeSuffix(pcLinkByEnv.trim(), "/") + KUAIDI100_CALLBACK_PATH;
+        return pcLinkByEnv.trim();
     }
 
     private List<RegisterResponseVO> buildFailureResponseList(List<LogisticsRegisterVO> registerVOS, String code, String msg) {
