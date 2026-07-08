@@ -544,15 +544,23 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                 String referenceNo = createOutboundReq.getReferenceNo();
                 log.warn("{}建单返回[订单已存在]（非重单，属幂等重试），按 referenceCode 反查 WEGO 单号, referenceNo={}",
                         getPlatForm().getName(), referenceNo);
-                ApiResult<ThirdWarehouseQueryOutboundResponse> fallback =
-                        queryByReferenceCodeFallback(accessToken, secret, referenceNo);
-                if (fallback.isSuccess()) {
-                    log.info("{}反查成功，幂等重试命中已有订单, wegoNo={}",
-                            getPlatForm().getName(), fallback.getData().getShippingOrderNo());
-                    return fallback;
+                try {
+                    ApiResult<ThirdWarehouseQueryOutboundResponse> fallback =
+                            queryByReferenceCodeFallback(accessToken, secret, referenceNo);
+                    if (fallback.isSuccess()) {
+                        log.info("{}反查成功，幂等重试命中已有订单, wegoNo={}",
+                                getPlatForm().getName(), fallback.getData().getShippingOrderNo());
+                        return fallback;
+                    }
+                    log.warn("{}反查失败（referenceCode={}, msg={}），以原始错误返回",
+                            getPlatForm().getName(), referenceNo, fallback.getMsg());
+                } catch (ServiceException e) {
+                    // 幂等重试路径下反查接口临时失败（响应为空/success=false）不应向上抛出，
+                    // 否则上层会将其当作系统异常处理，导致 WFHD 状态与预期不符。
+                    // 此处降级为原始 WEGO 错误信息返回，保证幂等分支始终返回可控的 ApiResult。
+                    log.warn("{}反查接口异常（referenceCode={}, err={}），以原始错误返回",
+                            getPlatForm().getName(), referenceNo, e.getMessage());
                 }
-                log.warn("{}反查失败（referenceCode={}, msg={}），以原始错误返回",
-                        getPlatForm().getName(), referenceNo, fallback.getMsg());
             }
             return failure(buildErrorMessage(resp));
         }
