@@ -67,15 +67,15 @@ public class CrossServiceStepInvoker {
             methodName = legacy[1];
         }
         if (StringUtils.isAnyBlank(classPath, methodName)) {
-            markFailed(entity, "classpath为空", retryIncrement, ERROR_SOURCE_ORCHESTRATOR, 0L);
-            return StepInvokeResult.failed("classpath为空", ERROR_SOURCE_ORCHESTRATOR, 0L);
+            prepareFailed(entity, "classpath为空", retryIncrement, ERROR_SOURCE_ORCHESTRATOR, 0L);
+            return StepInvokeResult.failed("classpath为空", ERROR_SOURCE_ORCHESTRATOR, 0L, entity);
         }
 
         String jsonStr = entity.getInputData();
         if (StringUtils.isBlank(jsonStr)) {
             String msg = StrUtil.format("traceId: 【{}】，inputData为空", traceId);
-            markFailed(entity, msg, retryIncrement, ERROR_SOURCE_ORCHESTRATOR, 0L);
-            return StepInvokeResult.failed(msg, ERROR_SOURCE_ORCHESTRATOR, 0L);
+            prepareFailed(entity, msg, retryIncrement, ERROR_SOURCE_ORCHESTRATOR, 0L);
+            return StepInvokeResult.failed(msg, ERROR_SOURCE_ORCHESTRATOR, 0L, entity);
         }
 
         Map<String, Object> inputDataMap;
@@ -85,8 +85,8 @@ public class CrossServiceStepInvoker {
             inputDataMap = gson.fromJson(jsonStr, mapType);
         } catch (Exception e) {
             String msg = StrUtil.format("traceId: 【{}】，inputData解析失败，id={}", traceId, entity.getId());
-            markFailed(entity, msg, retryIncrement, ERROR_SOURCE_ORCHESTRATOR, 0L);
-            return StepInvokeResult.failed(msg, ERROR_SOURCE_ORCHESTRATOR, 0L);
+            prepareFailed(entity, msg, retryIncrement, ERROR_SOURCE_ORCHESTRATOR, 0L);
+            return StepInvokeResult.failed(msg, ERROR_SOURCE_ORCHESTRATOR, 0L, entity);
         }
 
         WorkflowTaskRecordDTO.MqRequestDTO dto = new WorkflowTaskRecordDTO.MqRequestDTO();
@@ -105,14 +105,14 @@ public class CrossServiceStepInvoker {
             long duration = System.currentTimeMillis() - startMs;
             log.error("Feign invoke failed for workflowTaskRecordEntity id: {}", entity.getId(), e);
             String msg = StrUtil.format("traceId: 【{}】，Feign invoke failed, id={}, error={}", traceId, entity.getId(), e.getMessage());
-            markFailed(entity, msg, retryIncrement, ERROR_SOURCE_REMOTE, duration);
-            return StepInvokeResult.failed(msg, ERROR_SOURCE_REMOTE, duration);
+            prepareFailed(entity, msg, retryIncrement, ERROR_SOURCE_REMOTE, duration);
+            return StepInvokeResult.failed(msg, ERROR_SOURCE_REMOTE, duration, entity);
         }
         long duration = System.currentTimeMillis() - startMs;
 
         if (Objects.isNull(mqResponseDTO)) {
-            markFailed(entity, "远程返回为空", retryIncrement, ERROR_SOURCE_REMOTE, duration);
-            return StepInvokeResult.failed("远程返回为空", ERROR_SOURCE_REMOTE, duration);
+            prepareFailed(entity, "远程返回为空", retryIncrement, ERROR_SOURCE_REMOTE, duration);
+            return StepInvokeResult.failed("远程返回为空", ERROR_SOURCE_REMOTE, duration, entity);
         }
 
         entity.setOutputData(JSON.toJSONString(mqResponseDTO.getData()));
@@ -123,40 +123,57 @@ public class CrossServiceStepInvoker {
         String errorMsg = mqResponseDTO.getErrorMsg();
         String responseStatus = mqResponseDTO.getStatus();
         if (Objects.equals(responseStatus, WorkflowTaskRecordStatusEnum.WAITING.getCode())) {
+            // 只在内存中准备状态，不写 DB；由调用方在事务中与实例状态同步落库
             entity.setStatus(WorkflowTaskRecordStatusEnum.WAITING.getCode());
             entity.setLastError(StringUtils.defaultString(errorMsg));
             entity.setErrorSource(ERROR_SOURCE_REMOTE);
             entity.setEndTime(LocalDateTime.now());
-            workflowTaskRecordService.updateById(entity);
-            return StepInvokeResult.waiting(errorMsg);
+            return StepInvokeResult.waiting(errorMsg, entity);
         }
         if (Objects.equals(responseStatus, WorkflowTaskRecordStatusEnum.FAILED.getCode())) {
-            markFailed(entity, StringUtils.defaultString(errorMsg), true, ERROR_SOURCE_REMOTE, duration);
-            return StepInvokeResult.failed(StringUtils.defaultString(errorMsg), ERROR_SOURCE_REMOTE, duration);
+            // 远程显式终态失败：retryCount 提升至阈值以上，Job 不再自动重试
+            prepareTerminalFailed(entity, StringUtils.defaultString(errorMsg), ERROR_SOURCE_REMOTE, duration);
+            return StepInvokeResult.failed(StringUtils.defaultString(errorMsg), ERROR_SOURCE_REMOTE, duration, entity);
         }
         if (StringUtils.isNotBlank(errorMsg)) {
-            markFailed(entity, errorMsg, retryIncrement, ERROR_SOURCE_REMOTE, duration);
-            return StepInvokeResult.failed(errorMsg, ERROR_SOURCE_REMOTE, duration);
+            prepareFailed(entity, errorMsg, retryIncrement, ERROR_SOURCE_REMOTE, duration);
+            return StepInvokeResult.failed(errorMsg, ERROR_SOURCE_REMOTE, duration, entity);
         }
 
+        // SUCCESS：在内存中准备状态，由调用方原子写库
         entity.setStatus(WorkflowTaskRecordStatusEnum.SUCCESS.getCode());
         entity.setLastError("");
         entity.setErrorSource("");
         entity.setEndTime(LocalDateTime.now());
         entity.setRetryCount(Optional.ofNullable(entity.getRetryCount()).orElse(0) + (retryIncrement ? 1 : 0));
-        workflowTaskRecordService.updateById(entity);
-        return StepInvokeResult.success(entity.getOutputData());
+        return StepInvokeResult.success(entity.getOutputData(), entity);
     }
 
-    private void markFailed(WorkflowTaskRecordEntity entity, String errorMsg, boolean retryIncrement,
-                            String errorSource, long duration) {
+    /**
+     * 在内存中准备失败状态字段（不写 DB），由调用方在事务中统一落库。
+     */
+    private void prepareFailed(WorkflowTaskRecordEntity entity, String errorMsg, boolean retryIncrement,
+                               String errorSource, long duration) {
         entity.setStatus(WorkflowTaskRecordStatusEnum.FAILED.getCode());
         entity.setLastError(errorMsg);
         entity.setRetryCount(Optional.ofNullable(entity.getRetryCount()).orElse(0) + (retryIncrement ? 1 : 0));
         entity.setErrorSource(errorSource);
         entity.setFeignDurationMs(duration);
         entity.setEndTime(LocalDateTime.now());
-        workflowTaskRecordService.updateById(entity);
+    }
+
+    /**
+     * 在内存中准备业务终态失败字段（不写 DB）：retryCount 提升至阈值以上，Job 不再自动重试。
+     */
+    private void prepareTerminalFailed(WorkflowTaskRecordEntity entity, String errorMsg,
+                                       String errorSource, long duration) {
+        int terminal = WorkflowTaskRecordService.AUTO_RETRY_MAX_COUNT + 1;
+        entity.setStatus(WorkflowTaskRecordStatusEnum.FAILED.getCode());
+        entity.setLastError(errorMsg);
+        entity.setRetryCount(Math.max(Optional.ofNullable(entity.getRetryCount()).orElse(0) + 1, terminal));
+        entity.setErrorSource(errorSource);
+        entity.setFeignDurationMs(duration);
+        entity.setEndTime(LocalDateTime.now());
     }
 
     private String[] splitLegacyClassPath(String classPath) {

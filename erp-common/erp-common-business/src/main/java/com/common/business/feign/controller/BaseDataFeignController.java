@@ -142,7 +142,11 @@ public class BaseDataFeignController extends BaseController implements BaseDataF
 			for(int i = 0; i < parameterTypeNames.size(); i++) {
 				parameterTypes[i] = Class.forName(parameterTypeNames.get(i));
 			}
-			return clazz.getMethod(methodName, parameterTypes);
+			try {
+				return clazz.getMethod(methodName, parameterTypes);
+			} catch (NoSuchMethodException e) {
+				return null;
+			}
 		}
 		Method[] methods = clazz.getMethods();
 		for(Method method : methods) {

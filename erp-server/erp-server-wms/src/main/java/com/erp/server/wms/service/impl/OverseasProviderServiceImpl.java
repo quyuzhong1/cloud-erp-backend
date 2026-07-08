@@ -260,6 +260,14 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
     }
 
     @Override
+    public List<OverseasProviderDTO.ListWithWarehouseDTO> listMatchByMainId(String mainId) {
+        if (StringUtils.isBlank(mainId)) {
+            return Collections.emptyList();
+        }
+        return baseMapper.selectListWithWarehouseByMainId(mainId);
+    }
+
+    @Override
     public OverseasProviderEntity getByPlatformCode(String code) {
         return lambdaQuery().eq(OverseasProviderEntity::getCode,code).last("LIMIT 1").one();
     }

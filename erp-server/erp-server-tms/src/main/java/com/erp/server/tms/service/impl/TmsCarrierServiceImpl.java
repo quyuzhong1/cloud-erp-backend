@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.constant.SqlConstants;
@@ -37,8 +38,9 @@ import java.util.stream.Collectors;
 public class TmsCarrierServiceImpl extends SuperServiceImpl<TmsCarrierMapper, TmsCarrierEntity> implements TmsCarrierService {
     @Override
     public List<BaseDropDownDTO.CommonDTO> listBySalesPlatform(String salesPlatform) {
+        String apiSalesPlatform = PlatformDictEnum.getApiPlatformCode(salesPlatform);
         List<TmsCarrierEntity> list = lambdaQuery()
-                .eq(StringUtils.isNotBlank(salesPlatform), TmsCarrierEntity::getSalesPlatform, salesPlatform)
+                .eq(StringUtils.isNotBlank(apiSalesPlatform), TmsCarrierEntity::getSalesPlatform, apiSalesPlatform)
                 .list();
         if (CollectionUtils.isEmpty(list)) {
             return Collections.emptyList();
@@ -50,7 +52,7 @@ public class TmsCarrierServiceImpl extends SuperServiceImpl<TmsCarrierMapper, Tm
 
     @Override
     public TmsCarrierEntity getByCodeAndSalesPlatform(String carrierCode, String dictPlatform) {
-        return lambdaQuery().eq(TmsCarrierEntity::getSalesPlatform, dictPlatform)
+        return lambdaQuery().eq(TmsCarrierEntity::getSalesPlatform, PlatformDictEnum.getApiPlatformCode(dictPlatform))
                 .eq(TmsCarrierEntity::getCode, carrierCode)
                 .last(SqlConstants.LIMIT_1)
                 .one();
@@ -76,6 +78,9 @@ public class TmsCarrierServiceImpl extends SuperServiceImpl<TmsCarrierMapper, Tm
     public PagingVO<BaseDropDownDTO.CommonDTO> pagingSelect(PagingDTO<LogisticsSaleChannelDTO.SelectDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         LogisticsSaleChannelDTO.SelectDTO params = dto.getParams();
+        if (params != null) {
+            params.setSalesPlatform(PlatformDictEnum.getApiPlatformCode(params.getSalesPlatform()));
+        }
         IPage<BaseDropDownDTO.CommonDTO> pagResult = baseMapper.pagingSelect(query, params);
         return new PagingVO<>(pagResult);
     }

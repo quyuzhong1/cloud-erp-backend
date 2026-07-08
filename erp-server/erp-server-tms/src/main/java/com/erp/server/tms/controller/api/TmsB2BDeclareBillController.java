@@ -195,6 +195,11 @@ public class TmsB2BDeclareBillController extends BaseController {
      */
     @PostMapping("/confirmDeclareStatus")
     @LogAction(value = LogActionEnum.CONFIRM, desc = "B2B报关单报关状态更新")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:tmsB2BDeclareBill:confirmDeclareStatus",
+            serviceClass = TmsDeclareBillService.class,
+            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> confirmDeclareStatus(@RequestBody @Validated TmsDeclareBillDTO.ConfirmDeclareStatusDTO dto) {
         List<BatchResultDTO> resultList = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -249,6 +254,11 @@ public class TmsB2BDeclareBillController extends BaseController {
     @PostMapping("/exportDeclare")
     @LogAction(value = LogActionEnum.EXPORT, desc = "多sheet导出B2B报关单报关信息")
     @WebAdvanceQuery(handler = TmsB2BDeclareQueryHandler.class)
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "tms:tmsB2BDeclareBill:exportDeclare",
+            tableAlias = "db"
+    )
     public ApiResult<Object> exportDeclare(@RequestBody @Valid TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) throws IOException {
         pagingParamDTO.setType(SourceTypeEnum.B2B_DECLARE_BILL.getCode());
         tmsDeclareBillService.exportDeclare(pagingParamDTO, response);
@@ -299,6 +309,11 @@ public class TmsB2BDeclareBillController extends BaseController {
      */
     @PostMapping("/updateBatchFiled")
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "报关单批量更新字段:ids={ids},修改的字段名称编号={updateFiledCode}")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:tmsB2BDeclareBill:updateBatchFiled",
+            serviceClass = TmsDeclareBillService.class,
+            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> updateBatchFiled(@RequestBody @Validated TmsDeclareBillDTO.BatchUpdateFieldDTO dto) {
         if (ObjectUtil.isEmpty(dto.getIds())) {
             throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
@@ -343,6 +358,11 @@ public class TmsB2BDeclareBillController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.SplitDeclareDTO>>
      */
     @PostMapping("/listSplitB2bDetail")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:tmsB2BDeclareBill:batchAddSplitB2bDetail",
+            serviceClass = TmsDeclareBillService.class,
+            keyIdName = "id")
     public ApiResult<List<TmsDeclareBillDTO.SplitDeclareDTO>> listSplitB2bDetail(@RequestBody @Valid BaseIdDTO dto)  {
         List<TmsDeclareBillDTO.SplitDeclareDTO> list = tmsDeclareBillService.listSplitB2bDetail(dto.getId());
         return success(list);
@@ -384,6 +404,11 @@ public class TmsB2BDeclareBillController extends BaseController {
      * @return ApiResult<java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.SourceDeliveryDetailDTO>>
      */
     @PostMapping("/listAfterMergeDetail")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:tmsB2BDeclareBill:mergeDeclare",
+            serviceClass = TmsDeclareBillService.class,
+            keyIdName = "ids")
     public ApiResult<List<TmsDeclareBillDTO.MergeDeclareBillDTO>> listAfterMergeDetail(@RequestBody @Valid BaseIdsDTO.IdsDTO dto)  {
         return success(tmsDeclareBillService.listAfterMergeDetail(dto.getIds()));
     }
@@ -397,6 +422,7 @@ public class TmsB2BDeclareBillController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.lang.Object>
      */
     @PostMapping("/batchAddMergeDetail")
+    @LogAction(value = LogActionEnum.INSERT, desc = "B2B报关单保存合并明细")
     public ApiResult<Object> batchAddMergeDetail(@RequestBody @Valid ValidList<TmsDeclareBillDTO.MergeDeclareBillDTO> list)  {
         return success(tmsDeclareBillService.batchAddMergeDetail(SourceTypeEnum.B2B_DECLARE_BILL.getCode(),list.getList()));
     }

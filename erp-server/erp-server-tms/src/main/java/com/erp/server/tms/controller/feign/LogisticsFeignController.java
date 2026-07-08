@@ -238,6 +238,16 @@ public class LogisticsFeignController {
     public void webhookByTrack123(@RequestBody LogisticsTrackDTO.TrackWebHookDTO dto){
         logisticsTrackService.webhookByTrack123(dto);
     }
+
+    /**
+     * 接收快递100物流轨迹订阅回调数据
+     *
+     * @param dto 快递100回调数据
+     */
+    @PostMapping("/webhookByKuaidi100")
+    public void webhookByKuaidi100(@RequestBody LogisticsTrackDTO.Kuaidi100WebHookDTO dto){
+        logisticsTrackService.webhookByKuaidi100(dto);
+    }
     /**
      * 根据渠道id ， 国家二字码，邮编判断是否属于偏远邮编组
      * @param

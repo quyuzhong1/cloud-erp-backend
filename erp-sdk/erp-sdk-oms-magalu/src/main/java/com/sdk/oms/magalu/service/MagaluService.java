@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import cn.hutool.core.text.CharSequenceUtil;
+import com.common.core.enums.ApiError;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.utils.RedisUtil;
@@ -23,7 +24,17 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.math.BigDecimal;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Base64;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +47,15 @@ public class MagaluService {
     private static final String DEFAULT_API_BASE_URL = "https://api.magalu.com";
     private static final String TOKEN_PATH = "/oauth/token";
     private static final String SKU_LIST_PATH = "/seller/v1/portfolios/skus";
+    private static final String ORDER_LIST_PATH = "/seller/v1/orders";
+    private static final String TICKET_LIST_PATH = "/seller/v1/tickets";
+    private static final String TICKET_ACTIVITIES_PATH = "/seller/v1/tickets/{id}/activities";
+    private static final String SHIPPING_LABEL_PATH = "/seller/v1/logistics/shipping-labels";
+    private static final String DELIVERY_INVOICE_PATH = "/seller/v1/deliveries/{id}/invoices";
+    private static final String DELIVERY_INVOICE_UPDATE_PATH = "/seller/v1/deliveries/{id}/invoices/{key}";
+    private static final String DELIVERY_SHIPPING_PATH = "/seller/v1/deliveries/{id}/shippings";
+    private static final String SANDBOX_ONBOARDING_PATH = "/v1/samples/onboarding";
+    private static final String SANDBOX_ORDERS_PATH = "/v1/samples/orders";
     private static final int PAGE_SIZE = 100;
 
     @Resource
@@ -96,6 +116,7 @@ public class MagaluService {
                 .setClientSecret(cfgAppClient.getClientSecret())
                 .setBaseUrl(cfgAppClient.getUrl())
                 .setApiBaseUrl(getApiBaseUrl(cfgAppClient))
+                .setChannelId(getChannelId(cfgAppClient))
                 .setRedirectUrl(cfgAppClient.getRedirectUrl())
                 .setAccessToken(shopAuth.getAccessToken())
                 .setRefreshToken(shopAuth.getRefreshToken());
@@ -124,15 +145,298 @@ public class MagaluService {
         String path = StringUtils.isBlank(apiPath) ? SKU_LIST_PATH : apiPath;
         String url = trimEndSlash(getApiBaseUrl(shopInfoDTO)) + addStartSlash(path);
         Map<String, Object> params = new HashMap<>(4);
-        params.put("limit", limit);
-        params.put("offset", offset);
+        params.put("_limit", limit);
+        params.put("_offset", offset);
 
-        Map<String, String> headerMap = new HashMap<>(2);
-        headerMap.put("Authorization", "Bearer " + shopInfoDTO.getAccessToken());
-        headerMap.put("Accept", "application/json");
-
-        String response = OkHttpUtils.doGet(url, params, headerMap);
+        String response = OkHttpUtils.doGet(url, params, buildApiHeaders(shopInfoDTO));
         return parseSkuList(response);
+    }
+
+    public List<JSONObject> listOrderPage(MagaluShopInfoDTO shopInfoDTO, String apiPath, int offset, int limit, String startTime, String endTime) {
+        String path = StringUtils.isBlank(apiPath) ? ORDER_LIST_PATH : apiPath;
+        String url = trimEndSlash(getApiBaseUrl(shopInfoDTO)) + addStartSlash(path);
+        Map<String, Object> params = new HashMap<>(8);
+        params.put("_limit", limit);
+        params.put("_offset", offset);
+        if (StringUtils.isNotBlank(startTime)) {
+            params.put("updated_at__gte", startTime);
+        }
+        if (StringUtils.isNotBlank(endTime)) {
+            params.put("updated_at__lte", endTime);
+        }
+
+        String response = OkHttpUtils.doGet(url, params, buildApiHeaders(shopInfoDTO));
+        return parseDataList(response);
+    }
+
+    public JSONObject getOrderDetail(MagaluShopInfoDTO shopInfoDTO, String apiPath, String orderCode) {
+        String path = StringUtils.defaultIfBlank(apiPath, ORDER_LIST_PATH + "/{code}");
+        path = path.replace("{code}", orderCode).replace("{id}", orderCode);
+        String url = trimEndSlash(getApiBaseUrl(shopInfoDTO)) + addStartSlash(path);
+        String response = OkHttpUtils.doGet(url, new HashMap<>(), buildApiHeaders(shopInfoDTO));
+        return JSON.parseObject(response);
+    }
+
+    public List<JSONObject> listTicketPage(MagaluShopInfoDTO shopInfoDTO, String apiPath, int offset, int limit, String startTime, String endTime) {
+        String path = StringUtils.isBlank(apiPath) ? TICKET_LIST_PATH : apiPath;
+        String url = trimEndSlash(getApiBaseUrl(shopInfoDTO)) + addStartSlash(path);
+        Map<String, Object> params = new HashMap<>(8);
+        params.put("_limit", limit);
+        params.put("_offset", offset);
+        if (StringUtils.isNotBlank(startTime)) {
+            params.put("updated_at__gte", startTime);
+        }
+        if (StringUtils.isNotBlank(endTime)) {
+            params.put("updated_at__lte", endTime);
+        }
+
+        String response = OkHttpUtils.doGet(url, params, buildApiHeaders(shopInfoDTO));
+        return parseDataList(response);
+    }
+
+    public JSONObject getTicketActivities(MagaluShopInfoDTO shopInfoDTO, String ticketId) {
+        if (StringUtils.isBlank(ticketId)) {
+            return new JSONObject();
+        }
+        String path = TICKET_ACTIVITIES_PATH.replace("{id}", ticketId).replace("{ticket_id}", ticketId);
+        String url = trimEndSlash(getApiBaseUrl(shopInfoDTO)) + addStartSlash(path);
+        String response = OkHttpUtils.doGet(url, new HashMap<>(), buildApiHeaders(shopInfoDTO));
+        return JSON.parseObject(response);
+    }
+
+    public JSONObject createShippingLabel(MagaluShopInfoDTO shopInfoDTO, List<String> deliveryIdList, String format, String type) {
+        String url = trimEndSlash(getApiBaseUrl(shopInfoDTO)) + SHIPPING_LABEL_PATH;
+        Map<String, Object> body = new HashMap<>(4);
+        Map<String, Object> channel = new HashMap<>(1);
+        channel.put("id", shopInfoDTO.getChannelId());
+        body.put("channel", channel);
+
+        List<Map<String, Object>> deliveries = new ArrayList<>();
+        for (String deliveryId : deliveryIdList) {
+            Map<String, Object> delivery = new HashMap<>(1);
+            delivery.put("id", deliveryId);
+            deliveries.add(delivery);
+        }
+        body.put("deliveries", deliveries);
+
+        Map<String, Object> label = new HashMap<>(2);
+        label.put("format", StringUtils.defaultIfBlank(format, "pdf"));
+        label.put("type", StringUtils.defaultIfBlank(type, "full"));
+        body.put("label", label);
+
+        String response = OkHttpUtils.doPostJson(url, body, buildApiHeaders(shopInfoDTO));
+        return JSON.parseObject(response);
+    }
+
+    public JSONObject markDeliveryShipped(MagaluShopInfoDTO shopInfoDTO, String deliveryId,
+                                          String shippedAt, String estimatedDeliveryAt, String trackingNo) {
+        String path = DELIVERY_SHIPPING_PATH.replace("{id}", deliveryId);
+        String url = trimEndSlash(getApiBaseUrl(shopInfoDTO)) + path;
+        Map<String, Object> body = new HashMap<>(4);
+
+        Map<String, Object> channel = new HashMap<>(1);
+        channel.put("id", shopInfoDTO.getChannelId());
+        body.put("channel", channel);
+
+        Map<String, Object> dates = new HashMap<>(2);
+        dates.put("shipped_at", shippedAt);
+        dates.put("estimated_delivery_at", estimatedDeliveryAt);
+        body.put("dates", dates);
+
+        if (StringUtils.isNotBlank(trackingNo)) {
+            body.put("tracking_url", "https://www.track123.com/cn/track?trackNos=" + trackingNo);
+        }
+        String response = OkHttpUtils.doPostJson(url, body, buildApiHeaders(shopInfoDTO));
+        return parseResponseObject(response);
+    }
+
+    public JSONObject createDeliveryInvoice(MagaluShopInfoDTO shopInfoDTO, String deliveryId, BigDecimal amount,
+                                            String issuedAt, String issuer, String key, String xml) {
+        String path = DELIVERY_INVOICE_PATH.replace("{id}", deliveryId);
+        String url = trimEndSlash(getApiBaseUrl(shopInfoDTO)) + path;
+        String response = OkHttpUtils.doPostJson(url, buildDeliveryInvoiceBody(shopInfoDTO, amount, issuedAt, issuer, key, xml, true),
+                buildApiHeaders(shopInfoDTO));
+        return parseResponseObject(response);
+    }
+
+    public JSONObject updateDeliveryInvoice(MagaluShopInfoDTO shopInfoDTO, String deliveryId, String key,
+                                            BigDecimal amount, String issuedAt, String xml) {
+        String path = DELIVERY_INVOICE_UPDATE_PATH.replace("{id}", deliveryId).replace("{key}", key);
+        String url = trimEndSlash(getApiBaseUrl(shopInfoDTO)) + path;
+        String response = requestJson("PUT", url, buildDeliveryInvoiceBody(shopInfoDTO, amount, issuedAt, null, null, xml, false),
+                buildApiHeaders(shopInfoDTO));
+        return parseResponseObject(response);
+    }
+
+    public List<JSONObject> listDeliveryInvoices(MagaluShopInfoDTO shopInfoDTO, String deliveryId) {
+        String path = DELIVERY_INVOICE_PATH.replace("{id}", deliveryId);
+        String url = trimEndSlash(getApiBaseUrl(shopInfoDTO)) + path;
+        String response = OkHttpUtils.doGet(url, new HashMap<>(), buildApiHeaders(shopInfoDTO));
+        return parseDataList(response);
+    }
+
+    /**
+     * 沙箱 onboarding，关联 seller 与 sandbox channel。
+     */
+    public JSONObject putSandboxOnboarding(MagaluShopInfoDTO shopInfoDTO) {
+        if (StringUtils.isBlank(shopInfoDTO.getChannelId())) {
+            throw new ServiceException("Magalu渠道ID未配置");
+        }
+        String url = trimEndSlash(getApiBaseUrl(shopInfoDTO)) + SANDBOX_ONBOARDING_PATH;
+        Map<String, Object> body = new HashMap<>(2);
+        body.put("channel_id", shopInfoDTO.getChannelId());
+        String response = requestJson("PUT", url, body, buildApiHeaders(shopInfoDTO));
+        return parseResponseObject(response);
+    }
+
+    public JSONObject createSandboxSampleOrder(MagaluShopInfoDTO shopInfoDTO, String sku, int quantity, String paymentMethod) {
+        if (StringUtils.isBlank(shopInfoDTO.getChannelId())) {
+            throw new ServiceException("Magalu渠道ID未配置");
+        }
+        if (StringUtils.isBlank(sku)) {
+            throw new ServiceException("Magalu沙箱订单SKU不能为空");
+        }
+        String url = trimEndSlash(getApiBaseUrl(shopInfoDTO)) + SANDBOX_ORDERS_PATH;
+        Map<String, Object> body = new HashMap<>(8);
+        Map<String, Object> channel = new HashMap<>(2);
+        channel.put("id", shopInfoDTO.getChannelId());
+        body.put("channel", channel);
+
+        Map<String, Object> itemInfo = new HashMap<>(2);
+        itemInfo.put("sku", sku);
+        Map<String, Object> item = new HashMap<>(4);
+        item.put("info", itemInfo);
+        item.put("quantity", quantity <= 0 ? 1 : quantity);
+
+        Map<String, Object> delivery = new HashMap<>(2);
+        delivery.put("items", Collections.singletonList(item));
+        body.put("deliveries", Collections.singletonList(delivery));
+
+        Map<String, Object> payment = new HashMap<>(2);
+        payment.put("method", StringUtils.defaultIfBlank(paymentMethod, "pix"));
+        body.put("payments", Collections.singletonList(payment));
+
+        String response = OkHttpUtils.doPostJson(url, body, buildApiHeaders(shopInfoDTO));
+        return parseResponseObject(response);
+    }
+
+    /**
+     * 沙箱确认样例订单支付，使 deliveries.status 从 new 进入 approved 等可拉取状态。
+     */
+    public JSONObject confirmSandboxSampleOrder(MagaluShopInfoDTO shopInfoDTO, String orderId) {
+        return confirmSandboxSampleOrder(shopInfoDTO, orderId, null);
+    }
+
+    /**
+     * 沙箱确认支付；若平台异步流转，可按 orderCode 轮询详情直至包裹状态离开 new。
+     */
+    public JSONObject confirmSandboxSampleOrder(MagaluShopInfoDTO shopInfoDTO, String orderId, String orderCode) {
+        if (StringUtils.isBlank(orderId)) {
+            throw new ServiceException("Magalu沙箱订单ID不能为空");
+        }
+        List<String> bases = new ArrayList<>(2);
+        addUniqueBaseUrl(bases, trimEndSlash(getApiBaseUrl(shopInfoDTO)));
+        addUniqueBaseUrl(bases, DEFAULT_API_BASE_URL);
+        Map<String, String> headers = buildApiHeaders(shopInfoDTO);
+        String[] paths = new String[]{
+                "/v1/samples/orders/" + orderId + "/payments/confirm",
+                "/v1/samples/orders/" + orderId + "/confirm",
+                "/v1/samples/orders/" + orderId + "/payments/confirmation"
+        };
+        ServiceException lastError = null;
+        for (String base : bases) {
+            for (String path : paths) {
+                try {
+                    Map<String, Object> emptyBody = new HashMap<>(1);
+                    String response = OkHttpUtils.doPostJson(base + path, emptyBody, headers);
+                    JSONObject result = parseResponseObject(response);
+                    if (!isMagaluApiError(result)) {
+                        return result;
+                    }
+                    log.warn("Magalu沙箱确认支付返回错误 base={}, path={}, result={}", base, path, result);
+                } catch (ServiceException e) {
+                    lastError = e;
+                    log.warn("Magalu沙箱确认支付失败 base={}, path={}, msg={}", base, path, e.getMessage());
+                }
+            }
+            Map<String, Object> paymentBody = new HashMap<>(4);
+            paymentBody.put("method", "pix");
+            paymentBody.put("status", "approved");
+            try {
+                String response = OkHttpUtils.doPostJson(base + "/v1/samples/orders/" + orderId + "/payments",
+                        Collections.singletonList(paymentBody), headers);
+                JSONObject result = parseResponseObject(response);
+                if (!isMagaluApiError(result)) {
+                    return result;
+                }
+                log.warn("Magalu沙箱补充支付返回错误 base={}, result={}", base, result);
+            } catch (ServiceException e) {
+                lastError = e;
+                log.warn("Magalu沙箱补充支付失败 base={}, msg={}", base, e.getMessage());
+            }
+        }
+        if (StringUtils.isNotBlank(orderCode)) {
+            JSONObject polled = pollSandboxOrderUntilPullable(shopInfoDTO, orderCode, 12, 5000);
+            if (polled != null) {
+                return polled;
+            }
+        }
+        if (lastError != null) {
+            throw lastError;
+        }
+        throw new ServiceException("Magalu沙箱确认支付失败，订单仍处于new状态");
+    }
+
+    private JSONObject pollSandboxOrderUntilPullable(MagaluShopInfoDTO shopInfoDTO, String orderCode, int maxAttempts, long intervalMs) {
+        for (int i = 0; i < maxAttempts; i++) {
+            JSONObject detail = getOrderDetail(shopInfoDTO, null, orderCode);
+            if (isSandboxDeliveryPullable(detail)) {
+                JSONObject result = new JSONObject();
+                result.put("polled", true);
+                result.put("attempt", i + 1);
+                result.put("detail", detail);
+                return result;
+            }
+            if (i < maxAttempts - 1) {
+                try {
+                    Thread.sleep(intervalMs);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new ServiceException("Magalu沙箱轮询订单状态被中断");
+                }
+            }
+        }
+        return null;
+    }
+
+    private boolean isSandboxDeliveryPullable(JSONObject detail) {
+        if (detail == null || detail.isEmpty()) {
+            return false;
+        }
+        JSONArray deliveries = detail.getJSONArray("deliveries");
+        if (deliveries == null || deliveries.isEmpty()) {
+            return false;
+        }
+        for (int i = 0; i < deliveries.size(); i++) {
+            JSONObject delivery = deliveries.getJSONObject(i);
+            String status = delivery == null ? "" : StringUtils.defaultString(delivery.getString("status"));
+            if (StringUtils.isNotBlank(status) && !"new".equalsIgnoreCase(status)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isMagaluApiError(JSONObject result) {
+        return result != null
+                && (result.containsKey("errorCode") || StringUtils.isNotBlank(result.getString("slug")));
+    }
+
+    private void addUniqueBaseUrl(List<String> bases, String baseUrl) {
+        if (StringUtils.isBlank(baseUrl) || bases.contains(baseUrl)) {
+            return;
+        }
+        bases.add(baseUrl);
     }
 
     private MagaluTokenDTO requestToken(String baseUrl, Map<String, Object> params, String action) {
@@ -149,9 +453,95 @@ public class MagaluService {
         return tokenDTO;
     }
 
+    private Map<String, Object> buildDeliveryInvoiceBody(MagaluShopInfoDTO shopInfoDTO, BigDecimal amount,
+                                                         String issuedAt, String issuer, String key, String xml,
+                                                         boolean includeCreateFields) {
+        Map<String, Object> body = new HashMap<>(8);
+        body.put("amount", amount);
+        Map<String, Object> channel = new HashMap<>(2);
+        channel.put("id", shopInfoDTO.getChannelId());
+        channel.put("extras", Collections.emptyMap());
+        body.put("channel", channel);
+        body.put("issued_at", issuedAt);
+        body.put("xml", xml);
+        if (includeCreateFields) {
+            body.put("issuer", issuer);
+            body.put("key", key);
+        }
+        return body;
+    }
+
+    private JSONObject parseResponseObject(String response) {
+        if (StringUtils.isBlank(response)) {
+            return new JSONObject();
+        }
+        JSONObject jsonObject = JSON.parseObject(response);
+        if (jsonObject == null) {
+            return new JSONObject();
+        }
+        String slug = jsonObject.getString("slug");
+        String message = jsonObject.getString("message");
+        if (StringUtils.isNotBlank(slug) && StringUtils.isNotBlank(message)) {
+            throw new ServiceException("Magalu接口返回失败:" + message);
+        }
+        return jsonObject;
+    }
+
+    private String requestJson(String method, String url, Map<String, Object> body, Map<String, String> headers) {
+        HttpURLConnection connection = null;
+        try {
+            connection = (HttpURLConnection) new URL(url).openConnection();
+            connection.setRequestMethod(method);
+            connection.setConnectTimeout(10 * 1000);
+            connection.setReadTimeout(30 * 1000);
+            connection.setDoOutput(true);
+            connection.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+            if (headers != null) {
+                for (Map.Entry<String, String> entry : headers.entrySet()) {
+                    connection.setRequestProperty(entry.getKey(), entry.getValue());
+                }
+            }
+            byte[] payload = JSON.toJSONString(body).getBytes(StandardCharsets.UTF_8);
+            try (OutputStream outputStream = connection.getOutputStream()) {
+                outputStream.write(payload);
+            }
+            InputStream inputStream = connection.getResponseCode() >= 400 ? connection.getErrorStream() : connection.getInputStream();
+            if (inputStream == null) {
+                return "";
+            }
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
+                StringBuilder builder = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    builder.append(line);
+                }
+                return builder.toString();
+            }
+        } catch (Exception e) {
+            throw new ServiceException("Magalu接口请求失败:" + e.getMessage());
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
+    }
+
     private List<JSONObject> parseSkuList(String response) {
-        Object parsed = JSON.parse(response);
-        JSONArray dataArray = findDataArray(parsed);
+        JSONArray dataArray = findDataArray(JSON.parse(response));
+        List<JSONObject> resultList = new ArrayList<>();
+        if (dataArray == null) {
+            return resultList;
+        }
+        for (Object item : dataArray) {
+            if (item instanceof JSONObject) {
+                resultList.add((JSONObject) item);
+            }
+        }
+        return resultList;
+    }
+
+    private List<JSONObject> parseDataList(String response) {
+        JSONArray dataArray = findDataArray(JSON.parse(response));
         List<JSONObject> resultList = new ArrayList<>();
         if (dataArray == null) {
             return resultList;
@@ -205,8 +595,47 @@ public class MagaluService {
         return StringUtils.isBlank(apiBaseUrl) ? DEFAULT_API_BASE_URL : apiBaseUrl;
     }
 
+    private String getChannelId(CfgAppClientEntity cfgAppClient) {
+        Map<String, Object> extendData = cfgAppClient.getExtendData();
+        if (extendData == null || Objects.isNull(extendData.get("channelId"))) {
+            return "";
+        }
+        return extendData.get("channelId").toString();
+    }
+
     private String getApiBaseUrl(MagaluShopInfoDTO shopInfoDTO) {
         return StringUtils.isBlank(shopInfoDTO.getApiBaseUrl()) ? DEFAULT_API_BASE_URL : shopInfoDTO.getApiBaseUrl();
+    }
+
+    private Map<String, String> buildApiHeaders(MagaluShopInfoDTO shopInfoDTO) {
+        Map<String, String> headerMap = new HashMap<>(4);
+        headerMap.put("Authorization", "Bearer " + shopInfoDTO.getAccessToken());
+        headerMap.put("Accept", "application/json");
+        String tenantId = getTenantId(shopInfoDTO.getAccessToken());
+        if (StringUtils.isNotBlank(tenantId)) {
+            headerMap.put("X-Tenant-Id", tenantId);
+        }
+        if (StringUtils.isNotBlank(shopInfoDTO.getChannelId())) {
+            headerMap.put("X-Channel-Id", shopInfoDTO.getChannelId());
+        }
+        return headerMap;
+    }
+
+    private String getTenantId(String accessToken) {
+        if (StringUtils.isBlank(accessToken)) {
+            return "";
+        }
+        String[] parts = accessToken.split("\\.");
+        if (parts.length < 2) {
+            return "";
+        }
+        try {
+            String payload = new String(Base64.getUrlDecoder().decode(parts[1]), "UTF-8");
+            JSONObject payloadJson = JSON.parseObject(payload);
+            return payloadJson.getString("tenant");
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.SHOP_AUTH_REQUIRED);
+        }
     }
 
     private long getCacheSeconds(Integer expiresIn) {

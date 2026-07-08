@@ -3,6 +3,7 @@ package com.erp.server.oms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.extra.spring.SpringUtil;
+import com.google.common.collect.Lists;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -24,8 +25,8 @@ import com.erp.model.oms.entity.WorkflowTaskRecordEntity;
 import com.erp.model.oms.enums.WorkflowTaskInstanceStatusEnum;
 import com.erp.model.oms.enums.WorkflowTaskRecordStatusEnum;
 import com.erp.model.oms.enums.WorkflowTaskRecordTypeEnum;
-import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.mapper.WorkflowTaskInstanceMapper;
+import com.erp.server.oms.orchestration.StepInvokeResult;
 import com.erp.server.oms.orchestration.WorkflowTaskNodeConfigParser;
 import com.erp.server.oms.orchestration.WorkflowTaskStepDispatcher;
 import com.erp.server.oms.service.WorkflowTaskInstanceService;
@@ -56,9 +57,6 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
     @Lazy
     @Resource
     private WorkflowTaskStepDispatcher workflowTaskStepDispatcher;
-
-    @Resource
-    private SysUserFeign sysUserFeign;
 
     /**
      * {@inheritDoc}
@@ -129,15 +127,25 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
     }
 
     private void linkStepsToInstance(List<WorkflowTaskRecordEntity> steps, String instanceId) {
-        for (WorkflowTaskRecordEntity step : steps) {
-            if (CharSequenceUtil.isBlank(step.getInstanceId())) {
-                workflowTaskRecordService.lambdaUpdate()
-                        .eq(WorkflowTaskRecordEntity::getId, step.getId())
-                        .set(WorkflowTaskRecordEntity::getInstanceId, instanceId)
-                        .update();
-                step.setInstanceId(instanceId);
-            }
+        List<String> ids = steps.stream()
+                .filter(s -> CharSequenceUtil.isBlank(s.getInstanceId()))
+                .map(WorkflowTaskRecordEntity::getId)
+                .collect(Collectors.toList());
+        if (ids.isEmpty()) {
+            return;
         }
+        // 分批（每批 500 条）批量回填 instance_id，避免 N+1 单条 UPDATE
+        for (List<String> batch : Lists.partition(ids, 500)) {
+            workflowTaskRecordService.lambdaUpdate()
+                    .in(WorkflowTaskRecordEntity::getId, batch)
+                    .set(WorkflowTaskRecordEntity::getInstanceId, instanceId)
+                    .update();
+        }
+        steps.forEach(s -> {
+            if (CharSequenceUtil.isBlank(s.getInstanceId())) {
+                s.setInstanceId(instanceId);
+            }
+        });
     }
 
     /**
@@ -181,15 +189,25 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
      */
     @Override
     public void markRunning(String instanceId, int currentIndex, int totalSteps) {
-        this.lambdaUpdate()
+        WorkflowTaskInstanceEntity fresh = getById(instanceId);
+        if (fresh == null) {
+            log.warn("markRunning 跳过，实例不存在，instanceId={}", instanceId);
+            return;
+        }
+        boolean updated = this.lambdaUpdate()
                 .eq(WorkflowTaskInstanceEntity::getId, instanceId)
+                .eq(WorkflowTaskInstanceEntity::getVersion, fresh.getVersion())
                 .ne(WorkflowTaskInstanceEntity::getStatus, WorkflowTaskInstanceStatusEnum.CANCELLED.getCode())
                 .ne(WorkflowTaskInstanceEntity::getStatus, WorkflowTaskInstanceStatusEnum.SUCCESS.getCode())
                 .set(WorkflowTaskInstanceEntity::getStatus, WorkflowTaskInstanceStatusEnum.RUNNING.getCode())
                 .set(WorkflowTaskInstanceEntity::getCurrentIndex, currentIndex)
                 .set(WorkflowTaskInstanceEntity::getTotalSteps, totalSteps)
                 .set(WorkflowTaskInstanceEntity::getLastError, "")
+                .set(WorkflowTaskInstanceEntity::getVersion, fresh.getVersion() + 1)
                 .update();
+        if (!updated) {
+            log.warn("markRunning 并发冲突，instanceId={}, version={}", instanceId, fresh.getVersion());
+        }
     }
 
     /**
@@ -197,14 +215,24 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
      */
     @Override
     public void markWaiting(String instanceId, int currentIndex, String lastError) {
-        this.lambdaUpdate()
+        WorkflowTaskInstanceEntity fresh = getById(instanceId);
+        if (fresh == null) {
+            log.warn("markWaiting 跳过，实例不存在，instanceId={}", instanceId);
+            return;
+        }
+        boolean updated = this.lambdaUpdate()
                 .eq(WorkflowTaskInstanceEntity::getId, instanceId)
+                .eq(WorkflowTaskInstanceEntity::getVersion, fresh.getVersion())
                 .ne(WorkflowTaskInstanceEntity::getStatus, WorkflowTaskInstanceStatusEnum.CANCELLED.getCode())
                 .ne(WorkflowTaskInstanceEntity::getStatus, WorkflowTaskInstanceStatusEnum.SUCCESS.getCode())
                 .set(WorkflowTaskInstanceEntity::getStatus, WorkflowTaskInstanceStatusEnum.WAITING.getCode())
                 .set(WorkflowTaskInstanceEntity::getCurrentIndex, currentIndex)
                 .set(WorkflowTaskInstanceEntity::getLastError, CharSequenceUtil.blankToDefault(lastError, ""))
+                .set(WorkflowTaskInstanceEntity::getVersion, fresh.getVersion() + 1)
                 .update();
+        if (!updated) {
+            log.warn("markWaiting 并发冲突，instanceId={}, version={}", instanceId, fresh.getVersion());
+        }
     }
 
     /**
@@ -212,14 +240,24 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
      */
     @Override
     public void markFailed(String instanceId, int currentIndex, String lastError) {
-        this.lambdaUpdate()
+        WorkflowTaskInstanceEntity fresh = getById(instanceId);
+        if (fresh == null) {
+            log.warn("markFailed 跳过，实例不存在，instanceId={}", instanceId);
+            return;
+        }
+        boolean updated = this.lambdaUpdate()
                 .eq(WorkflowTaskInstanceEntity::getId, instanceId)
+                .eq(WorkflowTaskInstanceEntity::getVersion, fresh.getVersion())
                 .ne(WorkflowTaskInstanceEntity::getStatus, WorkflowTaskInstanceStatusEnum.CANCELLED.getCode())
                 .set(WorkflowTaskInstanceEntity::getStatus, WorkflowTaskInstanceStatusEnum.FAILED.getCode())
                 .set(WorkflowTaskInstanceEntity::getCurrentIndex, currentIndex)
                 .set(WorkflowTaskInstanceEntity::getLastError, CharSequenceUtil.blankToDefault(lastError, ""))
                 .set(WorkflowTaskInstanceEntity::getFinishTime, LocalDateTime.now())
+                .set(WorkflowTaskInstanceEntity::getVersion, fresh.getVersion() + 1)
                 .update();
+        if (!updated) {
+            log.warn("markFailed 并发冲突，instanceId={}, version={}", instanceId, fresh.getVersion());
+        }
     }
 
     /**
@@ -227,15 +265,25 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
      */
     @Override
     public void markSuccess(String instanceId, int currentIndex, int totalSteps) {
-        this.lambdaUpdate()
+        WorkflowTaskInstanceEntity fresh = getById(instanceId);
+        if (fresh == null) {
+            log.warn("markSuccess 跳过，实例不存在，instanceId={}", instanceId);
+            return;
+        }
+        boolean updated = this.lambdaUpdate()
                 .eq(WorkflowTaskInstanceEntity::getId, instanceId)
+                .eq(WorkflowTaskInstanceEntity::getVersion, fresh.getVersion())
                 .ne(WorkflowTaskInstanceEntity::getStatus, WorkflowTaskInstanceStatusEnum.CANCELLED.getCode())
                 .set(WorkflowTaskInstanceEntity::getStatus, WorkflowTaskInstanceStatusEnum.SUCCESS.getCode())
                 .set(WorkflowTaskInstanceEntity::getCurrentIndex, currentIndex)
                 .set(WorkflowTaskInstanceEntity::getTotalSteps, totalSteps)
                 .set(WorkflowTaskInstanceEntity::getLastError, "")
                 .set(WorkflowTaskInstanceEntity::getFinishTime, LocalDateTime.now())
+                .set(WorkflowTaskInstanceEntity::getVersion, fresh.getVersion() + 1)
                 .update();
+        if (!updated) {
+            log.warn("markSuccess 并发冲突，instanceId={}, version={}", instanceId, fresh.getVersion());
+        }
     }
 
     /**
@@ -244,16 +292,23 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void markCancelled(String instanceId, String remark) {
-        WorkflowTaskInstanceEntity instance = getById(instanceId);
-        if (instance == null) {
+        WorkflowTaskInstanceEntity fresh = getById(instanceId);
+        if (fresh == null) {
             throw new ServiceException(ApiError.WF_TASK_INSTANCE_NOT_FOUND);
         }
-        this.lambdaUpdate()
+        boolean updated = this.lambdaUpdate()
                 .eq(WorkflowTaskInstanceEntity::getId, instanceId)
+                .eq(WorkflowTaskInstanceEntity::getVersion, fresh.getVersion())
                 .set(WorkflowTaskInstanceEntity::getStatus, WorkflowTaskInstanceStatusEnum.CANCELLED.getCode())
                 .set(WorkflowTaskInstanceEntity::getLastError, CharSequenceUtil.blankToDefault(remark, "已取消"))
                 .set(WorkflowTaskInstanceEntity::getFinishTime, LocalDateTime.now())
+                .set(WorkflowTaskInstanceEntity::getVersion, fresh.getVersion() + 1)
                 .update();
+        if (!updated) {
+            // 并发取消冲突：实例已被其他请求更新，跳过子节点批量修改，避免实例/节点状态不一致
+            log.warn("markCancelled 并发冲突，instanceId={}, version={}", instanceId, fresh.getVersion());
+            throw new ServiceException("任务编排实例状态已变化，请刷新后重试");
+        }
         workflowTaskRecordService.lambdaUpdate()
                 .eq(WorkflowTaskRecordEntity::getInstanceId, instanceId)
                 .ne(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.SUCCESS.getCode())
@@ -511,6 +566,84 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
         return instance == null ? null : instance.getId();
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>仅用于 FAILED / WAITING 结果；SUCCESS 路径请使用 {@link #persistLastNodeSuccess} 或 {@link #persistMiddleNodeSuccess}。</p>
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void persistNodeAndSyncInstance(WorkflowTaskRecordEntity node,
+                                           String instanceId,
+                                           int currentIndex,
+                                           int totalSteps,
+                                           StepInvokeResult.Outcome outcome,
+                                           String lastError) {
+        workflowTaskRecordService.updateById(node);
+        if (StepInvokeResult.Outcome.WAITING.equals(outcome)) {
+            markWaiting(instanceId, currentIndex, lastError);
+        } else if (StepInvokeResult.Outcome.FAILED.equals(outcome)) {
+            markFailed(instanceId, currentIndex, lastError);
+        }
+        // SUCCESS 路径由专用方法处理，此处不兜底，避免歧义
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void persistLastNodeSuccess(WorkflowTaskRecordEntity node,
+                                       String instanceId,
+                                       int maxIndex,
+                                       int totalSteps) {
+        // 同一事务：节点 SUCCESS 落库 + 实例 SUCCESS 落库，消除两步写库之间的中间态
+        workflowTaskRecordService.updateById(node);
+        markSuccess(instanceId, maxIndex, totalSteps);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void persistMiddleNodeSuccess(WorkflowTaskRecordEntity currentNode,
+                                         WorkflowTaskRecordEntity nextNode,
+                                         String nextInputData) {
+        // 同一事务：当前节点 SUCCESS + 下一节点 inputData 回填
+        workflowTaskRecordService.updateById(currentNode);
+        if (nextNode != null && CharSequenceUtil.isNotBlank(nextInputData)) {
+            nextNode.setInputData(nextInputData);
+            workflowTaskRecordService.updateById(nextNode);
+        }
+    }
+
+    /**
+     * 事务提交后 MQ 发送失败时，新开事务将目标节点标记为 FAILED，确保 Job 可扫描到并补偿。
+     * <p>由 registerDispatchAfterCommit 的 catch 块调用，使用独立事务避免与已提交事务干扰。</p>
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void markDispatchMqFailed(String instanceId, Integer targetIndex, String reason) {
+        if (CharSequenceUtil.isBlank(instanceId) || targetIndex == null) {
+            log.warn("markDispatchMqFailed 跳过：参数不完整，instanceId={}, targetIndex={}", instanceId, targetIndex);
+            return;
+        }
+        WorkflowTaskRecordEntity node = workflowTaskRecordService.lambdaQuery()
+                .eq(WorkflowTaskRecordEntity::getInstanceId, instanceId)
+                .eq(WorkflowTaskRecordEntity::getIndex, targetIndex)
+                .eq(WorkflowTaskRecordEntity::getIsDeleted, false)
+                .last("LIMIT 1")
+                .one();
+        if (node != null && !WorkflowTaskRecordStatusEnum.SUCCESS.getCode().equals(node.getStatus())) {
+            workflowTaskRecordService.lambdaUpdate()
+                    .eq(WorkflowTaskRecordEntity::getId, node.getId())
+                    .set(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.FAILED.getCode())
+                    .set(WorkflowTaskRecordEntity::getLastError, CharSequenceUtil.blankToDefault(reason, "调度MQ发送失败"))
+                    .set(WorkflowTaskRecordEntity::getEndTime, LocalDateTime.now())
+                    .update();
+        }
+        markFailed(instanceId, targetIndex, CharSequenceUtil.blankToDefault(reason, "调度MQ发送失败"));
+    }
+
     private WorkflowTaskRecordDTO.AddTaskDTO buildDispatchMessage(WorkflowTaskInstanceEntity instance) {
         WorkflowTaskRecordDTO.AddTaskDTO dto = new WorkflowTaskRecordDTO.AddTaskDTO();
         dto.setInstanceId(instance.getId());
@@ -569,6 +702,7 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
 
     /**
      * 事务提交后再发 MQ，避免消费端读不到未提交节点。
+     * <p>MQ 发送失败时，新开独立事务将目标节点与实例标记为 FAILED，确保 Job 下次可扫到并补偿。</p>
      */
     private void registerDispatchAfterCommit(WorkflowTaskRecordDTO.AddTaskDTO dispatch, String messageKey) {
         if (TransactionSynchronizationManager.isActualTransactionActive()) {
@@ -580,6 +714,17 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
                     } catch (Exception ex) {
                         log.error("任务编排 MQ 发送失败（事务已提交），sourceId={}, instanceId={}, targetIndex={}",
                                 dispatch.getSourceId(), dispatch.getInstanceId(), dispatch.getTargetIndex(), ex);
+                        // 新开独立事务：回写节点 + 实例为 FAILED，让 Job 下次补偿重发
+                        try {
+                            SpringUtil.getBean(WorkflowTaskInstanceServiceImpl.class)
+                                    .markDispatchMqFailed(
+                                            dispatch.getInstanceId(),
+                                            dispatch.getTargetIndex(),
+                                            "调度MQ发送失败: " + ex.getMessage());
+                        } catch (Exception markEx) {
+                            log.error("MQ失败回写节点/实例状态异常，instanceId={}, targetIndex={}，需人工核查",
+                                    dispatch.getInstanceId(), dispatch.getTargetIndex(), markEx);
+                        }
                     }
                 }
             });

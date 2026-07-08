@@ -1,5 +1,6 @@
 package com.sdk.wms.tongyou.dto.response;
 
+import com.alibaba.fastjson.annotation.JSONField;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -179,6 +180,7 @@ public class TongYouQueryOutboundResp {
     /**
      * 订单状态
      */
+    @JSONField(name = "PB", alternateNames = {"pb"})
     private String pb;
 
     /**

@@ -140,8 +140,20 @@ public class WegoOutboundInitHandler extends DmpInputInitHandler {
                 log.error("[WEGO出库] 服务商[id={}] query2cOrderPage 异常, pageNum={}", authId, pageNum, e);
                 throw new ServiceException("WEGO出库：query2cOrderPage 分页拉取异常，已拉取页数=" + (pageNum - 1) + "，数据不完整，任务中止");
             }
-            if (resp == null || resp.getResult() == null) { break; }
+            if (resp == null) {
+                log.error("[WEGO出库] 服务商[id={}] query2cOrderPage 接口响应为空, pageNum={}", authId, pageNum);
+                throw new ServiceException("WEGO出库：query2cOrderPage 接口响应为空，pageNum=" + pageNum + "，数据不完整，任务中止");
+            }
+            if (!Boolean.TRUE.equals(resp.getSuccess())) {
+                log.error("[WEGO出库] 服务商[id={}] query2cOrderPage 接口返回失败: errorCode={}, errorMsg={}, pageNum={}",
+                        authId, resp.getErrorCode(), resp.getErrorMsg(), pageNum);
+                throw new ServiceException("WEGO出库：query2cOrderPage 接口返回失败: errorCode=" + resp.getErrorCode()
+                        + ", errorMsg=" + resp.getErrorMsg());
+            }
             WegoOutboundResp.PageResultDTO pageResult = resp.getResult();
+            if (pageResult == null) {
+                break;
+            }
             List<WegoOutboundResp.OutboundOrderDTO> list = pageResult.getList();
             if (CollUtil.isNotEmpty(list)) { orderList.addAll(list); }
             if (totalPages == null) { totalPages = pageResult.getPages(); }
@@ -150,7 +162,9 @@ public class WegoOutboundInitHandler extends DmpInputInitHandler {
             pageNum++;
         }
         if (pageNum > MAX_PAGE_LIMIT) {
-            log.warn("[WEGO出库] 服务商[id={}] 已达最大翻页上限({})，可能存在未拉取数据", authId, MAX_PAGE_LIMIT);
+            log.error("[WEGO出库] 服务商[id={}] 已达最大翻页上限({})，存在未拉取数据，任务中止", authId, MAX_PAGE_LIMIT);
+            throw new ServiceException("WEGO出库：已达最大翻页上限(" + MAX_PAGE_LIMIT
+                    + ")，已拉取=" + orderList.size() + "条，数据不完整，任务中止");
         }
         log.info("[WEGO出库] 服务商[id={}] 订单日期[{} ~ {}] 拉取={}条 已翻页={}",
                 authId, orderDateBegin, orderDateEnd, orderList.size(), pageNum);

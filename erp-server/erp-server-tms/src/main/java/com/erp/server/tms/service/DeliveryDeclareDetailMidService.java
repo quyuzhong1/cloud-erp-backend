@@ -90,16 +90,6 @@ public interface DeliveryDeclareDetailMidService extends SuperService<DeliveryDe
      */
     List<TmsDeclareBillDTO.MergeDeclareBillDTO> mergeAfterPreview(List<String> ids);
 
-
-    /**
-    * 导出Excel
-    * @author jack
-    * @date: 2026-04-27
-    * @param dto
-    * @param response
-    * @return
-    */
-    void exportList(DeliveryDeclareDetailMidDTO.ExportDTO dto, HttpServletResponse response);
     /**
      * 根据报关单id查询
      * @author will
@@ -159,8 +149,33 @@ public interface DeliveryDeclareDetailMidService extends SuperService<DeliveryDe
      */
     Boolean restoreWaitGenerateByIds(List<String> ids);
 
-
+    /**
+     * 批量保存合并后的中间表报关明细。
+     *
+     * <p>该方法作为编排入口，负责在事务外完成来源明细校验、合并预览重算和报关单主/明细实体预构建，
+     * 避免 Feign 查询、规则匹配等耗时逻辑进入数据库事务。</p>
+     *
+     * @param list 前端提交的合并预览结果，仅作为选择范围，保存前会重新计算最新合并结果
+     * @param updateSourceDeclareStatus 是否同步回写来源单报关状态
+     * @return 保存成功返回 true
+     */
     Boolean batchAddMergeDetail(List<TmsDeclareBillDTO.MergeDeclareBillDTO> list,Boolean updateSourceDeclareStatus);
+
+    /**
+     * 批量保存合并报关单的写库阶段。
+     *
+     * <p>调用方需要先在事务外完成 Feign 查询、预览重算和实体构建，再通过代理进入本方法，
+     * 使事务内仅保留报关单、中间表和来源状态回写。</p>
+     *
+     * @param sourceType 中间表来源类型
+     * @param declareBillType 报关单类型
+     * @param preparedBills 事务外预构建的报关单主表、明细实体及其合并明细映射
+     * @param updateSourceDeclareStatus 是否同步回写来源单报关状态
+     */
+    void batchAddMergeDetailInTx(String sourceType,
+                                 String declareBillType,
+                                 List<TmsDeclareBillDTO.BatchMergeBillData> preparedBills,
+                                 Boolean updateSourceDeclareStatus);
 
     /**
      * 保存报关单生成后的中间表数据，复用待生成行，避免重复插入。

@@ -76,7 +76,7 @@ public final class WeGoSignUtils {
         String raw = secret + content + secret;
         String md5 = DigestUtils.md5Hex(raw.getBytes(StandardCharsets.UTF_8)).toUpperCase(Locale.ROOT);
         if (log.isDebugEnabled()) {
-            log.debug("WEGO 签名原文: {}, sign={}", raw, md5);
+            log.debug("WEGO 签名完成, paramKeys={}, sign={}", params.keySet(), md5);
         }
         return md5;
     }

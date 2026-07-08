@@ -8,6 +8,7 @@ import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.UnitEnum;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.third.*;
@@ -189,7 +190,7 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     @Override
     protected ApiResult<String> editInboundBill(ThirdWarehouseCreateInboundReq createInboundReq) {
         if (CharSequenceUtil.isBlank(createInboundReq.getReceivingCode())) {
-            throw new ServiceException("WEGO入库单号不能为空");
+            throw new ServiceException(ApiError.WH_WEGO_INBOUND_CODE_REQUIRED);
         }
         WegoInOrderSaveDTO.SaveReqDTO request = buildInorderSaveDto(createInboundReq, createInboundReq.getReceivingCode());
         log.warn("{}修改入库单请求:{}", getPlatForm().getName(), toLogSafeJson(request));
@@ -221,12 +222,12 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     private WegoInOrderSaveDTO.SaveReqDTO buildInorderSaveDto(ThirdWarehouseCreateInboundReq createInboundReq, String no) {
         Map<String, Object> authMap = ThirdWarehouseContext.getAuthMap();
         if (authMap == null || authMap.isEmpty()) {
-            throw new ServiceException("WEGO授权信息为空");
+            throw new ServiceException(ApiError.WH_WEGO_AUTH_INFO_EMPTY);
         }
         String accessToken = toStr(authMap.get(AUTH_KEY_APP_TOKEN));
         String secret = toStr(authMap.get(AUTH_KEY_APP_SECRET));
         if (CharSequenceUtil.hasBlank(accessToken, secret)) {
-            throw new ServiceException("WEGO授权信息appToken/appSecret缺失");
+            throw new ServiceException(ApiError.WH_WEGO_AUTH_TOKEN_SECRET_MISSING);
         }
         boolean isCreate = CharSequenceUtil.isBlank(no);
         return WegoInOrderSaveDTO.SaveReqDTO.builder()
@@ -290,15 +291,13 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
      * <ol>
      *     <li>装箱清单（{@code wms_carton_detail}）— 通过发货单 code 反查 sourceId 后调用
      *         {@link WmsCartonDetailService#boxInfoBySourceIds(List)}；</li>
-     *     <li>兜底：上层 {@link ThirdWarehouseCreateInboundReq#getItems()}（来自
-     *         {@code OverseasWarehouseInboundServiceImpl#entityToCreateInboundBill}）。</li>
      * </ol>
      */
     private List<WegoInOrderSaveDTO.Detail> buildDetails(ThirdWarehouseCreateInboundReq createInboundReq) {
         List<WmsCartonSpecDTO.PackingItemDTO> packingItems = loadPackingList(createInboundReq.getReferenceNo());
         if (CollUtil.isEmpty(packingItems)) {
             log.warn("[WEGO入库] 装箱清单为空，referenceNo={}", createInboundReq.getReferenceNo());
-            throw new ServiceException("装箱清单为空");
+            throw new ServiceException(ApiError.WH_WEGO_PACKING_LIST_EMPTY);
         }
         return buildDetailsFromPackingList(packingItems);
     }
@@ -345,6 +344,10 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         boxMap.forEach((boxNo, list) -> {
             WmsCartonSpecDTO.PackingItemDTO first = list.get(0);
             List<WegoInOrderSaveDTO.Product> products = buildProductsFromPackingList(list);
+            if (CollUtil.isEmpty(products) || sumSkuQty(products) <= 0) {
+                log.warn("[WEGO入库] 箱内无有效SKU明细, 发货单号={}, boxNo={}", first.getSourceCode(), boxNo);
+                throw new ServiceException(ApiError.WH_WEGO_PACKING_BOX_NO_VALID_SKU, first.getSourceCode(), boxNo);
+            }
             WegoInOrderSaveDTO.Detail detail = WegoInOrderSaveDTO.Detail.builder()
                     .inOrderDetailId(null)
                     .boxQty(1)
@@ -359,6 +362,10 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                     .build();
             details.add(detail);
         });
+        if (CollUtil.isEmpty(details)) {
+            log.warn("[WEGO入库] 装箱清单缺少有效箱号，无法构造入库明细，packingItems={}", packingItems.size());
+            throw new ServiceException(ApiError.WH_WEGO_PACKING_LIST_MISSING_BOX_NO);
+        }
         return details;
     }
 
@@ -444,7 +451,7 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     @Override
     protected ApiResult<String> cancelInboundBill(@Valid ThirdWarehouseCancelInboundReq cancelInboundReq) {
         if (CharSequenceUtil.isBlank(cancelInboundReq.getReceivingCode())) {
-            throw new ServiceException("WEGO入库单号不能为空");
+            throw new ServiceException(ApiError.WH_WEGO_INBOUND_CODE_REQUIRED);
         }
         WegoInOrderCancelDTO.CancelReqDTO request = buildInorderCancelDto(cancelInboundReq);
         log.warn("{}取消入库单请求:{}", getPlatForm().getName(), toLogSafeJson(request));
@@ -465,12 +472,12 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     private WegoInOrderCancelDTO.CancelReqDTO buildInorderCancelDto(ThirdWarehouseCancelInboundReq cancelInboundReq) {
         Map<String, Object> authMap = ThirdWarehouseContext.getAuthMap();
         if (authMap == null || authMap.isEmpty()) {
-            throw new ServiceException("WEGO授权信息为空");
+            throw new ServiceException(ApiError.WH_WEGO_AUTH_INFO_EMPTY);
         }
         String accessToken = toStr(authMap.get(AUTH_KEY_APP_TOKEN));
         String secret = toStr(authMap.get(AUTH_KEY_APP_SECRET));
         if (CharSequenceUtil.hasBlank(accessToken, secret)) {
-            throw new ServiceException("WEGO授权信息appToken/appSecret缺失");
+            throw new ServiceException(ApiError.WH_WEGO_AUTH_TOKEN_SECRET_MISSING);
         }
         return WegoInOrderCancelDTO.CancelReqDTO.builder()
                 .accessToken(accessToken)
@@ -512,15 +519,19 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     protected ApiResult<ThirdWarehouseQueryOutboundResponse> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
         Map<String, Object> authMap = ThirdWarehouseContext.getAuthMap();
         if (authMap == null || authMap.isEmpty()) {
-            throw new ServiceException("WEGO授权信息为空");
+            throw new ServiceException(ApiError.WH_WEGO_AUTH_INFO_EMPTY);
         }
         String accessToken = toStr(authMap.get(AUTH_KEY_APP_TOKEN));
         String secret = toStr(authMap.get(AUTH_KEY_APP_SECRET));
         if (CharSequenceUtil.hasBlank(accessToken, secret)) {
-            throw new ServiceException("WEGO授权信息appToken/appSecret缺失");
+            throw new ServiceException(ApiError.WH_WEGO_AUTH_TOKEN_SECRET_MISSING);
         }
 
         WegoOutboundSaveDTO.SaveReqDTO request = buildOutboundSaveDto(createOutboundReq, null, accessToken, secret);
+        if (CollUtil.isEmpty(request.getProducts())) {
+            log.warn("{}创建出库单明细为空, referenceNo={}", getPlatForm().getName(), createOutboundReq.getReferenceNo());
+            throw new ServiceException(ApiError.WH_WEGO_OUTBOUND_DETAIL_EMPTY);
+        }
         log.warn("{}创建出库单请求:{}", getPlatForm().getName(), toLogSafeJson(request));
         JSONObject resp = wegoOpenApiService.save2cOrder(request);
         log.warn("{}创建出库单结果:{}", getPlatForm().getName(), JSONUtil.toJsonStr(resp));
@@ -533,22 +544,32 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                 String referenceNo = createOutboundReq.getReferenceNo();
                 log.warn("{}建单返回[订单已存在]（非重单，属幂等重试），按 referenceCode 反查 WEGO 单号, referenceNo={}",
                         getPlatForm().getName(), referenceNo);
-                ApiResult<ThirdWarehouseQueryOutboundResponse> fallback =
-                        queryByReferenceCodeFallback(accessToken, secret, referenceNo);
-                if (fallback.isSuccess()) {
-                    log.info("{}反查成功，幂等重试命中已有订单, wegoNo={}",
-                            getPlatForm().getName(), fallback.getData().getShippingOrderNo());
-                    return fallback;
+                try {
+                    ApiResult<ThirdWarehouseQueryOutboundResponse> fallback =
+                            queryByReferenceCodeFallback(accessToken, secret, referenceNo);
+                    if (fallback.isSuccess()) {
+                        log.info("{}反查成功，幂等重试命中已有订单, wegoNo={}",
+                                getPlatForm().getName(), fallback.getData().getShippingOrderNo());
+                        return fallback;
+                    }
+                    log.warn("{}反查失败（referenceCode={}, msg={}），以原始错误返回",
+                            getPlatForm().getName(), referenceNo, fallback.getMsg());
+                } catch (ServiceException e) {
+                    // 幂等重试路径下反查接口临时失败（响应为空/success=false）不应向上抛出，
+                    // 否则上层会将其当作系统异常处理，导致 WFHD 状态与预期不符。
+                    // 此处降级为原始 WEGO 错误信息返回，保证幂等分支始终返回可控的 ApiResult。
+                    log.warn("{}反查接口异常（referenceCode={}, err={}），以原始错误返回",
+                            getPlatForm().getName(), referenceNo, e.getMessage());
                 }
-                log.warn("{}反查失败（referenceCode={}, msg={}），以原始错误返回",
-                        getPlatForm().getName(), referenceNo, fallback.getMsg());
             }
             return failure(buildErrorMessage(resp));
         }
 
         String wegoOrderNo = extractStringResult(resp);
         if (CharSequenceUtil.isBlank(wegoOrderNo)) {
-            log.warn("{}创建出库单成功但未提取到出库单号, resp={}", getPlatForm().getName(), JSONUtil.toJsonStr(resp));
+            log.error("{}创建出库单接口返回 success 但未提取到出库单号, resp={}",
+                    getPlatForm().getName(), JSONUtil.toJsonStr(resp));
+            return failure("WEGO创建出库单成功但未返回出库单号，请检查接口响应或联系WEGO排查");
         }
         return success(ThirdWarehouseQueryOutboundResponse.builder().shippingOrderNo(wegoOrderNo).build());
     }
@@ -586,7 +607,7 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     @Override
     protected ApiResult<String> cancelOutboundBill(@Valid ThirdWarehouseCancelOutboundReq cancelOutboundReq) {
         if (CharSequenceUtil.isBlank(cancelOutboundReq.getOrderCode())) {
-            throw new ServiceException("WEGO出库单号不能为空");
+            throw new ServiceException(ApiError.WH_WEGO_OUTBOUND_CODE_REQUIRED);
         }
         WegoOutboundInterceptDTO.InterceptReqDTO request = buildInterceptDto(cancelOutboundReq);
         log.warn("{}截单请求:{}", getPlatForm().getName(), toLogSafeJson(request));
@@ -631,12 +652,12 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         }
         Map<String, Object> authMap = ThirdWarehouseContext.getAuthMap();
         if (authMap == null || authMap.isEmpty()) {
-            throw new ServiceException("WEGO授权信息为空");
+            throw new ServiceException(ApiError.WH_WEGO_AUTH_INFO_EMPTY);
         }
         String accessToken = toStr(authMap.get(AUTH_KEY_APP_TOKEN));
         String secret = toStr(authMap.get(AUTH_KEY_APP_SECRET));
         if (CharSequenceUtil.hasBlank(accessToken, secret)) {
-            throw new ServiceException("WEGO授权信息appToken/appSecret缺失");
+            throw new ServiceException(ApiError.WH_WEGO_AUTH_TOKEN_SECRET_MISSING);
         }
 
         log.info("{}查询出库单（按 referenceCode），referenceCode={}", getPlatForm().getName(), referenceCode);
@@ -673,8 +694,17 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                     .build();
 
             WegoOutboundResp pageResp = wegoOpenApiService.query2cOrderPage(pageReq);
-            if (pageResp == null || pageResp.getResult() == null
-                    || CollUtil.isEmpty(pageResp.getResult().getList())) {
+            if (pageResp == null) {
+                log.error("{}queryPage 降级查询接口响应为空, referenceCode={}, pageNum={}",
+                        getPlatForm().getName(), referenceCode, pageNum);
+                throw new ServiceException(ApiError.WH_WEGO_QUERY_FALLBACK_EMPTY_RESPONSE, referenceCode);
+            }
+            if (!Boolean.TRUE.equals(pageResp.getSuccess())) {
+                log.error("{}queryPage 降级查询接口返回失败: errorCode={}, errorMsg={}, referenceCode={}, pageNum={}",
+                        getPlatForm().getName(), pageResp.getErrorCode(), pageResp.getErrorMsg(), referenceCode, pageNum);
+                throw new ServiceException(ApiError.WH_WEGO_QUERY_FALLBACK_FAILED, pageResp.getErrorCode(), pageResp.getErrorMsg());
+            }
+            if (pageResp.getResult() == null || CollUtil.isEmpty(pageResp.getResult().getList())) {
                 log.warn("{}queryPage 降级查询第{}页无数据，停止翻页, referenceCode={}",
                         getPlatForm().getName(), pageNum, referenceCode);
                 break;
@@ -742,6 +772,10 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     private WegoOutboundSaveDTO.SaveReqDTO buildOutboundSaveDto(
             ThirdWarehouseCreateOutboundReq req, String wegoOrderNo,
             String accessToken, String secret) {
+
+        if (CollUtil.isEmpty(req.getItems())) {
+            throw new ServiceException(ApiError.WH_WEGO_OUTBOUND_DETAIL_EMPTY);
+        }
 
         ThirdWarehouseCreateOutboundReq.ReceiverInfo receiver = req.getReceiverInfo();
 
@@ -824,12 +858,12 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     private WegoOutboundInterceptDTO.InterceptReqDTO buildInterceptDto(ThirdWarehouseCancelOutboundReq cancelReq) {
         Map<String, Object> authMap = ThirdWarehouseContext.getAuthMap();
         if (authMap == null || authMap.isEmpty()) {
-            throw new ServiceException("WEGO授权信息为空");
+            throw new ServiceException(ApiError.WH_WEGO_AUTH_INFO_EMPTY);
         }
         String accessToken = toStr(authMap.get(AUTH_KEY_APP_TOKEN));
         String secret = toStr(authMap.get(AUTH_KEY_APP_SECRET));
         if (CharSequenceUtil.hasBlank(accessToken, secret)) {
-            throw new ServiceException("WEGO授权信息appToken/appSecret缺失");
+            throw new ServiceException(ApiError.WH_WEGO_AUTH_TOKEN_SECRET_MISSING);
         }
         return WegoOutboundInterceptDTO.InterceptReqDTO.builder()
                 .accessToken(accessToken)
@@ -871,11 +905,11 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         // WEGO 授权属于特殊场景，无需调用第三方授权接口，仅在落库前校验必填字段。
         Map<String, Object> authJson = dto.getAuthJson();
         if (authJson == null || authJson.isEmpty()) {
-            throw new ServiceException("WEGO授权信息不能为空");
+            throw new ServiceException(ApiError.WH_WEGO_AUTH_INFO_EMPTY);
         }
         if (CharSequenceUtil.hasBlank(toStr(authJson.get(AUTH_KEY_APP_TOKEN)),
                 toStr(authJson.get(AUTH_KEY_APP_SECRET)))) {
-            throw new ServiceException("WEGO授权信息appToken/appSecret不能为空");
+            throw new ServiceException(ApiError.WH_WEGO_AUTH_TOKEN_SECRET_MISSING);
         }
         return true;
     }
@@ -935,7 +969,7 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         if (Integer.valueOf(WEGO_ERROR_CODE_INTERCEPTED).equals(errorCode)) {
             return true;
         }
-        // 场景2：WEGO 后台手动取消后返回 success=false + errorMsg="操作成功!"
+        // 场景2：WEGO 后台手动取消后返回 success=false + errorMsg包含"操作成功!"
         String errorMsg = resp.getString(RESP_FIELD_ERROR_MSG);
         return CharSequenceUtil.isNotBlank(errorMsg) && errorMsg.contains(WEGO_INTERCEPT_IDEMPOTENT_KEYWORD);
     }

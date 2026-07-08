@@ -500,7 +500,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         SoB2cReturnEntity soB2cReturnEntity = null;
         //当退货单不为空的时候
         if (CharSequenceUtil.isNotBlank(soReturnId)) {
-            if ("B2C".equals(dto.getType())) {
+            if (BillTypeEnum.B2C.getCode().equals(dto.getType())) {
                 soB2cReturnEntity = FeignQuery.getById(SoB2cReturnEntity.class, dto.getSoReturnId());
                 dto.setShopId(soB2cReturnEntity.getShopId());
                 //获取销售单信息
@@ -1200,7 +1200,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         entity.setApproveStatus(ApproveStatusEnum.APPROVE_ING.getStatus());
         entity.setApproveTime(LocalDateTime.now());
         entity.setApproveUserName("system");
-        entity.setBillDate(dto.getPutawayTime().toLocalDate());
+        entity.setBillDate(dto.getPutawayLocalDate());
         entity.setInventoryOrgId(warehouseEntity.getOrgId());
         entity.setInventoryOrgName(Objects.nonNull(company) ? company.getCompanyName() : "");
         entity.setWarehouseKeeperId(warehouseEntity.getChargeId());
@@ -1245,7 +1245,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         entity.setApproveStatus(ApproveStatusEnum.APPROVE_ING.getStatus());
         entity.setApproveTime(LocalDateTime.now());
         entity.setApproveUserName("system");
-        entity.setBillDate(dto.getPutawayTime().toLocalDate());
+        entity.setBillDate(dto.getPutawayLocalDate());
         entity.setInventoryOrgId(warehouseEntity.getOrgId());
         entity.setInventoryOrgName(Objects.nonNull(company) ? company.getCompanyName() : "");
         entity.setWarehouseKeeperId(warehouseEntity.getChargeId());
@@ -1466,7 +1466,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 detailView.setWarehouseId(viewDTO.getWarehouseId());
                 detailView.setWarehouseName(viewDTO.getWarehouseName());
             }
-            if ("B2C".equals(entity.getType())) {
+            if (BillTypeEnum.B2C.getCode().equals(entity.getType())) {
                 SoB2cReturnDetailEntity soB2cReturnDetailEntity = returnB2cDetailEntityList.stream().filter(v -> v.getId().equals(detailEntity.getSoReturnDetailId())).findFirst().orElse(new SoB2cReturnDetailEntity());
                 detailView.setSalesQty(soB2cReturnDetailEntity.getSaleQty());
                 Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> detail.getSkuId().equals(detailEntity.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);

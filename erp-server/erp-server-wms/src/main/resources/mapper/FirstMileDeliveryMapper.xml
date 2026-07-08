@@ -738,14 +738,18 @@
         from (
         WITH qualified_delivery_base AS MATERIALIZED (
             SELECT
-                fmd.id,
-                fmd.source_id,
-                fmd.code,
-                fmd.demand_type,
-                fmd.create_time AS source_create_time
-            FROM first_mile_delivery fmd
-            WHERE fmd.is_deleted = false
-            AND fmd.declare_status = 'wait'
+                fd.id,
+                fd.source_id,
+                fd.code,
+                fd.demand_type,
+                fd.create_time AS source_create_time
+            FROM first_mile_delivery fd
+            WHERE fd.is_deleted = false
+            AND fd.declare_status = 'wait'
+            <!--数据权限-->
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
         ),
         fba_business_code AS (
             SELECT
@@ -956,7 +960,28 @@
     <!-- 查询合并前头程报关单 -->
     <select id="listBeforePushFmDeclare"
             resultType="com.erp.model.tms.dto.TmsDeclareBillDTO$SourceDeliveryDetailDTO">
-        WITH carton_detail AS (
+        WITH target_packing_task AS (
+        SELECT DISTINCT pt.id
+        FROM packing_task pt
+        INNER JOIN first_mile_delivery fmd
+        ON (pt.source_id = fmd.id OR pt.source_id = fmd.source_id)
+        AND fmd.is_deleted = false
+        WHERE pt.is_deleted = false
+        AND pt.packing_status = 'packed'
+        <choose>
+            <when test="onlyWaitDeclareStatus != null and onlyWaitDeclareStatus == false">
+                AND fmd.declare_status IN ('wait', 'finish')
+            </when>
+            <otherwise>
+                AND fmd.declare_status = 'wait'
+            </otherwise>
+        </choose>
+        AND fmd.id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        ),
+        carton_detail AS (
         SELECT
         wc.packing_task_id,
         wc.box_no,
@@ -971,6 +996,7 @@
         AND COALESCE(wcd.pack_qty, 0) > 0
         WHERE wc.is_deleted = false
         AND wc.box_no IS NOT NULL
+        AND wc.packing_task_id IN (SELECT id FROM target_packing_task)
         GROUP BY wc.packing_task_id, wc.box_no, wcd.sku_id, wcd.sku_no, COALESCE(wcd.fn_sku, '')
         )
         select
@@ -1230,7 +1256,7 @@
         ),
         has_bom AS MATERIALIZED (
         SELECT fpbi.id AS bom_id, fpbh.id AS bom_history_id, fpbi.bom_version,
-        fpbs.parent_sku_id, fpbs.parent_sku_no, fpbs.sku_id, fpbs.sku_no
+        fpbs.parent_sku_id, fpbs.parent_sku_no, fpbs.sku_id, fpbs.sku_no, fpbs.quantity
         FROM foreign_product_bom_info fpbi
         JOIN foreign_product_bom_sku fpbs ON fpbi.id = fpbs.bom_id
         LEFT JOIN foreign_product_bom_history fpbh
@@ -1272,7 +1298,7 @@
         COALESCE(hb.bom_id, '')          AS bomId,
         COALESCE(hb.bom_history_id, '')  AS bomHistoryId,
         COALESCE(hb.bom_version, '')     AS bomVersion,
-        cd.pack_qty AS qty,
+        CASE WHEN hb.sku_id IS NOT NULL THEN cd.pack_qty * hb.quantity ELSE cd.pack_qty END AS qty,
         cd.box_no   AS boxNo,
         fmd.country_id AS countryId,
         fmd.delivery_warehouse_id   AS fromWarehouseId,

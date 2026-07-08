@@ -486,7 +486,7 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
             insert.setPlatformWarehouseCode(warehouseCode);
             insert.setPlatformWarehouseName(wh.getString("warehouseName"));
             insert.setCountry(wh.getString("warehouseRegion"));
-            insert.setCountryName(marketPlaceEnum.getName());
+            insert.setCountryName(marketPlaceEnum != null ? marketPlaceEnum.getName() : wh.getString("warehouseRegion"));
             insert.setDisabled(Boolean.TRUE);
             toInsert.add(insert);
         }
@@ -495,7 +495,7 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
         List<String> toDeleteIds = new ArrayList<>();
         List<OverseasProviderWarehouseEntity> toDisable = new ArrayList<>();
         for (OverseasProviderWarehouseEntity exist : existingList) {
-            String code = exist.getWarehouseCode();
+            String code = exist.getPlatformWarehouseCode();
             if (CharSequenceUtil.isBlank(code) || apiWarehouseCodes.contains(code)) {
                 continue;
             }

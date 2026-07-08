@@ -871,6 +871,9 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         if (PlatformDictEnum.WILDBERRIES.getCode().equals(entity.getDictPlatform())){
             throw new ServiceException(ApiError.SO_B2C_WILDBERRIES_NOT_ALLOWED, entity.getCode());
         }
+        if (PlatformDictEnum.MAGALU.getCode().equals(entity.getDictPlatform())){
+            throw new ServiceException(ApiError.SO_B2C_MAGALU_SPLIT_FORBIDDEN);
+        }
         //已拆分数据不能再次拆分
         List<SoB2cRefEntity> soB2cRefList = soB2cRefService.listBySourceIdOrTargetId(Arrays.asList(dto.getId()));
         //拆分后的销售订单集合

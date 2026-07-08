@@ -1,15 +1,13 @@
 package com.erp.model.tms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.DynamicDataSourceTypeEnum;
-import com.erp.model.plm.entity.ProductPackEntity;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
-import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.tms.enums.LogisticsBillCostPayTypeEnum;
+import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -1150,7 +1148,12 @@ public class LogisticsBillCostDTO implements Serializable {
     	 *物流标签类型
     	 */
     	private String type;
-    	
+        /**
+         * 销售平台
+         */
+        @NotEmpty(message = "销售平台不能为空")
+        private List<String> salesPlatformList;
+
     } /**
      * 支付状态
      */
@@ -1375,6 +1378,11 @@ public class LogisticsBillCostDTO implements Serializable {
         private Integer batchSize;
 
         private List<String> ids;
+
+        /**
+         * 销售平台集合
+         */
+        private List<String> salesPlatformList;
     }
 
     /**

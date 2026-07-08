@@ -235,6 +235,8 @@ public class LogisticsReconServiceImpl
         data.setReconciliationMonth(DateUtil.formatCnYearMonth(entity.getReconciliationMonth()));
         data.setSupplierName(entity.getSupplierName());
         data.setTotalAmountStr(formatAmount(entity.getTotalAmount(), currencySymbol(entity.getCurrency())));
+        data.setCheckStatus(entity.getCheckStatus());
+        data.setCheckStatusName(LogisticsReconCheckStatusEnum.getName(entity.getCheckStatus()));
         return data;
     }
 
@@ -266,8 +268,10 @@ public class LogisticsReconServiceImpl
         }
         dto.setCfgLogisticsCostImportList(cfgList);
         dto.setImportDetailList(cfgDetails);
-        // 提交导入时捕获操作人，异步回调落导入历史记录时使用
-        dto.setUserId(UserContext.getDefaultLoginUser().getUid());
+        // 提交导入时捕获操作人，异步回调落导入历史记录 / importCheck 回写校验人时使用
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
+        dto.setUserId(loginUser.getUid());
+        dto.setUserName(loginUser.getUserName());
         // 按配置预创建主表（一个配置一条），列表立即可见「导入中」状态；
         // mainId/code 为异步任务内按配置逐条处理时使用的临时字段，提交阶段不在此设置
         Map<String, String> mainIdMap = new HashMap<>(cfgList.size());
@@ -580,7 +584,7 @@ public class LogisticsReconServiceImpl
         } else if (StrUtil.isBlank(reconciliationMonth)) {
             rate = null;
         } else {
-            rate = dmpTaskFeign.getMonthRate(reconciliationMonth + "-01", code);
+            rate = dmpTaskFeign.getRate(reconciliationMonth + "-01", code);
         }
         cache.put(code, rate);
         return rate;
@@ -601,18 +605,26 @@ public class LogisticsReconServiceImpl
         int subCount = (int) logisticsReconDetailSubService.lambdaQuery()
                 .eq(LogisticsReconDetailSubEntity::getMainId, mainId)
                 .count();
-        String checkStatus = LogisticsReconOpenImportConverter.RECON_PROCESSING_IMPORT_CHECK.equals(dto.getProcessingType())
+        boolean importCheck = LogisticsReconOpenImportConverter.RECON_PROCESSING_IMPORT_CHECK.equals(dto.getProcessingType());
+        String checkStatus = importCheck
                 ? LogisticsReconCheckStatusEnum.CONFIRMED.getCode()
                 : LogisticsReconCheckStatusEnum.PENDING.getCode();
-        lambdaUpdate()
+        LambdaUpdateChainWrapper<LogisticsReconEntity> updateChain = lambdaUpdate()
                 .eq(LogisticsReconEntity::getId, mainId)
                 .set(LogisticsReconEntity::getCheckStatus, checkStatus)
                 .set(LogisticsReconEntity::getImportCount, detailCount)
                 .set(LogisticsReconEntity::getCostCount, subCount)
                 .set(LogisticsReconEntity::getTotalAmount, excelListener.getTotalAmount())
                 .set(LogisticsReconEntity::getCurrency, excelListener.resolveCurrency())
-                .set(LogisticsReconEntity::getImportFailReason, "")
-                .update();
+                .set(LogisticsReconEntity::getImportFailReason, "");
+        if (importCheck) {
+            LocalDateTime checkTime = LocalDateTime.now();
+            updateChain
+                    .set(LogisticsReconEntity::getCheckUserId, StrUtil.blankToDefault(dto.getUserId(), ""))
+                    .set(LogisticsReconEntity::getCheckUserName, StrUtil.blankToDefault(dto.getUserName(), ""))
+                    .set(LogisticsReconEntity::getCheckTime, checkTime);
+        }
+        updateChain.update();
     }
 
     /**
@@ -1636,7 +1648,7 @@ public class LogisticsReconServiceImpl
 
     /**
      * 校验对账单校验状态切换是否合法（待确认 ↔ 已确认）。
-     * <p>目标待确认：禁止同状态重复；已确认回退时要求全部费用项未匹配。</p>
+     * <p>目标待确认：禁止同状态重复；已确认回退时要求全部费用项为未匹配或匹配失败。</p>
      * <p>目标已确认：仅允许当前待确认；禁止导入失败或存在匹配中费用项。</p>
      *
      * @author Will
@@ -1659,13 +1671,12 @@ public class LogisticsReconServiceImpl
             throw new ServiceException(ApiError.LOGISTICS_RECON_CHECK_STATUS_NO_CHANGE);
         }
         if (LogisticsReconCheckStatusEnum.PENDING.getCode().equals(targetStatus)) {
-            // 已确认 → 待确认：仅当全部费用项匹配状态为未匹配时允许
-            long nonUnmatchedCount = logisticsReconDetailSubService.lambdaQuery()
+            // 已确认 → 待确认：仅当全部费用项匹配状态为未匹配或匹配失败时允许
+            long invalidCount = logisticsReconDetailSubService.lambdaQuery()
                     .eq(LogisticsReconDetailSubEntity::getMainId, entity.getId())
-                    .ne(LogisticsReconDetailSubEntity::getMatchStatus,
-                            LogisticsReconDetailMatchStatusEnum.UNMATCHED.getCode())
+                    .notIn(LogisticsReconDetailSubEntity::getMatchStatus, MATCH_CLAIM_FROM_STATUSES)
                     .count();
-            if (nonUnmatchedCount > 0) {
+            if (invalidCount > 0) {
                 throw new ServiceException(ApiError.LOGISTICS_RECON_MATCH_REF_EXISTS_ROLLBACK_FORBIDDEN);
             }
         }
@@ -1697,6 +1708,7 @@ public class LogisticsReconServiceImpl
     public List<BatchResultDTO> batchMatch(LogisticsReconDTO.BatchMatchDTO dto) {
         // 异步：仅做校验 + 认领（置 matching）+ 提交线程池，立即返回；匹配结果异步写回 detail_sub
         LoginUser user = UserContext.getLoginUser();
+        boolean isConfirm = Boolean.TRUE.equals(dto.getIsConfirm());
         List<BatchResultDTO> results = new ArrayList<>(dto.getIds().size());
         for (String mainId : dto.getIds()) {
             try {
@@ -1705,8 +1717,6 @@ public class LogisticsReconServiceImpl
                 if (!LogisticsReconCheckStatusEnum.CONFIRMED.getCode().equals(entity.getCheckStatus())) {
                     throw new ServiceException(ApiError.LOGISTICS_RECON_ONLY_CONFIRMED_ALLOW_MATCH);
                 }
-                // 超时兜底：重置长时间卡在匹配中的费用项，避免异步任务异常后无法再次触发
-                resetStaleMatchingSubs(mainId);
                 int submittedChunkCount = 0;
                 while (true) {
                     List<String> claimedIds = logisticsReconDetailSubService
@@ -1716,7 +1726,7 @@ public class LogisticsReconServiceImpl
                     }
                     List<String> scopeSubIds = new ArrayList<>(claimedIds);
                     try {
-                        logisticsReconMatchPool.submit(() -> asyncMatchByMain(mainId, user, scopeSubIds));
+                        logisticsReconMatchPool.submit(() -> asyncMatchByMain(mainId, user, scopeSubIds, isConfirm));
                         submittedChunkCount++;
                     } catch (RejectedExecutionException e) {
                         log.warn("[batchMatch] 匹配线程池已满 mainId={}", mainId, e);
@@ -1755,11 +1765,11 @@ public class LogisticsReconServiceImpl
     /**
      * 异步执行对账单整批匹配：仅处理本次认领的费用项，失败时仅回写该范围。
      */
-    private void asyncMatchByMain(String mainId, LoginUser user, List<String> scopeSubIds) {
+    private void asyncMatchByMain(String mainId, LoginUser user, List<String> scopeSubIds, boolean isConfirm) {
         LoginUser prev = UserContext.getLoginUser();
         try {
             UserContext.setLoginUser(user);
-            self.doMatchByMain(mainId, scopeSubIds);
+            self.doMatchByMain(mainId, scopeSubIds, isConfirm);
         } catch (Exception e) {
             log.error("[asyncMatchByMain] 匹配失败 mainId={} scopeSize={}", mainId,
                     scopeSubIds == null ? 0 : scopeSubIds.size(), e);
@@ -1781,7 +1791,7 @@ public class LogisticsReconServiceImpl
      * 对账单整批匹配（同步）：按 scopeSubIds 分片调用 {@link #doMatchSubsChunk}，单片失败仅回写该分片。
      */
     @Override
-    public void doMatchByMain(String mainId, List<String> scopeSubIds) {
+    public void doMatchByMain(String mainId, List<String> scopeSubIds, boolean isConfirm) {
         if (CollUtil.isEmpty(scopeSubIds)) {
             return;
         }
@@ -1795,7 +1805,7 @@ public class LogisticsReconServiceImpl
         for (int i = 0; i < sortedScope.size(); i += MATCH_CHUNK_SIZE) {
             List<String> chunk = sortedScope.subList(i, Math.min(sortedScope.size(), i + MATCH_CHUNK_SIZE));
             try {
-                self.doMatchSubsChunk(mainId, chunk);
+                self.doMatchSubsChunk(mainId, chunk, isConfirm);
             } catch (Exception e) {
                 log.error("[doMatchByMain] 分片匹配失败 mainId={} chunkSize={}", mainId, chunk.size(), e);
                 self.markReconMatchFailed(mainId, chunk, LogisticsReconMatchFailReasonSupport.resolve(e));
@@ -1808,7 +1818,7 @@ public class LogisticsReconServiceImpl
      * {@link #commitReconMatchResult} 回写关联与匹配状态。
      */
     @Override
-    public void doMatchSubsChunk(String mainId, List<String> detailSubIds) {
+    public void doMatchSubsChunk(String mainId, List<String> detailSubIds, boolean isConfirm) {
         if (CollUtil.isEmpty(detailSubIds)) {
             return;
         }
@@ -1849,14 +1859,14 @@ public class LogisticsReconServiceImpl
         if (CollUtil.isEmpty(units)) {
             return;
         }
-        LogisticsReconMatchExecutionResultDTO executionResult = executeReconMatch(entity, units, false);
+        LogisticsReconMatchExecutionResultDTO executionResult = executeReconMatch(entity, units, false, isConfirm);
         self.commitReconMatchResult(mainId, LogisticsReconRefMatchTypeEnum.AUTO.getCode(),
                 executionResult.getRowKeyToDetailId(), executionResult.getRowKeyToSubs(),
                 executionResult.getMatchResults());
     }
 
     /**
-     * 刷新匹配中费用项的更新时间，避免长任务被 resetStaleMatchingSubs 误判超时。
+     * 刷新匹配中费用项的更新时间（心跳），避免在跑的长任务被认领逻辑误判超时而遭抢占重试。
      */
     private void touchMatchingSubsUpdateTime(List<String> detailSubIds) {
         LocalDateTime now = LocalDateTime.now();
@@ -1869,23 +1879,6 @@ public class LogisticsReconServiceImpl
                     .set(LogisticsReconDetailSubEntity::getUpdateTime, now)
                     .update();
         }
-    }
-
-    /**
-     * 重置长时间处于匹配中且未更新的费用项（异步任务异常兜底）。
-     */
-    @Override
-    public void resetStaleMatchingSubs(String mainId) {
-        LocalDateTime threshold = LocalDateTime.now().minusMinutes(MATCHING_STALE_MINUTES);
-        logisticsReconDetailSubService.lambdaUpdate()
-                .eq(LogisticsReconDetailSubEntity::getMainId, mainId)
-                .eq(LogisticsReconDetailSubEntity::getMatchStatus,
-                        LogisticsReconDetailMatchStatusEnum.MATCHING.getCode())
-                .lt(LogisticsReconDetailSubEntity::getUpdateTime, threshold)
-                .set(LogisticsReconDetailSubEntity::getMatchStatus,
-                        LogisticsReconDetailMatchStatusEnum.FAILED.getCode())
-                .set(LogisticsReconDetailSubEntity::getMatchFailReason, "匹配超时，请重新匹配")
-                .update();
     }
 
     /** 认领匹配时可覆盖的前置 match_status（未匹配 / 失败） */
@@ -1909,11 +1902,13 @@ public class LogisticsReconServiceImpl
      * @param entity           对账单主表
      * @param units            待匹配单元（费用项 + 所属明细 + 识别号覆盖）
      * @param matchByProvided  是否按 units 提供的识别字段匹配（手动/导入为 true，自动整批为 false）
+     * @param isConfirm        是否确认匹配上的物流费用数据
      * @return 匹配编排结果（供 commitReconMatchResult 落库）
      */
     private LogisticsReconMatchExecutionResultDTO executeReconMatch(LogisticsReconEntity entity,
                                                    List<ReconMatchUnit> units,
-                                                   boolean matchByProvided) {
+                                                   boolean matchByProvided,
+                                                   boolean isConfirm) {
         if (CollUtil.isEmpty(units)) {
             return new LogisticsReconMatchExecutionResultDTO(Collections.emptyList(),
                     Collections.emptyMap(), Collections.emptyMap());
@@ -1947,7 +1942,9 @@ public class LogisticsReconServiceImpl
         ctx.setCostImportEntity(costImportEntity);
         ctx.setCfgImportDetailList(cfgDetails);
         ctx.setReconciliationMonth(entity.getReconciliationMonth());
-        ctx.setProcessingType(ImportHistoryRecordProcessingTypeEnum.IMPORT.getCode());
+        ctx.setProcessingType(isConfirm
+                ? ImportHistoryRecordProcessingTypeEnum.CONFIRM_IMPORT.getCode()
+                : ImportHistoryRecordProcessingTypeEnum.IMPORT.getCode());
         ctx.setMatchByProvidedIdentifyKeys(matchByProvided);
         ctx.setRows(rows);
 
@@ -2239,7 +2236,7 @@ public class LogisticsReconServiceImpl
         touchMatchingSubsUpdateTime(matchingSubIds);
 
         // 复用统一核心编排（与导入一致：同识别号合并费用、多物流单重量分摊）
-        LogisticsReconMatchExecutionResultDTO executionResult = executeReconMatch(entity, units, true);
+        LogisticsReconMatchExecutionResultDTO executionResult = executeReconMatch(entity, units, true, false);
         touchMatchingSubsUpdateTime(matchingSubIds);
         self.commitReconMatchResult(mainId, matchType, executionResult.getRowKeyToDetailId(),
                 executionResult.getRowKeyToSubs(), executionResult.getMatchResults());
@@ -2963,12 +2960,8 @@ public class LogisticsReconServiceImpl
      */
     private static final int MATCH_CHUNK_SIZE = 500;
 
-    /**
-     * 匹配中状态超时分钟数，超时后允许重置为失败并重新触发匹配。
-     */
-    private static final long MATCHING_STALE_MINUTES = 120;
-
     // ============================== private ==============================
+
 
     /**
      * 列表名称回填

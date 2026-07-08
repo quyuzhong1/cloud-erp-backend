@@ -118,10 +118,29 @@ public class InvoiceApiClient {
      * @return 发票详情响应数据DTO（data部分）
      */
     public InvoiceDetailResponseDTO.InvoiceDetailDataDTO getInvoiceDetail(String uuid, String companyToken, String appKey) {
+        return getInvoiceDetailByParam("uuid", uuid, companyToken, appKey);
+    }
+
+    /**
+     * 根据chave查询发票详情
+     *
+     * @param chave 发票访问密钥
+     * @param companyToken 公司token（cfg_invoice_setting.token）
+     * @param appKey AppKey（用于签名）
+     * @return 发票详情响应数据DTO（data部分）
+     */
+    public InvoiceDetailResponseDTO.InvoiceDetailDataDTO getInvoiceDetailByChave(String chave, String companyToken, String appKey) {
+        return getInvoiceDetailByParam("chave", chave, companyToken, appKey);
+    }
+
+    private InvoiceDetailResponseDTO.InvoiceDetailDataDTO getInvoiceDetailByParam(String paramName, String paramValue, String companyToken, String appKey) {
+        if (paramValue == null || paramValue.trim().isEmpty()) {
+            throw new IllegalArgumentException("查询发票详情参数不能为空");
+        }
         try {
             // 构建查询参数（需要URL编码）
-            String encodedUuid = java.net.URLEncoder.encode(uuid, java.nio.charset.StandardCharsets.UTF_8.name());
-            String path = PATH_GET_INVOICE_DETAIL + "?uuid=" + encodedUuid;
+            String encodedValue = java.net.URLEncoder.encode(paramValue, java.nio.charset.StandardCharsets.UTF_8.name());
+            String path = PATH_GET_INVOICE_DETAIL + "?" + paramName + "=" + encodedValue;
             
             // 生成时间戳
             String timestamp = SignUtil.generateTimestamp();

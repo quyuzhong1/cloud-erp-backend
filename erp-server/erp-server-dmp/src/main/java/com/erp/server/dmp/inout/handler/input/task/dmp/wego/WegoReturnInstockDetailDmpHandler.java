@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.erp.server.dmp.inout.handler.input.task.dmp.DmpInputDoNextDmpHandler;
+import com.sdk.wms.wego.enums.WegoEnums;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.context.annotation.Scope;
@@ -32,16 +33,14 @@ import java.util.TreeMap;
 @Scope("prototype")
 public class WegoReturnInstockDetailDmpHandler extends DmpInputDoNextDmpHandler {
 
-    /** WEGO API 实际入库明细字段（优先使用） */
+    /** WEGO API 实际入库明细字段（{@code queryProducts} 为空时的兜底，见 {@link #getDetailList}） */
     private static final String MONGO_KEY_INSTOCK_PRODUCTS = "instockProducts";
 
     /** WEGO API 预计入库明细字段（实际明细为空时的回退） */
     private static final String MONGO_KEY_QUERY_PRODUCTS = "queryProducts";
 
-    /** WEGO API 返回的库存类型字段名：3=不良品，其余=可用 */
+    /** WEGO API 返回的库存类型字段名，取值见 {@link WegoEnums.InventoryTypeEnum} */
     private static final String MONGO_KEY_INVENTORY_TYPE = "inventoryType";
-    /** WEGO 不良品库存类型值 */
-    private static final int INVENTORY_TYPE_DEFECTIVE = 3;
     /** DMP 明细字段：是否不良品 */
     private static final String DMP_KEY_DEFECTIVE_PRODUCT_FLAG = "defectiveProductFlag";
 
@@ -72,14 +71,9 @@ public class WegoReturnInstockDetailDmpHandler extends DmpInputDoNextDmpHandler 
             if (inventoryTypeObj == null) {
                 continue;
             }
-            try {
-                int inventoryType = Integer.parseInt(inventoryTypeObj.toString());
-                boolean defectiveProductFlag = (inventoryType == INVENTORY_TYPE_DEFECTIVE);
-                for (TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
-                    dmpDataMap.put(DMP_KEY_DEFECTIVE_PRODUCT_FLAG, defectiveProductFlag);
-                }
-            } catch (NumberFormatException e) {
-                log.warn("WEGO inventoryType 格式异常，跳过不良品标记回填，inventoryType={}", inventoryTypeObj, e);
+            boolean defectiveProductFlag = WegoEnums.InventoryTypeEnum.isDefective(inventoryTypeObj.toString());
+            for (TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
+                dmpDataMap.put(DMP_KEY_DEFECTIVE_PRODUCT_FLAG, defectiveProductFlag);
             }
         }
     }

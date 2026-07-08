@@ -141,12 +141,12 @@ public class WegoReturnInstockInitHandler extends DmpInputInitHandler {
             } catch (Exception e) {
                 log.error("[WEGO退货入库] 服务商[id={}] 到仓日期[{} ~ {}] 调用异常, pageNum={}",
                         authId, arrivalDateBegin, arrivalDateEnd, pageNum, e);
-                break;
+                throw new ServiceException("WEGO 退货入库分页查询调用异常, pageNum=" + pageNum + ": " + e.getMessage(), e);
             }
 
             if (resp == null) {
                 log.error("[WEGO退货入库] 服务商[id={}] 接口响应为空, pageNum={}", authId, pageNum);
-                break;
+                throw new ServiceException("WEGO 退货入库分页查询接口响应为空, pageNum=" + pageNum);
             }
             if (!Boolean.TRUE.equals(resp.getSuccess())) {
                 log.error("[WEGO退货入库] 服务商[id={}] 接口返回失败: errorCode={}, errorMsg={}",
@@ -156,7 +156,7 @@ public class WegoReturnInstockInitHandler extends DmpInputInitHandler {
             }
             WegoReturnOrderResp.PageResultDTO page = resp.getResult();
             if (page == null) {
-                break;
+                throw new ServiceException("WEGO 退货入库分页查询接口 result 为空, pageNum=" + pageNum);
             }
             if (totalPages == null) {
                 totalPages = page.getPages();
@@ -177,7 +177,9 @@ public class WegoReturnInstockInitHandler extends DmpInputInitHandler {
         }
 
         if (pageNum > MAX_PAGE_LIMIT) {
-            log.warn("[WEGO退货入库] 服务商[id={}] 已达最大翻页上限({})", authId, MAX_PAGE_LIMIT);
+            log.error("[WEGO退货入库] 服务商[id={}] 已达最大翻页上限({})，存在未拉取数据，任务中止", authId, MAX_PAGE_LIMIT);
+            throw new ServiceException("WEGO退货入库：已达最大翻页上限(" + MAX_PAGE_LIMIT
+                    + ")，已拉取=" + result.size() + "条，数据不完整，任务中止");
         }
         log.info("[WEGO退货入库] 服务商[id={}] 到仓日期[{} ~ {}] 共拉到已处理退货单={}条, 翻页={}",
                 authId, arrivalDateBegin, arrivalDateEnd, result.size(), pageNum);

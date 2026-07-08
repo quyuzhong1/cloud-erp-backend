@@ -252,7 +252,11 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                         updateStatus.setTrackNo(dto.getTrackNo());
                     }
                     soB2cFeign.updateSoB2cStatusByParams(updateStatus);
-
+                    //更新物流单跟踪号
+                    if (CharSequenceUtil.isNotBlank(dto.getTrackNo()) && !dto.getTrackNo().equals(thirdWarehouseDeliveryEntity.getTrackNo())){
+                        thirdWarehouseDeliveryEntity.setTrackNo(dto.getTrackNo());
+                        thirdWarehouseDeliveryService.updateById(thirdWarehouseDeliveryEntity);
+                    }
                     map.put(mainEntity, thirdWarehouseDeliveryEntity);
                 }
             }else if (referenceNo.contains(BusinessNoConstant.SFFH)){

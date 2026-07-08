@@ -27,6 +27,7 @@ import com.erp.model.tms.enums.BusinessTypeEnum;
 import com.erp.model.tms.enums.LogisticTrackStatusEnum;
 import com.erp.model.tms.enums.LogisticsThirdChannelRefPushTypeEnum;
 import com.erp.model.tms.enums.RequestStatusEnums;
+import com.erp.model.tms.vo.request.LogisticsRegisterVO;
 import com.erp.model.tms.vo.request.LogisticsTrackVO;
 import com.erp.model.tms.vo.request.RegisterTrackVO;
 import com.erp.model.tms.vo.response.LogisticsServiceResponseVO;
@@ -34,11 +35,14 @@ import com.erp.model.tms.vo.response.RegisterResponseVO;
 import com.erp.model.tms.dto.LogisticsThirdChannelRefDTO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
+import com.erp.server.tms.service.CfgSettingService;
 import com.erp.server.tms.service.LogisticsBillDetailService;
 import com.erp.server.tms.service.LogisticsOperateService;
 import com.erp.server.tms.service.LogisticsThirdChannelRefService;
 import com.sdk.tms.kuaidi100.model.request.Kuaidi100QueryParam;
+import com.sdk.tms.kuaidi100.model.request.Kuaidi100SubscribeParam;
 import com.sdk.tms.kuaidi100.model.response.Kuaidi100QueryResponse;
+import com.sdk.tms.kuaidi100.model.response.Kuaidi100SubscribeResponse;
 import com.sdk.tms.kuaidi100.service.Kuaidi100Service;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -66,6 +70,13 @@ import java.util.stream.Collectors;
 @LogisticsPlatformType(LogisticsPlatformEnum.KUAIDI100)
 public class Kuaidi100LogisticsHandlerImpl extends AbstractLogisticsHandler {
 
+    private static final String KUAIDI100_SUBSCRIBE_SUCCESS_CODE = "200";
+    private static final String KUAIDI100_DUPLICATE_SUBSCRIBE_CODE = "501";
+    private static final String ENV_URL_EMPTY_CODE = "ENV_URL_EMPTY";
+    private static final String AUTH_KEY_EMPTY_CODE = "AUTH_KEY_EMPTY";
+    private static final String PARAM_EMPTY_CODE = "PARAM_EMPTY";
+    private static final String SUBSCRIBE_EXCEPTION_CODE = "SUBSCRIBE_EXCEPTION";
+
     @Resource
     private Kuaidi100Service kuaidi100Service;
 
@@ -78,6 +89,8 @@ public class Kuaidi100LogisticsHandlerImpl extends AbstractLogisticsHandler {
     private LogisticsBillDetailService logisticsBillDetailService;
     @Resource
     private LogisticsOperateService logisticsOperateService;
+    @Resource
+    private CfgSettingService cfgSettingService;
 
 
     /**
@@ -233,17 +246,13 @@ public class Kuaidi100LogisticsHandlerImpl extends AbstractLogisticsHandler {
     }
 
 
-
-
     private String getTrackNo(LogisticsTrackDTO.UpdateTrackDTO record) {
         return TrackQueryTypeEnum.TRACK_NO.getCode().equals(record.getTrackQueryType()) && StrUtil.isNotBlank(record.getTrackNo())
                 ? record.getTrackNo() : record.getTransportNo();
     }
 
     /**
-     * 注册物流单号（伪注册实现）
-     * 由于快递100无需在官方平台执行“注册”动作，此处直接返回所有单号注册成功。
-     * 目的是为了让单据在ERP内部的 register_status 状态从 0（待注册）变为 1（已注册）。
+     * 注册物流单号
      *
      * @param registerTrackVO 注册参数，包含待处理的物流单号
      * @return 注册结果列表
@@ -252,17 +261,105 @@ public class Kuaidi100LogisticsHandlerImpl extends AbstractLogisticsHandler {
      */
     @Override
     public ApiResult<List<RegisterResponseVO>> registerLogisticsNumber(RegisterTrackVO registerTrackVO) {
-        log.info("快递100执行标准化伪注册流程，处理单数：{}", registerTrackVO.getLogisticsRegisterVOS().size());
-        
-        // 伪注册核心：直接将所有传入单号标记为注册成功
-        List<RegisterResponseVO> responseList = registerTrackVO.getLogisticsRegisterVOS().stream()
-                .map(vo -> RegisterResponseVO.builder()
-                        .trackNo(vo.getTrackNo())
-                        .trackStatus(true) // 标识注册成功
-                        .build())
-                .collect(Collectors.toList());
-        
+        List<LogisticsRegisterVO> registerVOS = registerTrackVO.getLogisticsRegisterVOS();
+        if (CollUtil.isEmpty(registerVOS)) {
+            return success(Collections.emptyList());
+        }
+
+        log.info("快递100执行订阅注册流程，处理单数：{}", registerVOS.size());
+        String callbackUrl = buildKuaidi100CallbackUrl();
+        if (StrUtil.isBlank(callbackUrl)) {
+            log.warn("快递100订阅失败，未配置当前环境ERP访问地址");
+            return success(buildFailureResponseList(registerVOS, ENV_URL_EMPTY_CODE, "未配置当前环境ERP访问地址"));
+        }
+
+        Map<String, String> authMap = registerTrackVO.getAuthMap();
+        String key = authMap == null ? null : authMap.get("key");
+        if (StrUtil.isBlank(key)) {
+            log.warn("快递100订阅失败，未配置快递100key");
+            return success(buildFailureResponseList(registerVOS, AUTH_KEY_EMPTY_CODE, "未配置快递100key"));
+        }
+
+        List<RegisterResponseVO> responseList = new ArrayList<>();
+        for (LogisticsRegisterVO registerVO : registerVOS) {
+            responseList.add(subscribeKuaidi100(registerVO, key, callbackUrl));
+        }
         return success(responseList);
+    }
+
+    private String buildKuaidi100CallbackUrl() {
+        String pcLinkByEnv = cfgSettingService.getPcLinkByEnv();
+        if (StrUtil.isBlank(pcLinkByEnv) || "null".equalsIgnoreCase(pcLinkByEnv)) {
+            return "";
+        }
+        return pcLinkByEnv.trim();
+    }
+
+    private List<RegisterResponseVO> buildFailureResponseList(List<LogisticsRegisterVO> registerVOS, String code, String msg) {
+        return registerVOS.stream()
+                .map(vo -> buildRegisterResponse(vo.getTrackNo(), false, code, msg))
+                .collect(Collectors.toList());
+    }
+
+    private RegisterResponseVO subscribeKuaidi100(LogisticsRegisterVO registerVO, String key, String callbackUrl) {
+        String trackNo = registerVO.getTrackNo();
+        if (StrUtil.isBlank(trackNo) || StrUtil.isBlank(registerVO.getCourierCode())) {
+            return buildRegisterResponse(trackNo, false, PARAM_EMPTY_CODE, "物流单号或快递公司编码为空");
+        }
+
+        Kuaidi100SubscribeParam param = kuaidi100Service.buildKuaidi100SubscribeParam(
+                registerVO.getCourierCode(),
+                trackNo,
+                key,
+                callbackUrl,
+                StrUtil.isNotBlank(registerVO.getPhoneSuffix()),
+                registerVO.getPhoneSuffix());
+
+        try {
+            Kuaidi100SubscribeResponse response = kuaidi100Service.subscribe(param);
+            boolean success = isSubscribeSuccess(response);
+            String code = response == null ? SUBSCRIBE_EXCEPTION_CODE : response.getReturnCode();
+            String msg = response == null ? "快递100订阅接口无响应" : response.getMessage();
+            logisticsOperateService.pushOperateLog(null,
+                    trackNo,
+                    BusinessTypeEnum.REGISTER_TRACK.getCode(),
+                    LogisticsPlatformEnum.KUAIDI100.getCode(),
+                    success ? RequestStatusEnums.SUCCESS.getCode() : RequestStatusEnums.FAILED.getCode(),
+                    JSONUtil.toJsonStr(param),
+                    JSONUtil.toJsonStr(response),
+                    false);
+            return buildRegisterResponse(trackNo, success, code, msg);
+        } catch (Exception e) {
+            log.error("快递100订阅异常，trackNo：{}", trackNo, e);
+            logisticsOperateService.pushOperateLog(null,
+                    trackNo,
+                    BusinessTypeEnum.REGISTER_TRACK.getCode(),
+                    LogisticsPlatformEnum.KUAIDI100.getCode(),
+                    RequestStatusEnums.FAILED.getCode(),
+                    JSONUtil.toJsonStr(param),
+                    e.getMessage(),
+                    false);
+            return buildRegisterResponse(trackNo, false, SUBSCRIBE_EXCEPTION_CODE, e.getMessage());
+        }
+    }
+
+    private boolean isSubscribeSuccess(Kuaidi100SubscribeResponse response) {
+        if (response == null) {
+            return false;
+        }
+        String returnCode = response.getReturnCode();
+        return Boolean.TRUE.equals(response.getResult())
+                || KUAIDI100_SUBSCRIBE_SUCCESS_CODE.equals(returnCode)
+                || KUAIDI100_DUPLICATE_SUBSCRIBE_CODE.equals(returnCode);
+    }
+
+    private RegisterResponseVO buildRegisterResponse(String trackNo, boolean trackStatus, String code, String msg) {
+        return RegisterResponseVO.builder()
+                .trackNo(trackNo)
+                .trackStatus(trackStatus)
+                .code(code)
+                .msg(msg)
+                .build();
     }
 
     /**

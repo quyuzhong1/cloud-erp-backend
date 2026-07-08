@@ -61,6 +61,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -138,6 +139,9 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
     @Autowired
     private FileFeign fileFeign;
 
+    @Lazy
+    @Autowired
+    private AssetNoticeService self;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -850,7 +854,6 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void importAssetNotice(BaseDTO.ImportDTO dto) {
         //设置操作人
         List<FindUserDTO> userList = sysUserFeign.getUserList();
@@ -1285,7 +1288,6 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class, propagation = Propagation.NESTED)
     public void handleImportSuccessList(List<AssetNoticeImportExcelDTO> successList,
                                        List<String> errorNoList,
                                        List<AssetNoticeImportExcelDTO> errorList2,
@@ -1356,48 +1358,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
                     continue;
                 }
 
-                // 保存数据
-                AssetNoticeEntity entity = new AssetNoticeEntity();
-                entity.setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_MPL));
-                entity.setApplyDate(moldImportDTO.getApplyDate());
-                entity.setApplyUserId(moldImportDTO.getApplyUserId());
-                entity.setApplyUserName(moldImportDTO.getApplyUserName());
-                entity.setApplyDeptId(moldImportDTO.getApplyDeptId());
-                entity.setApplyDeptName(moldImportDTO.getApplyDeptName());
-                entity.setPurchaseDevUserId(moldImportDTO.getPurchaseDevUserId());
-                entity.setPurchaseFollowUserId(moldImportDTO.getPurchaseFollowUserId());
-                entity.setInvalidStatus(Boolean.FALSE);
-                entity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getCode());
-
-                // 保存主表
-                boolean save = super.save(entity);
-                if (!save) {
-                    throw new ServiceException("开模通知单单头导入保存失败");
-                }
-
-                // 处理明细数据
-                List<AssetNoticeDetailEntity> assetNoticeDetailEntities = new ArrayList<>();
-                for (AssetNoticeDetailDTO.MoldDetailImportDTO moldDetailImportDTO : moldImportDTO.getMoldDetailImportDTOList()) {
-                    AssetNoticeDetailEntity assetNoticeDetailEntity = new AssetNoticeDetailEntity();
-                    BeanMapperUtils.copy(moldDetailImportDTO, assetNoticeDetailEntity);
-                    assetNoticeDetailEntity.setMainId(entity.getId());
-                    assetNoticeDetailEntity.setCreatePoType(CreatePoTypeEnum.NOT_GENERATED.getStatus());
-                    // 供应商信息已在validateAndConvertData中处理，这里直接使用
-                    assetNoticeDetailEntities.add(assetNoticeDetailEntity);
-                }
-
-                // 批量保存明细
-                boolean saveDetail = assetNoticeDetailService.saveBatch(assetNoticeDetailEntities);
-                if (!saveDetail) {
-                    throw new ServiceException("开模通知单明细导入保存失败");
-                }
-
-                // 记录操作日志
-                String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】",
-                        UserContext.getDefaultLoginUser().getUserName(),
-                        "开模通知单",
-                        entity.getCode());
-                moduleOperateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_NOTICE.getCode(), entity.getId(), "导入");
+                self.saveImportSerialNumber(moldImportDTO);
             } catch (Exception e) {
                 // 保存失败，添加到错误列表
                 String errorMsg = e.getMessage();
@@ -1410,6 +1371,51 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
                 }
                 log.error("导入第{}条开模通知单失败", importMainDTO.getSerialNumber(), e);
             }
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
+    public void saveImportSerialNumber(AssetNoticeDetailDTO.MoldImportDTO moldImportDTO) {
+        AssetNoticeEntity entity = new AssetNoticeEntity();
+        entity.setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_MPL));
+        entity.setApplyDate(moldImportDTO.getApplyDate());
+        entity.setApplyUserId(moldImportDTO.getApplyUserId());
+        entity.setApplyUserName(moldImportDTO.getApplyUserName());
+        entity.setApplyDeptId(moldImportDTO.getApplyDeptId());
+        entity.setApplyDeptName(moldImportDTO.getApplyDeptName());
+        entity.setPurchaseDevUserId(moldImportDTO.getPurchaseDevUserId());
+        entity.setPurchaseFollowUserId(moldImportDTO.getPurchaseFollowUserId());
+        entity.setInvalidStatus(Boolean.FALSE);
+        entity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getCode());
+
+        boolean save = super.save(entity);
+        if (!save) {
+            throw new ServiceException("开模通知单单头导入保存失败");
+        }
+
+        List<AssetNoticeDetailEntity> assetNoticeDetailEntities = new ArrayList<>();
+        for (AssetNoticeDetailDTO.MoldDetailImportDTO moldDetailImportDTO : moldImportDTO.getMoldDetailImportDTOList()) {
+            AssetNoticeDetailEntity assetNoticeDetailEntity = new AssetNoticeDetailEntity();
+            BeanMapperUtils.copy(moldDetailImportDTO, assetNoticeDetailEntity);
+            assetNoticeDetailEntity.setMainId(entity.getId());
+            assetNoticeDetailEntity.setCreatePoType(CreatePoTypeEnum.NOT_GENERATED.getStatus());
+            assetNoticeDetailEntities.add(assetNoticeDetailEntity);
+        }
+
+        boolean saveDetail = assetNoticeDetailService.saveBatch(assetNoticeDetailEntities);
+        if (!saveDetail) {
+            throw new ServiceException("开模通知单明细导入保存失败");
+        }
+
+        try {
+            String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】",
+                    UserContext.getDefaultLoginUser().getUserName(),
+                    "开模通知单",
+                    entity.getCode());
+            moduleOperateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_NOTICE.getCode(), entity.getId(), "导入");
+        } catch (Exception e) {
+            log.warn("开模通知单导入操作日志写入失败, id:{}", entity.getId(), e);
         }
     }
 

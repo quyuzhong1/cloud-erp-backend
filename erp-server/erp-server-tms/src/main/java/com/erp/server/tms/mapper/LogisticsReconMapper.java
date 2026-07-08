@@ -40,4 +40,5 @@ public interface LogisticsReconMapper extends BaseMapper<LogisticsReconEntity> {
      * @return List<LogisticsReconDTO.TabListDTO>
      */
     List<LogisticsReconDTO.TabListDTO> tabList(@Param("params") LogisticsReconDTO.PagingParamDTO params);
+
 }

@@ -477,7 +477,7 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 		SoReturnInstockEntity soReturnInstockEntity = new SoReturnInstockEntity();
 		soReturnInstockEntity.setApproveTime(LocalDateTime.now());
 		soReturnInstockEntity.setApproveStatus(ApproveStatusEnum.APPROVE_ING.getStatus());
-		soReturnInstockEntity.setBillDate(dto.getPutawayTime().toLocalDate());
+		soReturnInstockEntity.setBillDate(dto.getPutawayLocalDate());
 		soReturnInstockEntity.setInventoryOrgId(warehouseEntity.getOrgId());
 		SysAccountingCompanyEntity company = sysUserFeign.getCompanyById(warehouseEntity.getOrgId());
 		soReturnInstockEntity.setInventoryOrgName(company.getCompanyName());
@@ -488,6 +488,7 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 		soReturnInstockEntity.setThirdCode(dto.getPlatformReturnOrderNo());
 		soReturnInstockEntity.setPlatformOrderCode(dto.getPlatformOrderNo());
 		soReturnInstockEntity.setCreated(dto.getCreateTime());
+		soReturnInstockEntity.setReturnLogisticCode(dto.getReturnLogisticCode());
 		soReturnInstockEntity.setType(BillTypeEnum.B2B.getCode());
 		soReturnInstockEntity.setSoId(soInfoEntity.getId());
 		soReturnInstockEntity.setSoCode(soInfoEntity.getCode());
@@ -802,7 +803,7 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 	 * 取出库日期最近(倒序首条)且包含该平台SKU的出库明细，以其实际出库SKU为准。
 	 */
 	private Map<String, SoOutstockDetailEntity> buildNearestOutstockSkuMap(PlatformReturnInstockDTO dto, SoB2cEntity soB2cEntity, List<SoB2cDetailEntity> soDetailEntityList) {
-		LocalDate returnDate = dto.getPutawayTime().toLocalDate();
+		LocalDate returnDate = dto.getPutawayLocalDate();
 		List<SoOutstockEntity> outstockList = soOutstockService.listBySoIds(Collections.singletonList(soB2cEntity.getId()));
 		if (CollectionUtils.isEmpty(outstockList)) {
             log.warn("【平台退货入库】订单无出库单，按订单映射兜底:订单={}", dto.getPlatformOrderNo());
@@ -878,7 +879,7 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 		SoReturnInstockEntity soReturnInstockEntity = new SoReturnInstockEntity();
 		soReturnInstockEntity.setApproveTime(LocalDateTime.now());
 		soReturnInstockEntity.setApproveStatus(ApproveStatusEnum.APPROVE_ING.getStatus());
-		soReturnInstockEntity.setBillDate(dto.getPutawayTime().toLocalDate());
+		soReturnInstockEntity.setBillDate(dto.getPutawayLocalDate());
 		soReturnInstockEntity.setInventoryOrgId(warehouseEntity.getOrgId());
 		//组织信息
 		SysAccountingCompanyEntity company = sysUserFeign.getCompanyById(warehouseEntity.getOrgId());
@@ -890,8 +891,9 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 		soReturnInstockEntity.setThirdCode(dto.getPlatformReturnOrderNo());
 		soReturnInstockEntity.setPlatformOrderCode(dto.getPlatformOrderNo());
 		soReturnInstockEntity.setCreated(dto.getCreateTime());
-		soReturnInstockEntity.setType("B2C");
-		ShopInfoEntity customerShop = shopInfoEntity;
+		soReturnInstockEntity.setReturnLogisticCode(dto.getReturnLogisticCode());
+		soReturnInstockEntity.setType(BillTypeEnum.B2C.getCode());
+        ShopInfoEntity customerShop = shopInfoEntity;
 		if(Objects.nonNull(soB2cEntity)) {
 			soReturnInstockEntity.setSoId(soB2cEntity.getId());
 			soReturnInstockEntity.setSoCode(soB2cEntity.getCode());
@@ -955,10 +957,10 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 		}
 		WarehouseEntity warehouseEntity = checkAndGetWarehouseByShopInfo(shopInfoEntity);
 		// 查询是否已关账
-		LocalDate closedLocalDate = inventoryClosedRecordService.checkClosed(warehouseEntity.getOrgId(), dto.getPutawayTime().toLocalDate());
+		LocalDate closedLocalDate = inventoryClosedRecordService.checkClosed(warehouseEntity.getOrgId(), dto.getPutawayLocalDate());
 		if (null != closedLocalDate) {
 			// 已关账
-			log.warn("[退货入库单消费]:当前退货入库单消费日期【{}】因关账【{}】停止生成：单号={}", dto.getPutawayTime().toLocalDate(), closedLocalDate, dto.getPlatformOrderNo());
+			log.warn("[退货入库单消费]:当前退货入库单消费日期【{}】因关账【{}】停止生成：单号={}", dto.getPutawayLocalDate(), closedLocalDate, dto.getPlatformOrderNo());
 			return;
 		}
 		List<SoReturnInstockDetailEntity> detailEntityList = this.buildPlatformSoReturnInstockDetailWithoutSoB2c(dto, warehouseEntity, shopInfoEntity, shopIds);
@@ -979,10 +981,10 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 		ShopInfoEntity shopInfoEntity = resolveSalesShopInfo(shopList, soB2cEntity, dto);
 		WarehouseEntity warehouseEntity = checkAndGetWarehouseByShopInfo(shopInfoEntity);
 		// 查询是否已关账
-		LocalDate closedLocalDate = inventoryClosedRecordService.checkClosed(warehouseEntity.getOrgId(), dto.getPutawayTime().toLocalDate());
+		LocalDate closedLocalDate = inventoryClosedRecordService.checkClosed(warehouseEntity.getOrgId(), dto.getPutawayLocalDate());
 		if (null != closedLocalDate) {
 			// 已关账
-			log.warn("[退货入库单消费]:当前退货入库单消费日期【{}】因关账【{}】停止生成：单号={}", dto.getPutawayTime().toLocalDate(), closedLocalDate, dto.getPlatformOrderNo());
+			log.warn("[退货入库单消费]:当前退货入库单消费日期【{}】因关账【{}】停止生成：单号={}", dto.getPutawayLocalDate(), closedLocalDate, dto.getPlatformOrderNo());
 			return;
 		}
 

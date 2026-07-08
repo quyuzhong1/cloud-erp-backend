@@ -4,7 +4,11 @@ import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.write.style.ColumnWidth;
 import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.SortDTO;
+import com.erp.model.tms.entity.DeliveryDeclareDetailMidEntity;
+import com.erp.model.tms.entity.TmsDeclareBillDetailEntity;
+import com.erp.model.tms.entity.TmsDeclareBillEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -1860,7 +1864,6 @@ public class TmsDeclareBillDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
-        private Boolean isAuto = false;
 
         /**
          * 是否按规则重新合并后保存
@@ -2697,6 +2700,8 @@ public class TmsDeclareBillDTO implements Serializable {
          */
         @NotEmpty(message = "来源明细列表不能为空")
         private List<TmsDeclareBillDTO.MergeDeclareBillDTO> mergeDeclareBillDTOS;
+
+        private String sourceType;
     }
 
     /**
@@ -2736,5 +2741,168 @@ public class TmsDeclareBillDTO implements Serializable {
          */
         @NotBlank(message = "业务单号不能为空")
         private String businessCode;
+    }
+
+    /**
+     * 头程报关单新增「事务外预构建」数据载体。
+     * <p>
+     * 所有跨服务 Feign 读取、校验、实体构建在事务外完成后放入本对象，
+     * 全局事务内仅消费本对象做本地库写入与来源单状态回写，避免事务内调用 Feign。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class FmAddPreparedData {
+        /**
+         * 本次新增涉及的来源单 id 集合（去重后）。
+         */
+        private List<String> sourceIdList;
+
+        /**
+         * 普通保存/合并保存时，前端提交并补全后的合并明细列表（自动生成场景为空）。
+         */
+        private List<MergeDeclareBillDetailDTO> mergeDetailList;
+
+        /**
+         * 普通保存/合并保存时，待落库的报关单主表实体（自动生成场景为空）。
+         */
+        private TmsDeclareBillEntity declareBillEntity;
+
+        /**
+         * 普通保存/合并保存时，待落库的报关单明细实体列表（自动生成场景为空）。
+         */
+        private List<TmsDeclareBillDetailEntity> detailEntityList;
+
+        /**
+         * 自动生成场景下按明细上限拆分出的多张报关单数据（普通保存/合并保存时为空）。
+         */
+        private List<FmAddBillData> generatedBills;
+    }
+
+    /**
+     * 自动生成场景下，单张报关单的主表实体与明细实体集合。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class FmAddBillData {
+        /**
+         * 报关单主表实体。
+         */
+        private TmsDeclareBillEntity declareBillEntity;
+
+        /**
+         * 报关单明细实体列表。
+         */
+        private List<TmsDeclareBillDetailEntity> detailEntityList;
+
+        /**
+         * 本票合并明细（自动生成场景用于中间表 saveGeneratedMidData）。
+         */
+        private List<MergeDeclareBillDetailDTO> declareBillList;
+    }
+
+    /**
+     * B2B 报关单新增「事务外预构建」数据载体。
+     * <p>
+     * 与头程一致：所有跨服务 Feign 读取、校验、实体构建在事务外完成后放入本对象，
+     * 全局事务内仅消费本对象做本地库写入与来源单状态回写，避免事务内调用 Feign。
+     * B2B 仅支持按前端提交合并明细下推保存，无自动生成路径。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class B2bAddPreparedData {
+        /**
+         * 本次新增涉及的来源单（发货通知单）id 集合（去重后）。
+         */
+        private List<String> sourceIdList;
+
+        /**
+         * 前端提交并补全后的合并明细列表。
+         */
+        private List<MergeDeclareBillDetailDTO> mergeDetailList;
+
+        /**
+         * 待落库的报关单主表实体。
+         */
+        private TmsDeclareBillEntity declareBillEntity;
+
+        /**
+         * 待落库的报关单明细实体列表。
+         */
+        private List<TmsDeclareBillDetailEntity> detailEntityList;
+    }
+
+    /**
+     * 批量合并保存（下推合并/独立保存、拆分保存复用）时，单张报关单的「事务外预构建」数据。
+     * <p>
+     * 主/明细实体连同其对应的合并明细在事务外完成 Feign 构建后放入本对象，
+     * 全局事务内仅据此做 add + saveGeneratedMidData，避免 XA 分支内调用 Feign。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class BatchMergeBillData {
+        /**
+         * 本票对应的合并明细列表（用于中间表 saveGeneratedMidData 与明细行匹配）。
+         */
+        private List<MergeDeclareBillDetailDTO> declareBillList;
+
+        /**
+         * 待落库的报关单主表实体。
+         */
+        private TmsDeclareBillEntity declareBillEntity;
+
+        /**
+         * 待落库的报关单明细实体列表（与 declareBillList 一一对应）。
+         */
+        private List<TmsDeclareBillDetailEntity> detailEntityList;
+    }
+
+    /**
+     * 拆分保存时，单票拆分结果的「事务外预构建」数据。
+     * <p>
+     * 拆分入口先在事务外完成自动合并预览与报关单实体构建；全局事务内只消费本对象删除原单并落新单。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SplitPreparedBillData {
+        /**
+         * 本票自动合并预览结果。
+         */
+        private List<MergeDeclareBillDTO> mergeDeclareBillList;
+
+        /**
+         * 本票预构建的报关单主/明细实体。
+         */
+        private List<BatchMergeBillData> preparedBillList;
+    }
+
+    /**
+     * 报关单删除「事务外预构建」数据载体。
+     * <p>
+     * 校验与中间表查询在事务外完成；全局事务内仅执行本地库删除与中间表恢复，
+     * WMS 来源单状态回写在全局事务提交后执行，避免 Feign 长时间占用全局事务。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class DeletePreparedData {
+        /**
+         * 待删除报关单 id 列表。
+         */
+        private List<String> removeIds;
+
+        /**
+         * 本次删除关联、且需回写来源单状态的中间表明细。
+         */
+        private List<DeliveryDeclareDetailMidEntity> removedMidList;
+
+        /**
+         * 批量删除逐条结果（含校验失败项）。
+         */
+        private List<BatchResultDTO> resultList;
     }
 }

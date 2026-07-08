@@ -37,6 +37,7 @@ public class WegoSkuSyncDTO implements Serializable {
         /**
          * 系统仓库ID（overseas_provider_warehouse.warehouse_id），由 DMP 层查询后传入
          */
+        @NotBlank(message = "warehouseId不能为空")
         private String warehouseId;
 
         /**

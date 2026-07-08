@@ -5,18 +5,16 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.vo.PagingVO;
-import com.common.core.anno.LogAction;
-import com.common.core.enums.LogActionEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.scm.dto.*;
-import com.erp.model.scm.dto.PurchaseOrderDTO.QcQtyDTO;
 import com.erp.model.scm.entity.*;
 import com.erp.model.srm.dto.DeliveryOrderDTO;
 import com.erp.server.scm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
 import javax.annotation.Resource;
 import java.util.Collections;
 import java.util.List;
@@ -179,7 +177,6 @@ public class PurchaseOrderFeignController {
      * @return
      */
     @PostMapping("/addQcGoodQty")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "采购订单累加质检合格量")
     public Boolean addQcGoodQty(@RequestBody List<PurchaseOrderDTO.QcQtyDTO> dtoList) {
         return purchaseOrderService.addQcGoodQty(dtoList);
     }
@@ -262,7 +259,6 @@ public class PurchaseOrderFeignController {
      * @Date 2023/4/20 18:51
      **/
     @PostMapping("/updatePurchaseOrderDetailByIdBatch")
-    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "采购订单批量更新明细")
     public Boolean updatePurchaseOrderDetailByIdBatch(@RequestBody List<PurchaseOrderDetailEntity> entityList) {
         return purchaseOrderDetailService.updateBatchById(entityList);
     }
@@ -300,7 +296,6 @@ public class PurchaseOrderFeignController {
      * @return String
      */
     @PostMapping("/addPurchaseOrder")
-    @LogAction(value = LogActionEnum.INSERT, desc = "采购订单新增")
     public String addPurchaseOrder(@RequestBody PurchaseOrderDTO.AddDTO addDTO) {
         PurchaseOrderEntity purchaseOrderEntity = purchaseOrderService.add(addDTO);
         if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
@@ -440,7 +435,6 @@ public class PurchaseOrderFeignController {
      * @return ApiResult<PagingVO<PurchaseOrderDTO.listDTO>>
      */
     @PostMapping("/srmOrderConfirmStatus")
-    @LogAction(value = LogActionEnum.CONFIRM, desc = "SRM订单确认整单处理")
     public List<BatchResultDTO> srmOrderConfirmStatus(@RequestBody @Validated PurchaseOrderDTO.ConfirmDTO dto) {
         List<BatchResultDTO> batchResultDTOS = purchaseOrderService.srmOrderConfirmStatus(dto);
         return batchResultDTOS;
@@ -496,7 +490,6 @@ public class PurchaseOrderFeignController {
      * @return
      */
     @PostMapping("/generateDeliveryList")
-    @LogAction(value = LogActionEnum.EXECUTE, desc = "采购订单生成送货清单")
     public List<PurchaseOrderDTO.ListDTO> generateDeliveryList(@RequestBody PurchaseOrderSrmDTO.GenerateDeliveryParamDTO dto){
         List<PurchaseOrderDTO.ListDTO> list = purchaseOrderService.generateDeliveryList(dto);
         return list;
@@ -562,7 +555,6 @@ public class PurchaseOrderFeignController {
      * 根据id更新合同状态
      */
     @PostMapping("/updateContractStatusById")
-    @LogAction(value = LogActionEnum.UPDATE_STATUS, desc = "采购订单更新合同状态")
     public void updateContractStatusById(@RequestBody PurchaseOrderDTO.ContractStampStatusParamsDTO  contractStampStatusParamsDTO) {
         purchaseOrderService.updateContractStampStatus(contractStampStatusParamsDTO);
     }

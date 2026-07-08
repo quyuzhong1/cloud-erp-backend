@@ -36,6 +36,8 @@ import com.common.core.utils.Md5Util;
 import com.erp.model.oms.entity.CfgSettingEntity;
 import com.sdk.oms.mercadolocal.dto.MercadoInvoiceDTO;
 import com.sdk.oms.mercadolocal.service.MercadoLocalSdkClientService;
+import com.sdk.oms.magalu.dto.MagaluShopInfoDTO;
+import com.sdk.oms.magalu.service.MagaluService;
 import com.sdk.oms.shopee.dto.base.ShopeeResponse;
 import com.sdk.oms.shopee.dto.order.request.OrderRequest;
 import com.sdk.oms.shopee.dto.order.response.OrderDetail;
@@ -84,12 +86,17 @@ import java.io.InputStream;
 import java.math.BigDecimal;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.common.core.utils.MathUtil.removeSignAndSpace;
 
@@ -106,6 +113,8 @@ public class NfeInvoiceService {
     private static final String SHOPEE_BR_FREIGHT_ERROR_MSG = "虾皮巴西店铺不支持含买家运费开票";
     private static final int DANFE_SIMPLE_HEIGHT_MM = 150;
     private static final int DANFE_SIMPLE_WIDTH_MM = 100;
+    private static final String MAGALU_DELIVERY_SEPARATOR = "_";
+    private static final Pattern BRAZIL_NFE_CHAVE_PATTERN = Pattern.compile("\\b\\d{44}\\b");
     private static final OkHttpClient OK_HTTP_CLIENT = new OkHttpClient.Builder()
             .connectTimeout(10, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
@@ -189,6 +198,10 @@ public class NfeInvoiceService {
     private ShopAuthService shopAuthService;
     @Resource
     private ShopeeOrderService shopeeOrderService;
+    @Resource
+    private MagaluService magaluService;
+    @Resource
+    private SoB2cLogisticsService soB2cLogisticsService;
 
     @Transactional(rollbackFor = Exception.class)
     @Deprecated
@@ -365,8 +378,6 @@ public class NfeInvoiceService {
      */
     @Transactional(rollbackFor = Exception.class)
     public Boolean createInvoiceV2(SoB2cEntity soB2cEntity) {
-        String invoiceStatus = InvoiceInfoStatusEnum.INVOICE_SUCCESS.getCode();
-        String uploadStatus = InvoiceInfoUploadStatusEnum.WAIT_UPLOAD.getCode();
         //配置信息
         CfgInvoiceSettingDetailEntity invoiceSettingDetail = null;
         CfgInvoiceSettingEntity invoiceSetting = null;
@@ -414,6 +425,9 @@ public class NfeInvoiceService {
             log.warn("开具发票（新接口V2）响应, 销售订单：{}, status:{}", soB2cEntity.getCode(), responseData.getStatus());
         }catch (Exception e){
             log.error("创建发票失败,返回信息:{}", e.getMessage(), e);
+            if (tryHandleDuplicateInvoiceByChave(soB2cEntity, invoiceSettingDetail, e.getMessage(), invoiceAddress, sellerTaxNo, companyName, shopeeBrazilOrderContext)) {
+                return Boolean.TRUE;
+            }
             InvoiceInfoEntity invoiceInfoEntity = invoiceInfoService.getInvoicingBySoId(soB2cEntity.getId());
             invoiceInfoEntity.setCfgId(invoiceSettingDetail.getId());
             invoiceInfoEntity.setStatus(InvoiceInfoStatusEnum.INVOICE_FAILED.getCode());
@@ -443,53 +457,7 @@ public class NfeInvoiceService {
         InvoiceInfoStatusEnum statusEnum = InvoiceStatusMapper.mapToEnum(status);
         
         if (InvoiceStatusMapper.isSuccess(status)) {
-            // 开票成功后，查询发票详情以获取完整的发票信息（特别是XML链接）
-            InvoiceDetailResponseDTO.InvoiceDetailDataDTO detailData = null;
-            try {
-                String companyToken = invoiceSettingDetail.getToken();
-                detailData = tfFiscalService.getInvoiceDetailV2(responseData.getUuid(), companyToken);
-                log.warn("查询发票详情成功, uuid: {}, xml: {}", responseData.getUuid(), detailData.getXml());
-            } catch (Exception e) {
-                log.error("查询发票详情失败, uuid: {}, 错误: {}", responseData.getUuid(), e.getMessage(), e);
-                // 即使查询详情失败，也继续使用创建接口返回的数据
-            }
-            
-            // 使用详情接口返回的数据（如果查询成功），否则使用创建接口返回的数据
-            Integer serie = detailData != null && detailData.getSerie() != null ? detailData.getSerie() : responseData.getSerie();
-            Integer number = detailData != null && detailData.getNumber() != null ? detailData.getNumber() : responseData.getNfe();
-            String xmlUrl = detailData != null && CharSequenceUtil.isNotBlank(detailData.getXml()) ? detailData.getXml() : responseData.getXml();
-            String chave = detailData != null && CharSequenceUtil.isNotBlank(detailData.getChave()) ? detailData.getChave() : responseData.getChave();
-            
-            if (serie != null && number != null) {
-                cfgInvoiceSettingService.updateSerialNoById(invoiceSettingDetail.getMainId(), serie, number);
-            }
-            
-            InvoiceInfoEntity invoiceInfoEntity = invoiceInfoService.getInvoicingBySoId(soB2cEntity.getId());
-            invoiceInfoEntity.setCfgId(invoiceSettingDetail.getId());
-            invoiceInfoEntity.setStatus(invoiceStatus);
-            invoiceInfoEntity.setUploadStatus(PlatformDictEnum.ALI_EXPRESS.getCode().equals(soB2cEntity.getDictPlatform()) ? InvoiceInfoUploadStatusEnum.NOT_NEED_UPLOAD.getCode() : uploadStatus);
-            invoiceInfoEntity.setQueryId(responseData.getUuid());
-            // queryKey直接使用chave，不需要解析XML
-            invoiceInfoEntity.setQueryKey(chave);
-            invoiceInfoEntity.setPlatformInvoiceNo(chave);
-            invoiceInfoEntity.setNo(serie);
-            invoiceInfoEntity.setStartCode(String.valueOf(number));
-            invoiceInfoEntity.setInvoiceAddress(invoiceAddress);
-            invoiceInfoEntity.setSellerTaxNo(sellerTaxNo);
-            invoiceInfoEntity.setCompanyName(companyName);
-            invoiceInfoService.updateNfeStatusById(invoiceInfoEntity);
-            
-            // 上传xml、pdf（使用详情接口返回的XML链接）
-            if (CharSequenceUtil.isNotBlank(xmlUrl)) {
-                uploadFile(invoiceInfoEntity.getId(), xmlUrl, "");
-                // 获取Danfe PDF并上传
-                generateAndUploadPdfFromDanfe(invoiceInfoEntity.getId(), responseData.getUuid(), invoiceSettingDetail.getToken());
-            }
-            
-            if (shouldAutoUploadInvoice(soB2cEntity, invoiceSettingDetail, shopeeBrazilOrderContext)) {
-                invoiceInfoService.uploadNfeInvoice(soB2cEntity,invoiceInfoEntity.getId());
-            }
-            return Boolean.TRUE;
+            return handleCreateInvoiceSuccess(soB2cEntity, invoiceSettingDetail, responseData, null, invoiceAddress, sellerTaxNo, companyName, shopeeBrazilOrderContext);
         } else if (InvoiceStatusMapper.isProcessing(status)) {
             InvoiceInfoEntity invoiceInfoEntity = invoiceInfoService.getInvoicingBySoId(soB2cEntity.getId());
             invoiceInfoEntity.setCfgId(invoiceSettingDetail.getId());
@@ -504,6 +472,10 @@ public class NfeInvoiceService {
         } else {
             // 失败状态（包括 InvoicingFailed, Failed, Canceled, Voided 等）
             String motivo = CharSequenceUtil.isNotBlank(responseData.getMotivo()) ? responseData.getMotivo() : statusEnum.getName();
+            String duplicateMessage = CharSequenceUtil.format("{} {} {}", status, motivo, responseData.getChave());
+            if (tryHandleDuplicateInvoiceByChave(soB2cEntity, invoiceSettingDetail, duplicateMessage, invoiceAddress, sellerTaxNo, companyName, shopeeBrazilOrderContext)) {
+                return Boolean.TRUE;
+            }
             boolean isErrorStatus = InvoiceStatusMapper.isFailed(status);
             
             if (isErrorStatus) {
@@ -538,6 +510,158 @@ public class NfeInvoiceService {
             }
             return Boolean.FALSE;
         }
+    }
+
+    /**
+     * 开票接口超时后再次调用可能返回“已开票/重复开票”错误。
+     * 这种场景第三方已经生成了NF-e，不能按失败处理；需要用错误里的chave反查详情，再复用开票成功落库和附件上传逻辑。
+     */
+    private boolean tryHandleDuplicateInvoiceByChave(SoB2cEntity soB2cEntity,
+                                                     CfgInvoiceSettingDetailEntity invoiceSettingDetail,
+                                                     String errorMessage,
+                                                     String invoiceAddress,
+                                                     String sellerTaxNo,
+                                                     String companyName,
+                                                     ShopeeBrazilOrderContext shopeeBrazilOrderContext) {
+        String chave = extractDuplicateInvoiceChave(errorMessage);
+        if (CharSequenceUtil.isBlank(chave)) {
+            return false;
+        }
+        if (Objects.isNull(invoiceSettingDetail) || CharSequenceUtil.isBlank(invoiceSettingDetail.getToken())) {
+            log.warn("重复开票补偿失败，发票配置或公司token为空, soCode:{}, chave:{}", soB2cEntity.getCode(), chave);
+            return false;
+        }
+        try {
+            InvoiceDetailResponseDTO.InvoiceDetailDataDTO detailData =
+                    tfFiscalService.getInvoiceDetailByChaveV2(chave, invoiceSettingDetail.getToken());
+            if (Objects.isNull(detailData) || !InvoiceStatusMapper.isSuccess(detailData.getStatus())) {
+                log.warn("重复开票补偿未确认成功, soCode:{}, chave:{}, detailStatus:{}",
+                        soB2cEntity.getCode(), chave, Objects.isNull(detailData) ? null : detailData.getStatus());
+                return false;
+            }
+            log.warn("重复开票补偿确认成功, soCode:{}, chave:{}, uuid:{}",
+                    soB2cEntity.getCode(), chave, detailData.getUuid());
+            return handleCreateInvoiceSuccess(soB2cEntity, invoiceSettingDetail, null, detailData,
+                    invoiceAddress, sellerTaxNo, companyName, shopeeBrazilOrderContext);
+        } catch (Exception ex) {
+            log.error("重复开票补偿查询失败, soCode:{}, chave:{}, error:{}", soB2cEntity.getCode(), chave, ex.getMessage(), ex);
+            return false;
+        }
+    }
+
+    private String extractDuplicateInvoiceChave(String errorMessage) {
+        if (CharSequenceUtil.isBlank(errorMessage) || !isDuplicateInvoiceMessage(errorMessage)) {
+            return CharSequenceUtil.EMPTY;
+        }
+        Matcher matcher = BRAZIL_NFE_CHAVE_PATTERN.matcher(errorMessage);
+        return matcher.find() ? matcher.group() : CharSequenceUtil.EMPTY;
+    }
+
+    private boolean isDuplicateInvoiceMessage(String errorMessage) {
+        String lowerMessage = errorMessage.toLowerCase(Locale.ROOT);
+        return lowerMessage.contains("duplicad")
+                || lowerMessage.contains("ja foi emitido")
+                || lowerMessage.contains("já foi emitido")
+                || lowerMessage.contains("已开票")
+                || lowerMessage.contains("已经开票")
+                || lowerMessage.contains("重复");
+    }
+
+    private Boolean handleCreateInvoiceSuccess(SoB2cEntity soB2cEntity,
+                                               CfgInvoiceSettingDetailEntity invoiceSettingDetail,
+                                               CreateInvoiceResponseDTO.CreateInvoiceDataDTO responseData,
+                                               InvoiceDetailResponseDTO.InvoiceDetailDataDTO detailData,
+                                               String invoiceAddress,
+                                               String sellerTaxNo,
+                                               String companyName,
+                                               ShopeeBrazilOrderContext shopeeBrazilOrderContext) {
+        InvoiceDetailResponseDTO.InvoiceDetailDataDTO resolvedDetailData = detailData;
+        String uuidFromCreate = Objects.nonNull(responseData) ? responseData.getUuid() : null;
+        if (Objects.isNull(resolvedDetailData) && CharSequenceUtil.isNotBlank(uuidFromCreate)) {
+            try {
+                resolvedDetailData = tfFiscalService.getInvoiceDetailV2(uuidFromCreate, invoiceSettingDetail.getToken());
+                log.warn("查询发票详情成功, uuid: {}, xml: {}", uuidFromCreate, resolvedDetailData.getXml());
+            } catch (Exception e) {
+                log.error("查询发票详情失败, uuid: {}, 错误: {}", uuidFromCreate, e.getMessage(), e);
+                // 创建接口已返回Success时，详情查询失败仍使用创建接口数据继续落库。
+            }
+        }
+
+        Integer serie = firstNonNull(
+                Objects.nonNull(resolvedDetailData) ? resolvedDetailData.getSerie() : null,
+                Objects.nonNull(responseData) ? responseData.getSerie() : null
+        );
+        Integer number = firstNonNull(
+                Objects.nonNull(resolvedDetailData) ? resolvedDetailData.getNumber() : null,
+                Objects.nonNull(responseData) ? responseData.getNfe() : null
+        );
+        String uuid = firstNonBlank(
+                Objects.nonNull(resolvedDetailData) ? resolvedDetailData.getUuid() : null,
+                uuidFromCreate
+        );
+        String chave = firstNonBlank(
+                Objects.nonNull(resolvedDetailData) ? resolvedDetailData.getChave() : null,
+                Objects.nonNull(responseData) ? responseData.getChave() : null
+        );
+        String xmlUrl = firstNonBlank(
+                Objects.nonNull(resolvedDetailData) ? resolvedDetailData.getXml() : null,
+                Objects.nonNull(responseData) ? responseData.getXml() : null
+        );
+        String pdfUrl = resolveInvoiceDetailPdfUrl(resolvedDetailData);
+
+        if (serie != null && number != null) {
+            cfgInvoiceSettingService.updateSerialNoById(invoiceSettingDetail.getMainId(), serie, number);
+        }
+
+        InvoiceInfoEntity invoiceInfoEntity = invoiceInfoService.getInvoicingBySoId(soB2cEntity.getId());
+        invoiceInfoEntity.setCfgId(invoiceSettingDetail.getId());
+        invoiceInfoEntity.setStatus(InvoiceInfoStatusEnum.INVOICE_SUCCESS.getCode());
+        invoiceInfoEntity.setUploadStatus(PlatformDictEnum.ALI_EXPRESS.getCode().equals(soB2cEntity.getDictPlatform()) ? InvoiceInfoUploadStatusEnum.NOT_NEED_UPLOAD.getCode() : InvoiceInfoUploadStatusEnum.WAIT_UPLOAD.getCode());
+        invoiceInfoEntity.setQueryId(uuid);
+        // queryKey直接使用chave，避免再从XML解析失败影响后续取消/退货发票。
+        invoiceInfoEntity.setQueryKey(chave);
+        invoiceInfoEntity.setPlatformInvoiceNo(chave);
+        invoiceInfoEntity.setNo(serie);
+        if (number != null) {
+            invoiceInfoEntity.setStartCode(String.valueOf(number));
+        }
+        invoiceInfoEntity.setInvoiceAddress(invoiceAddress);
+        invoiceInfoEntity.setSellerTaxNo(sellerTaxNo);
+        invoiceInfoEntity.setCompanyName(companyName);
+        invoiceInfoService.updateNfeStatusById(invoiceInfoEntity);
+
+        if (CharSequenceUtil.isNotBlank(xmlUrl) || CharSequenceUtil.isNotBlank(pdfUrl)) {
+            uploadFile(invoiceInfoEntity.getId(), xmlUrl, pdfUrl);
+        }
+        if (CharSequenceUtil.isBlank(pdfUrl) && CharSequenceUtil.isNotBlank(uuid)) {
+            generateAndUploadPdfFromDanfe(invoiceInfoEntity.getId(), uuid, invoiceSettingDetail.getToken());
+        }
+
+        if (shouldAutoUploadInvoice(soB2cEntity, invoiceSettingDetail, shopeeBrazilOrderContext)) {
+            invoiceInfoService.uploadNfeInvoice(soB2cEntity, invoiceInfoEntity.getId());
+        }
+        return Boolean.TRUE;
+    }
+
+    private static Integer firstNonNull(Integer first, Integer second) {
+        return first != null ? first : second;
+    }
+
+    private static String firstNonBlank(String first, String second) {
+        return CharSequenceUtil.isNotBlank(first) ? first : second;
+    }
+
+    private static String resolveInvoiceDetailPdfUrl(InvoiceDetailResponseDTO.InvoiceDetailDataDTO detailData) {
+        if (Objects.isNull(detailData)) {
+            return null;
+        }
+        if (CharSequenceUtil.isNotBlank(detailData.getDanfeSimples())) {
+            return detailData.getDanfeSimples();
+        }
+        if (CharSequenceUtil.isNotBlank(detailData.getDanfe())) {
+            return detailData.getDanfe();
+        }
+        return detailData.getDanfeEtiqueta();
     }
 
     /**
@@ -835,10 +959,13 @@ public class NfeInvoiceService {
      * @param soB2cEntity
      * @return void
      */
-    public void uploadNfeInvoice (SoB2cEntity soB2cEntity) {
+    public String uploadNfeInvoice (SoB2cEntity soB2cEntity) {
         if (isShopeeBrazilOrder(soB2cEntity)) {
             uploadShopeeBrazilInvoice(soB2cEntity);
-            return;
+            return InvoiceInfoUploadStatusEnum.UPLOAD_SUCCESS.getCode();
+        }
+        if (isMagaluOrder(soB2cEntity)) {
+            return uploadMagaluInvoice(soB2cEntity);
         }
         if (!isMercadoLocalOrder(soB2cEntity)) {
             throw new ServiceException(CharSequenceUtil.format("当前平台不支持上传NF-e发票，订单平台：{}，订单号：{}",
@@ -868,6 +995,7 @@ public class NfeInvoiceService {
         }
         //NF-e发票
         mercadoLocalSdkClientService.uploadInvoice(mercadoInvoiceDTO);
+        return InvoiceInfoUploadStatusEnum.UPLOAD_SUCCESS.getCode();
     }
 
 
@@ -890,9 +1018,16 @@ public class NfeInvoiceService {
             }
             return BigDecimal.ZERO;
         }
+        if (isMagaluOrder(soB2cEntity)) {
+            return getFinanceShippingCost(soB2cEntity, invoiceSettingDetail);
+        }
         if (!CharSequenceUtil.equals(PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode(),soB2cEntity.getDictPlatform())) {
             return BigDecimal.ZERO;
         }
+        return getFinanceShippingCost(soB2cEntity, invoiceSettingDetail);
+    }
+
+    private BigDecimal getFinanceShippingCost(SoB2cEntity soB2cEntity, CfgInvoiceSettingDetailEntity invoiceSettingDetail) {
         if (ObjUtil.isEmpty(invoiceSettingDetail) || !Boolean.TRUE.equals(invoiceSettingDetail.getIsContainShipFee())){
             return BigDecimal.ZERO;
         }
@@ -903,18 +1038,19 @@ public class NfeInvoiceService {
         if (BigDecimal.ZERO.compareTo(financeEntity.getShippingCost()) == 0){
             return BigDecimal.ZERO;
         }
-        if (CharSequenceUtil.isBlank(financeEntity.getCurrency())){
+        String currency = CharSequenceUtil.blankToDefault(financeEntity.getCurrency(), soB2cEntity.getCurrency());
+        if (CharSequenceUtil.isBlank(currency)){
             throw new ServiceException("销售订单财务信息币种不存在");
         }
-        if (CurrencyEnum.BRL.getCurrencyCode().equals(soB2cEntity.getCurrency())){
+        if (CurrencyEnum.BRL.getCurrencyCode().equals(currency)){
             return financeEntity.getShippingCost();
         }
-        //转换成人民币
+        // 巴西 NF-e 开票金额统一按 BRL 传给开票服务。
         BigDecimal rate;
         try {
-            rate = dmpTaskFeign.getRate(soB2cEntity.getBillDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), soB2cEntity.getCurrency());
+            rate = dmpTaskFeign.getRate(soB2cEntity.getBillDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), currency);
         }catch (Exception e){
-            throw new ServiceException(soB2cEntity.getCurrency() + "获取汇率失败");
+            throw new ServiceException(currency + "获取汇率失败");
         }
         BigDecimal rate2;
         try {
@@ -1238,6 +1374,7 @@ public class NfeInvoiceService {
         return ObjUtil.isNotEmpty(invoiceSettingDetail)
                 && Boolean.TRUE.equals(invoiceSettingDetail.getIsAutoUpload())
                 && (isMercadoLocalOrder(soB2cEntity)
+                || isMagaluOrder(soB2cEntity)
                 || shopeeBrazilOrderContext.isBrazilOrder());
     }
 
@@ -1248,6 +1385,11 @@ public class NfeInvoiceService {
 
     private boolean isShopeeBrazilOrder(SoB2cEntity soB2cEntity) {
         return buildShopeeBrazilOrderContext(soB2cEntity).isBrazilOrder();
+    }
+
+    private boolean isMagaluOrder(SoB2cEntity soB2cEntity) {
+        return ObjUtil.isNotEmpty(soB2cEntity)
+                && CharSequenceUtil.equalsIgnoreCase(PlatformDictEnum.MAGALU.getCode(), soB2cEntity.getDictPlatform());
     }
 
     private ShopeeBrazilOrderContext buildShopeeBrazilOrderContext(SoB2cEntity soB2cEntity) {
@@ -1536,6 +1678,180 @@ public class NfeInvoiceService {
         throw new ServiceException(CharSequenceUtil.format("Shopee订单明细未匹配到SKU，平台SKU：{}", detailEntity.getPlatformSkuNo()));
     }
 
+    private String uploadMagaluInvoice(SoB2cEntity soB2cEntity) {
+        InvoiceInfoDTO.AttachDTO attachDTO = invoiceInfoService.getNewInvoicedAttachBySoId(soB2cEntity.getId(), InvoiceInfoInvoiceTypeEnum.NFE.getCode(), AttachmentTypeEnum.INVOICE_INFO_XML.getCode());
+        if (ObjUtil.isEmpty(attachDTO)) {
+            throw new ServiceException("NF-e发票未找到xml文件");
+        }
+        String xmlContent = new String(getFileBytesByUrl(buildFastDfsPublicUrl(attachDTO.getAttachUrl())), StandardCharsets.UTF_8);
+        MagaluInvoiceXmlFields fields = parseMagaluInvoiceXmlFields(xmlContent);
+        String deliveryId = getMagaluDeliveryId(soB2cEntity);
+        MagaluShopInfoDTO shopInfoDTO = magaluService.getShopInfoByShopId(soB2cEntity.getShopId());
+        if (ObjUtil.isEmpty(shopInfoDTO) || CharSequenceUtil.isBlank(shopInfoDTO.getAccessToken())) {
+            throw new ServiceException("Magalu店铺授权信息不存在");
+        }
+        if (CharSequenceUtil.isBlank(shopInfoDTO.getChannelId())) {
+            throw new ServiceException("Magalu渠道ID未配置");
+        }
+        com.alibaba.fastjson.JSONObject response = magaluService.createDeliveryInvoice(shopInfoDTO, deliveryId, fields.amount,
+                fields.issuedAt, fields.issuer, fields.key, xmlContent);
+        String status = response == null ? "" : response.getString("status");
+        if (CharSequenceUtil.equalsIgnoreCase("invalid", status)) {
+            throw new ServiceException(CharSequenceUtil.format("Magalu发票校验失败:{}", JSONUtil.toJsonStr(response)));
+        }
+        return mapMagaluInvoiceUploadStatus(status);
+    }
+
+    private String mapMagaluInvoiceUploadStatus(String status) {
+        if (CharSequenceUtil.isBlank(status)) {
+            return InvoiceInfoUploadStatusEnum.UPLOAD_SUCCESS.getCode();
+        }
+        if (CharSequenceUtil.equalsIgnoreCase(status, "validated")
+                || CharSequenceUtil.equalsIgnoreCase(status, "approved")) {
+            return InvoiceInfoUploadStatusEnum.UPLOAD_SUCCESS.getCode();
+        }
+        return InvoiceInfoUploadStatusEnum.UPLOADING.getCode();
+    }
+
+    public String queryMagaluInvoiceUploadStatus(SoB2cEntity soB2cEntity, InvoiceInfoEntity invoiceInfoEntity) {
+        if (!isMagaluOrder(soB2cEntity)) {
+            return invoiceInfoEntity.getUploadStatus();
+        }
+        String deliveryId = getMagaluDeliveryId(soB2cEntity);
+        String invoiceKey = firstNotBlank(invoiceInfoEntity.getQueryKey(), invoiceInfoEntity.getPlatformInvoiceNo());
+        if (CharSequenceUtil.isBlank(invoiceKey)) {
+            throw new ServiceException("Magalu发票秘钥不能为空");
+        }
+        MagaluShopInfoDTO shopInfoDTO = magaluService.getShopInfoByShopId(soB2cEntity.getShopId());
+        if (ObjUtil.isEmpty(shopInfoDTO) || CharSequenceUtil.isBlank(shopInfoDTO.getAccessToken())) {
+            throw new ServiceException("Magalu店铺授权信息不存在");
+        }
+        List<com.alibaba.fastjson.JSONObject> invoiceList = magaluService.listDeliveryInvoices(shopInfoDTO, deliveryId);
+        if (CollUtil.isEmpty(invoiceList)) {
+            return InvoiceInfoUploadStatusEnum.UPLOADING.getCode();
+        }
+        com.alibaba.fastjson.JSONObject matchedInvoice = invoiceList.stream()
+                .filter(item -> CharSequenceUtil.equals(invoiceKey, item.getString("key")))
+                .findFirst()
+                .orElse(null);
+        if (matchedInvoice == null) {
+            return InvoiceInfoUploadStatusEnum.UPLOADING.getCode();
+        }
+        String status = matchedInvoice.getString("status");
+        if (CharSequenceUtil.equalsIgnoreCase("invalid", status)) {
+            throw new ServiceException(CharSequenceUtil.format("Magalu发票校验失败:{}", JSONUtil.toJsonStr(matchedInvoice)));
+        }
+        return mapMagaluInvoiceUploadStatus(status);
+    }
+
+    private String updateMagaluInvoice(SoB2cEntity soB2cEntity, InvoiceInfoEntity invoiceInfoEntity) {
+        InvoiceInfoDTO.AttachDTO attachDTO = invoiceInfoService.getNewInvoicedAttachBySoId(soB2cEntity.getId(), InvoiceInfoInvoiceTypeEnum.NFE.getCode(), AttachmentTypeEnum.INVOICE_INFO_XML.getCode());
+        if (ObjUtil.isEmpty(attachDTO)) {
+            throw new ServiceException("NF-e发票未找到xml文件");
+        }
+        String xmlContent = new String(getFileBytesByUrl(buildFastDfsPublicUrl(attachDTO.getAttachUrl())), StandardCharsets.UTF_8);
+        MagaluInvoiceXmlFields fields = parseMagaluInvoiceXmlFields(xmlContent);
+        String deliveryId = getMagaluDeliveryId(soB2cEntity);
+        String originalKey = firstNotBlank(invoiceInfoEntity.getPlatformInvoiceNo(), invoiceInfoEntity.getQueryKey(), fields.key);
+        if (CharSequenceUtil.isBlank(originalKey)) {
+            throw new ServiceException("Magalu原发票秘钥不能为空");
+        }
+        MagaluShopInfoDTO shopInfoDTO = magaluService.getShopInfoByShopId(soB2cEntity.getShopId());
+        if (ObjUtil.isEmpty(shopInfoDTO) || CharSequenceUtil.isBlank(shopInfoDTO.getAccessToken())) {
+            throw new ServiceException("Magalu店铺授权信息不存在");
+        }
+        if (CharSequenceUtil.isBlank(shopInfoDTO.getChannelId())) {
+            throw new ServiceException("Magalu渠道ID未配置");
+        }
+        com.alibaba.fastjson.JSONObject response = magaluService.updateDeliveryInvoice(shopInfoDTO, deliveryId, originalKey,
+                fields.amount, fields.issuedAt, xmlContent);
+        String status = response == null ? "" : response.getString("status");
+        if (CharSequenceUtil.equalsIgnoreCase("invalid", status)) {
+            throw new ServiceException(CharSequenceUtil.format("Magalu发票校验失败:{}", JSONUtil.toJsonStr(response)));
+        }
+        if (CharSequenceUtil.isNotBlank(fields.key)) {
+            invoiceInfoEntity.setQueryKey(fields.key);
+            invoiceInfoEntity.setPlatformInvoiceNo(fields.key);
+        }
+        return mapMagaluInvoiceUploadStatus(status);
+    }
+
+    private String getMagaluDeliveryId(SoB2cEntity soB2cEntity) {
+        SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsService.getByMainId(soB2cEntity.getId());
+        if (ObjUtil.isNotEmpty(logisticsEntity) && CharSequenceUtil.isNotBlank(logisticsEntity.getPlanPackageNo())) {
+            return logisticsEntity.getPlanPackageNo();
+        }
+        List<SoB2cDetailEntity> detailEntityList = soB2cDetailService.listByMainIds(Collections.singletonList(soB2cEntity.getId()));
+        if (CollUtil.isNotEmpty(detailEntityList)) {
+            String platformPackageId = detailEntityList.stream()
+                    .map(SoB2cDetailEntity::getPlatformPackageId)
+                    .filter(CharSequenceUtil::isNotBlank)
+                    .findFirst()
+                    .orElse("");
+            if (CharSequenceUtil.isNotBlank(platformPackageId)) {
+                return platformPackageId;
+            }
+        }
+        String thirdCode = soB2cEntity.getThirdCode();
+        String platformCode = soB2cEntity.getPlatformCode();
+        if (CharSequenceUtil.isNotBlank(thirdCode) && CharSequenceUtil.isNotBlank(platformCode)) {
+            String prefix = platformCode + MAGALU_DELIVERY_SEPARATOR;
+            if (thirdCode.startsWith(prefix) && thirdCode.length() > prefix.length()) {
+                return thirdCode.substring(prefix.length());
+            }
+        }
+        throw new ServiceException("Magalu订单delivery.id不能为空");
+    }
+
+    private MagaluInvoiceXmlFields parseMagaluInvoiceXmlFields(String xmlContent) {
+        MagaluInvoiceXmlFields fields = new MagaluInvoiceXmlFields();
+        fields.key = firstRegexGroup(xmlContent, "Id=\\\"NFe([0-9]{44})\\\"");
+        fields.issuer = firstRegexGroup(xmlContent, "<emit>.*?<CNPJ>([0-9]{14})</CNPJ>");
+        fields.issuedAt = firstRegexGroup(xmlContent, "<dhEmi>([^<]+)</dhEmi>");
+        String amountText = firstRegexGroup(xmlContent, "<vNF>([^<]+)</vNF>");
+        if (CharSequenceUtil.isBlank(fields.key)) {
+            throw new ServiceException("NF-e发票XML未解析到发票秘钥");
+        }
+        if (CharSequenceUtil.isBlank(fields.issuer)) {
+            throw new ServiceException("NF-e发票XML未解析到卖家税号");
+        }
+        if (CharSequenceUtil.isBlank(fields.issuedAt)) {
+            throw new ServiceException("NF-e发票XML未解析到发票发布日期");
+        }
+        if (CharSequenceUtil.isBlank(amountText)) {
+            throw new ServiceException("NF-e发票XML未解析到发票金额");
+        }
+        fields.amount = new BigDecimal(amountText);
+        return fields;
+    }
+
+    private String firstRegexGroup(String value, String regex) {
+        if (CharSequenceUtil.isBlank(value)) {
+            return "";
+        }
+        Matcher matcher = Pattern.compile(regex, Pattern.DOTALL).matcher(value);
+        return matcher.find() ? matcher.group(1) : "";
+    }
+
+    private String firstNotBlank(String... values) {
+        if (values == null) {
+            return "";
+        }
+        for (String value : values) {
+            if (CharSequenceUtil.isNotBlank(value)) {
+                return value;
+            }
+        }
+        return "";
+    }
+
+    private static class MagaluInvoiceXmlFields {
+        private String key;
+        private String issuer;
+        private String issuedAt;
+        private BigDecimal amount;
+    }
+
     private void uploadShopeeBrazilInvoice(SoB2cEntity soB2cEntity) {
         InvoiceInfoDTO.AttachDTO attachDTO = invoiceInfoService.getNewInvoicedAttachBySoId(soB2cEntity.getId(), InvoiceInfoInvoiceTypeEnum.NFE.getCode(), AttachmentTypeEnum.INVOICE_INFO_XML.getCode());
         if (ObjUtil.isEmpty(attachDTO)) {
@@ -1790,7 +2106,14 @@ public class NfeInvoiceService {
             // 重新上传至平台（如果配置了自动上传）
             if (shouldAutoUploadInvoice(soB2cEntity, invoiceSettingDetail)) {
                 try {
-                    invoiceInfoService.uploadNfeInvoice(soB2cEntity, invoiceInfoEntity.getId());
+                    if (isMagaluOrder(soB2cEntity)) {
+                        String uploadStatus = updateMagaluInvoice(soB2cEntity, invoiceInfoEntity);
+                        invoiceInfoEntity.setUploadStatus(uploadStatus);
+                        invoiceInfoEntity.setUploadTime(java.time.LocalDateTime.now());
+                        soB2cService.updateNfeInvoiceStatus(soB2cEntity.getId(), uploadStatus);
+                    } else {
+                        invoiceInfoService.uploadNfeInvoice(soB2cEntity, invoiceInfoEntity.getId());
+                    }
                 } catch (Exception e) {
                     // 上传失败时，记录失败原因到备注
                     String uploadErrorMsg = CharSequenceUtil.format("取消发票后重新上传平台失败: {}", e.getMessage());

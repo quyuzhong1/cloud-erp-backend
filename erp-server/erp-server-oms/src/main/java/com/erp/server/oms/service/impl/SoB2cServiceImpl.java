@@ -433,6 +433,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     private PackagePlanService packagePlanService;
     private static final int MAX_RETRY_COUNT = 3;
     private static final long RETRY_DELAY_SECONDS = 60000;
+    private static final int EARLY_PERSIST_RETRY_COUNT = 2;
 
     @Resource
     private SyncThirdWarehouseService syncThirdWarehouseService;
@@ -4033,24 +4034,48 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 // 导致 shippingOrderNo 丢失，下次重试时因找不到已有订单而重复建单。
                 String earlyShippingOrderNo = apiResult.getData() != null ? apiResult.getData().getShippingOrderNo() : null;
                 if (CharSequenceUtil.isNotBlank(earlyShippingOrderNo) && CharSequenceUtil.isBlank(entity.getShippingOrderNo())) {
-                    boolean updated = this.lambdaUpdate()
-                            .set(SoB2cEntity::getShippingOrderNo, earlyShippingOrderNo)
-                            .eq(SoB2cEntity::getId, entity.getId())
-                            .eq(SoB2cEntity::getVersion, entity.getVersion())
-                            .update();
-                    if (updated) {
-                        entity.setShippingOrderNo(earlyShippingOrderNo);
-                        entity.setVersion(entity.getVersion() + 1);
-                        log.info("三方仓建单成功，提前落库 shippingOrderNo={}, soCode={}", earlyShippingOrderNo, entity.getCode());
-                    } else {
-                        log.warn("三方仓建单成功，提前落库 shippingOrderNo 因版本冲突跳过（并发写），soCode={}", entity.getCode());
-                    }
+                    persistEarlyShippingOrderNoWithRetry(entity, earlyShippingOrderNo);
                 }
             }
             return apiResult;
         } catch (Exception e) {
             return retryCreateThirdWarehouseOutbound(entity, warehouseId, createOutboundReq, retryCount, thirdWarehouseDeliveryEntity, apiResult, type, e);
         }
+    }
+
+    /**
+     * 建单成功后提前落库 shippingOrderNo。
+     * 由于建单前存在较长耗时的远程调用，订单在此期间可能已被其他动作更新（version 已变化），
+     * 若仍用调用前读到的旧 version 做乐观锁条件，更新必然失败。
+     * 因此每次尝试前都重新查询最新记录以获取最新 version，缩小乐观锁冲突窗口；
+     * 重试仍失败时仅 warn，由外层 thirdWarehouseCreateOutStock 的无条件更新兜底。
+     */
+    private void persistEarlyShippingOrderNoWithRetry(SoB2cEntity entity, String earlyShippingOrderNo) {
+        for (int attempt = 1; attempt <= EARLY_PERSIST_RETRY_COUNT; attempt++) {
+            SoB2cEntity latest = soB2cService.getById(entity.getId());
+            if (Objects.isNull(latest)) {
+                log.warn("三方仓建单成功，提前落库 shippingOrderNo 时订单不存在，soCode={}", entity.getCode());
+                return;
+            }
+            if (CharSequenceUtil.isNotBlank(latest.getShippingOrderNo())) {
+                entity.setShippingOrderNo(latest.getShippingOrderNo());
+                entity.setVersion(latest.getVersion());
+                return;
+            }
+            boolean updated = this.lambdaUpdate()
+                    .set(SoB2cEntity::getShippingOrderNo, earlyShippingOrderNo)
+                    .eq(SoB2cEntity::getId, entity.getId())
+                    .eq(SoB2cEntity::getVersion, latest.getVersion())
+                    .update();
+            if (updated) {
+                entity.setShippingOrderNo(earlyShippingOrderNo);
+                entity.setVersion(latest.getVersion() + 1);
+                log.info("三方仓建单成功，提前落库 shippingOrderNo={}, soCode={}，第{}次尝试成功", earlyShippingOrderNo, entity.getCode(), attempt);
+                return;
+            }
+            log.warn("三方仓建单成功，提前落库 shippingOrderNo 因版本冲突失败（第{}次尝试），soCode={}", attempt, entity.getCode());
+        }
+        log.warn("三方仓建单成功，提前落库 shippingOrderNo 重试{}次后仍失败，交由外层最终更新兜底，soCode={}", EARLY_PERSIST_RETRY_COUNT, entity.getCode());
     }
 
     private ApiResult<ThirdWarehouseQueryOutboundResponse> retryCreateThirdWarehouseOutbound(SoB2cEntity entity, String warehouseId, ThirdWarehouseCreateOutboundReq createOutboundReq, final int retryCount, ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity, ApiResult<ThirdWarehouseQueryOutboundResponse> apiResult, String type, Exception e) {
@@ -4294,7 +4319,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             LogisticsPlatformEnum platformEnum = LogisticsPlatformEnum.getByCode(overseasWarehouseList.get(0).getProviderCode());
             //API海外物流拦截
             BatchResultDTO resultDTO = this.overseasProviderIntercept(entity, platformEnum, overseasWarehouseList.get(0), remark);
-            if (resultDTO.getSuccess()) {
+            if (Objects.isNull(resultDTO)) {
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), "三方仓拦截返回为空");
+            }
+            if (Boolean.TRUE.equals(resultDTO.getSuccess())) {
                 addDTO.setHandleStatus(SoB2cDeliveryInterceptStatusEnum.HANDLE.getCode());
                 addDTO.setHandleResult(HandleResultEnum.SUCCESS.getCode());
                 addDTO.setCancelStatus(CancelStatusEnum.SUCCESS.getCode());
@@ -4302,6 +4330,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 addDTO.setHandleTime(LocalDateTime.now());
                 soB2cLogisticsService.cancelLogistic(entity.getId(), Collections.singletonList(entity), Collections.singletonList(logisticsEntity), false);
                 soB2cDeliveryInterceptFeign.add(addDTO);
+            } else if (!isThirdWarehouseInterceptingResult(resultDTO)) {
+                fillApiInterceptFailure(addDTO, resultDTO.getMsg());
+                soB2cDeliveryInterceptFeign.add(addDTO);
+                updateApiInterceptFailureOrder(entity.getId(), resultDTO.getMsg());
             }
             return resultDTO;
         } else {
@@ -4347,6 +4379,34 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     }
 
+    private boolean isThirdWarehouseInterceptingResult(BatchResultDTO resultDTO) {
+        return Objects.nonNull(resultDTO) && CharSequenceUtil.contains(resultDTO.getMsg(), "发起拦截中");
+    }
+
+    private void fillApiInterceptFailure(SoB2cDeliveryInterceptDTO.AddDTO addDTO, String failureReason) {
+        addDTO.setHandleStatus(SoB2cDeliveryInterceptStatusEnum.HANDLE.getCode());
+        addDTO.setHandleResult(HandleResultEnum.FAILURE.getCode());
+        addDTO.setCancelStatus(CancelStatusEnum.FAILURE.getCode());
+        addDTO.setInterceptStatus(InterceptStatusEnum.FAILURE.getCode());
+        addDTO.setHandleUserName(UserContext.getDefaultLoginUser().getUserName());
+        addDTO.setHandleTime(LocalDateTime.now());
+        if (CharSequenceUtil.isNotBlank(failureReason)) {
+            addDTO.setRemark(CharSequenceUtil.format("{}；失败原因：{}",
+                    CharSequenceUtil.blankToDefault(addDTO.getRemark(), "三方仓发货拦截"),
+                    failureReason));
+        }
+    }
+
+    private void updateApiInterceptFailureOrder(String soId, String failureReason) {
+        SoB2cDTO.InterceptUpdateOrderDTO interceptUpdateOrderDTO = new SoB2cDTO.InterceptUpdateOrderDTO();
+        interceptUpdateOrderDTO.setIsIntercept(Boolean.FALSE);
+        interceptUpdateOrderDTO.setIsFrozen(Boolean.FALSE);
+        interceptUpdateOrderDTO.setIds(Collections.singletonList(soId));
+        interceptUpdateOrderDTO.setAbnormalType(SoB2cAbnormalTypeEnum.INTERCEPT_FAILURE_REJECT.getCode());
+        interceptUpdateOrderDTO.setRemark(failureReason);
+        this.updateIntercept(interceptUpdateOrderDTO);
+    }
+
     /**
      * @param soB2cEntity  订单信息
      * @param platformEnum 物流平台枚举
@@ -4369,6 +4429,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         req.setErpOrderCode(referenceCode);
         req.setWarehouseCode(viewDTO.getPlatformWarehouseCode());
         req.setReason(remark);
+        req.setConfirmInterceptResult(Boolean.TRUE);
         OverseasProviderEntity overseasProviderEntity = overseasProviderFeign.getByWarehouseId(viewDTO.getWarehouseId());
         if (ObjectUtils.isNotEmpty(overseasProviderEntity)) {
             req.setAuthId(overseasProviderEntity.getId());
@@ -4511,6 +4572,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         String codeStr = list.stream().filter(e -> PlatformDictEnum.WILDBERRIES.getCode().equals(e.getDictPlatform())).map(SoB2cEntity::getCode).distinct().collect(Collectors.joining(","));
         if (CharSequenceUtil.isNotBlank(codeStr)) {
             throw new ServiceException(ApiError.SO_B2C_WILDBERRIES_NOT_ALLOWED, codeStr);
+        }
+        String magaluCodeStr = list.stream().filter(e -> PlatformDictEnum.MAGALU.getCode().equals(e.getDictPlatform())).map(SoB2cEntity::getCode).distinct().collect(Collectors.joining(","));
+        if (CharSequenceUtil.isNotBlank(magaluCodeStr)) {
+            throw new ServiceException(ApiError.SO_B2C_MAGALU_MERGE_FORBIDDEN);
         }
         // 销售明细
         List<SoB2cDetailEntity> soB2cDetailList = soB2cDetailService.listByMainIds(ids);
@@ -8342,12 +8407,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         dto.setSourceCode(sourceCode);
         String chargeId = shopInfoEntity.getChargeId();
         dto.setCustomerId(shopInfoEntity.getCustomerId());
-        dto.setCustomerName(shopInfoEntity.getName());
+        // 销售出库单的客户列展示客户档案名称，店铺只保留在 shopId 维度用于权限和平台业务。
         if (Objects.nonNull(customerInfo)) {
+            dto.setCustomerName(customerInfo.getName());
             dto.setSellerId(customerInfo.getSellerId());
             dto.setSellerName(customerInfo.getSellerName());
             dto.setSalesDeptId(customerInfo.getSalesDeptId());
         } else {
+            dto.setCustomerName("");
             dto.setSellerId(chargeId);
             dto.setSellerName(shopInfoEntity.getChargeName());
         }

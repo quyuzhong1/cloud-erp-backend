@@ -82,6 +82,7 @@ public class DmpInputAliExpressOverseasManagedSkuDmpHandler extends DmpInputDoCh
 			}
 			JSONObject sku = (JSONObject) item;
 			Map<String, Object> flatSku = new HashMap<>();
+			String skuId = AliExpressOverseasManagedProductHelper.findString(sku, "sku_id", "skuId");
 			putIfNotBlank(flatSku, "platformCreateTime", firstNotBlank(
 					AliExpressOverseasManagedProductHelper.findString(productInfo, "gmt_create", "gmtCreate"),
 					AliExpressOverseasManagedProductHelper.findString(detail, "gmt_create", "gmtCreate")));
@@ -89,12 +90,15 @@ public class DmpInputAliExpressOverseasManagedSkuDmpHandler extends DmpInputDoCh
 					AliExpressOverseasManagedProductHelper.findString(productInfo, "gmt_modified", "gmtModified"),
 					AliExpressOverseasManagedProductHelper.findString(detail, "gmt_modified", "gmtModified")));
 			flatSku.put("spuId", spuId);
-			flatSku.put("skuId", AliExpressOverseasManagedProductHelper.findString(sku, "sku_id", "skuId"));
+			flatSku.put("skuId", skuId);
 			flatSku.put("skuNo", AliExpressOverseasManagedProductHelper.findString(sku, "sku_code", "skuCode"));
-			flatSku.put("status", AliExpressOverseasManagedProductHelper.mapStatus(
-					AliExpressOverseasManagedProductHelper.findString(sku, "status")));
+			flatSku.put("status", firstNotBlank(
+					AliExpressOverseasManagedProductHelper.findString(sku, "status"),
+					AliExpressOverseasManagedProductHelper.findString(productInfo, "product_status_type", "productStatusType"),
+					AliExpressOverseasManagedProductHelper.findString(detail, "product_status_type", "productStatusType")));
 			flatSku.put("name", productTitle);
-			putIfNotBlank(flatSku, "prodcutProperty", AliExpressOverseasManagedProductHelper.joinSkuProperties(sku));
+			putIfNotBlank(flatSku, "prodcutProperty",
+					appendSkuId(AliExpressOverseasManagedProductHelper.joinSkuProperties(sku), skuId));
 			flatSku.put("imageUrls", AliExpressOverseasManagedProductHelper.joinImages(detail, sku));
 			putIfNotBlank(flatSku, "packageLength", firstNotBlank(
 					AliExpressOverseasManagedProductHelper.findString(sku, "package_length", "packageLength", "length"),
@@ -116,7 +120,7 @@ public class DmpInputAliExpressOverseasManagedSkuDmpHandler extends DmpInputDoCh
 					AliExpressOverseasManagedProductHelper.findString(sku, "weight_unit", "weightUnit"),
 					AliExpressOverseasManagedProductHelper.findString(detail, "weight_unit", "weightUnit"),
 					"kg"));
-			flatSku.put("platformParentSpuNo", spuId);
+			flatSku.put("platformParentSpuNo", "");
 			flatSku.put(DmpInputMongoHandler.MONGO_BASE_ID, childMongo.get(DmpInputMongoHandler.MONGO_BASE_ID));
 			flatSku.put(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, childMongo.get(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID));
 			result.add(flatSku);
@@ -157,6 +161,16 @@ public class DmpInputAliExpressOverseasManagedSkuDmpHandler extends DmpInputDoCh
 			}
 		}
 		return "";
+	}
+
+	private String appendSkuId(String productSpec, String skuId) {
+		if (StringUtils.isBlank(skuId) || StringUtils.containsIgnoreCase(productSpec, "sku_id:")) {
+			return productSpec;
+		}
+		if (StringUtils.isBlank(productSpec)) {
+			return "sku_id:" + skuId;
+		}
+		return productSpec + ";sku_id:" + skuId;
 	}
 
 	private void putIfNotBlank(Map<String, Object> data, String key, String value) {

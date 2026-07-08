@@ -498,7 +498,7 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		SoReturnInstockEntity soReturnInstockEntity = new SoReturnInstockEntity();
 		soReturnInstockEntity.setApproveTime(LocalDateTime.now());
 		soReturnInstockEntity.setApproveStatus(ApproveStatusEnum.APPROVE_ING.getStatus());
-		soReturnInstockEntity.setBillDate(dto.getPutawayTime().toLocalDate());
+		soReturnInstockEntity.setBillDate(dto.getPutawayLocalDate());
 		soReturnInstockEntity.setInventoryOrgId(warehouseEntity.getOrgId());
 		SysAccountingCompanyEntity company = sysUserFeign.getCompanyById(warehouseEntity.getOrgId());
 		soReturnInstockEntity.setInventoryOrgName(company.getCompanyName());
@@ -858,7 +858,7 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 			soReturnInstockEntity.setApproveTime(LocalDateTime.now());
 			soReturnInstockEntity.setApproveStatus(ApproveStatusEnum.APPROVE_ING.getStatus());
 		}
-		soReturnInstockEntity.setBillDate(dto.getPutawayTime().toLocalDate());
+		soReturnInstockEntity.setBillDate(dto.getPutawayLocalDate());
 		soReturnInstockEntity.setInventoryOrgId(warehouseEntity.getOrgId());
 		soReturnInstockEntity.setReturnLogisticCode(dto.getReturnLogisticCode());
 		soReturnInstockEntity.setSourceId(dto.getSourceId());
@@ -917,7 +917,7 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 			soReturnInstockEntity.setApproveTime(LocalDateTime.now());
 			soReturnInstockEntity.setApproveStatus(ApproveStatusEnum.APPROVE_ING.getStatus());
 		}
-		soReturnInstockEntity.setBillDate(dto.getPutawayTime().toLocalDate());
+		soReturnInstockEntity.setBillDate(dto.getPutawayLocalDate());
 		soReturnInstockEntity.setInventoryOrgId(warehouseEntity.getOrgId());
 		soReturnInstockEntity.setReturnLogisticCode(dto.getReturnLogisticCode());
 		soReturnInstockEntity.setSourceId(dto.getSourceId());
@@ -1076,7 +1076,7 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		SoReturnInstockEntity soReturnInstockEntity = new SoReturnInstockEntity();
 		soReturnInstockEntity.setApproveTime(LocalDateTime.now());
 		soReturnInstockEntity.setApproveStatus(ApproveStatusEnum.APPROVE_ING.getStatus());
-		soReturnInstockEntity.setBillDate(dto.getPutawayTime().toLocalDate());
+		soReturnInstockEntity.setBillDate(dto.getPutawayLocalDate());
 		soReturnInstockEntity.setInventoryOrgId(warehouseEntity.getOrgId());
 		//组织信息
 		SysAccountingCompanyEntity company = sysUserFeign.getCompanyById(warehouseEntity.getOrgId());
@@ -1154,10 +1154,10 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		}
 		WarehouseEntity warehouseEntity = checkAndGetWarehouseByShopInfo(shopInfoEntity);
 		// 查询是否已关账
-		LocalDate closedLocalDate = inventoryClosedRecordService.checkClosed(warehouseEntity.getOrgId(), dto.getPutawayTime().toLocalDate());
+		LocalDate closedLocalDate = inventoryClosedRecordService.checkClosed(warehouseEntity.getOrgId(), dto.getPutawayLocalDate());
 		if (null != closedLocalDate) {
 			// 已关账
-			log.warn("[退货入库单消费]:当前退货入库单消费日期【{}】因关账【{}】停止生成：单号={}", dto.getPutawayTime().toLocalDate(), closedLocalDate, dto.getPlatformOrderNo());
+			log.warn("[退货入库单消费]:当前退货入库单消费日期【{}】因关账【{}】停止生成：单号={}", dto.getPutawayLocalDate(), closedLocalDate, dto.getPlatformOrderNo());
 			return;
 		}
 		List<SoReturnInstockDetailEntity> detailEntityList = this.buildPlatformSoReturnInstockDetailWithoutSoB2c(dto, warehouseEntity, shopInfoEntity, shopIds);
@@ -1178,10 +1178,10 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		ShopInfoEntity shopInfoEntity = resolveSalesShopInfo(shopList, soB2cEntity, dto);
 		WarehouseEntity warehouseEntity = checkAndGetWarehouseByShopInfo(shopInfoEntity);
 		// 查询是否已关账
-		LocalDate closedLocalDate = inventoryClosedRecordService.checkClosed(warehouseEntity.getOrgId(), dto.getPutawayTime().toLocalDate());
+		LocalDate closedLocalDate = inventoryClosedRecordService.checkClosed(warehouseEntity.getOrgId(), dto.getPutawayLocalDate());
 		if (null != closedLocalDate) {
 			// 已关账
-			log.warn("[退货入库单消费]:当前退货入库单消费日期【{}】因关账【{}】停止生成：单号={}", dto.getPutawayTime().toLocalDate(), closedLocalDate, dto.getPlatformOrderNo());
+			log.warn("[退货入库单消费]:当前退货入库单消费日期【{}】因关账【{}】停止生成：单号={}", dto.getPutawayLocalDate(), closedLocalDate, dto.getPlatformOrderNo());
 			return;
 		}
 
@@ -1320,7 +1320,7 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 	private SoReturnInstockEntity buildJiTuSoReturnInstockEntity(PlatformReturnInstockDTO dto,WarehouseEntity warehouseEntity,SoB2cEntity soB2cEntity,SoInfoEntity soInfoEntity,SoOutstockEntity soOutstock){
 		SoReturnInstockEntity soReturnInstockEntity = new SoReturnInstockEntity();
 		CustomerInfoEntity customerInfo = null;
-		
+
 		// 默认自动提交并审核通过
 		if(StringUtils.isNotBlank(warehouseEntity.getId())){
 			soReturnInstockEntity.setApproveTime(LocalDateTime.now());
@@ -1403,7 +1403,7 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 			soReturnInstockEntity.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
 			soReturnInstockEntity.setCurrencySymbol("¥");
 		}
-		
+
 		// 销售部门和销售员
 		if(Objects.nonNull(soOutstock)){
 			if (StringUtils.isNotBlank(soOutstock.getSalesDeptId())){
@@ -1421,10 +1421,10 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 			soReturnInstockEntity.setSellerId(customerInfo.getSellerId());
 			soReturnInstockEntity.setSellerName(customerInfo.getSellerName());
 		}
-		
+
 		return soReturnInstockEntity;
 	}
-	
+
 	/**
 	 * 构建极兔退货入库单明细
 	 */
@@ -1434,11 +1434,11 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		List<SoDetailEntity> soDetails = new ArrayList<>();
 		List<SoB2cReturnDetailEntity> soB2cReturnDetails = new ArrayList<>();
 		List<SoReturnDetailEntity> soReturnDetails = new ArrayList<>();
-		
+
 		if(CollectionUtils.isEmpty(details)){
 			throw new ServiceException("明细为空");
 		}
-		
+
 		// 获取SKU映射
 		List<String> platformSkuNoList = dto.getProductDetailList().stream().map(v->v.getProductSku()).collect(Collectors.toList());
 		ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
@@ -1461,7 +1461,7 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 			}
 			// B2C订单
 			soB2cDetails.addAll(soB2cFeign.listDetailByMainIds(Collections.singletonList(soB2cEntity.getId())));
-			
+
 			// 获取退货订单明细
 			List<SoB2cReturnEntity> soB2cReturnEntities = FeignQuery.create(SoB2cReturnEntity.class)
 					.eq(SoB2cReturnEntity::getSoId, soB2cEntity.getId())
@@ -1480,7 +1480,7 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 			}
 			// B2B订单
 			soDetails.addAll(soInfoFeign.listSoDetailByMainId(soInfoEntity.getId()));
-			
+
 			// 获取退货订单明细
 			List<SoReturnEntity> soReturnEntities = FeignQuery.create(SoReturnEntity.class)
 					.eq(SoReturnEntity::getSourceId, soInfoEntity.getId())
@@ -1492,20 +1492,20 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 						.list());
 			}
 		}
-		
+
 		List<SoReturnInstockDetailEntity> detailEntityList = new ArrayList<>();
-		
+
 		for (PlatformReturnInstockDTO.Detail detail : details) {
 			// 匹配SKU
 			SkuMappingDTO.MappingSkuViewDTO skuViewDTO = mappingSkuViewDTOList.stream()
 					.filter(v->v.getPlatformSkuNo().equals(detail.getProductSku()))
 					.findFirst()
 					.orElse(null);
-			
+
 			if(Objects.isNull(skuViewDTO)){
 				continue;
 			}
-			
+
 			SoReturnInstockDetailEntity soReturnInstockDetailEntity = new SoReturnInstockDetailEntity();
 			soReturnInstockDetailEntity.setSkuId(skuViewDTO.getProductSkuId());
 			soReturnInstockDetailEntity.setSkuNo(skuViewDTO.getProductSkuNo());
@@ -1519,7 +1519,7 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 			soReturnInstockDetailEntity.setSourceDetailId(detail.getThirdId());
 			soReturnInstockDetailEntity.setCreateUserId(dto.getAuthId());
 			soReturnInstockDetailEntity.setPlatformSkuNo(detail.getProductSku());
-			
+
 			// 计算数量
 			int shouldReturnQty = 0; // 应退数量
 			int actualQty = detail.getReceiveQty() != null ? detail.getReceiveQty() : 0;
@@ -1531,13 +1531,13 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 						.findFirst()
 						.orElse(null);
 				if (Objects.nonNull(soB2cDetailEntity)) {
-					
+
 					// 应退数量
 					shouldReturnQty = soB2cReturnDetails.stream()
 							.filter(item -> Objects.equals(item.getSkuId(), skuViewDTO.getProductSkuId()))
 							.mapToInt(item -> item.getReturnQty() != null ? item.getReturnQty() : 0)
 							.sum();
-					
+
 					// 计算退货金额和含税退货金额
 					// 取销售订单的订单金额*订单明细的真实售价占比*（上架数量/销售数量）
 					BigDecimal amount = MathUtil.multiplyWithTwo(soB2cDetailEntity.getPrice(), actualQty);
@@ -1556,13 +1556,13 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 						.findFirst()
 						.orElse(null);
 				if (Objects.nonNull(soDetailEntity)) {
-					
+
 					// 应退数量
 					shouldReturnQty = soReturnDetails.stream()
 							.filter(item -> Objects.equals(item.getSkuId(), skuViewDTO.getProductSkuId()))
 							.mapToInt(item -> item.getReturnQty() != null ? item.getReturnQty() : 0)
 							.sum();
-					
+
 					// 计算退货金额和含税退货金额
 					// 取销售订单的明细销售单价*上架数量
 					soReturnInstockDetailEntity.setReturnAmount(MathUtil.multiplyWithTwo(soDetailEntity.getPrice(), actualQty));
@@ -1581,14 +1581,14 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 				soReturnInstockDetailEntity.setTaxReturnAmount(BigDecimal.ZERO);
 				soReturnInstockDetailEntity.setTaxReturnAmountLocalCurrency(BigDecimal.ZERO);
 			}
-			
+
 			soReturnInstockDetailEntity.setMustQty(shouldReturnQty);
 			soReturnInstockDetailEntity.setReceiveQty(actualQty);
 			soReturnInstockDetailEntity.setRealQty(actualQty);
 			soReturnInstockDetailEntity.setDefectiveProductFlag(detail.getDefectiveProductFlag());
 			detailEntityList.add(soReturnInstockDetailEntity);
 		}
-		
+
 		return detailEntityList;
 	}
 }

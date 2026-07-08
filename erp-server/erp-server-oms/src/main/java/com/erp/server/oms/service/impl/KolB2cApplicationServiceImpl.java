@@ -184,6 +184,8 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
     private AddressParseService addressParseService;
     @Resource
     private WorkflowTaskRecordService workflowTaskRecordService;
+    @Resource
+    private WorkflowTaskInstanceService workflowTaskInstanceService;
 
     @Resource
     private DictBasicService dictBasicService;
@@ -1171,8 +1173,10 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
             return;
         }
         String failReason = StringUtils.substring(StrUtil.blankToDefault(dto.getResponseMsg(), "中台审批下推失败"), 0, 500);
+        markKolB2cSubApproveTaskFailed(subEntity, failReason);
         updateBillStatusIfNotIn(mainEntity.getId(), KolB2cApplicationDocumentStatusEnum.CREATE_FAIL.getCode(),
                 APPROVE_PUSH_FAIL_SKIP_BILL_STATUSES);
+        resumeKolB2cParentTask(mainEntity);
         String msg = StrUtil.format("中台审批下推失败回调，拆分单【{}】推送失败，主单【{}】状态更新为【{}】，原因：【{}】",
                 subEntity.getCode(),
                 mainEntity.getCode(),
@@ -1667,8 +1671,22 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         map.put(TASK_DATA_SUB_CODE, subEntity.getCode());
         addTaskDTO.setFirstNodeInputData(map);
         addWorkflowTaskIfAbsent(addTaskDTO, existTasks);
+        List<WorkflowTaskRecordEntity> currentTasks = workflowTaskRecordService.listBySourceId(
+                subEntity.getId(), WorkflowTaskRecordTypeEnum.KOL_B2C_SUB_APPROVE.getCode());
+        if (isWorkflowTaskAllSuccess(currentTasks)) {
+            log.info("KOL B2C拆分单子任务已全部成功，跳过重复调度，subId={}, subCode={}", subEntity.getId(), subEntity.getCode());
+            return;
+        }
         // 子流程也走统一恢复入口，兼容历史节点补建 instance 后的当前节点重试。
         workflowTaskRecordService.startOrResume(addTaskDTO);
+    }
+
+    private boolean isWorkflowTaskAllSuccess(List<WorkflowTaskRecordEntity> tasks) {
+        return CollUtil.isNotEmpty(tasks)
+                && tasks.stream()
+                .filter(Objects::nonNull)
+                .filter(e -> !Boolean.TRUE.equals(e.getIsDeleted()))
+                .allMatch(e -> Objects.equals(e.getStatus(), WorkflowTaskRecordStatusEnum.SUCCESS.getCode()));
     }
 
     private void addWorkflowTaskIfAbsent(WorkflowTaskRecordDTO.AddTaskDTO addTaskDTO, List<WorkflowTaskRecordEntity> existTasks) {
@@ -1697,6 +1715,29 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         }
         WorkflowTaskRecordDTO.AddTaskDTO addTaskDTO = buildKolB2cParentTaskDTO(entity, existTasks.get(0).getTraceId());
         workflowTaskRecordService.startOrResume(addTaskDTO);
+    }
+
+    private void markKolB2cSubApproveTaskFailed(KolSubB2cApplicationEntity subEntity, String failReason) {
+        List<WorkflowTaskRecordEntity> tasks = workflowTaskRecordService.lambdaQuery()
+                .eq(WorkflowTaskRecordEntity::getSourceId, subEntity.getId())
+                .eq(WorkflowTaskRecordEntity::getSourceType, WorkflowTaskRecordTypeEnum.KOL_B2C_SUB_APPROVE.getCode())
+                .eq(WorkflowTaskRecordEntity::getIsDeleted, false)
+                .list();
+        if (CollUtil.isEmpty(tasks)) {
+            return;
+        }
+        List<String> taskIds = tasks.stream().map(WorkflowTaskRecordEntity::getId).collect(Collectors.toList());
+        workflowTaskRecordService.lambdaUpdate()
+                .in(WorkflowTaskRecordEntity::getId, taskIds)
+                .set(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.FAILED.getCode())
+                .set(WorkflowTaskRecordEntity::getLastError, failReason)
+                .set(WorkflowTaskRecordEntity::getErrorSource, "remote")
+                .set(WorkflowTaskRecordEntity::getRetryCount, WorkflowTaskRecordService.AUTO_RETRY_MAX_COUNT + 1)
+                .set(WorkflowTaskRecordEntity::getEndTime, LocalDateTime.now())
+                .update();
+        tasks.stream()
+                .filter(task -> StringUtils.isNotBlank(task.getInstanceId()))
+                .forEach(task -> workflowTaskInstanceService.markFailed(task.getInstanceId(), task.getIndex(), failReason));
     }
 
     private boolean isTerminalFailedTask(WorkflowTaskRecordEntity entity) {
@@ -2155,9 +2196,26 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         if (StringUtils.isBlank(subOrderCode)) {
             return null;
         }
-        return kolSubB2cApplicationService.lambdaQuery()
+        KolSubB2cApplicationEntity subEntity = kolSubB2cApplicationService.lambdaQuery()
                 .eq(KolSubB2cApplicationEntity::getCode, subOrderCode)
                 .eq(KolSubB2cApplicationEntity::getIsDeleted, false)
+                .last("limit 1")
+                .one();
+        if (ObjectUtil.isNotEmpty(subEntity)) {
+            return subEntity;
+        }
+        KolB2cApplicationEntity mainEntity = this.lambdaQuery()
+                .eq(KolB2cApplicationEntity::getCode, subOrderCode)
+                .eq(KolB2cApplicationEntity::getIsDeleted, false)
+                .last("limit 1")
+                .one();
+        if (ObjectUtil.isEmpty(mainEntity)) {
+            return null;
+        }
+        return kolSubB2cApplicationService.lambdaQuery()
+                .eq(KolSubB2cApplicationEntity::getSourceId, mainEntity.getId())
+                .eq(KolSubB2cApplicationEntity::getIsDeleted, false)
+                .orderByAsc(KolSubB2cApplicationEntity::getCreateTime)
                 .last("limit 1")
                 .one();
     }

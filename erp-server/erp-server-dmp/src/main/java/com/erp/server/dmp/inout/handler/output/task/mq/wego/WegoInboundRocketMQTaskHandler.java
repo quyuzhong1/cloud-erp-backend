@@ -7,6 +7,7 @@ import com.common.business.dto.PlatformInboundDTO;
 import com.common.business.dto.PlatformInboundDTO.Receiving;
 import com.common.business.enums.OverseasInstockStatusEnum;
 import com.common.core.entity.BaseEntity;
+import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpThirdInboundEntity;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
@@ -154,7 +155,8 @@ public class WegoInboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
         platformInboundDTO.setPlatform(sourcePlatform);
         platformInboundDTO.setProvider(sourcePlatform);
 
-        List<WegoInboundResp.InstockDTO> instockList = parseInstockList(dmpThirdInboundEntity.getDetailListJson());
+        List<WegoInboundResp.InstockDTO> instockList =
+                parseInstockList(dmpThirdInboundEntity.getId(), dmpThirdInboundEntity.getDetailListJson());
 
         // 入库单状态：用 inorder.status 优先映射；instockList 仅作为「是否已经有上架明细」的辅助判断
         platformInboundDTO.setReceivingStatus(this.convertStatus(
@@ -184,9 +186,17 @@ public class WegoInboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
     /**
      * 反序列化 {@code detail_list_json} 为 WEGO 入库批次明细列表。
      * <p>
-     * 失败返回空列表，避免 NPE；上层会兜底为「无签收流水」继续推送状态。
+     * {@code detail_list_json} 为空属正常场景（尚无上架明细），返回空列表即可。
+     * 但当其非空却解析失败时，说明签收数据已损坏或不完整；此时若按「无签收流水」兜底推送
+     * {@code hasReceivedData=false}，会导致 {@code overseas_warehouse_inbound_received} 漏记、
+     * 库存状态不同步且难以排查。因此解析失败视为数据不完整，抛出 {@link ServiceException}
+     * 中止本次任务（与分页拉取失败的处理方式一致），阻止「无流水签收」静默落库，
+     * 待 {@code detail_list_json} 修复后由任务重试重新推送。
+     *
+     * @param inboundId      DMP 层第三方入库实体 id，仅用于日志定位
+     * @param detailListJson 待解析的 {@code detail_list_json}
      */
-    private List<WegoInboundResp.InstockDTO> parseInstockList(String detailListJson) {
+    private List<WegoInboundResp.InstockDTO> parseInstockList(String inboundId, String detailListJson) {
         if (StringUtils.isBlank(detailListJson)) {
             return new ArrayList<>();
         }
@@ -195,7 +205,10 @@ public class WegoInboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
                     JSON.parseArray(detailListJson, WegoInboundResp.InstockDTO.class);
             return list == null ? new ArrayList<>() : list;
         } catch (Exception e) {
-            return new ArrayList<>();
+            log.error("[WEGO入库] 解析 detail_list_json 失败，签收数据不完整，中止本次推送以避免漏记签收流水。"
+                            + "inboundId={}, jsonLength={}, jsonSummary={}",
+                    inboundId, detailListJson.length(), StringUtils.abbreviate(detailListJson, 500), e);
+            throw new ServiceException("WEGO入库明细 detail_list_json 解析失败，inboundId=" + inboundId);
         }
     }
 

@@ -25,11 +25,7 @@ import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * dmp 输入 init 任务基础处理器：WEGO 海外仓入库单 api 拉取实现。
@@ -148,12 +144,13 @@ public class WegoInboundInitHandler extends DmpInputInitHandler {
             } catch (Exception e) {
                 log.error("[WEGO入库] 服务商[id={}] 上架日期[{} ~ {}] 调用异常，pageNum={}",
                         authId, upDateBegin, upDateEnd, pageNum, e);
-                break;
+                throw new ServiceException("WEGO入库：queryInorderPage 分页拉取异常，已拉取页数=" + (pageNum - 1) + "，数据不完整，任务中止");
             }
 
             WegoInboundResp.PageResultDTO pageResult = extractPageResult(resp, authId);
             if (pageResult == null) {
-                break;
+                throw new ServiceException("WEGO入库：第" + pageNum + "页响应解析失败，已拉取页数=" + (pageNum - 1)
+                        + "，数据不完整，任务中止");
             }
 
             List<WegoInboundResp.InorderDTO> list = pageResult.getList();
@@ -175,7 +172,9 @@ public class WegoInboundInitHandler extends DmpInputInitHandler {
         }
 
         if (pageNum > MAX_PAGE_LIMIT) {
-            log.warn("[WEGO入库] 服务商[id={}] 已达最大翻页上限({})，可能存在未拉取数据", authId, MAX_PAGE_LIMIT);
+            log.error("[WEGO入库] 服务商[id={}] 已达最大翻页上限({})，存在未拉取数据，任务中止", authId, MAX_PAGE_LIMIT);
+            throw new ServiceException("WEGO入库：已达最大翻页上限(" + MAX_PAGE_LIMIT
+                    + ")，已拉取=" + orderList.size() + "条，数据不完整，任务中止");
         }
         log.info("[WEGO入库] 服务商[id={}] 上架日期[{} ~ {}] 共拉取入库单={}条，已翻页={}",
                 authId, upDateBegin, upDateEnd, orderList.size(), pageNum);
@@ -183,14 +182,14 @@ public class WegoInboundInitHandler extends DmpInputInitHandler {
     }
 
     /**
-     * 校验 WEGO 接口响应：success=true 才返回 result，否则抛出业务异常或返回 null。
+     * 校验 WEGO 接口响应：success=true 且 result 非空才返回分页对象，否则抛出业务异常。
      *
-     * @return 分页对象，失败时返回 null
+     * @return 分页对象，非空
      */
     private WegoInboundResp.PageResultDTO extractPageResult(WegoInboundResp resp, String authId) {
         if (resp == null) {
             log.error("[WEGO入库] 服务商[id={}] 接口响应为空", authId);
-            return null;
+            throw new ServiceException("WEGO入库分页查询接口响应为空");
         }
         if (!Boolean.TRUE.equals(resp.getSuccess())) {
             log.error("[WEGO入库] 服务商[id={}] 接口返回失败: errorCode={}, errorMsg={}",
@@ -198,7 +197,12 @@ public class WegoInboundInitHandler extends DmpInputInitHandler {
             throw new ServiceException("WEGO入库分页查询接口返回失败: errorCode=" + resp.getErrorCode()
                     + ", errorMsg=" + resp.getErrorMsg());
         }
-        return resp.getResult();
+        WegoInboundResp.PageResultDTO result = resp.getResult();
+        if (result == null) {
+            log.error("[WEGO入库] 服务商[id={}] 接口 success=true 但 result 为空", authId);
+            throw new ServiceException("WEGO入库分页查询接口 success=true 但 result 为空");
+        }
+        return result;
     }
 
     /**
