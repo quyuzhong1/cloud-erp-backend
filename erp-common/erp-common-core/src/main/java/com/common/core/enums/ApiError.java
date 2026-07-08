@@ -1998,6 +1998,7 @@ public enum ApiError implements Serializable {
     LOGISTICS_RECON_BILL_REVERT_NO_ELIGIBLE(13676,"没有可回退为待确认的已确认数据"),
     LOGISTICS_RECON_BILL_REVERT_COST_STATUS_FORBIDDEN(13677,"存在已确认关联数据，但物流费用核算状态非待生成或支付状态非未支付（待付款/待退款），无法回退为待确认"),
     ASYNC_TASK_DETAIL_TIMEOUT(13648,"明细执行超时，系统自动标记失败"),
+    LOGISTICS_SALES_PLATFORM_REQUIRED(13649,"销售平台不能为空"),
 
     /**
      * 财务管理 错误 信息 14000-14500
