@@ -6,6 +6,7 @@ import com.alibaba.excel.annotation.write.style.ColumnWidth;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.SortDTO;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.tms.entity.DeliveryDeclareDetailMidEntity;
 import com.erp.model.tms.entity.TmsDeclareBillDetailEntity;
 import com.erp.model.tms.entity.TmsDeclareBillEntity;
@@ -2835,6 +2836,7 @@ public class TmsDeclareBillDTO implements Serializable {
          * 待落库的报关单明细实体列表。
          */
         private List<TmsDeclareBillDetailEntity> detailEntityList;
+
     }
 
     /**
@@ -2847,6 +2849,14 @@ public class TmsDeclareBillDTO implements Serializable {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class BatchMergeBillData {
+        public BatchMergeBillData(List<MergeDeclareBillDetailDTO> declareBillList,
+                                  TmsDeclareBillEntity declareBillEntity,
+                                  List<TmsDeclareBillDetailEntity> detailEntityList) {
+            this.declareBillList = declareBillList;
+            this.declareBillEntity = declareBillEntity;
+            this.detailEntityList = detailEntityList;
+        }
+
         /**
          * 本票对应的合并明细列表（用于中间表 saveGeneratedMidData 与明细行匹配）。
          */
@@ -2861,6 +2871,16 @@ public class TmsDeclareBillDTO implements Serializable {
          * 待落库的报关单明细实体列表（与 declareBillList 一一对应）。
          */
         private List<TmsDeclareBillDetailEntity> detailEntityList;
+
+        /**
+         * Preloaded transfer warehouse names, used inside the DB transaction without WMS Feign.
+         */
+        private Map<String, String> transferWarehouseNameMap;
+
+        /**
+         * Preloaded parent SKU BOM history, used inside the DB transaction without PLM Feign.
+         */
+        private Map<String, List<BomChildrenSkuDTO>> historyByParentMap;
     }
 
     /**

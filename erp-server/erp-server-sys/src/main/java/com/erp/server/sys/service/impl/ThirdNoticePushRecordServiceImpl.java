@@ -907,7 +907,6 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
         SendResult sendResult = mqProducerService.syncClassMsg(RocketMqTopic.RECEIVE_DDL_TO_MQ_SYS_TOPIC, RocketMqTagEnum.SYS_RECEIVE_DDL_TO_MQ_TAG.getName(), jsonStr, IdUtil.simpleUUID());
         if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
             log.error("消息发送结果失败：{}", JSONObject.toJSONString(sendResult));
-            throw new ServiceException("MQ send failed");
         }
     }
 

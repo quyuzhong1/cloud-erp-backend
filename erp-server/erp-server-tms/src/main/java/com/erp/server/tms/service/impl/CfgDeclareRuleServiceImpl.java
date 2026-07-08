@@ -179,7 +179,7 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
                     customerChildList(isShowCustomerId,name)));
             return result;
         }
-        throw new ServiceException("type must be fmDeclareBill or b2bDeclareBill");
+        throw new ServiceException(ApiError.LOGISTICS_DECLARE_RULE_TYPE_INVALID);
     }
 
     /**
@@ -308,10 +308,10 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
         Set<String> uniqueKeySet = new HashSet<>();
         for (CfgDeclareRuleDTO.SaveDTO item : saveList) {
             if (!StrUtil.equals(ruleType, item.getRuleType())) {
-                throw new ServiceException("request ruleType does not match item ruleType");
+                throw new ServiceException(ApiError.LOGISTICS_DECLARE_RULE_TYPE_MISMATCH);
             }
             if (CollUtil.isEmpty(item.getDetailList())) {
-                throw new ServiceException("detailList can not be empty");
+                throw new ServiceException(ApiError.COMMON_PARAM_REQUIRED, "detailList");
             }
             if (StrUtil.isNotBlank(item.getId())) {
                 CfgDeclareRuleEntity existingRule = existingRuleMap.get(item.getId());
@@ -319,7 +319,7 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
                     throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "CfgDeclareRule");
                 }
                 if (!StrUtil.equals(ruleType, existingRule.getRuleType())) {
-                    throw new ServiceException("cross-ruleType update is not allowed");
+                    throw new ServiceException(ApiError.LOGISTICS_DECLARE_RULE_CROSS_TYPE_UPDATE_FORBIDDEN);
                 }
             }
 
@@ -1011,20 +1011,20 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
     }
 
     private void addCreateLog(CfgDeclareRuleEntity entity) {
-        String msg = StrUtil.format("User [{}] created cfg declare rule [{}]",
+        String msg = StrUtil.format("用户 [{}] 创建报关规则 [{}]",
                 UserContext.getDefaultLoginUser().getUserName(), entity.getId());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_DECLARE_RULE.getCode(), entity.getId(), "create");
     }
 
     private void addUpdateLog(CfgDeclareRuleEntity oldEntity, CfgDeclareRuleEntity newEntity) {
-        String msg = StrUtil.format("User [{}] updated cfg declare rule [{}]",
+        String msg = StrUtil.format("用户 [{}] 更新报关规则 [{}]",
                 UserContext.getDefaultLoginUser().getUserName(), newEntity.getId());
         operateLogService.addModuleOperateLogByObj(oldEntity, newEntity,
                 ModuleTypeEnum.CFG_DECLARE_RULE.getCode(), newEntity.getId(), msg);
     }
 
     private void addDeleteLog(CfgDeclareRuleEntity entity) {
-        String msg = StrUtil.format("User [{}] deleted cfg declare rule [{}]",
+        String msg = StrUtil.format("用户 [{}] 删除报关规则 [{}]",
                 UserContext.getDefaultLoginUser().getUserName(), entity.getId());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_DECLARE_RULE.getCode(), entity.getId(), "delete");
     }
@@ -1059,7 +1059,7 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
     private List<BaseDropDownDTO.ChildTree> accountingCompanyChildList(String name) {
         ApiResult<List<SysAccountingCompanyDTO.ListDTO>> companyResult = sysFeign.companyListAll(name);
         if (companyResult == null || !companyResult.isSuccess()) {
-            throw new ServiceException("load accounting company list failed");
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_RULE_ACCOUNTING_COMPANY_LOAD_FAILED);
         }
         return Optional.ofNullable(companyResult.getData())
                 .orElse(Collections.emptyList())

@@ -1945,6 +1945,10 @@ public enum ApiError implements Serializable {
     COMMON_COUNTRY_INFO_NOT_FOUND(13711,"国家信息不存在"),
     LOGISTICS_DECLARE_B2B_SO_DETAIL_NOT_FOUND(13712,"来源单【{0}】SKU【{1}】未找到销售订单明细，无法按客户分发规则取价"),
     LOGISTICS_DECLARE_B2B_CUSTOMER_RECEIVER_NOT_FOUND(13713,"未找到来源单客户信息，无法按客户分发规则设置报关收货人"),
+    LOGISTICS_DECLARE_RULE_TYPE_INVALID(13714,"报关规则类型必须为fmDeclareBill或b2bDeclareBill"),
+    LOGISTICS_DECLARE_RULE_TYPE_MISMATCH(13715,"请求ruleType与明细ruleType不一致"),
+    LOGISTICS_DECLARE_RULE_CROSS_TYPE_UPDATE_FORBIDDEN(13716,"不允许跨ruleType更新"),
+    LOGISTICS_DECLARE_RULE_ACCOUNTING_COMPANY_LOAD_FAILED(13717,"加载核算公司列表失败"),
 
 
     LOGISTICS_ORDER_NOT_CANCEL(13645,"物流单据不是已取消或者下单失败状态，不能编辑"),

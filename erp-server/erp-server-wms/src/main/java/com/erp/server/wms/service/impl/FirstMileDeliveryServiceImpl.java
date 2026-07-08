@@ -102,6 +102,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -116,6 +117,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -228,6 +231,9 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     @Lazy
     @Resource
     FirstMileDeliveryService self;
+    @Resource
+    @Qualifier("wmsTaskExecutorPool")
+    private ExecutorService wmsTaskExecutorPool;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -270,8 +276,9 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
             public void afterCommit() {
-                self.autoGenerateByPacked(firstMileDeliveryEntity, BillGenerateTimingEnum.AFTER_ADD);
-
+                CompletableFuture.runAsync(() -> {
+                    self.autoGenerateByPacked(firstMileDeliveryEntity, BillGenerateTimingEnum.AFTER_ADD);
+                }, wmsTaskExecutorPool);
             }
         });
         return new BaseResultDTO.AddDTO(firstMileDeliveryEntity.getId(), code);
@@ -2398,15 +2405,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         lambdaUpdate().set(FirstMileDeliveryEntity::getPackingStatus, packingStatus)
                 .eq(FirstMileDeliveryEntity::getId, id)
                 .update();
-//        if (CharSequenceUtil.equals(packingStatus, PackingTaskStatusEnum.PACKED.getCode())) {
-//            FirstMileDeliveryEntity entity = this.getById(id);
-//            if (Objects.nonNull(entity)) {
-//                autoGenerateByPacked(entity, BillGenerateTimingEnum.AFTER_ADD);
-//                if (CharSequenceUtil.equals(entity.getApproveStatus(), com.common.business.enums.ApproveStatusEnum.APPROVE.getCode())) {
-//                    autoGenerateByPacked(entity, BillGenerateTimingEnum.AFTER_APPROVE);
-//                }
-//            }
-//        }
     }
 
     @Override
