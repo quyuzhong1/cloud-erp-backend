@@ -22,6 +22,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -644,7 +645,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
                 			}
                 			rateMap.put(currency, rate);
                 		}
-                		actualShippingCost = actualShippingCost.add(cost.multiply(rate).setScale(4, RoundingMode.DOWN));
+                		actualShippingCost = actualShippingCost.add(MathUtil.multiplyWithSix(cost, rate, BigDecimal.ROUND_DOWN));
                 		
                 		cost = detail.getDeclareCost();
             			currency = detail.getDeclareCostCurrency();
@@ -657,7 +658,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
                 			}
                 			rateMap.put(currency, rate);
                 		}
-                		actualDeclareCost = actualDeclareCost.add(cost.multiply(rate).setScale(4, RoundingMode.DOWN));
+                		actualDeclareCost = actualDeclareCost.add(MathUtil.multiplyWithSix(cost, rate, BigDecimal.ROUND_DOWN));
                 		
                 		cost = detail.getOtherCost();
             			currency = detail.getOtherCostCurrency();
@@ -670,7 +671,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
                 			}
                 			rateMap.put(currency, rate);
                 		}
-                		actualOtherCost = actualOtherCost.add(cost.multiply(rate).setScale(4, RoundingMode.DOWN));
+                		actualOtherCost = actualOtherCost.add(MathUtil.multiplyWithSix(cost, rate, BigDecimal.ROUND_DOWN));
                 		
                 		cost = detail.getOtherTaxCost();
             			currency = detail.getOtherTaxCurrency();
@@ -683,7 +684,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
                 			}
                 			rateMap.put(currency, rate);
                 		}
-                		actualOtherTaxCost = actualOtherTaxCost.add(cost.multiply(rate).setScale(4, RoundingMode.DOWN));
+                		actualOtherTaxCost = actualOtherTaxCost.add(MathUtil.multiplyWithSix(cost, rate, BigDecimal.ROUND_DOWN));
             		}
             	}
             }

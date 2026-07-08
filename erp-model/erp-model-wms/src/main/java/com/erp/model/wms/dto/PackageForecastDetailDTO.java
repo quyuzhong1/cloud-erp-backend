@@ -186,7 +186,7 @@ public class PackageForecastDetailDTO implements Serializable {
         * 重量
         */
         @NotNull(message = "重量不能为空")
-        @Digits(integer = 12, fraction = 4, message = "重量整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "重量整数位不能超过18位，小数位不能超过6位")
         private BigDecimal weight;
 
         /**

@@ -319,42 +319,42 @@ public class DmpSoDeliveryDTO implements Serializable {
         * 商品总成交金额（合计）
         */
         @NotNull(message = "商品总成交金额（合计）不能为空")
-        @Digits(integer = 12, fraction = 4, message = "商品总成交金额（合计）整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "商品总成交金额（合计）整数位不能超过18位，小数位不能超过6位")
         private BigDecimal allAmount;
 
         /**
         * 优惠抵扣金额|佣金（合计）
         */
         @NotNull(message = "优惠抵扣金额|佣金（合计）不能为空")
-        @Digits(integer = 12, fraction = 4, message = "优惠抵扣金额|佣金（合计）整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "优惠抵扣金额|佣金（合计）整数位不能超过18位，小数位不能超过6位")
         private BigDecimal totalDiscountAmount;
 
         /**
         * 取消商品总金额（合计）
         */
         @NotNull(message = "取消商品总金额（合计）不能为空")
-        @Digits(integer = 12, fraction = 4, message = "取消商品总金额（合计）整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "取消商品总金额（合计）整数位不能超过18位，小数位不能超过6位")
         private BigDecimal totalCancelAmount;
 
         /**
         * 支付金额
         */
         @NotNull(message = "支付金额不能为空")
-        @Digits(integer = 12, fraction = 4, message = "支付金额整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "支付金额整数位不能超过18位，小数位不能超过6位")
         private BigDecimal payAmount;
 
         /**
         * 运费收入
         */
         @NotNull(message = "运费收入不能为空")
-        @Digits(integer = 12, fraction = 4, message = "运费收入整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "运费收入整数位不能超过18位，小数位不能超过6位")
         private BigDecimal shippingAmount;
 
         /**
         * 税金
         */
         @NotNull(message = "税金不能为空")
-        @Digits(integer = 12, fraction = 4, message = "税金整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "税金整数位不能超过18位，小数位不能超过6位")
         private BigDecimal totalTaxAmount;
 
         /**

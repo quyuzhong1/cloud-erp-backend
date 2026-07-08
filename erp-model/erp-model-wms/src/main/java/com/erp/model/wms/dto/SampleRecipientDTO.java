@@ -794,7 +794,7 @@ public class SampleRecipientDTO implements Serializable {
         /**
          * SKU成本合计
          */
-        @Digits(integer = 13, fraction = 2, message = "SKU成本合计整数位不能超过13位，小数位不能超过2位")
+        @Digits(integer = 18, fraction = 6, message = "SKU成本合计整数位不能超过18位，小数位不能超过6位")
         private BigDecimal skuTotalCost;
 
         /**

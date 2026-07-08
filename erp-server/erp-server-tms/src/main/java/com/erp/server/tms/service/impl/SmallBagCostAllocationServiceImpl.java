@@ -259,10 +259,10 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 				        }
 						rateMap.put(key, rate);
 					}
-					unitCost = unitCost.multiply(rate).setScale(6);
+					unitCost = MathUtil.scaleToSix(unitCost.multiply(rate));
 				}
 				dto.setUnitCost(df6.format(unitCost));
-				dto.setTotalCost(df6.format(unitCost.multiply(new BigDecimal(deliveryQty)).setScale(6)));
+				dto.setTotalCost(df6.format(MathUtil.scaleToSix(unitCost.multiply(new BigDecimal(deliveryQty)))));
 			}
 			
 			dto.setFeeSource(SmallBagCostAllocationMainFeeSourceEnum.getName(dto.getFeeSource()));
@@ -285,7 +285,7 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 			}
 			String billAmount = dto.getBillAmount();
 			if(billAmount != null) {
-				dto.setBillAmount(df4.format(new BigDecimal(billAmount).multiply(refund).setScale(4, RoundingMode.HALF_UP)));
+				dto.setBillAmount(df4.format(MathUtil.scaleToSix(new BigDecimal(billAmount).multiply(refund))));
 			}
 			String allocatedAmount = dto.getAllocatedAmount();
 			if(allocatedAmount != null) {
@@ -293,7 +293,7 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 			}
 			String productAllocatedAmount = dto.getProductAllocatedAmount();
 			if(productAllocatedAmount != null) {
-				dto.setProductAllocatedAmount(df6.format(new BigDecimal(productAllocatedAmount).multiply(refund).setScale(6, RoundingMode.HALF_UP)));
+				dto.setProductAllocatedAmount(df6.format(MathUtil.scaleToSix(new BigDecimal(productAllocatedAmount).multiply(refund))));
 			}
 		}
 	}

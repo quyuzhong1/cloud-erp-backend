@@ -21,7 +21,7 @@ import java.util.stream.Collector;
 @UtilityClass
 public class MathUtil {
 
-    public final int scale = 4;
+    public final int scale = 6;
     public final BigDecimal BigDecimal_100 = new BigDecimal("100");
     public final BigDecimal BigDecimal_1000 = new BigDecimal("1000");
     public final BigDecimal BigDecimal__1 = new BigDecimal("-1");
@@ -277,12 +277,66 @@ public class MathUtil {
     /**
      * 两数相乘，得出结果，该结果未四舍五入，请注意, 默认保留四位小数
      *
-     * @param d1
-     * @param d2
-     * @return
+     * @deprecated 历史命名，语义已为六位小数，请优先使用 {@link #multiplyWithSix(BigDecimal, BigDecimal)}
      */
     public BigDecimal multiplyWithFour(BigDecimal d1, BigDecimal d2) {
-        return multiplyWithTwo(d1, d2, 4);
+        return multiplyWithSix(d1, d2);
+    }
+
+    /**
+     * 两数相乘，保留六位小数（四舍五入）
+     */
+    public BigDecimal multiplyWithSix(BigDecimal d1, BigDecimal d2) {
+        return multiplyWithTwo(d1, d2, scale);
+    }
+
+    /**
+     * 两数相乘，保留六位小数（指定舍入模式）
+     */
+    public BigDecimal multiplyWithSix(BigDecimal d1, BigDecimal d2, int roundingMode) {
+        if (d1 == null && d2 == null) {
+            return BigDecimal.ZERO;
+        }
+        BigDecimal newd1 = d1;
+        if (newd1 == null) {
+            newd1 = BigDecimal.ZERO;
+        }
+        BigDecimal newd2 = d2;
+        if (newd2 == null) {
+            newd2 = BigDecimal.ZERO;
+        }
+        return newd2.multiply(newd1).setScale(scale, roundingMode);
+    }
+
+    /**
+     * 两数相除，保留六位小数（四舍五入）
+     */
+    public BigDecimal divideWithSix(BigDecimal d1, BigDecimal d2) {
+        return divide(d1, d2, scale);
+    }
+
+    /**
+     * 两数相除，保留六位小数（指定舍入模式）
+     */
+    public BigDecimal divideWithSix(BigDecimal d1, BigDecimal d2, int roundingMode) {
+        return divide(d1, d2, scale, roundingMode);
+    }
+
+    /**
+     * 保留六位小数（四舍五入）
+     */
+    public BigDecimal scaleToSix(BigDecimal d1) {
+        return scaleToSix(d1, BigDecimal.ROUND_HALF_UP);
+    }
+
+    /**
+     * 保留六位小数（指定舍入模式）
+     */
+    public BigDecimal scaleToSix(BigDecimal d1, int roundingMode) {
+        if (d1 == null) {
+            return BigDecimal.ZERO;
+        }
+        return d1.setScale(scale, roundingMode);
     }
 
     /**

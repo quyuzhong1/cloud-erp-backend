@@ -1287,7 +1287,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             BigDecimal price = item.getPrice();
 
             //销售单价(本位币)
-            item.setPriceLc(MathUtil.multiplyWithTwo(price, exchangeRate));
+            item.setPriceLc(MathUtil.multiplyWithSix(price, exchangeRate));
 
             //含税单价=销售单价*（税率+1）
             BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
@@ -1295,7 +1295,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             BigDecimal taxPrice = MathUtil.multiplyWithTwo(price, multiplyTax);
             item.setTaxPrice(taxPrice);
             //含税单价(本位币)
-            item.setTaxPriceLc(MathUtil.multiplyWithTwo(taxPrice, exchangeRate));
+            item.setTaxPriceLc(MathUtil.multiplyWithSix(taxPrice, exchangeRate));
 
             //是否是组合SKU
             if (CollectionUtils.isNotEmpty(bomChildrenList)) {
@@ -3211,7 +3211,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             }
             SoDetailDTO.CalDetailResultDTO result = new SoDetailDTO.CalDetailResultDTO();
             BeanMapper.copy(item, result);
-            result.setTaxPriceLc(MathUtil.multiplyWithTwo(taxPrice, exchangeRate,4));
+            result.setTaxPriceLc(MathUtil.multiplyWithSix(taxPrice, exchangeRate));
             resultList.add(result);
         }
         return resultList;

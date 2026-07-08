@@ -400,28 +400,28 @@ public class DmpSoOutstockDTO implements Serializable {
         * 单据总金额
         */
         @NotNull(message = "单据总金额不能为空")
-        @Digits(integer = 12, fraction = 4, message = "单据总金额整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "单据总金额整数位不能超过18位，小数位不能超过6位")
         private BigDecimal allAmount;
 
         /**
         * 汇率
         */
         @NotNull(message = "汇率不能为空")
-        @Digits(integer = 12, fraction = 4, message = "汇率整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "汇率整数位不能超过18位，小数位不能超过6位")
         private BigDecimal exchangeRate;
 
         /**
         * 运费
         */
         @NotNull(message = "运费不能为空")
-        @Digits(integer = 12, fraction = 4, message = "运费整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "运费整数位不能超过18位，小数位不能超过6位")
         private BigDecimal shippingCost;
 
         /**
         * 补贴金额
         */
         @NotNull(message = "补贴金额不能为空")
-        @Digits(integer = 12, fraction = 4, message = "补贴金额整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "补贴金额整数位不能超过18位，小数位不能超过6位")
         private BigDecimal subsidyAmount;
 
         /**
@@ -492,7 +492,7 @@ public class DmpSoOutstockDTO implements Serializable {
         * 整单折扣
         */
         @NotNull(message = "整单折扣不能为空")
-        @Digits(integer = 12, fraction = 4, message = "整单折扣整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "整单折扣整数位不能超过18位，小数位不能超过6位")
         private BigDecimal totalDiscountAmount;
 
         /**

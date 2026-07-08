@@ -1260,8 +1260,8 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
         detailEntity.setExchangeRate(safeExchangeRate);
         detailEntity.setReturnAmount(MathUtil.multiplyWithFour(safePrice, qty));
         detailEntity.setTaxReturnAmount(MathUtil.multiplyWithFour(safeTaxPrice, qty));
-        detailEntity.setReturnAmountLocalCurrency(MathUtil.multiplyWithFour(detailEntity.getReturnAmount(), safeExchangeRate));
-        detailEntity.setTaxReturnAmountLocalCurrency(MathUtil.multiplyWithFour(detailEntity.getTaxReturnAmount(), safeExchangeRate));
+        detailEntity.setReturnAmountLocalCurrency(MathUtil.multiplyWithSix(detailEntity.getReturnAmount(), safeExchangeRate, BigDecimal.ROUND_DOWN));
+        detailEntity.setTaxReturnAmountLocalCurrency(MathUtil.multiplyWithSix(detailEntity.getTaxReturnAmount(), safeExchangeRate, BigDecimal.ROUND_DOWN));
     }
 
     @Override

@@ -1068,11 +1068,15 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 					// 取销售订单的订单金额*订单明细的真实售价占比*（上架数量/销售数量）
 					BigDecimal amount = MathUtil.multiplyWithTwo(soB2cDetailEntity.getPrice(), actualQty);
 					soReturnInstockDetailEntity.setAmount(amount);
+					soReturnInstockDetailEntity.setReturnAmount(amount);
 					soReturnInstockDetailEntity.setTaxReturnAmount(amount);
-					soReturnInstockDetailEntity.setTaxReturnAmountLocalCurrency(MathUtil.multiplyWithTwo(amount,rate));
+					soReturnInstockDetailEntity.setReturnAmountLocalCurrency(MathUtil.multiplyWithSix(amount, rate, BigDecimal.ROUND_DOWN));
+					soReturnInstockDetailEntity.setTaxReturnAmountLocalCurrency(MathUtil.multiplyWithSix(amount, rate, BigDecimal.ROUND_DOWN));
 				} else {
 					soReturnInstockDetailEntity.setAmount(BigDecimal.ZERO);
+					soReturnInstockDetailEntity.setReturnAmount(BigDecimal.ZERO);
 					soReturnInstockDetailEntity.setTaxReturnAmount(BigDecimal.ZERO);
+					soReturnInstockDetailEntity.setReturnAmountLocalCurrency(BigDecimal.ZERO);
 					soReturnInstockDetailEntity.setTaxReturnAmountLocalCurrency(BigDecimal.ZERO);
 				}
 			} else if (!soDetails.isEmpty()){
@@ -1089,22 +1093,26 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 							.mapToInt(item -> item.getReturnQty() != null ? item.getReturnQty() : 0)
 							.sum();
 					
-					// 计算退货金额和含税退货金额
-					// 取销售订单的明细销售单价*上架数量
-					soReturnInstockDetailEntity.setReturnAmount(MathUtil.multiplyWithTwo(soDetailEntity.getPrice(), actualQty));
+					BigDecimal returnAmount = MathUtil.multiplyWithTwo(soDetailEntity.getPrice(), actualQty);
+					soReturnInstockDetailEntity.setReturnAmount(returnAmount);
 					// 取销售订单的含税单价*退货数量
 					BigDecimal amount = MathUtil.multiplyWithTwo(soDetailEntity.getTaxPrice(), actualQty);
 					soReturnInstockDetailEntity.setTaxReturnAmount(amount);
-					soReturnInstockDetailEntity.setTaxReturnAmountLocalCurrency(MathUtil.multiplyWithTwo(amount,rate));
+					soReturnInstockDetailEntity.setReturnAmountLocalCurrency(MathUtil.multiplyWithSix(returnAmount, rate, BigDecimal.ROUND_DOWN));
+					soReturnInstockDetailEntity.setTaxReturnAmountLocalCurrency(MathUtil.multiplyWithSix(amount, rate, BigDecimal.ROUND_DOWN));
 				} else {
 					soReturnInstockDetailEntity.setAmount(BigDecimal.ZERO);
+					soReturnInstockDetailEntity.setReturnAmount(BigDecimal.ZERO);
 					soReturnInstockDetailEntity.setTaxReturnAmount(BigDecimal.ZERO);
+					soReturnInstockDetailEntity.setReturnAmountLocalCurrency(BigDecimal.ZERO);
 					soReturnInstockDetailEntity.setTaxReturnAmountLocalCurrency(BigDecimal.ZERO);
 				}
 			} else {
 				// 未匹配到订单
 				soReturnInstockDetailEntity.setAmount(BigDecimal.ZERO);
+				soReturnInstockDetailEntity.setReturnAmount(BigDecimal.ZERO);
 				soReturnInstockDetailEntity.setTaxReturnAmount(BigDecimal.ZERO);
+				soReturnInstockDetailEntity.setReturnAmountLocalCurrency(BigDecimal.ZERO);
 				soReturnInstockDetailEntity.setTaxReturnAmountLocalCurrency(BigDecimal.ZERO);
 			}
 			

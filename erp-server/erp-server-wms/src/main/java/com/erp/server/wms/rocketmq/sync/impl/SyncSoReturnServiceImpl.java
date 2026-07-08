@@ -392,8 +392,8 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
             detailEntity.setExchangeRate(BigDecimal.ONE);
             detailEntity.setReturnAmount(MathUtil.multiplyWithFour(price, qty));
             detailEntity.setTaxReturnAmount(MathUtil.multiplyWithFour(price, qty));
-            detailEntity.setReturnAmountLocalCurrency(detailEntity.getReturnAmount());
-            detailEntity.setTaxReturnAmountLocalCurrency(detailEntity.getTaxReturnAmount());
+            detailEntity.setReturnAmountLocalCurrency(MathUtil.scaleToSix(detailEntity.getReturnAmount(), BigDecimal.ROUND_DOWN));
+            detailEntity.setTaxReturnAmountLocalCurrency(MathUtil.scaleToSix(detailEntity.getTaxReturnAmount(), BigDecimal.ROUND_DOWN));
             if(WmsConstant.WDT_NULL_LOCATION.contains(detailEntity.getWarehouseLocation())){
                 detailEntity.setWarehouseLocation("");
             }

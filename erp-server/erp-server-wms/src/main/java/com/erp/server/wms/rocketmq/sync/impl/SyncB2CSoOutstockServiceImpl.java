@@ -20,6 +20,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.common.message.constant.DistributeKeyConstant;
 import com.common.message.service.mq.MQProducerService;
@@ -545,12 +546,12 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
     						BigDecimal allAmountLocalCurrency = totalAllAmountLocalCurrency
         							.multiply(skuPriceMap.get(wdtSoOutStockDetailDTO.getSkuNo()))
         							.multiply(new BigDecimal(wdtSoOutStockDetailDTO.getActualQty().toString()))
-        							.divide(totalStd , 4 , RoundingMode.DOWN);
+        							.divide(totalStd , MathUtil.scale , RoundingMode.DOWN);
     						currTotalAllAmountLocalCurrency = currTotalAllAmountLocalCurrency.add(allAmountLocalCurrency);
                             BigDecimal taxAmount = totalTaxAmount
                                     .multiply(skuPriceMap.get(wdtSoOutStockDetailDTO.getSkuNo()))
                                     .multiply(new BigDecimal(wdtSoOutStockDetailDTO.getActualQty().toString()))
-                                    .divide(totalStd , 4 , RoundingMode.DOWN);
+                                    .divide(totalStd , MathUtil.scale , RoundingMode.DOWN);
                             currTotalTaxAmount = currTotalTaxAmount.add(taxAmount);
                             wdtSoOutStockDetailDTO.setTaxAmount(taxAmount);
                             wdtSoOutStockDetailDTO.setAllAmountLocalCurrency(allAmountLocalCurrency);
@@ -558,7 +559,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         					BigDecimal amount = totalAmount
         							.multiply(skuPriceMap.get(wdtSoOutStockDetailDTO.getSkuNo()))
         							.multiply(new BigDecimal(wdtSoOutStockDetailDTO.getActualQty().toString()))
-        							.divide(totalStd , 4 , RoundingMode.DOWN);
+        							.divide(totalStd , MathUtil.scale , RoundingMode.DOWN);
         					currTotalAmount = currTotalAmount.add(amount);
 							wdtSoOutStockDetailDTO.setAmount(amount);
     					}else {
@@ -1140,7 +1141,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
     					nowAllAmountLocalCurrency = allAmountLocalCurrency.subtract(addAllAmountLocalCurrency);
         			}else {
         				nowAmount = amount.multiply(positionGoodsCount).divide(sum , 4 , RoundingMode.DOWN);
-        				nowAllAmountLocalCurrency = allAmountLocalCurrency.multiply(positionGoodsCount).divide(sum , 4 , RoundingMode.DOWN);
+        				nowAllAmountLocalCurrency = MathUtil.divideWithSix(allAmountLocalCurrency.multiply(positionGoodsCount), sum, BigDecimal.ROUND_DOWN);
         			}
         			map.put(recId, new Pair<>(nowAmount, nowAllAmountLocalCurrency));
         			addAmount = addAmount.add(nowAmount);

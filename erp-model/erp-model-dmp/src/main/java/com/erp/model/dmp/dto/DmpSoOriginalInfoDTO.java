@@ -393,14 +393,14 @@ public class DmpSoOriginalInfoDTO implements Serializable {
         * 优惠
         */
         @NotNull(message = "优惠不能为空")
-        @Digits(integer = 12, fraction = 4, message = "优惠整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "优惠整数位不能超过18位，小数位不能超过6位")
         private BigDecimal discount;
 
         /**
         * 买家已付金额
         */
         @NotNull(message = "买家已付金额不能为空")
-        @Digits(integer = 12, fraction = 4, message = "买家已付金额整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "买家已付金额整数位不能超过18位，小数位不能超过6位")
         private BigDecimal paid;
 
         /**
@@ -414,7 +414,7 @@ public class DmpSoOriginalInfoDTO implements Serializable {
         * 退款金额
         */
         @NotNull(message = "退款金额不能为空")
-        @Digits(integer = 12, fraction = 4, message = "退款金额整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "退款金额整数位不能超过18位，小数位不能超过6位")
         private BigDecimal refundAmount;
 
         /**
