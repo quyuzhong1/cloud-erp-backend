@@ -249,8 +249,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     @DistributeLocker(
             businessType = DistributeKeyConstant.TMS_DECLARE_BILL_SOURCE_KEY,
             keyName = "addDTO.mergeDetailList.sourceDeliveryDetailList.sourceId",
-            maxRetries = 1,
-            unlockAfterTx = true
+            maxRetries = 1
     )
     public Boolean addFmDeclare(TmsDeclareBillDTO.AddDTO addDTO) {
         // 事务外完成所有 Feign 读取 + 校验 + 实体构建（erp-backend-standards：禁止事务内 Feign）。
@@ -527,8 +526,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     @DistributeLocker(
             businessType = DistributeKeyConstant.TMS_DECLARE_BILL_ID_KEY,
             keyName = "updateDTO.id",
-            maxRetries = 1,
-            unlockAfterTx = true
+            maxRetries = 1
     )
     @Override
     public Boolean update(TmsDeclareBillDTO.UpdateDTO updateDTO,SourceTypeEnum sourceTypeEnum) {
@@ -1584,6 +1582,9 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
     @Override
     public List<TmsDeclareBillDTO.SoOutDTO> getCanGenerateSoOut(TmsDeclareBillDTO.QuerySourceDTO querySourceDTO) {
+        if (querySourceDTO == null || CollUtil.isEmpty(querySourceDTO.getIds())) {
+            return Collections.emptyList();
+        }
         List<TmsDeclareBillDTO.SoOutDTO> deliveryDTOList = soDeliveryNoticeFeign.listPackingDetailByIdList(querySourceDTO);
 
         //销售出库单编码
@@ -2082,8 +2083,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     @DistributeLocker(
             businessType = DistributeKeyConstant.TMS_DECLARE_BILL_SOURCE_KEY,
             keyName = "addDTO.mergeDetailList.sourceDeliveryDetailList.sourceId",
-            maxRetries = 1,
-            unlockAfterTx = true
+            maxRetries = 1
     )
     public Boolean addB2BDeclare(TmsDeclareBillDTO.AddDTO addDTO) {
         // 事务外完成所有 Feign 读取 + 校验 + 实体构建（erp-backend-standards：禁止事务内 Feign）。
@@ -3318,8 +3318,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     @DistributeLocker(
             businessType = DistributeKeyConstant.TMS_DECLARE_BILL_ID_KEY,
             keyName = "declareDTO.id",
-            maxRetries = 1,
-            unlockAfterTx = true
+            maxRetries = 1
     )
     public Boolean batchAddSplitFmDetail(TmsDeclareBillDTO.AddSplitDeclareDTO declareDTO) {
         if (CollUtil.isEmpty(declareDTO.getSplitDeclareDTOList())) {
@@ -3419,8 +3418,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     @DistributeLocker(
             businessType = DistributeKeyConstant.TMS_DECLARE_BILL_ID_KEY,
             keyName = "declareDTO.id",
-            maxRetries = 1,
-            unlockAfterTx = true
+            maxRetries = 1
     )
     public Boolean batchAddSplitB2bDetail(TmsDeclareBillDTO.AddSplitDeclareDTO declareDTO) {
         if (CollUtil.isEmpty(declareDTO.getSplitDeclareDTOList())) {
@@ -5427,8 +5425,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     @DistributeLocker(
             businessType = DistributeKeyConstant.TMS_DECLARE_BILL_SOURCE_KEY,
             keyName = "list.declareBillList.sourceDeliveryDetailList.sourceId",
-            maxRetries = 1,
-            unlockAfterTx = true
+            maxRetries = 1
     )
     public Boolean batchAddMergeDetail(String type, List<TmsDeclareBillDTO.MergeDeclareBillDTO> list) {
         List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> allSourceDetails = collectMergeSourceDetails(list);

@@ -26,7 +26,6 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
@@ -86,11 +85,10 @@ import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysPostFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.sys.feign.ThirdNoticePushRecordFeign;
-import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.tms.feign.DeliveryDeclareDetailMidFeign;
+import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.tms.feign.TmsDeclareBillFeign;
 import com.erp.rpc.tms.feign.TmsFirstMileLogisticFeign;
-import com.erp.rpc.wms.feign.WmsWarehouseFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
 import com.erp.server.wms.convert.FirstMileDeliveryConverter;
@@ -104,7 +102,6 @@ import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
@@ -551,12 +548,15 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             countryIdSet.add(delivery.getCountryId());
         }
         if (countryIdSet.size() > 1) {
-            throw new ServiceException("所选头程发货单国家不一致");
+            throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_DEST_COUNTRY_INCONSISTENT);
+        }
+        if (countryIdSet.isEmpty()) {
+            throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_DEST_COUNTRY_NOT_MAINTAINED);
         }
 
         List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(Collections.singletonList(countryIdSet.iterator().next()));
         if (CollectionUtils.isEmpty(countryList)) {
-            throw new ServiceException("国家信息不存在");
+            throw new ServiceException(ApiError.COMMON_COUNTRY_INFO_NOT_FOUND);
         }
         DictCountryEntity country = countryList.get(0);
         return Collections.singletonList(new BaseDropDownDTO.DisabledDTO(country.getId(), country.getNameCn(), country.getDisabled()));
@@ -3452,6 +3452,9 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
         //查询单位名称
         List<BasicDictEntity> declareUnitList = FeignQuery.create(BasicDictEntity.class).eq(BasicDictEntity::getType, "declareUnit").list();
+        Map<String, String> declareUnitNameMap = CollUtil.isEmpty(declareUnitList)
+                ? new HashMap<>()
+                : declareUnitList.stream().collect(Collectors.toMap(BasicDictEntity::getValue, BasicDictEntity::getName, (a, b) -> a));
 
         //币别明细
         List<DictCurrencyEntity> dictCurrencyList = sysUserFeign.currencyList();
@@ -3465,10 +3468,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 deliveryDetailDTO.setDeclareElement(productLogisticsEntity.getDeclareElement());
                 deliveryDetailDTO.setUnit(productLogisticsEntity.getDeclareUnit());
                 //报关单位名称
-                BasicDictEntity unitEntity = declareUnitList.stream().filter(v -> v.getValue().equals(deliveryDetailDTO.getUnit())).findFirst().orElse(null);
-                if (Objects.nonNull(unitEntity)) {
-                    deliveryDetailDTO.setUnitName(unitEntity.getName());
-                }
+                deliveryDetailDTO.setUnitName(declareUnitNameMap.get(productLogisticsEntity.getDeclareUnit()));
                 deliveryDetailDTO.setUnitPrice(productLogisticsEntity.getDeclarePrice());
                 deliveryDetailDTO.setDeclareCurrency(productLogisticsEntity.getDeclareCurrency());
                 deliveryDetailDTO.setDeclareCurrencySymbol(productLogisticsEntity.getDeclareCurrencySymbol());

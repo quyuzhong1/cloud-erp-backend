@@ -1602,6 +1602,8 @@ public enum ApiError implements Serializable {
     LOGISTICS_BILL_COST_IMPORT_NOT_EXIST_RECONCILIATION_MONTH(11528,"物流费用导入对账月份不能为空"),
     LOGISTICS_BILL_COST_IMPORT_NOT_EXIST_BILL(11529,"平台订单号、发货单号、销售单号、物流跟踪单号必须至少填一个"),
     FIRST_MILE_COST_ALLOCATION_ORG_ID_REQUIRED(11531,"分摊组织id为空"),
+    FIRST_MILE_SHIPMENT_DEST_COUNTRY_INCONSISTENT(11532,"所选头程发货单国家不一致"),
+    FIRST_MILE_SHIPMENT_DEST_COUNTRY_NOT_MAINTAINED(11533,"所选头程发货单未维护目的国"),
 
     /**
      * 样品管理 错误 信息 12000-12500
