@@ -1085,8 +1085,9 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (ObjectUtil.isEmpty(dataJson)) {
             return new ArrayList<>();
         }
-        List<TmsDeclareBillDTO.BatchUpdateFieldDropDownDTO> data = JSONUtil.toList(dataJson.getJSONArray("data"), TmsDeclareBillDTO.BatchUpdateFieldDropDownDTO.class).stream().filter(e -> e.getType().contains(type)).collect(Collectors.toList());;
-        return data;
+        return JSONUtil.toList(dataJson.getJSONArray("data"), TmsDeclareBillDTO.BatchUpdateFieldDropDownDTO.class).stream()
+                .filter(e -> StringUtils.isNotBlank(e.getType()) && e.getType().contains(type))
+                .collect(Collectors.toList());
     }
 
     /**
@@ -1271,9 +1272,21 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
     public List<BatchResultDTO> delete(TmsDeclareBillDTO.DeleteDTO dto) {
+        TmsDeclareBillDTO.DeletePreparedData prepared = prepareDeleteData(dto);
+        if (CollectionUtils.isEmpty(prepared.getRemoveIds())) {
+            return prepared.getResultList();
+        }
+        // 全局事务内仅写 TMS 单库；WMS 状态回写在事务提交后执行，避免 Feign 长时间占用全局事务。
+        service.deleteInGlobalTx(prepared);
+        updateWaitStatusForNoGeneratedSources(prepared.getRemovedMidList());
+        return prepared.getResultList();
+    }
+
+    /**
+     * 事务外完成删除校验与中间表查询，全局事务内仅消费本对象做本地库删除。
+     */
+    private TmsDeclareBillDTO.DeletePreparedData prepareDeleteData(TmsDeclareBillDTO.DeleteDTO dto) {
         List<TmsDeclareBillEntity> entityList = this.listByIds(dto.getIds());
         List<BatchResultDTO> resultList = new ArrayList<>();
         List<String> candidateIds = new ArrayList<>();
@@ -1285,7 +1298,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             candidateIds.add(entity.getId());
         }
         if (CollectionUtils.isEmpty(candidateIds)) {
-            return resultList;
+            return new TmsDeclareBillDTO.DeletePreparedData(Collections.emptyList(), Collections.emptyList(), resultList);
         }
         List<DeliveryDeclareDetailMidEntity> deliveryDeclareDetailMidList =
                 deliveryDeclareDetailMidService.listByDeclareBillIdList(candidateIds);
@@ -1307,18 +1320,24 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             resultList.add(BatchResultDTO.success(entity.getId(), entity.getCode(), "删除成功"));
         }
         if (CollectionUtils.isEmpty(removeIds)) {
-            return resultList;
+            return new TmsDeclareBillDTO.DeletePreparedData(Collections.emptyList(), Collections.emptyList(), resultList);
         }
-        this.removeByIds(removeIds);
-        //删除明细数据
-        detailService.deleteDetailByMainIdList(removeIds);
-        //中间表恢复为待生成，不删除历史来源明细
-        deliveryDeclareDetailMidService.restoreWaitGenerateByDeclareBillIds(removeIds);
         List<DeliveryDeclareDetailMidEntity> removedMidList = deliveryDeclareDetailMidList.stream()
                 .filter(item -> removeIds.contains(item.getDeclareId()))
                 .collect(Collectors.toList());
-        updateWaitStatusForNoGeneratedSources(removedMidList);
-        return resultList;
+        return new TmsDeclareBillDTO.DeletePreparedData(removeIds, removedMidList, resultList);
+    }
+
+    /**
+     * 全局事务内删除报关单主/明细并恢复中间表为待生成；不包含 WMS Feign 回写。
+     */
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteInGlobalTx(TmsDeclareBillDTO.DeletePreparedData prepared) {
+        List<String> removeIds = prepared.getRemoveIds();
+        this.removeByIds(removeIds);
+        detailService.deleteDetailByMainIdList(removeIds);
+        deliveryDeclareDetailMidService.restoreWaitGenerateByDeclareBillIds(removeIds);
     }
 
     /**
@@ -5973,7 +5992,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     }
 
     /**
-     * TMS 事务提交后回写 WMS 来源单报关状态（不参与 Seata 全局事务）。
+     * 回写 WMS 来源单报关状态；删除场景在全局事务提交后调用，避免 Feign 占用全局事务。
      * 规则：存在已生成（finish）中间表明细 → 来源单已生成；全部为 wait 或无中间表 → 来源单未生成。
      */
     private void syncSourceDeclareStatusIfNeeded(String type, List<String> sourceIdList) {

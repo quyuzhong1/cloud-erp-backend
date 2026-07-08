@@ -4,7 +4,9 @@ import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.write.style.ColumnWidth;
 import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.SortDTO;
+import com.erp.model.tms.entity.DeliveryDeclareDetailMidEntity;
 import com.erp.model.tms.entity.TmsDeclareBillDetailEntity;
 import com.erp.model.tms.entity.TmsDeclareBillEntity;
 import lombok.AllArgsConstructor;
@@ -2879,5 +2881,31 @@ public class TmsDeclareBillDTO implements Serializable {
          * 本票预构建的报关单主/明细实体。
          */
         private List<BatchMergeBillData> preparedBillList;
+    }
+
+    /**
+     * 报关单删除「事务外预构建」数据载体。
+     * <p>
+     * 校验与中间表查询在事务外完成；全局事务内仅执行本地库删除与中间表恢复，
+     * WMS 来源单状态回写在全局事务提交后执行，避免 Feign 长时间占用全局事务。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class DeletePreparedData {
+        /**
+         * 待删除报关单 id 列表。
+         */
+        private List<String> removeIds;
+
+        /**
+         * 本次删除关联、且需回写来源单状态的中间表明细。
+         */
+        private List<DeliveryDeclareDetailMidEntity> removedMidList;
+
+        /**
+         * 批量删除逐条结果（含校验失败项）。
+         */
+        private List<BatchResultDTO> resultList;
     }
 }

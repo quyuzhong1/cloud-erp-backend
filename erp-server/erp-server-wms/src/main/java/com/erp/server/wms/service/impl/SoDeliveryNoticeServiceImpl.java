@@ -1095,19 +1095,25 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         //查询币别名称
         List<String> currencyList = list.stream().map(TmsDeclareBillDTO.NotGenerateDetailDTO::getDeclareCurrency).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
         List<DictCurrencyEntity> currencyEntityList = FeignQuery.create(DictCurrencyEntity.class).in(DictCurrencyEntity::getId, currencyList).list();
+        Map<String, DictCurrencyEntity> currencyEntityMap = CollUtil.isEmpty(currencyEntityList)
+                ? Collections.emptyMap()
+                : currencyEntityList.stream().collect(Collectors.toMap(DictCurrencyEntity::getId, item -> item, (a, b) -> a));
 
         //查询原产国名称
         List<String> sourceCountryIdList = list.stream().map(TmsDeclareBillDTO.NotGenerateDetailDTO::getSourceCountry).distinct().collect(Collectors.toList());
         List<DictCountryEntity> sourceCountryList = sysDictFeign.listCountryByIds(sourceCountryIdList);
+        Map<String, DictCountryEntity> sourceCountryMap = CollUtil.isEmpty(sourceCountryList)
+                ? Collections.emptyMap()
+                : sourceCountryList.stream().collect(Collectors.toMap(DictCountryEntity::getId, item -> item, (a, b) -> a));
 
         for (TmsDeclareBillDTO.NotGenerateDetailDTO dto : list) {
             //币别名称
-            DictCurrencyEntity currencyEntity = currencyEntityList.stream().filter(v -> v.getId().equals(dto.getDeclareCurrency())).findFirst().orElse(null);
+            DictCurrencyEntity currencyEntity = currencyEntityMap.get(dto.getDeclareCurrency());
             if (Objects.nonNull(currencyEntity)) {
                 dto.setDeclareCurrencyName(currencyEntity.getName());
             }
             //国家名称
-            DictCountryEntity countryEntity = sourceCountryList.stream().filter(v -> v.getId().equals(dto.getSourceCountry())).findFirst().orElse(null);
+            DictCountryEntity countryEntity = sourceCountryMap.get(dto.getSourceCountry());
             if (Objects.nonNull(countryEntity)) {
                 dto.setSourceCountryName(countryEntity.getNameCn());
             }
