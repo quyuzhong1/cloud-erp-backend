@@ -1589,6 +1589,12 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                 }
             }
         }
+        // skuType=warehouse 时统计按 authId（海外仓服务商）维度分组/过滤，warehouseId（ERP仓库ID）条件不生效，
+        // 避免管理员误配 warehouseId 后统计范围与预期不符却毫无提示
+        if (RuleTypeEnum.WAREHOUSE.getCode().equals(skuType) && StringUtils.isNotBlank(queryDTO.getWarehouseId())) {
+            log.warn("SKU未匹配预警: type=warehouse 时 warehouseId 规则条件不生效（该维度按 authId 过滤），" +
+                    "请改为配置 authId 字段, 配置id:{}, warehouseId:{}", noticeEntity.getId(), queryDTO.getWarehouseId());
+        }
 
         // 2. 查询各维度未匹配SKU数量
         List<SkuMappingDTO.UnmatchCountDTO> unmatchList;

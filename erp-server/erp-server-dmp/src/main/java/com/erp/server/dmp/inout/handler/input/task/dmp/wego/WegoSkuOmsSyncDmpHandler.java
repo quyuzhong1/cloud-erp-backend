@@ -88,6 +88,10 @@ public class WegoSkuOmsSyncDmpHandler extends DmpInputBaseDmpHandler {
         // 查询 provider 绑定的系统仓库（按 authId 精确查询，避免每次全表扫描 listAllMatch）：
         //   - Feign 调用抛异常 → 直接上抛，终止本次同步，避免写入空 warehouse_id 的脏数据，等待任务重试
         //   - 调用成功但未找到绑定仓库 → 属于配置缺失，跳过同步并 warn，同样不写脏数据
+        //   - 同一 authId 可能绑定多个系统仓库：WEGO 的对照关系按服务商维度共享给其名下所有仓库
+        //     （下游 syncWarehouseNotMatchSku 写入 sku_mapping 时 hasMappingAll=true），
+        //     因此这里任取一条绑定仓库仅作为 warehouseId/warehouseName 的默认展示值，
+        //     不代表 SKU 实际归属的唯一仓库，不需要也不应该为了"归属哪个仓库"再做额外区分处理。
         List<OverseasProviderDTO.ListWithWarehouseDTO> matchedProviders = overseasProviderFeign.listMatchByMainId(authId);
         String warehouseId = "";
         String warehouseName = "";

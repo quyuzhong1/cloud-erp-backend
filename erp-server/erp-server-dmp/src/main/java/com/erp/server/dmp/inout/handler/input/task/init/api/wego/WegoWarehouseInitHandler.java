@@ -4,9 +4,9 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.exception.ServiceException;
+import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.wms.dto.WegoWarehouseQueryDTO;
 import com.erp.model.wms.entity.OverseasProviderEntity;
@@ -56,7 +56,7 @@ public class WegoWarehouseInitHandler extends DmpInputInitHandler {
 
         List<OverseasProviderEntity> overseasProviderEntityList = FeignQuery.create(OverseasProviderEntity.class)
                 .eq(OverseasProviderEntity::getAuthStatus, AuthStatusEnum.ALREADY.getCode())
-                .eq(OverseasProviderEntity::getCode, OmsPlatformEnum.WE_GO.getCode())
+                .eq(OverseasProviderEntity::getCode, DmpBasicSystemCodeEnum.WEGO.getCode())
                 .list();
         if (CollUtil.isEmpty(overseasProviderEntityList)) {
             throw new ServiceException("WEGO授权信息不存在");
@@ -67,7 +67,7 @@ public class WegoWarehouseInitHandler extends DmpInputInitHandler {
                 .findFirst()
                 .orElse(null);
         if (null == overseasProviderEntity) {
-            throw new ServiceException(OmsPlatformEnum.WE_GO.getCode() + "对应授权ID信息不存在,nextId:" + dmpInputTaskEntity.getNextLevelId());
+            throw new ServiceException(DmpBasicSystemCodeEnum.WEGO.getCode() + "对应授权ID信息不存在,nextId:" + dmpInputTaskEntity.getNextLevelId());
         }
 
         JSONObject resp = callWarehouseList(overseasProviderEntity);
