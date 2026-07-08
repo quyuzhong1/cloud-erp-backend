@@ -232,7 +232,7 @@ public interface WorkflowTaskInstanceService extends SuperService<WorkflowTaskIn
      * @param instanceId    对应编排实例 ID
      * @param currentIndex  当前节点序号
      * @param totalSteps    实例节点总数
-     * @param outcome       节点结果：FAILED 或 WAITING
+     * @param outcome       节点结果：FAILED 或 WAITING（SUCCESS 请使用 persistLastNodeSuccess）
      * @param lastError     错误摘要，用于写入实例 last_error
      */
     void persistNodeAndSyncInstance(WorkflowTaskRecordEntity node,
@@ -241,5 +241,39 @@ public interface WorkflowTaskInstanceService extends SuperService<WorkflowTaskIn
                                     int totalSteps,
                                     com.erp.server.oms.orchestration.StepInvokeResult.Outcome outcome,
                                     String lastError);
+
+    /**
+     * 事务提交后 MQ 发送失败时，新开独立事务将目标节点与实例标记为 FAILED，确保 Job 可扫描到并补偿。
+     *
+     * @param instanceId  编排实例 ID
+     * @param targetIndex 目标节点 index
+     * @param reason      失败原因，写入 last_error
+     */
+    void markDispatchMqFailed(String instanceId, Integer targetIndex, String reason);
+
+    /**
+     * 末节点成功：原子写节点 SUCCESS + 实例 SUCCESS，避免两步写库之间出现「节点成功/实例仍运行」中间态。
+     *
+     * @param node       末节点实体（内存中已准备好 SUCCESS 状态，尚未落库）
+     * @param instanceId 对应编排实例 ID
+     * @param maxIndex   末节点 index（= currentIndex）
+     * @param totalSteps 实例节点总数
+     */
+    void persistLastNodeSuccess(WorkflowTaskRecordEntity node,
+                                String instanceId,
+                                int maxIndex,
+                                int totalSteps);
+
+    /**
+     * 中间节点成功：原子写当前节点 SUCCESS + 下一节点 inputData，避免两次独立写库之间断链。
+     * <p>MQ 发送应在本方法事务提交后进行（由调用方通过 scheduleNextStep 处理）。</p>
+     *
+     * @param currentNode   当前节点（内存中已准备好 SUCCESS 状态，尚未落库）
+     * @param nextNode      下一节点实体；为 null 或 nextInputData 为空时仅写当前节点
+     * @param nextInputData 要回填到下一节点的 inputData；为空时跳过下一节点更新
+     */
+    void persistMiddleNodeSuccess(WorkflowTaskRecordEntity currentNode,
+                                  WorkflowTaskRecordEntity nextNode,
+                                  String nextInputData);
 }
 

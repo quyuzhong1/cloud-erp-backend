@@ -170,8 +170,18 @@ public class WorkflowTaskStepDispatcher {
         }
 
         if (!isInstanceActive(instance.getId())) {
-            log.info("编排实例已取消或终态，终止后续调度，instanceId={}", instance.getId());
-            // 节点状态已在内存中准备好但尚未落库，若实例已终态则节点保持 PROCESSING（由超时机制重置）
+            log.info("编排实例已取消或终态，节点结果仅归档不链式调度，instanceId={}", instance.getId());
+            // Feign 调用已完成、远端可能已执行；将节点最终状态落库（归档），
+            // 避免节点长期停留 PROCESSING 导致超时后被误判为需重试（重复执行风险）
+            WorkflowTaskRecordEntity pendingNode = result.getPendingNode();
+            if (pendingNode != null) {
+                try {
+                    workflowTaskRecordService.updateById(pendingNode);
+                } catch (Exception ex) {
+                    log.warn("实例已终态，节点状态归档失败（不影响业务），instanceId={}, index={}",
+                            instance.getId(), targetIndex, ex);
+                }
+            }
             return;
         }
 
@@ -197,20 +207,22 @@ public class WorkflowTaskStepDispatcher {
             WorkflowTaskRecordEntity pendingNode = result.getPendingNode();
             WorkflowTaskRecordEntity next = indexMap.get(targetIndex + 1);
             if (next == null) {
-                // 最后一个节点：原子写节点 SUCCESS + 实例 SUCCESS
+                // 末节点：原子写节点 SUCCESS + 实例 SUCCESS，两步同在一个事务，消除中间态
                 if (pendingNode != null) {
-                    workflowTaskInstanceService.persistNodeAndSyncInstance(
-                            pendingNode, instance.getId(), targetIndex, steps.size(),
-                            result.getOutcome(), null);
+                    workflowTaskInstanceService.persistLastNodeSuccess(
+                            pendingNode, instance.getId(), targetIndex, steps.size());
+                } else {
+                    markInstanceSuccess(instance, steps);
                 }
-                markInstanceSuccess(instance, steps);
                 return;
             }
-            // 中间节点：先原子写节点 SUCCESS（不改实例 currentIndex），再链式调度下一节点
+            // 中间节点：原子写当前节点 SUCCESS + 下一节点 inputData，MQ 在事务提交后发送
             if (pendingNode != null) {
-                workflowTaskRecordService.updateById(pendingNode);
-            }
-            if (CharSequenceUtil.isNotBlank(result.getOutputDataJson())) {
+                workflowTaskInstanceService.persistMiddleNodeSuccess(
+                        pendingNode,
+                        CharSequenceUtil.isNotBlank(result.getOutputDataJson()) ? next : null,
+                        result.getOutputDataJson());
+            } else if (CharSequenceUtil.isNotBlank(result.getOutputDataJson())) {
                 next.setInputData(result.getOutputDataJson());
                 workflowTaskRecordService.updateById(next);
             }
@@ -354,20 +366,20 @@ public class WorkflowTaskStepDispatcher {
     }
 
     /**
-     * 将超时的 WAITING 节点标记为终态失败，retryCount 提升至阈值以上后同步实例状态。
+     * 将超时的 WAITING 节点标记为终态失败，通过 persistNodeAndSyncInstance 原子写节点 + 实例状态，
+     * 避免两步写库之间出现「节点已失败、实例仍 waiting/running」的中间态。
      */
     private void markWaitingTimedOut(WorkflowTaskRecordEntity step, WorkflowTaskInstanceEntity instance) {
         int terminal = WorkflowTaskRecordService.AUTO_RETRY_MAX_COUNT + 1;
         String errorMsg = "WAITING 超时（超过 " + WorkflowTaskRecordService.TASK_WAITING_TIMEOUT_HOURS + " 小时未收到回调）";
-        workflowTaskRecordService.lambdaUpdate()
-                .eq(WorkflowTaskRecordEntity::getId, step.getId())
-                .set(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.FAILED.getCode())
-                .set(WorkflowTaskRecordEntity::getLastError, errorMsg)
-                .set(WorkflowTaskRecordEntity::getRetryCount,
-                        Math.max(Optional.ofNullable(step.getRetryCount()).orElse(0) + 1, terminal))
-                .set(WorkflowTaskRecordEntity::getEndTime, LocalDateTime.now())
-                .update();
-        workflowTaskInstanceService.markFailed(instance.getId(), step.getIndex(), errorMsg);
+        // 在内存中准备节点终态字段（不提前写 DB）
+        step.setStatus(WorkflowTaskRecordStatusEnum.FAILED.getCode());
+        step.setLastError(errorMsg);
+        step.setRetryCount(Math.max(Optional.ofNullable(step.getRetryCount()).orElse(0) + 1, terminal));
+        step.setEndTime(LocalDateTime.now());
+        // 原子写：节点 FAILED + 实例 FAILED（同一事务）
+        workflowTaskInstanceService.persistNodeAndSyncInstance(
+                step, instance.getId(), step.getIndex(), 0, StepInvokeResult.Outcome.FAILED, errorMsg);
     }
 
     private boolean isInstanceActive(String instanceId) {
