@@ -618,9 +618,8 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
      */
     @Transactional(rollbackFor = Exception.class)
     @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "sourceType,sourceId", unlockAfterTx = true)
-    public WorkflowTaskRecordDTO.ForceRetryResultDTO forceRetryWithLock(WorkflowTaskRecordDTO.ForceRetryDTO dto, String sourceType, String sourceId, WorkflowTaskRecordEntity lockTask) {
-        checkForceRetryPermission();
-        List<WorkflowTaskRecordEntity> taskList = listForceRetryTasks(dto, lockTask);
+    public WorkflowTaskRecordDTO.ForceRetryResultDTO forceRetryWithLock(WorkflowTaskRecordDTO.ForceRetryDTO dto, String sourceType, String sourceId) {
+        List<WorkflowTaskRecordEntity> taskList = listForceRetryTasks(dto);
         if (CollUtil.isEmpty(taskList)) {
             throw new ServiceException(ApiError.WF_TASK_RECORD_FORCE_RETRY_NOT_FOUND);
         }
