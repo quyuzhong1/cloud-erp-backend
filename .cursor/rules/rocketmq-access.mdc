@@ -1,0 +1,111 @@
+---
+description: RocketMQ Dashboard and API reference for production message queue troubleshooting
+alwaysApply: true
+---
+
+# RocketMQ 排查参考
+
+排查 **平台订单/产品未同步、DMP 输出卡在 mqsuccess、MQ 消费失败、消费堆积** 等问题时，在查库与 Loki 之外，**主动查 RocketMQ**。
+
+## 生产 Dashboard
+
+- **页面**：http://172.16.100.10:8080/#/consumer
+- **API 基址**：`http://172.16.100.10:8080`
+- **内网可达**：当前环境可直接 `curl` 调用，**无需登录凭据**（以实际访问结果为准）
+- **默认只读排查**：不要跳过/删除/重发消息，除非用户明确要求
+
+测试环境 Dashboard 地址未在本规则确认；若用户指定 test/uat，先问 URL 或从 Nacos `common.yml` 的 RocketMQ 配置核对。
+
+## 命名空间约定
+
+Topic / ConsumerGroup 前缀来自 Nacos `${spring.cloud.nacos.discovery.namespace}`：
+
+| 环境 | 前缀示例 |
+|------|----------|
+| 生产 | `prod-` |
+| 测试 | `test-` |
+
+代码常量见 `erp-common-message` 的 `RocketMqNewTopic`、`RocketMqNewConsumerGroup`、`RocketMqNewTag`；生产排查时将 `{namespace}` 替换为 `prod`。
+
+## 常用生产 Topic / ConsumerGroup
+
+| 业务 | Topic | ConsumerGroup | OMS 消费者 |
+|------|-------|---------------|------------|
+| DMP 平台订单 → OMS | `prod-dmp_platform_order_to_oms_topic` | `prod-dmp_platform_order_to_oms_group` | `NewPlatformOrderConsumerService`（**ORDERLY**） |
+| RestCloud 平台订单 → OMS | `prod-restcloud_platform_order_to_oms_topic` | `prod-restcloud_platform_order_to_oms_group` | RestCloud 消费者 |
+| DMP 平台产品 → OMS | `prod-dmp_platform_product_to_oms_topic` | `prod-dmp_platform_product_to_oms_group` | 产品同步消费者 |
+| 旧版平台订单拉取 | `PLATFORM_PULL_DATA_TOPIC`（带 namespace） | `{namespace}-platform_pull_order_consumer` | `PlatformOrderConsumerService` |
+
+DMP 新中台输出消息的 **Message Key** 一般为 `dmp_output_task_record.id`；业务单号在消息体 JSON 的 `platformCode` / `sourceId` 字段。
+
+## Dashboard API（已验证可用）
+
+### 列出全部 Consumer Group
+
+```text
+GET /consumer/groupList.query
+```
+
+### 查指定 Group 堆积与各 Queue 偏移
+
+```text
+GET /consumer/queryTopicByConsumer.query?consumerGroup={group}
+```
+
+关注返回中目标 topic 的：
+
+- `diffTotal`：总堆积
+- `queueStatInfoList[].brokerOffset - consumerOffset`：单 queue 堆积
+- `clientInfo`：当前消费实例
+- `lastTimestamp`：最近消费时间
+
+### 按时间范围查 Topic 消息（Message Key 在 body/keys 里）
+
+```text
+GET /message/queryMessageByTopic.query?topic={topic}&begin={ms}&end={ms}
+```
+
+`begin` / `end` 为 **毫秒** Unix 时间戳。
+
+## PowerShell 示例（Windows）
+
+```powershell
+# 查 DMP 平台订单消费组堆积
+curl.exe -sS -m 20 "http://172.16.100.10:8080/consumer/queryTopicByConsumer.query?consumerGroup=prod-dmp_platform_order_to_oms_group"
+
+# 按输出记录 id 对应的发送时间查消息（先换算 begin/end 毫秒时间戳）
+$push = [DateTimeOffset]::Parse('2026-06-18T01:09:52Z')
+$begin = $push.AddHours(-2).ToUnixTimeMilliseconds()
+$end = $push.AddHours(2).ToUnixTimeMilliseconds()
+curl.exe -sS -m 60 "http://172.16.100.10:8080/message/queryMessageByTopic.query?topic=prod-dmp_platform_order_to_oms_topic&begin=$begin&end=$end"
+```
+
+## 与 DMP 输出任务状态对照
+
+`erp-dmp.public.dmp_output_task_record.status`：
+
+| 状态 | 含义 |
+|------|------|
+| `mqsuccess` | MQ 已发送，**OMS 尚未消费完成**（或消费后未回调 finish） |
+| `finish` | 消费链路完成 |
+| `cosumererror` | OMS 消费异常 |
+
+**典型未同步链路判断：**
+
+1. DMP `dmp_so_info` 有单 → 平台已拉到中台
+2. `dmp_output_task_record` 为 `mqsuccess` → 已发 MQ，OMS 未处理完
+3. RocketMQ `diffTotal` 很大 → **消费堆积**，新单会长时间排队
+4. OMS Loki 无「销售平台订单接收到输出id=…」→ 消息尚未被消费到
+
+## 排查顺序建议
+
+1. 生产 DMP 库：`dmp_output_task_record`（按 `source_code` = `{platformCode}_{shopId}` 或 `data_id`）
+2. 生产 OMS 库：目标业务表（如 `so_b2c.platform_code`）
+3. Loki `erp-oms` / `erp-dmp`：消费日志与异常栈
+4. **RocketMQ Dashboard**：消费组 `diffTotal`、单 queue 是否卡死、Retry topic `%RETRY%{group}`
+
+## 生产环境注意
+
+- 顺序消费（`ConsumeMode.ORDERLY`）下，**单个 Queue  poison message 会阻塞同 Queue 后续消息**
+- 不要在规则、仓库或回复中写入 MQ 鉴权信息（当前 Dashboard 内网免登）
+- 修复堆积需运维/开发评估：扩容消费者、处理慢消费、死信排查等；Agent 默认只读排查

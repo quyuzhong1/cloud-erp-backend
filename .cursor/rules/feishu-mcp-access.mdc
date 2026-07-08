@@ -1,0 +1,139 @@
+---
+description: 飞书 Lark MCP：读群消息、读用户提供的 Wiki/云文档链接；OAuth 个人应用 AiMcp
+alwaysApply: true
+---
+
+# 飞书 MCP 参考
+
+个人 Cursor MCP：`lark-mcp`（`@larksuiteoapi/lark-mcp`），**OAuth 用户身份**。能力：**读群消息**（默认「软件研发组」）+ **读用户发来的飞书文档链接**（Wiki / 云文档 docx）。与 ERP 共用应用分离，个人自建 + 可用性测试发布。
+
+## 用户发飞书文档链接时（必须执行）
+
+当用户提供 `*.feishu.cn` / `*.larkoffice.com` 的 **Wiki、云文档、docx** 链接时：
+
+1. **不要**只用 WebFetch（内网/需登录，通常失败）
+2. **主动**用已 OAuth 的 user_access_token 调 Open API 读取正文，再回答
+3. 只读；不改文档、不加协作者、不发评论，除非用户明确要求写操作
+4. 无 token 或 scope 不足时：按下方 OAuth 流程重新 login，**不要**只告诉用户「读不了」
+
+### 链接识别与 token 提取
+
+| 链接形态 | 示例 | token 位置 |
+|---|---|---|
+| Wiki | `https://ulanzichina.feishu.cn/wiki/FeWnwMJekiqdgDkiR78csh27n9e` | 路径 `/wiki/{token}` |
+| 云文档 docx | `https://ulanzichina.feishu.cn/docx/GNHtd9hgWo8sEjx6vc7c2BmGnuf` | 路径 `/docx/{document_id}` |
+| 带 query | `...?from=from_copylink` | 忽略 query，只取路径段 |
+
+**表格 sheet、多维表格、PDF 等**：当前 scope 仅覆盖 Wiki + docx；若 API 失败，说明类型并问用户是否导出/换 docx 链接。
+
+### 读 Wiki（两步）
+
+1. `GET /open-apis/wiki/v2/spaces/get_node?token={wiki_token}` → 取 `data.node.title`、`obj_type`、`obj_token`
+2. 若 `obj_type === 'docx'`：`GET /open-apis/docx/v1/documents/{obj_token}/raw_content` → `data.content` 为纯文本
+
+### 读云文档 docx（一步）
+
+`GET /open-apis/docx/v1/documents/{document_id}/raw_content`
+
+### 实现方式优先级
+
+1. Cursor MCP `lark-mcp` 工具（`preset.light` 含 `docx.v1.document.rawContent`、`wiki.v2.space.getNode` 等）
+2. MCP 未加载时：Node + `authStore` 取 token，直接调 `open.feishu.cn`（与群消息拉取相同）
+
+## 配置文件位置
+
+| 项 | 路径 |
+|---|---|
+| Cursor MCP | `%USERPROFILE%\.cursor\mcp.json` → `lark-mcp` |
+| 一键 OAuth | `scripts/setup-feishu-mcp.ps1` |
+| Token 存储 | `%LOCALAPPDATA%\lark-mcp-nodejs\Data\storage.json` |
+
+### `mcp.json` 中 `lark-mcp`（IM + 文档，**不含** `drive:drive:readonly`）
+
+```json
+"lark-mcp": {
+  "command": "npx",
+  "args": [
+    "-y",
+    "@larksuiteoapi/lark-mcp",
+    "mcp",
+    "-a",
+    "${env:FEISHU_APP_ID}",
+    "-s",
+    "${env:FEISHU_APP_SECRET}",
+    "--oauth",
+    "--token-mode",
+    "user_access_token",
+    "--scope",
+    "im:chat:readonly,im:message,im:message.group_msg,im:message.group_msg:get_as_user,im:message:readonly,docx:document:readonly,wiki:wiki:readonly,offline_access",
+    "-t",
+    "preset.light"
+  ]
+}
+```
+
+**要点：** `login` 与 `mcp` 的 `--scope` 必须一致；`-t preset.light` 同时含 IM 与文档工具。
+
+**不要默认申请 `drive:drive:readonly`**（云空间全盘只读，OAuth 易弹 20027）；仅当用户明确要「搜云盘所有文件」时再单独加。
+
+## 环境变量（Windows User 级）
+
+| 变量 | 说明 |
+|---|---|
+| `FEISHU_APP_ID` | 默认 `cli_aac1b895fcb95bb4` |
+| `FEISHU_APP_SECRET` | setup 脚本写入，禁止进 Git/聊天 |
+| `FEISHU_OKR_CHAT_NAME` | 默认 `软件研发组` |
+| `FEISHU_OKR_CHAT_ID` | 可选，默认 `oc_0f8a8ebfc728f5a79950aa1d2d54f18d` |
+
+## 开放平台（用户身份权限）
+
+`https://open.feishu.cn/app/cli_aac1b895fcb95bb4`
+
+1. 重定向 URL：`http://localhost:3000/callback`
+2. **IM**：`im:chat:readonly`、`im:message`、`im:message.group_msg`、`im:message.group_msg:get_as_user`、`im:message:readonly`
+3. **文档**：`docx:document:readonly`、`wiki:wiki:readonly`
+4. 测试企业和人员 + **版本发布**（否则 `232034`）
+
+文档权限快捷申请：
+
+```text
+https://open.feishu.cn/app/cli_aac1b895fcb95bb4/auth?q=docx:document:readonly,wiki:wiki:readonly&token_type=user
+```
+
+## OAuth
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/setup-feishu-mcp.ps1
+```
+
+或手动 scope：
+
+```powershell
+$scopes = 'im:chat:readonly im:message im:message.group_msg im:message.group_msg:get_as_user im:message:readonly docx:document:readonly wiki:wiki:readonly offline_access'
+npx -y @larksuiteoapi/lark-mcp login -a $AppId -s $AppSecret --scope $scopes
+npx -y @larksuiteoapi/lark-mcp whoami
+```
+
+**成功标准：** `scopes` 含 `docx:document:readonly`、`wiki:wiki:readonly`（读文档）及 `im:message.group_msg:get_as_user`（读群消息）。完成后完全重启 Cursor。
+
+## 读群消息（简要）
+
+- 群：`FEISHU_OKR_CHAT_ID` 或按名称匹配「软件研发组」
+- `GET /open-apis/im/v1/messages`，`body.content` 为 JSON 字符串；`create_time` 多为毫秒
+- 群聊以**线上问题处理**为主；与 Jira/Git 交叉验证
+
+## 常见错误
+
+| 码 / 现象 | 处理 |
+|---|---|
+| `232034` | 应用未发版 → 版本管理与发布 |
+| `230027` 缺 IM scope | 加 IM 权限 → 发版 → 带 scope 重 login |
+| `20027` / 缺 `drive:drive:readonly` | 读 Wiki/docx **不需要** drive；从 OAuth scope 去掉 `drive:*` 后重授权 |
+| `whoami` 仅 `auth:user.id:read` | login 未带 `--scope` |
+| 文档 `99991672` / permission | 开放平台补 docx/wiki 只读 → 发版 → 重 login |
+| 无权限读该文档 | 用户飞书账号需对该 Wiki/文档有访问权（与浏览器能打开一致） |
+
+## 安全
+
+- 禁止写入 App Secret、user_access_token
+- 文档/群聊内容按敏感信息处理；回复用摘要，除非用户要求全文

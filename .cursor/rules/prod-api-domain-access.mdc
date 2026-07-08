@@ -1,0 +1,65 @@
+---
+description: 访问生产环境 HTTP API 时使用域名网关，禁止 IP:端口直连
+alwaysApply: true
+---
+
+# 生产 API 域名访问
+
+调用**生产环境** ERP HTTP API（排查补数、重推、接口验证、curl/Postman 示例等）时，**必须走域名网关**，不要写内网 IP 或微服务端口。
+
+## 网关基址（生产）
+
+与前端 `erp-web` 生产配置 `VITE_BASE_URL` 一致：
+
+```text
+https://erp.ulanzi.cn:9000/api
+```
+
+完整 URL 形如：
+
+```text
+https://erp.ulanzi.cn:9000/api/{service}/{相对路径}
+```
+
+`{service}` 示例：`oms`、`wms`、`dmp`、`auth`、`sys`、`tms`、`workflow` 等（与 Gateway 路由前缀一致）。
+
+## 禁止写法
+
+- ❌ `http://172.16.100.10:9000/...`
+- ❌ `http://172.16.100.10:9110/...`（直连 OMS）
+- ❌ `http://172.16.100.10:9090/...`（直连 WMS）
+- ❌ 其他 `172.16.*` IP + 端口作为生产 API 基址
+
+内网 IP 仅用于 **数据库 / Redis / RocketMQ Dashboard / Loki / SkyWalking** 等基础设施排查；**业务 REST API 仍用域名网关**。
+
+## 鉴权
+
+- Header：`Authorization: {token}`（**不要**加 `Bearer ` 前缀；与前端 `sessionStorage.token` 一致）
+- `Content-Type: application/json`（POST JSON 时）
+- 不要把 token 写入仓库、规则正文或持久化文档；仅在本机会话或用户提供的临时凭据中使用
+- **测试环境**需 token 时：用 `test-api-auth.mdc` 中的测试账号登录 `POST /auth/user/accountLogin` 获取 `accessToken`
+
+## 环境变量（可选覆盖）
+
+优先读用户环境变量（进程 + Windows User 级）：
+
+- `ERP_PROD_GATEWAY_URL`，默认 `https://erp.ulanzi.cn:9000/api`
+
+## 示例
+
+```powershell
+$base = if ($env:ERP_PROD_GATEWAY_URL) { $env:ERP_PROD_GATEWAY_URL } else { [Environment]::GetEnvironmentVariable('ERP_PROD_GATEWAY_URL','User') }
+if (-not $base) { $base = 'https://erp.ulanzi.cn:9000/api' }
+$headers = @{ Authorization = $token; 'Content-Type' = 'application/json' }
+$body = '{"ids":["2070426373860728833","2070426350422958082","2068979106003890178"]}'
+Invoke-RestMethod -Uri "$base/wms/soOutstock/afreshGenerateB2cOutstock" -Method Post -Headers $headers -Body $body
+```
+
+## 其他环境（非生产 API 时）
+
+| 环境 | 网关基址（与前端 env 一致） |
+|---|---|
+| 测试 | `https://erptest.ulanzi.cn:7000/api` |
+| UAT | 以 `erp-web` 对应 `.env.uat*` 中 `VITE_BASE_URL` 为准 |
+
+用户明确指定 test/uat/prod 时再选用对应域名；未指定且为生产排查/修数场景，默认生产域名。

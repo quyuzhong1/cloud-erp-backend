@@ -1,0 +1,38 @@
+---
+description: 禁止新增 UserContext.setIsUserSystem 用法
+globs: **/*.java
+alwaysApply: true
+---
+
+# 禁止 UserContext.setIsUserSystem
+
+**新增或修改 Java 代码时，不得使用** `UserContext.setIsUserSystem(...)`、`UserContext.clearIsUserSystem()`，也不得在外层用 try-finally 包裹上述调用。
+
+## 原因
+
+- ThreadLocal 标志位隐式影响 `getLoginUser()` / Feign `tokenuserinfo`，调用链不透明，排查困难。
+- 异步、回调、线程池场景下容易遗漏 `clear`，造成用户身份污染。
+
+## 禁止写法
+
+```java
+// ❌ 新增代码禁止
+UserContext.setIsUserSystem(true);
+try {
+    someService.doSomething();
+} finally {
+    UserContext.clearIsUserSystem();
+}
+```
+
+## 推荐替代
+
+1. **无 HTTP 登录上下文**（平台回调、MQ、定时任务）：在方法内显式使用 `UserContext.getSystemLoginUser()` 或 `UserContext.getDefaultLoginUser()`，并通过**方法入参**把 `userId` / `LoginUser` 传给下游；不要靠 ThreadLocal 开关。
+2. **跨 Feign 需要 system 身份**：优先在 RPC DTO 上显式传 `isUserSystem` 或 `operatorUserId`（沿用已有契约字段）；不要在新代码里靠 ThreadLocal 间接触发 FeignInterceptor。
+3. **调用 legacy 方法**：若被调方法内部仍含 `setIsUserSystem`（如部分历史 `saveCustom`），**外层不要再套一层**；后续小步重构被调方法本身，改为显式传操作人。
+4. **MyBatis 自动填充**：需要 system 用户写 `createUserId` 时，在实体或 MetaObject 上显式赋值，或走已有 `ErpObjectHandler` / DTO 字段，而非临时改 ThreadLocal。
+
+## 修改 legacy 代码时
+
+- 触碰到仍使用 `setIsUserSystem` 的文件时，**顺手改为显式传参**（范围限于当前 MR 相关逻辑，不顺手大 refactor）。
+- 不要在新分支、新功能中复制该模式。
