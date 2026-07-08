@@ -40,4 +40,12 @@ public interface LogisticsReconMapper extends BaseMapper<LogisticsReconEntity> {
      * @return List<LogisticsReconDTO.TabListDTO>
      */
     List<LogisticsReconDTO.TabListDTO> tabList(@Param("params") LogisticsReconDTO.PagingParamDTO params);
+
+    /**
+     * 详情页状态统计（匹配数 / 对账状态，与列表 paging 聚合逻辑一致）
+     *
+     * @param id 对账单主键
+     * @return 仅填充 matchCount、costCount、reconciliationStatus
+     */
+    LogisticsReconDTO.ListDTO selectStatusStatsById(@Param("id") String id);
 }
