@@ -18,39 +18,4 @@ import java.util.List;
  */
 public interface CfgDeclareRuleConditionService extends SuperService<CfgDeclareRuleConditionEntity> {
 
-    /**
-    * 新增
-    * @author jack
-    * @date: 2026-04-20
-    * @param dto
-    * @return
-    */
-    BaseResultDTO.AddDTO add(CfgDeclareRuleConditionDTO.AddDTO dto);
-
-    /**
-    * 修改
-    * @author jack
-    * @date: 2026-04-20
-    * @param dto
-    * @return
-    */
-    Boolean update(CfgDeclareRuleConditionDTO.UpdateDTO dto);
-
-    /**
-    * 状态统计
-    * @author jack
-    * @date: 2026-04-20
-    * @param dto
-    * @return List<CfgDeclareRuleConditionDTO.TabListDTO>>
-    */
-    List<CfgDeclareRuleConditionDTO.TabListDTO> tabList(PermissionsDTO dto);
-
-    /**
-    * 详情
-    * @author jack
-    * @date: 2026-04-20
-    * @param id
-    * @return
-    */
-    CfgDeclareRuleConditionDTO.ViewDTO view(String id);
 }

@@ -1525,7 +1525,11 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         // 用于装箱明细的体积重回填。
         Map<String, LogisticsChannelEntity> channelMap = loadChannelMap(logisticsBillEntityList);
         for (TmsDeclareBillDTO.SoOutDTO deliveryDTO : deliveryDTOList) {
-            LogisticsBillEntity logisticsBillEntity = logisticsBillEntityList.stream().filter(v->v.getOutstockId().equals(deliveryDTO.getSourceId())).findFirst().orElse(new LogisticsBillEntity());
+            LogisticsBillEntity logisticsBillEntity = logisticsBillEntityList.stream()
+                    .filter(v -> Objects.equals(v.getOutstockCode(), deliveryDTO.getSoOutstockCode())
+                            || Objects.equals(v.getOutstockId(), deliveryDTO.getSoOutstockId()))
+                    .findFirst()
+                    .orElse(new LogisticsBillEntity());
             LogisticsSupplierEntity logisticsSupplierEntity = logisticsSupplierEntityList.stream().filter(v->v.getId().equals(logisticsBillEntity.getLogisticsSupplierId())).findFirst().orElse(new LogisticsSupplierEntity());
             deliveryDTO.setShippingMethod(logisticsBillEntity.getShippingMethod());
             deliveryDTO.setShippingMethodName(LogisticsMethodEnum.getName(logisticsBillEntity.getShippingMethod()));
@@ -5567,21 +5571,23 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         }
 
         // 校验完成后再删除旧中间表，避免幂等命中 return 或校验抛错时误删历史关联。
+        List<String> obsoleteMidIds = existsMidList.stream()
+                .map(DeliveryDeclareDetailMidEntity::getId)
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.toList());
         if (splitSave) {
             // 拆分保存按票多轮调用：同一来源单的多张票共用 sourceId，
             // 若按整个 sourceId 删除中间表，会把本来源其它票刚生成的中间表一并删掉，
             // 导致除最后一票外的报关单丢失中间表（业务单号/来源单号/数量等全部为空，看起来只有主表）。
             // 因此这里只删除本票涉及来源明细对应的旧中间表（原报关单及其中间表已在拆分入口整单删除）。
-            List<String> obsoleteMidIds = existsMidList.stream()
-                    .map(DeliveryDeclareDetailMidEntity::getId)
-                    .filter(StringUtils::isNotBlank)
-                    .collect(Collectors.toList());
             if (CollUtil.isNotEmpty(obsoleteMidIds)) {
                 deliveryDeclareDetailMidService.removeByIds(obsoleteMidIds);
             }
         } else {
-            // 旧报关单 id 已在 existsMidList 中缓存，删除中间表不会影响后续新单落库。
-            deliveryDeclareDetailMidService.deleteDeliveryDeclareDetailMid(new ArrayList<>(sourceIdSet));
+            // 普通合并保存同样只删除本次命中的来源明细，保留同一来源单下未参与本次保存的待生成明细。
+            if (CollUtil.isNotEmpty(obsoleteMidIds)) {
+                deliveryDeclareDetailMidService.removeByIds(obsoleteMidIds);
+            }
         }
 
         List<DeliveryDeclareDetailMidEntity> changedMidList = new ArrayList<>();
