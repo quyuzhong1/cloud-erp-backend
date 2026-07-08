@@ -276,6 +276,16 @@ public class LogisticsReconDTO implements Serializable {
          * 对账总金额（带币别符号展示）
          */
         private String totalAmountStr;
+
+        /**
+         * 校验状态（已合并导入状态）importing / pending / confirmed
+         */
+        private String checkStatus;
+        /**
+         * 校验状态名称
+         */
+        private String checkStatusName;
+
         /**
          * 对账确认状态 toBeConfirm / partialConfirm / confirmed（查询时按当前对账单费用项状态派生，非主表存储）
          */

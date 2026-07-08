@@ -235,6 +235,8 @@ public class LogisticsReconServiceImpl
         data.setReconciliationMonth(DateUtil.formatCnYearMonth(entity.getReconciliationMonth()));
         data.setSupplierName(entity.getSupplierName());
         data.setTotalAmountStr(formatAmount(entity.getTotalAmount(), currencySymbol(entity.getCurrency())));
+        data.setCheckStatus(entity.getCheckStatus());
+        data.setCheckStatusName(LogisticsReconCheckStatusEnum.getName(entity.getCheckStatus()));
         fillViewStatus(data, baseMapper.selectStatusStatsById(id));
         return data;
     }
