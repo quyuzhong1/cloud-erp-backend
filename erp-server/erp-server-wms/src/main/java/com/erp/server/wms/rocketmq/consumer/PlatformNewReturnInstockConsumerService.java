@@ -305,6 +305,10 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 			ServiceException.runError("【海外仓退货入库】来源明细未匹配到映射");
 		}
 		SoReturnInstockEntity soReturnInstockEntity = this.buildPlatformSoReturnInstockEntity(dto, warehouseEntity, soB2cEntity, shopInfoEntity);
+		// 来源编号：该场景已匹配到具体的B2C退货单，取其挂载的销售订单编号作为来源追溯
+		if (StringUtils.isNotBlank(matchedReturn.getSoCode())) {
+			soReturnInstockEntity.setSourceCode(matchedReturn.getSoCode());
+		}
 
 		// 关联已匹配到的退货单：按SKU回写明细的退货单明细ID，退货单状态由待退货流转为已退货
 		List<SoB2cReturnDetailEntity> matchedDetailList = FeignQuery.create(SoB2cReturnDetailEntity.class)
@@ -409,6 +413,10 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 			ServiceException.runError("【海外仓退货入库】来源明细未匹配到映射");
 		}
 		SoReturnInstockEntity soReturnInstockEntity = this.buildPlatformSoReturnInstockEntity(dto, warehouseEntity, soB2cEntity, shopInfoEntity);
+		// 来源编号：该场景按参考单号直接匹配到销售订单（未命中具体退货单），取销售订单编号作为来源追溯
+		if (StringUtils.isNotBlank(soB2cEntity.getCode())) {
+			soReturnInstockEntity.setSourceCode(soB2cEntity.getCode());
+		}
 
 		// 顺带尝试关联退货单（与既有销售订单流程一致）
 		this.matchSoReturn(soReturnInstockEntity, detailEntityList, dto, soB2cEntity);
@@ -425,6 +433,10 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 			ServiceException.runError("【海外仓退货入库】来源明细未匹配到映射");
 		}
 		SoReturnInstockEntity soReturnInstockEntity = this.buildPlatformSoReturnInstockEntityForSoInfo(dto, warehouseEntity, soInfoEntity);
+		// 来源编号：该场景按参考单号匹配到B2B销售订单，取销售订单编号作为来源追溯
+		if (StringUtils.isNotBlank(soInfoEntity.getCode())) {
+			soReturnInstockEntity.setSourceCode(soInfoEntity.getCode());
+		}
 
 		soReturnInstockService.addByThirdWarehouse(soReturnInstockEntity, detailEntityList);
 	}
@@ -478,6 +490,7 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 		soReturnInstockEntity.setInventoryOrgName(company.getCompanyName());
 		soReturnInstockEntity.setWarehouseKeeperId(warehouseEntity.getChargeId());
 		soReturnInstockEntity.setApproveUserName("system");
+		// sourceCode在此处保持原语义（uniqueId），generateInstockBySoInfo中会按需覆盖为销售订单编号
 		soReturnInstockEntity.setSourceCode(dto.getUniqueId());
 		soReturnInstockEntity.setSourceType(SourceTypeEnum.PLATFORM_RETURN_INSTOCK.getCode());
 		soReturnInstockEntity.setThirdCode(dto.getPlatformReturnOrderNo());
@@ -488,6 +501,11 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 		soReturnInstockEntity.setSoId(soInfoEntity.getId());
 		soReturnInstockEntity.setSoCode(soInfoEntity.getCode());
 		soReturnInstockEntity.setCurrency(soInfoEntity.getCurrency());
+		// 部分海外仓来源平台（如WEGO）本身无"平台订单号"概念，只回传参考单号，
+		// dto.getPlatformOrderNo()必为空；此时用匹配到的销售订单自身的平台订单号兜底
+		if (StringUtils.isBlank(soReturnInstockEntity.getPlatformOrderCode())) {
+			soReturnInstockEntity.setPlatformOrderCode(soInfoEntity.getPlatformOrderCode());
+		}
 		if (StringUtils.isBlank(soInfoEntity.getCustomerId())) {
 			ServiceException.runError("B2B销售订单对应客户信息为空:{}", soInfoEntity.getCode());
 		}
@@ -814,6 +832,9 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 		soReturnInstockEntity.setInventoryOrgName(company.getCompanyName());
 		soReturnInstockEntity.setWarehouseKeeperId(warehouseEntity.getChargeId());
 		soReturnInstockEntity.setApproveUserName("system");
+		// 注意：sourceCode在平台仓入库场景（platformWarehouseHandle）用于按uniqueId去重，
+		// 此处保持原语义不变；海外仓场景（generateInstockBySo/generateInstockByMatchedReturn）
+		// 会在各自调用处按需覆盖为对应销售订单编号，不在此处统一处理
 		soReturnInstockEntity.setSourceCode(dto.getUniqueId());
 		soReturnInstockEntity.setSourceType(SourceTypeEnum.PLATFORM_RETURN_INSTOCK.getCode());
 		soReturnInstockEntity.setThirdCode(dto.getPlatformReturnOrderNo());
@@ -825,6 +846,11 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 			soReturnInstockEntity.setSoId(soB2cEntity.getId());
 			soReturnInstockEntity.setSoCode(soB2cEntity.getCode());
 			soReturnInstockEntity.setCurrency(soB2cEntity.getCurrency());
+			// 部分海外仓来源平台（如WEGO）本身无"平台订单号"概念，只回传参考单号，
+			// dto.getPlatformOrderNo()必为空；此时用匹配到的销售订单自身的平台订单号兜底
+			if (StringUtils.isBlank(soReturnInstockEntity.getPlatformOrderCode())) {
+				soReturnInstockEntity.setPlatformOrderCode(soB2cEntity.getPlatformCode());
+			}
 		} else {
 			soReturnInstockEntity.setCurrency(shopInfoEntity.getSettlementCurrency());
 		}
