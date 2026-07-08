@@ -1289,17 +1289,23 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 .map(OverseasWarehouseInboundReceivedEntity::getFlowId)
                 .collect(Collectors.toCollection(HashSet::new));
         //有签收记录直接保存，没有签收记录判断签收数量与数据库是否一致，不一致的话用签收数量-数据库签收数量
+        List<PlatformInboundDTO.Receiving> unmatchedReceivingList = new ArrayList<>();
         if (dto.getHasReceivedData() && CollectionUtils.isNotEmpty(dto.getReceivingDataList())) {
             //判断是否存在，通过明细id+数量+时间
             for (PlatformInboundDTO.Receiving receiving : dto.getReceivingDataList()) {
                 OverseasWarehouseInboundDetailEntity detailEntity = detailEntityMap.get(receiving.getProductSku());
                 // 平台回写的签收 sku 在本地入库明细中找不到时（如 wego 海外仓收到计划外不良品），
-                // 单独跳过本条流水并落 warn 日志，避免一条异常 NPE 把整批签收记录连同事务回滚掉。
+                // 单独跳过本条流水并落 warn 日志，避免一条异常 NPE 把整批签收记录连同事务回滚掉；
+                // 同时记录到 unmatchedReceivingList，事务提交后补一条业务操作日志，便于人工在单据详情页感知并对账追溯。
                 if (detailEntity == null) {
-                    log.warn("[海外仓签收] 单号={} 平台={} 流水sku={} 在本地入库明细中找不到，已跳过该流水",
+                    log.warn("[海外仓签收] 单号={} 平台={} 流水sku={} thirdId={} receiveQty={} receiveTime={} 在本地入库明细中找不到，已跳过该流水",
                             StringUtil.isBlank(dto.getReceivingCode()) ? dto.getSourceCode() : dto.getReceivingCode(),
                             dto.getPlatform(),
-                            receiving.getProductSku());
+                            receiving.getProductSku(),
+                            receiving.getThirdId(),
+                            receiving.getReceiveQty(),
+                            receiving.getReceiveTime());
+                    unmatchedReceivingList.add(receiving);
                     continue;
                 }
                 String detailId = detailEntity.getId();
@@ -1380,6 +1386,18 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         }
         if (CollectionUtils.isNotEmpty(insertReceiveEntityList)) {
             overseasWarehouseInboundReceivedService.saveBatch(insertReceiveEntityList);
+        }
+        if (CollectionUtils.isNotEmpty(unmatchedReceivingList)) {
+            // 计划外签收流水不落库，但补一条业务操作日志，便于人工在单据详情页感知并对账追溯，
+            // 而不是只能靠翻 warn 日志才能发现库存/调拨状态与三方仓不一致。
+            String unmatchedDetail = unmatchedReceivingList.stream()
+                    .map(r -> CharSequenceUtil.format("sku={},thirdId={},qty={}",
+                            r.getProductSku(), r.getThirdId(), r.getReceiveQty()))
+                    .collect(Collectors.joining("；"));
+            operateLogService.addModuleOperateLog(
+                    CharSequenceUtil.format("平台【{}】回传{}条签收流水在本地入库明细中找不到对应SKU，已跳过未落库，需人工核实：{}",
+                            dto.getPlatform(), unmatchedReceivingList.size(), unmatchedDetail),
+                    ModuleTypeEnum.OVERSEAS_WAREHOUSE_INBOUND.getCode(), mainEntity.getId(), "异常签收");
         }
 
         List<OverseasWarehouseInboundDetailEntity> updateList = new ArrayList<>(updateDetailEntityMap.values());
