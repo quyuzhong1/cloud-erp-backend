@@ -20,7 +20,6 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.constant.RedisCacheConstants;
-import com.common.message.constant.DistributeKeyConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -43,7 +42,9 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
+import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.ProductBomHistoryDTO;
 import com.erp.model.plm.dto.ProductDetailDTO;
@@ -71,7 +72,6 @@ import com.erp.model.wms.enums.PackingTaskStatusEnum;
 import com.erp.model.wms.enums.WmsDeclareStatusEnum;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
-import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.plm.feign.ProductPackFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
@@ -84,17 +84,12 @@ import com.erp.server.tms.mapper.TmsDeclareBillMapper;
 import com.erp.server.tms.service.*;
 import com.erp.server.tms.utils.DeclarationGenerationService;
 import com.erp.server.tms.utils.DeclareMergeDefaults;
-import com.google.common.collect.Lists;
 import freemarker.template.utility.StringUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.ss.usermodel.BorderStyle;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.DataFormatter;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.RegionUtil;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -1277,9 +1272,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (CollectionUtils.isEmpty(prepared.getRemoveIds())) {
             return prepared.getResultList();
         }
-        // 全局事务内仅写 TMS 单库；WMS 状态回写在事务提交后执行，避免 Feign 长时间占用全局事务。
+        // 全局事务内更新
         service.deleteInGlobalTx(prepared);
-        updateWaitStatusForNoGeneratedSources(prepared.getRemovedMidList());
         return prepared.getResultList();
     }
 
@@ -1338,6 +1332,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         this.removeByIds(removeIds);
         detailService.deleteDetailByMainIdList(removeIds);
         deliveryDeclareDetailMidService.restoreWaitGenerateByDeclareBillIds(removeIds);
+        updateWaitStatusForNoGeneratedSources(prepared.getRemovedMidList());
     }
 
     /**

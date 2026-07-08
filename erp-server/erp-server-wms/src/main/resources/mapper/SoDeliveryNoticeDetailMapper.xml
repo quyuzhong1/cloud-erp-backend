@@ -102,9 +102,6 @@
             SELECT
                 sdn.id AS source_id,
                 sdn.code AS source_code,
-                so.id AS so_outstock_id,
-                so.code AS so_outstock_code,
-                so.order_type AS business_type,
                 wc.id AS carton_id,
                 wc.box_no AS box_no,
                 wcs.box_length AS box_length,
@@ -115,12 +112,25 @@
             INNER JOIN packing_task pt ON pt.source_id = sdn.id AND pt.is_deleted = false
             INNER JOIN wms_carton wc ON wc.packing_task_id = pt.id AND wc.is_deleted = FALSE
             INNER JOIN wms_carton_spec wcs ON wc.spec_id = wcs.id AND wcs.is_deleted = FALSE
-            LEFT JOIN so_outstock so ON sdn.id = so.source_id AND so.is_deleted = false
             WHERE sdn.is_deleted = FALSE
             AND sdn.id IN
             <foreach collection="soDeliveryNoticeIdList" item="id" open="(" close=")" separator=",">
                 #{id}
             </foreach>
+        ),
+        source_outstock AS (
+            SELECT DISTINCT ON (so.source_id)
+                so.source_id,
+                so.id AS so_outstock_id,
+                so.code AS so_outstock_code,
+                so.order_type AS business_type
+            FROM so_outstock so
+            WHERE so.is_deleted = false
+            AND so.source_id IN
+            <foreach collection="soDeliveryNoticeIdList" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+            ORDER BY so.source_id, so.create_time DESC
         ),
         carton_detail_agg AS (
             SELECT
@@ -128,16 +138,16 @@
                 string_agg(concat(wcd.sku_no, '*', wcd.pack_qty), ',') AS box_desc,
                 string_agg(wcd.sku_no, ',') AS sku
             FROM wms_carton_detail wcd
-            INNER JOIN scoped_carton sc ON sc.carton_id = wcd.main_id
             WHERE wcd.is_deleted = false
+            AND wcd.main_id IN (SELECT carton_id FROM scoped_carton)
             GROUP BY wcd.main_id
         )
         SELECT
             sc.source_id AS sourceId,
             sc.source_code AS sourceCode,
-            sc.so_outstock_id AS soOutstockId,
-            sc.so_outstock_code AS soOutstockCode,
-            sc.business_type AS businessType,
+            so.so_outstock_id AS soOutstockId,
+            so.so_outstock_code AS soOutstockCode,
+            so.business_type AS businessType,
             sc.box_no AS boxNo,
             concat(sc.box_length, '*', sc.box_width, '*', sc.box_height) AS boxSize,
             sc.box_length * sc.box_width * sc.box_height AS multiplySize,
@@ -145,6 +155,7 @@
             cda.box_desc AS boxDesc,
             cda.sku AS sku
         FROM scoped_carton sc
+        LEFT JOIN source_outstock so ON sc.source_id = so.source_id
         LEFT JOIN carton_detail_agg cda ON cda.main_id = sc.carton_id
         ORDER BY CAST(sc.box_no AS INTEGER)
     </select>
