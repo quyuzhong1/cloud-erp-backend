@@ -235,6 +235,7 @@ public class LogisticsReconServiceImpl
         data.setReconciliationMonth(DateUtil.formatCnYearMonth(entity.getReconciliationMonth()));
         data.setSupplierName(entity.getSupplierName());
         data.setTotalAmountStr(formatAmount(entity.getTotalAmount(), currencySymbol(entity.getCurrency())));
+        fillViewStatus(data, baseMapper.selectStatusStatsById(id));
         return data;
     }
 
@@ -582,7 +583,7 @@ public class LogisticsReconServiceImpl
         } else if (StrUtil.isBlank(reconciliationMonth)) {
             rate = null;
         } else {
-            rate = dmpTaskFeign.getMonthRate(reconciliationMonth + "-01", code);
+            rate = dmpTaskFeign.getRate(reconciliationMonth + "-01", code);
         }
         cache.put(code, rate);
         return rate;
@@ -1646,7 +1647,7 @@ public class LogisticsReconServiceImpl
 
     /**
      * 校验对账单校验状态切换是否合法（待确认 ↔ 已确认）。
-     * <p>目标待确认：禁止同状态重复；已确认回退时要求全部费用项未匹配。</p>
+     * <p>目标待确认：禁止同状态重复；已确认回退时要求全部费用项为未匹配或匹配失败。</p>
      * <p>目标已确认：仅允许当前待确认；禁止导入失败或存在匹配中费用项。</p>
      *
      * @author Will
@@ -1669,13 +1670,12 @@ public class LogisticsReconServiceImpl
             throw new ServiceException(ApiError.LOGISTICS_RECON_CHECK_STATUS_NO_CHANGE);
         }
         if (LogisticsReconCheckStatusEnum.PENDING.getCode().equals(targetStatus)) {
-            // 已确认 → 待确认：仅当全部费用项匹配状态为未匹配时允许
-            long nonUnmatchedCount = logisticsReconDetailSubService.lambdaQuery()
+            // 已确认 → 待确认：仅当全部费用项匹配状态为未匹配或匹配失败时允许
+            long invalidCount = logisticsReconDetailSubService.lambdaQuery()
                     .eq(LogisticsReconDetailSubEntity::getMainId, entity.getId())
-                    .ne(LogisticsReconDetailSubEntity::getMatchStatus,
-                            LogisticsReconDetailMatchStatusEnum.UNMATCHED.getCode())
+                    .notIn(LogisticsReconDetailSubEntity::getMatchStatus, MATCH_CLAIM_FROM_STATUSES)
                     .count();
-            if (nonUnmatchedCount > 0) {
+            if (invalidCount > 0) {
                 throw new ServiceException(ApiError.LOGISTICS_RECON_MATCH_REF_EXISTS_ROLLBACK_FORBIDDEN);
             }
         }
@@ -2960,6 +2960,23 @@ public class LogisticsReconServiceImpl
     private static final int MATCH_CHUNK_SIZE = 500;
 
     // ============================== private ==============================
+
+    /**
+     * 详情页状态回填（对账状态 / 匹配状态，与列表 fillList 派生逻辑一致）
+     */
+    private void fillViewStatus(LogisticsReconDTO.ViewDTO data, LogisticsReconDTO.ListDTO stats) {
+        if (data == null || stats == null) {
+            return;
+        }
+        int matchCount = stats.getMatchCount() == null ? 0 : stats.getMatchCount();
+        int costCount = stats.getCostCount() == null ? 0 : stats.getCostCount();
+        String matchStatus = LogisticsReconMatchStatusEnum.resolve(matchCount, costCount);
+        data.setMatchStatus(matchStatus);
+        data.setMatchStatusName(LogisticsReconMatchStatusEnum.getName(matchStatus));
+        data.setReconciliationStatus(stats.getReconciliationStatus());
+        data.setReconciliationStatusName(
+                LogisticsReconReconciliationStatusEnum.getName(stats.getReconciliationStatus()));
+    }
 
     /**
      * 列表名称回填
