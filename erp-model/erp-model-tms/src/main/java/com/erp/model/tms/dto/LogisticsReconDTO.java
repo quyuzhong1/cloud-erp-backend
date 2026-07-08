@@ -285,23 +285,6 @@ public class LogisticsReconDTO implements Serializable {
          * 校验状态名称
          */
         private String checkStatusName;
-
-        /**
-         * 对账确认状态 toBeConfirm / partialConfirm / confirmed（查询时按当前对账单费用项状态派生，非主表存储）
-         */
-        private String reconciliationStatus;
-        /**
-         * 对账确认状态名称
-         */
-        private String reconciliationStatusName;
-        /**
-         * 匹配状态 unmatched / partial / matched（查询时按费用项 cost_count + 已匹配费用项数实时派生，非主表存储）
-         */
-        private String matchStatus;
-        /**
-         * 匹配状态名称
-         */
-        private String matchStatusName;
     }
 
     /**

@@ -110,29 +110,39 @@
         ) a ON a.main_id = logistics_recon.id
     </sql>
 
+
     <select id="paging" resultType="com.erp.model.tms.dto.LogisticsReconDTO$ListDTO">
         SELECT <include refid="Paging_Column_List"/>,
-        <include refid="Status_Stats_Select"/>,
+        COALESCE(m.match_count, 0) AS matchCount,
         COALESCE(a.match_success_amount, 0) AS matchSuccessAmount,
-        COALESCE(a.match_fail_amount, 0) AS matchFailAmount
+        COALESCE(a.match_fail_amount, 0) AS matchFailAmount,
+        CASE
+        WHEN COALESCE(a.reconciliation_total_count, 0) &lt;= 0
+        OR (COALESCE(a.reconciliation_confirmed_count, 0) &lt;= 0
+        AND COALESCE(a.reconciliation_partial_count, 0) &lt;= 0)
+        THEN 'toBeConfirm'
+        WHEN COALESCE(a.reconciliation_confirmed_count, 0) &gt;= COALESCE(a.reconciliation_total_count, 0)
+        THEN 'confirmed'
+        ELSE 'partialConfirm'
+        END AS reconciliationStatus
         FROM logistics_recon
         LEFT JOIN (
-            SELECT main_id,
-                   COUNT(*) FILTER (WHERE match_status = 'matched') AS match_count
-            FROM logistics_recon_detail_sub
-            WHERE is_deleted = false
-            GROUP BY main_id
+        SELECT main_id,
+        COUNT(*) FILTER (WHERE match_status = 'matched') AS match_count
+        FROM logistics_recon_detail_sub
+        WHERE is_deleted = false
+        GROUP BY main_id
         ) m ON m.main_id = logistics_recon.id
         LEFT JOIN (
-            SELECT sub.main_id,
-                   SUM(sub.actual_amount) FILTER (WHERE sub.match_status = 'matched') AS match_success_amount,
-                   SUM(sub.actual_amount) FILTER (WHERE sub.match_status = 'failed') AS match_fail_amount,
-                   COUNT(*) AS reconciliation_total_count,
-                   COUNT(*) FILTER (WHERE sub.reconciliation_status = 'confirmed') AS reconciliation_confirmed_count,
-                   COUNT(*) FILTER (WHERE sub.reconciliation_status = 'partialConfirm') AS reconciliation_partial_count
-            FROM logistics_recon_detail_sub sub
-            WHERE sub.is_deleted = false
-            GROUP BY sub.main_id
+        SELECT sub.main_id,
+        SUM(sub.actual_amount) FILTER (WHERE sub.match_status = 'matched') AS match_success_amount,
+        SUM(sub.actual_amount) FILTER (WHERE sub.match_status = 'failed') AS match_fail_amount,
+        COUNT(*) AS reconciliation_total_count,
+        COUNT(*) FILTER (WHERE sub.reconciliation_status = 'confirmed') AS reconciliation_confirmed_count,
+        COUNT(*) FILTER (WHERE sub.reconciliation_status = 'partialConfirm') AS reconciliation_partial_count
+        FROM logistics_recon_detail_sub sub
+        WHERE sub.is_deleted = false
+        GROUP BY sub.main_id
         ) a ON a.main_id = logistics_recon.id
         WHERE ${params.sqlMap.default}
         AND is_deleted = false
@@ -158,15 +168,4 @@
         </if>
         GROUP BY check_status
     </select>
-
-    <!-- 详情页状态统计（与 paging 聚合逻辑一致） -->
-    <select id="selectStatusStatsById" resultType="com.erp.model.tms.dto.LogisticsReconDTO$ListDTO">
-        SELECT logistics_recon.cost_count AS costCount,
-        <include refid="Status_Stats_Select"/>
-        FROM logistics_recon
-        <include refid="Status_Stats_Join"/>
-        WHERE logistics_recon.id = #{id}
-          AND logistics_recon.is_deleted = false
-    </select>
-
 </mapper>
