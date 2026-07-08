@@ -1562,6 +1562,16 @@ public enum ApiError implements Serializable {
     WH_STOCKTAKING_NOT_ALLOW_APPROVE(11137,"【{0}】盘点日期不能小于当前日期,请修改后重新审核"),
 
     WH_ONWAY_WAREHOUSE_NOT_EXIST(11138,"目的仓【{}】未配置在途仓"),
+    WH_WEGO_INBOUND_CODE_REQUIRED(11139,"WEGO入库单号不能为空"),
+    WH_WEGO_AUTH_INFO_EMPTY(11140,"WEGO授权信息不能为空"),
+    WH_WEGO_AUTH_TOKEN_SECRET_MISSING(11141,"WEGO授权信息appToken/appSecret不能为空"),
+    WH_WEGO_PACKING_LIST_EMPTY(11142,"WEGO装箱清单为空"),
+    WH_WEGO_PACKING_BOX_NO_VALID_SKU(11143,"装箱清单箱内无有效SKU明细，发货单号【{0}】，箱号【{1}】"),
+    WH_WEGO_PACKING_LIST_MISSING_BOX_NO(11144,"装箱清单缺少箱号"),
+    WH_WEGO_OUTBOUND_DETAIL_EMPTY(11145,"WEGO出库明细不能为空"),
+    WH_WEGO_OUTBOUND_CODE_REQUIRED(11146,"WEGO出库单号不能为空"),
+    WH_WEGO_QUERY_FALLBACK_EMPTY_RESPONSE(11147,"WEGO查询出库单降级查询接口响应为空，referenceCode【{0}】"),
+    WH_WEGO_QUERY_FALLBACK_FAILED(11148,"WEGO查询出库单降级查询接口返回失败：errorCode【{0}】，errorMsg【{1}】"),
 
 
     /**

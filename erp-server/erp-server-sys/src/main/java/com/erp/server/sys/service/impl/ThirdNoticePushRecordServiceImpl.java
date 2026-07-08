@@ -1417,13 +1417,13 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                     //仓位补货
                     sendWarehouseLocationReplenish(noticeEntity,post, roleType, specificPerson, title, content, now, delayLevel);
                 } else if (SourceTypeEnum.OMS_SKU_MAPPING_UNMATCH_PLATFORM.getCode().equals(businessType)) {
-                    sendSkuMappingUnmatchNotice(noticeEntity, post, roleType, specificPerson, title, content, now, delayLevel, "platform");
+                    sendSkuMappingUnmatchNotice(noticeEntity, post, roleType, specificPerson, title, content, now, delayLevel, RuleTypeEnum.B2C_PLATFORM.getCode());
                 } else if (SourceTypeEnum.OMS_SKU_MAPPING_UNMATCH_WAREHOUSE.getCode().equals(businessType)) {
-                    sendSkuMappingUnmatchNotice(noticeEntity, post, roleType, specificPerson, title, content, now, delayLevel, "warehouse");
+                    sendSkuMappingUnmatchNotice(noticeEntity, post, roleType, specificPerson, title, content, now, delayLevel, RuleTypeEnum.WAREHOUSE.getCode());
                 } else if (SourceTypeEnum.OMS_SKU_MAPPING_UNMATCH_CUSTOMER.getCode().equals(businessType)) {
-                    sendSkuMappingUnmatchNotice(noticeEntity, post, roleType, specificPerson, title, content, now, delayLevel, "customer");
+                    sendSkuMappingUnmatchNotice(noticeEntity, post, roleType, specificPerson, title, content, now, delayLevel, RuleTypeEnum.CUSTOMER.getCode());
                 } else if (SourceTypeEnum.OMS_SKU_MAPPING_UNMATCH_B2B_PLATFORM.getCode().equals(businessType)) {
-                    sendSkuMappingUnmatchNotice(noticeEntity, post, roleType, specificPerson, title, content, now, delayLevel, "b2bPlatform");
+                    sendSkuMappingUnmatchNotice(noticeEntity, post, roleType, specificPerson, title, content, now, delayLevel, RuleTypeEnum.B2B_PLATFORM.getCode());
                 }
             }
         }
@@ -1592,6 +1592,7 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
             unmatchList = skuMappingFeign.countUnmatchedGroupByWarehouse(queryDTO);
         } catch (Exception e) {
             log.error("SKU未匹配预警: 查询未匹配数量异常, 配置id:{}", noticeEntity.getId(), e);
+            saveSkuMappingUnmatchFailedRecord(noticeEntity, skuType, now, e);
             return;
         }
         if (CollUtil.isEmpty(unmatchList)) {
@@ -1646,6 +1647,27 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
 
         // 6. 发送一条汇总飞书卡片
         forSendByNoticeMethod(noticeEntity, userIdList, now, cardTitle, cardContent, delayLevel, buttonDTO);
+    }
+
+    /**
+     * SKU未匹配预警：Feign 查询未匹配数量异常时，落一条 FAILED 记录留痕，避免静默跳过。
+     * @author lc
+     */
+    private void saveSkuMappingUnmatchFailedRecord(CfgThirdNoticeEntity noticeEntity, String skuType, LocalDateTime now, Exception e) {
+        ThirdNoticePushRecordEntity recordEntity = new ThirdNoticePushRecordEntity();
+        recordEntity.setCfgThirdNoticeId(noticeEntity.getId());
+        recordEntity.setNoticeType(ThirdNoticePushRecordNoticeTypeEnum.MESSAGEPUSH.getCode());
+        recordEntity.setBusinessType(noticeEntity.getBusinessType());
+        recordEntity.setBusinessCode(skuType);
+        recordEntity.setNoticeMethod(noticeEntity.getNoticeMethod());
+        recordEntity.setReceiverId("");
+        recordEntity.setReceiverName("");
+        recordEntity.setSendTime(now);
+        recordEntity.setTitle(noticeEntity.getTitle());
+        recordEntity.setContent("");
+        recordEntity.setStatus(ThirdNoticePushRecordStatusEnum.FAILED.getCode());
+        recordEntity.setErrorReason("SKU未匹配预警：查询未匹配数量异常：" + e.getMessage());
+        save(recordEntity);
     }
 
     /**
