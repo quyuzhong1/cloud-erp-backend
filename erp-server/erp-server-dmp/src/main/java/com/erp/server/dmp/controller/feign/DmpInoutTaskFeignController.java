@@ -327,9 +327,22 @@ public class DmpInoutTaskFeignController{
 			quantity = Integer.parseInt(request.get("quantity"));
 		}
 		String paymentMethod = CharSequenceUtil.blankToDefault(request.get("paymentMethod"), "pix");
-		Map<String, Object> result = new LinkedHashMap<>(4);
+		Map<String, Object> result = new LinkedHashMap<>(8);
 		result.put("onboarding", magaluService.putSandboxOnboarding(shopInfoDTO));
-		result.put("order", magaluService.createSandboxSampleOrder(shopInfoDTO, sku, quantity, paymentMethod));
+		com.alibaba.fastjson.JSONObject order = magaluService.createSandboxSampleOrder(shopInfoDTO, sku, quantity, paymentMethod);
+		result.put("order", order);
+		String orderId = order == null ? "" : CharSequenceUtil.blankToDefault(order.getString("id"), "");
+		String orderCode = order == null ? "" : CharSequenceUtil.blankToDefault(order.getString("code"), "");
+		if (CharSequenceUtil.isNotBlank(orderId)) {
+			try {
+				result.put("confirm", magaluService.confirmSandboxSampleOrder(shopInfoDTO, orderId));
+			} catch (Exception e) {
+				result.put("confirmError", e.getMessage());
+			}
+			if (CharSequenceUtil.isNotBlank(orderCode)) {
+				result.put("detail", magaluService.getOrderDetail(shopInfoDTO, null, orderCode));
+			}
+		}
 		return ApiResult.success(result);
 	}
 }
