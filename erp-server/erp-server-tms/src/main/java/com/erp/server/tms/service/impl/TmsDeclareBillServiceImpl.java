@@ -351,28 +351,41 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_DEST_COUNTRY_CN_NOT_GENERATE,
                     String.join("、", mainlandSourceCodes));
         }
-        TmsDeclareBillEntity baseTmsDeclareBillEntity = new TmsDeclareBillEntity();
-        BeanMapperUtils.copy(addDTO, baseTmsDeclareBillEntity);
-        BeanMapperUtils.copy(deliveryDTO, baseTmsDeclareBillEntity);
-        baseTmsDeclareBillEntity.setDeclareStatus(com.erp.model.tms.enums.DeclareStatusEnum.WAIT.getCode());
-        baseTmsDeclareBillEntity.setType(SourceTypeEnum.FM_DECLARE_BILL.getCode());
-        // 贸易国默认中国香港。
-        applyTradingAreaDefault(baseTmsDeclareBillEntity);
-        // 48 个明细为一个报关单
-        List<TmsDeclareBillDTO.ProductDetail> allProductDetailList = deliveryDTO.getProductDetailList();
-        if(CollectionUtils.isEmpty(allProductDetailList)){
-            throw new ServiceException(ApiError.LOGISTICS_DECLARE_GENERATABLE_DETAIL_NOT_FOUND);
+        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList = loadFullBoxSourceDetail(
+                SourceTypeEnum.FIRST_MILE_DELIVERY.getCode(), sourceIdList);
+        List<TmsDeclareBillDTO.MergeDeclareBillDTO> autoMergeList = autoMergeDeclareBillView(
+                new TmsDeclareBillDTO.AutoMergeDeclareBillViewDTO(Boolean.TRUE, sourceDetailList));
+        List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> autoMergeDetailList = autoMergeList.stream()
+                .filter(Objects::nonNull)
+                .map(TmsDeclareBillDTO.MergeDeclareBillDTO::getDeclareBillList)
+                .filter(CollUtil::isNotEmpty)
+                .flatMap(Collection::stream)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(autoMergeDetailList)) {
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_SAVE_REQUIRED);
         }
-        //自动生成报关单前校验海关编码/报关品名/申报要素/单位/币种/单价是否完整，
-        // 缺失则提示对应来源单据 + SKU 缺哪些字段，不进入入库流程。
-        validateAutoFmDeclareProductDetails(deliveryDTO.getSourceCode(), allProductDetailList);
-        List<List<TmsDeclareBillDTO.ProductDetail>> productDetailListList = Lists.partition(allProductDetailList, SAVE_DECLARE_DETAIL_LIMIT);
-        List<TmsDeclareBillDTO.FmAddBillData> generatedBills = new ArrayList<>(productDetailListList.size());
-        for(List<TmsDeclareBillDTO.ProductDetail> productDetailList : productDetailListList){
-            TmsDeclareBillEntity tmsDeclareBillEntity = BeanUtil.copyProperties(baseTmsDeclareBillEntity,TmsDeclareBillEntity.class);
-            List<TmsDeclareBillDetailEntity> detailEntityList = BeanUtil.copyToList(productDetailList,TmsDeclareBillDetailEntity.class);
-            tmsDeclareBillEntity.setNetWeight(productDetailList.stream().filter(v->Objects.nonNull(v.getNetWeight())).map(v->v.getNetWeight().multiply(new BigDecimal(v.getQty())).divide(new BigDecimal(1000),4, RoundingMode.HALF_UP)).reduce(BigDecimal.ZERO, BigDecimal::add));
-            generatedBills.add(new TmsDeclareBillDTO.FmAddBillData(tmsDeclareBillEntity, detailEntityList));
+        validateAutoMergeDeclareDetailRequired(autoMergeDetailList);
+        List<TmsDeclareBillDTO.FmAddBillData> generatedBills = new ArrayList<>(autoMergeList.size());
+        for (TmsDeclareBillDTO.MergeDeclareBillDTO mergeDeclareBillDTO : autoMergeList) {
+            if (Objects.isNull(mergeDeclareBillDTO) || CollUtil.isEmpty(mergeDeclareBillDTO.getDeclareBillList())) {
+                continue;
+            }
+            List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> declareBillList = mergeDeclareBillDTO.getDeclareBillList();
+            List<TmsDeclareBillDetailEntity> detailEntityList = new ArrayList<>(declareBillList.size());
+            for (TmsDeclareBillDTO.MergeDeclareBillDetailDTO detailDTO : declareBillList) {
+                TmsDeclareBillDetailEntity detailEntity = new TmsDeclareBillDetailEntity();
+                mapMergeDeclareDetailToEntity(detailDTO, detailEntity);
+                detailEntityList.add(detailEntity);
+            }
+            TmsDeclareBillEntity declareBillEntity = new TmsDeclareBillEntity();
+            BeanMapperUtils.copy(addDTO, declareBillEntity);
+            fillBatchDeclareBillEntity(SourceTypeEnum.FM_DECLARE_BILL.getCode(), declareBillList, declareBillEntity);
+            applyTradingAreaDefault(declareBillEntity);
+            generatedBills.add(new TmsDeclareBillDTO.FmAddBillData(declareBillEntity, detailEntityList, declareBillList));
+        }
+        if (CollUtil.isEmpty(generatedBills)) {
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_SAVE_REQUIRED);
         }
         prepared.setGeneratedBills(generatedBills);
         return prepared;
@@ -395,10 +408,28 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             syncDeclareGeneratedSourceStatus(SourceTypeEnum.FM_DECLARE_BILL.getCode(), prepared.getSourceIdList());
             return;
         }
-        for (TmsDeclareBillDTO.FmAddBillData billData : prepared.getGeneratedBills()) {
-            service.add(billData.getDeclareBillEntity(), billData.getDetailEntityList(), SourceTypeEnum.FIRST_MILE_DELIVERY, false);
+        if (CollUtil.isNotEmpty(prepared.getGeneratedBills())) {
+            List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> autoMergeDetailList = prepared.getGeneratedBills().stream()
+                    .map(TmsDeclareBillDTO.FmAddBillData::getDeclareBillList)
+                    .filter(CollUtil::isNotEmpty)
+                    .flatMap(Collection::stream)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+            Set<String> sourceKeySet = collectSourceKeySet(autoMergeDetailList);
+            validateSourceNotGenerated(sourceKeySet, collectSourceIdSet(autoMergeDetailList),
+                    SourceTypeEnum.FIRST_MILE_DELIVERY.getCode(), null);
+            for (TmsDeclareBillDTO.FmAddBillData billData : prepared.getGeneratedBills()) {
+                BaseResultDTO.AddDTO addResult = service.add(billData.getDeclareBillEntity(),
+                        billData.getDetailEntityList(), SourceTypeEnum.FM_DECLARE_BILL, false);
+                deliveryDeclareDetailMidService.saveGeneratedMidData(
+                        SourceTypeEnum.FIRST_MILE_DELIVERY.getCode(),
+                        billData.getDeclareBillList(),
+                        billData.getDetailEntityList(),
+                        addResult.getId(),
+                        addResult.getCode());
+            }
+            syncDeclareGeneratedSourceStatus(SourceTypeEnum.FM_DECLARE_BILL.getCode(), prepared.getSourceIdList());
         }
-        syncDeclareGeneratedSourceStatus(SourceTypeEnum.FM_DECLARE_BILL.getCode(), prepared.getSourceIdList());
     }
 
     /**
@@ -756,14 +787,13 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
     /**
      * 头程报关单列表：物流商沿用 logistics_bill 链路（按 outstockCode 关联），与历史口径保持一致。
+     * 合并报关后 sourceCode 可能为逗号拼接，回填时需拆分后逐码匹配并去重拼接物流商。
      */
     private void fillFmDeclareSupplier(List<TmsDeclareBillDTO.PagingVO> list) {
         List<String> sourceCodes = list.stream()
                 .map(TmsDeclareBillDTO.PagingVO::getSourceCode)
                 .filter(StringUtils::isNotBlank)
-                .flatMap(code -> Arrays.stream(code.split(",")))
-                .map(String::trim)
-                .filter(StringUtils::isNotBlank)
+                .flatMap(code -> splitCommaValues(code).stream())
                 .distinct()
                 .collect(Collectors.toList());
         List<LogisticsBillEntity> logisticsList = CollectionUtils.isEmpty(sourceCodes)
@@ -777,16 +807,36 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         List<LogisticsSupplierEntity> supplierList = CollectionUtils.isNotEmpty(supplierIds)
                 ? logisticsSupplierService.listByIds(supplierIds)
                 : new ArrayList<>();
+        Map<String, LogisticsSupplierEntity> supplierMap = supplierList.stream()
+                .filter(s -> StringUtils.isNotBlank(s.getId()))
+                .collect(Collectors.toMap(LogisticsSupplierEntity::getId, s -> s, (a, b) -> a));
         list.forEach(v -> {
-            LogisticsBillEntity logistics = logisticsList.stream()
-                    .filter(e -> e.getOutstockCode().equals(v.getSourceCode()))
-                    .findFirst().orElse(null);
-            if (logistics != null) {
-                LogisticsSupplierEntity supplier = supplierList.stream()
-                        .filter(e -> e.getId().equals(logistics.getLogisticsSupplierId()))
-                        .findFirst().orElse(new LogisticsSupplierEntity());
-                v.setLogisticsSupplierId(supplier.getId());
-                v.setLogisticsSupplierName(supplier.getSupplierName());
+            List<String> rowSourceCodes = splitCommaValues(v.getSourceCode());
+            List<LogisticsBillEntity> matchedLogistics = logisticsList.stream()
+                    .filter(e -> rowSourceCodes.contains(e.getOutstockCode()))
+                    .collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(matchedLogistics)) {
+                String supplierIdsJoined = matchedLogistics.stream()
+                        .map(LogisticsBillEntity::getLogisticsSupplierId)
+                        .filter(StringUtils::isNotBlank)
+                        .distinct()
+                        .collect(Collectors.joining(","));
+                String supplierNamesJoined = matchedLogistics.stream()
+                        .map(LogisticsBillEntity::getLogisticsSupplierId)
+                        .filter(StringUtils::isNotBlank)
+                        .distinct()
+                        .map(supplierMap::get)
+                        .filter(Objects::nonNull)
+                        .map(LogisticsSupplierEntity::getSupplierName)
+                        .filter(StringUtils::isNotBlank)
+                        .distinct()
+                        .collect(Collectors.joining(","));
+                if (StringUtils.isNotBlank(supplierIdsJoined)) {
+                    v.setLogisticsSupplierId(supplierIdsJoined);
+                }
+                if (StringUtils.isNotBlank(supplierNamesJoined)) {
+                    v.setLogisticsSupplierName(supplierNamesJoined);
+                }
             }
             v.setBusinessTypeName(FbaDemandTypeEnum.getName(v.getBusinessType()));
         });
@@ -1387,7 +1437,12 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         List<String> ids = list.stream().map(TmsDeclareBillDTO.ExportDTO::getId).collect(Collectors.toList());
         List<TmsDeclareBillDetailEntity> detailList = detailService.listByMainIds(ids);
         List<TmsDeclareBillDTO.ExportProductDetail> allExportProductDetailList = BeanUtil.copyToList(detailList,TmsDeclareBillDTO.ExportProductDetail.class);
-        List<String> sourceCodeList = list.stream().map(TmsDeclareBillDTO.ExportDTO::getSourceCode).distinct().collect(Collectors.toList());
+        List<String> sourceCodeList = list.stream()
+                .map(TmsDeclareBillDTO.ExportDTO::getSourceCode)
+                .filter(StringUtils::isNotBlank)
+                .flatMap(code -> splitCommaValues(code).stream())
+                .distinct()
+                .collect(Collectors.toList());
         List<LogisticsBillEntity> logisticsBillEntityList = fmLogisticService.listByOutstcockCode(sourceCodeList);
 
         Map<String, SysAccountingCompanyEntity> allAccountingCompanyMap = accountingCompanyMap;
@@ -1433,7 +1488,11 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 exportDTO.setReceiverCode(receiverCompanyEntity.getCode()+"("+receiverCompanyEntity.getCompanyHsCode()+")");
             }
 
-            LogisticsBillEntity logisticsBillEntity = logisticsBillEntityList.stream().filter(v->v.getOutstockCode().equals(exportDTO.getSourceCode())).findFirst().orElse(new LogisticsBillEntity());
+            List<String> rowSourceCodes = splitCommaValues(exportDTO.getSourceCode());
+            LogisticsBillEntity logisticsBillEntity = logisticsBillEntityList.stream()
+                    .filter(v -> rowSourceCodes.contains(v.getOutstockCode()))
+                    .findFirst()
+                    .orElse(new LogisticsBillEntity());
             exportDTO.setShippingMethodName(LogisticsMethodEnum.getName(logisticsBillEntity.getShippingMethod()));
             if(exportDTO.getType().equals(SourceTypeEnum.FM_DECLARE_BILL.getCode())){
                 exportDTO.setTransportNo(logisticsBillEntity.getCounterNo());

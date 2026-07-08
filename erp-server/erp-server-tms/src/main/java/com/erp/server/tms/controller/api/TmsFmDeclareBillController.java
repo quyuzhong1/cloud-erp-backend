@@ -374,6 +374,11 @@ public class TmsFmDeclareBillController extends BaseController {
      * @return ApiResult<java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.SourceDeliveryDetailDTO>>
      */
     @PostMapping("/listAfterMergeDetail")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:tmsFmDeclareBill:mergeDeclare",
+            serviceClass = TmsDeclareBillService.class,
+            keyIdName = "ids")
     public ApiResult<List<TmsDeclareBillDTO.MergeDeclareBillDTO>> listAfterMergeDetail(@RequestBody @Valid BaseIdsDTO.IdsDTO dto)  {
         return success(tmsDeclareBillService.listAfterMergeDetail(dto.getIds()));
     }

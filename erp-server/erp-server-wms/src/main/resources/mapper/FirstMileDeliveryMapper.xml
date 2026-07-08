@@ -1254,7 +1254,7 @@
         ),
         has_bom AS MATERIALIZED (
         SELECT fpbi.id AS bom_id, fpbh.id AS bom_history_id, fpbi.bom_version,
-        fpbs.parent_sku_id, fpbs.parent_sku_no, fpbs.sku_id, fpbs.sku_no
+        fpbs.parent_sku_id, fpbs.parent_sku_no, fpbs.sku_id, fpbs.sku_no, fpbs.quantity
         FROM foreign_product_bom_info fpbi
         JOIN foreign_product_bom_sku fpbs ON fpbi.id = fpbs.bom_id
         LEFT JOIN foreign_product_bom_history fpbh
@@ -1296,7 +1296,7 @@
         COALESCE(hb.bom_id, '')          AS bomId,
         COALESCE(hb.bom_history_id, '')  AS bomHistoryId,
         COALESCE(hb.bom_version, '')     AS bomVersion,
-        cd.pack_qty AS qty,
+        CASE WHEN hb.sku_id IS NOT NULL THEN cd.pack_qty * hb.quantity ELSE cd.pack_qty END AS qty,
         cd.box_no   AS boxNo,
         fmd.country_id AS countryId,
         fmd.delivery_warehouse_id   AS fromWarehouseId,

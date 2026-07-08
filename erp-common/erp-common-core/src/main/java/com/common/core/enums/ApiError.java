@@ -1938,6 +1938,8 @@ public enum ApiError implements Serializable {
     LOGISTICS_DECLARE_AUTO_DETAIL_FIELD_REQUIRED_BATCH(13707,"以下SKU缺少报关信息，请先到PLM物流产品资料完善后再生成报关单：{0}"),
     LOGISTICS_DECLARE_SPLIT_DETAIL_MISSING(13708,"拆分未覆盖全部明细，业务单号【{0}】箱号【{1}】未分配到任何一票，缺失SKU：{2}"),
     LOGISTICS_DECLARE_SOURCE_STATUS_SYNC_FAILED(13709,"回写{0}报关状态失败，sourceIds={1}"),
+    SO_DELIVERY_NOTICE_CUSTOMER_COUNTRY_INCONSISTENT(13710,"所选发货通知单客户国家不一致"),
+    COMMON_COUNTRY_INFO_NOT_FOUND(13711,"国家信息不存在"),
 
 
     LOGISTICS_ORDER_NOT_CANCEL(13645,"物流单据不是已取消或者下单失败状态，不能编辑"),

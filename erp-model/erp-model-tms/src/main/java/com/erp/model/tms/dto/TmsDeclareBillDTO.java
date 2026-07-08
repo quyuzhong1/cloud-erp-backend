@@ -2796,6 +2796,11 @@ public class TmsDeclareBillDTO implements Serializable {
          * 报关单明细实体列表。
          */
         private List<TmsDeclareBillDetailEntity> detailEntityList;
+
+        /**
+         * 本票合并明细（自动生成场景用于中间表 saveGeneratedMidData）。
+         */
+        private List<MergeDeclareBillDetailDTO> declareBillList;
     }
 
     /**
