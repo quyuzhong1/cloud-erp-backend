@@ -1011,10 +1011,11 @@ public class SoReturnPrestockServiceImpl
     public String addFromReturnInstock(SoReturnPrestockDTO.FromInstock dto) {
         checkCustomerAndLogisticCodeForPrestock(dto.getCustomerId(), dto.getReturnLogisticCode());
         String warehouseId = resolveWarehouseIdFromInstock(dto.getWarehouseId(), dto.getDetailList());
+        String returnTypeDict = resolveReturnTypeDictFromInstock(dto.getDetailList());
         List<SoReturnPrestockDetailDTO.Add> detailList = buildPrestockDetailListFromInstock(dto.getDetailList());
         SoReturnPrestockDTO.Add prestockAdd = buildPrestockAddFromInstockParams(
                 dto.getType(), dto.getReturnLogisticCode(), dto.getThirdCode(), warehouseId,
-                dto.getSoReturnCode(), detailList);
+                returnTypeDict, dto.getSoReturnCode(), detailList);
         String prestockId = add(prestockAdd);
         generateOtherInstockForPrestock(prestockId, prestockAdd);
         return prestockId;
@@ -1041,6 +1042,22 @@ public class SoReturnPrestockServiceImpl
             throw new ServiceException("退货入库明细仓库不一致，无法生成预入库单");
         }
         return distinctWarehouseIds.get(0);
+    }
+
+    /**
+     * 解析创建预入库单所用的退货类型字典值：退货入库单表单按明细行填写退货类型，预入库单主表仅支持单一退货类型，
+     * 按明细行 returnTypeDict 汇总推导；各行不一致时拒绝创建，行内均未填写时返回空（该字段非必填）
+     */
+    private String resolveReturnTypeDictFromInstock(List<SoReturnPrestockDetailDTO.FromInstock> detailList) {
+        List<String> distinctReturnTypeDicts = CollUtil.emptyIfNull(detailList).stream()
+                .map(SoReturnPrestockDetailDTO.FromInstock::getReturnTypeDict)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (distinctReturnTypeDicts.size() > 1) {
+            throw new ServiceException("退货入库明细退货类型不一致，无法生成预入库单");
+        }
+        return CollUtil.isEmpty(distinctReturnTypeDicts) ? "" : distinctReturnTypeDicts.get(0);
     }
 
     // ===================== 强制关闭剩余未认领预入库单（定时任务） =====================
@@ -1438,7 +1455,8 @@ public class SoReturnPrestockServiceImpl
      * 组装预入库单新增入参：库存组织/仓库信息通过仓库 ID 反查补齐；来源类型固定为 MANUAL（人工在退货入库单表单发起）
      */
     private SoReturnPrestockDTO.Add buildPrestockAddFromInstockParams(String type, String returnLogisticCode,
-                                                                      String thirdCode, String warehouseId, String soReturnCode, List<SoReturnPrestockDetailDTO.Add> detailList) {
+                                                                      String thirdCode, String warehouseId, String returnTypeDict,
+                                                                      String soReturnCode, List<SoReturnPrestockDetailDTO.Add> detailList) {
         if (CharSequenceUtil.isBlank(warehouseId)) {
             throw new ServiceException("仓库不能为空");
         }
@@ -1459,6 +1477,7 @@ public class SoReturnPrestockServiceImpl
         prestockAdd.setInventoryOrgName(inventoryOrgName);
         prestockAdd.setWarehouseId(warehouse.getId());
         prestockAdd.setWarehouseName(warehouse.getName());
+        prestockAdd.setReturnTypeDict(returnTypeDict);
         prestockAdd.setThirdCode(CharSequenceUtil.emptyToDefault(thirdCode, ""));
         prestockAdd.setRemark(CharSequenceUtil.isNotBlank(soReturnCode) ? "原退货订单号：" + soReturnCode : "");
         prestockAdd.setDetailList(detailList);

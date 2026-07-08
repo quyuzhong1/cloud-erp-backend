@@ -116,6 +116,12 @@ public class SoReturnPrestockDetailDTO {
         private String warehouseId;
 
         /**
+         * 退货类型字典值；退货入库单表单按明细行填写退货类型，预入库单主表仅支持单一退货类型，
+         * 服务端汇总本字段推导主表退货类型（各行不一致时拒绝创建）
+         */
+        private String returnTypeDict;
+
+        /**
          * 备注
          */
         private String remark;
