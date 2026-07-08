@@ -131,7 +131,7 @@ public class CrossServiceStepInvoker {
             return StepInvokeResult.waiting(errorMsg);
         }
         if (Objects.equals(responseStatus, WorkflowTaskRecordStatusEnum.FAILED.getCode())) {
-            markFailed(entity, StringUtils.defaultString(errorMsg), true, ERROR_SOURCE_REMOTE, duration);
+            markTerminalFailed(entity, StringUtils.defaultString(errorMsg), ERROR_SOURCE_REMOTE, duration);
             return StepInvokeResult.failed(StringUtils.defaultString(errorMsg), ERROR_SOURCE_REMOTE, duration);
         }
         if (StringUtils.isNotBlank(errorMsg)) {
@@ -153,6 +153,21 @@ public class CrossServiceStepInvoker {
         entity.setStatus(WorkflowTaskRecordStatusEnum.FAILED.getCode());
         entity.setLastError(errorMsg);
         entity.setRetryCount(Optional.ofNullable(entity.getRetryCount()).orElse(0) + (retryIncrement ? 1 : 0));
+        entity.setErrorSource(errorSource);
+        entity.setFeignDurationMs(duration);
+        entity.setEndTime(LocalDateTime.now());
+        workflowTaskRecordService.updateById(entity);
+    }
+
+    /**
+     * 业务终态失败：将 retryCount 提升至自动补偿阈值以上，使 Job 跳过该节点，与 KOL 审批终态处理保持一致。
+     */
+    private void markTerminalFailed(WorkflowTaskRecordEntity entity, String errorMsg,
+                                    String errorSource, long duration) {
+        int terminal = WorkflowTaskRecordService.AUTO_RETRY_MAX_COUNT + 1;
+        entity.setStatus(WorkflowTaskRecordStatusEnum.FAILED.getCode());
+        entity.setLastError(errorMsg);
+        entity.setRetryCount(Math.max(Optional.ofNullable(entity.getRetryCount()).orElse(0) + 1, terminal));
         entity.setErrorSource(errorSource);
         entity.setFeignDurationMs(duration);
         entity.setEndTime(LocalDateTime.now());

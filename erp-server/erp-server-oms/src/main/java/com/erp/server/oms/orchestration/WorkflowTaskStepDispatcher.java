@@ -86,6 +86,21 @@ public class WorkflowTaskStepDispatcher {
             return;
         }
 
+        // 检测重复 index：存在时终止调度并标记实例失败，避免静默取第一条导致节点跳过或错误执行
+        Map<Integer, Long> indexCount = steps.stream()
+                .collect(Collectors.groupingBy(WorkflowTaskRecordEntity::getIndex, Collectors.counting()));
+        List<Integer> dupIndexes = indexCount.entrySet().stream()
+                .filter(e -> e.getValue() > 1)
+                .map(Map.Entry::getKey)
+                .sorted()
+                .collect(Collectors.toList());
+        if (!dupIndexes.isEmpty()) {
+            String dupMsg = "节点 index 重复: " + dupIndexes;
+            log.error("编排节点 index 重复，终止调度，instanceId={}, indexes={}", instance.getId(), dupIndexes);
+            workflowTaskInstanceService.markFailed(instance.getId(), instance.getCurrentIndex(), dupMsg);
+            return;
+        }
+
         Map<Integer, WorkflowTaskRecordEntity> indexMap = steps.stream()
                 .collect(Collectors.toMap(WorkflowTaskRecordEntity::getIndex, e -> e, (a, b) -> a));
 
@@ -120,6 +135,14 @@ public class WorkflowTaskStepDispatcher {
             syncInstanceFailed(instance, current);
             log.warn("节点已达自动重试上限，需人工 forceRetry，index={}, retryCount={}, instanceId={}",
                     targetIndex, current.getRetryCount(), instance.getId());
+            return;
+        }
+
+        // WAITING 节点超过 24h 仍未收到回调，转为终态失败，防止流程永久挂起
+        if (WorkflowTaskRecordStatusEnum.WAITING.getCode().equals(current.getStatus())
+                && isWaitingTimedOut(current)) {
+            log.warn("WAITING 节点超时，转终态失败，index={}, instanceId={}", targetIndex, instance.getId());
+            markWaitingTimedOut(current, instance);
             return;
         }
 
@@ -296,6 +319,35 @@ public class WorkflowTaskStepDispatcher {
             return false;
         }
         return updateTime.plusMinutes(WorkflowTaskRecordService.TASK_PROCESSING_TIMEOUT_MINUTES).isAfter(LocalDateTime.now());
+    }
+
+    /**
+     * 判断 WAITING 节点是否已超过最长等待时长（24h）。
+     * 以 endTime（节点进入 WAITING 的时间）为基准，不存在时退化为 updateTime。
+     */
+    private boolean isWaitingTimedOut(WorkflowTaskRecordEntity step) {
+        LocalDateTime base = step.getEndTime() != null ? step.getEndTime() : step.getUpdateTime();
+        if (base == null) {
+            return false;
+        }
+        return base.plusHours(WorkflowTaskRecordService.TASK_WAITING_TIMEOUT_HOURS).isBefore(LocalDateTime.now());
+    }
+
+    /**
+     * 将超时的 WAITING 节点标记为终态失败，retryCount 提升至阈值以上后同步实例状态。
+     */
+    private void markWaitingTimedOut(WorkflowTaskRecordEntity step, WorkflowTaskInstanceEntity instance) {
+        int terminal = WorkflowTaskRecordService.AUTO_RETRY_MAX_COUNT + 1;
+        String errorMsg = "WAITING 超时（超过 " + WorkflowTaskRecordService.TASK_WAITING_TIMEOUT_HOURS + " 小时未收到回调）";
+        workflowTaskRecordService.lambdaUpdate()
+                .eq(WorkflowTaskRecordEntity::getId, step.getId())
+                .set(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.FAILED.getCode())
+                .set(WorkflowTaskRecordEntity::getLastError, errorMsg)
+                .set(WorkflowTaskRecordEntity::getRetryCount,
+                        Math.max(Optional.ofNullable(step.getRetryCount()).orElse(0) + 1, terminal))
+                .set(WorkflowTaskRecordEntity::getEndTime, LocalDateTime.now())
+                .update();
+        workflowTaskInstanceService.markFailed(instance.getId(), step.getIndex(), errorMsg);
     }
 
     private boolean isInstanceActive(String instanceId) {

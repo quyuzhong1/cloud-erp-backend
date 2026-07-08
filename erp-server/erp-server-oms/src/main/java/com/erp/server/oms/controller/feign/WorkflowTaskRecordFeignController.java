@@ -2,6 +2,7 @@ package com.erp.server.oms.controller.feign;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import com.common.core.controller.BaseController;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
 import com.erp.model.oms.entity.WorkflowTaskInstanceEntity;
@@ -55,7 +56,7 @@ public class WorkflowTaskRecordFeignController extends BaseController {
     @PostMapping("/startMergePackageDeliveryWorkflow")
     public WorkflowTaskRecordDTO.StartWorkflowResultDTO startMergePackageDeliveryWorkflow(@RequestBody WorkflowTaskRecordDTO.StartWorkflowDTO dto) {
         if (dto == null || CharSequenceUtil.isBlank(dto.getSourceId())) {
-            throw new ServiceException("sourceId不能为空");
+            throw new ServiceException(ApiError.COMMON_PARAM_REQUIRED, "sourceId");
         }
         WorkflowTaskRecordDTO.AddTaskDTO addTaskDTO = new WorkflowTaskRecordDTO.AddTaskDTO();
         addTaskDTO.setSourceTypeEnum(WorkflowTaskRecordTypeEnum.SO_B2C_MERGE_PACKAGE_DELIVERY);
