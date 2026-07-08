@@ -144,6 +144,7 @@ public class DeliveryDeclareDetailMidController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.lang.Object>
      */
     @PostMapping("/batchAddMergeDetail")
+    @LogAction(value = LogActionEnum.INSERT, desc = "批量添加合并报关明细")
     public ApiResult<Object> batchAddMergeDetail(@RequestBody @Valid ValidList<TmsDeclareBillDTO.MergeDeclareBillDTO> list)  {
         return success(deliveryDeclareDetailMidService.batchAddMergeDetail(list.getList(),true));
     }

@@ -1153,7 +1153,7 @@ public class LogisticsBillCostDTO implements Serializable {
          */
         @NotEmpty(message = "销售平台不能为空")
         private List<String> salesPlatformList;
-    	
+
     } /**
      * 支付状态
      */

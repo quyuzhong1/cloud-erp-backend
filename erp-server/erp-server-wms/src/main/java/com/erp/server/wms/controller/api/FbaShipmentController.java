@@ -263,7 +263,7 @@ public class FbaShipmentController extends BaseController {
      * @param list
      * @return com.common.core.controller.vo.ApiResult
      **/
-    @PostMapping("/")
+    @PostMapping("/generateDeliverSave")
     @LogAction(value = LogActionEnum.INSERT, desc = "下推发货单保存：id = {id}")
     public ApiResult generateDeliverSave(@RequestBody @Validated List<FbaShipmentDTO.GenerateDeliverView> list) {
         Boolean flag = fbaShipmentService.generateDeliverSave(list, ShipmentSourceTypeEnum.FBA.getCode());

@@ -7,6 +7,7 @@ import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.wrapper.FeignBuilder;
 import com.common.business.wrapper.FeignQuery;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.wms.entity.WarehouseEntity;
@@ -888,13 +889,9 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
         if(!isShowCustomerId){
             return  Collections.emptyList();
         }
-        List<CustomerInfoEntity> list = FeignQuery.create(CustomerInfoEntity.class).list();
-        //如果name不为空，则进行模糊查询
-        if (StrUtil.isNotBlank(name)) {
-            list = list.stream()
-                    .filter(e -> StrUtil.contains(e.getName(), name))
-                    .collect(Collectors.toList());
-        }
+        FeignBuilder feignBuilder = FeignQuery.create(CustomerInfoEntity.class)
+                .like(StrUtil.isNotBlank(name), CustomerInfoEntity::getName, name);
+        List<CustomerInfoEntity> list = feignBuilder.list();
         return list.stream()
                 .sorted(Comparator.comparing(CustomerInfoEntity::getDisabled))
                 .map(e -> BaseDropDownDTO.ChildTree.builder()
