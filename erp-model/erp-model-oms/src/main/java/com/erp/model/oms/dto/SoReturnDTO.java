@@ -1084,6 +1084,10 @@ public class SoReturnDTO {
          */
         private String typeName;
         /**
+         * 收货仓库id
+         */
+        private String warehouseId;
+        /**
          * 收货仓库名称
          */
         private String warehouseName;

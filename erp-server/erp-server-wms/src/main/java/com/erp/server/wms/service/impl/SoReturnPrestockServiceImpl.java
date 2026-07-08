@@ -280,6 +280,7 @@ public class SoReturnPrestockServiceImpl
     @Override
     @DistributeLocker(businessType = SO_RETURN_PRESTOCK_LINK_LOCK_KEY, keyName = "dto.mainId")
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO confirmLinkAfterSale(SoReturnPrestockDetailDTO.ConfirmLinkAfterSale dto) {
         SoReturnPrestockEntity main = getByIdOrThrow(dto.getMainId());
         if (PrestockLinkStatusEnum.FORCE_CLOSE.getStatus().equals(main.getLinkStatus())) {
@@ -436,11 +437,12 @@ public class SoReturnPrestockServiceImpl
                             CharSequenceUtil.emptyToDefault(p.item.getDetailId(), "")))
                     .collect(Collectors.toList()));
 
-            String instockId = soReturnInstockService.add(add);
+            // 新增并拿到落库后的内存实体（含 id、单号），后续提交/审核与回写均基于该实体，避免"写入后再查询"
+            SoReturnInstockEntity instock = soReturnInstockService.addReturnEntity(add);
             // 关联售后单生成的退货入库单直接提交并审核通过（不走审批流），置为已审核并触发退货入库库存联动
-            approveReturnInstock(instockId);
-            SoReturnInstockEntity instock = soReturnInstockService.getById(instockId);
-            String instockCode = Objects.nonNull(instock) ? instock.getCode() : "";
+            approveReturnInstock(instock);
+            String instockId = instock.getId();
+            String instockCode = CharSequenceUtil.emptyToDefault(instock.getCode(), "");
             // 回写退货入库单号到本组预入库单明细行
             for (LinkedDetailPair pair : pairs) {
                 pair.detail.setReturnInstockId(instockId).setReturnInstockCode(instockCode);
@@ -473,6 +475,9 @@ public class SoReturnPrestockServiceImpl
         da.setReturnTypeDict(returnTypeDict);
         da.setReturnReasonDict(returnReasonDict);
         da.setSoReturnDetailId(soReturnDetailId);
+        // 预入库单不存在退货签收单，签收数量兜底为 0 会误触发"实退总数量不能大于签收数量"校验；
+        // 预入库单明细的 returnQty 即已确认的到货数量，此处关闭签收数量校验
+        da.setIsCheckReceiveQty(false);
         return da;
     }
 
@@ -497,6 +502,11 @@ public class SoReturnPrestockServiceImpl
      */
     private void applyAfterSaleToDetail(SoReturnPrestockDetailEntity row,
             SoReturnPrestockDetailDTO.AfterSaleItem item) {
+        // 三无包裹创建的预入库单明细 sku_id 可能为空，关联售后单时用售后单明细带回的 skuId 回填，
+        // 保证后续生成退货入库单及库存联动时 sku_id 非空
+        if (CharSequenceUtil.isBlank(row.getSkuId()) && CharSequenceUtil.isNotBlank(item.getSkuId())) {
+            row.setSkuId(item.getSkuId());
+        }
         row.setAfterSaleId(item.getAfterSaleId())
            .setAfterSaleCode(CharSequenceUtil.emptyToDefault(item.getAfterSaleCode(), ""))
            .setPlatformOrderCode(CharSequenceUtil.emptyToDefault(item.getPlatformOrderCode(), ""))
@@ -741,21 +751,25 @@ public class SoReturnPrestockServiceImpl
      * 将新生成的退货入库单直接置为已审核状态：先提交（不启动审批流），再直接结束审核（跳过工作流），
      * 由 {@code approveEnd} 更新为已审核并触发退货入库库存联动。
      */
-    private void approveReturnInstock(String instockId) {
-        SoReturnInstockEntity instock = soReturnInstockService.getById(instockId);
-        if (Objects.isNull(instock)) {
+    private void approveReturnInstock(SoReturnInstockEntity instock) {
+        if (Objects.isNull(instock) || CharSequenceUtil.isBlank(instock.getId())) {
             throw new ServiceException("退货入库单生成失败，无法审核");
+        }
+        // 直接使用新增返回的内存实体推进提交/审核，避免"写入后再查询"在同一事务未提交或读写分离场景下查不到数据。
+        // 落库审核状态默认 waitSubmit，内存实体未回填，补齐以通过 submit 的状态校验
+        if (CharSequenceUtil.isBlank(instock.getApproveStatus())) {
+            instock.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         }
         // 提交但不启动审批流（isNeedProcess=false），单据转为审核中
         BatchResultDTO submitResult = soReturnInstockService.submit(instock, Boolean.FALSE);
         if (!Boolean.TRUE.equals(submitResult.getSuccess())) {
             throw new ServiceException("退货入库单提交失败：" + submitResult.getMsg());
         }
-        // 直接结束审核为通过（不经过工作流），置为已审核并更新库存
-        SoReturnInstockEntity submitted = soReturnInstockService.getById(instockId);
+        // submit 已把 DB 状态更新为 approveIng，同步内存实体后直接结束审核为通过（不经过工作流），置为已审核并更新库存
+        instock.setApproveStatus(ApproveStatusEnum.APPROVE_ING.getStatus());
         soReturnInstockService.approveEnd(
-                new ApproveOneDTO(instockId, ApproveTypeEnum.PASS.getStatus(), "预入库单关联店铺自动审核通过"),
-                submitted);
+                new ApproveOneDTO(instock.getId(), ApproveTypeEnum.PASS.getStatus(), "预入库单关联自动审核通过"),
+                instock);
     }
 
     // ===================== 确认关联店铺（明细维度，逐行选店铺） =====================
@@ -763,6 +777,7 @@ public class SoReturnPrestockServiceImpl
     @Override
     @DistributeLocker(businessType = SO_RETURN_PRESTOCK_LINK_LOCK_KEY, keyName = "dto.mainId")
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO confirmLinkShop(SoReturnPrestockDetailDTO.ConfirmLinkShop dto) {
         SoReturnPrestockEntity main = getByIdOrThrow(dto.getMainId());
         if (PrestockLinkStatusEnum.FORCE_CLOSE.getStatus().equals(main.getLinkStatus())) {
@@ -899,13 +914,14 @@ public class SoReturnPrestockServiceImpl
                     .map(p -> buildInstockDetailAdd(main, p.detail, main.getReturnTypeDict(), "", ""))
                     .collect(Collectors.toList()));
 
-            String instockId = soReturnInstockService.add(add);
+            // 新增并拿到落库后的内存实体（含 id、单号），后续提交/审核与回写均基于该实体，避免"写入后再查询"
+            SoReturnInstockEntity instock = soReturnInstockService.addReturnEntity(add);
             // 批量整单关联场景：生成后直接提交并审核通过
             if (autoApprove) {
-                approveReturnInstock(instockId);
+                approveReturnInstock(instock);
             }
-            SoReturnInstockEntity instock = soReturnInstockService.getById(instockId);
-            String instockCode = Objects.nonNull(instock) ? instock.getCode() : "";
+            String instockId = instock.getId();
+            String instockCode = CharSequenceUtil.emptyToDefault(instock.getCode(), "");
             // 回写退货入库单号到本组预入库单明细行
             for (LinkedShopPair pair : pairs) {
                 pair.detail.setReturnInstockId(instockId).setReturnInstockCode(instockCode);

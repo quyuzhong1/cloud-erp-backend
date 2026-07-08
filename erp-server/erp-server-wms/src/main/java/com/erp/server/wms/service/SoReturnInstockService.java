@@ -70,6 +70,15 @@ public interface SoReturnInstockService extends SuperService<SoReturnInstockEnti
     String add(SoReturnInstockDTO.Add dto);
 
     /**
+     * 新增并返回落库后的实体（含 id、单号），供调用方直接使用内存实体做后续提交/审核，
+     * 避免"写入后再查询"在同一事务未提交或读写分离场景下查不到数据。
+     *
+     * @param dto 退货入库单新增入参
+     * @return 落库后的退货入库单实体
+     */
+    SoReturnInstockEntity addReturnEntity(SoReturnInstockDTO.Add dto);
+
+    /**
      * 修改
      * @Author Luo_WG
      * @Date 2023/4/13 14:51

@@ -349,6 +349,13 @@ public class SoReturnPrestockDetailDTO {
         private String returnReason;
 
         /**
+         * SKU ID；用于与预入库单未关联明细行按 SKU 匹配，并回填预入库单明细
+         * （三无包裹创建时 sku_id 可能为空），保证生成退货入库单及库存联动时 sku_id 非空
+         */
+        @NotBlank(message = "skuId不能为空")
+        private String skuId;
+
+        /**
          * SKU 编码；用于与预入库单未关联明细行按 SKU 匹配
          */
         @NotBlank(message = "SKU编码不能为空")
