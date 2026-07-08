@@ -1066,6 +1066,14 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
                 .set(WorkflowTaskRecordEntity::getLastError, errorMsg)
                 .set(WorkflowTaskRecordEntity::getRetryCount, Optional.ofNullable(taskEntity.getRetryCount()).orElse(0) + 1)
                 .update();
+        String instanceId = CharSequenceUtil.blankToDefault(taskEntity.getInstanceId(), entity.getInstanceId());
+        if (CharSequenceUtil.isBlank(instanceId)) {
+            WorkflowTaskInstanceEntity latest = workflowTaskInstanceService.getLatestBySource(entity.getSourceId(), entity.getSourceType());
+            instanceId = latest == null ? "" : latest.getId();
+        }
+        if (CharSequenceUtil.isNotBlank(instanceId)) {
+            workflowTaskInstanceService.markDispatchMqFailed(instanceId, taskEntity.getIndex(), errorMsg);
+        }
     }
 
     /**

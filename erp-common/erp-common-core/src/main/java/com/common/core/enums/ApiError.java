@@ -500,6 +500,7 @@ public enum ApiError implements Serializable {
     WF_KOL_B2C_WAIT_SPLIT_ORDER(4077,"等待拆分单生成"),
     WF_KOL_B2C_WAIT_SUB_TASK_COMPLETE(4078,"等待KOL B2C拆分单子任务完成，已完成{0}/{1}"),
     WF_TASK_RECORD_TYPE_NOT_FOUND(4080,"任务节点类型不存在"),
+    WF_TASK_INSTANCE_VERSION_CONFLICT(4081,"任务编排实例状态已变化，请刷新后重试"),
     /**
      * PROJECT 项目相关 4500 - 5000
      */

@@ -1721,11 +1721,20 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
                 .eq(WorkflowTaskRecordEntity::getSourceId, subEntity.getId())
                 .eq(WorkflowTaskRecordEntity::getSourceType, WorkflowTaskRecordTypeEnum.KOL_B2C_SUB_APPROVE.getCode())
                 .eq(WorkflowTaskRecordEntity::getIsDeleted, false)
+                .orderByAsc(WorkflowTaskRecordEntity::getIndex)
                 .list();
         if (CollUtil.isEmpty(tasks)) {
             return;
         }
-        List<String> taskIds = tasks.stream().map(WorkflowTaskRecordEntity::getId).collect(Collectors.toList());
+        List<WorkflowTaskRecordEntity> activeTasks = tasks.stream()
+                .filter(task -> WorkflowTaskRecordStatusEnum.PENDING.getCode().equals(task.getStatus())
+                        || WorkflowTaskRecordStatusEnum.PROCESSING.getCode().equals(task.getStatus())
+                        || WorkflowTaskRecordStatusEnum.WAITING.getCode().equals(task.getStatus()))
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(activeTasks)) {
+            return;
+        }
+        List<String> taskIds = activeTasks.stream().map(WorkflowTaskRecordEntity::getId).collect(Collectors.toList());
         workflowTaskRecordService.lambdaUpdate()
                 .in(WorkflowTaskRecordEntity::getId, taskIds)
                 .set(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.FAILED.getCode())
@@ -1734,8 +1743,10 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
                 .set(WorkflowTaskRecordEntity::getRetryCount, WorkflowTaskRecordService.AUTO_RETRY_MAX_COUNT + 1)
                 .set(WorkflowTaskRecordEntity::getEndTime, LocalDateTime.now())
                 .update();
-        tasks.stream()
+        activeTasks.stream()
                 .filter(task -> StringUtils.isNotBlank(task.getInstanceId()))
+                .collect(Collectors.toMap(WorkflowTaskRecordEntity::getInstanceId, Function.identity(), (a, b) -> a))
+                .values()
                 .forEach(task -> workflowTaskInstanceService.markFailed(task.getInstanceId(), task.getIndex(), failReason));
     }
 
