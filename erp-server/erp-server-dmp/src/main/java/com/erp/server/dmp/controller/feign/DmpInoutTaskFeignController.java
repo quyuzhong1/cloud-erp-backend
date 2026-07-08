@@ -335,7 +335,7 @@ public class DmpInoutTaskFeignController{
 		String orderCode = order == null ? "" : CharSequenceUtil.blankToDefault(order.getString("code"), "");
 		if (CharSequenceUtil.isNotBlank(orderId)) {
 			try {
-				result.put("confirm", magaluService.confirmSandboxSampleOrder(shopInfoDTO, orderId));
+                result.put("confirm", magaluService.confirmSandboxSampleOrder(shopInfoDTO, orderId, orderCode));
 			} catch (Exception e) {
 				result.put("confirmError", e.getMessage());
 			}

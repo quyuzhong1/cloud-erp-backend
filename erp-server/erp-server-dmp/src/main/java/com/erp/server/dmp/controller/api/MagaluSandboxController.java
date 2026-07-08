@@ -51,7 +51,7 @@ public class MagaluSandboxController extends BaseController {
         String orderCode = order == null ? "" : firstNotBlank(order.getString("code"), "");
         if (StringUtils.isNotBlank(orderId)) {
             try {
-                confirm = magaluService.confirmSandboxSampleOrder(shopInfoDTO, orderId);
+                confirm = magaluService.confirmSandboxSampleOrder(shopInfoDTO, orderId, orderCode);
             } catch (Exception e) {
                 log.warn("Magalu沙箱确认支付异常 orderId={}, msg={}", orderId, e.getMessage());
             }
