@@ -171,28 +171,48 @@ public class WorkflowTaskStepDispatcher {
 
         if (!isInstanceActive(instance.getId())) {
             log.info("编排实例已取消或终态，终止后续调度，instanceId={}", instance.getId());
+            // 节点状态已在内存中准备好但尚未落库，若实例已终态则节点保持 PROCESSING（由超时机制重置）
             return;
         }
 
-        if (result.isWaiting()) {
-            workflowTaskInstanceService.markWaiting(instance.getId(), targetIndex, result.getErrorMsg());
-            return;
-        }
-
-        if (result.isFailed()) {
-            workflowTaskInstanceService.markFailed(instance.getId(), targetIndex, result.getErrorMsg());
+        // 使用统一事务方法原子写入：节点最终状态 + 实例状态，避免两步写库之间出现中间态
+        if (result.isWaiting() || result.isFailed()) {
+            WorkflowTaskRecordEntity pendingNode = result.getPendingNode();
+            if (pendingNode != null) {
+                workflowTaskInstanceService.persistNodeAndSyncInstance(
+                        pendingNode, instance.getId(), targetIndex, steps.size(),
+                        result.getOutcome(), result.getErrorMsg());
+            } else {
+                // pendingNode 为 null（理论上不会发生），降级为分开写
+                if (result.isWaiting()) {
+                    workflowTaskInstanceService.markWaiting(instance.getId(), targetIndex, result.getErrorMsg());
+                } else {
+                    workflowTaskInstanceService.markFailed(instance.getId(), targetIndex, result.getErrorMsg());
+                }
+            }
             return;
         }
 
         if (result.isSuccess()) {
+            WorkflowTaskRecordEntity pendingNode = result.getPendingNode();
             WorkflowTaskRecordEntity next = indexMap.get(targetIndex + 1);
-            if (next != null && CharSequenceUtil.isNotBlank(result.getOutputDataJson())) {
-                next.setInputData(result.getOutputDataJson());
-                workflowTaskRecordService.updateById(next);
-            }
             if (next == null) {
+                // 最后一个节点：原子写节点 SUCCESS + 实例 SUCCESS
+                if (pendingNode != null) {
+                    workflowTaskInstanceService.persistNodeAndSyncInstance(
+                            pendingNode, instance.getId(), targetIndex, steps.size(),
+                            result.getOutcome(), null);
+                }
                 markInstanceSuccess(instance, steps);
                 return;
+            }
+            // 中间节点：先原子写节点 SUCCESS（不改实例 currentIndex），再链式调度下一节点
+            if (pendingNode != null) {
+                workflowTaskRecordService.updateById(pendingNode);
+            }
+            if (CharSequenceUtil.isNotBlank(result.getOutputDataJson())) {
+                next.setInputData(result.getOutputDataJson());
+                workflowTaskRecordService.updateById(next);
             }
             scheduleNextStep(instance, mqDTO, targetIndex, indexMap);
         }

@@ -26,6 +26,7 @@ import com.erp.model.oms.enums.WorkflowTaskInstanceStatusEnum;
 import com.erp.model.oms.enums.WorkflowTaskRecordStatusEnum;
 import com.erp.model.oms.enums.WorkflowTaskRecordTypeEnum;
 import com.erp.server.oms.mapper.WorkflowTaskInstanceMapper;
+import com.erp.server.oms.orchestration.StepInvokeResult;
 import com.erp.server.oms.orchestration.WorkflowTaskNodeConfigParser;
 import com.erp.server.oms.orchestration.WorkflowTaskStepDispatcher;
 import com.erp.server.oms.service.WorkflowTaskInstanceService;
@@ -558,6 +559,58 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
         return instance == null ? null : instance.getId();
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>在同一事务内持久化节点最终状态 + 实例状态，保证两表写操作的原子性。</p>
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void persistNodeAndSyncInstance(WorkflowTaskRecordEntity node,
+                                           String instanceId,
+                                           int currentIndex,
+                                           int totalSteps,
+                                           StepInvokeResult.Outcome outcome,
+                                           String lastError) {
+        // 1. 持久化节点状态
+        workflowTaskRecordService.updateById(node);
+        // 2. 同步实例状态
+        if (StepInvokeResult.Outcome.WAITING.equals(outcome)) {
+            markWaiting(instanceId, currentIndex, lastError);
+        } else if (StepInvokeResult.Outcome.FAILED.equals(outcome)) {
+            markFailed(instanceId, currentIndex, lastError);
+        } else if (StepInvokeResult.Outcome.SUCCESS.equals(outcome)) {
+            // SUCCESS 路径：节点写库；实例状态（markRunning/markSuccess）由 dispatch 后续逻辑处理
+            // 此处仅落库节点，不改变实例 currentIndex（由调用方在事务外处理）
+        }
+    }
+
+    /**
+     * 事务提交后 MQ 发送失败时，新开事务将目标节点标记为 FAILED，确保 Job 可扫描到并补偿。
+     * <p>由 registerDispatchAfterCommit 的 catch 块调用，使用独立事务避免与已提交事务干扰。</p>
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void markDispatchMqFailed(String instanceId, Integer targetIndex, String reason) {
+        if (CharSequenceUtil.isBlank(instanceId) || targetIndex == null) {
+            log.warn("markDispatchMqFailed 跳过：参数不完整，instanceId={}, targetIndex={}", instanceId, targetIndex);
+            return;
+        }
+        WorkflowTaskRecordEntity node = workflowTaskRecordService.lambdaQuery()
+                .eq(WorkflowTaskRecordEntity::getInstanceId, instanceId)
+                .eq(WorkflowTaskRecordEntity::getIndex, targetIndex)
+                .eq(WorkflowTaskRecordEntity::getIsDeleted, false)
+                .last("LIMIT 1")
+                .one();
+        if (node != null && !WorkflowTaskRecordStatusEnum.SUCCESS.getCode().equals(node.getStatus())) {
+            workflowTaskRecordService.lambdaUpdate()
+                    .eq(WorkflowTaskRecordEntity::getId, node.getId())
+                    .set(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.FAILED.getCode())
+                    .set(WorkflowTaskRecordEntity::getLastError, CharSequenceUtil.blankToDefault(reason, "调度MQ发送失败"))
+                    .set(WorkflowTaskRecordEntity::getEndTime, LocalDateTime.now())
+                    .update();
+        }
+        markFailed(instanceId, targetIndex, CharSequenceUtil.blankToDefault(reason, "调度MQ发送失败"));
+    }
+
     private WorkflowTaskRecordDTO.AddTaskDTO buildDispatchMessage(WorkflowTaskInstanceEntity instance) {
         WorkflowTaskRecordDTO.AddTaskDTO dto = new WorkflowTaskRecordDTO.AddTaskDTO();
         dto.setInstanceId(instance.getId());
@@ -616,6 +669,7 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
 
     /**
      * 事务提交后再发 MQ，避免消费端读不到未提交节点。
+     * <p>MQ 发送失败时，新开独立事务将目标节点与实例标记为 FAILED，确保 Job 下次可扫到并补偿。</p>
      */
     private void registerDispatchAfterCommit(WorkflowTaskRecordDTO.AddTaskDTO dispatch, String messageKey) {
         if (TransactionSynchronizationManager.isActualTransactionActive()) {
@@ -627,6 +681,17 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
                     } catch (Exception ex) {
                         log.error("任务编排 MQ 发送失败（事务已提交），sourceId={}, instanceId={}, targetIndex={}",
                                 dispatch.getSourceId(), dispatch.getInstanceId(), dispatch.getTargetIndex(), ex);
+                        // 新开独立事务：回写节点 + 实例为 FAILED，让 Job 下次补偿重发
+                        try {
+                            SpringUtil.getBean(WorkflowTaskInstanceServiceImpl.class)
+                                    .markDispatchMqFailed(
+                                            dispatch.getInstanceId(),
+                                            dispatch.getTargetIndex(),
+                                            "调度MQ发送失败: " + ex.getMessage());
+                        } catch (Exception markEx) {
+                            log.error("MQ失败回写节点/实例状态异常，instanceId={}, targetIndex={}，需人工核查",
+                                    dispatch.getInstanceId(), dispatch.getTargetIndex(), markEx);
+                        }
                     }
                 }
             });
