@@ -7,6 +7,7 @@ import com.erp.model.dmp.entity.DmpProductInfoEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.server.dmp.inout.dto.request.DmpInputDmpRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputMongoResponse;
+import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import com.erp.server.dmp.service.CfgAppClientService;
 import com.erp.server.dmp.service.DmpProductInfoService;
 import org.apache.commons.lang3.StringUtils;
@@ -107,6 +108,7 @@ public class MagaluProductDmpHandler extends DmpInputDbConvertDmpHandler {
             row.put("spuName", stringValue(sku.get("title")));
             row.put("sourceId", spuId);
             row.put("platformUpdateTime", parsePlatformUpdateTime(sku));
+            copyMongoBaseId(row, sku);
             productMap.put(spuId, row);
         }
         return new ArrayList<>(productMap.values());
@@ -132,6 +134,7 @@ public class MagaluProductDmpHandler extends DmpInputDbConvertDmpHandler {
             // categoryName 暂存规格文本，供 MagaluProductRocketMQTaskHandler 写入 productSpec
             row.put("categoryName", buildAttributesSpec(sku));
             fillPackageDimensions(row, sku);
+            copyMongoBaseId(row, sku);
             resultList.add(row);
         }
         return resultList;
@@ -198,6 +201,13 @@ public class MagaluProductDmpHandler extends DmpInputDbConvertDmpHandler {
         Object channelId = cfgAppClient.getExtendData().get("channelId");
         magaluChannelId = channelId == null ? "" : channelId.toString();
         return magaluChannelId;
+    }
+
+    private void copyMongoBaseId(Map<String, Object> row, Map<String, Object> sku) {
+        Object mongoId = sku.get(DmpInputMongoHandler.MONGO_BASE_ID);
+        if (mongoId != null) {
+            row.put(DmpInputMongoHandler.MONGO_BASE_ID, mongoId);
+        }
     }
 
     private String resolveSpuId(Map<String, Object> sku) {
