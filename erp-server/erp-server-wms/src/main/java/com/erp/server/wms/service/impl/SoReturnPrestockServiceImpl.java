@@ -27,12 +27,7 @@ import com.erp.model.wms.dto.SoReturnInstockDTO;
 import com.erp.model.wms.dto.SoReturnInstockDetailDTO;
 import com.erp.model.wms.dto.SoReturnPrestockDTO;
 import com.erp.model.wms.dto.SoReturnPrestockDetailDTO;
-import com.erp.model.wms.entity.SoReturnInstockEntity;
-import com.erp.model.wms.entity.OtherInstockDetailEntity;
-import com.erp.model.wms.entity.OtherInstockEntity;
-import com.erp.model.wms.entity.SoReturnPrestockDetailEntity;
-import com.erp.model.wms.entity.SoReturnPrestockEntity;
-import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.InstockTypeEnum;
 import com.erp.model.wms.enums.InventoryDirectionEnum;
 import com.erp.model.wms.enums.PrestockLinkStatusEnum;
@@ -42,12 +37,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.convert.OtherInStockConverter;
 import com.erp.server.wms.mapper.SoReturnPrestockMapper;
-import com.erp.server.wms.service.SoReturnInstockService;
-import com.erp.server.wms.service.OtherInstockDetailService;
-import com.erp.server.wms.service.OtherInstockService;
-import com.erp.server.wms.service.SoReturnPrestockDetailService;
-import com.erp.server.wms.service.SoReturnPrestockService;
-import com.erp.server.wms.service.WarehouseService;
+import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -57,15 +47,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Deque;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -136,11 +118,18 @@ public class SoReturnPrestockServiceImpl
     public PagingVO<SoReturnPrestockDTO.PagingView> paging(PagingDTO<SoReturnPrestockDTO.PagingParam> dto) {
         Page<SoReturnPrestockDTO.PagingView> page = new Page<>(dto.getPage(), dto.getPageSize());
         IPage<SoReturnPrestockDTO.PagingView> result = baseMapper.paging(page, dto.getParams());
+        List<SoReturnPrestockDTO.PagingView> records = result.getRecords();
+        List<String> ids = records.stream().map(SoReturnPrestockDTO.PagingView::getId).collect(Collectors.toList());
+        // 查询详情行
+        List<SoReturnPrestockDetailEntity> detailEntities = soReturnPrestockDetailService.listByMainIds(ids);
+        Map<String, List<SoReturnPrestockDetailEntity>> detailMap = detailEntities.stream().collect(Collectors.groupingBy(SoReturnPrestockDetailEntity::getMainId));
         // 翻译枚举名称
-        result.getRecords().forEach(v -> {
+        records.forEach(v -> {
             v.setTypeName(BillTypeEnum.getName(v.getType()));
             v.setLinkStatusName(PrestockLinkStatusEnum.getName(v.getLinkStatus()));
             v.setSourceTypeName(PrestockSourceTypeEnum.getName(v.getSourceType()));
+            List<SoReturnPrestockDetailEntity> details = detailMap.get(v.getId());
+            v.setDetailList(details.stream().map(this::convertDetailToView).collect(Collectors.toList()));
         });
         return new PagingVO<>(result);
     }
@@ -162,12 +151,12 @@ public class SoReturnPrestockServiceImpl
     public Boolean update(SoReturnPrestockDTO.Update dto) {
         SoReturnPrestockEntity entity = getByIdOrThrow(dto.getId());
         entity.setInventoryOrgId(CharSequenceUtil.emptyToDefault(dto.getInventoryOrgId(), entity.getInventoryOrgId()))
-              .setInventoryOrgName(CharSequenceUtil.emptyToDefault(dto.getInventoryOrgName(), entity.getInventoryOrgName()))
-              .setWarehouseId(CharSequenceUtil.emptyToDefault(dto.getWarehouseId(), entity.getWarehouseId()))
-              .setWarehouseName(CharSequenceUtil.emptyToDefault(dto.getWarehouseName(), entity.getWarehouseName()))
-              .setReturnTypeDict(CharSequenceUtil.emptyToDefault(dto.getReturnTypeDict(), entity.getReturnTypeDict()))
-              .setRemark(CharSequenceUtil.emptyToDefault(dto.getRemark(), entity.getRemark()))
-              .setOperateTime(LocalDateTime.now());
+                .setInventoryOrgName(CharSequenceUtil.emptyToDefault(dto.getInventoryOrgName(), entity.getInventoryOrgName()))
+                .setWarehouseId(CharSequenceUtil.emptyToDefault(dto.getWarehouseId(), entity.getWarehouseId()))
+                .setWarehouseName(CharSequenceUtil.emptyToDefault(dto.getWarehouseName(), entity.getWarehouseName()))
+                .setReturnTypeDict(CharSequenceUtil.emptyToDefault(dto.getReturnTypeDict(), entity.getReturnTypeDict()))
+                .setRemark(CharSequenceUtil.emptyToDefault(dto.getRemark(), entity.getRemark()))
+                .setOperateTime(LocalDateTime.now());
         // 使用客户端提交时看到的 version 做乐观锁校验，而非重新查询出的服务端当前版本，
         // 否则并发场景下后到的过期编辑会静默覆盖他人已提交的修改；version 已在 DTO 层强制必传
         entity.setVersion(dto.getVersion());
@@ -249,23 +238,23 @@ public class SoReturnPrestockServiceImpl
 
         // 更新当前行关联信息；platformOrderCode、dictPlatform 均取自本次关联的售后单自身，而非本行数据来源渠道
         detail.setAfterSaleId(dto.getAfterSaleId())
-              .setAfterSaleCode(dto.getAfterSaleCode())
-              .setPlatformOrderCode(CharSequenceUtil.emptyToDefault(dto.getPlatformOrderCode(), ""))
-              .setDictPlatform(dto.getDictPlatform())
-              .setSoId(CharSequenceUtil.emptyToDefault(dto.getSoId(), ""))
-              .setSoCode(CharSequenceUtil.emptyToDefault(dto.getSoCode(), ""))
-              .setSoReturnId(CharSequenceUtil.emptyToDefault(dto.getSoReturnId(), ""))
-              .setSoReturnCode(CharSequenceUtil.emptyToDefault(dto.getSoReturnCode(), ""))
-              .setShopId(CharSequenceUtil.emptyToDefault(dto.getShopId(), ""))
-              .setShopName(CharSequenceUtil.emptyToDefault(dto.getShopName(), ""))
-              .setSalesOrgId(CharSequenceUtil.emptyToDefault(dto.getSalesOrgId(), ""))
-              .setSalesOrgName(CharSequenceUtil.emptyToDefault(dto.getSalesOrgName(), ""))
-              .setSalesDeptId(CharSequenceUtil.emptyToDefault(dto.getSalesDeptId(), ""))
-              .setSalesDeptName(CharSequenceUtil.emptyToDefault(dto.getSalesDeptName(), ""))
-              .setSellerId(CharSequenceUtil.emptyToDefault(dto.getSellerId(), ""))
-              .setSellerName(CharSequenceUtil.emptyToDefault(dto.getSellerName(), ""))
-              .setReturnQty(dto.getLinkQty())
-              .setLinkStatus(PrestockLinkStatusEnum.LINKED.getStatus());
+                .setAfterSaleCode(dto.getAfterSaleCode())
+                .setPlatformOrderCode(CharSequenceUtil.emptyToDefault(dto.getPlatformOrderCode(), ""))
+                .setDictPlatform(dto.getDictPlatform())
+                .setSoId(CharSequenceUtil.emptyToDefault(dto.getSoId(), ""))
+                .setSoCode(CharSequenceUtil.emptyToDefault(dto.getSoCode(), ""))
+                .setSoReturnId(CharSequenceUtil.emptyToDefault(dto.getSoReturnId(), ""))
+                .setSoReturnCode(CharSequenceUtil.emptyToDefault(dto.getSoReturnCode(), ""))
+                .setShopId(CharSequenceUtil.emptyToDefault(dto.getShopId(), ""))
+                .setShopName(CharSequenceUtil.emptyToDefault(dto.getShopName(), ""))
+                .setSalesOrgId(CharSequenceUtil.emptyToDefault(dto.getSalesOrgId(), ""))
+                .setSalesOrgName(CharSequenceUtil.emptyToDefault(dto.getSalesOrgName(), ""))
+                .setSalesDeptId(CharSequenceUtil.emptyToDefault(dto.getSalesDeptId(), ""))
+                .setSalesDeptName(CharSequenceUtil.emptyToDefault(dto.getSalesDeptName(), ""))
+                .setSellerId(CharSequenceUtil.emptyToDefault(dto.getSellerId(), ""))
+                .setSellerName(CharSequenceUtil.emptyToDefault(dto.getSellerName(), ""))
+                .setReturnQty(dto.getLinkQty())
+                .setLinkStatus(PrestockLinkStatusEnum.LINKED.getStatus());
         if (!soReturnPrestockDetailService.updateById(detail)) {
             return BatchResultDTO.fail(detail.getId(), detail.getSkuNo(), "关联失败，请重试");
         }
@@ -371,7 +360,7 @@ public class SoReturnPrestockServiceImpl
      * 关联的明细行仅在内存中变更，配对信息收集到 collector，由调用方统一落库。</p>
      */
     private void allocateAfterSaleItem(Deque<SoReturnPrestockDetailEntity> rows,
-            SoReturnPrestockDetailDTO.AfterSaleItem item, List<LinkedDetailPair> collector) {
+                                       SoReturnPrestockDetailDTO.AfterSaleItem item, List<LinkedDetailPair> collector) {
         int remaining = Objects.nonNull(item.getReturnQty()) ? item.getReturnQty() : 0;
         while (remaining > 0 && Objects.nonNull(rows) && !rows.isEmpty()) {
             SoReturnPrestockDetailEntity row = rows.pollFirst();
@@ -458,12 +447,12 @@ public class SoReturnPrestockServiceImpl
     /**
      * 由已关联的预入库单明细行组装退货入库单明细入参：数量取本行关联数量（应退=签收兜底=实退）。
      *
-     * @param returnTypeDict     退货类型字典值（关联售后单时优先取售后单明细，兜底主表；关联店铺时取主表）
-     * @param returnReasonDict   退货原因字典值（关联售后单时取售后单明细，关联店铺时为空）
-     * @param soReturnDetailId   售后单明细 ID（关联店铺场景为空，仅关联售后单时用于溯源）
+     * @param returnTypeDict   退货类型字典值（关联售后单时优先取售后单明细，兜底主表；关联店铺时取主表）
+     * @param returnReasonDict 退货原因字典值（关联售后单时取售后单明细，关联店铺时为空）
+     * @param soReturnDetailId 售后单明细 ID（关联店铺场景为空，仅关联售后单时用于溯源）
      */
     private SoReturnInstockDetailDTO.Add buildInstockDetailAdd(SoReturnPrestockEntity main,
-            SoReturnPrestockDetailEntity detail, String returnTypeDict, String returnReasonDict, String soReturnDetailId) {
+                                                               SoReturnPrestockDetailEntity detail, String returnTypeDict, String returnReasonDict, String soReturnDetailId) {
         int qty = Objects.nonNull(detail.getReturnQty()) ? detail.getReturnQty() : 0;
         SoReturnInstockDetailDTO.Add da = new SoReturnInstockDetailDTO.Add();
         da.setSkuId(detail.getSkuId());
@@ -501,26 +490,26 @@ public class SoReturnPrestockServiceImpl
      * 不在候选售后单列表出参中，留空由后续认领流程补齐。</p>
      */
     private void applyAfterSaleToDetail(SoReturnPrestockDetailEntity row,
-            SoReturnPrestockDetailDTO.AfterSaleItem item) {
+                                        SoReturnPrestockDetailDTO.AfterSaleItem item) {
         // 三无包裹创建的预入库单明细 sku_id 可能为空，关联售后单时用售后单明细带回的 skuId 回填，
         // 保证后续生成退货入库单及库存联动时 sku_id 非空
         if (CharSequenceUtil.isBlank(row.getSkuId()) && CharSequenceUtil.isNotBlank(item.getSkuId())) {
             row.setSkuId(item.getSkuId());
         }
         row.setAfterSaleId(item.getAfterSaleId())
-           .setAfterSaleCode(CharSequenceUtil.emptyToDefault(item.getAfterSaleCode(), ""))
-           .setPlatformOrderCode(CharSequenceUtil.emptyToDefault(item.getPlatformOrderCode(), ""))
-           .setDictPlatform(CharSequenceUtil.emptyToDefault(item.getDictPlatform(), ""))
-           .setSoId(CharSequenceUtil.emptyToDefault(item.getSoId(), ""))
-           .setSoCode(CharSequenceUtil.emptyToDefault(item.getSoCode(), ""))
-           .setSoReturnId(item.getAfterSaleId())
-           .setSoReturnCode(CharSequenceUtil.emptyToDefault(item.getAfterSaleCode(), ""))
-           .setShopId(CharSequenceUtil.emptyToDefault(item.getShopId(), ""))
-           .setShopName(CharSequenceUtil.emptyToDefault(item.getShopName(), ""))
-           .setSalesOrgId("").setSalesOrgName("")
-           .setSalesDeptId("").setSalesDeptName("")
-           .setSellerId("").setSellerName("")
-           .setLinkStatus(PrestockLinkStatusEnum.LINKED.getStatus());
+                .setAfterSaleCode(CharSequenceUtil.emptyToDefault(item.getAfterSaleCode(), ""))
+                .setPlatformOrderCode(CharSequenceUtil.emptyToDefault(item.getPlatformOrderCode(), ""))
+                .setDictPlatform(CharSequenceUtil.emptyToDefault(item.getDictPlatform(), ""))
+                .setSoId(CharSequenceUtil.emptyToDefault(item.getSoId(), ""))
+                .setSoCode(CharSequenceUtil.emptyToDefault(item.getSoCode(), ""))
+                .setSoReturnId(item.getAfterSaleId())
+                .setSoReturnCode(CharSequenceUtil.emptyToDefault(item.getAfterSaleCode(), ""))
+                .setShopId(CharSequenceUtil.emptyToDefault(item.getShopId(), ""))
+                .setShopName(CharSequenceUtil.emptyToDefault(item.getShopName(), ""))
+                .setSalesOrgId("").setSalesOrgName("")
+                .setSalesDeptId("").setSalesDeptName("")
+                .setSellerId("").setSellerName("")
+                .setLinkStatus(PrestockLinkStatusEnum.LINKED.getStatus());
     }
 
     // ===================== 关联店铺（批量） =====================
@@ -706,7 +695,7 @@ public class SoReturnPrestockServiceImpl
      * @param dept 已由调用方预取的仓储兜底部门，作为占位单归属部门，避免在此方法内重复发起 Feign 调用
      */
     private void generateOrdinaryOtherInstockForDetails(SoReturnPrestockEntity main,
-            List<SoReturnPrestockDetailEntity> details, SysDepartmentEntity dept) {
+                                                        List<SoReturnPrestockDetailEntity> details, SysDepartmentEntity dept) {
         if (CollUtil.isEmpty(details)) {
             return;
         }
@@ -853,22 +842,22 @@ public class SoReturnPrestockServiceImpl
      * 平台字典值取自店铺所属平台，销售组织/部门由前端选店铺后带出。</p>
      */
     private void applyShopToDetail(SoReturnPrestockDetailEntity detail,
-            SoReturnPrestockDetailDTO.ShopItem item, int claimQty) {
+                                   SoReturnPrestockDetailDTO.ShopItem item, int claimQty) {
         detail.setShopId(item.getShopId())
-              .setShopName(CharSequenceUtil.emptyToDefault(item.getShopName(), ""))
-              .setDictPlatform(CharSequenceUtil.emptyToDefault(item.getDictPlatform(), ""))
-              .setSalesOrgId(CharSequenceUtil.emptyToDefault(item.getSalesOrgId(), ""))
-              .setSalesOrgName(CharSequenceUtil.emptyToDefault(item.getSalesOrgName(), ""))
-              .setSalesDeptId(CharSequenceUtil.emptyToDefault(item.getSalesDeptId(), ""))
-              .setSalesDeptName(CharSequenceUtil.emptyToDefault(item.getSalesDeptName(), ""))
-              .setSellerId(CharSequenceUtil.emptyToDefault(item.getSellerId(), ""))
-              .setSellerName(CharSequenceUtil.emptyToDefault(item.getSellerName(), ""))
-              .setAfterSaleId("").setAfterSaleCode("")
-              .setPlatformOrderCode("")
-              .setSoId("").setSoCode("")
-              .setSoReturnId("").setSoReturnCode("")
-              .setClaimedQty(claimQty)
-              .setLinkStatus(PrestockLinkStatusEnum.LINKED.getStatus());
+                .setShopName(CharSequenceUtil.emptyToDefault(item.getShopName(), ""))
+                .setDictPlatform(CharSequenceUtil.emptyToDefault(item.getDictPlatform(), ""))
+                .setSalesOrgId(CharSequenceUtil.emptyToDefault(item.getSalesOrgId(), ""))
+                .setSalesOrgName(CharSequenceUtil.emptyToDefault(item.getSalesOrgName(), ""))
+                .setSalesDeptId(CharSequenceUtil.emptyToDefault(item.getSalesDeptId(), ""))
+                .setSalesDeptName(CharSequenceUtil.emptyToDefault(item.getSalesDeptName(), ""))
+                .setSellerId(CharSequenceUtil.emptyToDefault(item.getSellerId(), ""))
+                .setSellerName(CharSequenceUtil.emptyToDefault(item.getSellerName(), ""))
+                .setAfterSaleId("").setAfterSaleCode("")
+                .setPlatformOrderCode("")
+                .setSoId("").setSoCode("")
+                .setSoReturnId("").setSoReturnCode("")
+                .setClaimedQty(claimQty)
+                .setLinkStatus(PrestockLinkStatusEnum.LINKED.getStatus());
     }
 
     /**
@@ -1030,7 +1019,7 @@ public class SoReturnPrestockServiceImpl
      * 主表未直接传入时按明细行 warehouseId 汇总推导（预入库单主表仅支持单一仓库，明细行仓库不一致时拒绝创建）
      */
     private String resolveWarehouseIdFromInstock(String mainWarehouseId,
-            List<SoReturnPrestockDetailDTO.FromInstock> detailList) {
+                                                 List<SoReturnPrestockDetailDTO.FromInstock> detailList) {
         if (CharSequenceUtil.isNotBlank(mainWarehouseId)) {
             return mainWarehouseId;
         }
@@ -1302,28 +1291,28 @@ public class SoReturnPrestockServiceImpl
         List<SoReturnPrestockDetailEntity> entities = addList.stream().map(dto -> {
             SoReturnPrestockDetailEntity d = new SoReturnPrestockDetailEntity();
             d.setMainId(mainId)
-             .setParentDetailId("")
-             .setSkuId(CharSequenceUtil.emptyToDefault(dto.getSkuId(), ""))
-             .setSkuNo(dto.getSkuNo())
-             .setProductName(CharSequenceUtil.emptyToDefault(dto.getProductName(), ""))
-             .setProductImageUrl(CharSequenceUtil.emptyToDefault(dto.getProductImageUrl(), ""))
-             .setEan(CharSequenceUtil.emptyToDefault(dto.getEan(), ""))
-             .setReturnQty(dto.getReturnQty())
-             .setReceiveQty(Objects.nonNull(dto.getReceiveQty()) ? dto.getReceiveQty() : 0)
-             .setClaimedQty(0)
-             .setLinkStatus(PrestockLinkStatusEnum.UNLINKED.getStatus())
-             .setAfterSaleId("").setAfterSaleCode("")
-             .setSoId("").setSoCode("")
-             .setSoReturnId("").setSoReturnCode("")
-             .setReturnInstockId("").setReturnInstockCode("")
-             .setShopId("").setShopName("")
-             .setSalesOrgId("").setSalesOrgName("")
-             .setSalesDeptId("").setSalesDeptName("")
-             .setSellerId("").setSellerName("")
-             // 新增时尚未关联售后单/店铺，平台订单号、平台字典值均未知，留空；由后续关联操作写入
-             .setPlatformOrderCode("")
-             .setDictPlatform("")
-             .setRemark(CharSequenceUtil.emptyToDefault(dto.getRemark(), ""));
+                    .setParentDetailId("")
+                    .setSkuId(CharSequenceUtil.emptyToDefault(dto.getSkuId(), ""))
+                    .setSkuNo(dto.getSkuNo())
+                    .setProductName(CharSequenceUtil.emptyToDefault(dto.getProductName(), ""))
+                    .setProductImageUrl(CharSequenceUtil.emptyToDefault(dto.getProductImageUrl(), ""))
+                    .setEan(CharSequenceUtil.emptyToDefault(dto.getEan(), ""))
+                    .setReturnQty(dto.getReturnQty())
+                    .setReceiveQty(Objects.nonNull(dto.getReceiveQty()) ? dto.getReceiveQty() : 0)
+                    .setClaimedQty(0)
+                    .setLinkStatus(PrestockLinkStatusEnum.UNLINKED.getStatus())
+                    .setAfterSaleId("").setAfterSaleCode("")
+                    .setSoId("").setSoCode("")
+                    .setSoReturnId("").setSoReturnCode("")
+                    .setReturnInstockId("").setReturnInstockCode("")
+                    .setShopId("").setShopName("")
+                    .setSalesOrgId("").setSalesOrgName("")
+                    .setSalesDeptId("").setSalesDeptName("")
+                    .setSellerId("").setSellerName("")
+                    // 新增时尚未关联售后单/店铺，平台订单号、平台字典值均未知，留空；由后续关联操作写入
+                    .setPlatformOrderCode("")
+                    .setDictPlatform("")
+                    .setRemark(CharSequenceUtil.emptyToDefault(dto.getRemark(), ""));
             return d;
         }).collect(Collectors.toList());
         soReturnPrestockDetailService.saveBatch(entities, 500);
@@ -1430,7 +1419,7 @@ public class SoReturnPrestockServiceImpl
      * 组装预入库单新增入参：库存组织/仓库信息通过仓库 ID 反查补齐；来源类型固定为 MANUAL（人工在退货入库单表单发起）
      */
     private SoReturnPrestockDTO.Add buildPrestockAddFromInstockParams(String type, String returnLogisticCode,
-            String thirdCode, String warehouseId, String soReturnCode, List<SoReturnPrestockDetailDTO.Add> detailList) {
+                                                                      String thirdCode, String warehouseId, String soReturnCode, List<SoReturnPrestockDetailDTO.Add> detailList) {
         if (CharSequenceUtil.isBlank(warehouseId)) {
             throw new ServiceException("仓库不能为空");
         }

@@ -118,6 +118,9 @@ public class SoReturnPrestockDTO {
 
         /** 创建时间 */
         private LocalDateTime createTime;
+
+        /** 详情行列表 */
+        private List<SoReturnPrestockDetailDTO.View> detailList;
     }
 
     // ===================== 新增 =====================
