@@ -9,20 +9,20 @@
         - ${item.field}/${item.sort}: 排序字段由 @WebAdvanceQuery 框架白名单校验，不得视为注入风险
     -->
     <select id="paging" resultType="com.erp.model.wms.dto.SoReturnPrestockDTO$PagingView">
-        SELECT
-            srp.id,
-            srp.code,
-            srp.type,
-            srp.return_logistic_code  AS returnLogisticCode,
-            srp.link_status           AS linkStatus,
-            srp.inventory_org_name    AS inventoryOrgName,
-            srp.warehouse_name        AS warehouseName,
-            srp.return_instock_time   AS returnInstockTime,
-            srp.operate_time          AS operateTime,
-            srp.source_type           AS sourceType,
-            srp.create_user_name      AS createUserName,
-            srp.create_time           AS createTime
+        SELECT distinct srp.id,
+                srp.code,
+                srp.type,
+                srp.return_logistic_code  AS returnLogisticCode,
+                srp.link_status           AS linkStatus,
+                srp.inventory_org_name    AS inventoryOrgName,
+                srp.warehouse_name        AS warehouseName,
+                srp.return_instock_time   AS returnInstockTime,
+                srp.operate_time          AS operateTime,
+                srp.source_type           AS sourceType,
+                srp.create_user_name      AS createUserName,
+                srp.create_time           AS createTime
         FROM so_return_prestock srp
+        left join so_return_prestock_detail dt on dt.main_id = srp.id and dt.is_deleted = FALSE
         WHERE ${params.sqlMap.default}
           AND srp.is_deleted = FALSE
         <if test="params.permissionSql != null and params.permissionSql != ''">
