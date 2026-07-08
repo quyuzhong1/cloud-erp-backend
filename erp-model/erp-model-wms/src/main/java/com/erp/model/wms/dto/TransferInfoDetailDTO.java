@@ -50,6 +50,10 @@ public class TransferInfoDetailDTO implements Serializable {
          */
         @NotBlank(message = "调出仓库不能为空")
         private String outWarehouseId;
+        /**
+         * 虚拟仓id
+         */
+        private String virtualWarehouseId;
 
         /**
          * 调入仓库id

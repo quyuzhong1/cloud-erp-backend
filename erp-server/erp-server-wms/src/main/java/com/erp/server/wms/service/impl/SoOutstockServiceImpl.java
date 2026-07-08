@@ -3109,7 +3109,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                     platformOutboundDTO.setOutBoundTime(outBoundTime);
                 }
                 platformOutboundDTO.setTrackNo(outboundEntity.getTrackingNo());
-                platformOutboundConsumerService.generateSoOut(soB2cEntity,thirdWarehouseDeliveryEntity,platformOutboundDTO,"");
+                platformOutboundConsumerService.generateSoOut(soB2cEntity,thirdWarehouseDeliveryEntity,platformOutboundDTO,"", "");
                 return true;
             }
             return true;

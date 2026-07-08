@@ -70,6 +70,11 @@ public class TransferInfoDetailEntity extends BaseEntity<TransferInfoDetailEntit
      */
     @TableField("out_warehouse_id")
     private String outWarehouseId;
+    /**
+     * 虚拟仓id
+     */
+    @TableField("virtual_warehouse_id")
+    private String virtualWarehouseId;
 
     /**
      * 调出仓库名称

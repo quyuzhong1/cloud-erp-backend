@@ -1617,6 +1617,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             transferDTO.setSourceDetailId(detailEntity.getId());
             transferDTO.setBillDate(transferInfoEntity.getBillDate());
             transferDTO.setCurWarehouseId(detailEntity.getOutWarehouseId());
+            transferDTO.setCurVirtualWarehouseId(detailEntity.getVirtualWarehouseId());
             transferDTO.setCurWarehouseLocation(detailEntity.getOutWarehouseLocation());
             transferDTO.setTargetWarehouseId(detailEntity.getInWarehouseId());
             transferDTO.setTargetWarehouseLocation(detailEntity.getInWarehouseLocation());

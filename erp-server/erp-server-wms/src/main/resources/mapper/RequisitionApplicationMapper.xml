@@ -257,6 +257,7 @@
         w.name AS toWarehouseName,
         rad.sku_id,
         rad.sku_no,
+        rad.from_virtual_warehouse_id AS fromVirtualWarehouseId,
         rad.approve_qty AS planQty,
         rad.picking_qty AS deliveryQty,
         ra.type,

@@ -19,6 +19,10 @@ public class LocationInventoryResultDTO {
      */
     private String warehouseId;
     /**
+     * 虚拟仓id
+     */
+    private String virtualWarehouseId;
+    /**
      * 仓库库区id
      */
     private String warehouseAreaId;
