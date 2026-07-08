@@ -534,22 +534,46 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
             LogisticsBillDetailQueryDTO query = LogisticsBillDetailQueryDTO.builder()
                     .trackQueryMode(typeEnums.getCode())
                     .trackNoList(trackNos)
-                    .trackEnable(true)
+//                    .trackEnable(true)
                     .transportType(transportType)
                     .build();
             List<LogisticsTrackDTO.UpdateTrackDTO> list = logisticsBillDetailService.listWaitingRegisterByConfig(query, typeEnums.getCode());
             log.warn("【{}】批量更新物流轨迹信息查询到：{} 条", typeEnums.getName(), list.size());
 
-            // 【第二步】按注册状态拆分：registerStatus=1 已注册，registerStatus=0 待注册
+            // 【第二步】按注册状态拆分：registerStatus=1 已注册，registerStatus=0 待注册 , 其余为无需查询
+            List<LogisticsTrackDTO.UpdateTrackDTO> notQueryList = list.stream()
+                    .filter(e -> e.getRegisterStatus() != 0 && e.getRegisterStatus() != 1)
+                    .filter(e -> Objects.equals(Boolean.FALSE, e.getTrackEnable()))
+                    .collect(Collectors.toList());
+            log.warn("【{}】批量更新物流轨迹信息查询到【无需查询】数：{}", typeEnums.getName(), notQueryList.size());
+            if(CollUtil.isNotEmpty(notQueryList)){
+                //把无需查询的更新为待注册
+                List<String> lbdIds = notQueryList.stream().map(LogisticsTrackDTO.UpdateTrackDTO::getId).distinct().collect(Collectors.toList());
+                logisticsBillDetailService.lambdaUpdate()
+                        .set(LogisticsBillDetailEntity::getTrackEnable, true)
+                        .set(LogisticsBillDetailEntity::getRegisterStatus, 0)
+                        .set(LogisticsBillDetailEntity::getRegisterResult, "")
+                        .in(LogisticsBillDetailEntity::getId, lbdIds)
+                        .update();
+
+                notQueryList.stream().forEach(e -> {
+                    e.setRegisterStatus(0);
+                    e.setTrackEnable(true);
+                });
+            }
+
             List<LogisticsTrackDTO.UpdateTrackDTO> registered = list.stream()
                     .filter(e -> e.getRegisterStatus() == 1)
                     .collect(Collectors.toList());
-            log.warn("【{}】批量更新物流轨迹信息查询到已注册数：{}", typeEnums.getName(), registered.size());
+            log.warn("【{}】批量更新物流轨迹信息查询到【已注册】数：{}", typeEnums.getName(), registered.size());
 
             List<LogisticsTrackDTO.UpdateTrackDTO> unregistered = list.stream()
                     .filter(e -> e.getRegisterStatus() == 0)
                     .collect(Collectors.toList());
-            log.warn("【{}】批量更新物流轨迹信息查询到待注册数：{}", typeEnums.getName(), unregistered.size());
+            log.warn("【{}】批量更新物流轨迹信息查询到【待注册】数：{}", typeEnums.getName(), unregistered.size());
+
+            //无需查询归到待注册
+            unregistered.addAll(notQueryList);
 
             // 【第三步】对待注册单据执行注册动作，获取本轮注册成功的单据集合
             List<LogisticsThirdChannelRefDTO.PagingVO> configs = logisticsThirdChannelRefService.listByPlatform(typeEnums.getCode());
