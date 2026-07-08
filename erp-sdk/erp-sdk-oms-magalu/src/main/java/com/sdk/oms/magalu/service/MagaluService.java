@@ -54,6 +54,8 @@ public class MagaluService {
     private static final String DELIVERY_INVOICE_PATH = "/seller/v1/deliveries/{id}/invoices";
     private static final String DELIVERY_INVOICE_UPDATE_PATH = "/seller/v1/deliveries/{id}/invoices/{key}";
     private static final String DELIVERY_SHIPPING_PATH = "/seller/v1/deliveries/{id}/shippings";
+    private static final String SANDBOX_ONBOARDING_PATH = "/v1/samples/onboarding";
+    private static final String SANDBOX_ORDERS_PATH = "/v1/samples/orders";
     private static final int PAGE_SIZE = 100;
 
     @Resource
@@ -271,6 +273,54 @@ public class MagaluService {
         String url = trimEndSlash(getApiBaseUrl(shopInfoDTO)) + path;
         String response = OkHttpUtils.doGet(url, new HashMap<>(), buildApiHeaders(shopInfoDTO));
         return parseDataList(response);
+    }
+
+    /**
+     * 沙箱 onboarding，关联 seller 与 sandbox channel。
+     */
+    public JSONObject putSandboxOnboarding(MagaluShopInfoDTO shopInfoDTO) {
+        if (StringUtils.isBlank(shopInfoDTO.getChannelId())) {
+            throw new ServiceException("Magalu渠道ID未配置");
+        }
+        String url = trimEndSlash(getApiBaseUrl(shopInfoDTO)) + SANDBOX_ONBOARDING_PATH;
+        Map<String, Object> body = new HashMap<>(2);
+        body.put("channel_id", shopInfoDTO.getChannelId());
+        String response = requestJson("PUT", url, body, buildApiHeaders(shopInfoDTO));
+        return parseResponseObject(response);
+    }
+
+    /**
+     * 沙箱创建样例订单，参见 Magalu /v1/samples/orders。
+     */
+    public JSONObject createSandboxSampleOrder(MagaluShopInfoDTO shopInfoDTO, String sku, int quantity, String paymentMethod) {
+        if (StringUtils.isBlank(shopInfoDTO.getChannelId())) {
+            throw new ServiceException("Magalu渠道ID未配置");
+        }
+        if (StringUtils.isBlank(sku)) {
+            throw new ServiceException("Magalu沙箱订单SKU不能为空");
+        }
+        String url = trimEndSlash(getApiBaseUrl(shopInfoDTO)) + SANDBOX_ORDERS_PATH;
+        Map<String, Object> body = new HashMap<>(8);
+        Map<String, Object> channel = new HashMap<>(2);
+        channel.put("id", shopInfoDTO.getChannelId());
+        body.put("channel", channel);
+
+        Map<String, Object> itemInfo = new HashMap<>(2);
+        itemInfo.put("sku", sku);
+        Map<String, Object> item = new HashMap<>(4);
+        item.put("info", itemInfo);
+        item.put("quantity", quantity <= 0 ? 1 : quantity);
+
+        Map<String, Object> delivery = new HashMap<>(2);
+        delivery.put("items", Collections.singletonList(item));
+        body.put("deliveries", Collections.singletonList(delivery));
+
+        Map<String, Object> payment = new HashMap<>(2);
+        payment.put("method", StringUtils.defaultIfBlank(paymentMethod, "pix"));
+        body.put("payments", Collections.singletonList(payment));
+
+        String response = OkHttpUtils.doPostJson(url, body, buildApiHeaders(shopInfoDTO));
+        return parseResponseObject(response);
     }
 
     private MagaluTokenDTO requestToken(String baseUrl, Map<String, Object> params, String action) {
