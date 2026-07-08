@@ -65,13 +65,15 @@ Nacos / Seata 1.5.2 / RocketMQ / Redis(Redisson) / XXL-JOB / EasyExcel / MapStru
 - 仅当以下情况才报告数据权限问题：
   1. paging / edit / delete HTTP 接口**漏用** `@DataPermission`
   2. `@DataPermission` 的 `serviceClass`、`keyIdName`、`tableField`、`menuCode`、`operationType` 与入参字段或校验实体**不一致**（例如入参仅传 `instanceId` 但 `keyIdName` 仍为 `id`，导致 AOP 跳过校验）
-  3. 存在**绕过 Controller** 的入口（Feign Controller、Job、MQ Consumer 等）直接调用 Service 写操作，且该入口未配置等效的权限控制
+  3. 存在**绕过 Controller** 的入口（Job、MQ Consumer、定时任务等）直接调用 Service 写操作，且该入口未配置等效的权限控制
 - Service 被已标注 `@DataPermission` 的 Controller 调用时，**视为权限已在入口校验**，不再要求 Service 内重复校验
 - 修复建议应优先指向 **修正 Controller 注解配置** 或 **补齐遗漏入口的注解**，而非恢复 Service 层重复逻辑
 
 **Feign 契约与 FeignController 审查边界（必须遵守）：**
 - `erp-rpc-*` 定义 Feign **调用方**契约（`@FeignClient` + 路径/方法/入参/出参）；`erp-server-*/controller/feign/*FeignController` 提供**服务端** HTTP 实现
 - FeignController **不要求** `implements XxxFeign`，**不得**因删除 `implements`、缺少 `@Override` 而报告问题或要求恢复（本项目多数 FeignController 均未实现 rpc 接口）
+- Feign 接口 / FeignController 属于服务间内部调用入口，**不要求**配置 `@DataPermission`；不得仅因 Feign 写接口未加 `@DataPermission`、未复用普通 API Controller 的权限注解而报告权限问题或要求补权限
+- FeignController 调用 Service 写操作时，默认视为内部服务编排/系统链路的一部分；除非 diff 中能直接证明该 Feign 端点可被外部用户绕过网关/API Controller 直接访问并造成越权，否则不得按「绕过 Controller 写入口」报告数据权限问题
 - 跨服务契约是否对齐，以 **URL 路径、HTTP 方法、入参/出参类型** 与 `erp-rpc-*` 中 `@FeignClient` 接口声明是否一致为准，而非是否显式 `implements`
 - 仅当以下情况才报告 Feign 契约相关问题：
   1. 业务 Service 绕过 `erp-rpc-*` Feign 客户端，直接 HTTP 调用其他服务
@@ -134,6 +136,9 @@ Nacos / Seata 1.5.2 / RocketMQ / Redis(Redisson) / XXL-JOB / EasyExcel / MapStru
 - 批量操作是否使用 `BatchResultDTO` 收集结果，而非直接抛异常中断
 - catch 块是否吞掉异常（只打日志不上报）
 - 异常信息是否泄露内部堆栈或 SQL 细节
+- `ApiError.HTTP_UNKNOWN` 仅允许用于全局兜底、无法解析的远程响应、网关/框架未知异常等真正无法归类场景；新增业务代码不得直接用它承载明确的参数、文件、工作流、第三方或远程服务失败
+- 明确参数缺失/非法应使用 `COMMON_PARAM_REQUIRED`、`HTTP_BAD_REQUEST` 或对应业务错误；文件/Excel 失败应使用 `FILE_*`；工作流失败应使用 `WF_*`；三方/远程服务失败应使用 `COMMON_REMOTE_*` / `COMMON_THIRD_PARTY_*`
+- `new ApiResult(ApiError.HTTP_UNKNOWN.getCode(), xxx)` 或 `throw new ServiceException(ApiError.HTTP_UNKNOWN)` 若上下文能明确错误来源，应作为问题提示替换为对应分类异常
 
 #### ApiError 审查边界
 
