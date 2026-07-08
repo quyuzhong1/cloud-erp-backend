@@ -1,22 +1,20 @@
 package com.erp.model.tms.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.SortDTO;
+import com.common.business.dto.base.SuperDTO;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-
-import com.common.business.dto.AdvanceQueryDTO;
-import com.common.business.dto.base.SortDTO;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
 import java.util.Map;
-
-import com.common.business.dto.base.SuperDTO;
-
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
 
 /**
  * <p>
@@ -394,6 +392,16 @@ public class TmsAsyncTaskRecordDTO implements Serializable {
          * 费用类型：自发货/尾程
          */
         private String type;
+        /**
+         * 销售平台
+         */
+        private List<String> salesPlatformList;
+
+
+        public SmallBagPushAllocationPayloadDTO (String reportDate,String type) {
+            this.reportDate = reportDate;
+            this.type = type;
+        }
     }
 
     /**
