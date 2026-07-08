@@ -158,7 +158,7 @@ public class WdtSoB2ckConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatf
                                     .collect(Collectors.joining(","));
                             if (isKolB2cCancelRequest(request)) {
                                 notifyKolB2cCancelPushFailByRequest(dmpSyncTaskId, request, errorMsg);
-                            } else if (StringUtils.isBlank(dmpSyncTaskId)) {
+                            } else if (shouldNotifyKolB2cApproveByRequest(dmpSyncTaskId)) {
                                 notifyKolB2cApprovePushFailByRequest(dmpSyncTaskId, request, errorMsg);
                             }
                             return ApiResult.error(MessageUtils.getMessage(ApiError.SO_WDT_SALES_RAW_TRADE_PUSHSELF, newCount, chgCount, errorMsg));
@@ -166,7 +166,7 @@ public class WdtSoB2ckConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatf
                             String successMsg = MessageUtils.getMessage(ApiError.SO_WDT_SALES_RAW_TRADE_PUSHSELF, newCount, chgCount, errorMsg);
                             if (isKolB2cCancelRequest(request)) {
                                 notifyKolB2cCancelPushSuccess(dmpSyncTaskId, request, successMsg);
-                            } else if (StringUtils.isBlank(dmpSyncTaskId)) {
+                            } else if (shouldNotifyKolB2cApproveByRequest(dmpSyncTaskId)) {
                                 notifyKolB2cApprovePushSuccessByRequest(dmpSyncTaskId, request, successMsg);
                             }
                             return ApiResult.success(successMsg);
@@ -195,8 +195,20 @@ public class WdtSoB2ckConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatf
             }
         } catch (Exception e) {
             log.error("推送旺店通失败:{}", e.getMessage(), e);
+            if (shouldNotifyKolB2cApproveByRequest(dmpSyncTaskId) && !isKolB2cCancelRequest(request)) {
+                notifyKolB2cApprovePushFailByRequest(dmpSyncTaskId, request,
+                        StringUtils.defaultIfBlank(e.getMessage(), "推送旺店通失败"));
+            }
             throw e;
         }
+    }
+
+    private boolean shouldNotifyKolB2cApproveByRequest(String dmpSyncTaskId) {
+        if (StringUtils.isBlank(dmpSyncTaskId)) {
+            return true;
+        }
+        DmpPushTaskEntity dmpPushTaskEntity = dmpPushTaskService.getById(dmpSyncTaskId);
+        return ObjectUtils.isEmpty(dmpPushTaskEntity);
     }
 
     private void notifyKolB2cApprovePushResult(DmpPushTaskEntity dmpPushTaskEntity, DmpSyncMqDTO.ParamDTO paramDTO) {
