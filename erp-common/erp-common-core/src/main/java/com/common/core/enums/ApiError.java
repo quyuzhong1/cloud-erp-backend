@@ -1590,6 +1590,15 @@ public enum ApiError implements Serializable {
     WH_WEGO_INVENTORY_PAGE_PARSE_FAILED(11164,"WEGO库存：仓库[{0}] 第{1}页响应解析失败，数据不完整，任务中止"),
     WH_WEGO_INVENTORY_PAGE_LIMIT_EXCEEDED(11165,"WEGO库存：仓库[{0}] 已达最大翻页上限({1})，已拉取={2}条，数据不完整，任务中止"),
     WH_WEGO_INVENTORY_RESPONSE_FAILED(11166,"WEGO库存接口返回失败: errorCode={0}, errorMsg={1}"),
+    WH_WEGO_OUTBOUND_AUTH_INFO_NOT_FOUND(11167,"WEGO授权信息不存在"),
+    WH_WEGO_OUTBOUND_AUTH_ID_NOT_FOUND(11168,"WEGO对应授权ID信息不存在, nextId:{0}"),
+    WH_WEGO_OUTBOUND_AUTH_JSON_EMPTY(11169,"WEGO出库：服务商[{0}]auth_json为空"),
+    WH_WEGO_OUTBOUND_TOKEN_SECRET_MISSING(11170,"WEGO出库：服务商[{0}]appToken/appSecret缺失"),
+    WH_WEGO_OUTBOUND_PAGE_QUERY_ERROR(11171,"WEGO出库：query2cOrderPage 分页拉取异常，已拉取页数={0}，数据不完整，任务中止"),
+    WH_WEGO_OUTBOUND_RESPONSE_EMPTY(11172,"WEGO出库：query2cOrderPage 接口响应为空，pageNum={0}，数据不完整，任务中止"),
+    WH_WEGO_OUTBOUND_RESPONSE_FAILED(11173,"WEGO出库：query2cOrderPage 接口返回失败: errorCode={0}, errorMsg={1}"),
+    WH_WEGO_OUTBOUND_RESULT_EMPTY(11174,"WEGO出库：query2cOrderPage 接口 success=true 但 result 为空，pageNum={0}，已拉取页数={1}，数据不完整，任务中止"),
+    WH_WEGO_OUTBOUND_PAGE_LIMIT_EXCEEDED(11175,"WEGO出库：已达最大翻页上限({0})，已拉取={1}条，数据不完整，任务中止"),
 
 
     /**

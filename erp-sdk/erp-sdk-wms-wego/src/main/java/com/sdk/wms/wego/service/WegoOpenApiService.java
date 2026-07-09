@@ -51,6 +51,24 @@ public class WegoOpenApiService {
             new HashSet<>(Arrays.asList("pageNum", "pageSize"));
 
     /**
+     * 日志脱敏 PII 字段：收件人/发件人 姓名、电话、邮箱、地址、邮编等，打印日志时需打码。
+     */
+    private static final Set<String> LOG_PII_PARAM_KEYS = new HashSet<>(Arrays.asList(
+            "receiver", "receiverPhone", "receiverPostCode", "receiverEmail",
+            "receiverProvince", "receiverCity", "receiverArea", "receiverAddress",
+            "sender", "senderPhone", "senderEmail"));
+
+    /**
+     * 日志脱敏大体积/大数组字段：仅记录长度或条数，避免污染日志或泄露明细。
+     */
+    private static final Set<String> LOG_LARGE_COLLECTION_KEYS = new HashSet<>(Arrays.asList("products", "wayBillUrl"));
+
+    /**
+     * 原始响应字符串在日志中打印的最大长度。
+     */
+    private static final int RAW_RESPONSE_LOG_MAX_LEN = 500;
+
+    /**
      * 根据当前激活的 Spring profile 选择 WEGO 接口域名。
      *
      * @return WEGO 网关地址（生产或测试）
@@ -476,7 +494,7 @@ public class WegoOpenApiService {
         try {
             return JSON.parseObject(response);
         } catch (Exception ex) {
-            log.error("[WEGO{}] 响应JSON解析失败, response={}", actionName, response, ex);
+            log.error("[WEGO{}] 响应JSON解析失败, response={}", actionName, truncateRawResponse(response), ex);
             throw new ServiceException("WEGO " + actionName + "接口返回非JSON格式");
         }
     }
@@ -513,7 +531,13 @@ public class WegoOpenApiService {
     }
 
     /**
-     * 日志参数脱敏，避免打印 accessToken 与 sign。
+     * 日志参数脱敏：
+     * <ul>
+     *   <li>凭证字段 accessToken / sign 打码；</li>
+     *   <li>收件人/发件人 姓名、电话、邮箱、地址、邮编等 PII 字段打码；</li>
+     *   <li>面单 Base64 仅记录长度，避免大体积内容与收件人信息写入日志；</li>
+     *   <li>products / wayBillUrl 等大数组仅记录条数。</li>
+     * </ul>
      */
     private Map<String, Object> maskLogParams(Map<String, Object> params) {
         Map<String, Object> logParams = new HashMap<>(params);
@@ -523,7 +547,35 @@ public class WegoOpenApiService {
         if (logParams.containsKey(WeGoSignUtils.SIGN_FIELD)) {
             logParams.put(WeGoSignUtils.SIGN_FIELD, "***");
         }
+        for (String piiKey : LOG_PII_PARAM_KEYS) {
+            if (logParams.get(piiKey) != null) {
+                logParams.put(piiKey, "***");
+            }
+        }
+        Object wayBillBase64 = logParams.get("wayBillBase64");
+        if (wayBillBase64 != null) {
+            logParams.put("wayBillBase64", "***(base64 length=" + String.valueOf(wayBillBase64).length() + ")");
+        }
+        for (String collectionKey : LOG_LARGE_COLLECTION_KEYS) {
+            Object value = logParams.get(collectionKey);
+            if (value instanceof Collection) {
+                logParams.put(collectionKey, "***(size=" + ((Collection<?>) value).size() + ")");
+            }
+        }
         return logParams;
+    }
+
+    /**
+     * 截断原始响应字符串，避免解析失败时将大体积/含 PII 的完整响应写入日志。
+     */
+    private String truncateRawResponse(String response) {
+        if (response == null) {
+            return "null";
+        }
+        if (response.length() <= RAW_RESPONSE_LOG_MAX_LEN) {
+            return response;
+        }
+        return response.substring(0, RAW_RESPONSE_LOG_MAX_LEN) + "...(truncated, length=" + response.length() + ")";
     }
 
     /**

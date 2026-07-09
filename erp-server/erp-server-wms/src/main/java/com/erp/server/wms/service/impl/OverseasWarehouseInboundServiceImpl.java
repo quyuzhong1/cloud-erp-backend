@@ -1387,7 +1387,10 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         if (CollectionUtils.isNotEmpty(insertReceiveEntityList)) {
             overseasWarehouseInboundReceivedService.saveBatch(insertReceiveEntityList);
         }
-        if (CollectionUtils.isNotEmpty(unmatchedReceivingList)) {
+        // 存在计划外（本地明细找不到 SKU）的签收流水：本地签收数量会低于三方仓实际上架量，
+        // 需阻止入库单自动完结并留痕，避免入库单状态/调拨基于不完整数据推进。
+        boolean hasUnmatchedReceiving = CollectionUtils.isNotEmpty(unmatchedReceivingList);
+        if (hasUnmatchedReceiving) {
             // 计划外签收流水不落库，但补一条业务操作日志，便于人工在单据详情页感知并对账追溯，
             // 而不是只能靠翻 warn 日志才能发现库存/调拨状态与三方仓不一致。
             String unmatchedDetail = unmatchedReceivingList.stream()
@@ -1395,7 +1398,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                             r.getProductSku(), r.getThirdId(), r.getReceiveQty()))
                     .collect(Collectors.joining("；"));
             operateLogService.addModuleOperateLog(
-                    CharSequenceUtil.format("平台【{}】回传{}条签收流水在本地入库明细中找不到对应SKU，已跳过未落库，需人工核实：{}",
+                    CharSequenceUtil.format("平台【{}】回传{}条签收流水在本地入库明细中找不到对应SKU，已跳过未落库，本单不会自动完结，需人工核实：{}",
                             dto.getPlatform(), unmatchedReceivingList.size(), unmatchedDetail),
                     ModuleTypeEnum.OVERSEAS_WAREHOUSE_INBOUND.getCode(), mainEntity.getId(), "异常签收");
         }
@@ -1440,7 +1443,8 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 //有任意签收流水，但是至少有一条明细没有签收完成，即至少有一条明细收发差异小于0
                 boolean isAnyReceiveZero = detailList.stream().anyMatch(v -> v.getDiffQty() < 0);
                 //根据以上条件判断入库状态 都不符合原来状态不做更新
-                if(isAllDiffZero){
+                //存在计划外未匹配签收时，即使本地明细收发差异为0也不自动完结，降级为已签收，强制人工对账
+                if(isAllDiffZero && !hasUnmatchedReceiving){
                     mainEntity.setInstockStatus(OverseasInstockStatusEnum.AUTOMATIC_COMPLETION.getCode());
                 }else if(isAllReceiveZero){
                     mainEntity.setInstockStatus(OverseasInstockStatusEnum.SIGNED.getCode());
