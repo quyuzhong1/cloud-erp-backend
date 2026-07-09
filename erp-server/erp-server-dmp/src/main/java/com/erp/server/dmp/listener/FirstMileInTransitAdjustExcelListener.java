@@ -90,11 +90,6 @@ public class FirstMileInTransitAdjustExcelListener extends AnalysisEventListener
         if (null != reportMonth){
             excelDTO.setReportMonth(reportMonth.toString());
         }
-        // 上个月1日
-        LocalDate beforeMonth = LocalDate.now().withDayOfMonth(1).minusMonths(1);
-        if (null != reportMonth && reportMonth.isBefore(beforeMonth)){
-            errorMsgList.add(CharSequenceUtil.format("导入月份错误:只能是上个月之后的数据:【{}】",reportMonthStr));
-        }
         String adjustQty = excelDTO.getAdjustQty();
         try {
             Integer i = Integer.valueOf(adjustQty);

@@ -31,6 +31,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.StrUtils;
+import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -565,6 +566,7 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "dto.id", unlockAfterTx = true)
     public BatchResultDTO approve(ApproveOneDTO dto, ClientTypeEnum clientType) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
@@ -1320,6 +1322,7 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.WMS_IMPORT_TASK_KEY, keyName = "dto.taskId", unlockAfterTx = true)
     public void importSampleTransfer(BaseDTO.ImportDTO dto) {
         // SKU信息（获取所有sku，不限制审核状态）
         List<SkuVO> skuList = plmTaskFeign.listAllSku();

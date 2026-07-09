@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.OperationTypeEnum;
@@ -16,6 +17,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.constant.DictCityConstants;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.sys.dto.DictCityDTO;
 import com.erp.model.sys.dto.DictCountryDTO;
@@ -207,6 +209,7 @@ public class DictCityServiceImpl extends SuperServiceImpl<DictCityMapper, DictCi
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.KINGDEE_SYNC_KEY, keyName = "dto.id", unlockAfterTx = true)
     public Boolean updateProvince(DictCityDTO.UpdateProvinceDTO dto) {
         String id = dto.getId();
         DictCityEntity entity=this.getById(id);
@@ -231,6 +234,7 @@ public class DictCityServiceImpl extends SuperServiceImpl<DictCityMapper, DictCi
     }
 
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.KINGDEE_SYNC_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO delete(String id) {
         DictCityEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
@@ -354,6 +358,7 @@ public class DictCityServiceImpl extends SuperServiceImpl<DictCityMapper, DictCi
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.KINGDEE_SYNC_KEY, keyName = "dto.id", unlockAfterTx = true)
     public Boolean updateCity(DictCityDTO.UpdateCityDTO dto) {
         String id = dto.getId();
         DictCityEntity entity = this.getById(id);

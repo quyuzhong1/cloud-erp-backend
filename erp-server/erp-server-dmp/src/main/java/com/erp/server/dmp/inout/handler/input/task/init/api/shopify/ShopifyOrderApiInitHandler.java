@@ -64,6 +64,17 @@ public class ShopifyOrderApiInitHandler implements DmpInputApiInitHandler {
         if (CollectionUtils.isEmpty(orders)) {
             return Collections.emptyList();
         }
+        orders.removeIf(order -> {
+            if (StringUtils.isNotBlank(order.getOrderId())) {
+                return false;
+            }
+            log.error("[Shopify订单下载]订单缺少orderId, 跳过写入init/fds: name={}, orderNumber={}",
+                    order.getName(), order.getOrderNumber());
+            return true;
+        });
+        if (CollectionUtils.isEmpty(orders)) {
+            return Collections.emptyList();
+        }
         DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
         dmpInputTaskInitDTO.setMsg(JSONArray.toJSONString(orders));
         dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);

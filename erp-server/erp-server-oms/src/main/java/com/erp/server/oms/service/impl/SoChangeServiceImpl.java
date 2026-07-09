@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.ThirdConstants;
@@ -28,6 +29,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
+import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.oms.dto.SoChangeDTO;
 import com.erp.model.oms.dto.SoChangeDetailDTO;
@@ -332,6 +334,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "ids", unlockAfterTx = true)
     public Boolean submit(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
             return false;
@@ -849,6 +852,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "entity.id", unlockAfterTx = true)
     public BatchResultDTO approve(BaseApproveParamDTO dto, SoChangeEntity entity) {
         List<SoChangeEntity> list = Arrays.asList(entity);
         String ingStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
@@ -943,6 +947,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "dto.ids", unlockAfterTx = true)
     public Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto) {
         List<String> ids = dto.getIds();
         List<SoChangeEntity> list = this.listByIds(ids);
@@ -982,6 +987,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "ids", unlockAfterTx = true)
     public Boolean deleteByIds(List<String> ids) {
         List<SoChangeEntity> list = this.listByIds(ids);
         if (CollectionUtils.isEmpty(list)) {
@@ -1012,6 +1018,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "ids", unlockAfterTx = true)
     public List<BatchResultDTO> deleteByIds(List<String> ids, boolean returnDetails) {
         List<SoChangeEntity> list = this.listByIds(ids);
         if (CollectionUtils.isEmpty(list)) {
@@ -1061,6 +1068,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "ids", unlockAfterTx = true)
     public Boolean invalid(List<String> ids, String remark) {
         List<SoChangeEntity> list = this.listByIds(ids);
         if (CollectionUtils.isEmpty(list)) {

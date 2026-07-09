@@ -153,6 +153,12 @@ public interface SoB2cLogisticsService extends SuperService<SoB2cLogisticsEntity
    Boolean updateWeight(String soId, String logisticsId, BigDecimal weightByG, String operation);
 
     BatchResultDTO cancelLogistic(String id, List<SoB2cEntity> soB2cEntityList, List<SoB2cLogisticsEntity> soB2cLogisticsEntityList, Boolean checkBillStatus);
+
+    /**
+     * 配货换渠道：独立事务取消三方物流并清空运单号，避免主流程回滚导致云途已删但 ERP 仍留单号
+     */
+    BatchResultDTO cancelThirdLogisticsRequiresNew(SoB2cEntity entity, String cancelChannelId);
+
     /**
      * 根据物流跟踪号或运单好查询订单物流信息
      * @author will

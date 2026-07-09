@@ -79,12 +79,13 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
 		entity.setCreateUserName(userName);
 		return super.save(entity);
 	}
-	
+
+    /**
+     * 更新字典，统一改为上游删除对应类型字典缓存
+     * @param jsonObjects
+     * @return
+     */
 	@Override
-    @CacheEvict(
-            cacheNames = RedisCacheConstants.TMS_DICT_BASIC_BY_TYPE,
-            key = "#jsonObjects[0].getString('type')"
-    )
 	public boolean updateJsonObject(List<JSONObject> jsonObjects) {
 		List<DictBasicEntity> entityList = new ArrayList<>();
 		for(JSONObject jsonObject : jsonObjects) {
@@ -165,6 +166,7 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
         if (CollectionUtils.isNotEmpty(missTypes)) {
             List<DictBasicEntity> dbList = this.lambdaQuery()
                     .in(DictBasicEntity::getType, missTypes)
+                    .eq(DictBasicEntity::getStatus, Boolean.TRUE)
                     .list();
             Map<String, List<DictBasicEntity>> dbMap = dbList.stream()
                     .collect(Collectors.groupingBy(DictBasicEntity::getType));
@@ -217,6 +219,7 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
     private List<DictBasicEntity> listByKey(String key) {
         LambdaQueryWrapper<DictBasicEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(DictBasicEntity::getType, key);
+        queryWrapper.eq(DictBasicEntity::getStatus, Boolean.TRUE);
         queryWrapper.orderByAsc(DictBasicEntity::getIndex);
         return this.list(queryWrapper);
 

@@ -7,6 +7,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
@@ -19,6 +20,7 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.message.constant.DistributeKeyConstant;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.FastDFSClientUtil;
@@ -838,6 +840,7 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
     * 更新审核状态
     */
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "id", unlockAfterTx = true)
     public void updateApproveStatus(String id, String approveStatus) {
         lambdaUpdate().eq(ContractInfoEntity::getId, id)
         .set(ContractInfoEntity::getApproveStatus, approveStatus)

@@ -8,7 +8,11 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.constant.UserStateConstants;
 import com.common.business.dto.base.BaseDTO;
+import com.common.business.threadlocal.UserContext;
+import com.common.core.exception.ServiceException;
+import com.common.business.vo.LoginUser;
 import com.erp.model.file.dto.FileDTO;
 import com.erp.model.file.dto.FileTaskParamsDTO;
 import com.erp.model.file.entity.FileTask;
@@ -122,11 +126,29 @@ public class FileTaskRepository extends ServiceImpl<FileTaskMapper, FileTask> im
 
     @Override
     public boolean removeWithAudit(FileTask fileTask, boolean userSystem) {
-        // 复用已加载实体走 updateById：触发 updateFill 审计填充并借助 version 乐观锁，
-        // 避免 removeById 仅置 is_deleted 而不更新更新时间/更新人；
-        // isUserSystem 标识让拦截器（ErpObjectHandler#updateFill）记录系统用户或当前登录人
-        fileTask.setIsDeleted(Boolean.TRUE);
-        fileTask.setIsUserSystem(userSystem);
-        return updateById(fileTask);
+        LocalDateTime nowDate = LocalDateTime.now();
+        String userId;
+        String userName;
+        if (userSystem) {
+            userId = UserStateConstants.USER_SYSTEM_ID;
+            userName = UserStateConstants.USER_SYSTEM;
+        } else {
+            LoginUser userInfo = UserContext.getNonLoginUser();
+            if (userInfo == null) {
+                throw new ServiceException("删除文件任务缺少用户信息");
+            }
+            userId = userInfo.getUid();
+            userName = userInfo.getUserName();
+        }
+        // updateById 会排除 @TableLogic 字段，无法写入 is_deleted；改 lambdaUpdate 显式软删并填充审计字段
+        return this.lambdaUpdate()
+                .set(FileTask::getIsDeleted, Boolean.TRUE)
+                .set(FileTask::getUpdateTime, nowDate)
+                .set(FileTask::getUpdateUserId, userId)
+                .set(FileTask::getUpdateUserName, userName)
+                .setSql("version = version + 1")
+                .eq(FileTask::getId, fileTask.getId())
+                .eq(FileTask::getVersion, fileTask.getVersion())
+                .update();
     }
 }

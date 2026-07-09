@@ -7,7 +7,7 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.common.business.annotation.DataIdempotent;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.WdtReturnOrderDTO;
 import com.common.business.dto.base.BaseIdDTO;
@@ -17,6 +17,7 @@ import com.common.core.constant.CommonConstants;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
+import com.common.message.constant.DistributeKeyConstant;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
@@ -114,7 +115,7 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DataIdempotent(keyIdName = "kingdeeReturnOrderEntity.fBillNo", leaseTime = 30, waitTime = 20)
+    @DistributeLocker(businessType = DistributeKeyConstant.KINGDEE_SYNC_KEY, keyName = "kingdeeReturnOrderEntity.fBillNo", waiteTime = 20, unlockAfterTx = true)
     public void syncKingdeeReturnOrderToSoReturn(KingdeeReturnOrderEntity kingdeeReturnOrderEntity) {
         //跳过优质胜和小隼科技的单
         if (CharSequenceUtil.isEmpty(kingdeeReturnOrderEntity.getFSaleOrgId()) || ApiKingdeeOrganizationEnum.ORGANIZATION_YZS.getCode().equals(kingdeeReturnOrderEntity.getFSaleOrgId()) || ApiKingdeeOrganizationEnum.ORGANIZATION_XX.getCode().equals(kingdeeReturnOrderEntity.getFSaleOrgId())) {
@@ -244,7 +245,7 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
     }
 
     @Override
-    @DataIdempotent(keyIdName = "dto.thirdCode")
+    @DistributeLocker(businessType = DistributeKeyConstant.WDT_RETURN_SYNC_KEY, keyName = "dto.thirdCode")
     public void syncWdtReturnOrderToSoReturn(WdtReturnOrderDTO dto) {
         //入库时间根据查询其他入库单是否已存在，存在取修改时间，否则取审核时间
         OtherInstockEntity dbOtherInstockEntity = otherInstockService.getByThirdCode(dto.getThirdCode(), InventoryDirectionEnum.ORDINARY);

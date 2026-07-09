@@ -1,6 +1,5 @@
 package com.erp.server.sys.controller.feign;
 
-import com.common.business.annotation.DataIdempotent;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.constant.UserStateConstants;
 import com.common.business.dto.FindUserDTO;
@@ -626,7 +625,6 @@ public class SysUserFeignController extends BaseController {
      * @param
      * @return
      **/
-    @DataIdempotent(keyIdName = "uid")
     @GetMapping("/changePassword")
     public ApiResult changePassword(@RequestParam("uid") String uid,@RequestParam("pwd") String pwd) {
         Boolean flag = sysUserInfoService.changePassword(uid,pwd);

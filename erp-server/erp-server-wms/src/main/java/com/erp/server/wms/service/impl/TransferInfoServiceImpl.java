@@ -12,6 +12,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.dto.ApproveDTO;
@@ -34,6 +35,7 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
+import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.dto.ThirdWarehouseDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
@@ -144,6 +146,10 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     @Resource
     private SyncMabangTransferService syncMabangTransferService;
 
+    @Lazy
+    @Resource
+    private TransferInfoService transferInfoService;
+
     @Value("${transfer-sync-to-mb: true}")
     private Boolean transferSyncToMb;
 
@@ -214,7 +220,6 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
     @Resource
     private VirtualWarehousePushHandleDetailService virtualWarehousePushHandleDetailService;
-
 
     @Override
     public PagingVO<TransferInfoDTO.ListDTO> paging(PagingDTO<TransferInfoDTO.SearchParamDTO> pagingDTO) {
@@ -322,6 +327,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.TRANSFER_INFO_APPROVE_KEY, keyName = "dto.sourceType,dto.sourceId,dto.outWarehouseId,dto.inWarehouseId", unlockAfterTx = true)
     public String addAndApprove(TransferInfoDTO.AddDTO dto) {
         //新增
         String id = this.add(dto);
@@ -342,7 +348,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             throw new ServiceException(ApiError.WH_TRANSFER_DIRECT_NOT_FOUND);
         }
         approveEntity.setIsUserSystem(dto.getIsUserSystem());
-        this.approve(approveEntity,ApproveType.PASS,"", null , Boolean.TRUE, Boolean.FALSE);
+        transferInfoService.approve(approveEntity, ApproveType.PASS, "", null, Boolean.TRUE, Boolean.FALSE);
         return id;
     }
 
@@ -480,6 +486,9 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         //可用数量
         List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryList = inventoryService.listSkuInventory(skuInventoryDTO);
         for (TransferInfoDetailDTO.ViewDTO viewDetailDTO : viewDetailList) {
+            //库存状态名称（可用/冻结/不良品）
+            viewDetailDTO.setOutInventoryStatusName(InventoryStatusEnum.getNameByCode(viewDetailDTO.getOutInventoryStatus()));
+            viewDetailDTO.setInInventoryStatusName(InventoryStatusEnum.getNameByCode(viewDetailDTO.getInInventoryStatus()));
             //产品名称
             if (CollectionUtils.isNotEmpty(skuList)) {
                 SkuVO skuVO = skuList.stream().filter(e -> e.getSkuId().equals(viewDetailDTO.getSkuId())).findFirst().orElse(new SkuVO());
@@ -627,6 +636,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "entity.id", unlockAfterTx = true)
     public BatchResultDTO approve(TransferInfoEntity entity, String type, String comment, Boolean isNeedProcess, Boolean isSyncKingDee, Boolean isStartProcess){
         //调用没有审核流程的审核
         if (!isStartProcess) {
@@ -1512,6 +1522,11 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             throw new ServiceException(ApiError.WH_TRANSFER_DIRECT_DETAIL_NOT_FOUND);
         }
         List<TransferInfoDetailDTO.ViewDTO> viewDetailList = BeanMapperUtils.copyList(TransferInfoDetailDTO.ViewDTO.class, detailList);
+        //库存状态名称（可用/冻结/不良品）
+        viewDetailList.forEach(viewDetailDTO -> {
+            viewDetailDTO.setOutInventoryStatusName(InventoryStatusEnum.getNameByCode(viewDetailDTO.getOutInventoryStatus()));
+            viewDetailDTO.setInInventoryStatusName(InventoryStatusEnum.getNameByCode(viewDetailDTO.getInInventoryStatus()));
+        });
         viewDTO.setDetailList(viewDetailList);
         viewDTO.setApproveStatusName(ApproveStatusEnum.getName(viewDTO.getApproveStatus()));
         return viewDTO;
@@ -1623,6 +1638,17 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             transferDTO.setSkuId(detailEntity.getSkuId());
             transferDTO.setSkuNo(detailEntity.getSkuNo());
             transferDTO.setQty(detailEntity.getQty());
+            // 库存状态由明细列驱动（DB 默认 usable，仅非可用才覆盖交易规则，保证历史链路行为不变）：
+            // 调出库存状态(out_inventory_status) → 调出端(CURRENT)；
+            // 调入库存状态(in_inventory_status) → 调入端(TARGET)，wego 海外仓不良品签收已在创建时落库。
+            InventoryStatusEnum outStatus = InventoryStatusEnum.getByCode(detailEntity.getOutInventoryStatus());
+            if (outStatus != null && outStatus != InventoryStatusEnum.USABLE) {
+                transferDTO.setCurInventoryStatus(outStatus);
+            }
+            InventoryStatusEnum inStatus = InventoryStatusEnum.getByCode(detailEntity.getInInventoryStatus());
+            if (inStatus != null && inStatus != InventoryStatusEnum.USABLE) {
+                transferDTO.setDictInventoryStatus(inStatus);
+            }
             if (SourceTypeEnum.TRANSFER_APPLICATION.getCode().equals(transferInfoEntity.getSourceType())) {
                 pushTransferList.add(transferDTO);
             } else if (SourceTypeEnum.SO_B2C_DELIVERY.getCode().equals(transferInfoEntity.getSourceType())){
@@ -1811,6 +1837,9 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
             obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
             obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
+            //库存状态名称（可用/冻结/不良品）
+            obj.setOutInventoryStatusName(InventoryStatusEnum.getNameByCode(obj.getOutInventoryStatus()));
+            obj.setInInventoryStatusName(InventoryStatusEnum.getNameByCode(obj.getInInventoryStatus()));
             String approveUserName = curApproveUserNameMap.get(obj.getId());
             if(CharSequenceUtil.isNotBlank(approveUserName)){
                 obj.setApproveUserName(approveUserName);
@@ -1959,13 +1988,18 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         }
         List<TransferInfoDTO.PdaListDTO> records = pageData.getRecords();
         //主键id
-        List<String> ids = records.stream().map(req -> req.getId()).collect(Collectors.toList());
+        List<String> ids = records.stream().map(TransferInfoDTO.PdaListDTO::getId).collect(Collectors.toList());
         //查询详情
         List<TransferInfoDetailEntity> transferInfoDetailEntities = transferInfoDetailService.listByMainIds(ids);
         for (TransferInfoDTO.PdaListDTO record : records) {
             record.setApproveStatusName(ApproveStatusEnum.getName(record.getApproveStatus()));
             List<TransferInfoDetailEntity> detailEntities = transferInfoDetailEntities.stream().filter(obj -> obj.getMainId().equals(record.getId())).collect(Collectors.toList());
             List<TransferInfoDTO.PdaItemDTO> itemDTOList = BeanMapper.copyList(detailEntities, TransferInfoDTO.PdaItemDTO.class);
+            itemDTOList.forEach(viewDetailDTO -> {
+                //库存状态名称（可用/冻结/不良品）
+                viewDetailDTO.setOutInventoryStatusName(InventoryStatusEnum.getNameByCode(viewDetailDTO.getOutInventoryStatus()));
+                viewDetailDTO.setInInventoryStatusName(InventoryStatusEnum.getNameByCode(viewDetailDTO.getInInventoryStatus()));
+            });
             record.setDetailCount(itemDTOList.size());
             record.setItemList(itemDTOList);
         }
@@ -2066,11 +2100,20 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             detailAddDto.setInWarehouseLocation("");
             detailAddDto.setSourceDetailId(receivedEntity.getId());
             detailAddDto.setRemark(mainEntity.getCode());
+            // 库存状态：调出端固定可用（在途仓/目的仓的可用库存）；
+            // 调入端仅 wego 平台正向签收(在途仓→目的仓)且不良品标记时落不良品，其余默认可用。
+            boolean isDefective = OmsPlatformEnum.WE_GO.getCode().equalsIgnoreCase(mainEntity.getDictPlatform())
+                    && Boolean.FALSE.equals(isToOnwayWarehouse)
+                    && Boolean.TRUE.equals(receivedEntity.getDefectiveProductFlag());
+            detailAddDto.setOutInventoryStatus(InventoryStatusEnum.USABLE.getCode());
+            detailAddDto.setInInventoryStatus(isDefective
+                    ? InventoryStatusEnum.DEFECTIVE_PRODUCT.getCode()
+                    : InventoryStatusEnum.USABLE.getCode());
             detailAddDtoList.add(detailAddDto);
         }
 
         addDTO.setDetailList(detailAddDtoList);
-        return this.addAndApprove(addDTO);
+        return transferInfoService.addAndApprove(addDTO);
     }
 
     @Override
@@ -2280,6 +2323,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    @DistributeLocker(businessType = DistributeKeyConstant.TRANSFER_INFO_APPROVE_KEY, keyName = "updateApprovalStatusDTO.transferInfoEntity.id", unlockAfterTx = true)
     public void updateApproveStatus(TransferInfoDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO) {
         String approveStatus = updateApprovalStatusDTO.getApproveStatus();
         TransferInfoEntity transferInfoEntity = updateApprovalStatusDTO.getTransferInfoEntity();

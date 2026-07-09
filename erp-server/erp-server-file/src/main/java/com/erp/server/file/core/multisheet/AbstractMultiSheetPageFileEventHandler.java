@@ -12,7 +12,6 @@ import org.springframework.core.ResolvableType;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.List;
 
 /**
  * 多 sheet 导出公共样板：
@@ -100,11 +99,6 @@ public abstract class AbstractMultiSheetPageFileEventHandler<P> extends Abstract
 
     protected int maxRowsPerXlsxSheetHardLimit() {
         return Math.max(1, 1_048_576 - reservedTemplateHeaderRows() - 1);
-    }
-
-    @Override
-    protected final List<Object> getData(FileTask fileTask) {
-        throw new UnsupportedOperationException("多sheet导出请使用 handle(FileTask)");
     }
 
     @Override

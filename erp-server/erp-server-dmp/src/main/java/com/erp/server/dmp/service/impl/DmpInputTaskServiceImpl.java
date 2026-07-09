@@ -39,6 +39,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.message.constant.DistributeKeyConstant;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.DmpInputTaskDTO;
 import com.erp.model.dmp.entity.DmpCfgInputEntity;
@@ -66,6 +67,12 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 public class DmpInputTaskServiceImpl extends SuperServiceImpl<DmpInputTaskMapper, DmpInputTaskEntity> implements DmpInputTaskService {
+
+    /**
+     * 链路最大回溯深度，避免脏数据 parent_task_id 成环导致死循环。
+     */
+    private static final int MAX_TASK_CHAIN_DEPTH = 20;
+
 	@Resource
     private MQProducerService mqProducerService;
 	@Resource
@@ -200,6 +207,7 @@ public class DmpInputTaskServiceImpl extends SuperServiceImpl<DmpInputTaskMapper
 
 	@Transactional(rollbackFor = Exception.class)
 	@Override
+    @DistributeLocker(businessType = DistributeKeyConstant.DMP_PULL_TASK_KEY, keyName = "dmpInputTaskEntity.id", unlockAfterTx = true)
 	public void createNewTask(DmpInputTaskEntity dmpInputTaskEntity) {
 		String errorMessage = dmpInputTaskEntity.getErrorMessage();
 		String id = dmpInputTaskEntity.getId();
@@ -353,6 +361,97 @@ public class DmpInputTaskServiceImpl extends SuperServiceImpl<DmpInputTaskMapper
         } else {
             throw new ServiceException("拉取任务重试失败");
         }
+    }
+
+    /**
+     * 沿 parent_task_id 向上回溯根任务。
+     * <p>
+     * 代码审查说明：DMP 任务链为浅链路（通常远小于 {@link #MAX_TASK_CHAIN_DEPTH}），
+     * 此处 intentionally 逐层 getById，不使用 batch/递归 SQL；请勿报循环查库或 N+1。
+     * 达到 {@link #MAX_TASK_CHAIN_DEPTH} 仍非根节点时打 warn 便于观测脏链/环链，并返回当前节点供调用方兜底。
+     */
+    @Override
+    public DmpInputTaskEntity findRootTaskInChain(DmpInputTaskEntity startTask) {
+        if (startTask == null || StringUtils.isBlank(startTask.getId())) {
+            return null;
+        }
+        DmpInputTaskEntity currentTask = startTask;
+        int guard = 0;
+        while (StringUtils.isNotBlank(currentTask.getParentTaskId()) && guard++ < MAX_TASK_CHAIN_DEPTH) {
+            DmpInputTaskEntity parentTask = super.getById(currentTask.getParentTaskId());
+            if (parentTask == null) {
+                break;
+            }
+            currentTask = parentTask;
+        }
+        if (StringUtils.isNotBlank(currentTask.getParentTaskId())) {
+            log.warn("DMP任务链回溯达到最大深度, startTaskId={}, currentTaskId={}, parentTaskId={}, maxDepth={}",
+                    startTask.getId(), currentTask.getId(), currentTask.getParentTaskId(), MAX_TASK_CHAIN_DEPTH);
+        }
+        return currentTask;
+    }
+
+    @Override
+    public Map<String, String> batchResolveRootTaskShopId(Collection<String> inputTaskIds) {
+        if (CollUtil.isEmpty(inputTaskIds)) {
+            return Collections.emptyMap();
+        }
+        Map<String, DmpInputTaskEntity> taskMap = loadTaskChainMap(inputTaskIds);
+        Map<String, String> result = new HashMap<>(inputTaskIds.size());
+        for (String inputTaskId : inputTaskIds) {
+            if (StringUtils.isBlank(inputTaskId)) {
+                continue;
+            }
+            DmpInputTaskEntity rootTask = findRootTaskInChain(taskMap.get(inputTaskId), taskMap);
+            result.put(inputTaskId, rootTask == null ? "" : StringUtils.defaultString(rootTask.getNextLevelId()));
+        }
+        return result;
+    }
+
+    private Map<String, DmpInputTaskEntity> loadTaskChainMap(Collection<String> inputTaskIds) {
+        Set<String> pendingIds = inputTaskIds.stream()
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.toSet());
+        Map<String, DmpInputTaskEntity> taskMap = new HashMap<>();
+        while (CollUtil.isNotEmpty(pendingIds)) {
+            List<DmpInputTaskEntity> batchTasks = listByIds(new ArrayList<>(pendingIds));
+            pendingIds.clear();
+            for (DmpInputTaskEntity task : batchTasks) {
+                if (task == null || StringUtils.isBlank(task.getId())) {
+                    continue;
+                }
+                taskMap.put(task.getId(), task);
+            }
+            for (DmpInputTaskEntity task : batchTasks) {
+                if (task == null || StringUtils.isBlank(task.getParentTaskId())) {
+                    continue;
+                }
+                if (!taskMap.containsKey(task.getParentTaskId())) {
+                    pendingIds.add(task.getParentTaskId());
+                }
+            }
+        }
+        return taskMap;
+    }
+
+    private DmpInputTaskEntity findRootTaskInChain(DmpInputTaskEntity startTask, Map<String, DmpInputTaskEntity> taskMap) {
+        if (startTask == null || StringUtils.isBlank(startTask.getId())) {
+            return null;
+        }
+        DmpInputTaskEntity currentTask = startTask;
+        int guard = 0;
+        while (StringUtils.isNotBlank(currentTask.getParentTaskId()) && guard++ < MAX_TASK_CHAIN_DEPTH) {
+            DmpInputTaskEntity parentTask = taskMap.get(currentTask.getParentTaskId());
+            if (parentTask == null) {
+                break;
+            }
+            currentTask = parentTask;
+        }
+        if (StringUtils.isNotBlank(currentTask.getParentTaskId())) {
+            log.warn("DMP任务链回溯达到最大深度, startTaskId={}, currentTaskId={}, parentTaskId={}, maxDepth={}",
+                    startTask.getId(), currentTask.getId(), currentTask.getParentTaskId(), MAX_TASK_CHAIN_DEPTH);
+        }
+        return currentTask;
     }
 
 }

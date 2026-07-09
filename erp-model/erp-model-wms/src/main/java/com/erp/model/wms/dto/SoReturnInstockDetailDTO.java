@@ -106,6 +106,11 @@ public class SoReturnInstockDetailDTO {
          * 是否校验签收数量
          */
         private Boolean isCheckReceiveQty;
+
+        /**
+         * 是否不良品（true=不良品，false=可用）
+         */
+        private Boolean defectiveProductFlag;
     }
 
     /**
@@ -177,6 +182,11 @@ public class SoReturnInstockDetailDTO {
          * 是否子skuNo
          */
         private Boolean isChildSkuNo;
+
+        /**
+         * 是否不良品（true=不良品，false=可用）
+         */
+        private Boolean defectiveProductFlag;
     }
 
     /**
@@ -294,6 +304,11 @@ public class SoReturnInstockDetailDTO {
          * 平台sku
          */
         private String platformSkuNo;
+
+        /**
+         * 是否不良品（true=不良品，false=可用），默认可用
+         */
+        private Boolean defectiveProductFlag;
     }
 
     /**
