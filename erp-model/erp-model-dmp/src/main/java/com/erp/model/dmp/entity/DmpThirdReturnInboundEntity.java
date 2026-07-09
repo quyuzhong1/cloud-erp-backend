@@ -131,11 +131,19 @@ public class DmpThirdReturnInboundEntity extends BaseEntity<DmpThirdReturnInboun
     private String sourceId = "";
 
     /**
+     * 退货物流单号（来自 WEGO trackNumber）
+     */
+    @TableField("return_logistic_code")
+    private String returnLogisticCode;
+
+    /**
      * 批次号
      */
     @TableField("batch_no")
     private String batchNo = "";
 
+
+    public static final String RETURN_LOGISTIC_CODE = "return_logistic_code";
 
     public static final String WAREHOUSE_PLATFORM_TYPE = "warehouse_platform_type";
 

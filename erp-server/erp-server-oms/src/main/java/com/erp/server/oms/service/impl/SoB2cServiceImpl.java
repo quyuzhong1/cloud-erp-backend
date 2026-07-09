@@ -431,6 +431,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     private PackagePlanService packagePlanService;
     private static final int MAX_RETRY_COUNT = 3;
     private static final long RETRY_DELAY_SECONDS = 60000;
+    private static final int EARLY_PERSIST_RETRY_COUNT = 2;
 
     @Resource
     private SyncThirdWarehouseService syncThirdWarehouseService;
@@ -3625,12 +3626,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             List<DictCountryEntity> countryEntityList = sysDictFeign.listCountryByIds(Collections.singletonList(receiver.getCountry()));
             receiverInfo.setCountryCode3(CollUtil.isNotEmpty(countryEntityList) ? countryEntityList.get(0).getAlpha3() : "");
         }
-        //速派通地址3赋值
+        //地址2/地址3分行处理：需要将secondAddress/fullAddress分开传递的仓库平台
         if (PlatformDictEnum.SPT.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())
          ||PlatformDictEnum.JIFENG.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())
          ||PlatformDictEnum.ZHONG_BAO_WAREHOUSE.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())
          ||PlatformDictEnum.JI_TU_WAREHOUSE.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())
-         ||PlatformDictEnum.DA_MAI.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())) {
+         ||PlatformDictEnum.DA_MAI.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())
+         ||isWegoProvider(overseasProviderWarehouse.getProviderCode())) {
             receiverInfo.setAddress2(receiver.getSecondAddress());
             receiverInfo.setAddress3(receiver.getFullAddress());
         }
@@ -3754,7 +3756,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 if (Objects.isNull(packagePlanEntity) || StringUtils.isBlank(packagePlanEntity.getHandoverLabelUrl())) {
                     throw new ServiceException("交接文件不存在，请先生成交接文件");
                 }
-                String domain = dictBasicService.getByTypeAndValue("fastDfsDomain", BusinessCommonConstants.getEnvironment() + "-fastDfsDomain").getName();
+                String domain = getFastDfsDomain();
 
                 handoverLabelUrl = domain + packagePlanEntity.getHandoverLabelUrl();
             }
@@ -3866,7 +3868,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
             byte[] bytes = fileFeign.downloadFile(logisticsLabelUrl);
             String logisticsLabelBase64 = "data:application/pdf;base64," + Base64.getEncoder().encodeToString(bytes);
-            if (!PlatformDictEnum.ZHONG_BAO_WAREHOUSE.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())) {
+            // WEGO 仅依赖 labelUrl，uploadFile 为空实现，跳过无效调用；众包同样跳过
+            if (!PlatformDictEnum.ZHONG_BAO_WAREHOUSE.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())
+                    && !isWegoProvider(overseasProviderWarehouse.getProviderCode())) {
                 ThirdWarehouseUploadFileReq thirdWarehouseUploadFileReq = new ThirdWarehouseUploadFileReq();
                 thirdWarehouseUploadFileReq.setOrderCode(entity.getCode());
                 thirdWarehouseUploadFileReq.setFileData(logisticsLabelBase64);
@@ -3884,15 +3888,46 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
             createOutboundReq.setLabelData(logisticsLabelBase64);
             //生成在线url
-            if (PlatformDictEnum.JIFENG.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())
-                    || PlatformDictEnum.CAINIAO.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())
-                    || PlatformDictEnum.IML.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())
-                    || PlatformDictEnum.TONG_YOU_WAREHOUSE.getCode().equals(overseasProviderWarehouse.getProviderCode())) {
-                String path = FastDFSClientUtil.uploadFile(Base64.getDecoder().decode(logisticsLabelBase64.replace("data:application/pdf;base64,", "")), entity.getCode() + ".pdf", new HashMap<>());
-                String domain = dictBasicService.getByTypeAndValue("fastDfsDomain", BusinessCommonConstants.getEnvironment() + "-fastDfsDomain").getName();
-                createOutboundReq.setLabelUrl(domain + path);
+            if (needOnlineLabelUrl(overseasProviderWarehouse.getProviderCode())) {
+                String path;
+                try {
+                    path = FastDFSClientUtil.uploadFile(Base64.getDecoder().decode(logisticsLabelBase64.replace("data:application/pdf;base64,","")), entity.getCode()+".pdf",new HashMap<>());
+                } catch (Exception e) {
+                    throw new ServiceException(ApiError.FASTDFS_UPLOAD_FAILED_FOR_WAYBILL);
+                }
+                createOutboundReq.setLabelUrl(getFastDfsDomain() + path);
             }
         }
+    }
+
+    /**
+     * 判断该三方仓是否需要生成面单在线 URL（上传至 FastDFS 后回填 labelUrl）。
+     * WEGO / 极风 / 菜鸟 / 艾姆勒 / 通邮 通过 labelUrl 传递面单文件。
+     */
+    private boolean needOnlineLabelUrl(String providerCode) {
+        return PlatformDictEnum.JIFENG.getCode().equalsIgnoreCase(providerCode)
+                || PlatformDictEnum.CAINIAO.getCode().equalsIgnoreCase(providerCode)
+                || PlatformDictEnum.IML.getCode().equalsIgnoreCase(providerCode)
+                || PlatformDictEnum.TONG_YOU_WAREHOUSE.getCode().equalsIgnoreCase(providerCode)
+                || isWegoProvider(providerCode);
+    }
+
+    /**
+     * 判断是否为 WEGO 三方仓，统一收口，避免多处内联判断。
+     */
+    private boolean isWegoProvider(String providerCode) {
+        return OmsPlatformEnum.WE_GO.getCode().equalsIgnoreCase(providerCode);
+    }
+
+    /**
+     * 获取 FastDFS 域名，字典缺失时抛出明确的业务异常，避免 NPE。
+     */
+    private String getFastDfsDomain() {
+        DictBasicEntity domainEntity = dictBasicService.getByTypeAndValue("fastDfsDomain", BusinessCommonConstants.getEnvironment() + "-fastDfsDomain");
+        if (domainEntity == null || CharSequenceUtil.isBlank(domainEntity.getName())) {
+            throw new ServiceException("FastDFS域名配置缺失，请检查字典[fastDfsDomain]");
+        }
+        return domainEntity.getName();
     }
 
     private void setInsurePrice(SoB2cEntity entity, ThirdWarehouseCreateOutboundReq createOutboundReq) {
@@ -3986,11 +4021,54 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 soB2cErrorService.generateErrorOrder(entity.getId(), type, message, JSONObject.toJSONString(createOutboundReq), JSONObject.toJSONString(apiResult), getApiResultCode(apiResult));
                 //标记三方仓发货单为删除
                 thirdWarehouseDeliveryFeign.deleteByCode(createOutboundReq.getReferenceNo());
+            } else {
+                // 建单成功后立即将 WEGO/三方仓出库单号持久化到 so_b2c，防止外层调用方在后续逻辑中
+                // 因超时、异常等原因未能执行到 thirdWarehouseCreateOutStock 的写库步骤，
+                // 导致 shippingOrderNo 丢失，下次重试时因找不到已有订单而重复建单。
+                String earlyShippingOrderNo = apiResult.getData() != null ? apiResult.getData().getShippingOrderNo() : null;
+                if (CharSequenceUtil.isNotBlank(earlyShippingOrderNo) && CharSequenceUtil.isBlank(entity.getShippingOrderNo())) {
+                    persistEarlyShippingOrderNoWithRetry(entity, earlyShippingOrderNo);
+                }
             }
             return apiResult;
         } catch (Exception e) {
             return retryCreateThirdWarehouseOutbound(entity, warehouseId, createOutboundReq, retryCount, thirdWarehouseDeliveryEntity, apiResult, type, e);
         }
+    }
+
+    /**
+     * 建单成功后提前落库 shippingOrderNo。
+     * 由于建单前存在较长耗时的远程调用，订单在此期间可能已被其他动作更新（version 已变化），
+     * 若仍用调用前读到的旧 version 做乐观锁条件，更新必然失败。
+     * 因此每次尝试前都重新查询最新记录以获取最新 version，缩小乐观锁冲突窗口；
+     * 重试仍失败时仅 warn，由外层 thirdWarehouseCreateOutStock 的无条件更新兜底。
+     */
+    private void persistEarlyShippingOrderNoWithRetry(SoB2cEntity entity, String earlyShippingOrderNo) {
+        for (int attempt = 1; attempt <= EARLY_PERSIST_RETRY_COUNT; attempt++) {
+            SoB2cEntity latest = soB2cService.getById(entity.getId());
+            if (Objects.isNull(latest)) {
+                log.warn("三方仓建单成功，提前落库 shippingOrderNo 时订单不存在，soCode={}", entity.getCode());
+                return;
+            }
+            if (CharSequenceUtil.isNotBlank(latest.getShippingOrderNo())) {
+                entity.setShippingOrderNo(latest.getShippingOrderNo());
+                entity.setVersion(latest.getVersion());
+                return;
+            }
+            boolean updated = this.lambdaUpdate()
+                    .set(SoB2cEntity::getShippingOrderNo, earlyShippingOrderNo)
+                    .eq(SoB2cEntity::getId, entity.getId())
+                    .eq(SoB2cEntity::getVersion, latest.getVersion())
+                    .update();
+            if (updated) {
+                entity.setShippingOrderNo(earlyShippingOrderNo);
+                entity.setVersion(latest.getVersion() + 1);
+                log.info("三方仓建单成功，提前落库 shippingOrderNo={}, soCode={}，第{}次尝试成功", earlyShippingOrderNo, entity.getCode(), attempt);
+                return;
+            }
+            log.warn("三方仓建单成功，提前落库 shippingOrderNo 因版本冲突失败（第{}次尝试），soCode={}", attempt, entity.getCode());
+        }
+        log.warn("三方仓建单成功，提前落库 shippingOrderNo 重试{}次后仍失败，交由外层最终更新兜底，soCode={}", EARLY_PERSIST_RETRY_COUNT, entity.getCode());
     }
 
     private ApiResult<ThirdWarehouseQueryOutboundResponse> retryCreateThirdWarehouseOutbound(SoB2cEntity entity, String warehouseId, ThirdWarehouseCreateOutboundReq createOutboundReq, final int retryCount, ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity, ApiResult<ThirdWarehouseQueryOutboundResponse> apiResult, String type, Exception e) {

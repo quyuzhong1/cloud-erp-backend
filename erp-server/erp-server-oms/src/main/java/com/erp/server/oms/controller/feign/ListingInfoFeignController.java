@@ -10,6 +10,7 @@ import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.wms.dto.FbaShipmentDTO;
+import com.erp.model.wms.dto.WegoSkuSyncDTO;
 import com.erp.server.oms.service.ListingInfoService;
 import com.erp.server.oms.service.SkuMappingService;
 import org.springframework.validation.annotation.Validated;
@@ -104,5 +105,16 @@ public class ListingInfoFeignController extends BaseController {
     @PostMapping("/updatePlatformSkuId")
     public boolean updatePlatformSkuId(@RequestParam(value = "listingId") String listingId, @RequestParam(value = "platformSkuId") String platformSkuId) {
         return listingInfoService.updatePlatformSkuId(listingId,platformSkuId);
+    }
+
+    /**
+     * 同步三方仓SKU到未匹配对照表
+     *
+     * @param dto 三方仓 SKU 同步参数
+     * @return 本次新增未匹配记录数量
+     */
+    @PostMapping("/syncWarehouseNotMatchSku")
+    public Integer syncWarehouseNotMatchSku(@RequestBody @Validated WegoSkuSyncDTO.SyncReqDTO dto) {
+        return listingInfoService.syncWarehouseNotMatchSku(dto);
     }
 }
