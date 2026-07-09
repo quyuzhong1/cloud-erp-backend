@@ -7,7 +7,6 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -19,7 +18,6 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
-import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
 import com.erp.model.sys.dto.KingdeeOperatorRefPostDTO;
@@ -83,7 +81,6 @@ public class KingdeeOperatorRefPostServiceImpl extends SuperServiceImpl<KingdeeO
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.KINGDEE_SYNC_KEY, keyName = "userPostId", unlockAfterTx = true)
     public BatchResultDTO add(String typeCode, String userPostId) {
         KingdeeUserRefPostEntity userPost = kingdeeUserRefPostService.getById(userPostId);
         if (Objects.isNull(userPost) || StringUtils.isBlank(userPost.getCode())) {
@@ -251,7 +248,6 @@ public class KingdeeOperatorRefPostServiceImpl extends SuperServiceImpl<KingdeeO
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    @DistributeLocker(businessType = DistributeKeyConstant.KINGDEE_SYNC_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO delete(String id) {
         KingdeeOperatorRefPostEntity entity = super.getById(id);
         Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "金蝶业务员"));

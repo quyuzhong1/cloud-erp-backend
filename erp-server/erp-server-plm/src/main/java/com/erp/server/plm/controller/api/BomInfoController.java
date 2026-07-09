@@ -469,7 +469,6 @@ public class BomInfoController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<com.common.business.vo.PagingVO<OverseasDeliveryPlanDTO.DeliverRecordDTO>>
      **/
     @PostMapping("/sendFeishu")
-    @LogAction(value = LogActionEnum.EXECUTE, desc = "BOM信息发送飞书")
     public ApiResult<Boolean> sendFeishu(@RequestBody ProductBomInfoDTO.FeiShuDto dto) {
         // 提取feishuText中的sku
         // {SKU_NO1}{SKU_NO2}{SKU_NO3}无零售价，会导致订单无法分摊

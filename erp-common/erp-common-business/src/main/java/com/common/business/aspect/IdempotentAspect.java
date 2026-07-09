@@ -94,7 +94,6 @@ public class IdempotentAspect {
             }
             return result;
         } else {
-            log.warn("key={},interval={},重复提交", submitKey, interval);
             throw new ServiceException(ApiError.COMMON_DUPLICATE_OPERATION);
         }
     }

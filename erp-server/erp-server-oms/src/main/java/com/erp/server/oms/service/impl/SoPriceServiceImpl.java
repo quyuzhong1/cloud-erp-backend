@@ -11,7 +11,6 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ThirdConstants;
 import com.common.business.dto.ApproveDTO;
@@ -31,7 +30,6 @@ import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.common.core.utils.date.LocalDateUtil;
-import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.oms.dto.SoPriceDTO;
 import com.erp.model.oms.dto.SoPriceDetailDTO;
 import com.erp.model.oms.dto.excel.ImportSoPriceExcelDTO;
@@ -343,7 +341,6 @@ public class SoPriceServiceImpl extends SuperServiceImpl<SoPriceMapper, SoPriceE
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "entity.id", unlockAfterTx = true)
     public BatchResultDTO delete(SoPriceEntity entity) {
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
         long count = Stream.of(entity).filter(p -> !p.getApproveStatus().getStatus().equals(waitSubmitStatus)).count();
@@ -376,7 +373,6 @@ public class SoPriceServiceImpl extends SuperServiceImpl<SoPriceMapper, SoPriceE
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "entity.id", unlockAfterTx = true)
     public BatchResultDTO submit(SoPriceEntity entity) {
         List<SoPriceEntity> list = Collections.singletonList(entity);
         //待审核
@@ -419,7 +415,6 @@ public class SoPriceServiceImpl extends SuperServiceImpl<SoPriceMapper, SoPriceE
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "entity.id", unlockAfterTx = true)
     public BatchResultDTO approve(SoPriceEntity entity, ApproveOneDTO dto) {
         if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus().getStatus())) {
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.WF_APPROVE_ALLOWED_STATUS_ONLY.getMsg());
@@ -466,7 +461,6 @@ public class SoPriceServiceImpl extends SuperServiceImpl<SoPriceMapper, SoPriceE
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "dto.id", unlockAfterTx = true)
     public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         SoPriceEntity entity = getById(dto.getId());
         String approveIngStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
@@ -913,7 +907,6 @@ public class SoPriceServiceImpl extends SuperServiceImpl<SoPriceMapper, SoPriceE
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "entity.id", unlockAfterTx = true)
     public BatchResultDTO disApprove(SoPriceEntity entity,  List<SoPriceChangeDetailEntity> changeDetailEntityList) {
         if (!Objects.equals(ApproveStatusEnum.APPROVE, entity.getApproveStatus())) {
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.BILL_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY.getMsg());

@@ -1,6 +1,7 @@
 package com.erp.server.oms.controller.api;
 
 
+import com.common.business.annotation.DataIdempotent;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
