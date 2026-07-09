@@ -7,6 +7,7 @@ import org.apache.commons.lang3.StringUtils;
  */
 public enum KolB2cApplicationDocumentStatusEnum {
     WAIT("wait", "未创建"),
+    CREATING("creating", "创建中"),
     CREATED("created", "已创建"),
     CREATE_FAIL("createFail", "创建失败"),
     CANCELING("canceling", "取消中"),

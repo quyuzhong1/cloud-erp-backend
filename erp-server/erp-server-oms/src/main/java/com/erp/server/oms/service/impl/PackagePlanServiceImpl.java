@@ -1067,13 +1067,9 @@ public class PackagePlanServiceImpl extends SuperServiceImpl<PackagePlanMapper, 
         map.put("id", dto.getSoId());
         map.put("errorType", SoB2cErrorTypeEnum.PACKAGE_PLAN_GENERATE.getCode());
         addTaskDTO.setFirstNodeInputData(map);
-        workflowTaskRecordEntities = workflowTaskRecordService.addTask(addTaskDTO);
+        workflowTaskRecordEntities = workflowTaskRecordService.addTaskAndStart(addTaskDTO);
         if(CollUtil.isEmpty(workflowTaskRecordEntities)){
             throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC,DictBasicTypeEnum.WORKFLOW_TASK_NODE.getDesc());
-        }
-        SendResult result = mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.OMS_WORKFLOW_TASK_RECORD_TOPIC, RocketMqTagEnum.OMS_WORKFLOW_TASK_RECORD_TAG.getName(), addTaskDTO, dto.getSoId(),2);
-        if (!result.getSendStatus().equals(SendStatus.SEND_OK)) {
-            throw new RuntimeException(StrUtil.format("生成组包计划通过发送任务编排MQ数据异常，{}", JSONUtil.toJsonStr(result)));
         }
         return BatchResultDTO.success(dto.getSoId(), dto.getSoCode(), "生成组包计划任务编排已生成");
     }

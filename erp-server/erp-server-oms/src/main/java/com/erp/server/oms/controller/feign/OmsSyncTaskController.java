@@ -1,6 +1,7 @@
 package com.erp.server.oms.controller.feign;
 
 import com.common.business.dto.DmpSyncMqDTO;
+import com.erp.model.oms.dto.KolB2cApplicationApproveCallbackDTO;
 import com.erp.model.oms.dto.KolB2cApplicationCancelCallbackDTO;
 import com.erp.server.oms.service.KolB2cApplicationService;
 import com.erp.server.oms.service.SyncTaskService;
@@ -51,5 +52,21 @@ public class OmsSyncTaskController {
     @PostMapping("/handleKolB2cCancelPushFail")
     public void handleKolB2cCancelPushFail(@RequestBody @Validated KolB2cApplicationCancelCallbackDTO dto) {
         kolB2cApplicationService.handleDomesticCancelPushFail(dto);
+    }
+
+    /**
+     * KOL B2C approve success callback after DMP push success.
+     */
+    @PostMapping("/handleKolB2cApprovePushSuccess")
+    public void handleKolB2cApprovePushSuccess(@RequestBody @Validated KolB2cApplicationApproveCallbackDTO dto) {
+        kolB2cApplicationService.handleDomesticApprovePushSuccess(dto);
+    }
+
+    /**
+     * KOL B2C approve fail callback after DMP push fail.
+     */
+    @PostMapping("/handleKolB2cApprovePushFail")
+    public void handleKolB2cApprovePushFail(@RequestBody @Validated KolB2cApplicationApproveCallbackDTO dto) {
+        kolB2cApplicationService.handleDomesticApprovePushFail(dto);
     }
 }
