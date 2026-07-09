@@ -211,6 +211,32 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
     }
 
     /**
+     * 人工重试场景下实例状态必须成功切回 RUNNING 后才能发送 MQ；
+     * 否则会出现实例未切换但节点已重置、MQ 已发送的不一致状态。
+     */
+    private void markRunningOrThrow(String instanceId, int currentIndex, int totalSteps) {
+        WorkflowTaskInstanceEntity fresh = getById(instanceId);
+        if (fresh == null) {
+            throw new ServiceException(ApiError.WF_TASK_INSTANCE_NOT_FOUND);
+        }
+        boolean updated = this.lambdaUpdate()
+                .eq(WorkflowTaskInstanceEntity::getId, instanceId)
+                .eq(WorkflowTaskInstanceEntity::getVersion, fresh.getVersion())
+                .ne(WorkflowTaskInstanceEntity::getStatus, WorkflowTaskInstanceStatusEnum.CANCELLED.getCode())
+                .ne(WorkflowTaskInstanceEntity::getStatus, WorkflowTaskInstanceStatusEnum.SUCCESS.getCode())
+                .set(WorkflowTaskInstanceEntity::getStatus, WorkflowTaskInstanceStatusEnum.RUNNING.getCode())
+                .set(WorkflowTaskInstanceEntity::getCurrentIndex, currentIndex)
+                .set(WorkflowTaskInstanceEntity::getTotalSteps, totalSteps)
+                .set(WorkflowTaskInstanceEntity::getLastError, "")
+                .set(WorkflowTaskInstanceEntity::getVersion, fresh.getVersion() + 1)
+                .update();
+        if (!updated) {
+            log.warn("markRunningOrThrow 并发冲突，instanceId={}, version={}", instanceId, fresh.getVersion());
+            throw new ServiceException(ApiError.WF_TASK_INSTANCE_VERSION_CONFLICT);
+        }
+    }
+
+    /**
      * {@inheritDoc}
      */
     @Override
@@ -443,7 +469,8 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
     }
 
     /**
-     * 带锁从指定 index 重跑：校验 forceRetry 权限，重置后续节点并在事务提交后发 MQ。
+     * 带锁从指定 index 重跑：重置后续节点并在事务提交后发 MQ。
+     * <p>权限由 Controller 层 @DataPermission(menuCode = "oms:workflowTaskInstance:retry") 统一校验。</p>
      */
     @Transactional(rollbackFor = Exception.class)
     @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY,
@@ -497,17 +524,24 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
             Integer resetRetryCount = dto.getRetryCount() == null
                     ? Optional.ofNullable(step.getRetryCount()).orElse(0) + 1
                     : dto.getRetryCount();
-            workflowTaskRecordService.lambdaUpdate()
+            Integer currentVersion = Optional.ofNullable(step.getVersion()).orElse(0);
+            boolean updated = workflowTaskRecordService.lambdaUpdate()
                     .eq(WorkflowTaskRecordEntity::getId, step.getId())
+                    .eq(WorkflowTaskRecordEntity::getVersion, currentVersion)
                     .set(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.PENDING.getCode())
                     .set(WorkflowTaskRecordEntity::getRetryCount, resetRetryCount)
                     .set(WorkflowTaskRecordEntity::getLastError, "")
                     .set(WorkflowTaskRecordEntity::getRemark, remark)
                     .set(CharSequenceUtil.isNotBlank(refreshedInputData),
                             WorkflowTaskRecordEntity::getInputData, refreshedInputData)
+                    .set(WorkflowTaskRecordEntity::getVersion, currentVersion + 1)
                     .update();
+            if (!updated) {
+                log.warn("retryFromStepWithLock 重置节点并发冲突，stepId={}, version={}", step.getId(), currentVersion);
+                throw new ServiceException(ApiError.WF_TASK_INSTANCE_VERSION_CONFLICT);
+            }
         }
-        markRunning(instance.getId(), fromIndex, instance.getTotalSteps());
+        markRunningOrThrow(instance.getId(), fromIndex, instance.getTotalSteps());
         WorkflowTaskRecordDTO.AddTaskDTO dispatch = buildDispatchMessage(instance);
         dispatch.setTargetIndex(fromIndex);
         dispatch.setRetryFailedStep(Boolean.TRUE);
