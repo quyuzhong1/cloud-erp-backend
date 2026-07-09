@@ -3649,38 +3649,12 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
      */
     private List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> filterSplitSourceDetail(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDeliveryDetailList,
                                                                                    TmsDeclareBillDTO.SplitDeclareDTO splitDeclareDTO) {
-        // 拆分是整箱维度：按业务单号+箱号整箱取明细（同业务单跨来源单相同箱号视为同一箱），
+        // 拆分是整箱维度：按「来源单id + 箱号」整箱取明细（不同来源单相同箱号是不同箱），
         // 不再用前端回传的 skuId 快照二次过滤，避免快照与保存时实际箱内明细不一致导致漏行。
-        String splitBusinessKey = resolveSplitBusinessKey(splitDeclareDTO, sourceDeliveryDetailList);
         return Optional.ofNullable(sourceDeliveryDetailList).orElse(Collections.emptyList()).stream()
                 .filter(obj -> CharSequenceUtil.equals(obj.getBoxNo(), splitDeclareDTO.getBoxNo()))
-                .filter(obj -> CharSequenceUtil.equals(resolveBusinessCodeForBoxKey(obj), splitBusinessKey))
+                .filter(obj -> CharSequenceUtil.equals(obj.getSourceId(), splitDeclareDTO.getSourceId()))
                 .collect(Collectors.toList());
-    }
-
-    /**
-     * 解析拆分项的业务单号匹配键，使其与来源明细侧 {@link #resolveBusinessCodeForBoxKey} 口径一致。
-     * 前端保存时可能只回传 sourceId 而漏传 businessCode，导致拆分侧回退到 sourceId、
-     * 而来源明细侧仍用 businessCode，两边键不一致过滤为空。此处在 businessCode 为空时，
-     * 用已加载的来源明细按 sourceId 反查真实 businessCode（无需额外查库），再拼匹配键。
-     *
-     * @param splitDeclareDTO 拆分选择
-     * @param sourceDeliveryDetailList 原报关单来源明细（含 sourceId 与 businessCode）
-     * @return 与来源明细一致的业务单号匹配键
-     */
-    private String resolveSplitBusinessKey(TmsDeclareBillDTO.SplitDeclareDTO splitDeclareDTO,
-                                           List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDeliveryDetailList) {
-        String businessCode = splitDeclareDTO.getBusinessCode();
-        if (StringUtils.isBlank(businessCode) && StringUtils.isNotBlank(splitDeclareDTO.getSourceId())) {
-            businessCode = Optional.ofNullable(sourceDeliveryDetailList).orElse(Collections.emptyList()).stream()
-                    .filter(obj -> CharSequenceUtil.equals(obj.getSourceId(), splitDeclareDTO.getSourceId()))
-                    .filter(obj -> CharSequenceUtil.equals(obj.getBoxNo(), splitDeclareDTO.getBoxNo()))
-                    .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getBusinessCode)
-                    .filter(StringUtils::isNotBlank)
-                    .findFirst()
-                    .orElse(null);
-        }
-        return resolveBusinessCodeForBoxKey(businessCode, splitDeclareDTO.getSourceId(), null);
     }
 
     /**
@@ -6030,11 +6004,34 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
      * @return java.lang.String
      */
     private String buildDeclareBoxKey(TmsDeclareBillDTO.SourceDeliveryDetailDTO sourceDetail) {
-        return buildBusinessBoxKey(resolveBusinessCodeForBoxKey(sourceDetail), sourceDetail.getBoxNo());
+        return buildSourceBoxKey(sourceDetail);
     }
 
     /**
-     * 解析同箱/同业务维度键；businessCode 为空时回退 sourceId，再回退 businessId。
+     * 同箱判定键：来源单id + 箱号。
+     * 同一业务单(销售单)下可能挂多张发货通知单(来源单)且箱号相同，用业务单号会把不同来源单的相同箱号
+     * 误判为同一箱导致整箱校验对不齐/跨箱，改用来源单维度：仅同一来源单同一箱号才算一箱。
+     */
+    private String buildSourceBoxKey(TmsDeclareBillDTO.SourceDeliveryDetailDTO sourceDetail) {
+        if (Objects.isNull(sourceDetail)) {
+            return "";
+        }
+        return buildBusinessBoxKey(sourceDetail.getSourceId(), sourceDetail.getBoxNo());
+    }
+
+    /**
+     * 同箱判定键（中间表）：来源单id + 箱号，与 {@link #buildSourceBoxKey} 口径一致。
+     */
+    private String buildSourceBoxKey(DeliveryDeclareDetailMidEntity mid) {
+        if (Objects.isNull(mid)) {
+            return "";
+        }
+        return buildBusinessBoxKey(mid.getSourceId(), mid.getBoxNo());
+    }
+
+    /**
+     * 解析同业务维度键（仅用于「按业务单号校验目的国一致」及业务单号展示，非装箱同箱判定）；
+     * businessCode 为空时回退 sourceId，再回退 businessId。
      */
     private String resolveBusinessCodeForBoxKey(TmsDeclareBillDTO.SourceDeliveryDetailDTO sourceDetail) {
         if (Objects.isNull(sourceDetail)) {
@@ -6196,7 +6193,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     }
 
     /**
-     * 构建拆分报关明细列表：按业务单号+箱号整箱分组（与拆分保存口径一致）。
+     * 构建拆分报关明细列表：按来源单id+箱号整箱分组（与拆分保存口径一致，不同来源单相同箱号是不同箱）。
      */
     private List<TmsDeclareBillDTO.SplitDeclareDTO> buildSplitDeclareDTOList(String id,
                                                                              List<DeliveryDeclareDetailMidEntity> deliveryDeclareDetailMidList) {
@@ -6232,12 +6229,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     }
 
     private String buildMidDeclareBoxKey(DeliveryDeclareDetailMidEntity mid) {
-        if (Objects.isNull(mid)) {
-            return "";
-        }
-        return buildBusinessBoxKey(
-                resolveBusinessCodeForBoxKey(mid.getBusinessCode(), mid.getSourceId(), mid.getBusinessId()),
-                mid.getBoxNo());
+        return buildSourceBoxKey(mid);
     }
 
 
