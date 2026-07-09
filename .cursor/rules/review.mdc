@@ -106,7 +106,8 @@ Nacos / Seata 1.5.2 / RocketMQ / Redis(Redisson) / XXL-JOB / EasyExcel / MapStru
 - **tabList N+1 查询**：若代码用循环对每个 Tab 执行一次 COUNT 查询，应改为单条 `GROUP BY` SQL
 - **分页 paging 缺少服务端 type 强制过滤**：业务类型字段（如 `type`）若仅依赖前端高级搜索传参，需在 Service 层强制注入兜底
 - **N+1 / 循环查库**：循环内调用 `getById` / Feign / Mapper 查询，改批量
-- **版本号校验**：更新操作必须校验 `version`，防并发覆盖
+- **版本号校验**：自定义 SQL / `lambdaUpdate()` / `update(wrapper)` 等显式更新逻辑应校验 `version`，防并发覆盖
+- **MyBatis-Plus `updateById` 乐观锁提示边界**：若 diff 中出现 `updateById(entity)` / `updateBatchById(list)`，且对应 Entity 存在或疑似存在 `version` 字段，但 diff 中无法确认调用方是否已正确携带 `version`，仅作为「低风险提示」说明“需确认入参是否携带 version 以触发 MyBatis-Plus `@Version` 乐观锁”；不得将此类问题标为中/高/严重，不得据此阻断合并
 - **软删**：本项目统一使用软删除；MyBatis-Plus 的 `remove()` / `removeById()` / `removeByIds()` / `remove(wrapper)` 默认视为走项目软删机制，**不得**仅因 diff 中出现这些方法就报告「可能物理删除 / 需确认 @TableLogic」问题
 - 仅当 diff 中能直接确认存在物理删除时才报告软删问题，例如 Mapper XML / 注解 SQL / 自定义 Mapper 方法出现明确 `DELETE FROM ...`，或代码绕过 MyBatis-Plus 软删机制执行物理删除；否则不要输出「若 Entity 未配置 @TableLogic」这类需确认问题
 - **NOT IN 使用**：大表禁用 `NOT IN`，改 `NOT EXISTS`
@@ -226,6 +227,9 @@ Nacos / Seata 1.5.2 / RocketMQ / Redis(Redisson) / XXL-JOB / EasyExcel / MapStru
 | 低 | 纯代码风格偏好、命名建议、可读性改进 | 变量命名、注释补充、代码格式 |
 
 **禁止将纯代码风格（命名、格式、注释）标注为严重或高风险。**
+
+**MyBatis-Plus `updateById` 乐观锁问题分级约束：**
+仅因 `updateById(entity)` / `updateBatchById(list)` 在 diff 中未显式看到 `version` 赋值时，问题等级最高只能标为「低」，标题末尾建议加「（需确认）」；只有当 diff 能直接证明实体有 `@Version` 且调用方明确清空/丢失/覆盖 `version`，导致乐观锁必然不生效时，才可按实际影响提高等级。
 
 **依赖 diff 外代码的问题分级上限：**
 若某问题的核心依据（如被调用方实现、写入端逻辑、枚举返回值）不在本次 diff 中，

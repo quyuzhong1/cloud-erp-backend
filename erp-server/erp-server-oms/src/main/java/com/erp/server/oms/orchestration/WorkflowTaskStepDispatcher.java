@@ -65,6 +65,8 @@ public class WorkflowTaskStepDispatcher {
         WorkflowTaskInstanceEntity instance = resolveInstance(mqDTO);
         if (instance == null) {
             log.error("未找到编排实例，sourceType={}, sourceId={}", mqDTO.getSourceTypeEnum().getCode(), mqDTO.getSourceId());
+            // 明确携带 instanceId 但实例已不存在/已删除时属于不可恢复错误，正常 ACK 避免 RocketMQ 无效重投。
+            // 未携带 instanceId 的历史兼容路径也保持原有静默跳过逻辑。
             return;
         }
 
@@ -254,7 +256,15 @@ public class WorkflowTaskStepDispatcher {
         WorkflowTaskRecordDTO.AddTaskDTO nextMsg = copyDispatchMessage(template, instance);
         nextMsg.setTargetIndex(nextIndex);
         nextMsg.setRetryFailedStep(Boolean.FALSE);
-        sendDispatchMq(nextMsg, instance.getSourceId());
+        try {
+            sendDispatchMq(nextMsg, instance.getSourceId());
+        } catch (Exception ex) {
+            String errorMsg = "调度MQ发送失败: " + ex.getMessage();
+            log.error("链式调度 MQ 发送失败，instanceId={}, nextIndex={}",
+                    instance.getId(), nextIndex, ex);
+            workflowTaskInstanceService.markDispatchMqFailed(instance.getId(), nextIndex, errorMsg);
+            return;
+        }
         workflowTaskInstanceService.markRunning(instance.getId(), nextIndex, indexMap.size());
     }
 
@@ -379,7 +389,12 @@ public class WorkflowTaskStepDispatcher {
         step.setEndTime(LocalDateTime.now());
         // 原子写：节点 FAILED + 实例 FAILED（同一事务）
         workflowTaskInstanceService.persistNodeAndSyncInstance(
-                step, instance.getId(), step.getIndex(), 0, StepInvokeResult.Outcome.FAILED, errorMsg);
+                step,
+                instance.getId(),
+                step.getIndex(),
+                Optional.ofNullable(instance.getTotalSteps()).orElse(0),
+                StepInvokeResult.Outcome.FAILED,
+                errorMsg);
     }
 
     private boolean isInstanceActive(String instanceId) {

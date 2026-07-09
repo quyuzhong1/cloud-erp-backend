@@ -16,7 +16,6 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.sys.dto.SysAccountingCompanyDTO;
 import com.erp.model.tms.dto.CfgSettingDTO;
 import com.erp.model.tms.dto.CfgSettingValueDTO;
-import com.erp.model.tms.dto.DictBasicDTO;
 import com.erp.model.tms.entity.CfgSettingEntity;
 import com.erp.model.tms.entity.DictBasicEntity;
 import com.erp.model.tms.enums.*;
@@ -32,15 +31,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -75,19 +66,18 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
         log.info("开始新增系统配置管理");
         boolean save = super.saveOrUpdateBatch(cfgSettingList);
         if(!save) {
-            throw new ServiceException("系统配置管理保存失败");
+            throw new ServiceException(ApiError.COMMON_CFG_SETTING_SAVE_FAILED);
         }
         return new BaseResultDTO.AddDTO("", "");
     }
 
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public  BaseResultDTO.AddDTO addByKey(CfgSettingDTO.AddByKeyDTO addDTO) {
         // 数据处理
         CfgSettingEnum cfgSettingEnum = CfgSettingEnum.getEnum(addDTO.getKey());
         if (Objects.isNull(cfgSettingEnum)){
-            throw new ServiceException("系统配置类型不存在");
+            throw new ServiceException(ApiError.COMMON_CFG_SETTING_KEY, addDTO.getKey());
         }
 
         //系统配置json
@@ -105,7 +95,7 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
                 jsonObject.putOpt(DATA_KEY, contractAgreementNoArray);
                 break;
             default:
-                throw new ServiceException("系统配置类型不正确");
+                throw new ServiceException(ApiError.COMMON_CFG_SETTING_TYPE_INVALID);
         }
         //查询是否是修改
         CfgSettingEntity entity = getByKey(addDTO.getKey());
@@ -117,7 +107,7 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
         log.info("开始新增系统配置管理");
         boolean save = super.saveOrUpdate(entity);
         if(!save) {
-            throw new ServiceException("系统配置管理保存失败");
+            throw new ServiceException(ApiError.COMMON_CFG_SETTING_SAVE_FAILED);
         }
         return new BaseResultDTO.AddDTO("", "");
     }
@@ -377,10 +367,10 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
         for (CfgSettingValueDTO.ContractAgreementNoDTO dto : contractAgreementNoList) {
 
             if (Objects.isNull(dto)) {
-                throw new ServiceException("合同协议号配置不能为空");
+                throw new ServiceException(ApiError.LOGISTICS_CONTRACT_AGREEMENT_NO_CONFIG_REQUIRED);
             }
             if (CharSequenceUtil.isBlank(dto.getCompanyId())) {
-                throw new ServiceException("核算公司不能为空");
+                throw new ServiceException(ApiError.LOGISTICS_CONTRACT_AGREEMENT_NO_COMPANY_REQUIRED);
             }
             String contractAgreementNo = dto.getContractAgreementNo();
             if (Objects.nonNull(contractAgreementNo)) {
@@ -388,19 +378,19 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
                 dto.setContractAgreementNo(contractAgreementNo);
             }
             if (CharSequenceUtil.isBlank(contractAgreementNo)) {
-                throw new ServiceException("合同协议号不能为空");
+                throw new ServiceException(ApiError.LOGISTICS_CONTRACT_AGREEMENT_NO_REQUIRED);
             }
             if (!CONTRACT_AGREEMENT_NO_PATTERN.matcher(contractAgreementNo).matches()) {
-                throw new ServiceException("合同协议号只能输入英文字母");
+                throw new ServiceException(ApiError.LOGISTICS_CONTRACT_AGREEMENT_NO_LETTERS_ONLY);
             }
             SysAccountingCompanyDTO.ListDTO company = companyMap.get(dto.getCompanyId());
             if (Objects.isNull(company)) {
-                throw new ServiceException("核算公司不存在或已禁用");
+                throw new ServiceException(ApiError.LOGISTICS_CONTRACT_AGREEMENT_NO_COMPANY_INVALID);
             }
             dto.setCompanyName(company.getCompanyName());
             String uniqueKey = dto.getCompanyId() + "_" + contractAgreementNo;
             if (!uniqueKeySet.add(uniqueKey)) {
-                throw new ServiceException("核算公司和合同协议号不可重复");
+                throw new ServiceException(ApiError.LOGISTICS_CONTRACT_AGREEMENT_NO_DUPLICATE);
             }
 
             dto.setIndex(index++);
@@ -410,7 +400,7 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
     private Map<String, SysAccountingCompanyDTO.ListDTO> listEnabledAccountingCompanyMap() {
         ApiResult<List<SysAccountingCompanyDTO.ListDTO>> companyResult = sysFeign.companyList("");
         if (Objects.isNull(companyResult) || !companyResult.isSuccess()) {
-            throw new ServiceException("获取核算公司列表失败");
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_RULE_ACCOUNTING_COMPANY_LOAD_FAILED);
         }
         List<SysAccountingCompanyDTO.ListDTO> companyList = Optional.ofNullable(companyResult.getData()).orElse(Collections.emptyList());
         return companyList.stream()

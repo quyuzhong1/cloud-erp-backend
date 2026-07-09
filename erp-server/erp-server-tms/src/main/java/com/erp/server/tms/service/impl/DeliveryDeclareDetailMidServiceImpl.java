@@ -679,7 +679,8 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
             BaseResultDTO.AddDTO addResult = tmsDeclareBillService.add(declareBillEntity, detailEntityList,
                     SourceTypeEnum.getEnum(declareBillType), false);
             changedMidList.addAll(saveGeneratedMidData(sourceType, declareBillList, detailEntityList,
-                    addResult.getId(), addResult.getCode()));
+                    addResult.getId(), addResult.getCode(), preparedBill.getTransferWarehouseNameMap(),
+                    preparedBill.getHistoryByParentMap()));
         }
         if (Boolean.TRUE.equals(updateSourceDeclareStatus)) {
             List<String> sourceIds = changedMidList.stream()
@@ -713,9 +714,29 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
                     .map(this::buildDeclareBillDetailEntity)
                     .collect(Collectors.toList());
             TmsDeclareBillEntity declareBillEntity = buildDeclareBillEntity(declareBillType, declareBillList);
-            preparedBills.add(new TmsDeclareBillDTO.BatchMergeBillData(declareBillList, declareBillEntity, detailEntityList));
+            Map<String, String> transferWarehouseNameMap = prepareTransferWarehouseNameMap(declareBillList);
+            Map<String, List<BomChildrenSkuDTO>> historyByParentMap = prepareHistoryByParentMap(declareBillList);
+            preparedBills.add(new TmsDeclareBillDTO.BatchMergeBillData(declareBillList, declareBillEntity, detailEntityList,
+                    transferWarehouseNameMap, historyByParentMap));
         }
         return preparedBills;
+    }
+
+    private Map<String, String> prepareTransferWarehouseNameMap(List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> declareBillList) {
+        List<String> transferWarehouseIdsList = collectSourceDetailListByDeclareDetails(declareBillList).stream()
+                .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getTransferWarehouseIds)
+                .filter(CharSequenceUtil::isNotBlank)
+                .collect(Collectors.toList());
+        return getTransferWarehouseNameMap(transferWarehouseIdsList);
+    }
+
+    private Map<String, List<BomChildrenSkuDTO>> prepareHistoryByParentMap(List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> declareBillList) {
+        List<String> parentSkuIds = collectSourceDetailListByDeclareDetails(declareBillList).stream()
+                .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getParentSkuId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        return listBomHistoryByParentMap(parentSkuIds);
     }
 
     @Override
@@ -1147,6 +1168,20 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
                 .collect(Collectors.toList());
     }
 
+    private List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> collectSourceDetailListByDeclareDetails(
+            List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> declareBillList) {
+        if (CollUtil.isEmpty(declareBillList)) {
+            return Collections.emptyList();
+        }
+        return declareBillList.stream()
+                .filter(Objects::nonNull)
+                .map(TmsDeclareBillDTO.MergeDeclareBillDetailDTO::getSourceDeliveryDetailList)
+                .filter(CollUtil::isNotEmpty)
+                .flatMap(Collection::stream)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+    }
+
     private List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> collectMergeDetailList(List<TmsDeclareBillDTO.MergeDeclareBillDTO> list) {
         if (CollUtil.isEmpty(list)) {
             return Collections.emptyList();
@@ -1424,23 +1459,35 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
                                                                       List<TmsDeclareBillDetailEntity> detailEntityList,
                                                                       String declareId,
                                                                       String declareCode) {
-        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList = declareBillList.stream()
-                .map(TmsDeclareBillDTO.MergeDeclareBillDetailDTO::getSourceDeliveryDetailList)
-                .filter(CollUtil::isNotEmpty)
-                .flatMap(Collection::stream)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList = collectSourceDetailListByDeclareDetails(declareBillList);
+        Map<String, String> transferWarehouseNameMap = getTransferWarehouseNameMap(sourceDetailList.stream()
+                .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getTransferWarehouseIds)
+                .filter(CharSequenceUtil::isNotBlank)
+                .collect(Collectors.toList()));
+        Map<String, List<BomChildrenSkuDTO>> historyByParentMap = listBomHistoryByParentMap(sourceDetailList.stream()
+                .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getParentSkuId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList()));
+        return saveGeneratedMidData(sourceType, declareBillList, detailEntityList, declareId, declareCode,
+                transferWarehouseNameMap, historyByParentMap);
+    }
+
+    private List<DeliveryDeclareDetailMidEntity> saveGeneratedMidData(String sourceType,
+                                                                      List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> declareBillList,
+                                                                      List<TmsDeclareBillDetailEntity> detailEntityList,
+                                                                      String declareId,
+                                                                      String declareCode,
+                                                                      Map<String, String> transferWarehouseNameMap,
+                                                                      Map<String, List<BomChildrenSkuDTO>> historyByParentMap) {
+        transferWarehouseNameMap = Objects.isNull(transferWarehouseNameMap) ? Collections.emptyMap() : transferWarehouseNameMap;
+        historyByParentMap = Objects.isNull(historyByParentMap) ? Collections.emptyMap() : historyByParentMap;
+        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList = collectSourceDetailListByDeclareDetails(declareBillList);
         List<String> sourceIds = sourceDetailList.stream()
                 .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getSourceId)
                 .filter(CharSequenceUtil::isNotBlank)
                 .distinct()
                 .collect(Collectors.toList());
-        // 来源单 SQL 只返回 transfer_warehouse_ids、不返回名称，这里按 ids 统一查名称 map，
-        // 否则中间表 transfer_warehouse_names 落空，导致列表「中转仓」无值。
-        Map<String, String> transferWarehouseNameMap = getTransferWarehouseNameMap(sourceDetailList.stream()
-                .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getTransferWarehouseIds)
-                .filter(CharSequenceUtil::isNotBlank)
-                .collect(Collectors.toList()));
         List<DeliveryDeclareDetailMidEntity> existingMidList = listBySourceIdList(sourceIds);
         Map<String, DeliveryDeclareDetailMidEntity> existingKeyMap = buildExistingMidKeyMap(existingMidList, sourceType);
         Set<String> sourceKeySet = sourceDetailList.stream()
@@ -1464,9 +1511,9 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
                 .filter(item -> CharSequenceUtil.isNotBlank(item.getParentSkuId()))
                 .map(this::buildSourceBoxParentKey)
                 .collect(Collectors.toSet());
-        Set<String> changedComboGroupKeys = findChangedComboGroupKeys(comboGroupKeys, sourceDetailList, existingMidList);
+        Set<String> changedComboGroupKeys = findChangedComboGroupKeys(comboGroupKeys, sourceDetailList, existingMidList, historyByParentMap);
         if (CollUtil.isNotEmpty(changedComboGroupKeys)) {
-            List<String> deleteIds = findComboMidIds(existingMidList, changedComboGroupKeys);
+            List<String> deleteIds = findComboMidIds(existingMidList, changedComboGroupKeys, historyByParentMap);
             if (CollUtil.isNotEmpty(deleteIds)) {
                 // 预览阶段不允许清理旧行；只有报关单主明细保存成功后，才在同一事务内清理旧 BOM 拆分行。
                 super.removeByIds(deleteIds);
@@ -1571,18 +1618,14 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
      */
     private Set<String> findChangedComboGroupKeys(Set<String> comboGroupKeys,
                                                   List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList,
-                                                  List<DeliveryDeclareDetailMidEntity> existingMidList) {
+                                                  List<DeliveryDeclareDetailMidEntity> existingMidList,
+                                                  Map<String, List<BomChildrenSkuDTO>> historyByParentMap) {
         if (CollUtil.isEmpty(comboGroupKeys)) {
             return Collections.emptySet();
         }
         Map<String, List<TmsDeclareBillDTO.SourceDeliveryDetailDTO>> submitGroupMap = sourceDetailList.stream()
                 .filter(item -> comboGroupKeys.contains(buildSourceBoxParentKey(item)))
                 .collect(Collectors.groupingBy(this::buildSourceBoxParentKey));
-        Map<String, List<BomChildrenSkuDTO>> historyByParentMap = listBomHistoryByParentMap(sourceDetailList.stream()
-                .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getParentSkuId)
-                .filter(CharSequenceUtil::isNotBlank)
-                .distinct()
-                .collect(Collectors.toList()));
         Set<String> changedGroupKeys = new HashSet<>();
         for (String comboGroupKey : comboGroupKeys) {
             List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> submitList = submitGroupMap.get(comboGroupKey);
@@ -1643,15 +1686,9 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
                 .collect(Collectors.toList());
     }
 
-    private List<String> findComboMidIds(List<DeliveryDeclareDetailMidEntity> existingMidList, Set<String> comboGroupKeys) {
-        List<String> parentSkuIds = comboGroupKeys.stream()
-                .map(key -> key.split("\\|", -1))
-                .filter(parts -> parts.length >= 3)
-                .map(parts -> parts[2])
-                .filter(CharSequenceUtil::isNotBlank)
-                .distinct()
-                .collect(Collectors.toList());
-        Map<String, List<BomChildrenSkuDTO>> historyByParentMap = listBomHistoryByParentMap(parentSkuIds);
+    private List<String> findComboMidIds(List<DeliveryDeclareDetailMidEntity> existingMidList,
+                                         Set<String> comboGroupKeys,
+                                         Map<String, List<BomChildrenSkuDTO>> historyByParentMap) {
         return comboGroupKeys.stream()
                 .map(key -> findComboMidList(existingMidList, key, historyByParentMap))
                 .flatMap(Collection::stream)

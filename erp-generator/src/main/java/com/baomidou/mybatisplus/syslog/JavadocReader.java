@@ -1,6 +1,7 @@
 package com.baomidou.mybatisplus.syslog;
 
 import cn.hutool.core.util.ReflectUtil;
+import com.erp.model.oms.dto.SoInfoDTO;
 import com.github.javaparser.JavaParser;
 import com.github.javaparser.ParseResult;
 import com.github.javaparser.ast.CompilationUnit;
@@ -17,6 +18,21 @@ import java.util.*;
 
 @Slf4j
 public class JavadocReader {
+
+    public static void main(String[] args) throws Exception {
+        List<Class<?>> list = Arrays.asList(
+                SoInfoDTO.ViewDTO.class
+//                ProjectPlanDetailsVO.class,
+//                SubjectLayoutDetailsDTO.class
+        );
+        for (Class<?> clazz : list) {
+            // 是否是内部类
+            Map<String, String> map = readToJavadocMap(clazz);
+            System.out.println(map);
+        }
+
+    }
+
     /**
      * 指定calss生成Map<字段名，javadoc信息>
      */

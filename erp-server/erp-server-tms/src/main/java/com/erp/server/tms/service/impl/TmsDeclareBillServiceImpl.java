@@ -249,8 +249,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     @DistributeLocker(
             businessType = DistributeKeyConstant.TMS_DECLARE_BILL_SOURCE_KEY,
             keyName = "addDTO.mergeDetailList.sourceDeliveryDetailList.sourceId",
-            maxRetries = 1,
-            unlockAfterTx = true
+            maxRetries = 1
     )
     public Boolean addFmDeclare(TmsDeclareBillDTO.AddDTO addDTO) {
         // 事务外完成所有 Feign 读取 + 校验 + 实体构建（erp-backend-standards：禁止事务内 Feign）。
@@ -527,8 +526,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     @DistributeLocker(
             businessType = DistributeKeyConstant.TMS_DECLARE_BILL_ID_KEY,
             keyName = "updateDTO.id",
-            maxRetries = 1,
-            unlockAfterTx = true
+            maxRetries = 1
     )
     @Override
     public Boolean update(TmsDeclareBillDTO.UpdateDTO updateDTO,SourceTypeEnum sourceTypeEnum) {
@@ -1584,6 +1582,9 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
     @Override
     public List<TmsDeclareBillDTO.SoOutDTO> getCanGenerateSoOut(TmsDeclareBillDTO.QuerySourceDTO querySourceDTO) {
+        if (querySourceDTO == null || CollUtil.isEmpty(querySourceDTO.getIds())) {
+            return Collections.emptyList();
+        }
         List<TmsDeclareBillDTO.SoOutDTO> deliveryDTOList = soDeliveryNoticeFeign.listPackingDetailByIdList(querySourceDTO);
 
         //销售出库单编码
@@ -2082,8 +2083,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     @DistributeLocker(
             businessType = DistributeKeyConstant.TMS_DECLARE_BILL_SOURCE_KEY,
             keyName = "addDTO.mergeDetailList.sourceDeliveryDetailList.sourceId",
-            maxRetries = 1,
-            unlockAfterTx = true
+            maxRetries = 1
     )
     public Boolean addB2BDeclare(TmsDeclareBillDTO.AddDTO addDTO) {
         // 事务外完成所有 Feign 读取 + 校验 + 实体构建（erp-backend-standards：禁止事务内 Feign）。
@@ -3318,8 +3318,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     @DistributeLocker(
             businessType = DistributeKeyConstant.TMS_DECLARE_BILL_ID_KEY,
             keyName = "declareDTO.id",
-            maxRetries = 1,
-            unlockAfterTx = true
+            maxRetries = 1
     )
     public Boolean batchAddSplitFmDetail(TmsDeclareBillDTO.AddSplitDeclareDTO declareDTO) {
         if (CollUtil.isEmpty(declareDTO.getSplitDeclareDTOList())) {
@@ -3406,12 +3405,19 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteDeclareBillById (String id) {
-        // 删除报关单关联的中间表、明细及主表数据。
-        deliveryDeclareDetailMidService.removeByDeclareBillIds(Collections.singletonList(id));
-        //删除明细数据
-        detailService.deleteDetailByMainIdList(Collections.singletonList(id));
-        //删除主表数据
-        super.removeById(id);
+        deleteDeclareBillByIds(Collections.singletonList(id));
+    }
+
+    /**
+     * 批量删除报关单及其关联的中间表、明细数据。
+     */
+    private void deleteDeclareBillByIds(List<String> ids) {
+        if (CollUtil.isEmpty(ids)) {
+            return;
+        }
+        deliveryDeclareDetailMidService.removeByDeclareBillIds(ids);
+        detailService.deleteDetailByMainIdList(ids);
+        super.removeByIds(ids);
     }
 
 
@@ -3419,8 +3425,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     @DistributeLocker(
             businessType = DistributeKeyConstant.TMS_DECLARE_BILL_ID_KEY,
             keyName = "declareDTO.id",
-            maxRetries = 1,
-            unlockAfterTx = true
+            maxRetries = 1
     )
     public Boolean batchAddSplitB2bDetail(TmsDeclareBillDTO.AddSplitDeclareDTO declareDTO) {
         if (CollUtil.isEmpty(declareDTO.getSplitDeclareDTOList())) {
@@ -5427,8 +5432,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     @DistributeLocker(
             businessType = DistributeKeyConstant.TMS_DECLARE_BILL_SOURCE_KEY,
             keyName = "list.declareBillList.sourceDeliveryDetailList.sourceId",
-            maxRetries = 1,
-            unlockAfterTx = true
+            maxRetries = 1
     )
     public Boolean batchAddMergeDetail(String type, List<TmsDeclareBillDTO.MergeDeclareBillDTO> list) {
         List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> allSourceDetails = collectMergeSourceDetails(list);
@@ -5607,8 +5611,12 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
             if (CollUtil.isNotEmpty(obsoleteDeclareBillIds)) {
                 // 合并确认：原报关单上的中间表已挂 declare_id，先按原单删除再落新单
+                Map<String, TmsDeclareBillEntity> oldBillMap = super.listByIds(new ArrayList<>(obsoleteDeclareBillIds)).stream()
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toMap(TmsDeclareBillEntity::getId, Function.identity(), (a, b) -> a));
+                List<String> toDeleteIds = new ArrayList<>();
                 for (String declareBillId : obsoleteDeclareBillIds) {
-                    TmsDeclareBillEntity oldBill = super.getById(declareBillId);
+                    TmsDeclareBillEntity oldBill = oldBillMap.get(declareBillId);
                     if (Objects.isNull(oldBill)) {
                         continue;
                     }
@@ -5618,8 +5626,9 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                     if (!CharSequenceUtil.equals(oldBill.getDeclareStatus(), DeclareStatusEnum.WAIT.getCode())) {
                         throw new ServiceException(ApiError.LOGISTICS_DECLARE_REPLACE_WAIT_STATUS_REQUIRED, CharSequenceUtil.blankToDefault(oldBill.getCode(), declareBillId));
                     }
-                    deleteDeclareBillById(declareBillId);
+                    toDeleteIds.add(declareBillId);
                 }
+                deleteDeclareBillByIds(toDeleteIds);
             } else {
                 List<DeliveryDeclareDetailMidEntity> generatedMidList = existsMidList.stream()
                         .filter(item -> StringUtils.isNotBlank(item.getDeclareId())
