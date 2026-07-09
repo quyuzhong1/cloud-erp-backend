@@ -250,9 +250,9 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
     }
 
     @Override
-    public String getPcLinkByEnv() {
+    public String getKuaidi100CallBackUrl() {
         String url = "";
-        CfgSettingEntity cfgSetting = lambdaQuery().eq(CfgSettingEntity::getKey, "envUrl").one();
+        CfgSettingEntity cfgSetting = lambdaQuery().eq(CfgSettingEntity::getKey, "kuaidi100CallBackUrl").one();
         if (cfgSetting != null && cfgSetting.getDataJson() != null) {
             Map<String, Object> dataJson = cfgSetting.getDataJson();
             boolean uat = BusinessCommonConstants.hasProfile("uat");

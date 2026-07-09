@@ -5,7 +5,6 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSONArray;
 import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.LogisticsTransportTypeEnum;
@@ -13,7 +12,6 @@ import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.TrackQueryTypeEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
-import com.common.core.enums.ApiError;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
@@ -32,13 +30,11 @@ import com.erp.model.tms.vo.request.LogisticsTrackVO;
 import com.erp.model.tms.vo.request.RegisterTrackVO;
 import com.erp.model.tms.vo.response.LogisticsServiceResponseVO;
 import com.erp.model.tms.vo.response.RegisterResponseVO;
-import com.erp.model.tms.dto.LogisticsThirdChannelRefDTO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.erp.server.tms.service.CfgSettingService;
 import com.erp.server.tms.service.LogisticsBillDetailService;
 import com.erp.server.tms.service.LogisticsOperateService;
-import com.erp.server.tms.service.LogisticsThirdChannelRefService;
 import com.sdk.tms.kuaidi100.model.request.Kuaidi100QueryParam;
 import com.sdk.tms.kuaidi100.model.request.Kuaidi100SubscribeParam;
 import com.sdk.tms.kuaidi100.model.response.Kuaidi100QueryResponse;
@@ -46,7 +42,6 @@ import com.sdk.tms.kuaidi100.model.response.Kuaidi100SubscribeResponse;
 import com.sdk.tms.kuaidi100.service.Kuaidi100Service;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -83,8 +78,6 @@ public class Kuaidi100LogisticsHandlerImpl extends AbstractLogisticsHandler {
     @Resource
     private DmpTaskFeign dmpTaskFeign;
 
-    @Resource
-    private LogisticsThirdChannelRefService logisticsThirdChannelRefService;
     @Resource
     private LogisticsBillDetailService logisticsBillDetailService;
     @Resource
@@ -288,7 +281,7 @@ public class Kuaidi100LogisticsHandlerImpl extends AbstractLogisticsHandler {
     }
 
     private String buildKuaidi100CallbackUrl() {
-        String pcLinkByEnv = cfgSettingService.getPcLinkByEnv();
+        String pcLinkByEnv = cfgSettingService.getKuaidi100CallBackUrl();
         if (StrUtil.isBlank(pcLinkByEnv) || "null".equalsIgnoreCase(pcLinkByEnv)) {
             return "";
         }

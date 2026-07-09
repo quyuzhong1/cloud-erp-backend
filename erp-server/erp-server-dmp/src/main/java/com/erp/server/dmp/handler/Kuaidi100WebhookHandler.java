@@ -8,6 +8,7 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.Kuaidi100WebhookResponseDTO;
 import com.erp.model.tms.dto.LogisticsTrackDTO;
 import com.erp.rpc.tms.feign.LogisticsFeign;
+import com.sdk.tms.kuaidi100.service.Kuaidi100Service;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
 import cn.hutool.extra.spring.SpringUtil;
@@ -39,7 +40,7 @@ public class Kuaidi100WebhookHandler implements WebhookHandler {
         if (StrUtil.isBlank(param) || StrUtil.isBlank(sign)) {
             throw new ServiceException("快递100回调缺少param或sign");
         }
-        String expectedSign = DigestUtils.md5Hex(param.getBytes(StandardCharsets.UTF_8)).toUpperCase();
+        String expectedSign = DigestUtils.md5Hex((param + Kuaidi100Service.SALT).getBytes(StandardCharsets.UTF_8)).toUpperCase();
         if (!expectedSign.equals(sign.trim())) {
             throw new ServiceException("快递100回调验签失败");
         }

@@ -55,7 +55,7 @@ public interface CfgSettingService extends SuperService<CfgSettingEntity> {
      *
      * @return ERP 外部访问地址
      */
-    String getPcLinkByEnv();
+    String getKuaidi100CallBackUrl();
 
     List<CfgSettingEntity> listCfgSettingByKeys(List<String> keys);
 
