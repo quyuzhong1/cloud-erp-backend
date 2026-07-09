@@ -44,7 +44,7 @@ public class DmpInputAliExpressOrderDetailDmpHandler extends DmpInputAliExpressO
 		if(CollUtil.isNotEmpty(dmpInputMongoChildList)) {
 			List<Map<String, Object>> findMongoData = new ArrayList<>();
 			List<ParamData> paramDataList = new ArrayList<>();
-			List<String> orderIdList = dmpInputMongoChildList.stream().map(f -> f.get("order_id").toString()).collect(Collectors.toList());
+			List<String> orderIdList = AliExpressDmpHandlerUtils.collectParentAndChildOrderIds(dmpInputMongoChildList);
 			paramDataList.add(new ParamData("trade_order_no", "trade_order_no", PannoEnum.IN, orderIdList));
 			paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, PannoEnum.EQ, nextLevelId));
 			findMongoData = mongoService.findMongoData(paramDataList,
@@ -81,7 +81,13 @@ public class DmpInputAliExpressOrderDetailDmpHandler extends DmpInputAliExpressO
 
 						Object order_id = dmpInputMongoChild.get("order_id");
 						c.put("order_id", order_id);
-						Map<String, Object> soOutstockMap = soOutstockMaps.get(order_id);
+						Map<String, Object> soOutstockMap = null;
+						for (String currentOrderId : AliExpressDmpHandlerUtils.collectCurrentOrderIds(dmpInputMongoChild, c)) {
+							soOutstockMap = soOutstockMaps.get(currentOrderId);
+							if (soOutstockMap != null) {
+								break;
+							}
+						}
 						if(soOutstockMap != null) {
 							c.put("warehouseName", soOutstockMap.get("warehouse_name"));
 						}

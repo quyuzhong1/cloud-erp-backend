@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 import javax.net.ssl.SSLHandshakeException;
@@ -69,8 +68,10 @@ public class DmpInputAliExpressSoOutstockDetailInitHandler extends DmpInputInitH
 		AliExpressShopInfoDTO aliExpressShopInfoDTO = aliExpressOrderService.getShopInfoByShopId(findMongoData.get(0).get("nextLevelId").toString());
 		
 		List<ParamData> paramDataList = new ArrayList<>();
-		List<String> orderIdList = findMongoData.stream().map(f -> f.get("order_id").toString()).collect(Collectors.toList());
+		List<String> orderIdList = AliExpressDmpHandlerUtils.collectParentAndChildOrderIds(findMongoData);
 		paramDataList.add(new ParamData("trade_order_no", "trade_order_no", PannoEnum.IN, orderIdList));
+		paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID,
+				DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, PannoEnum.EQ, dmpInputTaskEntity.getNextLevelId()));
 		findMongoData = mongoService.findMongoData(paramDataList,
 				AliExpressDmpHandlerUtils.getMongoStorageName(dmpBasicSystemEntity, dmpCfgInputService, dmpHandlerCache,
 						dmpCfgInputEntity.getSystemId(), SO_OUTSTOCK_CODE));
