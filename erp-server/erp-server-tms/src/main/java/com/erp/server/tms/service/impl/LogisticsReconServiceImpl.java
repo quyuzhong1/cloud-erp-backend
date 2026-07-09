@@ -289,8 +289,6 @@ public class LogisticsReconServiceImpl
     /**
      * 单配置维度加锁后预创建/复用主表：pending 复用并置 importing，否则新建 importing 主表。
      */
-    @DistributeLocker(businessType = DistributeKeyConstant.TMS_LOGISTICS_RECON_KEY, keyName = "lockKey",
-            unlockAfterTx = true)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void prepareImportMainLocked(String lockKey, LogisticsReconDTO.ImportDTO dto,
@@ -1652,7 +1650,6 @@ public class LogisticsReconServiceImpl
      * @param checkStatus 目标校验状态
      * @return 切换结果
      */
-    @DistributeLocker(businessType = DistributeKeyConstant.TMS_LOGISTICS_RECON_KEY, keyName = "id", unlockAfterTx = true)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO updateCheckStatus(String id, String checkStatus) {
@@ -2737,7 +2734,6 @@ public class LogisticsReconServiceImpl
         return query;
     }
 
-    @DistributeLocker(businessType = DistributeKeyConstant.TMS_LOGISTICS_RECON_KEY, keyName = "mainId", unlockAfterTx = true)
     @Override
     public BatchResultDTO confirmBill(String mainId, String reconciliationStatus, LocalDateTime confirmTime) {
         if (!ReconciliationStatusEnum.TO_BE_CONFIRM.getCode().equals(reconciliationStatus)
@@ -2785,7 +2781,6 @@ public class LogisticsReconServiceImpl
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE);
     }
 
-    @DistributeLocker(businessType = DistributeKeyConstant.TMS_LOGISTICS_RECON_KEY, keyName = "dto.mainId", unlockAfterTx = true)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public List<BatchResultDTO> batchUnbindMatch(LogisticsReconDTO.BatchUnbindMatchDTO dto) {
@@ -2851,7 +2846,6 @@ public class LogisticsReconServiceImpl
 
     // ============================== 删除 / 导出 ==============================
 
-    @DistributeLocker(businessType = DistributeKeyConstant.TMS_LOGISTICS_RECON_KEY, keyName = "id", unlockAfterTx = true)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO delete(String id) {
