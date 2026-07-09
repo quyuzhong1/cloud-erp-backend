@@ -573,6 +573,12 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     // 编辑保存写 TMS 单库 + 中间表，并回写 WMS 来源单报关状态；
     // Feign 重量重算/装箱校验已全部前置到事务外，事务内仅剩快速 DML + 一次 WMS 回写，
     // 用 Seata 全局事务保证「本地库写入」与「远端来源单状态回写」强一致。
+    @DistributeLocker(
+            businessType = DistributeKeyConstant.TMS_DECLARE_BILL_SOURCE_KEY,
+            keyName = "mergeDetailList.sourceDeliveryDetailList.sourceId",
+            maxRetries = 1,
+            unlockAfterTx = true
+    )
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
     @Transactional(rollbackFor = Exception.class)
     public void updateInTx(TmsDeclareBillDTO.UpdateDTO updateDTO,
@@ -1401,12 +1407,10 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (CollUtil.isEmpty(restoreMidList)) {
             return;
         }
-        // 编辑时被删除的来源箱明细恢复为待生成。
+        // 编辑时被删除的来源箱明细恢复为待生成；来源单报关状态统一在 updateInTx 末尾回写一次，避免事务内重复 Feign 抢锁。
         deliveryDeclareDetailMidService.restoreWaitGenerateByIds(restoreMidList.stream()
                 .map(DeliveryDeclareDetailMidEntity::getId)
                 .collect(Collectors.toList()));
-        // 删除来源后，必要时回写来源单据为待报关。
-        updateWaitStatusForNoGeneratedSources(restoreMidList);
     }
 
     /**
