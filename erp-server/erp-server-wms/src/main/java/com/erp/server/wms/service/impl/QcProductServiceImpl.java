@@ -7,6 +7,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.QcProductDTO;
@@ -22,7 +23,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -139,23 +139,34 @@ public class QcProductServiceImpl extends SuperServiceImpl<QcProductMapper, QcPr
         QcProductEntity product = this.getByBillId(billId);
         QcProductDTO.ViewDTO productView = new QcProductDTO.ViewDTO();
         if (product != null) {
-            BeanMapper.copy(product, productView);
-            List<SkuVO> skuVOList = plmTaskFeign.listSkuPackByIds(Collections.singletonList(product.getSkuId()));
-            SkuVO skuVO = skuVOList.stream().filter(s -> s.getSkuId().equals(productView.getSkuId())).findFirst().orElse(null);
-            if(skuVO!=null){
-                productView.setProductGrade(skuVO.getProductGrade());
-                productView.setProductName(skuVO.getSkuName());
-                productView.setSkuNo(skuVO.getSkuNo());
-                productView.setVariantProperty(skuVO.getVariantProperty());
-                productView.setProductLength(Objects.nonNull(productView.getProductLength()) && BigDecimal.ZERO.compareTo(productView.getProductLength()) != 0 ? productView.getProductLength() : skuVO.getProductLength());
-                productView.setProductWidth(Objects.nonNull(productView.getProductWidth()) && BigDecimal.ZERO.compareTo(productView.getProductWidth()) != 0 ? productView.getProductWidth() : skuVO.getProductWidth());
-                productView.setProductHeight(Objects.nonNull(productView.getProductHeight()) && BigDecimal.ZERO.compareTo(productView.getProductHeight()) != 0 ? productView.getProductHeight() : skuVO.getProductHeight());
-                productView.setBoxLength(Objects.nonNull(productView.getBoxLength()) && BigDecimal.ZERO.compareTo(productView.getBoxLength()) != 0 ? productView.getBoxLength() : skuVO.getProductLength());
-                productView.setBoxWidth(Objects.nonNull(productView.getBoxWidth()) && BigDecimal.ZERO.compareTo(productView.getBoxWidth()) != 0 ? productView.getBoxWidth() : skuVO.getProductWidth());
-                productView.setBoxHeight(Objects.nonNull(productView.getBoxHeight()) && BigDecimal.ZERO.compareTo(productView.getBoxHeight()) != 0 ? productView.getBoxHeight() : skuVO.getProductHeight());
-                productView.setProductNetWeight(Objects.nonNull(productView.getProductNetWeight()) && BigDecimal.ZERO.compareTo(productView.getProductNetWeight()) != 0 ? productView.getProductNetWeight() : skuVO.getNetWeight());
-                productView.setBoxWeight(Objects.nonNull(productView.getBoxWeight()) && BigDecimal.ZERO.compareTo(productView.getBoxWeight()) != 0 ? productView.getBoxWeight() : skuVO.getGrossWeight());
-                productView.setBoxQty(Objects.nonNull(productView.getBoxQty()) && productView.getBoxQty() != 0 ? productView.getBoxQty() : skuVO.getBoxQty());
+            productView.setId(product.getId());
+            productView.setSkuId(product.getSkuId());
+            List<ProductVO.ProductPackVO> productPackList = plmTaskFeign.getProductPackBySkuIds(Collections.singletonList(product.getSkuId()));
+            ProductVO.ProductPackVO productPackVO = null;
+            if (CollectionUtils.isNotEmpty(productPackList)) {
+                productPackVO = productPackList.stream()
+                        .filter(s -> product.getSkuId().equals(s.getSkuId()))
+                        .findFirst()
+                        .orElse(null);
+            }
+            if (productPackVO != null) {
+                productView.setProductGrade(productPackVO.getProductGrade());
+                productView.setProductName(productPackVO.getProductName());
+                productView.setSkuNo(productPackVO.getSkuNo());
+                productView.setVariantProperty(productPackVO.getVariantProperty());
+                productView.setProductLength(productPackVO.getProductLength());
+                productView.setProductWidth(productPackVO.getProductWidth());
+                productView.setProductHeight(productPackVO.getProductHeight());
+                productView.setBoxLength(productPackVO.getBoxLength());
+                productView.setBoxWidth(productPackVO.getBoxWidth());
+                productView.setBoxHeight(productPackVO.getBoxHeight());
+                productView.setProductNetWeight(productPackVO.getProductNetWeight());
+                productView.setBoxWeight(productPackVO.getBoxWeight());
+                productView.setBoxQty(productPackVO.getBoxQty());
+            } else {
+                productView.setSkuNo(product.getSkuNo());
+                productView.setProductGrade(product.getProductGrade());
+                productView.setVariantProperty(product.getVariantProperty());
             }
 
         }
