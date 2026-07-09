@@ -387,7 +387,6 @@ public class MouldInfoController extends BaseController {
      * @param dto 参数
      */
     @PostMapping("/returnConfirm")
-    @LogAction(value = LogActionEnum.CONFIRM, desc = "模具主表费用返还确认")
     public ApiResult<String> returnConfirm(@RequestBody @Validated MouldInfoDTO.ReturnConfirmDTO dto) {
         mouldInfoService.returnConfirm(dto);
         return success();
@@ -483,7 +482,6 @@ public class MouldInfoController extends BaseController {
      *
      */
     @GetMapping("/exportTemplate")
-    @LogAction(value = LogActionEnum.EXPORT, desc = "模具信息下载导入模板")
     public void exportTemplate(HttpServletResponse response) {
         String path = "classpath:excel/mouldDetailTemplate.xlsx";
         String excelName = "template.xlsx";

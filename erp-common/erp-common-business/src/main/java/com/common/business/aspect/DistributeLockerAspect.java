@@ -23,6 +23,7 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
@@ -448,18 +449,17 @@ public class DistributeLockerAspect {
      * @return  获取当前方法
      */
     private Method currentMethod(JoinPoint joinPoint) {
-        if (!(joinPoint.getSignature() instanceof MethodSignature)) {
-            log.warn("无法解析方法签名：{}", joinPoint.getSignature());
-            return null;
+        String methodName = joinPoint.getSignature().getName();
+        //获取目标类的所有方法，找到当前要执行的方法
+        Method[] methods = joinPoint.getTarget().getClass().getMethods();
+        for (Method method : methods) {
+            if (method.getName().equals(methodName)) {
+                return method;
+            }
         }
-        MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
-        Method signatureMethod = methodSignature.getMethod();
-        try {
-            return joinPoint.getTarget().getClass().getMethod(signatureMethod.getName(), signatureMethod.getParameterTypes());
-        } catch (NoSuchMethodException e) {
-            log.warn("目标类未找到方法：{}，使用签名方法兜底", signatureMethod.getName(), e);
-            return signatureMethod;
-        }
+        log.warn("未找到方法：{}", methodName);
+        // 返回 null 并记录警告日志
+        return null;
     }
 
     /**

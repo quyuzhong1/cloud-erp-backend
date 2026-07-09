@@ -23,7 +23,6 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
-import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.wms.dto.CfgQcUserDTO;
@@ -413,7 +412,6 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
     }
 
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.WMS_IMPORT_TASK_KEY, keyName = "dto.taskId", unlockAfterTx = true)
     public void importCfgQcUser(BaseDTO.ImportDTO dto) {
         boolean userContextSet = false;
         try {

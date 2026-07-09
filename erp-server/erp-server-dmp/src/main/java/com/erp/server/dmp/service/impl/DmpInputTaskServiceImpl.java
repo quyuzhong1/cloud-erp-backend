@@ -39,7 +39,6 @@ import com.common.business.threadlocal.UserContext;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.message.constant.DistributeKeyConstant;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.DmpInputTaskDTO;
 import com.erp.model.dmp.entity.DmpCfgInputEntity;
@@ -207,7 +206,6 @@ public class DmpInputTaskServiceImpl extends SuperServiceImpl<DmpInputTaskMapper
 
 	@Transactional(rollbackFor = Exception.class)
 	@Override
-    @DistributeLocker(businessType = DistributeKeyConstant.DMP_PULL_TASK_KEY, keyName = "dmpInputTaskEntity.id", unlockAfterTx = true)
 	public void createNewTask(DmpInputTaskEntity dmpInputTaskEntity) {
 		String errorMessage = dmpInputTaskEntity.getErrorMessage();
 		String id = dmpInputTaskEntity.getId();
