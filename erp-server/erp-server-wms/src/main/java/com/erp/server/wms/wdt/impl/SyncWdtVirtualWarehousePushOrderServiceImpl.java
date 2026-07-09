@@ -32,6 +32,7 @@ import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.server.wms.service.*;
 import com.erp.server.wms.wdt.SyncWdtVirtualWarehousePushOrderService;
+import com.sdk.wangdian.sdk.api.wms.WdtOtherStockRemarkConstants;
 import com.sdk.wangdian.sdk.api.virtualWarehouse.dto.VwPushHandelDetailPushDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -384,7 +385,7 @@ public class SyncWdtVirtualWarehousePushOrderServiceImpl implements SyncWdtVirtu
                     break;
             }
             request.setDetailList(detailList);
-            request.setRemark("原始单据号：" + vwAllocationCode);
+            request.setRemark(WdtOtherStockRemarkConstants.buildSourceCodeRemark(vwAllocationCode));
 
             //添加本地任务
             WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();

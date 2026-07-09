@@ -151,13 +151,14 @@ public class WdtWarnMsgHelper {
         ResolvedWarnFields fields = new ResolvedWarnFields();
         fields.setTableId(resolveTableId(context.getDmpSyncTaskId(), context.getSourceId()));
         fields.setOuterNo(CharSequenceUtil.nullToEmpty(context.getOuterNo()));
-        fields.setErpSourceCode(resolveErpSourceCode(context));
+        PushTaskSnapshot pushTaskSnapshot = loadPushTaskSnapshot(context.getDmpSyncTaskId());
+        fields.setErpSourceCode(resolveErpSourceCode(context, pushTaskSnapshot));
         ApiModuleTypeEnum apiModuleType = context.getApiModuleType();
         String docTypeName = apiModuleType != null ? apiModuleType.getDesc() : DEFAULT_DOC_TYPE_NAME;
         fields.setDocTypeName(docTypeName);
         fields.setBizName(CharSequenceUtil.format("{}同步通知", docTypeName));
 
-        String sysWarehouseId = resolveSysWarehouseId(context);
+        String sysWarehouseId = resolveSysWarehouseId(context, pushTaskSnapshot);
         if (CharSequenceUtil.isNotBlank(sysWarehouseId)) {
             fields.setErpWarehouseName(resolveErpWarehouseName(sysWarehouseId));
             fields.setWdtWarehouseNo(resolveWdtWarehouseCode(sysWarehouseId, context.getWdtWarehouseNo()));
@@ -192,45 +193,28 @@ public class WdtWarnMsgHelper {
         return CharSequenceUtil.nullToEmpty(fallbackWdtWarehouseNo);
     }
 
-    private String resolveErpSourceCode(OtherStockWarnContext context) {
+    private String resolveErpSourceCode(OtherStockWarnContext context, PushTaskSnapshot pushTaskSnapshot) {
         if (CharSequenceUtil.isNotBlank(context.getSourceCode())) {
             return context.getSourceCode();
         }
-        if (CharSequenceUtil.isNotBlank(context.getDmpSyncTaskId())) {
-            try {
-                DmpPushTaskEntity pushTask = dmpPushTaskService.getById(context.getDmpSyncTaskId());
-                if (pushTask != null && CharSequenceUtil.isNotBlank(pushTask.getSourceCode())) {
-                    return pushTask.getSourceCode();
-                }
-                if (pushTask != null && CharSequenceUtil.isNotBlank(pushTask.getSourceId())) {
-                    DmpPushWdtEntity pushWdtEntity = dmpPushWdtService.getById(pushTask.getSourceId());
-                    if (pushWdtEntity != null && CharSequenceUtil.isNotBlank(pushWdtEntity.getSourceCode())) {
-                        return pushWdtEntity.getSourceCode();
-                    }
-                }
-            } catch (Exception e) {
-                log.warn("通过推送任务反查ERP单号失败: dmpSyncTaskId={}", context.getDmpSyncTaskId(), e);
+        if (pushTaskSnapshot != null) {
+            if (pushTaskSnapshot.pushTask != null && CharSequenceUtil.isNotBlank(pushTaskSnapshot.pushTask.getSourceCode())) {
+                return pushTaskSnapshot.pushTask.getSourceCode();
+            }
+            if (pushTaskSnapshot.pushWdtEntity != null && CharSequenceUtil.isNotBlank(pushTaskSnapshot.pushWdtEntity.getSourceCode())) {
+                return pushTaskSnapshot.pushWdtEntity.getSourceCode();
             }
         }
         return "";
     }
 
-    private String resolveSysWarehouseId(OtherStockWarnContext context) {
+    private String resolveSysWarehouseId(OtherStockWarnContext context, PushTaskSnapshot pushTaskSnapshot) {
         if (CharSequenceUtil.isNotBlank(context.getSysWarehouseId())) {
             return context.getSysWarehouseId();
         }
-        if (CharSequenceUtil.isNotBlank(context.getDmpSyncTaskId())) {
-            try {
-                DmpPushTaskEntity pushTask = dmpPushTaskService.getById(context.getDmpSyncTaskId());
-                if (pushTask != null && CharSequenceUtil.isNotBlank(pushTask.getSourceId())) {
-                    DmpPushWdtEntity pushWdtEntity = dmpPushWdtService.getById(pushTask.getSourceId());
-                    if (pushWdtEntity != null && CharSequenceUtil.isNotBlank(pushWdtEntity.getWarehouseId())) {
-                        return pushWdtEntity.getWarehouseId();
-                    }
-                }
-            } catch (Exception e) {
-                log.warn("通过推送任务反查ERP仓库失败: dmpSyncTaskId={}", context.getDmpSyncTaskId(), e);
-            }
+        if (pushTaskSnapshot != null && pushTaskSnapshot.pushWdtEntity != null
+                && CharSequenceUtil.isNotBlank(pushTaskSnapshot.pushWdtEntity.getWarehouseId())) {
+            return pushTaskSnapshot.pushWdtEntity.getWarehouseId();
         }
         if (CharSequenceUtil.isNotBlank(context.getWdtWarehouseNo())) {
             try {
@@ -244,6 +228,36 @@ public class WdtWarnMsgHelper {
             }
         }
         return null;
+    }
+
+    private PushTaskSnapshot loadPushTaskSnapshot(String dmpSyncTaskId) {
+        if (CharSequenceUtil.isBlank(dmpSyncTaskId)) {
+            return null;
+        }
+        try {
+            DmpPushTaskEntity pushTask = dmpPushTaskService.getById(dmpSyncTaskId);
+            if (pushTask == null) {
+                return null;
+            }
+            DmpPushWdtEntity pushWdtEntity = null;
+            if (CharSequenceUtil.isNotBlank(pushTask.getSourceId())) {
+                pushWdtEntity = dmpPushWdtService.getById(pushTask.getSourceId());
+            }
+            return new PushTaskSnapshot(pushTask, pushWdtEntity);
+        } catch (Exception e) {
+            log.warn("通过推送任务加载任务明细失败: dmpSyncTaskId={}", dmpSyncTaskId, e);
+            return null;
+        }
+    }
+
+    private static final class PushTaskSnapshot {
+        private final DmpPushTaskEntity pushTask;
+        private final DmpPushWdtEntity pushWdtEntity;
+
+        private PushTaskSnapshot(DmpPushTaskEntity pushTask, DmpPushWdtEntity pushWdtEntity) {
+            this.pushTask = pushTask;
+            this.pushWdtEntity = pushWdtEntity;
+        }
     }
 
     private void sendCreateOrApproveWarnMsg(String bizName, String title, String tableId, String keyInfo) {

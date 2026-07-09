@@ -2,6 +2,7 @@ package com.erp.server.dmp.push.service.wdt.dto;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import com.common.message.enums.ApiModuleTypeEnum;
+import com.sdk.wangdian.sdk.api.wms.WdtOtherStockRemarkConstants;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
 import lombok.Builder;
@@ -13,8 +14,6 @@ import lombok.Data;
 @Data
 @Builder
 public class OtherStockWarnContext {
-
-    private static final String REMARK_SOURCE_CODE_PREFIX = "原始单据号：";
 
     /** 兜底模块类型 */
     private ApiModuleTypeEnum apiModuleType;
@@ -59,8 +58,8 @@ public class OtherStockWarnContext {
         if (CharSequenceUtil.isNotBlank(sourceCode)) {
             return sourceCode;
         }
-        if (CharSequenceUtil.isNotBlank(remark) && remark.startsWith(REMARK_SOURCE_CODE_PREFIX)) {
-            return remark.substring(REMARK_SOURCE_CODE_PREFIX.length()).trim();
+        if (CharSequenceUtil.isNotBlank(remark) && remark.startsWith(WdtOtherStockRemarkConstants.SOURCE_CODE_PREFIX)) {
+            return remark.substring(WdtOtherStockRemarkConstants.SOURCE_CODE_PREFIX.length()).trim();
         }
         return CharSequenceUtil.nullToEmpty(sourceCode);
     }

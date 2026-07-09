@@ -78,7 +78,7 @@ public class WdtOtherInStockServiceImpl implements WdtOtherInStockService {
             log.error("旺店通其他入库单审核失败，request：{}，response：{}", stockinRequest, response);
             wdtWarnMsgHelper.safeSendOtherStockAuditFailWarn(OtherStockWarnContext.fromInStockRequest(stockinRequest),
                     response.getData().getStatus(), response.getData().getMessage());
-            throw new ServiceException(ApiError.COMMON_WDT_API_CALL_FAILED.getCode(), "推送旺店通其他入库单审核失败: {}, {}, {}", stockinRequest.getOuterNo(), response.getStatus(), response.getData().getMessage());
+            throw new ServiceException(ApiError.COMMON_WDT_API_CALL_FAILED.getCode(), "推送旺店通其他入库单审核失败: {}, {}, {}", stockinRequest.getOuterNo(), response.getData().getStatus(), response.getData().getMessage());
         }
     }
 

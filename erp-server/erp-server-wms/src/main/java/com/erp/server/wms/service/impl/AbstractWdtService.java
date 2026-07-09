@@ -36,6 +36,7 @@ import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.service.WdtWarehouseLocationMappingService;
 import com.erp.server.wms.service.WmsPushMsgService;
+import com.sdk.wangdian.sdk.api.wms.WdtOtherStockRemarkConstants;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CommonCreateBillGoodsReq;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
@@ -309,7 +310,7 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
         request.setSourcePlatformName(PlatformEnum.ERP.getDesc());
         request.setTargetPlatformName(PlatformEnum.WANGDIAN.getDesc());
         request.setCreateTime(LocalDateTime.now());
-        request.setRemark("原始单据号：" + sourceCode);
+        request.setRemark(WdtOtherStockRemarkConstants.buildSourceCodeRemark(sourceCode));
 
         SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
         List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
@@ -377,7 +378,7 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
         request.setSourcePlatformName(PlatformEnum.ERP.getDesc());
         request.setTargetPlatformName(PlatformEnum.WANGDIAN.getDesc());
         request.setCreateTime(LocalDateTime.now());
-        request.setRemark("原始单据号：" + sourceCode);
+        request.setRemark(WdtOtherStockRemarkConstants.buildSourceCodeRemark(sourceCode));
 
         SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
         List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
