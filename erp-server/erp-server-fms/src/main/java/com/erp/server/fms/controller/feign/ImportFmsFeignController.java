@@ -2,8 +2,6 @@ package com.erp.server.fms.controller.feign;
 
 import com.common.business.dto.base.BaseDTO;
 import com.common.business.enums.FileTaskStatusEnum;
-import com.common.core.anno.LogAction;
-import com.common.core.enums.LogActionEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.fms.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -56,7 +54,6 @@ public class ImportFmsFeignController {
      * @param dto 导入参数
      */
     @PostMapping("/assetLocation")
-    @LogAction(value = LogActionEnum.IMPORT, desc = "资产位置导入")
     public void importAssetLocation(@RequestBody BaseDTO.ImportDTO dto) {
         log.info("开始导入资产位置，任务ID：{}", dto.getTaskId());
         try {
@@ -73,7 +70,6 @@ public class ImportFmsFeignController {
      * @param dto 导入参数
      */
     @PostMapping("/assetAccept")
-    @LogAction(value = LogActionEnum.IMPORT, desc = "资产验收表导入")
     public void importAssetAccept(@RequestBody BaseDTO.ImportDTO dto) {
         log.info("开始导入资产验收表，任务ID：{}", dto.getTaskId());
         try {
@@ -90,7 +86,6 @@ public class ImportFmsFeignController {
      * @param dto 导入参数
      */
     @PostMapping("/assetCard")
-    @LogAction(value = LogActionEnum.IMPORT, desc = "资产卡片导入")
     public void importAssetCard(@RequestBody BaseDTO.ImportDTO dto) {
         log.info("开始导入资产卡片，任务ID：{}", dto.getTaskId());
         try {
@@ -107,7 +102,6 @@ public class ImportFmsFeignController {
      * @param dto 导入参数
      */
     @PostMapping("/assetStocktakingPlan")
-    @LogAction(value = LogActionEnum.IMPORT, desc = "资产盘点方案导入")
     public void importAssetStocktakingPlan(@RequestBody BaseDTO.ImportDTO dto) {
         log.info("开始导入资产盘点方案，任务ID：{}", dto.getTaskId());
         try {
@@ -121,7 +115,6 @@ public class ImportFmsFeignController {
 
 
     @PostMapping("/importAssetDisposal")
-    @LogAction(value = LogActionEnum.IMPORT, desc = "资产处置单导入")
     public void importAssetDisposal(@RequestBody BaseDTO.ImportDTO dto) {
         try {
             assetDisposalService.importAssetDisposal(dto);

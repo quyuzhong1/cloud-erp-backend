@@ -1,7 +1,7 @@
 package com.baomidou.mybatisplus.syslog;
 
 import cn.hutool.core.util.ReflectUtil;
-import com.erp.model.bi.dto.BiTargetNewProductSettingDTO;
+import com.erp.model.oms.dto.SoInfoDTO;
 import com.github.javaparser.JavaParser;
 import com.github.javaparser.ParseResult;
 import com.github.javaparser.ast.CompilationUnit;
@@ -21,8 +21,7 @@ public class JavadocReader {
 
     public static void main(String[] args) throws Exception {
         List<Class<?>> list = Arrays.asList(
-                BiTargetNewProductSettingDTO.ViewDTO.class
-//                SoInfoDTO.ViewDTO.class,
+                SoInfoDTO.ViewDTO.class
 //                ProjectPlanDetailsVO.class,
 //                SubjectLayoutDetailsDTO.class
         );

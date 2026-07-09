@@ -146,7 +146,6 @@ public class DmpThirdInventoryEntity extends BaseEntity<DmpThirdInventoryEntity>
     private Integer saleReturnInTransitQty;
 
 
-
     public static final String WAREHOUSE_PLATFORM_TYPE = "warehouse_platform_type";
 
     public static final String SOURCE_PLATFORM = "source_platform";
@@ -192,7 +191,6 @@ public class DmpThirdInventoryEntity extends BaseEntity<DmpThirdInventoryEntity>
     public static final String UNIQUE_ENCRYPT = "unique_encrypt";
 
     public static final String DATA_ENCRYPT = "data_encrypt";
-
     @Override
     public Serializable pkVal() {
         return null;

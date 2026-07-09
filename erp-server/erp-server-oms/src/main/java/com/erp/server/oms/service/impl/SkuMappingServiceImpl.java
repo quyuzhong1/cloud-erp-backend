@@ -2572,6 +2572,14 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
                 .list();
     }
 
+    @Override
+    public List<SkuMappingDTO.UnmatchCountDTO> countUnmatchedGroupByWarehouse(SkuMappingDTO.UnmatchQueryDTO dto) {
+        if (dto == null || StringUtils.isBlank(dto.getType())) {
+            throw new ServiceException("SKU未匹配统计：type 不能为空");
+        }
+        return baseMapper.countUnmatchedGroupByWarehouse(dto);
+    }
+
     private boolean isAliExpressApiPlatform(String platform) {
         return PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(PlatformDictEnum.getApiPlatformCode(platform));
     }

@@ -440,7 +440,10 @@ public class InventoryDTO implements Serializable {
          */
         private String secondSupplierName;
 
-
+        /**
+         * 不良品库存数量
+         */
+        private Integer defectiveProductQty;
     }
 
     /**
