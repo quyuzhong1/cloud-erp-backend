@@ -1,6 +1,7 @@
 package com.sdk.wms.wego.utils;
 
 import com.alibaba.fastjson.JSON;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -67,10 +68,10 @@ public final class WeGoSignUtils {
      */
     public static String sign(Map<String, Object> params, String secret) {
         if (params == null) {
-            throw new ServiceException("WEGO 签名参数不能为空");
+            throw new ServiceException(ApiError.WH_WEGO_SDK_SIGN_PARAMS_EMPTY);
         }
         if (secret == null || secret.isEmpty()) {
-            throw new ServiceException("WEGO 签名 secret 不能为空");
+            throw new ServiceException(ApiError.WH_WEGO_SDK_SIGN_SECRET_EMPTY);
         }
         String content = buildSignContent(params);
         String raw = secret + content + secret;
@@ -90,7 +91,7 @@ public final class WeGoSignUtils {
      */
     public static String sign(String paramJson, String secret) {
         if (paramJson == null || paramJson.isEmpty()) {
-            throw new ServiceException("WEGO 签名 JSON 不能为空");
+            throw new ServiceException(ApiError.WH_WEGO_SDK_SIGN_JSON_EMPTY);
         }
         return sign(JSON.parseObject(paramJson), secret);
     }
