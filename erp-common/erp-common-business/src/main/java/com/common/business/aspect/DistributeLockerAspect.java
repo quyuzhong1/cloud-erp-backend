@@ -429,7 +429,7 @@ public class DistributeLockerAspect {
         }
 
         // 将各个字段路径末端的值用 | 连接起来
-        int maxLength = fieldValuesList.stream().mapToInt(List::size).max().orElse(0);
+        int maxLength = fieldValuesList.stream().mapToInt(fieldValues -> fieldValues.size()).max().orElse(0);
         for (int i = 0; i < maxLength; i++) {
             StringBuilder combinedKey = new StringBuilder();
             for (List<Object> fieldValues : fieldValuesList) {
