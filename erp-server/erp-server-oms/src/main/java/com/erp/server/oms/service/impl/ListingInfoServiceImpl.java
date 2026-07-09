@@ -761,6 +761,8 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
                 skuMappingToBackfill.forEach(skuMapping -> {
                     skuMapping.setWarehouseId(dto.getWarehouseId());
                     skuMapping.setWarehouseName(StringUtils.defaultString(dto.getWarehouseName()));
+                    // 同批历史占位记录一并纠正为服务商维度共享，避免沿用旧逻辑遗留的 false
+                    skuMapping.setHasMappingAll(Boolean.TRUE);
                 });
                 CollUtil.split(skuMappingToBackfill, 500).forEach(batch -> skuMappingService.updateBatchById(batch));
             }
@@ -790,7 +792,8 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
             skuMappingEntity.setListingId(listingInfoEntity.getId());
             skuMappingEntity.setWarehouseId(dto.getWarehouseId() != null ? dto.getWarehouseId() : "");
             skuMappingEntity.setWarehouseName(dto.getWarehouseName() != null ? dto.getWarehouseName() : "");
-            skuMappingEntity.setHasMappingAll(Boolean.FALSE);
+            // 服务商（authId）可能绑定多个系统仓库，对照关系按服务商维度共享，与其它 sku_mapping 创建路径保持一致
+            skuMappingEntity.setHasMappingAll(Boolean.TRUE);
             skuMappingEntity.setIsExpire(Boolean.FALSE);
             skuMappingEntity.setEffectiveTime(effectiveTime);
             skuMappingEntity.setExpireTime(effectiveTime.plusYears(MathUtil.NUMBER_100));

@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.enums.AuthStatusEnum;
@@ -74,25 +75,24 @@ public class WegoReturnInstockInitHandler extends DmpInputInitHandler {
                 .eq(OverseasProviderEntity::getCode, DmpBasicSystemCodeEnum.WEGO.getCode())
                 .list();
         if (CollUtil.isEmpty(providerList)) {
-            throw new ServiceException("WEGO 退货入库：授权信息不存在");
+            throw new ServiceException(ApiError.WH_WEGO_RETURN_AUTH_INFO_NOT_FOUND);
         }
         OverseasProviderEntity provider = providerList.stream()
                 .filter(e -> e.getId().equalsIgnoreCase(dmpInputTaskEntity.getNextLevelId()))
                 .findFirst()
                 .orElse(null);
         if (provider == null) {
-            throw new ServiceException("WEGO 退货入库：对应授权ID不存在, nextLevelId="
-                    + dmpInputTaskEntity.getNextLevelId());
+            throw new ServiceException(ApiError.WH_WEGO_RETURN_AUTH_ID_NOT_FOUND, dmpInputTaskEntity.getNextLevelId());
         }
 
         Map<String, Object> authJson = provider.getAuthJson();
         if (authJson == null || authJson.isEmpty()) {
-            throw new ServiceException("WEGO 退货入库：服务商[" + provider.getId() + "] auth_json 为空");
+            throw new ServiceException(ApiError.WH_WEGO_RETURN_AUTH_JSON_EMPTY, provider.getId());
         }
         String appToken = toStr(authJson.get(AUTH_KEY_APP_TOKEN));
         String appSecret = toStr(authJson.get(AUTH_KEY_APP_SECRET));
         if (StringUtils.isAnyBlank(appToken, appSecret)) {
-            throw new ServiceException("WEGO 退货入库：服务商[" + provider.getId() + "] appToken/appSecret 缺失");
+            throw new ServiceException(ApiError.WH_WEGO_RETURN_TOKEN_SECRET_MISSING, provider.getId());
         }
 
         // 到仓日期范围：优先取 dmp 任务注入的时间窗口，缺省回退为 [date-1] ~ [date]
@@ -141,22 +141,21 @@ public class WegoReturnInstockInitHandler extends DmpInputInitHandler {
             } catch (Exception e) {
                 log.error("[WEGO退货入库] 服务商[id={}] 到仓日期[{} ~ {}] 调用异常, pageNum={}",
                         authId, arrivalDateBegin, arrivalDateEnd, pageNum, e);
-                throw new ServiceException("WEGO 退货入库分页查询调用异常, pageNum=" + pageNum + ": " + e.getMessage(), e);
+                throw new ServiceException(e, ApiError.WH_WEGO_RETURN_PAGE_QUERY_ERROR, pageNum, e.getMessage());
             }
 
             if (resp == null) {
                 log.error("[WEGO退货入库] 服务商[id={}] 接口响应为空, pageNum={}", authId, pageNum);
-                throw new ServiceException("WEGO 退货入库分页查询接口响应为空, pageNum=" + pageNum);
+                throw new ServiceException(ApiError.WH_WEGO_RETURN_RESPONSE_EMPTY, pageNum);
             }
             if (!Boolean.TRUE.equals(resp.getSuccess())) {
                 log.error("[WEGO退货入库] 服务商[id={}] 接口返回失败: errorCode={}, errorMsg={}",
                         authId, resp.getErrorCode(), resp.getErrorMsg());
-                throw new ServiceException("WEGO 退货入库分页查询接口失败: errorCode=" + resp.getErrorCode()
-                        + ", errorMsg=" + resp.getErrorMsg());
+                throw new ServiceException(ApiError.WH_WEGO_RETURN_RESPONSE_FAILED, resp.getErrorCode(), resp.getErrorMsg());
             }
             WegoReturnOrderResp.PageResultDTO page = resp.getResult();
             if (page == null) {
-                throw new ServiceException("WEGO 退货入库分页查询接口 result 为空, pageNum=" + pageNum);
+                throw new ServiceException(ApiError.WH_WEGO_RETURN_RESULT_EMPTY, pageNum);
             }
             if (totalPages == null) {
                 totalPages = page.getPages();
@@ -178,8 +177,7 @@ public class WegoReturnInstockInitHandler extends DmpInputInitHandler {
 
         if (pageNum > MAX_PAGE_LIMIT) {
             log.error("[WEGO退货入库] 服务商[id={}] 已达最大翻页上限({})，存在未拉取数据，任务中止", authId, MAX_PAGE_LIMIT);
-            throw new ServiceException("WEGO退货入库：已达最大翻页上限(" + MAX_PAGE_LIMIT
-                    + ")，已拉取=" + result.size() + "条，数据不完整，任务中止");
+            throw new ServiceException(ApiError.WH_WEGO_RETURN_PAGE_LIMIT_EXCEEDED, MAX_PAGE_LIMIT, result.size());
         }
         log.info("[WEGO退货入库] 服务商[id={}] 到仓日期[{} ~ {}] 共拉到已处理退货单={}条, 翻页={}",
                 authId, arrivalDateBegin, arrivalDateEnd, result.size(), pageNum);

@@ -537,11 +537,11 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         if (OmsPlatformEnum.WE_GO.getCode().equalsIgnoreCase(dictPlatform)) {
             // WEGO 平台目的仓只支持「自发头程」入库类型
             if (!OverseasInstockTypeEnum.SELF_HEADWAY.equals(commonDTO.getInstockType())) {
-                throw new ServiceException("目的仓平台授权为WEGO时，入库类型只能为【自发头程】");
+                throw new ServiceException(ApiError.WH_WEGO_INBOUND_TYPE_ONLY_SELF_HEADWAY);
             }
             // WEGO入库单需提供物流跟踪号
             if (CharSequenceUtil.isBlank(commonDTO.getTrackingNo())) {
-                throw new ServiceException("WEGO入库单需提供物流跟踪号");
+                throw new ServiceException(ApiError.WH_WEGO_INBOUND_TRACKING_NO_REQUIRED);
             }
         }
         // 入库类型=自发头程
@@ -1366,17 +1366,23 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                         + Boolean.TRUE.equals(v.getDefectiveProductFlag()))
                 .collect(Collectors.toCollection(HashSet::new));
         //有签收记录直接保存，没有签收记录判断签收数量与数据库是否一致，不一致的话用签收数量-数据库签收数量
+        List<PlatformInboundDTO.Receiving> unmatchedReceivingList = new ArrayList<>();
         if (dto.getHasReceivedData() && CollectionUtils.isNotEmpty(dto.getReceivingDataList())) {
             //判断是否存在，通过明细id+数量+时间
             for (PlatformInboundDTO.Receiving receiving : dto.getReceivingDataList()) {
                 OverseasWarehouseInboundDetailEntity detailEntity = detailEntityMap.get(receiving.getProductSku());
                 // 平台回写的签收 sku 在本地入库明细中找不到时（如 wego 海外仓收到计划外不良品），
-                // 单独跳过本条流水并落 warn 日志，避免一条异常 NPE 把整批签收记录连同事务回滚掉。
+                // 单独跳过本条流水并落 warn 日志，避免一条异常 NPE 把整批签收记录连同事务回滚掉；
+                // 同时记录到 unmatchedReceivingList，便于人工在单据详情页感知并对账追溯。
                 if (detailEntity == null) {
-                    log.warn("[海外仓签收] 单号={} 平台={} 流水sku={} 在本地入库明细中找不到，已跳过该流水",
+                    log.warn("[海外仓签收] 单号={} 平台={} 流水sku={} thirdId={} receiveQty={} receiveTime={} 在本地入库明细中找不到，已跳过该流水",
                             StringUtil.isBlank(dto.getReceivingCode()) ? dto.getSourceCode() : dto.getReceivingCode(),
                             dto.getPlatform(),
-                            receiving.getProductSku());
+                            receiving.getProductSku(),
+                            receiving.getThirdId(),
+                            receiving.getReceiveQty(),
+                            receiving.getReceiveTime());
+                    unmatchedReceivingList.add(receiving);
                     continue;
                 }
                 String detailId = detailEntity.getId();
@@ -1466,6 +1472,21 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         if (CollectionUtils.isNotEmpty(insertReceiveEntityList)) {
             overseasWarehouseInboundReceivedService.saveBatch(insertReceiveEntityList);
         }
+        // 存在计划外（本地明细找不到 SKU）的签收流水：本地签收数量会低于三方仓实际上架量，
+        // 需阻止入库单自动完结并留痕，避免入库单状态/调拨基于不完整数据推进。
+        boolean hasUnmatchedReceiving = CollectionUtils.isNotEmpty(unmatchedReceivingList);
+        if (hasUnmatchedReceiving) {
+            // 计划外签收流水不落库，但补一条业务操作日志，便于人工在单据详情页感知并对账追溯，
+            // 而不是只能靠翻 warn 日志才能发现库存/调拨状态与三方仓不一致。
+            String unmatchedDetail = unmatchedReceivingList.stream()
+                    .map(r -> CharSequenceUtil.format("sku={},thirdId={},qty={}",
+                            r.getProductSku(), r.getThirdId(), r.getReceiveQty()))
+                    .collect(Collectors.joining("；"));
+            operateLogService.addModuleOperateLog(
+                    CharSequenceUtil.format("平台【{}】回传{}条签收流水在本地入库明细中找不到对应SKU，已跳过未落库，本单不会自动完结，需人工核实：{}",
+                            dto.getPlatform(), unmatchedReceivingList.size(), unmatchedDetail),
+                    ModuleTypeEnum.OVERSEAS_WAREHOUSE_INBOUND.getCode(), mainEntity.getId(), "异常签收");
+        }
 
         List<OverseasWarehouseInboundDetailEntity> updateList = new ArrayList<>(updateDetailEntityMap.values());
         if (changeFlag) {
@@ -1507,7 +1528,8 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 //有任意签收流水，但是至少有一条明细没有签收完成，即至少有一条明细收发差异小于0
                 boolean isAnyReceiveZero = detailList.stream().anyMatch(v -> v.getDiffQty() < 0);
                 //根据以上条件判断入库状态 都不符合原来状态不做更新
-                if(isAllDiffZero){
+                //存在计划外未匹配签收时，即使本地明细收发差异为0也不自动完结，降级为已签收，强制人工对账
+                if(isAllDiffZero && !hasUnmatchedReceiving){
                     mainEntity.setInstockStatus(OverseasInstockStatusEnum.AUTOMATIC_COMPLETION.getCode());
                 }else if(isAllReceiveZero){
                     mainEntity.setInstockStatus(OverseasInstockStatusEnum.SIGNED.getCode());
