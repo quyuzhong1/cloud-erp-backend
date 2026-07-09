@@ -1089,12 +1089,8 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         if (ObjectUtil.isEmpty(dto)) {
             return;
         }
-        KolSubB2cApplicationEntity subEntity = getKolSubB2cApplicationByCallback(dto);
-        if (ObjectUtil.isEmpty(subEntity)) {
-            log.warn("处理中台B2C审批下推成功回调失败，拆分单不存在: subOrderId={}, subOrderCode={}, syncTaskId={}",
-                    dto.getSubOrderId(), dto.getSubOrderCode(), dto.getSyncTaskId());
-            return;
-        }
+        KolSubB2cApplicationEntity subEntity = getRequiredKolSubB2cApplicationByApproveCallback(
+                dto, "处理中台B2C审批下推成功回调");
         KolB2cApplicationEntity mainEntity = super.getByIdOpt(subEntity.getSourceId()).orElse(null);
         if (ObjectUtil.isEmpty(mainEntity)) {
             log.warn("处理中台B2C审批下推成功回调失败，主单不存在: subOrderId={}, subOrderCode={}, mainId={}, syncTaskId={}",
@@ -1156,12 +1152,8 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         if (ObjectUtil.isEmpty(dto)) {
             return;
         }
-        KolSubB2cApplicationEntity subEntity = getKolSubB2cApplicationByCallback(dto);
-        if (ObjectUtil.isEmpty(subEntity)) {
-            log.warn("处理中台B2C审批下推失败回调失败，拆分单不存在: subOrderId={}, subOrderCode={}, syncTaskId={}",
-                    dto.getSubOrderId(), dto.getSubOrderCode(), dto.getSyncTaskId());
-            return;
-        }
+        KolSubB2cApplicationEntity subEntity = getRequiredKolSubB2cApplicationByApproveCallback(
+                dto, "处理中台B2C审批下推失败回调");
         KolB2cApplicationEntity mainEntity = super.getByIdOpt(subEntity.getSourceId()).orElse(null);
         if (ObjectUtil.isEmpty(mainEntity)) {
             log.warn("处理中台B2C审批下推失败回调失败，主单不存在: subOrderId={}, subOrderCode={}, mainId={}, syncTaskId={}",
@@ -2197,6 +2189,18 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         return getKolSubB2cApplicationByCallback(dto.getSubOrderId(), dto.getSubOrderCode());
     }
 
+    private KolSubB2cApplicationEntity getRequiredKolSubB2cApplicationByApproveCallback(KolB2cApplicationApproveCallbackDTO dto,
+                                                                                        String callbackName) {
+        KolSubB2cApplicationEntity subEntity = getKolSubB2cApplicationByCallback(dto);
+        if (ObjectUtil.isNotEmpty(subEntity)) {
+            return subEntity;
+        }
+        String msg = StrUtil.format("{}失败，无法定位唯一拆分单: subOrderId={}, subOrderCode={}, syncTaskId={}",
+                callbackName, dto.getSubOrderId(), dto.getSubOrderCode(), dto.getSyncTaskId());
+        log.warn(msg);
+        throw new ServiceException(msg);
+    }
+
     private KolSubB2cApplicationEntity getKolSubB2cApplicationByCallback(String subOrderId, String subOrderCode) {
         if (StringUtils.isNotBlank(subOrderId)) {
             KolSubB2cApplicationEntity subEntity = kolSubB2cApplicationService.getByIdOpt(subOrderId).orElse(null);
@@ -2207,28 +2211,28 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         if (StringUtils.isBlank(subOrderCode)) {
             return null;
         }
-        KolSubB2cApplicationEntity subEntity = kolSubB2cApplicationService.lambdaQuery()
+        List<KolSubB2cApplicationEntity> subList = kolSubB2cApplicationService.lambdaQuery()
                 .eq(KolSubB2cApplicationEntity::getCode, subOrderCode)
                 .eq(KolSubB2cApplicationEntity::getIsDeleted, false)
-                .last("limit 1")
-                .one();
-        if (ObjectUtil.isNotEmpty(subEntity)) {
-            return subEntity;
+                .last("limit 2")
+                .list();
+        if (CollUtil.size(subList) > 1) {
+            log.warn("KOL B2C回调匹配拆分单失败，拆分单号不唯一: subOrderCode={}", subOrderCode);
+            return null;
+        }
+        if (CollUtil.isNotEmpty(subList)) {
+            return subList.get(0);
         }
         KolB2cApplicationEntity mainEntity = this.lambdaQuery()
                 .eq(KolB2cApplicationEntity::getCode, subOrderCode)
                 .eq(KolB2cApplicationEntity::getIsDeleted, false)
                 .last("limit 1")
                 .one();
-        if (ObjectUtil.isEmpty(mainEntity)) {
-            return null;
+        if (ObjectUtil.isNotEmpty(mainEntity)) {
+            log.warn("KOL B2C回调匹配拆分单失败，回调编码命中主单编码，拒绝默认取第一条拆分单: subOrderCode={}, mainId={}",
+                    subOrderCode, mainEntity.getId());
         }
-        return kolSubB2cApplicationService.lambdaQuery()
-                .eq(KolSubB2cApplicationEntity::getSourceId, mainEntity.getId())
-                .eq(KolSubB2cApplicationEntity::getIsDeleted, false)
-                .orderByAsc(KolSubB2cApplicationEntity::getCreateTime)
-                .last("limit 1")
-                .one();
+        return null;
     }
 
     /**
