@@ -166,28 +166,28 @@ public class DictHsCodeDTO implements Serializable {
         * 最惠国税率 (%)
         */
 //        @NotNull(message = "最惠国税率 (%)不能为空")
-//        @Digits(integer = 18, fraction = 6, message = "最惠国税率 (%)整数位不能超过12位，小数位不能超过4位")
+//        @Digits(integer = 18, fraction = 6, message = "最惠国税率 (%)整数位不能超过18位，小数位不能超过6位")
         private BigDecimal mfnRate;
 
         /**
         * 普通税率 (%)
         */
 //        @NotNull(message = "普通税率 (%)不能为空")
-//        @Digits(integer = 18, fraction = 6, message = "普通税率 (%)整数位不能超过12位，小数位不能超过4位")
+//        @Digits(integer = 18, fraction = 6, message = "普通税率 (%)整数位不能超过18位，小数位不能超过6位")
         private BigDecimal generalRate;
 
         /**
         * 增值税率 (%)
         */
 //        @NotNull(message = "增值税率 (%)不能为空")
-//        @Digits(integer = 18, fraction = 6, message = "增值税率 (%)整数位不能超过12位，小数位不能超过4位")
+//        @Digits(integer = 18, fraction = 6, message = "增值税率 (%)整数位不能超过18位，小数位不能超过6位")
         private BigDecimal vatRate;
 
         /**
         * 消费税率 (%)
         */
 //        @NotNull(message = "消费税率 (%)不能为空")
-//        @Digits(integer = 18, fraction = 6, message = "消费税率 (%)整数位不能超过12位，小数位不能超过4位")
+//        @Digits(integer = 18, fraction = 6, message = "消费税率 (%)整数位不能超过18位，小数位不能超过6位")
         private BigDecimal consumptionTaxRate;
 
         /**

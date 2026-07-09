@@ -546,12 +546,12 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
     						BigDecimal allAmountLocalCurrency = totalAllAmountLocalCurrency
         							.multiply(skuPriceMap.get(wdtSoOutStockDetailDTO.getSkuNo()))
         							.multiply(new BigDecimal(wdtSoOutStockDetailDTO.getActualQty().toString()))
-        							.divide(totalStd , MathUtil.scale , RoundingMode.DOWN);
+        							.divide(totalStd , MathUtil.scaleSix , RoundingMode.DOWN);
     						currTotalAllAmountLocalCurrency = currTotalAllAmountLocalCurrency.add(allAmountLocalCurrency);
                             BigDecimal taxAmount = totalTaxAmount
                                     .multiply(skuPriceMap.get(wdtSoOutStockDetailDTO.getSkuNo()))
                                     .multiply(new BigDecimal(wdtSoOutStockDetailDTO.getActualQty().toString()))
-                                    .divide(totalStd , MathUtil.scale , RoundingMode.DOWN);
+                                    .divide(totalStd , MathUtil.scaleSix , RoundingMode.DOWN);
                             currTotalTaxAmount = currTotalTaxAmount.add(taxAmount);
                             wdtSoOutStockDetailDTO.setTaxAmount(taxAmount);
                             wdtSoOutStockDetailDTO.setAllAmountLocalCurrency(allAmountLocalCurrency);
@@ -559,7 +559,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         					BigDecimal amount = totalAmount
         							.multiply(skuPriceMap.get(wdtSoOutStockDetailDTO.getSkuNo()))
         							.multiply(new BigDecimal(wdtSoOutStockDetailDTO.getActualQty().toString()))
-        							.divide(totalStd , MathUtil.scale , RoundingMode.DOWN);
+        							.divide(totalStd , MathUtil.scaleSix , RoundingMode.DOWN);
         					currTotalAmount = currTotalAmount.add(amount);
 							wdtSoOutStockDetailDTO.setAmount(amount);
     					}else {

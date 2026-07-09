@@ -491,7 +491,7 @@ public class DmpSoOutstockDetailDTO implements Serializable {
         * 价税合计(本位币)-旺店通用
         */
         @NotNull(message = "价税合计(本位币)不能为空")
-        @Digits(integer = 18, fraction = 6, message = "价税合计(本位币)整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "价税合计(本位币)整数位不能超过18位，小数位不能超过6位")
         private BigDecimal allAmountLocalCurrency;
 
         /**

@@ -248,7 +248,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                     viewDTO.setAmount(amount);
                     remainAmount = remainAmount.subtract(amount);
                     //原捆绑商品建议售价金额*（单个SKU含税成本/总的SKU含税成本），最后一个订单明细行显示最后剩余的建议售价金额
-                    BigDecimal advancePrice = viewDTO.getAllocationAmount().divide(totalAllocationPrice,4, RoundingMode.HALF_UP).multiply(detailEntity.getAdvicePrice());
+                    BigDecimal advancePrice = viewDTO.getAllocationAmount().divide(totalAllocationPrice, MathUtil.scaleSix, RoundingMode.HALF_UP).multiply(detailEntity.getAdvicePrice());
                     viewDTO.setAdvicePrice(advancePrice);
                     remainAdvicePrice = remainAdvicePrice.subtract(advancePrice);
                 }
@@ -491,7 +491,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                         soB2cDetailEntity.setAmount(amount);
                         remainAmount = remainAmount.subtract(amount);
                         //原捆绑商品建议售价金额*（单个SKU含税成本/总的SKU含税成本），最后一个订单明细行显示最后剩余的建议售价金额
-                        BigDecimal advancePrice = soB2cDetailEntity.getAllocationAmount().divide(totalAllocationPrice,4, RoundingMode.HALF_UP).multiply(detailEntity.getAdvicePrice());
+                        BigDecimal advancePrice = soB2cDetailEntity.getAllocationAmount().divide(totalAllocationPrice, MathUtil.scaleSix, RoundingMode.HALF_UP).multiply(detailEntity.getAdvicePrice());
                         soB2cDetailEntity.setAdvicePrice(advancePrice);
                         remainAdvicePrice = remainAdvicePrice.subtract(advancePrice);
                     }

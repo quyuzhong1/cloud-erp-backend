@@ -21,7 +21,10 @@ import java.util.stream.Collector;
 @UtilityClass
 public class MathUtil {
 
-    public final int scale = 6;
+    /** 历史默认精度（四位小数），供 setScale(d1)、divide(d1,d2)、multiplyWithFour 等沿用 */
+    public final int scale = 4;
+    /** 六位小数精度，供 multiplyWithSix / divideWithSix / scaleToSix 使用 */
+    public final int scaleSix = 6;
     public final BigDecimal BigDecimal_100 = new BigDecimal("100");
     public final BigDecimal BigDecimal_1000 = new BigDecimal("1000");
     public final BigDecimal BigDecimal__1 = new BigDecimal("-1");
@@ -277,17 +280,19 @@ public class MathUtil {
     /**
      * 两数相乘，得出结果，该结果未四舍五入，请注意, 默认保留四位小数
      *
-     * @deprecated 历史命名，语义已为六位小数，请优先使用 {@link #multiplyWithSix(BigDecimal, BigDecimal)}
+     * @param d1
+     * @param d2
+     * @return
      */
     public BigDecimal multiplyWithFour(BigDecimal d1, BigDecimal d2) {
-        return multiplyWithSix(d1, d2);
+        return multiplyWithTwo(d1, d2, scale);
     }
 
     /**
      * 两数相乘，保留六位小数（四舍五入）
      */
     public BigDecimal multiplyWithSix(BigDecimal d1, BigDecimal d2) {
-        return multiplyWithTwo(d1, d2, scale);
+        return multiplyWithTwo(d1, d2, scaleSix);
     }
 
     /**
@@ -305,21 +310,21 @@ public class MathUtil {
         if (newd2 == null) {
             newd2 = BigDecimal.ZERO;
         }
-        return newd2.multiply(newd1).setScale(scale, roundingMode);
+        return newd2.multiply(newd1).setScale(scaleSix, roundingMode);
     }
 
     /**
      * 两数相除，保留六位小数（四舍五入）
      */
     public BigDecimal divideWithSix(BigDecimal d1, BigDecimal d2) {
-        return divide(d1, d2, scale);
+        return divide(d1, d2, scaleSix);
     }
 
     /**
      * 两数相除，保留六位小数（指定舍入模式）
      */
     public BigDecimal divideWithSix(BigDecimal d1, BigDecimal d2, int roundingMode) {
-        return divide(d1, d2, scale, roundingMode);
+        return divide(d1, d2, scaleSix, roundingMode);
     }
 
     /**
@@ -336,7 +341,7 @@ public class MathUtil {
         if (d1 == null) {
             return BigDecimal.ZERO;
         }
-        return d1.setScale(scale, roundingMode);
+        return d1.setScale(scaleSix, roundingMode);
     }
 
     /**

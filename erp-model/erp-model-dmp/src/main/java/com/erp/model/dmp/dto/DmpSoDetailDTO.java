@@ -335,7 +335,7 @@ public class DmpSoDetailDTO implements Serializable {
         * 商品原始售价(折扣前单价)
         */
         @NotNull(message = "商品原始售价(折扣前单价)不能为空")
-        @Digits(integer = 18, fraction = 6, message = "商品原始售价(折扣前单价)整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "商品原始售价(折扣前单价)整数位不能超过18位，小数位不能超过6位")
         private BigDecimal sellPriceOrigin;
 
         /**
@@ -349,7 +349,7 @@ public class DmpSoDetailDTO implements Serializable {
         * 商品售价(折扣后单价)
         */
         @NotNull(message = "商品售价(折扣后单价)不能为空")
-        @Digits(integer = 18, fraction = 6, message = "商品售价(折扣后单价)整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "商品售价(折扣后单价)整数位不能超过18位，小数位不能超过6位")
         private BigDecimal sellPrice;
 
         /**

@@ -896,11 +896,11 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
     }
 
     private BigDecimal calculateB2bAllAmountLocalCurrency(SoDetailEntity soDetailEntity, Integer actualQty) {
-        return calculateB2bProportionalAmount(soDetailEntity, actualQty, soDetailEntity.getAllAmountLocalCurrency(), MathUtil.scale);
+        return calculateB2bProportionalAmount(soDetailEntity, actualQty, soDetailEntity.getAllAmountLocalCurrency(), MathUtil.scaleSix);
     }
 
     private BigDecimal calculateB2bTaxAmount(SoDetailEntity soDetailEntity, Integer actualQty) {
-        return calculateB2bProportionalAmount(soDetailEntity, actualQty, soDetailEntity.getTaxAmount(), 4);
+        return calculateB2bProportionalAmount(soDetailEntity, actualQty, soDetailEntity.getTaxAmount(), MathUtil.scaleSix);
     }
 
     private BigDecimal calculateB2bProportionalAmount(SoDetailEntity soDetailEntity, Integer actualQty, BigDecimal totalAmount, int scale) {
@@ -1125,8 +1125,8 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         if (Objects.nonNull(currentCost) && MathUtil.compareTo(totalCost, BigDecimal.ZERO) != 0
                 && MathUtil.compareTo(childQty, BigDecimal.ZERO) != 0) {
             return MathUtil.nvl(parentUnitAmount, BigDecimal.ZERO)
-                    .multiply(currentCost.divide(totalCost, 4, RoundingMode.HALF_UP))
-                    .divide(childQty, 4, RoundingMode.HALF_UP);
+                    .multiply(currentCost.divide(totalCost, MathUtil.scaleSix, RoundingMode.HALF_UP))
+                    .divide(childQty, MathUtil.scaleSix, RoundingMode.HALF_UP);
         }
         BigDecimal totalQuantity = sameBomChildrenSkuDTOList.stream()
                 .map(child -> BigDecimal.valueOf(Objects.nonNull(child.getQuantity()) ? child.getQuantity() : 0))
@@ -1138,8 +1138,8 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         // 数学等价于 parentUnitAmount / totalQuantity；保留 childQty / childQty 写法
         // 是为了与有 allocationAmount 时的 (currentCost / totalCost) 分摊公式结构对称、便于对照阅读
         return MathUtil.nvl(parentUnitAmount, BigDecimal.ZERO)
-                .multiply(childQty.divide(totalQuantity, 4, RoundingMode.HALF_UP))
-                .divide(childQty, 4, RoundingMode.HALF_UP);
+                .multiply(childQty.divide(totalQuantity, MathUtil.scaleSix, RoundingMode.HALF_UP))
+                .divide(childQty, MathUtil.scaleSix, RoundingMode.HALF_UP);
     }
 
     private BigDecimal getB2cComboChildTotalAllocationAmount(SoOutstockDetailEntity currentDetail, String parentSkuId, List<BomChildrenSkuDTO> sameBomChildrenSkuDTOList,
@@ -1171,8 +1171,8 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         BigDecimal detailAmount = MathUtil.nvl(soDetailEntity.getPrice(), BigDecimal.ZERO)
                 .multiply(BigDecimal.valueOf(qty));
         return MathUtil.nvl(soB2cEntity.getAmount(), BigDecimal.ZERO)
-                .multiply(detailAmount.divide(allDetailAmount, 4, RoundingMode.HALF_UP))
-                .divide(BigDecimal.valueOf(qty), 4, RoundingMode.HALF_UP);
+                .multiply(detailAmount.divide(allDetailAmount, MathUtil.scaleSix, RoundingMode.HALF_UP))
+                .divide(BigDecimal.valueOf(qty), MathUtil.scaleSix, RoundingMode.HALF_UP);
     }
 
     private BigDecimal calculateB2cTaxAmount(SoB2cEntity soB2cEntity, SoB2cDetailEntity soDetailEntity,
@@ -1183,10 +1183,10 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             return calculateAllocatedAmount(MathUtil.nvl(soB2cEntity.getAmount(), BigDecimal.ZERO),
                     calculateB2cDetailWeight(soDetailEntity), totalWeight,
                     BigDecimal.valueOf(Objects.nonNull(soDetailEntity.getQty()) ? soDetailEntity.getQty() : 0),
-                    detailEntity.getActualQty(), RoundingMode.DOWN, 4);
+                    detailEntity.getActualQty(), RoundingMode.DOWN, MathUtil.scaleSix);
         }
         return multiplyAmount(taxPrice, BigDecimal.valueOf(Objects.nonNull(detailEntity.getActualQty()) ? detailEntity.getActualQty() : 0),
-                RoundingMode.DOWN, 4);
+                RoundingMode.DOWN, MathUtil.scaleSix);
     }
 
     private BigDecimal calculateB2cAllAmountLocalCurrency(SoB2cEntity soB2cEntity, SoB2cDetailEntity soDetailEntity,
@@ -1198,9 +1198,9 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             return calculateAllocatedAmount(MathUtil.nvl(soB2cEntity.getAmount(), BigDecimal.ZERO).multiply(safeExchangeRate),
                     calculateB2cDetailWeight(soDetailEntity), totalWeight,
                     BigDecimal.valueOf(Objects.nonNull(soDetailEntity.getQty()) ? soDetailEntity.getQty() : 0),
-                    detailEntity.getActualQty(), RoundingMode.DOWN, MathUtil.scale);
+                    detailEntity.getActualQty(), RoundingMode.DOWN, MathUtil.scaleSix);
         }
-        return multiplyAmount(taxAmount, safeExchangeRate, RoundingMode.DOWN, MathUtil.scale);
+        return multiplyAmount(taxAmount, safeExchangeRate, RoundingMode.DOWN, MathUtil.scaleSix);
     }
 
     private BigDecimal calculateB2cDetailWeight(SoB2cDetailEntity soDetailEntity) {
