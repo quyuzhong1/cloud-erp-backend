@@ -1,22 +1,15 @@
 package com.erp.server.auth.server;
 
-import java.util.Date;
-import java.util.Objects;
-
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletRequest;
-
-import com.common.business.vo.LoginUser;
-import com.common.core.utils.MessageUtils;
-import org.springframework.stereotype.Component;
-
+import cn.hutool.core.util.StrUtil;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.enums.UserTypeEnum;
 import com.common.business.utils.RedisUtil;
+import com.common.business.vo.LoginUser;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.IpUtils;
+import com.common.core.utils.MessageUtils;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.sys.dto.AccountLoginDTO;
 import com.erp.model.sys.dto.SysFeignDTO;
@@ -27,8 +20,12 @@ import com.erp.model.sys.vo.SysUserMenuAuthVO;
 import com.erp.model.sys.vo.SysUserPermissionAuthVO;
 import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import org.springframework.stereotype.Component;
 
-import cn.hutool.core.util.StrUtil;
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import java.util.Date;
+import java.util.Objects;
 
 /**
  * 登录认证服务
@@ -124,16 +121,10 @@ public class LoginAuthService {
         ipDTO.setUid(info.getUid());
         sysUserFeign.setLoginIp(ipDTO);
         SysLoginUserVO sysLoginUserVO = new SysLoginUserVO();
-        if (loginDTO.getIsTest()) {
-            // 创建token（仅缓存用户基础信息，菜单与权限由独立接口获取）
-            info.setOverallMenuList(null);
-            info.setLeftMenuList(null);
-            info.setPermissionList(null);
-        } else {
-            sysLoginUserVO.setOverallMenuList(info.getOverallMenuList());
-            sysLoginUserVO.setPermissionList(info.getPermissionList());
-            sysLoginUserVO.setLeftMenuList(info.getLeftMenuList());
-        }
+        // 创建token（仅缓存用户基础信息，菜单与权限由独立接口获取）
+        info.setOverallMenuList(null);
+        info.setLeftMenuList(null);
+        info.setPermissionList(null);
         info.setUserType(loginDTO.getUserType());
         String accessToken = authTokenService.createSlimToken(info);
         sysLoginUserVO.setAccessToken(accessToken);
@@ -192,7 +183,7 @@ public class LoginAuthService {
         LoginUser loginUser = getLoginUserOrThrow(token);
         ApiResult<SysUserMenuAuthVO> apiResult = sysUserFeign.getUserMenuAuth(
                 new SysFeignDTO.UserLoginInfoDTO(loginUser.getUid(), loginUser.getUserType()));
-        return requireFeignData(apiResult);
+        return requireFeignData(apiResult, ApiError.AUTH_MENU_FETCH_FAILED);
     }
 
     /**
@@ -208,19 +199,22 @@ public class LoginAuthService {
         LoginUser loginUser = getLoginUserOrThrow(token);
         ApiResult<SysUserPermissionAuthVO> apiResult = sysUserFeign.getUserPermissionAuth(
                 new SysFeignDTO.UserLoginInfoDTO(loginUser.getUid(), loginUser.getUserType()));
-        return requireFeignData(apiResult);
+        return requireFeignData(apiResult, ApiError.AUTH_PERMISSION_FETCH_FAILED);
     }
 
     /**
      * 校验 Feign 响应：HTTP 200 且 data 非空
+     *
+     * @param apiResult    Feign 响应结果
+     * @param dataEmptyError data 为空时抛出的业务错误码（按调用场景区分，避免误报「登录失败」）
      */
-    private <T> T requireFeignData(ApiResult<T> apiResult) {
+    private <T> T requireFeignData(ApiResult<T> apiResult, ApiError dataEmptyError) {
         if (apiResult.getCode() != 200) {
             throw new ServiceException(apiResult.getCode(), apiResult.getMsg());
         }
         T data = apiResult.getData();
         if (Objects.isNull(data)) {
-            throw new ServiceException(ApiError.AUTH_LOGIN_FAILED);
+            throw new ServiceException(dataEmptyError);
         }
         return data;
     }

@@ -270,6 +270,8 @@ public enum ApiError implements Serializable {
     AUTH_API_TOKEN_MANAGEMENT_PATH_FORBIDDEN(2048, "API Token不允许访问管理接口"),
     AUTH_API_TOKEN_PATH_NOT_IN_WHITELIST(2049, "接口未配置API Token白名单"),
     AUTH_API_TOKEN_WHITELIST_ADMIN_REQUIRED(2050, "仅管理员可维护API Token接口白名单"),
+    AUTH_MENU_FETCH_FAILED(2027, "获取菜单权限失败，请稍后重试"),
+    AUTH_PERMISSION_FETCH_FAILED(2028, "获取按钮权限失败，请稍后重试"),
 
     /**
      * EMAIL 邮件相关 2200 - 2400
