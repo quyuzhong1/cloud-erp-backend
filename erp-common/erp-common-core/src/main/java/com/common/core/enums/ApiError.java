@@ -1977,6 +1977,7 @@ public enum ApiError implements Serializable {
     LOGISTICS_ORDER_CANNOT_EDIT(13646,"该单据不能再当前页面编辑"),
     LOGISTICS_CHANNEL_CODE_EMPTY(13647,"渠道代码为空或者格式不正确"),
     ASYNC_TASK_DETAIL_TIMEOUT(13648,"明细执行超时，系统自动标记失败"),
+    LOGISTICS_DECLARE_SENDER_REQUIRED(13649,"境内发货人未选择"),
     /**
      * 财务管理 错误 信息 14000-14500
      */

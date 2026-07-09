@@ -509,6 +509,10 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         }
         redisUtil.set(key,number,86400);
 
+        // 合同号按境内发货人(核算公司)匹配编码规则；senderId 为空会误报"核算公司【】未配置编码规则"，先给出明确提示。
+        if (StringUtils.isBlank(tmsDeclareBillEntity.getSenderId())) {
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_SENDER_REQUIRED);
+        }
         //查询报关单头编码配置
         CfgSettingDTO.ViewDTO settingViewDTO = cfgSettingService.getSetting(CONTRACT_AGREEMENT_NO.getCode());
         if (ObjectUtil.isEmpty(settingViewDTO) || CollUtil.isEmpty(settingViewDTO.getContractAgreementNoList())) {
