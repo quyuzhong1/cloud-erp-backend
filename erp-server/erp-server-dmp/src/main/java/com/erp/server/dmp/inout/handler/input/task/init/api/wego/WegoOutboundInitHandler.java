@@ -72,7 +72,7 @@ public class WegoOutboundInitHandler extends DmpInputInitHandler {
                 .eq(OverseasProviderEntity::getCode, DmpBasicSystemCodeEnum.WEGO.getCode())
                 .list();
         if (CollUtil.isEmpty(providerList)) {
-            throw new ServiceException(ApiError.WH_WEGO_OUTBOUND_AUTH_INFO_NOT_FOUND);
+            throw new ServiceException(ApiError.WH_WEGO_AUTH_INFO_NOT_FOUND);
         }
         OverseasProviderEntity provider = providerList.stream()
                 .filter(e -> e.getId().equalsIgnoreCase(dmpInputTaskEntity.getNextLevelId()))

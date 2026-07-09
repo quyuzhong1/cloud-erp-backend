@@ -7,6 +7,7 @@ import com.common.business.dto.PlatformInboundDTO;
 import com.common.business.dto.PlatformInboundDTO.Receiving;
 import com.common.business.enums.OverseasInstockStatusEnum;
 import com.common.core.entity.BaseEntity;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpThirdInboundEntity;
@@ -208,7 +209,7 @@ public class WegoInboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
             log.error("[WEGO入库] 解析 detail_list_json 失败，签收数据不完整，中止本次推送以避免漏记签收流水。"
                             + "inboundId={}, jsonLength={}, jsonSummary={}",
                     inboundId, detailListJson.length(), StringUtils.abbreviate(detailListJson, 500), e);
-            throw new ServiceException("WEGO入库明细 detail_list_json 解析失败，inboundId=" + inboundId);
+            throw new ServiceException(e, ApiError.WH_WEGO_INBOUND_DETAIL_JSON_PARSE_FAILED, inboundId);
         }
     }
 

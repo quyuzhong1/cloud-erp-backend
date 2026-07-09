@@ -1590,7 +1590,7 @@ public enum ApiError implements Serializable {
     WH_WEGO_INVENTORY_PAGE_PARSE_FAILED(11164,"WEGO库存：仓库[{0}] 第{1}页响应解析失败，数据不完整，任务中止"),
     WH_WEGO_INVENTORY_PAGE_LIMIT_EXCEEDED(11165,"WEGO库存：仓库[{0}] 已达最大翻页上限({1})，已拉取={2}条，数据不完整，任务中止"),
     WH_WEGO_INVENTORY_RESPONSE_FAILED(11166,"WEGO库存接口返回失败: errorCode={0}, errorMsg={1}"),
-    WH_WEGO_OUTBOUND_AUTH_INFO_NOT_FOUND(11167,"WEGO授权信息不存在"),
+    WH_WEGO_AUTH_INFO_NOT_FOUND(11167,"WEGO授权信息不存在"),
     WH_WEGO_OUTBOUND_AUTH_ID_NOT_FOUND(11168,"WEGO对应授权ID信息不存在, nextId:{0}"),
     WH_WEGO_OUTBOUND_AUTH_JSON_EMPTY(11169,"WEGO出库：服务商[{0}]auth_json为空"),
     WH_WEGO_OUTBOUND_TOKEN_SECRET_MISSING(11170,"WEGO出库：服务商[{0}]appToken/appSecret缺失"),
@@ -1640,6 +1640,7 @@ public enum ApiError implements Serializable {
     WH_WEGO_WAREHOUSE_AUTH_JSON_EMPTY(11214,"WEGO授权信息auth_json为空,authId:{0}"),
     WH_WEGO_WAREHOUSE_TOKEN_SECRET_MISSING(11215,"WEGO授权信息appToken/appSecret缺失,authId:{0}"),
     FASTDFS_UPLOAD_FAILED_FOR_WAYBILL(11216,"面单上传FastDFS失败"),
+    WH_WEGO_INBOUND_DETAIL_JSON_PARSE_FAILED(11217,"WEGO入库明细 detail_list_json 解析失败，inboundId={0}"),
 
 
     /**

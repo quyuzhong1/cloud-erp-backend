@@ -60,7 +60,7 @@ public class WegoWarehouseInitHandler extends DmpInputInitHandler {
                 .eq(OverseasProviderEntity::getCode, DmpBasicSystemCodeEnum.WEGO.getCode())
                 .list();
         if (CollUtil.isEmpty(overseasProviderEntityList)) {
-            throw new ServiceException(ApiError.WH_WEGO_OUTBOUND_AUTH_INFO_NOT_FOUND);
+            throw new ServiceException(ApiError.WH_WEGO_AUTH_INFO_NOT_FOUND);
         }
         // 取对应授权ID授权
         OverseasProviderEntity overseasProviderEntity = overseasProviderEntityList.stream()
