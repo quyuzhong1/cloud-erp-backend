@@ -442,14 +442,14 @@ public class LogisticsReconServiceImpl
                 boolean reimportUpdate = CollUtil.isNotEmpty(dto.getReimportUpdateMap())
                         && Boolean.TRUE.equals(dto.getReimportUpdateMap().get(importCfg.getId()));
                 dto.setReimportUpdate(reimportUpdate);
+                // 每个配置对应独立主表，处理前无条件清空导入缓存，避免多主表间 row_no→明细 id 串号
+                dto.setImportDetailKeyMap(null);
+                dto.setImportDetailMaxSeqMap(null);
+                dto.setImportDetailSubKeyMap(null);
+                dto.setImportDetailSubSnapshotMap(null);
+                dto.setImportDetailSnapshotMap(null);
                 if (reimportUpdate) {
                     initImportDetailCacheFromDb(dto, cfgDetails);
-                } else {
-                    dto.setImportDetailKeyMap(null);
-                    dto.setImportDetailMaxSeqMap(null);
-                    dto.setImportDetailSubKeyMap(null);
-                    dto.setImportDetailSubSnapshotMap(null);
-                    dto.setImportDetailSnapshotMap(null);
                 }
                 // 边解析边分批落库（监听器内 BATCH_COUNT 达阈值回调 handleReconImportBatch）
                 LogisticsReconExcelListener excelListener =
@@ -1041,7 +1041,7 @@ public class LogisticsReconServiceImpl
     private DetailResolveResult resolveImportDetail(LogisticsReconDTO.ImportDTO dto, int rowNo,
                                                     LogisticsReconImportExcelDTO excelDTO) {
         ensureImportDetailCache(dto);
-        String cacheKey = buildImportDetailRowCacheKey(rowNo);
+        String cacheKey = buildImportDetailRowCacheKey(dto.getMainId(), rowNo);
         String existingDetailId = StrUtil.isBlank(cacheKey) ? null : dto.getImportDetailKeyMap().get(cacheKey);
         if (StrUtil.isNotBlank(existingDetailId)) {
             LogisticsReconDetailEntity detail = new LogisticsReconDetailEntity();
@@ -1059,8 +1059,8 @@ public class LogisticsReconServiceImpl
         return new DetailResolveResult(detail, true, 1);
     }
 
-    private String buildImportDetailRowCacheKey(Integer rowNo) {
-        return rowNo == null ? "" : IMPORT_DETAIL_ROW_CACHE_PREFIX + rowNo;
+    private String buildImportDetailRowCacheKey(String mainId, Integer rowNo) {
+        return rowNo == null ? "" : IMPORT_DETAIL_ROW_CACHE_PREFIX + StrUtil.blankToDefault(mainId, "") + ":" + rowNo;
     }
 
     /**
@@ -1327,7 +1327,7 @@ public class LogisticsReconServiceImpl
             }
             lastDetailId = detailBatch.get(detailBatch.size() - 1).getId();
             for (LogisticsReconDetailEntity detail : detailBatch) {
-                String cacheKey = buildImportDetailRowCacheKey(detail.getRowNo());
+                String cacheKey = buildImportDetailRowCacheKey(dto.getMainId(), detail.getRowNo());
                 if (StrUtil.isNotBlank(cacheKey)) {
                     dto.getImportDetailKeyMap().putIfAbsent(cacheKey, detail.getId());
                 }
