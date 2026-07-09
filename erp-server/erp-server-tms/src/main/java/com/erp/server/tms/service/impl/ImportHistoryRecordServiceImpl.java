@@ -1384,7 +1384,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             LogisticsReconMatchDTO.MatchRowDTO mergedRow = mergedRowMap.get(groupResult.getRowKey());
             LogisticsBillCostDTO.ImportDataDTO importDataDTO = groupImportDataMap.get(groupResult.getRowKey());
             groupResult.setBillRefs(buildReconBillRefs(mergedRow, importDataDTO, preQueryResult.getCfgCostList(),
-                    costImportEntity, cfgImportDetailList, reconBillRefCostDetailMap));
+                    costImportEntity, cfgImportDetailList, reconBillRefCostDetailMap, importDTO.getProcessingType()));
         }
         return fanOutReconMatchResults(groupResults, groupToOriginalRowKeys);
     }
@@ -1734,16 +1734,21 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                                                                        List<TmsCfgCostEntity> cfgCostList,
                                                                        CfgLogisticsCostImportEntity costImportEntity,
                                                                        List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList,
-                                                                       Map<String, List<TmsCostDetailEntity>> costDetailMap) {
+                                                                       Map<String, List<TmsCostDetailEntity>> costDetailMap,
+                                                                       String processingType) {
         List<LogisticsReconMatchDTO.BillRefDTO> billRefs = new ArrayList<>();
         List<LogisticsReconMatchDTO.BillRefDTO> billCostRefs = new ArrayList<>();
+        String refReconciliationStatus = CharSequenceUtil.equals(
+                ImportHistoryRecordProcessingTypeEnum.CONFIRM_IMPORT.getCode(), processingType)
+                ? ReconciliationStatusEnum.CONFIRMED.getCode()
+                : ReconciliationStatusEnum.TO_BE_CONFIRM.getCode();
         if (CollUtil.isNotEmpty(importDataDTO.getUpdateBillCostList())) {
             for (LogisticsBillCostDTO.UpdateDTO updateDTO : importDataDTO.getUpdateBillCostList()) {
                 LogisticsReconMatchDTO.BillRefDTO ref = new LogisticsReconMatchDTO.BillRefDTO();
                 ref.setLogisticsBillId(updateDTO.getLogisticsBillId());
                 ref.setLogisticsBillDetailId(updateDTO.getLogisticsBillDetailId());
                 ref.setLogisticsBillCostId(updateDTO.getId());
-                ref.setReconciliationStatus(ReconciliationStatusEnum.TO_BE_CONFIRM.getCode());
+                ref.setReconciliationStatus(refReconciliationStatus);
                 billCostRefs.add(ref);
             }
         }
@@ -1753,8 +1758,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 ref.setLogisticsBillId(addDTO.getLogisticsBillId());
                 ref.setLogisticsBillDetailId(addDTO.getLogisticsBillDetailId());
                 ref.setLogisticsBillCostId(addDTO.getId());
-                ref.setReconciliationStatus(CharSequenceUtil.blankToDefault(addDTO.getReconciliationStatus(),
-                        ReconciliationStatusEnum.TO_BE_CONFIRM.getCode()));
+                ref.setReconciliationStatus(refReconciliationStatus);
                 billCostRefs.add(ref);
             }
         }

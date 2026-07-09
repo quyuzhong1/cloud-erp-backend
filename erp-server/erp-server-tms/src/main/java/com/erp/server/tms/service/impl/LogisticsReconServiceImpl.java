@@ -2016,6 +2016,30 @@ public class LogisticsReconServiceImpl
         self.commitReconMatchResult(mainId, LogisticsReconRefMatchTypeEnum.AUTO.getCode(),
                 executionResult.getRowKeyToDetailId(), executionResult.getRowKeyToSubs(),
                 executionResult.getMatchResults(), null);
+        if (isConfirm) {
+            List<String> costIds = extractMatchedCostIds(executionResult.getMatchResults());
+            if (CollUtil.isNotEmpty(costIds)) {
+                self.syncReconStatusByCostIds(costIds);
+            }
+        }
+    }
+
+    /**
+     * 从匹配结果中提取已成功关联的物流费用单 id。
+     */
+    private List<String> extractMatchedCostIds(List<LogisticsReconMatchDTO.MatchResultDTO> matchResults) {
+        if (CollUtil.isEmpty(matchResults)) {
+            return Collections.emptyList();
+        }
+        return matchResults.stream()
+                .filter(LogisticsReconMatchDTO.MatchResultDTO::isSuccess)
+                .map(LogisticsReconMatchDTO.MatchResultDTO::getBillRefs)
+                .filter(CollUtil::isNotEmpty)
+                .flatMap(List::stream)
+                .map(LogisticsReconMatchDTO.BillRefDTO::getLogisticsBillCostId)
+                .filter(StrUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
     }
 
     /**
