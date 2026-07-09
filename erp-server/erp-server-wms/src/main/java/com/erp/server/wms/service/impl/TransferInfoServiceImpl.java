@@ -12,7 +12,6 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.dto.ApproveDTO;
@@ -35,7 +34,6 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
-import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.dto.ThirdWarehouseDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
@@ -145,10 +143,6 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
     @Resource
     private SyncMabangTransferService syncMabangTransferService;
-
-    @Lazy
-    @Resource
-    private TransferInfoService transferInfoService;
 
     @Value("${transfer-sync-to-mb: true}")
     private Boolean transferSyncToMb;
@@ -327,7 +321,6 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.TRANSFER_INFO_APPROVE_KEY, keyName = "dto.sourceType,dto.sourceId,dto.outWarehouseId,dto.inWarehouseId", unlockAfterTx = true)
     public String addAndApprove(TransferInfoDTO.AddDTO dto) {
         //新增
         String id = this.add(dto);
@@ -348,7 +341,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             throw new ServiceException(ApiError.WH_TRANSFER_DIRECT_NOT_FOUND);
         }
         approveEntity.setIsUserSystem(dto.getIsUserSystem());
-        transferInfoService.approve(approveEntity, ApproveType.PASS, "", null, Boolean.TRUE, Boolean.FALSE);
+        this.approve(approveEntity,ApproveType.PASS,"", null , Boolean.TRUE, Boolean.FALSE);
         return id;
     }
 
@@ -636,7 +629,6 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
-    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "entity.id", unlockAfterTx = true)
     public BatchResultDTO approve(TransferInfoEntity entity, String type, String comment, Boolean isNeedProcess, Boolean isSyncKingDee, Boolean isStartProcess){
         //调用没有审核流程的审核
         if (!isStartProcess) {
@@ -2118,7 +2110,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         }
 
         addDTO.setDetailList(detailAddDtoList);
-        return transferInfoService.addAndApprove(addDTO);
+        return this.addAndApprove(addDTO);
     }
 
     @Override
@@ -2328,7 +2320,6 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    @DistributeLocker(businessType = DistributeKeyConstant.TRANSFER_INFO_APPROVE_KEY, keyName = "updateApprovalStatusDTO.transferInfoEntity.id", unlockAfterTx = true)
     public void updateApproveStatus(TransferInfoDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO) {
         String approveStatus = updateApprovalStatusDTO.getApproveStatus();
         TransferInfoEntity transferInfoEntity = updateApprovalStatusDTO.getTransferInfoEntity();

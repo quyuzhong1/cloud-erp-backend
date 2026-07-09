@@ -1,8 +1,8 @@
 package com.erp.server.sys.controller.api;
 
 
+import com.common.business.annotation.DataIdempotent;
 import com.common.business.annotation.DataPermission;
-import com.common.business.annotation.DistributeLocker;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseDropDownDTO;
@@ -19,7 +19,6 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
-import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.plm.dto.MoldInfoDTO;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysUserInfoEntity;
@@ -105,7 +104,6 @@ public class SysUserInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.INSERT, desc = "添加用户")
     @RequestMapping("/save")
-    @DistributeLocker(businessType = DistributeKeyConstant.SYS_USER_KEY, keyName = "sysUserInfoDTO.mobile", unlockAfterTx = true)
     public ApiResult save(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO) {
         sysUserInfoDTO.setUserType(UserTypeEnum.ERP.code);
         sysUserInfoService.add(sysUserInfoDTO);
@@ -123,7 +121,6 @@ public class SysUserInfoController extends BaseController {
             menuCode = "sys:user:batchRefUserIdByShop",
             serviceClass = SysUserInfoService.class,
             keyIdName = "uid")
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "批量操作-分配店铺/仓库/权限")
     public ApiResult batchRefUserIdByShop(@RequestBody @Validated SysUserInfoDTO.RefParamseDTO refParamseDTO) {
         refParamseDTO.setRefType("shop");
         sysUserInfoService.batchRefUserIdByType(refParamseDTO);
@@ -139,7 +136,6 @@ public class SysUserInfoController extends BaseController {
             menuCode = "sys:user:batchRefUserIdByWarehouse",
             serviceClass = SysUserInfoService.class,
             keyIdName = "uid")
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "批量操作-分配店铺/仓库/权限")
     public ApiResult batchRefUserIdByWarehouse(@RequestBody @Validated SysUserInfoDTO.RefParamseDTO refParamseDTO) {
         refParamseDTO.setRefType("warehouse");
         sysUserInfoService.batchRefUserIdByType(refParamseDTO);
@@ -155,7 +151,6 @@ public class SysUserInfoController extends BaseController {
             menuCode = "sys:user:batchRefUserIdByRole",
             serviceClass = SysUserInfoService.class,
             keyIdName = "uid")
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "批量操作-分配店铺/仓库/权限")
     public ApiResult batchRefUserIdByRole(@RequestBody @Validated SysUserInfoDTO.RefParamseDTO refParamseDTO) {
         refParamseDTO.setRefType("role");
         sysUserInfoService.batchRefUserIdByType(refParamseDTO);
@@ -167,7 +162,6 @@ public class SysUserInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "修改用户", keyIdName = "uid")
     @RequestMapping("/update")
-    @DistributeLocker(businessType = DistributeKeyConstant.SYS_USER_KEY, keyName = "sysUserInfoDTO.uid", unlockAfterTx = true)
     public ApiResult update(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO) {
         sysUserInfoDTO.setUserType(UserTypeEnum.ERP.code);
         sysUserInfoService.update(sysUserInfoDTO);
@@ -180,7 +174,6 @@ public class SysUserInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.DELETE, desc = "删除用户")
     @RequestMapping("/remove")
-    @DistributeLocker(businessType = DistributeKeyConstant.SYS_USER_KEY, keyName = "uids", unlockAfterTx = true)
     public ApiResult delete(@RequestBody List<String> uids) {
         sysUserInfoService.deleteByIds(uids);
         sysUserThirdService.deleteByUserIds(uids);
@@ -199,7 +192,6 @@ public class SysUserInfoController extends BaseController {
             menuCode = "sys:user:updateState",
             serviceClass = SysUserInfoService.class,
             keyIdName = "ids")
-    @DistributeLocker(businessType = DistributeKeyConstant.SYS_USER_KEY, keyName = "stateDTO.ids", unlockAfterTx = true)
     public ApiResult updateState(@RequestBody @Validated UpdateUserStateDTO stateDTO) {
         sysUserInfoService.updateState(stateDTO);
         return success();
@@ -212,7 +204,8 @@ public class SysUserInfoController extends BaseController {
      * @param
      * @return
      **/
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "重置用户密码:用户ID={uid}")
+    @DataIdempotent(keyIdName = "uid")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "重置用户密码:用户ID={uid},用户密码={pwd}")
     @GetMapping("/changePassword")
     public ApiResult changePassword(@RequestParam("uid") String uid,@RequestParam("pwd") String pwd) {
         Boolean flag = sysUserInfoService.changePassword(uid,pwd);

@@ -26,6 +26,7 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DataIdempotent;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.RedisCacheConstants;
@@ -46,7 +47,6 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.dto.ExcelData;
 import com.common.core.dto.SheetData;
-import com.common.message.constant.DistributeKeyConstant;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
@@ -1028,7 +1028,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
-    @DistributeLocker(businessType = DistributeKeyConstant.SO_OUTSTOCK_APPROVE_KEY, keyName = "dto.id", unlockAfterTx = true)
+    @DataIdempotent(keyIdName = "dto.id")
     public BatchResultDTO approve(ApproveOneDTO dto) {
         SoOutstockEntity entity = this.getById(dto.getId());
         if (Objects.isNull(entity)) {
@@ -1482,7 +1482,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.SAVE_LOGISTICS_BILL_KEY, keyName = "entity.code", unlockAfterTx = true)
+    @DataIdempotent(keyIdName = "entity.code" , businessType = "saveLogisticsBill")
     public void saveLogisticsBill(SoOutstockEntity entity) {
         if(CollUtil.isNotEmpty(FeignQuery.create(LogisticsBillEntity.class).eq(LogisticsBillEntity::getIsDeleted,Boolean.FALSE).eq(LogisticsBillEntity::getOutstockId, entity.getId()).list())) {
             throw new ServiceException("小包物流单已生成");
@@ -3364,7 +3364,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * @date 2023-12-11 16:17
      */
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.SO_OUTSTOCK_GENERATE_KEY, keyName = "soB2cId", unlockAfterTx = true)
     public Boolean generateB2cSoOutstock(String soB2cId) {
         SoOutstockEntity outstock = this.getBySoId(soB2cId);
         if (Objects.isNull(outstock)) {
@@ -3531,7 +3530,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     }
 
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.SO_OUTSTOCK_GENERATE_KEY, keyName = "generateB2cDTO.soId", unlockAfterTx = true)
     public Boolean generateB2cSoOutstock(SoOutstockDTO.GenerateB2cDTO generateB2cDTO) {
         Boolean result = createB2cSoOutstock(generateB2cDTO);
         if (result) {
@@ -4214,16 +4212,16 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 // 无已发货的发货单只清理历史异常信息
                 result = true;
             } else {
-                result = soOutstockService.generateB2cSoOutstock(id);
+                result = this.generateB2cSoOutstock(id);
             }
         } else {
             //速卖通平台仓订单的销售出库在处理类生成
             if (isAliExpressApiPlatform(currentEntity.getDictPlatform())) {
                 result = flag;
             } else if (PlatformDictEnum.TIK_TOK.getCode().equals(currentEntity.getDictPlatform())) {
-                result = flag && soOutstockService.generateB2cSoOutstock(id);
+                result = flag && this.generateB2cSoOutstock(id);
             }else{
-                result = soOutstockService.generateB2cSoOutstock(id);
+                result = this.generateB2cSoOutstock(id);
             }
         }
         boolean allResult = result && flag;
@@ -4299,7 +4297,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * @return
      */
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.PLATFORM_GENERATE_SO_OUTSTOCK_KEY, keyName = "redissonKey", waiteTime = 10)
+    @DataIdempotent(keyIdName = "redissonKey", waitTime = 10)
     public Boolean generateB2cSoOutstockByPlatformData(PlatformGenerateSoOutstockDTO platformGenerateSoOutstockDTO, String redissonKey) {
         List<PlatformDeliveryDetailDTO> platformDeliveryDetailDTO = platformGenerateSoOutstockDTO.getPlatformDeliveryDetailDTOList();
         if(CollectionUtils.isEmpty(platformDeliveryDetailDTO)){
@@ -4373,7 +4371,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     }
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.SO_OUTSTOCK_GENERATE_KEY, keyName = "ids", unlockAfterTx = true)
     public Boolean afreshGenerateB2cOutstock(List<String> ids) {
         Map<String, SoB2cEntity> mainMap = soB2cFeign.listByIds(ids)
                 .stream()
@@ -4465,7 +4462,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             generateB2cDTO.setTrackNo(dto.getTrackNo());
             //运单号
             generateB2cDTO.setTransportNo(dto.getTrackNo());
-            soOutstockService.generateB2cSoOutstock(generateB2cDTO);
+            this.generateB2cSoOutstock(generateB2cDTO);
         } catch (Exception e) {
             log.error("销售订单{} 生成销售出库单失败>>>>>>{}", generateB2cDTO.getSoCode(), e.getMessage());
             throw new ServiceException(e.getMessage());
@@ -4725,7 +4722,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     }
 
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.SO_OUTSTOCK_GENERATE_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO handleWdtData(String id) {
         SoOutstockEntity entity = this.soOutstockService.getById(id);
         if (ObjectUtil.isEmpty(entity)) {

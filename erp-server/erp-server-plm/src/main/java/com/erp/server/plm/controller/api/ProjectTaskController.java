@@ -621,7 +621,6 @@ public class ProjectTaskController extends BaseController {
      *
      * @return
      */
-    @LogAction(value = LogActionEnum.UPDATE_STATUS, desc = "任务列表工作流审核通过变更状态")
     @PostMapping("/workflow/pass")
     public ApiResult<Object> processPass(String processId) {
         projectTaskService.approvalTaskPass(processId);

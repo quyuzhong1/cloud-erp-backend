@@ -1,8 +1,6 @@
 package com.erp.server.plm.controller.feign;
 
 import com.common.business.dto.DmpSyncMqDTO;
-import com.common.core.anno.LogAction;
-import com.common.core.enums.LogActionEnum;
 import com.erp.server.plm.service.SyncTaskService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -31,7 +29,6 @@ public class PlmSyncTaskController {
      * @param syncParamDTO
      */
     @PostMapping("/findDataSendSyncTask")
-    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "同步任务推送金蝶")
     public void findDataSendSyncTask(@RequestBody @Validated DmpSyncMqDTO.SyncParamDTO syncParamDTO) {
         syncTaskService.findDataSendSyncTask(syncParamDTO);
     }

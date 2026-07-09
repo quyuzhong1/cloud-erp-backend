@@ -1762,7 +1762,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    @DistributeLocker(businessType = DistributeKeyConstant.SO_B2B_ORDER_KEY, keyName = "entity.id", waiteTime = 60, unlockAfterTx = true)
     public BatchResultDTO approve(BaseApproveParamDTO dto, SoInfoEntity entity) {
         String ingStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
         if(!ingStatus.equals(entity.getApproveStatus().getStatus())){
@@ -1879,7 +1878,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    @DistributeLocker(businessType = DistributeKeyConstant.SO_B2B_ORDER_KEY, keyName = "entity.id", waiteTime = 60, unlockAfterTx = true)
     public BatchResultDTO disApprove(SoInfoEntity entity, List<SoChangeEntity> soChangeEntityList) {
         List<String> ids = Arrays.asList(entity.getId());
         List<SoInfoEntity> list = Arrays.asList(entity);
@@ -2008,7 +2006,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    @DistributeLocker(businessType = DistributeKeyConstant.SO_B2B_ORDER_KEY, keyName = "dto.ids", waiteTime = 60, unlockAfterTx = true)
     public Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto) {
         List<String> ids = dto.getIds();
         List<SoInfoEntity> list = this.listByIds(ids);
@@ -2045,7 +2042,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    @DistributeLocker(businessType = DistributeKeyConstant.SO_B2B_ORDER_KEY, keyName = "ids", waiteTime = 60, unlockAfterTx = true)
     public List<BatchResultDTO>  deleteByIds(List<String> ids) {
         List<SoInfoEntity> list = this.listByIds(ids);
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
@@ -2137,7 +2133,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    @DistributeLocker(businessType = DistributeKeyConstant.SO_B2B_ORDER_KEY, keyName = "ids", waiteTime = 60, unlockAfterTx = true)
     public Boolean invalid(List<String> ids, String remark) {
         List<SoInfoEntity> list = this.listByIds(ids);
         String waitSubmitStatus = BillApproveStatusEnum.WAIT_SUBMIT.getStatus();
@@ -2632,15 +2627,19 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             if (view.getDeliveryQty() <= MathUtil.ZERO) {
                 continue;
             }
+
+            if (view.getDeliveryQty() <= MathUtil.ZERO) {
+                continue;
+            }
             // 绑定虚拟仓且锁定数量为0的明细不在下推发货通知弹框展示
             if (virtualWarehouseIdBySoId.containsKey(view.getSoId())
-                    && ObjectUtil.defaultIfNull(view.getFrozenQty(), MathUtil.ZERO) == MathUtil.ZERO) {
+                    && ObjectUtil.defaultIfNull(view.getFrozenQty(), MathUtil.ZERO).equals(MathUtil.ZERO)) {
                 continue;
             }
             resultList.add(view);
         }
         if(CollectionUtils.isEmpty(resultList)){
-            throw new ServiceException("没有待发货明细");
+            throw new ServiceException("没有待发货明细或者绑定数量为0");
         }
         return resultList;
     }
@@ -2777,7 +2776,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                             log.warn("[updateSyncKingdeeId] 金蝶明细第{}行物料编码(FNumber/Number)为空，订单id: {}，跳过", rowNum, id);
                             continue;
                         }
-                        
+
                         // 金蝶 view 接口返回：明细数量 Qty、价格 Price
                         BigDecimal kingdeeQty = null;
                         BigDecimal kingdeePrice = null;
@@ -2793,7 +2792,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                         } catch (Exception e) {
                             log.warn("[updateSyncKingdeeId] 金蝶明细第{}行解析数量/价格失败，订单id: {}, SKU: {}, 错误: {}", rowNum, id, skuNo, e.getMessage());
                         }
-                        
+
                         // 优先通过SKU + 数量 + 价格匹配
                         BigDecimal finalKingdeeQty = kingdeeQty;
                         BigDecimal finalKingdeePrice = kingdeePrice;
@@ -2805,14 +2804,14 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                                 return skuMatch && qtyMatch && priceMatch;
                             })
                             .collect(Collectors.toList());
-                        
+
                         if (matched.size() == 1) {
                             // 唯一匹配，更新
                             SoDetailEntity soDetail = matched.get(0);
                             if (!kingdeeId.equals(soDetail.getKingdeeDetailId())) {
                                 soDetail.setKingdeeDetailId(kingdeeId);
                                 updateList.add(soDetail);
-                                log.info("[updateSyncKingdeeId] 金蝶第{}行唯一匹配，更新kingdee_detail_id，订单id: {}, 明细id: {}, SKU: {}, 数量: {}, 价格: {}, kingdeeDetailId: {} -> {}", 
+                                log.info("[updateSyncKingdeeId] 金蝶第{}行唯一匹配，更新kingdee_detail_id，订单id: {}, 明细id: {}, SKU: {}, 数量: {}, 价格: {}, kingdeeDetailId: {} -> {}",
                                     rowNum, id, soDetail.getId(), skuNo, soDetail.getQty(), soDetail.getPrice(), soDetail.getKingdeeDetailId(), kingdeeId);
                             } else {
                                 log.debug("[updateSyncKingdeeId] 金蝶第{}行唯一匹配但已存在相同kingdee_detail_id，无需更新，订单id: {}, SKU: {}, kingdeeId: {}", rowNum, id, skuNo, kingdeeId);
@@ -2822,24 +2821,24 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                             List<SoDetailEntity> unmatched = matched.stream()
                                 .filter(d -> !updateList.contains(d))
                                 .collect(Collectors.toList());
-                            
+
                             if (unmatched.size() == 1) {
                                 SoDetailEntity soDetail = unmatched.get(0);
                                 if (!kingdeeId.equals(soDetail.getKingdeeDetailId())) {
                                     soDetail.setKingdeeDetailId(kingdeeId);
                                     updateList.add(soDetail);
-                                    log.info("[updateSyncKingdeeId] 金蝶第{}行多匹配排除后唯一，更新kingdee_detail_id，订单id: {}, 明细id: {}, SKU: {}, kingdeeDetailId: {} -> {}", 
+                                    log.info("[updateSyncKingdeeId] 金蝶第{}行多匹配排除后唯一，更新kingdee_detail_id，订单id: {}, 明细id: {}, SKU: {}, kingdeeDetailId: {} -> {}",
                                         rowNum, id, soDetail.getId(), skuNo, soDetail.getKingdeeDetailId(), kingdeeId);
                                 } else {
                                     log.debug("[updateSyncKingdeeId] 金蝶第{}行多匹配排除后唯一但已存在相同kingdee_detail_id，无需更新，订单id: {}, SKU: {}", rowNum, id, skuNo);
                                 }
                             } else {
-                                log.warn("[updateSyncKingdeeId] 金蝶第{}行找到多个匹配的销售订单明细，订单id: {}, SKU: {}, 数量: {}, 价格: {}, 匹配数量: {}", 
+                                log.warn("[updateSyncKingdeeId] 金蝶第{}行找到多个匹配的销售订单明细，订单id: {}, SKU: {}, 数量: {}, 价格: {}, 匹配数量: {}",
                                     rowNum, id, skuNo, kingdeeQty, kingdeePrice, matched.size());
                             }
                         } else {
                             // 没有对应的明细记录匹配上
-                            log.warn("[updateSyncKingdeeId] 金蝶第{}行没有对应的明细记录匹配上(本地无SKU/数量/价格一致明细)，订单id: {}, SKU: {}, 数量: {}, 价格: {}, 金蝶分录id: {}, 本地明细数: {}", 
+                            log.warn("[updateSyncKingdeeId] 金蝶第{}行没有对应的明细记录匹配上(本地无SKU/数量/价格一致明细)，订单id: {}, SKU: {}, 数量: {}, 价格: {}, 金蝶分录id: {}, 本地明细数: {}",
                                 rowNum, id, skuNo, kingdeeQty, kingdeePrice, kingdeeId, soDetailList.size());
                         }
                     }
