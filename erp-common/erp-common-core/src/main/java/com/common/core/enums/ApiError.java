@@ -267,6 +267,8 @@ public enum ApiError implements Serializable {
     AUTH_API_TOKEN_PATH_TOO_LONG(2045, "接口路径最大长度不能超过500位"),
     AUTH_API_TOKEN_WHITELIST_NOT_FOUND(2046, "接口白名单配置不存在"),
     AUTH_API_TOKEN_PATH_EXISTS(2047, "接口路径已存在"),
+    AUTH_API_TOKEN_MANAGEMENT_PATH_FORBIDDEN(2048, "API Token不允许访问管理接口"),
+    AUTH_API_TOKEN_PATH_NOT_IN_WHITELIST(2049, "接口未配置API Token白名单"),
 
     /**
      * EMAIL 邮件相关 2200 - 2400

@@ -153,7 +153,8 @@ public class IpRateLimitUtil {
             return pass;
         } catch (Exception e) {
             log.error("检查访问频率失败: {}", logName, e);
-            // 入口限流组件异常时 fail-close，避免 Redis 故障期间开放接口失去保护。
+            // 入口限流组件采用安全优先的 fail-close：Redis/Lua 异常时拒绝开放接口/API Token 请求，
+            // 避免故障期间绕过防护；上线需配套 Redis 可用性监控，必要时再改成配置化策略。
             return false;
         }
     }
