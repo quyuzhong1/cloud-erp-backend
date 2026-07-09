@@ -4,7 +4,7 @@ import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.json.JSONUtil;
+import cn.hutool.extra.spring.SpringUtil;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.UnitEnum;
@@ -88,6 +88,12 @@ public class PackageServiceImpl implements PackageService {
     private AsyncService asyncService;
     @Resource
     private SoB2cDeliveryInterceptService soB2cDeliveryInterceptService;
+
+    /** 组包写库结果：已产生的 BatchResult + 待事务提交后触发自动出库的 soId/soCode。 */
+    static class MergePackageWriteResult {
+        private final List<BatchResultDTO> results = new ArrayList<>();
+        private final List<Map.Entry<String, String>> pendingAutoOut = new ArrayList<>();
+    }
 
     @Override
     public PackageDTO.ScanResultDTO packageScan(PackageDTO.ScanDTO scanDTO) {
@@ -260,19 +266,55 @@ public class PackageServiceImpl implements PackageService {
 
 
     /**
-     * 组包合并
-     *
-     * @param dto
-     * @return
+     * 组包合并。
+     * <p>分布式锁覆盖整段流程；组包写库走全局事务，编排 Feign 在事务提交后再调用，
+     * 避免 OMS 写编排与 WMS 组包处于同一 Seata 窗口导致脏状态。</p>
      */
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.PACKAGE_MERGE_KEY, keyName = "dto.ids", unlockAfterTx = true)
+    @DistributeLocker(businessType = DistributeKeyConstant.PACKAGE_MERGE_KEY, keyName = "dto.ids")
+    public List<BatchResultDTO> mergePackage(PackageDTO.MergePackageDTO dto) {
+        MergePackageWriteResult writeResult = SpringUtil.getBean(PackageServiceImpl.class).mergePackageWrites(dto);
+        List<BatchResultDTO> resultDTOList = new ArrayList<>(writeResult.results);
+        for (Map.Entry<String, String> soItem : writeResult.pendingAutoOut) {
+            String soId = soItem.getKey();
+            String soCode = soItem.getValue();
+            try {
+                WorkflowTaskRecordDTO.StartWorkflowDTO startDTO = new WorkflowTaskRecordDTO.StartWorkflowDTO();
+                startDTO.setSourceId(soId);
+                startDTO.setSourceCode(soCode);
+                Map<String, Object> firstNodeInputData = new HashMap<>();
+                firstNodeInputData.put("soId", soId);
+                firstNodeInputData.put("id", soId);
+                firstNodeInputData.put("sourceCode", soCode);
+                startDTO.setFirstNodeInputData(firstNodeInputData);
+                WorkflowTaskRecordDTO.StartWorkflowResultDTO startResult =
+                        workflowTaskRecordFeign.startMergePackageDeliveryWorkflow(startDTO);
+                if (startResult == null || !Boolean.TRUE.equals(startResult.getAccepted())) {
+                    resultDTOList.add(BatchResultDTO.fail(soId, soCode, "自动出库任务受理失败"));
+                    continue;
+                }
+                resultDTOList.add(BatchResultDTO.success(
+                        soId,
+                        soCode,
+                        CharSequenceUtil.format("自动出库任务已受理，任务ID:{}", startResult.getInstanceId())
+                ));
+            } catch (Exception ex) {
+                log.error("组包自动出库任务受理失败，soId={}", soId, ex);
+                resultDTOList.add(BatchResultDTO.fail(soId, soCode, BatchResultDTO.resolveFailMsg(ex)));
+            }
+        }
+        return resultDTOList;
+    }
+
+    /**
+     * 组包写库（全局事务）。仅收集待自动出库单据，不触发 OMS 编排。
+     */
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    public List<BatchResultDTO> mergePackage(PackageDTO.MergePackageDTO dto) {
+    public MergePackageWriteResult mergePackageWrites(PackageDTO.MergePackageDTO dto) {
         List<PackageForecastDTO.AddDTO> addList = assembleDbBySoIds(dto);
-        List<BatchResultDTO> resultDTOList = new ArrayList<>();
-        //自动发货
+        MergePackageWriteResult writeResult = new MergePackageWriteResult();
+        //自动发货前置校验
         if (dto.getIsAutoOut()) {
             List<String> soIdList = dto.getIds();
             //待处理和异常单不允许自动出库
@@ -288,15 +330,21 @@ public class PackageServiceImpl implements PackageService {
         for (PackageForecastDTO.AddDTO item : addList) {
             List<PackageForecastDetailDTO.AddDTO> detailList = item.getDetailList();
             //有拦截单的订单返回错误
-            Map<String, String> hasDeliveryInterceptMap = detailList.stream().filter(PackageForecastDetailDTO.AddDTO::isHasDeliveryIntercept).collect(Collectors.toMap(PackageForecastDetailDTO.CommonDTO::getSoCode, v -> CharSequenceUtil.format("{}/{}/{}", v.getSoCode(), v.getTransportNo(), v.getTrackNo()), (v1, v2) -> v1));
+            Map<String, String> hasDeliveryInterceptMap = detailList.stream()
+                    .filter(PackageForecastDetailDTO.AddDTO::isHasDeliveryIntercept)
+                    .collect(Collectors.toMap(PackageForecastDetailDTO.CommonDTO::getSoCode,
+                            v -> CharSequenceUtil.format("{}/{}/{}", v.getSoCode(), v.getTransportNo(), v.getTrackNo()),
+                            (v1, v2) -> v1));
             if (MapUtil.isEmpty(hasDeliveryInterceptMap)) {
                 try {
                     packageForecastService.add(item);
                 } catch (Exception e) {
                     log.error("添加组包预报异常 {}", e.getMessage());
-                    item.getDetailList().forEach(v -> resultDTOList.add(BatchResultDTO.fail(item.getLogisticsSupplierId(), v.getSoCode(), CharSequenceUtil.format("添加组包预报异常 {}", ExceptionUtil.getSimpleMessage(e)))));
+                    item.getDetailList().forEach(v -> writeResult.results.add(BatchResultDTO.fail(
+                            item.getLogisticsSupplierId(), v.getSoCode(),
+                            CharSequenceUtil.format("添加组包预报异常 {}", ExceptionUtil.getSimpleMessage(e)))));
                 }
-                //自动发货
+                //自动发货：事务内只收集，提交后再 Feign 启动编排（与改造前「事务内发 MQ」时机对齐到提交后更安全）
                 if (dto.getIsAutoOut()) {
                     Map<String, String> soIdCodeMap = item.getDetailList().stream()
                             .filter(v -> !SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(v.getBillStatus()))
@@ -305,42 +353,14 @@ public class PackageServiceImpl implements PackageService {
                                     PackageForecastDetailDTO.AddDTO::getSoCode,
                                     (a, b) -> a
                             ));
-                    for (Map.Entry<String, String> soItem : soIdCodeMap.entrySet()) {
-                        String soId = soItem.getKey();
-                        String soCode = soItem.getValue();
-                        try {
-                            WorkflowTaskRecordDTO.StartWorkflowDTO startDTO = new WorkflowTaskRecordDTO.StartWorkflowDTO();
-                            startDTO.setSourceId(soId);
-                            startDTO.setSourceCode(soCode);
-                            Map<String, Object> firstNodeInputData = new HashMap<>();
-                            firstNodeInputData.put("soId", soId);
-                            firstNodeInputData.put("id", soId);
-                            firstNodeInputData.put("sourceCode", soCode);
-                            startDTO.setFirstNodeInputData(firstNodeInputData);
-                            WorkflowTaskRecordDTO.StartWorkflowResultDTO startResult = workflowTaskRecordFeign.startMergePackageDeliveryWorkflow(startDTO);
-                            if (startResult == null || !Boolean.TRUE.equals(startResult.getAccepted())) {
-                                resultDTOList.add(BatchResultDTO.fail(soId, soCode, "自动出库任务受理失败"));
-                                continue;
-                            }
-                            resultDTOList.add(BatchResultDTO.success(
-                                    soId,
-                                    soCode,
-                                    CharSequenceUtil.format("自动出库任务已受理，任务ID:{}", startResult.getInstanceId())
-                            ));
-                        } catch (Exception ex) {
-                            log.error("组包自动出库任务受理失败，soId={}", soId, ex);
-                            resultDTOList.add(BatchResultDTO.fail(soId, soCode, BatchResultDTO.resolveFailMsg(ex)));
-                        }
-                    }
+                    writeResult.pendingAutoOut.addAll(soIdCodeMap.entrySet());
                 }
             } else {
-                hasDeliveryInterceptMap.forEach((key, val) -> {
-                    resultDTOList.add(BatchResultDTO.fail(item.getLogisticsSupplierId(), key, val + " 存在拦截单，无法组包，可操作移除后再进行组包"));
-                });
+                hasDeliveryInterceptMap.forEach((key, val) -> writeResult.results.add(
+                        BatchResultDTO.fail(item.getLogisticsSupplierId(), key, val + " 存在拦截单，无法组包，可操作移除后再进行组包")));
             }
         }
-
-        return resultDTOList;
+        return writeResult;
     }
 
     @Override
