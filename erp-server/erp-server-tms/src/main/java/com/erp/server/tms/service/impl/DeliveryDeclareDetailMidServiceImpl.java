@@ -1,6 +1,9 @@
 package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import com.common.business.wrapper.FeignQuery;
+import com.erp.model.plm.entity.BasicDictEntity;
+import com.erp.model.plm.enums.BasicDictTypeEnum;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.tms.entity.*;
 import cn.hutool.core.collection.CollUtil;
@@ -1911,6 +1914,11 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         Map<String, String> transferWarehouseNameMap = getTransferWarehouseNameMap(list.stream()
                 .map(DeliveryDeclareDetailMidDTO.ListDTO::getTransferWarehouseIds)
                 .collect(Collectors.toList()));
+        //查询单位名称
+        List<BasicDictEntity> declareUnitList = FeignQuery.create(BasicDictEntity.class).eq(BasicDictEntity::getType, BasicDictTypeEnum.DECLARE_UNIT.getCode()).list();
+        Map<String, String> declareUnitNameMap = CollUtil.isEmpty(declareUnitList)
+                ? new HashMap<>()
+                : declareUnitList.stream().collect(Collectors.toMap(BasicDictEntity::getValue, BasicDictEntity::getName, (a, b) -> a));
         for (DeliveryDeclareDetailMidDTO.ListDTO data : list) {
             if(StringUtils.isNotBlank(data.getDeclareStatus())){
                 data.setDeclareStatusName(DeclareStatusEnum.getName(data.getDeclareStatus()));
@@ -1922,7 +1930,10 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
             if (CharSequenceUtil.isBlank(data.getTransferWarehouseNames())) {
                 data.setTransferWarehouseNames(buildTransferWarehouseNames(data.getTransferWarehouseIds(), transferWarehouseNameMap));
             }
+
             fillLatestProductLogistic(data, productLogisticMap.get(data.getSkuId()));
+            data.setUnitName(declareUnitNameMap.getOrDefault(data.getUnit(),""));
+            data.setLatestUnitName(declareUnitNameMap.getOrDefault(data.getLatestUnit(),""));
         }
     }
 
