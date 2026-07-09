@@ -52,19 +52,28 @@ Nacos / Seata 1.5.2 / RocketMQ / Redis(Redisson) / XXL-JOB / EasyExcel / MapStru
 - **不得**将上述权限相关 `${...}` 拼接视为 SQL 注入风险，**不得**就此提出问题或降低评分
 - 仍须检查：接口是否**漏用** `@DataPermission`（注解缺失属于合规问题，与 permissionSql 注入无关）
 
+**本项目不存在的能力（禁止基于此类假设提问题）：**
+- 灰度发布 / 金丝雀发布 / 蓝绿部署 / A/B 分流
+- Feature Flag / Feature Toggle / 功能开关
+- 客户端版本兼容（无多版本并行）
+
+**禁止**在审查报告中出现「灰度发布期间…」「若存在多版本并行…」「Feature Flag 未清理…」等以上述不存在能力为前提的假设性问题。
+
 **数据权限审查边界（必须遵守）：**
 - 数据权限以 **Controller 层 `@DataPermission`** 为唯一标准入口；**不得**因 Service 层删除手写数据权限方法（如 `assertXxxDataPermission`）而单独扣分或要求恢复
 - **不得**建议「Controller + Service 双层重复做同一套数据权限校验」
 - 仅当以下情况才报告数据权限问题：
   1. paging / edit / delete HTTP 接口**漏用** `@DataPermission`
   2. `@DataPermission` 的 `serviceClass`、`keyIdName`、`tableField`、`menuCode`、`operationType` 与入参字段或校验实体**不一致**（例如入参仅传 `instanceId` 但 `keyIdName` 仍为 `id`，导致 AOP 跳过校验）
-  3. 存在**绕过 Controller** 的入口（Feign Controller、Job、MQ Consumer 等）直接调用 Service 写操作，且该入口未配置等效的权限控制
+  3. 存在**绕过 Controller** 的入口（Job、MQ Consumer、定时任务等）直接调用 Service 写操作，且该入口未配置等效的权限控制
 - Service 被已标注 `@DataPermission` 的 Controller 调用时，**视为权限已在入口校验**，不再要求 Service 内重复校验
 - 修复建议应优先指向 **修正 Controller 注解配置** 或 **补齐遗漏入口的注解**，而非恢复 Service 层重复逻辑
 
 **Feign 契约与 FeignController 审查边界（必须遵守）：**
 - `erp-rpc-*` 定义 Feign **调用方**契约（`@FeignClient` + 路径/方法/入参/出参）；`erp-server-*/controller/feign/*FeignController` 提供**服务端** HTTP 实现
 - FeignController **不要求** `implements XxxFeign`，**不得**因删除 `implements`、缺少 `@Override` 而报告问题或要求恢复（本项目多数 FeignController 均未实现 rpc 接口）
+- Feign 接口 / FeignController 属于服务间内部调用入口，**不要求**配置 `@DataPermission`；不得仅因 Feign 写接口未加 `@DataPermission`、未复用普通 API Controller 的权限注解而报告权限问题或要求补权限
+- FeignController 调用 Service 写操作时，默认视为内部服务编排/系统链路的一部分；除非 diff 中能直接证明该 Feign 端点可被外部用户绕过网关/API Controller 直接访问并造成越权，否则不得按「绕过 Controller 写入口」报告数据权限问题
 - 跨服务契约是否对齐，以 **URL 路径、HTTP 方法、入参/出参类型** 与 `erp-rpc-*` 中 `@FeignClient` 接口声明是否一致为准，而非是否显式 `implements`
 - 仅当以下情况才报告 Feign 契约相关问题：
   1. 业务 Service 绕过 `erp-rpc-*` Feign 客户端，直接 HTTP 调用其他服务
@@ -98,18 +107,19 @@ Nacos / Seata 1.5.2 / RocketMQ / Redis(Redisson) / XXL-JOB / EasyExcel / MapStru
 - **分页 paging 缺少服务端 type 强制过滤**：业务类型字段（如 `type`）若仅依赖前端高级搜索传参，需在 Service 层强制注入兜底
 - **N+1 / 循环查库**：循环内调用 `getById` / Feign / Mapper 查询，改批量
 - **版本号校验**：更新操作必须校验 `version`，防并发覆盖
-- **软删**：禁止物理删除，必须使用 `is_deleted = true` 标记
+- **软删**：本项目统一使用软删除；MyBatis-Plus 的 `remove()` / `removeById()` / `removeByIds()` / `remove(wrapper)` 默认视为走项目软删机制，**不得**仅因 diff 中出现这些方法就报告「可能物理删除 / 需确认 @TableLogic」问题
+- 仅当 diff 中能直接确认存在物理删除时才报告软删问题，例如 Mapper XML / 注解 SQL / 自定义 Mapper 方法出现明确 `DELETE FROM ...`，或代码绕过 MyBatis-Plus 软删机制执行物理删除；否则不要输出「若 Entity 未配置 @TableLogic」这类需确认问题
 - **NOT IN 使用**：大表禁用 `NOT IN`，改 `NOT EXISTS`
 - **批量写入**：大数据量批量操作是否分批（每批建议 ≤ 500 条）
 - **JSONB 显式转换**：PostgreSQL 中 JSONB 字段需显式 `::jsonb` 转换
 
 ### 3. 注解使用合规性
 
-- 写操作（新增/修改/删除）的 Controller 方法是否有 `@LogAction`
+- 写操作（新增/修改/删除）的 Controller 方法是否有 `@LogAction`；**`@LogAction` 本身已内置防重复提交能力**，与 `@Idempotent` 的短窗口去重效果等价；用 `@LogAction` 替换 `@Idempotent` **不视为移除了防重复能力**，**不得**就此提出「缺少幂等/防重复」问题
 - 涉及数据范围过滤的接口（列表/修改/删除）是否有 `@DataPermission`，`operationType`、`menuCode`、`tableField` 是否填写正确（只查注解是否配置，不审查 permissionSql 内容）
 - 高级搜索接口是否挂载 `@WebAdvanceQuery(handler = XxxQueryHandler.class)`
-- 幂等场景（重复提交、MQ 消费）是否使用 `@Idempotent` 或 `@DataIdempotent`
-- 并发写场景是否使用 `@DistributeLocker`
+- 幂等场景（重复提交、MQ 消费）是否使用 `@Idempotent` 或 `@DataIdempotent`（已有 `@LogAction` 时不重复要求）
+- 并发写场景是否使用 `@DistributeLocker`；**`unlockAfterTx = true` 仅在该方法本身已有 `@Transactional` / `@GlobalTransactional` 事务时才需要配置**，无事务的方法不需要配置此参数；**禁止**因未配置 `unlockAfterTx` 而要求增加事务
 
 ### 4. 事务
 
@@ -126,6 +136,23 @@ Nacos / Seata 1.5.2 / RocketMQ / Redis(Redisson) / XXL-JOB / EasyExcel / MapStru
 - 批量操作是否使用 `BatchResultDTO` 收集结果，而非直接抛异常中断
 - catch 块是否吞掉异常（只打日志不上报）
 - 异常信息是否泄露内部堆栈或 SQL 细节
+- `ApiError.HTTP_UNKNOWN` 仅允许用于全局兜底、无法解析的远程响应、网关/框架未知异常等真正无法归类场景；新增业务代码不得直接用它承载明确的参数、文件、工作流、第三方或远程服务失败
+- 明确参数缺失/非法应使用 `COMMON_PARAM_REQUIRED`、`HTTP_BAD_REQUEST` 或对应业务错误；文件/Excel 失败应使用 `FILE_*`；工作流失败应使用 `WF_*`；三方/远程服务失败应使用 `COMMON_REMOTE_*` / `COMMON_THIRD_PARTY_*`
+- `new ApiResult(ApiError.HTTP_UNKNOWN.getCode(), xxx)` 或 `throw new ServiceException(ApiError.HTTP_UNKNOWN)` 若上下文能明确错误来源，应作为问题提示替换为对应分类异常
+
+#### ApiError 审查边界
+
+- `ApiError.code` 当前不作为对外稳定契约，也不作为前端 / 三方系统 / i18n 识别错误的唯一标识；业务错误枚举中出现相同 `code` 可作为「低风险提示」说明，但不作为必须修复问题，不因此影响合并判断
+- 审查 `ApiError` 时重点关注：
+  1. 枚举常量命名是否符合业务域前缀和语义
+  2. 错误文案是否准确、可理解
+  3. 国际化占位符是否统一使用 `{0}` / `{1}`，且调用参数数量匹配
+  4. 是否错误修改已有枚举常量的语义
+  5. 是否存在代码基于业务错误码 `getCode()` 做流程分支判断
+- 仅当 `code` 被明确用于外部协议、前端逻辑、三方系统判断、i18n key 或代码分支判断时，才可将重复 `code` 作为中高风险问题报告
+- 仅因多个 `ApiError` 使用相同数字 `code` 时，问题等级最高只能标为「低」，不得标为「中 / 高 / 严重」
+- 若报告重复 `ApiError.code` 为中 / 高 / 严重风险，必须同时给出具体代码引用，证明该重复 `code` 被用于外部协议、前端 / 三方判断、i18n code key 或业务分支判断；否则只能作为「低风险提示」
+- 不得使用「按整型 code 反查会导致错误文案 / 错误业务分支」这类泛化推断作为中高风险依据，除非能指出本次重复的具体 `code` 命中了具体反查 / 分支代码
 
 ### 6. RocketMQ 消息
 
@@ -184,6 +211,10 @@ Nacos / Seata 1.5.2 / RocketMQ / Redis(Redisson) / XXL-JOB / EasyExcel / MapStru
 - **禁止将推断出的代码行为**（如「原代码使用了 X」「该枚举返回大写」「原缓存键前缀为全小写」）**以事实语气陈述**；
   必须使用条件句：「若 X，则…」，并注明是基于 diff 中的线索还是推测。
 - 只有当问题的所有关键条件均可从 diff 中直接读取时，才允许以事实语气报告。
+- **import 缺失、方法/类不存在** 类问题：系统会在 diff 前附加本次变更 Java 文件的 `package/import` 区块供参考（标注于 `// ===== import 区块 =====` 中）。
+  **不得仅凭 diff hunk 可见范围内未出现某 import/方法就报告缺失**；
+  需先检查附加的 import 区块，若已在其中出现，则**不得**报告为问题；
+  若附加区块中也未出现，方可以「（需确认）」方式标注，并说明「可能定义于其他文件或未在 import 区块中展示」。
 
 ### 问题分级约束（必须遵守）
 

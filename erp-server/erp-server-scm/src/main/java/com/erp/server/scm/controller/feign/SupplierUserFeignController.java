@@ -81,7 +81,6 @@ public class SupplierUserFeignController extends BaseController {
      * 添加用户
      */
     @PostMapping("/saveRef")
-    @LogAction(value = LogActionEnum.INSERT, desc = "新增供应商协同用户关系")
     public Boolean saveRef(@RequestBody @Validated SupplierRefUserEntity refUserEntity) {
         return supplierRefUserService.save(refUserEntity);
     }
@@ -111,6 +110,7 @@ public class SupplierUserFeignController extends BaseController {
      * 删除
      */
     @PostMapping("/remove")
+    @LogAction(value = LogActionEnum.DELETE, desc = "供应商协同用户删除")
     public ApiResult remove(@RequestParam("uid") String uid) {
         return supplierUserService.deleteById(uid);
     }
@@ -122,6 +122,7 @@ public class SupplierUserFeignController extends BaseController {
      * @return
      */
     @PostMapping("/updateState")
+    @LogAction(value = LogActionEnum.UPDATE_STATUS, desc = "供应商协同用户更新状态")
     public ApiResult updateState(@RequestBody @Validated UpdateUserStateDTO stateDTO) {
         supplierUserService.updateState(stateDTO);
         return success();
@@ -135,6 +136,7 @@ public class SupplierUserFeignController extends BaseController {
      * @return
      */
     @GetMapping("/changePassword")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "供应商协同用户修改密码")
     public ApiResult changePassword(@RequestParam("uid") String uid, @RequestParam("pwd") String pwd) {
         return supplierUserService.changePassword(uid, pwd);
     }

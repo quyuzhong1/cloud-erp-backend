@@ -15,6 +15,7 @@ import org.apache.commons.lang3.StringUtils;
 public enum WmsPackingSourceTypeEnum implements EnumMessage {
 	B2B("B2B", "B2B"),
 	FBA("FBA", "FBA"),
+	FBS("fbs", "FBS"),
 	THIRDWAREHOUSE("thirdWarehouse", "第三方仓"),
 	ALIEXPRESS("aliexpress", "速卖通仓"),
 	FBT("fbt", "FBT"),

@@ -117,7 +117,7 @@ public class QcProductDTO {
         /**
          * 整箱数量
          */
-        private Integer boxQty;
+        private BigDecimal boxQty;
 
         /**
          * 产品净重

@@ -3,6 +3,8 @@ package com.erp.server.scm.controller.api;
 
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.anno.LogAction;
+import com.common.core.enums.LogActionEnum;
 import com.erp.server.scm.service.CfgModuleOperateLogFieldService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -30,6 +32,7 @@ public class CfgModuleOperateLogFieldController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/saveBatchSysLogField")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "操作日志字段批量保存")
     public ApiResult<Object> saveBatchSysLogField() {
         Boolean flag = cfgModuleOperateLogFieldService.saveBatchSysLogField();
         return flag == true ? success() : failure();
