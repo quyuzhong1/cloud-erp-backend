@@ -206,7 +206,15 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 					if (Objects.isNull(soB2cEntity)) {
 						List<SoB2cEntity> byPlatformCode = soB2cFeign.getSoB2cByPlatformCode(dto.getOrderReferenceNo());
 						if (CollUtil.isNotEmpty(byPlatformCode)) {
-							soB2cEntity = byPlatformCode.get(0);
+							if (byPlatformCode.size() == 1) {
+								soB2cEntity = byPlatformCode.get(0);
+							} else {
+								// platform_code 未跨店铺/平台做唯一性约束，命中多条时无法判断真实归属，
+								// 不猜测取值以避免误挂到其他店铺订单，仅记录日志供人工排查
+								log.warn("WEGO退货入库：platformCode命中多条so_b2c记录，无法确定唯一归属，跳过匹配，orderReferenceNo={}, 命中soId列表={}",
+										dto.getOrderReferenceNo(),
+										byPlatformCode.stream().map(SoB2cEntity::getId).collect(Collectors.toList()));
+							}
 						}
 					}
 					if (Objects.nonNull(soB2cEntity)) {
