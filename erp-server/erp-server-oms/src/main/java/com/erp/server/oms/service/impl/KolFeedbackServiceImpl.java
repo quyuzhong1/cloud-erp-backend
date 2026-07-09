@@ -126,8 +126,8 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
         // 数据处理
         handleData(kolFeedbackEntity);
 
-//        // 校验唯一性：source_code + sku_no + url_hash
-//        checkUnique(kolFeedbackEntity, null);
+        // 校验唯一性：同一来源明细下同一回片链接不能重复登记。
+        checkUnique(kolFeedbackEntity, null);
 
         log.info("开始新增KOL回片列单");
         boolean save = super.save(kolFeedbackEntity);
@@ -185,8 +185,8 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
         // 数据处理
         handleData(kolFeedbackEntity);
         
-//        // 校验唯一性：source_code + sku_no + url_hash
-//        checkUnique(kolFeedbackEntity, old.getId());
+        // 校验唯一性：同一来源明细下同一回片链接不能重复登记。
+        checkUnique(kolFeedbackEntity, old.getId());
         
         log.info("编辑 开始修改KOL回片列单数据，id：【{}】", old.getId());
         boolean save = super.updateById(kolFeedbackEntity);
@@ -785,27 +785,39 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
         return StrUtil.format("{}#{}#{}", entity.getSourceType(), entity.getSourceDetailId(), entity.getUrlHash());
     }
 
-    /**
-     * 校验唯一性：source_code + sku_no + url_hash
-     * @param kolFeedbackEntity 当前实体
-     * @param excludeId 排除的ID（修改时使用，排除当前记录）
-     */
     private void checkUnique(KolFeedbackEntity kolFeedbackEntity, String excludeId) {
-        if (StrUtil.isBlank(kolFeedbackEntity.getSourceCode()) || 
-            StrUtil.isBlank(kolFeedbackEntity.getSkuNo()) || 
-            StrUtil.isBlank(kolFeedbackEntity.getUrlHash())) {
+        if (StrUtil.isBlank(kolFeedbackEntity.getUrlHash())) {
             return;
         }
 
-        // 查询是否存在相同的source_code、sku_no和url_hash的记录
+        if (StrUtil.isNotBlank(kolFeedbackEntity.getSourceType())
+                && StrUtil.isNotBlank(kolFeedbackEntity.getSourceDetailId())) {
+            KolFeedbackEntity existEntity = lambdaQuery()
+                    .eq(KolFeedbackEntity::getSourceType, kolFeedbackEntity.getSourceType())
+                    .eq(KolFeedbackEntity::getSourceDetailId, kolFeedbackEntity.getSourceDetailId())
+                    .eq(KolFeedbackEntity::getUrlHash, kolFeedbackEntity.getUrlHash())
+                    .eq(KolFeedbackEntity::getIsDeleted, false)
+                    .ne(excludeId != null, KolFeedbackEntity::getId, excludeId)
+                    .last("limit 1")
+                    .one();
+            if (existEntity != null) {
+                throw new ServiceException("该来源明细和回片链接的组合已存在，不能重复添加");
+            }
+            return;
+        }
+
+        if (StrUtil.isBlank(kolFeedbackEntity.getSourceCode()) || StrUtil.isBlank(kolFeedbackEntity.getSkuNo())) {
+            return;
+        }
+
         KolFeedbackEntity existEntity = lambdaQuery()
                 .eq(KolFeedbackEntity::getSourceCode, kolFeedbackEntity.getSourceCode())
                 .eq(KolFeedbackEntity::getSkuNo, kolFeedbackEntity.getSkuNo())
                 .eq(KolFeedbackEntity::getUrlHash, kolFeedbackEntity.getUrlHash())
                 .eq(KolFeedbackEntity::getIsDeleted, false)
                 .ne(excludeId != null, KolFeedbackEntity::getId, excludeId)
+                .last("limit 1")
                 .one();
-
         if (existEntity != null) {
             throw new ServiceException("该来源单号、SKU编码和回片链接的组合已存在，不能重复添加");
         }

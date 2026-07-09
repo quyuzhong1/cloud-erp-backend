@@ -21,6 +21,7 @@
     <select id="boxInfoBySourceId" resultType="com.erp.model.wms.dto.WmsCartonSpecDTO$PackingItemDTO">
         SELECT
             pt.source_Id,
+            pt.source_code as sourceCode,
             wcd.main_id as cartonId,
             wcd.sku_id,
             wcd.sku_no,

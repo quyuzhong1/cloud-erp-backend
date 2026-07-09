@@ -2621,6 +2621,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<SoInfoDTO.GenerateDeliveryView> resultList = new ArrayList<>();
         List<String> sodIdList = viewList.stream().map(SoInfoDTO.GenerateDeliveryView::getDetailId).collect(Collectors.toList());
         List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList = soDeliveryNoticeFeign.listDetailBySourceDetailIds(sodIdList);
+        List<String> soIdList = viewList.stream().map(SoInfoDTO.GenerateDeliveryView::getSoId).distinct().collect(Collectors.toList());
+        Map<String, String> virtualWarehouseIdBySoId = CollectionUtils.isEmpty(soIdList) ? Collections.emptyMap()
+                : this.listByIds(soIdList).stream()
+                .filter(so -> CharSequenceUtil.isNotBlank(so.getVirtualWarehouseId()))
+                .collect(Collectors.toMap(SoInfoEntity::getId, SoInfoEntity::getVirtualWarehouseId, (a, b) -> a));
         for (SoInfoDTO.GenerateDeliveryView view : viewList) {
             ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(view.getSkuId())).findFirst().orElse(new ProductDetailEntity());
             view.setProductName(productDetailEntity.getName());
@@ -2629,9 +2634,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             String customerName = customerList.stream().filter(c -> c.getId().equals(view.getCustomerId())).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             view.setCustomerName(customerName);
-            if(view.getDeliveryQty()>0){
-                resultList.add(view);
-            }
 
             //发货通知数量
             List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailEntityList = soDeliveryNoticeDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(view.getDetailId())).collect(Collectors.toList());
@@ -2641,9 +2643,18 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 view.setEffectiveNoticeQty(effectiveNoticeQty);
             }
 
+            if (view.getDeliveryQty() <= MathUtil.ZERO) {
+                continue;
+            }
+            // 绑定虚拟仓且锁定数量为0的明细不在下推发货通知弹框展示
+            if (virtualWarehouseIdBySoId.containsKey(view.getSoId())
+                    && ObjectUtil.defaultIfNull(view.getFrozenQty(), MathUtil.ZERO).equals(MathUtil.ZERO)) {
+                continue;
+            }
+            resultList.add(view);
         }
         if(CollectionUtils.isEmpty(resultList)){
-            throw new ServiceException("没有待发货明细");
+            throw new ServiceException("没有待发货明细或者绑定数量为0");
         }
         return resultList;
     }

@@ -90,6 +90,48 @@ public class WorkflowTaskRecordEntity extends BaseEntity<WorkflowTaskRecordEntit
     @TableField("trace_id")
     private String traceId;
 
+    /**
+     * 编排实例 id
+     */
+    @TableField("instance_id")
+    private String instanceId;
+
+    /**
+     * 目标服务编码 oms/wms/tms
+     */
+    @TableField("target_service")
+    private String targetService;
+
+    /**
+     * 目标接口标识
+     */
+    @TableField("target_endpoint")
+    private String targetEndpoint;
+
+    /**
+     * 跨服务调用耗时毫秒
+     */
+    @TableField("feign_duration_ms")
+    private Long feignDurationMs;
+
+    /**
+     * 错误来源 orchestrator / remote
+     */
+    @TableField("error_source")
+    private String errorSource;
+
+    /**
+     * 节点开始执行时间
+     */
+    @TableField("start_time")
+    private java.time.LocalDateTime startTime;
+
+    /**
+     * 节点结束执行时间
+     */
+    @TableField("end_time")
+    private java.time.LocalDateTime endTime;
+
 
     public static final String SOURCE_ID = "source_id";
 
