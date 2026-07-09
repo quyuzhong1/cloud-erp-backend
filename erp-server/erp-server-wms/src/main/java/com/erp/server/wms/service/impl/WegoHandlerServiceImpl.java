@@ -972,14 +972,12 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         if (resp == null || Boolean.TRUE.equals(resp.getBoolean(RESP_FIELD_SUCCESS))) {
             return false;
         }
-        // 场景1：已截单（errorCode=2003）
+        //已截单（errorCode=2003） 已讨论直接用文档里面的code进行判断是否已截单
         Integer errorCode = resp.getInteger(RESP_FIELD_ERROR_CODE);
         if (Integer.valueOf(WEGO_ERROR_CODE_INTERCEPTED).equals(errorCode)) {
             return true;
         }
-        // 场景2：WEGO 后台手动取消后返回 success=false + errorMsg包含"操作成功!"
-        String errorMsg = resp.getString(RESP_FIELD_ERROR_MSG);
-        return CharSequenceUtil.isNotBlank(errorMsg) && errorMsg.contains(WEGO_INTERCEPT_IDEMPOTENT_KEYWORD);
+        return false;
     }
 
     /**
