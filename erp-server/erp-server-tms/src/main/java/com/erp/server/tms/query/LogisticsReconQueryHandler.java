@@ -1,6 +1,5 @@
 package com.erp.server.tms.query;
 
-import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.query.AbstractQueryHandler;
 import com.erp.model.tms.enums.LogisticsReconCheckStatusEnum;
 import com.erp.model.tms.enums.LogisticsReconMatchStatusEnum;
@@ -47,6 +46,10 @@ public class LogisticsReconQueryHandler extends AbstractQueryHandler {
      * @return String
      */
     public String getTabSql (Object value) {
+        // 导入中
+        if (LogisticsReconCheckStatusEnum.IMPORTING.getCode().equals(value)) {
+            super.buildDefaultDTO("logistics_recon.check_status", Collections.singletonList(LogisticsReconCheckStatusEnum.IMPORTING.getCode()));
+        }
         // 待确认
         if (LogisticsReconCheckStatusEnum.PENDING.getCode().equals(value)) {
             super.buildDefaultDTO("logistics_recon.check_status", Collections.singletonList(LogisticsReconCheckStatusEnum.PENDING.getCode()));
