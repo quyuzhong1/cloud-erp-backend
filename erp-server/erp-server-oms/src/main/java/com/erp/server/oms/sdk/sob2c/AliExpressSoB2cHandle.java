@@ -93,7 +93,7 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
         try {
             platformOrderConsumerHandleService.handleRule(mainEntity);
         } catch (Exception e) {
-            log.error("[速卖通订单规则处理失败]:order={},msg={}", mainEntity.getPlatformCode(), e.getMessage());
+            log.error("[速卖通订单规则处理失败]:order={}", mainEntity.getPlatformCode(), e);
         }
         return true;
     }
