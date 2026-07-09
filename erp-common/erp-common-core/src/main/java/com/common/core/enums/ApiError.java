@@ -1068,7 +1068,6 @@ public enum ApiError implements Serializable {
     PO_RECONCILIATION_DETAIL_NOT_FOUND(9662,"采购对账明细不存在"),
     PO_RECONCILIATION_DETAIL_SUPPLIER_ORG_MISMATCH(9663,"对账单【{0}】新增对账明细的供应商【{1}】与结算组织【{2}】必须保持一致"),
     PO_FRAMEWORK_CONTRACT_ATTACHMENT_REQUIRED(9664,"采购框架合同类型附件不能为空"),
-    PO_SUBCONTRACT_ONLY_PUSH_ONE_ORDER(9665,"请选择同一采购退货单下明细进行下推"),
     PO_RETURN_DETAIL_NOT_EXISTS(9666,"未找到采购退货单明细"),
     PO_RETURN_REPAIR_QTY_NOT_ALLOW_BIGGER_THAN_RETURN_QTY(9667,"SKU【{0}】委外返修数量不能大于采购退货数量"),
     PO_RETURN_ONLY_SAME_SUPPLIER(9669,"只能选择同一供应商的采购退货订单进行下推"),
@@ -1101,7 +1100,6 @@ public enum ApiError implements Serializable {
     PURCHASE_PRICE_CHANGE_APPROVE_STATUS_INVALID(10005,"采购调价表未审核通过不支持调价"),
     PURCHASE_PRICE_CHANGE_ADJUST_NOT_ALLOWED(10006,"该调价表数据非最新报价数据不支持批量调价"),
 
-    PURCHASE_PRICE_QUOTE_QUERY_PARAM_REQUIRED(10007,"请输入采购报价查询条件"),
 
     PURCHASE_PRICE_HAS_SUPPLIER_DELETE_FORBIDDEN(10008,"采购价目存在对应供应商,不能删除"),
 
@@ -1300,7 +1298,6 @@ public enum ApiError implements Serializable {
     SO_PUSH_MACHINE_DATA_NOT_FOUND(10678,"未找到可下推加工单的销售订单数据"),
     SO_B2C_REVERSE_APPROVE_STATUS_LIMIT(10679,"仅待配货或配货中状态的订单支持反审核"),
     SO_B2C_APPROVED_REQUIRED_FOR_DELIVERY(10680,"仅审核通过的订单支持提交发货"),
-    SO_OUTBOUND_EXISTS_MAPPING_UPDATE_FORBIDDEN(10681,"已生成销售出库单，不支持修改SKU映射关系"),
     SO_DELIVERY_EXISTS_MAPPING_UPDATE_FORBIDDEN(10682,"已生成发货单，不支持修改SKU映射关系"),
     SO_B2C_SOURCE_ONLY_MAPPING_UPDATE_ALLOWED(10683,"非平台来源的B2C销售订单不支持修改SKU映射关系"),
     SO_B2C_DISTRIBUTION_DECLARE_STATUS_INVALID(10684,"B2C销售订单【{0}】仅支持已审核且处于配货中的订单操作"),
@@ -1343,8 +1340,6 @@ public enum ApiError implements Serializable {
     SO_THIRD_DELIVERY_ONLY_WAIT_SHIPPED(92248,"只有待发货状态的允许发货"),
     SO_THIRD_DELIVERY_GENERATE_OUTSTOCK_ONLY_SHIPPED(92248,"只有已发货状态的允许生成销售出库单"),
     SO_THIRD_DELIVERY_DELETE_ONLY_FAILED_OR_CANCELED(92248,"只有创建失败、取消发货允许删除"),
-    PO_DELIVERY_SKU_UPDATE_FORBIDDEN(92202,"已下推发货通知单的明细，不能修改发货sku"),
-    PO_BOX_QTY_LESS_THAN_NOTICE_QTY(92203,"发货箱数不能少于已下推的发货通知单数量"),
     PO_BOX_PER_QTY_GT_ONE_SO_OUTBOUND_FORBIDDEN(92205,"单箱数量>1的销售订单不能下推销售出库单"),
     PO_RECONCILIATION_DETAIL_REF_NOT_FOUND(96004,"对账单明细不存在"),
     PO_RECONCILIATION_DETAIL_STATUS_UPDATE_FORBIDDEN(94106,"仅待对账或无需对账数据允许状态更新"),
@@ -1378,7 +1373,6 @@ public enum ApiError implements Serializable {
     SO_RETURN_INSTOCK_IMPORT_TASK_CREATE_FAILED(10774,"创建销售退货入库单导入任务失败"),
     SO_RETURN_INSTOCK_IMPORT_TASK_FAILED(10775,"销售退货入库单导入失败"),
     SO_RETURN_INSTOCK_IMPORT_CUSTOMER_DUPLICATE(10776,"存在多个同名客户【{0}】，请人工确认"),
-    SO_RETURN_INSTOCK_IMPORT_SKU_OCCUPY_FAILED(10777,"单据已创建但SKU占用状态更新失败"),
     // ---------- 预入库单（SO_RETURN_PRESTOCK） 10780-10800 ----------
     SO_RETURN_PRESTOCK_MODIFIED(10780,"预入库单数据已被修改，请刷新后重试"),
     SO_RETURN_PRESTOCK_B2C_PLATFORM_REQUIRED(10781,"B2C售后单平台信息不能为空"),
