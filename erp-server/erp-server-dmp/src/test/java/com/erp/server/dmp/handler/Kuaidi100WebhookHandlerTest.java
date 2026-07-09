@@ -5,6 +5,7 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.Kuaidi100WebhookResponseDTO;
 import com.erp.model.tms.dto.LogisticsTrackDTO;
 import com.erp.rpc.tms.feign.LogisticsFeign;
+import com.sdk.tms.kuaidi100.service.Kuaidi100Service;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -25,7 +26,7 @@ public class Kuaidi100WebhookHandlerTest {
     public void verifyValidFormBodyWithMd5UpperSign() throws Exception {
         Kuaidi100WebhookHandler handler = new Kuaidi100WebhookHandler();
         String param = callbackParam();
-        String formBody = formBody(param, DigestUtils.md5Hex(param.getBytes(StandardCharsets.UTF_8)).toUpperCase());
+        String formBody = formBody(param, buildSign(param));
 
         handler.verify(formBody, Collections.emptyMap(), "kuaidi100");
     }
@@ -57,7 +58,7 @@ public class Kuaidi100WebhookHandlerTest {
         LogisticsFeign logisticsFeign = mock(LogisticsFeign.class);
         setField(handler, "logisticsFeign", logisticsFeign);
         String param = callbackParam();
-        String sign = DigestUtils.md5Hex(param.getBytes(StandardCharsets.UTF_8)).toUpperCase();
+        String sign = buildSign(param);
 
         WebhookResult<Kuaidi100WebhookResponseDTO> result = handler.process(formBody(param, sign), Collections.emptyMap(), "kuaidi100");
 
@@ -78,7 +79,7 @@ public class Kuaidi100WebhookHandlerTest {
     public void process_missingLastResult_throwsServiceException() throws Exception {
         Kuaidi100WebhookHandler handler = new Kuaidi100WebhookHandler();
         String param = "{\"status\":\"polling\",\"message\":\"ok\"}";
-        String sign = DigestUtils.md5Hex(param.getBytes(StandardCharsets.UTF_8)).toUpperCase();
+        String sign = buildSign(param);
 
         handler.process(formBody(param, sign), Collections.emptyMap(), "kuaidi100");
     }
@@ -89,6 +90,10 @@ public class Kuaidi100WebhookHandlerTest {
 
     private String formBody(String param, String sign) throws Exception {
         return "param=" + URLEncoder.encode(param, StandardCharsets.UTF_8.name()) + "&sign=" + sign;
+    }
+
+    private String buildSign(String param) {
+        return DigestUtils.md5Hex((param + Kuaidi100Service.SALT).getBytes(StandardCharsets.UTF_8)).toUpperCase();
     }
 
     private void setField(Object target, String fieldName, Object value) throws Exception {

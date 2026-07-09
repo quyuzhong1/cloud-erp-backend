@@ -40,7 +40,7 @@ public class Kuaidi100LogisticsHandlerImplTest {
         setField(handler, "kuaidi100Service", kuaidi100Service);
         setField(handler, "cfgSettingService", cfgSettingService);
         setField(handler, "logisticsOperateService", logisticsOperateService);
-        doReturn("https://erp.test/").when(cfgSettingService).getPcLinkByEnv();
+        doReturn("https://erp.test/").when(cfgSettingService).getKuaidi100CallBackUrl();
         doReturn(response(true, "200", "success"),
                 response(false, "501", "duplicate"),
                 response(false, "400", "bad request"))
@@ -62,7 +62,7 @@ public class Kuaidi100LogisticsHandlerImplTest {
         ArgumentCaptor<Kuaidi100SubscribeParam> captor = ArgumentCaptor.forClass(Kuaidi100SubscribeParam.class);
         verify(kuaidi100Service, org.mockito.Mockito.times(3)).subscribe(captor.capture());
         assertEquals("https://erp.test/webhook/kuaidi100/push", captor.getAllValues().get(0).getParameters().getCallbackurl());
-        assertEquals("", captor.getAllValues().get(0).getParameters().getSalt());
+        assertEquals(Kuaidi100Service.SALT, captor.getAllValues().get(0).getParameters().getSalt());
     }
 
     @Test
@@ -72,7 +72,7 @@ public class Kuaidi100LogisticsHandlerImplTest {
         CfgSettingService cfgSettingService = mock(CfgSettingService.class);
         setField(handler, "kuaidi100Service", kuaidi100Service);
         setField(handler, "cfgSettingService", cfgSettingService);
-        doReturn("").when(cfgSettingService).getPcLinkByEnv();
+        doReturn("").when(cfgSettingService).getKuaidi100CallBackUrl();
 
         ApiResult<List<RegisterResponseVO>> result = handler.registerLogisticsNumber(RegisterTrackVO.builder()
                 .authMap(authMap())
@@ -92,7 +92,7 @@ public class Kuaidi100LogisticsHandlerImplTest {
         CfgSettingService cfgSettingService = mock(CfgSettingService.class);
         setField(handler, "kuaidi100Service", kuaidi100Service);
         setField(handler, "cfgSettingService", cfgSettingService);
-        doReturn("https://erp.test").when(cfgSettingService).getPcLinkByEnv();
+        doReturn("https://erp.test").when(cfgSettingService).getKuaidi100CallBackUrl();
 
         ApiResult<List<RegisterResponseVO>> result = handler.registerLogisticsNumber(RegisterTrackVO.builder()
                 .authMap(authMap())
@@ -115,7 +115,7 @@ public class Kuaidi100LogisticsHandlerImplTest {
         CfgSettingService cfgSettingService = mock(CfgSettingService.class);
         setField(handler, "kuaidi100Service", kuaidi100Service);
         setField(handler, "cfgSettingService", cfgSettingService);
-        doReturn("https://erp.test").when(cfgSettingService).getPcLinkByEnv();
+        doReturn("https://erp.test").when(cfgSettingService).getKuaidi100CallBackUrl();
 
         ApiResult<List<RegisterResponseVO>> result = handler.registerLogisticsNumber(RegisterTrackVO.builder()
                 .authMap(Collections.emptyMap())
@@ -137,7 +137,7 @@ public class Kuaidi100LogisticsHandlerImplTest {
         setField(handler, "kuaidi100Service", kuaidi100Service);
         setField(handler, "cfgSettingService", cfgSettingService);
         setField(handler, "logisticsOperateService", logisticsOperateService);
-        doReturn("https://erp.test").when(cfgSettingService).getPcLinkByEnv();
+        doReturn("https://erp.test").when(cfgSettingService).getKuaidi100CallBackUrl();
         doReturn(null).when(kuaidi100Service).subscribe(any(Kuaidi100SubscribeParam.class));
 
         ApiResult<List<RegisterResponseVO>> result = handler.registerLogisticsNumber(RegisterTrackVO.builder()
@@ -159,7 +159,7 @@ public class Kuaidi100LogisticsHandlerImplTest {
         setField(handler, "kuaidi100Service", kuaidi100Service);
         setField(handler, "cfgSettingService", cfgSettingService);
         setField(handler, "logisticsOperateService", logisticsOperateService);
-        doReturn("https://erp.test").when(cfgSettingService).getPcLinkByEnv();
+        doReturn("https://erp.test").when(cfgSettingService).getKuaidi100CallBackUrl();
         org.mockito.Mockito.doThrow(new RuntimeException("network error"))
                 .when(kuaidi100Service).subscribe(any(Kuaidi100SubscribeParam.class));
 

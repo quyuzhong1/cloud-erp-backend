@@ -26,8 +26,8 @@ public class Kuaidi100ServiceTest {
         assertEquals("YT123", param.getNumber());
         assertEquals("appKey", param.getKey());
         assertEquals("https://erp.test/webhook/kuaidi100/push", param.getParameters().getCallbackurl());
-        assertEquals("", param.getParameters().getSalt());
-        assertEquals("4", param.getParameters().getResultv2());
+        assertEquals(Kuaidi100Service.SALT, param.getParameters().getSalt());
+        assertEquals("1", param.getParameters().getResultv2());
         assertEquals("13800138000", param.getParameters().getPhone());
     }
 

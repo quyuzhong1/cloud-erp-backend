@@ -29,6 +29,8 @@ public class Kuaidi100Service {
 
     private static final String QUERY_URL = "https://poll.kuaidi100.com/poll/query.do";
     private static final String SUBSCRIBE_URL = "https://poll.kuaidi100.com/poll";
+    public static final String SALT = "9527";
+    private static final String RESULTV2 = "1";
 
     /**
      * 实时查询快递轨迹
@@ -105,7 +107,8 @@ public class Kuaidi100Service {
                                                                String callbackUrl, Boolean isPushMobile, String mobile) {
         Kuaidi100SubscribeParam.Parameters parameters = Kuaidi100SubscribeParam.Parameters.builder()
                 .callbackurl(callbackUrl)
-                .resultv2("4")
+                .salt(SALT)
+                .resultv2(RESULTV2)
                 .build();
         if (isPushMobile && StringUtils.isNotBlank(mobile)) {
             parameters.setPhone(mobile);
@@ -126,7 +129,7 @@ public class Kuaidi100Service {
         Kuaidi100QueryParam param = Kuaidi100QueryParam.builder()
                 .com(companyCode.toLowerCase()) // 快递100要求小写
                 .num(trackNo)
-                .resultv2("1")
+                .resultv2(RESULTV2)
                 .build();
         if(isPushMobile && StringUtils.isNotBlank(mobile)){
                 //只取后四位
