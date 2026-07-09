@@ -121,7 +121,6 @@ public class AssetAcceptController extends BaseController {
     * @return ApiResult<Void>
     */
     @PostMapping("/addAndSubmit")
-    @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "资产验收表新增并提交")
     public ApiResult<BaseResultDTO.AddDTO> addAndSubmit(@RequestBody @Validated AssetAcceptDTO.AddDTO dto) {
         BaseResultDTO.AddDTO result = assetAcceptService.addAndSubmit(dto);
         return success(result);
@@ -135,7 +134,6 @@ public class AssetAcceptController extends BaseController {
     * @return ApiResult<Void>
     */
     @PostMapping("/updateAndSubmit")
-    @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "资产验收表修改并提交")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "fms:assetAccept:updateAndSubmit",

@@ -151,11 +151,6 @@
             <artifactId>seata-all</artifactId>
             <version>${seata.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-        </dependency>
         <!--分布式锁-->
         <dependency>
             <groupId>org.redisson</groupId>
