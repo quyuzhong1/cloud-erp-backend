@@ -337,9 +337,9 @@ public class LogisticsReconServiceImpl
     }
 
     /**
-     * 对账维度（月份+物流商+Sheet）pending/importing 部分唯一索引名。
+     * 对账维度（月份+文件+物流商+Sheet）pending/importing 部分唯一索引名（子串，用于异常消息匹配）。
      */
-    private static final String DIM_UNIQUE_CONSTRAINT = "uniq_logistics_recon_month_supplier_sheet";
+    private static final String DIM_UNIQUE_CONSTRAINT = "uniq_logistics_recon_month_file_supplier_sheet";
 
     /**
      * 判断是否因对账维度唯一约束冲突（pending/importing 同维度）导致的数据完整性异常。
@@ -459,8 +459,12 @@ public class LogisticsReconServiceImpl
                         .sheet(importCfg.getSheetName())
                         .doRead();
                 if (excelListener.isHeadEmpty()) {
-                    //未找到表头直接跳过，可能是不匹配的sheet设置
-                    log.warn("sheet【{}】未找到表头信息",importCfg.getSheetName());
+                    // 文件中不存在该配置对应的 sheet：本次为该配置预建的主表没有任何明细，
+                    // 直接删除、不保留空记录，也不复用/引用其它历史数据的明细
+                    log.warn("sheet【{}】未找到表头信息，删除本次空导入主表 mainId={}",
+                            importCfg.getSheetName(), dto.getMainId());
+                    discardEmptyImportMain(dto.getMainId());
+                    createdMainIds.remove(dto.getMainId());
                     continue;
                 }
                 totalCount += excelListener.getTotalRowCount();
@@ -1252,13 +1256,16 @@ public class LogisticsReconServiceImpl
     }
 
     /**
-     * 按对账维度（月份 + 物流商 + Sheet）构建查重条件，与唯一索引
-     * uniq_logistics_recon_month_supplier_sheet_active 一致。
+     * 按对账维度（月份 + 文件 + 物流商 + Sheet）构建查重条件，与唯一索引
+     * uniq_logistics_recon_month_file_supplier_sheet_active 一致。
+     * 文件维度用于隔离不同文件：仅同月份 + 同文件 + 同物流商 + 同 Sheet 才复用/查重，
+     * 避免复用其它文件遗留的历史 pending 记录。
      */
     private LambdaQueryChainWrapper<LogisticsReconEntity> buildReimportDimensionQuery(
             LogisticsReconDTO.ImportDTO dto, CfgLogisticsCostImportEntity importCfg) {
         LambdaQueryChainWrapper<LogisticsReconEntity> query = lambdaQuery()
                 .eq(LogisticsReconEntity::getReconciliationMonth, dto.getReconciliationMonth())
+                .eq(LogisticsReconEntity::getFileName, dto.getFileName())
                 .eq(LogisticsReconEntity::getSupplierId, importCfg.getDictPlatform())
                 .eq(LogisticsReconEntity::getIsDeleted, false);
         if (StrUtil.isBlank(importCfg.getSheetName())) {
@@ -1271,10 +1278,11 @@ public class LogisticsReconServiceImpl
     }
 
     /**
-     * 构建重导维度分布式锁键：对账月份 | 物流商/平台 id | Sheet 名。
+     * 构建重导维度分布式锁键：对账月份 | 文件名 | 物流商/平台 id | Sheet 名。
      */
     private String buildReimportLockKey(LogisticsReconDTO.ImportDTO dto, CfgLogisticsCostImportEntity importCfg) {
         return dto.getReconciliationMonth() + "|"
+                + StrUtil.blankToDefault(dto.getFileName(), "") + "|"
                 + StrUtil.blankToDefault(importCfg.getDictPlatform(), "") + "|"
                 + StrUtil.blankToDefault(importCfg.getSheetName(), "");
     }
@@ -1558,6 +1566,29 @@ public class LogisticsReconServiceImpl
             exportRow.add(columnIndex == null ? "" : StrUtil.blankToDefault(rawRow.get(columnIndex), ""));
         }
         return exportRow;
+    }
+
+    /**
+     * 文件中缺失该配置对应 sheet 时，丢弃本次为其预建的主表：
+     * 无明细则级联删除，避免残留「导入中」空记录、并杜绝引用历史明细；
+     * 极端情况下（复用到同文件历史含明细记录）仅复位为待确认，避免误删数据。
+     */
+    private void discardEmptyImportMain(String mainId) {
+        if (StrUtil.isBlank(mainId)) {
+            return;
+        }
+        long detailCount = logisticsReconDetailService.lambdaQuery()
+                .eq(LogisticsReconDetailEntity::getMainId, mainId)
+                .count();
+        if (detailCount > 0) {
+            lambdaUpdate()
+                    .eq(LogisticsReconEntity::getId, mainId)
+                    .set(LogisticsReconEntity::getCheckStatus, LogisticsReconCheckStatusEnum.PENDING.getCode())
+                    .update();
+            return;
+        }
+        // 走已有单条删除（独立事务 + 行锁，级联 detail/detail_sub/ref）
+        self.delete(mainId);
     }
 
     /**
