@@ -225,6 +225,14 @@ public class WarehouseReceiveDetailDTO {
          */
         private String podId;
         /**
+         * 采购订单id（按 PO+SKU 汇总时使用）
+         */
+        private String purchaseOrderId;
+        /**
+         * SKU id（按 PO+SKU 汇总时使用）
+         */
+        private String skuId;
+        /**
          *  收货数量汇总
          */
         private Integer totalReceiveQty;
@@ -237,6 +245,14 @@ public class WarehouseReceiveDetailDTO {
          * 采购订单明细id
          */
         private String podId;
+        /**
+         * 采购订单id（按 PO+SKU 汇总时使用）
+         */
+        private String purchaseOrderId;
+        /**
+         * SKU id（按 PO+SKU 汇总时使用）
+         */
+        private String skuId;
         /**
          * 采购收货明细id
          */
