@@ -716,6 +716,10 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      */
     void checkProductRegistrationAndUpdate(String id, String logisticsChannelId);
 
+    /**
+     * 提交发货时按 TMS 预报设置静默同步组包/中转状态（仅强制中转/组包时更新，无需中转的单跳过）
+     */
+    void syncForecastStatusQuietly(String id, String logisticsChannelId);
 
     /**
      * 检查产品是否备案

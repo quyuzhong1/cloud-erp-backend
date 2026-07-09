@@ -543,25 +543,21 @@ public class KolB2cApplicationController extends BaseController {
      * 工作流任务回调由 WorkflowTaskRecordConsumer 直接反序列化 MqResponseDTO，不包装 ApiResult。
      */
     @PostMapping("/generateKolB2cSplitOrder")
-    @LogAction(value = LogActionEnum.EXECUTE, desc = "KOL B2C任务节点回调-生成拆分单")
     public WorkflowTaskRecordDTO.MqResponseDTO generateKolB2cSplitOrder(@RequestBody WorkflowTaskRecordDTO.MqRequestDTO dto) {
         return kolB2cApplicationService.generateKolB2cSplitOrder(dto);
     }
 
     @PostMapping("/dispatchKolB2cSubApproveTasks")
-    @LogAction(value = LogActionEnum.EXECUTE, desc = "KOL B2C任务节点回调-派发子任务")
     public WorkflowTaskRecordDTO.MqResponseDTO dispatchKolB2cSubApproveTasks(@RequestBody WorkflowTaskRecordDTO.MqRequestDTO dto) {
         return kolB2cApplicationService.dispatchKolB2cSubApproveTasks(dto);
     }
 
     @PostMapping("/finishKolB2cApplicationApprove")
-    @LogAction(value = LogActionEnum.EXECUTE, desc = "KOL B2C任务节点回调-完结审核下推")
     public WorkflowTaskRecordDTO.MqResponseDTO finishKolB2cApplicationApprove(@RequestBody WorkflowTaskRecordDTO.MqRequestDTO dto) {
         return kolB2cApplicationService.finishKolB2cApplicationApprove(dto);
     }
 
     @PostMapping("/pushKolB2cSubOrder")
-    @LogAction(value = LogActionEnum.EXECUTE, desc = "KOL B2C任务节点回调-下推拆分单")
     public WorkflowTaskRecordDTO.MqResponseDTO pushKolB2cSubOrder(@RequestBody WorkflowTaskRecordDTO.MqRequestDTO dto) {
         return kolB2cApplicationService.pushKolB2cSubOrder(dto);
     }
