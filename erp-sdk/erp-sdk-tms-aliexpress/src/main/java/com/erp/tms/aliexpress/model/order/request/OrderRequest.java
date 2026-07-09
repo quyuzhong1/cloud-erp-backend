@@ -117,4 +117,22 @@ public class OrderRequest implements Serializable {
     @JSONField(name = "insurance_coverage")
     private InsuranceCoverage insuranceCoverage;
 
+    /**
+     * 包裹长（单位：cm），APL 平台物流创单必填
+     */
+    @JSONField(name = "goods_length")
+    private Long goods_length;
+
+    /**
+     * 包裹宽（单位：cm），APL 平台物流创单必填
+     */
+    @JSONField(name = "goods_width")
+    private Long goods_width;
+
+    /**
+     * 包裹高（单位：cm），APL 平台物流创单必填
+     */
+    @JSONField(name = "goods_height")
+    private Long goods_height;
+
 }

@@ -112,6 +112,16 @@ public class AliExpressShipperService {
         if (Objects.nonNull(orderRequest.getInsuranceCoverage())){
             request.addApiParameter("insurance_coverage", JSONObject.toJSONString(orderRequest.getInsuranceCoverage()));
         }
+        // APL 平台物流：包裹件重尺（单位 cm），2026-06-30 后必填
+        if (Objects.nonNull(orderRequest.getGoods_length())) {
+            request.addApiParameter("goodsLength", String.valueOf(orderRequest.getGoods_length()));
+        }
+        if (Objects.nonNull(orderRequest.getGoods_width())) {
+            request.addApiParameter("goodsWidth", String.valueOf(orderRequest.getGoods_width()));
+        }
+        if (Objects.nonNull(orderRequest.getGoods_height())) {
+            request.addApiParameter("goodsHeight", String.valueOf(orderRequest.getGoods_height()));
+        }
         request.addApiParameter("simplify", "true");
         IopResponse response = client.execute(request, token, Protocol.TOP);
         log.info("下单完成：{}",JSONObject.toJSONString(response));
