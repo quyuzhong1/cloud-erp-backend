@@ -79,6 +79,7 @@ public class SyncWdtOtherInStockServiceImpl extends AbstractWdtService implement
         }
 
         request.setWarehouseNo(thirdWarehouseCode);
+        request.setSysWarehouseId(sysWarehouseId);
         request.setIsCheck(Boolean.TRUE);
         request.setGoodsList(goodsList);
         request.setSourceId(outerCode);
@@ -87,6 +88,7 @@ public class SyncWdtOtherInStockServiceImpl extends AbstractWdtService implement
         request.setTargetPlatformName(PlatformEnum.WANGDIAN.getDesc());
         request.setCreateTime(LocalDateTime.now());
         request.setRemark("原始单据号：" + sourceCode);
+        request.setSourceCode(sourceCode);
 
         //添加推送任务
         DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();

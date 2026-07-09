@@ -57,6 +57,11 @@ public class CreateOtherStockinRequest
 	 */
 	private String sysWarehouseId;
 
+	/**
+	 * 来源单据号（ERP其他出入库单号）
+	 */
+	private String sourceCode;
+
 	@EqualsAndHashCode(callSuper = true)
 	@ToString
 	@Data

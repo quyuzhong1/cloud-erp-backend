@@ -80,6 +80,7 @@ public class SyncWdtOtherOutStockServiceImpl extends AbstractWdtService implemen
         }
 
         request.setWarehouseNo(thirdWarehouseCode);
+        request.setSysWarehouseId(sysWarehouseId);
         request.setIsCheck(Boolean.TRUE);
         request.setGoodsList(goodsList);
         request.setSourceId(outerCode);
