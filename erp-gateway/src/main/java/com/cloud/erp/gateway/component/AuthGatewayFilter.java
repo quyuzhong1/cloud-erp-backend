@@ -76,16 +76,23 @@ public class AuthGatewayFilter implements GlobalFilter, Ordered {
 
     private static final String KEY_REGISTER_URL = "/key/register";
 
+    private static final String API_SYS_PREFIX = "/api/sys";
+
+    private static final String SYS_SERVICE_PREFIX = "/sys";
+
     private static final String PERSONAL_CENTER_API_TOKEN_PATH = "/personalCenter/apiToken";
 
     private static final String API_TOKEN_WHITELIST_PATH = "/apiTokenWhitelist";
 
     private static final String API_SYS_EVENT_TRACKING_PATH = "/api/sys" + AuthPassPath.EVENT_TRACKING_PATH;
 
-    private static final String[] API_TOKEN_DENY_PATHS = {
+    private static final String[] API_TOKEN_MANAGEMENT_DENY_PATHS = {
+            API_SYS_PREFIX + PERSONAL_CENTER_API_TOKEN_PATH,
+            API_SYS_PREFIX + API_TOKEN_WHITELIST_PATH,
+            SYS_SERVICE_PREFIX + PERSONAL_CENTER_API_TOKEN_PATH,
+            SYS_SERVICE_PREFIX + API_TOKEN_WHITELIST_PATH,
             PERSONAL_CENTER_API_TOKEN_PATH,
-            API_TOKEN_WHITELIST_PATH,
-            FEIGN_URL
+            API_TOKEN_WHITELIST_PATH
     };
 
     /**
@@ -439,12 +446,24 @@ public class AuthGatewayFilter implements GlobalFilter, Ordered {
     }
 
     private boolean isApiTokenManagementPath(String uri) {
-        for (String denyPath : API_TOKEN_DENY_PATHS) {
-            if (uri.contains(denyPath)) {
+        if (StringUtils.isBlank(uri)) {
+            return false;
+        }
+        if (uri.contains(FEIGN_URL)) {
+            return true;
+        }
+        for (String denyPath : API_TOKEN_MANAGEMENT_DENY_PATHS) {
+            if (isSamePathOrChild(uri, denyPath)) {
                 return true;
             }
         }
         return false;
+    }
+
+    private boolean isSamePathOrChild(String uri, String basePath) {
+        String normalizedUri = StringUtils.removeEnd(uri, "/");
+        String normalizedBasePath = StringUtils.removeEnd(basePath, "/");
+        return normalizedUri.equals(normalizedBasePath) || normalizedUri.startsWith(normalizedBasePath + "/");
     }
 
     private LoginUser buildLoginUser(SysApiTokenDTO.ValidateRespDTO validateResp) {

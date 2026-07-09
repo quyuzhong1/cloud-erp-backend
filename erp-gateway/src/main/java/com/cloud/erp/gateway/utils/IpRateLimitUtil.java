@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RScript;
 import org.redisson.api.RedissonClient;
 import org.redisson.client.codec.StringCodec;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -28,6 +29,9 @@ public class IpRateLimitUtil {
 
     @Resource
     private RedissonClient redisson;
+
+    @Value("${gateway.rate-limit.allow-unknown-ip:false}")
+    private Boolean allowUnknownIp;
 
     private static final String UNKNOWN_IP = "unknown";
 
@@ -122,7 +126,10 @@ public class IpRateLimitUtil {
     }
 
     private boolean isAllowedByKey(String keyPart, int maxRequests, int timeWindow, String logName) {
-        if (keyPart == null || keyPart.trim().isEmpty() || UNKNOWN_IP.equalsIgnoreCase(keyPart)) {
+        if (keyPart == null || keyPart.trim().isEmpty()) {
+            return false;
+        }
+        if (UNKNOWN_IP.equalsIgnoreCase(keyPart) && !Boolean.TRUE.equals(allowUnknownIp)) {
             return false;
         }
         return isAllowedByRedisKey(buildRateLimitKey(keyPart), buildBlockKey(keyPart), maxRequests, timeWindow, logName);
