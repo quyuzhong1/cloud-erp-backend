@@ -396,14 +396,6 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         vo.setIsSupper(entity.getIsSuper());
         vo.setUserType(dto.getUserType());
         String uid = entity.getUid();
-        List<String> roleIds = sysRoleUserService.findRoleIdsByUid(uid);
-        List<SysMenuVO> overallMenuList = sysRoleMenuService.findMenuByRoleIds(roleIds,dto.getUserType());
-        List<SysMenuVO> leftMenuList = sysRoleMenuService.findLeftMenuByRoleIds(roleIds,MathUtil.ONE,dto.getUserType());
-        List<String> permissionList = sysRoleMenuService.findMenuCodeByRoleIds(roleIds, SysConstant.NO_STATE,dto.getUserType());
-        vo.setPermissionList(permissionList);
-        vo.setOverallMenuList(overallMenuList);
-        vo.setLeftMenuList(leftMenuList);
-
         SysUserThirdEntity thirdEntity = sysUserThirdService.findByUserId(uid);
         Integer bindingState = 0;
         String bindingPlatform = "";
