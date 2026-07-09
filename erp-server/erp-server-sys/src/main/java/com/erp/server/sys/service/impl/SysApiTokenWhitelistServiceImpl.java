@@ -2,11 +2,14 @@ package com.erp.server.sys.service.impl;
 
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.sys.dto.SysApiTokenWhitelistDTO;
 import com.erp.model.sys.entity.SysApiTokenWhitelistEntity;
 import com.erp.server.sys.mapper.SysApiTokenWhitelistMapper;
+import com.erp.server.sys.service.SysRoleUserService;
 import com.erp.server.sys.service.SysApiTokenWhitelistService;
 import com.erp.server.sys.support.SysApiTokenSupport;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +17,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -26,6 +30,8 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class SysApiTokenWhitelistServiceImpl extends SuperServiceImpl<SysApiTokenWhitelistMapper, SysApiTokenWhitelistEntity> implements SysApiTokenWhitelistService {
+
+    private static final String ADMIN_ROLE_ID = "1";
 
     /**
      * 本地缓存只用于降低高频认证时的白名单查询压力；多实例配置变更最多等待该 TTL 收敛。
@@ -42,8 +48,12 @@ public class SysApiTokenWhitelistServiceImpl extends SuperServiceImpl<SysApiToke
      */
     private volatile WhitelistCache whitelistCache;
 
+    @Resource
+    private SysRoleUserService sysRoleUserService;
+
     @Override
     public List<SysApiTokenWhitelistDTO.ListDTO> listConfig() {
+        checkWhitelistManagePermission();
         return this.lambdaQuery()
                 .orderByDesc(SysApiTokenWhitelistEntity::getCreateTime)
                 .list()
@@ -55,6 +65,7 @@ public class SysApiTokenWhitelistServiceImpl extends SuperServiceImpl<SysApiToke
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean add(SysApiTokenWhitelistDTO.AddDTO dto) {
+        checkWhitelistManagePermission();
         String pathPattern = SysApiTokenSupport.normalizePathPattern(dto.getPathPattern());
         checkDuplicate(pathPattern, null);
 
@@ -70,6 +81,7 @@ public class SysApiTokenWhitelistServiceImpl extends SuperServiceImpl<SysApiToke
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean update(SysApiTokenWhitelistDTO.UpdateDTO dto) {
+        checkWhitelistManagePermission();
         SysApiTokenWhitelistEntity entity = this.getById(dto.getId());
         if (entity == null) {
             throw new ServiceException(ApiError.AUTH_API_TOKEN_WHITELIST_NOT_FOUND);
@@ -88,6 +100,7 @@ public class SysApiTokenWhitelistServiceImpl extends SuperServiceImpl<SysApiToke
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean removeConfig(BaseIdDTO dto) {
+        checkWhitelistManagePermission();
         SysApiTokenWhitelistEntity entity = this.getById(dto.getId());
         if (entity == null) {
             throw new ServiceException(ApiError.AUTH_API_TOKEN_WHITELIST_NOT_FOUND);
@@ -122,6 +135,17 @@ public class SysApiTokenWhitelistServiceImpl extends SuperServiceImpl<SysApiToke
             }
         }
         return false;
+    }
+
+    private void checkWhitelistManagePermission() {
+        LoginUser loginUser = UserContext.getLoginUser();
+        if (loginUser == null || StringUtils.isBlank(loginUser.getUid())) {
+            throw new ServiceException(ApiError.HTTP_UNAUTHORIZED);
+        }
+        List<String> roleIdList = sysRoleUserService.findRoleIdsByUid(loginUser.getUid());
+        if (roleIdList == null || !roleIdList.contains(ADMIN_ROLE_ID)) {
+            throw new ServiceException(ApiError.AUTH_API_TOKEN_WHITELIST_ADMIN_REQUIRED);
+        }
     }
 
     private void checkDuplicate(String pathPattern, String excludeId) {

@@ -262,7 +262,7 @@ public class AuthGatewayFilter implements GlobalFilter, Ordered {
             return null;
         }
         if (isApiTokenManagementPath(uri)) {
-            return unauthorizedResponse(exchange, "API Token不允许访问管理接口", ApiError.HTTP_FORBIDDEN.getCode());
+            return unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.AUTH_API_TOKEN_MANAGEMENT_PATH_FORBIDDEN, exchange.getRequest()), ApiError.HTTP_FORBIDDEN.getCode());
         }
         if (!isApiTokenFormatValid(apiToken)) {
             return unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.HTTP_UNAUTHORIZED, exchange.getRequest()), ApiError.HTTP_UNAUTHORIZED.getCode());
@@ -317,7 +317,7 @@ public class AuthGatewayFilter implements GlobalFilter, Ordered {
             if (!Boolean.TRUE.equals(validateResp.getPathAllowed())) {
                 log.warn("API Token接口未配置白名单，URI: {}, tokenId: {}", uri, validateResp.getTokenId());
                 recordApiTokenFailure(tokenHash, uri, "forbidden");
-                return ApiTokenAuthDecision.failure("接口未配置API Token白名单", ApiError.HTTP_FORBIDDEN.getCode());
+                return ApiTokenAuthDecision.failure(localeUtils.getMessage(ApiError.AUTH_API_TOKEN_PATH_NOT_IN_WHITELIST, exchange.getRequest()), ApiError.HTTP_FORBIDDEN.getCode());
             }
 
             LoginUser loginUser = buildLoginUser(validateResp);
@@ -635,6 +635,7 @@ public class AuthGatewayFilter implements GlobalFilter, Ordered {
         long ipValue = ipv4ToLong(ip);
         long rangeValue = ipv4ToLong(rangeParts[0]);
         if (ipValue < 0 || rangeValue < 0) {
+            // 可信代理 CIDR 当前只支持 IPv4；IPv6 代理按非可信处理，避免误信任代理头。
             return false;
         }
         try {
