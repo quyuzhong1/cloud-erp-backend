@@ -10,6 +10,7 @@ import com.erp.model.wms.dto.WegoSkuSyncDTO;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.wms.feign.OverseasProviderFeign;
 import com.erp.server.dmp.inout.handler.input.task.dmp.DmpInputBaseDmpHandler;
+import com.sdk.wms.wego.enums.WegoSkuStatusEnum;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.context.annotation.Scope;
@@ -71,6 +72,13 @@ public class WegoSkuOmsSyncDmpHandler extends DmpInputBaseDmpHandler {
             }
             String sku = toStr(mongoData.get("sku"));
             if (sku == null || sku.isEmpty()) {
+                continue;
+            }
+            // 防御性兜底：Init 阶段已按 status 过滤过草稿态 SKU，此处再校验一次，
+            // 避免未来其他写入路径绕过 Init 过滤时，草稿 SKU 被同步进 OMS 未匹配对照表
+            Object statusObj = mongoData.get("status");
+            Integer status = statusObj instanceof Number ? ((Number) statusObj).intValue() : null;
+            if (!WegoSkuStatusEnum.needSync(status)) {
                 continue;
             }
             WegoSkuSyncDTO.SkuItemDTO item = new WegoSkuSyncDTO.SkuItemDTO();
