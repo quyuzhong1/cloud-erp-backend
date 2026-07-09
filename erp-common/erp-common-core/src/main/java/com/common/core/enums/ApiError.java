@@ -1572,6 +1572,17 @@ public enum ApiError implements Serializable {
     WH_WEGO_OUTBOUND_CODE_REQUIRED(11146,"WEGO出库单号不能为空"),
     WH_WEGO_QUERY_FALLBACK_EMPTY_RESPONSE(11147,"WEGO查询出库单降级查询接口响应为空，referenceCode【{0}】"),
     WH_WEGO_QUERY_FALLBACK_FAILED(11148,"WEGO查询出库单降级查询接口返回失败：errorCode【{0}】，errorMsg【{1}】"),
+    WH_WEGO_INBOUND_AUTH_ID_NOT_FOUND(11149,"{0}对应授权ID信息不存在,nextId:{1}"),
+    WH_WEGO_INBOUND_AUTH_JSON_EMPTY(11150,"WEGO入库：服务商[{0}]auth_json为空"),
+    WH_WEGO_INBOUND_TOKEN_SECRET_MISSING(11151,"WEGO入库：服务商[{0}]appToken/appSecret缺失"),
+    WH_WEGO_INBOUND_PAGE_QUERY_ERROR(11152,"WEGO入库：queryInorderPage 分页拉取异常，已拉取页数={0}，数据不完整，任务中止"),
+    WH_WEGO_INBOUND_PAGE_PARSE_FAILED(11153,"WEGO入库：第{0}页响应解析失败，已拉取页数={1}，数据不完整，任务中止"),
+    WH_WEGO_INBOUND_PAGE_LIMIT_EXCEEDED(11154,"WEGO入库：已达最大翻页上限({0})，已拉取={1}条，数据不完整，任务中止"),
+    WH_WEGO_INBOUND_RESPONSE_EMPTY(11155,"WEGO入库分页查询接口响应为空"),
+    WH_WEGO_INBOUND_RESPONSE_FAILED(11156,"WEGO入库分页查询接口返回失败: errorCode={0}, errorMsg={1}"),
+    WH_WEGO_INBOUND_RESULT_EMPTY(11157,"WEGO入库分页查询接口 success=true 但 result 为空"),
+    WH_WEGO_INBOUND_TYPE_ONLY_SELF_HEADWAY(11158,"目的仓平台授权为WEGO时，入库类型只能为【自发头程】"),
+    WH_WEGO_INBOUND_TRACKING_NO_REQUIRED(11159,"WEGO入库单需提供物流跟踪号"),
 
 
     /**

@@ -500,11 +500,11 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         if (OmsPlatformEnum.WE_GO.getCode().equalsIgnoreCase(dictPlatform)) {
             // WEGO 平台目的仓只支持「自发头程」入库类型
             if (!OverseasInstockTypeEnum.SELF_HEADWAY.equals(commonDTO.getInstockType())) {
-                throw new ServiceException("目的仓平台授权为WEGO时，入库类型只能为【自发头程】");
+                throw new ServiceException(ApiError.WH_WEGO_INBOUND_TYPE_ONLY_SELF_HEADWAY);
             }
             // WEGO入库单需提供物流跟踪号
             if (CharSequenceUtil.isBlank(commonDTO.getTrackingNo())) {
-                throw new ServiceException("WEGO入库单需提供物流跟踪号");
+                throw new ServiceException(ApiError.WH_WEGO_INBOUND_TRACKING_NO_REQUIRED);
             }
         }
         // 入库类型=自发头程
@@ -1296,7 +1296,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 OverseasWarehouseInboundDetailEntity detailEntity = detailEntityMap.get(receiving.getProductSku());
                 // 平台回写的签收 sku 在本地入库明细中找不到时（如 wego 海外仓收到计划外不良品），
                 // 单独跳过本条流水并落 warn 日志，避免一条异常 NPE 把整批签收记录连同事务回滚掉；
-                // 同时记录到 unmatchedReceivingList，事务提交后补一条业务操作日志，便于人工在单据详情页感知并对账追溯。
+                // 同时记录到 unmatchedReceivingList，便于人工在单据详情页感知并对账追溯。
                 if (detailEntity == null) {
                     log.warn("[海外仓签收] 单号={} 平台={} 流水sku={} thirdId={} receiveQty={} receiveTime={} 在本地入库明细中找不到，已跳过该流水",
                             StringUtil.isBlank(dto.getReceivingCode()) ? dto.getSourceCode() : dto.getReceivingCode(),
