@@ -1,6 +1,10 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -54,6 +58,31 @@ public final class AliExpressDmpHandlerUtils {
 		return DmpHandlerUtils.getMongoStorageName(dmpBasicSystemEntity, dmpCfgInputEntity, dmpCfgInputConvertEntityList.get(0));
 	}
 
+	public static List<String> collectParentAndChildOrderIds(List<Map<String, Object>> orderDataList) {
+		Set<String> orderIds = new LinkedHashSet<>();
+		if (CollUtil.isNotEmpty(orderDataList)) {
+			for (Map<String, Object> orderData : orderDataList) {
+				orderIds.addAll(collectParentAndChildOrderIds(orderData));
+			}
+		}
+		return new ArrayList<>(orderIds);
+	}
+
+	public static List<String> collectParentAndChildOrderIds(Map<String, Object> orderData) {
+		Set<String> orderIds = new LinkedHashSet<>();
+		addOrderIdFields(orderIds, orderData);
+		addOrderIdsFromValue(orderIds, orderData == null ? null : orderData.get("product_list"));
+		addOrderIdsFromValue(orderIds, orderData == null ? null : orderData.get("child_order_list"));
+		return new ArrayList<>(orderIds);
+	}
+
+	public static List<String> collectCurrentOrderIds(Map<String, Object> parentOrderData, Map<String, Object> childOrderData) {
+		Set<String> orderIds = new LinkedHashSet<>();
+		addOrderIdFields(orderIds, parentOrderData);
+		addOrderIdFields(orderIds, childOrderData);
+		return new ArrayList<>(orderIds);
+	}
+
 	private static DmpCfgInputEntity getDmpCfgInputEntity(DmpCfgInputService dmpCfgInputService,
 			DmpHandlerCache dmpHandlerCache,
 			String systemId,
@@ -69,6 +98,38 @@ public final class AliExpressDmpHandlerUtils {
 				.eq(BaseEntity.IS_DELETED, false)
 				.last("limit 1");
 		return dmpCfgInputService.getOne(queryWrapper);
+	}
+
+	@SuppressWarnings("unchecked")
+	private static void addOrderIdsFromValue(Set<String> orderIds, Object value) {
+		if (value instanceof List) {
+			for (Object item : (List<?>) value) {
+				if (item instanceof Map) {
+					addOrderIdFields(orderIds, (Map<String, Object>) item);
+				}
+			}
+		} else if (value instanceof Map) {
+			addOrderIdFields(orderIds, (Map<String, Object>) value);
+		}
+	}
+
+	private static void addOrderIdFields(Set<String> orderIds, Map<String, Object> data) {
+		if (data == null) {
+			return;
+		}
+		addIfNotBlank(orderIds, data.get("order_id"));
+		addIfNotBlank(orderIds, data.get("child_id"));
+		addIfNotBlank(orderIds, data.get("child_order_id"));
+	}
+
+	private static void addIfNotBlank(Set<String> values, Object value) {
+		if (value == null) {
+			return;
+		}
+		String valueStr = value.toString();
+		if (StringUtils.isNotBlank(valueStr)) {
+			values.add(valueStr);
+		}
 	}
 
 	private static String getSystemCode(DmpBasicSystemEntity dmpBasicSystemEntity) {

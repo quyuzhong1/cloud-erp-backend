@@ -222,7 +222,7 @@ public class NewPlatformReturnOrderConsumerService extends AbstractNewPlatformCo
 		if (Objects.nonNull(matchedDetail)) {
 			return matchedDetail;
 		}
-		if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dictPlatform)) {
+		if (isAliExpressApiPlatform(dictPlatform)) {
 			return soB2cDetailEntityList.stream()
 					.filter(v -> Objects.equals(v.getPlatformSpuNo(), platformSkuNo))
 					.findFirst()
@@ -235,7 +235,7 @@ public class NewPlatformReturnOrderConsumerService extends AbstractNewPlatformCo
 		if (StringUtils.isBlank(platformSkuNo) || StringUtils.isBlank(dictPlatform) || StringUtils.isBlank(shopId)) {
 			return null;
 		}
-		if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dictPlatform)) {
+		if (isAliExpressApiPlatform(dictPlatform)) {
 			Map<String, List<ListingInfoWithSkuMappingDTO>> mappingMap = skuMappingService
 					.mapListingByPlatformSkuNo(Collections.singletonList(""),
 							Collections.singletonList(platformSkuNo),
@@ -300,13 +300,19 @@ public class NewPlatformReturnOrderConsumerService extends AbstractNewPlatformCo
 			return false;
 		}
 		String platform = resolvePlatformCode(dto);
-		return PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(platform)
-				|| PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(platform)
-				|| PlatformDictEnum.SHOPEE.getCode().equalsIgnoreCase(platform);
+		String apiPlatform = PlatformDictEnum.getApiPlatformCode(platform);
+		return PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(apiPlatform)
+				|| PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(apiPlatform)
+				|| PlatformDictEnum.SHOPEE.getCode().equalsIgnoreCase(apiPlatform);
 	}
 
 	private String resolvePlatformCode(PlatformReturnOrderDTO dto) {
 		return org.apache.commons.lang3.StringUtils.defaultIfBlank(dto.getDictPlatform(), dto.getPlatform());
+	}
+
+	private boolean isAliExpressApiPlatform(String dictPlatform) {
+		return PlatformDictEnum.ALI_EXPRESS.getCode()
+				.equalsIgnoreCase(PlatformDictEnum.getApiPlatformCode(dictPlatform));
 	}
 
 	private boolean isShopeePlatform(PlatformReturnOrderDTO dto) {
