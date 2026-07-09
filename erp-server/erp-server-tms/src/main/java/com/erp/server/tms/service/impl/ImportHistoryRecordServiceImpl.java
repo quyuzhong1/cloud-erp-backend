@@ -44,6 +44,7 @@ import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
 import com.erp.server.tms.constant.LogisticsCostImportTargetFieldConstant;
 import com.erp.server.tms.util.CfgLogisticsCostImportEtlRuleHelper;
+import com.erp.server.tms.util.LogisticsCostImportRowValueHelper;
 import com.erp.server.tms.util.LogisticsBillPlatformCodeUtil;
 import com.erp.server.tms.util.LogisticsCostImportMatchHelper;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
@@ -600,7 +601,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
 
     // 判断是否为纵向费用项
     private boolean isVerticalCostItem(List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList) {
-        return cfgImportDetailList.stream().anyMatch(obj -> CharSequenceUtil.equals(obj.getTargetField(), "costItem") && CharSequenceUtil.isNotBlank(obj.getSourceDetailField()));
+        return LogisticsCostImportRowValueHelper.isVerticalCostItem(cfgImportDetailList);
     }
 
     private String buildImportUniqueGroupKey(JSONObject row, List<CfgLogisticsCostImportDetailEntity> uniqueKeyList) {
@@ -1361,6 +1362,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             groupResult.setSuccess(true);
             groupResult.setImportType(importDataDTO.getImportType());
             groupResult.setResolvedCfgCostBySubId(resolvedCfgCostBySubId);
+            fillReconMatchErpSnapshot(groupResult, groupMatchedBillList);
             importDataList.add(importDataDTO);
             groupImportDataMap.put(groupKey, importDataDTO);
         }
@@ -1408,10 +1410,32 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 rowResult.setImportType(groupResult.getImportType());
                 rowResult.setResolvedCfgCostBySubId(groupResult.getResolvedCfgCostBySubId());
                 rowResult.setBillRefs(groupResult.getBillRefs());
+                rowResult.setErpSoCode(groupResult.getErpSoCode());
+                rowResult.setErpPlatformOrderNo(groupResult.getErpPlatformOrderNo());
+                rowResult.setErpTrackNo(groupResult.getErpTrackNo());
+                rowResult.setErpSoDeliveryCode(groupResult.getErpSoDeliveryCode());
                 results.add(rowResult);
             }
         }
         return results;
+    }
+
+    /**
+     * 从命中的物流单提取 ERP 单号快照，供对账明细回填展示。
+     */
+    private void fillReconMatchErpSnapshot(LogisticsReconMatchDTO.MatchResultDTO result,
+                                           List<LogisticsBillDTO.LogisticsBillVo> matchedBillList) {
+        if (result == null || CollUtil.isEmpty(matchedBillList)) {
+            return;
+        }
+        LogisticsBillDTO.LogisticsBillVo bill = matchedBillList.get(0);
+        if (bill == null) {
+            return;
+        }
+        result.setErpSoCode(bill.getSourceCode());
+        result.setErpPlatformOrderNo(bill.getPlatformCode());
+        result.setErpTrackNo(bill.getTrackNo());
+        result.setErpSoDeliveryCode(bill.getSoDeliveryCode());
     }
 
     /**
@@ -3049,301 +3073,27 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
     private void prepareImportRowValues(List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList,
                                         Map<Integer, String> headMap,
                                         List<JSONObject> successList) {
-        int nextVirtualIndex = headMap.keySet().stream().filter(Objects::nonNull).max(Integer::compareTo).orElse(-1) + 1;
-        boolean isVertical = isVerticalCostItem(cfgImportDetailList);
-        for (CfgLogisticsCostImportDetailEntity detail : cfgImportDetailList) {
-            if (isVertical && isVerticalAmountDetail(detail)) {
-                if (CharSequenceUtil.isNotBlank(detail.getSourceField())) {
-                    Integer mappingIndex = getMapKey(headMap, detail.getSourceField());
-                    if (ObjectUtil.isNotNull(mappingIndex)) {
-                        detail.setMappingIndex(mappingIndex);
-                    }
-                }
-                continue;
-            }
-            if (CharSequenceUtil.isBlank(detail.getSourceField())) {
-                if (CharSequenceUtil.isBlank(detail.getDefaultValue())) {
-                    continue;
-                }
-                if (ObjectUtil.isNull(detail.getMappingIndex())) {
-                    detail.setMappingIndex(nextVirtualIndex++);
-                }
-                for (JSONObject rowData : successList) {
-                    String cleanedValue = cleanFieldValue(detail.getDefaultValue(), detail, rowData, headMap);
-                    setPreparedValue(rowData, detail, cleanedValue);
-                }
-                continue;
-            }
-
-            Integer mappingIndex = getMapKey(headMap, detail.getSourceField());
-            if (ObjectUtil.isEmpty(mappingIndex)) {
-                if (Boolean.TRUE.equals(detail.getIsUniqueKey())) {
-                    throw new ServiceException("唯一识别字段未匹配到 Excel 抬头：" + detail.getSourceField());
-                }
-                continue;
-            }
-            detail.setMappingIndex(mappingIndex);
-            String mappingKey = mappingIndex.toString();
-            if (isVertical && isVerticalCostItemDetail(detail)) {
-                for (JSONObject rowData : successList) {
-                    Object rawValue = rowData.get(mappingKey);
-                    String resolvedValue = ObjectUtil.isEmpty(rawValue) ? "" : String.valueOf(rawValue);
-                    setPreparedValue(rowData, detail, resolvedValue);
-                    if (!CharSequenceUtil.equals(detail.getSourceDetailField(), resolvedValue)) {
-                        continue;
-                    }
-                    prepareVerticalAmountValue(cfgImportDetailList, ACTUAL_AMOUNT_FIELD, detail, rowData, headMap);
-                    prepareVerticalAmountValue(cfgImportDetailList, ESTIMATED_AMOUNT_FIELD, detail, rowData, headMap);
-                }
-                continue;
-            }
-            for (JSONObject rowData : successList) {
-                Object rawValue = rowData.get(mappingKey);
-                String resolvedValue = ObjectUtil.isEmpty(rawValue) ? "" : String.valueOf(rawValue);
-                String cleanedValue = cleanFieldValue(resolvedValue, detail, rowData, headMap);
-                setPreparedValue(rowData, detail, cleanedValue);
-            }
-        }
-    }
-
-    private boolean isVerticalCostItemDetail(CfgLogisticsCostImportDetailEntity detail) {
-        return CharSequenceUtil.equals(detail.getTargetField(), COST_ITEM_FIELD)
-                && CharSequenceUtil.isNotBlank(detail.getSourceDetailField());
-    }
-
-    private boolean isVerticalAmountDetail(CfgLogisticsCostImportDetailEntity detail) {
-        return CharSequenceUtil.equals(detail.getTargetField(), ACTUAL_AMOUNT_FIELD)
-                || CharSequenceUtil.equals(detail.getTargetField(), ESTIMATED_AMOUNT_FIELD);
-    }
-
-    private void prepareVerticalAmountValue(List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList,
-                                            String amountTargetField,
-                                            CfgLogisticsCostImportDetailEntity costItemDetail,
-                                            JSONObject rowData,
-                                            Map<Integer, String> headMap) {
-        Optional<CfgLogisticsCostImportDetailEntity> amountDetailOpt = cfgImportDetailList.stream()
-                .filter(detail -> CharSequenceUtil.equals(detail.getTargetField(), amountTargetField))
-                .findFirst();
-        if (!amountDetailOpt.isPresent()) {
-            return;
-        }
-        CfgLogisticsCostImportDetailEntity amountDetail = amountDetailOpt.get();
-        Integer mappingIndex = amountDetail.getMappingIndex();
-        if (ObjectUtil.isNull(mappingIndex)) {
-            if (CharSequenceUtil.isBlank(amountDetail.getSourceField())) {
-                return;
-            }
-            mappingIndex = getMapKey(headMap, amountDetail.getSourceField());
-            if (ObjectUtil.isNull(mappingIndex)) {
-                return;
-            }
-            amountDetail.setMappingIndex(mappingIndex);
-        }
-        Object rawValue = rowData.get(mappingIndex.toString());
-        String resolvedValue = ObjectUtil.isEmpty(rawValue) ? "" : String.valueOf(rawValue);
-        String cleanedValue = cleanFieldValue(resolvedValue, costItemDetail, rowData, headMap);
-        setPreparedValue(rowData, amountDetail, cleanedValue);
+        LogisticsCostImportRowValueHelper.prepareImportRowValues(cfgImportDetailList, headMap, successList);
     }
 
     private String cleanFieldValue(String value,
                                    CfgLogisticsCostImportDetailEntity detail,
                                    JSONObject rowData,
                                    Map<Integer, String> headMap) {
-        String result = ObjectUtil.isEmpty(value) ? "" : String.valueOf(value);
-        for (com.erp.model.tms.dto.CfgLogisticsCostImportDetailDTO.EtlRuleDTO rule : getSortedEtlRuleList(detail)) {
-            String type = rule.getType();
-            if (CharSequenceUtil.equals(CfgLogisticsCostImportEtlRuleTypeEnum.REPLACE.getCode(), type)) {
-                result = applyReplaceRule(result, rule);
-                continue;
-            }
-            if (CharSequenceUtil.equals(CfgLogisticsCostImportEtlRuleTypeEnum.SUBSTRING.getCode(), type)) {
-                result = applySubstringRule(result, rule);
-                continue;
-            }
-            if (CharSequenceUtil.equals(CfgLogisticsCostImportEtlRuleTypeEnum.TO_POSITIVE.getCode(), type)) {
-                result = toSignedNumberText(result, false);
-                continue;
-            }
-            if (CharSequenceUtil.equals(CfgLogisticsCostImportEtlRuleTypeEnum.TO_NEGATIVE.getCode(), type)) {
-                result = toSignedNumberText(result, true);
-                continue;
-            }
-            if (CharSequenceUtil.equals(CfgLogisticsCostImportEtlRuleTypeEnum.FILL_EMPTY.getCode(), type)) {
-                result = applyFillEmptyRule(result, rule, rowData, headMap);
-                continue;
-            }
-            log.error("不支持的字段清洗规则类型：{}", type);
-        }
-        return result;
-    }
-
-    private List<com.erp.model.tms.dto.CfgLogisticsCostImportDetailDTO.EtlRuleDTO> getSortedEtlRuleList(CfgLogisticsCostImportDetailEntity detail) {
-        List<com.erp.model.tms.dto.CfgLogisticsCostImportDetailDTO.EtlRuleDTO> ruleList = detail.getEtlRuleList();
-        if (CollUtil.isEmpty(ruleList)) {
-            ruleList = CfgLogisticsCostImportEtlRuleHelper.parseStorage(detail.getEtlRuleListStorage());
-            detail.setEtlRuleList(ruleList);
-        }
-        if (CollUtil.isEmpty(ruleList)) {
-            return Collections.emptyList();
-        }
-        return ruleList.stream()
-                .filter(Objects::nonNull)
-                .sorted(Comparator.comparing(rule -> Optional.ofNullable(rule.getIndex()).orElse(0)))
-                .collect(Collectors.toList());
-    }
-
-    private String applyReplaceRule(String value, com.erp.model.tms.dto.CfgLogisticsCostImportDetailDTO.EtlRuleDTO rule) {
-        if (CharSequenceUtil.isBlank(rule.getSourceText())) {
-            return value;
-        }
-        if (CharSequenceUtil.equals(CfgLogisticsCostImportEtlReplaceModeEnum.REPLACE_EMPTY.getCode(), rule.getMode())) {
-            return value.replace(rule.getSourceText(), "");
-        }
-        if (CharSequenceUtil.equals(CfgLogisticsCostImportEtlReplaceModeEnum.REPLACE_TO.getCode(), rule.getMode())) {
-            return value.replace(rule.getSourceText(), rule.getTargetText() == null ? "" : rule.getTargetText());
-        }
-        return value;
-    }
-
-    private String applySubstringRule(String value, com.erp.model.tms.dto.CfgLogisticsCostImportDetailDTO.EtlRuleDTO rule) {
-        if (CharSequenceUtil.isBlank(value)) {
-            return value;
-        }
-        String mode = rule.getMode();
-        if (CharSequenceUtil.equals(CfgLogisticsCostImportEtlSubstringModeEnum.BY_SYMBOL.getCode(), mode)) {
-            String symbol = rule.getSymbol();
-            if (CharSequenceUtil.isBlank(symbol) || !value.contains(symbol)) {
-                return value;
-            }
-            int index = value.indexOf(symbol);
-            if (CharSequenceUtil.equals(CfgLogisticsCostImportEtlSymbolPositionEnum.BEFORE.getCode(), rule.getSymbolPosition())) {
-                return value.substring(0, index);
-            }
-            if (CharSequenceUtil.equals(CfgLogisticsCostImportEtlSymbolPositionEnum.AFTER.getCode(), rule.getSymbolPosition())) {
-                return value.substring(index + symbol.length());
-            }
-            return value;
-        }
-        if (CharSequenceUtil.equals(CfgLogisticsCostImportEtlSubstringModeEnum.BY_ORDER.getCode(), mode)) {
-            Integer length = rule.getLength();
-            if (ObjectUtil.isNull(length) || length <= 0) {
-                return value;
-            }
-            int safeLength = Math.min(length, value.length());
-            if (CharSequenceUtil.equals(CfgLogisticsCostImportEtlOrderDirectionEnum.RIGHT.getCode(), rule.getOrderDirection())) {
-                return value.substring(value.length() - safeLength);
-            }
-            return value.substring(0, safeLength);
-        }
-        if (CharSequenceUtil.equals(CfgLogisticsCostImportEtlSubstringModeEnum.CHINESE.getCode(), mode)) {
-            return NON_CHINESE_PATTERN.matcher(value).replaceAll("");
-        }
-        if (CharSequenceUtil.equals(CfgLogisticsCostImportEtlSubstringModeEnum.ENGLISH.getCode(), mode)) {
-            return NON_ENGLISH_PATTERN.matcher(value).replaceAll("");
-        }
-        return value;
-    }
-
-    private String applyFillEmptyRule(String value,
-                                      com.erp.model.tms.dto.CfgLogisticsCostImportDetailDTO.EtlRuleDTO rule,
-                                      JSONObject rowData,
-                                      Map<Integer, String> headMap) {
-        if (CharSequenceUtil.isNotBlank(value)) {
-            return value;
-        }
-        if (CharSequenceUtil.equals(CfgLogisticsCostImportEtlFillModeEnum.CUSTOM.getCode(), rule.getMode())) {
-            return rule.getFillValue() == null ? "" : rule.getFillValue();
-        }
-        if (CharSequenceUtil.equals(CfgLogisticsCostImportEtlFillModeEnum.FIELD.getCode(), rule.getMode())) {
-            Integer fieldIndex = getMapKey(headMap, rule.getSourceField());
-            if (ObjectUtil.isNull(fieldIndex)) {
-                return value;
-            }
-            Object fieldValue = rowData.get(fieldIndex.toString());
-            return ObjectUtil.isEmpty(fieldValue) ? "" : String.valueOf(fieldValue);
-        }
-        return value;
-    }
-
-    private String toSignedNumberText(String value, boolean negative) {
-        if (CharSequenceUtil.isBlank(value)) {
-            return value;
-        }
-        try {
-            BigDecimal number = new BigDecimal(value.trim());
-            BigDecimal signedNumber = negative ? number.abs().negate() : number.abs();
-            return signedNumber.stripTrailingZeros().toPlainString();
-        } catch (NumberFormatException e) {
-            return value;
-        }
+        return LogisticsCostImportRowValueHelper.cleanFieldValue(value, detail, rowData, headMap);
     }
 
     private void setPreparedValue(JSONObject rowData, CfgLogisticsCostImportDetailEntity detail, String value) {
-        String text = ObjectUtil.isEmpty(value) ? "" : value;
-        if (ObjectUtil.isNotNull(detail.getMappingIndex())) {
-            rowData.set(detail.getMappingIndex().toString(), text);
-        }
-        if (CharSequenceUtil.isNotBlank(detail.getTargetField())) {
-            rowData.set(detail.getTargetField(), text);
-        }
+        LogisticsCostImportRowValueHelper.setPreparedValue(rowData, detail, value);
     }
 
     private String getPreparedValue(JSONObject rowData, CfgLogisticsCostImportDetailEntity detail) {
-        Object value = ObjectUtil.isNotNull(detail.getMappingIndex()) ? rowData.get(detail.getMappingIndex().toString()) : null;
-        if (ObjectUtil.isEmpty(value) && CharSequenceUtil.isNotBlank(detail.getTargetField())) {
-            value = rowData.get(detail.getTargetField());
-        }
-        if (ObjectUtil.isEmpty(value)) {
-            return "";
-        }
-        return String.valueOf(value);
+        return LogisticsCostImportRowValueHelper.getPreparedValue(rowData, detail);
     }
 
     private void standardizeImportRowWeightValues(List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList,
                                                   List<JSONObject> successList) {
-        if (CollUtil.isEmpty(successList)) {
-            return;
-        }
-        Optional<CfgLogisticsCostImportDetailEntity> unitDetailOpt = cfgImportDetailList.stream()
-                .filter(detail -> CharSequenceUtil.equals(detail.getTargetField(), LOGISTICS_WEIGHT_UNIT_FIELD))
-                .findFirst();
-        if (!unitDetailOpt.isPresent()) {
-            return;
-        }
-        CfgLogisticsCostImportDetailEntity unitDetail = unitDetailOpt.get();
-        List<CfgLogisticsCostImportDetailEntity> weightDetails = cfgImportDetailList.stream()
-                .filter(detail -> CharSequenceUtil.equals(detail.getTargetField(), BILLING_WEIGHT_LOGISTICS_FIELD)
-                        || CharSequenceUtil.equals(detail.getTargetField(), THIRD_ACTUAL_WEIGHT_FIELD))
-                .collect(Collectors.toList());
-        if (CollUtil.isEmpty(weightDetails)) {
-            return;
-        }
-        for (JSONObject rowData : successList) {
-            String unit = getPreparedValue(rowData, unitDetail);
-            if (!UnitEnum.WeightUnitEnum.G.getCode().equalsIgnoreCase(unit)) {
-                continue;
-            }
-            Map<CfgLogisticsCostImportDetailEntity, String> convertedWeightMap = new HashMap<>();
-            boolean convertFailed = false;
-            for (CfgLogisticsCostImportDetailEntity weightDetail : weightDetails) {
-                String weightValue = getPreparedValue(rowData, weightDetail);
-                if (CharSequenceUtil.isBlank(weightValue)) {
-                    continue;
-                }
-                try {
-                    BigDecimal kgValue = new BigDecimal(weightValue).divide(new BigDecimal("1000"), 4, RoundingMode.DOWN);
-                    convertedWeightMap.put(weightDetail, kgValue.stripTrailingZeros().toPlainString());
-                } catch (NumberFormatException e) {
-                    log.warn("物流商重量值无法转换为 KG：{}", weightValue);
-                    convertFailed = true;
-                }
-            }
-            if (convertFailed) {
-                continue;
-            }
-            convertedWeightMap.forEach((weightDetail, value) -> setPreparedValue(rowData, weightDetail, value));
-            setPreparedValue(rowData, unitDetail, UnitEnum.WeightUnitEnum.KG.getCode());
-        }
+        LogisticsCostImportRowValueHelper.standardizeImportRowWeightValues(cfgImportDetailList, successList);
     }
 
     private void prepareCleanFileHeaders(List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList,
@@ -3467,31 +3217,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
      * @return String
      */
     private Integer getMapKey(Map<Integer, String> headMap, String targetValue) {
-        Integer resultKey = null;
-
-        // 预处理目标值：去除首尾空格、换行等空白字符
-        String cleanedTarget = targetValue.trim();
-
-        for (Integer key : headMap.keySet()) {
-            String value = headMap.get(key);
-
-            // 如果value为null，跳过避免空指针异常
-            if (value == null) {
-                continue;
-            }
-
-            // 去除当前value的首尾空格、换行等空白字符
-            String cleanedValue = value.trim().replaceAll("\n"," ");
-
-
-
-            // 精准匹配（完全相等）
-            if (cleanedValue.equals(cleanedTarget)) {
-                resultKey = key;
-                break;  // 找到第一个匹配的就返回
-            }
-        }
-        return resultKey;
+        return LogisticsCostImportRowValueHelper.getMapKey(headMap, targetValue);
     }
 
     /**

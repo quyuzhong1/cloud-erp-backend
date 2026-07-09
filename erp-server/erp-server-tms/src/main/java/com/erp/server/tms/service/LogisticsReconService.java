@@ -198,6 +198,15 @@ public interface LogisticsReconService extends SuperService<LogisticsReconEntity
                                 List<LogisticsReconMatchDTO.MatchResultDTO> matchResults);
 
     /**
+     * 回写匹配结果（独立短事务，与 reconMatchAndGenerate 分离），支持传入 ERP 单号用于明细快照回填。
+     */
+    void commitReconMatchResult(String mainId, String matchType,
+                                Map<String, String> rowKeyToDetailId,
+                                Map<String, List<LogisticsReconDetailSubEntity>> rowKeyToSubs,
+                                List<LogisticsReconMatchDTO.MatchResultDTO> matchResults,
+                                List<LogisticsReconMatchDTO.SubErpInputDTO> erpInputs);
+
+    /**
      * 物流商对账单导入分批处理（供 Excel 监听器分批回调）
      * 解析/校验/汇率换算在事务外完成，仅 detail+sub 落库走事务（{@link #saveImportDetailAndSub}）
      * @author Will

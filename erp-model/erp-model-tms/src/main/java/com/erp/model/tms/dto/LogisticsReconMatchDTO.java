@@ -170,6 +170,22 @@ public class LogisticsReconMatchDTO implements Serializable {
          * 匹配成功后按 detailSubId 回写的 ERP 费用配置（key = logistics_recon_detail_sub.id）
          */
         private Map<String, ResolvedCfgCostDTO> resolvedCfgCostBySubId = new HashMap<>();
+        /**
+         * 匹配成功后回填明细 ERP 单号快照：销售单号
+         */
+        private String erpSoCode;
+        /**
+         * 匹配成功后回填明细 ERP 单号快照：平台订单号
+         */
+        private String erpPlatformOrderNo;
+        /**
+         * 匹配成功后回填明细 ERP 单号快照：物流跟踪号
+         */
+        private String erpTrackNo;
+        /**
+         * 匹配成功后回填明细 ERP 单号快照：发货单号
+         */
+        private String erpSoDeliveryCode;
     }
 
     /**

@@ -77,8 +77,11 @@ import com.erp.server.tms.service.LogisticsReconDetailSubService;
 import com.erp.server.tms.service.LogisticsReconRefLogisticsBillService;
 import com.erp.server.tms.service.LogisticsReconService;
 import com.erp.server.tms.constant.LogisticsCostImportTargetFieldConstant;
+import com.erp.server.tms.util.LogisticsCostImportRowValueHelper;
 import com.erp.server.tms.util.LogisticsReconMatchGroupHelper;
 import com.erp.server.tms.util.LogisticsReconOpenImportConverter;
+import com.erp.model.tms.enums.logisticsPayTypeEnum;
+import cn.hutool.json.JSONObject;
 import com.erp.server.tms.service.LogisticsSupplierService;
 import com.erp.server.tms.service.OperateLogService;
 import com.erp.server.tms.service.support.LogisticsReconMatchFailReasonSupport;
@@ -698,36 +701,70 @@ public class LogisticsReconServiceImpl
     }
 
     /**
-     * 构建导入中间对象并执行字段映射
-     * @author Will
-     * @date: 2026/06/02
-     * @param rowNo
-     * @param row
-     * @param headerIndexMap
-     * @param cfgDetails
-     * @return LogisticsReconImportExcelDTO
+     * 按费用配置准备导入行（映射、默认值、ETL、重量单位标准化），与物流费用导入一致。
+     */
+    private List<JSONObject> prepareReconImportRowDataList(List<Map<Integer, String>> rows,
+                                                           Map<Integer, String> headMap,
+                                                           List<CfgLogisticsCostImportDetailEntity> cfgDetails) {
+        List<JSONObject> rowDataList = rows.stream()
+                .map(LogisticsCostImportRowValueHelper::toRowData)
+                .collect(Collectors.toList());
+        LogisticsCostImportRowValueHelper.prepareImportRowValues(cfgDetails, headMap, rowDataList);
+        LogisticsCostImportRowValueHelper.standardizeImportRowWeightValues(cfgDetails, rowDataList);
+        return rowDataList;
+    }
+
+    /**
+     * 构建导入中间对象并执行字段映射（复用费用配置的默认值与 ETL 清洗结果）。
      */
     private LogisticsReconImportExcelDTO buildReconImportExcel(int rowNo, Map<Integer, String> row,
                                                               Map<Integer, String> headMap,
-                                                              Map<String, Integer> headerIndexMap,
-                                                              List<CfgLogisticsCostImportDetailEntity> cfgDetails) {
+                                                              List<CfgLogisticsCostImportDetailEntity> cfgDetails,
+                                                              JSONObject rowData, boolean vertical) {
         LogisticsReconImportExcelDTO excelDTO = new LogisticsReconImportExcelDTO();
         excelDTO.setNo(String.valueOf(rowNo));
         attachImportErrorRow(excelDTO, row, headMap);
         for (CfgLogisticsCostImportDetailEntity cfg : cfgDetails) {
             String target = StrUtil.blankToDefault(cfg.getTargetField(), cfg.getTargetDetailField());
-            String value = getCellValue(row, headerIndexMap, cfg);
-            if (StrUtil.isBlank(target) || StrUtil.isBlank(value)) {
+            if (StrUtil.isBlank(target)) {
+                continue;
+            }
+            // 纵向模式下 costItem 列存的是费用名称文本，交由 actualAmount 配置提供金额校验值，避免把费用名当金额触发数字校验失败；
+            // 横向模式下 costItem 列即为金额列，需保留以设置 actualAmount 通过非空校验。
+            if (vertical && StrUtil.equals("costItem", target)) {
+                continue;
+            }
+            String value = LogisticsCostImportRowValueHelper.getPreparedValue(rowData, cfg);
+            if (StrUtil.isBlank(value)) {
                 continue;
             }
             applyImportExcelField(excelDTO, target, value, cfg);
         }
+        normalizeImportPayType(excelDTO);
         if (StrUtil.isNotBlank(excelDTO.getActualAmount())) {
-            // 原币金额统一按 numeric(16,4) 规整
             excelDTO.setActualAmountValue(
                     parseAmount(excelDTO.getActualAmount(), false).setScale(4, RoundingMode.HALF_UP));
         }
         return excelDTO;
+    }
+
+    /**
+     * 对账类型归一：已是合法 code（pay/refund）直接保留；是名称（付款/退款）则转 code；
+     * 其余无法识别的值保留原样，交由 DTO 的 fieldValues 校验拦截（避免静默改成 pay 导致 refund 丢失）。
+     */
+    private void normalizeImportPayType(LogisticsReconImportExcelDTO excelDTO) {
+        if (excelDTO == null || StrUtil.isBlank(excelDTO.getPayType())) {
+            return;
+        }
+        String raw = StrUtil.trim(excelDTO.getPayType());
+        if (logisticsPayTypeEnum.getByStatus(raw) != null) {
+            excelDTO.setPayType(raw);
+            return;
+        }
+        String payTypeCode = logisticsPayTypeEnum.getByName(raw);
+        if (StrUtil.isNotBlank(payTypeCode)) {
+            excelDTO.setPayType(payTypeCode);
+        }
     }
 
     /**
@@ -845,12 +882,15 @@ public class LogisticsReconServiceImpl
                                             List<LogisticsReconImportExcelDTO> errorList,
                                             Map<String, Integer> detailCostCountDelta) {
         List<CfgLogisticsCostImportDetailEntity> costCfgList = reconCostItemCfgList(cfgDetails);
+        List<JSONObject> preparedRowDataList = prepareReconImportRowDataList(rows, headMap, cfgDetails);
         int rowNo = rowNoStart;
-        for (Map<Integer, String> row : rows) {
+        for (int rowIndex = 0; rowIndex < rows.size(); rowIndex++) {
+            Map<Integer, String> row = rows.get(rowIndex);
+            JSONObject rowData = preparedRowDataList.get(rowIndex);
             int currentRowNo = rowNo++;
             LogisticsReconImportExcelDTO excelDTO = null;
             try {
-                excelDTO = buildReconImportExcel(currentRowNo, row, headMap, headerIndexMap, cfgDetails);
+                excelDTO = buildReconImportExcel(currentRowNo, row, headMap, cfgDetails, rowData, false);
                 List<String> errorMsgList = FieldValidUtil.fieldValid(excelDTO);
                 if (CollUtil.isNotEmpty(errorMsgList)) {
                     excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
@@ -864,7 +904,7 @@ public class LogisticsReconServiceImpl
                 String localRateError = null;
                 int seqNo = resolveResult.getNextSeqNo();
                 for (CfgLogisticsCostImportDetailEntity costCfg : costCfgList) {
-                    String value = getCellValue(row, headerIndexMap, costCfg);
+                    String value = LogisticsCostImportRowValueHelper.getPreparedValue(rowData, costCfg);
                     if (StrUtil.isBlank(value)) {
                         continue;
                     }
@@ -924,21 +964,20 @@ public class LogisticsReconServiceImpl
                                           List<LogisticsReconImportExcelDTO> errorList,
                                           Map<String, Integer> detailCostCountDelta) {
         List<CfgLogisticsCostImportDetailEntity> costCfgList = reconCostItemCfgList(cfgDetails);
-        String costNameHeader = costCfgList.stream()
-                .map(CfgLogisticsCostImportDetailEntity::getSourceField)
-                .filter(StrUtil::isNotBlank)
-                .findFirst().orElse(null);
         CfgLogisticsCostImportDetailEntity actualCfg = cfgDetails.stream()
                 .filter(detail -> StrUtil.equals("actualAmount", detail.getTargetField())).findFirst().orElse(null);
         CfgLogisticsCostImportDetailEntity estimatedCfg = cfgDetails.stream()
                 .filter(detail -> StrUtil.equals("estimatedAmount", detail.getTargetField())).findFirst().orElse(null);
 
+        List<JSONObject> preparedRowDataList = prepareReconImportRowDataList(rows, headMap, cfgDetails);
         int rowNo = rowNoStart;
-        for (Map<Integer, String> row : rows) {
+        for (int rowIndex = 0; rowIndex < rows.size(); rowIndex++) {
+            Map<Integer, String> row = rows.get(rowIndex);
+            JSONObject rowData = preparedRowDataList.get(rowIndex);
             int currentRowNo = rowNo++;
             LogisticsReconImportExcelDTO excelDTO = null;
             try {
-                excelDTO = buildReconImportExcel(currentRowNo, row, headMap, headerIndexMap, cfgDetails);
+                excelDTO = buildReconImportExcel(currentRowNo, row, headMap, cfgDetails, rowData, true);
                 List<String> errorMsgList = FieldValidUtil.fieldValid(excelDTO);
                 if (CollUtil.isNotEmpty(errorMsgList)) {
                     excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
@@ -951,7 +990,11 @@ public class LogisticsReconServiceImpl
                 List<LogisticsReconDetailSubEntity> rowUpdateSubs = new ArrayList<>();
                 int seqNo = resolveResult.getNextSeqNo();
 
-                String costNameCell = StrUtil.isBlank(costNameHeader) ? "" : readCellByHeader(row, headerIndexMap, costNameHeader);
+                CfgLogisticsCostImportDetailEntity costItemCfg = costCfgList.stream()
+                        .filter(costCfg -> StrUtil.isNotBlank(costCfg.getSourceDetailField()))
+                        .findFirst().orElse(null);
+                String costNameCell = costItemCfg == null ? ""
+                        : LogisticsCostImportRowValueHelper.getPreparedValue(rowData, costItemCfg);
                 CfgLogisticsCostImportDetailEntity matched = costCfgList.stream()
                         .filter(costCfg -> StrUtil.equals(costCfg.getSourceDetailField(), costNameCell))
                         .findFirst().orElse(null);
@@ -964,9 +1007,11 @@ public class LogisticsReconServiceImpl
                     continue;
                 }
                 BigDecimal actual = actualCfg == null ? BigDecimal.ZERO
-                        : parseAmount(getCellValue(row, headerIndexMap, actualCfg), false).setScale(4, RoundingMode.HALF_UP);
+                        : parseAmount(LogisticsCostImportRowValueHelper.getPreparedValue(rowData, actualCfg), false)
+                        .setScale(4, RoundingMode.HALF_UP);
                 BigDecimal estimated = estimatedCfg == null ? BigDecimal.ZERO
-                        : parseAmount(getCellValue(row, headerIndexMap, estimatedCfg), false).setScale(4, RoundingMode.HALF_UP);
+                        : parseAmount(LogisticsCostImportRowValueHelper.getPreparedValue(rowData, estimatedCfg), false)
+                        .setScale(4, RoundingMode.HALF_UP);
                 ImportSubResolveResult subResult = resolveOrBuildImportSub(dto, detail, seqNo, costName, actual, estimated, rateCache);
                 if (subResult.getRateError() != null) {
                     excelDTO.setErrorMsg(subResult.getRateError());
@@ -1403,10 +1448,10 @@ public class LogisticsReconServiceImpl
      * @author Will
      * @date: 2026/06/12
      */
-    private String reconUniqueGroupKey(Map<Integer, String> row, Map<String, Integer> headerIndexMap,
+    private String reconUniqueGroupKey(JSONObject rowData,
                                        List<CfgLogisticsCostImportDetailEntity> uniqueKeyList) {
         return uniqueKeyList.stream()
-                .map(uniqueKey -> getCellValue(row, headerIndexMap, uniqueKey))
+                .map(uniqueKey -> LogisticsCostImportRowValueHelper.getPreparedValue(rowData, uniqueKey))
                 .collect(Collectors.joining("_"));
     }
 
@@ -1895,7 +1940,7 @@ public class LogisticsReconServiceImpl
         LogisticsReconMatchExecutionResultDTO executionResult = executeReconMatch(entity, units, false, isConfirm);
         self.commitReconMatchResult(mainId, LogisticsReconRefMatchTypeEnum.AUTO.getCode(),
                 executionResult.getRowKeyToDetailId(), executionResult.getRowKeyToSubs(),
-                executionResult.getMatchResults());
+                executionResult.getMatchResults(), null);
     }
 
     /**
@@ -2007,7 +2052,25 @@ public class LogisticsReconServiceImpl
                                        Map<String, String> rowKeyToDetailId,
                                        Map<String, List<LogisticsReconDetailSubEntity>> rowKeyToSubs,
                                        List<LogisticsReconMatchDTO.MatchResultDTO> matchResults) {
+        commitReconMatchResult(mainId, matchType, rowKeyToDetailId, rowKeyToSubs, matchResults, null);
+    }
+
+    /**
+     * 提交匹配结果（独立事务）：成功行写 ref 关联并置 matched，失败行置 failed + 原因，并回填明细 ERP 快照。
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void commitReconMatchResult(String mainId, String matchType,
+                                       Map<String, String> rowKeyToDetailId,
+                                       Map<String, List<LogisticsReconDetailSubEntity>> rowKeyToSubs,
+                                       List<LogisticsReconMatchDTO.MatchResultDTO> matchResults,
+                                       List<LogisticsReconMatchDTO.SubErpInputDTO> erpInputs) {
         writeReconMatchResult(mainId, matchType, rowKeyToDetailId, rowKeyToSubs, matchResults);
+        try {
+            writeErpSnapshot(erpInputs, matchResults);
+        } catch (Exception e) {
+            log.warn("[commitReconMatchResult] ERP 单号快照回写失败 mainId={}", mainId, e);
+        }
     }
 
     /**
@@ -2272,12 +2335,7 @@ public class LogisticsReconServiceImpl
         LogisticsReconMatchExecutionResultDTO executionResult = executeReconMatch(entity, units, true, false);
         touchMatchingSubsUpdateTime(matchingSubIds);
         self.commitReconMatchResult(mainId, matchType, executionResult.getRowKeyToDetailId(),
-                executionResult.getRowKeyToSubs(), executionResult.getMatchResults());
-        try {
-            writeErpSnapshot(inputs, executionResult.getMatchResults());
-        } catch (Exception e) {
-            log.warn("[matchDetailSubsByErp] ERP 单号快照回写失败 mainId={}", mainId, e);
-        }
+                executionResult.getRowKeyToSubs(), executionResult.getMatchResults(), inputs);
         for (LogisticsReconMatchDTO.MatchResultDTO matchResult : executionResult.getMatchResults()) {
             if (matchResult.isSuccess()) {
                 results.add(BatchResultDTO.success(matchResult.getRowKey(), matchResult.getRowKey(), OperationTypeEnum.UPDATE));
@@ -2365,18 +2423,27 @@ public class LogisticsReconServiceImpl
 
     /**
      * 匹配成功后回填明细 ERP 单号快照（用于第三方/ERP 对照展示）。
-     * @author Will
-     * @date 2026/6/11
+     * 优先使用调用方传入的 ERP 单号（手动/导入匹配），否则取匹配结果中命中的物流单 ERP 单号（自动整批匹配）。
      */
     private void writeErpSnapshot(List<LogisticsReconMatchDTO.SubErpInputDTO> inputs,
                                   List<LogisticsReconMatchDTO.MatchResultDTO> matchResults) {
+        if (CollUtil.isEmpty(matchResults)) {
+            return;
+        }
         Map<String, Boolean> successMap = matchResults.stream()
                 .collect(Collectors.toMap(LogisticsReconMatchDTO.MatchResultDTO::getRowKey,
                         LogisticsReconMatchDTO.MatchResultDTO::isSuccess, (a, b) -> a));
-        List<String> successSubIds = inputs.stream()
-                .filter(input -> Boolean.TRUE.equals(successMap.get(input.getDetailSubId())))
-                .map(LogisticsReconMatchDTO.SubErpInputDTO::getDetailSubId)
-                .filter(StrUtil::isNotBlank)
+        Map<String, LogisticsReconMatchDTO.MatchResultDTO> resultMap = matchResults.stream()
+                .collect(Collectors.toMap(LogisticsReconMatchDTO.MatchResultDTO::getRowKey, r -> r, (a, b) -> a));
+        Map<String, LogisticsReconMatchDTO.SubErpInputDTO> inputBySubId = CollUtil.isEmpty(inputs)
+                ? Collections.emptyMap()
+                : inputs.stream()
+                .filter(input -> StrUtil.isNotBlank(input.getDetailSubId()))
+                .collect(Collectors.toMap(LogisticsReconMatchDTO.SubErpInputDTO::getDetailSubId,
+                        input -> input, (a, b) -> a));
+        List<String> successSubIds = matchResults.stream()
+                .filter(result -> result.isSuccess() && StrUtil.isNotBlank(result.getRowKey()))
+                .map(LogisticsReconMatchDTO.MatchResultDTO::getRowKey)
                 .distinct()
                 .collect(Collectors.toList());
         if (CollUtil.isEmpty(successSubIds)) {
@@ -2390,16 +2457,21 @@ public class LogisticsReconServiceImpl
                     .list()
                     .forEach(sub -> subEntityMap.put(sub.getId(), sub));
         }
-        Map<String, LogisticsReconMatchDTO.SubErpInputDTO> detailSnapshotMap = new HashMap<>();
-        for (LogisticsReconMatchDTO.SubErpInputDTO input : inputs) {
-            if (!Boolean.TRUE.equals(successMap.get(input.getDetailSubId()))) {
+        Map<String, LogisticsReconMatchDTO.SubErpInputDTO> detailSnapshotMap = new LinkedHashMap<>();
+        for (String detailSubId : successSubIds) {
+            if (!Boolean.TRUE.equals(successMap.get(detailSubId))) {
                 continue;
             }
-            LogisticsReconDetailSubEntity sub = subEntityMap.get(input.getDetailSubId());
+            LogisticsReconMatchDTO.SubErpInputDTO snapshot = mergeErpSnapshot(
+                    inputBySubId.get(detailSubId), resultMap.get(detailSubId));
+            if (snapshot == null) {
+                continue;
+            }
+            LogisticsReconDetailSubEntity sub = subEntityMap.get(detailSubId);
             if (sub == null || StrUtil.isBlank(sub.getDetailId())) {
                 continue;
             }
-            detailSnapshotMap.putIfAbsent(sub.getDetailId(), input);
+            detailSnapshotMap.putIfAbsent(sub.getDetailId(), snapshot);
         }
         for (Map.Entry<String, LogisticsReconMatchDTO.SubErpInputDTO> entry : detailSnapshotMap.entrySet()) {
             LogisticsReconMatchDTO.SubErpInputDTO input = entry.getValue();
@@ -2411,6 +2483,41 @@ public class LogisticsReconServiceImpl
                     .set(LogisticsReconDetailEntity::getErpSoDeliveryCode, input.getErpSoDeliveryCode())
                     .update();
         }
+    }
+
+    /**
+     * 合并调用方 ERP 单号与匹配结果中的 ERP 快照，调用方非空字段优先。
+     */
+    private LogisticsReconMatchDTO.SubErpInputDTO mergeErpSnapshot(
+            LogisticsReconMatchDTO.SubErpInputDTO input,
+            LogisticsReconMatchDTO.MatchResultDTO matchResult) {
+        LogisticsReconMatchDTO.SubErpInputDTO merged = new LogisticsReconMatchDTO.SubErpInputDTO();
+        if (input != null) {
+            merged.setErpSoCode(input.getErpSoCode());
+            merged.setErpPlatformOrderNo(input.getErpPlatformOrderNo());
+            merged.setErpTrackNo(input.getErpTrackNo());
+            merged.setErpSoDeliveryCode(input.getErpSoDeliveryCode());
+        }
+        if (matchResult != null && matchResult.isSuccess()) {
+            if (StrUtil.isBlank(merged.getErpSoCode())) {
+                merged.setErpSoCode(matchResult.getErpSoCode());
+            }
+            if (StrUtil.isBlank(merged.getErpPlatformOrderNo())) {
+                merged.setErpPlatformOrderNo(matchResult.getErpPlatformOrderNo());
+            }
+            if (StrUtil.isBlank(merged.getErpTrackNo())) {
+                merged.setErpTrackNo(matchResult.getErpTrackNo());
+            }
+            if (StrUtil.isBlank(merged.getErpSoDeliveryCode())) {
+                merged.setErpSoDeliveryCode(matchResult.getErpSoDeliveryCode());
+            }
+        }
+        return isErpSnapshotBlank(merged) ? null : merged;
+    }
+
+    private boolean isErpSnapshotBlank(LogisticsReconMatchDTO.SubErpInputDTO snapshot) {
+        return snapshot == null || StrUtil.isAllBlank(snapshot.getErpSoCode(), snapshot.getErpPlatformOrderNo(),
+                snapshot.getErpTrackNo(), snapshot.getErpSoDeliveryCode());
     }
 
     /**
