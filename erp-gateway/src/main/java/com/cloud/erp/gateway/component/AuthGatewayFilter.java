@@ -30,6 +30,7 @@ import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 import com.erp.rpc.sys.feign.SysApiTokenFeign;
 
 import javax.annotation.Resource;
@@ -268,14 +269,30 @@ public class AuthGatewayFilter implements GlobalFilter, Ordered {
         }
 
         String tokenHash = sha256Hex(apiToken);
-        // API Token 是入口级能力，先做 IP/全局/路径限流，再调用 sys 服务校验，避免异常流量直接压到 Feign。
-        Mono<Void> rateLimitResult = checkApiTokenRateLimit(exchange, request, uri);
-        if (rateLimitResult != null) {
-            return rateLimitResult;
+        return Mono.fromCallable(() -> authenticateApiToken(exchange, request, uri, tokenHash))
+                .subscribeOn(Schedulers.boundedElastic())
+                .flatMap(decision -> {
+                    if (decision.authenticated) {
+                        return chain.filter(decision.authenticatedExchange);
+                    }
+                    return unauthorizedResponse(exchange, decision.msg, decision.code);
+                })
+                .onErrorResume(e -> {
+                    log.error("API Token校验失败，URI: {}", uri, e);
+                    return unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.HTTP_UNAUTHORIZED, exchange.getRequest()), ApiError.HTTP_UNAUTHORIZED.getCode());
+                });
+    }
+
+    private ApiTokenAuthDecision authenticateApiToken(ServerWebExchange exchange, ServerHttpRequest request,
+                                                     String uri, String tokenHash) {
+        // API Token 是入口级能力，限流、Redis 缓存和 Feign 都是阻塞调用，统一隔离到 boundedElastic。
+        ApiTokenAuthDecision rateLimitDecision = checkApiTokenRateLimit(exchange, request, uri);
+        if (rateLimitDecision != null) {
+            return rateLimitDecision;
         }
         if (ipRateLimitUtil.isApiTokenFailureBlocked(tokenHash)) {
             log.warn("API Token失败次数过多，已临时封禁，URI: {}", uri);
-            return unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.HTTP_UNAUTHORIZED, exchange.getRequest()), ApiError.HTTP_UNAUTHORIZED.getCode());
+            return ApiTokenAuthDecision.failure(localeUtils.getMessage(ApiError.HTTP_UNAUTHORIZED, exchange.getRequest()), ApiError.HTTP_UNAUTHORIZED.getCode());
         }
 
         SysApiTokenDTO.ValidateReqDTO dto = new SysApiTokenDTO.ValidateReqDTO();
@@ -289,18 +306,18 @@ public class AuthGatewayFilter implements GlobalFilter, Ordered {
                 validateResp = result == null ? null : result.getData();
                 // Feign/系统异常不写缓存，只缓存 sys 明确返回的业务校验结果。
                 if (result == null || !result.isSuccess() || validateResp == null) {
-                    return unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.HTTP_UNAUTHORIZED, exchange.getRequest()), ApiError.HTTP_UNAUTHORIZED.getCode());
+                    return ApiTokenAuthDecision.failure(localeUtils.getMessage(ApiError.HTTP_UNAUTHORIZED, exchange.getRequest()), ApiError.HTTP_UNAUTHORIZED.getCode());
                 }
                 cacheApiTokenValidate(tokenHash, uri, validateResp);
             }
             if (!Boolean.TRUE.equals(validateResp.getTokenValid())) {
                 recordApiTokenFailure(tokenHash, uri, "invalid");
-                return unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.HTTP_UNAUTHORIZED, exchange.getRequest()), ApiError.HTTP_UNAUTHORIZED.getCode());
+                return ApiTokenAuthDecision.failure(localeUtils.getMessage(ApiError.HTTP_UNAUTHORIZED, exchange.getRequest()), ApiError.HTTP_UNAUTHORIZED.getCode());
             }
             if (!Boolean.TRUE.equals(validateResp.getPathAllowed())) {
                 log.warn("API Token接口未配置白名单，URI: {}, tokenId: {}", uri, validateResp.getTokenId());
                 recordApiTokenFailure(tokenHash, uri, "forbidden");
-                return unauthorizedResponse(exchange, "接口未配置API Token白名单", ApiError.HTTP_FORBIDDEN.getCode());
+                return ApiTokenAuthDecision.failure("接口未配置API Token白名单", ApiError.HTTP_FORBIDDEN.getCode());
             }
 
             LoginUser loginUser = buildLoginUser(validateResp);
@@ -318,33 +335,38 @@ public class AuthGatewayFilter implements GlobalFilter, Ordered {
             ServerWebExchange authenticatedExchange = exchange.mutate().request(mutatedRequest).build();
             // 签名过滤器只信任 exchange 内部属性，不信任客户端可伪造的同名请求头。
             authenticatedExchange.getAttributes().put(SysApiTokenConstants.INTERNAL_AUTH_ATTRIBUTE, Boolean.TRUE);
-            return chain.filter(authenticatedExchange);
+            return ApiTokenAuthDecision.success(authenticatedExchange);
         } catch (UnsupportedEncodingException e) {
             log.error("API Token用户信息编码失败，URI: {}", uri, e);
-            return unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.HTTP_UNKNOWN, exchange.getRequest()), ApiError.HTTP_UNKNOWN.getCode());
+            return ApiTokenAuthDecision.failure(localeUtils.getMessage(ApiError.HTTP_UNKNOWN, exchange.getRequest()), ApiError.HTTP_UNKNOWN.getCode());
         } catch (Exception e) {
             log.error("API Token校验失败，URI: {}", uri, e);
-            return unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.HTTP_UNAUTHORIZED, exchange.getRequest()), ApiError.HTTP_UNAUTHORIZED.getCode());
+            return ApiTokenAuthDecision.failure(localeUtils.getMessage(ApiError.HTTP_UNAUTHORIZED, exchange.getRequest()), ApiError.HTTP_UNAUTHORIZED.getCode());
         }
     }
 
-    private Mono<Void> checkApiTokenRateLimit(ServerWebExchange exchange, ServerHttpRequest request, String uri) {
-        Mono<Void> ipRateLimitResult = checkOpenApiRateLimit(exchange, request, uri);
-        if (ipRateLimitResult != null) {
-            return ipRateLimitResult;
+    private ApiTokenAuthDecision checkApiTokenRateLimit(ServerWebExchange exchange, ServerHttpRequest request, String uri) {
+        ApiTokenAuthDecision ipRateLimitDecision = checkOpenApiRateLimitDecision(exchange, request, uri);
+        if (ipRateLimitDecision != null) {
+            return ipRateLimitDecision;
         }
         if (!ipRateLimitUtil.isApiTokenGlobalAllowed()) {
             log.warn("API Token全局访问频率过高，URI: {}", uri);
-            return unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.HTTP_TOO_MANY_REQUESTS, exchange.getRequest()), ApiError.HTTP_TOO_MANY_REQUESTS.getCode());
+            return ApiTokenAuthDecision.failure(localeUtils.getMessage(ApiError.HTTP_TOO_MANY_REQUESTS, exchange.getRequest()), ApiError.HTTP_TOO_MANY_REQUESTS.getCode());
         }
         if (!ipRateLimitUtil.isApiTokenPathAllowed(sha256Hex(uri))) {
             log.warn("API Token路径访问频率过高，URI: {}", uri);
-            return unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.HTTP_TOO_MANY_REQUESTS, exchange.getRequest()), ApiError.HTTP_TOO_MANY_REQUESTS.getCode());
+            return ApiTokenAuthDecision.failure(localeUtils.getMessage(ApiError.HTTP_TOO_MANY_REQUESTS, exchange.getRequest()), ApiError.HTTP_TOO_MANY_REQUESTS.getCode());
         }
         return null;
     }
 
     private Mono<Void> checkOpenApiRateLimit(ServerWebExchange exchange, ServerHttpRequest request, String uri) {
+        ApiTokenAuthDecision decision = checkOpenApiRateLimitDecision(exchange, request, uri);
+        return decision == null ? null : unauthorizedResponse(exchange, decision.msg, decision.code);
+    }
+
+    private ApiTokenAuthDecision checkOpenApiRateLimitDecision(ServerWebExchange exchange, ServerHttpRequest request, String uri) {
         String remoteIp = getRemoteIp(request);
         boolean trustedProxy = isTrustedProxy(remoteIp);
         String xForwardedFor = request.getHeaders().getFirst(X_FORWARDED_FOR);
@@ -367,9 +389,31 @@ public class AuthGatewayFilter implements GlobalFilter, Ordered {
         }
         if (!ipRateLimitUtil.isOpenApiAllowed(clientIp)) {
             log.warn("开放接口访问频率过高或限流组件不可用，IP: {}, URI: {}", clientIp, uri);
-            return unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.HTTP_TOO_MANY_REQUESTS, exchange.getRequest()), ApiError.HTTP_TOO_MANY_REQUESTS.getCode());
+            return ApiTokenAuthDecision.failure(localeUtils.getMessage(ApiError.HTTP_TOO_MANY_REQUESTS, exchange.getRequest()), ApiError.HTTP_TOO_MANY_REQUESTS.getCode());
         }
         return null;
+    }
+
+    private static class ApiTokenAuthDecision {
+        private final boolean authenticated;
+        private final ServerWebExchange authenticatedExchange;
+        private final String msg;
+        private final Integer code;
+
+        private ApiTokenAuthDecision(boolean authenticated, ServerWebExchange authenticatedExchange, String msg, Integer code) {
+            this.authenticated = authenticated;
+            this.authenticatedExchange = authenticatedExchange;
+            this.msg = msg;
+            this.code = code;
+        }
+
+        private static ApiTokenAuthDecision success(ServerWebExchange authenticatedExchange) {
+            return new ApiTokenAuthDecision(true, authenticatedExchange, null, null);
+        }
+
+        private static ApiTokenAuthDecision failure(String msg, Integer code) {
+            return new ApiTokenAuthDecision(false, null, msg, code);
+        }
     }
 
     private ServerHttpRequest stripApiTokenInternalHeaders(ServerHttpRequest request) {

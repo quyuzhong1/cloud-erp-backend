@@ -1,5 +1,6 @@
 package com.erp.server.sys.support;
 
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -52,7 +53,7 @@ public class SysApiTokenCryptoService {
         } catch (ServiceException e) {
             throw e;
         } catch (Exception e) {
-            throw new ServiceException(e, "加密令牌失败");
+            throw new ServiceException(e, ApiError.AUTH_API_TOKEN_ENCRYPT_FAILED);
         }
     }
 
@@ -60,7 +61,7 @@ public class SysApiTokenCryptoService {
         try {
             byte[] allBytes = Base64.getUrlDecoder().decode(encryptedToken);
             if (allBytes.length <= IV_LENGTH) {
-                throw new ServiceException("令牌密文格式不合法");
+                throw new ServiceException(ApiError.AUTH_API_TOKEN_CIPHERTEXT_INVALID);
             }
             byte[] iv = Arrays.copyOfRange(allBytes, 0, IV_LENGTH);
             byte[] encrypted = Arrays.copyOfRange(allBytes, IV_LENGTH, allBytes.length);
@@ -71,21 +72,21 @@ public class SysApiTokenCryptoService {
         } catch (ServiceException e) {
             throw e;
         } catch (Exception e) {
-            throw new ServiceException(e, "解密令牌失败，请确认API Token加密密钥配置未变更");
+            throw new ServiceException(e, ApiError.AUTH_API_TOKEN_DECRYPT_FAILED);
         }
     }
 
     private SecretKeySpec getKeySpec() {
         String key = StringUtils.defaultIfBlank(configuredKey, System.getenv(ENV_KEY));
         if (StringUtils.isBlank(key)) {
-            throw new ServiceException("API Token加密密钥未配置，请配置erp.api-token.aes-key或环境变量ERP_API_TOKEN_AES_KEY");
+            throw new ServiceException(ApiError.AUTH_API_TOKEN_AES_KEY_REQUIRED);
         }
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] keyBytes = digest.digest(key.getBytes(StandardCharsets.UTF_8));
             return new SecretKeySpec(Arrays.copyOf(keyBytes, AES_128_BYTES), AES);
         } catch (Exception e) {
-            throw new ServiceException(e, "初始化API Token加密密钥失败");
+            throw new ServiceException(e, ApiError.AUTH_API_TOKEN_AES_KEY_INIT_FAILED);
         }
     }
 }

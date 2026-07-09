@@ -893,7 +893,7 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
                     .eq(WorkflowTaskRecordEntity::getId, entity.getId())
                     .eq(WorkflowTaskRecordEntity::getVersion, currentVersion)
                     .set(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.PENDING.getCode())
-                    .set(WorkflowTaskRecordEntity::getRetryCount, Optional.ofNullable(dto.getRetryCount()).orElse(0))
+                    .set(WorkflowTaskRecordEntity::getRetryCount, resetRetryCount)
                     .set(WorkflowTaskRecordEntity::getLastError, "")
                     .set(WorkflowTaskRecordEntity::getRemark, remark)
                     .set(WorkflowTaskRecordEntity::getInputData, refreshedInputData)
@@ -909,7 +909,7 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
                 .eq(WorkflowTaskRecordEntity::getId, entity.getId())
                 .eq(WorkflowTaskRecordEntity::getVersion, currentVersion)
                 .set(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.PENDING.getCode())
-                .set(WorkflowTaskRecordEntity::getRetryCount, Optional.ofNullable(dto.getRetryCount()).orElse(0))
+                .set(WorkflowTaskRecordEntity::getRetryCount, resetRetryCount)
                 .set(WorkflowTaskRecordEntity::getLastError, "")
                 .set(WorkflowTaskRecordEntity::getRemark, remark)
                 .set(WorkflowTaskRecordEntity::getVersion, currentVersion + 1)
@@ -919,6 +919,7 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
             throw new ServiceException(ApiError.WF_TASK_INSTANCE_VERSION_CONFLICT);
         }
     }
+
     /**
      * 人工重试未显式传 retryCount 时，默认在当前值基础上 +1。
      */
@@ -928,6 +929,7 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
         }
         return Optional.ofNullable(currentRetryCount).orElse(0) + 1;
     }
+
     /**
      * 以 index 构建节点映射，过滤空节点和逻辑删除节点。
      */

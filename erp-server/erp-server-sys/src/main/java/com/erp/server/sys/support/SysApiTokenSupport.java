@@ -1,5 +1,6 @@
 package com.erp.server.sys.support;
 
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.sys.constants.SysApiTokenConstants;
 import org.apache.commons.lang3.StringUtils;
@@ -45,7 +46,7 @@ public final class SysApiTokenSupport {
             }
             return sb.toString();
         } catch (Exception e) {
-            throw new ServiceException(e, "生成令牌哈希失败");
+            throw new ServiceException(e, ApiError.AUTH_API_TOKEN_HASH_FAILED);
         }
     }
 
@@ -65,10 +66,10 @@ public final class SysApiTokenSupport {
     public static String normalizePathPattern(String pathPattern) {
         String value = StringUtils.trimToEmpty(pathPattern);
         if (StringUtils.isBlank(value)) {
-            throw new ServiceException("接口路径不能为空");
+            throw new ServiceException(ApiError.AUTH_API_TOKEN_PATH_REQUIRED);
         }
         if (value.contains("\\")) {
-            throw new ServiceException("接口路径不允许包含反斜杠");
+            throw new ServiceException(ApiError.AUTH_API_TOKEN_PATH_BACKSLASH_FORBIDDEN);
         }
 
         value = removeQueryAndFragment(value);
@@ -76,7 +77,7 @@ public final class SysApiTokenSupport {
             try {
                 value = StringUtils.defaultString(URI.create(value).getRawPath());
             } catch (Exception e) {
-                throw new ServiceException("接口路径格式不合法");
+                throw new ServiceException(ApiError.AUTH_API_TOKEN_PATH_INVALID);
             }
         }
         if (!value.startsWith("/")) {
@@ -86,16 +87,16 @@ public final class SysApiTokenSupport {
             value = value.replace("//", "/");
         }
         if (value.contains("..")) {
-            throw new ServiceException("接口路径不允许包含路径穿越");
+            throw new ServiceException(ApiError.AUTH_API_TOKEN_PATH_TRAVERSAL_FORBIDDEN);
         }
         if (value.length() > 1 && value.endsWith("/") && !value.endsWith("/**")) {
             value = value.substring(0, value.length() - 1);
         }
         if (StringUtils.isBlank(value) || "/".equals(value)) {
-            throw new ServiceException("接口路径不能为空");
+            throw new ServiceException(ApiError.AUTH_API_TOKEN_PATH_REQUIRED);
         }
         if (value.length() > 500) {
-            throw new ServiceException("接口路径最大长度不能超过500位");
+            throw new ServiceException(ApiError.AUTH_API_TOKEN_PATH_TOO_LONG);
         }
         return value;
     }
