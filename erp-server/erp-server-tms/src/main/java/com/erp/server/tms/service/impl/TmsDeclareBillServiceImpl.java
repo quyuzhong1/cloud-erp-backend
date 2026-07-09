@@ -509,6 +509,10 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         }
         redisUtil.set(key,number,86400);
 
+        // 合同号按境内发货人(核算公司)匹配编码规则；senderId 为空会误报"核算公司【】未配置编码规则"，先给出明确提示。
+        if (StringUtils.isBlank(tmsDeclareBillEntity.getSenderId())) {
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_SENDER_REQUIRED);
+        }
         //查询报关单头编码配置
         CfgSettingDTO.ViewDTO settingViewDTO = cfgSettingService.getSetting(CONTRACT_AGREEMENT_NO.getCode());
         if (ObjectUtil.isEmpty(settingViewDTO) || CollUtil.isEmpty(settingViewDTO.getContractAgreementNoList())) {
@@ -573,6 +577,12 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     // 编辑保存写 TMS 单库 + 中间表，并回写 WMS 来源单报关状态；
     // Feign 重量重算/装箱校验已全部前置到事务外，事务内仅剩快速 DML + 一次 WMS 回写，
     // 用 Seata 全局事务保证「本地库写入」与「远端来源单状态回写」强一致。
+    @DistributeLocker(
+            businessType = DistributeKeyConstant.TMS_DECLARE_BILL_SOURCE_KEY,
+            keyName = "mergeDetailList.sourceDeliveryDetailList.sourceId",
+            maxRetries = 1,
+            unlockAfterTx = true
+    )
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
     @Transactional(rollbackFor = Exception.class)
     public void updateInTx(TmsDeclareBillDTO.UpdateDTO updateDTO,
@@ -629,13 +639,16 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         }
         List<DeliveryDeclareDetailMidEntity> addMidList = buildDeclareDetailMidList(mergeDetailList, detailEntityList,
                 sourceType, null, old.getId(), old.getCode());
-        saveOrRestoreUpdateMidData(oldMidList, addMidList, old.getId(), old.getCode());
+        List<String> restoredSourceIds = saveOrRestoreUpdateMidData(oldMidList, addMidList, old.getId(), old.getCode());
         log.info("编辑 开始记录报关单日志数据，单号：【{}】", tmsDeclareBillEntity.getCode());
         String msg = CharSequenceUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), tmsDeclareBillEntity.getCode(), "报关单");
         operateLogService.addModuleOperateLogByObj(old, tmsDeclareBillEntity, sourceTypeEnum.getCode(), tmsDeclareBillEntity.getId(), msg);
-        // 编辑可能移除部分来源明细，需按中间表现状回写：仍生成的来源单 → finish，被移除释放的 → wait，
-        // 故沿用 syncSourceDeclareStatusIfNeeded（含 finish/wait 两批），不能改为 finish-only。
-        syncSourceDeclareStatusIfNeeded(sourceTypeEnum.getCode(), extractSourceIdListFromMidList(addMidList));
+        // 编辑可能移除部分来源明细，需按中间表现状回写：仍生成的来源单 → finish，被移除释放的 → wait。
+        // 保留来源 ∪ 被移除来源 合并去重后一次性回写，syncSourceDeclareStatusIfNeeded 内部按源重查分 finish/wait 两批，
+        // 既保证被整源移除的来源单能回退为 wait，又保证同一来源单在本事务内只回写一次（避免重复 Feign 抢锁）。
+        Set<String> syncSourceIdSet = new LinkedHashSet<>(extractSourceIdListFromMidList(addMidList));
+        syncSourceIdSet.addAll(restoredSourceIds);
+        syncSourceDeclareStatusIfNeeded(sourceTypeEnum.getCode(), new ArrayList<>(syncSourceIdSet));
     }
 
     @Override
@@ -1370,8 +1383,9 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
      * @param newMidList 编辑后需要绑定当前报关单的中间表
      * @param declareId 报关单id
      * @param declareCode 报关单号
+     * @return 本次被移除（恢复为待生成）的来源单 id 集合，供调用方统一回写来源单报关状态
      */
-    private void saveOrRestoreUpdateMidData(List<DeliveryDeclareDetailMidEntity> oldMidList,
+    private List<String> saveOrRestoreUpdateMidData(List<DeliveryDeclareDetailMidEntity> oldMidList,
                                             List<DeliveryDeclareDetailMidEntity> newMidList,
                                             String declareId,
                                             String declareCode) {
@@ -1379,18 +1393,38 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         Map<String, DeliveryDeclareDetailMidEntity> oldMidMap = CollUtil.isEmpty(oldMidList)
                 ? new HashMap<>()
                 : oldMidList.stream().collect(Collectors.toMap(this::buildSourceDetailKey, item -> item, (a, b) -> a));
+        List<DeliveryDeclareDetailMidEntity> safeNewMidList = Optional.ofNullable(newMidList).orElse(Collections.emptyList());
+        List<String> sourceIdList = safeNewMidList.stream()
+                .map(DeliveryDeclareDetailMidEntity::getSourceId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        // 编辑新增 SKU 时须复用来源单下同键「待生成」行（与 saveGeneratedMidData 口径一致），避免重复插入。
+        List<DeliveryDeclareDetailMidEntity> sourceMidList = CollUtil.isEmpty(sourceIdList)
+                ? new ArrayList<>()
+                : new ArrayList<>(deliveryDeclareDetailMidService.listBySourceIdList(sourceIdList));
+        Map<String, DeliveryDeclareDetailMidEntity> sourceWaitMidMap = buildSourceWaitMidKeyMap(sourceMidList);
+
         Set<String> retainedOldMidIds = new HashSet<>();
         List<DeliveryDeclareDetailMidEntity> addMidList = new ArrayList<>();
-        for (DeliveryDeclareDetailMidEntity newMid : Optional.ofNullable(newMidList).orElse(Collections.emptyList())) {
-            DeliveryDeclareDetailMidEntity oldMid = oldMidMap.get(buildSourceDetailKey(newMid));
-            if (Objects.isNull(oldMid)) {
-                // 新增的来源箱明细直接保存为已生成。
-                addMidList.add(newMid);
+        for (DeliveryDeclareDetailMidEntity newMid : safeNewMidList) {
+            String sourceDetailKey = buildSourceDetailKey(newMid);
+            DeliveryDeclareDetailMidEntity oldMid = oldMidMap.get(sourceDetailKey);
+            if (Objects.nonNull(oldMid)) {
+                // 保留的来源箱明细复用本单旧中间表行，并更新报关关联。
+                retainedOldMidIds.add(oldMid.getId());
+                updateRetainedMidData(oldMid, newMid, declareId, declareCode);
                 continue;
             }
-            // 保留的来源箱明细复用旧中间表行，并更新报关关联。
-            retainedOldMidIds.add(oldMid.getId());
-            updateRetainedMidData(oldMid, newMid, declareId, declareCode);
+            DeliveryDeclareDetailMidEntity waitMid = sourceWaitMidMap.get(sourceDetailKey);
+            if (Objects.nonNull(waitMid)) {
+                // 新增 SKU：复用来源单已有待生成行，并清理同键重复待生成行。
+                retainedOldMidIds.add(waitMid.getId());
+                updateRetainedMidData(waitMid, newMid, declareId, declareCode);
+                removeDuplicateWaitMidByKey(newMid.getSourceType(), sourceDetailKey, waitMid.getId(), sourceMidList);
+                continue;
+            }
+            addMidList.add(newMid);
         }
         if (CollUtil.isNotEmpty(addMidList)) {
             deliveryDeclareDetailMidService.saveBatch(addMidList);
@@ -1399,14 +1433,64 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 .filter(item -> !retainedOldMidIds.contains(item.getId()))
                 .collect(Collectors.toList());
         if (CollUtil.isEmpty(restoreMidList)) {
-            return;
+            return Collections.emptyList();
         }
-        // 编辑时被删除的来源箱明细恢复为待生成。
+        // 编辑时被删除的来源箱明细恢复为待生成；来源单报关状态统一在 updateInTx 末尾回写一次，避免事务内重复 Feign 抢锁。
         deliveryDeclareDetailMidService.restoreWaitGenerateByIds(restoreMidList.stream()
                 .map(DeliveryDeclareDetailMidEntity::getId)
                 .collect(Collectors.toList()));
-        // 删除来源后，必要时回写来源单据为待报关。
-        updateWaitStatusForNoGeneratedSources(restoreMidList);
+        return restoreMidList.stream()
+                .map(DeliveryDeclareDetailMidEntity::getSourceId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 构建来源单下可复用的待生成中间表映射（来源单|箱号|SKU）。
+     */
+    private Map<String, DeliveryDeclareDetailMidEntity> buildSourceWaitMidKeyMap(List<DeliveryDeclareDetailMidEntity> sourceMidList) {
+        Map<String, DeliveryDeclareDetailMidEntity> waitMidMap = new HashMap<>();
+        for (DeliveryDeclareDetailMidEntity item : Optional.ofNullable(sourceMidList).orElse(Collections.emptyList())) {
+            if (!isWaitReusableMid(item)) {
+                continue;
+            }
+            String key = buildSourceDetailKey(item);
+            DeliveryDeclareDetailMidEntity existing = waitMidMap.get(key);
+            if (Objects.isNull(existing)) {
+                waitMidMap.put(key, item);
+            }
+        }
+        return waitMidMap;
+    }
+
+    /**
+     * 判断中间表行是否为可复用的待生成行。
+     */
+    private boolean isWaitReusableMid(DeliveryDeclareDetailMidEntity mid) {
+        return DeliveryDeclareDetailMidGenerateStatusEnum.WAIT.getCode().equals(mid.getGenerateStatus())
+                && StringUtils.isBlank(mid.getDeclareId());
+    }
+
+    /**
+     * 删除同来源明细键下除保留行外的重复待生成中间表行。
+     */
+    private void removeDuplicateWaitMidByKey(String sourceType,
+                                             String sourceDetailKey,
+                                             String retainId,
+                                             List<DeliveryDeclareDetailMidEntity> sourceMidList) {
+        List<String> removeIds = Optional.ofNullable(sourceMidList).orElse(Collections.emptyList()).stream()
+                .filter(item -> CharSequenceUtil.equals(item.getSourceType(), sourceType))
+                .filter(item -> sourceDetailKey.equals(buildSourceDetailKey(item)))
+                .filter(item -> !CharSequenceUtil.equals(item.getId(), retainId))
+                .map(DeliveryDeclareDetailMidEntity::getId)
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(removeIds)) {
+            return;
+        }
+        deliveryDeclareDetailMidService.removeByIds(removeIds);
+        sourceMidList.removeIf(item -> removeIds.contains(item.getId()));
     }
 
     /**
