@@ -151,10 +151,9 @@ public class SoReturnPrestockController extends BaseController {
             serviceClass = SoReturnPrestockService.class,
             keyIdName = "mainId"
     )
-    public ApiResult<BatchResultDTO> confirmLinkAfterSale(
+    public ApiResult<Boolean> confirmLinkAfterSale(
             @RequestBody @Validated SoReturnPrestockDetailDTO.ConfirmLinkAfterSale dto) {
-        BatchResultDTO result = soReturnPrestockService.confirmLinkAfterSale(dto);
-        return result.getSuccess() ? success(result) : failure(result);
+        return success(soReturnPrestockService.confirmLinkAfterSale(dto));
     }
 
     /**
