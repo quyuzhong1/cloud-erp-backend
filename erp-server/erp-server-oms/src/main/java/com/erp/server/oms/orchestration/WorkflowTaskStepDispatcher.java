@@ -65,9 +65,8 @@ public class WorkflowTaskStepDispatcher {
         WorkflowTaskInstanceEntity instance = resolveInstance(mqDTO);
         if (instance == null) {
             log.error("未找到编排实例，sourceType={}, sourceId={}", mqDTO.getSourceTypeEnum().getCode(), mqDTO.getSourceId());
-            if (CharSequenceUtil.isNotBlank(mqDTO.getInstanceId())) {
-                throw new ServiceException(ApiError.WF_TASK_INSTANCE_NOT_FOUND);
-            }
+            // 明确携带 instanceId 但实例已不存在/已删除时属于不可恢复错误，正常 ACK 避免 RocketMQ 无效重投。
+            // 未携带 instanceId 的历史兼容路径也保持原有静默跳过逻辑。
             return;
         }
 

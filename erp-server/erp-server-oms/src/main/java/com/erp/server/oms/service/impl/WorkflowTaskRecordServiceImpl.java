@@ -11,11 +11,9 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.DistributeKeyConstant;
-import com.common.message.service.mq.MQProducerService;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.WorkflowTaskNodeConfigDTO;
 import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
@@ -493,7 +491,9 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
             try {
                 workflowTaskStepDispatcher.sendDispatchMq(addTaskDTO, entity.getSourceId());
             } catch (Exception ex) {
-                XxlJobHelper.log(StrUtil.format("任务节点补偿重试MQ异常，{}", ex.getMessage()));
+                String errorMsg = "任务节点补偿重试MQ异常: " + ex.getMessage();
+                XxlJobHelper.log(errorMsg);
+                workflowTaskInstanceService.markDispatchMqFailed(instance.getId(), entity.getIndex(), errorMsg);
             }
         }
     }
@@ -640,6 +640,12 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
             WorkflowTaskRecordEntity dispatchTask = resetTasks.stream()
                     .min(Comparator.comparing(WorkflowTaskRecordEntity::getIndex))
                     .orElse(resetTasks.get(0));
+            WorkflowTaskInstanceEntity instance = resolveForceRetryInstance(dispatchTask);
+            if (instance != null
+                    && (WorkflowTaskInstanceStatusEnum.SUCCESS.getCode().equals(instance.getStatus())
+                    || WorkflowTaskInstanceStatusEnum.CANCELLED.getCode().equals(instance.getStatus()))) {
+                throw new ServiceException(ApiError.WF_TASK_RECORD_FORCE_RETRY_NO_ELIGIBLE);
+            }
             List<WorkflowTaskRecordEntity> tasksToReset = retryByNodeId
                     ? resetTasks
                     : Collections.singletonList(dispatchTask);
@@ -868,6 +874,8 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
                 log.warn("链式调度补偿 MQ 失败，instanceId={}, nextIndex={}", instance.getId(), nextIndex, ex);
                 XxlJobHelper.log(StrUtil.format("链式调度补偿 MQ 失败，instanceId={}, nextIndex={}, error={}",
                         instance.getId(), nextIndex, ex.getMessage()));
+                workflowTaskInstanceService.markDispatchMqFailed(
+                        instance.getId(), nextIndex, "链式调度补偿 MQ 失败: " + ex.getMessage());
             }
         }
     }
@@ -878,26 +886,48 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
     private void resetForceRetryTask(WorkflowTaskRecordEntity entity, WorkflowTaskRecordDTO.ForceRetryDTO dto, Map<Integer, WorkflowTaskRecordEntity> indexTaskMap) {
         String remark = appendForceRetryRemark(entity.getRemark(), dto.getRemark());
         String refreshedInputData = getPreviousSuccessOutputDataInternal(entity, indexTaskMap);
+        Integer resetRetryCount = resolveResetRetryCount(entity.getRetryCount(), dto.getRetryCount());
+        Integer currentVersion = Optional.ofNullable(entity.getVersion()).orElse(0);
         if (CharSequenceUtil.isNotBlank(refreshedInputData)) {
-            this.lambdaUpdate()
+            boolean updated = this.lambdaUpdate()
                     .eq(WorkflowTaskRecordEntity::getId, entity.getId())
+                    .eq(WorkflowTaskRecordEntity::getVersion, currentVersion)
                     .set(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.PENDING.getCode())
                     .set(WorkflowTaskRecordEntity::getRetryCount, Optional.ofNullable(dto.getRetryCount()).orElse(0))
                     .set(WorkflowTaskRecordEntity::getLastError, "")
                     .set(WorkflowTaskRecordEntity::getRemark, remark)
                     .set(WorkflowTaskRecordEntity::getInputData, refreshedInputData)
+                    .set(WorkflowTaskRecordEntity::getVersion, currentVersion + 1)
                     .update();
+            if (!updated) {
+                log.warn("resetForceRetryTask 重置节点并发冲突，stepId={}, version={}", entity.getId(), currentVersion);
+                throw new ServiceException(ApiError.WF_TASK_INSTANCE_VERSION_CONFLICT);
+            }
             return;
         }
-        this.lambdaUpdate()
+        boolean updated = this.lambdaUpdate()
                 .eq(WorkflowTaskRecordEntity::getId, entity.getId())
+                .eq(WorkflowTaskRecordEntity::getVersion, currentVersion)
                 .set(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.PENDING.getCode())
                 .set(WorkflowTaskRecordEntity::getRetryCount, Optional.ofNullable(dto.getRetryCount()).orElse(0))
                 .set(WorkflowTaskRecordEntity::getLastError, "")
                 .set(WorkflowTaskRecordEntity::getRemark, remark)
+                .set(WorkflowTaskRecordEntity::getVersion, currentVersion + 1)
                 .update();
+        if (!updated) {
+            log.warn("resetForceRetryTask 重置节点并发冲突，stepId={}, version={}", entity.getId(), currentVersion);
+            throw new ServiceException(ApiError.WF_TASK_INSTANCE_VERSION_CONFLICT);
+        }
     }
-
+    /**
+     * 人工重试未显式传 retryCount 时，默认在当前值基础上 +1。
+     */
+    private Integer resolveResetRetryCount(Integer currentRetryCount, Integer requestedRetryCount) {
+        if (requestedRetryCount != null) {
+            return requestedRetryCount;
+        }
+        return Optional.ofNullable(currentRetryCount).orElse(0) + 1;
+    }
     /**
      * 以 index 构建节点映射，过滤空节点和逻辑删除节点。
      */
@@ -955,11 +985,15 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
         return oldRemark + "\n" + current;
     }
 
-    /** 强制重试后将实例状态同步为 running，并指向即将调度的节点 index。 */
-    private void syncInstanceOnForceRetry(WorkflowTaskRecordEntity dispatchTask) {
-        WorkflowTaskInstanceEntity instance = CharSequenceUtil.isNotBlank(dispatchTask.getInstanceId())
+    private WorkflowTaskInstanceEntity resolveForceRetryInstance(WorkflowTaskRecordEntity dispatchTask) {
+        return CharSequenceUtil.isNotBlank(dispatchTask.getInstanceId())
                 ? workflowTaskInstanceService.getById(dispatchTask.getInstanceId())
                 : workflowTaskInstanceService.getLatestBySource(dispatchTask.getSourceId(), dispatchTask.getSourceType());
+    }
+
+    /** 强制重试后将实例状态同步为 running，并指向即将调度的节点 index。 */
+    private void syncInstanceOnForceRetry(WorkflowTaskRecordEntity dispatchTask) {
+        WorkflowTaskInstanceEntity instance = resolveForceRetryInstance(dispatchTask);
         if (instance == null) {
             return;
         }
@@ -970,7 +1004,7 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
                     .eq(WorkflowTaskRecordEntity::getIsDeleted, false)
                     .count();
         }
-        workflowTaskInstanceService.markRunning(instance.getId(), dispatchTask.getIndex(), totalSteps);
+        workflowTaskInstanceService.markRunningOrThrow(instance.getId(), dispatchTask.getIndex(), totalSteps);
     }
 
     /**

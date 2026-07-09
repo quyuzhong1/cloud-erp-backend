@@ -97,6 +97,12 @@ public interface WorkflowTaskInstanceService extends SuperService<WorkflowTaskIn
 
     void markRunning(String instanceId, int currentIndex, int totalSteps);
 
+    /**
+     * 将实例标记为执行中；若实例不存在或乐观锁冲突则抛出业务异常。
+     * <p>用于人工重试等必须确保实例状态切换成功后才能发送 MQ 的场景。</p>
+     */
+    void markRunningOrThrow(String instanceId, int currentIndex, int totalSteps);
+
 
 
     /**

@@ -214,7 +214,8 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
      * 人工重试场景下实例状态必须成功切回 RUNNING 后才能发送 MQ；
      * 否则会出现实例未切换但节点已重置、MQ 已发送的不一致状态。
      */
-    private void markRunningOrThrow(String instanceId, int currentIndex, int totalSteps) {
+    @Override
+    public void markRunningOrThrow(String instanceId, int currentIndex, int totalSteps) {
         WorkflowTaskInstanceEntity fresh = getById(instanceId);
         if (fresh == null) {
             throw new ServiceException(ApiError.WF_TASK_INSTANCE_NOT_FOUND);
