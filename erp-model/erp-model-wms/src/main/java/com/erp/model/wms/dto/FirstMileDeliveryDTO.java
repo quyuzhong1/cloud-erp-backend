@@ -784,6 +784,10 @@ public class FirstMileDeliveryDTO implements Serializable {
         @NotBlank(message = "发货仓id不能为空")
         @Size(max = 19,message = "发货仓id最大长度不能超过19位")
         private String deliveryWarehouseId;
+        /**
+         * 虚拟仓id
+         */
+        private String virtualWarehouseId;
 
         /**
          * 发货仓名称

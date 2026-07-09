@@ -208,7 +208,7 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
         platformOutboundDTO.setOutBoundTime(deliveryWithNotOutboundDTO.getDeliveryTime());
         platformOutboundDTO.setTrackNo(deliveryWithNotOutboundDTO.getTrackNo());
         thirdWarehouseDeliveryEntity.setActualDeliveryCode(deliveryWithNotOutboundDTO.getActualDeliveryCode());
-        platformOutboundConsumerService.generateSoOut(entity,thirdWarehouseDeliveryEntity,platformOutboundDTO,deliveryWithNotOutboundDTO.getWarehouseId());
+        platformOutboundConsumerService.generateSoOut(entity,thirdWarehouseDeliveryEntity,platformOutboundDTO,deliveryWithNotOutboundDTO.getWarehouseId(), "");
         entity = soB2cFeign.getById(entity.getId());
         if(entity.getSignOrderError().equals(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode())){
             throw new ServiceException("生成销售出库单失败,请查看订单异常");
@@ -385,7 +385,7 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
             PlatformOutboundDTO platformOutboundDTO = new PlatformOutboundDTO();
             platformOutboundDTO.setOutBoundTime(soB2cLogisticsEntity.getDeliveryTime());
             platformOutboundDTO.setTrackNo(soB2cLogisticsEntity.getCode());
-            platformOutboundConsumerService.generateSoOut(soB2cEntity,entity,platformOutboundDTO,"");
+            platformOutboundConsumerService.generateSoOut(soB2cEntity,entity,platformOutboundDTO,"", "");
         }
         return BatchResultDTO.success();
     }

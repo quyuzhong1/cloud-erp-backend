@@ -1543,6 +1543,10 @@ public class RequisitionApplicationDTO implements Serializable {
          */
         private String deliveryWarehouseId;
         /**
+         * 虚拟仓id
+         */
+        private String fromVirtualWarehouseId;
+        /**
          * 发货仓名字
          */
         private String deliveryWarehouseName;

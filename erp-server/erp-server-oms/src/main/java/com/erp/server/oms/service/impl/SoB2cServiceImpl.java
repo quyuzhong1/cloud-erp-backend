@@ -4180,6 +4180,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             thirdWarehouseDeliveryDetailEntity.setSkuNo(item.getSkuNo());
             thirdWarehouseDeliveryDetailEntity.setDeliveryQty(item.getQuantity());
             thirdWarehouseDeliveryDetailEntity.setWarehouseId(warehouseId);
+            thirdWarehouseDeliveryDetailEntity.setVirtualWarehouseId("");
             thirdWarehouseDeliveryDetailEntity.setPlatformSkuNo(item.getProductSku());
             thirdWarehouseDeliveryDetailEntity.setPlatformWarehouseCode(createOutboundReq.getWarehouseCode());
             thirdWarehouseDeliveryDetailEntity.setSourceSkuId(item.getSourceSkuId());
@@ -4193,6 +4194,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             thirdWarehouseDeliveryDetailEntity.setSkuNo(item.getSkuNo());
             thirdWarehouseDeliveryDetailEntity.setDeliveryQty(item.getQuantity());
             thirdWarehouseDeliveryDetailEntity.setWarehouseId(warehouseId);
+            thirdWarehouseDeliveryDetailEntity.setVirtualWarehouseId("");
             thirdWarehouseDeliveryDetailEntity.setPlatformWarehouseCode(createOutboundReq.getWarehouseCode());
             thirdWarehouseDeliveryDetailEntity.setSourceSkuId(item.getSourceSkuId());
             thirdWarehouseDeliveryDetailEntity.setSourceSkuNo(item.getSourceSkuNo());

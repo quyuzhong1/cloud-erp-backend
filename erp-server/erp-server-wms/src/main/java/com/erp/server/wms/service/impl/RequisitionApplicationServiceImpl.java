@@ -2144,6 +2144,7 @@ revokeDTO.setSourcePlatform(dto.getSourcePlatform());
                 } else {
                     detailAddDto.setWarehouseLocation("");
                 }
+                detailAddDto.setVirtualWarehouseId(detailEntity.getFromVirtualWarehouseId());
                 detailAddDto.setFbaShipmentCode(viewDTO.getFbaShipmentCode());
                 detailAddList.add(detailAddDto);
                 detailEntity.setDeliveryQty(detailAddDto.getDeliveryQty());
@@ -2253,6 +2254,7 @@ revokeDTO.setSourcePlatform(dto.getSourcePlatform());
             detail.setQty(detailEntity.getApproveQty() - detailEntity.getPickingQty());
             detail.setSourceDetailId(detailEntity.getId());
             detail.setBomVersion(detailEntity.getBomVersion());
+            detail.setVirtualWarehouseId(detailEntity.getFromVirtualWarehouseId());
             detailList.add(detail);
             detailEntity.setPickingQty(detailEntity.getApproveQty());
             updateDetails.add(detailEntity);

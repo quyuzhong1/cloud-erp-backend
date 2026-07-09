@@ -1881,6 +1881,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                     addDTO.setActualQty(view.getQty());
                     addDTO.setPlanQty(view.getQty());
                     addDTO.setSourceDetailId(detailEntity.getId());
+                    addDTO.setVirtualWarehouseId(detailEntity.getVirtualWarehouseId());
                     newDetailList.add(addDTO);
                 }
                 generateB2cDTO.setDetailList(newDetailList);
@@ -2395,11 +2396,11 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                     ).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(sonSkuList)) {
                 for (BomChildrenSkuDTO bomChildrenSkuDTO : sonSkuList) {
-                    detailList.add(new CfgRulePickingDTO.CfgExecutionDataDetailDTO(detailEntity.getWarehouseId(), bomChildrenSkuDTO.getSkuId(), bomChildrenSkuDTO.getSkuNo(),"",
+                    detailList.add(new CfgRulePickingDTO.CfgExecutionDataDetailDTO(detailEntity.getWarehouseId(),detailEntity.getVirtualWarehouseId(), bomChildrenSkuDTO.getSkuId(), bomChildrenSkuDTO.getSkuNo(),"",
                             detailEntity.getDeliveryQty() * bomChildrenSkuDTO.getQuantity(), detailEntity.getId()));
                 }
             } else {
-                detailList.add(new CfgRulePickingDTO.CfgExecutionDataDetailDTO(detailEntity.getWarehouseId(), detailEntity.getSkuId(), detailEntity.getSkuNo(),"",
+                detailList.add(new CfgRulePickingDTO.CfgExecutionDataDetailDTO(detailEntity.getWarehouseId(),detailEntity.getVirtualWarehouseId(), detailEntity.getSkuId(), detailEntity.getSkuNo(),"",
                         detailEntity.getDeliveryQty(), detailEntity.getId()));
             }
         }
