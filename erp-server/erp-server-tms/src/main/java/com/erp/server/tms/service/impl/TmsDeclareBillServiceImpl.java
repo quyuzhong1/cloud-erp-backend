@@ -5810,13 +5810,14 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 .filter(StringUtils::isNotBlank)
                 .distinct()
                 .collect(Collectors.toList());
+        String sourceCode = resolveFirstSourceCode(sourceDetailList);
         if (CollUtil.isEmpty(sourceIdList)) {
-            throw new ServiceException(ApiError.LOGISTICS_DECLARE_B2B_CUSTOMER_RECEIVER_NOT_FOUND);
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_B2B_CUSTOMER_RECEIVER_NOT_FOUND, sourceCode);
         }
 
         List<SoDeliveryNoticeEntity> noticeList = soDeliveryNoticeFeign.listByIds(sourceIdList);
         if (CollUtil.isEmpty(noticeList)) {
-            throw new ServiceException(ApiError.LOGISTICS_DECLARE_B2B_CUSTOMER_RECEIVER_NOT_FOUND);
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_B2B_CUSTOMER_RECEIVER_NOT_FOUND, sourceCode);
         }
         Map<String, SoDeliveryNoticeEntity> noticeMap = noticeList.stream()
                 .filter(Objects::nonNull)
@@ -5832,7 +5833,19 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             declareBillEntity.setReceiverName(notice.getCustomerName());
             return;
         }
-        throw new ServiceException(ApiError.LOGISTICS_DECLARE_B2B_CUSTOMER_RECEIVER_NOT_FOUND);
+        throw new ServiceException(ApiError.LOGISTICS_DECLARE_B2B_CUSTOMER_RECEIVER_NOT_FOUND, sourceCode);
+    }
+
+    private String resolveFirstSourceCode(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList) {
+        if (CollUtil.isEmpty(sourceDetailList)) {
+            return "";
+        }
+        return sourceDetailList.stream()
+                .filter(Objects::nonNull)
+                .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getSourceCode)
+                .filter(StringUtils::isNotBlank)
+                .findFirst()
+                .orElse("");
     }
 
     /**

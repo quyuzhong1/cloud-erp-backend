@@ -556,7 +556,8 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
                 .filter(Objects::nonNull)
                 .map(item -> BeanMapperUtils.map(DeliveryDeclareDetailMidDTO.MergePreviewDTO.class, item))
                 .collect(Collectors.toList());
-        fillMergePreviewLatestProductLogistic(previewList, entityMap);
+        MergePreviewRuleContext ruleContext = buildMergePreviewRuleContext(entityList);
+        fillMergePreviewLatestProductLogistic(previewList, entityMap, ruleContext);
         return previewList;
     }
 
@@ -1342,7 +1343,7 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
                                          List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList,
                                          CfgDeclareRuleEntity cfgDeclareRule,
                                          TmsDeclareBillEntity entity) {
-        // 先写规则值作为兜底，后续查不到客户时保留 byCustomer/按客户。
+        // 先写规则值，B2B按客户场景必须在下方替换为真实客户。
         entity.setReceiverId(cfgDeclareRule.getReceiverId());
         entity.setReceiverName(cfgDeclareRule.getReceiverName());
         entity.setReceiverType(cfgDeclareRule.getReceiverType());
@@ -1359,13 +1360,14 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
                 .filter(CharSequenceUtil::isNotBlank)
                 .distinct()
                 .collect(Collectors.toList());
+        String sourceCode = resolveFirstSourceCode(sourceDetailList);
         if (CollUtil.isEmpty(sourceIdList)) {
-            return;
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_B2B_CUSTOMER_RECEIVER_NOT_FOUND, sourceCode);
         }
 
         List<SoDeliveryNoticeEntity> noticeList = soDeliveryNoticeFeign.listByIds(sourceIdList);
         if (CollUtil.isEmpty(noticeList)) {
-            return;
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_B2B_CUSTOMER_RECEIVER_NOT_FOUND, sourceCode);
         }
         Map<String, SoDeliveryNoticeEntity> noticeMap = noticeList.stream()
                 .filter(Objects::nonNull)
@@ -1381,6 +1383,19 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
             entity.setReceiverName(notice.getCustomerName());
             return;
         }
+        throw new ServiceException(ApiError.LOGISTICS_DECLARE_B2B_CUSTOMER_RECEIVER_NOT_FOUND, sourceCode);
+    }
+
+    private String resolveFirstSourceCode(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList) {
+        if (CollUtil.isEmpty(sourceDetailList)) {
+            return "";
+        }
+        return sourceDetailList.stream()
+                .filter(Objects::nonNull)
+                .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getSourceCode)
+                .filter(CharSequenceUtil::isNotBlank)
+                .findFirst()
+                .orElse("");
     }
 
     private String resolveBusinessType(String declareBillType, List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList) {
@@ -2026,9 +2041,11 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
      *
      * @param list 合并前预览明细
      * @param entityMap 中间表明细映射，用于通过预览明细 id 反查 skuId
+     * @param ruleContext 本次预览已解析的规则上下文，用于避免填充商品资料时重复远程查询和规则匹配
      */
     private void fillMergePreviewLatestProductLogistic(List<DeliveryDeclareDetailMidDTO.MergePreviewDTO> list,
-                                                       Map<String, DeliveryDeclareDetailMidEntity> entityMap) {
+                                                       Map<String, DeliveryDeclareDetailMidEntity> entityMap,
+                                                       MergePreviewRuleContext ruleContext) {
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
@@ -2040,7 +2057,7 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         if (CollUtil.isEmpty(productLogisticMap)) {
             return;
         }
-        Map<String, SoDetailEntity> b2bCustomerSoDetailMap = buildB2bCustomerSoDetailMap(entityMap.values());
+        Map<String, SoDetailEntity> b2bCustomerSoDetailMap = buildB2bCustomerSoDetailMap(ruleContext);
         for (DeliveryDeclareDetailMidDTO.MergePreviewDTO data : list) {
             DeliveryDeclareDetailMidEntity entity = entityMap.get(data.getId());
             if (Objects.isNull(entity)) {
@@ -2066,15 +2083,66 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         }
     }
 
-    private Map<String, SoDetailEntity> buildB2bCustomerSoDetailMap(Collection<DeliveryDeclareDetailMidEntity> entityList) {
-        List<DeliveryDeclareDetailMidEntity> b2bEntityList = entityList.stream()
+    /**
+     * 构建合并预览的规则上下文。
+     *
+     * <p>合并预览只需要知道当前批次是否为 B2B 按客户收货。该方法在预览入口一次性完成
+     * 来源明细构建、B2B 规则匹配字段补齐和收货人类型解析，后续填充商品物流资料时直接复用结果，
+     * 避免在 `fillMergePreviewLatestProductLogistic` 内再次触发发货通知、客户、字典 Feign 查询和规则重算。</p>
+     *
+     * @param entityList 本次合并预览选中的中间表明细
+     * @return 合并预览规则上下文
+     */
+    private MergePreviewRuleContext buildMergePreviewRuleContext(List<DeliveryDeclareDetailMidEntity> entityList) {
+        List<DeliveryDeclareDetailMidEntity> b2bEntityList = filterB2bMergePreviewEntities(entityList);
+        if (CollUtil.isEmpty(b2bEntityList)) {
+            return MergePreviewRuleContext.empty();
+        }
+        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList = b2bEntityList.stream()
+                .map(this::buildRuleMatchSourceDetailFromMid)
+                .collect(Collectors.toList());
+        List<String> declareBillIdList = b2bEntityList.stream()
+                .map(DeliveryDeclareDetailMidEntity::getDeclareId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        fillB2bSourceCountry(sourceDetailList, declareBillIdList);
+        fillB2bSourceRuleMatchFields(sourceDetailList);
+        String receiverType = cfgDeclareRuleService.resolveConsistentReceiverType(
+                SourceTypeEnum.B2B_DECLARE_BILL.getCode(),
+                sourceDetailList,
+                this::buildDeclareRuleMatchParamMap,
+                ApiError.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_RULE_NOT_FOUND_FOR_SOURCE,
+                ApiError.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_RECEIVER_TYPE_CONFLICT);
+        return new MergePreviewRuleContext(
+                b2bEntityList,
+                CharSequenceUtil.equals(CfgDeclareRuleReceiverTypeEnum.BY_CUSTOMER.getCode(), receiverType));
+    }
+
+    /**
+     * 过滤本次合并预览中的 B2B 发货通知来源明细。
+     *
+     * <p>只有 B2B 发货通知在按客户收货规则下需要额外读取 SO 明细单价；头程来源和非 B2B 来源
+     * 直接使用 PLM 最新商品物流资料即可。</p>
+     *
+     * @param entityList 本次合并预览选中的中间表明细
+     * @return B2B 发货通知来源明细
+     */
+    private List<DeliveryDeclareDetailMidEntity> filterB2bMergePreviewEntities(Collection<DeliveryDeclareDetailMidEntity> entityList) {
+        if (CollUtil.isEmpty(entityList)) {
+            return Collections.emptyList();
+        }
+        return entityList.stream()
                 .filter(Objects::nonNull)
                 .filter(item -> CharSequenceUtil.equals(item.getSourceType(), SourceTypeEnum.SO_DELIVERY_NOTICE.getCode()))
                 .collect(Collectors.toList());
-        if (CollUtil.isEmpty(b2bEntityList) || !isB2bCustomerReceiverForMergePreview(b2bEntityList)) {
+    }
+
+    private Map<String, SoDetailEntity> buildB2bCustomerSoDetailMap(MergePreviewRuleContext ruleContext) {
+        if (Objects.isNull(ruleContext) || !ruleContext.isB2bCustomerReceiver() || CollUtil.isEmpty(ruleContext.getB2bEntityList())) {
             return Collections.emptyMap();
         }
-        List<String> businessIds = b2bEntityList.stream()
+        List<String> businessIds = ruleContext.getB2bEntityList().stream()
                 .map(DeliveryDeclareDetailMidEntity::getBusinessId)
                 .filter(CharSequenceUtil::isNotBlank)
                 .distinct()
@@ -2091,26 +2159,6 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
                 .filter(item -> CharSequenceUtil.isNotBlank(item.getMainId()) && CharSequenceUtil.isNotBlank(item.getSkuId()))
                 .collect(Collectors.toMap(item -> buildSoDetailKey(item.getMainId(), item.getSkuId()),
                         Function.identity(), (oldValue, newValue) -> oldValue));
-    }
-
-    private boolean isB2bCustomerReceiverForMergePreview(List<DeliveryDeclareDetailMidEntity> entityList) {
-        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList = entityList.stream()
-                .map(this::buildRuleMatchSourceDetailFromMid)
-                .collect(Collectors.toList());
-        List<String> declareBillIdList = entityList.stream()
-                .map(DeliveryDeclareDetailMidEntity::getDeclareId)
-                .filter(CharSequenceUtil::isNotBlank)
-                .distinct()
-                .collect(Collectors.toList());
-        fillB2bSourceCountry(sourceDetailList, declareBillIdList);
-        fillB2bSourceRuleMatchFields(sourceDetailList);
-        String receiverType = cfgDeclareRuleService.resolveConsistentReceiverType(
-                SourceTypeEnum.B2B_DECLARE_BILL.getCode(),
-                sourceDetailList,
-                this::buildDeclareRuleMatchParamMap,
-                ApiError.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_RULE_NOT_FOUND_FOR_SOURCE,
-                ApiError.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_RECEIVER_TYPE_CONFLICT);
-        return CharSequenceUtil.equals(CfgDeclareRuleReceiverTypeEnum.BY_CUSTOMER.getCode(), receiverType);
     }
 
     private TmsDeclareBillDTO.SourceDeliveryDetailDTO buildRuleMatchSourceDetailFromMid(DeliveryDeclareDetailMidEntity entity) {
@@ -2132,5 +2180,34 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
 
     private String buildSoDetailKey(String businessId, String skuId) {
         return CharSequenceUtil.blankToDefault(businessId, "") + "#" + CharSequenceUtil.blankToDefault(skuId, "");
+    }
+
+    /**
+     * 合并预览规则上下文。
+     *
+     * <p>用于在一次预览请求内缓存 B2B 来源明细及其收货人类型判断结果，避免后续填充商品物流资料时
+     * 再次走远程补齐和规则匹配链路。</p>
+     */
+    private static class MergePreviewRuleContext {
+
+        private final List<DeliveryDeclareDetailMidEntity> b2bEntityList;
+        private final boolean b2bCustomerReceiver;
+
+        private MergePreviewRuleContext(List<DeliveryDeclareDetailMidEntity> b2bEntityList, boolean b2bCustomerReceiver) {
+            this.b2bEntityList = b2bEntityList;
+            this.b2bCustomerReceiver = b2bCustomerReceiver;
+        }
+
+        private static MergePreviewRuleContext empty() {
+            return new MergePreviewRuleContext(Collections.emptyList(), false);
+        }
+
+        private List<DeliveryDeclareDetailMidEntity> getB2bEntityList() {
+            return b2bEntityList;
+        }
+
+        private boolean isB2bCustomerReceiver() {
+            return b2bCustomerReceiver;
+        }
     }
 }
