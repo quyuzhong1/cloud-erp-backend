@@ -669,12 +669,19 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
                 .last("LIMIT 1")
                 .one();
         if (node != null && !WorkflowTaskRecordStatusEnum.SUCCESS.getCode().equals(node.getStatus())) {
-            workflowTaskRecordService.lambdaUpdate()
+            Integer currentVersion = Optional.ofNullable(node.getVersion()).orElse(0);
+            boolean updated = workflowTaskRecordService.lambdaUpdate()
                     .eq(WorkflowTaskRecordEntity::getId, node.getId())
+                    .eq(WorkflowTaskRecordEntity::getVersion, currentVersion)
                     .set(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.FAILED.getCode())
                     .set(WorkflowTaskRecordEntity::getLastError, CharSequenceUtil.blankToDefault(reason, "调度MQ发送失败"))
                     .set(WorkflowTaskRecordEntity::getEndTime, LocalDateTime.now())
+                    .set(WorkflowTaskRecordEntity::getVersion, currentVersion + 1)
                     .update();
+            if (!updated) {
+                log.warn("markDispatchMqFailed 节点状态并发冲突，跳过覆盖，instanceId={}, targetIndex={}, stepId={}, version={}",
+                        instanceId, targetIndex, node.getId(), currentVersion);
+            }
         }
         markFailed(instanceId, targetIndex, CharSequenceUtil.blankToDefault(reason, "调度MQ发送失败"));
     }
