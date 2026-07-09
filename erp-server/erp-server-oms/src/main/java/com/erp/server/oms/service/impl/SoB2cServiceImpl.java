@@ -10351,9 +10351,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         // 在独立事务内同步预报状态，避免 submitDelivery 外层事务未提交导致读不到 wait/failure
         List<SoB2cLogisticsEntity> syncLogisticsList = soB2cLogisticsService.listByMainIds(soIdList);
+        Map<String, SoB2cLogisticsEntity> syncLogisticsMap = CollUtil.isEmpty(syncLogisticsList)
+                ? Collections.emptyMap()
+                : syncLogisticsList.stream().collect(Collectors.toMap(SoB2cLogisticsEntity::getMainId, Function.identity(), (a, b) -> a));
         for (String soId : soIdList) {
-            SoB2cLogisticsEntity logisticsEntity = syncLogisticsList.stream()
-                    .filter(v -> soId.equals(v.getMainId())).findFirst().orElse(null);
+            SoB2cLogisticsEntity logisticsEntity = syncLogisticsMap.get(soId);
             if (Objects.nonNull(logisticsEntity) && StringUtils.isNotBlank(logisticsEntity.getLogisticsChannelId())) {
                 syncForecastStatusQuietly(soId, logisticsEntity.getLogisticsChannelId());
             }
