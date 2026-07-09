@@ -1635,14 +1635,24 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
     }
 
     /**
+     * 是否为费用项导入配置（与 LogisticsReconServiceImpl#reconCostItemCfgList 口径一致，含历史横向配置）。
+     */
+    private boolean isReconCostItemCfg(CfgLogisticsCostImportDetailEntity detail) {
+        return CharSequenceUtil.equals(COST_ITEM_FIELD, detail.getTargetField())
+                || (CharSequenceUtil.isBlank(detail.getTargetField())
+                && CharSequenceUtil.isNotBlank(detail.getTargetDetailField()));
+    }
+
+    /**
      * 取费用项配置的绝对值开关，与 lineFormatCost / rowFormatCost 中 isAbsoluteValue 一致。
      */
     private boolean isReconCostAbsolute(LogisticsReconMatchDTO.MatchCostItemDTO item,
                                         List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList) {
         return cfgImportDetailList.stream()
-                .filter(detail -> CharSequenceUtil.equals(COST_ITEM_FIELD, detail.getTargetField()))
+                .filter(this::isReconCostItemCfg)
                 .filter(detail -> CharSequenceUtil.equals(detail.getTargetDetailFieldName(), item.getCostName())
                         || CharSequenceUtil.equals(detail.getSourceDetailField(), item.getCostName())
+                        || CharSequenceUtil.equals(detail.getSourceField(), item.getCostName())
                         || CharSequenceUtil.equals(detail.getTargetDetailField(), item.getCostName()))
                 .anyMatch(detail -> Boolean.TRUE.equals(detail.getIsAbsoluteValue()));
     }
@@ -1664,9 +1674,10 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             }
         }
         String cfgCostName = cfgImportDetailList.stream()
-                .filter(detail -> CharSequenceUtil.equals(COST_ITEM_FIELD, detail.getTargetField()))
+                .filter(this::isReconCostItemCfg)
                 .filter(detail -> CharSequenceUtil.equals(detail.getTargetDetailFieldName(), item.getCostName())
                         || CharSequenceUtil.equals(detail.getSourceDetailField(), item.getCostName())
+                        || CharSequenceUtil.equals(detail.getSourceField(), item.getCostName())
                         || CharSequenceUtil.equals(detail.getTargetDetailField(), item.getCostName()))
                 .map(CfgLogisticsCostImportDetailEntity::getTargetDetailFieldName)
                 .filter(CharSequenceUtil::isNotBlank)

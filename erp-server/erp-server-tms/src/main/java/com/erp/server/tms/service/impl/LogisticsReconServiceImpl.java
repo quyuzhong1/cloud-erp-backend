@@ -909,7 +909,11 @@ public class LogisticsReconServiceImpl
                         continue;
                     }
                     BigDecimal amount = parseAmount(value, false).setScale(4, RoundingMode.HALF_UP);
-                    String costName = StrUtil.blankToDefault(costCfg.getTargetDetailFieldName(), costCfg.getTargetDetailField());
+                    String costName = resolveImportOriginalCostName(costCfg, rowData, false);
+                    if (StrUtil.isBlank(costName)) {
+                        localRateError = "费用名称为空，无法识别费用项";
+                        break;
+                    }
                     ImportSubResolveResult subResult = resolveOrBuildImportSub(dto, detail, seqNo, costName,
                             amount, BigDecimal.ZERO, rateCache);
                     if (subResult.getRateError() != null) {
@@ -995,12 +999,7 @@ public class LogisticsReconServiceImpl
                         .findFirst().orElse(null);
                 String costNameCell = costItemCfg == null ? ""
                         : LogisticsCostImportRowValueHelper.getPreparedValue(rowData, costItemCfg);
-                CfgLogisticsCostImportDetailEntity matched = costCfgList.stream()
-                        .filter(costCfg -> StrUtil.equals(costCfg.getSourceDetailField(), costNameCell))
-                        .findFirst().orElse(null);
-                String costName = matched != null
-                        ? StrUtil.blankToDefault(matched.getTargetDetailFieldName(), matched.getSourceDetailField())
-                        : costNameCell;
+                String costName = StrUtil.trim(costNameCell);
                 if (StrUtil.isBlank(costName)) {
                     excelDTO.setErrorMsg("费用名称为空，无法识别费用项");
                     errorList.add(excelDTO);
@@ -1301,6 +1300,18 @@ public class LogisticsReconServiceImpl
     }
 
     /**
+     * 解析导入原始费用名称：横向取 Excel 列标题（sourceField），纵向取 costItem 单元格原始值。
+     */
+    private String resolveImportOriginalCostName(CfgLogisticsCostImportDetailEntity costCfg,
+                                                 JSONObject rowData,
+                                                 boolean vertical) {
+        if (vertical) {
+            return StrUtil.trim(LogisticsCostImportRowValueHelper.getPreparedValue(rowData, costCfg));
+        }
+        return StrUtil.blankToDefault(costCfg.getSourceField(), costCfg.getSourceDetailField());
+    }
+
+    /**
      * 按对账维度（月份 + 文件 + 物流商 + Sheet）构建查重条件，与唯一索引
      * uniq_logistics_recon_month_file_supplier_sheet_active 一致。
      * 文件维度用于隔离不同文件：仅同月份 + 同文件 + 同物流商 + 同 Sheet 才复用/查重，
@@ -1517,7 +1528,7 @@ public class LogisticsReconServiceImpl
         } else if ("thirdHeight".equals(target)) {
             excelDTO.setThirdHeight(value);
         } else if ("actualAmount".equals(target) || StrUtil.isNotBlank(cfg.getTargetDetailField())) {
-            excelDTO.setCostName(StrUtil.blankToDefault(cfg.getTargetDetailFieldName(), cfg.getSourceDetailField()));
+            excelDTO.setCostName(StrUtil.blankToDefault(cfg.getSourceField(), cfg.getSourceDetailField()));
             excelDTO.setActualAmount(value);
         }
     }
