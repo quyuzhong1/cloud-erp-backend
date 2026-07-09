@@ -183,7 +183,7 @@ public class LoginAuthService {
         LoginUser loginUser = getLoginUserOrThrow(token);
         ApiResult<SysUserMenuAuthVO> apiResult = sysUserFeign.getUserMenuAuth(
                 new SysFeignDTO.UserLoginInfoDTO(loginUser.getUid(), loginUser.getUserType()));
-        return requireFeignData(apiResult);
+        return requireFeignData(apiResult, ApiError.AUTH_MENU_FETCH_FAILED);
     }
 
     /**
@@ -199,19 +199,22 @@ public class LoginAuthService {
         LoginUser loginUser = getLoginUserOrThrow(token);
         ApiResult<SysUserPermissionAuthVO> apiResult = sysUserFeign.getUserPermissionAuth(
                 new SysFeignDTO.UserLoginInfoDTO(loginUser.getUid(), loginUser.getUserType()));
-        return requireFeignData(apiResult);
+        return requireFeignData(apiResult, ApiError.AUTH_PERMISSION_FETCH_FAILED);
     }
 
     /**
      * 校验 Feign 响应：HTTP 200 且 data 非空
+     *
+     * @param apiResult    Feign 响应结果
+     * @param dataEmptyError data 为空时抛出的业务错误码（按调用场景区分，避免误报「登录失败」）
      */
-    private <T> T requireFeignData(ApiResult<T> apiResult) {
+    private <T> T requireFeignData(ApiResult<T> apiResult, ApiError dataEmptyError) {
         if (apiResult.getCode() != 200) {
             throw new ServiceException(apiResult.getCode(), apiResult.getMsg());
         }
         T data = apiResult.getData();
         if (Objects.isNull(data)) {
-            throw new ServiceException(ApiError.AUTH_LOGIN_FAILED);
+            throw new ServiceException(dataEmptyError);
         }
         return data;
     }
