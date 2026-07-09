@@ -2018,9 +2018,16 @@ public class LogisticsReconServiceImpl
                 executionResult.getMatchResults(), null);
         if (isConfirm) {
             List<String> costIds = extractMatchedCostIds(executionResult.getMatchResults());
-            if (CollUtil.isNotEmpty(costIds)) {
-                self.syncReconStatusByCostIds(costIds);
+            try {
+                if (CollUtil.isNotEmpty(costIds)) {
+                    self.syncReconStatusByCostIds(costIds);
+                }
+            } catch (Exception e) {
+                log.warn("[doMatchSubsChunk] 确认后费用单状态反向同步失败 mainId={} costIds={}", mainId, costIds, e);
             }
+            // ref 快照可能已在 writeReconMatchResult 中写入 confirmed，sync 会因状态一致而跳过刷新；
+            // 此处显式重算 detail_sub 聚合状态，与 confirmBill 保持一致。
+            self.refreshDetailSubReconciliationStatusInTx(mainId);
         }
     }
 
@@ -3138,6 +3145,10 @@ public class LogisticsReconServiceImpl
             if (CollUtil.isEmpty(refs)) {
                 continue;
             }
+            refs.stream()
+                    .map(LogisticsReconRefLogisticsBillEntity::getMainId)
+                    .filter(StrUtil::isNotBlank)
+                    .forEach(affectedMainIds::add);
             // 费用单当前对账状态
             Map<String, String> costStatusMap = logisticsBillCostService.listByIds(costIdBatch).stream()
                     .filter(cost -> StrUtil.isNotBlank(cost.getId()))
@@ -3152,9 +3163,6 @@ public class LogisticsReconServiceImpl
                     continue;
                 }
                 refIdsBySnapshot.computeIfAbsent(snapshot, key -> new ArrayList<>()).add(ref.getId());
-                if (StrUtil.isNotBlank(ref.getMainId())) {
-                    affectedMainIds.add(ref.getMainId());
-                }
             }
             for (Map.Entry<String, List<String>> entry : refIdsBySnapshot.entrySet()) {
                 updateRefReconciliationStatus(entry.getValue(), entry.getKey());
