@@ -246,6 +246,8 @@ public enum ApiError implements Serializable {
     AUTH_SSO_USER_NOT_BOUND_ERP(2024, "用户未绑定ERP系统"),
     AUTH_SSO_SYSTEM_ERROR(2025, "单点登录系统异常：{0}"),
     AUTH_ARCHIVE_DENIED(2026,"归档系统不允许增删改数据"),
+    AUTH_MENU_FETCH_FAILED(2027, "获取菜单权限失败，请稍后重试"),
+    AUTH_PERMISSION_FETCH_FAILED(2028, "获取按钮权限失败，请稍后重试"),
 
     /**
      * EMAIL 邮件相关 2200 - 2400
