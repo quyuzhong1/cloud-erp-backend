@@ -269,6 +269,7 @@ public enum ApiError implements Serializable {
     AUTH_API_TOKEN_PATH_EXISTS(2047, "接口路径已存在"),
     AUTH_API_TOKEN_MANAGEMENT_PATH_FORBIDDEN(2048, "API Token不允许访问管理接口"),
     AUTH_API_TOKEN_PATH_NOT_IN_WHITELIST(2049, "接口未配置API Token白名单"),
+    AUTH_API_TOKEN_WHITELIST_ADMIN_REQUIRED(2050, "仅管理员可维护API Token接口白名单"),
 
     /**
      * EMAIL 邮件相关 2200 - 2400

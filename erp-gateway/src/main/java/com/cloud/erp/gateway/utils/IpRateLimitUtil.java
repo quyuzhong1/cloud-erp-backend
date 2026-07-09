@@ -232,7 +232,8 @@ public class IpRateLimitUtil {
             return redisson.getBucket(blockKey).isExists();
         } catch (Exception e) {
             log.error("检查访问对象封禁状态失败: {}", logName, e);
-            return false;
+            // 与限流计数保持一致的安全优先策略：封禁状态不可判定时按已封禁处理。
+            return true;
         }
     }
 
