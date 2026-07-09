@@ -207,6 +207,10 @@ public class DeliveryDeclareDetailMidDTO implements Serializable {
         * 单位
         */
         private String unit;
+        /**
+         * 单位名称
+         */
+        private String unitName;
 
         /**
         * 出口申报单价
@@ -232,6 +236,10 @@ public class DeliveryDeclareDetailMidDTO implements Serializable {
         * 最新单位
         */
         private String latestUnit;
+        /**
+         * 最新单位名称
+         */
+        private String latestUnitName;
 
         /**
         * 最新出口申报单价
@@ -400,7 +408,7 @@ public class DeliveryDeclareDetailMidDTO implements Serializable {
          */
         private String unit;
         /**
-         * 单位mingc
+         * 单位名称
          */
         private String unitName;
 
