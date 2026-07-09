@@ -81,7 +81,6 @@ public class SupplierUserFeignController extends BaseController {
      * 添加用户
      */
     @PostMapping("/saveRef")
-    @LogAction(value = LogActionEnum.INSERT, desc = "新增供应商协同用户关系")
     public Boolean saveRef(@RequestBody @Validated SupplierRefUserEntity refUserEntity) {
         return supplierRefUserService.save(refUserEntity);
     }

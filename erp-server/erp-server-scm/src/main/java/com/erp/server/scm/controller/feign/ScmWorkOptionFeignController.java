@@ -4,8 +4,6 @@ import cn.hutool.core.util.ObjectUtil;
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
-import com.common.core.anno.LogAction;
-import com.common.core.enums.LogActionEnum;
 import com.erp.model.scm.entity.*;
 import com.erp.model.wms.entity.PoReturnDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
@@ -90,7 +88,6 @@ public class ScmWorkOptionFeignController {
      * @return java.lang.Boolean
      **/
     @PostMapping("/salesDemandApprove")
-    @LogAction(value = LogActionEnum.APPROVE, desc = "备货申请单审核")
     public List<BatchResultDTO> salesDemandApprove(@RequestBody @Validated BaseApproveParamDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         List<SalesDemandEntity> entityList = salesDemandService.listByIds(dto.getIds());
@@ -118,7 +115,6 @@ public class ScmWorkOptionFeignController {
      * @return java.lang.Boolean
      **/
     @PostMapping("/purchasePriceApprove")
-    @LogAction(value = LogActionEnum.APPROVE, desc = "采购价目审核")
     public List<BatchResultDTO> purchasePriceApprove(@RequestBody @Validated BaseApproveParamDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         List<PurchasePriceEntity> entityList = purchasePriceService.listByIds(dto.getIds());
@@ -146,7 +142,6 @@ public class ScmWorkOptionFeignController {
      * @return java.lang.Boolean
      **/
     @PostMapping("/purchasePriceChangeApprove")
-    @LogAction(value = LogActionEnum.APPROVE, desc = "采购调价审核")
     public List<BatchResultDTO> purchasePriceChangeApprove(@RequestBody @Validated BaseApproveParamDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         List<PurchasePriceChangeEntity> entityList = purchasePriceChangeService.listByIds(dto.getIds());
@@ -174,7 +169,6 @@ public class ScmWorkOptionFeignController {
      * @return java.lang.Boolean
      **/
     @PostMapping("/purchaseOrderApprove")
-    @LogAction(value = LogActionEnum.APPROVE, desc = "采购订单审核")
     public Boolean purchaseOrderApprove(@RequestBody @Validated ApproveOneDTO dto) {
         purchaseOrderService.approve(dto);
         return Boolean.TRUE;
@@ -188,7 +182,6 @@ public class ScmWorkOptionFeignController {
      * @return java.lang.Boolean
      **/
     @PostMapping("/purchaseChangeApprove")
-    @LogAction(value = LogActionEnum.APPROVE, desc = "采购变更单审核")
     public List<BatchResultDTO> purchaseChangeApprove(@RequestBody @Validated BaseApproveParamDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         List<PurchaseChangeEntity> entityList = purchaseChangeService.listByIds(dto.getIds());
@@ -225,7 +218,6 @@ public class ScmWorkOptionFeignController {
      * @return java.lang.Boolean
      **/
     @PostMapping("/purchaseApplicationApprove")
-    @LogAction(value = LogActionEnum.APPROVE, desc = "采购申请单审核")
     public List<BatchResultDTO> purchaseApplicationApprove(@RequestBody @Validated BaseApproveParamDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         List<PurchaseApplicationEntity> entityList = purchaseApplicationService.listByIds(dto.getIds());
@@ -246,7 +238,6 @@ public class ScmWorkOptionFeignController {
     }
 
     @PostMapping("/assetNoticeApprove")
-    @LogAction(value = LogActionEnum.APPROVE, desc = "资产通知单审核")
     public List<BatchResultDTO> assetNoticeApprove(@RequestBody @Validated BaseApproveParamDTO  dto){
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
@@ -273,7 +264,6 @@ public class ScmWorkOptionFeignController {
     }
 
     @PostMapping("/assetPurchaseOrderApprove")
-    @LogAction(value = LogActionEnum.APPROVE, desc = "资产采购订单审核")
     public List<BatchResultDTO> assetPurchaseOrderApprove(@RequestBody @Validated BaseApproveParamDTO  dto){
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
@@ -299,7 +289,6 @@ public class ScmWorkOptionFeignController {
     }
 
     @PostMapping("/assetPurchaseChangeApprove")
-    @LogAction(value = LogActionEnum.APPROVE, desc = "资产采购变更单审核")
     public List<BatchResultDTO> assetPurchaseChangeApprove(@RequestBody @Validated BaseApproveParamDTO  dto){
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
