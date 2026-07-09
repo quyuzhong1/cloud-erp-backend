@@ -2903,7 +2903,17 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         //校验中转状态
         if (TransferStatusEnum.FAILURE.getCode().equals(entity.getTransferStatus()) || TransferStatusEnum.WAIT.getCode().equals(entity.getTransferStatus())) {
-            throw new ServiceException(CharSequenceUtil.format("{}未成功预报无法提交发货", entity.getCode()));
+            String forecastErrorMsg = "";
+            List<SoB2cErrorEntity> forecastErrors = soB2cErrorService.getByMainIdsAndType(Collections.singletonList(id), SoB2cErrorTypeEnum.ORDER_FORECAST.getCode());
+            if (CollUtil.isNotEmpty(forecastErrors) && StringUtils.isNotBlank(forecastErrors.get(0).getMessage())) {
+                forecastErrorMsg = forecastErrors.get(0).getMessage();
+            }
+            if (TransferStatusEnum.FAILURE.getCode().equals(entity.getTransferStatus())) {
+                throw new ServiceException(CharSequenceUtil.format("{}订单预报失败，无法提交发货{}", entity.getCode(),
+                        StringUtils.isBlank(forecastErrorMsg) ? "，请查看订单异常或重新操作「订单预报」" : "：" + forecastErrorMsg));
+            }
+            throw new ServiceException(CharSequenceUtil.format("{}待订单预报，请先完成「订单预报」后再提交发货{}", entity.getCode(),
+                    StringUtils.isBlank(forecastErrorMsg) ? "" : "（" + forecastErrorMsg + "）"));
         }
 
         //检查发货限制
@@ -10317,6 +10327,20 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000, propagation = io.seata.tm.api.transaction.Propagation.REQUIRES_NEW)
     public List<BatchResultDTO> autoOrderForecast(List<String> soIdList) {
+        if (CollUtil.isEmpty(soIdList)) {
+            return new ArrayList<>();
+        }
+        // 在独立事务内同步预报状态，避免 submitDelivery 外层事务未提交导致读不到 wait/failure
+        List<SoB2cLogisticsEntity> syncLogisticsList = soB2cLogisticsService.listByMainIds(soIdList);
+        Map<String, SoB2cLogisticsEntity> syncLogisticsMap = CollUtil.isEmpty(syncLogisticsList)
+                ? Collections.emptyMap()
+                : syncLogisticsList.stream().collect(Collectors.toMap(SoB2cLogisticsEntity::getMainId, Function.identity(), (a, b) -> a));
+        for (String soId : soIdList) {
+            SoB2cLogisticsEntity logisticsEntity = syncLogisticsMap.get(soId);
+            if (Objects.nonNull(logisticsEntity) && StringUtils.isNotBlank(logisticsEntity.getLogisticsChannelId())) {
+                syncForecastStatusQuietly(soId, logisticsEntity.getLogisticsChannelId());
+            }
+        }
         List<SoB2cEntity> soB2cEntityList = listByIds(soIdList);
         soB2cEntityList = soB2cEntityList.stream().filter(v -> (TransferStatusEnum.FAILURE.getCode().equals(v.getTransferStatus()) || TransferStatusEnum.WAIT.getCode().equals(v.getTransferStatus())) &&
                 SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equalsIgnoreCase(v.getBillStatus()) && !Boolean.TRUE.equals(v.getInvalidStatus())).collect(Collectors.toList());
@@ -10336,7 +10360,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<SettingForecastEntity> settingForecastEntityList = forecastFeign.getSettingForecastByLogisticsSupplierIdList(logisticSupplierIds);
         settingForecastEntityList = settingForecastEntityList.stream().filter(v -> v.getIsAutoForecast() && StringUtils.isNotBlank(v.getTransferLogisticsChannelId()) && StringUtils.isNotBlank(v.getTransferLogisticsSupplierId())).collect(Collectors.toList());
         if (CollUtil.isEmpty(settingForecastEntityList)) {
-            return new ArrayList<>();
+            List<BatchResultDTO> noAutoConfigResults = new ArrayList<>();
+            for (SoB2cEntity soB2cEntity : soB2cEntityList) {
+                if (TransferStatusEnum.WAIT.getCode().equals(soB2cEntity.getTransferStatus())
+                        || TransferStatusEnum.FAILURE.getCode().equals(soB2cEntity.getTransferStatus())) {
+                    noAutoConfigResults.add(BatchResultDTO.fail(soB2cEntity.getId(), soB2cEntity.getCode(),
+                            "物流商未开启自动订单预报，请先手动完成「订单预报」"));
+                }
+            }
+            return noAutoConfigResults;
         }
         //根据物流商分类
         List<SoB2cDTO.TransferDeclareDTO> transferDeclareDTOList = new ArrayList<>();
