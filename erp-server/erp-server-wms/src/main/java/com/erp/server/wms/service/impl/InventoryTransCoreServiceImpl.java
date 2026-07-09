@@ -262,7 +262,11 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
                 stockBaseDTO.setOrgId(getOrgIdFromWarehouse(warehouseEntityList,flow.getWarehouseId()));
                 stockBaseDTO.setWarehouseId(flow.getWarehouseId());
                 stockBaseDTO.setWarehouseLocation(warehouseLocation);
-                stockBaseDTO.setInventoryStatus(rule.getInventoryStatus());
+                // 若调用方在 InOutStockDTO 上显式指定了库存状态（如不良品），则优先使用；
+                // 否则回落到交易规则配置的默认状态，保证历史调用链路行为不变。
+                InventoryStatusEnum effectiveStatus = flow.getInventoryStatus() != null
+                        ? flow.getInventoryStatus() : rule.getInventoryStatus();
+                stockBaseDTO.setInventoryStatus(effectiveStatus);
                 InventoryEntity inventoryEntity=inventoryService.getInventory(InventoryTransactionDTO.getInventoryTransactionDTO(stockBaseDTO));
                 transactionDTO.setInventoryId(null==inventoryEntity?null:inventoryEntity.getId());
 
@@ -347,7 +351,17 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
                 InventoryStockBaseDTO stockBaseDTO = new InventoryStockBaseDTO();
                 stockBaseDTO.setSkuId(flow.getSkuId());
                 stockBaseDTO.setSkuNo(flow.getSkuNo());
-                stockBaseDTO.setInventoryStatus(rule.getInventoryStatus());
+                // 调用方可分别覆盖两端库存状态：调入端（TARGET）取 dictInventoryStatus，
+                // 调出端（CURRENT）取 curInventoryStatus；两者均为非空才覆盖，否则回落交易
+                // 规则配置，保证历史调用链路行为不变。
+                // 业务语义：物理位置仍按调拨方向（如在途仓→目的仓），但各端的库存分类可按
+                // 单据明细指定切换（如 wego 海外仓签收为不良品 → 目的仓落 DEFECTIVE_PRODUCT，
+                // 或直接调拨单明细指定从冻结/不良品库存桶调出）。
+                // 注意：覆盖端必须有对应分类的物理库存，否则会触发「库存不足」报错。
+                boolean isTargetSide = rule.getWarehouseOption() == InventoryWarehouseOptionEnum.WAREHOUSE_TARGET;
+                InventoryStatusEnum overrideStatus = isTargetSide ? flow.getDictInventoryStatus() : flow.getCurInventoryStatus();
+                InventoryStatusEnum effectiveStatus = overrideStatus != null ? overrideStatus : rule.getInventoryStatus();
+                stockBaseDTO.setInventoryStatus(effectiveStatus);
                 if(rule.getWarehouseOption()==InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT){
                     stockBaseDTO.setOrgId(getOrgIdFromWarehouse(warehouseEntityList,flow.getCurWarehouseId()));
                     stockBaseDTO.setWarehouseId(flow.getCurWarehouseId());

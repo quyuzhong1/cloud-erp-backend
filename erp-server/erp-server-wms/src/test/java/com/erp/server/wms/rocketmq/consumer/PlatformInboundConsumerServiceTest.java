@@ -27,7 +27,7 @@ public class PlatformInboundConsumerServiceTest {
 
     @Test
     public void handleTest() {
-        String json = "{\"sourceCode\":\"297c29b44c82fcfdc0cb3d3b2becba55\",\"dmpOutputTaskRecordDataId\":\"1978567870124539906\",\"receivingDataList\":[{\"receiveTime\":\"2025-10-16T12:57:59\",\"productSku\":\"T163\",\"thirdId\":\"297c29b44c82fcfdc0cb3d3b2becba55\",\"receiveQty\":60}],\"hasReceivedData\":true,\"receivingStatus\":\"partialSigned\",\"provider\":\"damai\",\"warehousePlatformType\":\"overseasWarehouse\",\"dmpOutputTaskRecordId\":\"1978567870211624961\",\"receivingCode\":\"ASNVLV20250922000001\",\"items\":[{\"productSku\":\"T163\",\"receivedQuantity\":60}],\"downloadTime\":\"2025-10-16T12:57:59\",\"platform\":\"damai\"}";
+        String json = "{\"sourceCode\":\"FHD260609000001\",\"dmpOutputTaskRecordDataId\":\"2064233384325967874\",\"receivingDataList\":[{\"receiveTime\":\"2026-06-09T11:35:12\",\"productSku\":\"0605+2529+2821\",\"defectiveProductFlag\":false,\"thirdId\":\"1197_2026-06-09_0605+2529+2821\",\"receiveQty\":1,\"receiveUser\":\"管理员\"}],\"hasReceivedData\":true,\"receivingStatus\":\"toBeSigned\",\"provider\":\"wego\",\"warehousePlatformType\":\"overseasWarehouse\",\"dmpOutputTaskRecordId\":\"2064233385377861634\",\"receivingCode\":\"Q202606090001\",\"items\":[{\"productSku\":\"0605+2529+2821\",\"receivedQuantity\":1}],\"downloadTime\":\"2026-06-09T11:35:12\",\"platform\":\"wego\"}";
 
         platformInboundConsumerService.handle(json);
     }
