@@ -459,7 +459,9 @@ public class LogisticsReconServiceImpl
                         .sheet(importCfg.getSheetName())
                         .doRead();
                 if (excelListener.isHeadEmpty()) {
-                    throw new ServiceException(ApiError.LOGISTICS_RECON_EXCEL_HEAD_NOT_FOUND);
+                    //未找到表头直接跳过，可能是不匹配的sheet设置
+                    log.warn("sheet【{}】未找到表头信息",importCfg.getSheetName());
+                    continue;
                 }
                 totalCount += excelListener.getTotalRowCount();
                 errorList.addAll(excelListener.getErrorList());
