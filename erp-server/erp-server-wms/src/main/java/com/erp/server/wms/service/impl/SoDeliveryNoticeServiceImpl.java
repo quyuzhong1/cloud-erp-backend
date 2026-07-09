@@ -50,6 +50,7 @@ import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.plm.entity.BasicDictEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductLogisticsEntity;
+import com.erp.model.plm.enums.BasicDictTypeEnum;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.enums.CombinationDeclareTypeEnums;
 import com.erp.model.plm.vo.SkuVO;
@@ -1129,7 +1130,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         Map<String, ProductLogisticsEntity> logisticsMap = CollUtil.isEmpty(productLogisticsList) ? new HashMap<>() : productLogisticsList.stream().collect(Collectors.toMap(ProductLogisticsEntity::getSkuId,item -> item));
 
         //查询单位名称
-        List<BasicDictEntity> declareUnitList = FeignQuery.create(BasicDictEntity.class).eq(BasicDictEntity::getType, "declareUnit").list();
+        List<BasicDictEntity> declareUnitList = FeignQuery.create(BasicDictEntity.class).eq(BasicDictEntity::getType, BasicDictTypeEnum.DECLARE_UNIT.getCode()).list();
         Map<String, String> declareUnitNameMap = CollUtil.isEmpty(declareUnitList)
                 ? new HashMap<>()
                 : declareUnitList.stream().collect(Collectors.toMap(BasicDictEntity::getValue, BasicDictEntity::getName, (a, b) -> a));

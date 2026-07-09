@@ -2601,7 +2601,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                                 .collect(Collectors.toList());
                         
                         if (CollUtil.isNotEmpty(generatedCodes)) {
-                            throw new ServiceException("发货单【" + String.join("、", generatedCodes) + "】已生成报关单");
+                            throw new ServiceException(ApiError.FIRST_MILE_DELIVERY_DECLARE_ALREADY_GENERATED, String.join("、", generatedCodes));
                         }
                     }
 
