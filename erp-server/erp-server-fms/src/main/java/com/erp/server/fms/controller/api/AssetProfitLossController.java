@@ -442,6 +442,7 @@ public class AssetProfitLossController extends BaseController {
      * @return ApiResult<List<BatchResultDTO>>
      */
     @PostMapping("/pushToCard")
+    @LogAction(value = LogActionEnum.EXECUTE, desc = "盘盈盘亏单主表推送至资产卡片")
     public ApiResult<List<BatchResultDTO>> pushToCard(@RequestBody @Validated AssetProfitLossDTO.PushToCardDTO dto) {
         List<BatchResultDTO> resultDTOS = assetProfitLossService.pushToCard(dto);
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
