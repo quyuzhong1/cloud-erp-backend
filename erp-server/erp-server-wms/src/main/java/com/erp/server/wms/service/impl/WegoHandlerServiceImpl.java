@@ -795,10 +795,18 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
         List<WegoOutboundSaveDTO.Product> products = new ArrayList<>();
         if (CollUtil.isNotEmpty(req.getItems())) {
-            req.getItems().forEach(item -> products.add(
+            // 同一 productSku 可能出现在多行明细中，需按 SKU 聚合数量后再传给 WEGO，避免重复条目导致拒单或数量统计异常
+            Map<String, Integer> skuQtyMap = new LinkedHashMap<>();
+            for (ThirdWarehouseCreateOutboundReq.Item item : req.getItems()) {
+                if (CharSequenceUtil.isBlank(item.getProductSku()) || item.getQuantity() == null) {
+                    continue;
+                }
+                skuQtyMap.merge(item.getProductSku(), item.getQuantity(), Integer::sum);
+            }
+            skuQtyMap.forEach((sku, qty) -> products.add(
                     WegoOutboundSaveDTO.Product.builder()
-                            .sku(item.getProductSku())
-                            .qty(item.getQuantity())
+                            .sku(sku)
+                            .qty(qty)
                             .build()));
         }
 
