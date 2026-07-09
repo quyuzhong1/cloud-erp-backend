@@ -260,10 +260,13 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                 .eq(SoOutstockEntity::getCode, entity.getCode()));
         if (ObjectUtil.isNotEmpty(soOutstockEntity)) {
             // 旺店通已作废场景需要写操作，委托带事务的方法处理
-            service.handleVoidWdtSoOutStock(soOutstockEntity, entity);
+            if (isWdtVoid(entity)) {
+                service.handleVoidWdtSoOutStock(soOutstockEntity, entity);
+            }
             return;
         }
-        if (StringUtils.isNotBlank(entity.getStatus()) && entity.getStatus().equals("2")) {
+        //已作废直接返回
+        if (isWdtVoid(entity)) {
             return;
         }
         SoOutstockEntity pddSoOutstockEntity = soOutstockService.getOne(Wrappers.<SoOutstockEntity>lambdaQuery()
@@ -287,13 +290,17 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
     public void handleVoidWdtSoOutStock(SoOutstockEntity existing, WdtSoOutStockDTO entity) {
-        if (StringUtils.isNotBlank(entity.getStatus()) && entity.getStatus().equals("2")) {
+        if (isWdtVoid(entity)) {
             //旺店通已作废，ERP反审核删除并同步金蝶
             if (existing.getApproveStatus().equals(ApproveStatusEnum.APPROVE)) {
                 soOutstockService.disApprove(existing, true);
             }
             soOutstockService.delete(Collections.singletonList(existing.getId()));
         }
+    }
+
+    private boolean isWdtVoid(WdtSoOutStockDTO entity) {
+        return StringUtils.isNotBlank(entity.getStatus()) && entity.getStatus().equals("2");
     }
 
     /**
@@ -478,7 +485,6 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
             operateLogService.addModuleOperateLog(warnMsg, ModuleTypeEnum.SO_OUT_STOCK.getCode(), soOutstock.getId(), "新增销售出库单");
             return;
         }
-
         //保存销售出库单
         soOutstockService.save(soOutstock);
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "销售出库单", soOutstock.getCode());

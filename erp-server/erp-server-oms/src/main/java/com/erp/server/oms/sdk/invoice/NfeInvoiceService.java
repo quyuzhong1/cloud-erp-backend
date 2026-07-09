@@ -564,7 +564,8 @@ public class NfeInvoiceService {
                 || lowerMessage.contains("já foi emitido")
                 || lowerMessage.contains("已开票")
                 || lowerMessage.contains("已经开票")
-                || lowerMessage.contains("重复");
+                || lowerMessage.contains("重复开票")
+                || lowerMessage.contains("重复发票");
     }
 
     private Boolean handleCreateInvoiceSuccess(SoB2cEntity soB2cEntity,

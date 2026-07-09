@@ -255,9 +255,8 @@ public class TongYouHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         try {
             queryResp = queryOutboundAfterCancel(cancelOutboundReq);
         } catch (Exception e) {
-            log.warn(getPlatForm().getName() + "取消后查询出库单异常", e);
-            return success(CharSequenceUtil.format("通邮取消请求已受理，取消后查询异常，按拦截中处理：{}",
-                            CharSequenceUtil.blankToDefault(e.getMessage(), e.getClass().getSimpleName())),
+            log.warn(getPlatForm().getName() + "取消后查询出库单异常, erpOrderCode:{}", erpOrderCode, e);
+            return success("通邮取消请求已受理，取消后查询异常，按拦截中处理",
                     ThirdWarehouseCancelResultEnum.INTERCEPTING.getCode());
         }
         log.warn(getPlatForm().getName()+"取消后查询出库单结果:{}", JSONUtil.toJsonStr(queryResp));
@@ -304,9 +303,8 @@ public class TongYouHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         try {
             queryResp = queryOutboundAfterCancel(cancelOutboundReq, true);
         } catch (Exception e) {
-            log.warn(getPlatForm().getName() + "发货拦截后查询出库单异常", e);
-            return success(CharSequenceUtil.format("通邮取消请求已受理，按order_status=7查询拦截结果异常，按拦截失败处理：{}",
-                            CharSequenceUtil.blankToDefault(e.getMessage(), e.getClass().getSimpleName())),
+            log.warn(getPlatForm().getName() + "发货拦截后查询出库单异常, erpOrderCode:{}", cancelOutboundReq.getErpOrderCode(), e);
+            return success("通邮取消请求已受理，按order_status=7查询拦截结果异常，按拦截失败处理",
                     ThirdWarehouseCancelResultEnum.INTERCEPTION_FAILED.getCode());
         }
         log.warn(getPlatForm().getName()+"发货拦截后查询出库单结果:{}", JSONUtil.toJsonStr(queryResp));
@@ -347,7 +345,7 @@ public class TongYouHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         authJson.put("deliver_no",cancelOutboundReq.getErpOrderCode());
         // 通邮拦截结果不能用取消接口受理响应判断，拦截场景必须带 order_status=7 查询确认返回PB=7。
         if (queryInterceptStatus) {
-            authJson.put("order_status", TONGYOU_INTERCEPTED_STATUS);
+            authJson.put("order_status", TongYouOutboundStatusEnum.INTERCEPTED.getCode());
         }
         return tongYouService.getOutboundBill(authJson);
     }
@@ -360,7 +358,7 @@ public class TongYouHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                 .map(TongYouQueryOutboundResp::getPb)
                 .filter(CharSequenceUtil::isNotBlank)
                 .map(CharSequenceUtil::trim)
-                .anyMatch(TONGYOU_INTERCEPTED_STATUS::equals);
+                .anyMatch(status -> TongYouOutboundStatusEnum.INTERCEPTED.getCode().equals(status));
     }
 
     private boolean isCancelDeletedResult(String errorMsg) {

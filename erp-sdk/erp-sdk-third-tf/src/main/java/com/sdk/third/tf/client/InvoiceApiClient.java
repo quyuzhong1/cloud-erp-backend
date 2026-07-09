@@ -1,5 +1,6 @@
 package com.sdk.third.tf.client;
 
+import com.common.core.exception.ServiceException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.sdk.third.tf.util.JsonUtil;
 import com.sdk.third.tf.constant.TfApiConstants;
@@ -135,7 +136,7 @@ public class InvoiceApiClient {
 
     private InvoiceDetailResponseDTO.InvoiceDetailDataDTO getInvoiceDetailByParam(String paramName, String paramValue, String companyToken, String appKey) {
         if (paramValue == null || paramValue.trim().isEmpty()) {
-            throw new IllegalArgumentException("查询发票详情参数不能为空");
+            throw new ServiceException("查询发票详情参数不能为空");
         }
         try {
             // 构建查询参数（需要URL编码）
