@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.threadlocal.ThirdWarehouseContext;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.OkHttpUtils;
 import com.erp.model.wms.dto.WegoInOrderCancelDTO;
@@ -209,7 +210,7 @@ public class WegoOpenApiService {
             return response.toJavaObject(WegoInboundResp.class);
         } catch (Exception ex) {
             log.error("[WEGO分页查询入库单] 响应JSON转换WegoInboundResp失败, response={}", safeResponseLog(response), ex);
-            throw new ServiceException("WEGO 分页查询入库单接口响应转换失败: " + ex.getMessage());
+            throw new ServiceException(ApiError.WH_WEGO_SDK_INBOUND_PAGE_CONVERT_FAILED, ex.getMessage());
         }
     }
 
@@ -304,11 +305,11 @@ public class WegoOpenApiService {
                 WeGoConstants.TWO_C_ORDER_SEARCH, bizParams, "查询2C出库单");
         if (response == null) {
             log.error("[WEGO查询2C出库单] 接口无响应");
-            throw new ServiceException("WEGO 查询2C出库单接口无响应");
+            throw new ServiceException(ApiError.WH_WEGO_SDK_OUTBOUND_SEARCH_NO_RESPONSE);
         }
         if (!Boolean.TRUE.equals(response.getBoolean("success"))) {
             log.error("[WEGO查询2C出库单] 接口返回失败, {}", safeResponseLog(response));
-            throw new ServiceException("WEGO 查询2C出库单接口失败: " + response.getString("errorMsg"));
+            throw new ServiceException(ApiError.WH_WEGO_SDK_OUTBOUND_SEARCH_FAILED, response.getString("errorMsg"));
         }
         JSONArray resultArray = response.getJSONArray("result");
         if (resultArray == null || resultArray.isEmpty()) {
@@ -318,7 +319,7 @@ public class WegoOpenApiService {
             return resultArray.toJavaList(WegoOutboundResp.OutboundOrderDTO.class);
         } catch (Exception ex) {
             log.error("[WEGO查询2C出库单] result数组转换OutboundOrderDTO失败, {}", safeResponseLog(response), ex);
-            throw new ServiceException("WEGO 查询2C出库单接口响应转换失败: " + ex.getMessage());
+            throw new ServiceException(ApiError.WH_WEGO_SDK_OUTBOUND_SEARCH_CONVERT_FAILED, ex.getMessage());
         }
     }
 
@@ -363,7 +364,7 @@ public class WegoOpenApiService {
             return response.toJavaObject(WegoOutboundResp.class);
         } catch (Exception ex) {
             log.error("[WEGO分页查询2C出库单] 响应JSON转换WegoOutboundResp失败, {}", safeResponseLog(response), ex);
-            throw new ServiceException("WEGO 分页查询2C出库单接口响应转换失败: " + ex.getMessage());
+            throw new ServiceException(ApiError.WH_WEGO_SDK_OUTBOUND_PAGE_CONVERT_FAILED, ex.getMessage());
         }
     }
 
@@ -429,7 +430,7 @@ public class WegoOpenApiService {
             return response.toJavaObject(WegoReturnOrderResp.class);
         } catch (Exception ex) {
             log.error("[WEGO分页查询退货订单] 响应JSON转换WegoReturnOrderResp失败, {}", safeResponseLog(response), ex);
-            throw new ServiceException("WEGO 分页查询退货订单接口响应转换失败: " + ex.getMessage());
+            throw new ServiceException(ApiError.WH_WEGO_SDK_RETURN_ORDER_PAGE_CONVERT_FAILED, ex.getMessage());
         }
     }
 
@@ -481,13 +482,13 @@ public class WegoOpenApiService {
         } catch (Exception e) {
             long cost = System.currentTimeMillis() - start;
             log.error("[WEGO{}] HTTP调用异常, url={}, cost={}ms, params={}", actionName, url, cost, logRequestJson, e);
-            throw new ServiceException("WEGO " + actionName + "接口调用异常: " + e.getMessage());
+            throw new ServiceException(e, ApiError.WH_WEGO_SDK_API_CALL_ERROR, actionName, e.getMessage());
         }
         long cost = System.currentTimeMillis() - start;
         log.info("[WEGO{}] 请求结束, cost={}ms", actionName, cost);
         if (response == null || response.isEmpty()) {
             log.error("[WEGO{}] 接口返回为空, url={}, params={}", actionName, url, logRequestJson);
-            throw new ServiceException("WEGO " + actionName + "接口返回为空");
+            throw new ServiceException(ApiError.WH_WEGO_SDK_API_RESPONSE_EMPTY, actionName);
         }
         ThirdWarehouseContext.setRequestJson(requestJson);
         ThirdWarehouseContext.setResponseJson(response);
@@ -495,7 +496,7 @@ public class WegoOpenApiService {
             return JSON.parseObject(response);
         } catch (Exception ex) {
             log.error("[WEGO{}] 响应JSON解析失败, response={}", actionName, truncateRawResponse(response), ex);
-            throw new ServiceException("WEGO " + actionName + "接口返回非JSON格式");
+            throw new ServiceException(ApiError.WH_WEGO_SDK_API_RESPONSE_NOT_JSON, actionName);
         }
     }
 
@@ -601,7 +602,7 @@ public class WegoOpenApiService {
     private String buildRouterUrl(String domain) {
         String normalized = domain == null ? "" : domain.trim();
         if (normalized.isEmpty()) {
-            throw new ServiceException("WEGO域名不能为空");
+            throw new ServiceException(ApiError.WH_WEGO_SDK_DOMAIN_EMPTY);
         }
         if (normalized.endsWith("/")) {
             normalized = normalized.substring(0, normalized.length() - 1);

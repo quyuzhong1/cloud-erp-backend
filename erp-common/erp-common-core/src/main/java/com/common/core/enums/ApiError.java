@@ -1599,6 +1599,16 @@ public enum ApiError implements Serializable {
     WH_WEGO_OUTBOUND_RESPONSE_FAILED(11173,"WEGO出库：query2cOrderPage 接口返回失败: errorCode={0}, errorMsg={1}"),
     WH_WEGO_OUTBOUND_RESULT_EMPTY(11174,"WEGO出库：query2cOrderPage 接口 success=true 但 result 为空，pageNum={0}，已拉取页数={1}，数据不完整，任务中止"),
     WH_WEGO_OUTBOUND_PAGE_LIMIT_EXCEEDED(11175,"WEGO出库：已达最大翻页上限({0})，已拉取={1}条，数据不完整，任务中止"),
+    WH_WEGO_SDK_INBOUND_PAGE_CONVERT_FAILED(11176,"WEGO 分页查询入库单接口响应转换失败: {0}"),
+    WH_WEGO_SDK_OUTBOUND_SEARCH_NO_RESPONSE(11177,"WEGO 查询2C出库单接口无响应"),
+    WH_WEGO_SDK_OUTBOUND_SEARCH_FAILED(11178,"WEGO 查询2C出库单接口失败: {0}"),
+    WH_WEGO_SDK_OUTBOUND_SEARCH_CONVERT_FAILED(11179,"WEGO 查询2C出库单接口响应转换失败: {0}"),
+    WH_WEGO_SDK_OUTBOUND_PAGE_CONVERT_FAILED(11180,"WEGO 分页查询2C出库单接口响应转换失败: {0}"),
+    WH_WEGO_SDK_RETURN_ORDER_PAGE_CONVERT_FAILED(11181,"WEGO 分页查询退货订单接口响应转换失败: {0}"),
+    WH_WEGO_SDK_API_CALL_ERROR(11182,"WEGO {0}接口调用异常: {1}"),
+    WH_WEGO_SDK_API_RESPONSE_EMPTY(11183,"WEGO {0}接口返回为空"),
+    WH_WEGO_SDK_API_RESPONSE_NOT_JSON(11184,"WEGO {0}接口返回非JSON格式"),
+    WH_WEGO_SDK_DOMAIN_EMPTY(11185,"WEGO域名不能为空"),
 
 
     /**
