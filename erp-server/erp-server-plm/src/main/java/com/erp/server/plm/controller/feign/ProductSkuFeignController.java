@@ -5,8 +5,6 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.BaseIdsDTO;
-import com.common.core.anno.LogAction;
-import com.common.core.enums.LogActionEnum;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
@@ -150,7 +148,6 @@ public class ProductSkuFeignController {
      * @date: 2023/3/10 15:46
      */
     @PostMapping("/updateBusinessSyncKingdeeStatus")
-    @LogAction(value = LogActionEnum.UPDATE_STATUS, desc = "产品金蝶同步业务状态更新")
     public void updateBusinessSyncKingdeeStatus(@RequestBody Map<String, Object> params) {
         syncKingdeeService.updateBusinessSyncKingdeeStatus(params);
     }
@@ -314,7 +311,6 @@ public class ProductSkuFeignController {
      * @Date 2023/6/15 11:32
      **/
     @PostMapping("/updateOccupyStatus")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "产品占用标识更新")
     public Boolean updateOccupyStatus(@RequestBody List<String> skuIds) {
         if (CollectionUtils.isEmpty(skuIds)) {
             return Boolean.FALSE;
@@ -386,7 +382,6 @@ public class ProductSkuFeignController {
      * @return java.util.List<com.erp.model.plm.vo.SkuVO>
      **/
     @PostMapping("/updateProductDetailBatch")
-    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "产品信息批量修改")
     public Boolean updateProductDetailBatch(@RequestBody List<ProductDetailEntity> list) {
         return productDetailService.updateProductDetailBatch(list);
     }
@@ -398,7 +393,6 @@ public class ProductSkuFeignController {
      * @return java.util.List<com.erp.model.plm.vo.SkuVO>
      **/
     @PostMapping("/updateProductPlaceOrderTimeBatch")
-    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "产品采购首批下单日期批量修改")
     public Boolean updateProductPlaceOrderTimeBatch(@RequestBody List<ProductPurchaseEntity> list) {
         return productPurchaseService.updateProductPlaceOrderTimeBatch(list);
     }
@@ -410,7 +404,6 @@ public class ProductSkuFeignController {
      * @return java.util.List<com.erp.model.plm.vo.SkuVO>
      **/
     @PostMapping("/updateProductSaleListingTimeBatch")
-    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "产品销售上市日期批量修改")
     public Boolean updateProductSaleListingTimeBatch(@RequestBody List<ProductSaleEntity> list) {
         return productSaleService.updateProductSaleListingTimeBatch(list);
     }
@@ -624,7 +617,6 @@ public class ProductSkuFeignController {
      *
      */
     @PostMapping("/dimensionalWeightMeasure")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "产品尺寸重量测量更新")
     public String dimensionalWeightMeasure(@RequestBody DimensionalWeightDTO dto){
         return productDetailService.dimensionalWeightMeasure(dto);
     }
@@ -648,7 +640,6 @@ public class ProductSkuFeignController {
      *
      */
     @PostMapping("/uploadSkuImage")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "产品SKU图片上传")
     public void uploadSkuImage(@RequestBody UploadSkuDTO dto){
         productDetailService.uploadSkuImage(dto);
     }
