@@ -71,13 +71,13 @@ public class LogisticsReconQueryHandler extends AbstractQueryHandler {
      */
     private String matchStatusSql(String status) {
         if (LogisticsReconMatchStatusEnum.UNMATCHED.getCode().equals(status)) {
-            return "(logistics_recon.cost_count <= 0 OR COALESCE(m.match_count, 0) <= 0)";
+            return "(COALESCE(s.valid_cost_count, 0) <= 0 OR COALESCE(s.match_count, 0) <= 0)";
         }
         if (LogisticsReconMatchStatusEnum.PARTIAL.getCode().equals(status)) {
-            return "(COALESCE(m.match_count, 0) > 0 AND COALESCE(m.match_count, 0) < logistics_recon.cost_count)";
+            return "(COALESCE(s.match_count, 0) > 0 AND COALESCE(s.match_count, 0) < COALESCE(s.valid_cost_count, 0))";
         }
         if (LogisticsReconMatchStatusEnum.MATCHED.getCode().equals(status)) {
-            return "(logistics_recon.cost_count > 0 AND COALESCE(m.match_count, 0) >= logistics_recon.cost_count)";
+            return "(COALESCE(s.valid_cost_count, 0) > 0 AND COALESCE(s.match_count, 0) >= COALESCE(s.valid_cost_count, 0))";
         }
         return "";
     }
@@ -91,18 +91,18 @@ public class LogisticsReconQueryHandler extends AbstractQueryHandler {
      */
     private String reconciliationStatusSql(String status) {
         if (LogisticsReconReconciliationStatusEnum.TO_BE_CONFIRM.getCode().equals(status)) {
-            return "(COALESCE(a.reconciliation_total_count, 0) <= 0 "
-                    + "OR (COALESCE(a.reconciliation_confirmed_count, 0) <= 0 "
-                    + "AND COALESCE(a.reconciliation_partial_count, 0) <= 0))";
+            return "(COALESCE(s.reconciliation_total_count, 0) <= 0 "
+                    + "OR (COALESCE(s.reconciliation_confirmed_count, 0) <= 0 "
+                    + "AND COALESCE(s.reconciliation_partial_count, 0) <= 0))";
         }
         if (LogisticsReconReconciliationStatusEnum.PARTIAL_CONFIRM.getCode().equals(status)) {
-            return "(COALESCE(a.reconciliation_partial_count, 0) > 0 "
-                    + "OR (COALESCE(a.reconciliation_confirmed_count, 0) > 0 "
-                    + "AND COALESCE(a.reconciliation_confirmed_count, 0) < COALESCE(a.reconciliation_total_count, 0)))";
+            return "(COALESCE(s.reconciliation_partial_count, 0) > 0 "
+                    + "OR (COALESCE(s.reconciliation_confirmed_count, 0) > 0 "
+                    + "AND COALESCE(s.reconciliation_confirmed_count, 0) < COALESCE(s.reconciliation_total_count, 0)))";
         }
         if (LogisticsReconReconciliationStatusEnum.CONFIRMED.getCode().equals(status)) {
-            return "(COALESCE(a.reconciliation_total_count, 0) > 0 "
-                    + "AND COALESCE(a.reconciliation_confirmed_count, 0) >= COALESCE(a.reconciliation_total_count, 0))";
+            return "(COALESCE(s.reconciliation_total_count, 0) > 0 "
+                    + "AND COALESCE(s.reconciliation_confirmed_count, 0) >= COALESCE(s.reconciliation_total_count, 0))";
         }
         return "";
     }

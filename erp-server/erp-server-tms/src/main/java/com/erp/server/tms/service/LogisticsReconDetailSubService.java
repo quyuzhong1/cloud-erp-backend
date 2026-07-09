@@ -90,4 +90,9 @@ public interface LogisticsReconDetailSubService extends SuperService<LogisticsRe
      * @return 认领成功的费用项 id
      */
     List<String> claimMainSubsMatchingBatch(String mainId, int batchSize);
+
+    /**
+     * 统计主表下有效费用项数（detail 归属与 sub.main_id 一致）
+     */
+    int countValidByMainId(String mainId);
 }

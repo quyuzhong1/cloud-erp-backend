@@ -185,6 +185,10 @@ public class LogisticsReconDTO implements Serializable {
          */
         private Integer matchCount;
         /**
+         * 有效费用项总数（查询时实时聚合：detail 归属与 sub.main_id 一致，用于派生 match_status）
+         */
+        private Integer validCostCount;
+        /**
          * 对账总金额
          */
         private BigDecimal totalAmount;

@@ -246,4 +246,12 @@ public class LogisticsReconDetailSubServiceImpl
                 .update();
         return lockedIds;
     }
+
+    @Override
+    public int countValidByMainId(String mainId) {
+        if (StrUtil.isBlank(mainId)) {
+            return 0;
+        }
+        return baseMapper.countValidByMainId(mainId);
+    }
 }

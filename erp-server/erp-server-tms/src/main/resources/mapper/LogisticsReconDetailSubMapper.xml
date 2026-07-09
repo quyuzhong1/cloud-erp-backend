@@ -51,4 +51,13 @@
         ORDER BY detail_id, seq_no
     </select>
 
+    <select id="countValidByMainId" resultType="int">
+        SELECT COUNT(*)
+        FROM logistics_recon_detail_sub sub
+        INNER JOIN logistics_recon_detail d
+            ON d.id = sub.detail_id AND d.is_deleted = false AND d.main_id = sub.main_id
+        WHERE sub.is_deleted = false
+          AND d.main_id = #{mainId}
+    </select>
+
 </mapper>

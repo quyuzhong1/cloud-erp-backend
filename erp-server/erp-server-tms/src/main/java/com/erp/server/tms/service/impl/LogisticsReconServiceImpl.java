@@ -534,6 +534,53 @@ public class LogisticsReconServiceImpl
                 subList.size() + updateSubList.size(), batchAmount, currencies);
     }
 
+    /**
+     * 校验费用项与明细主表归属一致（sub.main_id 必须等于 detail.main_id）。
+     */
+    private void assertSubDetailMainConsistent(List<LogisticsReconDetailSubEntity> subs,
+                                               List<LogisticsReconDetailEntity> pendingDetails,
+                                               List<LogisticsReconDetailEntity> pendingUpdateDetails) {
+        if (CollUtil.isEmpty(subs)) {
+            return;
+        }
+        List<String> detailIds = subs.stream()
+                .map(LogisticsReconDetailSubEntity::getDetailId)
+                .filter(StrUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, String> detailMainIdMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(detailIds)) {
+            detailMainIdMap.putAll(logisticsReconDetailService.listByIds(detailIds).stream()
+                    .filter(detail -> StrUtil.isNotBlank(detail.getId()))
+                    .collect(Collectors.toMap(LogisticsReconDetailEntity::getId,
+                            LogisticsReconDetailEntity::getMainId, (first, second) -> first)));
+        }
+        mergeDetailMainIdMap(detailMainIdMap, pendingDetails);
+        mergeDetailMainIdMap(detailMainIdMap, pendingUpdateDetails);
+        for (LogisticsReconDetailSubEntity sub : subs) {
+            if (StrUtil.isBlank(sub.getDetailId()) || StrUtil.isBlank(sub.getMainId())) {
+                throw new ServiceException(ApiError.LOGISTICS_RECON_SAVE_FAILED);
+            }
+            String detailMainId = detailMainIdMap.get(sub.getDetailId());
+            if (StrUtil.isBlank(detailMainId) || !StrUtil.equals(detailMainId, sub.getMainId())) {
+                log.error("[saveImportDetailAndSub] detail/sub main_id mismatch subId={} detailId={} subMainId={} detailMainId={}",
+                        sub.getId(), sub.getDetailId(), sub.getMainId(), detailMainId);
+                throw new ServiceException(ApiError.LOGISTICS_RECON_SAVE_FAILED);
+            }
+        }
+    }
+
+    private void mergeDetailMainIdMap(Map<String, String> detailMainIdMap, List<LogisticsReconDetailEntity> details) {
+        if (CollUtil.isEmpty(details)) {
+            return;
+        }
+        for (LogisticsReconDetailEntity detail : details) {
+            if (StrUtil.isNotBlank(detail.getId()) && StrUtil.isNotBlank(detail.getMainId())) {
+                detailMainIdMap.put(detail.getId(), detail.getMainId());
+            }
+        }
+    }
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void saveImportDetailAndSub(List<LogisticsReconDetailEntity> detailList,
@@ -547,6 +594,9 @@ public class LogisticsReconServiceImpl
         if (CollUtil.isNotEmpty(updateDetailList)) {
             logisticsReconDetailService.updateBatchById(updateDetailList);
         }
+        // 明细落库后再校验归属（新建明细 id 在 saveBatch 前仅内存存在，提前查库会误判）
+        assertSubDetailMainConsistent(subList, detailList, updateDetailList);
+        assertSubDetailMainConsistent(updateSubList, detailList, updateDetailList);
         if (CollUtil.isNotEmpty(subList)) {
             logisticsReconDetailSubService.saveBatch(subList);
         }
@@ -611,9 +661,7 @@ public class LogisticsReconServiceImpl
         int detailCount = (int) logisticsReconDetailService.lambdaQuery()
                 .eq(LogisticsReconDetailEntity::getMainId, mainId)
                 .count();
-        int subCount = (int) logisticsReconDetailSubService.lambdaQuery()
-                .eq(LogisticsReconDetailSubEntity::getMainId, mainId)
-                .count();
+        int subCount = logisticsReconDetailSubService.countValidByMainId(mainId);
         boolean importCheck = LogisticsReconOpenImportConverter.RECON_PROCESSING_IMPORT_CHECK.equals(dto.getProcessingType());
         String checkStatus = importCheck
                 ? LogisticsReconCheckStatusEnum.CONFIRMED.getCode()
@@ -1412,8 +1460,24 @@ public class LogisticsReconServiceImpl
                 break;
             }
             lastSubId = subBatch.get(subBatch.size() - 1).getId();
+            List<String> detailIds = subBatch.stream()
+                    .map(LogisticsReconDetailSubEntity::getDetailId)
+                    .filter(StrUtil::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.toList());
+            Map<String, LogisticsReconDetailEntity> detailMap = CollUtil.isEmpty(detailIds)
+                    ? Collections.emptyMap()
+                    : logisticsReconDetailService.listByIds(detailIds).stream()
+                    .collect(Collectors.toMap(LogisticsReconDetailEntity::getId, d -> d, (first, second) -> first));
             for (LogisticsReconDetailSubEntity sub : subBatch) {
                 if (StrUtil.isBlank(sub.getDetailId()) || StrUtil.isBlank(sub.getCostName())) {
+                    continue;
+                }
+                LogisticsReconDetailEntity detail = detailMap.get(sub.getDetailId());
+                if (detail == null || !StrUtil.equals(detail.getMainId(), dto.getMainId())
+                        || !StrUtil.equals(detail.getMainId(), sub.getMainId())) {
+                    log.warn("[initImportDetailCacheFromDb] skip invalid sub id={} detailId={} subMainId={}",
+                            sub.getId(), sub.getDetailId(), sub.getMainId());
                     continue;
                 }
                 dto.getImportDetailSubKeyMap().putIfAbsent(buildImportSubKey(sub.getDetailId(), sub.getCostName()), sub.getId());
@@ -3004,13 +3068,15 @@ public class LogisticsReconServiceImpl
         if (super.getById(mainId) == null) {
             return;
         }
-        // 仅汇总导入行数（导入完成时调用一次）；匹配状态/匹配数不在主表存储，由查询实时聚合派生
+        // 汇总导入行数与有效费用项数（detail 归属一致）
         int importCount = (int) logisticsReconDetailService.lambdaQuery()
                 .eq(LogisticsReconDetailEntity::getMainId, mainId)
                 .count();
+        int costCount = logisticsReconDetailSubService.countValidByMainId(mainId);
         lambdaUpdate()
                 .eq(LogisticsReconEntity::getId, mainId)
                 .set(LogisticsReconEntity::getImportCount, importCount)
+                .set(LogisticsReconEntity::getCostCount, costCount)
                 .update();
     }
 
@@ -3215,9 +3281,13 @@ public class LogisticsReconServiceImpl
             data.setCheckStatusName(LogisticsReconCheckStatusEnum.getName(data.getCheckStatus()));
             data.setReconciliationStatusName(
                     LogisticsReconReconciliationStatusEnum.getName(data.getReconciliationStatus()));
-            // match_count 由 paging 子查询实时聚合得到，match_status 在此按 cost_count（费用项数）派生
+            // match_count / valid_cost_count 由 paging 子查询实时聚合（与详情页口径一致），match_status 据此派生
             int matchCount = data.getMatchCount() == null ? 0 : data.getMatchCount();
-            int costCount = data.getCostCount() == null ? 0 : data.getCostCount();
+            int costCount = data.getValidCostCount() != null ? data.getValidCostCount()
+                    : (data.getCostCount() == null ? 0 : data.getCostCount());
+            if (data.getValidCostCount() != null) {
+                data.setCostCount(data.getValidCostCount());
+            }
             String matchStatus = LogisticsReconMatchStatusEnum.resolve(matchCount, costCount);
             data.setMatchStatus(matchStatus);
             data.setMatchStatusName(LogisticsReconMatchStatusEnum.getName(matchStatus));
