@@ -2820,6 +2820,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @DistributeLocker(businessType = DistributeKeyConstant.SO_B2C_ORDER_KEY, keyName = "id", waiteTime = 60, unlockAfterTx = true)
     public BatchResultDTO submitDelivery(String id, String channelId) {
+        SoB2cLogisticsEntity logisticsForForecastSync = soB2cLogisticsService.getByMainId(id);
+        if (Objects.nonNull(logisticsForForecastSync) && StringUtils.isNotBlank(logisticsForForecastSync.getLogisticsChannelId())) {
+            // 提交发货时按 TMS 预报设置同步中转/组包状态（无需中转的单内部会跳过）
+            soB2cService.syncForecastStatusQuietly(id, logisticsForForecastSync.getLogisticsChannelId());
+        }
         try {
             List<BatchResultDTO> batchResultDTOS = soB2cService.autoOrderForecast(Collections.singletonList(id));
             //在提交发货中，清除异常订单报错
@@ -9282,6 +9287,35 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (!isRegistration) {
             String skuStr = String.join(",", notRegistrationSkuNoList);
             throw new ServiceException(ApiError.LOGISTICS_PRODUCT_NOT_REGISTERED, skuStr, resultDTO.getDeclarePlatformName());
+        }
+    }
+
+    @Override
+    public void syncForecastStatusQuietly(String id, String logisticsChannelId) {
+        try {
+            SettingForecastDTO.CheckRegistrationResultDTO resultDTO = getCheckRegistrationResult(id, logisticsChannelId);
+            // TMS 未配置强制中转/组包时不处理，避免影响无需中转的单
+            if (TransferStatusEnum.NOT.getCode().equals(resultDTO.getTransferStatus())
+                    && PackageStatusEnum.NOT.getCode().equals(resultDTO.getPackageStatus())) {
+                return;
+            }
+            if (CollUtil.isNotEmpty(resultDTO.getNotRegistrationSkuNoList())) {
+                log.warn("销售订单{}存在未备案SKU，跳过预报状态同步", id);
+                return;
+            }
+            SoB2cEntity entity = getById(id);
+            if (Objects.isNull(entity) || TransferStatusEnum.SUCCESS.getCode().equals(entity.getTransferStatus())) {
+                return;
+            }
+            String packageStatus = resultDTO.getPackageStatus();
+            // 仅强制组包时更新组包状态，避免把已组包单误改回未组包
+            if (PackageStatusEnum.NOT.getCode().equals(packageStatus)) {
+                packageStatus = entity.getPackageStatus();
+            }
+            soB2cService.updatePackageAndTransferStatus(id, packageStatus,
+                    resultDTO.getTransferStatus(), true, true);
+        } catch (Exception e) {
+            log.error("销售订单{}同步预报状态失败", id, e);
         }
     }
 
