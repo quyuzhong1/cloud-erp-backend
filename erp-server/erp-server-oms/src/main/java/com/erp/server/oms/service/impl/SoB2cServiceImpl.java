@@ -3907,7 +3907,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 try {
                     path = FastDFSClientUtil.uploadFile(Base64.getDecoder().decode(logisticsLabelBase64.replace("data:application/pdf;base64,","")), entity.getCode()+".pdf",new HashMap<>());
                 } catch (Exception e) {
-                    throw new ServiceException("面单上传FastDFS失败：" + e.getMessage());
+                    throw new ServiceException(ApiError.FASTDFS_UPLOAD_FAILED_FOR_WAYBILL);
                 }
                 createOutboundReq.setLabelUrl(getFastDfsDomain() + path);
             }

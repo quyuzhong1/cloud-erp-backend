@@ -9,7 +9,6 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
-import com.common.core.utils.MessageUtils;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.vo.request.ChanelQueryVO;
 import com.erp.model.tms.vo.response.LogisticsServiceResponseVO;
@@ -102,8 +101,7 @@ public class WegoLogisticsHandlerImpl extends AbstractLogisticsHandler {
             response = wegoOpenApiService.queryTransport(reqDTO);
         } catch (Exception e) {
             log.error("[WEGO渠道同步] 调用 transport.get 异常, authId={}", authMap.get("id"), e);
-            return ApiResult.error(ApiError.WH_WEGO_CHANNEL_QUERY_ERROR.getCode(),
-                    MessageUtils.getMessage(ApiError.WH_WEGO_CHANNEL_QUERY_ERROR, e.getMessage()));
+            return ApiResult.error(ApiError.WH_WEGO_CHANNEL_QUERY_ERROR);
         }
         if (Objects.isNull(response)) {
             return ApiResult.error(ApiError.WH_WEGO_CHANNEL_RESPONSE_EMPTY);

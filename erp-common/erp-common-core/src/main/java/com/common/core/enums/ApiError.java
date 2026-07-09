@@ -1623,10 +1623,18 @@ public enum ApiError implements Serializable {
     WH_WEGO_RETURN_PAGE_LIMIT_EXCEEDED(11197,"WEGO退货入库：已达最大翻页上限({0})，已拉取={1}条，数据不完整，任务中止"),
     WH_WEGO_CHANNEL_AUTH_INFO_EMPTY(11198,"WEGO授权信息为空"),
     WH_WEGO_CHANNEL_TOKEN_SECRET_MISSING(11199,"WEGO授权信息缺失appToken/appSecret"),
-    WH_WEGO_CHANNEL_QUERY_ERROR(11200,"WEGO查询派送渠道异常: {0}"),
+    WH_WEGO_CHANNEL_QUERY_ERROR(11200,"WEGO查询派送渠道异常"),
     WH_WEGO_CHANNEL_RESPONSE_EMPTY(11201,"WEGO查询派送渠道接口返回为空"),
     WH_WEGO_CHANNEL_QUERY_FAILED(11202,"WEGO查询派送渠道失败"),
     WH_WEGO_LOGISTICS_SERVICE_NOT_OPEN(11203,"WEGO物流服务功能暂未开放"),
+    WH_WEGO_SKU_PROVIDER_NOT_FOUND(11204,"WEGO SKU：nextLevelId[{0}]对应的服务商不存在"),
+    WH_WEGO_SKU_AUTH_JSON_EMPTY(11205,"WEGO SKU：服务商[{0}]auth_json为空"),
+    WH_WEGO_SKU_TOKEN_SECRET_MISSING(11206,"WEGO SKU：服务商[{0}]appToken/appSecret缺失"),
+    WH_WEGO_SKU_PAGE_QUERY_ERROR(11207,"WEGO SKU：分页调用异常，pageNum={0}，已拉取={1}条，数据不完整，任务中止"),
+    WH_WEGO_SKU_PAGE_PARSE_FAILED(11208,"WEGO SKU：第{0}页响应解析失败，数据不完整，任务中止"),
+    WH_WEGO_SKU_PAGE_LIMIT_EXCEEDED(11209,"WEGO SKU：已达最大翻页上限({0})，已拉取={1}条，数据不完整，任务中止"),
+    WH_WEGO_SKU_RESPONSE_FAILED(11210,"WEGO SKU接口返回失败: errorCode={0}, errorMsg={1}"),
+    FASTDFS_UPLOAD_FAILED_FOR_WAYBILL(11211,"面单上传FastDFS失败"),
 
 
     /**
