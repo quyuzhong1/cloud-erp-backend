@@ -6,8 +6,10 @@ import com.alibaba.fastjson.JSONObject;
 import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.MessageUtils;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.vo.request.ChanelQueryVO;
 import com.erp.model.tms.vo.response.LogisticsServiceResponseVO;
@@ -84,12 +86,12 @@ public class WegoLogisticsHandlerImpl extends AbstractLogisticsHandler {
     public ApiResult<List<LogisticsSaleChannelEntity>> getChannel(ChanelQueryVO chanelQueryVO) {
         Map<String, String> authMap = chanelQueryVO == null ? null : chanelQueryVO.getAuthMap();
         if (authMap == null || authMap.isEmpty()) {
-            return ApiResult.error(-1, "WEGO授权信息为空");
+            return ApiResult.error(ApiError.WH_WEGO_CHANNEL_AUTH_INFO_EMPTY);
         }
         String appToken = authMap.get(APP_TOKEN);
         String appSecret = authMap.get(APP_SECRET);
         if (CharSequenceUtil.hasBlank(appToken, appSecret)) {
-            return ApiResult.error(-1, "WEGO授权信息缺失appToken/appSecret");
+            return ApiResult.error(ApiError.WH_WEGO_CHANNEL_TOKEN_SECRET_MISSING);
         }
 
         JSONObject response;
@@ -100,18 +102,20 @@ public class WegoLogisticsHandlerImpl extends AbstractLogisticsHandler {
             response = wegoOpenApiService.queryTransport(reqDTO);
         } catch (Exception e) {
             log.error("[WEGO渠道同步] 调用 transport.get 异常, authId={}", authMap.get("id"), e);
-            return ApiResult.error(-1, "WEGO查询派送渠道异常: " + e.getMessage());
+            return ApiResult.error(ApiError.WH_WEGO_CHANNEL_QUERY_ERROR.getCode(),
+                    MessageUtils.getMessage(ApiError.WH_WEGO_CHANNEL_QUERY_ERROR, e.getMessage()));
         }
         if (Objects.isNull(response)) {
-            return ApiResult.error(-1, "WEGO查询派送渠道接口返回为空");
+            return ApiResult.error(ApiError.WH_WEGO_CHANNEL_RESPONSE_EMPTY);
         }
         if (!Boolean.TRUE.equals(response.getBoolean("success"))) {
             String errorMsg = response.getString("errorMsg");
             Integer errorCode = response.getInteger("errorCode");
             log.error("[WEGO渠道同步] 接口返回失败, authId={}, errorCode={}, errorMsg={}",
                     authMap.get("id"), errorCode, errorMsg);
-            return ApiResult.error(errorCode == null ? -1 : errorCode,
-                    CharSequenceUtil.isBlank(errorMsg) ? "WEGO查询派送渠道失败" : errorMsg);
+            // 透传 WEGO 原始 errorCode（非空时），便于区分远端失败类型；缺失时回退到规范化业务错误码
+            return ApiResult.error(errorCode == null ? ApiError.WH_WEGO_CHANNEL_QUERY_FAILED.getCode() : errorCode,
+                    CharSequenceUtil.isBlank(errorMsg) ? ApiError.WH_WEGO_CHANNEL_QUERY_FAILED.getMsg() : errorMsg);
         }
         JSONArray result = response.getJSONArray("result");
         if (result == null || result.isEmpty()) {
@@ -139,7 +143,7 @@ public class WegoLogisticsHandlerImpl extends AbstractLogisticsHandler {
 
     @Override
     public ApiResult<List<LogisticsServiceResponseVO>> listLogisticsService(Map<String, String> authMap) {
-        return ApiResult.error(-1, "功能未开放");
+        return ApiResult.error(ApiError.WH_WEGO_LOGISTICS_SERVICE_NOT_OPEN);
     }
 
     /**
