@@ -1,4 +1,4 @@
-package com.erp.server.tms.utils;
+package com.erp.model.tms.constant;
 
 /**
  * 报关合并明细默认取值（与产品物流信息为空时的兜底一致）。

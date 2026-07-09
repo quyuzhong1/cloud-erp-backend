@@ -83,7 +83,7 @@ import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
 import com.erp.server.tms.mapper.TmsDeclareBillMapper;
 import com.erp.server.tms.service.*;
 import com.erp.server.tms.utils.DeclarationGenerationService;
-import com.erp.server.tms.utils.DeclareMergeDefaults;
+import com.erp.model.tms.constant.DeclareMergeDefaults;
 import freemarker.template.utility.StringUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
