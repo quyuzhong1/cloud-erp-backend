@@ -708,7 +708,6 @@ public enum ApiError implements Serializable {
     PRODUCT_IMG_ATTACHMENT_NOT_FOUND(5108, "未找到图片分类附件关联单数据"),
     PRODUCT_IMG_CATEGORY_MOVE_FORBIDDEN_ALL(5109, "不能移动到\"所有分类\""),
     PRODUCT_IMG_CATEGORY_MOVE_FORBIDDEN_MAIN(5110, "不能移动到\"产品主图\"分类"),
-    PRODUCT_IMG_CATEGORY_MOVE_FORBIDDEN_THUMBNAIL(5111, "不能移动到\"产品缩略图\"分类"),
     PRODUCT_IMG_DOWNLOAD_MIN_REQUIRED(5112, "请至少选择一张图片"),
     PRODUCT_IMG_DOWNLOAD_MAX_LIMIT(5113, "最多支持50张图片下载"),
     PRODUCT_IMG_DOWNLOAD_NOT_FOUND(5114, "未找到可下载的图片"),
@@ -883,8 +882,6 @@ public enum ApiError implements Serializable {
 
     PO_CAN_GENERATE_ONLY_WHEN_APPROVED(9513,"已审核数据才能生成采购单"),
     PO_APPLY_APPROVAL_NOT_ALLOWED_ONLY(9514,"只有未生成采购订单的申请单才能反审核"),
-    PO_SUBMIT_FAILED(9515,"采购订单提交失败"),
-    PO_APPROVE_FAILED(9516,"采购订单审核失败"),
 
     PO_APPROVED_ONLY_CAN_PUSH_RECEIPT(9518,"只有已审核采购订单能下推签收单"),
     PO_APPROVED_ONLY_CAN_PUSH_QC_APPLICATION(9518,"只有已审核采购订单能下推质检申请单"),
@@ -959,7 +956,6 @@ public enum ApiError implements Serializable {
 
     PO_SUBCONTRACT_ORDER_NOT_FOUND(9557,"未找到委外订单"),
     PO_SUBCONTRACT_DETAIL_NOT_FOUND(9558,"未找到委外订单明细"),
-    PO_SUBCONTRACT_PARENT_SKU_QTY_EXCEEDS(9559,"委外订单【{0}】明细父级SKU【{1}】数量不能大于{2}"),
     PO_SUBCONTRACT_ALREADY_PUSHED_REVERSE_FORBIDDEN(9560,"委外订单【{0}】已下推采购订单【{1}】,不支持反审核"),
 
     PO_RECONCILIATION_ONLY_PENDING_SUPPLIER_CONFIRM_ALLOWED(9561,"仅【待供方确认】支持此操作"),
@@ -1058,7 +1054,6 @@ public enum ApiError implements Serializable {
     PO_RECONCILIATION_NOT_CONFIRMED_FOR_GENERATE(9651,"单据单号【{0}】未确认，不支持生成采购对账单"),
     PO_RECONCILIATION_ALREADY_GENERATED(9652,"单据单号【{0}】已生成采购对账单"),
     PO_RECONCILIATION_DETAIL_DELETE_FORBIDDEN(9653,"单据【{0}】已完成对账，不支持删除对账明细"),
-    PO_RECONCILIATION_DETAIL_ALREADY_GENERATED(9654,"单据单号【{0}】已生成对账明细"),
     PO_RECONCILIATION_REF_RECEIVE_DISAPPROVE_FORBIDDEN(9655,"单据单号【{0}】已关联对账单，无法反审核"),
     PO_RECONCILIATION_ONLY_RECEIVED_CANCEL_ALLOWED(9656,"仅处于【已收单据】状态的对账单支持取消签收"),
     PO_RECONCILIATION_NOT_REQUIRED_FORBIDDEN(9657,"单据单号【{0}】无需对账，不支持生成对账单"),
@@ -1424,7 +1419,6 @@ public enum ApiError implements Serializable {
     WH_STOCK_RULE_STATUS_CONFIG_ERROR(11011,"库存交易规则的库存状态配置错误，请联系系统管理员"),
     WH_STOCK_RULE_TX_TYPE_ERROR(11012,"库存交易规则的交易类型配置错误，请联系系统管理员"),
     WH_STOCK_TRANSFER_SRC_DEST_SAME(11013,"库存交易的当前仓与目的仓不能为同一仓库"),
-    WH_STOCK_TX_NOT_FOUND_OR_REVERSED(11014,"库存交易流水不存在或已反审核，无法再次执行反审核"),
     WH_TRANSFER_APPLY_NOT_FOUND(11015,"未找到调拨申请单"),
     WH_TRANSFER_APPLY_DETAIL_NOT_FOUND(11016,"未找到调拨申请明细"),
     WH_TRANSFER_APPLY_ALREADY_PUSHED_DIRECT_REVERSE_FORBIDDEN(11017,"调拨申请单已下推直接调拨单，不支持反审核"),
@@ -1676,7 +1670,6 @@ public enum ApiError implements Serializable {
     VM_INVENTORY_INSUFFICIENT_FOR_TRANSFER(12524,"虚拟仓【{0}】库存不足"),
     VM_FROM_WAREHOUSE_NOT_BLANK(92290,"启动自动借调时，借调仓不能为空"),
     VM_NOT_CONTAINS_FROM_WAREHOUSE(92291,"虚拟仓关联实体仓不能包含借调仓"),
-    VM_ALLOCATION_NOT_REPEAT(92292,"存在未同步成功的虚拟仓分货单调出任务，调出仓库ID：{0}，调出虚拟仓ID：{1}，SKU：{2}，请确认后再操作"),
     VM_VIRTUAL_WAREHOUSE_NOT_FOUND(12524,"虚拟仓【{0}】未找到"),
     VM_WDT_ENTITY_INVENTORY_INSUFFICIENT(12525,"提交失败，旺店通【{0}】【{1}】可用库存不足无法分货，可用库存【{2}】，分配数量【{3}】"),
 
@@ -1777,7 +1770,6 @@ public enum ApiError implements Serializable {
     LOGISTICS_SALES_CHANNEL_NOT_CONFIGURED(13576,"渠道【{0}】尚未配置销售渠道"),
     LOGISTICS_PRINT_WAYBILL_FAILED(13577,"调用第三方接口打印面单异常，订单ID:{0}，原因：{1}"),
     LOGISTICS_CHANNEL_QUOTE_REF_DELETE_FORBIDDEN(13578,"该物流渠道已被引用，不支持删除"),
-    LOGISTICS_SELF_SHIP_BILL_STATUS_CHANGE_FORBIDDEN(13579,"已确认或已作废的自发货费用单不支持状态变更"),
     LOGISTICS_CHANNEL_ALREADY_USED(13580,"物流渠道【{0}】已被使用，不支持重复选择"),
     LOGISTICS_SAILING_CONFIG_ALREADY_EXISTS(13581,"已存在渠道【{0}】的截单开船配置数据"),
     LOGISTICS_COST_NAME_ALREADY_EXISTS(13582,"费用归属【{0}】费用名称【{1}】已存在"),
