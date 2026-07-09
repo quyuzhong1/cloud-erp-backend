@@ -2,6 +2,7 @@ package com.erp.server.sys.service.impl;
 
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.sys.dto.SysApiTokenWhitelistDTO;
 import com.erp.model.sys.entity.SysApiTokenWhitelistEntity;
@@ -71,7 +72,7 @@ public class SysApiTokenWhitelistServiceImpl extends SuperServiceImpl<SysApiToke
     public Boolean update(SysApiTokenWhitelistDTO.UpdateDTO dto) {
         SysApiTokenWhitelistEntity entity = this.getById(dto.getId());
         if (entity == null) {
-            throw new ServiceException("接口白名单配置不存在");
+            throw new ServiceException(ApiError.AUTH_API_TOKEN_WHITELIST_NOT_FOUND);
         }
 
         String pathPattern = SysApiTokenSupport.normalizePathPattern(dto.getPathPattern());
@@ -89,7 +90,7 @@ public class SysApiTokenWhitelistServiceImpl extends SuperServiceImpl<SysApiToke
     public Boolean removeConfig(BaseIdDTO dto) {
         SysApiTokenWhitelistEntity entity = this.getById(dto.getId());
         if (entity == null) {
-            throw new ServiceException("接口白名单配置不存在");
+            throw new ServiceException(ApiError.AUTH_API_TOKEN_WHITELIST_NOT_FOUND);
         }
         Boolean result = this.removeById(dto.getId());
         if (Boolean.TRUE.equals(result)) {
@@ -129,7 +130,7 @@ public class SysApiTokenWhitelistServiceImpl extends SuperServiceImpl<SysApiToke
                 .ne(StringUtils.isNotBlank(excludeId), SysApiTokenWhitelistEntity::getId, excludeId)
                 .count();
         if (count > 0) {
-            throw new ServiceException("接口路径已存在");
+            throw new ServiceException(ApiError.AUTH_API_TOKEN_PATH_EXISTS);
         }
     }
 

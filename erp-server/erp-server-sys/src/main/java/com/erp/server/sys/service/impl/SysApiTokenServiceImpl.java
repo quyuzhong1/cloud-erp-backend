@@ -4,6 +4,7 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.sys.dto.SysApiTokenDTO;
 import com.erp.model.sys.entity.SysApiTokenEntity;
@@ -94,7 +95,7 @@ public class SysApiTokenServiceImpl extends SuperServiceImpl<SysApiTokenMapper, 
     @Transactional(rollbackFor = Exception.class)
     public Boolean extend(SysApiTokenDTO.ExtendDTO dto) {
         SysApiTokenEntity entity = getOwnedToken(dto.getId());
-        entity.setExpiresTime(calculateExpiresTime(dto.getValidityDays()));
+        entity.setExpiresTime(calculateExtendExpiresTime(entity.getExpiresTime(), dto.getValidityDays()));
         return this.updateById(entity);
     }
 
@@ -109,7 +110,7 @@ public class SysApiTokenServiceImpl extends SuperServiceImpl<SysApiTokenMapper, 
     public SysApiTokenDTO.TokenDTO copy(String id) {
         SysApiTokenEntity entity = getOwnedToken(id);
         if (isExpired(entity.getExpiresTime())) {
-            throw new ServiceException("个人访问令牌已过期，请重新生成");
+            throw new ServiceException(ApiError.AUTH_API_TOKEN_EXPIRED_RECREATE);
         }
         return new SysApiTokenDTO.TokenDTO(sysApiTokenCryptoService.decrypt(entity.getEncryptedToken()), entity.getExpiresTime());
     }
@@ -166,7 +167,7 @@ public class SysApiTokenServiceImpl extends SuperServiceImpl<SysApiTokenMapper, 
 
     private SysApiTokenEntity getOwnedToken(String id) {
         if (StringUtils.isBlank(id)) {
-            throw new ServiceException("id不能为空");
+            throw new ServiceException(ApiError.AUTH_API_TOKEN_ID_REQUIRED);
         }
         String userId = currentUserId();
         SysApiTokenEntity entity = this.lambdaQuery()
@@ -174,7 +175,7 @@ public class SysApiTokenServiceImpl extends SuperServiceImpl<SysApiTokenMapper, 
                 .eq(SysApiTokenEntity::getUserId, userId)
                 .one();
         if (entity == null) {
-            throw new ServiceException("个人访问令牌不存在");
+            throw new ServiceException(ApiError.AUTH_API_TOKEN_NOT_FOUND);
         }
         return entity;
     }
@@ -182,7 +183,7 @@ public class SysApiTokenServiceImpl extends SuperServiceImpl<SysApiTokenMapper, 
     private String currentUserId() {
         LoginUser loginUser = UserContext.getLoginUser();
         if (loginUser == null || StringUtils.isBlank(loginUser.getUid())) {
-            throw new ServiceException("用户未登录");
+            throw new ServiceException(ApiError.AUTH_API_TOKEN_USER_NOT_LOGIN);
         }
         return loginUser.getUid();
     }
@@ -190,17 +191,17 @@ public class SysApiTokenServiceImpl extends SuperServiceImpl<SysApiTokenMapper, 
     private String normalizeTokenName(String tokenName) {
         String value = StringUtils.trimToEmpty(tokenName);
         if (StringUtils.isBlank(value)) {
-            throw new ServiceException("令牌名称不能为空");
+            throw new ServiceException(ApiError.AUTH_API_TOKEN_NAME_REQUIRED);
         }
         if (value.length() > 50) {
-            throw new ServiceException("令牌名称最大长度不能超过50位");
+            throw new ServiceException(ApiError.AUTH_API_TOKEN_NAME_TOO_LONG);
         }
         return value;
     }
 
     private LocalDateTime calculateExpiresTime(Integer validityDays) {
         if (validityDays == null) {
-            throw new ServiceException("有效期不能为空");
+            throw new ServiceException(ApiError.AUTH_API_TOKEN_VALIDITY_REQUIRED);
         }
         if (validityDays == VALIDITY_NEVER_EXPIRES) {
             return null;
@@ -208,7 +209,23 @@ public class SysApiTokenServiceImpl extends SuperServiceImpl<SysApiTokenMapper, 
         if (validityDays == 30 || validityDays == 90 || validityDays == 180 || validityDays == 365) {
             return LocalDateTime.now().plusDays(validityDays);
         }
-        throw new ServiceException("有效期只能选择30天、90天、180天、365天或永不过期");
+        throw new ServiceException(ApiError.AUTH_API_TOKEN_VALIDITY_INVALID);
+    }
+
+    private LocalDateTime calculateExtendExpiresTime(LocalDateTime currentExpiresTime, Integer validityDays) {
+        if (validityDays == null) {
+            throw new ServiceException(ApiError.AUTH_API_TOKEN_VALIDITY_REQUIRED);
+        }
+        if (validityDays == VALIDITY_NEVER_EXPIRES) {
+            return null;
+        }
+        if (validityDays == 30 || validityDays == 90 || validityDays == 180 || validityDays == 365) {
+            LocalDateTime now = LocalDateTime.now();
+            // 未过期令牌从原到期时间续期；已过期或永不过期改为固定有效期时，从当前时间开始计算。
+            LocalDateTime baseTime = currentExpiresTime != null && currentExpiresTime.isAfter(now) ? currentExpiresTime : now;
+            return baseTime.plusDays(validityDays);
+        }
+        throw new ServiceException(ApiError.AUTH_API_TOKEN_VALIDITY_INVALID);
     }
 
     private boolean isExpired(LocalDateTime expiresTime) {
