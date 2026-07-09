@@ -125,8 +125,6 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 	@Resource
 	private SoReturnInstockSalesMatchService soReturnInstockSalesMatchService;
 
-	@Resource
-	private SoB2cReturnFeign soB2cReturnFeign;
 
 	@Override
 	public String getBizName() {
