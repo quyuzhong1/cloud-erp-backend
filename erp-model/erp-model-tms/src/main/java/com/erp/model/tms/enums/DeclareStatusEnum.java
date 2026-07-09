@@ -54,6 +54,9 @@ public enum DeclareStatusEnum implements EnumMessage {
     }
 
     public static DeclareStatusEnum getEnum(String code) {
+        if (StringUtils.isBlank(code)) {
+            return null;
+        }
         for (DeclareStatusEnum declareStatusEnum : DeclareStatusEnum.values()) {
             if (code.equals(declareStatusEnum.getCode())) {
                 return declareStatusEnum;
