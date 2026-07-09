@@ -3010,6 +3010,89 @@ public class LogisticsReconServiceImpl
     }
 
     /**
+     * 物流费用单对账状态 → ref 快照 → detail_sub 聚合 的反向同步。
+     * 独立新事务提交，避免与费用侧主流程事务耦合（费用状态已在其自身事务内落库）。
+     */
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
+    @Override
+    public void syncReconStatusByCostIds(java.util.Collection<String> logisticsBillCostIds) {
+        if (CollUtil.isEmpty(logisticsBillCostIds)) {
+            return;
+        }
+        List<String> costIds = logisticsBillCostIds.stream()
+                .filter(StrUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(costIds)) {
+            return;
+        }
+        Set<String> affectedMainIds = new HashSet<>();
+        for (int i = 0; i < costIds.size(); i += MATCH_ID_BATCH_SIZE) {
+            List<String> costIdBatch = costIds.subList(i, Math.min(costIds.size(), i + MATCH_ID_BATCH_SIZE));
+            // 关联的 ref（快照跟随费用单，费用单可被多个对账费用项引用）
+            List<LogisticsReconRefLogisticsBillEntity> refs = logisticsReconRefLogisticsBillService.lambdaQuery()
+                    .in(LogisticsReconRefLogisticsBillEntity::getLogisticsBillCostId, costIdBatch)
+                    .eq(LogisticsReconRefLogisticsBillEntity::getIsDeleted, false)
+                    .list();
+            if (CollUtil.isEmpty(refs)) {
+                continue;
+            }
+            // 费用单当前对账状态
+            Map<String, String> costStatusMap = logisticsBillCostService.listByIds(costIdBatch).stream()
+                    .filter(cost -> StrUtil.isNotBlank(cost.getId()))
+                    .collect(Collectors.toMap(LogisticsBillCostEntity::getId,
+                            LogisticsBillCostEntity::getReconciliationStatus, (a, b) -> a));
+            // 目标 ref 快照状态 → ref id 集合（按快照分组批量更新）
+            Map<String, List<String>> refIdsBySnapshot = new HashMap<>();
+            for (LogisticsReconRefLogisticsBillEntity ref : refs) {
+                String costStatus = costStatusMap.get(ref.getLogisticsBillCostId());
+                String snapshot = mapCostStatusToRefSnapshot(costStatus);
+                if (StrUtil.equals(snapshot, ref.getReconciliationStatus())) {
+                    continue;
+                }
+                refIdsBySnapshot.computeIfAbsent(snapshot, key -> new ArrayList<>()).add(ref.getId());
+                if (StrUtil.isNotBlank(ref.getMainId())) {
+                    affectedMainIds.add(ref.getMainId());
+                }
+            }
+            for (Map.Entry<String, List<String>> entry : refIdsBySnapshot.entrySet()) {
+                updateRefReconciliationStatus(entry.getValue(), entry.getKey());
+            }
+        }
+        // ref 快照变更后，按对账单重算 detail_sub 聚合确认状态
+        for (String mainId : affectedMainIds) {
+            refreshDetailSubReconciliationStatus(mainId);
+        }
+    }
+
+    /**
+     * 费用单对账状态 → ref 快照状态映射：
+     * 账单确认(CONFIRMED) 记为已确认；其余（待确认 / 暂估确认 / 待生成 / 作废等）统一视为待确认。
+     */
+    private String mapCostStatusToRefSnapshot(String costReconciliationStatus) {
+        if (ReconciliationStatusEnum.CONFIRMED.getCode().equals(costReconciliationStatus)) {
+            return ReconciliationStatusEnum.CONFIRMED.getCode();
+        }
+        return ReconciliationStatusEnum.TO_BE_CONFIRM.getCode();
+    }
+
+    /**
+     * 批量更新 ref 快照对账状态（分片，避免 IN 过长）。
+     */
+    private void updateRefReconciliationStatus(List<String> refIds, String reconciliationStatus) {
+        if (CollUtil.isEmpty(refIds)) {
+            return;
+        }
+        for (int i = 0; i < refIds.size(); i += MATCH_ID_BATCH_SIZE) {
+            List<String> batch = refIds.subList(i, Math.min(refIds.size(), i + MATCH_ID_BATCH_SIZE));
+            logisticsReconRefLogisticsBillService.lambdaUpdate()
+                    .in(LogisticsReconRefLogisticsBillEntity::getId, batch)
+                    .set(LogisticsReconRefLogisticsBillEntity::getReconciliationStatus, reconciliationStatus)
+                    .update();
+        }
+    }
+
+    /**
      * 刷新费用项确认状态汇总（ref → detail_sub）
      * @author Will
      * @date 2026/6/2 16:30

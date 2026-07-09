@@ -190,6 +190,15 @@ public interface LogisticsReconService extends SuperService<LogisticsReconEntity
                                  LocalDateTime confirmTime);
 
     /**
+     * 物流费用单对账状态变更后反向同步：按费用单 id 将其对账状态回写到关联 ref 快照，
+     * 并刷新受影响对账费用项（detail_sub）的确认状态聚合。
+     * <p>供物流费用侧（手动改状态 / 作废 / 导入确认 / 回退重算）调用，保证三表状态一致。</p>
+     *
+     * @param logisticsBillCostIds 发生对账状态变更的物流费用单 id 集合
+     */
+    void syncReconStatusByCostIds(java.util.Collection<String> logisticsBillCostIds);
+
+    /**
      * 回写匹配结果（独立短事务，与 reconMatchAndGenerate 分离）
      */
     void commitReconMatchResult(String mainId, String matchType,
