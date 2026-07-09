@@ -22,7 +22,7 @@ public class WorkflowTaskRecordRetryJob {
     @Resource
     private WorkflowTaskRecordService workflowTaskRecordService;
 
-    @XxlJob("WorkflowTaskRecordRetryJob")
+    @XxlJob("workflowTaskRecordRetryJob")
     public ReturnT<String> workflowTaskRecordRetryJob() {
         String jobParam = XxlJobHelper.getJobParam();
         String type = "instance";
