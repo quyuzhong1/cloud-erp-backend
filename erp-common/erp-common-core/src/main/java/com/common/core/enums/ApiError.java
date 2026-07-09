@@ -494,10 +494,13 @@ public enum ApiError implements Serializable {
     WF_TASK_RECORD_MQ_SEND_FAILED(4072,"任务节点MQ发送失败：{0}"),
     WF_TASK_RECORD_FORCE_RETRY_NO_ELIGIBLE(4073,"没有可强制重试的任务节点，成功节点不会重试，处理中节点需超过3分钟才允许接管"),
     WF_TASK_RECORD_FORCE_RETRY_PARAM_INCOMPLETE(4074,"任务节点id或sourceType/sourceId不能为空"),
+    WF_TASK_INSTANCE_NOT_FOUND(4079,"任务编排实例不存在"),
     WF_KOL_B2C_SUB_TASK_NODE_NOT_FOUND(4075,"KOL B2C拆分单任务节点配置不存在"),
     WF_KOL_B2C_SPLIT_DETAIL_INCOMPLETE(4076,"B2C寄样申请单拆分单明细不完整，单号【{0}】，达人【{1}】"),
     WF_KOL_B2C_WAIT_SPLIT_ORDER(4077,"等待拆分单生成"),
     WF_KOL_B2C_WAIT_SUB_TASK_COMPLETE(4078,"等待KOL B2C拆分单子任务完成，已完成{0}/{1}"),
+    WF_TASK_RECORD_TYPE_NOT_FOUND(4080,"任务节点类型不存在"),
+    WF_TASK_INSTANCE_VERSION_CONFLICT(4081,"任务编排实例状态已变化，请刷新后重试"),
     /**
      * PROJECT 项目相关 4500 - 5000
      */
@@ -1637,6 +1640,14 @@ public enum ApiError implements Serializable {
     SAMPLE_PARTNER_MULTIPLE_DEFAULT_ADDRESS_FORBIDDEN(10724,"企业达人不允许配置多个默认地址"),
     SAMPLE_B2B_DETAIL_ALREADY_PUSHED_SO(10725,"B2B寄样申请单【{0}】SKU【{1}】已下推销售订单，禁止重复下推"),
     SAMPLE_B2B_PUSHED_SO_DETAIL_DELETE_FORBIDDEN(10726,"由B2B寄样申请单下推生成的销售订单明细不允许删除"),
+    SAMPLE_B2C_APPLICATION_SAVE_FAILED(10728,"B2C寄样申请单保存失败"),
+    SAMPLE_B2C_CN_DISTRICT_REQUIRED(10729,"国家为中国大陆时区域不能为空"),
+    SAMPLE_B2C_DUPLICATE_PARTNER_ADDRESS(10730,"存在重复的达人地址：{0}"),
+    SAMPLE_B2C_APPLICATION_DETAIL_NOT_FOUND(10731,"B2C寄样申请明细不存在"),
+    SAMPLE_B2C_DETAIL_REMARK_UPDATE_FAILED(10732,"B2C寄样申请明细备注更新失败"),
+    SAMPLE_B2C_SHOP_DISABLED_ADD_ORDER_FORBIDDEN(10733,"店铺已禁用，无法新增订单"),
+    SAMPLE_B2C_APPROVE_CALLBACK_SUB_ORDER_NOT_FOUND(10734,"KOL B2C审批回调无法定位唯一拆分单，subOrderId={0}，subOrderCode={1}，syncTaskId={2}"),
+    SAMPLE_B2C_APPROVED_SO_FORBIDDEN_ACTION(10735,"关联B2C销售订单已审核通过，不允许{0}B2C寄样申请单"),
     SAMPLE_APPLY_NOT_FOUND(10738,"样品领用单不存在"),
     SAMPLE_ONLY_AUDITING_ALLOW_MODIFY_QTY(10739,"只有审核中的样品领用单才能修改审核数量"),
     SAMPLE_VOIDED_MODIFY_QTY_FORBIDDEN(10740,"已作废的样品领用单不支持修改审核数量"),

@@ -2457,39 +2457,25 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     private BatchResultDTO getWildberrisLogistics(SoB2cEntity entity, Boolean isDelivery) {
         List<WorkflowTaskRecordEntity> workflowTaskRecordEntities = workflowTaskRecordService.listBySourceId(entity.getId(), WorkflowTaskRecordTypeEnum.SO_B2C_GET_LOGISTICS.getCode());
-        if (CollUtil.isNotEmpty(workflowTaskRecordEntities)) {
-            WorkflowTaskRecordDTO.AddTaskDTO addTaskDTO = new WorkflowTaskRecordDTO.AddTaskDTO();
-            addTaskDTO.setSourceId(entity.getId());
-            addTaskDTO.setSourceCode(entity.getCode());
-            addTaskDTO.setDictBasicTypeEnum(DictBasicTypeEnum.WORKFLOW_TASK_NODE); //type
-            addTaskDTO.setSourceTypeEnum(WorkflowTaskRecordTypeEnum.SO_B2C_GET_LOGISTICS);//subType
-            addTaskDTO.setTraceId(workflowTaskRecordEntities.get(0).getTraceId());
-            SendResult result = mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.OMS_WORKFLOW_TASK_RECORD_TOPIC, RocketMqTagEnum.OMS_WORKFLOW_TASK_RECORD_TAG.getName(), addTaskDTO, entity.getId(), 2);
-            if (!result.getSendStatus().equals(SendStatus.SEND_OK)) {
-                throw new RuntimeException(StrUtil.format("获取物流单通过发送任务编排MQ数据异常，{}", JSONUtil.toJsonStr(result)));
-            }
-            return BatchResultDTO.success(entity.getId(), "", "重试获取物流信息");
-        }
-        //自动生成并完成节点功能
         WorkflowTaskRecordDTO.AddTaskDTO addTaskDTO = new WorkflowTaskRecordDTO.AddTaskDTO();
         addTaskDTO.setSourceId(entity.getId());
         addTaskDTO.setSourceCode(entity.getCode());
-        addTaskDTO.setDictBasicTypeEnum(DictBasicTypeEnum.WORKFLOW_TASK_NODE); //type
-        addTaskDTO.setSourceTypeEnum(WorkflowTaskRecordTypeEnum.SO_B2C_GET_LOGISTICS);//subType
+        addTaskDTO.setDictBasicTypeEnum(DictBasicTypeEnum.WORKFLOW_TASK_NODE);
+        addTaskDTO.setSourceTypeEnum(WorkflowTaskRecordTypeEnum.SO_B2C_GET_LOGISTICS);
+        if (CollUtil.isNotEmpty(workflowTaskRecordEntities)) {
+            addTaskDTO.setTraceId(workflowTaskRecordEntities.get(0).getTraceId());
+            workflowTaskRecordService.startOrResume(addTaskDTO);
+            return BatchResultDTO.success(entity.getId(), "", "重试获取物流信息");
+        }
         addTaskDTO.setTraceId(TraceContext.traceId());
-
         Map<String, Object> map = new HashMap<>();
         map.put("id", entity.getId());
         map.put("isDelivery", isDelivery);
         map.put("errorType", SoB2cErrorTypeEnum.GET_LOGISTICS_CODE.getCode());
         addTaskDTO.setFirstNodeInputData(map);
-        workflowTaskRecordEntities = workflowTaskRecordService.addTask(addTaskDTO);
+        workflowTaskRecordEntities = workflowTaskRecordService.addTaskAndStart(addTaskDTO);
         if (CollUtil.isEmpty(workflowTaskRecordEntities)) {
             throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, DictBasicTypeEnum.WORKFLOW_TASK_NODE.getDesc());
-        }
-        SendResult result = mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.OMS_WORKFLOW_TASK_RECORD_TOPIC, RocketMqTagEnum.OMS_WORKFLOW_TASK_RECORD_TAG.getName(), addTaskDTO, entity.getId(), 2);
-        if (!result.getSendStatus().equals(SendStatus.SEND_OK)) {
-            throw new RuntimeException(StrUtil.format("获取物流单通过发送任务编排MQ数据异常，{}", JSONUtil.toJsonStr(result)));
         }
         return BatchResultDTO.success(entity.getId(), "", "获取物流单号任务编排已生成");
     }
@@ -12050,10 +12036,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         addTaskDTO.setDictBasicTypeEnum(DictBasicTypeEnum.WORKFLOW_TASK_NODE);
         addTaskDTO.setSourceTypeEnum(WorkflowTaskRecordTypeEnum.PACKAGE_PLAN_GENERATE);
         addTaskDTO.setTraceId(workflowTaskRecordEntities.get(0).getTraceId());
-        SendResult result = mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.OMS_WORKFLOW_TASK_RECORD_TOPIC, RocketMqTagEnum.OMS_WORKFLOW_TASK_RECORD_TAG.getName(), addTaskDTO, soId, 1);
-        if (!result.getSendStatus().equals(SendStatus.SEND_OK)) {
-            XxlJobHelper.log(StrUtil.format("展会订单任务节点记录补偿重试MQ数据异常，{}", JSONUtil.toJsonStr(result)));
-        }
+        workflowTaskRecordService.startOrResume(addTaskDTO);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "重试组包任务");
     }
 
