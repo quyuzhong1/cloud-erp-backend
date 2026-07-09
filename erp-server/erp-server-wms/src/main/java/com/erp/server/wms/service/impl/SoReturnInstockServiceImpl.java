@@ -73,6 +73,7 @@ import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.SoReturnStockImportExcelDTO;
 import com.erp.model.wms.dto.excel.SoReturnStockUpdateImportExcelDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
+import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryUnApproveDTO;
@@ -1394,6 +1395,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 inOutStockDTO.setQty(detailEntity.getRealQty());
                 inOutStockDTO.setWarehouseId(detailEntity.getWarehouseId());
                 inOutStockDTO.setWarehouseLocation(detailEntity.getWarehouseLocation());
+                if (Boolean.TRUE.equals(detailEntity.getDefectiveProductFlag())) {
+                    inOutStockDTO.setInventoryStatus(InventoryStatusEnum.DEFECTIVE_PRODUCT);
+                }
                 inOutStockList.add(inOutStockDTO);
             }
             //添加冻结库存
