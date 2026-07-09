@@ -21,7 +21,7 @@ public class WorkflowTaskInstanceQueryHandler extends AbstractQueryHandler {
 
     private String getTabSql(Object value) {
         String tabValue = value == null ? null : value.toString();
-        if ("all".equals(value)) {
+        if ("all".equalsIgnoreCase(tabValue)) {
             return this.getQueryAllSql();
         }
         if (CharSequenceUtil.isNotBlank(tabValue)) {
