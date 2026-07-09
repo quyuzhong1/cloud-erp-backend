@@ -5,6 +5,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.enums.AuthStatusEnum;
@@ -59,7 +60,7 @@ public class WegoWarehouseInitHandler extends DmpInputInitHandler {
                 .eq(OverseasProviderEntity::getCode, DmpBasicSystemCodeEnum.WEGO.getCode())
                 .list();
         if (CollUtil.isEmpty(overseasProviderEntityList)) {
-            throw new ServiceException("WEGO授权信息不存在");
+            throw new ServiceException(ApiError.WH_WEGO_OUTBOUND_AUTH_INFO_NOT_FOUND);
         }
         // 取对应授权ID授权
         OverseasProviderEntity overseasProviderEntity = overseasProviderEntityList.stream()
@@ -67,7 +68,8 @@ public class WegoWarehouseInitHandler extends DmpInputInitHandler {
                 .findFirst()
                 .orElse(null);
         if (null == overseasProviderEntity) {
-            throw new ServiceException(DmpBasicSystemCodeEnum.WEGO.getCode() + "对应授权ID信息不存在,nextId:" + dmpInputTaskEntity.getNextLevelId());
+            throw new ServiceException(ApiError.WH_WEGO_WAREHOUSE_AUTH_ID_NOT_FOUND,
+                    DmpBasicSystemCodeEnum.WEGO.getCode(), dmpInputTaskEntity.getNextLevelId());
         }
 
         JSONObject resp = callWarehouseList(overseasProviderEntity);
@@ -79,7 +81,7 @@ public class WegoWarehouseInitHandler extends DmpInputInitHandler {
             if (isTokenInvalid(resp)) {
                 OverseasProviderEntity refreshed = overseasProviderFeign.refreshToken(overseasProviderEntity);
                 if (refreshed == null) {
-                    throw new ServiceException("WEGO刷新token失败, authId:" + overseasProviderEntity.getId());
+                    throw new ServiceException(ApiError.WH_WEGO_WAREHOUSE_REFRESH_TOKEN_FAILED, overseasProviderEntity.getId());
                 }
                 overseasProviderEntity = refreshed;
                 resp = callWarehouseList(overseasProviderEntity);
@@ -87,12 +89,12 @@ public class WegoWarehouseInitHandler extends DmpInputInitHandler {
                     return Collections.emptyList();
                 }
                 if (!Boolean.TRUE.equals(resp.getBoolean("success"))) {
-                    throw new ServiceException("WEGO获取仓库列表失败,errorCode:" + resp.getString("errorCode")
-                            + ",errorMsg:" + resp.getString("errorMsg"));
+                    throw new ServiceException(ApiError.WH_WEGO_WAREHOUSE_QUERY_FAILED,
+                            resp.getString("errorCode"), resp.getString("errorMsg"));
                 }
             } else {
-                throw new ServiceException("WEGO获取仓库列表失败,errorCode:" + resp.getString("errorCode")
-                        + ",errorMsg:" + resp.getString("errorMsg"));
+                throw new ServiceException(ApiError.WH_WEGO_WAREHOUSE_QUERY_FAILED,
+                        resp.getString("errorCode"), resp.getString("errorMsg"));
             }
         }
 
@@ -120,12 +122,12 @@ public class WegoWarehouseInitHandler extends DmpInputInitHandler {
     private JSONObject callWarehouseList(OverseasProviderEntity overseasProviderEntity) {
         Map<String, Object> authJson = overseasProviderEntity.getAuthJson();
         if (authJson == null || authJson.isEmpty()) {
-            throw new ServiceException("WEGO授权信息auth_json为空,authId:" + overseasProviderEntity.getId());
+            throw new ServiceException(ApiError.WH_WEGO_WAREHOUSE_AUTH_JSON_EMPTY, overseasProviderEntity.getId());
         }
         String appToken = toStr(authJson.get(AUTH_KEY_APP_TOKEN));
         String appSecret = toStr(authJson.get(AUTH_KEY_APP_SECRET));
         if (CharSequenceUtil.hasBlank(appToken, appSecret)) {
-            throw new ServiceException("WEGO授权信息appToken/appSecret缺失,authId:" + overseasProviderEntity.getId());
+            throw new ServiceException(ApiError.WH_WEGO_WAREHOUSE_TOKEN_SECRET_MISSING, overseasProviderEntity.getId());
         }
 
         WegoWarehouseQueryDTO.QueryReqDTO reqDTO = new WegoWarehouseQueryDTO.QueryReqDTO();

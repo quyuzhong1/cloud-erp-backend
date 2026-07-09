@@ -1634,7 +1634,12 @@ public enum ApiError implements Serializable {
     WH_WEGO_SKU_PAGE_PARSE_FAILED(11208,"WEGO SKU：第{0}页响应解析失败，数据不完整，任务中止"),
     WH_WEGO_SKU_PAGE_LIMIT_EXCEEDED(11209,"WEGO SKU：已达最大翻页上限({0})，已拉取={1}条，数据不完整，任务中止"),
     WH_WEGO_SKU_RESPONSE_FAILED(11210,"WEGO SKU接口返回失败: errorCode={0}, errorMsg={1}"),
-    FASTDFS_UPLOAD_FAILED_FOR_WAYBILL(11211,"面单上传FastDFS失败"),
+    WH_WEGO_WAREHOUSE_AUTH_ID_NOT_FOUND(11211,"{0}对应授权ID信息不存在,nextId:{1}"),
+    WH_WEGO_WAREHOUSE_REFRESH_TOKEN_FAILED(11212,"WEGO刷新token失败, authId:{0}"),
+    WH_WEGO_WAREHOUSE_QUERY_FAILED(11213,"WEGO获取仓库列表失败,errorCode:{0},errorMsg:{1}"),
+    WH_WEGO_WAREHOUSE_AUTH_JSON_EMPTY(11214,"WEGO授权信息auth_json为空,authId:{0}"),
+    WH_WEGO_WAREHOUSE_TOKEN_SECRET_MISSING(11215,"WEGO授权信息appToken/appSecret缺失,authId:{0}"),
+    FASTDFS_UPLOAD_FAILED_FOR_WAYBILL(11216,"面单上传FastDFS失败"),
 
 
     /**
