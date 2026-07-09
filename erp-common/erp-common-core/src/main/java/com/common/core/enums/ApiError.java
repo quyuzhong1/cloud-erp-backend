@@ -1674,6 +1674,7 @@ public enum ApiError implements Serializable {
     FIRST_MILE_SHIPMENT_LOGISTICS_AUTO_GENERATE_FAILED(11542,"头程发货单【{0}】审核后自动生成物流单失败：{1}"),
     FIRST_MILE_SHIPMENT_WORKFLOW_START_FAILED(11543,"头程发货单启动流程失败：{0}"),
     FIRST_MILE_SHIPMENT_DEST_WAREHOUSE_REQUIRED(11544,"目的仓信息不能为空"),
+    FIRST_MILE_DELIVERY_DECLARE_ALREADY_GENERATED(11545,"发货单【{0}】已生成报关单"),
 
     /**
      * 样品管理 错误 信息 12000-12500

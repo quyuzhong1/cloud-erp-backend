@@ -50,6 +50,7 @@ import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.plm.entity.BasicDictEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductLogisticsEntity;
+import com.erp.model.plm.enums.BasicDictTypeEnum;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.enums.CombinationDeclareTypeEnums;
 import com.erp.model.plm.vo.SkuVO;
@@ -61,6 +62,7 @@ import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.sys.entity.FileTemplateEntity;
+import com.erp.model.tms.constant.DeclareMergeDefaults;
 import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.tms.enums.BillGenerateTimingEnum;
@@ -1128,7 +1130,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         Map<String, ProductLogisticsEntity> logisticsMap = CollUtil.isEmpty(productLogisticsList) ? new HashMap<>() : productLogisticsList.stream().collect(Collectors.toMap(ProductLogisticsEntity::getSkuId,item -> item));
 
         //查询单位名称
-        List<BasicDictEntity> declareUnitList = FeignQuery.create(BasicDictEntity.class).eq(BasicDictEntity::getType, "declareUnit").list();
+        List<BasicDictEntity> declareUnitList = FeignQuery.create(BasicDictEntity.class).eq(BasicDictEntity::getType, BasicDictTypeEnum.DECLARE_UNIT.getCode()).list();
         Map<String, String> declareUnitNameMap = CollUtil.isEmpty(declareUnitList)
                 ? new HashMap<>()
                 : declareUnitList.stream().collect(Collectors.toMap(BasicDictEntity::getValue, BasicDictEntity::getName, (a, b) -> a));
@@ -1395,8 +1397,8 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         }
         detailDTO.setSourceCountry(productLogisticsDTO.getSourceCountry());
         detailDTO.setSourceCountryName(productLogisticsDTO.getSourceCountryName());
-        detailDTO.setSourceCargo(StringUtils.defaultIfBlank(productLogisticsDTO.getSourceCargo(), "深圳特区"));
-        detailDTO.setExemption(StringUtils.defaultIfBlank(productLogisticsDTO.getExemption(), "照章征税"));
+        detailDTO.setSourceCargo(StringUtils.defaultIfBlank(productLogisticsDTO.getSourceCargo(), DeclareMergeDefaults.DEFAULT_SOURCE_CARGO));
+        detailDTO.setExemption(StringUtils.defaultIfBlank(productLogisticsDTO.getExemption(), DeclareMergeDefaults.DEFAULT_EXEMPTION));
     }
 
     /**
@@ -1440,8 +1442,8 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 StringUtils.defaultString(detailDTO.getDeclareCurrency()),
                 StringUtils.defaultString(detailDTO.getSourceCountry()),
                 StringUtils.defaultString(detailDTO.getCountryId()),
-                StringUtils.defaultIfBlank(detailDTO.getSourceCargo(), "深圳特区"),
-                StringUtils.defaultIfBlank(detailDTO.getExemption(), "照章征税"));
+                StringUtils.defaultIfBlank(detailDTO.getSourceCargo(), DeclareMergeDefaults.DEFAULT_SOURCE_CARGO),
+                StringUtils.defaultIfBlank(detailDTO.getExemption(), DeclareMergeDefaults.DEFAULT_EXEMPTION));
     }
 
     private TmsDeclareBillDTO.MergeDeclareBillDetailDTO buildB2bMinMergeDeclareBillDetail(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> detailGroup) {
@@ -1479,8 +1481,8 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 .sourceCountryName(detailDTO.getSourceCountryName())
                 .toCountry(detailDTO.getCountryId())
                 .toCountryName(detailDTO.getCountryName())
-                .sourceCargo(StringUtils.defaultIfBlank(detailDTO.getSourceCargo(), "深圳特区"))
-                .exemption(StringUtils.defaultIfBlank(detailDTO.getExemption(), "照章征税"))
+                .sourceCargo(StringUtils.defaultIfBlank(detailDTO.getSourceCargo(), DeclareMergeDefaults.DEFAULT_SOURCE_CARGO))
+                .exemption(StringUtils.defaultIfBlank(detailDTO.getExemption(), DeclareMergeDefaults.DEFAULT_EXEMPTION))
                 .declareCurrency(detailDTO.getDeclareCurrency())
                 .declareCurrencyName(detailDTO.getDeclareCurrencyName())
                 .declareCurrencySymbol(detailDTO.getDeclareCurrencySymbol())
