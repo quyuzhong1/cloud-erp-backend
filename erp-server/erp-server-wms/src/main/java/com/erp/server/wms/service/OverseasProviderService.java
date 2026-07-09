@@ -88,6 +88,12 @@ public interface OverseasProviderService extends SuperService<OverseasProviderEn
     List<OverseasProviderDTO.ListWithWarehouseDTO> listAllMatch();
 
     /**
+     * 按服务商主键 id（authId）精确查询已匹配的仓库信息，避免每次全表扫描。
+     * @param mainId overseas_provider.id
+     */
+    List<OverseasProviderDTO.ListWithWarehouseDTO> listMatchByMainId(String mainId);
+
+    /**
      * 根据平台名称查询
      * @param code
      * @return

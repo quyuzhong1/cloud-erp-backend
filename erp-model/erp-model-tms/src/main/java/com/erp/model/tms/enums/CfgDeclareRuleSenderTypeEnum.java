@@ -41,7 +41,7 @@ public enum CfgDeclareRuleSenderTypeEnum implements EnumMessage {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (BusinessTypeEnum typeEnums : BusinessTypeEnum.values()) {
+        for (CfgDeclareRuleSenderTypeEnum typeEnums : CfgDeclareRuleSenderTypeEnum.values()) {
             if (code.equals(typeEnums.getCode())) {
                 return typeEnums.getName();
             }

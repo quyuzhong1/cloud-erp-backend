@@ -459,6 +459,12 @@
         AND sb.cost_id = lbc.ID
         AND ( sb.report_date = #{params.reportDate} OR sb.report_status = 'confirmed' OR ( lbc.reconciliation_status = 'confirmed' AND sb.fee_source = 'confirmed' ) )
         )
+        <if test="params.salesPlatformList != null and params.salesPlatformList.size() > 0">
+            AND lb.sales_platform IN
+            <foreach collection="params.salesPlatformList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
         <if test="params.lastId != null and params.lastId != ''">
             AND lbc.id &gt; #{params.lastId}
         </if>
@@ -496,6 +502,12 @@
         AND sb.cost_id = lbc.ID
         AND ( sb.report_date = #{params.reportDate} OR sb.report_status = 'confirmed' OR ( lbc.reconciliation_status = 'confirmed' AND sb.fee_source = 'confirmed' ) )
         )
+        <if test="params.salesPlatformList != null and params.salesPlatformList.size() > 0">
+            AND lb.sales_platform IN
+            <foreach collection="params.salesPlatformList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
         <if test="params.lastId != null and params.lastId != ''">
             AND lbc.id &gt; #{params.lastId}
         </if>

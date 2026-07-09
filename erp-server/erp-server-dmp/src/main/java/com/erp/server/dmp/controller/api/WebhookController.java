@@ -3,6 +3,7 @@ package com.erp.server.dmp.controller.api;
 import com.common.business.dto.WebhookResult;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
+import com.erp.model.dmp.dto.Kuaidi100WebhookResponseDTO;
 import com.erp.model.dmp.enums.WebhookServiceEnum;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.server.dmp.factory.WebhookHandlerFactory;
@@ -17,6 +18,10 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 
@@ -64,22 +69,54 @@ public class WebhookController extends BaseController {
         String service = getService(serviceFlag, headers, data);
         // 根据不同平台的Webhook内容做处理
         WebhookHandler handler = webhookHandlerFactory.getHandler(service);
-        //安全校验
-        handler.verify(data, headers, serviceFlag);
-        //业务处理
-        WebhookResult result = handler.process(data, headers, serviceFlag);
-        log.info("========接收到webhook接口请求=======end");
-        // 返回 ResponseEntity，支持 JSON 和 XML
-        return getWebhookResultResponseEntity(result, serviceFlag);
+        try {
+            //安全校验
+            handler.verify(data, headers, serviceFlag);
+            //业务处理
+            WebhookResult result = handler.process(data, headers, serviceFlag);
+            log.info("========接收到webhook接口请求=======end");
+            // 返回 ResponseEntity，支持 JSON 和 XML
+            return getWebhookResultResponseEntity(result, serviceFlag);
+        } catch (Exception e) {
+            log.error("webhook处理异常，serviceFlag：{}", serviceFlag, e);
+            if (WebhookServiceEnum.KUAIDI100.getCode().equals(serviceFlag)) {
+                return ResponseEntity.ok(Kuaidi100WebhookResponseDTO.failure("500", e.getMessage()));
+            }
+            throw e;
+        }
+    }
+
+    /**
+     * 快递100订阅推送专用入口。
+     */
+    @PostMapping("/kuaidi100/push")
+    public Kuaidi100WebhookResponseDTO receiveKuaidi100Push(@RequestParam("param") String param,
+                                                            @RequestParam("sign") String sign) {
+        String serviceFlag = WebhookServiceEnum.KUAIDI100.getCode();
+        String data = buildKuaidi100FormBody(param, sign);
+        WebhookHandler handler = webhookHandlerFactory.getHandler(serviceFlag);
+        try {
+            handler.verify(data, Collections.emptyMap(), serviceFlag);
+            WebhookResult result = handler.process(data, Collections.emptyMap(), serviceFlag);
+            Object resultData = result == null ? null : result.getData();
+            if (resultData instanceof Kuaidi100WebhookResponseDTO) {
+                return (Kuaidi100WebhookResponseDTO) resultData;
+            }
+            return Kuaidi100WebhookResponseDTO.success();
+        } catch (Exception e) {
+            log.error("快递100推送处理异常", e);
+            return Kuaidi100WebhookResponseDTO.failure("500", e.getMessage());
+        }
     }
 
     private static ResponseEntity<?> getWebhookResultResponseEntity(WebhookResult result, String serviceFlag) {
-        if (WebhookServiceEnum.QIMEN_CALL_BACK.getCode().equals(serviceFlag)) {
+        if (WebhookServiceEnum.QIMEN_CALL_BACK.getCode().equals(serviceFlag)){
             return ResponseEntity.ok().body(result.toXml());
-        } else {
+        }else {
             return ResponseEntity.ok(result);
         }
     }
+
     private String getService(String serviceFlag, Map<String, String> headers, String data) {
         WebhookServiceEnum serviceEnum = WebhookServiceEnum.getByCode(serviceFlag);
         if (Objects.nonNull(serviceEnum)) {
@@ -99,5 +136,17 @@ public class WebhookController extends BaseController {
         }
         String platform = headers.get("X-Platform");  // 假设平台信息通过头部传递
         return "";
+    }
+
+    private String buildKuaidi100FormBody(String param, String sign) {
+        return "param=" + urlEncode(param) + "&sign=" + urlEncode(sign);
+    }
+
+    private String urlEncode(String value) {
+        try {
+            return URLEncoder.encode(value, StandardCharsets.UTF_8.name());
+        } catch (UnsupportedEncodingException e) {
+            throw new IllegalStateException("快递100推送参数编码失败", e);
+        }
     }
 }

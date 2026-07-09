@@ -6,7 +6,10 @@ import com.alibaba.fastjson.JSONObject;
 import com.common.core.utils.OkHttpUtils;
 import com.erp.model.tms.enums.LogisticTrackStatusEnum;
 import com.sdk.tms.kuaidi100.model.request.Kuaidi100QueryParam;
+import com.sdk.tms.kuaidi100.model.request.Kuaidi100SubscribeParam;
+import com.sdk.tms.kuaidi100.model.request.Kuaidi100SubscribeRequest;
 import com.sdk.tms.kuaidi100.model.response.Kuaidi100QueryResponse;
+import com.sdk.tms.kuaidi100.model.response.Kuaidi100SubscribeResponse;
 import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,6 +28,9 @@ import java.util.Map;
 public class Kuaidi100Service {
 
     private static final String QUERY_URL = "https://poll.kuaidi100.com/poll/query.do";
+    private static final String SUBSCRIBE_URL = "https://poll.kuaidi100.com/poll";
+    public static final String SALT = "9527";
+    private static final String RESULTV2 = "1";
 
     /**
      * 实时查询快递轨迹
@@ -62,6 +68,60 @@ public class Kuaidi100Service {
     }
 
     /**
+     * 订阅快递100物流轨迹推送.
+     *
+     * @param param 订阅参数
+     * @return 订阅结果
+     * @author jack
+     * @date 2026-07-07
+     */
+    public Kuaidi100SubscribeResponse subscribe(Kuaidi100SubscribeParam param) {
+        try {
+            String paramJson = JSONObject.toJSONString(param);
+            Kuaidi100SubscribeRequest request = Kuaidi100SubscribeRequest.builder()
+                    .param(paramJson)
+                    .build();
+
+            Map<String, Object> formParams = new HashMap<>();
+            formParams.put("schema", request.getSchema());
+            formParams.put("param", request.getParam());
+
+            Map<String, String> headers = new HashMap<>();
+            headers.put("Content-Type", "application/x-www-form-urlencoded");
+
+            log.warn("快递100订阅请求参数：{}", formParams);
+            String response = OkHttpUtils.doPost(SUBSCRIBE_URL, formParams, headers);
+            log.warn("快递100订阅响应结果：{}", response);
+
+            return JSONObject.parseObject(response, Kuaidi100SubscribeResponse.class);
+        } catch (Exception e) {
+            log.error("快递100订阅异常", e);
+            return null;
+        }
+    }
+
+    /**
+     * 构建快递100订阅参数.
+     */
+    public Kuaidi100SubscribeParam buildKuaidi100SubscribeParam(String companyCode, String trackNo, String key,
+                                                               String callbackUrl, Boolean isPushMobile, String mobile) {
+        Kuaidi100SubscribeParam.Parameters parameters = Kuaidi100SubscribeParam.Parameters.builder()
+                .callbackurl(callbackUrl)
+                .salt(SALT)
+                .resultv2(RESULTV2)
+                .build();
+        if (isPushMobile && StringUtils.isNotBlank(mobile)) {
+            parameters.setPhone(mobile);
+        }
+        return Kuaidi100SubscribeParam.builder()
+                .company(companyCode.toLowerCase())
+                .number(trackNo)
+                .key(key)
+                .parameters(parameters)
+                .build();
+    }
+
+    /**
      * 构建快递100请求参数
      */
     public Kuaidi100QueryParam buildKuaidi100QueryParam(String companyCode,String trackNo,Boolean isPushMobile,String mobile){
@@ -69,7 +129,7 @@ public class Kuaidi100Service {
         Kuaidi100QueryParam param = Kuaidi100QueryParam.builder()
                 .com(companyCode.toLowerCase()) // 快递100要求小写
                 .num(trackNo)
-                .resultv2("1")
+                .resultv2(RESULTV2)
                 .build();
         if(isPushMobile && StringUtils.isNotBlank(mobile)){
             //判断mobile如果小于4位数字则报错
@@ -93,6 +153,7 @@ public class Kuaidi100Service {
         }
         switch (state) {
             case "0":
+            case "8":
             case "10":
             case "11":
             case "12":

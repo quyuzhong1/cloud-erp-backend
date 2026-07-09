@@ -177,6 +177,7 @@
         lbd.track_no,
         lbd.platform_order_no,
         lbd.register_status,
+        lbd.track_enable as trackEnable,
         lb.carrier_id AS carrierId,
         lb.tel_number AS telNumber,
         lb.channel_id AS channelId,

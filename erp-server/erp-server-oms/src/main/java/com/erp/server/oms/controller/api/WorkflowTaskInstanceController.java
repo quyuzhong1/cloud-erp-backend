@@ -117,7 +117,7 @@ public class WorkflowTaskInstanceController extends BaseController {
     @LogAction(value = LogActionEnum.EXECUTE, desc = "任务编排实例重试")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "oms:workflowTaskRecord:forceRetry",
+            menuCode = "oms:workflowTaskInstance:retry",
             serviceClass = WorkflowTaskInstanceService.class,
             keyIdName = "instanceId")
     public ApiResult<WorkflowTaskInstanceDTO.RetryResultDTO> retry(
@@ -132,7 +132,7 @@ public class WorkflowTaskInstanceController extends BaseController {
     @LogAction(value = LogActionEnum.EXECUTE, desc = "任务编排从指定节点重试")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "oms:workflowTaskRecord:forceRetry",
+            menuCode = "oms:workflowTaskInstance:retry",
             serviceClass = WorkflowTaskInstanceService.class,
             keyIdName = "instanceId")
     public ApiResult<WorkflowTaskInstanceDTO.RetryResultDTO> retryFromStep(

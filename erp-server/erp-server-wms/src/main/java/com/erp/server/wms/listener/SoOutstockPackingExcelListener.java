@@ -142,7 +142,7 @@ public class SoOutstockPackingExcelListener extends AnalysisEventListener<SoOuts
 
             //检查发货单是否已装箱
             if(soOutstockEntity.getPackingStatus().equals(PackingTaskStatusEnum.PACKED.getCode())){
-                packingExcelDTO.setErrorMsg("出库单已装箱并且生成报关单，无法更改装箱信息");
+                packingExcelDTO.setErrorMsg("出库单已装箱，无法更改装箱信息");
                 errorList.add(packingExcelDTO);
                 it.remove();
                 continue;

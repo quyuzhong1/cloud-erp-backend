@@ -184,6 +184,8 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
     private AddressParseService addressParseService;
     @Resource
     private WorkflowTaskRecordService workflowTaskRecordService;
+    @Resource
+    private WorkflowTaskInstanceService workflowTaskInstanceService;
 
     @Resource
     private DictBasicService dictBasicService;
@@ -208,7 +210,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         kolB2cApplicationEntity.setBillStatus(KolB2cApplicationDocumentStatusEnum.WAIT.getCode());
         boolean save = super.save(kolB2cApplicationEntity);
         if(!save) {
-            throw new ServiceException("B2C寄样申请单保存失败");
+            throw new ServiceException(ApiError.SAMPLE_B2C_APPLICATION_SAVE_FAILED);
         }
 
         // 操作日志
@@ -248,28 +250,28 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         if(StringUtils.isNotBlank(countryName)){
             KolB2cApplicationAddressEntity.setCountryName(countryName);
         }else {
-            throw new ServiceException("国家名称不存在");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "国家名称");
         }
         if(KolB2cApplicationAddressEntity.getCountryId().equals(DictValueEnum.CN.getCode())){
             //省
             if(StringUtils.isBlank(KolB2cApplicationAddressEntity.getProvinceId())){
-                throw new ServiceException("省不能为空");
+                throw new ServiceException(ApiError.COMMON_PARAM_REQUIRED, "省");
             }
             String province = provinceMap.getOrDefault(KolB2cApplicationAddressEntity.getProvinceId(), "");
             if(StringUtils.isNotBlank(province)){
                 KolB2cApplicationAddressEntity.setProvince(province);
             }else {
-                throw new ServiceException("省不存在");
+                throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "省");
             }
             //市
             if(StringUtils.isBlank(KolB2cApplicationAddressEntity.getCityId())){
-                throw new ServiceException("市不能为空");
+                throw new ServiceException(ApiError.COMMON_PARAM_REQUIRED, "市");
             }
             String city = cityMap.getOrDefault(KolB2cApplicationAddressEntity.getCityId(), "");
             if(StringUtils.isNotBlank(city)){
                 KolB2cApplicationAddressEntity.setCity(city);
             }else {
-                throw new ServiceException("市不存在");
+                throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "市");
             }
             //区域
             if(StringUtils.isNotBlank(KolB2cApplicationAddressEntity.getDistrictId())){
@@ -283,19 +285,19 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
                     KolB2cApplicationAddressEntity.setDistrictId(null);
                     KolB2cApplicationAddressEntity.setDistrict(DictCityConstants.NO_DISTRICT_NAME);
                 }else {
-                    throw new ServiceException("区域不存在");
+                    throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "区域");
                 }
             }else {
-                throw new ServiceException("国家为中国大陆则区域不能为空");
+                throw new ServiceException(ApiError.SAMPLE_B2C_CN_DISTRICT_REQUIRED);
             }
         }else{
             //省
             if(StringUtils.isBlank(KolB2cApplicationAddressEntity.getProvince())){
-                throw new ServiceException("省不能为空");
+                throw new ServiceException(ApiError.COMMON_PARAM_REQUIRED, "省");
             }
             //市
             if(StringUtils.isBlank(KolB2cApplicationAddressEntity.getCity())){
-                throw new ServiceException("市不能为空");
+                throw new ServiceException(ApiError.COMMON_PARAM_REQUIRED, "市");
             }
         }
     }
@@ -384,7 +386,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         Set<String> partnerIdSet = new HashSet<>();
         for (KolB2cApplicationAddressDTO.AddDTO address : addressList) {
             if (!partnerIdSet.add(address.getPartnerId())) {
-                throw new ServiceException("存在重复的达人地址：" + address.getNickname());
+                throw new ServiceException(ApiError.SAMPLE_B2C_DUPLICATE_PARTNER_ADDRESS, address.getNickname());
             }
         }
 
@@ -462,7 +464,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         log.info("编辑 开始修改B2C寄样申请单数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(kolB2cApplicationEntity);
         if(!save) {
-            throw new ServiceException("B2C寄样申请单保存失败");
+            throw new ServiceException(ApiError.SAMPLE_B2C_APPLICATION_SAVE_FAILED);
         }
         // 记录主单操作日志
         log.info("编辑 开始记录B2C寄样申请单日志数据，单号：【{}】", kolB2cApplicationEntity.getCode());
@@ -508,7 +510,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
                 .eq(KolB2cApplicationDetailEntity::getId, detailId)
                 .eq(KolB2cApplicationDetailEntity::getMainId, id)
                 .one();
-        detailEntity = Optional.ofNullable(detailEntity).orElseThrow(() -> new ServiceException("B2C寄样申请明细不存在"));
+        detailEntity = Optional.ofNullable(detailEntity).orElseThrow(() -> new ServiceException(ApiError.SAMPLE_B2C_APPLICATION_DETAIL_NOT_FOUND));
 
         String newRemark = StrUtil.nullToEmpty(remark);
         if (Objects.equals(detailEntity.getRemark(), newRemark)) {
@@ -519,7 +521,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         detailEntity.setRemark(newRemark);
         boolean update = kolB2cApplicationDetailService.updateById(detailEntity);
         if (!update) {
-            throw new ServiceException("B2C寄样申请明细备注更新失败");
+            throw new ServiceException(ApiError.SAMPLE_B2C_DETAIL_REMARK_UPDATE_FAILED);
         }
 
         String msg = StrUtil.format("用户【{}】编辑单号为【{}】的明细【{}】备注，由[{}]变更为[{}]",
@@ -601,7 +603,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         Set<String> partnerIdSet = new HashSet<>();
         for (KolB2cApplicationAddressDTO.UpdateDTO address : addressList) {
             if (!partnerIdSet.add(address.getPartnerId())) {
-                throw new ServiceException("存在重复的达人地址：" + address.getNickname());
+                throw new ServiceException(ApiError.SAMPLE_B2C_DUPLICATE_PARTNER_ADDRESS, address.getNickname());
             }
         }
 
@@ -705,7 +707,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
     public BatchResultDTO submit(String id) {
         KolB2cApplicationEntity entity = getById(id);
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException("未找到B2C寄样申请单数据");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "B2C寄样申请单");
         }
         validateSubmit(entity);
         // 更新单据审核状态
@@ -810,10 +812,10 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO delete(String id) {
-        KolB2cApplicationEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到B2C寄样申请单数据"));
+        KolB2cApplicationEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "B2C寄样申请单"));
         // 只有待提交数据允许删除
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getCode(), entity.getApproveStatus())) {
-            throw new ServiceException("只有待提交数据支持删除");
+            throw new ServiceException(ApiError.BILL_DELETE_STATUS_NOT_ALLOWED);
         }
         if (entity.getInvalidStatus()) {
             throw new ServiceException(ApiError.BILL_DELETE_ALLOWED_STATUS_ONLY);
@@ -857,7 +859,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO invalid(String id, String remark) {
-        KolB2cApplicationEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到B2C寄样申请单数据"));
+        KolB2cApplicationEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "B2C寄样申请单"));
 //        validateNoApprovedSoB2c(entity, "作废");
         // 只有待提交、审核不通过数据允许作废
         if (!(Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getCode(), entity.getApproveStatus()) || Objects.equals(ApproveStatusEnum.REJECT.getCode(), entity.getApproveStatus()))) {
@@ -880,7 +882,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
     @Transactional(rollbackFor = Exception.class)
     @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO cancel(String id) {
-        KolB2cApplicationEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到B2C寄样申请单数据"));
+        KolB2cApplicationEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "B2C寄样申请单"));
         validateNoApprovedSoB2c(entity, "取消");
         String billStatus = resolveBillStatus(entity.getBillStatus(), entity.getApproveStatus());
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getCode())) {
@@ -1087,12 +1089,8 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         if (ObjectUtil.isEmpty(dto)) {
             return;
         }
-        KolSubB2cApplicationEntity subEntity = getKolSubB2cApplicationByCallback(dto);
-        if (ObjectUtil.isEmpty(subEntity)) {
-            log.warn("处理中台B2C审批下推成功回调失败，拆分单不存在: subOrderId={}, subOrderCode={}, syncTaskId={}",
-                    dto.getSubOrderId(), dto.getSubOrderCode(), dto.getSyncTaskId());
-            return;
-        }
+        KolSubB2cApplicationEntity subEntity = getRequiredKolSubB2cApplicationByApproveCallback(
+                dto, "处理中台B2C审批下推成功回调");
         KolB2cApplicationEntity mainEntity = super.getByIdOpt(subEntity.getSourceId()).orElse(null);
         if (ObjectUtil.isEmpty(mainEntity)) {
             log.warn("处理中台B2C审批下推成功回调失败，主单不存在: subOrderId={}, subOrderCode={}, mainId={}, syncTaskId={}",
@@ -1154,12 +1152,8 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         if (ObjectUtil.isEmpty(dto)) {
             return;
         }
-        KolSubB2cApplicationEntity subEntity = getKolSubB2cApplicationByCallback(dto);
-        if (ObjectUtil.isEmpty(subEntity)) {
-            log.warn("处理中台B2C审批下推失败回调失败，拆分单不存在: subOrderId={}, subOrderCode={}, syncTaskId={}",
-                    dto.getSubOrderId(), dto.getSubOrderCode(), dto.getSyncTaskId());
-            return;
-        }
+        KolSubB2cApplicationEntity subEntity = getRequiredKolSubB2cApplicationByApproveCallback(
+                dto, "处理中台B2C审批下推失败回调");
         KolB2cApplicationEntity mainEntity = super.getByIdOpt(subEntity.getSourceId()).orElse(null);
         if (ObjectUtil.isEmpty(mainEntity)) {
             log.warn("处理中台B2C审批下推失败回调失败，主单不存在: subOrderId={}, subOrderCode={}, mainId={}, syncTaskId={}",
@@ -1171,8 +1165,10 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
             return;
         }
         String failReason = StringUtils.substring(StrUtil.blankToDefault(dto.getResponseMsg(), "中台审批下推失败"), 0, 500);
+        markKolB2cSubApproveTaskFailed(subEntity, failReason);
         updateBillStatusIfNotIn(mainEntity.getId(), KolB2cApplicationDocumentStatusEnum.CREATE_FAIL.getCode(),
                 APPROVE_PUSH_FAIL_SKIP_BILL_STATUSES);
+        resumeKolB2cParentTask(mainEntity);
         String msg = StrUtil.format("中台审批下推失败回调，拆分单【{}】推送失败，主单【{}】状态更新为【{}】，原因：【{}】",
                 subEntity.getCode(),
                 mainEntity.getCode(),
@@ -1189,7 +1185,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
     @Override
     public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         String id = dto.getId();
-        KolB2cApplicationEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到B2C寄样申请单数据"));
+        KolB2cApplicationEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "B2C寄样申请单"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getCode())) {
             throw new ServiceException(ApiError.WF_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
@@ -1667,8 +1663,22 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         map.put(TASK_DATA_SUB_CODE, subEntity.getCode());
         addTaskDTO.setFirstNodeInputData(map);
         addWorkflowTaskIfAbsent(addTaskDTO, existTasks);
+        List<WorkflowTaskRecordEntity> currentTasks = workflowTaskRecordService.listBySourceId(
+                subEntity.getId(), WorkflowTaskRecordTypeEnum.KOL_B2C_SUB_APPROVE.getCode());
+        if (isWorkflowTaskAllSuccess(currentTasks)) {
+            log.info("KOL B2C拆分单子任务已全部成功，跳过重复调度，subId={}, subCode={}", subEntity.getId(), subEntity.getCode());
+            return;
+        }
         // 子流程也走统一恢复入口，兼容历史节点补建 instance 后的当前节点重试。
         workflowTaskRecordService.startOrResume(addTaskDTO);
+    }
+
+    private boolean isWorkflowTaskAllSuccess(List<WorkflowTaskRecordEntity> tasks) {
+        return CollUtil.isNotEmpty(tasks)
+                && tasks.stream()
+                .filter(Objects::nonNull)
+                .filter(e -> !Boolean.TRUE.equals(e.getIsDeleted()))
+                .allMatch(e -> Objects.equals(e.getStatus(), WorkflowTaskRecordStatusEnum.SUCCESS.getCode()));
     }
 
     private void addWorkflowTaskIfAbsent(WorkflowTaskRecordDTO.AddTaskDTO addTaskDTO, List<WorkflowTaskRecordEntity> existTasks) {
@@ -1697,6 +1707,40 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         }
         WorkflowTaskRecordDTO.AddTaskDTO addTaskDTO = buildKolB2cParentTaskDTO(entity, existTasks.get(0).getTraceId());
         workflowTaskRecordService.startOrResume(addTaskDTO);
+    }
+
+    private void markKolB2cSubApproveTaskFailed(KolSubB2cApplicationEntity subEntity, String failReason) {
+        List<WorkflowTaskRecordEntity> tasks = workflowTaskRecordService.lambdaQuery()
+                .eq(WorkflowTaskRecordEntity::getSourceId, subEntity.getId())
+                .eq(WorkflowTaskRecordEntity::getSourceType, WorkflowTaskRecordTypeEnum.KOL_B2C_SUB_APPROVE.getCode())
+                .eq(WorkflowTaskRecordEntity::getIsDeleted, false)
+                .orderByAsc(WorkflowTaskRecordEntity::getIndex)
+                .list();
+        if (CollUtil.isEmpty(tasks)) {
+            return;
+        }
+        List<WorkflowTaskRecordEntity> activeTasks = tasks.stream()
+                .filter(task -> WorkflowTaskRecordStatusEnum.PENDING.getCode().equals(task.getStatus())
+                        || WorkflowTaskRecordStatusEnum.PROCESSING.getCode().equals(task.getStatus())
+                        || WorkflowTaskRecordStatusEnum.WAITING.getCode().equals(task.getStatus()))
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(activeTasks)) {
+            return;
+        }
+        List<String> taskIds = activeTasks.stream().map(WorkflowTaskRecordEntity::getId).collect(Collectors.toList());
+        workflowTaskRecordService.lambdaUpdate()
+                .in(WorkflowTaskRecordEntity::getId, taskIds)
+                .set(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.FAILED.getCode())
+                .set(WorkflowTaskRecordEntity::getLastError, failReason)
+                .set(WorkflowTaskRecordEntity::getErrorSource, "remote")
+                .set(WorkflowTaskRecordEntity::getRetryCount, WorkflowTaskRecordService.AUTO_RETRY_MAX_COUNT + 1)
+                .set(WorkflowTaskRecordEntity::getEndTime, LocalDateTime.now())
+                .update();
+        activeTasks.stream()
+                .filter(task -> StringUtils.isNotBlank(task.getInstanceId()))
+                .collect(Collectors.toMap(WorkflowTaskRecordEntity::getInstanceId, Function.identity(), (a, b) -> a))
+                .values()
+                .forEach(task -> workflowTaskInstanceService.markFailed(task.getInstanceId(), task.getIndex(), failReason));
     }
 
     private boolean isTerminalFailedTask(WorkflowTaskRecordEntity entity) {
@@ -1863,7 +1907,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         dto.checkAndSetAfterTaxAmount();
         ShopInfoEntity shopInfoEntity = shopInfoService.getById(dto.getShopId());
         if(Objects.nonNull(shopInfoEntity) && shopInfoEntity.getDisabled()){
-            throw new ServiceException("店铺已禁用，无法新增订单");
+            throw new ServiceException(ApiError.SAMPLE_B2C_SHOP_DISABLED_ADD_ORDER_FORBIDDEN);
         }
 
         // 通过代理调用，确保 add() 方法上的独立事务生效
@@ -1908,7 +1952,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
 
     @Override
     public KolB2cApplicationDTO.ViewDTO view(String id) {
-        KolB2cApplicationEntity kolB2cApplicationEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到B2C寄样申请单数据"));
+        KolB2cApplicationEntity kolB2cApplicationEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "B2C寄样申请单"));
         KolB2cApplicationDTO.ViewDTO data = BeanMapperUtils.map(KolB2cApplicationDTO.ViewDTO.class, kolB2cApplicationEntity);
 
 
@@ -1942,7 +1986,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         startDTO.setVariablesMap(getVariablesMap(entity));
         ApiResult<ProcessManagementDTO.StartResultDTO> result = workflowFeign.start(startDTO);
         if (!result.isSuccess()) {
-            throw new ServiceException(result.getMsg());
+            throw new ServiceException(ApiError.WF_START_FAILED);
         }
     }
 
@@ -2145,6 +2189,19 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         return getKolSubB2cApplicationByCallback(dto.getSubOrderId(), dto.getSubOrderCode());
     }
 
+    private KolSubB2cApplicationEntity getRequiredKolSubB2cApplicationByApproveCallback(KolB2cApplicationApproveCallbackDTO dto,
+                                                                                        String callbackName) {
+        KolSubB2cApplicationEntity subEntity = getKolSubB2cApplicationByCallback(dto);
+        if (ObjectUtil.isNotEmpty(subEntity)) {
+            return subEntity;
+        }
+        String msg = StrUtil.format("{}失败，无法定位唯一拆分单: subOrderId={}, subOrderCode={}, syncTaskId={}",
+                callbackName, dto.getSubOrderId(), dto.getSubOrderCode(), dto.getSyncTaskId());
+        log.warn(msg);
+        throw new ServiceException(ApiError.SAMPLE_B2C_APPROVE_CALLBACK_SUB_ORDER_NOT_FOUND,
+                dto.getSubOrderId(), dto.getSubOrderCode(), dto.getSyncTaskId());
+    }
+
     private KolSubB2cApplicationEntity getKolSubB2cApplicationByCallback(String subOrderId, String subOrderCode) {
         if (StringUtils.isNotBlank(subOrderId)) {
             KolSubB2cApplicationEntity subEntity = kolSubB2cApplicationService.getByIdOpt(subOrderId).orElse(null);
@@ -2155,11 +2212,28 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         if (StringUtils.isBlank(subOrderCode)) {
             return null;
         }
-        return kolSubB2cApplicationService.lambdaQuery()
+        List<KolSubB2cApplicationEntity> subList = kolSubB2cApplicationService.lambdaQuery()
                 .eq(KolSubB2cApplicationEntity::getCode, subOrderCode)
                 .eq(KolSubB2cApplicationEntity::getIsDeleted, false)
+                .last("limit 2")
+                .list();
+        if (CollUtil.size(subList) > 1) {
+            log.warn("KOL B2C回调匹配拆分单失败，拆分单号不唯一: subOrderCode={}", subOrderCode);
+            return null;
+        }
+        if (CollUtil.isNotEmpty(subList)) {
+            return subList.get(0);
+        }
+        KolB2cApplicationEntity mainEntity = this.lambdaQuery()
+                .eq(KolB2cApplicationEntity::getCode, subOrderCode)
+                .eq(KolB2cApplicationEntity::getIsDeleted, false)
                 .last("limit 1")
                 .one();
+        if (ObjectUtil.isNotEmpty(mainEntity)) {
+            log.warn("KOL B2C回调匹配拆分单失败，回调编码命中主单编码，拒绝默认取第一条拆分单: subOrderCode={}, mainId={}",
+                    subOrderCode, mainEntity.getId());
+        }
+        return null;
     }
 
     /**
@@ -2254,7 +2328,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
                 .eq(SoB2cEntity::getIsDeleted, false)
                 .count() > 0;
         if (hasApprovedSoB2c) {
-            throw new ServiceException(StrUtil.format("关联B2C销售订单已审核通过，不允许{}B2C寄样申请单", actionName));
+            throw new ServiceException(ApiError.SAMPLE_B2C_APPROVED_SO_FORBIDDEN_ACTION, actionName);
         }
     }
 

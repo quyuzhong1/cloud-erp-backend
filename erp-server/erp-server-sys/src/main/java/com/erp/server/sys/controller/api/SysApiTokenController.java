@@ -72,8 +72,9 @@ public class SysApiTokenController extends BaseController {
     /**
      * 复制个人访问令牌
      */
-    @GetMapping("/copy/{id}")
-    public ApiResult<SysApiTokenDTO.TokenDTO> copy(@PathVariable("id") String id) {
-        return success(sysApiTokenService.copy(id));
+    @PostMapping("/copy")
+    @LogAction(value = LogActionEnum.DOWNLOAD, desc = "复制个人访问令牌:id={id}")
+    public ApiResult<SysApiTokenDTO.TokenDTO> copy(@RequestBody @Validated BaseIdDTO dto) {
+        return success(sysApiTokenService.copy(dto.getId()));
     }
 }

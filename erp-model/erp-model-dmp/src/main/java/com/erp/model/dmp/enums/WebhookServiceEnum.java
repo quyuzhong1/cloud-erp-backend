@@ -10,6 +10,7 @@ package com.erp.model.dmp.enums;
 public enum WebhookServiceEnum {
 
     TRACK123("track123", "track123", "物流轨迹查询"),
+    KUAIDI100("kuaidi100", "kuaidi100", "快递100物流订阅回调"),
     OUTBOUND("outbound", "outbound", "订单出库"),
     INBOUND("inbound", "inbound", "入库单"),
     RETURN_INSTOCK("returnInstock", "returnInstock", "退货入库单"),

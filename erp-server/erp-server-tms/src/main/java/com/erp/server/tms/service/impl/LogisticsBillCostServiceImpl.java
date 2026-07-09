@@ -15,8 +15,6 @@ import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.incrementer.IdentifierGenerator;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.conditions.update.LambdaUpdateChainWrapper;
-import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.*;
@@ -39,19 +37,15 @@ import com.erp.model.plm.entity.ProductPackEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.*;
-import com.erp.model.tms.dto.*;
 import com.erp.model.tms.dto.CfgSettingValueDTO.AllocationSettingDTO;
-import com.erp.model.tms.dto.LogisticsBillCostDTO.AddDataDTO;
-import com.erp.model.tms.dto.LogisticsBillCostDTO.ConfirmAddDataDTO;
-import com.erp.model.tms.dto.LogisticsBillCostDTO.EditDataDTO;
-import com.erp.model.tms.dto.LogisticsBillCostDTO.EditViewDTO;
-import com.erp.model.tms.dto.LogisticsBillCostDTO.OutstockWeightPreloadDTO;
+import com.erp.model.tms.dto.*;
+import com.erp.model.tms.dto.LogisticsBillCostDTO.*;
 import com.erp.model.tms.dto.TmsCostDetailDTO.CostViewDTO;
 import com.erp.model.tms.dto.TmsCostDetailDTO.UpdateDTO;
 import com.erp.model.tms.dto.excel.LogisticsBillCostExcelDTO;
 import com.erp.model.tms.entity.CfgSettingEntity;
-import com.erp.model.tms.entity.*;
 import com.erp.model.tms.entity.DictBasicEntity;
+import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
 import com.erp.model.wms.entity.*;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
@@ -60,17 +54,17 @@ import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.sys.feign.UserInfoFeign;
+import com.erp.server.tms.handler.asynctask.LogisticsSmallBagPushBatchPushHandlerFactory;
+import com.erp.server.tms.handler.asynctask.LogisticsUpdateReconciliationBatchPushHandler;
 import com.erp.server.tms.listener.LogisticsBillCostExcelListener;
-import com.erp.server.tms.util.LogisticsBillPlatformCodeUtil;
 import com.erp.server.tms.mapper.LogisticsBillCostMapper;
 import com.erp.server.tms.query.LogisticsBillCostQueryHandler;
 import com.erp.server.tms.query.LogisticsLastMileCostQueryHandler;
-import com.erp.server.tms.handler.asynctask.LogisticsSmallBagPushBatchPushHandlerFactory;
-import com.erp.server.tms.handler.asynctask.LogisticsUpdateReconciliationBatchPushHandler;
 import com.erp.server.tms.service.*;
 import com.erp.server.tms.service.asynctask.LogisticsBillCostAsyncTaskDelegate;
 import com.erp.server.tms.service.support.LogisticsOrderWeightSupport;
 import com.erp.server.tms.service.support.TmsAsyncTaskBatchConsumerSupport;
+import com.erp.server.tms.util.LogisticsBillPlatformCodeUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -2840,6 +2834,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         query.setIds(dto.getIds());
         query.setReportDate(dto.getReportDate());
         query.setType(dto.getType());
+        query.setSalesPlatformList(dto.getSalesPlatformList());
         int count = countByCanPushAllocation(query);
         LogisticsBillCostDTO.PushAllocatedCostCountDTO pushAllocatedCostCountDTO = new LogisticsBillCostDTO.PushAllocatedCostCountDTO();
         pushAllocatedCostCountDTO.setCount(count);
@@ -2896,6 +2891,9 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         if (Objects.isNull(payload)) {
             throw new ServiceException("下推分摊参数不能为空");
         }
+        if (CollUtil.isEmpty(payload.getSalesPlatformList())) {
+            throw new ServiceException(ApiError.LOGISTICS_SALES_PLATFORM_REQUIRED);
+        }
         if (StringUtils.isBlank(payload.getReportDate())) {
             throw new ServiceException("核算日期不能为空");
         }
@@ -2912,6 +2910,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         LogisticsBillCostDTO.CanPushAllocationPageQueryDTO query = new LogisticsBillCostDTO.CanPushAllocationPageQueryDTO();
         query.setReportDate(payload.getReportDate());
         query.setType(payload.getType());
+        query.setSalesPlatformList(payload.getSalesPlatformList());
         int totalCount = countByCanPushAllocation(query);
         if (totalCount == 0) {
             throw new ServiceException("没有可下推分摊的数据");

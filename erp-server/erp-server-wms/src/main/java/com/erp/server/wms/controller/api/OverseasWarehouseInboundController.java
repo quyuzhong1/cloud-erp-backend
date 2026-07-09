@@ -271,7 +271,7 @@ public class OverseasWarehouseInboundController extends BaseController {
     }
 
     /**
-     * 上传箱唛回显
+     * 上传箱唛/交接单回显
      */
     @PostMapping("/uploadCartonLabelView")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
@@ -284,10 +284,10 @@ public class OverseasWarehouseInboundController extends BaseController {
     }
 
     /**
-     * 上传箱唛
+     * 上传箱唛/交接单
      */
     @PostMapping("/uploadCartonLabel")
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "海外仓入库单上传箱唛")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "海外仓入库单上传箱唛/交接单")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "wms:overseasWarehouseInbound:uploadCartonLabel",
@@ -298,7 +298,7 @@ public class OverseasWarehouseInboundController extends BaseController {
     }
 
     /**
-     * 打印箱唛
+     * 打印箱唛/交接单
      */
     @PostMapping("/printCartonLabel")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,

@@ -37,17 +37,12 @@
         rule_id, left_bracket, field, compare, value, name, right_bracket, logic, index
     </sql>
 
-    <select id="paging" resultType="com.erp.model.tms.dto.CfgDeclareRuleConditionDTO$ListDTO">
-
-    </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
         select approve_status, count(id) from cfg_declare_rule_condition where is_deleted = false group by approve_status
     </select>
 
-    <select id="listExport" resultType="com.erp.model.tms.dto.CfgDeclareRuleConditionDTO$ListDTO">
 
-    </select>
     <select id="tabList" resultType="com.erp.model.tms.dto.CfgDeclareRuleConditionDTO$TabListDTO">
         SELECT
         approve_status AS tabFlag,

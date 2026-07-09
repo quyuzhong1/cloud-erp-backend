@@ -42,7 +42,7 @@ public enum CfgDeclareRuleReceiverTypeEnum implements EnumMessage {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (BusinessTypeEnum typeEnums : BusinessTypeEnum.values()) {
+        for (CfgDeclareRuleReceiverTypeEnum typeEnums : CfgDeclareRuleReceiverTypeEnum.values()) {
             if (code.equals(typeEnums.getCode())) {
                 return typeEnums.getName();
             }

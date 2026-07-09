@@ -5,12 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
-import com.common.business.dto.base.BaseDTO;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -19,7 +14,6 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
-import com.common.core.utils.BeanMapper;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO.EditDataDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO.EditViewDTO;
@@ -380,7 +374,7 @@ public class LogisticsBillCostController extends BaseController {
      public ApiResult<List<BatchResultDTO>> pushAllocation(@RequestBody @Validated PushDTO dto) {
          if(CollUtil.isEmpty(dto.getIds())){
              TmsAsyncTaskRecordDTO.SmallBagPushAllocationPayloadDTO payload =
-                     new TmsAsyncTaskRecordDTO.SmallBagPushAllocationPayloadDTO(dto.getReportDate(), DictCostAttributionEnum.SELF_DELIVER.getCode());
+                     new TmsAsyncTaskRecordDTO.SmallBagPushAllocationPayloadDTO(dto.getReportDate(), DictCostAttributionEnum.SELF_DELIVER.getCode(),dto.getSalesPlatformList());
              logisticsBillCostService.batchAsyncPushAllocation(payload);
              return success();
          }else {

@@ -78,7 +78,9 @@ public class LogisticsServiceSyncJob {
             }
             LogisticsService logisticsService = logisticsRegistry.getHandler(logisticsPlatform);
             CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
-            AppClientEnum appClientEnum = AppClientEnum.ALI_EXPRESS_LOGISTICS;
+            AppClientEnum appClientEnum = LogisticsPlatformEnum.ALI_EXPRESS_OVERSEAS_MANAGED.getCode().equals(logisticsPlatform)
+                    ? AppClientEnum.ALI_EXPRESS_OVERSEAS_MANAGED_LOGISTICS
+                    : AppClientEnum.ALI_EXPRESS_LOGISTICS;
             findDTO.setBusinessType(appClientEnum.getBusinessType());
             findDTO.setDictPlatform(appClientEnum.getPlatform());
             findDTO.setPlatformType(appClientEnum.getPlatformType());

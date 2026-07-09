@@ -1,41 +1,66 @@
 package com.sdk.tms.kuaidi100.service;
 
-import com.sdk.tms.kuaidi100.model.request.Kuaidi100QueryParam;
-import com.sdk.tms.kuaidi100.model.response.Kuaidi100QueryResponse;
-import lombok.extern.slf4j.Slf4j;
+import com.alibaba.fastjson.JSONObject;
+import com.erp.model.tms.enums.LogisticTrackStatusEnum;
+import com.sdk.tms.kuaidi100.model.request.Kuaidi100SubscribeParam;
+import com.sdk.tms.kuaidi100.model.response.Kuaidi100SubscribeResponse;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 
-import javax.annotation.Resource;
-
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * 快递100 服务测试类
+ * Kuaidi100 SDK parameter and response parsing verification.
  */
-@Slf4j
-@SpringBootTest(classes = Kuaidi100Service.class)
 public class Kuaidi100ServiceTest {
 
-    @Resource
-    private Kuaidi100Service kuaidi100Service;
+    private final Kuaidi100Service kuaidi100Service = new Kuaidi100Service();
 
     @Test
-    public void testGetTrack() {
-        // 使用测试环境参数（通常需要替换为真实的测试 key）
-        String customer = "TEST_CUSTOMER";
-        String key = "TEST_KEY";
-        
-        Kuaidi100QueryParam param = Kuaidi100QueryParam.builder()
-                .com("yuantong")
-                .num("YT7470876612046")
-                .build();
-        
-        // 实际上会发起请求，这里仅演示调用
-        // Kuaidi100QueryResponse response = kuaidi100Service.getTrack(customer, key, param);
-        // assertNotNull(response);
-        // log.info("测试响应: {}", response);
-        
-        log.info("单元测试结构已准备就绪，待填充真实授权信息进行测试。");
+    public void buildKuaidi100SubscribeParamWithMobile() {
+        Kuaidi100SubscribeParam param = kuaidi100Service.buildKuaidi100SubscribeParam(
+                "YuanTong", "YT123", "appKey", "https://erp.test/webhook/kuaidi100/push", true, "13800138000");
+
+        assertEquals("yuantong", param.getCompany());
+        assertEquals("YT123", param.getNumber());
+        assertEquals("appKey", param.getKey());
+        assertEquals("https://erp.test/webhook/kuaidi100/push", param.getParameters().getCallbackurl());
+        assertEquals(Kuaidi100Service.SALT, param.getParameters().getSalt());
+        assertEquals("1", param.getParameters().getResultv2());
+        assertEquals("13800138000", param.getParameters().getPhone());
+    }
+
+    @Test
+    public void buildKuaidi100SubscribeParamWithoutMobile() {
+        Kuaidi100SubscribeParam param = kuaidi100Service.buildKuaidi100SubscribeParam(
+                "YTO", "YT123", "appKey", "https://erp.test/webhook/kuaidi100/push", false, "13800138000");
+
+        assertEquals("yto", param.getCompany());
+        assertNull(param.getParameters().getPhone());
+    }
+
+    @Test
+    public void parseSubscribeResponseJson() {
+        String responseJson = "{\"result\":true,\"returnCode\":\"200\",\"message\":\"submitted\"}";
+
+        Kuaidi100SubscribeResponse response = JSONObject.parseObject(responseJson, Kuaidi100SubscribeResponse.class);
+
+        assertTrue(response.getResult());
+        assertEquals("200", response.getReturnCode());
+        assertEquals("submitted", response.getMessage());
+    }
+
+    @Test
+    public void convertTrackStatusCoversKuaidi100States() {
+        assertEquals(LogisticTrackStatusEnum.TRACK_ING.getCode(), kuaidi100Service.convertTrackStatus("0"));
+        assertEquals(LogisticTrackStatusEnum.WAIT_COLLECT.getCode(), kuaidi100Service.convertTrackStatus("1"));
+        assertEquals(LogisticTrackStatusEnum.MAYBE_EXCEPTION.getCode(), kuaidi100Service.convertTrackStatus("2"));
+        assertEquals(LogisticTrackStatusEnum.SIGN.getCode(), kuaidi100Service.convertTrackStatus("3"));
+        assertEquals(LogisticTrackStatusEnum.RETURNED.getCode(), kuaidi100Service.convertTrackStatus("4"));
+        assertEquals(LogisticTrackStatusEnum.DELIVERY_ING.getCode(), kuaidi100Service.convertTrackStatus("5"));
+        assertEquals(LogisticTrackStatusEnum.DELIVERY_FAIL.getCode(), kuaidi100Service.convertTrackStatus("14"));
+        assertEquals(LogisticTrackStatusEnum.NOT_FIND.getCode(), kuaidi100Service.convertTrackStatus(""));
+        assertEquals(LogisticTrackStatusEnum.NOT_FIND.getCode(), kuaidi100Service.convertTrackStatus("999"));
     }
 }

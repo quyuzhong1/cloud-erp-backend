@@ -167,6 +167,11 @@ public class TmsFmDeclareBillController extends BaseController {
      */
     @PostMapping("/confirmDeclareStatus")
     @LogAction(value = LogActionEnum.CONFIRM, desc = "头程报关单报关状态更新")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:tmsFmDeclareBill:confirmDeclareStatus",
+            serviceClass = TmsDeclareBillService.class,
+            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> confirmDeclareStatus(@RequestBody @Validated TmsDeclareBillDTO.ConfirmDeclareStatusDTO dto) {
         List<BatchResultDTO> resultList = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -205,6 +210,7 @@ public class TmsFmDeclareBillController extends BaseController {
      */
     @PostMapping("/export")
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出头程报关单")
+    @WebAdvanceQuery(handler = TmsFmDeclareQueryHandler.class)
     public ApiResult<Object>export(@RequestBody @Valid TmsDeclareBillDTO.PagingParamDTO pagingParamDTO) {
         downloadTaskFeign.saveDownloadTask("头程报关单导出", EXPORT_TMS_TMS_FM_DECLARE_BILL.getCode(), pagingParamDTO);
         return success();
@@ -219,6 +225,11 @@ public class TmsFmDeclareBillController extends BaseController {
     @PostMapping("/exportDeclare")
     @LogAction(value = LogActionEnum.EXPORT, desc = "多sheet导出头程报关单报关信息")
     @WebAdvanceQuery(handler = TmsFmDeclareQueryHandler.class)
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "tms:tmsFmDeclareBill:exportDeclare",
+            tableAlias = "db"
+    )
     public ApiResult<Object> exportDeclare(@RequestBody @Valid TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) throws IOException {
         pagingParamDTO.setType(SourceTypeEnum.FM_DECLARE_BILL.getCode());
         tmsDeclareBillService.exportDeclare(pagingParamDTO, response);
@@ -278,6 +289,11 @@ public class TmsFmDeclareBillController extends BaseController {
      */
     @PostMapping("/updateBatchFiled")
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "报关单批量更新字段:ids={ids},修改的字段名称编号={updateFiledCode}")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:tmsFmDeclareBill:updateBatchFiled",
+            serviceClass = TmsDeclareBillService.class,
+            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> updateBatchFiled(@RequestBody @Validated TmsDeclareBillDTO.BatchUpdateFieldDTO dto) {
         if (ObjectUtil.isEmpty(dto.getIds())) {
             throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
@@ -322,6 +338,11 @@ public class TmsFmDeclareBillController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.SplitDeclareDTO>>
      */
     @PostMapping("/listSplitFmDetail")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:tmsFmDeclareBill:batchAddSplitFmDetail",
+            serviceClass = TmsDeclareBillService.class,
+            keyIdName = "id")
     public ApiResult<List<TmsDeclareBillDTO.SplitDeclareDTO>> listSplitFmDetail(@RequestBody @Valid BaseIdDTO dto)  {
         List<TmsDeclareBillDTO.SplitDeclareDTO> list = tmsDeclareBillService.listSplitFmDetail(dto.getId());
         return success(list);
@@ -364,6 +385,11 @@ public class TmsFmDeclareBillController extends BaseController {
      * @return ApiResult<java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.SourceDeliveryDetailDTO>>
      */
     @PostMapping("/listAfterMergeDetail")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:tmsFmDeclareBill:mergeDeclare",
+            serviceClass = TmsDeclareBillService.class,
+            keyIdName = "ids")
     public ApiResult<List<TmsDeclareBillDTO.MergeDeclareBillDTO>> listAfterMergeDetail(@RequestBody @Valid BaseIdsDTO.IdsDTO dto)  {
         return success(tmsDeclareBillService.listAfterMergeDetail(dto.getIds()));
     }
@@ -377,6 +403,7 @@ public class TmsFmDeclareBillController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.lang.Object>
      */
     @PostMapping("/batchAddMergeDetail")
+    @LogAction(value = LogActionEnum.INSERT, desc = "头程报关单保存合并明细")
     public ApiResult<Object> batchAddMergeDetail(@RequestBody @Valid ValidList<TmsDeclareBillDTO.MergeDeclareBillDTO> list)  {
         return success(tmsDeclareBillService.batchAddMergeDetail(SourceTypeEnum.FM_DECLARE_BILL.getCode(),list.getList()));
     }

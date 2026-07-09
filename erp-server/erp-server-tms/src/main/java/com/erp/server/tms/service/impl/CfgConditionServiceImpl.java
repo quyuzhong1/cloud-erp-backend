@@ -1,5 +1,6 @@
 package com.erp.server.tms.service.impl;
 
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.wrapper.FeignQuery;
@@ -64,14 +65,16 @@ public class CfgConditionServiceImpl extends SuperServiceImpl<CfgConditionMapper
             CfgConditionDTO.TreeDTO tree = new CfgConditionDTO.TreeDTO();
             tree.setConditionField(conditionField);
             String logicStr = item.getLogic();
-            List<String> logicList = Arrays.asList(logicStr.split(","));
-            List<CfgConditionDTO.TreeDTO> childrenList = new ArrayList<>(logicList.size());
-            for (String logic : logicList) {
-                CfgConditionDTO.TreeDTO children = new CfgConditionDTO.TreeDTO();
-                children.setConditionField(conditionField);
-                children.setLogic(logic);
-                children.setLogicName(map.getOrDefault(logic, ""));
-                childrenList.add(children);
+            List<CfgConditionDTO.TreeDTO> childrenList = new ArrayList<>();
+            if (StrUtil.isNotBlank(logicStr)) {
+                List<String> logicList = Arrays.asList(logicStr.split(","));
+                for (String logic : logicList) {
+                    CfgConditionDTO.TreeDTO children = new CfgConditionDTO.TreeDTO();
+                    children.setConditionField(conditionField);
+                    children.setLogic(logic);
+                    children.setLogicName(map.getOrDefault(logic, ""));
+                    childrenList.add(children);
+                }
             }
             tree.setChildren(childrenList);
             resultList.add(tree);

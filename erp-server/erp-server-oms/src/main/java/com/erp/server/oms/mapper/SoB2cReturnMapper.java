@@ -41,6 +41,11 @@ public interface SoB2cReturnMapper extends BaseMapper<SoB2cReturnEntity> {
     List<SoDetailDTO.AddDetailView> listAddDetailView(@Param("dto") listAddDetailViewDTO dto);
 
     /**
+     * WEGO 退货入库：用参考单号一次查询，按 code/platform_return_no/platform_order_no/so_code OR 匹配，返回优先级最高的首条记录。
+     */
+    SoB2cReturnEntity findFirstByReferenceNo(@Param("referenceNo") String referenceNo);
+
+    /**
      * 预入库-关联售后单：分页查询 B2C 售后单（so_b2c_return），按 sku 过滤
      * @param query 分页
      * @param params 过滤参数

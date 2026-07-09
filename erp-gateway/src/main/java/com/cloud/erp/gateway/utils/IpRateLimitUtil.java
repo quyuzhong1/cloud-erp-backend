@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RScript;
 import org.redisson.api.RedissonClient;
 import org.redisson.client.codec.StringCodec;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -28,6 +29,9 @@ public class IpRateLimitUtil {
 
     @Resource
     private RedissonClient redisson;
+
+    @Value("${gateway.rate-limit.allow-unknown-ip:false}")
+    private Boolean allowUnknownIp;
 
     private static final String UNKNOWN_IP = "unknown";
 
@@ -122,7 +126,10 @@ public class IpRateLimitUtil {
     }
 
     private boolean isAllowedByKey(String keyPart, int maxRequests, int timeWindow, String logName) {
-        if (keyPart == null || keyPart.trim().isEmpty() || UNKNOWN_IP.equalsIgnoreCase(keyPart)) {
+        if (keyPart == null || keyPart.trim().isEmpty()) {
+            return false;
+        }
+        if (UNKNOWN_IP.equalsIgnoreCase(keyPart) && !Boolean.TRUE.equals(allowUnknownIp)) {
             return false;
         }
         return isAllowedByRedisKey(buildRateLimitKey(keyPart), buildBlockKey(keyPart), maxRequests, timeWindow, logName);
@@ -153,7 +160,8 @@ public class IpRateLimitUtil {
             return pass;
         } catch (Exception e) {
             log.error("检查访问频率失败: {}", logName, e);
-            // 入口限流组件异常时 fail-close，避免 Redis 故障期间开放接口失去保护。
+            // 入口限流组件采用安全优先的 fail-close：Redis/Lua 异常时拒绝开放接口/API Token 请求，
+            // 避免故障期间绕过防护；上线需配套 Redis 可用性监控，必要时再改成配置化策略。
             return false;
         }
     }
@@ -231,7 +239,8 @@ public class IpRateLimitUtil {
             return redisson.getBucket(blockKey).isExists();
         } catch (Exception e) {
             log.error("检查访问对象封禁状态失败: {}", logName, e);
-            return false;
+            // 与限流计数保持一致的安全优先策略：封禁状态不可判定时按已封禁处理。
+            return true;
         }
     }
 

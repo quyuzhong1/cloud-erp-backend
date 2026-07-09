@@ -1,6 +1,7 @@
 package com.erp.server.tms.controller.feign;
 
 import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.core.anno.LogSystemModule;
 import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
@@ -70,6 +71,11 @@ public class TmsDeclareBillFeignController {
     @PostMapping("/autoMergeDeclareBillView")
     List<TmsDeclareBillDTO.MergeDeclareBillDTO> autoMergeDeclareBillView(@RequestBody TmsDeclareBillDTO.AutoMergeDeclareBillViewDTO viewDTO){
         return tmsDeclareBillService.autoMergeDeclareBillView(viewDTO);
+    }
+
+    @PostMapping("/batchAddMergeDetail")
+    Boolean batchAddMergeDetail(@RequestBody TmsDeclareBillDTO.AutoGenerateMidDataDTO dto) {
+        return tmsDeclareBillService.batchAddMergeDetail(dto.getSourceType(), dto.getMergeDeclareBillDTOS());
     }
 
     /**

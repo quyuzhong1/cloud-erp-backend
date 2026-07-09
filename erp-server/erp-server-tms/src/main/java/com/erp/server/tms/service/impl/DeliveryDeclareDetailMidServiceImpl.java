@@ -1,11 +1,11 @@
 package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import com.common.core.excel.ExcelPrintUtils;
-import com.common.core.utils.date.DateUtil;
+import com.common.business.wrapper.FeignQuery;
+import com.erp.model.plm.entity.BasicDictEntity;
+import com.erp.model.plm.enums.BasicDictTypeEnum;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.tms.entity.*;
-import io.seata.spring.annotation.GlobalTransactional;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -24,23 +24,18 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
-import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.ProductBomHistoryDTO;
 import com.erp.model.plm.dto.ProductDetailDTO;
+import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.DeliveryDeclareDetailMidDTO;
-import com.erp.model.tms.enums.DeclareDeclareTypeEnum;
-import com.erp.model.tms.enums.DeclareNatureLevyEnum;
-import com.erp.model.tms.enums.DeclarePackTypeEnum;
-import com.erp.model.tms.enums.DeclareStatusEnum;
-import com.erp.model.tms.enums.DeclareSupervisionMethodEnum;
-import com.erp.model.tms.enums.DeclareTransactionMethodEnum;
-import com.erp.model.tms.enums.DeliveryDeclareDetailMidGenerateStatusEnum;
-import com.erp.model.tms.enums.CfgDeclareRuleReceiverTypeEnum;
-import com.erp.model.wms.dto.FirstMileDeliveryDTO;
-import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
+import com.erp.model.tms.dto.TmsDeclareBillDTO;
+import com.erp.model.tms.entity.CfgDeclareRuleEntity;
+import com.erp.model.tms.entity.DeliveryDeclareDetailMidEntity;
+import com.erp.model.tms.entity.TmsDeclareBillDetailEntity;
+import com.erp.model.tms.entity.TmsDeclareBillEntity;
+import com.erp.model.tms.enums.*;
 import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.model.wms.enums.WmsDeclareStatusEnum;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
@@ -63,7 +58,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
@@ -107,6 +101,9 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
     @Lazy
     @Resource
     private DeliveryDeclareDetailMidService self;
+    //展示专用：报关单尚未生成
+    private static final String NOT_GENERATED = "not";
+    private static final String NOT_GENERATED_NAME = "待生成";
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -115,7 +112,7 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         handleData(entity);
         boolean save = super.save(entity);
         if (!save) {
-            throw new ServiceException(ApiError.BILL_SAVE_FAIL, "报关明细中间表");
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_SAVE_FAILED);
         }
         operateLogService.addModuleOperateLog("新增报关明细中间表",
                 null, entity.getId(), "新增操作");
@@ -128,13 +125,13 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
     public Boolean update(DeliveryDeclareDetailMidDTO.UpdateDTO addOrUpdateDTO) {
         DeliveryDeclareDetailMidEntity old = super.getById(addOrUpdateDTO.getId());
         if (Objects.isNull(old)) {
-            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "报关明细中间表");
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_NOT_EXIST);
         }
         DeliveryDeclareDetailMidEntity entity = BeanMapperUtils.map(DeliveryDeclareDetailMidEntity.class, addOrUpdateDTO);
         handleData(entity);
         boolean save = super.updateById(entity);
         if (!save) {
-            throw new ServiceException(ApiError.BILL_UPDATE_FAILED);
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_UPDATE_FAILED);
         }
         operateLogService.addModuleOperateLogByObj(old, entity, null, entity.getId(), "更新报关明细中间表");
         return Boolean.TRUE;
@@ -170,28 +167,6 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         finish.setTabFlagName(DeliveryDeclareDetailMidGenerateStatusEnum.FINISH.getName());
         result.add(finish);
         return result;
-    }
-
-    @Override
-    public void exportList(DeliveryDeclareDetailMidDTO.ExportDTO param, HttpServletResponse response) {
-        List<DeliveryDeclareDetailMidDTO.ListDTO> list = this.baseMapper.listExport(param);
-        if(CollUtil.isEmpty(list)) {
-           return;
-        }
-        // 数据处理
-        fillList(list);
-
-        // 导出数据
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/deliveryDeclareDetailMid.xlsx";
-        String name = "报关明细中间单导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.FILE_EXPORT_FAILED);
-        }
     }
 
     @Override
@@ -540,7 +515,7 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
     @Override
     public DeliveryDeclareDetailMidDTO.ViewDTO view(String id) {
         DeliveryDeclareDetailMidEntity entity = super.getByIdOpt(id)
-                .orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "报关明细中间表"));
+                .orElseThrow(() -> new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_NOT_EXIST));
         DeliveryDeclareDetailMidDTO.ViewDTO viewDTO = BeanMapperUtils.map(DeliveryDeclareDetailMidDTO.ViewDTO.class, entity);
         if (CharSequenceUtil.isBlank(viewDTO.getTransferWarehouseNames())) {
             viewDTO.setTransferWarehouseNames(getTransferWarehouseNames(viewDTO.getTransferWarehouseIds()));
@@ -584,7 +559,8 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
                 .filter(Objects::nonNull)
                 .map(item -> BeanMapperUtils.map(DeliveryDeclareDetailMidDTO.MergePreviewDTO.class, item))
                 .collect(Collectors.toList());
-        fillMergePreviewLatestProductLogistic(previewList, entityMap);
+        MergePreviewRuleContext ruleContext = buildMergePreviewRuleContext(entityList);
+        fillMergePreviewLatestProductLogistic(previewList, entityMap, ruleContext);
         return previewList;
     }
 
@@ -651,9 +627,7 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
     }
 
     @Override
-//    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    @Transactional(rollbackFor = Exception.class)
-    public Boolean batchAddMergeDetail(List<TmsDeclareBillDTO.MergeDeclareBillDTO> list,Boolean updateSourceDeclareStatus) {
+    public Boolean batchAddMergeDetail(List<TmsDeclareBillDTO.MergeDeclareBillDTO> list, Boolean updateSourceDeclareStatus) {
         List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList = collectSourceDetailList(list);
         if (CollUtil.isEmpty(sourceDetailList)) {
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_SAVE_REQUIRED);
@@ -680,7 +654,61 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         // 错误信息列出所有命中的来源单号，来源单 declare_status 保持 WAIT，等使用方调整目的国后再触发。
         tmsDeclareBillService.validateDestCountryNotMainlandChina(latestDetailList);
 
+        List<TmsDeclareBillDTO.BatchMergeBillData> preparedBills = prepareBatchMergeBills(declareBillType, latestMergeList);
+        self.batchAddMergeDetailInTx(sourceType, declareBillType, preparedBills, updateSourceDeclareStatus);
+        return Boolean.TRUE;
+    }
+
+    /**
+     * 批量保存合并报关单的事务内写库阶段。
+     *
+     * <p>入口方法已在事务外完成 Feign 查询、合并重算、规则匹配和实体构建；本方法必须通过
+     * {@code self.batchAddMergeDetailInTx(...)} 代理调用，确保事务只包住本地写库和必要的来源状态回写。</p>
+     *
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void batchAddMergeDetailInTx(String sourceType,
+                                        String declareBillType,
+                                        List<TmsDeclareBillDTO.BatchMergeBillData> preparedBills,
+                                        Boolean updateSourceDeclareStatus) {
         List<DeliveryDeclareDetailMidEntity> changedMidList = new ArrayList<>();
+        for (TmsDeclareBillDTO.BatchMergeBillData preparedBill : preparedBills) {
+            if (Objects.isNull(preparedBill) || CollUtil.isEmpty(preparedBill.getDeclareBillList())) {
+                continue;
+            }
+            List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> declareBillList = preparedBill.getDeclareBillList();
+            List<TmsDeclareBillDetailEntity> detailEntityList = preparedBill.getDetailEntityList();
+            TmsDeclareBillEntity declareBillEntity = preparedBill.getDeclareBillEntity();
+            BaseResultDTO.AddDTO addResult = tmsDeclareBillService.add(declareBillEntity, detailEntityList,
+                    SourceTypeEnum.getEnum(declareBillType), false);
+            changedMidList.addAll(saveGeneratedMidData(sourceType, declareBillList, detailEntityList,
+                    addResult.getId(), addResult.getCode(), preparedBill.getTransferWarehouseNameMap(),
+                    preparedBill.getHistoryByParentMap()));
+        }
+        if (Boolean.TRUE.equals(updateSourceDeclareStatus)) {
+            List<String> sourceIds = changedMidList.stream()
+                    .map(DeliveryDeclareDetailMidEntity::getSourceId)
+                    .filter(CharSequenceUtil::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.toList());
+            tmsDeclareBillService.syncSourceDeclareStatusBySourceIds(declareBillType, sourceIds);
+        }
+    }
+
+    /**
+     * 事务外预构建批量合并报关单写库数据。
+     *
+     * <p>该方法会调用 {@link #buildDeclareBillEntity(String, List)}，其中包含报关头信息重算、
+     * 规则匹配和收货人填充等可能触发远程查询的逻辑，因此必须在事务外执行。</p>
+     *
+     * @param declareBillType 报关单类型
+     * @param latestMergeList 保存前重新计算得到的最新合并结果
+     * @return 可直接进入写库阶段的报关单主表、明细实体及合并明细映射
+     */
+    private List<TmsDeclareBillDTO.BatchMergeBillData> prepareBatchMergeBills(String declareBillType,
+                                                                             List<TmsDeclareBillDTO.MergeDeclareBillDTO> latestMergeList) {
+        List<TmsDeclareBillDTO.BatchMergeBillData> preparedBills = new ArrayList<>();
         for (TmsDeclareBillDTO.MergeDeclareBillDTO mergeDeclareBillDTO : latestMergeList) {
             if (Objects.isNull(mergeDeclareBillDTO) || CollUtil.isEmpty(mergeDeclareBillDTO.getDeclareBillList())) {
                 continue;
@@ -690,20 +718,29 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
                     .map(this::buildDeclareBillDetailEntity)
                     .collect(Collectors.toList());
             TmsDeclareBillEntity declareBillEntity = buildDeclareBillEntity(declareBillType, declareBillList);
-            BaseResultDTO.AddDTO addResult = tmsDeclareBillService.add(declareBillEntity, detailEntityList,
-                    SourceTypeEnum.getEnum(declareBillType), false);
-            changedMidList.addAll(saveGeneratedMidData(sourceType, declareBillList, detailEntityList,
-                    addResult.getId(), addResult.getCode()));
+            Map<String, String> transferWarehouseNameMap = prepareTransferWarehouseNameMap(declareBillList);
+            Map<String, List<BomChildrenSkuDTO>> historyByParentMap = prepareHistoryByParentMap(declareBillList);
+            preparedBills.add(new TmsDeclareBillDTO.BatchMergeBillData(declareBillList, declareBillEntity, detailEntityList,
+                    transferWarehouseNameMap, historyByParentMap));
         }
-        if (updateSourceDeclareStatus) {
-            List<String> sourceIds = changedMidList.stream()
-                    .map(DeliveryDeclareDetailMidEntity::getSourceId)
-                    .filter(CharSequenceUtil::isNotBlank)
-                    .distinct()
-                    .collect(Collectors.toList());
-            tmsDeclareBillService.syncSourceDeclareStatusBySourceIds(declareBillType, sourceIds);
-        }
-        return Boolean.TRUE;
+        return preparedBills;
+    }
+
+    private Map<String, String> prepareTransferWarehouseNameMap(List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> declareBillList) {
+        List<String> transferWarehouseIdsList = collectSourceDetailListByDeclareDetails(declareBillList).stream()
+                .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getTransferWarehouseIds)
+                .filter(CharSequenceUtil::isNotBlank)
+                .collect(Collectors.toList());
+        return getTransferWarehouseNameMap(transferWarehouseIdsList);
+    }
+
+    private Map<String, List<BomChildrenSkuDTO>> prepareHistoryByParentMap(List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> declareBillList) {
+        List<String> parentSkuIds = collectSourceDetailListByDeclareDetails(declareBillList).stream()
+                .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getParentSkuId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        return listBomHistoryByParentMap(parentSkuIds);
     }
 
     @Override
@@ -866,10 +903,35 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
             return;
         }
         Set<String> selectedIdSet = new HashSet<>(selectedIds);
+        List<String> declareIds = sourceMidList.stream()
+                .map(DeliveryDeclareDetailMidEntity::getDeclareId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, TmsDeclareBillEntity> declareBillMap = Collections.emptyMap();
+        if (CollUtil.isNotEmpty(declareIds)) {
+            declareBillMap = tmsDeclareBillService.lambdaQuery()
+                    .in(TmsDeclareBillEntity::getId, declareIds)
+                    .list()
+                    .stream()
+                    .collect(Collectors.toMap(TmsDeclareBillEntity::getId, item -> item, (oldValue, newValue) -> oldValue));
+        }
         // 按业务单号+箱号分组，构建每个箱子对应的明细列表映射关系
-        // 只处理状态为"待生成"且存在箱号的明细记录
+        // 只处理状态为"待生成"或已生成但关联报关单仍为待确认，且存在箱号的明细记录
+        Map<String, TmsDeclareBillEntity> finalDeclareBillMap = declareBillMap;
         Map<String, List<DeliveryDeclareDetailMidEntity>> boxGroupMap = sourceMidList.stream()
-                .filter(item -> CharSequenceUtil.equals(item.getGenerateStatus(), DeliveryDeclareDetailMidGenerateStatusEnum.WAIT.getCode()))
+                .filter(item -> {
+                    if (CharSequenceUtil.equals(item.getGenerateStatus(), DeliveryDeclareDetailMidGenerateStatusEnum.WAIT.getCode())) {
+                        return true;
+                    }
+                    if (!CharSequenceUtil.equals(item.getGenerateStatus(), DeliveryDeclareDetailMidGenerateStatusEnum.FINISH.getCode())
+                            || CharSequenceUtil.isBlank(item.getDeclareId())) {
+                        return false;
+                    }
+                    TmsDeclareBillEntity declareBill = finalDeclareBillMap.get(item.getDeclareId());
+                    return Objects.nonNull(declareBill)
+                            && CharSequenceUtil.equals(declareBill.getDeclareStatus(), DeclareStatusEnum.WAIT.getCode());
+                })
                 .filter(item -> CharSequenceUtil.isNotBlank(item.getBoxNo()))
                 .collect(Collectors.groupingBy(this::buildSourceBoxKey));
 
@@ -1110,6 +1172,20 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
                 .collect(Collectors.toList());
     }
 
+    private List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> collectSourceDetailListByDeclareDetails(
+            List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> declareBillList) {
+        if (CollUtil.isEmpty(declareBillList)) {
+            return Collections.emptyList();
+        }
+        return declareBillList.stream()
+                .filter(Objects::nonNull)
+                .map(TmsDeclareBillDTO.MergeDeclareBillDetailDTO::getSourceDeliveryDetailList)
+                .filter(CollUtil::isNotEmpty)
+                .flatMap(Collection::stream)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+    }
+
     private List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> collectMergeDetailList(List<TmsDeclareBillDTO.MergeDeclareBillDTO> list) {
         if (CollUtil.isEmpty(list)) {
             return Collections.emptyList();
@@ -1270,7 +1346,7 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
                                          List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList,
                                          CfgDeclareRuleEntity cfgDeclareRule,
                                          TmsDeclareBillEntity entity) {
-        // 先写规则值作为兜底，后续查不到客户时保留 byCustomer/按客户。
+        // 先写规则值，B2B按客户场景必须在下方替换为真实客户。
         entity.setReceiverId(cfgDeclareRule.getReceiverId());
         entity.setReceiverName(cfgDeclareRule.getReceiverName());
         entity.setReceiverType(cfgDeclareRule.getReceiverType());
@@ -1287,13 +1363,14 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
                 .filter(CharSequenceUtil::isNotBlank)
                 .distinct()
                 .collect(Collectors.toList());
+        String sourceCode = resolveFirstSourceCode(sourceDetailList);
         if (CollUtil.isEmpty(sourceIdList)) {
-            return;
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_B2B_CUSTOMER_RECEIVER_NOT_FOUND, sourceCode);
         }
 
         List<SoDeliveryNoticeEntity> noticeList = soDeliveryNoticeFeign.listByIds(sourceIdList);
         if (CollUtil.isEmpty(noticeList)) {
-            return;
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_B2B_CUSTOMER_RECEIVER_NOT_FOUND, sourceCode);
         }
         Map<String, SoDeliveryNoticeEntity> noticeMap = noticeList.stream()
                 .filter(Objects::nonNull)
@@ -1309,6 +1386,19 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
             entity.setReceiverName(notice.getCustomerName());
             return;
         }
+        throw new ServiceException(ApiError.LOGISTICS_DECLARE_B2B_CUSTOMER_RECEIVER_NOT_FOUND, sourceCode);
+    }
+
+    private String resolveFirstSourceCode(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList) {
+        if (CollUtil.isEmpty(sourceDetailList)) {
+            return "";
+        }
+        return sourceDetailList.stream()
+                .filter(Objects::nonNull)
+                .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getSourceCode)
+                .filter(CharSequenceUtil::isNotBlank)
+                .findFirst()
+                .orElse("");
     }
 
     private String resolveBusinessType(String declareBillType, List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList) {
@@ -1387,23 +1477,35 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
                                                                       List<TmsDeclareBillDetailEntity> detailEntityList,
                                                                       String declareId,
                                                                       String declareCode) {
-        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList = declareBillList.stream()
-                .map(TmsDeclareBillDTO.MergeDeclareBillDetailDTO::getSourceDeliveryDetailList)
-                .filter(CollUtil::isNotEmpty)
-                .flatMap(Collection::stream)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList = collectSourceDetailListByDeclareDetails(declareBillList);
+        Map<String, String> transferWarehouseNameMap = getTransferWarehouseNameMap(sourceDetailList.stream()
+                .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getTransferWarehouseIds)
+                .filter(CharSequenceUtil::isNotBlank)
+                .collect(Collectors.toList()));
+        Map<String, List<BomChildrenSkuDTO>> historyByParentMap = listBomHistoryByParentMap(sourceDetailList.stream()
+                .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getParentSkuId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList()));
+        return saveGeneratedMidData(sourceType, declareBillList, detailEntityList, declareId, declareCode,
+                transferWarehouseNameMap, historyByParentMap);
+    }
+
+    private List<DeliveryDeclareDetailMidEntity> saveGeneratedMidData(String sourceType,
+                                                                      List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> declareBillList,
+                                                                      List<TmsDeclareBillDetailEntity> detailEntityList,
+                                                                      String declareId,
+                                                                      String declareCode,
+                                                                      Map<String, String> transferWarehouseNameMap,
+                                                                      Map<String, List<BomChildrenSkuDTO>> historyByParentMap) {
+        transferWarehouseNameMap = Objects.isNull(transferWarehouseNameMap) ? Collections.emptyMap() : transferWarehouseNameMap;
+        historyByParentMap = Objects.isNull(historyByParentMap) ? Collections.emptyMap() : historyByParentMap;
+        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList = collectSourceDetailListByDeclareDetails(declareBillList);
         List<String> sourceIds = sourceDetailList.stream()
                 .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getSourceId)
                 .filter(CharSequenceUtil::isNotBlank)
                 .distinct()
                 .collect(Collectors.toList());
-        // 来源单 SQL 只返回 transfer_warehouse_ids、不返回名称，这里按 ids 统一查名称 map，
-        // 否则中间表 transfer_warehouse_names 落空，导致列表「中转仓」无值。
-        Map<String, String> transferWarehouseNameMap = getTransferWarehouseNameMap(sourceDetailList.stream()
-                .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getTransferWarehouseIds)
-                .filter(CharSequenceUtil::isNotBlank)
-                .collect(Collectors.toList()));
         List<DeliveryDeclareDetailMidEntity> existingMidList = listBySourceIdList(sourceIds);
         Map<String, DeliveryDeclareDetailMidEntity> existingKeyMap = buildExistingMidKeyMap(existingMidList, sourceType);
         Set<String> sourceKeySet = sourceDetailList.stream()
@@ -1427,9 +1529,9 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
                 .filter(item -> CharSequenceUtil.isNotBlank(item.getParentSkuId()))
                 .map(this::buildSourceBoxParentKey)
                 .collect(Collectors.toSet());
-        Set<String> changedComboGroupKeys = findChangedComboGroupKeys(comboGroupKeys, sourceDetailList, existingMidList);
+        Set<String> changedComboGroupKeys = findChangedComboGroupKeys(comboGroupKeys, sourceDetailList, existingMidList, historyByParentMap);
         if (CollUtil.isNotEmpty(changedComboGroupKeys)) {
-            List<String> deleteIds = findComboMidIds(existingMidList, changedComboGroupKeys);
+            List<String> deleteIds = findComboMidIds(existingMidList, changedComboGroupKeys, historyByParentMap);
             if (CollUtil.isNotEmpty(deleteIds)) {
                 // 预览阶段不允许清理旧行；只有报关单主明细保存成功后，才在同一事务内清理旧 BOM 拆分行。
                 super.removeByIds(deleteIds);
@@ -1534,18 +1636,14 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
      */
     private Set<String> findChangedComboGroupKeys(Set<String> comboGroupKeys,
                                                   List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList,
-                                                  List<DeliveryDeclareDetailMidEntity> existingMidList) {
+                                                  List<DeliveryDeclareDetailMidEntity> existingMidList,
+                                                  Map<String, List<BomChildrenSkuDTO>> historyByParentMap) {
         if (CollUtil.isEmpty(comboGroupKeys)) {
             return Collections.emptySet();
         }
         Map<String, List<TmsDeclareBillDTO.SourceDeliveryDetailDTO>> submitGroupMap = sourceDetailList.stream()
                 .filter(item -> comboGroupKeys.contains(buildSourceBoxParentKey(item)))
                 .collect(Collectors.groupingBy(this::buildSourceBoxParentKey));
-        Map<String, List<BomChildrenSkuDTO>> historyByParentMap = listBomHistoryByParentMap(sourceDetailList.stream()
-                .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getParentSkuId)
-                .filter(CharSequenceUtil::isNotBlank)
-                .distinct()
-                .collect(Collectors.toList()));
         Set<String> changedGroupKeys = new HashSet<>();
         for (String comboGroupKey : comboGroupKeys) {
             List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> submitList = submitGroupMap.get(comboGroupKey);
@@ -1606,15 +1704,9 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
                 .collect(Collectors.toList());
     }
 
-    private List<String> findComboMidIds(List<DeliveryDeclareDetailMidEntity> existingMidList, Set<String> comboGroupKeys) {
-        List<String> parentSkuIds = comboGroupKeys.stream()
-                .map(key -> key.split("\\|", -1))
-                .filter(parts -> parts.length >= 3)
-                .map(parts -> parts[2])
-                .filter(CharSequenceUtil::isNotBlank)
-                .distinct()
-                .collect(Collectors.toList());
-        Map<String, List<BomChildrenSkuDTO>> historyByParentMap = listBomHistoryByParentMap(parentSkuIds);
+    private List<String> findComboMidIds(List<DeliveryDeclareDetailMidEntity> existingMidList,
+                                         Set<String> comboGroupKeys,
+                                         Map<String, List<BomChildrenSkuDTO>> historyByParentMap) {
         return comboGroupKeys.stream()
                 .map(key -> findComboMidList(existingMidList, key, historyByParentMap))
                 .flatMap(Collection::stream)
@@ -1822,18 +1914,26 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         Map<String, String> transferWarehouseNameMap = getTransferWarehouseNameMap(list.stream()
                 .map(DeliveryDeclareDetailMidDTO.ListDTO::getTransferWarehouseIds)
                 .collect(Collectors.toList()));
+        //查询单位名称
+        List<BasicDictEntity> declareUnitList = FeignQuery.create(BasicDictEntity.class).eq(BasicDictEntity::getType, BasicDictTypeEnum.DECLARE_UNIT.getCode()).list();
+        Map<String, String> declareUnitNameMap = CollUtil.isEmpty(declareUnitList)
+                ? new HashMap<>()
+                : declareUnitList.stream().collect(Collectors.toMap(BasicDictEntity::getValue, BasicDictEntity::getName, (a, b) -> a));
         for (DeliveryDeclareDetailMidDTO.ListDTO data : list) {
             if(StringUtils.isNotBlank(data.getDeclareStatus())){
                 data.setDeclareStatusName(DeclareStatusEnum.getName(data.getDeclareStatus()));
             }else {
-                data.setDeclareStatus("not");
-                data.setDeclareStatusName("待生成");
+                data.setDeclareStatus(NOT_GENERATED);
+                data.setDeclareStatusName(NOT_GENERATED_NAME);
             }
             data.setGenerateStatusName(DeliveryDeclareDetailMidGenerateStatusEnum.getName(data.getGenerateStatus()));
             if (CharSequenceUtil.isBlank(data.getTransferWarehouseNames())) {
                 data.setTransferWarehouseNames(buildTransferWarehouseNames(data.getTransferWarehouseIds(), transferWarehouseNameMap));
             }
+
             fillLatestProductLogistic(data, productLogisticMap.get(data.getSkuId()));
+            data.setUnitName(declareUnitNameMap.getOrDefault(data.getUnit(),""));
+            data.setLatestUnitName(declareUnitNameMap.getOrDefault(data.getLatestUnit(),""));
         }
     }
 
@@ -1952,9 +2052,11 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
      *
      * @param list 合并前预览明细
      * @param entityMap 中间表明细映射，用于通过预览明细 id 反查 skuId
+     * @param ruleContext 本次预览已解析的规则上下文，用于避免填充商品资料时重复远程查询和规则匹配
      */
     private void fillMergePreviewLatestProductLogistic(List<DeliveryDeclareDetailMidDTO.MergePreviewDTO> list,
-                                                       Map<String, DeliveryDeclareDetailMidEntity> entityMap) {
+                                                       Map<String, DeliveryDeclareDetailMidEntity> entityMap,
+                                                       MergePreviewRuleContext ruleContext) {
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
@@ -1966,7 +2068,7 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         if (CollUtil.isEmpty(productLogisticMap)) {
             return;
         }
-        Map<String, SoDetailEntity> b2bCustomerSoDetailMap = buildB2bCustomerSoDetailMap(entityMap.values());
+        Map<String, SoDetailEntity> b2bCustomerSoDetailMap = buildB2bCustomerSoDetailMap(ruleContext);
         for (DeliveryDeclareDetailMidDTO.MergePreviewDTO data : list) {
             DeliveryDeclareDetailMidEntity entity = entityMap.get(data.getId());
             if (Objects.isNull(entity)) {
@@ -1992,15 +2094,66 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         }
     }
 
-    private Map<String, SoDetailEntity> buildB2bCustomerSoDetailMap(Collection<DeliveryDeclareDetailMidEntity> entityList) {
-        List<DeliveryDeclareDetailMidEntity> b2bEntityList = entityList.stream()
+    /**
+     * 构建合并预览的规则上下文。
+     *
+     * <p>合并预览只需要知道当前批次是否为 B2B 按客户收货。该方法在预览入口一次性完成
+     * 来源明细构建、B2B 规则匹配字段补齐和收货人类型解析，后续填充商品物流资料时直接复用结果，
+     * 避免在 `fillMergePreviewLatestProductLogistic` 内再次触发发货通知、客户、字典 Feign 查询和规则重算。</p>
+     *
+     * @param entityList 本次合并预览选中的中间表明细
+     * @return 合并预览规则上下文
+     */
+    private MergePreviewRuleContext buildMergePreviewRuleContext(List<DeliveryDeclareDetailMidEntity> entityList) {
+        List<DeliveryDeclareDetailMidEntity> b2bEntityList = filterB2bMergePreviewEntities(entityList);
+        if (CollUtil.isEmpty(b2bEntityList)) {
+            return MergePreviewRuleContext.empty();
+        }
+        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList = b2bEntityList.stream()
+                .map(this::buildRuleMatchSourceDetailFromMid)
+                .collect(Collectors.toList());
+        List<String> declareBillIdList = b2bEntityList.stream()
+                .map(DeliveryDeclareDetailMidEntity::getDeclareId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        fillB2bSourceCountry(sourceDetailList, declareBillIdList);
+        fillB2bSourceRuleMatchFields(sourceDetailList);
+        String receiverType = cfgDeclareRuleService.resolveConsistentReceiverType(
+                SourceTypeEnum.B2B_DECLARE_BILL.getCode(),
+                sourceDetailList,
+                this::buildDeclareRuleMatchParamMap,
+                ApiError.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_RULE_NOT_FOUND_FOR_SOURCE,
+                ApiError.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_RECEIVER_TYPE_CONFLICT);
+        return new MergePreviewRuleContext(
+                b2bEntityList,
+                CharSequenceUtil.equals(CfgDeclareRuleReceiverTypeEnum.BY_CUSTOMER.getCode(), receiverType));
+    }
+
+    /**
+     * 过滤本次合并预览中的 B2B 发货通知来源明细。
+     *
+     * <p>只有 B2B 发货通知在按客户收货规则下需要额外读取 SO 明细单价；头程来源和非 B2B 来源
+     * 直接使用 PLM 最新商品物流资料即可。</p>
+     *
+     * @param entityList 本次合并预览选中的中间表明细
+     * @return B2B 发货通知来源明细
+     */
+    private List<DeliveryDeclareDetailMidEntity> filterB2bMergePreviewEntities(Collection<DeliveryDeclareDetailMidEntity> entityList) {
+        if (CollUtil.isEmpty(entityList)) {
+            return Collections.emptyList();
+        }
+        return entityList.stream()
                 .filter(Objects::nonNull)
                 .filter(item -> CharSequenceUtil.equals(item.getSourceType(), SourceTypeEnum.SO_DELIVERY_NOTICE.getCode()))
                 .collect(Collectors.toList());
-        if (CollUtil.isEmpty(b2bEntityList) || !isB2bCustomerReceiverForMergePreview(b2bEntityList)) {
+    }
+
+    private Map<String, SoDetailEntity> buildB2bCustomerSoDetailMap(MergePreviewRuleContext ruleContext) {
+        if (Objects.isNull(ruleContext) || !ruleContext.isB2bCustomerReceiver() || CollUtil.isEmpty(ruleContext.getB2bEntityList())) {
             return Collections.emptyMap();
         }
-        List<String> businessIds = b2bEntityList.stream()
+        List<String> businessIds = ruleContext.getB2bEntityList().stream()
                 .map(DeliveryDeclareDetailMidEntity::getBusinessId)
                 .filter(CharSequenceUtil::isNotBlank)
                 .distinct()
@@ -2019,25 +2172,12 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
                         Function.identity(), (oldValue, newValue) -> oldValue));
     }
 
-    private boolean isB2bCustomerReceiverForMergePreview(List<DeliveryDeclareDetailMidEntity> entityList) {
-        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList = entityList.stream()
-                .map(this::buildRuleMatchSourceDetailFromMid)
-                .collect(Collectors.toList());
-        String receiverType = cfgDeclareRuleService.resolveConsistentReceiverType(
-                SourceTypeEnum.B2B_DECLARE_BILL.getCode(),
-                sourceDetailList,
-                this::buildDeclareRuleMatchParamMap,
-                ApiError.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_RULE_NOT_FOUND_FOR_SOURCE,
-                ApiError.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_RECEIVER_TYPE_CONFLICT);
-        return CharSequenceUtil.equals(CfgDeclareRuleReceiverTypeEnum.BY_CUSTOMER.getCode(), receiverType);
-    }
-
     private TmsDeclareBillDTO.SourceDeliveryDetailDTO buildRuleMatchSourceDetailFromMid(DeliveryDeclareDetailMidEntity entity) {
         TmsDeclareBillDTO.SourceDeliveryDetailDTO detailDTO = new TmsDeclareBillDTO.SourceDeliveryDetailDTO();
+        detailDTO.setDeclareId(entity.getDeclareId());
         detailDTO.setSourceId(entity.getSourceId());
         detailDTO.setSourceCode(entity.getSourceCode());
         detailDTO.setSourceType(entity.getSourceType());
-        detailDTO.setCountryId("");
         detailDTO.setFromWarehouseId(entity.getFromWarehouseId());
         detailDTO.setTransferWarehouseIds(entity.getTransferWarehouseIds());
         detailDTO.setSalesOrgId(entity.getSalesOrgId());
@@ -2051,5 +2191,34 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
 
     private String buildSoDetailKey(String businessId, String skuId) {
         return CharSequenceUtil.blankToDefault(businessId, "") + "#" + CharSequenceUtil.blankToDefault(skuId, "");
+    }
+
+    /**
+     * 合并预览规则上下文。
+     *
+     * <p>用于在一次预览请求内缓存 B2B 来源明细及其收货人类型判断结果，避免后续填充商品物流资料时
+     * 再次走远程补齐和规则匹配链路。</p>
+     */
+    private static class MergePreviewRuleContext {
+
+        private final List<DeliveryDeclareDetailMidEntity> b2bEntityList;
+        private final boolean b2bCustomerReceiver;
+
+        private MergePreviewRuleContext(List<DeliveryDeclareDetailMidEntity> b2bEntityList, boolean b2bCustomerReceiver) {
+            this.b2bEntityList = b2bEntityList;
+            this.b2bCustomerReceiver = b2bCustomerReceiver;
+        }
+
+        private static MergePreviewRuleContext empty() {
+            return new MergePreviewRuleContext(Collections.emptyList(), false);
+        }
+
+        private List<DeliveryDeclareDetailMidEntity> getB2bEntityList() {
+            return b2bEntityList;
+        }
+
+        private boolean isB2bCustomerReceiver() {
+            return b2bCustomerReceiver;
+        }
     }
 }

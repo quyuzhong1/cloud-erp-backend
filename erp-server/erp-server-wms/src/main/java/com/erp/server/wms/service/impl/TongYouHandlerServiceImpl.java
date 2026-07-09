@@ -51,6 +51,7 @@ import java.util.Map;
 public class TongYouHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     private static final String TONGYOU_ORDER_NOT_EXISTS = "订单不存在";
     private static final String TONGYOU_ORDER_DELETED = "已删除";
+    private static final String TONGYOU_INTERCEPTED_STATUS = "7";
 
     @Resource
     private TongYouService tongYouService;
@@ -224,6 +225,10 @@ public class TongYouHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     private ApiResult<String> resolveCancelOutboundResult(ThirdWarehouseCancelOutboundReq cancelOutboundReq,
                                                           TongYouCancelOutboundResp cancelResp) {
+        if (Boolean.TRUE.equals(cancelOutboundReq.getConfirmInterceptResult())) {
+            return resolveInterceptCancelOutboundResult(cancelOutboundReq, cancelResp);
+        }
+
         String erpOrderCode = cancelOutboundReq.getErpOrderCode();
         if (containsCancelOrder(cancelResp.getSuccArray(), erpOrderCode)) {
             return success(CharSequenceUtil.format("通邮取消出库单成功：{}", erpOrderCode),
@@ -250,9 +255,8 @@ public class TongYouHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         try {
             queryResp = queryOutboundAfterCancel(cancelOutboundReq);
         } catch (Exception e) {
-            log.warn(getPlatForm().getName() + "取消后查询出库单异常", e);
-            return success(CharSequenceUtil.format("通邮取消请求已受理，取消后查询异常，按拦截中处理：{}",
-                            CharSequenceUtil.blankToDefault(e.getMessage(), e.getClass().getSimpleName())),
+            log.warn(getPlatForm().getName() + "取消后查询出库单异常, erpOrderCode:{}", erpOrderCode, e);
+            return success("通邮取消请求已受理，取消后查询异常，按拦截中处理",
                     ThirdWarehouseCancelResultEnum.INTERCEPTING.getCode());
         }
         log.warn(getPlatForm().getName()+"取消后查询出库单结果:{}", JSONUtil.toJsonStr(queryResp));
@@ -293,12 +297,68 @@ public class TongYouHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                 ThirdWarehouseCancelResultEnum.INTERCEPTING.getCode());
     }
 
+    private ApiResult<String> resolveInterceptCancelOutboundResult(ThirdWarehouseCancelOutboundReq cancelOutboundReq,
+                                                                   TongYouCancelOutboundResp cancelResp) {
+        TongYouQueryOutboundBillResp queryResp;
+        try {
+            queryResp = queryOutboundAfterCancel(cancelOutboundReq, true);
+        } catch (Exception e) {
+            log.warn(getPlatForm().getName() + "发货拦截后查询出库单异常, erpOrderCode:{}", cancelOutboundReq.getErpOrderCode(), e);
+            return success("通邮取消请求已受理，按order_status=7查询拦截结果异常，按拦截失败处理",
+                    ThirdWarehouseCancelResultEnum.INTERCEPTION_FAILED.getCode());
+        }
+        log.warn(getPlatForm().getName()+"发货拦截后查询出库单结果:{}", JSONUtil.toJsonStr(queryResp));
+        if (ObjectUtil.isEmpty(queryResp)) {
+            return success("通邮取消请求已受理，按order_status=7查询拦截结果无返回，按拦截失败处理",
+                    ThirdWarehouseCancelResultEnum.INTERCEPTION_FAILED.getCode());
+        }
+        if(!isSuccess(queryResp.getError())){
+            return success(CharSequenceUtil.format("通邮取消请求已受理，按order_status=7查询拦截结果失败，按拦截失败处理：{}",
+                            CharSequenceUtil.blankToDefault(queryResp.getContent(), getCancelResultText(cancelResp))),
+                    ThirdWarehouseCancelResultEnum.INTERCEPTION_FAILED.getCode());
+        }
+        if (CollUtil.isEmpty(queryResp.getData())) {
+            return success(CharSequenceUtil.format("通邮取消请求已受理，按order_status=7查询无出库单，按拦截失败处理：{}",
+                            getCancelResultText(cancelResp)),
+                    ThirdWarehouseCancelResultEnum.INTERCEPTION_FAILED.getCode());
+        }
+        if (hasInterceptedOutbound(queryResp.getData())) {
+            return success(CharSequenceUtil.format("通邮取消请求已受理，查询返回PB=7，按拦截成功处理：{}",
+                            cancelOutboundReq.getErpOrderCode()),
+                    ThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
+        }
+
+        String statusText = getOutboundStatusText(CharSequenceUtil.trim(queryResp.getData().get(0).getPb()));
+        return success(CharSequenceUtil.format("通邮取消请求已受理，查询未返回PB=7，当前状态为{}，按拦截失败处理", statusText),
+                ThirdWarehouseCancelResultEnum.INTERCEPTION_FAILED.getCode());
+    }
+
     private TongYouQueryOutboundBillResp queryOutboundAfterCancel(ThirdWarehouseCancelOutboundReq cancelOutboundReq) {
+        return queryOutboundAfterCancel(cancelOutboundReq, false);
+    }
+
+    private TongYouQueryOutboundBillResp queryOutboundAfterCancel(ThirdWarehouseCancelOutboundReq cancelOutboundReq,
+                                                                  boolean queryInterceptStatus) {
         Map<String, Object> authJson = new HashMap<>();
         Object object = ThirdWarehouseContext.getAuthMap().get("appToken");
         authJson.put("token",ObjectUtil.isEmpty(object) ? "" : object.toString());
         authJson.put("deliver_no",cancelOutboundReq.getErpOrderCode());
+        // 通邮拦截结果不能用取消接口受理响应判断，拦截场景必须带 order_status=7 查询确认返回PB=7。
+        if (queryInterceptStatus) {
+            authJson.put("order_status", TongYouOutboundStatusEnum.INTERCEPTED.getCode());
+        }
         return tongYouService.getOutboundBill(authJson);
+    }
+
+    private boolean hasInterceptedOutbound(List<TongYouQueryOutboundResp> dataList) {
+        if (CollUtil.isEmpty(dataList)) {
+            return false;
+        }
+        return dataList.stream()
+                .map(TongYouQueryOutboundResp::getPb)
+                .filter(CharSequenceUtil::isNotBlank)
+                .map(CharSequenceUtil::trim)
+                .anyMatch(status -> TongYouOutboundStatusEnum.INTERCEPTED.getCode().equals(status));
     }
 
     private boolean isCancelDeletedResult(String errorMsg) {

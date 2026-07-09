@@ -235,6 +235,8 @@ public class LogisticsReconServiceImpl
         data.setReconciliationMonth(DateUtil.formatCnYearMonth(entity.getReconciliationMonth()));
         data.setSupplierName(entity.getSupplierName());
         data.setTotalAmountStr(formatAmount(entity.getTotalAmount(), currencySymbol(entity.getCurrency())));
+        data.setCheckStatus(entity.getCheckStatus());
+        data.setCheckStatusName(LogisticsReconCheckStatusEnum.getName(entity.getCheckStatus()));
         return data;
     }
 
@@ -335,9 +337,9 @@ public class LogisticsReconServiceImpl
     }
 
     /**
-     * 对账维度（月份+物流商+Sheet）pending/importing 部分唯一索引名。
+     * 对账维度（月份+文件+物流商+Sheet）pending/importing 部分唯一索引名（子串，用于异常消息匹配）。
      */
-    private static final String DIM_UNIQUE_CONSTRAINT = "uniq_logistics_recon_month_supplier_sheet";
+    private static final String DIM_UNIQUE_CONSTRAINT = "uniq_logistics_recon_month_file_supplier_sheet";
 
     /**
      * 判断是否因对账维度唯一约束冲突（pending/importing 同维度）导致的数据完整性异常。
@@ -440,14 +442,14 @@ public class LogisticsReconServiceImpl
                 boolean reimportUpdate = CollUtil.isNotEmpty(dto.getReimportUpdateMap())
                         && Boolean.TRUE.equals(dto.getReimportUpdateMap().get(importCfg.getId()));
                 dto.setReimportUpdate(reimportUpdate);
+                // 每个配置对应独立主表，处理前无条件清空导入缓存，避免多主表间 row_no→明细 id 串号
+                dto.setImportDetailKeyMap(null);
+                dto.setImportDetailMaxSeqMap(null);
+                dto.setImportDetailSubKeyMap(null);
+                dto.setImportDetailSubSnapshotMap(null);
+                dto.setImportDetailSnapshotMap(null);
                 if (reimportUpdate) {
                     initImportDetailCacheFromDb(dto, cfgDetails);
-                } else {
-                    dto.setImportDetailKeyMap(null);
-                    dto.setImportDetailMaxSeqMap(null);
-                    dto.setImportDetailSubKeyMap(null);
-                    dto.setImportDetailSubSnapshotMap(null);
-                    dto.setImportDetailSnapshotMap(null);
                 }
                 // 边解析边分批落库（监听器内 BATCH_COUNT 达阈值回调 handleReconImportBatch）
                 LogisticsReconExcelListener excelListener =
@@ -457,7 +459,13 @@ public class LogisticsReconServiceImpl
                         .sheet(importCfg.getSheetName())
                         .doRead();
                 if (excelListener.isHeadEmpty()) {
-                    throw new ServiceException(ApiError.LOGISTICS_RECON_EXCEL_HEAD_NOT_FOUND);
+                    // 文件中不存在该配置对应的 sheet：本次为该配置预建的主表没有任何明细，
+                    // 直接删除、不保留空记录，也不复用/引用其它历史数据的明细
+                    log.warn("sheet【{}】未找到表头信息，删除本次空导入主表 mainId={}",
+                            importCfg.getSheetName(), dto.getMainId());
+                    discardEmptyImportMain(dto.getMainId());
+                    createdMainIds.remove(dto.getMainId());
+                    continue;
                 }
                 totalCount += excelListener.getTotalRowCount();
                 errorList.addAll(excelListener.getErrorList());
@@ -582,7 +590,7 @@ public class LogisticsReconServiceImpl
         } else if (StrUtil.isBlank(reconciliationMonth)) {
             rate = null;
         } else {
-            rate = dmpTaskFeign.getMonthRate(reconciliationMonth + "-01", code);
+            rate = dmpTaskFeign.getRate(reconciliationMonth + "-01", code);
         }
         cache.put(code, rate);
         return rate;
@@ -1037,7 +1045,7 @@ public class LogisticsReconServiceImpl
     private DetailResolveResult resolveImportDetail(LogisticsReconDTO.ImportDTO dto, int rowNo,
                                                     LogisticsReconImportExcelDTO excelDTO) {
         ensureImportDetailCache(dto);
-        String cacheKey = buildImportDetailRowCacheKey(rowNo);
+        String cacheKey = buildImportDetailRowCacheKey(dto.getMainId(), rowNo);
         String existingDetailId = StrUtil.isBlank(cacheKey) ? null : dto.getImportDetailKeyMap().get(cacheKey);
         if (StrUtil.isNotBlank(existingDetailId)) {
             LogisticsReconDetailEntity detail = new LogisticsReconDetailEntity();
@@ -1055,8 +1063,8 @@ public class LogisticsReconServiceImpl
         return new DetailResolveResult(detail, true, 1);
     }
 
-    private String buildImportDetailRowCacheKey(Integer rowNo) {
-        return rowNo == null ? "" : IMPORT_DETAIL_ROW_CACHE_PREFIX + rowNo;
+    private String buildImportDetailRowCacheKey(String mainId, Integer rowNo) {
+        return rowNo == null ? "" : IMPORT_DETAIL_ROW_CACHE_PREFIX + StrUtil.blankToDefault(mainId, "") + ":" + rowNo;
     }
 
     /**
@@ -1248,13 +1256,16 @@ public class LogisticsReconServiceImpl
     }
 
     /**
-     * 按对账维度（月份 + 物流商 + Sheet）构建查重条件，与唯一索引
-     * uniq_logistics_recon_month_supplier_sheet_active 一致。
+     * 按对账维度（月份 + 文件 + 物流商 + Sheet）构建查重条件，与唯一索引
+     * uniq_logistics_recon_month_file_supplier_sheet_active 一致。
+     * 文件维度用于隔离不同文件：仅同月份 + 同文件 + 同物流商 + 同 Sheet 才复用/查重，
+     * 避免复用其它文件遗留的历史 pending 记录。
      */
     private LambdaQueryChainWrapper<LogisticsReconEntity> buildReimportDimensionQuery(
             LogisticsReconDTO.ImportDTO dto, CfgLogisticsCostImportEntity importCfg) {
         LambdaQueryChainWrapper<LogisticsReconEntity> query = lambdaQuery()
                 .eq(LogisticsReconEntity::getReconciliationMonth, dto.getReconciliationMonth())
+                .eq(LogisticsReconEntity::getFileName, dto.getFileName())
                 .eq(LogisticsReconEntity::getSupplierId, importCfg.getDictPlatform())
                 .eq(LogisticsReconEntity::getIsDeleted, false);
         if (StrUtil.isBlank(importCfg.getSheetName())) {
@@ -1267,10 +1278,11 @@ public class LogisticsReconServiceImpl
     }
 
     /**
-     * 构建重导维度分布式锁键：对账月份 | 物流商/平台 id | Sheet 名。
+     * 构建重导维度分布式锁键：对账月份 | 文件名 | 物流商/平台 id | Sheet 名。
      */
     private String buildReimportLockKey(LogisticsReconDTO.ImportDTO dto, CfgLogisticsCostImportEntity importCfg) {
         return dto.getReconciliationMonth() + "|"
+                + StrUtil.blankToDefault(dto.getFileName(), "") + "|"
                 + StrUtil.blankToDefault(importCfg.getDictPlatform(), "") + "|"
                 + StrUtil.blankToDefault(importCfg.getSheetName(), "");
     }
@@ -1323,7 +1335,7 @@ public class LogisticsReconServiceImpl
             }
             lastDetailId = detailBatch.get(detailBatch.size() - 1).getId();
             for (LogisticsReconDetailEntity detail : detailBatch) {
-                String cacheKey = buildImportDetailRowCacheKey(detail.getRowNo());
+                String cacheKey = buildImportDetailRowCacheKey(dto.getMainId(), detail.getRowNo());
                 if (StrUtil.isNotBlank(cacheKey)) {
                     dto.getImportDetailKeyMap().putIfAbsent(cacheKey, detail.getId());
                 }
@@ -1557,6 +1569,29 @@ public class LogisticsReconServiceImpl
     }
 
     /**
+     * 文件中缺失该配置对应 sheet 时，丢弃本次为其预建的主表：
+     * 无明细则级联删除，避免残留「导入中」空记录、并杜绝引用历史明细；
+     * 极端情况下（复用到同文件历史含明细记录）仅复位为待确认，避免误删数据。
+     */
+    private void discardEmptyImportMain(String mainId) {
+        if (StrUtil.isBlank(mainId)) {
+            return;
+        }
+        long detailCount = logisticsReconDetailService.lambdaQuery()
+                .eq(LogisticsReconDetailEntity::getMainId, mainId)
+                .count();
+        if (detailCount > 0) {
+            lambdaUpdate()
+                    .eq(LogisticsReconEntity::getId, mainId)
+                    .set(LogisticsReconEntity::getCheckStatus, LogisticsReconCheckStatusEnum.PENDING.getCode())
+                    .update();
+            return;
+        }
+        // 走已有单条删除（独立事务 + 行锁，级联 detail/detail_sub/ref）
+        self.delete(mainId);
+    }
+
+    /**
      * 获取导入任务预创建的主表（禁止异步任务内静默新建，避免绕过提交阶段查重）。
      */
     private LogisticsReconEntity resolveImportMain(LogisticsReconDTO.ImportDTO dto,
@@ -1646,7 +1681,7 @@ public class LogisticsReconServiceImpl
 
     /**
      * 校验对账单校验状态切换是否合法（待确认 ↔ 已确认）。
-     * <p>目标待确认：禁止同状态重复；已确认回退时要求全部费用项未匹配。</p>
+     * <p>目标待确认：禁止同状态重复；已确认回退时要求全部费用项为未匹配或匹配失败。</p>
      * <p>目标已确认：仅允许当前待确认；禁止导入失败或存在匹配中费用项。</p>
      *
      * @author Will
@@ -1669,13 +1704,12 @@ public class LogisticsReconServiceImpl
             throw new ServiceException(ApiError.LOGISTICS_RECON_CHECK_STATUS_NO_CHANGE);
         }
         if (LogisticsReconCheckStatusEnum.PENDING.getCode().equals(targetStatus)) {
-            // 已确认 → 待确认：仅当全部费用项匹配状态为未匹配时允许
-            long nonUnmatchedCount = logisticsReconDetailSubService.lambdaQuery()
+            // 已确认 → 待确认：仅当全部费用项匹配状态为未匹配或匹配失败时允许
+            long invalidCount = logisticsReconDetailSubService.lambdaQuery()
                     .eq(LogisticsReconDetailSubEntity::getMainId, entity.getId())
-                    .ne(LogisticsReconDetailSubEntity::getMatchStatus,
-                            LogisticsReconDetailMatchStatusEnum.UNMATCHED.getCode())
+                    .notIn(LogisticsReconDetailSubEntity::getMatchStatus, MATCH_CLAIM_FROM_STATUSES)
                     .count();
-            if (nonUnmatchedCount > 0) {
+            if (invalidCount > 0) {
                 throw new ServiceException(ApiError.LOGISTICS_RECON_MATCH_REF_EXISTS_ROLLBACK_FORBIDDEN);
             }
         }
@@ -2960,6 +2994,7 @@ public class LogisticsReconServiceImpl
     private static final int MATCH_CHUNK_SIZE = 500;
 
     // ============================== private ==============================
+
 
     /**
      * 列表名称回填

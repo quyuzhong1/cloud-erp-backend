@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.enums.AuthStatusEnum;
@@ -71,24 +72,24 @@ public class WegoOutboundInitHandler extends DmpInputInitHandler {
                 .eq(OverseasProviderEntity::getCode, DmpBasicSystemCodeEnum.WEGO.getCode())
                 .list();
         if (CollUtil.isEmpty(providerList)) {
-            throw new ServiceException("WEGO授权信息不存在");
+            throw new ServiceException(ApiError.WH_WEGO_AUTH_INFO_NOT_FOUND);
         }
         OverseasProviderEntity provider = providerList.stream()
                 .filter(e -> e.getId().equalsIgnoreCase(dmpInputTaskEntity.getNextLevelId()))
                 .findFirst().orElse(null);
         if (provider == null) {
-            throw new ServiceException("WEGO对应授权ID信息不存在, nextId:" + dmpInputTaskEntity.getNextLevelId());
+            throw new ServiceException(ApiError.WH_WEGO_OUTBOUND_AUTH_ID_NOT_FOUND, dmpInputTaskEntity.getNextLevelId());
         }
 
         // 从数据库 overseas_provider.auth_json 读取 appToken / appSecret
         Map<String, Object> authJson = provider.getAuthJson();
         if (authJson == null || authJson.isEmpty()) {
-            throw new ServiceException("WEGO出库：服务商[" + provider.getId() + "]auth_json为空");
+            throw new ServiceException(ApiError.WH_WEGO_OUTBOUND_AUTH_JSON_EMPTY, provider.getId());
         }
         String appToken = toStr(authJson.get(AUTH_KEY_APP_TOKEN));
         String appSecret = toStr(authJson.get(AUTH_KEY_APP_SECRET));
         if (StringUtils.isAnyBlank(appToken, appSecret)) {
-            throw new ServiceException("WEGO出库：服务商[" + provider.getId() + "]appToken/appSecret缺失");
+            throw new ServiceException(ApiError.WH_WEGO_OUTBOUND_TOKEN_SECRET_MISSING, provider.getId());
         }
         String authId = provider.getId();
 
@@ -138,21 +139,21 @@ public class WegoOutboundInitHandler extends DmpInputInitHandler {
                 resp = wegoOpenApiService.query2cOrderPage(req);
             } catch (Exception e) {
                 log.error("[WEGO出库] 服务商[id={}] query2cOrderPage 异常, pageNum={}", authId, pageNum, e);
-                throw new ServiceException("WEGO出库：query2cOrderPage 分页拉取异常，已拉取页数=" + (pageNum - 1) + "，数据不完整，任务中止");
+                throw new ServiceException(ApiError.WH_WEGO_OUTBOUND_PAGE_QUERY_ERROR, pageNum - 1);
             }
             if (resp == null) {
                 log.error("[WEGO出库] 服务商[id={}] query2cOrderPage 接口响应为空, pageNum={}", authId, pageNum);
-                throw new ServiceException("WEGO出库：query2cOrderPage 接口响应为空，pageNum=" + pageNum + "，数据不完整，任务中止");
+                throw new ServiceException(ApiError.WH_WEGO_OUTBOUND_RESPONSE_EMPTY, pageNum);
             }
             if (!Boolean.TRUE.equals(resp.getSuccess())) {
                 log.error("[WEGO出库] 服务商[id={}] query2cOrderPage 接口返回失败: errorCode={}, errorMsg={}, pageNum={}",
                         authId, resp.getErrorCode(), resp.getErrorMsg(), pageNum);
-                throw new ServiceException("WEGO出库：query2cOrderPage 接口返回失败: errorCode=" + resp.getErrorCode()
-                        + ", errorMsg=" + resp.getErrorMsg());
+                throw new ServiceException(ApiError.WH_WEGO_OUTBOUND_RESPONSE_FAILED, resp.getErrorCode(), resp.getErrorMsg());
             }
             WegoOutboundResp.PageResultDTO pageResult = resp.getResult();
             if (pageResult == null) {
-                break;
+                log.error("[WEGO出库] 服务商[id={}] query2cOrderPage success=true 但 result 为空, pageNum={}", authId, pageNum);
+                throw new ServiceException(ApiError.WH_WEGO_OUTBOUND_RESULT_EMPTY, pageNum, pageNum - 1);
             }
             List<WegoOutboundResp.OutboundOrderDTO> list = pageResult.getList();
             if (CollUtil.isNotEmpty(list)) { orderList.addAll(list); }
@@ -163,8 +164,7 @@ public class WegoOutboundInitHandler extends DmpInputInitHandler {
         }
         if (pageNum > MAX_PAGE_LIMIT) {
             log.error("[WEGO出库] 服务商[id={}] 已达最大翻页上限({})，存在未拉取数据，任务中止", authId, MAX_PAGE_LIMIT);
-            throw new ServiceException("WEGO出库：已达最大翻页上限(" + MAX_PAGE_LIMIT
-                    + ")，已拉取=" + orderList.size() + "条，数据不完整，任务中止");
+            throw new ServiceException(ApiError.WH_WEGO_OUTBOUND_PAGE_LIMIT_EXCEEDED, MAX_PAGE_LIMIT, orderList.size());
         }
         log.info("[WEGO出库] 服务商[id={}] 订单日期[{} ~ {}] 拉取={}条 已翻页={}",
                 authId, orderDateBegin, orderDateEnd, orderList.size(), pageNum);

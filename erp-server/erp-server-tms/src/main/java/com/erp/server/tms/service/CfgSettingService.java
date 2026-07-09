@@ -50,6 +50,13 @@ public interface CfgSettingService extends SuperService<CfgSettingEntity> {
      **/
     CfgSettingEntity getByKey(String key);
 
+    /**
+     * 根据当前运行环境获取 ERP 外部访问地址
+     *
+     * @return ERP 外部访问地址
+     */
+    String getKuaidi100CallBackUrl();
+
     List<CfgSettingEntity> listCfgSettingByKeys(List<String> keys);
 
     CfgSettingValueDTO.AllocationSettingDTO getCfgSettingByAllocationSetting();

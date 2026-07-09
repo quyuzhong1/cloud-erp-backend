@@ -1,5 +1,6 @@
 package com.erp.server.tms.utils;
 
+import com.erp.model.tms.constant.DeclareMergeDefaults;
 import com.erp.model.tms.dto.DeclarationGenerationDTO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import org.apache.commons.lang3.StringUtils;

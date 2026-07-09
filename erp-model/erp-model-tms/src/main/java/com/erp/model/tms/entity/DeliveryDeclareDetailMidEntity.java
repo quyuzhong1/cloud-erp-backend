@@ -1,14 +1,15 @@
 package com.erp.model.tms.entity;
 
-import java.math.BigDecimal;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.experimental.Accessors;
 import lombok.NoArgsConstructor;
+import lombok.experimental.Accessors;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
 
 
 /**
@@ -31,11 +32,7 @@ public class DeliveryDeclareDetailMidEntity extends BaseEntity<DeliveryDeclareDe
     */
     @TableField("remark")
     private String remark;
-//    /**
-//    * 报关状态：
-//    */
-//    @TableField("declare_status")
-//    private String declareStatus;
+
     /**
     * 生成状态：wait=未生成 finish=已生成
     */
@@ -205,8 +202,6 @@ public class DeliveryDeclareDetailMidEntity extends BaseEntity<DeliveryDeclareDe
 
 
     public static final String REMARK = "remark";
-
-    public static final String DECLARE_STATUS = "declare_status";
 
     public static final String GENERATE_STATUS = "generate_status";
 

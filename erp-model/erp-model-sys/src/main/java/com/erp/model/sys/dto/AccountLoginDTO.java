@@ -28,9 +28,4 @@ public class AccountLoginDTO implements Serializable {
      */
     @NotBlank(message = "所属系统不能为空")
     private String userType;
-
-    /**
-     * 标识是否是测试联调所用
-     */
-    private  Boolean isTest = false;
 }

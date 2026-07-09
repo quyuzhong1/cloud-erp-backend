@@ -10,6 +10,7 @@ import com.erp.model.wms.dto.WegoSkuSyncDTO;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.wms.feign.OverseasProviderFeign;
 import com.erp.server.dmp.inout.handler.input.task.dmp.DmpInputBaseDmpHandler;
+import com.sdk.wms.wego.enums.WegoSkuStatusEnum;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.context.annotation.Scope;
@@ -73,6 +74,13 @@ public class WegoSkuOmsSyncDmpHandler extends DmpInputBaseDmpHandler {
             if (sku == null || sku.isEmpty()) {
                 continue;
             }
+            // 防御性兜底：Init 阶段已按 status 过滤过草稿态 SKU，此处再校验一次，
+            // 避免未来其他写入路径绕过 Init 过滤时，草稿 SKU 被同步进 OMS 未匹配对照表
+            Object statusObj = mongoData.get("status");
+            Integer status = statusObj instanceof Number ? ((Number) statusObj).intValue() : null;
+            if (!WegoSkuStatusEnum.needSync(status)) {
+                continue;
+            }
             WegoSkuSyncDTO.SkuItemDTO item = new WegoSkuSyncDTO.SkuItemDTO();
             item.setSku(sku);
             item.setName(toStr(mongoData.get("name")));
@@ -85,15 +93,19 @@ public class WegoSkuOmsSyncDmpHandler extends DmpInputBaseDmpHandler {
             return new ArrayList<>();
         }
 
-        // 查询 provider 绑定的系统仓库：
+        // 查询 provider 绑定的系统仓库（按 authId 精确查询，避免每次全表扫描 listAllMatch）：
         //   - Feign 调用抛异常 → 直接上抛，终止本次同步，避免写入空 warehouse_id 的脏数据，等待任务重试
         //   - 调用成功但未找到绑定仓库 → 属于配置缺失，跳过同步并 warn，同样不写脏数据
-        List<OverseasProviderDTO.ListWithWarehouseDTO> allProviders = overseasProviderFeign.listAllMatch();
+        //   - 同一 authId 可能绑定多个系统仓库：WEGO 的对照关系按服务商维度共享给其名下所有仓库
+        //     （下游 syncWarehouseNotMatchSku 写入 sku_mapping 时 hasMappingAll=true），
+        //     因此这里任取一条绑定仓库仅作为 warehouseId/warehouseName 的默认展示值，
+        //     不代表 SKU 实际归属的唯一仓库，不需要也不应该为了"归属哪个仓库"再做额外区分处理。
+        List<OverseasProviderDTO.ListWithWarehouseDTO> matchedProviders = overseasProviderFeign.listMatchByMainId(authId);
         String warehouseId = "";
         String warehouseName = "";
-        if (CollUtil.isNotEmpty(allProviders)) {
-            for (OverseasProviderDTO.ListWithWarehouseDTO p : allProviders) {
-                if (authId.equals(p.getId()) && p.getWarehouseId() != null && !p.getWarehouseId().isEmpty()) {
+        if (CollUtil.isNotEmpty(matchedProviders)) {
+            for (OverseasProviderDTO.ListWithWarehouseDTO p : matchedProviders) {
+                if (p.getWarehouseId() != null && !p.getWarehouseId().isEmpty()) {
                     warehouseId = p.getWarehouseId();
                     warehouseName = p.getWarehouseName() != null ? p.getWarehouseName() : "";
                     break;

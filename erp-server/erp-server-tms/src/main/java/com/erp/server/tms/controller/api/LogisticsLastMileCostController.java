@@ -14,7 +14,6 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
-import com.common.core.utils.BeanMapper;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO.EditDataDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO.EditViewDTO;
@@ -364,7 +363,7 @@ public class LogisticsLastMileCostController extends BaseController {
      public ApiResult<List<BatchResultDTO>> pushAllocation(@RequestBody @Validated PushDTO dto) {
          if(CollUtil.isEmpty(dto.getIds())){
              TmsAsyncTaskRecordDTO.SmallBagPushAllocationPayloadDTO payload =
-                     new TmsAsyncTaskRecordDTO.SmallBagPushAllocationPayloadDTO(dto.getReportDate(), DictCostAttributionEnum.LAST_MILE.getCode());
+                     new TmsAsyncTaskRecordDTO.SmallBagPushAllocationPayloadDTO(dto.getReportDate(), DictCostAttributionEnum.LAST_MILE.getCode(),dto.getSalesPlatformList());
              logisticsBillCostService.batchAsyncPushAllocation(payload);
              return success();
          }else {

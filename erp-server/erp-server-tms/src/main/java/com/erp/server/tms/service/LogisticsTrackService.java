@@ -71,6 +71,13 @@ public interface LogisticsTrackService extends SuperService<LogisticsTrackEntity
      */
     void webhookByTrack123(LogisticsTrackDTO.TrackWebHookDTO dto);
 
+    /**
+     * 对接快递100 webhook
+     *
+     * @param dto 快递100回调数据
+     */
+    void webhookByKuaidi100(LogisticsTrackDTO.Kuaidi100WebHookDTO dto);
+
     void saveIncrementTrackData(String trackNo, List<LogisticsTrackEntity> newList);
 
     Boolean importExcel(BaseDTO.ImportDTO dto);

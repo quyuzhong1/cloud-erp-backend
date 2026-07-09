@@ -1190,11 +1190,14 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ids.forEach(obj -> {
             ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
-revokeDTO.setExecuteSystem(dto.getExecuteSystem());
+            revokeDTO.setExecuteSystem(dto.getExecuteSystem());
             revokeDTO.setBusinessId(obj);
             revokeDTO.setBusinessKey(SourceTypeEnum.CUSTOMER_INFO.getCode());
             revokeDTO.setUserId(userInfo.getUid());
-            workflowFeign.revokeProcess(revokeDTO);
+            ApiResult<ProcessManagementDTO.RevokeResultDTO> revokeResult = workflowFeign.revokeProcess(revokeDTO);
+            if (Objects.isNull(revokeResult) || !revokeResult.isSuccess()) {
+                throw new ServiceException(Objects.isNull(revokeResult) ? "撤销流程失败" : revokeResult.getMsg());
+            }
         });
 
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
