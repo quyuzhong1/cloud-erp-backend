@@ -65,6 +65,9 @@ public class WorkflowTaskStepDispatcher {
         WorkflowTaskInstanceEntity instance = resolveInstance(mqDTO);
         if (instance == null) {
             log.error("未找到编排实例，sourceType={}, sourceId={}", mqDTO.getSourceTypeEnum().getCode(), mqDTO.getSourceId());
+            if (CharSequenceUtil.isNotBlank(mqDTO.getInstanceId())) {
+                throw new ServiceException(ApiError.WF_TASK_INSTANCE_NOT_FOUND);
+            }
             return;
         }
 
