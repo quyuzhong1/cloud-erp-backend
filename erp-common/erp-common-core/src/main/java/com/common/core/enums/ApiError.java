@@ -1583,6 +1583,13 @@ public enum ApiError implements Serializable {
     WH_WEGO_INBOUND_RESULT_EMPTY(11157,"WEGO入库分页查询接口 success=true 但 result 为空"),
     WH_WEGO_INBOUND_TYPE_ONLY_SELF_HEADWAY(11158,"目的仓平台授权为WEGO时，入库类型只能为【自发头程】"),
     WH_WEGO_INBOUND_TRACKING_NO_REQUIRED(11159,"WEGO入库单需提供物流跟踪号"),
+    WH_WEGO_INVENTORY_PROVIDER_NOT_FOUND(11160,"WEGO库存：nextLevelId[{0}]对应的服务商不存在"),
+    WH_WEGO_INVENTORY_AUTH_JSON_EMPTY(11161,"WEGO库存：服务商[{0}]auth_json为空"),
+    WH_WEGO_INVENTORY_TOKEN_SECRET_MISSING(11162,"WEGO库存：服务商[{0}]appToken/appSecret缺失"),
+    WH_WEGO_INVENTORY_PAGE_QUERY_ERROR(11163,"WEGO库存：仓库[{0}] 分页调用异常，pageNum={1}，已拉取={2}条，数据不完整，任务中止"),
+    WH_WEGO_INVENTORY_PAGE_PARSE_FAILED(11164,"WEGO库存：仓库[{0}] 第{1}页响应解析失败，数据不完整，任务中止"),
+    WH_WEGO_INVENTORY_PAGE_LIMIT_EXCEEDED(11165,"WEGO库存：仓库[{0}] 已达最大翻页上限({1})，已拉取={2}条，数据不完整，任务中止"),
+    WH_WEGO_INVENTORY_RESPONSE_FAILED(11166,"WEGO库存接口返回失败: errorCode={0}, errorMsg={1}"),
 
 
     /**
