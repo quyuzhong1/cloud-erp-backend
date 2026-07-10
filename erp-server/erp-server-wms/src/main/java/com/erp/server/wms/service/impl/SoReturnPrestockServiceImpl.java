@@ -288,6 +288,11 @@ public class SoReturnPrestockServiceImpl
             throw new ServiceException(ApiError.SO_RETURN_PRESTOCK_FORCE_CLOSE);
         }
 
+        // 售后订单类型（补/换/赠）不允许关联售后单，只能走关联店铺
+        if (BillTypeEnum.AFTER_SALES.getCode().equals(main.getType())) {
+            throw new ServiceException(ApiError.SO_RETURN_PRESTOCK_AFTER_SALE_TYPE_LINK_FORBIDDEN);
+        }
+
         // B2C售后单平台字典值为必填（B2B售后单无平台概念，允许为空，故不能在DTO层统一加@NotBlank）
         if (BillTypeEnum.B2C.getCode().equals(main.getType())) {
             boolean anyDictPlatformBlank = dto.getAfterSaleList().stream()

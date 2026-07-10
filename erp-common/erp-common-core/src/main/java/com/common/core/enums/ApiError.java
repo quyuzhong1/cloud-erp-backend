@@ -1397,6 +1397,7 @@ public enum ApiError implements Serializable {
     SO_RETURN_PRESTOCK_LINK_AFTER_SALE_SKU_TYPE_EXCEEDS(10804,"退货单SKU明细数量超过预入库单（SKU种类超出：{0}），可能为异常包裹或关联的售后单有误，请改用「关联店铺」进行关联"),
     SO_RETURN_PRESTOCK_LINK_AFTER_SALE_SKU_QTY_EXCEEDS(10805,"退货单SKU明细数量超过预入库单（SKU数量超出：{0}），可能为异常包裹或关联的售后单有误，请改用「关联店铺」进行关联"),
     SO_RETURN_PRESTOCK_LINK_AFTER_SALE_SKU_RECEIVE_QTY_EXCEEDS(10806,"认领失败，【sku：{0}]实际退货数量<认领数量"),
+    SO_RETURN_PRESTOCK_AFTER_SALE_TYPE_LINK_FORBIDDEN(10807,"售后订单类型的预入库单不支持关联售后单，请改用「关联店铺」进行关联"),
     SO_B2C_NOT_OUTBOUND_DETAIL_WAREHOUSE_UPDATE_FAILED(10753,"不出库发货失败：销售订单明细仓库未成功落库，请刷新后重试"),
     SO_B2C_NOT_OUTBOUND_LOGISTICS_UPDATE_FAILED(10754,"不出库发货失败：销售订单物流信息更新失败，请刷新后重试"),
     SO_B2C_NOT_OUTBOUND_STATUS_UPDATE_FAILED(10755,"不出库发货失败：销售订单状态更新失败，请刷新后重试"),
