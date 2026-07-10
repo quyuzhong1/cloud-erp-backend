@@ -445,13 +445,22 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return this.baseMapper.fullyManagedPaging(query, params, null);
     }
 
+    /**
+     * Doris 分析库 SQL 回查 PG 主库时，将跨库表名替换为 OMS 可访问的表/外部表。
+     */
+    private String convertDorisSqlToPgSql(String dorisSql) {
+        return dorisSql
+                .replace("erp_wms.third_warehouse_delivery", "foreign_third_warehouse_delivery")
+                .replace("erp_wms.so_b2c_delivery", "so_b2c_delivery");
+    }
+
     // 新增方法：处理普通 paging 的逻辑
     private IPage<SoB2cDTO.ListDTO> handlePaging(Page query, PagingParamDTO params, String dynamicDataSource, Boolean secondQuery) {
         IPage<SoB2cDTO.ListDTO> pageData = null;
         if (DynamicDataSourceTypeEnum.DORIS.getCode().equals(dynamicDataSource) && secondQuery) {
             int queryCount = 0;
             String defaultSql = params.getSqlMap().get("default");
-            String pgSql = defaultSql.replace("erp_wms.third_warehouse_delivery", "foreign_third_warehouse_delivery");
+            String pgSql = convertDorisSqlToPgSql(defaultSql);
             boolean unSameCountFlag = true;
             while (queryCount < 3) {
                 DynamicDataSourceContextHolder.poll();
@@ -2814,11 +2823,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO submitDelivery(String id, String channelId) {
-        SoB2cLogisticsEntity logisticsForForecastSync = soB2cLogisticsService.getByMainId(id);
-        if (Objects.nonNull(logisticsForForecastSync) && StringUtils.isNotBlank(logisticsForForecastSync.getLogisticsChannelId())) {
-            // 提交发货时按 TMS 预报设置同步中转/组包状态（无需中转的单内部会跳过）
-            soB2cService.syncForecastStatusQuietly(id, logisticsForForecastSync.getLogisticsChannelId());
-        }
         try {
             List<BatchResultDTO> batchResultDTOS = soB2cService.autoOrderForecast(Collections.singletonList(id));
             //在提交发货中，清除异常订单报错
