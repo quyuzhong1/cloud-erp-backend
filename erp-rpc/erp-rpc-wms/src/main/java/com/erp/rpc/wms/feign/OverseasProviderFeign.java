@@ -40,6 +40,13 @@ public interface OverseasProviderFeign {
     @GetMapping("/feign/overseasProvider/listAllMatch")
     List<OverseasProviderDTO.ListWithWarehouseDTO> listAllMatch();
 
+    /**
+     * 按服务商主键 id（authId）精确查询已匹配的仓库信息，避免每次全表扫描。
+     * @param mainId overseas_provider.id
+     */
+    @GetMapping("/feign/overseasProvider/listMatchByMainId")
+    List<OverseasProviderDTO.ListWithWarehouseDTO> listMatchByMainId(@RequestParam("mainId") String mainId);
+
     @GetMapping("/feign/overseasProvider/listProviderWarehouseBySql")
     List<String> listProviderWarehouseBySql(@RequestParam String compareCodeSplicingValueSql);
 

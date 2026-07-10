@@ -11,27 +11,41 @@ import com.cloud.erp.gateway.utils.IpRateLimitUtil;
 import com.cloud.erp.gateway.utils.ServletUtils;
 import com.cloud.erp.gateway.web.server.TokenService;
 import com.common.business.constant.AuthPassPath;
+import com.common.business.constant.RedisCacheConstants;
 import com.common.business.constant.TokenConstants;
 import com.common.business.vo.LoginUser;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.erp.model.sys.constants.SysApiTokenConstants;
+import com.erp.model.sys.dto.SysApiTokenDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.redisson.api.RedissonClient;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
-import org.springframework.core.annotation.Order;
+import org.springframework.core.Ordered;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
+import com.erp.rpc.sys.feign.SysApiTokenFeign;
 
 import javax.annotation.Resource;
 import java.io.UnsupportedEncodingException;
-import java.lang.annotation.Annotation;
+import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.net.URLEncoder;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 /**
  * @Classname AuthGatewayFilter
@@ -40,7 +54,7 @@ import java.util.Objects;
  */
 @Slf4j
 @Component
-public class AuthGatewayFilter implements GlobalFilter, Order {
+public class AuthGatewayFilter implements GlobalFilter, Ordered {
     /**
      * Feign资源前缀
      */
@@ -62,6 +76,57 @@ public class AuthGatewayFilter implements GlobalFilter, Order {
 
     private static final String KEY_REGISTER_URL = "/key/register";
 
+    private static final String API_SYS_PREFIX = "/api/sys";
+
+    private static final String SYS_SERVICE_PREFIX = "/sys";
+
+    private static final String PERSONAL_CENTER_API_TOKEN_PATH = "/personalCenter/apiToken";
+
+    private static final String API_TOKEN_WHITELIST_PATH = "/apiTokenWhitelist";
+
+    private static final String API_SYS_EVENT_TRACKING_PATH = "/api/sys" + AuthPassPath.EVENT_TRACKING_PATH;
+
+    private static final String[] API_TOKEN_MANAGEMENT_DENY_PATHS = {
+            API_SYS_PREFIX + PERSONAL_CENTER_API_TOKEN_PATH,
+            API_SYS_PREFIX + API_TOKEN_WHITELIST_PATH,
+            SYS_SERVICE_PREFIX + PERSONAL_CENTER_API_TOKEN_PATH,
+            SYS_SERVICE_PREFIX + API_TOKEN_WHITELIST_PATH,
+            PERSONAL_CENTER_API_TOKEN_PATH,
+            API_TOKEN_WHITELIST_PATH
+    };
+
+    /**
+     * 成功结果缓存很短，降低高频合法调用的 Feign 压力，同时控制 token 删除后的最大延迟。
+     */
+    private static final int API_TOKEN_VALIDATE_SUCCESS_CACHE_SECONDS = 5;
+
+    /**
+     * 无效 token 做更短的负缓存，拦截重复探测，避免随机 token 攻击长时间占用 Redis。
+     */
+    private static final int API_TOKEN_VALIDATE_INVALID_CACHE_SECONDS = 3;
+
+    /**
+     * token 有效但接口未进白名单时缓存 5 秒，兼顾防重复 Feign 和后台新增白名单后的生效速度。
+     */
+    private static final int API_TOKEN_VALIDATE_FORBIDDEN_CACHE_SECONDS = 5;
+
+    /**
+     * 32 字节随机数做 Base64URL 无 padding 后固定为 43 位。
+     */
+    private static final int API_TOKEN_RANDOM_LENGTH = 43;
+
+    private static final int API_TOKEN_TOTAL_LENGTH = SysApiTokenConstants.TOKEN_PREFIX.length() + API_TOKEN_RANDOM_LENGTH;
+
+    private static final Pattern API_TOKEN_PATTERN = Pattern.compile("^" + Pattern.quote(SysApiTokenConstants.TOKEN_PREFIX) + "[A-Za-z0-9_-]{43}$");
+
+    private static final String UNKNOWN_IP = "unknown";
+
+    private static final String X_FORWARDED_FOR = "X-Forwarded-For";
+
+    private static final String X_REAL_IP = "X-Real-IP";
+
+    private static final int IPV4_BIT_LENGTH = 32;
+
     @Resource
     private TokenService tokenService;
     @Resource
@@ -73,15 +138,24 @@ public class AuthGatewayFilter implements GlobalFilter, Order {
     @Resource
     private GatewayLocaleUtils localeUtils;
 
-    @Override
-    public Class<? extends Annotation> annotationType() {
-        return null;
-    }
+    @Resource
+    private SysApiTokenFeign sysApiTokenFeign;
+
+    @Resource
+    private RedissonClient redissonClient;
+
+    /**
+     * 只有直接连接方在这些网段内，才信任代理写入的 X-Forwarded-For/X-Real-IP。
+     * 代理层需要清洗并重写转发头，避免客户端自带伪造头透传到网关。
+     */
+    @Value("${gateway.client-ip.trusted-proxy-cidrs:}")
+    private String trustedProxyCidrs;
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         try {  //获取请求
-            ServerHttpRequest request = exchange.getRequest();
+            ServerHttpRequest request = stripApiTokenInternalHeaders(exchange.getRequest());
+            exchange = exchange.mutate().request(request).build();
             // 获取请求URL
             String uri = request.getPath().value();
             //判断是否有feign
@@ -89,16 +163,23 @@ public class AuthGatewayFilter implements GlobalFilter, Order {
                 //文件头使用JSON格式
                 return unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.HTTP_FORBIDDEN, exchange.getRequest()), ApiError.HTTP_FORBIDDEN.getCode());
             }
+            Mono<Void> apiTokenAuthResult = tryApiTokenAuth(exchange, chain, request, uri);
+            if (apiTokenAuthResult != null) {
+                return apiTokenAuthResult;
+            }
             if (uri.contains(SSO_URL)||uri.contains(KEY_REGISTER_URL)){
-                String clientIp = getClientIp(request);
-                if (!ipRateLimitUtil.isOpenApiAllowed(clientIp)) {
-                    log.warn("开放接口访问频率过高，IP: {}, URI: {}", clientIp, uri);
-                    return unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.HTTP_TOO_MANY_REQUESTS, exchange.getRequest()), ApiError.HTTP_TOO_MANY_REQUESTS.getCode());
+                Mono<Void> rateLimitResult = checkOpenApiRateLimit(exchange, request, uri);
+                if (rateLimitResult != null) {
+                    return rateLimitResult;
                 }
                 return chain.filter(exchange);
             }
             //判断是否是开放API 如果是 进行IP防护后放行
             if (uri.contains(OPEN_API_URL)) {
+                Mono<Void> rateLimitResult = checkOpenApiRateLimit(exchange, request, uri);
+                if (rateLimitResult != null) {
+                    return rateLimitResult;
+                }
                 return chain.filter(exchange);
             }
 
@@ -116,7 +197,7 @@ public class AuthGatewayFilter implements GlobalFilter, Order {
                 return chain.filter(exchange);
             }
             // 埋点路径解析
-            if (AuthPassPath.EVENT_TRACKING_PATH.contains(uri)) {
+            if (isEventTrackingPath(uri)) {
                 // 解析请求参数token用户
                 parseFormDataToken(exchange, request);
                 return chain.filter(exchange);
@@ -168,13 +249,307 @@ public class AuthGatewayFilter implements GlobalFilter, Order {
 
 
     @Override
-    public int value() {
+    public int getOrder() {
         return 0;
     }
 
 
     private Mono<Void> unauthorizedResponse(ServerWebExchange exchange, String msg, Integer code) {
         return ServletUtils.webFluxResponseWriter(exchange.getResponse(), msg, code);
+    }
+
+    private boolean isEventTrackingPath(String uri) {
+        return AuthPassPath.EVENT_TRACKING_PATH.equals(uri) || API_SYS_EVENT_TRACKING_PATH.equals(uri);
+    }
+
+    private Mono<Void> tryApiTokenAuth(ServerWebExchange exchange, GatewayFilterChain chain,
+                                       ServerHttpRequest request, String uri) {
+        String apiToken = resolveApiTokenFromAuthorization(request.getHeaders().getFirst(TokenConstants.AUTHENTICATION));
+        if (StringUtils.isBlank(apiToken)) {
+            return null;
+        }
+        if (isApiTokenManagementPath(uri)) {
+            return unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.AUTH_API_TOKEN_MANAGEMENT_PATH_FORBIDDEN, exchange.getRequest()), ApiError.HTTP_FORBIDDEN.getCode());
+        }
+        if (!isApiTokenFormatValid(apiToken)) {
+            return unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.HTTP_UNAUTHORIZED, exchange.getRequest()), ApiError.HTTP_UNAUTHORIZED.getCode());
+        }
+
+        String tokenHash = sha256Hex(apiToken);
+        return Mono.fromCallable(() -> authenticateApiToken(exchange, request, uri, tokenHash))
+                .subscribeOn(Schedulers.boundedElastic())
+                .flatMap(decision -> {
+                    if (decision.authenticated) {
+                        return chain.filter(decision.authenticatedExchange);
+                    }
+                    return unauthorizedResponse(exchange, decision.msg, decision.code);
+                })
+                .onErrorResume(e -> {
+                    log.error("API Token校验失败，URI: {}", uri, e);
+                    return unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.HTTP_UNAUTHORIZED, exchange.getRequest()), ApiError.HTTP_UNAUTHORIZED.getCode());
+                });
+    }
+
+    private ApiTokenAuthDecision authenticateApiToken(ServerWebExchange exchange, ServerHttpRequest request,
+                                                     String uri, String tokenHash) {
+        // API Token 是入口级能力，限流、Redis 缓存和 Feign 都是阻塞调用，统一隔离到 boundedElastic。
+        ApiTokenAuthDecision rateLimitDecision = checkApiTokenRateLimit(exchange, request, uri);
+        if (rateLimitDecision != null) {
+            return rateLimitDecision;
+        }
+        if (ipRateLimitUtil.isApiTokenFailureBlocked(tokenHash)) {
+            log.warn("API Token失败次数过多，已临时封禁，URI: {}", uri);
+            return ApiTokenAuthDecision.failure(localeUtils.getMessage(ApiError.HTTP_UNAUTHORIZED, exchange.getRequest()), ApiError.HTTP_UNAUTHORIZED.getCode());
+        }
+
+        SysApiTokenDTO.ValidateReqDTO dto = new SysApiTokenDTO.ValidateReqDTO();
+        dto.setTokenHash(tokenHash);
+        dto.setRequestPath(uri);
+
+        try {
+            SysApiTokenDTO.ValidateRespDTO validateResp = getCachedApiTokenValidate(tokenHash, uri);
+            if (validateResp == null) {
+                ApiResult<SysApiTokenDTO.ValidateRespDTO> result = sysApiTokenFeign.validate(dto);
+                validateResp = result == null ? null : result.getData();
+                // Feign/系统异常不写缓存，只缓存 sys 明确返回的业务校验结果。
+                if (result == null || !result.isSuccess() || validateResp == null) {
+                    return ApiTokenAuthDecision.failure(localeUtils.getMessage(ApiError.HTTP_UNAUTHORIZED, exchange.getRequest()), ApiError.HTTP_UNAUTHORIZED.getCode());
+                }
+                cacheApiTokenValidate(tokenHash, uri, validateResp);
+            }
+            if (!Boolean.TRUE.equals(validateResp.getTokenValid())) {
+                recordApiTokenFailure(tokenHash, uri, "invalid");
+                return ApiTokenAuthDecision.failure(localeUtils.getMessage(ApiError.HTTP_UNAUTHORIZED, exchange.getRequest()), ApiError.HTTP_UNAUTHORIZED.getCode());
+            }
+            if (!Boolean.TRUE.equals(validateResp.getPathAllowed())) {
+                log.warn("API Token接口未配置白名单，URI: {}, tokenId: {}", uri, validateResp.getTokenId());
+                recordApiTokenFailure(tokenHash, uri, "forbidden");
+                return ApiTokenAuthDecision.failure(localeUtils.getMessage(ApiError.AUTH_API_TOKEN_PATH_NOT_IN_WHITELIST, exchange.getRequest()), ApiError.HTTP_FORBIDDEN.getCode());
+            }
+
+            LoginUser loginUser = buildLoginUser(validateResp);
+            String tokenUserInfo = LoginUser.simpleLoginUser(loginUser);
+            ServerHttpRequest mutatedRequest = request.mutate()
+                    .headers(headers -> {
+                        headers.remove(TokenConstants.AUTHENTICATION);
+                        headers.remove(SysApiTokenConstants.INTERNAL_AUTH_HEADER);
+                        headers.remove(SysApiTokenConstants.INTERNAL_TOKEN_ID_HEADER);
+                    })
+                    .header("tokenUserInfo", tokenUserInfo)
+                    .header(SysApiTokenConstants.INTERNAL_AUTH_HEADER, SysApiTokenConstants.INTERNAL_AUTH_VALUE)
+                    .header(SysApiTokenConstants.INTERNAL_TOKEN_ID_HEADER, validateResp.getTokenId())
+                    .build();
+            ServerWebExchange authenticatedExchange = exchange.mutate().request(mutatedRequest).build();
+            // 签名过滤器只信任 exchange 内部属性，不信任客户端可伪造的同名请求头。
+            authenticatedExchange.getAttributes().put(SysApiTokenConstants.INTERNAL_AUTH_ATTRIBUTE, Boolean.TRUE);
+            return ApiTokenAuthDecision.success(authenticatedExchange);
+        } catch (UnsupportedEncodingException e) {
+            log.error("API Token用户信息编码失败，URI: {}", uri, e);
+            return ApiTokenAuthDecision.failure(localeUtils.getMessage(ApiError.HTTP_UNKNOWN, exchange.getRequest()), ApiError.HTTP_UNKNOWN.getCode());
+        } catch (Exception e) {
+            log.error("API Token校验失败，URI: {}", uri, e);
+            return ApiTokenAuthDecision.failure(localeUtils.getMessage(ApiError.HTTP_UNAUTHORIZED, exchange.getRequest()), ApiError.HTTP_UNAUTHORIZED.getCode());
+        }
+    }
+
+    private ApiTokenAuthDecision checkApiTokenRateLimit(ServerWebExchange exchange, ServerHttpRequest request, String uri) {
+        ApiTokenAuthDecision ipRateLimitDecision = checkOpenApiRateLimitDecision(exchange, request, uri);
+        if (ipRateLimitDecision != null) {
+            return ipRateLimitDecision;
+        }
+        if (!ipRateLimitUtil.isApiTokenGlobalAllowed()) {
+            log.warn("API Token全局访问频率过高，URI: {}", uri);
+            return ApiTokenAuthDecision.failure(localeUtils.getMessage(ApiError.HTTP_TOO_MANY_REQUESTS, exchange.getRequest()), ApiError.HTTP_TOO_MANY_REQUESTS.getCode());
+        }
+        if (!ipRateLimitUtil.isApiTokenPathAllowed(sha256Hex(uri))) {
+            log.warn("API Token路径访问频率过高，URI: {}", uri);
+            return ApiTokenAuthDecision.failure(localeUtils.getMessage(ApiError.HTTP_TOO_MANY_REQUESTS, exchange.getRequest()), ApiError.HTTP_TOO_MANY_REQUESTS.getCode());
+        }
+        return null;
+    }
+
+    private Mono<Void> checkOpenApiRateLimit(ServerWebExchange exchange, ServerHttpRequest request, String uri) {
+        ApiTokenAuthDecision decision = checkOpenApiRateLimitDecision(exchange, request, uri);
+        return decision == null ? null : unauthorizedResponse(exchange, decision.msg, decision.code);
+    }
+
+    private ApiTokenAuthDecision checkOpenApiRateLimitDecision(ServerWebExchange exchange, ServerHttpRequest request, String uri) {
+        String remoteIp = getRemoteIp(request);
+        boolean trustedProxy = isTrustedProxy(remoteIp);
+        String xForwardedFor = request.getHeaders().getFirst(X_FORWARDED_FOR);
+        String xRealIp = request.getHeaders().getFirst(X_REAL_IP);
+        String clientIp = getClientIp(request, remoteIp);
+        log.info("开放接口限流IP解析，clientIp: {}, remoteIp: {}, trustedProxy: {}, xForwardedFor: {}, xRealIp: {}, URI: {}",
+                clientIp,
+                remoteIp,
+                trustedProxy,
+                xForwardedFor,
+                xRealIp,
+                uri);
+        if (!trustedProxy && (StringUtils.isNotBlank(xForwardedFor) || StringUtils.isNotBlank(xRealIp))) {
+            log.warn("开放接口忽略代理IP头，remoteIp未配置为可信代理，clientIp按remoteIp限流，remoteIp: {}, trustedProxyCidrs: {}, xForwardedFor: {}, xRealIp: {}, URI: {}",
+                    remoteIp,
+                    trustedProxyCidrs,
+                    xForwardedFor,
+                    xRealIp,
+                    uri);
+        }
+        if (!ipRateLimitUtil.isOpenApiAllowed(clientIp)) {
+            log.warn("开放接口访问频率过高或限流组件不可用，IP: {}, URI: {}", clientIp, uri);
+            return ApiTokenAuthDecision.failure(localeUtils.getMessage(ApiError.HTTP_TOO_MANY_REQUESTS, exchange.getRequest()), ApiError.HTTP_TOO_MANY_REQUESTS.getCode());
+        }
+        return null;
+    }
+
+    private static class ApiTokenAuthDecision {
+        private final boolean authenticated;
+        private final ServerWebExchange authenticatedExchange;
+        private final String msg;
+        private final Integer code;
+
+        private ApiTokenAuthDecision(boolean authenticated, ServerWebExchange authenticatedExchange, String msg, Integer code) {
+            this.authenticated = authenticated;
+            this.authenticatedExchange = authenticatedExchange;
+            this.msg = msg;
+            this.code = code;
+        }
+
+        private static ApiTokenAuthDecision success(ServerWebExchange authenticatedExchange) {
+            return new ApiTokenAuthDecision(true, authenticatedExchange, null, null);
+        }
+
+        private static ApiTokenAuthDecision failure(String msg, Integer code) {
+            return new ApiTokenAuthDecision(false, null, msg, code);
+        }
+    }
+
+    private ServerHttpRequest stripApiTokenInternalHeaders(ServerHttpRequest request) {
+        return request.mutate()
+                .headers(headers -> {
+                    headers.remove(SysApiTokenConstants.INTERNAL_AUTH_HEADER);
+                    headers.remove(SysApiTokenConstants.INTERNAL_TOKEN_ID_HEADER);
+                })
+                .build();
+    }
+
+    private String resolveApiTokenFromAuthorization(String authorization) {
+        if (StringUtils.isBlank(authorization) || !authorization.startsWith(TokenConstants.PREFIX)) {
+            return null;
+        }
+        String credential = authorization.substring(TokenConstants.PREFIX.length()).trim();
+        // 只有明确使用个人访问令牌前缀的 Bearer 凭证才进入 API Token 分支，普通 ERP JWT 继续走原登录鉴权。
+        return credential.startsWith(SysApiTokenConstants.TOKEN_PREFIX) ? credential : null;
+    }
+
+    private boolean isApiTokenFormatValid(String apiToken) {
+        return apiToken.length() == API_TOKEN_TOTAL_LENGTH && API_TOKEN_PATTERN.matcher(apiToken).matches();
+    }
+
+    private boolean isApiTokenManagementPath(String uri) {
+        if (StringUtils.isBlank(uri)) {
+            return false;
+        }
+        if (uri.contains(FEIGN_URL)) {
+            return true;
+        }
+        for (String denyPath : API_TOKEN_MANAGEMENT_DENY_PATHS) {
+            if (isSamePathOrChild(uri, denyPath)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isSamePathOrChild(String uri, String basePath) {
+        String normalizedUri = StringUtils.removeEnd(uri, "/");
+        String normalizedBasePath = StringUtils.removeEnd(basePath, "/");
+        return normalizedUri.equals(normalizedBasePath) || normalizedUri.startsWith(normalizedBasePath + "/");
+    }
+
+    private LoginUser buildLoginUser(SysApiTokenDTO.ValidateRespDTO validateResp) {
+        LoginUser loginUser = new LoginUser();
+        loginUser.setUid(validateResp.getUserId());
+        loginUser.setUserName(validateResp.getUserName());
+        loginUser.setRealName(validateResp.getRealName());
+        loginUser.setMobile(validateResp.getMobile());
+        loginUser.setUserAccount(validateResp.getUserAccount());
+        loginUser.setIsSupper(validateResp.getSuperAdmin());
+        return loginUser;
+    }
+
+    private SysApiTokenDTO.ValidateRespDTO getCachedApiTokenValidate(String tokenHash, String uri) {
+        try {
+            return (SysApiTokenDTO.ValidateRespDTO) redissonClient.getBucket(buildApiTokenValidateCacheKey(tokenHash, uri)).get();
+        } catch (Exception e) {
+            log.warn("读取API Token校验缓存失败，URI: {}", uri, e);
+            return null;
+        }
+    }
+
+    private void cacheApiTokenValidate(String tokenHash, String uri, SysApiTokenDTO.ValidateRespDTO validateResp) {
+        int cacheSeconds = getApiTokenValidateCacheSeconds(validateResp);
+        if (cacheSeconds <= 0) {
+            return;
+        }
+        try {
+            redissonClient.getBucket(buildApiTokenValidateCacheKey(tokenHash, uri))
+                    .set(validateResp, cacheSeconds, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            log.warn("写入API Token校验缓存失败，URI: {}", uri, e);
+        }
+    }
+
+    private int getApiTokenValidateCacheSeconds(SysApiTokenDTO.ValidateRespDTO validateResp) {
+        if (validateResp == null) {
+            return 0;
+        }
+        if (!Boolean.TRUE.equals(validateResp.getTokenValid())) {
+            // 已知 token 的失效状态可能因延期、启用用户等后台操作恢复，避免缓存导致恢复后短暂误拒。
+            if (StringUtils.isNotBlank(validateResp.getTokenId())) {
+                return 0;
+            }
+            return API_TOKEN_VALIDATE_INVALID_CACHE_SECONDS;
+        }
+        if (!Boolean.TRUE.equals(validateResp.getPathAllowed())) {
+            return capCacheSecondsByTokenExpiry(API_TOKEN_VALIDATE_FORBIDDEN_CACHE_SECONDS, validateResp.getExpiresTime());
+        }
+        return capCacheSecondsByTokenExpiry(API_TOKEN_VALIDATE_SUCCESS_CACHE_SECONDS, validateResp.getExpiresTime());
+    }
+
+    private int capCacheSecondsByTokenExpiry(int cacheSeconds, LocalDateTime expiresTime) {
+        if (expiresTime == null) {
+            return cacheSeconds;
+        }
+        long secondsUntilExpire = ChronoUnit.SECONDS.between(LocalDateTime.now(), expiresTime);
+        if (secondsUntilExpire <= 0) {
+            return 0;
+        }
+        return (int) Math.min(cacheSeconds, secondsUntilExpire);
+    }
+
+    private void recordApiTokenFailure(String tokenHash, String uri, String reason) {
+        if (!ipRateLimitUtil.recordApiTokenFailure(tokenHash)) {
+            log.warn("API Token失败次数达到封禁阈值，URI: {}, reason: {}", uri, reason);
+        }
+    }
+
+    private String buildApiTokenValidateCacheKey(String tokenHash, String uri) {
+        // 缓存粒度包含请求路径，因为同一个 token 可能只被白名单允许访问部分接口。
+        return RedisCacheConstants.GATEWAY_API_TOKEN_VALIDATE.replace("{}", sha256Hex(tokenHash + ":" + uri));
+    }
+
+    private String sha256Hex(String value) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] bytes = digest.digest(value.getBytes(StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder(bytes.length * 2);
+            for (byte item : bytes) {
+                sb.append(String.format("%02x", item));
+            }
+            return sb.toString();
+        } catch (Exception e) {
+            throw new IllegalStateException("生成API Token哈希失败", e);
+        }
     }
 
     /**
@@ -184,53 +559,143 @@ public class AuthGatewayFilter implements GlobalFilter, Order {
      * @return 客户端IP地址
      */
     private String getClientIp(ServerHttpRequest request) {
-        HttpHeaders headers = request.getHeaders();
+        String remoteIp = getRemoteIp(request);
+        return getClientIp(request, remoteIp);
+    }
 
-        // 检查X-Forwarded-For头
-        String xForwardedFor = headers.getFirst("X-Forwarded-For");
-        if (StringUtils.isNotBlank(xForwardedFor) && !"unknown".equalsIgnoreCase(xForwardedFor)) {
-            // X-Forwarded-For可能包含多个IP，取第一个
-            String[] ips = xForwardedFor.split(",");
-            if (ips.length > 0) {
-                return ips[0].trim();
+    private String getClientIp(ServerHttpRequest request, String remoteIp) {
+        if (!isTrustedProxy(remoteIp)) {
+            return remoteIp;
+        }
+        String forwardedClientIp = resolveForwardedClientIp(request);
+        return StringUtils.defaultIfBlank(forwardedClientIp, remoteIp);
+    }
+
+    private String getRemoteIp(ServerHttpRequest request) {
+        InetSocketAddress remoteAddress = request.getRemoteAddress();
+        if (remoteAddress == null) {
+            return UNKNOWN_IP;
+        }
+        if (remoteAddress.getAddress() != null) {
+            return remoteAddress.getAddress().getHostAddress();
+        }
+        return StringUtils.defaultIfBlank(remoteAddress.getHostString(), UNKNOWN_IP);
+    }
+
+    private String resolveForwardedClientIp(ServerHttpRequest request) {
+        String xForwardedFor = request.getHeaders().getFirst(X_FORWARDED_FOR);
+        String clientIp = resolveFromXForwardedFor(xForwardedFor);
+        if (StringUtils.isNotBlank(clientIp)) {
+            return clientIp;
+        }
+        return normalizeHeaderIp(request.getHeaders().getFirst(X_REAL_IP));
+    }
+
+    private String resolveFromXForwardedFor(String xForwardedFor) {
+        if (StringUtils.isBlank(xForwardedFor)) {
+            return null;
+        }
+        String[] ipChain = xForwardedFor.split(",");
+        for (String ip : ipChain) {
+            String currentIp = normalizeHeaderIp(ip);
+            if (isIpLiteral(currentIp)) {
+                return currentIp;
             }
         }
+        return null;
+    }
 
-        // 检查X-Real-IP头
-        String xRealIp = headers.getFirst("X-Real-IP");
-        if (StringUtils.isNotBlank(xRealIp) && !"unknown".equalsIgnoreCase(xRealIp)) {
-            return xRealIp;
+    private String normalizeHeaderIp(String rawIp) {
+        if (StringUtils.isBlank(rawIp)) {
+            return null;
         }
-
-        // 检查Proxy-Client-IP头
-        String proxyClientIp = headers.getFirst("Proxy-Client-IP");
-        if (StringUtils.isNotBlank(proxyClientIp) && !"unknown".equalsIgnoreCase(proxyClientIp)) {
-            return proxyClientIp;
+        String ip = rawIp.trim();
+        if (UNKNOWN_IP.equalsIgnoreCase(ip)) {
+            return null;
         }
-
-        // 检查WL-Proxy-Client-IP头
-        String wlProxyClientIp = headers.getFirst("WL-Proxy-Client-IP");
-        if (StringUtils.isNotBlank(wlProxyClientIp) && !"unknown".equalsIgnoreCase(wlProxyClientIp)) {
-            return wlProxyClientIp;
+        if (ip.startsWith("[") && ip.contains("]")) {
+            return ip.substring(1, ip.indexOf(']'));
         }
-
-        // 检查HTTP_CLIENT_IP头
-        String httpClientIp = headers.getFirst("HTTP_CLIENT_IP");
-        if (StringUtils.isNotBlank(httpClientIp) && !"unknown".equalsIgnoreCase(httpClientIp)) {
-            return httpClientIp;
+        int firstColonIndex = ip.indexOf(':');
+        if (firstColonIndex > 0 && ip.indexOf(':', firstColonIndex + 1) < 0) {
+            String hostPart = ip.substring(0, firstColonIndex);
+            if (ipv4ToLong(hostPart) >= 0) {
+                return hostPart;
+            }
         }
+        return ip;
+    }
 
-        // 检查HTTP_X_FORWARDED_FOR头
-        String httpXForwardedFor = headers.getFirst("HTTP_X_FORWARDED_FOR");
-        if (StringUtils.isNotBlank(httpXForwardedFor) && !"unknown".equalsIgnoreCase(httpXForwardedFor)) {
-            return httpXForwardedFor;
+    private boolean isTrustedProxy(String ip) {
+        if (!isIpLiteral(ip) || StringUtils.isBlank(trustedProxyCidrs)) {
+            return false;
         }
+        String[] cidrs = trustedProxyCidrs.split(",");
+        for (String cidr : cidrs) {
+            if (matchesTrustedProxy(ip, cidr)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
-        // 最后使用远程地址
-        String remoteAddress = request.getRemoteAddress() != null ?
-                request.getRemoteAddress().getAddress().getHostAddress() : "unknown";
+    private boolean matchesTrustedProxy(String ip, String cidr) {
+        if (StringUtils.isBlank(cidr)) {
+            return false;
+        }
+        String trustedRange = cidr.trim();
+        if (!trustedRange.contains("/")) {
+            return ip.equals(trustedRange);
+        }
+        String[] rangeParts = trustedRange.split("/");
+        if (rangeParts.length != 2) {
+            return false;
+        }
+        long ipValue = ipv4ToLong(ip);
+        long rangeValue = ipv4ToLong(rangeParts[0]);
+        if (ipValue < 0 || rangeValue < 0) {
+            // 可信代理 CIDR 当前只支持 IPv4；IPv6 代理按非可信处理，避免误信任代理头。
+            return false;
+        }
+        try {
+            int prefixLength = Integer.parseInt(rangeParts[1]);
+            if (prefixLength < 0 || prefixLength > IPV4_BIT_LENGTH) {
+                return false;
+            }
+            long mask = prefixLength == 0 ? 0 : 0xFFFFFFFFL << (IPV4_BIT_LENGTH - prefixLength) & 0xFFFFFFFFL;
+            return (ipValue & mask) == (rangeValue & mask);
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
 
-        return "unknown".equals(remoteAddress) ? "127.0.0.1" : remoteAddress;
+    private boolean isIpLiteral(String ip) {
+        if (StringUtils.isBlank(ip)) {
+            return false;
+        }
+        return ipv4ToLong(ip) >= 0 || ip.contains(":") && ip.matches("^[0-9a-fA-F:.%]+$");
+    }
+
+    private long ipv4ToLong(String ip) {
+        if (StringUtils.isBlank(ip)) {
+            return -1L;
+        }
+        String[] parts = ip.split("\\.");
+        if (parts.length != 4) {
+            return -1L;
+        }
+        long value = 0L;
+        for (String part : parts) {
+            if (!part.matches("\\d{1,3}")) {
+                return -1L;
+            }
+            int number = Integer.parseInt(part);
+            if (number < 0 || number > 255) {
+                return -1L;
+            }
+            value = (value << 8) + number;
+        }
+        return value;
     }
 
     /**

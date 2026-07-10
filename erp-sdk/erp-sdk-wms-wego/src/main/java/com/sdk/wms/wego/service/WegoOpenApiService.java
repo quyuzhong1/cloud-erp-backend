@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.threadlocal.ThirdWarehouseContext;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.OkHttpUtils;
 import com.erp.model.wms.dto.WegoInOrderCancelDTO;
@@ -49,6 +50,24 @@ public class WegoOpenApiService {
      */
     private static final Set<String> SKU_QUERY_RESERVED_PARAM_KEYS =
             new HashSet<>(Arrays.asList("pageNum", "pageSize"));
+
+    /**
+     * 日志脱敏 PII 字段：收件人/发件人 姓名、电话、邮箱、地址、邮编等，打印日志时需打码。
+     */
+    private static final Set<String> LOG_PII_PARAM_KEYS = new HashSet<>(Arrays.asList(
+            "receiver", "receiverPhone", "receiverPostCode", "receiverEmail",
+            "receiverProvince", "receiverCity", "receiverArea", "receiverAddress",
+            "sender", "senderPhone", "senderEmail"));
+
+    /**
+     * 日志脱敏大体积/大数组字段：仅记录长度或条数，避免污染日志或泄露明细。
+     */
+    private static final Set<String> LOG_LARGE_COLLECTION_KEYS = new HashSet<>(Arrays.asList("products", "wayBillUrl"));
+
+    /**
+     * 原始响应字符串在日志中打印的最大长度。
+     */
+    private static final int RAW_RESPONSE_LOG_MAX_LEN = 500;
 
     /**
      * 根据当前激活的 Spring profile 选择 WEGO 接口域名。
@@ -193,8 +212,8 @@ public class WegoOpenApiService {
         try {
             return response.toJavaObject(WegoInboundResp.class);
         } catch (Exception ex) {
-            log.error("[WEGO分页查询入库单] 响应JSON转换WegoInboundResp失败, response={}", response, ex);
-            throw new ServiceException("WEGO 分页查询入库单接口响应转换失败: " + ex.getMessage());
+            log.error("[WEGO分页查询入库单] 响应JSON转换WegoInboundResp失败, response={}", safeResponseLog(response), ex);
+            throw new ServiceException(ApiError.WH_WEGO_SDK_INBOUND_PAGE_CONVERT_FAILED, ex.getMessage());
         }
     }
 
@@ -273,18 +292,27 @@ public class WegoOpenApiService {
      * <p>
      * 注意：该接口响应的 {@code result} 字段是数组，与 queryPage 的分页对象结构不同，
      * 此处直接解包为 {@link WegoOutboundResp.OutboundOrderDTO} 列表返回，避免 FastJSON 同名字段冲突。
+     * <p>
+     * 与 {@link #query2cOrderPage} / {@link #queryInorderPage} 保持一致：接口返回
+     * {@code success=false} 视为真实失败，抛出 {@link ServiceException}，不在 SDK 层静默降级为
+     * "无数据"，避免调用方（如 Handler 的 {@code queryOutboundBill}）误判单据不存在或未变化。
+     * 仅当接口调用成功但 {@code result} 为空数组时，才代表"未查询到匹配单据"并返回空列表。
      *
      * @param dto 查询请求，包含 accessToken / secret / noList（WEGO 出库单号列表）
-     * @return 出库单详情列表；失败或无数据时返回空列表
+     * @return 出库单详情列表；调用成功但无匹配单据时返回空列表；接口失败时抛出 ServiceException
      */
     public List<WegoOutboundResp.OutboundOrderDTO> search2cOrder(@Valid WegoOutboundSearchDTO.SearchReqDTO dto) {
         Map<String, Object> bizParams = new HashMap<>();
         bizParams.put("noList", JSON.toJSON(dto.getNoList()));
         JSONObject response = doQuery(dto.getAccessToken(), dto.getSecret(),
                 WeGoConstants.TWO_C_ORDER_SEARCH, bizParams, "查询2C出库单");
-        if (response == null || !Boolean.TRUE.equals(response.getBoolean("success"))) {
-            log.warn("[WEGO查询2C出库单] 接口返回失败或无响应, {}", safeResponseLog(response));
-            return Collections.emptyList();
+        if (response == null) {
+            log.error("[WEGO查询2C出库单] 接口无响应");
+            throw new ServiceException(ApiError.WH_WEGO_SDK_OUTBOUND_SEARCH_NO_RESPONSE);
+        }
+        if (!Boolean.TRUE.equals(response.getBoolean("success"))) {
+            log.error("[WEGO查询2C出库单] 接口返回失败, {}", safeResponseLog(response));
+            throw new ServiceException(ApiError.WH_WEGO_SDK_OUTBOUND_SEARCH_FAILED, response.getString("errorMsg"));
         }
         JSONArray resultArray = response.getJSONArray("result");
         if (resultArray == null || resultArray.isEmpty()) {
@@ -294,7 +322,7 @@ public class WegoOpenApiService {
             return resultArray.toJavaList(WegoOutboundResp.OutboundOrderDTO.class);
         } catch (Exception ex) {
             log.error("[WEGO查询2C出库单] result数组转换OutboundOrderDTO失败, {}", safeResponseLog(response), ex);
-            throw new ServiceException("WEGO 查询2C出库单接口响应转换失败: " + ex.getMessage());
+            throw new ServiceException(ApiError.WH_WEGO_SDK_OUTBOUND_SEARCH_CONVERT_FAILED, ex.getMessage());
         }
     }
 
@@ -309,8 +337,14 @@ public class WegoOpenApiService {
      * <p>
      * WEGO 限制：单次最多返回 100 条（pageSize ≤ 100）。
      *
+     * <p>
+     * 与 {@link #queryInorderPage} 保持一致：本方法不在 SDK 层吞掉 {@code success=false}，
+     * 只要底层有响应即正常解析并返回（{@code success/errorCode/errorMsg} 原样带出），
+     * 由调用方根据 {@link WegoOutboundResp#getSuccess()} 判断是否需要中止任务，
+     * 避免"接口失败"被静默当作"无数据"。
+     *
      * @param dto 分页查询请求（pageNum / pageSize 必填，其余过滤条件可选）
-     * @return 分页结果（{@code result} 为分页对象）；接口返回失败或无响应时返回 null，解析失败时抛出 ServiceException
+     * @return 分页结果（含 success/errorCode/errorMsg 及 result 分页对象）；无响应时返回 null，解析失败时抛出 ServiceException
      */
     public WegoOutboundResp query2cOrderPage(@Valid WegoOutboundQueryPageDTO.QueryReqDTO dto) {
         Map<String, Object> bizParams = new HashMap<>();
@@ -325,15 +359,15 @@ public class WegoOpenApiService {
         putIfNotNull(bizParams, "orderDateEnd", dto.getOrderDateEnd());
         JSONObject response = doQuery(dto.getAccessToken(), dto.getSecret(),
                 WeGoConstants.TWO_C_ORDER_QUERY_PAGE, bizParams, "分页查询2C出库单");
-        if (response == null || !Boolean.TRUE.equals(response.getBoolean("success"))) {
-            log.warn("[WEGO分页查询2C出库单] 接口返回失败或无响应, {}", safeResponseLog(response));
+        if (response == null) {
+            log.warn("[WEGO分页查询2C出库单] 接口无响应, {}", safeResponseLog(response));
             return null;
         }
         try {
             return response.toJavaObject(WegoOutboundResp.class);
         } catch (Exception ex) {
             log.error("[WEGO分页查询2C出库单] 响应JSON转换WegoOutboundResp失败, {}", safeResponseLog(response), ex);
-            throw new ServiceException("WEGO 分页查询2C出库单接口响应转换失败: " + ex.getMessage());
+            throw new ServiceException(ApiError.WH_WEGO_SDK_OUTBOUND_PAGE_CONVERT_FAILED, ex.getMessage());
         }
     }
 
@@ -367,6 +401,11 @@ public class WegoOpenApiService {
      * <p>
      * 调用方根据 {@link WegoReturnOrderResp.PageResultDTO#getPages()} 判断总页数，
      * 当 {@code pageNum >= pages} 或 {@code emptyFlag == true} 时结束分页。
+     * <p>
+     * 与 {@link #queryInorderPage} / {@link #query2cOrderPage} 保持一致：本方法不在 SDK 层吞掉
+     * {@code success=false}，只要底层有响应即正常解析并返回（{@code success/errorCode/errorMsg} 原样带出），
+     * 由调用方根据 {@link WegoReturnOrderResp#getSuccess()} 判断是否需要中止任务，
+     * 避免"接口失败"被静默当作"无数据"或误报为"无响应"而丢失 errorCode/errorMsg。
      *
      * @param accessToken      WEGO accessToken
      * @param secret           WEGO secret（用于签名）
@@ -374,7 +413,7 @@ public class WegoOpenApiService {
      * @param arrivalDateEnd   到仓日期结束（YYYY-MM-DD，可为 null）
      * @param pageNum          页码（从 1 开始）
      * @param pageSize         每页数量（最大 100）
-     * @return 分页结果；接口返回失败或无响应时返回 null，解析失败时抛出 ServiceException
+     * @return 分页结果（含 success/errorCode/errorMsg 及 result 分页对象）；无响应时返回 null，解析失败时抛出 ServiceException
      */
     public WegoReturnOrderResp queryReturnOrderPage(String accessToken, String secret,
                                                      String arrivalDateBegin, String arrivalDateEnd,
@@ -386,15 +425,15 @@ public class WegoOpenApiService {
         putIfNotNull(bizParams, "arrivalDateEnd", arrivalDateEnd);
         JSONObject response = doQuery(accessToken, secret,
                 WeGoConstants.RETURN_ORDER_QUERY_PAGE, bizParams, "分页查询退货订单");
-        if (response == null || !Boolean.TRUE.equals(response.getBoolean("success"))) {
-            log.warn("[WEGO分页查询退货订单] 接口返回失败或无响应, {}", safeResponseLog(response));
+        if (response == null) {
+            log.warn("[WEGO分页查询退货订单] 接口无响应, {}", safeResponseLog(response));
             return null;
         }
         try {
             return response.toJavaObject(WegoReturnOrderResp.class);
         } catch (Exception ex) {
             log.error("[WEGO分页查询退货订单] 响应JSON转换WegoReturnOrderResp失败, {}", safeResponseLog(response), ex);
-            throw new ServiceException("WEGO 分页查询退货订单接口响应转换失败: " + ex.getMessage());
+            throw new ServiceException(ApiError.WH_WEGO_SDK_RETURN_ORDER_PAGE_CONVERT_FAILED, ex.getMessage());
         }
     }
 
@@ -446,21 +485,21 @@ public class WegoOpenApiService {
         } catch (Exception e) {
             long cost = System.currentTimeMillis() - start;
             log.error("[WEGO{}] HTTP调用异常, url={}, cost={}ms, params={}", actionName, url, cost, logRequestJson, e);
-            throw new ServiceException("WEGO " + actionName + "接口调用异常: " + e.getMessage());
+            throw new ServiceException(e, ApiError.WH_WEGO_SDK_API_CALL_ERROR, actionName, e.getMessage());
         }
         long cost = System.currentTimeMillis() - start;
         log.info("[WEGO{}] 请求结束, cost={}ms", actionName, cost);
         if (response == null || response.isEmpty()) {
             log.error("[WEGO{}] 接口返回为空, url={}, params={}", actionName, url, logRequestJson);
-            throw new ServiceException("WEGO " + actionName + "接口返回为空");
+            throw new ServiceException(ApiError.WH_WEGO_SDK_API_RESPONSE_EMPTY, actionName);
         }
         ThirdWarehouseContext.setRequestJson(requestJson);
         ThirdWarehouseContext.setResponseJson(response);
         try {
             return JSON.parseObject(response);
         } catch (Exception ex) {
-            log.error("[WEGO{}] 响应JSON解析失败, response={}", actionName, response, ex);
-            throw new ServiceException("WEGO " + actionName + "接口返回非JSON格式");
+            log.error("[WEGO{}] 响应JSON解析失败, response={}", actionName, truncateRawResponse(response), ex);
+            throw new ServiceException(ApiError.WH_WEGO_SDK_API_RESPONSE_NOT_JSON, actionName);
         }
     }
 
@@ -496,7 +535,13 @@ public class WegoOpenApiService {
     }
 
     /**
-     * 日志参数脱敏，避免打印 accessToken 与 sign。
+     * 日志参数脱敏：
+     * <ul>
+     *   <li>凭证字段 accessToken / sign 打码；</li>
+     *   <li>收件人/发件人 姓名、电话、邮箱、地址、邮编等 PII 字段打码；</li>
+     *   <li>面单 Base64 仅记录长度，避免大体积内容与收件人信息写入日志；</li>
+     *   <li>products / wayBillUrl 等大数组仅记录条数。</li>
+     * </ul>
      */
     private Map<String, Object> maskLogParams(Map<String, Object> params) {
         Map<String, Object> logParams = new HashMap<>(params);
@@ -506,7 +551,35 @@ public class WegoOpenApiService {
         if (logParams.containsKey(WeGoSignUtils.SIGN_FIELD)) {
             logParams.put(WeGoSignUtils.SIGN_FIELD, "***");
         }
+        for (String piiKey : LOG_PII_PARAM_KEYS) {
+            if (logParams.get(piiKey) != null) {
+                logParams.put(piiKey, "***");
+            }
+        }
+        Object wayBillBase64 = logParams.get("wayBillBase64");
+        if (wayBillBase64 != null) {
+            logParams.put("wayBillBase64", "***(base64 length=" + String.valueOf(wayBillBase64).length() + ")");
+        }
+        for (String collectionKey : LOG_LARGE_COLLECTION_KEYS) {
+            Object value = logParams.get(collectionKey);
+            if (value instanceof Collection) {
+                logParams.put(collectionKey, "***(size=" + ((Collection<?>) value).size() + ")");
+            }
+        }
         return logParams;
+    }
+
+    /**
+     * 截断原始响应字符串，避免解析失败时将大体积/含 PII 的完整响应写入日志。
+     */
+    private String truncateRawResponse(String response) {
+        if (response == null) {
+            return "null";
+        }
+        if (response.length() <= RAW_RESPONSE_LOG_MAX_LEN) {
+            return response;
+        }
+        return response.substring(0, RAW_RESPONSE_LOG_MAX_LEN) + "...(truncated, length=" + response.length() + ")";
     }
 
     /**
@@ -532,7 +605,7 @@ public class WegoOpenApiService {
     private String buildRouterUrl(String domain) {
         String normalized = domain == null ? "" : domain.trim();
         if (normalized.isEmpty()) {
-            throw new ServiceException("WEGO域名不能为空");
+            throw new ServiceException(ApiError.WH_WEGO_SDK_DOMAIN_EMPTY);
         }
         if (normalized.endsWith("/")) {
             normalized = normalized.substring(0, normalized.length() - 1);

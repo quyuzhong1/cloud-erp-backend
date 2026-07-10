@@ -3,10 +3,12 @@ package com.erp.server.dmp.inout.handler.input.task.dmp.wego;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.WarehousePlatformTypeEnum;
 import com.erp.server.dmp.inout.handler.input.task.dmp.DmpInputDbConvertDmpHandler;
 import com.erp.server.dmp.inout.handler.input.task.dmp.jifeng.JiFengOutBoundDmpHandler;
 import com.erp.server.dmp.inout.handler.input.task.init.api.wego.WegoOutboundInitHandler;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -36,6 +38,7 @@ import java.util.TreeMap;
  * <p>
  * 多例：因父类持有成员变量，Spring 管理为 {@link Scope}({@code prototype})。
  */
+@Slf4j
 @Service
 @Scope("prototype")
 public class WegoOutBoundDmpHandler extends DmpInputDbConvertDmpHandler {
@@ -43,6 +46,7 @@ public class WegoOutBoundDmpHandler extends DmpInputDbConvertDmpHandler {
     private static final DateTimeFormatter DATETIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
+    private static final String MONGO_KEY_NO = "no";
     private static final String MONGO_KEY_FINISH_DATE = "finishDate";
     private static final String MONGO_KEY_CREATE_TIME = "createTime";
     private static final String MONGO_KEY_LOGISTICS_LIST = "logisticsList";
@@ -70,8 +74,9 @@ public class WegoOutBoundDmpHandler extends DmpInputDbConvertDmpHandler {
             }
             Map<String, Object> mongoData = mongoDataMaps.get(0);
 
-            LocalDateTime dateShipping = resolveDateTime(mongoData.get(MONGO_KEY_FINISH_DATE));
-            LocalDateTime platformCreateTime = resolveDateTime(mongoData.get(MONGO_KEY_CREATE_TIME));
+            Object wegoNo = mongoData.get(MONGO_KEY_NO);
+            LocalDateTime dateShipping = resolveDateTime(mongoData.get(MONGO_KEY_FINISH_DATE), MONGO_KEY_FINISH_DATE, wegoNo);
+            LocalDateTime platformCreateTime = resolveDateTime(mongoData.get(MONGO_KEY_CREATE_TIME), MONGO_KEY_CREATE_TIME, wegoNo);
             String trackingNo = resolveTrackingNo(mongoData.get(MONGO_KEY_LOGISTICS_LIST));
             String orderStatus = mongoData.get(MONGO_KEY_ORDER_STATUS) != null
                     ? String.valueOf(mongoData.get(MONGO_KEY_ORDER_STATUS)) : null;
@@ -90,7 +95,7 @@ public class WegoOutBoundDmpHandler extends DmpInputDbConvertDmpHandler {
                     dmpDataMap.put(DMP_KEY_ORDER_STATUS, orderStatus);
                 }
                 dmpDataMap.put(DMP_KEY_WAREHOUSE_PLATFORM_TYPE, WarehousePlatformTypeEnum.OVERSEAS_WAREHOUSE.getCode());
-                dmpDataMap.put(DMP_KEY_ORDER_TYPE, "B2C");
+                dmpDataMap.put(DMP_KEY_ORDER_TYPE, OrderTypeEnum.B2C.getCode());
             }
         }
     }
@@ -98,8 +103,15 @@ public class WegoOutBoundDmpHandler extends DmpInputDbConvertDmpHandler {
     /**
      * 解析日期字符串为 {@link LocalDateTime}，优先按 "yyyy-MM-dd HH:mm:ss" 解析，
      * 回退到 "yyyy-MM-dd"（取当日 00:00:00）。
+     * <p>
+     * 两种格式均解析失败时返回 null 并打印 warn，记录 WEGO 单号与原始值，
+     * 避免发货时间等字段静默丢失且无法从日志定位。
+     *
+     * @param value     mongo 原始日期值
+     * @param fieldName 字段名（用于日志定位，如 finishDate / createTime）
+     * @param bizNo     WEGO 出库单号（{@code no}），用于日志定位
      */
-    private LocalDateTime resolveDateTime(Object value) {
+    private LocalDateTime resolveDateTime(Object value, String fieldName, Object bizNo) {
         if (value == null) {
             return null;
         }
@@ -114,7 +126,9 @@ public class WegoOutBoundDmpHandler extends DmpInputDbConvertDmpHandler {
         }
         try {
             return LocalDate.parse(str, DATE_FORMATTER).atStartOfDay();
-        } catch (Exception ignore) {
+        } catch (Exception e) {
+            log.warn("[WEGO出库] {} 日期格式解析失败，该字段将不写入DMP。WEGO单号={}，{}原始值={}",
+                    fieldName, bizNo, fieldName, str, e);
             return null;
         }
     }

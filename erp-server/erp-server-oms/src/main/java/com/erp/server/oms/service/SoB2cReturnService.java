@@ -137,4 +137,9 @@ public interface SoB2cReturnService extends SuperService<SoB2cReturnEntity> {
      * @return Boolean
      */
     Boolean approveEnd(ApproveOneDTO dto, SoB2cReturnEntity entity);
+
+    /**
+     * WEGO 退货入库：用参考单号一次查询，按 code/platform_return_no/platform_order_no/so_code OR 匹配，返回优先级最高的首条记录。
+     */
+    SoB2cReturnEntity findFirstByReferenceNo(String referenceNo);
 }

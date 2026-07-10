@@ -1569,3 +1569,134 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 	}
 	
 }
+
+	/**
+	 * 构建极兔退货入库单实体
+	 */
+	private SoReturnInstockEntity buildJiTuSoReturnInstockEntity(PlatformReturnInstockDTO dto,WarehouseEntity warehouseEntity,SoB2cEntity soB2cEntity,SoInfoEntity soInfoEntity,SoOutstockEntity soOutstock){
+		SoReturnInstockEntity soReturnInstockEntity = new SoReturnInstockEntity();
+		CustomerInfoEntity customerInfo = null;
+
+		// 默认自动提交并审核通过
+		if(StringUtils.isNotBlank(warehouseEntity.getId())){
+			soReturnInstockEntity.setApproveTime(LocalDateTime.now());
+			soReturnInstockEntity.setApproveStatus(ApproveStatusEnum.APPROVE_ING.getStatus());
+		}
+		// 入库日期取关单时间
+		if (dto.getPutawayTime() != null) {
+			soReturnInstockEntity.setBillDate(dto.getPutawayTime().toLocalDate());
+		}
+		// 库存组织
+		soReturnInstockEntity.setInventoryOrgId(warehouseEntity.getOrgId());
+		// 组织信息
+		if(StringUtils.isNotBlank(warehouseEntity.getId())){
+			SysAccountingCompanyEntity company = sysUserFeign.getCompanyById(warehouseEntity.getOrgId());
+			soReturnInstockEntity.setInventoryOrgName(company.getCompanyName());
+		}
+		// 退货物流单号
+		soReturnInstockEntity.setReturnLogisticCode(dto.getReturnLogisticCode());
+		// 第三方单据编号
+		soReturnInstockEntity.setThirdCode(dto.getPlatformReturnOrderNo());
+		// 来源类型
+		soReturnInstockEntity.setSourceType(SourceTypeEnum.THIRD_WAREHOUSE_RETURN_INSTOCK.getCode());
+		// 创建时间
+		soReturnInstockEntity.setCreated(dto.getCreateTime());
+		// 仓库信息
+		soReturnInstockEntity.setWarehouseKeeperId(warehouseEntity.getChargeId());
+		if (Objects.nonNull(soB2cEntity)) {
+			// B2C订单
+			soReturnInstockEntity.setType("B2C");
+			//取客户订单号，匹配数大臣的B2C三方仓发货单的三方仓订单号，匹配到后将发货单的销售单号作为退货入库单的来源订单号
+			if (Objects.equals(soB2cEntity.getShippingOrderNo(),dto.getOrderReferenceNo())) {
+				soReturnInstockEntity.setSourceId(soB2cEntity.getId());
+				soReturnInstockEntity.setSourceCode(soB2cEntity.getCode());
+			}
+			soReturnInstockEntity.setSalesOrgId(soB2cEntity.getOrgId());
+			soReturnInstockEntity.setSalesOrgName(soB2cEntity.getOrgName());
+			// 退货客户
+			ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(soB2cEntity.getShopId());
+			customerInfo = customerFeign.getCustomerById(shopInfoEntity.getCustomerId());
+			soReturnInstockEntity.setCustomerId(shopInfoEntity.getCustomerId());
+			soReturnInstockEntity.setCustomerName(customerInfo.getName());
+			// 销售订单信息
+			soReturnInstockEntity.setSoCode(soB2cEntity.getCode());
+			soReturnInstockEntity.setSoId(soB2cEntity.getId());
+			soReturnInstockEntity.setShopId(soB2cEntity.getShopId());
+			// 平台订单编号：销售订单平台单号为空时用平台消息单号兜底
+			soReturnInstockEntity.setPlatformOrderCode(CharSequenceUtil.isNotBlank(soB2cEntity.getPlatformCode()) ? soB2cEntity.getPlatformCode() : dto.getPlatformOrderNo());
+			// 币种
+			soReturnInstockEntity.setCurrency(soB2cEntity.getCurrency());
+		} else if (Objects.nonNull(soInfoEntity)){
+			// B2B订单
+			soReturnInstockEntity.setType("B2B");
+			//未匹配到时匹配B2B三方发货单的三方仓订单号，匹配到后将发货单的销售单号作为退货入库单的来源订单号
+			if (StringUtils.isNotBlank(dto.getOrderReferenceNo())) {
+				B2bThirdDeliveryEntity b2bThirdDelivery = b2bThirdDeliveryService.lambdaQuery()
+						.eq(B2bThirdDeliveryEntity::getPlatformOrderCode, dto.getOrderReferenceNo())
+						.one();
+				if (Objects.nonNull(b2bThirdDelivery)) {
+					soReturnInstockEntity.setSourceId(b2bThirdDelivery.getId());
+					soReturnInstockEntity.setSourceCode(b2bThirdDelivery.getSoCode());
+				}
+			}
+			soReturnInstockEntity.setSalesOrgId(soInfoEntity.getSalesOrgId());
+			soReturnInstockEntity.setSalesOrgName(soInfoEntity.getSalesOrgName());
+			// 退货客户
+			customerInfo = customerFeign.getCustomerById(soInfoEntity.getCustomerId());
+			soReturnInstockEntity.setCustomerId(soInfoEntity.getCustomerId());
+			soReturnInstockEntity.setCustomerName(customerInfo.getName());
+			// 销售订单信息
+			soReturnInstockEntity.setSoCode(soInfoEntity.getCode());
+			soReturnInstockEntity.setSoId(soInfoEntity.getId());
+			// 平台订单编号，与B2C分支保持一致：销售订单平台单号为空时用平台消息单号兜底
+			soReturnInstockEntity.setPlatformOrderCode(CharSequenceUtil.isNotBlank(soInfoEntity.getPlatformOrderCode()) ? soInfoEntity.getPlatformOrderCode() : dto.getPlatformOrderNo());
+			// 币种
+			soReturnInstockEntity.setCurrency(soInfoEntity.getCurrency());
+			soReturnInstockEntity.setCurrencySymbol(soInfoEntity.getCurrencySymbol());
+		} else {
+			// 未关联到订单
+			soReturnInstockEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+			soReturnInstockEntity.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
+			soReturnInstockEntity.setCurrencySymbol("¥");
+		}
+
+		// 销售部门和销售员
+		if(Objects.nonNull(soOutstock)){
+			if (StringUtils.isNotBlank(soOutstock.getSalesDeptId())){
+				SysDepartmentDTO department = sysUserFeign.getUserDeptById(soOutstock.getSalesDeptId());
+				if( null != department){
+					soReturnInstockEntity.setSalesDeptId(soOutstock.getSalesDeptId());
+					soReturnInstockEntity.setSalesDeptName(department.getName());
+				}
+			}
+			soReturnInstockEntity.setSellerId(soOutstock.getSellerId());
+			soReturnInstockEntity.setSellerName(soOutstock.getSellerName());
+		}
+
+		if (Objects.nonNull(customerInfo)) {
+			soReturnInstockEntity.setSellerId(customerInfo.getSellerId());
+			soReturnInstockEntity.setSellerName(customerInfo.getSellerName());
+		}
+
+		return soReturnInstockEntity;
+	}
+
+	/**
+	 * WEGO 退货入库：按参考单号从 so_b2c_return 中查找匹配记录。
+	 * <p>
+	 * 单次 Feign 调用，DB 层 SQL 以 OR 条件匹配 code / platform_return_no / platform_order_no / so_code，
+	 * 并按以上优先级排序取首条，避免多次远程调用。
+	 */
+	private SoB2cReturnEntity findSoB2cReturnByRef(String referenceNo) {
+		if (CharSequenceUtil.isBlank(referenceNo)) {
+			return null;
+		}
+		SoB2cReturnEntity result = soB2cReturnFeign.findFirstByReferenceNo(referenceNo);
+		if (Objects.nonNull(result)) {
+			log.info("[WEGO退货入库] 参考单号 {} 命中 so_b2c_return[{}]", referenceNo, result.getId());
+		} else {
+			log.info("[WEGO退货入库] 参考单号 {} 在 so_b2c_return 中未查到匹配记录", referenceNo);
+		}
+		return result;
+	}
+}

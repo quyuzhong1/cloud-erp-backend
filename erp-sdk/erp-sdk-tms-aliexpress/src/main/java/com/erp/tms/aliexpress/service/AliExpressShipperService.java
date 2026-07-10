@@ -112,6 +112,21 @@ public class AliExpressShipperService {
         if (Objects.nonNull(orderRequest.getInsuranceCoverage())){
             request.addApiParameter("insurance_coverage", JSONObject.toJSONString(orderRequest.getInsuranceCoverage()));
         }
+        // APL 平台物流：包裹件重尺（单位 cm），2026-06-30 后必填。
+        // TOP 网关入参与 createorder / 询盘同系列接口一致，使用下划线：goods_length/width/height
+        // （开放文档 Java SDK 属性名为 goodsLength，实际 HTTP 参数为 goods_length）
+        // 文档：https://open.aliexpress.com/doc/api.htm#/api?cid=20892&path=aliexpress.logistics.order.createorder&methodType=GET/POST
+        if (Objects.nonNull(orderRequest.getGoods_length())) {
+            request.addApiParameter("goods_length", String.valueOf(orderRequest.getGoods_length()));
+        }
+        if (Objects.nonNull(orderRequest.getGoods_width())) {
+            request.addApiParameter("goods_width", String.valueOf(orderRequest.getGoods_width()));
+        }
+        if (Objects.nonNull(orderRequest.getGoods_height())) {
+            request.addApiParameter("goods_height", String.valueOf(orderRequest.getGoods_height()));
+        }
+        log.warn("createorder goods dims: goods_length={}, goods_width={}, goods_height={}",
+                orderRequest.getGoods_length(), orderRequest.getGoods_width(), orderRequest.getGoods_height());
         request.addApiParameter("simplify", "true");
         IopResponse response = client.execute(request, token, Protocol.TOP);
         log.info("下单完成：{}",JSONObject.toJSONString(response));

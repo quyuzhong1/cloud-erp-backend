@@ -1,0 +1,213 @@
+package com.erp.server.dmp.inout.handler.output.task.mq;
+
+import cn.hutool.core.collection.CollUtil;
+import com.alibaba.fastjson.JSON;
+import com.common.business.dto.PlatformRefundOrderDTO;
+import com.common.core.entity.BaseEntity;
+import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
+import com.erp.model.dmp.entity.DmpSoRefundDetailEntity;
+import com.erp.model.dmp.entity.DmpSoRefundInfoEntity;
+import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
+import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
+import com.erp.server.dmp.service.DmpSoRefundDetailService;
+import com.erp.server.dmp.service.DmpSoRefundInfoService;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeanUtils;
+
+import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+/**
+ * 平台 B2C 退款单通用 MQ 输出：dmp_so_refund_info/detail → PlatformRefundOrderDTO → OMS。
+ */
+@Slf4j
+public abstract class DmpOutputPlatformRefundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler {
+
+    private static final int BATCH_SIZE = 500;
+    private static final String STORAGE_REFUND_INFO = "dmp_so_refund_info";
+    private static final String STORAGE_REFUND_DETAIL = "dmp_so_refund_detail";
+
+    @Resource
+    private DmpSoRefundDetailService dmpSoRefundDetailService;
+
+    @Resource
+    private DmpSoRefundInfoService dmpSoRefundInfoService;
+
+    @Override
+    public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
+        Map<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMaps =
+                dmpRequest.getConvertInputDmpBaseEntityListMaps();
+        Map<String, DmpSoRefundInfoEntity> dmpEntityMap = new HashMap<>();
+        Map<String, List<DmpSoRefundDetailEntity>> dmpDetailEntityMap = new HashMap<>();
+
+        for (Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> entry : convertInputDmpBaseEntityListMaps.entrySet()) {
+            List<BaseEntity> value = entry.getValue();
+            if (CollUtil.isEmpty(value)) {
+                continue;
+            }
+            String storageName = entry.getKey().getStorageName();
+            if (STORAGE_REFUND_INFO.equals(storageName)) {
+                for (BaseEntity entity : value) {
+                    DmpSoRefundInfoEntity dmpEntity = (DmpSoRefundInfoEntity) entity;
+                    dmpEntityMap.put(dmpEntity.getId(), dmpEntity);
+                }
+            } else if (STORAGE_REFUND_DETAIL.equals(storageName)) {
+                for (BaseEntity entity : value) {
+                    DmpSoRefundDetailEntity detailEntity = (DmpSoRefundDetailEntity) entity;
+                    dmpDetailEntityMap.computeIfAbsent(detailEntity.getMainId(), key -> new ArrayList<>())
+                            .add(detailEntity);
+                }
+            }
+        }
+
+        Set<String> changeIds = new HashSet<>();
+        for (Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> entry :
+                dmpRequest.getChangeConvertInputDmpBaseEntityListMaps().entrySet()) {
+            List<BaseEntity> value = entry.getValue();
+            if (CollUtil.isEmpty(value)) {
+                continue;
+            }
+            String storageName = entry.getKey().getStorageName();
+            if (STORAGE_REFUND_INFO.equals(storageName)) {
+                for (BaseEntity entity : value) {
+                    changeIds.add(entity.getId());
+                }
+            } else if (STORAGE_REFUND_DETAIL.equals(storageName)) {
+                for (BaseEntity entity : value) {
+                    changeIds.add(((DmpSoRefundDetailEntity) entity).getMainId());
+                }
+            }
+        }
+
+        supplementRefundInfos(changeIds, dmpEntityMap);
+        supplementRefundDetails(changeIds, dmpEntityMap, dmpDetailEntityMap);
+
+        Map<String, String> map = new HashMap<>();
+        String cfgOutputId = dmpResponse.getDmpCfgOutputEntity().getId();
+        for (String changeId : changeIds) {
+            DmpSoRefundInfoEntity dmpEntity = dmpEntityMap.get(changeId);
+            List<DmpSoRefundDetailEntity> dmpDetailList = dmpDetailEntityMap.get(changeId);
+            PlatformRefundOrderDTO orderDTO = convert(dmpEntity, dmpDetailList, cfgOutputId);
+            if (orderDTO != null) {
+                map.put(changeId, JSON.toJSONString(orderDTO));
+            } else {
+                log.warn("平台退款MQ输出跳过, changeId:{}, hasInfo:{}, detailSize:{}, cfgOutputId:{}",
+                        changeId, dmpEntity != null, dmpDetailList == null ? 0 : dmpDetailList.size(), cfgOutputId);
+            }
+        }
+        return map;
+    }
+
+    private void supplementRefundInfos(Set<String> changeIds,
+                                       Map<String, DmpSoRefundInfoEntity> dmpEntityMap) {
+        List<String> missingMainIds = changeIds.stream()
+                .filter(StringUtils::isNotBlank)
+                .filter(id -> !dmpEntityMap.containsKey(id))
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(missingMainIds)) {
+            return;
+        }
+        for (int fromIndex = 0; fromIndex < missingMainIds.size(); fromIndex += BATCH_SIZE) {
+            List<String> batchIds = missingMainIds.subList(fromIndex, Math.min(fromIndex + BATCH_SIZE, missingMainIds.size()));
+            List<DmpSoRefundInfoEntity> batchInfoList = dmpSoRefundInfoService.lambdaQuery()
+                    .in(DmpSoRefundInfoEntity::getId, batchIds)
+                    .eq(DmpSoRefundInfoEntity::getIsDeleted, Boolean.FALSE)
+                    .list();
+            if (CollUtil.isEmpty(batchInfoList)) {
+                continue;
+            }
+            for (DmpSoRefundInfoEntity dmpEntity : batchInfoList) {
+                dmpEntityMap.put(dmpEntity.getId(), dmpEntity);
+            }
+        }
+    }
+
+    private void supplementRefundDetails(Set<String> changeIds,
+                                         Map<String, DmpSoRefundInfoEntity> dmpEntityMap,
+                                         Map<String, List<DmpSoRefundDetailEntity>> dmpDetailEntityMap) {
+        List<String> missingMainIds = changeIds.stream()
+                .filter(dmpEntityMap::containsKey)
+                .filter(id -> CollUtil.isEmpty(dmpDetailEntityMap.get(id)))
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(missingMainIds)) {
+            return;
+        }
+        List<DmpSoRefundDetailEntity> detailList = new ArrayList<>();
+        for (int fromIndex = 0; fromIndex < missingMainIds.size(); fromIndex += BATCH_SIZE) {
+            List<String> batchIds = missingMainIds.subList(fromIndex, Math.min(fromIndex + BATCH_SIZE, missingMainIds.size()));
+            List<DmpSoRefundDetailEntity> batchDetailList = dmpSoRefundDetailService.lambdaQuery()
+                    .in(DmpSoRefundDetailEntity::getMainId, batchIds)
+                    .eq(DmpSoRefundDetailEntity::getIsDeleted, Boolean.FALSE)
+                    .list();
+            if (CollUtil.isNotEmpty(batchDetailList)) {
+                detailList.addAll(batchDetailList);
+            }
+        }
+        if (CollUtil.isEmpty(detailList)) {
+            return;
+        }
+        for (DmpSoRefundDetailEntity detailEntity : detailList) {
+            dmpDetailEntityMap.computeIfAbsent(detailEntity.getMainId(), key -> new ArrayList<>())
+                    .add(detailEntity);
+        }
+    }
+
+    protected PlatformRefundOrderDTO convert(DmpSoRefundInfoEntity dmpEntity,
+                                             List<DmpSoRefundDetailEntity> dmpDetailList,
+                                             String cfgOutputId) {
+        if (dmpEntity == null || CollUtil.isEmpty(dmpDetailList)) {
+            return null;
+        }
+        if (this.validateDataBlack(dmpEntity, cfgOutputId)) {
+            return null;
+        }
+        if (!acceptRefund(dmpEntity)) {
+            return null;
+        }
+
+        PlatformRefundOrderDTO dto = new PlatformRefundOrderDTO();
+        BeanUtils.copyProperties(dmpEntity, dto);
+        dto.setUniqueId(dmpEntity.getThirdCode());
+        dto.setPlatformRefundNo(dmpEntity.getThirdCode());
+        dto.setPlatformOrderNo(StringUtils.defaultIfBlank(dmpEntity.getPlatformOrderCode(), dmpEntity.getPlatformCode()));
+        dto.setRemark(StringUtils.defaultIfBlank(dmpEntity.getRemark(), dmpEntity.getReason()));
+        String platform = StringUtils.defaultIfBlank(dmpEntity.getSourcePlatform(), dmpEntity.getSourceSystem());
+        dto.setDictPlatform(platform);
+        dto.setPlatform(platform);
+        dto.setShopId(dmpEntity.getShopId());
+        dto.setRefundAmount(dmpEntity.getAmount());
+        dto.setCurrency(dmpEntity.getCurrencyCode());
+        dto.setDmpSyncTaskId(cfgOutputId);
+        dto.setDetailList(parseRefundDetailList(dmpDetailList));
+        return dto;
+    }
+
+    protected boolean acceptRefund(DmpSoRefundInfoEntity dmpEntity) {
+        return true;
+    }
+
+    protected List<PlatformRefundOrderDTO.Detail> parseRefundDetailList(List<DmpSoRefundDetailEntity> dmpDetailList) {
+        List<PlatformRefundOrderDTO.Detail> resultList = new LinkedList<>();
+        for (DmpSoRefundDetailEntity dmpDetailEntity : dmpDetailList) {
+            PlatformRefundOrderDTO.Detail detail = new PlatformRefundOrderDTO.Detail();
+            detail.setPlatformSkuNo(StringUtils.defaultString(dmpDetailEntity.getSkuNo()));
+            detail.setRefundQty(dmpDetailEntity.getQty());
+            resultList.add(detail);
+        }
+        return resultList;
+    }
+
+    @Override
+    protected List<String> getSourceCodeKeys() {
+        return Collections.singletonList("uniqueId");
+    }
+}

@@ -3,6 +3,7 @@ package com.sdk.wms.jitu.service;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
+import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.exception.ServiceException;
 import com.common.core.exception.ThirdWarehouseEmptyResponseException;
@@ -27,11 +28,11 @@ import java.util.Map;
 @Component
 public class JituService {
     private String getPreUrl() {
-//        if (BusinessCommonConstants.hasProfile("prod")) {
-//            return "https://sop.jtfulfillment.cn";
-//        } else {
+        if (BusinessCommonConstants.hasProfile("prod")) {
+            return "https://sop.jtfulfillment.cn";
+        } else {
         return "https://demo-sop.jtfulfillment.cn";
-//        }
+        }
     }
 
     /**

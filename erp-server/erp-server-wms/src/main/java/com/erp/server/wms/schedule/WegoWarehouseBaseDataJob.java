@@ -4,7 +4,7 @@ import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.common.business.enums.OmsPlatformEnum;
+import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.wms.dto.WegoWarehouseQueryDTO;
 import com.erp.model.wms.entity.OverseasProviderEntity;
@@ -60,7 +60,7 @@ public class WegoWarehouseBaseDataJob {
         long start = System.currentTimeMillis();
 
         List<OverseasProviderEntity> providers = overseasProviderService.lambdaQuery()
-                .eq(OverseasProviderEntity::getCode, OmsPlatformEnum.WE_GO.getCode())
+                .eq(OverseasProviderEntity::getCode, DmpBasicSystemCodeEnum.WEGO.getCode())
                 .eq(OverseasProviderEntity::getAuthStatus, AuthStatusEnum.ALREADY.getCode())
                 .list();
         if (CollectionUtils.isEmpty(providers)) {
