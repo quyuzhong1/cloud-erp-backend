@@ -94,6 +94,17 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
     int batchUpdateReconciliationStatus(List<String> ids, String reconciliationStatus, LocalDateTime confirmTime);
 
     /**
+     * 批量更新对账状态（可选跳过对账单反向同步）。
+     *
+     * @param ids                  物流费用单 id 列表
+     * @param reconciliationStatus 目标对账状态
+     * @param confirmTime          确认时间（账单/暂估确认时必填）
+     * @param skipSync             true：跳过 ref 快照与 detail_sub 聚合的反向同步，由调用方结束后统一同步
+     */
+    int batchUpdateReconciliationStatus(List<String> ids, String reconciliationStatus, LocalDateTime confirmTime,
+                                        boolean skipSync);
+
+    /**
      * 导入确认前校验目标费用单合并导入明细后的确认金额是否大于 0。
      * <p>仅在对账状态为账单确认或暂估确认时生效；供 confirmImport 及标准导入勾选确认场景行级校验使用。</p>
      *
@@ -375,6 +386,14 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      * @param code 对账状态
      */
     void batchConfirmImport(List<ImportHistoryRecordDTO.ImportConfirmDTO> confirmList, String code);
+
+    /**
+     * 批量确认导入（可选跳过对账单反向同步）。
+     * @param confirmList 导入确认数据
+     * @param code        对账状态
+     * @param skipSync    true：跳过 ref 快照与 detail_sub 聚合的反向同步，供对账匹配确认路径按分片自行刷新
+     */
+    void batchConfirmImport(List<ImportHistoryRecordDTO.ImportConfirmDTO> confirmList, String code, boolean skipSync);
 
     /**
      * 多物流单费用分摊前批量预加载出库明细与 SKU 包装信息，避免分组循环内 N+1 Feign 调用。

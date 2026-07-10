@@ -55,9 +55,34 @@ public class LogisticsReconMatchDTO implements Serializable {
          */
         private boolean matchByProvidedIdentifyKeys = false;
         /**
+         * 币别归一映射（id/name -> 标准币别）。整单级预加载时传入，非空则复用，避免每分片 Feign 查询币别字典。
+         */
+        private Map<String, String> currencyLookupMap;
+        /**
+         * 币别汇率映射（币别 id -> 汇率）。整单级预加载时传入，非空则复用，避免每分片 Feign 查询汇率。
+         */
+        private Map<String, BigDecimal> currencyRateMap;
+        /**
          * 待匹配行（行 = 一条对账明细 logistics_recon_detail）
          */
         private List<MatchRowDTO> rows = new ArrayList<>();
+    }
+
+    /**
+     * 整单级匹配预加载上下文：对同一对账单（同一对账月）不变的配置/字典在分片匹配前只加载一次，
+     * 供各分片复用，避免每 500 条分片重复查询导入配置并放大 Feign 调用。
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ReconMatchPreloadDTO {
+        /** 命中的导入模板配置 */
+        private CfgLogisticsCostImportEntity costImportEntity;
+        /** 导入模板字段配置 */
+        private List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList;
+        /** 币别归一映射（id/name -> 标准币别） */
+        private Map<String, String> currencyLookupMap;
+        /** 币别汇率映射（币别 id -> 汇率） */
+        private Map<String, BigDecimal> currencyRateMap;
     }
 
     /**
@@ -170,6 +195,22 @@ public class LogisticsReconMatchDTO implements Serializable {
          * 匹配成功后按 detailSubId 回写的 ERP 费用配置（key = logistics_recon_detail_sub.id）
          */
         private Map<String, ResolvedCfgCostDTO> resolvedCfgCostBySubId = new HashMap<>();
+        /**
+         * 匹配成功后回填明细 ERP 单号快照：销售单号
+         */
+        private String erpSoCode;
+        /**
+         * 匹配成功后回填明细 ERP 单号快照：平台订单号
+         */
+        private String erpPlatformOrderNo;
+        /**
+         * 匹配成功后回填明细 ERP 单号快照：物流跟踪号
+         */
+        private String erpTrackNo;
+        /**
+         * 匹配成功后回填明细 ERP 单号快照：发货单号
+         */
+        private String erpSoDeliveryCode;
     }
 
     /**
