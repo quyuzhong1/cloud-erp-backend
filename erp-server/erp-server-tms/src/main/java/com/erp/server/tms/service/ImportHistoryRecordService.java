@@ -110,6 +110,13 @@ public interface ImportHistoryRecordService extends SuperService<ImportHistoryRe
     List<LogisticsReconMatchDTO.MatchResultDTO> reconMatchAndGenerate(LogisticsReconMatchDTO.MatchContextDTO ctx);
 
     /**
+     * 加载对账整批匹配的整单级币别/汇率上下文（Feign 查询币别字典 + 汇率），把结果写入预加载对象。
+     * 供整单匹配前调用一次，各分片复用，避免每分片重复远程查询。
+     * @param preload 预加载对象（方法内填充 currencyLookupMap / currencyRateMap）
+     */
+    void fillReconMatchCurrencyContext(LogisticsReconMatchDTO.ReconMatchPreloadDTO preload);
+
+    /**
      * 对账匹配落库（短事务，与 Feign 预查询分离）
      */
     void persistReconMatchImportData(List<LogisticsBillCostDTO.ImportDataDTO> importDataList, String processingType);

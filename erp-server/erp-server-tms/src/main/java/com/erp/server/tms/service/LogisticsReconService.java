@@ -143,8 +143,10 @@ public interface LogisticsReconService extends SuperService<LogisticsReconEntity
      * @param mainId       对账单 id
      * @param detailSubIds 本批费用项 id
      * @param isConfirm    是否确认匹配上的物流费用数据
+     * @param preload      整单级预加载上下文（导入配置 + 币别/汇率），各分片复用；为空则分片内自查（兼容旧调用）
      */
-    void doMatchSubsChunk(String mainId, List<String> detailSubIds, boolean isConfirm);
+    void doMatchSubsChunk(String mainId, List<String> detailSubIds, boolean isConfirm,
+                          LogisticsReconMatchDTO.ReconMatchPreloadDTO preload);
 
     /**
      * 提交手动匹配异步任务（按对账单分组、认领 matching 后提交线程池），立即返回。
@@ -173,6 +175,14 @@ public interface LogisticsReconService extends SuperService<LogisticsReconEntity
     void refreshDetailSubReconciliationStatusInTx(String mainId);
 
     /**
+     * 刷新指定费用项范围的确认状态汇总（短事务），供分片匹配确认后按 scope 刷新，避免全单扫描。
+     *
+     * @param mainId 对账单 id
+     * @param subIds 需要重算确认状态的费用项 id
+     */
+    void refreshDetailSubReconciliationStatusInTx(String mainId, java.util.Collection<String> subIds);
+
+    /**
      * 物流商对账单账单确认（单条，更新已匹配物流费用单对账状态）
      * @author Will
      * @date: 2026/06/02
@@ -182,6 +192,16 @@ public interface LogisticsReconService extends SuperService<LogisticsReconEntity
      * @return BatchResultDTO
      */
     BatchResultDTO confirmBill(String mainId, String reconciliationStatus, LocalDateTime confirmTime);
+
+    /**
+     * 物流商对账单账单确认（批量，异步）：HTTP 快速校验后提交后台任务执行 confirmBill，立即返回。
+     *
+     * @param ids                  对账单 id 集合
+     * @param reconciliationStatus 目标对账状态（toBeConfirm / confirmed）
+     * @param confirmTime          对账确认时间（状态为 confirmed 时有效）
+     * @return 逐单提交结果（已提交 / 校验失败）
+     */
+    List<BatchResultDTO> submitConfirmBillAsync(List<String> ids, String reconciliationStatus, LocalDateTime confirmTime);
 
     /**
      * 账单确认单批 ref + 物流费用状态更新（独立短事务）
@@ -197,6 +217,16 @@ public interface LogisticsReconService extends SuperService<LogisticsReconEntity
      * @param logisticsBillCostIds 发生对账状态变更的物流费用单 id 集合
      */
     void syncReconStatusByCostIds(java.util.Collection<String> logisticsBillCostIds);
+
+    /**
+     * 物流费用单对账状态反向同步（可排除指定主单）。
+     * <p>账单确认场景下当前主单的 ref 快照已在确认分片内直接更新，通过 {@code excludeMainId} 跳过当前主单，
+     * 仅同步共享同一费用单的其他对账单，避免二次全量回查并重写当前主单 ref 快照。</p>
+     *
+     * @param logisticsBillCostIds 发生对账状态变更的物流费用单 id 集合
+     * @param excludeMainId        需跳过的对账单主单 id（为空则不跳过）
+     */
+    void syncReconStatusByCostIds(java.util.Collection<String> logisticsBillCostIds, String excludeMainId);
 
     /**
      * 回写匹配结果（独立短事务，与 reconMatchAndGenerate 分离）

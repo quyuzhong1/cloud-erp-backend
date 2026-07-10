@@ -1265,9 +1265,17 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 : buildLogisticsBillVoIndex(preQueryResult.getLogisticsBillVoList(), uniqueKeyList, costImportEntity);
 
         // 币别字典（费用项币别归一）+ 汇率（与导入一致校验汇率存在性）
-        List<DictCurrencyEntity> dictCurrencyList = sysUserFeign.currencyList();
-        Map<String, String> currencyLookupMap = buildCurrencyLookupMap(dictCurrencyList);
-        Map<String, BigDecimal> currencyRateMap = buildCurrencyRateMap(dictCurrencyList);
+        // 整单级预加载已传入时直接复用，避免对账整批匹配下每 500 条分片都重复 Feign 查询币别/汇率。
+        Map<String, String> currencyLookupMap;
+        Map<String, BigDecimal> currencyRateMap;
+        if (CollUtil.isNotEmpty(ctx.getCurrencyLookupMap()) && CollUtil.isNotEmpty(ctx.getCurrencyRateMap())) {
+            currencyLookupMap = ctx.getCurrencyLookupMap();
+            currencyRateMap = ctx.getCurrencyRateMap();
+        } else {
+            List<DictCurrencyEntity> dictCurrencyList = sysUserFeign.currencyList();
+            currencyLookupMap = buildCurrencyLookupMap(dictCurrencyList);
+            currencyRateMap = buildCurrencyRateMap(dictCurrencyList);
+        }
 
         ImportHistoryRecordDTO.ImportSyncDTO importDTO = new ImportHistoryRecordDTO.ImportSyncDTO();
         importDTO.setReconciliationMonth(ctx.getReconciliationMonth());
@@ -1387,6 +1395,16 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                     costImportEntity, cfgImportDetailList, reconBillRefCostDetailMap, importDTO.getProcessingType()));
         }
         return fanOutReconMatchResults(groupResults, groupToOriginalRowKeys);
+    }
+
+    @Override
+    public void fillReconMatchCurrencyContext(LogisticsReconMatchDTO.ReconMatchPreloadDTO preload) {
+        if (preload == null) {
+            return;
+        }
+        List<DictCurrencyEntity> dictCurrencyList = sysUserFeign.currencyList();
+        preload.setCurrencyLookupMap(buildCurrencyLookupMap(dictCurrencyList));
+        preload.setCurrencyRateMap(buildCurrencyRateMap(dictCurrencyList));
     }
 
     /**
@@ -1519,7 +1537,9 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 importBatchAddOrUpdate(importDataList, processingType);
         if (CharSequenceUtil.equals(ImportHistoryRecordProcessingTypeEnum.CONFIRM_IMPORT.getCode(), processingType)
                 && CollUtil.isNotEmpty(confirmList)) {
-            logisticsBillCostService.batchConfirmImport(confirmList, ReconciliationStatusEnum.CONFIRMED.getCode());
+            // 对账匹配确认路径：跳过费用侧内部反向同步，detail_sub 由 doMatchSubsChunk 按分片 scope 刷新，
+            // ref 快照已在 buildReconBillRefs 直接写 confirmed，避免每分片触发全单刷新（O(n^2) + 并发全表更新竞争）。
+            logisticsBillCostService.batchConfirmImport(confirmList, ReconciliationStatusEnum.CONFIRMED.getCode(), true);
         }
     }
 
