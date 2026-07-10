@@ -525,6 +525,14 @@ public class SoB2bProcessingDTO implements Serializable {
          * 来源id
          */
         private String sourceDetailId;
+        /**
+         * 调出库存状态(usable可用/frozen冻结/defectiveProduct不良品)
+         */
+        private String outInventoryStatus;
+        /**
+         * 调入库存状态(usable可用/frozen冻结/defectiveProduct不良品)
+         */
+        private String inInventoryStatus;
     }
 
     /**

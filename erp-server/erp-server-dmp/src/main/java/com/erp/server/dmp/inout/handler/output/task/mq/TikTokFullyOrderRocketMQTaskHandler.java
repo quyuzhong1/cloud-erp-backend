@@ -20,6 +20,7 @@ import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import com.erp.server.dmp.inout.utils.DmpMappingUtils;
+import com.erp.server.dmp.inout.utils.TikTokOrderDetailUtils;
 import com.erp.server.dmp.service.DmpCfgOutputConvertMappingService;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -237,8 +238,11 @@ public class TikTokFullyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHa
 
     /**
      * 转换明细
+     *
+     * @param groupingDetailId parseDetailDto 分组键（platformDetailId），third_detail_id 为空时作为 sourceDetailId 回退
      */
-    private static PlatformOrderDetailDTO intPlatformOrderDetailDTO(DmpSoInfoEntity dmpSoInfoEntity, List<DmpSoDetailEntity> soDetailEntityList, String sourceDetailId) {
+    private static PlatformOrderDetailDTO intPlatformOrderDetailDTO(DmpSoInfoEntity dmpSoInfoEntity, List<DmpSoDetailEntity> soDetailEntityList,
+                                                                    String groupingDetailId) {
         PlatformOrderDetailDTO detailDTO = new PlatformOrderDetailDTO();
         if (CollectionUtil.isEmpty(soDetailEntityList)) {
             return detailDTO;
@@ -282,16 +286,15 @@ public class TikTokFullyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHa
         // 含税成本（本位币）
         detailDTO.setTaxCost(BigDecimal.ZERO);
 
-        // 来源明细id
-        detailDTO.setSourceDetailId(sourceDetailId);
-
         List<String> thirdDetailIdList = soDetailEntityList.stream()
                 .map(DmpSoDetailEntity::getThirdDetailId)
+                .filter(StringUtils::isNotBlank)
                 .sorted()
                 .collect(Collectors.toList());
 
-        // 平台明细行
-        detailDTO.setPlatformLineNumber(String.join(",", thirdDetailIdList));
+        String sourceDetailId = TikTokOrderDetailUtils.buildSourceDetailId(soDetailEntity, thirdDetailIdList, groupingDetailId);
+        detailDTO.setSourceDetailId(sourceDetailId);
+        detailDTO.setPlatformLineNumber(sourceDetailId);
 
         // 标签json
         detailDTO.setLabelJson("");

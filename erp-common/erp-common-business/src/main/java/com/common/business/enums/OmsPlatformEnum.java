@@ -28,6 +28,7 @@ public enum OmsPlatformEnum {
     FBT("fbt","FBT仓"),
     ZHONG_BAO("zhongbao","众包"),
     JI_TU("jitu","极兔云仓"),
+    WE_GO("wego","WEGO"),
     ;
 
     @EnumValue

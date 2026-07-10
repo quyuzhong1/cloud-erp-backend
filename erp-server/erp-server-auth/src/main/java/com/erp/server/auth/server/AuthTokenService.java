@@ -64,6 +64,45 @@ public class AuthTokenService {
 
     }
 
+    /**
+     * 创建精简 Token
+     * <p>
+     * 用于账号密码登录场景，Redis 仅缓存用户基础信息，不缓存菜单与权限数据。
+     * </p>
+     *
+     * @param info 用户信息
+     * @return JWT accessToken
+     */
+    public String createSlimToken(SysUserDTO info) {
+        String token = info.getUid();
+        info.setToken(token);
+        refreshSlimToken(info, authJwtProperties.getExpire());
+        return JwtUtils.generateToken(info, authJwtProperties.getSecret(), authJwtProperties.getExpire());
+    }
+
+    /**
+     * 刷新精简 Token 缓存
+     * <p>
+     * 将 LoginUser 基础信息写入 Redis，用于后续鉴权及权限接口获取 userType。
+     * </p>
+     *
+     * @param info       用户信息
+     * @param expireTime 过期时间（秒）
+     */
+    private void refreshSlimToken(SysUserDTO info, Long expireTime) {
+        LoginUser loginUser = new LoginUser();
+        loginUser.setUid(info.getUid());
+        loginUser.setUserName(info.getUserName());
+        loginUser.setRealName(info.getRealName());
+        loginUser.setMobile(info.getMobile());
+        loginUser.setUserAccount(info.getUserAccount());
+        loginUser.setBindingPlatform(info.getBindingPlatform());
+        loginUser.setIsSupper(info.getIsSupper());
+        loginUser.setUserType(info.getUserType());
+        String userKey = getTokenKey(info.getToken());
+        redisService.setCacheObject(userKey, JSONObject.toJSONString(loginUser), expireTime, TimeUnit.SECONDS);
+    }
+
 
     /**
      * 根据token  获取用户信息

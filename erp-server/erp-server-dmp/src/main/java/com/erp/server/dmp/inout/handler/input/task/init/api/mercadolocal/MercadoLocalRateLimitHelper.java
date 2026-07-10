@@ -49,7 +49,8 @@ import lombok.extern.slf4j.Slf4j;
  *       TTL 长一些没有正确性风险，多覆盖几次重试更安全。</li>
  * </ul>
  *
- * <p>{@code orders.search}（主任务）本身是分页拉取，不属于"按 fid 逐条调用"模型，不做结果缓存。
+ * <p>{@code orders.search}（主任务）按 {@code offset} 分页缓存（key 仍带 inputTaskId），
+ * 任务软退重试时跳过已成功页；{@code orders.get}（{@code orderIdList} 补拉）按订单 id 逐条缓存。
  *
  * <p>本助手只服务于 mercadolocal 包下的几个 init handler，不动通用任务调度逻辑。
  */
@@ -101,8 +102,10 @@ public class MercadoLocalRateLimitHelper {
 	 */
 	public static final long CACHE_SECONDS_STABLE = 1800L;
 
-	/** 业务类型：订单列表 search 接口（主任务） */
+	/** 业务类型：订单列表 search 接口（主任务，按 offset 分页缓存） */
 	public static final String BIZ_ORDER_SEARCH = "orders.search";
+	/** 业务类型：单条订单 GET /orders/{id}（orderIdList 补拉） */
+	public static final String BIZ_ORDER_GET = "orders.get";
 	/** 业务类型：订单账单接口 */
 	public static final String BIZ_ORDER_BILLING = "orders.billing";
 	/** 业务类型：shipments 详情接口 */
