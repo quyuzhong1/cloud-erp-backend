@@ -416,7 +416,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         //金额
         //总金额
         BigDecimal billTotalAmount = skuCostDetailEntityList.stream().map(FirstMileSkuCostAllocationDetailEntity::getAllocatedAmount).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
-        addDTO.setBillTotalAmount(billTotalAmount.divide(rate, 4, RoundingMode.DOWN));
+        addDTO.setBillTotalAmount(MathUtil.divideWithSix(billTotalAmount, rate, BigDecimal.ROUND_DOWN));
 
         List<FirstMileSkuCostAllocationDetailEntity> costAllocationDetailEntities = skuCostDetailEntityList.stream()
                 .filter(req -> req.getCostMainId().equals(firstMileSkuCostAllocationEntity.getId()))
@@ -458,7 +458,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             addDTO.setFreightCalculationFactor(detailEntity.getAllocatedAmount().divide(detailEntity.getAmount(), 4, RoundingMode.DOWN));
         }
         if (ObjectUtil.isNotEmpty(detailEntity)) {
-            BigDecimal firstMileFreightAmount = detailEntity.getAllocatedAmount().divide(rate, 4, RoundingMode.DOWN);
+            BigDecimal firstMileFreightAmount = MathUtil.divideWithSix(detailEntity.getAllocatedAmount(), rate, BigDecimal.ROUND_DOWN);
             addDTO.setFirstMileEstimatedFreightTax(firstMileFreightAmount);
             addDTO.setFirstMileEstimatedFreight(firstMileFreightAmount.divide(BigDecimal.ONE.add(taxRate), 4, RoundingMode.DOWN));
 
@@ -477,8 +477,8 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         }
         
         if (ObjectUtil.isNotEmpty(otherCostDetailEntity)) {
-            addDTO.setEstimatedDestMiscFee(otherCostDetailEntity.getAllocatedAmount().divide(rate, 4, RoundingMode.DOWN));
-            addDTO.setActualDestMiscFee(otherCostDetailEntity.getAllocatedAmount().divide(rate, 4, RoundingMode.DOWN));
+            addDTO.setEstimatedDestMiscFee(MathUtil.divideWithSix(otherCostDetailEntity.getAllocatedAmount(), rate, BigDecimal.ROUND_DOWN));
+            addDTO.setActualDestMiscFee(MathUtil.divideWithSix(otherCostDetailEntity.getAllocatedAmount(), rate, BigDecimal.ROUND_DOWN));
         }
 
         //关税
@@ -490,8 +490,8 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             addDTO.setDutyCalculationFactor(declareCostDetailEntity.getAllocatedAmount().divide(declareCostDetailEntity.getAmount(), 4, RoundingMode.DOWN));
         }
         if (ObjectUtil.isNotEmpty(declareCostDetailEntity)) {
-            addDTO.setEstimatedDutyAmount(declareCostDetailEntity.getAllocatedAmount().divide(rate, 4, RoundingMode.DOWN));
-            addDTO.setActualDutyAmount(declareCostDetailEntity.getAllocatedAmount().divide(rate, 4, RoundingMode.DOWN));
+            addDTO.setEstimatedDutyAmount(MathUtil.divideWithSix(declareCostDetailEntity.getAllocatedAmount(), rate, BigDecimal.ROUND_DOWN));
+            addDTO.setActualDutyAmount(MathUtil.divideWithSix(declareCostDetailEntity.getAllocatedAmount(), rate, BigDecimal.ROUND_DOWN));
         }
 
         //其他税金
@@ -504,8 +504,8 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         }
 
         if (ObjectUtil.isNotEmpty(otherTaxFeeDetailEntity)) {
-            addDTO.setEstimatedTaxOtherTax(otherTaxFeeDetailEntity.getAllocatedAmount().divide(rate, 4, RoundingMode.DOWN));
-            addDTO.setActualTaxOtherTax(otherTaxFeeDetailEntity.getAllocatedAmount().divide(rate, 4, RoundingMode.DOWN));
+            addDTO.setEstimatedTaxOtherTax(MathUtil.divideWithSix(otherTaxFeeDetailEntity.getAllocatedAmount(), rate, BigDecimal.ROUND_DOWN));
+            addDTO.setActualTaxOtherTax(MathUtil.divideWithSix(otherTaxFeeDetailEntity.getAllocatedAmount(), rate, BigDecimal.ROUND_DOWN));
         }
 
         if (ReconciliationBillTypeEnum.ACTUAL.getCode().equals(firstMileSkuCostAllocationEntity.getBillSourceType())) {

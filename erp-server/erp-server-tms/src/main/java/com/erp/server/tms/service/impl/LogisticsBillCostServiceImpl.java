@@ -1359,7 +1359,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             listDTO.setActualShippingCostStr(listDTO.getActualShippingCostCurrencySymbol() + listDTO.getActualShippingCost());
 
             //运费差异
-            listDTO.setDiffShippingCost(MathUtil.subtract(exchangeActualShippingCost,exchangeEstimatedShippingCost).setScale(4, RoundingMode.DOWN));
+            listDTO.setDiffShippingCost(MathUtil.scaleToSix(MathUtil.subtract(exchangeActualShippingCost, exchangeEstimatedShippingCost), BigDecimal.ROUND_DOWN));
             listDTO.setDiffShippingCostStr(listDTO.getDiffShippingCostCurrencySymbol() + listDTO.getDiffShippingCost());
 
             //实际报关费
@@ -3486,7 +3486,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 					rateMap.put(key, rate);
 				}
 				smallBagCostAllocationDetailEntity.setBillAmount(costValueSum);
-				BigDecimal billAmountExchange = smallBagCostAllocationDetailEntity.getBillAmount().multiply(rate).setScale(4 , RoundingMode.DOWN);
+				BigDecimal billAmountExchange = MathUtil.multiplyWithSix(smallBagCostAllocationDetailEntity.getBillAmount(), rate, BigDecimal.ROUND_DOWN);
 				smallBagCostAllocationDetailEntity.setBillAmountExchange(billAmountExchange);
 				smallBagCostAllocationDetailEntity.setFeeType(feeType);
 				String feeAllocationType = feeTypeSettingMap.getValue();

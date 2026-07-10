@@ -651,9 +651,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             String productName = skuMap.get(detailEntity.getSkuId());
             detailEntity.setProductName(productName);
             //销售单价-本位币
-            detailEntity.setBasePrice(MathUtil.multiplyWithFour(detailEntity.getPrice(), detailEntity.getExchangeRate()));
+            detailEntity.setBasePrice(MathUtil.multiplyWithSix(detailEntity.getPrice(), detailEntity.getExchangeRate()));
             //含税单价-本位币
-            detailEntity.setBaseTaxPrice(MathUtil.multiplyWithFour(detailEntity.getTaxPrice(), detailEntity.getExchangeRate()));
+            detailEntity.setBaseTaxPrice(MathUtil.multiplyWithSix(detailEntity.getTaxPrice(), detailEntity.getExchangeRate()));
             //价税合计
             detailEntity.setOriginalTaxPrice(MathUtil.subtract(MathUtil.multiplyWithTwo(detailEntity.getTaxPrice(), detailEntity.getQty()),detailEntity.getDiscountAmount()));
         }
@@ -1276,7 +1276,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             BigDecimal price = item.getPrice();
 
             //销售单价(本位币)
-            item.setPriceLc(MathUtil.multiplyWithTwo(price, exchangeRate));
+            item.setPriceLc(MathUtil.multiplyWithSix(price, exchangeRate));
 
             //含税单价=销售单价*（税率+1）
             BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
@@ -1284,7 +1284,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             BigDecimal taxPrice = MathUtil.multiplyWithTwo(price, multiplyTax);
             item.setTaxPrice(taxPrice);
             //含税单价(本位币)
-            item.setTaxPriceLc(MathUtil.multiplyWithTwo(taxPrice, exchangeRate));
+            item.setTaxPriceLc(MathUtil.multiplyWithSix(taxPrice, exchangeRate));
 
             //是否是组合SKU
             if (CollectionUtils.isNotEmpty(bomChildrenList)) {
@@ -3330,7 +3330,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             }
             SoDetailDTO.CalDetailResultDTO result = new SoDetailDTO.CalDetailResultDTO();
             BeanMapper.copy(item, result);
-            result.setTaxPriceLc(MathUtil.multiplyWithTwo(taxPrice, exchangeRate,4));
+            result.setTaxPriceLc(MathUtil.multiplyWithSix(taxPrice, exchangeRate));
             resultList.add(result);
         }
         return resultList;

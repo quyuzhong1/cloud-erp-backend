@@ -197,7 +197,7 @@ public class PackageDTO implements Serializable {
         /**
          * 重量
          */
-        @Digits(integer = 16,fraction = 4,message = "重量最大16位数，小数位不能大于4位数")
+        @Digits(integer = 18, fraction = 6,message = "重量最大16位数，小数位不能大于6位数")
         private BigDecimal weight;
 
         /**

@@ -196,42 +196,42 @@ public class PayableDetailDTO implements Serializable {
         * 含税单价
         */
         @NotNull(message = "含税单价不能为空")
-        @Digits(integer = 12, fraction = 4, message = "含税单价整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "含税单价整数位不能超过18位，小数位不能超过6位")
         private BigDecimal taxIncludedPrice;
 
         /**
         * 税率
         */
         @NotNull(message = "税率不能为空")
-        @Digits(integer = 12, fraction = 4, message = "税率整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "税率整数位不能超过18位，小数位不能超过6位")
         private BigDecimal taxRate;
 
         /**
         * 折扣率
         */
         @NotNull(message = "折扣率不能为空")
-        @Digits(integer = 12, fraction = 4, message = "折扣率整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "折扣率整数位不能超过18位，小数位不能超过6位")
         private BigDecimal discountRate;
 
         /**
         * 预付金额
         */
         @NotNull(message = "预付金额不能为空")
-        @Digits(integer = 12, fraction = 4, message = "预付金额整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "预付金额整数位不能超过18位，小数位不能超过6位")
         private BigDecimal prepayAmount;
 
         /**
         * 价税合计（折扣后）
         */
         @NotNull(message = "价税合计（折扣后）不能为空")
-        @Digits(integer = 12, fraction = 4, message = "价税合计（折扣后）整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "价税合计（折扣后）整数位不能超过18位，小数位不能超过6位")
         private BigDecimal discountTaxAmount;
 
         /**
         * 价税合计
         */
         @NotNull(message = "价税合计不能为空")
-        @Digits(integer = 12, fraction = 4, message = "价税合计整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "价税合计整数位不能超过18位，小数位不能超过6位")
         private BigDecimal taxIncludedTotal;
 
         /**
@@ -245,7 +245,7 @@ public class PayableDetailDTO implements Serializable {
         * 汇率
         */
         @NotNull(message = "汇率不能为空")
-        @Digits(integer = 12, fraction = 4, message = "汇率整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "汇率整数位不能超过18位，小数位不能超过6位")
         private BigDecimal exchangeRate;
 
         /**

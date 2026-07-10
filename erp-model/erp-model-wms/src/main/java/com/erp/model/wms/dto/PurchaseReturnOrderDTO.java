@@ -2068,13 +2068,13 @@ public class PurchaseReturnOrderDTO {
         /**
          * 含税单价
          */
-        @Digits(integer = 12, fraction = 4, message = "含税单价整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "含税单价整数位不能超过18位，小数位不能超过6位")
         private BigDecimal price;
 
         /**
          * 税率
          */
-        @Digits(integer = 16,fraction = 4,message = "税率最大16字符，小数位不能大于4个字符")
+        @Digits(integer = 18, fraction = 6,message = "税率最大16字符，小数位不能大于6个字符")
         private BigDecimal taxRate;
 
         /**

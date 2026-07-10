@@ -236,7 +236,7 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
 						total = total.add(otherDTO.getCostValue());
 					}
                 }
-                item.setCostTotal(total.setScale(4, RoundingMode.DOWN));
+                item.setCostTotal(MathUtil.scaleToSix(total, BigDecimal.ROUND_DOWN));
                 
                 item.setCostTotalStr(item.getCostTotalCurrencySymbol() + item.getCostTotal());
                 item.setLogisticsCostStr(item.getLogisticsCostCurrencySymbol() + item.getLogisticsCost());

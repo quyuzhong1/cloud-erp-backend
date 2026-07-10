@@ -198,7 +198,7 @@ public class CfgRuleDeclareDTO implements Serializable {
         * 目的国申报价
         */
 //        @NotNull(message = "目的国申报价不能为空")
-        @Digits(integer = 12, fraction = 4, message = "目的国申报价整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "目的国申报价整数位不能超过18位，小数位不能超过6位")
         private BigDecimal toDeclarePrice;
 
         /**
@@ -227,21 +227,21 @@ public class CfgRuleDeclareDTO implements Serializable {
         * 固定比例（当toDeclarePriceType=ratePrice）必填
         */
 //        @NotNull(message = "固定比例（当toDeclarePriceType=ratePrice）必填不能为空")
-        @Digits(integer = 10, fraction = 2, message = "固定比例必填整数位不能超过10位，小数位不能超过2位")
+        @Digits(integer = 18, fraction = 6, message = "固定比例必填整数位不能超过18位，小数位不能超过6位")
         private BigDecimal rate;
 
         /**
         * 最高申报价
         */
 //        @NotNull(message = "最高申报价不能为空")
-        @Digits(integer = 12, fraction = 4, message = "最高申报价整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "最高申报价整数位不能超过18位，小数位不能超过6位")
         private BigDecimal maxDeclarePrice;
 
         /**
         * 最低申报价
         */
 //        @NotNull(message = "最低申报价不能为空")
-        @Digits(integer = 12, fraction = 4, message = "最低申报价整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "最低申报价整数位不能超过18位，小数位不能超过6位")
         private BigDecimal minDeclarePrice;
 
 

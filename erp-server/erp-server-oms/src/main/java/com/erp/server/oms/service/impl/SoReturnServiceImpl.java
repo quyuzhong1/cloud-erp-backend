@@ -700,9 +700,10 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
 
     @Override
     public BigDecimal calLocalCurrency(BigDecimal exchangeRate, BigDecimal returnAmount) {
-        return returnAmount
-                .multiply(exchangeRate)
-                .setScale(4, RoundingMode.DOWN)
+        if (ObjectUtil.isNull(returnAmount)) {
+            return BigDecimal.ZERO;
+        }
+        return MathUtil.scaleToSix(returnAmount.multiply(exchangeRate), BigDecimal.ROUND_DOWN)
                 .stripTrailingZeros();
     }
 

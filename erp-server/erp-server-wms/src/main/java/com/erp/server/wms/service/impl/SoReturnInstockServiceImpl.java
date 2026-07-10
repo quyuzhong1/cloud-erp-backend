@@ -3120,8 +3120,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         detail.setExchangeRate(safeExchangeRate);
         detail.setReturnAmount(MathUtil.multiplyWithFour(safePrice, realQty));
         detail.setTaxReturnAmount(MathUtil.multiplyWithFour(safeTaxPrice, realQty));
-        detail.setReturnAmountLocalCurrency(MathUtil.multiplyWithFour(detail.getReturnAmount(), safeExchangeRate));
-        detail.setTaxReturnAmountLocalCurrency(MathUtil.multiplyWithFour(detail.getTaxReturnAmount(), safeExchangeRate));
+        detail.setReturnAmountLocalCurrency(MathUtil.multiplyWithSix(detail.getReturnAmount(), safeExchangeRate, BigDecimal.ROUND_DOWN));
+        detail.setTaxReturnAmountLocalCurrency(MathUtil.multiplyWithSix(detail.getTaxReturnAmount(), safeExchangeRate, BigDecimal.ROUND_DOWN));
     }
 
     private Integer defaultRealQty(SoReturnInstockDetailEntity detail) {
@@ -4396,8 +4396,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                     detail.setWarehouseId(instockDTO.getWarehouseId());
                     detail.setPlatformSkuNo(g.getPlatformSkuNo());
                     detail.setExchangeRate(g.getExchangeRate());
-                    detail.setReturnAmountLocalCurrency(MathUtil.multiplyWithFour(g.getExchangeRate(), detail.getReturnAmount()));
-                    detail.setTaxReturnAmountLocalCurrency(MathUtil.multiplyWithFour(g.getExchangeRate(), detail.getTaxReturnAmount()));
+                    detail.setReturnAmountLocalCurrency(MathUtil.multiplyWithSix(detail.getReturnAmount(), g.getExchangeRate(), BigDecimal.ROUND_DOWN));
+                    detail.setTaxReturnAmountLocalCurrency(MathUtil.multiplyWithSix(detail.getTaxReturnAmount(), g.getExchangeRate(), BigDecimal.ROUND_DOWN));
                 });
             });
         });

@@ -1686,7 +1686,7 @@ public class SoB2cDTO implements Serializable {
          * 订单总额：折前销售金额汇总，平台推送优先
          */
         @NotNull(message = "订单总额不能为空")
-        @Digits(integer = 12, fraction = 4, message = "订单总额整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "订单金额整数位不能超过18位，小数位不能超过6位")
         private BigDecimal amount;
         /**
          * 实付总额（订单付款总额）：sum(明细.实付金额)，平台已推送时直接取平台值

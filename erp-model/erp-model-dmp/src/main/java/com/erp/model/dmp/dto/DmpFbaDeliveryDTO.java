@@ -233,7 +233,7 @@ public class DmpFbaDeliveryDTO implements Serializable {
         * 物流单价
         */
         @NotNull(message = "物流单价不能为空")
-        @Digits(integer = 15, fraction = 4, message = "物流单价整数位不能超过15位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "物流单价整数位不能超过18位，小数位不能超过6位")
         private BigDecimal logicPrice;
 
         /**
@@ -266,7 +266,7 @@ public class DmpFbaDeliveryDTO implements Serializable {
         * 总重量
         */
         @NotNull(message = "总重量不能为空")
-        @Digits(integer = 15, fraction = 4, message = "总重量整数位不能超过15位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "总重量整数位不能超过18位，小数位不能超过6位")
         private BigDecimal totalWeights;
 
         /**
@@ -294,7 +294,7 @@ public class DmpFbaDeliveryDTO implements Serializable {
         * 总体积
         */
         @NotNull(message = "总体积不能为空")
-        @Digits(integer = 15, fraction = 4, message = "总体积整数位不能超过15位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "总体积整数位不能超过18位，小数位不能超过6位")
         private BigDecimal totalVolumes;
 
         /**
@@ -322,7 +322,7 @@ public class DmpFbaDeliveryDTO implements Serializable {
         * 总费用
         */
         @NotNull(message = "总费用不能为空")
-        @Digits(integer = 15, fraction = 4, message = "总费用整数位不能超过15位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "总费用整数位不能超过18位，小数位不能超过6位")
         private BigDecimal extendFee;
 
         /**

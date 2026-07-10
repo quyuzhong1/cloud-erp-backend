@@ -2283,7 +2283,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 exchangeRate = MathUtil.BigDecimal_1;
             }
             //销售单价(本位币)
-            item.setCnyPrice(MathUtil.multiplyWithTwo(price, exchangeRate,4));
+            item.setCnyPrice(MathUtil.multiplyWithSix(price, exchangeRate));
 
             // B2C 列表含税单价优先 tax_amount/实发数量；B2B 统一按不含税单价*(1+税率)，不读 tax_amount
             BigDecimal taxPrice = resolvePagingTaxUnitPrice(price, taxRate, item.getTaxAmount(), item.getActualQty(), item.getOrderType());
@@ -2344,9 +2344,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (BillTypeEnum.B2C.getCode().equals(orderType)
                 && Objects.nonNull(allAmountLocalCurrency) && Objects.nonNull(actualQty) && actualQty > 0
                 && allAmountLocalCurrency.compareTo(BigDecimal.ZERO) > 0) {
-            return MathUtil.divide(allAmountLocalCurrency, BigDecimal.valueOf(actualQty), 4);
+            return MathUtil.divideWithSix(allAmountLocalCurrency, BigDecimal.valueOf(actualQty));
         }
-        return MathUtil.multiplyWithTwo(taxPrice, exchangeRate, 4);
+        return MathUtil.multiplyWithSix(taxPrice, exchangeRate);
     }
 
     /**

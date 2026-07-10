@@ -669,14 +669,10 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
                         .multiply(BigDecimal.valueOf(dto.getReturnQty()))
                         .stripTrailingZeros();
                 //退货金额（本位币）
-                returnAmountLocalCurrency = returnAmount
-                        .multiply(dto.getExchangeRate())
-                        .setScale(4, RoundingMode.DOWN)
+                returnAmountLocalCurrency = MathUtil.multiplyWithSix(returnAmount, dto.getExchangeRate(), BigDecimal.ROUND_DOWN)
                         .stripTrailingZeros();
                 //含税退货金额（本位币）
-                taxReturnAmountLocalCurrency = taxReturnAmount
-                        .multiply(dto.getExchangeRate())
-                        .setScale(4, RoundingMode.DOWN)
+                taxReturnAmountLocalCurrency = MathUtil.multiplyWithSix(taxReturnAmount, dto.getExchangeRate(), BigDecimal.ROUND_DOWN)
                         .stripTrailingZeros();
             }
             view.setReturnAmount(returnAmount);
@@ -743,14 +739,10 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
                 taxReturnAmount = taxReturnAmount.multiply(soRate).divide(viewRate, 4, RoundingMode.DOWN);
             }
             //退货金额（本位币）
-            BigDecimal returnAmountLocalCurrency = returnAmount
-                    .multiply(dto.getExchangeRate())
-                    .setScale(4, RoundingMode.DOWN)
+            BigDecimal returnAmountLocalCurrency = MathUtil.multiplyWithSix(returnAmount, dto.getExchangeRate(), BigDecimal.ROUND_DOWN)
                     .stripTrailingZeros();
             //含税退货金额（本位币）
-            BigDecimal taxReturnAmountLocalCurrency = taxReturnAmount
-                    .multiply(dto.getExchangeRate())
-                    .setScale(4, RoundingMode.DOWN)
+            BigDecimal taxReturnAmountLocalCurrency = MathUtil.multiplyWithSix(taxReturnAmount, dto.getExchangeRate(), BigDecimal.ROUND_DOWN)
                     .stripTrailingZeros();
             view.setReturnAmount(returnAmount);
             view.setTaxReturnAmount(taxReturnAmount);
@@ -789,14 +781,10 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
                         .multiply(BigDecimal.valueOf(dto.getReturnQty()))
                         .stripTrailingZeros();
                 //退货金额（本位币）
-                BigDecimal returnAmountLocalCurrency = returnAmount
-                        .multiply(dto.getExchangeRate())
-                        .setScale(4, RoundingMode.DOWN)
+                BigDecimal returnAmountLocalCurrency = MathUtil.multiplyWithSix(returnAmount, dto.getExchangeRate(), BigDecimal.ROUND_DOWN)
                         .stripTrailingZeros();
                 //含税退货金额（本位币）
-                BigDecimal taxReturnAmountLocalCurrency = taxReturnAmount
-                        .multiply(dto.getExchangeRate())
-                        .setScale(4, RoundingMode.DOWN)
+                BigDecimal taxReturnAmountLocalCurrency = MathUtil.multiplyWithSix(taxReturnAmount, dto.getExchangeRate(), BigDecimal.ROUND_DOWN)
                         .stripTrailingZeros();
                 view.setReturnAmount(returnAmount);
                 view.setTaxReturnAmount(taxReturnAmount);

@@ -80,7 +80,7 @@ public class CfgSettingDTO implements Serializable {
          * HOUR:小时
          */
         @NotNull(message = "预警时间不能为空")
-        @Digits(integer = 12, fraction = 1, message = "预警时间不能超过12位，小数位不能超过1位")
+        @Digits(integer = 18, fraction = 6, message = "预警时间整数位不能超过18位，小数位不能超过6位")
         private BigDecimal warningTime;
         /**
          * 发送通知人员列表

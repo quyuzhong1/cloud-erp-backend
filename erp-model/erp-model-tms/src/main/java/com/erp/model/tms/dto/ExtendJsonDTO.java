@@ -26,25 +26,25 @@ public class ExtendJsonDTO {
         /**
          * 最长边
          */
-        @Digits(integer = 12, fraction = 4, message = "最长边值整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "最长边值整数位不能超过18位，小数位不能超过6位")
         private BigDecimal longestEdge;
 
         /**
          * 次长边
          */
-        @Digits(integer = 12, fraction = 4, message = "次长边值整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "次长边值整数位不能超过18位，小数位不能超过6位")
         private BigDecimal minorEdge;
 
         /**
          * 三边和
          */
-        @Digits(integer = 12, fraction = 4, message = "三边和值整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "三边和值整数位不能超过18位，小数位不能超过6位")
         private BigDecimal edgelSum;
 
         /**
          * 任意一边
          */
-        @Digits(integer = 12, fraction = 4, message = "任意一边值整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "任意一边值整数位不能超过18位，小数位不能超过6位")
         private BigDecimal anyEdge;
     }
 }
