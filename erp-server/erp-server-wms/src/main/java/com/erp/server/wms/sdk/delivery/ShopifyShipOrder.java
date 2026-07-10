@@ -149,7 +149,20 @@ public class ShopifyShipOrder extends AbstractShipOrder {
                     channelIds,
                     PlatformDictEnum.SHOPIFY.getCode()
             );
-
+            Map<String, LogisticsChannelDTO.SignShipDTO> channelShipMap = tmsScaleChannelShipDTOList.stream()
+                    .collect(Collectors.toMap(LogisticsChannelDTO.SignShipDTO::getLogisticsChannelId, Function.identity(), (a, b) -> a));
+            // 捆绑拆分会合并关联子单物流标发，每个渠道都需配置 Shopify 平台映射
+            for (SoB2cLogisticsEntity logisticsEntity : soB2cLogisticsEntityList) {
+                if (StringUtils.isBlank(logisticsEntity.getLogisticsChannelId())) {
+                    throw new ServiceException("操作失败，关联子单物流渠道为空（捆绑拆分需所有关联子单均配置物流渠道）");
+                }
+                if (!channelShipMap.containsKey(logisticsEntity.getLogisticsChannelId())) {
+                    String channelName = StringUtils.defaultIfBlank(logisticsEntity.getLogisticsChannelName(), logisticsEntity.getLogisticsChannelId());
+                    throw new ServiceException(CharSequenceUtil.format(
+                            "操作失败，物流渠道【{}】未配置Shopify平台标发映射（捆绑拆分需所有关联子单渠道均配置）",
+                            channelName));
+                }
+            }
 
             // 需要根据配送服务分组请求参数
             for (ShopifyFulfillmentOrder fulfillmentOrder : fulfillmentOrdersFromOrderList) {
@@ -179,10 +192,8 @@ public class ShopifyShipOrder extends AbstractShipOrder {
                 //获取渠道标发单号
                 List<String> trackingNumberList = new ArrayList<>();
                 for (SoB2cLogisticsEntity soB2cLogisticsEntity : soB2cLogisticsEntityList) {
-                    LogisticsChannelDTO.SignShipDTO tmsScaleChannelShipDTO = tmsScaleChannelShipDTOList.stream()
-                            .filter(e -> e.getLogisticsChannelId().equals(soB2cLogisticsEntity.getLogisticsChannelId()))
-                            .findFirst()
-                            .orElse(null);
+                    // 渠道映射已在上方批量校验，此处直接取 Map 避免重复判空
+                    LogisticsChannelDTO.SignShipDTO tmsScaleChannelShipDTO = channelShipMap.get(soB2cLogisticsEntity.getLogisticsChannelId());
                     String standardOrderType = tmsScaleChannelShipDTO.checkAndGetOrderDeliveryMarkType();
                     String trackingNumber = CharSequenceUtil.equals(OrderDeliveryMarkTypeEnum.TRANSPORT_NO.getCode(),standardOrderType)
                             ? soB2cLogisticsEntity.getCode() : soB2cLogisticsEntity.getTrackNo();

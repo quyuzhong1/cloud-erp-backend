@@ -16,7 +16,8 @@ import com.erp.server.wms.rocketmq.sync.SyncB2CSoOutstockService;
 @Component
 @RocketMQMessageListener(topic = RocketMqNewTopic.DMP_WDT_SO_OUTSTOCK_TO_WMS_TOPIC, 
 selectorExpression = RocketMqNewTag.DMP_WDT_SO_OUTSTOCK_TO_WMS_TAG, 
-consumerGroup = RocketMqNewConsumerGroup.DMP_WDT_SO_OUTSTOCK_TO_WMS_GROUP)
+consumerGroup = RocketMqNewConsumerGroup.DMP_WDT_SO_OUTSTOCK_TO_WMS_GROUP,
+consumeThreadNumber = 5)
 public class SyncNewWdtDeliveryConsumer extends AbstractNewPlatformConsumerHandler {
 
 	@Resource

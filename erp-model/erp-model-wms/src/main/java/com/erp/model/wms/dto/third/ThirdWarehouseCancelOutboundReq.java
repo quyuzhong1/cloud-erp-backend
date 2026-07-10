@@ -30,4 +30,9 @@ public class ThirdWarehouseCancelOutboundReq extends ThirdWarehouseAuth{
     //拦截原因
     private String reason;
 
+    /**
+     * 是否为发货拦截结果确认。通邮取消接口只代表请求受理，拦截场景需再查 PB=7 确认结果。
+     */
+    private Boolean confirmInterceptResult;
+
 }

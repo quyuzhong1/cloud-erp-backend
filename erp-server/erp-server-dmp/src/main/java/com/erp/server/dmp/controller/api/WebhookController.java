@@ -110,13 +110,12 @@ public class WebhookController extends BaseController {
     }
 
     private static ResponseEntity<?> getWebhookResultResponseEntity(WebhookResult result, String serviceFlag) {
-        if (WebhookServiceEnum.QIMEN_CALL_BACK.getCode().equals(serviceFlag)){
+        if (WebhookServiceEnum.QIMEN_CALL_BACK.getCode().equals(serviceFlag)) {
             return ResponseEntity.ok().body(result.toXml());
-        }else {
+        } else {
             return ResponseEntity.ok(result);
         }
     }
-
     private String getService(String serviceFlag, Map<String, String> headers, String data) {
         WebhookServiceEnum serviceEnum = WebhookServiceEnum.getByCode(serviceFlag);
         if (Objects.nonNull(serviceEnum)) {
