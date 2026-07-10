@@ -3633,7 +3633,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
      * 校验全量异步更新对账状态时必须选择对账月份。
      * <p>
      * 全量异步任务按高级查询条件创建任务，不回传具体 ID。为了避免任务范围过大，
-     * 必须包含 lbc.reconciliation_month 条件，且比较符只能为等于、值不能为空。
+     * 必须包含 lbc.reconciliation_month 条件，且比较符只能为等于、值不能为空、格式必须为 yyyy-MM。
      *
      * @param advanceQueryDTOList 页面高级查询条件
      */
@@ -3644,14 +3644,25 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 .filter(query -> Objects.equals(RECONCILIATION_MONTH_QUERY_FIELD, query.getField()))
                 .collect(Collectors.toList());
         if (CollUtil.isEmpty(reconciliationMonthQueries)) {
-            throw new ServiceException("异步更新必须选择【对账月份】，且不能为空，比较符必须为等于");
+            throw new ServiceException("异步更新必须选择【对账月份】，格式为yyyy-MM，且不能为空，比较符必须为等于");
         }
         boolean invalid = reconciliationMonthQueries.stream().anyMatch(query ->
                 !Objects.equals(QueryConditionEnum.EQ.getCompareCode(), query.getCompare())
-                        || isBlankAdvanceQueryValue(query.getValue()));
+                        || isBlankAdvanceQueryValue(query.getValue())
+                        || !isValidReconciliationMonthValue(query.getValue()));
         if (invalid) {
-            throw new ServiceException("异步更新必须选择【对账月份】，且不能为空，比较符必须为等于");
+            throw new ServiceException("异步更新必须选择【对账月份】，格式为yyyy-MM，且不能为空，比较符必须为等于");
         }
+    }
+
+    /**
+     * 判断对账月份高级查询值格式是否合法。
+     *
+     * @param value 对账月份高级查询条件值
+     * @return true 表示值符合 yyyy-MM 格式
+     */
+    private boolean isValidReconciliationMonthValue(Object value) {
+        return value != null && value.toString().trim().matches("\\d{4}-(0[1-9]|1[0-2])");
     }
 
     /**
