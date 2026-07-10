@@ -1,6 +1,7 @@
 package com.erp.rpc.wms.feign;
 
 import com.common.business.config.FeignErrorDecoder;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -39,8 +40,21 @@ public interface OverseasProviderFeign {
     @GetMapping("/feign/overseasProvider/listAllMatch")
     List<OverseasProviderDTO.ListWithWarehouseDTO> listAllMatch();
 
+    /**
+     * 按服务商主键 id（authId）精确查询已匹配的仓库信息，避免每次全表扫描。
+     * @param mainId overseas_provider.id
+     */
+    @GetMapping("/feign/overseasProvider/listMatchByMainId")
+    List<OverseasProviderDTO.ListWithWarehouseDTO> listMatchByMainId(@RequestParam("mainId") String mainId);
+
     @GetMapping("/feign/overseasProvider/listProviderWarehouseBySql")
     List<String> listProviderWarehouseBySql(@RequestParam String compareCodeSplicingValueSql);
+
+    /**
+     * 根据授权ID查询货主编码。data 为 null 表示未找到授权信息或未维护货主编码，调用方需按空值处理。
+     */
+    @GetMapping("/feign/overseasProvider/getOwnerCodeByAuthId")
+    ApiResult<String> getOwnerCodeByAuthId(@RequestParam("authId") String authId);
 
     @PostMapping("/feign/overseasProvider/refreshToken")
     OverseasProviderEntity refreshToken(@RequestBody OverseasProviderEntity entity);

@@ -88,6 +88,12 @@ public interface OverseasProviderService extends SuperService<OverseasProviderEn
     List<OverseasProviderDTO.ListWithWarehouseDTO> listAllMatch();
 
     /**
+     * 按服务商主键 id（authId）精确查询已匹配的仓库信息，避免每次全表扫描。
+     * @param mainId overseas_provider.id
+     */
+    List<OverseasProviderDTO.ListWithWarehouseDTO> listMatchByMainId(String mainId);
+
+    /**
      * 根据平台名称查询
      * @param code
      * @return
@@ -125,6 +131,13 @@ public interface OverseasProviderService extends SuperService<OverseasProviderEn
     OverseasProviderEntity getByPlatformCodeAndShortName(String sysType, String thirdShortName);
 
     List<OverseasProviderEntity> listByAuthStatus(String code);
+
+    /**
+     * 根据授权ID查询货主编码。
+     *
+     * @return 未找到授权信息或未维护货主编码时返回 null，调用方需按空值处理。
+     */
+    String getOwnerCodeByAuthId(String authId);
 
     OverseasProviderEntity refreshToken(OverseasProviderEntity entity);
 }

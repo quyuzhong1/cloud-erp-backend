@@ -23,6 +23,7 @@ import com.erp.model.dmp.constant.DmpOutputConstant;
 import com.erp.model.dmp.dto.CfgSettingDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
+import com.erp.model.dmp.enums.KingdeeStockStatusEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.dto.DictBasicDTO;
@@ -311,8 +312,8 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             	}
             }
             //收款条件
-            List<DictBasicDTO.ViewDTO> collectionTermsList = customerFeign.getDictBasicByKey("collectionTerms");
-            DictBasicDTO.ViewDTO viewDTO = collectionTermsList.stream().filter(req -> req.getValue().equals(customerInfoEntity.getCode())).findFirst().orElse(new DictBasicDTO.ViewDTO());
+            List<DictBasicEntity> collectionTermsList = customerFeign.getDictBasicByKey("collectionTerms");
+            DictBasicEntity viewDTO = collectionTermsList.stream().filter(req -> req.getValue().equals(customerInfoEntity.getCode())).findFirst().orElse(new DictBasicEntity());
             resultMap.put("collectionTerms", viewDTO.getRemark());
 
             //获取币别信息
@@ -427,6 +428,10 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             String inventoryOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getInventoryOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse(null);
             //库存组织
             map.put("inventoryOrgCode", inventoryOrgCode);
+            //入库库存状态
+            map.put("stockStatusId", Boolean.TRUE.equals(detailEntity.getDefectiveProductFlag())
+                    ? KingdeeStockStatusEnum.DEFECTIVE.getCode()
+                    : KingdeeStockStatusEnum.USABLE.getCode());
             //备注
             map.put("remark", detailEntity.getRemark());
             if (ObjectUtils.isNotEmpty(soReturnEntity)) {

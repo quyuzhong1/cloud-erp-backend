@@ -159,7 +159,7 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
         Map<String, Map<String, String>> cfgMaps = new HashMap<>();
         if(CollUtil.isNotEmpty(changeDmpSoOutstockEntity)) {
         	List<String> countryIds = changeDmpSoOutstockEntity.stream().map(DmpSoOutstockEntity::getCountry).filter(StringUtils::isNotBlank).collect(Collectors.toList());
-        	Map<String, String> countryIdNameMap = FeignQuery.getByIds(DictCountryEntity.class, countryIds).stream().collect(Collectors.toMap(DictCountryEntity::getId, DictCountryEntity::getShortNameCn));
+        	Map<String, String> countryIdNameMap = FeignQuery.getByIds(DictCountryEntity.class, countryIds).stream().collect(Collectors.toMap(DictCountryEntity::getId, DictCountryEntity::getNameCn));
         	cfgMaps.put("country", countryIdNameMap);
         	
         	List<String> provinceIds = changeDmpSoOutstockEntity.stream().map(DmpSoOutstockEntity::getProvince).filter(StringUtils::isNotBlank).collect(Collectors.toList());
@@ -219,10 +219,10 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
 			cfgMaps.put("amzPlatformSignTimeInfo", amzPlatformSignTimeInfo);
 
 			// 旺店通仓库店铺发货类型映射
-			List<DictBasicDTO.ViewDTO> dictbaseList = dictBasicService.getByKey("wdtSdyPlatformDeliveryType");
+			List<com.erp.model.dmp.entity.DictBasicEntity> dictbaseList = dictBasicService.getByKey("wdtSdyPlatformDeliveryType");
 			if (CollUtil.isNotEmpty(dictbaseList)) {
 				Map<String, String> deliveryTypeMap = dictbaseList.stream()
-						.collect(Collectors.toMap(e -> CharSequenceUtil.format("{}_{}",e.getName(), e.getValue()), DictBasicDTO.ViewDTO::getValue));
+						.collect(Collectors.toMap(e -> CharSequenceUtil.format("{}_{}",e.getName(), e.getValue()), com.erp.model.dmp.entity.DictBasicEntity::getValue));
 				cfgMaps.put("wdtSdyPlatformDeliveryType", deliveryTypeMap);
 			}
 			cfgMaps.put("warehouse", FeignQuery.list(WarehouseEntity.class).stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getKingdeeWarehouseCode)));

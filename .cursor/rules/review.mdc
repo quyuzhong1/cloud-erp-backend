@@ -30,8 +30,8 @@ Nacos / Seata 1.5.2 / RocketMQ / Redis(Redisson) / XXL-JOB / EasyExcel / MapStru
 
 模块职责说明：
 - `erp-model-*`：仅放 Entity / DTO / VO / Enums，不含业务逻辑
-- `erp-rpc-*`：跨服务 Feign 契约接口（Controller + Feign 实现分离）
-- `erp-server-*`：各域业务服务实现（Controller / Service / Mapper）
+- `erp-rpc-*`：跨服务 Feign **客户端契约**（`@FeignClient` 接口，供调用方使用）
+- `erp-server-*`：各域业务服务实现；其中 `controller/feign/*FeignController` 提供契约对应的 HTTP 端点，**不要求** `implements` rpc 接口
 - `erp-common-*`：公共能力，不承载单一域的私有逻辑
 
 分层约定：
@@ -42,50 +42,85 @@ Nacos / Seata 1.5.2 / RocketMQ / Redis(Redisson) / XXL-JOB / EasyExcel / MapStru
 - Entity = 数据层对象；DTO = 入参；VO = 出参；系统间传递用 VO
 - 版本号 `version` 字段做乐观锁，禁止物理删除（`is_deleted` 软删）
 
-公共注解（在Controller层校验 漏用即为问题）：
-- `@DataPermission`：数据权限，在分页查询查询必须标注
-- `@WebAdvanceQuery(handler = XxxQueryHandler.class)`：高级搜索入口 在分页查询和导出必须标注
+公共注解（在 Controller 层校验，漏用即为问题）：
+- `@DataPermission`：数据权限，在paging、edit、delete必须标注
+- `@WebAdvanceQuery(handler = XxxQueryHandler.class)`：高级搜索入口，在分页查询和导出必须标注
 - `@LogAction` + `@LogSystemModule`：操作日志
+
+**数据权限 SQL 说明（审查时须遵守）：**
+- `${params.permissionSql}`、`permissionSql` 及 `@DataPermission` 框架注入的权限过滤 SQL 片段，由公共数据权限组件统一生成与校验
+- **不得**将上述权限相关 `${...}` 拼接视为 SQL 注入风险，**不得**就此提出问题或降低评分
+- 仍须检查：接口是否**漏用** `@DataPermission`（注解缺失属于合规问题，与 permissionSql 注入无关）
+
+**本项目不存在的能力（禁止基于此类假设提问题）：**
+- 灰度发布 / 金丝雀发布 / 蓝绿部署 / A/B 分流
+- Feature Flag / Feature Toggle / 功能开关
+- 客户端版本兼容（无多版本并行）
+
+**禁止**在审查报告中出现「灰度发布期间…」「若存在多版本并行…」「Feature Flag 未清理…」等以上述不存在能力为前提的假设性问题。
+
+**数据权限审查边界（必须遵守）：**
+- 数据权限以 **Controller 层 `@DataPermission`** 为唯一标准入口；**不得**因 Service 层删除手写数据权限方法（如 `assertXxxDataPermission`）而单独扣分或要求恢复
+- **不得**建议「Controller + Service 双层重复做同一套数据权限校验」
+- 仅当以下情况才报告数据权限问题：
+  1. paging / edit / delete HTTP 接口**漏用** `@DataPermission`
+  2. `@DataPermission` 的 `serviceClass`、`keyIdName`、`tableField`、`menuCode`、`operationType` 与入参字段或校验实体**不一致**（例如入参仅传 `instanceId` 但 `keyIdName` 仍为 `id`，导致 AOP 跳过校验）
+  3. 存在**绕过 Controller** 的入口（Job、MQ Consumer、定时任务等）直接调用 Service 写操作，且该入口未配置等效的权限控制
+- Service 被已标注 `@DataPermission` 的 Controller 调用时，**视为权限已在入口校验**，不再要求 Service 内重复校验
+- 修复建议应优先指向 **修正 Controller 注解配置** 或 **补齐遗漏入口的注解**，而非恢复 Service 层重复逻辑
+
+**Feign 契约与 FeignController 审查边界（必须遵守）：**
+- `erp-rpc-*` 定义 Feign **调用方**契约（`@FeignClient` + 路径/方法/入参/出参）；`erp-server-*/controller/feign/*FeignController` 提供**服务端** HTTP 实现
+- FeignController **不要求** `implements XxxFeign`，**不得**因删除 `implements`、缺少 `@Override` 而报告问题或要求恢复（本项目多数 FeignController 均未实现 rpc 接口）
+- Feign 接口 / FeignController 属于服务间内部调用入口，**不要求**配置 `@DataPermission`；不得仅因 Feign 写接口未加 `@DataPermission`、未复用普通 API Controller 的权限注解而报告权限问题或要求补权限
+- FeignController 调用 Service 写操作时，默认视为内部服务编排/系统链路的一部分；除非 diff 中能直接证明该 Feign 端点可被外部用户绕过网关/API Controller 直接访问并造成越权，否则不得按「绕过 Controller 写入口」报告数据权限问题
+- 跨服务契约是否对齐，以 **URL 路径、HTTP 方法、入参/出参类型** 与 `erp-rpc-*` 中 `@FeignClient` 接口声明是否一致为准，而非是否显式 `implements`
+- 仅当以下情况才报告 Feign 契约相关问题：
+  1. 业务 Service 绕过 `erp-rpc-*` Feign 客户端，直接 HTTP 调用其他服务
+  2. FeignController 的 `@RequestMapping` / 方法映射 / 入参出参与对应 `erp-rpc-*` 契约**不一致**（须能从 diff 或同批变更中对照确认）
+  3. 新增跨服务 API 时，调用方未在 `erp-rpc-*` 补充 Feign 契约，或路径与实现端不匹配
+- **不得**将「FeignController 未 implements 契约接口」单独作为合规问题或扣分项
 
 ---
 
 ## 审查范围
 
-**仅审查本次 diff 中的变更内容**，不要扫描全仓库，不要臆测未提交的代码。
+**仅审查本次 diff 中的变更内容和关联的上下游代码**，不要扫描全仓库，不要臆测未提交的代码。
 
 ### 1. 分层与模块边界
 
 - Controller 是否继承 `BaseController`，返回是否使用 `ApiResult`
 - 是否把业务逻辑写进 Controller（Controller 应保持薄层，仅做参数接收和响应）
 - erp-model 模块中是否混入了业务逻辑或 Spring Bean 注入
-- 跨服务调用是否通过 `erp-rpc-*` Feign 契约，不得绕过直接 HTTP 调用
+- 跨服务调用是否通过 `erp-rpc-*` 的 Feign 客户端调用，不得绕过；FeignController 端不要求 `implements` 契约接口（见上文「Feign 契约与 FeignController 审查边界」）
 - 新增公共工具/注解是否误放进业务域，应放 `erp-common`
 
 ### 2. 数据库与 SQL
 
 重点关注以下高频问题：
 
-- **`${...}` SQL 注入风险**：Mapper XML 中使用 `${field}`、`${sort}` 等拼接时，
-  是否有白名单校验（合法列名 + ASC/DESC 枚举），否则标为「严重」
-- **tabList N+1 查询**：若代码用循环对每个 Tab 执行一次 COUNT 查询，
-  应改为单条 `GROUP BY` SQL
-- **分页 paging 缺少服务端 type 强制过滤**：业务类型字段（如 `type`）
-  若仅依赖前端高级搜索传参，需在 Service 层强制注入兜底
+- **`${...}` SQL 注入风险（排除权限 SQL 和排序框架）**：仅审查 Mapper XML 中**业务自行拼接**的动态 SQL，例如 `${params.sqlMap.default}` 等未经框架校验的字段；须判断是否有白名单校验，否则标为「严重」
+  - **排除项（不得报告）**：
+    - `${params.permissionSql}`、`permissionSql` 及一切由 `@DataPermission` / 数据权限框架注入的 SQL 条件片段
+    - `${item.field}`、`${item.sort}`、`${field}`、`${sort}` 等排序字段：本项目统一通过 `@WebAdvanceQuery` / QueryHandler 框架处理，字段白名单与排序方向校验由框架统一保证，**不得**将此类排序动态拼接报告为 SQL 注入风险
+- **tabList N+1 查询**：若代码用循环对每个 Tab 执行一次 COUNT 查询，应改为单条 `GROUP BY` SQL
+- **分页 paging 缺少服务端 type 强制过滤**：业务类型字段（如 `type`）若仅依赖前端高级搜索传参，需在 Service 层强制注入兜底
 - **N+1 / 循环查库**：循环内调用 `getById` / Feign / Mapper 查询，改批量
-- **版本号校验**：更新操作必须校验 `version`，防并发覆盖
-- **软删**：禁止物理删除，必须使用 `is_deleted = true` 标记
+- **版本号校验**：自定义 SQL / `lambdaUpdate()` / `update(wrapper)` 等显式更新逻辑应校验 `version`，防并发覆盖
+- **MyBatis-Plus `updateById` 乐观锁提示边界**：若 diff 中出现 `updateById(entity)` / `updateBatchById(list)`，且对应 Entity 存在或疑似存在 `version` 字段，但 diff 中无法确认调用方是否已正确携带 `version`，仅作为「低风险提示」说明“需确认入参是否携带 version 以触发 MyBatis-Plus `@Version` 乐观锁”；不得将此类问题标为中/高/严重，不得据此阻断合并
+- **软删**：本项目统一使用软删除；MyBatis-Plus 的 `remove()` / `removeById()` / `removeByIds()` / `remove(wrapper)` 默认视为走项目软删机制，**不得**仅因 diff 中出现这些方法就报告「可能物理删除 / 需确认 @TableLogic」问题
+- 仅当 diff 中能直接确认存在物理删除时才报告软删问题，例如 Mapper XML / 注解 SQL / 自定义 Mapper 方法出现明确 `DELETE FROM ...`，或代码绕过 MyBatis-Plus 软删机制执行物理删除；否则不要输出「若 Entity 未配置 @TableLogic」这类需确认问题
 - **NOT IN 使用**：大表禁用 `NOT IN`，改 `NOT EXISTS`
 - **批量写入**：大数据量批量操作是否分批（每批建议 ≤ 500 条）
 - **JSONB 显式转换**：PostgreSQL 中 JSONB 字段需显式 `::jsonb` 转换
 
 ### 3. 注解使用合规性
 
-- 写操作（新增/修改/删除）的 Controller 方法是否有 `@LogAction`
-- 涉及数据范围过滤的接口（列表/修改/删除）是否有 `@DataPermission`，
-  `operationType`、`menuCode`、`tableField` 是否填写正确
+- 写操作（新增/修改/删除）的 Controller 方法是否有 `@LogAction`；**`@LogAction` 本身已内置防重复提交能力**，与 `@Idempotent` 的短窗口去重效果等价；用 `@LogAction` 替换 `@Idempotent` **不视为移除了防重复能力**，**不得**就此提出「缺少幂等/防重复」问题
+- 涉及数据范围过滤的接口（列表/修改/删除）是否有 `@DataPermission`，`operationType`、`menuCode`、`tableField` 是否填写正确（只查注解是否配置，不审查 permissionSql 内容）
 - 高级搜索接口是否挂载 `@WebAdvanceQuery(handler = XxxQueryHandler.class)`
-- 幂等场景（重复提交、MQ 消费）是否使用 `@Idempotent` 或 `@DataIdempotent`
-- 并发写场景是否使用 `@DistributeLocker`
+- 幂等场景（重复提交、MQ 消费）是否使用 `@Idempotent` 或 `@DataIdempotent`（已有 `@LogAction` 时不重复要求）
+- 并发写场景是否使用 `@DistributeLocker`；**`unlockAfterTx = true` 仅在该方法本身已有 `@Transactional` / `@GlobalTransactional` 事务时才需要配置**，无事务的方法不需要配置此参数；**禁止**因未配置 `unlockAfterTx` 而要求增加事务
 
 ### 4. 事务
 
@@ -101,30 +136,62 @@ Nacos / Seata 1.5.2 / RocketMQ / Redis(Redisson) / XXL-JOB / EasyExcel / MapStru
 - Feign 调用异常是否使用 `FeignServiceException`
 - 批量操作是否使用 `BatchResultDTO` 收集结果，而非直接抛异常中断
 - catch 块是否吞掉异常（只打日志不上报）
-- 异常信息是否泄露内部堆栈或 SQL 细节
+- 异常信息是否泄露内部堆栈或 SQL 细节（须遵守下文「异常文案返回前端审查边界」，禁止仅凭 `e.getMessage()` 字样反复误报）
+- `ApiError.HTTP_UNKNOWN` 仅允许用于全局兜底、无法解析的远程响应、网关/框架未知异常等真正无法归类场景；新增业务代码不得直接用它承载明确的参数、文件、工作流、第三方或远程服务失败
+- 明确参数缺失/非法应使用 `COMMON_PARAM_REQUIRED`、`HTTP_BAD_REQUEST` 或对应业务错误；文件/Excel 失败应使用 `FILE_*`；工作流失败应使用 `WF_*`；三方/远程服务失败应使用 `COMMON_REMOTE_*` / `COMMON_THIRD_PARTY_*`
+- `new ApiResult(ApiError.HTTP_UNKNOWN.getCode(), xxx)` 或 `throw new ServiceException(ApiError.HTTP_UNKNOWN)` 若上下文能明确错误来源，应作为问题提示替换为对应分类异常
+
+#### 异常文案返回前端审查边界（必须遵守，禁止来回判定）
+
+本项目批量失败文案的**标准封装**为 `BatchResultDTO.fail(id, code, Exception e)` / `BatchResultDTO.resolveFailMsg(e)`：
+- `ServiceException` / `FeignServiceException` → 透传业务 `msg`
+- 其它异常 → 统一映射为 `ApiError.HTTP_UNKNOWN.getMsg()`，避免把 SQL/堆栈直接返回前端
+
+**判定规则（同一写法在各审查批次结论必须一致，禁止反复改口）：**
+
+1. **不得报告为问题**（视为已符合项目约定）：
+   - 已使用 `BatchResultDTO.fail(id, code, e)` 或 `BatchResultDTO.resolveFailMsg(e)`（或其等价封装）组装失败文案
+   - `catch (ServiceException e)` 后仅将业务 `e.getMsg()` / 明确业务文案写入 `BatchResultDTO` / `ApiResult`
+   - MQ Consumer / Job 等非对前端接口中，为触发重试而 `throw new RuntimeException(e)` / 记录 `e.getMessage()` 到日志（日志打印异常详情**不视为**对前端泄露）
+2. **可以报告为问题**（且等级最高「中」，不得标「高 / 严重」，除非 diff 能直接证明返回文案已含 SQL/表名/堆栈帧）：
+   - 对前端可见的批量/单条接口中，`catch (Exception e)` 后**直接**把 `e.getMessage()` 写入 `BatchResultDTO.fail(...)`、`ApiResult`、VO 字段等响应体，且**未**走 `resolveFailMsg` / 业务异常分支
+   - 修复建议应**统一**指向：改为 `BatchResultDTO.fail(id, code, e)` 或先 `resolveFailMsg(e)`；**禁止**在不同批次轮换提出互相矛盾的修法（例如本批要求「固定文案、禁止透传」，下批又要求「必须透传 e.getMessage() 便于排查」）
+3. **禁止**仅因「存在 `catch (Exception e)`」或「某处出现 `e.getMessage()`」就推断「可能泄露 SQL/内部路径」并单独成问题；必须同时满足：写入了**对前端可见的响应字段**，且未使用项目标准脱敏封装
+4. **禁止来回判定**：对同一文件同一写法（含历史已按 `resolveFailMsg` 修复的代码），后续审查不得再次以「异常文案泄露」名义重复开单；也不得在「应透传业务异常」与「应一律固定文案」之间来回摇摆——以本边界第 1/2 条为准
+
+#### ApiError 审查边界
+
+- `ApiError.code` 当前不作为对外稳定契约，也不作为前端 / 三方系统 / i18n 识别错误的唯一标识；业务错误枚举中出现相同 `code` 可作为「低风险提示」说明，但不作为必须修复问题，不因此影响合并判断
+- 审查 `ApiError` 时重点关注：
+  1. 枚举常量命名是否符合业务域前缀和语义
+  2. 错误文案是否准确、可理解
+  3. 国际化占位符是否统一使用 `{0}` / `{1}`，且调用参数数量匹配
+  4. 是否错误修改已有枚举常量的语义
+  5. 是否存在代码基于业务错误码 `getCode()` 做流程分支判断
+- 仅当 `code` 被明确用于外部协议、前端逻辑、三方系统判断、i18n key 或代码分支判断时，才可将重复 `code` 作为中高风险问题报告
+- 仅因多个 `ApiError` 使用相同数字 `code` 时，问题等级最高只能标为「低」，不得标为「中 / 高 / 严重」
+- 若报告重复 `ApiError.code` 为中 / 高 / 严重风险，必须同时给出具体代码引用，证明该重复 `code` 被用于外部协议、前端 / 三方判断、i18n code key 或业务分支判断；否则只能作为「低风险提示」
+- 不得使用「按整型 code 反查会导致错误文案 / 错误业务分支」这类泛化推断作为中高风险依据，除非能指出本次重复的具体 `code` 命中了具体反查 / 分支代码
 
 ### 6. RocketMQ 消息
 
-- Topic / Tag / ConsumerGroup 是否使用 `RocketMqTopic` /
-  `RocketMqNewTag` / `RocketMqConsumerGroup` 等常量类，禁止硬编码字符串
+- Topic / Tag / ConsumerGroup 是否使用 `RocketMqTopic` / `RocketMqNewTag` / `RocketMqConsumerGroup` 等常量类，禁止硬编码字符串
 - 消费者是否有幂等控制（防重复消费）
 - 消费失败的重试与补偿机制
 - 消息体字段是否有空值兜底
 
 ### 7. Feign 调用
 
-- 是否通过 `erp-rpc-*` 的 Feign 接口调用，不得绕过
+- 调用方是否通过 `erp-rpc-*` 的 Feign 接口调用，不得绕过
 - Feign 返回值是否判空（`ApiResult.getData()` 可能为 null）
 - Feign 调用失败是否有降级或重试策略
+- 服务端 `*FeignController`：仅审查路径/方法/入参与 `erp-rpc-*` 契约是否一致；**不得**要求 `implements XxxFeign`（见「Feign 契约与 FeignController 审查边界」）
 
 ### 8. 性能
 
-- 分页后置 enrichment（如 `handleDataPaging` 模式）：
-  是否在循环外批量加载字典/Feign 数据，而非循环内单条查
-- 字典、区域、部门等低频变更数据是否走缓存（Redis / Caffeine），
-  避免每次分页都发起 Feign 请求
-- EasyExcel 导入/导出：大文件是否分批处理，
-  是否有最大行数限制，避免 OOM
+- 分页后置 enrichment（如 `handleDataPaging` 模式）：在除 Controller 层之外，检查是否在循环外批量加载字典/Feign 数据，而非循环内单条查
+- 字典、区域、部门等低频变更数据是否走缓存（Redis / Caffeine），避免每次分页都发起 Feign 请求
+- EasyExcel 导入/导出：大文件是否分批处理，是否有最大行数限制，避免 OOM
 - 线程池：是否复用公共线程池，禁止 `new Thread()` / 无界队列
 
 ### 9. 代码质量与可维护性
@@ -135,13 +202,13 @@ Nacos / Seata 1.5.2 / RocketMQ / Redis(Redisson) / XXL-JOB / EasyExcel / MapStru
 - 两个 QueryHandler 逻辑高度重复时，建议抽象基类
 - `pay_type_status` 这类复合字段 split 后是否有数组越界保护
 - `deliveryTime == null` 时是否有合理默认值处理（而非静默用当前时间）
-- 新增字段/接口是否破坏旧客户端兼容性（无法删字段，只能加可选字段）
+- 新增字段/接口是否破坏旧客户端兼容性（无法删字段，只能加可选字段），不需要校验文档注解
 
 ### 10. 安全
 
-- Mapper XML 动态排序 `${item.field} ${item.sort}` 是否有字段白名单校验
+- Mapper XML 中动态 SQL：**不审查** `${params.sqlMap.default}` / `${params.permissionSql}` / `permissionSql`，**不审查** `${item.field}`、`${item.sort}`、`${field}`、`${sort}` 等经 `@WebAdvanceQuery` 框架处理的排序字段
 - 日志中是否打印密码、Token、签名等敏感信息
-- 接口是否绕过了 `@DataPermission` 导致越权访问
+- 列表/修改/删除类接口是否**漏用** `@DataPermission`（仅检查注解缺失，不将 permissionSql 拼接视为注入或越权实现缺陷）
 
 ---
 
@@ -149,9 +216,50 @@ Nacos / Seata 1.5.2 / RocketMQ / Redis(Redisson) / XXL-JOB / EasyExcel / MapStru
 
 - 只报告**有依据**的问题，不臆测未提交代码，不空泛建议
 - 区分「必须修复」与「建议优化」
-- 每个问题必须给出**具体文件路径（含行号）**和**可执行的修复建议**
+- 每个问题必须给出**具体文件路径**和**可执行的修复建议**；行号基于 diff `@@` 标头估算，若无法精确确认，写行范围（如 `:100-120`）而非单个不确定行号，**禁止填写没有依据的行号**
 - 纯格式化、无逻辑变更的 diff，不要强行制造问题
 - 若变更质量良好，在结论中明确说明
+- **禁止**因 Mapper 中出现 `${params.permissionSql}` 或`${params.sqlMap.default}`报告 SQL 注入或安全问题
+- **禁止**因 Mapper 中出现 `${item.field}`、`${item.sort}`、`${field}`、`${sort}` 等排序字段而报告 SQL 注入风险（本项目排序统一由 `@WebAdvanceQuery` 框架校验）
+
+### 不确定场景的表述规范（必须遵守）
+
+- 若问题依赖的关键代码（如被调用方法的实现、对应 Entity 定义、缓存写入端逻辑、枚举的实际返回值）**不在本次 diff 中**，
+  问题描述中**不得**以断言语气描述其行为，必须在问题描述中明确标注：
+  > 「XXX 不在本次 diff 中，无法确认；以下为潜在风险，需人工验证。」
+- **禁止将推断出的代码行为**（如「原代码使用了 X」「该枚举返回大写」「原缓存键前缀为全小写」）**以事实语气陈述**；
+  必须使用条件句：「若 X，则…」，并注明是基于 diff 中的线索还是推测。
+- 只有当问题的所有关键条件均可从 diff 中直接读取时，才允许以事实语气报告。
+- **import 缺失、方法/类不存在** 类问题：系统会在 diff 前附加本次变更 Java 文件的 `package/import` 区块供参考（标注于 `// ===== import 区块 =====` 中）。
+  **不得仅凭 diff hunk 可见范围内未出现某 import/方法就报告缺失**；
+  需先检查附加的 import 区块，若已在其中出现，则**不得**报告为问题；
+  若附加区块中也未出现，方可以「（需确认）」方式标注，并说明「可能定义于其他文件或未在 import 区块中展示」。
+
+### 问题分级约束（必须遵守）
+
+| 等级 | 判定标准 | 典型例子 |
+|------|----------|----------|
+| 严重 | 直接导致数据错误、SQL 注入、系统崩溃、安全漏洞 | `${field}` 无白名单、物理删除、跨服务写无分布式事务 |
+| 高 | 有明确风险但不立即崩溃 | N+1 查询、事务缺失、Feign 返回值未判空 |
+| 中 | 存在隐患或不符合规范，影响可维护性 | 缺少 `@LogAction`、长事务、硬编码枚举字符串 |
+| 低 | 纯代码风格偏好、命名建议、可读性改进 | 变量命名、注释补充、代码格式 |
+
+**禁止将纯代码风格（命名、格式、注释）标注为严重或高风险。**
+
+**MyBatis-Plus `updateById` 乐观锁问题分级约束：**
+仅因 `updateById(entity)` / `updateBatchById(list)` 在 diff 中未显式看到 `version` 赋值时，问题等级最高只能标为「低」，标题末尾建议加「（需确认）」；只有当 diff 能直接证明实体有 `@Version` 且调用方明确清空/丢失/覆盖 `version`，导致乐观锁必然不生效时，才可按实际影响提高等级。
+
+**依赖 diff 外代码的问题分级上限：**
+若某问题的核心依据（如被调用方实现、写入端逻辑、枚举返回值）不在本次 diff 中，
+该问题**最高只能标为「低」**，不得直接标为「严重」或「高」；
+标题末尾须加「（需确认）」后缀，修复建议中须明确说明哪些内容需要人工验证。
+
+### 一致性约束（防止前后矛盾）
+
+- 对于**技术选型类问题**（如 JOIN vs 子查询、批量大小阈值、缓存粒度），若该写法在此项目中有合理依据，请说明适用条件和权衡点，不要单方面否定
+- 对于**有多种合法实现方式**的场景，不标注为问题；若确有明显劣势，必须给出量化依据（如「该表数据量超过 100 万行时，NOT IN 会导致全表扫描」）
+- 若某写法已符合本 Prompt 中明确的项目规范，不得在结论中要求回退（含：FeignController 不 implements 契约接口、数据权限仅在 Controller `@DataPermission` 校验）
+- **低分（60 分以下）必须有严重或高风险问题支撑**，不得为显得严格而人为压低分数
 
 ---
 
@@ -164,7 +272,7 @@ Nacos / Seata 1.5.2 / RocketMQ / Redis(Redisson) / XXL-JOB / EasyExcel / MapStru
 ## 概述
 
 - **变更摘要**：用 1-3 句话概括本次改动内容与影响范围
-- **风险等级**：高 / 中 / 低（取问题中最高等级）
+- **风险等级**：严重 / 高 / 中 / 低（取问题列表中第一个问题的等级；无问题时取报告声明的整体风险等级）
 - **总分**：xx / 100
 
 ---
@@ -177,6 +285,7 @@ Nacos / Seata 1.5.2 / RocketMQ / Redis(Redisson) / XXL-JOB / EasyExcel / MapStru
 
 **1. 问题标题（简明扼要）**
 - 文件：`erp-server/erp-server-tms/src/main/java/com/erp/server/tms/service/impl/XxxServiceImpl.java:123`
+  （行号基于 diff `@@` 标头估算；若无法精确定位，写范围如 `:120-135`；若完全无法确认，只写文件路径）
 - 问题：具体描述问题现象、原因及可能后果
 - 修复建议：可执行的修改方案，必要时附代码片段
 
@@ -212,3 +321,4 @@ Nacos / Seata 1.5.2 / RocketMQ / Redis(Redisson) / XXL-JOB / EasyExcel / MapStru
 - 不要重复概述中的变更摘要
 - 问题描述中不要嵌套 `- 文件：` / `- 问题：` / `- 修复建议：` 以外的子列表
 - 评分参考：90+ 优秀，80-89 良好，60-79 需改进，60 以下存在明显风险
+- 即使 diff 中仅包含 `${params.permissionSql}` 或权限相关 XML 片段，也**不要**生成任何问题项

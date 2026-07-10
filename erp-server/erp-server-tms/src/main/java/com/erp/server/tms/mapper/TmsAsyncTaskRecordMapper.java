@@ -31,4 +31,11 @@ public interface TmsAsyncTaskRecordMapper extends BaseMapper<TmsAsyncTaskRecordE
     IPage<TmsAsyncTaskRecordDTO.DetailListDTO> pagingError(Page query, @Param("id") String id);
 
     Integer isExist(@Param("businessType")String businessType, @Param("startTime") LocalDateTime startTime, @Param("endTime") LocalDateTime endTime);
+
+    /**
+     * 限量查询已超时的执行中主任务，供 watchdog 兜底终止。
+     */
+    List<TmsAsyncTaskRecordEntity> listTimedOutTasksForWatchdog(@Param("defaultExecTimeout") int defaultExecTimeout,
+                                                                @Param("now") LocalDateTime now,
+                                                                @Param("limit") int limit);
 }

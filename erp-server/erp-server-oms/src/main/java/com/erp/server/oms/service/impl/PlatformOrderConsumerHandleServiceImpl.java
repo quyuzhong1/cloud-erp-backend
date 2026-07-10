@@ -154,6 +154,15 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
               soB2cDetailService.updateWarehouseIdByMainId(mainEntity.getId(),warehouseId,true);
             }
         }
+        //虾皮平台仓订单默认使用店铺绑定平台仓，不覆盖已有仓库
+        if (isWarehouseEmpty
+                && hasPlatformWarehouse
+                && PlatformDictEnum.SHOPEE.getCode().equals(mainEntity.getDictPlatform())) {
+            String warehouseId = resultDTO.getShopWarehouseId();
+            if(StringUtils.isNotBlank(warehouseId)){
+              soB2cDetailService.updateWarehouseIdByMainId(mainEntity.getId(),warehouseId,false);
+            }
+        }
 
         Boolean retryFlag = false;
         // 跳过未作废的自发货无地址的订单
@@ -393,7 +402,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         List<String> countryIds;
         if (Objects.nonNull(dto.getReceiver())){
             countryIds = Stream.of(shopInfo.getDictCountryCode(), dto.getReceiver().getCountry()).distinct().collect(Collectors.toList());
-            if(StringUtils.isBlank(dto.getReceiver().getCountry()) && PlatformDictEnum.TE_MU.getCode().equalsIgnoreCase(dto.getPlatform())){
+            if(StringUtils.isBlank(dto.getReceiver().getCountry()) && StringUtils.isNotBlank(shopInfo.getDictCountryCode())){
                 dto.getReceiver().setCountry(shopInfo.getDictCountryCode());
             }
         }else {
@@ -475,7 +484,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
 
             receiverEntity.setCustomerId(customerB2cEntity.getId());
             soB2cReceiverService.buildPartitionId(receiverEntity,shopInfo);
-            if(PlatformDictEnum.TE_MU.getCode().equals(dto.getDictPlatform()) && StringUtils.isBlank(receiverEntity.getCountry()) && StringUtils.isNotBlank(shopInfo.getDictCountryCode())){
+            if(StringUtils.isBlank(receiverEntity.getCountry()) && StringUtils.isNotBlank(shopInfo.getDictCountryCode())){
                 receiverEntity.setCountry(shopInfo.getDictCountryCode());
             }
             soB2cReceiverService.saveOrUpdate(receiverEntity);

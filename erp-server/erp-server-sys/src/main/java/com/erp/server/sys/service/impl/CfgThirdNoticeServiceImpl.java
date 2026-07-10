@@ -23,6 +23,7 @@ import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.*;
 import com.erp.model.sys.enums.CfgThirdNoticeApplyScopeEnum;
 import com.erp.model.sys.enums.CfgThirdNoticeMethodEnum;
+import com.erp.model.sys.enums.CfgThirdNoticeUrlTypeEnum;
 import com.erp.model.sys.enums.RuleTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysPostFeign;
@@ -189,8 +190,8 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
             Map<String, List<CfgRuleConditionDTO.ConditionElementDTO>> oldGroup = oldConditionList.stream().collect(Collectors.groupingBy(CfgRuleConditionDTO.ConditionElementDTO::getRuleId));
 
             //单据类型
-            List<DictBasicDTO.ViewDTO> thirdNoticeBusinessType = dictBasicService.listByType("thirdNoticeBusinessType");
-            Map<String, String> businessTypeMap = thirdNoticeBusinessType.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getValue, DictBasicDTO.ViewDTO::getName,(o1,o2) -> o1));
+            List<DictBasicEntity> thirdNoticeBusinessType = dictBasicService.listByType("thirdNoticeBusinessType");
+            Map<String, String> businessTypeMap = thirdNoticeBusinessType.stream().collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName,(o1,o2) -> o1));
 
             for (CfgThirdNoticeEntity oldEntity : oldList) {
                 List<CfgRuleConditionDTO.ConditionElementDTO> conditionElementDTOS = oldGroup.get(oldEntity);
@@ -446,8 +447,8 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
 
     private void fillList(List<CfgThirdNoticeDTO.ListDTO> records) {
         //单据类型
-        List<DictBasicDTO.ViewDTO> thirdNoticeBusinessType = dictBasicService.listByType("thirdNoticeBusinessType");
-        Map<String, String> businessTypeMap = thirdNoticeBusinessType.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getValue, DictBasicDTO.ViewDTO::getName,(o1,o2) -> o1));
+        List<DictBasicEntity> thirdNoticeBusinessType = dictBasicService.listByType("thirdNoticeBusinessType");
+        Map<String, String> businessTypeMap = thirdNoticeBusinessType.stream().collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName,(o1,o2) -> o1));
         //飞书
         for (CfgThirdNoticeDTO.ListDTO record : records) {
             record.setBusinessTypeName(businessTypeMap.getOrDefault(record.getBusinessType(),""));
@@ -524,11 +525,14 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
         data.setApplyScopeName(CfgThirdNoticeApplyScopeEnum.getName(entity.getApplyScope()));
 
         //单据类型
-        List<DictBasicDTO.ViewDTO> thirdNoticeBusinessType = dictBasicService.listByType("thirdNoticeBusinessType");
+        List<DictBasicEntity> thirdNoticeBusinessType = dictBasicService.listByType("thirdNoticeBusinessType");
         thirdNoticeBusinessType.stream().filter(e -> e.getValue().equals(entity.getBusinessType())).findFirst().ifPresent(e -> data.setBusinessTypeName(e.getName()));
 
         String method = data.getMethod();
         data.setMethodName(CfgThirdNoticeMethodEnum.getName(method));
+        // noticeType 存的即为显示文本（枚举 name 或历史自定义值），直接透传
+        data.setNoticeTypeName(entity.getNoticeType());
+        data.setUrlTypeName(CfgThirdNoticeUrlTypeEnum.getName(entity.getUrlType()));
         if(StringUtils.isNotBlank(data.getPost())){
             //岗位id
             List<String> postIdList = Arrays.asList(data.getPost().split(","));
@@ -594,8 +598,8 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
                 .eq(CfgApproveSyncFieldMapEntity::getMainId, id)
                 .update();
         //单据类型
-        List<DictBasicDTO.ViewDTO> thirdNoticeBusinessType = dictBasicService.listByType("thirdNoticeBusinessType");
-        Map<String, String> businessTypeMap = thirdNoticeBusinessType.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getValue, DictBasicDTO.ViewDTO::getName,(o1,o2) -> o1));
+        List<DictBasicEntity> thirdNoticeBusinessType = dictBasicService.listByType("thirdNoticeBusinessType");
+        Map<String, String> businessTypeMap = thirdNoticeBusinessType.stream().collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName,(o1,o2) -> o1));
         // 删除日志数据
         String msg = StrUtil.format("用户【{}】操作【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), "三方通知配置");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_THIRD_NOTICE.getCode(), entity.getId(), "删除三方通知配置数据");

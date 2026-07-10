@@ -12,6 +12,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.DictKindgeeConstant;
 import com.common.business.dto.AttachDTO;
@@ -72,6 +73,7 @@ import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.LWAException;
 import com.erp.sdk.oms.amz.spapi.api.AwdApi;
 import com.erp.sdk.oms.amz.spapi.api.FbaInboundApi;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonFbaLabelTypeEnum;
 import com.erp.sdk.oms.amz.spapi.model.awd.ShipmentLabels;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.GetLabelsResponse;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.ShipmentStatus;
@@ -124,6 +126,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     private FbaShipmentDetailService fbaShipmentDetailService;
     @Resource
     private ShopInfoFeign shopInfoFeign;
+    @Lazy
     @Resource
     private FbaShipmentReceiveService fbaShipmentReceiveService;
     @Resource
@@ -388,6 +391,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(keyName = "dto.shopId")
     public Boolean pullShipment(FbaShipmentDTO.PullShipmentDTO dto) {
         // 检查当前店铺是否授权
         ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(dto.getShopId());
@@ -424,9 +428,40 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             return true;
         }
 
-        // FBA/Amazon货件：走DMP拉取
+        // 审查说明（审查问题4，intentional）：Feign success=hotfix 已提交，货件落库见 DMP 异步任务
         DmpPullShipmentDTO pullShipmentDTO = new DmpPullShipmentDTO(dto.getShopId(), dto.getShipmentCodeList());
-        dmpAmazonFeign.pullShipment(pullShipmentDTO);
+        if (!Boolean.TRUE.equals(dmpAmazonFeign.pullShipment(pullShipmentDTO))) {
+            throw new ServiceException(ApiError.HTTP_BAD_REQUEST.getCode(), "拉取FBA货件失败");
+        }
+        return true;
+    }
+
+    /**
+     * 审查问题5（intentional）：未加 {@code @Transactional}，与 {@link #pullShipment} 差异可接受——
+     * 本方法仅 Feign 调 DMP 创建 hotfix，无 WMS 本地写库；{@code pullShipment} 的 {@code @Transactional} 为历史遗留，功能等价。
+     */
+    @Override
+    @DistributeLocker(keyName = "dto.shopId")
+    public Boolean pullInboundPlanShipment(FbaShipmentDTO.PullShipmentDTO dto) {
+        if (CollUtil.isEmpty(dto.getShipmentCodeList())) {
+            return true;
+        }
+        ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(dto.getShopId());
+        if (null == shopInfoEntity) {
+            throw new ServiceException(ApiError.SHOP_NOT_FOUND);
+        }
+        if (!AuthStatusEnum.ALREADY.getCode().equalsIgnoreCase(shopInfoEntity.getAuthStatus())) {
+            throw new ServiceException(ApiError.SHOP_AUTH_SHIPMENT_ERROR);
+        }
+        // 入库计划仅支持 Amazon 平台，禁止 TikTok / FBT 等其他平台误入新流程
+        if (!PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(shopInfoEntity.getDictPlatform())) {
+            throw new ServiceException(ApiError.HTTP_BAD_REQUEST.getCode(), "FBA入库计划货件拉取仅支持Amazon平台");
+        }
+        // 审查说明（审查问题4，intentional）：Feign success=hotfix 已提交，货件落库见 DMP 异步任务
+        DmpPullShipmentDTO pullShipmentDTO = new DmpPullShipmentDTO(dto.getShopId(), dto.getShipmentCodeList());
+        if (!Boolean.TRUE.equals(dmpAmazonFeign.pullInboundPlanShipment(pullShipmentDTO))) {
+            throw new ServiceException(ApiError.HTTP_BAD_REQUEST.getCode(), "拉取FBA入库计划货件失败");
+        }
         return true;
     }
 
@@ -2171,8 +2206,8 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
      **/
     private void checkOnwayWarehouse(WarehouseEntity warehouseEntity) {
         //校验目的仓是否为FBA第三方仓
-        List<DictBasicDTO.ListDTO> warehouseTypes = dictBasicService.getByKey("warehouseType");
-        DictBasicDTO.ListDTO listDTO = warehouseTypes.stream().filter(req -> "FBA".equals(req.getValue())).findFirst().orElse(null);
+        List<DictBasicEntity> warehouseTypes = dictBasicService.getByKey("warehouseType");
+        DictBasicEntity listDTO = warehouseTypes.stream().filter(req -> "FBA".equals(req.getValue())).findFirst().orElse(null);
         //如果是FBA第三方仓
         if (listDTO.getId().equals(warehouseEntity.getTypeId())) {
             //如果配置为空时默认为“FBA在途仓-xgwj-fba”
@@ -2267,9 +2302,9 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
     @Override
     public LocalDate getStopGenReceivedDate(FbaShipmentEntity fbaShipmentEntity) {
-        List<DictBasicDTO.ListDTO> stopGenReceivedTimeList = dictBasicService.getByKey(DictBasicEnum.STOP_GEN_RECEIVE_TIME.getKey());
+        List<DictBasicEntity> stopGenReceivedTimeList = dictBasicService.getByKey(DictBasicEnum.STOP_GEN_RECEIVE_TIME.getKey());
         if (!CollectionUtils.isEmpty(stopGenReceivedTimeList)) {
-            DictBasicDTO.ListDTO configDTO = stopGenReceivedTimeList.stream().findFirst().orElse(null);
+            DictBasicEntity configDTO = stopGenReceivedTimeList.stream().findFirst().orElse(null);
             LocalDateTime stopTime;
             if (null != configDTO && CharSequenceUtil.isNotBlank(configDTO.getValue())) {
                 // 配置时间为主
@@ -2702,7 +2737,8 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             }
             try {
                 FbaInboundApi api = AmazonSpApiInitUtils.create(FbaInboundApi.class, shopInfoDTO, false);
-                GetLabelsResponse response = api.getLabels(entity.getFbaShipmentId(), pageType, "BARCODE_2D", null, null, null, pageSize, 0);
+                GetLabelsResponse response = api.getLabels(entity.getFbaShipmentId(), pageType,
+                        AmazonFbaLabelTypeEnum.BARCODE_2D.getCode(), null, null, null, pageSize, 0);
                 if (CharSequenceUtil.isNotBlank(response.getPayload().getDownloadURL())){
                     labelUrl = PdfUtil.convertPdfUrlToErpUrl(response.getPayload().getDownloadURL(), true);
                 }

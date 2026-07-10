@@ -127,7 +127,7 @@ public class SmallBagCostAllocationJob {
             	for(LogisticsBillCostEntity l : list) {
             		costAllocationPool.execute(() -> {
             			try {
-    						logisticsBillCostService.pushAllocation(l.getId(), StrUtil.blankToDefault(l.getReconciliationMonth(),l.getConfirmTime().format(formatter)));
+    						logisticsBillCostService.pushAllocation(l.getId(), StrUtil.blankToDefault(l.getReconciliationMonth(), l.getConfirmTime().format(formatter)), null);
     					} catch (Exception e) {
     						WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
     				        warnMsgInfo.setBizName("自动生成小包分摊");

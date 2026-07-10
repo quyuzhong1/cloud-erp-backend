@@ -7,13 +7,10 @@ import com.erp.model.scm.dto.SalesDemandDTO;
 import com.erp.model.scm.dto.excel.SalesDemandExportExcelDTO;
 import com.erp.rpc.scm.feign.ExportScmFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
-import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.List;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_SALES_DEMAND;
 
@@ -22,12 +19,6 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_SALES_DEMAN
 public class ExportScmSalesDemandHandler extends AbstractPageFileEventHandler<SalesDemandExportExcelDTO, SalesDemandDTO.SearchParamDTO> {
     @Resource
     private ExportScmFeign exportScmFeign;
-    @Override
-    protected List<SalesDemandExportExcelDTO> getData(FileTask fileTask) {
-        SalesDemandDTO.SearchParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<SalesDemandDTO.SearchParamDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected PagingVO<SalesDemandExportExcelDTO> getPageData(PagingDTO<SalesDemandDTO.SearchParamDTO> dto) {

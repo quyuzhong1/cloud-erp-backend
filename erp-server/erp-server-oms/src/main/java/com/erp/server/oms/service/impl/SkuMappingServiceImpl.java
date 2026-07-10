@@ -264,12 +264,12 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             List<SkuVO> skuList = plmTaskFeign.listApproveSku();
             List<ListingInfoEntity> list = listingInfoService.list();
             String key = DictBasicTypeEnum.SALES_PLATFORM.getType();
-            List<DictBasicDTO.ViewDTO> dictBasicList = dictBasicService.getByKey(key);
+            List<DictBasicEntity> dictBasicList = dictBasicService.getByKey(key);
             //单位
             List<ProductUnitEntity> unitList = FeignQuery.create(ProductUnitEntity.class).list();
             //原产地
             String originKey = DictBasicTypeEnum.INVOICE_TAX_NFE_ORIGIN.getType();
-            List<DictBasicDTO.ViewDTO> originList = dictBasicService.getByKey(originKey);
+            List<DictBasicEntity> originList = dictBasicService.getByKey(originKey);
 
             SkuMappingExcelListener excelListenerUtil = new SkuMappingExcelListener(this,unitList,originList, skuList, shopInfoService, skuMappingList, dictBasicList, list, listingInfoService,operateLogService,invoiceTaxService);
             try {
@@ -288,9 +288,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         //仓库sku 对照
         if (warehouse.equals(type)) {
             // 查询仓库关联服务商
-            List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listApproveWarehouse();
+            List<WarehouseDTO.ListDTO> warehouseList = wmsTaskFeign.listApproveWarehouse();
             warehouseList = warehouseList.stream().filter(w -> !w.getDisabled()).collect(Collectors.toList());
-            List<String> warehouseIds = warehouseList.stream().map(WarehouseDTO.UpdateDTO::getId).collect(Collectors.toList());
+            List<String> warehouseIds = warehouseList.stream().map(WarehouseDTO.ListDTO::getId).collect(Collectors.toList());
             // 海外仓库
             List<WarehouseDTO.ListDTO> overseasWarehouseList = wmsWarehouseFeign.listByIds(warehouseIds);
             Map<String, WarehouseDTO.ListDTO> overseasWarehouseMap = new HashMap<>();
@@ -1150,7 +1150,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     private void fillCustomerDb(List<SkuMappingDTO.CustomerPagingViewDTO> list,PagingDTO<SkuMappingDTO.CustomerPagingParamDTO> dto) {
         //平台信息
         String type = DictBasicTypeEnum.SALES_PLATFORM.getType();
-        List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(type);
+        List<DictBasicEntity> dictList = dictBasicService.getByKey(type);
         for (SkuMappingDTO.CustomerPagingViewDTO item : list) {
             item.setMatchResultStr(ListingMatchResultEnum.getName(item.getMatchResult()));
             String platformTypeName = dictList.stream().filter(obj -> obj.getValue().equals(item.getPlatformName())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
@@ -1237,18 +1237,39 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
         List<String> skuIdList = list.stream().map(SkuMappingDTO.PagingViewDTO::getProductSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIdList);
+        if (CollectionUtils.isEmpty(skuList)) {
+            skuList = Collections.emptyList();
+        }
+        List<String> skuNoList = list.stream().map(SkuMappingDTO.PagingViewDTO::getProductSkuNo)
+                .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<SkuVO> skuNoVoList = CollectionUtils.isEmpty(skuNoList) ? Collections.emptyList() : plmTaskFeign.listBySkuNoList(skuNoList);
+        if (CollectionUtils.isEmpty(skuNoVoList)) {
+            skuNoVoList = Collections.emptyList();
+        }
+        Map<String, SkuVO> skuNoVoMap = skuNoVoList.stream()
+                .collect(Collectors.toMap(SkuVO::getSkuNo, Function.identity(), (k1, k2) -> k1));
         //子件信息
         List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
+        if (CollectionUtils.isEmpty(bomChildrenSkuList)) {
+            bomChildrenSkuList = Collections.emptyList();
+        }
 
         //原产地名称
-        List<DictBasicDTO.ViewDTO> originList = dictBasicService.getByKey(DictBasicTypeEnum.INVOICE_TAX_NFE_ORIGIN.getType());
-        Map<String, String> originMap = originList.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getValue, DictBasicDTO.ViewDTO::getName));
+        List<DictBasicEntity> originList = dictBasicService.getByKey(DictBasicTypeEnum.INVOICE_TAX_NFE_ORIGIN.getType());
+        if (CollectionUtils.isEmpty(originList)) {
+            originList = Collections.emptyList();
+        }
+        Map<String, String> originMap = originList.stream().collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName));
 
         for (SkuMappingDTO.PagingViewDTO item : list) {
             String skuId = item.getProductSkuId();
             String skuName = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).
                     findFirst().map(SkuVO::getSkuName).orElse("");
             item.setProductName(skuName);
+            SkuVO skuNoVo = skuNoVoMap.get(item.getProductSkuNo());
+            if (Objects.nonNull(skuNoVo)) {
+                item.setBoxQty(skuNoVo.getBoxQty());
+            }
             item.setMatchResultStr(ListingMatchResultEnum.getName(item.getMatchResult()));
             //查询sku是否存在子SKU
             List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuList.stream()
@@ -2549,5 +2570,13 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
                 .eq(SkuMappingEntity::getIsExpire,true)
                 .orderByDesc(SkuMappingEntity::getEffectiveTime)
                 .list();
+    }
+
+    @Override
+    public List<SkuMappingDTO.UnmatchCountDTO> countUnmatchedGroupByWarehouse(SkuMappingDTO.UnmatchQueryDTO dto) {
+        if (dto == null || StringUtils.isBlank(dto.getType())) {
+            throw new ServiceException("SKU未匹配统计：type 不能为空");
+        }
+        return baseMapper.countUnmatchedGroupByWarehouse(dto);
     }
 }

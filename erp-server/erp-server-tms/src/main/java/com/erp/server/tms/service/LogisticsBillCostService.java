@@ -8,10 +8,13 @@ import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO.EditDataDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO.EditViewDTO;
+import com.erp.model.tms.dto.LogisticsBillDTO;
+import com.erp.model.tms.dto.TmsCostDetailDTO;
 import com.erp.model.tms.dto.excel.LogisticsBillCostExcelDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.DictCostAttributionEnum;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
+
 import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -35,9 +38,9 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
     * @param dto
     * @return
     */
-    BaseResultDTO.AddDTO add(LogisticsBillCostDTO.AddDTO dto);
+    BaseResultDTO.AddDTO add(LogisticsBillCostDTO.AddDTO dto, Map<String, TmsCfgCostEntity> cfgCostCache);
     
-    List<BaseResultDTO.AddDTO> addPayAndRefund(List<LogisticsBillCostDTO.AddDataDTO> dtoList);
+    List<BaseResultDTO.AddDTO> addPayAndRefund(List<LogisticsBillCostDTO.AddDataDTO> dtoList, Map<String, TmsCfgCostEntity> cfgCostCache);
     
     void addPayAndRefundConfirm(LogisticsBillCostDTO.ConfirmAddDataDTO dto);
 
@@ -48,7 +51,7 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
     * @param dto
     * @return
     */
-    BaseResultDTO.UpdateDTO update(LogisticsBillCostDTO.UpdateDTO dto,Boolean isImport);
+    BaseResultDTO.UpdateDTO update(LogisticsBillCostDTO.UpdateDTO dto, Boolean isImport, Map<String, TmsCfgCostEntity> cfgCostCache);
     
     List<EditViewDTO> editView(String id);
     
@@ -79,6 +82,26 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      * @return BatchResultDTO
      */
     BatchResultDTO updateReconciliationStatus(String id, String reconciliationStatus , LocalDateTime confirmTime);
+
+    /**
+     * 导入确认前校验目标费用单合并导入明细后的确认金额是否大于 0。
+     * <p>仅在对账状态为账单确认或暂估确认时生效；供 confirmImport 及标准导入勾选确认场景行级校验使用。</p>
+     *
+     * @param logisticsCostId      目标物流费用单 ID
+     * @param importList           本次导入待合并的费用明细，可为 null
+     * @param reconciliationStatus 目标对账状态
+     * @return 不满足时返回错误文案，否则返回 null
+     */
+    String validateImportConfirmAmountMsg(String logisticsCostId, List<TmsCostDetailDTO.UpdateDTO> importList, String reconciliationStatus);
+
+    /**
+     * 导入确认前校验目标费用单合并导入明细后的确认金额是否大于 0。
+     * <p>传入 {@code existingDetailMap} 时复用预查明细，避免循环内逐单查库。</p>
+     *
+     * @param existingDetailMap 预查的费用明细，key 为费用单 ID；可为 null
+     */
+    String validateImportConfirmAmountMsg(String logisticsCostId, List<TmsCostDetailDTO.UpdateDTO> importList,
+                                          String reconciliationStatus, Map<String, List<TmsCostDetailEntity>> existingDetailMap);
 
     BatchResultDTO updatePayStatus(String id, String payStatus , LocalDateTime payTime);
     
@@ -223,9 +246,7 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
     
     void generateLogisticsBill(SoReturnInstockEntity entity);
 
-    void pushSmallBagCostAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
-
-    BatchResultDTO pushAllocation(String id , String reportDate);
+    void pushSmallBagCostAllocation(TmsAsyncTaskRecordEntity taskRecord);
 
     BatchResultDTO pushAllocation(String id , String reportDate, LogisticsBillCostDTO.SmallBagPushAllocationContext pushContext);
 
@@ -256,31 +277,68 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      */
     LogisticsBillCostDTO.TotalCountDTO listTotalCount(LogisticsBillCostDTO.PagingParamDTO dto);
 
-    List<String> listByCanPushAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
+    void batchAsyncPushAllocation(TmsAsyncTaskRecordDTO.SmallBagPushAllocationPayloadDTO payload);
 
-    void batchAsyncPushAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
+    /**
+     * 创建尾程费用对账状态变更异步任务，用任务code承接全量高级查询场景。
+     *
+     * @param dto 高级查询条件与目标对账状态
+     * @return 异步任务ID和code
+     */
+    BatchResultDTO batchAsyncUpdateReconciliationStatus(LogisticsBillCostDTO.UpdateStatusDTO dto);
+
+    /**
+     * 同步按ID更新时校验入参ID是否都在当前数据权限范围内。
+     *
+     * @param dto 更新入参
+     */
+    void checkUpdateReconciliationStatusPermission(LogisticsBillCostDTO.UpdateStatusDTO dto);
+
+    /**
+     * 消费尾程费用对账状态变更异步任务，按游标分页执行。
+     *
+     * @param taskRecord 任务记录
+     */
+    void pushUpdateReconciliationStatus(TmsAsyncTaskRecordEntity taskRecord);
 
     LogisticsBillCostDTO.PushAllocatedCostCountDTO pushAllocationCount(LogisticsBillCostDTO.PushDTO dto);
 
     /**
      * 游标分页查询可下推分摊的费用ID（SQL层分批，不全量加载）
      *
-     * @param dto 查询条件（含 lastId 游标、batchSize 批大小）
+     * @param query 查询条件（含 lastId 游标、batchSize 批大小）
      * @return 当前批次费用ID列表
      * @author jack
      * @date 2026-04-22
      */
-    List<String> pageByCanPushAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
+    List<String> pageByCanPushAllocation(LogisticsBillCostDTO.CanPushAllocationPageQueryDTO query);
 
     /**
      * 统计可下推分摊的费用总条数
      *
-     * @param dto 查询条件
+     * @param query 查询条件
      * @return 总条数
      * @author jack
      * @date 2026-04-22
      */
-    int countByCanPushAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
+    int countByCanPushAllocation(LogisticsBillCostDTO.CanPushAllocationPageQueryDTO query);
+
+
+    /**
+     * 游标分页查询可更新对账状态的费用ID。
+     *
+     * @param query 查询条件（含 lastId 游标、batchSize 批大小）
+     * @return 当前批次费用ID列表
+     */
+    List<String> pageByUpdateReconciliationStatus(LogisticsBillCostDTO.UpdateReconciliationStatusPageQueryDTO query);
+
+    /**
+     * 统计可更新对账状态的费用数量，避免创建无效异步任务。
+     *
+     * @param query 查询条件
+     * @return 可处理数量
+     */
+    int countByUpdateReconciliationStatus(LogisticsBillCostDTO.UpdateReconciliationStatusPageQueryDTO query);
 
     /**
      * @description: 批量导入新增
@@ -306,4 +364,25 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      * @param code 对账状态
      */
     void batchConfirmImport(List<ImportHistoryRecordDTO.ImportConfirmDTO> confirmList, String code);
+
+    /**
+     * 多物流单费用分摊前批量预加载出库明细与 SKU 包装信息，避免分组循环内 N+1 Feign 调用。
+     */
+    LogisticsBillCostDTO.OutstockWeightPreloadDTO preloadOutstockWeightDataForAllocation(
+            Map<String, List<LogisticsBillDTO.LogisticsBillVo>> groupLogisticsBillVoMap);
+
+    /**
+     * 订单重量 = SKU 毛重(g) × 上游出库单实发数量，多物流单匹配时作为费用分摊依据。
+     */
+    Map<String, BigDecimal> buildOrderWeightMap(List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVoList,
+                                                List<String> errorMsgList,
+                                                LogisticsBillCostDTO.OutstockWeightPreloadDTO preloadData);
+
+    /**
+     * 多物流单匹配时按订单重量占比分摊费用，最后一条补差，避免四舍五入误差。
+     */
+            Map<String, List<TmsCostDetailDTO.UpdateDTO>> allocateCostDetailByWeight(
+            List<TmsCostDetailDTO.UpdateDTO> updateList,
+            List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVoList,
+            Map<String, BigDecimal> weightMap);
 }

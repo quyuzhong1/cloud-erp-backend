@@ -5,8 +5,10 @@ import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.DynamicDataSourceTypeEnum;
+import com.erp.model.plm.entity.ProductPackEntity;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
+import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.tms.enums.LogisticsBillCostPayTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -20,6 +22,7 @@ import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -840,6 +843,11 @@ public class LogisticsBillCostDTO implements Serializable {
 
         private String logisticsBillDetailId;
 
+        /**
+         * 平台订单号
+         */
+        private String platformCode;
+
         private String trackNo;
         /**
          * 对账类型
@@ -907,6 +915,11 @@ public class LogisticsBillCostDTO implements Serializable {
         @NotBlank(message = "物流单明细id不能为空")
         @Size(max = 19,message = "物流单明细id最大长度不能超过19位")
         private String logisticsBillDetailId;
+
+        /**
+         * 平台订单号
+         */
+        private String platformCode;
 
         /**
         * 实重
@@ -1026,12 +1039,27 @@ public class LogisticsBillCostDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class UpdateStatusDTO {
+    public static class UpdateStatusDTO extends PermissionsDTO {
 
         /**
          * ids
          */
         private List<String> ids;
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
+
+        /**
+         * 费用归属类型
+         */
+        private String type;
 
         /**
          * 状态 对账类型   http://172.16.100.11:3002/project/128/interface/api/25522 key=reconciliationStatus
@@ -1313,4 +1341,71 @@ public class LogisticsBillCostDTO implements Serializable {
         private String packageOrgId;
         private String packageWarehouseId;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class OutstockWeightPreloadDTO {
+        private Map<String, List<SoOutstockDetailEntity>> outstockDetailMap = Collections.emptyMap();
+    }
+
+    /**
+     * 小包下推分摊游标分页查询参数。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CanPushAllocationPageQueryDTO implements Serializable {
+
+        private String reportDate;
+
+        private String type;
+
+        private String lastId;
+
+        private Integer batchSize;
+
+        private List<String> ids;
+    }
+
+    /**
+     * 批量更新对账状态游标分页查询参数。
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateReconciliationStatusPageQueryDTO implements Serializable {
+
+        private String type;
+
+        private String reconciliationStatus;
+
+        private LocalDateTime confirmTime;
+
+        private Map<String, String> sqlMap;
+
+        private String permissionSql;
+
+        private String lastId;
+
+        private Integer batchSize;
+
+        private List<String> ids;
+
+        private String estimateConfirmStatus;
+
+        private String confirmedStatus;
+
+        private String invalidStatus;
+
+        private String toBeConfirmStatus;
+
+        private String checkedCheckStatus;
+
+        private String checkingCheckStatus;
+
+        private String refundPayType;
+
+        private String paymentPayStatus;
+
+    }
+
 }

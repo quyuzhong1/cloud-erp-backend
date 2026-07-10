@@ -1404,7 +1404,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
 
     @Override
     public List<PilotApplicationDTO.WarehouseDTO> listWarehouse() {
-        List<WarehouseDTO.UpdateDTO> list = warehouseFeign.listApproveWarehouse();
+        List<WarehouseDTO.ListDTO> list = warehouseFeign.listApproveWarehouse();
         List<PilotApplicationDTO.WarehouseDTO> resultList = new ArrayList<>(list.size());
         list.forEach(item -> resultList.add(new PilotApplicationDTO.WarehouseDTO(item.getId(), item.getName())));
         return resultList;

@@ -14,6 +14,7 @@ import org.apache.commons.lang3.StringUtils;
  */
 public enum WmsDeliveryPlanTypeEnum implements EnumMessage {
     FBA("fba", "FBA发货计划"),
+    FBS("fbs", "FBS发货计划"),
     THIRDWAREHOUSE("thirdWarehouse", "第三方仓发货计划"),
     ALIEXPRESS("AliExpress", "速卖通发货计划"),
     ;

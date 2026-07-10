@@ -344,8 +344,17 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             addEntity.setCustomsFee(BigDecimal.ZERO);
         }
 
-        //仓库id
+        //仓库id（B2B 手工新增：请求未带仓库时，用客户维护的默认发货仓库；前端已选仓库则以请求为准）
         String warehouseId = dto.getWarehouseId();
+        CustomerInfoEntity customerInfoEntity = StringUtils.isNotBlank(customerId) ? customerInfoService.getById(customerId) : null;
+        if (OrderTypeEnum.B2B.getCode().equals(dto.getOrderType())
+                && StringUtils.isBlank(warehouseId)
+                && customerInfoEntity != null
+                && StringUtils.isNotBlank(customerInfoEntity.getDefaultShippingWarehouse())) {
+            warehouseId = customerInfoEntity.getDefaultShippingWarehouse();
+            assertWarehouseAvailable(warehouseId, "客户默认发货仓库");
+            addEntity.setWarehouseId(warehouseId);
+        }
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
         String warehouseOrgId = "";
         if (CollectionUtils.isNotEmpty(warehouseList)) {
@@ -372,7 +381,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         // 验证字典值
         checkDict(addEntity);
         //封装军区
-        this.buildPartition(addEntity);
+        this.buildPartition(addEntity, customerInfoEntity);
         //获取虚拟仓库
         handleVirtualWarehouse(addEntity);
         //获取客户收货国家
@@ -419,11 +428,22 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     }
 
     private void buildPartition(SoInfoEntity addEntity) {
+        buildPartition(addEntity, null);
+    }
+
+    /**
+     * 当调用方已查询客户档案时使用该重载，避免重复查库。
+     *
+     * @param customerInfo 可为 null，为 null 时内部按 customerId 查询
+     */
+    private void buildPartition(SoInfoEntity addEntity, CustomerInfoEntity customerInfo) {
         String customerId = addEntity.getCustomerId();
         if (StringUtils.isBlank(customerId)) {
             return;
         }
-        CustomerInfoEntity customerInfo = customerInfoService.getById(customerId);
+        if (customerInfo == null) {
+            customerInfo = customerInfoService.getById(customerId);
+        }
         if (Objects.nonNull(customerInfo)) {
             // 优先使用 CustomerInfo 中的 partitionId
             if (StringUtils.isNotBlank(customerInfo.getPartitionId())) {
@@ -435,6 +455,21 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 String country = customerInfo.getCountryId();
                 addEntity.setPartitionId(sysPartitionFeign.getPartitionByCountry(country));
             }
+        }
+    }
+
+    /** 同步 Feign 校验仓库有效性；WMS 不可用会阻断保存，属有意设计，异步校验需产品方案后再改。 */
+    private void assertWarehouseAvailable(String warehouseId, String label) {
+        if (StringUtils.isBlank(warehouseId)) {
+            return;
+        }
+        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Collections.singletonList(warehouseId));
+        if (warehouseList == null || warehouseList.isEmpty()) {
+            throw new ServiceException("{}不存在或已禁用", label);
+        }
+        WarehouseDTO.UpdateDTO warehouse = warehouseList.get(0);
+        if (warehouse == null || Boolean.TRUE.equals(warehouse.getDisabled())) {
+            throw new ServiceException("{}不存在或已禁用", label);
         }
     }
 
@@ -1412,11 +1447,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             throw new ServiceException("是否含税不能空");
         }
         Boolean isFirst = false;
+        String code = "";
         if (StringUtils.isNotBlank(id)) {
             SoInfoEntity soInfo = this.getById(id);
             if (Objects.isNull(soInfo)) {
                 throw new ServiceException(ApiError.SO_NOT_FOUND);
             }
+            code = soInfo.getCode();
         } else {
             isFirst = true;
             id = IdWorker.getIdStr();
@@ -1428,6 +1465,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         SoInfoEntity draftEntity = new SoInfoEntity();
         BeanMapper.copy(dto, draftEntity);
         draftEntity.setId(id);
+        if (StringUtils.isBlank(code)) {
+            code = draftEntity.getCode();
+        }
+        if (StringUtils.isBlank(code)) {
+            code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XSD);
+        }
+        draftEntity.setCode(code);
         //报关费
         if (!draftEntity.getIsDeclare()) {
             draftEntity.setCustomsFee(BigDecimal.ZERO);
@@ -2572,11 +2616,17 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<String> skuIdList = viewList.stream().map(SoInfoDTO.GenerateDeliveryView::getSkuId).collect(Collectors.toList());
         //根据ids查询sku信息
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
+        List<SkuVO> skuList = listSkuProductByIds(skuIdList);
         List<String> customerIds = viewList.stream().map(SoInfoDTO.GenerateDeliveryView::getCustomerId).collect(Collectors.toList());
         List<CustomerInfoEntity> customerList = CollectionUtils.isNotEmpty(customerIds) ? customerInfoService.listByIds(customerIds) : Collections.emptyList();
         List<SoInfoDTO.GenerateDeliveryView> resultList = new ArrayList<>();
         List<String> sodIdList = viewList.stream().map(SoInfoDTO.GenerateDeliveryView::getDetailId).collect(Collectors.toList());
         List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList = soDeliveryNoticeFeign.listDetailBySourceDetailIds(sodIdList);
+        List<String> soIdList = viewList.stream().map(SoInfoDTO.GenerateDeliveryView::getSoId).distinct().collect(Collectors.toList());
+        Map<String, String> virtualWarehouseIdBySoId = CollectionUtils.isEmpty(soIdList) ? Collections.emptyMap()
+                : this.listByIds(soIdList).stream()
+                .filter(so -> CharSequenceUtil.isNotBlank(so.getVirtualWarehouseId()))
+                .collect(Collectors.toMap(SoInfoEntity::getId, SoInfoEntity::getVirtualWarehouseId, (a, b) -> a));
         for (SoInfoDTO.GenerateDeliveryView view : viewList) {
             ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(view.getSkuId())).findFirst().orElse(new ProductDetailEntity());
             view.setProductName(productDetailEntity.getName());
@@ -2585,9 +2635,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             String customerName = customerList.stream().filter(c -> c.getId().equals(view.getCustomerId())).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             view.setCustomerName(customerName);
-            if(view.getDeliveryQty()>0){
-                resultList.add(view);
-            }
 
             //发货通知数量
             List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailEntityList = soDeliveryNoticeDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(view.getDetailId())).collect(Collectors.toList());
@@ -2597,9 +2644,19 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 view.setEffectiveNoticeQty(effectiveNoticeQty);
             }
 
+            if (view.getDeliveryQty() <= MathUtil.ZERO) {
+                continue;
+            }
+            // 绑定虚拟仓且锁定数量为0的明细不在下推发货通知弹框展示（费用类、服务类除外）
+            if (virtualWarehouseIdBySoId.containsKey(view.getSoId())
+                    && ObjectUtil.defaultIfNull(view.getFrozenQty(), MathUtil.ZERO).equals(MathUtil.ZERO)
+                    && !isFilterCalculate(view.getSkuId(), view.getSkuId(), skuList)) {
+                continue;
+            }
+            resultList.add(view);
         }
         if(CollectionUtils.isEmpty(resultList)){
-            throw new ServiceException("没有待发货明细");
+            throw new ServiceException("没有待发货明细或者绑定数量为0");
         }
         return resultList;
     }
@@ -3908,6 +3965,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             updateDTO.setReceiveAddressId(dto.getCustomerAddressId());
             updateDTO.setCurrency(dto.getCurrency());
             updateDTO.setReceiveCondition(dto.getReceiveCondition());
+            updateDTO.setReceiveAccount(dto.getReceiveAccount());
             updateDTO.setPlatformCreateTime(dto.getPlatformCreateTime());
             updateDTO.setPlatformUpdateTime(dto.getPlatformUpdateTime());
             updateDTO.setAccountDeductAmount(dto.getAccountDeductAmount());
@@ -3997,6 +4055,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             addDTO.setCurrency(dto.getCurrency());
             addDTO.setTelNumber(dto.getTelNumber());
             addDTO.setReceiveCondition(dto.getReceiveCondition());
+            addDTO.setReceiveAccount(dto.getReceiveAccount());
             addDTO.setPlatformCreateTime(dto.getPlatformCreateTime());
             addDTO.setPlatformUpdateTime(dto.getPlatformUpdateTime());
             addDTO.setAccountDeductAmount(dto.getAccountDeductAmount());
@@ -4342,6 +4401,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
 
         viewDTO.setRemark("Customer PO: " + soInfoEntity.getCustomerOrderNo());
+        viewDTO.setPackingType(B2bPackingTypeEnum.WAREHOUSE_SELF.getCode());
+        viewDTO.setLabelsPerBox(0);
+        viewDTO.setPackingDetailList(Collections.emptyList());
         return viewDTO;
     }
 

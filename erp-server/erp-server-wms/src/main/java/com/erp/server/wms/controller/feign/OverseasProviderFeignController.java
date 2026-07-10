@@ -1,13 +1,15 @@
 package com.erp.server.wms.controller.feign;
 
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.server.wms.service.OverseasProviderService;
 import com.erp.server.wms.service.OverseasProviderWarehouseService;
-import org.apache.xpath.operations.Bool;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.validation.constraints.NotBlank;
 import java.util.List;
 
 /**
@@ -15,6 +17,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/feign/overseasProvider")
+@Validated
 public class OverseasProviderFeignController {
 
     @Resource
@@ -64,9 +67,22 @@ public class OverseasProviderFeignController {
         return overseasProviderService.listAllMatch();
     }
 
+    /**
+     * 按服务商主键 id（authId）精确查询已匹配的仓库信息，避免每次全表扫描
+     */
+    @GetMapping("/listMatchByMainId")
+    public List<OverseasProviderDTO.ListWithWarehouseDTO> listMatchByMainId(@RequestParam("mainId") String mainId) {
+        return overseasProviderService.listMatchByMainId(mainId);
+    }
+
     @GetMapping("/listProviderWarehouseBySql")
     public List<String> listProviderWarehouseBySql(@RequestParam String compareCodeSplicingValueSql) {
         return overseasProviderWarehouseService.listProviderWarehouseBySql(compareCodeSplicingValueSql);
+    }
+
+    @GetMapping("/getOwnerCodeByAuthId")
+    public ApiResult<String> getOwnerCodeByAuthId(@RequestParam(value = "authId") String authId) {
+        return ApiResult.success(overseasProviderService.getOwnerCodeByAuthId(authId));
     }
 
     @PostMapping("/refreshToken")

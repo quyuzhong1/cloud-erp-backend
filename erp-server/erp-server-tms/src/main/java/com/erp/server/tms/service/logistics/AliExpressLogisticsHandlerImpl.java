@@ -196,6 +196,7 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 OrderResponse orderResponse = response.getResult();
                 responseVO.setDeliveryNo(orderResponse.getTradeOrderId());
                 responseVO.setTransportNo(orderResponse.getOutOrderCode());
+                responseVO.setTrackNo(orderResponse.getIntlTrackingNo());
                 success = true;
                 responseVO.success();
                 logisticsOperateService.pushOperateLog(logisticsOrderVO.getSourceId(),
@@ -273,6 +274,10 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
         if (!StringUtils.isBlank(logisticsOrderVO.getLogisticsChannelEntity().getUndeliverableDecision()) && UnDeliverableDecisionEnum.RETURN.getCode().equals(logisticsOrderVO.getLogisticsChannelEntity().getUndeliverableDecision())){
             undeliverableDecision = "0";
         }
+        // APL 创单件重尺：ERP ParceInfoVO 已为 cm（PLM mm 已在上游 mmToCm），AE 要求 Long(cm)
+        Long goodsLength = toAliExpressGoodsCm(logisticsOrderVO.getParceInfoVO() != null ? logisticsOrderVO.getParceInfoVO().getLength() : null);
+        Long goodsWidth = toAliExpressGoodsCm(logisticsOrderVO.getParceInfoVO() != null ? logisticsOrderVO.getParceInfoVO().getWidth() : null);
+        Long goodsHeight = toAliExpressGoodsCm(logisticsOrderVO.getParceInfoVO() != null ? logisticsOrderVO.getParceInfoVO().getHeight() : null);
         return OrderRequest.builder()
                 .oaid(oaid)
                 .pickup_type(logisticsOrderVO.getLogisticsChannelEntity().getDeliveryType())
@@ -290,7 +295,21 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 .address_d_t_os(addressDTO)
                 .is_agree_upgrade_reverse_parcel_insure(false)
                 .top_user_key(logisticsOrderVO.getTopUserKey())
+                .goods_length(goodsLength)
+                .goods_width(goodsWidth)
+                .goods_height(goodsHeight)
                 .build();
+    }
+
+    /**
+     * ERP 包裹尺寸单位为 cm，速卖通 APL 创单 goodsLength/Width/Height 单位同为 cm（Long）。
+     * null 或 &lt;=0 不传，避免覆盖平台侧商品尺寸。
+     */
+    private static Long toAliExpressGoodsCm(Integer cm) {
+        if (cm == null || cm <= 0) {
+            return null;
+        }
+        return cm.longValue();
     }
     private Address encryptByOrderType(String orderType, Address address){
         if (!StringUtils.isBlank(orderType) && !SourceTypeEnum.SELF_ADD.getCode().equals(orderType)){
@@ -574,6 +593,23 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
         List<LogisticsPrintLabelResponse> responses = new ArrayList<>();
         LogisticsGetLabelVO logisticsGetLabelVO = logisticsQueryVO.stream().filter(e -> Objects.nonNull(e.getAuthMap())).findFirst().orElse(null);
         assert logisticsGetLabelVO != null;
+        List<LogisticsGetLabelVO> emptyTrackNoList = logisticsQueryVO.stream()
+                .filter(e -> CharSequenceUtil.isBlank(e.getTrackNo()))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(emptyTrackNoList)) {
+            String orderCodes = emptyTrackNoList.stream()
+                    .map(LogisticsGetLabelVO::getDeliveryNo)
+                    .filter(CharSequenceUtil::isNotBlank)
+                    .collect(Collectors.joining(","));
+            String errorMessage = "当前批次存在速卖通国际运单号为空的单据，无法获取物流面单，请稍后重试";
+            LogisticsPrintLabelResponse response = new LogisticsPrintLabelResponse();
+            response.failure(LogisticsPlatformEnum.ALI_EXPRESS.getName(), orderCodes, errorMessage);
+            responses.add(response);
+            logisticsOperateService.pullOperateLog(logisticsGetLabelVO.getOrderId(),
+                    logisticsGetLabelVO.getTransportNo(), BusinessTypeEnum.GET_LABEL_LIST.getCode(), LogisticsPlatformEnum.ALI_EXPRESS.getCode(),
+                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryVO), errorMessage);
+            return failure(responses);
+        }
         List<WarehouseOrderQuery> warehouseOrderQueries = new ArrayList<>(logisticsQueryVO.size());
         logisticsQueryVO.stream().forEach(logisticsGetLabelVO1 -> {
             WarehouseOrderQuery warehouseOrderQuery = new WarehouseOrderQuery();

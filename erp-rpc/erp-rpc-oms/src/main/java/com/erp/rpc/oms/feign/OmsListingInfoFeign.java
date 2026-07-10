@@ -4,12 +4,12 @@ import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.ListingInfoDTO;
-import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.wms.dto.FbaShipmentDTO;
+import com.erp.model.wms.dto.WegoSkuSyncDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -76,4 +76,13 @@ public interface OmsListingInfoFeign {
 
     @PostMapping("feign/listing/updatePlatformSkuId")
     boolean updatePlatformSkuId(@RequestParam(value = "listingId") String listingId, @RequestParam(value = "platformSkuId") String platformSkuId);
+
+    /**
+     * 同步三方仓SKU到未匹配对照表
+     *
+     * @param dto 三方仓 SKU 同步参数
+     * @return 本次新增未匹配记录数量
+     */
+    @PostMapping("feign/listing/syncWarehouseNotMatchSku")
+    Integer syncWarehouseNotMatchSku(@RequestBody @Validated WegoSkuSyncDTO.SyncReqDTO dto);
 }

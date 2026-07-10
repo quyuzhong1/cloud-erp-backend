@@ -48,7 +48,6 @@
         so.remark AS remark,
         so.customer_remark AS customerRemark,
         so.dict_platform AS dictPlatform,
-        sod.id as detailId,
         sod.sku_id AS skuId,
         sod.sku_no AS skuNo,
         sod.plan_qty AS planQty,
@@ -69,105 +68,12 @@
         so.packing_status,
         so.logistics_channel_id,
         so.logistics_channel_name,
-        COALESCE(si.partition_id, sbr.partition_id) as partitionId
+        so.partition_id as partitionId
         FROM so_outstock so
         INNER JOIN so_outstock_detail sod ON so.id=sod.main_id
-        <if test="params.dynamicDataSource != null and params.dynamicDataSource == 'doris'">
-        LEFT JOIN erp_oms.so_info si ON so.so_id = si.id
-        LEFT JOIN erp_oms.so_b2c_receiver sbr ON so.so_id = sbr.main_id
-        </if>
-        <if test="params.dynamicDataSource == null or params.dynamicDataSource != 'doris'">
-        LEFT JOIN so_info si ON so.so_id = si.id
-        LEFT JOIN so_b2c_receiver sbr ON so.so_id = sbr.main_id
-        </if>
         WHERE
         ${params.sqlMap.default}
         and  so.is_deleted=FALSE AND sod.is_deleted=FALSE
-        <!--权限-->
-        <if test="params.permissionSql!=null and params.permissionSql!=''">
-            ${params.permissionSql}
-        </if>
-        ORDER BY
-        <if test="params.sortList != null and params.sortList.size > 0">
-            <foreach collection="params.sortList" item="item" separator="," close=",">
-                ${item.field} ${item.sort}
-            </foreach>
-        </if>
-        sod.id DESC
-    </select>
-
-    <select id="listExport" resultType="com.erp.model.wms.dto.SoOutstockDTO$PagingViewDTO">
-       SELECT
-           so.id,
-           so.code,
-           sod.platform_code as platformCode,
-           so.third_code as thirdCode,
-           so.so_id AS soId,
-           so.so_code AS soCode,
-           so.source_type AS sourceType,
-           so.order_type AS orderType,
-           so.source_id AS sourceId,
-           so.source_code AS sourceCode,
-           so.approve_status AS approveStatus,
-           so.warehouse_org_name AS warehouseOrgName,
-           so.carrier_id AS carrierId,
-           so.invalid_status AS invalidStatus,
-           so.plan_delivery_date AS planDeliveryDate,
-           so.actual_delivery_date AS actualDeliveryDate,
-           so.pack_date AS packDate,
-           so.warehouse_id AS warehouseId,
-           so.warehouse_name AS warehouseName,
-           so.approve_user_name AS approveUserName,
-           so.create_user_name AS createUserName,
-           so.create_time AS createTime,
-           so.track_no AS trackNos,
-           so.seller_id AS sellerId,
-           so.seller_name AS sellerName,
-           so.customer_id AS customerId,
-           so.bill_date AS billDate,
-           so.customer_order_no AS customerOrderNo,
-           so.sales_dept_id AS salesDeptId,
-           so.sales_org_id AS salesOrgId,
-           so.sales_org_name AS salesOrgName,
-           so.customer_name AS customerName,
-           so.country AS countryId,
-           so.remark AS remark,
-           so.customer_remark AS customerRemark,
-           so.dict_platform AS dictPlatform,
-           sod.id as detailId,
-           sod.sku_id AS skuId,
-           sod.sku_no AS skuNo,
-           sod.plan_qty AS planQty,
-           sod.actual_qty AS actualQty,
-            sod.price,
-            sod.tax_rate as taxRate,
-            sod.amount,
-            sod.currency,
-            sod.currency_symbol as currencySymbol,
-            sod.tax_amount as taxAmount,
-            sod.all_amount_local_currency as allAmountLocalCurrency,
-            sod.exchange_rate as exchangeRate,
-            sod.so_detail_id as soDetailId,
-           sod.source_detail_id AS sourceDetailId,
-        sod.virtual_warehouse_id as virtualWarehouseId,
-           sod.warehouse_location AS warehouseLocation,
-           sod.remark AS detailRemark,
-        sod.customer_po as customerPO,
-           sod.remark AS detailRemark,
-           COALESCE(si.partition_id, sbr.partition_id) as partitionId
-        FROM so_outstock so
-        INNER JOIN so_outstock_detail sod ON so.id=sod.main_id
-        <if test="params.dynamicDataSource != null and params.dynamicDataSource == 'doris'">
-        LEFT JOIN erp_oms.so_info si ON so.so_id = si.id
-        LEFT JOIN erp_oms.so_b2c_receiver sbr ON so.so_id = sbr.main_id
-        </if>
-        <if test="params.dynamicDataSource == null or params.dynamicDataSource != 'doris'">
-        LEFT JOIN so_info si ON so.so_id = si.id
-        LEFT JOIN so_b2c_receiver sbr ON so.so_id = sbr.main_id
-        </if>
-        WHERE
-            ${params.sqlMap.default}
-          and so.is_deleted=FALSE AND  sod.is_deleted=FALSE
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
@@ -362,30 +268,6 @@
             #{id}
         </foreach>
         ORDER BY CAST(wc.box_no AS INTEGER)
-    </select>
-
-    <!--导出装箱信息-->
-    <select id="exportPacking" resultType="com.erp.model.wms.dto.WmsCartonSpecDTO$ExportPackingDTO">
-        SELECT
-        so.id,
-        so.packing_status,
-        so.code,
-        fmcb.box_no,
-        concat(box_length, '*', fmc.box_width, '*', fmc.box_height) AS boxSize,
-        fmc.package_weight,
-        fmcb.box_desc
-        FROM so_outstock so
-        LEFT JOIN wms_carton_spec fmc ON fmc.source_id = so.id AND fmc.is_deleted = FALSE
-        LEFT JOIN wms_carton fmcb ON fmc.id = fmcb.carton_id AND fmcb.is_deleted = FALSE
-        WHERE
-        ${params.sqlMap.default}
-        AND so.is_deleted = FALSE
-        <!--权限-->
-        <if test="params.permissionSql!=null and params.permissionSql!=''">
-            ${params.permissionSql}
-        </if>
-        ORDER BY so.code,
-        CAST(fmcb.box_no AS INTEGER)
     </select>
     <!--根据销售出单单ID 查询sku 信息-->
     <select id="listGroupSkuByMainId" resultType="com.erp.model.wms.dto.WmsCartonSpecDTO$GroupSkuDTO">

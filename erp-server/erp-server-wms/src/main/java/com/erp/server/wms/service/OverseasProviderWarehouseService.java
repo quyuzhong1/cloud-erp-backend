@@ -1,4 +1,5 @@
 package com.erp.server.wms.service;
+import com.alibaba.fastjson.JSONArray;
 import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.ThirdWarehouseDTO;
 import com.erp.model.wms.dto.OverseasProviderDTO;
@@ -115,4 +116,27 @@ public interface OverseasProviderWarehouseService extends SuperService<OverseasP
     BaseResultDTO.AddDTO addThirdWarehouse(ThirdWarehouseDTO.AddDTO addDTO);
 
     List<OverseasProviderWarehouseEntity> getOverseasWarehouseListByPlatformCode(String platform);
+
+    /**
+     * 同步WEGO平台返回的仓库基础数据（差异同步：增/软删/禁用）。
+     * <p>
+     * 字段映射：warehouseCode→platform_warehouse_code、warehouseName→platform_warehouse_name、warehouseRegion→country。
+     * <p>
+     * 同步策略（按 main_id + platform_warehouse_code 匹配）：
+     * <ul>
+     *     <li>API有、DB无：新增（disabled=true）</li>
+     *     <li>API有、DB有：不做任何处理（保持现状）</li>
+     *     <li>API无、DB有：
+     *         <ul>
+     *             <li>warehouse_id 为空（未绑定ERP仓）→ 软删（is_deleted=true）</li>
+     *             <li>warehouse_id 非空（已绑定ERP仓）→ 仅置 disabled=true，保留绑定关系</li>
+     *         </ul>
+     *     </li>
+     * </ul>
+     *
+     * @param mainId            overseas_provider 主表id
+     * @param wegoWarehouseList WEGO接口返回的 result 数组
+     * @return int[] {新增数量, 软删数量, 禁用数量}
+     */
+    int[] syncFromWego(String mainId, JSONArray wegoWarehouseList);
 }

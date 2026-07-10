@@ -235,35 +235,71 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         System.out.println("===============结束执行 单号：" + entity.getFBillNo());
     }
 
+    /**
+     * 旺店通销售出库单同步入口：仅持有分布式锁，不开事务。
+     * <p>
+     * 将原方法拆分为三步，降低事务持有时间：
+     * 1. 幂等检查（纯读，无事务）
+     * 2. 前置查询：所有 Feign / DB 只读操作（无事务，{@link #preQueryForWdtSync}）
+     * 3. 写操作：保存单据 + 扣库存 + 推送（短事务，{@link #doSyncWdtSoOutStock}）
+     * </p>
+     */
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class , timeoutMills = 180000)
     @DistributeLocker(keyName = "entity.code")
     public void syncWdtSoOutStock(WdtSoOutStockDTO entity) {
+        // 1. 幂等检查：单据已存在则短路退出（读操作，无需事务）
         SoOutstockEntity soOutstockEntity = soOutstockService.getOne(Wrappers.<SoOutstockEntity>lambdaQuery()
                 .eq(SoOutstockEntity::getCode, entity.getCode()));
-        //单据已经存在
         if (ObjectUtil.isNotEmpty(soOutstockEntity)) {
-            if(StringUtils.isNotBlank(entity.getStatus()) && entity.getStatus().equals("2")){
-                //旺店通已作废，ERP反审核删除并同步金蝶
-                if(soOutstockEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE)){
-                    soOutstockService.disApprove(soOutstockEntity,true);
-                }
-                soOutstockService.delete(Collections.singletonList(soOutstockEntity.getId()));
+            // 旺店通已作废场景需要写操作，委托带事务的方法处理
+            if (isWdtVoid(entity)) {
+                service.handleVoidWdtSoOutStock(soOutstockEntity, entity);
             }
             return;
         }
-        if(StringUtils.isNotBlank(entity.getStatus()) && entity.getStatus().equals("2")){
+        //已作废直接返回
+        if (isWdtVoid(entity)) {
             return;
         }
         SoOutstockEntity pddSoOutstockEntity = soOutstockService.getOne(Wrappers.<SoOutstockEntity>lambdaQuery()
                 .eq(SoOutstockEntity::getThirdCode, entity.getCode()).last(" limit 1"));
-        //单据已经存在
         if (ObjectUtil.isNotEmpty(pddSoOutstockEntity)) {
             log.warn("旺店通销售出库单同步，拼多多单据已存在，第三方单号：{}", entity.getCode());
             return;
         }
 
+        // 2. 前置查询：所有 Feign / 只读 DB 操作在事务外完成，避免长事务持有连接
+        WdtSyncQueryContext ctx = preQueryForWdtSync(entity);
+
+        // 3. 写操作：短事务内完成保存 + 扣库存 + 推送
+        service.doSyncWdtSoOutStock(ctx);
+    }
+
+    /**
+     * 处理「旺店通已作废、ERP 中对应单据仍存在」场景。
+     * 独立事务：仅在 status="2" 时执行反审核 + 删除，避免在主流程大事务中混入。
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
+    public void handleVoidWdtSoOutStock(SoOutstockEntity existing, WdtSoOutStockDTO entity) {
+        if (isWdtVoid(entity)) {
+            //旺店通已作废，ERP反审核删除并同步金蝶
+            if (existing.getApproveStatus().equals(ApproveStatusEnum.APPROVE)) {
+                soOutstockService.disApprove(existing, true);
+            }
+            soOutstockService.delete(Collections.singletonList(existing.getId()));
+        }
+    }
+
+    private boolean isWdtVoid(WdtSoOutStockDTO entity) {
+        return StringUtils.isNotBlank(entity.getStatus()) && entity.getStatus().equals("2");
+    }
+
+    /**
+     * 前置查询：在事务外完成所有只读操作并组装好待写入的实体，不产生任何写库行为。
+     * <p>遇到数据异常（如映射缺失、SKU 不存在）直接抛 {@link ServiceException}，无需事务回滚。</p>
+     */
+    private WdtSyncQueryContext preQueryForWdtSync(WdtSoOutStockDTO entity) {
         //不需要管的sku
         List<SkuVO> noInventorySkuList = plmTaskFeign.getNoInventorySku();
         //对应不需要的验证的sku no list
@@ -292,8 +328,8 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         }
         List<String> skuNoList = entity.getDetailList().stream().map(WdtSoOutStockDetailDTO::getSkuNo).collect(Collectors.toList());
         List<String> suiteNoList = entity.getDetailList().stream().map(WdtSoOutStockDetailDTO::getSuiteNo).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
-        if (CollUtil.isNotEmpty(suiteNoList)){
-            skuNoList = Stream.concat(skuNoList.stream(),suiteNoList.stream()).collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(suiteNoList)) {
+            skuNoList = Stream.concat(skuNoList.stream(), suiteNoList.stream()).collect(Collectors.toList());
         }
         List<SkuVO> skuList = plmTaskFeign.listBySkuNoList(skuNoList);
         WarehouseEntity warehouse = FeignQuery.getById(WarehouseEntity.class, warehouseList.get(0).getSysId());
@@ -311,7 +347,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         //wdt渠道映射erp
         String logisticsCode = entity.getLogisticsCompanyCode();
         LogisticsChannelDTO.BaseDTO channel = logisticsFeign.getChannelByCodeAndPlatform(logisticsCode, LogisticsPlatformEnum.WDT.getCode());
-        if (Objects.isNull(channel)){
+        if (Objects.isNull(channel)) {
             throw new ServiceException(ApiError.COMMON_PLATFORM_CHANNEL_NOT_FOUND, LogisticsPlatformEnum.WDT.getName(), logisticsCode);
         }
         soOutstock.setLogisticsChannelId(channel.getId());
@@ -322,8 +358,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         soOutstock.setWarehouseId(warehouse.getId());
         soOutstock.setWarehouseName(warehouse.getName());
         //查询虚拟仓
-        String virtualWarehouseId = handleVirtualWarehouse(Collections.singletonList(soOutstock.getWarehouseId()), shopInfo.getDictPlatform(),shopInfo.getId(), shopInfo.getCustomerId(), soOutstock.getCountry());
-
+        String virtualWarehouseId = handleVirtualWarehouse(Collections.singletonList(soOutstock.getWarehouseId()), shopInfo.getDictPlatform(), shopInfo.getId(), shopInfo.getCustomerId(), soOutstock.getCountry());
         //客户信息
         soOutstock.setCustomerId(shopInfo.getCustomerId());
         if (ObjectUtil.isNotEmpty(customerInfo)) {
@@ -334,6 +369,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
             soOutstock.setSalesOrgId(customerInfo.getUseOrgId());
             soOutstock.setSalesOrgName(customerInfo.getUseOrgName());
             soOutstock.setDictPlatform(customerInfo.getPlatformType());
+            soOutstock.setPartitionId(customerInfo.getPartitionId());
         }
         //销售组织
         soOutstock.setSalesOrgId(shopInfo.getSalesOrgId());
@@ -342,22 +378,28 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         soOutstock.setInvalidStatus(false);
         soOutstock.setApproveStatus(ApproveStatusEnum.APPROVE);
         soOutstock.setApproveTime(soOutstock.getActualDeliveryDate());
-        List<WdtSoOutStockDetailDTO> wdtSoOutStockDetailDTOS = buildOutStockDetail(soOutstock,entity.getDetailList());
+        //2024.09.11 jack sdc-erp销售出库单增加旺店通的物流渠道名称
+        soOutstock.setLogisticsChannelCode(entity.getLogisticsCompanyCode());
+        soOutstock.setLogisticsChannelName(entity.getLogisticsCompanyName());
+        //订单标签
+        soOutstock.setTradeLabel(entity.getTradeLabel());
+        log.info("旺店通同步订单标签到erp：" + JSONUtil.toJsonStr(soOutstock));
+
+        // 组装明细及库存操作列表（纯计算，无写库行为）
+        List<WdtSoOutStockDetailDTO> wdtSoOutStockDetailDTOS = buildOutStockDetail(soOutstock, entity.getDetailList());
         List<InOutStockDTO> inOutStockList = new ArrayList<>();
         ArrayList<SoOutstockDetailEntity> detailList = new ArrayList<>();
         for (WdtSoOutStockDetailDTO detailDTO : wdtSoOutStockDetailDTOS) {
             List<PositionDetailsList> positionDetailsList = detailDTO.getPositionDetailsList();
-			if (CollectionUtils.isEmpty(positionDetailsList)){
+            if (CollectionUtils.isEmpty(positionDetailsList)) {
                 //暂时使用空仓位
                 SoOutstockDetailEntity detailEntity = BeanMapperUtils.map(SoOutstockDetailEntity.class, detailDTO);
-                detailEntity.setId(IdWorker.getIdStr());
-                String skuId = skuList.stream().filter(s -> s.getSkuNo().equals(detailEntity.getSkuNo())).
-                        findFirst().map(SkuVO::getSkuId).orElse("");
+                String skuId = skuList.stream().filter(s -> s.getSkuNo().equals(detailEntity.getSkuNo()))
+                        .findFirst().map(SkuVO::getSkuId).orElse("");
                 if (CharSequenceUtil.isBlank(skuId)) {
                     throw new ServiceException(ApiError.PRODUCT_SKU_PARAM_NOT_FOUND, detailEntity.getSkuNo());
                 }
-                String detailId = IdWorker.getIdStr();
-                detailEntity.setId(detailId);
+                detailEntity.setId(IdWorker.getIdStr());
                 detailEntity.setMainId(id);
                 detailEntity.setSkuId(skuId);
                 //仓库
@@ -376,26 +418,24 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                     buildInOutStock(id, detailEntity, soOutstock, virtualWarehouseId, inOutStockList);
                 }
             } else {
-            	Map<String, Pair<BigDecimal, BigDecimal>> recIdAmountMap = this.splitAmountAndLocalCurrency(detailDTO);
+                Map<String, Pair<BigDecimal, BigDecimal>> recIdAmountMap = this.splitAmountAndLocalCurrency(detailDTO);
                 for (WdtSoOutStockDetailDTO.PositionDetailsList detail : positionDetailsList) {
                     if (Boolean.FALSE.equals(warehouse.getIsEnableLocation())) {
                         detail.setPositionNo("");
                     }
                     SoOutstockDetailEntity detailEntity = BeanMapperUtils.map(SoOutstockDetailEntity.class, detailDTO);
                     Pair<BigDecimal, BigDecimal> amountPair = recIdAmountMap.get(detail.getRecId());
-                    if(amountPair != null) {
-                    	detailEntity.setAmount(amountPair.getKey());
-                    	detailEntity.setAllAmountLocalCurrency(amountPair.getValue());
+                    if (amountPair != null) {
+                        detailEntity.setAmount(amountPair.getKey());
+                        detailEntity.setAllAmountLocalCurrency(amountPair.getValue());
                         detailEntity.setTaxAmount(amountPair.getValue());
                     }
-                    detailEntity.setId(IdWorker.getIdStr());
-                    String skuId = skuList.stream().filter(s -> s.getSkuNo().equals(detailEntity.getSkuNo())).
-                            findFirst().map(SkuVO::getSkuId).orElse("");
+                    String skuId = skuList.stream().filter(s -> s.getSkuNo().equals(detailEntity.getSkuNo()))
+                            .findFirst().map(SkuVO::getSkuId).orElse("");
                     if (CharSequenceUtil.isBlank(skuId)) {
                         throw new ServiceException(ApiError.PRODUCT_SKU_PARAM_NOT_FOUND, detailEntity.getSkuNo());
                     }
-                    String detailId = IdWorker.getIdStr();
-                    detailEntity.setId(detailId);
+                    detailEntity.setId(IdWorker.getIdStr());
                     detailEntity.setMainId(id);
                     detailEntity.setSkuId(skuId);
                     //仓库
@@ -415,16 +455,19 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                 }
             }
         }
+        return new WdtSyncQueryContext(soOutstock, detailList, inOutStockList);
+    }
 
-        //2024.09.11 jack sdc-erp销售出库单增加旺店通的物流渠道名称
-        soOutstock.setLogisticsChannelCode(entity.getLogisticsCompanyCode());
-        soOutstock.setLogisticsChannelName(entity.getLogisticsCompanyName());
-        //订单标签
-        soOutstock.setTradeLabel(entity.getTradeLabel());
-        log.info("旺店通同步订单标签到erp："+ JSONUtil.toJsonStr(soOutstock));
-        // 记录最新出库日期
-        List<String> skuIds = detailList.stream().map(SoOutstockDetailEntity::getSkuId).distinct().collect(Collectors.toList());
-//        plmTaskFeign.updateSkuStdCost(new SkuStdCostDTO.UpdateDTO(skuIds, entity.getBillDate()));
+    /**
+     * 写操作：在短事务内完成单据保存、库存扣减和外部推送。
+     * 此时所有查询数据均已从 {@link WdtSyncQueryContext} 中预取，不再持有 DB 连接做 Feign 调用。
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
+    public void doSyncWdtSoOutStock(WdtSyncQueryContext ctx) {
+        SoOutstockEntity soOutstock = ctx.soOutstock;
+        List<SoOutstockDetailEntity> detailList = ctx.detailList;
+        List<InOutStockDTO> inOutStockList = ctx.inOutStockList;
 
         //保存销售出库单
         soOutstockService.save(soOutstock);
@@ -433,7 +476,6 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         //保存销售出库单详情
         soOutstockDetailService.saveBatch(detailList);
         //根据销售出库单创建物流单和自发货费用
-        soOutstock.setId(id);
         soOutstockService.saveLogisticsBill(soOutstock);
         //扣减库存
         InventoryInOutStockRuleDTO inventoryInOutStockDTO = getInventoryInOutStockRuleDTO(inOutStockList);
@@ -450,12 +492,28 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
             }
             inventoryTransCoreService.approveByRule(inventoryInOutStockDTO);
         }
-
         //推送金蝶
         sendPushTask(soOutstock);
-
         //推送数帝云
         this.syncToSdy(soOutstock, SyncOperateEnum.OPERATE_APPROVE.getCode());
+    }
+
+    /**
+     * 前置查询结果上下文：承载 {@link #preQueryForWdtSync} 组装好的全部数据，
+     * 传递给 {@link #doSyncWdtSoOutStock} 直接写库，无需再发起任何外部调用。
+     */
+    private static class WdtSyncQueryContext {
+        final SoOutstockEntity soOutstock;
+        final List<SoOutstockDetailEntity> detailList;
+        final List<InOutStockDTO> inOutStockList;
+
+        WdtSyncQueryContext(SoOutstockEntity soOutstock,
+                            List<SoOutstockDetailEntity> detailList,
+                            List<InOutStockDTO> inOutStockList) {
+            this.soOutstock = soOutstock;
+            this.detailList = detailList;
+            this.inOutStockList = inOutStockList;
+        }
     }
 
     /**
@@ -601,7 +659,8 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
 
 
     @Override
-    @DistributeLocker(keyName = "entity.platformOrderCode,entity.detailList.platformSkuNo",waiteTime = 60)
+    // Temu MQ 按「平台订单+店铺」整单推送，单店铺不支持多仓并发；waiteTime=60s，失败依赖 MQ 重试。
+    @DistributeLocker(keyName = "entity.platformOrderCode,entity.shopId", waiteTime = 60)
     public void syncTemuSoOutStock(TeMuSoOutStockDTO entity) {
         //查询销售出库单
         List<SoB2cEntity> soB2cEntityList = soB2cFeign.getByPlatformCode(Collections.singletonList(entity.getPlatformOrderCode()),PlatformDictEnum.TE_MU.getCode(),entity.getShopId(),"");
@@ -625,7 +684,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         List<SoB2cDetailEntity> handleDetailList = new ArrayList<>();
         for (TeMuSoOutStockDetailDTO teMuSoOutStockDetailDTO : detailList) {
             String erpWarehouseId = warehouseMappingDTOS.stream().filter(v->v.getThirdWarehouseCode().equals(teMuSoOutStockDetailDTO.getPlatformWarehouseCode())).map(ThirdMappingDTO.WarehouseMappingDTO::getSysWarehouseId).findFirst().orElse(null);
-            SoB2cDetailEntity soB2cDetailEntity = soB2cDetailEntityList.stream().filter(v->v.getPlatformSkuNo().equals(teMuSoOutStockDetailDTO.getPlatformSkuNo())).findFirst().orElse(null);
+            SoB2cDetailEntity soB2cDetailEntity = matchTemuSoB2cDetail(soB2cDetailEntityList, teMuSoOutStockDetailDTO);
             if(Objects.isNull(soB2cDetailEntity)){
                 log.warn("同步temu销售出库单失败，未查询到对应的销售订单明细，平台订单号：{}，平台sku编号：{}", entity.getPlatformOrderCode(), teMuSoOutStockDetailDTO.getPlatformSkuNo());
                 continue;
@@ -657,11 +716,33 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         }
         soB2cFeign.updateDetail(handleDetailList);
         //不同仓库生成不同的出库单
-        Map<String,List<SoB2cDetailEntity>> detailMap = handleDetailList.stream().filter(v->StringUtils.isNotBlank(v.getWarehouseId())).collect(Collectors.groupingBy(SoB2cDetailEntity::getWarehouseId));
-        detailMap.forEach((warehouseId,detailEntities)->{
+        // MQ 偶发重复推送时保留首条；若需严格唯一应在上游去重。
+        Map<String, TeMuSoOutStockDetailDTO> temuDetailBySubSoCode = detailList.stream()
+                .filter(d -> StringUtils.isNotBlank(d.getPlatformSubSoCode()))
+                .collect(Collectors.toMap(TeMuSoOutStockDetailDTO::getPlatformSubSoCode, d -> d, (left, right) -> {
+                    log.warn("Temu出库明细重复platformSubSoCode={}, 保留首条, platformOrderCode={}",
+                            left.getPlatformSubSoCode(), entity.getPlatformOrderCode());
+                    return left;
+                }));
+        Map<String, TeMuSoOutStockDetailDTO> temuDetailBySkuNo = detailList.stream()
+                .filter(d -> StringUtils.isNotBlank(d.getPlatformSkuNo()))
+                .collect(Collectors.toMap(TeMuSoOutStockDetailDTO::getPlatformSkuNo, d -> d, (left, right) -> {
+                    log.warn("Temu出库明细重复platformSkuNo={}, 保留首条, platformOrderCode={}",
+                            left.getPlatformSkuNo(), entity.getPlatformOrderCode());
+                    return left;
+                }));
+        Map<String, List<SoB2cDetailEntity>> detailMap = handleDetailList.stream()
+                .filter(v -> StringUtils.isNotBlank(v.getWarehouseId()))
+                .collect(Collectors.groupingBy(SoB2cDetailEntity::getWarehouseId));
+        detailMap.forEach((warehouseId, detailEntities) -> {
             for (SoB2cDetailEntity detailEntity : detailEntities) {
-                TeMuSoOutStockDetailDTO teMuSoOutStockDetailDTO = detailList.stream().filter(v->v.getPlatformSkuNo().equals(detailEntity.getPlatformSkuNo())).findFirst().orElse(null);
-                if(Objects.nonNull(teMuSoOutStockDetailDTO)){
+                TeMuSoOutStockDetailDTO teMuSoOutStockDetailDTO;
+                if (StringUtils.isNotBlank(detailEntity.getPlatformSubSoCode())) {
+                    teMuSoOutStockDetailDTO = temuDetailBySubSoCode.get(detailEntity.getPlatformSubSoCode());
+                } else {
+                    teMuSoOutStockDetailDTO = temuDetailBySkuNo.get(detailEntity.getPlatformSkuNo());
+                }
+                if (Objects.nonNull(teMuSoOutStockDetailDTO)) {
                     detailEntity.setQty(teMuSoOutStockDetailDTO.getQty());
                 }
             }
@@ -680,6 +761,19 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
             }
         }
 
+    }
+
+    /**
+     * 匹配 Temu 出库明细与 ERP 订单行：优先 platformSubSoCode，缺失时回退 platformSkuNo（历史 MQ 无子单号）。
+     */
+    private SoB2cDetailEntity matchTemuSoB2cDetail(List<SoB2cDetailEntity> soB2cDetailEntityList, TeMuSoOutStockDetailDTO teMuSoOutStockDetailDTO) {
+        if (StringUtils.isNotBlank(teMuSoOutStockDetailDTO.getPlatformSubSoCode())) {
+            return soB2cDetailEntityList.stream()
+                    .filter(v -> teMuSoOutStockDetailDTO.getPlatformSubSoCode().equals(v.getPlatformSubSoCode()))
+                    .findFirst()
+                    .orElse(null);
+        }
+        return soB2cDetailEntityList.stream().filter(v->v.getPlatformSkuNo().equals(teMuSoOutStockDetailDTO.getPlatformSkuNo())).findFirst().orElse(null);
     }
 
     @Override
@@ -766,6 +860,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         soOutstock.setCustomerName(customerInfo.getName());
         soOutstock.setSellerId(customerInfo.getSellerId());
         soOutstock.setSellerName(customerInfo.getSellerName());
+        soOutstock.setPartitionId(customerInfo.getPartitionId());
         soOutstock.setWarehouseId(warehouse.getId());
         soOutstock.setSourceType(SourceTypeEnum.SO_OUTSTOCK.getCode());
         soOutstock.setOrderType(OrderTypeEnum.B2C.getCode());
@@ -926,6 +1021,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         soOutstock.setCode(code);
         //金蝶无店铺id
         soOutstock.setShopId("");
+        soOutstock.setPartitionId("");
         //运输单号
         soOutstock.setTrackNo(entity.getFCarriageNO());
         //第三方单据编号
