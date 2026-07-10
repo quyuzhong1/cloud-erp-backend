@@ -191,6 +191,9 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     @Lazy
     private LogisticsBillCostService service;
     @Resource
+    @Lazy
+    private LogisticsReconService logisticsReconService;
+    @Resource
     private TmsAsyncTaskRecordService asyncTaskRecordService;
     @Resource
     private TmsAsyncTaskDetailService asyncTaskDetailRecordService;
@@ -772,6 +775,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 .set(!confirmFlag,LogisticsBillCostEntity::getConfirmUserId, "")
                 .set(!confirmFlag,LogisticsBillCostEntity::getConfirmUserName, "")
                 .update();
+        // 费用单对账状态变更后，反向同步对账单 ref 快照与 detail_sub 聚合状态
+        syncReconStatusQuietly(Collections.singletonList(id));
         // 状态变更日志
         log.info("状态变更日志数据，id集合：【{}】", id);
         String msg = CharSequenceUtil.format("状态更新为【{}】 ",  ReconciliationStatusEnum.getName(reconciliationStatus));
@@ -783,6 +788,12 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
     @Override
     public int batchUpdateReconciliationStatus(List<String> ids, String reconciliationStatus, LocalDateTime confirmTime) {
+        return batchUpdateReconciliationStatus(ids, reconciliationStatus, confirmTime, false);
+    }
+
+    @Override
+    public int batchUpdateReconciliationStatus(List<String> ids, String reconciliationStatus, LocalDateTime confirmTime,
+                                               boolean skipSync) {
         if (CollUtil.isEmpty(ids)) {
             return 0;
         }
@@ -829,8 +840,28 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                     .set(!confirmFlag, LogisticsBillCostEntity::getConfirmUserName, "");
             totalUpdated += getBaseMapper().update(null, updateChain.getWrapper());
         }
-        log.info("批量更新对账状态完成，更新={}，期望={}，状态={}", totalUpdated, distinctIds.size(), reconciliationStatus);
+        // 费用单对账状态变更后，反向同步对账单 ref 快照与 detail_sub 聚合状态（幂等，重复刷新结果一致）；
+        // skipSync=true 时由调用方在批处理结束后统一同步一次，避免逐批全单刷新导致的 O(n^2) 开销。
+        if (!skipSync) {
+            syncReconStatusQuietly(distinctIds);
+        }
+        log.info("批量更新对账状态完成，更新={}，期望={}，状态={}，skipSync={}", totalUpdated, distinctIds.size(),
+                reconciliationStatus, skipSync);
         return totalUpdated;
+    }
+
+    /**
+     * 反向同步对账单状态（失败仅告警，不影响费用单状态主流程）。
+     */
+    private void syncReconStatusQuietly(java.util.Collection<String> logisticsBillCostIds) {
+        if (CollUtil.isEmpty(logisticsBillCostIds)) {
+            return;
+        }
+        try {
+            logisticsReconService.syncReconStatusByCostIds(logisticsBillCostIds);
+        } catch (Exception e) {
+            log.warn("[syncReconStatusQuietly] 对账单状态反向同步失败 costIds={}", logisticsBillCostIds, e);
+        }
     }
 
     /**
@@ -974,7 +1005,10 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             return true;
         }
         entity.setReconciliationStatus(ReconciliationStatusEnum.INVALID.getCode());
-        return this.updateById(entity);
+        boolean updated = this.updateById(entity);
+        // 作废后费用单不再参与对账确认，反向同步对账单 ref 快照与 detail_sub 聚合状态
+        syncReconStatusQuietly(Collections.singletonList(entity.getId()));
+        return updated;
     }
 
     @Override
@@ -2848,6 +2882,12 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
     @Override
     public void batchConfirmImport(List<ImportHistoryRecordDTO.ImportConfirmDTO> confirmList, String reconciliationStatus) {
+        batchConfirmImport(confirmList, reconciliationStatus, false);
+    }
+
+    @Override
+    public void batchConfirmImport(List<ImportHistoryRecordDTO.ImportConfirmDTO> confirmList, String reconciliationStatus,
+                                   boolean skipSync) {
         if (CollUtil.isEmpty(confirmList)) {
             return;
         }
@@ -2874,7 +2914,14 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         for (List<ImportHistoryRecordDTO.ImportConfirmDTO> batch : ListUtil.partition(distinctConfirmList, IMPORT_CONFIRM_BATCH_SIZE)) {
             updateCount += baseMapper.batchConfirmImport(batch, reconciliationStatus, confirmUserId, confirmUserName);
         }
-        log.info("导入确认批量更新完成，入参条数：{}，去重后条数：{}，更新条数：{}", confirmList.size(), distinctConfirmList.size(), updateCount);
+        // 导入确认变更费用单对账状态后，反向同步对账单 ref 快照与 detail_sub 聚合状态；
+        // skipSync=true（对账匹配确认路径）时跳过：ref 已由 buildReconBillRefs 直接写 confirmed，
+        // detail_sub 由 doMatchSubsChunk 按分片 scope 刷新，避免逐分片全单刷新导致的 O(n^2) 与并发全表更新竞争。
+        if (!skipSync) {
+            syncReconStatusQuietly(new ArrayList<>(confirmMap.keySet()));
+        }
+        log.info("导入确认批量更新完成，入参条数：{}，去重后条数：{}，更新条数：{}，skipSync={}",
+                confirmList.size(), distinctConfirmList.size(), updateCount, skipSync);
     }
 
     @Override

@@ -78,72 +78,61 @@
         logistics_recon.remark AS remark
     </sql>
 
+    <!-- 有效费用项：sub.detail_id 对应明细且 detail.main_id = sub.main_id（与详情页统计口径一致） -->
+    <sql id="Valid_Sub_Stats_Join">
+        LEFT JOIN (
+            SELECT d.main_id,
+                   COUNT(*) AS valid_cost_count,
+                   COUNT(*) FILTER (WHERE sub.match_status = 'matched') AS match_count,
+                   SUM(sub.local_amount) FILTER (WHERE sub.match_status = 'matched') AS match_success_amount,
+                   SUM(sub.local_amount) FILTER (WHERE sub.match_status = 'failed') AS match_fail_amount,
+                   COUNT(*) AS reconciliation_total_count,
+                   COUNT(*) FILTER (WHERE sub.reconciliation_status = 'confirmed') AS reconciliation_confirmed_count,
+                   COUNT(*) FILTER (WHERE sub.reconciliation_status = 'partialConfirm') AS reconciliation_partial_count
+            FROM logistics_recon_detail_sub sub
+            INNER JOIN logistics_recon_detail d
+                ON d.id = sub.detail_id AND d.is_deleted = false AND d.main_id = sub.main_id
+            WHERE sub.is_deleted = false
+            GROUP BY d.main_id
+        ) s ON s.main_id = logistics_recon.id
+    </sql>
+
     <sql id="Status_Stats_Select">
-        COALESCE(m.match_count, 0) AS matchCount,
+        COALESCE(s.match_count, 0) AS matchCount,
+        COALESCE(s.valid_cost_count, 0) AS validCostCount,
         CASE
-            WHEN COALESCE(a.reconciliation_total_count, 0) &lt;= 0
-                OR (COALESCE(a.reconciliation_confirmed_count, 0) &lt;= 0
-                    AND COALESCE(a.reconciliation_partial_count, 0) &lt;= 0)
+            WHEN COALESCE(s.reconciliation_total_count, 0) &lt;= 0
+                OR (COALESCE(s.reconciliation_confirmed_count, 0) &lt;= 0
+                    AND COALESCE(s.reconciliation_partial_count, 0) &lt;= 0)
                 THEN 'toBeConfirm'
-            WHEN COALESCE(a.reconciliation_confirmed_count, 0) &gt;= COALESCE(a.reconciliation_total_count, 0)
+            WHEN COALESCE(s.reconciliation_confirmed_count, 0) &gt;= COALESCE(s.reconciliation_total_count, 0)
                 THEN 'confirmed'
             ELSE 'partialConfirm'
         END AS reconciliationStatus
     </sql>
 
     <sql id="Status_Stats_Join">
-        LEFT JOIN (
-            SELECT main_id,
-                   COUNT(*) FILTER (WHERE match_status = 'matched') AS match_count
-            FROM logistics_recon_detail_sub
-            WHERE is_deleted = false
-            GROUP BY main_id
-        ) m ON m.main_id = logistics_recon.id
-        LEFT JOIN (
-            SELECT sub.main_id,
-                   COUNT(*) AS reconciliation_total_count,
-                   COUNT(*) FILTER (WHERE sub.reconciliation_status = 'confirmed') AS reconciliation_confirmed_count,
-                   COUNT(*) FILTER (WHERE sub.reconciliation_status = 'partialConfirm') AS reconciliation_partial_count
-            FROM logistics_recon_detail_sub sub
-            WHERE sub.is_deleted = false
-            GROUP BY sub.main_id
-        ) a ON a.main_id = logistics_recon.id
+        <include refid="Valid_Sub_Stats_Join"/>
     </sql>
 
 
     <select id="paging" resultType="com.erp.model.tms.dto.LogisticsReconDTO$ListDTO">
         SELECT <include refid="Paging_Column_List"/>,
-        COALESCE(m.match_count, 0) AS matchCount,
-        COALESCE(a.match_success_amount, 0) AS matchSuccessAmount,
-        COALESCE(a.match_fail_amount, 0) AS matchFailAmount,
+        COALESCE(s.match_count, 0) AS matchCount,
+        COALESCE(s.valid_cost_count, 0) AS validCostCount,
+        COALESCE(s.match_success_amount, 0) AS matchSuccessAmount,
+        COALESCE(s.match_fail_amount, 0) AS matchFailAmount,
         CASE
-        WHEN COALESCE(a.reconciliation_total_count, 0) &lt;= 0
-        OR (COALESCE(a.reconciliation_confirmed_count, 0) &lt;= 0
-        AND COALESCE(a.reconciliation_partial_count, 0) &lt;= 0)
+        WHEN COALESCE(s.reconciliation_total_count, 0) &lt;= 0
+        OR (COALESCE(s.reconciliation_confirmed_count, 0) &lt;= 0
+        AND COALESCE(s.reconciliation_partial_count, 0) &lt;= 0)
         THEN 'toBeConfirm'
-        WHEN COALESCE(a.reconciliation_confirmed_count, 0) &gt;= COALESCE(a.reconciliation_total_count, 0)
+        WHEN COALESCE(s.reconciliation_confirmed_count, 0) &gt;= COALESCE(s.reconciliation_total_count, 0)
         THEN 'confirmed'
         ELSE 'partialConfirm'
         END AS reconciliationStatus
         FROM logistics_recon
-        LEFT JOIN (
-        SELECT main_id,
-        COUNT(*) FILTER (WHERE match_status = 'matched') AS match_count
-        FROM logistics_recon_detail_sub
-        WHERE is_deleted = false
-        GROUP BY main_id
-        ) m ON m.main_id = logistics_recon.id
-        LEFT JOIN (
-        SELECT sub.main_id,
-        SUM(sub.actual_amount) FILTER (WHERE sub.match_status = 'matched') AS match_success_amount,
-        SUM(sub.actual_amount) FILTER (WHERE sub.match_status = 'failed') AS match_fail_amount,
-        COUNT(*) AS reconciliation_total_count,
-        COUNT(*) FILTER (WHERE sub.reconciliation_status = 'confirmed') AS reconciliation_confirmed_count,
-        COUNT(*) FILTER (WHERE sub.reconciliation_status = 'partialConfirm') AS reconciliation_partial_count
-        FROM logistics_recon_detail_sub sub
-        WHERE sub.is_deleted = false
-        GROUP BY sub.main_id
-        ) a ON a.main_id = logistics_recon.id
+        <include refid="Valid_Sub_Stats_Join"/>
         WHERE ${params.sqlMap.default}
         AND is_deleted = false
         <if test="params.permissionSql != null and params.permissionSql != ''">

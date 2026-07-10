@@ -27,4 +27,9 @@ public interface LogisticsReconDetailSubMapper extends BaseMapper<LogisticsRecon
      * @return List<LogisticsReconDetailSubDTO.ListDTO>
      */
     List<LogisticsReconDetailSubDTO.ListDTO> listByDetailIds(@Param("detailIds") List<String> detailIds);
+
+    /**
+     * 统计主表下有效费用项数（detail 归属与 sub.main_id 一致）
+     */
+    int countValidByMainId(@Param("mainId") String mainId);
 }

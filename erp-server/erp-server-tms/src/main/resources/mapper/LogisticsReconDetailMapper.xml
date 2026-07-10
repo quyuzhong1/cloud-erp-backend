@@ -104,10 +104,12 @@
 
     <select id="countMatchedByMainId" resultType="java.lang.Integer">
         SELECT count(1)
-        FROM logistics_recon_detail_sub
-        WHERE is_deleted = false
-          AND main_id = #{mainId}
-          AND match_status = 'matched'
+        FROM logistics_recon_detail_sub sub
+        INNER JOIN logistics_recon_detail d
+            ON d.id = sub.detail_id AND d.is_deleted = false AND d.main_id = sub.main_id
+        WHERE sub.is_deleted = false
+          AND d.main_id = #{mainId}
+          AND sub.match_status = 'matched'
     </select>
 
     <!-- TAB 计数按费用项粒度统计（与列表一行一费用项对齐），按费用项 match_status 分组 -->

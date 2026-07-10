@@ -222,15 +222,8 @@ public class LogisticsReconController extends BaseController {
         if (dto.getIds() != null) {
             dto.getIds().sort(null);
         }
-        List<BatchResultDTO> results = new ArrayList<>(dto.getIds().size());
-        for (String mainId : dto.getIds()) {
-            try {
-                results.add(logisticsReconService.confirmBill(mainId, dto.getReconciliationStatus(), dto.getConfirmTime()));
-            } catch (Exception e) {
-                log.error("[batchConfirmBill] 失败 mainId={}", mainId, e);
-                results.add(BatchResultDTO.fail(mainId, mainId, e.getMessage()));
-            }
-        }
+        List<BatchResultDTO> results = logisticsReconService.submitConfirmBillAsync(
+                dto.getIds(), dto.getReconciliationStatus(), dto.getConfirmTime());
         return results.stream().allMatch(BatchResultDTO::getSuccess) ? success(results) : failure(results);
     }
 
