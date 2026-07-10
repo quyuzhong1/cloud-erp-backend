@@ -2,8 +2,6 @@ package com.erp.server.plm.controller.feign;
 
 import com.common.business.dto.base.BaseDTO;
 import com.common.business.enums.FileTaskStatusEnum;
-import com.common.core.anno.LogAction;
-import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.plm.enums.SkuStdCostImportTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -55,7 +53,6 @@ public class ImportPlmFeignController {
     }
 
     @PostMapping("/productDetailImages")
-    @LogAction(value = LogActionEnum.IMPORT, desc = "产品详情图片导入")
     public void productDetailImages(@RequestBody BaseDTO.ImportDTO dto) {
         try {
             productDetailImagesService.importProductDetailImages(dto);
@@ -66,7 +63,6 @@ public class ImportPlmFeignController {
     }
 
     @PostMapping("/skuStdCostDetail")
-    @LogAction(value = LogActionEnum.IMPORT, desc = "SKU标准成本明细导入")
     public void skuStdCostDetail(@RequestBody BaseDTO.ImportTypeDTO dto) {
         try {
             SkuStdCostImportTypeEnum importTypeEnum = SkuStdCostImportTypeEnum.getByCode(dto.getImportType());
@@ -87,7 +83,6 @@ public class ImportPlmFeignController {
     }
 
     @PostMapping("/importMoldInfo")
-    @LogAction(value = LogActionEnum.IMPORT, desc = "模具档案导入")
     public void importMoldInfo(@RequestBody BaseDTO.ImportDTO dto) {
         try {
             moldInfoService.importMoldInfo(dto);
@@ -98,7 +93,6 @@ public class ImportPlmFeignController {
     }
 
     @PostMapping("/importMoldRefSku")
-    @LogAction(value = LogActionEnum.IMPORT, desc = "模具关联SKU导入")
     public void importMoldRefSku(@RequestBody BaseDTO.ImportDTO dto) {
         try {
             moldRefSkuService.importMoldRefSku(dto);
@@ -109,7 +103,6 @@ public class ImportPlmFeignController {
     }
 
     @PostMapping("/importCfgMoldReturn")
-    @LogAction(value = LogActionEnum.IMPORT, desc = "模具返还策略导入")
     public void importCfgMoldReturn(@RequestBody BaseDTO.ImportDTO dto) {
         try {
             cfgMoldReturnAlertRuleService.importCfgMoldReturn(dto);
@@ -120,7 +113,6 @@ public class ImportPlmFeignController {
     }
 
     @PostMapping("/importCfgMoldAlert")
-    @LogAction(value = LogActionEnum.IMPORT, desc = "模具预警策略导入")
     public void importCfgMoldAlert(@RequestBody BaseDTO.ImportDTO dto) {
         try {
             cfgMoldAlertRuleService.importCfgMoldAlert(dto);
@@ -131,7 +123,6 @@ public class ImportPlmFeignController {
     }
 
     @PostMapping("/importBatchUpload")
-    @LogAction(value = LogActionEnum.IMPORT, desc = "产品图片批量上传导入")
     public void importBatchUpload(@RequestBody RefProductImgAttachmentDTO.BatchUploadDTO dto) {
         try {
             // FileTaskContext 现在直接传递 metaInfo JSON 字符串，parseParamVarArgs 会根据参数类型反序列化
@@ -143,7 +134,6 @@ public class ImportPlmFeignController {
         }
     }
     @PostMapping("/importProductChange")
-    @LogAction(value = LogActionEnum.IMPORT, desc = "产品信息变更导入")
     public void importProductChange(@RequestBody BaseDTO.ImportDTO dto) {
         try {
             productChangeService.importProductChange(dto);
@@ -155,7 +145,6 @@ public class ImportPlmFeignController {
 
 
     @PostMapping("/importSkuStdRetailPrice")
-    @LogAction(value = LogActionEnum.IMPORT, desc = "SKU标准零售价导入")
     public void importSkuStdRetailPrice(@RequestBody BaseDTO.ImportDTO dto) {
         try {
             skuStdRetailPriceService.importSkuStdRetailPrice(dto);

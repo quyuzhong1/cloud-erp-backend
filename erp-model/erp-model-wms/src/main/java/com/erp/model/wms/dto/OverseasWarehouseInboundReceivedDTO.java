@@ -56,6 +56,11 @@ public class OverseasWarehouseInboundReceivedDTO implements Serializable {
         */
         private LocalDateTime receiveTime;
 
+        /**
+        * 是否不良品 true 是 false 否
+        */
+        private Boolean defectiveProductFlag;
+
 
     }
 
@@ -112,6 +117,11 @@ public class OverseasWarehouseInboundReceivedDTO implements Serializable {
         * 签收时间
         */
         private LocalDateTime receiveTime;
+
+        /**
+        * 是否不良品 true 是 false 否
+        */
+        private Boolean defectiveProductFlag;
 
 
     }
