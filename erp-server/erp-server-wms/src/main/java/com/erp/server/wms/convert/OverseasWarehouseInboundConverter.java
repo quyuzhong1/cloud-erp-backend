@@ -169,7 +169,7 @@ public interface OverseasWarehouseInboundConverter {
             @Mapping(target = "company", ignore = true),
             @Mapping(target = "customerPackageRequirement", ignore = true),
             @Mapping(target = "distributorType", ignore = true),
-            @Mapping(target = "email", ignore = true),
+            @Mapping(target = "email", source = "receiverInfo.email"),
             @Mapping(target = "estimatedArrivalDate", ignore = true),
             @Mapping(target = "estimatedArrivalTime", ignore = true),
             @Mapping(target = "fbaShipmentId", ignore = true),

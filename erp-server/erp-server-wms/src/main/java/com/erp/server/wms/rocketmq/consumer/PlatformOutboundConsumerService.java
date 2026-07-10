@@ -27,8 +27,11 @@ import com.erp.model.oms.entity.SoB2cReceiverEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
+import com.erp.model.oms.enums.OrderSubTypeEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.tms.dto.LogisticsChannelDTO;
+import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.wms.dto.OverseasProviderDTO;
@@ -42,7 +45,9 @@ import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.server.wms.service.*;
+import com.sdk.wms.wego.enums.WegoEnums;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.redisson.api.RLock;
@@ -114,6 +119,9 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
+
+    @Resource
+    private LogisticsFeign logisticsFeign;
 
     @Resource
     private RedissonClient redissonClient;
@@ -236,9 +244,19 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                             updateStatus.setAddOperationLog(true);
                         }
                     }
-                    updateStatus.setTrackNo(dto.getTrackNo());
+                    // WEGO 物流跟踪号仅针对线下下单同步，线上订单跟踪号由销售平台管理；
+                    // transactionSubType 为空时视为线下订单（WEGO 手工建单场景），兜底同步跟踪号
+                    if (!OmsPlatformEnum.WE_GO.getCode().equals(dto.getPlatform())
+                            || CharSequenceUtil.isBlank(mainEntity.getTransactionSubType())
+                            || OrderSubTypeEnum.OFFLINE_ORDER.getCode().equals(mainEntity.getTransactionSubType())) {
+                        updateStatus.setTrackNo(dto.getTrackNo());
+                    }
                     soB2cFeign.updateSoB2cStatusByParams(updateStatus);
-
+                    //更新物流单跟踪号
+                    if (CharSequenceUtil.isNotBlank(dto.getTrackNo()) && !dto.getTrackNo().equals(thirdWarehouseDeliveryEntity.getTrackNo())){
+                        thirdWarehouseDeliveryEntity.setTrackNo(dto.getTrackNo());
+                        thirdWarehouseDeliveryService.updateById(thirdWarehouseDeliveryEntity);
+                    }
                     map.put(mainEntity, thirdWarehouseDeliveryEntity);
                 }
             }else if (referenceNo.contains(BusinessNoConstant.SFFH)){
@@ -352,8 +370,22 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                             ""
                     );
                     soB2cFeign.addSoB2cError(addError);
-                    //异步取消海外仓订单
-                    asyncService.asyncCancelThirdWarehouseOrder(mainEntity, dto.getAbnormalProblemReason());
+                    // WEGO 出库单"出库异常"（WegoEnums.OrderStatusEnum.OUTBOUND_EXCEPTION，状态码13）需人工至WEGO后台手动取消，
+                    // 与"提交失败"（状态码1）区分处理，二者在ERP侧都会映射为同一个 exception 状态，需依赖 thirdOrderStatus 区分来源
+                    boolean isWegoOutboundException = OmsPlatformEnum.WE_GO.getCode().equals(dto.getPlatform())
+                            && WegoEnums.OrderStatusEnum.OUTBOUND_EXCEPTION.getName().equals(dto.getThirdOrderStatus());
+                    if (isWegoOutboundException) {
+                        // WEGO 出库异常：三方仓发货单保持"待处理"、销售订单保持"待发货"，不做自动截单/状态变更，
+                        // 需人工至 WEGO 海外仓后台确认包裹/库存是否可找到后手动取消，只有 WEGO 后台才能真正取消出库异常单
+                        operateLogService.addModuleOperateLog("三方仓出库异常，需人工至WEGO后台确认后手动取消，异常信息：" + dto.getAbnormalProblemReason(),
+                                ModuleTypeEnum.SO_B2C.getCode(), mainEntity.getId(), "出库异常");
+                    } else {
+                        //异步取消海外仓订单（拦截确认成功后会将销售订单更新为配货中；
+                        //若为WEGO"提交失败"场景，同样在拦截确认成功后才将三方仓发货单更新为取消发货，避免与异步结果时序不一致）
+                        ThirdWarehouseDeliveryEntity wegoDeliveryEntity = OmsPlatformEnum.WE_GO.getCode().equals(dto.getPlatform())
+                                ? thirdWarehouseDeliveryEntity : null;
+                        asyncService.asyncCancelThirdWarehouseOrder(mainEntity, dto.getAbnormalProblemReason(), wegoDeliveryEntity);
+                    }
                 }
                 if (SoB2cBillStatusEnum.ENUM_DISUSE.getCode().equals(dto.getOrderStatus())) {
                     if (mainEntity.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode())) {
@@ -437,6 +469,14 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         }else {
             mainEntityList = listByReferenceNo;
         }
+        // 安兔等三方仓自动出库仅匹配平台拉单（XSDD），排除手工单（XSDS）及全托管单（XSBH）
+        mainEntityList = mainEntityList.stream()
+                .filter(entity -> CharSequenceUtil.startWith(entity.getCode(), BusinessNoConstant.XSDD))
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(mainEntityList)) {
+            log.error("三方仓自动出库: 未找到平台拉取的B2C销售订单 >>>>>>>{}", JSONUtil.toJsonStr(dto));
+            return null;
+        }
 
         List<String> soB2cIds = mainEntityList.stream().map(SoB2cEntity::getId).collect(Collectors.toList());
 
@@ -470,6 +510,8 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         if(!platformWarehouseCodeNotExist && !overseasProviderNotExist) {
             skuValidationContext = loadThirdWarehouseSkuValidationContext(dto, overseasWarehouse);
         }
+        ThirdWarehouseLogisticsChannelValidationContext logisticsChannelContext =
+                loadThirdWarehouseLogisticsChannelValidationContext(soB2cIds, dto);
 
         for (SoB2cEntity mainEntity : mainEntityList) {
             SoB2cDeliveryEntity soB2cDeliveryEntity = soB2cDeliveryMap.get(mainEntity.getId());
@@ -520,6 +562,13 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                 }
             }
 
+            String logisticsChannelErrorMsg = validateThirdWarehouseLogisticsChannelMapping(
+                    mainEntity.getId(), dto, logisticsChannelContext);
+            if (StringUtils.isNotBlank(logisticsChannelErrorMsg)) {
+                addRetryPlatformOutboundError(mainEntity.getId(), dto, logisticsChannelErrorMsg);
+                continue;
+            }
+
             //虚拟仓库查询
             SoB2cReceiverEntity soB2cReceiverEntity = soB2cReceiverMap.getOrDefault(mainEntity.getId(),null);
             VirtualWarehouseChannelDTO.PlatformDTO platformDTO = new VirtualWarehouseChannelDTO.PlatformDTO();
@@ -549,6 +598,14 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
             updateDto.setVirtualWarehouseId(virtualWarehouseId);
             updateDto.setTrackNo(dto.getTrackNo());
             updateDto.setSoB2cId(mainEntity.getId());
+            updateDto.setShippingMethod(dto.getShippingMethod());
+            updateDto.setThirdWarehousePlatform(dto.getPlatform());
+            updateDto.setPlatformWarehouseCode(dto.getWarehouseCode());
+            LogisticsChannelEntity resolvedLogisticsChannel = logisticsChannelContext.getResolvedLogisticsChannel();
+            if (Objects.nonNull(resolvedLogisticsChannel)) {
+                updateDto.setResolvedLogisticsChannelId(resolvedLogisticsChannel.getId());
+                updateDto.setResolvedLogisticsChannelName(resolvedLogisticsChannel.getName());
+            }
             if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dto.getOrderStatus())) {
                 //只有已发货才更新
                 updateDto.setBillStatus(dto.getOrderStatus());
@@ -558,7 +615,14 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                     updateDto.setAddOperationLog(true);
                 }
             }
-            soB2cFeign.updateB2cByPlatformOutbound(updateDto);
+            try {
+                soB2cFeign.updateB2cByPlatformOutbound(updateDto);
+            } catch (Exception e) {
+                log.error("三方仓自动出库: 更新B2C销售订单失败, orderId={}, code={}", mainEntity.getId(), mainEntity.getCode(), e);
+                addRetryPlatformOutboundError(mainEntity.getId(), dto,
+                        "自动生成销售出库单失败：" + (e.getMessage() != null ? e.getMessage() : "更新订单异常"));
+                continue;
+            }
 
             //5.“三方仓发货单”
             ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity = generateThirdWarehouseDelivery(detailList, dto, mainEntity, platformCode,overseasWarehouse.getWarehouseId());
@@ -586,6 +650,74 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                 ""
         );
         soB2cFeign.addSoB2cError(addError);
+    }
+
+    private ThirdWarehouseLogisticsChannelValidationContext loadThirdWarehouseLogisticsChannelValidationContext(
+            List<String> soB2cIds, PlatformOutboundDTO dto) {
+        List<SoB2cLogisticsEntity> logisticsList = FeignQuery.create(SoB2cLogisticsEntity.class)
+                .in(SoB2cLogisticsEntity::getMainId, soB2cIds)
+                .list();
+        Map<String, SoB2cLogisticsEntity> logisticsByMainId = new HashMap<>();
+        if (CollUtil.isNotEmpty(logisticsList)) {
+            for (SoB2cLogisticsEntity logisticsEntity : logisticsList) {
+                logisticsByMainId.putIfAbsent(logisticsEntity.getMainId(), logisticsEntity);
+            }
+        }
+        Boolean mappingValid = null;
+        LogisticsChannelEntity resolvedChannel = resolveThirdWarehouseLogisticsChannel(dto);
+        if (StringUtils.isNotBlank(dto.getShippingMethod())
+                && StringUtils.isNotBlank(dto.getPlatform())
+                && StringUtils.isNotBlank(dto.getWarehouseCode())) {
+            mappingValid = Objects.nonNull(resolvedChannel);
+        }
+        return new ThirdWarehouseLogisticsChannelValidationContext(logisticsByMainId, mappingValid, resolvedChannel);
+    }
+
+    /**
+     * 三方仓出库批次内仅解析一次 ERP 物流渠道，供校验与 OMS 回写透传。
+     */
+    private LogisticsChannelEntity resolveThirdWarehouseLogisticsChannel(PlatformOutboundDTO dto) {
+        String shippingMethod = dto.getShippingMethod();
+        String thirdWarehousePlatform = dto.getPlatform();
+        String platformWarehouseCode = dto.getWarehouseCode();
+        if (StringUtils.isBlank(shippingMethod)
+                || StringUtils.isBlank(thirdWarehousePlatform)
+                || StringUtils.isBlank(platformWarehouseCode)) {
+            return null;
+        }
+        LogisticsChannelDTO.ThirdWarehouseLogisticsMappingDTO mappingQuery = new LogisticsChannelDTO.ThirdWarehouseLogisticsMappingDTO();
+        mappingQuery.setLogisticsPlatform(thirdWarehousePlatform);
+        mappingQuery.setShippingMethod(shippingMethod);
+        mappingQuery.setPlatformWarehouseCode(platformWarehouseCode);
+        return logisticsFeign.resolveThirdWarehouseLogisticsChannel(mappingQuery);
+    }
+
+    /**
+     * 订单物流渠道为空时，校验三方仓 shipping_method 是否已映射 ERP 物流渠道。
+     *
+     * @return 校验失败时的异常文案；null 表示通过或无需校验
+     */
+    private String validateThirdWarehouseLogisticsChannelMapping(String mainId,
+                                                                 PlatformOutboundDTO dto,
+                                                                 ThirdWarehouseLogisticsChannelValidationContext context) {
+        SoB2cLogisticsEntity logisticsEntity = context.getLogisticsByMainId().get(mainId);
+        if (Objects.isNull(logisticsEntity) || StringUtils.isNotBlank(logisticsEntity.getLogisticsChannelId())) {
+            return null;
+        }
+        Boolean mappingValid = context.getMappingValid();
+        if (mappingValid == null) {
+            return null;
+        }
+        if (Boolean.TRUE.equals(mappingValid)) {
+            return null;
+        }
+        return buildLogisticsChannelNotMappedErrorMsg(dto);
+    }
+
+    private String buildLogisticsChannelNotMappedErrorMsg(PlatformOutboundDTO dto) {
+        String providerCode = StrUtil.blankToDefault(dto.getProvider(), dto.getPlatform());
+        String providerName = StrUtil.blankToDefault(OmsPlatformEnum.getName(providerCode), providerCode);
+        return StrUtil.format("自动出库失败，【{}】物流渠道【{}】未映射", providerName, dto.getShippingMethod());
     }
 
     private ThirdWarehouseSkuValidationContext loadThirdWarehouseSkuValidationContext(PlatformOutboundDTO dto,
@@ -869,6 +1001,34 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                                 && StringUtils.isNotBlank(mapping.getProductSkuNo())
                                 && StrUtil.equals(skuNo, mapping.getProductSkuNo()))))
                 .collect(Collectors.toList());
+    }
+
+    private static class ThirdWarehouseLogisticsChannelValidationContext {
+        private final Map<String, SoB2cLogisticsEntity> logisticsByMainId;
+        /** null 表示跳过映射校验 */
+        private final Boolean mappingValid;
+        /** 批次内单次 Feign 解析结果，透传 OMS 避免 N 次重复调用 */
+        private final LogisticsChannelEntity resolvedLogisticsChannel;
+
+        private ThirdWarehouseLogisticsChannelValidationContext(Map<String, SoB2cLogisticsEntity> logisticsByMainId,
+                                                                Boolean mappingValid,
+                                                                LogisticsChannelEntity resolvedLogisticsChannel) {
+            this.logisticsByMainId = logisticsByMainId;
+            this.mappingValid = mappingValid;
+            this.resolvedLogisticsChannel = resolvedLogisticsChannel;
+        }
+
+        public Map<String, SoB2cLogisticsEntity> getLogisticsByMainId() {
+            return logisticsByMainId;
+        }
+
+        public Boolean getMappingValid() {
+            return mappingValid;
+        }
+
+        public LogisticsChannelEntity getResolvedLogisticsChannel() {
+            return resolvedLogisticsChannel;
+        }
     }
 
     private static class ThirdWarehouseSkuCheckResult {
