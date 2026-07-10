@@ -261,6 +261,7 @@ public class CfgSupplierSalesDTO implements Serializable {
         @NotBlank(message = "供应商不能为空")
         private String supplierId;
         private String supplierCode;
+        @Size(max = 500, message = "供应商名称最大长度不能超过500位")
         private String supplierName;
 
         /**

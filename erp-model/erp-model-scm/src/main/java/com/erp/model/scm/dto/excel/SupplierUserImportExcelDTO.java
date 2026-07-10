@@ -23,7 +23,7 @@ public class SupplierUserImportExcelDTO implements Serializable {
      */
     @ColumnWidth(30)
     @ExcelProperty(value = "供应商名称", index = 0)
-    @FieldValid(fieldName = "供应商名称",maxLength = 50)
+    @FieldValid(fieldName = "供应商名称",maxLength = 100)
     private String supplierName;
     /**
      * 用户名

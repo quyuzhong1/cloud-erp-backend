@@ -143,7 +143,7 @@ public class SupplierDTO implements Serializable {
          * 名称
          */
         @NotBlank(message = "供应商名称不能为空")
-        @Size(max = 50, message = "供应商名称最大50字符")
+        @Size(max = 100, message = "供应商名称最大100字符")
         private String name;
 
 
@@ -584,7 +584,7 @@ public class SupplierDTO implements Serializable {
          * 名称
          */
         @NotBlank(message = "供应商名称不能为空")
-        @Size(max = 50, message = "供应商名称最大50字符")
+        @Size(max = 100, message = "供应商名称最大100字符")
         private String name;
         /**
          * 外部平台编号

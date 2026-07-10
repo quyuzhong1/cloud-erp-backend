@@ -66,11 +66,8 @@ public @interface DistributeLocker {
     TimeUnit timeUnit() default TimeUnit.SECONDS;
 
     /**
-     * 是否在事务提交/回滚后再解锁。
-     * <p>生效条件：本服务本地 Spring 事务，或本服务作为 Seata 全局事务发起方（入站请求未携带 TX_XID）。
-     * 若入站请求已携带 {@code TX_XID}（上游 Feign 传入的跨服务参与方），Seata TransactionHook
-     * 不会在本进程执行，切面会退化为方法结束即解锁，避免锁泄漏。</p>
-     * @return  true:在事务结束后解锁
+     * 是否在事务提交后解锁
+     * @return  true:在事务提交后解锁
      */
     boolean unlockAfterTx() default false;
     /**

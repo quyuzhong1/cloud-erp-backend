@@ -116,7 +116,7 @@ public class SupplierPurchaseQuantityDTO implements Serializable {
         * 供应商名称
         */
         @NotBlank(message = "供应商名称不能为空")
-        @Size(max = 64,message = "供应商名称最大长度不能超过64位")
+        @Size(max = 100,message = "供应商名称最大长度不能超过100位")
         private String supplierName;
 
         /**
