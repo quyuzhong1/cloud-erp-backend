@@ -1,11 +1,9 @@
 package com.erp.server.workflow.controller.api;
 
 
-import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.common.core.enums.LogActionEnum;
 import com.erp.server.workflow.service.CfgOperateLogFieldService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -36,7 +34,6 @@ public class CfgOperateLogFieldController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/saveBatchSysLogField")
-    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "操作日志字段批量保存")
     public ApiResult<?> saveBatchSysLogField() {
         Boolean flag = cfgOperateLogFieldService.saveBatchSysLogField();
         return flag == true ? success() : failure();

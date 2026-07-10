@@ -5,7 +5,6 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.nacos.common.utils.StringUtils;
-import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.RedisService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -15,7 +14,6 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.SqlUtils;
-import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.sys.dto.AuthUserWarehouseDTO;
 import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.entity.AuthUserWarehouseEntity;
@@ -147,7 +145,6 @@ public class AuthUserWarehouseServiceImpl extends SuperServiceImpl<AuthUserWareh
     @Override
     @Transactional(rollbackFor = Exception.class)
     @CacheEvict(value = "cache:sys:warehouseUser:getWarehouseUserList", key = "#uid")
-    @DistributeLocker(businessType = DistributeKeyConstant.SYS_USER_AUTH_KEY, keyName = "uid", unlockAfterTx = true)
     public void batchSaveOrUpdate(String uid, List<String> warehouseIdList, String warehouseAuthType, boolean ifAdd) {
         if (CharSequenceUtil.isBlank(uid)) {
             return;

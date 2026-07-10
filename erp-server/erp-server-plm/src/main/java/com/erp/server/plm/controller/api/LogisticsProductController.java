@@ -361,7 +361,6 @@ public class LogisticsProductController extends BaseController {
      * @param dto
      */
     @PostMapping("/pushRegistration")
-    @LogAction(value = LogActionEnum.EXECUTE, desc = "物流产品下推注册")
     public  ApiResult<List<BatchResultDTO>> pushRegistration(@RequestBody LogisticsProductDTO.PushRegistrationDTO dto) {
         List<BatchResultDTO> resultDTOS = logisticsProductService.pushRegistration(dto);
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);

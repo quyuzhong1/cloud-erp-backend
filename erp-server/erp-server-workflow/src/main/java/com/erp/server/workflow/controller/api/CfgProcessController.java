@@ -221,7 +221,6 @@ public class CfgProcessController extends BaseController {
      * @return
      */
     @PostMapping("/startThirdProcess")
-    @LogAction(value = LogActionEnum.SUBMIT, desc = "启动第三方流程")
     public ApiResult<List<CfgProcessDTO.TabListDTO>> startThirdProcess(@RequestBody CfgProcessDTO.StartDTO dto) {
         cfgProcessService.startThirdProcess(dto);
         return success();

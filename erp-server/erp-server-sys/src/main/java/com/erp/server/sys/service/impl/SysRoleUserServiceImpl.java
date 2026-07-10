@@ -3,11 +3,9 @@ package com.erp.server.sys.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
-import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.dto.BatchSaveRoleUserDTO;
 import com.erp.model.sys.entity.SysRoleUserEntity;
@@ -36,7 +34,6 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysRoleUserMapper, SysRo
      * @param ifAdd
      */
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.SYS_USER_AUTH_KEY, keyName = "uid", unlockAfterTx = true)
     public void batchInsertRef(String uid, List<String> roleIds, boolean ifAdd) {
         //如果是修改 则要先删除数据
         if (!ifAdd) {

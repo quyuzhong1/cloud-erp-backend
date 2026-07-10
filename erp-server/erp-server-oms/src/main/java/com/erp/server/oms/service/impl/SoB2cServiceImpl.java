@@ -445,13 +445,22 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return this.baseMapper.fullyManagedPaging(query, params, null);
     }
 
+    /**
+     * Doris 分析库 SQL 回查 PG 主库时，将跨库表名替换为 OMS 可访问的表/外部表。
+     */
+    private String convertDorisSqlToPgSql(String dorisSql) {
+        return dorisSql
+                .replace("erp_wms.third_warehouse_delivery", "foreign_third_warehouse_delivery")
+                .replace("erp_wms.so_b2c_delivery", "so_b2c_delivery");
+    }
+
     // 新增方法：处理普通 paging 的逻辑
     private IPage<SoB2cDTO.ListDTO> handlePaging(Page query, PagingParamDTO params, String dynamicDataSource, Boolean secondQuery) {
         IPage<SoB2cDTO.ListDTO> pageData = null;
         if (DynamicDataSourceTypeEnum.DORIS.getCode().equals(dynamicDataSource) && secondQuery) {
             int queryCount = 0;
             String defaultSql = params.getSqlMap().get("default");
-            String pgSql = defaultSql.replace("erp_wms.third_warehouse_delivery", "foreign_third_warehouse_delivery");
+            String pgSql = convertDorisSqlToPgSql(defaultSql);
             boolean unSameCountFlag = true;
             while (queryCount < 3) {
                 DynamicDataSourceContextHolder.poll();
@@ -1538,7 +1547,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.SO_B2C_ORDER_KEY, keyName = "updateDTO.id", waiteTime = 60, unlockAfterTx = true)
     public BatchResultDTO update(SoB2cDTO.UpdateDTO updateDTO) {
         SoB2cEntity old = super.getById(updateDTO.getId());
         isExist(old);
@@ -1633,7 +1641,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.SO_B2C_ORDER_KEY, keyName = "entity.id", waiteTime = 60, unlockAfterTx = true)
     public ApproveResultDTO submit(SoB2cEntity entity, SoB2cErrorEntity error, SoB2cLogisticsEntity soB2cLogisticsEntity, Boolean isProcess) {
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException("未找到B2C销售订单表数据");
@@ -1696,7 +1703,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.SO_B2C_ORDER_KEY, keyName = "dto.id", waiteTime = 60, unlockAfterTx = true)
     public BatchResultDTO approve(ApproveOneDTO dto, Boolean isMatch, String ruleName) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if (Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
@@ -1781,7 +1787,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.SO_B2C_ORDER_KEY, keyName = "id", waiteTime = 60, unlockAfterTx = true)
     public BatchResultDTO invalid(String id, String remark, SoB2cInvalidTypeEnum soB2cInvalidTypeEnum) {
         SoB2cEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到B2C销售订单表数据"));
         // 待提交或审核不通过并且未作废允许作废
@@ -1813,7 +1818,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.SO_B2C_ORDER_KEY, keyName = "id", waiteTime = 60, unlockAfterTx = true)
     public BatchResultDTO unInvalid(String id, SoB2cInvalidTypeEnum soB2cInvalidTypeEnum) {
         SoB2cEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到B2C销售订单表数据"));
         if (InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())) {
@@ -2818,13 +2822,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    @DistributeLocker(businessType = DistributeKeyConstant.SO_B2C_ORDER_KEY, keyName = "id", waiteTime = 60, unlockAfterTx = true)
     public BatchResultDTO submitDelivery(String id, String channelId) {
-        SoB2cLogisticsEntity logisticsForForecastSync = soB2cLogisticsService.getByMainId(id);
-        if (Objects.nonNull(logisticsForForecastSync) && StringUtils.isNotBlank(logisticsForForecastSync.getLogisticsChannelId())) {
-            // 提交发货时按 TMS 预报设置同步中转/组包状态（无需中转的单内部会跳过）
-            soB2cService.syncForecastStatusQuietly(id, logisticsForForecastSync.getLogisticsChannelId());
-        }
         try {
             List<BatchResultDTO> batchResultDTOS = soB2cService.autoOrderForecast(Collections.singletonList(id));
             //在提交发货中，清除异常订单报错
@@ -2903,7 +2901,17 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         //校验中转状态
         if (TransferStatusEnum.FAILURE.getCode().equals(entity.getTransferStatus()) || TransferStatusEnum.WAIT.getCode().equals(entity.getTransferStatus())) {
-            throw new ServiceException(CharSequenceUtil.format("{}未成功预报无法提交发货", entity.getCode()));
+            String forecastErrorMsg = "";
+            List<SoB2cErrorEntity> forecastErrors = soB2cErrorService.getByMainIdsAndType(Collections.singletonList(id), SoB2cErrorTypeEnum.ORDER_FORECAST.getCode());
+            if (CollUtil.isNotEmpty(forecastErrors) && StringUtils.isNotBlank(forecastErrors.get(0).getMessage())) {
+                forecastErrorMsg = forecastErrors.get(0).getMessage();
+            }
+            if (TransferStatusEnum.FAILURE.getCode().equals(entity.getTransferStatus())) {
+                throw new ServiceException(CharSequenceUtil.format("{}订单预报失败，无法提交发货{}", entity.getCode(),
+                        StringUtils.isBlank(forecastErrorMsg) ? "，请查看订单异常或重新操作「订单预报」" : "：" + forecastErrorMsg));
+            }
+            throw new ServiceException(CharSequenceUtil.format("{}待订单预报，请先完成「订单预报」后再提交发货{}", entity.getCode(),
+                    StringUtils.isBlank(forecastErrorMsg) ? "" : "（" + forecastErrorMsg + "）"));
         }
 
         //检查发货限制
@@ -4212,7 +4220,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
 
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.SO_B2C_ORDER_KEY, keyName = "id", waiteTime = 60, unlockAfterTx = true)
     public BatchResultDTO deliveryIntercept(String id, String remark) {
         //B2C销售订单主表信息
         SoB2cEntity entity = this.getById(id);
@@ -4476,7 +4483,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.SO_B2C_ORDER_KEY, keyName = "id", waiteTime = 60, unlockAfterTx = true)
     public BatchResultDTO cancelDeliveryIntercept(String id) {
         //B2C销售订单主表信息
         SoB2cEntity entity = this.getById(id);
@@ -4556,7 +4562,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.SO_B2C_ORDER_KEY, keyName = "ids", waiteTime = 60, unlockAfterTx = true)
     public String mergeSave(List<String> ids) {
         if (MathUtil.TWO.intValue() > ids.size()) {
             throw new ServiceException(ApiError.SO_B2C_MERGE_SIZE_REQUIRED);
@@ -4776,7 +4781,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.SO_B2C_ORDER_KEY, keyName = "id", waiteTime = 60, unlockAfterTx = true)
     public BatchResultDTO cancelMerge(String id) {
         //B2C销售订单主表信息
         SoB2cEntity entity = this.getById(id);
@@ -7377,7 +7381,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    @DistributeLocker(businessType = DistributeKeyConstant.SO_B2C_ORDER_KEY, keyName = "dto.id", waiteTime = 60, unlockAfterTx = true)
     public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         SoB2cEntity entity = this.getById(dto.getId());
         if (Objects.isNull(entity)) {
@@ -7414,7 +7417,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    @DistributeLocker(businessType = DistributeKeyConstant.SO_B2C_ORDER_KEY, keyName = "id", waiteTime = 60, unlockAfterTx = true)
     public BatchResultDTO disApprove(String id) {
         SoB2cEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
@@ -7793,7 +7795,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.SO_B2C_ORDER_KEY, keyName = "dto.platformCode,dto.shopId,dto.dictPlatform", waiteTime = 60, unlockAfterTx = true)
     public SoB2cDTO.PullOrderResultDTO saveOrUpdateEntity(PlatformOrderDTO dto, ShopInfoEntity shopInfo) {
         SoB2cDTO.PullOrderResultDTO resultDTO = new SoB2cDTO.PullOrderResultDTO();
         if (dto.getInvalidStatus()) {
@@ -10317,6 +10318,20 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000, propagation = io.seata.tm.api.transaction.Propagation.REQUIRES_NEW)
     public List<BatchResultDTO> autoOrderForecast(List<String> soIdList) {
+        if (CollUtil.isEmpty(soIdList)) {
+            return new ArrayList<>();
+        }
+        // 在独立事务内同步预报状态，避免 submitDelivery 外层事务未提交导致读不到 wait/failure
+        List<SoB2cLogisticsEntity> syncLogisticsList = soB2cLogisticsService.listByMainIds(soIdList);
+        Map<String, SoB2cLogisticsEntity> syncLogisticsMap = CollUtil.isEmpty(syncLogisticsList)
+                ? Collections.emptyMap()
+                : syncLogisticsList.stream().collect(Collectors.toMap(SoB2cLogisticsEntity::getMainId, Function.identity(), (a, b) -> a));
+        for (String soId : soIdList) {
+            SoB2cLogisticsEntity logisticsEntity = syncLogisticsMap.get(soId);
+            if (Objects.nonNull(logisticsEntity) && StringUtils.isNotBlank(logisticsEntity.getLogisticsChannelId())) {
+                syncForecastStatusQuietly(soId, logisticsEntity.getLogisticsChannelId());
+            }
+        }
         List<SoB2cEntity> soB2cEntityList = listByIds(soIdList);
         soB2cEntityList = soB2cEntityList.stream().filter(v -> (TransferStatusEnum.FAILURE.getCode().equals(v.getTransferStatus()) || TransferStatusEnum.WAIT.getCode().equals(v.getTransferStatus())) &&
                 SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equalsIgnoreCase(v.getBillStatus()) && !Boolean.TRUE.equals(v.getInvalidStatus())).collect(Collectors.toList());
@@ -10336,7 +10351,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<SettingForecastEntity> settingForecastEntityList = forecastFeign.getSettingForecastByLogisticsSupplierIdList(logisticSupplierIds);
         settingForecastEntityList = settingForecastEntityList.stream().filter(v -> v.getIsAutoForecast() && StringUtils.isNotBlank(v.getTransferLogisticsChannelId()) && StringUtils.isNotBlank(v.getTransferLogisticsSupplierId())).collect(Collectors.toList());
         if (CollUtil.isEmpty(settingForecastEntityList)) {
-            return new ArrayList<>();
+            List<BatchResultDTO> noAutoConfigResults = new ArrayList<>();
+            for (SoB2cEntity soB2cEntity : soB2cEntityList) {
+                if (TransferStatusEnum.WAIT.getCode().equals(soB2cEntity.getTransferStatus())
+                        || TransferStatusEnum.FAILURE.getCode().equals(soB2cEntity.getTransferStatus())) {
+                    noAutoConfigResults.add(BatchResultDTO.fail(soB2cEntity.getId(), soB2cEntity.getCode(),
+                            "物流商未开启自动订单预报，请先手动完成「订单预报」"));
+                }
+            }
+            return noAutoConfigResults;
         }
         //根据物流商分类
         List<SoB2cDTO.TransferDeclareDTO> transferDeclareDTOList = new ArrayList<>();
