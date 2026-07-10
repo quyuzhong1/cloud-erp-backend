@@ -1432,7 +1432,6 @@ public final class ApiError implements Serializable {
     public static final ApiError LOGISTICS_RECON_BILL_REVERT_NO_ELIGIBLE = ApiErrorTms.LOGISTICS_RECON_BILL_REVERT_NO_ELIGIBLE;
     public static final ApiError LOGISTICS_RECON_BILL_REVERT_COST_STATUS_FORBIDDEN = ApiErrorTms.LOGISTICS_RECON_BILL_REVERT_COST_STATUS_FORBIDDEN;
     public static final ApiError LOGISTICS_SALES_PLATFORM_REQUIRED = ApiErrorTms.LOGISTICS_SALES_PLATFORM_REQUIRED;
-    public static final ApiError LOGISTICS_DECLARE_SENDER_REQUIRED = ApiErrorTms.LOGISTICS_DECLARE_SENDER_REQUIRED;
 
     /** Plm service error constants. */
     public static final ApiError BOM_REQUIRED = ApiErrorPlm.BOM_REQUIRED;
