@@ -11,7 +11,6 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.dynamic.datasource.toolkit.DynamicDataSourceContextHolder;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.annotation.DistributeLocker;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.DmpSyncMqDTO;
@@ -36,7 +35,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
-import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.dmp.constant.DmpConstant;
 import com.erp.model.dmp.dto.DmpCfgOutputBlackDTO;
 import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO;
@@ -533,7 +531,6 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
     }
 
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.DMP_PUSH_TASK_KEY, keyName = "dmpOutputTaskRecordEntityList.id", waiteTime = 60)
     public Boolean batchSync(List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList) {
         if (CollectionUtils.isEmpty(dmpOutputTaskRecordEntityList)) {
             return false;

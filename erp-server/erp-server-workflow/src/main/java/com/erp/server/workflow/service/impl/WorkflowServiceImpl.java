@@ -1,11 +1,9 @@
 package com.erp.server.workflow.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.business.annotation.DistributeLocker;
 import com.common.business.enums.ProcessInstanceStateEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.message.constant.DistributeKeyConstant;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.workflow.dto.*;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
@@ -293,7 +291,6 @@ public class WorkflowServiceImpl implements WorkflowService {
      */
     @Override
     @Transactional
-    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "dto.processDefinitionKey,dto.businessKey", unlockAfterTx = true)
     public ProcessNodeDTO startProcess(StartProcessDTO dto) {
         ProcessNodeDTO processNodeDTO = new ProcessNodeDTO();
         String processId = "";
@@ -396,7 +393,6 @@ public class WorkflowServiceImpl implements WorkflowService {
 
 
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "ids", unlockAfterTx = true)
     public void cancelProcess(List<String> ids) {
         List<WorkflowBusinessProcessDTO> list = workflowBusinessProcessService.getProcessByTables(ids);
         if (CollectionUtils.isEmpty(list)) {

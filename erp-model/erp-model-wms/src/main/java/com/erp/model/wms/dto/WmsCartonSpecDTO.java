@@ -396,6 +396,11 @@ public class WmsCartonSpecDTO implements Serializable {
         private String sourceId;
 
         /**
+         * 关联订单编号（packing_task.source_code）
+         */
+        private String sourceCode;
+
+        /**
          * 箱子id
          */
         private String cartonId;

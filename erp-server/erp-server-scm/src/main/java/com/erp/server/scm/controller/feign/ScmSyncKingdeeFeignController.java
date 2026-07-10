@@ -1,7 +1,5 @@
 package com.erp.server.scm.controller.feign;
 
-import com.common.core.anno.LogAction;
-import com.common.core.enums.LogActionEnum;
 import com.erp.server.scm.kingdee.SyncKingdeeService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -31,7 +29,6 @@ public class ScmSyncKingdeeFeignController {
      * @date: 2023/3/10 15:46
      */
     @PostMapping("/updateBusinessSyncKingdeeStatus")
-    @LogAction(value = LogActionEnum.UPDATE_STATUS, desc = "更新金蝶同步状态")
     public void updateBusinessSyncKingdeeStatus(@RequestBody Map<String, Object> params) {
         syncKingdeeService.updateBusinessSyncKingdeeStatus(params);
     }

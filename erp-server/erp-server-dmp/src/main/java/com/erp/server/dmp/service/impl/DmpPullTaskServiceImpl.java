@@ -8,7 +8,7 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.annotation.DistributeLocker;
+import com.common.business.annotation.DataIdempotent;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.SourceTypeEnum;
@@ -18,7 +18,6 @@ import com.common.business.utils.RedisUtil;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.message.constant.DistributeKeyConstant;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -130,7 +129,7 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.DMP_PULL_TASK_KEY, keyName = "dmpPullTaskEntity.redissonKey", waiteTime = 30, unlockAfterTx = true)
+    @DataIdempotent(keyIdName = "dmpPullTaskEntity.redissonKey", waitTime = 30)
     public String saveOrUpdateDmpSyncTask(DmpPullTaskEntity dmpPullTaskEntity) {
         DmpPullTaskEntity found = lambdaQuery()
                 .eq(DmpPullTaskEntity::getSourceType, dmpPullTaskEntity.getSourceType())
@@ -279,7 +278,6 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
     }
 
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.DMP_PULL_TASK_KEY, keyName = "ids", waiteTime = 60)
     public Boolean batchSync(List<String> ids) {
         List<DmpPullTaskEntity> list = this.listByIds(ids);
         if (CollectionUtils.isEmpty(list)) {

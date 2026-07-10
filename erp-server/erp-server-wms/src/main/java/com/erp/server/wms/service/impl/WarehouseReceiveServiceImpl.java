@@ -9,7 +9,6 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.UserStateConstants;
 import com.common.business.dto.ApproveDTO;
@@ -25,7 +24,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
-import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.FirstMassProductTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
@@ -64,7 +62,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.BeanUtils;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -149,10 +146,6 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
     private DocNoGenHelper docNoGenHelper;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
-
-    @Lazy
-    @Resource
-    private WarehouseReceiveService warehouseReceiveService;
 /*
     @Resource
     private SyncKingdeePoReceiveService syncKingdeePoReceiveService;*/
@@ -269,7 +262,6 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    @DistributeLocker(businessType = DistributeKeyConstant.WAREHOUSE_RECEIVE_ADD_KEY, keyName = "dto.purchaseOrderId", unlockAfterTx = true)
     public WarehouseReceiveEntity add(WarehouseReceiveDTO.AddDTO dto) {
         //获取采购订单主表信息
         PurchaseOrderEntity purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(dto.getPurchaseOrderId());
@@ -521,7 +513,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
     @Override
     @Transactional(rollbackFor = Exception.class)
     public WarehouseReceiveEntity addAndSubmit(WarehouseReceiveDTO.AddDTO dto) {
-        WarehouseReceiveEntity entity = warehouseReceiveService.add(dto);
+        WarehouseReceiveEntity entity = this.add(dto);
         if (null == entity) {
             throw new ServiceException(ApiError.BILL_SAVE_FAILED);
         }
@@ -557,7 +549,6 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "entity.id", unlockAfterTx = true)
     public BatchResultDTO approve(WarehouseReceiveEntity entity, String type, String comment, Boolean isNeedProcess,List<WarehouseReceiveDetailEntity> receiveDetailList) {
         if (!entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())) {
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.WF_APPROVE_ALLOWED_STATUS_ONLY.getMsg());
@@ -1314,7 +1305,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             }
         }
         dto.setWarehouseReceiveDetailList(addDTOList);
-        return warehouseReceiveService.add(dto).getId();
+        return this.add(dto).getId();
     }
 
     @Override

@@ -7,8 +7,6 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
-import com.common.core.anno.LogAction;
-import com.common.core.enums.LogActionEnum;
 import com.common.core.utils.HttpCommonUtil;
 import com.common.message.handler.AbstractRestCloudPlatformConsumerHandler;
 import com.common.message.service.mq.MQProducerService;
@@ -60,7 +58,6 @@ public class FsCallbackApiController {
 
     @PostMapping("/approve")
     @ResponseBody
-    @LogAction(value = LogActionEnum.APPROVE, desc = "飞书审批回调")
     public FsCallbackApiRespDTO approve(@RequestBody FsCallbackApiReqDTO req, HttpServletRequest request){
         request.getHeaders("");
     	log.info("飞书回调开始：{}", JSON.toJSONString(req));
@@ -82,7 +79,6 @@ public class FsCallbackApiController {
      * @return void
      */
     @PostMapping("/webhook/event")
-    @LogAction(value = LogActionEnum.EXECUTE, desc = "飞书事件回调")
     public void event(HttpServletRequest request, HttpServletResponse response)
             throws Throwable {
         // 包装请求，使其可以重复读取body
@@ -102,7 +98,6 @@ public class FsCallbackApiController {
      */
     @PostMapping("/fileRecordChange")
     @ResponseBody
-    @LogAction(value = LogActionEnum.UPDATE, desc = "飞书表格文件记录变更")
     public ResponseEntity<FsCallbackApiRespDTO> fileRecordChange(@RequestParam Map<String, String> req, HttpServletRequest request) {
         log.warn("飞书表格文件更新回调开始：{}", JSON.toJSONString(req));
         FsCallbackApiRespDTO resp = new FsCallbackApiRespDTO();

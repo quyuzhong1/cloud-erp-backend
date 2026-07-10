@@ -358,6 +358,7 @@ public class RocketMqConsumerGroup {
      * 添加系统操作日志
      */
     public static final String OMS_WORKFLOW_TASK_RECORD = "${spring.cloud.nacos.discovery.namespace}-oms_workflow_task_record";
+
     //---------------------------------------------------wangdian---------------------------------------------------------------------------------------------
     /**
      * 旺店通推送货品资料

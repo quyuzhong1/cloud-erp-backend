@@ -7,12 +7,10 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
-import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.scm.dto.ContractInfoDTO;
 import com.erp.model.scm.entity.ContractInfoEntity;
@@ -56,7 +54,6 @@ public class ContractInfoFeignController extends BaseController {
      * @return
      */
     @PostMapping("/updateContractNameByTempId")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "合同管理更新合同名称")
     public void updateContractNameByTempId(@RequestBody ContractInfoDTO.UpdateContractNameDTO dto){
         contractInfoService.lambdaUpdate()
                 .set(ContractInfoEntity::getName, dto.getName())

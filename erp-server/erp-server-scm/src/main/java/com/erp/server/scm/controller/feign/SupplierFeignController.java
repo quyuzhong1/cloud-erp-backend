@@ -2,8 +2,6 @@ package com.erp.server.scm.controller.feign;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
-import com.common.core.anno.LogAction;
-import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.SupplierDTO;
@@ -53,7 +51,6 @@ public class SupplierFeignController extends BaseController {
      * @return java.lang.Boolean
      **/
     @PostMapping("/supplierApprove")
-    @LogAction(value = LogActionEnum.APPROVE, desc = "供应商审核")
     public List<BatchResultDTO> supplierApprove(@RequestBody BaseApproveParamDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         List<SupplierEntity> entityList = supplierService.listByIds(dto.getIds());
@@ -144,14 +141,12 @@ public class SupplierFeignController extends BaseController {
      * 根据供应商编号查询
      */
     @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "供应商新增")
     BatchResultDTO add(@RequestBody SupplierDTO.InsertDTO addDTO){
         SupplierEntity entity = supplierService.add(addDTO);
         return BatchResultDTO.success(entity.getId(), entity.getCode());
     }
 
      @PostMapping("/updateApproveStatus")
-    @LogAction(value = LogActionEnum.UPDATE_STATUS, desc = "供应商更新审核状态")
     void updateApproveStatus(@RequestBody SupplierDTO.UpdateApproveStatusDTO updateApproveStatusDTO){
         supplierService.updateApproveStatus(updateApproveStatusDTO);
     }

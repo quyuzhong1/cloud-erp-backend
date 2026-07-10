@@ -101,6 +101,18 @@ public class TransferInfoDetailEntity extends BaseEntity<TransferInfoDetailEntit
     @TableField("source_detail_id")
     private String sourceDetailId;
 
+    /**
+     * 调出库存状态: usable可用/frozen冻结/defectiveProduct不良品（默认可用）
+     */
+    @TableField("out_inventory_status")
+    private String outInventoryStatus;
+
+    /**
+     * 调入库存状态: usable可用/frozen冻结/defectiveProduct不良品（默认可用）
+     */
+    @TableField("in_inventory_status")
+    private String inInventoryStatus;
+
     @TableField(exist = false)
     private String inWarehouseCode;
 

@@ -9,7 +9,6 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.UserStateConstants;
 import com.common.business.dto.ApproveDTO;
@@ -29,7 +28,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
-import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.dto.ThirdWarehouseDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
@@ -66,6 +64,7 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeStockInService;
 import com.erp.server.wms.mapper.PoInstockMapper;
 import com.erp.server.wms.service.*;
+import com.erp.server.wms.util.SubcontractRepairHelper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
@@ -657,7 +656,6 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
     @Override
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "entity.id", unlockAfterTx = true)
     public BatchResultDTO approve(PoInstockEntity entity, String type, String comment, Boolean isNeedProcess) {
         if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.WF_APPROVE_ALLOWED_STATUS_ONLY.getMsg());
@@ -2206,22 +2204,11 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                     if (Objects.isNull(subcontractOrder)) {
                         throw new ServiceException(ApiError.PO_SUBCONTRACT_ORDER_NOT_FOUND);
                     }
-                    if (Objects.equals(subcontractOrder.getType(), SubcontractOrderTypeEnum.REPAIR_SUBCONTRACT.getCode())) {
-                        addDetailDTO.setIssueQty(detailEntity.getStockInQty());
-                        addDetailDTO.setWarehouseId(childSubDetail.getWarehouseId());
-                        addDetailDTO.setWarehouseLocation(childSubDetail.getWarehouseLocation());
-                    } else {
-                        //父级SKU和子级SKU之间的用量
-                        Integer quantity = bomList.stream()
-                                .filter(obj -> childSubDetail.getBomVersion().equals(obj.getBomVersion()) && obj.getSkuId().equals(childSubDetail.getSkuId()) && obj.getParentSkuId().equals(detailEntity.getSkuId()))
-                                .map(BomChildrenSkuDTO::getQuantity).findFirst().orElse(null);
-                        if (ObjectUtils.isEmpty(quantity)) {
-                            throw new ServiceException(ApiError.BOM_CHILD_NOT_FOUND);
-                        }
-                        addDetailDTO.setIssueQty(detailEntity.getStockInQty() * quantity);
-                        addDetailDTO.setWarehouseId(childSubDetail.getWarehouseId());
-                        addDetailDTO.setWarehouseLocation(childSubDetail.getWarehouseLocation());
-                    }
+                    Integer quantity = SubcontractRepairHelper.resolveChildSkuQuantityWithBomVersionOrThrow(
+                            subcontractOrder, detailEntity.getSkuId(), childSubDetail, bomList);
+                    addDetailDTO.setIssueQty(detailEntity.getStockInQty() * quantity);
+                    addDetailDTO.setWarehouseId(childSubDetail.getWarehouseId());
+                    addDetailDTO.setWarehouseLocation(childSubDetail.getWarehouseLocation());
                     detailList.add(addDetailDTO);
                 }
                 addDTO.setDetailList(detailList);

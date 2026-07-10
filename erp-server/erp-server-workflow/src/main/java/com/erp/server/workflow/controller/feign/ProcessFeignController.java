@@ -4,8 +4,6 @@ import cn.hutool.json.JSONUtil;
 import com.common.business.validator.ValidList;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.common.core.anno.LogAction;
-import com.common.core.enums.LogActionEnum;
 import com.erp.model.workflow.dto.*;
 import com.erp.model.workflow.entity.ProcessBusinessEntity;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
@@ -61,7 +59,6 @@ public class ProcessFeignController extends BaseController {
      */
     @Deprecated
     @PostMapping("/startProcess")
-    @LogAction(value = LogActionEnum.SUBMIT, desc = "启动流程")
     public ProcessNodeDTO startProcess(@RequestBody StartProcessDTO dto) {
         ProcessNodeDTO process = workflowService.startProcess(dto);
         return process;
@@ -88,7 +85,6 @@ public class ProcessFeignController extends BaseController {
      */
     @Deprecated
     @PostMapping("/taskPass")
-    @LogAction(value = LogActionEnum.APPROVE, desc = "任务审核通过")
     public ProcessNodeDTO taskPass(@RequestBody @Validated ApproveProcessDTO dto) {
         ProcessNodeDTO node = processTaskService.taskPass(dto);
         return node;
@@ -101,7 +97,6 @@ public class ProcessFeignController extends BaseController {
      */
     @Deprecated
     @PostMapping("/taskNoPass")
-    @LogAction(value = LogActionEnum.REJECT, desc = "任务审核驳回")
     public ProcessNodeDTO taskNoPass(@RequestBody @Validated ApproveProcessDTO dto) {
         return processTaskService.taskNoPass(dto);
     }
@@ -112,7 +107,6 @@ public class ProcessFeignController extends BaseController {
      */
     @Deprecated
     @PostMapping("/rejectOriginProcess")
-    @LogAction(value = LogActionEnum.REJECT, desc = "驳回至初始状态")
     public void rejectOriginProcess(@RequestBody @Validated ApproveProcessDTO dto) {
         workflowService.rejectOriginProcess(dto);
     }
@@ -123,7 +117,6 @@ public class ProcessFeignController extends BaseController {
      */
     @Deprecated
     @PostMapping("/withDraw")
-    @LogAction(value = LogActionEnum.CANCEL, desc = "撤销流程")
     public void withDraw(@RequestBody @Validated ApproveProcessDTO dto) {
         workflowService.withDrawProcess(dto);
     }
@@ -135,7 +128,6 @@ public class ProcessFeignController extends BaseController {
      */
     @Deprecated
     @PostMapping("/batchCancelProcess")
-    @LogAction(value = LogActionEnum.CANCEL, desc = "批量撤销流程")
     public Boolean batchCancelProcess(@RequestBody @Validated List<String> processIdList) {
         return workflowService.batchCancelProcess(processIdList);
     }
@@ -146,7 +138,6 @@ public class ProcessFeignController extends BaseController {
      */
     @Deprecated
     @PostMapping("/fetchBack")
-    @LogAction(value = LogActionEnum.CANCEL, desc = "取回流程")
     public void fetchBack(@RequestBody @Validated ApproveProcessDTO dto) {
         workflowService.fetchBackProcess(dto);
     }
@@ -155,7 +146,6 @@ public class ProcessFeignController extends BaseController {
      * 终止流程
      */
     @PostMapping("/terminate")
-    @LogAction(value = LogActionEnum.CANCEL, desc = "终止流程")
     public void terminate(@RequestBody @Validated ApproveProcessDTO dto) {
         workflowService.terminateProcess(dto.getProcessInstanceId());
     }
@@ -164,14 +154,12 @@ public class ProcessFeignController extends BaseController {
      * 取消流程(弃用)
      */
     @PostMapping("/cancelProcess")
-    @LogAction(value = LogActionEnum.CANCEL, desc = "取消流程")
     public void cancelProcess(@RequestBody List<String> ids) {
         workflowService.cancelProcess(ids);
     }
 
     //驳回到源点
     @PostMapping("/rejectOrigin")
-    @LogAction(value = LogActionEnum.REJECT, desc = "驳回到源点")
     public void rejectOrigin(@RequestBody @Validated ApproveProcessDTO dto) {
         workflowService.rejectOriginProcess(dto);
     }
@@ -228,7 +216,6 @@ public class ProcessFeignController extends BaseController {
      * @date 2023-01-31 15:32
      */
     @PostMapping("/saveBusinessProcess")
-    @LogAction(value = LogActionEnum.INSERT, desc = "保存业务流程关联")
     public Boolean saveBusinessProcess(@RequestBody WorkflowBusinessProcessDTO dto) {
         Boolean result = businessProcessService.saveBusinessProcess(dto);
         return result;
@@ -290,7 +277,6 @@ public class ProcessFeignController extends BaseController {
      * 撤销流程
      */
     @PostMapping("/withDrawByBusiness")
-    @LogAction(value = LogActionEnum.CANCEL, desc = "按业务撤销流程")
     public Boolean withDraw(@RequestBody WithDrawProcessBusinessDTO dto) {
         return workflowService.withDrawProcessByBusinessTable(dto);
     }
@@ -299,7 +285,6 @@ public class ProcessFeignController extends BaseController {
      * 流程启动 -new
      */
     @PostMapping("/start")
-    @LogAction(value = LogActionEnum.SUBMIT, desc = "启动流程")
     public ApiResult<ProcessManagementDTO.StartResultDTO> start(@RequestBody ProcessManagementDTO.StartDTO dto) {
         log.info("#####ProcessFeignController :::::start>>>>> 流程启动入参 dto={}", JSONUtil.toJsonStr(dto));
         ProcessManagementDTO.StartResultDTO startResultDTO = processManagementService.startProcessManagement(dto);
@@ -313,7 +298,6 @@ public class ProcessFeignController extends BaseController {
      * @return
      */
     @PostMapping("/batchStart")
-    @LogAction(value = LogActionEnum.SUBMIT, desc = "批量启动流程")
     public ApiResult<List<ProcessManagementDTO.StartResultDTO>> batchStartProcess(@RequestBody @Valid ValidList<ProcessManagementDTO.StartDTO> dto) {
         log.info("#####ProcessFeignController :::::batchStartProcess>>>>> 流程批量启动入参 dto={}", JSONUtil.toJsonStr(dto));
         List<ProcessManagementDTO.StartResultDTO> result = processManagementService.batchStartProcess(dto);
@@ -324,7 +308,6 @@ public class ProcessFeignController extends BaseController {
      * 流程审批 -new
      */
     @PostMapping("/approve")
-    @LogAction(value = LogActionEnum.APPROVE, desc = "流程审核")
     public ApiResult<ProcessManagementDTO.ApproveResultDTO> approve(@RequestBody ProcessManagementDTO.ApproveDTO dto) {
         log.info("#####ProcessFeignController :::::approve>>>>> 流程审核入参 dto={}", JSONUtil.toJsonStr(dto));
         return success(processManagementService.approveProcess(dto,Boolean.TRUE));
@@ -334,7 +317,6 @@ public class ProcessFeignController extends BaseController {
      * 流程驳回到指定节点 -new
      */
     @PostMapping("/back")
-    @LogAction(value = LogActionEnum.REJECT, desc = "流程驳回到指定节点")
     public ApiResult<ProcessManagementDTO.BackResultDTO> backProcess(@RequestBody @Valid ProcessManagementDTO.BackDTO dto) {
         ProcessManagementDTO.BackResultDTO resultDTO = processManagementService.back(dto);
         return success(resultDTO);
@@ -344,7 +326,6 @@ public class ProcessFeignController extends BaseController {
      * 流程取回 -new
      */
     @PostMapping("/revoke")
-    @LogAction(value = LogActionEnum.CANCEL, desc = "流程取回")
     public ApiResult<ProcessManagementDTO.RevokeResultDTO> revokeProcess(@RequestBody @Valid ProcessManagementDTO.RevokeDTO dto) {
         ProcessManagementDTO.RevokeResultDTO revokeResult = processManagementService.revoke(dto);
         return success(revokeResult);
@@ -354,7 +335,6 @@ public class ProcessFeignController extends BaseController {
      * 转发任务 - new
      */
     @PostMapping("/transfer")
-    @LogAction(value = LogActionEnum.EXECUTE, desc = "转发任务")
     public ApiResult<Boolean> transferProcess(@RequestBody @Valid ProcessManagementDTO.TransferDTO dto) {
         return success(processManagementService.transfer(dto));
     }
@@ -375,7 +355,6 @@ public class ProcessFeignController extends BaseController {
      * @return
      */
     @PostMapping("/batchApprove")
-    @LogAction(value = LogActionEnum.APPROVE, desc = "批量审批流程")
     public ApiResult<List<ProcessManagementDTO.ApproveResultDTO>> batchApproveProcess(@RequestBody @Valid ValidList<ProcessManagementDTO.ApproveDTO> dto) {
         log.info("#####ProcessFeignController :::::batchApproveProcess>>>>> 流程批量审核入参 dto={}", JSONUtil.toJsonStr(dto));
         List<ProcessManagementDTO.ApproveResultDTO> resultDTO = processManagementService.batchApproveProcess(dto);

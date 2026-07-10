@@ -2,8 +2,6 @@ package com.erp.server.fms.controller.feign;
 
 import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.BatchResultDTO;
-import com.common.core.anno.LogAction;
-import com.common.core.enums.LogActionEnum;
 import com.erp.model.workflow.dto.EndProcessDTO;
 import com.erp.server.fms.service.FmsWorkflowService;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +31,6 @@ public class FmsWorkflowFeignController {
      * @return Boolean
      */
     @PostMapping("/approve")
-    @LogAction(value = LogActionEnum.APPROVE, desc = "FMS工作流审核")
     public BatchResultDTO approve(@RequestBody ApproveDTO.ApproveOneDTO dto) {
         return fmsWorkflowService.approve(dto);
     }
@@ -44,7 +41,6 @@ public class FmsWorkflowFeignController {
      * @return 处理结果
      */
     @PostMapping("/approveEnd")
-    @LogAction(value = LogActionEnum.APPROVE, desc = "FMS工作流审核结束")
     public Boolean approveEnd(@RequestBody EndProcessDTO dto) {
         log.info("FMS工作流审核结束回调，businessId: {}, businessKey: {}", dto.getBusinessId(), dto.getBusinessKey());
         return fmsWorkflowService.approveEnd(dto);
@@ -56,7 +52,6 @@ public class FmsWorkflowFeignController {
      * @return 处理结果
      */
     @PostMapping("/disApprove")
-    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "FMS工作流反审核")
     public Boolean disApprove(@RequestBody ApproveDTO.DisApproveDTO dto) {
         log.info("FMS工作流反审核回调， businessKey: {}", dto.getBusinessKey());
         return fmsWorkflowService.disApprove(dto);
@@ -68,7 +63,6 @@ public class FmsWorkflowFeignController {
      * @return 处理结果
      */
     @PostMapping("/cancelProcess")
-    @LogAction(value = LogActionEnum.CANCEL, desc = "FMS工作流撤销")
     public Boolean cancelProcess(@RequestBody ApproveDTO.CancelProcessDTO dto) {
         log.info("FMS工作流撤销流程回调， businessKey: {}", dto.getBusinessKey());
         return fmsWorkflowService.cancelProcess(dto);
@@ -82,7 +76,6 @@ public class FmsWorkflowFeignController {
      * @return void
      */
     @PostMapping("/addComment")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "FMS工作流添加评论")
     public void addComment(@RequestBody ApproveDTO.AddCommentDTO dto) {
         fmsWorkflowService.addComment(dto);
     }
