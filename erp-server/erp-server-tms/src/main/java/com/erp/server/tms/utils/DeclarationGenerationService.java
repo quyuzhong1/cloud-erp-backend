@@ -356,12 +356,10 @@ public class DeclarationGenerationService {
     }
 
     /**
-     * 与 {@code TmsDeclareBillServiceImpl#buildDeclareBoxKey} 保持一致：业务单号|boxNo。
+     * 与 {@code TmsDeclareBillServiceImpl#buildDeclareBoxKey} 保持一致：来源单id|boxNo。
      */
     private String buildDeclareBoxKey(TmsDeclareBillDTO.SourceDeliveryDetailDTO source) {
-        String businessKey = StringUtils.defaultIfBlank(source.getBusinessCode(),
-                StringUtils.defaultIfBlank(source.getSourceId(), source.getBusinessId()));
-        return StringUtils.defaultString(businessKey) + "|" + StringUtils.defaultString(source.getBoxNo());
+        return StringUtils.defaultString(resolveShipmentKey(source)) + "|" + StringUtils.defaultString(source.getBoxNo());
     }
 
     /**
