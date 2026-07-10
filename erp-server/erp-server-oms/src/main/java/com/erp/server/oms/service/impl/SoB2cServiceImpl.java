@@ -2814,11 +2814,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO submitDelivery(String id, String channelId) {
-        SoB2cLogisticsEntity logisticsForForecastSync = soB2cLogisticsService.getByMainId(id);
-        if (Objects.nonNull(logisticsForForecastSync) && StringUtils.isNotBlank(logisticsForForecastSync.getLogisticsChannelId())) {
-            // 提交发货时按 TMS 预报设置同步中转/组包状态（无需中转的单内部会跳过）
-            soB2cService.syncForecastStatusQuietly(id, logisticsForForecastSync.getLogisticsChannelId());
-        }
         try {
             List<BatchResultDTO> batchResultDTOS = soB2cService.autoOrderForecast(Collections.singletonList(id));
             //在提交发货中，清除异常订单报错
