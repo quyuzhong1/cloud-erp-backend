@@ -53,6 +53,7 @@
             ON wti.id = wtr.instance_id AND wti.is_deleted = false
         WHERE wtr.is_deleted = false
           AND wtr.status != 'success'
+          AND NOT (wtr.status = 'failed' AND COALESCE(wtr.retry_count, 0) > #{maxRetryCount})
           AND wtr.instance_id IS NOT NULL
           AND wtr.instance_id != ''
           AND wti.status NOT IN ('success', 'cancelled')
@@ -73,7 +74,9 @@
             FROM workflow_task_record
             WHERE status != 'success'
               AND is_deleted = false
+              AND NOT (status = 'failed' AND COALESCE(retry_count, 0) > #{maxRetryCount})
           )
+          AND NOT (status = 'failed' AND COALESCE(retry_count, 0) > #{maxRetryCount})
         <if test="id != null and id != ''">
             AND source_id = #{id}
         </if>

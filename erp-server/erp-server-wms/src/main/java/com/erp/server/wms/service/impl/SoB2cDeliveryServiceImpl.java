@@ -1869,7 +1869,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                     SoOutstockDetailDTO.AddDTO dto = detailList.stream().filter(d -> d.getSoDetailId().equals(detailEntity.getSourceDetailId()))
                             .findFirst().orElse(new SoOutstockDetailDTO.AddDTO());
                     SoOutstockDetailDTO.AddDTO addDTO = BeanMapperUtils.map(SoOutstockDetailDTO.AddDTO.class, dto);
-                    addDTO.setWarehouseLocation(Objects.isNull(entity.getBatchNo()) ? view.getWarehouseLocation() : "");
+                    addDTO.setWarehouseLocation(CharSequenceUtil.isBlank(entity.getTransferWarehouseIds()) ? view.getWarehouseLocation() : "");
                     addDTO.setSkuNo(view.getSkuNo());
                     addDTO.setSkuId(view.getSkuId());
                     addDTO.setActualQty(view.getQty());
