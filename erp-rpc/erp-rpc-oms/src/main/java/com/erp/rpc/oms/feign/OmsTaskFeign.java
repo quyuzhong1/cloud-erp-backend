@@ -2,6 +2,7 @@ package com.erp.rpc.oms.feign;
 
 import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.DmpSyncMqDTO;
+import com.erp.model.oms.dto.KolB2cApplicationApproveCallbackDTO;
 import com.erp.model.oms.dto.KolB2cApplicationCancelCallbackDTO;
 import com.erp.model.oms.dto.SoMultiChannelDTO;
 import com.erp.model.workflow.dto.WorkOptionDTO;
@@ -48,4 +49,16 @@ public interface OmsTaskFeign {
      */
     @PostMapping("/feign/omsSyncTask/handleKolB2cCancelPushFail")
     void handleKolB2cCancelPushFail(@RequestBody KolB2cApplicationCancelCallbackDTO dto);
+
+    /**
+     * KOL B2C approve success callback after DMP push success.
+     */
+    @PostMapping("/feign/omsSyncTask/handleKolB2cApprovePushSuccess")
+    void handleKolB2cApprovePushSuccess(@RequestBody KolB2cApplicationApproveCallbackDTO dto);
+
+    /**
+     * KOL B2C approve fail callback after DMP push fail.
+     */
+    @PostMapping("/feign/omsSyncTask/handleKolB2cApprovePushFail")
+    void handleKolB2cApprovePushFail(@RequestBody KolB2cApplicationApproveCallbackDTO dto);
 }

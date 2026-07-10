@@ -7,7 +7,10 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.SmallBagCostAllocationDTO;
+import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
 import com.erp.model.tms.entity.SmallBagCostAllocationEntity;
+import com.erp.model.tms.entity.SmallBagCostAllocationMainEntity;
+import com.erp.model.tms.entity.TmsAsyncTaskRecordEntity;
 
 import java.util.List;
 
@@ -44,8 +47,42 @@ public interface SmallBagCostAllocationService extends SuperService<SmallBagCost
     PagingVO<SmallBagCostAllocationDTO.ListDTO> paging(PagingDTO<SmallBagCostAllocationDTO.PagingParamDTO> dto);
     
     BatchResultDTO updateReportStatus(String id , String reportDate , String reportStatus);
+
+    /**
+     * 按核算月份异步批量更新核算状态：创建异步任务并发 MQ，立即返回携带任务 id+code 的结果
+     * @param dto 含 reportPeriodStr/reportDate/reportStatus
+     * @return BatchResultDTO（id=任务id, code=任务编号）
+     */
+    BatchResultDTO asyncUpdateReportStatus(SmallBagCostAllocationDTO.UpdateStatusDTO dto);
+
+    /**
+     * MQ 消费：游标分批批量更新核算状态
+     */
+    void pushUpdateReportStatus(TmsAsyncTaskRecordEntity taskRecord);
+
+    /**
+     * 按核算月份异步批量重新分摊：创建异步任务并发 MQ，立即返回携带任务 id+code 的结果
+     */
+    BatchResultDTO asyncReAllocation(SmallBagCostAllocationDTO.ResetIdsDTO dto);
+
+    /**
+     * MQ 消费：游标分批批量重新分摊
+     */
+    void pushReAllocation(TmsAsyncTaskRecordEntity taskRecord);
+
+    /**
+     * 按核算月份异步批量删除
+     */
+    BatchResultDTO asyncDelete(SmallBagCostAllocationDTO.ResetIdsDTO dto);
+
+    /**
+     * MQ 消费：游标分批批量删除
+     */
+    void pushDelete(TmsAsyncTaskRecordEntity taskRecord);
     
     BatchResultDTO reAllocation(String id);
+
+    BatchResultDTO reAllocation(SmallBagCostAllocationMainEntity entity);
     
     BatchResultDTO delete(String id);
     

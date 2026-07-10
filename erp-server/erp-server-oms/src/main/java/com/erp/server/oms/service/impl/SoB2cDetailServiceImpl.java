@@ -558,9 +558,15 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         String finalTikTokShopWarehouseName = tikTokShopWarehouseName;
         String finalTikTokShopWarehouseOrgId = tikTokShopWarehouseOrgId;
         String finalTikTokShopWarehouseOrgName = tikTokShopWarehouseOrgName;
+        boolean isTikTokOrder = PlatformDictEnum.TIK_TOK.getCode().equals(mainEntity.getDictPlatform());
         List<SoB2cDetailEntity> saveOrUpdateList = dto.getDetails().stream().map(detailDTO -> {
-            // 历史记录
-            SoB2cDetailEntity oldEntity = oldDetailMap.get(detailDTO.getSourceDetailId());
+            // 历史记录：TikTok 仅以 platformSkuNo + platformLineNumber 作为唯一匹配键
+            SoB2cDetailEntity oldEntity;
+            if (isTikTokOrder) {
+                oldEntity = findTikTokDetailBySkuAndLineNumber(oldDetailEntityList, detailDTO);
+            } else {
+                oldEntity = oldDetailMap.get(detailDTO.getSourceDetailId());
+            }
             List<ListingInfoWithSkuMappingDTO> mappingDTOList;
             if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dto.getDictPlatform()) && StringUtils.isBlank(detailDTO.getPlatformSkuNo())) {
                 // 速卖通明细SKU为空按platformSpuNo匹配
@@ -598,6 +604,9 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             if (null != oldEntity) {
                 // 更新指定内容
                 saveOrUpdateEntity = B2cOrderConsumerConverter.INSTANCE.convertUpdateDetail(oldEntity, detailDTO, skuId, skuNO, imageUrl, platformSpuNo);
+                if (isTikTokOrder) {
+                    applyTikTokDetailIdentity(saveOrUpdateEntity, detailDTO);
+                }
             } else {
                 // 新记录
                 saveOrUpdateEntity = B2cOrderConsumerConverter.INSTANCE.convertNewDetail(detailDTO, mainEntity.getId(), skuId, skuNO, imageUrl, platformSpuNo);
@@ -652,7 +661,138 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             throw new ServiceException(ApiError.SO_B2C_DETAIL_SAVE_OR_UPDATE_FAILED);
         }
         updateMainAmountOrThrow(mainEntity);
+        // 与 saveOrUpdateBatch 同属 saveOrUpdateEntity 的 @Transactional 边界
+        if (isTikTokOrder) {
+            softDeleteTikTokSupersededDetails(oldDetailEntityList, saveOrUpdateList);
+        }
         return saveOrUpdateList;
+    }
+
+    /**
+     * TikTok 明细唯一键：platformSkuNo + platformLineNumber（构建规则见 DMP {@code TikTokOrderDetailUtils}）。
+     */
+    private SoB2cDetailEntity findTikTokDetailBySkuAndLineNumber(List<SoB2cDetailEntity> oldDetailEntityList, PlatformOrderDetailDTO detailDTO) {
+        // DMP TikTok 输出始终带 platformSkuNo；为空时无法匹配，走新建（与速卖通空 SKU 兜底不同）
+        if (CollectionUtils.isEmpty(oldDetailEntityList) || StringUtils.isBlank(detailDTO.getPlatformSkuNo())) {
+            return null;
+        }
+        String incomingLineNumber = resolveTikTokLineNumber(detailDTO);
+        if (StringUtils.isBlank(incomingLineNumber)) {
+            return null;
+        }
+        List<SoB2cDetailEntity> candidates = oldDetailEntityList.stream()
+                .filter(e -> StringUtils.equals(e.getPlatformSkuNo(), detailDTO.getPlatformSkuNo()))
+                .filter(e -> matchTikTokPlatformLineNumber(e.getPlatformLineNumber(), incomingLineNumber))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(candidates)) {
+            return null;
+        }
+        Comparator<SoB2cDetailEntity> byLatestUpdate = Comparator.comparing(
+                SoB2cDetailEntity::getUpdateTime, Comparator.nullsLast(Comparator.naturalOrder()));
+        Optional<SoB2cDetailEntity> exactMatch = candidates.stream()
+                .filter(e -> StringUtils.equals(e.getPlatformLineNumber(), incomingLineNumber))
+                .max(byLatestUpdate);
+        if (exactMatch.isPresent()) {
+            return exactMatch.get();
+        }
+        return candidates.stream().max(byLatestUpdate).orElse(null);
+    }
+
+    private String resolveTikTokLineNumber(PlatformOrderDetailDTO detailDTO) {
+        if (StringUtils.isNotBlank(detailDTO.getPlatformLineNumber())) {
+            return detailDTO.getPlatformLineNumber();
+        }
+        return detailDTO.getSourceDetailId();
+    }
+
+    private void applyTikTokDetailIdentity(SoB2cDetailEntity saveOrUpdateEntity, PlatformOrderDetailDTO detailDTO) {
+        if (StringUtils.isNotBlank(detailDTO.getSourceDetailId())) {
+            saveOrUpdateEntity.setSourceDetailId(detailDTO.getSourceDetailId());
+        }
+        if (StringUtils.isNotBlank(detailDTO.getPlatformLineNumber())) {
+            saveOrUpdateEntity.setPlatformLineNumber(detailDTO.getPlatformLineNumber());
+        }
+    }
+
+    /**
+     * 仅清理 sourceDetailId / platformLineNumber 漂移产生的重复行，不处理平台整行删明细场景
+     * （payload 中不再出现的行需单独产品方案，参考领星 qty=0 分支）。
+     */
+    private void softDeleteTikTokSupersededDetails(List<SoB2cDetailEntity> oldDetailEntityList, List<SoB2cDetailEntity> saveOrUpdateList) {
+        if (CollectionUtils.isEmpty(oldDetailEntityList) || CollectionUtils.isEmpty(saveOrUpdateList)) {
+            return;
+        }
+        Set<String> savedDetailIds = saveOrUpdateList.stream()
+                .map(SoB2cDetailEntity::getId)
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.toSet());
+        Set<String> currentSkuLineKeys = saveOrUpdateList.stream()
+                .map(detail -> buildSkuLineKey(detail.getPlatformSkuNo(), detail.getPlatformLineNumber()))
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.toSet());
+        List<SoB2cDetailEntity> staleRows = oldDetailEntityList.stream()
+                .filter(e -> !savedDetailIds.contains(e.getId()))
+                .filter(e -> isTikTokSupersededDetail(e, saveOrUpdateList, currentSkuLineKeys))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(staleRows)) {
+            return;
+        }
+        log.info("TikTok superseded detail soft delete, detailIds={}, rows={}",
+                staleRows.stream().map(SoB2cDetailEntity::getId).collect(Collectors.joining(",")),
+                staleRows.stream()
+                        .map(e -> e.getId() + ":" + e.getPlatformSkuNo() + ":" + e.getPlatformLineNumber())
+                        .collect(Collectors.joining(";")));
+        staleRows.forEach(e -> e.setIsDeleted(true));
+        // updateBatchById 使用 listByMainId 加载时的 version，与项目其他软删写法一致
+        String staleDetailIds = staleRows.stream().map(SoB2cDetailEntity::getId).collect(Collectors.joining(","));
+        if (!this.updateBatchById(staleRows)) {
+            throw new ServiceException("TikTok重复明细软删除失败，detailIds=" + staleDetailIds);
+        }
+    }
+
+    private boolean isTikTokSupersededDetail(SoB2cDetailEntity oldDetail, List<SoB2cDetailEntity> saveOrUpdateList,
+                                             Set<String> currentSkuLineKeys) {
+        String oldKey = buildSkuLineKey(oldDetail.getPlatformSkuNo(), oldDetail.getPlatformLineNumber());
+        if (StringUtils.isNotBlank(oldKey) && currentSkuLineKeys.contains(oldKey)) {
+            return true;
+        }
+        return saveOrUpdateList.stream().anyMatch(current ->
+                StringUtils.equals(current.getPlatformSkuNo(), oldDetail.getPlatformSkuNo())
+                        && matchTikTokPlatformLineNumber(oldDetail.getPlatformLineNumber(), current.getPlatformLineNumber()));
+    }
+
+    /**
+     * 优先精确相等；逗号分隔 ID 交集匹配仅用于 xxxnull→packageId 等历史 key 迁移窗口。
+     */
+    private boolean matchTikTokPlatformLineNumber(String oldLineNumber, String newLineNumber) {
+        if (StringUtils.isAnyBlank(oldLineNumber, newLineNumber)) {
+            return false;
+        }
+        if (StringUtils.equals(oldLineNumber, newLineNumber)) {
+            return true;
+        }
+        Set<String> oldLineIds = parseTikTokLineNumberIds(oldLineNumber);
+        Set<String> newLineIds = parseTikTokLineNumberIds(newLineNumber);
+        for (String lineId : newLineIds) {
+            if (oldLineIds.contains(lineId)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private Set<String> parseTikTokLineNumberIds(String lineNumber) {
+        return Arrays.stream(lineNumber.split(","))
+                .map(String::trim)
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.toSet());
+    }
+
+    private String buildSkuLineKey(String platformSkuNo, String platformLineNumber) {
+        if (StringUtils.isAnyBlank(platformSkuNo, platformLineNumber)) {
+            return "";
+        }
+        return StringUtils.defaultString(platformSkuNo) + "|" + StringUtils.defaultString(platformLineNumber);
     }
 
     @Override

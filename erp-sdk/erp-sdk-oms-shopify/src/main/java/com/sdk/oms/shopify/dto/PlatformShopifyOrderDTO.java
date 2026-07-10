@@ -7,6 +7,7 @@ import com.common.business.enums.PlatformDictEnum;
 import com.common.core.anno.Panno;
 import com.common.core.enums.PannoEnum;
 import com.erp.model.dmp.enums.CleanStatusEnum;
+import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
 import com.sdk.oms.shopify.api.rest.model.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -112,7 +113,8 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
         // 作废状态（false未作废，true已作废）
         orderDTO.setInvalidStatus(sourceOrder.convertInvalidStatus());
         // 作废类型（manual手动作废，automatic自动作废）
-        orderDTO.setInvalidType(orderDTO.getInvalidStatus() ? "automatic" : "");
+        orderDTO.setInvalidType(orderDTO.getInvalidStatus()
+                ? SoB2cInvalidTypeEnum.ENUM_AUTOMATIC.getCode() : "");
         // 作废原因
         orderDTO.setInvalidRemark("");
         // 订单状态
@@ -183,12 +185,14 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
         List<PlatformOrderDetailDTO> details = parseDetailDto(sourceOrder);
         orderDTO.setDetails(details);
 
-        // 明细是否退款
-        boolean detailRefund = details.stream().anyMatch(PlatformOrderDetailDTO::getIsDetailRefund);
-        // 平台是否取消(全退款/明细退款视为平台取消(暂不包含部分退款)
-        Boolean isCancel = sourceOrder.convertIsCancel(detailRefund);
-        // 平台订单原始取消状态(已退款,部分退款)
+        // 平台是否取消/作废：仅依据 cancelled_at
+        Boolean isCancel = sourceOrder.convertIsCancel();
         orderDTO.setIsCancel(isCancel);
+        if (isCancel) {
+            orderDTO.setInvalidStatus(Boolean.TRUE);
+            orderDTO.setInvalidType(SoB2cInvalidTypeEnum.ENUM_AUTOMATIC.getCode());
+            orderDTO.setInvalidRemark(SoB2cInvalidTypeEnum.PLATFORM_CANCEL_REMARK);
+        }
 
         // 标签json
         Map<String, Object> lableMap = new HashMap<>();

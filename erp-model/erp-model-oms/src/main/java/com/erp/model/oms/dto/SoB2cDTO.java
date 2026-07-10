@@ -4225,6 +4225,31 @@ public class SoB2cDTO implements Serializable {
          * 是否匹配仓库规则
          */
         private Boolean isMatchWarehouseRule;
+
+        /**
+         * 三方仓运输方式代码（如安兔 shipping_method）
+         */
+        private String shippingMethod;
+
+        /**
+         * 三方仓平台（如 antu、spt、zhongbao）
+         */
+        private String thirdWarehousePlatform;
+
+        /**
+         * 三方仓仓库代码（平台侧 warehouseCode）
+         */
+        private String platformWarehouseCode;
+
+        /**
+         * WMS 校验阶段已解析的 ERP 物流渠道 ID（透传至 OMS，避免逐单重复 Feign）
+         */
+        private String resolvedLogisticsChannelId;
+
+        /**
+         * WMS 校验阶段已解析的 ERP 物流渠道名称
+         */
+        private String resolvedLogisticsChannelName;
     }
 
     @Data

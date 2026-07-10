@@ -569,7 +569,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             this.removeByIds(deleteIdList);
         }
         List<String> skuIdList = detailList.stream().map(SoDetailDTO.UpdateDTO::getSkuId).collect(Collectors.toList());
-        List<String> deliverySkuIdList = detailList.stream().map(SoDetailDTO.UpdateDTO::getDeliverySkuId).collect(Collectors.toList());
+        List<String> deliverySkuIdList = resolveDeliverySkuIdsForBomLookup(skuIdList,
+                detailList.stream().map(SoDetailDTO.UpdateDTO::getDeliverySkuId).collect(Collectors.toList()));
         List<SkuVO> skuList = plmTaskFeign.listSkuCostByIds(skuIdList);
         //重置sku含税成本
         resetSkuVo(skuIdList,skuList,soInfoEntity);
@@ -593,7 +594,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             }
 
             //查询sku是否存在子SKU
-            List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(item.getDeliverySkuId())).collect(Collectors.toList());
+            String bomParentSkuId = resolveBomParentSkuId(item.getSkuId(), item.getDeliverySkuId());
+            List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(bomParentSkuId)).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(sonSkuList)) {
                 item.setBomVersion(sonSkuList.get(MathUtil.ZERO).getBomVersion());
             } else {
@@ -1348,7 +1350,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             this.removeByIds(deleteIdList);
         }
         List<String> skuIdList = detailList.stream().map(SoDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
-        List<String> deliverySkuIdList = detailList.stream().map(SoDetailDTO.AddDTO::getDeliverySkuId).collect(Collectors.toList());
+        List<String> deliverySkuIdList = resolveDeliverySkuIdsForBomLookup(skuIdList,
+                detailList.stream().map(SoDetailDTO.AddDTO::getDeliverySkuId).collect(Collectors.toList()));
         List<SkuVO> skuList = plmTaskFeign.listSkuCostByIds(skuIdList);
         resetSkuVo(skuIdList,skuList,soInfoEntity);
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(deliverySkuIdList);
@@ -1372,9 +1375,12 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             }
 
             //查询sku是否存在子SKU
-            List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(item.getDeliverySkuId())).collect(Collectors.toList());
+            String bomParentSkuId = resolveBomParentSkuId(item.getSkuId(), item.getDeliverySkuId());
+            List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(bomParentSkuId)).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(sonSkuList)) {
                 item.setBomVersion(sonSkuList.get(MathUtil.ZERO).getBomVersion());
+            } else {
+                item.setBomVersion("");
             }
             String symbol = currencyViewList.stream().filter(c -> c.getId().equals(currency)).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("");
@@ -1394,6 +1400,27 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         this.saveOrUpdateBatch(saveOrUpdateList);
     }
 
+    /**
+     * 查 BOM 前解析发货 SKU：平台同步等场景可能只传 skuId，未传 deliverySkuId。
+     */
+    private List<String> resolveDeliverySkuIdsForBomLookup(List<String> skuIds, List<String> deliverySkuIds) {
+        if (CollectionUtils.isEmpty(skuIds)) {
+            return Collections.emptyList();
+        }
+        List<String> resolved = new ArrayList<>(skuIds.size());
+        for (int i = 0; i < skuIds.size(); i++) {
+            String deliverySkuId = deliverySkuIds != null && i < deliverySkuIds.size() ? deliverySkuIds.get(i) : null;
+            String bomParentSkuId = resolveBomParentSkuId(skuIds.get(i), deliverySkuId);
+            if (StringUtils.isNotBlank(bomParentSkuId)) {
+                resolved.add(bomParentSkuId);
+            }
+        }
+        return resolved.stream().distinct().collect(Collectors.toList());
+    }
+
+    private String resolveBomParentSkuId(String skuId, String deliverySkuId) {
+        return StringUtils.isNotBlank(deliverySkuId) ? deliverySkuId : skuId;
+    }
 
     /**
      * 获取到删除的数据

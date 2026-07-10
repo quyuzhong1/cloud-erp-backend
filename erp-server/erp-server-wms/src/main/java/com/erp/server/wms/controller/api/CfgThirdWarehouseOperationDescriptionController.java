@@ -29,14 +29,14 @@ import java.util.stream.Collectors;
 import com.erp.model.wms.entity.CfgThirdWarehouseOperationDescriptionEntity;
 
 /**
- * 
+ * 第三方仓库操作说明
  *
  * @author wtr
  * @since 2026-03-13
  */
 @Slf4j
 @RestController
-@LogSystemModule("")
+@LogSystemModule("第三方仓库操作说明")
 @RequestMapping("/cfgThirdWarehouseOperationDescription")
 public class CfgThirdWarehouseOperationDescriptionController extends BaseController {
 

@@ -866,15 +866,6 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
                 ? Collections.singletonList(prefetchedSoInfoEntity)
                 : usePrefetchedDetailList ? Collections.emptyList() : soInfoFeign.listSoInfoByIds(soIdList);
         soInfoList = Objects.isNull(soInfoList) ? Collections.emptyList() : soInfoList;
-        allSoDetailList = Objects.nonNull(allSoDetailList)
-                ? allSoDetailList
-                : CollectionUtils.isNotEmpty(soIdList) ? soInfoFeign.listSoDetailByMainIds(soIdList) : Collections.emptyList();
-        allSoDetailList = Objects.isNull(allSoDetailList) ? Collections.emptyList() : allSoDetailList;
-        Map<String, BigDecimal> orderWeightMap = allSoDetailList.stream()
-                .collect(Collectors.groupingBy(SoDetailEntity::getMainId,
-                        Collectors.mapping(this::calculateB2bDetailWeight,
-                                Collectors.reducing(BigDecimal.ZERO, BigDecimal::add))));
-
         for (SoOutstockDetailEntity detailEntity : detailList) {
             //销售订单明细
             SoDetailEntity soDetailEntity = soDetailList.stream().filter(obj -> obj.getId().equals(detailEntity.getSoDetailId())).findFirst().orElse(null);
@@ -896,33 +887,32 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             detailEntity.setAmount(MathUtil.multiplyWithTwo(price, detailEntity.getActualQty()));
             detailEntity.setCurrency(soDetailEntity.getCurrency());
             detailEntity.setCurrencySymbol(soDetailEntity.getCurrencySymbol());
-            BigDecimal allAmountLocalCurrency = calculateB2bAllAmountLocalCurrency(soInfoEntity, soDetailEntity,
-                    detailEntity.getActualQty(), orderWeightMap.get(soDetailEntity.getMainId()));
+            BigDecimal allAmountLocalCurrency = calculateB2bAllAmountLocalCurrency(soDetailEntity, detailEntity.getActualQty());
             detailEntity.setAllAmountLocalCurrency(allAmountLocalCurrency);
-            detailEntity.setTaxAmount(divideAmount(allAmountLocalCurrency, defaultExchangeRate(soDetailEntity.getExchangeRate()), RoundingMode.HALF_UP));
+            detailEntity.setTaxAmount(calculateB2bTaxAmount(soDetailEntity, detailEntity.getActualQty()));
             detailEntity.setRemark(soDetailEntity.getRemark());
             detailEntity.setCustomerPO(soDetailEntity.getCustomerPO());
         }
     }
 
-    private BigDecimal calculateB2bAllAmountLocalCurrency(SoInfoEntity soInfoEntity, SoDetailEntity soDetailEntity,
-                                                          Integer actualQty, BigDecimal totalWeight) {
-        BigDecimal exchangeRate = defaultExchangeRate(soDetailEntity.getExchangeRate());
-        BigDecimal orderLocalAmount = getB2bOrderLocalAmount(soInfoEntity, exchangeRate);
-        return calculateAllocatedAmount(orderLocalAmount, calculateB2bDetailWeight(soDetailEntity), totalWeight,
-                getB2bSalesQty(soDetailEntity), actualQty, RoundingMode.DOWN);
+    private BigDecimal calculateB2bAllAmountLocalCurrency(SoDetailEntity soDetailEntity, Integer actualQty) {
+        return calculateB2bProportionalAmount(soDetailEntity, actualQty, soDetailEntity.getAllAmountLocalCurrency());
     }
 
-    private BigDecimal getB2bOrderLocalAmount(SoInfoEntity soInfoEntity, BigDecimal exchangeRate) {
-        BigDecimal orderAmount = soInfoEntity.getOrderAmount();
-        if (Objects.nonNull(orderAmount)) {
-            return orderAmount.multiply(exchangeRate);
+    private BigDecimal calculateB2bTaxAmount(SoDetailEntity soDetailEntity, Integer actualQty) {
+        return calculateB2bProportionalAmount(soDetailEntity, actualQty, soDetailEntity.getTaxAmount());
+    }
+
+    private BigDecimal calculateB2bProportionalAmount(SoDetailEntity soDetailEntity, Integer actualQty, BigDecimal totalAmount) {
+        BigDecimal salesQty = getB2bSalesQty(soDetailEntity);
+        if (MathUtil.compareTo(salesQty, BigDecimal.ZERO) == 0) {
+            return BigDecimal.ZERO.setScale(4, RoundingMode.DOWN);
         }
-        return MathUtil.nvl(soInfoEntity.getAllAmountLc(), BigDecimal.ZERO);
-    }
-
-    private BigDecimal calculateB2bDetailWeight(SoDetailEntity soDetailEntity) {
-        return getB2bSalesQty(soDetailEntity).multiply(getB2bOutstockPrice(soDetailEntity));
+        BigDecimal qty = BigDecimal.valueOf(Objects.nonNull(actualQty) ? actualQty : 0);
+        return MathUtil.nvl(totalAmount, BigDecimal.ZERO)
+                .divide(salesQty, 12, RoundingMode.HALF_UP)
+                .multiply(qty)
+                .setScale(4, RoundingMode.DOWN);
     }
 
     private BigDecimal getB2bSalesQty(SoDetailEntity soDetailEntity) {
@@ -1238,13 +1228,6 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
                 .setScale(4, roundingMode);
     }
 
-    private BigDecimal divideAmount(BigDecimal amount, BigDecimal divisor, RoundingMode roundingMode) {
-        if (MathUtil.compareTo(divisor, BigDecimal.ZERO) == 0) {
-            return BigDecimal.ZERO.setScale(4, roundingMode);
-        }
-        return MathUtil.nvl(amount, BigDecimal.ZERO).divide(divisor, 4, roundingMode);
-    }
-
     private BigDecimal defaultExchangeRate(BigDecimal exchangeRate) {
         if (Objects.isNull(exchangeRate) || BigDecimal.ZERO.compareTo(exchangeRate) == 0) {
             return BigDecimal.ONE;
@@ -1342,22 +1325,11 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             return true;
         }
         List<SoOutstockDetailEntity> soOutstockDetailEntityList = this.lambdaQuery().in(SoOutstockDetailEntity::getSoDetailId,soDetailIds).list();
-        List<String> orderIdList = soDetailEntityList.stream().map(SoDetailEntity::getMainId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
-        List<SoInfoEntity> soInfoList = CollectionUtils.isNotEmpty(orderIdList) ? soInfoFeign.listSoInfoByIds(orderIdList) : Collections.emptyList();
-        List<SoDetailEntity> allSoDetailList = CollectionUtils.isNotEmpty(orderIdList) ? soInfoFeign.listSoDetailByMainIds(orderIdList) : Collections.emptyList();
-        Map<String, BigDecimal> orderWeightMap = allSoDetailList.stream()
-                .collect(Collectors.groupingBy(SoDetailEntity::getMainId,
-                        Collectors.mapping(this::calculateB2bDetailWeight,
-                                Collectors.reducing(BigDecimal.ZERO, BigDecimal::add))));
         List<SoOutstockDetailEntity> updateList = new ArrayList<>();
         for (SoOutstockDetailEntity detailEntity : soOutstockDetailEntityList) {
             //销售订单明细
             SoDetailEntity soDetailEntity = soDetailEntityList.stream().filter(obj -> obj.getId().equals(detailEntity.getSoDetailId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(soDetailEntity)) {
-                continue;
-            }
-            SoInfoEntity soInfoEntity = soInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), soDetailEntity.getMainId())).findFirst().orElse(null);
-            if (Objects.isNull(soInfoEntity)) {
                 continue;
             }
             BigDecimal price = getB2bOutstockPrice(soDetailEntity);
@@ -1367,10 +1339,9 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             detailEntity.setExchangeRate(exchangeRate);
             BigDecimal amount = MathUtil.multiplyWithTwo(price, detailEntity.getActualQty());
             detailEntity.setAmount(amount);
-            BigDecimal allAmountLocalCurrency = calculateB2bAllAmountLocalCurrency(soInfoEntity, soDetailEntity,
-                    detailEntity.getActualQty(), orderWeightMap.get(soDetailEntity.getMainId()));
+            BigDecimal allAmountLocalCurrency = calculateB2bAllAmountLocalCurrency(soDetailEntity, detailEntity.getActualQty());
             detailEntity.setAllAmountLocalCurrency(allAmountLocalCurrency);
-            detailEntity.setTaxAmount(divideAmount(allAmountLocalCurrency, exchangeRate, RoundingMode.HALF_UP));
+            detailEntity.setTaxAmount(calculateB2bTaxAmount(soDetailEntity, detailEntity.getActualQty()));
             updateList.add(detailEntity);
         }
         if(CollectionUtils.isNotEmpty(updateList)){

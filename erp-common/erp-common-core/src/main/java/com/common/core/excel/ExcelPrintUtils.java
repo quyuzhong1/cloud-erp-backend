@@ -1445,7 +1445,18 @@ public class ExcelPrintUtils {
      * 与 {@link #openTemplateListWriter} 的最终异常归口一致（后者因读取模板字节才额外声明受检 {@link IOException}）。
      */
     public ExcelWriter openDynamicHeadersWriter(OutputStream outputStream, List<List<String>> head) {
-        HorizontalCellStyleStrategy horizontalCellStyleStrategy = getHorizontalCellStyleStrategy();
+        return openDynamicHeadersWriter(outputStream, head, null);
+    }
+
+    /**
+     * 与 {@link #openDynamicHeadersWriter(OutputStream, List)} 一致，但允许调用方自定义表头/内容样式策略。
+     * {@code styleStrategy} 为 {@code null} 时沿用通用样式 {@link #getHorizontalCellStyleStrategy()}，
+     * 不影响未指定样式的动态表头导出。
+     */
+    public ExcelWriter openDynamicHeadersWriter(OutputStream outputStream, List<List<String>> head,
+                                                HorizontalCellStyleStrategy styleStrategy) {
+        HorizontalCellStyleStrategy horizontalCellStyleStrategy =
+                styleStrategy != null ? styleStrategy : getHorizontalCellStyleStrategy();
         return EasyExcelFactory.write(outputStream)
                 .registerConverter(new SqlDateNumberConverter())
                 .registerConverter(new SqlDateStringConverter())

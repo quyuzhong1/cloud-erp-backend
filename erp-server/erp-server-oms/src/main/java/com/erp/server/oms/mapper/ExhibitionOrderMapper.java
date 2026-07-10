@@ -32,6 +32,13 @@ public interface ExhibitionOrderMapper extends BaseMapper<ExhibitionOrderEntity>
     IPage<ExhibitionOrderDTO.ListDTO> paging(Page query, @Param("params") ExhibitionOrderDTO.PagingParamDTO params);
 
     /**
+     * 分页总数，按列表明细行口径统计。
+     * @param params 查询参数
+     * @return 总数
+     */
+    Long pagingCount(@Param("params") ExhibitionOrderDTO.PagingParamDTO params);
+
+    /**
     * 状态数量
     * @param params
     * @return

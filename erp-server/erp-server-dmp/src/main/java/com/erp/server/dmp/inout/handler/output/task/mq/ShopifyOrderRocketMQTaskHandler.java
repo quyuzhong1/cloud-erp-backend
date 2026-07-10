@@ -17,6 +17,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.StrUtils;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.DmpOrderReturnStatusEnum;
+import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
@@ -343,7 +344,6 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
 
         // 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）
         orderDTO.setSyncKingdeeStatus("0");
-        orderDTO.setInvalidStatus(Boolean.FALSE);
 
         orderDTO.setShippingFee(dmpSoInfoEntity.getShippingAmount());
 
@@ -356,9 +356,6 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
 
         orderDTO.setApproveStatusStr(dmpSoInfoEntity.getOrderStatus());
         orderDTO.setBillStatus(dmpSoInfoEntity.getDeliveryStatus());
-        orderDTO.setInvalidStatus(dmpSoInfoEntity.getInvalidStatus());
-        // 作废类型（manual手动作废，automatic自动作废）
-        orderDTO.setInvalidType(dmpSoInfoEntity.getInvalidStatus() ? "automatic" : "");
 
         // 订单明细
         List<PlatformOrderDetailDTO> details = parseDetailDto(dmpSoInfoEntity, dmpSoDetailEntityList);
@@ -370,17 +367,21 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
             orderDTO.setSellerOrderCode(jsonObject.get("sellerOrderCode") + "");
         }
 
-        // 平台订单原始取消状态(已退款,部分退款)
+        // 平台取消/作废：仅依据 cancelled_at（DMP 入库时已写入 is_cancel）
         DmpOrderReturnStatusEnum dmpBasicSystemCodeEnum = DmpOrderReturnStatusEnum.getByCode(dmpSoInfoEntity.getReturnStatus());
-        // 整单退款 或 明细存在退货 才推送取消状态
-        if (DmpOrderReturnStatusEnum.ORDER_RETURN.equals(dmpBasicSystemCodeEnum)
-            || details.stream().anyMatch(PlatformOrderDetailDTO::getIsDetailRefund)
-        ) {
-            orderDTO.setIsCancel(Boolean.TRUE);
+        boolean platformCancelled = Boolean.TRUE.equals(dmpSoInfoEntity.getIsCancel());
+        orderDTO.setIsCancel(platformCancelled);
+        if (platformCancelled) {
+            orderDTO.setInvalidStatus(Boolean.TRUE);
+            orderDTO.setInvalidType(SoB2cInvalidTypeEnum.ENUM_AUTOMATIC.getCode());
+            orderDTO.setInvalidRemark(SoB2cInvalidTypeEnum.PLATFORM_CANCEL_REMARK);
         } else {
-            orderDTO.setIsCancel(Boolean.FALSE);
+            orderDTO.setInvalidStatus(dmpSoInfoEntity.getInvalidStatus());
+            orderDTO.setInvalidType(dmpSoInfoEntity.getInvalidStatus()
+                    ? SoB2cInvalidTypeEnum.ENUM_AUTOMATIC.getCode() : "");
+            orderDTO.setInvalidRemark("");
         }
-        // 主单退款标签(包含退款/部分退款)
+        // 主单退款标签(包含退款/部分退款)，与平台取消区分
         if (dmpBasicSystemCodeEnum != null && !DmpOrderReturnStatusEnum.NOT_RETURN.equals(dmpBasicSystemCodeEnum)) {
             jsonObject.put("isRefunded", true);
         }

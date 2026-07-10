@@ -35,6 +35,8 @@ public class ExportWmsVirtualInventoryDiffHandler extends AbstractSingleSheetGro
 
     @Override
     protected PagingVO<VirtualInventoryDiffDTO.ListDiffExportDataDTO> getPageData(PagingDTO<VirtualInventoryDiffDTO.SearchParamDTO> dto) {
+        // sortList 已在 wms-server VirtualInventoryDiffServiceImpl.exportListDiffExportData 清空并固定 ORDER BY；
+        // Feign 返回 null 由基类 writeOffsetBatches → requirePagingResult 统一拦截，Handler 无需重复判空。
         return exportWmsFeign.exportListDiffExportData(dto);
     }
 
