@@ -31,8 +31,6 @@ import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.service.DmpCfgInputDetailService;
 import com.erp.server.dmp.service.DmpInputTaskService;
 import com.erp.server.dmp.service.DmpOutputTaskRecordService;
-import com.sdk.oms.magalu.dto.MagaluShopInfoDTO;
-import com.sdk.oms.magalu.service.MagaluService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -44,7 +42,6 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -73,8 +70,6 @@ public class DmpInoutTaskFeignController{
 	private CfgSettingService cfgSettingService;
 	@Resource
 	private DmpCfgEtlController dmpCfgEtlController;
-	@Resource
-	private MagaluService magaluService;
 
 	/**
 	 * @param updateDTO
@@ -309,40 +304,5 @@ public class DmpInoutTaskFeignController{
 	@PostMapping("/doEtlTask")
 	public ApiResult<List<BatchResultDTO>> doEtlTask(@RequestBody DmpCfgEtlDTO.DoTaskDTO dto) {
 		return dmpCfgEtlController.doTask(dto);
-	}
-
-	@PostMapping("/magalu/createSandboxOrder")
-	public ApiResult<Map<String, Object>> createMagaluSandboxOrder(@RequestBody Map<String, String> request) {
-		String shopId = request == null ? null : request.get("shopId");
-		if (CharSequenceUtil.isBlank(shopId)) {
-			throw new ServiceException("shopId不能为空");
-		}
-		MagaluShopInfoDTO shopInfoDTO = magaluService.getShopInfoByShopId(shopId);
-		if (shopInfoDTO == null || CharSequenceUtil.isBlank(shopInfoDTO.getAccessToken())) {
-			throw new ServiceException("Magalu店铺授权信息不存在");
-		}
-		String sku = CharSequenceUtil.blankToDefault(request.get("sku"), "ERPTESTSKU20260702113421");
-		int quantity = 1;
-		if (CharSequenceUtil.isNotBlank(request.get("quantity"))) {
-			quantity = Integer.parseInt(request.get("quantity"));
-		}
-		String paymentMethod = CharSequenceUtil.blankToDefault(request.get("paymentMethod"), "pix");
-		Map<String, Object> result = new LinkedHashMap<>(8);
-		result.put("onboarding", magaluService.putSandboxOnboarding(shopInfoDTO));
-		com.alibaba.fastjson.JSONObject order = magaluService.createSandboxSampleOrder(shopInfoDTO, sku, quantity, paymentMethod);
-		result.put("order", order);
-		String orderId = order == null ? "" : CharSequenceUtil.blankToDefault(order.getString("id"), "");
-		String orderCode = order == null ? "" : CharSequenceUtil.blankToDefault(order.getString("code"), "");
-		if (CharSequenceUtil.isNotBlank(orderId)) {
-			try {
-                result.put("confirm", magaluService.confirmSandboxSampleOrder(shopInfoDTO, orderId, orderCode));
-			} catch (Exception e) {
-				result.put("confirmError", e.getMessage());
-			}
-			if (CharSequenceUtil.isNotBlank(orderCode)) {
-				result.put("detail", magaluService.getOrderDetail(shopInfoDTO, null, orderCode));
-			}
-		}
-		return ApiResult.success(result);
 	}
 }
