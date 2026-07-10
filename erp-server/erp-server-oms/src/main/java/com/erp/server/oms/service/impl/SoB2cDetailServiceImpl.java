@@ -668,6 +668,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         if (!this.saveOrUpdateBatch(saveOrUpdateList)) {
             throw new ServiceException(ApiError.SO_B2C_DETAIL_SAVE_OR_UPDATE_FAILED);
         }
+        updateMainAmountOrThrow(mainEntity);
         // 与 saveOrUpdateBatch 同属 saveOrUpdateEntity 的 @Transactional 边界
         if (isTikTokOrder) {
             softDeleteTikTokSupersededDetails(oldDetailEntityList, saveOrUpdateList);
