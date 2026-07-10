@@ -1,6 +1,7 @@
 package com.erp.model.wms.dto;
 
 import com.common.business.dto.base.SuperDTO;
+import com.common.core.anno.StateEnumValue;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -81,6 +82,20 @@ public class TransferInfoDetailDTO implements Serializable {
          * 来源明细id
          */
         private String sourceDetailId;
+
+        /**
+         * 调出库存状态: usable可用/frozen冻结/defectiveProduct不良品（默认可用）
+         * 仅允许 InventoryStatusEnum 中的 USABLE/FROZEN/DEFECTIVE_PRODUCT 三值；为空时按 DB 默认可用。
+         */
+        @StateEnumValue(strValues = {"usable", "frozen", "defectiveProduct"}, message = "调出库存状态值有误")
+        private String outInventoryStatus;
+
+        /**
+         * 调入库存状态: usable可用/frozen冻结/defectiveProduct不良品（默认可用）
+         * 仅允许 InventoryStatusEnum 中的 USABLE/FROZEN/DEFECTIVE_PRODUCT 三值；为空时按 DB 默认可用。
+         */
+        @StateEnumValue(strValues = {"usable", "frozen", "defectiveProduct"}, message = "调入库存状态值有误")
+        private String inInventoryStatus;
     }
 
     @Data
@@ -151,6 +166,26 @@ public class TransferInfoDetailDTO implements Serializable {
          * 调入仓位名称
          */
         private String inWarehouseLocationName;
+
+        /**
+         * 调出库存状态(usable可用/frozen冻结/defectiveProduct不良品)
+         */
+        private String outInventoryStatus;
+
+        /**
+         * 调出库存状态名称
+         */
+        private String outInventoryStatusName;
+
+        /**
+         * 调入库存状态(usable可用/frozen冻结/defectiveProduct不良品)
+         */
+        private String inInventoryStatus;
+
+        /**
+         * 调入库存状态名称
+         */
+        private String inInventoryStatusName;
     }
     @Data
     @NoArgsConstructor

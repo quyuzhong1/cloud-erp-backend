@@ -6,7 +6,6 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BaseResultDTO;
@@ -23,7 +22,6 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
-import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.oms.dto.SoB2cRefundDTO;
 import com.erp.model.oms.entity.SoB2cRefundDetailEntity;
 import com.erp.model.oms.entity.SoB2cRefundEntity;
@@ -152,7 +150,6 @@ public class SoB2cRefundServiceImpl extends SuperServiceImpl<SoB2cRefundMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "entity.id", unlockAfterTx = true)
     public BatchResultDTO submit(SoB2cRefundEntity entity, Boolean isNeedProcess) {
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
@@ -202,7 +199,6 @@ public class SoB2cRefundServiceImpl extends SuperServiceImpl<SoB2cRefundMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "entity.id", unlockAfterTx = true)
     public BatchResultDTO approve(SoB2cRefundEntity entity, ApproveOneDTO dto) {
         //判断是否是审核中的状态
         if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
@@ -292,7 +288,6 @@ public class SoB2cRefundServiceImpl extends SuperServiceImpl<SoB2cRefundMapper, 
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "entity.id", unlockAfterTx = true)
     public BatchResultDTO disApprove(SoB2cRefundEntity entity) {
         //已审核支持反审核
         if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())) {
@@ -310,7 +305,6 @@ public class SoB2cRefundServiceImpl extends SuperServiceImpl<SoB2cRefundMapper, 
     @Override
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "entity.id", unlockAfterTx = true)
     public BatchResultDTO cancelProcess(SoB2cRefundEntity entity) {
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {

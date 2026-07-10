@@ -8,7 +8,6 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -16,7 +15,6 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.vo.PagingVO;
-import com.common.message.constant.DistributeKeyConstant;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -25,6 +23,7 @@ import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.*;
 import com.erp.model.sys.enums.CfgThirdNoticeApplyScopeEnum;
 import com.erp.model.sys.enums.CfgThirdNoticeMethodEnum;
+import com.erp.model.sys.enums.CfgThirdNoticeUrlTypeEnum;
 import com.erp.model.sys.enums.RuleTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysPostFeign;
@@ -292,7 +291,6 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.SYS_USER_AUTH_KEY, keyName = "addOrUpdateDTO.id", unlockAfterTx = true)
     public Boolean update(CfgThirdNoticeDTO.UpdateDTO addOrUpdateDTO) {
         //校验通知人员不能全部为空
         List<String> roleTypeList = addOrUpdateDTO.getRoleTypeList();
@@ -532,6 +530,9 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
 
         String method = data.getMethod();
         data.setMethodName(CfgThirdNoticeMethodEnum.getName(method));
+        // noticeType 存的即为显示文本（枚举 name 或历史自定义值），直接透传
+        data.setNoticeTypeName(entity.getNoticeType());
+        data.setUrlTypeName(CfgThirdNoticeUrlTypeEnum.getName(entity.getUrlType()));
         if(StringUtils.isNotBlank(data.getPost())){
             //岗位id
             List<String> postIdList = Arrays.asList(data.getPost().split(","));
@@ -606,7 +607,6 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
     }
 
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.SYS_USER_AUTH_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO enable(String id, Boolean noticeStatus) {
         CfgThirdNoticeEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到三方通知配置数据"));
         if(!entity.getNoticeStatus().equals(noticeStatus)){

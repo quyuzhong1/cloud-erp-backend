@@ -51,6 +51,7 @@ import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.mapper.SubcontractReturnMapper;
 import com.erp.server.wms.service.*;
+import com.erp.server.wms.util.SubcontractRepairHelper;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -449,6 +450,8 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
         if (CollUtil.isEmpty(subcontractOrderList)) {
             throw new ServiceException(ApiError.PO_SUBCONTRACT_ORDER_NOT_FOUND);
         }
+        SubcontractOrderEntity subcontractOrderEntity = subcontractOrderList.get(0);
+        boolean isRepairSubcontract = SubcontractRepairHelper.isRepairSubcontract(subcontractOrderEntity);
         //委外明细
         List<SubcontractOrderDetailEntity> subcontractOrderDetailList = scmTaskFeign.listSubcontractDetailByMainIds(Collections.singletonList(sourceId));
         if (CollUtil.isEmpty(subcontractOrderDetailList)) {
@@ -460,15 +463,16 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
             throw new ServiceException(ApiError.PO_SUBCONTRACT_DETAIL_PARENT_SKU_NOT_FOUND);
         }
 
-        //bom信息
-        List<String> parentSkuIdList = parentList.stream().map(SubcontractOrderDetailEntity::getSkuId).collect(Collectors.toList());
-        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listHistoryBomChildBySkuIds(parentSkuIdList);
-
         //委外子级SKU明细
         List<SubcontractOrderDetailEntity> childList = subcontractOrderDetailList.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getParentId())).collect(Collectors.toList());
-        if (CollUtil.isEmpty(parentList)) {
+        if (CollUtil.isEmpty(childList)) {
             throw new ServiceException(ApiError.PO_SUBCONTRACT_DETAIL_CHILD_SKU_NOT_FOUND);
         }
+
+        //bom信息（返修委外订单子件不依赖BOM）
+        List<String> parentSkuIdList = parentList.stream().map(SubcontractOrderDetailEntity::getSkuId).collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomChildrenSkuList = SubcontractRepairHelper.needBomLookup(subcontractOrderEntity)
+                ? plmTaskFeign.listHistoryBomChildBySkuIds(parentSkuIdList) : Collections.emptyList();
         //已审核退料数量
         List<String> subcontractOrderDetailIdList = childList.stream().map(SubcontractOrderDetailEntity::getId).collect(Collectors.toList());
         List<SubcontractIssueDetailEntity> hasIssueDetailList = subcontractIssueDetailService.listBySubcontractOrderDetailIdList(subcontractOrderDetailIdList);
@@ -477,7 +481,11 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
         List<SubcontractReturnDetailEntity> hasReturnDetailList = subcontractReturnDetailService.listBySubcontractOrderDetailIdList(subcontractOrderDetailIdList);
 
         //sku信息
-        List<SkuVO> skuVOList = plmTaskFeign.listSkuCategoryByIds(parentSkuIdList);
+        List<String> skuIdList = new ArrayList<>(parentSkuIdList);
+        if (isRepairSubcontract) {
+            skuIdList.addAll(childList.stream().map(SubcontractOrderDetailEntity::getSkuId).collect(Collectors.toList()));
+        }
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuCategoryByIds(skuIdList.stream().distinct().collect(Collectors.toList()));
 
         //即时库存信息
         List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = listSubDetailSkuInventoryList(childList);
@@ -525,15 +533,24 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
                 if (Objects.nonNull(warehouseLocation)){
                     detailDTO.setWarehouseLocationName(warehouseLocation.getName());
                 }
-                //bom信息
-                BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuList.stream().filter(obj -> obj.getParentSkuId().equals(parentDetailEntity.getSkuId()) && obj.getSkuId().equals(childDetailEntity.getSkuId()))
-                        .findFirst().orElse(null);
-                if (ObjectUtils.isEmpty(bomChildrenSkuDTO)) {
-                    throw new ServiceException(ApiError.BOM_NOT_FOUND);
+                //bom信息（返修委外订单子件取自委外明细，不查BOM）
+                if (isRepairSubcontract) {
+                    SkuVO childSkuVO = skuVOList.stream().filter(obj -> obj.getSkuId().equals(childDetailEntity.getSkuId())).findFirst().orElse(null);
+                    if (Objects.isNull(childSkuVO)) {
+                        throw new ServiceException(ApiError.PRODUCT_NOT_FOUND);
+                    }
+                    detailDTO.setProductName(childSkuVO.getSkuName());
+                    detailDTO.setBomVersion(childDetailEntity.getBomVersion());
+                    detailDTO.setQuantity(SubcontractRepairHelper.resolveChildSkuQuantity(
+                            subcontractOrderEntity, parentDetailEntity, childDetailEntity, bomChildrenSkuList));
+                } else {
+                    BomChildrenSkuDTO bomChildrenSkuDTO = SubcontractRepairHelper.findBomChild(
+                                    bomChildrenSkuList, parentDetailEntity.getSkuId(), childDetailEntity.getSkuId())
+                            .orElseThrow(() -> new ServiceException(ApiError.BOM_NOT_FOUND));
+                    detailDTO.setProductName(bomChildrenSkuDTO.getSkuName());
+                    detailDTO.setBomVersion(bomChildrenSkuDTO.getBomVersion());
+                    detailDTO.setQuantity(bomChildrenSkuDTO.getQuantity());
                 }
-                detailDTO.setProductName(bomChildrenSkuDTO.getSkuName());
-                detailDTO.setBomVersion(bomChildrenSkuDTO.getBomVersion());
-                detailDTO.setQuantity(bomChildrenSkuDTO.getQuantity());
 
                 //即时库存
                 Integer curInventoryQty = skuInventoryTotalList.stream().filter(s -> s.getSkuId().equals(detailDTO.getSkuId())

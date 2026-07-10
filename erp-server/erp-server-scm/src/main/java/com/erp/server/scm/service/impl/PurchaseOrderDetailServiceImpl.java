@@ -10,7 +10,6 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.business.annotation.DistributeLocker;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SubcontractTypeEnum;
@@ -20,7 +19,6 @@ import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
-import com.common.message.constant.DistributeKeyConstant;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.MessageUtils;
@@ -709,7 +707,6 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.SCM_PO_ARRIVAL_STATUS_KEY, keyName = "entity.id", unlockAfterTx = true)
     public Boolean updatePoArrivalStatus(PurchaseOrderDetailEntity entity) {
 
         //更新采购订单交货状态

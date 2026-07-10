@@ -116,7 +116,6 @@ public class AssetLocationController extends BaseController {
     * @return ApiResult<Void>
     */
     @PostMapping("/addAndSubmit")
-    @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "资产位置表新增并提交")
     public ApiResult<BaseResultDTO.AddDTO> addAndSubmit(@RequestBody @Validated AssetLocationDTO.AddDTO dto) {
         BaseResultDTO.AddDTO result = assetLocationService.addAndSubmit(dto);
         return success(result);
@@ -144,7 +143,6 @@ public class AssetLocationController extends BaseController {
     * @return ApiResult<Void>
     */
     @PostMapping("/updateAndSubmit")
-    @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "资产位置表修改并提交")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "fms:assetLocation:updateAndSubmit",
@@ -469,7 +467,6 @@ public class AssetLocationController extends BaseController {
      * @return ApiResult
      */
     @PostMapping(value = "/importExcel")
-    @LogAction(value = LogActionEnum.IMPORT, desc = "资产位置表导入")
     public ApiResult<Object> importExcel(@RequestBody BaseDTO.ImportDTO dto) {
         Boolean flag = assetLocationService.importExcel(dto);
         return flag == true ? success() : failure();

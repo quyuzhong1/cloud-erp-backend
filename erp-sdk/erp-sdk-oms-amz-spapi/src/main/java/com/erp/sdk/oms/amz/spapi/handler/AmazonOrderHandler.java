@@ -5,7 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.annotation.BusinessType;
-import com.common.business.annotation.DistributeLocker;
+import com.common.business.annotation.DataIdempotent;
 import com.common.business.annotation.PlatformCategoryType;
 import com.common.business.annotation.PlatformType;
 import com.common.business.constant.RedisCacheConstants;
@@ -207,7 +207,7 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
     }
 
     @Override
-    @DistributeLocker(keyName = "dto.redissonKey", waiteTime = 20)
+    @DataIdempotent(keyIdName = "dto.redissonKey", waitTime = 20)
     public PlatformAmazonOrderDTO downloadDetail(PlatformAmazonOrderDTO dto, JSONObject extendObj) {
         // 缓存获取
         String key = StrUtil.format(RedisCacheConstants.AMZ_SP_API_RESULT_PREFIX, AmazonRequestTypeRateLimiterEnum.ORDER_ITEMS.getBusinessTypeName(), dto.getUniqueId());
@@ -321,7 +321,7 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
     }
 
 
-    @DistributeLocker(keyName = "dto.redissonKey", waiteTime = 20)
+    @DataIdempotent(keyIdName = "dto.redissonKey", waitTime = 20)
     public PlatformAmazonOrderDTO downloadAddressAndBuyInfo(PlatformAmazonOrderDTO dto, JSONObject extendObj) {
         if ( null != dto.getOrder().getShippingAddress() &&
                 StringUtils.isNotBlank(dto.getOrder().getShippingAddress().getName())){

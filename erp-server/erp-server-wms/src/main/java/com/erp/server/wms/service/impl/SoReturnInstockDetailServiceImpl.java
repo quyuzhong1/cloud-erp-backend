@@ -186,6 +186,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                         soReturnDetailEntities, soDetailEntityList, Collections.emptyList());
                 detailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
                 detailEntity.setReturnReasonDict(detailDto.getReturnReasonDict());
+                detailEntity.setDefectiveProductFlag(detailDto.getDefectiveProductFlag());
 
                 if(Boolean.FALSE.equals(detailDto.getIsChildSkuNo()) //子sku不做数量校验
                         && SourceTypeEnum.SO_RETURN_RECEIVE.getCode().equals(dto.getSourceType())
@@ -288,6 +289,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 detailEntity.setReceiveQty(detailDto.getReceiveQty());
                 detailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
                 detailEntity.setReturnReasonDict(detailDto.getReturnReasonDict());
+                detailEntity.setDefectiveProductFlag(detailDto.getDefectiveProductFlag());
                 detailEntity.setWarehouseLocation(detailDto.getWarehouseLocation());
                 detailEntity.setRemark(detailDto.getRemark());
                 detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
@@ -363,6 +365,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 detailEntity.setReceiveQty(detailDto.getReceiveQty());
                 detailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
                 detailEntity.setReturnReasonDict(detailDto.getReturnReasonDict());
+                detailEntity.setDefectiveProductFlag(detailDto.getDefectiveProductFlag());
                 detailEntity.setWarehouseLocation(detailDto.getWarehouseLocation());
                 detailEntity.setRemark(detailDto.getRemark());
                 detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
@@ -445,6 +448,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             detailEntity.setSoReturnDetailId(detailDto.getSoReturnDetailId());
             detailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
             detailEntity.setReturnReasonDict(detailDto.getReturnReasonDict());
+            detailEntity.setDefectiveProductFlag(detailDto.getDefectiveProductFlag());
             //封装仓库
             WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(v->v.getId().equals(detailDto.getWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
             detailEntity.setWarehouseId(detailDto.getWarehouseId());
@@ -600,6 +604,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 }
                 detailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
                 detailEntity.setReturnReasonDict(detailDto.getReturnReasonDict());
+                detailEntity.setDefectiveProductFlag(detailDto.getDefectiveProductFlag());
                 boolean receiveTailAmountApplied = false;
                 if(Boolean.FALSE.equals(detailDto.getIsChildSkuNo()) //子sku不做数量校验
                         && StringUtils.isNotBlank(detailDto.getSourceDetailId())
@@ -788,6 +793,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
                 detailEntity.setSoReturnDetailId(detailDto.getSoReturnDetailId());
                 detailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
+                detailEntity.setDefectiveProductFlag(detailDto.getDefectiveProductFlag());
                 fillDetailPriceForUpdate(detailEntity, dto, detailDto, receivePushDetailList,
                         soReturnDetailEntities, Collections.emptyList(), soB2cDetailEntityList);
                 //封装仓库，如果没有明细仓库，取主记录的仓库
@@ -870,6 +876,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 detailEntity.setRemark(detailDto.getRemark());
                 detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
                 detailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
+                detailEntity.setDefectiveProductFlag(detailDto.getDefectiveProductFlag());
                 if (hasDetailPriceFromRequest(detailDto)) {
                     applyUpdateDetailPriceFromRequest(detailEntity, detailDto, dto.getExchangeRate(), detailDto.getRealQty());
                 } else if (isReceivePushInstock(dto.getSourceType()) && CharSequenceUtil.isNotBlank(detailDto.getSourceDetailId())) {
@@ -998,6 +1005,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             detailEntity.setTaxReturnAmount(detailDto.getTaxReturnAmount());
             detailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
             detailEntity.setReturnReasonDict(detailDto.getReturnReasonDict());
+            detailEntity.setDefectiveProductFlag(detailDto.getDefectiveProductFlag());
             detailEntity.setReturnAmountLocalCurrency(detailDto.getReturnAmountLocalCurrency());
             detailEntity.setTaxReturnAmountLocalCurrency(detailDto.getTaxReturnAmountLocalCurrency());
             if(null == detailDto.getExchangeRate()){
@@ -1276,6 +1284,9 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
 
     @Override
     public List<SoReturnInstockDetailEntity> listDetailBySourceIds(List<String> sourceIds) {
+        if (CollUtil.isEmpty(sourceIds)){
+            return new ArrayList<>();
+        }
         return baseMapper.listDetailBySourceIds(sourceIds);
     }
 

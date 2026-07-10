@@ -2,6 +2,7 @@ package com.erp.model.wms.dto.inventory;
 
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
+import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import lombok.Data;
 
 import javax.validation.constraints.NotEmpty;
@@ -87,6 +88,28 @@ public class TransferDTO extends InventoryStockBaseDTO implements Serializable {
     // @Min(value = 1,message = "库存变更数量不能小于1")
     private Integer qty;
 
+    /**
+     * 库存状态运行期覆盖（仅对「调入端 TARGET」生效）：非空时调入仓库的 inventoryStatus
+     * 取此值，调出仓库 inventoryStatus 仍按交易规则配置（一般为 {@link InventoryStatusEnum#USABLE}）。
+     * <p>
+     * 设计为「单边覆盖」是因为调拨业务的物理语义是：调出仓的物理库存搬到调入仓，
+     * 调出端的库存分类必须与调出仓的实际库存匹配，否则会出现「调出仓 0 不良品库存」
+     * 的库存不足报错；调入端则可以根据业务需要切换分类。
+     * <p>
+     * 当前已知用例：wego 海外仓签收 {@code defective_product_flag=true} 时，
+     * 在途仓 USABLE 调出 → 目的仓 DEFECTIVE_PRODUCT 调入。
+     * <p>
+     * 为空时按原有规则走，保证全部历史调用链路行为不变。
+     */
+    private InventoryStatusEnum dictInventoryStatus;
 
+    /**
+     * 库存状态运行期覆盖（仅对「调出端 CURRENT」生效）：非空时调出仓库的 inventoryStatus
+     * 取此值，调入仓库 inventoryStatus 仍按 {@link #dictInventoryStatus} 或交易规则配置。
+     * <p>
+     * 用于直接调拨单明细显式指定「调出库存状态」(out_inventory_status) 的场景，
+     * 例如从冻结 / 不良品库存桶调出。为空时按原有交易规则走，保证历史链路行为不变。
+     */
+    private InventoryStatusEnum curInventoryStatus;
 
 }

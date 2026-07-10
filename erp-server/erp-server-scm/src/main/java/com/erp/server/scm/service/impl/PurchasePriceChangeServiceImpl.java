@@ -13,7 +13,6 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
@@ -32,7 +31,6 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
-import com.common.message.constant.DistributeKeyConstant;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -1190,7 +1188,6 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "updateApprovalStatusDTO.purchasePricechangeEntity.id", unlockAfterTx = true)
     public void updateApproveStatus(PurchasePriceChangeDTO.UpdateApprovalStatusDTO  updateApprovalStatusDTO) {
         PurchasePriceChangeEntity entity = updateApprovalStatusDTO.getPurchasePricechangeEntity();
         ApproveStatusEnum approveStatus = updateApprovalStatusDTO.getApproveStatus();
