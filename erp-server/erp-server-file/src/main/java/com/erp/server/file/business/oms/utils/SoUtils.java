@@ -181,7 +181,7 @@ public final class SoUtils {
             row.put("receiveAmount", "");
             row.put("discountAmount", "");
             row.put("orderAmount", "");
-            data.put("paidAmount", "");
+            row.put("paidAmount", "");
             row.put("allAmountLc", "");
             return;
         }
