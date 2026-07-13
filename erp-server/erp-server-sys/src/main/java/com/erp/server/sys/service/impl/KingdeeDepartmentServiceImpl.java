@@ -5,7 +5,6 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -16,7 +15,6 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.sys.dto.DeptKingdeeDTO;
 import com.erp.model.sys.dto.KingdeeDepartmentDTO;
@@ -78,7 +76,6 @@ public class KingdeeDepartmentServiceImpl extends SuperServiceImpl<KingdeeDepart
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.KINGDEE_SYNC_KEY, keyName = "addDTO.kingdeeDeptName,addDTO.useOrgId", unlockAfterTx = true)
     public Boolean add(KingdeeDepartmentDTO.AddDTO addDTO) {
         KingdeeDepartmentEntity kingdeeDepartmentEntity = new KingdeeDepartmentEntity();
         BeanMapperUtils.copy(addDTO, kingdeeDepartmentEntity);
@@ -105,7 +102,6 @@ public class KingdeeDepartmentServiceImpl extends SuperServiceImpl<KingdeeDepart
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.KINGDEE_SYNC_KEY, keyName = "updateDTO.id", unlockAfterTx = true)
     public Boolean update(KingdeeDepartmentDTO.UpdateDTO updateDTO) {
         KingdeeDepartmentEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "金蝶部门不存在"));
@@ -298,7 +294,6 @@ public class KingdeeDepartmentServiceImpl extends SuperServiceImpl<KingdeeDepart
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    @DistributeLocker(businessType = DistributeKeyConstant.KINGDEE_SYNC_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO delete(String id) {
         KingdeeDepartmentEntity entity = super.getById(id);
         List<KingdeePostEntity> postList = kingdeePostService.listByKingDeptId(id);

@@ -13,7 +13,6 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.FileTemplateConstant;
@@ -35,7 +34,6 @@ import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
-import com.common.message.constant.DistributeKeyConstant;
 import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
@@ -535,7 +533,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     @Override
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "dto.id", unlockAfterTx = true)
     public BatchResultDTO approve(ApproveOneDTO dto) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if (Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
@@ -937,7 +934,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "entity.id", unlockAfterTx = true)
     public BatchResultDTO submit(PurchaseOrderEntity entity, Boolean isStartProcess) {
         //待提交或审核不通过并且未作废允许提交
         if ((!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(entity.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())) {
@@ -2642,7 +2638,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.SCM_PO_SUPPLIER_CONFIRM_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO supplierConfirm(String id) {
         PurchaseOrderEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
@@ -2680,7 +2675,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.SCM_SRM_ORDER_CONFIRM_KEY, keyName = "dto.ids", unlockAfterTx = true)
     public List<BatchResultDTO> srmOrderConfirmStatus(PurchaseOrderDTO.ConfirmDTO dto) {
         Set<String> ids;
         if (CollectionUtils.isEmpty(dto.getIds())) {
@@ -2911,7 +2905,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.SCM_PO_GENERATE_DELIVERY_KEY, keyName = "dto.purchaseDetailIds", unlockAfterTx = true)
     public List<PurchaseOrderDTO.ListDTO> generateDeliveryList(PurchaseOrderSrmDTO.GenerateDeliveryParamDTO dto) {
         if (CollectionUtils.isEmpty(dto.getPurchaseDetailIds())) {
             return Collections.emptyList();
@@ -4117,7 +4110,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.SCM_PO_QC_QTY_KEY, keyName = "dtoList.purchaseOrderDetailId", unlockAfterTx = true)
     public Boolean addQcGoodQty(List<PurchaseOrderDTO.QcQtyDTO> dtoList) {
         if (CollectionUtils.isEmpty(dtoList)) {
             return false;

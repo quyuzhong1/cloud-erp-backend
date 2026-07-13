@@ -1,9 +1,7 @@
 package com.erp.server.plm.controller.api;
 
-import com.common.core.anno.LogAction;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.common.core.enums.LogActionEnum;
 import com.common.business.dto.base.BaseIdDTO;
 import com.erp.server.plm.service.TaskRefSkuConfigService;
 import org.springframework.validation.annotation.Validated;
@@ -36,7 +34,6 @@ public class TaskRefSkuConfigController extends BaseController {
      * @return 删除是否成功
      */
     @PostMapping("/delete")
-    @LogAction(value = LogActionEnum.DELETE, desc = "任务SKU配置删除")
     public ApiResult deleteById(@RequestBody @Validated BaseIdDTO dto) {
         Boolean flag = this.taskRefSkuConfigService.deleteById(dto.getId());
         return flag == true ? success() : failure();
@@ -47,7 +44,6 @@ public class TaskRefSkuConfigController extends BaseController {
      * @param deleteOld 是否删除原字段
      */
     @GetMapping("/initTaskRefSkuConfig")
-    @LogAction(value = LogActionEnum.EXECUTE, desc = "初始化任务SKU配置尺寸转换")
     public ApiResult<String> initTaskRefSkuConfig(@RequestParam(required = false, defaultValue = "false") Boolean deleteOld){
         taskRefSkuConfigService.initTaskRefSkuConfig(deleteOld);
         return success();

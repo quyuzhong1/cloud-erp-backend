@@ -440,7 +440,6 @@ public class PilotApplicationController extends BaseController {
      * @author tmj
      */
     @PostMapping("/pushPurchaseApplication")
-    @LogAction(value = LogActionEnum.EXECUTE, desc = "试产申请下推采购申请")
     public ApiResult<List<BatchResultDTO>> pushPurchaseApplication(@RequestBody @Validated List<PilotApplicationDTO.PushPurchaseApplicationDTO> dtoList){
         List<BatchResultDTO> resultList = pilotApplicationService.pushPurchaseApplication(dtoList);
         return resultList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultList) : failure(resultList);
@@ -451,7 +450,6 @@ public class PilotApplicationController extends BaseController {
      * @author tmj
      */
     @PostMapping("/pushAndSubmitPurchaseApplication")
-    @LogAction(value = LogActionEnum.EXECUTE, desc = "试产申请下推并提交采购申请")
     public ApiResult<List<BatchResultDTO>> pushAndSubmitPurchaseApplication(@RequestBody @Validated List<PilotApplicationDTO.PushPurchaseApplicationDTO> dtoList){
         List<BatchResultDTO> resultList = pilotApplicationService.pushAndSubmitPurchaseApplication(dtoList);
         return resultList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultList) : failure(resultList);
@@ -491,7 +489,6 @@ public class PilotApplicationController extends BaseController {
      * 保存关联任务
      */
     @PostMapping("/addRefTaskBatch")
-    @LogAction(value = LogActionEnum.INSERT, desc = "试产申请保存关联任务")
     public ApiResult<Boolean> addRefTaskBatch(@RequestBody PilotApplicationDTO.RefTaskDTO dto){
         return success(pilotApplicationService.addRefTaskBatch(dto));
     }
@@ -500,7 +497,6 @@ public class PilotApplicationController extends BaseController {
      * 删除关联任务
      */
     @PostMapping("/deleteRefTaskBatch")
-    @LogAction(value = LogActionEnum.DELETE, desc = "试产申请删除关联任务")
     public ApiResult<Boolean> deleteRefTaskBatch(@RequestBody PilotApplicationDTO.RefTaskDTO dto){
         return success(pilotApplicationService.deleteRefTaskBatch(dto));
     }
@@ -509,7 +505,6 @@ public class PilotApplicationController extends BaseController {
      * 移除产品
      */
     @PostMapping("/deleteProductBatch")
-    @LogAction(value = LogActionEnum.DELETE, desc = "试产申请移除产品")
     public ApiResult<Boolean> deleteProductBatch(@RequestBody PilotApplicationDTO.ProductDTO dto){
         return success(pilotApplicationService.deleteProductBatch(dto));
     }

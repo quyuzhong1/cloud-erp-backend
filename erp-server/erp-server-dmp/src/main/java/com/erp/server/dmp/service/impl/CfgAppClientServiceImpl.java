@@ -2,14 +2,13 @@ package com.erp.server.dmp.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
-import com.common.business.annotation.DistributeLocker;
+import com.common.business.annotation.DataIdempotent;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.RedisUtil;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.message.constant.DistributeKeyConstant;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
@@ -167,7 +166,7 @@ public class CfgAppClientServiceImpl extends SuperServiceImpl<CfgAppClientMapper
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.AMZ_AUTH_KEY, keyName = "shopInfo.platformShopCode", waiteTime = 90, unlockAfterTx = true)
+    @DataIdempotent(keyIdName = "shopInfo.platformShopCode", waitTime = 90)
     public AmazonTokenDTO requestAmzAndAuth(ShopInfoEntity shopInfo, CfgAppClientEntity cfgAppClient) {
         // 查询已授权信息
         //根据店铺id 获取到授权信息

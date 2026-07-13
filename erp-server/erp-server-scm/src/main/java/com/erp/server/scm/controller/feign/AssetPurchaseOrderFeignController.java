@@ -2,8 +2,6 @@ package com.erp.server.scm.controller.feign;
 
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.common.core.anno.LogAction;
-import com.common.core.enums.LogActionEnum;
 import com.erp.model.scm.dto.AssetPurchaseOrderDTO;
 import com.erp.server.scm.service.AssetPurchaseOrderService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,13 +61,11 @@ public class AssetPurchaseOrderFeignController extends BaseController {
 
 
     @PostMapping("/rewriteAssetPurchaseOrder")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "资产采购订单回写")
     public ApiResult<Boolean> rewriteAssetPurchaseOrder(@RequestBody AssetPurchaseOrderDTO.rewritePurchaseOrderDTO rewritePurchaseOrderDTO){
         return success(assetPurchaseOrderService.rewriteAssetPurchaseOrder(rewritePurchaseOrderDTO));
     }
 
     @PostMapping("/batchRewriteAssetPurchaseOrder")
-    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "资产采购订单批量回写")
     public ApiResult<Boolean> batchRewriteAssetPurchaseOrder(@RequestBody List<AssetPurchaseOrderDTO.rewritePurchaseOrderDTO> rewritePurchaseOrderDTOList){
         boolean flag = Boolean.TRUE;
         for (AssetPurchaseOrderDTO.rewritePurchaseOrderDTO rewritePurchaseOrderDTO : rewritePurchaseOrderDTOList) {

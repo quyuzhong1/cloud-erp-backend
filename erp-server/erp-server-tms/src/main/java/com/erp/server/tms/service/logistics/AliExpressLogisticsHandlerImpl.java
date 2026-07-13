@@ -274,6 +274,10 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
         if (!StringUtils.isBlank(logisticsOrderVO.getLogisticsChannelEntity().getUndeliverableDecision()) && UnDeliverableDecisionEnum.RETURN.getCode().equals(logisticsOrderVO.getLogisticsChannelEntity().getUndeliverableDecision())){
             undeliverableDecision = "0";
         }
+        // APL 创单件重尺：ERP ParceInfoVO 已为 cm（PLM mm 已在上游 mmToCm），AE 要求 Long(cm)
+        Long goodsLength = toAliExpressGoodsCm(logisticsOrderVO.getParceInfoVO() != null ? logisticsOrderVO.getParceInfoVO().getLength() : null);
+        Long goodsWidth = toAliExpressGoodsCm(logisticsOrderVO.getParceInfoVO() != null ? logisticsOrderVO.getParceInfoVO().getWidth() : null);
+        Long goodsHeight = toAliExpressGoodsCm(logisticsOrderVO.getParceInfoVO() != null ? logisticsOrderVO.getParceInfoVO().getHeight() : null);
         return OrderRequest.builder()
                 .oaid(oaid)
                 .pickup_type(logisticsOrderVO.getLogisticsChannelEntity().getDeliveryType())
@@ -291,7 +295,21 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 .address_d_t_os(addressDTO)
                 .is_agree_upgrade_reverse_parcel_insure(false)
                 .top_user_key(logisticsOrderVO.getTopUserKey())
+                .goods_length(goodsLength)
+                .goods_width(goodsWidth)
+                .goods_height(goodsHeight)
                 .build();
+    }
+
+    /**
+     * ERP 包裹尺寸单位为 cm，速卖通 APL 创单 goodsLength/Width/Height 单位同为 cm（Long）。
+     * null 或 &lt;=0 不传，避免覆盖平台侧商品尺寸。
+     */
+    private static Long toAliExpressGoodsCm(Integer cm) {
+        if (cm == null || cm <= 0) {
+            return null;
+        }
+        return cm.longValue();
     }
     private Address encryptByOrderType(String orderType, Address address){
         if (!StringUtils.isBlank(orderType) && !SourceTypeEnum.SELF_ADD.getCode().equals(orderType)){

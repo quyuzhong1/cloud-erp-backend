@@ -10,7 +10,6 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.business.annotation.DistributeLocker;
 import com.common.business.constant.*;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.UserRequestPermissionsDTO;
@@ -31,7 +30,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.UUID;
 import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
-import com.common.message.constant.DistributeKeyConstant;
 import com.common.message.dto.email.EmailDTO;
 import com.common.message.dto.email.EmailVerifyCodeDTO;
 import com.common.message.service.MailService;
@@ -51,6 +49,8 @@ import com.erp.model.sys.enums.ThirdPlatformEnums;
 import com.erp.model.sys.utils.RedisKeyUtil;
 import com.erp.model.sys.vo.SupplierUserVO;
 import com.erp.model.sys.vo.SysMenuVO;
+import com.erp.model.sys.vo.SysUserMenuAuthVO;
+import com.erp.model.sys.vo.SysUserPermissionAuthVO;
 import com.erp.rpc.auth.feign.AuthFeign;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -363,9 +363,13 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
 
     /**
      * 账号登录
+     * <p>
+     * 校验账号密码与用户状态，返回用户基础信息。
+     * 菜单与按钮权限已拆分为独立接口，登录时不再查询。
+     * </p>
      *
-     * @param dto
-     * @return
+     * @param dto 登录入参
+     * @return 用户基础信息
      */
     @Override
     public SysUserDTO accountLogin(AccountLoginDTO dto) {
@@ -388,21 +392,8 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         SysUserDTO vo = new SysUserDTO();
         BeanMapperUtils.copy(entity, vo);
         vo.setIsSupper(entity.getIsSuper());
-        //判断是否是超级管理员登录
-        SysUserDTO sysUserDTO = adminLogin(vo,dto.getUserType());
-        if (sysUserDTO != null) {
-            return sysUserDTO;
-        }
-
-        //后面还有编写 1580852739573813249
+        vo.setUserType(dto.getUserType());
         String uid = entity.getUid();
-        List<String> roleIds = sysRoleUserService.findRoleIdsByUid(uid);
-        List<SysMenuVO> overallMenuList = sysRoleMenuService.findMenuByRoleIds(roleIds,dto.getUserType());
-        List<SysMenuVO> leftMenuList = sysRoleMenuService.findLeftMenuByRoleIds(roleIds,MathUtil.ONE,dto.getUserType());
-        List<String> permissionList = sysRoleMenuService.findMenuCodeByRoleIds(roleIds, SysConstant.NO_STATE,dto.getUserType());
-        vo.setPermissionList(permissionList);
-        vo.setOverallMenuList(overallMenuList);
-        vo.setLeftMenuList(leftMenuList);
         SysUserThirdEntity thirdEntity = sysUserThirdService.findByUserId(uid);
         Integer bindingState = 0;
         String bindingPlatform = "";
@@ -417,6 +408,60 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         vo.setDeptId(sysDepartmentUserNumberDTO.getDepartmentId());
         vo.setDeptName(sysDepartmentUserNumberDTO.getDepartmentName());
         return vo;
+    }
+
+    /**
+     * 获取用户菜单权限
+     * <p>
+     * 超级管理员返回全量菜单，普通用户按角色查询。
+     * </p>
+     *
+     * @param userId   用户 ID
+     * @param userType 所属系统（erp/srm/pda）
+     * @return 菜单权限数据
+     */
+    @Override
+    public SysUserMenuAuthVO getUserMenuAuth(String userId, String userType) {
+        SysUserInfoEntity entity = this.getById(userId);
+        if (Objects.isNull(entity)) {
+            throw new ServiceException(ApiError.AUTH_USER_NOT_FOUND);
+        }
+        SysUserMenuAuthVO menuAuthVO = new SysUserMenuAuthVO();
+        if (SysConstant.ADMIN_USER.equals(entity.getUserAccount())) {
+            menuAuthVO.setOverallMenuList(sysRoleMenuService.findMenuAll(userType));
+            menuAuthVO.setLeftMenuList(sysRoleMenuService.findLeftMenuAll(MathUtil.ONE, userType));
+            return menuAuthVO;
+        }
+        List<String> roleIds = sysRoleUserService.findRoleIdsByUid(userId);
+        menuAuthVO.setOverallMenuList(sysRoleMenuService.findMenuByRoleIds(roleIds, userType));
+        menuAuthVO.setLeftMenuList(sysRoleMenuService.findLeftMenuByRoleIds(roleIds, MathUtil.ONE, userType));
+        return menuAuthVO;
+    }
+
+    /**
+     * 获取用户按钮权限编码
+     * <p>
+     * 超级管理员返回全量按钮权限，普通用户按角色查询。
+     * </p>
+     *
+     * @param userId   用户 ID
+     * @param userType 所属系统（erp/srm/pda）
+     * @return 按钮权限编码列表
+     */
+    @Override
+    public SysUserPermissionAuthVO getUserPermissionAuth(String userId, String userType) {
+        SysUserInfoEntity entity = this.getById(userId);
+        if (Objects.isNull(entity)) {
+            throw new ServiceException(ApiError.AUTH_USER_NOT_FOUND);
+        }
+        SysUserPermissionAuthVO permissionAuthVO = new SysUserPermissionAuthVO();
+        if (SysConstant.ADMIN_USER.equals(entity.getUserAccount())) {
+            permissionAuthVO.setPermissionList(sysRoleMenuService.findMenuCodeAll(userType));
+            return permissionAuthVO;
+        }
+        List<String> roleIds = sysRoleUserService.findRoleIdsByUid(userId);
+        permissionAuthVO.setPermissionList(sysRoleMenuService.findMenuCodeByRoleIds(roleIds, SysConstant.NO_STATE, userType));
+        return permissionAuthVO;
     }
 
     public SysUserDTO getAdminLoginData(SysUserDTO vo) {
@@ -1425,7 +1470,6 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.SYS_USER_PWD_KEY, keyName = "uid", unlockAfterTx = true)
     public Boolean changePassword(String uid) {
         if (StringUtils.isBlank(uid)) {
             throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
@@ -1470,9 +1514,8 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     }
 
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.SYS_USER_PWD_KEY, keyName = "uid")
     public Boolean changePassword(String uid, String pwd) {
-        log.info("changePassword: uid={}", uid);
+        log.info("changePassword：uid：{}，pwd：{}",uid,pwd);
         if (StringUtils.isBlank(uid)) {
             throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
         }
