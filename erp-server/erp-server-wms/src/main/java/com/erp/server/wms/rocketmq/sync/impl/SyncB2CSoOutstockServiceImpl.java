@@ -8,6 +8,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.common.business.annotation.DataIdempotent;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.*;
@@ -21,7 +22,6 @@ import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.date.LocalDateUtil;
-import com.common.message.constant.DistributeKeyConstant;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
@@ -183,7 +183,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.KINGDEE_SYNC_KEY, keyName = "entity.fBillNo", waiteTime = 20, unlockAfterTx = true)
+    @DataIdempotent(keyIdName = "entity.fBillNo", leaseTime = 30, waitTime = 20)
     public void syncKingdeeSoOutstock(KingdeeDeliveryDetailEntity entity) {
         System.out.println("===============开始执行 单号：" + entity.getFBillNo());
         List<KingdeeDeliveryDetailItemEntity> kingdeeDetailList = entity.getKingdeeOutStockItemEntityList();

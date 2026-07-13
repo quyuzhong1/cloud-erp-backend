@@ -9,7 +9,6 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.RedisService;
@@ -17,7 +16,6 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysDepartmentUserEntity;
 import com.erp.server.sys.mapper.SysDepartmentUserMapper;
@@ -263,7 +261,6 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
     @Override
     @Transactional(rollbackFor = Exception.class)
     @CacheEvict(value = "cache:sys:dept:getDeptByUserId", key = "#uid")
-    @DistributeLocker(businessType = DistributeKeyConstant.SYS_USER_AUTH_KEY, keyName = "uid", unlockAfterTx = true)
     public void batchSaveOrUpdate(String uid, List<String> departmentIdList, boolean ifAdd) {
         if (StringUtils.isBlank(uid)) {
             return;

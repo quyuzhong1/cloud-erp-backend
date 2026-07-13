@@ -73,7 +73,6 @@ public class CfgMoldAlertRuleController extends BaseController {
      * @return ApiResult<List<BatchResultDTO>>
      */
     @PostMapping("/batchAdd")
-    @LogAction(value = LogActionEnum.INSERT, desc = "模具预警规则批量新增")
     public ApiResult<List<BatchResultDTO>> batchAdd(@RequestBody @Validated CfgMoldAlertRuleDTO.BatchAddDTO dto) {
         List<CfgMoldAlertRuleDTO.AddDTO> addList = dto.getList();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(addList.size());
