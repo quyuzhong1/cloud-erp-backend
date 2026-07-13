@@ -14,7 +14,7 @@ public class AuthPassPath {
     public static final String PASS_PATH_LIST = "/user/accountLogin;/user/scanCodeLogin;/calendar/save/year;/user/forgotPasswordGetCode;" +
             "/user/forgotPassword;/shop/shopAuthorize;/shop/shopifyAuthorizeIndex;/shop/shopifyUrl;/shopifyWebhook/customersDataRequest;" +
             "/shopifyWebhook/customersRedact;/shopifyWebhook/shopRedact;" +
-            "/user/srmAccountLogin;/user/srmForgotPassword;/user/srmForgotPasswordGetCode;/shop/shopifyUrl;/webVersion/update;/webVersion/sse;"+
+            "/user/srmAccountLogin;/user/srmForgotPassword;/user/srmForgotPasswordGetCode;/shop/shopifyUrl;/webVersion/update;/webVersion/sse;/pdaVersion/getPdaVersion;"+
             "/open/api/;/logisticsTrack/webhookByTrack123;/webhook/receive/;/overseasInventory/shopifyShippedInfo;"+
             "/webhook/tiktok;"+
             "/fs/callback/api;/thirdProcessDefinition/getFsAppId;"+
