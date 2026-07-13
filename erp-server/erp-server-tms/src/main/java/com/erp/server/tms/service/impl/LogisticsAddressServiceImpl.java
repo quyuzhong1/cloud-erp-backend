@@ -203,9 +203,14 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
                 //根据地址id 和店铺id 区分数据是否已存在
                 LogisticsAddressEntity logisticsServiceAddress = getLogisticsServiceAddress(logisticsAddressEntity.getAddressId(), logisticsAddressEntity.getShopId());
                 if (Objects.nonNull(logisticsServiceAddress)){
+                    if (StringUtils.isBlank(logisticsServiceAddress.getId())) {
+                        throw new ServiceException("物流地址主键异常，请先修复历史数据");
+                    }
                     logisticsAddressEntity.setId(logisticsServiceAddress.getId());
                     this.updateById(logisticsAddressEntity);
                 }else {
+                    // 同步数据只能使用 ERP 主键，避免上游空白值绕过 ASSIGN_ID。
+                    logisticsAddressEntity.setId(null);
                     this.save(logisticsAddressEntity);
                 }
             });
