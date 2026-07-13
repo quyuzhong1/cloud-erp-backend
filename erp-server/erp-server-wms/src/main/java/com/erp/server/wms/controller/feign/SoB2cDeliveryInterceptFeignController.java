@@ -1,11 +1,9 @@
 package com.erp.server.wms.controller.feign;
 
-import com.common.business.annotation.DataIdempotent;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
-import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.wms.dto.SoB2cDeliveryInterceptDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity;
@@ -40,7 +38,6 @@ public class SoB2cDeliveryInterceptFeignController extends BaseController {
      * @return com.common.business.dto.base.BaseResultDTO.AddDTO
      **/
     @PostMapping("/add")
-    @DataIdempotent(keyIdName = "dto.sourceCode",businessType = DistributeKeyConstant.SO_B2C_DELIVERY_INTERCEPT_KEY)
     public BaseResultDTO.AddDTO add(@RequestBody SoB2cDeliveryInterceptDTO.AddDTO dto) {
         BaseResultDTO.AddDTO add = soB2cDeliveryInterceptService.add(dto);
         return add;

@@ -4,9 +4,10 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.annotation.DataIdempotent;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.PlatformDictEnum;
+import com.common.message.constant.DistributeKeyConstant;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.entity.BaseEntity;
@@ -63,7 +64,7 @@ public class FbaShipmentPackingServiceImpl extends SuperServiceImpl<FbaShipmentP
     private WmsCartonService wmsCartonService;
 
     @Override
-    @DataIdempotent(keyIdName = "data.boxNo")
+    @DistributeLocker(businessType = DistributeKeyConstant.FBA_SHIPMENT_PACKING_KEY, keyName = "data.boxNo", unlockAfterTx = true)
     @Transactional(rollbackFor = Exception.class)
     public void handle(FbaShipmentPackingDTO.PackingDTO data) {
         if(Objects.isNull(data) || CharSequenceUtil.isBlank(data.getFbaShipmentCode())|| CharSequenceUtil.isBlank(data.getBoxNo()) || CollUtil.isEmpty(data.getDetailDTOList())){

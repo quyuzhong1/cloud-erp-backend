@@ -127,6 +127,7 @@ public class MoldMonitorController extends BaseController {
      * @return ApiResult<BatchResultDTO>
      */
     @PostMapping("/updateReturnPriceById")
+    @LogAction(value = LogActionEnum.CONFIRM, desc = "模具返还监控返还确认")
     public ApiResult<BatchResultDTO> updateReturnPriceById(@RequestBody @Validated MoldMonitorDTO.UpdateReturnParamsDTO dto) {
         return success(moldMonitorService.updateReturnPriceById(dto));
     }
@@ -138,6 +139,7 @@ public class MoldMonitorController extends BaseController {
      * @return ApiResult<BatchResultDTO>
      */
     @PostMapping("/cancelReturnPrice")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "模具返还监控撤销返还")
     public ApiResult<List<BatchResultDTO>> cancelReturnPrice(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
@@ -172,6 +174,7 @@ public class MoldMonitorController extends BaseController {
      * @return ApiResult<BatchResultDTO>
      */
     @PostMapping("/refresh")
+    @LogAction(value = LogActionEnum.EXECUTE, desc = "模具返还监控刷新统计")
     public ApiResult<BatchResultDTO> batchRefresh(@RequestBody @Validated MoldMonitorDTO.RefreshParamsDTO dto) {
         return success(moldMonitorService.batchRefresh(dto));
     }
@@ -183,6 +186,7 @@ public class MoldMonitorController extends BaseController {
      * @return ApiResult<BatchResultDTO>
      */
     @GetMapping("/calMonitorOrder")
+    @LogAction(value = LogActionEnum.EXECUTE, desc = "模具返还监控计算订单")
     public void calMonitorOrder() {
 
         List<MoldMonitorEntity> moldMonitorEntities = moldMonitorService.buildMonitor(null,null);

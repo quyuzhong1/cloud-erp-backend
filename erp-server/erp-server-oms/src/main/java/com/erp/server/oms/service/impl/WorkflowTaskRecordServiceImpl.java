@@ -617,6 +617,7 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
      * 带锁执行强制重试：重置 eligible 节点、同步实例状态并发送单步 MQ。
      */
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "sourceType,sourceId", unlockAfterTx = true)
     public WorkflowTaskRecordDTO.ForceRetryResultDTO forceRetryWithLock(WorkflowTaskRecordDTO.ForceRetryDTO dto, String sourceType, String sourceId) {
         List<WorkflowTaskRecordEntity> taskList = listForceRetryTasks(dto);
         if (CollUtil.isEmpty(taskList)) {

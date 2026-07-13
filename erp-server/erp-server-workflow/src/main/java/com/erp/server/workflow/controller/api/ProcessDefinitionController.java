@@ -197,6 +197,7 @@ public class ProcessDefinitionController extends BaseController {
      * @return ApiResult<List<BatchResultDTO>>
      */
     @PostMapping("/changeProcess")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "流程定义变更")
     public ApiResult<Boolean> changeProcess(@RequestBody @Validated ProcessDefinitionDTO.ProcessChangeDTO dto) {
        return success(processDefinitionService.changeProcess(dto));
     }

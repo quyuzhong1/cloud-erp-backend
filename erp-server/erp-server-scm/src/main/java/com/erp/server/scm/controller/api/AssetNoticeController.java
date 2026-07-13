@@ -126,6 +126,7 @@ public class AssetNoticeController extends BaseController {
     * @return ApiResult<Void>
     */
     @PostMapping("/addAndSubmit")
+    @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "资产通知单新增并提交")
     public ApiResult<BaseResultDTO.AddDTO> addAndSubmit(@RequestBody @Validated AssetNoticeDTO.AddDTO dto) {
         BaseResultDTO.AddDTO result = assetNoticeService.addAndSubmit(dto);
         return success(result);
@@ -144,6 +145,7 @@ public class AssetNoticeController extends BaseController {
             menuCode = "scm:assetNotice:updateAndSubmit",
             serviceClass = AssetNoticeService.class,
             keyIdName = "id")
+    @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "资产通知单修改并提交")
     public ApiResult<Void> updateAndSubmit(@RequestBody @Validated AssetNoticeDTO.UpdateDTO dto) {
         assetNoticeService.updateAndSubmit(dto);
         return success();
