@@ -672,6 +672,10 @@ public class LogisticsReconServiceImpl
                 .eq(LogisticsReconDetailEntity::getMainId, mainId)
                 .count();
         int subCount = logisticsReconDetailSubService.countValidByMainId(mainId);
+        // 合计与 importCount/costCount 口径一致，统一按库内实际落库的费用项 local_amount 汇总，
+        // 避免重导/部分错误场景用本趟内存累计值覆盖导致明细有金额而主表合计为 0
+        BigDecimal totalAmount = logisticsReconDetailSubService.sumLocalAmountByMainId(mainId)
+                .setScale(4, RoundingMode.HALF_UP);
         boolean importCheck = LogisticsReconOpenImportConverter.RECON_PROCESSING_IMPORT_CHECK.equals(dto.getProcessingType());
         String checkStatus = importCheck
                 ? LogisticsReconCheckStatusEnum.CONFIRMED.getCode()
@@ -681,7 +685,7 @@ public class LogisticsReconServiceImpl
                 .set(LogisticsReconEntity::getCheckStatus, checkStatus)
                 .set(LogisticsReconEntity::getImportCount, detailCount)
                 .set(LogisticsReconEntity::getCostCount, subCount)
-                .set(LogisticsReconEntity::getTotalAmount, excelListener.getTotalAmount())
+                .set(LogisticsReconEntity::getTotalAmount, totalAmount)
                 .set(LogisticsReconEntity::getCurrency, excelListener.resolveCurrency())
                 .set(LogisticsReconEntity::getImportFailReason, "");
         if (importCheck) {
