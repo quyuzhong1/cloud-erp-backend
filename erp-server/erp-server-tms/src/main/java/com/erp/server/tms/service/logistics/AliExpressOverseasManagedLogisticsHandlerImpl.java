@@ -466,7 +466,8 @@ public class AliExpressOverseasManagedLogisticsHandlerImpl extends AbstractLogis
         }
         Object success = response.getSuccess();
         boolean successFlag = !Boolean.FALSE.equals(success) && !"false".equalsIgnoreCase(String.valueOf(success));
-        return "0".equals(response.getCode()) && successFlag
+        boolean codeSuccess = StringUtils.isBlank(response.getCode()) || "0".equals(response.getCode());
+        return codeSuccess && successFlag
                 && StringUtils.isBlank(response.getErrorCode());
     }
 
