@@ -44,6 +44,11 @@ public class ThirdWarehouseCreateFbaOutboundReq extends ThirdWarehouseAuth {
     private String receiverCountryCode;
 
     /**
+     * 收货国家名称（通邮等国家名字段）
+     */
+    private String countryName;
+
+    /**
      * 客户名称
      */
     private String customerName;
@@ -213,6 +218,11 @@ public class ThirdWarehouseCreateFbaOutboundReq extends ThirdWarehouseAuth {
          * 规格编号（ZXGG0001）
          */
         private String boxSpecNo;
+
+        /**
+         * 换标SKU（通邮B2B）
+         */
+        private String relabelSku;
     }
 
     private List<WarehouseOperationTypeDTO> warehouseOperationTypeDTOList;
@@ -231,6 +241,21 @@ public class ThirdWarehouseCreateFbaOutboundReq extends ThirdWarehouseAuth {
      * 装箱明细（谷仓客户指定/已暂存箱发货时使用）
      */
     private List<PackingDetailItem> packingDetailList;
+
+    /**
+     * 产品标签 PDF URL（通邮 file1）
+     */
+    private String productLabelFileUrl;
+
+    /**
+     * 外箱面单 PDF URL（通邮 file2）
+     */
+    private String outerBoxLabelFileUrl;
+
+    /**
+     * 其他附件 PDF URL（通邮 file3）
+     */
+    private String orderAttachmentFileUrl;
 
     @Data
     @AllArgsConstructor
