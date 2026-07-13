@@ -144,6 +144,15 @@ public class DistributeLockerAspectTest {
     }
 
     @Test
+    public void isCrossServiceSeataParticipant_returnsTrueWhenJudgementFails() {
+        RootContext.bind(XID);
+        ServletRequestAttributes attrs = mock(ServletRequestAttributes.class);
+        when(attrs.getRequest()).thenThrow(new IllegalStateException("simulate request access failure"));
+        RequestContextHolder.setRequestAttributes(attrs);
+        assertTrue(invokeIsCrossServiceSeataParticipant());
+    }
+
+    @Test
     public void crossServiceParticipantUnlocksWhenMethodEnds() throws Throwable {
         joinPoint = newJoinPoint("lockedBusiness");
         RootContext.bind(XID);

@@ -206,24 +206,38 @@ public class DistributeLockerAspect {
      * <p>不能用 {@code GlobalTransactionContext.getCurrent().getGlobalTransactionRole()} 判断：
      * Seata 1.5.2 在存在 XID 时 {@code getCurrent()} 总会 new 一个 role=Participant 的对象，
      * 发起方本服务内也会被误判。</p>
-     * <p>可靠信号：入站 HTTP 请求已携带 {@link RootContext#KEY_XID}（由上游 Feign 传入）。</p>
+     * <p>可靠信号：入站 HTTP 请求已携带 {@link RootContext#KEY_XID}（由上游 {@code FeignInterceptor} 传入）。
+     * 无 HTTP 上下文（如 XXL-JOB 发起方）视为非参与方。</p>
      */
     private boolean isCrossServiceSeataParticipant() {
         if (!RootContext.inGlobalTransaction()) {
             return false;
         }
-        try {
-            RequestAttributes attrs = RequestContextHolder.getRequestAttributes();
-            if (!(attrs instanceof ServletRequestAttributes)) {
-                return false;
-            }
-            HttpServletRequest request = ((ServletRequestAttributes) attrs).getRequest();
-            String inboundXid = request.getHeader(RootContext.KEY_XID);
-            return CharSequenceUtil.isNotBlank(inboundXid);
-        } catch (Exception e) {
-            log.warn("判断跨服务Seata参与方失败，按非跨服务处理（仍优先走事务回调解锁）", e);
+        RequestAttributes attrs = RequestContextHolder.getRequestAttributes();
+        if (!(attrs instanceof ServletRequestAttributes)) {
+            // 无 HTTP 上下文（如 XXL-JOB 发起方）→ 非参与方，仍走 TransactionHook
             return false;
         }
+        try {
+            return CharSequenceUtil.isNotBlank(readInboundSeataXidHeader((ServletRequestAttributes) attrs));
+        } catch (Exception e) {
+            // 已有 Servlet 上下文但读取失败：保守按参与方，避免误注册 Hook 导致锁泄漏
+            log.warn("读取入站TX_XID失败，保守按参与方处理（方法结束释放锁）", e);
+            return true;
+        }
+    }
+
+    /**
+     * 从当前 Servlet 请求读取入站 Seata XID（Feign 调用方通过 {@link RootContext#KEY_XID} 传入）。
+     *
+     * @return 入站 XID；请求头为空时返回 {@code null}
+     */
+    private String readInboundSeataXidHeader(ServletRequestAttributes attrs) {
+        HttpServletRequest request = attrs.getRequest();
+        if (request == null) {
+            return null;
+        }
+        return request.getHeader(RootContext.KEY_XID);
     }
 
     /**
