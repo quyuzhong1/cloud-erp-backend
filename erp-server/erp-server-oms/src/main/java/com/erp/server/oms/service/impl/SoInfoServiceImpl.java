@@ -1017,7 +1017,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = soIdList.stream().map(obj -> new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SO_INFO.getCode(), obj)).collect(Collectors.toCollection(ValidList::new));
         ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
         if (200 != listApiResult.getCode()) {
-            throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(),listApiResult.getMsg()));
+            throw new ServiceException(ApiError.WF_CUR_APPROVER_QUERY_FAILED, listApiResult.getMsg());
         }
         // 忽略库存计算SKU
         List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();

@@ -95,6 +95,7 @@ public final class ApiErrorWorkflow {
     public static final ApiError WF_KOL_B2C_WAIT_SUB_TASK_COMPLETE = new ApiError("WF_KOL_B2C_WAIT_SUB_TASK_COMPLETE", 4078, "等待KOL B2C拆分单子任务完成，已完成{0}/{1}");
     public static final ApiError WF_TASK_RECORD_TYPE_NOT_FOUND = new ApiError("WF_TASK_RECORD_TYPE_NOT_FOUND", 4080, "任务节点类型不存在");
     public static final ApiError WF_TASK_INSTANCE_VERSION_CONFLICT = new ApiError("WF_TASK_INSTANCE_VERSION_CONFLICT", 4081, "任务编排实例状态已变化，请刷新后重试");
+    public static final ApiError WF_CUR_APPROVER_QUERY_FAILED = new ApiError("WF_CUR_APPROVER_QUERY_FAILED", 4082, "查询当前审批人失败：{0}");
 
     static ApiError[] values() {
         return new ApiError[]{
