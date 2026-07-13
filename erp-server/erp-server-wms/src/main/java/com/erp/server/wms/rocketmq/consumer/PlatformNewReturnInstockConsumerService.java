@@ -311,6 +311,10 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 			ServiceException.runError("【海外仓退货入库】来源明细未匹配到映射");
 		}
 		SoReturnInstockEntity soReturnInstockEntity = this.buildPlatformSoReturnInstockEntity(dto, warehouseEntity, soB2cEntity, shopInfoEntity);
+		// 来源编号：该场景已匹配到具体的B2C退货单，取其挂载的销售订单编号作为来源追溯
+		if (StringUtils.isNotBlank(matchedReturn.getSoCode())) {
+			soReturnInstockEntity.setSourceCode(matchedReturn.getSoCode());
+		}
 
 		// 关联已匹配到的退货单：按SKU回写明细的退货单明细ID，退货单状态由待退货流转为已退货
 		List<SoB2cReturnDetailEntity> matchedDetailList = FeignQuery.create(SoB2cReturnDetailEntity.class)
@@ -415,6 +419,10 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 			ServiceException.runError("【海外仓退货入库】来源明细未匹配到映射");
 		}
 		SoReturnInstockEntity soReturnInstockEntity = this.buildPlatformSoReturnInstockEntity(dto, warehouseEntity, soB2cEntity, shopInfoEntity);
+		// 来源编号：该场景按参考单号直接匹配到销售订单（未命中具体退货单），取销售订单编号作为来源追溯
+		if (StringUtils.isNotBlank(soB2cEntity.getCode())) {
+			soReturnInstockEntity.setSourceCode(soB2cEntity.getCode());
+		}
 
 		// 顺带尝试关联退货单（与既有销售订单流程一致）
 		this.matchSoReturn(soReturnInstockEntity, detailEntityList, dto, soB2cEntity);
@@ -431,6 +439,10 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 			ServiceException.runError("【海外仓退货入库】来源明细未匹配到映射");
 		}
 		SoReturnInstockEntity soReturnInstockEntity = this.buildPlatformSoReturnInstockEntityForSoInfo(dto, warehouseEntity, soInfoEntity);
+		// 来源编号：该场景按参考单号匹配到B2B销售订单，取销售订单编号作为来源追溯
+		if (StringUtils.isNotBlank(soInfoEntity.getCode())) {
+			soReturnInstockEntity.setSourceCode(soInfoEntity.getCode());
+		}
 
 		soReturnInstockService.addByThirdWarehouse(soReturnInstockEntity, detailEntityList);
 	}
@@ -484,6 +496,7 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 		soReturnInstockEntity.setInventoryOrgName(company.getCompanyName());
 		soReturnInstockEntity.setWarehouseKeeperId(warehouseEntity.getChargeId());
 		soReturnInstockEntity.setApproveUserName("system");
+		// sourceCode在此处保持原语义（uniqueId），generateInstockBySoInfo中会按需覆盖为销售订单编号
 		soReturnInstockEntity.setSourceCode(dto.getUniqueId());
 		soReturnInstockEntity.setSourceType(SourceTypeEnum.PLATFORM_RETURN_INSTOCK.getCode());
 		soReturnInstockEntity.setThirdCode(dto.getPlatformReturnOrderNo());
@@ -494,6 +507,11 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 		soReturnInstockEntity.setSoId(soInfoEntity.getId());
 		soReturnInstockEntity.setSoCode(soInfoEntity.getCode());
 		soReturnInstockEntity.setCurrency(soInfoEntity.getCurrency());
+		// 部分海外仓来源平台（如WEGO）本身无"平台订单号"概念，只回传参考单号，
+		// dto.getPlatformOrderNo()必为空；此时用匹配到的销售订单自身的平台订单号兜底
+		if (StringUtils.isBlank(soReturnInstockEntity.getPlatformOrderCode())) {
+			soReturnInstockEntity.setPlatformOrderCode(soInfoEntity.getPlatformOrderCode());
+		}
 		if (StringUtils.isBlank(soInfoEntity.getCustomerId())) {
 			ServiceException.runError("B2B销售订单对应客户信息为空:{}", soInfoEntity.getCode());
 		}
@@ -799,9 +817,28 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 	}
 
 	/**
-	 * 构建 平台SKU -> 就近出库单出库明细 的映射。
+	 * 解析销售订单明细可用于匹配第三方SKU的候选值：platformSkuNo（平台/销售渠道SKU）与
+	 * warehouseSkuNo（仓库SKU）均纳入，二者均为空时返回空列表。
+	 */
+	private static List<String> resolveSkuMatchKeys(SoB2cDetailEntity e) {
+		List<String> keys = new ArrayList<>(2);
+		if (StringUtils.isNotBlank(e.getPlatformSkuNo())) {
+			keys.add(e.getPlatformSkuNo());
+		}
+		if (StringUtils.isNotBlank(e.getWarehouseSkuNo()) && !keys.contains(e.getWarehouseSkuNo())) {
+			keys.add(e.getWarehouseSkuNo());
+		}
+		return keys;
+	}
+
+	/**
+	 * 构建 第三方SKU -> 就近出库单出库明细 的映射。
 	 * 在该订单已审核且未作废、出库日期(bill_date)<=退货日期(含当天)的出库单中，
-	 * 取出库日期最近(倒序首条)且包含该平台SKU的出库明细，以其实际出库SKU为准。
+	 * 取出库日期最近(倒序首条)且包含该第三方SKU的出库明细，以其实际出库SKU为准。
+	 * <p>
+	 * 匹配键优先取销售订单明细的 platformSkuNo（平台/销售渠道SKU）；部分海外仓来源平台
+	 * （如WEGO，属于第三方仓库服务商而非销售渠道）回传的 productSku 实际是仓库侧SKU，
+	 * 因此同时把 warehouseSkuNo 纳入匹配键，platformSkuNo 未命中时可用 warehouseSkuNo 兜底。
 	 */
 	private Map<String, SoOutstockDetailEntity> buildNearestOutstockSkuMap(PlatformReturnInstockDTO dto, SoB2cEntity soB2cEntity, List<SoB2cDetailEntity> soDetailEntityList) {
 		LocalDate returnDate = dto.getPutawayLocalDate();
@@ -830,32 +867,38 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
         if (CollectionUtils.isEmpty(outstockDetailList)) {
 			return Collections.emptyMap();
 		}
-		// 销售订单明细id -> 平台SKU
-		Map<String, String> soDetailIdToPlatformSku = soDetailEntityList.stream()
-				.filter(e -> StringUtils.isNotBlank(e.getId()) && StringUtils.isNotBlank(e.getPlatformSkuNo()))
-                .collect(Collectors.toMap(
-                        SoB2cDetailEntity::getId,
-                        SoB2cDetailEntity::getPlatformSkuNo,
-                        (a, b) -> {
-                            log.warn("【平台退货入库】销售订单明细重复SKU: platformSkuA={}, platformSkuB={}", a, b);
-                            return a;
-                        }
-                ));
+		// 销售订单明细id -> 候选第三方SKU集合（platformSkuNo优先，warehouseSkuNo兜底）
+		Map<String, List<String>> soDetailIdToSkuKeys = soDetailEntityList.stream()
+				.filter(e -> StringUtils.isNotBlank(e.getId()))
+				.collect(Collectors.toMap(
+						SoB2cDetailEntity::getId,
+						PlatformNewReturnInstockConsumerService::resolveSkuMatchKeys,
+						(a, b) -> a
+				));
 
-        // 平台SKU -> 出库明细，按出库单出库日期倒序，保留最近一张(首次写入即最近)
+        // 第三方SKU -> 出库明细，按出库单出库日期倒序，保留最近一张(首次写入即最近)
 		Map<String, SoOutstockDetailEntity> nearestOutstockSkuMap = new HashMap<>();
 		outstockDetailList.stream()
-				.filter(d -> StringUtils.isNotBlank(d.getSoDetailId()) && soDetailIdToPlatformSku.containsKey(d.getSoDetailId()))
+				.filter(d -> StringUtils.isNotBlank(d.getSoDetailId()) && soDetailIdToSkuKeys.containsKey(d.getSoDetailId()))
 				.sorted(Comparator.comparing((SoOutstockDetailEntity d) -> outstockBillDateMap.getOrDefault(d.getMainId(), LocalDate.MIN)).reversed())
-				.forEach(d -> nearestOutstockSkuMap.putIfAbsent(soDetailIdToPlatformSku.get(d.getSoDetailId()), d));
+				.forEach(d -> soDetailIdToSkuKeys.get(d.getSoDetailId())
+						.forEach(key -> nearestOutstockSkuMap.putIfAbsent(key, d)));
 		return nearestOutstockSkuMap;
 	}
 
 	/**
-	 * 兜底：按销售订单明细的平台SKU映射取入库SKU（原逻辑）。
+	 * 兜底：按销售订单明细的第三方SKU映射取入库SKU（原逻辑）。
+	 * 优先匹配 platformSkuNo（平台/销售渠道SKU），未命中时按 warehouseSkuNo（仓库SKU）兜底匹配——
+	 * 部分海外仓来源平台（如WEGO）回传的 productSku 实际是仓库侧SKU而非平台SKU。
 	 */
 	private SoReturnInstockDetailEntity buildFallbackDetailBySoB2c(PlatformReturnInstockDTO.Detail detail, List<SoB2cDetailEntity> soDetailEntityList, WarehouseEntity warehouseEntity, PlatformReturnInstockDTO dto) {
-		SoB2cDetailEntity detailEntity = soDetailEntityList.stream().filter(e -> e.getPlatformSkuNo().equalsIgnoreCase(detail.getProductSku())).findFirst().orElse(null);
+		SoB2cDetailEntity detailEntity = soDetailEntityList.stream()
+				.filter(e -> StringUtils.isNotBlank(e.getPlatformSkuNo()) && e.getPlatformSkuNo().equalsIgnoreCase(detail.getProductSku()))
+				.findFirst()
+				.orElseGet(() -> soDetailEntityList.stream()
+						.filter(e -> StringUtils.isNotBlank(e.getWarehouseSkuNo()) && e.getWarehouseSkuNo().equalsIgnoreCase(detail.getProductSku()))
+						.findFirst()
+						.orElse(null));
 		if (null == detailEntity) {
             ServiceException.runError("找不到销售订单明细:订单={}, 平台SKU={}", dto.getPlatformOrderNo(), detail.getProductSku());
         }
@@ -887,6 +930,9 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 		soReturnInstockEntity.setInventoryOrgName(company.getCompanyName());
 		soReturnInstockEntity.setWarehouseKeeperId(warehouseEntity.getChargeId());
 		soReturnInstockEntity.setApproveUserName("system");
+		// 注意：sourceCode在平台仓入库场景（platformWarehouseHandle）用于按uniqueId去重，
+		// 此处保持原语义不变；海外仓场景（generateInstockBySo/generateInstockByMatchedReturn）
+		// 会在各自调用处按需覆盖为对应销售订单编号，不在此处统一处理
 		soReturnInstockEntity.setSourceCode(dto.getUniqueId());
 		soReturnInstockEntity.setSourceType(SourceTypeEnum.PLATFORM_RETURN_INSTOCK.getCode());
 		soReturnInstockEntity.setThirdCode(dto.getPlatformReturnOrderNo());
@@ -900,9 +946,11 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 			soReturnInstockEntity.setSoCode(soB2cEntity.getCode());
 			soReturnInstockEntity.setCurrency(soB2cEntity.getCurrency());
 			soReturnInstockEntity.setShopId(soB2cEntity.getShopId());
-			if (CharSequenceUtil.isNotBlank(soB2cEntity.getPlatformCode())) {
-				soReturnInstockEntity.setPlatformOrderCode(soB2cEntity.getPlatformCode());
-			}
+            // 部分海外仓来源平台（如WEGO）本身无"平台订单号"概念，只回传参考单号，
+            // dto.getPlatformOrderNo()必为空；此时用匹配到的销售订单自身的平台订单号兜底
+            if (StringUtils.isBlank(soReturnInstockEntity.getPlatformOrderCode())) {
+                soReturnInstockEntity.setPlatformOrderCode(soB2cEntity.getPlatformCode());
+            }
 			ShopInfoEntity originalShop = shopInfoFeign.getShopInfoById(soB2cEntity.getShopId());
 			if (Objects.nonNull(originalShop)) {
 				customerShop = originalShop;

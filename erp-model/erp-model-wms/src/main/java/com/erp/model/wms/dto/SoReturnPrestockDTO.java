@@ -95,17 +95,11 @@ public class SoReturnPrestockDTO {
         /** 关联状态名称 */
         private String linkStatusName;
 
-        /** 库存组织名称 */
-        private String inventoryOrgName;
+        /** 来源单 ID */
+        private String sourceId;
 
-        /** 签收仓库名称 */
-        private String warehouseName;
-
-        /** 入库时间 */
-        private LocalDateTime returnInstockTime;
-
-        /** 操作时间 */
-        private LocalDateTime operateTime;
+        /** 来源单号 */
+        private String sourceCode;
 
         /** 来源类型 */
         private String sourceType;
@@ -113,11 +107,56 @@ public class SoReturnPrestockDTO {
         /** 来源类型名称 */
         private String sourceTypeName;
 
+        /** 第三方单据编号 */
+        private String thirdCode;
+
+        /** 库存组织 ID */
+        private String inventoryOrgId;
+
+        /** 库存组织名称 */
+        private String inventoryOrgName;
+
+        /** 签收仓库 ID */
+        private String warehouseId;
+
+        /** 签收仓库名称 */
+        private String warehouseName;
+
+        /** 退货类型字典值 */
+        private String returnTypeDict;
+
+        /** 入库时间 */
+        private LocalDateTime returnInstockTime;
+
+        /** 操作时间 */
+        private LocalDateTime operateTime;
+
+        /** 备注 */
+        private String remark;
+
+        /** 版本号（乐观锁） */
+        private Integer version;
+
+        /** 创建人 ID */
+        private String createUserId;
+
         /** 创建人 */
         private String createUserName;
 
         /** 创建时间 */
         private LocalDateTime createTime;
+
+        /** 修改人 ID */
+        private String updateUserId;
+
+        /** 修改人 */
+        private String updateUserName;
+
+        /** 更新时间 */
+        private LocalDateTime updateTime;
+
+        /** 详情行列表 */
+        private List<SoReturnPrestockDetailDTO.View> detailList;
     }
 
     // ===================== 新增 =====================
@@ -170,6 +209,45 @@ public class SoReturnPrestockDTO {
         @Valid
         @NotEmpty(message = "详情行不能为空")
         private List<SoReturnPrestockDetailDTO.Add> detailList;
+    }
+
+    // ===================== 由退货入库单表单创建 =====================
+
+    /**
+     * 由【退货入库单】新增/修改表单参数创建预入库单-入参
+     * <p>与退货入库单表单 DTO（{@code SoReturnInstockDTO.Add}/{@code Update}）解耦，
+     * 仅包含创建预入库单实际用到的字段。</p>
+     */
+    @Data
+    @NoArgsConstructor
+    public static class FromInstock {
+
+        /** 退货客户 ID；必须为空才允许创建预入库单，否则应直接保存退货入库单 */
+        private String customerId;
+
+        /** 退货物流单号 */
+        @NotBlank(message = "退货物流单号不能为空")
+        private String returnLogisticCode;
+
+        /** 第三方单据编号 */
+        private String thirdCode;
+
+        /**
+         * 签收仓库 ID；可不传，未传时服务端会按 {@code detailList} 各行的 warehouseId 推导
+         * （退货入库单表单按明细行填写仓库）；最终仍取不到仓库时报错
+         */
+        private String warehouseId;
+
+        /** 售后单据类型：B2B / B2C */
+        private String type;
+
+        /** 退货单编号 */
+        private String soReturnCode;
+
+        /** 详情行列表 */
+        @Valid
+        @NotEmpty(message = "产品明细不能为空")
+        private List<SoReturnPrestockDetailDTO.FromInstock> detailList;
     }
 
     // ===================== 修改 =====================

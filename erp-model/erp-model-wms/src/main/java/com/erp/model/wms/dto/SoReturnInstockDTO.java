@@ -133,6 +133,10 @@ public class SoReturnInstockDTO {
          */
         private String soReturnId;
         /**
+         * 退货单编号
+         */
+        private String soReturnCode;
+        /**
          * 退货入库单号
          */
         private String code;

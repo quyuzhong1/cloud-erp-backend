@@ -491,22 +491,29 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
         List<String> soIds = list.stream().map(SoDetailDTO.AddDetailView::getSourceId).distinct().collect(Collectors.toList());
         List<SoB2cReturnDetailEntity> soReturnDetailEntities = soB2cReturnDetailService.listByMainIds(Collections.singletonList(dto.getId()));
         List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockFeign.listDetailBySoIds(soIds);
-        List<String> skuIdList = list.stream().map(SoDetailDTO.AddDetailView::getSkuId).distinct().collect(Collectors.toList());
+        List<String> skuIdList = list.stream().map(SoDetailDTO.AddDetailView::getSkuId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
         //根据ids查询sku信息
         List<ProductDetailEntity> productDetailEntitys = plmTaskFeign.getByIdList(skuIdList);
-        InventoryQtyDTO.FindSkuInventoryParamDTO paramDTO = new InventoryQtyDTO.FindSkuInventoryParamDTO();
-        paramDTO.setSkuIds(skuIdList);
-        paramDTO.setWarehouseId(list.get(MathUtil.ZERO).getWarehouseId());
-        paramDTO.setInventoryStatus(InventoryStatusEnum.USABLE.getCode());
-        //从wms 获取到sku 的即时库存信息
-        List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = inventoryFeign.listSkuInventory(paramDTO);
+        //从wms 获取到sku 的即时库存信息，WMS接口要求仓库必传，仓库为空时跳过查询，库存默认0
+        String warehouseId = list.get(MathUtil.ZERO).getWarehouseId();
+        List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = new ArrayList<>();
+        if (StringUtils.isNotBlank(warehouseId)) {
+            InventoryQtyDTO.FindSkuInventoryParamDTO paramDTO = new InventoryQtyDTO.FindSkuInventoryParamDTO();
+            paramDTO.setSkuIds(skuIdList);
+            paramDTO.setWarehouseId(warehouseId);
+            paramDTO.setInventoryStatus(InventoryStatusEnum.USABLE.getCode());
+            skuInventoryTotalList = inventoryFeign.listSkuInventory(paramDTO);
+        }
         //获取退货单id
         List<String> returnMainIds = list.stream().map(SoDetailDTO.AddDetailView::getMainId).distinct().collect(Collectors.toList());
         List<SoReturnReceiveDetailEntity> soReturnReceiveDetailEntities = soReturnReceiveFeign.listDetailBySourceIds(returnMainIds);
+        //剩余应退货数量：应退数量(mustQty) - 历史已入库实退数量(realQty)累计，实退数量来自退货入库单明细（按退货单明细id关联，跨单据累计）
+        List<String> returnDetailIds = list.stream().map(SoDetailDTO.AddDetailView::getId).distinct().collect(Collectors.toList());
+        List<SoReturnInstockDetailEntity> soReturnInstockDetailEntities = soReturnInstockFeign.listDetailBySoReturnDetailIds(returnDetailIds);
         List<String> orgIds = list.stream().map(SoDetailDTO.AddDetailView::getInventoryOrgId).collect(Collectors.toList());
 
-        List<String> warehouseIdList = list.stream().map(SoDetailDTO.AddDetailView::getWarehouseId).collect(Collectors.toList());
-        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(warehouseIdList);
+        List<String> warehouseIdList = list.stream().map(SoDetailDTO.AddDetailView::getWarehouseId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        List<WarehouseDTO.UpdateDTO> warehouseList = CollectionUtils.isNotEmpty(warehouseIdList) ? wmsTaskFeign.listWarehouseByIds(warehouseIdList) : Collections.emptyList();
 
         //组织列表
         List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIds);
@@ -534,6 +541,9 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
             Integer receiveQty = soReturnReceiveDetailEntities.stream().filter(req -> addDetailView.getId().equals(req.getSourceDetailId()) && req.getSkuId().equals(addDetailView.getSkuId()) && ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).map(SoReturnReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
             addDetailView.setReceiveQty(receiveQty);
             addDetailView.setMustQty(returnQty);
+            //剩余应退货数量 = 应退数量(returnQty) - 历史已入库实退数量(realQty)累计
+            Integer realQty = soReturnInstockDetailEntities.stream().filter(req -> addDetailView.getId().equals(req.getSoReturnDetailId())).map(SoReturnInstockDetailEntity::getRealQty).reduce(MathUtil.ZERO, Integer::sum);
+            addDetailView.setRemainMustQty(returnQty - realQty);
             addDetailView.setReturnTypeDictName(ReturnTypeEnum.getName(addDetailView.getReturnTypeDict()));
             addDetailView.setReturnReasonDictName(ReturnReasonEnum.getName(addDetailView.getReturnReasonDict()));
         }

@@ -1052,6 +1052,10 @@ public class SoReturnDTO {
          */
         private String platformOrderNo;
         /**
+         * 销售单 ID
+         */
+        private String soId;
+        /**
          * 销售单号
          */
         private String soCode;
@@ -1079,6 +1083,10 @@ public class SoReturnDTO {
          * 单据类型名称
          */
         private String typeName;
+        /**
+         * 收货仓库id
+         */
+        private String warehouseId;
         /**
          * 收货仓库名称
          */

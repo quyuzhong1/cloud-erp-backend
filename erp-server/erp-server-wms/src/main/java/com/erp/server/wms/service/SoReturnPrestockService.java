@@ -4,7 +4,6 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.erp.model.wms.dto.SoReturnInstockDTO;
 import com.erp.model.wms.dto.SoReturnPrestockDTO;
 import com.erp.model.wms.dto.SoReturnPrestockDetailDTO;
 import com.erp.model.wms.entity.SoReturnPrestockEntity;
@@ -76,7 +75,7 @@ public interface SoReturnPrestockService extends SuperService<SoReturnPrestockEn
      * @param dto 确认关联售后单入参
      * @return 操作结果（失败时 msg 说明超出原因，成功时区分完成关联/部分关联）
      */
-    BatchResultDTO confirmLinkAfterSale(SoReturnPrestockDetailDTO.ConfirmLinkAfterSale dto);
+    Boolean confirmLinkAfterSale(SoReturnPrestockDetailDTO.ConfirmLinkAfterSale dto);
 
     /**
      * 批量关联店铺
@@ -133,21 +132,27 @@ public interface SoReturnPrestockService extends SuperService<SoReturnPrestockEn
     String createFromOverseasWhHeadless(SoReturnPrestockDTO.Add dto);
 
     /**
-     * 由【退货入库单-新增】表单参数创建预入库单
+     * 由【退货入库单】新增/修改表单参数创建预入库单
      * <p>前提：退货客户（customerId）必须为空，否则应直接保存退货入库单，创建预入库单没有意义；
      * 退货物流单号必须非空（预入库单以物流单号唯一）。</p>
      *
-     * @param dto 与退货入库单新增接口相同的入参
+     * @param dto 预入库单专属入参（与退货入库单表单 DTO 解耦）
      * @return 新建预入库单的 ID
      */
-    String addFromReturnInstockAdd(SoReturnInstockDTO.Add dto);
+    String addFromReturnInstock(SoReturnPrestockDTO.FromInstock dto);
 
     /**
-     * 由【退货入库单-修改】表单参数创建预入库单
-     * <p>前提同 {@link #addFromReturnInstockAdd}；仅使用表单字段值新建预入库单，不影响原退货入库单记录。</p>
+     * 强制关闭剩余未认领的预入库单（定时任务调用，每月1号23:50执行）。
+     * <p>处理范围：仍存在未关联（UNLINKED）明细的预入库单（主表关联状态为未关联或部分关联，且未删除）。</p>
+     * <p>处理逻辑：</p>
+     * <ul>
+     *   <li>将这些预入库单下关联状态为「未关联」的明细行 link_status 更新为「强制关闭」（已关联明细保持不变）；</li>
+     *   <li>按明细最新关联状态联动刷新主表关联状态：明细全部已关联→已关联；全部强制关闭→强制关闭；
+     *       部分已关联部分强制关闭→部分关联。</li>
+     * </ul>
+     * <p>强制关闭后，该预入库单及其明细不再允许关联店铺、关联售后单等操作。</p>
      *
-     * @param dto 与退货入库单修改接口相同的入参
-     * @return 新建预入库单的 ID
+     * @return 本次实际强制关闭处理的预入库单数量
      */
-    String addFromReturnInstockUpdate(SoReturnInstockDTO.Update dto);
+    int forceCloseUnclaimedPrestock();
 }

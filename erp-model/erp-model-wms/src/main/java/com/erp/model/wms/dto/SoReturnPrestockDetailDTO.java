@@ -4,10 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
+import javax.validation.constraints.*;
 import java.util.List;
 
 /**
@@ -68,6 +65,57 @@ public class SoReturnPrestockDetailDTO {
          * 实际收货数量
          */
         private Integer receiveQty;
+
+        /**
+         * 备注
+         */
+        private String remark;
+    }
+
+    // ===================== 由退货入库单表单创建 =====================
+
+    /**
+     * 由退货入库单表单创建预入库单-详情行入参
+     */
+    @Data
+    @NoArgsConstructor
+    public static class FromInstock {
+
+        /**
+         * SKU ID
+         */
+        private String skuId;
+
+        /**
+         * SKU 编码
+         */
+        @NotBlank(message = "SKU编码不能为空")
+        private String skuNo;
+
+        /**
+         * 实退数量
+         */
+        @NotNull(message = "实退数量不能为空")
+        @Min(value = 1, message = "退货数量必须大于0")
+        private Integer realQty;
+
+        /**
+         * 实际收货数量
+         */
+        private Integer receiveQty;
+
+        /**
+         * 仓库 ID；退货入库单表单按明细行填写仓库，预入库单主表仅支持单一仓库。
+         * 主表 {@code SoReturnPrestockDTO.FromInstock#warehouseId} 未直接传入时，
+         * 由服务端汇总本字段推导主表仓库
+         */
+        private String warehouseId;
+
+        /**
+         * 退货类型字典值；退货入库单表单按明细行填写退货类型，预入库单主表仅支持单一退货类型，
+         * 服务端汇总本字段推导主表退货类型（各行不一致时拒绝创建）
+         */
+        private String returnTypeDict;
 
         /**
          * 备注
@@ -270,6 +318,11 @@ public class SoReturnPrestockDetailDTO {
         private String detailId;
 
         /**
+         * 销售单 ID；对应 {@code LinkAfterSaleView.soId}（B2B 为 so_return.source_id，B2C 为 so_b2c_return.so_id）
+         */
+        private String soId;
+
+        /**
          * 销售单号；对应 {@code LinkAfterSaleView.soCode}
          */
         private String soCode;
@@ -305,6 +358,13 @@ public class SoReturnPrestockDetailDTO {
         private String returnReason;
 
         /**
+         * SKU ID；用于与预入库单未关联明细行按 SKU 匹配，并回填预入库单明细
+         * （三无包裹创建时 sku_id 可能为空），保证生成退货入库单及库存联动时 sku_id 非空
+         */
+        @NotBlank(message = "skuId不能为空")
+        private String skuId;
+
+        /**
          * SKU 编码；用于与预入库单未关联明细行按 SKU 匹配
          */
         @NotBlank(message = "SKU编码不能为空")
@@ -330,20 +390,32 @@ public class SoReturnPrestockDetailDTO {
 
         /**
          * 待关联的预入库单主表 ID 列表
+         * <p>单次批量关联在同一全局事务内会为每张预入库单生成退货入库单、平账其他入库单并做多次入库审核，
+         * 属于重事务操作，限制单次处理数量以控制全局事务时长与锁持有范围。</p>
          */
         @NotEmpty(message = "预入库单不能为空")
+        @Size(max = 50, message = "单次最多关联50张预入库单，请分批操作")
         private List<String> ids;
 
         /**
          * 店铺 ID
          */
-        @NotBlank(message = "店铺ID不能为空")
         private String shopId;
 
         /**
          * 店铺名称
          */
         private String shopName;
+
+        /**
+         * 客户id
+         */
+        private String customerId;
+
+        /**
+         * 客户名称
+         */
+        private String customerName;
 
         /**
          * 平台字典值；取自所关联店铺自身所属的平台，不代表本行数据的来源渠道。
@@ -438,13 +510,22 @@ public class SoReturnPrestockDetailDTO {
         /**
          * 店铺 ID
          */
-        @NotBlank(message = "店铺ID不能为空")
         private String shopId;
 
         /**
          * 店铺名称
          */
         private String shopName;
+
+        /**
+         * 客户id
+         */
+        private String customerId;
+
+        /**
+         * 客户名称
+         */
+        private String customerName;
 
         /**
          * 平台字典值；取自所关联店铺自身所属平台，由前端在选定店铺后回传

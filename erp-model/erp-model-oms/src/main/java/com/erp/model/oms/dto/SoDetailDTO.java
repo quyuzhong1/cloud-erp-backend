@@ -1176,6 +1176,10 @@ public class SoDetailDTO implements Serializable {
          */
         private Integer mustQty;
         /**
+         * 剩余应退货数量 = 应退数量(mustQty) - 历史已入库实退数量(realQty)累计
+         */
+        private Integer remainMustQty;
+        /**
          * 是否赠品 true 是
          */
         private Boolean isGift;
