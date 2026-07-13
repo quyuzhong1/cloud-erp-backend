@@ -276,7 +276,7 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
         dto.setId(entity.getId());
         dto.setUpdateTime(entity.getUpdateTime());
         if (!flag) {
-            throw new ServiceException(ApiError.HTTP_UNKNOWN);
+            throw new ServiceException(ApiError.COMMON_CODE_GENERATE_FAILED);
         }
     }
 
