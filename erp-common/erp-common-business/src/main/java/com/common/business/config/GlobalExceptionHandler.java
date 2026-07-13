@@ -31,12 +31,14 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartException;
+import org.apache.skywalking.apm.toolkit.trace.TraceContext;
 
 import javax.validation.ConstraintViolationException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -189,7 +191,7 @@ public class GlobalExceptionHandler {
         if (lowerMsg.contains("violates foreign key constraint")) {
             return buildResult(ApiError.BILL_IN_USE_DELETE_FORBIDDEN);
         }
-        return buildResult(ApiError.HTTP_UNKNOWN);
+        return buildResultWithTrace(ApiError.HTTP_UNKNOWN);
     }
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
@@ -201,7 +203,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MultipartException.class)
     public ApiResult<?> handleMultipartException(MultipartException e) {
         log.error("[MultipartException]", e);
-        return buildResult(ApiError.FILE_UPLOAD_FAILED);
+        return buildResultWithTrace(ApiError.FILE_UPLOAD_FAILED);
     }
 
     @ExceptionHandler(IllegalStateException.class)
@@ -210,7 +212,7 @@ public class GlobalExceptionHandler {
         if (e.getMessage() != null && e.getMessage().contains("No instances available for")) {
             return buildResult(ApiError.HTTP_SERVICE_UNAVAILABLE);
         }
-        return buildResult(ApiError.HTTP_UNKNOWN);
+        return buildResultWithTrace(ApiError.HTTP_UNKNOWN);
     }
 
     @ExceptionHandler(IllegalMonitorStateException.class)
@@ -219,7 +221,7 @@ public class GlobalExceptionHandler {
         if (e.getMessage() != null && e.getMessage().contains("attempt to unlock lock")) {
             return buildResult(ApiError.BILL_DATA_LOCKED);
         }
-        return buildResult(ApiError.HTTP_UNKNOWN);
+        return buildResultWithTrace(ApiError.HTTP_UNKNOWN);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
@@ -234,7 +236,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MappingException.class)
     public ApiResult<?> handleMappingException(MappingException e) {
         log.error("[MappingException]", e);
-        return buildResult(ApiError.COMMON_COPY_ERROR);
+        return buildResultWithTrace(ApiError.COMMON_COPY_ERROR);
     }
 
     @ExceptionHandler(ClientException.class)
@@ -246,8 +248,9 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(NullPointerException.class)
     public ApiResult<?> handleNullPointer(NullPointerException e, HttpServletRequest request) {
-        log.error("[NullPointerException] {}", resolveRequestInfo(request), e);
-        return buildResult(ApiError.HTTP_UNKNOWN);
+        String traceId = resolveTraceId();
+        log.error("[NullPointerException] traceId={}, {}", traceId, resolveRequestInfo(request), e);
+        return buildResultWithTrace(ApiError.HTTP_UNKNOWN, traceId);
     }
 
     /** 客户端主动断开连接 */
@@ -262,14 +265,16 @@ public class GlobalExceptionHandler {
     /** RuntimeException 兜底处理：日志记录明细，前端返回通用提示，避免泄露内部异常信息 */
     @ExceptionHandler(RuntimeException.class)
     public ApiResult<?> handleRuntimeException(RuntimeException e, HttpServletRequest request) {
-        log.error("[RuntimeException] {} {}", resolveRequestInfo(request), e.getMessage(), e);
-        return buildResult(ApiError.HTTP_UNKNOWN);
+        String traceId = resolveTraceId();
+        log.error("[RuntimeException] traceId={}, {} {}", traceId, resolveRequestInfo(request), e.getMessage(), e);
+        return buildResultWithTrace(ApiError.HTTP_UNKNOWN, traceId);
     }
 
     @ExceptionHandler(Exception.class)
     public ApiResult<?> handleGenericException(Exception e, HttpServletRequest request) {
-        log.error("[UnknownException] {} {}", resolveRequestInfo(request), e.getMessage(), e);
-        return buildResult(ApiError.HTTP_UNKNOWN);
+        String traceId = resolveTraceId();
+        log.error("[UnknownException] traceId={}, {} {}", traceId, resolveRequestInfo(request), e.getMessage(), e);
+        return buildResultWithTrace(ApiError.HTTP_UNKNOWN, traceId);
     }
 
     // ===================== 工具方法 ===================== //
@@ -277,6 +282,16 @@ public class GlobalExceptionHandler {
     /** 构造返回结果（自动国际化） */
     private ApiResult<?> buildResult(ApiError error, Object... args) {
         return buildResult(error.getCode(), MessageUtils.getMessage(error, args), null);
+    }
+
+    /** 系统类异常返回 traceId，方便实施/开发按错误编号定位日志。 */
+    private ApiResult<?> buildResultWithTrace(ApiError error, Object... args) {
+        return buildResultWithTrace(error, resolveTraceId(), args);
+    }
+
+    private ApiResult<?> buildResultWithTrace(ApiError error, String traceId, Object... args) {
+        String msg = MessageUtils.getMessage(error, args);
+        return buildResult(error.getCode(), appendTraceId(msg, traceId), null);
     }
 
     private ApiResult<?> buildResult(Integer code, String msg) {
@@ -308,6 +323,15 @@ public class GlobalExceptionHandler {
             return "";
         }
         return CharSequenceUtil.format("method={}, uri={}", request.getMethod(), request.getRequestURI());
+    }
+
+    private String resolveTraceId() {
+        String traceId = TraceContext.traceId();
+        return CharSequenceUtil.isNotBlank(traceId) ? traceId : UUID.randomUUID().toString().replace("-", "");
+    }
+
+    private String appendTraceId(String msg, String traceId) {
+        return CharSequenceUtil.format("{}，错误编号：{}", CharSequenceUtil.blankToDefault(msg, ApiError.HTTP_UNKNOWN.getMsg()), traceId);
     }
 
     /** 设置 HTTP 状态码（401 → UNAUTHORIZED, 403 → FORBIDDEN, 默认200） */
