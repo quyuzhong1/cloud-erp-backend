@@ -11,6 +11,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 
+import javax.validation.Valid;
 import javax.validation.constraints.Digits;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -624,6 +625,7 @@ public class LogisticsChannelDTO implements Serializable {
         /**
          * 地址设置列表
          */
+        @Valid
         private List<LogisticsChannelAddressDTO.AddDTO> addressList;
 
         /**
