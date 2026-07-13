@@ -435,7 +435,7 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
         if (dto.getType().equals(ApproveType.PASS)) {
-            // 审核完成：退料入库（增加加工商仓可用）
+            // 审核完成自动退料扣库存
             autoOutStockInventory(entity);
         }
         return Boolean.TRUE;
@@ -852,9 +852,10 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
     }
 
     /**
-     * 委外退料审核通过：按退料入库规则增加加工商仓可用库存。
-     * 注意：若由采购退货审核自动触发，需与后续子件采购退货扣可用处于同一全局事务（同一 Redis transactionId），
-     * 否则 try.lua 不会把其他事务未提交的正数库存计入可用，子件退货会误报库存不足。
+     * @description: 自动扣库存
+     * @author Will
+     * @date: 2024/1/29 16:10
+     * @param entity
      */
     private void autoOutStockInventory (SubcontractReturnEntity entity) {
         //委外退料明细
@@ -878,7 +879,7 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
             inOutStockDTO.setWarehouseLocation(detailEntity.getWarehouseLocation());
             inOutStockList.add(inOutStockDTO);
         }
-        // 退料入库：增加加工商仓可用
+        //生成退料入库单，需要按比例出库（父级SKU入库数量/父级SKU采购数量）（现没有领料出库单据，则直接调用领料库存变化逻辑）
         InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
         inventoryInOutStockDTO.setParamList(inOutStockList);
         inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SUBCONTRACT_RETURN_IN.getCode());
