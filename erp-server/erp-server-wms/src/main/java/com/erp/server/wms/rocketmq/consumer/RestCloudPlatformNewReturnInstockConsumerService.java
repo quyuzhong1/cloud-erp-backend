@@ -345,7 +345,9 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		}
 		SkuSplitDetailResult splitResult = this.buildPlatformSoReturnInstockDetailSplit(dto, warehouseEntity, soB2cEntity);
 		if (CollectionUtils.isEmpty(splitResult.matchedList)) {
-			ServiceException.runError("【海外仓退货入库】来源明细未匹配到映射");
+			// 整批SKU在销售订单里都对不上：不再整批抛错中断，全部明细改走预入库单，避免消息卡死重试
+			log.warn("[海外仓退货入库] 退货单{}对应销售订单明细中一个SKU都匹配不上，全部改为生成预入库单：soCode={}",
+					matchedReturn.getCode(), soB2cEntity.getCode());
 		}
 		SoReturnInstockEntity soReturnInstockEntity = this.buildPlatformSoReturnInstockEntity(dto, warehouseEntity, soB2cEntity, shopInfoEntity);
 
@@ -450,7 +452,8 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		}
 		SkuSplitDetailResult splitResult = this.buildPlatformSoReturnInstockDetailSplit(dto, warehouseEntity, soB2cEntity);
 		if (CollectionUtils.isEmpty(splitResult.matchedList)) {
-			ServiceException.runError("【海外仓退货入库】来源明细未匹配到映射");
+			// 整批SKU在销售订单里都对不上：不再整批抛错中断，全部明细改走预入库单，避免消息卡死重试
+			log.warn("[海外仓退货入库] 参考单号匹配到销售订单{}但一个SKU都匹配不上，全部改为生成预入库单", soB2cEntity.getCode());
 		}
 		SoReturnInstockEntity soReturnInstockEntity = this.buildPlatformSoReturnInstockEntity(dto, warehouseEntity, soB2cEntity, shopInfoEntity);
 
@@ -466,7 +469,8 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 	private void generateInstockBySoInfo(PlatformReturnInstockDTO dto, WarehouseEntity warehouseEntity, SoInfoEntity soInfoEntity) {
 		SkuSplitDetailResult splitResult = this.buildPlatformSoReturnInstockDetailForSoInfoSplit(dto, warehouseEntity, soInfoEntity);
 		if (CollectionUtils.isEmpty(splitResult.matchedList)) {
-			ServiceException.runError("【海外仓退货入库】来源明细未匹配到映射");
+			// 整批SKU在B2B销售订单里都对不上：不再整批抛错中断，全部明细改走预入库单，避免消息卡死重试
+			log.warn("[海外仓退货入库] 参考单号匹配到B2B销售订单{}但一个SKU都匹配不上，全部改为生成预入库单", soInfoEntity.getCode());
 		}
 		SoReturnInstockEntity soReturnInstockEntity = this.buildPlatformSoReturnInstockEntityForSoInfo(dto, warehouseEntity, soInfoEntity);
 
@@ -554,6 +558,9 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 			soReturnInstockDetailEntity.setWarehouseName(warehouseEntity.getName());
 			soReturnInstockDetailEntity.setRemark(dto.getReason());
 			soReturnInstockDetailEntity.setReturnTypeDict(dto.getReturnType());
+			soReturnInstockDetailEntity.setSourceDetailId(detail.getThirdId());
+			soReturnInstockDetailEntity.setCreateUserId(dto.getAuthId());
+			soReturnInstockDetailEntity.setPlatformSkuNo(detail.getProductSku());
 			soReturnInstockDetailEntity.setDefectiveProductFlag(detail.getDefectiveProductFlag());
 			result.matchedList.add(soReturnInstockDetailEntity);
 		}
@@ -564,7 +571,10 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 	 * 已匹配退货入库单 + 未匹配预入库单 合并落库：用同一个本地事务包裹两次持久化调用。
 	 * TransactionTemplate 默认传播行为 PROPAGATION_REQUIRED，内部 addByThirdWarehouse/
 	 * createFromOverseasWhHeadless 各自的事务会直接加入这里开启的事务而不是另开一个，
-	 * 保证已匹配退货入库单和未匹配预入库单要么一起提交，要么一起回滚
+	 * 保证已匹配退货入库单和未匹配预入库单要么一起提交，要么一起回滚。
+	 * 预入库单DTO组装（含SKU映射、公司信息等纯查询型Feign调用）在事务开启前先算好，
+	 * 事务内只做落库，缩短本地事务与分布式锁的持有时间；addByThirdWarehouse/
+	 * createFromOverseasWhHeadless 内部仍各自含有 Feign 调用，属已知遗留限制（见方法内日志）
 	 */
 	private void persistMatchedInstockAndUnmatchedPrestock(SoReturnInstockEntity soReturnInstockEntity,
 															List<SoReturnInstockDetailEntity> matchedList,
@@ -577,13 +587,16 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		int unmatchedQty = CollectionUtils.isEmpty(unmatchedList) ? 0 : unmatchedList.stream().mapToInt(v -> Objects.nonNull(v.getMustQty()) ? v.getMustQty() : 0).sum();
 		log.info("[海外仓退货入库-参考单号匹配] thirdCode={} 已匹配{}个SKU共{}件落退货入库单，未匹配{}个SKU共{}件落预入库单",
 				thirdCode, matchedList.size(), matchedQty, unmatchedSkuCount, unmatchedQty);
+		SoReturnPrestockDTO.Add prestockAdd = CollectionUtils.isNotEmpty(unmatchedList)
+				? buildPrestockAddDtoForDetails(dto, warehouseEntity, unmatchedList) : null;
 		new TransactionTemplate(transactionManager).executeWithoutResult(status -> {
-			soReturnInstockService.addByThirdWarehouse(soReturnInstockEntity, matchedList);
-			if (CollectionUtils.isNotEmpty(unmatchedList)) {
-				SoReturnPrestockDTO.Add prestockAdd = buildPrestockAddDtoForDetails(dto, warehouseEntity, unmatchedList);
-				if (Objects.nonNull(prestockAdd)) {
-					soReturnPrestockService.createFromOverseasWhHeadless(prestockAdd);
-				}
+			// matchedList 可能整批为空（参考单号匹配到订单，但订单里一个SKU都对不上）：
+			// 此时跳过退货入库单生成，全部明细改走预入库单，不写零明细的空退货入库单
+			if (CollectionUtils.isNotEmpty(matchedList)) {
+				soReturnInstockService.addByThirdWarehouse(soReturnInstockEntity, matchedList);
+			}
+			if (Objects.nonNull(prestockAdd)) {
+				soReturnPrestockService.createFromOverseasWhHeadless(prestockAdd);
 			}
 		});
 	}
