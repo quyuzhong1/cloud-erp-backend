@@ -228,7 +228,7 @@ public class AssetLocationServiceImpl extends SuperServiceImpl<AssetLocationMapp
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.BILL_SUBMIT_KEY, keyName = "id", unlockAfterTx = true)
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO submit(String id) {
         return ApplicationContextUtils.getBean(AssetLocationServiceImpl.class).submit(id, true);
     }
