@@ -53,11 +53,4 @@ public interface SoB2cReturnMapper extends BaseMapper<SoB2cReturnEntity> {
      */
     SoB2cReturnEntity findFirstByReferenceNo(@Param("referenceNo") String referenceNo);
 
-    /**
-     * 预入库-关联售后单：分页查询 B2C 售后单（so_b2c_return），按 sku 过滤
-     * @param query 分页
-     * @param params 过滤参数
-     * @return com.baomidou.mybatisplus.core.metadata.IPage<com.erp.model.oms.dto.SoReturnDTO.LinkAfterSaleView>
-     */
-    IPage<SoReturnDTO.LinkAfterSaleView> pagingLinkAfterSaleB2C(Page query, @Param("params") SoReturnDTO.LinkAfterSalePagingParam params);
 }
