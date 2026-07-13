@@ -60,4 +60,13 @@
           AND d.main_id = #{mainId}
     </select>
 
+    <select id="sumLocalAmountByMainId" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(sub.local_amount), 0)
+        FROM logistics_recon_detail_sub sub
+        INNER JOIN logistics_recon_detail d
+            ON d.id = sub.detail_id AND d.is_deleted = false AND d.main_id = sub.main_id
+        WHERE sub.is_deleted = false
+          AND d.main_id = #{mainId}
+    </select>
+
 </mapper>

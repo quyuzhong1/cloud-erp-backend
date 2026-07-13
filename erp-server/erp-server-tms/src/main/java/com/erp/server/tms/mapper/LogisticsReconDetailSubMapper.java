@@ -6,6 +6,7 @@ import com.erp.model.tms.entity.LogisticsReconDetailSubEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -32,4 +33,9 @@ public interface LogisticsReconDetailSubMapper extends BaseMapper<LogisticsRecon
      * 统计主表下有效费用项数（detail 归属与 sub.main_id 一致）
      */
     int countValidByMainId(@Param("mainId") String mainId);
+
+    /**
+     * 汇总主表下有效费用项的本位币金额（detail 归属与 sub.main_id 一致），无数据返回 0
+     */
+    BigDecimal sumLocalAmountByMainId(@Param("mainId") String mainId);
 }
