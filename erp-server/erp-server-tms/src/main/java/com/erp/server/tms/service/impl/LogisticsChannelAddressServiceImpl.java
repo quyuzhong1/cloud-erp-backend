@@ -6,6 +6,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.tms.dto.LogisticsChannelAddressDTO;
@@ -127,7 +128,10 @@ public class LogisticsChannelAddressServiceImpl extends SuperServiceImpl<Logisti
      * 新增修改处理数据
      */
     private void handleData(List<LogisticsChannelAddressEntity> list) {
-        
-        List<String> shopIdList = list.stream().map(LogisticsChannelAddressEntity::getShopId).collect(Collectors.toList());
+        boolean hasBlankAddressId = list.stream()
+                .anyMatch(item -> item == null || StringUtils.isBlank(item.getAddressId()));
+        if (hasBlankAddressId) {
+            throw new ServiceException("地址id不能为空");
+        }
     }
 }

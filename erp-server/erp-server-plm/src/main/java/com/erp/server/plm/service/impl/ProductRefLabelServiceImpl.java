@@ -39,8 +39,8 @@ public class ProductRefLabelServiceImpl extends SuperServiceImpl<ProductRefLabel
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void batchAdd(ProductRefLabelDTO.BatchAddDTO batchAddDTO) {
-        if (CollectionUtils.isEmpty(batchAddDTO.getLabelIds())) throw new ServiceException(ApiError.HTTP_UNKNOWN);
-        if (CollectionUtils.isEmpty(batchAddDTO.getProjectDTOs())) throw new ServiceException(ApiError.HTTP_UNKNOWN);
+        if (CollectionUtils.isEmpty(batchAddDTO.getLabelIds())) throw new ServiceException(ApiError.COMMON_PARAM_REQUIRED, "标签");
+        if (CollectionUtils.isEmpty(batchAddDTO.getProjectDTOs())) throw new ServiceException(ApiError.COMMON_PARAM_REQUIRED, "项目");
         List<ProductRefLabelEntity> productRefLabelEntities = new ArrayList<>();
         // 数据处理
         handleData(batchAddDTO, productRefLabelEntities);

@@ -6,16 +6,41 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.enums.OmsPlatformEnum;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.erp.model.wms.dto.OverseasProviderDTO;
-import com.erp.model.wms.dto.third.*;
+import com.erp.model.wms.dto.third.ThirdWarehouseCancelFbaOutboundReq;
+import com.erp.model.wms.dto.third.ThirdWarehouseCancelInboundReq;
+import com.erp.model.wms.dto.third.ThirdWarehouseCancelOutboundReq;
+import com.erp.model.wms.dto.third.ThirdWarehouseCreateFbaOutboundReq;
+import com.erp.model.wms.dto.third.ThirdWarehouseCreateInboundReq;
+import com.erp.model.wms.dto.third.ThirdWarehouseCreateOutboundReq;
+import com.erp.model.wms.dto.third.ThirdWarehouseCalculateFeeReq;
+import com.erp.model.wms.dto.third.ThirdWarehouseCalculateFeeResponse;
+import com.erp.model.wms.dto.third.ThirdWarehouseProductReq;
+import com.erp.model.wms.dto.third.ThirdWarehouseQueryFbaOutboundReq;
+import com.erp.model.wms.dto.third.ThirdWarehouseQueryFbaOutboundResponse;
+import com.erp.model.wms.dto.third.ThirdWarehouseQueryOutboundReq;
+import com.erp.model.wms.dto.third.ThirdWarehouseQueryOutboundResponse;
+import com.erp.model.wms.dto.third.ThirdWarehouseSkuResp;
+import com.erp.model.wms.dto.third.ThirdWarehouseUploadFileReq;
+import com.erp.model.wms.dto.third.ThirdWarehouseUploadFileResponse;
+import com.erp.model.wms.dto.third.ThirdWarehouseUploadHandoverFileReq;
+import com.erp.model.wms.dto.third.ThirdWarehouseUploadHandoverFileResponse;
+import com.erp.model.wms.dto.third.ThirdWarehouseUploadOrderLabelReq;
+import com.erp.model.wms.dto.third.ThirdWarehouseUploadOrderLabelResponse;
+import com.erp.model.wms.resolver.B2bThirdDeliveryStatusResolver;
 import com.erp.model.wms.enums.OverseasInstockTypeEnum;
+import com.erp.model.wms.enums.B2bThirdWarehouseCancelResultEnum;
 import com.erp.model.wms.enums.ThirdWarehouseCancelResultEnum;
+import com.erp.server.wms.handler.TongYouB2bOperationResolver;
+import com.erp.server.wms.convert.TongYouCreateHbOutboundConverter;
 import com.erp.server.wms.convert.TongYouCreateInboundConverter;
 import com.erp.server.wms.convert.TongYouCreateOutboundConverter;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
+import com.sdk.wms.tongyou.dto.request.TongYouCreateHbOutboundReq;
 import com.sdk.wms.tongyou.dto.request.TongYouCreateInboundReq;
 import com.sdk.wms.tongyou.dto.request.TongYouCreateOutboundReq;
 import com.sdk.wms.tongyou.dto.response.TongYouBaseResp;
@@ -34,6 +59,7 @@ import javax.annotation.Resource;
 import javax.validation.Valid;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -179,7 +205,31 @@ public class TongYouHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     protected ApiResult<String> createFbaOutboundBill(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
-        return failure("ERP功能暂不支持");
+        TongYouCreateHbOutboundReq hbOutboundReq = buildHbOutboundDto(createOutboundReq);
+        log.warn(getPlatForm().getName() + "创建B2B出库单请求:{}", JSONUtil.toJsonStr(hbOutboundReq));
+        TongYouBaseResp<TongYouOutboundResp> tongYouBaseResp = tongYouService.createHbOutboundBill(hbOutboundReq);
+        log.warn(getPlatForm().getName() + "创建B2B出库单结果:{}", JSONUtil.toJsonStr(tongYouBaseResp));
+        if (!isSuccess(tongYouBaseResp.getError())) {
+            return failure(tongYouBaseResp.getContent());
+        }
+        return success(createOutboundReq.getReferenceNo());
+    }
+
+    private TongYouCreateHbOutboundReq buildHbOutboundDto(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
+        TongYouCreateHbOutboundReq request = TongYouCreateHbOutboundConverter.INSTANCE.toHbOutboundReq(createOutboundReq);
+        request.setIs_hb(TongYouB2bOperationResolver.isRelabel(createOutboundReq) ? "2" : "1");
+        request.setIs_hz(TongYouB2bOperationResolver.isMixedPacking(createOutboundReq) ? "1" : "2");
+        if (CollUtil.isNotEmpty(request.getDeliver_products())) {
+            for (TongYouCreateHbOutboundReq.DeliverProductDTO product : request.getDeliver_products()) {
+                if (product.getNums() != null) {
+                    product.setNums(String.valueOf(product.getNums()));
+                }
+                if (!TongYouB2bOperationResolver.isRelabel(createOutboundReq)) {
+                    product.setSku_news("");
+                }
+            }
+        }
+        return request;
     }
 
     /**
@@ -433,7 +483,20 @@ public class TongYouHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     protected ApiResult<String> cancelFbaOutboundBill(ThirdWarehouseCancelFbaOutboundReq cancelOutboundReq) {
-        return failure("ERP功能暂不支持");
+        ThirdWarehouseCancelOutboundReq cancelReq = new ThirdWarehouseCancelOutboundReq();
+        cancelReq.setErpOrderCode(CharSequenceUtil.blankToDefault(cancelOutboundReq.getErpOrderCode(), cancelOutboundReq.getOrderCode()));
+        ApiResult<String> cancelResult = cancelOutboundBill(cancelReq);
+        if (!cancelResult.isSuccess()) {
+            return failure(cancelResult.getMsg());
+        }
+        String resultCode = cancelResult.getData();
+        if (ThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode().equals(resultCode)) {
+            return success(B2bThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
+        }
+        if (ThirdWarehouseCancelResultEnum.INTERCEPTION_FAILED.getCode().equals(resultCode)) {
+            return success(B2bThirdWarehouseCancelResultEnum.INTERCEPTION_FAILED.getCode());
+        }
+        return success(B2bThirdWarehouseCancelResultEnum.INTERCEPTING.getCode());
     }
 
     @Override
@@ -457,8 +520,35 @@ public class TongYouHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     @Override
-    protected ApiResult<List<ThirdWarehouseQueryFbaOutboundResponse>> queryFbaOutboundBill(ThirdWarehouseQueryFbaOutboundReq req) {
-        return failure("ERP功能暂不支持");
+    protected ApiResult<List<ThirdWarehouseQueryFbaOutboundResponse>> queryFbaOutboundBill(@Valid ThirdWarehouseQueryFbaOutboundReq req) {
+        if (CollUtil.isEmpty(req.getErpOrderCodeList())) {
+            return success(Collections.emptyList());
+        }
+        List<ThirdWarehouseQueryFbaOutboundResponse> resultList = new ArrayList<>();
+        for (String erpOrderCode : req.getErpOrderCodeList()) {
+            if (CharSequenceUtil.isBlank(erpOrderCode)) {
+                continue;
+            }
+            Map<String, Object> authJson = new HashMap<>();
+            Object object = ThirdWarehouseContext.getAuthMap().get("appToken");
+            authJson.put("token", ObjectUtil.isEmpty(object) ? "" : object.toString());
+            authJson.put("deliver_no", erpOrderCode);
+            TongYouQueryOutboundBillResp queryResp = tongYouService.getOutboundBill(authJson);
+            if (ObjectUtil.isEmpty(queryResp) || !isSuccess(queryResp.getError()) || CollUtil.isEmpty(queryResp.getData())) {
+                continue;
+            }
+            TongYouQueryOutboundResp outboundResp = queryResp.getData().get(0);
+            ThirdWarehouseQueryFbaOutboundResponse response = new ThirdWarehouseQueryFbaOutboundResponse();
+            response.setCode(CharSequenceUtil.blankToDefault(outboundResp.getDeliver_no(), erpOrderCode));
+            response.setPlatformOrderCode(CharSequenceUtil.blankToDefault(outboundResp.getDeliver_no(), erpOrderCode));
+            response.setTrackNo(outboundResp.getWaybill());
+            response.setPlatformOriginalStatus(outboundResp.getPb());
+            response.setStatus(B2bThirdDeliveryStatusResolver.resolveErpStatus(PlatformDictEnum.TONG_YOU_WAREHOUSE.getCode(), outboundResp.getPb()));
+            response.setDeliveryTimeStr(outboundResp.getCk_time());
+            response.setPlatform(PlatformDictEnum.TONG_YOU_WAREHOUSE.getCode());
+            resultList.add(response);
+        }
+        return success(resultList);
     }
 
     @Override

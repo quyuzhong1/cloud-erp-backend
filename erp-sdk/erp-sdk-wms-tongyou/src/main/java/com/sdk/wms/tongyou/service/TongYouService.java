@@ -8,6 +8,7 @@ import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.utils.OkHttpUtils;
 import com.erp.model.wms.dto.third.ThirdWarehouseCancelOutboundReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseQueryOutboundResponse;
+import com.sdk.wms.tongyou.dto.request.TongYouCreateHbOutboundReq;
 import com.sdk.wms.tongyou.dto.request.TongYouCreateInboundReq;
 import com.sdk.wms.tongyou.dto.request.TongYouCreateOutboundReq;
 import com.sdk.wms.tongyou.dto.response.*;
@@ -143,6 +144,22 @@ public class TongYouService {
         String jsonString = JSONObject.toJSONString(Collections.singletonList(tongYouCreateOutboundReq));
         log.warn("通邮 createOutboundBill request:{}",maskTokenJson(jsonString));
         String bodyStr = OkHttpUtils.doPostJson(getPreUrl()+path,jsonString, headerMap);
+        TongYouBaseResp<TongYouOutboundResp> respDto = TongYouUtils.parseToTongYouResp(bodyStr, TongYouOutboundResp.class);
+        ThirdWarehouseContext.setResponseJson(bodyStr);
+        return respDto;
+    }
+
+    /**
+     * B2B 换标/混装创建出库单
+     */
+    public TongYouBaseResp<TongYouOutboundResp> createHbOutboundBill(@Valid TongYouCreateHbOutboundReq request) {
+        String path = "hwc_api/add_order_hb.php";
+        Map<String, String> headerMap = new HashMap<>();
+        Object object = ThirdWarehouseContext.getAuthMap().get("appToken");
+        request.setToken(ObjectUtil.isEmpty(object) ? "" : object.toString());
+        log.warn("通邮 createHbOutboundBill request:{}", toLogJson(request));
+        ThirdWarehouseContext.setRequestJson(toLogJson(request));
+        String bodyStr = OkHttpUtils.doPostJson(getPreUrl() + path, JSONObject.toJSONString(request), headerMap);
         TongYouBaseResp<TongYouOutboundResp> respDto = TongYouUtils.parseToTongYouResp(bodyStr, TongYouOutboundResp.class);
         ThirdWarehouseContext.setResponseJson(bodyStr);
         return respDto;

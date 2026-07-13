@@ -64,8 +64,6 @@ public class SoReturnPrestockServiceImpl
         extends SuperServiceImpl<SoReturnPrestockMapper, SoReturnPrestockEntity>
         implements SoReturnPrestockService {
 
-    private static final String SO_RETURN_PRESTOCK_OVERSEAS_LOCK_KEY = "SO_RETURN_PRESTOCK_OVERSEAS";
-
     private static final String SO_RETURN_PRESTOCK_HEADLESS_LOCK_KEY = "SO_RETURN_PRESTOCK_HEADLESS";
 
     private static final String SO_RETURN_PRESTOCK_DETAIL_LINK_LOCK_KEY = "SO_RETURN_PRESTOCK_DETAIL_LINK";
@@ -1044,24 +1042,6 @@ public class SoReturnPrestockServiceImpl
         return results;
     }
 
-    // ===================== 海外仓自动创建（系统内部） =====================
-
-    @Override
-    @DistributeLocker(businessType = SO_RETURN_PRESTOCK_OVERSEAS_LOCK_KEY, keyName = "dto.returnLogisticCode")
-    @Transactional(rollbackFor = Exception.class)
-    public String createFromOverseasWh(SoReturnPrestockDTO.Add dto) {
-        // 幂等：同一物流单号已存在则直接返回
-        SoReturnPrestockEntity existing = lambdaQuery()
-                .eq(SoReturnPrestockEntity::getReturnLogisticCode, dto.getReturnLogisticCode())
-                .eq(SoReturnPrestockEntity::getIsDeleted, false)
-                .one();
-        if (Objects.nonNull(existing)) {
-            log.info("预入库单已存在，物流单号：{}，跳过创建", dto.getReturnLogisticCode());
-            return existing.getId();
-        }
-        return buildAndPersist(dto, dto.getReturnLogisticCode(), PrestockSourceTypeEnum.OVERSEAS_WH.getStatus());
-    }
-
     // ===================== 无物流单号+无参考单号自动创建（系统内部） =====================
 
     @Override
@@ -1081,7 +1061,10 @@ public class SoReturnPrestockServiceImpl
         } else {
             log.warn("无头件预入库单缺少第三方单号，跳过幂等校验，可能重复生成");
         }
-        return buildAndPersist(dto, "", PrestockSourceTypeEnum.OVERSEAS_WH.getStatus());
+        String prestockId = buildAndPersist(dto, "", PrestockSourceTypeEnum.OVERSEAS_WH.getStatus());
+        // 与人工发起创建（addFromReturnInstock）保持一致：预入库单落库后同步生成其它入库单，使预入库真正增加库存
+        generateOtherInstockForPrestock(prestockId, dto);
+        return prestockId;
     }
 
     // ===================== 由退货入库单新增/修改表单参数创建（人工触发） =====================
@@ -1596,14 +1579,28 @@ public class SoReturnPrestockServiceImpl
     }
 
     /**
-     * 由退货入库单表单发起创建预入库单后，同时生成并自动审核一张"其它入库单"（三无退货预入库类型），
-     * 使预入库真正增加库存；写法参照旺店通预入库范式 {@code OtherInstockServiceImpl#buildWdtPreStock}，
+     * 预入库单创建（人工由退货入库单表单发起、或系统海外仓自动拉取）后，同时生成并自动审核一张
+     * "其它入库单"（三无退货预入库类型），使预入库真正增加库存；
+     * 写法参照旺店通预入库范式 {@code OtherInstockServiceImpl#buildWdtPreStock}，
      * 走同一个 {@code addAndApprove} 入口完成新增、提交、审核并触发库存联动，与退货入库单原有库存联动方式互不干扰。
      * 其它入库生成失败需要预入库单一并回滚，异常直接向上抛出，由调用方的事务统一处理。
+     * <p>仅对已解析出 skuId 的明细行生成库存联动：海外仓自动拉取场景（{@link #createFromOverseasWhHeadless}）
+     * 允许平台SKU未映射到内部SKU时用空skuId占位落预入库单明细
+     * （见调用方 {@code buildPrestockDetailList}），若把空skuId传入其他入库单，会一路带到库存核心服务
+     * （{@code OtherInstockServiceImpl#updateInventoryTransCore}）导致报错回滚整单，或落下无法追溯的空SKU库存记录。
+     * 未解析行只落预入库单明细，等运营人工核实SKU后再走关联流程；全部行都未解析到SKU时整单不生成其它入库单。</p>
      */
     private void generateOtherInstockForPrestock(String prestockId, SoReturnPrestockDTO.Add prestockAdd) {
+        List<SoReturnPrestockDetailDTO.Add> addDetailList = prestockAdd.getDetailList().stream()
+                .filter(d -> CharSequenceUtil.isNotBlank(d.getSkuId()))
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(addDetailList)) {
+            log.warn("[预入库单联动生成其它入库单]全部明细行均未解析到内部SKU，跳过生成其它入库单：预入库单id={}",
+                    prestockId);
+            return;
+        }
         SoReturnPrestockEntity prestockEntity = getByIdOrThrow(prestockId);
-        Map<String, SkuVO> skuVOMap = listSkuVOMap(prestockAdd.getDetailList().stream()
+        Map<String, SkuVO> skuVOMap = listSkuVOMap(addDetailList.stream()
                 .map(SoReturnPrestockDetailDTO.Add::getSkuId).collect(Collectors.toList()));
         // 按 skuId 分组后组内按创建顺序（create_time + id 兜底排序）与入参详情行配对，用于回填 sourceDetailId
         // 溯源到预入库单具体明细行；相比整体按下标对齐，同 SKU 场景下即使排序偶发抖动也不会跨SKU错配
@@ -1634,7 +1631,6 @@ public class SoReturnPrestockServiceImpl
         otherInstockEntity.setRemark(CharSequenceUtil.format("预入库单【{}】自动生成", prestockEntity.getCode()));
 
         List<OtherInstockDetailEntity> detailEntityList = new ArrayList<>();
-        List<SoReturnPrestockDetailDTO.Add> addDetailList = prestockAdd.getDetailList();
         for (SoReturnPrestockDetailDTO.Add detail : addDetailList) {
             SkuVO skuVO = skuVOMap.getOrDefault(detail.getSkuId(), new SkuVO());
             OtherInstockDetailEntity detailEntity = new OtherInstockDetailEntity();
@@ -1656,6 +1652,11 @@ public class SoReturnPrestockServiceImpl
         if (cost > LINK_LOOP_WARN_THRESHOLD_MS) {
             log.warn("[预入库单联动生成其它入库单]addAndApprove耗时过长：预入库单={}，明细行数={}，耗时={}ms",
                     prestockEntity.getCode(), detailEntityList.size(), cost);
+        }
+        if (addDetailList.size() < prestockAdd.getDetailList().size()) {
+            log.warn("[预入库单联动生成其它入库单]部分明细行未解析到内部SKU，未计入本次库存联动：预入库单={}，" +
+                            "总行数={}，已联动行数={}",
+                    prestockEntity.getCode(), prestockAdd.getDetailList().size(), addDetailList.size());
         }
     }
 
