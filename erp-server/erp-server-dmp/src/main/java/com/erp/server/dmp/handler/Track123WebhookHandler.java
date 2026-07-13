@@ -1,62 +1,33 @@
 package com.erp.server.dmp.handler;
 
 import cn.hutool.extra.spring.SpringUtil;
-import cn.hutool.json.JSONUtil;
 import com.common.business.dto.WebhookResult;
-import com.common.core.security.HmacSHA256Utils;
-import com.erp.model.tms.dto.LogisticsTrackDTO;
-import com.erp.rpc.tms.feign.LogisticsFeign;
+import com.erp.server.dmp.service.DmpLogisticsTrackWebhookRecordService;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Map;
 
-/**
- * @author zdy
- * @ClassName Track123WebhookHandler
- * @description: TODO
- * @date 2024年11月11日
- * @version: 1.0
- */
 @Slf4j
-public class Track123WebhookHandler implements WebhookHandler{
-    // 预先约定的Secret
-    private static final String SECRET_KEY = "9fa500686633410a84ff0b00daed555e";
-    // 允许的时间偏差（秒）
-    private static final long MAX_AGE = 5 * 60L; // 5 minutes
+public class Track123WebhookHandler implements WebhookHandler {
 
-    private final LogisticsFeign logisticsFeign = SpringUtil.getBean(LogisticsFeign.class);
+    private DmpLogisticsTrackWebhookRecordService webhookRecordService;
+
     @Override
     public void verify(String data, Map<String, String> headers, String serviceFlag) {
-        return;
-//        LogisticsTrackDTO.TrackWebHookDTO trackWebHookDTO = JSONUtil.toBean(data, LogisticsTrackDTO.TrackWebHookDTO.class);
-//        LogisticsTrackDTO.Verify verify = trackWebHookDTO.getVerify();
-//        String timestamp = verify.getTimestamp();
-//        String signature = verify.getSignature();
-//        // 校验时间戳
-//        if (CharSequenceUtil.isNotBlank(timestamp) && Math.abs((System.currentTimeMillis() - Long.parseLong(timestamp))/1000) > MAX_AGE) {
-//            throw new ServiceException("Request is too old or timestamp is missing");
-//        }
-//
-//        // 校验签名
-//        if (CharSequenceUtil.isNotBlank(signature) && !verifySignature(JSONUtil.toJsonStr(trackWebHookDTO.getData()), signature)) {
-//            throw new ServiceException("Invalid signature");
-//        }
+        // Track123 active pull has no verify logic, so webhook keeps the same behavior.
     }
 
     @Override
     public WebhookResult process(String data, Map<String, String> headers, String serviceFlag) {
-        log.warn("webhook 获取track123数据,{}",data);
-//        LogisticsTrackDTO.TrackWebHookDTO trackWebHookDTO = JSONUtil.toBean(data, LogisticsTrackDTO.TrackWebHookDTO.class);
-//        logisticsFeign.webhookByTrack123(trackWebHookDTO);
+        log.warn("webhook获取Track123数据,{}", data);
+        getWebhookRecordService().saveTrack123RawRecord(data);
         return WebhookResult.isSuccess();
     }
 
-    private boolean verifySignature(String data, String signature) {
-        String generatedSignature = HmacSHA256Utils.hmacSHA256(data, SECRET_KEY);
-        // 注意：这里假设传入的签名是"sha256="前缀后的实际Base64编码值
-        if (signature.startsWith("sha256=")) {
-            signature = signature.substring(7);
+    private DmpLogisticsTrackWebhookRecordService getWebhookRecordService() {
+        if (webhookRecordService == null) {
+            webhookRecordService = SpringUtil.getBean(DmpLogisticsTrackWebhookRecordService.class);
         }
-        return signature.equals(generatedSignature);
+        return webhookRecordService;
     }
 }

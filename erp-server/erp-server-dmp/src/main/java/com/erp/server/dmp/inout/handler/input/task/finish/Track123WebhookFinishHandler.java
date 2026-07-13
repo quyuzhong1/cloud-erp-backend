@@ -4,7 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import com.common.business.enums.PlatformDictEnum;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
-import com.erp.server.dmp.handler.Kuaidi100WebhookPayloadParser;
+import com.erp.server.dmp.handler.Track123WebhookPayloadParser;
 import com.erp.server.dmp.inout.dto.request.DmpInputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputFinishResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
@@ -20,9 +20,9 @@ import java.util.Set;
 
 @Service
 @Scope("prototype")
-public class Kuaidi100WebhookFinishHandler extends DmpInputBaseFinishHandler {
+public class Track123WebhookFinishHandler extends DmpInputBaseFinishHandler {
 
-    private static final String PLATFORM_CODE = PlatformDictEnum.KUAIDI100.getCode();
+    private static final String PLATFORM_CODE = PlatformDictEnum.TRACK123.getCode();
 
     @Resource
     private DmpLogisticsTrackWebhookRecordService dmpLogisticsTrackWebhookRecordService;
@@ -54,7 +54,7 @@ public class Kuaidi100WebhookFinishHandler extends DmpInputBaseFinishHandler {
                 if (row == null) {
                     continue;
                 }
-                Object webhookRecordId = row.get(Kuaidi100WebhookPayloadParser.WEBHOOK_RECORD_ID);
+                Object webhookRecordId = row.get(Track123WebhookPayloadParser.WEBHOOK_RECORD_ID);
                 if (webhookRecordId != null) {
                     webhookRecordIds.add(webhookRecordId.toString());
                 }

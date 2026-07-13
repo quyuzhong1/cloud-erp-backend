@@ -5,6 +5,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.model.dmp.entity.DmpLogisticsTrackWebhookRecordEntity;
 import com.erp.model.dmp.enums.DmpLogisticsTrackWebhookRecordStatusEnum;
 import com.erp.server.dmp.handler.Kuaidi100WebhookPayloadParser;
+import com.erp.server.dmp.handler.Track123WebhookPayloadParser;
 import com.erp.server.dmp.mapper.DmpLogisticsTrackWebhookRecordMapper;
 import com.erp.server.dmp.service.DmpLogisticsTrackWebhookRecordService;
 import org.apache.commons.lang3.StringUtils;
@@ -21,7 +22,9 @@ public class DmpLogisticsTrackWebhookRecordServiceImpl
         extends SuperServiceImpl<DmpLogisticsTrackWebhookRecordMapper, DmpLogisticsTrackWebhookRecordEntity>
         implements DmpLogisticsTrackWebhookRecordService {
 
-    private static final String PLATFORM_CODE = PlatformDictEnum.KUAIDI100.getCode();
+    private static final String KUAIDI100_PLATFORM_CODE = PlatformDictEnum.KUAIDI100.getCode();
+
+    private static final String TRACK123_PLATFORM_CODE = PlatformDictEnum.TRACK123.getCode();
 
     private static final int DEFAULT_TIMEOUT_MINUTES = 30;
 
@@ -32,17 +35,30 @@ public class DmpLogisticsTrackWebhookRecordServiceImpl
     @Transactional(rollbackFor = Exception.class)
     @Override
     public DmpLogisticsTrackWebhookRecordEntity saveKuaidi100RawRecord(String param, String sign) {
+        return saveRawRecord(KUAIDI100_PLATFORM_CODE,
+                Kuaidi100WebhookPayloadParser.buildRawData(param, sign).toJSONString(),
+                () -> Kuaidi100WebhookPayloadParser.extractTrackNo(param));
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public DmpLogisticsTrackWebhookRecordEntity saveTrack123RawRecord(String rawData) {
+        return saveRawRecord(TRACK123_PLATFORM_CODE, rawData, () -> Track123WebhookPayloadParser.extractTrackNo(rawData));
+    }
+
+    private DmpLogisticsTrackWebhookRecordEntity saveRawRecord(String platformCode,
+                                                              String rawData,
+                                                              TrackNoSupplier trackNoSupplier) {
         DmpLogisticsTrackWebhookRecordEntity entity = new DmpLogisticsTrackWebhookRecordEntity();
-        entity.setPlatformCode(PLATFORM_CODE);
+        entity.setPlatformCode(platformCode);
         entity.setTrackNo("");
         entity.setStatus(DmpLogisticsTrackWebhookRecordStatusEnum.WAIT.getCode());
-        entity.setRawData(Kuaidi100WebhookPayloadParser.buildRawData(param, sign).toJSONString());
+        entity.setRawData(rawData);
         entity.setRemark("");
         super.save(entity);
 
         try {
-            String trackNo = Kuaidi100WebhookPayloadParser.extractTrackNo(param);
-            entity.setTrackNo(trackNo);
+            entity.setTrackNo(trackNoSupplier.get());
             entity.setStatus(DmpLogisticsTrackWebhookRecordStatusEnum.WAIT.getCode());
             entity.setRemark("");
         } catch (Exception e) {
@@ -56,30 +72,30 @@ public class DmpLogisticsTrackWebhookRecordServiceImpl
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void prepareKuaidi100Records(int timeoutMinutes) {
+    public void prepareRecords(String platformCode, int timeoutMinutes) {
         int actualTimeoutMinutes = timeoutMinutes > 0 ? timeoutMinutes : DEFAULT_TIMEOUT_MINUTES;
-        baseMapper.skipCoveredRecords(PLATFORM_CODE, actualTimeoutMinutes, "");
-        baseMapper.recoverTimeoutIngRecords(PLATFORM_CODE, actualTimeoutMinutes, "");
+        baseMapper.skipCoveredRecords(platformCode, actualTimeoutMinutes, "");
+        baseMapper.recoverTimeoutIngRecords(platformCode, actualTimeoutMinutes, "");
     }
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public List<DmpLogisticsTrackWebhookRecordEntity> claimKuaidi100LatestWaitRecords(int limit) {
+    public List<DmpLogisticsTrackWebhookRecordEntity> claimLatestWaitRecords(String platformCode, int limit) {
         if (limit <= 0) {
             return Collections.emptyList();
         }
         int actualLimit = Math.min(limit, MAX_CLAIM_LIMIT);
-        return baseMapper.claimLatestWaitRecords(PLATFORM_CODE, actualLimit);
+        return baseMapper.claimLatestWaitRecords(platformCode, actualLimit);
     }
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void markFinish(Collection<String> ids) {
+    public void markFinish(String platformCode, Collection<String> ids) {
         if (ids == null || ids.isEmpty()) {
             return;
         }
         baseMapper.updateStatusByIds(ids,
-                PLATFORM_CODE,
+                platformCode,
                 DmpLogisticsTrackWebhookRecordStatusEnum.ING.getCode(),
                 DmpLogisticsTrackWebhookRecordStatusEnum.FINISH.getCode(),
                 "");
@@ -87,12 +103,12 @@ public class DmpLogisticsTrackWebhookRecordServiceImpl
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void markError(String id, String reason) {
+    public void markError(String platformCode, String id, String reason) {
         if (StringUtils.isBlank(id)) {
             return;
         }
         lambdaUpdate().eq(DmpLogisticsTrackWebhookRecordEntity::getId, id)
-                .eq(DmpLogisticsTrackWebhookRecordEntity::getPlatformCode, PLATFORM_CODE)
+                .eq(DmpLogisticsTrackWebhookRecordEntity::getPlatformCode, platformCode)
                 .eq(DmpLogisticsTrackWebhookRecordEntity::getStatus, DmpLogisticsTrackWebhookRecordStatusEnum.ING.getCode())
                 .eq(DmpLogisticsTrackWebhookRecordEntity::getIsDeleted, false)
                 .set(DmpLogisticsTrackWebhookRecordEntity::getStatus, DmpLogisticsTrackWebhookRecordStatusEnum.ERROR.getCode())
@@ -106,5 +122,9 @@ public class DmpLogisticsTrackWebhookRecordServiceImpl
             return "";
         }
         return remark.length() > MAX_REMARK_LENGTH ? remark.substring(0, MAX_REMARK_LENGTH) : remark;
+    }
+
+    private interface TrackNoSupplier {
+        String get();
     }
 }

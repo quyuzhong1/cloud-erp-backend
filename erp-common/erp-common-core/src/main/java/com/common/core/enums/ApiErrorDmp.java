@@ -57,6 +57,10 @@ public final class ApiErrorDmp {
     public static final ApiError DMP_KUAIDI100_WEBHOOK_LAST_RESULT_REQUIRED = new ApiError("DMP_KUAIDI100_WEBHOOK_LAST_RESULT_REQUIRED", 3533, "快递100 webhook 缺少lastResult");
     public static final ApiError DMP_KUAIDI100_WEBHOOK_TRACK_NO_REQUIRED = new ApiError("DMP_KUAIDI100_WEBHOOK_TRACK_NO_REQUIRED", 3534, "快递100 webhook 缺少物流单号");
     public static final ApiError DMP_KUAIDI100_WEBHOOK_FORM_URL_DECODE_FAILED = new ApiError("DMP_KUAIDI100_WEBHOOK_FORM_URL_DECODE_FAILED", 3535, "快递100 webhook 表单参数URL解码失败");
+    public static final ApiError DMP_TRACK123_WEBHOOK_RAW_DATA_REQUIRED = new ApiError("DMP_TRACK123_WEBHOOK_RAW_DATA_REQUIRED", 3536, "Track123 webhook 原始数据不能为空");
+    public static final ApiError DMP_TRACK123_WEBHOOK_RAW_DATA_JSON_INVALID = new ApiError("DMP_TRACK123_WEBHOOK_RAW_DATA_JSON_INVALID", 3537, "Track123 webhook 原始数据不是合法JSON");
+    public static final ApiError DMP_TRACK123_WEBHOOK_DATA_NODE_INVALID = new ApiError("DMP_TRACK123_WEBHOOK_DATA_NODE_INVALID", 3538, "Track123 webhook 原始数据data节点不是合法JSON对象");
+    public static final ApiError DMP_TRACK123_WEBHOOK_TRACK_NO_REQUIRED = new ApiError("DMP_TRACK123_WEBHOOK_TRACK_NO_REQUIRED", 3539, "Track123 webhook 原始数据缺少trackNo");
     public static final ApiError MAPPING_FIELD_VALUE_REQUIRED = new ApiError("MAPPING_FIELD_VALUE_REQUIRED", 7500, "字段值对应关系不能为空");
     public static final ApiError MAPPING_EN_DESC_DUPLICATE = new ApiError("MAPPING_EN_DESC_DUPLICATE", 7501, "同平台下存在相同英文描述");
     public static final ApiError MAPPING_NOT_SET_PUSH_FORBIDDEN = new ApiError("MAPPING_NOT_SET_PUSH_FORBIDDEN", 7502, "未设置字段映射，不支持推送");
@@ -123,6 +127,10 @@ public final class ApiErrorDmp {
                 DMP_KUAIDI100_WEBHOOK_LAST_RESULT_REQUIRED,
                 DMP_KUAIDI100_WEBHOOK_TRACK_NO_REQUIRED,
                 DMP_KUAIDI100_WEBHOOK_FORM_URL_DECODE_FAILED,
+                DMP_TRACK123_WEBHOOK_RAW_DATA_REQUIRED,
+                DMP_TRACK123_WEBHOOK_RAW_DATA_JSON_INVALID,
+                DMP_TRACK123_WEBHOOK_DATA_NODE_INVALID,
+                DMP_TRACK123_WEBHOOK_TRACK_NO_REQUIRED,
                 MAPPING_FIELD_VALUE_REQUIRED,
                 MAPPING_EN_DESC_DUPLICATE,
                 MAPPING_NOT_SET_PUSH_FORBIDDEN,
