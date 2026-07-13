@@ -3377,6 +3377,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,"销售出库单");
         }
+        //已审核直接返回
+        if (ApproveStatusEnum.APPROVE.equals(entity.getApproveStatus())) {
+            return;
+        }
         BatchResultDTO submit = this.submit(entity, Boolean.FALSE);
         if (submit.getSuccess()) {
             soOutstockService.approve(new ApproveOneDTO(id, ApproveTypeEnum.PASS.getStatus(), ""));
@@ -3462,6 +3466,13 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             sourceType = SourceTypeEnum.SELF_ADD.getCode();
         }
         String sourceId = dto.getSourceId();
+        if (SourceTypeEnum.SO_B2C_DELIVERY.getCode().equals(sourceType)){
+            //检查发货单是否已经生成销售出库单
+            List<SoOutstockEntity> entityList = this.listBySourceId(Collections.singletonList(sourceId));
+            if (CollectionUtils.isNotEmpty(entityList)) {
+                return entityList.get(0).getId();
+            }
+        }
         List<SoOutstockDetailDTO.AddDTO> detailList = dto.getDetailList();
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException(ApiError.SO_DELIVERY_OUTBOUND_DETAIL_REQUIRED);
