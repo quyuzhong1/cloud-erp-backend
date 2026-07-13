@@ -10,11 +10,13 @@ public interface DmpLogisticsTrackWebhookRecordService extends SuperService<DmpL
 
     DmpLogisticsTrackWebhookRecordEntity saveKuaidi100RawRecord(String param, String sign);
 
-    void prepareKuaidi100Records(int timeoutMinutes);
+    DmpLogisticsTrackWebhookRecordEntity saveTrack123RawRecord(String rawData);
 
-    List<DmpLogisticsTrackWebhookRecordEntity> claimKuaidi100LatestWaitRecords(int limit);
+    void prepareRecords(String platformCode, int timeoutMinutes);
 
-    void markFinish(Collection<String> ids);
+    List<DmpLogisticsTrackWebhookRecordEntity> claimLatestWaitRecords(String platformCode, int limit);
 
-    void markError(String id, String reason);
+    void markFinish(String platformCode, Collection<String> ids);
+
+    void markError(String platformCode, String id, String reason);
 }

@@ -1,10 +1,10 @@
-package com.erp.server.dmp.inout.handler.input.task.init.api.kuaidi100;
+package com.erp.server.dmp.inout.handler.input.task.init.api.track123;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.enums.PlatformDictEnum;
 import com.erp.model.dmp.entity.DmpLogisticsTrackWebhookRecordEntity;
-import com.erp.server.dmp.handler.Kuaidi100WebhookPayloadParser;
+import com.erp.server.dmp.handler.Track123WebhookPayloadParser;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputApiInitRequest;
 import com.erp.server.dmp.inout.handler.input.task.init.api.DmpInputApiInitHandler;
@@ -22,14 +22,14 @@ import java.util.Map;
 @Slf4j
 @Service
 @Scope("prototype")
-public class Kuaidi100WebhookInitHandler implements DmpInputApiInitHandler {
+public class Track123WebhookInitHandler implements DmpInputApiInitHandler {
 
     private static final int DEFAULT_BATCH_SIZE = 100;
     private static final int DEFAULT_ING_TIMEOUT_MINUTES = 30;
     private static final String BATCH_SIZE_PARAM = "batchSize";
     private static final String ING_TIMEOUT_MINUTES_PARAM = "ingTimeoutMinutes";
     private static final String PARSE_ERROR_PREFIX = "清洗解析失败：";
-    private static final String PLATFORM_CODE = PlatformDictEnum.KUAIDI100.getCode();
+    private static final String PLATFORM_CODE = PlatformDictEnum.TRACK123.getCode();
 
     @Resource
     private DmpLogisticsTrackWebhookRecordService dmpLogisticsTrackWebhookRecordService;
@@ -47,12 +47,10 @@ public class Kuaidi100WebhookInitHandler implements DmpInputApiInitHandler {
         List<DmpInputTaskInitDTO> result = new ArrayList<>();
         for (DmpLogisticsTrackWebhookRecordEntity record : records) {
             try {
-                Map<String, Object> data = Kuaidi100WebhookPayloadParser.buildMongoData(record.getId(), record.getRawData());
-                DmpInputTaskInitDTO dto = new DmpInputTaskInitDTO();
-                dto.setMsg(JSON.toJSONString(data));
-                result.add(dto);
+                Map<String, Object> data = Track123WebhookPayloadParser.buildMongoData(record.getId(), record.getRawData());
+                result.add(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(data)));
             } catch (Exception e) {
-                log.error("快递100 webhook 源记录清洗解析失败，recordId={}", record.getId(), e);
+                log.error("Track123 webhook源记录清洗解析失败，recordId={}", record.getId(), e);
                 dmpLogisticsTrackWebhookRecordService.markError(PLATFORM_CODE, record.getId(), PARSE_ERROR_PREFIX + e.getMessage());
             }
         }
@@ -73,7 +71,7 @@ public class Kuaidi100WebhookInitHandler implements DmpInputApiInitHandler {
             batchSize = getPositiveInt(requestParam, BATCH_SIZE_PARAM, DEFAULT_BATCH_SIZE);
             ingTimeoutMinutes = getPositiveInt(requestParam, ING_TIMEOUT_MINUTES_PARAM, DEFAULT_ING_TIMEOUT_MINUTES);
         } catch (Exception e) {
-            log.warn("解析快递100 webhook 初始任务配置失败，使用默认配置，requestParam={}",
+            log.warn("解析Track123 webhook初始任务配置失败，使用默认配置，requestParam={}",
                     request.getRequestParam(), e);
         }
         return new InitConfig(batchSize, ingTimeoutMinutes);
@@ -97,7 +95,7 @@ public class Kuaidi100WebhookInitHandler implements DmpInputApiInitHandler {
             }
             return intValue <= 0 ? defaultValue : intValue;
         } catch (Exception e) {
-            log.warn("快递100 webhook 初始任务配置项无效，使用默认值，key={}, value={}", key, value);
+            log.warn("Track123 webhook初始任务配置项无效，使用默认值，key={}, value={}", key, value);
             return defaultValue;
         }
     }
