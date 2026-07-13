@@ -13,6 +13,7 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.config.GlobalExceptionHandler;
 import com.common.business.constant.RedisCacheConstants;
+import com.common.business.constant.TokenConstants;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.utils.MD5Util;
@@ -287,15 +288,30 @@ public class SysLoggingAspect {
         }
         String params = argsToString(proceedingJoinPoint.getArgs());
         String url = null;
-        String token = null;
+        String requesterIdentity = null;
         if (request != null) {
             // 请求地址（作为存放cache的key值）
             url = request.getRequestURI();
-            // 用户的唯一标识
-            token = request.getHeader("Authorization");
+            requesterIdentity = getRequesterIdentity(request);
         }
-        // 唯一标识（url +  token  + params）
-        return RedisCacheConstants.IDEM_REDISKEY + MD5Util.toMD5(url + "_" + token + ":" + params);
+        // 唯一标识（url + 请求方身份 + params）。API Token请求不透传原始Authorization，使用tokenId/用户上下文兜底。
+        return RedisCacheConstants.IDEM_REDISKEY + MD5Util.toMD5(url + "_" + requesterIdentity + ":" + params);
+    }
+
+    private String getRequesterIdentity(HttpServletRequest request) {
+        String authorization = request.getHeader(TokenConstants.AUTHENTICATION);
+        if (StringUtils.isNotBlank(authorization)) {
+            return authorization;
+        }
+        String apiTokenId = request.getHeader(TokenConstants.API_TOKEN_ID_HEADER);
+        if (StringUtils.isNotBlank(apiTokenId)) {
+            return "apiToken:" + apiTokenId;
+        }
+        String tokenUserInfo = request.getHeader(TokenConstants.TOKEN_USER_INFO);
+        if (StringUtils.isNotBlank(tokenUserInfo)) {
+            return "user:" + tokenUserInfo;
+        }
+        return "";
     }
 
     /**

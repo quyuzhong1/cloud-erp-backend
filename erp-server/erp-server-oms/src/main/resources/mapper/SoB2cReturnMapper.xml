@@ -26,6 +26,7 @@
        <result column="status" property="status" />
        <result column="return_instock_code" property="returnInstockCode" />
        <result column="sys_return_time" property="sysReturnTime" />
+       <result column="platform_status" property="platformStatus" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -39,7 +40,7 @@
         update_time,
         version,
         is_deleted,
-        code, platform_order_no, platform_return_no, so_id, so_code, dict_platform, shop_id, amount, currency, type, reason, status, return_instock_code, sys_return_time
+        code, platform_order_no, platform_return_no, so_id, so_code, dict_platform, shop_id, amount, currency, type, reason, status, return_instock_code, sys_return_time, platform_status
     </sql>
     <select id="paging" resultType="com.erp.model.oms.dto.SoB2cReturnDTO$PagingViewDTO">
         SELECT
@@ -56,6 +57,7 @@
             sbr.type,
             sbr.reason,
             sbr.status,
+            sbr.platform_status as platformStatus,
             sbrd.id as detailId,
             sbrd.sku_id as skuId,
             sbrd.sku_no as skuNo,
@@ -179,6 +181,39 @@
             #{id}
         </foreach>
     </select>
+    <!--
+        WEGO 退货入库：用参考单号一次命中 so_b2c_return，
+        按 code → platform_return_no → platform_order_no → so_code 优先级排序，取首条。
+    -->
+    <select id="findFirstByReferenceNo" resultMap="BaseResultMap">
+        SELECT
+            id, code, platform_order_no, platform_return_no, so_id, so_code,
+            dict_platform, shop_id, amount, currency, type, reason, status,
+            sys_return_time,
+            create_user_id, create_user_name, create_time,
+            update_user_id, update_user_name, update_time,
+            version, is_deleted,
+            source_type, return_logistic_code, batch_no,
+            approve_status, approve_user_id, approve_user_name, approve_time
+        FROM so_b2c_return
+        WHERE is_deleted = false
+          AND (
+              code             = #{referenceNo}
+           OR platform_return_no = #{referenceNo}
+           OR platform_order_no  = #{referenceNo}
+           OR so_code            = #{referenceNo}
+          )
+        ORDER BY
+            CASE
+                WHEN code              = #{referenceNo} THEN 1
+                WHEN platform_return_no = #{referenceNo} THEN 2
+                WHEN platform_order_no  = #{referenceNo} THEN 3
+                WHEN so_code            = #{referenceNo} THEN 4
+                ELSE 5
+            END
+        LIMIT 1
+    </select>
+
     <select id="listAddDetailView" resultType="com.erp.model.oms.dto.SoDetailDTO$AddDetailView">
         SELECT
         sr.so_id AS sourceId,

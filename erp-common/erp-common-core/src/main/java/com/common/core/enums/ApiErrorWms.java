@@ -1,0 +1,898 @@
+package com.common.core.enums;
+
+/**
+ * Wms service error constants.
+ */
+public final class ApiErrorWms {
+
+    private ApiErrorWms() {
+    }
+
+    public static final ApiError DELIVERY_SUGGESTION_ONLY_COMPLETED_ALLOW_PUSH = new ApiError("DELIVERY_SUGGESTION_ONLY_COMPLETED_ALLOW_PUSH", 15500, "发货建议【{0}】未完成，不支持下推");
+    public static final ApiError DELIVERY_SUGGESTION_INVALID_FORBIDDEN = new ApiError("DELIVERY_SUGGESTION_INVALID_FORBIDDEN", 15501, "发货建议【{0}】已作废，不支持下推");
+    public static final ApiError FBA_SHIPMENT_COUNTRY_NOT_FOUND = new ApiError("FBA_SHIPMENT_COUNTRY_NOT_FOUND", 8024, "暂未查询到货件国家，请稍后重新拉取");
+    public static final ApiError PO_QC_ASSIGN_ALLOWED_PENDING_ONLY = new ApiError("PO_QC_ASSIGN_ALLOWED_PENDING_ONLY", 9545, "只有待质检状态才能分配质检员");
+    public static final ApiError PO_QC_PASSED_OR_EXEMPT_ONLY_ALLOWED = new ApiError("PO_QC_PASSED_OR_EXEMPT_ONLY_ALLOWED", 9546, "只有已质检和免检才能下推单据");
+    public static final ApiError PO_QC_REPORT_NOT_FOUND = new ApiError("PO_QC_REPORT_NOT_FOUND", 9547, "质检报告不存在或已删除");
+    public static final ApiError PO_QC_RULE_NOT_FOUND = new ApiError("PO_QC_RULE_NOT_FOUND", 9548, "质检规则不存在或已删除");
+    public static final ApiError PO_QC_TYPE_EXISTS = new ApiError("PO_QC_TYPE_EXISTS", 9549, "质检类型已存在，请勿重复新增");
+    public static final ApiError PO_QC_ORDER_NOT_FOUND = new ApiError("PO_QC_ORDER_NOT_FOUND", 9550, "质检单不存在或已删除");
+    public static final ApiError PO_QC_TOTAL_GOOD_BAD_QTY_INVALID = new ApiError("PO_QC_TOTAL_GOOD_BAD_QTY_INVALID", 9551, "不良数与合格数之和不能超过质检数量");
+    public static final ApiError PO_QC_COMPLETE_ALLOWED_STATUS_ONLY = new ApiError("PO_QC_COMPLETE_ALLOWED_STATUS_ONLY", 9552, "仅待质检状态的单据允许完成质检");
+    public static final ApiError PO_QC_EXEMPT_ALLOWED_STATUS_ONLY = new ApiError("PO_QC_EXEMPT_ALLOWED_STATUS_ONLY", 9553, "仅暂存或待质检状态的质检单允许执行免检操作");
+    public static final ApiError PO_QC_CANCEL_ALLOWED_STATUS_ONLY = new ApiError("PO_QC_CANCEL_ALLOWED_STATUS_ONLY", 9554, "仅待质检状态的质检单允许执行取消操作");
+    public static final ApiError PO_QC_DELETE_ALLOWED_STATUS_ONLY = new ApiError("PO_QC_DELETE_ALLOWED_STATUS_ONLY", 9555, "仅待质检、已取消、暂存状态的质检单允许删除");
+    public static final ApiError PO_QC_REVOKE_ALLOWED_STATUS_ONLY = new ApiError("PO_QC_REVOKE_ALLOWED_STATUS_ONLY", 9556, "仅免检或已质检状态的质检单允许撤销质检");
+    public static final ApiError PO_QC_QUALITY_CONTROL_TYPE_ALREADY_EXISTS = new ApiError("PO_QC_QUALITY_CONTROL_TYPE_ALREADY_EXISTS", 9557, "质检类型【{0}】已存在全量的抽样方案，不能重复配置");
+    public static final ApiError PO_QC_QUALITY_CONTROL_TYPE_EXISTS_PARTIAL = new ApiError("PO_QC_QUALITY_CONTROL_TYPE_EXISTS_PARTIAL", 9558, "质检类型【{0}】已存在部分SKU的抽样方案，不能配置全部SKU");
+    public static final ApiError PO_QC_QUALITY_CONTROL_TYPE_EXISTS_PARTIAL_SKU = new ApiError("PO_QC_QUALITY_CONTROL_TYPE_EXISTS_PARTIAL_SKU", 9558, "质检类型【{0}】已存在部分SKU的抽样方案，不能配置相同SKU【{1}】");
+    public static final ApiError PO_QC_SAMPLING_PLAN_DETAIL_RANGE_NOT_CONTINUOUS = new ApiError("PO_QC_SAMPLING_PLAN_DETAIL_RANGE_NOT_CONTINUOUS", 9559, "抽样方案明细区间不连续【{0},{1}】->【{2},{3}】");
+    public static final ApiError PO_QC_SAMPLING_PLAN_DETAIL_QTY_INVALID = new ApiError("PO_QC_SAMPLING_PLAN_DETAIL_QTY_INVALID", 9560, "抽样方案明细抽样数量只能输入大于0的整数");
+    public static final ApiError PO_QC_SAMPLING_PLAN_DETAIL_QTY_EXCEEDS = new ApiError("PO_QC_SAMPLING_PLAN_DETAIL_QTY_EXCEEDS", 9561, "抽样方案明细抽样数量不能大于批量范围");
+    public static final ApiError PO_QC_SAMPLING_PLAN_DETAIL_QC_LEVEL_INVALID = new ApiError("PO_QC_SAMPLING_PLAN_DETAIL_QC_LEVEL_INVALID", 9562, "检验水平不能为空");
+    public static final ApiError PO_QC_SAMPLING_PLAN_DETAIL_MAJOR_AQL_INVALID = new ApiError("PO_QC_SAMPLING_PLAN_DETAIL_MAJOR_AQL_INVALID", 9563, "严重缺陷AQL不能为空");
+    public static final ApiError PO_QC_SAMPLING_PLAN_DETAIL_MAJOR_AQL_EMPTY = new ApiError("PO_QC_SAMPLING_PLAN_DETAIL_MAJOR_AQL_EMPTY", 9563, "严重缺陷AQL应该为空");
+    public static final ApiError PO_QC_SAMPLING_PLAN_DETAIL_GENERAL_AQL_INVALID = new ApiError("PO_QC_SAMPLING_PLAN_DETAIL_GENERAL_AQL_INVALID", 9564, "一般缺陷AQL不能为空");
+    public static final ApiError PO_QC_SAMPLING_PLAN_DETAIL_GENERAL_AQL_EMPTY = new ApiError("PO_QC_SAMPLING_PLAN_DETAIL_GENERAL_AQL_EMPTY", 9564, "一般缺陷AQL应该为空");
+    public static final ApiError PO_QC_SAMPLING_PLAN_DETAIL_MAJOR_AQL_ENUM_INVALID = new ApiError("PO_QC_SAMPLING_PLAN_DETAIL_MAJOR_AQL_ENUM_INVALID", 9564, "严重缺陷AQL枚举不存在");
+    public static final ApiError PO_QC_SAMPLING_PLAN_DETAIL_GENERAL_AQL_ENUM_INVALID = new ApiError("PO_QC_SAMPLING_PLAN_DETAIL_GENERAL_AQL_ENUM_INVALID", 9565, "一般缺陷AQL枚举不存在");
+    public static final ApiError PO_QC_SAMPLING_PLAN_DETAIL_DETAIL_EMPTY = new ApiError("PO_QC_SAMPLING_PLAN_DETAIL_DETAIL_EMPTY", 9566, "抽样方案明细要为空");
+    public static final ApiError PO_QC_SAMPLING_PLAN_DETAIL_DETAIL_NOT_EMPTY = new ApiError("PO_QC_SAMPLING_PLAN_DETAIL_DETAIL_NOT_EMPTY", 9567, "抽样方案明细不能为空");
+    public static final ApiError PO_QC_SAMPLING_PLAN_DETAIL_RANGE_INVALID = new ApiError("PO_QC_SAMPLING_PLAN_DETAIL_RANGE_INVALID", 9568, "抽样方案明细范围不能为空");
+    public static final ApiError PO_QC_SAMPLING_PLAN_DETAIL_RANGE_LESS_THAN_ZERO = new ApiError("PO_QC_SAMPLING_PLAN_DETAIL_RANGE_LESS_THAN_ZERO", 9569, "范围必须大于等于0");
+    public static final ApiError PO_QC_SAMPLING_PLAN_DETAIL_RANGE_EQUAL = new ApiError("PO_QC_SAMPLING_PLAN_DETAIL_RANGE_EQUAL", 9570, "范围前后值不能相同");
+    public static final ApiError PO_QC_SAMPLING_PLAN_DETAIL_RANGE_GREATER_THAN_END = new ApiError("PO_QC_SAMPLING_PLAN_DETAIL_RANGE_GREATER_THAN_END", 9571, "起始值不能大于结束值");
+    public static final ApiError PO_QC_SAMPLING_PLAN_DETAIL_QC_TYPE_NOT_FOUND = new ApiError("PO_QC_SAMPLING_PLAN_DETAIL_QC_TYPE_NOT_FOUND", 9572, "未找到抽样方案质检类型单数据");
+    public static final ApiError PO_QC_SAMPLING_PLAN_DETAIL_RATE_INVALID = new ApiError("PO_QC_SAMPLING_PLAN_DETAIL_RATE_INVALID", 9573, "抽样比例明细抽样比例只能输入大于等于0的小数且小于等于100");
+    public static final ApiError PO_QC_SAMPLING_PLAN_QC_TYPE_IS_NULL = new ApiError("PO_QC_SAMPLING_PLAN_QC_TYPE_IS_NULL", 9574, "质检类型【{0}】不存在抽样方案");
+    public static final ApiError PO_QC_SAMPLING_PLAN_NOT_FOUND = new ApiError("PO_QC_SAMPLING_PLAN_NOT_FOUND", 9575, "未找到抽样方案【{0}】，SKU【{1}】不存在");
+    public static final ApiError PO_QC_SAMPLING_PLAN_DETAIL_FOUND = new ApiError("PO_QC_SAMPLING_PLAN_DETAIL_FOUND", 9576, "未找到抽样方案明细【{0}】，SKU【{1}】不存在");
+    public static final ApiError PO_QC_SAMPLING_PLAN_GENERAL_AQL_IS_NULL = new ApiError("PO_QC_SAMPLING_PLAN_GENERAL_AQL_IS_NULL", 9577, "一般缺陷AQL【{0}】方案不存在");
+    public static final ApiError PO_QC_SAMPLING_PLAN_MAJOR_AQL_IS_NULL = new ApiError("PO_QC_SAMPLING_PLAN_MAJOR_AQL_IS_NULL", 9578, "严重缺陷AQL【{0}】方案不存在");
+    public static final ApiError PO_QC_UPDATE_MEASURE_ALLOWED_STATUS_ONLY = new ApiError("PO_QC_UPDATE_MEASURE_ALLOWED_STATUS_ONLY", 9600, "仅待质检或暂存状态的质检单允许更新处理措施");
+    public static final ApiError PO_QC_PUSH_RETURN_ALLOWED_ONLY_IF_REJECTED = new ApiError("PO_QC_PUSH_RETURN_ALLOWED_ONLY_IF_REJECTED", 9605, "仅当质检结果为退货供应商时才允许下推退货单");
+    public static final ApiError PO_QC_ALREADY_PUSHED_REVERSE_FORBIDDEN = new ApiError("PO_QC_ALREADY_PUSHED_REVERSE_FORBIDDEN", 9609, "质检单【{0}】已生成下游单据，不允许执行反审核");
+    public static final ApiError PO_QC_TOTAL_QTY_EXCEEDS = new ApiError("PO_QC_TOTAL_QTY_EXCEEDS", 9611, "质检数量不能大于总数量");
+    public static final ApiError PO_QC_VOIDED_OPERATION_NOT_ALLOWED = new ApiError("PO_QC_VOIDED_OPERATION_NOT_ALLOWED", 9616, "已作废的质检单不支持执行【{0}】操作");
+    public static final ApiError PO_QC_NOTICE_VOIDED_OPERATION_NOT_ALLOWED = new ApiError("PO_QC_NOTICE_VOIDED_OPERATION_NOT_ALLOWED", 9617, "已作废的质检通知单不支持执行【{0}】操作");
+    public static final ApiError PO_QC_STOCK_INSUFFICIENT = new ApiError("PO_QC_STOCK_INSUFFICIENT", 9638, "【{0}】库存不足,质检通知数量{1}，可用库存{2}");
+    public static final ApiError PO_QC_ALREADY_COMPLETED_REVERSE_FORBIDDEN = new ApiError("PO_QC_ALREADY_COMPLETED_REVERSE_FORBIDDEN", 9639, "【{0}】已质检完成，不允许操作反审核");
+    public static final ApiError PO_QC_NOTICE_APPROVE_REQUIRED = new ApiError("PO_QC_NOTICE_APPROVE_REQUIRED", 9640, "请先审核通过质检通知单");
+    public static final ApiError PO_QC_DETAIL_REQUIRED = new ApiError("PO_QC_DETAIL_REQUIRED", 9641, "请至少选择一条质检明细");
+    public static final ApiError PO_QC_PACKAGE_NOT_FOUND = new ApiError("PO_QC_PACKAGE_NOT_FOUND", 9642, "【{0}】对应的包装信息不存在");
+    public static final ApiError PO_QC_STOCK_INSUFFICIENT_CONTINUE_CONFIRM = new ApiError("PO_QC_STOCK_INSUFFICIENT_CONTINUE_CONFIRM", 9643, "SKU库存不足，质检通知数量为{0}，可用库存为{1}，请确认是否继续创建");
+    public static final ApiError PO_QC_GOOD_BAD_BOTH_ZERO_FORBIDDEN = new ApiError("PO_QC_GOOD_BAD_BOTH_ZERO_FORBIDDEN", 9644, "【{0}】良品数量与不良品数量不能同时为0");
+    public static final ApiError PO_QC_NO_TRANSFER_OUT = new ApiError("PO_QC_NO_TRANSFER_OUT", 9645, "【{0}】质检单未下推分步式调出单");
+    public static final ApiError PO_QC_TRANSFER_OUT_ALREADY_GENERATED = new ApiError("PO_QC_TRANSFER_OUT_ALREADY_GENERATED", 9646, "【{0}】质检单【{1}】已生成分步式调出单并审核，不允许撤销质检");
+    public static final ApiError PO_QC_NOT_COMPLETED_REVERSE_FORBIDDEN = new ApiError("PO_QC_NOT_COMPLETED_REVERSE_FORBIDDEN", 9647, "【{0}】质检单【{1}】尚未完成质检，不能撤销");
+    public static final ApiError PO_QC_DEFECT_INFO_INCOMPLETE = new ApiError("PO_QC_DEFECT_INFO_INCOMPLETE", 9666, "缺陷信息必须同时填写或同时不填写");
+    public static final ApiError PO_QC_WAIT_QC_QTY_NOT_ALLOW_LESS_THAN_ZERO = new ApiError("PO_QC_WAIT_QC_QTY_NOT_ALLOW_LESS_THAN_ZERO", 9667, "采购收货单待质检数量不允许小于0");
+    public static final ApiError PO_QC_DEFECT_LEVEL_DUPLICATE = new ApiError("PO_QC_DEFECT_LEVEL_DUPLICATE", 9668, "缺陷等级不能重复");
+    public static final ApiError PO_QC_NOTICE_FINISH = new ApiError("PO_QC_NOTICE_FINISH", 9668, "【{0}】已质检完成");
+    public static final ApiError PO_QC_NOTICE_DETAIL_NOT_FOUND = new ApiError("PO_QC_NOTICE_DETAIL_NOT_FOUND", 9669, "没有找到质检通知单明细");
+    public static final ApiError PO_QC_QTY_NOT_ALLOW_LESS_THAN_ZERO = new ApiError("PO_QC_QTY_NOT_ALLOW_LESS_THAN_ZERO", 9670, "良品/不良品数量不允许小于0或空");
+    public static final ApiError PO_QC_RESULT_NOT_EMPTY = new ApiError("PO_QC_RESULT_NOT_EMPTY", 9671, "质检结果不允许为空");
+    public static final ApiError QC_APPLICATION_NOT_EXIST = new ApiError("QC_APPLICATION_NOT_EXIST", 16000, "质检申请单不存在");
+    public static final ApiError QC_APPLICATION_DETAIL_NOT_EXIST = new ApiError("QC_APPLICATION_DETAIL_NOT_EXIST", 16001, "质检申请明细单不存在");
+    public static final ApiError QC_APPLICATION_SUPPLIER_NOT_DIFF = new ApiError("QC_APPLICATION_SUPPLIER_NOT_DIFF", 16002, "质检申请单明细单供应商与来源单据供应商不一致");
+    public static final ApiError QC_APPLICATION_NOT_APPROVE_PUSH = new ApiError("QC_APPLICATION_NOT_APPROVE_PUSH", 16003, "质检申请单未审核不支持下推");
+    public static final ApiError QC_APPLICATION_EXPECT_QC_DATE_NOT_BEFORE_NOW = new ApiError("QC_APPLICATION_EXPECT_QC_DATE_NOT_BEFORE_NOW", 16004, "期望质检日期不能早于当前日期");
+    public static final ApiError QC_APPLICATION_DETAIL_QTY_NOT_GREATER_THAN_PO_QTY = new ApiError("QC_APPLICATION_DETAIL_QTY_NOT_GREATER_THAN_PO_QTY", 16005, "申请质检数量不能大于未入库数量，SKU【{0}】未入库数量：【{1}】");
+    public static final ApiError QC_STANDARD_SKU_NOT_FOUND = new ApiError("QC_STANDARD_SKU_NOT_FOUND", 11140, "SKU【{0}】未查得质检标准");
+    public static final ApiError QC_STANDARD_NOT_FOUND = new ApiError("QC_STANDARD_NOT_FOUND", 11141, "质检标准不存在");
+    public static final ApiError QC_STANDARD_SKU_EXISTS = new ApiError("QC_STANDARD_SKU_EXISTS", 11142, "该SKU已存在质检标准");
+    public static final ApiError QC_STANDARD_IMPORT_SKU_NOT_FOUND = new ApiError("QC_STANDARD_IMPORT_SKU_NOT_FOUND", 11143, "未在Excel中找到“产品SKU”对应值");
+    public static final ApiError QC_STANDARD_IMPORT_DETAIL_NOT_FOUND = new ApiError("QC_STANDARD_IMPORT_DETAIL_NOT_FOUND", 11144, "未发现有效的质检明细（请确保从第15行开始有数字序号的明细项）");
+    public static final ApiError QC_APPLICATION_DETAIL_QTY_NOT_GREATER_THAN_WAIT_DELIVERY_QTY = new ApiError("QC_APPLICATION_DETAIL_QTY_NOT_GREATER_THAN_WAIT_DELIVERY_QTY", 16006, "申请质检数量不能大于剩余送货数量，SKU【{0}】剩余送货数量：【{1}】");
+    public static final ApiError QC_APPLICATION_SOURCE_WAIT_DELIVERY_NOT_OPTION = new ApiError("QC_APPLICATION_SOURCE_WAIT_DELIVERY_NOT_OPTION", 16007, "待发货来源质检申请单不允许操作");
+    public static final ApiError QC_APPLICATION_SOURCE_PO_NOT_OPTION = new ApiError("QC_APPLICATION_SOURCE_PO_NOT_OPTION", 16008, "采购订单/自建质检申请单不允许操作");
+    public static final ApiError QC_APPLICATION_PUSH_QC_NOTICE_NOT_DISAPPROVE = new ApiError("QC_APPLICATION_PUSH_QC_NOTICE_NOT_DISAPPROVE", 16009, "质检申请单已下推质检通知单，不支持反审核");
+    public static final ApiError QC_APPLICATION_PUSH_QC_NOTICE_NOT_PUSH = new ApiError("QC_APPLICATION_PUSH_QC_NOTICE_NOT_PUSH", 16010, "质检申请单已下推质检通知单，不支持再次下推");
+    public static final ApiError CFG_QC_USER_NOT_EXIST = new ApiError("CFG_QC_USER_NOT_EXIST", 16011, "未找到质检员配置");
+    public static final ApiError CFG_QC_USER_SUPPLIER_DUPLICATE = new ApiError("CFG_QC_USER_SUPPLIER_DUPLICATE", 16012, "供应商【{0}】仓库【{1}】已配置质检员，不允许重复添加");
+    public static final ApiError CFG_QC_USER_SUPPLIER_REQUIRED = new ApiError("CFG_QC_USER_SUPPLIER_REQUIRED", 16013, "供应商编码不能为空");
+    public static final ApiError CFG_QC_USER_SUPPLIER_NOT_FOUND = new ApiError("CFG_QC_USER_SUPPLIER_NOT_FOUND", 16014, "供应商编码【{0}】不存在");
+    public static final ApiError CFG_QC_USER_IMPORT_USER_NOT_IN_ORG = new ApiError("CFG_QC_USER_IMPORT_USER_NOT_IN_ORG", 16015, "质检员【{0}】在仓库对应组织下不存在业务员任岗明细");
+    public static final ApiError CFG_QC_USER_WAREHOUSE_REQUIRED = new ApiError("CFG_QC_USER_WAREHOUSE_REQUIRED", 16016, "仓库不能为空");
+    public static final ApiError CFG_QC_USER_WAREHOUSE_NOT_FOUND = new ApiError("CFG_QC_USER_WAREHOUSE_NOT_FOUND", 16017, "仓库【{0}】不存在");
+    public static final ApiError CFG_QC_USER_WAREHOUSE_NAME_DUPLICATE = new ApiError("CFG_QC_USER_WAREHOUSE_NAME_DUPLICATE", 16018, "仓库名称【{0}】存在多条记录，请使用唯一仓库名称");
+    public static final ApiError PO_QC_NOTICE_PLAN_QC_DATE_REQUIRED = new ApiError("PO_QC_NOTICE_PLAN_QC_DATE_REQUIRED", 16019, "外验质检类型审核通过时，计划质检日期不能为空");
+    public static final ApiError PO_QC_NOTICE_PLAN_QC_DATE_NOT_BEFORE_NOW = new ApiError("PO_QC_NOTICE_PLAN_QC_DATE_NOT_BEFORE_NOW", 16020, "计划质检日期只能选择当前及以后的日期");
+    public static final ApiError CFG_QC_USER_QC_USER_AT_LEAST_ONE = new ApiError("CFG_QC_USER_QC_USER_AT_LEAST_ONE", 16021, "至少需要配置一名质检员");
+    public static final ApiError CFG_QC_USER_LOAD_QC_USER_LIST_FAILED = new ApiError("CFG_QC_USER_LOAD_QC_USER_LIST_FAILED", 16022, "加载质检员列表失败，请稍后重试");
+    public static final ApiError CFG_QC_USER_UPDATE_KEY_NOT_MODIFIABLE = new ApiError("CFG_QC_USER_UPDATE_KEY_NOT_MODIFIABLE", 16023, "修改时不允许变更供应商或仓库");
+    public static final ApiError QC_NOTICE_PARAM_REQUIRED = new ApiError("QC_NOTICE_PARAM_REQUIRED", 16024, "请输入质检通知单号或选择明细");
+    public static final ApiError QC_NOTICE_DETAILS_MUST_SAME_NOTICE = new ApiError("QC_NOTICE_DETAILS_MUST_SAME_NOTICE", 16025, "选中的明细必须属于同一质检通知单");
+    public static final ApiError QC_NOTICE_UPDATE_QC_USER_STATUS_INVALID = new ApiError("QC_NOTICE_UPDATE_QC_USER_STATUS_INVALID", 16026, "只能更新待质检状态通知单的质检员");
+    public static final ApiError QC_NOTICE_QC_USER_ID_REQUIRED = new ApiError("QC_NOTICE_QC_USER_ID_REQUIRED", 16027, "质检员id不能为空");
+    public static final ApiError QC_NOTICE_DETAIL_UPDATE_QC_USER_STATUS_INVALID = new ApiError("QC_NOTICE_DETAIL_UPDATE_QC_USER_STATUS_INVALID", 16028, "只能更新待质检状态明细的质检员");
+    public static final ApiError REPLENISHMENT_ONLY_NORMAL_ALLOW_STOP = new ApiError("REPLENISHMENT_ONLY_NORMAL_ALLOW_STOP", 14500, "只有正常补货数据支持暂不补货");
+    public static final ApiError REPLENISHMENT_ONLY_STOPPED_ALLOW_RESTORE = new ApiError("REPLENISHMENT_ONLY_STOPPED_ALLOW_RESTORE", 14501, "只有暂不补货数据支持恢复补货");
+    public static final ApiError REPLENISHMENT_STOCK_UP_RULE_CONFIG_NOT_EXIST = new ApiError("REPLENISHMENT_STOCK_UP_RULE_CONFIG_NOT_EXIST", 14502, "备货规则配置不存在");
+    public static final ApiError REPLENISHMENT_SALES_RULE_CONFIG_NOT_EXIST = new ApiError("REPLENISHMENT_SALES_RULE_CONFIG_NOT_EXIST", 14503, "销量【{0}】规则配置不存在");
+    public static final ApiError REPLENISHMENT_NEW_PRODUCT_RULE_CONFIG_NOT_EXIST = new ApiError("REPLENISHMENT_NEW_PRODUCT_RULE_CONFIG_NOT_EXIST", 14504, "新品系统规则配置不存在");
+    public static final ApiError REPLENISHMENT_DAYS_RULE_CONFIG_NOT_EXIST = new ApiError("REPLENISHMENT_DAYS_RULE_CONFIG_NOT_EXIST", 14505, "补货天数规则配置不存在");
+    public static final ApiError REPLENISHMENT_SUGGESTION_NOT_FOUND = new ApiError("REPLENISHMENT_SUGGESTION_NOT_FOUND", 14506, "未找到补货建议数据");
+    public static final ApiError REPLENISHMENT_SUGGESTION_ONLY_PENDING_CONFIRM_ALLOW = new ApiError("REPLENISHMENT_SUGGESTION_ONLY_PENDING_CONFIRM_ALLOW", 14507, "仅待确认状态的补货建议支持确认操作");
+    public static final ApiError REPLENISHMENT_SUGGESTION_ONLY_DRAFT_ALLOW_LOCK = new ApiError("REPLENISHMENT_SUGGESTION_ONLY_DRAFT_ALLOW_LOCK", 14508, "仅草稿状态的补货建议支持锁定操作");
+    public static final ApiError REPLENISHMENT_SUGGESTION_PUSHED_INVALID_FORBIDDEN = new ApiError("REPLENISHMENT_SUGGESTION_PUSHED_INVALID_FORBIDDEN", 14509, "已下推的补货建议不支持作废操作");
+    public static final ApiError REPLENISHMENT_SUGGESTION_UPDATE_REMARK_FORBIDDEN = new ApiError("REPLENISHMENT_SUGGESTION_UPDATE_REMARK_FORBIDDEN", 14510, "仅未作废的草稿和待确认补货建议支持更新备注");
+    public static final ApiError REPLENISHMENT_SUGGESTION_UPDATE_FORBIDDEN = new ApiError("REPLENISHMENT_SUGGESTION_UPDATE_FORBIDDEN", 14511, "仅未作废的草稿和待确认补货建议支持更新");
+    public static final ApiError SAMPLE_AVAILABLE_QTY_EXCEEDS_LEDGER = new ApiError("SAMPLE_AVAILABLE_QTY_EXCEEDS_LEDGER", 12000, "SKU【{0}】{1}数量不能大于台账数量");
+    public static final ApiError SAMPLE_BORROW_DATE_INVALID = new ApiError("SAMPLE_BORROW_DATE_INVALID", 12001, "预计退回日期不能小于借用日期");
+    public static final ApiError SAMPLE_GENERATE_RETURN_VIEW_ALLOWED_APPROVED_ONLY = new ApiError("SAMPLE_GENERATE_RETURN_VIEW_ALLOWED_APPROVED_ONLY", 12002, "仅已审核且可归还数量大于0的样品借用单支持下推样品归还单");
+    public static final ApiError SAMPLE_GENERATE_VIEW_LEDGER_QTY_ZERO_FORBIDDEN = new ApiError("SAMPLE_GENERATE_VIEW_LEDGER_QTY_ZERO_FORBIDDEN", 12003, "台账数量为0，无法下推{0}");
+    public static final ApiError SAMPLE_GENERATE_VIEW_USER_UNIQUE_REQUIRED = new ApiError("SAMPLE_GENERATE_VIEW_USER_UNIQUE_REQUIRED", 12004, "请勿选择多个{0}，仅支持针对单一样品生成");
+    public static final ApiError SAMPLE_RETURN_QTY_NOT_EXIST = new ApiError("SAMPLE_RETURN_QTY_NOT_EXIST", 12005, "【{0}】不存在可归还数量");
+    public static final ApiError SAMPLE_RETURN_QTY_NOT_ENOUGH = new ApiError("SAMPLE_RETURN_QTY_NOT_ENOUGH", 12006, "SKU【{0}】归还数量【{1}】不能大于可归还数量【{2}】");
+    public static final ApiError SAMPLE_LEDGER_NOT_EXIST = new ApiError("SAMPLE_LEDGER_NOT_EXIST", 12007, "样品台账不存在");
+    public static final ApiError SAMPLE_BORROW_USER_SAME_FORBIDDEN = new ApiError("SAMPLE_BORROW_USER_SAME_FORBIDDEN", 12008, "借入人和借出人不能为同一人");
+    public static final ApiError SAMPLE_RETURN_USER_SAME_FORBIDDEN = new ApiError("SAMPLE_RETURN_USER_SAME_FORBIDDEN", 12009, "归还人和接收人不能为同一人");
+    public static final ApiError SAMPLE_RETURN_EXIST_REVERSE_FORBIDDEN = new ApiError("SAMPLE_RETURN_EXIST_REVERSE_FORBIDDEN", 12010, "已下推的样品归还单不支持反审核");
+    public static final ApiError SAMPLE_GENERATE_RETURN_QTY_ZERO = new ApiError("SAMPLE_GENERATE_RETURN_QTY_ZERO", 12011, "可归还数量为0，没有可下推的数据");
+    public static final ApiError SAMPLE_ASSET_ACCEPT_QTY_EXCEEDS_PURCHASE_QTY = new ApiError("SAMPLE_ASSET_ACCEPT_QTY_EXCEEDS_PURCHASE_QTY", 12012, "资产验收数量不能大于模具采购单的采购数量");
+    public static final ApiError SAMPLE_ASSET_NOT_FOUND = new ApiError("SAMPLE_ASSET_NOT_FOUND", 12013, "资产卡片【{0}】不存在");
+    public static final ApiError SAMPLE_ASSET_DISPOSAL_QTY_EXCEEDS_BOOK_QTY = new ApiError("SAMPLE_ASSET_DISPOSAL_QTY_EXCEEDS_BOOK_QTY", 12014, "资产编码【{0}】处置数量不能大于账存数量");
+    public static final ApiError SAMPLE_B2C_DISAPPROVE_FORBIDDEN = new ApiError("SAMPLE_B2C_DISAPPROVE_FORBIDDEN", 12015, "B2C寄样单不允许反审核");
+    public static final ApiError SAMPLE_B2C_CANCEL_APPROVE_REQUIRED = new ApiError("SAMPLE_B2C_CANCEL_APPROVE_REQUIRED", 12016, "B2C寄样单仅审核通过后允许取消");
+    public static final ApiError SAMPLE_B2C_CANCEL_STATUS_INVALID = new ApiError("SAMPLE_B2C_CANCEL_STATUS_INVALID", 12017, "B2C寄样单当前单据状态不允许取消");
+    public static final ApiError SAMPLE_B2C_CANCEL_ALREADY = new ApiError("SAMPLE_B2C_CANCEL_ALREADY", 12018, "B2C寄样单已取消，不允许再次取消");
+    public static final ApiError SAMPLE_ADDRESS_PARSE_ONLY_CN = new ApiError("SAMPLE_ADDRESS_PARSE_ONLY_CN", 12019, "只支持中国地区地址解析，请检查地址内容");
+    public static final ApiError SAMPLE_ADDRESS_PARSE_EMPTY_INPUT = new ApiError("SAMPLE_ADDRESS_PARSE_EMPTY_INPUT", 12020, "待解析地址不能为空");
+    public static final ApiError SAMPLE_B2B_APPLICATION_NOT_FOUND = new ApiError("SAMPLE_B2B_APPLICATION_NOT_FOUND", 10716, "B2B寄样申请单不存在");
+    public static final ApiError SAMPLE_B2B_APPLICATION_DETAIL_NOT_FOUND = new ApiError("SAMPLE_B2B_APPLICATION_DETAIL_NOT_FOUND", 10717, "B2B寄样申请单明细不存在");
+    public static final ApiError SAMPLE_B2B_APPLICATION_NOT_APPROVED = new ApiError("SAMPLE_B2B_APPLICATION_NOT_APPROVED", 10718, "B2B寄样申请单【{0}】未审核完成，暂不支持下推");
+    public static final ApiError SAMPLE_PUSH_DETAIL_ID_NOT_FOUND = new ApiError("SAMPLE_PUSH_DETAIL_ID_NOT_FOUND", 10719, "未找到明细ID【{0}】对应的B2B寄样申请明细");
+    public static final ApiError SAMPLE_PUSH_WAREHOUSE_MISMATCH = new ApiError("SAMPLE_PUSH_WAREHOUSE_MISMATCH", 10720, "B2B寄样申请单【{0}】明细下推的发货仓库不一致");
+    public static final ApiError SAMPLE_PUSH_SALES_ORG_MISMATCH = new ApiError("SAMPLE_PUSH_SALES_ORG_MISMATCH", 10721, "B2B寄样申请单【{0}】明细下推的销售组织不一致");
+    public static final ApiError SAMPLE_B2C_APPROVED_REQUIRED = new ApiError("SAMPLE_B2C_APPROVED_REQUIRED", 10722, "请选择审核通过的B2C寄样申请数据");
+    public static final ApiError SAMPLE_B2C_HAS_GENERATED_SO = new ApiError("SAMPLE_B2C_HAS_GENERATED_SO", 10723, "B2C寄样申请已生成销售订单，不支持反审核");
+    public static final ApiError SAMPLE_PARTNER_MULTIPLE_DEFAULT_ADDRESS_FORBIDDEN = new ApiError("SAMPLE_PARTNER_MULTIPLE_DEFAULT_ADDRESS_FORBIDDEN", 10724, "企业达人不允许配置多个默认地址");
+    public static final ApiError SAMPLE_B2B_DETAIL_ALREADY_PUSHED_SO = new ApiError("SAMPLE_B2B_DETAIL_ALREADY_PUSHED_SO", 10725, "B2B寄样申请单【{0}】SKU【{1}】已下推销售订单，禁止重复下推");
+    public static final ApiError SAMPLE_B2B_PUSHED_SO_DETAIL_DELETE_FORBIDDEN = new ApiError("SAMPLE_B2B_PUSHED_SO_DETAIL_DELETE_FORBIDDEN", 10726, "由B2B寄样申请单下推生成的销售订单明细不允许删除");
+    public static final ApiError SAMPLE_B2C_APPLICATION_SAVE_FAILED = new ApiError("SAMPLE_B2C_APPLICATION_SAVE_FAILED", 10728, "B2C寄样申请单保存失败");
+    public static final ApiError SAMPLE_B2C_CN_DISTRICT_REQUIRED = new ApiError("SAMPLE_B2C_CN_DISTRICT_REQUIRED", 10729, "国家为中国大陆时区域不能为空");
+    public static final ApiError SAMPLE_B2C_DUPLICATE_PARTNER_ADDRESS = new ApiError("SAMPLE_B2C_DUPLICATE_PARTNER_ADDRESS", 10730, "存在重复的达人地址：{0}");
+    public static final ApiError SAMPLE_B2C_APPLICATION_DETAIL_NOT_FOUND = new ApiError("SAMPLE_B2C_APPLICATION_DETAIL_NOT_FOUND", 10731, "B2C寄样申请明细不存在");
+    public static final ApiError SAMPLE_B2C_DETAIL_REMARK_UPDATE_FAILED = new ApiError("SAMPLE_B2C_DETAIL_REMARK_UPDATE_FAILED", 10732, "B2C寄样申请明细备注更新失败");
+    public static final ApiError SAMPLE_B2C_SHOP_DISABLED_ADD_ORDER_FORBIDDEN = new ApiError("SAMPLE_B2C_SHOP_DISABLED_ADD_ORDER_FORBIDDEN", 10733, "店铺已禁用，无法新增订单");
+    public static final ApiError SAMPLE_B2C_APPROVE_CALLBACK_SUB_ORDER_NOT_FOUND = new ApiError("SAMPLE_B2C_APPROVE_CALLBACK_SUB_ORDER_NOT_FOUND", 10734, "KOL B2C审批回调无法定位唯一拆分单，subOrderId={0}，subOrderCode={1}，syncTaskId={2}");
+    public static final ApiError SAMPLE_B2C_APPROVED_SO_FORBIDDEN_ACTION = new ApiError("SAMPLE_B2C_APPROVED_SO_FORBIDDEN_ACTION", 10735, "关联B2C销售订单已审核通过，不允许{0}B2C寄样申请单");
+    public static final ApiError SAMPLE_APPLY_NOT_FOUND = new ApiError("SAMPLE_APPLY_NOT_FOUND", 10738, "样品领用单不存在");
+    public static final ApiError SAMPLE_ONLY_AUDITING_ALLOW_MODIFY_QTY = new ApiError("SAMPLE_ONLY_AUDITING_ALLOW_MODIFY_QTY", 10739, "只有审核中的样品领用单才能修改审核数量");
+    public static final ApiError SAMPLE_VOIDED_MODIFY_QTY_FORBIDDEN = new ApiError("SAMPLE_VOIDED_MODIFY_QTY_FORBIDDEN", 10740, "已作废的样品领用单不支持修改审核数量");
+    public static final ApiError SAMPLE_DETAIL_NOT_BELONG_TO_APPLY = new ApiError("SAMPLE_DETAIL_NOT_BELONG_TO_APPLY", 10741, "部分明细不存在或不属于该样品领用单");
+    public static final ApiError SAMPLE_AUDIT_QTY_EXCEEDS_APPLY_QTY = new ApiError("SAMPLE_AUDIT_QTY_EXCEEDS_APPLY_QTY", 10742, "SKU【{0}】的审核数量【{1}】不能大于领用数量【{2}】");
+    public static final ApiError SAMPLE_AUDIT_QTY_UPDATE_FAILED = new ApiError("SAMPLE_AUDIT_QTY_UPDATE_FAILED", 10743, "修改审核数量失败");
+    public static final ApiError SAMPLE_PARTNER_IN_USE = new ApiError("SAMPLE_PARTNER_IN_USE", 10744, "企业达人已被引用，不允许删除");
+    public static final ApiError SAMPLE_ASSET_ACCEPT_DETAIL_NOT_FOUND = new ApiError("SAMPLE_ASSET_ACCEPT_DETAIL_NOT_FOUND", 10744, "资产验收单明细不存在");
+    public static final ApiError SAMPLE_ASSET_PURCHASE_ORDER_NOT_FOUND = new ApiError("SAMPLE_ASSET_PURCHASE_ORDER_NOT_FOUND", 10745, "资产采购订单不存在");
+    public static final ApiError SAMPLE_ASSET_PURCHASE_ORDER_DETAIL_NOT_FOUND = new ApiError("SAMPLE_ASSET_PURCHASE_ORDER_DETAIL_NOT_FOUND", 10746, "资产采购订单明细不存在");
+    public static final ApiError SAMPLE_USER_ID_CHINESE_NOT_FOUND = new ApiError("SAMPLE_USER_ID_CHINESE_NOT_FOUND", 10745, "领用人【{0}】不存在，请传入正确的用户ID或用户名称");
+    public static final ApiError SAMPLE_USER_ID_CHINESE_QUERY_FAILED = new ApiError("SAMPLE_USER_ID_CHINESE_QUERY_FAILED", 10746, "领用人【{0}】查询失败，请传入正确的用户ID或用户名称");
+    public static final ApiError SAMPLE_USE_USER_ID_CHINESE_NOT_FOUND = new ApiError("SAMPLE_USE_USER_ID_CHINESE_NOT_FOUND", 10747, "使用方【{0}】不存在，请传入正确的使用方ID或使用方名称");
+    public static final ApiError SAMPLE_USE_USER_ID_CHINESE_QUERY_FAILED = new ApiError("SAMPLE_USE_USER_ID_CHINESE_QUERY_FAILED", 10748, "使用方【{0}】查询失败，请传入正确的使用方ID或使用方名称");
+    public static final ApiError VM_INVENTORY_INSUFFICIENT = new ApiError("VM_INVENTORY_INSUFFICIENT", 12500, "虚拟库存不足，SKU:[{0}]，虚拟仓库:[{1}]，实物仓库:[{2}]，库存状态:[{3}]，当前库存[{4}]，交易数量[{5}]");
+    public static final ApiError VM_NAME_EXIST = new ApiError("VM_NAME_EXIST", 12501, "虚拟仓名称已存在");
+    public static final ApiError VM_NOT_EXIST = new ApiError("VM_NOT_EXIST", 12502, "虚拟仓不存在");
+    public static final ApiError VM_ALLOCATION_DETAIL_SAVE_FAILED = new ApiError("VM_ALLOCATION_DETAIL_SAVE_FAILED", 12503, "分货单明细保存失败");
+    public static final ApiError VM_FROM_TO_BOTH_EMPTY = new ApiError("VM_FROM_TO_BOTH_EMPTY", 12504, "调入虚拟仓与调出虚拟仓不能同时为空");
+    public static final ApiError VM_FROM_TO_SAME = new ApiError("VM_FROM_TO_SAME", 12505, "调入虚拟仓与调出虚拟仓不能为同一虚拟仓");
+    public static final ApiError VM_TARGET_NOT_FOUND = new ApiError("VM_TARGET_NOT_FOUND", 12506, "调入虚拟仓不存在");
+    public static final ApiError VM_TARGET_NOT_ACTIVE = new ApiError("VM_TARGET_NOT_ACTIVE", 12507, "调入虚拟仓未启用");
+    public static final ApiError VM_SOURCE_NOT_FOUND = new ApiError("VM_SOURCE_NOT_FOUND", 12508, "调出虚拟仓不存在");
+    public static final ApiError VM_SOURCE_NOT_ACTIVE = new ApiError("VM_SOURCE_NOT_ACTIVE", 12509, "调出虚拟仓未启用");
+    public static final ApiError VM_SOURCE_INVENTORY_INSUFFICIENT = new ApiError("VM_SOURCE_INVENTORY_INSUFFICIENT", 12510, "调出虚拟仓库存不足，SKU【{0}】，虚拟仓【{1}】，可用库存【{2}】");
+    public static final ApiError VM_ALLOCATION_NOT_FOUND = new ApiError("VM_ALLOCATION_NOT_FOUND", 12511, "分货单【{0}】不存在");
+    public static final ApiError VM_MANUAL_STATUS_ERROR = new ApiError("VM_MANUAL_STATUS_ERROR", 12512, "仅已处理且同步失败状态的记录才可手动完结");
+    public static final ApiError VM_SYNC_ERROR_STATUS_ONLY = new ApiError("VM_SYNC_ERROR_STATUS_ONLY", 12513, "仅已处理且同步失败状态的记录才可重新同步");
+    public static final ApiError VM_RELATION_ERROR = new ApiError("VM_RELATION_ERROR", 12514, "实体仓【{0}】未关联虚拟仓【{1}】");
+    public static final ApiError VM_ALLOCATION_UNIQUE_ERROR = new ApiError("VM_ALLOCATION_UNIQUE_ERROR", 12515, "“SKU【{0}】- 实体仓【{1}】- 调入虚拟仓【{2}】”记录重复\n");
+    public static final ApiError VM_ALLOCATION_TRANSFER_UNIQUE_ERROR = new ApiError("VM_ALLOCATION_TRANSFER_UNIQUE_ERROR", 12516, "“SKU【{0}】- 实体仓【{1}】- 调入虚拟仓【{2}】- 调出虚拟仓【{3}】”记录重复\n");
+    public static final ApiError VM_ALLOCATION_CANCEL_UNIQUE_ERROR = new ApiError("VM_ALLOCATION_CANCEL_UNIQUE_ERROR", 12517, "“SKU【{0}】- 实体仓【{1}】- 调出虚拟仓【{2}】”记录重复\n");
+    public static final ApiError VM_STOCK_NOT_EMPTY = new ApiError("VM_STOCK_NOT_EMPTY", 12518, "虚拟仓库存不为0，操作失败");
+    public static final ApiError VM_ENTITY_STOCK_NOT_EMPTY = new ApiError("VM_ENTITY_STOCK_NOT_EMPTY", 12519, "虚拟仓在实体仓【{0}】下库存不为0，操作失败");
+    public static final ApiError VM_THIRD_VIRTUAL_WAREHOUSE_BINDED = new ApiError("VM_THIRD_VIRTUAL_WAREHOUSE_BINDED", 12520, "旺店通虚拟仓【{0}】已与仓库【{1}】关联");
+    public static final ApiError VM_NO_SYNC_INFO = new ApiError("VM_NO_SYNC_INFO", 12521, "暂无可同步信息");
+    public static final ApiError VM_CHECK_OUT_VIRTUAL_INVENTORY = new ApiError("VM_CHECK_OUT_VIRTUAL_INVENTORY", 12522, "SKU【{0}】实体仓【{1}】虚拟仓库存已分配【{2}】，出库数量不能超过【{3}】");
+    public static final ApiError VM_CHANNEL_RELATION_ERROR = new ApiError("VM_CHANNEL_RELATION_ERROR", 12523, "平台【{0}】店铺【{1}】军区【{2}】已绑定虚拟仓【{3}】\n");
+    public static final ApiError VM_SAME_WAREHOUSE_B2B_FOREIGN_ERROR = new ApiError("VM_SAME_WAREHOUSE_B2B_FOREIGN_ERROR", 12525, "实体仓【{0}】下虚拟仓【{1}】已配置平台【{2}】，同一实体仓的不同虚拟仓不可重复配置");
+    public static final ApiError VM_INVENTORY_INSUFFICIENT_FOR_TRANSFER = new ApiError("VM_INVENTORY_INSUFFICIENT_FOR_TRANSFER", 12524, "虚拟仓【{0}】库存不足");
+    public static final ApiError VM_FROM_WAREHOUSE_NOT_BLANK = new ApiError("VM_FROM_WAREHOUSE_NOT_BLANK", 92290, "启动自动借调时，借调仓不能为空");
+    public static final ApiError VM_NOT_CONTAINS_FROM_WAREHOUSE = new ApiError("VM_NOT_CONTAINS_FROM_WAREHOUSE", 92291, "虚拟仓关联实体仓不能包含借调仓");
+    public static final ApiError VM_ALLOCATION_NOT_REPEAT = new ApiError("VM_ALLOCATION_NOT_REPEAT", 92292, "存在未同步成功的虚拟仓分货单调出任务，调出仓库ID：{0}，调出虚拟仓ID：{1}，SKU：{2}，请确认后再操作");
+    public static final ApiError VM_VIRTUAL_WAREHOUSE_NOT_FOUND = new ApiError("VM_VIRTUAL_WAREHOUSE_NOT_FOUND", 12524, "虚拟仓【{0}】未找到");
+    public static final ApiError VM_WDT_ENTITY_INVENTORY_INSUFFICIENT = new ApiError("VM_WDT_ENTITY_INVENTORY_INSUFFICIENT", 12525, "提交失败，旺店通【{0}】【{1}】可用库存不足无法分货，可用库存【{2}】，分配数量【{3}】");
+    public static final ApiError WH_MACHINE_EXIST_PURCHASE_RETURN = new ApiError("WH_MACHINE_EXIST_PURCHASE_RETURN", 11000, "加工单【{0}】已存在下推采购退货单，不支持反审核");
+    public static final ApiError WH_LOCATION_REQUIRED = new ApiError("WH_LOCATION_REQUIRED", 11001, "仓库【{0}】下必须配置至少一个仓位，仓位不能为空");
+    public static final ApiError WH_TRANSFER_DIRECT_ALREADY_PUSHED_REVERSE_FORBIDDEN = new ApiError("WH_TRANSFER_DIRECT_ALREADY_PUSHED_REVERSE_FORBIDDEN", 11002, "【{0}】已存在下推的直接调拨单，不允许执行反审核操作");
+    public static final ApiError WH_TRANSFER_IN_OUT_WAREHOUSE_MUST_DIFFER = new ApiError("WH_TRANSFER_IN_OUT_WAREHOUSE_MUST_DIFFER", 11003, "【{0}】调入仓库和调出仓库不能是同一仓库");
+    public static final ApiError WH_TRANSFER_MB_UPDATE_NOT_ALLOWED = new ApiError("WH_TRANSFER_MB_UPDATE_NOT_ALLOWED", 11004, "马帮直接调拨单不允许修改");
+    public static final ApiError WH_K3_CLOUD_WAREHOUSE_CODE_EXISTS = new ApiError("WH_K3_CLOUD_WAREHOUSE_CODE_EXISTS", 11005, "金蝶仓库编号已存在，不允许重复维护");
+    public static final ApiError WH_REQUIRED = new ApiError("WH_REQUIRED", 11006, "仓库不能为空，请先选择仓库");
+    public static final ApiError WH_NOT_FOUND = new ApiError("WH_NOT_FOUND", 11007, "未找到对应的仓库信息");
+    public static final ApiError WH_STOCK_RULE_WAREHOUSE_CONFIG_ERROR = new ApiError("WH_STOCK_RULE_WAREHOUSE_CONFIG_ERROR", 11008, "库存交易规则的仓库配置错误，请联系系统管理员");
+    public static final ApiError WH_STOCK_RULE_BIZ_TYPE_ERROR = new ApiError("WH_STOCK_RULE_BIZ_TYPE_ERROR", 11009, "库存交易规则未正确配置业务类型【{0}】，请联系系统管理员");
+    public static final ApiError WH_STOCK_INSUFFICIENT = new ApiError("WH_STOCK_INSUFFICIENT", 11010, "库存不足，SKU:[{0}]，仓库:[{1}]，仓位:[{2}]，库存状态:[{3}]，当前库存[{4}]，交易数量[{5}]");
+    public static final ApiError WH_STOCK_RULE_STATUS_CONFIG_ERROR = new ApiError("WH_STOCK_RULE_STATUS_CONFIG_ERROR", 11011, "库存交易规则的库存状态配置错误，请联系系统管理员");
+    public static final ApiError WH_STOCK_RULE_TX_TYPE_ERROR = new ApiError("WH_STOCK_RULE_TX_TYPE_ERROR", 11012, "库存交易规则的交易类型配置错误，请联系系统管理员");
+    public static final ApiError WH_STOCK_TRANSFER_SRC_DEST_SAME = new ApiError("WH_STOCK_TRANSFER_SRC_DEST_SAME", 11013, "库存交易的当前仓与目的仓不能为同一仓库");
+    public static final ApiError WH_STOCK_TX_NOT_FOUND_OR_REVERSED = new ApiError("WH_STOCK_TX_NOT_FOUND_OR_REVERSED", 11014, "库存交易流水不存在或已反审核，无法再次执行反审核");
+    public static final ApiError WH_TRANSFER_APPLY_NOT_FOUND = new ApiError("WH_TRANSFER_APPLY_NOT_FOUND", 11015, "未找到调拨申请单");
+    public static final ApiError WH_TRANSFER_APPLY_DETAIL_NOT_FOUND = new ApiError("WH_TRANSFER_APPLY_DETAIL_NOT_FOUND", 11016, "未找到调拨申请明细");
+    public static final ApiError WH_TRANSFER_APPLY_ALREADY_PUSHED_DIRECT_REVERSE_FORBIDDEN = new ApiError("WH_TRANSFER_APPLY_ALREADY_PUSHED_DIRECT_REVERSE_FORBIDDEN", 11017, "调拨申请单已下推直接调拨单，不支持反审核");
+    public static final ApiError WH_TRANSFER_APPLY_ALREADY_PUSHED_STEP_REVERSE_FORBIDDEN = new ApiError("WH_TRANSFER_APPLY_ALREADY_PUSHED_STEP_REVERSE_FORBIDDEN", 11018, "调拨申请单已下推分步式调出单，不支持反审核");
+    public static final ApiError WH_TRANSFER_DIRECT_NOT_FOUND = new ApiError("WH_TRANSFER_DIRECT_NOT_FOUND", 11019, "未找到直接调拨单");
+    public static final ApiError WH_TRANSFER_DIRECT_DETAIL_NOT_FOUND = new ApiError("WH_TRANSFER_DIRECT_DETAIL_NOT_FOUND", 11020, "未找到直接调拨明细");
+    public static final ApiError WH_TRANSFER_DIRECTION_NOT_FOUND = new ApiError("WH_TRANSFER_DIRECTION_NOT_FOUND", 11021, "未找到调拨方向");
+    public static final ApiError WH_TRANSFER_APPLY_QTY_EXCEEDS = new ApiError("WH_TRANSFER_APPLY_QTY_EXCEEDS", 11022, "调拨申请单【{0}】SKU【{1}】调拨数量不能超过【{2}】");
+    public static final ApiError WH_TRANSFER_APPLY_ALREADY_COMPLETED_DIRECT = new ApiError("WH_TRANSFER_APPLY_ALREADY_COMPLETED_DIRECT", 11023, "调拨申请单【{0}】中SKU【{1}】的直接调拨已完成");
+    public static final ApiError WH_SUBCONTRACT_PROCESS_ORDER_NOT_FOUND = new ApiError("WH_SUBCONTRACT_PROCESS_ORDER_NOT_FOUND", 11024, "未找到加工单");
+    public static final ApiError WH_SUBCONTRACT_PROCESS_ORDER_DETAIL_NOT_FOUND = new ApiError("WH_SUBCONTRACT_PROCESS_ORDER_DETAIL_NOT_FOUND", 11025, "未找到加工单明细");
+    public static final ApiError WH_TRANSFER_APPLY_ALREADY_COMPLETED_STEP_OUT = new ApiError("WH_TRANSFER_APPLY_ALREADY_COMPLETED_STEP_OUT", 11026, "调拨申请单【{0}】中SKU【{1}】的分步式调出已全部完成");
+    public static final ApiError WH_SUBCONTRACT_PROCESS_ORDER_CHILD_DETAIL_NOT_FOUND = new ApiError("WH_SUBCONTRACT_PROCESS_ORDER_CHILD_DETAIL_NOT_FOUND", 11027, "未找到加工单子件明细");
+    public static final ApiError WH_SUBCONTRACT_PROCESS_CHILD_QTY_NOT_MATCH = new ApiError("WH_SUBCONTRACT_PROCESS_CHILD_QTY_NOT_MATCH", 11028, "第【{0}】条产品明细中，SKU【{1}】子件数量合计应等于【{2}】");
+    public static final ApiError WH_OTHER_INBOUND_NOT_FOUND = new ApiError("WH_OTHER_INBOUND_NOT_FOUND", 11029, "未找到其他入库单");
+    public static final ApiError WH_OTHER_INBOUND_DETAIL_NOT_FOUND = new ApiError("WH_OTHER_INBOUND_DETAIL_NOT_FOUND", 11030, "未找到其他入库单明细");
+    public static final ApiError WH_OTHER_OUTBOUND_NOT_FOUND = new ApiError("WH_OTHER_OUTBOUND_NOT_FOUND", 11031, "未找到其他出库单");
+    public static final ApiError WH_OTHER_OUTBOUND_DETAIL_NOT_FOUND = new ApiError("WH_OTHER_OUTBOUND_DETAIL_NOT_FOUND", 11032, "未找到其他出库单明细");
+    public static final ApiError WH_OTHER_OUTBOUND_CUSTOMER_NOT_FOUND = new ApiError("WH_OTHER_OUTBOUND_CUSTOMER_NOT_FOUND", 11033, "未找到其他出库单对应的客户信息");
+    public static final ApiError WH_TRANSFER_APPLY_APPROVED_ONLY_CAN_PUSH = new ApiError("WH_TRANSFER_APPLY_APPROVED_ONLY_CAN_PUSH", 11034, "仅已审核的调拨申请单支持下推单据");
+    public static final ApiError WH_TRANSFER_IN_QTY_EXCEEDS_OUT_QTY = new ApiError("WH_TRANSFER_IN_QTY_EXCEEDS_OUT_QTY", 11035, "调入数量不能大于调出数量");
+    public static final ApiError WH_TRANSFER_INBOUND_NOT_FOUND = new ApiError("WH_TRANSFER_INBOUND_NOT_FOUND", 11036, "未找到分步式调入单");
+    public static final ApiError WH_TRANSFER_OUTBOUND_NOT_FOUND = new ApiError("WH_TRANSFER_OUTBOUND_NOT_FOUND", 11037, "未找到分步式调出单");
+    public static final ApiError WH_TRANSFER_OUT_WAREHOUSE_IMMUTABLE = new ApiError("WH_TRANSFER_OUT_WAREHOUSE_IMMUTABLE", 11038, "调出仓库不允许修改");
+    public static final ApiError WH_TRANSFER_IN_QTY_EXCEEDS_PLAN = new ApiError("WH_TRANSFER_IN_QTY_EXCEEDS_PLAN", 11039, "调入数量+途损数量 不能超过计划调入数量");
+    public static final ApiError WH_SKU_STOCK_INSUFFICIENT = new ApiError("WH_SKU_STOCK_INSUFFICIENT", 11040, "sku【{0}】可用库存数不足，请调整数量");
+    public static final ApiError WH_K3_CLOUD_WAREHOUSE_CODE_NOT_FOUND = new ApiError("WH_K3_CLOUD_WAREHOUSE_CODE_NOT_FOUND", 11041, "未找到仓库对应的金蝶编号【{0}】");
+    public static final ApiError WH_TRANSFER_ALREADY_EXISTS = new ApiError("WH_TRANSFER_ALREADY_EXISTS", 11042, "ERP中已存在直接调拨单【{0}】");
+    public static final ApiError WH_RETURN_QTY_EXCEEDS_PENDING_QC = new ApiError("WH_RETURN_QTY_EXCEEDS_PENDING_QC", 11043, "【{0}】的退货数量不能大于待检库存数量");
+    public static final ApiError WH_LOCATION_DEFAULT_STAGING_NOT_FOUND = new ApiError("WH_LOCATION_DEFAULT_STAGING_NOT_FOUND", 11044, "仓库对应的默认暂存库位不存在，请联系管理员维护");
+    public static final ApiError WH_LOCATION_STAGING_NOT_FOUND = new ApiError("WH_LOCATION_STAGING_NOT_FOUND", 11045, "仓库【{0}】对应的默认暂存库位不存在");
+    public static final ApiError WH_BIN_NOT_AVAILABLE = new ApiError("WH_BIN_NOT_AVAILABLE", 11046, "暂无可用仓位，请检查仓位配置");
+    public static final ApiError WH_REF_LOCATION_NOT_FOUND = new ApiError("WH_REF_LOCATION_NOT_FOUND", 11047, "仓库【{0}】下未找到有效仓位【{1}】");
+    public static final ApiError WH_STOCKTAKING_TASK_STARTED = new ApiError("WH_STOCKTAKING_TASK_STARTED", 11048, "盘点任务已开始, 无法反审核");
+    public static final ApiError WH_LOCATION_IS_NULL = new ApiError("WH_LOCATION_IS_NULL", 11049, "仓位不能为空");
+    public static final ApiError WH_AREA_IS_NULL = new ApiError("WH_AREA_IS_NULL", 11050, "库区不能为空");
+    public static final ApiError WH_STOCK_FREEZE_NOT_ALLOW = new ApiError("WH_STOCK_FREEZE_NOT_ALLOW", 11051, "仓库【{0}】、库位【{1}】、SKU【{2}】、库存状态【{3}】存在冻结库存【{4}】，当前不允许操作");
+    public static final ApiError WH_NOT_EXIST_ORG = new ApiError("WH_NOT_EXIST_ORG", 11052, "仓库【{0}】未关联库存组织");
+    public static final ApiError WH_STOCKTAKING_TASK_EXIST = new ApiError("WH_STOCKTAKING_TASK_EXIST", 11053, "仓库【{0}】、仓位【{1}】、SKU【{2}】已存在盘点任务");
+    public static final ApiError WH_LOCATION_MOVE_DETAIL_SAVE_FAILED = new ApiError("WH_LOCATION_MOVE_DETAIL_SAVE_FAILED", 11054, "仓位移动明细单保存失败");
+    public static final ApiError WH_LOCATION_MOVE_QTY_EXCEEDS_AVAILABLE = new ApiError("WH_LOCATION_MOVE_QTY_EXCEEDS_AVAILABLE", 11055, "SKU【{0}】仓位移动数量不能大于可用库存数量");
+    public static final ApiError WH_LOCATION_MOVE_FROZEN_QTY_EXCEEDS = new ApiError("WH_LOCATION_MOVE_FROZEN_QTY_EXCEEDS", 11056, "sku【{0}】仓位移动数量不能大于冻结库存数量");
+    public static final ApiError WH_CURRENT_TARGET_WAREHOUSE_MUST_SAME = new ApiError("WH_CURRENT_TARGET_WAREHOUSE_MUST_SAME", 11057, "仓位移动的当前仓与目的仓必须为同一仓库");
+    public static final ApiError WH_INV_CLOSED = new ApiError("WH_INV_CLOSED", 11058, "库存已关账，不允许操作【{0}】之前的单据");
+    public static final ApiError WH_SUBCONTRACT_MACHINE_WAREHOUSE_ORG_DIFF = new ApiError("WH_SUBCONTRACT_MACHINE_WAREHOUSE_ORG_DIFF", 11059, "加工单子件【{0}】仓库【{1}】不属于库存组织【{2}】");
+    public static final ApiError WH_STOCKTAKING_DIFF_QTY_NOT_ZERO = new ApiError("WH_STOCKTAKING_DIFF_QTY_NOT_ZERO", 11060, "盘点差异数量不能为0");
+    public static final ApiError WH_PROFIT_DIFF_GREATER_ZERO_REQUIRED = new ApiError("WH_PROFIT_DIFF_GREATER_ZERO_REQUIRED", 11061, "盘盈单差异数量必须大于0");
+    public static final ApiError WH_LOSS_DIFF_LESS_ZERO_REQUIRED = new ApiError("WH_LOSS_DIFF_LESS_ZERO_REQUIRED", 11062, "盘亏单差异数量必须小于0");
+    public static final ApiError WH_ORG_WAREHOUSE_MISMATCH = new ApiError("WH_ORG_WAREHOUSE_MISMATCH", 11063, "仓库所属组织与当前操作组织不匹配");
+    public static final ApiError WH_DISABLED = new ApiError("WH_DISABLED", 11064, "仓库【{0}】未审核或已被禁用，无法进行盘点");
+    public static final ApiError WH_AREA_LOCATION_DISABLED = new ApiError("WH_AREA_LOCATION_DISABLED", 11065, "仓库【{0}】、库区【{1}】、仓位【{2}】未审核或已禁用，无法进行盘点");
+    public static final ApiError WH_SUBCONTRACT_GENERATE_MACHINE_FOR_COMBINATION_ONLY = new ApiError("WH_SUBCONTRACT_GENERATE_MACHINE_FOR_COMBINATION_ONLY", 11066, "只有组合SKU允许下推加工单");
+    public static final ApiError WH_SUBCONTRACT_WAIT_SUBMIT_GENERATE_MACHINE_ONLY = new ApiError("WH_SUBCONTRACT_WAIT_SUBMIT_GENERATE_MACHINE_ONLY", 11067, "只有单据为待审核状态允许下推加工单");
+    public static final ApiError WH_SUBCONTRACT_MACHINE_ALREADY_GENERATED = new ApiError("WH_SUBCONTRACT_MACHINE_ALREADY_GENERATED", 11068, "已下推加工单");
+    public static final ApiError WH_GENERATE_TRANSFER_OUT_FAILED = new ApiError("WH_GENERATE_TRANSFER_OUT_FAILED", 11069, "生成直接调拨单失败!");
+    public static final ApiError WH_NOT_MATCHED = new ApiError("WH_NOT_MATCHED", 11070, "请先在系统中匹配并启用对应的仓库");
+    public static final ApiError WH_ONWAY_NOT_EXIST = new ApiError("WH_ONWAY_NOT_EXIST", 11071, "在途归属仓库不存在");
+    public static final ApiError WH_SHOP_INFO_EXIST_NOT_DISAPPROVE = new ApiError("WH_SHOP_INFO_EXIST_NOT_DISAPPROVE", 11072, "仓库已绑定店铺【{0}】，不允许反审核");
+    public static final ApiError WH_OPEN_STATUS_OPEN_TIME_REQUIRED = new ApiError("WH_OPEN_STATUS_OPEN_TIME_REQUIRED", 11073, "仓库状态为启用时，启用日期不能为空");
+    public static final ApiError WH_OVERSEAS_INBOUND_DETAIL_NOT_EXIST = new ApiError("WH_OVERSEAS_INBOUND_DETAIL_NOT_EXIST", 11074, "海外仓入库单详情不存在");
+    public static final ApiError WH_OVERSEAS_INBOUND_NOT_EXIST = new ApiError("WH_OVERSEAS_INBOUND_NOT_EXIST", 11075, "海外仓入库单不存在");
+    public static final ApiError WH_OVERSEAS_INBOUND_NOT_CANCEL = new ApiError("WH_OVERSEAS_INBOUND_NOT_CANCEL", 11076, "仅待提交状态的海外仓入库单支持取消");
+    public static final ApiError WH_OVERSEAS_INBOUND_NOT_DELETE = new ApiError("WH_OVERSEAS_INBOUND_NOT_DELETE", 11077, "仅已取消状态的海外仓入库单支持删除");
+    public static final ApiError WH_OVERSEAS_INTERFACE_EXCEPTION = new ApiError("WH_OVERSEAS_INTERFACE_EXCEPTION", 11078, "调用第三方仓接口异常");
+    public static final ApiError WH_OVERSEAS_INBOUND_EXIST_NOT_UPDATE = new ApiError("WH_OVERSEAS_INBOUND_EXIST_NOT_UPDATE", 11079, "已下推海外仓入库单【{0}】，不允许修改删除装箱数据");
+    public static final ApiError WH_OVERSEAS_PROVIDER_NOT_FOUND = new ApiError("WH_OVERSEAS_PROVIDER_NOT_FOUND", 11080, "未查询到海外仓服务商信息");
+    public static final ApiError WH_OVERSEAS_PROVIDER_NOT_AUTH = new ApiError("WH_OVERSEAS_PROVIDER_NOT_AUTH", 11081, "海外仓服务商尚未授权");
+    public static final ApiError WH_INBOUND_EXIST_NOT_REPEAT = new ApiError("WH_INBOUND_EXIST_NOT_REPEAT", 11082, "已下推入库单【{0}】，不允许重复操作");
+    public static final ApiError WH_ONWAY_NOT_CONFIGURED = new ApiError("WH_ONWAY_NOT_CONFIGURED", 11083, "目的仓没有配置在途归属仓库，请在【仓库列表】配置后再审核");
+    public static final ApiError WH_CODE_XGWJ_FBA_NOT_EXIST = new ApiError("WH_CODE_XGWJ_FBA_NOT_EXIST", 11084, "未找到仓库为【FBA在途仓-xgwj-fba】的仓库和仓库编码");
+    public static final ApiError WH_OVERSEAS_INBOUND_NOT_FOUND_FOR_APPROVE = new ApiError("WH_OVERSEAS_INBOUND_NOT_FOUND_FOR_APPROVE", 11085, "没有找到海外仓入库单，请先下推海外仓入库单再审核");
+    public static final ApiError WH_REPEAT_BINDING_THIRD_WAREHOUSE = new ApiError("WH_REPEAT_BINDING_THIRD_WAREHOUSE", 11086, "仓库【{0}】已绑定多个第三方仓库，一个仓库仅允许绑定一个第三方仓");
+    public static final ApiError WH_OVERSEAS_INBOUND_ALREADY_PUSHED_REVERSE_FORBIDDEN = new ApiError("WH_OVERSEAS_INBOUND_ALREADY_PUSHED_REVERSE_FORBIDDEN", 11087, "已下推海外仓入库单【{0}】，不允许执行反审核");
+    public static final ApiError WH_TRANSFER_INFO_ERROR_NOT_CANCEL_PROCESS = new ApiError("WH_TRANSFER_INFO_ERROR_NOT_CANCEL_PROCESS", 11088, "关联的直接调拨单【{0}】反审核或删除失败，无法撤销");
+    public static final ApiError WH_TRANSFER_INFO_CANCEL_PROCESS_ERROR = new ApiError("WH_TRANSFER_INFO_CANCEL_PROCESS_ERROR", 11089, "关联的直接调拨单【{0}】撤销或删除失败，无法撤销");
+    public static final ApiError WH_TRANSFER_DECLARE_DETAIL_NOT_EXIST = new ApiError("WH_TRANSFER_DECLARE_DETAIL_NOT_EXIST", 11090, "入库预报订单明细不能为空");
+    public static final ApiError WH_THIRD_WAREHOUSE_NAME_EXIST = new ApiError("WH_THIRD_WAREHOUSE_NAME_EXIST", 11091, "平台【{0}】下第三方仓【{1}】不能重复绑定多个仓库");
+    public static final ApiError WH_STOCKTAKING_PROFIT_LOSS_CLOSED = new ApiError("WH_STOCKTAKING_PROFIT_LOSS_CLOSED", 11092, "已存在盘盈/盘亏单【{0}】，不允许操作【{1}】及之前的单据");
+    public static final ApiError WH_TRANSFER_WAREHOUSE_REQUIRED = new ApiError("WH_TRANSFER_WAREHOUSE_REQUIRED", 11093, "中转出库配置的中转仓库不能为空，请检查配置");
+    public static final ApiError WH_TRANSFER_ALREADY_APPROVED_MODIFY_FORBIDDEN = new ApiError("WH_TRANSFER_ALREADY_APPROVED_MODIFY_FORBIDDEN", 11094, "存在已审核的调拨单【{0}】，不允许修改中转仓配置");
+    public static final ApiError WH_PARAM_NOT_FOUND = new ApiError("WH_PARAM_NOT_FOUND", 11095, "未找到仓库【{0}】");
+    public static final ApiError WH_NOT_EXIST_OR_NO_PERMISSION = new ApiError("WH_NOT_EXIST_OR_NO_PERMISSION", 11096, "仓库不存在或没有仓库权限");
+    public static final ApiError WH_TRANSFER_DECLARE_SO_EXISTS = new ApiError("WH_TRANSFER_DECLARE_SO_EXISTS", 11097, "订单【{0}】已存在入库预报单，请不要重复新增");
+    public static final ApiError WH_THIRD_WAREHOUSE_MAPPING_EXIST = new ApiError("WH_THIRD_WAREHOUSE_MAPPING_EXIST", 11098, "仓库【{0}】已存在第三方仓库映射关系，请在【中台配置】页面解除绑定后再操作");
+    public static final ApiError WH_ENTITY_NOT_FOUND = new ApiError("WH_ENTITY_NOT_FOUND", 11099, "实体仓不存在");
+    public static final ApiError WH_ENTITY_NOT_ACTIVE = new ApiError("WH_ENTITY_NOT_ACTIVE", 11100, "实体仓必须为启用状态");
+    public static final ApiError WH_ENTITY_INVENTORY_INSUFFICIENT = new ApiError("WH_ENTITY_INVENTORY_INSUFFICIENT", 11101, "实体仓库存不足，SKU【{0}】，实体仓【{1}】，可分配库存【{2}】");
+    public static final ApiError WH_ENTITY_NO_VIRTUAL_RELATION = new ApiError("WH_ENTITY_NO_VIRTUAL_RELATION", 11102, "实体仓未关联任何虚拟仓");
+    public static final ApiError WH_AREA_EXIST = new ApiError("WH_AREA_EXIST", 11103, "库区类型{0}【{1}】已存在");
+    public static final ApiError WH_POSITION_BINDING_EXIST = new ApiError("WH_POSITION_BINDING_EXIST", 11104, "库区{0}存在仓位绑定，无法删除或禁用");
+    public static final ApiError WH_TRANSFER_ASSOCIATED_OUTBOUND_APPROVE_REQUIRED = new ApiError("WH_TRANSFER_ASSOCIATED_OUTBOUND_APPROVE_REQUIRED", 11105, "请先审核通过关联的中转调拨单【{0}】后再审核出库单");
+    public static final ApiError WH_TRANSFER_OUTBOUND_DATE_INVALID = new ApiError("WH_TRANSFER_OUTBOUND_DATE_INVALID", 11106, "出库日期不能早于最后一个调拨单的调拨日期【{0}】");
+    public static final ApiError WH_ENTITY_ALLOCATION_STOCK_INSUFFICIENT = new ApiError("WH_ENTITY_ALLOCATION_STOCK_INSUFFICIENT", 11107, "实体仓可分配库存不足，SKU【{0}】，实体仓【{1}】，可分配库存【{2}】");
+    public static final ApiError WH_EXISTS_TRANSFER_INFO_NOT_CLEAR = new ApiError("WH_EXISTS_TRANSFER_INFO_NOT_CLEAR", 11108, "存在未删除或未作废的直接调拨单");
+    public static final ApiError WH_REPLENISH_AREA_NOT_FOUND = new ApiError("WH_REPLENISH_AREA_NOT_FOUND", 11109, "新增补货单时，SKU【{0}】未找到有效的库区");
+    public static final ApiError WH_REPLENISH_LOCATION_NOT_FOUND = new ApiError("WH_REPLENISH_LOCATION_NOT_FOUND", 11110, "新增补货单时，SKU【{0}】未找到有效的仓位");
+    public static final ApiError WH_TRANSFER_AUTO_CREATED_DIRECT_FORBIDDEN = new ApiError("WH_TRANSFER_AUTO_CREATED_DIRECT_FORBIDDEN", 11111, "根据中转规则自动生成的直接调拨单，不支持修改");
+    public static final ApiError WH_INV_NOT_EXIST = new ApiError("WH_INV_NOT_EXIST", 11112, "仓库【{0}】、SKU【{1}】、库存状态【{2}】对应的库存记录不存在");
+    public static final ApiError WH_AREA_NOT_EXIST = new ApiError("WH_AREA_NOT_EXIST", 11113, "库区信息不存在");
+    public static final ApiError WH_AREA_USED_STOCK_TYPE_NOT_EDIT = new ApiError("WH_AREA_USED_STOCK_TYPE_NOT_EDIT", 11114, "库区已被使用，库存类型禁止修改");
+    public static final ApiError WH_WAREHOUSE_NOT_EDITABLE = new ApiError("WH_WAREHOUSE_NOT_EDITABLE", 11115, "所属仓库禁止修改");
+    public static final ApiError WH_FBA_FNSKU_NOT_BLANK = new ApiError("WH_FBA_FNSKU_NOT_BLANK", 11116, "FNSKU不能为空");
+    public static final ApiError WH_PICK_AND_PUTAWAY_POSITION_SAME_FORBIDDEN = new ApiError("WH_PICK_AND_PUTAWAY_POSITION_SAME_FORBIDDEN", 11117, "取货仓位与上架仓位不能为同一仓位");
+    public static final ApiError WH_SKU_MAPPING_STOCK_INSUFFICIENT = new ApiError("WH_SKU_MAPPING_STOCK_INSUFFICIENT", 11118, "需要扣除的映射关系SKU【{0}】可用库存不足");
+    public static final ApiError WH_WAREHOUSE_LOCATION_NOT_FOUND = new ApiError("WH_WAREHOUSE_LOCATION_NOT_FOUND", 11119, "仓库【{0}】下的仓位【{1}】不存在");
+    public static final ApiError WH_THIRD_NOT_ALLOW_MULTIPLE = new ApiError("WH_THIRD_NOT_ALLOW_MULTIPLE", 11120, "不允许绑定多个海外三方仓");
+    public static final ApiError WH_INVENTORY_NOT_EXIST = new ApiError("WH_INVENTORY_NOT_EXIST", 11121, "仓库:【{0}】,SKU:【{1}】,库存状态:【{2}】,库存不存在");
+    public static final ApiError WH_BOX_RULE_SKU_EXISTS = new ApiError("WH_BOX_RULE_SKU_EXISTS", 11122, "箱规sku已存在");
+    public static final ApiError WH_BOX_RULE_BATCH_UPDATE_FAILED = new ApiError("WH_BOX_RULE_BATCH_UPDATE_FAILED", 11123, "批量更新箱规失败");
+    public static final ApiError WH_BOX_RULE_PRIORITY_DUPLICATE = new ApiError("WH_BOX_RULE_PRIORITY_DUPLICATE", 11124, "箱规优先级【{0}】重复");
+    public static final ApiError WH_BOX_RULE_BATCH_ADD_FAILED = new ApiError("WH_BOX_RULE_BATCH_ADD_FAILED", 11125, "批量新增箱规失败");
+    public static final ApiError WH_BOX_RULE_QTY_NOT_MULTIPLE = new ApiError("WH_BOX_RULE_QTY_NOT_MULTIPLE", 11126, "变更数量必须是发货箱规的整数倍");
+    public static final ApiError WH_BOX_RULE_SKU_DUPLICATE = new ApiError("WH_BOX_RULE_SKU_DUPLICATE", 11127, "箱规SKU【{0}】重复");
+    public static final ApiError WH_BOX_RULE_PER_BOX_QTY_DUPLICATE = new ApiError("WH_BOX_RULE_PER_BOX_QTY_DUPLICATE", 11128, "箱规单箱数量【{0}】重复");
+    public static final ApiError WH_BOX_PER_QTY_FORBIDDEN_ONE = new ApiError("WH_BOX_PER_QTY_FORBIDDEN_ONE", 11129, "单箱数量必须大>1");
+    public static final ApiError WH_STOCKTAKING_BILL_DATE_NEED_GREATER_THAN_TODAY = new ApiError("WH_STOCKTAKING_BILL_DATE_NEED_GREATER_THAN_TODAY", 11130, "盘点日期需要大于等于今天");
+    public static final ApiError WH_STOCKPLAN_NOT_FOUND = new ApiError("WH_STOCKPLAN_NOT_FOUND", 11131, "盘点计划不存在");
+    public static final ApiError WH_STOCKPLAN_ALREADY_PUSH = new ApiError("WH_STOCKPLAN_ALREADY_PUSH", 11132, "盘点计划【{0}】已下推盘点任务");
+    public static final ApiError WH_STOCKTAKING_PUSH_OVER = new ApiError("WH_STOCKTAKING_PUSH_OVER", 11133, "【{0}】已生成盘盈/亏单{1}，不允许再次生成");
+    public static final ApiError WH_STOCKTAKING_APPROVE_BILL_DATE_NEED_GREATER_THAN_TODAY = new ApiError("WH_STOCKTAKING_APPROVE_BILL_DATE_NEED_GREATER_THAN_TODAY", 11134, "盘点日期不能小于当前日期，请修改后重新审核");
+    public static final ApiError WH_STOCKTAKING_PROFIT_LOSS_NOT_ALLOW_UPDATE = new ApiError("WH_STOCKTAKING_PROFIT_LOSS_NOT_ALLOW_UPDATE", 11135, "下推生成的盘盈盘亏单不允许修改");
+    public static final ApiError WH_STOCKTAKING_NOT_NEED_PUSH = new ApiError("WH_STOCKTAKING_NOT_NEED_PUSH", 11136, "【{0}】无需下推盘盈/亏单{1}");
+    public static final ApiError WH_STOCKTAKING_NOT_ALLOW_APPROVE = new ApiError("WH_STOCKTAKING_NOT_ALLOW_APPROVE", 11137, "【{0}】盘点日期不能小于当前日期,请修改后重新审核");
+    public static final ApiError WH_ONWAY_WAREHOUSE_NOT_EXIST = new ApiError("WH_ONWAY_WAREHOUSE_NOT_EXIST", 11138, "目的仓【{}】未配置在途仓");
+    public static final ApiError WH_WEGO_INBOUND_CODE_REQUIRED = new ApiError("WH_WEGO_INBOUND_CODE_REQUIRED", 11139, "WEGO入库单号不能为空");
+    public static final ApiError WH_WEGO_AUTH_INFO_EMPTY = new ApiError("WH_WEGO_AUTH_INFO_EMPTY", 11140, "WEGO授权信息不能为空");
+    public static final ApiError WH_WEGO_AUTH_TOKEN_SECRET_MISSING = new ApiError("WH_WEGO_AUTH_TOKEN_SECRET_MISSING", 11141, "WEGO授权信息appToken/appSecret不能为空");
+    public static final ApiError WH_WEGO_PACKING_LIST_EMPTY = new ApiError("WH_WEGO_PACKING_LIST_EMPTY", 11142, "WEGO装箱清单为空");
+    public static final ApiError WH_WEGO_PACKING_BOX_NO_VALID_SKU = new ApiError("WH_WEGO_PACKING_BOX_NO_VALID_SKU", 11143, "装箱清单箱内无有效SKU明细，发货单号【{0}】，箱号【{1}】");
+    public static final ApiError WH_WEGO_PACKING_LIST_MISSING_BOX_NO = new ApiError("WH_WEGO_PACKING_LIST_MISSING_BOX_NO", 11144, "装箱清单缺少箱号");
+    public static final ApiError WH_WEGO_OUTBOUND_DETAIL_EMPTY = new ApiError("WH_WEGO_OUTBOUND_DETAIL_EMPTY", 11145, "WEGO出库明细不能为空");
+    public static final ApiError WH_WEGO_OUTBOUND_CODE_REQUIRED = new ApiError("WH_WEGO_OUTBOUND_CODE_REQUIRED", 11146, "WEGO出库单号不能为空");
+    public static final ApiError WH_WEGO_QUERY_FALLBACK_EMPTY_RESPONSE = new ApiError("WH_WEGO_QUERY_FALLBACK_EMPTY_RESPONSE", 11147, "WEGO查询出库单降级查询接口响应为空，referenceCode【{0}】");
+    public static final ApiError WH_WEGO_QUERY_FALLBACK_FAILED = new ApiError("WH_WEGO_QUERY_FALLBACK_FAILED", 11148, "WEGO查询出库单降级查询接口返回失败：errorCode【{0}】，errorMsg【{1}】");
+    public static final ApiError WH_WEGO_INBOUND_AUTH_ID_NOT_FOUND = new ApiError("WH_WEGO_INBOUND_AUTH_ID_NOT_FOUND", 11149, "{0}对应授权ID信息不存在,nextId:{1}");
+    public static final ApiError WH_WEGO_INBOUND_AUTH_JSON_EMPTY = new ApiError("WH_WEGO_INBOUND_AUTH_JSON_EMPTY", 11150, "WEGO入库：服务商[{0}]auth_json为空");
+    public static final ApiError WH_WEGO_INBOUND_TOKEN_SECRET_MISSING = new ApiError("WH_WEGO_INBOUND_TOKEN_SECRET_MISSING", 11151, "WEGO入库：服务商[{0}]appToken/appSecret缺失");
+    public static final ApiError WH_WEGO_INBOUND_PAGE_QUERY_ERROR = new ApiError("WH_WEGO_INBOUND_PAGE_QUERY_ERROR", 11152, "WEGO入库：queryInorderPage 分页拉取异常，已拉取页数={0}，数据不完整，任务中止");
+    public static final ApiError WH_WEGO_INBOUND_PAGE_PARSE_FAILED = new ApiError("WH_WEGO_INBOUND_PAGE_PARSE_FAILED", 11153, "WEGO入库：第{0}页响应解析失败，已拉取页数={1}，数据不完整，任务中止");
+    public static final ApiError WH_WEGO_INBOUND_PAGE_LIMIT_EXCEEDED = new ApiError("WH_WEGO_INBOUND_PAGE_LIMIT_EXCEEDED", 11154, "WEGO入库：已达最大翻页上限({0})，已拉取={1}条，数据不完整，任务中止");
+    public static final ApiError WH_WEGO_INBOUND_RESPONSE_EMPTY = new ApiError("WH_WEGO_INBOUND_RESPONSE_EMPTY", 11155, "WEGO入库分页查询接口响应为空");
+    public static final ApiError WH_WEGO_INBOUND_RESPONSE_FAILED = new ApiError("WH_WEGO_INBOUND_RESPONSE_FAILED", 11156, "WEGO入库分页查询接口返回失败: errorCode={0}, errorMsg={1}");
+    public static final ApiError WH_WEGO_INBOUND_RESULT_EMPTY = new ApiError("WH_WEGO_INBOUND_RESULT_EMPTY", 11157, "WEGO入库分页查询接口 success=true 但 result 为空");
+    public static final ApiError WH_WEGO_INBOUND_TYPE_ONLY_SELF_HEADWAY = new ApiError("WH_WEGO_INBOUND_TYPE_ONLY_SELF_HEADWAY", 11158, "目的仓平台授权为WEGO时，入库类型只能为【自发头程】");
+    public static final ApiError WH_WEGO_INBOUND_TRACKING_NO_REQUIRED = new ApiError("WH_WEGO_INBOUND_TRACKING_NO_REQUIRED", 11159, "WEGO入库单需提供物流跟踪号");
+    public static final ApiError WH_WEGO_INVENTORY_PROVIDER_NOT_FOUND = new ApiError("WH_WEGO_INVENTORY_PROVIDER_NOT_FOUND", 11160, "WEGO库存：nextLevelId[{0}]对应的服务商不存在");
+    public static final ApiError WH_WEGO_INVENTORY_AUTH_JSON_EMPTY = new ApiError("WH_WEGO_INVENTORY_AUTH_JSON_EMPTY", 11161, "WEGO库存：服务商[{0}]auth_json为空");
+    public static final ApiError WH_WEGO_INVENTORY_TOKEN_SECRET_MISSING = new ApiError("WH_WEGO_INVENTORY_TOKEN_SECRET_MISSING", 11162, "WEGO库存：服务商[{0}]appToken/appSecret缺失");
+    public static final ApiError WH_WEGO_INVENTORY_PAGE_QUERY_ERROR = new ApiError("WH_WEGO_INVENTORY_PAGE_QUERY_ERROR", 11163, "WEGO库存：仓库[{0}] 分页调用异常，pageNum={1}，已拉取={2}条，数据不完整，任务中止");
+    public static final ApiError WH_WEGO_INVENTORY_PAGE_PARSE_FAILED = new ApiError("WH_WEGO_INVENTORY_PAGE_PARSE_FAILED", 11164, "WEGO库存：仓库[{0}] 第{1}页响应解析失败，数据不完整，任务中止");
+    public static final ApiError WH_WEGO_INVENTORY_PAGE_LIMIT_EXCEEDED = new ApiError("WH_WEGO_INVENTORY_PAGE_LIMIT_EXCEEDED", 11165, "WEGO库存：仓库[{0}] 已达最大翻页上限({1})，已拉取={2}条，数据不完整，任务中止");
+    public static final ApiError WH_WEGO_INVENTORY_RESPONSE_FAILED = new ApiError("WH_WEGO_INVENTORY_RESPONSE_FAILED", 11166, "WEGO库存接口返回失败: errorCode={0}, errorMsg={1}");
+    public static final ApiError WH_WEGO_AUTH_INFO_NOT_FOUND = new ApiError("WH_WEGO_AUTH_INFO_NOT_FOUND", 11167, "WEGO授权信息不存在");
+    public static final ApiError WH_WEGO_OUTBOUND_AUTH_ID_NOT_FOUND = new ApiError("WH_WEGO_OUTBOUND_AUTH_ID_NOT_FOUND", 11168, "WEGO对应授权ID信息不存在, nextId:{0}");
+    public static final ApiError WH_WEGO_OUTBOUND_AUTH_JSON_EMPTY = new ApiError("WH_WEGO_OUTBOUND_AUTH_JSON_EMPTY", 11169, "WEGO出库：服务商[{0}]auth_json为空");
+    public static final ApiError WH_WEGO_OUTBOUND_TOKEN_SECRET_MISSING = new ApiError("WH_WEGO_OUTBOUND_TOKEN_SECRET_MISSING", 11170, "WEGO出库：服务商[{0}]appToken/appSecret缺失");
+    public static final ApiError WH_WEGO_OUTBOUND_PAGE_QUERY_ERROR = new ApiError("WH_WEGO_OUTBOUND_PAGE_QUERY_ERROR", 11171, "WEGO出库：query2cOrderPage 分页拉取异常，已拉取页数={0}，数据不完整，任务中止");
+    public static final ApiError WH_WEGO_OUTBOUND_RESPONSE_EMPTY = new ApiError("WH_WEGO_OUTBOUND_RESPONSE_EMPTY", 11172, "WEGO出库：query2cOrderPage 接口响应为空，pageNum={0}，数据不完整，任务中止");
+    public static final ApiError WH_WEGO_OUTBOUND_RESPONSE_FAILED = new ApiError("WH_WEGO_OUTBOUND_RESPONSE_FAILED", 11173, "WEGO出库：query2cOrderPage 接口返回失败: errorCode={0}, errorMsg={1}");
+    public static final ApiError WH_WEGO_OUTBOUND_RESULT_EMPTY = new ApiError("WH_WEGO_OUTBOUND_RESULT_EMPTY", 11174, "WEGO出库：query2cOrderPage 接口 success=true 但 result 为空，pageNum={0}，已拉取页数={1}，数据不完整，任务中止");
+    public static final ApiError WH_WEGO_OUTBOUND_PAGE_LIMIT_EXCEEDED = new ApiError("WH_WEGO_OUTBOUND_PAGE_LIMIT_EXCEEDED", 11175, "WEGO出库：已达最大翻页上限({0})，已拉取={1}条，数据不完整，任务中止");
+    public static final ApiError WH_WEGO_SDK_INBOUND_PAGE_CONVERT_FAILED = new ApiError("WH_WEGO_SDK_INBOUND_PAGE_CONVERT_FAILED", 11176, "WEGO 分页查询入库单接口响应转换失败: {0}");
+    public static final ApiError WH_WEGO_SDK_OUTBOUND_SEARCH_NO_RESPONSE = new ApiError("WH_WEGO_SDK_OUTBOUND_SEARCH_NO_RESPONSE", 11177, "WEGO 查询2C出库单接口无响应");
+    public static final ApiError WH_WEGO_SDK_OUTBOUND_SEARCH_FAILED = new ApiError("WH_WEGO_SDK_OUTBOUND_SEARCH_FAILED", 11178, "WEGO 查询2C出库单接口失败: {0}");
+    public static final ApiError WH_WEGO_SDK_OUTBOUND_SEARCH_CONVERT_FAILED = new ApiError("WH_WEGO_SDK_OUTBOUND_SEARCH_CONVERT_FAILED", 11179, "WEGO 查询2C出库单接口响应转换失败: {0}");
+    public static final ApiError WH_WEGO_SDK_OUTBOUND_PAGE_CONVERT_FAILED = new ApiError("WH_WEGO_SDK_OUTBOUND_PAGE_CONVERT_FAILED", 11180, "WEGO 分页查询2C出库单接口响应转换失败: {0}");
+    public static final ApiError WH_WEGO_SDK_RETURN_ORDER_PAGE_CONVERT_FAILED = new ApiError("WH_WEGO_SDK_RETURN_ORDER_PAGE_CONVERT_FAILED", 11181, "WEGO 分页查询退货订单接口响应转换失败: {0}");
+    public static final ApiError WH_WEGO_SDK_API_CALL_ERROR = new ApiError("WH_WEGO_SDK_API_CALL_ERROR", 11182, "WEGO {0}接口调用异常: {1}");
+    public static final ApiError WH_WEGO_SDK_API_RESPONSE_EMPTY = new ApiError("WH_WEGO_SDK_API_RESPONSE_EMPTY", 11183, "WEGO {0}接口返回为空");
+    public static final ApiError WH_WEGO_SDK_API_RESPONSE_NOT_JSON = new ApiError("WH_WEGO_SDK_API_RESPONSE_NOT_JSON", 11184, "WEGO {0}接口返回非JSON格式");
+    public static final ApiError WH_WEGO_SDK_DOMAIN_EMPTY = new ApiError("WH_WEGO_SDK_DOMAIN_EMPTY", 11185, "WEGO域名不能为空");
+    public static final ApiError WH_WEGO_SDK_SIGN_PARAMS_EMPTY = new ApiError("WH_WEGO_SDK_SIGN_PARAMS_EMPTY", 11186, "WEGO 签名参数不能为空");
+    public static final ApiError WH_WEGO_SDK_SIGN_SECRET_EMPTY = new ApiError("WH_WEGO_SDK_SIGN_SECRET_EMPTY", 11187, "WEGO 签名 secret 不能为空");
+    public static final ApiError WH_WEGO_SDK_SIGN_JSON_EMPTY = new ApiError("WH_WEGO_SDK_SIGN_JSON_EMPTY", 11188, "WEGO 签名 JSON 不能为空");
+    public static final ApiError WH_WEGO_RETURN_AUTH_INFO_NOT_FOUND = new ApiError("WH_WEGO_RETURN_AUTH_INFO_NOT_FOUND", 11189, "WEGO 退货入库：授权信息不存在");
+    public static final ApiError WH_WEGO_RETURN_AUTH_ID_NOT_FOUND = new ApiError("WH_WEGO_RETURN_AUTH_ID_NOT_FOUND", 11190, "WEGO 退货入库：对应授权ID不存在, nextLevelId={0}");
+    public static final ApiError WH_WEGO_RETURN_AUTH_JSON_EMPTY = new ApiError("WH_WEGO_RETURN_AUTH_JSON_EMPTY", 11191, "WEGO 退货入库：服务商[{0}] auth_json 为空");
+    public static final ApiError WH_WEGO_RETURN_TOKEN_SECRET_MISSING = new ApiError("WH_WEGO_RETURN_TOKEN_SECRET_MISSING", 11192, "WEGO 退货入库：服务商[{0}] appToken/appSecret 缺失");
+    public static final ApiError WH_WEGO_RETURN_PAGE_QUERY_ERROR = new ApiError("WH_WEGO_RETURN_PAGE_QUERY_ERROR", 11193, "WEGO 退货入库分页查询调用异常, pageNum={0}: {1}");
+    public static final ApiError WH_WEGO_RETURN_RESPONSE_EMPTY = new ApiError("WH_WEGO_RETURN_RESPONSE_EMPTY", 11194, "WEGO 退货入库分页查询接口响应为空, pageNum={0}");
+    public static final ApiError WH_WEGO_RETURN_RESPONSE_FAILED = new ApiError("WH_WEGO_RETURN_RESPONSE_FAILED", 11195, "WEGO 退货入库分页查询接口失败: errorCode={0}, errorMsg={1}");
+    public static final ApiError WH_WEGO_RETURN_RESULT_EMPTY = new ApiError("WH_WEGO_RETURN_RESULT_EMPTY", 11196, "WEGO 退货入库分页查询接口 result 为空, pageNum={0}");
+    public static final ApiError WH_WEGO_RETURN_PAGE_LIMIT_EXCEEDED = new ApiError("WH_WEGO_RETURN_PAGE_LIMIT_EXCEEDED", 11197, "WEGO退货入库：已达最大翻页上限({0})，已拉取={1}条，数据不完整，任务中止");
+    public static final ApiError WH_WEGO_CHANNEL_AUTH_INFO_EMPTY = new ApiError("WH_WEGO_CHANNEL_AUTH_INFO_EMPTY", 11198, "WEGO授权信息为空");
+    public static final ApiError WH_WEGO_CHANNEL_TOKEN_SECRET_MISSING = new ApiError("WH_WEGO_CHANNEL_TOKEN_SECRET_MISSING", 11199, "WEGO授权信息缺失appToken/appSecret");
+    public static final ApiError WH_WEGO_CHANNEL_QUERY_ERROR = new ApiError("WH_WEGO_CHANNEL_QUERY_ERROR", 11200, "WEGO查询派送渠道异常");
+    public static final ApiError WH_WEGO_CHANNEL_RESPONSE_EMPTY = new ApiError("WH_WEGO_CHANNEL_RESPONSE_EMPTY", 11201, "WEGO查询派送渠道接口返回为空");
+    public static final ApiError WH_WEGO_CHANNEL_QUERY_FAILED = new ApiError("WH_WEGO_CHANNEL_QUERY_FAILED", 11202, "WEGO查询派送渠道失败");
+    public static final ApiError WH_WEGO_LOGISTICS_SERVICE_NOT_OPEN = new ApiError("WH_WEGO_LOGISTICS_SERVICE_NOT_OPEN", 11203, "WEGO物流服务功能暂未开放");
+    public static final ApiError WH_WEGO_SKU_PROVIDER_NOT_FOUND = new ApiError("WH_WEGO_SKU_PROVIDER_NOT_FOUND", 11204, "WEGO SKU：nextLevelId[{0}]对应的服务商不存在");
+    public static final ApiError WH_WEGO_SKU_AUTH_JSON_EMPTY = new ApiError("WH_WEGO_SKU_AUTH_JSON_EMPTY", 11205, "WEGO SKU：服务商[{0}]auth_json为空");
+    public static final ApiError WH_WEGO_SKU_TOKEN_SECRET_MISSING = new ApiError("WH_WEGO_SKU_TOKEN_SECRET_MISSING", 11206, "WEGO SKU：服务商[{0}]appToken/appSecret缺失");
+    public static final ApiError WH_WEGO_SKU_PAGE_QUERY_ERROR = new ApiError("WH_WEGO_SKU_PAGE_QUERY_ERROR", 11207, "WEGO SKU：分页调用异常，pageNum={0}，已拉取={1}条，数据不完整，任务中止");
+    public static final ApiError WH_WEGO_SKU_PAGE_PARSE_FAILED = new ApiError("WH_WEGO_SKU_PAGE_PARSE_FAILED", 11208, "WEGO SKU：第{0}页响应解析失败，数据不完整，任务中止");
+    public static final ApiError WH_WEGO_SKU_PAGE_LIMIT_EXCEEDED = new ApiError("WH_WEGO_SKU_PAGE_LIMIT_EXCEEDED", 11209, "WEGO SKU：已达最大翻页上限({0})，已拉取={1}条，数据不完整，任务中止");
+    public static final ApiError WH_WEGO_SKU_RESPONSE_FAILED = new ApiError("WH_WEGO_SKU_RESPONSE_FAILED", 11210, "WEGO SKU接口返回失败: errorCode={0}, errorMsg={1}");
+    public static final ApiError WH_WEGO_WAREHOUSE_AUTH_ID_NOT_FOUND = new ApiError("WH_WEGO_WAREHOUSE_AUTH_ID_NOT_FOUND", 11211, "{0}对应授权ID信息不存在,nextId:{1}");
+    public static final ApiError WH_WEGO_WAREHOUSE_REFRESH_TOKEN_FAILED = new ApiError("WH_WEGO_WAREHOUSE_REFRESH_TOKEN_FAILED", 11212, "WEGO刷新token失败, authId:{0}");
+    public static final ApiError WH_WEGO_WAREHOUSE_QUERY_FAILED = new ApiError("WH_WEGO_WAREHOUSE_QUERY_FAILED", 11213, "WEGO获取仓库列表失败,errorCode:{0},errorMsg:{1}");
+    public static final ApiError WH_WEGO_WAREHOUSE_AUTH_JSON_EMPTY = new ApiError("WH_WEGO_WAREHOUSE_AUTH_JSON_EMPTY", 11214, "WEGO授权信息auth_json为空,authId:{0}");
+    public static final ApiError WH_WEGO_WAREHOUSE_TOKEN_SECRET_MISSING = new ApiError("WH_WEGO_WAREHOUSE_TOKEN_SECRET_MISSING", 11215, "WEGO授权信息appToken/appSecret缺失,authId:{0}");
+    public static final ApiError WH_WEGO_INBOUND_DETAIL_JSON_PARSE_FAILED = new ApiError("WH_WEGO_INBOUND_DETAIL_JSON_PARSE_FAILED", 11217, "WEGO入库明细 detail_list_json 解析失败，inboundId={0}");
+    public static final ApiError WH_BORROW_WAREHOUSE_USABLE_INSUFFICIENT = new ApiError("WH_BORROW_WAREHOUSE_USABLE_INSUFFICIENT", 11218, "SKU【{0}】，借调仓【{1}】，可用数【{2}】，可用库存不足，无法借调");
+    public static final ApiError SO_RETURN_PRESTOCK_MODIFIED = new ApiError("SO_RETURN_PRESTOCK_MODIFIED", 10780, "预入库单数据已被修改，请刷新后重试");
+    public static final ApiError SO_RETURN_PRESTOCK_B2C_PLATFORM_REQUIRED = new ApiError("SO_RETURN_PRESTOCK_B2C_PLATFORM_REQUIRED", 10781, "B2C售后单平台信息不能为空");
+    public static final ApiError SO_RETURN_PRESTOCK_DETAIL_MODIFIED = new ApiError("SO_RETURN_PRESTOCK_DETAIL_MODIFIED", 10782, "预入库单详情行数据已被修改，请刷新后重试");
+    public static final ApiError SO_RETURN_PRESTOCK_WAREHOUSE_REQUIRED_FOR_INSTOCK = new ApiError("SO_RETURN_PRESTOCK_WAREHOUSE_REQUIRED_FOR_INSTOCK", 10783, "预入库单未设置收货仓库，无法生成退货入库单");
+    public static final ApiError SO_RETURN_PRESTOCK_LINK_AFTER_SALE_GROUP_EXCEEDS = new ApiError("SO_RETURN_PRESTOCK_LINK_AFTER_SALE_GROUP_EXCEEDS", 10784, "本次关联涉及售后单数量过多（{0}个），单次事务内生成退货入库单数量超限，请分批关联");
+    public static final ApiError SO_RETURN_PRESTOCK_NOT_FOUND_OR_DELETED = new ApiError("SO_RETURN_PRESTOCK_NOT_FOUND_OR_DELETED", 10785, "存在不存在或已删除的预入库单，请刷新后重试");
+    public static final ApiError SO_RETURN_PRESTOCK_BILL_TYPE_MIXED_FORBIDDEN = new ApiError("SO_RETURN_PRESTOCK_BILL_TYPE_MIXED_FORBIDDEN", 10786, "所选预入库单不能同时包含B2B和B2C类型，请分别关联");
+    public static final ApiError SO_RETURN_PRESTOCK_WAREHOUSING_DEPT_NOT_FOUND = new ApiError("SO_RETURN_PRESTOCK_WAREHOUSING_DEPT_NOT_FOUND", 10787, "获取不到仓储部门信息");
+    public static final ApiError SO_RETURN_PRESTOCK_INSTOCK_GENERATE_FAILED = new ApiError("SO_RETURN_PRESTOCK_INSTOCK_GENERATE_FAILED", 10788, "退货入库单生成失败，无法审核");
+    public static final ApiError SO_RETURN_PRESTOCK_INSTOCK_SUBMIT_FAILED = new ApiError("SO_RETURN_PRESTOCK_INSTOCK_SUBMIT_FAILED", 10789, "退货入库单提交失败：{0}");
+    public static final ApiError SO_RETURN_PRESTOCK_LINK_SHOP_GROUP_EXCEEDS = new ApiError("SO_RETURN_PRESTOCK_LINK_SHOP_GROUP_EXCEEDS", 10790, "本次关联涉及店铺数量过多（{0}个），单次事务内生成退货入库单数量超限，请分批关联");
+    public static final ApiError SO_RETURN_PRESTOCK_LINK_SHOP_REQUIRED = new ApiError("SO_RETURN_PRESTOCK_LINK_SHOP_REQUIRED", 10791, "关联店铺不能为空");
+    public static final ApiError SO_RETURN_PRESTOCK_LINK_CUSTOMER_REQUIRED = new ApiError("SO_RETURN_PRESTOCK_LINK_CUSTOMER_REQUIRED", 10803, "关联客户不能为空");
+    public static final ApiError SO_RETURN_PRESTOCK_LINK_SHOP_NOT_FOUND = new ApiError("SO_RETURN_PRESTOCK_LINK_SHOP_NOT_FOUND", 10792, "关联店铺不存在：{0}");
+    public static final ApiError SO_RETURN_PRESTOCK_LINK_SHOP_CUSTOMER_REQUIRED = new ApiError("SO_RETURN_PRESTOCK_LINK_SHOP_CUSTOMER_REQUIRED", 10793, "关联店铺未绑定客户，无法生成退货入库单：{0}");
+    public static final ApiError SO_RETURN_PRESTOCK_WAREHOUSE_REQUIRED = new ApiError("SO_RETURN_PRESTOCK_WAREHOUSE_REQUIRED", 10794, "仓库不能为空");
+    public static final ApiError SO_RETURN_PRESTOCK_INSTOCK_WAREHOUSE_INCONSISTENT = new ApiError("SO_RETURN_PRESTOCK_INSTOCK_WAREHOUSE_INCONSISTENT", 10795, "退货入库明细仓库不一致，无法生成预入库单");
+    public static final ApiError SO_RETURN_PRESTOCK_INSTOCK_RETURN_TYPE_INCONSISTENT = new ApiError("SO_RETURN_PRESTOCK_INSTOCK_RETURN_TYPE_INCONSISTENT", 10796, "退货入库明细退货类型不一致，无法生成预入库单");
+    public static final ApiError SO_RETURN_PRESTOCK_DETAIL_NOT_BELONG = new ApiError("SO_RETURN_PRESTOCK_DETAIL_NOT_BELONG", 10797, "详情行不属于当前预入库单");
+    public static final ApiError SO_RETURN_PRESTOCK_RETURN_QTY_INVALID = new ApiError("SO_RETURN_PRESTOCK_RETURN_QTY_INVALID", 10798, "退货数量必须大于0：{0}");
+    public static final ApiError SO_RETURN_PRESTOCK_CUSTOMER_NOT_EMPTY_FORBIDDEN = new ApiError("SO_RETURN_PRESTOCK_CUSTOMER_NOT_EMPTY_FORBIDDEN", 10799, "退货客户不为空时无法创建预入库单，请直接保存退货入库单");
+    public static final ApiError SO_RETURN_PRESTOCK_RETURN_LOGISTIC_CODE_REQUIRED = new ApiError("SO_RETURN_PRESTOCK_RETURN_LOGISTIC_CODE_REQUIRED", 10800, "退货物流单号不能为空");
+    public static final ApiError SO_RETURN_PRESTOCK_FORCE_CLOSE = new ApiError("SO_RETURN_PRESTOCK_FORCE_CLOSE", 10801, "该预入库单已强制关闭，不可再关联");
+    public static final ApiError SO_RETURN_PRESTOCK_ALL_LINKED = new ApiError("SO_RETURN_PRESTOCK_ALL_LINKED", 10802, "该预入库单无可关联的明细行");
+    public static final ApiError SO_RETURN_PRESTOCK_LINK_AFTER_SALE_SKU_TYPE_EXCEEDS = new ApiError("SO_RETURN_PRESTOCK_LINK_AFTER_SALE_SKU_TYPE_EXCEEDS", 10804, "退货单SKU明细数量超过预入库单（SKU种类超出：{0}），可能为异常包裹或关联的售后单有误，请改用「关联店铺」进行关联");
+    public static final ApiError SO_RETURN_PRESTOCK_LINK_AFTER_SALE_SKU_QTY_EXCEEDS = new ApiError("SO_RETURN_PRESTOCK_LINK_AFTER_SALE_SKU_QTY_EXCEEDS", 10805, "退货单SKU明细数量超过预入库单（SKU数量超出：{0}），可能为异常包裹或关联的售后单有误，请改用「关联店铺」进行关联");
+    public static final ApiError SO_RETURN_PRESTOCK_LINK_AFTER_SALE_SKU_RECEIVE_QTY_EXCEEDS = new ApiError("SO_RETURN_PRESTOCK_LINK_AFTER_SALE_SKU_RECEIVE_QTY_EXCEEDS", 10806, "认领失败，【sku：{0}]实际退货数量<认领数量");
+    public static final ApiError SO_RETURN_PRESTOCK_AFTER_SALE_TYPE_LINK_FORBIDDEN = new ApiError("SO_RETURN_PRESTOCK_AFTER_SALE_TYPE_LINK_FORBIDDEN", 10807, "售后订单类型的预入库单不支持关联售后单，请改用「关联店铺」进行关联");
+
+    static ApiError[] values() {
+        return new ApiError[]{
+                DELIVERY_SUGGESTION_ONLY_COMPLETED_ALLOW_PUSH,
+                DELIVERY_SUGGESTION_INVALID_FORBIDDEN,
+                FBA_SHIPMENT_COUNTRY_NOT_FOUND,
+                PO_QC_ASSIGN_ALLOWED_PENDING_ONLY,
+                PO_QC_PASSED_OR_EXEMPT_ONLY_ALLOWED,
+                PO_QC_REPORT_NOT_FOUND,
+                PO_QC_RULE_NOT_FOUND,
+                PO_QC_TYPE_EXISTS,
+                PO_QC_ORDER_NOT_FOUND,
+                PO_QC_TOTAL_GOOD_BAD_QTY_INVALID,
+                PO_QC_COMPLETE_ALLOWED_STATUS_ONLY,
+                PO_QC_EXEMPT_ALLOWED_STATUS_ONLY,
+                PO_QC_CANCEL_ALLOWED_STATUS_ONLY,
+                PO_QC_DELETE_ALLOWED_STATUS_ONLY,
+                PO_QC_REVOKE_ALLOWED_STATUS_ONLY,
+                PO_QC_QUALITY_CONTROL_TYPE_ALREADY_EXISTS,
+                PO_QC_QUALITY_CONTROL_TYPE_EXISTS_PARTIAL,
+                PO_QC_QUALITY_CONTROL_TYPE_EXISTS_PARTIAL_SKU,
+                PO_QC_SAMPLING_PLAN_DETAIL_RANGE_NOT_CONTINUOUS,
+                PO_QC_SAMPLING_PLAN_DETAIL_QTY_INVALID,
+                PO_QC_SAMPLING_PLAN_DETAIL_QTY_EXCEEDS,
+                PO_QC_SAMPLING_PLAN_DETAIL_QC_LEVEL_INVALID,
+                PO_QC_SAMPLING_PLAN_DETAIL_MAJOR_AQL_INVALID,
+                PO_QC_SAMPLING_PLAN_DETAIL_MAJOR_AQL_EMPTY,
+                PO_QC_SAMPLING_PLAN_DETAIL_GENERAL_AQL_INVALID,
+                PO_QC_SAMPLING_PLAN_DETAIL_GENERAL_AQL_EMPTY,
+                PO_QC_SAMPLING_PLAN_DETAIL_MAJOR_AQL_ENUM_INVALID,
+                PO_QC_SAMPLING_PLAN_DETAIL_GENERAL_AQL_ENUM_INVALID,
+                PO_QC_SAMPLING_PLAN_DETAIL_DETAIL_EMPTY,
+                PO_QC_SAMPLING_PLAN_DETAIL_DETAIL_NOT_EMPTY,
+                PO_QC_SAMPLING_PLAN_DETAIL_RANGE_INVALID,
+                PO_QC_SAMPLING_PLAN_DETAIL_RANGE_LESS_THAN_ZERO,
+                PO_QC_SAMPLING_PLAN_DETAIL_RANGE_EQUAL,
+                PO_QC_SAMPLING_PLAN_DETAIL_RANGE_GREATER_THAN_END,
+                PO_QC_SAMPLING_PLAN_DETAIL_QC_TYPE_NOT_FOUND,
+                PO_QC_SAMPLING_PLAN_DETAIL_RATE_INVALID,
+                PO_QC_SAMPLING_PLAN_QC_TYPE_IS_NULL,
+                PO_QC_SAMPLING_PLAN_NOT_FOUND,
+                PO_QC_SAMPLING_PLAN_DETAIL_FOUND,
+                PO_QC_SAMPLING_PLAN_GENERAL_AQL_IS_NULL,
+                PO_QC_SAMPLING_PLAN_MAJOR_AQL_IS_NULL,
+                PO_QC_UPDATE_MEASURE_ALLOWED_STATUS_ONLY,
+                PO_QC_PUSH_RETURN_ALLOWED_ONLY_IF_REJECTED,
+                PO_QC_ALREADY_PUSHED_REVERSE_FORBIDDEN,
+                PO_QC_TOTAL_QTY_EXCEEDS,
+                PO_QC_VOIDED_OPERATION_NOT_ALLOWED,
+                PO_QC_NOTICE_VOIDED_OPERATION_NOT_ALLOWED,
+                PO_QC_STOCK_INSUFFICIENT,
+                PO_QC_ALREADY_COMPLETED_REVERSE_FORBIDDEN,
+                PO_QC_NOTICE_APPROVE_REQUIRED,
+                PO_QC_DETAIL_REQUIRED,
+                PO_QC_PACKAGE_NOT_FOUND,
+                PO_QC_STOCK_INSUFFICIENT_CONTINUE_CONFIRM,
+                PO_QC_GOOD_BAD_BOTH_ZERO_FORBIDDEN,
+                PO_QC_NO_TRANSFER_OUT,
+                PO_QC_TRANSFER_OUT_ALREADY_GENERATED,
+                PO_QC_NOT_COMPLETED_REVERSE_FORBIDDEN,
+                PO_QC_DEFECT_INFO_INCOMPLETE,
+                PO_QC_WAIT_QC_QTY_NOT_ALLOW_LESS_THAN_ZERO,
+                PO_QC_DEFECT_LEVEL_DUPLICATE,
+                PO_QC_NOTICE_FINISH,
+                PO_QC_NOTICE_DETAIL_NOT_FOUND,
+                PO_QC_QTY_NOT_ALLOW_LESS_THAN_ZERO,
+                PO_QC_RESULT_NOT_EMPTY,
+                QC_APPLICATION_NOT_EXIST,
+                QC_APPLICATION_DETAIL_NOT_EXIST,
+                QC_APPLICATION_SUPPLIER_NOT_DIFF,
+                QC_APPLICATION_NOT_APPROVE_PUSH,
+                QC_APPLICATION_EXPECT_QC_DATE_NOT_BEFORE_NOW,
+                QC_APPLICATION_DETAIL_QTY_NOT_GREATER_THAN_PO_QTY,
+                QC_STANDARD_SKU_NOT_FOUND,
+                QC_STANDARD_NOT_FOUND,
+                QC_STANDARD_SKU_EXISTS,
+                QC_STANDARD_IMPORT_SKU_NOT_FOUND,
+                QC_STANDARD_IMPORT_DETAIL_NOT_FOUND,
+                QC_APPLICATION_DETAIL_QTY_NOT_GREATER_THAN_WAIT_DELIVERY_QTY,
+                QC_APPLICATION_SOURCE_WAIT_DELIVERY_NOT_OPTION,
+                QC_APPLICATION_SOURCE_PO_NOT_OPTION,
+                QC_APPLICATION_PUSH_QC_NOTICE_NOT_DISAPPROVE,
+                QC_APPLICATION_PUSH_QC_NOTICE_NOT_PUSH,
+                CFG_QC_USER_NOT_EXIST,
+                CFG_QC_USER_SUPPLIER_DUPLICATE,
+                CFG_QC_USER_SUPPLIER_REQUIRED,
+                CFG_QC_USER_SUPPLIER_NOT_FOUND,
+                CFG_QC_USER_IMPORT_USER_NOT_IN_ORG,
+                CFG_QC_USER_WAREHOUSE_REQUIRED,
+                CFG_QC_USER_WAREHOUSE_NOT_FOUND,
+                CFG_QC_USER_WAREHOUSE_NAME_DUPLICATE,
+                PO_QC_NOTICE_PLAN_QC_DATE_REQUIRED,
+                PO_QC_NOTICE_PLAN_QC_DATE_NOT_BEFORE_NOW,
+                CFG_QC_USER_QC_USER_AT_LEAST_ONE,
+                CFG_QC_USER_LOAD_QC_USER_LIST_FAILED,
+                CFG_QC_USER_UPDATE_KEY_NOT_MODIFIABLE,
+                QC_NOTICE_PARAM_REQUIRED,
+                QC_NOTICE_DETAILS_MUST_SAME_NOTICE,
+                QC_NOTICE_UPDATE_QC_USER_STATUS_INVALID,
+                QC_NOTICE_QC_USER_ID_REQUIRED,
+                QC_NOTICE_DETAIL_UPDATE_QC_USER_STATUS_INVALID,
+                REPLENISHMENT_ONLY_NORMAL_ALLOW_STOP,
+                REPLENISHMENT_ONLY_STOPPED_ALLOW_RESTORE,
+                REPLENISHMENT_STOCK_UP_RULE_CONFIG_NOT_EXIST,
+                REPLENISHMENT_SALES_RULE_CONFIG_NOT_EXIST,
+                REPLENISHMENT_NEW_PRODUCT_RULE_CONFIG_NOT_EXIST,
+                REPLENISHMENT_DAYS_RULE_CONFIG_NOT_EXIST,
+                REPLENISHMENT_SUGGESTION_NOT_FOUND,
+                REPLENISHMENT_SUGGESTION_ONLY_PENDING_CONFIRM_ALLOW,
+                REPLENISHMENT_SUGGESTION_ONLY_DRAFT_ALLOW_LOCK,
+                REPLENISHMENT_SUGGESTION_PUSHED_INVALID_FORBIDDEN,
+                REPLENISHMENT_SUGGESTION_UPDATE_REMARK_FORBIDDEN,
+                REPLENISHMENT_SUGGESTION_UPDATE_FORBIDDEN,
+                SAMPLE_AVAILABLE_QTY_EXCEEDS_LEDGER,
+                SAMPLE_BORROW_DATE_INVALID,
+                SAMPLE_GENERATE_RETURN_VIEW_ALLOWED_APPROVED_ONLY,
+                SAMPLE_GENERATE_VIEW_LEDGER_QTY_ZERO_FORBIDDEN,
+                SAMPLE_GENERATE_VIEW_USER_UNIQUE_REQUIRED,
+                SAMPLE_RETURN_QTY_NOT_EXIST,
+                SAMPLE_RETURN_QTY_NOT_ENOUGH,
+                SAMPLE_LEDGER_NOT_EXIST,
+                SAMPLE_BORROW_USER_SAME_FORBIDDEN,
+                SAMPLE_RETURN_USER_SAME_FORBIDDEN,
+                SAMPLE_RETURN_EXIST_REVERSE_FORBIDDEN,
+                SAMPLE_GENERATE_RETURN_QTY_ZERO,
+                SAMPLE_ASSET_ACCEPT_QTY_EXCEEDS_PURCHASE_QTY,
+                SAMPLE_ASSET_NOT_FOUND,
+                SAMPLE_ASSET_DISPOSAL_QTY_EXCEEDS_BOOK_QTY,
+                SAMPLE_B2C_DISAPPROVE_FORBIDDEN,
+                SAMPLE_B2C_CANCEL_APPROVE_REQUIRED,
+                SAMPLE_B2C_CANCEL_STATUS_INVALID,
+                SAMPLE_B2C_CANCEL_ALREADY,
+                SAMPLE_ADDRESS_PARSE_ONLY_CN,
+                SAMPLE_ADDRESS_PARSE_EMPTY_INPUT,
+                SAMPLE_B2B_APPLICATION_NOT_FOUND,
+                SAMPLE_B2B_APPLICATION_DETAIL_NOT_FOUND,
+                SAMPLE_B2B_APPLICATION_NOT_APPROVED,
+                SAMPLE_PUSH_DETAIL_ID_NOT_FOUND,
+                SAMPLE_PUSH_WAREHOUSE_MISMATCH,
+                SAMPLE_PUSH_SALES_ORG_MISMATCH,
+                SAMPLE_B2C_APPROVED_REQUIRED,
+                SAMPLE_B2C_HAS_GENERATED_SO,
+                SAMPLE_PARTNER_MULTIPLE_DEFAULT_ADDRESS_FORBIDDEN,
+                SAMPLE_B2B_DETAIL_ALREADY_PUSHED_SO,
+                SAMPLE_B2B_PUSHED_SO_DETAIL_DELETE_FORBIDDEN,
+                SAMPLE_B2C_APPLICATION_SAVE_FAILED,
+                SAMPLE_B2C_CN_DISTRICT_REQUIRED,
+                SAMPLE_B2C_DUPLICATE_PARTNER_ADDRESS,
+                SAMPLE_B2C_APPLICATION_DETAIL_NOT_FOUND,
+                SAMPLE_B2C_DETAIL_REMARK_UPDATE_FAILED,
+                SAMPLE_B2C_SHOP_DISABLED_ADD_ORDER_FORBIDDEN,
+                SAMPLE_B2C_APPROVE_CALLBACK_SUB_ORDER_NOT_FOUND,
+                SAMPLE_B2C_APPROVED_SO_FORBIDDEN_ACTION,
+                SAMPLE_APPLY_NOT_FOUND,
+                SAMPLE_ONLY_AUDITING_ALLOW_MODIFY_QTY,
+                SAMPLE_VOIDED_MODIFY_QTY_FORBIDDEN,
+                SAMPLE_DETAIL_NOT_BELONG_TO_APPLY,
+                SAMPLE_AUDIT_QTY_EXCEEDS_APPLY_QTY,
+                SAMPLE_AUDIT_QTY_UPDATE_FAILED,
+                SAMPLE_PARTNER_IN_USE,
+                SAMPLE_ASSET_ACCEPT_DETAIL_NOT_FOUND,
+                SAMPLE_ASSET_PURCHASE_ORDER_NOT_FOUND,
+                SAMPLE_ASSET_PURCHASE_ORDER_DETAIL_NOT_FOUND,
+                SAMPLE_USER_ID_CHINESE_NOT_FOUND,
+                SAMPLE_USER_ID_CHINESE_QUERY_FAILED,
+                SAMPLE_USE_USER_ID_CHINESE_NOT_FOUND,
+                SAMPLE_USE_USER_ID_CHINESE_QUERY_FAILED,
+                VM_INVENTORY_INSUFFICIENT,
+                VM_NAME_EXIST,
+                VM_NOT_EXIST,
+                VM_ALLOCATION_DETAIL_SAVE_FAILED,
+                VM_FROM_TO_BOTH_EMPTY,
+                VM_FROM_TO_SAME,
+                VM_TARGET_NOT_FOUND,
+                VM_TARGET_NOT_ACTIVE,
+                VM_SOURCE_NOT_FOUND,
+                VM_SOURCE_NOT_ACTIVE,
+                VM_SOURCE_INVENTORY_INSUFFICIENT,
+                VM_ALLOCATION_NOT_FOUND,
+                VM_MANUAL_STATUS_ERROR,
+                VM_SYNC_ERROR_STATUS_ONLY,
+                VM_RELATION_ERROR,
+                VM_ALLOCATION_UNIQUE_ERROR,
+                VM_ALLOCATION_TRANSFER_UNIQUE_ERROR,
+                VM_ALLOCATION_CANCEL_UNIQUE_ERROR,
+                VM_STOCK_NOT_EMPTY,
+                VM_ENTITY_STOCK_NOT_EMPTY,
+                VM_THIRD_VIRTUAL_WAREHOUSE_BINDED,
+                VM_NO_SYNC_INFO,
+                VM_CHECK_OUT_VIRTUAL_INVENTORY,
+                VM_CHANNEL_RELATION_ERROR,
+                VM_SAME_WAREHOUSE_B2B_FOREIGN_ERROR,
+                VM_INVENTORY_INSUFFICIENT_FOR_TRANSFER,
+                VM_FROM_WAREHOUSE_NOT_BLANK,
+                VM_NOT_CONTAINS_FROM_WAREHOUSE,
+                VM_ALLOCATION_NOT_REPEAT,
+                VM_VIRTUAL_WAREHOUSE_NOT_FOUND,
+                VM_WDT_ENTITY_INVENTORY_INSUFFICIENT,
+                WH_MACHINE_EXIST_PURCHASE_RETURN,
+                WH_LOCATION_REQUIRED,
+                WH_TRANSFER_DIRECT_ALREADY_PUSHED_REVERSE_FORBIDDEN,
+                WH_TRANSFER_IN_OUT_WAREHOUSE_MUST_DIFFER,
+                WH_TRANSFER_MB_UPDATE_NOT_ALLOWED,
+                WH_K3_CLOUD_WAREHOUSE_CODE_EXISTS,
+                WH_REQUIRED,
+                WH_NOT_FOUND,
+                WH_STOCK_RULE_WAREHOUSE_CONFIG_ERROR,
+                WH_STOCK_RULE_BIZ_TYPE_ERROR,
+                WH_STOCK_INSUFFICIENT,
+                WH_STOCK_RULE_STATUS_CONFIG_ERROR,
+                WH_STOCK_RULE_TX_TYPE_ERROR,
+                WH_STOCK_TRANSFER_SRC_DEST_SAME,
+                WH_STOCK_TX_NOT_FOUND_OR_REVERSED,
+                WH_TRANSFER_APPLY_NOT_FOUND,
+                WH_TRANSFER_APPLY_DETAIL_NOT_FOUND,
+                WH_TRANSFER_APPLY_ALREADY_PUSHED_DIRECT_REVERSE_FORBIDDEN,
+                WH_TRANSFER_APPLY_ALREADY_PUSHED_STEP_REVERSE_FORBIDDEN,
+                WH_TRANSFER_DIRECT_NOT_FOUND,
+                WH_TRANSFER_DIRECT_DETAIL_NOT_FOUND,
+                WH_TRANSFER_DIRECTION_NOT_FOUND,
+                WH_TRANSFER_APPLY_QTY_EXCEEDS,
+                WH_TRANSFER_APPLY_ALREADY_COMPLETED_DIRECT,
+                WH_SUBCONTRACT_PROCESS_ORDER_NOT_FOUND,
+                WH_SUBCONTRACT_PROCESS_ORDER_DETAIL_NOT_FOUND,
+                WH_TRANSFER_APPLY_ALREADY_COMPLETED_STEP_OUT,
+                WH_SUBCONTRACT_PROCESS_ORDER_CHILD_DETAIL_NOT_FOUND,
+                WH_SUBCONTRACT_PROCESS_CHILD_QTY_NOT_MATCH,
+                WH_OTHER_INBOUND_NOT_FOUND,
+                WH_OTHER_INBOUND_DETAIL_NOT_FOUND,
+                WH_OTHER_OUTBOUND_NOT_FOUND,
+                WH_OTHER_OUTBOUND_DETAIL_NOT_FOUND,
+                WH_OTHER_OUTBOUND_CUSTOMER_NOT_FOUND,
+                WH_TRANSFER_APPLY_APPROVED_ONLY_CAN_PUSH,
+                WH_TRANSFER_IN_QTY_EXCEEDS_OUT_QTY,
+                WH_TRANSFER_INBOUND_NOT_FOUND,
+                WH_TRANSFER_OUTBOUND_NOT_FOUND,
+                WH_TRANSFER_OUT_WAREHOUSE_IMMUTABLE,
+                WH_TRANSFER_IN_QTY_EXCEEDS_PLAN,
+                WH_SKU_STOCK_INSUFFICIENT,
+                WH_K3_CLOUD_WAREHOUSE_CODE_NOT_FOUND,
+                WH_TRANSFER_ALREADY_EXISTS,
+                WH_RETURN_QTY_EXCEEDS_PENDING_QC,
+                WH_LOCATION_DEFAULT_STAGING_NOT_FOUND,
+                WH_LOCATION_STAGING_NOT_FOUND,
+                WH_BIN_NOT_AVAILABLE,
+                WH_REF_LOCATION_NOT_FOUND,
+                WH_STOCKTAKING_TASK_STARTED,
+                WH_LOCATION_IS_NULL,
+                WH_AREA_IS_NULL,
+                WH_STOCK_FREEZE_NOT_ALLOW,
+                WH_NOT_EXIST_ORG,
+                WH_STOCKTAKING_TASK_EXIST,
+                WH_LOCATION_MOVE_DETAIL_SAVE_FAILED,
+                WH_LOCATION_MOVE_QTY_EXCEEDS_AVAILABLE,
+                WH_LOCATION_MOVE_FROZEN_QTY_EXCEEDS,
+                WH_CURRENT_TARGET_WAREHOUSE_MUST_SAME,
+                WH_INV_CLOSED,
+                WH_SUBCONTRACT_MACHINE_WAREHOUSE_ORG_DIFF,
+                WH_STOCKTAKING_DIFF_QTY_NOT_ZERO,
+                WH_PROFIT_DIFF_GREATER_ZERO_REQUIRED,
+                WH_LOSS_DIFF_LESS_ZERO_REQUIRED,
+                WH_ORG_WAREHOUSE_MISMATCH,
+                WH_DISABLED,
+                WH_AREA_LOCATION_DISABLED,
+                WH_SUBCONTRACT_GENERATE_MACHINE_FOR_COMBINATION_ONLY,
+                WH_SUBCONTRACT_WAIT_SUBMIT_GENERATE_MACHINE_ONLY,
+                WH_SUBCONTRACT_MACHINE_ALREADY_GENERATED,
+                WH_GENERATE_TRANSFER_OUT_FAILED,
+                WH_NOT_MATCHED,
+                WH_ONWAY_NOT_EXIST,
+                WH_SHOP_INFO_EXIST_NOT_DISAPPROVE,
+                WH_OPEN_STATUS_OPEN_TIME_REQUIRED,
+                WH_OVERSEAS_INBOUND_DETAIL_NOT_EXIST,
+                WH_OVERSEAS_INBOUND_NOT_EXIST,
+                WH_OVERSEAS_INBOUND_NOT_CANCEL,
+                WH_OVERSEAS_INBOUND_NOT_DELETE,
+                WH_OVERSEAS_INTERFACE_EXCEPTION,
+                WH_OVERSEAS_INBOUND_EXIST_NOT_UPDATE,
+                WH_OVERSEAS_PROVIDER_NOT_FOUND,
+                WH_OVERSEAS_PROVIDER_NOT_AUTH,
+                WH_INBOUND_EXIST_NOT_REPEAT,
+                WH_ONWAY_NOT_CONFIGURED,
+                WH_CODE_XGWJ_FBA_NOT_EXIST,
+                WH_OVERSEAS_INBOUND_NOT_FOUND_FOR_APPROVE,
+                WH_REPEAT_BINDING_THIRD_WAREHOUSE,
+                WH_OVERSEAS_INBOUND_ALREADY_PUSHED_REVERSE_FORBIDDEN,
+                WH_TRANSFER_INFO_ERROR_NOT_CANCEL_PROCESS,
+                WH_TRANSFER_INFO_CANCEL_PROCESS_ERROR,
+                WH_TRANSFER_DECLARE_DETAIL_NOT_EXIST,
+                WH_THIRD_WAREHOUSE_NAME_EXIST,
+                WH_STOCKTAKING_PROFIT_LOSS_CLOSED,
+                WH_TRANSFER_WAREHOUSE_REQUIRED,
+                WH_TRANSFER_ALREADY_APPROVED_MODIFY_FORBIDDEN,
+                WH_PARAM_NOT_FOUND,
+                WH_NOT_EXIST_OR_NO_PERMISSION,
+                WH_TRANSFER_DECLARE_SO_EXISTS,
+                WH_THIRD_WAREHOUSE_MAPPING_EXIST,
+                WH_ENTITY_NOT_FOUND,
+                WH_ENTITY_NOT_ACTIVE,
+                WH_ENTITY_INVENTORY_INSUFFICIENT,
+                WH_ENTITY_NO_VIRTUAL_RELATION,
+                WH_AREA_EXIST,
+                WH_POSITION_BINDING_EXIST,
+                WH_TRANSFER_ASSOCIATED_OUTBOUND_APPROVE_REQUIRED,
+                WH_TRANSFER_OUTBOUND_DATE_INVALID,
+                WH_ENTITY_ALLOCATION_STOCK_INSUFFICIENT,
+                WH_EXISTS_TRANSFER_INFO_NOT_CLEAR,
+                WH_REPLENISH_AREA_NOT_FOUND,
+                WH_REPLENISH_LOCATION_NOT_FOUND,
+                WH_TRANSFER_AUTO_CREATED_DIRECT_FORBIDDEN,
+                WH_INV_NOT_EXIST,
+                WH_AREA_NOT_EXIST,
+                WH_AREA_USED_STOCK_TYPE_NOT_EDIT,
+                WH_WAREHOUSE_NOT_EDITABLE,
+                WH_FBA_FNSKU_NOT_BLANK,
+                WH_PICK_AND_PUTAWAY_POSITION_SAME_FORBIDDEN,
+                WH_SKU_MAPPING_STOCK_INSUFFICIENT,
+                WH_WAREHOUSE_LOCATION_NOT_FOUND,
+                WH_THIRD_NOT_ALLOW_MULTIPLE,
+                WH_INVENTORY_NOT_EXIST,
+                WH_BOX_RULE_SKU_EXISTS,
+                WH_BOX_RULE_BATCH_UPDATE_FAILED,
+                WH_BOX_RULE_PRIORITY_DUPLICATE,
+                WH_BOX_RULE_BATCH_ADD_FAILED,
+                WH_BOX_RULE_QTY_NOT_MULTIPLE,
+                WH_BOX_RULE_SKU_DUPLICATE,
+                WH_BOX_RULE_PER_BOX_QTY_DUPLICATE,
+                WH_BOX_PER_QTY_FORBIDDEN_ONE,
+                WH_STOCKTAKING_BILL_DATE_NEED_GREATER_THAN_TODAY,
+                WH_STOCKPLAN_NOT_FOUND,
+                WH_STOCKPLAN_ALREADY_PUSH,
+                WH_STOCKTAKING_PUSH_OVER,
+                WH_STOCKTAKING_APPROVE_BILL_DATE_NEED_GREATER_THAN_TODAY,
+                WH_STOCKTAKING_PROFIT_LOSS_NOT_ALLOW_UPDATE,
+                WH_STOCKTAKING_NOT_NEED_PUSH,
+                WH_STOCKTAKING_NOT_ALLOW_APPROVE,
+                WH_ONWAY_WAREHOUSE_NOT_EXIST,
+                WH_WEGO_INBOUND_CODE_REQUIRED,
+                WH_WEGO_AUTH_INFO_EMPTY,
+                WH_WEGO_AUTH_TOKEN_SECRET_MISSING,
+                WH_WEGO_PACKING_LIST_EMPTY,
+                WH_WEGO_PACKING_BOX_NO_VALID_SKU,
+                WH_WEGO_PACKING_LIST_MISSING_BOX_NO,
+                WH_WEGO_OUTBOUND_DETAIL_EMPTY,
+                WH_WEGO_OUTBOUND_CODE_REQUIRED,
+                WH_WEGO_QUERY_FALLBACK_EMPTY_RESPONSE,
+                WH_WEGO_QUERY_FALLBACK_FAILED,
+                WH_WEGO_INBOUND_AUTH_ID_NOT_FOUND,
+                WH_WEGO_INBOUND_AUTH_JSON_EMPTY,
+                WH_WEGO_INBOUND_TOKEN_SECRET_MISSING,
+                WH_WEGO_INBOUND_PAGE_QUERY_ERROR,
+                WH_WEGO_INBOUND_PAGE_PARSE_FAILED,
+                WH_WEGO_INBOUND_PAGE_LIMIT_EXCEEDED,
+                WH_WEGO_INBOUND_RESPONSE_EMPTY,
+                WH_WEGO_INBOUND_RESPONSE_FAILED,
+                WH_WEGO_INBOUND_RESULT_EMPTY,
+                WH_WEGO_INBOUND_TYPE_ONLY_SELF_HEADWAY,
+                WH_WEGO_INBOUND_TRACKING_NO_REQUIRED,
+                WH_WEGO_INVENTORY_PROVIDER_NOT_FOUND,
+                WH_WEGO_INVENTORY_AUTH_JSON_EMPTY,
+                WH_WEGO_INVENTORY_TOKEN_SECRET_MISSING,
+                WH_WEGO_INVENTORY_PAGE_QUERY_ERROR,
+                WH_WEGO_INVENTORY_PAGE_PARSE_FAILED,
+                WH_WEGO_INVENTORY_PAGE_LIMIT_EXCEEDED,
+                WH_WEGO_INVENTORY_RESPONSE_FAILED,
+                WH_WEGO_AUTH_INFO_NOT_FOUND,
+                WH_WEGO_OUTBOUND_AUTH_ID_NOT_FOUND,
+                WH_WEGO_OUTBOUND_AUTH_JSON_EMPTY,
+                WH_WEGO_OUTBOUND_TOKEN_SECRET_MISSING,
+                WH_WEGO_OUTBOUND_PAGE_QUERY_ERROR,
+                WH_WEGO_OUTBOUND_RESPONSE_EMPTY,
+                WH_WEGO_OUTBOUND_RESPONSE_FAILED,
+                WH_WEGO_OUTBOUND_RESULT_EMPTY,
+                WH_WEGO_OUTBOUND_PAGE_LIMIT_EXCEEDED,
+                WH_WEGO_SDK_INBOUND_PAGE_CONVERT_FAILED,
+                WH_WEGO_SDK_OUTBOUND_SEARCH_NO_RESPONSE,
+                WH_WEGO_SDK_OUTBOUND_SEARCH_FAILED,
+                WH_WEGO_SDK_OUTBOUND_SEARCH_CONVERT_FAILED,
+                WH_WEGO_SDK_OUTBOUND_PAGE_CONVERT_FAILED,
+                WH_WEGO_SDK_RETURN_ORDER_PAGE_CONVERT_FAILED,
+                WH_WEGO_SDK_API_CALL_ERROR,
+                WH_WEGO_SDK_API_RESPONSE_EMPTY,
+                WH_WEGO_SDK_API_RESPONSE_NOT_JSON,
+                WH_WEGO_SDK_DOMAIN_EMPTY,
+                WH_WEGO_SDK_SIGN_PARAMS_EMPTY,
+                WH_WEGO_SDK_SIGN_SECRET_EMPTY,
+                WH_WEGO_SDK_SIGN_JSON_EMPTY,
+                WH_WEGO_RETURN_AUTH_INFO_NOT_FOUND,
+                WH_WEGO_RETURN_AUTH_ID_NOT_FOUND,
+                WH_WEGO_RETURN_AUTH_JSON_EMPTY,
+                WH_WEGO_RETURN_TOKEN_SECRET_MISSING,
+                WH_WEGO_RETURN_PAGE_QUERY_ERROR,
+                WH_WEGO_RETURN_RESPONSE_EMPTY,
+                WH_WEGO_RETURN_RESPONSE_FAILED,
+                WH_WEGO_RETURN_RESULT_EMPTY,
+                WH_WEGO_RETURN_PAGE_LIMIT_EXCEEDED,
+                WH_WEGO_CHANNEL_AUTH_INFO_EMPTY,
+                WH_WEGO_CHANNEL_TOKEN_SECRET_MISSING,
+                WH_WEGO_CHANNEL_QUERY_ERROR,
+                WH_WEGO_CHANNEL_RESPONSE_EMPTY,
+                WH_WEGO_CHANNEL_QUERY_FAILED,
+                WH_WEGO_LOGISTICS_SERVICE_NOT_OPEN,
+                WH_WEGO_SKU_PROVIDER_NOT_FOUND,
+                WH_WEGO_SKU_AUTH_JSON_EMPTY,
+                WH_WEGO_SKU_TOKEN_SECRET_MISSING,
+                WH_WEGO_SKU_PAGE_QUERY_ERROR,
+                WH_WEGO_SKU_PAGE_PARSE_FAILED,
+                WH_WEGO_SKU_PAGE_LIMIT_EXCEEDED,
+                WH_WEGO_SKU_RESPONSE_FAILED,
+                WH_WEGO_WAREHOUSE_AUTH_ID_NOT_FOUND,
+                WH_WEGO_WAREHOUSE_REFRESH_TOKEN_FAILED,
+                WH_WEGO_WAREHOUSE_QUERY_FAILED,
+                WH_WEGO_WAREHOUSE_AUTH_JSON_EMPTY,
+                WH_WEGO_WAREHOUSE_TOKEN_SECRET_MISSING,
+                WH_WEGO_INBOUND_DETAIL_JSON_PARSE_FAILED,
+                WH_BORROW_WAREHOUSE_USABLE_INSUFFICIENT,
+                SO_RETURN_PRESTOCK_MODIFIED,
+                SO_RETURN_PRESTOCK_B2C_PLATFORM_REQUIRED,
+                SO_RETURN_PRESTOCK_DETAIL_MODIFIED,
+                SO_RETURN_PRESTOCK_WAREHOUSE_REQUIRED_FOR_INSTOCK,
+                SO_RETURN_PRESTOCK_LINK_AFTER_SALE_GROUP_EXCEEDS,
+                SO_RETURN_PRESTOCK_NOT_FOUND_OR_DELETED,
+                SO_RETURN_PRESTOCK_BILL_TYPE_MIXED_FORBIDDEN,
+                SO_RETURN_PRESTOCK_WAREHOUSING_DEPT_NOT_FOUND,
+                SO_RETURN_PRESTOCK_INSTOCK_GENERATE_FAILED,
+                SO_RETURN_PRESTOCK_INSTOCK_SUBMIT_FAILED,
+                SO_RETURN_PRESTOCK_LINK_SHOP_GROUP_EXCEEDS,
+                SO_RETURN_PRESTOCK_LINK_SHOP_REQUIRED,
+                SO_RETURN_PRESTOCK_LINK_CUSTOMER_REQUIRED,
+                SO_RETURN_PRESTOCK_LINK_SHOP_NOT_FOUND,
+                SO_RETURN_PRESTOCK_LINK_SHOP_CUSTOMER_REQUIRED,
+                SO_RETURN_PRESTOCK_WAREHOUSE_REQUIRED,
+                SO_RETURN_PRESTOCK_INSTOCK_WAREHOUSE_INCONSISTENT,
+                SO_RETURN_PRESTOCK_INSTOCK_RETURN_TYPE_INCONSISTENT,
+                SO_RETURN_PRESTOCK_DETAIL_NOT_BELONG,
+                SO_RETURN_PRESTOCK_RETURN_QTY_INVALID,
+                SO_RETURN_PRESTOCK_CUSTOMER_NOT_EMPTY_FORBIDDEN,
+                SO_RETURN_PRESTOCK_RETURN_LOGISTIC_CODE_REQUIRED,
+                SO_RETURN_PRESTOCK_FORCE_CLOSE,
+                SO_RETURN_PRESTOCK_ALL_LINKED,
+                SO_RETURN_PRESTOCK_LINK_AFTER_SALE_SKU_TYPE_EXCEEDS,
+                SO_RETURN_PRESTOCK_LINK_AFTER_SALE_SKU_QTY_EXCEEDS,
+                SO_RETURN_PRESTOCK_LINK_AFTER_SALE_SKU_RECEIVE_QTY_EXCEEDS,
+                SO_RETURN_PRESTOCK_AFTER_SALE_TYPE_LINK_FORBIDDEN,
+        };
+    }
+}

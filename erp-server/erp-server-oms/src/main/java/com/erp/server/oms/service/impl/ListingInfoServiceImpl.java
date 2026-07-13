@@ -703,6 +703,7 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
         LocalDateTime now = LocalDateTime.now();
         List<ListingInfoEntity> toInsert = new ArrayList<>();
         List<ListingInfoEntity> toUpdate = new ArrayList<>();
+        List<String> existingListingIds = new ArrayList<>();
         for (WegoSkuSyncDTO.SkuItemDTO itemDTO : itemMap.values()) {
             String latestBarcode = buildBarcode(itemDTO.getBarcode());
             ListingInfoEntity listingInfoEntity = existingMap.get(itemDTO.getSku());
@@ -722,6 +723,8 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
                 toInsert.add(add);
                 continue;
             }
+
+            existingListingIds.add(listingInfoEntity.getId());
 
             // 已存在 SKU：只感知 SkuItemDTO 携带的字段（name / barcode）变化，避免无效写入
             boolean dataChanged = false;
@@ -747,6 +750,24 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
         if (CollectionUtils.isNotEmpty(toUpdate)) {
             CollUtil.split(toUpdate, 500).forEach(batch -> service.updateBatchById(batch));
         }
+
+        // 历史遗留：已存在 SKU 关联的 sku_mapping.warehouse_id 此前可能被写成空字符串，命中本次同步时顺带回填
+        if (StringUtils.isNotBlank(dto.getWarehouseId()) && CollectionUtils.isNotEmpty(existingListingIds)) {
+            List<SkuMappingEntity> skuMappingToBackfill = skuMappingService.listByListingIds(existingListingIds).stream()
+                    .filter(skuMapping -> RuleTypeEnum.WAREHOUSE.equals(skuMapping.getType()))
+                    .filter(skuMapping -> StringUtils.isBlank(skuMapping.getWarehouseId()))
+                    .collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(skuMappingToBackfill)) {
+                skuMappingToBackfill.forEach(skuMapping -> {
+                    skuMapping.setWarehouseId(dto.getWarehouseId());
+                    skuMapping.setWarehouseName(StringUtils.defaultString(dto.getWarehouseName()));
+                    // 同批历史占位记录一并纠正为服务商维度共享，避免沿用旧逻辑遗留的 false
+                    skuMapping.setHasMappingAll(Boolean.TRUE);
+                });
+                CollUtil.split(skuMappingToBackfill, 500).forEach(batch -> skuMappingService.updateBatchById(batch));
+            }
+        }
+
         if (CollectionUtils.isEmpty(toInsert)) {
             // 没有新增 listing_info 时无需新增 sku_mapping
             return 0;
@@ -771,7 +792,8 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
             skuMappingEntity.setListingId(listingInfoEntity.getId());
             skuMappingEntity.setWarehouseId(dto.getWarehouseId() != null ? dto.getWarehouseId() : "");
             skuMappingEntity.setWarehouseName(dto.getWarehouseName() != null ? dto.getWarehouseName() : "");
-            skuMappingEntity.setHasMappingAll(Boolean.FALSE);
+            // 服务商（authId）可能绑定多个系统仓库，对照关系按服务商维度共享，与其它 sku_mapping 创建路径保持一致
+            skuMappingEntity.setHasMappingAll(Boolean.TRUE);
             skuMappingEntity.setIsExpire(Boolean.FALSE);
             skuMappingEntity.setEffectiveTime(effectiveTime);
             skuMappingEntity.setExpireTime(effectiveTime.plusYears(MathUtil.NUMBER_100));

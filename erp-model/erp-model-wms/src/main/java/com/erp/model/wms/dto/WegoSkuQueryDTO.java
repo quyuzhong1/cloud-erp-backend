@@ -3,6 +3,7 @@ package com.erp.model.wms.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -15,6 +16,11 @@ import java.util.Map;
 @Data
 @NoArgsConstructor
 public class WegoSkuQueryDTO implements Serializable {
+
+    /**
+     * WEGO SKU 查询单页最大条数（由服务端约束）。
+     */
+    public static final int MAX_PAGE_SIZE = 100;
 
     /**
      * 查询 SKU 请求
@@ -36,10 +42,11 @@ public class WegoSkuQueryDTO implements Serializable {
         private String secret;
 
         /**
-         * 页大小
+         * 页大小，WEGO 服务端最大 100
          */
         @NotNull(message = "pageSize不能为空")
         @Min(value = 1, message = "pageSize最小为1")
+        @Max(value = MAX_PAGE_SIZE, message = "pageSize最大为" + MAX_PAGE_SIZE)
         private Integer pageSize;
 
         /**

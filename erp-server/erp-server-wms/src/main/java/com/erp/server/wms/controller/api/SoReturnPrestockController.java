@@ -2,8 +2,8 @@ package com.erp.server.wms.controller.api;
 
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
-import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -151,10 +151,9 @@ public class SoReturnPrestockController extends BaseController {
             serviceClass = SoReturnPrestockService.class,
             keyIdName = "mainId"
     )
-    public ApiResult<BatchResultDTO> confirmLinkAfterSale(
+    public ApiResult<Boolean> confirmLinkAfterSale(
             @RequestBody @Validated SoReturnPrestockDetailDTO.ConfirmLinkAfterSale dto) {
-        BatchResultDTO result = soReturnPrestockService.confirmLinkAfterSale(dto);
-        return result.getSuccess() ? success(result) : failure(result);
+        return success(soReturnPrestockService.confirmLinkAfterSale(dto));
     }
 
     /**

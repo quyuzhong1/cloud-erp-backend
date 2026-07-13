@@ -4,11 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 import java.util.List;
 
 /**
@@ -404,13 +400,22 @@ public class SoReturnPrestockDetailDTO {
         /**
          * 店铺 ID
          */
-        @NotBlank(message = "店铺ID不能为空")
         private String shopId;
 
         /**
          * 店铺名称
          */
         private String shopName;
+
+        /**
+         * 客户id
+         */
+        private String customerId;
+
+        /**
+         * 客户名称
+         */
+        private String customerName;
 
         /**
          * 平台字典值；取自所关联店铺自身所属的平台，不代表本行数据的来源渠道。
@@ -505,13 +510,22 @@ public class SoReturnPrestockDetailDTO {
         /**
          * 店铺 ID
          */
-        @NotBlank(message = "店铺ID不能为空")
         private String shopId;
 
         /**
          * 店铺名称
          */
         private String shopName;
+
+        /**
+         * 客户id
+         */
+        private String customerId;
+
+        /**
+         * 客户名称
+         */
+        private String customerName;
 
         /**
          * 平台字典值；取自所关联店铺自身所属平台，由前端在选定店铺后回传

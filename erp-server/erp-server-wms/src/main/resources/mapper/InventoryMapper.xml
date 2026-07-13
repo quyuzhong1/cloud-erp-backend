@@ -438,16 +438,17 @@
                 AND warehouse_id = #{warehouseId}
             </if>
             GROUP BY i.warehouse_id
-        )t
+        ) t
         LEFT JOIN (
             SELECT
                 warehouse_id,
-                SUM(CASE WHEN qty > 0 THEN qty END) AS todayStockInQty,
-                SUM(CASE WHEN qty &lt; 0 THEN qty END) AS todayDeliveryQty
-            FROM "transaction_flow"
-            WHERE create_time &gt;= date_trunc('day', NOW()::timestamp)
-            AND create_time &lt; date_trunc('day', NOW()::timestamp) + interval '1 day'
+                SUM(qty) FILTER (WHERE qty > 0) AS todayStockInQty,
+                SUM(qty) FILTER (WHERE qty &lt; 0) AS todayDeliveryQty
+            FROM transaction_flow
+            WHERE is_deleted = FALSE
             AND is_unapproved = FALSE
+            AND create_time >= CURRENT_DATE
+            AND create_time &lt; CURRENT_DATE + INTERVAL '1 day'
             <if test="status != null and status != ''">
                 AND dict_inventory_status = #{status}
             </if>
@@ -456,7 +457,7 @@
             </if>
             AND dict_inventory_status = 'usable'
             GROUP BY warehouse_id
-        )tt ON t.warehouse_id = tt.warehouse_id
+        ) tt ON t.warehouse_id = tt.warehouse_id
     </select>
 
     <select id="listByStocktakingType" resultType="com.erp.model.wms.entity.InventoryEntity">

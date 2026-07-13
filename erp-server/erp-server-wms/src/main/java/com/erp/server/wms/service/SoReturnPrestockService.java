@@ -75,7 +75,7 @@ public interface SoReturnPrestockService extends SuperService<SoReturnPrestockEn
      * @param dto 确认关联售后单入参
      * @return 操作结果（失败时 msg 说明超出原因，成功时区分完成关联/部分关联）
      */
-    BatchResultDTO confirmLinkAfterSale(SoReturnPrestockDetailDTO.ConfirmLinkAfterSale dto);
+    Boolean confirmLinkAfterSale(SoReturnPrestockDetailDTO.ConfirmLinkAfterSale dto);
 
     /**
      * 批量关联店铺

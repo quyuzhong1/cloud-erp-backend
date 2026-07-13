@@ -347,11 +347,22 @@ public class AsyncServiceImpl implements AsyncService {
                 mainEntity.setShippingOrderNo("");
                 soB2cFeign.updateStatus(mainEntity);
                 operateLogDTO.setContent("三方仓出库异常，三方仓出库单已自动取消,异常信息："+ abnormalProblemReason);
-                //拦截确认成功后才同步更新三方仓发货单状态，避免与异步拦截结果的时序不一致
+                //拦截确认成功后才同步更新三方仓发货单状态，避免与异步拦截结果的时序不一致；
+                //调用方传入的实体在拦截接口调用期间可能已过期（version 已变化），更新前重新查询最新记录，缩小乐观锁冲突窗口
                 if (Objects.nonNull(thirdWarehouseDeliveryEntity)) {
-                    thirdWarehouseDeliveryEntity.setStatus(SoB2cWarehouseDeliveryStatusEnum.CANCEL_DELIVERY.getStatus());
-                    thirdWarehouseDeliveryService.updateById(thirdWarehouseDeliveryEntity);
-                    operateLogService.addModuleOperateLog("状态变更为取消发货", ModuleTypeEnum.THIRD_WAREHOUSE_DELIVERY.getCode(), thirdWarehouseDeliveryEntity.getId(), "状态变更");
+                    ThirdWarehouseDeliveryEntity latestDeliveryEntity = thirdWarehouseDeliveryService.getById(thirdWarehouseDeliveryEntity.getId());
+                    if (Objects.isNull(latestDeliveryEntity)) {
+                        log.warn("三方仓出库异常自动取消：三方仓发货单不存在，id={}", thirdWarehouseDeliveryEntity.getId());
+                    } else {
+                        latestDeliveryEntity.setStatus(SoB2cWarehouseDeliveryStatusEnum.CANCEL_DELIVERY.getStatus());
+                        boolean updated = thirdWarehouseDeliveryService.updateById(latestDeliveryEntity);
+                        if (updated) {
+                            operateLogService.addModuleOperateLog("状态变更为取消发货", ModuleTypeEnum.THIRD_WAREHOUSE_DELIVERY.getCode(), thirdWarehouseDeliveryEntity.getId(), "状态变更");
+                        } else {
+                            //重新查询后仍更新失败，说明存在并发写入冲突，仅记录日志不做无限重试，避免异步任务阻塞
+                            log.warn("三方仓出库异常自动取消：三方仓发货单状态更新失败（可能存在版本冲突），id={}", thirdWarehouseDeliveryEntity.getId());
+                        }
+                    }
                 }
             }else{
                 operateLogDTO.setContent("三方仓出库异常，三方仓出库单自动取消失败,异常信息："+ abnormalProblemReason);
