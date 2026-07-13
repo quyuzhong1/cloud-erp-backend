@@ -3781,7 +3781,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             //检查发货单是否已经生成销售出库单
             List<SoOutstockEntity> entityList = this.listBySourceId(Collections.singletonList(sourceId));
             if (CollectionUtils.isNotEmpty(entityList)) {
-                return entityList.get(0).getId();
+                return SoOutstockDTO.AddB2cSoOutstockResult.of(entityList.get(0).getId(), Boolean.FALSE);
             }
         }
         List<SoOutstockDetailDTO.AddDTO> detailList = dto.getDetailList();
