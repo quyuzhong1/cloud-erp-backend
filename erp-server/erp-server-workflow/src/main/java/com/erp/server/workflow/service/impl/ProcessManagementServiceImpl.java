@@ -184,6 +184,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "dto.businessKey,dto.businessId", unlockAfterTx = true)
     public ProcessManagementDTO.StartResultDTO startProcessManagement(ProcessManagementDTO.StartDTO dto) {
         CfgProcessRuleEntity cfgProcessRuleEntity = getProcessDefinitionId(dto);
         if (ObjectUtil.isEmpty(cfgProcessRuleEntity)) {
@@ -468,6 +469,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "dto.businessKey,dto.businessId", unlockAfterTx = true)
     public ProcessManagementDTO.ApproveResultDTO approveProcess(ProcessManagementDTO.ApproveDTO dto,Boolean isFirst) {
         //判断是否走飞书流程
        Boolean isFsApprove = isFsApprovePass(dto.getBusinessId(),dto.getBusinessKey());
@@ -1529,6 +1531,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
      * @param dto
      */
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "dto.businessKey,dto.id", unlockAfterTx = true)
     public BatchResultDTO approveFeign(ApproveDTO.ApproveOneDTO dto) {
         WorkMenuEntity menuEntity = workMenuService.getByModuleCode(dto.getBusinessKey());
         String feignBeanName = menuEntity.getFeignBeanName();
@@ -1549,6 +1552,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
      * @return Boolean
      */
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "dto.businessKey,dto.businessId", unlockAfterTx = true)
     public Boolean callFeign(String businessKey, EndProcessDTO dto) {
         WorkMenuEntity menuEntity = workMenuService.getByModuleCode(businessKey);
         String feignBeanName = menuEntity.getFeignBeanName();
@@ -1560,6 +1564,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     }
 
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "dto.businessKey,dto.id", unlockAfterTx = true)
     public Boolean disApproveFeign(ApproveDTO.DisApproveDTO dto) {
         WorkMenuEntity menuEntity = workMenuService.getByModuleCode(dto.getBusinessKey());
         String feignBeanName = menuEntity.getFeignBeanName();
@@ -1571,6 +1576,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     }
 
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "dto.businessKey,dto.id", unlockAfterTx = true)
     public Boolean cancelProcessFeign(ApproveDTO.CancelProcessDTO dto) {
         WorkMenuEntity menuEntity = workMenuService.getByModuleCode(dto.getBusinessKey());
         String feignBeanName = menuEntity.getFeignBeanName();

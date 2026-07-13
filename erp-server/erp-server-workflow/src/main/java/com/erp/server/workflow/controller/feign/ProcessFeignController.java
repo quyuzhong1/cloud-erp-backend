@@ -61,6 +61,7 @@ public class ProcessFeignController extends BaseController {
      */
     @Deprecated
     @PostMapping("/startProcess")
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "启动流程")
     public ProcessNodeDTO startProcess(@RequestBody StartProcessDTO dto) {
         ProcessNodeDTO process = workflowService.startProcess(dto);
         return process;
@@ -87,6 +88,7 @@ public class ProcessFeignController extends BaseController {
      */
     @Deprecated
     @PostMapping("/taskPass")
+    @LogAction(value = LogActionEnum.APPROVE, desc = "任务审核通过")
     public ProcessNodeDTO taskPass(@RequestBody @Validated ApproveProcessDTO dto) {
         ProcessNodeDTO node = processTaskService.taskPass(dto);
         return node;
@@ -99,6 +101,7 @@ public class ProcessFeignController extends BaseController {
      */
     @Deprecated
     @PostMapping("/taskNoPass")
+    @LogAction(value = LogActionEnum.REJECT, desc = "任务审核驳回")
     public ProcessNodeDTO taskNoPass(@RequestBody @Validated ApproveProcessDTO dto) {
         return processTaskService.taskNoPass(dto);
     }
@@ -109,6 +112,7 @@ public class ProcessFeignController extends BaseController {
      */
     @Deprecated
     @PostMapping("/rejectOriginProcess")
+    @LogAction(value = LogActionEnum.REJECT, desc = "驳回至初始状态")
     public void rejectOriginProcess(@RequestBody @Validated ApproveProcessDTO dto) {
         workflowService.rejectOriginProcess(dto);
     }
@@ -119,6 +123,7 @@ public class ProcessFeignController extends BaseController {
      */
     @Deprecated
     @PostMapping("/withDraw")
+    @LogAction(value = LogActionEnum.CANCEL, desc = "撤销流程")
     public void withDraw(@RequestBody @Validated ApproveProcessDTO dto) {
         workflowService.withDrawProcess(dto);
     }
@@ -130,6 +135,7 @@ public class ProcessFeignController extends BaseController {
      */
     @Deprecated
     @PostMapping("/batchCancelProcess")
+    @LogAction(value = LogActionEnum.CANCEL, desc = "批量撤销流程")
     public Boolean batchCancelProcess(@RequestBody @Validated List<String> processIdList) {
         return workflowService.batchCancelProcess(processIdList);
     }
@@ -140,6 +146,7 @@ public class ProcessFeignController extends BaseController {
      */
     @Deprecated
     @PostMapping("/fetchBack")
+    @LogAction(value = LogActionEnum.CANCEL, desc = "取回流程")
     public void fetchBack(@RequestBody @Validated ApproveProcessDTO dto) {
         workflowService.fetchBackProcess(dto);
     }
@@ -148,6 +155,7 @@ public class ProcessFeignController extends BaseController {
      * 终止流程
      */
     @PostMapping("/terminate")
+    @LogAction(value = LogActionEnum.CANCEL, desc = "终止流程")
     public void terminate(@RequestBody @Validated ApproveProcessDTO dto) {
         workflowService.terminateProcess(dto.getProcessInstanceId());
     }
@@ -156,12 +164,14 @@ public class ProcessFeignController extends BaseController {
      * 取消流程(弃用)
      */
     @PostMapping("/cancelProcess")
+    @LogAction(value = LogActionEnum.CANCEL, desc = "取消流程")
     public void cancelProcess(@RequestBody List<String> ids) {
         workflowService.cancelProcess(ids);
     }
 
     //驳回到源点
     @PostMapping("/rejectOrigin")
+    @LogAction(value = LogActionEnum.REJECT, desc = "驳回到源点")
     public void rejectOrigin(@RequestBody @Validated ApproveProcessDTO dto) {
         workflowService.rejectOriginProcess(dto);
     }
@@ -218,6 +228,7 @@ public class ProcessFeignController extends BaseController {
      * @date 2023-01-31 15:32
      */
     @PostMapping("/saveBusinessProcess")
+    @LogAction(value = LogActionEnum.INSERT, desc = "保存业务流程关联")
     public Boolean saveBusinessProcess(@RequestBody WorkflowBusinessProcessDTO dto) {
         Boolean result = businessProcessService.saveBusinessProcess(dto);
         return result;
@@ -279,6 +290,7 @@ public class ProcessFeignController extends BaseController {
      * 撤销流程
      */
     @PostMapping("/withDrawByBusiness")
+    @LogAction(value = LogActionEnum.CANCEL, desc = "按业务撤销流程")
     public Boolean withDraw(@RequestBody WithDrawProcessBusinessDTO dto) {
         return workflowService.withDrawProcessByBusinessTable(dto);
     }

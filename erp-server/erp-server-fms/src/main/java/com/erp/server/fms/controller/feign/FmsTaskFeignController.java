@@ -2,6 +2,8 @@ package com.erp.server.fms.controller.feign;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
+import com.common.core.anno.LogAction;
+import com.common.core.enums.LogActionEnum;
 import com.erp.server.fms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -48,6 +50,7 @@ public class FmsTaskFeignController {
      * 资产卡片审核
      */
     @PostMapping("/assetCard/approve")
+    @LogAction(value = LogActionEnum.APPROVE, desc = "资产卡片审核")
     public List<BatchResultDTO> assetCardApprove(@RequestBody BaseApproveParamDTO dto) {
         List<BatchResultDTO> resultList = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -65,6 +68,7 @@ public class FmsTaskFeignController {
      * 资产验收单审核
      */
     @PostMapping("/assetAccept/approve")
+    @LogAction(value = LogActionEnum.APPROVE, desc = "资产验收单审核")
     public List<BatchResultDTO> assetAcceptApprove(@RequestBody BaseApproveParamDTO dto) {
         List<BatchResultDTO> resultList = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -82,6 +86,7 @@ public class FmsTaskFeignController {
      * 盘盈盘亏单审核
      */
     @PostMapping("/assetProfitLoss/approve")
+    @LogAction(value = LogActionEnum.APPROVE, desc = "盘盈盘亏单审核")
     public List<BatchResultDTO> assetProfitLossApprove(@RequestBody BaseApproveParamDTO dto) {
         List<BatchResultDTO> resultList = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -99,6 +104,7 @@ public class FmsTaskFeignController {
      * 资产盘点表审核
      */
     @PostMapping("/assetStocktaking/approve")
+    @LogAction(value = LogActionEnum.APPROVE, desc = "资产盘点表审核")
     public List<BatchResultDTO> assetStocktakingApprove(@RequestBody BaseApproveParamDTO dto) {
         List<BatchResultDTO> resultList = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -116,6 +122,7 @@ public class FmsTaskFeignController {
      * 资产盘点方案审核
      */
     @PostMapping("/assetStocktakingPlan/approve")
+    @LogAction(value = LogActionEnum.APPROVE, desc = "资产盘点方案审核")
     public List<BatchResultDTO> assetStocktakingPlanApprove(@RequestBody BaseApproveParamDTO dto) {
         List<BatchResultDTO> resultList = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -133,6 +140,7 @@ public class FmsTaskFeignController {
      * 资产位置审核
      */
     @PostMapping("/assetLocation/approve")
+    @LogAction(value = LogActionEnum.APPROVE, desc = "资产位置审核")
     public List<BatchResultDTO> assetLocationApprove(@RequestBody BaseApproveParamDTO dto) {
         List<BatchResultDTO> resultList = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -150,6 +158,7 @@ public class FmsTaskFeignController {
      * 资产处置单审核
      */
     @PostMapping("/assetDisposal/approve")
+    @LogAction(value = LogActionEnum.APPROVE, desc = "资产处置单审核")
     public List<BatchResultDTO> assetDisposalApprove(@RequestBody BaseApproveParamDTO dto) {
         List<BatchResultDTO> resultList = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {

@@ -8,6 +8,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -17,6 +18,7 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.message.constant.DistributeKeyConstant;
 import com.common.core.utils.ValidatorUtil;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.entity.SupplierEntity;
@@ -336,6 +338,7 @@ public class FsInstancesServiceImpl implements FsInstancesService {
     /**
      * 原始的回调方法，保持不变。
      */
+    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_FS_CALLBACK_KEY, keyName = "entity.bussinessKey,entity.bussinessId", unlockAfterTx = true)
     public void handleCallback(ApproveTaskInfoEntity entity, String approveStatus, String userId, LocalDateTime approveTime,String comment) {
         EndProcessDTO processDTO = new EndProcessDTO();
         processDTO.setBusinessKey(entity.getBussinessKey());

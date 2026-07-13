@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SubcontractTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -11,6 +12,7 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
+import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cReturnDetailEntity;
@@ -1334,6 +1336,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.SO_RETURN_INSTOCK_SAVE_KEY, keyName = "dto.updateMainList.id", unlockAfterTx = true)
     public void clearSoReturnAndUpdate(SoReturnInstockDetailDTO.ClearSoReturnAndUpdateDTO dto) {
         if(CollectionUtils.isNotEmpty(dto.getClearSoReturnDetailIds())){
             this.lambdaUpdate().in(SoReturnInstockDetailEntity::getSoReturnDetailId,dto.getClearSoReturnDetailIds()).set(SoReturnInstockDetailEntity::getSoReturnDetailId,"").update();

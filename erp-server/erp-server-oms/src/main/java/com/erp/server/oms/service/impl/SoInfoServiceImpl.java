@@ -2621,6 +2621,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<String> skuIdList = viewList.stream().map(SoInfoDTO.GenerateDeliveryView::getSkuId).collect(Collectors.toList());
         //根据ids查询sku信息
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
+        List<SkuVO> skuList = listSkuProductByIds(skuIdList);
         List<String> customerIds = viewList.stream().map(SoInfoDTO.GenerateDeliveryView::getCustomerId).collect(Collectors.toList());
         List<CustomerInfoEntity> customerList = CollectionUtils.isNotEmpty(customerIds) ? customerInfoService.listByIds(customerIds) : Collections.emptyList();
         List<SoInfoDTO.GenerateDeliveryView> resultList = new ArrayList<>();
@@ -2651,9 +2652,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             if (view.getDeliveryQty() <= MathUtil.ZERO) {
                 continue;
             }
-            // 绑定虚拟仓且锁定数量为0的明细不在下推发货通知弹框展示
+            // 绑定虚拟仓且锁定数量为0的明细不在下推发货通知弹框展示（费用类、服务类除外）
             if (virtualWarehouseIdBySoId.containsKey(view.getSoId())
-                    && ObjectUtil.defaultIfNull(view.getFrozenQty(), MathUtil.ZERO).equals(MathUtil.ZERO)) {
+                    && ObjectUtil.defaultIfNull(view.getFrozenQty(), MathUtil.ZERO).equals(MathUtil.ZERO)
+                    && !isFilterCalculate(view.getSkuId(), view.getSkuId(), skuList)) {
                 continue;
             }
             resultList.add(view);

@@ -1071,16 +1071,6 @@ public class LogisticsBillCostDTO implements Serializable {
          */
         private LocalDateTime confirmTime;
 
-        /**
-         * 费用记录创建时间范围起始
-         */
-        private LocalDateTime createTimeStart;
-
-        /**
-         * 费用记录创建时间范围结束
-         */
-        private LocalDateTime createTimeEnd;
-
     }
 
     /**
@@ -1389,10 +1379,6 @@ public class LogisticsBillCostDTO implements Serializable {
         private String reconciliationStatus;
 
         private LocalDateTime confirmTime;
-
-        private LocalDateTime createTimeStart;
-
-        private LocalDateTime createTimeEnd;
 
         private Map<String, String> sqlMap;
 
