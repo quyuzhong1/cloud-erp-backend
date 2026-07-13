@@ -58,6 +58,7 @@ public class B2bThirdDeliveryDetailServiceImpl extends SuperServiceImpl<B2bThird
         detailEntityList.forEach(e -> {
             e.setMainId(id);
             e.setBoxSpecNo(getBoxSpecNo(e.getSort()));
+            e.setRelabelSku(CharSequenceUtil.blankToDefault(e.getRelabelSku(), CharSequenceUtil.EMPTY));
         });
         this.saveBatch(detailEntityList);
         return detailEntityList;
