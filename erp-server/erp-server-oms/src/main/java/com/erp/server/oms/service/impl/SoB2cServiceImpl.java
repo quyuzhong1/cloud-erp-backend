@@ -952,9 +952,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     public SoB2cEntity add(SoB2cDTO.AddDTO addDTO, String code) {
         SoB2cEntity soB2cEntity = new SoB2cEntity();
         BeanMapperUtils.copy(addDTO, soB2cEntity);
-        SoB2cAmountUtil.ignoreRequestMainPaidAmount(soB2cEntity);
+        SoB2cAmountUtil.resolveManualMainAmountFromDetailAddDtos(soB2cEntity, addDTO.getDetailList());
+        SoB2cAmountUtil.resolveManualMainPaidAmount(soB2cEntity);
         SoB2cAmountUtil.ignoreRequestMainTotalDiscount(soB2cEntity);
-        SoB2cAmountUtil.applyMainAmountsFromDetailAddDtos(soB2cEntity, addDTO.getDetailList());
         //查询支付方式是否需要填写付款时间
         Boolean isFlag = soB2cCoreService.listPayMethodSetting(soB2cEntity);
         if (!isFlag && Objects.isNull(soB2cEntity.getPayTime())) {
@@ -1566,9 +1566,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         soB2cCoreService.checkPayMent(old);
 
         SoB2cEntity soB2cEntity = BeanMapperUtils.map(SoB2cEntity.class, updateDTO);
-        SoB2cAmountUtil.ignoreRequestMainPaidAmount(soB2cEntity);
+        SoB2cAmountUtil.resolveManualMainAmountFromDetailUpdateDtos(soB2cEntity, updateDTO.getDetailList());
+        SoB2cAmountUtil.resolveManualMainPaidAmount(soB2cEntity);
         SoB2cAmountUtil.ignoreRequestMainTotalDiscount(soB2cEntity);
-        SoB2cAmountUtil.applyMainAmountsFromDetailUpdateDtos(soB2cEntity, updateDTO.getDetailList());
 
         // 数据处理
         handleData(soB2cEntity, true, true);
