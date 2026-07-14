@@ -429,6 +429,13 @@ public class MathUtil {
     }
 
     /**
+     * 优先返回第一个非空值，均为空时返回 null。
+     */
+    public static BigDecimal preferNonNull(BigDecimal primary, BigDecimal fallback) {
+        return Objects.nonNull(primary) ? primary : fallback;
+    }
+
+    /**
      * 获取BigDecimal 随机数
      *
      * @param min

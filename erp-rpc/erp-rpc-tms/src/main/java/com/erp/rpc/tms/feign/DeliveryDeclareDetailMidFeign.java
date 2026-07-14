@@ -1,0 +1,51 @@
+package com.erp.rpc.tms.feign;
+
+import com.common.business.config.FeignErrorDecoder;
+import com.erp.model.tms.dto.TmsDeclareBillDTO;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+
+/**
+ * 报关明细中间表Feign接口
+ *
+ * @author jack
+ * @date 2026-04-29
+ */
+@FeignClient(name = "erp-tms", contextId = "deliveryDeclareDetailMidFeign",
+             configuration = {FeignErrorDecoder.class})
+public interface DeliveryDeclareDetailMidFeign {
+
+    /**
+     * 自动生成报关明细中间数据
+     *
+     * @param dto 自动生成参数
+     * @return 是否成功
+     * @throws RuntimeException 远程调用异常时抛出
+     * @author jack
+     * @date 2026-04-29
+     */
+    @PostMapping("/feign/deliveryDeclareDetailMid/batchAddMergeDetail")
+    Boolean batchAddMergeDetail(@RequestBody TmsDeclareBillDTO.AutoGenerateMidDataDTO dto);
+
+    /**
+     * 删除报关明细中间表数据
+     *
+     * @param dto 删除参数
+     * @return 是否成功
+     * @throws RuntimeException 远程调用异常时抛出
+     * @author jack
+     * @date 2026-05-20
+     */
+    @PostMapping("/feign/deliveryDeclareDetailMid/deleteDeliveryDeclareDetailMid")
+    Boolean deleteDeliveryDeclareDetailMid(@RequestBody TmsDeclareBillDTO.DeleteDeliveryDeclareDetailMidDTO dto);
+
+    /**
+     * 更新发货单明细业务单号。
+     *
+     * @param dto 业务单号更新参数
+     * @return 是否成功
+     */
+    @PostMapping("/feign/deliveryDeclareDetailMid/updateBusinessCode")
+    Boolean updateBusinessCode(@RequestBody TmsDeclareBillDTO.UpdateDeliveryDeclareBusinessCodeDTO dto);
+}
