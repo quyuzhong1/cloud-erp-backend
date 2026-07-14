@@ -1403,6 +1403,9 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
             BeanMapperUtils.copy(moldDetailImportDTO, assetNoticeDetailEntity);
             assetNoticeDetailEntity.setMainId(entity.getId());
             assetNoticeDetailEntity.setCreatePoType(CreatePoTypeEnum.NOT_GENERATED.getStatus());
+            if (assetNoticeDetailEntity.getIsUrgent() == null) {
+                assetNoticeDetailEntity.setIsUrgent(Boolean.FALSE);
+            }
             assetNoticeDetailEntities.add(assetNoticeDetailEntity);
         }
 
@@ -1571,8 +1574,11 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
                     errorMsgList.add("申请数量格式错误");
                 }
             }
+            // is_urgent 库字段 NOT NULL 且无默认值；Excel 未填「是否加急」时按否落库，避免明细 insert 批处理失败
             if (StringUtils.isNotBlank(importExcelDTO.getIsUrgentName())) {
                 detail.setIsUrgent("是".equals(importExcelDTO.getIsUrgentName()) ? Boolean.TRUE : Boolean.FALSE);
+            } else {
+                detail.setIsUrgent(Boolean.FALSE);
             }
             detail.setRemark(importExcelDTO.getRemark());
 
