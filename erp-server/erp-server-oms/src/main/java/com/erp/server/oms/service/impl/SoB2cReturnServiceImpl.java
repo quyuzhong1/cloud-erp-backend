@@ -864,6 +864,13 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
                 pagingViewDTO.setReason(ReturnReasonEnum.getName(pagingViewDTO.getReason()));
             }
             pagingViewDTO.setInstockQty(instockDetailEntityList.stream().filter(v->v.getSkuId().equals(pagingViewDTO.getSkuId()) && v.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode())).map(SoReturnInstockDetailEntity::getRealQty).reduce(MathUtil.ZERO, Integer::sum));
+            //剩余应退货数量 = 退货数量 - 全部有效入库实退（与 listAddDetailView / WMS 口径一致，含待审/草稿；instockQty 仍仅展示已审核）
+            Integer returnQty = pagingViewDTO.getReturnQty() != null ? pagingViewDTO.getReturnQty() : MathUtil.ZERO;
+            Integer allInstockRealQty = instockDetailEntityList.stream()
+                    .filter(v -> pagingViewDTO.getSkuId().equals(v.getSkuId()))
+                    .map(SoReturnInstockDetailEntity::getRealQty)
+                    .reduce(MathUtil.ZERO, Integer::sum);
+            pagingViewDTO.setRemainMustQty(returnQty - allInstockRealQty);
             if(CollectionUtils.isNotEmpty(instockDetailEntityList)){
                 pagingViewDTO.setSysInstockTime(instockDetailEntityList.stream().filter(v->Objects.nonNull(v.getApproveTime())).findFirst().orElse(new SoReturnInstockDetailEntity()).getApproveTime());
             }

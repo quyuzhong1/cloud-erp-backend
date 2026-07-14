@@ -374,6 +374,34 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 .filter(e -> CharSequenceUtil.isNotBlank(e.getDictPlatform()))
                 .collect(Collectors.toMap(SoB2cReturnEntity::getId, SoB2cReturnEntity::getDictPlatform, (a, b) -> a)) : Collections.emptyMap();
 
+        // B2C售后明细退货数量，及按售后明细累计的入库实退数量（用于补齐 mustQty / remainMustQty）
+        List<String> b2cReturnDetailIds = records.stream()
+                .filter(r -> BillTypeEnum.B2C.getCode().equals(r.getType()) && CharSequenceUtil.isNotBlank(r.getSoReturnDetailId()))
+                .map(SoReturnInstockDTO.PagingView::getSoReturnDetailId).distinct().collect(Collectors.toList());
+        List<SoB2cReturnDetailEntity> b2cReturnDetailEntities = CollUtil.isNotEmpty(b2cReturnDetailIds)
+                ? FeignQuery.getByIds(SoB2cReturnDetailEntity.class, b2cReturnDetailIds) : Collections.emptyList();
+        Map<String, Integer> b2cReturnQtyMap = CollUtil.isNotEmpty(b2cReturnDetailEntities) ? b2cReturnDetailEntities.stream()
+                .filter(d -> CharSequenceUtil.isNotBlank(d.getId()) && Objects.nonNull(d.getReturnQty()))
+                .collect(Collectors.toMap(SoB2cReturnDetailEntity::getId, SoB2cReturnDetailEntity::getReturnQty, (a, b) -> a)) : Collections.emptyMap();
+        List<SoReturnInstockDetailEntity> b2cInstockDetailEntities = CollUtil.isNotEmpty(b2cReturnDetailIds)
+                ? soReturnInstockDetailService.listDetailBySoReturnDetailIds(b2cReturnDetailIds) : Collections.emptyList();
+        Map<String, Integer> b2cInstockRealQtyMap = CollUtil.isNotEmpty(b2cInstockDetailEntities) ? b2cInstockDetailEntities.stream()
+                .filter(d -> CharSequenceUtil.isNotBlank(d.getSoReturnDetailId()))
+                .collect(Collectors.groupingBy(SoReturnInstockDetailEntity::getSoReturnDetailId,
+                        Collectors.summingInt(d -> d.getRealQty() != null ? d.getRealQty() : MathUtil.ZERO))) : Collections.emptyMap();
+        // 无售后关联时：按 sourceDetailId 累计有效入库实退（与落库口径一致）
+        List<String> b2cSourceDetailIds = records.stream()
+                .filter(r -> BillTypeEnum.B2C.getCode().equals(r.getType())
+                        && CharSequenceUtil.isBlank(r.getSoReturnDetailId())
+                        && CharSequenceUtil.isNotBlank(r.getSourceDetailId()))
+                .map(SoReturnInstockDTO.PagingView::getSourceDetailId).distinct().collect(Collectors.toList());
+        List<SoReturnInstockDetailEntity> b2cInstockBySourceDetailIds = CollUtil.isNotEmpty(b2cSourceDetailIds)
+                ? soReturnInstockDetailService.listDetailBySourceDetailIds(b2cSourceDetailIds) : Collections.emptyList();
+        Map<String, Integer> b2cSourceDetailRealQtyMap = CollUtil.isNotEmpty(b2cInstockBySourceDetailIds) ? b2cInstockBySourceDetailIds.stream()
+                .filter(d -> CharSequenceUtil.isNotBlank(d.getSourceDetailId()))
+                .collect(Collectors.groupingBy(SoReturnInstockDetailEntity::getSourceDetailId,
+                        Collectors.summingInt(d -> d.getRealQty() != null ? d.getRealQty() : MathUtil.ZERO))) : Collections.emptyMap();
+
         //查询审核流程
         List<String> ids = records.stream().map(SoReturnInstockDTO.PagingView::getId).distinct().collect(Collectors.toList());
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = ids.stream().map(obj -> new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SO_RETURN_INSTOCK.getCode(), obj)).collect(Collectors.toCollection(ValidList::new));
@@ -403,6 +431,27 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                     obj.setDeliveryQty(actualQtyMap.getOrDefault(obj.getSoId() + "-" + obj.getSkuId(), 0));
                     if (obj.getReceiveQty() == 0) {
                         obj.setReceiveQty(receiveQtyMap.getOrDefault(obj.getSourceDetailId(), MathUtil.ZERO));
+                    }
+                    // B2C：应退取售后明细退货数量；无售后取 mustQty（仅 null 时用签收兜底）；剩余应退按售后明细或 sourceDetailId 累计入库
+                    Integer b2cReturnQty = b2cReturnQtyMap.get(obj.getSoReturnDetailId());
+                    if (Objects.isNull(b2cReturnQty)) {
+                        b2cReturnQty = obj.getMustQty();
+                    }
+                    if (b2cReturnQty == null && CharSequenceUtil.isBlank(obj.getSoReturnDetailId())
+                            && obj.getReceiveQty() != null) {
+                        b2cReturnQty = obj.getReceiveQty();
+                    }
+                    if (Objects.nonNull(b2cReturnQty)) {
+                        obj.setMustQty(b2cReturnQty);
+                        int instockQty;
+                        if (CharSequenceUtil.isNotBlank(obj.getSoReturnDetailId())) {
+                            instockQty = b2cInstockRealQtyMap.getOrDefault(obj.getSoReturnDetailId(), MathUtil.ZERO);
+                        } else if (CharSequenceUtil.isNotBlank(obj.getSourceDetailId())) {
+                            instockQty = b2cSourceDetailRealQtyMap.getOrDefault(obj.getSourceDetailId(), MathUtil.ZERO);
+                        } else {
+                            instockQty = obj.getRealQty() != null ? obj.getRealQty() : MathUtil.ZERO;
+                        }
+                        obj.setRemainMustQty(b2cReturnQty - instockQty);
                     }
                 } else {
                     String sourceDetailId = sourceDetailMap.get(obj.getSoReturnDetailId());
@@ -1443,6 +1492,25 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         List<SoReturnDetailEntity> returnDetailEntityList = soReturnFeign.listDetailByMainIds(Collections.singletonList(entity.getSoReturnId()));
         List<SoB2cReturnDetailEntity> returnB2cDetailEntityList = FeignQuery.getByIds(SoB2cReturnDetailEntity.class, returnDetailIds);
         SoB2cReturnEntity soB2cReturnEntity = FeignQuery.getById(SoB2cReturnEntity.class, entity.getSoReturnId());
+        // B2C：按售后明细 / 来源明细累计入库实退，用于详情实时重算剩余应退货数量
+        List<String> b2cReturnDetailIdsForRemain = returnDetailIds.stream().filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<SoReturnInstockDetailEntity> b2cInstockByReturnDetailIds = BillTypeEnum.B2C.getCode().equals(entity.getType()) && CollUtil.isNotEmpty(b2cReturnDetailIdsForRemain)
+                ? soReturnInstockDetailService.listDetailBySoReturnDetailIds(b2cReturnDetailIdsForRemain) : Collections.emptyList();
+        Map<String, Integer> b2cInstockRealQtyMap = CollUtil.isNotEmpty(b2cInstockByReturnDetailIds) ? b2cInstockByReturnDetailIds.stream()
+                .filter(d -> CharSequenceUtil.isNotBlank(d.getSoReturnDetailId()))
+                .collect(Collectors.groupingBy(SoReturnInstockDetailEntity::getSoReturnDetailId,
+                        Collectors.summingInt(d -> d.getRealQty() != null ? d.getRealQty() : MathUtil.ZERO))) : Collections.emptyMap();
+        List<String> b2cSourceDetailIdsForRemain = BillTypeEnum.B2C.getCode().equals(entity.getType())
+                ? detailEntityList.stream()
+                .filter(d -> CharSequenceUtil.isBlank(d.getSoReturnDetailId()) && CharSequenceUtil.isNotBlank(d.getSourceDetailId()))
+                .map(SoReturnInstockDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList())
+                : Collections.emptyList();
+        List<SoReturnInstockDetailEntity> b2cInstockBySourceDetailIds = CollUtil.isNotEmpty(b2cSourceDetailIdsForRemain)
+                ? soReturnInstockDetailService.listDetailBySourceDetailIds(b2cSourceDetailIdsForRemain) : Collections.emptyList();
+        Map<String, Integer> b2cSourceDetailRealQtyMap = CollUtil.isNotEmpty(b2cInstockBySourceDetailIds) ? b2cInstockBySourceDetailIds.stream()
+                .filter(d -> CharSequenceUtil.isNotBlank(d.getSourceDetailId()))
+                .collect(Collectors.groupingBy(SoReturnInstockDetailEntity::getSourceDetailId,
+                        Collectors.summingInt(d -> d.getRealQty() != null ? d.getRealQty() : MathUtil.ZERO))) : Collections.emptyMap();
         //销售单详情id集合
         List<String> detailIds = returnDetailEntityList.stream().map(SoReturnDetailEntity::getSourceDetailId).collect(Collectors.toList());
         //获取销售单详情信息
@@ -1499,7 +1567,28 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 detailView.setSalesQty(soB2cReturnDetailEntity.getSaleQty());
                 Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> detail.getSkuId().equals(detailEntity.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
                 detailView.setDeliveryQty(actualQty);
-                detailView.setMustQty(soB2cReturnDetailEntity.getReturnQty());
+                // 应退：优先售后明细退货数量；无售后关联时取落库 mustQty；仅 mustQty 为 null 时用签收数量兜底
+                Integer returnQty = soB2cReturnDetailEntity.getReturnQty();
+                if (returnQty == null) {
+                    returnQty = detailEntity.getMustQty();
+                }
+                if (returnQty == null && CharSequenceUtil.isBlank(detailEntity.getSoReturnDetailId())
+                        && detailEntity.getReceiveQty() != null) {
+                    returnQty = detailEntity.getReceiveQty();
+                }
+                detailView.setMustQty(returnQty);
+                // 剩余应退货数量 = 退货数量 - 累计入库（有售后按 soReturnDetailId；无售后按 sourceDetailId；皆空则本行实退）
+                if (returnQty != null) {
+                    int instockQty;
+                    if (CharSequenceUtil.isNotBlank(detailEntity.getSoReturnDetailId())) {
+                        instockQty = b2cInstockRealQtyMap.getOrDefault(detailEntity.getSoReturnDetailId(), MathUtil.ZERO);
+                    } else if (CharSequenceUtil.isNotBlank(detailEntity.getSourceDetailId())) {
+                        instockQty = b2cSourceDetailRealQtyMap.getOrDefault(detailEntity.getSourceDetailId(), MathUtil.ZERO);
+                    } else {
+                        instockQty = detailEntity.getRealQty() != null ? detailEntity.getRealQty() : MathUtil.ZERO;
+                    }
+                    detailView.setRemainMustQty(returnQty - instockQty);
+                }
                 Integer receiveQty = soReturnReceiveDetailEntitieList.stream().filter(req -> detailEntity.getSourceDetailId().equals(req.getId()) && req.getSkuId().equals(detailEntity.getSkuId()) && ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).map(SoReturnReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                 detailView.setReceiveQty(receiveQty);
                 detailView.setReturnTypeDictName(ReturnTypeEnum.getName(detailEntity.getReturnTypeDict()));
