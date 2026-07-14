@@ -336,10 +336,7 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
 			transactionId = RootContext.getXID().replace(":", "_");
 			transactionType = "global";
 		}else {
-			transactionId = TraceContext.traceId();
-			if(StringUtils.isBlank(transactionId) || "N/A".equals(transactionId) || "Ignored_Trace".equals(transactionId)) {
-				transactionId = transactionFlowEntityList.get(0).getId();
-			}
+			transactionId = transactionFlowEntityList.get(0).getId();
 			transactionType = "local";
 		}
 		
