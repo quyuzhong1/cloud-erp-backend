@@ -235,7 +235,6 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
         return BeanMapper.copyList(list, SysAccountingCompanyDTO.ListDTO.class);
     }
 
-
     /**
      * 根据ids 获取组织列表
      *

@@ -13,7 +13,6 @@ import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.tms.enums.BillGenerateTimingEnum;
-import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDTO;

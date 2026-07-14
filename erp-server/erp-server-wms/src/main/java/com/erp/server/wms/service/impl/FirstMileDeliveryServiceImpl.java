@@ -26,7 +26,6 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
@@ -91,7 +90,6 @@ import com.erp.rpc.tms.feign.DeliveryDeclareDetailMidFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.tms.feign.TmsDeclareBillFeign;
 import com.erp.rpc.tms.feign.TmsFirstMileLogisticFeign;
-import com.erp.rpc.wms.feign.WmsWarehouseFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
 import com.erp.server.wms.convert.FirstMileDeliveryConverter;
@@ -136,7 +134,7 @@ import static com.common.business.enums.FileTaskEventEnum.*;
 @Slf4j
 @Service
 public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeliveryMapper, FirstMileDeliveryEntity> implements FirstMileDeliveryService {
-    @Resource
+     @Resource
     private OperateLogService operateLogService;
     @Resource
     private DocNoGenHelper docNoGenHelper;
@@ -181,8 +179,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     @Resource
     private WmsCartonSpecService wmsCartonSpecService;
     @Resource
-    private WmsCartonService wmsCartonService;
-    @Resource
     private WmsCartonDetailService wmsCartonDetailService;
     @Lazy
     @Resource
@@ -206,17 +202,9 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     private PackingTaskService packingTaskService;
     @Resource
     private CfgRuleOutService cfgRuleOutService;
-    @Resource
-    private PickingListsService pickingListsService;
-    @Resource
-    private PickingDetailService pickingDetailService;
-    @Resource
-    private CfgRulePickingStagingService cfgRulePickingStagingService;
     @Lazy
     @Resource
     private RequisitionApplicationService requisitionApplicationService;
-    @Resource
-    private RequisitionApplicationDetailService requisitionApplicationDetailService;
     @Resource
     private CfgSettingService cfgSettingService;
     @Resource
@@ -234,8 +222,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     private AwdOutstockDetailService awdOutstockDetailService;
     @Resource
     private CfgQueryOptionFeign cfgQueryOptionFeign;
-    @Resource
-    private WmsWarehouseFeign wmsWarehouseFeign;
     @Resource
     private SysDictFeign sysDictFeign;
     @Resource
@@ -2606,14 +2592,14 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                             .map(DeliveryDeclareDetailMidEntity::getSourceId)
                             .filter(CharSequenceUtil::isNotBlank)
                             .collect(Collectors.toSet());
-
+                    
                     if (CollUtil.isNotEmpty(generatedSourceIds)) {
                         // 找出发货单实体，获取单号
                         List<String> generatedCodes = deliveryEntities.stream()
                                 .filter(entity -> generatedSourceIds.contains(entity.getId()))
                                 .map(FirstMileDeliveryEntity::getCode)
                                 .collect(Collectors.toList());
-
+                        
                         if (CollUtil.isNotEmpty(generatedCodes)) {
                             throw new ServiceException(ApiError.FIRST_MILE_DELIVERY_DECLARE_ALREADY_GENERATED, String.join("、", generatedCodes));
                         }
@@ -3369,6 +3355,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         detailDTO.setProductNameCn(productLogisticsDTO.getDeclareChineseName());
         detailDTO.setDeclareElement(productLogisticsDTO.getDeclareElement());
         detailDTO.setUnit(productLogisticsDTO.getDeclareUnit());
+        detailDTO.setUnitName(productLogisticsDTO.getDeclareUnitName());
         detailDTO.setUnitPrice(productLogisticsDTO.getPrice());
         detailDTO.setDeclareCurrency(productLogisticsDTO.getDeclareCurrency());
         detailDTO.setDeclareCurrencyName(productLogisticsDTO.getDeclareCurrencyName());

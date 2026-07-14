@@ -480,9 +480,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         soOutstock.setRemark(soCustomer.getSoRemark());
         soOutstock.setCustomerRemark(soCustomer.getCustomerRemark());
         soOutstock.setPartitionId(soCustomer.getPartitionId());
-        if(OrderTypeEnum.B2B.getCode().equals(soOutstock.getOrderType())){
-            soOutstock.setDeclareStatus(WmsDeclareStatusEnum.WAIT.getCode());
-        }
         if(OrderTypeEnum.B2C.getCode().equals(soOutstock.getOrderType()) && CharSequenceUtil.isNotBlank(soOutstock.getSoId())){
             SoB2cEntity soB2c = soB2cFeign.getById(soOutstock.getSoId());
             if (Objects.nonNull(soB2c)){

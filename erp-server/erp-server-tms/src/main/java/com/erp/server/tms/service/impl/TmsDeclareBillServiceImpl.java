@@ -246,6 +246,11 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
 
     @Override
+    @DistributeLocker(
+            businessType = DistributeKeyConstant.TMS_DECLARE_BILL_SOURCE_KEY,
+            keyName = "addDTO.mergeDetailList.sourceDeliveryDetailList.sourceId",
+            maxRetries = 1
+    )
     public Boolean addFmDeclare(TmsDeclareBillDTO.AddDTO addDTO) {
         // 事务外完成所有 Feign 读取 + 校验 + 实体构建（erp-backend-standards：禁止事务内 Feign）。
         TmsDeclareBillDTO.FmAddPreparedData prepared = prepareFmDeclareData(addDTO);
@@ -522,6 +527,11 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     /**
     * 修改
     */
+    @DistributeLocker(
+            businessType = DistributeKeyConstant.TMS_DECLARE_BILL_ID_KEY,
+            keyName = "updateDTO.id",
+            maxRetries = 1
+    )
     @Override
     public Boolean update(TmsDeclareBillDTO.UpdateDTO updateDTO,SourceTypeEnum sourceTypeEnum) {
         // 事务外校验：拦截不可编辑单据，避免无效 Feign 重量重算。
@@ -567,7 +577,12 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     // 编辑保存写 TMS 单库 + 中间表，并回写 WMS 来源单报关状态；
     // Feign 重量重算/装箱校验已全部前置到事务外，事务内仅剩快速 DML + 一次 WMS 回写，
     // 用 Seata 全局事务保证「本地库写入」与「远端来源单状态回写」强一致。
-
+    @DistributeLocker(
+            businessType = DistributeKeyConstant.TMS_DECLARE_BILL_SOURCE_KEY,
+            keyName = "mergeDetailList.sourceDeliveryDetailList.sourceId",
+            maxRetries = 1,
+            unlockAfterTx = true
+    )
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
     @Transactional(rollbackFor = Exception.class)
     public void updateInTx(TmsDeclareBillDTO.UpdateDTO updateDTO,
@@ -2149,6 +2164,11 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     }
 
     @Override
+    @DistributeLocker(
+            businessType = DistributeKeyConstant.TMS_DECLARE_BILL_SOURCE_KEY,
+            keyName = "addDTO.mergeDetailList.sourceDeliveryDetailList.sourceId",
+            maxRetries = 1
+    )
     public Boolean addB2BDeclare(TmsDeclareBillDTO.AddDTO addDTO) {
         // 事务外完成所有 Feign 读取 + 校验 + 实体构建（erp-backend-standards：禁止事务内 Feign）。
         TmsDeclareBillDTO.B2bAddPreparedData prepared = prepareB2bDeclareData(addDTO);
@@ -3379,6 +3399,11 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     }
 
     @Override
+    @DistributeLocker(
+            businessType = DistributeKeyConstant.TMS_DECLARE_BILL_ID_KEY,
+            keyName = "declareDTO.id",
+            maxRetries = 1
+    )
     public Boolean batchAddSplitFmDetail(TmsDeclareBillDTO.AddSplitDeclareDTO declareDTO) {
         if (CollUtil.isEmpty(declareDTO.getSplitDeclareDTOList())) {
             return Boolean.TRUE;
@@ -3481,6 +3506,11 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
 
     @Override
+    @DistributeLocker(
+            businessType = DistributeKeyConstant.TMS_DECLARE_BILL_ID_KEY,
+            keyName = "declareDTO.id",
+            maxRetries = 1
+    )
     public Boolean batchAddSplitB2bDetail(TmsDeclareBillDTO.AddSplitDeclareDTO declareDTO) {
         if (CollUtil.isEmpty(declareDTO.getSplitDeclareDTOList())) {
             return Boolean.TRUE;
@@ -5457,6 +5487,11 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
 
     @Override
+    @DistributeLocker(
+            businessType = DistributeKeyConstant.TMS_DECLARE_BILL_SOURCE_KEY,
+            keyName = "list.declareBillList.sourceDeliveryDetailList.sourceId",
+            maxRetries = 1
+    )
     public Boolean batchAddMergeDetail(String type, List<TmsDeclareBillDTO.MergeDeclareBillDTO> list) {
         List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> allSourceDetails = collectMergeSourceDetails(list);
         // 国家一致性按「单张预览报关单」维度校验：预览已按目的国拆分成多张报关单（每张 MergeDeclareBillDTO 一个国家），

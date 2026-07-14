@@ -1138,11 +1138,9 @@ public class LogisticsBillCostDTO implements Serializable {
     	 *物流标签类型
     	 */
     	private String type;
-        /**
-         * 销售平台
-         */
-        private List<String> salesPlatformList;
 
+
+    	
     } /**
      * 支付状态
      */

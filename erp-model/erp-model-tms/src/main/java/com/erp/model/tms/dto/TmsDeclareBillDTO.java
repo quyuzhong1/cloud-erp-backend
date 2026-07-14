@@ -2298,7 +2298,7 @@ public class TmsDeclareBillDTO implements Serializable {
          */
         private Integer qty;
     }
-    
+
     /**
      * 合并报关信息
      */
@@ -2517,8 +2517,11 @@ public class TmsDeclareBillDTO implements Serializable {
          * 报关单位
          */
         private String unit;
-        private String UnitName;
 
+        /**
+         * 报关单位名称
+         */
+        private String unitName;
         /**
          * 单价
          */

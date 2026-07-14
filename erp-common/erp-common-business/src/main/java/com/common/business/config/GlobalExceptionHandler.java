@@ -56,7 +56,24 @@ import java.util.regex.Pattern;
  */
 @Slf4j
 @RestControllerAdvice(basePackages = {
-        "com.erp.server"
+        "com.erp.server.auth.controller.api",
+        "com.erp.server.auth.controller.pda",
+        "com.erp.server.sys.controller.api",
+        "com.erp.server.sys.controller.pda",
+        "com.erp.server.file.controller.api",
+        "com.erp.server.srm.controller.api",
+        "com.erp.server.scm.controller.api",
+        "com.erp.server.scm.controller.pda",
+        "com.erp.server.dmp.controller.api",
+        "com.erp.server.plm.controller.api",
+        "com.erp.server.plm.controller.pda",
+        "com.erp.server.oms.controller.api",
+        "com.erp.server.oms.controller.pda",
+        "com.erp.server.wms.controller.pda",
+        "com.erp.server.wms.controller.api",
+        "com.erp.server.tms.controller.api",
+        "com.erp.server.workflow.controller.api",
+        "com.erp.server.workflow.controller.pda"
 })
 public class GlobalExceptionHandler {
     private static final Pattern MYSQL_DUPLICATE_PATTERN = Pattern.compile("Duplicate entry '([^']*)' for key");
