@@ -7,7 +7,7 @@ import java.io.Serializable;
 
 /**
  * 物流商对账「导入匹配」模板（固定列，与 logisticsReconDetailTemplate.xlsx 一致）。
- * <p>识别列固定包含销售单号、平台订单号、物流跟踪号、物流运单号、发货单号（均可配置为识别单号）；
+ * <p>识别列固定包含销售单号、平台订单号、物流跟踪号、发货单号（均可配置为识别单号）；
  * 实际匹配时仅按导入模板配置的唯一识别字段取值分组，未配置为识别单的列不参与识别。
  * ERP 四单号与手动匹配一致。</p>
  *
@@ -18,57 +18,51 @@ import java.io.Serializable;
 public class LogisticsReconMatchImportExcelDTO implements Serializable {
 
   /**
-     * 销售单号（识别列，对应 sourceCode）
+     * 第三方-销售单号（识别列，对应 sourceCode）
      */
-    @ExcelProperty("销售单号")
+    @ExcelProperty("第三方-销售单号")
     private String soCode;
 
     /**
-     * 平台订单号（识别列，对应 platformCode）
+     * 第三方-平台订单号（识别列，对应 platformCode）
      */
-    @ExcelProperty("平台订单号")
+    @ExcelProperty("第三方-平台订单号")
     private String platformOrderNo;
 
     /**
-     * 物流跟踪号（识别列，对应 trackNo）
+     * 第三方-物流跟踪号（识别列，对应 trackNo）
      */
-    @ExcelProperty("物流跟踪号")
+    @ExcelProperty("第三方-物流跟踪号")
     private String trackNo;
 
     /**
-     * 物流运单号（识别列，对应 transportNo）
+     * 第三方-发货单号（识别列，对应 soDeliveryCode）
      */
-    @ExcelProperty("物流运单号")
-    private String transportNo;
-
-    /**
-     * 发货单号（识别列，对应 soDeliveryCode）
-     */
-    @ExcelProperty("发货单号")
+    @ExcelProperty("第三方-发货单号")
     private String soDeliveryCode;
 
     /**
-     * ERP 销售单号
+     * ERP-销售单号
      */
-    @ExcelProperty("ERP销售单号")
+    @ExcelProperty("ERP-销售单号")
     private String erpSoCode;
 
     /**
-     * ERP 平台订单号
+     * ERP-平台订单号
      */
-    @ExcelProperty("ERP平台订单号")
+    @ExcelProperty("ERP-平台订单号")
     private String erpPlatformOrderNo;
 
     /**
-     * ERP 物流跟踪号
+     * ERP-物流跟踪号
      */
-    @ExcelProperty("ERP物流跟踪号")
+    @ExcelProperty("ERP-物流跟踪号")
     private String erpTrackNo;
 
     /**
-     * ERP 发货单号
+     * ERP-发货单号
      */
-    @ExcelProperty("ERP发货单号")
+    @ExcelProperty("ERP-发货单号")
     private String erpSoDeliveryCode;
 
     /**
