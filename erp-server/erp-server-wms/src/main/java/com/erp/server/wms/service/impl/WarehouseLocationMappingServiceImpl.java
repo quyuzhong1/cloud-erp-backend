@@ -385,7 +385,7 @@ public class WarehouseLocationMappingServiceImpl extends SuperServiceImpl<Wareho
     private List<Candidate> buildCandidates(WarehouseLocationMappingDTO.AddDTO dto) {
         String platform = validatePlatform(dto.getDictPlatform());
         WarehouseEntity warehouse = validateWarehouse(dto.getSysWarehouseId());
-        validateBindWarehouse(warehouse.getId(), platform);
+        ThirdWarehouseEntity bindWarehouse = requireBindWarehouse(warehouse.getId(), platform);
         List<Candidate> candidates = new ArrayList<>(dto.getDetailList().size());
         for (WarehouseLocationMappingDTO.DetailDTO detailDTO : dto.getDetailList()) {
             WarehouseLocationEntity location = validateLocation(warehouse.getId(), detailDTO.getSysWarehouseLocation());
@@ -393,9 +393,9 @@ public class WarehouseLocationMappingServiceImpl extends SuperServiceImpl<Wareho
             entity.setDictPlatform(platform);
             entity.setSysWarehouseId(warehouse.getId());
             entity.setSysWarehouseCode(warehouse.getKingdeeWarehouseCode());
-            entity.setSysWarehouseLocation(location.getCode());
+            entity.setSysWarehouseLocation(normalizeSysWarehouseLocation(location.getCode()));
             entity.setThirdWarehouseLocation(detailDTO.getThirdWarehouseLocation());
-            candidates.add(new Candidate(entity, null));
+            candidates.add(new Candidate(entity, null, bindWarehouse.getId()));
         }
         validateRequired(candidates);
         return candidates;
@@ -417,36 +417,37 @@ public class WarehouseLocationMappingServiceImpl extends SuperServiceImpl<Wareho
         }
         if (CollectionUtils.isNotEmpty(errorList)) {
             row.setErrorMsg(String.join("；", errorList));
-            return new Candidate(new WarehouseLocationMappingEntity(), row);
+            return new Candidate(new WarehouseLocationMappingEntity(), row, null);
         }
         if (warehouse == null || location == null || CharSequenceUtil.isBlank(platform)) {
             row.setErrorMsg("导入数据校验失败");
-            return new Candidate(new WarehouseLocationMappingEntity(), row);
+            return new Candidate(new WarehouseLocationMappingEntity(), row, null);
         }
-        validateImportBindWarehouse(warehouse.getId(), platform, errorList);
-        if (CollectionUtils.isNotEmpty(errorList)) {
+        ThirdWarehouseEntity bindWarehouse = resolveBindWarehouse(warehouse.getId(), platform);
+        if (bindWarehouse == null) {
+            errorList.add(BIND_WAREHOUSE_EMPTY_MSG);
             row.setErrorMsg(String.join("；", errorList));
-            return new Candidate(new WarehouseLocationMappingEntity(), row);
+            return new Candidate(new WarehouseLocationMappingEntity(), row, null);
         }
         WarehouseLocationMappingEntity entity = new WarehouseLocationMappingEntity();
         entity.setDictPlatform(platform);
         entity.setSysWarehouseId(warehouse.getId());
         entity.setSysWarehouseCode(warehouse.getKingdeeWarehouseCode());
-        entity.setSysWarehouseLocation(location.getCode());
+        entity.setSysWarehouseLocation(normalizeSysWarehouseLocation(location.getCode()));
         entity.setThirdWarehouseLocation(row.getThirdWarehouseLocation());
-        return new Candidate(entity, row);
+        return new Candidate(entity, row, bindWarehouse.getId());
     }
 
-    private void validateBindWarehouse(String warehouseId, String platform) {
-        if (dmpThirdMappingFeign.getBySysId(warehouseId, platform) == null) {
+    private ThirdWarehouseEntity requireBindWarehouse(String warehouseId, String platform) {
+        ThirdWarehouseEntity bindWarehouse = resolveBindWarehouse(warehouseId, platform);
+        if (bindWarehouse == null) {
             throw new ServiceException(BIND_WAREHOUSE_EMPTY_MSG);
         }
+        return bindWarehouse;
     }
 
-    private void validateImportBindWarehouse(String warehouseId, String platform, List<String> errorList) {
-        if (dmpThirdMappingFeign.getBySysId(warehouseId, platform) == null) {
-            errorList.add(BIND_WAREHOUSE_EMPTY_MSG);
-        }
+    private ThirdWarehouseEntity resolveBindWarehouse(String warehouseId, String platform) {
+        return dmpThirdMappingFeign.getBySysId(warehouseId, platform);
     }
 
     private void validateRequired(List<Candidate> candidates) {
@@ -561,16 +562,26 @@ public class WarehouseLocationMappingServiceImpl extends SuperServiceImpl<Wareho
         }
         List<WarehouseLocationMappingEntity> existList = listExisting(candidates, excludeId);
         Map<String, String> bindWarehouseNameMap = buildBindWarehouseNameMap(candidates);
+        Map<String, String> bindWarehouseIdMap = buildBindWarehouseIdMap(candidates, existList);
         for (Candidate candidate : candidates) {
             errorMap.computeIfAbsent(candidate, key -> new ArrayList<>());
-            validateDuplicateWithList(candidate, candidates, errorMap.get(candidate), true, bindWarehouseNameMap);
-            validateDuplicateWithList(candidate, wrapExisting(existList), errorMap.get(candidate), false, bindWarehouseNameMap);
+            validateDuplicateWithList(candidate, candidates, errorMap.get(candidate), true, bindWarehouseNameMap, bindWarehouseIdMap);
+            validateDuplicateWithList(candidate, wrapExisting(existList), errorMap.get(candidate), false, bindWarehouseNameMap, bindWarehouseIdMap);
         }
     }
 
     private List<WarehouseLocationMappingEntity> listExisting(List<Candidate> candidates, String excludeId) {
-        Set<String> warehouseIds = candidates.stream().map(item -> item.getEntity().getSysWarehouseId()).collect(Collectors.toSet());
-        Set<String> platforms = candidates.stream().map(item -> item.getEntity().getDictPlatform()).collect(Collectors.toSet());
+        Set<String> warehouseIds = candidates.stream()
+                .map(item -> item.getEntity().getSysWarehouseId())
+                .filter(CharSequenceUtil::isNotBlank)
+                .collect(Collectors.toSet());
+        Set<String> platforms = candidates.stream()
+                .map(item -> item.getEntity().getDictPlatform())
+                .filter(CharSequenceUtil::isNotBlank)
+                .collect(Collectors.toSet());
+        if (CollectionUtils.isEmpty(warehouseIds) || CollectionUtils.isEmpty(platforms)) {
+            return Collections.emptyList();
+        }
         return this.lambdaQuery()
                 .in(WarehouseLocationMappingEntity::getSysWarehouseId, warehouseIds)
                 .in(WarehouseLocationMappingEntity::getDictPlatform, platforms)
@@ -582,11 +593,12 @@ public class WarehouseLocationMappingServiceImpl extends SuperServiceImpl<Wareho
         if (CollectionUtils.isEmpty(existList)) {
             return Collections.emptyList();
         }
-        return existList.stream().map(entity -> new Candidate(entity, null)).collect(Collectors.toList());
+        return existList.stream().map(entity -> new Candidate(entity, null, null)).collect(Collectors.toList());
     }
 
     private void validateDuplicateWithList(Candidate current, List<Candidate> candidateList, List<String> errorList,
-                                         boolean sameBatch, Map<String, String> bindWarehouseNameMap) {
+                                         boolean sameBatch, Map<String, String> bindWarehouseNameMap,
+                                         Map<String, String> bindWarehouseIdMap) {
         WarehouseLocationMappingEntity currentEntity = current.getEntity();
         String bindWarehouseName = resolveBindWarehouseName(currentEntity.getSysWarehouseId(), currentEntity.getDictPlatform(), bindWarehouseNameMap);
         Set<String> messageSet = new HashSet<>(errorList);
@@ -595,10 +607,11 @@ public class WarehouseLocationMappingServiceImpl extends SuperServiceImpl<Wareho
             if (sameBatch && current == candidate) {
                 continue;
             }
-            if (!sameSysWarehouseAndPlatform(currentEntity, other)) {
+            if (!sameBindWarehouseAndPlatform(current, candidate, bindWarehouseIdMap)) {
                 continue;
             }
-            boolean sameSysLocation = Objects.equals(currentEntity.getSysWarehouseLocation(), other.getSysWarehouseLocation());
+            boolean sameSysLocation = Objects.equals(normalizeSysWarehouseLocation(currentEntity.getSysWarehouseLocation()),
+                    normalizeSysWarehouseLocation(other.getSysWarehouseLocation()));
             boolean sameThirdLocation = Objects.equals(currentEntity.getThirdWarehouseLocation(), other.getThirdWarehouseLocation());
             String platformName = getPlatformName(currentEntity.getDictPlatform());
             if (sameSysLocation && sameThirdLocation) {
@@ -612,6 +625,23 @@ public class WarehouseLocationMappingServiceImpl extends SuperServiceImpl<Wareho
                         formatLocationDisplay(currentEntity.getSysWarehouseLocation()), platformName, bindWarehouseName, other.getThirdWarehouseLocation()));
             }
         }
+    }
+
+    private Map<String, String> buildBindWarehouseIdMap(List<Candidate> candidates, List<WarehouseLocationMappingEntity> existList) {
+        Map<String, String> bindWarehouseIdMap = new HashMap<>();
+        candidates.stream()
+                .filter(candidate -> CharSequenceUtil.isNotBlank(candidate.getBindWarehouseId()))
+                .forEach(candidate -> bindWarehouseIdMap.put(
+                        buildKey(candidate.getEntity().getSysWarehouseId(), candidate.getEntity().getDictPlatform()),
+                        candidate.getBindWarehouseId()));
+        if (CollectionUtils.isNotEmpty(existList)) {
+            existList.stream()
+                    .filter(entity -> CharSequenceUtil.isNotBlank(entity.getSysWarehouseId()) && CharSequenceUtil.isNotBlank(entity.getDictPlatform()))
+                    .map(entity -> buildKey(entity.getSysWarehouseId(), entity.getDictPlatform()))
+                    .distinct()
+                    .forEach(key -> bindWarehouseIdMap.putIfAbsent(key, resolveBindWarehouseId(key, bindWarehouseIdMap)));
+        }
+        return bindWarehouseIdMap;
     }
 
     private Map<String, String> buildBindWarehouseNameMap(List<Candidate> candidates) {
@@ -643,9 +673,45 @@ public class WarehouseLocationMappingServiceImpl extends SuperServiceImpl<Wareho
         return bindWarehouseName;
     }
 
-    private boolean sameSysWarehouseAndPlatform(WarehouseLocationMappingEntity current, WarehouseLocationMappingEntity other) {
-        return Objects.equals(current.getSysWarehouseId(), other.getSysWarehouseId())
-                && Objects.equals(current.getDictPlatform(), other.getDictPlatform());
+    private boolean sameBindWarehouseAndPlatform(Candidate current, Candidate other, Map<String, String> bindWarehouseIdMap) {
+        WarehouseLocationMappingEntity currentEntity = current.getEntity();
+        WarehouseLocationMappingEntity otherEntity = other.getEntity();
+        if (!Objects.equals(currentEntity.getDictPlatform(), otherEntity.getDictPlatform())) {
+            return false;
+        }
+        String currentBindWarehouseId = resolveCandidateBindWarehouseId(current, bindWarehouseIdMap);
+        String otherBindWarehouseId = resolveCandidateBindWarehouseId(other, bindWarehouseIdMap);
+        if (CharSequenceUtil.isNotBlank(currentBindWarehouseId) && CharSequenceUtil.isNotBlank(otherBindWarehouseId)) {
+            return Objects.equals(currentBindWarehouseId, otherBindWarehouseId);
+        }
+        return Objects.equals(currentEntity.getSysWarehouseId(), otherEntity.getSysWarehouseId());
+    }
+
+    private String resolveCandidateBindWarehouseId(Candidate candidate, Map<String, String> bindWarehouseIdMap) {
+        if (CharSequenceUtil.isNotBlank(candidate.getBindWarehouseId())) {
+            return candidate.getBindWarehouseId();
+        }
+        WarehouseLocationMappingEntity entity = candidate.getEntity();
+        return resolveBindWarehouseId(buildKey(entity.getSysWarehouseId(), entity.getDictPlatform()), bindWarehouseIdMap);
+    }
+
+    private String resolveBindWarehouseId(String key, Map<String, String> bindWarehouseIdMap) {
+        if (bindWarehouseIdMap.containsKey(key)) {
+            return bindWarehouseIdMap.get(key);
+        }
+        String[] split = key.split("#", 2);
+        if (split.length < 2 || CharSequenceUtil.isBlank(split[0]) || CharSequenceUtil.isBlank(split[1])) {
+            bindWarehouseIdMap.put(key, "");
+            return "";
+        }
+        ThirdWarehouseEntity thirdWarehouse = resolveBindWarehouse(split[0], split[1]);
+        String bindWarehouseId = thirdWarehouse == null ? "" : CharSequenceUtil.blankToDefault(thirdWarehouse.getId(), "");
+        bindWarehouseIdMap.put(key, bindWarehouseId);
+        return bindWarehouseId;
+    }
+
+    private String normalizeSysWarehouseLocation(String sysWarehouseLocation) {
+        return sysWarehouseLocation == null ? "" : sysWarehouseLocation;
     }
 
     private void addMessage(List<String> errorList, Set<String> messageSet, String message) {
@@ -689,10 +755,12 @@ public class WarehouseLocationMappingServiceImpl extends SuperServiceImpl<Wareho
     private static class Candidate {
         private final WarehouseLocationMappingEntity entity;
         private final WarehouseLocationMappingExcelDTO importRow;
+        private final String bindWarehouseId;
 
-        private Candidate(WarehouseLocationMappingEntity entity, WarehouseLocationMappingExcelDTO importRow) {
+        private Candidate(WarehouseLocationMappingEntity entity, WarehouseLocationMappingExcelDTO importRow, String bindWarehouseId) {
             this.entity = entity;
             this.importRow = importRow;
+            this.bindWarehouseId = bindWarehouseId;
         }
 
         public WarehouseLocationMappingEntity getEntity() {
@@ -701,6 +769,10 @@ public class WarehouseLocationMappingServiceImpl extends SuperServiceImpl<Wareho
 
         public WarehouseLocationMappingExcelDTO getImportRow() {
             return importRow;
+        }
+
+        public String getBindWarehouseId() {
+            return bindWarehouseId;
         }
     }
 }
