@@ -619,7 +619,7 @@ public class WarehouseLocationMappingServiceImpl extends SuperServiceImpl<Wareho
                         formatLocationDisplay(currentEntity.getSysWarehouseLocation()), platformName, bindWarehouseName, currentEntity.getThirdWarehouseLocation()));
             } else if (!sameSysLocation && sameThirdLocation) {
                 addMessage(errorList, messageSet, CharSequenceUtil.format("仓位【{}】已绑定第三方系统【{}】仓库【{}】仓位【{}】，请绑定其他仓位",
-                        formatLocationDisplay(currentEntity.getSysWarehouseLocation()), platformName, bindWarehouseName, other.getThirdWarehouseLocation()));
+                        formatLocationDisplay(other.getSysWarehouseLocation()), platformName, bindWarehouseName, other.getThirdWarehouseLocation()));
             } else if (sameSysLocation) {
                 addMessage(errorList, messageSet, CharSequenceUtil.format("仓位【{}】已绑定第三方系统【{}】仓库【{}】仓位【{}】，请解绑后再绑定",
                         formatLocationDisplay(currentEntity.getSysWarehouseLocation()), platformName, bindWarehouseName, other.getThirdWarehouseLocation()));
