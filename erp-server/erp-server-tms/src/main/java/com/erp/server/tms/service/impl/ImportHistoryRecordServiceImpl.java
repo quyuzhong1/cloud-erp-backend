@@ -3034,6 +3034,21 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             importType = CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_OLD.getCode();
         }
 
+        // 同一物流单明细在相同对账月份 + 相同付款类型下不允许重复生成费用单（JIRA ERP-18299）。
+        // 前置确定性拦截：只要走按原单新增(ADD_OLD)且已存在同明细 + 同对账月份 + 同付款类型的费用单即报错，
+        // 不依赖 size 分支与旧单状态，避免重复生成。
+        if (CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_OLD.getCode().equals(importType)) {
+            long sameMonthPayTypeCount = logisticsBillCostList.stream()
+                    .filter(obj -> CharSequenceUtil.equals(obj.getLogisticsBillDetailId(), logisticsBillVo.getDetailId())
+                            && CharSequenceUtil.equals(excelDTO.getPayType(), obj.getPayType())
+                            && CharSequenceUtil.equals(logisticsBillVo.getReconciliationMonth(), obj.getReconciliationMonth()))
+                    .count();
+            if (sameMonthPayTypeCount > 0) {
+                errorMsgList.add("已存在相同对账月份和付款类型的物流费用单，不支持重复生成");
+                return importType;
+            }
+        }
+
         //校验物流费用
         if(logisticsBillCostEntityList.size() > 1) {
             if (CfgLogisticsCostImportImportTypeEnum.IMPORT_UPDATE.getCode().equals(importType)) {
