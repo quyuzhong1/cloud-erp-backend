@@ -309,6 +309,36 @@ public interface RedisCacheConstants {
 
     String TABLE_BUSINESS_KEY = "sys:table:business:key";
 
+    /**
+     * Gateway IP滑动窗口限流:{ip}
+     */
+    String GATEWAY_IP_RATE_LIMIT = "gateway:ip:rate:limit:{}";
+
+    /**
+     * Gateway限流临时封禁:{限流维度}
+     */
+    String GATEWAY_RATE_LIMIT_BLOCK = "gateway:rate:limit:block:{}";
+
+    /**
+     * Gateway API Token校验结果缓存:{tokenHash+uri二次hash}
+     */
+    String GATEWAY_API_TOKEN_VALIDATE = "gateway:api:token:validate:{}";
+
+    /**
+     * Gateway API Token全局限流:{固定维度}
+     */
+    String GATEWAY_API_TOKEN_RATE_GLOBAL = "gateway:api:token:rate:global:{}";
+
+    /**
+     * Gateway API Token路径级限流:{uriHash}
+     */
+    String GATEWAY_API_TOKEN_RATE_PATH = "gateway:api:token:rate:path:{}";
+
+    /**
+     * Gateway API Token失败封禁:{tokenHash}
+     */
+    String GATEWAY_API_TOKEN_RATE_FAILURE = "gateway:api:token:rate:failure:{}";
+
     String WECHAT_ACCESS_TOKEN_KEY = "third:wechat:access:token";
 
     String ADD_GYY_REFUND_ORDER_KEY = "dmp:gyy:refund:add";
@@ -379,7 +409,9 @@ public interface RedisCacheConstants {
     String DORIS_QUERY_CFG_FULL_KEY = "erp:doris_query_cfg:full";
 
     // dict_basic 缓存 —— 按服务+type 维度存储
-    // 格式: cache:{serviceCode}:dict:type:{type}
+    // 通用格式: cache:{serviceCode}:dict:type::{type}
+    String BASE_DICT_BASIC_BY_TYPE = "cache:{}:dict:type::{}";
+    //每个系统缓存格式: cache:系统编码:dict:type
     String SYS_DICT_BASIC_BY_TYPE = "cache:sys:dict:type";
     String DMP_DICT_BASIC_BY_TYPE = "cache:dmp:dict:type";
     String OMS_DICT_BASIC_BY_TYPE = "cache:oms:dict:type";

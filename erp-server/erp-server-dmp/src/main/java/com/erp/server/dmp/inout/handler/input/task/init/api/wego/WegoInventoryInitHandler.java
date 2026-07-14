@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.enums.AuthStatusEnum;
@@ -66,17 +67,17 @@ public class WegoInventoryInitHandler extends DmpInputInitHandler {
                 .findFirst()
                 .orElse(null);
         if (provider == null) {
-            throw new ServiceException("WEGO库存：nextLevelId[" + dmpInputTaskEntity.getNextLevelId() + "]对应的服务商不存在");
+            throw new ServiceException(ApiError.WH_WEGO_INVENTORY_PROVIDER_NOT_FOUND, dmpInputTaskEntity.getNextLevelId());
         }
 
         Map<String, Object> authJson = provider.getAuthJson();
         if (authJson == null || authJson.isEmpty()) {
-            throw new ServiceException("WEGO库存：服务商[" + provider.getId() + "]auth_json为空");
+            throw new ServiceException(ApiError.WH_WEGO_INVENTORY_AUTH_JSON_EMPTY, provider.getId());
         }
         String appToken = toStr(authJson.get(AUTH_KEY_APP_TOKEN));
         String appSecret = toStr(authJson.get(AUTH_KEY_APP_SECRET));
         if (StringUtils.isAnyBlank(appToken, appSecret)) {
-            throw new ServiceException("WEGO库存：服务商[" + provider.getId() + "]appToken/appSecret缺失");
+            throw new ServiceException(ApiError.WH_WEGO_INVENTORY_TOKEN_SECRET_MISSING, provider.getId());
         }
 
         // 查询服务商下已启用的仓库
@@ -94,6 +95,11 @@ public class WegoInventoryInitHandler extends DmpInputInitHandler {
 
         for (OverseasProviderWarehouseEntity warehouse : warehouseList) {
             String warehouseCode = warehouse.getPlatformWarehouseCode();
+            if (StringUtils.isBlank(warehouseCode)) {
+                log.warn("[WEGO库存] 服务商[id={}] 仓库[id={}]platformWarehouseCode为空，跳过",
+                        authId, warehouse.getId());
+                continue;
+            }
             String warehouseName = warehouse.getPlatformWarehouseName();
             List<Object> warehouseInventory = fetchInventoryByWarehouse(appToken, appSecret, warehouseCode, authId, warehouseName);
             allInventory.addAll(warehouseInventory);
@@ -137,12 +143,13 @@ public class WegoInventoryInitHandler extends DmpInputInitHandler {
                 response = wegoOpenApiService.queryInventory(reqDTO);
             } catch (Exception e) {
                 log.error("[WEGO库存] 服务商[id={}] 仓库[{}]调用异常，pageNum={}", authId, warehouseCode, pageNum, e);
-                break;
+                throw new ServiceException(e, ApiError.WH_WEGO_INVENTORY_PAGE_QUERY_ERROR,
+                        warehouseCode, pageNum, inventoryList.size());
             }
 
             JSONObject pageResult = extractPageResult(response, authId, warehouseCode);
             if (pageResult == null) {
-                break;
+                throw new ServiceException(ApiError.WH_WEGO_INVENTORY_PAGE_PARSE_FAILED, warehouseCode, pageNum);
             }
 
             JSONArray list = pageResult.getJSONArray("list");
@@ -170,8 +177,10 @@ public class WegoInventoryInitHandler extends DmpInputInitHandler {
         }
 
         if (pageNum > MAX_PAGE_LIMIT) {
-            log.warn("[WEGO库存] 服务商[id={}] 仓库[{}]已达最大翻页上限({})，可能存在未拉取数据",
+            log.error("[WEGO库存] 服务商[id={}] 仓库[{}]已达最大翻页上限({})，存在未拉取数据，任务中止",
                     authId, warehouseCode, MAX_PAGE_LIMIT);
+            throw new ServiceException(ApiError.WH_WEGO_INVENTORY_PAGE_LIMIT_EXCEEDED,
+                    warehouseCode, MAX_PAGE_LIMIT, inventoryList.size());
         }
         log.info("[WEGO库存] 服务商[id={}] 仓库[{}] 共拉取库存明细={}条，页数={}",
                 authId, warehouseCode, inventoryList.size(), pageNum);
@@ -195,7 +204,7 @@ public class WegoInventoryInitHandler extends DmpInputInitHandler {
             String errorMsg = String.valueOf(response.get("errorMsg"));
             log.error("[WEGO库存] 服务商[id={}] 仓库[{}]接口返回失败: errorCode={}, errorMsg={}",
                     authId, warehouseCode, errorCode, errorMsg);
-            throw new ServiceException("WEGO库存接口返回失败: errorCode=" + errorCode + ", errorMsg=" + errorMsg);
+            throw new ServiceException(ApiError.WH_WEGO_INVENTORY_RESPONSE_FAILED, errorCode, errorMsg);
         }
         Object resultObj = response.get("result");
         if (resultObj instanceof JSONObject) {

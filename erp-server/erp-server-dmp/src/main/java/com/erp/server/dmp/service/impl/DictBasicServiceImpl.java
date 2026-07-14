@@ -61,12 +61,13 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
 		entity.setCreateUserName(userName);
 		return super.save(entity);
 	}
-	
+
+	/**
+	 * 更新字典，统一改为上游删除对应类型字典缓存
+	 * @param jsonObjects
+	 * @return
+	 */
 	@Override
-	@CacheEvict(
-			cacheNames = RedisCacheConstants.DMP_DICT_BASIC_BY_TYPE,
-			key = "#jsonObjects[0].getString('type')"
-	)
 	public boolean updateJsonObject(List<JSONObject> jsonObjects) {
 		List<DictBasicEntity> entityList = new ArrayList<>();
 		for(JSONObject jsonObject : jsonObjects) {

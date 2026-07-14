@@ -74,6 +74,7 @@ public enum SourceTypeEnum {
     FBA_SHIPMENT("fbaShipment", "FBA货件","fba_shipment"),
     AWD_SHIPMENT("awdShipment", "AWD货件","fba_shipment"),
     FBA_SHIPMENT_DETAIL("fbaShipmentDetail", "FBA货件明细","fba_shipment_detail"),
+    FBA_INBOUND_PLANS("fbaInboundPlans", "FBA入库货件列表","fba_inbound_plans"),
     FIRST_MILE_DELIVERY("firstMileDelivery", "头程发货单", "first_mile_delivery"),
     //当前仓可用减少，中转仓冻结增加
     FIRST_MILE_DELIVERY_TRANSFER_TO_THIRD("firstMileDeliveryTransferToThird", "头程发货单-中转（三方仓发三方仓）", "first_mile_delivery"),
@@ -335,6 +336,9 @@ public enum SourceTypeEnum {
 
     //售后申请
     AFTER_SALE("afterSale", "寄修申请","after_sale"),
+
+    // 售后装箱
+    AFTER_SALE_PACK("afterSalePack", "售后装箱","after_sale_pack"),
     ;
 
     /**

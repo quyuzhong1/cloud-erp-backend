@@ -9,6 +9,7 @@ import com.erp.model.dmp.entity.DmpThirdWarehouseInfoEntity;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import com.erp.server.dmp.inout.handler.output.task.mq.DmpOutputRocketMQTaskHandler;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -33,6 +34,7 @@ import java.util.Set;
  * <p>
  * 多例：{@link Scope}({@code prototype})，与父类 {@link DmpOutputRocketMQTaskHandler} 的生命周期约定一致。
  */
+@Slf4j
 @Service
 @Scope("prototype")
 public class WegoWarehouseRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler {
@@ -71,6 +73,10 @@ public class WegoWarehouseRocketMQTaskHandler extends DmpOutputRocketMQTaskHandl
         String cfgOutputId = dmpResponse.getDmpCfgOutputEntity().getId();
         for (String changeId : changeIds) {
             DmpThirdWarehouseInfoEntity dmpThirdWarehouseInfoEntity = dmpThirdWarehouseInfoEntityMap.get(changeId);
+            if (dmpThirdWarehouseInfoEntity == null) {
+                log.warn("WegoWarehouseRocketMQTaskHandler: changeId={} not found, cfgOutputId={}", changeId, cfgOutputId);
+                continue;
+            }
             PlatformWarehouseDTO warehouse = this.convert(dmpThirdWarehouseInfoEntity, cfgOutputId);
             if (warehouse != null) {
                 map.put(dmpThirdWarehouseInfoEntity.getId(), JSON.toJSONString(warehouse));

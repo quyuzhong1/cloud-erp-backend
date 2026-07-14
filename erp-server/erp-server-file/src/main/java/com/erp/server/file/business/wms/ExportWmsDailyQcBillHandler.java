@@ -13,8 +13,6 @@ import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.rpc.wms.feign.ExportWmsFeign;
 import com.erp.server.file.business.wms.hanldler.HyperlinkWriteHandler;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
-import com.erp.model.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -34,16 +32,20 @@ public class ExportWmsDailyQcBillHandler extends AbstractPageFileEventHandler<Qc
     @Resource
     private ExportWmsFeign exportWmsFeign;
 
-    @Override
-    protected List<QcInfoDTO.QcDailyReportDTO> getData(FileTask fileTask) {
-        QcInfoDTO.ExportDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<QcInfoDTO.ExportDTO>() {
-        });
-        List<QcInfoDTO.QcDailyReportDTO> qcDailyReportDTOS = listSeqData(dto);
+    /**
+     * 逐行无状态富化（图片取首项/尺寸格式/附件/报告链接）随每页流式写出，与历史全量富化等价。
+     */
+    private void enrichPage(List<QcInfoDTO.QcDailyReportDTO> pageList) {
+        if (CollUtil.isEmpty(pageList)) {
+            return;
+        }
         List<String> picFormats = Arrays.stream(PicFormatEnum.values())
                 .map(PicFormatEnum::getCode)
                 .collect(Collectors.toList());
-
-        for (QcInfoDTO.QcDailyReportDTO data : qcDailyReportDTOS) {
+        for (QcInfoDTO.QcDailyReportDTO data : pageList) {
+            if (data == null) {
+                continue;
+            }
             data.setProductImg(getFirstItem(data.getProductImgUrl()));
             data.setBoxMarkImg(getFirstItem(data.getBoxMarkImgUrl()));
             data.setBadAttachment(getBadAttachment(data.getBadAttachments(), picFormats));
@@ -55,7 +57,6 @@ public class ExportWmsDailyQcBillHandler extends AbstractPageFileEventHandler<Qc
             // 获取第一个带链接的报告
             data.setReportListLink(getReportListLink(data.getReportList()));
         }
-        return qcDailyReportDTOS;
     }
 
     /**
@@ -118,6 +119,11 @@ public class ExportWmsDailyQcBillHandler extends AbstractPageFileEventHandler<Qc
     @Override
     protected PagingVO<QcInfoDTO.QcDailyReportDTO> getPageData(PagingDTO<QcInfoDTO.ExportDTO> dto) {
         return exportWmsFeign.exportDailyQcBill(dto);
+    }
+
+    @Override
+    protected void afterFetchPage(List<QcInfoDTO.QcDailyReportDTO> pageList) {
+        enrichPage(pageList);
     }
 
     @Override

@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.enums.AuthStatusEnum;
@@ -25,11 +26,7 @@ import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * dmp 输入 init 任务基础处理器：WEGO 海外仓入库单 api 拉取实现。
@@ -79,25 +76,26 @@ public class WegoInboundInitHandler extends DmpInputInitHandler {
                 .eq(OverseasProviderEntity::getCode, DmpBasicSystemCodeEnum.WEGO.getCode())
                 .list();
         if (CollUtil.isEmpty(overseasProviderEntityList)) {
-            throw new ServiceException("WEGO授权信息不存在");
+            log.warn("[WEGO库存] 无已授权的WEGO服务商配置，跳过");
+            return Collections.emptyList();
         }
         OverseasProviderEntity overseasProviderEntity = overseasProviderEntityList.stream()
                 .filter(e -> e.getId().equalsIgnoreCase(dmpInputTaskEntity.getNextLevelId()))
                 .findFirst()
                 .orElse(null);
         if (null == overseasProviderEntity) {
-            throw new ServiceException(DmpBasicSystemCodeEnum.WEGO.getCode() + "对应授权ID信息不存在,nextId:"
-                    + dmpInputTaskEntity.getNextLevelId());
+            throw new ServiceException(ApiError.WH_WEGO_INBOUND_AUTH_ID_NOT_FOUND,
+                    DmpBasicSystemCodeEnum.WEGO.getCode(), dmpInputTaskEntity.getNextLevelId());
         }
 
         Map<String, Object> authJson = overseasProviderEntity.getAuthJson();
         if (authJson == null || authJson.isEmpty()) {
-            throw new ServiceException("WEGO入库：服务商[" + overseasProviderEntity.getId() + "]auth_json为空");
+            throw new ServiceException(ApiError.WH_WEGO_INBOUND_AUTH_JSON_EMPTY, overseasProviderEntity.getId());
         }
         String appToken = toStr(authJson.get(AUTH_KEY_APP_TOKEN));
         String appSecret = toStr(authJson.get(AUTH_KEY_APP_SECRET));
         if (StringUtils.isAnyBlank(appToken, appSecret)) {
-            throw new ServiceException("WEGO入库：服务商[" + overseasProviderEntity.getId() + "]appToken/appSecret缺失");
+            throw new ServiceException(ApiError.WH_WEGO_INBOUND_TOKEN_SECRET_MISSING, overseasProviderEntity.getId());
         }
 
         // 上架日期范围：优先取 dmp 任务的时间窗口（定时器/补单均会注入），缺省时回退为 [date-1] ~ [date]
@@ -148,12 +146,12 @@ public class WegoInboundInitHandler extends DmpInputInitHandler {
             } catch (Exception e) {
                 log.error("[WEGO入库] 服务商[id={}] 上架日期[{} ~ {}] 调用异常，pageNum={}",
                         authId, upDateBegin, upDateEnd, pageNum, e);
-                break;
+                throw new ServiceException(ApiError.WH_WEGO_INBOUND_PAGE_QUERY_ERROR, pageNum - 1);
             }
 
             WegoInboundResp.PageResultDTO pageResult = extractPageResult(resp, authId);
             if (pageResult == null) {
-                break;
+                throw new ServiceException(ApiError.WH_WEGO_INBOUND_PAGE_PARSE_FAILED, pageNum, pageNum - 1);
             }
 
             List<WegoInboundResp.InorderDTO> list = pageResult.getList();
@@ -175,7 +173,8 @@ public class WegoInboundInitHandler extends DmpInputInitHandler {
         }
 
         if (pageNum > MAX_PAGE_LIMIT) {
-            log.warn("[WEGO入库] 服务商[id={}] 已达最大翻页上限({})，可能存在未拉取数据", authId, MAX_PAGE_LIMIT);
+            log.error("[WEGO入库] 服务商[id={}] 已达最大翻页上限({})，存在未拉取数据，任务中止", authId, MAX_PAGE_LIMIT);
+            throw new ServiceException(ApiError.WH_WEGO_INBOUND_PAGE_LIMIT_EXCEEDED, MAX_PAGE_LIMIT, orderList.size());
         }
         log.info("[WEGO入库] 服务商[id={}] 上架日期[{} ~ {}] 共拉取入库单={}条，已翻页={}",
                 authId, upDateBegin, upDateEnd, orderList.size(), pageNum);
@@ -183,22 +182,26 @@ public class WegoInboundInitHandler extends DmpInputInitHandler {
     }
 
     /**
-     * 校验 WEGO 接口响应：success=true 才返回 result，否则抛出业务异常或返回 null。
+     * 校验 WEGO 接口响应：success=true 且 result 非空才返回分页对象，否则抛出业务异常。
      *
-     * @return 分页对象，失败时返回 null
+     * @return 分页对象，非空
      */
     private WegoInboundResp.PageResultDTO extractPageResult(WegoInboundResp resp, String authId) {
         if (resp == null) {
             log.error("[WEGO入库] 服务商[id={}] 接口响应为空", authId);
-            return null;
+            throw new ServiceException(ApiError.WH_WEGO_INBOUND_RESPONSE_EMPTY);
         }
         if (!Boolean.TRUE.equals(resp.getSuccess())) {
             log.error("[WEGO入库] 服务商[id={}] 接口返回失败: errorCode={}, errorMsg={}",
                     authId, resp.getErrorCode(), resp.getErrorMsg());
-            throw new ServiceException("WEGO入库分页查询接口返回失败: errorCode=" + resp.getErrorCode()
-                    + ", errorMsg=" + resp.getErrorMsg());
+            throw new ServiceException(ApiError.WH_WEGO_INBOUND_RESPONSE_FAILED, resp.getErrorCode(), resp.getErrorMsg());
         }
-        return resp.getResult();
+        WegoInboundResp.PageResultDTO result = resp.getResult();
+        if (result == null) {
+            log.error("[WEGO入库] 服务商[id={}] 接口 success=true 但 result 为空", authId);
+            throw new ServiceException(ApiError.WH_WEGO_INBOUND_RESULT_EMPTY);
+        }
+        return result;
     }
 
     /**

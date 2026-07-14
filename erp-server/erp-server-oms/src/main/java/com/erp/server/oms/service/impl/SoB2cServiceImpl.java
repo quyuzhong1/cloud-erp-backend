@@ -356,6 +356,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Resource
     private TransferLogisticsFeign transferLogisticsFeign;
 
+    /**
+     * 自注入代理，供同类内需要独立事务的方法（如 {@link #doDeleteSingleB2cSo}）通过代理调用，
+     * 使 {@code @Transactional} 生效。禁止改为 {@code this.xxx()} 或直接注入非代理对象。
+     */
     @Resource
     @Lazy
     private SoB2cServiceImpl soB2cService;
@@ -427,6 +431,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     private PackagePlanService packagePlanService;
     private static final int MAX_RETRY_COUNT = 3;
     private static final long RETRY_DELAY_SECONDS = 60000;
+    private static final int EARLY_PERSIST_RETRY_COUNT = 2;
 
     @Resource
     private SyncThirdWarehouseService syncThirdWarehouseService;
@@ -440,13 +445,22 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return this.baseMapper.fullyManagedPaging(query, params, null);
     }
 
+    /**
+     * Doris 分析库 SQL 回查 PG 主库时，将跨库表名替换为 OMS 可访问的表/外部表。
+     */
+    private String convertDorisSqlToPgSql(String dorisSql) {
+        return dorisSql
+                .replace("erp_wms.third_warehouse_delivery", "foreign_third_warehouse_delivery")
+                .replace("erp_wms.so_b2c_delivery", "so_b2c_delivery");
+    }
+
     // 新增方法：处理普通 paging 的逻辑
     private IPage<SoB2cDTO.ListDTO> handlePaging(Page query, PagingParamDTO params, String dynamicDataSource, Boolean secondQuery) {
         IPage<SoB2cDTO.ListDTO> pageData = null;
         if (DynamicDataSourceTypeEnum.DORIS.getCode().equals(dynamicDataSource) && secondQuery) {
             int queryCount = 0;
             String defaultSql = params.getSqlMap().get("default");
-            String pgSql = defaultSql.replace("erp_wms.third_warehouse_delivery", "foreign_third_warehouse_delivery");
+            String pgSql = convertDorisSqlToPgSql(defaultSql);
             boolean unSameCountFlag = true;
             while (queryCount < 3) {
                 DynamicDataSourceContextHolder.poll();
@@ -748,7 +762,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void deleteB2cSoJob() {
         List<SoB2cEntity> soB2cList = this.lambdaQuery()
                 .lt(SoB2cEntity::getCreateTime, LocalDateTime.now().minusDays(30)) // 30天前
@@ -759,7 +772,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 .eq(SoB2cEntity::getIsDeleted, Boolean.FALSE)
                 .list();
 
-        //非货到付款（批量预取支付方式配置，避免循环内重复查库）
         Map<String, CfgSettingDTO.PayMethodDTO> payMethodSettingMap = soB2cCoreService.listPayMethodSettingMap();
         List<SoB2cEntity> toDeleteList = soB2cList.stream()
                 .filter(entity -> !payMethodSettingMap.containsKey(
@@ -770,17 +782,90 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             return;
         }
 
-        List<String> soB2cIdList = toDeleteList.stream()
-                .map(SoB2cEntity::getId)
-                .collect(Collectors.toList());
-        String codes = toDeleteList.stream()
-                .map(SoB2cEntity::getCode)
-                .filter(CharSequenceUtil::isNotBlank)
-                .collect(Collectors.joining(","));
+        // 循环外批量预取物流单，避免逐条 getByMainId 造成 N+1 查询
+        List<String> deleteIdList = toDeleteList.stream().map(SoB2cEntity::getId).collect(Collectors.toList());
+        Map<String, SoB2cLogisticsEntity> logisticsMap = new HashMap<>(deleteIdList.size());
+        int batchSize = 1000;
+        for (int i = 0; i < deleteIdList.size(); i += batchSize) {
+            List<String> batchIds = deleteIdList.subList(i, Math.min(i + batchSize, deleteIdList.size()));
+            soB2cLogisticsService.listByMainIds(batchIds).forEach(logisticsEntity ->
+                    logisticsMap.putIfAbsent(logisticsEntity.getMainId(), logisticsEntity));
+        }
 
-        this.deleteById(soB2cIdList, codes);
+        List<String> successCodeList = new ArrayList<>();
+        List<String> skipCodeList = new ArrayList<>();
 
-        XxlJobHelper.log("成功删除{}条b2c销售订单，ID为:{}",soB2cIdList.size(), codes);
+        // 每个订单一个独立事务，单条失败不影响其他订单；须通过 soB2cService 代理调用，不可使用 this
+        for (SoB2cEntity entity : toDeleteList) {
+            try {
+                BatchResultDTO result = soB2cService.deleteSingleB2cSo(entity, logisticsMap.get(entity.getId()));
+                if (result.getSuccess()) {
+                    successCodeList.add(entity.getCode());
+                } else {
+                    skipCodeList.add(CharSequenceUtil.format("{}({})", entity.getCode(), result.getMsg()));
+                }
+            } catch (Exception e) {
+                log.error("定时删除B2C销售订单【{}】失败", entity.getCode(), e);
+                skipCodeList.add(CharSequenceUtil.format("{}({})", entity.getCode(), "删除异常:" + e.getMessage()));
+            }
+        }
+
+        if (CollUtil.isNotEmpty(successCodeList)) {
+            String codes = String.join(",", successCodeList);
+            XxlJobHelper.log("成功删除{}条b2c销售订单，单号为:{}", successCodeList.size(), codes);
+        }
+
+        if (CollUtil.isNotEmpty(skipCodeList)) {
+            XxlJobHelper.log("跳过{}条不符合删除条件的b2c销售订单，单号及原因:{}", skipCodeList.size(), String.join("; ", skipCodeList));
+        }
+    }
+
+    /**
+     * 删除单条B2C销售订单（供 {@link #deleteB2cSoJob()} 调用）。
+     * 须通过 {@link #soB2cService} 代理调用，使 {@link #doDeleteSingleB2cSo} 事务生效。
+     */
+    public BatchResultDTO deleteSingleB2cSo(SoB2cEntity entity, SoB2cLogisticsEntity logisticsEntity) {
+        return soB2cService.doDeleteSingleB2cSo(entity, logisticsEntity);
+    }
+
+    /**
+     * 删除单条B2C销售订单（每条订单独立事务，供 {@link #deleteSingleB2cSo} 调用）。
+     * 取消物流与删单在同一事务内执行，本地 DB 变更可一并回滚。
+     * <p>
+     * 审查说明：定时删单为低并发串行任务，取消物流与删单 intentionally 同事务以保证本地 DB 原子性；
+     * cancelLogistic 内 Feign 远程取消成功后无法随事务回滚，为已知且已接受的业务边界，不按「事务内 Feign」项拦截。
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO doDeleteSingleB2cSo(SoB2cEntity entity, SoB2cLogisticsEntity logisticsEntity) {
+        BatchResultDTO cancelResult = cancelLogisticsIfNeeded(entity, logisticsEntity);
+        if (!cancelResult.getSuccess()) {
+            return cancelResult;
+        }
+        // 物流已在 cancelLogisticsIfNeeded 处理，跳过 deleteById 内 batchCancelLogistic 避免重复取消
+        this.removeSoB2cByIds(Collections.singletonList(entity.getId()));
+        return BatchResultDTO.success(entity.getId(), entity.getCode());
+    }
+
+    /**
+     * 删除前按需取消物流单（有副作用，非纯校验）。
+     * 触发条件与 {@link #batchCancelLogistic} 对齐：仅 logistics code 非空时才调用 cancelLogistic。
+     */
+    private BatchResultDTO cancelLogisticsIfNeeded(SoB2cEntity entity, SoB2cLogisticsEntity logisticsEntity) {
+        if (Objects.isNull(logisticsEntity) || CharSequenceUtil.isBlank(logisticsEntity.getCode())) {
+            return BatchResultDTO.success(entity.getId(), entity.getCode());
+        }
+        try {
+            List<SoB2cEntity> soB2cEntityList = Collections.singletonList(entity);
+            List<SoB2cLogisticsEntity> logisticsEntityList = Collections.singletonList(logisticsEntity);
+            BatchResultDTO resultDTO = soB2cLogisticsService.cancelLogistic(entity.getId(), soB2cEntityList, logisticsEntityList, true);
+            if (!resultDTO.getSuccess()) {
+                return BatchResultDTO.fail(entity.getId(), entity.getCode(), resultDTO.getMsg());
+            }
+        } catch (Exception e) {
+            log.error("B2C销售订单【{}】删除前取消物流单失败", entity.getCode(), e);
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "取消物流单失败，请联系物流同事处理");
+        }
+        return BatchResultDTO.success(entity.getId(), entity.getCode());
     }
 
 
@@ -927,6 +1012,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 } finally {
                     UserContext.clearIsUserSystem();
                 }
+            } else {
+                addDTO.getReceiverDTO().setCustomerId(cutomer.getId());
             }
             //新增买家信息
             soB2cReceiverService.add(addDTO.getReceiverDTO(), soB2cEntity);
@@ -1505,6 +1592,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 CustomerB2CDTO.AddDTO dto = buildB2cCustomerUpdateDTO(updateDTO);
                 String customerId = customerB2cService.add(dto);
                 updateDTO.getReceiverDTO().setCustomerId(customerId);
+            } else {
+                updateDTO.getReceiverDTO().setCustomerId(customer.getId());
             }
             //修改买家信息
             soB2cReceiverService.update(updateDTO.getReceiverDTO(), soB2cEntity);
@@ -2001,29 +2090,23 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //修改组包和中转状态
         updatePackageAndTransferStatus(id, packageStatus, transferStatus, isRegistration, isUpdateTransferStatus);
 
-        //如果有物流单号 就要去取消
+        //如果有物流单号 就要去取消（独立事务提交，避免后续配货校验失败回滚导致云途已删但 ERP 仍留运单号）
         if (StringUtils.isNotBlank(code) && !Objects.equals(logisticsChannelId, existChannelId) && soB2cLogisticsEntity.getSourceSystem().equals(SoB2cLogisticSourceSystemEnum.THIRD.getCode())) {
-            //已存在的渠道为空
             if (StringUtils.isBlank(existChannelId)) {
                 throw new ServiceException(ApiError.LOGISTICS_CHANNEL_REQUIRED_FOR_CANCEL);
             }
-            //取消物流单
-            LogisticsBillDTO.CancelBillDTO cancelBillDTO = LogisticsBillDTO.CancelBillDTO.builder().
-                    channelId(existChannelId).transportNo(code).platformCode(entity.getPlatformCode()).
-                    referenceNumber(entity.getCode()).orderId(entity.getId()).shopId(entity.getShopId()).build();
-            ApiResult<CancelResponseVO> cancelResult = logisticsBillFeign.cancelBill(cancelBillDTO);
-            //取消失败
-            if (!cancelResult.isSuccess() && cancelResult.getCode() != -1) {
+            BatchResultDTO cancelResult = soB2cLogisticsService.cancelThirdLogisticsRequiresNew(entity, existChannelId);
+            if (!Boolean.TRUE.equals(cancelResult.getSuccess())) {
+                String cancelMsg = Objects.toString(cancelResult.getMsg(), "");
+                if (cancelMsg.startsWith("外部物流单已取消，本地清理失败")) {
+                    throw new ServiceException(cancelMsg);
+                }
+                if (StringUtils.isNotBlank(cancelMsg)) {
+                    throw new ServiceException(cancelMsg);
+                }
                 throw new ServiceException(ApiError.LOGISTICS_CANCEL_NOT_SUPPORTED, code);
-            } else {
-                String msg = CharSequenceUtil.format("取消物流单单号成功,单号:【{}/{}】 ", soB2cLogisticsEntity.getCode(), soB2cLogisticsEntity.getTrackNo());
-                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "取消物流单");
-                soB2cLogisticsEntity.setCode("");
-                soB2cLogisticsEntity.setTrackNo("");
-                //清空面单信息
-                soB2cLabelService.deleteByMainIds(Arrays.asList(id));
-                soB2cErrorService.removeErrorOrder(id, SoB2cErrorTypeEnum.GET_LOGISTICS_LABEL.getCode());
             }
+            soB2cLogisticsEntity = soB2cLogisticsService.getByMainId(id);
         }
         //重置物流渠道信息
         soB2cLogisticsEntity.setLogisticsChannelId(logisticsChannelId);
@@ -2379,39 +2462,25 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     private BatchResultDTO getWildberrisLogistics(SoB2cEntity entity, Boolean isDelivery) {
         List<WorkflowTaskRecordEntity> workflowTaskRecordEntities = workflowTaskRecordService.listBySourceId(entity.getId(), WorkflowTaskRecordTypeEnum.SO_B2C_GET_LOGISTICS.getCode());
-        if (CollUtil.isNotEmpty(workflowTaskRecordEntities)) {
-            WorkflowTaskRecordDTO.AddTaskDTO addTaskDTO = new WorkflowTaskRecordDTO.AddTaskDTO();
-            addTaskDTO.setSourceId(entity.getId());
-            addTaskDTO.setSourceCode(entity.getCode());
-            addTaskDTO.setDictBasicTypeEnum(DictBasicTypeEnum.WORKFLOW_TASK_NODE); //type
-            addTaskDTO.setSourceTypeEnum(WorkflowTaskRecordTypeEnum.SO_B2C_GET_LOGISTICS);//subType
-            addTaskDTO.setTraceId(workflowTaskRecordEntities.get(0).getTraceId());
-            SendResult result = mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.OMS_WORKFLOW_TASK_RECORD_TOPIC, RocketMqTagEnum.OMS_WORKFLOW_TASK_RECORD_TAG.getName(), addTaskDTO, entity.getId(), 2);
-            if (!result.getSendStatus().equals(SendStatus.SEND_OK)) {
-                throw new RuntimeException(StrUtil.format("获取物流单通过发送任务编排MQ数据异常，{}", JSONUtil.toJsonStr(result)));
-            }
-            return BatchResultDTO.success(entity.getId(), "", "重试获取物流信息");
-        }
-        //自动生成并完成节点功能
         WorkflowTaskRecordDTO.AddTaskDTO addTaskDTO = new WorkflowTaskRecordDTO.AddTaskDTO();
         addTaskDTO.setSourceId(entity.getId());
         addTaskDTO.setSourceCode(entity.getCode());
-        addTaskDTO.setDictBasicTypeEnum(DictBasicTypeEnum.WORKFLOW_TASK_NODE); //type
-        addTaskDTO.setSourceTypeEnum(WorkflowTaskRecordTypeEnum.SO_B2C_GET_LOGISTICS);//subType
+        addTaskDTO.setDictBasicTypeEnum(DictBasicTypeEnum.WORKFLOW_TASK_NODE);
+        addTaskDTO.setSourceTypeEnum(WorkflowTaskRecordTypeEnum.SO_B2C_GET_LOGISTICS);
+        if (CollUtil.isNotEmpty(workflowTaskRecordEntities)) {
+            addTaskDTO.setTraceId(workflowTaskRecordEntities.get(0).getTraceId());
+            workflowTaskRecordService.startOrResume(addTaskDTO);
+            return BatchResultDTO.success(entity.getId(), "", "重试获取物流信息");
+        }
         addTaskDTO.setTraceId(TraceContext.traceId());
-
         Map<String, Object> map = new HashMap<>();
         map.put("id", entity.getId());
         map.put("isDelivery", isDelivery);
         map.put("errorType", SoB2cErrorTypeEnum.GET_LOGISTICS_CODE.getCode());
         addTaskDTO.setFirstNodeInputData(map);
-        workflowTaskRecordEntities = workflowTaskRecordService.addTask(addTaskDTO);
+        workflowTaskRecordEntities = workflowTaskRecordService.addTaskAndStart(addTaskDTO);
         if (CollUtil.isEmpty(workflowTaskRecordEntities)) {
             throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, DictBasicTypeEnum.WORKFLOW_TASK_NODE.getDesc());
-        }
-        SendResult result = mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.OMS_WORKFLOW_TASK_RECORD_TOPIC, RocketMqTagEnum.OMS_WORKFLOW_TASK_RECORD_TAG.getName(), addTaskDTO, entity.getId(), 2);
-        if (!result.getSendStatus().equals(SendStatus.SEND_OK)) {
-            throw new RuntimeException(StrUtil.format("获取物流单通过发送任务编排MQ数据异常，{}", JSONUtil.toJsonStr(result)));
         }
         return BatchResultDTO.success(entity.getId(), "", "获取物流单号任务编排已生成");
     }
@@ -2832,7 +2901,17 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         //校验中转状态
         if (TransferStatusEnum.FAILURE.getCode().equals(entity.getTransferStatus()) || TransferStatusEnum.WAIT.getCode().equals(entity.getTransferStatus())) {
-            throw new ServiceException(CharSequenceUtil.format("{}未成功预报无法提交发货", entity.getCode()));
+            String forecastErrorMsg = "";
+            List<SoB2cErrorEntity> forecastErrors = soB2cErrorService.getByMainIdsAndType(Collections.singletonList(id), SoB2cErrorTypeEnum.ORDER_FORECAST.getCode());
+            if (CollUtil.isNotEmpty(forecastErrors) && StringUtils.isNotBlank(forecastErrors.get(0).getMessage())) {
+                forecastErrorMsg = forecastErrors.get(0).getMessage();
+            }
+            if (TransferStatusEnum.FAILURE.getCode().equals(entity.getTransferStatus())) {
+                throw new ServiceException(CharSequenceUtil.format("{}订单预报失败，无法提交发货{}", entity.getCode(),
+                        StringUtils.isBlank(forecastErrorMsg) ? "，请查看订单异常或重新操作「订单预报」" : "：" + forecastErrorMsg));
+            }
+            throw new ServiceException(CharSequenceUtil.format("{}待订单预报，请先完成「订单预报」后再提交发货{}", entity.getCode(),
+                    StringUtils.isBlank(forecastErrorMsg) ? "" : "（" + forecastErrorMsg + "）"));
         }
 
         //检查发货限制
@@ -3717,7 +3796,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         String trackNo = apiResult.getData().getTrackNo();
         log.warn("{}打印接口响应参数{}", entity.getCode(), apiResult.getData());
         if (StringUtils.isNotBlank(shippingOrderNo)) {
-            this.lambdaUpdate().set(SoB2cEntity::getShippingOrderNo, shippingOrderNo).
+            this.lambdaUpdate()
+                    .set(SoB2cEntity::getShippingOrderNo, shippingOrderNo)
+                    .set(SoB2cEntity::getDeliveryType, OrderLogisticTypeEnum.THIRD_WAREHOUSE.getCode()).
                     eq(SoB2cEntity::getId, mainId).update(new SoB2cEntity());
             String msg = CharSequenceUtil.format("创建海外仓出库单成功，单号【{}】", shippingOrderNo);
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "创建海外仓出库单");
@@ -3762,10 +3843,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             uploadHandoverFileReq.setThirdWarehouseProvideCode(overseasProviderWarehouse.getProviderCode());
             ApiResult<ThirdWarehouseUploadHandoverFileResponse> uploadHandoverFile = thirdWarehouseFeign.uploadHandoverFile(uploadHandoverFileReq);
             if (!uploadHandoverFile.isSuccess()) {
-                //删除三方仓订单和发货单
+                // 先取消海外仓订单，取消成功后再删除本地发货单；取消失败时保留本地单据，避免重试重新下单。
                 thirdWarehouseDeliveryEntity = thirdWarehouseDeliveryFeign.getLatestBySoId(entity.getId());
                 if (Objects.nonNull(thirdWarehouseDeliveryEntity)) {
-                    thirdWarehouseDeliveryFeign.deleteById(thirdWarehouseDeliveryEntity.getId());
                     ThirdWarehouseCancelOutboundReq req = new ThirdWarehouseCancelOutboundReq();
                     req.setOrderCode(shippingOrderNo);
                     req.setThirdWarehouseProvideCode(overseasProviderWarehouse.getProviderCode());
@@ -3776,10 +3856,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     req.setReason("推送交接文件失败，取消订单");
                     req.setAuthId(overseasProviderWarehouse.getMainId());
                     ApiResult<String> cancelResult = thirdWarehouseFeign.cancelOutboundOrder(req);
-                    if (!cancelResult.isSuccess()) {
-                        log.error("推送交接文件失败，取消三方仓订单失败，订单号{}，原因{}", shippingOrderNo, cancelResult.getMsg());
-                        throw new ServiceException("推送交接文件失败{},同时取消三方仓订单失败，原因{}", uploadHandoverFile.getMsg(), cancelResult.getMsg());
+                    if (Objects.isNull(cancelResult) || !cancelResult.isSuccess()) {
+                        String cancelMsg = Objects.isNull(cancelResult) ? "取消三方仓订单返回为空" : cancelResult.getMsg();
+                        log.error("推送交接文件失败，取消三方仓订单失败，订单号{}，原因{}", shippingOrderNo, cancelMsg);
+                        throw new ServiceException("推送交接文件失败{},同时取消三方仓订单失败，原因{}", uploadHandoverFile.getMsg(), cancelMsg);
                     }
+                    thirdWarehouseDeliveryFeign.deleteById(thirdWarehouseDeliveryEntity.getId());
                 }
                 throw new ServiceException("推送交接文件失败{}", uploadHandoverFile.getMsg());
             }
@@ -3824,7 +3906,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 try {
                     path = FastDFSClientUtil.uploadFile(Base64.getDecoder().decode(logisticsLabelBase64.replace("data:application/pdf;base64,","")), entity.getCode()+".pdf",new HashMap<>());
                 } catch (Exception e) {
-                    throw new ServiceException("面单上传FastDFS失败：" + e.getMessage());
+                    throw new ServiceException(ApiError.FASTDFS_UPLOAD_FAILED_FOR_WAYBILL);
                 }
                 createOutboundReq.setLabelUrl(getFastDfsDomain() + path);
             }
@@ -3958,24 +4040,48 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 // 导致 shippingOrderNo 丢失，下次重试时因找不到已有订单而重复建单。
                 String earlyShippingOrderNo = apiResult.getData() != null ? apiResult.getData().getShippingOrderNo() : null;
                 if (CharSequenceUtil.isNotBlank(earlyShippingOrderNo) && CharSequenceUtil.isBlank(entity.getShippingOrderNo())) {
-                    boolean updated = this.lambdaUpdate()
-                            .set(SoB2cEntity::getShippingOrderNo, earlyShippingOrderNo)
-                            .eq(SoB2cEntity::getId, entity.getId())
-                            .eq(SoB2cEntity::getVersion, entity.getVersion())
-                            .update();
-                    if (updated) {
-                        entity.setShippingOrderNo(earlyShippingOrderNo);
-                        entity.setVersion(entity.getVersion() + 1);
-                        log.info("三方仓建单成功，提前落库 shippingOrderNo={}, soCode={}", earlyShippingOrderNo, entity.getCode());
-                    } else {
-                        log.warn("三方仓建单成功，提前落库 shippingOrderNo 因版本冲突跳过（并发写），soCode={}", entity.getCode());
-                    }
+                    persistEarlyShippingOrderNoWithRetry(entity, earlyShippingOrderNo);
                 }
             }
             return apiResult;
         } catch (Exception e) {
             return retryCreateThirdWarehouseOutbound(entity, warehouseId, createOutboundReq, retryCount, thirdWarehouseDeliveryEntity, apiResult, type, e);
         }
+    }
+
+    /**
+     * 建单成功后提前落库 shippingOrderNo。
+     * 由于建单前存在较长耗时的远程调用，订单在此期间可能已被其他动作更新（version 已变化），
+     * 若仍用调用前读到的旧 version 做乐观锁条件，更新必然失败。
+     * 因此每次尝试前都重新查询最新记录以获取最新 version，缩小乐观锁冲突窗口；
+     * 重试仍失败时仅 warn，由外层 thirdWarehouseCreateOutStock 的无条件更新兜底。
+     */
+    private void persistEarlyShippingOrderNoWithRetry(SoB2cEntity entity, String earlyShippingOrderNo) {
+        for (int attempt = 1; attempt <= EARLY_PERSIST_RETRY_COUNT; attempt++) {
+            SoB2cEntity latest = soB2cService.getById(entity.getId());
+            if (Objects.isNull(latest)) {
+                log.warn("三方仓建单成功，提前落库 shippingOrderNo 时订单不存在，soCode={}", entity.getCode());
+                return;
+            }
+            if (CharSequenceUtil.isNotBlank(latest.getShippingOrderNo())) {
+                entity.setShippingOrderNo(latest.getShippingOrderNo());
+                entity.setVersion(latest.getVersion());
+                return;
+            }
+            boolean updated = this.lambdaUpdate()
+                    .set(SoB2cEntity::getShippingOrderNo, earlyShippingOrderNo)
+                    .eq(SoB2cEntity::getId, entity.getId())
+                    .eq(SoB2cEntity::getVersion, latest.getVersion())
+                    .update();
+            if (updated) {
+                entity.setShippingOrderNo(earlyShippingOrderNo);
+                entity.setVersion(latest.getVersion() + 1);
+                log.info("三方仓建单成功，提前落库 shippingOrderNo={}, soCode={}，第{}次尝试成功", earlyShippingOrderNo, entity.getCode(), attempt);
+                return;
+            }
+            log.warn("三方仓建单成功，提前落库 shippingOrderNo 因版本冲突失败（第{}次尝试），soCode={}", attempt, entity.getCode());
+        }
+        log.warn("三方仓建单成功，提前落库 shippingOrderNo 重试{}次后仍失败，交由外层最终更新兜底，soCode={}", EARLY_PERSIST_RETRY_COUNT, entity.getCode());
     }
 
     private ApiResult<ThirdWarehouseQueryOutboundResponse> retryCreateThirdWarehouseOutbound(SoB2cEntity entity, String warehouseId, ThirdWarehouseCreateOutboundReq createOutboundReq, final int retryCount, ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity, ApiResult<ThirdWarehouseQueryOutboundResponse> apiResult, String type, Exception e) {
@@ -4218,7 +4324,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             LogisticsPlatformEnum platformEnum = LogisticsPlatformEnum.getByCode(overseasWarehouseList.get(0).getProviderCode());
             //API海外物流拦截
             BatchResultDTO resultDTO = this.overseasProviderIntercept(entity, platformEnum, overseasWarehouseList.get(0), remark);
-            if (resultDTO.getSuccess()) {
+            if (Objects.isNull(resultDTO)) {
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), "三方仓拦截返回为空");
+            }
+            if (Boolean.TRUE.equals(resultDTO.getSuccess())) {
                 addDTO.setHandleStatus(SoB2cDeliveryInterceptStatusEnum.HANDLE.getCode());
                 addDTO.setHandleResult(HandleResultEnum.SUCCESS.getCode());
                 addDTO.setCancelStatus(CancelStatusEnum.SUCCESS.getCode());
@@ -4226,6 +4335,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 addDTO.setHandleTime(LocalDateTime.now());
                 soB2cLogisticsService.cancelLogistic(entity.getId(), Collections.singletonList(entity), Collections.singletonList(logisticsEntity), false);
                 soB2cDeliveryInterceptFeign.add(addDTO);
+            } else if (!isThirdWarehouseInterceptingResult(resultDTO)) {
+                fillApiInterceptFailure(addDTO, resultDTO.getMsg());
+                soB2cDeliveryInterceptFeign.add(addDTO);
+                updateApiInterceptFailureOrder(entity.getId(), resultDTO.getMsg());
             }
             return resultDTO;
         } else {
@@ -4271,6 +4384,34 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     }
 
+    private boolean isThirdWarehouseInterceptingResult(BatchResultDTO resultDTO) {
+        return Objects.nonNull(resultDTO) && CharSequenceUtil.contains(resultDTO.getMsg(), "发起拦截中");
+    }
+
+    private void fillApiInterceptFailure(SoB2cDeliveryInterceptDTO.AddDTO addDTO, String failureReason) {
+        addDTO.setHandleStatus(SoB2cDeliveryInterceptStatusEnum.HANDLE.getCode());
+        addDTO.setHandleResult(HandleResultEnum.FAILURE.getCode());
+        addDTO.setCancelStatus(CancelStatusEnum.FAILURE.getCode());
+        addDTO.setInterceptStatus(InterceptStatusEnum.FAILURE.getCode());
+        addDTO.setHandleUserName(UserContext.getDefaultLoginUser().getUserName());
+        addDTO.setHandleTime(LocalDateTime.now());
+        if (CharSequenceUtil.isNotBlank(failureReason)) {
+            addDTO.setRemark(CharSequenceUtil.format("{}；失败原因：{}",
+                    CharSequenceUtil.blankToDefault(addDTO.getRemark(), "三方仓发货拦截"),
+                    failureReason));
+        }
+    }
+
+    private void updateApiInterceptFailureOrder(String soId, String failureReason) {
+        SoB2cDTO.InterceptUpdateOrderDTO interceptUpdateOrderDTO = new SoB2cDTO.InterceptUpdateOrderDTO();
+        interceptUpdateOrderDTO.setIsIntercept(Boolean.FALSE);
+        interceptUpdateOrderDTO.setIsFrozen(Boolean.FALSE);
+        interceptUpdateOrderDTO.setIds(Collections.singletonList(soId));
+        interceptUpdateOrderDTO.setAbnormalType(SoB2cAbnormalTypeEnum.INTERCEPT_FAILURE_REJECT.getCode());
+        interceptUpdateOrderDTO.setRemark(failureReason);
+        this.updateIntercept(interceptUpdateOrderDTO);
+    }
+
     /**
      * @param soB2cEntity  订单信息
      * @param platformEnum 物流平台枚举
@@ -4293,6 +4434,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         req.setErpOrderCode(referenceCode);
         req.setWarehouseCode(viewDTO.getPlatformWarehouseCode());
         req.setReason(remark);
+        req.setConfirmInterceptResult(Boolean.TRUE);
         OverseasProviderEntity overseasProviderEntity = overseasProviderFeign.getByWarehouseId(viewDTO.getWarehouseId());
         if (ObjectUtils.isNotEmpty(overseasProviderEntity)) {
             req.setAuthId(overseasProviderEntity.getId());
@@ -4306,7 +4448,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             soB2cEntity.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
             soB2cEntity.setAbnormalType(SoB2cAbnormalTypeEnum.INTERCEPT_SUCCESS_REJECT.getCode());
             soB2cEntity.setShippingOrderNo("");
-            if (soB2cEntity.getIsCancel()) {
+            soB2cEntity.setDeliveryType(resolveDeliveryType(soB2cEntity));
+            if(soB2cEntity.getIsCancel()){
                 soB2cEntity.setInvalidStatus(Boolean.TRUE);
                 soB2cEntity.setInvalidRemark("平台订单取消,拦截成功自动作废");
             }
@@ -4681,6 +4824,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     public void deleteById(List<String> ids, String code) {
         //存在物流单需要先取消物流单
         batchCancelLogistic(ids, code);
+        removeSoB2cByIds(ids);
+    }
+
+    /**
+     * 删除销售订单及关联子表（不含取消物流，取消逻辑由调用方 {@link #batchCancelLogistic} 或 {@link #cancelLogisticsIfNeeded} 负责）。
+     */
+    private void removeSoB2cByIds(List<String> ids) {
         //删除物流信息
         soB2cLogisticsService.deleteByMainIds(ids);
         //删除买家信息
@@ -7674,6 +7824,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             SoB2cEntity entity = new SoB2cEntity();
             BeanUtils.copyProperties(dto, entity);
             handleData(entity, false, false);
+            entity.setDeliveryType(resolveDeliveryType(entity));
             if (StringUtils.isNotBlank(dto.getApproveStatusStr())) {
                 ApproveStatusEnum approveStatusEnum = ApproveStatusEnum.getByStatus(dto.getApproveStatusStr());
                 if (null == approveStatusEnum) {
@@ -7887,6 +8038,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
             // 只替换更新信息
             SoB2cEntity entity = B2cOrderConsumerConverter.INSTANCE.convertUpdateMainOrder(oldEntity, dto);
+            String deliveryType = StringUtils.isNotBlank(entity.getDeliveryType()) ? entity.getDeliveryType() : oldEntity.getDeliveryType();
+            String shippingOrderNo = StringUtils.isNotBlank(entity.getShippingOrderNo()) ? entity.getShippingOrderNo() : oldEntity.getShippingOrderNo();
+            entity.setDeliveryType(resolveDeliveryType(entity, deliveryType, shippingOrderNo));
             if (StringUtils.isNotBlank(dto.getSellerOrderCode())) {
                 entity.setSellerOrderCode(dto.getSellerOrderCode());
             }
@@ -7902,6 +8056,40 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
             return resultDTO;
         }
+    }
+
+    private String resolveDeliveryType(SoB2cEntity entity) {
+        return resolveDeliveryType(entity, entity.getDeliveryType(), entity.getShippingOrderNo());
+    }
+
+    private String resolveDeliveryType(SoB2cEntity entity, String deliveryType, String shippingOrderNo) {
+        if (Boolean.TRUE.equals(entity.hasPlatformWarehouseOrder())) {
+            return OrderLogisticTypeEnum.PLATFORM_WAREHOUSE.getCode();
+        }
+        if (StringUtils.isNotBlank(deliveryType)) {
+            return deliveryType;
+        }
+        if (StringUtils.isNotBlank(shippingOrderNo)) {
+            return OrderLogisticTypeEnum.THIRD_WAREHOUSE.getCode();
+        }
+        // 兜底历史/未回填发货方式但已有三方仓发货单的订单；平台拉单新增未落库时无 soId，不可能存在三方仓记录。
+        if (StringUtils.isBlank(entity.getId())) {
+            return OrderLogisticTypeEnum.SELF_SHIPMENT.getCode();
+        }
+        ThirdWarehouseDeliveryEntity thirdWarehouseDelivery;
+        try {
+            // 业务确认三方仓发货类型以 WMS 最新发货单兜底；暂不从上游透传，避免扩大订单同步改造面。
+            thirdWarehouseDelivery = thirdWarehouseDeliveryFeign.getLatestBySoId(entity.getId());
+        } catch (Exception e) {
+            log.warn("解析订单发货类型时查询三方仓发货单失败, soId: {}, code: {}", entity.getId(), entity.getCode(), e);
+            // 查询异常不能降级为自发货，否则会写错订单发货类型；交给上游重试/补偿处理。
+            throw new ServiceException("解析订单发货类型失败，请稍后重试");
+        }
+        if (Objects.nonNull(thirdWarehouseDelivery)
+                && !SoB2cWarehouseDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(thirdWarehouseDelivery.getStatus())) {
+            return OrderLogisticTypeEnum.THIRD_WAREHOUSE.getCode();
+        }
+        return OrderLogisticTypeEnum.SELF_SHIPMENT.getCode();
     }
 
     private boolean isTikTokPlatformWarehouseOrder(SoB2cEntity oldEntity, PlatformOrderDTO dto) {
@@ -8198,12 +8386,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         dto.setSourceCode(sourceCode);
         String chargeId = shopInfoEntity.getChargeId();
         dto.setCustomerId(shopInfoEntity.getCustomerId());
-        dto.setCustomerName(shopInfoEntity.getName());
+        // 销售出库单的客户列展示客户档案名称，店铺只保留在 shopId 维度用于权限和平台业务。
         if (Objects.nonNull(customerInfo)) {
+            dto.setCustomerName(customerInfo.getName());
             dto.setSellerId(customerInfo.getSellerId());
             dto.setSellerName(customerInfo.getSellerName());
             dto.setSalesDeptId(customerInfo.getSalesDeptId());
         } else {
+            dto.setCustomerName("");
             dto.setSellerId(chargeId);
             dto.setSellerName(shopInfoEntity.getChargeName());
         }
@@ -8236,6 +8426,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             dto.setTransportNo(soB2cLogistics.getCode());
             // TikTok平台仓自动生成销售出库单时，时间口径按平台发货时间(rts_time)统一下发
             if (PlatformDictEnum.TIK_TOK.getCode().equals(entity.getDictPlatform())
+                    && entity.hasPlatformWarehouseOrder()
+                    && Objects.nonNull(soB2cLogistics.getDeliveryTime())) {
+                LocalDateTime deliveryTime = soB2cLogistics.getDeliveryTime();
+                dto.setBillDate(deliveryTime.toLocalDate());
+                dto.setPlanDeliveryDate(deliveryTime.toLocalDate());
+                dto.setActualDeliveryDate(deliveryTime);
+            }
+            if (PlatformDictEnum.SHOPEE.getCode().equals(entity.getDictPlatform())
                     && entity.hasPlatformWarehouseOrder()
                     && Objects.nonNull(soB2cLogistics.getDeliveryTime())) {
                 LocalDateTime deliveryTime = soB2cLogistics.getDeliveryTime();
@@ -9090,6 +9288,35 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (!isRegistration) {
             String skuStr = String.join(",", notRegistrationSkuNoList);
             throw new ServiceException(ApiError.LOGISTICS_PRODUCT_NOT_REGISTERED, skuStr, resultDTO.getDeclarePlatformName());
+        }
+    }
+
+    @Override
+    public void syncForecastStatusQuietly(String id, String logisticsChannelId) {
+        try {
+            SettingForecastDTO.CheckRegistrationResultDTO resultDTO = getCheckRegistrationResult(id, logisticsChannelId);
+            // TMS 未配置强制中转/组包时不处理，避免影响无需中转的单
+            if (TransferStatusEnum.NOT.getCode().equals(resultDTO.getTransferStatus())
+                    && PackageStatusEnum.NOT.getCode().equals(resultDTO.getPackageStatus())) {
+                return;
+            }
+            if (CollUtil.isNotEmpty(resultDTO.getNotRegistrationSkuNoList())) {
+                log.warn("销售订单{}存在未备案SKU，跳过预报状态同步", id);
+                return;
+            }
+            SoB2cEntity entity = getById(id);
+            if (Objects.isNull(entity) || TransferStatusEnum.SUCCESS.getCode().equals(entity.getTransferStatus())) {
+                return;
+            }
+            String packageStatus = resultDTO.getPackageStatus();
+            // 仅强制组包时更新组包状态，避免把已组包单误改回未组包
+            if (PackageStatusEnum.NOT.getCode().equals(packageStatus)) {
+                packageStatus = entity.getPackageStatus();
+            }
+            soB2cService.updatePackageAndTransferStatus(id, packageStatus,
+                    resultDTO.getTransferStatus(), true, true);
+        } catch (Exception e) {
+            log.error("销售订单{}同步预报状态失败", id, e);
         }
     }
 
@@ -10091,6 +10318,20 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000, propagation = io.seata.tm.api.transaction.Propagation.REQUIRES_NEW)
     public List<BatchResultDTO> autoOrderForecast(List<String> soIdList) {
+        if (CollUtil.isEmpty(soIdList)) {
+            return new ArrayList<>();
+        }
+        // 在独立事务内同步预报状态，避免 submitDelivery 外层事务未提交导致读不到 wait/failure
+        List<SoB2cLogisticsEntity> syncLogisticsList = soB2cLogisticsService.listByMainIds(soIdList);
+        Map<String, SoB2cLogisticsEntity> syncLogisticsMap = CollUtil.isEmpty(syncLogisticsList)
+                ? Collections.emptyMap()
+                : syncLogisticsList.stream().collect(Collectors.toMap(SoB2cLogisticsEntity::getMainId, Function.identity(), (a, b) -> a));
+        for (String soId : soIdList) {
+            SoB2cLogisticsEntity logisticsEntity = syncLogisticsMap.get(soId);
+            if (Objects.nonNull(logisticsEntity) && StringUtils.isNotBlank(logisticsEntity.getLogisticsChannelId())) {
+                syncForecastStatusQuietly(soId, logisticsEntity.getLogisticsChannelId());
+            }
+        }
         List<SoB2cEntity> soB2cEntityList = listByIds(soIdList);
         soB2cEntityList = soB2cEntityList.stream().filter(v -> (TransferStatusEnum.FAILURE.getCode().equals(v.getTransferStatus()) || TransferStatusEnum.WAIT.getCode().equals(v.getTransferStatus())) &&
                 SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equalsIgnoreCase(v.getBillStatus()) && !Boolean.TRUE.equals(v.getInvalidStatus())).collect(Collectors.toList());
@@ -10110,7 +10351,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<SettingForecastEntity> settingForecastEntityList = forecastFeign.getSettingForecastByLogisticsSupplierIdList(logisticSupplierIds);
         settingForecastEntityList = settingForecastEntityList.stream().filter(v -> v.getIsAutoForecast() && StringUtils.isNotBlank(v.getTransferLogisticsChannelId()) && StringUtils.isNotBlank(v.getTransferLogisticsSupplierId())).collect(Collectors.toList());
         if (CollUtil.isEmpty(settingForecastEntityList)) {
-            return new ArrayList<>();
+            List<BatchResultDTO> noAutoConfigResults = new ArrayList<>();
+            for (SoB2cEntity soB2cEntity : soB2cEntityList) {
+                if (TransferStatusEnum.WAIT.getCode().equals(soB2cEntity.getTransferStatus())
+                        || TransferStatusEnum.FAILURE.getCode().equals(soB2cEntity.getTransferStatus())) {
+                    noAutoConfigResults.add(BatchResultDTO.fail(soB2cEntity.getId(), soB2cEntity.getCode(),
+                            "物流商未开启自动订单预报，请先手动完成「订单预报」"));
+                }
+            }
+            return noAutoConfigResults;
         }
         //根据物流商分类
         List<SoB2cDTO.TransferDeclareDTO> transferDeclareDTOList = new ArrayList<>();
@@ -11958,10 +12207,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         addTaskDTO.setDictBasicTypeEnum(DictBasicTypeEnum.WORKFLOW_TASK_NODE);
         addTaskDTO.setSourceTypeEnum(WorkflowTaskRecordTypeEnum.PACKAGE_PLAN_GENERATE);
         addTaskDTO.setTraceId(workflowTaskRecordEntities.get(0).getTraceId());
-        SendResult result = mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.OMS_WORKFLOW_TASK_RECORD_TOPIC, RocketMqTagEnum.OMS_WORKFLOW_TASK_RECORD_TAG.getName(), addTaskDTO, soId, 1);
-        if (!result.getSendStatus().equals(SendStatus.SEND_OK)) {
-            XxlJobHelper.log(StrUtil.format("展会订单任务节点记录补偿重试MQ数据异常，{}", JSONUtil.toJsonStr(result)));
-        }
+        workflowTaskRecordService.startOrResume(addTaskDTO);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "重试组包任务");
     }
 
@@ -12929,9 +13175,60 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return null;
     }
 
+    /**
+     * 三方仓自动出库：优先使用 WMS 已解析并透传的渠道，避免逐单重复 Feign；无透传时再本地解析。
+     */
+    private void applyThirdWarehouseLogisticsChannel(SoB2cLogisticsEntity logisticsEntity,
+                                                     SoB2cDTO.B2cByPlatformOutboundDTO dto) {
+        if (CharSequenceUtil.isNotBlank(logisticsEntity.getLogisticsChannelId())) {
+            return;
+        }
+        if (CharSequenceUtil.isNotBlank(dto.getResolvedLogisticsChannelId())) {
+            logisticsEntity.setLogisticsChannelId(dto.getResolvedLogisticsChannelId());
+            if (CharSequenceUtil.isNotBlank(dto.getResolvedLogisticsChannelName())) {
+                logisticsEntity.setLogisticsChannelName(dto.getResolvedLogisticsChannelName());
+            }
+            return;
+        }
+        if (CharSequenceUtil.isBlank(dto.getShippingMethod())
+                || CharSequenceUtil.isBlank(dto.getThirdWarehousePlatform())
+                || CharSequenceUtil.isBlank(dto.getPlatformWarehouseCode())) {
+            return;
+        }
+        LogisticsChannelDTO.ThirdWarehouseLogisticsMappingDTO mappingQuery = new LogisticsChannelDTO.ThirdWarehouseLogisticsMappingDTO();
+        mappingQuery.setLogisticsPlatform(dto.getThirdWarehousePlatform());
+        mappingQuery.setShippingMethod(dto.getShippingMethod());
+        mappingQuery.setPlatformWarehouseCode(dto.getPlatformWarehouseCode());
+        LogisticsChannelEntity channel = logisticsFeign.resolveThirdWarehouseLogisticsChannel(mappingQuery);
+        if (Objects.isNull(channel)) {
+            throw new ServiceException(StrUtil.format(
+                    "三方仓自动出库未匹配到ERP物流渠道, mainId={}, platform={}, shippingMethod={}, platformWarehouseCode={}",
+                    logisticsEntity.getMainId(), dto.getThirdWarehousePlatform(), dto.getShippingMethod(),
+                    dto.getPlatformWarehouseCode()));
+        }
+        logisticsEntity.setLogisticsChannelId(channel.getId());
+        logisticsEntity.setLogisticsChannelName(channel.getName());
+    }
+
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void updateB2cByPlatformOutbound(SoB2cDTO.B2cByPlatformOutboundDTO dto) {
+        // 三方仓渠道映射依赖 Feign，须在事务外完成，避免长事务占用连接
+        SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsService.getByMainId(dto.getSoB2cId());
+        if (Objects.nonNull(logisticsEntity)) {
+            logisticsEntity.setCode(CharSequenceUtil.isNotBlank(logisticsEntity.getCode()) ? logisticsEntity.getCode() : dto.getTrackNo());
+            logisticsEntity.setTrackNo(CharSequenceUtil.isNotBlank(logisticsEntity.getTrackNo()) ? logisticsEntity.getTrackNo() : dto.getTrackNo());
+            applyThirdWarehouseLogisticsChannel(logisticsEntity, dto);
+        }
+        // 经 self-injection 代理调用，使 @Transactional 生效；该方法 intentionally 不暴露在 SoB2cService 接口
+        soB2cService.updateB2cByPlatformOutboundTransactional(dto, logisticsEntity);
+    }
+
+    /**
+     * 平台出库回写 B2C 的 DB 更新段；须通过 {@link #soB2cService} 代理调用以触发事务，勿从类内直接 this 调用。
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void updateB2cByPlatformOutboundTransactional(SoB2cDTO.B2cByPlatformOutboundDTO dto,
+                                                         SoB2cLogisticsEntity logisticsEntity) {
         lambdaUpdate().eq(SoB2cEntity::getId, dto.getSoB2cId())
                 .set(StringUtils.isNotBlank(dto.getBillStatus()), SoB2cEntity::getBillStatus, dto.getBillStatus())
                 .set(SoB2cEntity::getSoOutstockDate, dto.getSoOutstockDate())
@@ -12946,18 +13243,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 .set(StringUtils.isNotBlank(dto.getWarehouseOrgName()), SoB2cDetailEntity::getWarehouseOrgName, dto.getWarehouseOrgName())
                 .update();
 
-        // 记录跟踪号
-        SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsService.getByMainId(dto.getSoB2cId());
         if (Objects.nonNull(logisticsEntity)) {
-            logisticsEntity.setCode(CharSequenceUtil.isNotBlank(logisticsEntity.getCode()) ? logisticsEntity.getCode() : dto.getTrackNo());
-            logisticsEntity.setTrackNo(CharSequenceUtil.isNotBlank(logisticsEntity.getTrackNo()) ? logisticsEntity.getTrackNo() : dto.getTrackNo());
             soB2cLogisticsService.updateById(logisticsEntity);
         }
 
         if (dto.isAddOperationLog()) {
             operateLogService.addModuleOperateLog("海外仓发货成功", ModuleTypeEnum.SO_B2C.getCode(), dto.getSoB2cId(), "海外仓发货");
         }
-
     }
 
     @Override

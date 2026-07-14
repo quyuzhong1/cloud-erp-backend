@@ -1414,13 +1414,13 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                     //仓位补货
                     sendWarehouseLocationReplenish(noticeEntity,post, roleType, specificPerson, title, content, now, delayLevel);
                 } else if (SourceTypeEnum.OMS_SKU_MAPPING_UNMATCH_PLATFORM.getCode().equals(businessType)) {
-                    sendSkuMappingUnmatchNotice(noticeEntity, post, roleType, specificPerson, title, content, now, delayLevel, "platform");
+                    sendSkuMappingUnmatchNotice(noticeEntity, post, roleType, specificPerson, title, content, now, delayLevel, RuleTypeEnum.B2C_PLATFORM.getCode());
                 } else if (SourceTypeEnum.OMS_SKU_MAPPING_UNMATCH_WAREHOUSE.getCode().equals(businessType)) {
-                    sendSkuMappingUnmatchNotice(noticeEntity, post, roleType, specificPerson, title, content, now, delayLevel, "warehouse");
+                    sendSkuMappingUnmatchNotice(noticeEntity, post, roleType, specificPerson, title, content, now, delayLevel, RuleTypeEnum.WAREHOUSE.getCode());
                 } else if (SourceTypeEnum.OMS_SKU_MAPPING_UNMATCH_CUSTOMER.getCode().equals(businessType)) {
-                    sendSkuMappingUnmatchNotice(noticeEntity, post, roleType, specificPerson, title, content, now, delayLevel, "customer");
+                    sendSkuMappingUnmatchNotice(noticeEntity, post, roleType, specificPerson, title, content, now, delayLevel, RuleTypeEnum.CUSTOMER.getCode());
                 } else if (SourceTypeEnum.OMS_SKU_MAPPING_UNMATCH_B2B_PLATFORM.getCode().equals(businessType)) {
-                    sendSkuMappingUnmatchNotice(noticeEntity, post, roleType, specificPerson, title, content, now, delayLevel, "b2bPlatform");
+                    sendSkuMappingUnmatchNotice(noticeEntity, post, roleType, specificPerson, title, content, now, delayLevel, RuleTypeEnum.B2B_PLATFORM.getCode());
                 }
             }
         }
@@ -1553,29 +1553,44 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
         }
     }
     /**
-     * 海外仓SKU未匹配预警通知：每个有未匹配SKU的仓库单独发一张飞书卡片
+     * 海外仓SKU未匹配预警通知：按 skuType 维度汇总各分组（仓库/平台/客户）未匹配SKU数量，
+     * 聚合为一张飞书卡片统一发送（卡片正文按分组逐行列出，见 {@code NoticeMsgConstant.FS_SKU_MAPPING_*_CONTENT}）
      * @param skuType RuleTypeEnum code：platform / warehouse / customer / b2bPlatform
      * @author lc
      */
     private void sendSkuMappingUnmatchNotice(CfgThirdNoticeEntity noticeEntity, String post, String roleType,
                                               String specificPerson, String title, String content,
                                               LocalDateTime now, int delayLevel, String skuType) {
-        // 1. 读取规则条件，构造过滤参数（warehouseId / shopId / dictPlatform）
+        // 1. 读取规则条件，构造过滤参数（warehouseId / authId / shopId / dictPlatform）
+        // 注意：warehouseId 对应 ERP 仓库维度（sm.warehouse_id），authId 对应海外仓服务商/授权账号维度（li.auth_id）；
+        // skuType=warehouse 时统计按 authId 维度分组，需使用 authId 过滤，而非 warehouseId
         List<CfgRuleConditionEntity> ruleList = cfgRuleConditionService.lambdaQuery()
                 .eq(CfgRuleConditionEntity::getRuleId, noticeEntity.getId())
                 .list();
+        if (StringUtils.isBlank(skuType)) {
+            log.warn("SKU未匹配预警: skuType 为空，跳过查询, 配置id:{}", noticeEntity.getId());
+            return;
+        }
         SkuMappingDTO.UnmatchQueryDTO queryDTO = new SkuMappingDTO.UnmatchQueryDTO();
         queryDTO.setType(skuType);
         if (CollUtil.isNotEmpty(ruleList)) {
             for (CfgRuleConditionEntity rule : ruleList) {
                 if ("warehouseId".equals(rule.getField())) {
                     queryDTO.setWarehouseId(rule.getValue());
+                } else if ("authId".equals(rule.getField())) {
+                    queryDTO.setAuthId(rule.getValue());
                 } else if ("shopId".equals(rule.getField())) {
                     queryDTO.setShopId(rule.getValue());
                 } else if ("dictPlatform".equals(rule.getField())) {
                     queryDTO.setDictPlatform(rule.getValue());
                 }
             }
+        }
+        // skuType=warehouse 时统计按 authId（海外仓服务商）维度分组/过滤，warehouseId（ERP仓库ID）条件不生效，
+        // 避免管理员误配 warehouseId 后统计范围与预期不符却毫无提示
+        if (RuleTypeEnum.WAREHOUSE.getCode().equals(skuType) && StringUtils.isNotBlank(queryDTO.getWarehouseId())) {
+            log.warn("SKU未匹配预警: type=warehouse 时 warehouseId 规则条件不生效（该维度按 authId 过滤），" +
+                    "请改为配置 authId 字段, 配置id:{}, warehouseId:{}", noticeEntity.getId(), queryDTO.getWarehouseId());
         }
 
         // 2. 查询各维度未匹配SKU数量
@@ -1584,6 +1599,7 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
             unmatchList = skuMappingFeign.countUnmatchedGroupByWarehouse(queryDTO);
         } catch (Exception e) {
             log.error("SKU未匹配预警: 查询未匹配数量异常, 配置id:{}", noticeEntity.getId(), e);
+            saveSkuMappingUnmatchFailedRecord(noticeEntity, skuType, now, e);
             return;
         }
         if (CollUtil.isEmpty(unmatchList)) {
@@ -1638,6 +1654,27 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
 
         // 6. 发送一条汇总飞书卡片
         forSendByNoticeMethod(noticeEntity, userIdList, now, cardTitle, cardContent, delayLevel, buttonDTO);
+    }
+
+    /**
+     * SKU未匹配预警：Feign 查询未匹配数量异常时，落一条 FAILED 记录留痕，避免静默跳过。
+     * @author lc
+     */
+    private void saveSkuMappingUnmatchFailedRecord(CfgThirdNoticeEntity noticeEntity, String skuType, LocalDateTime now, Exception e) {
+        ThirdNoticePushRecordEntity recordEntity = new ThirdNoticePushRecordEntity();
+        recordEntity.setCfgThirdNoticeId(noticeEntity.getId());
+        recordEntity.setNoticeType(ThirdNoticePushRecordNoticeTypeEnum.MESSAGEPUSH.getCode());
+        recordEntity.setBusinessType(noticeEntity.getBusinessType());
+        recordEntity.setBusinessCode(skuType);
+        recordEntity.setNoticeMethod(noticeEntity.getNoticeMethod());
+        recordEntity.setReceiverId("");
+        recordEntity.setReceiverName("");
+        recordEntity.setSendTime(now);
+        recordEntity.setTitle(noticeEntity.getTitle());
+        recordEntity.setContent("");
+        recordEntity.setStatus(ThirdNoticePushRecordStatusEnum.FAILED.getCode());
+        recordEntity.setErrorReason("SKU未匹配预警：查询未匹配数量异常：" + e.getMessage());
+        save(recordEntity);
     }
 
     /**

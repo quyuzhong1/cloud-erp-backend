@@ -723,11 +723,12 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
         // 查询面单信息
         List<TmsAttachmentEntity> attachmentList = attachmentService.list(new QueryWrapper<TmsAttachmentEntity>().lambda()
                 .in(TmsAttachmentEntity::getBusinessId, dto.getIds())
-                .eq(TmsAttachmentEntity::getType, "logistics_label"));
+                .eq(TmsAttachmentEntity::getType, "logistics_label")
+                .orderByDesc(TmsAttachmentEntity::getCreateTime));
         if (CollectionUtils.isEmpty(attachmentList)) {
             throw new ServiceException("无可打印的物流面单");
         }
-        Map<String, String> baseMap = attachmentList.stream().collect(Collectors.toMap(TmsAttachmentEntity::getBusinessId, TmsAttachmentEntity::getAttachUrl));
+        Map<String, String> baseMap = attachmentList.stream().collect(Collectors.toMap(TmsAttachmentEntity::getBusinessId, TmsAttachmentEntity::getAttachUrl, (v1, v2) -> v1));
         List<String> urlList = dto.getIds().stream().map(e -> baseMap.getOrDefault(e, null)).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
         try {
             return fileFeign.mergeFiles(urlList);

@@ -117,12 +117,13 @@ public class DataRecoveryJob {
         Integer pageSize = param.getInt("pageSize", DEFAULT_PAGE_SIZE);
         LocalDate startDate = parseDate(param.getStr("startDate"));
         LocalDate endDate = parseDate(param.getStr("endDate"));
+        List<String> excludeOrderTypes = parseExcludeOrderTypes(param);
         if (CollUtil.isNotEmpty(ids)) {
-            refreshByIds(type, ids, isPushKingdee);
+            refreshByIds(type, ids, isPushKingdee, excludeOrderTypes);
             return;
         }
         if (TYPE_ALL.equals(type) || TYPE_SO_OUTSTOCK_AMOUNT.equals(type)) {
-            refreshSoOutstockAmount(startDate, endDate, pageSize, approveOnly, isPushKingdee);
+            refreshSoOutstockAmount(startDate, endDate, pageSize, approveOnly, isPushKingdee, excludeOrderTypes);
         }
         if (TYPE_ALL.equals(type) || TYPE_SO_RETURN_INSTOCK_PRICE.equals(type)) {
             refreshSoReturnInstockPrice(startDate, endDate, pageSize, approveOnly);
@@ -137,10 +138,16 @@ public class DataRecoveryJob {
         return JSONUtil.parseObj(jobParam);
     }
 
-    private void refreshByIds(String type, List<String> ids, Boolean isPushKingdee) {
+    private void refreshByIds(String type, List<String> ids, Boolean isPushKingdee, List<String> excludeOrderTypes) {
         if (TYPE_ALL.equals(type) || TYPE_SO_OUTSTOCK_AMOUNT.equals(type)) {
-            soOutstockService.refreshAmountFields(ids, isPushKingdee);
-            XxlJobHelper.log("销售出库金额字段重算完成，数量={}", ids.size());
+            List<String> filteredIds = filterOutstockIdsByExcludeOrderTypes(ids, excludeOrderTypes);
+            if (CollUtil.isEmpty(filteredIds)) {
+                XxlJobHelper.log("未找到需要重算的销售出库单，原始数量={}，excludeOrderTypes={}", ids.size(), excludeOrderTypes);
+                return;
+            }
+            soOutstockService.refreshAmountFields(filteredIds, isPushKingdee);
+            XxlJobHelper.log("销售出库金额字段重算完成，原始数量={}，实际数量={}，excludeOrderTypes={}",
+                    ids.size(), filteredIds.size(), excludeOrderTypes);
         }
         if (TYPE_ALL.equals(type) || TYPE_SO_RETURN_INSTOCK_PRICE.equals(type)) {
             soReturnInstockService.refreshPriceFields(ids);
@@ -149,13 +156,16 @@ public class DataRecoveryJob {
     }
 
     private void refreshSoOutstockAmount(LocalDate startDate, LocalDate endDate, Integer pageSize,
-                                         Boolean approveOnly, Boolean isPushKingdee) {
+                                         Boolean approveOnly, Boolean isPushKingdee, List<String> excludeOrderTypes) {
         int currentPage = 1;
         while (true) {
             LambdaQueryWrapper<SoOutstockEntity> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.select(SoOutstockEntity::getId);
             if (Boolean.TRUE.equals(approveOnly)) {
                 queryWrapper.eq(SoOutstockEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus());
+            }
+            if (CollUtil.isNotEmpty(excludeOrderTypes)) {
+                queryWrapper.notIn(SoOutstockEntity::getOrderType, excludeOrderTypes);
             }
             if (Objects.nonNull(startDate)) {
                 queryWrapper.ge(SoOutstockEntity::getBillDate, startDate);
@@ -170,12 +180,35 @@ public class DataRecoveryJob {
                 break;
             }
             soOutstockService.refreshAmountFields(ids, isPushKingdee);
-            XxlJobHelper.log("销售出库金额字段重算完成，当前页={}，数量={}", currentPage, ids.size());
+            XxlJobHelper.log("销售出库金额字段重算完成，excludeOrderTypes={}，当前页={}，数量={}",
+                    excludeOrderTypes, currentPage, ids.size());
             if (currentPage >= page.getPages()) {
                 break;
             }
             currentPage++;
         }
+    }
+
+    private List<String> parseExcludeOrderTypes(JSONObject param) {
+        List<String> excludeOrderTypes = param.getBeanList("excludeOrderTypes", String.class);
+        if (CollUtil.isEmpty(excludeOrderTypes)) {
+            return Collections.emptyList();
+        }
+        return excludeOrderTypes.stream()
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+    }
+
+    private List<String> filterOutstockIdsByExcludeOrderTypes(List<String> ids, List<String> excludeOrderTypes) {
+        if (CollUtil.isEmpty(ids) || CollUtil.isEmpty(excludeOrderTypes)) {
+            return ids;
+        }
+        Set<String> excludeSet = new HashSet<>(excludeOrderTypes);
+        return soOutstockService.listByIds(ids).stream()
+                .filter(item -> !excludeSet.contains(item.getOrderType()))
+                .map(SoOutstockEntity::getId)
+                .collect(Collectors.toList());
     }
 
     private void refreshSoReturnInstockPrice(LocalDate startDate, LocalDate endDate, Integer pageSize,

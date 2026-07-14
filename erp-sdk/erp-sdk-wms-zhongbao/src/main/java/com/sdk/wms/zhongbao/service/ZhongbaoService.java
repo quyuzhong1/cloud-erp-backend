@@ -509,6 +509,7 @@ public class ZhongbaoService {
     public BaseResponse<OutboundB2cCreateResponse> createB2cOutboundBill(OutboundB2cCreateRequest createRequest) {
         String token = getToken(ThirdWarehouseContext.getAuthMap());
         log.warn("生成的token: {}, request: {}", token, JSONUtil.toJsonStr(createRequest));
+        ThirdWarehouseContext.setRequestJson(JSONUtil.toJsonStr(createRequest));
         OkHttpClient client = new OkHttpClient().newBuilder().build();
         MediaType mediaType = MediaType.parse("application/json");
         RequestBody body = RequestBody.create(mediaType, JSONUtil.toJsonStr(createRequest));

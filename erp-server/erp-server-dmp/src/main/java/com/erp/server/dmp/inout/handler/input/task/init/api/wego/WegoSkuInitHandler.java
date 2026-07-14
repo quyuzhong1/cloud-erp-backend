@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.enums.AuthStatusEnum;
@@ -65,17 +66,17 @@ public class WegoSkuInitHandler extends DmpInputInitHandler {
                 .findFirst()
                 .orElse(null);
         if (provider == null) {
-            throw new ServiceException("WEGO SKU：nextLevelId[" + dmpInputTaskEntity.getNextLevelId() + "]对应的服务商不存在");
+            throw new ServiceException(ApiError.WH_WEGO_SKU_PROVIDER_NOT_FOUND, dmpInputTaskEntity.getNextLevelId());
         }
 
         Map<String, Object> authJson = provider.getAuthJson();
         if (authJson == null || authJson.isEmpty()) {
-            throw new ServiceException("WEGO SKU：服务商[" + provider.getId() + "]auth_json为空");
+            throw new ServiceException(ApiError.WH_WEGO_SKU_AUTH_JSON_EMPTY, provider.getId());
         }
         String appToken = toStr(authJson.get(AUTH_KEY_APP_TOKEN));
         String appSecret = toStr(authJson.get(AUTH_KEY_APP_SECRET));
         if (StringUtils.isAnyBlank(appToken, appSecret)) {
-            throw new ServiceException("WEGO SKU：服务商[" + provider.getId() + "]appToken/appSecret缺失");
+            throw new ServiceException(ApiError.WH_WEGO_SKU_TOKEN_SECRET_MISSING, provider.getId());
         }
 
         String authId = provider.getId();
@@ -94,12 +95,12 @@ public class WegoSkuInitHandler extends DmpInputInitHandler {
                 response = wegoOpenApiService.querySku(reqDTO);
             } catch (Exception e) {
                 log.error("[WEGO SKU] 服务商[id={}]调用异常，pageNum={}", authId, pageNum, e);
-                break;
+                throw new ServiceException(e, ApiError.WH_WEGO_SKU_PAGE_QUERY_ERROR, pageNum, allSkuList.size());
             }
 
             JSONObject pageResult = extractPageResult(response, authId);
             if (pageResult == null) {
-                break;
+                throw new ServiceException(ApiError.WH_WEGO_SKU_PAGE_PARSE_FAILED, pageNum);
             }
 
             JSONArray list = pageResult.getJSONArray("list");
@@ -128,7 +129,8 @@ public class WegoSkuInitHandler extends DmpInputInitHandler {
         }
 
         if (pageNum > MAX_PAGE_LIMIT) {
-            log.warn("[WEGO SKU] 服务商[id={}]已达最大翻页上限({})，可能存在未拉取数据", authId, MAX_PAGE_LIMIT);
+            log.error("[WEGO SKU] 服务商[id={}]已达最大翻页上限({})，存在未拉取数据，任务中止", authId, MAX_PAGE_LIMIT);
+            throw new ServiceException(ApiError.WH_WEGO_SKU_PAGE_LIMIT_EXCEEDED, MAX_PAGE_LIMIT, allSkuList.size());
         }
         log.info("[WEGO SKU] 服务商[id={}] 共拉取SKU={}条，页数={}", authId, allSkuList.size(), pageNum);
 
@@ -164,7 +166,7 @@ public class WegoSkuInitHandler extends DmpInputInitHandler {
             String errorCode = String.valueOf(response.get("errorCode"));
             String errorMsg = String.valueOf(response.get("errorMsg"));
             log.error("[WEGO SKU] 服务商[id={}]接口返回失败: errorCode={}, errorMsg={}", authId, errorCode, errorMsg);
-            throw new ServiceException("WEGO SKU接口返回失败: errorCode=" + errorCode + ", errorMsg=" + errorMsg);
+            throw new ServiceException(ApiError.WH_WEGO_SKU_RESPONSE_FAILED, errorCode, errorMsg);
         }
         Object resultObj = response.get("result");
         if (resultObj instanceof JSONObject) {

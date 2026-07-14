@@ -62,7 +62,7 @@ public class QcNoticeFeignController extends BaseController {
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "wms:qcNotice:paging",
+            menuCode = "wms:qcNoticeApp:paging",
             tableAlias = "qn"
     )
     public ApiResult<List<QcNoticeDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO param) {
@@ -75,7 +75,7 @@ public class QcNoticeFeignController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "wms:qcNotice:paging",
+            menuCode = "wms:qcNoticeApp:paging",
             tableAlias = "qn"
     )
     @WebAdvanceQuery(handler = QcNoticeQueryHandler.class)
@@ -89,7 +89,7 @@ public class QcNoticeFeignController extends BaseController {
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:qcNotice:view",
+            menuCode = "wms:qcNoticeApp:view",
             serviceClass = QcNoticeService.class,
             keyIdName = "id")
     @LogViewService
@@ -113,7 +113,7 @@ public class QcNoticeFeignController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "质检通知单app端修改")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:qcNotice:update",
+            menuCode = "wms:qcNoticeApp:update",
             serviceClass = QcNoticeService.class,
             keyIdName = "id")
     public ApiResult<?> update(@RequestBody @Validated QcNoticeDTO.UpdateDTO dto) {
@@ -136,7 +136,7 @@ public class QcNoticeFeignController extends BaseController {
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:qcNotice:updateAndSubmit",
+            menuCode = "wms:qcNoticeApp:updateAndSubmit",
             serviceClass = QcNoticeService.class,
             keyIdName = "id")
     @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "质检通知单app端修改并提交审核")
@@ -151,7 +151,7 @@ public class QcNoticeFeignController extends BaseController {
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:qcNotice:submit",
+            menuCode = "wms:qcNoticeApp:submit",
             serviceClass = QcNoticeService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.SUBMIT, desc = "质检通知单app端提交审核")
@@ -185,7 +185,7 @@ public class QcNoticeFeignController extends BaseController {
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:qcNotice:approve",
+            menuCode = "wms:qcNoticeApp:approve",
             serviceClass = QcNoticeService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.APPROVE, desc = "质检通知单app端审核")

@@ -153,6 +153,7 @@ public class AssetPurchaseOrderSupplierDTO implements Serializable {
          * 供应商id
          */
         @NotBlank(message = "供应商名称不能为空")
+        @Size(max = 255, message = "供应商名称最大长度不能超过255位")
         private String supplierName;
 
         /**

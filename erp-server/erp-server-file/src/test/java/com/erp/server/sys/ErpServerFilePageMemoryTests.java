@@ -179,11 +179,6 @@ public class ErpServerFilePageMemoryTests {
         }
 
         @Override
-        protected List<MemoryTestRow> getData(FileTask fileTask) {
-            return Collections.emptyList();
-        }
-
-        @Override
         protected int getPageSize() {
             return PAGE_SIZE;
         }

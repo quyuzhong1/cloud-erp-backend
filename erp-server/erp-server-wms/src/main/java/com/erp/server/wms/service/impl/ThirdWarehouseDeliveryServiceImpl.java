@@ -185,6 +185,7 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
         addThirdWarehouseDeliveryEntity.setPlatformCode(entity.getPlatformCode());
         addThirdWarehouseDeliveryEntity.setThirdWarehousePlatform(viewDTO.getProviderCode());
         addThirdWarehouseDeliveryEntity.setShippingMethod(deliveryWithNotOutboundDTO.getLogisticsChannelCode());
+        addThirdWarehouseDeliveryEntity.setTrackNo(deliveryWithNotOutboundDTO.getTrackNo());
         addThirdWarehouseDeliveryEntity.setStatus(SoB2cWarehouseDeliveryStatusEnum.SHIPPED.getStatus());
         List<ThirdWarehouseDeliveryDetailEntity> thirdWarehouseDetailList = new ArrayList<>();
         for (SoB2cDetailEntity soB2cDetailEntity : soB2cDetailEntityList) {
@@ -432,6 +433,7 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
         addThirdWarehouseDeliveryEntity.setSoCode(soOutstockEntity.getSoCode());
         addThirdWarehouseDeliveryEntity.setSoId(soOutstockEntity.getSoId());
         addThirdWarehouseDeliveryEntity.setShopId(soOutstockEntity.getShopId());
+        addThirdWarehouseDeliveryEntity.setTrackNo(soOutstockEntity.getTrackNo());
         addThirdWarehouseDeliveryEntity.setStatus(SoB2cWarehouseDeliveryStatusEnum.SHIPPED.getStatus());
         // 生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_WFHD);
@@ -490,6 +492,7 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
             addThirdWarehouseDeliveryEntity.setId(idStr);
             addThirdWarehouseDeliveryEntity.setSoCode(soOutstock.getSoCode());
             addThirdWarehouseDeliveryEntity.setSoId(soOutstock.getSoId());
+            addThirdWarehouseDeliveryEntity.setTrackNo(soOutstock.getTrackNo());
             addThirdWarehouseDeliveryEntity.setStatus(SoB2cWarehouseDeliveryStatusEnum.SHIPPED.getStatus());
             // 生成单号
             String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_WFHD);

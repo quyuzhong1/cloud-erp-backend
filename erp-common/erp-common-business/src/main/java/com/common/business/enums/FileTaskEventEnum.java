@@ -173,8 +173,7 @@ public enum FileTaskEventEnum implements EnumMessage {
     //srm
     EXPORT_SRM_SALES_SHARING_REPORT("EXPORT_SRM_SALES_SHARING_REPORT","销量共享导出","","",""),
 
-    //SCM
-    EXPORT_SRM_PO_RECONCILIATION_SCM("EXPORT_SRM_PO_RECONCILIATION_SCM","对账单导出","","",""),
+    //SCM（历史 EXPORT_SRM_PO_RECONCILIATION_SCM 为无入口遗留枚举，已删除；对账单导出统一走下方 EXPORT 事件）
     EXPORT_SRM_PO_RECONCILIATION_SCM_EXPORT("EXPORT_SRM_PO_RECONCILIATION_SCM_EXPORT","对账单Excel导出","","",""),
     EXPORT_SRM_PO_RECONCILIATION_DETAIL_SCM("EXPORT_SRM_PO_RECONCILIATION_DETAIL_SCM","对账明细导出","","",""),
 
@@ -249,6 +248,8 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_WMS_SO_RETURN_NOTICE("EXPORT_WMS_SO_RETURN_NOTICE", "销售退货通知单","","",""),
     EXPORT_WMS_SO_RETURN_RECEIVE("EXPORT_WMS_SO_RETURN_RECEIVE", "销售退货签收单","","",""),
     EXPORT_WMS_SO_RETURN_IN_STOCK("EXPORT_WMS_SO_RETURN_IN_STOCK", "销售退货入库单","","",""),
+    IMPORT_WMS_SO_RETURN_IN_STOCK("IMPORT_WMS_SO_RETURN_IN_STOCK", "销售退货入库单导入","com.erp.rpc.wms.feign.ImportWmsFeign","importSoReturnInstock",""),
+    IMPORT_WMS_SO_RETURN_IN_STOCK_OVERWRITE("IMPORT_WMS_SO_RETURN_IN_STOCK_OVERWRITE", "销售退货入库单批量更新","com.erp.rpc.wms.feign.ImportWmsFeign","importSoReturnInstock",""),
     EXPORT_WMS_PO_IN_STOCK("EXPORT_WMS_PO_IN_STOCK", "采购入库单数据","","",""),
     EXPORT_WMS_SUBCONTRACT_ISSUE("EXPORT_WMS_SUBCONTRACT_ISSUE", "委外发料单导出","","",""),
     EXPORT_WMS_SUPPLIER_DELIVERY_ORDER("EXPORT_WMS_SUPPLIER_DELIVERY_ORDER", "供应商送货单","","",""),
@@ -310,12 +311,15 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_WMS_B2B_THIRD_DELIVERY_REPORT("EXPORT_WMS_B2B_THIRD_DELIVERY_REPORT", "B2B三方发货单导出","","",""),
     EXPORT_WMS_AWD_OUT_STOCK("EXPORT_WMS_AWD_OUT_STOCK", "AWD出库货件导出","","",""),
     EXPORT_WMS_AWD_INVENTORY("EXPORT_WMS_AWD_INVENTORY", "AWD库存导出","","",""),
+    EXPORT_WMS_FBS_INVENTORY("EXPORT_WMS_FBS_INVENTORY", "FBS库存导出","","",""),
 
     EXPORT_WMS_QC_APPLICATION("EXPORT_WMS_QC_APPLICATION", "质检申请导出","","",""),
     IMPORT_WMS_QC_APPLICATION_DETAIL("IMPORT_WMS_QC_APPLICATION_DETAIL", "质检申请明细导入","com.erp.rpc.wms.feign.ImportWmsFeign","importQcApplicationDetail",""),
     IMPORT_WMS_CFG_QC_USER("IMPORT_WMS_CFG_QC_USER", "质检员配置导入","com.erp.rpc.wms.feign.ImportWmsFeign","importCfgQcUser",""),
     EXPORT_WMS_CFG_QC_USER("EXPORT_WMS_CFG_QC_USER", "质检员配置导出","","",""),
 
+    EXPORT_WAREHOUSE_LOCATION_SUGGEST_AFTER_SALES("EXPORT_WAREHOUSE_LOCATION_SUGGEST_AFTER_SALES", "售后仓位推荐数据导出","","",""),
+    IMPORT_WAREHOUSE_LOCATION_SUGGEST_AFTER_SALES("IMPORT_WAREHOUSE_LOCATION_SUGGEST_AFTER_SALES", "售后仓位推荐数据导入","","",""),
 
     //tms
     EXPORT_TMS_LOGISTICS_ADDRESS("EXPORT_TMS_LOGISTICS_ADDRESS", "物流地址列表","","",""),

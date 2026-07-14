@@ -1,6 +1,7 @@
 package com.sdk.oms.shopee.service;
 
 import cn.hutool.json.JSONUtil;
+import com.common.core.exception.ServiceException;
 import com.sdk.oms.shopee.dto.base.ShopeeAuth;
 import com.sdk.oms.shopee.dto.base.ShopeeTokenAuth;
 import com.sdk.oms.shopee.dto.base.request.AuthRequest;
@@ -9,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
+import java.util.Objects;
 
 import static com.sdk.oms.shopee.constants.ShopeeConstants.*;
 
@@ -68,7 +70,11 @@ public class ShopeeAuthService {
         bodyParam.put("code", authRequest.getCode());
         bodyParam.put("main_account_id", authRequest.getMainAccountId());
         bodyParam.put("partner_id", authRequest.getPartnerId());
-        return ShopeeApiUtils.sendAuthPost(authRequest.getHost() + path, paramMap, bodyParam);
+        ShopeeAuth shopeeAuth = ShopeeApiUtils.sendAuthPost(authRequest.getHost() + path, paramMap, bodyParam);
+        if (Objects.isNull(shopeeAuth)) {
+            throw new ServiceException("虾皮主账号授权接口响应为空");
+        }
+        return shopeeAuth;
     }
 
     /**
@@ -88,7 +94,11 @@ public class ShopeeAuthService {
         bodyParam.put("code", authRequest.getCode());
         bodyParam.put("shop_id", authRequest.getShopId());
         bodyParam.put("partner_id", authRequest.getPartnerId());
-        return ShopeeApiUtils.sendAuthPost(authRequest.getHost() + path, paramMap, bodyParam);
+        ShopeeAuth shopeeAuth = ShopeeApiUtils.sendAuthPost(authRequest.getHost() + path, paramMap, bodyParam);
+        if (Objects.isNull(shopeeAuth)) {
+            throw new ServiceException("虾皮店铺授权接口响应为空");
+        }
+        return shopeeAuth;
     }
 
     /**

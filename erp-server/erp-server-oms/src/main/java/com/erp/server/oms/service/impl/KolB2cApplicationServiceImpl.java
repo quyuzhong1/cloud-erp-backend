@@ -27,6 +27,9 @@ import com.common.core.enums.ApiError;
 import com.common.core.enums.DictCityTypeEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.KolB2cApplicationAddressImportExcelDTO;
 import com.erp.model.oms.dto.excel.KolB2cApplicationDetailImportExcelDTO;
@@ -67,11 +70,16 @@ import com.erp.server.oms.service.address.AddressParseService;
 import com.erp.server.oms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.skywalking.apm.toolkit.trace.TraceContext;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -98,6 +106,30 @@ import static com.common.business.enums.FileTaskEventEnum.IMPORT_OMS_KOL_B2C_APP
 @Slf4j
 @Service
 public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplicationMapper, KolB2cApplicationEntity> implements KolB2cApplicationService {
+    private static final String TASK_DATA_KOL_ID = "kolId";
+    private static final String TASK_DATA_KOL_CODE = "kolCode";
+    private static final String TASK_DATA_SUB_IDS = "subIds";
+    private static final String TASK_DATA_SUB_ID = "subId";
+    private static final String TASK_DATA_SUB_CODE = "subCode";
+    private static final String TASK_DATA_B2C_CODE = "b2cCode";
+    private static final String TASK_DATA_WDT_PUSH_MSG = "wdtPushMsg";
+    private static final String TASK_DATA_WDT_PUSH_MSG_SKIPPED = "wdtPushMsgSkipped";
+    private static final List<String> APPROVE_PUSH_CREATING_SKIP_BILL_STATUSES = Arrays.asList(
+            KolB2cApplicationDocumentStatusEnum.CREATED.getCode(),
+            KolB2cApplicationDocumentStatusEnum.CREATE_FAIL.getCode(),
+            KolB2cApplicationDocumentStatusEnum.CANCELING.getCode(),
+            KolB2cApplicationDocumentStatusEnum.CANCELED.getCode(),
+            KolB2cApplicationDocumentStatusEnum.CANCEL_FAIL.getCode());
+    private static final List<String> APPROVE_PUSH_SUCCESS_SKIP_BILL_STATUSES = Arrays.asList(
+            KolB2cApplicationDocumentStatusEnum.CANCELING.getCode(),
+            KolB2cApplicationDocumentStatusEnum.CANCELED.getCode(),
+            KolB2cApplicationDocumentStatusEnum.CANCEL_FAIL.getCode());
+    private static final List<String> APPROVE_PUSH_FAIL_SKIP_BILL_STATUSES = Arrays.asList(
+            KolB2cApplicationDocumentStatusEnum.CREATED.getCode(),
+            KolB2cApplicationDocumentStatusEnum.CANCELING.getCode(),
+            KolB2cApplicationDocumentStatusEnum.CANCELED.getCode(),
+            KolB2cApplicationDocumentStatusEnum.CANCEL_FAIL.getCode());
+
     @Resource
     private OperateLogService operateLogService;
     @Resource
@@ -148,6 +180,17 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
     private SoB2cRuleService soB2cRuleService;
     @Resource
     private AddressParseService addressParseService;
+    @Resource
+    private WorkflowTaskRecordService workflowTaskRecordService;
+    @Resource
+    private WorkflowTaskInstanceService workflowTaskInstanceService;
+
+    @Resource
+    private DictBasicService dictBasicService;
+
+    @Lazy
+    @Resource
+    private KolB2cApplicationService self;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -165,7 +208,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         kolB2cApplicationEntity.setBillStatus(KolB2cApplicationDocumentStatusEnum.WAIT.getCode());
         boolean save = super.save(kolB2cApplicationEntity);
         if(!save) {
-            throw new ServiceException("B2C寄样申请单保存失败");
+            throw new ServiceException(ApiError.SAMPLE_B2C_APPLICATION_SAVE_FAILED);
         }
 
         // 操作日志
@@ -205,28 +248,28 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         if(StringUtils.isNotBlank(countryName)){
             KolB2cApplicationAddressEntity.setCountryName(countryName);
         }else {
-            throw new ServiceException("国家名称不存在");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "国家名称");
         }
         if(KolB2cApplicationAddressEntity.getCountryId().equals(DictValueEnum.CN.getCode())){
             //省
             if(StringUtils.isBlank(KolB2cApplicationAddressEntity.getProvinceId())){
-                throw new ServiceException("省不能为空");
+                throw new ServiceException(ApiError.COMMON_PARAM_REQUIRED, "省");
             }
             String province = provinceMap.getOrDefault(KolB2cApplicationAddressEntity.getProvinceId(), "");
             if(StringUtils.isNotBlank(province)){
                 KolB2cApplicationAddressEntity.setProvince(province);
             }else {
-                throw new ServiceException("省不存在");
+                throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "省");
             }
             //市
             if(StringUtils.isBlank(KolB2cApplicationAddressEntity.getCityId())){
-                throw new ServiceException("市不能为空");
+                throw new ServiceException(ApiError.COMMON_PARAM_REQUIRED, "市");
             }
             String city = cityMap.getOrDefault(KolB2cApplicationAddressEntity.getCityId(), "");
             if(StringUtils.isNotBlank(city)){
                 KolB2cApplicationAddressEntity.setCity(city);
             }else {
-                throw new ServiceException("市不存在");
+                throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "市");
             }
             //区域
             if(StringUtils.isNotBlank(KolB2cApplicationAddressEntity.getDistrictId())){
@@ -240,19 +283,19 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
                     KolB2cApplicationAddressEntity.setDistrictId(null);
                     KolB2cApplicationAddressEntity.setDistrict(DictCityConstants.NO_DISTRICT_NAME);
                 }else {
-                    throw new ServiceException("区域不存在");
+                    throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "区域");
                 }
             }else {
-                throw new ServiceException("国家为中国大陆则区域不能为空");
+                throw new ServiceException(ApiError.SAMPLE_B2C_CN_DISTRICT_REQUIRED);
             }
         }else{
             //省
             if(StringUtils.isBlank(KolB2cApplicationAddressEntity.getProvince())){
-                throw new ServiceException("省不能为空");
+                throw new ServiceException(ApiError.COMMON_PARAM_REQUIRED, "省");
             }
             //市
             if(StringUtils.isBlank(KolB2cApplicationAddressEntity.getCity())){
-                throw new ServiceException("市不能为空");
+                throw new ServiceException(ApiError.COMMON_PARAM_REQUIRED, "市");
             }
         }
     }
@@ -341,7 +384,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         Set<String> partnerIdSet = new HashSet<>();
         for (KolB2cApplicationAddressDTO.AddDTO address : addressList) {
             if (!partnerIdSet.add(address.getPartnerId())) {
-                throw new ServiceException("存在重复的达人地址：" + address.getNickname());
+                throw new ServiceException(ApiError.SAMPLE_B2C_DUPLICATE_PARTNER_ADDRESS, address.getNickname());
             }
         }
 
@@ -419,7 +462,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         log.info("编辑 开始修改B2C寄样申请单数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(kolB2cApplicationEntity);
         if(!save) {
-            throw new ServiceException("B2C寄样申请单保存失败");
+            throw new ServiceException(ApiError.SAMPLE_B2C_APPLICATION_SAVE_FAILED);
         }
         // 记录主单操作日志
         log.info("编辑 开始记录B2C寄样申请单日志数据，单号：【{}】", kolB2cApplicationEntity.getCode());
@@ -465,7 +508,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
                 .eq(KolB2cApplicationDetailEntity::getId, detailId)
                 .eq(KolB2cApplicationDetailEntity::getMainId, id)
                 .one();
-        detailEntity = Optional.ofNullable(detailEntity).orElseThrow(() -> new ServiceException("B2C寄样申请明细不存在"));
+        detailEntity = Optional.ofNullable(detailEntity).orElseThrow(() -> new ServiceException(ApiError.SAMPLE_B2C_APPLICATION_DETAIL_NOT_FOUND));
 
         String newRemark = StrUtil.nullToEmpty(remark);
         if (Objects.equals(detailEntity.getRemark(), newRemark)) {
@@ -476,7 +519,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         detailEntity.setRemark(newRemark);
         boolean update = kolB2cApplicationDetailService.updateById(detailEntity);
         if (!update) {
-            throw new ServiceException("B2C寄样申请明细备注更新失败");
+            throw new ServiceException(ApiError.SAMPLE_B2C_DETAIL_REMARK_UPDATE_FAILED);
         }
 
         String msg = StrUtil.format("用户【{}】编辑单号为【{}】的明细【{}】备注，由[{}]变更为[{}]",
@@ -558,7 +601,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         Set<String> partnerIdSet = new HashSet<>();
         for (KolB2cApplicationAddressDTO.UpdateDTO address : addressList) {
             if (!partnerIdSet.add(address.getPartnerId())) {
-                throw new ServiceException("存在重复的达人地址：" + address.getNickname());
+                throw new ServiceException(ApiError.SAMPLE_B2C_DUPLICATE_PARTNER_ADDRESS, address.getNickname());
             }
         }
 
@@ -661,7 +704,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
     public BatchResultDTO submit(String id) {
         KolB2cApplicationEntity entity = getById(id);
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException("未找到B2C寄样申请单数据");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "B2C寄样申请单");
         }
         validateSubmit(entity);
         // 更新单据审核状态
@@ -765,10 +808,10 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO delete(String id) {
-        KolB2cApplicationEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到B2C寄样申请单数据"));
+        KolB2cApplicationEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "B2C寄样申请单"));
         // 只有待提交数据允许删除
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getCode(), entity.getApproveStatus())) {
-            throw new ServiceException("只有待提交数据支持删除");
+            throw new ServiceException(ApiError.BILL_DELETE_STATUS_NOT_ALLOWED);
         }
         if (entity.getInvalidStatus()) {
             throw new ServiceException(ApiError.BILL_DELETE_ALLOWED_STATUS_ONLY);
@@ -812,7 +855,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO invalid(String id, String remark) {
-        KolB2cApplicationEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到B2C寄样申请单数据"));
+        KolB2cApplicationEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "B2C寄样申请单"));
 //        validateNoApprovedSoB2c(entity, "作废");
         // 只有待提交、审核不通过数据允许作废
         if (!(Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getCode(), entity.getApproveStatus()) || Objects.equals(ApproveStatusEnum.REJECT.getCode(), entity.getApproveStatus()))) {
@@ -834,7 +877,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO cancel(String id) {
-        KolB2cApplicationEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到B2C寄样申请单数据"));
+        KolB2cApplicationEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "B2C寄样申请单"));
         validateNoApprovedSoB2c(entity, "取消");
         String billStatus = resolveBillStatus(entity.getBillStatus(), entity.getApproveStatus());
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getCode())) {
@@ -1035,6 +1078,100 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.KOL_B2C_APPLICATION.getCode(), mainEntity.getId(), "取消回调");
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void handleDomesticApprovePushSuccess(KolB2cApplicationApproveCallbackDTO dto) {
+        if (ObjectUtil.isEmpty(dto)) {
+            return;
+        }
+        KolSubB2cApplicationEntity subEntity = getRequiredKolSubB2cApplicationByApproveCallback(
+                dto, "处理中台B2C审批下推成功回调");
+        KolB2cApplicationEntity mainEntity = super.getByIdOpt(subEntity.getSourceId()).orElse(null);
+        if (ObjectUtil.isEmpty(mainEntity)) {
+            log.warn("处理中台B2C审批下推成功回调失败，主单不存在: subOrderId={}, subOrderCode={}, mainId={}, syncTaskId={}",
+                    dto.getSubOrderId(), dto.getSubOrderCode(), subEntity.getSourceId(), dto.getSyncTaskId());
+            return;
+        }
+        String billStatus = resolveBillStatus(mainEntity.getBillStatus(), mainEntity.getApproveStatus());
+        if (APPROVE_PUSH_SUCCESS_SKIP_BILL_STATUSES.contains(billStatus)) {
+            return;
+        }
+        boolean subNeedUpdate = !Objects.equals(KolSubB2cApplicationOrderStatusEnum.APPROVE.getCode(), subEntity.getOrderStatus());
+        if (!subNeedUpdate && Objects.equals(billStatus, KolB2cApplicationDocumentStatusEnum.CREATED.getCode())) {
+            return;
+        }
+        if (subNeedUpdate) {
+            KolSubB2cApplicationEntity updateSubEntity = new KolSubB2cApplicationEntity();
+            updateSubEntity.setId(subEntity.getId());
+            updateSubEntity.setOrderStatus(KolSubB2cApplicationOrderStatusEnum.APPROVE.getCode());
+            kolSubB2cApplicationService.updateById(updateSubEntity);
+        }
+        List<KolSubB2cApplicationEntity> subList = kolSubB2cApplicationService.lambdaQuery()
+                .eq(KolSubB2cApplicationEntity::getSourceId, mainEntity.getId())
+                .eq(KolSubB2cApplicationEntity::getIsDeleted, false)
+                .list();
+        boolean allApproved = CollUtil.isNotEmpty(subList) && subList.stream()
+                .allMatch(sub -> Objects.equals(KolSubB2cApplicationOrderStatusEnum.APPROVE.getCode(), sub.getOrderStatus()));
+        if (allApproved) {
+            updateBillStatusIfNotIn(mainEntity.getId(), KolB2cApplicationDocumentStatusEnum.CREATED.getCode(),
+                    APPROVE_PUSH_SUCCESS_SKIP_BILL_STATUSES);
+        }
+        String callbackMsg = StringUtils.substring(StrUtil.blankToDefault(dto.getResponseMsg(), ""), 0, 200);
+        String msg;
+        if (allApproved) {
+            msg = StrUtil.format("中台审批下推成功回调，拆分单【{}】状态更新为【{}】，主单【{}】状态更新为【{}】{}",
+                    subEntity.getCode(),
+                    KolSubB2cApplicationOrderStatusEnum.APPROVE.getName(),
+                    mainEntity.getCode(),
+                    KolB2cApplicationDocumentStatusEnum.CREATED.getName(),
+                    StringUtils.isNotBlank(callbackMsg) ? StrUtil.format("，回调结果：【{}】", callbackMsg) : "");
+        } else {
+            long approvedCount = Optional.ofNullable(subList).orElse(Collections.emptyList()).stream()
+                    .filter(sub -> Objects.equals(KolSubB2cApplicationOrderStatusEnum.APPROVE.getCode(), sub.getOrderStatus()))
+                    .count();
+            msg = StrUtil.format("中台审批下推成功回调，拆分单【{}】状态更新为【{}】，主单【{}】保持【{}】，待其余拆分单回调完成（{}/{}）{}",
+                    subEntity.getCode(),
+                    KolSubB2cApplicationOrderStatusEnum.APPROVE.getName(),
+                    mainEntity.getCode(),
+                    KolB2cApplicationDocumentStatusEnum.getName(billStatus),
+                    approvedCount,
+                    CollUtil.size(subList),
+                    StringUtils.isNotBlank(callbackMsg) ? StrUtil.format("，回调结果：【{}】", callbackMsg) : "");
+        }
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.KOL_B2C_APPLICATION.getCode(), mainEntity.getId(), "审批下推回调");
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void handleDomesticApprovePushFail(KolB2cApplicationApproveCallbackDTO dto) {
+        if (ObjectUtil.isEmpty(dto)) {
+            return;
+        }
+        KolSubB2cApplicationEntity subEntity = getRequiredKolSubB2cApplicationByApproveCallback(
+                dto, "处理中台B2C审批下推失败回调");
+        KolB2cApplicationEntity mainEntity = super.getByIdOpt(subEntity.getSourceId()).orElse(null);
+        if (ObjectUtil.isEmpty(mainEntity)) {
+            log.warn("处理中台B2C审批下推失败回调失败，主单不存在: subOrderId={}, subOrderCode={}, mainId={}, syncTaskId={}",
+                    dto.getSubOrderId(), dto.getSubOrderCode(), subEntity.getSourceId(), dto.getSyncTaskId());
+            return;
+        }
+        String billStatus = resolveBillStatus(mainEntity.getBillStatus(), mainEntity.getApproveStatus());
+        if (APPROVE_PUSH_FAIL_SKIP_BILL_STATUSES.contains(billStatus)) {
+            return;
+        }
+        String failReason = StringUtils.substring(StrUtil.blankToDefault(dto.getResponseMsg(), "中台审批下推失败"), 0, 500);
+        markKolB2cSubApproveTaskFailed(subEntity, failReason);
+        updateBillStatusIfNotIn(mainEntity.getId(), KolB2cApplicationDocumentStatusEnum.CREATE_FAIL.getCode(),
+                APPROVE_PUSH_FAIL_SKIP_BILL_STATUSES);
+        resumeKolB2cParentTask(mainEntity);
+        String msg = StrUtil.format("中台审批下推失败回调，拆分单【{}】推送失败，主单【{}】状态更新为【{}】，原因：【{}】",
+                subEntity.getCode(),
+                mainEntity.getCode(),
+                KolB2cApplicationDocumentStatusEnum.CREATE_FAIL.getName(),
+                failReason);
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.KOL_B2C_APPLICATION.getCode(), mainEntity.getId(), "审批下推回调");
+    }
+
     /**
      * 撤销
      */
@@ -1043,7 +1180,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
     @Override
     public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         String id = dto.getId();
-        KolB2cApplicationEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到B2C寄样申请单数据"));
+        KolB2cApplicationEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "B2C寄样申请单"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getCode())) {
             throw new ServiceException(ApiError.WF_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
@@ -1077,47 +1214,226 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         // 只有审核通过才下推
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if (ApproveTypeEnum.PASS.equals(approveType)) {
-            List<KolB2cApplicationDetailEntity> list = kolB2cApplicationDetailService.lambdaQuery().eq(KolB2cApplicationDetailEntity::getMainId, entity.getId()).list();
-            //企业达人信息
-            List<String> partnerIds = list.stream().map(KolB2cApplicationDetailEntity::getPartnerId).distinct().collect(Collectors.toList());
-            List<KolPartnerInfoEntity> kolPartnerInfoEntities = kolPartnerInfoService.lambdaQuery().in(KolPartnerInfoEntity::getId, partnerIds).eq(KolPartnerInfoEntity::getDisabled,false).list();
-            Map<String, KolPartnerInfoEntity> partnerMap = kolPartnerInfoEntities.stream().collect(Collectors.toMap(KolPartnerInfoEntity::getId, v -> v));
-
-            //B2C寄样申请单地址信息
-            List<KolB2cApplicationAddressEntity> addressList = kolB2cApplicationAddressService.lambdaQuery().eq(KolB2cApplicationAddressEntity::getMainId, entity.getId()).list();
-            Map<String, KolB2cApplicationAddressEntity> partnerAddressMap = addressList.stream().collect(Collectors.toMap(KolB2cApplicationAddressEntity::getPartnerId, v -> v));
-
-            //根据业务类型生成 国外=B2C订单  国内=旺店通销售订单
-            if(entity.getIsInternational()){
-                try {
-                    UserContext.setIsUserSystem(true);
-                    //
-                    List<KolSubB2cApplicationDTO.PushDTO> pushDTOS = kolSubB2cApplicationService.generateSplitOrder(entity, list);
-                    //下推B2C订单
-                    Map<String, String> b2cCodeMap = pushSoB2c(entity,pushDTOS, partnerMap, partnerAddressMap);
-                }finally {
-                    UserContext.clearIsUserSystem();
-                }
-
-            }else {
-                //旺店通
-                List<KolSubB2cApplicationDTO.PushDTO> pushDTOS = kolSubB2cApplicationService.generateSplitOrder(entity, list);
-                // 获取所有推送订单的所有明细 SKU ID 列表
-                List<String> skuNos = pushDTOS.stream()
-                        .flatMap(e -> e.getDetailList().stream())
-                        .map(KolSubB2cApplicationDetailEntity::getSkuNo)
-                        .distinct()
-                        .collect(Collectors.toList());
-
-                List<SkuVO> skuVOS = plmTaskFeign.listBySkuNoList(skuNos);
-                Map<String, SkuVO> skuMap = skuVOS.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
-                for (KolSubB2cApplicationDTO.PushDTO pushDTO : pushDTOS) {
-                    syncWangDianSoB2cService.syncDataToWangDian(pushDTO, skuMap);
-                }
+            if (!startKolB2cApproveWorkflowTask(entity)) {
+                log.warn("KOL B2C审核下推走legacy路径，请确认工作流任务节点字典已配置，kolId={}, kolCode={}",
+                        entity.getId(), entity.getCode());
+                registerLegacyApproveEndPush(entity);
             }
-            updateBillStatus(entity.getId(), KolB2cApplicationDocumentStatusEnum.CREATED.getCode());
         }
         return Boolean.TRUE;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public WorkflowTaskRecordDTO.MqResponseDTO generateKolB2cSplitOrder(WorkflowTaskRecordDTO.MqRequestDTO dto) {
+        WorkflowTaskRecordDTO.MqResponseDTO responseDTO = new WorkflowTaskRecordDTO.MqResponseDTO();
+        try {
+            String kolId = getRequiredString(dto, TASK_DATA_KOL_ID);
+            checkWorkflowTaskContext(dto, kolId, WorkflowTaskRecordTypeEnum.KOL_B2C_APPLICATION_APPROVE, 0);
+            KolB2cApplicationEntity entity = getById(kolId);
+            if (Objects.isNull(entity)) {
+                setTerminalFailed(responseDTO, MessageUtils.getMessage(ApiError.BILL_NOT_EXIST_WITH_TYPE, "B2C寄样申请单"));
+                return responseDTO;
+            }
+            if (!checkKolB2cApproveTaskCanPush(responseDTO, entity)) {
+                return responseDTO;
+            }
+            List<KolB2cApplicationDetailEntity> detailList = kolB2cApplicationDetailService.lambdaQuery()
+                    .eq(KolB2cApplicationDetailEntity::getMainId, entity.getId())
+                    .list();
+            List<KolSubB2cApplicationDTO.PushDTO> pushDTOS = kolSubB2cApplicationService.generateSplitOrderIdempotent(entity, detailList);
+            Map<String, Object> data = new HashMap<>();
+            data.put(TASK_DATA_KOL_ID, entity.getId());
+            data.put(TASK_DATA_KOL_CODE, entity.getCode());
+            data.put(TASK_DATA_SUB_IDS, pushDTOS.stream().map(e -> e.getEntity().getId()).collect(Collectors.toList()));
+            responseDTO.setData(data);
+            return responseDTO;
+        } catch (ServiceException e) {
+            return handleWorkflowTaskServiceException(responseDTO, e);
+        } catch (Exception e) {
+            return handleWorkflowTaskUnexpectedException(responseDTO, "generateKolB2cSplitOrder", e);
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public WorkflowTaskRecordDTO.MqResponseDTO dispatchKolB2cSubApproveTasks(WorkflowTaskRecordDTO.MqRequestDTO dto) {
+        WorkflowTaskRecordDTO.MqResponseDTO responseDTO = new WorkflowTaskRecordDTO.MqResponseDTO();
+        try {
+            String kolId = getRequiredString(dto, TASK_DATA_KOL_ID);
+            checkWorkflowTaskContext(dto, kolId, WorkflowTaskRecordTypeEnum.KOL_B2C_APPLICATION_APPROVE, 1);
+            KolB2cApplicationEntity entity = getById(kolId);
+            if (Objects.isNull(entity)) {
+                setTerminalFailed(responseDTO, MessageUtils.getMessage(ApiError.BILL_NOT_EXIST_WITH_TYPE, "B2C寄样申请单"));
+                return responseDTO;
+            }
+            if (!checkKolB2cApproveTaskCanPush(responseDTO, entity)) {
+                return responseDTO;
+            }
+            List<KolSubB2cApplicationEntity> subList = kolSubB2cApplicationService.lambdaQuery()
+                    .eq(KolSubB2cApplicationEntity::getSourceId, kolId)
+                    .eq(KolSubB2cApplicationEntity::getIsDeleted, false)
+                    .list();
+            if (CollUtil.isEmpty(subList)) {
+                setTerminalFailed(responseDTO, MessageUtils.getMessage(ApiError.BILL_NOT_EXIST_WITH_TYPE, "B2C寄样申请单拆分单"));
+                return responseDTO;
+            }
+            if (!hasWorkflowTaskNode(WorkflowTaskRecordTypeEnum.KOL_B2C_SUB_APPROVE)) {
+                responseDTO.setStatus(WorkflowTaskRecordStatusEnum.FAILED.getCode());
+                responseDTO.setErrorMsg(ApiError.WF_KOL_B2C_SUB_TASK_NODE_NOT_FOUND.getMsg());
+                return responseDTO;
+            }
+            List<String> subIds = subList.stream().map(KolSubB2cApplicationEntity::getId).collect(Collectors.toList());
+            List<WorkflowTaskRecordEntity> existChildTasks = workflowTaskRecordService.lambdaQuery()
+                    .in(WorkflowTaskRecordEntity::getSourceId, subIds)
+                    .eq(WorkflowTaskRecordEntity::getSourceType, WorkflowTaskRecordTypeEnum.KOL_B2C_SUB_APPROVE.getCode())
+                    .eq(WorkflowTaskRecordEntity::getIsDeleted, false)
+                    .list();
+            Map<String, List<WorkflowTaskRecordEntity>> existChildTaskMap = existChildTasks.stream()
+                    .collect(Collectors.groupingBy(WorkflowTaskRecordEntity::getSourceId));
+            for (KolSubB2cApplicationEntity subEntity : subList) {
+                dispatchKolB2cSubTask(entity, subEntity, existChildTaskMap.getOrDefault(subEntity.getId(), Collections.emptyList()));
+            }
+            Map<String, Object> data = new HashMap<>();
+            data.put(TASK_DATA_KOL_ID, entity.getId());
+            data.put(TASK_DATA_KOL_CODE, entity.getCode());
+            data.put(TASK_DATA_SUB_IDS, subIds);
+            responseDTO.setData(data);
+            return responseDTO;
+        } catch (ServiceException e) {
+            return handleWorkflowTaskServiceException(responseDTO, e);
+        } catch (Exception e) {
+            return handleWorkflowTaskUnexpectedException(responseDTO, "dispatchKolB2cSubApproveTasks", e);
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public WorkflowTaskRecordDTO.MqResponseDTO finishKolB2cApplicationApprove(WorkflowTaskRecordDTO.MqRequestDTO dto) {
+        WorkflowTaskRecordDTO.MqResponseDTO responseDTO = new WorkflowTaskRecordDTO.MqResponseDTO();
+        try {
+            String kolId = getRequiredString(dto, TASK_DATA_KOL_ID);
+            checkWorkflowTaskContext(dto, kolId, WorkflowTaskRecordTypeEnum.KOL_B2C_APPLICATION_APPROVE, 2);
+            KolB2cApplicationEntity entity = getById(kolId);
+            if (Objects.isNull(entity)) {
+                setTerminalFailed(responseDTO, MessageUtils.getMessage(ApiError.BILL_NOT_EXIST_WITH_TYPE, "B2C寄样申请单"));
+                return responseDTO;
+            }
+            if (!checkKolB2cApproveTaskCanPush(responseDTO, entity)) {
+                return responseDTO;
+            }
+            List<KolSubB2cApplicationEntity> subList = kolSubB2cApplicationService.lambdaQuery()
+                    .eq(KolSubB2cApplicationEntity::getSourceId, kolId)
+                    .eq(KolSubB2cApplicationEntity::getIsDeleted, false)
+                    .list();
+            if (CollUtil.isEmpty(subList)) {
+                responseDTO.setStatus(WorkflowTaskRecordStatusEnum.WAITING.getCode());
+                responseDTO.setErrorMsg(ApiError.WF_KOL_B2C_WAIT_SPLIT_ORDER.getMsg());
+                return responseDTO;
+            }
+            List<String> subIds = subList.stream().map(KolSubB2cApplicationEntity::getId).collect(Collectors.toList());
+            List<WorkflowTaskRecordEntity> childTasks = workflowTaskRecordService.lambdaQuery()
+                    .in(WorkflowTaskRecordEntity::getSourceId, subIds)
+                    .eq(WorkflowTaskRecordEntity::getSourceType, WorkflowTaskRecordTypeEnum.KOL_B2C_SUB_APPROVE.getCode())
+                    .eq(WorkflowTaskRecordEntity::getIsDeleted, false)
+                    .list();
+            Map<String, List<WorkflowTaskRecordEntity>> childTaskMap = childTasks.stream()
+                    .collect(Collectors.groupingBy(WorkflowTaskRecordEntity::getSourceId));
+            long successCount = 0;
+            List<WorkflowTaskRecordEntity> terminalFailedTasks = new ArrayList<>();
+            for (String subId : subIds) {
+                List<WorkflowTaskRecordEntity> tasks = childTaskMap.getOrDefault(subId, Collections.emptyList());
+                boolean success = tasks.stream().anyMatch(e -> Objects.equals(e.getStatus(), WorkflowTaskRecordStatusEnum.SUCCESS.getCode()));
+                if (success) {
+                    successCount++;
+                    continue;
+                }
+                tasks.stream()
+                        .filter(this::isTerminalFailedTask)
+                        .findFirst()
+                        .ifPresent(terminalFailedTasks::add);
+            }
+            if (CollUtil.isNotEmpty(terminalFailedTasks)) {
+                responseDTO.setStatus(WorkflowTaskRecordStatusEnum.FAILED.getCode());
+                responseDTO.setErrorMsg(buildKolB2cSubTaskFailedMsg(terminalFailedTasks));
+                return responseDTO;
+            }
+            if (successCount < subIds.size()) {
+                responseDTO.setStatus(WorkflowTaskRecordStatusEnum.WAITING.getCode());
+                responseDTO.setErrorMsg(MessageUtils.getMessage(ApiError.WF_KOL_B2C_WAIT_SUB_TASK_COMPLETE, successCount, subIds.size()));
+                return responseDTO;
+            }
+            if (Boolean.TRUE.equals(entity.getIsInternational())) {
+                updateKolSubStatus(entity.getId());
+                updateBillStatus(entity.getId(), KolB2cApplicationDocumentStatusEnum.CREATED.getCode());
+            } else {
+                updateBillStatusIfNotIn(entity.getId(), KolB2cApplicationDocumentStatusEnum.CREATING.getCode(),
+                        APPROVE_PUSH_CREATING_SKIP_BILL_STATUSES);
+            }
+            Map<String, Object> data = new HashMap<>();
+            data.put(TASK_DATA_KOL_ID, entity.getId());
+            data.put(TASK_DATA_KOL_CODE, entity.getCode());
+            responseDTO.setData(data);
+            return responseDTO;
+        } catch (ServiceException e) {
+            return handleWorkflowTaskServiceException(responseDTO, e);
+        } catch (Exception e) {
+            return handleWorkflowTaskUnexpectedException(responseDTO, "finishKolB2cApplicationApprove", e);
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public WorkflowTaskRecordDTO.MqResponseDTO pushKolB2cSubOrder(WorkflowTaskRecordDTO.MqRequestDTO dto) {
+        WorkflowTaskRecordDTO.MqResponseDTO responseDTO = new WorkflowTaskRecordDTO.MqResponseDTO();
+        try {
+            String kolId = getRequiredString(dto, TASK_DATA_KOL_ID);
+            String subId = getRequiredString(dto, TASK_DATA_SUB_ID);
+            checkWorkflowTaskContext(dto, subId, WorkflowTaskRecordTypeEnum.KOL_B2C_SUB_APPROVE, 0);
+            KolB2cApplicationEntity entity = getById(kolId);
+            if (Objects.isNull(entity)) {
+                setTerminalFailed(responseDTO, MessageUtils.getMessage(ApiError.BILL_NOT_EXIST_WITH_TYPE, "B2C寄样申请单"));
+                return responseDTO;
+            }
+            if (!checkKolB2cApproveTaskCanPush(responseDTO, entity)) {
+                return responseDTO;
+            }
+            List<KolSubB2cApplicationDTO.PushDTO> pushDTOS = kolSubB2cApplicationService.listPushByIds(Collections.singletonList(subId));
+            if (CollUtil.isEmpty(pushDTOS)) {
+                setTerminalFailed(responseDTO, MessageUtils.getMessage(ApiError.BILL_NOT_EXIST_WITH_TYPE, "B2C寄样申请单拆分单"));
+                return responseDTO;
+            }
+            KolSubB2cApplicationDTO.PushDTO pushDTO = pushDTOS.get(0);
+            Map<String, Object> data = self.executeKolB2cSubOrderPush(entity, pushDTO);
+            responseDTO.setData(data);
+            resumeKolB2cParentTask(entity);
+            return responseDTO;
+        } catch (ServiceException e) {
+            return handleWorkflowTaskServiceException(responseDTO, e);
+        } catch (Exception e) {
+            return handleWorkflowTaskUnexpectedException(responseDTO, "pushKolB2cSubOrder", e);
+        }
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public Map<String, Object> executeKolB2cSubOrderPush(KolB2cApplicationEntity entity, KolSubB2cApplicationDTO.PushDTO pushDTO) {
+        // 推单编排不包大事务：下游销售单创建、网店推送消息各自提交，并通过来源单据做幂等防重。
+        Map<String, Object> data = new HashMap<>();
+        data.put(TASK_DATA_KOL_ID, entity.getId());
+        data.put(TASK_DATA_KOL_CODE, entity.getCode());
+        data.put(TASK_DATA_SUB_ID, pushDTO.getEntity().getId());
+        data.put(TASK_DATA_SUB_CODE, pushDTO.getEntity().getCode());
+        if (Boolean.TRUE.equals(entity.getIsInternational())) {
+            String b2cCode = pushSingleSoB2c(entity, pushDTO);
+            data.put(TASK_DATA_B2C_CODE, b2cCode);
+        } else {
+            Map<String, SkuVO> skuMap = buildKolSubB2cSkuMap(pushDTO);
+            Boolean created = syncWangDianSoB2cService.saveApproveMsgToWangDian(pushDTO, skuMap);
+            data.put(TASK_DATA_WDT_PUSH_MSG, created);
+            data.put(TASK_DATA_WDT_PUSH_MSG_SKIPPED, !created);
+        }
+        return data;
     }
 
     /**
@@ -1241,13 +1557,352 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         return resultMap;
     }
 
+    private void legacyApproveEndPush(KolB2cApplicationEntity entity) {
+        List<KolB2cApplicationDetailEntity> list = kolB2cApplicationDetailService.lambdaQuery().eq(KolB2cApplicationDetailEntity::getMainId, entity.getId()).list();
+        //企业达人信息
+        List<String> partnerIds = list.stream().map(KolB2cApplicationDetailEntity::getPartnerId).distinct().collect(Collectors.toList());
+        List<KolPartnerInfoEntity> kolPartnerInfoEntities = kolPartnerInfoService.lambdaQuery().in(KolPartnerInfoEntity::getId, partnerIds).eq(KolPartnerInfoEntity::getDisabled,false).list();
+        Map<String, KolPartnerInfoEntity> partnerMap = kolPartnerInfoEntities.stream().collect(Collectors.toMap(KolPartnerInfoEntity::getId, v -> v));
+
+        //B2C寄样申请单地址信息
+        List<KolB2cApplicationAddressEntity> addressList = kolB2cApplicationAddressService.lambdaQuery().eq(KolB2cApplicationAddressEntity::getMainId, entity.getId()).list();
+        Map<String, KolB2cApplicationAddressEntity> partnerAddressMap = addressList.stream().collect(Collectors.toMap(KolB2cApplicationAddressEntity::getPartnerId, v -> v));
+
+        //根据业务类型生成 国外=B2C订单  国内=旺店通销售订单
+        if(entity.getIsInternational()){
+            try {
+                UserContext.setIsUserSystem(true);
+                List<KolSubB2cApplicationDTO.PushDTO> pushDTOS = kolSubB2cApplicationService.generateSplitOrderIdempotent(entity, list);
+                pushSoB2c(entity,pushDTOS, partnerMap, partnerAddressMap);
+                updateBillStatus(entity.getId(), KolB2cApplicationDocumentStatusEnum.CREATED.getCode());
+            }finally {
+                UserContext.clearIsUserSystem();
+            }
+
+        }else {
+            List<KolSubB2cApplicationDTO.PushDTO> pushDTOS = kolSubB2cApplicationService.generateSplitOrderIdempotent(entity, list);
+            List<String> skuNos = pushDTOS.stream()
+                    .flatMap(e -> e.getDetailList().stream())
+                    .map(KolSubB2cApplicationDetailEntity::getSkuNo)
+                    .filter(StringUtils::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.toList());
+            Map<String, SkuVO> skuMap = buildKolSubB2cSkuMapBySkuNos(skuNos);
+            for (KolSubB2cApplicationDTO.PushDTO pushDTO : pushDTOS) {
+                syncWangDianSoB2cService.syncDataToWangDian(pushDTO, skuMap);
+            }
+            updateBillStatusIfNotIn(entity.getId(), KolB2cApplicationDocumentStatusEnum.CREATING.getCode(),
+                    APPROVE_PUSH_CREATING_SKIP_BILL_STATUSES);
+        }
+    }
+
+    private void registerLegacyApproveEndPush(KolB2cApplicationEntity entity) {
+        if (TransactionSynchronizationManager.isActualTransactionActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                @Override
+                public void afterCommit() {
+                    try {
+                        legacyApproveEndPush(entity);
+                    } catch (Exception e) {
+                        log.error("KOL B2C legacy审核下推失败，kolId={}, kolCode={}", entity.getId(), entity.getCode(), e);
+                        updateBillStatus(entity.getId(), KolB2cApplicationDocumentStatusEnum.CREATE_FAIL.getCode());
+                        String reason = StringUtils.substring(StrUtil.blankToDefault(e.getMessage(), e.getClass().getSimpleName()), 0, 500);
+                        String msg = StrUtil.format("legacy审核下推失败，单号为【{}】，原因：【{}】", entity.getCode(), reason);
+                        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.KOL_B2C_APPLICATION.getCode(), entity.getId(), "legacy下推失败");
+                    }
+                }
+            });
+            return;
+        }
+        legacyApproveEndPush(entity);
+    }
+
+    private Boolean startKolB2cApproveWorkflowTask(KolB2cApplicationEntity entity) {
+        if (!hasWorkflowTaskNode(WorkflowTaskRecordTypeEnum.KOL_B2C_APPLICATION_APPROVE)
+                || !hasWorkflowTaskNode(WorkflowTaskRecordTypeEnum.KOL_B2C_SUB_APPROVE)) {
+            return Boolean.FALSE;
+        }
+        List<WorkflowTaskRecordEntity> existTasks = workflowTaskRecordService.listBySourceId(entity.getId(), WorkflowTaskRecordTypeEnum.KOL_B2C_APPLICATION_APPROVE.getCode());
+        WorkflowTaskRecordDTO.AddTaskDTO addTaskDTO = buildKolB2cParentTaskDTO(entity, CollUtil.isNotEmpty(existTasks) ? existTasks.get(0).getTraceId() : TraceContext.traceId());
+        addWorkflowTaskIfAbsent(addTaskDTO, existTasks);
+        // 统一入口负责分布式锁、instance 定位和超时 PROCESSING 回拨，避免手动发 MQ 绕过恢复逻辑。
+        workflowTaskRecordService.startOrResume(addTaskDTO);
+        return Boolean.TRUE;
+    }
+
+    private WorkflowTaskRecordDTO.AddTaskDTO buildKolB2cParentTaskDTO(KolB2cApplicationEntity entity, String traceId) {
+        WorkflowTaskRecordDTO.AddTaskDTO addTaskDTO = new WorkflowTaskRecordDTO.AddTaskDTO();
+        addTaskDTO.setSourceId(entity.getId());
+        addTaskDTO.setSourceCode(entity.getCode());
+        addTaskDTO.setDictBasicTypeEnum(DictBasicTypeEnum.WORKFLOW_TASK_NODE);
+        addTaskDTO.setSourceTypeEnum(WorkflowTaskRecordTypeEnum.KOL_B2C_APPLICATION_APPROVE);
+        addTaskDTO.setTraceId(traceId);
+        Map<String, Object> map = new HashMap<>();
+        map.put(TASK_DATA_KOL_ID, entity.getId());
+        map.put(TASK_DATA_KOL_CODE, entity.getCode());
+        addTaskDTO.setFirstNodeInputData(map);
+        return addTaskDTO;
+    }
+
+    private void dispatchKolB2cSubTask(KolB2cApplicationEntity parentEntity, KolSubB2cApplicationEntity subEntity, List<WorkflowTaskRecordEntity> existTasks) {
+        WorkflowTaskRecordDTO.AddTaskDTO addTaskDTO = new WorkflowTaskRecordDTO.AddTaskDTO();
+        addTaskDTO.setSourceId(subEntity.getId());
+        addTaskDTO.setSourceCode(subEntity.getCode());
+        addTaskDTO.setDictBasicTypeEnum(DictBasicTypeEnum.WORKFLOW_TASK_NODE);
+        addTaskDTO.setSourceTypeEnum(WorkflowTaskRecordTypeEnum.KOL_B2C_SUB_APPROVE);
+        addTaskDTO.setTraceId(CollUtil.isNotEmpty(existTasks) ? existTasks.get(0).getTraceId() : TraceContext.traceId());
+        Map<String, Object> map = new HashMap<>();
+        map.put(TASK_DATA_KOL_ID, parentEntity.getId());
+        map.put(TASK_DATA_KOL_CODE, parentEntity.getCode());
+        map.put(TASK_DATA_SUB_ID, subEntity.getId());
+        map.put(TASK_DATA_SUB_CODE, subEntity.getCode());
+        addTaskDTO.setFirstNodeInputData(map);
+        addWorkflowTaskIfAbsent(addTaskDTO, existTasks);
+        List<WorkflowTaskRecordEntity> currentTasks = workflowTaskRecordService.listBySourceId(
+                subEntity.getId(), WorkflowTaskRecordTypeEnum.KOL_B2C_SUB_APPROVE.getCode());
+        if (isWorkflowTaskAllSuccess(currentTasks)) {
+            log.info("KOL B2C拆分单子任务已全部成功，跳过重复调度，subId={}, subCode={}", subEntity.getId(), subEntity.getCode());
+            return;
+        }
+        // 子流程也走统一恢复入口，兼容历史节点补建 instance 后的当前节点重试。
+        workflowTaskRecordService.startOrResume(addTaskDTO);
+    }
+
+    private boolean isWorkflowTaskAllSuccess(List<WorkflowTaskRecordEntity> tasks) {
+        return CollUtil.isNotEmpty(tasks)
+                && tasks.stream()
+                .filter(Objects::nonNull)
+                .filter(e -> !Boolean.TRUE.equals(e.getIsDeleted()))
+                .allMatch(e -> Objects.equals(e.getStatus(), WorkflowTaskRecordStatusEnum.SUCCESS.getCode()));
+    }
+
+    private void addWorkflowTaskIfAbsent(WorkflowTaskRecordDTO.AddTaskDTO addTaskDTO, List<WorkflowTaskRecordEntity> existTasks) {
+        try {
+            if (CollUtil.isNotEmpty(existTasks)) {
+                workflowTaskRecordService.addMissingTask(addTaskDTO, existTasks);
+                return;
+            }
+            workflowTaskRecordService.addTask(addTaskDTO);
+        } catch (ServiceException e) {
+            if (!Objects.equals(e.getCode(), ApiError.WF_TASK_RECORD_DUPLICATE.getCode())) {
+                throw e;
+            }
+            log.warn("任务节点并发创建命中唯一约束，按幂等继续，sourceType={}, sourceId={}",
+                    addTaskDTO.getSourceTypeEnum().getCode(), addTaskDTO.getSourceId());
+        }
+    }
+
+    /**
+     * 子单推送成功后唤醒父流程当前节点，由 startOrResume 决定继续等待、重试或推进 finish 节点。
+     */
+    private void resumeKolB2cParentTask(KolB2cApplicationEntity entity) {
+        List<WorkflowTaskRecordEntity> existTasks = workflowTaskRecordService.listBySourceId(entity.getId(), WorkflowTaskRecordTypeEnum.KOL_B2C_APPLICATION_APPROVE.getCode());
+        if (CollUtil.isEmpty(existTasks)) {
+            return;
+        }
+        WorkflowTaskRecordDTO.AddTaskDTO addTaskDTO = buildKolB2cParentTaskDTO(entity, existTasks.get(0).getTraceId());
+        workflowTaskRecordService.startOrResume(addTaskDTO);
+    }
+
+    private void markKolB2cSubApproveTaskFailed(KolSubB2cApplicationEntity subEntity, String failReason) {
+        List<WorkflowTaskRecordEntity> tasks = workflowTaskRecordService.lambdaQuery()
+                .eq(WorkflowTaskRecordEntity::getSourceId, subEntity.getId())
+                .eq(WorkflowTaskRecordEntity::getSourceType, WorkflowTaskRecordTypeEnum.KOL_B2C_SUB_APPROVE.getCode())
+                .eq(WorkflowTaskRecordEntity::getIsDeleted, false)
+                .orderByAsc(WorkflowTaskRecordEntity::getIndex)
+                .list();
+        if (CollUtil.isEmpty(tasks)) {
+            return;
+        }
+        List<WorkflowTaskRecordEntity> activeTasks = tasks.stream()
+                .filter(task -> WorkflowTaskRecordStatusEnum.PENDING.getCode().equals(task.getStatus())
+                        || WorkflowTaskRecordStatusEnum.PROCESSING.getCode().equals(task.getStatus())
+                        || WorkflowTaskRecordStatusEnum.WAITING.getCode().equals(task.getStatus()))
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(activeTasks)) {
+            return;
+        }
+        List<String> taskIds = activeTasks.stream().map(WorkflowTaskRecordEntity::getId).collect(Collectors.toList());
+        workflowTaskRecordService.lambdaUpdate()
+                .in(WorkflowTaskRecordEntity::getId, taskIds)
+                .set(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.FAILED.getCode())
+                .set(WorkflowTaskRecordEntity::getLastError, failReason)
+                .set(WorkflowTaskRecordEntity::getErrorSource, "remote")
+                .set(WorkflowTaskRecordEntity::getRetryCount, WorkflowTaskRecordService.AUTO_RETRY_MAX_COUNT + 1)
+                .set(WorkflowTaskRecordEntity::getEndTime, LocalDateTime.now())
+                .update();
+        activeTasks.stream()
+                .filter(task -> StringUtils.isNotBlank(task.getInstanceId()))
+                .collect(Collectors.toMap(WorkflowTaskRecordEntity::getInstanceId, Function.identity(), (a, b) -> a))
+                .values()
+                .forEach(task -> workflowTaskInstanceService.markFailed(task.getInstanceId(), task.getIndex(), failReason));
+    }
+
+    private boolean isTerminalFailedTask(WorkflowTaskRecordEntity entity) {
+        return Objects.equals(entity.getStatus(), WorkflowTaskRecordStatusEnum.FAILED.getCode())
+                && Optional.ofNullable(entity.getRetryCount()).orElse(0) >= WorkflowTaskRecordService.TASK_TERMINAL_RETRY_COUNT;
+    }
+
+    private String buildKolB2cSubTaskFailedMsg(List<WorkflowTaskRecordEntity> failedTasks) {
+        String detail = failedTasks.stream()
+                .limit(5)
+                .map(e -> StrUtil.format("{}：{}",
+                        StringUtils.defaultIfBlank(e.getSourceCode(), e.getSourceId()),
+                        StringUtils.defaultIfBlank(e.getLastError(), "子任务失败")))
+                .collect(Collectors.joining("；"));
+        if (failedTasks.size() > 5) {
+            detail = detail + StrUtil.format("；其余{}个失败任务略", failedTasks.size() - 5);
+        }
+        return StrUtil.format("KOL B2C拆分单子任务已失败{}个，{}", failedTasks.size(), detail);
+    }
+
+    private WorkflowTaskRecordDTO.MqResponseDTO handleWorkflowTaskServiceException(WorkflowTaskRecordDTO.MqResponseDTO responseDTO, ServiceException e) {
+        markCurrentWorkflowTaskTransactionRollbackOnly();
+        if (isRetryableWorkflowTaskException(e)) {
+            responseDTO.setErrorMsg(StringUtils.defaultIfBlank(e.getMsg(), ApiError.HTTP_UNKNOWN.getMsg()));
+            return responseDTO;
+        }
+        setTerminalFailed(responseDTO, StringUtils.defaultIfBlank(e.getMsg(), ApiError.HTTP_UNKNOWN.getMsg()));
+        return responseDTO;
+    }
+
+    private WorkflowTaskRecordDTO.MqResponseDTO handleWorkflowTaskUnexpectedException(WorkflowTaskRecordDTO.MqResponseDTO responseDTO, String callbackName, Exception e) {
+        markCurrentWorkflowTaskTransactionRollbackOnly();
+        log.error("KOL B2C任务节点回调执行异常，callback={}", callbackName, e);
+        responseDTO.setErrorMsg(ApiError.HTTP_UNKNOWN.getMsg());
+        return responseDTO;
+    }
+
+    private boolean isRetryableWorkflowTaskException(ServiceException e) {
+        Integer code = e.getCode();
+        return Objects.equals(code, ApiError.HTTP_UNKNOWN.getCode())
+                || Objects.equals(code, ApiError.WF_TASK_RECORD_MQ_SEND_FAILED.getCode());
+    }
+
+    private void markCurrentWorkflowTaskTransactionRollbackOnly() {
+        if (TransactionSynchronizationManager.isActualTransactionActive()) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+        }
+    }
+
+    private void setTerminalFailed(WorkflowTaskRecordDTO.MqResponseDTO responseDTO, String errorMsg) {
+        responseDTO.setStatus(WorkflowTaskRecordStatusEnum.FAILED.getCode());
+        responseDTO.setErrorMsg(errorMsg);
+    }
+
+    private Boolean hasWorkflowTaskNode(WorkflowTaskRecordTypeEnum sourceTypeEnum) {
+        return CollUtil.isNotEmpty(dictBasicService.getByType(DictBasicTypeEnum.WORKFLOW_TASK_NODE.getType(), sourceTypeEnum.getCode()));
+    }
+
+    private String getRequiredString(WorkflowTaskRecordDTO.MqRequestDTO dto, String key) {
+        if (Objects.isNull(dto) || Objects.isNull(dto.getData()) || Objects.isNull(dto.getData().get(key))) {
+            throw new ServiceException(ApiError.COMMON_PARAM_REQUIRED, key);
+        }
+        return String.valueOf(dto.getData().get(key));
+    }
+
+    private void checkWorkflowTaskContext(WorkflowTaskRecordDTO.MqRequestDTO dto, String sourceId, WorkflowTaskRecordTypeEnum sourceTypeEnum, Integer index) {
+        if (Objects.isNull(dto)
+                || StringUtils.isBlank(dto.getTaskId())
+                || StringUtils.isBlank(dto.getSourceType())
+                || Objects.isNull(dto.getIndex())) {
+            throw new ServiceException(ApiError.WF_TASK_RECORD_CONTEXT_REQUIRED);
+        }
+        if (!Objects.equals(dto.getSourceType(), sourceTypeEnum.getCode()) || !Objects.equals(dto.getIndex(), index)) {
+            throw new ServiceException(ApiError.WF_TASK_RECORD_CONTEXT_MISMATCH);
+        }
+        WorkflowTaskRecordEntity taskEntity = workflowTaskRecordService.getActiveTask(sourceId, sourceTypeEnum.getCode(), index);
+        if (Objects.isNull(taskEntity) || !Objects.equals(taskEntity.getId(), dto.getTaskId())) {
+            throw new ServiceException(ApiError.WF_TASK_RECORD_NOT_MATCH);
+        }
+        if (!Objects.equals(taskEntity.getStatus(), WorkflowTaskRecordStatusEnum.PROCESSING.getCode())) {
+            throw new ServiceException(ApiError.WF_TASK_RECORD_NOT_PROCESSING);
+        }
+    }
+
+    private boolean checkKolB2cApproveTaskCanPush(WorkflowTaskRecordDTO.MqResponseDTO responseDTO, KolB2cApplicationEntity entity) {
+        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
+            setTerminalFailed(responseDTO, ApiError.WF_KOL_B2C_APPROVE_REQUIRED.getMsg());
+            return false;
+        }
+        return true;
+    }
+
+    private Map<String, SkuVO> buildKolSubB2cSkuMap(KolSubB2cApplicationDTO.PushDTO pushDTO) {
+        if (Objects.isNull(pushDTO) || CollUtil.isEmpty(pushDTO.getDetailList())) {
+            return Collections.emptyMap();
+        }
+        List<String> skuIds = pushDTO.getDetailList().stream()
+                .map(KolSubB2cApplicationDetailEntity::getSkuId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        return buildKolSubB2cSkuMapBySkuIds(skuIds);
+    }
+
+    private Map<String, SkuVO> buildKolSubB2cSkuMapBySkuNos(List<String> skuNos) {
+        if (CollUtil.isEmpty(skuNos)) {
+            return Collections.emptyMap();
+        }
+        List<SkuVO> skuList = plmTaskFeign.listBySkuNoList(skuNos);
+        return toSkuMap(skuList);
+    }
+
+    private Map<String, SkuVO> buildKolSubB2cSkuMapBySkuIds(List<String> skuIds) {
+        if (CollUtil.isEmpty(skuIds)) {
+            return Collections.emptyMap();
+        }
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
+        return toSkuMap(skuList);
+    }
+
+    private Map<String, SkuVO> toSkuMap(List<SkuVO> skuList) {
+        if (CollUtil.isEmpty(skuList)) {
+            return Collections.emptyMap();
+        }
+        return skuList.stream()
+                .filter(Objects::nonNull)
+                .filter(e -> StringUtils.isNotBlank(e.getSkuId()))
+                .collect(Collectors.toMap(SkuVO::getSkuId, Function.identity(), (o1, o2) -> o1));
+    }
+
+    private String pushSingleSoB2c(KolB2cApplicationEntity kolB2cApplicationEntity, KolSubB2cApplicationDTO.PushDTO pushDTO) {
+        KolSubB2cApplicationEntity subEntity = pushDTO.getEntity();
+        SoB2cEntity exist = soB2cService.lambdaQuery()
+                .eq(SoB2cEntity::getSourceType, SourceTypeEnum.KOL_B2C_APPLICATION.getCode())
+                .eq(SoB2cEntity::getSourceId, subEntity.getId())
+                .eq(SoB2cEntity::getIsDeleted, false)
+                .last("limit 1")
+                .one();
+        if (Objects.nonNull(exist)) {
+            return exist.getCode();
+        }
+        List<KolPartnerInfoEntity> kolPartnerInfoEntities = kolPartnerInfoService.lambdaQuery()
+                .eq(KolPartnerInfoEntity::getId, subEntity.getPartnerId())
+                .eq(KolPartnerInfoEntity::getDisabled, false)
+                .list();
+        Map<String, KolPartnerInfoEntity> partnerMap = kolPartnerInfoEntities.stream().collect(Collectors.toMap(KolPartnerInfoEntity::getId, v -> v));
+        List<KolB2cApplicationAddressEntity> addressList = kolB2cApplicationAddressService.lambdaQuery()
+                .eq(KolB2cApplicationAddressEntity::getMainId, kolB2cApplicationEntity.getId())
+                .eq(KolB2cApplicationAddressEntity::getPartnerId, subEntity.getPartnerId())
+                .list();
+        Map<String, KolB2cApplicationAddressEntity> partnerAddressMap = addressList.stream().collect(Collectors.toMap(KolB2cApplicationAddressEntity::getPartnerId, v -> v));
+        try {
+            UserContext.setIsUserSystem(true);
+            Map<String, String> result = pushSoB2c(kolB2cApplicationEntity, Collections.singletonList(pushDTO), partnerMap, partnerAddressMap);
+            return result.get(subEntity.getCode());
+        } finally {
+            UserContext.clearIsUserSystem();
+        }
+    }
+
 
     private String processOrderCreation(SoB2cDTO.AddDTO dto) {
         // 速卖通手工订单首次添加税后金额=订单金额(其他平台=0)
         dto.checkAndSetAfterTaxAmount();
         ShopInfoEntity shopInfoEntity = shopInfoService.getById(dto.getShopId());
         if(Objects.nonNull(shopInfoEntity) && shopInfoEntity.getDisabled()){
-            throw new ServiceException("店铺已禁用，无法新增订单");
+            throw new ServiceException(ApiError.SAMPLE_B2C_SHOP_DISABLED_ADD_ORDER_FORBIDDEN);
         }
 
         // 通过代理调用，确保 add() 方法上的独立事务生效
@@ -1299,7 +1954,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
 
     @Override
     public KolB2cApplicationDTO.ViewDTO view(String id) {
-        KolB2cApplicationEntity kolB2cApplicationEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到B2C寄样申请单数据"));
+        KolB2cApplicationEntity kolB2cApplicationEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "B2C寄样申请单"));
         KolB2cApplicationDTO.ViewDTO data = BeanMapperUtils.map(KolB2cApplicationDTO.ViewDTO.class, kolB2cApplicationEntity);
 
 
@@ -1333,7 +1988,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         startDTO.setVariablesMap(getVariablesMap(entity));
         ApiResult<ProcessManagementDTO.StartResultDTO> result = workflowFeign.start(startDTO);
         if (!result.isSuccess()) {
-            throw new ServiceException(result.getMsg());
+            throw new ServiceException(ApiError.WF_START_FAILED);
         }
     }
 
@@ -1506,6 +2161,15 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
                 .update(new KolB2cApplicationEntity());
     }
 
+    private void updateBillStatusIfNotIn(String id, String billStatus, Collection<String> skippedStatuses) {
+        lambdaUpdate().eq(KolB2cApplicationEntity::getId, id)
+                .and(wrapper -> wrapper.isNull(KolB2cApplicationEntity::getBillStatus)
+                        .or()
+                        .notIn(CollUtil.isNotEmpty(skippedStatuses), KolB2cApplicationEntity::getBillStatus, skippedStatuses))
+                .set(KolB2cApplicationEntity::getBillStatus, billStatus)
+                .update(new KolB2cApplicationEntity());
+    }
+
     private LoginUser buildCancelCallbackUser(KolB2cApplicationEntity entity) {
         LoginUser userInfo = new LoginUser();
         userInfo.setUid(StrUtil.blankToDefault(entity.getCancelUserId(), "0"));
@@ -1517,20 +2181,61 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         if (ObjectUtil.isEmpty(dto)) {
             return null;
         }
-        if (StringUtils.isNotBlank(dto.getSubOrderId())) {
-            KolSubB2cApplicationEntity subEntity = kolSubB2cApplicationService.getByIdOpt(dto.getSubOrderId()).orElse(null);
+        return getKolSubB2cApplicationByCallback(dto.getSubOrderId(), dto.getSubOrderCode());
+    }
+
+    private KolSubB2cApplicationEntity getKolSubB2cApplicationByCallback(KolB2cApplicationApproveCallbackDTO dto) {
+        if (ObjectUtil.isEmpty(dto)) {
+            return null;
+        }
+        return getKolSubB2cApplicationByCallback(dto.getSubOrderId(), dto.getSubOrderCode());
+    }
+
+    private KolSubB2cApplicationEntity getRequiredKolSubB2cApplicationByApproveCallback(KolB2cApplicationApproveCallbackDTO dto,
+                                                                                        String callbackName) {
+        KolSubB2cApplicationEntity subEntity = getKolSubB2cApplicationByCallback(dto);
+        if (ObjectUtil.isNotEmpty(subEntity)) {
+            return subEntity;
+        }
+        String msg = StrUtil.format("{}失败，无法定位唯一拆分单: subOrderId={}, subOrderCode={}, syncTaskId={}",
+                callbackName, dto.getSubOrderId(), dto.getSubOrderCode(), dto.getSyncTaskId());
+        log.warn(msg);
+        throw new ServiceException(ApiError.SAMPLE_B2C_APPROVE_CALLBACK_SUB_ORDER_NOT_FOUND,
+                dto.getSubOrderId(), dto.getSubOrderCode(), dto.getSyncTaskId());
+    }
+
+    private KolSubB2cApplicationEntity getKolSubB2cApplicationByCallback(String subOrderId, String subOrderCode) {
+        if (StringUtils.isNotBlank(subOrderId)) {
+            KolSubB2cApplicationEntity subEntity = kolSubB2cApplicationService.getByIdOpt(subOrderId).orElse(null);
             if (ObjectUtil.isNotEmpty(subEntity)) {
                 return subEntity;
             }
         }
-        if (StringUtils.isBlank(dto.getSubOrderCode())) {
+        if (StringUtils.isBlank(subOrderCode)) {
             return null;
         }
-        return kolSubB2cApplicationService.lambdaQuery()
-                .eq(KolSubB2cApplicationEntity::getCode, dto.getSubOrderCode())
+        List<KolSubB2cApplicationEntity> subList = kolSubB2cApplicationService.lambdaQuery()
+                .eq(KolSubB2cApplicationEntity::getCode, subOrderCode)
                 .eq(KolSubB2cApplicationEntity::getIsDeleted, false)
+                .last("limit 2")
+                .list();
+        if (CollUtil.size(subList) > 1) {
+            log.warn("KOL B2C回调匹配拆分单失败，拆分单号不唯一: subOrderCode={}", subOrderCode);
+            return null;
+        }
+        if (CollUtil.isNotEmpty(subList)) {
+            return subList.get(0);
+        }
+        KolB2cApplicationEntity mainEntity = this.lambdaQuery()
+                .eq(KolB2cApplicationEntity::getCode, subOrderCode)
+                .eq(KolB2cApplicationEntity::getIsDeleted, false)
                 .last("limit 1")
                 .one();
+        if (ObjectUtil.isNotEmpty(mainEntity)) {
+            log.warn("KOL B2C回调匹配拆分单失败，回调编码命中主单编码，拒绝默认取第一条拆分单: subOrderCode={}, mainId={}",
+                    subOrderCode, mainEntity.getId());
+        }
+        return null;
     }
 
     /**
@@ -1625,7 +2330,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
                 .eq(SoB2cEntity::getIsDeleted, false)
                 .count() > 0;
         if (hasApprovedSoB2c) {
-            throw new ServiceException(StrUtil.format("关联B2C销售订单已审核通过，不允许{}B2C寄样申请单", actionName));
+            throw new ServiceException(ApiError.SAMPLE_B2C_APPROVED_SO_FORBIDDEN_ACTION, actionName);
         }
     }
 

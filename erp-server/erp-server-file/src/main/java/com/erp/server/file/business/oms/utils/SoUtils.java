@@ -8,7 +8,6 @@ import com.common.core.utils.StrUtils;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigDecimal;
@@ -60,6 +59,7 @@ public final class SoUtils {
         headMap.put("addressTypeName", "地址类型");
         headMap.put("receiveConditionName", "收款条件");
         headMap.put("deliveryStatusName", "发货状态");
+        headMap.put("spuNo", "SPU");
         headMap.put("skuNo", "sku");
         headMap.put("productName", "产品名称");
         headMap.put("customerSkuNo", "客户SKU");
@@ -160,25 +160,30 @@ public final class SoUtils {
     }
 
     /**
-     * 导出隐藏主单列
+     * 导出隐藏重复主单的金额列：同一主单(id) 在当前判重范围内的非首行，置空金额类列（仅首行保留）。
+     * <p>
+     * 本方法按 {@code seenMainIds} 维护判重状态，判重范围由调用方决定。
+     * {@code ExportOmsSoHandler} 在 {@code beforeWriteGroupRows} 内按主单分组调用，同组内仅首行保留金额列；
+     * 多 sheet 时基类保证同一主单不跨 sheet 拆分，避免 sheet 边界重复展示金额。
      *
-     * @param dataList
+     * @param row         当前数据行，命中重复时原地置空金额列
+     * @param seenMainIds 当前分组内已出现的主单 id 集合，原地维护
      */
-    public static void hideForExport(List<LinkedHashMap<String, Object>> dataList) {
-        Set<String> mainIds = Sets.newHashSet();
-        for (LinkedHashMap<String, Object> data : dataList) {
-            String id = StrUtils.null2EmptyWithTrim(data.get("id"));
-            if (mainIds.contains(id)) {
-                data.put("bankServiceFee", "");
-                data.put("shippingFee", "");
-                data.put("receiveAmount", "");
-                data.put("discountAmount", "");
-                data.put("orderAmount", "");
-                data.put("allAmountLc", "");
-                continue;
-            }
-            mainIds.add(id);
+    public static void hideRepeatedMainRow(LinkedHashMap<String, Object> row, Set<String> seenMainIds) {
+        if (row == null || seenMainIds == null) {
+            return;
         }
+        String id = StrUtils.null2EmptyWithTrim(row.get("id"));
+        if (seenMainIds.contains(id)) {
+            row.put("bankServiceFee", "");
+            row.put("shippingFee", "");
+            row.put("receiveAmount", "");
+            row.put("discountAmount", "");
+            row.put("orderAmount", "");
+            row.put("allAmountLc", "");
+            return;
+        }
+        seenMainIds.add(id);
     }
 
 

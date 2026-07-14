@@ -220,6 +220,21 @@ eo.partition_id as partitionId
         <include refid="paging_sql"></include>
     </select>
 
+    <select id="pagingCount" resultType="java.lang.Long">
+        SELECT
+        COUNT(1)
+        FROM
+        exhibition_order AS eo
+        LEFT JOIN exhibition_order_detail AS eod ON eo.ID = eod.main_id AND eod.is_deleted = FALSE
+        left join foreign_dict_partition fdp on fdp.id = eo.partition_id and fdp.is_deleted = false
+        WHERE
+        ${params.sqlMap.default}
+        and eo.is_deleted = FALSE
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+    </select>
+
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
         select approve_status, count(id) from exhibition_order where is_deleted = false group by approve_status
     </select>
