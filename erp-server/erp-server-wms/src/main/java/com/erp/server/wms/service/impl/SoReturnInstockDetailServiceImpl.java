@@ -383,6 +383,17 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 detailEntity.setSkuNo(skuVO.getSkuNo());
                 detailEntity.setRealQty(detailDto.getRealQty());
                 detailEntity.setReceiveQty(detailDto.getReceiveQty());
+                // 无售后单关联（如预入库关联店铺）：应退取入参 mustQty；仅 null 时用签收兜底；剩余应退 = 应退 - 历史实退 - 本次实退
+                Integer mustQty = detailDto.getMustQty();
+                if (mustQty == null && detailDto.getReceiveQty() != null) {
+                    mustQty = detailDto.getReceiveQty();
+                }
+                if (mustQty == null) {
+                    mustQty = MathUtil.ZERO;
+                }
+                detailEntity.setMustQty(mustQty);
+                Integer currentRealQty = detailDto.getRealQty() != null ? detailDto.getRealQty() : MathUtil.ZERO;
+                detailEntity.setRemainMustQty(mustQty - (realQty + currentRealQty));
                 detailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
                 detailEntity.setReturnReasonDict(detailDto.getReturnReasonDict());
                 detailEntity.setDefectiveProductFlag(detailDto.getDefectiveProductFlag());
@@ -462,8 +473,17 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             detailEntity.setSkuNo(skuVO.getSkuNo());
             detailEntity.setRealQty(detailDto.getRealQty());
             detailEntity.setReceiveQty(detailDto.getReceiveQty());
-            //此单未关联任何退货单/售后单（notReturnOrderAdd 场景），没有权威的"应退数量"来源可用，remainMustQty 留空，
-            //不用签收数量(receiveQty)兜底计算——签收数量是签收环节确认收到的数量，语义上不等于应退数量
+            // 无退货单/售后单：应退取入参 mustQty；仅 null 时用签收兜底；剩余应退 = 应退 - 历史实退 - 本次实退
+            Integer mustQty = detailDto.getMustQty();
+            if (mustQty == null && detailDto.getReceiveQty() != null) {
+                mustQty = detailDto.getReceiveQty();
+            }
+            if (mustQty == null) {
+                mustQty = MathUtil.ZERO;
+            }
+            detailEntity.setMustQty(mustQty);
+            Integer currentRealQty = detailDto.getRealQty() != null ? detailDto.getRealQty() : MathUtil.ZERO;
+            detailEntity.setRemainMustQty(mustQty - (realQty + currentRealQty));
             detailEntity.setWarehouseLocation(detailDto.getWarehouseLocation());
             detailEntity.setRemark(detailDto.getRemark());
             detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
@@ -914,8 +934,16 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 detailEntity.setSkuNo(skuVO.getSkuNo());
                 detailEntity.setRealQty(detailDto.getRealQty());
                 detailEntity.setReceiveQty(detailDto.getReceiveQty());
-                //此单未关联任何退货单/售后单（无 soReturnId 场景），没有权威的"应退数量"来源可用，remainMustQty 留空，
-                //不用签收数量(receiveQty)兜底计算——签收数量是签收环节确认收到的数量，语义上不等于应退数量
+                // 无售后单关联：Update 无 mustQty 入参，优先保留原明细 mustQty；仅原值为 null 时用签收兜底
+                SoReturnInstockDetailEntity oldDetail = CharSequenceUtil.isNotBlank(detailDto.getId())
+                        ? oldList.stream().filter(o -> detailDto.getId().equals(o.getId())).findFirst().orElse(null)
+                        : null;
+                Integer mustQty = (oldDetail != null && oldDetail.getMustQty() != null)
+                        ? oldDetail.getMustQty()
+                        : (detailDto.getReceiveQty() != null ? detailDto.getReceiveQty() : MathUtil.ZERO);
+                detailEntity.setMustQty(mustQty);
+                Integer currentRealQty = detailDto.getRealQty() != null ? detailDto.getRealQty() : MathUtil.ZERO;
+                detailEntity.setRemainMustQty(mustQty - (realQty + currentRealQty));
                 detailEntity.setWarehouseLocation(detailDto.getWarehouseLocation());
                 detailEntity.setRemark(detailDto.getRemark());
                 detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
@@ -1023,8 +1051,16 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             detailEntity.setSkuNo(skuVO.getSkuNo());
             detailEntity.setRealQty(detailDto.getRealQty());
             detailEntity.setReceiveQty(detailDto.getReceiveQty());
-            //此单未关联任何退货单/售后单（notReturnOrderUpdate 场景），没有权威的"应退数量"来源可用，remainMustQty 留空，
-            //不用签收数量(receiveQty)兜底计算——签收数量是签收环节确认收到的数量，语义上不等于应退数量
+            // 无退货单/售后单：Update 无 mustQty 入参，优先保留原明细 mustQty；仅原值为 null 时用签收兜底
+            SoReturnInstockDetailEntity oldDetail = CharSequenceUtil.isNotBlank(detailDto.getId())
+                    ? oldList.stream().filter(o -> detailDto.getId().equals(o.getId())).findFirst().orElse(null)
+                    : null;
+            Integer mustQty = (oldDetail != null && oldDetail.getMustQty() != null)
+                    ? oldDetail.getMustQty()
+                    : (detailDto.getReceiveQty() != null ? detailDto.getReceiveQty() : MathUtil.ZERO);
+            detailEntity.setMustQty(mustQty);
+            Integer currentRealQty = detailDto.getRealQty() != null ? detailDto.getRealQty() : MathUtil.ZERO;
+            detailEntity.setRemainMustQty(mustQty - (realQty + currentRealQty));
             detailEntity.setWarehouseLocation(detailDto.getWarehouseLocation());
             detailEntity.setRemark(detailDto.getRemark());
             detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
