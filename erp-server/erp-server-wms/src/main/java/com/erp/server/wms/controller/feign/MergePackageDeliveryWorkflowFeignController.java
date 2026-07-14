@@ -154,12 +154,12 @@ public class MergePackageDeliveryWorkflowFeignController extends BaseController 
         }
         SoB2cDeliveryEntity deliveryEntity = findActiveDelivery(soId);
         if (deliveryEntity == null) {
-            return waiting("未找到有效发货单，等待重试");
+            return failed("未找到有效发货单，等待重试");
         }
         try {
             Boolean generated = soB2cDeliveryService.generateB2cSoOutstock(deliveryEntity);
             if (!Boolean.TRUE.equals(generated)) {
-                return waiting("生成销售出库单未完成，等待重试");
+                return failed("生成销售出库单失败");
             }
             redisUtil.del(CharSequenceUtil.format(RedisCacheConstants.MERGE_PACKAGE_RETRY_COUNT_KEY, soId));
             data.put("outstockGenerated", Boolean.TRUE);

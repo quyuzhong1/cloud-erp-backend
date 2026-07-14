@@ -253,6 +253,7 @@ public class AssetNoticeDetailDTO implements Serializable {
         /**
         * 供应商名称
         */
+        @Size(max = 255, message = "供应商名称最大长度不能超过255位")
         private String supplierName;
 
         /**
