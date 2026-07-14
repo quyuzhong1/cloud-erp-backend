@@ -467,9 +467,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         soOutstock.setRemark(soCustomer.getSoRemark());
         soOutstock.setCustomerRemark(soCustomer.getCustomerRemark());
         soOutstock.setPartitionId(soCustomer.getPartitionId());
-        if(OrderTypeEnum.B2B.getCode().equals(soOutstock.getOrderType())){
-            soOutstock.setDeclareStatus(WmsDeclareStatusEnum.WAIT.getCode());
-        }
         if(OrderTypeEnum.B2C.getCode().equals(soOutstock.getOrderType()) && CharSequenceUtil.isNotBlank(soOutstock.getSoId())){
             SoB2cEntity soB2c = soB2cFeign.getById(soOutstock.getSoId());
             if (Objects.nonNull(soB2c)){
@@ -897,22 +894,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             // 销售出库单推送数帝云
             List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByMainIds(Arrays.asList(entity.getId()));
 
-            Boolean isExhibition = Boolean.TRUE;
-            if(OrderTypeEnum.B2B.getCode().equalsIgnoreCase(entity.getOrderType())){
-                List<SoInfoEntity> list = FeignQuery.create(SoInfoEntity.class).eq(SoInfoEntity::getId, entity.getSoId()).list();
-                if(CollUtil.isNotEmpty(list)){
-                    String sourceType = list.get(0).getSourceType();
-                    if(Objects.equals(SourceTypeEnum.EXHIBITION_ORDER.getCode(),sourceType)){
-                        isExhibition = Boolean.FALSE;
-                    }
-                }
-            }
-
-            if(isExhibition){
-                //走TMS自动生成报关单逻辑
-                autoGenerateB2bDeclare(entity,BillGenerateTimingEnum.AFTER_APPROVE);
-            }
-
             //B2B发送金蝶
             sendPushTask(Collections.singletonList(entity),SyncOperateEnum.OPERATE_APPROVE.getCode());
             //推送旺店通
@@ -925,48 +906,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         return Boolean.TRUE;
     }
 
-    /**
-     * 自动生成B2B报关单
-     *
-     * 根据销售出库单信息，在满足条件时自动调用TMS服务生成B2B报关单
-     * 条件包括：非中国地区、报关状态为待报关、订单类型为B2B
-     *
-     * @param entity 销售出库单实体对象，包含出库单详细信息
-     * @throws ServiceException 当自动生成报关单失败时抛出异常
-     */
-    private void autoGenerateB2bDeclare(SoOutstockEntity entity, BillGenerateTimingEnum billGenerateTiming) {
-        if (!"CN".equalsIgnoreCase(entity.getCountry()) && entity.getDeclareStatus().equals(WmsDeclareStatusEnum.WAIT.getCode()) && entity.getOrderType().equals(OrderTypeEnum.B2B.getCode())) {
-            //走TMS自动生成逻辑
-            AutoGenerateBillDTO autoGenerateBillDTO = AutoGenerateBillDTO.builder()
-                    .id(entity.getId())
-                    .billGenerateTimingEnum(billGenerateTiming)
-                    .sourceTypeEnum(SourceTypeEnum.SO_OUTSTOCK)
-                    .soOutstockEntity(entity)
-                    .checkCfg(Boolean.TRUE) // 检查配置
-                    .build();
-            try {
-                Boolean autoGenerateResult;
-                //自动生成功能系统标识
-                Boolean originalValue = UserContext.getIsUserSystem();
-                UserContext.setIsUserSystem(Boolean.TRUE);
-                try {
-                    autoGenerateResult = tmsDeclareBillFeign.autoGenerateB2bDeclare(autoGenerateBillDTO);
-                } finally {
-                    //恢复系统标识
-                    UserContext.setIsUserSystem(originalValue);
-                }
-                if(autoGenerateResult){
-                    TmsDeclareBillDTO.UpdateStatusDTO updateStatusDTO = new TmsDeclareBillDTO.UpdateStatusDTO();
-                    updateStatusDTO.setIds(Collections.singletonList(entity.getId()));
-                    updateStatusDTO.setDeclareStatus(WmsDeclareStatusEnum.FINISH.getCode());
-                    this.updateStatus(updateStatusDTO);
-                }
-            }catch (Exception e){
-                log.error("销售出库单{} 审核后自动生成报关单失败>>>>>>{}", entity.getCode(), e.getMessage());
-                throw new ServiceException(CharSequenceUtil.format("销售出库单{} 审核后自动生成报关单失败>>>>>>{}", entity.getCode(), e.getMessage()));
-            }
-        }
-    }
 
     private void syncToSdy(SoOutstockEntity entity,List<SoOutstockDetailEntity> soOutstockDetailEntityList, String operate) {
         // 配货单推送数帝云
@@ -1430,11 +1369,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
     public BatchResultDTO disApprove(SoOutstockEntity entity, Boolean isPushKingDee) {
-        //下游单据【报关单】生成后不可操作反审核：报关单[单号]已生成不可操作反审核
-        List<TmsDeclareBillEntity> tmsDeclareBillEntities = tmsDeclareBillFeign.listBySourceIds(Collections.singletonList(entity.getSoId()));
-        if (CollUtil.isNotEmpty(tmsDeclareBillEntities)) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(), CharSequenceUtil.format(ApiError.LOGISTICS_DECLARE_BILL_EXISTS_REVERSE_FORBIDDEN.getMsg(),tmsDeclareBillEntities.get(0).getCode()));
-        }
 
         //审核通过
         // 增加 出库单关联的自发货费用单据已确认状态下，不允许出库单反审核
@@ -3911,124 +3845,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             }
         }
     }
-    @Override
-    public List<TmsDeclareBillDTO.SoOutDTO> getCanGenerateDeclare(TmsDeclareBillDTO.QuerySourceDTO querySourceDTO) {
-        List<TmsDeclareBillDTO.SoOutDTO> result = baseMapper.getCanGenerateDeclare(querySourceDTO);
-        if(CollectionUtils.isEmpty(result)){
-            return new ArrayList<>();
-        }
-        List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
-
-        List<String> ids = result.stream().map(TmsDeclareBillDTO.SoOutDTO::getSourceId).collect(Collectors.toList());
-        List<SoOutstockDetailEntity> allDetailEntityList = soOutstockDetailService.listByMainIds(ids);
-        //查询物流产品信息
-        List<String> skuIds = allDetailEntityList.stream().map(SoOutstockDetailEntity::getSkuId).distinct().collect(Collectors.toList());
-        List<ProductDetailDTO.ProductLogisticDTO> allProductLogisticDTOList = plmTaskFeign.listProductLogisticsByIds(skuIds);
-
-        //箱子明细信息
-        List<WmsCartonDetailDTO.ListPackingDetailDTO> packingDetailList = baseMapper.listPackingDetail(ids);
-        Map<String,List<WmsCartonDetailDTO.ListPackingDetailDTO>> packingDetailMap = packingDetailList.stream().collect(Collectors.groupingBy(WmsCartonDetailDTO.ListPackingDetailDTO::getId));
-
-        for (TmsDeclareBillDTO.SoOutDTO deliveryDTO : result) {
-            String countryName = countryList.stream().filter(obj -> obj.getId().equals(deliveryDTO.getCountry())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
-            deliveryDTO.setCountryName(countryName);
-
-            List<SoOutstockDetailEntity> detailEntityList = allDetailEntityList.stream().filter(entity -> entity.getMainId().equals(deliveryDTO.getSourceId())).collect(Collectors.toList());
-            //处理产品信息
-            if(CollectionUtils.isNotEmpty(detailEntityList)){
-                //转成MAP，相同sku数量相加
-                Map<String,SoOutstockDetailEntity> detailEntityMap = detailEntityList.stream().collect(Collectors.toMap(SoOutstockDetailEntity::getSkuId,
-                        Function.identity(),(o1, o2)->{
-                            SoOutstockDetailEntity mergeDetail = new SoOutstockDetailEntity();
-                            mergeDetail.setSkuId(o1.getSkuId());
-                            mergeDetail.setPlanQty(o1.getPlanQty()+o2.getPlanQty());
-                            return mergeDetail;
-                        }));
-                List<TmsDeclareBillDTO.ProductDetail> productDetailList = new ArrayList<>();
-                List<ProductDetailDTO.ProductLogisticDTO> productLogisticDTOList = allProductLogisticDTOList.stream().filter(v->detailEntityMap.containsKey(v.getSkuId())).collect(Collectors.toList());
-                for (ProductDetailDTO.ProductLogisticDTO productLogisticDTO : productLogisticDTOList) {
-                    SoOutstockDetailEntity detailEntity = detailEntityMap.get(productLogisticDTO.getSkuId());
-                    if(productLogisticDTO.getCombinationDeclareType().equals(CombinationDeclareTypeEnums.SPLIT.getCode()) && productLogisticDTO.getIsCombination()){
-                        //拆分申报的组合品，拆成子SKU
-                        for (ProductDetailDTO.ProductLogisticDTO logisticDTO : productLogisticDTO.getChildList()) {
-                            TmsDeclareBillDTO.ProductDetail productDetail = BeanUtil.copyProperties(logisticDTO,TmsDeclareBillDTO.ProductDetail.class);
-                            productDetail.setQty(detailEntity.getPlanQty() * logisticDTO.getChildQty());
-                            productDetail.setToCountry(deliveryDTO.getCountry());
-                            productDetail.setToCountryName(deliveryDTO.getCountryName());
-                            productDetailList.add(productDetail);
-                        }
-                    }else{
-                        TmsDeclareBillDTO.ProductDetail productDetail = BeanUtil.copyProperties(productLogisticDTO,TmsDeclareBillDTO.ProductDetail.class);
-                        productDetail.setQty(detailEntity.getPlanQty());
-                        productDetail.setToCountry(deliveryDTO.getCountry());
-                        productDetail.setToCountryName(deliveryDTO.getCountryName());
-                        productDetailList.add(productDetail);
-                    }
-                }
-                deliveryDTO.setNetWeight(productDetailList.stream().filter(v->Objects.nonNull(v.getNetWeight())).map(v->v.getNetWeight().multiply(new BigDecimal(v.getQty())).divide(new BigDecimal(1000),4, RoundingMode.HALF_UP)).reduce(BigDecimal.ZERO, BigDecimal::add));
-                deliveryDTO.setProductDetailList(productDetailList);
-            }
-
-            //设置装箱信息
-            List<WmsCartonDetailDTO.ListPackingDetailDTO> list = packingDetailMap.getOrDefault(deliveryDTO.getSourceId(),new ArrayList<>());
-            if(CollectionUtils.isNotEmpty(list)){
-                List<TmsDeclareBillDTO.PackingDTO> packingDTOList = BeanUtil.copyToList(list,TmsDeclareBillDTO.PackingDTO.class);
-                packingDTOList.forEach(t->t.setCode(deliveryDTO.getSourceCode()));
-                deliveryDTO.setPackingDTOList(packingDTOList);
-            }
-            deliveryDTO.setBoxQty(list.size());
-            deliveryDTO.setGrossWeight(list.stream()
-                    .map(WmsCartonDetailDTO.ListPackingDetailDTO::getPackageWeight)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add));
-        }
-        //合并相同的sku
-        for (TmsDeclareBillDTO.SoOutDTO deliveryDTO : result) {
-            List<TmsDeclareBillDTO.ProductDetail> productDetails = deliveryDTO.getProductDetailList();
-            if(productDetails == null){
-                productDetails = new ArrayList<>();
-            }
-            // 根据 skuId 进行分组，并对数量进行求和
-            List<TmsDeclareBillDTO.ProductDetail> mergedDetails = new ArrayList<>(productDetails.stream()
-                    .collect(Collectors.toMap(
-                            TmsDeclareBillDTO.ProductDetail::getSkuId,
-                            Function.identity(),
-                            (existing, replacement) -> {
-                                // 合并数量
-                                existing.setQty(existing.getQty() + replacement.getQty());
-                                // 其他字段取第一个出现的值
-                                return existing;
-                            }
-                    ))
-                    .values());
-            mergedDetails.forEach(v->{
-                if(Objects.nonNull(v.getPrice())){
-                    v.setTotalPrice(v.getPrice().multiply(new BigDecimal(v.getQty())));
-                }
-            });
-            deliveryDTO.setProductDetailList(mergedDetails);
-        }
-
-        return result;
-    }
 
     @Override
     public List<FirstMileDeliveryDTO.LogisticStatisticsDTO> logisticStatistics(FirstMileDeliveryDTO.StatisticsReq deliveryStaticsReq) {
         return baseMapper.logisticStatistics(deliveryStaticsReq);
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public Boolean updateStatus(TmsDeclareBillDTO.UpdateStatusDTO dto) {
-        if(CharSequenceUtil.isBlank(dto.getDeclareStatus()) && CharSequenceUtil.isBlank(dto.getLogisticsStatus())){
-            return false;
-        }
-        return this.lambdaUpdate()
-                .in(SoOutstockEntity :: getId,dto.getIds())
-                .set(CharSequenceUtil.isNotBlank(dto.getDeclareStatus()),SoOutstockEntity::getDeclareStatus,dto.getDeclareStatus())
-                .update();
-
-    }
 
     /**
      * 根据单号查询出库单
@@ -4681,48 +4503,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         soMultiChannelFeign.updateSoMultiOutstockQty(outstockQtyDTOList);
     }
 
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    public BatchResultDTO generateB2bDeclar(String id) {
-        SoOutstockEntity entity = getById(id);
-        if (Objects.isNull(entity)) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.SO_OUTBOUND_NOT_FOUND.getMsg() );
-        }
-        //限制B2B类型,未作废,审核状态为未审核 才可下推报关单
-        Boolean isB2B = OrderTypeEnum.B2B.getCode().equals(entity.getOrderType());
-        if(!isB2B || Objects.equals(entity.getInvalidStatus(), Boolean.TRUE)){
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.SO_OUTBOUND_B2B_REQUIRED.getMsg() );
-        }
-        //生成B2B报关单
-        if (!"CN".equalsIgnoreCase(entity.getCountry()) && entity.getDeclareStatus().equals(WmsDeclareStatusEnum.WAIT.getCode()) && entity.getOrderType().equals(OrderTypeEnum.B2B.getCode())) {
-            //走TMS自动生成逻辑
-            AutoGenerateBillDTO autoGenerateBillDTO = AutoGenerateBillDTO.builder()
-                    .id(entity.getId())
-                    .billGenerateTimingEnum(BillGenerateTimingEnum.AFTER_PACKING)
-                    .sourceTypeEnum(SourceTypeEnum.SO_OUTSTOCK)
-                    .soOutstockEntity(entity)
-                    .checkCfg(Boolean.FALSE) //不检查配置
-                    .build();
-            try {
-                Boolean autoGenerateResult = tmsDeclareBillFeign.autoGenerateB2bDeclare(autoGenerateBillDTO);
-                if(autoGenerateResult){
-                    TmsDeclareBillDTO.UpdateStatusDTO updateStatusDTO = new TmsDeclareBillDTO.UpdateStatusDTO();
-                    updateStatusDTO.setIds(Collections.singletonList(entity.getId()));
-                    updateStatusDTO.setDeclareStatus(WmsDeclareStatusEnum.FINISH.getCode());
-                    this.updateStatus(updateStatusDTO);
-                }else {
-                    throw new ServiceException("下推生成报关单失败");
-                }
-            }catch (Exception e){
-                log.error("销售出库单{} 生成报关单失败>>>>>>{}", entity.getCode(), e.getMessage());
-                throw new ServiceException(CharSequenceUtil.format("销售出库单{} 生成报关单失败>>>>>>{}", entity.getCode(), e.getMessage()));
-            }
-        }else {
-            throw new ServiceException("仅限B2B类型的且报关状态为待报关的出库单可生成报关单");
-        }
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
-    }
 
     @Override
     public SoOutstockEntity getBySourceCode(String sourceCode) {

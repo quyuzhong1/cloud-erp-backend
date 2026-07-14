@@ -535,6 +535,7 @@ public enum RocketMqTagEnum {
      * 金蝶同步销售出库单到WMS
      */
     SYNC_WDT_SO_OUT_STOCK_TAG(6007,RocketMqTagEnum.SYNC_WMS,"sync_wdt_so_out_stock_tag"),
+
     //---------------------------------马帮数据同步code从7001开始------------------------------------------------------------------------------------------
 
     /**

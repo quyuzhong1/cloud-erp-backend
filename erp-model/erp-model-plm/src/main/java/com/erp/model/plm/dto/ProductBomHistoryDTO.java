@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * @author Will
@@ -38,5 +39,19 @@ public class ProductBomHistoryDTO implements Serializable {
         private String bomVersion;
     }
 
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class BomHistoryQueryDTO {
+        /**
+         * BOM 历史 id 集合
+         */
+        private List<String> bomHistoryIds;
+
+        /**
+         * 组合品父 SKU id 集合
+         */
+        private List<String> parentSkuIds;
+    }
 
 }

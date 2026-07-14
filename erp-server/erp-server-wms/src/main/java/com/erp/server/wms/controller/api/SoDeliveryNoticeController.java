@@ -17,11 +17,13 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
+import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.entity.PackingTaskEntity;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import com.erp.server.wms.query.SoDeliveryNoticeQueryHandler;
+import com.erp.server.wms.service.FirstMileDeliveryService;
 import com.erp.server.wms.service.PackingTaskService;
 import com.erp.server.wms.service.SoDeliveryNoticeService;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +32,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -91,6 +94,14 @@ public class SoDeliveryNoticeController extends BaseController {
     public ApiResult<List<SoDeliveryNoticeDTO.StatusCountDTO>> listCount(@RequestBody PermissionsDTO dto) {
         List<SoDeliveryNoticeDTO.StatusCountDTO> soDeliveryNoticeCountDTOS = soDeliveryNoticeService.listCount(dto);
         return success(soDeliveryNoticeCountDTOS);
+    }
+
+    /**
+     * 根据发货通知单ids获取客户国家下拉。
+     */
+    @PostMapping("/countryDropDownByIds")
+    public ApiResult<List<BaseDropDownDTO.DisabledDTO>> countryDropDownByIds(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        return success(soDeliveryNoticeService.countryDropDownByIds(dto.getIds()));
     }
 
     /**
@@ -615,5 +626,108 @@ public class SoDeliveryNoticeController extends BaseController {
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+
+
+    /**
+     * 报关状态更新
+     * @author will
+     * @date 2026/4/24 14:44
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.common.business.dto.base.BatchResultDTO>>
+     */
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "报关状态更新")
+    @PostMapping(value = "/updateDeclareStatus")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:soDeliveryNotice:updateDeclareStatus",
+            serviceClass = SoDeliveryNoticeService.class,
+            keyIdName = "ids")
+    public ApiResult<List<BatchResultDTO>> updateDeclareStatus(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<SoDeliveryNoticeEntity> entityList = soDeliveryNoticeService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            BatchResultDTO resultDTO;
+            SoDeliveryNoticeEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"发货通知单记录不存在"));
+                continue;
+            }
+            try {
+                resultDTO = soDeliveryNoticeService.updateNotNeedDeclare(id);
+            }catch (Exception e){
+                log.error("报关状态更新",e);
+                if (ObjectUtil.isEmpty(entity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "发货通知单不存在, 报关状态更新失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 添加产品明细（查询未生成的B2B发货通知单明细信息）
+     * @author will
+     * @date 2026/4/21 19:09
+     * @return com.common.core.controller.vo.ApiResult<java.lang.Object>
+     */
+    @PostMapping("/listNotGenerateB2bDetailPaging")
+    @WebAdvanceQuery
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            warehouseTableField = "sdn.warehouse_id",
+            menuCode = "wms:soDeliveryNotice:paging",
+            tableAlias = "sdn"
+    )
+    public ApiResult<PagingVO<TmsDeclareBillDTO.NotGenerateDetailDTO>> listNotGenerateB2bDetailPaging(@RequestBody @Valid PagingDTO<TmsDeclareBillDTO.NotGenerateParamDTO> dto)  {
+        PagingVO<TmsDeclareBillDTO.NotGenerateDetailDTO> pagingVO = soDeliveryNoticeService.listNotGenerateB2bDetailPaging(dto);
+        return success(pagingVO);
+    }
+
+    /**
+     * 下推b2b报关单（合并前）
+     * @author will
+     * @date 2026/4/23 18:00
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.lang.Object>
+     */
+    @PostMapping("/listBeforePushB2bDeclare")
+    public ApiResult<List<TmsDeclareBillDTO.SourceDeliveryDetailDTO>> listBeforePushB2bDeclare(@RequestBody @Valid TmsDeclareBillDTO.PushDeclareBeforeParamDTO dto)  {
+        return success(soDeliveryNoticeService.listBeforePushB2bDeclare(dto));
+    }
+
+
+    /**
+     * 下推b2b报关单（合并后）
+     * @author will
+     * @date 2026/4/23 18:00
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<List<TmsDeclareBillDTO.SourceDeliveryDetailDTO>>
+     */
+    @PostMapping("/listAfterPushB2bDeclare")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:tmsB2BDeclareBill:batchAddMergeDetail",
+            serviceClass = SoDeliveryNoticeService.class,
+            keyIdName = "ids")
+    public ApiResult<List<TmsDeclareBillDTO.MergeDeclareBillDTO>> listAfterPushB2bDeclare(@RequestBody @Valid TmsDeclareBillDTO.PushDeclareBeforeParamDTO dto)  {
+        return success(soDeliveryNoticeService.listAfterPushB2bDeclare(dto));
+    }
+
+    /**
+     * b2b报关单（BOM拆分后不合并，按来源明细最小维度返回）
+     * @author will
+     * @date 2026/5/9 15:00
+     * @param list
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.MergeDeclareBillDTO>>
+     */
+    @PostMapping("/listAfterPushB2bDeclareNoMerge")
+    public ApiResult<TmsDeclareBillDTO.MergeDeclareBillDTO> listAfterPushB2bDeclareNoMerge(@RequestBody @Valid ValidList<TmsDeclareBillDTO.PushDeclareNoMergeDTO> list)  {
+        return success(soDeliveryNoticeService.listAfterPushB2bDeclareNoMerge(list.getList()));
+    }
+
 }
 

@@ -37,11 +37,6 @@ public class TmsDeclareBillEntity extends BaseEntity<TmsDeclareBillEntity> {
     @TableField("code")
     private String code;
     /**
-    * 来源类型：头程,B2B
-    */
-    @TableField("source_type")
-    private String sourceType;
-    /**
     * 报关状态
     */
     @TableField("declare_status")
@@ -51,17 +46,6 @@ public class TmsDeclareBillEntity extends BaseEntity<TmsDeclareBillEntity> {
     */
     @TableField("business_type")
     private String businessType;
-
-    /**
-     * 来源id
-     */
-    @TableField("source_id")
-    private String sourceId;
-    /**
-     * 来源编码
-     */
-    @TableField("source_code")
-    private String sourceCode;
 
     /**
      * 提运单号，头程的话这个值是空的，B2B的话是页面手动输入
@@ -95,6 +79,21 @@ public class TmsDeclareBillEntity extends BaseEntity<TmsDeclareBillEntity> {
     @TableField(value = "declare_date",updateStrategy = FieldStrategy.IGNORED)
     private LocalDate declareDate;
     /**
+    * 报关确认日期
+    */
+    @TableField(value = "declare_confirm_date", updateStrategy = FieldStrategy.IGNORED)
+    private LocalDate declareConfirmDate;
+    /**
+    * 报关确认人id
+    */
+    @TableField(value = "declare_user_id")
+    private String declareUserId;
+    /**
+    * 报关确认人
+    */
+    @TableField(value = "declare_user_name")
+    private String declareUserName;
+    /**
     * 报关类型
     */
     @TableField("declare_type")
@@ -114,6 +113,16 @@ public class TmsDeclareBillEntity extends BaseEntity<TmsDeclareBillEntity> {
     */
     @TableField("sender_id")
     private String senderId;
+    /**
+     * 发货人名称
+     */
+    @TableField("sender_name")
+    private String senderName;
+    /**
+     * 发货人类型
+     */
+    @TableField("sender_type")
+    private String senderType;
 
     /**
     * 出境关别
@@ -126,10 +135,20 @@ public class TmsDeclareBillEntity extends BaseEntity<TmsDeclareBillEntity> {
     @TableField("export_date")
     private LocalDate exportDate;
     /**
+     * 收货人id
+     */
+    @TableField("receiver_id")
+    private String receiverId;
+    /**
     * 收货人名称
     */
     @TableField("receiver_name")
     private String receiverName;
+    /**
+     * 收货人类型
+     */
+    @TableField("receiver_type")
+    private String receiverType;
     /**
     * 监管方式
     */
@@ -200,11 +219,6 @@ public class TmsDeclareBillEntity extends BaseEntity<TmsDeclareBillEntity> {
     */
     @TableField("box_qty")
     private Integer boxQty;
-    /**
-    * 合并来源Id
-    */
-    @TableField("merge_source_id")
-    private String mergeSourceId;
 
 
     public static final String FIELD_CODE = "code";
@@ -215,6 +229,8 @@ public class TmsDeclareBillEntity extends BaseEntity<TmsDeclareBillEntity> {
 
     public static final String LOGISTICS_SUPPLIER_ID = "logistics_supplier_id";
 
+    public static final String LOGISTICS_SUPPLIER_NAME = "logistics_supplier_name";
+
     public static final String DELIVERY_TYPE = "delivery_type";
 
     public static final String FIELD_COUNTRY = "country";
@@ -224,6 +240,12 @@ public class TmsDeclareBillEntity extends BaseEntity<TmsDeclareBillEntity> {
     public static final String GROSS_WEIGHT = "gross_weight";
 
     public static final String DECLARE_DATE = "declare_date";
+
+    public static final String DECLARE_CONFIRM_DATE = "declare_confirm_date";
+
+    public static final String DECLARE_USER_ID = "declare_user_id";
+
+    public static final String DECLARE_USER_NAME = "declare_user_name";
 
     public static final String DECLARE_TYPE = "declare_type";
 
