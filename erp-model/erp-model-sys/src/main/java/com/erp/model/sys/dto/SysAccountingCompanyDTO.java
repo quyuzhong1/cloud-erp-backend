@@ -1,6 +1,5 @@
 package com.erp.model.sys.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -86,6 +85,11 @@ public class SysAccountingCompanyDTO {
      */
     @NotBlank(message = "统一社会信用代码不能为空")
     private String usciCode;
+
+    /**
+     * 公司海关代码
+     */
+    private String companyHsCode;
     
     /**
      * 组织职能（下拉项接口：http://172.16.100.11:3002/project/36/interface/api/10672	type传orgFuntion）

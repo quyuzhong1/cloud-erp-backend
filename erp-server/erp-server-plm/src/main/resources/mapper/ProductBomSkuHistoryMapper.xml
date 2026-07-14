@@ -11,6 +11,7 @@
         pbs.parent_sku_no as parentSkuNo,
         pbs.sku_id as skuId,
         pbs.sku_no as skuNo,
+        pbi.bom_version as thisBomVersion,
         pbi.type AS type,
         pbs.quantity as quantity,
         pp.product_length as productLength,
