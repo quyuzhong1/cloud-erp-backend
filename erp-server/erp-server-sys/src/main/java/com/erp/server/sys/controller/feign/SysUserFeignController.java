@@ -20,6 +20,8 @@ import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.model.sys.entity.SysUserThirdEntity;
 import com.erp.model.sys.entity.SysUserWechatEntity;
 import com.erp.model.sys.vo.SupplierUserVO;
+import com.erp.model.sys.vo.SysUserMenuAuthVO;
+import com.erp.model.sys.vo.SysUserPermissionAuthVO;
 import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.server.sys.constant.SysConstant;
 import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeService;
@@ -78,6 +80,15 @@ public class SysUserFeignController extends BaseController {
     @Resource
     private RedisService redisService;
 
+    /**
+     * 账号登录（Feign 内部接口）
+     * <p>
+     * 校验账号密码并返回用户基础信息，不再组装菜单与权限数据。
+     * </p>
+     *
+     * @param dto 登录入参
+     * @return 用户基础信息
+     */
     @PostMapping("/accountLogin")
     public ApiResult<SysUserDTO> accountLogin(@RequestBody AccountLoginDTO dto) {
         SysUserDTO info = sysUserInfoService.accountLogin(dto);
@@ -215,6 +226,34 @@ public class SysUserFeignController extends BaseController {
         sysUserDTO.setLeftMenuList(leftMenuList);
 
         return success(sysUserDTO);
+    }
+
+    /**
+     * 获取用户菜单权限（Feign 内部接口）
+     * <p>
+     * 供 auth 服务调用，返回 leftMenuList 与 overallMenuList。
+     * </p>
+     *
+     * @param dto 用户 ID 及所属系统类型
+     * @return 菜单权限数据
+     */
+    @PostMapping("/getUserMenuAuth")
+    public ApiResult<SysUserMenuAuthVO> getUserMenuAuth(@RequestBody @Validated SysFeignDTO.UserLoginInfoDTO dto) {
+        return success(sysUserInfoService.getUserMenuAuth(dto.getUserId(), dto.getUserType()));
+    }
+
+    /**
+     * 获取用户按钮权限编码（Feign 内部接口）
+     * <p>
+     * 供 auth 服务调用，返回 permissionList。
+     * </p>
+     *
+     * @param dto 用户 ID 及所属系统类型
+     * @return 按钮权限编码列表
+     */
+    @PostMapping("/getUserPermissionAuth")
+    public ApiResult<SysUserPermissionAuthVO> getUserPermissionAuth(@RequestBody @Validated SysFeignDTO.UserLoginInfoDTO dto) {
+        return success(sysUserInfoService.getUserPermissionAuth(dto.getUserId(), dto.getUserType()));
     }
 
     /**

@@ -170,6 +170,26 @@ public class TransferInfoDTO implements Serializable {
         private String outWarehouseLocationName;
 
         /**
+         * 调出库存状态(usable可用/frozen冻结/defectiveProduct不良品)
+         */
+        private String outInventoryStatus;
+
+        /**
+         * 调出库存状态名称
+         */
+        private String outInventoryStatusName;
+
+        /**
+         * 调入库存状态(usable可用/frozen冻结/defectiveProduct不良品)
+         */
+        private String inInventoryStatus;
+
+        /**
+         * 调入库存状态名称
+         */
+        private String inInventoryStatusName;
+
+        /**
          * 备注
          */
         private String remark;
@@ -528,6 +548,26 @@ public class TransferInfoDTO implements Serializable {
          * 数量
          */
         private Integer qty;
+
+        /**
+         * 调出库存状态(usable可用/frozen冻结/defectiveProduct不良品)
+         */
+        private String outInventoryStatus;
+
+        /**
+         * 调出库存状态名称
+         */
+        private String outInventoryStatusName;
+
+        /**
+         * 调入库存状态(usable可用/frozen冻结/defectiveProduct不良品)
+         */
+        private String inInventoryStatus;
+
+        /**
+         * 调入库存状态名称
+         */
+        private String inInventoryStatusName;
     }
 
     /**

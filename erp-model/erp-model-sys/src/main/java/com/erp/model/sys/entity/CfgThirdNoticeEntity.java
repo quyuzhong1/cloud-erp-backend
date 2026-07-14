@@ -62,15 +62,17 @@ public class CfgThirdNoticeEntity extends BaseEntity<CfgThirdNoticeEntity> {
     @TableField("url")
     private String url;
     /**
+    * 跳转链接类型：custom=自定义路径，menu=选择菜单
+    * 枚举：CfgThirdNoticeUrlTypeEnum
+    */
+    @TableField("url_type")
+    private String urlType;
+    public static final String URL_TYPE = "url_type";
+    /**
     * cron
     */
     @TableField("cron")
     private String cron;
-    /**
-    * 通知人员
-    */
-    @TableField("role_type")
-    private String roleType;
     /**
     * 具体人员
     */
@@ -106,6 +108,11 @@ public class CfgThirdNoticeEntity extends BaseEntity<CfgThirdNoticeEntity> {
     public static final String NOTICE_TYPE = "notice_type";
 
     public static final String URL = "url";
+    /**
+    * 通知人员
+    */
+    @TableField("role_type")
+    private String roleType;
 
     public static final String CRON = "cron";
 

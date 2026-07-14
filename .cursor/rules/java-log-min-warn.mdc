@@ -1,0 +1,38 @@
+---
+description: Agent 新增 Java 业务诊断日志最低级别为 warn
+globs: "**/*.java"
+alwaysApply: true
+---
+
+# Java 日志最低级别：warn
+
+Agent **新增或修改** Java 业务代码中的诊断/排查日志时，级别**最低使用 `warn`**，禁止新增 `log.debug` / `log.info` 用于业务排查埋点。
+
+## 适用
+
+- 第三方 API 入参/出参核对（如速卖通 `goods_length`）
+- 关键分支、补偿、降级、数据兜底的可观测日志
+- 为排查问题临时加的上下文日志
+
+## 要求
+
+- 使用 `log.warn(...)` 或 `log.error(...)`（失败/异常用 `error`）
+- 不要为“方便看一眼”新增 `log.info` / `log.debug`
+- 日志勿打印 token、密码、完整授权串等敏感信息；尺寸、单号等业务字段可打
+
+## 示例
+
+```java
+// ✅
+log.warn("createorder goods dims: goods_length={}, goods_width={}, goods_height={}",
+        length, width, height);
+
+// ❌ 新增排查日志不要用 info/debug
+log.info("createorder goods dims: ...");
+log.debug("authMap:{}", authMap);
+```
+
+## 不适用
+
+- 不要求批量改写历史已有的 `log.info` / `log.debug`（除非当前 MR 正在改同一处）
+- 框架/中间件自带日志、测试代码中的日志不受本规则强制

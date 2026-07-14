@@ -97,6 +97,9 @@
         <if test="params.type !=null and params.type!=''">
             AND sm.type =#{params.type}
         </if>
+        <if test="params.shopId != null and params.shopId != ''">
+            AND sm.shop_id = #{params.shopId}
+        </if>
         <!--权限-->
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
@@ -893,6 +896,62 @@
             ${params.permissionSql}
         </if>
         ORDER BY li.platform_sku_no,sm.create_time DESC
+    </select>
+
+    <!-- 统计未匹配SKU数量，按不同维度分组：
+         warehouse → 按 overseas_provider（li.auth_id）分组，短名称取 op.short_name，
+                     过滤条件对应按 li.auth_id（authId）过滤，与分组维度保持一致；
+         platform/b2bPlatform/customer → 按 sm.platform_name + sm.dict_platform 分组，
+                     过滤条件对应按 sm.warehouse_id（ERP仓库维度，warehouseId）过滤；
+         使用 li.match_result = 'false' 判断未匹配，与前端 Tab 计数保持一致；
+         groupName 为空（JOIN 未命中或字段为空）时由调用方归入"未知"分组 -->
+    <select id="countUnmatchedGroupByWarehouse" resultType="com.erp.model.oms.dto.SkuMappingDTO$UnmatchCountDTO">
+        SELECT
+            <choose>
+                <when test="'warehouse'.equals(params.type)">
+                    COALESCE(NULLIF(MAX(op.short_name), ''), NULL) AS groupName,
+                </when>
+                <otherwise>
+                    COALESCE(NULLIF(sm.platform_name, ''), NULLIF(sm.dict_platform, ''), NULL) AS groupName,
+                </otherwise>
+            </choose>
+            COUNT(*) AS unmatchCount
+        FROM sku_mapping sm
+        INNER JOIN listing_info li ON li.id = sm.listing_id AND li.is_deleted = false AND li.match_result = 'false'
+        LEFT JOIN overseas_provider op ON op.id = li.auth_id AND op.is_deleted = false
+        WHERE sm.is_deleted = false
+          AND sm.is_expire   = false
+          <choose>
+              <when test="'warehouse'.equals(params.type)">
+                  <if test="params.authId != null and params.authId != ''">
+                      AND li.auth_id = #{params.authId}
+                  </if>
+              </when>
+              <otherwise>
+                  <if test="params.warehouseId != null and params.warehouseId != ''">
+                      AND sm.warehouse_id = #{params.warehouseId}
+                  </if>
+              </otherwise>
+          </choose>
+          <if test="params.shopId != null and params.shopId != ''">
+              AND sm.shop_id = #{params.shopId}
+          </if>
+          <if test="params.dictPlatform != null and params.dictPlatform != ''">
+              AND sm.dict_platform = #{params.dictPlatform}
+          </if>
+          <if test="params.type != null and params.type != ''">
+              AND sm.type = #{params.type}
+          </if>
+        <choose>
+            <when test="'warehouse'.equals(params.type)">
+                GROUP BY li.auth_id
+            </when>
+            <otherwise>
+                GROUP BY sm.platform_name, sm.dict_platform
+            </otherwise>
+        </choose>
+        HAVING COUNT(*) > 0
+        ORDER BY unmatchCount DESC
     </select>
 
 </mapper>

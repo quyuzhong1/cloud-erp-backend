@@ -67,6 +67,14 @@ public class OverseasProviderFeignController {
         return overseasProviderService.listAllMatch();
     }
 
+    /**
+     * 按服务商主键 id（authId）精确查询已匹配的仓库信息，避免每次全表扫描
+     */
+    @GetMapping("/listMatchByMainId")
+    public List<OverseasProviderDTO.ListWithWarehouseDTO> listMatchByMainId(@RequestParam("mainId") String mainId) {
+        return overseasProviderService.listMatchByMainId(mainId);
+    }
+
     @GetMapping("/listProviderWarehouseBySql")
     public List<String> listProviderWarehouseBySql(@RequestParam String compareCodeSplicingValueSql) {
         return overseasProviderWarehouseService.listProviderWarehouseBySql(compareCodeSplicingValueSql);
