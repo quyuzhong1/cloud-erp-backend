@@ -116,6 +116,9 @@
         <if test="params.warehouseId != null and params.warehouseId != ''">
             and wl.warehouse_id = #{params.warehouseId}
         </if>
+        <if test="params.code != null and params.code != ''">
+            and wl.code = #{params.code}
+        </if>
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
             and ((wl.code = #{params.searchKeyword}) or wl.name ilike concat('%', #{params.searchKeyword}::text ,'%'))
         </if>
@@ -366,6 +369,9 @@
         </if>
         <if test="params.warehouseId != null and params.warehouseId != ''">
             and wl.warehouse_id = #{params.warehouseId}
+        </if>
+        <if test="params.code != null and params.code != ''">
+            and wl.code = #{params.code}
         </if>
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
             and ((wl.code = #{params.searchKeyword}) or wl.name ilike concat('%', #{params.searchKeyword}::text ,'%'))
