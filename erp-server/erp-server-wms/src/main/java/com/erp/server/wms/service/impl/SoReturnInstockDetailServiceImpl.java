@@ -383,16 +383,18 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 detailEntity.setSkuNo(skuVO.getSkuNo());
                 detailEntity.setRealQty(detailDto.getRealQty());
                 detailEntity.setReceiveQty(detailDto.getReceiveQty());
-                // 无售后单关联（如预入库关联店铺）：应退取入参 mustQty；仅 null 时用签收兜底；剩余应退 = 应退 - 历史实退 - 本次实退
+                // 无售后单关联（如预入库关联店铺）：应退取入参 mustQty；mustQty 缺失或非正数时用签收数量兜底；
+                // 兜底后仍不足以覆盖已实退数量时，以累计实退数量为下限，避免应退数量小于实退数量导致剩余应退为负
                 Integer mustQty = detailDto.getMustQty();
-                if (mustQty == null && detailDto.getReceiveQty() != null) {
+                if ((mustQty == null || mustQty <= 0) && detailDto.getReceiveQty() != null && detailDto.getReceiveQty() > 0) {
                     mustQty = detailDto.getReceiveQty();
                 }
                 if (mustQty == null) {
                     mustQty = MathUtil.ZERO;
                 }
-                detailEntity.setMustQty(mustQty);
                 Integer currentRealQty = detailDto.getRealQty() != null ? detailDto.getRealQty() : MathUtil.ZERO;
+                mustQty = Math.max(mustQty, realQty + currentRealQty);
+                detailEntity.setMustQty(mustQty);
                 detailEntity.setRemainMustQty(mustQty - (realQty + currentRealQty));
                 detailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
                 detailEntity.setReturnReasonDict(detailDto.getReturnReasonDict());
@@ -473,16 +475,18 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             detailEntity.setSkuNo(skuVO.getSkuNo());
             detailEntity.setRealQty(detailDto.getRealQty());
             detailEntity.setReceiveQty(detailDto.getReceiveQty());
-            // 无退货单/售后单：应退取入参 mustQty；仅 null 时用签收兜底；剩余应退 = 应退 - 历史实退 - 本次实退
+            // 无退货单/售后单：应退取入参 mustQty；mustQty 缺失或非正数时用签收数量兜底；
+            // 兜底后仍不足以覆盖已实退数量时，以累计实退数量为下限，避免应退数量小于实退数量导致剩余应退为负
             Integer mustQty = detailDto.getMustQty();
-            if (mustQty == null && detailDto.getReceiveQty() != null) {
+            if ((mustQty == null || mustQty <= 0) && detailDto.getReceiveQty() != null && detailDto.getReceiveQty() > 0) {
                 mustQty = detailDto.getReceiveQty();
             }
             if (mustQty == null) {
                 mustQty = MathUtil.ZERO;
             }
-            detailEntity.setMustQty(mustQty);
             Integer currentRealQty = detailDto.getRealQty() != null ? detailDto.getRealQty() : MathUtil.ZERO;
+            mustQty = Math.max(mustQty, realQty + currentRealQty);
+            detailEntity.setMustQty(mustQty);
             detailEntity.setRemainMustQty(mustQty - (realQty + currentRealQty));
             detailEntity.setWarehouseLocation(detailDto.getWarehouseLocation());
             detailEntity.setRemark(detailDto.getRemark());
@@ -934,15 +938,17 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 detailEntity.setSkuNo(skuVO.getSkuNo());
                 detailEntity.setRealQty(detailDto.getRealQty());
                 detailEntity.setReceiveQty(detailDto.getReceiveQty());
-                // 无售后单关联：Update 无 mustQty 入参，优先保留原明细 mustQty；仅原值为 null 时用签收兜底
+                // 无售后单关联：Update 无 mustQty 入参，优先保留原明细 mustQty；原值缺失或非正数时用签收数量兜底
                 SoReturnInstockDetailEntity oldDetail = CharSequenceUtil.isNotBlank(detailDto.getId())
                         ? oldList.stream().filter(o -> detailDto.getId().equals(o.getId())).findFirst().orElse(null)
                         : null;
-                Integer mustQty = (oldDetail != null && oldDetail.getMustQty() != null)
+                Integer mustQty = (oldDetail != null && oldDetail.getMustQty() != null && oldDetail.getMustQty() > 0)
                         ? oldDetail.getMustQty()
-                        : (detailDto.getReceiveQty() != null ? detailDto.getReceiveQty() : MathUtil.ZERO);
-                detailEntity.setMustQty(mustQty);
+                        : (detailDto.getReceiveQty() != null && detailDto.getReceiveQty() > 0 ? detailDto.getReceiveQty() : MathUtil.ZERO);
                 Integer currentRealQty = detailDto.getRealQty() != null ? detailDto.getRealQty() : MathUtil.ZERO;
+                // 兜底后仍不足以覆盖已实退数量时，以累计实退数量为下限，避免应退数量小于实退数量导致剩余应退为负
+                mustQty = Math.max(mustQty, realQty + currentRealQty);
+                detailEntity.setMustQty(mustQty);
                 detailEntity.setRemainMustQty(mustQty - (realQty + currentRealQty));
                 detailEntity.setWarehouseLocation(detailDto.getWarehouseLocation());
                 detailEntity.setRemark(detailDto.getRemark());
@@ -1051,15 +1057,17 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             detailEntity.setSkuNo(skuVO.getSkuNo());
             detailEntity.setRealQty(detailDto.getRealQty());
             detailEntity.setReceiveQty(detailDto.getReceiveQty());
-            // 无退货单/售后单：Update 无 mustQty 入参，优先保留原明细 mustQty；仅原值为 null 时用签收兜底
+            // 无退货单/售后单：Update 无 mustQty 入参，优先保留原明细 mustQty；原值缺失或非正数时用签收数量兜底
             SoReturnInstockDetailEntity oldDetail = CharSequenceUtil.isNotBlank(detailDto.getId())
                     ? oldList.stream().filter(o -> detailDto.getId().equals(o.getId())).findFirst().orElse(null)
                     : null;
-            Integer mustQty = (oldDetail != null && oldDetail.getMustQty() != null)
+            Integer mustQty = (oldDetail != null && oldDetail.getMustQty() != null && oldDetail.getMustQty() > 0)
                     ? oldDetail.getMustQty()
-                    : (detailDto.getReceiveQty() != null ? detailDto.getReceiveQty() : MathUtil.ZERO);
-            detailEntity.setMustQty(mustQty);
+                    : (detailDto.getReceiveQty() != null && detailDto.getReceiveQty() > 0 ? detailDto.getReceiveQty() : MathUtil.ZERO);
             Integer currentRealQty = detailDto.getRealQty() != null ? detailDto.getRealQty() : MathUtil.ZERO;
+            // 兜底后仍不足以覆盖已实退数量时，以累计实退数量为下限，避免应退数量小于实退数量导致剩余应退为负
+            mustQty = Math.max(mustQty, realQty + currentRealQty);
+            detailEntity.setMustQty(mustQty);
             detailEntity.setRemainMustQty(mustQty - (realQty + currentRealQty));
             detailEntity.setWarehouseLocation(detailDto.getWarehouseLocation());
             detailEntity.setRemark(detailDto.getRemark());
