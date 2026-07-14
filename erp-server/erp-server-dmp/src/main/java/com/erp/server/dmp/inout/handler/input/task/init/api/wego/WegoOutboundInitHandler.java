@@ -150,7 +150,6 @@ public class WegoOutboundInitHandler extends DmpInputInitHandler {
                         authId, resp.getErrorCode(), resp.getErrorMsg(), pageNum);
                 throw new ServiceException(ApiError.WH_WEGO_OUTBOUND_RESPONSE_FAILED, resp.getErrorCode(), resp.getErrorMsg());
             }
-            if (resp == null || resp.getResult() == null) { break; }
             WegoOutboundResp.PageResultDTO pageResult = resp.getResult();
             if (pageResult == null) {
                 log.error("[WEGO出库] 服务商[id={}] query2cOrderPage success=true 但 result 为空, pageNum={}", authId, pageNum);
