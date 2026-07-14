@@ -18,6 +18,8 @@ import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import com.common.business.annotation.DistributeLocker;
+import com.common.message.constant.DistributeKeyConstant;
 
 
 @Service
@@ -34,6 +36,7 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysRoleUserMapper, SysRo
      * @param ifAdd
      */
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.SYS_USER_AUTH_KEY, keyName = "uid", unlockAfterTx = true)
     public void batchInsertRef(String uid, List<String> roleIds, boolean ifAdd) {
         //如果是修改 则要先删除数据
         if (!ifAdd) {

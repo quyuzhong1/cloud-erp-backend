@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.Map;
+import com.common.business.annotation.DistributeLocker;
+import com.common.message.constant.DistributeKeyConstant;
 
 /**
  * @author Will
@@ -59,6 +61,7 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
     private AssetPurchaseOrderDetailService assetPurchaseOrderDetailService;
 
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.KINGDEE_SYNC_KEY, keyName = "params.code,params.businessId", unlockAfterTx = true)
     public void updateBusinessSyncKingdeeStatus(Map<String, Object> params) {
         //模块类型编码
         String code = (String) params.get("code");

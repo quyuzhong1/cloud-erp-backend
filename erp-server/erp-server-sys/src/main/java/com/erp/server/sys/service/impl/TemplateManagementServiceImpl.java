@@ -51,6 +51,8 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_SYS_TEMPLATE;
+import com.common.business.annotation.DistributeLocker;
+import com.common.message.constant.DistributeKeyConstant;
 
 /**
  * <p>
@@ -77,6 +79,7 @@ public class TemplateManagementServiceImpl extends SuperServiceImpl<TemplateMana
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.SYS_TEMPLATE_DEFAULT_KEY, keyName = "addDTO.type", unlockAfterTx = true)
     public BaseResultDTO.AddDTO add(TemplateManagementDTO.AddDTO addDTO) {
         if(addDTO.getBizType().equals(TemplateManagementBizTypeEnum.PURCHASEFRAMEWORK.getCode())){
             throw new ServiceException("采购框架合同无法创建模板");
@@ -119,6 +122,7 @@ public class TemplateManagementServiceImpl extends SuperServiceImpl<TemplateMana
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.SYS_TEMPLATE_DEFAULT_KEY, keyName = "addOrUpdateDTO.type", unlockAfterTx = true)
     public Boolean update(TemplateManagementDTO.UpdateDTO addOrUpdateDTO) {
         if(addOrUpdateDTO.getBizType().equals(TemplateManagementBizTypeEnum.PURCHASEFRAMEWORK.getCode())){
             throw new ServiceException("采购框架合同无法创建模板");

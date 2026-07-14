@@ -350,7 +350,7 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DataIdempotent
+    @DistributeLocker(businessType = DistributeKeyConstant.SO_B2C_FALSE_DELIVERY_KEY, keyName = "soB2cId", unlockAfterTx = true)
     public BatchResultDTO retryFalseDelivery(String soB2cId) {
         // 直接重新触发标记发货
         // 调用第三方平台SDK标记发货(独立事务)

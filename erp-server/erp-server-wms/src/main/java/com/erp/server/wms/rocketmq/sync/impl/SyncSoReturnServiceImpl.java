@@ -69,6 +69,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import com.common.business.annotation.DistributeLocker;
+import com.common.message.constant.DistributeKeyConstant;
 
 @Service
 @Slf4j
@@ -114,7 +116,7 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DataIdempotent(keyIdName = "kingdeeReturnOrderEntity.fBillNo", leaseTime = 30, waitTime = 20)
+    @DistributeLocker(businessType = DistributeKeyConstant.KINGDEE_SYNC_KEY, keyName = "kingdeeReturnOrderEntity.fBillNo", waiteTime = 20, unlockAfterTx = true)
     public void syncKingdeeReturnOrderToSoReturn(KingdeeReturnOrderEntity kingdeeReturnOrderEntity) {
         //跳过优质胜和小隼科技的单
         if (CharSequenceUtil.isEmpty(kingdeeReturnOrderEntity.getFSaleOrgId()) || ApiKingdeeOrganizationEnum.ORGANIZATION_YZS.getCode().equals(kingdeeReturnOrderEntity.getFSaleOrgId()) || ApiKingdeeOrganizationEnum.ORGANIZATION_XX.getCode().equals(kingdeeReturnOrderEntity.getFSaleOrgId())) {
@@ -244,7 +246,7 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
     }
 
     @Override
-    @DataIdempotent(keyIdName = "dto.thirdCode")
+    @DistributeLocker(businessType = DistributeKeyConstant.WDT_RETURN_SYNC_KEY, keyName = "dto.thirdCode")
     public void syncWdtReturnOrderToSoReturn(WdtReturnOrderDTO dto) {
         //入库时间根据查询其他入库单是否已存在，存在取修改时间，否则取审核时间
         OtherInstockEntity dbOtherInstockEntity = otherInstockService.getByThirdCode(dto.getThirdCode(), InventoryDirectionEnum.ORDINARY);

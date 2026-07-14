@@ -55,6 +55,7 @@ import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import com.common.message.constant.DistributeKeyConstant;
 /**
  * <p>
  * 拉取任务 服务实现类
@@ -206,6 +207,7 @@ public class DmpInputTaskServiceImpl extends SuperServiceImpl<DmpInputTaskMapper
 
 	@Transactional(rollbackFor = Exception.class)
 	@Override
+    @DistributeLocker(businessType = DistributeKeyConstant.DMP_PULL_TASK_KEY, keyName = "dmpInputTaskEntity.id", unlockAfterTx = true)
 	public void createNewTask(DmpInputTaskEntity dmpInputTaskEntity) {
 		String errorMessage = dmpInputTaskEntity.getErrorMessage();
 		String id = dmpInputTaskEntity.getId();

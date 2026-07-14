@@ -64,7 +64,6 @@ public class SoB2cDeliveryFeignController extends BaseController {
       * @create 2023-12-18 15:47
       */
     @PostMapping("/add")
-    @DataIdempotent(keyIdName = "dto.soCode",businessType = DistributeKeyConstant.SO_B2C_DELIVERY_KEY)
     public Boolean add(@RequestBody SoB2cDeliveryDTO.AddDTO dto) {
         soB2cDeliveryService.add(dto);
         return true;

@@ -68,6 +68,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import com.common.business.annotation.DistributeLocker;
+import com.common.message.constant.DistributeKeyConstant;
 
 /**
  * <p>
@@ -365,7 +367,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
     }
 
     @Override
-    @DataIdempotent(keyIdName = "ids")
+    @DistributeLocker(businessType = DistributeKeyConstant.SO_B2C_BOM_SPLIT_KEY, keyName = "ids")
     public List<BatchResultDTO> bomSplitAndSave(List<String> ids) {
         List<SoB2cEntity> soB2cEntityList = this.listByIds(ids);
         List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainIds(ids);
@@ -808,7 +810,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
 
 
     @Override
-    @DataIdempotent(keyIdName = "dto.id")
+    @DistributeLocker(businessType = DistributeKeyConstant.SO_B2C_SPLIT_KEY, keyName = "dto.id")
     public SoB2cDTO.SplitSaveResultDTO splitSave(SoB2cDTO.SplitSaveDTO dto) {
         SoB2cDTO.SplitSaveResultDTO resultDTO = service.handleSplit(dto);
         service.splitRule(resultDTO);

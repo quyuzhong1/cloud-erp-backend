@@ -37,6 +37,8 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
+import com.common.business.annotation.DistributeLocker;
+import com.common.message.constant.DistributeKeyConstant;
 
 /**
  * <p>
@@ -166,7 +168,7 @@ public class CfgAppClientServiceImpl extends SuperServiceImpl<CfgAppClientMapper
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DataIdempotent(keyIdName = "shopInfo.platformShopCode", waitTime = 90)
+    @DistributeLocker(businessType = DistributeKeyConstant.AMZ_AUTH_KEY, keyName = "shopInfo.platformShopCode", waiteTime = 90, unlockAfterTx = true)
     public AmazonTokenDTO requestAmzAndAuth(ShopInfoEntity shopInfo, CfgAppClientEntity cfgAppClient) {
         // 查询已授权信息
         //根据店铺id 获取到授权信息

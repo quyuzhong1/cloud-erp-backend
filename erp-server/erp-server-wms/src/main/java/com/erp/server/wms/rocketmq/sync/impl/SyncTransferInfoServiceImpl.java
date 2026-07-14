@@ -41,6 +41,8 @@ import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import com.common.business.annotation.DistributeLocker;
+import com.common.message.constant.DistributeKeyConstant;
 
 /**
  * @description: 同步直接调拨单业务层
@@ -65,7 +67,7 @@ public class SyncTransferInfoServiceImpl implements SyncTransferInfoService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DataIdempotent(keyIdName = "entity.code", leaseTime = 30, waitTime = 20)
+    @DistributeLocker(businessType = DistributeKeyConstant.KINGDEE_SYNC_KEY, keyName = "entity.code", waiteTime = 20, unlockAfterTx = true)
     public void syncKingdeeTransferInfo(DmpTransferInfoDTO entity) {
 
         TransferInfoDTO.ViewDTO oldTransferInfo = transferInfoService.viewTransferInfoByCode(entity.getCode());

@@ -54,6 +54,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_PROCESS_CFG_PROCESS;
+import com.common.business.annotation.DistributeLocker;
+import com.common.message.constant.DistributeKeyConstant;
 
 /**
  * <p>
@@ -305,6 +307,7 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_THIRD_START_KEY, keyName = "dto.businessKey,dto.businessId", unlockAfterTx = true)
     public void startThirdProcess(CfgProcessDTO.StartDTO dto) {
         log.info("开始创建飞书审批实例,启动参数为:{}", dto);
         //查询approvalCode

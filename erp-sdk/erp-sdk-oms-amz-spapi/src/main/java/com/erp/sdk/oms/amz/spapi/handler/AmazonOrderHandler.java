@@ -47,6 +47,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+import com.common.business.annotation.DistributeLocker;
 
 /**
  * 亚马逊订单处理器
@@ -207,7 +208,7 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
     }
 
     @Override
-    @DataIdempotent(keyIdName = "dto.redissonKey", waitTime = 20)
+    @DistributeLocker(keyName = "dto.redissonKey", waiteTime = 20)
     public PlatformAmazonOrderDTO downloadDetail(PlatformAmazonOrderDTO dto, JSONObject extendObj) {
         // 缓存获取
         String key = StrUtil.format(RedisCacheConstants.AMZ_SP_API_RESULT_PREFIX, AmazonRequestTypeRateLimiterEnum.ORDER_ITEMS.getBusinessTypeName(), dto.getUniqueId());
@@ -321,7 +322,7 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
     }
 
 
-    @DataIdempotent(keyIdName = "dto.redissonKey", waitTime = 20)
+    @DistributeLocker(keyName = "dto.redissonKey", waiteTime = 20)
     public PlatformAmazonOrderDTO downloadAddressAndBuyInfo(PlatformAmazonOrderDTO dto, JSONObject extendObj) {
         if ( null != dto.getOrder().getShippingAddress() &&
                 StringUtils.isNotBlank(dto.getOrder().getShippingAddress().getName())){

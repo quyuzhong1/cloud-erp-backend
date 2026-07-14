@@ -162,6 +162,7 @@ import java.util.stream.Stream;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SO_OUT_STOCK;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SO_OUT_STOCK_DYNAMIC;
+import com.common.message.constant.DistributeKeyConstant;
 
 /**
  * <p>
@@ -1025,7 +1026,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
-    @DataIdempotent(keyIdName = "dto.id")
+    @DistributeLocker(businessType = DistributeKeyConstant.SO_OUTSTOCK_APPROVE_KEY, keyName = "dto.id", unlockAfterTx = true)
     public BatchResultDTO approve(ApproveOneDTO dto) {
         SoOutstockEntity entity = this.getById(dto.getId());
         if (Objects.isNull(entity)) {
@@ -1479,7 +1480,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DataIdempotent(keyIdName = "entity.code" , businessType = "saveLogisticsBill")
+    @DistributeLocker(businessType = DistributeKeyConstant.SAVE_LOGISTICS_BILL_KEY, keyName = "entity.code", unlockAfterTx = true)
     public void saveLogisticsBill(SoOutstockEntity entity) {
         if(CollUtil.isNotEmpty(FeignQuery.create(LogisticsBillEntity.class).eq(LogisticsBillEntity::getIsDeleted,Boolean.FALSE).eq(LogisticsBillEntity::getOutstockId, entity.getId()).list())) {
             throw new ServiceException("小包物流单已生成");
@@ -3361,6 +3362,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * @date 2023-12-11 16:17
      */
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.SO_OUTSTOCK_GENERATE_KEY, keyName = "soB2cId", unlockAfterTx = true)
     public Boolean generateB2cSoOutstock(String soB2cId) {
         SoOutstockEntity outstock = this.getBySoId(soB2cId);
         if (Objects.isNull(outstock)) {
@@ -3527,6 +3529,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     }
 
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.SO_OUTSTOCK_GENERATE_KEY, keyName = "generateB2cDTO.soId", unlockAfterTx = true)
     public Boolean generateB2cSoOutstock(SoOutstockDTO.GenerateB2cDTO generateB2cDTO) {
         Boolean result = createB2cSoOutstock(generateB2cDTO);
         if (result) {
@@ -4305,7 +4308,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * @return
      */
     @Override
-    @DataIdempotent(keyIdName = "redissonKey", waitTime = 10)
+    @DistributeLocker(businessType = DistributeKeyConstant.PLATFORM_GENERATE_SO_OUTSTOCK_KEY, keyName = "redissonKey", waiteTime = 10)
     public Boolean generateB2cSoOutstockByPlatformData(PlatformGenerateSoOutstockDTO platformGenerateSoOutstockDTO, String redissonKey) {
         List<PlatformDeliveryDetailDTO> platformDeliveryDetailDTO = platformGenerateSoOutstockDTO.getPlatformDeliveryDetailDTOList();
         if(CollectionUtils.isEmpty(platformDeliveryDetailDTO)){
@@ -4379,6 +4382,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     }
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.SO_OUTSTOCK_GENERATE_KEY, keyName = "ids", unlockAfterTx = true)
     public Boolean afreshGenerateB2cOutstock(List<String> ids) {
         Map<String, SoB2cEntity> mainMap = soB2cFeign.listByIds(ids)
                 .stream()
@@ -4730,6 +4734,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     }
 
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.SO_OUTSTOCK_GENERATE_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO handleWdtData(String id) {
         SoOutstockEntity entity = this.soOutstockService.getById(id);
         if (ObjectUtil.isEmpty(entity)) {

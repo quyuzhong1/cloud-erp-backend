@@ -70,6 +70,8 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import com.common.business.annotation.DistributeLocker;
+import com.common.message.constant.DistributeKeyConstant;
 /**
  * <p>
  * 拉取调度 服务实现类
@@ -401,6 +403,7 @@ public class DmpCfgInputDetailServiceImpl extends SuperServiceImpl<DmpCfgInputDe
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.DMP_PULL_TASK_KEY, keyName = "id", waiteTime = 60, unlockAfterTx = true)
     public BatchResultDTO doTask(String id, DmpCfgInputDetailDTO.DoTaskDTO dto, DmpCfgInputEntity dmpCfgInputEntity, DmpCfgInputDetailEntity entity) {
         if (DmpCfgInputExecSystemEnum.DMP.getCode().equals(dmpCfgInputEntity.getExecSystem())){
             // 中台执行
@@ -443,6 +446,7 @@ public class DmpCfgInputDetailServiceImpl extends SuperServiceImpl<DmpCfgInputDe
 
 	@Override
 	@Transactional(rollbackFor = Exception.class)
+	@DistributeLocker(businessType = DistributeKeyConstant.DMP_PULL_TASK_KEY, keyName = "inventoryMonthCheckEnum.code", waiteTime = 60, unlockAfterTx = true)
 	public BatchResultDTO reCreateInventoryMonthCheck(InventoryMonthCheckEnum inventoryMonthCheckEnum, String checkMonth,
 			String sourceSystem) {
 		if(sourceSystem == null) {

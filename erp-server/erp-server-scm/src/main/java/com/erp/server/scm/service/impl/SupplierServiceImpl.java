@@ -2300,66 +2300,6 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
              updateDTO.setTelNumber(DesensitizedUtil.mobilePhone(updateDTO.getTelNumber()));
         }
     }
-    /**
-     * 查看是否存在权限
-     * @author will
-     * @date 2025/7/25 12:21
-     * @param billIdList
-     * @param menuCode
-     * @param menuTableField
-     * @return Boolean
-     */
-    private Boolean isExistAuth (List<String> billIdList,String menuCode,String menuTableField) {
-        //判断是否有权限回填产品信息
-        LoginUser userInfo = UserContext.getDefaultLoginUser();
-        List<UserRequestPermissionsDTO> requestPermissionsList = sysUserFeign.getRequestPermissionsList(userInfo.getUid());
-        UserRequestPermissionsDTO userRequestPermissions = new UserRequestPermissionsDTO();
-        List<String> roleIdList = sysUserFeign.getRoleIdList(userInfo.getUid());
-        if (roleIdList.contains("1")) {
-            userRequestPermissions.setPermissionsCode(menuCode);
-            userRequestPermissions.setDataScope(DataPermissionAspect.DATA_SCOPE_ALL);
-        } else {
-            userRequestPermissions = requestPermissionsList
-                    .stream()
-                    .filter(p -> p.getPermissionsCode().equals(menuCode))
-                    .findFirst()
-                    .orElse(null);
-        }
-        if (ObjectUtils.isEmpty(userRequestPermissions)) {
-            return Boolean.FALSE;
-        }
-        List<String> userList = sysUserFeign.getDepUserList(userInfo.getUid());
-        List<String> users = new ArrayList<>();
-        List<?> objects = this.listByIds(billIdList);
-        for (Object object : objects) {
-            JSONObject jsonObject = JSONObject.parseObject(JSONObject.toJSONString(object));
-
-            if (CharSequenceUtil.isBlank(menuTableField)) {
-                return Boolean.FALSE;
-            }
-            String[] tableFields = menuTableField.split(",");
-            for (String tableField : tableFields) {
-                Object o = jsonObject.get(StrUtils.underlineToCamel(tableField, true));
-                if (o == null) {
-                    continue;
-                }
-                users.addAll(Arrays.asList(o.toString().split(",")));
-            }
-        }
-        if (DataPermissionAspect.DATA_SCOPE_ALL.equals(userRequestPermissions.getDataScope())) {
-            return Boolean.TRUE;
-        } else if (DataPermissionAspect.DATA_SCOPE_DEPT.equals(userRequestPermissions.getDataScope())) {
-            long containsUserCount = users.stream().filter(u -> userList.contains(u)).count();
-            if (containsUserCount == 0) {
-                return Boolean.FALSE;
-            }
-        } else if (DataPermissionAspect.DATA_SCOPE_SELF.equals(userRequestPermissions.getDataScope())) {
-            if (!users.contains(userInfo.getUid())) {
-                return Boolean.FALSE;
-            }
-        }
-        return Boolean.TRUE;
-    }
 
     /**
      * 处理导入数据

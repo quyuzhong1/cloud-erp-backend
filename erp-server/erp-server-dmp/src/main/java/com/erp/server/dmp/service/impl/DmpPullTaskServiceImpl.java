@@ -54,6 +54,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_PULL_TASK;
+import com.common.business.annotation.DistributeLocker;
+import com.common.message.constant.DistributeKeyConstant;
 
 /**
  * <p>
@@ -129,7 +131,7 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DataIdempotent(keyIdName = "dmpPullTaskEntity.redissonKey", waitTime = 30)
+    @DistributeLocker(businessType = DistributeKeyConstant.DMP_PULL_TASK_KEY, keyName = "dmpPullTaskEntity.redissonKey", waiteTime = 30, unlockAfterTx = true)
     public String saveOrUpdateDmpSyncTask(DmpPullTaskEntity dmpPullTaskEntity) {
         DmpPullTaskEntity found = lambdaQuery()
                 .eq(DmpPullTaskEntity::getSourceType, dmpPullTaskEntity.getSourceType())
@@ -278,6 +280,7 @@ public class DmpPullTaskServiceImpl extends SuperServiceImpl<DmpPullTaskMapper, 
     }
 
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.DMP_PULL_TASK_KEY, keyName = "ids", waiteTime = 60)
     public Boolean batchSync(List<String> ids) {
         List<DmpPullTaskEntity> list = this.listByIds(ids);
         if (CollectionUtils.isEmpty(list)) {

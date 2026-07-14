@@ -21,6 +21,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import com.common.business.annotation.DistributeLocker;
+import com.common.message.constant.DistributeKeyConstant;
 
 /**
  * 更新金蝶状态
@@ -90,6 +92,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
     }
 
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.KINGDEE_SYNC_KEY, keyName = "params.code,params.businessId", unlockAfterTx = true)
     public void updateBusinessSyncKingdeeStatus(Map<String, Object> params) {
         //模块类型编码
         //模块类型编码

@@ -34,6 +34,8 @@ import javax.annotation.Resource;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import com.common.business.annotation.DistributeLocker;
+import com.common.message.constant.DistributeKeyConstant;
 
 /**
  * <p>
@@ -145,6 +147,7 @@ public class AuthUserWarehouseServiceImpl extends SuperServiceImpl<AuthUserWareh
     @Override
     @Transactional(rollbackFor = Exception.class)
     @CacheEvict(value = "cache:sys:warehouseUser:getWarehouseUserList", key = "#uid")
+    @DistributeLocker(businessType = DistributeKeyConstant.SYS_USER_AUTH_KEY, keyName = "uid", unlockAfterTx = true)
     public void batchSaveOrUpdate(String uid, List<String> warehouseIdList, String warehouseAuthType, boolean ifAdd) {
         if (CharSequenceUtil.isBlank(uid)) {
             return;

@@ -152,7 +152,6 @@ public class DeliveryOrderController extends BaseController {
     */
     @PostMapping("/update")
     @LogAction(value = LogActionEnum.UPDATE, desc = "送货单编辑")
-    @DataIdempotent(keyIdName = "dto.id")
     public ApiResult<Object> update(@RequestBody @Validated DeliveryOrderDTO.UpdateDTO dto) {
         deliveryOrderService.update(dto);
         return success();

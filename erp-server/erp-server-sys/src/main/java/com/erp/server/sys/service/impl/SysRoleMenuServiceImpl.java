@@ -27,6 +27,8 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import com.common.business.annotation.DistributeLocker;
+import com.common.message.constant.DistributeKeyConstant;
 
 
 @Service
@@ -80,6 +82,7 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
      */
     @Override
     @Transactional
+    @DistributeLocker(businessType = DistributeKeyConstant.SYS_USER_AUTH_KEY, keyName = "batchDTO.roleId", unlockAfterTx = true)
     public boolean batchSaveRoleMenu(SysRoleMenuBatchDTO batchDTO) {
         Set<SysRoleMenuDataScopeDTO> menuIds = batchDTO.getMenuIdList();
         String roleId = batchDTO.getRoleId();

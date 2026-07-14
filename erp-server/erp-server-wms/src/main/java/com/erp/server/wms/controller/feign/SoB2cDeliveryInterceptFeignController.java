@@ -40,7 +40,6 @@ public class SoB2cDeliveryInterceptFeignController extends BaseController {
      * @return com.common.business.dto.base.BaseResultDTO.AddDTO
      **/
     @PostMapping("/add")
-    @DataIdempotent(keyIdName = "dto.sourceCode",businessType = DistributeKeyConstant.SO_B2C_DELIVERY_INTERCEPT_KEY)
     public BaseResultDTO.AddDTO add(@RequestBody SoB2cDeliveryInterceptDTO.AddDTO dto) {
         BaseResultDTO.AddDTO add = soB2cDeliveryInterceptService.add(dto);
         return add;

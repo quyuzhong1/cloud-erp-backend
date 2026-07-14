@@ -43,6 +43,8 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import java.util.*;
 import java.util.stream.Collectors;
+import com.common.business.annotation.DistributeLocker;
+import com.common.message.constant.DistributeKeyConstant;
 
 /**
  * <p>
@@ -76,6 +78,7 @@ public class KingdeeDepartmentServiceImpl extends SuperServiceImpl<KingdeeDepart
 
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.KINGDEE_SYNC_KEY, keyName = "addDTO.kingdeeDeptName,addDTO.useOrgId", unlockAfterTx = true)
     public Boolean add(KingdeeDepartmentDTO.AddDTO addDTO) {
         KingdeeDepartmentEntity kingdeeDepartmentEntity = new KingdeeDepartmentEntity();
         BeanMapperUtils.copy(addDTO, kingdeeDepartmentEntity);
@@ -102,6 +105,7 @@ public class KingdeeDepartmentServiceImpl extends SuperServiceImpl<KingdeeDepart
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.KINGDEE_SYNC_KEY, keyName = "updateDTO.id", unlockAfterTx = true)
     public Boolean update(KingdeeDepartmentDTO.UpdateDTO updateDTO) {
         KingdeeDepartmentEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "金蝶部门不存在"));
@@ -294,6 +298,7 @@ public class KingdeeDepartmentServiceImpl extends SuperServiceImpl<KingdeeDepart
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    @DistributeLocker(businessType = DistributeKeyConstant.KINGDEE_SYNC_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO delete(String id) {
         KingdeeDepartmentEntity entity = super.getById(id);
         List<KingdeePostEntity> postList = kingdeePostService.listByKingDeptId(id);
