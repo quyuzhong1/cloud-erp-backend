@@ -421,6 +421,20 @@ public final class ApiErrorWms {
     public static final ApiError WH_WEGO_WAREHOUSE_TOKEN_SECRET_MISSING = new ApiError("WH_WEGO_WAREHOUSE_TOKEN_SECRET_MISSING", 11215, "WEGO授权信息appToken/appSecret缺失,authId:{0}");
     public static final ApiError WH_WEGO_INBOUND_DETAIL_JSON_PARSE_FAILED = new ApiError("WH_WEGO_INBOUND_DETAIL_JSON_PARSE_FAILED", 11217, "WEGO入库明细 detail_list_json 解析失败，inboundId={0}");
     public static final ApiError WH_BORROW_WAREHOUSE_USABLE_INSUFFICIENT = new ApiError("WH_BORROW_WAREHOUSE_USABLE_INSUFFICIENT", 11218, "SKU【{0}】，借调仓【{1}】，可用数【{2}】，可用库存不足，无法借调");
+    public static final ApiError WH_AIYA_SDK_INBOUND_PAGE_CONVERT_FAILED = new ApiError("WH_AIYA_SDK_INBOUND_PAGE_CONVERT_FAILED", 11219, "AIYA 分页查询入库单接口响应转换失败: {0}");
+    public static final ApiError WH_AIYA_SDK_OUTBOUND_SEARCH_NO_RESPONSE = new ApiError("WH_AIYA_SDK_OUTBOUND_SEARCH_NO_RESPONSE", 11220, "AIYA 查询2C出库单接口无响应");
+    public static final ApiError WH_AIYA_SDK_OUTBOUND_SEARCH_FAILED = new ApiError("WH_AIYA_SDK_OUTBOUND_SEARCH_FAILED", 11221, "AIYA 查询2C出库单接口失败: {0}");
+    public static final ApiError WH_AIYA_SDK_OUTBOUND_SEARCH_CONVERT_FAILED = new ApiError("WH_AIYA_SDK_OUTBOUND_SEARCH_CONVERT_FAILED", 11222, "AIYA 查询2C出库单接口响应转换失败: {0}");
+    public static final ApiError WH_AIYA_SDK_OUTBOUND_PAGE_CONVERT_FAILED = new ApiError("WH_AIYA_SDK_OUTBOUND_PAGE_CONVERT_FAILED", 11223, "AIYA 分页查询2C出库单接口响应转换失败: {0}");
+    public static final ApiError WH_AIYA_SDK_RETURN_ORDER_PAGE_CONVERT_FAILED = new ApiError("WH_AIYA_SDK_RETURN_ORDER_PAGE_CONVERT_FAILED", 11224, "AIYA 分页查询退货订单接口响应转换失败: {0}");
+    public static final ApiError WH_AIYA_SDK_API_CALL_ERROR = new ApiError("WH_AIYA_SDK_API_CALL_ERROR", 11225, "AIYA {0}接口调用异常: {1}");
+    public static final ApiError WH_AIYA_SDK_API_RESPONSE_EMPTY = new ApiError("WH_AIYA_SDK_API_RESPONSE_EMPTY", 11226, "AIYA {0}接口返回为空");
+    public static final ApiError WH_AIYA_SDK_API_RESPONSE_NOT_JSON = new ApiError("WH_AIYA_SDK_API_RESPONSE_NOT_JSON", 11227, "AIYA {0}接口返回非JSON格式");
+    public static final ApiError WH_AIYA_SDK_DOMAIN_EMPTY = new ApiError("WH_AIYA_SDK_DOMAIN_EMPTY", 11228, "AIYA域名不能为空");
+    public static final ApiError WH_AIYA_SDK_SIGN_PARAMS_EMPTY = new ApiError("WH_AIYA_SDK_SIGN_PARAMS_EMPTY", 11229, "AIYA 签名参数不能为空");
+    public static final ApiError WH_AIYA_SDK_SIGN_SECRET_EMPTY = new ApiError("WH_AIYA_SDK_SIGN_SECRET_EMPTY", 11230, "AIYA 签名 secret 不能为空");
+    public static final ApiError WH_AIYA_SDK_SIGN_JSON_EMPTY = new ApiError("WH_AIYA_SDK_SIGN_JSON_EMPTY", 11231, "AIYA 签名 JSON 不能为空");
+    public static final ApiError WH_AIYA_SDK_SIGN_FAILED = new ApiError("WH_AIYA_SDK_SIGN_FAILED", 11232, "AIYA 签名计算失败: {0}");
 
     static ApiError[] values() {
         return new ApiError[]{
@@ -837,6 +851,20 @@ public final class ApiErrorWms {
                 WH_WEGO_WAREHOUSE_TOKEN_SECRET_MISSING,
                 WH_WEGO_INBOUND_DETAIL_JSON_PARSE_FAILED,
                 WH_BORROW_WAREHOUSE_USABLE_INSUFFICIENT,
+                WH_AIYA_SDK_INBOUND_PAGE_CONVERT_FAILED,
+                WH_AIYA_SDK_OUTBOUND_SEARCH_NO_RESPONSE,
+                WH_AIYA_SDK_OUTBOUND_SEARCH_FAILED,
+                WH_AIYA_SDK_OUTBOUND_SEARCH_CONVERT_FAILED,
+                WH_AIYA_SDK_OUTBOUND_PAGE_CONVERT_FAILED,
+                WH_AIYA_SDK_RETURN_ORDER_PAGE_CONVERT_FAILED,
+                WH_AIYA_SDK_API_CALL_ERROR,
+                WH_AIYA_SDK_API_RESPONSE_EMPTY,
+                WH_AIYA_SDK_API_RESPONSE_NOT_JSON,
+                WH_AIYA_SDK_DOMAIN_EMPTY,
+                WH_AIYA_SDK_SIGN_PARAMS_EMPTY,
+                WH_AIYA_SDK_SIGN_SECRET_EMPTY,
+                WH_AIYA_SDK_SIGN_JSON_EMPTY,
+                WH_AIYA_SDK_SIGN_FAILED,
         };
     }
 }

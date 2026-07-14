@@ -60,6 +60,7 @@
         <module>erp-sdk-wms-zhongbao</module>
         <module>erp-sdk-wms-jitu</module>
         <module>erp-sdk-wms-wego</module>
+        <module>erp-sdk-wms-aiya</module>
     </modules>
 
     <dependencies>
