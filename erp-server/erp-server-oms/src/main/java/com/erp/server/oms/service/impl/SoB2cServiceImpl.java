@@ -2018,7 +2018,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO saveSoB2cDistribution(String id, SoB2cDTO.SaveSoB2cDistributionDTO dto) {
         ValidatorUtil.validateEntity(dto);
         //B2C销售订单主表信息
@@ -2103,6 +2102,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //修改组包和中转状态
         updatePackageAndTransferStatus(id, packageStatus, transferStatus, isRegistration, isUpdateTransferStatus);
 
+        String channelNameForValidate = CharSequenceUtil.blankToDefault(resultDTO.getLogisticsChannelName(),
+                soB2cLogisticsEntity.getLogisticsChannelName());
+        validateLogisticsChannelWarehouseBinding(effectiveLogisticsChannelId, channelNameForValidate, detailList, entity.getCode());
+
         //如果有物流单号 就要去取消（独立事务提交，避免后续配货校验失败回滚导致云途已删但 ERP 仍留运单号）
         boolean logisticsCanceledInRequiresNew = false;
         if (StringUtils.isNotBlank(code) && !Objects.equals(effectiveLogisticsChannelId, existChannelId)
@@ -2150,34 +2153,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(CharSequenceUtil.format("B2C销售订单【{}】物流渠道更新失败，请刷新后重试", entity.getCode()));
         }
 
-        if (CharSequenceUtil.isNotBlank(soB2cLogisticsEntity.getLogisticsChannelId())) {
-            //验证渠道下是否设置了仓库
-            List<LogisticsChannelWarehouseEntity> list = FeignQuery.create(LogisticsChannelWarehouseEntity.class)
-                    .eq(LogisticsChannelWarehouseEntity::getLogisticsChannelId, soB2cLogisticsEntity.getLogisticsChannelId())
-                    .list();
-            if (CollUtil.isEmpty(list)) {
-                throw new ServiceException(CharSequenceUtil.format("渠道【{}】未设置仓库，请先设置仓库", soB2cLogisticsEntity.getLogisticsChannelName()));
-            }
-            //全部指定直接过，部分指定校验仓库是否一致
-            if (CharSequenceUtil.equals(list.get(0).getType(), LogisticsChannelWarehouseTypeEnum.ENUM_PART.getCode())) {
-                List<String> warehouseIdList = detailList.stream().map(SoB2cDTO.SaveSoB2cDistributionDetailDTO::getWarehouseId).collect(Collectors.toList());
-                if (CollUtil.isEmpty(warehouseIdList)) {
-                    throw new ServiceException("B2C销售订单仓库不能为空");
-                }
-                List<String> channelWarehouseIdList = list.stream().map(LogisticsChannelWarehouseEntity::getWarehouseId).collect(Collectors.toList());
-                Boolean isMatch = Boolean.TRUE;
-                for (String warehouseId : warehouseIdList) {
-                    if (!channelWarehouseIdList.contains(warehouseId)) {
-                        isMatch = Boolean.FALSE;
-                        break;
-                    }
-                }
-                //如果仓库没匹配上则进行下一条规则的匹配
-                if (!isMatch) {
-                    throw new ServiceException(CharSequenceUtil.format("订单【{}】仓库和渠道不存在绑定关系，配货失败！", entity.getCode()));
-                }
-            }
-        }
         //明细仓库更新
         soB2cDetailService.updateWarehouseId(entity, detailList, isCover);
         //订单明细数据
@@ -2230,6 +2205,39 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             operateLogService.addModuleOperateLog(CharSequenceUtil.format(msg, entity.getCode(), detailEntity.getSkuNo(), operateLogisticsChannelName, warehouseName), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "手动配货");
         }
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "手动配货");
+    }
+
+    /**
+     * 校验物流渠道与仓库绑定关系。须在 cancelThirdLogisticsRequiresNew 之前调用，避免外部取消耗时后 Feign 查 TMS 失败。
+     */
+    private void validateLogisticsChannelWarehouseBinding(String logisticsChannelId, String logisticsChannelName,
+            List<SoB2cDTO.SaveSoB2cDistributionDetailDTO> detailList, String orderCode) {
+        if (CharSequenceUtil.isBlank(logisticsChannelId)) {
+            return;
+        }
+        List<LogisticsChannelWarehouseEntity> list = FeignQuery.create(LogisticsChannelWarehouseEntity.class)
+                .eq(LogisticsChannelWarehouseEntity::getLogisticsChannelId, logisticsChannelId)
+                .list();
+        if (CollUtil.isEmpty(list)) {
+            String channelDisplayName = CharSequenceUtil.blankToDefault(logisticsChannelName, logisticsChannelId);
+            throw new ServiceException(CharSequenceUtil.format("渠道【{}】未设置仓库，请先设置仓库", channelDisplayName));
+        }
+        if (CharSequenceUtil.equals(list.get(0).getType(), LogisticsChannelWarehouseTypeEnum.ENUM_PART.getCode())) {
+            List<String> warehouseIdList = detailList.stream()
+                    .map(SoB2cDTO.SaveSoB2cDistributionDetailDTO::getWarehouseId)
+                    .collect(Collectors.toList());
+            if (CollUtil.isEmpty(warehouseIdList)) {
+                throw new ServiceException("B2C销售订单仓库不能为空");
+            }
+            List<String> channelWarehouseIdList = list.stream()
+                    .map(LogisticsChannelWarehouseEntity::getWarehouseId)
+                    .collect(Collectors.toList());
+            for (String warehouseId : warehouseIdList) {
+                if (!channelWarehouseIdList.contains(warehouseId)) {
+                    throw new ServiceException(CharSequenceUtil.format("订单【{}】仓库和渠道不存在绑定关系，配货失败！", orderCode));
+                }
+            }
+        }
     }
 
     /**
