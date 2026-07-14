@@ -434,6 +434,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                     }
                     // B2C：应退取售后明细退货数量；无售后取 mustQty（仅 null 时用签收兜底）；剩余应退按售后明细或 sourceDetailId 累计入库
                     Integer b2cReturnQty = b2cReturnQtyMap.get(obj.getSoReturnDetailId());
+                    boolean hasAuthoritativeReturnQty = Objects.nonNull(b2cReturnQty);
                     if (Objects.isNull(b2cReturnQty)) {
                         b2cReturnQty = obj.getMustQty();
                     }
@@ -442,7 +443,6 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                         b2cReturnQty = obj.getReceiveQty();
                     }
                     if (Objects.nonNull(b2cReturnQty)) {
-                        obj.setMustQty(b2cReturnQty);
                         int instockQty;
                         if (CharSequenceUtil.isNotBlank(obj.getSoReturnDetailId())) {
                             instockQty = b2cInstockRealQtyMap.getOrDefault(obj.getSoReturnDetailId(), MathUtil.ZERO);
@@ -451,6 +451,11 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                         } else {
                             instockQty = obj.getRealQty() != null ? obj.getRealQty() : MathUtil.ZERO;
                         }
+                        // 无售后单权威应退数量时，历史数据可能落成偏小/为0的 mustQty；以累计入库为下限，避免展示负数剩余应退
+                        if (!hasAuthoritativeReturnQty && b2cReturnQty < instockQty) {
+                            b2cReturnQty = instockQty;
+                        }
+                        obj.setMustQty(b2cReturnQty);
                         obj.setRemainMustQty(b2cReturnQty - instockQty);
                     }
                 } else {
@@ -1569,6 +1574,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 detailView.setDeliveryQty(actualQty);
                 // 应退：优先售后明细退货数量；无售后关联时取落库 mustQty；仅 mustQty 为 null 时用签收数量兜底
                 Integer returnQty = soB2cReturnDetailEntity.getReturnQty();
+                boolean hasAuthoritativeReturnQty = returnQty != null;
                 if (returnQty == null) {
                     returnQty = detailEntity.getMustQty();
                 }
@@ -1576,7 +1582,6 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                         && detailEntity.getReceiveQty() != null) {
                     returnQty = detailEntity.getReceiveQty();
                 }
-                detailView.setMustQty(returnQty);
                 // 剩余应退货数量 = 退货数量 - 累计入库（有售后按 soReturnDetailId；无售后按 sourceDetailId；皆空则本行实退）
                 if (returnQty != null) {
                     int instockQty;
@@ -1587,8 +1592,13 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                     } else {
                         instockQty = detailEntity.getRealQty() != null ? detailEntity.getRealQty() : MathUtil.ZERO;
                     }
+                    // 无售后单权威应退数量时，历史数据可能落成偏小/为0的 mustQty；以累计入库为下限，避免展示负数剩余应退
+                    if (!hasAuthoritativeReturnQty && returnQty < instockQty) {
+                        returnQty = instockQty;
+                    }
                     detailView.setRemainMustQty(returnQty - instockQty);
                 }
+                detailView.setMustQty(returnQty);
                 Integer receiveQty = soReturnReceiveDetailEntitieList.stream().filter(req -> detailEntity.getSourceDetailId().equals(req.getId()) && req.getSkuId().equals(detailEntity.getSkuId()) && ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).map(SoReturnReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                 detailView.setReceiveQty(receiveQty);
                 detailView.setReturnTypeDictName(ReturnTypeEnum.getName(detailEntity.getReturnTypeDict()));
