@@ -102,6 +102,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_PROCESS_MANAGEMENT;
+import com.common.business.annotation.DistributeLocker;
+import com.common.message.constant.DistributeKeyConstant;
 
 /**
  * <p>
@@ -182,6 +184,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "dto.businessKey,dto.businessId", unlockAfterTx = true)
     public ProcessManagementDTO.StartResultDTO startProcessManagement(ProcessManagementDTO.StartDTO dto) {
         CfgProcessRuleEntity cfgProcessRuleEntity = getProcessDefinitionId(dto);
         if (ObjectUtil.isEmpty(cfgProcessRuleEntity)) {
@@ -466,6 +469,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "dto.businessKey,dto.businessId", unlockAfterTx = true)
     public ProcessManagementDTO.ApproveResultDTO approveProcess(ProcessManagementDTO.ApproveDTO dto,Boolean isFirst) {
         //判断是否走飞书流程
        Boolean isFsApprove = isFsApprovePass(dto.getBusinessId(),dto.getBusinessKey());
@@ -1527,6 +1531,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
      * @param dto
      */
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "dto.businessKey,dto.id", unlockAfterTx = true)
     public BatchResultDTO approveFeign(ApproveDTO.ApproveOneDTO dto) {
         WorkMenuEntity menuEntity = workMenuService.getByModuleCode(dto.getBusinessKey());
         String feignBeanName = menuEntity.getFeignBeanName();
@@ -1547,6 +1552,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
      * @return Boolean
      */
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "dto.businessKey,dto.businessId", unlockAfterTx = true)
     public Boolean callFeign(String businessKey, EndProcessDTO dto) {
         WorkMenuEntity menuEntity = workMenuService.getByModuleCode(businessKey);
         String feignBeanName = menuEntity.getFeignBeanName();
@@ -1558,6 +1564,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     }
 
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "dto.businessKey,dto.id", unlockAfterTx = true)
     public Boolean disApproveFeign(ApproveDTO.DisApproveDTO dto) {
         WorkMenuEntity menuEntity = workMenuService.getByModuleCode(dto.getBusinessKey());
         String feignBeanName = menuEntity.getFeignBeanName();
@@ -1569,6 +1576,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     }
 
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "dto.businessKey,dto.id", unlockAfterTx = true)
     public Boolean cancelProcessFeign(ApproveDTO.CancelProcessDTO dto) {
         WorkMenuEntity menuEntity = workMenuService.getByModuleCode(dto.getBusinessKey());
         String feignBeanName = menuEntity.getFeignBeanName();
@@ -1760,6 +1768,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     @Override
     @Transactional(rollbackFor =  Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO processPass(String id) {
         ProcessManagementEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
@@ -1836,6 +1845,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     @Override
     @Transactional(rollbackFor =  Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO processReject(String id) {
         ProcessManagementEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
@@ -1887,6 +1897,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
 
     @Override
     @Transactional(rollbackFor =  Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO processRestore(String id) {
         ProcessManagementEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
@@ -1937,6 +1948,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
 
     @Override
     @Transactional(rollbackFor =  Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO processSuspend(String id) {
         ProcessManagementEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {

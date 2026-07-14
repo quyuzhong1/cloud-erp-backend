@@ -46,6 +46,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_PROCESS_DEFINITION;
+import com.common.business.annotation.DistributeLocker;
+import com.common.message.constant.DistributeKeyConstant;
 
 /**
  * <p>
@@ -323,6 +325,7 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
     }
 
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_DEFINITION_CHANGE_KEY, keyName = "dto.id", unlockAfterTx = true)
     public Boolean changeProcess(ProcessDefinitionDTO.ProcessChangeDTO dto) {
         // 查询数据是否存在
         List<ProcessDefinitionEntity> list = listByIds(Collections.singletonList(dto.getId()));

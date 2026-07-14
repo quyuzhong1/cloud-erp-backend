@@ -60,6 +60,7 @@ import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_CFG_QC_USER;
 import static com.common.business.enums.FileTaskEventEnum.IMPORT_WMS_CFG_QC_USER;
+import com.common.message.constant.DistributeKeyConstant;
 
 /**
  * <p>
@@ -412,6 +413,7 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
     }
 
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.WMS_IMPORT_TASK_KEY, keyName = "dto.taskId", unlockAfterTx = true)
     public void importCfgQcUser(BaseDTO.ImportDTO dto) {
         boolean userContextSet = false;
         try {

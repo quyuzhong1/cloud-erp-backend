@@ -44,6 +44,8 @@ import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_SYS_CITY;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_SYS_CITY_PROVINCE;
+import com.common.business.annotation.DistributeLocker;
+import com.common.message.constant.DistributeKeyConstant;
 
 /**
  * <p>
@@ -207,6 +209,7 @@ public class DictCityServiceImpl extends SuperServiceImpl<DictCityMapper, DictCi
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.KINGDEE_SYNC_KEY, keyName = "dto.id", unlockAfterTx = true)
     public Boolean updateProvince(DictCityDTO.UpdateProvinceDTO dto) {
         String id = dto.getId();
         DictCityEntity entity=this.getById(id);
@@ -231,6 +234,7 @@ public class DictCityServiceImpl extends SuperServiceImpl<DictCityMapper, DictCi
     }
 
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.KINGDEE_SYNC_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO delete(String id) {
         DictCityEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
@@ -354,6 +358,7 @@ public class DictCityServiceImpl extends SuperServiceImpl<DictCityMapper, DictCi
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.KINGDEE_SYNC_KEY, keyName = "dto.id", unlockAfterTx = true)
     public Boolean updateCity(DictCityDTO.UpdateCityDTO dto) {
         String id = dto.getId();
         DictCityEntity entity = this.getById(id);

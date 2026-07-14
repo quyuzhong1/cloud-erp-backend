@@ -114,6 +114,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 
 import java.util.*;
+import com.common.business.annotation.DistributeLocker;
+import com.common.message.constant.DistributeKeyConstant;
 
 /**
  * <p>
@@ -1054,7 +1056,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 
     @Transactional(rollbackFor = Exception.class)
 	@Override
-	@DataIdempotent(keyIdName = "id")
+	@DistributeLocker(businessType = DistributeKeyConstant.TMS_PUSH_ALLOCATION_KEY, keyName = "id", unlockAfterTx = true)
 	public void singPushAllocation(String id, String reportDate , List<TmsB2cDeclareReconciliationDetailEntity> tmsB2cDeclareReconciliationDetailEntityList) {
 		if(CollUtil.isEmpty(tmsB2cDeclareReconciliationDetailEntityList)) {
 			return;

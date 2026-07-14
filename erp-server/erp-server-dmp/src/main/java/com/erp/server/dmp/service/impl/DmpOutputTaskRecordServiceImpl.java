@@ -69,6 +69,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_NEW_DMP_PUSH_TASK;
+import com.common.business.annotation.DistributeLocker;
+import com.common.message.constant.DistributeKeyConstant;
 
 /**
  * <p>
@@ -531,6 +533,7 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
     }
 
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.DMP_PUSH_TASK_KEY, keyName = "dmpOutputTaskRecordEntityList.id", waiteTime = 60)
     public Boolean batchSync(List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList) {
         if (CollectionUtils.isEmpty(dmpOutputTaskRecordEntityList)) {
             return false;

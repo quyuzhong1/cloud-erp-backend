@@ -32,6 +32,8 @@ import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import com.common.business.annotation.DistributeLocker;
+import com.common.message.constant.DistributeKeyConstant;
 
 /**
  * @Classname SysDepartmentUserServiceImpl
@@ -261,6 +263,7 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
     @Override
     @Transactional(rollbackFor = Exception.class)
     @CacheEvict(value = "cache:sys:dept:getDeptByUserId", key = "#uid")
+    @DistributeLocker(businessType = DistributeKeyConstant.SYS_USER_AUTH_KEY, keyName = "uid", unlockAfterTx = true)
     public void batchSaveOrUpdate(String uid, List<String> departmentIdList, boolean ifAdd) {
         if (StringUtils.isBlank(uid)) {
             return;

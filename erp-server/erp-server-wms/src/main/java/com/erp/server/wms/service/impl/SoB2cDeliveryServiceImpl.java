@@ -239,6 +239,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.SO_B2C_DELIVERY_KEY, keyName = "addDTO.soCode", unlockAfterTx = true)
     public SoB2cDeliveryEntity add(SoB2cDeliveryDTO.AddDTO addDTO) {
         SoB2cDeliveryEntity existEntity = this.getNotCancelBySoId(addDTO.getSourceId());
         if(ObjectUtil.isNotEmpty(existEntity)){
@@ -1845,7 +1846,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
      * @return
      */
     @Override
-    @DataIdempotent(keyIdName = "id")
+    @DistributeLocker(businessType = DistributeKeyConstant.SO_B2C_DELIVERY_KEY, keyName = "id")
     public BatchResultDTO delivery(String id, String deliveryType, LocalDate deliveryDate) {
         //手工发货
         String manual = DeliverTypeEnum.MANUAL.getCode();

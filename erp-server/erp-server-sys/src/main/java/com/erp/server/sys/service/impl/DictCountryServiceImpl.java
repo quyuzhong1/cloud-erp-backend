@@ -63,6 +63,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_SYS_COUNTRY;
+import com.common.business.annotation.DistributeLocker;
+import com.common.message.constant.DistributeKeyConstant;
 
 /**
  * <p>
@@ -129,6 +131,7 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
     @Override
     @Transactional(rollbackFor = Exception.class)
     @CacheEvict(cacheNames = RedisCacheConstants.SYS_COUNTRY_BY_ID, key = "#dto.id")
+    @DistributeLocker(businessType = DistributeKeyConstant.KINGDEE_SYNC_KEY, keyName = "dto.id", unlockAfterTx = true)
     public Boolean update(DictCountryDTO.UpdateDTO dto) {
         String id=dto.getId();
         DictCountryEntity entity = this.getById(id);
@@ -490,6 +493,7 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
     @Override
     @Transactional(rollbackFor = Exception.class)
     @CacheEvict(cacheNames = RedisCacheConstants.SYS_COUNTRY_BY_ID, key = "#id")
+    @DistributeLocker(businessType = DistributeKeyConstant.KINGDEE_SYNC_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO delete(String id) {
         DictCountryEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {

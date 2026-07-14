@@ -47,6 +47,8 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
+import com.common.business.annotation.DistributeLocker;
+import com.common.message.constant.DistributeKeyConstant;
 
 /**
  * <p>
@@ -77,6 +79,7 @@ public class VirtualInventoryTransactionServiceImpl extends SuperServiceImpl<Vir
     private VirtualInventoryDetailHisService virtualInventoryDetailHisService;
 
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.WMS_VIRTUAL_OVERRIDE_KEY, keyName = "inventoryIds")
 	public Map<String , Boolean> overrideDbInventory(LocalDate startDate , List<String> inventoryIds){
     	Map<String , Boolean> result = new HashMap<>();
     	List<CheckInventoryDTO> checkInventoryList = this.checkDbInventorySame(inventoryIds);
@@ -119,6 +122,7 @@ public class VirtualInventoryTransactionServiceImpl extends SuperServiceImpl<Vir
     }
 
 	@Override
+    @DistributeLocker(businessType = DistributeKeyConstant.WMS_VIRTUAL_OVERRIDE_KEY, keyName = "inventoryIds")
 	public Map<String , Boolean> overrideRedisInventory(List<String> inventoryIds , boolean isCheck) {
 		Map<String , Boolean> result = new HashMap<>();
 		List<CheckInventoryDTO> redisCheckInventoryList = null;

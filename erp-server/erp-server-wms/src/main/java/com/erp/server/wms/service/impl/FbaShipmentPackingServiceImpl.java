@@ -37,6 +37,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_FBA_SHIPMENT_PACKING;
+import com.common.business.annotation.DistributeLocker;
+import com.common.message.constant.DistributeKeyConstant;
 
 /**
  * <p>
@@ -63,8 +65,8 @@ public class FbaShipmentPackingServiceImpl extends SuperServiceImpl<FbaShipmentP
     private WmsCartonService wmsCartonService;
 
     @Override
-    @DataIdempotent(keyIdName = "data.boxNo")
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.FBA_SHIPMENT_PACKING_KEY, keyName = "data.boxNo", unlockAfterTx = true)
     public void handle(FbaShipmentPackingDTO.PackingDTO data) {
         if(Objects.isNull(data) || CharSequenceUtil.isBlank(data.getFbaShipmentCode())|| CharSequenceUtil.isBlank(data.getBoxNo()) || CollUtil.isEmpty(data.getDetailDTOList())){
             return;

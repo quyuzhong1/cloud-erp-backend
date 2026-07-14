@@ -37,6 +37,8 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import java.util.*;
 import java.util.stream.Collectors;
+import com.common.business.annotation.DistributeLocker;
+import com.common.message.constant.DistributeKeyConstant;
 
 /**
  * <p>
@@ -74,6 +76,7 @@ public class KingdeeUserRefPostServiceImpl extends SuperServiceImpl<KingdeeUserR
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.KINGDEE_SYNC_KEY, keyName = "addDTO.erpUserId,addDTO.kingdeePostId", unlockAfterTx = true)
     public Boolean add(KingdeeUserRefPostDTO.AddDTO addDTO) {
         KingdeeUserRefPostEntity kingdeeUserRefPostEntity = new KingdeeUserRefPostEntity();
         BeanMapperUtils.copy(addDTO, kingdeeUserRefPostEntity);
@@ -99,6 +102,7 @@ public class KingdeeUserRefPostServiceImpl extends SuperServiceImpl<KingdeeUserR
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.KINGDEE_SYNC_KEY, keyName = "updateDTO.id", unlockAfterTx = true)
     public Boolean update(KingdeeUserRefPostDTO.UpdateDTO updateDTO) {
         KingdeeUserRefPostEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "金蝶员工任岗单"));
@@ -301,6 +305,7 @@ public class KingdeeUserRefPostServiceImpl extends SuperServiceImpl<KingdeeUserR
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.KINGDEE_SYNC_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO delete(String id) {
         KingdeeUserRefPostEntity entity = super.getById(id);
         Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "金蝶员工任岗"));

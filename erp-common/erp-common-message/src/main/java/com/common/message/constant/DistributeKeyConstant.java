@@ -17,6 +17,10 @@ public class DistributeKeyConstant {
     public static final String INVOICE_INFO_KEY = "INVOICE_INFO_KEY";
     // 工作流接口分布式锁KEY
     public static final String WORKFLOW_LOCK_KEY = "WORKFLOW_LOCK_KEY";
+    /** 飞书审批回调 */
+    public static final String WORKFLOW_FS_CALLBACK_KEY = "WORKFLOW_FS_CALLBACK";
+    /** 第三方流程启动 */
+    public static final String WORKFLOW_THIRD_START_KEY = "WORKFLOW_THIRD_START";
     /** 流程定义变更 */
     public static final String WORKFLOW_DEFINITION_CHANGE_KEY = "WORKFLOW_DEFINITION_CHANGE";
     /** 单据生命周期统一锁：提交、审批、撤销、回调状态更新使用同一业务id互斥 */

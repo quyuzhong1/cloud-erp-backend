@@ -634,7 +634,6 @@ public class SysUserFeignController extends BaseController {
      * @param
      * @return
      **/
-    @DataIdempotent(keyIdName = "uid")
     @GetMapping("/changePassword")
     public ApiResult changePassword(@RequestParam("uid") String uid,@RequestParam("pwd") String pwd) {
         Boolean flag = sysUserInfoService.changePassword(uid,pwd);

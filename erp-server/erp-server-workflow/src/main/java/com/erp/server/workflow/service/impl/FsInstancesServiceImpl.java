@@ -47,6 +47,8 @@ import java.util.stream.Collectors;
 
 import static com.common.business.enums.ApproveTypeEnum.PASS;
 import static com.common.business.enums.ApproveTypeEnum.REJECT;
+import com.common.business.annotation.DistributeLocker;
+import com.common.message.constant.DistributeKeyConstant;
 
 /**
  * 飞书审批示例详情拉取接口服务IMPL
@@ -336,6 +338,7 @@ public class FsInstancesServiceImpl implements FsInstancesService {
     /**
      * 原始的回调方法，保持不变。
      */
+    @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_FS_CALLBACK_KEY, keyName = "entity.bussinessKey,entity.bussinessId", unlockAfterTx = true)
     public void handleCallback(ApproveTaskInfoEntity entity, String approveStatus, String userId, LocalDateTime approveTime,String comment) {
         EndProcessDTO processDTO = new EndProcessDTO();
         processDTO.setBusinessKey(entity.getBussinessKey());

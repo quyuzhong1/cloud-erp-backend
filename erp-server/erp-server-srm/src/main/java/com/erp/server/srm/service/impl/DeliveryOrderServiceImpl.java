@@ -77,6 +77,8 @@ import java.time.LocalDate;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import com.common.business.annotation.DistributeLocker;
+import com.common.message.constant.DistributeKeyConstant;
 
 /**
  * <p>
@@ -434,7 +436,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
      * @param stockInDetailList
      * @param returnOrderDetailList
      */
-    @DataIdempotent(keyIdName = "deliveryOrderEntity.id")
+    @DistributeLocker(businessType = DistributeKeyConstant.SRM_DELIVERY_ORDER_KEY, keyName = "mainId")
     private void handleDeliverOrderDetailList(String mainId, List<DeliveryOrderDTO.AddDeliveryDTO> deliveryDTOS,
                                               List<PurchaseOrderDetailEntity> purchaseOrderDetailList, List<BatchResultDTO> dtos,
                                               List<DeliveryOrderDetailDTO.ListDTO> deliveryOrderDetailList, List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> receiveList,
@@ -667,6 +669,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.SRM_DELIVERY_ORDER_KEY, keyName = "updateDTO.id", unlockAfterTx = true)
     public Boolean update(DeliveryOrderDTO.UpdateDTO updateDTO) {
         DeliveryOrderEntity old = super.getById(updateDTO.getId());
         isExist(old);

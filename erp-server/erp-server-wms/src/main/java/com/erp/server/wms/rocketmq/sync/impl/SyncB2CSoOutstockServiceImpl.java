@@ -84,6 +84,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import com.common.message.constant.DistributeKeyConstant;
 
 /**
  * @author Lambda
@@ -184,7 +185,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DataIdempotent(keyIdName = "entity.fBillNo", leaseTime = 30, waitTime = 20)
+    @DistributeLocker(businessType = DistributeKeyConstant.KINGDEE_SYNC_KEY, keyName = "entity.fBillNo", waiteTime = 20, unlockAfterTx = true)
     public void syncKingdeeSoOutstock(KingdeeDeliveryDetailEntity entity) {
         System.out.println("===============开始执行 单号：" + entity.getFBillNo());
         List<KingdeeDeliveryDetailItemEntity> kingdeeDetailList = entity.getKingdeeOutStockItemEntityList();

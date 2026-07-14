@@ -51,6 +51,8 @@ import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_SYS_THIRD_NOTICE;
+import com.common.business.annotation.DistributeLocker;
+import com.common.message.constant.DistributeKeyConstant;
 
 /**
  * <p>
@@ -291,6 +293,7 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.SYS_USER_AUTH_KEY, keyName = "addOrUpdateDTO.id", unlockAfterTx = true)
     public Boolean update(CfgThirdNoticeDTO.UpdateDTO addOrUpdateDTO) {
         //校验通知人员不能全部为空
         List<String> roleTypeList = addOrUpdateDTO.getRoleTypeList();
@@ -607,6 +610,7 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
     }
 
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.SYS_USER_AUTH_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO enable(String id, Boolean noticeStatus) {
         CfgThirdNoticeEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到三方通知配置数据"));
         if(!entity.getNoticeStatus().equals(noticeStatus)){

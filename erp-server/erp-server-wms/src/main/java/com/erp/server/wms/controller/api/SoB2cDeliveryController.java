@@ -56,7 +56,6 @@ public class SoB2cDeliveryController extends BaseController {
      */
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "b2c发货单新增")
-    @DataIdempotent(keyIdName = "dto.soCode",businessType = DistributeKeyConstant.SO_B2C_DELIVERY_KEY)
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated SoB2cDeliveryDTO.AddDTO dto) {
         soB2cDeliveryService.add(dto);
         return success();

@@ -65,6 +65,8 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import com.common.business.annotation.DistributeLocker;
+import com.common.message.constant.DistributeKeyConstant;
 
 /**
  * <p>
@@ -707,6 +709,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.SCM_PO_ARRIVAL_STATUS_KEY, keyName = "entity.id", unlockAfterTx = true)
     public Boolean updatePoArrivalStatus(PurchaseOrderDetailEntity entity) {
 
         //更新采购订单交货状态

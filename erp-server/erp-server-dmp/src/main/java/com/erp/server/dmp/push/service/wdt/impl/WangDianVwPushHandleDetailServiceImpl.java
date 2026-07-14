@@ -40,6 +40,8 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import com.common.business.annotation.DistributeLocker;
+import com.common.message.constant.DistributeKeyConstant;
 
 /**
  * 旺店通虚拟仓订单创建处理明细
@@ -59,7 +61,7 @@ public class WangDianVwPushHandleDetailServiceImpl implements WangDianVwPushHand
     private static String SEARCH_VIRTUAL_WAREHOUSE_URL = "setting.strategy.VirtualWarehouse.orderSearch";
 
     @Override
-    @DataIdempotent(keyIdName = "pushDTOS.virtual_warehouse_no", waitTime = 10)
+    @DistributeLocker(businessType = DistributeKeyConstant.WDT_VW_PUSH_KEY, keyName = "pushDTOS.virtual_warehouse_no", waiteTime = 10)
     public ApiResult<?> executeConsumer(VwPushHandelDetailPushDTO pushDTOS) {
         PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(PlatformEnum.WANGDIAN.getDesc());
         if (ObjectUtils.isEmpty(platformEntity)) {
