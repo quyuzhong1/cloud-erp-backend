@@ -3,8 +3,6 @@ package com.erp.server.scm.kingdee.impl;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.business.annotation.DistributeLocker;
-import com.common.message.constant.DistributeKeyConstant;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.server.scm.kingdee.SyncKingdeeService;
 import com.erp.server.scm.service.*;
@@ -61,7 +59,6 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
     private AssetPurchaseOrderDetailService assetPurchaseOrderDetailService;
 
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.KINGDEE_SYNC_KEY, keyName = "params.code,params.businessId", unlockAfterTx = true)
     public void updateBusinessSyncKingdeeStatus(Map<String, Object> params) {
         //模块类型编码
         String code = (String) params.get("code");

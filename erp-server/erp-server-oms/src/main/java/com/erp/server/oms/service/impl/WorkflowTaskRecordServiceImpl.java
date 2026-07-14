@@ -411,7 +411,7 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
      */
     @Override
     public List<WorkflowTaskRecordEntity> listErrorTaskByInstance(String id) {
-        return baseMapper.listErrorTaskByInstance(CharSequenceUtil.blankToDefault(id, ""));
+        return baseMapper.listErrorTaskByInstance(CharSequenceUtil.blankToDefault(id, ""), AUTO_RETRY_MAX_COUNT);
     }
 
     /**
@@ -419,7 +419,7 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
      */
     @Override
     public List<WorkflowTaskRecordEntity> listErrorTaskByRecord(String id) {
-        return baseMapper.listErrorTaskByRecord(CharSequenceUtil.blankToDefault(id, ""));
+        return baseMapper.listErrorTaskByRecord(CharSequenceUtil.blankToDefault(id, ""), AUTO_RETRY_MAX_COUNT);
     }
 
     /**

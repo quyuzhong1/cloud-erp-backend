@@ -149,7 +149,7 @@ public class TaskDocHistoryDTO implements Serializable {
         * 文件大小
         */
         @NotNull(message = "文件大小不能为空")
-        @Digits(integer = 8, fraction = 2, message = "文件大小整数位不能超过8位，小数位不能超过2位")
+        @Digits(integer = 18, fraction = 6, message = "文件大小整数位不能超过18位，小数位不能超过6位")
         private BigDecimal fileSize;
         /**
         * 文件后缀

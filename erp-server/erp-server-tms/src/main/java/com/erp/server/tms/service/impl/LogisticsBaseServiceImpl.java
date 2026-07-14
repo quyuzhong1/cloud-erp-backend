@@ -944,7 +944,8 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
         }
         Object success = response.getResult().getSuccess();
         boolean successFlag = !Boolean.FALSE.equals(success) && !"false".equalsIgnoreCase(String.valueOf(success));
-        return "0".equals(response.getCode()) && successFlag
+        boolean codeSuccess = StringUtils.isBlank(response.getCode()) || "0".equals(response.getCode());
+        return codeSuccess && successFlag
                 && StringUtils.isBlank(response.getResult().getErrorCode())
                 && Objects.nonNull(response.getResult().getData());
     }

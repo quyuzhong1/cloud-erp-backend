@@ -1323,8 +1323,8 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
         detailEntity.setExchangeRate(safeExchangeRate);
         detailEntity.setReturnAmount(MathUtil.multiplyWithFour(safePrice, qty));
         detailEntity.setTaxReturnAmount(MathUtil.multiplyWithFour(safeTaxPrice, qty));
-        detailEntity.setReturnAmountLocalCurrency(MathUtil.multiplyWithFour(detailEntity.getReturnAmount(), safeExchangeRate));
-        detailEntity.setTaxReturnAmountLocalCurrency(MathUtil.multiplyWithFour(detailEntity.getTaxReturnAmount(), safeExchangeRate));
+        detailEntity.setReturnAmountLocalCurrency(MathUtil.multiplyWithSix(detailEntity.getReturnAmount(), safeExchangeRate, BigDecimal.ROUND_DOWN));
+        detailEntity.setTaxReturnAmountLocalCurrency(MathUtil.multiplyWithSix(detailEntity.getTaxReturnAmount(), safeExchangeRate, BigDecimal.ROUND_DOWN));
     }
 
     @Override
@@ -1389,7 +1389,6 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.SO_RETURN_INSTOCK_SAVE_KEY, keyName = "dto.updateMainList.id", unlockAfterTx = true)
     public void clearSoReturnAndUpdate(SoReturnInstockDetailDTO.ClearSoReturnAndUpdateDTO dto) {
         if(CollectionUtils.isNotEmpty(dto.getClearSoReturnDetailIds())){
             this.lambdaUpdate().in(SoReturnInstockDetailEntity::getSoReturnDetailId,dto.getClearSoReturnDetailIds()).set(SoReturnInstockDetailEntity::getSoReturnDetailId,"").update();

@@ -10,7 +10,6 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.business.annotation.DistributeLocker;
 import com.common.business.constant.*;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.UserRequestPermissionsDTO;
@@ -32,7 +31,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.UUID;
 import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
-import com.common.message.constant.DistributeKeyConstant;
 import com.common.message.dto.email.EmailDTO;
 import com.common.message.dto.email.EmailVerifyCodeDTO;
 import com.common.message.service.MailService;
@@ -1475,7 +1473,6 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.SYS_USER_PWD_KEY, keyName = "uid", unlockAfterTx = true)
     public Boolean changePassword(String uid) {
         if (StringUtils.isBlank(uid)) {
             throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
@@ -1520,9 +1517,8 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     }
 
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.SYS_USER_PWD_KEY, keyName = "uid")
     public Boolean changePassword(String uid, String pwd) {
-        log.info("changePassword: uid={}", uid);
+        log.info("changePassword：uid：{}，pwd：{}",uid,pwd);
         if (StringUtils.isBlank(uid)) {
             throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
         }
@@ -2076,13 +2072,13 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             
             if (userInfo == null || userInfo.isEmpty()) {
                 log.warn("获取飞书用户信息失败，appId: {}", appId);
-                throw new ServiceException(ApiError.HTTP_UNKNOWN.getCode(), "获取飞书用户信息失败");
+                throw new ServiceException(ApiError.COMMON_LARK_USER_INFO_FAILED, appId);
             }
             
             // 提取unionId
             Object unionIdObj = userInfo.get("union_id");
             if (unionIdObj == null) {
-                throw new ServiceException(ApiError.HTTP_UNKNOWN.getCode(), "未获取到用户UnionId");
+                throw new ServiceException(ApiError.COMMON_LARK_UNION_ID_NOT_FOUND);
             }
             
             String unionId = unionIdObj.toString();
@@ -2095,7 +2091,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             throw e;
         } catch (Exception e) {
             log.error("通过App-Id获取飞书用户UnionId异常，appId: {}", appId, e);
-            throw new ServiceException(ApiError.HTTP_UNKNOWN.getCode(), "获取飞书用户UnionId失败：" + e.getMessage());
+            throw new ServiceException(ApiError.COMMON_LARK_UNION_ID_FETCH_FAILED, e.getMessage());
         }
     }
     @Override

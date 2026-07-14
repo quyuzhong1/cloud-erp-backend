@@ -1229,7 +1229,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     @Transactional(rollbackFor = Exception.class)
     public WmsCartonDTO.PrintDTO pdaPackingSave(WmsCartonSpecDTO.AddDTO dto) {
         dto.setPackingStatus(PackingTaskStatusEnum.COMPLETED.getCode());
-        return service.stagingPacking(dto);
+        return this.stagingPacking(dto);
     }
 
     @Override

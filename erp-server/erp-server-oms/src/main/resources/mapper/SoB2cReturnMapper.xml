@@ -274,6 +274,7 @@
             sbrd.sku_id AS skuId,
             sbrd.sku_no AS skuNo,
             sbrd.return_qty AS returnQty,
+            sbd.warehouse_id AS warehouseId,
             sbd.warehouse_name AS warehouseName
         FROM so_b2c_return_detail sbrd
         INNER JOIN so_b2c_return sbr ON sbrd.main_id = sbr.id AND sbrd.is_deleted = FALSE

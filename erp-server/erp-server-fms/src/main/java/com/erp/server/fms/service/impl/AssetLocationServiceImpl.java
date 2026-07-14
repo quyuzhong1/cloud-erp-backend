@@ -228,6 +228,7 @@ public class AssetLocationServiceImpl extends SuperServiceImpl<AssetLocationMapp
 
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @DistributeLocker(businessType = DistributeKeyConstant.BILL_BUSINESS_LOCK_KEY, keyName = "id", unlockAfterTx = true)
     public BatchResultDTO submit(String id) {
         return ApplicationContextUtils.getBean(AssetLocationServiceImpl.class).submit(id, true);
     }
@@ -574,7 +575,7 @@ public class AssetLocationServiceImpl extends SuperServiceImpl<AssetLocationMapp
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(), listApiResult.getMsg()));
+                throw new ServiceException(ApiError.WF_CUR_APPROVER_QUERY_FAILED, listApiResult.getMsg());
             }
         }
 

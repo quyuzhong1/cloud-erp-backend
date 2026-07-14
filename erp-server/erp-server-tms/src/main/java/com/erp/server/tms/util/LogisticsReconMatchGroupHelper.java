@@ -67,14 +67,14 @@ public final class LogisticsReconMatchGroupHelper {
      * @author Will
      * @date 2026/6/12
      * @param row 导入匹配 Excel 行
-     * @return 五个固定识别列均为空时返回 true
+     * @return 固定识别列均为空时返回 true
      */
     public static boolean isTemplateRowBlank(LogisticsReconMatchImportExcelDTO row) {
         if (row == null) {
             return true;
         }
         return StrUtil.isAllBlank(row.getSoCode(), row.getPlatformOrderNo(), row.getTrackNo(),
-                row.getTransportNo(), row.getSoDeliveryCode());
+                row.getSoDeliveryCode());
     }
 
     /**
@@ -115,8 +115,6 @@ public final class LogisticsReconMatchGroupHelper {
                 return StrUtil.trimToEmpty(detail.getPlatformOrderNo());
             case LogisticsCostImportTargetFieldConstant.TRACK_NO:
                 return StrUtil.trimToEmpty(detail.getTrackNo());
-            case LogisticsCostImportTargetFieldConstant.TRANSPORT_NO:
-                return StrUtil.trimToEmpty(detail.getTransportNo());
             case LogisticsCostImportTargetFieldConstant.SO_DELIVERY_CODE:
                 return StrUtil.trimToEmpty(detail.getSoDeliveryCode());
             default:
@@ -144,8 +142,6 @@ public final class LogisticsReconMatchGroupHelper {
                 return StrUtil.trimToEmpty(row.getPlatformOrderNo());
             case LogisticsCostImportTargetFieldConstant.TRACK_NO:
                 return StrUtil.trimToEmpty(row.getTrackNo());
-            case LogisticsCostImportTargetFieldConstant.TRANSPORT_NO:
-                return StrUtil.trimToEmpty(row.getTransportNo());
             case LogisticsCostImportTargetFieldConstant.SO_DELIVERY_CODE:
                 return StrUtil.trimToEmpty(row.getSoDeliveryCode());
             default:

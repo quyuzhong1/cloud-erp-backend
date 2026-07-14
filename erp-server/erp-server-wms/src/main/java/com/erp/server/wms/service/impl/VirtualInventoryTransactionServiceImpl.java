@@ -8,13 +8,11 @@ import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
-import com.common.business.annotation.DistributeLocker;
 import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.utils.StringUtil;
 import com.common.core.exception.ServiceException;
-import com.common.message.constant.DistributeKeyConstant;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
@@ -79,7 +77,6 @@ public class VirtualInventoryTransactionServiceImpl extends SuperServiceImpl<Vir
     private VirtualInventoryDetailHisService virtualInventoryDetailHisService;
 
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.WMS_VIRTUAL_OVERRIDE_KEY, keyName = "inventoryIds")
 	public Map<String , Boolean> overrideDbInventory(LocalDate startDate , List<String> inventoryIds){
     	Map<String , Boolean> result = new HashMap<>();
     	List<CheckInventoryDTO> checkInventoryList = this.checkDbInventorySame(inventoryIds);
@@ -122,7 +119,6 @@ public class VirtualInventoryTransactionServiceImpl extends SuperServiceImpl<Vir
     }
 
 	@Override
-    @DistributeLocker(businessType = DistributeKeyConstant.WMS_VIRTUAL_OVERRIDE_KEY, keyName = "inventoryIds")
 	public Map<String , Boolean> overrideRedisInventory(List<String> inventoryIds , boolean isCheck) {
 		Map<String , Boolean> result = new HashMap<>();
 		List<CheckInventoryDTO> redisCheckInventoryList = null;
@@ -331,10 +327,7 @@ public class VirtualInventoryTransactionServiceImpl extends SuperServiceImpl<Vir
 			transactionId = RootContext.getXID().replace(":", "_");
 			transactionType = "global";
 		}else {
-			transactionId = TraceContext.traceId();
-			if(StringUtils.isBlank(transactionId) || "N/A".equals(transactionId) || "Ignored_Trace".equals(transactionId)) {
-				transactionId = transactionFlowEntityList.get(0).getId();
-			}
+			transactionId = transactionFlowEntityList.get(0).getId();
 			transactionType = "local";
 		}
 		

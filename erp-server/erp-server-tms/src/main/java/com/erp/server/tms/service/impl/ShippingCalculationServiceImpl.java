@@ -248,7 +248,7 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
             dto.setChannelName(channelWarehouseDTO.getChannelName());
             dto.setLogisticsName(channelWarehouseDTO.getSupplierName());
             //其他费用
-            dto.setOtherCostStr(ObjectUtil.isNotEmpty(dto.getOtherCost()) ? MathUtil.setScale(dto.getOtherCost(),4).toPlainString() : MathUtil.ZERO.toString());
+            dto.setOtherCostStr(ObjectUtil.isNotEmpty(dto.getOtherCost()) ? MathUtil.scaleToSix(dto.getOtherCost()).toPlainString() : MathUtil.ZERO.toString());
             //时效
             if (CharSequenceUtil.isBlank(dto.getEffectiveTime())) {
                 String effectiveTime = channelWarehouseDTO.getEffectiveTime();
@@ -387,9 +387,9 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
             }
 
             //体积重
-            BigDecimal volumeWeight = MathUtil.multiplyWithTwo(MathUtil.divide(MathUtil.multiplyWithTwo(MathUtil.multiplyWithTwo(params.getLength(), params.getWidth()), params.getHeight()), new BigDecimal(listDTO.getVolumeSetting())), volumeRatio, 4);
+            BigDecimal volumeWeight = MathUtil.multiplyWithSix(MathUtil.divide(MathUtil.multiplyWithTwo(MathUtil.multiplyWithTwo(params.getLength(), params.getWidth()), params.getHeight()), new BigDecimal(listDTO.getVolumeSetting())), volumeRatio);
             //重量
-            BigDecimal weight = MathUtil.multiplyWithTwo(params.getWeight(), ratio, 4);
+            BigDecimal weight = MathUtil.multiplyWithSix(params.getWeight(), ratio);
             if (ShippingFeeRuleEnum.BILLING_WEIGHT.getCode().equals(listDTO.getFeeRule())) {
                 weight = MathUtil.compareTo(volumeWeight, weight) > MathUtil.ZERO ? volumeWeight : weight;
             }
@@ -564,7 +564,7 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
                 //续重比例（进一）
                 BigDecimal weightRatio = MathUtil.divide(MathUtil.subtract(weight, shippingTemplateRule.getFirstWeight()), shippingTemplateRule.getAdditionalUnitWeight(), 0, BigDecimal.ROUND_UP);
                 //续重费用
-                additionalWeightShippingCost = MathUtil.multiplyWithTwo(weightRatio, shippingTemplateRule.getAdditionalPrice(), 4);
+                additionalWeightShippingCost = MathUtil.multiplyWithSix(weightRatio, shippingTemplateRule.getAdditionalPrice());
             }
             shippingCost = MathUtil.add(firstWeightShippingCost, additionalWeightShippingCost);
         } else {
@@ -572,7 +572,7 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
             if (MathUtil.compareTo(shippingTemplateRule.getStartWeight(), weight) >= MathUtil.ZERO || MathUtil.compareTo(weight, shippingTemplateRule.getEndWeight()) > MathUtil.ZERO) {
                 throw new ServiceException(ApiError.LOGISTICS_WEIGHT_OUT_OF_RANGE, weight, shippingTemplateRule.getStartWeight(), shippingTemplateRule.getEndWeight());
             }
-            shippingCost = MathUtil.multiplyWithTwo(shippingTemplateRule.getShippingPrice(), weight, 4);
+            shippingCost = MathUtil.multiplyWithSix(shippingTemplateRule.getShippingPrice(), weight);
         }
         shippingCost = MathUtil.compareTo(shippingCost, shippingTemplateRule.getMinCost()) > MathUtil.ZERO ? shippingCost : shippingTemplateRule.getMinCost();
         return shippingCost;
@@ -692,7 +692,7 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
         //费用合计值
         BigDecimal totalOtherCost = costSettingList.stream().map(obj -> (BigDecimal) jsonObject.get(obj.getCode())).reduce(BigDecimal.ZERO, BigDecimal::add);
         //燃油附加费率
-        BigDecimal fuelSurchargeCost = MathUtil.multiplyWithTwo(totalOtherCost, MathUtil.divide(otherCostEntity.getCostSettingValue(), MathUtil.BigDecimal_100), 4);
+        BigDecimal fuelSurchargeCost = MathUtil.multiplyWithSix(totalOtherCost, MathUtil.divide(otherCostEntity.getCostSettingValue(), MathUtil.BigDecimal_100));
 
         return fuelSurchargeCost;
     }
@@ -715,7 +715,7 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
         //费用合计值
         BigDecimal totalOtherCost = costSettingList.stream().map(obj -> MathUtil.valueOf(jsonObject.get(obj.getCode()))).reduce(BigDecimal.ZERO, BigDecimal::add);
         //折扣费
-        BigDecimal discountCost = MathUtil.multiplyWithTwo(totalOtherCost, MathUtil.subtract(MathUtil.BigDecimal_1, MathUtil.divide(otherCostEntity.getCostSettingValue(), MathUtil.BigDecimal_100)), 4);
+        BigDecimal discountCost = MathUtil.multiplyWithSix(totalOtherCost, MathUtil.subtract(MathUtil.BigDecimal_1, MathUtil.divide(otherCostEntity.getCostSettingValue(), MathUtil.BigDecimal_100)));
 
         return discountCost;
     }
@@ -792,9 +792,9 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
                 volumeRatio = new BigDecimal(1000);
             }
             //体积重
-            BigDecimal volumeWeight = MathUtil.multiplyWithTwo(MathUtil.divide(MathUtil.multiplyWithTwo(MathUtil.multiplyWithTwo(params.getLength(), params.getWidth()), params.getHeight()), new BigDecimal(item.getVolumeSetting())), volumeRatio, 4);
+            BigDecimal volumeWeight = MathUtil.multiplyWithSix(MathUtil.divide(MathUtil.multiplyWithTwo(MathUtil.multiplyWithTwo(params.getLength(), params.getWidth()), params.getHeight()), new BigDecimal(item.getVolumeSetting())), volumeRatio);
             //重量
-            BigDecimal weight = MathUtil.multiplyWithTwo(params.getWeight(), ratio, 4);
+            BigDecimal weight = MathUtil.multiplyWithSix(params.getWeight(), ratio);
             if (billingWeightCode.equals(item.getFeeRule())) {
                 weight = MathUtil.compareTo(volumeWeight, weight) > MathUtil.ZERO ? volumeWeight : weight;
             }

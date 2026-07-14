@@ -1160,7 +1160,7 @@ public class PackageForecastDTO implements Serializable {
         * 包裹总重量
         */
         @NotNull(message = "包裹总重量不能为空")
-        @Digits(integer = 12, fraction = 4, message = "包裹总重量整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "包裹总重量整数位不能超过18位，小数位不能超过6位")
         private BigDecimal totalPackageWeight;
 
         /**

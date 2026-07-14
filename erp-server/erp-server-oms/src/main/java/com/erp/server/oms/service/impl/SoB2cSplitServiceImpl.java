@@ -8,7 +8,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
-import com.common.business.annotation.DistributeLocker;
+import com.common.business.annotation.DataIdempotent;
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -29,7 +29,6 @@ import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.message.constant.DistributeKeyConstant;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
@@ -249,7 +248,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                     viewDTO.setAmount(amount);
                     remainAmount = remainAmount.subtract(amount);
                     //原捆绑商品建议售价金额*（单个SKU含税成本/总的SKU含税成本），最后一个订单明细行显示最后剩余的建议售价金额
-                    BigDecimal advancePrice = viewDTO.getAllocationAmount().divide(totalAllocationPrice,4, RoundingMode.HALF_UP).multiply(detailEntity.getAdvicePrice());
+                    BigDecimal advancePrice = viewDTO.getAllocationAmount().divide(totalAllocationPrice, MathUtil.scaleSix, RoundingMode.HALF_UP).multiply(detailEntity.getAdvicePrice());
                     viewDTO.setAdvicePrice(advancePrice);
                     remainAdvicePrice = remainAdvicePrice.subtract(advancePrice);
                 }
@@ -366,7 +365,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
     }
 
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.SO_B2C_BOM_SPLIT_KEY, keyName = "ids")
+    @DataIdempotent(keyIdName = "ids")
     public List<BatchResultDTO> bomSplitAndSave(List<String> ids) {
         List<SoB2cEntity> soB2cEntityList = this.listByIds(ids);
         List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainIds(ids);
@@ -492,7 +491,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                         soB2cDetailEntity.setAmount(amount);
                         remainAmount = remainAmount.subtract(amount);
                         //原捆绑商品建议售价金额*（单个SKU含税成本/总的SKU含税成本），最后一个订单明细行显示最后剩余的建议售价金额
-                        BigDecimal advancePrice = soB2cDetailEntity.getAllocationAmount().divide(totalAllocationPrice,4, RoundingMode.HALF_UP).multiply(detailEntity.getAdvicePrice());
+                        BigDecimal advancePrice = soB2cDetailEntity.getAllocationAmount().divide(totalAllocationPrice, MathUtil.scaleSix, RoundingMode.HALF_UP).multiply(detailEntity.getAdvicePrice());
                         soB2cDetailEntity.setAdvicePrice(advancePrice);
                         remainAdvicePrice = remainAdvicePrice.subtract(advancePrice);
                     }
@@ -809,7 +808,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
 
 
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.SO_B2C_SPLIT_KEY, keyName = "dto.id")
+    @DataIdempotent(keyIdName = "dto.id")
     public SoB2cDTO.SplitSaveResultDTO splitSave(SoB2cDTO.SplitSaveDTO dto) {
         SoB2cDTO.SplitSaveResultDTO resultDTO = service.handleSplit(dto);
         service.splitRule(resultDTO);

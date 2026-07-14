@@ -141,7 +141,7 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         // 校验验收数量
         validateAcceptQty(addDTO.getDetailList());
         validateMoldRefSkuForSave(addDTO.getDetailList());
-        
+
         AssetAcceptEntity assetAcceptEntity = new AssetAcceptEntity();
         BeanMapperUtils.copy(addDTO, assetAcceptEntity);
         assetAcceptEntity.setSourceCode(addDTO.getSourceCode());
@@ -329,7 +329,7 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         // 校验验收数量
         validateAcceptQty(addOrUpdateDTO.getDetailList());
         validateMoldRefSkuForSave(addOrUpdateDTO.getDetailList());
-        
+
         AssetAcceptEntity old = super.getById(addOrUpdateDTO.getId());
         old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "资产验收单"));
         // 待提交和审核不通过允许修改
@@ -1481,7 +1481,7 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(), listApiResult.getMsg()));
+                throw new ServiceException(ApiError.WF_CUR_APPROVER_QUERY_FAILED, listApiResult.getMsg());
             }
         }
         List<String> moldCodes = list.stream()

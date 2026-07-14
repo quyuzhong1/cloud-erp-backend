@@ -10,6 +10,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -545,9 +546,14 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             throw new ServiceException(ApiError.BILL_SAVE_FAILED);
         }
         /**
-         * 添加修改日志
+         * 添加修改日志（税率按前端百分比展示，如 0.13 → 13）
+         * 使用独立副本传参，避免修改 old/supplier 快照导致税率被放大后影响后续逻辑
          */
-        moduleOperateLogService.addModuleOperateLogByObj(old, supplier, ModuleTypeEnum.SUPPLIER.getCode(), supplierId, "", "");
+        SupplierEntity oldForLog = BeanUtil.toBean(old, SupplierEntity.class);
+        SupplierEntity newForLog = BeanUtil.toBean(supplier, SupplierEntity.class);
+        oldForLog.setTaxRate(MathUtil.multiplyWithTwo(oldForLog.getTaxRate(), MathUtil.BigDecimal_100));
+        newForLog.setTaxRate(MathUtil.multiplyWithTwo(newForLog.getTaxRate(), MathUtil.BigDecimal_100));
+        moduleOperateLogService.addModuleOperateLogByObj(oldForLog, newForLog, ModuleTypeEnum.SUPPLIER.getCode(), supplierId, "", "");
 
         //联系人的
         supplierContactService.updateSupplierContact(contactList, supplierId);
@@ -624,7 +630,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(), listApiResult.getMsg()));
+                throw new ServiceException(ApiError.WF_CUR_APPROVER_QUERY_FAILED, listApiResult.getMsg());
             }
         }
         //TODO 获取srm 供应商订单规则
@@ -1729,7 +1735,7 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(ApiError.HTTP_UNKNOWN);
+                throw new ServiceException(ApiError.WF_CUR_APPROVER_QUERY_FAILED, listApiResult.getMsg());
             }
         }
         // 按 businessId 预分组，循环内直接取值，避免 O(N*M) 扫描
@@ -2294,6 +2300,67 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
              updateDTO.setTelNumber(DesensitizedUtil.mobilePhone(updateDTO.getTelNumber()));
         }
     }
+    /**
+     * 查看是否存在权限
+     * @author will
+     * @date 2025/7/25 12:21
+     * @param billIdList
+     * @param menuCode
+     * @param menuTableField
+     * @return Boolean
+     */
+    private Boolean isExistAuth (List<String> billIdList,String menuCode,String menuTableField) {
+        //判断是否有权限回填产品信息
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        List<UserRequestPermissionsDTO> requestPermissionsList = sysUserFeign.getRequestPermissionsList(userInfo.getUid());
+        UserRequestPermissionsDTO userRequestPermissions = new UserRequestPermissionsDTO();
+        List<String> roleIdList = sysUserFeign.getRoleIdList(userInfo.getUid());
+        if (roleIdList.contains("1")) {
+            userRequestPermissions.setPermissionsCode(menuCode);
+            userRequestPermissions.setDataScope(DataPermissionAspect.DATA_SCOPE_ALL);
+        } else {
+            userRequestPermissions = requestPermissionsList
+                    .stream()
+                    .filter(p -> p.getPermissionsCode().equals(menuCode))
+                    .findFirst()
+                    .orElse(null);
+        }
+        if (ObjectUtils.isEmpty(userRequestPermissions)) {
+            return Boolean.FALSE;
+        }
+        List<String> userList = sysUserFeign.getDepUserList(userInfo.getUid());
+        List<String> users = new ArrayList<>();
+        List<?> objects = this.listByIds(billIdList);
+        for (Object object : objects) {
+            JSONObject jsonObject = JSONObject.parseObject(JSONObject.toJSONString(object));
+
+            if (CharSequenceUtil.isBlank(menuTableField)) {
+                return Boolean.FALSE;
+            }
+            String[] tableFields = menuTableField.split(",");
+            for (String tableField : tableFields) {
+                Object o = jsonObject.get(StrUtils.underlineToCamel(tableField, true));
+                if (o == null) {
+                    continue;
+                }
+                users.addAll(Arrays.asList(o.toString().split(",")));
+            }
+        }
+        if (DataPermissionAspect.DATA_SCOPE_ALL.equals(userRequestPermissions.getDataScope())) {
+            return Boolean.TRUE;
+        } else if (DataPermissionAspect.DATA_SCOPE_DEPT.equals(userRequestPermissions.getDataScope())) {
+            long containsUserCount = users.stream().filter(u -> userList.contains(u)).count();
+            if (containsUserCount == 0) {
+                return Boolean.FALSE;
+            }
+        } else if (DataPermissionAspect.DATA_SCOPE_SELF.equals(userRequestPermissions.getDataScope())) {
+            if (!users.contains(userInfo.getUid())) {
+                return Boolean.FALSE;
+            }
+        }
+        return Boolean.TRUE;
+    }
+
     /**
      * 处理导入数据
      * @author will

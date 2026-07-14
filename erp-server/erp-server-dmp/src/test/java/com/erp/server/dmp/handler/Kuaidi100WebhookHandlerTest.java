@@ -3,12 +3,10 @@ package com.erp.server.dmp.handler;
 import com.common.business.dto.WebhookResult;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.Kuaidi100WebhookResponseDTO;
-import com.erp.model.tms.dto.LogisticsTrackDTO;
-import com.erp.rpc.tms.feign.LogisticsFeign;
+import com.erp.server.dmp.service.DmpLogisticsTrackWebhookRecordService;
 import com.sdk.tms.kuaidi100.service.Kuaidi100Service;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.Test;
-import org.mockito.ArgumentCaptor;
 
 import java.lang.reflect.Field;
 import java.net.URLEncoder;
@@ -53,35 +51,18 @@ public class Kuaidi100WebhookHandlerTest {
     }
 
     @Test
-    public void processParsesFormBodyAndForwardsDto() throws Exception {
+    public void processParsesFormBodyAndSavesRawRecord() throws Exception {
         Kuaidi100WebhookHandler handler = new Kuaidi100WebhookHandler();
-        LogisticsFeign logisticsFeign = mock(LogisticsFeign.class);
-        setField(handler, "logisticsFeign", logisticsFeign);
+        DmpLogisticsTrackWebhookRecordService service = mock(DmpLogisticsTrackWebhookRecordService.class);
+        setField(handler, "webhookRecordService", service);
         String param = callbackParam();
         String sign = buildSign(param);
 
         WebhookResult<Kuaidi100WebhookResponseDTO> result = handler.process(formBody(param, sign), Collections.emptyMap(), "kuaidi100");
 
-        ArgumentCaptor<LogisticsTrackDTO.Kuaidi100WebHookDTO> captor = ArgumentCaptor.forClass(LogisticsTrackDTO.Kuaidi100WebHookDTO.class);
-        verify(logisticsFeign).webhookByKuaidi100(captor.capture());
-        LogisticsTrackDTO.Kuaidi100WebHookDTO dto = captor.getValue();
-        assertEquals(sign, dto.getSign());
-        assertEquals("polling", dto.getStatus());
-        assertEquals("YT123", dto.getLastResult().getNu());
-        assertEquals("3", dto.getLastResult().getState());
-        assertEquals(1, dto.getLastResult().getData().size());
-        assertEquals("signed", dto.getLastResult().getData().get(0).getContext());
+        verify(service).saveKuaidi100RawRecord(param, sign);
         assertTrue(result.getData().getResult());
         assertEquals("200", result.getData().getReturnCode());
-    }
-
-    @Test(expected = ServiceException.class)
-    public void process_missingLastResult_throwsServiceException() throws Exception {
-        Kuaidi100WebhookHandler handler = new Kuaidi100WebhookHandler();
-        String param = "{\"status\":\"polling\",\"message\":\"ok\"}";
-        String sign = buildSign(param);
-
-        handler.process(formBody(param, sign), Collections.emptyMap(), "kuaidi100");
     }
 
     private String callbackParam() {

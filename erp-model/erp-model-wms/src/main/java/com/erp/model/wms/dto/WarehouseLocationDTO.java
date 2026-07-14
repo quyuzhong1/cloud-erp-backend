@@ -292,6 +292,11 @@ public class WarehouseLocationDTO implements Serializable {
         private Boolean filterZero;
 
         /**
+         * 仓位编码
+         */
+        private String code;
+
+        /**
          * 关键词
          */
         private String searchKeyword;

@@ -205,28 +205,28 @@ public class DmpSoOriginalDetailDTO implements Serializable {
         * 数量
         */
         @NotNull(message = "数量不能为空")
-        @Digits(integer = 12, fraction = 4, message = "数量整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "数量整数位不能超过18位，小数位不能超过6位")
         private BigDecimal num;
 
         /**
         * 单价
         */
         @NotNull(message = "单价不能为空")
-        @Digits(integer = 12, fraction = 4, message = "单价整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "单价整数位不能超过18位，小数位不能超过6位")
         private BigDecimal price;
 
         /**
         * 分摊优惠
         */
         @NotNull(message = "分摊优惠不能为空")
-        @Digits(integer = 12, fraction = 4, message = "分摊优惠整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "分摊优惠整数位不能超过18位，小数位不能超过6位")
         private BigDecimal shareDiscount;
 
         /**
         * 退款金额
         */
         @NotNull(message = "退款金额不能为空")
-        @Digits(integer = 12, fraction = 4, message = "退款金额整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "退款金额整数位不能超过18位，小数位不能超过6位")
         private BigDecimal refundAmount;
 
         /**

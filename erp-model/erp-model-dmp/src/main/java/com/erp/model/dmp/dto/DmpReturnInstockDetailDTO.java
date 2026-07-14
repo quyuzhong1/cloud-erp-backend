@@ -341,7 +341,7 @@ public class DmpReturnInstockDetailDTO implements Serializable {
         * 退货入库金额
         */
         @NotNull(message = "退货入库金额不能为空")
-        @Digits(integer = 12, fraction = 4, message = "退货入库金额整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "退货入库金额整数位不能超过18位，小数位不能超过6位")
         private BigDecimal returnInstockAmount;
 
         /**
@@ -407,7 +407,7 @@ public class DmpReturnInstockDetailDTO implements Serializable {
         * 基准售价
         */
         @NotNull(message = "基准售价不能为空")
-        @Digits(integer = 12, fraction = 4, message = "基准售价整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "基准售价整数位不能超过18位，小数位不能超过6位")
         private BigDecimal listPrice;
 
         /**

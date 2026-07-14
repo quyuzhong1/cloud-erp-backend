@@ -21,6 +21,9 @@ import java.util.stream.Collectors;
  *       仅记录到上下文供仓库字段判定表别名；要求其在 warehouseId 之前处理。</li>
  *   <li>warehouseId：按单据类型手动拼接仓库过滤 —— B2B 用 so_return.warehouse_id（sr），
  *       B2C 用关联销售订单明细 so_b2c_detail.warehouse_id（sbd）。</li>
+ *   <li>b2bSoCode/b2bPlatformOrderCode/b2bAfterSaleCode 与 b2cSoCode/b2cPlatformOrderCode/b2cAfterSaleCode：
+ *       B2B/B2C 单号字段分属不同表列，按上下文单据类型拼到对应表列；单据类型不匹配的字段直接放行，
+ *       避免把 B2C 列拼进 B2B 查询（或反之）导致列不存在报错。</li>
  * </ul>
  *
  * @author Will
@@ -39,6 +42,36 @@ public class SoReturnLinkAfterSaleQueryHandler extends AbstractQueryHandler {
      */
     private static final String FIELD_WAREHOUSE_ID = "warehouseId";
 
+    /**
+     * B2C 销售订单号高级查询字段名
+     */
+    private static final String FIELD_B2C_SO_CODE = "b2cSoCode";
+
+    /**
+     * B2C 平台订单号高级查询字段名
+     */
+    private static final String FIELD_B2C_PLATFORM_ORDER_CODE = "b2cPlatformOrderCode";
+
+    /**
+     * B2C 售后订单号高级查询字段名
+     */
+    private static final String FIELD_B2C_AFTER_SALE_CODE = "b2cAfterSaleCode";
+
+    /**
+     * B2B 销售订单号高级查询字段名
+     */
+    private static final String FIELD_B2B_SO_CODE = "b2bSoCode";
+
+    /**
+     * B2B 平台订单号高级查询字段名
+     */
+    private static final String FIELD_B2B_PLATFORM_ORDER_CODE = "b2bPlatformOrderCode";
+
+    /**
+     * B2B 售后订单号高级查询字段名
+     */
+    private static final String FIELD_B2B_AFTER_SALE_CODE = "b2bAfterSaleCode";
+
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
         //单据类型：只用于分表与仓库表别名判定，不生成列过滤
@@ -50,7 +83,53 @@ public class SoReturnLinkAfterSaleQueryHandler extends AbstractQueryHandler {
         if (FIELD_WAREHOUSE_ID.equals(field)) {
             return buildWarehouseSql(value);
         }
+        //B2B/B2C 单号：分属不同表列，按上下文单据类型拼接，单据类型不匹配的字段直接放行
+        String codeSql = buildOrderCodeSql(field, compareCodeSplicingValueSql);
+        if (codeSql != null) {
+            return codeSql;
+        }
         return null;
+    }
+
+    /**
+     * B2B / B2C 销售单号、平台单号、售后单号过滤：按上下文单据类型拼接到对应表列。
+     * <p>该接口一次只查一张表（B2B 查 so_return(sr)，B2C 查 so_b2c_return(sbr)），
+     * 因此仅当字段所属单据类型与上下文单据类型一致时才生成列过滤；否则放行（1 = 1），
+     * 避免把不存在的表别名列拼进 SQL 导致报错。</p>
+     * @param field 高级查询字段名
+     * @param compareCodeSplicingValueSql 比较符与值拼接后的 SQL 片段（如 = 'xxx' / like '%xxx%' / in (...)）
+     * @return java.lang.String 单号过滤 SQL 片段；非单号字段返回 null 交由后续默认逻辑处理
+     */
+    private String buildOrderCodeSql(String field, String compareCodeSplicingValueSql) {
+        boolean isB2b = BillTypeEnum.B2B.getCode().equals(LinkAfterSaleQueryContext.getBillType());
+        String column;
+        switch (field) {
+            case FIELD_B2B_SO_CODE:
+                column = isB2b ? "sr.source_code" : null;
+                break;
+            case FIELD_B2B_PLATFORM_ORDER_CODE:
+                column = isB2b ? "sr.platform_order_code" : null;
+                break;
+            case FIELD_B2B_AFTER_SALE_CODE:
+                column = isB2b ? "sr.code" : null;
+                break;
+            case FIELD_B2C_SO_CODE:
+                column = isB2b ? null : "sbr.so_code";
+                break;
+            case FIELD_B2C_PLATFORM_ORDER_CODE:
+                column = isB2b ? null : "sbr.platform_order_no";
+                break;
+            case FIELD_B2C_AFTER_SALE_CODE:
+                column = isB2b ? null : "sbr.code";
+                break;
+            default:
+                return null;
+        }
+        //命中单号字段但单据类型不匹配：放行，不生成列过滤
+        if (column == null) {
+            return getQueryAllSql();
+        }
+        return column + " " + compareCodeSplicingValueSql;
     }
 
     /**

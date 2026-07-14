@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import cn.hutool.core.util.StrUtil;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -245,5 +246,22 @@ public class LogisticsReconDetailSubServiceImpl
                 .set(LogisticsReconDetailSubEntity::getUpdateTime, LocalDateTime.now())
                 .update();
         return lockedIds;
+    }
+
+    @Override
+    public int countValidByMainId(String mainId) {
+        if (StrUtil.isBlank(mainId)) {
+            return 0;
+        }
+        return baseMapper.countValidByMainId(mainId);
+    }
+
+    @Override
+    public BigDecimal sumLocalAmountByMainId(String mainId) {
+        if (StrUtil.isBlank(mainId)) {
+            return BigDecimal.ZERO;
+        }
+        BigDecimal total = baseMapper.sumLocalAmountByMainId(mainId);
+        return total == null ? BigDecimal.ZERO : total;
     }
 }

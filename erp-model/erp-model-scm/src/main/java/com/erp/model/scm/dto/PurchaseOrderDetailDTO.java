@@ -70,13 +70,13 @@ public class PurchaseOrderDetailDTO implements Serializable {
         /**
          * 含税单价
          */
-        @Digits(integer = 16,fraction = 4,message = "含税单价最大16字符，小数位不能大于4个字符")
+        @Digits(integer = 18, fraction = 6,message = "含税单价最大16字符，小数位不能大于6个字符")
         private BigDecimal taxPrice;
 
         /**
          * 税率
          */
-        @Digits(integer = 16,fraction = 4,message = "税率最大16字符，小数位不能大于4个字符")
+        @Digits(integer = 18, fraction = 6,message = "税率最大16字符，小数位不能大于6个字符")
         private BigDecimal taxRate;
 
         /**

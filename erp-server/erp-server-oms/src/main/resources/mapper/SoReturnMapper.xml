@@ -229,6 +229,7 @@
             sr.type AS type,
             sr.customer_id AS shopId,
             sr.customer_name AS shopName,
+            sr.warehouse_id AS warehouseId,
             sr.warehouse_name AS warehouseName,
             srd.return_type_dict AS returnType,
             srd.return_reason_dict AS returnReason,

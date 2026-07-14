@@ -210,46 +210,46 @@ public class ShippingTemplateRuleDTO implements Serializable {
         /**
         * 首重运费
         */
-        @Digits(integer = 12, fraction = 4, message = "首重运费整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "首重运费整数位不能超过18位，小数位不能超过6位")
         private BigDecimal firstWeightShippingCost;
 
         /**
         * 续重单位重量
         */
-        @Digits(integer = 12, fraction = 4, message = "续重单位重量整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "续重单位重量整数位不能超过18位，小数位不能超过6位")
         private BigDecimal additionalUnitWeight;
 
         /**
         * 续重单价
         */
-        @Digits(integer = 12, fraction = 4, message = "续重单价整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "续重单价整数位不能超过18位，小数位不能超过6位")
         private BigDecimal additionalPrice;
 
         /**
          * 运费单价
          */
-        @Digits(integer = 12, fraction = 4, message = "运费单价整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "运费单价整数位不能超过18位，小数位不能超过6位")
         private BigDecimal shippingPrice;
 
         /**
         * 挂号费
         */
         @NotNull(message = "挂号费不能为空")
-        @Digits(integer = 12, fraction = 4, message = "挂号费整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "挂号费整数位不能超过18位，小数位不能超过6位")
         private BigDecimal registrationCost;
 
         /**
         * 操作费
         */
         @NotNull(message = "操作费不能为空")
-        @Digits(integer = 12, fraction = 4, message = "操作费整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "操作费整数位不能超过18位，小数位不能超过6位")
         private BigDecimal operatingCost;
 
         /**
         * 最低收费
         */
         @NotNull(message = "最低收费不能为空")
-        @Digits(integer = 12, fraction = 4, message = "最低收费整数位不能超过12位，小数位不能超过4位")
+        @Digits(integer = 18, fraction = 6, message = "最低收费整数位不能超过18位，小数位不能超过6位")
         private BigDecimal minCost;
 
 

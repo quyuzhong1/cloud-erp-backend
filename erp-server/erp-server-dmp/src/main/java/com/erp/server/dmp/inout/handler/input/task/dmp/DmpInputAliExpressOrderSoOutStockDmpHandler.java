@@ -7,12 +7,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import com.common.core.anno.ParamData;
 import com.common.core.enums.PannoEnum;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -33,6 +33,7 @@ import cn.hutool.core.collection.CollUtil;
 public class DmpInputAliExpressOrderSoOutStockDmpHandler extends DmpInputAliExpressOrderDoChildDmpHandler{
 
 
+	private static final String ORDER_CODE = "order";
 	public static final String DELIVERY_TIME = "deliveryTime";
 	public static final String SEND_FULFILL_TIME = "send_fulfill_time";
 	public static final String OUT_BOUND_TIME = "out_bound_time";
@@ -71,11 +72,40 @@ public class DmpInputAliExpressOrderSoOutStockDmpHandler extends DmpInputAliExpr
 				billNoIdMap.put(listMap.get("third_code").toString(), listMap.get(BaseEntity.FIELD_ID).toString());
 			}
 		}
+		Map<String, String> orderNoParentOrderIdMap = this.resolveParentOrderIdMap();
 		for(Map<String, Object> dmpInputMongoChildEntity : dmpInputMongoChildEntityList) {
-			String billNo = dmpInputMongoChildEntity.get("trade_order_no").toString();
-			String dmpId = billNoIdMap.get(billNo);
+			Object billNoObj = dmpInputMongoChildEntity.get("trade_order_no");
+			String billNo = billNoObj == null ? "" : billNoObj.toString();
+			String mainBillNo = StringUtils.defaultIfBlank(orderNoParentOrderIdMap.get(billNo), billNo);
+			String dmpId = billNoIdMap.get(mainBillNo);
 			dmpInputMongoChildEntity.put(MAIN_ID, dmpId);
 			dmpInputMongoChildEntity.put("sourceId", dmpId);
 		}
+	}
+
+	private Map<String, String> resolveParentOrderIdMap() {
+		Map<String, String> orderNoParentOrderIdMap = new HashMap<>();
+		List<ParamData> paramDataList = new ArrayList<>();
+		paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID,
+				DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, inputTaskId));
+		paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID,
+				DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, PannoEnum.EQ, nextLevelId));
+		List<Map<String, Object>> orderMongoDataList = mongoService.findMongoData(paramDataList,
+				AliExpressDmpHandlerUtils.getMongoStorageName(dmpBasicSystemEntity, dmpCfgInputService, dmpHandlerCache,
+						dmpCfgInputEntity.getSystemId(), ORDER_CODE));
+		if (CollUtil.isEmpty(orderMongoDataList)) {
+			return orderNoParentOrderIdMap;
+		}
+		for (Map<String, Object> orderMongoData : orderMongoDataList) {
+			Object parentOrderIdObj = orderMongoData.get("order_id");
+			if (parentOrderIdObj == null || StringUtils.isBlank(parentOrderIdObj.toString())) {
+				continue;
+			}
+			String parentOrderId = parentOrderIdObj.toString();
+			for (String orderId : AliExpressDmpHandlerUtils.collectParentAndChildOrderIds(orderMongoData)) {
+				orderNoParentOrderIdMap.put(orderId, parentOrderId);
+			}
+		}
+		return orderNoParentOrderIdMap;
 	}
 }

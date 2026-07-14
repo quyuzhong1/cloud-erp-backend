@@ -60,7 +60,7 @@ public class ProductLogisticsDTO implements Serializable {
     /**
      * 报关申报价格
      */
-    @Digits(integer = 16,fraction = 4,message = "报关申报价格最大16字符，小数位不能大于4位")
+    @Digits(integer = 18, fraction = 6,message = "报关申报价格最大16字符，小数位不能大于6位")
     private BigDecimal declarePrice;
 
     /**

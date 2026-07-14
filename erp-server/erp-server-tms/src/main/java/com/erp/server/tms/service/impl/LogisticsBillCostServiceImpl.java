@@ -16,7 +16,9 @@ import com.baomidou.mybatisplus.core.incrementer.IdentifierGenerator;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.conditions.update.LambdaUpdateChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DataIdempotent;
 import com.common.business.annotation.DistributeLocker;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.*;
 import com.common.business.dto.base.BaseResultDTO.AddDTO;
 import com.common.business.enums.*;
@@ -37,6 +39,7 @@ import com.erp.model.plm.entity.ProductPackEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.*;
+import com.erp.model.tms.dto.*;
 import com.erp.model.tms.dto.CfgSettingValueDTO.AllocationSettingDTO;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.dto.LogisticsBillCostDTO.*;
@@ -46,6 +49,7 @@ import com.erp.model.tms.dto.excel.LogisticsBillCostExcelDTO;
 import com.erp.model.tms.entity.CfgSettingEntity;
 import com.erp.model.tms.entity.DictBasicEntity;
 import com.erp.model.tms.entity.*;
+import com.erp.model.tms.entity.DictBasicEntity;
 import com.erp.model.tms.enums.*;
 import com.erp.model.wms.entity.*;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
@@ -57,9 +61,12 @@ import com.erp.rpc.sys.feign.UserInfoFeign;
 import com.erp.server.tms.handler.asynctask.LogisticsSmallBagPushBatchPushHandlerFactory;
 import com.erp.server.tms.handler.asynctask.LogisticsUpdateReconciliationBatchPushHandler;
 import com.erp.server.tms.listener.LogisticsBillCostExcelListener;
+import com.erp.server.tms.util.LogisticsBillPlatformCodeUtil;
 import com.erp.server.tms.mapper.LogisticsBillCostMapper;
 import com.erp.server.tms.query.LogisticsBillCostQueryHandler;
 import com.erp.server.tms.query.LogisticsLastMileCostQueryHandler;
+import com.erp.server.tms.handler.asynctask.LogisticsSmallBagPushBatchPushHandlerFactory;
+import com.erp.server.tms.handler.asynctask.LogisticsUpdateReconciliationBatchPushHandler;
 import com.erp.server.tms.service.*;
 import com.erp.server.tms.service.asynctask.LogisticsBillCostAsyncTaskDelegate;
 import com.erp.server.tms.service.support.LogisticsOrderWeightSupport;
@@ -119,6 +126,10 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     implements LogisticsBillCostService, LogisticsBillCostAsyncTaskDelegate {
     private static final int IMPORT_CONFIRM_BATCH_SIZE = 1000;
     private static final String LAST_MILE_FEE_ATTRIBUTION = DictCostAttributionEnum.LAST_MILE_DELIVERY.getCode();
+    /**
+     * 对账月份高级查询字段名。
+     */
+    private static final String RECONCILIATION_MONTH_QUERY_FIELD = "lbc.reconciliation_month";
     @Resource
     private OperateLogService operateLogService;
 
@@ -185,6 +196,9 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     @Resource
     @Lazy
     private LogisticsBillCostService service;
+    @Resource
+    @Lazy
+    private LogisticsReconService logisticsReconService;
     @Resource
     private TmsAsyncTaskRecordService asyncTaskRecordService;
     @Resource
@@ -767,6 +781,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 .set(!confirmFlag,LogisticsBillCostEntity::getConfirmUserId, "")
                 .set(!confirmFlag,LogisticsBillCostEntity::getConfirmUserName, "")
                 .update();
+        // 费用单对账状态变更后，反向同步对账单 ref 快照与 detail_sub 聚合状态
+        syncReconStatusQuietly(Collections.singletonList(id));
         // 状态变更日志
         log.info("状态变更日志数据，id集合：【{}】", id);
         String msg = CharSequenceUtil.format("状态更新为【{}】 ",  ReconciliationStatusEnum.getName(reconciliationStatus));
@@ -778,6 +794,12 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
     @Override
     public int batchUpdateReconciliationStatus(List<String> ids, String reconciliationStatus, LocalDateTime confirmTime) {
+        return batchUpdateReconciliationStatus(ids, reconciliationStatus, confirmTime, false);
+    }
+
+    @Override
+    public int batchUpdateReconciliationStatus(List<String> ids, String reconciliationStatus, LocalDateTime confirmTime,
+                                               boolean skipSync) {
         if (CollUtil.isEmpty(ids)) {
             return 0;
         }
@@ -824,8 +846,28 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                     .set(!confirmFlag, LogisticsBillCostEntity::getConfirmUserName, "");
             totalUpdated += getBaseMapper().update(null, updateChain.getWrapper());
         }
-        log.info("批量更新对账状态完成，更新={}，期望={}，状态={}", totalUpdated, distinctIds.size(), reconciliationStatus);
+        // 费用单对账状态变更后，反向同步对账单 ref 快照与 detail_sub 聚合状态（幂等，重复刷新结果一致）；
+        // skipSync=true 时由调用方在批处理结束后统一同步一次，避免逐批全单刷新导致的 O(n^2) 开销。
+        if (!skipSync) {
+            syncReconStatusQuietly(distinctIds);
+        }
+        log.info("批量更新对账状态完成，更新={}，期望={}，状态={}，skipSync={}", totalUpdated, distinctIds.size(),
+                reconciliationStatus, skipSync);
         return totalUpdated;
+    }
+
+    /**
+     * 反向同步对账单状态（失败仅告警，不影响费用单状态主流程）。
+     */
+    private void syncReconStatusQuietly(java.util.Collection<String> logisticsBillCostIds) {
+        if (CollUtil.isEmpty(logisticsBillCostIds)) {
+            return;
+        }
+        try {
+            logisticsReconService.syncReconStatusByCostIds(logisticsBillCostIds);
+        } catch (Exception e) {
+            log.warn("[syncReconStatusQuietly] 对账单状态反向同步失败 costIds={}", logisticsBillCostIds, e);
+        }
     }
 
     /**
@@ -969,7 +1011,10 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             return true;
         }
         entity.setReconciliationStatus(ReconciliationStatusEnum.INVALID.getCode());
-        return this.updateById(entity);
+        boolean updated = this.updateById(entity);
+        // 作废后费用单不再参与对账确认，反向同步对账单 ref 快照与 detail_sub 聚合状态
+        syncReconStatusQuietly(Collections.singletonList(entity.getId()));
+        return updated;
     }
 
     @Override
@@ -1359,7 +1404,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             listDTO.setActualShippingCostStr(listDTO.getActualShippingCostCurrencySymbol() + listDTO.getActualShippingCost());
 
             //运费差异
-            listDTO.setDiffShippingCost(MathUtil.subtract(exchangeActualShippingCost,exchangeEstimatedShippingCost).setScale(4, RoundingMode.DOWN));
+            listDTO.setDiffShippingCost(MathUtil.scaleToSix(MathUtil.subtract(exchangeActualShippingCost, exchangeEstimatedShippingCost), BigDecimal.ROUND_DOWN));
             listDTO.setDiffShippingCostStr(listDTO.getDiffShippingCostCurrencySymbol() + listDTO.getDiffShippingCost());
 
             //实际报关费
@@ -2843,6 +2888,12 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
     @Override
     public void batchConfirmImport(List<ImportHistoryRecordDTO.ImportConfirmDTO> confirmList, String reconciliationStatus) {
+        batchConfirmImport(confirmList, reconciliationStatus, false);
+    }
+
+    @Override
+    public void batchConfirmImport(List<ImportHistoryRecordDTO.ImportConfirmDTO> confirmList, String reconciliationStatus,
+                                   boolean skipSync) {
         if (CollUtil.isEmpty(confirmList)) {
             return;
         }
@@ -2869,7 +2920,14 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         for (List<ImportHistoryRecordDTO.ImportConfirmDTO> batch : ListUtil.partition(distinctConfirmList, IMPORT_CONFIRM_BATCH_SIZE)) {
             updateCount += baseMapper.batchConfirmImport(batch, reconciliationStatus, confirmUserId, confirmUserName);
         }
-        log.info("导入确认批量更新完成，入参条数：{}，去重后条数：{}，更新条数：{}", confirmList.size(), distinctConfirmList.size(), updateCount);
+        // 导入确认变更费用单对账状态后，反向同步对账单 ref 快照与 detail_sub 聚合状态；
+        // skipSync=true（对账匹配确认路径）时跳过：ref 已由 buildReconBillRefs 直接写 confirmed，
+        // detail_sub 由 doMatchSubsChunk 按分片 scope 刷新，避免逐分片全单刷新导致的 O(n^2) 与并发全表更新竞争。
+        if (!skipSync) {
+            syncReconStatusQuietly(new ArrayList<>(confirmMap.keySet()));
+        }
+        log.info("导入确认批量更新完成，入参条数：{}，去重后条数：{}，更新条数：{}，skipSync={}",
+                confirmList.size(), distinctConfirmList.size(), updateCount, skipSync);
     }
 
     @Override
@@ -3486,7 +3544,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 					rateMap.put(key, rate);
 				}
 				smallBagCostAllocationDetailEntity.setBillAmount(costValueSum);
-				BigDecimal billAmountExchange = smallBagCostAllocationDetailEntity.getBillAmount().multiply(rate).setScale(4 , RoundingMode.DOWN);
+				BigDecimal billAmountExchange = MathUtil.multiplyWithSix(smallBagCostAllocationDetailEntity.getBillAmount(), rate, BigDecimal.ROUND_DOWN);
 				smallBagCostAllocationDetailEntity.setBillAmountExchange(billAmountExchange);
 				smallBagCostAllocationDetailEntity.setFeeType(feeType);
 				String feeAllocationType = feeTypeSettingMap.getValue();
@@ -3622,9 +3680,6 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         String costTypeName = resolveCostAttributionName(dto.getType());
         String businessType = SourceTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode();
         String methodType = resolveUpdateReconciliationStatusMethodType(dto.getType());
-        LocalDate today = LocalDate.now();
-        dto.setCreateTimeStart(today.minusDays(30).atStartOfDay());
-        dto.setCreateTimeEnd(today.atTime(23, 59, 59));
 
         int total = countByUpdateReconciliationStatus(buildUpdateReconciliationStatusCountQuery(dto));
         if (total == 0) {
@@ -3633,8 +3688,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
         TmsAsyncTaskRecordDTO.UpdateReconciliationStatusPayloadDTO payload =
             new TmsAsyncTaskRecordDTO.UpdateReconciliationStatusPayloadDTO(
-                dto.getReconciliationStatus(), dto.getConfirmTime(),
-                dto.getCreateTimeStart(), dto.getCreateTimeEnd(), dto.getSqlMap(), dto.getPermissionSql());
+                dto.getReconciliationStatus(), dto.getConfirmTime(), dto.getSqlMap(), dto.getPermissionSql());
         TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope =
             asyncTaskRecordService.buildEnvelope(businessType, methodType, null, null, payload);
         BatchResultDTO result = asyncTaskRecordService.dispatchManualEnvelopeTask(
@@ -3677,9 +3731,67 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             throw new ServiceException("费用归属类型不支持");
         }
         String querySql = dto.getSqlMap() == null ? null : dto.getSqlMap().get("default");
+        if (CollUtil.isEmpty(dto.getIds())) {
+            validateAsyncUpdateReconciliationMonth(dto.getAdvanceQueryDTOList());
+        }
         if (CollUtil.isEmpty(dto.getIds()) && StringUtils.isBlank(querySql)) {
             throw new ServiceException("请先筛选要更新的费用数据");
         }
+    }
+
+    /**
+     * 校验全量异步更新对账状态时必须选择对账月份。
+     * <p>
+     * 全量异步任务按高级查询条件创建任务，不回传具体 ID。为了避免任务范围过大，
+     * 必须包含 lbc.reconciliation_month 条件，且比较符只能为等于、值不能为空、格式必须为 yyyy-MM。
+     *
+     * @param advanceQueryDTOList 页面高级查询条件
+     */
+    private void validateAsyncUpdateReconciliationMonth(List<AdvanceQueryDTO> advanceQueryDTOList) {
+        List<AdvanceQueryDTO> reconciliationMonthQueries = Optional.ofNullable(advanceQueryDTOList)
+                .orElse(Collections.emptyList())
+                .stream()
+                .filter(query -> Objects.equals(RECONCILIATION_MONTH_QUERY_FIELD, query.getField()))
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(reconciliationMonthQueries)) {
+            throw new ServiceException("异步更新必须选择【对账月份】，格式为yyyy-MM，且不能为空，比较符必须为等于");
+        }
+        boolean invalid = reconciliationMonthQueries.stream().anyMatch(query ->
+                !Objects.equals(QueryConditionEnum.EQ.getCompareCode(), query.getCompare())
+                        || isBlankAdvanceQueryValue(query.getValue())
+                        || !isValidReconciliationMonthValue(query.getValue()));
+        if (invalid) {
+            throw new ServiceException("异步更新必须选择【对账月份】，格式为yyyy-MM，且不能为空，比较符必须为等于");
+        }
+    }
+
+    /**
+     * 判断对账月份高级查询值格式是否合法。
+     *
+     * @param value 对账月份高级查询条件值
+     * @return true 表示值符合 yyyy-MM 格式
+     */
+    private boolean isValidReconciliationMonthValue(Object value) {
+        return value != null && value.toString().trim().matches("\\d{4}-(0[1-9]|1[0-2])");
+    }
+
+    /**
+     * 判断高级查询值是否为空。
+     *
+     * @param value 高级查询条件值
+     * @return true 表示值为空
+     */
+    private boolean isBlankAdvanceQueryValue(Object value) {
+        if (value == null) {
+            return true;
+        }
+        if (value instanceof CharSequence) {
+            return StrUtil.isBlank((CharSequence) value);
+        }
+        if (value instanceof Collection) {
+            return CollUtil.isEmpty((Collection<?>) value);
+        }
+        return false;
     }
 
     private String resolveCostAttributionName(String type) {
@@ -3743,8 +3855,6 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         query.setType(costType);
         query.setReconciliationStatus(payload.getReconciliationStatus());
         query.setConfirmTime(payload.getConfirmTime());
-        query.setCreateTimeStart(payload.getCreateTimeStart());
-        query.setCreateTimeEnd(payload.getCreateTimeEnd());
         query.setSqlMap(payload.getSqlMap());
         query.setPermissionSql(payload.getPermissionSql());
         fillUpdateReconciliationStatusCodes(query);
@@ -3784,8 +3894,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             LogisticsBillCostDTO.UpdateStatusDTO dto) {
         return buildUpdateReconciliationStatusPageQuery(
             new TmsAsyncTaskRecordDTO.UpdateReconciliationStatusPayloadDTO(
-                dto.getReconciliationStatus(), dto.getConfirmTime(),
-                dto.getCreateTimeStart(), dto.getCreateTimeEnd(), dto.getSqlMap(), dto.getPermissionSql()),
+                dto.getReconciliationStatus(), dto.getConfirmTime(), dto.getSqlMap(), dto.getPermissionSql()),
             dto.getType());
     }
 

@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 import javax.net.ssl.SSLHandshakeException;
@@ -33,6 +32,7 @@ import com.erp.oms.aliexpress.util.ApiException;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
+import com.erp.server.dmp.inout.handler.input.task.dmp.AliExpressDmpHandlerUtils;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import com.google.common.collect.Lists;
 
@@ -81,10 +81,10 @@ public class DmpInputAliExpressSoOutstockInitHandler extends DmpInputInitHandler
         
         Integer pageSize = 20;
         
-        String apiType = dmpCfgApiEntity.getApiType();
+		String apiType = dmpCfgApiEntity.getApiType();
 		request.setApiName(apiType);
 		request.addApiParameter("simplify", "true");
-		List<String> orderLists = findMongoData.stream().map(f -> f.get("order_id").toString()).collect(Collectors.toList());
+		List<String> orderLists = AliExpressDmpHandlerUtils.collectParentAndChildOrderIds(findMongoData);
 		List<List<String>> partition = Lists.partition(orderLists, pageSize);
 		
 		JSONArray result = new JSONArray();

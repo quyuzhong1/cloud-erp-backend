@@ -261,14 +261,17 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             //标记SKU
             List<String> skuIds = entity.getDetailEntityList().stream().map(OtherInstockDetailEntity::getSkuId).collect(Collectors.toList());
             plmTaskFeign.updateOccupyStatus(skuIds);
-            //提交
-            this.submit(id,Boolean.FALSE);
-            //审核
-            BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
-            baseApproveParamDTO.setIds(Collections.singletonList(id));
-            baseApproveParamDTO.setType(ApproveTypeEnum.PASS.getStatus());
-            baseApproveParamDTO.setComment("");
-            this.approve(id, baseApproveParamDTO.getType(), baseApproveParamDTO.getComment(), isPushWdt);
+            // 提交但不启动审批流；addAndApprove 为系统自动闭环场景，需直接结束审核，不能走 workflowFeign.approve，
+            // 否则创建人与当前操作人相同时会触发「创建人与审批人不能相同」并被包装为「审核失败」
+            this.submit(id, Boolean.FALSE);
+            entity.setApproveStatus(ApproveStatusEnum.APPROVE_ING.getStatus());
+            entity.setIsPushWdt(isPushWdt);
+            ApproveOneDTO approveOneDTO = new ApproveOneDTO(id, ApproveTypeEnum.PASS.getStatus(), "");
+            approveOneDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+            this.approveEnd(approveOneDTO, entity);
+            operateLogService.addModuleOperateLog(
+                    String.format("审核【%s】了一个其他入库单【%s】", ApproveTypeEnum.getName(ApproveTypeEnum.PASS.getStatus()), code),
+                    ModuleTypeEnum.OTHER_INSTOCK.getCode(), id, "审核操作");
             return id;
         }
         return entity.getId();
@@ -1652,7 +1655,7 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(), listApiResult.getMsg()));
+                throw new ServiceException(ApiError.WF_CUR_APPROVER_QUERY_FAILED, listApiResult.getMsg());
             }
         }
         return listApiResult;

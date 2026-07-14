@@ -120,7 +120,6 @@ public class ProductChangeController extends BaseController {
     * @return ApiResult<Void>
     */
     @PostMapping("/addAndSubmit")
-    @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "产品变更信息表新增并提交审核")
     public ApiResult<BaseResultDTO.AddDTO> addAndSubmit(@RequestBody @Validated ProductChangeDTO.AddDTO dto) {
         BaseResultDTO.AddDTO result = productChangeService.addAndSubmit(dto);
         return success(result);
@@ -139,7 +138,6 @@ public class ProductChangeController extends BaseController {
             menuCode = "plm:productChange:updateAndSubmit",
             serviceClass = ProductChangeService.class,
             keyIdName = "id")
-    @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "产品变更信息表修改并提交审核")
     public ApiResult<Void> updateAndSubmit(@RequestBody @Validated ProductChangeDTO.UpdateDTO dto) {
         productChangeService.updateAndSubmit(dto);
         return success();

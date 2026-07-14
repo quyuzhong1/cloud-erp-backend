@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.dmp.mapper.DmpLogisticsTrackWebhookRecordMapper">
+
+    <resultMap id="BaseResultMap" type="com.erp.model.dmp.entity.DmpLogisticsTrackWebhookRecordEntity">
+        <id column="id" property="id"/>
+        <result column="create_user_id" property="createUserId"/>
+        <result column="create_user_name" property="createUserName"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_user_id" property="updateUserId"/>
+        <result column="update_user_name" property="updateUserName"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="version" property="version"/>
+        <result column="is_deleted" property="isDeleted"/>
+        <result column="platform_code" property="platformCode"/>
+        <result column="track_no" property="trackNo"/>
+        <result column="status" property="status"/>
+        <result column="raw_data" property="rawData"/>
+        <result column="remark" property="remark"/>
+    </resultMap>
+
+    <update id="skipCoveredRecords">
+        UPDATE dmp_logistics_track_webhook_record source_record
+        SET status = 'skip',
+            remark = #{remark},
+            update_time = NOW()
+        WHERE source_record.is_deleted = false
+          AND source_record.platform_code = #{platformCode}
+          AND source_record.track_no &lt;&gt; ''
+          AND source_record.status IN ('wait', 'ing')
+          AND (
+              source_record.status = 'wait'
+              OR (
+                  source_record.status = 'ing'
+                  AND source_record.update_time &lt;= NOW() - (#{timeoutMinutes} * INTERVAL '1 minute')
+              )
+          )
+          AND EXISTS (
+              SELECT 1
+              FROM dmp_logistics_track_webhook_record newer_record
+              WHERE newer_record.is_deleted = false
+                AND newer_record.platform_code = source_record.platform_code
+                AND newer_record.track_no = source_record.track_no
+                AND newer_record.status IN ('wait', 'ing', 'finish')
+                AND (
+                    newer_record.create_time &gt; source_record.create_time
+                    OR (
+                        newer_record.create_time = source_record.create_time
+                        AND newer_record.id &gt; source_record.id
+                    )
+                )
+          )
+    </update>
+
+    <update id="recoverTimeoutIngRecords">
+        UPDATE dmp_logistics_track_webhook_record source_record
+        SET status = 'wait',
+            remark = #{remark},
+            update_time = NOW()
+        WHERE source_record.is_deleted = false
+          AND source_record.platform_code = #{platformCode}
+          AND source_record.track_no &lt;&gt; ''
+          AND source_record.status = 'ing'
+          AND source_record.update_time &lt;= NOW() - (#{timeoutMinutes} * INTERVAL '1 minute')
+          AND NOT EXISTS (
+              SELECT 1
+              FROM dmp_logistics_track_webhook_record newer_record
+              WHERE newer_record.is_deleted = false
+                AND newer_record.platform_code = source_record.platform_code
+                AND newer_record.track_no = source_record.track_no
+                AND newer_record.status IN ('wait', 'ing', 'finish')
+                AND (
+                    newer_record.create_time &gt; source_record.create_time
+                    OR (
+                        newer_record.create_time = source_record.create_time
+                        AND newer_record.id &gt; source_record.id
+                    )
+                )
+          )
+    </update>
+
+    <select id="claimLatestWaitRecords" resultMap="BaseResultMap">
+        UPDATE dmp_logistics_track_webhook_record source_record
+        SET status = 'ing',
+            update_time = NOW()
+        WHERE source_record.id IN (
+            SELECT wait_record.id
+            FROM dmp_logistics_track_webhook_record wait_record
+            WHERE wait_record.is_deleted = false
+              AND wait_record.platform_code = #{platformCode}
+              AND wait_record.status = 'wait'
+              AND wait_record.track_no &lt;&gt; ''
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM dmp_logistics_track_webhook_record newer_record
+                  WHERE newer_record.is_deleted = false
+                    AND newer_record.platform_code = wait_record.platform_code
+                    AND newer_record.track_no = wait_record.track_no
+                    AND newer_record.status IN ('wait', 'ing', 'finish')
+                    AND (
+                        newer_record.create_time &gt; wait_record.create_time
+                        OR (
+                            newer_record.create_time = wait_record.create_time
+                            AND newer_record.id &gt; wait_record.id
+                        )
+                    )
+              )
+            ORDER BY wait_record.create_time ASC, wait_record.id ASC
+            LIMIT #{limit}
+            FOR UPDATE SKIP LOCKED
+        )
+          AND source_record.is_deleted = false
+        RETURNING source_record.*
+    </select>
+
+    <update id="updateStatusByIds">
+        UPDATE dmp_logistics_track_webhook_record
+        SET status = #{status},
+            remark = #{remark},
+            update_time = NOW()
+        WHERE is_deleted = false
+          AND platform_code = #{platformCode}
+          AND status = #{fromStatus}
+          AND id IN
+          <foreach collection="ids" item="id" open="(" separator="," close=")">
+              #{id}
+          </foreach>
+    </update>
+</mapper>

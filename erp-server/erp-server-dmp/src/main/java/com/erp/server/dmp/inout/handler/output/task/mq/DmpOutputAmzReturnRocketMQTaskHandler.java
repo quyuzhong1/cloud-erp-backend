@@ -5,6 +5,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.dto.PlatformReturnOrderDTO;
 import com.common.business.utils.ApplicationContextUtils;
 import com.common.core.entity.BaseEntity;
@@ -12,7 +13,6 @@ import com.common.core.utils.StrUtils;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpSoReturnDetailEntity;
 import com.erp.model.dmp.entity.DmpSoReturnInfoEntity;
-import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import org.apache.commons.lang3.StringUtils;
@@ -135,7 +135,8 @@ public class DmpOutputAmzReturnRocketMQTaskHandler extends DmpOutputRocketMQTask
     }
 
     private String resolvePlatformOrderNo(DmpSoReturnInfoEntity dmpEntity) {
-        if (StringUtils.equalsIgnoreCase(dmpEntity.getSourceSystem(), DmpBasicSystemCodeEnum.ALI_EXPRESS.getCode())) {
+        String apiPlatform = PlatformDictEnum.getApiPlatformCode(dmpEntity.getSourceSystem());
+        if (StringUtils.equalsIgnoreCase(apiPlatform, PlatformDictEnum.ALI_EXPRESS.getCode())) {
             return StringUtils.defaultIfBlank(dmpEntity.getPlatformOrderCode(), dmpEntity.getPlatformCode());
         }
         return dmpEntity.getPlatformCode();

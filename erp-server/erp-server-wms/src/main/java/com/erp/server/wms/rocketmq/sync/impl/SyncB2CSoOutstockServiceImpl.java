@@ -8,6 +8,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.common.business.annotation.DataIdempotent;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.*;
@@ -20,8 +21,8 @@ import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.LocalDateUtil;
-import com.common.message.constant.DistributeKeyConstant;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
@@ -183,7 +184,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.KINGDEE_SYNC_KEY, keyName = "entity.fBillNo", waiteTime = 20, unlockAfterTx = true)
+    @DataIdempotent(keyIdName = "entity.fBillNo", leaseTime = 30, waitTime = 20)
     public void syncKingdeeSoOutstock(KingdeeDeliveryDetailEntity entity) {
         System.out.println("===============开始执行 单号：" + entity.getFBillNo());
         List<KingdeeDeliveryDetailItemEntity> kingdeeDetailList = entity.getKingdeeOutStockItemEntityList();
@@ -618,12 +619,12 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
     						BigDecimal allAmountLocalCurrency = totalAllAmountLocalCurrency
         							.multiply(skuPriceMap.get(wdtSoOutStockDetailDTO.getSkuNo()))
         							.multiply(new BigDecimal(wdtSoOutStockDetailDTO.getActualQty().toString()))
-        							.divide(totalStd , 4 , RoundingMode.DOWN);
+        							.divide(totalStd , MathUtil.scaleSix , RoundingMode.DOWN);
     						currTotalAllAmountLocalCurrency = currTotalAllAmountLocalCurrency.add(allAmountLocalCurrency);
                             BigDecimal taxAmount = totalTaxAmount
                                     .multiply(skuPriceMap.get(wdtSoOutStockDetailDTO.getSkuNo()))
                                     .multiply(new BigDecimal(wdtSoOutStockDetailDTO.getActualQty().toString()))
-                                    .divide(totalStd , 4 , RoundingMode.DOWN);
+                                    .divide(totalStd , MathUtil.scaleSix , RoundingMode.DOWN);
                             currTotalTaxAmount = currTotalTaxAmount.add(taxAmount);
                             wdtSoOutStockDetailDTO.setTaxAmount(taxAmount);
                             wdtSoOutStockDetailDTO.setAllAmountLocalCurrency(allAmountLocalCurrency);
@@ -631,7 +632,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         					BigDecimal amount = totalAmount
         							.multiply(skuPriceMap.get(wdtSoOutStockDetailDTO.getSkuNo()))
         							.multiply(new BigDecimal(wdtSoOutStockDetailDTO.getActualQty().toString()))
-        							.divide(totalStd , 4 , RoundingMode.DOWN);
+        							.divide(totalStd , MathUtil.scaleSix , RoundingMode.DOWN);
         					currTotalAmount = currTotalAmount.add(amount);
 							wdtSoOutStockDetailDTO.setAmount(amount);
     					}else {
@@ -1247,7 +1248,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
     					nowAllAmountLocalCurrency = allAmountLocalCurrency.subtract(addAllAmountLocalCurrency);
         			}else {
         				nowAmount = amount.multiply(positionGoodsCount).divide(sum , 4 , RoundingMode.DOWN);
-        				nowAllAmountLocalCurrency = allAmountLocalCurrency.multiply(positionGoodsCount).divide(sum , 4 , RoundingMode.DOWN);
+        				nowAllAmountLocalCurrency = MathUtil.divideWithSix(allAmountLocalCurrency.multiply(positionGoodsCount), sum, BigDecimal.ROUND_DOWN);
         			}
         			map.put(recId, new Pair<>(nowAmount, nowAllAmountLocalCurrency));
         			addAmount = addAmount.add(nowAmount);

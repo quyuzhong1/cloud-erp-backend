@@ -379,7 +379,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = ids.stream().map(obj -> new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SO_RETURN_INSTOCK.getCode(), obj)).collect(Collectors.toCollection(ValidList::new));
         ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
         if (200 != listApiResult.getCode()) {
-            throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(), listApiResult.getMsg()));
+            throw new ServiceException(ApiError.WF_CUR_APPROVER_QUERY_FAILED, listApiResult.getMsg());
         }
         Map<String, String> approveNameMap = listApiResult.getData().stream().collect(Collectors.groupingBy(ProcessManagementDTO.CurApproveInfoDTO::getBusinessId, Collectors.mapping(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName, Collectors.joining(","))));
 
@@ -479,6 +479,16 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     @Override
     @Transactional(rollbackFor = Exception.class)
     public String add(SoReturnInstockDTO.Add dto) {
+        return buildAndSaveInstock(dto).getId();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public SoReturnInstockEntity addReturnEntity(SoReturnInstockDTO.Add dto) {
+        return buildAndSaveInstock(dto);
+    }
+
+    private SoReturnInstockEntity buildAndSaveInstock(SoReturnInstockDTO.Add dto) {
         //校验数据
         List<SoReturnInstockDetailDTO.Add> detailList = dto.getDetailList();
         if (CollUtil.isEmpty(detailList)) {
@@ -632,7 +642,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         operateLogService.addModuleOperateLog(String.format("新增了一个销售退货入库单【%s】", code), ModuleTypeEnum.SO_RETURN_INSTOCK.getCode(), entity.getId(), "新增操作");
 
         soReturnInstockDetailService.add(dto, entity.getId());
-        return entity.getId();
+        return entity;
     }
 
     @Override
@@ -982,7 +992,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 instockDetail.setWarehouseId(warehouseEntity.getId());
                 instockDetail.setWarehouseName(warehouseEntity.getName());
                 instockDetail.setRemark(dto.getReason());
-                instockDetail.setReturnTypeDict(dto.getReturnType());
+                // 退货类型/原因优先取匹配到的售后单，缺失时兜底用平台推送的退货类型（WEGO 默认"其他"）
+                instockDetail.setReturnTypeDict(CharSequenceUtil.emptyToDefault(candidate.returnTypeDict, dto.getReturnType()));
+                instockDetail.setReturnReasonDict(CharSequenceUtil.emptyToDefault(candidate.returnReasonDict, ""));
                 instockDetail.setSoReturnDetailId(candidate.detailId);
                 instockDetailsByMainId.computeIfAbsent(candidate.mainId, k -> new ArrayList<>()).add(instockDetail);
 
@@ -1071,6 +1083,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                                 gapDetail.detailId = d.getId();
                                 gapDetail.skuId = d.getSkuId();
                                 gapDetail.gapQty = gap;
+                                // B2B退货类型/原因取自退货单明细
+                                gapDetail.returnTypeDict = d.getReturnTypeDict();
+                                gapDetail.returnReasonDict = d.getReturnReasonDict();
                                 result.add(gapDetail);
                             }
                         });
@@ -1084,6 +1099,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                         b2cDetailList.stream().map(SoB2cReturnDetailDTO.ViewDTO::getId).collect(Collectors.toList()));
                 Map<String, LocalDateTime> mainCreateTimeMap = b2cReturnList.stream()
                         .collect(Collectors.toMap(SoB2cReturnEntity::getId, SoB2cReturnEntity::getCreateTime, (a, b) -> a));
+                // B2C退货类型/原因在售后单主表上，按 mainId 取用
+                Map<String, SoB2cReturnEntity> b2cReturnMap = b2cReturnList.stream()
+                        .collect(Collectors.toMap(SoB2cReturnEntity::getId, Function.identity(), (a, b) -> a));
                 b2cDetailList.stream()
                         .filter(d -> CharSequenceUtil.isNotBlank(d.getSkuId()))
                         .sorted(Comparator.comparing((SoB2cReturnDetailDTO.ViewDTO d) -> mainCreateTimeMap.getOrDefault(d.getMainId(), LocalDateTime.MAX)))
@@ -1096,6 +1114,12 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                                 gapDetail.detailId = d.getId();
                                 gapDetail.skuId = d.getSkuId();
                                 gapDetail.gapQty = gap;
+                                // B2C退货类型/原因取自售后单主表（type/reason）
+                                SoB2cReturnEntity b2cReturn = b2cReturnMap.get(d.getMainId());
+                                if (Objects.nonNull(b2cReturn)) {
+                                    gapDetail.returnTypeDict = b2cReturn.getType();
+                                    gapDetail.returnReasonDict = b2cReturn.getReason();
+                                }
                                 result.add(gapDetail);
                             }
                         });
@@ -1289,6 +1313,10 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         String detailId;
         String skuId;
         int gapQty;
+        /** 匹配到的售后单退货类型字典值（B2B取明细，B2C取售后单主表 type），用于回写退货入库单明细 */
+        String returnTypeDict;
+        /** 匹配到的售后单退货原因字典值（B2B取明细，B2C取售后单主表 reason），用于回写退货入库单明细 */
+        String returnReasonDict;
     }
 
     /**
@@ -3121,8 +3149,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         detail.setExchangeRate(safeExchangeRate);
         detail.setReturnAmount(MathUtil.multiplyWithFour(safePrice, realQty));
         detail.setTaxReturnAmount(MathUtil.multiplyWithFour(safeTaxPrice, realQty));
-        detail.setReturnAmountLocalCurrency(MathUtil.multiplyWithFour(detail.getReturnAmount(), safeExchangeRate));
-        detail.setTaxReturnAmountLocalCurrency(MathUtil.multiplyWithFour(detail.getTaxReturnAmount(), safeExchangeRate));
+        detail.setReturnAmountLocalCurrency(MathUtil.multiplyWithSix(detail.getReturnAmount(), safeExchangeRate, BigDecimal.ROUND_DOWN));
+        detail.setTaxReturnAmountLocalCurrency(MathUtil.multiplyWithSix(detail.getTaxReturnAmount(), safeExchangeRate, BigDecimal.ROUND_DOWN));
     }
 
     private Integer defaultRealQty(SoReturnInstockDetailEntity detail) {
@@ -4399,8 +4427,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                     detail.setWarehouseId(instockDTO.getWarehouseId());
                     detail.setPlatformSkuNo(g.getPlatformSkuNo());
                     detail.setExchangeRate(g.getExchangeRate());
-                    detail.setReturnAmountLocalCurrency(MathUtil.multiplyWithFour(g.getExchangeRate(), detail.getReturnAmount()));
-                    detail.setTaxReturnAmountLocalCurrency(MathUtil.multiplyWithFour(g.getExchangeRate(), detail.getTaxReturnAmount()));
+                    detail.setReturnAmountLocalCurrency(MathUtil.multiplyWithSix(detail.getReturnAmount(), g.getExchangeRate(), BigDecimal.ROUND_DOWN));
+                    detail.setTaxReturnAmountLocalCurrency(MathUtil.multiplyWithSix(detail.getTaxReturnAmount(), g.getExchangeRate(), BigDecimal.ROUND_DOWN));
                 });
             });
         });

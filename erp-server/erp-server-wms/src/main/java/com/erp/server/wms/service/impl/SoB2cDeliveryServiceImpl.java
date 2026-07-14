@@ -14,6 +14,7 @@ import com.baomidou.mybatisplus.core.incrementer.IdentifierGenerator;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DataIdempotent;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.FileTemplateConstant;
@@ -237,7 +238,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     private ExecutorService printLabelPool;
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.SO_B2C_DELIVERY_KEY, keyName = "addDTO.soCode", unlockAfterTx = true)
     @Override
     public SoB2cDeliveryEntity add(SoB2cDeliveryDTO.AddDTO addDTO) {
         SoB2cDeliveryEntity existEntity = this.getNotCancelBySoId(addDTO.getSourceId());
@@ -1845,7 +1845,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
      * @return
      */
     @Override
-    @DistributeLocker(businessType = DistributeKeyConstant.SO_B2C_DELIVERY_KEY, keyName = "id")
+    @DataIdempotent(keyIdName = "id")
     public BatchResultDTO delivery(String id, String deliveryType, LocalDate deliveryDate) {
         //手工发货
         String manual = DeliverTypeEnum.MANUAL.getCode();
@@ -1875,7 +1875,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                     SoOutstockDetailDTO.AddDTO dto = detailList.stream().filter(d -> d.getSoDetailId().equals(detailEntity.getSourceDetailId()))
                             .findFirst().orElse(new SoOutstockDetailDTO.AddDTO());
                     SoOutstockDetailDTO.AddDTO addDTO = BeanMapperUtils.map(SoOutstockDetailDTO.AddDTO.class, dto);
-                    addDTO.setWarehouseLocation(Objects.isNull(entity.getBatchNo()) ? view.getWarehouseLocation() : "");
+                    addDTO.setWarehouseLocation(CharSequenceUtil.isBlank(entity.getTransferWarehouseIds()) ? view.getWarehouseLocation() : "");
                     addDTO.setSkuNo(view.getSkuNo());
                     addDTO.setSkuId(view.getSkuId());
                     addDTO.setActualQty(view.getQty());
