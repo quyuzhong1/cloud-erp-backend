@@ -233,6 +233,14 @@ public final class ApiErrorCommon {
     public static final ApiError COMMON_COUNTRY_INFO_NOT_FOUND = new ApiError("COMMON_COUNTRY_INFO_NOT_FOUND", 13711, "国家信息不存在");
     public static final ApiError COMMON_CFG_SETTING_SAVE_FAILED = new ApiError("COMMON_CFG_SETTING_SAVE_FAILED", 13718, "系统配置管理保存失败");
     public static final ApiError COMMON_CFG_SETTING_TYPE_INVALID = new ApiError("COMMON_CFG_SETTING_TYPE_INVALID", 13719, "系统配置类型不正确");
+    public static final ApiError COMMON_REMOTE_SERVICE_ERROR = new ApiError("COMMON_REMOTE_SERVICE_ERROR", 13720, "{0}服务调用失败：{1}");
+    public static final ApiError COMMON_REMOTE_RESPONSE_EMPTY = new ApiError("COMMON_REMOTE_RESPONSE_EMPTY", 13720, "{0}服务返回为空");
+    public static final ApiError COMMON_REMOTE_RESPONSE_INVALID = new ApiError("COMMON_REMOTE_RESPONSE_INVALID", 13720, "{0}服务返回格式异常：{1}");
+    public static final ApiError COMMON_THIRD_PARTY_API_FAILED = new ApiError("COMMON_THIRD_PARTY_API_FAILED", 13720, "{0}接口调用失败：{1}");
+    public static final ApiError COMMON_LARK_USER_INFO_FAILED = new ApiError("COMMON_LARK_USER_INFO_FAILED", 13721, "获取飞书用户信息失败：{0}");
+    public static final ApiError COMMON_LARK_UNION_ID_NOT_FOUND = new ApiError("COMMON_LARK_UNION_ID_NOT_FOUND", 13722, "未找到飞书Union ID");
+    public static final ApiError COMMON_LARK_UNION_ID_FETCH_FAILED = new ApiError("COMMON_LARK_UNION_ID_FETCH_FAILED", 13723, "获取飞书Union ID失败：{0}");
+
     public static final ApiError FASTDFS_UPLOAD_FAILED_FOR_WAYBILL = new ApiError("FASTDFS_UPLOAD_FAILED_FOR_WAYBILL", 11216, "面单上传FastDFS失败");
     public static final ApiError FILE_EXCEL_PARSE = new ApiError("FILE_EXCEL_PARSE", 2400, "Excel解析数据时发生错误");
     public static final ApiError FILE_EXPORT_FAILED = new ApiError("FILE_EXPORT_FAILED", 2401, "导出失败");
