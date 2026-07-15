@@ -52,16 +52,6 @@ public interface SoReturnPrestockService extends SuperService<SoReturnPrestockEn
     SoReturnPrestockDTO.View view(String id);
 
     /**
-     * 关联售后单
-     * <p>若本次关联数量 &lt; 当前行 return_qty，触发拆行逻辑：
-     * 原行数量减少，新建一行承载剩余数量；主表关联状态联动更新。</p>
-     *
-     * @param dto 关联售后单入参
-     * @return 操作结果
-     */
-    BatchResultDTO linkAfterSale(SoReturnPrestockDetailDTO.LinkAfterSale dto);
-
-    /**
      * 确认关联售后单（预入库单维度批量关联）
      * <p>入参 afterSaleList 为在候选售后单列表（{@code SoReturnController.pagingLinkAfterSale}）中勾选的
      * 售后单明细行。按 SKU 将本次勾选的退货明细数量与预入库单未关联明细数量比较：</p>
