@@ -26,6 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.oms.dto.SoReceiptDetailDTO;
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -91,7 +92,12 @@ public class SoReceiptDetailServiceImpl extends SuperServiceImpl<SoReceiptDetail
             }
         }
 
-        detailList.forEach(v->v.setMainId(soReceiptEntity.getId()));
+        detailList.forEach(v -> {
+            v.setMainId(soReceiptEntity.getId());
+            if (v.getServiceFee() == null) {
+                v.setServiceFee(BigDecimal.ZERO);
+            }
+        });
         List<SoReceiptDetailEntity> saveList = BeanMapper.copyList(detailList, SoReceiptDetailEntity.class);
         this.saveBatch(saveList);
         List<AttachDTO> allAttachDTOS = new ArrayList<>();
@@ -192,6 +198,7 @@ public class SoReceiptDetailServiceImpl extends SuperServiceImpl<SoReceiptDetail
             soReceiptDetailEntity.setPaymentNo(updateDTO.getPaymentNo());
             soReceiptDetailEntity.setRemark(updateDTO.getRemark());
             soReceiptDetailEntity.setReceiptAmount(updateDTO.getReceiptAmount());
+            soReceiptDetailEntity.setServiceFee(updateDTO.getServiceFee() == null ? BigDecimal.ZERO : updateDTO.getServiceFee());
             soReceiptDetailEntity.setId(updateDTO.getId());
             updateEntityList.add(soReceiptDetailEntity);
             String msg = StrUtil.format("用户【{}】编辑【{}】单据明细 ", UserContext.getDefaultLoginUser().getUserName(), "收款单");

@@ -299,6 +299,11 @@ public class SoReceiptDTO implements Serializable {
         private BigDecimal receiptAmount;
 
         /**
+         * 手续费
+         */
+        private BigDecimal serviceFee;
+
+        /**
          * 收款账号
          */
         private String receiptAccount;

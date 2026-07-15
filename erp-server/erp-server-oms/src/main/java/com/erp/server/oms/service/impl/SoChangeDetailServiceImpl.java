@@ -510,6 +510,9 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
 
             for (SoChangeEntity soChangeEntity : list) {
                 SoInfoEntity soInfoEntity = soInfoMap.get(soChangeEntity.getSoId());
+                if (soInfoEntity == null) {
+                    continue;
+                }
                 if (!Objects.equals(soInfoEntity.getReceiveAddressId(), soChangeEntity.getReceiveAddressId())
                         || !Objects.equals(soInfoEntity.getAddressType(), soChangeEntity.getAddressType())
                         || !Objects.equals(soInfoEntity.getReceiverName(), soChangeEntity.getReceiverName())
@@ -520,6 +523,21 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
 
                     String receiveAddress = customerAddressMap.getOrDefault(soChangeEntity.getReceiveAddressId(), new CustomerAddressEntity()).getAddress();
                     soReturnService.updateAddress(soInfoEntity.getId(), receiveAddress, soChangeEntity.getReceiverName(), soChangeEntity.getTelNumber());
+                }
+                // 销售员/销售部门变更回写销售订单（再推金蝶）
+                if (StringUtils.isNotBlank(soChangeEntity.getSellerId())
+                        && (!Objects.equals(soInfoEntity.getSellerId(), soChangeEntity.getSellerId())
+                        || !Objects.equals(soInfoEntity.getSalesDeptId(), soChangeEntity.getSalesDeptId()))) {
+                    log.warn("销售订单【{}】销售变更单【{}】销售员发生变化，同步更新销售订单销售员/销售部门", soInfoEntity.getCode(), soChangeEntity.getCode());
+                    soInfoService.lambdaUpdate()
+                            .eq(SoInfoEntity::getId, soInfoEntity.getId())
+                            .set(SoInfoEntity::getSellerId, soChangeEntity.getSellerId())
+                            .set(SoInfoEntity::getSellerName, soChangeEntity.getSellerName())
+                            .set(SoInfoEntity::getSalesDeptId, soChangeEntity.getSalesDeptId())
+                            .update();
+                    soInfoEntity.setSellerId(soChangeEntity.getSellerId());
+                    soInfoEntity.setSellerName(soChangeEntity.getSellerName());
+                    soInfoEntity.setSalesDeptId(soChangeEntity.getSalesDeptId());
                 }
             }
         }
@@ -883,6 +901,11 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
     @Transactional(rollbackFor = Exception.class)
     public void updateDetailList(SoChangeEntity soChange, List<SoChangeDetailDTO.UpdateDTO> detailList) {
         if (CollectionUtils.isEmpty(detailList)) {
+            // 允许清空明细（仅变更销售员）
+            List<SoChangeDetailEntity> dbList = this.listDetailDbByMainId(soChange.getId());
+            if (CollectionUtils.isNotEmpty(dbList)) {
+                this.removeByIds(dbList.stream().map(SoChangeDetailEntity::getId).collect(Collectors.toList()));
+            }
             return;
         }
         String mainId = soChange.getId();

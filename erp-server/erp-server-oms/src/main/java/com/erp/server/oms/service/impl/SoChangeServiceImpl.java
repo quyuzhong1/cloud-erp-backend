@@ -145,6 +145,9 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         String soId = dto.getSoId();
         //检查能否变更
         checkIsChange(soId);
+        if (dto.getDetailList() == null) {
+            dto.setDetailList(Collections.emptyList());
+        }
         //检查对应详情的变更类型
         List<SoChangeDetailDTO.UpdateDTO> checkList= BeanMapper.copyList(dto.getDetailList(),SoChangeDetailDTO.UpdateDTO.class);
         soChangeDetailService.checkChange(checkList);
@@ -170,6 +173,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         soChange.setDeptName(deptName);
         soChange.setUserName(useName);
         soChange.setId(id);
+        fillSellerInfo(soChange, dto.getSellerId(), dto.getSalesDeptId(), soId);
 
         // 判断是否可以修改地址和联系人信息
         checkChangeCustomerInfo(soId, dto.getReceiveAddressId(), dto.getAddressType(), dto.getReceiverName(), dto.getTelNumber());
@@ -209,6 +213,9 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         if (Objects.isNull(soChange)) {
             throw new ServiceException(ApiError.SO_CHANGE_NOT_FOUND);
         }
+        if (dto.getDetailList() == null) {
+            dto.setDetailList(Collections.emptyList());
+        }
         List<SoChangeDetailDTO.UpdateDTO> detailList = dto.getDetailList();
         //检查对应详情的变更类型
         soChangeDetailService.checkChange(detailList);
@@ -236,6 +243,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         }
         soChange.setDeptName(deptName);
         soChange.setUserName(useName);
+        fillSellerInfo(soChange, dto.getSellerId(), dto.getSalesDeptId(), soChange.getSoId());
 
 
         // 判断是否可以修改地址和联系人信息
@@ -294,6 +302,31 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         if (!approve.equals(approveStatus)) {
             throw new ServiceException(ApiError.SO_CHANGE_APPROVED_REQUIRED);
         }
+    }
+
+    /**
+     * 填充销售员名称；未传销售员时默认取销售订单当前销售员/部门
+     */
+    private void fillSellerInfo(SoChangeEntity soChange, String sellerId, String salesDeptId, String soId) {
+        SoInfoEntity soInfo = soInfoService.getById(soId);
+        if (StringUtils.isBlank(sellerId) && soInfo != null) {
+            sellerId = soInfo.getSellerId();
+            if (StringUtils.isBlank(salesDeptId)) {
+                salesDeptId = soInfo.getSalesDeptId();
+            }
+        }
+        soChange.setSellerId(sellerId);
+        soChange.setSalesDeptId(salesDeptId);
+        String sellerName = "";
+        if (StringUtils.isNotBlank(sellerId)) {
+            FindUserDTO userInfo = sysUserFeign.getUserByUserId(sellerId);
+            if (userInfo != null) {
+                sellerName = userInfo.getUserName();
+            } else if (soInfo != null && CharSequenceUtil.equals(sellerId, soInfo.getSellerId())) {
+                sellerName = soInfo.getSellerName();
+            }
+        }
+        soChange.setSellerName(sellerName);
     }
 
     /**
@@ -572,8 +605,26 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
             view.setAddressTypeName(CustomerAddressTypeEnum.getName(view.getAddressType()));
         }
         view.setSalesOrgName(soInfo.getSalesOrgName());
-        view.setSellerId(soInfo.getSellerId());
-        view.setSellerName(soInfo.getSellerName());
+        // 销售员：优先取变更单已保存值（可编辑），历史单无字段时回退销售订单
+        if (StringUtils.isNotBlank(soChange.getSellerId())) {
+            view.setSellerId(soChange.getSellerId());
+            view.setSellerName(soChange.getSellerName());
+            view.setSalesDeptId(soChange.getSalesDeptId());
+        } else {
+            view.setSellerId(soInfo.getSellerId());
+            view.setSellerName(soInfo.getSellerName());
+            view.setSalesDeptId(soInfo.getSalesDeptId());
+        }
+        if (StringUtils.isNotBlank(view.getSalesDeptId())) {
+            if (CharSequenceUtil.equals(view.getSalesDeptId(), soInfo.getSalesDeptId())) {
+                view.setSalesDeptName(soInfo.getSalesDeptName());
+            } else {
+                SysDepartmentDTO dept = sysUserFeign.getUserDeptById(view.getSalesDeptId());
+                view.setSalesDeptName(dept != null ? dept.getName() : "");
+            }
+        } else {
+            view.setSalesDeptName(soInfo.getSalesDeptName());
+        }
         //根据主表id 获取详情
         List<SoChangeDetailDTO.ViewDTO> detailList = soChangeDetailService.listDetailByMainId(id);
         view.setDetailList(detailList);
@@ -890,16 +941,15 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
 
         List<DmpPushTaskEntity> pushTaskList = new ArrayList<>();
         if (dto.getType().equals(ApproveType.PASS)) {
-            //销售变更单校验
+            //销售变更单校验（允许无明细：仅变更销售员）
             List<String> idList = list.stream().map(SoChangeEntity::getId).collect(Collectors.toList());
             List<SoChangeDetailEntity> soChangeDetailList = soChangeDetailService.listByMainIdList(idList);
-            if (CollectionUtils.isEmpty(soChangeDetailList)) {
-                throw new ServiceException(ApiError.SO_CHANGE_DETAIL_NOT_FOUND);
+            if (CollectionUtils.isNotEmpty(soChangeDetailList)) {
+                List<SoChangeDetailDTO.UpdateDTO> updateList = BeanMapperUtils.copyList(SoChangeDetailDTO.UpdateDTO.class, soChangeDetailList);
+                soChangeDetailService.checkChange(updateList);
             }
-            List<SoChangeDetailDTO.UpdateDTO> updateList = BeanMapperUtils.copyList(SoChangeDetailDTO.UpdateDTO.class, soChangeDetailList);
-            soChangeDetailService.checkChange(updateList);
 
-            //更新销售表数据
+            //更新销售表数据（含销售员/地址/明细）
             soChangeDetailService.handleDb(list);
 
             //获取销售订单信息

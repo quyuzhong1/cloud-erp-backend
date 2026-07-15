@@ -324,10 +324,19 @@ public class SoChangeDTO implements Serializable {
         private String addressType;
 
         /**
-         * 产品信息
+         * 销售员id（业务员管理，与B2B销售订单一致；允许只变更销售员）
+         */
+        private String sellerId;
+
+        /**
+         * 销售部门id（随销售员变更同步）
+         */
+        private String salesDeptId;
+
+        /**
+         * 产品信息（允许为空：仅变更销售员时无明细）
          */
         @Valid
-        @Size(min = 1, message = "销售变更订单详情不能为空")
         private List<SoChangeDetailDTO.AddDTO> detailList;
 
 
@@ -421,6 +430,16 @@ public class SoChangeDTO implements Serializable {
          * 销售员
          */
         private String sellerName;
+
+        /**
+         * 销售部门id
+         */
+        private String salesDeptId;
+
+        /**
+         * 销售部门名称（展示用，来自销售订单或前端）
+         */
+        private String salesDeptName;
 
 
         /**
@@ -563,10 +582,19 @@ public class SoChangeDTO implements Serializable {
         private String receiveAddressId;
 
         /**
-         * 产品信息
+         * 销售员id（业务员管理，与B2B销售订单一致；允许只变更销售员）
+         */
+        private String sellerId;
+
+        /**
+         * 销售部门id（随销售员变更同步）
+         */
+        private String salesDeptId;
+
+        /**
+         * 产品信息（允许为空：仅变更销售员时无明细）
          */
         @Valid
-        @NotEmpty
         private List<SoChangeDetailDTO.UpdateDTO> detailList;
     }
 
