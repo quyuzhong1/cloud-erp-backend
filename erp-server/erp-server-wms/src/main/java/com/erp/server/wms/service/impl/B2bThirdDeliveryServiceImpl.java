@@ -777,15 +777,52 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO delete(B2bThirdDeliveryEntity entity) {
-        //只有创建失败、取消发货允许删除
-        if (!ThirdDeliveryStatusEnum.FAILED.getCode().equals(entity.getStatus()) && !ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(entity.getStatus())) {
+        // 允许：待发货+手动发货；或创建失败/取消发货（兼容历史手动取消发货单）
+        boolean allowFailedOrCancel = ThirdDeliveryStatusEnum.FAILED.getCode().equals(entity.getStatus())
+                || ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(entity.getStatus());
+        boolean allowManualWaitShipped = ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode().equals(entity.getStatus())
+                && !isApiPushDelivery(entity);
+        if (!allowFailedOrCancel && !allowManualWaitShipped) {
             throw new ServiceException(ApiError.SO_THIRD_DELIVERY_DELETE_ONLY_FAILED_OR_CANCELED);
+        }
+        // 待发货手动单仍占用创建时冻结的虚拟库存，删除前需回退
+        if (allowManualWaitShipped) {
+            this.rollbackFreezeVirtualInventory(entity);
         }
         // BaseEntity.isDeleted has @TableLogic, so removeById performs logical delete rather than physical delete.
         this.removeById(entity.getId());
         b2bThirdDeliveryDetailService.deleteByMainIds(Collections.singletonList(entity.getId()));
         b2bCustomerPackingService.deleteByMainIds(Collections.singletonList(entity.getId()));
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "删除成功");
+    }
+
+    @Override
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
+    @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(keyName = "entity.id")
+    public BatchResultDTO revokeOutstock(B2bThirdDeliveryEntity entity) {
+        if (!ThirdDeliveryStatusEnum.SHIPPED.getCode().equals(entity.getStatus()) || isApiPushDelivery(entity)) {
+            throw new ServiceException(ApiError.SO_THIRD_DELIVERY_REVOKE_OUTSTOCK_ONLY_MANUAL_SHIPPED);
+        }
+        // 反审核并删除关联销售出库单（已审核时回写销售订单已出库/剩余未出数量；已推金蝶则同步反审核删除）
+        SoOutstockEntity outstockEntity = soOutstockService.getBySourceCode(entity.getCode());
+        if (Objects.nonNull(outstockEntity)) {
+            soOutstockService.deleteSoOutstock(outstockEntity.getId(), null);
+        }
+        // 回到待发货；明细发货箱数(box_qty)本身未因出库改写，列表仍按明细展示
+        B2bThirdDeliveryEntity old = this.getById(entity.getId());
+        this.lambdaUpdate()
+                .set(B2bThirdDeliveryEntity::getStatus, ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode())
+                .set(B2bThirdDeliveryEntity::getDeliveryTime, null)
+                .eq(B2bThirdDeliveryEntity::getId, entity.getId())
+                .update();
+        B2bThirdDeliveryEntity latest = this.getById(entity.getId());
+        if (Objects.nonNull(old) && Objects.nonNull(latest)) {
+            operateLogService.addModuleOperateLogByObj(old, latest, ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode(), entity.getId(), "撤销出库");
+        }
+        String msg = StrUtil.format("用户【{}】撤销出库，单号【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode(), entity.getId(), "撤销出库");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "撤销出库成功");
     }
 
     @Override
