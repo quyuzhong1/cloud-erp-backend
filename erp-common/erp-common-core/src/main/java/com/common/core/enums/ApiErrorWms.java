@@ -450,6 +450,30 @@ public final class ApiErrorWms {
     public static final ApiError SO_RETURN_PRESTOCK_LINK_AFTER_SALE_SKU_QTY_EXCEEDS = new ApiError("SO_RETURN_PRESTOCK_LINK_AFTER_SALE_SKU_QTY_EXCEEDS", 10805, "退货单SKU明细数量超过预入库单（SKU数量超出：{0}），可能为异常包裹或关联的售后单有误，请改用「关联店铺」进行关联");
     public static final ApiError SO_RETURN_PRESTOCK_LINK_AFTER_SALE_SKU_RECEIVE_QTY_EXCEEDS = new ApiError("SO_RETURN_PRESTOCK_LINK_AFTER_SALE_SKU_RECEIVE_QTY_EXCEEDS", 10806, "认领失败，【sku：{0}]实际退货数量<认领数量");
     public static final ApiError SO_RETURN_PRESTOCK_AFTER_SALE_TYPE_LINK_FORBIDDEN = new ApiError("SO_RETURN_PRESTOCK_AFTER_SALE_TYPE_LINK_FORBIDDEN", 10807, "售后订单类型的预入库单不支持关联售后单，请改用「关联店铺」进行关联");
+    public static final ApiError WH_AIYA_SDK_INBOUND_PAGE_CONVERT_FAILED = new ApiError("WH_AIYA_SDK_INBOUND_PAGE_CONVERT_FAILED", 11219, "AIYA 分页查询入库单接口响应转换失败: {0}");
+    public static final ApiError WH_AIYA_SDK_OUTBOUND_SEARCH_NO_RESPONSE = new ApiError("WH_AIYA_SDK_OUTBOUND_SEARCH_NO_RESPONSE", 11220, "AIYA 查询2C出库单接口无响应");
+    public static final ApiError WH_AIYA_SDK_OUTBOUND_SEARCH_FAILED = new ApiError("WH_AIYA_SDK_OUTBOUND_SEARCH_FAILED", 11221, "AIYA 查询2C出库单接口失败: {0}");
+    public static final ApiError WH_AIYA_SDK_OUTBOUND_SEARCH_CONVERT_FAILED = new ApiError("WH_AIYA_SDK_OUTBOUND_SEARCH_CONVERT_FAILED", 11222, "AIYA 查询2C出库单接口响应转换失败: {0}");
+    public static final ApiError WH_AIYA_SDK_OUTBOUND_PAGE_CONVERT_FAILED = new ApiError("WH_AIYA_SDK_OUTBOUND_PAGE_CONVERT_FAILED", 11223, "AIYA 分页查询2C出库单接口响应转换失败: {0}");
+    public static final ApiError WH_AIYA_SDK_RETURN_ORDER_PAGE_CONVERT_FAILED = new ApiError("WH_AIYA_SDK_RETURN_ORDER_PAGE_CONVERT_FAILED", 11224, "AIYA 分页查询退货订单接口响应转换失败: {0}");
+    public static final ApiError WH_AIYA_SDK_API_CALL_ERROR = new ApiError("WH_AIYA_SDK_API_CALL_ERROR", 11225, "AIYA {0}接口调用异常: {1}");
+    public static final ApiError WH_AIYA_SDK_API_RESPONSE_EMPTY = new ApiError("WH_AIYA_SDK_API_RESPONSE_EMPTY", 11226, "AIYA {0}接口返回为空");
+    public static final ApiError WH_AIYA_SDK_API_RESPONSE_NOT_JSON = new ApiError("WH_AIYA_SDK_API_RESPONSE_NOT_JSON", 11227, "AIYA {0}接口返回非JSON格式");
+    public static final ApiError WH_AIYA_SDK_DOMAIN_EMPTY = new ApiError("WH_AIYA_SDK_DOMAIN_EMPTY", 11228, "AIYA域名不能为空");
+    public static final ApiError WH_AIYA_SDK_SIGN_PARAMS_EMPTY = new ApiError("WH_AIYA_SDK_SIGN_PARAMS_EMPTY", 11229, "AIYA 签名参数不能为空");
+    public static final ApiError WH_AIYA_SDK_SIGN_SECRET_EMPTY = new ApiError("WH_AIYA_SDK_SIGN_SECRET_EMPTY", 11230, "AIYA 签名 secret 不能为空");
+    public static final ApiError WH_AIYA_SDK_SIGN_JSON_EMPTY = new ApiError("WH_AIYA_SDK_SIGN_JSON_EMPTY", 11231, "AIYA 签名 JSON 不能为空");
+    public static final ApiError WH_AIYA_SDK_SIGN_FAILED = new ApiError("WH_AIYA_SDK_SIGN_FAILED", 11232, "AIYA 签名计算失败: {0}");
+    public static final ApiError WH_AIYA_AUTH_INFO_NOT_FOUND = new ApiError("WH_AIYA_AUTH_INFO_NOT_FOUND", 11233, "AIYA授权信息不存在");
+    public static final ApiError WH_AIYA_AUTH_ID_NOT_FOUND = new ApiError("WH_AIYA_AUTH_ID_NOT_FOUND", 11234, "AIYA对应授权ID信息不存在, nextId:{0}");
+    public static final ApiError WH_AIYA_AUTH_JSON_EMPTY = new ApiError("WH_AIYA_AUTH_JSON_EMPTY", 11235, "AIYA：服务商[{0}]auth_json为空");
+    public static final ApiError WH_AIYA_TOKEN_SECRET_MISSING = new ApiError("WH_AIYA_TOKEN_SECRET_MISSING", 11236, "AIYA：服务商[{0}]customerCode/partnerKey缺失");
+    public static final ApiError WH_AIYA_PAGE_QUERY_ERROR = new ApiError("WH_AIYA_PAGE_QUERY_ERROR", 11237, "AIYA{0}分页查询异常, pageNum={1}");
+    public static final ApiError WH_AIYA_PAGE_PARSE_FAILED = new ApiError("WH_AIYA_PAGE_PARSE_FAILED", 11238, "AIYA{0}分页结果解析失败, pageNum={1}");
+    public static final ApiError WH_AIYA_RESPONSE_EMPTY = new ApiError("WH_AIYA_RESPONSE_EMPTY", 11239, "AIYA{0}接口响应为空");
+    public static final ApiError WH_AIYA_RESPONSE_FAILED = new ApiError("WH_AIYA_RESPONSE_FAILED", 11240, "AIYA{0}接口返回失败: errorCode={1}, errorMsg={2}");
+    public static final ApiError WH_AIYA_RESULT_EMPTY = new ApiError("WH_AIYA_RESULT_EMPTY", 11241, "AIYA{0}接口success=true但result为空");
+    public static final ApiError WH_AIYA_PAGE_LIMIT_EXCEEDED = new ApiError("WH_AIYA_PAGE_LIMIT_EXCEEDED", 11242, "AIYA{0}已达最大翻页上限{1}，已拉取{2}条");
 
     static ApiError[] values() {
         return new ApiError[]{
@@ -894,6 +918,30 @@ public final class ApiErrorWms {
                 SO_RETURN_PRESTOCK_LINK_AFTER_SALE_SKU_QTY_EXCEEDS,
                 SO_RETURN_PRESTOCK_LINK_AFTER_SALE_SKU_RECEIVE_QTY_EXCEEDS,
                 SO_RETURN_PRESTOCK_AFTER_SALE_TYPE_LINK_FORBIDDEN,
+                WH_AIYA_SDK_INBOUND_PAGE_CONVERT_FAILED,
+                WH_AIYA_SDK_OUTBOUND_SEARCH_NO_RESPONSE,
+                WH_AIYA_SDK_OUTBOUND_SEARCH_FAILED,
+                WH_AIYA_SDK_OUTBOUND_SEARCH_CONVERT_FAILED,
+                WH_AIYA_SDK_OUTBOUND_PAGE_CONVERT_FAILED,
+                WH_AIYA_SDK_RETURN_ORDER_PAGE_CONVERT_FAILED,
+                WH_AIYA_SDK_API_CALL_ERROR,
+                WH_AIYA_SDK_API_RESPONSE_EMPTY,
+                WH_AIYA_SDK_API_RESPONSE_NOT_JSON,
+                WH_AIYA_SDK_DOMAIN_EMPTY,
+                WH_AIYA_SDK_SIGN_PARAMS_EMPTY,
+                WH_AIYA_SDK_SIGN_SECRET_EMPTY,
+                WH_AIYA_SDK_SIGN_JSON_EMPTY,
+                WH_AIYA_SDK_SIGN_FAILED,
+                WH_AIYA_AUTH_INFO_NOT_FOUND,
+                WH_AIYA_AUTH_ID_NOT_FOUND,
+                WH_AIYA_AUTH_JSON_EMPTY,
+                WH_AIYA_TOKEN_SECRET_MISSING,
+                WH_AIYA_PAGE_QUERY_ERROR,
+                WH_AIYA_PAGE_PARSE_FAILED,
+                WH_AIYA_RESPONSE_EMPTY,
+                WH_AIYA_RESPONSE_FAILED,
+                WH_AIYA_RESULT_EMPTY,
+                WH_AIYA_PAGE_LIMIT_EXCEEDED,
         };
     }
 }
