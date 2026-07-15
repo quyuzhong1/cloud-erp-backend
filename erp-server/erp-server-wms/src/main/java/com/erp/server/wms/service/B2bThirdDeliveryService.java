@@ -96,6 +96,14 @@ public interface B2bThirdDeliveryService extends SuperService<B2bThirdDeliveryEn
     BatchResultDTO delete(B2bThirdDeliveryEntity entity);
 
     /**
+     * 撤销出库（仅已发货的手动发货单）
+     *
+     * @param entity
+     * @return
+     */
+    BatchResultDTO revokeOutstock(B2bThirdDeliveryEntity entity);
+
+    /**
      * 根据状态查询B2B三方仓发货单
      * @param isApiDelivery
      * @param statusList
