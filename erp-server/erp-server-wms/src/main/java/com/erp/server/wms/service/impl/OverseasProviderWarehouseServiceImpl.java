@@ -521,6 +521,84 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
         return new int[]{toInsert.size(), toDeleteIds.size(), toDisable.size()};
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public int[] syncFromAiya(String mainId, JSONArray aiyaWarehouseList) {
+        if (CharSequenceUtil.isBlank(mainId)) {
+            return new int[]{0, 0, 0};
+        }
+        JSONArray apiList = Objects.isNull(aiyaWarehouseList) ? new JSONArray() : aiyaWarehouseList;
+
+        List<OverseasProviderWarehouseEntity> existingList = lambdaQuery()
+                .eq(OverseasProviderWarehouseEntity::getMainId, mainId)
+                .list();
+        Set<String> existingCodeSet = existingList.stream()
+                .map(OverseasProviderWarehouseEntity::getPlatformWarehouseCode)
+                .filter(CharSequenceUtil::isNotBlank)
+                .collect(Collectors.toSet());
+
+        Set<String> apiWarehouseCodes = new HashSet<>();
+        List<OverseasProviderWarehouseEntity> toInsert = new ArrayList<>();
+        for (int i = 0; i < apiList.size(); i++) {
+            JSONObject wh = apiList.getJSONObject(i);
+            if (Objects.isNull(wh)) {
+                continue;
+            }
+            // 爱亚仓库编码字段：warehouseCode（对应海外仓仓库代码）
+            String warehouseCode = wh.getString("warehouseCode");
+            if (CharSequenceUtil.isBlank(warehouseCode)) {
+                log.warn("[爱亚仓库同步] mainId={} 跳过 warehouseCode 为空的记录: {}", mainId, wh);
+                continue;
+            }
+            apiWarehouseCodes.add(warehouseCode);
+            // 数大臣已存在：忽略（需求a），仅参与后续过期判定
+            if (existingCodeSet.contains(warehouseCode)) {
+                continue;
+            }
+            // 数大臣未存在：新增存储（需求b），默认禁用等待人工映射
+            String country = wh.getString("country");
+            AmazonMarketplaceEnum marketPlaceEnum = AmazonMarketplaceEnum.getByCountryCode(country);
+            OverseasProviderWarehouseEntity insert = new OverseasProviderWarehouseEntity();
+            insert.setMainId(mainId);
+            insert.setPlatformWarehouseCode(warehouseCode);
+            // 爱亚仓库名称字段：warehouseDescription（对应海外仓仓库名称）
+            insert.setPlatformWarehouseName(wh.getString("warehouseDescription"));
+            insert.setCountry(country);
+            insert.setCountryName(marketPlaceEnum != null ? marketPlaceEnum.getName() : country);
+            insert.setDisabled(Boolean.TRUE);
+            toInsert.add(insert);
+        }
+
+        // 处理「DB有、API无」的过期记录：warehouse_id 为空（未映射）软删（需求c），否则禁用映射关系（需求d）
+        List<String> toDeleteIds = new ArrayList<>();
+        List<OverseasProviderWarehouseEntity> toDisable = new ArrayList<>();
+        for (OverseasProviderWarehouseEntity exist : existingList) {
+            String code = exist.getPlatformWarehouseCode();
+            if (CharSequenceUtil.isBlank(code) || apiWarehouseCodes.contains(code)) {
+                continue;
+            }
+            if (CharSequenceUtil.isBlank(exist.getWarehouseId())) {
+                toDeleteIds.add(exist.getId());
+            } else if (!Boolean.TRUE.equals(exist.getDisabled())) {
+                OverseasProviderWarehouseEntity update = new OverseasProviderWarehouseEntity();
+                update.setId(exist.getId());
+                update.setDisabled(Boolean.TRUE);
+                toDisable.add(update);
+            }
+        }
+
+        if (CollUtil.isNotEmpty(toInsert)) {
+            this.saveBatch(toInsert);
+        }
+        if (CollUtil.isNotEmpty(toDeleteIds)) {
+            this.removeByIds(toDeleteIds);
+        }
+        if (CollUtil.isNotEmpty(toDisable)) {
+            this.updateBatchById(toDisable);
+        }
+        return new int[]{toInsert.size(), toDeleteIds.size(), toDisable.size()};
+    }
+
     private List<String> getShopIdBySite(String site) {
         if (CharSequenceUtil.isBlank(site)){
             return Collections.emptyList();

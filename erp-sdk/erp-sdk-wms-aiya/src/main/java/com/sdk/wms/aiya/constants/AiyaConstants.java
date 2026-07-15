@@ -3,9 +3,9 @@ package com.sdk.wms.aiya.constants;
 /**
  * AIYA（爱亚）海外仓接口常量。
  * <p>
- * 骨架说明：本类参照 {@code WeGoConstants} 结构搭建，采用「单网关 Router + interfaceType 路由」模式。
- * 以下 {@code BASE_URL} / {@code BASE_URL_PROD} / {@code ROUTER_PATH} 及各 {@code interfaceType}
- * 常量目前均为占位值，需按 AIYA 官方开放平台文档确认后替换（TODO）。
+ * 骨架说明：本类参照 {@code WeGoConstants} 结构搭建，采用「单网关 + serviceType 路由」模式。
+ * 爱亚网关地址即完整请求地址，无需额外 router 路径；各 {@code serviceType} 常量需按
+ * AIYA 官方开放平台文档确认后替换（TODO）。
  */
 public class AiyaConstants {
 
@@ -20,15 +20,8 @@ public class AiyaConstants {
 
     /**
      * AIYA 接口域名-正式环境
-     * <p>TODO：占位值，需替换为 AIYA 官方生产网关地址。
      */
-    public static final String BASE_URL_PROD = "https://oms.aiya.example.com/api";
-
-    /**
-     * 统一 Router 路径
-     * <p>TODO：占位值，需按 AIYA 文档确认。
-     */
-    public static final String ROUTER_PATH = "/open-api/router";
+    public static final String BASE_URL_PROD = "http://edi-glink.800best.com/gateway/api/glink";
 
     /**
      * 查询仓库

@@ -82,8 +82,8 @@ public class AiyaInventoryInitHandler extends AbstractAiyaInitHandler {
 
             JSONObject response;
             try {
-                response = aiyaOpenApiService.queryInventory(auth.getCustomerCode(), auth.getPartnerKey(),
-                        pageNum, DEFAULT_PAGE_SIZE, bizParams);
+                response = aiyaOpenApiService.queryInventory(auth.getPartnerId(), auth.getPartnerKey(),
+                        auth.getCustomerCode(), pageNum, DEFAULT_PAGE_SIZE, bizParams);
             } catch (Exception e) {
                 log.error("[爱亚库存] 服务商[id={}] 仓库[{}] 调用异常, pageNum={}",
                         auth.getAuthId(), warehouseCode, pageNum, e);
