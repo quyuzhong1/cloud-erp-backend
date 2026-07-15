@@ -1,6 +1,9 @@
 package com.erp.server.wms.listener;
 
+import cn.hutool.core.io.FileUtil;
 import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.event.AnalysisEventListener;
+import com.common.core.exception.ServiceException;
 import com.erp.model.wms.dto.excel.StocktakingTaskDetailExcelDTO;
 import com.erp.model.wms.entity.StocktakingTaskDetailEntity;
 import com.erp.server.wms.service.OperateLogService;
@@ -16,18 +19,27 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * 盘点任务明细导入：支持按库区多 sheet、首行元信息；兼容旧版单 sheet。
+ * <p>使用临时文件避免整文件常驻内存。</p>
  */
 public final class StocktakingTaskDetailExcelImportHelper {
 
     private static final DataFormatter DATA_FORMATTER = new DataFormatter();
+
+    /** 导入文件大小上限：50MB */
+    private static final long MAX_IMPORT_FILE_BYTES = 50L * 1024 * 1024;
+
+    /** 导入 sheet 数上限 */
+    private static final int MAX_IMPORT_SHEET_COUNT = 100;
 
     private StocktakingTaskDetailExcelImportHelper() {
     }
@@ -44,19 +56,10 @@ public final class StocktakingTaskDetailExcelImportHelper {
             List<StocktakingTaskDetailEntity> taskDetailList,
             WarehouseService warehouseService,
             OperateLogService operateLogService) throws IOException {
-        byte[] bytes = excelFile.getBytes();
-        List<SheetHeadInfo> sheetInfos = detectSheetHeadRows(bytes);
-        StocktakingTaskDetailExcelListener sharedListener = new StocktakingTaskDetailExcelListener(
+        StocktakingTaskDetailExcelListener listener = new StocktakingTaskDetailExcelListener(
                 stocktakingTaskService, stocktakingTaskDetailService, stocktakingProfitLossService,
                 taskCode, taskDetailList, warehouseService, operateLogService);
-        for (SheetHeadInfo info : sheetInfos) {
-            EasyExcel.read(new ByteArrayInputStream(bytes), StocktakingTaskDetailExcelDTO.class, sharedListener)
-                    .headRowNumber(info.headRowNumber)
-                    .sheet(info.sheetNo)
-                    .doRead();
-        }
-        sharedListener.flush();
-        return sharedListener.getErrorList();
+        return importWithTempFile(excelFile, listener, listener::flush, listener::getErrorList);
     }
 
     /**
@@ -69,24 +72,52 @@ public final class StocktakingTaskDetailExcelImportHelper {
             StocktakingProfitLossService stocktakingProfitLossService,
             WarehouseService warehouseService,
             OperateLogService operateLogService) throws IOException {
-        byte[] bytes = excelFile.getBytes();
-        List<SheetHeadInfo> sheetInfos = detectSheetHeadRows(bytes);
-        StocktakingTaskExcelListener sharedListener = new StocktakingTaskExcelListener(
+        StocktakingTaskExcelListener listener = new StocktakingTaskExcelListener(
                 stocktakingTaskService, stocktakingTaskDetailService, stocktakingProfitLossService,
                 warehouseService, operateLogService);
-        for (SheetHeadInfo info : sheetInfos) {
-            EasyExcel.read(new ByteArrayInputStream(bytes), StocktakingTaskDetailExcelDTO.class, sharedListener)
-                    .headRowNumber(info.headRowNumber)
-                    .sheet(info.sheetNo)
-                    .doRead();
-        }
-        sharedListener.flush();
-        return sharedListener.getErrorList();
+        return importWithTempFile(excelFile, listener, listener::flush, listener::getErrorList);
     }
 
-    private static List<SheetHeadInfo> detectSheetHeadRows(byte[] bytes) throws IOException {
+    private static List<StocktakingTaskDetailExcelDTO> importWithTempFile(
+            MultipartFile excelFile,
+            AnalysisEventListener<StocktakingTaskDetailExcelDTO> listener,
+            Runnable flushAction,
+            Supplier<List<StocktakingTaskDetailExcelDTO>> errorSupplier) throws IOException {
+        assertFileSize(excelFile);
+        File tempFile = File.createTempFile("stocktaking-import-", ".xlsx");
+        try {
+            excelFile.transferTo(tempFile);
+            List<SheetHeadInfo> sheetInfos = detectSheetHeadRows(tempFile);
+            if (sheetInfos.size() > MAX_IMPORT_SHEET_COUNT) {
+                throw new ServiceException("导入 sheet 数量 " + sheetInfos.size()
+                        + " 超过上限 " + MAX_IMPORT_SHEET_COUNT + "，请拆分后导入。");
+            }
+            for (SheetHeadInfo info : sheetInfos) {
+                try (InputStream in = new FileInputStream(tempFile)) {
+                    EasyExcel.read(in, StocktakingTaskDetailExcelDTO.class, listener)
+                            .headRowNumber(info.headRowNumber)
+                            .sheet(info.sheetNo)
+                            .doRead();
+                }
+            }
+            flushAction.run();
+            return errorSupplier.get();
+        } finally {
+            FileUtil.del(tempFile);
+        }
+    }
+
+    private static void assertFileSize(MultipartFile excelFile) {
+        long size = excelFile.getSize();
+        if (size > MAX_IMPORT_FILE_BYTES) {
+            throw new ServiceException("导入文件大小超过上限 "
+                    + (MAX_IMPORT_FILE_BYTES / 1024 / 1024) + "MB，请拆分后导入。");
+        }
+    }
+
+    private static List<SheetHeadInfo> detectSheetHeadRows(File file) throws IOException {
         List<SheetHeadInfo> result = new ArrayList<>();
-        try (InputStream in = new ByteArrayInputStream(bytes); Workbook workbook = WorkbookFactory.create(in)) {
+        try (Workbook workbook = WorkbookFactory.create(file)) {
             int sheetCount = workbook.getNumberOfSheets();
             for (int i = 0; i < sheetCount; i++) {
                 Sheet sheet = workbook.getSheetAt(i);
