@@ -64,10 +64,10 @@ public class SoReceiptDetailEntity extends BaseEntity<SoReceiptDetailEntity> {
     private BigDecimal receiptAmount;
 
     /**
-     * 手续费
+     * 银行手续费
      */
-    @TableField("service_fee")
-    private BigDecimal serviceFee;
+    @TableField("bank_service_fee")
+    private BigDecimal bankServiceFee;
 
     /**
      * 平台明细id
