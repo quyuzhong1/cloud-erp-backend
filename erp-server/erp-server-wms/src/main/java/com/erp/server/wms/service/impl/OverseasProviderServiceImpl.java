@@ -194,8 +194,8 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
         if (Objects.isNull(entity)) {
             throw new ServiceException(ApiError.WH_OVERSEAS_PROVIDER_NOT_FOUND);
         }
-        // WEGO的三方海外仓不需要调用授权接口
-        if (OmsPlatformEnum.WE_GO.getCode().equals(entity.getCode())) {
+        // WEGO / 爱亚(AIYA) 的三方海外仓不需要调用外部授权接口，仅保存授权信息并置为已授权
+        if (OmsPlatformEnum.WE_GO.getCode().equals(entity.getCode()) || OmsPlatformEnum.AI_YA.getCode().equals(entity.getCode())) {
             result = true;
         } else {
             ThirdWarehouseService thirdWarehouseService = thirdWarehouseRegistry.getHandlerByAuthId(dto.getId());
