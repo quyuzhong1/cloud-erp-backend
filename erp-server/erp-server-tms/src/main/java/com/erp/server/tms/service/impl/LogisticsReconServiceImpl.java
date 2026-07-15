@@ -991,6 +991,10 @@ public class LogisticsReconServiceImpl
                 String localRateError = null;
                 int seqNo = resolveResult.getNextSeqNo();
                 for (CfgLogisticsCostImportDetailEntity costCfg : costCfgList) {
+                    // 横向费用列未在 Excel 表头命中时不生成费用项（与 getPreparedValue costItem 防回落一致）
+                    if (costCfg.getMappingIndex() == null) {
+                        continue;
+                    }
                     String value = LogisticsCostImportRowValueHelper.getPreparedValue(rowData, costCfg);
                     if (StrUtil.isBlank(value)) {
                         continue;

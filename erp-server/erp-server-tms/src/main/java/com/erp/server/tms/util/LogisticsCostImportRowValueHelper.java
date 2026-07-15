@@ -85,6 +85,7 @@ public final class LogisticsCostImportRowValueHelper {
 
             Integer mappingIndex = getMapKey(headMap, detail.getSourceField());
             if (ObjectUtil.isEmpty(mappingIndex)) {
+                detail.setMappingIndex(null);
                 if (Boolean.TRUE.equals(detail.getIsUniqueKey())) {
                     throw new ServiceException("唯一识别字段未匹配到 Excel 抬头：" + detail.getSourceField());
                 }
@@ -165,6 +166,15 @@ public final class LogisticsCostImportRowValueHelper {
     }
 
     public static String getPreparedValue(JSONObject rowData, CfgLogisticsCostImportDetailEntity detail) {
+        // 横向多费用列 targetField 均为 costItem，且 setPreparedValue 会覆盖同一公共键；
+        // 费用金额只认 mappingIndex 对应列，禁止回退 costItem，避免列缺失或单元格为空时误读其它费用列金额。
+        if (CharSequenceUtil.equals(COST_ITEM_FIELD, detail.getTargetField())) {
+            if (ObjectUtil.isNull(detail.getMappingIndex())) {
+                return "";
+            }
+            Object costValue = rowData.get(detail.getMappingIndex().toString());
+            return ObjectUtil.isEmpty(costValue) ? "" : String.valueOf(costValue);
+        }
         Object value = ObjectUtil.isNotNull(detail.getMappingIndex())
                 ? rowData.get(detail.getMappingIndex().toString()) : null;
         if (ObjectUtil.isEmpty(value) && CharSequenceUtil.isNotBlank(detail.getTargetField())) {

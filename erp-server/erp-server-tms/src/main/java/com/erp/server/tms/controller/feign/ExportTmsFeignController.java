@@ -479,11 +479,6 @@ public class ExportTmsFeignController {
      * @return PagingVO<LogisticsReconDetailDTO.ListDTO>
      */
     @PostMapping("/exportLogisticsReconDetail")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "tms:logisticsReconDetail:paging",
-            tableAlias = "d"
-    )
     @WebAdvanceQuery(handler = LogisticsReconDetailQueryHandler.class)
     public PagingVO<LogisticsReconDetailDTO.ListDTO> exportLogisticsReconDetail(@RequestBody PagingDTO<LogisticsReconDetailDTO.PagingParamDTO> dto) {
         return logisticsReconDetailService.paging(dto);
