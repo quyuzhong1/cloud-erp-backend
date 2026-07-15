@@ -1323,6 +1323,14 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             groupResults.add(groupResult);
 
             List<String> consistencyErrors = new ArrayList<>();
+            for (LogisticsReconMatchDTO.MatchRowDTO row : groupRows) {
+                validateReconMatchPayType(row, consistencyErrors);
+            }
+            if (CollUtil.isNotEmpty(consistencyErrors)) {
+                groupResult.setSuccess(false);
+                groupResult.setFailReason(FieldValidUtil.getMsgSort(consistencyErrors));
+                continue;
+            }
             List<LogisticsBillDTO.LogisticsBillVo> groupMatchedBillList =
                     resolveReconGroupMatchedBillList(groupRows, rowMatchedMap, consistencyErrors);
             if (CollUtil.isNotEmpty(consistencyErrors)) {
@@ -1473,6 +1481,31 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             });
         }
         return buildImportRowGroupKey(json, uniqueKeyList, matchedBillList);
+    }
+
+    /**
+     * 对账匹配阶段校验对账类型：未填默认付款（pay），有值时须为 pay/refund（或付款/退款），通过后归一为 code。
+     * 与 {@link #handleImportData} 中付款类型默认逻辑一致。
+     */
+    private void validateReconMatchPayType(LogisticsReconMatchDTO.MatchRowDTO row, List<String> errorMsgList) {
+        if (row == null) {
+            return;
+        }
+        String raw = CharSequenceUtil.trim(row.getPayType());
+        if (CharSequenceUtil.isBlank(raw)) {
+            row.setPayType(logisticsPayTypeEnum.PAY.getCode());
+            return;
+        }
+        if (logisticsPayTypeEnum.getByStatus(raw) != null) {
+            row.setPayType(raw);
+            return;
+        }
+        String payTypeCode = logisticsPayTypeEnum.getByName(raw);
+        if (CharSequenceUtil.isNotBlank(payTypeCode)) {
+            row.setPayType(payTypeCode);
+            return;
+        }
+        errorMsgList.add("对账类型输入值必须为[pay,refund]");
     }
 
     /**

@@ -67,10 +67,10 @@ public class LogisticsReconImportExcelDTO implements Serializable {
     private String currency;
 
     /**
-     * 对账类型
+     * 对账类型（导入阶段不校验，匹配阶段校验）
      */
     @ExcelProperty(value = "对账类型", index = 7)
-    @FieldValid(fieldName = "对账类型", fieldValues = "pay,refund")
+    @FieldValid(fieldName = "对账类型", maxLength = 32)
     private String payType;
 
     /**

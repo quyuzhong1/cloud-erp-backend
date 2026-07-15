@@ -835,7 +835,7 @@ public class LogisticsReconServiceImpl
 
     /**
      * 对账类型归一：已是合法 code（pay/refund）直接保留；是名称（付款/退款）则转 code；
-     * 其余无法识别的值保留原样，交由 DTO 的 fieldValues 校验拦截（避免静默改成 pay 导致 refund 丢失）。
+     * 无法识别时保留原样，导入阶段不拦截，匹配阶段再校验。
      */
     private void normalizeImportPayType(LogisticsReconImportExcelDTO excelDTO) {
         if (excelDTO == null || StrUtil.isBlank(excelDTO.getPayType())) {
