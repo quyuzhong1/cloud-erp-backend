@@ -23,6 +23,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.util.WorkbookUtil;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -172,14 +173,11 @@ public class ExportWmsStocktakingTaskDetailHandler extends AbstractFileEventHand
 
     private static String sanitizeSheetName(String name) {
         String raw = CharSequenceUtil.blankToDefault(name, EMPTY_AREA_NAME);
-        String sanitized = raw.replaceAll("[:\\\\/?*\\[\\]]", "_");
-        if (sanitized.length() > 31) {
-            sanitized = sanitized.substring(0, 31);
+        String safe = WorkbookUtil.createSafeSheetName(raw, '_');
+        if (CharSequenceUtil.isBlank(safe) || "'".equals(safe)) {
+            safe = EMPTY_AREA_NAME;
         }
-        if (CharSequenceUtil.isBlank(sanitized)) {
-            sanitized = EMPTY_AREA_NAME;
-        }
-        return sanitized;
+        return safe;
     }
 
     private static String uniqueSheetName(String baseName, Set<String> used) {
