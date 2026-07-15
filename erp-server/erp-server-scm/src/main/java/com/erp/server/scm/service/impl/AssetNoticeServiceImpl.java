@@ -14,6 +14,9 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
@@ -41,11 +44,15 @@ import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
+import com.erp.model.sys.entity.SysUserInfoEntity;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.server.scm.constant.ScmConstant;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.scm.listener.AssetNoticeExcelListener;
 import com.erp.server.scm.mapper.AssetNoticeMapper;
@@ -58,6 +65,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -87,6 +95,8 @@ import static com.common.business.enums.FileTaskEventEnum.IMPORT_SCM_ASSET_NOTIC
 @Slf4j
 @Service
 public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, AssetNoticeEntity> implements AssetNoticeService {
+
+    private static final Integer USER_DISABLED_STATE = 0;
 
     @Autowired
     private ModuleOperateLogService moduleOperateLogService;
@@ -133,6 +143,9 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
     @Autowired
     private FileFeign fileFeign;
 
+    @Lazy
+    @Autowired
+    private AssetNoticeService self;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -845,7 +858,6 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void importAssetNotice(BaseDTO.ImportDTO dto) {
         //设置操作人
         List<FindUserDTO> userList = sysUserFeign.getUserList();
@@ -1207,7 +1219,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         if(Objects.equals(entity.getInvalidStatus(), Boolean.TRUE)) {
             throw new ServiceException(ApiError.BILL_VOIDED_CANNOT_SUBMIT);
         }
-        return;
+        validatePurchaseDevUser(entity.getPurchaseDevUserId());
     }
 
     /**
@@ -1241,10 +1253,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         }
         // 采购开发用户验证
         if (StringUtils.isNotBlank(assetNoticeEntity.getPurchaseDevUserId())) {
-            FindUserDTO purchaseDevUser = sysUserFeign.getUserByUserId(assetNoticeEntity.getPurchaseDevUserId());
-            if (com.baomidou.mybatisplus.core.toolkit.ObjectUtils.isEmpty(purchaseDevUser)) {
-                throw new ServiceException(ApiError.COMMON_USER_NOT_FOUND);
-            }
+            validatePurchaseDevUser(assetNoticeEntity.getPurchaseDevUserId());
         }
         // 采购跟单用户验证
         if (StringUtils.isNotBlank(assetNoticeEntity.getPurchaseFollowUserId())) {
@@ -1256,8 +1265,32 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
 
     }
 
+    private void validatePurchaseDevUser(String userId) {
+        SysUserInfoEntity purchaseDevUser = listPurchaseDevUsers().stream()
+                .filter(user -> Objects.equals(user.getUid(), userId))
+                .findFirst()
+                .orElse(null);
+        if (Objects.isNull(purchaseDevUser)) {
+            throw new ServiceException("采购开发只能选择供应链支持中心部门下的用户");
+        }
+        if (USER_DISABLED_STATE.equals(purchaseDevUser.getUserState())) {
+            throw new ServiceException("采购开发用户已禁用");
+        }
+    }
+
+    private List<SysUserInfoEntity> listPurchaseDevUsers() {
+        List<SysUserInfoEntity> userList = sysUserFeign.listUserByDeptId(ScmConstant.SUPPLY_CHAIN_SUPPORT_CENTER_DEPT_ID);
+        if (CollectionUtils.isEmpty(userList)) {
+            return Collections.emptyList();
+        }
+        return userList.stream()
+                .filter(user -> Objects.nonNull(user)
+                        && StringUtils.isNotBlank(user.getUid())
+                        && !Objects.equals(user.getIsDeleted(), Boolean.TRUE))
+                .collect(Collectors.toList());
+    }
+
     @Override
-    @Transactional(rollbackFor = Exception.class, propagation = Propagation.NESTED)
     public void handleImportSuccessList(List<AssetNoticeImportExcelDTO> successList,
                                        List<String> errorNoList,
                                        List<AssetNoticeImportExcelDTO> errorList2,
@@ -1286,6 +1319,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         List<BaseIdDTO> companyList = sysUserFeign.listAccountingCompany();
         List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
         List<FindUserDTO> userList = sysUserFeign.getUserList();
+        List<SysUserInfoEntity> purchaseDevUserList = listPurchaseDevUsers();
 
         // 收集所有的assetCode并去重
         Set<String> assetCodeSet = successList.stream()
@@ -1315,7 +1349,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
                 // 数据校验和转换
                 List<String> errorMsgList = new ArrayList<>();
                 AssetNoticeDetailDTO.MoldImportDTO moldImportDTO = validateAndConvertData(
-                        importMainDTO, value, skuVOList, companyList, deptList, userList, errorMsgList, supplierInfoMap);
+                        importMainDTO, value, skuVOList, companyList, deptList, userList, purchaseDevUserList, errorMsgList, supplierInfoMap);
 
                 // 如果存在错误，添加到错误列表
                 if (errorMsgList.size() > 0) {
@@ -1327,48 +1361,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
                     continue;
                 }
 
-                // 保存数据
-                AssetNoticeEntity entity = new AssetNoticeEntity();
-                entity.setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_MPL));
-                entity.setApplyDate(moldImportDTO.getApplyDate());
-                entity.setApplyUserId(moldImportDTO.getApplyUserId());
-                entity.setApplyUserName(moldImportDTO.getApplyUserName());
-                entity.setApplyDeptId(moldImportDTO.getApplyDeptId());
-                entity.setApplyDeptName(moldImportDTO.getApplyDeptName());
-                entity.setPurchaseDevUserId(moldImportDTO.getPurchaseDevUserId());
-                entity.setPurchaseFollowUserId(moldImportDTO.getPurchaseFollowUserId());
-                entity.setInvalidStatus(Boolean.FALSE);
-                entity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getCode());
-
-                // 保存主表
-                boolean save = super.save(entity);
-                if (!save) {
-                    throw new ServiceException("开模通知单单头导入保存失败");
-                }
-
-                // 处理明细数据
-                List<AssetNoticeDetailEntity> assetNoticeDetailEntities = new ArrayList<>();
-                for (AssetNoticeDetailDTO.MoldDetailImportDTO moldDetailImportDTO : moldImportDTO.getMoldDetailImportDTOList()) {
-                    AssetNoticeDetailEntity assetNoticeDetailEntity = new AssetNoticeDetailEntity();
-                    BeanMapperUtils.copy(moldDetailImportDTO, assetNoticeDetailEntity);
-                    assetNoticeDetailEntity.setMainId(entity.getId());
-                    assetNoticeDetailEntity.setCreatePoType(CreatePoTypeEnum.NOT_GENERATED.getStatus());
-                    // 供应商信息已在validateAndConvertData中处理，这里直接使用
-                    assetNoticeDetailEntities.add(assetNoticeDetailEntity);
-                }
-
-                // 批量保存明细
-                boolean saveDetail = assetNoticeDetailService.saveBatch(assetNoticeDetailEntities);
-                if (!saveDetail) {
-                    throw new ServiceException("开模通知单明细导入保存失败");
-                }
-
-                // 记录操作日志
-                String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】",
-                        UserContext.getDefaultLoginUser().getUserName(),
-                        "开模通知单",
-                        entity.getCode());
-                moduleOperateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_NOTICE.getCode(), entity.getId(), "导入");
+                self.saveImportSerialNumber(moldImportDTO);
             } catch (Exception e) {
                 // 保存失败，添加到错误列表
                 String errorMsg = e.getMessage();
@@ -1384,6 +1377,54 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         }
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
+    public void saveImportSerialNumber(AssetNoticeDetailDTO.MoldImportDTO moldImportDTO) {
+        AssetNoticeEntity entity = new AssetNoticeEntity();
+        entity.setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_MPL));
+        entity.setApplyDate(moldImportDTO.getApplyDate());
+        entity.setApplyUserId(moldImportDTO.getApplyUserId());
+        entity.setApplyUserName(moldImportDTO.getApplyUserName());
+        entity.setApplyDeptId(moldImportDTO.getApplyDeptId());
+        entity.setApplyDeptName(moldImportDTO.getApplyDeptName());
+        entity.setPurchaseDevUserId(moldImportDTO.getPurchaseDevUserId());
+        entity.setPurchaseFollowUserId(moldImportDTO.getPurchaseFollowUserId());
+        entity.setInvalidStatus(Boolean.FALSE);
+        entity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getCode());
+
+        boolean save = super.save(entity);
+        if (!save) {
+            throw new ServiceException("开模通知单单头导入保存失败");
+        }
+
+        List<AssetNoticeDetailEntity> assetNoticeDetailEntities = new ArrayList<>();
+        for (AssetNoticeDetailDTO.MoldDetailImportDTO moldDetailImportDTO : moldImportDTO.getMoldDetailImportDTOList()) {
+            AssetNoticeDetailEntity assetNoticeDetailEntity = new AssetNoticeDetailEntity();
+            BeanMapperUtils.copy(moldDetailImportDTO, assetNoticeDetailEntity);
+            assetNoticeDetailEntity.setMainId(entity.getId());
+            assetNoticeDetailEntity.setCreatePoType(CreatePoTypeEnum.NOT_GENERATED.getStatus());
+            if (assetNoticeDetailEntity.getIsUrgent() == null) {
+                assetNoticeDetailEntity.setIsUrgent(Boolean.FALSE);
+            }
+            assetNoticeDetailEntities.add(assetNoticeDetailEntity);
+        }
+
+        boolean saveDetail = assetNoticeDetailService.saveBatch(assetNoticeDetailEntities);
+        if (!saveDetail) {
+            throw new ServiceException("开模通知单明细导入保存失败");
+        }
+
+        try {
+            String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】",
+                    UserContext.getDefaultLoginUser().getUserName(),
+                    "开模通知单",
+                    entity.getCode());
+            moduleOperateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_NOTICE.getCode(), entity.getId(), "导入");
+        } catch (Exception e) {
+            log.warn("开模通知单导入操作日志写入失败, id:{}", entity.getId(), e);
+        }
+    }
+
     /**
      * 数据校验和转换
      */
@@ -1394,6 +1435,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
             List<BaseIdDTO> companyList,
             List<SysDepartmentDTO> deptList,
             List<FindUserDTO> userList,
+            List<SysUserInfoEntity> purchaseDevUserList,
             List<String> errorMsgList,
             Map<String, MoldInfoDTO.SupplierInfoByCodeDTO> supplierInfoMap) {
 
@@ -1437,14 +1479,16 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
 
         // 采购开发用户
         if (StringUtils.isNotBlank(importMainDTO.getPurchaseDevUserName())) {
-            FindUserDTO purchaseDevUser = userList.stream()
+            SysUserInfoEntity purchaseDevUser = purchaseDevUserList.stream()
                     .filter(obj -> obj.getUserName().equals(importMainDTO.getPurchaseDevUserName()))
                     .findFirst()
                     .orElse(null);
             if (purchaseDevUser == null) {
-                errorMsgList.add("请录入采购开发用户信息");
+                errorMsgList.add("采购开发只能录入供应链支持中心部门下的用户");
+            } else if (USER_DISABLED_STATE.equals(purchaseDevUser.getUserState())) {
+                errorMsgList.add("采购开发用户【" + importMainDTO.getPurchaseDevUserName() + "】已禁用");
             } else {
-                moldImportDTO.setPurchaseDevUserId(purchaseDevUser.getUserId());
+                moldImportDTO.setPurchaseDevUserId(purchaseDevUser.getUid());
                 moldImportDTO.setPurchaseDevUserName(purchaseDevUser.getUserName());
             }
         }
@@ -1530,8 +1574,11 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
                     errorMsgList.add("申请数量格式错误");
                 }
             }
+            // is_urgent 库字段 NOT NULL 且无默认值；Excel 未填「是否加急」时按否落库，避免明细 insert 批处理失败
             if (StringUtils.isNotBlank(importExcelDTO.getIsUrgentName())) {
                 detail.setIsUrgent("是".equals(importExcelDTO.getIsUrgentName()) ? Boolean.TRUE : Boolean.FALSE);
+            } else {
+                detail.setIsUrgent(Boolean.FALSE);
             }
             detail.setRemark(importExcelDTO.getRemark());
 
