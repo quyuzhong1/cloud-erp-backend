@@ -1,6 +1,8 @@
 package com.common.message.config;
 
+import com.xxl.job.core.executor.XxlJobExecutor;
 import com.xxl.job.core.executor.impl.XxlJobSpringExecutor;
+import com.xxl.job.core.thread.JobThread;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEvent;
@@ -8,6 +10,10 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.context.EnvironmentAware;
 import org.springframework.core.env.Environment;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -28,6 +34,10 @@ public class ReleaseControlledXxlJobSpringExecutor extends XxlJobSpringExecutor
 
     private final AtomicBoolean executorStarted = new AtomicBoolean(false);
     private final AtomicBoolean executorDestroyed = new AtomicBoolean(false);
+    private volatile DrainState drainState = DrainState.DISABLED;
+    private volatile String drainFailure;
+    private volatile boolean registryRemovalRequested;
+    private volatile Thread drainThread;
     private Environment environment;
 
     @Override
@@ -53,7 +63,8 @@ public class ReleaseControlledXxlJobSpringExecutor extends XxlJobSpringExecutor
 
     @Override
     public void destroy() {
-        stopExecutor();
+        beginDrain();
+        awaitDrainCompletion();
     }
 
     private boolean isXxlJobEnabled() {
@@ -88,7 +99,7 @@ public class ReleaseControlledXxlJobSpringExecutor extends XxlJobSpringExecutor
         if (isXxlJobEnabled()) {
             startExecutor();
         } else {
-            stopExecutor();
+            beginDrain();
         }
     }
 
@@ -102,6 +113,7 @@ public class ReleaseControlledXxlJobSpringExecutor extends XxlJobSpringExecutor
         }
         try {
             super.afterSingletonsInstantiated();
+            drainState = DrainState.RUNNING;
             log.info(">>>>>>>>>>> xxl-job executor started by {}=true.", XXL_JOB_ENABLED_KEY);
         } catch (RuntimeException e) {
             executorStarted.set(false);
@@ -109,15 +121,147 @@ public class ReleaseControlledXxlJobSpringExecutor extends XxlJobSpringExecutor
         }
     }
 
-    private void stopExecutor() {
+    /**
+     * Terminal drain for an old blue-green Pod. XXL-JOB 2.3.0 destroy() interrupts active JobThreads,
+     * so stop the RPC/registry entry first and destroy only after all accepted jobs have completed.
+     */
+    public synchronized void beginDrain() {
+        if (drainState == DrainState.DRAINING || drainState == DrainState.DRAINED) {
+            return;
+        }
+        if (drainState == DrainState.FAILED) {
+            throw new IllegalStateException("XXL-JOB terminal drain has failed: " + drainFailure);
+        }
         if (!executorStarted.compareAndSet(true, false)) {
             return;
         }
+
+        // Drain is terminal in XXL-JOB 2.3.0; rollback must rebuild this Pod instead of restarting the singleton threads.
+        executorDestroyed.set(true);
+        drainState = DrainState.DRAINING;
+        drainFailure = null;
+        Thread coordinator = new Thread(this::drainExecutor, "xxl-job-terminal-drain");
+        coordinator.setDaemon(true);
+        drainThread = coordinator;
+        coordinator.start();
+    }
+
+    private void drainExecutor() {
         try {
+            stopAcceptingTriggersAndUnregister();
+            waitForAcceptedJobs();
+            // At this point the official destroy path only interrupts idle JobThreads.
             super.destroy();
-        } finally {
-            executorDestroyed.set(true);
+            drainState = DrainState.DRAINED;
+            log.info(">>>>>>>>>>> xxl-job executor unregistered and drained without interrupting an active job.");
+        } catch (Throwable ex) {
+            drainFailure = ex.getClass().getSimpleName() + ": " + ex.getMessage();
+            drainState = DrainState.FAILED;
+            log.error(">>>>>>>>>>> xxl-job terminal drain failed; Pod removal must be blocked.", ex);
         }
-        log.info(">>>>>>>>>>> xxl-job executor stopped by {}=false.", XXL_JOB_ENABLED_KEY);
+    }
+
+    private void stopAcceptingTriggersAndUnregister() throws Exception {
+        Field embedServerField = XxlJobExecutor.class.getDeclaredField("embedServer");
+        embedServerField.setAccessible(true);
+        Object embedServer = embedServerField.get(this);
+        if (embedServer == null) {
+            throw new IllegalStateException("XXL-JOB embed server is unavailable");
+        }
+
+        Method stopMethod = embedServer.getClass().getMethod("stop");
+        try {
+            stopMethod.invoke(embedServer);
+        } catch (InvocationTargetException ex) {
+            Throwable cause = ex.getCause() == null ? ex : ex.getCause();
+            if (cause instanceof Exception) {
+                throw (Exception) cause;
+            }
+            throw ex;
+        }
+        registryRemovalRequested = true;
+
+        Field serverThreadField = embedServer.getClass().getDeclaredField("thread");
+        serverThreadField.setAccessible(true);
+        Thread serverThread = (Thread) serverThreadField.get(embedServer);
+        if (serverThread != null) {
+            serverThread.join(10000L);
+            if (serverThread.isAlive()) {
+                throw new IllegalStateException("XXL-JOB embed server did not stop within 10 seconds");
+            }
+        }
+    }
+
+    private void waitForAcceptedJobs() throws Exception {
+        int consecutiveIdleChecks = 0;
+        // Allow already accepted Netty tasks to enqueue before declaring the executor idle.
+        while (consecutiveIdleChecks < 5) {
+            if (getBusyJobThreadCount() == 0) {
+                consecutiveIdleChecks++;
+            } else {
+                consecutiveIdleChecks = 0;
+            }
+            if (consecutiveIdleChecks < 5) {
+                Thread.sleep(1000L);
+            }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<Integer, JobThread> getJobThreadRepository() throws Exception {
+        Field repositoryField = XxlJobExecutor.class.getDeclaredField("jobThreadRepository");
+        repositoryField.setAccessible(true);
+        return (Map<Integer, JobThread>) repositoryField.get(null);
+    }
+
+    public int getBusyJobThreadCount() {
+        try {
+            int busy = 0;
+            for (JobThread jobThread : getJobThreadRepository().values()) {
+                if (jobThread != null && jobThread.isRunningOrHasQueue()) {
+                    busy++;
+                }
+            }
+            return busy;
+        } catch (Exception ex) {
+            throw new IllegalStateException("Cannot inspect XXL-JOB 2.3.0 JobThread repository", ex);
+        }
+    }
+
+    public String getDrainState() {
+        return drainState.name();
+    }
+
+    public String getDrainFailure() {
+        return drainFailure;
+    }
+
+    public boolean isAcceptingTriggers() {
+        return drainState == DrainState.RUNNING;
+    }
+
+    public boolean isRegistryRemovalRequested() {
+        return registryRemovalRequested;
+    }
+
+    private void awaitDrainCompletion() {
+        Thread coordinator = drainThread;
+        if (coordinator == null) {
+            return;
+        }
+        try {
+            coordinator.join();
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+            log.warn(">>>>>>>>>>> interrupted while waiting for XXL-JOB terminal drain.");
+        }
+    }
+
+    enum DrainState {
+        DISABLED,
+        RUNNING,
+        DRAINING,
+        DRAINED,
+        FAILED
     }
 }
