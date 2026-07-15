@@ -117,7 +117,7 @@
             and wl.warehouse_id = #{params.warehouseId}
         </if>
         <if test="params.code != null and params.code != ''">
-            and wl.code = #{params.code}
+            and wl.code ilike concat('%', #{params.code}::text ,'%')
         </if>
         <if test="params.codeList != null and params.codeList.size() > 0">
             and wl.code in
@@ -126,7 +126,7 @@
             </foreach>
         </if>
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
-            and ((wl.code = #{params.searchKeyword}) or wl.name ilike concat('%', #{params.searchKeyword}::text ,'%'))
+            and ((wl.code ilike concat('%', #{params.searchKeyword}::text ,'%')) or wl.name ilike concat('%', #{params.searchKeyword}::text ,'%'))
         </if>
         <if test="params.warehouseAreaId != null and params.warehouseAreaId != ''">
             and wl.parent_id = #{params.warehouseAreaId}
@@ -377,7 +377,7 @@
             and wl.warehouse_id = #{params.warehouseId}
         </if>
         <if test="params.code != null and params.code != ''">
-            and wl.code = #{params.code}
+            and wl.code ilike concat('%', #{params.code}::text ,'%')
         </if>
         <if test="params.codeList != null and params.codeList.size() > 0">
             and wl.code in
@@ -386,7 +386,7 @@
             </foreach>
         </if>
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
-            and ((wl.code = #{params.searchKeyword}) or wl.name ilike concat('%', #{params.searchKeyword}::text ,'%'))
+            and ((wl.code ilike concat('%', #{params.searchKeyword}::text ,'%')) or wl.name ilike concat('%', #{params.searchKeyword}::text ,'%'))
         </if>
         <if test="params.warehouseAreaId != null and params.warehouseAreaId != ''">
             and wl.parent_id = #{params.warehouseAreaId}

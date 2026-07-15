@@ -306,9 +306,10 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
         if (StringUtils.isBlank(platformShopCode)) {
             return new ArrayList<>(resultShopIds);
         }
+        // 同卖家账号下未授权、取消授权的站点一并联动授权（含北美/其他区域多站点）
         List<ShopInfoEntity> relatedNotAuthShops = shopInfoService.lambdaQuery()
                 .eq(ShopInfoEntity::getDictPlatform, PlatformDictEnum.AMAZON.getCode())
-                .eq(ShopInfoEntity::getAuthStatus, AuthStatusEnum.NOT.getCode())
+                .in(ShopInfoEntity::getAuthStatus, AuthStatusEnum.NOT.getCode(), AuthStatusEnum.CANCEL.getCode())
                 .eq(ShopInfoEntity::getPlatformShopCode, platformShopCode)
                 .list();
         if (!CollectionUtils.isEmpty(relatedNotAuthShops)) {
