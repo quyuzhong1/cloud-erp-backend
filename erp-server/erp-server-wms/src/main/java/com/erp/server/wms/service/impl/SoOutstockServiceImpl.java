@@ -765,7 +765,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     }
 
     /**
-     * 追加写入"审核状态说明"
+     * 写入"审核状态说明"（仅保留最新一条，覆盖旧内容）
      * <p>
      * 传播行为 REQUIRED，具体提交时机取决于调用方是否在事务内：
      * <ul>
@@ -784,23 +784,13 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (entity == null) {
             return;
         }
-        String prev = entity.getApproveRemark();
         String prefix = "[" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) + "] ";
-        StringBuilder sb = new StringBuilder();
-        if (CharSequenceUtil.isNotBlank(prev)) {
-            sb.append(prev);
-            if (!prev.endsWith("\n")) {
-                sb.append("\n");
-            }
-        }
-        sb.append(prefix).append(message);
-        String merged = sb.toString();
-        // 超长则从头部截断，保留最近内容
-        if (merged.length() > APPROVE_REMARK_MAX_LENGTH) {
-            merged = merged.substring(merged.length() - APPROVE_REMARK_MAX_LENGTH);
+        String remark = prefix + message;
+        if (remark.length() > APPROVE_REMARK_MAX_LENGTH) {
+            remark = remark.substring(remark.length() - APPROVE_REMARK_MAX_LENGTH);
         }
         lambdaUpdate()
-                .set(SoOutstockEntity::getApproveRemark, merged)
+                .set(SoOutstockEntity::getApproveRemark, remark)
                 .eq(SoOutstockEntity::getId, id)
                 .update();
     }
