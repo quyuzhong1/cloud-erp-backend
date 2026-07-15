@@ -680,6 +680,27 @@ public class TmsAsyncTaskRecordDTO implements Serializable {
     }
 
     /**
+     * 物流商对账单合并匹配载荷。
+     * <p>
+     * 持久化本次批量匹配勾选的对账单主单 id 与是否同时确认标记；游标、批次大小由框架运行时注入，不写入 payload。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class LogisticsReconMatchPayloadDTO implements Serializable {
+
+        /**
+         * 勾选的对账单主单 id 集合。
+         */
+        private List<String> ids;
+
+        /**
+         * 是否合并匹配后同时确认。
+         */
+        private Boolean isConfirm;
+    }
+
+    /**
      * 内部类：批次处理结果
      */
     @Data

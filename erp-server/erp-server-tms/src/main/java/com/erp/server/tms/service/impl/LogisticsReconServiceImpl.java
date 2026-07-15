@@ -43,7 +43,13 @@ import com.erp.model.tms.dto.LogisticsReconBatchResultDTO;
 import com.erp.model.tms.dto.LogisticsReconDTO;
 import com.erp.model.tms.dto.LogisticsReconMatchDTO;
 import com.erp.model.tms.dto.LogisticsReconMatchExecutionResultDTO;
+import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
 import com.erp.model.tms.dto.excel.LogisticsReconImportExcelDTO;
+import com.erp.model.tms.entity.TmsAsyncTaskDetailEntity;
+import com.erp.model.tms.entity.TmsAsyncTaskRecordEntity;
+import com.erp.model.tms.enums.TmsAsyncTaskMethodTypeEnum;
+import com.erp.model.tms.enums.TmsAsyncTaskRecordBusinessTypeEnum;
+import com.erp.model.tms.enums.TmsAsyncTaskRecordStatusEnum;
 import com.erp.model.tms.entity.CfgLogisticsCostImportDetailEntity;
 import com.erp.model.tms.entity.CfgLogisticsCostImportEntity;
 import com.erp.model.tms.entity.LogisticsBillCostEntity;
@@ -78,6 +84,10 @@ import com.erp.server.tms.service.LogisticsReconDetailService;
 import com.erp.server.tms.service.LogisticsReconDetailSubService;
 import com.erp.server.tms.service.LogisticsReconRefLogisticsBillService;
 import com.erp.server.tms.service.LogisticsReconService;
+import com.erp.server.tms.service.TmsAsyncTaskDetailService;
+import com.erp.server.tms.service.TmsAsyncTaskRecordService;
+import com.erp.server.tms.service.support.TmsAsyncTaskBatchConsumerSupport;
+import com.erp.server.tms.handler.asynctask.LogisticsReconMatchBatchPushHandler;
 import com.erp.server.tms.constant.LogisticsCostImportTargetFieldConstant;
 import com.erp.server.tms.util.LogisticsCostImportRowValueHelper;
 import com.erp.server.tms.util.LogisticsReconMatchGroupHelper;
@@ -202,6 +212,18 @@ public class LogisticsReconServiceImpl
 
     @Resource
     private RedissonClient redissonClient;
+
+    @Resource
+    private TmsAsyncTaskRecordService tmsAsyncTaskRecordService;
+
+    @Resource
+    private TmsAsyncTaskDetailService tmsAsyncTaskDetailService;
+
+    @Resource
+    private TmsAsyncTaskBatchConsumerSupport tmsAsyncTaskBatchConsumerSupport;
+
+    @Resource
+    private LogisticsReconMatchBatchPushHandler logisticsReconMatchBatchPushHandler;
 
 
     @Override
@@ -641,6 +663,7 @@ public class LogisticsReconServiceImpl
      * @date: 2026/06/05
      * @param currency 原币别（空按人民币处理）
      * @param reconciliationMonth 对账月份 yyyy-MM
+     * 
      * @param cache 币别 → 汇率缓存
      * @return 汇率；本位币为人民币时恒为 1；查不到返回 null
      */
@@ -1875,11 +1898,11 @@ public class LogisticsReconServiceImpl
      */
     @Override
     public List<BatchResultDTO> batchMatch(LogisticsReconDTO.BatchMatchDTO dto) {
-        // 异步：HTTP 仅做主单快速校验 + 提交后台认领任务，立即返回；认领与匹配全部在后台线程完成，
-        // 避免大数据量下认领循环阻塞 HTTP 线程导致超时。
-        LoginUser user = UserContext.getLoginUser();
+        // 异步：HTTP 仅做主单快速校验，通过后统一落 TmsAsyncTaskRecord 异步任务并 MQ 派发，
+        // 认领与匹配全部在异步任务框架内完成，进度/完成情况可在异步任务列表追踪。
         boolean isConfirm = Boolean.TRUE.equals(dto.getIsConfirm());
         List<BatchResultDTO> results = new ArrayList<>(dto.getIds().size());
+        List<String> validIds = new ArrayList<>(dto.getIds().size());
         for (String mainId : dto.getIds()) {
             try {
                 LogisticsReconEntity entity = super.getByIdOpt(mainId)
@@ -1887,21 +1910,85 @@ public class LogisticsReconServiceImpl
                 if (!LogisticsReconCheckStatusEnum.CONFIRMED.getCode().equals(entity.getCheckStatus())) {
                     throw new ServiceException(ApiError.LOGISTICS_RECON_ONLY_CONFIRMED_ALLOW_MATCH);
                 }
-                try {
-                    logisticsReconMatchPool.submit(() -> asyncClaimAndMatchByMain(mainId, user, isConfirm));
-                } catch (RejectedExecutionException e) {
-                    log.warn("[batchMatch] 匹配线程池已满 mainId={}", mainId, e);
-                    results.add(BatchResultDTO.fail(entity.getId(), entity.getCode(),
-                            ApiError.LOGISTICS_RECON_MATCH_POOL_BUSY.getMsg()));
-                    continue;
-                }
-                results.add(BatchResultDTO.success(entity.getId(), entity.getCode(), "已提交匹配，请稍后查看明细匹配结果"));
+                validIds.add(mainId);
             } catch (Exception e) {
-                log.error("[batchMatch] 提交失败 mainId={}", mainId, e);
+                log.error("[batchMatch] 校验失败 mainId={}", mainId, e);
                 results.add(BatchResultDTO.fail(mainId, mainId, e.getMessage()));
             }
         }
+        if (CollUtil.isNotEmpty(validIds)) {
+            try {
+                String businessType = TmsAsyncTaskRecordBusinessTypeEnum.LOGISTICS_RECON.getCode();
+                String methodType = TmsAsyncTaskMethodTypeEnum.LOGISTICS_RECON_MATCH.getCode();
+                TmsAsyncTaskRecordDTO.LogisticsReconMatchPayloadDTO payload =
+                        new TmsAsyncTaskRecordDTO.LogisticsReconMatchPayloadDTO(validIds, isConfirm);
+                TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope =
+                        tmsAsyncTaskRecordService.buildEnvelope(businessType, methodType, null, null, payload);
+                BatchResultDTO dispatchResult = tmsAsyncTaskRecordService.dispatchManualEnvelopeTask(
+                        businessType, methodType, validIds.size(), envelope,
+                        "物流商对账单合并匹配异步任务派发成功，taskId: {}, 预计处理数据量: {}");
+                String taskId = dispatchResult.getId();
+                String taskCode = dispatchResult.getCode();
+                String successMsg = StrUtil.format("已提交匹配，任务编号【{}】，请在异步任务列表查看进度", taskCode);
+                for (String mainId : validIds) {
+                    LogisticsReconEntity entity = super.getByIdOpt(mainId).orElse(null);
+                    String code = entity != null ? entity.getCode() : mainId;
+                    results.add(BatchResultDTO.success(taskId, code, successMsg));
+                }
+            } catch (Exception e) {
+                log.error("[batchMatch] 派发异步任务失败 ids={}", validIds, e);
+                for (String mainId : validIds) {
+                    results.add(BatchResultDTO.fail(mainId, mainId, e.getMessage()));
+                }
+            }
+        }
         return results;
+    }
+
+    @Override
+    public void pushMatch(TmsAsyncTaskRecordEntity taskRecord) {
+        tmsAsyncTaskBatchConsumerSupport.execute(taskRecord, logisticsReconMatchBatchPushHandler);
+    }
+
+    @Override
+    public TmsAsyncTaskRecordDTO.BatchProcessResult processMatchBatch(String taskId, List<String> batchIds,
+                                                                      boolean isConfirm, LoginUser operatorUser) {
+        int success = 0;
+        int failed = 0;
+        for (String mainId : batchIds) {
+            TmsAsyncTaskDetailEntity detail = new TmsAsyncTaskDetailEntity();
+            detail.setMainId(taskId);
+            detail.setBusinessId(mainId);
+            detail.setBusinessType(TmsAsyncTaskRecordBusinessTypeEnum.LOGISTICS_RECON.getCode());
+            detail.setStartTime(LocalDateTime.now());
+            LogisticsReconEntity entity = super.getByIdOpt(mainId).orElse(null);
+            if (entity != null) {
+                detail.setBusinessCode(entity.getCode());
+            }
+            String failReason = null;
+            try {
+                // 匹配逻辑保持不变：整单认领 + 流式匹配，失败在方法内部按对账状态回写
+                asyncClaimAndMatchByMain(mainId, operatorUser, isConfirm);
+            } catch (Exception e) {
+                failReason = LogisticsReconMatchFailReasonSupport.resolve(e);
+                log.error("[processMatchBatch] 匹配失败 taskId={} mainId={}", taskId, mainId, e);
+            }
+            detail.setEndTime(LocalDateTime.now());
+            if (failReason == null) {
+                detail.setStatus(TmsAsyncTaskRecordStatusEnum.FINISH.getCode());
+                success++;
+            } else {
+                detail.setStatus(TmsAsyncTaskRecordStatusEnum.FAILED.getCode());
+                detail.setErrorData(StrUtil.sub(failReason, 0, 490));
+                failed++;
+            }
+            try {
+                tmsAsyncTaskDetailService.save(detail);
+            } catch (Exception e) {
+                log.error("[processMatchBatch] 保存任务明细失败 taskId={} mainId={}", taskId, mainId, e);
+            }
+        }
+        return new TmsAsyncTaskRecordDTO.BatchProcessResult(success, failed);
     }
 
     /**
