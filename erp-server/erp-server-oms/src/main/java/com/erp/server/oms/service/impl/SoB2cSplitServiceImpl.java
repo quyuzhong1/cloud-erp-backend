@@ -83,6 +83,9 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
 
     @Resource
     private SoB2cService soB2cService;
+    @Lazy
+    @Resource
+    private KolSubB2cApplicationService kolSubB2cApplicationService;
 
     @Resource
     private OperateLogService operateLogService;
@@ -959,7 +962,10 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             //新建拆分后数据
             SoB2cDTO.AddDTO addDTO = new SoB2cDTO.AddDTO();
             BeanMapperUtils.copy(entity, addDTO);
-            addDTO.setSourceType(SourceTypeEnum.SELF_ADD.getCode());
+            // 寄样来源拆单后保留来源，便于回写拆分单状态/跟踪号；其它来源仍记为手工新增
+            if (!CharSequenceUtil.equals(entity.getSourceType(), SourceTypeEnum.KOL_B2C_APPLICATION.getCode())) {
+                addDTO.setSourceType(SourceTypeEnum.SELF_ADD.getCode());
+            }
             if (CollectionUtils.isNotEmpty(soB2cRefCategoryList)) {
                 List<String> categoryIdList = soB2cRefCategoryList.stream().map(SoB2cRefCategoryEntity::getCategoryId).collect(Collectors.toList());
                 addDTO.setCategoryIdList(categoryIdList);
@@ -1143,6 +1149,10 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         //操作日志
         String msg = "从【{}】拆分出新订单";
         operateLogService.addModuleOperateLog( CharSequenceUtil.format(msg, entity.getCode()), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "拆分订单");
+        if (CharSequenceUtil.equals(entity.getSourceType(), SourceTypeEnum.KOL_B2C_APPLICATION.getCode())
+                && CharSequenceUtil.isNotBlank(entity.getSourceId())) {
+            kolSubB2cApplicationService.refreshDeliveryAndTrackBySoB2c(entity.getSourceId());
+        }
         SoB2cDTO.SplitSaveResultDTO splitSaveResultDTO = new SoB2cDTO.SplitSaveResultDTO();
         splitSaveResultDTO.setSoB2cIds(soIdList);
         splitSaveResultDTO.setSoCodeList(soCodeList);
@@ -1179,9 +1189,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
      * @date: 2023/8/23 15:12
      */
     private void checkSplitData(SoB2cEntity entity, List<SoB2cRefEntity> soB2cRefList, Boolean checkTikTok) {
-        if (CharSequenceUtil.equals(entity.getSourceType(), SourceTypeEnum.KOL_B2C_APPLICATION.getCode())) {
-            throw new ServiceException(ApiError.SO_B2C_SPLIT_KOL_FORBIDDEN);
-        }
+        // B2C寄样单来源允许拆单（拆后子单保留 KOL_B2C_APPLICATION + sourceId，便于回写发货状态/跟踪号）
         SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsService.getByMainId(entity.getId());
         if (SoB2cBillStatusEnum.ENUM_FROZEN.getCode().equals(entity.getBillStatus()) || entity.getInvalidStatus()
                 || SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equals(entity.getBillStatus())) {

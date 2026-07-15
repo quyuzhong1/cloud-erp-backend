@@ -199,6 +199,14 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(ExhibitionOrderDTO.AddDTO addDTO) {
+        // 新增时：未传收款账号则带出客户默认收款账号；人为传入则不覆盖
+        if (StringUtils.isBlank(addDTO.getReceiveAccount()) && StringUtils.isNotBlank(addDTO.getCustomerId())) {
+            CustomerInfoEntity customerInfo = customerInfoService.getById(addDTO.getCustomerId());
+            if (customerInfo != null && StringUtils.isNotBlank(customerInfo.getDefaultReceiveAccount())) {
+                addDTO.setReceiveAccount(customerInfo.getDefaultReceiveAccount());
+            }
+        }
+
         ExhibitionOrderEntity exhibitionOrderEntity = new ExhibitionOrderEntity();
         BeanMapperUtils.copy(addDTO, exhibitionOrderEntity);
 
@@ -1193,6 +1201,13 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         addDTO.setSourceCode(entity.getCode());
         addDTO.setSourceType(SourceTypeEnum.EXHIBITION_ORDER.getCode());
         addDTO.setDictPlatform("");
+        // 要货日期取展会单据日期；订单金额=明细价税合计（折前）合计
+        addDTO.setRequireDate(entity.getBillDate());
+        BigDecimal orderAmount = detailList.stream()
+                .map(ExhibitionOrderDetailEntity::getTaxAmountBefore)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        addDTO.setOrderAmount(orderAmount);
 
         List<SoDetailDTO.AddDTO> addDTOS = new ArrayList<>(detailList.size());
         for (ExhibitionOrderDetailEntity detail : detailList) {
@@ -1211,6 +1226,14 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
         String soId;
         try {
             soId = soInfoService.add(addDTO);
+            // 创建人与展会订单创建人保持一致（收款单可选销售订单依赖创建人）
+            if (StringUtils.isNotBlank(soId) && StringUtils.isNotBlank(entity.getCreateUserId())) {
+                soInfoService.lambdaUpdate()
+                        .set(SoInfoEntity::getCreateUserId, entity.getCreateUserId())
+                        .set(SoInfoEntity::getCreateUserName, entity.getCreateUserName())
+                        .eq(SoInfoEntity::getId, soId)
+                        .update();
+            }
         }catch (Exception e) {
             log.error("B2B订单新增异常，请求参数: {}", addDTO, e);
             mqResponseDTO.setErrorMsg(e.getMessage());
@@ -1565,11 +1588,6 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
             bankAccountMap = bankAccountService.listByIds(receiveAccountList).stream().collect(Collectors.toMap(BankAccountEntity::getId, BankAccountEntity::getAccountName, (o1, o2) -> o1));
         }
 
-        // 收款方式
-        List<String> dictKeys = Lists.newArrayList(DictBasicTypeEnum.RECEIVE_METHOD.getType());
-        List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(dictKeys);
-        Map<String, String> dictBasicMap = dictBasicEntityList.stream().collect(Collectors.toMap(DictBasicEntity::getId, DictBasicEntity::getName, (o1, o2) -> o1));
-
         // 收款条件
         List<KingdeeReceiptConditionEntity> receiveConditionList = kingdeeReceiptConditionService.list();
         Map<String, String> receiveConditionMap = receiveConditionList.stream().collect(Collectors.toMap(KingdeeReceiptConditionEntity::getId, KingdeeReceiptConditionEntity::getName, (o1, o2) -> o1));
@@ -1633,10 +1651,6 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
             //实体仓名称
             String warehouseName = warehouseMap.getOrDefault(item.getWarehouseId(), "");
             item.setWarehouseName(warehouseName);
-
-            //收款方式
-            String receiveMethodName = dictBasicMap.getOrDefault(item.getReceiveMethod(), "");
-            item.setReceiveMethodName(receiveMethodName);
 
             //收款条件
             String receiveConditionName = receiveConditionMap.getOrDefault(item.getReceiveCondition(), "");
@@ -2080,37 +2094,6 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
                 }
                 addSo.setReceiveAccount(receiveAccount);
 
-                //收款方式
-                String receiveMethodStr = mainInfo.getReceiveMethod();
-                String receiveMethod = dictBasicList.stream().filter(d ->  StringUtils.isNotBlank(receiveMethodStr) &&  d.getName().equals(receiveMethodStr)).findFirst().
-                        map(DictBasicEntity::getValue).orElse("");
-                if (StringUtils.isBlank(receiveMethod)) {
-                    errorMsgList.add("收款方式不存在");
-                }
-                addSo.setReceiveMethod(receiveMethod);
-
-                //收款日期
-                String receiveDateStr = mainInfo.getReceiveDate();
-                if (StringUtils.isNotBlank(receiveDateStr)) {
-                    LocalDate receiveDate = null;
-                    try {
-                        receiveDate = LocalDate.parse(receiveDateStr, dateTimeFormatter);
-                    } catch (Exception e1) {
-                        try {
-                            receiveDate = LocalDate.parse(receiveDateStr, dateTimeFormatter2);
-                        } catch (Exception e2) {
-                            try {
-                                receiveDate = LocalDate.parse(receiveDateStr, dateTimeFormatter3);
-                            } catch (Exception e3) {
-                                errorMsgList.add("收款日期格式错误，请使用 yyyy-MM-dd、yyyy/M/d 或 yyyy/MM/dd 格式");
-                            }
-                        }
-                    }
-                    addSo.setReceiveDate(receiveDate);
-                }else {
-                    errorMsgList.add("收款日期不能为空");
-                }
-
                 //贸易条款
                 String tradeTermStr = mainInfo.getTradeTerm();
                 String tradeTerm = "";
@@ -2205,15 +2188,10 @@ public class ExhibitionOrderServiceImpl extends SuperServiceImpl<ExhibitionOrder
                 String shippingFeeStr = mainInfo.getShippingFee();
                 BigDecimal shippingFee = MathUtil.getBigDecimalByStr(shippingFeeStr);
 
-                //收款金额
-                String receiveAmountStr = mainInfo.getReceiveAmount();
-                BigDecimal receiveAmount = MathUtil.getBigDecimalByStr(receiveAmountStr);
-
                 //折扣总额
                 String discountAmountStr = mainInfo.getDiscountAmount();
                 BigDecimal discountAmount = MathUtil.getBigDecimalByStr(discountAmountStr);
                 addSo.setShippingFee(shippingFee);
-                addSo.setReceiveAmount(receiveAmount);
                 addSo.setDiscountAmount(discountAmount);
 
                 Boolean isAdd = Boolean.TRUE;

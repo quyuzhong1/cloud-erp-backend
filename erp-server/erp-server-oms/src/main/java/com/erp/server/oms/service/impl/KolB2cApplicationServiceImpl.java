@@ -1451,26 +1451,27 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
     @Transactional(rollbackFor = Exception.class)
     public void updateKolSubStatus(String kolId) {
         List<KolSubB2cApplicationEntity> kolSubB2cApplicationEntities = kolSubB2cApplicationService.lambdaQuery().eq(KolSubB2cApplicationEntity::getSourceId, kolId).list();
-        if(CollUtil.isNotEmpty(kolSubB2cApplicationEntities)){
-            List<String> sourceIds = kolSubB2cApplicationEntities.stream().map(KolSubB2cApplicationEntity::getId).collect(Collectors.toList());
-            List<SoB2cEntity> soB2cEntities = soB2cService.lambdaQuery().eq(SoB2cEntity::getSourceType, SourceTypeEnum.KOL_B2C_APPLICATION.getCode())
-                    .in(SoB2cEntity::getSourceId, sourceIds).list();
-
-            for (KolSubB2cApplicationEntity entity : kolSubB2cApplicationEntities) {
-                SoB2cEntity soB2cEntity = soB2cEntities.stream().filter(e -> e.getSourceId().equals(entity.getId())).findFirst().orElse(null);
-                if(Objects.nonNull(soB2cEntity)){
-                    entity.setPlatformSoCode(soB2cEntity.getCode());
-                    entity.setPlatformOrderCode(soB2cEntity.getCode());
-                    entity.setOrderStatus(soB2cEntity.getApproveStatus().getStatus());
-                    if(StringUtils.isNotBlank(soB2cEntity.getBillStatus())&&soB2cEntity.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode())){
-                        entity.setDeliveryStatus(KolSubB2cApplicationDeliveryStatusEnum.SHIPPED.getCode());
-                    }else {
-                        entity.setDeliveryStatus(KolSubB2cApplicationDeliveryStatusEnum.WAITSHIPPED.getCode());
-                    }
-                    entity.setTrackNo(soB2cEntity.getShippingOrderNo());
-                }
+        if (CollUtil.isEmpty(kolSubB2cApplicationEntities)) {
+            return;
+        }
+        List<String> sourceIds = kolSubB2cApplicationEntities.stream().map(KolSubB2cApplicationEntity::getId).collect(Collectors.toList());
+        List<SoB2cEntity> soB2cEntities = soB2cService.lambdaQuery()
+                .eq(SoB2cEntity::getSourceType, SourceTypeEnum.KOL_B2C_APPLICATION.getCode())
+                .in(SoB2cEntity::getSourceId, sourceIds)
+                .list();
+        for (KolSubB2cApplicationEntity entity : kolSubB2cApplicationEntities) {
+            SoB2cEntity soB2cEntity = soB2cEntities.stream()
+                    .filter(e -> e.getSourceId().equals(entity.getId()) && !Boolean.TRUE.equals(e.getInvalidStatus()))
+                    .findFirst()
+                    .orElse(null);
+            if (Objects.nonNull(soB2cEntity)) {
+                kolSubB2cApplicationService.lambdaUpdate()
+                        .set(KolSubB2cApplicationEntity::getPlatformSoCode, soB2cEntity.getCode())
+                        .set(KolSubB2cApplicationEntity::getPlatformOrderCode, soB2cEntity.getCode())
+                        .eq(KolSubB2cApplicationEntity::getId, entity.getId())
+                        .update();
             }
-            kolSubB2cApplicationService.updateBatchById(kolSubB2cApplicationEntities);
+            kolSubB2cApplicationService.refreshDeliveryAndTrackBySoB2c(entity.getId());
         }
     }
 

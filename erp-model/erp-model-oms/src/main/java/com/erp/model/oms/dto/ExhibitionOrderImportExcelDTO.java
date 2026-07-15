@@ -9,7 +9,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
-import java.math.BigDecimal;
 import java.time.LocalDate;
 
 
@@ -91,43 +90,10 @@ public class ExhibitionOrderImportExcelDTO implements Serializable {
     private String warehouseId;
 
     /**
-     * 收款日期
-     */
-    @ColumnWidth(30)
-    @ExcelProperty(value = "*收款日期", index = 7)
-    @FieldValid(fieldName = "*收款日期",isNotBlank = true)
-    private String receiveDate;
-
-    /**
-     * 收款方式
-     */
-    @ColumnWidth(20)
-    @ExcelProperty(value = "*收款方式", index = 8)
-    @FieldValid(fieldName = "*收款方式",isNotBlank = true)
-    private String receiveMethod;
-
-    /**
-     * 收款账号
-     */
-    @ColumnWidth(20)
-    @ExcelProperty(value = "*收款账号", index = 9)
-    @FieldValid(fieldName = "*收款账号",isNotBlank = true)
-    private String receiveAccount;
-
-    /**
-     * 收款金额
-     */
-    @ColumnWidth(20)
-    @ExcelProperty(value = "*收款金额", index = 10)
-    @FieldValid(fieldName = "*收款金额",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.AMOUNT4)
-    private String receiveAmount;
-
-
-    /**
      * 是否收取运费
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "是否收取运费", index = 11)
+    @ExcelProperty(value = "是否收取运费", index = 7)
     @FieldValid(fieldName = "是否收取运费")
     private String isCollectShippingFee;
 
@@ -135,7 +101,7 @@ public class ExhibitionOrderImportExcelDTO implements Serializable {
      * 运费金额
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "运费金额", index = 12)
+    @ExcelProperty(value = "运费金额", index = 8)
     @FieldValid(fieldName = "运费金额",formatPattern = FieldFormatPatternTypeEnum.AMOUNT4)
     private String shippingFee;
 
@@ -143,7 +109,7 @@ public class ExhibitionOrderImportExcelDTO implements Serializable {
      * 展会名称
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "展会名称", index = 13)
+    @ExcelProperty(value = "展会名称", index = 9)
     @FieldValid(fieldName = "展会名称")
     private String exhibitionTitle;
 
@@ -151,7 +117,7 @@ public class ExhibitionOrderImportExcelDTO implements Serializable {
      * 贸易条款
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "贸易条款", index = 14)
+    @ExcelProperty(value = "贸易条款", index = 10)
     @FieldValid(fieldName = "贸易条款")
     private String tradeTerm;
 
@@ -159,7 +125,7 @@ public class ExhibitionOrderImportExcelDTO implements Serializable {
      * 折扣总额
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "折扣总额", index = 15)
+    @ExcelProperty(value = "折扣总额", index = 11)
     @FieldValid(fieldName = "折扣总额",formatPattern = FieldFormatPatternTypeEnum.AMOUNT4)
     private String discountAmount;
 
@@ -167,7 +133,7 @@ public class ExhibitionOrderImportExcelDTO implements Serializable {
      * 客户
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "*客户", index = 16)
+    @ExcelProperty(value = "*客户", index = 12)
     @FieldValid(fieldName = "*客户",isNotBlank = true)
     private String customerName;
 
@@ -175,7 +141,7 @@ public class ExhibitionOrderImportExcelDTO implements Serializable {
      * 收货人
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "收货人", index = 17)
+    @ExcelProperty(value = "收货人", index = 13)
     @FieldValid(fieldName = "收货人")
     private String receiverName;
 
@@ -183,7 +149,7 @@ public class ExhibitionOrderImportExcelDTO implements Serializable {
      * 联系电话
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "联系电话", index = 18)
+    @ExcelProperty(value = "联系电话", index = 14)
     @FieldValid(fieldName = "联系电话")
     private String telNumber;
 
@@ -191,7 +157,7 @@ public class ExhibitionOrderImportExcelDTO implements Serializable {
      * 收货地址
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "*收货地址", index = 19)
+    @ExcelProperty(value = "*收货地址", index = 15)
     @FieldValid(fieldName = "*收货地址",isNotBlank = true)
     private String receiveAddress;
 
@@ -199,15 +165,23 @@ public class ExhibitionOrderImportExcelDTO implements Serializable {
      * 交货方式
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "*交货方式", index = 20)
+    @ExcelProperty(value = "*交货方式", index = 16)
     @FieldValid(fieldName = "*交货方式",isNotBlank = true)
     private String deliveryMode;
+
+    /**
+     * 收款账号（在结算币别前）
+     */
+    @ColumnWidth(20)
+    @ExcelProperty(value = "*收款账号", index = 17)
+    @FieldValid(fieldName = "*收款账号",isNotBlank = true)
+    private String receiveAccount;
 
     /**
      * 结算币别
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "*结算币别", index = 21)
+    @ExcelProperty(value = "*结算币别", index = 18)
     @FieldValid(fieldName = "*结算币别",isNotBlank = true)
     private String currency;
 
@@ -215,7 +189,7 @@ public class ExhibitionOrderImportExcelDTO implements Serializable {
      * 是否含税
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "*是否含税", index = 22)
+    @ExcelProperty(value = "*是否含税", index = 19)
     @FieldValid(fieldName = "*是否含税",isNotBlank = true)
     private String isTax;
 
@@ -223,7 +197,7 @@ public class ExhibitionOrderImportExcelDTO implements Serializable {
      * 地址类型
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "*地址类型", index = 23)
+    @ExcelProperty(value = "*地址类型", index = 20)
     @FieldValid(fieldName = "*地址类型",isNotBlank = true)
     private String addressType;
 
@@ -231,7 +205,7 @@ public class ExhibitionOrderImportExcelDTO implements Serializable {
      * 收款条件
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "*收款条件", index = 24)
+    @ExcelProperty(value = "*收款条件", index = 21)
     @FieldValid(fieldName = "*收款条件",isNotBlank = true)
     private String receiveCondition;
 
@@ -239,7 +213,7 @@ public class ExhibitionOrderImportExcelDTO implements Serializable {
      * 备注
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "备注", index = 25)
+    @ExcelProperty(value = "备注", index = 22)
     @FieldValid(fieldName = "备注",maxLength =200)
     private String remark;
 
@@ -248,7 +222,7 @@ public class ExhibitionOrderImportExcelDTO implements Serializable {
      * SKU
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "*SKU", index = 26)
+    @ExcelProperty(value = "*SKU", index = 23)
     @FieldValid(fieldName = "*SKU",isNotBlank = true)
     private String skuNo;
 
@@ -256,7 +230,7 @@ public class ExhibitionOrderImportExcelDTO implements Serializable {
      * 使用方
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "*使用方", index = 27)
+    @ExcelProperty(value = "*使用方", index = 24)
     @FieldValid(fieldName = "*使用方",isNotBlank = true)
     private String useUserName;
 
@@ -265,7 +239,7 @@ public class ExhibitionOrderImportExcelDTO implements Serializable {
      * 销售数量
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "*销售数量", index = 28)
+    @ExcelProperty(value = "*销售数量", index = 25)
     @FieldValid(fieldName = "*销售数量",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.POSITIVEINTEGER)
     private String qty;
 
@@ -273,7 +247,7 @@ public class ExhibitionOrderImportExcelDTO implements Serializable {
      * 销售单价
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "销售单价", index = 29)
+    @ExcelProperty(value = "销售单价", index = 26)
     @FieldValid(fieldName = "销售单价",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.AMOUNT4)
     private String price;
 
@@ -281,7 +255,7 @@ public class ExhibitionOrderImportExcelDTO implements Serializable {
      * 税率(%)
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "税率(%)", index = 30)
+    @ExcelProperty(value = "税率(%)", index = 27)
     @FieldValid(fieldName = "税率(%)",formatPattern = FieldFormatPatternTypeEnum.AMOUNT2)
     private String taxRate;
 
@@ -289,7 +263,7 @@ public class ExhibitionOrderImportExcelDTO implements Serializable {
      *  含税单价
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "含税单价", index = 31)
+    @ExcelProperty(value = "含税单价", index = 28)
     @FieldValid(fieldName = "含税单价",formatPattern = FieldFormatPatternTypeEnum.AMOUNT4)
     private String taxPrice;
 
@@ -297,7 +271,7 @@ public class ExhibitionOrderImportExcelDTO implements Serializable {
      * 是否赠品
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "*是否赠品", index = 32)
+    @ExcelProperty(value = "*是否赠品", index = 29)
     @FieldValid(fieldName = "*是否赠品",isNotBlank = true)
     private String isGift;
 
@@ -305,7 +279,7 @@ public class ExhibitionOrderImportExcelDTO implements Serializable {
      * 明细备注
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "明细备注", index = 33)
+    @ExcelProperty(value = "明细备注", index = 30)
     @FieldValid(fieldName = "明细备注",maxLength =200)
     private String detailRemark;
 
@@ -315,8 +289,7 @@ public class ExhibitionOrderImportExcelDTO implements Serializable {
     /**
      * 错误数据
      */
-    @ExcelProperty(value = "错误数据", index = 34)
+    @ExcelProperty(value = "错误数据", index = 31)
     @ColumnWidth(50)
     private String  errorMsg = "";
 }
-

@@ -2448,16 +2448,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             String declareOrgId = resultDTO.getDeclareOrgId();
             soB2cLogisticsService.updateLogisticsCode(id, transportNo, trackNo, iossTaxNo, declareOrgId, pushPlatformCode);
 
-            //KOL-B2C订单需要回写跟踪单号
-            if (Objects.equals(SourceTypeEnum.KOL_B2C_APPLICATION.getCode(), entity.getSourceType())) {
-                KolSubB2cApplicationEntity kolSubB2cApplicationEntity = kolSubB2cApplicationService.getById(entity.getSourceId());
-                if (StringUtils.isNotBlank(trackNo)) {
-                    kolSubB2cApplicationEntity.setDeliveryStatus(KolSubB2cApplicationDeliveryStatusEnum.SHIPPED.getCode());
-                } else {
-                    kolSubB2cApplicationEntity.setDeliveryStatus(KolSubB2cApplicationDeliveryStatusEnum.WAITSHIPPED.getCode());
-                }
-                kolSubB2cApplicationEntity.setTrackNo(trackNo);
-                kolSubB2cApplicationService.updateById(kolSubB2cApplicationEntity);
+            //KOL-B2C订单需要回写跟踪单号/发货状态（支持拆单后多单汇总）
+            if (Objects.equals(SourceTypeEnum.KOL_B2C_APPLICATION.getCode(), entity.getSourceType())
+                    && StringUtils.isNotBlank(entity.getSourceId())) {
+                kolSubB2cApplicationService.refreshDeliveryAndTrackBySoB2c(entity.getSourceId());
             }
 
             //操作日志
@@ -8859,25 +8853,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             soB2cLogisticsService.updateBatchById(deliveryTimeDTO.getSoB2cLogisticsList());
         }
 
-        //回写更新kol-b2c拆分单
-        List<SoB2cEntity> soB2cEntities = listByIds(deliveryTimeDTO.getSoB2cIds()).stream().filter(e -> e.getSourceType().equals(SourceTypeEnum.KOL_B2C_APPLICATION.getCode())).collect(Collectors.toList());
-        if (CollUtil.isNotEmpty(soB2cEntities) && deliveryTimeDTO.getStatus().equals(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode())) {
-            List<String> kolSubB2cIds = soB2cEntities.stream().map(SoB2cEntity::getSourceId).collect(Collectors.toList());
-            List<KolSubB2cApplicationEntity> kolSubB2cApplicationEntities = kolSubB2cApplicationService.listByIds(kolSubB2cIds);
-            for (KolSubB2cApplicationEntity entity : kolSubB2cApplicationEntities) {
-                SoB2cEntity soB2cEntity = soB2cEntities.stream().filter(e -> e.getSourceId().equals(entity.getId())).findFirst().orElse(null);
-                if (Objects.nonNull(soB2cEntity)) {
-                    entity.setTrackNo(soB2cEntity.getShippingOrderNo());
-                    entity.setDeliveryStatus(KolSubB2cApplicationDeliveryStatusEnum.SHIPPED.getCode());
-                }
-            }
-            try {
-                //生成nf-e发票
-                UserContext.setIsUserSystem(true);
-                kolSubB2cApplicationService.updateBatchById(kolSubB2cApplicationEntities);
-            } finally {
-                UserContext.clearIsUserSystem();
-            }
+        //回写更新kol-b2c拆分单（支持拆单后部分发货、多跟踪号）
+        List<SoB2cEntity> soB2cEntities = listByIds(deliveryTimeDTO.getSoB2cIds()).stream()
+                .filter(e -> SourceTypeEnum.KOL_B2C_APPLICATION.getCode().equals(e.getSourceType()))
+                .collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(soB2cEntities)) {
+            soB2cEntities.stream().map(SoB2cEntity::getSourceId).filter(StringUtils::isNotBlank).distinct()
+                    .forEach(kolSubB2cApplicationService::refreshDeliveryAndTrackBySoB2c);
         }
 
         String statusName = SoB2cBillStatusEnum.getName(deliveryTimeDTO.getStatus());

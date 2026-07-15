@@ -2675,6 +2675,28 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         }
     }
 
+    @Override
+    public void syncNameFromShopAndPushKingdee(String customerId, String newName) {
+        if (StringUtils.isBlank(customerId) || StringUtils.isBlank(newName)) {
+            return;
+        }
+        CustomerInfoEntity entity = getById(customerId);
+        if (entity == null) {
+            return;
+        }
+        if (Objects.equals(entity.getName(), newName)) {
+            return;
+        }
+        checkName(customerId, newName);
+        entity.setName(newName);
+        updateById(entity);
+        // 已审核或已推送金蝶：同步客户名称到金蝶
+        if (ApproveStatusEnum.APPROVE.equals(entity.getApproveStatus())
+                || StringUtils.isNotBlank(entity.getSyncKingdeeId())) {
+            sendPushTask(Collections.singletonList(entity), SyncOperateEnum.OPERATE_UPDATE.getCode());
+        }
+    }
+
     /** 默认仓库/账号有值时同步校验有效性；WMS 不可用会阻断保存，属有意设计，异步校验需产品方案后再改。 */
     private void validateCustomerDefaultFields(String defaultShippingWarehouse, String defaultReceiveAccount) {
         if (StringUtils.isNotBlank(defaultShippingWarehouse)) {

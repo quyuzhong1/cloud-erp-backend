@@ -3,22 +3,27 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.common.business.enums.BillApproveStatusEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.dto.KolSubB2cApplicationDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.CfgKolOptionTypeEnum;
 import com.erp.model.oms.enums.KolSubB2cApplicationDeliveryStatusEnum;
 import com.erp.model.oms.enums.KolSubB2cApplicationOrderStatusEnum;
+import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.oms.service.CfgKolOptionService;
 import com.erp.server.oms.service.KolSubB2cApplicationDetailService;
 import com.erp.server.oms.mapper.KolSubB2cApplicationMapper;
 import com.erp.server.oms.service.KolSubB2cApplicationService;
+import com.erp.server.oms.service.SoB2cService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
@@ -37,6 +42,9 @@ import javax.annotation.Resource;
 @Slf4j
 @Service
 public class KolSubB2cApplicationServiceImpl extends SuperServiceImpl<KolSubB2cApplicationMapper, KolSubB2cApplicationEntity> implements KolSubB2cApplicationService {
+    @Lazy
+    @Resource
+    private SoB2cService soB2cService;
     @Resource
     private KolSubB2cApplicationDetailService kolSubB2cApplicationDetailService;
     @Resource
@@ -261,6 +269,59 @@ public class KolSubB2cApplicationServiceImpl extends SuperServiceImpl<KolSubB2cA
      */
     private String getDictPlatform(Boolean isInternational) {
         return Boolean.TRUE.equals(isInternational) ? DmpBasicSystemCodeEnum.ERP.getCode() : DmpBasicSystemCodeEnum.WDT.getCode();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void refreshDeliveryAndTrackBySoB2c(String kolSubId) {
+        if (StringUtils.isBlank(kolSubId)) {
+            return;
+        }
+        KolSubB2cApplicationEntity subEntity = getById(kolSubId);
+        if (subEntity == null) {
+            return;
+        }
+        List<SoB2cEntity> soList = soB2cService.lambdaQuery()
+                .eq(SoB2cEntity::getSourceType, SourceTypeEnum.KOL_B2C_APPLICATION.getCode())
+                .eq(SoB2cEntity::getSourceId, kolSubId)
+                .eq(SoB2cEntity::getInvalidStatus, Boolean.FALSE)
+                .list();
+        if (CollUtil.isEmpty(soList)) {
+            return;
+        }
+        long shippedCount = soList.stream()
+                .filter(e -> SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(e.getBillStatus()))
+                .count();
+        String deliveryStatus;
+        if (shippedCount <= 0) {
+            deliveryStatus = KolSubB2cApplicationDeliveryStatusEnum.WAITSHIPPED.getCode();
+        } else if (shippedCount >= soList.size()) {
+            deliveryStatus = KolSubB2cApplicationDeliveryStatusEnum.SHIPPED.getCode();
+        } else {
+            deliveryStatus = KolSubB2cApplicationDeliveryStatusEnum.PARTIAL_SHIPPED.getCode();
+        }
+        String trackNo = soList.stream()
+                .map(SoB2cEntity::getShippingOrderNo)
+                .filter(StringUtils::isNotBlank)
+                .flatMap(s -> Arrays.stream(s.split(",")))
+                .map(String::trim)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.joining(","));
+        // 订单关联状态：过滤已作废后，全部已审核则为已审核，否则未审核
+        boolean allApproved = soList.stream().allMatch(e ->
+                e.getApproveStatus() != null
+                        && BillApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus().getStatus()));
+        String orderStatus = allApproved
+                ? KolSubB2cApplicationOrderStatusEnum.APPROVE.getCode()
+                : KolSubB2cApplicationOrderStatusEnum.NOTAPPROVE.getCode();
+
+        lambdaUpdate()
+                .set(KolSubB2cApplicationEntity::getDeliveryStatus, deliveryStatus)
+                .set(KolSubB2cApplicationEntity::getTrackNo, trackNo)
+                .set(KolSubB2cApplicationEntity::getOrderStatus, orderStatus)
+                .eq(KolSubB2cApplicationEntity::getId, kolSubId)
+                .update();
     }
 
 }
