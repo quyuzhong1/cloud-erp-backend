@@ -2,12 +2,13 @@ package com.erp.server.wms.service.impl;
 
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapper;
+import com.common.core.utils.AlphanumericComparatorUtil;
 import com.common.core.utils.ExcelUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -18,7 +19,8 @@ import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.PushStocktakingProfitLossStatusEnum;
 import com.erp.model.wms.enums.StocktakingModeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
-import com.erp.server.wms.listener.StocktakingTaskDetailExcelListener;
+import com.erp.server.wms.listener.StocktakingTaskDetailExcelImportHelper;
+import com.erp.server.wms.listener.StocktakingTaskDetailExcelTemplateWriter;
 import com.erp.server.wms.listener.StocktakingTaskFirstQtyExcelListener;
 import com.erp.server.wms.mapper.StocktakingTaskDetailMapper;
 import com.erp.server.wms.mapper.StocktakingTaskMapper;
@@ -57,6 +59,11 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_STOCKTAKING
 @Slf4j
 @Service
 public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<StocktakingTaskDetailMapper, StocktakingTaskDetailEntity> implements StocktakingTaskDetailService {
+
+    /**
+     * 无仓位或找不到所属库区时的导出 sheet / 库区名
+     */
+    public static final String EMPTY_WAREHOUSE_AREA_NAME = "空仓位";
 
     @Resource
     private ProductDetailService productDetailService;
@@ -108,14 +115,15 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
         }
 
         List<StocktakingTaskDetailEntity> taskDetailList = this.listBaseByMainIds(Collections.singletonList(mainId));
-        StocktakingTaskDetailExcelListener excelListener = new StocktakingTaskDetailExcelListener(stocktakingTaskService,this,stocktakingProfitLossService, task.getCode(), taskDetailList, warehouseService, operateLogService);
+        List<StocktakingTaskDetailExcelDTO> errorList;
         try {
-            EasyExcel.read(excelFile.getInputStream(), StocktakingTaskDetailExcelDTO.class, excelListener).sheet(0).doRead();
+            errorList = StocktakingTaskDetailExcelImportHelper.importDetailSheets(
+                    excelFile, stocktakingTaskService, this, stocktakingProfitLossService,
+                    task.getCode(), taskDetailList, warehouseService, operateLogService);
         } catch (Exception e) {
             log.error("盘点任务明细导入错误！>>>>>{}", e);
             return Boolean.FALSE;
         }
-        List<StocktakingTaskDetailExcelDTO> errorList = excelListener.getErrorList();
         if (errorList.size() > 0) {
             String fileName = "盘点任务明细错误信息";
             ExcelUtil.export(fileName, "error", errorList, StocktakingTaskDetailExcelDTO.class, response);
@@ -320,21 +328,15 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
      */
     @Override
     public void downloadTemplate(HttpServletResponse response) {
-        String path = "classpath:excel/StocktakingTaskDetailTemplate.xlsx";
         String excelName = "template.xlsx";
-        ResourceLoader resourceLoader = new DefaultResourceLoader();
         try {
-            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
-            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
-            // 输出Excel文件
             OutputStream output = response.getOutputStream();
             response.reset();
-            // 设置文件头
             response.setHeader("Content-Disposition",
                     "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
             response.setContentType("application/msexcel");
-            wb.write(output);
-            wb.close();
+            StocktakingTaskDetailExcelTemplateWriter.writeEmptyTemplate(output);
+            output.flush();
         } catch (Exception e) {
             log.error("盘点任务明细 downloadTemplate  出错了 e==={}", e);
             throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
@@ -422,22 +424,72 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
         }
         List<String> skuIdList = exportList.stream().map(StocktakingTaskDetailDTO.ExportDTO::getSkuId).collect(Collectors.toList());
         List<ProductDetailEntity> skuList = productDetailService.listProductDetailByIds(skuIdList);
+        Map<String, ProductDetailEntity> skuMap = skuList.stream()
+                .collect(Collectors.toMap(ProductDetailEntity::getId, Function.identity(), (a, b) -> a));
+
+        Map<String, String> locationToAreaName = resolveLocationAreaNameMap(exportList);
 
         for (StocktakingTaskDetailDTO.ExportDTO item : exportList) {
             item.setStocktakingUserName(stocktakingUserName);
-            String skuName = skuList.stream().filter(s -> s.getId().equals(item.getSkuId())).findFirst().
-                    map(ProductDetailEntity::getName).orElse("");
-            item.setProductName(skuName);
+            ProductDetailEntity sku = skuMap.get(item.getSkuId());
+            item.setProductName(sku != null ? sku.getName() : "");
             item.setStocktakingModeName(stocktakingModeName);
+            String location = item.getWarehouseLocation() == null ? "" : item.getWarehouseLocation();
+            if (CharSequenceUtil.isBlank(location)) {
+                item.setWarehouseAreaName(EMPTY_WAREHOUSE_AREA_NAME);
+            } else {
+                String areaName = locationToAreaName.get(item.getWarehouseId() + "_" + location);
+                item.setWarehouseAreaName(CharSequenceUtil.isBlank(areaName) ? EMPTY_WAREHOUSE_AREA_NAME : areaName);
+            }
             //如果是盲盘就要清空一些数据
-            if(isBlindCount){
+            if(Boolean.TRUE.equals(isBlindCount)){
                 item.setUsableQty(null);
                 item.setDiffQty(null);
                 item.setFrozenQty(null);
             }
-
         }
+
+        exportList.sort(Comparator
+                .comparing((StocktakingTaskDetailDTO.ExportDTO e) -> EMPTY_WAREHOUSE_AREA_NAME.equals(e.getWarehouseAreaName()) ? 1 : 0)
+                .thenComparing(StocktakingTaskDetailDTO.ExportDTO::getWarehouseAreaName, Comparator.nullsLast(String::compareTo))
+                .thenComparing(e -> e.getWarehouseLocation() == null ? "" : e.getWarehouseLocation(), AlphanumericComparatorUtil::compare)
+                .thenComparing(StocktakingTaskDetailDTO.ExportDTO::getSkuNo, Comparator.nullsLast(String::compareTo)));
+
         return new PagingVO<>(exportList, exportList.size(), dto.getPageSize(), dto.getCurrPage());
+    }
+
+    /**
+     * 根据仓位编码批量解析所属库区名称。
+     */
+    private Map<String, String> resolveLocationAreaNameMap(List<StocktakingTaskDetailDTO.ExportDTO> exportList) {
+        List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> searchParams = exportList.stream()
+                .filter(e -> CharSequenceUtil.isNotBlank(e.getWarehouseLocation()))
+                .map(e -> new WarehouseLocationDTO.WarehouseLocationSearchParamDTO(e.getWarehouseId(), e.getWarehouseLocation()))
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(searchParams)) {
+            return Collections.emptyMap();
+        }
+        List<WarehouseLocationEntity> locationList = warehouseLocationService.listByWarehouseIdAndCode(searchParams);
+        if (CollectionUtils.isEmpty(locationList)) {
+            return Collections.emptyMap();
+        }
+        Set<String> parentIds = locationList.stream()
+                .map(WarehouseLocationEntity::getParentId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .collect(Collectors.toSet());
+        Map<String, String> areaIdNameMap = Collections.emptyMap();
+        if (CollectionUtils.isNotEmpty(parentIds)) {
+            areaIdNameMap = warehouseLocationService.listByIds(parentIds).stream()
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toMap(WarehouseLocationEntity::getId, WarehouseLocationEntity::getName, (a, b) -> a));
+        }
+        Map<String, String> result = new HashMap<>();
+        for (WarehouseLocationEntity location : locationList) {
+            String areaName = areaIdNameMap.get(location.getParentId());
+            result.put(location.getWarehouseId() + "_" + location.getCode(), areaName);
+        }
+        return result;
     }
     @Override
     public List<StocktakingTaskDetailDTO.LastDTO> maxDateByParams(List<String> warehouseIds, List<String> orgIds, List<String> skuIds) {
