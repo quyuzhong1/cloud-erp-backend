@@ -1,5 +1,6 @@
 package com.erp.server.wms.mapper;
 
+import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
@@ -39,4 +40,12 @@ public interface SoDeliveryNoticeDetailMapper extends BaseMapper<SoDeliveryNotic
     List<SoDeliveryNoticeDetailDTO.ListDTO> listBySourceIdList(@Param("sourceIdList")List<String> sourceIdList,@Param("status")String status);
 
     List<SoDeliveryNoticeDetailDTO.ListDTO> listBySourceDetailIdList(@Param("sourceDetailIdList")List<String> sourceDetailIdList);
+    /**
+     * 根据id查询装箱明细信息
+     * @author will
+     * @date 2026/4/21 16:17
+     * @param soDeliveryNoticeIdList
+     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.PackingDTO>
+     */
+    List<TmsDeclareBillDTO.PackingDTO> listPackingDetailByIdList(@Param("soDeliveryNoticeIdList") List<String> soDeliveryNoticeIdList);
 }
