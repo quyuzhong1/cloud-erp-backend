@@ -802,6 +802,15 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                         .filter(s -> CharSequenceUtil.isNotBlank(s.getSkuId()))
                         .collect(Collectors.toMap(SkuVO::getSkuId, SkuVO::getSkuName, (a, b) -> a));
             }
+            // 按售后单明细id批量累计历史已入库实退数量（同一售后单分批多次生成退货入库单场景，与 view()/paging() 口径一致）
+            List<String> b2cReturnDetailIds = allDetails.stream().map(SoB2cReturnDetailDTO.ViewDTO::getId)
+                    .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+            if (CollUtil.isNotEmpty(b2cReturnDetailIds)) {
+                context.b2cInstockRealQtyBySoReturnDetailId = soReturnInstockDetailService.listDetailBySoReturnDetailIds(b2cReturnDetailIds).stream()
+                        .filter(d -> CharSequenceUtil.isNotBlank(d.getSoReturnDetailId()))
+                        .collect(Collectors.groupingBy(SoReturnInstockDetailEntity::getSoReturnDetailId,
+                                Collectors.summingInt(d -> d.getRealQty() != null ? d.getRealQty() : MathUtil.ZERO)));
+            }
         }
         return context;
     }
@@ -894,6 +903,12 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             pd.setProductName(context.skuNameById.get(d.getSkuId()));
             pd.setSalesQty(d.getSaleQty());
             pd.setMustQty(d.getReturnQty());
+            // 剩余应退 = 应退数量 - 历史已入库实退数量累计（同一售后单分批多次生成退货入库单场景）
+            Integer mustQty = d.getReturnQty();
+            if (mustQty != null) {
+                int instockQty = context.b2cInstockRealQtyBySoReturnDetailId.getOrDefault(d.getId(), MathUtil.ZERO);
+                pd.setRemainMustQty(mustQty - instockQty);
+            }
             prefillDetails.add(pd);
         }
         prefill.setDetailList(prefillDetails);
@@ -954,6 +969,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         Map<String, CustomerInfoEntity> customerInfoMap = Collections.emptyMap();
         Map<String, List<SoB2cReturnDetailDTO.ViewDTO>> b2cDetailsByMainId = Collections.emptyMap();
         Map<String, String> skuNameById = Collections.emptyMap();
+        // 按售后单明细id累计的历史已入库实退数量，用于计算剩余应退数量（跨批次退货入库单累计）
+        Map<String, Integer> b2cInstockRealQtyBySoReturnDetailId = Collections.emptyMap();
     }
 
     // ===================== matchAndCreateByReturnLogisticCode：按退货物流单号匹配售后单并生成退货入库单 =====================

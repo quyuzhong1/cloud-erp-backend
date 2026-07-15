@@ -826,9 +826,14 @@ public class SoReturnInstockDTO {
          */
         private Integer salesQty;
         /**
-         * 应退数量
+         * 应退数量（售后单明细自身的退货数量，不随入库单变化）
          */
         private Integer mustQty;
+        /**
+         * 剩余应退数量 = 应退数量(mustQty) - 已入库实退数量累计（按售后单明细id关联，跨批次退货入库单累计）；
+         * 同一售后单/物流单号分批多次生成退货入库单时，用于提示本次还剩多少未退
+         */
+        private Integer remainMustQty;
     }
 
     /**
