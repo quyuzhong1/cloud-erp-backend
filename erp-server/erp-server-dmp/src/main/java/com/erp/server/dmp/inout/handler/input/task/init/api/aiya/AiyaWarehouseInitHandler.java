@@ -31,16 +31,17 @@ public class AiyaWarehouseInitHandler extends AbstractAiyaInitHandler {
     @Override
     public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
         AiyaAuth auth = resolveAuth();
-        JSONObject resp = aiyaOpenApiService.queryWarehouse(auth.getCustomerCode(), auth.getPartnerKey(), null);
+        JSONObject resp = aiyaOpenApiService.queryWarehouse(
+                auth.getPartnerId(), auth.getPartnerKey(), auth.getCustomerCode(), null);
         if (resp == null) {
             log.warn("[爱亚仓库] 服务商[id={}] 接口无响应", auth.getAuthId());
             return Collections.emptyList();
         }
         if (!Boolean.TRUE.equals(resp.getBoolean("success"))) {
             throw new ServiceException(ApiError.WH_AIYA_RESPONSE_FAILED, ACTION,
-                    resp.getString("errorCode"), resp.getString("errorMsg"));
+                    resp.getString("code"), resp.getString("message"));
         }
-        JSONArray warehouseArray = resp.getJSONArray("result");
+        JSONArray warehouseArray = resp.getJSONArray("resultList");
         if (CollUtil.isEmpty(warehouseArray)) {
             log.info("[爱亚仓库] 服务商[id={}] 未拉到任何仓库", auth.getAuthId());
             return Collections.emptyList();

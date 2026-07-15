@@ -139,4 +139,21 @@ public interface OverseasProviderWarehouseService extends SuperService<OverseasP
      * @return int[] {新增数量, 软删数量, 禁用数量}
      */
     int[] syncFromWego(String mainId, JSONArray wegoWarehouseList);
+
+    /**
+     * 按爱亚（AIYA）仓库列表接口返回的 resultList 同步「三方仓配置-仓库设置」。
+     * <p>
+     * 同步策略与 {@link #syncFromWego(String, JSONArray)} 完全一致（按 main_id + platform_warehouse_code 匹配）：
+     * <ul>
+     *     <li>API有、DB无：新增（disabled=true）</li>
+     *     <li>API有、DB有：不做任何处理（保持现状）</li>
+     *     <li>API无、DB有：warehouse_id 为空（未映射）→ 软删；warehouse_id 非空（已映射）→ 置 disabled=true</li>
+     * </ul>
+     * 与 WEGO 的差异仅在字段名：爱亚为 warehouseCode / warehouseDescription / country。
+     *
+     * @param mainId            overseas_provider 主表id
+     * @param aiyaWarehouseList 爱亚接口返回的 resultList 数组
+     * @return int[] {新增数量, 软删数量, 禁用数量}
+     */
+    int[] syncFromAiya(String mainId, JSONArray aiyaWarehouseList);
 }

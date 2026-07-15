@@ -26,16 +26,23 @@ import java.util.Map;
  * 收敛 6 个爱亚 init handler 共用的「按 nextLevelId 定位授权 + 读取 customerCode/partnerKey +
  * 组装 DmpInputTaskInitDTO」逻辑，避免各业务 handler 重复复制。
  * <p>
- * 授权约定：爱亚不走 OAuth，凭证以 {@code customerCode}（客户编码）/ {@code partnerKey}（合作方密钥）
- * 形式存放于 {@code overseas_provider.auth_json}，分别对应 {@link AiyaOpenApiService} 的
- * accessToken / secret 参数；{@code partnerKey} 仅用于本地签名，不发送给第三方。
+ * 授权约定：爱亚不走 OAuth，凭证以 {@code partnerId}（客户ID，外层字段）/ {@code customerCode}（客户code，业务字段）/
+ * {@code partnerKey}（合作方密钥）形式存放于 {@code overseas_provider.auth_json}；
+ * 调用 {@link AiyaOpenApiService} 时 partnerId/partnerKey/customerCode 均作为独立参数传入，
+ * 由 SDK 统一将 customerCode 注入 bizData（爱亚所有接口必填业务参数）；
+ * {@code partnerKey} 仅用于本地签名，不发送给第三方。
  * <p>
  * 因父类 {@link DmpInputInitHandler} 含成员变量，子类必须使用多例 {@code @Scope("prototype")}。
  */
 public abstract class AbstractAiyaInitHandler extends DmpInputInitHandler {
 
     /**
-     * 爱亚授权 JSON（overseas_provider.auth_json）中的 customerCode 字段 key。
+     * 爱亚授权 JSON（overseas_provider.auth_json）中的 partnerId 字段 key（客户ID，外层字段）。
+     */
+    protected static final String AUTH_KEY_PARTNER_ID = "partnerId";
+
+    /**
+     * 爱亚授权 JSON（overseas_provider.auth_json）中的 customerCode 字段 key（客户code，业务字段）。
      */
     protected static final String AUTH_KEY_CUSTOMER_CODE = "customerCode";
 
@@ -77,12 +84,13 @@ public abstract class AbstractAiyaInitHandler extends DmpInputInitHandler {
         if (authJson == null || authJson.isEmpty()) {
             throw new ServiceException(ApiError.WH_AIYA_AUTH_JSON_EMPTY, provider.getId());
         }
+        String partnerId = toStr(authJson.get(AUTH_KEY_PARTNER_ID));
         String customerCode = toStr(authJson.get(AUTH_KEY_CUSTOMER_CODE));
         String partnerKey = toStr(authJson.get(AUTH_KEY_PARTNER_KEY));
-        if (CharSequenceUtil.hasBlank(customerCode, partnerKey)) {
+        if (CharSequenceUtil.hasBlank(partnerId, customerCode, partnerKey)) {
             throw new ServiceException(ApiError.WH_AIYA_TOKEN_SECRET_MISSING, provider.getId());
         }
-        return new AiyaAuth(provider.getId(), customerCode, partnerKey);
+        return new AiyaAuth(provider.getId(), partnerId, customerCode, partnerKey);
     }
 
     /**
@@ -145,6 +153,7 @@ public abstract class AbstractAiyaInitHandler extends DmpInputInitHandler {
     @AllArgsConstructor
     protected static class AiyaAuth {
         private final String authId;
+        private final String partnerId;
         private final String customerCode;
         private final String partnerKey;
     }
