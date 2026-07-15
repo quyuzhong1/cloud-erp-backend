@@ -1118,6 +1118,16 @@ public final class ApiError implements Serializable {
     public static final ApiError WH_AIYA_SDK_SIGN_SECRET_EMPTY = ApiErrorWms.WH_AIYA_SDK_SIGN_SECRET_EMPTY;
     public static final ApiError WH_AIYA_SDK_SIGN_JSON_EMPTY = ApiErrorWms.WH_AIYA_SDK_SIGN_JSON_EMPTY;
     public static final ApiError WH_AIYA_SDK_SIGN_FAILED = ApiErrorWms.WH_AIYA_SDK_SIGN_FAILED;
+    public static final ApiError WH_AIYA_AUTH_INFO_NOT_FOUND = ApiErrorWms.WH_AIYA_AUTH_INFO_NOT_FOUND;
+    public static final ApiError WH_AIYA_AUTH_ID_NOT_FOUND = ApiErrorWms.WH_AIYA_AUTH_ID_NOT_FOUND;
+    public static final ApiError WH_AIYA_AUTH_JSON_EMPTY = ApiErrorWms.WH_AIYA_AUTH_JSON_EMPTY;
+    public static final ApiError WH_AIYA_TOKEN_SECRET_MISSING = ApiErrorWms.WH_AIYA_TOKEN_SECRET_MISSING;
+    public static final ApiError WH_AIYA_PAGE_QUERY_ERROR = ApiErrorWms.WH_AIYA_PAGE_QUERY_ERROR;
+    public static final ApiError WH_AIYA_PAGE_PARSE_FAILED = ApiErrorWms.WH_AIYA_PAGE_PARSE_FAILED;
+    public static final ApiError WH_AIYA_RESPONSE_EMPTY = ApiErrorWms.WH_AIYA_RESPONSE_EMPTY;
+    public static final ApiError WH_AIYA_RESPONSE_FAILED = ApiErrorWms.WH_AIYA_RESPONSE_FAILED;
+    public static final ApiError WH_AIYA_RESULT_EMPTY = ApiErrorWms.WH_AIYA_RESULT_EMPTY;
+    public static final ApiError WH_AIYA_PAGE_LIMIT_EXCEEDED = ApiErrorWms.WH_AIYA_PAGE_LIMIT_EXCEEDED;
 
     /** Tms service error constants. */
     public static final ApiError FIRST_MILE_FBA_SHIPMENT_NOT_EXIST_BILL = ApiErrorTms.FIRST_MILE_FBA_SHIPMENT_NOT_EXIST_BILL;

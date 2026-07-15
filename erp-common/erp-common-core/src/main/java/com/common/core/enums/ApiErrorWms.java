@@ -435,6 +435,16 @@ public final class ApiErrorWms {
     public static final ApiError WH_AIYA_SDK_SIGN_SECRET_EMPTY = new ApiError("WH_AIYA_SDK_SIGN_SECRET_EMPTY", 11230, "AIYA 签名 secret 不能为空");
     public static final ApiError WH_AIYA_SDK_SIGN_JSON_EMPTY = new ApiError("WH_AIYA_SDK_SIGN_JSON_EMPTY", 11231, "AIYA 签名 JSON 不能为空");
     public static final ApiError WH_AIYA_SDK_SIGN_FAILED = new ApiError("WH_AIYA_SDK_SIGN_FAILED", 11232, "AIYA 签名计算失败: {0}");
+    public static final ApiError WH_AIYA_AUTH_INFO_NOT_FOUND = new ApiError("WH_AIYA_AUTH_INFO_NOT_FOUND", 11233, "AIYA授权信息不存在");
+    public static final ApiError WH_AIYA_AUTH_ID_NOT_FOUND = new ApiError("WH_AIYA_AUTH_ID_NOT_FOUND", 11234, "AIYA对应授权ID信息不存在, nextId:{0}");
+    public static final ApiError WH_AIYA_AUTH_JSON_EMPTY = new ApiError("WH_AIYA_AUTH_JSON_EMPTY", 11235, "AIYA：服务商[{0}]auth_json为空");
+    public static final ApiError WH_AIYA_TOKEN_SECRET_MISSING = new ApiError("WH_AIYA_TOKEN_SECRET_MISSING", 11236, "AIYA：服务商[{0}]customerCode/partnerKey缺失");
+    public static final ApiError WH_AIYA_PAGE_QUERY_ERROR = new ApiError("WH_AIYA_PAGE_QUERY_ERROR", 11237, "AIYA{0}分页查询异常, pageNum={1}");
+    public static final ApiError WH_AIYA_PAGE_PARSE_FAILED = new ApiError("WH_AIYA_PAGE_PARSE_FAILED", 11238, "AIYA{0}分页结果解析失败, pageNum={1}");
+    public static final ApiError WH_AIYA_RESPONSE_EMPTY = new ApiError("WH_AIYA_RESPONSE_EMPTY", 11239, "AIYA{0}接口响应为空");
+    public static final ApiError WH_AIYA_RESPONSE_FAILED = new ApiError("WH_AIYA_RESPONSE_FAILED", 11240, "AIYA{0}接口返回失败: errorCode={1}, errorMsg={2}");
+    public static final ApiError WH_AIYA_RESULT_EMPTY = new ApiError("WH_AIYA_RESULT_EMPTY", 11241, "AIYA{0}接口success=true但result为空");
+    public static final ApiError WH_AIYA_PAGE_LIMIT_EXCEEDED = new ApiError("WH_AIYA_PAGE_LIMIT_EXCEEDED", 11242, "AIYA{0}已达最大翻页上限{1}，已拉取{2}条");
 
     static ApiError[] values() {
         return new ApiError[]{
@@ -865,6 +875,16 @@ public final class ApiErrorWms {
                 WH_AIYA_SDK_SIGN_SECRET_EMPTY,
                 WH_AIYA_SDK_SIGN_JSON_EMPTY,
                 WH_AIYA_SDK_SIGN_FAILED,
+                WH_AIYA_AUTH_INFO_NOT_FOUND,
+                WH_AIYA_AUTH_ID_NOT_FOUND,
+                WH_AIYA_AUTH_JSON_EMPTY,
+                WH_AIYA_TOKEN_SECRET_MISSING,
+                WH_AIYA_PAGE_QUERY_ERROR,
+                WH_AIYA_PAGE_PARSE_FAILED,
+                WH_AIYA_RESPONSE_EMPTY,
+                WH_AIYA_RESPONSE_FAILED,
+                WH_AIYA_RESULT_EMPTY,
+                WH_AIYA_PAGE_LIMIT_EXCEEDED,
         };
     }
 }
