@@ -487,13 +487,13 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
     boolean isAmountMismatchWithUpstreamSo(SoOutstockEntity entity, List<SoOutstockDetailEntity> outDetails);
 
     /**
-     * 校验销售出库单与上游 B2C 销售订单金额一致性，返回细分结果供调用方选择提示语。
+     * 按产品流程图校验销售出库单与上游 B2C/B2B 销售订单金额一致性，返回细分结果供调用方选择提示语。
      */
     UpstreamAmountCheckResultEnum checkUpstreamAmountWithSo(SoOutstockEntity entity,
                                                                                     List<SoOutstockDetailEntity> outDetails);
 
     /**
-     * 三方同步落库：出库明细价税合计与上游 B2C 实付不一致时，主单落待提交并写入 approve_remark。
+     * 三方同步落库：出库明细价税合计与上游销售订单金额不一致时，主单落待提交并写入 approve_remark。
      *
      * @param persisted 主单及明细是否已落库（如拼多多同步后为 true，旺店通/金蝶同步前为 false）
      * @return true 表示已按异常路径处理，调用方应中断后续扣库存/自动审核
