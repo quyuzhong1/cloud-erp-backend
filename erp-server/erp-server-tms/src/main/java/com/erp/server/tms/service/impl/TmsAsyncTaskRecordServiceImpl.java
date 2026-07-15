@@ -132,21 +132,12 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
             .in(TmsAsyncTaskRecordEntity::getStatus,Arrays.asList(TmsAsyncTaskRecordStatusEnum.ING.getCode(), TmsAsyncTaskRecordStatusEnum.PENDING.getCode()))
             .list();
 
-        //仅头程/小包费用分摊防重维度需要不同月份
         if (CollUtil.isNotEmpty(runningTasks)) {
-            String reportDate = extractReportDate(compactJson);
-            if (StringUtils.isBlank(reportDate)) {
-                log.warn("存在进行中手动任务且无法提取核算期间，businessType: {}, methodType: {}", businessType, methodType);
-                throw new ServiceException("存在进行中的异步任务，请稍后重试或联系管理员");
-            }
-            Optional<TmsAsyncTaskRecordEntity> periodConflict = runningTasks.stream()
-                    .filter(task -> reportDate.equals(extractReportDate(task.getDataJson())))
-                    .findFirst();
-            if (periodConflict.isPresent()) {
-                TmsAsyncTaskRecordEntity conflict = periodConflict.get();
-                log.warn("手动异步任务核算期间冲突，businessType: {}, methodType: {}, reportDate: {}, 进行中任务 code: {}",
-                        businessType, conflict.getMethodType(), reportDate, conflict.getCode());
-                throw new ServiceException(ApiError.LOGISTICS_ASYNC_TASK_CREATE_ERROR, reportDate);
+            if (TmsAsyncTaskMethodTypeEnum.LOGISTICS_RECON_MATCH.getCode().equals(methodType)) {
+                validateLogisticsReconMatchTaskNotConflict(compactJson, runningTasks, businessType, methodType);
+            } else {
+                // 仅头程/小包费用分摊防重维度需要不同月份
+                validateManualTaskReportDateNotConflict(compactJson, runningTasks, businessType, methodType);
             }
         }
 
@@ -179,6 +170,75 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
             throw new ServiceException("任务参数必须为 TaskEnvelope 格式");
         }
         return JSONUtil.toJsonStr(envelope, TASK_DATA_JSON_CONFIG);
+    }
+
+    /**
+     * 物流商对账单合并匹配：仅当本次勾选的对账单 id 与进行中任务 payload 内 id 有交集时拦截。
+     */
+    private void validateLogisticsReconMatchTaskNotConflict(String compactJson,
+                                                            List<TmsAsyncTaskRecordEntity> runningTasks,
+                                                            String businessType,
+                                                            String methodType) {
+        List<String> requestIds = extractLogisticsReconMatchIds(compactJson);
+        if (CollUtil.isEmpty(requestIds)) {
+            log.warn("物流商对账单匹配任务无法提取业务id，businessType: {}, methodType: {}", businessType, methodType);
+            throw new ServiceException("任务参数缺少对账单业务id，无法创建匹配任务");
+        }
+        for (TmsAsyncTaskRecordEntity runningTask : runningTasks) {
+            List<String> runningIds = extractLogisticsReconMatchIds(runningTask.getDataJson());
+            if (CollUtil.isEmpty(runningIds)) {
+                continue;
+            }
+            boolean conflict = requestIds.stream().anyMatch(runningIds::contains);
+            if (conflict) {
+                log.warn("物流商对账单匹配任务业务id冲突，businessType: {}, methodType: {}, requestIds: {}, 进行中任务 code: {}",
+                        businessType, methodType, requestIds, runningTask.getCode());
+                throw new ServiceException("所选对账单正在匹配中，请稍后重试或联系管理员");
+            }
+        }
+    }
+
+    /**
+     * 头程/小包费用分摊等：按核算期间防重。
+     */
+    private void validateManualTaskReportDateNotConflict(String compactJson,
+                                                         List<TmsAsyncTaskRecordEntity> runningTasks,
+                                                         String businessType,
+                                                         String methodType) {
+        String reportDate = extractReportDate(compactJson);
+        if (StringUtils.isBlank(reportDate)) {
+            log.warn("存在进行中手动任务且无法提取核算期间，businessType: {}, methodType: {}", businessType, methodType);
+            throw new ServiceException("存在进行中的异步任务，请稍后重试或联系管理员");
+        }
+        Optional<TmsAsyncTaskRecordEntity> periodConflict = runningTasks.stream()
+                .filter(task -> reportDate.equals(extractReportDate(task.getDataJson())))
+                .findFirst();
+        if (periodConflict.isPresent()) {
+            TmsAsyncTaskRecordEntity conflict = periodConflict.get();
+            log.warn("手动异步任务核算期间冲突，businessType: {}, methodType: {}, reportDate: {}, 进行中任务 code: {}",
+                    businessType, conflict.getMethodType(), reportDate, conflict.getCode());
+            throw new ServiceException(ApiError.LOGISTICS_ASYNC_TASK_CREATE_ERROR, reportDate);
+        }
+    }
+
+    /**
+     * 解析物流商对账单合并匹配 payload 中的对账单主单 id。
+     */
+    private List<String> extractLogisticsReconMatchIds(String json) {
+        TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope = parseEnvelope(json);
+        if (envelope == null) {
+            return Collections.emptyList();
+        }
+        TmsAsyncTaskRecordDTO.LogisticsReconMatchPayloadDTO payload =
+                parseEnvelopePayload(envelope, TmsAsyncTaskRecordDTO.LogisticsReconMatchPayloadDTO.class);
+        if (payload == null || CollUtil.isEmpty(payload.getIds())) {
+            return Collections.emptyList();
+        }
+        return payload.getIds().stream()
+                .filter(StringUtils::isNotBlank)
+                .map(String::trim)
+                .distinct()
+                .collect(Collectors.toList());
     }
 
     /**
