@@ -790,7 +790,7 @@ public class SoReturnInstockDTO {
          */
         private LocalDateTime createTime;
         /**
-         * 明细信息（仅B2C售后单带出）
+         * 明细信息（B2B/B2C售后单均带出）
          */
         private List<PrefillDetail> detailList;
     }
@@ -834,6 +834,14 @@ public class SoReturnInstockDTO {
          * 同一售后单/物流单号分批多次生成退货入库单时，用于提示本次还剩多少未退
          */
         private Integer remainMustQty;
+        /**
+         * 已出库数量
+         */
+        private Integer deliveryQty;
+        /**
+         * 签收数量
+         */
+        private Integer receiveQty;
     }
 
     /**
