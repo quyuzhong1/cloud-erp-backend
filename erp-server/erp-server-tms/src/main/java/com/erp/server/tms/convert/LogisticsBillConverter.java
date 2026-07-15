@@ -39,6 +39,7 @@ public interface LogisticsBillConverter {
             @Mapping(target = "city", source = "cityName"),
             @Mapping(target = "district", source = "districtName"),
             @Mapping(target = "streetAddress", source = "fullAddress"),
+            @Mapping(target = "houseNumber", source = "houseNumber"),
             @Mapping(target = "addressFirst", source = "firstAddress"),
             @Mapping(target = "addressSecond", source = "secondAddress"),
             @Mapping(target = "zipCode", source = "postCode"),
