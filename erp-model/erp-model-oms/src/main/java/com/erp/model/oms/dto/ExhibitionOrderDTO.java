@@ -292,10 +292,6 @@ public class ExhibitionOrderDTO implements Serializable {
          * 总价税合计（本位币）
          */
         private BigDecimal allAmountLc;
-        /**
-         * 收款金额
-         */
-        private BigDecimal receiveAmount;
 
         /**
          * 备注
@@ -331,11 +327,6 @@ public class ExhibitionOrderDTO implements Serializable {
          * 作废状态名称
          */
         private String invalidStatusName;
-        /**
-         * 收款方式
-         */
-        private String receiveMethod;
-        private String receiveMethodName;
         /**
          * 收款条件
          */
@@ -542,17 +533,17 @@ public class ExhibitionOrderDTO implements Serializable {
         private String receiveAccountName;
 
         /**
-        * 收款金额
+        * 收款金额（详情页前端隐藏，保留字段兼容历史数据）
         */
         private BigDecimal receiveAmount;
 
         /**
-        * 收款日期
+        * 收款日期（详情页前端隐藏，保留字段兼容历史数据）
         */
         private LocalDate receiveDate;
 
         /**
-        * 收款方式
+        * 收款方式（详情页前端隐藏，保留字段兼容历史数据）
         */
         private String receiveMethod;
         private String receiveMethodName;
@@ -749,6 +740,18 @@ public class ExhibitionOrderDTO implements Serializable {
         private String deliveryMode;
 
         /**
+        * 收款条件
+        */
+        @NotBlank(message = "收款条件不能为空")
+        private String receiveCondition;
+
+        /**
+        * 收款账号（表单顺序在结算币别前，由前端控制展示顺序）
+        */
+        @NotBlank(message = "收款账号不能为空")
+        private String receiveAccount;
+
+        /**
         * 币种
         */
         @NotBlank(message = "币种不能为空")
@@ -786,33 +789,18 @@ public class ExhibitionOrderDTO implements Serializable {
         private String receiveAddressId;
 
         /**
-        * 收款条件
+        * 收款金额（展会订单不再展示/校验必填）
         */
-        @NotBlank(message = "收款条件不能为空")
-        private String receiveCondition;
-
-        /**
-        * 收款账号
-        */
-        @NotBlank(message = "收款账号不能为空")
-        private String receiveAccount;
-
-        /**
-        * 收款金额
-        */
-        @NotNull(message = "收款金额不能为空")
         private BigDecimal receiveAmount;
 
         /**
-        * 收款日期
+        * 收款日期（展会订单不再展示/校验必填）
         */
-        @NotNull(message = "收款日期不能为空")
         private LocalDate receiveDate;
 
         /**
-        * 收款方式
+        * 收款方式（展会订单不再展示/校验必填）
         */
-        @NotBlank(message = "收款方式不能为空")
         private String receiveMethod;
 
         /**
