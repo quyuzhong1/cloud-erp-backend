@@ -214,7 +214,7 @@ public interface LogisticsReconService extends SuperService<LogisticsReconEntity
     BatchResultDTO confirmBill(String mainId, String reconciliationStatus, LocalDateTime confirmTime);
 
     /**
-     * 物流商对账单账单确认（批量，异步）：HTTP 快速校验后提交后台任务执行 confirmBill，立即返回。
+     * 物流商对账单账单确认（批量，异步任务列表）：HTTP 按主单 id 轻校验后派发 TmsAsyncTask，立即返回。
      *
      * @param ids                  对账单 id 集合
      * @param reconciliationStatus 目标对账状态（toBeConfirm / confirmed）
@@ -222,6 +222,27 @@ public interface LogisticsReconService extends SuperService<LogisticsReconEntity
      * @return 逐单提交结果（已提交 / 校验失败）
      */
     List<BatchResultDTO> submitConfirmBillAsync(List<String> ids, String reconciliationStatus, LocalDateTime confirmTime);
+
+    /**
+     * 消费物流商对账单账单确认异步任务（MQ 触发）。
+     * @param taskRecord 异步任务记录
+     */
+    void pushConfirmBill(TmsAsyncTaskRecordEntity taskRecord);
+
+    /**
+     * 分批执行对账单账单确认（供异步任务框架回调）：逐单复用既有 confirmBill 并落任务明细。
+     *
+     * @param taskId               异步主任务 id
+     * @param batchIds             本批对账单主单 id
+     * @param reconciliationStatus 目标对账状态
+     * @param confirmTime          对账确认时间
+     * @param operatorUser         任务操作人
+     * @return 批次成功/失败计数
+     */
+    TmsAsyncTaskRecordDTO.BatchProcessResult processConfirmBillBatch(String taskId, List<String> batchIds,
+                                                                     String reconciliationStatus,
+                                                                     LocalDateTime confirmTime,
+                                                                     LoginUser operatorUser);
 
     /**
      * 账单确认单批 ref + 物流费用状态更新（独立短事务）

@@ -699,6 +699,32 @@ public class TmsAsyncTaskRecordDTO implements Serializable {
     }
 
     /**
+     * 物流商对账单账单确认载荷。
+     * <p>
+     * 持久化本次批量确认勾选的对账单主单 id、目标对账状态与确认时间；游标、批次大小由框架运行时注入。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class LogisticsReconConfirmBillPayloadDTO implements Serializable {
+
+        /**
+         * 勾选的对账单主单 id 集合。
+         */
+        private List<String> ids;
+
+        /**
+         * 物流费用单目标对账状态（ReconciliationStatusEnum：toBeConfirm / confirmed）。
+         */
+        private String reconciliationStatus;
+
+        /**
+         * 对账确认时间（状态为 confirmed 时传入；toBeConfirm 时可为 null）。
+         */
+        private LocalDateTime confirmTime;
+    }
+
+    /**
      * 内部类：批次处理结果
      */
     @Data

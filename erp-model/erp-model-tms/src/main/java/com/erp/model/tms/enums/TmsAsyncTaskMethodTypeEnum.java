@@ -22,6 +22,7 @@ public enum TmsAsyncTaskMethodTypeEnum implements EnumMessage {
 	RE_ALLOCATION("reAllocation", "重新分摊"),
 	DELETE("delete", "批量删除"),
 	LOGISTICS_RECON_MATCH("logisticsReconMatch", "对账单合并匹配"),
+	LOGISTICS_RECON_CONFIRM_BILL("logisticsReconConfirmBill", "对账单账单确认"),
     ;
     /**
      * 类型
