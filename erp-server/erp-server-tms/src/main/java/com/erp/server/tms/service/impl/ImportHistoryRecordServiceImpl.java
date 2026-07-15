@@ -2653,7 +2653,8 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
      * 按识别单号维度：从分组命中的物流单中拆出两批落库对象。
      * <ul>
      *   <li>分组内存在待确认 + 同付款类型：仅待确认进更新批次（可参与重量分摊），已确认（当月/跨月）均不处理</li>
-     *   <li>分组内无待确认、且配置含 import_add_old：已确认 + 同付款类型进按原单新增批次，同月/跨月由下游 checkCostImportData 校验</li>
+     *   <li>分组内无待确认 + 同付款类型、且配置含 import_add_old：已确认 + 同付款类型进按原单新增批次</li>
+     *   <li>分组内无待确认 + 付款类型不一致、且配置含 import_add_old：进按原单新增批次（与 checkCostImportData 付款类型分支一致，支持退款等）</li>
      * </ul>
      */
     private void splitIdentifyNoProcessBills(List<LogisticsBillDTO.LogisticsBillVo> matchedBillList,
@@ -2665,37 +2666,67 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                                              List<LogisticsBillDTO.LogisticsBillVo> addOldBillList) {
         boolean allowAddOld = costImportEntity.getImportType()
                 .contains(CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_OLD.getCode());
-        boolean groupHasToBeConfirm = matchedBillList.stream().anyMatch(billVo -> logisticsBillCostList.stream()
-                .anyMatch(cost -> CharSequenceUtil.equals(cost.getLogisticsBillDetailId(), billVo.getDetailId())
-                        && CharSequenceUtil.equals(cost.getPayType(), payType)
-                        && CharSequenceUtil.equals(cost.getReconciliationStatus(),
-                                ReconciliationStatusEnum.TO_BE_CONFIRM.getCode())));
-        if (groupHasToBeConfirm) {
-            for (LogisticsBillDTO.LogisticsBillVo billVo : matchedBillList) {
-                boolean hasToBeConfirm = logisticsBillCostList.stream().anyMatch(cost ->
-                        CharSequenceUtil.equals(cost.getLogisticsBillDetailId(), billVo.getDetailId())
-                                && CharSequenceUtil.equals(cost.getPayType(), payType)
-                                && CharSequenceUtil.equals(cost.getReconciliationStatus(),
-                                        ReconciliationStatusEnum.TO_BE_CONFIRM.getCode()));
-                if (hasToBeConfirm) {
+        boolean groupHasToBeConfirmSamePayType = matchedBillList.stream()
+                .anyMatch(billVo -> hasToBeConfirmSamePayType(billVo, logisticsBillCostList, payType));
+        for (LogisticsBillDTO.LogisticsBillVo billVo : matchedBillList) {
+            if (groupHasToBeConfirmSamePayType) {
+                if (hasToBeConfirmSamePayType(billVo, logisticsBillCostList, payType)) {
                     updateBillList.add(billVo);
                 }
+                continue;
             }
-            return;
-        }
-        if (!allowAddOld) {
-            return;
-        }
-        for (LogisticsBillDTO.LogisticsBillVo billVo : matchedBillList) {
-            boolean hasConfirmed = logisticsBillCostList.stream().anyMatch(cost ->
-                    CharSequenceUtil.equals(cost.getLogisticsBillDetailId(), billVo.getDetailId())
-                            && CharSequenceUtil.equals(cost.getPayType(), payType)
-                            && CharSequenceUtil.equals(cost.getReconciliationStatus(),
-                                    ReconciliationStatusEnum.CONFIRMED.getCode()));
-            if (hasConfirmed) {
+            if (!allowAddOld) {
+                continue;
+            }
+            if (shouldAddOldForIdentifyNoBill(billVo, logisticsBillCostList, payType)) {
                 addOldBillList.add(billVo);
             }
         }
+    }
+
+    private boolean hasToBeConfirmSamePayType(LogisticsBillDTO.LogisticsBillVo billVo,
+                                              List<LogisticsBillCostEntity> logisticsBillCostList,
+                                              String payType) {
+        return logisticsBillCostList.stream().anyMatch(cost ->
+                CharSequenceUtil.equals(cost.getLogisticsBillDetailId(), billVo.getDetailId())
+                        && CharSequenceUtil.equals(cost.getPayType(), payType)
+                        && CharSequenceUtil.equals(cost.getReconciliationStatus(),
+                                ReconciliationStatusEnum.TO_BE_CONFIRM.getCode()));
+    }
+
+    /**
+     * 识别单号维度下是否应进入按原单新增批次（下游 checkCostImportData 再校验月份/重复）。
+     */
+    private boolean shouldAddOldForIdentifyNoBill(LogisticsBillDTO.LogisticsBillVo billVo,
+                                                  List<LogisticsBillCostEntity> logisticsBillCostList,
+                                                  String importPayType) {
+        boolean hasConfirmedSamePayType = logisticsBillCostList.stream().anyMatch(cost ->
+                CharSequenceUtil.equals(cost.getLogisticsBillDetailId(), billVo.getDetailId())
+                        && CharSequenceUtil.equals(cost.getPayType(), importPayType)
+                        && CharSequenceUtil.equals(cost.getReconciliationStatus(),
+                                ReconciliationStatusEnum.CONFIRMED.getCode()));
+        if (hasConfirmedSamePayType) {
+            return true;
+        }
+        return logisticsBillCostList.stream().anyMatch(cost ->
+                CharSequenceUtil.equals(cost.getLogisticsBillId(), billVo.getId())
+                        && CharSequenceUtil.equals(cost.getLogisticsBillDetailId(), billVo.getDetailId())
+                        && CharSequenceUtil.equals(billVo.getTrackNo(), cost.getTrackNo())
+                        && !CharSequenceUtil.equals(importPayType, cost.getPayType()));
+    }
+
+    /**
+     * ERP-18299：按原单新增时是否视为「同对账月份 + 同付款类型」重复。
+     * 导入已指定月份时，已有记录月份为空也计为同月冲突，避免 null 绕过防重。
+     */
+    private boolean isDuplicateReconciliationMonthForAddOld(String importMonth, String existingMonth) {
+        if (CharSequenceUtil.isBlank(importMonth)) {
+            return CharSequenceUtil.equals(importMonth, existingMonth);
+        }
+        if (CharSequenceUtil.isBlank(existingMonth)) {
+            return true;
+        }
+        return CharSequenceUtil.equals(importMonth, existingMonth);
     }
 
     /**
@@ -3137,7 +3168,8 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             long sameMonthPayTypeCount = logisticsBillCostList.stream()
                     .filter(obj -> CharSequenceUtil.equals(obj.getLogisticsBillDetailId(), logisticsBillVo.getDetailId())
                             && CharSequenceUtil.equals(excelDTO.getPayType(), obj.getPayType())
-                            && CharSequenceUtil.equals(logisticsBillVo.getReconciliationMonth(), obj.getReconciliationMonth()))
+                            && isDuplicateReconciliationMonthForAddOld(logisticsBillVo.getReconciliationMonth(),
+                                    obj.getReconciliationMonth()))
                     .count();
             if (sameMonthPayTypeCount > 0) {
                 errorMsgList.add("已存在相同对账月份和付款类型的物流费用单，不支持重复生成");
@@ -3163,7 +3195,10 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 logisticsBillCostEntityList = logisticsBillCostEntityList.stream().filter(obj -> CharSequenceUtil.equals(excelDTO.getPayType(),obj.getPayType())).collect(Collectors.toList());
 
                 //新增时判断是否已存在相同对账月份
-                long hasCount = logisticsBillCostEntityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getReconciliationMonth(), logisticsBillVo.getReconciliationMonth())).count();
+                long hasCount = logisticsBillCostEntityList.stream()
+                        .filter(obj -> isDuplicateReconciliationMonthForAddOld(logisticsBillVo.getReconciliationMonth(),
+                                obj.getReconciliationMonth()))
+                        .count();
                 if (hasCount > 0) {
                     errorMsgList.add("已存在相同对账月份的物流费用单，不支持新增");
                 }
@@ -3186,7 +3221,8 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             } else{
                 //只需要对Excel相同payType进行校验
                 if(CharSequenceUtil.equals(excelDTO.getPayType(),logisticsBillCostEntity.getPayType())){
-                    if (CharSequenceUtil.equals(logisticsBillVo.getReconciliationMonth(),logisticsBillCostEntity.getReconciliationMonth())) {
+                    if (isDuplicateReconciliationMonthForAddOld(logisticsBillVo.getReconciliationMonth(),
+                            logisticsBillCostEntity.getReconciliationMonth())) {
                         errorMsgList.add("已存在相同对账月份的物流费用单，不支持新增");
                     }
                     if (!CharSequenceUtil.equals(logisticsBillVo.getReconciliationMonth(), logisticsBillCostEntity.getReconciliationMonth()) && CharSequenceUtil.equals(logisticsBillCostEntity.getReconciliationStatus(), ReconciliationStatusEnum.TO_BE_CONFIRM.getCode())) {
