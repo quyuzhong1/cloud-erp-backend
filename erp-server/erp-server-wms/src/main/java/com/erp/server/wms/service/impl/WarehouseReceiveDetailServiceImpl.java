@@ -31,6 +31,7 @@ import com.erp.server.wms.mapper.WarehouseReceiveDetailMapper;
 import com.erp.server.wms.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -63,6 +64,13 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
 
     @Resource
     private QcNoticeDetailService qcNoticeDetailService;
+
+    /**
+     * 自注入：保证 {@link #doRecalculateWaitQcQty} 上的分布式锁经 Spring 代理生效。
+     */
+    @Lazy
+    @Resource
+    private WarehouseReceiveDetailServiceImpl self;
 
     /**
      * 新增
@@ -373,33 +381,57 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
      * <p>口径：按采购订单 + SKU 合并（同 PO 下相同 SKU 的多条采购明细数量合并）。</p>
      * 公式：当前收货明细待质检量 = max(0, 累计收货量 - 外验允许入库量 - 入库质检总数量 - 前序收货单待质检量)。
      * 同批次多条同 SKU 明细按循环顺序扣减本批次已分配量，避免重复占用同一剩余池。
+     * <p>锁粒度按采购订单 id：先解析 PO，再经代理加锁，保证同 PO 下不同 pod 子集并发时串行重算。</p>
      *
      * @param podIdList    当前收货明细关联的采购订单明细 id（用于扩维同 SKU）
      * @param detailIdList 待重算的收货明细 id
      */
     @Override
-    @DistributeLocker(keyName = "podIdList")
     public void recalculateWaitQcQty(List<String> podIdList, List<String> detailIdList) {
         if (CollUtil.isEmpty(podIdList) || CollUtil.isEmpty(detailIdList)) {
             return;
         }
+        // 只查一次采购明细：同时用于锁 key 与锁内重算，避免重复 Feign、锁口径与计算口径不一致
+        List<PurchaseOrderDetailEntity> seedPoDetails = Optional.ofNullable(scmTaskFeign.listPurchaseOrderDetailById(podIdList))
+                .orElse(Collections.emptyList());
+        List<String> purchaseOrderIds = seedPoDetails.stream()
+                .map(PurchaseOrderDetailEntity::getPurchaseOrderId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(purchaseOrderIds)) {
+            // 解析不到 PO 时回退为 podId，避免无锁执行
+            purchaseOrderIds = podIdList.stream().filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        }
+        if (CollUtil.isEmpty(purchaseOrderIds)) {
+            return;
+        }
+        self.doRecalculateWaitQcQty(purchaseOrderIds, podIdList, detailIdList, seedPoDetails);
+    }
 
+    /**
+     * 按采购订单加锁后执行待质检重算。
+     * {@code purchaseOrderIds} 仅用于分布式锁 key；{@code seedPoDetails} 复用入口一次 Feign 结果。
+     */
+    @DistributeLocker(keyName = "purchaseOrderIds")
+    public void doRecalculateWaitQcQty(List<String> purchaseOrderIds, List<String> podIdList,
+                                       List<String> detailIdList, List<PurchaseOrderDetailEntity> seedPoDetails) {
         List<WarehouseReceiveDetailEntity> receiveDetailList = this.listByIds(detailIdList);
         if (CollUtil.isEmpty(receiveDetailList)) {
             throw new ServiceException(ApiError.PO_RECEIPT_NOT_FOUND);
         }
 
         // 扩维：同采购订单下相同 SKU 的全部采购明细 id（覆盖外验/质检挂在另一条同 SKU 明细的场景）
-        List<PurchaseOrderDetailEntity> seedPoDetails = scmTaskFeign.listPurchaseOrderDetailById(podIdList);
-        Map<String, PurchaseOrderDetailEntity> seedPoDetailMap = CollUtil.isEmpty(seedPoDetails)
+        List<PurchaseOrderDetailEntity> safeSeedPoDetails = seedPoDetails == null ? Collections.emptyList() : seedPoDetails;
+        Map<String, PurchaseOrderDetailEntity> seedPoDetailMap = CollUtil.isEmpty(safeSeedPoDetails)
                 ? Collections.emptyMap()
-                : seedPoDetails.stream().collect(Collectors.toMap(PurchaseOrderDetailEntity::getId, e -> e, (a, b) -> a));
-        List<String> purchaseOrderIds = seedPoDetails == null ? Collections.emptyList()
-                : seedPoDetails.stream().map(PurchaseOrderDetailEntity::getPurchaseOrderId)
+                : safeSeedPoDetails.stream().collect(Collectors.toMap(PurchaseOrderDetailEntity::getId, e -> e, (a, b) -> a));
+        List<String> resolvedPurchaseOrderIds = safeSeedPoDetails.stream()
+                .map(PurchaseOrderDetailEntity::getPurchaseOrderId)
                 .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
-        List<PurchaseOrderDetailEntity> allPoDetails = CollUtil.isEmpty(purchaseOrderIds)
+        List<PurchaseOrderDetailEntity> allPoDetails = CollUtil.isEmpty(resolvedPurchaseOrderIds)
                 ? Collections.emptyList()
-                : Optional.ofNullable(scmTaskFeign.listByPurchaseOrderIds(purchaseOrderIds)).orElse(Collections.emptyList());
+                : Optional.ofNullable(scmTaskFeign.listByPurchaseOrderIds(resolvedPurchaseOrderIds)).orElse(Collections.emptyList());
         Map<String, PurchaseOrderDetailEntity> podToPoDetail = allPoDetails.stream()
                 .collect(Collectors.toMap(PurchaseOrderDetailEntity::getId, e -> e, (a, b) -> a));
         seedPoDetailMap.forEach(podToPoDetail::putIfAbsent);
