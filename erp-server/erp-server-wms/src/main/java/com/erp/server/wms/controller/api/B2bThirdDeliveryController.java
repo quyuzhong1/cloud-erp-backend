@@ -195,6 +195,33 @@ public class B2bThirdDeliveryController extends BaseController {
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
+    /**
+     * 撤销出库（已发货 + 手动发货）
+     */
+    @PostMapping("/revokeOutstock")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "撤销出库")
+    public ApiResult<List<BatchResultDTO>> revokeOutstock(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<B2bThirdDeliveryEntity> entities = b2bThirdDeliveryService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            BatchResultDTO result;
+            B2bThirdDeliveryEntity entity = entities.stream().filter(item -> item.getId().equals(id)).findFirst().orElse(null);
+            if (Objects.isNull(entity)) {
+                result = BatchResultDTO.fail(id, id, "B2B三方发货单不存在, 撤销出库失败");
+                resultDTOS.add(result);
+                continue;
+            }
+            try {
+                result = b2bThirdDeliveryService.revokeOutstock(entity);
+            } catch (Exception e) {
+                log.error("B2B三方发货单撤销出库失败", e);
+                result = BatchResultDTO.fail(entity.getId(), entity.getCode(), BatchResultDTO.resolveFailMsg(e));
+            }
+            resultDTOS.add(result);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
 
     /**
      * 重新生成销售出库单
