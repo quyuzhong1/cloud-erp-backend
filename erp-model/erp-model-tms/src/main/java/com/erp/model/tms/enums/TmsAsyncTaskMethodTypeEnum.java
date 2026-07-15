@@ -21,6 +21,7 @@ public enum TmsAsyncTaskMethodTypeEnum implements EnumMessage {
 	UPDATE_REPORT_STATUS("updateReportStatus", "批量更新核算状态"),
 	RE_ALLOCATION("reAllocation", "重新分摊"),
 	DELETE("delete", "批量删除"),
+	LOGISTICS_RECON_MATCH("logisticsReconMatch", "对账单合并匹配"),
     ;
     /**
      * 类型

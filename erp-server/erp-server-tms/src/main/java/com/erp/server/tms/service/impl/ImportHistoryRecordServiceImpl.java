@@ -917,6 +917,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 for (Map.Entry<String, List<ImportHistoryRecordDTO.ImportRowContextDTO>> entry : batch) {
                     List<ImportHistoryRecordDTO.ImportRowContextDTO> value = entry.getValue();
                     JSONObject successJson = new JSONObject();
+                    seedSuccessJsonIdentifyFields(successJson, uniqueKeyList, value.get(0).getRow());
                     List<TmsCostDetailDTO.UpdateDTO> updateAllList = new ArrayList<>();
                     HashMap<String, String> currencyMap = new HashMap<>();
                     // 逐条处理每个jsonObject，分别校验和赋值
@@ -1004,6 +1005,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 for (Map.Entry<String, List<ImportHistoryRecordDTO.ImportRowContextDTO>> entry : batch) {
                     List<ImportHistoryRecordDTO.ImportRowContextDTO> value = entry.getValue();
                     JSONObject successJson = new JSONObject();
+                    seedSuccessJsonIdentifyFields(successJson, uniqueKeyList, value.get(0).getRow());
                     List<TmsCostDetailDTO.UpdateDTO> updateAllList = new ArrayList<>();
                     for (ImportHistoryRecordDTO.ImportRowContextDTO rowContext : value) {
                         JSONObject jsonObject = rowContext.getRow();
@@ -2032,9 +2034,53 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                     updateList.add(updateDTO);
                 }
             }
-            successJson.set(cfgDetailEntity.getTargetField(), preparedValue);
+            mergeIntoSuccessJson(successJson, cfgDetailEntity, preparedValue);
         }
         return updateList;
+    }
+
+    /**
+     * 分组合并写入 successJson：唯一识别字段已有值时，不被后续空行覆盖。
+     */
+    private void mergeIntoSuccessJson(JSONObject successJson,
+                                      CfgLogisticsCostImportDetailEntity cfg,
+                                      String preparedValue) {
+        String targetField = cfg.getTargetField();
+        if (CharSequenceUtil.isBlank(targetField)) {
+            return;
+        }
+        if (CharSequenceUtil.isNotBlank(preparedValue)) {
+            successJson.set(targetField, preparedValue);
+            return;
+        }
+        if (Boolean.TRUE.equals(cfg.getIsUniqueKey())) {
+            Object existing = successJson.get(targetField);
+            if (ObjectUtil.isEmpty(existing) || CharSequenceUtil.isBlank(String.valueOf(existing))) {
+                successJson.set(targetField, preparedValue);
+            }
+            return;
+        }
+        successJson.set(targetField, preparedValue);
+    }
+
+    /**
+     * 同一识别分组合并费用时，识别字段固定取首行，避免后续费用行未重复填写识别列导致 successJson 被置空。
+     */
+    private void seedSuccessJsonIdentifyFields(JSONObject successJson,
+                                               List<CfgLogisticsCostImportDetailEntity> uniqueKeyList,
+                                               JSONObject row) {
+        if (successJson == null || row == null || CollUtil.isEmpty(uniqueKeyList)) {
+            return;
+        }
+        for (CfgLogisticsCostImportDetailEntity uniqueKey : uniqueKeyList) {
+            if (CharSequenceUtil.isBlank(uniqueKey.getTargetField())) {
+                continue;
+            }
+            String value = getPreparedValue(row, uniqueKey);
+            if (CharSequenceUtil.isNotBlank(value)) {
+                successJson.set(uniqueKey.getTargetField(), value);
+            }
+        }
     }
 
     /**
@@ -2145,7 +2191,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                     updateList.add(updateDTO);
                 }
             }
-            successJson.set(cfgDetailEntity.getTargetField(), preparedValue);
+            mergeIntoSuccessJson(successJson, cfgDetailEntity, preparedValue);
         }
         return updateList;
     }

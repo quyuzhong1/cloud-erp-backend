@@ -5,10 +5,13 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.LogisticsReconBatchResultDTO;
 import com.erp.model.tms.dto.LogisticsReconDTO;
 import com.erp.model.tms.dto.LogisticsReconMatchDTO;
+import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
+import com.erp.model.tms.entity.TmsAsyncTaskRecordEntity;
 import com.erp.model.tms.entity.CfgLogisticsCostImportDetailEntity;
 import com.erp.model.tms.entity.CfgLogisticsCostImportEntity;
 import com.erp.model.tms.entity.LogisticsReconDetailEntity;
@@ -112,6 +115,23 @@ public interface LogisticsReconService extends SuperService<LogisticsReconEntity
      * @return List<BatchResultDTO>
      */
     List<BatchResultDTO> batchMatch(LogisticsReconDTO.BatchMatchDTO dto);
+
+    /**
+     * 消费物流商对账单合并匹配异步任务（MQ 触发）。
+     * @param taskRecord 异步任务记录
+     */
+    void pushMatch(TmsAsyncTaskRecordEntity taskRecord);
+
+    /**
+     * 分批执行对账单合并匹配（供异步任务框架回调）：逐单复用既有匹配逻辑并落任务明细。
+     * @param taskId 异步主任务 id
+     * @param batchIds 本批对账单主单 id
+     * @param isConfirm 是否匹配后同时确认
+     * @param operatorUser 任务操作人
+     * @return 批次成功/失败计数
+     */
+    TmsAsyncTaskRecordDTO.BatchProcessResult processMatchBatch(String taskId, List<String> batchIds,
+                                                               boolean isConfirm, LoginUser operatorUser);
 
     /**
      * 按费用项 + ERP 业务单号匹配（手动匹配 / 导入匹配共用）。

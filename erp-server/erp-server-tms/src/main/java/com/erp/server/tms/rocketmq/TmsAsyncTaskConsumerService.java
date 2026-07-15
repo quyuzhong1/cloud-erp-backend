@@ -7,6 +7,7 @@ import com.common.message.constant.RocketMqNewTag;
 import com.common.message.constant.RocketMqTopic;
 import com.erp.model.tms.entity.TmsAsyncTaskRecordEntity;
 import com.erp.model.tms.enums.TmsAsyncTaskMethodTypeEnum;
+import com.erp.model.tms.enums.TmsAsyncTaskRecordBusinessTypeEnum;
 import com.erp.server.tms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -44,6 +45,9 @@ public class TmsAsyncTaskConsumerService implements RocketMQListener<TmsAsyncTas
 
     @Resource
     private TransferDeclareCostAllocationService transferDeclareCostAllocationService;
+
+    @Resource
+    private LogisticsReconService logisticsReconService;
 
     @Resource
     private TmsAsyncTaskRecordService asyncTaskRecordService;
@@ -138,6 +142,16 @@ public class TmsAsyncTaskConsumerService implements RocketMQListener<TmsAsyncTas
             } else {
                 log.warn("中转分摊MQ方法类型不支持，跳过消费，taskId: {}, methodType: {}", taskId, methodType);
                 asyncTaskRecordService.finishTaskWithError(taskId, "中转分摊MQ方法类型不支持: " + methodType);
+                return;
+            }
+        }
+        //物流商对账单合并匹配
+        else if(Objects.equals(businessType, TmsAsyncTaskRecordBusinessTypeEnum.LOGISTICS_RECON.getCode())){
+            if (Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.LOGISTICS_RECON_MATCH.getCode())) {
+                logisticsReconService.pushMatch(taskRecord);
+            } else {
+                log.warn("物流商对账单MQ方法类型不支持，跳过消费，taskId: {}, methodType: {}", taskId, methodType);
+                asyncTaskRecordService.finishTaskWithError(taskId, "物流商对账单MQ方法类型不支持: " + methodType);
                 return;
             }
         }
