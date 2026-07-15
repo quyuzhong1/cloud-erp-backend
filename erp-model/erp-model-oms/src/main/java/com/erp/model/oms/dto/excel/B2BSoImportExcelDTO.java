@@ -117,7 +117,7 @@ public class B2BSoImportExcelDTO {
     private String shippingFee;
 
     /**
-     * 收款账号
+     * 收款账号（填银行账号 bankAccountNo，非账号名称）
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "收款账号", index = 11)

@@ -64,6 +64,12 @@ public class SoReceiptDetailEntity extends BaseEntity<SoReceiptDetailEntity> {
     private BigDecimal receiptAmount;
 
     /**
+     * 手续费
+     */
+    @TableField("service_fee")
+    private BigDecimal serviceFee;
+
+    /**
      * 平台明细id
      */
     @TableField("platform_detail_id")

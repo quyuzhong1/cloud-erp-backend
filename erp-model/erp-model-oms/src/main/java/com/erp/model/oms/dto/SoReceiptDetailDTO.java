@@ -69,6 +69,11 @@ public class SoReceiptDetailDTO implements Serializable {
         private BigDecimal receiptAmount;
 
         /**
+         * 手续费
+         */
+        private BigDecimal serviceFee;
+
+        /**
          * 审核状态
          */
         private String approveStatus;
@@ -170,6 +175,13 @@ public class SoReceiptDetailDTO implements Serializable {
         @NotNull(message = "收款金额不能为空")
         @Digits(integer = 18, fraction = 6, message = "收款金额整数位不能超过18位，小数位不能超过6位")
         private BigDecimal receiptAmount;
+
+        /**
+         * 手续费（非必填，未传按 0）
+         */
+        @Digits(integer = 12, fraction = 6, message = "手续费整数位不能超过12位，小数位不能超过6位")
+        private BigDecimal serviceFee = BigDecimal.ZERO;
+
         /**
          * 平台明细id
          */

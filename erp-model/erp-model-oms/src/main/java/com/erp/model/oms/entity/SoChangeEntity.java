@@ -133,6 +133,25 @@ public class SoChangeEntity extends BaseEntity<SoChangeEntity> {
      */
     @TableField("receive_address_id")
     private String receiveAddressId;
+
+    /**
+     * 销售员id（变更后，审批通过回写销售订单）
+     */
+    @TableField("seller_id")
+    private String sellerId;
+
+    /**
+     * 销售员
+     */
+    @TableField("seller_name")
+    private String sellerName;
+
+    /**
+     * 销售部门id（变更后，审批通过回写销售订单）
+     */
+    @TableField("sales_dept_id")
+    private String salesDeptId;
+
     /**
      * 客户id
      */

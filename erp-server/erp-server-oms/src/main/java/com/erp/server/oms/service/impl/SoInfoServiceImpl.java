@@ -4668,10 +4668,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         //仓库
         List<String> warehouseNameList = successList.stream().map(B2BSoImportExcelDTO::getWarehouseName).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<WarehouseDTO.ListDTO> warehouseList = wmsTaskFeign.listWarehouseByNameList(warehouseNameList);
-        //收款账号
+        //收款账号（导入按银行账号 bankAccountNo 匹配，不再按账号名称）
         List<String> receiveAccountList = successList.stream().map(B2BSoImportExcelDTO::getReceiveAccount).distinct().collect(Collectors.toList());
-        //根据收款账号获取数据
-        List<BankAccountEntity> bankAccountList = bankAccountService.listByAccountNameList(receiveAccountList);
+        List<BankAccountEntity> bankAccountList = bankAccountService.listByAccountList(receiveAccountList);
         List<String> keyList = new ArrayList<>(5);
         //收款方式
         keyList.add(DictBasicTypeEnum.RECEIVE_METHOD.getType());
@@ -4813,12 +4812,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             String warehouseOrgName = orgList.stream().filter(o -> o.getId().equals(finalWarehouseOrgId)).findFirst().
                     map(BaseIdDTO.CodeDTO::getName).orElse("");
             addSo.setWarehouseOrgName(warehouseOrgName);
-            //收款账号
+            //收款账号：Excel 填「账号」(bankAccountNo)，按销售组织匹配
             String receiveAccountStr = mainInfo.getReceiveAccount();
             String receiveAccount = "";
             String finalSalesOrgId = salesOrgId;
-            BankAccountEntity bankAccount = bankAccountList.stream().filter(b -> b.getAccountName().equals(receiveAccountStr) &&
-                    finalSalesOrgId.equals(b.getOrgId()) && !b.getDisabled()).findFirst().orElse(null);
+            BankAccountEntity bankAccount = bankAccountList.stream().filter(b -> CharSequenceUtil.equals(receiveAccountStr, b.getBankAccountNo()) &&
+                    CharSequenceUtil.equals(finalSalesOrgId, b.getOrgId()) && !Boolean.TRUE.equals(b.getDisabled())).findFirst().orElse(null);
             if (Objects.isNull(bankAccount)) {
                 errorMsgList.add("收款账号不存在");
             } else {
