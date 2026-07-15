@@ -457,11 +457,12 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
     void submitAndApprove(String id);
 
     /**
-     * 追加写入"审核状态说明"
+     * 写入"审核状态说明"（仅保留最新一条）
      * <p>
      * 用途：提交/审核校验失败时，把失败原因落地到 so_outstock.approve_remark
      * 字段，前端列表可见。
-     * 写入策略：按 [yyyy-MM-dd HH:mm:ss] 前缀追加，超过最大长度从头部截断。
+     * 写入策略：覆盖旧内容，仅保留带 [yyyy-MM-dd HH:mm:ss] 前缀的最新一条；
+     * 超过最大长度从头部截断。
      * 事务策略：默认事务传播（REQUIRED），跟随调用方事务提交，
      * 校验失败路径调用方直接 return 不抛异常，父事务正常 commit。
      * </p>
