@@ -119,6 +119,12 @@
         <if test="params.code != null and params.code != ''">
             and wl.code = #{params.code}
         </if>
+        <if test="params.codeList != null and params.codeList.size() > 0">
+            and wl.code in
+            <foreach collection="params.codeList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
             and ((wl.code = #{params.searchKeyword}) or wl.name ilike concat('%', #{params.searchKeyword}::text ,'%'))
         </if>
@@ -372,6 +378,12 @@
         </if>
         <if test="params.code != null and params.code != ''">
             and wl.code = #{params.code}
+        </if>
+        <if test="params.codeList != null and params.codeList.size() > 0">
+            and wl.code in
+            <foreach collection="params.codeList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
         </if>
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
             and ((wl.code = #{params.searchKeyword}) or wl.name ilike concat('%', #{params.searchKeyword}::text ,'%'))
