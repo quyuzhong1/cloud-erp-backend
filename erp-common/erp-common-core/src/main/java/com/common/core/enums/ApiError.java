@@ -1142,6 +1142,30 @@ public final class ApiError implements Serializable {
     public static final ApiError SO_RETURN_PRESTOCK_LINK_AFTER_SALE_SKU_QTY_EXCEEDS = ApiErrorWms.SO_RETURN_PRESTOCK_LINK_AFTER_SALE_SKU_QTY_EXCEEDS;
     public static final ApiError SO_RETURN_PRESTOCK_LINK_AFTER_SALE_SKU_RECEIVE_QTY_EXCEEDS = ApiErrorWms.SO_RETURN_PRESTOCK_LINK_AFTER_SALE_SKU_RECEIVE_QTY_EXCEEDS;
     public static final ApiError SO_RETURN_PRESTOCK_AFTER_SALE_TYPE_LINK_FORBIDDEN = ApiErrorWms.SO_RETURN_PRESTOCK_AFTER_SALE_TYPE_LINK_FORBIDDEN;
+    public static final ApiError WH_AIYA_SDK_INBOUND_PAGE_CONVERT_FAILED = ApiErrorWms.WH_AIYA_SDK_INBOUND_PAGE_CONVERT_FAILED;
+    public static final ApiError WH_AIYA_SDK_OUTBOUND_SEARCH_NO_RESPONSE = ApiErrorWms.WH_AIYA_SDK_OUTBOUND_SEARCH_NO_RESPONSE;
+    public static final ApiError WH_AIYA_SDK_OUTBOUND_SEARCH_FAILED = ApiErrorWms.WH_AIYA_SDK_OUTBOUND_SEARCH_FAILED;
+    public static final ApiError WH_AIYA_SDK_OUTBOUND_SEARCH_CONVERT_FAILED = ApiErrorWms.WH_AIYA_SDK_OUTBOUND_SEARCH_CONVERT_FAILED;
+    public static final ApiError WH_AIYA_SDK_OUTBOUND_PAGE_CONVERT_FAILED = ApiErrorWms.WH_AIYA_SDK_OUTBOUND_PAGE_CONVERT_FAILED;
+    public static final ApiError WH_AIYA_SDK_RETURN_ORDER_PAGE_CONVERT_FAILED = ApiErrorWms.WH_AIYA_SDK_RETURN_ORDER_PAGE_CONVERT_FAILED;
+    public static final ApiError WH_AIYA_SDK_API_CALL_ERROR = ApiErrorWms.WH_AIYA_SDK_API_CALL_ERROR;
+    public static final ApiError WH_AIYA_SDK_API_RESPONSE_EMPTY = ApiErrorWms.WH_AIYA_SDK_API_RESPONSE_EMPTY;
+    public static final ApiError WH_AIYA_SDK_API_RESPONSE_NOT_JSON = ApiErrorWms.WH_AIYA_SDK_API_RESPONSE_NOT_JSON;
+    public static final ApiError WH_AIYA_SDK_DOMAIN_EMPTY = ApiErrorWms.WH_AIYA_SDK_DOMAIN_EMPTY;
+    public static final ApiError WH_AIYA_SDK_SIGN_PARAMS_EMPTY = ApiErrorWms.WH_AIYA_SDK_SIGN_PARAMS_EMPTY;
+    public static final ApiError WH_AIYA_SDK_SIGN_SECRET_EMPTY = ApiErrorWms.WH_AIYA_SDK_SIGN_SECRET_EMPTY;
+    public static final ApiError WH_AIYA_SDK_SIGN_JSON_EMPTY = ApiErrorWms.WH_AIYA_SDK_SIGN_JSON_EMPTY;
+    public static final ApiError WH_AIYA_SDK_SIGN_FAILED = ApiErrorWms.WH_AIYA_SDK_SIGN_FAILED;
+    public static final ApiError WH_AIYA_AUTH_INFO_NOT_FOUND = ApiErrorWms.WH_AIYA_AUTH_INFO_NOT_FOUND;
+    public static final ApiError WH_AIYA_AUTH_ID_NOT_FOUND = ApiErrorWms.WH_AIYA_AUTH_ID_NOT_FOUND;
+    public static final ApiError WH_AIYA_AUTH_JSON_EMPTY = ApiErrorWms.WH_AIYA_AUTH_JSON_EMPTY;
+    public static final ApiError WH_AIYA_TOKEN_SECRET_MISSING = ApiErrorWms.WH_AIYA_TOKEN_SECRET_MISSING;
+    public static final ApiError WH_AIYA_PAGE_QUERY_ERROR = ApiErrorWms.WH_AIYA_PAGE_QUERY_ERROR;
+    public static final ApiError WH_AIYA_PAGE_PARSE_FAILED = ApiErrorWms.WH_AIYA_PAGE_PARSE_FAILED;
+    public static final ApiError WH_AIYA_RESPONSE_EMPTY = ApiErrorWms.WH_AIYA_RESPONSE_EMPTY;
+    public static final ApiError WH_AIYA_RESPONSE_FAILED = ApiErrorWms.WH_AIYA_RESPONSE_FAILED;
+    public static final ApiError WH_AIYA_RESULT_EMPTY = ApiErrorWms.WH_AIYA_RESULT_EMPTY;
+    public static final ApiError WH_AIYA_PAGE_LIMIT_EXCEEDED = ApiErrorWms.WH_AIYA_PAGE_LIMIT_EXCEEDED;
 
     /** Tms service error constants. */
     public static final ApiError FIRST_MILE_FBA_SHIPMENT_NOT_EXIST_BILL = ApiErrorTms.FIRST_MILE_FBA_SHIPMENT_NOT_EXIST_BILL;

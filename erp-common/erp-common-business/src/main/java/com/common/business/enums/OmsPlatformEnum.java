@@ -29,6 +29,7 @@ public enum OmsPlatformEnum {
     ZHONG_BAO("zhongbao","众包"),
     JI_TU("jitu","极兔云仓"),
     WE_GO("wego","WEGO"),
+    AI_YA("aiya", "爱亚");
     ;
 
     @EnumValue
