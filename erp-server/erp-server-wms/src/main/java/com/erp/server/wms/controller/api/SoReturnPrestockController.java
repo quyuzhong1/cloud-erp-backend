@@ -16,7 +16,6 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.SoReturnPrestockDTO;
 import com.erp.model.wms.dto.SoReturnPrestockDetailDTO;
 import com.erp.server.wms.query.SoReturnPrestockQueryHandler;
-import com.erp.server.wms.service.SoReturnPrestockDetailService;
 import com.erp.server.wms.service.SoReturnPrestockService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -107,25 +106,6 @@ public class SoReturnPrestockController extends BaseController {
     )
     public ApiResult<SoReturnPrestockDTO.View> view(@RequestParam("id") String id) {
         return success(soReturnPrestockService.view(id));
-    }
-
-    /**
-     * 关联售后单
-     * <p>支持拆行：本次关联数量 &lt; 当前行退货数量时，自动拆分剩余数量为新行。</p>
-     */
-    @LogAction(value = LogActionEnum.UPDATE, desc = "关联售后单")
-    @PostMapping("/linkAfterSale")
-    @DataPermission(
-            operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "wms:soReturnPrestock:linkAfterSale",
-            serviceClass = SoReturnPrestockDetailService.class,
-            keyIdName = "detailId"
-    )
-    public ApiResult<BatchResultDTO> linkAfterSale(
-            @RequestBody @Validated SoReturnPrestockDetailDTO.LinkAfterSale dto) {
-        BatchResultDTO result = soReturnPrestockService.linkAfterSale(dto);
-        return result.getSuccess() ? success(result) : failure(result);
     }
 
     /**
