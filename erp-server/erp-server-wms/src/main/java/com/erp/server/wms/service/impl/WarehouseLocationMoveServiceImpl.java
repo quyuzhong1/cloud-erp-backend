@@ -1287,10 +1287,28 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         return pushWdtDTO;
     }
 
+    /**
+     * 旺店通库存不足自动移仓：默认加入调用方全局事务（DMP Job 等）。
+     */
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
 	@Override
 	public void wdtAutoAdd(PcAddDTO pcAddDTO) {
+        doWdtAutoAdd(pcAddDTO);
+	}
+
+    /**
+     * 旺店通库存不足自动移仓：独立新事务提交（出库同步前预检）。
+     */
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000,
+            propagation = io.seata.tm.api.transaction.Propagation.REQUIRES_NEW)
+    @Transactional(rollbackFor = Exception.class, propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
+    @Override
+    public void wdtAutoAddNewTx(PcAddDTO pcAddDTO) {
+        doWdtAutoAdd(pcAddDTO);
+    }
+
+    private void doWdtAutoAdd(PcAddDTO pcAddDTO) {
     	String moveId = this.pcAdd(pcAddDTO);
     	this.submit(moveId);
     	ApproveOneDTO approveOneDTO = new ApproveOneDTO();

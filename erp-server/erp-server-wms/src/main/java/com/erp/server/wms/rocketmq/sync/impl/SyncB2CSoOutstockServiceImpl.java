@@ -104,6 +104,9 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
     private InventoryTransCoreService inventoryTransCoreService;
 
     @Resource
+    private WdtSoOutstockAutoMoveService wdtSoOutstockAutoMoveService;
+
+    @Resource
     private PlmTaskFeign plmTaskFeign;
 
     @Resource
@@ -238,10 +241,11 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
     /**
      * 旺店通销售出库单同步入口：仅持有分布式锁，不开事务。
      * <p>
-     * 将原方法拆分为三步，降低事务持有时间：
+     * 将原方法拆分为四步，降低事务持有时间：
      * 1. 幂等检查（纯读，无事务）
      * 2. 前置查询：所有 Feign / DB 只读操作（无事务，{@link #preQueryForWdtSync}）
-     * 3. 写操作：保存单据 + 扣库存 + 推送（短事务，{@link #doSyncWdtSoOutStock}）
+     * 3. 扣库存前结构化预检：目标仓位不足则独立事务自动移仓（{@link WdtSoOutstockAutoMoveService#preCheckAndAutoMove}）
+     * 4. 写操作：保存单据 + 扣库存 + 推送（短事务，{@link #doSyncWdtSoOutStock}）
      * </p>
      */
     @Override
@@ -271,7 +275,10 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         // 2. 前置查询：所有 Feign / 只读 DB 操作在事务外完成，避免长事务持有连接
         WdtSyncQueryContext ctx = preQueryForWdtSync(entity);
 
-        // 3. 写操作：短事务内完成保存 + 扣库存 + 推送
+        // 3. 扣库存事务外预检：目标仓位可用不足则按优先级自动移仓（移仓独立事务已提交）
+        wdtSoOutstockAutoMoveService.preCheckAndAutoMove(ctx.inOutStockList);
+
+        // 4. 写操作：短事务内完成保存 + 扣库存 + 推送
         service.doSyncWdtSoOutStock(ctx);
     }
 
