@@ -304,9 +304,9 @@ public class SoReceiptDTO implements Serializable {
         private BigDecimal receiptAmount;
 
         /**
-         * 手续费
+         * 银行手续费
          */
-        private BigDecimal serviceFee;
+        private BigDecimal bankServiceFee;
 
         /**
          * 收款账号

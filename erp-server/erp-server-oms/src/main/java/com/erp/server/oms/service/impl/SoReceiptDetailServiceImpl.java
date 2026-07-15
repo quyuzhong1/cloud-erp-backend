@@ -94,8 +94,8 @@ public class SoReceiptDetailServiceImpl extends SuperServiceImpl<SoReceiptDetail
 
         detailList.forEach(v -> {
             v.setMainId(soReceiptEntity.getId());
-            if (v.getServiceFee() == null) {
-                v.setServiceFee(BigDecimal.ZERO);
+            if (v.getBankServiceFee() == null) {
+                v.setBankServiceFee(BigDecimal.ZERO);
             }
         });
         List<SoReceiptDetailEntity> saveList = BeanMapper.copyList(detailList, SoReceiptDetailEntity.class);
@@ -198,7 +198,7 @@ public class SoReceiptDetailServiceImpl extends SuperServiceImpl<SoReceiptDetail
             soReceiptDetailEntity.setPaymentNo(updateDTO.getPaymentNo());
             soReceiptDetailEntity.setRemark(updateDTO.getRemark());
             soReceiptDetailEntity.setReceiptAmount(updateDTO.getReceiptAmount());
-            soReceiptDetailEntity.setServiceFee(updateDTO.getServiceFee() == null ? BigDecimal.ZERO : updateDTO.getServiceFee());
+            soReceiptDetailEntity.setBankServiceFee(updateDTO.getBankServiceFee() == null ? BigDecimal.ZERO : updateDTO.getBankServiceFee());
             soReceiptDetailEntity.setId(updateDTO.getId());
             updateEntityList.add(soReceiptDetailEntity);
             String msg = StrUtil.format("用户【{}】编辑【{}】单据明细 ", UserContext.getDefaultLoginUser().getUserName(), "收款单");
