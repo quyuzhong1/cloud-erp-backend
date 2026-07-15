@@ -34,6 +34,8 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartException;
 import org.apache.skywalking.apm.toolkit.trace.TraceContext;
+import org.springframework.web.multipart.MultipartException;
+import org.apache.skywalking.apm.toolkit.trace.TraceContext;
 import org.springframework.web.util.ContentCachingRequestWrapper;
 import org.springframework.web.util.WebUtils;
 
@@ -339,6 +341,32 @@ public class GlobalExceptionHandler {
         return result;
     }
 
+    private String resolveMostSpecificMessage(Throwable e) {
+        if (e instanceof org.springframework.core.NestedRuntimeException) {
+            Throwable cause = ((org.springframework.core.NestedRuntimeException) e).getMostSpecificCause();
+            if (cause != null && CharSequenceUtil.isNotBlank(cause.getMessage())) {
+                return cause.getMessage();
+            }
+        }
+        return e == null ? "" : e.getMessage();
+    }
+
+    private String resolveRequestInfo(HttpServletRequest request) {
+        if (request == null) {
+            return "";
+        }
+        return CharSequenceUtil.format("method={}, uri={}", request.getMethod(), request.getRequestURI());
+    }
+
+    private String resolveTraceId() {
+        String traceId = TraceContext.traceId();
+        return CharSequenceUtil.isNotBlank(traceId) ? traceId : UUID.randomUUID().toString().replace("-", "");
+    }
+
+    private String appendTraceId(String msg, String traceId) {
+        return CharSequenceUtil.format("{}，错误编号：{}", CharSequenceUtil.blankToDefault(msg, ApiError.HTTP_UNKNOWN.getMsg()), traceId);
+    }
+
     @SafeVarargs
     private final boolean hasCause(Throwable throwable, Class<? extends Throwable>... causeTypes) {
         Throwable cause = throwable;
@@ -405,32 +433,6 @@ public class GlobalExceptionHandler {
             sb.append(hex);
         }
         return sb.toString();
-    }
-
-    private String resolveMostSpecificMessage(Throwable e) {
-        if (e instanceof org.springframework.core.NestedRuntimeException) {
-            Throwable cause = ((org.springframework.core.NestedRuntimeException) e).getMostSpecificCause();
-            if (cause != null && CharSequenceUtil.isNotBlank(cause.getMessage())) {
-                return cause.getMessage();
-            }
-        }
-        return e == null ? "" : e.getMessage();
-    }
-
-    private String resolveRequestInfo(HttpServletRequest request) {
-        if (request == null) {
-            return "";
-        }
-        return CharSequenceUtil.format("method={}, uri={}", request.getMethod(), request.getRequestURI());
-    }
-
-    private String resolveTraceId() {
-        String traceId = TraceContext.traceId();
-        return CharSequenceUtil.isNotBlank(traceId) ? traceId : UUID.randomUUID().toString().replace("-", "");
-    }
-
-    private String appendTraceId(String msg, String traceId) {
-        return CharSequenceUtil.format("{}，错误编号：{}", CharSequenceUtil.blankToDefault(msg, ApiError.HTTP_UNKNOWN.getMsg()), traceId);
     }
 
     /** 设置 HTTP 状态码（401 → UNAUTHORIZED, 403 → FORBIDDEN, 默认200） */
