@@ -734,6 +734,9 @@ public interface PlmTaskFeign {
     @PostMapping("feign/moldInfo/searchMoldRefSkuByAssetId")
     List<AssetNoticeDetailDTO.AssetDetailRefSkuDTO> searchMoldRefSkuByAssetId(@RequestBody String assetId);
 
+    @PostMapping("feign/moldInfo/listInvalidMoldCodesForRefSku")
+    List<String> listInvalidMoldCodesForRefSku(@RequestBody List<String> moldCodes);
+
     /**
      * 批量通过模具code获取供应商信息
      * @param moldCodes 模具编码列表

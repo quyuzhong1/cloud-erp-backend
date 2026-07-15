@@ -66,12 +66,22 @@ public class RuleLogisticsEntity extends BaseEntity<RuleLogisticsEntity> {
     @TableField("logistics_channel_name")
     private String logisticsChannelName;
     /**
-    * 是否自动获取物流单号 
+    * 是否自动获取跟踪号并提交发货
     */
     @TableField("auto_get_track_no")
     private Boolean autoGetTrackNo;
     /**
-     *是否自动获取跟踪号提交发货（非超范围派送订单）
+     * 是否自动获取跟踪号并不提交发货
+     */
+    @TableField("auto_track_no_only")
+    private Boolean autoTrackNoOnly;
+    /**
+     * 是否自动获取跟踪号并不提交发货（非超范围派送订单）
+     */
+    @TableField("auto_track_no_in_range")
+    private Boolean autoTrackNoInRange;
+    /**
+     * 是否自动获取跟踪号并提交发货（非超范围派送订单）
      */
     @TableField("auto_get_track_not_of_range_delivery")
     private Boolean autoGetTrackNotOfRangeDelivery;
