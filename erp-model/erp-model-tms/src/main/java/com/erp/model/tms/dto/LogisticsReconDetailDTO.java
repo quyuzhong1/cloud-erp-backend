@@ -356,7 +356,7 @@ public class LogisticsReconDetailDTO implements Serializable {
     }
 
     /**
-     * 手动匹配（批量指定 detail_sub ↔ ERP 四个业务单号）
+     * 手动匹配（按明细 detail 维度：明细下全部未匹配费用项共用同一组 ERP 业务单号）
      */
     @Data
     @NoArgsConstructor
@@ -373,16 +373,16 @@ public class LogisticsReconDetailDTO implements Serializable {
     }
 
     /**
-     * 手动匹配明细
+     * 手动匹配明细（按对账明细 id；服务端展开其下未匹配费用项）
      */
     @Data
     @NoArgsConstructor
     public static class ManualMatchItemDTO {
         /**
-         * 对账费用项 id
+         * 对账明细 id（logistics_recon_detail.id）
          */
-        @NotBlank(message = "对账费用项id不能为空")
-        private String detailSubId;
+        @NotBlank(message = "对账明细id不能为空")
+        private String detailId;
         /**
          * ERP 销售单号
          */

@@ -121,21 +121,6 @@ public class ThreadPoolConfig {
         return new TraceableExecutorService(service);
     }
 
-    /**
-     * 物流商对账"账单确认"异步线程池，与合并匹配池隔离，避免大批量匹配与账单确认互相抢占线程。
-     * @author Will
-     * @return ExecutorService
-     */
-    @Bean(name = "logisticsReconConfirmPool")
-    public ExecutorService logisticsReconConfirmPool() {
-        ThreadPoolExecutor service = new ThreadPoolExecutor(8, 16,
-                60L, TimeUnit.SECONDS,
-                new LinkedBlockingQueue<>(20000));
-        // 池满时快速失败，由业务层回写状态 / 记录操作日志，避免 CallerRunsPolicy 阻塞 HTTP 线程
-        service.setRejectedExecutionHandler(new ThreadPoolExecutor.AbortPolicy());
-        return new TraceableExecutorService(service);
-    }
-
     @Bean(name = "tmsLogisticsOrderPool")
     public ExecutorService tmsLogisticsOrderPool() {
         // 1. 先创建原始的 ThreadPoolExecutor

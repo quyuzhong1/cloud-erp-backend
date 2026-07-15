@@ -28,30 +28,31 @@ public class TmsAsyncTaskRecordServiceImplLogisticsReconMatchConflictTest {
     }
 
     @Test
-    public void extractLogisticsReconMatchIdsShouldParsePayloadIds() throws Exception {
+    public void extractLogisticsReconBusinessIdsShouldParsePayloadIds() throws Exception {
         String json = buildEnvelopeJson(Arrays.asList("2077242700333756417", "2077281074952192001"), true);
 
         @SuppressWarnings("unchecked")
-        List<String> ids = (List<String>) invokePrivate("extractLogisticsReconMatchIds",
+        List<String> ids = (List<String>) invokePrivate("extractLogisticsReconBusinessIds",
                 new Class[]{String.class}, json);
 
         assertEquals(Arrays.asList("2077242700333756417", "2077281074952192001"), ids);
     }
 
     @Test
-    public void validateLogisticsReconMatchShouldBlockWhenBusinessIdOverlaps() throws Exception {
+    public void validateLogisticsReconIdShouldBlockWhenBusinessIdOverlaps() throws Exception {
         String requestJson = buildEnvelopeJson(Collections.singletonList("2077242700333756417"), true);
         TmsAsyncTaskRecordEntity runningTask = new TmsAsyncTaskRecordEntity();
         runningTask.setCode("Z280715000035");
         runningTask.setDataJson(buildEnvelopeJson(Collections.singletonList("2077242700333756417"), false));
 
         try {
-            invokePrivate("validateLogisticsReconMatchTaskNotConflict",
-                    new Class[]{String.class, List.class, String.class, String.class},
+            invokePrivate("validateLogisticsReconIdTaskNotConflict",
+                    new Class[]{String.class, List.class, String.class, String.class, String.class},
                     requestJson,
                     Collections.singletonList(runningTask),
                     TmsAsyncTaskRecordBusinessTypeEnum.LOGISTICS_RECON.getCode(),
-                    TmsAsyncTaskMethodTypeEnum.LOGISTICS_RECON_MATCH.getCode());
+                    TmsAsyncTaskMethodTypeEnum.LOGISTICS_RECON_MATCH.getCode(),
+                    "所选对账单正在匹配中，请稍后重试或联系管理员");
             fail("expected ServiceException");
         } catch (ServiceException e) {
             assertTrue(e.getMessage().contains("所选对账单正在匹配中"));
@@ -59,38 +60,41 @@ public class TmsAsyncTaskRecordServiceImplLogisticsReconMatchConflictTest {
     }
 
     @Test
-    public void validateLogisticsReconMatchShouldFailWhenRequestIdsMissing() throws Exception {
+    public void validateLogisticsReconIdShouldFailWhenRequestIdsMissing() throws Exception {
         String requestJson = buildEnvelopeJson(Collections.emptyList(), true);
         TmsAsyncTaskRecordEntity runningTask = new TmsAsyncTaskRecordEntity();
         runningTask.setCode("Z280715000035");
         runningTask.setDataJson(buildEnvelopeJson(Collections.singletonList("2077242700333756417"), false));
 
         try {
-            invokePrivate("validateLogisticsReconMatchTaskNotConflict",
-                    new Class[]{String.class, List.class, String.class, String.class},
+            invokePrivate("validateLogisticsReconIdTaskNotConflict",
+                    new Class[]{String.class, List.class, String.class, String.class, String.class},
                     requestJson,
                     Collections.singletonList(runningTask),
                     TmsAsyncTaskRecordBusinessTypeEnum.LOGISTICS_RECON.getCode(),
-                    TmsAsyncTaskMethodTypeEnum.LOGISTICS_RECON_MATCH.getCode());
+                    TmsAsyncTaskMethodTypeEnum.LOGISTICS_RECON_MATCH.getCode(),
+                    "所选对账单正在匹配中，请稍后重试或联系管理员");
             fail("expected ServiceException");
         } catch (ServiceException e) {
             assertTrue(e.getMessage().contains("任务参数缺少对账单业务id"));
+            assertTrue(e.getMessage().contains("无法创建任务"));
         }
     }
 
     @Test
-    public void validateLogisticsReconMatchShouldAllowWhenBusinessIdsDoNotOverlap() throws Exception {
+    public void validateLogisticsReconIdShouldAllowWhenBusinessIdsDoNotOverlap() throws Exception {
         String requestJson = buildEnvelopeJson(Collections.singletonList("2077281074952192001"), true);
         TmsAsyncTaskRecordEntity runningTask = new TmsAsyncTaskRecordEntity();
         runningTask.setCode("Z280715000035");
         runningTask.setDataJson(buildEnvelopeJson(Collections.singletonList("2077242700333756417"), false));
 
-        invokePrivate("validateLogisticsReconMatchTaskNotConflict",
-                new Class[]{String.class, List.class, String.class, String.class},
+        invokePrivate("validateLogisticsReconIdTaskNotConflict",
+                new Class[]{String.class, List.class, String.class, String.class, String.class},
                 requestJson,
                 Collections.singletonList(runningTask),
                 TmsAsyncTaskRecordBusinessTypeEnum.LOGISTICS_RECON.getCode(),
-                TmsAsyncTaskMethodTypeEnum.LOGISTICS_RECON_MATCH.getCode());
+                TmsAsyncTaskMethodTypeEnum.LOGISTICS_RECON_MATCH.getCode(),
+                "所选对账单正在匹配中，请稍后重试或联系管理员");
     }
 
     private String buildEnvelopeJson(List<String> ids, boolean isConfirm) {

@@ -633,17 +633,97 @@ public class LogisticsReconDetailServiceImpl
 
     @Override
     public List<BatchResultDTO> manualMatch(LogisticsReconDetailDTO.ManualMatchDTO dto) {
-        // 异步：组装入参后提交异步匹配（识别单号 + 物流商，match_type=manual），结果异步写回 detail_sub
-        List<LogisticsReconMatchDTO.SubErpInputDTO> inputs = dto.getItemList().stream().map(item -> {
-            LogisticsReconMatchDTO.SubErpInputDTO input = new LogisticsReconMatchDTO.SubErpInputDTO();
-            input.setDetailSubId(item.getDetailSubId());
-            input.setErpSoCode(item.getErpSoCode());
-            input.setErpPlatformOrderNo(item.getErpPlatformOrderNo());
-            input.setErpTrackNo(item.getErpTrackNo());
-            input.setErpSoDeliveryCode(item.getErpSoDeliveryCode());
-            return input;
-        }).collect(Collectors.toList());
-        return logisticsReconService.submitManualMatch(inputs, LogisticsReconRefMatchTypeEnum.MANUAL.getCode());
+        // 按明细维度入参：展开明细下可匹配费用项（未匹配/匹配失败且未确认），共用同一组 ERP 单号提交异步匹配
+        List<LogisticsReconDetailDTO.ManualMatchItemDTO> itemList = dto.getItemList();
+        List<String> detailIds = itemList.stream()
+                .map(LogisticsReconDetailDTO.ManualMatchItemDTO::getDetailId)
+                .filter(StrUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(detailIds)) {
+            return Collections.emptyList();
+        }
+
+        Map<String, LogisticsReconDetailEntity> detailMap = lambdaQuery()
+                .in(LogisticsReconDetailEntity::getId, detailIds)
+                .list().stream()
+                .collect(Collectors.toMap(LogisticsReconDetailEntity::getId, d -> d, (a, b) -> a));
+
+        Map<String, List<LogisticsReconDetailSubEntity>> eligibleSubsByDetailId =
+                logisticsReconDetailSubService.lambdaQuery()
+                        .in(LogisticsReconDetailSubEntity::getDetailId, detailIds)
+                        .in(LogisticsReconDetailSubEntity::getMatchStatus,
+                                Arrays.asList(
+                                        LogisticsReconDetailMatchStatusEnum.UNMATCHED.getCode(),
+                                        LogisticsReconDetailMatchStatusEnum.FAILED.getCode()))
+                        .list().stream()
+                        .filter(this::canImportMatchSub)
+                        .collect(Collectors.groupingBy(LogisticsReconDetailSubEntity::getDetailId,
+                                LinkedHashMap::new, Collectors.toList()));
+
+        List<BatchResultDTO> results = new ArrayList<>(itemList.size());
+        List<LogisticsReconMatchDTO.SubErpInputDTO> inputs = new ArrayList<>();
+        Map<String, String> subIdToDetailId = new HashMap<>();
+        Set<String> seenDetailIds = new HashSet<>();
+
+        for (LogisticsReconDetailDTO.ManualMatchItemDTO item : itemList) {
+            String detailId = item.getDetailId();
+            if (!seenDetailIds.add(detailId)) {
+                results.add(BatchResultDTO.fail(detailId, detailId, "明细重复提交匹配"));
+                continue;
+            }
+            LogisticsReconDetailEntity detail = detailMap.get(detailId);
+            if (detail == null) {
+                results.add(BatchResultDTO.fail(detailId, detailId, "对账明细不存在"));
+                continue;
+            }
+            List<LogisticsReconDetailSubEntity> eligibleSubs =
+                    eligibleSubsByDetailId.getOrDefault(detailId, Collections.emptyList());
+            if (CollUtil.isEmpty(eligibleSubs)) {
+                results.add(BatchResultDTO.fail(detailId, detailId, "明细下无未匹配的费用项"));
+                continue;
+            }
+            for (LogisticsReconDetailSubEntity sub : eligibleSubs) {
+                LogisticsReconMatchDTO.SubErpInputDTO input = new LogisticsReconMatchDTO.SubErpInputDTO();
+                input.setDetailSubId(sub.getId());
+                input.setErpSoCode(item.getErpSoCode());
+                input.setErpPlatformOrderNo(item.getErpPlatformOrderNo());
+                input.setErpTrackNo(item.getErpTrackNo());
+                input.setErpSoDeliveryCode(item.getErpSoDeliveryCode());
+                inputs.add(input);
+                subIdToDetailId.put(sub.getId(), detailId);
+            }
+        }
+
+        if (CollUtil.isEmpty(inputs)) {
+            return results;
+        }
+
+        List<BatchResultDTO> submitResults =
+                logisticsReconService.submitManualMatch(inputs, LogisticsReconRefMatchTypeEnum.MANUAL.getCode());
+        // 费用项提交结果聚合回明细维度（同一明细下任一费用项失败则明细失败）
+        Map<String, List<BatchResultDTO>> submitByDetailId = new LinkedHashMap<>();
+        for (BatchResultDTO submitResult : submitResults) {
+            String detailId = subIdToDetailId.get(submitResult.getId());
+            if (StrUtil.isBlank(detailId)) {
+                continue;
+            }
+            submitByDetailId.computeIfAbsent(detailId, key -> new ArrayList<>()).add(submitResult);
+        }
+        for (Map.Entry<String, List<BatchResultDTO>> entry : submitByDetailId.entrySet()) {
+            String detailId = entry.getKey();
+            List<BatchResultDTO> detailResults = entry.getValue();
+            BatchResultDTO firstFail = detailResults.stream()
+                    .filter(r -> !Boolean.TRUE.equals(r.getSuccess()))
+                    .findFirst()
+                    .orElse(null);
+            if (firstFail != null) {
+                results.add(BatchResultDTO.fail(detailId, detailId, firstFail.getMsg()));
+            } else {
+                results.add(BatchResultDTO.success(detailId, detailId, "已提交匹配，请稍后查看匹配结果"));
+            }
+        }
+        return results;
     }
 
     /**

@@ -133,11 +133,30 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
             .list();
 
         if (CollUtil.isNotEmpty(runningTasks)) {
-            if (TmsAsyncTaskMethodTypeEnum.LOGISTICS_RECON_MATCH.getCode().equals(methodType)) {
-                validateLogisticsReconMatchTaskNotConflict(compactJson, runningTasks, businessType, methodType);
+            if (isLogisticsReconIdBasedMethod(methodType)) {
+                validateLogisticsReconIdTaskNotConflict(compactJson, runningTasks, businessType, methodType,
+                        resolveLogisticsReconConflictMessage(methodType));
             } else {
                 // 仅头程/小包费用分摊防重维度需要不同月份
                 validateManualTaskReportDateNotConflict(compactJson, runningTasks, businessType, methodType);
+            }
+        }
+        // 对账单匹配 / 账单确认：跨方法按业务 id 互斥，避免同单同时跑匹配与确认
+        if (isLogisticsReconIdBasedMethod(methodType)) {
+            String crossMethodType = resolveLogisticsReconCrossMethodType(methodType);
+            if (StringUtils.isNotBlank(crossMethodType)) {
+                List<TmsAsyncTaskRecordEntity> crossRunningTasks = lambdaQuery()
+                        .eq(TmsAsyncTaskRecordEntity::getExecType, TmsAsyncTaskRecordExecTypeEnum.MANUAL.getCode())
+                        .eq(TmsAsyncTaskRecordEntity::getBusinessType, businessType)
+                        .eq(TmsAsyncTaskRecordEntity::getMethodType, crossMethodType)
+                        .in(TmsAsyncTaskRecordEntity::getStatus, Arrays.asList(
+                                TmsAsyncTaskRecordStatusEnum.ING.getCode(),
+                                TmsAsyncTaskRecordStatusEnum.PENDING.getCode()))
+                        .list();
+                if (CollUtil.isNotEmpty(crossRunningTasks)) {
+                    validateLogisticsReconIdTaskNotConflict(compactJson, crossRunningTasks, businessType, methodType,
+                            resolveLogisticsReconConflictMessage(crossMethodType));
+                }
             }
         }
 
@@ -173,29 +192,70 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
     }
 
     /**
-     * 物流商对账单合并匹配：仅当本次勾选的对账单 id 与进行中任务 payload 内 id 有交集时拦截。
+     * 物流商对账单（匹配 / 账单确认）创建任务防重：
+     * 仅当本次勾选的对账单 id 与进行中任务 payload 内 id 有交集时拦截。
+     *
+     * @param compactJson     本次任务信封 JSON
+     * @param runningTasks    进行中（PENDING/ING）的同类或跨方法任务
+     * @param businessType    业务类型（日志用）
+     * @param methodType      当前创建的方法类型（日志用）
+     * @param conflictMessage 命中交集时抛出的提示文案
      */
-    private void validateLogisticsReconMatchTaskNotConflict(String compactJson,
-                                                            List<TmsAsyncTaskRecordEntity> runningTasks,
-                                                            String businessType,
-                                                            String methodType) {
-        List<String> requestIds = extractLogisticsReconMatchIds(compactJson);
+    private void validateLogisticsReconIdTaskNotConflict(String compactJson,
+                                                         List<TmsAsyncTaskRecordEntity> runningTasks,
+                                                         String businessType,
+                                                         String methodType,
+                                                         String conflictMessage) {
+        List<String> requestIds = extractLogisticsReconBusinessIds(compactJson);
         if (CollUtil.isEmpty(requestIds)) {
-            log.warn("物流商对账单匹配任务无法提取业务id，businessType: {}, methodType: {}", businessType, methodType);
-            throw new ServiceException("任务参数缺少对账单业务id，无法创建匹配任务");
+            log.warn("物流商对账单任务无法提取业务id，businessType: {}, methodType: {}", businessType, methodType);
+            throw new ServiceException("任务参数缺少对账单业务id，无法创建任务");
         }
         for (TmsAsyncTaskRecordEntity runningTask : runningTasks) {
-            List<String> runningIds = extractLogisticsReconMatchIds(runningTask.getDataJson());
+            List<String> runningIds = extractLogisticsReconBusinessIds(runningTask.getDataJson());
             if (CollUtil.isEmpty(runningIds)) {
                 continue;
             }
             boolean conflict = requestIds.stream().anyMatch(runningIds::contains);
             if (conflict) {
-                log.warn("物流商对账单匹配任务业务id冲突，businessType: {}, methodType: {}, requestIds: {}, 进行中任务 code: {}",
+                log.warn("物流商对账单任务业务id冲突，businessType: {}, methodType: {}, requestIds: {}, 进行中任务 code: {}",
                         businessType, methodType, requestIds, runningTask.getCode());
-                throw new ServiceException("所选对账单正在匹配中，请稍后重试或联系管理员");
+                throw new ServiceException(conflictMessage);
             }
         }
+    }
+
+    /**
+     * 是否为按对账单主单 id 做防重的物流商对账异步方法（合并匹配 / 账单确认）。
+     */
+    private boolean isLogisticsReconIdBasedMethod(String methodType) {
+        return TmsAsyncTaskMethodTypeEnum.LOGISTICS_RECON_MATCH.getCode().equals(methodType)
+                || TmsAsyncTaskMethodTypeEnum.LOGISTICS_RECON_CONFIRM_BILL.getCode().equals(methodType);
+    }
+
+    /**
+     * 解析与当前方法互斥的对账异步方法类型（匹配 ↔ 账单确认）。
+     *
+     * @return 对端 methodType；非对账 id 防重方法返回 null
+     */
+    private String resolveLogisticsReconCrossMethodType(String methodType) {
+        if (TmsAsyncTaskMethodTypeEnum.LOGISTICS_RECON_MATCH.getCode().equals(methodType)) {
+            return TmsAsyncTaskMethodTypeEnum.LOGISTICS_RECON_CONFIRM_BILL.getCode();
+        }
+        if (TmsAsyncTaskMethodTypeEnum.LOGISTICS_RECON_CONFIRM_BILL.getCode().equals(methodType)) {
+            return TmsAsyncTaskMethodTypeEnum.LOGISTICS_RECON_MATCH.getCode();
+        }
+        return null;
+    }
+
+    /**
+     * 按「进行中任务」的方法类型生成防重冲突提示（匹配中 / 账单确认中）。
+     */
+    private String resolveLogisticsReconConflictMessage(String runningMethodType) {
+        if (TmsAsyncTaskMethodTypeEnum.LOGISTICS_RECON_CONFIRM_BILL.getCode().equals(runningMethodType)) {
+            return "所选对账单正在账单确认中，请稍后重试或联系管理员";
+        }
+        return "所选对账单正在匹配中，请稍后重试或联系管理员";
     }
 
     /**
@@ -222,19 +282,38 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
     }
 
     /**
-     * 解析物流商对账单合并匹配 payload 中的对账单主单 id。
+     * 从任务信封解析物流商对账单业务主单 id（匹配 / 账单确认 payload 均含 ids）。
+     * <p>按 envelope.methodType 选择对应 Payload 类型反序列化。</p>
+     *
+     * @param json 任务 dataJson（TaskEnvelope）
+     * @return 去空白、去重后的对账单 id；无法解析时返回空列表
      */
-    private List<String> extractLogisticsReconMatchIds(String json) {
+    private List<String> extractLogisticsReconBusinessIds(String json) {
         TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope = parseEnvelope(json);
         if (envelope == null) {
             return Collections.emptyList();
         }
-        TmsAsyncTaskRecordDTO.LogisticsReconMatchPayloadDTO payload =
+        if (TmsAsyncTaskMethodTypeEnum.LOGISTICS_RECON_CONFIRM_BILL.getCode().equals(envelope.getMethodType())) {
+            TmsAsyncTaskRecordDTO.LogisticsReconConfirmBillPayloadDTO confirmPayload =
+                    parseEnvelopePayload(envelope, TmsAsyncTaskRecordDTO.LogisticsReconConfirmBillPayloadDTO.class);
+            if (confirmPayload == null || CollUtil.isEmpty(confirmPayload.getIds())) {
+                return Collections.emptyList();
+            }
+            return normalizeBusinessIds(confirmPayload.getIds());
+        }
+        TmsAsyncTaskRecordDTO.LogisticsReconMatchPayloadDTO matchPayload =
                 parseEnvelopePayload(envelope, TmsAsyncTaskRecordDTO.LogisticsReconMatchPayloadDTO.class);
-        if (payload == null || CollUtil.isEmpty(payload.getIds())) {
+        if (matchPayload == null || CollUtil.isEmpty(matchPayload.getIds())) {
             return Collections.emptyList();
         }
-        return payload.getIds().stream()
+        return normalizeBusinessIds(matchPayload.getIds());
+    }
+
+    /**
+     * 规范化业务 id 列表：去空白、trim、去重（保持首次出现顺序）。
+     */
+    private List<String> normalizeBusinessIds(List<String> ids) {
+        return ids.stream()
                 .filter(StringUtils::isNotBlank)
                 .map(String::trim)
                 .distinct()

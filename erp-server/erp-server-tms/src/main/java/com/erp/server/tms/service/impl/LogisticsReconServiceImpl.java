@@ -87,6 +87,7 @@ import com.erp.server.tms.service.LogisticsReconService;
 import com.erp.server.tms.service.TmsAsyncTaskDetailService;
 import com.erp.server.tms.service.TmsAsyncTaskRecordService;
 import com.erp.server.tms.service.support.TmsAsyncTaskBatchConsumerSupport;
+import com.erp.server.tms.handler.asynctask.LogisticsReconConfirmBillBatchPushHandler;
 import com.erp.server.tms.handler.asynctask.LogisticsReconMatchBatchPushHandler;
 import com.erp.server.tms.constant.LogisticsCostImportTargetFieldConstant;
 import com.erp.server.tms.util.LogisticsCostImportRowValueHelper;
@@ -203,13 +204,6 @@ public class LogisticsReconServiceImpl
     @Qualifier("logisticsReconMatchPool")
     private java.util.concurrent.ExecutorService logisticsReconMatchPool;
 
-    /**
-     * 账单确认异步线程池（与合并匹配池隔离，避免大批量匹配与账单确认互相抢占线程）
-     */
-    @Resource
-    @Qualifier("logisticsReconConfirmPool")
-    private java.util.concurrent.ExecutorService logisticsReconConfirmPool;
-
     @Resource
     private RedissonClient redissonClient;
 
@@ -224,6 +218,10 @@ public class LogisticsReconServiceImpl
 
     @Resource
     private LogisticsReconMatchBatchPushHandler logisticsReconMatchBatchPushHandler;
+
+    /** 账单确认异步任务分批执行策略 */
+    @Resource
+    private LogisticsReconConfirmBillBatchPushHandler logisticsReconConfirmBillBatchPushHandler;
 
 
     @Override
@@ -3185,17 +3183,23 @@ public class LogisticsReconServiceImpl
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE);
     }
 
+    /**
+     * 批量提交账单确认异步任务：按主单 id 轻校验后派发 TmsAsyncTask，立即返回。
+     * <p>实际确认在 MQ 消费侧分批执行 {@link #confirmBill}，进度见异步任务列表。</p>
+     */
     @Override
     public List<BatchResultDTO> submitConfirmBillAsync(List<String> ids, String reconciliationStatus,
                                                        LocalDateTime confirmTime) {
+        // 异步：HTTP 仅做主单快速校验，通过后统一落 TmsAsyncTaskRecord 并 MQ 派发，
+        // 确认执行全部在异步任务框架内完成，进度/完成情况可在异步任务列表追踪。
         if (!ReconciliationStatusEnum.TO_BE_CONFIRM.getCode().equals(reconciliationStatus)
                 && !ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus)) {
             throw new ServiceException(ApiError.LOGISTICS_RECON_RECONCILIATION_STATUS_INVALID);
         }
-        LoginUser user = UserContext.getLoginUser();
+        List<BatchResultDTO> results = new ArrayList<>();
+        List<String> validIds = new ArrayList<>();
         List<String> mainIds = ids == null ? Collections.emptyList()
                 : ids.stream().filter(StrUtil::isNotBlank).distinct().collect(Collectors.toList());
-        List<BatchResultDTO> results = new ArrayList<>(mainIds.size());
         for (String mainId : mainIds) {
             try {
                 LogisticsReconEntity entity = super.getByIdOpt(mainId)
@@ -3203,36 +3207,102 @@ public class LogisticsReconServiceImpl
                 if (!LogisticsReconCheckStatusEnum.CONFIRMED.getCode().equals(entity.getCheckStatus())) {
                     throw new ServiceException(ApiError.LOGISTICS_RECON_ONLY_CONFIRMED_ALLOW_BILL_CONFIRM);
                 }
-                try {
-                    logisticsReconConfirmPool.submit(() -> asyncConfirmBill(mainId, reconciliationStatus, confirmTime, user));
-                } catch (RejectedExecutionException e) {
-                    log.warn("[submitConfirmBillAsync] 线程池已满 mainId={}", mainId, e);
-                    results.add(BatchResultDTO.fail(entity.getId(), entity.getCode(),
-                            ApiError.LOGISTICS_RECON_MATCH_POOL_BUSY.getMsg()));
-                    continue;
-                }
-                results.add(BatchResultDTO.success(entity.getId(), entity.getCode(),
-                        "已提交账单确认，请稍后查看对账状态"));
+                validIds.add(mainId);
             } catch (Exception e) {
-                log.error("[submitConfirmBillAsync] 提交失败 mainId={}", mainId, e);
+                log.error("[submitConfirmBillAsync] 校验失败 mainId={}", mainId, e);
                 results.add(BatchResultDTO.fail(mainId, mainId, e.getMessage()));
+            }
+        }
+        if (CollUtil.isNotEmpty(validIds)) {
+            try {
+                String businessType = TmsAsyncTaskRecordBusinessTypeEnum.LOGISTICS_RECON.getCode();
+                String methodType = TmsAsyncTaskMethodTypeEnum.LOGISTICS_RECON_CONFIRM_BILL.getCode();
+                TmsAsyncTaskRecordDTO.LogisticsReconConfirmBillPayloadDTO payload =
+                        new TmsAsyncTaskRecordDTO.LogisticsReconConfirmBillPayloadDTO(
+                                validIds, reconciliationStatus, confirmTime);
+                TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope =
+                        tmsAsyncTaskRecordService.buildEnvelope(businessType, methodType, null, null, payload);
+                BatchResultDTO dispatchResult = tmsAsyncTaskRecordService.dispatchManualEnvelopeTask(
+                        businessType, methodType, validIds.size(), envelope,
+                        "物流商对账单账单确认异步任务派发成功，taskId: {}, 预计处理数据量: {}");
+                String taskId = dispatchResult.getId();
+                String taskCode = dispatchResult.getCode();
+                String successMsg = StrUtil.format("已提交账单确认，任务编号【{}】，请在异步任务列表查看进度", taskCode);
+                for (String mainId : validIds) {
+                    LogisticsReconEntity entity = super.getByIdOpt(mainId).orElse(null);
+                    String code = entity != null ? entity.getCode() : mainId;
+                    results.add(BatchResultDTO.success(taskId, code, successMsg));
+                }
+            } catch (Exception e) {
+                log.error("[submitConfirmBillAsync] 派发异步任务失败 ids={}", validIds, e);
+                for (String mainId : validIds) {
+                    results.add(BatchResultDTO.fail(mainId, mainId, e.getMessage()));
+                }
             }
         }
         return results;
     }
 
     /**
-     * 后台执行账单确认：设置用户上下文后走带分布式锁的 confirmBill，失败仅记录日志（结果以对账状态为准）。
+     * 消费账单确认异步任务（MQ 入口），委托分批框架执行。
      */
-    private void asyncConfirmBill(String mainId, String reconciliationStatus, LocalDateTime confirmTime, LoginUser user) {
+    @Override
+    public void pushConfirmBill(TmsAsyncTaskRecordEntity taskRecord) {
+        tmsAsyncTaskBatchConsumerSupport.execute(taskRecord, logisticsReconConfirmBillBatchPushHandler);
+    }
+
+    /**
+     * 分批执行账单确认：逐主单调用 {@link #confirmBill}，并落 TmsAsyncTaskDetail 成功/失败明细。
+     *
+     * @param taskId               异步主任务 id
+     * @param batchIds             本批对账单主单 id
+     * @param reconciliationStatus 目标对账状态（toBeConfirm / confirmed）
+     * @param confirmTime          确认时间（confirmed 时有效）
+     * @param operatorUser         任务操作人（写操作日志等）
+     * @return 本批成功/失败计数
+     */
+    @Override
+    public TmsAsyncTaskRecordDTO.BatchProcessResult processConfirmBillBatch(String taskId, List<String> batchIds,
+                                                                            String reconciliationStatus,
+                                                                            LocalDateTime confirmTime,
+                                                                            LoginUser operatorUser) {
+        int success = 0;
+        int failed = 0;
         LoginUser prev = UserContext.getLoginUser();
         try {
-            UserContext.setLoginUser(user);
-            self.confirmBill(mainId, reconciliationStatus, confirmTime);
-        } catch (Exception e) {
-            log.error("[asyncConfirmBill] 账单确认失败 mainId={}", mainId, e);
-            // 异步无法回传前端，失败落对账单操作日志（前端「操作日志」页可查），confirmBill 幂等可重跑
-            recordConfirmBillFailureLog(mainId, reconciliationStatus, e);
+            UserContext.setLoginUser(operatorUser);
+            for (String mainId : batchIds) {
+                TmsAsyncTaskDetailEntity detail = new TmsAsyncTaskDetailEntity();
+                detail.setMainId(taskId);
+                detail.setBusinessId(mainId);
+                detail.setBusinessType(TmsAsyncTaskRecordBusinessTypeEnum.LOGISTICS_RECON.getCode());
+                detail.setStartTime(LocalDateTime.now());
+                LogisticsReconEntity entity = super.getByIdOpt(mainId).orElse(null);
+                if (entity != null) {
+                    detail.setBusinessCode(entity.getCode());
+                }
+                String failReason = null;
+                try {
+                    self.confirmBill(mainId, reconciliationStatus, confirmTime);
+                } catch (Exception e) {
+                    failReason = BatchResultDTO.resolveFailMsg(e);
+                    log.error("[processConfirmBillBatch] 账单确认失败 taskId={} mainId={}", taskId, mainId, e);
+                }
+                detail.setEndTime(LocalDateTime.now());
+                if (failReason == null) {
+                    detail.setStatus(TmsAsyncTaskRecordStatusEnum.FINISH.getCode());
+                    success++;
+                } else {
+                    detail.setStatus(TmsAsyncTaskRecordStatusEnum.FAILED.getCode());
+                    detail.setErrorData(StrUtil.sub(failReason, 0, 490));
+                    failed++;
+                }
+                try {
+                    tmsAsyncTaskDetailService.save(detail);
+                } catch (Exception e) {
+                    log.error("[processConfirmBillBatch] 保存任务明细失败 taskId={} mainId={}", taskId, mainId, e);
+                }
+            }
         } finally {
             if (prev != null) {
                 UserContext.setLoginUser(prev);
@@ -3240,20 +3310,7 @@ public class LogisticsReconServiceImpl
                 UserContext.clear();
             }
         }
-    }
-
-    /**
-     * 异步账单确认失败时写对账单操作日志，便于用户在「操作日志」页感知（幂等，可重新发起确认续跑）。
-     */
-    private void recordConfirmBillFailureLog(String mainId, String reconciliationStatus, Exception e) {
-        try {
-            String failMsg = StrUtil.format("账单确认（目标状态【{}】）执行失败：{}，部分批次可能已确认，请重新发起确认续跑",
-                    ReconciliationStatusEnum.getName(reconciliationStatus),
-                    e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage());
-            operateLogService.addModuleOperateLog(failMsg, null, mainId, "账单确认");
-        } catch (Exception ex) {
-            log.error("[asyncConfirmBill] 写失败操作日志异常 mainId={}", mainId, ex);
-        }
+        return new TmsAsyncTaskRecordDTO.BatchProcessResult(success, failed);
     }
 
     @DistributeLocker(businessType = DistributeKeyConstant.TMS_LOGISTICS_RECON_KEY, keyName = "dto.mainId", unlockAfterTx = true)
