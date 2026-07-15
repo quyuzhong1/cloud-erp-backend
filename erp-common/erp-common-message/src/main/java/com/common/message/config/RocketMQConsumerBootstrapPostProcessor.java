@@ -67,8 +67,25 @@ public class RocketMQConsumerBootstrapPostProcessor
     }
 
     boolean isConsumerEnabled() {
-        return environment == null
-                || environment.getProperty(CONSUMER_ENABLED_PROPERTY, Boolean.class, Boolean.TRUE);
+        if (environment == null) {
+            return true;
+        }
+
+        String configuredValue = environment.getProperty(CONSUMER_ENABLED_PROPERTY);
+        if (configuredValue == null || configuredValue.trim().isEmpty()) {
+            return true;
+        }
+        if ("true".equalsIgnoreCase(configuredValue.trim())) {
+            return true;
+        }
+        if ("false".equalsIgnoreCase(configuredValue.trim())) {
+            return false;
+        }
+
+        // A malformed release value must not crash the whole service or start duplicate consumers.
+        LOGGER.error("Invalid {} value '{}'; RocketMQ consumers will remain disabled",
+                CONSUMER_ENABLED_PROPERTY, configuredValue);
+        return false;
     }
 
     private boolean isListenerContainerConfiguration(BeanDefinition beanDefinition) {
