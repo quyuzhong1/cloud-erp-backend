@@ -1972,6 +1972,8 @@ public class LogisticsReconServiceImpl
         Map<String, TmsAsyncTaskDetailEntity> detailMap = new LinkedHashMap<>();
         int success = 0;
         int failed = 0;
+        // 只允许当前 worker 回写自己认领的明细，避免覆盖其他 worker 的 ING 状态。
+        Set<String> taskDetailsClaimedByCurrentWorker = new LinkedHashSet<>();
         // 已置 MATCHING 的费用项：外层异常或“匹配未完成”时必须回写，避免永久卡在 matching
         List<String> feeItemsClaimedMatching = new ArrayList<>();
         RLock lock = redissonClient.getLock(buildReconMainLockKey(mainId));
@@ -1981,7 +1983,7 @@ public class LogisticsReconServiceImpl
             locked = tryLockReconMain(lock, mainId, "processMatchBatch");
             if (!locked) {
                 // 锁外仅处理本批种子明细，避免未持锁扩组误伤同组其它 PENDING
-                detailMap.putAll(loadOrCreateTaskDetails(taskId, businessType, seedSubIds));
+                detailMap.putAll(loadOrCreateTaskDetails(taskId, businessType, mainId, seedSubIds));
                 for (String subId : seedSubIds) {
                     TmsAsyncTaskDetailEntity detail = detailMap.get(subId);
                     if (detail == null || isTaskDetailTerminal(detail.getStatus())) {
@@ -1996,23 +1998,26 @@ public class LogisticsReconServiceImpl
             // ① 锁内扩组：保证与同步匹配互斥后再凑齐同识别组 PENDING
             List<String> expandedSubIds = expandTaskPendingSubIdsByIdentifyGroup(
                     taskId, mainId, seedSubIds, uniqueKeyList);
-            detailMap.putAll(loadOrCreateTaskDetails(taskId, businessType, expandedSubIds));
+            detailMap.putAll(loadOrCreateTaskDetails(taskId, businessType, mainId, expandedSubIds));
+            Map<String, String> groupKeyMap = buildSubIdGroupKeyMap(mainId, expandedSubIds, uniqueKeyList);
             // ② 扩组后按识别组打包，避免单次匹配体量过大
             List<List<String>> chunks = packSubIdsByIdentifyGroup(
-                    mainId, expandedSubIds, MATCH_CHUNK_SIZE, uniqueKeyList);
+                    mainId, expandedSubIds, MATCH_CHUNK_SIZE, uniqueKeyList, groupKeyMap);
             LogisticsReconEntity entity = super.getByIdOpt(mainId)
                     .orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, DOC_NAME));
             LogisticsReconMatchDTO.ReconMatchPreloadDTO preload = buildReconMatchPreload(entity);
             for (List<String> chunkSubIds : chunks) {
                 int[] chunkResult = processMatchBatchChunk(taskId, mainId, chunkSubIds, isConfirm, preload,
-                        uniqueKeyList, detailMap, feeItemsClaimedMatching);
+                        uniqueKeyList, groupKeyMap, detailMap, feeItemsClaimedMatching,
+                        taskDetailsClaimedByCurrentWorker);
                 success += chunkResult[0];
                 failed += chunkResult[1];
             }
         } catch (Exception e) {
             log.error("[processMatchBatch] 批次异常 taskId={} mainId={}", taskId, mainId, e);
             String reason = LogisticsReconMatchFailReasonSupport.resolve(e);
-            int[] settled = settleMatchTaskDetailsAfterException(mainId, detailMap, feeItemsClaimedMatching, reason);
+            int[] settled = settleMatchTaskDetailsAfterException(mainId, detailMap, feeItemsClaimedMatching,
+                    taskDetailsClaimedByCurrentWorker, reason);
             success += settled[0];
             failed += settled[1];
         } finally {
@@ -2043,8 +2048,10 @@ public class LogisticsReconServiceImpl
                                          boolean isConfirm,
                                          LogisticsReconMatchDTO.ReconMatchPreloadDTO preload,
                                          List<CfgLogisticsCostImportDetailEntity> uniqueKeyList,
+                                         Map<String, String> groupKeyMap,
                                          Map<String, TmsAsyncTaskDetailEntity> detailMap,
-                                         List<String> feeItemsClaimedMatching) {
+                                         List<String> feeItemsClaimedMatching,
+                                         Set<String> taskDetailsClaimedByCurrentWorker) {
         int success = 0;
         int failed = 0;
         if (CollUtil.isEmpty(chunkSubIds)) {
@@ -2060,6 +2067,10 @@ public class LogisticsReconServiceImpl
                 continue;
             }
             claimedDetails.add(detail);
+            if (taskDetailsClaimedByCurrentWorker != null
+                    && StrUtil.isNotBlank(detail.getBusinessId())) {
+                taskDetailsClaimedByCurrentWorker.add(detail.getBusinessId());
+            }
         }
         if (CollUtil.isEmpty(claimedDetails)) {
             return new int[]{success, failed};
@@ -2075,7 +2086,7 @@ public class LogisticsReconServiceImpl
         List<String> incompleteSubIds = new ArrayList<>();
         // 以分包内费用项为期望全集（排除任务明细已 FINISH），避免同组其它成员认领失败时半组匹配
         List<String> executableSubIds = filterCompleteIdentifyGroups(
-                mainId, chunkSubIds, claimedSet, uniqueKeyList, detailMap, incompleteSubIds);
+                mainId, chunkSubIds, claimedSet, uniqueKeyList, groupKeyMap, detailMap, incompleteSubIds);
         if (CollUtil.isNotEmpty(incompleteSubIds)) {
             String incompleteReason = "识别组未完整认领，已跳过避免费用覆盖";
             List<String> revertMatchingIds = incompleteSubIds.stream()
@@ -2087,7 +2098,10 @@ public class LogisticsReconServiceImpl
             }
             for (String subId : incompleteSubIds) {
                 TmsAsyncTaskDetailEntity detail = detailMap.get(subId);
-                if (detail != null && !isTaskDetailTerminal(detail.getStatus())) {
+                if (detail != null
+                        && taskDetailsClaimedByCurrentWorker != null
+                        && taskDetailsClaimedByCurrentWorker.contains(subId)
+                        && !isTaskDetailTerminal(detail.getStatus())) {
                     finishTaskDetail(detail, false, incompleteReason);
                     failed++;
                 }
@@ -2456,6 +2470,7 @@ public class LogisticsReconServiceImpl
                                                       List<String> expectedSubIds,
                                                       Set<String> claimedSubIds,
                                                       List<CfgLogisticsCostImportDetailEntity> uniqueKeyList,
+                                                      Map<String, String> precomputedGroupKeyMap,
                                                       Map<String, TmsAsyncTaskDetailEntity> detailMap,
                                                       List<String> incompleteSubIdsOut) {
         if (CollUtil.isEmpty(expectedSubIds)) {
@@ -2465,7 +2480,9 @@ public class LogisticsReconServiceImpl
         if (CollUtil.isEmpty(uniqueKeyList)) {
             return expectedSubIds.stream().filter(claimedSet::contains).collect(Collectors.toList());
         }
-        Map<String, String> groupKeyMap = buildSubIdGroupKeyMap(mainId, expectedSubIds, uniqueKeyList);
+        Map<String, String> groupKeyMap = precomputedGroupKeyMap == null
+                ? buildSubIdGroupKeyMap(mainId, expectedSubIds, uniqueKeyList)
+                : precomputedGroupKeyMap;
         Map<String, List<String>> byGroupKey = new LinkedHashMap<>();
         for (String subId : expectedSubIds) {
             String groupKey = StrUtil.blankToDefault(groupKeyMap.get(subId), subId);
@@ -2501,6 +2518,14 @@ public class LogisticsReconServiceImpl
                                                          List<String> subIds,
                                                          int maxChunkSize,
                                                          List<CfgLogisticsCostImportDetailEntity> uniqueKeyList) {
+        return packSubIdsByIdentifyGroup(mainId, subIds, maxChunkSize, uniqueKeyList, null);
+    }
+
+    private List<List<String>> packSubIdsByIdentifyGroup(String mainId,
+                                                         List<String> subIds,
+                                                         int maxChunkSize,
+                                                         List<CfgLogisticsCostImportDetailEntity> uniqueKeyList,
+                                                         Map<String, String> precomputedGroupKeyMap) {
         if (CollUtil.isEmpty(subIds)) {
             return Collections.emptyList();
         }
@@ -2512,7 +2537,9 @@ public class LogisticsReconServiceImpl
             }
             return plainChunks;
         }
-        Map<String, String> subIdGroupKeyMap = buildSubIdGroupKeyMap(mainId, subIds, uniqueKeyList);
+        Map<String, String> subIdGroupKeyMap = precomputedGroupKeyMap == null
+                ? buildSubIdGroupKeyMap(mainId, subIds, uniqueKeyList)
+                : precomputedGroupKeyMap;
         Map<String, List<String>> inputsByGroupKey = new LinkedHashMap<>();
         for (String subId : subIds) {
             String groupKey = StrUtil.blankToDefault(subIdGroupKeyMap.get(subId), subId);
@@ -3385,6 +3412,7 @@ public class LogisticsReconServiceImpl
         List<LogisticsReconRefLogisticsBillEntity> refList = new ArrayList<>();
         List<String> matchedSubIds = new ArrayList<>();
         List<String> successWithoutRefSubIds = new ArrayList<>();
+        Map<String, List<String>> failedSubIdsByReason = new LinkedHashMap<>();
         for (Map.Entry<String, List<LogisticsReconDetailSubEntity>> entry : rowKeyToSubs.entrySet()) {
             String rowKey = entry.getKey();
             String detailId = rowKeyToDetailId.get(rowKey);
@@ -3394,10 +3422,10 @@ public class LogisticsReconServiceImpl
                 continue;
             }
             if (!result.isSuccess()) {
-                logisticsReconDetailSubService.batchUpdateMatchStatus(
-                        subs.stream().map(LogisticsReconDetailSubEntity::getId).collect(Collectors.toList()),
-                        LogisticsReconDetailMatchStatusEnum.FAILED.getCode(), result.getFailReason(),
-                        MATCHING_FROM_STATUS);
+                String reason = StrUtil.blankToDefault(result.getFailReason(), "匹配失败");
+                failedSubIdsByReason.computeIfAbsent(reason, key -> new ArrayList<>()).addAll(
+                        subs.stream().map(LogisticsReconDetailSubEntity::getId)
+                                .filter(StrUtil::isNotBlank).collect(Collectors.toList()));
                 continue;
             }
             for (LogisticsReconDetailSubEntity sub : subs) {
@@ -3426,6 +3454,11 @@ public class LogisticsReconServiceImpl
                     successWithoutRefSubIds.add(sub.getId());
                 }
             }
+        }
+        for (Map.Entry<String, List<String>> failedEntry : failedSubIdsByReason.entrySet()) {
+            logisticsReconDetailSubService.batchUpdateMatchStatus(
+                    failedEntry.getValue(), LogisticsReconDetailMatchStatusEnum.FAILED.getCode(),
+                    failedEntry.getKey(), MATCHING_FROM_STATUS);
         }
         if (CollUtil.isNotEmpty(successWithoutRefSubIds)) {
             logisticsReconDetailSubService.batchUpdateMatchStatus(successWithoutRefSubIds,
@@ -3771,7 +3804,7 @@ public class LogisticsReconServiceImpl
                 Set<String> eligibleSubIds = scanResult.affectedSubIds;
                 BatchResultDTO dispatchResult = createLogisticsReconTaskWithDetails(
                         businessType, methodType, payload, eligibleSubIds.size(),
-                        (taskId, bt) -> saveConfirmableTaskDetails(taskId, bt, eligibleSubIds),
+                        (taskId, bt) -> saveConfirmableTaskDetails(taskId, bt, mainId, eligibleSubIds),
                         "物流商对账单账单确认异步任务派发成功，taskId: {}, 预计处理数据量: {}");
                 String successMsg = StrUtil.format("已提交账单确认，任务编号【{}】，请在异步任务列表查看进度",
                         dispatchResult.getCode());
@@ -3810,7 +3843,7 @@ public class LogisticsReconServiceImpl
             return new TmsAsyncTaskRecordDTO.BatchProcessResult(0, 0);
         }
         String businessType = TmsAsyncTaskRecordBusinessTypeEnum.LOGISTICS_RECON.getCode();
-        Map<String, TmsAsyncTaskDetailEntity> detailMap = loadOrCreateTaskDetails(taskId, businessType, subIds);
+        Map<String, TmsAsyncTaskDetailEntity> detailMap = loadOrCreateTaskDetails(taskId, businessType, mainId, subIds);
         int success = 0;
         int failed = 0;
         RLock lock = redissonClient.getLock(buildReconMainLockKey(mainId));
@@ -4008,9 +4041,14 @@ public class LogisticsReconServiceImpl
         int written = 0;
         String lastId = null;
         LocalDateTime now = LocalDateTime.now();
+        List<String> identifyFields = loadUniqueKeyListByMainId(mainId).stream()
+                .map(CfgLogisticsCostImportDetailEntity::getTargetField)
+                .filter(StrUtil::isNotBlank)
+                .collect(Collectors.toList());
         while (true) {
             LambdaQueryChainWrapper<LogisticsReconDetailSubEntity> query = logisticsReconDetailSubService.lambdaQuery()
                     .select(LogisticsReconDetailSubEntity::getId,
+                            LogisticsReconDetailSubEntity::getDetailId,
                             LogisticsReconDetailSubEntity::getCostName,
                             LogisticsReconDetailSubEntity::getCfgCostName)
                     .eq(LogisticsReconDetailSubEntity::getMainId, mainId)
@@ -4026,11 +4064,13 @@ public class LogisticsReconServiceImpl
             if (CollUtil.isEmpty(batch)) {
                 break;
             }
+            Map<String, LogisticsReconDetailEntity> detailMap = loadReconDetailMap(batch.stream()
+                    .map(LogisticsReconDetailSubEntity::getDetailId)
+                    .collect(Collectors.toList()));
             List<TmsAsyncTaskDetailEntity> details = new ArrayList<>(batch.size());
             for (LogisticsReconDetailSubEntity sub : batch) {
                 details.add(buildPendingTaskDetail(taskId, businessType, sub.getId(),
-                        StrUtil.blankToDefault(sub.getCfgCostName(),
-                                StrUtil.blankToDefault(sub.getCostName(), sub.getId())), now));
+                        buildReconTaskBusinessCode(detailMap.get(sub.getDetailId()), sub, identifyFields), now));
             }
             tmsAsyncTaskDetailService.saveBatchInChunks(details, MATCH_ID_BATCH_SIZE);
             written += details.size();
@@ -4042,7 +4082,8 @@ public class LogisticsReconServiceImpl
     /**
      * 按费用项 id 分片写入可确认任务明细，避免全量 Entity List 常驻。
      */
-    private int saveConfirmableTaskDetails(String taskId, String businessType, Collection<String> subIds) {
+    private int saveConfirmableTaskDetails(String taskId, String businessType, String mainId,
+                                           Collection<String> subIds) {
         if (CollUtil.isEmpty(subIds)) {
             return 0;
         }
@@ -4050,27 +4091,99 @@ public class LogisticsReconServiceImpl
                 .collect(Collectors.toList());
         int written = 0;
         LocalDateTime now = LocalDateTime.now();
+        List<String> identifyFields = loadUniqueKeyListByMainId(mainId).stream()
+                .map(CfgLogisticsCostImportDetailEntity::getTargetField)
+                .filter(StrUtil::isNotBlank)
+                .collect(Collectors.toList());
         for (int i = 0; i < sortedIds.size(); i += MATCH_ID_BATCH_SIZE) {
             List<String> batchIds = sortedIds.subList(i, Math.min(sortedIds.size(), i + MATCH_ID_BATCH_SIZE));
             Map<String, LogisticsReconDetailSubEntity> subMap = logisticsReconDetailSubService.lambdaQuery()
                     .select(LogisticsReconDetailSubEntity::getId,
+                            LogisticsReconDetailSubEntity::getDetailId,
                             LogisticsReconDetailSubEntity::getCostName,
                             LogisticsReconDetailSubEntity::getCfgCostName)
                     .in(LogisticsReconDetailSubEntity::getId, batchIds)
                     .list().stream()
                     .collect(Collectors.toMap(LogisticsReconDetailSubEntity::getId, s -> s, (a, b) -> a));
+            Map<String, LogisticsReconDetailEntity> detailMap = loadReconDetailMap(subMap.values().stream()
+                    .map(LogisticsReconDetailSubEntity::getDetailId)
+                    .collect(Collectors.toList()));
             List<TmsAsyncTaskDetailEntity> details = new ArrayList<>(batchIds.size());
             for (String subId : batchIds) {
                 LogisticsReconDetailSubEntity sub = subMap.get(subId);
                 String businessCode = sub == null ? subId
-                        : StrUtil.blankToDefault(sub.getCfgCostName(),
-                        StrUtil.blankToDefault(sub.getCostName(), subId));
+                        : buildReconTaskBusinessCode(detailMap.get(sub.getDetailId()), sub, identifyFields);
                 details.add(buildPendingTaskDetail(taskId, businessType, subId, businessCode, now));
             }
             tmsAsyncTaskDetailService.saveBatchInChunks(details, MATCH_ID_BATCH_SIZE);
             written += details.size();
         }
         return written;
+    }
+
+    private Map<String, LogisticsReconDetailEntity> loadReconDetailMap(Collection<String> detailIds) {
+        if (CollUtil.isEmpty(detailIds)) {
+            return Collections.emptyMap();
+        }
+        List<String> ids = detailIds.stream().filter(StrUtil::isNotBlank).distinct().collect(Collectors.toList());
+        if (ids.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        Map<String, LogisticsReconDetailEntity> result = new HashMap<>();
+        for (int i = 0; i < ids.size(); i += MATCH_ID_BATCH_SIZE) {
+            List<String> batch = ids.subList(i, Math.min(ids.size(), i + MATCH_ID_BATCH_SIZE));
+            logisticsReconDetailService.listByIds(batch).forEach(detail -> result.put(detail.getId(), detail));
+        }
+        return result;
+    }
+
+    private String buildReconTaskBusinessCode(LogisticsReconDetailEntity detail,
+                                              LogisticsReconDetailSubEntity sub,
+                                              List<String> identifyFields) {
+        String identifyValue = "";
+        if (detail != null && CollUtil.isNotEmpty(identifyFields)) {
+            identifyValue = identifyFields.stream()
+                    .map(field -> getReconDetailIdentifyValue(detail, field))
+                    .filter(StrUtil::isNotBlank)
+                    .findFirst()
+                    .orElse("");
+        }
+        if (StrUtil.isBlank(identifyValue) && detail != null) {
+            identifyValue = Arrays.asList(detail.getSoCode(), detail.getPlatformOrderNo(), detail.getTrackNo(),
+                            detail.getTransportNo(), detail.getSoDeliveryCode()).stream()
+                    .filter(StrUtil::isNotBlank)
+                    .findFirst()
+                    .orElse("");
+        }
+        String costName = sub == null ? "" : StrUtil.blankToDefault(sub.getCfgCostName(), sub.getCostName());
+        if (StrUtil.isBlank(identifyValue)) {
+            return StrUtil.blankToDefault(costName, sub == null ? "" : sub.getId());
+        }
+        if (StrUtil.isBlank(costName)) {
+            return identifyValue;
+        }
+        return identifyValue + "-" + costName;
+    }
+
+    private String getReconDetailIdentifyValue(LogisticsReconDetailEntity detail, String field) {
+        if (LogisticsCostImportTargetFieldConstant.SOURCE_CODE.equals(field)
+                || LogisticsCostImportTargetFieldConstant.SO_CODE.equals(field)) {
+            return detail.getSoCode();
+        }
+        if (LogisticsCostImportTargetFieldConstant.PLATFORM_CODE.equals(field)
+                || LogisticsCostImportTargetFieldConstant.PLATFORM_ORDER_NO.equals(field)) {
+            return detail.getPlatformOrderNo();
+        }
+        if (LogisticsCostImportTargetFieldConstant.TRACK_NO.equals(field)) {
+            return detail.getTrackNo();
+        }
+        if (LogisticsCostImportTargetFieldConstant.TRANSPORT_NO.equals(field)) {
+            return detail.getTransportNo();
+        }
+        if (LogisticsCostImportTargetFieldConstant.SO_DELIVERY_CODE.equals(field)) {
+            return detail.getSoDeliveryCode();
+        }
+        return "";
     }
 
     private TmsAsyncTaskDetailEntity buildPendingTaskDetail(String taskId, String businessType,
@@ -4116,6 +4229,7 @@ public class LogisticsReconServiceImpl
      * 加载本批任务明细；错误重试等场景下缺失时按 businessId 补建。
      */
     private Map<String, TmsAsyncTaskDetailEntity> loadOrCreateTaskDetails(String taskId, String businessType,
+                                                                          String mainId,
                                                                           List<String> businessIds) {
         Map<String, TmsAsyncTaskDetailEntity> map = new LinkedHashMap<>();
         if (StrUtil.isBlank(taskId) || CollUtil.isEmpty(businessIds)) {
@@ -4128,6 +4242,31 @@ public class LogisticsReconServiceImpl
         for (TmsAsyncTaskDetailEntity detail : existing) {
             map.put(detail.getBusinessId(), detail);
         }
+        List<String> missingIds = businessIds.stream()
+                .filter(StrUtil::isNotBlank)
+                .filter(id -> !map.containsKey(id))
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, LogisticsReconDetailSubEntity> missingSubMap = new HashMap<>();
+        Map<String, LogisticsReconDetailEntity> missingDetailMap = Collections.emptyMap();
+        List<String> identifyFields = Collections.emptyList();
+        if (CollUtil.isNotEmpty(missingIds)) {
+            missingSubMap.putAll(logisticsReconDetailSubService.lambdaQuery()
+                    .select(LogisticsReconDetailSubEntity::getId,
+                            LogisticsReconDetailSubEntity::getDetailId,
+                            LogisticsReconDetailSubEntity::getCostName,
+                            LogisticsReconDetailSubEntity::getCfgCostName)
+                    .in(LogisticsReconDetailSubEntity::getId, missingIds)
+                    .list().stream()
+                    .collect(Collectors.toMap(LogisticsReconDetailSubEntity::getId, sub -> sub, (a, b) -> a)));
+            missingDetailMap = loadReconDetailMap(missingSubMap.values().stream()
+                    .map(LogisticsReconDetailSubEntity::getDetailId)
+                    .collect(Collectors.toList()));
+            identifyFields = loadUniqueKeyListByMainId(mainId).stream()
+                    .map(CfgLogisticsCostImportDetailEntity::getTargetField)
+                    .filter(StrUtil::isNotBlank)
+                    .collect(Collectors.toList());
+        }
         LocalDateTime now = LocalDateTime.now();
         for (String businessId : businessIds) {
             if (map.containsKey(businessId)) {
@@ -4137,7 +4276,9 @@ public class LogisticsReconServiceImpl
             detail.setMainId(taskId);
             detail.setBusinessType(businessType);
             detail.setBusinessId(businessId);
-            detail.setBusinessCode(businessId);
+            LogisticsReconDetailSubEntity sub = missingSubMap.get(businessId);
+            detail.setBusinessCode(sub == null ? businessId
+                    : buildReconTaskBusinessCode(missingDetailMap.get(sub.getDetailId()), sub, identifyFields));
             detail.setStatus(TmsAsyncTaskRecordStatusEnum.PENDING.getCode());
             detail.setCreateTime(now);
             map.put(businessId, detail);
@@ -4178,6 +4319,50 @@ public class LogisticsReconServiceImpl
         }
     }
 
+    private int finishTaskDetailsBatch(Collection<TmsAsyncTaskDetailEntity> details,
+                                       boolean success,
+                                       String errorMsg) {
+        if (CollUtil.isEmpty(details)) {
+            return 0;
+        }
+        List<TmsAsyncTaskDetailEntity> unfinished = details.stream()
+                .filter(Objects::nonNull)
+                .filter(detail -> !isTaskDetailTerminal(detail.getStatus()))
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(unfinished)) {
+            return 0;
+        }
+        // 新建明细在极少数场景下可能尚未回填主键，保留单条保存兜底，避免批量回写时静默丢失。
+        List<TmsAsyncTaskDetailEntity> withoutId = unfinished.stream()
+                .filter(detail -> StrUtil.isBlank(detail.getId()))
+                .collect(Collectors.toList());
+        for (TmsAsyncTaskDetailEntity detail : withoutId) {
+            finishTaskDetail(detail, success, errorMsg);
+        }
+        List<TmsAsyncTaskDetailEntity> persisted = unfinished.stream()
+                .filter(detail -> StrUtil.isNotBlank(detail.getId()))
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(persisted)) {
+            return withoutId.size();
+        }
+        List<String> detailIds = persisted.stream()
+                .map(TmsAsyncTaskDetailEntity::getId)
+                .distinct()
+                .collect(Collectors.toList());
+        int updated = success
+                ? tmsAsyncTaskDetailService.markDetailsFinished(detailIds)
+                : tmsAsyncTaskDetailService.markDetailsFailed(detailIds, errorMsg);
+        String status = success
+                ? TmsAsyncTaskRecordStatusEnum.FINISH.getCode()
+                : TmsAsyncTaskRecordStatusEnum.FAILED.getCode();
+        for (TmsAsyncTaskDetailEntity detail : persisted) {
+            detail.setStatus(status);
+            detail.setEndTime(LocalDateTime.now());
+            detail.setErrorData(success ? "" : StrUtil.sub(StrUtil.blankToDefault(errorMsg, "处理失败"), 0, 490));
+        }
+        return updated + withoutId.size();
+    }
+
     private boolean isTaskDetailTerminal(String status) {
         return TmsAsyncTaskRecordStatusEnum.FINISH.getCode().equals(status)
                 || TmsAsyncTaskRecordStatusEnum.FAILED.getCode().equals(status);
@@ -4203,10 +4388,14 @@ public class LogisticsReconServiceImpl
             detail.setStatus(TmsAsyncTaskRecordStatusEnum.ING.getCode());
             return null;
         }
+        if (TmsAsyncTaskRecordStatusEnum.ING.getCode().equals(detail.getStatus())
+                && StrUtil.isNotBlank(detail.getId())) {
+            // 活跃或待 watchdog 判定的 ING 明细不在当前批次抢占，避免并发重复执行
+            return countClaimSkippedDetail(detail.getId());
+        }
         if (TmsAsyncTaskRecordStatusEnum.FAILED.getCode().equals(detail.getStatus())
-                || TmsAsyncTaskRecordStatusEnum.ING.getCode().equals(detail.getStatus())
                 || StrUtil.isBlank(detail.getId())) {
-            // FAILED 重试 / 僵死 ING 恢复 / 补建明细
+            // FAILED 重试 / 补建明细；僵死 ING 由 watchdog 先标记 FAILED 后再重试
             if (StrUtil.isBlank(detail.getId())) {
                 detail.setStatus(TmsAsyncTaskRecordStatusEnum.ING.getCode());
                 detail.setStartTime(LocalDateTime.now());
@@ -4232,8 +4421,8 @@ public class LogisticsReconServiceImpl
      * @return int[0]=success, int[1]=failed
      */
     private int[] settleMatchTaskDetailsByFeeStatus(String mainId,
-                                                    List<TmsAsyncTaskDetailEntity> executableDetails,
-                                                    String unfinishedReason) {
+                                                     List<TmsAsyncTaskDetailEntity> executableDetails,
+                                                     String unfinishedReason) {
         int success = 0;
         int failed = 0;
         if (CollUtil.isEmpty(executableDetails)) {
@@ -4246,28 +4435,25 @@ public class LogisticsReconServiceImpl
                 .collect(Collectors.toList());
         Map<String, LogisticsReconDetailSubEntity> subMap = loadFeeItemMatchStatusMap(executableSubIds);
         Set<String> unfinishedMatchingIds = new LinkedHashSet<>();
+        List<TmsAsyncTaskDetailEntity> unfinishedDetails = new ArrayList<>();
+        List<TmsAsyncTaskDetailEntity> matchedDetails = new ArrayList<>();
         for (TmsAsyncTaskDetailEntity detail : executableDetails) {
             LogisticsReconDetailSubEntity sub = subMap.get(detail.getBusinessId());
             if (sub != null && LogisticsReconDetailMatchStatusEnum.MATCHED.getCode().equals(sub.getMatchStatus())) {
-                finishTaskDetail(detail, true, null);
-                success++;
+                matchedDetails.add(detail);
             } else if (sub != null && LogisticsReconDetailMatchStatusEnum.FAILED.getCode().equals(sub.getMatchStatus())) {
                 finishTaskDetail(detail, false, StrUtil.blankToDefault(sub.getMatchFailReason(), "匹配失败"));
                 failed++;
             } else {
                 unfinishedMatchingIds.add(detail.getBusinessId());
+                unfinishedDetails.add(detail);
             }
         }
+        success += finishTaskDetailsBatch(matchedDetails, true, null);
         // 先回写费用项离开 MATCHING，再落任务明细失败，避免确认被 matchingCount 永久拦截
         if (CollUtil.isNotEmpty(unfinishedMatchingIds)) {
             self.markReconMatchFailed(mainId, new ArrayList<>(unfinishedMatchingIds), unfinishedReason);
-            for (TmsAsyncTaskDetailEntity detail : executableDetails) {
-                if (unfinishedMatchingIds.contains(detail.getBusinessId())
-                        && !isTaskDetailTerminal(detail.getStatus())) {
-                    finishTaskDetail(detail, false, unfinishedReason);
-                    failed++;
-                }
-            }
+            failed += finishTaskDetailsBatch(unfinishedDetails, false, unfinishedReason);
         }
         return new int[]{success, failed};
     }
@@ -4279,6 +4465,7 @@ public class LogisticsReconServiceImpl
     private int[] settleMatchTaskDetailsAfterException(String mainId,
                                                        Map<String, TmsAsyncTaskDetailEntity> detailMap,
                                                        List<String> feeItemsClaimedMatching,
+                                                       Set<String> taskDetailsClaimedByCurrentWorker,
                                                        String reason) {
         int success = 0;
         int failed = 0;
@@ -4291,6 +4478,8 @@ public class LogisticsReconServiceImpl
         }
         List<TmsAsyncTaskDetailEntity> unsettled = detailMap.values().stream()
                 .filter(Objects::nonNull)
+                .filter(d -> taskDetailsClaimedByCurrentWorker != null
+                        && taskDetailsClaimedByCurrentWorker.contains(d.getBusinessId()))
                 .filter(d -> !isTaskDetailTerminal(d.getStatus()))
                 .collect(Collectors.toList());
         if (CollUtil.isEmpty(unsettled)) {
@@ -4303,11 +4492,11 @@ public class LogisticsReconServiceImpl
                 .collect(Collectors.toList());
         Map<String, LogisticsReconDetailSubEntity> subMap = loadFeeItemMatchStatusMap(businessIds);
         Set<String> stillMatchingIds = new LinkedHashSet<>();
+        List<TmsAsyncTaskDetailEntity> matchedDetails = new ArrayList<>();
         for (TmsAsyncTaskDetailEntity detail : unsettled) {
             LogisticsReconDetailSubEntity sub = subMap.get(detail.getBusinessId());
             if (sub != null && LogisticsReconDetailMatchStatusEnum.MATCHED.getCode().equals(sub.getMatchStatus())) {
-                finishTaskDetail(detail, true, null);
-                success++;
+                matchedDetails.add(detail);
             } else if (sub != null && LogisticsReconDetailMatchStatusEnum.FAILED.getCode().equals(sub.getMatchStatus())) {
                 finishTaskDetail(detail, false, StrUtil.blankToDefault(sub.getMatchFailReason(), reason));
                 failed++;
@@ -4319,19 +4508,18 @@ public class LogisticsReconServiceImpl
                 failed++;
             }
         }
+        success += finishTaskDetailsBatch(matchedDetails, true, null);
         if (CollUtil.isNotEmpty(stillMatchingIds)) {
             try {
                 self.markReconMatchFailed(mainId, new ArrayList<>(stillMatchingIds), reason);
             } catch (Exception ex) {
                 log.error("[settleMatchTaskDetailsAfterException] 二次回写 MATCHING 失败 mainId={}", mainId, ex);
             }
-            for (TmsAsyncTaskDetailEntity detail : unsettled) {
-                if (stillMatchingIds.contains(detail.getBusinessId())
-                        && !isTaskDetailTerminal(detail.getStatus())) {
-                    finishTaskDetail(detail, false, reason);
-                    failed++;
-                }
-            }
+            List<TmsAsyncTaskDetailEntity> stillMatchingDetails = unsettled.stream()
+                    .filter(detail -> stillMatchingIds.contains(detail.getBusinessId()))
+                    .filter(detail -> !isTaskDetailTerminal(detail.getStatus()))
+                    .collect(Collectors.toList());
+            failed += finishTaskDetailsBatch(stillMatchingDetails, false, reason);
         }
         return new int[]{success, failed};
     }

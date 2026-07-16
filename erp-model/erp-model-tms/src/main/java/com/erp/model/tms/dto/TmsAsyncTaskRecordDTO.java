@@ -2,7 +2,11 @@ package com.erp.model.tms.dto;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
@@ -716,15 +720,24 @@ public class TmsAsyncTaskRecordDTO implements Serializable {
             if (mainId != null && !mainId.trim().isEmpty()) {
                 return mainId.trim();
             }
+            List<String> legacyMainIds = resolveLegacyMainIds();
+            return legacyMainIds.isEmpty() ? null : legacyMainIds.get(0);
+        }
+
+        /**
+         * 规范化旧版主单 id 列表，供消费端校验历史任务是否包含多个主单。
+         */
+        public List<String> resolveLegacyMainIds() {
             if (ids == null || ids.isEmpty()) {
-                return null;
+                return Collections.emptyList();
             }
+            Set<String> normalizedIds = new LinkedHashSet<>();
             for (String id : ids) {
                 if (id != null && !id.trim().isEmpty()) {
-                    return id.trim();
+                    normalizedIds.add(id.trim());
                 }
             }
-            return null;
+            return new ArrayList<>(normalizedIds);
         }
     }
 
@@ -772,15 +785,24 @@ public class TmsAsyncTaskRecordDTO implements Serializable {
             if (mainId != null && !mainId.trim().isEmpty()) {
                 return mainId.trim();
             }
+            List<String> legacyMainIds = resolveLegacyMainIds();
+            return legacyMainIds.isEmpty() ? null : legacyMainIds.get(0);
+        }
+
+        /**
+         * 规范化旧版主单 id 列表，供消费端校验历史任务是否包含多个主单。
+         */
+        public List<String> resolveLegacyMainIds() {
             if (ids == null || ids.isEmpty()) {
-                return null;
+                return Collections.emptyList();
             }
+            Set<String> normalizedIds = new LinkedHashSet<>();
             for (String id : ids) {
                 if (id != null && !id.trim().isEmpty()) {
-                    return id.trim();
+                    normalizedIds.add(id.trim());
                 }
             }
-            return null;
+            return new ArrayList<>(normalizedIds);
         }
     }
 

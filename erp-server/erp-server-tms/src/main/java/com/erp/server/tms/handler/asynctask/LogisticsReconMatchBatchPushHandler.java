@@ -57,7 +57,14 @@ public class LogisticsReconMatchBatchPushHandler
 
     @Override
     public String validatePayload(TmsAsyncTaskRecordDTO.LogisticsReconMatchPayloadDTO payload) {
-        if (payload == null || StringUtils.isBlank(payload.resolveMainId())) {
+        if (payload == null) {
+            return "无可匹配的对账单";
+        }
+        if (StringUtils.isBlank(payload.getMainId())
+                && payload.resolveLegacyMainIds().size() > 1) {
+            return "旧版任务包含多个对账单，请终止旧任务后重新提交";
+        }
+        if (StringUtils.isBlank(payload.resolveMainId())) {
             return "无可匹配的对账单";
         }
         return null;

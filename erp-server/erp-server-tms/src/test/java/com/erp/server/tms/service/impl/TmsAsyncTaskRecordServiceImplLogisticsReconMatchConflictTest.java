@@ -59,6 +59,37 @@ public class TmsAsyncTaskRecordServiceImplLogisticsReconMatchConflictTest {
     }
 
     @Test
+    public void logisticsReconMatchPayloadShouldNormalizeLegacyIds() {
+        TmsAsyncTaskRecordDTO.LogisticsReconMatchPayloadDTO payload =
+                new TmsAsyncTaskRecordDTO.LogisticsReconMatchPayloadDTO();
+        payload.setIds(java.util.Arrays.asList(" main-A ", "", "main-A", null, "main-B"));
+
+        assertEquals(java.util.Arrays.asList("main-A", "main-B"), payload.resolveLegacyMainIds());
+        assertEquals("main-A", payload.resolveMainId());
+    }
+
+    @Test
+    public void logisticsReconConfirmPayloadShouldPreferMainIdOverLegacyIds() {
+        TmsAsyncTaskRecordDTO.LogisticsReconConfirmBillPayloadDTO payload =
+                new TmsAsyncTaskRecordDTO.LogisticsReconConfirmBillPayloadDTO();
+        payload.setMainId(" main-A ");
+        payload.setIds(java.util.Arrays.asList("main-A", "main-B"));
+
+        assertEquals(java.util.Arrays.asList("main-A", "main-B"), payload.resolveLegacyMainIds());
+        assertEquals("main-A", payload.resolveMainId());
+    }
+
+    @Test
+    public void logisticsReconPayloadShouldIgnoreBlankLegacyIds() {
+        TmsAsyncTaskRecordDTO.LogisticsReconMatchPayloadDTO payload =
+                new TmsAsyncTaskRecordDTO.LogisticsReconMatchPayloadDTO();
+        payload.setIds(java.util.Arrays.asList(" ", null, ""));
+
+        assertTrue(payload.resolveLegacyMainIds().isEmpty());
+        assertEquals(null, payload.resolveMainId());
+    }
+
+    @Test
     public void validateLogisticsReconIdShouldBlockWhenBusinessIdOverlaps() throws Exception {
         String requestJson = buildEnvelopeJson("2077242700333756417", true);
         TmsAsyncTaskRecordEntity runningTask = new TmsAsyncTaskRecordEntity();

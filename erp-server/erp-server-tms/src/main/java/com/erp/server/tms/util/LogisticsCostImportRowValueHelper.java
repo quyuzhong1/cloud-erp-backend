@@ -229,7 +229,9 @@ public final class LogisticsCostImportRowValueHelper {
             }
             if (CharSequenceUtil.equals(CfgLogisticsCostImportEtlRuleTypeEnum.FILL_EMPTY.getCode(), type)) {
                 result = applyFillEmptyRule(result, rule, rowData, headMap);
+                continue;
             }
+            throw new ServiceException("未知的 ETL 清洗规则类型：" + type);
         }
         return result;
     }
