@@ -10,7 +10,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.lang.reflect.Method;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -28,22 +27,43 @@ public class TmsAsyncTaskRecordServiceImplLogisticsReconMatchConflictTest {
     }
 
     @Test
-    public void extractLogisticsReconBusinessIdsShouldParsePayloadIds() throws Exception {
-        String json = buildEnvelopeJson(Arrays.asList("2077242700333756417", "2077281074952192001"), true);
+    public void extractLogisticsReconBusinessIdsShouldParsePayloadMainId() throws Exception {
+        String json = buildEnvelopeJson("2077242700333756417", true);
 
         @SuppressWarnings("unchecked")
         List<String> ids = (List<String>) invokePrivate("extractLogisticsReconBusinessIds",
                 new Class[]{String.class}, json);
 
-        assertEquals(Arrays.asList("2077242700333756417", "2077281074952192001"), ids);
+        assertEquals(Collections.singletonList("2077242700333756417"), ids);
+    }
+
+    @Test
+    public void extractLogisticsReconBusinessIdsShouldParseLegacyIds() throws Exception {
+        TmsAsyncTaskRecordDTO.LogisticsReconMatchPayloadDTO payload =
+                new TmsAsyncTaskRecordDTO.LogisticsReconMatchPayloadDTO();
+        payload.setIds(java.util.Arrays.asList("2077242700333756417", "2077281074952192001"));
+        payload.setIsConfirm(true);
+        TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope = new TmsAsyncTaskRecordDTO.TaskEnvelopeDTO();
+        envelope.setBusinessType(TmsAsyncTaskRecordBusinessTypeEnum.LOGISTICS_RECON.getCode());
+        envelope.setMethodType(TmsAsyncTaskMethodTypeEnum.LOGISTICS_RECON_MATCH.getCode());
+        envelope.setPayloadType("logisticsRecon:logisticsReconMatch");
+        envelope.setPayloadVersion(1);
+        envelope.setPayloadJson(JSONUtil.toJsonStr(payload));
+        String json = JSONUtil.toJsonStr(envelope);
+
+        @SuppressWarnings("unchecked")
+        List<String> ids = (List<String>) invokePrivate("extractLogisticsReconBusinessIds",
+                new Class[]{String.class}, json);
+
+        assertEquals(java.util.Arrays.asList("2077242700333756417", "2077281074952192001"), ids);
     }
 
     @Test
     public void validateLogisticsReconIdShouldBlockWhenBusinessIdOverlaps() throws Exception {
-        String requestJson = buildEnvelopeJson(Collections.singletonList("2077242700333756417"), true);
+        String requestJson = buildEnvelopeJson("2077242700333756417", true);
         TmsAsyncTaskRecordEntity runningTask = new TmsAsyncTaskRecordEntity();
         runningTask.setCode("Z280715000035");
-        runningTask.setDataJson(buildEnvelopeJson(Collections.singletonList("2077242700333756417"), false));
+        runningTask.setDataJson(buildEnvelopeJson("2077242700333756417", false));
 
         try {
             invokePrivate("validateLogisticsReconIdTaskNotConflict",
@@ -60,11 +80,11 @@ public class TmsAsyncTaskRecordServiceImplLogisticsReconMatchConflictTest {
     }
 
     @Test
-    public void validateLogisticsReconIdShouldFailWhenRequestIdsMissing() throws Exception {
-        String requestJson = buildEnvelopeJson(Collections.emptyList(), true);
+    public void validateLogisticsReconIdShouldFailWhenRequestMainIdMissing() throws Exception {
+        String requestJson = buildEnvelopeJson(null, true);
         TmsAsyncTaskRecordEntity runningTask = new TmsAsyncTaskRecordEntity();
         runningTask.setCode("Z280715000035");
-        runningTask.setDataJson(buildEnvelopeJson(Collections.singletonList("2077242700333756417"), false));
+        runningTask.setDataJson(buildEnvelopeJson("2077242700333756417", false));
 
         try {
             invokePrivate("validateLogisticsReconIdTaskNotConflict",
@@ -83,10 +103,10 @@ public class TmsAsyncTaskRecordServiceImplLogisticsReconMatchConflictTest {
 
     @Test
     public void validateLogisticsReconIdShouldAllowWhenBusinessIdsDoNotOverlap() throws Exception {
-        String requestJson = buildEnvelopeJson(Collections.singletonList("2077281074952192001"), true);
+        String requestJson = buildEnvelopeJson("2077281074952192001", true);
         TmsAsyncTaskRecordEntity runningTask = new TmsAsyncTaskRecordEntity();
         runningTask.setCode("Z280715000035");
-        runningTask.setDataJson(buildEnvelopeJson(Collections.singletonList("2077242700333756417"), false));
+        runningTask.setDataJson(buildEnvelopeJson("2077242700333756417", false));
 
         invokePrivate("validateLogisticsReconIdTaskNotConflict",
                 new Class[]{String.class, List.class, String.class, String.class, String.class},
@@ -97,9 +117,9 @@ public class TmsAsyncTaskRecordServiceImplLogisticsReconMatchConflictTest {
                 "所选对账单正在匹配中，请稍后重试或联系管理员");
     }
 
-    private String buildEnvelopeJson(List<String> ids, boolean isConfirm) {
+    private String buildEnvelopeJson(String mainId, boolean isConfirm) {
         TmsAsyncTaskRecordDTO.LogisticsReconMatchPayloadDTO payload =
-                new TmsAsyncTaskRecordDTO.LogisticsReconMatchPayloadDTO(ids, isConfirm);
+                new TmsAsyncTaskRecordDTO.LogisticsReconMatchPayloadDTO(mainId, isConfirm);
         TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope = new TmsAsyncTaskRecordDTO.TaskEnvelopeDTO();
         envelope.setBusinessType(TmsAsyncTaskRecordBusinessTypeEnum.LOGISTICS_RECON.getCode());
         envelope.setMethodType(TmsAsyncTaskMethodTypeEnum.LOGISTICS_RECON_MATCH.getCode());
