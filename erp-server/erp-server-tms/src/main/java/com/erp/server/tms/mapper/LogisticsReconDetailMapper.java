@@ -1,8 +1,6 @@
 package com.erp.server.tms.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.tms.dto.LogisticsReconDetailDTO;
 import com.erp.model.tms.entity.LogisticsReconDetailEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -22,15 +20,26 @@ import java.util.List;
 public interface LogisticsReconDetailMapper extends BaseMapper<LogisticsReconDetailEntity> {
 
     /**
-     * 物流商对账明细分页列表查询
+     * 物流商对账明细分页 COUNT（轻量，不 JOIN 主表）
      * @author Will
-     * @date: 2026/05/29
-     * @param query
-     * @param params
-     * @return IPage<LogisticsReconDetailDTO.ListDTO>
+     * @date: 2026/07/16
+     * @param params 查询参数
+     * @return 总条数
      */
-    IPage<LogisticsReconDetailDTO.ListDTO> paging(Page<LogisticsReconDetailDTO.ListDTO> query,
-                                                  @Param("params") LogisticsReconDetailDTO.PagingParamDTO params);
+    Long pagingCount(@Param("params") LogisticsReconDetailDTO.PagingParamDTO params);
+
+    /**
+     * 物流商对账明细分页列表（延迟关联：内层 id 分页，外层回表）
+     * @author Will
+     * @date: 2026/07/16
+     * @param params 查询参数
+     * @param offset 偏移量
+     * @param limit  每页条数
+     * @return 当前页列表
+     */
+    List<LogisticsReconDetailDTO.ListDTO> paging(@Param("params") LogisticsReconDetailDTO.PagingParamDTO params,
+                                                 @Param("offset") long offset,
+                                                 @Param("limit") long limit);
 
     /**
      * 按主表 id 统计已匹配费用项数（match_status = matched）

@@ -44,15 +44,50 @@
         weight_unit, third_length, third_width, third_height, cost_count
     </sql>
 
+    <!-- 分页公共过滤：优先 sub.main_id，避免经 detail 回表过滤 -->
+    <sql id="Paging_Join_Detail">
+        FROM logistics_recon_detail_sub sub
+        INNER JOIN logistics_recon_detail d
+            ON d.id = sub.detail_id
+           AND d.is_deleted = false
+           AND d.main_id = sub.main_id
+    </sql>
+
+    <sql id="Paging_Where">
+        WHERE ${params.sqlMap.default}
+        AND sub.is_deleted = false
+        AND sub.main_id = #{params.mainId}
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+    </sql>
+
+    <sql id="Paging_Order">
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        d.row_no ASC, sub.seq_no ASC, sub.id ASC
+    </sql>
+
+    <!-- 轻量 COUNT：不 JOIN 主表、不选业务字段 -->
+    <select id="pagingCount" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        <include refid="Paging_Join_Detail"/>
+        <include refid="Paging_Where"/>
+    </select>
+
+    <!--
+      延迟关联分页：内层只取 id + 排序分页，外层再回表取宽字段。
+      主表字段（月份/物流商/sheet）由 Service 按 mainId 补齐，避免逐行 JOIN logistics_recon。
+    -->
     <select id="paging" resultType="com.erp.model.tms.dto.LogisticsReconDetailDTO$ListDTO">
         SELECT
             sub.id AS id,
             sub.detail_id AS detailId,
-            d.main_id AS mainId,
-            r.reconciliation_month AS reconciliationMonth,
-            r.supplier_id AS supplierId,
-            r.supplier_name AS supplierName,
-            r.sheet_name AS sheetName,
+            sub.main_id AS mainId,
             d.row_no AS rowNo,
             sub.seq_no AS seqNo,
             d.so_code AS soCode,
@@ -84,22 +119,17 @@
             d.create_user_name AS createUserName
         FROM logistics_recon_detail_sub sub
         INNER JOIN logistics_recon_detail d
-            ON d.id = sub.detail_id AND d.is_deleted = false
-        INNER JOIN logistics_recon r
-            ON r.id = d.main_id AND r.is_deleted = false
-        WHERE ${params.sqlMap.default}
-        and sub.is_deleted = false
-        AND d.main_id = #{params.mainId}
-        <if test="params.permissionSql != null and params.permissionSql != ''">
-            ${params.permissionSql}
-        </if>
-        ORDER BY
-        <if test="params.sortList != null and params.sortList.size > 0">
-            <foreach collection="params.sortList" item="item" separator="," close=",">
-                ${item.field} ${item.sort}
-            </foreach>
-        </if>
-        rowNo ASC, seqNo ASC
+            ON d.id = sub.detail_id
+           AND d.is_deleted = false
+           AND d.main_id = sub.main_id
+        INNER JOIN (
+            SELECT sub.id
+            <include refid="Paging_Join_Detail"/>
+            <include refid="Paging_Where"/>
+            <include refid="Paging_Order"/>
+            LIMIT #{limit} OFFSET #{offset}
+        ) page ON page.id = sub.id
+        <include refid="Paging_Order"/>
     </select>
 
     <select id="countMatchedByMainId" resultType="java.lang.Integer">
@@ -108,7 +138,7 @@
         INNER JOIN logistics_recon_detail d
             ON d.id = sub.detail_id AND d.is_deleted = false AND d.main_id = sub.main_id
         WHERE sub.is_deleted = false
-          AND d.main_id = #{mainId}
+          AND sub.main_id = #{mainId}
           AND sub.match_status = 'matched'
     </select>
 
@@ -117,9 +147,9 @@
         SELECT sub.match_status AS tabFlag, count(*) AS count
         FROM logistics_recon_detail_sub sub
         INNER JOIN logistics_recon_detail d
-            ON d.id = sub.detail_id AND d.is_deleted = false
+            ON d.id = sub.detail_id AND d.is_deleted = false AND d.main_id = sub.main_id
         WHERE sub.is_deleted = false
-          AND d.main_id = #{params.mainId}
+          AND sub.main_id = #{params.mainId}
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>

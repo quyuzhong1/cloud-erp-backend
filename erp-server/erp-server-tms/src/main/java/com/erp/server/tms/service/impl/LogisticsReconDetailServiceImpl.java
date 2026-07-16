@@ -5,7 +5,6 @@ import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.vo.LoginUser;
-import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseDTO;
@@ -105,14 +104,24 @@ public class LogisticsReconDetailServiceImpl
 
     @Override
     public PagingVO<LogisticsReconDetailDTO.ListDTO> paging(PagingDTO<LogisticsReconDetailDTO.PagingParamDTO> pagingParamDTO) {
-        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
-        Page<LogisticsReconDetailDTO.ListDTO> query =
-                new Page<>(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
-        IPage<LogisticsReconDetailDTO.ListDTO> pageData = baseMapper.paging(query, pagingParamDTO.getParams());
-        if (CollUtil.isEmpty(pageData.getRecords())) {
+        LogisticsReconDetailDTO.PagingParamDTO params = pagingParamDTO.getParams();
+        params.setPermissionSql(pagingParamDTO.getPermissionSql());
+
+        long currPage = pagingParamDTO.getCurrPage();
+        long pageSize = pagingParamDTO.getPageSize();
+        long offset = Math.max(0L, (currPage - 1) * pageSize);
+
+        Long total = baseMapper.pagingCount(params);
+        long totalCount = total == null ? 0L : total;
+        Page<LogisticsReconDetailDTO.ListDTO> pageData = new Page<>(currPage, pageSize, totalCount);
+        if (totalCount == 0L) {
             return new PagingVO<>(pageData);
         }
-        fillList(pageData.getRecords());
+
+        List<LogisticsReconDetailDTO.ListDTO> records = baseMapper.paging(params, offset, pageSize);
+        fillMainInfo(records, params.getMainId());
+        fillList(records);
+        pageData.setRecords(records);
         return new PagingVO<>(pageData);
     }
 
@@ -727,6 +736,37 @@ public class LogisticsReconDetailServiceImpl
     }
 
     /**
+     * 按对账单补齐主表展示字段（避免分页 SQL 逐行 JOIN logistics_recon）
+     * @author Will
+     * @date 2026/7/16
+     * @param list   当前页列表
+     * @param mainId 对账单 id
+     */
+    private void fillMainInfo(List<LogisticsReconDetailDTO.ListDTO> list, String mainId) {
+        if (CollUtil.isEmpty(list) || StrUtil.isBlank(mainId)) {
+            return;
+        }
+        LogisticsReconEntity main = logisticsReconService.lambdaQuery()
+                .select(LogisticsReconEntity::getId,
+                        LogisticsReconEntity::getReconciliationMonth,
+                        LogisticsReconEntity::getSupplierId,
+                        LogisticsReconEntity::getSupplierName,
+                        LogisticsReconEntity::getSheetName)
+                .eq(LogisticsReconEntity::getId, mainId)
+                .one();
+        if (main == null) {
+            return;
+        }
+        for (LogisticsReconDetailDTO.ListDTO data : list) {
+            data.setMainId(mainId);
+            data.setReconciliationMonth(main.getReconciliationMonth());
+            data.setSupplierId(main.getSupplierId());
+            data.setSupplierName(main.getSupplierName());
+            data.setSheetName(main.getSheetName());
+        }
+    }
+
+    /**
      * 费用项列表填充：补 match_status 名称 + 金额 / 尺寸展示字段
      * @author Will
      * @date: 2026/06/02
@@ -737,7 +777,14 @@ public class LogisticsReconDetailServiceImpl
         if (CollUtil.isEmpty(list)) {
             return;
         }
-        Map<String, String> currencySymbolMap = FeignQuery.list(DictCurrencyEntity.class).stream()
+        List<String> currencyIds = list.stream()
+                .map(LogisticsReconDetailDTO.ListDTO::getCurrency)
+                .filter(StrUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, String> currencySymbolMap = CollUtil.isEmpty(currencyIds)
+                ? Collections.emptyMap()
+                : FeignQuery.getByIds(DictCurrencyEntity.class, currencyIds).stream()
                 .collect(Collectors.toMap(DictCurrencyEntity::getId, DictCurrencyEntity::getSymbol, (first, second) -> first));
         for (LogisticsReconDetailDTO.ListDTO data : list) {
             data.setReconciliationMonth(DateUtil.formatCnYearMonth(data.getReconciliationMonth()));
