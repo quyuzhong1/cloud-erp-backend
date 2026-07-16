@@ -637,8 +637,11 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
         for (SoReceiptDTO.SoViewDTO update : updateList) {
             SoReceiptDetailEntity soReceiptDetailEntity = soReceiptDetailEntityList.stream().filter(v -> v.getId().equals(update.getDetailId())).findFirst().orElseThrow(() -> new ServiceException("未找到收款单明细数据"));
             SoReceiptEntity soReceiptEntity = soReceiptEntityList.stream().filter(v -> v.getId().equals(soReceiptDetailEntity.getMainId())).findFirst().orElseThrow(() -> new ServiceException("未找到收款单数据"));
+            // 已审核/审核中等不可编辑状态：跳过收款单同步，避免拦截销售订单其它字段（如仓库）保存
             if(!ApproveStatusEnum.allowUpdateStatus(soReceiptEntity.getApproveStatus())) {
-                throw new ServiceException("收款单状态不允许修改");
+                log.warn("销售订单[{}]同步收款单跳过更新, receiptCode={}, approveStatus={}",
+                        soInfo.getCode(), soReceiptEntity.getCode(), soReceiptEntity.getApproveStatus());
+                continue;
             }
             SoReceiptDTO.UpdateDTO updateDTO = new SoReceiptDTO.UpdateDTO();
             updateDTO.setId(update.getId());

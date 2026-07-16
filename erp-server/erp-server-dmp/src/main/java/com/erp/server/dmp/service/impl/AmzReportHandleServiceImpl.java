@@ -81,6 +81,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -898,6 +899,10 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
      * 审查问题5（intentional）：{@code createdTaskList} 为空或无非 DMP 可执行任务时静默 return，
      * 与 DmpInoutTaskFeignController 一致；配置校验已在 create 前完成，Amazon 店铺正常路径下应有 DMP 任务。
      * 若 execSystem 为 RestCloud，任务由 RestCloud 侧调度，本方法不立即 execute 属预期行为。
+     * <p>
+     * {@code dmpInputExecutorPool} 使用 CallerRunsPolicy，队列饱和时会在调用线程同步执行，通常不抛异常；
+     * 仅在线程池已关闭或无法接受新任务（{@link RejectedExecutionException}）时记录告警且不向上抛异常：
+     * 任务已在事务内落库为 INIT，由 {@link com.erp.server.dmp.inout.job.DmpInputTaskJob} 定时扫描补偿执行。
      */
     private void submitInputTaskAsync(List<DmpInputTaskEntity> createdTaskList) {
         if (CollUtil.isEmpty(createdTaskList)) {
@@ -907,12 +912,17 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
             if (!CharSequenceUtil.equals(dmpInputTaskEntity.getExecSystem(), DmpCfgInputExecSystemEnum.DMP.getCode())) {
                 continue;
             }
-            dmpInputExecutorPool.execute(() -> {
-                DmpInputFinishRequest dmpInputFinishRequest = new DmpInputFinishRequest();
-                dmpInputFinishRequest.setInputTaskId(dmpInputTaskEntity.getId());
-                dmpInputFinishRequest.setExecTimeout(dmpInputTaskEntity.getExecTimeout());
-                dmpInputTaskFactory.dealInputTask(dmpInputFinishRequest);
-            });
+            try {
+                dmpInputExecutorPool.execute(() -> {
+                    DmpInputFinishRequest dmpInputFinishRequest = new DmpInputFinishRequest();
+                    dmpInputFinishRequest.setInputTaskId(dmpInputTaskEntity.getId());
+                    dmpInputFinishRequest.setExecTimeout(dmpInputTaskEntity.getExecTimeout());
+                    dmpInputTaskFactory.dealInputTask(dmpInputFinishRequest);
+                });
+            } catch (RejectedExecutionException ex) {
+                log.warn("输入任务异步提交失败（线程池已关闭或无法接受新任务），taskId={}，任务保持 INIT 状态，将由 DmpInputTaskJob 定时补偿执行",
+                        dmpInputTaskEntity.getId(), ex);
+            }
         }
     }
 
