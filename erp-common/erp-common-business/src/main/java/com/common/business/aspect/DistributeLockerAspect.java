@@ -3,6 +3,7 @@ package com.common.business.aspect;
 import cn.hutool.core.util.ReflectUtil;
 import com.common.business.annotation.DistributeLocker;
 import com.common.core.exception.ServiceException;
+import cn.hutool.core.text.CharSequenceUtil;
 import io.seata.core.context.RootContext;
 import io.seata.tm.api.GlobalTransactionContext;
 import io.seata.tm.api.transaction.TransactionHookAdapter;
@@ -18,16 +19,20 @@ import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
-
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.web.context.request.RequestAttributes;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 /**
@@ -111,14 +116,17 @@ public class DistributeLockerAspect {
 
         RedissonMultiLock multiLock = new RedissonMultiLock(rLocks.toArray(new RLock[0]));
         boolean locked = false;
+        AtomicBoolean lockReleased = new AtomicBoolean(false);
 
         boolean unlockAfterTx = annotation.unlockAfterTx();
         // 检查是否处于 Seata 全局事务
-        boolean inSeataTx = (RootContext.inGlobalTransaction());
+        boolean inSeataTx = RootContext.inGlobalTransaction();
         // 检查是否处于 Spring 事务
         boolean inSpringTx = TransactionSynchronizationManager.isActualTransactionActive();
-        // 是否处于任一事务
-        boolean inAnyTx = inSeataTx || inSpringTx;
+        // 跨服务被带入 XID 的下游：TransactionHook 不会在本进程触发，也不能由发起方代为解锁
+        boolean crossServiceSeataParticipant = isCrossServiceSeataParticipant();
+        // 是否已把解锁推迟到事务回调（未推迟则 finally 必须释放，避免锁泄漏）
+        boolean deferredUnlock = false;
 
         // 最大重试次数和间隔时间
         int maxRetries = annotation.maxRetries();
@@ -133,40 +141,46 @@ public class DistributeLockerAspect {
             }
 
             // 根据事务上下文选择释放锁的策略
-            if (unlockAfterTx && inSeataTx) {
-                // Seata 全局事务
+            // 注意：跨服务 Participant 上 TransactionHook 不会执行，且锁在本进程；
+            // 发起方全局事务结束后也无法代为解锁，故参与方不能把解锁推迟到「全局事务结束」。
+            if (unlockAfterTx && crossServiceSeataParticipant && inSpringTx) {
+                // 参与方 + 加锁时已有本地 Spring 事务：TransactionHook 不会触发，改由 Spring 同步回调解锁
+                log.warn("线程{} 处于跨服务Seata参与方且unlockAfterTx=true，TransactionHook不会触发，改为本地Spring事务提交/回滚后释放锁，key={}",
+                        threadName, keys);
+                registerSpringTxDeferredUnlock(multiLock, threadName, keys, lockReleased);
+                deferredUnlock = true;
+            } else if (unlockAfterTx && crossServiceSeataParticipant) {
+                // 参与方 + 无活跃本地事务：同方法 @Transactional 由内层切面先提交，再在 finally 释放
+                log.warn("线程{} 处于跨服务Seata参与方且unlockAfterTx=true、无活跃本地Spring事务，方法结束释放锁，key={}",
+                        threadName, keys);
+            } else if (unlockAfterTx && inSeataTx) {
+                // 本服务作为 Seata 全局事务发起方（含嵌套调用）：由 TransactionHook 在全局事务提交/回滚后释放
                 GlobalTransactionContext.getCurrentOrCreate();
-                // 注册事务钩
                 TransactionHookManager.registerHook(
                     new TransactionHookAdapter() {
                         @Override
-                        public void afterCommit(){
-                            releaseLock(multiLock, threadName, keys);
+                        public void afterCommit() {
+                            releaseLockOnce(multiLock, threadName, keys, lockReleased);
                         }
-                        @Override public void afterRollback() {
-                            releaseLock(multiLock, threadName, keys);
+
+                        @Override
+                        public void afterRollback() {
+                            releaseLockOnce(multiLock, threadName, keys, lockReleased);
+                        }
+
+                        @Override
+                        public void afterCompletion() {
+                            releaseLockOnce(multiLock, threadName, keys, lockReleased);
                         }
                     }
                 );
+                deferredUnlock = true;
             } else if (unlockAfterTx && inSpringTx) {
-                // Spring 本地事务
-                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-                    @Override
-                    public void afterCommit() {
-                        releaseLock(multiLock, threadName, keys);
-                    }
-
-                    @Override
-                    public void afterCompletion(int status) {
-                        if (status != STATUS_COMMITTED) {
-                            log.warn("事务回滚，释放锁，key={}", keys);
-                            releaseLock(multiLock, threadName, keys);
-                        }
-                    }
-                });
+                // 纯本地 Spring 事务（非 Seata 全局事务）
+                registerSpringTxDeferredUnlock(multiLock, threadName, keys, lockReleased);
+                deferredUnlock = true;
             }
 
-            //方法执行后立即释放锁
             return pjp.proceed();
 
         } catch (InterruptedException e) {
@@ -174,14 +188,71 @@ public class DistributeLockerAspect {
             Thread.currentThread().interrupt();
             throw new ServiceException("线程 "+threadName+" 获取锁失败,请求超时",e);
         } finally {
-            // 仅当：未处于 Seata 全局事务 && 未处于 Spring 事务 && 已加锁 才在这里解锁
-            if (locked) {
-                if (!unlockAfterTx || !inAnyTx) {
-                    log.info("线程{} 未处于Seata全局事务 && 未处于Spring事务 && 已加锁，释放锁，key={}", threadName, keys);
-                    releaseLock(multiLock, threadName, keys);
-                }
+            if (locked && !deferredUnlock) {
+                log.info("线程{} 方法结束释放锁，key={}", threadName, keys);
+                releaseLockOnce(multiLock, threadName, keys, lockReleased);
             }
         }
+    }
+
+    /**
+     * 注册 Spring 本地事务同步：在事务提交/回滚后再释放锁。
+     */
+    private void registerSpringTxDeferredUnlock(RedissonMultiLock multiLock, String threadName,
+                                                List<String> keys, AtomicBoolean lockReleased) {
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                releaseLockOnce(multiLock, threadName, keys, lockReleased);
+            }
+
+            @Override
+            public void afterCompletion(int status) {
+                if (status != STATUS_COMMITTED) {
+                    log.warn("事务回滚，释放锁，key={}", keys);
+                }
+                releaseLockOnce(multiLock, threadName, keys, lockReleased);
+            }
+        });
+    }
+
+    /**
+     * 是否为「跨服务」带入的 Seata 参与方。
+     * <p>不能用 {@code GlobalTransactionContext.getCurrent().getGlobalTransactionRole()} 判断：
+     * Seata 1.5.2 在存在 XID 时 {@code getCurrent()} 总会 new 一个 role=Participant 的对象，
+     * 发起方本服务内也会被误判。</p>
+     * <p>可靠信号：入站 HTTP 请求已携带 {@link RootContext#KEY_XID}（由上游 {@code FeignInterceptor} 传入）。
+     * 无 HTTP 上下文（如 XXL-JOB 发起方）视为非参与方。</p>
+     */
+    private boolean isCrossServiceSeataParticipant() {
+        if (!RootContext.inGlobalTransaction()) {
+            return false;
+        }
+        RequestAttributes attrs = RequestContextHolder.getRequestAttributes();
+        if (!(attrs instanceof ServletRequestAttributes)) {
+            // 无 HTTP 上下文（如 XXL-JOB 发起方）→ 非参与方，仍走 TransactionHook
+            return false;
+        }
+        try {
+            return CharSequenceUtil.isNotBlank(readInboundSeataXidHeader((ServletRequestAttributes) attrs));
+        } catch (Exception e) {
+            // 已有 Servlet 上下文但读取失败：保守按参与方，避免误注册 Hook 导致锁泄漏
+            log.warn("读取入站TX_XID失败，保守按参与方处理（方法结束释放锁）", e);
+            return true;
+        }
+    }
+
+    /**
+     * 从当前 Servlet 请求读取入站 Seata XID（Feign 调用方通过 {@link RootContext#KEY_XID} 传入）。
+     *
+     * @return 入站 XID；请求头为空时返回 {@code null}
+     */
+    private String readInboundSeataXidHeader(ServletRequestAttributes attrs) {
+        HttpServletRequest request = attrs.getRequest();
+        if (request == null) {
+            return null;
+        }
+        return request.getHeader(RootContext.KEY_XID);
     }
 
     /**
@@ -225,12 +296,23 @@ public class DistributeLockerAspect {
      * @param threadName   线程名
      * @param keys         锁的key集合
      */
-    private void releaseLock(RedissonMultiLock multiLock, String threadName, List<String> keys) {
+    private void releaseLockOnce(RedissonMultiLock multiLock, String threadName, List<String> keys, AtomicBoolean lockReleased) {
+        if (lockReleased.get()) {
+            return;
+        }
+        if (releaseLock(multiLock, threadName, keys)) {
+            lockReleased.set(true);
+        }
+    }
+
+    private boolean releaseLock(RedissonMultiLock multiLock, String threadName, List<String> keys) {
         try {
             multiLock.unlock();
             log.info("线程{} 释放锁成功, key={}", threadName, keys);
+            return true;
         } catch (Exception e) {
             log.error("线程{} 释放锁失败, key={}", threadName, keys, e);
+            return false;
         }
     }
 
@@ -377,7 +459,7 @@ public class DistributeLockerAspect {
         }
 
         // 将各个字段路径末端的值用 | 连接起来
-        int maxLength = fieldValuesList.stream().mapToInt(List::size).max().orElse(0);
+        int maxLength = fieldValuesList.stream().mapToInt(fieldValues -> fieldValues.size()).max().orElse(0);
         for (int i = 0; i < maxLength; i++) {
             StringBuilder combinedKey = new StringBuilder();
             for (List<Object> fieldValues : fieldValuesList) {
