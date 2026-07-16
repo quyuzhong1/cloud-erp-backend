@@ -421,9 +421,11 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         if (CollUtil.isEmpty(sourceIds)) {
             return  Boolean.TRUE;
         }
-        List<DeliveryDeclareDetailMidEntity> list = lambdaQuery().in(DeliveryDeclareDetailMidEntity::getSourceId, sourceIds).list();
-        if (CollUtil.isEmpty(list)) {
-            return  Boolean.TRUE;
+        Integer count = lambdaQuery()
+                .in(DeliveryDeclareDetailMidEntity::getSourceId, sourceIds)
+                .count();
+        if (count == null || count == 0) {
+            return Boolean.TRUE;
         }
         return lambdaUpdate().in(DeliveryDeclareDetailMidEntity::getSourceId,sourceIds).remove();
     }
