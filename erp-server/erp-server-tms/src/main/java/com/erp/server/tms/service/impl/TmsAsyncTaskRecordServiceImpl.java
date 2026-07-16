@@ -282,7 +282,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
     }
 
     /**
-     * 从任务信封解析物流商对账单业务主单 id（匹配 / 账单确认 payload 均含 ids）。
+     * 从任务信封解析物流商对账单业务主单 id（匹配 / 账单确认 payload 含 mainId，兼容旧版 ids）。
      * <p>按 envelope.methodType 选择对应 Payload 类型反序列化。</p>
      *
      * @param json 任务 dataJson（TaskEnvelope）
@@ -296,17 +296,28 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         if (TmsAsyncTaskMethodTypeEnum.LOGISTICS_RECON_CONFIRM_BILL.getCode().equals(envelope.getMethodType())) {
             TmsAsyncTaskRecordDTO.LogisticsReconConfirmBillPayloadDTO confirmPayload =
                     parseEnvelopePayload(envelope, TmsAsyncTaskRecordDTO.LogisticsReconConfirmBillPayloadDTO.class);
-            if (confirmPayload == null || CollUtil.isEmpty(confirmPayload.getIds())) {
-                return Collections.emptyList();
-            }
-            return normalizeBusinessIds(confirmPayload.getIds());
+            return resolveLogisticsReconPayloadMainIds(
+                    confirmPayload == null ? null : confirmPayload.getMainId(),
+                    confirmPayload == null ? null : confirmPayload.getIds());
         }
         TmsAsyncTaskRecordDTO.LogisticsReconMatchPayloadDTO matchPayload =
                 parseEnvelopePayload(envelope, TmsAsyncTaskRecordDTO.LogisticsReconMatchPayloadDTO.class);
-        if (matchPayload == null || CollUtil.isEmpty(matchPayload.getIds())) {
+        return resolveLogisticsReconPayloadMainIds(
+                matchPayload == null ? null : matchPayload.getMainId(),
+                matchPayload == null ? null : matchPayload.getIds());
+    }
+
+    /**
+     * 解析对账 payload 主单 id：优先 mainId；否则回退旧版 ids 列表（防重需保留全集）。
+     */
+    private List<String> resolveLogisticsReconPayloadMainIds(String mainId, List<String> legacyIds) {
+        if (StringUtils.isNotBlank(mainId)) {
+            return normalizeBusinessIds(Collections.singletonList(mainId));
+        }
+        if (CollUtil.isEmpty(legacyIds)) {
             return Collections.emptyList();
         }
-        return normalizeBusinessIds(matchPayload.getIds());
+        return normalizeBusinessIds(legacyIds);
     }
 
     /**
@@ -1358,6 +1369,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         String transferDeclareBusinessType = TmsAsyncTaskRecordBusinessTypeEnum.TRANSFER_DECLARE_COST_ALLOCATION.getCode();
         String firstMileReconBusinessType = TmsAsyncTaskRecordBusinessTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode();
         String b2cDeclareBusinessType = TmsAsyncTaskRecordBusinessTypeEnum.TMS_B2C_DECLARE_RECONCILIATION.getCode();
+        String logisticsReconBusinessType = TmsAsyncTaskRecordBusinessTypeEnum.LOGISTICS_RECON.getCode();
         return Arrays.asList(
                 new TmsAsyncTaskRecordDTO.WatchdogStaleDetailTaskType(smallBagBusinessType, TmsAsyncTaskMethodTypeEnum.SELFDELIVER_PUSH_ALLOCATION.getCode()),
                 new TmsAsyncTaskRecordDTO.WatchdogStaleDetailTaskType(smallBagBusinessType, TmsAsyncTaskMethodTypeEnum.LASTMILE_PUSH_ALLOCATION.getCode()),
@@ -1376,7 +1388,9 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
                 new TmsAsyncTaskRecordDTO.WatchdogStaleDetailTaskType(transferDeclareBusinessType, TmsAsyncTaskMethodTypeEnum.RE_ALLOCATION.getCode()),
                 new TmsAsyncTaskRecordDTO.WatchdogStaleDetailTaskType(transferDeclareBusinessType, TmsAsyncTaskMethodTypeEnum.DELETE.getCode()),
                 new TmsAsyncTaskRecordDTO.WatchdogStaleDetailTaskType(firstMileReconBusinessType, TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode()),
-                new TmsAsyncTaskRecordDTO.WatchdogStaleDetailTaskType(b2cDeclareBusinessType, TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode())
+                new TmsAsyncTaskRecordDTO.WatchdogStaleDetailTaskType(b2cDeclareBusinessType, TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode()),
+                new TmsAsyncTaskRecordDTO.WatchdogStaleDetailTaskType(logisticsReconBusinessType, TmsAsyncTaskMethodTypeEnum.LOGISTICS_RECON_MATCH.getCode()),
+                new TmsAsyncTaskRecordDTO.WatchdogStaleDetailTaskType(logisticsReconBusinessType, TmsAsyncTaskMethodTypeEnum.LOGISTICS_RECON_CONFIRM_BILL.getCode())
         );
     }
 
