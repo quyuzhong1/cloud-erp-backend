@@ -19,6 +19,7 @@ import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.PushStocktakingProfitLossStatusEnum;
 import com.erp.model.wms.enums.StocktakingModeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.listener.StocktakingTaskDetailExcelImportHelper;
 import com.erp.server.wms.listener.StocktakingTaskDetailExcelTemplateWriter;
 import com.erp.server.wms.listener.StocktakingTaskFirstQtyExcelListener;
@@ -59,11 +60,6 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_STOCKTAKING
 @Slf4j
 @Service
 public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<StocktakingTaskDetailMapper, StocktakingTaskDetailEntity> implements StocktakingTaskDetailService {
-
-    /**
-     * 无仓位或找不到所属库区时的导出 sheet / 库区名
-     */
-    public static final String EMPTY_WAREHOUSE_AREA_NAME = "空仓位";
 
     @Resource
     private ProductDetailService productDetailService;
@@ -436,10 +432,10 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
             item.setStocktakingModeName(stocktakingModeName);
             String location = item.getWarehouseLocation() == null ? "" : item.getWarehouseLocation();
             if (CharSequenceUtil.isBlank(location)) {
-                item.setWarehouseAreaName(EMPTY_WAREHOUSE_AREA_NAME);
+                item.setWarehouseAreaName(WmsConstant.EMPTY_WAREHOUSE_AREA_NAME);
             } else {
                 String areaName = locationToAreaName.get(item.getWarehouseId() + "_" + location);
-                item.setWarehouseAreaName(CharSequenceUtil.isBlank(areaName) ? EMPTY_WAREHOUSE_AREA_NAME : areaName);
+                item.setWarehouseAreaName(CharSequenceUtil.isBlank(areaName) ? WmsConstant.EMPTY_WAREHOUSE_AREA_NAME : areaName);
             }
             //如果是盲盘就要清空一些数据
             if(Boolean.TRUE.equals(isBlindCount)){
@@ -450,7 +446,7 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
         }
 
         exportList.sort(Comparator
-                .comparing((StocktakingTaskDetailDTO.ExportDTO e) -> EMPTY_WAREHOUSE_AREA_NAME.equals(e.getWarehouseAreaName()) ? 1 : 0)
+                .comparing((StocktakingTaskDetailDTO.ExportDTO e) -> WmsConstant.EMPTY_WAREHOUSE_AREA_NAME.equals(e.getWarehouseAreaName()) ? 1 : 0)
                 .thenComparing(StocktakingTaskDetailDTO.ExportDTO::getWarehouseAreaName, Comparator.nullsLast(String::compareTo))
                 .thenComparing(e -> e.getWarehouseLocation() == null ? "" : e.getWarehouseLocation(), AlphanumericComparatorUtil::compare)
                 .thenComparing(StocktakingTaskDetailDTO.ExportDTO::getSkuNo, Comparator.nullsLast(String::compareTo)));

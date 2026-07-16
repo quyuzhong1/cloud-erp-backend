@@ -276,7 +276,8 @@ public final class ApiErrorOms {
     public static final ApiError SO_THIRD_DELIVERY_MANUAL_ONLY_B2B_DISABLED = new ApiError("SO_THIRD_DELIVERY_MANUAL_ONLY_B2B_DISABLED", 92248, "只有未开启B2B发货的允许手动发货");
     public static final ApiError SO_THIRD_DELIVERY_ONLY_WAIT_SHIPPED = new ApiError("SO_THIRD_DELIVERY_ONLY_WAIT_SHIPPED", 92248, "只有待发货状态的允许发货");
     public static final ApiError SO_THIRD_DELIVERY_GENERATE_OUTSTOCK_ONLY_SHIPPED = new ApiError("SO_THIRD_DELIVERY_GENERATE_OUTSTOCK_ONLY_SHIPPED", 92248, "只有已发货状态的允许生成销售出库单");
-    public static final ApiError SO_THIRD_DELIVERY_DELETE_ONLY_FAILED_OR_CANCELED = new ApiError("SO_THIRD_DELIVERY_DELETE_ONLY_FAILED_OR_CANCELED", 92248, "只有创建失败、取消发货允许删除");
+    public static final ApiError SO_THIRD_DELIVERY_DELETE_ONLY_FAILED_OR_CANCELED = new ApiError("SO_THIRD_DELIVERY_DELETE_ONLY_FAILED_OR_CANCELED", 92248, "仅支持删除待发货的手动单，或创建失败/取消发货的API推送单");
+    public static final ApiError SO_THIRD_DELIVERY_REVOKE_OUTSTOCK_ONLY_MANUAL_SHIPPED = new ApiError("SO_THIRD_DELIVERY_REVOKE_OUTSTOCK_ONLY_MANUAL_SHIPPED", 92248, "只有状态为已发货且推送类型为手动发货才允许撤销出库");
     public static final ApiError SO_B2C_GET_EXCHANGE_RATE_FAILED = new ApiError("SO_B2C_GET_EXCHANGE_RATE_FAILED", 10718, "获取汇率异常-汇率获取失败，请重新获取");
     public static final ApiError SO_RETURN_EXCHANGE_RATE_REQUIRED = new ApiError("SO_RETURN_EXCHANGE_RATE_REQUIRED", 10719, "销售订单明细【{0}】汇率为空，无法计算本位币金额");
     public static final ApiError SO_RETURN_RECEIVE_QTY_INVALID = new ApiError("SO_RETURN_RECEIVE_QTY_INVALID", 10720, "sku【{0}】签收数量异常，实际值：{1}");
@@ -595,6 +596,7 @@ public final class ApiErrorOms {
                 SO_THIRD_DELIVERY_ONLY_WAIT_SHIPPED,
                 SO_THIRD_DELIVERY_GENERATE_OUTSTOCK_ONLY_SHIPPED,
                 SO_THIRD_DELIVERY_DELETE_ONLY_FAILED_OR_CANCELED,
+                SO_THIRD_DELIVERY_REVOKE_OUTSTOCK_ONLY_MANUAL_SHIPPED,
                 SO_B2C_GET_EXCHANGE_RATE_FAILED,
                 SO_RETURN_EXCHANGE_RATE_REQUIRED,
                 SO_RETURN_RECEIVE_QTY_INVALID,

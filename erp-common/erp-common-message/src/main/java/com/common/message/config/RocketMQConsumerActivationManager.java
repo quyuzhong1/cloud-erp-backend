@@ -89,7 +89,12 @@ public class RocketMQConsumerActivationManager {
         try {
             listenerRegistrar.register();
             ContainerSummary summary = containerSummary();
-            if (summary.getTotal() == 0 || summary.getRunning() != summary.getTotal()) {
+            if (summary.getTotal() == 0) {
+                activationState = ActivationState.ACTIVE;
+                LOGGER.info("No RocketMQ listeners found; deferred activation completed as a no-op");
+                return;
+            }
+            if (summary.getRunning() != summary.getTotal()) {
                 throw new IllegalStateException("RocketMQ listener activation incomplete: total="
                         + summary.getTotal() + ", running=" + summary.getRunning());
             }

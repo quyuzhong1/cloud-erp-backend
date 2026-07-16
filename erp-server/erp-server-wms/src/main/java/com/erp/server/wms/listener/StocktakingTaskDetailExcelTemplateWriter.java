@@ -6,7 +6,7 @@ import com.alibaba.excel.write.handler.SheetWriteHandler;
 import com.alibaba.excel.write.metadata.WriteSheet;
 import com.alibaba.excel.write.metadata.holder.WriteSheetHolder;
 import com.alibaba.excel.write.metadata.holder.WriteWorkbookHolder;
-import com.erp.server.wms.service.impl.StocktakingTaskDetailServiceImpl;
+import com.erp.server.wms.constant.WmsConstant;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 
@@ -42,7 +42,7 @@ public final class StocktakingTaskDetailExcelTemplateWriter {
      * 写出空模板：一个「空仓位」示例 sheet，首行元信息 + 表头，无数据行。
      */
     public static void writeEmptyTemplate(OutputStream outputStream) {
-        String areaName = StocktakingTaskDetailServiceImpl.EMPTY_WAREHOUSE_AREA_NAME;
+        String areaName = WmsConstant.EMPTY_WAREHOUSE_AREA_NAME;
         ExcelWriter excelWriter = null;
         try {
             excelWriter = EasyExcel.write(outputStream).build();

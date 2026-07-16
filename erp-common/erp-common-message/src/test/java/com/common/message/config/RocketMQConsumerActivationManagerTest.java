@@ -34,6 +34,23 @@ public class RocketMQConsumerActivationManagerTest {
         context.close();
     }
 
+    @Test
+    public void shouldCompleteActivationWhenServiceHasNoMqListeners() {
+        GenericApplicationContext context = new GenericApplicationContext();
+        context.refresh();
+        AtomicInteger registrations = new AtomicInteger();
+        RocketMQConsumerActivationManager manager = new RocketMQConsumerActivationManager(
+                context, deferredEnvironment("green", "green"), registrations::incrementAndGet);
+
+        manager.activate();
+
+        Assert.assertEquals(1, registrations.get());
+        Assert.assertTrue(manager.isEffectivelyEnabled());
+        Assert.assertEquals("ACTIVE", manager.getActivationState());
+        Assert.assertEquals(0, manager.containerSummary().getTotal());
+        context.close();
+    }
+
     @Test(expected = RocketMQConsumerActivationManager.ActivationNotEligibleException.class)
     public void shouldRejectActivationWhenMqColorDoesNotMatch() {
         GenericApplicationContext context = new GenericApplicationContext();
