@@ -35,6 +35,10 @@ public class BomChildrenSkuDTO  implements Serializable {
      * bomId
      */
     private String bomId;
+    /**
+     * 当前最新bom版本
+     */
+    private String thisBomVersion;
 
 
     /**

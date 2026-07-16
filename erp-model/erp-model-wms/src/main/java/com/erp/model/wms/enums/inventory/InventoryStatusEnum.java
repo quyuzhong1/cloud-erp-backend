@@ -18,9 +18,16 @@ public enum InventoryStatusEnum  implements EnumMessage {
     FROZEN("frozen", "冻结", Boolean.TRUE),
     IN_TRANSIT("inTransit", "在途", Boolean.FALSE),
     WAIT_QC("waitQc", "待检", Boolean.FALSE),
+    /**
+     * 不良品：用于 wego 海外仓签收时 {@code defective_product_flag=true} 场景；
+     * 与「待检/在途」一致按空库位聚合，不参与「可用 / 冻结 / 盘点差异」统计，
+     * 业务上视为独立分类的物理库存。如需纳入盘点或可销售口径，需要在下游
+     * 查询/统计代码显式加入对该状态的过滤。
+     */
+    DEFECTIVE_PRODUCT("defectiveProduct", "不良品", Boolean.FALSE),
     ;
 
-    // 实际库存=可用库存+冻结库存，待检库存和在途库存不计入。
+    // 实际库存=可用库存+冻结库存，待检库存、在途库存、不良品库存不计入。
     @JsonValue
     @EnumValue
     private String code;
@@ -31,8 +38,10 @@ public enum InventoryStatusEnum  implements EnumMessage {
     private String name;
 
     /**
-     * 是否控制库位
-     * @return
+     * 是否控制库位（true = 按真实库位聚合；false = 强制按空库位聚合，
+     * 当前 {@link #IN_TRANSIT} / {@link #WAIT_QC} / {@link #DEFECTIVE_PRODUCT} 均为 false）。
+     * <p>
+     * 注意：该字段只控制库位维度，不直接表示「是否计入实际库存」；后者由调用方按状态过滤决定。
      */
     private Boolean controlLocation;
 

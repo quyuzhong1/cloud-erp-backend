@@ -4,6 +4,7 @@ import com.common.business.config.FeignErrorDecoder;
 import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
 
@@ -17,5 +18,11 @@ public interface WorkflowTaskRecordFeign {
      */
     @PostMapping("/feign/workflowTaskRecord/getTaskErrorReport")
     List<WorkflowTaskRecordDTO.TaskErrorReportDTO> getTaskErrorReport();
+
+    /**
+     * 启动组包预报自动出库任务编排。
+     */
+    @PostMapping("/feign/workflowTaskRecord/startMergePackageDeliveryWorkflow")
+    WorkflowTaskRecordDTO.StartWorkflowResultDTO startMergePackageDeliveryWorkflow(@RequestBody WorkflowTaskRecordDTO.StartWorkflowDTO dto);
 
 }

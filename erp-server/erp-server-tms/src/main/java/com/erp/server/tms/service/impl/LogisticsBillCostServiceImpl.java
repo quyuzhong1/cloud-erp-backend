@@ -20,6 +20,7 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DataIdempotent;
 import com.common.business.annotation.DistributeLocker;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.*;
 import com.common.business.dto.base.BaseResultDTO.AddDTO;
 import com.common.business.enums.*;
@@ -123,6 +124,10 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     implements LogisticsBillCostService, LogisticsBillCostAsyncTaskDelegate {
     private static final int IMPORT_CONFIRM_BATCH_SIZE = 1000;
     private static final String LAST_MILE_FEE_ATTRIBUTION = DictCostAttributionEnum.LAST_MILE_DELIVERY.getCode();
+    /**
+     * 对账月份高级查询字段名。
+     */
+    private static final String RECONCILIATION_MONTH_QUERY_FIELD = "lbc.reconciliation_month";
     @Resource
     private OperateLogService operateLogService;
 
@@ -3668,9 +3673,6 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         String costTypeName = resolveCostAttributionName(dto.getType());
         String businessType = SourceTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode();
         String methodType = resolveUpdateReconciliationStatusMethodType(dto.getType());
-        LocalDate today = LocalDate.now();
-        dto.setCreateTimeStart(today.minusDays(30).atStartOfDay());
-        dto.setCreateTimeEnd(today.atTime(23, 59, 59));
 
         int total = countByUpdateReconciliationStatus(buildUpdateReconciliationStatusCountQuery(dto));
         if (total == 0) {
@@ -3679,8 +3681,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
         TmsAsyncTaskRecordDTO.UpdateReconciliationStatusPayloadDTO payload =
             new TmsAsyncTaskRecordDTO.UpdateReconciliationStatusPayloadDTO(
-                dto.getReconciliationStatus(), dto.getConfirmTime(),
-                dto.getCreateTimeStart(), dto.getCreateTimeEnd(), dto.getSqlMap(), dto.getPermissionSql());
+                dto.getReconciliationStatus(), dto.getConfirmTime(), dto.getSqlMap(), dto.getPermissionSql());
         TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope =
             asyncTaskRecordService.buildEnvelope(businessType, methodType, null, null, payload);
         BatchResultDTO result = asyncTaskRecordService.dispatchManualEnvelopeTask(
@@ -3723,9 +3724,56 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             throw new ServiceException("费用归属类型不支持");
         }
         String querySql = dto.getSqlMap() == null ? null : dto.getSqlMap().get("default");
+        if (CollUtil.isEmpty(dto.getIds())) {
+            validateAsyncUpdateReconciliationMonth(dto.getAdvanceQueryDTOList());
+        }
         if (CollUtil.isEmpty(dto.getIds()) && StringUtils.isBlank(querySql)) {
             throw new ServiceException("请先筛选要更新的费用数据");
         }
+    }
+
+    /**
+     * 校验全量异步更新对账状态时必须选择对账月份。
+     * <p>
+     * 全量异步任务按高级查询条件创建任务，不回传具体 ID。为了避免任务范围过大，
+     * 必须包含 lbc.reconciliation_month 条件，且比较符只能为等于、值不能为空。
+     *
+     * @param advanceQueryDTOList 页面高级查询条件
+     */
+    private void validateAsyncUpdateReconciliationMonth(List<AdvanceQueryDTO> advanceQueryDTOList) {
+        List<AdvanceQueryDTO> reconciliationMonthQueries = Optional.ofNullable(advanceQueryDTOList)
+                .orElse(Collections.emptyList())
+                .stream()
+                .filter(query -> Objects.equals(RECONCILIATION_MONTH_QUERY_FIELD, query.getField()))
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(reconciliationMonthQueries)) {
+            throw new ServiceException("异步更新必须选择【对账月份】，且不能为空，比较符必须为等于");
+        }
+        boolean invalid = reconciliationMonthQueries.stream().anyMatch(query ->
+                !Objects.equals(QueryConditionEnum.EQ.getCompareCode(), query.getCompare())
+                        || isBlankAdvanceQueryValue(query.getValue()));
+        if (invalid) {
+            throw new ServiceException("异步更新必须选择【对账月份】，且不能为空，比较符必须为等于");
+        }
+    }
+
+    /**
+     * 判断高级查询值是否为空。
+     *
+     * @param value 高级查询条件值
+     * @return true 表示值为空
+     */
+    private boolean isBlankAdvanceQueryValue(Object value) {
+        if (value == null) {
+            return true;
+        }
+        if (value instanceof CharSequence) {
+            return StrUtil.isBlank((CharSequence) value);
+        }
+        if (value instanceof Collection) {
+            return CollUtil.isEmpty((Collection<?>) value);
+        }
+        return false;
     }
 
     private String resolveCostAttributionName(String type) {
@@ -3789,8 +3837,6 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         query.setType(costType);
         query.setReconciliationStatus(payload.getReconciliationStatus());
         query.setConfirmTime(payload.getConfirmTime());
-        query.setCreateTimeStart(payload.getCreateTimeStart());
-        query.setCreateTimeEnd(payload.getCreateTimeEnd());
         query.setSqlMap(payload.getSqlMap());
         query.setPermissionSql(payload.getPermissionSql());
         fillUpdateReconciliationStatusCodes(query);
@@ -3830,8 +3876,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             LogisticsBillCostDTO.UpdateStatusDTO dto) {
         return buildUpdateReconciliationStatusPageQuery(
             new TmsAsyncTaskRecordDTO.UpdateReconciliationStatusPayloadDTO(
-                dto.getReconciliationStatus(), dto.getConfirmTime(),
-                dto.getCreateTimeStart(), dto.getCreateTimeEnd(), dto.getSqlMap(), dto.getPermissionSql()),
+                dto.getReconciliationStatus(), dto.getConfirmTime(), dto.getSqlMap(), dto.getPermissionSql()),
             dto.getType());
     }
 

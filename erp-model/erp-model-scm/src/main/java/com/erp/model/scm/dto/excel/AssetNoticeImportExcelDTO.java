@@ -96,7 +96,7 @@ public class AssetNoticeImportExcelDTO  implements Serializable {
      * 供应商名称
      */
     @ExcelProperty("*供应商名称")
-    @FieldValid(fieldName = "supplierName")
+    @FieldValid(fieldName = "supplierName", maxLength = 255)
     private String supplierName;
 
     /**

@@ -6,6 +6,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONConfig;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -24,7 +25,6 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
@@ -46,18 +46,24 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.ProductBomInfoDTO;
 import com.erp.model.plm.dto.ProductDetailDTO;
+import com.erp.model.plm.entity.BasicDictEntity;
+import com.erp.model.plm.entity.ProductLogisticsEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.enums.CombinationDeclareTypeEnums;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.DictCountryDTO;
+import com.erp.model.sys.dto.ThirdNoticePushRecordDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.sys.entity.SysPostEntity;
+import com.erp.model.tms.constant.DeclareMergeDefaults;
 import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
+import com.erp.model.tms.entity.DeliveryDeclareDetailMidEntity;
 import com.erp.model.tms.entity.FirstMileWeightAllocationEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.entity.TmsDeclareBillEntity;
@@ -74,12 +80,14 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysPostFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.sys.feign.ThirdNoticePushRecordFeign;
+import com.erp.rpc.tms.feign.DeliveryDeclareDetailMidFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.tms.feign.TmsDeclareBillFeign;
 import com.erp.rpc.tms.feign.TmsFirstMileLogisticFeign;
-import com.erp.rpc.wms.feign.WmsWarehouseFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
 import com.erp.server.wms.convert.FirstMileDeliveryConverter;
@@ -91,6 +99,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -104,6 +113,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -121,7 +132,7 @@ import static com.common.business.enums.FileTaskEventEnum.*;
 @Slf4j
 @Service
 public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeliveryMapper, FirstMileDeliveryEntity> implements FirstMileDeliveryService {
-    @Resource
+     @Resource
     private OperateLogService operateLogService;
     @Resource
     private DocNoGenHelper docNoGenHelper;
@@ -160,14 +171,14 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     private IdentifierGenerator identifierGenerator;
     @Resource
     private SkuMappingFeign skuMappingFeign;
+    @Lazy
     @Resource
     private OverseasWarehouseInboundService overseasWarehouseInboundService;
     @Resource
     private WmsCartonSpecService wmsCartonSpecService;
     @Resource
-    private WmsCartonService wmsCartonService;
-    @Resource
     private WmsCartonDetailService wmsCartonDetailService;
+    @Lazy
     @Resource
     private WmsDeliveryPlanService wmsDeliveryPlanService;
     @Resource
@@ -179,21 +190,19 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     @Resource
     private LogisticsFeign logisticsFeign;
     @Resource
+    private DeliveryDeclareDetailMidFeign deliveryDeclareDetailMidFeign;
+    @Resource
     private TmsDeclareBillFeign tmsDeclareBillFeign;
+    @Resource
+    private com.erp.rpc.tms.feign.CfgSettingFeign tmsCfgSettingFeign;
+    @Lazy
     @Resource
     private PackingTaskService packingTaskService;
     @Resource
     private CfgRuleOutService cfgRuleOutService;
-    @Resource
-    private PickingListsService pickingListsService;
-    @Resource
-    private PickingDetailService pickingDetailService;
-    @Resource
-    private CfgRulePickingStagingService cfgRulePickingStagingService;
+    @Lazy
     @Resource
     private RequisitionApplicationService requisitionApplicationService;
-    @Resource
-    private RequisitionApplicationDetailService requisitionApplicationDetailService;
     @Resource
     private CfgSettingService cfgSettingService;
     @Resource
@@ -204,6 +213,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     private MQProducerService<NoticeMsgInfoDTO> mqProducerService;
     @Resource
     private FbaShipmentPackingService fbaShipmentPackingService;
+    @Lazy
     @Resource
     private AwdOutstockService awdOutstockService;
     @Resource
@@ -211,7 +221,15 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     @Resource
     private CfgQueryOptionFeign cfgQueryOptionFeign;
     @Resource
-    private WmsWarehouseFeign wmsWarehouseFeign;
+    private SysDictFeign sysDictFeign;
+    @Resource
+    private ThirdNoticePushRecordFeign thirdNoticePushRecordFeign;
+    @Lazy
+    @Resource
+    FirstMileDeliveryService self;
+    @Resource
+    @Qualifier("wmsTaskExecutorPool")
+    private ExecutorService wmsTaskExecutorPool;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -250,62 +268,158 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         //新增装箱任务
 //        packingTaskService.addPackingByFirstMileDelivery(firstMileDeliveryEntity);
 
-        //根据装箱状态自动生成报关单
+        // 当前单据提交完成后再检查装箱状态，避免事务未提交时读取不到装箱明细。
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
             public void afterCommit() {
-                try {
-                    Thread.sleep(2000);
-                } catch (InterruptedException e) {
-                    log.error("自动生成报关单睡眠异常: {}", e.getMessage());
-                }
-                FirstMileDeliveryServiceImpl bean = ApplicationContextUtils.getBean(FirstMileDeliveryServiceImpl.class);
-                bean.autoGenerateByPacked(firstMileDeliveryEntity,BillGenerateTimingEnum.AFTER_PACKING);
+                CompletableFuture.runAsync(() -> {
+                    self.autoGenerateByPacked(firstMileDeliveryEntity, BillGenerateTimingEnum.AFTER_ADD);
+                }, wmsTaskExecutorPool);
             }
         });
         return new BaseResultDTO.AddDTO(firstMileDeliveryEntity.getId(), code);
     }
 
+    /**
+     * 按装箱状态自动生成报关明细中间表
+     *
+     * @param entity 头程发货单
+     * @param billGenerateTimingEnum 单据生成时机
+     * @throws ServiceException 自动生成失败时抛出
+     * @author jack
+     * @date 2026-04-29
+     */
     @Override
     public void autoGenerateByPacked( FirstMileDeliveryEntity entity, BillGenerateTimingEnum billGenerateTimingEnum) {
         List<PackingTaskEntity> taskEntityList = packingTaskService.getPackingStatusByFirstMileDelivery(entity);
-        //已装箱才能生成报关单逻辑
+        // 已装箱才能生成报关明细中间表。
         if (CollectionUtils.isNotEmpty(taskEntityList)) {
             boolean packed = taskEntityList.stream().allMatch(taskEntity -> taskEntity.getPackingStatus().equals(PackingTaskStatusEnum.PACKED.getCode()));
             if(packed){
-                //走TMS生成报关单单逻辑
-                AutoGenerateBillDTO autoGenerateBillDTO = AutoGenerateBillDTO.builder()
-                        .id(entity.getId())
-                        .billGenerateTimingEnum(billGenerateTimingEnum)
-                        .sourceTypeEnum(SourceTypeEnum.FIRST_MILE_DELIVERY)
-                        .firstMileDeliveryEntity(entity)
-                        .checkCfg(Boolean.TRUE) // 检查配置
-                        .build();
-                try {
-                    if(WmsDeclareStatusEnum.WAIT.equals(entity.getDeclareStatus())){
-                        Boolean autoGenerateResult;
-                        //自动生成功能系统标识
-                        Boolean originalValue = UserContext.getIsUserSystem();
-                        UserContext.setIsUserSystem(Boolean.TRUE);
-                        try {
-                            autoGenerateResult = tmsDeclareBillFeign.autoGenerateFirstMileDeclare(autoGenerateBillDTO);
-                        } finally {
-                            //恢复系统标识
-                            UserContext.setIsUserSystem(originalValue);
-                        }
-                        if(autoGenerateResult){
-                            FirstMileDeliveryDTO.UpdateStatusDTO updateStatusDTO = new FirstMileDeliveryDTO.UpdateStatusDTO();
-                            updateStatusDTO.setIds(Collections.singletonList(entity.getId()));
-                            updateStatusDTO.setDeclareStatus(WmsDeclareStatusEnum.FINISH.getCode());
-                            this.updateStatus(updateStatusDTO);
-                        }
-                    }
-                }catch (Exception e){
-                    log.error("头程发货单{} 自动生成报关单失败>>>>>>{}", entity.getCode(), e.getMessage());
-                    throw new ServiceException(CharSequenceUtil.format("头程发货单{} 自动生成报关单失败>>>>>>{}", entity.getCode(), e.getMessage()));
+                if(WmsDeclareStatusEnum.WAIT.equals(entity.getDeclareStatus())){
+                    registerFirstMileDeclareAutoGenerateTask(entity, billGenerateTimingEnum);
                 }
             }
         }
+    }
+
+    /**
+     * 提交后发送头程报关自动生成任务，避免审核事务内同步回调 WMS。
+     *
+     * @param entity 头程发货单
+     * @param billGenerateTimingEnum 单据生成时机
+     */
+    private void registerFirstMileDeclareAutoGenerateTask(FirstMileDeliveryEntity entity, BillGenerateTimingEnum billGenerateTimingEnum) {
+        if (Objects.isNull(entity) || Objects.isNull(billGenerateTimingEnum)) {
+            return;
+        }
+        if (!checkFirstMileDeclareAutoGenerateCfg(billGenerateTimingEnum)) {
+            return;
+        }
+        AutoGenerateBillDTO dto = AutoGenerateBillDTO.builder()
+                .id(entity.getId())
+                .billGenerateTimingEnum(billGenerateTimingEnum)
+                .sourceTypeEnum(SourceTypeEnum.FIRST_MILE_DELIVERY)
+                .checkCfg(Boolean.TRUE)
+                .build();
+        try {
+            self.consumeDeclareAutoGenerateTask(dto);
+        } catch (Exception e) {
+            log.error("头程发货单{}提交后发送自动生成报关明细任务失败：{}", entity.getCode(), e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 消费头程报关自动生成任务。
+     *
+     * @param dto 自动生成参数
+     * @return 是否处理成功
+     * @throws ServiceException 自动生成失败时抛出
+     */
+    @Override
+    public Boolean consumeDeclareAutoGenerateTask(AutoGenerateBillDTO dto) {
+        if (Objects.isNull(dto) || CharSequenceUtil.isBlank(dto.getId())) {
+            log.warn("头程发货单自动生成报关明细任务参数为空");
+            return Boolean.FALSE;
+        }
+        if (!SourceTypeEnum.FIRST_MILE_DELIVERY.equals(dto.getSourceTypeEnum())) {
+            log.warn("头程发货单自动生成报关明细任务来源类型不匹配，id={}, sourceType={}", dto.getId(), dto.getSourceTypeEnum());
+            return Boolean.FALSE;
+        }
+        FirstMileDeliveryEntity entity = super.getById(dto.getId());
+        if (Objects.isNull(entity)) {
+            log.warn("头程发货单自动生成报关明细任务未找到来源单，id={}", dto.getId());
+            return Boolean.TRUE;
+        }
+        if (Boolean.TRUE.equals(entity.getInvalidStatus())) {
+            log.info("头程发货单{}已作废，跳过自动生成报关明细", entity.getCode());
+            return Boolean.TRUE;
+        }
+        if (BillGenerateTimingEnum.AFTER_APPROVE.equals(dto.getBillGenerateTimingEnum())
+                && !ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())) {
+            log.info("头程发货单{}非已审核状态，跳过审核后自动生成报关明细", entity.getCode());
+            return Boolean.TRUE;
+        }
+        if (!WmsDeclareStatusEnum.WAIT.equals(entity.getDeclareStatus())) {
+            log.info("头程发货单{}报关状态非待生成，跳过自动生成报关明细", entity.getCode());
+            return Boolean.TRUE;
+        }
+        if (Boolean.TRUE.equals(dto.getCheckCfg())
+                && !checkFirstMileDeclareAutoGenerateCfg(dto.getBillGenerateTimingEnum())) {
+            log.info("头程发货单{}未开启当前时机自动生成报关明细配置，跳过", entity.getCode());
+            return Boolean.TRUE;
+        }
+        List<PackingTaskEntity> taskEntityList = packingTaskService.getPackingStatusByFirstMileDelivery(entity);
+        boolean packed = CollectionUtils.isNotEmpty(taskEntityList)
+                && taskEntityList.stream().allMatch(taskEntity -> taskEntity.getPackingStatus().equals(PackingTaskStatusEnum.PACKED.getCode()));
+        if (!packed) {
+            log.info("头程发货单{}未全部装箱，跳过自动生成报关明细", entity.getCode());
+            return Boolean.TRUE;
+        }
+        Boolean originalValue = UserContext.getIsUserSystem();
+        UserContext.setIsUserSystem(Boolean.TRUE);
+        try {
+            List<TmsDeclareBillDTO.MergeDeclareBillDTO> mergeDeclareBillDTOS = listAfterPushFmDeclare(
+                    new TmsDeclareBillDTO.PushDeclareBeforeParamDTO(Boolean.FALSE, Collections.singletonList(entity.getId())));
+            if (CollectionUtils.isEmpty(mergeDeclareBillDTOS)) {
+                throw new ServiceException(CharSequenceUtil.format("头程发货单{}未查询到可生成报关明细的来源数据", entity.getCode()));
+            }
+            TmsDeclareBillDTO.AutoGenerateMidDataDTO autoGenerateDTO = new TmsDeclareBillDTO.AutoGenerateMidDataDTO();
+            autoGenerateDTO.setMergeDeclareBillDTOS(mergeDeclareBillDTOS);
+            autoGenerateDTO.setSourceType(SourceTypeEnum.FM_DECLARE_BILL.getCode());
+            Boolean autoGenerateResult = tmsDeclareBillFeign.batchAddMergeDetail(autoGenerateDTO);
+            if (!Boolean.TRUE.equals(autoGenerateResult)) {
+                throw new ServiceException(CharSequenceUtil.format("头程发货单{}自动生成报关明细中间表返回失败", entity.getCode()));
+            }
+            log.info("头程发货单{}自动生成报关明细中间表成功", entity.getCode());
+            return Boolean.TRUE;
+        } finally {
+            UserContext.setIsUserSystem(originalValue);
+        }
+    }
+
+    /**
+     * 检查头程申报自动生成配置。
+     *
+     * @param billGenerateTimingEnum 单据生成时机枚举，用于匹配配置中的生成时机
+     * @return Boolean.TRUE表示满足自动生成条件，Boolean.FALSE表示不满足
+     */
+    private Boolean checkFirstMileDeclareAutoGenerateCfg(BillGenerateTimingEnum billGenerateTimingEnum) {
+        if (Objects.isNull(billGenerateTimingEnum)) {
+            return Boolean.FALSE;
+        }
+        // 获取自动开单配置
+        com.erp.model.tms.entity.CfgSettingEntity cfgSettingEntity =
+                tmsCfgSettingFeign.getByKey(com.erp.model.tms.enums.CfgSettingEnum.BILL_AUTO_ADD.getCode());
+        if (Objects.isNull(cfgSettingEntity) || Boolean.TRUE.equals(cfgSettingEntity.getDisabled())) {
+            return Boolean.FALSE;
+        }
+        // 解析配置数据并验证头程申报自动生成条件
+        com.erp.model.tms.dto.CfgSettingValueDTO.BillAutoAddDTO cfg =
+                BeanUtil.toBean(cfgSettingEntity.getDataJson(), com.erp.model.tms.dto.CfgSettingValueDTO.BillAutoAddDTO.class);
+        return Objects.nonNull(cfg)
+                && Boolean.TRUE.equals(cfg.getIsAutoFirstMileDeclare())
+                && CharSequenceUtil.equals(cfg.getFirstMileDeclareGenerateTiming(), billGenerateTimingEnum.getCode());
     }
 
     private void matchTransferRule(FirstMileDeliveryEntity entity) {
@@ -409,6 +523,44 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         fillList(pageData.getRecords());
         return new PagingVO(pageData);
     }
+
+    @Override
+    public List<BaseDropDownDTO.DisabledDTO> countryDropDownByIds(List<String> ids) {
+        List<String> idList = Optional.ofNullable(ids).orElse(Collections.emptyList()).stream()
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(idList)) {
+            throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
+        }
+
+        List<FirstMileDeliveryEntity> deliveryList = this.listByIds(idList);
+        if (CollectionUtils.isEmpty(deliveryList) || deliveryList.size() != idList.size()) {
+            throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_NOT_FOUND);
+        }
+
+        Set<String> countryIdSet = new HashSet<>();
+        for (FirstMileDeliveryEntity delivery : deliveryList) {
+            if (CharSequenceUtil.isBlank(delivery.getCountryId())) {
+                continue;
+            }
+            countryIdSet.add(delivery.getCountryId());
+        }
+        if (countryIdSet.size() > 1) {
+            throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_DEST_COUNTRY_INCONSISTENT);
+        }
+        if (countryIdSet.isEmpty()) {
+            throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_DEST_COUNTRY_NOT_MAINTAINED);
+        }
+
+        List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(Collections.singletonList(countryIdSet.iterator().next()));
+        if (CollectionUtils.isEmpty(countryList)) {
+            throw new ServiceException(ApiError.COMMON_COUNTRY_INFO_NOT_FOUND);
+        }
+        DictCountryEntity country = countryList.get(0);
+        return Collections.singletonList(new BaseDropDownDTO.DisabledDTO(country.getId(), country.getNameCn(), country.getDisabled()));
+    }
+
     @Override
     public PagingVO<FirstMileDeliveryDTO.ListFirstMileDTO> pagingFirstMile(PagingDTO<FirstMileDeliveryDTO.PagingParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
@@ -1123,7 +1275,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                             && !OmsPlatformEnum.OMS_IML.getCode().equals(providerEntity.getCode())
                             && !OmsPlatformEnum.ZHONG_BAO.getCode().equals(providerEntity.getCode())
                             && !OmsPlatformEnum.JI_TU.getCode().equals(providerEntity.getCode())
-                            && !OmsPlatformEnum.TONG_YOU.getCode().equals(providerEntity.getCode())) {
+                            && !OmsPlatformEnum.TONG_YOU.getCode().equals(providerEntity.getCode())
+                            && !OmsPlatformEnum.WE_GO.getCode().equals(providerEntity.getCode())) {
                         // 推送第三方发货单审核通过
                         ApiResult<String> resultInfo = overseasWarehouseInboundService.pullThirdOverseasPlatform(providerEntity, inboundEntity, detailEntityList, OverseasVerifyEnum.PASS.getCode());
                         if (200 != resultInfo.getCode()) {
@@ -1167,8 +1320,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                         try {
                             if(FmDeliveryLogisticsStatusEnum.WAIT.equals(entity.getLogisticsStatus())){
                                 BatchResultDTO autoGenerateResult;
-                                //自动生成功能系统标识
-                                Boolean originalValue = UserContext.getIsUserSystem();
                                 autoGenerateResult = tmsFirstMileLogisticFeign.autoGenerateFirstMileLogistic(autoGenerateBillDTO);
                                 if(autoGenerateResult.getSuccess()){
                                     FirstMileDeliveryDTO.UpdateStatusDTO updateStatusDTO = new FirstMileDeliveryDTO.UpdateStatusDTO();
@@ -1182,22 +1333,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                             throw new ServiceException(CharSequenceUtil.format("头程发货单{} 审核后自动生成物流单失败>>>>>>{}", entity.getCode(), e.getMessage()));
                         }
 
-                        try {
-                            if(WmsDeclareStatusEnum.WAIT.equals(entity.getDeclareStatus())){
-                                Boolean autoGenerateResult;
-                                //自动生成功能系统标识
-                                Boolean originalValue = UserContext.getIsUserSystem();
-                                autoGenerateResult = tmsDeclareBillFeign.autoGenerateFirstMileDeclare(autoGenerateBillDTO);
-                                if(autoGenerateResult){
-                                    FirstMileDeliveryDTO.UpdateStatusDTO updateStatusDTO = new FirstMileDeliveryDTO.UpdateStatusDTO();
-                                    updateStatusDTO.setIds(Collections.singletonList(entity.getId()));
-                                    updateStatusDTO.setDeclareStatus(WmsDeclareStatusEnum.FINISH.getCode());
-                                    this.updateStatus(updateStatusDTO);
-                                }
-                            }
-                        }catch (Exception e){
-                            log.error("头程发货单{} 审核后自动生成报关单失败>>>>>>{}", entity.getCode(), e.getMessage());
-                            throw new ServiceException(CharSequenceUtil.format("头程发货单{} 审核后自动生成报关单失败>>>>>>{}", entity.getCode(), e.getMessage()));
+                        if(WmsDeclareStatusEnum.WAIT.equals(entity.getDeclareStatus())){
+                            registerFirstMileDeclareAutoGenerateTask(entity, BillGenerateTimingEnum.AFTER_APPROVE);
                         }
                     }
                 }
@@ -2423,13 +2560,15 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
     public Boolean generateStatusUpdate(FirstMileDeliveryDTO.GenerateStatusUpdateDTO dto) {
         if (CollectionUtils.isEmpty(dto.getIds()) || CollectionUtils.isEmpty(dto.getBillTypes())) {
             return false;
         }
         List<FirstMileDeliveryEntity> deliveryEntities = this.listByIds(dto.getIds());
 
-        List<FirstMileDeliveryEntity> deliveryEntityLogisticsStatusList = deliveryEntities.stream().filter(req -> FmDeliveryLogisticsStatusEnum.FINISH.getCode().equals(req.getLogisticsStatus().getCode())).collect(Collectors.toList());
+        List<FirstMileDeliveryEntity> deliveryEntityLogisticsStatusList = deliveryEntities.stream().filter(req -> !FmDeliveryLogisticsStatusEnum.WAIT.getCode().equals(req.getLogisticsStatus().getCode())).collect(Collectors.toList());
 
 
         for (String billType : dto.getBillTypes()) {
@@ -2438,6 +2577,37 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 if (CollUtil.isNotEmpty(deliveryEntityList)) {
                     throw new ServiceException(ApiError.BILL_DECLARE_STATUS_GENERATED_NOT_CHANGE_TO_NO_DECLARE, deliveryEntityList.get(0).getCode());
                 }
+                // 校验是否已经生成了报关单：通过报关明细中间表查询已生成的发货单
+                List<DeliveryDeclareDetailMidEntity> midEntityList = FeignQuery.create(DeliveryDeclareDetailMidEntity.class)
+                        .eq(DeliveryDeclareDetailMidEntity::getSourceType,SourceTypeEnum.FIRST_MILE_DELIVERY.getCode())
+                        .in(DeliveryDeclareDetailMidEntity::getSourceId,dto.getIds())
+                        .list();
+                if (CollUtil.isNotEmpty(midEntityList)) {
+                    // 找出已生成报关单的发货单ID（generateStatus为FINISH且有declareId）
+                    Set<String> generatedSourceIds = midEntityList.stream()
+                            .filter(mid -> CharSequenceUtil.isNotBlank(mid.getDeclareId()))
+                            .map(DeliveryDeclareDetailMidEntity::getSourceId)
+                            .filter(CharSequenceUtil::isNotBlank)
+                            .collect(Collectors.toSet());
+                    
+                    if (CollUtil.isNotEmpty(generatedSourceIds)) {
+                        // 找出发货单实体，获取单号
+                        List<String> generatedCodes = deliveryEntities.stream()
+                                .filter(entity -> generatedSourceIds.contains(entity.getId()))
+                                .map(FirstMileDeliveryEntity::getCode)
+                                .collect(Collectors.toList());
+                        
+                        if (CollUtil.isNotEmpty(generatedCodes)) {
+                            throw new ServiceException(ApiError.FIRST_MILE_DELIVERY_DECLARE_ALREADY_GENERATED, String.join("、", generatedCodes));
+                        }
+                    }
+
+                    // 删除报关明细中间表关联数据
+                    TmsDeclareBillDTO.DeleteDeliveryDeclareDetailMidDTO deleteDTO = new TmsDeclareBillDTO.DeleteDeliveryDeclareDetailMidDTO();
+                    deleteDTO.setSourceIds(dto.getIds());
+                    deliveryDeclareDetailMidFeign.deleteDeliveryDeclareDetailMid(deleteDTO);
+                }
+
                 lambdaUpdate()
                         .set(FmDeliveryBillTypeEnum.DECLARE.getCode().equals(billType), FirstMileDeliveryEntity::getDeclareStatus, WmsDeclareStatusEnum.NONE.getCode())
                         .in(FirstMileDeliveryEntity::getId, dto.getIds())
@@ -2517,19 +2687,18 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         return result;
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean updateStatus(FirstMileDeliveryDTO.UpdateStatusDTO dto) {
         if(CharSequenceUtil.isBlank(dto.getDeclareStatus()) && CharSequenceUtil.isBlank(dto.getLogisticsStatus())){
             return false;
         }
-        return this.lambdaUpdate()
+        Boolean updateResult = this.lambdaUpdate()
                 .in(FirstMileDeliveryEntity :: getId,dto.getIds())
                 .set(CharSequenceUtil.isNotBlank(dto.getLogisticsStatus()),FirstMileDeliveryEntity::getLogisticsStatus, dto.getLogisticsStatus())
                 .set(CharSequenceUtil.isNotBlank(dto.getDeclareStatus()),FirstMileDeliveryEntity::getDeclareStatus,dto.getDeclareStatus())
                 .update();
-
+        return updateResult;
     }
 
     @Override
@@ -2606,7 +2775,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             }
             if(CollectionUtils.isNotEmpty(list)){
                 List<TmsDeclareBillDTO.PackingDTO> packingDTOList = BeanUtil.copyToList(list,TmsDeclareBillDTO.PackingDTO.class);
-                packingDTOList.forEach(t->t.setCode(deliveryDTO.getSourceCode()));
+                packingDTOList.forEach(t->t.setSourceCode(deliveryDTO.getSourceCode()));
                 deliveryDTO.setPackingDTOList(packingDTOList);
             }
             deliveryDTO.setBoxQty(list.size());
@@ -2614,33 +2783,24 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                     .map(WmsCartonDetailDTO.ListPackingDetailDTO::getPackageWeight)
                     .reduce(BigDecimal.ZERO, BigDecimal::add));
         }
-        //合并相同的sku
-        for (TmsDeclareBillDTO.DeliveryDTO deliveryDTO : result) {
-            List<TmsDeclareBillDTO.ProductDetail> productDetails = deliveryDTO.getProductDetailList();
-            if(productDetails == null){
-                productDetails = new ArrayList<>();
-            }
-            // 根据 skuId 进行分组，并对数量进行求和
-            List<TmsDeclareBillDTO.ProductDetail> mergedDetails = new ArrayList<>(productDetails.stream()
-                    .collect(Collectors.toMap(
-                            TmsDeclareBillDTO.ProductDetail::getSkuId,
-                            Function.identity(),
-                            (existing, replacement) -> {
-                                // 合并数量
-                                existing.setQty(existing.getQty() + replacement.getQty());
-                                // 其他字段取第一个出现的值
-                                return existing;
-                            }
-                    ))
-                    .values());
-            mergedDetails.forEach(v->{
-                if(Objects.nonNull(v.getPrice())){
-                    v.setTotalPrice(v.getPrice().multiply(new BigDecimal(v.getQty())));
-                }
-            });
-            deliveryDTO.setProductDetailList(mergedDetails);
-        }
         return result;
+    }
+
+    /**
+     * 查询用于报关中间表生成的装箱明细
+     *
+     * @param ids 头程发货单id集合
+     * @return 装箱明细集合
+     * @throws RuntimeException 查询异常时抛出
+     * @author jack
+     * @date 2026-04-29
+     */
+    @Override
+    public List<WmsCartonDetailDTO.ListPackingDetailDTO> listDeclarePackingDetail(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return Collections.emptyList();
+        }
+        return baseMapper.listDeclarePackingDetail(ids);
     }
 
     @Override
@@ -2790,67 +2950,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         return baseMapper.listOverseasProvider(deliveryIds);
     }
 
-    @Override
-    public BatchResultDTO generateFirstMileDeclare(String id) {
-        FirstMileDeliveryEntity entity = getById(id);
-        if (Objects.isNull(entity)) {
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.FIRST_MILE_SHIPMENT_NOT_FOUND.getMsg());
-        }
-        //限制B2B类型,未作废,审核状态为未审核 才可下推报关单
-        if(Objects.equals(entity.getInvalidStatus(), Boolean.TRUE) || Objects.equals(ApproveStatusEnum.APPROVE, entity.getApproveStatus())){
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.SO_DELIVERY_REQUIRED_PENDING_NOT_APPROVED.getMsg() );
-        }
-        //根据装箱状态生成报关单
-        generateByPacked(entity,BillGenerateTimingEnum.AFTER_PACKING);
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
-    }
-
-    /**
-     * 根据装箱状态自动生成物流单和报关单
-     *
-     * 该方法会检查头程发货单关联的所有装箱任务是否都已装箱(PACKED状态)，
-     * 如果全部已装箱则自动调用TMS服务生成物流单和报关单，并更新发货单状态。
-     *
-     * @param entity 头程发货单实体对象，包含发货单基本信息及状态
-     * @throws ServiceException 当自动生成物流单或报关单失败时抛出异常
-     */
-    private void generateByPacked(FirstMileDeliveryEntity entity, BillGenerateTimingEnum billGenerateTiming) {
-        List<PackingTaskEntity> taskEntityList = packingTaskService.getPackingStatusByFirstMileDelivery(entity);
-        if (CollectionUtils.isEmpty(taskEntityList)) {
-            throw new ServiceException(ApiError.LOGISTICS_PACKING_NOT_COMPLETED_DECLARATION_FORBIDDEN);
-        } else {
-            boolean packed = taskEntityList.stream().allMatch(taskEntity -> taskEntity.getPackingStatus().equals(PackingTaskStatusEnum.PACKED.getCode()));
-            if (Boolean.FALSE.equals(packed) && billGenerateTiming.equals(BillGenerateTimingEnum.AFTER_PACKING)) {
-                throw new ServiceException(ApiError.LOGISTICS_PACKING_NOT_COMPLETED_DECLARATION_FORBIDDEN);
-            } else {
-                if (!WmsDeclareStatusEnum.WAIT.equals(entity.getDeclareStatus())) {
-                    throw new ServiceException("报关单状态不为待生成，不能下推生成报关单");
-                } else {
-                    AutoGenerateBillDTO autoGenerateBillDTO = AutoGenerateBillDTO.builder()
-                            .id(entity.getId())
-                            .billGenerateTimingEnum(billGenerateTiming)
-                            .sourceTypeEnum(SourceTypeEnum.FIRST_MILE_DELIVERY)
-                            .firstMileDeliveryEntity(entity)
-                            .checkCfg(Boolean.FALSE) // 不检查配置
-                            .build();
-                    try {
-                        Boolean autoGenerateResult = tmsDeclareBillFeign.autoGenerateFirstMileDeclare(autoGenerateBillDTO);
-                        if (autoGenerateResult) {
-                            FirstMileDeliveryDTO.UpdateStatusDTO updateStatusDTO = new FirstMileDeliveryDTO.UpdateStatusDTO();
-                            updateStatusDTO.setIds(Collections.singletonList(entity.getId()));
-                            updateStatusDTO.setDeclareStatus(WmsDeclareStatusEnum.FINISH.getCode());
-                            this.updateStatus(updateStatusDTO);
-                        }else {
-                            throw new ServiceException("下推生成报关单失败");
-                        }
-                    } catch (Exception e) {
-                        log.error("头程发货单{} 下推生成报关单失败>>>>>>{}", entity.getCode(), e.getMessage());
-                        throw new ServiceException(CharSequenceUtil.format("头程发货单{} 下推生成报关单失败>>>>>>{}", entity.getCode(), e.getMessage()));
-                    }
-                }
-            }
-        }
-    }
 
     @Override
     public BatchResultDTO retryOutstock(String id) {
@@ -3046,6 +3145,335 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         //添加日志
         addLogCancelDelivery(cancelDeliveryDTO, old, wmsCartonDetailEntity, cartonSpecEntity);
         return BatchResultDTO.success(wmsCartonDetailEntity.getId(), wmsCartonDetailEntity.getSkuNo(), "操作成功");
+    }
+
+    @Override
+    public void sendMsg(List<String> logisticsBillIds){
+        List<LogisticsBillEntity> list = FeignQuery.create(LogisticsBillEntity.class).in(LogisticsBillEntity::getId, logisticsBillIds).list();
+        if(CollUtil.isNotEmpty(list)){
+            JSONConfig config = JSONConfig.create().setDateFormat("yyyy-MM-dd HH:mm:ss");
+            List<String> jsonStrList = new ArrayList<>(list.size());
+            TableName tableName = LogisticsBillEntity.class.getDeclaredAnnotation(TableName.class);
+            for (LogisticsBillEntity entity : list) {
+                Map<String, Object> before = BeanUtil.beanToMap(entity);
+                Map<String, Object> after = new HashMap<>(before);
+                after.put("table", tableName.value());
+                after.put("P_TAG_IUD", "U");
+                after.put("db", "erp-tms");
+                after.put("cancelDelivery", Boolean.TRUE);
+                Map<String, Map<String, Object>> map = new HashMap<>();
+                map.put("before", before);
+                map.put("after", after);
+                String jsonStr = JSONUtil.toJsonStr(map, config);
+                jsonStrList.add(jsonStr);
+            }
+            ThirdNoticePushRecordDTO.BatchSendMqRecordConsumerDTO batchSendDto = new ThirdNoticePushRecordDTO.BatchSendMqRecordConsumerDTO();
+            batchSendDto.setJsonStrList(jsonStrList);
+            Boolean ok = thirdNoticePushRecordFeign.batchSendMqRecordConsumer(batchSendDto);
+            if (!Boolean.TRUE.equals(ok)) {
+                log.error("batchSendMqRecordConsumer failed, logisticsBillIds={}", logisticsBillIds);
+            }
+        }
+    }
+
+    @Override
+    public  PagingVO<TmsDeclareBillDTO.NotGenerateDetailDTO> listNotGenerateFmDetailPaging(PagingDTO<TmsDeclareBillDTO.NotGenerateParamDTO> dto) {
+        TmsDeclareBillDTO.NotGenerateParamDTO params = dto.getParams();
+        params.setPermissionSql(dto.getPermissionSql());
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage<TmsDeclareBillDTO.NotGenerateDetailDTO> pageData =  baseMapper.listNotGenerateDeclareFmDetail(query,params);
+        handleNotGenerateData(pageData.getRecords());
+        return new PagingVO<>(pageData);
+    }
+
+    /**
+     * 产品添加数据处理
+     * @author will
+     * @date 2026/4/22 17:56
+     * @param list
+     */
+    private void handleNotGenerateData(List<TmsDeclareBillDTO.NotGenerateDetailDTO> list) {
+        if (CollUtil.isEmpty(list)) {
+            return;
+        }
+        //查询币别名称
+        List<String> currencyList = list.stream().map(TmsDeclareBillDTO.NotGenerateDetailDTO::getDeclareCurrency).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        List<DictCurrencyEntity> currencyEntityList = FeignQuery.create(DictCurrencyEntity.class).in(DictCurrencyEntity::getId, currencyList).list();
+        Map<String, DictCurrencyEntity> currencyEntityMap = CollUtil.isEmpty(currencyEntityList)
+                ? Collections.emptyMap()
+                : currencyEntityList.stream().collect(Collectors.toMap(DictCurrencyEntity::getId, item -> item, (a, b) -> a));
+
+        //查询原产国名称
+        List<String> sourceCountryIdList = list.stream().map(TmsDeclareBillDTO.NotGenerateDetailDTO::getSourceCountry).distinct().collect(Collectors.toList());
+        List<DictCountryEntity> sourceCountryList = sysDictFeign.listCountryByIds(sourceCountryIdList);
+        Map<String, DictCountryEntity> sourceCountryMap = CollUtil.isEmpty(sourceCountryList)
+                ? Collections.emptyMap()
+                : sourceCountryList.stream().collect(Collectors.toMap(DictCountryEntity::getId, item -> item, (a, b) -> a));
+
+        for (TmsDeclareBillDTO.NotGenerateDetailDTO dto : list) {
+            //币别名称
+            DictCurrencyEntity currencyEntity = currencyEntityMap.get(dto.getDeclareCurrency());
+            if (Objects.nonNull(currencyEntity)) {
+                dto.setDeclareCurrencyName(currencyEntity.getName());
+            }
+            //国家名称
+            DictCountryEntity countryEntity = sourceCountryMap.get(dto.getSourceCountry());
+            if (Objects.nonNull(countryEntity)) {
+                dto.setSourceCountryName(countryEntity.getNameCn());
+            }
+        }
+    }
+
+
+    @Override
+    public List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> listBeforePushFmDeclare(TmsDeclareBillDTO.PushDeclareBeforeParamDTO dto) {
+        boolean onlyWaitDeclareStatus = dto.getOnlyWaitDeclareStatus() == null || Boolean.TRUE.equals(dto.getOnlyWaitDeclareStatus());
+        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> list = baseMapper.listBeforePushFmDeclare(dto.getIds(), onlyWaitDeclareStatus);
+        if (CollUtil.isEmpty(list)) {
+            throw new ServiceException(ApiError.COMMON_NOT_FOUND_PUSH_DADA);
+        }
+        handleDeclareData(list);
+        return list;
+    }
+
+    @Override
+    public List<TmsDeclareBillDTO.MergeDeclareBillDTO> listAfterPushFmDeclare(TmsDeclareBillDTO.PushDeclareBeforeParamDTO dto) {
+        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> list = baseMapper.listAfterPushFmDeclare(dto.getIds());
+        if (CollUtil.isEmpty(list)) {
+            throw new ServiceException(ApiError.COMMON_NOT_FOUND_PUSH_DADA);
+        }
+        List<TmsDeclareBillDTO.MergeDeclareBillDTO> mergeDeclareBillList = tmsDeclareBillFeign.autoMergeDeclareBillView(new TmsDeclareBillDTO.AutoMergeDeclareBillViewDTO(dto.getIsMultipleMerge(), list));
+        if (CollUtil.isEmpty(mergeDeclareBillList)) {
+            throw new ServiceException(ApiError.COMMON_NOT_FOUND_PUSH_DADA);
+        }
+        return mergeDeclareBillList;
+    }
+
+    @Override
+    public TmsDeclareBillDTO.MergeDeclareBillDTO listAfterPushFmDeclareNoMerge(List<TmsDeclareBillDTO.PushDeclareNoMergeDTO> list) {
+        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList = baseMapper.listFmDeclareMinSourceDetail(list);
+        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> declareSourceDetailList = prepareFmMinDeclareSourceDetail(sourceDetailList);
+        return buildFmMinMergeDeclareBillList(declareSourceDetailList);
+    }
+    /**
+     * 按产品物流补齐报关字段，并按组合品申报类型拆分 BOM 子件。
+     * @author will
+     * @date 2026/5/9 15:00
+     * @param sourceDetailList
+     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.SourceDeliveryDetailDTO>
+     */
+    private List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> prepareFmMinDeclareSourceDetail(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList) {
+        if (CollUtil.isEmpty(sourceDetailList)) {
+            return Collections.emptyList();
+        }
+        List<String> skuIdList = sourceDetailList.stream()
+                .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getSkuId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        List<ProductDetailDTO.ProductLogisticDTO> productLogisticsList = plmTaskFeign.listProductLogisticsByIds(skuIdList);
+        Map<String, ProductDetailDTO.ProductLogisticDTO> logisticsMap = CollUtil.isEmpty(productLogisticsList)
+                ? new HashMap<>()
+                : productLogisticsList.stream().collect(Collectors.toMap(ProductDetailDTO.ProductLogisticDTO::getSkuId, item -> item, (a, b) -> a));
+
+        List<String> countryIdList = sourceDetailList.stream()
+                .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getCountryId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        List<DictCountryEntity> countryList = CollUtil.isEmpty(countryIdList) ? Collections.emptyList() : sysDictFeign.listCountryByIds(countryIdList);
+        Map<String, String> countryNameMap = CollUtil.isEmpty(countryList)
+                ? new HashMap<>()
+                : countryList.stream().collect(Collectors.toMap(DictCountryEntity::getId, DictCountryEntity::getNameCn, (a, b) -> a));
+
+
+        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> result = new ArrayList<>();
+        for (TmsDeclareBillDTO.SourceDeliveryDetailDTO detailDTO : sourceDetailList) {
+            if (Objects.isNull(detailDTO)) {
+                continue;
+            }
+            detailDTO.setCountryName(countryNameMap.get(detailDTO.getCountryId()));
+            ProductDetailDTO.ProductLogisticDTO productLogisticsDTO = logisticsMap.get(detailDTO.getSkuId());
+            if (Objects.nonNull(productLogisticsDTO)
+                    && CombinationDeclareTypeEnums.SPLIT.getCode().equals(productLogisticsDTO.getCombinationDeclareType())
+                    && Boolean.TRUE.equals(productLogisticsDTO.getIsCombination())
+                    && CollUtil.isNotEmpty(productLogisticsDTO.getChildList())) {
+                for (ProductDetailDTO.ProductLogisticDTO childLogisticsDTO : productLogisticsDTO.getChildList()) {
+                    TmsDeclareBillDTO.SourceDeliveryDetailDTO childDetailDTO = new TmsDeclareBillDTO.SourceDeliveryDetailDTO();
+                    BeanUtil.copyProperties(detailDTO, childDetailDTO);
+                    childDetailDTO.setSkuId(childLogisticsDTO.getSkuId());
+                    childDetailDTO.setSkuNo(childLogisticsDTO.getSkuNo());
+                    childDetailDTO.setBomVersion(childLogisticsDTO.getBomVersion());
+                    childDetailDTO.setBomHistoryId(childLogisticsDTO.getBomHistoryId());
+                    childDetailDTO.setQty((detailDTO.getQty() == null ? 0 : detailDTO.getQty()) * (childLogisticsDTO.getChildQty() == null ? 1 : childLogisticsDTO.getChildQty()));
+                    fillB2bMinDeclareInfo(childDetailDTO, childLogisticsDTO);
+                    result.add(childDetailDTO);
+                }
+            } else {
+                fillB2bMinDeclareInfo(detailDTO, productLogisticsDTO);
+                result.add(detailDTO);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * 填充报关字段。
+     * @author will
+     * @date 2026/5/9 15:00
+     * @param detailDTO
+     * @param productLogisticsDTO
+     */
+    private void fillB2bMinDeclareInfo(TmsDeclareBillDTO.SourceDeliveryDetailDTO detailDTO,
+                                       ProductDetailDTO.ProductLogisticDTO productLogisticsDTO) {
+        if (Objects.isNull(detailDTO) || Objects.isNull(productLogisticsDTO)) {
+            return;
+        }
+        detailDTO.setHsCode(productLogisticsDTO.getCustomsCode());
+        detailDTO.setProductNameCn(productLogisticsDTO.getDeclareChineseName());
+        detailDTO.setDeclareElement(productLogisticsDTO.getDeclareElement());
+        detailDTO.setUnit(productLogisticsDTO.getDeclareUnit());
+        detailDTO.setUnitName(productLogisticsDTO.getDeclareUnitName());
+        detailDTO.setUnitPrice(productLogisticsDTO.getPrice());
+        detailDTO.setDeclareCurrency(productLogisticsDTO.getDeclareCurrency());
+        detailDTO.setDeclareCurrencyName(productLogisticsDTO.getDeclareCurrencyName());
+        detailDTO.setDeclareCurrencySymbol(productLogisticsDTO.getDeclareCurrencySymbol());
+        detailDTO.setSourceCountry(productLogisticsDTO.getSourceCountry());
+        detailDTO.setSourceCountryName(productLogisticsDTO.getSourceCountryName());
+        detailDTO.setSourceCargo(StringUtils.defaultIfBlank(productLogisticsDTO.getSourceCargo(), DeclareMergeDefaults.DEFAULT_SOURCE_CARGO));
+        detailDTO.setExemption(StringUtils.defaultIfBlank(productLogisticsDTO.getExemption(), DeclareMergeDefaults.DEFAULT_EXEMPTION));
+    }
+
+    /**
+     * 按报关明细维度组装头程报关单预览，同一明细下保留多箱来源数据。
+     * @author will
+     * @date 2026/5/9 15:00
+     * @param sourceDetailList 来源箱明细
+     * @return 头程报关预览明细
+     */
+    private TmsDeclareBillDTO.MergeDeclareBillDTO buildFmMinMergeDeclareBillList(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList) {
+        TmsDeclareBillDTO.MergeDeclareBillDTO billDTO = new TmsDeclareBillDTO.MergeDeclareBillDTO();
+        if (CollUtil.isEmpty(sourceDetailList)) {
+            return billDTO;
+        }
+        Map<String, List<TmsDeclareBillDTO.SourceDeliveryDetailDTO>> sourceDetailGroupMap = sourceDetailList.stream()
+                .collect(Collectors.groupingBy(this::buildFmMinDeclareGroupKey, LinkedHashMap::new, Collectors.toList()));
+        List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> detailDTOList = new ArrayList<>();
+        for (List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceGroup : sourceDetailGroupMap.values()) {
+            TmsDeclareBillDTO.MergeDeclareBillDetailDTO mergeDeclareBillDetailDTO = buildB2bMinMergeDeclareBillDetail(sourceGroup);
+            detailDTOList.add(mergeDeclareBillDetailDTO);
+        }
+        billDTO.setDeclareBillList(detailDTOList);
+        return billDTO;
+    }
+
+    /**
+     * 构建头程报关明细分组键。箱号不参与外层分组，保留在来源明细中用于后续保存中间表。
+     *
+     * @param detailDTO 来源箱明细
+     * @return 报关明细分组键
+     */
+    private String buildFmMinDeclareGroupKey(TmsDeclareBillDTO.SourceDeliveryDetailDTO detailDTO) {
+        return String.join("|",
+                StringUtils.defaultString(detailDTO.getSourceId()),
+                StringUtils.defaultString(detailDTO.getSkuId()),
+                StringUtils.defaultString(detailDTO.getHsCode()),
+                StringUtils.defaultString(detailDTO.getProductNameCn()),
+                StringUtils.defaultString(detailDTO.getDeclareElement()),
+                StringUtils.defaultString(detailDTO.getUnit()),
+                Objects.isNull(detailDTO.getUnitPrice()) ? "" : detailDTO.getUnitPrice().stripTrailingZeros().toPlainString(),
+                StringUtils.defaultString(detailDTO.getDeclareCurrency()),
+                StringUtils.defaultString(detailDTO.getSourceCountry()),
+                StringUtils.defaultString(detailDTO.getCountryId()),
+                StringUtils.defaultIfBlank(detailDTO.getSourceCargo(), DeclareMergeDefaults.DEFAULT_SOURCE_CARGO),
+                StringUtils.defaultIfBlank(detailDTO.getExemption(), DeclareMergeDefaults.DEFAULT_EXEMPTION));
+    }
+
+    private TmsDeclareBillDTO.MergeDeclareBillDetailDTO buildB2bMinMergeDeclareBillDetail(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> detailGroup) {
+        TmsDeclareBillDTO.SourceDeliveryDetailDTO detailDTO = detailGroup.get(0);
+        Integer qty = detailGroup.stream()
+                .filter(Objects::nonNull)
+                .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getQty)
+                .filter(Objects::nonNull)
+                .mapToInt(Integer::intValue)
+                .sum();
+        BigDecimal totalAmount = detailGroup.stream().map(obj -> MathUtil.multiplyWithFour(obj.getUnitPrice(),BigDecimal.valueOf(obj.getQty()))).reduce(BigDecimal.ZERO,BigDecimal::add);
+        String businessCode = detailGroup.stream().map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getBusinessCode).distinct().collect(Collectors.joining(","));
+        String businessDesc = detailGroup.stream()
+                .filter(Objects::nonNull)
+                .map(item -> StringUtils.isBlank(item.getBoxNo())
+                        ? businessCode
+                        : CharSequenceUtil.format("{}+{}", businessCode, item.getBoxNo()))
+                .distinct()
+                .collect(Collectors.joining("、"));
+
+        return TmsDeclareBillDTO.MergeDeclareBillDetailDTO.builder()
+                .businessDesc(businessDesc)
+                .businessOrderNos(StringUtils.defaultString(businessCode))
+                .leadSkuId(detailDTO.getSkuId())
+                .skuNo(detailDTO.getSkuNo())
+                .hsCode(detailDTO.getHsCode())
+                .productNameCn(detailDTO.getProductNameCn())
+                .declareElement(detailDTO.getDeclareElement())
+                .unit(detailDTO.getUnit())
+                .unitName(detailDTO.getUnitName())
+                .unitPrice(detailDTO.getUnitPrice())
+                .qty(qty)
+                .totalAmount(totalAmount)
+                .sourceCountry(detailDTO.getSourceCountry())
+                .sourceCountryName(detailDTO.getSourceCountryName())
+                .toCountry(detailDTO.getCountryId())
+                .toCountryName(detailDTO.getCountryName())
+                .sourceCargo(StringUtils.defaultIfBlank(detailDTO.getSourceCargo(), DeclareMergeDefaults.DEFAULT_SOURCE_CARGO))
+                .exemption(StringUtils.defaultIfBlank(detailDTO.getExemption(), DeclareMergeDefaults.DEFAULT_EXEMPTION))
+                .declareCurrency(detailDTO.getDeclareCurrency())
+                .declareCurrencyName(detailDTO.getDeclareCurrencyName())
+                .declareCurrencySymbol(detailDTO.getDeclareCurrencySymbol())
+                .mergeRemark("")
+                .sourceDeliveryDetailList(detailGroup)
+                .build();
+    }
+
+    /**
+     * 处理报关信息
+     * @author will
+     * @date 2026/4/27 17:32
+     * @param list
+     */
+    private void handleDeclareData (List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        //产品物流信息
+        List<String> skuIdList = list.stream().map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<ProductLogisticsEntity> productLogisticsList = FeignQuery.create(ProductLogisticsEntity.class).in(ProductLogisticsEntity::getSkuId, skuIdList).list();
+        Map<String, ProductLogisticsEntity> logisticsMap = CollUtil.isEmpty(productLogisticsList) ? new HashMap<>() : productLogisticsList.stream().collect(Collectors.toMap(ProductLogisticsEntity::getSkuId,item -> item));
+
+        //查询单位名称
+        List<BasicDictEntity> declareUnitList = FeignQuery.create(BasicDictEntity.class).eq(BasicDictEntity::getType, "declareUnit").list();
+        Map<String, String> declareUnitNameMap = CollUtil.isEmpty(declareUnitList)
+                ? new HashMap<>()
+                : declareUnitList.stream().collect(Collectors.toMap(BasicDictEntity::getValue, BasicDictEntity::getName, (a, b) -> a));
+
+        //币别明细
+        List<DictCurrencyEntity> dictCurrencyList = sysUserFeign.currencyList();
+        Map<String, String> currencyMap = CollUtil.isEmpty(dictCurrencyList) ? new HashMap<>() : dictCurrencyList.stream().collect(Collectors.toMap(DictCurrencyEntity::getId,item -> item.getName()));
+
+        for (TmsDeclareBillDTO.SourceDeliveryDetailDTO deliveryDetailDTO : list) {
+            ProductLogisticsEntity productLogisticsEntity = logisticsMap.get(deliveryDetailDTO.getSkuId());
+            if (Objects.nonNull(productLogisticsEntity)) {
+                deliveryDetailDTO.setHsCode(productLogisticsEntity.getCustomsCode());
+                deliveryDetailDTO.setProductNameCn(productLogisticsEntity.getDeclareChineseName());
+                deliveryDetailDTO.setDeclareElement(productLogisticsEntity.getDeclareElement());
+                deliveryDetailDTO.setUnit(productLogisticsEntity.getDeclareUnit());
+                //报关单位名称
+                deliveryDetailDTO.setUnitName(declareUnitNameMap.get(productLogisticsEntity.getDeclareUnit()));
+                deliveryDetailDTO.setUnitPrice(productLogisticsEntity.getDeclarePrice());
+                deliveryDetailDTO.setDeclareCurrency(productLogisticsEntity.getDeclareCurrency());
+                deliveryDetailDTO.setDeclareCurrencySymbol(productLogisticsEntity.getDeclareCurrencySymbol());
+                deliveryDetailDTO.setDeclareCurrencyName(currencyMap.get(productLogisticsEntity.getDeclareCurrency()));
+            }
+        }
     }
 
 

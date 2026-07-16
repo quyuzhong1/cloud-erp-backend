@@ -551,16 +551,6 @@ public class TmsAsyncTaskRecordDTO implements Serializable {
         private LocalDateTime confirmTime;
 
         /**
-         * 费用记录创建时间范围起始
-         */
-        private LocalDateTime createTimeStart;
-
-        /**
-         * 费用记录创建时间范围结束
-         */
-        private LocalDateTime createTimeEnd;
-
-        /**
          * 页面高级查询生成的 SQL 条件
          */
         private Map<String, String> sqlMap;
