@@ -37,6 +37,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -412,6 +413,9 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
     /**
      * 按采购订单加锁后执行待质检重算。
      * {@code purchaseOrderIds} 仅用于分布式锁 key；{@code seedPoDetails} 复用入口一次 Feign 结果。
+     * <p>当本批次全部收货明细都能解析出 PO+SKU 时按 PO+SKU 合并口径聚合；只要有明细解析不到（Feign 返回空/不完整），
+     * 则整体回退按 pod（采购订单明细）口径聚合，保证聚合查询 key 与逐条读取 key 体系一致，
+     * 避免部分明细因 key 不匹配命中不到聚合值而被错误算成 0。</p>
      */
     @DistributeLocker(keyName = "purchaseOrderIds")
     public void doRecalculateWaitQcQty(List<String> purchaseOrderIds, List<String> podIdList,
@@ -421,7 +425,84 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
             throw new ServiceException(ApiError.PO_RECEIPT_NOT_FOUND);
         }
 
-        // 扩维：同采购订单下相同 SKU 的全部采购明细 id（覆盖外验/质检挂在另一条同 SKU 明细的场景）
+        Map<String, PurchaseOrderDetailEntity> podToPoDetail = buildPodToPoDetailMap(seedPoDetails);
+        if (canResolvePoSkuForAll(receiveDetailList, podToPoDetail)) {
+            List<String> expandedPodIdList = buildExpandedPodIdList(receiveDetailList, podIdList, podToPoDetail);
+            applyWaitQcQty(receiveDetailList, detailIdList, expandedPodIdList,
+                    qc -> resolveQcSkuKey(qc, podToPoDetail),
+                    e -> buildPoSkuKey(e.getPurchaseOrderId(), e.getSkuId()),
+                    w -> buildPoSkuKey(w.getPurchaseOrderId(), w.getSkuId()),
+                    detail -> resolvePoSkuKey(detail, podToPoDetail),
+                    baseMapper::getTotalReceiveQtyByPoSku);
+        } else {
+            List<String> queryPodIdList = podIdList.stream().filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+            applyWaitQcQty(receiveDetailList, detailIdList, queryPodIdList,
+                    QcResultDTO.TotalLotQualifiedQtyDTO::getPurchaseOrderDetailId,
+                    WarehouseReceiveDetailDTO.ReceiveQtyDTO::getPodId,
+                    WarehouseReceiveDetailDTO.WaitQcQtyDTO::getPodId,
+                    WarehouseReceiveDetailEntity::getPurchaseOrderDetailId,
+                    baseMapper::getTotalReceiveQty);
+        }
+        super.updateBatchById(receiveDetailList);
+    }
+
+    /**
+     * 通用重算核心：质检汇总 / 累计收货量 / 前序待质检的聚合 key 与逐条读取 key 均由传入的 keyFn 统一生成，
+     * 避免 PO+SKU 口径与 pod 口径混用导致聚合值命中不到。
+     * 公式：当前收货明细待质检量 = max(0, 累计收货量 - 外验允许入库量 - 入库质检总数量 - 前序收货单待质检量 - 本批次已分配量)。
+     */
+    private void applyWaitQcQty(List<WarehouseReceiveDetailEntity> receiveDetailList,
+                                List<String> detailIdList,
+                                List<String> queryIdList,
+                                Function<QcResultDTO.TotalLotQualifiedQtyDTO, String> qcKeyFn,
+                                Function<WarehouseReceiveDetailDTO.ReceiveQtyDTO, String> receiveKeyFn,
+                                Function<WarehouseReceiveDetailDTO.WaitQcQtyDTO, String> waitQcKeyFn,
+                                Function<WarehouseReceiveDetailEntity, String> detailKeyFn,
+                                Function<List<String>, List<WarehouseReceiveDetailDTO.ReceiveQtyDTO>> receiveQtyQuery) {
+        List<QcResultDTO.TotalLotQualifiedQtyDTO> qcAggList = qcResultService.getTotalLotQualifiedQtyByPodId(queryIdList);
+        Map<String, Integer> instockQcMap = new HashMap<>();
+        Map<String, Integer> outAllowMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(qcAggList)) {
+            for (QcResultDTO.TotalLotQualifiedQtyDTO qc : qcAggList) {
+                accumulateQc(qc, qcKeyFn.apply(qc), instockQcMap, outAllowMap);
+            }
+        }
+
+        List<WarehouseReceiveDetailDTO.ReceiveQtyDTO> totalReceiveQtyList = receiveQtyQuery.apply(queryIdList);
+        Map<String, Integer> totalReceiveMap = CollUtil.isEmpty(totalReceiveQtyList)
+                ? Collections.emptyMap()
+                : totalReceiveQtyList.stream().collect(Collectors.toMap(receiveKeyFn,
+                e -> e.getTotalReceiveQty() == null ? MathUtil.ZERO : e.getTotalReceiveQty(), Integer::sum));
+
+        // 前序待质检：排除本批次全部明细，避免同批互相读到旧值
+        List<WarehouseReceiveDetailDTO.WaitQcQtyDTO> totalWaitQcQtyList = baseMapper.getTotalWaitQcQty(queryIdList);
+        Set<String> batchDetailIds = new HashSet<>(detailIdList);
+        Map<String, Integer> batchAllocatedMap = new HashMap<>();
+
+        for (WarehouseReceiveDetailEntity receiveDetailEntity : receiveDetailList) {
+            String key = detailKeyFn.apply(receiveDetailEntity);
+            Integer instockQcTotalQty = instockQcMap.getOrDefault(key, MathUtil.ZERO);
+            Integer outAllowInstockQty = outAllowMap.getOrDefault(key, MathUtil.ZERO);
+            Integer totalReceiveQty = totalReceiveMap.getOrDefault(key, MathUtil.ZERO);
+            Integer priorWaitQcQty = CollUtil.isEmpty(totalWaitQcQtyList) ? MathUtil.ZERO
+                    : totalWaitQcQtyList.stream()
+                    .filter(obj -> CharSequenceUtil.equals(waitQcKeyFn.apply(obj), key))
+                    .filter(obj -> !batchDetailIds.contains(obj.getDetailId()))
+                    .map(WarehouseReceiveDetailDTO.WaitQcQtyDTO::getTotalWaitQcQty)
+                    .filter(Objects::nonNull)
+                    .reduce(MathUtil.ZERO, Integer::sum);
+            Integer batchAllocated = batchAllocatedMap.getOrDefault(key, MathUtil.ZERO);
+            Integer waitQcQty = Math.max(MathUtil.ZERO,
+                    totalReceiveQty - instockQcTotalQty - outAllowInstockQty - priorWaitQcQty - batchAllocated);
+            receiveDetailEntity.setWaitQcQty(waitQcQty);
+            batchAllocatedMap.put(key, batchAllocated + waitQcQty);
+        }
+    }
+
+    /**
+     * 构造 采购明细 id -> 采购明细 映射：先按 PO 扩展同 PO 下全部明细（覆盖外验/质检挂在另一条同 SKU 明细的场景），再补齐入口种子明细。
+     */
+    private Map<String, PurchaseOrderDetailEntity> buildPodToPoDetailMap(List<PurchaseOrderDetailEntity> seedPoDetails) {
         List<PurchaseOrderDetailEntity> safeSeedPoDetails = seedPoDetails == null ? Collections.emptyList() : seedPoDetails;
         Map<String, PurchaseOrderDetailEntity> seedPoDetailMap = CollUtil.isEmpty(safeSeedPoDetails)
                 ? Collections.emptyMap()
@@ -435,7 +516,32 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
         Map<String, PurchaseOrderDetailEntity> podToPoDetail = allPoDetails.stream()
                 .collect(Collectors.toMap(PurchaseOrderDetailEntity::getId, e -> e, (a, b) -> a));
         seedPoDetailMap.forEach(podToPoDetail::putIfAbsent);
+        return podToPoDetail;
+    }
 
+    /**
+     * 判断本批次是否所有目标收货明细都能解析出非空 PO+SKU；任一缺失即整体回退 pod 级口径。
+     */
+    private boolean canResolvePoSkuForAll(List<WarehouseReceiveDetailEntity> receiveDetailList,
+                                          Map<String, PurchaseOrderDetailEntity> podToPoDetail) {
+        for (WarehouseReceiveDetailEntity detail : receiveDetailList) {
+            PurchaseOrderDetailEntity pod = podToPoDetail.get(detail.getPurchaseOrderDetailId());
+            String purchaseOrderId = pod == null ? null : pod.getPurchaseOrderId();
+            String skuId = CharSequenceUtil.isNotBlank(detail.getSkuId())
+                    ? detail.getSkuId()
+                    : (pod == null ? null : pod.getSkuId());
+            if (CharSequenceUtil.isBlank(purchaseOrderId) || CharSequenceUtil.isBlank(skuId)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * 扩维出同 PO 下相同 SKU 的全部采购明细 id，用于质检/收货/待质检聚合查询覆盖同 SKU 挂在其它 pod 的场景。
+     */
+    private List<String> buildExpandedPodIdList(List<WarehouseReceiveDetailEntity> receiveDetailList, List<String> podIdList,
+                                                 Map<String, PurchaseOrderDetailEntity> podToPoDetail) {
         Set<String> targetSkuKeys = new HashSet<>();
         for (WarehouseReceiveDetailEntity detail : receiveDetailList) {
             targetSkuKeys.add(resolvePoSkuKey(detail, podToPoDetail));
@@ -449,62 +555,36 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
         if (CollUtil.isEmpty(expandedPodIdList)) {
             expandedPodIdList = podIdList.stream().filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         }
+        return expandedPodIdList;
+    }
 
-        // 质检汇总（按 pod 查询后按 PO+SKU 合并）
-        List<QcResultDTO.TotalLotQualifiedQtyDTO> qcAggList = qcResultService.getTotalLotQualifiedQtyByPodId(expandedPodIdList);
-        Map<String, Integer> instockQcBySku = new HashMap<>();
-        Map<String, Integer> outAllowBySku = new HashMap<>();
-        if (CollUtil.isNotEmpty(qcAggList)) {
-            for (QcResultDTO.TotalLotQualifiedQtyDTO qc : qcAggList) {
-                PurchaseOrderDetailEntity pod = podToPoDetail.get(qc.getPurchaseOrderDetailId());
-                String skuKey = pod == null
-                        ? "POD|" + CharSequenceUtil.blankToDefault(qc.getPurchaseOrderDetailId(), "")
-                        : buildPoSkuKey(pod.getPurchaseOrderId(), pod.getSkuId());
-                if (QcTypeEnum.STOCK_IN.getCode().equals(qc.getQcType())
-                        || QcTypeEnum.NEW_PRODUCT_STOCK_IN.getCode().equals(qc.getQcType())) {
-                    if (qc.getTotalQty() != null) {
-                        instockQcBySku.merge(skuKey, qc.getTotalQty(), Integer::sum);
-                    }
-                } else if (QcTypeEnum.OUTSIDE_QC.getCode().equals(qc.getQcType())) {
-                    Integer allow = qc.getTotalAllowInstockQty() == null ? MathUtil.ZERO : qc.getTotalAllowInstockQty();
-                    outAllowBySku.merge(skuKey, allow, Integer::sum);
-                }
+    /**
+     * 按质检类型累加：入库质检 / 新品入库质检累加入库质检总数量，外验累加外验允许入库量。
+     */
+    private void accumulateQc(QcResultDTO.TotalLotQualifiedQtyDTO qc, String key,
+                              Map<String, Integer> instockQcMap, Map<String, Integer> outAllowMap) {
+        if (CharSequenceUtil.isBlank(key)) {
+            return;
+        }
+        if (QcTypeEnum.STOCK_IN.getCode().equals(qc.getQcType())
+                || QcTypeEnum.NEW_PRODUCT_STOCK_IN.getCode().equals(qc.getQcType())) {
+            if (qc.getTotalQty() != null) {
+                instockQcMap.merge(key, qc.getTotalQty(), Integer::sum);
             }
+        } else if (QcTypeEnum.OUTSIDE_QC.getCode().equals(qc.getQcType())) {
+            Integer allow = qc.getTotalAllowInstockQty() == null ? MathUtil.ZERO : qc.getTotalAllowInstockQty();
+            outAllowMap.merge(key, allow, Integer::sum);
         }
+    }
 
-        // 累计收货量：PO+SKU
-        List<WarehouseReceiveDetailDTO.ReceiveQtyDTO> totalReceiveQtyList = baseMapper.getTotalReceiveQtyByPoSku(expandedPodIdList);
-        Map<String, Integer> totalReceiveBySku = CollUtil.isEmpty(totalReceiveQtyList)
-                ? Collections.emptyMap()
-                : totalReceiveQtyList.stream().collect(Collectors.toMap(
-                e -> buildPoSkuKey(e.getPurchaseOrderId(), e.getSkuId()),
-                e -> e.getTotalReceiveQty() == null ? MathUtil.ZERO : e.getTotalReceiveQty(),
-                Integer::sum));
-
-        // 前序待质检：同 PO+SKU 下其它收货明细（排除本批次全部明细，避免同批互相读到旧值）
-        List<WarehouseReceiveDetailDTO.WaitQcQtyDTO> totalWaitQcQtyList = baseMapper.getTotalWaitQcQty(expandedPodIdList);
-        Set<String> batchDetailIds = new HashSet<>(detailIdList);
-        Map<String, Integer> batchAllocatedBySku = new HashMap<>();
-
-        for (WarehouseReceiveDetailEntity receiveDetailEntity : receiveDetailList) {
-            String skuKey = resolvePoSkuKey(receiveDetailEntity, podToPoDetail);
-            Integer instockQcTotalQty = instockQcBySku.getOrDefault(skuKey, MathUtil.ZERO);
-            Integer outAllowInstockQty = outAllowBySku.getOrDefault(skuKey, MathUtil.ZERO);
-            Integer totalReceiveQty = totalReceiveBySku.getOrDefault(skuKey, MathUtil.ZERO);
-            Integer priorWaitQcQty = CollUtil.isEmpty(totalWaitQcQtyList) ? MathUtil.ZERO
-                    : totalWaitQcQtyList.stream()
-                    .filter(obj -> CharSequenceUtil.equals(buildPoSkuKey(obj.getPurchaseOrderId(), obj.getSkuId()), skuKey))
-                    .filter(obj -> !batchDetailIds.contains(obj.getDetailId()))
-                    .map(WarehouseReceiveDetailDTO.WaitQcQtyDTO::getTotalWaitQcQty)
-                    .filter(Objects::nonNull)
-                    .reduce(MathUtil.ZERO, Integer::sum);
-            Integer batchAllocated = batchAllocatedBySku.getOrDefault(skuKey, MathUtil.ZERO);
-            Integer waitQcQty = Math.max(MathUtil.ZERO,
-                    totalReceiveQty - instockQcTotalQty - outAllowInstockQty - priorWaitQcQty - batchAllocated);
-            receiveDetailEntity.setWaitQcQty(waitQcQty);
-            batchAllocatedBySku.put(skuKey, batchAllocated + waitQcQty);
-        }
-        super.updateBatchById(receiveDetailList);
+    /**
+     * 解析质检汇总记录对应的 PO+SKU 聚合键；pod 映射缺失时退化为 pod 级 key（与 {@link #resolvePoSkuKey} 回退口径一致）。
+     */
+    private String resolveQcSkuKey(QcResultDTO.TotalLotQualifiedQtyDTO qc, Map<String, PurchaseOrderDetailEntity> podToPoDetail) {
+        PurchaseOrderDetailEntity pod = podToPoDetail.get(qc.getPurchaseOrderDetailId());
+        return pod == null
+                ? "POD|" + CharSequenceUtil.blankToDefault(qc.getPurchaseOrderDetailId(), "")
+                : buildPoSkuKey(pod.getPurchaseOrderId(), pod.getSkuId());
     }
 
     /**
