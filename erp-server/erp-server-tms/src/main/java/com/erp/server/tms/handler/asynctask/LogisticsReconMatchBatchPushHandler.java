@@ -100,7 +100,8 @@ public class LogisticsReconMatchBatchPushHandler
         if (StringUtils.isBlank(taskId)) {
             return Collections.emptyList();
         }
-        int size = batchSize > 0 ? batchSize : 500;
+        // 默认与 LogisticsReconServiceImpl.MATCH_CHUNK_SIZE 对齐；配置 >0 时尊重配置，便于运维调小减压
+        int size = batchSize > 0 ? batchSize : 1000;
         List<String> ids = tmsAsyncTaskDetailService.lambdaQuery()
                 .select(TmsAsyncTaskDetailEntity::getBusinessId)
                 .eq(TmsAsyncTaskDetailEntity::getMainId, taskId)

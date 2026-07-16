@@ -2,6 +2,7 @@ package com.erp.model.tms.dto;
 
 import com.erp.model.tms.entity.CfgLogisticsCostImportDetailEntity;
 import com.erp.model.tms.entity.CfgLogisticsCostImportEntity;
+import com.erp.model.tms.entity.TmsCfgCostEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -63,6 +64,10 @@ public class LogisticsReconMatchDTO implements Serializable {
          */
         private Map<String, BigDecimal> currencyRateMap;
         /**
+         * 尾程费用配置列表。整单级预加载时传入，非空则复用，避免每分片重复查询。
+         */
+        private List<TmsCfgCostEntity> cfgCostList;
+        /**
          * 待匹配行（行 = 一条对账明细 logistics_recon_detail）
          */
         private List<MatchRowDTO> rows = new ArrayList<>();
@@ -70,7 +75,7 @@ public class LogisticsReconMatchDTO implements Serializable {
 
     /**
      * 整单级匹配预加载上下文：对同一对账单（同一对账月）不变的配置/字典在分片匹配前只加载一次，
-     * 供各分片复用，避免每 500 条分片重复查询导入配置并放大 Feign 调用。
+     * 供各分片复用，避免每分片重复查询导入配置并放大 Feign 调用。
      */
     @Data
     @NoArgsConstructor
@@ -83,6 +88,8 @@ public class LogisticsReconMatchDTO implements Serializable {
         private Map<String, String> currencyLookupMap;
         /** 币别汇率映射（币别 id -> 汇率） */
         private Map<String, BigDecimal> currencyRateMap;
+        /** 尾程费用配置列表（整单复用） */
+        private List<TmsCfgCostEntity> cfgCostList;
     }
 
     /**
