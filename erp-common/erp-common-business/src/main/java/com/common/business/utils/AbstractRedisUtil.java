@@ -1,21 +1,74 @@
 package com.common.business.utils;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import org.springframework.data.redis.core.HashOperations;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.Cursor;
+import org.springframework.data.redis.core.RedisCallback;
+import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.util.CollectionUtils;
 
+import org.springframework.data.redis.core.HashOperations;
+import org.springframework.data.redis.core.RedisTemplate;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+
+import org.springframework.data.redis.core.script.DefaultRedisScript;
+
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public abstract class AbstractRedisUtil {
+
+    private static final DefaultRedisScript<Long> TRY_INVENTORY_LOCK_SCRIPT;
+
+    /**
+     * 盘点库存锁 Lua 脚本：同一库存维度下 SCAN 冲突检测 + SET NX 原子执行。
+     * <p>
+     * 性能说明：
+     * <ul>
+     *   <li>ARGV[1] 为单库存维度 pattern（org/warehouse/location/sku/status），非全量 lock:wms:inventory:*</li>
+     *   <li>SCAN COUNT=500，命中其它 plan 的冲突 key 即提前 return 0，无冲突时才继续 SET NX</li>
+     *   <li>正常业务同一维度同时仅一个盘点计划，单维度 key 数量极少；若历史遗留孤儿锁过多，需运维清理</li>
+     * </ul>
+     */
+    static {
+        TRY_INVENTORY_LOCK_SCRIPT = new DefaultRedisScript<>();
+        TRY_INVENTORY_LOCK_SCRIPT.setScriptText(
+                "local pattern = ARGV[1]\n"
+                        + "local lockKey = ARGV[2]\n"
+                        + "local lockValue = ARGV[3]\n"
+                        + "local existing = redis.call('GET', lockKey)\n"
+                        + "if existing == lockValue then\n"
+                        + "  return 1\n"
+                        + "end\n"
+                        + "if existing then\n"
+                        + "  return 0\n"
+                        + "end\n"
+                        + "local cursor = '0'\n"
+                        + "repeat\n"
+                        + "  local result = redis.call('SCAN', cursor, 'MATCH', pattern, 'COUNT', 500)\n"
+                        + "  cursor = result[1]\n"
+                        + "  for _, key in ipairs(result[2]) do\n"
+                        + "    if key ~= lockKey then\n"
+                        + "      return 0\n"
+                        + "    end\n"
+                        + "  end\n"
+                        + "until cursor == '0'\n"
+                        + "if redis.call('SET', lockKey, lockValue, 'NX') then\n"
+                        + "  return 1\n"
+                        + "end\n"
+                        + "return 0");
+        TRY_INVENTORY_LOCK_SCRIPT.setResultType(Long.class);
+    }
 
     public abstract RedisTemplate getRedisTemplate();
     
@@ -123,6 +176,44 @@ public abstract class AbstractRedisUtil {
         } catch (Exception e) {
 
             return false;
+        }
+    }
+
+    /**
+     * 键不存在时设置值（SET NX）
+     */
+    public Boolean setIfAbsent(String key, Object value) {
+        try {
+            Boolean result = getRedisTemplate().opsForValue().setIfAbsent(key, value);
+            if (result == null) {
+                throw new ServiceException(ApiError.COMMON_REMOTE_SERVICE_ERROR, "Redis", "SET NX 返回为空");
+            }
+            return result;
+        } catch (ServiceException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("redis setIfAbsent error, key={}", key, e);
+            throw new ServiceException(ApiError.COMMON_REMOTE_SERVICE_ERROR, "Redis", "SET NX 失败");
+        }
+    }
+
+    /**
+     * SCAN + SET NX 原子加锁：冲突维度存在其它 plan lock key 时返回 false。
+     * conflictPattern 已收窄至单库存维度，Lua 内 SCAN 成本随该维度并发锁数量线性增长，非全库 inventory 锁规模。
+     */
+    public boolean tryInventoryLock(String conflictPattern, String lockKey, String lockValue) {
+        try {
+            Long result = (Long) getRedisTemplate().execute(TRY_INVENTORY_LOCK_SCRIPT, Collections.emptyList(),
+                    conflictPattern, lockKey, lockValue);
+            if (result == null) {
+                throw new ServiceException(ApiError.COMMON_REMOTE_SERVICE_ERROR, "Redis", "盘点加锁脚本返回为空");
+            }
+            return result == 1L;
+        } catch (ServiceException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("redis tryInventoryLock error, pattern={}, lockKey={}", conflictPattern, lockKey, e);
+            throw new ServiceException(ApiError.COMMON_REMOTE_SERVICE_ERROR, "Redis", "盘点加锁失败");
         }
     }
 
@@ -580,6 +671,78 @@ public abstract class AbstractRedisUtil {
      */
     public Collection<String> keys(final String pattern) {
         return getRedisTemplate().keys(pattern);
+    }
+
+    /**
+     * 使用 SCAN 分批匹配 key，避免 KEYS 阻塞 Redis
+     */
+    public Collection<String> scanKeys(final String pattern) {
+        try {
+            Set<String> keys = (Set<String>) getRedisTemplate().execute((RedisCallback<Set<String>>) connection -> {
+                Set<String> result = new HashSet<>();
+                ScanOptions options = ScanOptions.scanOptions().match(pattern).count(500).build();
+                Cursor<byte[]> cursor = connection.scan(options);
+                try {
+                    while (cursor.hasNext()) {
+                        result.add(new String(cursor.next(), StandardCharsets.UTF_8));
+                    }
+                } finally {
+                    try {
+                        cursor.close();
+                    } catch (Exception closeEx) {
+                        log.warn("redis scan cursor close error, pattern={}", pattern, closeEx);
+                    }
+                }
+                return result;
+            });
+            return keys == null ? new HashSet<>() : keys;
+        } catch (ServiceException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("redis scanKeys error, pattern={}", pattern, e);
+            throw new ServiceException(ApiError.COMMON_REMOTE_SERVICE_ERROR, "Redis", "SCAN 失败");
+        }
+    }
+
+    /**
+     * SCAN 判断是否存在匹配 key（命中即返回，减少全量收集）。
+     * 盘点 Job 过滤场景传入单库存维度 pattern，避免对 lock:wms:inventory:* 做全量 SCAN。
+     */
+    public boolean hasScanKeys(final String pattern) {
+        try {
+            Boolean exists = (Boolean) getRedisTemplate().execute((RedisCallback<Boolean>) connection -> {
+                ScanOptions options = ScanOptions.scanOptions().match(pattern).count(500).build();
+                Cursor<byte[]> cursor = connection.scan(options);
+                try {
+                    return cursor.hasNext();
+                } finally {
+                    try {
+                        cursor.close();
+                    } catch (Exception closeEx) {
+                        log.warn("redis scan cursor close error, pattern={}", pattern, closeEx);
+                    }
+                }
+            });
+            if (exists == null) {
+                throw new ServiceException(ApiError.COMMON_REMOTE_SERVICE_ERROR, "Redis", "SCAN 返回为空");
+            }
+            return exists;
+        } catch (ServiceException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("redis hasScanKeys error, pattern={}", pattern, e);
+            throw new ServiceException(ApiError.COMMON_REMOTE_SERVICE_ERROR, "Redis", "SCAN 失败");
+        }
+    }
+
+    /**
+     * SCAN 匹配后批量删除
+     */
+    public void delByScan(final String pattern) {
+        Collection<String> keys = scanKeys(pattern);
+        if (!CollectionUtils.isEmpty(keys)) {
+            getRedisTemplate().delete(keys);
+        }
     }
 
     /**

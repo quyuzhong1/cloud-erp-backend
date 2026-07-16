@@ -1,16 +1,13 @@
 package com.erp.server.wms.controller.api;
 
 
-import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
-import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.DataAttributeEnum;
-import com.common.business.utils.RedisUtil;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -18,13 +15,10 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
-import com.common.business.constant.RedisCacheConstants;
 import com.erp.model.wms.dto.StocktakingTaskDTO;
-import com.erp.model.wms.dto.StocktakingTaskDetailDTO;
 import com.erp.model.wms.entity.StocktakingTaskEntity;
 import com.erp.server.wms.query.StocktakingTaskQueryHandler;
 import com.erp.server.wms.service.StocktakingProfitLossService;
-import com.erp.server.wms.service.StocktakingTaskDetailService;
 import com.erp.server.wms.service.StocktakingTaskService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -51,10 +45,6 @@ public class StocktakingTaskController extends BaseController {
 
     @Resource
     private StocktakingTaskService stocktakingTaskService;
-    @Resource
-    private RedisUtil redisUtil;
-    @Resource
-    private StocktakingTaskDetailService stocktakingTaskDetailService;
     @Resource
     private StocktakingProfitLossService stocktakingProfitLossService;
 
@@ -186,18 +176,6 @@ public class StocktakingTaskController extends BaseController {
             BatchResultDTO submit;
             try {
                 submit = stocktakingTaskService.approve(id, new ApproveOneDTO(id, dto.getType(), dto.getComment()));
-                StocktakingTaskEntity laterEntity = stocktakingTaskService.getById(id);
-                ApproveStatusEnum approveStatus = laterEntity.getApproveStatus();
-                if(ApproveStatusEnum.APPROVE.equals(approveStatus)){
-                    // 删除缓存
-                    List<StocktakingTaskDetailDTO.ViewDTO> detailList = stocktakingTaskDetailService.listByMainId(id);
-                    detailList.forEach(detail -> {
-                        String key = CharSequenceUtil.format(RedisCacheConstants.INVENTORY_LOCK, entity.getSourceCode(), "*",
-                                detail.getWarehouseId(), detail.getWarehouseLocation(), detail.getSkuId(), "*");
-                        redisUtil.keys(key).forEach(item -> redisUtil.del(item));
-                    });
-                }
-
             } catch (Exception e) {
                 log.error("盘点任务 审核失败>>>>{}", e);
                 if (ObjectUtil.isEmpty(entity)) {

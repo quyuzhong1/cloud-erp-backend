@@ -341,6 +341,7 @@ public final class ApiErrorWms {
     public static final ApiError WH_STOCKTAKING_PROFIT_LOSS_NOT_ALLOW_UPDATE = new ApiError("WH_STOCKTAKING_PROFIT_LOSS_NOT_ALLOW_UPDATE", 11135, "下推生成的盘盈盘亏单不允许修改");
     public static final ApiError WH_STOCKTAKING_NOT_NEED_PUSH = new ApiError("WH_STOCKTAKING_NOT_NEED_PUSH", 11136, "【{0}】无需下推盘盈/亏单{1}");
     public static final ApiError WH_STOCKTAKING_NOT_ALLOW_APPROVE = new ApiError("WH_STOCKTAKING_NOT_ALLOW_APPROVE", 11137, "【{0}】盘点日期不能小于当前日期,请修改后重新审核");
+    public static final ApiError WH_STOCKTAKING_INVENTORY_INVALID = new ApiError("WH_STOCKTAKING_INVENTORY_INVALID", 11219, "盘点计划【{0}】下推库存数据不完整，仓库【{1}】SKU【{2}】");
     public static final ApiError WH_ONWAY_WAREHOUSE_NOT_EXIST = new ApiError("WH_ONWAY_WAREHOUSE_NOT_EXIST", 11138, "目的仓【{}】未配置在途仓");
     public static final ApiError WH_WEGO_INBOUND_CODE_REQUIRED = new ApiError("WH_WEGO_INBOUND_CODE_REQUIRED", 11139, "WEGO入库单号不能为空");
     public static final ApiError WH_WEGO_AUTH_INFO_EMPTY = new ApiError("WH_WEGO_AUTH_INFO_EMPTY", 11140, "WEGO授权信息不能为空");
@@ -757,6 +758,7 @@ public final class ApiErrorWms {
                 WH_STOCKTAKING_PROFIT_LOSS_NOT_ALLOW_UPDATE,
                 WH_STOCKTAKING_NOT_NEED_PUSH,
                 WH_STOCKTAKING_NOT_ALLOW_APPROVE,
+                WH_STOCKTAKING_INVENTORY_INVALID,
                 WH_ONWAY_WAREHOUSE_NOT_EXIST,
                 WH_WEGO_INBOUND_CODE_REQUIRED,
                 WH_WEGO_AUTH_INFO_EMPTY,
