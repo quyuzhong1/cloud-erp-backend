@@ -19,6 +19,14 @@ import java.util.Map;
  * <p>
  * 注意：文档请求字段名为 {@code page}，与 WEGO 的 {@code pageNum} 不同；本 DTO 沿用
  * {@code pageNum} 作为 Java 侧字段名（与项目内分页命名习惯一致），由 SDK 序列化时转换为 {@code page} key。
+ * <p>
+ * 2026-07-16 联调发现：文档未列出的真实必填约束（对应爱亚网关底层 QERP Open API Platform
+ * {@code GLINK_QUERY_ITEM_NOTIFY} 接口规范）——{@code skus}、{@code createdTimeFrom}/
+ * {@code createdTimeTo}、{@code updatedTimeFrom}/{@code updatedTimeTo} 三者至少要有一组非空，
+ * 否则报错 {@code INVALID_DATA: Created time and Updated time and SKUs cannot be both empty}。
+ * 本 DTO 补充 {@code createdTimeFrom}/{@code createdTimeTo}（格式 {@code yyyy-MM-dd HH:mm:ss}）
+ * 供调用方满足该约束（{@code updatedTimeFrom}/{@code updatedTimeTo} 暂未支持），实现方式详见
+ * {@code AiyaSkuInitHandler}（固定锚点时间 ~ 当前时间，全量拉取）。
  */
 @Data
 @NoArgsConstructor
@@ -73,6 +81,21 @@ public class AiyaSkuQueryDTO implements Serializable {
          * 商品使用状态过滤（可选），取值参照 {@code com.sdk.wms.aiya.enums.AiyaSkuStatusEnum}
          */
         private String status;
+
+        /**
+         * 创建时间范围起（格式 {@code yyyy-MM-dd HH:mm:ss}）。
+         * <p>
+         * 与 {@code updatedTimeFrom}/{@code updatedTimeTo}、{@code skus} 三者至少要有一组非空
+         * （爱亚网关底层 QERP Open API Platform 真实约束，文档未列出），否则接口报
+         * {@code INVALID_DATA: Created time and Updated time and SKUs cannot be both empty}；
+         * 本 DTO 固定用 createdTime 范围满足该约束。
+         */
+        private String createdTimeFrom;
+
+        /**
+         * 创建时间范围止（格式 {@code yyyy-MM-dd HH:mm:ss}），需与 {@link #createdTimeFrom} 成对传入。
+         */
+        private String createdTimeTo;
 
         /**
          * 附加业务参数，参与签名并一起发送（预留，便于文档未列出的字段透传）
