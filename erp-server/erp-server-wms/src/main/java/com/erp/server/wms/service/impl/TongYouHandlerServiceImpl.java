@@ -223,8 +223,9 @@ public class TongYouHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                 if (product.getNums() != null) {
                     product.setNums(String.valueOf(product.getNums()));
                 }
-                if (!TongYouB2bOperationResolver.isRelabel(createOutboundReq)) {
-                    product.setSku_news("");
+                // add_order_hb requires non-empty sku_news; when not relabeling, fallback to warehouse SKU
+                if (CharSequenceUtil.isBlank(product.getSku_news())) {
+                    product.setSku_news(CharSequenceUtil.blankToDefault(product.getSku(), ""));
                 }
             }
         }
