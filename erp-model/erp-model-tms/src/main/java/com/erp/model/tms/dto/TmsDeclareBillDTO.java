@@ -4,13 +4,21 @@ import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.write.style.ColumnWidth;
 import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.SortDTO;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.tms.entity.DeliveryDeclareDetailMidEntity;
+import com.erp.model.tms.entity.TmsDeclareBillDetailEntity;
+import com.erp.model.tms.entity.TmsDeclareBillEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -45,43 +53,136 @@ public class TmsDeclareBillDTO implements Serializable {
 
     }
 
-
     /**
-     * 更新报关状态DTO
+     * 批量更新字段
      */
     @Data
     @NoArgsConstructor
-    public static class MergeDeclareDTO {
+    public static class BatchUpdateFieldDTO {
         /**
-         * id集合
+         * 主键id
          */
-        @NotNull(message = "id集合不能为空")
+        private String id;
+        /**
+         * 主键id集合
+         */
+        @NotEmpty(message = "至少选择一条报关单")
         private List<String> ids;
 
         /**
-         * 合同协议号
+         * 修改的字段编号
          */
-        private String code;
+        @NotEmpty(message = "修改字段不能为空")
+        private List<@Valid BatchUpdateFieldListDTO> fieldList;
 
     }
 
     /**
-     * 更新报关状态DTO
+     * 批量更新字段
      */
     @Data
     @NoArgsConstructor
-    public static class UpdateDeclareStatusDTO {
+    public static class BatchUpdateFieldListDTO {
         /**
-         * id集合
+         * 修改的字段编号
          */
-        @NotNull(message = "id集合不能为空")
+        @NotBlank(message = "修改字段不能为空")
+        private String updateFiledCode;
+
+        /**
+         * 字段值
+         */
+        private Object selectValue;
+
+        /**
+         * 字段显示值
+         */
+        private String selectLabel;
+    }
+
+    /**
+     * 批量更新字段下拉配置
+     */
+    @Data
+    @NoArgsConstructor
+    public static class BatchUpdateFieldDropDownDTO {
+        /**
+         * fmDeclareBill = 头程报关单 b2bDeclareBill = B2B报关单
+         */
+        private String type;
+        /**
+         * 字段编码
+         */
+        private String field;
+
+        /**
+         * 字段名称
+         */
+        private String name;
+
+        /**
+         * 控件类型（input/date/select/cascader）
+         */
+        private String controls;
+        /**
+         *
+         */
+        private String childrenKey;
+
+        /**
+         * 下拉接口地址
+         */
+        private String url;
+
+
+        /**
+         *下拉框显示值
+         */
+        private String selectLabel;
+
+
+        /**
+         *下拉框绑定值
+         */
+        private String selectValue;
+
+        /**
+         * 排序
+         */
+        private Integer index;
+    }
+
+    /**
+     * 确认报关状态
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ConfirmDeclareStatusDTO {
+        /**
+         * 主键id集合
+         */
+        @NotEmpty(message = "id集合不能为空")
         private List<String> ids;
+        /**
+         * 报关状态
+         */
+        @NotBlank(message = "报关状态不能为空")
+        private String declareStatus;
 
         /**
-         * 报关日期
+         * 报关确认日期
          */
-        private LocalDate date;
+        private LocalDate declareConfirmDate;
 
+        /**
+         * 报关确认人id
+         */
+        private String declareUserId;
+
+        /**
+         * 报关确认人
+         */
+        private String declareUserName;
     }
 
     /**
@@ -110,20 +211,36 @@ public class TmsDeclareBillDTO implements Serializable {
     }
 
     /**
-     * 销售出库单信息
+     * 发货单信息
      */
     @Data
     @NoArgsConstructor
     public static class SoOutDTO {
         /**
-         * 业务id（发货单id或销售出库单id）
+         * 柜号
+         * B2B 走 getCanGenerateSoOut 时由后端按发货通知单关联的 logistics_bill.counter_no 回填，
+         * 保存到 tms_declare_bill.transport_no 上。
+         */
+        private String counterNo;
+        /**
+         * 业务id（发货单id或发货通知单id）
          */
         private String sourceId;
 
         /**
-         * 业务code（发货单code或销售出库单code）
+         * 业务code（发货单code或发货通知库单code）
          */
         private String sourceCode;
+
+        /**
+         *  销售出库单id
+         */
+        private String soOutstockId;
+        /**
+         *  销售出库单编码
+         */
+        private String soOutstockCode;
+
         /**
          * 业务类型
          */
@@ -158,25 +275,6 @@ public class TmsDeclareBillDTO implements Serializable {
          */
         private String logisticsSupplierName;
 
-        /**
-         * 总箱数
-         */
-        private Integer boxQty;
-
-        /**
-         * 毛重
-         */
-        private BigDecimal grossWeight;
-
-        /**
-         * 净重
-         */
-        private BigDecimal netWeight;
-
-        /**
-         * 产品明细
-         */
-        private List<ProductDetail> productDetailList;
         /**
          * 装箱信息
          */
@@ -262,6 +360,10 @@ public class TmsDeclareBillDTO implements Serializable {
          */
         private List<ProductDetail> productDetailList;
         /**
+         * 合并报关明细（用于新增/编辑页面回显）
+         */
+        private List<MergeDeclareBillDetailDTO> mergeDetailList;
+        /**
          * 装箱信息
          */
         private List<PackingDTO> packingDTOList;
@@ -274,15 +376,32 @@ public class TmsDeclareBillDTO implements Serializable {
     @NoArgsConstructor
     public static class PackingDTO {
 
-        private String id;
+        /**
+         *  来源id
+         */
+        private String sourceId;
+        /**
+         * 关联单号
+         */
+        private String sourceCode;
+        /**
+         *  销售出库单id
+         */
+        private String soOutstockId;
+        /**
+         *  销售出库单编码
+         */
+        private String soOutstockCode;
+
+        /**
+         * 订单类型（so_outstock.order_type）
+         */
+        private String businessType;
+
         /**
          * sku
          */
         private String sku;
-        /**
-         * 关联单号
-         */
-        private String code;
 
         /**
          * 装箱SKU
@@ -313,6 +432,66 @@ public class TmsDeclareBillDTO implements Serializable {
          * 长宽高相乘结果
          */
         private BigDecimal multiplySize;
+    }
+
+    /**
+     * 选中SKU查询报关表头参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SelectedSkuHeaderParamDTO {
+        /**
+         * 选中的来源SKU明细
+         */
+        @NotEmpty(message = "选中的SKU信息不能为空")
+        private List<SourceDeliveryDetailDTO> sourceDeliveryDetailList;
+    }
+
+    /**
+     * 选中SKU查询报关表头返回
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SelectedSkuHeaderDTO {
+        /**
+         * 运输方式
+         */
+        private String shippingMethod;
+
+        /**
+         * 运输方式名称
+         */
+        private String shippingMethodName;
+
+        /**
+         * 物流商id
+         */
+        private String logisticsSupplierId;
+
+        /**
+         * 物流商名称
+         */
+        private String logisticsSupplierName;
+
+        /**
+         * 提运单号
+         */
+        private String transportNo;
+
+        /**
+         * 件数
+         */
+        private Integer boxQty;
+
+        /**
+         * 毛重
+         */
+        private BigDecimal grossWeight;
+
+        /**
+         * 净重
+         */
+        private BigDecimal netWeight;
     }
 
     /**
@@ -432,6 +611,8 @@ public class TmsDeclareBillDTO implements Serializable {
 
         private String sourceCode;
 
+        private String businessCode;
+
         /**
          * 预录入编号
          */
@@ -451,6 +632,10 @@ public class TmsDeclareBillDTO implements Serializable {
          */
         private String senderName;
         /**
+         * 发货人的统一社会信用代码+海关代码
+         */
+        private String senderCode;
+        /**
          * 出境关别
          */
         private String exportCustomsName;
@@ -467,7 +652,19 @@ public class TmsDeclareBillDTO implements Serializable {
         /**
          * 收货人名称
          */
+        private String receiverId;
+        /**
+         * 收货人名称
+         */
         private String receiverName;
+        /**
+         * 收货人类型
+         */
+        private String receiverType;
+        /**
+         * 收货人的统一社会信用代码+海关代码
+         */
+        private String receiverCode;
 
         /**
          * 运输方式
@@ -518,16 +715,19 @@ public class TmsDeclareBillDTO implements Serializable {
          * 贸易国
          */
         private String tradingArea;
+        private String tradingAreaName;
 
         /**
          * 运抵区
          */
         private String toArea;
+        private String toAreaName;
 
         /**
          * 运抵港
          */
         private String toPort;
+        private String toPortName;
 
         /**
          * 出境口岸
@@ -605,6 +805,401 @@ public class TmsDeclareBillDTO implements Serializable {
          * 产品明细
          */
         private List<ExportProductDetail> productDetailList;
+
+        /**
+         * 合同 sheet 信息
+         *
+         * <p>仅多 sheet 导出（exportDeclareMulti）时填充并渲染，旧的单 sheet 导出（exportDeclare）模板未引用，
+         * 不会输出到 xlsx，对原导出行为透明。</p>
+         */
+        private ContractInfo contractInfo;
+
+        /**
+         * 发票 sheet 信息
+         *
+         * <p>仅多 sheet 导出（exportDeclareMulti）时填充并渲染，旧的单 sheet 导出（exportDeclare）模板未引用，
+         * 不会输出到 xlsx，对原导出行为透明。</p>
+         */
+        private InvoiceInfo invoiceInfo;
+
+        /**
+         * 装箱单 sheet 信息（主表 + 合计 + 明细行）
+         *
+         * <p>仅多 sheet 导出（exportDeclareMulti）时填充并渲染，旧的单 sheet 导出（exportDeclare）模板未引用，
+         * 不会输出到 xlsx，对原导出行为透明。</p>
+         */
+        private PackingListInfo packingListInfo;
+
+        /**
+         * 装箱明细 sheet 行集合（按 sourceCode -> 箱 -> SKU 三层展开）
+         *
+         * <p>仅多 sheet 导出（exportDeclareMulti）时填充并渲染。</p>
+         */
+        private List<PackingDetailItem> packingDetailItemList;
+    }
+
+    /**
+     * 报关单导出 - 合同 sheet 主表信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ContractInfo {
+
+        /**
+         * 卖方
+         */
+        private String sellerName;
+
+        /**
+         * 卖方地址（境内核算公司地址）
+         */
+        private String sellerAddress;
+        /**
+         * 卖方电话
+         */
+        private String sellerMobile;
+
+        /**
+         * 买方
+         */
+        private String buyerName;
+
+        /**
+         * 买方地址
+         *
+         * <p>头程取核算公司地址；B2B 取销售出库 / 发货通知单关联客户地址（B2B 分支待接入）。</p>
+         */
+        private String buyerAddress;
+
+        /**
+         * 合同号码（合同协议号）
+         */
+        private String contractNo;
+
+        /**
+         * 合同日期（取报关日期 declareDate）
+         */
+        private LocalDate contractDate;
+
+        /**
+         * 币别名称
+         *
+         * <p>多明细行币别不一致时，取首行币别并打印 warn 日志。</p>
+         */
+        private String currency;
+
+        private String currencyName;
+
+        /**
+         * 合同总值（保留 4 位小数）
+         */
+        private BigDecimal totalAmount;
+
+        /**
+         * 合同总值大写（含币别中文名称前缀）
+         */
+        private String totalAmountUpper;
+
+        /**
+         * 包装及唛头（暂无数据源，预留占位）
+         */
+        private String packingMarks;
+
+        /**
+         * 装运目的地（取报关单目的国家名称）
+         */
+        private String destination;
+
+        /**
+         * 付款条件（取成交方式名称 dictTransactionMethodName）
+         */
+        private String paymentTerms;
+
+        /**
+         * 合同明细行
+         */
+        private List<ContractDetailItem> contractDetailList;
+    }
+
+    /**
+     * 报关单导出 - 合同 sheet 明细行
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ContractDetailItem {
+
+        /**
+         * 货物名称（报关中文名）
+         */
+        private String declareChineseName;
+
+        /**
+         * 数量
+         */
+        private Integer qty;
+        /**
+         * 单位（报关单位名称）
+         */
+        private String declareUnit;
+
+        /**
+         * 单位（报关单位名称）
+         */
+        private String declareUnitName;
+
+        /**
+         * 单价（保留 4 位小数）
+         */
+        private BigDecimal price;
+
+        /**
+         * 币别（币别名称）
+         */
+        private String declareCurrency;
+
+        /**
+         * 金额（保留 4 位小数）
+         */
+        private BigDecimal totalPrice;
+    }
+
+    /**
+     * 报关单导出 - 发票 sheet 主表信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class InvoiceInfo {
+
+        /**
+         * 卖方
+         */
+        private String sellerName;
+
+        /**
+         * 买方
+         */
+        private String buyerName;
+
+        /**
+         * 发票编号（取合同协议号）
+         */
+        private String no;
+
+        /**
+         * 发票日期（取报关日期 declareDate）
+         */
+        private LocalDate date;
+
+        /**
+         * 合计数量
+         */
+        private Integer totalQty;
+
+        /**
+         * 合计金额（保留 4 位小数）
+         */
+        private BigDecimal totalAmount;
+
+        /**
+         * 币别符号
+         */
+        private String currencySymbol;
+
+        /**
+         * 唛头（暂无数据源，预留占位）
+         */
+        private String marks;
+    }
+
+    /**
+     * 报关单导出 - 发票 sheet 明细行
+     */
+    @Data
+    @NoArgsConstructor
+    public static class InvoiceDetailItem {
+
+        /**
+         * 标记号码（固定 N/M）
+         */
+        private String markNo;
+
+        /**
+         * 货物名称、型号规格（报关中文名）
+         */
+        private String declareChineseName;
+
+        /**
+         * 数量
+         */
+        private Integer qty;
+
+        /**
+         * 单位
+         */
+        private String declareUnit;
+        /**
+         * 单位（报关单位名称）
+         */
+        private String declareUnitName;
+
+        /**
+         * 单价（保留 4 位小数）
+         */
+        private BigDecimal price;
+
+        /**
+         * 总金额（保留 4 位小数）
+         */
+        private BigDecimal totalPrice;
+
+        /**
+         * SKU 编码，多个时用英文逗号分隔
+         */
+        private String skuNo;
+    }
+
+    /**
+     * 报关单导出 - 装箱单 sheet 主表 + TOTAL 合计
+     *
+     * <p>明细行集合不放在此 DTO，由模板的命名集合占位符 {@code {packingListItem.x}} 单独渲染。</p>
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PackingListInfo {
+
+        /**
+         * Buyers（取境外收货人 receiverName）
+         */
+        private String buyers;
+
+        /**
+         * 日期（取报关日期 declareDate）
+         */
+        private LocalDate date;
+
+        /**
+         * 发票编号（取合同协议号 code）
+         */
+        private String invoiceNo;
+
+        /**
+         * 合约号（取合同协议号 code）
+         */
+        private String contractNo;
+
+        /**
+         * 船名 Shipped by（取抵运国 countryName）
+         */
+        private String shippedBy;
+
+        /**
+         * 箱号展示文案，规则："1-N"，N = 主表 boxQty；boxQty<=1 时退化为 "1"
+         */
+        private String boxNoLabel;
+
+        /**
+         * TOTAL 合计 - 总数(件)（取主表 boxQty）
+         */
+        private Integer totalBoxQty;
+
+        /**
+         * TOTAL 合计 - 总毛重(KG)（取主表 grossWeight）
+         */
+        private BigDecimal totalGrossWeight;
+
+        /**
+         * TOTAL 合计 - 总数量（按明细 qty 之和，等同 ExportDTO.totalQty）
+         */
+        private Integer totalQty;
+
+        /**
+         * TOTAL 合计 - 总净重(KG)，按明细 N.W. 之和（{@code product_pack.net_weight × qty} 累加，4 位精度）
+         */
+        private BigDecimal totalNetWeight;
+
+        /**
+         * From（暂无明确数据源，预留占位，模板手填或后续补）
+         */
+        private String fromArea;
+
+        /**
+         * To（暂无明确数据源，预留占位）
+         */
+        private String toArea;
+
+        /**
+         * 付款条件 Terms of Payment（暂不处理，预留占位）
+         */
+        private String paymentTerms;
+
+        /**
+         * 唛头 Marks（暂无数据源，预留占位）
+         */
+        private String marks;
+
+        /**
+         * 装箱单 sheet 明细行集合
+         */
+        private List<PackingListItem> itemList;
+    }
+
+    /**
+     * 报关单导出 - 装箱单 sheet 明细行
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PackingListItem {
+
+        /**
+         * 货物名称及规格 Description（报关中文名）
+         */
+        private String description;
+
+        /**
+         * 总数量 Ge.Quantity（明细 qty）
+         */
+        private Integer qty;
+
+        /**
+         * 总净重(KG) N.W.(KG) = {@code product_pack.net_weight × qty}，4 位精度
+         */
+        private BigDecimal netWeight;
+    }
+
+    /**
+     * 报关单导出 - 装箱明细 sheet 行（按 sourceCode -> 箱 -> SKU 三层展开）
+     *
+     * <p>取数链：sourceCode -> packing_task -> wms_carton_spec -> wms_carton_detail，
+     * 装箱重量取 {@code wms_carton_detail.gross_weight}（即装箱 SKU 在该箱内的预计毛重）。</p>
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PackingDetailItem {
+
+        /**
+         * 单号（业务单号 = 关联发货单/销售出库单号）
+         */
+        private String sourceCode;
+
+        /**
+         * 箱号（wms_carton.box_no，真实箱号）
+         */
+        private Integer boxNo;
+
+        /**
+         * 装箱SKU 编码
+         */
+        private String skuNo;
+
+        /**
+         * 装箱数量（wms_carton_detail.pack_qty）
+         */
+        private Integer packQty;
+
+        /**
+         * 装箱重量（wms_carton_detail.gross_weight，单位 kg）
+         */
+        private BigDecimal grossWeight;
     }
 
     /**
@@ -622,6 +1217,14 @@ public class TmsDeclareBillDTO implements Serializable {
          * sku id
          */
         private String skuId;
+        /**
+         * sku
+         */
+        private String skuNo;
+        /**
+         * 业务单号
+         */
+        private String businessCode;
 
         /**
          * 中国海关编码(商品编号)
@@ -717,13 +1320,20 @@ public class TmsDeclareBillDTO implements Serializable {
         private String code;
 
         /**
-         * 合并来源Id
+         * 业务单号【可排序】
          */
-        @ExcelIgnore
-        private String mergeSourceId;
+        private String businessCode;
+        /**
+         * 报关确认日期【可排序】
+         */
+        private LocalDate declareConfirmDate;
+        /**
+         * 报关员名称【可排序】
+         */
+        private String declareUserName;
 
         /**
-         * 来源编号
+         * 来源编号【可排序】
          */
         @ExcelIgnore
         private String sourceCode;
@@ -766,14 +1376,6 @@ public class TmsDeclareBillDTO implements Serializable {
         @ExcelProperty(value = "类型名称")
         @ColumnWidth(10)
         private String businessTypeName;
-
-        /**
-         * 关联单号List
-         */
-        @ExcelProperty(value = "关联单号")
-        @ColumnWidth(20)
-        private String sourceCodeList;
-
 
         /**
          * 目的国家(可排序)
@@ -854,10 +1456,28 @@ public class TmsDeclareBillDTO implements Serializable {
         private Boolean isMerged = Boolean.FALSE;
 
         /**
-         * 是否作废
+         * 发货仓名称【可排序】
          */
-        @ExcelIgnore
-        private Boolean isInvalid= Boolean.FALSE;
+        private String fromWarehouseName;
+
+        /**
+         * 目的仓名称【仅头程报关单存在】【可排序】
+         */
+        private String destWarehouseName;
+
+        /**
+         * 中转仓名称【可排序】
+         */
+        private String transferWarehouseName;
+
+        /**
+         * 销售组织名称【仅B2B报关单存在】【可排序】
+         */
+        private String salesOrgName;
+        /**
+         * 备注【可排序】
+         */
+        private String remark;
     }
 
     /**
@@ -1033,6 +1653,11 @@ public class TmsDeclareBillDTO implements Serializable {
         private String senderId;
 
         /**
+         * 发货人类型
+         */
+        private String senderType;
+
+        /**
          * 发货人名称
          */
         private String senderName;
@@ -1051,11 +1676,18 @@ public class TmsDeclareBillDTO implements Serializable {
          * 报关日期
          */
         private LocalDate declareDate;
-
+        /**
+         * 收货人id
+         */
+        private String receiverId;
         /**
          * 收货人名称
          */
         private String receiverName;
+        /**
+         * 收货人类型
+         */
+        private String receiverType;
         /**
          * 运输方式
          */
@@ -1122,9 +1754,19 @@ public class TmsDeclareBillDTO implements Serializable {
         private String toArea;
 
         /**
+         * 运抵区名称
+         */
+        private String toAreaName;
+
+        /**
          * 运抵港
          */
         private String toPort;
+
+        /**
+         * 运抵港名称
+         */
+        private String toPortName;
 
         /**
          * 出境口岸
@@ -1187,9 +1829,9 @@ public class TmsDeclareBillDTO implements Serializable {
         private BigDecimal otherFee;
 
         /**
-         * 产品明细
+         *  明细信息
          */
-        private List<ProductDetail> productDetailList;
+        List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList;
         /**
          * 装箱信息
          */
@@ -1223,13 +1865,17 @@ public class TmsDeclareBillDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
-        /**
-         * 业务id（发货单id或销售出库单id）
-         */
-        @NotBlank(message = "来源类型：头程,B2B不能为空")
-        private String sourceId;
 
-        private Boolean isAuto = false;
+        /**
+         * 是否按规则重新合并后保存
+         */
+        private Boolean isMerge = false;
+
+        /**
+         *  明细信息
+         */
+        @NotEmpty(message = "明细信息不能为空")
+        private List<MergeDeclareBillDetailDTO> mergeDetailList;
     }
     /**
     * 修改
@@ -1243,6 +1889,17 @@ public class TmsDeclareBillDTO implements Serializable {
         */
         @NotBlank(message = "主键id不能为空")
         private String id;
+
+        /**
+         * 是否按规则重新合并后保存
+         */
+        private Boolean isMerge = false;
+
+        /**
+         *  明细信息
+         */
+        @NotEmpty(message = "明细信息不能为空")
+        private List<MergeDeclareBillDetailDTO> mergeDetailList;
 
     }
 
@@ -1271,6 +1928,14 @@ public class TmsDeclareBillDTO implements Serializable {
          * 发货人id
          */
         private String senderId;
+        /**
+         * 发货人名称
+         */
+        private String senderName;
+        /**
+         * 发货人类型
+         */
+        private String senderType;
 
         /**
          * 出境关别
@@ -1288,9 +1953,17 @@ public class TmsDeclareBillDTO implements Serializable {
         private LocalDate declareDate;
 
         /**
+         * 收货人id
+         */
+        private String receiverId;
+        /**
          * 收货人名称
          */
         private String receiverName;
+        /**
+         * 收货人类型
+         */
+        private String receiverType;
 
         /**
          * 监管方式
@@ -1362,5 +2035,897 @@ public class TmsDeclareBillDTO implements Serializable {
          */
         private BigDecimal otherFee;
 
+    }
+
+
+
+    @Data
+    @NoArgsConstructor
+    public static class BillSourceDTO {
+
+        /**
+         * 来源id
+         */
+        private String sourceId;
+        /**
+         *  来源编码
+         */
+        private String sourceCode;
+        /**
+         *  来源类型
+         */
+        private String sourceType;
+        /**
+         * 业务id
+         */
+        private String businessId;
+        /**
+         *  业务编码
+         */
+        private String businessCode;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ListBillSourceDTO {
+
+        /**
+         *  来源id集合
+         */
+        private List<String> sourceIdList;
+        /**
+         * 来源编码集合
+         */
+        private List<String> sourceCodeList;
+        /**
+         * 业务id集合
+         */
+        private List<String> businessIdList;
+        /**
+         * 业务编码集合
+         */
+        private List<String> businessCodeList;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class NotGenerateParamDTO extends SortDTO {
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class NotGenerateDetailDTO {
+        /**
+         * 来源id
+         */
+        private String sourceId;
+        /**
+         *  来源编码
+         */
+        private String sourceCode;
+        /**
+         *  来源类型
+         */
+        private String sourceType;
+        /**
+         * 业务单号
+         */
+        private String businessCode;
+        /**
+         *  来源明细id
+         */
+        private String sourceDetailId;
+
+        /**
+         *  skuId
+         */
+        private String skuId;
+        /**
+         *  sku编码
+         */
+        private String skuNo;
+        /**
+         *  bom版本
+         */
+        private String bomId;
+        /**
+         *  bom版本
+         */
+        private String bomHistoryId;
+        /**
+         *  bom版本
+         */
+        private String bomVersion;
+
+        /**
+         * 中国海关编码(商品编号)
+         */
+        private String customsCode;
+        /**
+         * 报关中文名（商品名称）
+         */
+        private String declareChineseName;
+        /**
+         * 申报要素
+         */
+        private String declareElement;
+        /**
+         * 报关单位
+         */
+        private String declareUnit;
+
+        /**
+         * 单价
+         */
+        private BigDecimal price;
+        /**
+         * 数量
+         */
+        private Integer qty;
+
+        /**
+         * 总价
+         */
+        private BigDecimal totalPrice;
+
+        /**
+         * 报关币别
+         */
+        private String declareCurrency;
+        /**
+         * 报关币别名称
+         */
+        private String declareCurrencyName;
+        /**
+         * 报关币别符号
+         */
+        private String declareCurrencySymbol;
+        /**
+         * 原产国
+         */
+        private String sourceCountry;
+        /**
+         * 原产国名称
+         */
+        private String sourceCountryName;
+
+        /**
+         * 最终目的国（地区）
+         */
+        private String toCountry;
+
+        /**
+         * 最终目的国（地区）名称
+         */
+        private String toCountryName;
+        /**
+         * 境内货源地
+         */
+        private String sourceCargo;
+        /**
+         * 征免
+         */
+        private String exemption;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AddSplitDeclareDTO {
+        /**
+         * 原报关单主表id
+         */
+        @NotBlank(message = "报关单id不能为空")
+        private String id;
+        /**
+         * 拆分数据：外层每一组为一票，内层为该票包含的箱/SKU 选择
+         */
+        @NotEmpty(message = "拆分数据不能为空")
+        private List<List<SplitDeclareDTO>> splitDeclareDTOList;
+    }
+
+    /**
+     *  拆分信息
+     */
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SplitDeclareDTO {
+        /**
+         *  主表报关id
+         */
+        private String id;
+        /**
+         *  来源id
+         */
+        private String sourceId;
+        /**
+         *  来源单号（发货通知单号），用于区分同一业务单下不同来源单的相同箱号
+         */
+        private String sourceCode;
+        /**
+         *  业务单号
+         */
+        private String businessCode;
+        /**
+         *  箱号
+         */
+        private String boxNo;
+        /**
+         *  sku信息
+         */
+        private String skuDesc;
+        /**
+         * sku信息
+         */
+        private List<SplitDetailDTO> skuDetailList;
+    }
+
+    /**
+     * 拆分明细信息
+     */
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SplitDetailDTO {
+        /**
+         *  skuId
+         */
+        private String skuId;
+        /**
+         *  SKU编码
+         */
+        private String skuNo;
+        /**
+         *  数量
+         */
+        private Integer qty;
+    }
+    
+    /**
+     * 合并报关信息
+     */
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class MergeDeclareBillDTO {
+        /**
+         *  报关单明细集合
+         */
+        private List<MergeDeclareBillDetailDTO> declareBillList;
+    }
+
+    /**
+     *  合并报关明细信息
+     */
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class MergeDeclareBillDetailDTO {
+        /**
+         *  主键id
+         */
+        private String id;
+
+        /**
+         * 业务单号
+         */
+        private String businessDesc;
+
+        /**
+         * 合并来源业务单号（英文逗号拼接，不含箱号）
+         */
+        private String businessOrderNos;
+
+        /**
+         * 合并代表 SKU id（取合并集合第一条来源明细）
+         */
+        private String leadSkuId;
+
+        /**
+         *  sku编码
+         */
+        private String skuNo;
+
+        /**
+         * 中国海关编码(商品编号)
+         */
+        private String hsCode;
+        /**
+         * 报关中文名（商品名称）
+         */
+        private String productNameCn;
+        /**
+         * 申报要素
+         */
+        private String declareElement;
+        /**
+         * 报关单位
+         */
+        private String unit;
+
+        /**
+         * 报关单位名称
+         */
+        private String unitName;
+        /**
+         * 单价
+         */
+        private BigDecimal unitPrice;
+        /**
+         * 数量
+         */
+        private Integer qty;
+
+        /**
+         * 总价（单价 × 合并后数量）
+         */
+        private BigDecimal totalAmount;
+
+        /**
+         * 原产国（合并集合第一条 SKU）
+         */
+        private String sourceCountry;
+
+        /**
+         * 原产国名称
+         */
+        private String sourceCountryName;
+
+        /**
+         * 最终目的国/运抵国
+         */
+        private String toCountry;
+
+        /**
+         * 最终目的国名称
+         */
+        private String toCountryName;
+
+        /**
+         * 境内货源地
+         */
+        private String sourceCargo;
+
+        /**
+         * 征免
+         */
+        private String exemption;
+
+        /**
+         * 报关币别
+         */
+        private String declareCurrency;
+        /**
+         * 报关币别名称
+         */
+        private String declareCurrencyName;
+        /**
+         * 报关币别符号
+         */
+        private String declareCurrencySymbol;
+
+        /**
+         * 合并规则说明
+         */
+        private String mergeRemark;
+
+        /**
+         * 原发货明细数据
+         */
+        private List<SourceDeliveryDetailDTO> sourceDeliveryDetailList;
+    }
+
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SourceDeliveryDetailDTO {
+        /**
+         * 来源id
+         */
+        private String sourceId;
+        /**
+         * 报关单id（delivery_declare_detail_mid.declare_id）
+         */
+        private String declareId;
+        /**
+         *  来源类型
+         */
+        private String sourceType;
+
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
+        /**
+         *  业务id
+         */
+        private String businessId;
+        /**
+         *  业务但还要
+         */
+        private String businessCode;
+        /**
+         *  箱号
+         */
+        private String boxNo;
+        /**
+         *  skuId
+         */
+        private String skuId;
+        /**
+         *  sku编码
+         */
+        private String skuNo;
+        /**
+         *  父级SKUID
+         */
+        private String parentSkuId;
+        /**
+         * bom主表ID（product_bom_info）
+         */
+        private String bomId;
+        /**
+         * bomSku历史的主键id（product_bom_history）
+         */
+        private String bomHistoryId;
+
+        /**
+         * bom版本（product_bom_history）
+         */
+        private String bomVersion;
+
+        /**
+         * 客户SKU
+         */
+        private String platformSkuNo;
+
+        /**
+         * 中国海关编码(商品编号)
+         */
+        private String hsCode;
+        /**
+         * 报关中文名（商品名称）
+         */
+        private String productNameCn;
+        /**
+         * 申报要素
+         */
+        private String declareElement;
+        /**
+         * 报关单位
+         */
+        private String unit;
+
+        /**
+         * 报关单位名称
+         */
+        private String unitName;
+        /**
+         * 单价
+         */
+        private BigDecimal unitPrice;
+        /**
+         * 数量
+         */
+        private Integer qty;
+        /**
+         * 报关币别
+         */
+        private String declareCurrency;
+        /**
+         * 报关币别名称
+         */
+        private String declareCurrencyName;
+        /**
+         * 报关币别符号
+         */
+        private String declareCurrencySymbol;
+
+        /**
+         * 运抵国/最终目的国编码（国家维度）
+         */
+        private String countryId;
+
+        /**
+         * 运抵国/最终目的国名称
+         */
+        private String countryName;
+
+        /**
+         * 原产国（产品物流）
+         */
+        private String sourceCountry;
+
+        /**
+         * 原产国名称（产品物流）
+         */
+        private String sourceCountryName;
+
+        /**
+         * 境内货源地（产品物流）
+         */
+        private String sourceCargo;
+
+        /**
+         * 征免（产品物流）
+         */
+        private String exemption;
+
+        /**
+         * 订单类型（so_outstock.order_type，如 B2B）
+         */
+        private String businessType;
+
+        /**
+         * 发货仓ID
+         */
+        private String fromWarehouseId;
+        /**
+         * 发货仓名称
+         */
+        private String fromWarehouseName;
+        /**
+         * 目的仓ID
+         */
+        private String destWarehouseId;
+        /**
+         * 目的仓名称
+         */
+        private String destWarehouseName;
+        /**
+         * 中转仓IDs(逗号分隔)
+         */
+        private String transferWarehouseIds;
+        /**
+         * 中转仓名称
+         */
+        private String transferWarehouseNames;
+        /**
+         * 销售组织ID
+         */
+        private String salesOrgId;
+        /**
+         * 销售组织名称
+         */
+        private String salesOrgName;
+
+        /**
+         * BOM 拆分子 SKU 在 so_detail 无独立行，查价/币别需回退父 SKU。
+         */
+        public String resolveSoDetailSkuId() {
+            if (parentSkuId != null && StringUtils.isNotBlank(parentSkuId)) {
+                return parentSkuId;
+            }
+            return skuId;
+        }
+    }
+
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    public static class PushDeclareBeforeParamDTO {
+        /**
+         *  是否合并,true是，false否
+         */
+        private Boolean isMultipleMerge = true;
+        /**
+         *  下推的主表ids
+         */
+        @NotEmpty(message = "选择ids不能为空")
+        private List<String> ids;
+        /**
+         * 是否仅查询 declare_status = wait 的来源单。
+         * 下推/新增默认为 true；编辑/合并/同箱校验等场景传 false，允许 wait + finish。
+         */
+        private Boolean onlyWaitDeclareStatus = true;
+
+        public PushDeclareBeforeParamDTO(Boolean isMultipleMerge, List<String> ids) {
+            this.isMultipleMerge = isMultipleMerge;
+            this.ids = ids;
+        }
+
+        public PushDeclareBeforeParamDTO(Boolean isMultipleMerge, List<String> ids, Boolean onlyWaitDeclareStatus) {
+            this.isMultipleMerge = isMultipleMerge;
+            this.ids = ids;
+            this.onlyWaitDeclareStatus = onlyWaitDeclareStatus;
+        }
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PushDeclareNoMergeDTO {
+        /**
+         *  下推的主表id
+         */
+        @NotBlank(message = "选择id不能为空")
+        private String id;
+
+        /**
+         *  skuId
+         */
+        @NotBlank(message = "选择skuId不能为空")
+        private String skuId;
+    }
+
+
+
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AutoMergeDeclareBillViewDTO {
+        /**
+         *  是否批量合并,true是，false否
+         */
+        private Boolean isMultipleMerge = true;
+        /**
+         * 需要报关信息
+         */
+        private List<SourceDeliveryDetailDTO> sourceDeliveryDetailList;
+
+    }
+
+
+    /**
+     * 自动生成报关明细中间表DTO
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AutoGenerateMidDataDTO {
+        /**
+         * 来源明细列表
+         */
+        @NotEmpty(message = "来源明细列表不能为空")
+        private List<TmsDeclareBillDTO.MergeDeclareBillDTO> mergeDeclareBillDTOS;
+
+        private String sourceType;
+    }
+
+    /**
+     * 删除报关明细中间表DTO
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class DeleteDeliveryDeclareDetailMidDTO {
+        /**
+         * 来源id集合
+         */
+        @NotEmpty(message = "来源id集合不能为空")
+        private List<String> sourceIds;
+    }
+    /**
+     * 更新发货单明细业务单号参数。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UpdateDeliveryDeclareBusinessCodeDTO {
+        /**
+         * 来源单 ID，例如头程发货单 ID。
+         */
+        @NotBlank(message = "来源单ID不能为空")
+        private String sourceId;
+
+        /**
+         * 业务单 ID，例如海外仓入库单 ID。
+         */
+        @NotBlank(message = "业务单ID不能为空")
+        private String businessId;
+
+        /**
+         * 最新业务单号，例如海外仓入库单号。
+         */
+        @NotBlank(message = "业务单号不能为空")
+        private String businessCode;
+    }
+
+    /**
+     * 头程报关单新增「事务外预构建」数据载体。
+     * <p>
+     * 所有跨服务 Feign 读取、校验、实体构建在事务外完成后放入本对象，
+     * 全局事务内仅消费本对象做本地库写入与来源单状态回写，避免事务内调用 Feign。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class FmAddPreparedData {
+        /**
+         * 本次新增涉及的来源单 id 集合（去重后）。
+         */
+        private List<String> sourceIdList;
+
+        /**
+         * 普通保存/合并保存时，前端提交并补全后的合并明细列表（自动生成场景为空）。
+         */
+        private List<MergeDeclareBillDetailDTO> mergeDetailList;
+
+        /**
+         * 普通保存/合并保存时，待落库的报关单主表实体（自动生成场景为空）。
+         */
+        private TmsDeclareBillEntity declareBillEntity;
+
+        /**
+         * 普通保存/合并保存时，待落库的报关单明细实体列表（自动生成场景为空）。
+         */
+        private List<TmsDeclareBillDetailEntity> detailEntityList;
+
+        /**
+         * 自动生成场景下按明细上限拆分出的多张报关单数据（普通保存/合并保存时为空）。
+         */
+        private List<FmAddBillData> generatedBills;
+    }
+
+    /**
+     * 自动生成场景下，单张报关单的主表实体与明细实体集合。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class FmAddBillData {
+        /**
+         * 报关单主表实体。
+         */
+        private TmsDeclareBillEntity declareBillEntity;
+
+        /**
+         * 报关单明细实体列表。
+         */
+        private List<TmsDeclareBillDetailEntity> detailEntityList;
+
+        /**
+         * 本票合并明细（自动生成场景用于中间表 saveGeneratedMidData）。
+         */
+        private List<MergeDeclareBillDetailDTO> declareBillList;
+    }
+
+    /**
+     * B2B 报关单新增「事务外预构建」数据载体。
+     * <p>
+     * 与头程一致：所有跨服务 Feign 读取、校验、实体构建在事务外完成后放入本对象，
+     * 全局事务内仅消费本对象做本地库写入与来源单状态回写，避免事务内调用 Feign。
+     * B2B 仅支持按前端提交合并明细下推保存，无自动生成路径。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class B2bAddPreparedData {
+        /**
+         * 本次新增涉及的来源单（发货通知单）id 集合（去重后）。
+         */
+        private List<String> sourceIdList;
+
+        /**
+         * 前端提交并补全后的合并明细列表。
+         */
+        private List<MergeDeclareBillDetailDTO> mergeDetailList;
+
+        /**
+         * 待落库的报关单主表实体。
+         */
+        private TmsDeclareBillEntity declareBillEntity;
+
+        /**
+         * 待落库的报关单明细实体列表。
+         */
+        private List<TmsDeclareBillDetailEntity> detailEntityList;
+
+    }
+
+    /**
+     * 批量合并保存（下推合并/独立保存、拆分保存复用）时，单张报关单的「事务外预构建」数据。
+     * <p>
+     * 主/明细实体连同其对应的合并明细在事务外完成 Feign 构建后放入本对象，
+     * 全局事务内仅据此做 add + saveGeneratedMidData，避免 XA 分支内调用 Feign。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class BatchMergeBillData {
+        public BatchMergeBillData(List<MergeDeclareBillDetailDTO> declareBillList,
+                                  TmsDeclareBillEntity declareBillEntity,
+                                  List<TmsDeclareBillDetailEntity> detailEntityList) {
+            this.declareBillList = declareBillList;
+            this.declareBillEntity = declareBillEntity;
+            this.detailEntityList = detailEntityList;
+        }
+
+        /**
+         * 本票对应的合并明细列表（用于中间表 saveGeneratedMidData 与明细行匹配）。
+         */
+        private List<MergeDeclareBillDetailDTO> declareBillList;
+
+        /**
+         * 待落库的报关单主表实体。
+         */
+        private TmsDeclareBillEntity declareBillEntity;
+
+        /**
+         * 待落库的报关单明细实体列表（与 declareBillList 一一对应）。
+         */
+        private List<TmsDeclareBillDetailEntity> detailEntityList;
+
+        /**
+         * Preloaded transfer warehouse names, used inside the DB transaction without WMS Feign.
+         */
+        private Map<String, String> transferWarehouseNameMap;
+
+        /**
+         * Preloaded parent SKU BOM history, used inside the DB transaction without PLM Feign.
+         */
+        private Map<String, List<BomChildrenSkuDTO>> historyByParentMap;
+    }
+
+    /**
+     * 拆分保存时，单票拆分结果的「事务外预构建」数据。
+     * <p>
+     * 拆分入口先在事务外完成自动合并预览与报关单实体构建；全局事务内只消费本对象删除原单并落新单。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SplitPreparedBillData {
+        /**
+         * 本票自动合并预览结果。
+         */
+        private List<MergeDeclareBillDTO> mergeDeclareBillList;
+
+        /**
+         * 本票预构建的报关单主/明细实体。
+         */
+        private List<BatchMergeBillData> preparedBillList;
+    }
+
+    /**
+     * 报关单删除「事务外预构建」数据载体。
+     * <p>
+     * 校验与中间表查询在事务外完成；全局事务内仅执行本地库删除与中间表恢复，
+     * WMS 来源单状态回写在全局事务提交后执行，避免 Feign 长时间占用全局事务。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class DeletePreparedData {
+        /**
+         * 待删除报关单 id 列表。
+         */
+        private List<String> removeIds;
+
+        /**
+         * 本次删除关联、且需回写来源单状态的中间表明细。
+         */
+        private List<DeliveryDeclareDetailMidEntity> removedMidList;
+
+        /**
+         * 批量删除逐条结果（含校验失败项）。
+         */
+        private List<BatchResultDTO> resultList;
     }
 }

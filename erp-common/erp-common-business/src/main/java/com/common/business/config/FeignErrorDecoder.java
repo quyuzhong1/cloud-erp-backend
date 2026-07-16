@@ -11,6 +11,8 @@ import feign.codec.ErrorDecoder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Configuration;
 
+import java.nio.charset.StandardCharsets;
+
 /**
  * @author Lambda
  * @Classname FeignErrorDecoder
@@ -25,14 +27,22 @@ public class FeignErrorDecoder implements ErrorDecoder {
     @Override
     public Exception decode(String methodKey, Response response) {
         try {
-            String message = Util.toString(response.body().asReader());
+            if (response.body() == null) {
+                return new ServiceException(ApiError.COMMON_REMOTE_RESPONSE_EMPTY, methodKey);
+            }
+            String message = Util.toString(response.body().asReader(StandardCharsets.UTF_8));
             log.error("feign远程调用异常，原始异常信息：{}", message);
             JSONObject jsonObject = JSONObject.parseObject(message);
+            Integer code = jsonObject.getInteger("code");
+            String responseMsg = jsonObject.getString("msg");
+            if (code != null && CharSequenceUtil.isNotBlank(responseMsg)) {
+                return new ServiceException(code, responseMsg);
+            }
             if (jsonObject.containsKey("trace")) {
                 String trace = StrUtils.null2EmptyWithTrim(jsonObject.getString("trace"));
                 if (trace.contains("ServiceException")) {
                     String codeStr = CharSequenceUtil.subBetween(trace, "ServiceException(code=", ", msg");
-                    Integer code = Integer.valueOf(codeStr);
+                    code = Integer.valueOf(codeStr);
                     String msg = "";
                     // 有些异常会返回data
                     if (!trace.contains(", data=")) {
@@ -42,15 +52,15 @@ public class FeignErrorDecoder implements ErrorDecoder {
                     }
                     return  new ServiceException(code, msg);
                 }else{
-                    return  new ServiceException(ApiError.HTTP_UNKNOWN);
+                    return  new ServiceException(ApiError.COMMON_REMOTE_RESPONSE_INVALID, methodKey, message);
                 }
             }else{
-                return  new ServiceException(ApiError.HTTP_UNKNOWN);
+                return  new ServiceException(ApiError.COMMON_REMOTE_RESPONSE_INVALID, methodKey, message);
             }
         } catch (Exception e) {
             log.error("FeignErrorDecoder 出错了 {}", e);
         }
 
-         return  new ServiceException(ApiError.HTTP_UNKNOWN);
+         return  new ServiceException(ApiError.COMMON_REMOTE_SERVICE_ERROR, methodKey, response.status());
     }
 }

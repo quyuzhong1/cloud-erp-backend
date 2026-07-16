@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
@@ -47,8 +48,16 @@ public class SysFeignController extends BaseController {
      * 公司列表
      */
     @GetMapping("/company/list")
-    public ApiResult<List<SysAccountingCompanyDTO.ListDTO>> companyList() {
-        List<SysAccountingCompanyDTO.ListDTO> list = sysAccountingCompanyService.getList(null);
+    public ApiResult<List<SysAccountingCompanyDTO.ListDTO>> companyList(@RequestParam(value = "name", required = false) String name) {
+        List<SysAccountingCompanyDTO.ListDTO> list = sysAccountingCompanyService.getList(name);
+        return success(list);
+    }
+    /**
+     * 公司列表(全部)
+     */
+    @GetMapping("/company/listAll")
+    public ApiResult<List<SysAccountingCompanyDTO.ListDTO>> companyListAll(@RequestParam(value = "name", required = false) String name) {
+        List<SysAccountingCompanyDTO.ListDTO> list = sysAccountingCompanyService.listAll(name);
         return success(list);
     }
 

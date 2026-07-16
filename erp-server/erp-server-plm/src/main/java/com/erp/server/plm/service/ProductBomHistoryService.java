@@ -1,6 +1,7 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.BomSkuDTO;
 import com.erp.model.plm.dto.ProductBomHistoryDTO;
 import com.erp.model.plm.entity.BomInfoEntity;
@@ -34,6 +35,11 @@ public interface ProductBomHistoryService  extends IService<ProductBomHistoryEnt
      * @return java.util.List<com.erp.model.plm.entity.ProductBomHistoryEntity>
      **/
     List<ProductBomHistoryEntity> listByBomIds(List<String> bomIds);
+
+    List<BomChildrenSkuDTO> listBomHistoryByIds(List<String> bomHistoryIds);
+
+    List<BomChildrenSkuDTO> listBomHistoryByParentSkuIds(List<String> parentSkuIds);
+
     /**
      * @description: 根据sku查询历史版本
      * @author Will

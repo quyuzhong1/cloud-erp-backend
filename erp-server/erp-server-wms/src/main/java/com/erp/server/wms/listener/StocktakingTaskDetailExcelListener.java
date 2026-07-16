@@ -76,6 +76,11 @@ public class StocktakingTaskDetailExcelListener extends AnalysisEventListener<St
      */
     @Override
     public void invoke(StocktakingTaskDetailExcelDTO excelDTO, AnalysisContext analysisContext) {
+        // 跳过空行
+        if (CharSequenceUtil.isBlank(excelDTO.getCode()) && CharSequenceUtil.isBlank(excelDTO.getSkuNo())
+                && CharSequenceUtil.isBlank(excelDTO.getQty())) {
+            return;
+        }
         List<String> errorMsgList = new ArrayList<>();
         //基础验证
         List<String> msgList = FieldValidUtil.fieldValid(excelDTO);
@@ -100,9 +105,13 @@ public class StocktakingTaskDetailExcelListener extends AnalysisEventListener<St
         }
 
         StocktakingTaskEntity taskEntity = stocktakingTaskService.getByCode(taskCode);
-        List<StocktakingProfitLossEntity> stocktakingProfitLossList = stocktakingProfitLossService.listBySourceId(taskEntity.getId());
-        if (!stocktakingProfitLossList.isEmpty()) {
-            errorMsgList.add("已生成盘盈盘亏单的盘点任务不允许修改");
+        if (taskEntity == null) {
+            errorMsgList.add("盘点任务不存在");
+        } else {
+            List<StocktakingProfitLossEntity> stocktakingProfitLossList = stocktakingProfitLossService.listBySourceId(taskEntity.getId());
+            if (!stocktakingProfitLossList.isEmpty()) {
+                errorMsgList.add("已生成盘盈盘亏单的盘点任务不允许修改");
+            }
         }
 
         //仓库名称
@@ -168,13 +177,19 @@ public class StocktakingTaskDetailExcelListener extends AnalysisEventListener<St
      */
     @Override
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
+        // 多 sheet 导入由外部统一 flush，避免每个 sheet 结束重复落库
+    }
+
+    /**
+     * 全部 sheet 解析完成后落库一次。
+     */
+    public void flush() {
         if (CollectionUtils.isNotEmpty(updateList)) {
             stocktakingTaskDetailService.updateBatchById(updateList);
         }
         if (CollectionUtils.isNotEmpty(operateLogList)) {
             operateLogService.batchAddModuleOperateLog(operateLogList);
         }
-
     }
 
     public List<StocktakingTaskDetailExcelDTO> getErrorList() {
