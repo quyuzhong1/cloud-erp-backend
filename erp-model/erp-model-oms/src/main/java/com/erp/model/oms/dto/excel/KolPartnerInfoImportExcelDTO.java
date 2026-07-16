@@ -435,7 +435,7 @@ public class KolPartnerInfoImportExcelDTO implements Serializable {
         @ColumnWidth(20)
         @ExcelProperty(value = "粉丝数量", index = 15)
         @FieldValid(fieldName = "粉丝数量", formatPattern = FieldFormatPatternTypeEnum.POSITIVEINTEGER)
-        private Integer followerCount;
+        private BigDecimal followerCount;
 
         /**
          * 主页链接
