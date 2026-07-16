@@ -23,7 +23,8 @@ import java.util.stream.Collectors;
 
 /**
  * 物流商对账单合并匹配异步任务分批执行策略。
- * <p>一主单一任务：payload 存主单 id；任务明细 businessId 为费用项 id，按游标分批认领匹配。</p>
+ * <p>一主单一任务：payload 存主单 id；任务明细 businessId 为费用项 id，按游标分批。
+ * 执行时在主单锁内按识别组扩组、打包，且仅整组认领成功才匹配，避免半组覆盖费用。</p>
  */
 @Component
 public class LogisticsReconMatchBatchPushHandler
