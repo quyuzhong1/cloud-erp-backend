@@ -51,6 +51,7 @@ public enum DictBasicTypeEnum {
 
     /** WMS 虚拟仓渠道：店铺和军区均为全部时跳过重复绑定校验的平台编码 */
     VM_CHANNEL_SKIP_CHECK_PLATFORM("vmChannelSkipCheckPlatform", "虚拟仓渠道跳过重复校验平台"),
+    SKU_NO("skuNo", "skuNo"),
 
     ;
 
