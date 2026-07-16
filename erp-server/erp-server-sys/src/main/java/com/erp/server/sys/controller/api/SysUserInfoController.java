@@ -5,6 +5,7 @@ import com.common.business.annotation.DataIdempotent;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.ForgotPasswordDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -271,6 +272,14 @@ public class SysUserInfoController extends BaseController {
     public ApiResult<List<FindUserDTO>> listBySearchKeyword(@RequestParam(value ="searchKeyword" )String searchKeyword) {
         List<FindUserDTO> list = sysUserInfoService.listBySearchKeyword(searchKeyword);
         return success(list);
+    }
+
+    /**
+     * 根据部门ID查询用户下拉列表
+     */
+    @GetMapping("/deptUser/list")
+    public ApiResult<List<BaseDropDownDTO.DisabledDTO>> listDeptUserDropDown(@RequestParam("deptId") String deptId) {
+        return success(sysUserInfoService.listDeptUserDropDown(deptId));
     }
 
     /**

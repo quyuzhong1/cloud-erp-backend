@@ -150,6 +150,12 @@ public class PlatformB2bOrderConsumerService extends AbstractNewPlatformConsumer
 				dto.setWarehouseId(thirdMappingEntityList.get(0).getSysId());
 			}
 		}
+		if (StringUtils.isBlank(dto.getWarehouseId()) && StringUtils.isNotBlank(customerInfo.getDefaultShippingWarehouse())) {
+			dto.setWarehouseId(customerInfo.getDefaultShippingWarehouse());
+		}
+		if (StringUtils.isBlank(dto.getReceiveAccount()) && StringUtils.isNotBlank(customerInfo.getDefaultReceiveAccount())) {
+			dto.setReceiveAccount(customerInfo.getDefaultReceiveAccount());
+		}
 		customerInfoService.applyB2bOrderCustomerDefaults(dto, customerInfo);
 
 		dto.setDictPlatform(customerInfo.getPlatformType());
@@ -208,6 +214,12 @@ public class PlatformB2bOrderConsumerService extends AbstractNewPlatformConsumer
 				dto.setTelNumber(customerAddressEntity.getTelNumber());
 			}
 			dto.setIsDeclare(false);
+			if (StringUtils.isBlank(dto.getWarehouseId()) && StringUtils.isNotBlank(customerInfo.getDefaultShippingWarehouse())) {
+				dto.setWarehouseId(customerInfo.getDefaultShippingWarehouse());
+			}
+			if (StringUtils.isBlank(dto.getReceiveAccount()) && StringUtils.isNotBlank(customerInfo.getDefaultReceiveAccount())) {
+				dto.setReceiveAccount(customerInfo.getDefaultReceiveAccount());
+			}
 			customerInfoService.applyB2bOrderCustomerDefaults(dto, customerInfo);
 		}
 		//过滤掉明细已删除和已作废

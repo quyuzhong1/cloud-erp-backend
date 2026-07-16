@@ -71,6 +71,10 @@ public class ReceiverInfoVO implements ReceiverDTO , Serializable {
       */
     private String  streetAddress;
     /**
+     * 门牌号
+     */
+    private String houseNumber;
+    /**
      * 国家+城市+详细地址
      */
 
