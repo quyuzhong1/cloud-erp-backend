@@ -1,7 +1,6 @@
 package com.erp.server.tms.service;
 
 import com.common.business.service.SuperService;
-import com.erp.model.tms.dto.LogisticsReconRefLogisticsBillDTO;
 import com.erp.model.tms.entity.LogisticsReconRefLogisticsBillEntity;
 
 import java.util.Collection;
@@ -16,24 +15,6 @@ import java.util.List;
  * @since 2026-05-29
  */
 public interface LogisticsReconRefLogisticsBillService extends SuperService<LogisticsReconRefLogisticsBillEntity> {
-
-    /**
-     * 物流商对账明细 - 关联关系查询（按 detail_id 集合，join 展示业务单号）
-     * @author Will
-     * @date: 2026/05/29
-     * @param detailIds
-     * @return List<LogisticsReconRefLogisticsBillDTO.ListDTO>
-     */
-    List<LogisticsReconRefLogisticsBillDTO.ListDTO> listByDetailIds(Collection<String> detailIds);
-
-    /**
-     * 物流商对账单 - 关联关系查询（按 main_id）
-     * @author Will
-     * @date: 2026/05/29
-     * @param mainId
-     * @return List<LogisticsReconRefLogisticsBillDTO.ListDTO>
-     */
-    List<LogisticsReconRefLogisticsBillDTO.ListDTO> listByMainId(String mainId);
 
     /**
      * 按 detail 维度整批写入关联（合并匹配 / 手动匹配 / 新增费用单 共用）

@@ -106,14 +106,6 @@ public interface LogisticsReconDetailService extends SuperService<LogisticsRecon
     void removeByMainIds(Collection<String> mainIds);
 
     /**
-     * 按主表 id 集合查询所有 detail（合并匹配阶段拿来转 ImportDataDTO）
-     * @author Will
-     * @date: 2026/05/29
-     * @param mainIds
-     * @return List<LogisticsReconDetailEntity>
-     */
-    List<LogisticsReconDetailEntity> listByMainIds(Collection<String> mainIds);
-    /**
      * 下载物流商对账明细导入模板
      * @author Will
      * @date: 2026/06/08

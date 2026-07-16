@@ -164,16 +164,6 @@ public class LogisticsReconDetailServiceImpl
     }
 
     @Override
-    public List<LogisticsReconDetailEntity> listByMainIds(Collection<String> mainIds) {
-        if (CollUtil.isEmpty(mainIds)) {
-            return Collections.emptyList();
-        }
-        return lambdaQuery()
-                .in(LogisticsReconDetailEntity::getMainId, mainIds)
-                .list();
-    }
-
-    @Override
     public void downloadTemplate(HttpServletResponse response) {
         String path = "classpath:excel/logisticsReconDetailTemplate.xlsx";
         String excelName = "物流商对账明细导入模板.xlsx";

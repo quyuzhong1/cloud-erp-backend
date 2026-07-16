@@ -2830,11 +2830,6 @@ public class LogisticsReconServiceImpl
     private static final List<String> MATCHING_FROM_STATUS = Collections.singletonList(
             LogisticsReconDetailMatchStatusEnum.MATCHING.getCode());
 
-    /** 解绑时可还原为未匹配的前置 match_status */
-    private static final List<String> UNBIND_FROM_MATCH_STATUSES = Arrays.asList(
-            LogisticsReconDetailMatchStatusEnum.MATCHED.getCode(),
-            LogisticsReconDetailMatchStatusEnum.FAILED.getCode());
-
     /**
      * 三个匹配入口（主表整批 / 手动 / 导入）共用的核心编排：
      * 加载导入模板配置 → 构造匹配上下文 → 调用 reconMatchAndGenerate 生成物流费用。
@@ -3709,61 +3704,6 @@ public class LogisticsReconServiceImpl
         private final Set<String> eligibleCostIds = new LinkedHashSet<>();
         /** 本次确认/回退实际会变更的当前主单费用项 id，供确认结束后按范围刷新 detail_sub 聚合 */
         private final Set<String> affectedSubIds = new LinkedHashSet<>();
-    }
-
-    @DistributeLocker(businessType = DistributeKeyConstant.TMS_LOGISTICS_RECON_KEY, keyName = "mainId", unlockAfterTx = true)
-    @Override
-    public BatchResultDTO confirmBill(String mainId, String reconciliationStatus, LocalDateTime confirmTime) {
-        if (!ReconciliationStatusEnum.TO_BE_CONFIRM.getCode().equals(reconciliationStatus)
-                && !ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus)) {
-            throw new ServiceException(ApiError.LOGISTICS_RECON_RECONCILIATION_STATUS_INVALID);
-        }
-        LocalDateTime effectiveConfirmTime = ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus)
-                ? confirmTime : null;
-        LogisticsReconEntity entity = super.getByIdOpt(mainId)
-                .orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, DOC_NAME));
-        if (!LogisticsReconCheckStatusEnum.CONFIRMED.getCode().equals(entity.getCheckStatus())) {
-            throw new ServiceException(ApiError.LOGISTICS_RECON_ONLY_CONFIRMED_ALLOW_BILL_CONFIRM);
-        }
-        long matchingCount = logisticsReconDetailSubService.lambdaQuery()
-                .eq(LogisticsReconDetailSubEntity::getMainId, mainId)
-                .eq(LogisticsReconDetailSubEntity::getMatchStatus,
-                        LogisticsReconDetailMatchStatusEnum.MATCHING.getCode())
-                .count();
-        if (matchingCount > 0) {
-            throw new ServiceException(ApiError.LOGISTICS_RECON_MATCHING_CONFIRM_FORBIDDEN);
-        }
-        ConfirmBillScanResult scanResult = scanConfirmBillEligibility(mainId, reconciliationStatus);
-        assertConfirmBillEligibility(scanResult, reconciliationStatus);
-        List<String> eligibleCostIds = new ArrayList<>(scanResult.eligibleCostIds);
-        int batchNo = 0;
-        for (int i = 0; i < eligibleCostIds.size(); i += MATCH_ID_BATCH_SIZE) {
-            List<String> batchCostIds = eligibleCostIds.subList(i,
-                    Math.min(eligibleCostIds.size(), i + MATCH_ID_BATCH_SIZE));
-            batchNo++;
-            try {
-                self.confirmBillRefCostBatch(mainId, batchCostIds, reconciliationStatus, effectiveConfirmTime);
-            } catch (Exception e) {
-                log.error("[confirmBill] 分片确认失败 mainId={} batchNo={}", mainId, batchNo, e);
-                if (e instanceof ServiceException) {
-                    throw e;
-                }
-                throw new ServiceException(ApiError.LOGISTICS_RECON_CONFIRM_PARTIAL_FAILURE, batchNo);
-            }
-        }
-        // 当前主单 ref 快照已在各确认分片内直接更新，这里仅按「本次实际变更的费用项范围」重算 detail_sub 聚合，
-        // 再对共享同一费用单的其他对账单做一次跨单同步（排除当前主单，避免二次全量回查并重写当前主单 ref 快照）。
-        if (CollUtil.isNotEmpty(eligibleCostIds)) {
-            self.refreshDetailSubReconciliationStatusInTx(mainId, scanResult.affectedSubIds);
-            self.syncReconStatusByCostIds(eligibleCostIds, mainId);
-        } else {
-            self.refreshDetailSubReconciliationStatusInTx(mainId);
-        }
-        String msg = StrUtil.format("用户【{}】将{}【{}】关联物流费用单对账状态更新为【{}】",
-                UserContext.getDefaultLoginUser().getUserName(), DOC_NAME, entity.getCode(),
-                ReconciliationStatusEnum.getName(reconciliationStatus));
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "账单确认");
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE);
     }
 
     /**
@@ -4661,70 +4601,6 @@ public class LogisticsReconServiceImpl
         operateLogService.addModuleOperateLog(msg, null, entity.getId(), "账单确认");
     }
 
-    @DistributeLocker(businessType = DistributeKeyConstant.TMS_LOGISTICS_RECON_KEY, keyName = "dto.mainId", unlockAfterTx = true)
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public List<BatchResultDTO> batchUnbindMatch(LogisticsReconDTO.BatchUnbindMatchDTO dto) {
-        List<String> requestSubIds = dto.getDetailSubIds().stream()
-                .filter(StrUtil::isNotBlank).distinct().collect(Collectors.toList());
-        if (CollUtil.isEmpty(requestSubIds)) {
-            return Collections.emptyList();
-        }
-        Map<String, LogisticsReconDetailSubEntity> subMap = new HashMap<>();
-        for (int i = 0; i < requestSubIds.size(); i += MATCH_ID_BATCH_SIZE) {
-            List<String> batch = requestSubIds.subList(i, Math.min(requestSubIds.size(), i + MATCH_ID_BATCH_SIZE));
-            logisticsReconDetailSubService.lambdaQuery()
-                    .eq(LogisticsReconDetailSubEntity::getMainId, dto.getMainId())
-                    .in(LogisticsReconDetailSubEntity::getId, batch)
-                    .list()
-                    .forEach(sub -> subMap.put(sub.getId(), sub));
-        }
-        long matchingCount = subMap.values().stream()
-                .filter(sub -> LogisticsReconDetailMatchStatusEnum.MATCHING.getCode().equals(sub.getMatchStatus()))
-                .count();
-        if (matchingCount > 0) {
-            throw new ServiceException(ApiError.LOGISTICS_RECON_MATCHING_CONFIRM_FORBIDDEN);
-        }
-        List<String> eligibleSubIds = new ArrayList<>();
-        for (String detailSubId : requestSubIds) {
-            LogisticsReconDetailSubEntity sub = subMap.get(detailSubId);
-            if (sub == null) {
-                continue;
-            }
-            if (UNBIND_FROM_MATCH_STATUSES.contains(sub.getMatchStatus())) {
-                eligibleSubIds.add(detailSubId);
-            }
-        }
-        if (CollUtil.isNotEmpty(eligibleSubIds)) {
-            logisticsReconRefLogisticsBillService.removeByDetailSubIds(eligibleSubIds);
-            logisticsReconDetailSubService.batchUpdateMatchStatus(eligibleSubIds,
-                    LogisticsReconDetailMatchStatusEnum.UNMATCHED.getCode(), null, UNBIND_FROM_MATCH_STATUSES);
-            for (int i = 0; i < eligibleSubIds.size(); i += MATCH_ID_BATCH_SIZE) {
-                List<String> batch = eligibleSubIds.subList(i,
-                        Math.min(eligibleSubIds.size(), i + MATCH_ID_BATCH_SIZE));
-                logisticsReconDetailSubService.lambdaUpdate()
-                        .in(com.erp.model.tms.entity.LogisticsReconDetailSubEntity::getId, batch)
-                        .set(com.erp.model.tms.entity.LogisticsReconDetailSubEntity::getReconciliationStatus,
-                                LogisticsReconReconciliationStatusEnum.TO_BE_CONFIRM.getCode())
-                        .update();
-            }
-            self.refreshDetailSubReconciliationStatusInTx(dto.getMainId());
-        }
-        Set<String> eligibleSet = new HashSet<>(eligibleSubIds);
-        List<BatchResultDTO> results = new ArrayList<>(requestSubIds.size());
-        for (String detailSubId : requestSubIds) {
-            LogisticsReconDetailSubEntity sub = subMap.get(detailSubId);
-            if (sub == null) {
-                results.add(BatchResultDTO.fail(detailSubId, detailSubId, "对账费用项不存在或不属于当前对账单"));
-            } else if (eligibleSet.contains(detailSubId)) {
-                results.add(BatchResultDTO.success(detailSubId, detailSubId, OperationTypeEnum.UPDATE));
-            } else {
-                results.add(BatchResultDTO.fail(detailSubId, detailSubId, "费用项状态不允许解绑"));
-            }
-        }
-        return results;
-    }
-
     // ============================== 删除 / 导出 ==============================
 
     @DistributeLocker(businessType = DistributeKeyConstant.TMS_LOGISTICS_RECON_KEY, keyName = "id", unlockAfterTx = true)
@@ -4752,27 +4628,6 @@ public class LogisticsReconServiceImpl
     }
 
     // ============================== 主表汇总 ==============================
-
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public void refreshAggregate(String mainId) {
-        if (ObjectUtil.isEmpty(mainId)) {
-            return;
-        }
-        if (super.getById(mainId) == null) {
-            return;
-        }
-        // 汇总导入行数与有效费用项数（detail 归属一致）
-        int importCount = (int) logisticsReconDetailService.lambdaQuery()
-                .eq(LogisticsReconDetailEntity::getMainId, mainId)
-                .count();
-        int costCount = logisticsReconDetailSubService.countValidByMainId(mainId);
-        lambdaUpdate()
-                .eq(LogisticsReconEntity::getId, mainId)
-                .set(LogisticsReconEntity::getImportCount, importCount)
-                .set(LogisticsReconEntity::getCostCount, costCount)
-                .update();
-    }
 
     @Transactional(rollbackFor = Exception.class)
     @Override

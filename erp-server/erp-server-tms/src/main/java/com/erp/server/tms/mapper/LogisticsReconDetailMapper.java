@@ -42,15 +42,6 @@ public interface LogisticsReconDetailMapper extends BaseMapper<LogisticsReconDet
                                                  @Param("limit") long limit);
 
     /**
-     * 按主表 id 统计已匹配费用项数（match_status = matched）
-     * @author Will
-     * @date: 2026/05/29
-     * @param mainId
-     * @return Integer
-     */
-    Integer countMatchedByMainId(@Param("mainId") String mainId);
-
-    /**
      * 物流商对账费用项 TAB 数量统计（按 match_status 分组）
      * @author Will
      * @date: 2026/05/29

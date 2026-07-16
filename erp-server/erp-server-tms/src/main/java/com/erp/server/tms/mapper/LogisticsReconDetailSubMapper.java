@@ -2,7 +2,6 @@ package com.erp.server.tms.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.erp.model.tms.dto.LogisticsReconDTO;
-import com.erp.model.tms.dto.LogisticsReconDetailSubDTO;
 import com.erp.model.tms.entity.LogisticsReconDetailSubEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -20,15 +19,6 @@ import java.util.List;
  */
 @Mapper
 public interface LogisticsReconDetailSubMapper extends BaseMapper<LogisticsReconDetailSubEntity> {
-
-    /**
-     * 物流商对账费用项查询（按 detail_id 集合，用于详情页展开 / 合并匹配读取）
-     * @author Will
-     * @date: 2026/05/29
-     * @param detailIds
-     * @return List<LogisticsReconDetailSubDTO.ListDTO>
-     */
-    List<LogisticsReconDetailSubDTO.ListDTO> listByDetailIds(@Param("detailIds") List<String> detailIds);
 
     /**
      * 统计主表下有效费用项数（detail 归属与 sub.main_id 一致）

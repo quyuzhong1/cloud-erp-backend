@@ -4,7 +4,6 @@ import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.extension.conditions.update.LambdaUpdateChainWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.model.tms.dto.LogisticsReconDTO;
-import com.erp.model.tms.dto.LogisticsReconDetailSubDTO;
 import com.erp.model.tms.dto.LogisticsReconMatchDTO;
 import com.erp.model.tms.entity.LogisticsReconDetailSubEntity;
 import com.erp.model.tms.enums.LogisticsReconDetailMatchStatusEnum;
@@ -56,39 +55,6 @@ public class LogisticsReconDetailSubServiceImpl
      * 在跑的任务由每个 chunk 刷新 update_time 续期，只要单 chunk 执行时长不超过该值即不会被误抢占。
      */
     private static final long MATCHING_STALE_MINUTES = 120;
-
-    @Override
-    public List<LogisticsReconDetailSubDTO.ListDTO> listByDetailIds(Collection<String> detailIds) {
-        if (CollUtil.isEmpty(detailIds)) {
-            return Collections.emptyList();
-        }
-        List<String> ids = detailIds instanceof List ? (List<String>) detailIds : new ArrayList<>(detailIds);
-        List<LogisticsReconDetailSubDTO.ListDTO> merged = new ArrayList<>();
-        for (int i = 0; i < ids.size(); i += UPDATE_BATCH_SIZE) {
-            List<String> batch = ids.subList(i, Math.min(ids.size(), i + UPDATE_BATCH_SIZE));
-            List<LogisticsReconDetailSubDTO.ListDTO> list = baseMapper.listByDetailIds(batch);
-            if (CollUtil.isNotEmpty(list)) {
-                merged.addAll(list);
-            }
-        }
-        merged.forEach(item -> {
-            item.setMatchStatusName(LogisticsReconDetailMatchStatusEnum.getName(item.getMatchStatus()));
-            item.setReconciliationStatusName(
-                    LogisticsReconReconciliationStatusEnum.getName(item.getReconciliationStatus()));
-        });
-        return merged;
-    }
-
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public void removeByDetailIds(Collection<String> detailIds) {
-        if (CollUtil.isEmpty(detailIds)) {
-            return;
-        }
-        lambdaUpdate()
-                .in(LogisticsReconDetailSubEntity::getDetailId, detailIds)
-                .remove();
-    }
 
     @Transactional(rollbackFor = Exception.class)
     @Override

@@ -205,17 +205,6 @@ public interface LogisticsReconService extends SuperService<LogisticsReconEntity
     void refreshDetailSubReconciliationStatusInTx(String mainId, java.util.Collection<String> subIds);
 
     /**
-     * 物流商对账单账单确认（单条，更新已匹配物流费用单对账状态）
-     * @author Will
-     * @date: 2026/06/02
-     * @param mainId 对账单 id
-     * @param reconciliationStatus 目标对账状态
-     * @param confirmTime 对账确认时间（状态为 confirmed 时有效）
-     * @return BatchResultDTO
-     */
-    BatchResultDTO confirmBill(String mainId, String reconciliationStatus, LocalDateTime confirmTime);
-
-    /**
      * 物流商对账单账单确认（批量，异步任务列表）：HTTP 按主单 id 轻校验后派发 TmsAsyncTask，立即返回。
      *
      * @param ids                  对账单 id 集合
@@ -327,15 +316,6 @@ public interface LogisticsReconService extends SuperService<LogisticsReconEntity
                                 List<LogisticsReconDetailSubEntity> updateSubList);
 
     /**
-     * 物流商对账明细批量解绑匹配（按 detail 维度，逻辑删 ref）
-     * @author Will
-     * @date: 2026/05/29
-     * @param dto
-     * @return List<BatchResultDTO>
-     */
-    List<BatchResultDTO> batchUnbindMatch(LogisticsReconDTO.BatchUnbindMatchDTO dto);
-
-    /**
      * 物流商对账单单条删除（导入中 / 待确认可删，已确认不可删；级联 detail / detail_sub / ref）
      * 单条独立事务 + 按对账单加分布式锁，批量删除由控制层循环调用
      * @author Will
@@ -353,14 +333,4 @@ public interface LogisticsReconService extends SuperService<LogisticsReconEntity
      * @return void
      */
     void exportList(LogisticsReconDTO.ExportDTO dto);
-
-    /**
-     * 导入完成后刷新主表导入汇总字段（import_count 等）
-     * 匹配数 / 匹配状态不回写主表，由查询实时聚合明细派生
-     * @author Will
-     * @date: 2026/05/29
-     * @param mainId
-     * @return void
-     */
-    void refreshAggregate(String mainId);
 }

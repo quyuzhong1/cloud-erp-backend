@@ -32,25 +32,6 @@
         <result column="reconciliation_status" property="reconciliationStatus"/>
     </resultMap>
 
-    <sql id="Base_Column_List">
-        id, main_id, detail_id, seq_no, cost_name, cfg_cost_id, cfg_cost_name,
-        actual_amount, estimated_amount, currency,
-        settlement_currency, settlement_exchange_rate, settlement_amount,
-        local_currency, local_exchange_rate, local_amount,
-        match_status, match_fail_reason, reconciliation_status
-    </sql>
-
-    <select id="listByDetailIds" resultType="com.erp.model.tms.dto.LogisticsReconDetailSubDTO$ListDTO">
-        SELECT <include refid="Base_Column_List"/>
-        FROM logistics_recon_detail_sub
-        WHERE is_deleted = false
-        AND detail_id IN
-        <foreach collection="detailIds" item="detailId" open="(" separator="," close=")">
-            #{detailId}
-        </foreach>
-        ORDER BY detail_id, seq_no
-    </select>
-
     <select id="countValidByMainId" resultType="int">
         SELECT COUNT(*)
         FROM logistics_recon_detail_sub sub
