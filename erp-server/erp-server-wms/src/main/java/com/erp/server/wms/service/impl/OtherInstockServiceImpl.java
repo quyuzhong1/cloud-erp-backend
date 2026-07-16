@@ -83,7 +83,7 @@ import com.erp.server.wms.convert.OtherInStockConverter;
 import com.erp.server.wms.kingdee.SyncKingdeeOtherInstockService;
 import com.erp.server.wms.listener.OtherInStockExcelListener;
 import com.erp.server.wms.mapper.OtherInstockMapper;
-import com.erp.server.wms.mapper.WdtWarehouseLocationMappingMapper;
+import com.erp.server.wms.mapper.WarehouseLocationMappingMapper;
 import com.erp.server.wms.query.OtherInstockQueryHandler;
 import com.erp.server.wms.service.*;
 import com.erp.server.wms.wdt.SyncWdtOtherInStockService;
@@ -186,7 +186,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     @Resource
     private AbstractWdtService abstractWdtService;
     @Resource
-    private WdtWarehouseLocationMappingMapper wdtWarehouseLocationMappingMapper;
+    private WarehouseLocationMappingMapper warehouseLocationMappingMapper;
     @Resource
     private SoOutstockService soOutstockService;
 
@@ -1652,7 +1652,7 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(), listApiResult.getMsg()));
+                throw new ServiceException(ApiError.WF_CUR_APPROVER_QUERY_FAILED, listApiResult.getMsg());
             }
         }
         return listApiResult;

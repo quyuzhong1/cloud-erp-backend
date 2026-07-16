@@ -14,6 +14,7 @@ import com.common.business.constant.*;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.UserRequestPermissionsDTO;
 import com.common.business.dto.UserSelectDto;
+import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.ForgotPasswordDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -156,6 +157,8 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
 
     //123456
     private static final String DEFAULT_PASS = "e10adc3949ba59abbe56e057f20f883e";
+
+    private static final Integer USER_DISABLED_STATE = 0;
 
     @Override
     public List<SysUserInfoDTO.TabListDTO> tabList(PermissionsDTO param) {
@@ -1809,6 +1812,54 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     }
 
     @Override
+    public List<SysUserInfoEntity> listUserByDeptId(String deptId) {
+        List<String> deptIds = listChildDeptIds(deptId);
+        if (CollectionUtils.isEmpty(deptIds)) {
+            return Collections.emptyList();
+        }
+        return baseMapper.listUserByDept(deptIds);
+    }
+
+    @Override
+    public List<BaseDropDownDTO.DisabledDTO> listDeptUserDropDown(String deptId) {
+        List<SysUserInfoEntity> userList = listUserByDeptId(deptId);
+        if (CollectionUtils.isEmpty(userList)) {
+            return Collections.emptyList();
+        }
+        return userList.stream()
+                .filter(user -> Objects.nonNull(user)
+                        && StringUtils.isNotBlank(user.getUid())
+                        && !Objects.equals(user.getIsDeleted(), Boolean.TRUE))
+                .collect(Collectors.collectingAndThen(
+                        Collectors.toMap(SysUserInfoEntity::getUid, user -> user, (first, second) -> first, LinkedHashMap::new),
+                        map -> map.values().stream()
+                                .map(user -> new BaseDropDownDTO.DisabledDTO(
+                                        user.getUid(),
+                                        user.getUserName(),
+                                        USER_DISABLED_STATE.equals(user.getUserState())))
+                                .sorted(Comparator
+                                        .comparing(BaseDropDownDTO.DisabledDTO::getDisabled)
+                                        .thenComparing(BaseDropDownDTO.DisabledDTO::getValue, Comparator.nullsLast(String::compareTo)))
+                                .collect(Collectors.toList())
+                ));
+    }
+
+    private List<String> listChildDeptIds(String deptId) {
+        if (StringUtils.isBlank(deptId)) {
+            return Collections.emptyList();
+        }
+        List<SysDepartmentTreeDTO> treeList = sysDepartmentMapper.findTree();
+        if (CollectionUtils.isEmpty(treeList)) {
+            return Collections.emptyList();
+        }
+        return treeList.stream()
+                .filter(dept -> StringUtils.isNotBlank(dept.getPath()) && dept.getPath().contains(deptId))
+                .map(SysDepartmentTreeDTO::getId)
+                .distinct()
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public PagingVO shopAuthPaging(PagingDTO<SysUserInfoDTO.ShopAuthPagingSearchDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         SysUserInfoDTO.ShopAuthPagingSearchDTO params = dto.getParams();
@@ -2021,13 +2072,13 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             
             if (userInfo == null || userInfo.isEmpty()) {
                 log.warn("获取飞书用户信息失败，appId: {}", appId);
-                throw new ServiceException(ApiError.HTTP_UNKNOWN.getCode(), "获取飞书用户信息失败");
+                throw new ServiceException(ApiError.COMMON_LARK_USER_INFO_FAILED, appId);
             }
             
             // 提取unionId
             Object unionIdObj = userInfo.get("union_id");
             if (unionIdObj == null) {
-                throw new ServiceException(ApiError.HTTP_UNKNOWN.getCode(), "未获取到用户UnionId");
+                throw new ServiceException(ApiError.COMMON_LARK_UNION_ID_NOT_FOUND);
             }
             
             String unionId = unionIdObj.toString();
@@ -2040,7 +2091,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             throw e;
         } catch (Exception e) {
             log.error("通过App-Id获取飞书用户UnionId异常，appId: {}", appId, e);
-            throw new ServiceException(ApiError.HTTP_UNKNOWN.getCode(), "获取飞书用户UnionId失败：" + e.getMessage());
+            throw new ServiceException(ApiError.COMMON_LARK_UNION_ID_FETCH_FAILED, e.getMessage());
         }
     }
     @Override

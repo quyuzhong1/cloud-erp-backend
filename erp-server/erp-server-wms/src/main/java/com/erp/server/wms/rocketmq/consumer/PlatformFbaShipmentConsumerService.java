@@ -11,6 +11,7 @@ import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.erp.model.dmp.dto.MongoDBUpdateDTO;
@@ -122,7 +123,7 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
                 .eq(CfgAmzFulfillmentCenterEntity::getCode, entity.getFulfillmentCenter())
                 .list();
         if (org.apache.commons.lang3.StringUtils.isBlank(dto.getFulfillmentCenterCountry())) {
-            throw new ServiceException("领星接口同步延迟，暂未加载到最新数据，请稍后重新拉取");
+            throw new ServiceException(ApiError.FBA_SHIPMENT_COUNTRY_NOT_FOUND);
         }
 
         if (list.isEmpty()) {

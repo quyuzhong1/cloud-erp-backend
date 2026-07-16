@@ -149,6 +149,7 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "receiverInfo.zipCode", source = "receiverInfoVO.zipCode"),
             @Mapping(target = "receiverInfo.company", source = "receiverInfoVO.companyName"),
             @Mapping(target = "receiverInfo.taxNumber", source = "receiverInfoVO.receiverTaxNo"),
+            @Mapping(target = "receiverInfo.houseNumber", source = "receiverInfoVO.houseNumber"),
             @Mapping(target = "senderInfo.name", source = "senderInfo.name"),
             @Mapping(target = "senderInfo.phone", source = "senderInfo.telNumber"),
             @Mapping(target = "senderInfo.company", source = "senderInfo.companyName"),

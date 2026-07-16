@@ -323,7 +323,6 @@ public class RocketMqConsumerGroup {
      */
     public static final String WMS_VIRTUAL_DETAIL_MSG_CONSUMER = "${spring.cloud.nacos.discovery.namespace}-wms_virtual_detail_msg_consumer";
 
-
     /**
      *
      */

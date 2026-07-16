@@ -1,11 +1,15 @@
 package com.erp.rpc.workflow;
 
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.config.FeignErrorDecoder;
 import com.erp.model.workflow.dto.ProcessTaskManagementDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import javax.validation.Valid;
 import java.util.List;
 
 /**
@@ -21,4 +25,10 @@ public interface ProcessTaskManagementFeign {
      */
     @GetMapping("/feign/processTaskManagement/listApproveHistory")
     List<ProcessTaskManagementDTO.ApproveHistoryDTO> listApproveHistory(@RequestParam String businessId);
+
+    /**
+     * 批量获取已完结任务的备注
+     */
+    @PostMapping("/feign/processTaskManagement/finishedRemark")
+    List<ProcessTaskManagementDTO.FinishedRemarkDTO> finishedRemark(@RequestBody @Valid BaseIdsDTO.IdsDTO dto);
 }

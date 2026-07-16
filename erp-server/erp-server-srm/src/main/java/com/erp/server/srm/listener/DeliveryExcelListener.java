@@ -103,8 +103,10 @@ public class DeliveryExcelListener extends AnalysisEventListener<DeliveryOrderIm
     }
 
     /**
-     * 不管导入的数据同个订单号相同SKU有多少行，送货单明细需要小于等于采购明细的行数
-     * @param context
+     * 导入送货单批量校验与落库。
+     * <p>同一采购订单下不允许导入相同的 SKU 明细行；单行数量仍可按采购明细拆分落库。</p>
+     *
+     * @param context EasyExcel 解析上下文
      */
     @Override
     public void doAfterAllAnalysed(AnalysisContext context) {
@@ -139,6 +141,25 @@ public class DeliveryExcelListener extends AnalysisEventListener<DeliveryOrderIm
                 });
                 return;
             }
+
+            // 相同采购订单下不允许导入相同的 SKU 明细行
+            Map<String, Long> skuCountMap = value.stream()
+                    .filter(v -> StringUtils.isNotBlank(v.getSkuNo()))
+                    .collect(Collectors.groupingBy(DeliveryOrderImportExcelDTO::getSkuNo, Collectors.counting()));
+            Set<String> duplicateSkuNos = skuCountMap.entrySet().stream()
+                    .filter(e -> e.getValue() != null && e.getValue() > 1)
+                    .map(Map.Entry::getKey)
+                    .collect(Collectors.toSet());
+            if (CollectionUtils.isNotEmpty(duplicateSkuNos)) {
+                value.forEach(v -> {
+                    if (duplicateSkuNos.contains(v.getSkuNo())) {
+                        v.setErrorMsg("相同采购订单下不允许导入相同的SKU明细行");
+                        errorList.add(v);
+                    }
+                });
+                return;
+            }
+
             List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList = allPurchaseDetailList.stream().filter(v->v.getPurchaseOrderId().equals(purchaseOrderEntity.getId())).collect(Collectors.toList());
 
             //校验SKU存在
