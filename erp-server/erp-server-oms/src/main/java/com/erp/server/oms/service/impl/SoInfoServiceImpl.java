@@ -2626,7 +2626,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             String customerName = customerList.stream().filter(c -> c.getId().equals(view.getCustomerId())).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             view.setCustomerName(customerName);
-            resultList.add(view);
 
             //发货通知数量
             List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailEntityList = soDeliveryNoticeDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(view.getDetailId())).collect(Collectors.toList());
