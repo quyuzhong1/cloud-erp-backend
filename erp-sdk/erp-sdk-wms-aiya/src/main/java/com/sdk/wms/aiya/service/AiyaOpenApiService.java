@@ -8,6 +8,7 @@ import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.OkHttpUtils;
+import com.erp.model.wms.dto.AiyaInventoryQueryDTO;
 import com.erp.model.wms.dto.AiyaSkuQueryDTO;
 import com.sdk.wms.aiya.constants.AiyaConstants;
 import com.sdk.wms.aiya.dto.response.AiyaInboundResp;
@@ -80,6 +81,17 @@ public class AiyaOpenApiService {
             new HashSet<>(Arrays.asList("page", "pageSize", "status"));
 
     /**
+     * 库存查询专用保留参数：文档字段名同样为 {@code page}（而非 {@code pageNum}），
+     * 且 {@code warehouseCode}/{@code ignoreZero}/{@code skus}/{@code stockStatus}/{@code domainCode}
+     * 均由 DTO 一等字段承载，避免业务透传参数覆盖。
+     * <p>
+     * 注意：不含 {@code status}——2026-07-16 核对接口文档截图后确认库存查询接口没有该字段
+     * （与 SKU 查询接口混淆所致），已从 DTO 移除，故此处不再保留。
+     */
+    private static final Set<String> INVENTORY_QUERY_RESERVED_PARAM_KEYS =
+            new HashSet<>(Arrays.asList("page", "pageSize", "warehouseCode", "ignoreZero", "skus", "stockStatus", "domainCode"));
+
+    /**
      * 原始响应字符串在日志中打印的最大长度。
      */
     private static final int RAW_RESPONSE_LOG_MAX_LEN = 500;
@@ -141,22 +153,52 @@ public class AiyaOpenApiService {
     }
 
     /**
-     * 调用 AIYA 2c.inventory.search 分页查询 2C 库存列表。
+     * 调用 AIYA {@code 2c.inventory.search} 分页查询库存概要列表。
+     * <p>
+     * 请求/响应字段已按爱亚开放平台接口文档页面截图核对（2026-07-16），比《爱亚海外仓对接方案文档》
+     * 6.2.4「库存数据」翻译稿更权威，请求字段为 {@code customerCode}（必填）/ {@code warehouseCode}
+     * （必填）/ {@code page}（可选，{@code skus} 不存在时必填，注意不是其它接口的 {@code pageNum}）/
+     * {@code pageSize}（可选，{@code skus} 不存在时必填，默认200）/ 可选 {@code ignoreZero}/{@code skus}/
+     * {@code domainCode}（截图新增字段，未给出参数描述，用途未知）/ {@code stockStatus}（必填但未给出可选
+     * 枚举值，详见 {@link AiyaInventoryQueryDTO}）；<b>没有</b> {@code status} 字段（翻译稿里有，疑似跟
+     * SKU 查询接口混淆，已从本方法与 DTO 移除）。
+     * <p>
+     * 响应结构为 {@code {Code, message, success, inventoryVOList:[...]}}，与 warehouse/inbound 等接口的
+     * {@code resultList}/{@code result} 结构不同，调用方需按 {@code inventoryVOList} 解析；截图确认
+     * {@code inventoryVOList} 每条明细字段为 {@code customerCode}/{@code warehouseCode}/{@code sku}/
+     * {@code skuDescription}/{@code barcode}（商品条码，多个用逗号拼接）/{@code skuStatus}（商品状态，
+     * 未给出枚举值，疑似跟 6.3.2 入库签收段的 {@code skuStatus}（GOOD/DAMAGE）同义——需联调确认，
+     * 若为真则同一 sku 可能按状态拆成多条明细，下游按 warehouseCode+sku 去重时需一并确认是否要把
+     * skuStatus 纳入唯一键，避免良品/不良品明细互相覆盖）/{@code totalQty}/{@code occupiedQty}/
+     * {@code salableQty}/{@code duePutawayQty}/{@code unavailableQty}，本方法仍原样返回原始 JSON，
+     * 调用方（{@link com.erp.model.wms.dto.AiyaInventoryQueryDTO} 使用方）按需解析。
+     * <p>
+     * TODO：文档未说明分页是否有 {@code total}/{@code pages} 等终止字段，翻页终止条件（如
+     * {@code inventoryVOList.size() < pageSize}）需联调真实接口后确认。
      *
-     * @param accessToken  AIYA partnerId（客户ID）
-     * @param secret       AIYA partnerKey（仅用于本地签名）
-     * @param customerCode AIYA 客户code（必填业务参数）
-     * @param pageNum      页码（从 1 开始）
-     * @param pageSize     每页数量
-     * @param bizParams    业务扩展参数（如 warehouseCode，可为 null）
-     * @return AIYA 接口原始响应解析后的 JSONObject
+     * @param dto 查询请求，包含 accessToken / secret / customerCode / warehouseCode / pageNum(对应文档page) / pageSize 等
+     * @return AIYA 接口原始响应解析后的 JSONObject（含 Code / message / success / inventoryVOList 等字段）
      */
-    public JSONObject queryInventory(String accessToken, String secret, String customerCode, int pageNum, int pageSize, Map<String, Object> bizParams) {
+    public JSONObject queryInventory(@Valid AiyaInventoryQueryDTO.QueryReqDTO dto) {
         Map<String, Object> params = new HashMap<>();
-        params.put("pageNum", pageNum);
-        params.put("pageSize", pageSize);
-        mergeBizParams(params, bizParams, "查询库存", PAGE_RESERVED_PARAM_KEYS);
-        return doQuery(accessToken, secret, customerCode, AiyaConstants.TWO_C_INVENTORY_SEARCH, params, "查询库存");
+        params.put("page", dto.getPageNum());
+        params.put("pageSize", dto.getPageSize());
+        params.put("warehouseCode", dto.getWarehouseCode());
+        if (dto.getIgnoreZero() != null) {
+            params.put("ignoreZero", dto.getIgnoreZero());
+        }
+        if (dto.getSkus() != null && !dto.getSkus().isEmpty()) {
+            params.put("skus", dto.getSkus());
+        }
+        if (StringUtils.isNotBlank(dto.getDomainCode())) {
+            params.put("domainCode", dto.getDomainCode());
+        }
+        if (StringUtils.isNotBlank(dto.getStockStatus())) {
+            params.put("stockStatus", dto.getStockStatus());
+        }
+        mergeBizParams(params, dto.getBizParams(), "查询库存", INVENTORY_QUERY_RESERVED_PARAM_KEYS);
+        return doQuery(dto.getAccessToken(), dto.getSecret(), dto.getCustomerCode(),
+                AiyaConstants.TWO_C_INVENTORY_SEARCH, params, "查询库存");
     }
 
     /**
