@@ -169,6 +169,32 @@ public class DistributeLockerAspectTest {
         }
     }
 
+    @Test
+    public void crossServiceParticipantUnlocksAfterLocalSpringTransaction() throws Throwable {
+        joinPoint = newJoinPoint("lockedBusiness");
+        RootContext.bind(XID);
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader(RootContext.KEY_XID, XID);
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
+        TransactionSynchronizationManager.initSynchronization();
+        TransactionSynchronizationManager.setActualTransactionActive(true);
+
+        try (MockedConstruction<RedissonMultiLock> ignored = mockMultiLockConstruction()) {
+            Object result = aspect.doAround(joinPoint);
+
+            assertEquals("ok", result);
+            assertTrue(TransactionHookManager.getHooks().isEmpty());
+            assertEquals(0, unlockCount.get());
+
+            List<TransactionSynchronization> synchronizations = TransactionSynchronizationManager.getSynchronizations();
+            assertEquals(1, synchronizations.size());
+            synchronizations.get(0).afterCommit();
+            synchronizations.get(0).afterCompletion(TransactionSynchronization.STATUS_COMMITTED);
+
+            assertEquals(1, unlockCount.get());
+        }
+    }
+
     private MockedConstruction<RedissonMultiLock> mockMultiLockConstruction() {
         return mockConstruction(RedissonMultiLock.class, (mock, context) -> {
             when(mock.tryLock(anyLong(), any(TimeUnit.class))).thenReturn(true);

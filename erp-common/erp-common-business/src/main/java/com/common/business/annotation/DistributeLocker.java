@@ -70,9 +70,10 @@ public @interface DistributeLocker {
      * <p><b>发起方</b>：本服务通过 {@code @GlobalTransactional} 开启全局事务，或仅处于 Spring 本地事务时，
      * 锁延迟到事务提交/回滚后释放（含 XXL-JOB 等无 HTTP 上下文的发起方）。</p>
      * <p><b>参与方</b>：入站 Feign 请求携带 {@code TX_XID} 时，Seata {@code TransactionHook}
-     * 不会在本进程触发，切面退化为<b>方法执行结束后</b>即解锁（非全局事务结束），以避免锁泄漏；
-     * 方法上的本地 {@code @Transactional} 仍先于 unlock 完成提交。</p>
-     * @return  true:在事务结束后解锁（参与方实际为方法结束后解锁）
+     * 不会在本进程触发。若加锁时已有活跃本地 Spring 事务，则通过 {@code TransactionSynchronization}
+     * 在本地事务提交/回滚后解锁；否则在方法执行结束后解锁（无法等待全局事务结束，以避免锁泄漏）。
+     * 同方法 {@code @Transactional} 由内层切面先提交，再在 finally 释放。</p>
+     * @return  true:在本地事务提交/回滚后解锁（参与方无活跃本地事务时为方法结束后解锁）
      */
     boolean unlockAfterTx() default false;
     /**
