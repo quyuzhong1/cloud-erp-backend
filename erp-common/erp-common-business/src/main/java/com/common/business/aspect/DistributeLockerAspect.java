@@ -142,21 +142,19 @@ public class DistributeLockerAspect {
 
             // 根据事务上下文选择释放锁的策略
             // 注意：跨服务 Participant 上 TransactionHook 不会执行，且锁在本进程；
-            // 发起方全局事务结束后也无法代为解锁，故不能把解锁推迟到「全局事务结束」。
-            if (unlockAfterTx && inSpringTx) {
-                // 加锁时已有本地 Spring 事务（外层事务或嵌套调用）：提交/回滚后再解锁
-                if (crossServiceSeataParticipant) {
-                    log.warn("线程{} 处于跨服务Seata参与方且unlockAfterTx=true，TransactionHook不会触发，改为本地Spring事务提交/回滚后释放锁，key={}",
-                            threadName, keys);
-                }
+            // 发起方全局事务结束后也无法代为解锁，故参与方不能把解锁推迟到「全局事务结束」。
+            if (unlockAfterTx && crossServiceSeataParticipant && inSpringTx) {
+                // 参与方 + 加锁时已有本地 Spring 事务：TransactionHook 不会触发，改由 Spring 同步回调解锁
+                log.warn("线程{} 处于跨服务Seata参与方且unlockAfterTx=true，TransactionHook不会触发，改为本地Spring事务提交/回滚后释放锁，key={}",
+                        threadName, keys);
                 registerSpringTxDeferredUnlock(multiLock, threadName, keys, lockReleased);
                 deferredUnlock = true;
             } else if (unlockAfterTx && crossServiceSeataParticipant) {
-                // 无活跃本地事务：同方法 @Transactional 由内层切面先提交，再在 finally 释放
+                // 参与方 + 无活跃本地事务：同方法 @Transactional 由内层切面先提交，再在 finally 释放
                 log.warn("线程{} 处于跨服务Seata参与方且unlockAfterTx=true、无活跃本地Spring事务，方法结束释放锁，key={}",
                         threadName, keys);
             } else if (unlockAfterTx && inSeataTx) {
-                // 本服务作为 Seata 全局事务发起方：由 TransactionHook 在事务提交/回滚后释放
+                // 本服务作为 Seata 全局事务发起方（含嵌套调用）：由 TransactionHook 在全局事务提交/回滚后释放
                 GlobalTransactionContext.getCurrentOrCreate();
                 TransactionHookManager.registerHook(
                     new TransactionHookAdapter() {
@@ -176,6 +174,10 @@ public class DistributeLockerAspect {
                         }
                     }
                 );
+                deferredUnlock = true;
+            } else if (unlockAfterTx && inSpringTx) {
+                // 纯本地 Spring 事务（非 Seata 全局事务）
+                registerSpringTxDeferredUnlock(multiLock, threadName, keys, lockReleased);
                 deferredUnlock = true;
             }
 

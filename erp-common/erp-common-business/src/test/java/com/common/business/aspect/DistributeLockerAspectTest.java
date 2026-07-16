@@ -40,6 +40,10 @@ import static org.mockito.Mockito.mockConstruction;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
+/**
+ * {@link DistributeLockerAspect} 解锁策略单测。
+ * <p>覆盖发起方 / 参与方 / 纯本地事务等分支，以及 {@code isCrossServiceSeataParticipant} 判定逻辑。</p>
+ */
 public class DistributeLockerAspectTest {
 
     private static final String XID = "127.0.0.1:8091:123456";
@@ -73,6 +77,12 @@ public class DistributeLockerAspectTest {
         TransactionSynchronizationManager.setActualTransactionActive(false);
     }
 
+    // ==================== 解锁策略：发起方 ====================
+
+    /**
+     * 发起方顶层全局事务：加锁时仅有 XID（inSeataTx=true），无活跃本地 Spring 事务。
+     * 预期注册 Seata TransactionHook，全局事务提交后才解锁，方法返回时不解锁。
+     */
     @Test
     public void launcherGlobalTransactionUnlocksAfterSeataHook() throws Throwable {
         joinPoint = newJoinPoint("lockedBusiness");
@@ -95,6 +105,41 @@ public class DistributeLockerAspectTest {
         }
     }
 
+    /**
+     * 发起方嵌套调用：外层 @GlobalTransactional 已开启，加锁时 inSeataTx=true 且 inSpringTx=true，
+     * 且非跨服务参与方。预期优先走 TransactionHook 而非 Spring TransactionSynchronization。
+     */
+    @Test
+    public void launcherNestedGlobalTransactionPrefersSeataHookOverSpringSync() throws Throwable {
+        joinPoint = newJoinPoint("lockedBusiness");
+        RootContext.bind(XID);
+        TransactionSynchronizationManager.initSynchronization();
+        TransactionSynchronizationManager.setActualTransactionActive(true);
+
+        try (MockedStatic<GlobalTransactionContext> seataContext = mockStatic(GlobalTransactionContext.class);
+             MockedConstruction<RedissonMultiLock> ignored = mockMultiLockConstruction()) {
+            seataContext.when(GlobalTransactionContext::getCurrentOrCreate).thenReturn(mock(GlobalTransaction.class));
+
+            Object result = aspect.doAround(joinPoint);
+
+            assertEquals("ok", result);
+            assertEquals(0, unlockCount.get());
+            assertTrue(TransactionSynchronizationManager.getSynchronizations().isEmpty());
+
+            List<TransactionHook> hooks = TransactionHookManager.getHooks();
+            assertEquals(1, hooks.size());
+            hooks.get(0).afterCommit();
+
+            assertEquals(1, unlockCount.get());
+        }
+    }
+
+    // ==================== 解锁策略：纯本地 Spring 事务 ====================
+
+    /**
+     * 纯本地 @Transactional：无 Seata 全局事务，加锁时 inSpringTx=true。
+     * 预期注册 TransactionSynchronization，事务提交/完成后才解锁。
+     */
     @Test
     public void localSpringTransactionUnlocksAfterTransactionCompletion() throws Throwable {
         joinPoint = newJoinPoint("lockedBusiness");
@@ -116,17 +161,22 @@ public class DistributeLockerAspectTest {
         }
     }
 
+    // ==================== 参与方判定：isCrossServiceSeataParticipant ====================
+
+    /** 未处于 Seata 全局事务 → 非参与方。 */
     @Test
     public void isCrossServiceSeataParticipant_returnsFalseWhenNotInGlobalTransaction() {
         assertFalse(invokeIsCrossServiceSeataParticipant());
     }
 
+    /** 有 XID 但无 HTTP 上下文（如 XXL-JOB 发起方）→ 非参与方，仍可走 TransactionHook。 */
     @Test
     public void isCrossServiceSeataParticipant_returnsFalseWhenNoHttpContext() {
         RootContext.bind(XID);
         assertFalse(invokeIsCrossServiceSeataParticipant());
     }
 
+    /** 有 HTTP 上下文但入站请求未携带 TX_XID → 本服务为发起方，非参与方。 */
     @Test
     public void isCrossServiceSeataParticipant_returnsFalseWhenHttpWithoutXidHeader() {
         RootContext.bind(XID);
@@ -134,6 +184,7 @@ public class DistributeLockerAspectTest {
         assertFalse(invokeIsCrossServiceSeataParticipant());
     }
 
+    /** 入站 Feign 请求携带 TX_XID → 跨服务 Seata 参与方。 */
     @Test
     public void isCrossServiceSeataParticipant_returnsTrueWhenFeignInboundXid() {
         RootContext.bind(XID);
@@ -143,6 +194,7 @@ public class DistributeLockerAspectTest {
         assertTrue(invokeIsCrossServiceSeataParticipant());
     }
 
+    /** 读取入站 TX_XID 失败时保守按参与方处理，避免误注册 Hook 导致锁泄漏。 */
     @Test
     public void isCrossServiceSeataParticipant_returnsTrueWhenJudgementFails() {
         RootContext.bind(XID);
@@ -152,6 +204,12 @@ public class DistributeLockerAspectTest {
         assertTrue(invokeIsCrossServiceSeataParticipant());
     }
 
+    // ==================== 解锁策略：跨服务参与方 ====================
+
+    /**
+     * 参与方 + 无活跃本地 Spring 事务：TransactionHook 不会触发，退化为方法结束（finally）解锁。
+     * 同方法 @Transactional 场景依赖内层切面先提交，再由 finally 释放。
+     */
     @Test
     public void crossServiceParticipantUnlocksWhenMethodEnds() throws Throwable {
         joinPoint = newJoinPoint("lockedBusiness");
@@ -169,6 +227,10 @@ public class DistributeLockerAspectTest {
         }
     }
 
+    /**
+     * 参与方 + 加锁时已有活跃本地 Spring 事务：TransactionHook 不可用，
+     * 改由 TransactionSynchronization 在本地事务提交/回滚后解锁。
+     */
     @Test
     public void crossServiceParticipantUnlocksAfterLocalSpringTransaction() throws Throwable {
         joinPoint = newJoinPoint("lockedBusiness");
@@ -195,6 +257,7 @@ public class DistributeLockerAspectTest {
         }
     }
 
+    /** 统计 unlock 调用次数，用于断言解锁时机。 */
     private MockedConstruction<RedissonMultiLock> mockMultiLockConstruction() {
         return mockConstruction(RedissonMultiLock.class, (mock, context) -> {
             when(mock.tryLock(anyLong(), any(TimeUnit.class))).thenReturn(true);
@@ -311,7 +374,7 @@ public class DistributeLockerAspectTest {
     }
 
     public static class TargetService {
-        // keyName 使用 arg0：测试类未启用 -parameters，运行时参数名为 arg0 而非 id
+        /** keyName 使用 arg0：测试类未启用 -parameters，运行时参数名为 arg0 而非 id。 */
         @DistributeLocker(businessType = "testLock", keyName = "arg0", unlockAfterTx = true)
         public String lockedBusiness(String id) {
             return id;
