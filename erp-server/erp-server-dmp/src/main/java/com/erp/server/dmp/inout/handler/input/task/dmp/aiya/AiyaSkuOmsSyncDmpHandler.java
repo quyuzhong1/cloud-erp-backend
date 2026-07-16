@@ -85,7 +85,14 @@ public class AiyaSkuOmsSyncDmpHandler extends DmpInputBaseDmpHandler {
             }
             WegoSkuSyncDTO.SkuItemDTO item = new WegoSkuSyncDTO.SkuItemDTO();
             item.setSku(sku);
-            item.setName(toStr(mongoData.get("name")));
+            // description（商品名称描述）为文档必填字段，实测响应必带；name（商品名-前端不展示）为可选字段，
+            // 2026-07-16 实测两条真实测试SKU（未设置name）响应里完全没有 name 键，只有 description。
+            // 优先用 name，为空则退到 description，避免因 name 未设置导致 OMS 未匹配表里名称长期为空
+            String name = toStr(mongoData.get("name"));
+            if (name == null || name.isEmpty()) {
+                name = toStr(mongoData.get("description"));
+            }
+            item.setName(name);
             item.setBarcode(parseBarcodeList(mongoData));
             skuItems.add(item);
         }
@@ -154,25 +161,30 @@ public class AiyaSkuOmsSyncDmpHandler extends DmpInputBaseDmpHandler {
     }
 
     /**
-     * 解析条码字段，兼容 JSON Array 和单字符串两种格式。
+     * 解析条码字段。
      * <p>
-     * 文档仅注明 barcode 为"产品条形码"，未明确是否可能返回多个，此处按与 wego 一致的
-     * 兼容方式处理，真实返回格式需联调确认（TODO）。
+     * 2026-07-16 联调实测确认真实响应结构：条码不是顶层 {@code barcode} 字段（文档"产品条形码"的表述
+     * 曾被误理解为顶层字符串/数组），而是顶层 {@code barcodeList} 数组，每个元素为
+     * {@code {unit, barcode}} 对象（如 {@code [{"unit":"EA","barcode":"test1602"}]}），
+     * 与 {@code packagingList} 是同级的两个独立数组，不是嵌套关系。
+     * 按此结构解析每个元素的 {@code barcode} 字段；额外兼容极端情况下 {@code barcodeList} 元素本身是
+     * 纯字符串的写法，避免未来接口变更时直接抛异常。
      */
     private List<String> parseBarcodeList(Map<String, Object> mongoData) {
         List<String> barcodeList = new ArrayList<>();
-        Object barcodeObj = mongoData.get("barcode");
-        if (barcodeObj instanceof List) {
-            for (Object b : (List<?>) barcodeObj) {
-                if (b != null && !b.toString().isEmpty()) {
-                    barcodeList.add(b.toString());
+        Object barcodeListObj = mongoData.get("barcodeList");
+        if (barcodeListObj instanceof List) {
+            for (Object entry : (List<?>) barcodeListObj) {
+                String barcode;
+                if (entry instanceof Map) {
+                    barcode = toStr(((Map<?, ?>) entry).get("barcode"));
+                } else {
+                    barcode = toStr(entry);
+                }
+                if (barcode != null && !barcode.isEmpty()) {
+                    barcodeList.add(barcode);
                 }
             }
-            return barcodeList;
-        }
-        String barcode = toStr(barcodeObj);
-        if (barcode != null && !barcode.isEmpty()) {
-            barcodeList.add(barcode);
         }
         return barcodeList;
     }

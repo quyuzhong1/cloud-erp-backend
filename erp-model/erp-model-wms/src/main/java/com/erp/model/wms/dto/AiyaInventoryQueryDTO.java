@@ -26,8 +26,9 @@ import java.util.Map;
  * 截图确认的完整请求字段：{@code customerCode}（必填）/ {@code ignoreZero}（可选，默认FALSE）/
  * {@code domainCode}（可选，未知用途）/ {@code skus}（可选，单次不超过200个）/
  * {@code pageSize}（可选，{@code skus} 不存在时必填，默认200）/
- * {@code page}（可选，{@code skus} 不存在时必填）/ {@code stockStatus}（必填，但接口文档未给出可选
- * 枚举值——占位处理，详见 README「待产品确认」）/ {@code warehouseCode}（必填）。
+ * {@code page}（可选，{@code skus} 不存在时必填）/ {@code stockStatus}（文档标"必填"，但
+ * 2026-07-16 真实接口联调已确认实测<b>非必传</b>，不传即可查询全部状态库存，推荐不传）/
+ * {@code warehouseCode}（必填）。
  * <p>
  * 注意：接口字段名为 {@code page}，与 WEGO 的 {@code pageNum} 不同；本 DTO 沿用
  * {@code pageNum} 作为 Java 侧字段名（与项目内分页命名习惯一致，且与 {@link AiyaSkuQueryDTO} 保持一致），
@@ -110,8 +111,8 @@ public class AiyaInventoryQueryDTO implements Serializable {
         private List<String> skus;
 
         /**
-         * 商品库存状态（必填，但接口文档未给出可选枚举值，取值需联调/产品确认，
-         * 详见 docs/integrations/aiya-overseas-warehouse/README.md「待产品确认」）
+         * 商品库存状态。文档标"必填"，但 2026-07-16 真实接口联调已确认实测<b>非必传，且最好不传</b>
+         * （不传即查询全部状态库存），故此处不加校验注解，调用方默认不设置该字段即可。
          */
         private String stockStatus;
 

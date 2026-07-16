@@ -41,8 +41,9 @@ import java.util.List;
  * 已与产品/业务确认（2026-07-16）：该客户账号/SKU 不存在早于 {@link #DEV_START_TIME} 的创建记录，
  * 该固定锚点不会漏拉历史 SKU，详见 docs/integrations/aiya-overseas-warehouse/README.md「已确认结论」。
  * <p>
- * TODO：文档未提供 {@code total}/{@code pages}/{@code emptyFlag} 等分页终止字段，暂以
- * "本页返回条数 &lt; pageSize" 判断已到最后一页，需联调真实接口后确认。
+ * 2026-07-16 联调实测确认：响应顶层实际带有 {@code total} 字段（文档未列出），本类据此在
+ * "本页返回条数 &lt; pageSize" 之外，新增按累计拉取条数对比 {@code total} 的终止判断，两者任一满足即停止翻页，
+ * 优先信任 {@code total}（更准确），size 判断作为兜底（防止 {@code total} 缺失/不可靠时死循环翻页）。
  */
 @Slf4j
 @Service
@@ -74,6 +75,10 @@ public class AiyaSkuInitHandler extends AbstractAiyaInitHandler {
 
         List<Object> allSkuList = new ArrayList<>();
         int pageNum = 1;
+        // 2026-07-16 联调实测响应带 total 字段：记录首页拿到的声明总数 + 累计已拉取的原始条目数（过滤前），
+        // 用于比对 total 判断是否已拉完；total 缺失时 declaredTotal 保持 -1，退化为纯 size 判断
+        long declaredTotal = -1L;
+        long fetchedRawCount = 0L;
 
         while (pageNum <= MAX_PAGE_LIMIT) {
             AiyaSkuQueryDTO.QueryReqDTO reqDTO = new AiyaSkuQueryDTO.QueryReqDTO();
@@ -98,6 +103,10 @@ public class AiyaSkuInitHandler extends AbstractAiyaInitHandler {
                 log.error("[爱亚SKU] 服务商[id={}] 第{}页响应解析失败", auth.getAuthId(), pageNum);
                 throw new ServiceException(ApiError.WH_AIYA_PAGE_PARSE_FAILED, ACTION, pageNum);
             }
+            if (declaredTotal < 0 && response.containsKey("total")) {
+                declaredTotal = response.getLongValue("total");
+            }
+            fetchedRawCount += itemList.size();
 
             for (int i = 0; i < itemList.size(); i++) {
                 JSONObject item = itemList.getJSONObject(i);
@@ -110,7 +119,9 @@ public class AiyaSkuInitHandler extends AbstractAiyaInitHandler {
                 allSkuList.add(item);
             }
 
-            if (itemList.isEmpty() || itemList.size() < DEFAULT_PAGE_SIZE) {
+            boolean lastPageBySize = itemList.isEmpty() || itemList.size() < DEFAULT_PAGE_SIZE;
+            boolean lastPageByTotal = declaredTotal >= 0 && fetchedRawCount >= declaredTotal;
+            if (lastPageBySize || lastPageByTotal) {
                 break;
             }
             pageNum++;

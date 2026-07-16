@@ -27,7 +27,8 @@ import java.util.List;
  * 按服务商下每个已启用仓库分页调用爱亚 {@code 2c.inventory.search}（库存概要查询），
  * 逐条补充 warehouseCode / warehouseName 后写入 DMP Init 阶段。
  * <p>
- * 注意：该接口响应结构为 {@code {Code, message, success, inventoryVOList:[...]}}，与仓库接口的
+ * 注意：该接口响应结构为 {@code {code, message, success, inventoryVOList:[...]}}（2026-07-16 真实
+ * 联调响应确认顶层字段为小写 {@code code}，此前文档写的大写 {@code Code} 有误，已修正），与仓库接口的
  * {@code resultList}、入库/出库/退货分页接口的 {@code result:{list,pages,emptyFlag}} 结构均不同，
  * 不能复用 {@link AbstractAiyaInitHandler#extractPageResult}（该方法假设的是后者的分页结构），
  * 本类单独解析 {@code inventoryVOList}，做法与 {@code AiyaSkuInitHandler} 一致。
@@ -44,9 +45,9 @@ import java.util.List;
  * TODO：文档未提供 {@code total}/{@code pages}/{@code emptyFlag} 等分页终止字段，暂以
  * "本页返回条数 &lt; pageSize" 判断已到最后一页，需联调真实接口后确认。
  * <p>
- * TODO：文档「库存数据」请求参数 {@code stockStatus} 标"是否必填=是"，但未给出可选枚举值，
- * 当前用占位值 {@link #STOCK_STATUS_PLACEHOLDER}，需联调/产品确认真实取值后替换，
- * 详见 docs/integrations/aiya-overseas-warehouse/README.md「待产品确认」。
+ * 2026-07-16 真实接口联调已确认：请求参数 {@code stockStatus} 文档标"必填"，但实测**不传也能正常
+ * 查询、且不传效果更符合预期**（不传即查全部状态，无需按 GOOD/DAMAGE 分别查两次），
+ * 因此本类不再传该参数，之前的占位值 {@code "ALL"} 已移除。
  */
 @Slf4j
 @Service
@@ -55,12 +56,6 @@ public class AiyaInventoryInitHandler extends AbstractAiyaInitHandler {
 
     private static final String ACTION = "库存";
     private static final int DEFAULT_PAGE_SIZE = AiyaInventoryQueryDTO.DEFAULT_PAGE_SIZE;
-
-    /**
-     * TODO：文档「库存数据」{@code stockStatus} 标"必填"，但未给出可选枚举值/"查询全部状态"应传的值，
-     * 当前占位为 "ALL"，未经真实接口验证，联调/产品确认后需替换为真实取值。
-     */
-    private static final String STOCK_STATUS_PLACEHOLDER = "ALL";
 
     @Override
     public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
@@ -109,7 +104,7 @@ public class AiyaInventoryInitHandler extends AbstractAiyaInitHandler {
             reqDTO.setWarehouseCode(warehouseCode);
             reqDTO.setPageNum(pageNum);
             reqDTO.setPageSize(DEFAULT_PAGE_SIZE);
-            reqDTO.setStockStatus(STOCK_STATUS_PLACEHOLDER);
+            // stockStatus 实测非必传，不传即查全部状态库存，故此处不设置
 
             JSONObject response;
             try {
@@ -152,7 +147,7 @@ public class AiyaInventoryInitHandler extends AbstractAiyaInitHandler {
     /**
      * 解析爱亚库存查询响应，提取 {@code inventoryVOList} 数组。
      * <p>
-     * 接口结构：{@code {Code, message, success, inventoryVOList:[...]}}，success=true 为成功；
+     * 接口结构：{@code {code, message, success, inventoryVOList:[...]}}，success=true 为成功；
      * success=false 视为真实失败直接抛出 {@link ServiceException}，与
      * {@link AiyaSkuInitHandler} 保持一致的"不静默降级"原则。
      *
@@ -164,7 +159,7 @@ public class AiyaInventoryInitHandler extends AbstractAiyaInitHandler {
         }
         if (!Boolean.TRUE.equals(response.getBoolean("success"))) {
             throw new ServiceException(ApiError.WH_AIYA_RESPONSE_FAILED, actionName,
-                    String.valueOf(response.get("Code")), String.valueOf(response.get("message")));
+                    String.valueOf(response.get("code")), String.valueOf(response.get("message")));
         }
         JSONArray inventoryVOList = response.getJSONArray("inventoryVOList");
         return inventoryVOList == null ? new JSONArray() : inventoryVOList;
