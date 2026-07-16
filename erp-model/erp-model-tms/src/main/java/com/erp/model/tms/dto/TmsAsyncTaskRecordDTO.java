@@ -680,38 +680,66 @@ public class TmsAsyncTaskRecordDTO implements Serializable {
     /**
      * 物流商对账单合并匹配载荷。
      * <p>
-     * 持久化本次批量匹配勾选的对账单主单 id 与是否同时确认标记；游标、批次大小由框架运行时注入，不写入 payload。
+     * 一主单一任务：持久化对账单主单 id 与是否同时确认标记；
+     * 费用项明细落在 {@code tms_async_task_detail.businessId}，游标/批次大小由框架运行时注入。
      */
     @Data
     @NoArgsConstructor
-    @AllArgsConstructor
     public static class LogisticsReconMatchPayloadDTO implements Serializable {
 
         /**
-         * 勾选的对账单主单 id 集合。
+         * 对账单主单 id（一任务对应一主单）。
          */
-        private List<String> ids;
+        private String mainId;
 
         /**
          * 是否合并匹配后同时确认。
          */
         private Boolean isConfirm;
+
+        /**
+         * 旧版批量主单 id 列表，仅兼容历史任务反序列化/防重解析。
+         */
+        private List<String> ids;
+
+        public LogisticsReconMatchPayloadDTO(String mainId, Boolean isConfirm) {
+            this.mainId = mainId;
+            this.isConfirm = isConfirm;
+        }
+
+        /**
+         * 解析主单 id：优先 {@link #mainId}，否则取旧字段 {@link #ids} 首个非空值。
+         */
+        public String resolveMainId() {
+            if (mainId != null && !mainId.trim().isEmpty()) {
+                return mainId.trim();
+            }
+            if (ids == null || ids.isEmpty()) {
+                return null;
+            }
+            for (String id : ids) {
+                if (id != null && !id.trim().isEmpty()) {
+                    return id.trim();
+                }
+            }
+            return null;
+        }
     }
 
     /**
      * 物流商对账单账单确认载荷。
      * <p>
-     * 持久化本次批量确认勾选的对账单主单 id、目标对账状态与确认时间；游标、批次大小由框架运行时注入。
+     * 一主单一任务：持久化对账单主单 id、目标对账状态与确认时间；
+     * 费用项明细落在 {@code tms_async_task_detail.businessId}。
      */
     @Data
     @NoArgsConstructor
-    @AllArgsConstructor
     public static class LogisticsReconConfirmBillPayloadDTO implements Serializable {
 
         /**
-         * 勾选的对账单主单 id 集合。
+         * 对账单主单 id（一任务对应一主单）。
          */
-        private List<String> ids;
+        private String mainId;
 
         /**
          * 物流费用单目标对账状态（ReconciliationStatusEnum：toBeConfirm / confirmed）。
@@ -722,6 +750,36 @@ public class TmsAsyncTaskRecordDTO implements Serializable {
          * 对账确认时间（状态为 confirmed 时传入；toBeConfirm 时可为 null）。
          */
         private LocalDateTime confirmTime;
+
+        /**
+         * 旧版批量主单 id 列表，仅兼容历史任务反序列化/防重解析。
+         */
+        private List<String> ids;
+
+        public LogisticsReconConfirmBillPayloadDTO(String mainId, String reconciliationStatus,
+                                                   LocalDateTime confirmTime) {
+            this.mainId = mainId;
+            this.reconciliationStatus = reconciliationStatus;
+            this.confirmTime = confirmTime;
+        }
+
+        /**
+         * 解析主单 id：优先 {@link #mainId}，否则取旧字段 {@link #ids} 首个非空值。
+         */
+        public String resolveMainId() {
+            if (mainId != null && !mainId.trim().isEmpty()) {
+                return mainId.trim();
+            }
+            if (ids == null || ids.isEmpty()) {
+                return null;
+            }
+            for (String id : ids) {
+                if (id != null && !id.trim().isEmpty()) {
+                    return id.trim();
+                }
+            }
+            return null;
+        }
     }
 
     /**

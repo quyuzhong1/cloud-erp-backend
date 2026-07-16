@@ -123,14 +123,16 @@ public interface LogisticsReconService extends SuperService<LogisticsReconEntity
     void pushMatch(TmsAsyncTaskRecordEntity taskRecord);
 
     /**
-     * 分批执行对账单合并匹配（供异步任务框架回调）：逐单复用既有匹配逻辑并落任务明细。
-     * @param taskId 异步主任务 id
-     * @param batchIds 本批对账单主单 id
-     * @param isConfirm 是否匹配后同时确认
+     * 分批执行对账单合并匹配（供异步任务框架回调）：按费用项明细认领并匹配，回写任务明细状态。
+     *
+     * @param taskId       异步主任务 id
+     * @param mainId       对账单主单 id
+     * @param batchSubIds  本批费用项（detail_sub）id
+     * @param isConfirm    是否匹配后同时确认
      * @param operatorUser 任务操作人
      * @return 批次成功/失败计数
      */
-    TmsAsyncTaskRecordDTO.BatchProcessResult processMatchBatch(String taskId, List<String> batchIds,
+    TmsAsyncTaskRecordDTO.BatchProcessResult processMatchBatch(String taskId, String mainId, List<String> batchSubIds,
                                                                boolean isConfirm, LoginUser operatorUser);
 
     /**
@@ -230,16 +232,18 @@ public interface LogisticsReconService extends SuperService<LogisticsReconEntity
     void pushConfirmBill(TmsAsyncTaskRecordEntity taskRecord);
 
     /**
-     * 分批执行对账单账单确认（供异步任务框架回调）：逐单复用既有 confirmBill 并落任务明细。
+     * 分批执行对账单账单确认（供异步任务框架回调）：按费用项明细确认关联费用单，回写任务明细状态。
      *
      * @param taskId               异步主任务 id
-     * @param batchIds             本批对账单主单 id
+     * @param mainId               对账单主单 id
+     * @param batchSubIds          本批费用项（detail_sub）id
      * @param reconciliationStatus 目标对账状态
      * @param confirmTime          对账确认时间
      * @param operatorUser         任务操作人
      * @return 批次成功/失败计数
      */
-    TmsAsyncTaskRecordDTO.BatchProcessResult processConfirmBillBatch(String taskId, List<String> batchIds,
+    TmsAsyncTaskRecordDTO.BatchProcessResult processConfirmBillBatch(String taskId, String mainId,
+                                                                     List<String> batchSubIds,
                                                                      String reconciliationStatus,
                                                                      LocalDateTime confirmTime,
                                                                      LoginUser operatorUser);
