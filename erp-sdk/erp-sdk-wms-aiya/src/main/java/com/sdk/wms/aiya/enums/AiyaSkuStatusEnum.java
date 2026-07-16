@@ -14,7 +14,10 @@ import lombok.Getter;
  * 映射关系需取消——该取消逻辑由数大臣已有的通用 SKU 映射关系状态流转能力承接（文档 6.2.2
  * 节：配置已完成，无需再介入开发），本枚举仅负责标识两种状态均需同步到 OMS 未匹配表。
  * <p>
- * TODO：{@code Active}/{@code Inactive} 大小写以文档为准，需联调真实接口响应后确认。
+ * 2026-07-16 联调实测确认：真实响应 {@code status} 字段值为 {@code "Active"}（首字母大写，与文档一致）。
+ * TODO：目前仅实测验证过 {@code Active}，{@code Inactive} 的真实大小写仍未见过真实响应样例，
+ * 暂按文档原样保留；{@link #needSync} 已用 {@code equalsIgnoreCase} 做大小写兼容，即使实际大小写
+ * 有出入也不影响同步判断。
  */
 @Getter
 public enum AiyaSkuStatusEnum {

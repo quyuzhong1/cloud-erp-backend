@@ -87,7 +87,7 @@ public class AiyaOpenApiServiceManualTest {
         reqDTO.setPageNum(1);
         reqDTO.setPageSize(AiyaSkuQueryDTO.DEFAULT_PAGE_SIZE);
         // reqDTO.setStatus("Active"); // 可选：按状态过滤，真实大小写/取值需联调确认
-        reqDTO.setCreatedTimeFrom("2026-07-14 00:00:00"); // 锚点：本次爱亚对接开发起始日期，与 AiyaSkuInitHandler 一致
+        reqDTO.setCreatedTimeFrom("2026-07-01 00:00:00"); // 锚点：本次爱亚对接开发起始日期，与 AiyaSkuInitHandler 一致
         reqDTO.setCreatedTimeTo(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         JSONObject response = aiyaOpenApiService.querySku(reqDTO);
         System.out.println(JSONUtil.toJsonStr(response));
@@ -105,9 +105,7 @@ public class AiyaOpenApiServiceManualTest {
         reqDTO.setWarehouseCode(TEST_WAREHOUSE_CODE);
         reqDTO.setPageNum(1);
         reqDTO.setPageSize(AiyaInventoryQueryDTO.DEFAULT_PAGE_SIZE);
-        // 接口文档截图确认 stockStatus 为必填但未给出可选枚举值，此处占位，真实取值需联调确认，
-        // 详见 docs/integrations/aiya-overseas-warehouse/README.md「待产品确认」
-        reqDTO.setStockStatus("ALL");
+        // stockStatus 文档标"必填"，但实测确认非必传、且最好不传（不传即查全部状态库存），故不设置
         // domainCode 为截图新发现的可选字段，接口文档未给出参数描述，暂不传，联调时可尝试传值核对作用
         JSONObject response = aiyaOpenApiService.queryInventory(reqDTO);
         System.out.println(JSONUtil.toJsonStr(response));
@@ -115,10 +113,9 @@ public class AiyaOpenApiServiceManualTest {
         // 1) response.inventoryVOList 是否存在，每条 item 的 customerCode/warehouseCode/sku/
         //    skuDescription/barcode/skuStatus/totalQty/occupiedQty/salableQty/duePutawayQty/
         //    unavailableQty 字段名与截图是否一致；
-        // 2) stockStatus 传 "ALL" 是否被接口正确识别为"查询全部状态"（还是需要传别的值/直接不传，
-        //    或者是否要求传 GOOD/DAMAGE 之一，需分别查两次才能拿到全部库存）；
-        // 3) 重点确认 skuStatus 是否会让同一 warehouseCode+sku 拆成多条明细（如 GOOD 一条、DAMAGE
-        //    一条），这将影响 DMP 去重唯一键设计。
+        // 2) [已确认] stockStatus 不传即可查询全部状态库存，无需按 GOOD/DAMAGE 分别查两次；
+        // 3) 仍需确认 skuStatus 是否会让同一 warehouseCode+sku 拆成多条明细（如 GOOD 一条、DAMAGE
+        //    一条），这将影响 DMP 去重唯一键设计，详见 README「待产品确认」。
     }
 
     @Test
