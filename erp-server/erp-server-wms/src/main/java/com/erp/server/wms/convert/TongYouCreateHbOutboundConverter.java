@@ -25,7 +25,7 @@ public interface TongYouCreateHbOutboundConverter {
     @Mapping(target = "district", source = "city")
     @Mapping(target = "zip", source = "postCode")
     @Mapping(target = "address", source = "address1")
-    @Mapping(target = "address2", constant = "")
+    @Mapping(target = "address2", source = "address2")
     @Mapping(target = "contact", source = "receiverName")
     @Mapping(target = "mobile", source = "telNumber")
     @Mapping(target = "phone", source = "telNumber")

@@ -106,21 +106,9 @@ public class B2bThirdDeliveryDetailServiceImpl extends SuperServiceImpl<B2bThird
     }
 
     private String getBoxSpecNo(Integer number) {
-        //ZXGG0001
-        String prefix = "ZXGG";
-        String formatStr;
-        number = number + 1;
-        if (number < 10) {
-            formatStr = "000" + number;  // 个位数：000X
-        } else if (number < 100) {
-            formatStr = "00" + number;   // 十位数：00XX
-        } else if (number < 1000) {
-            formatStr = "0" + number;    // 百位数：0XXX
-        } else {
-            formatStr = String.valueOf(number); // 千位数：XXXX
-        }
-
-        return prefix + formatStr;
+        //ZXGG0001；sort 为空时按第 1 箱规格号处理，避免 NPE
+        int seq = (number == null ? 0 : number) + 1;
+        return "ZXGG" + String.format("%04d", seq);
     }
 
 

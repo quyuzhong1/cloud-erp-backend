@@ -157,9 +157,14 @@ public class TongYouService {
         Map<String, String> headerMap = new HashMap<>();
         Object object = ThirdWarehouseContext.getAuthMap().get("appToken");
         request.setToken(ObjectUtil.isEmpty(object) ? "" : object.toString());
-        log.warn("通邮 createHbOutboundBill request:{}", toLogJson(request));
-        ThirdWarehouseContext.setRequestJson(toLogJson(request));
-        String bodyStr = OkHttpUtils.doPostJson(getPreUrl() + path, JSONObject.toJSONString(request), headerMap);
+        // 与 add_order.php 一致：通邮该接口要求 JSON 数组体，单对象会返回空响应
+        String jsonString = JSONObject.toJSONString(Collections.singletonList(request));
+        log.warn("通邮 createHbOutboundBill request:{}", maskTokenJson(jsonString));
+        ThirdWarehouseContext.setRequestJson(maskTokenJson(jsonString));
+        String bodyStr = OkHttpUtils.doPostJson(getPreUrl() + path, jsonString, headerMap);
+        if (ObjectUtil.isEmpty(bodyStr)) {
+            log.warn("通邮 createHbOutboundBill empty response, url={}", getPreUrl() + path);
+        }
         TongYouBaseResp<TongYouOutboundResp> respDto = TongYouUtils.parseToTongYouResp(bodyStr, TongYouOutboundResp.class);
         ThirdWarehouseContext.setResponseJson(bodyStr);
         return respDto;

@@ -207,6 +207,10 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         boolean tongYouWarehouse = isTongYouWarehouse(b2bThirdDeliveryEntity.getDeliveryWarehouseId());
         boolean goodCangWarehouse = isGoodCangWarehouse(b2bThirdDeliveryEntity.getDeliveryWarehouseId());
         if (tongYouWarehouse) {
+            if (CharSequenceUtil.isBlank(b2bThirdDeliveryEntity.getLogisticsChannelId())
+                    && CharSequenceUtil.isBlank(addDTO.getLogisticsChannelId())) {
+                throw new ServiceException("通邮仓库物流渠道不能为空");
+            }
             validateTongYouFields(addDTO.getWarehouseOperationTypeDTOList(), addDTO.getDetailList(), addDTO.getPackingDetailList(),
                     addDTO.getAttachList(), addDTO.getProductLabelAttachList(), addDTO.getOuterBoxLabelAttachList());
         } else {
@@ -341,6 +345,10 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         boolean tongYouWarehouse = isTongYouWarehouse(b2bThirdDeliveryEntity.getDeliveryWarehouseId());
         boolean goodCangWarehouse = isGoodCangWarehouse(b2bThirdDeliveryEntity.getDeliveryWarehouseId());
         if (tongYouWarehouse) {
+            if (CharSequenceUtil.isBlank(b2bThirdDeliveryEntity.getLogisticsChannelId())
+                    && CharSequenceUtil.isBlank(addOrUpdateDTO.getLogisticsChannelId())) {
+                throw new ServiceException("通邮仓库物流渠道不能为空");
+            }
             validateTongYouFields(addOrUpdateDTO.getWarehouseOperationTypeDTOList(), addOrUpdateDTO.getDetailList(), addOrUpdateDTO.getPackingDetailList(),
                     addOrUpdateDTO.getAttachList(), addOrUpdateDTO.getProductLabelAttachList(), addOrUpdateDTO.getOuterBoxLabelAttachList());
         } else {
