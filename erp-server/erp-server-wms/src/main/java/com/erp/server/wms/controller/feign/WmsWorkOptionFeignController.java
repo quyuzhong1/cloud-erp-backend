@@ -279,6 +279,14 @@ public class WmsWorkOptionFeignController {
     }
 
     /**
+     * 按任务 ID 释放盘点库存 Redis 锁（补偿/运维入口）
+     */
+    @PostMapping("/releaseStocktakingTaskInventoryLock")
+    public void releaseStocktakingTaskInventoryLock(@RequestBody String taskId) {
+        stocktakingTaskService.releaseInventoryLockByTaskId(taskId);
+    }
+
+    /**
      * 头程发货单
      * @Author Luo_WG
      * @Date 2023/11/15 18:01

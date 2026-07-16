@@ -53,6 +53,8 @@ import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -587,18 +589,24 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
             stocktakingPlanService.updateForStocktakingStatus(entity.getSourceId(), StocktakingStatusEnum.COMPLETED);
         }
         if (ApproveStatusEnum.APPROVE.equals(approveStatus)) {
-            releaseInventoryLockByTask(entity);
+            releaseInventoryLockByTaskId(entity.getId());
         }
         return result;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void releaseInventoryLockByTaskId(String taskId) {
         if (CharSequenceUtil.isBlank(taskId)) {
             return;
         }
         StocktakingTaskEntity task = getById(taskId);
-        releaseInventoryLockByTask(task);
+        if (Objects.isNull(task) || CharSequenceUtil.isBlank(task.getSourceCode())) {
+            log.warn("释锁跳过：任务不存在或无计划单号，taskId={}", taskId);
+            return;
+        }
+        String planCode = task.getSourceCode();
+        runAfterCommit(() -> releaseInventoryLockByTaskWithRetry(taskId, planCode));
     }
 
     @Override
@@ -615,6 +623,49 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         log.warn("释放盘点计划库存锁：planCode={}, count={}", planCode, keys.size());
     }
 
+    /** 任务释锁重试封装，见 {@link #releaseInventoryLockByTask(StocktakingTaskEntity)} 设计说明 */
+    private void releaseInventoryLockByTaskWithRetry(String taskId, String planCode) {
+        try {
+            StocktakingTaskEntity task = getById(taskId);
+            releaseInventoryLockByTask(task);
+        } catch (Exception e) {
+            log.error("盘点任务释锁失败，重试一次：taskId={}, planCode={}", taskId, planCode, e);
+            try {
+                StocktakingTaskEntity task = getById(taskId);
+                releaseInventoryLockByTask(task);
+            } catch (Exception retryEx) {
+                log.error("盘点任务释锁重试仍失败，需人工清理 Redis 锁：taskId={}, planCode={}", taskId, planCode, retryEx);
+            }
+        }
+    }
+
+    /** 计划下全部任务已删时使用；失败重试一次，仍失败需人工清理 Redis */
+    private void releaseInventoryLockByPlanCodeWithRetry(String planCode, String context) {
+        try {
+            releaseInventoryLockByPlanCode(planCode);
+        } catch (Exception e) {
+            log.error("盘点计划释锁失败，重试一次：context={}, planCode={}", context, planCode, e);
+            try {
+                releaseInventoryLockByPlanCode(planCode);
+            } catch (Exception retryEx) {
+                log.error("盘点计划释锁重试仍失败，需人工清理 Redis 锁：context={}, planCode={}", context, planCode, retryEx);
+            }
+        }
+    }
+
+    /**
+     * 按任务明细释放 Redis 盘点库存锁（与 {@link #lockInventoryForStocktaking} 成对）。
+     * <p>
+     * 审查约定（通配释锁边界）：
+     * <ul>
+     *   <li>任务级按 {@code planCode + wh + 库位 + sku} 通配（orgId/status 为 *）SCAN 释锁，与历史 Controller 行为一致</li>
+     *   <li>范围已限定本计划单号，不按 plan 整批释锁（同计划其它任务可能仍在途）</li>
+     *   <li>明细未落库 orgId，故不用 inventory 反查精确 key，避免反查失败导致锁残留</li>
+     *   <li>若同一计划下多任务并发、且共享 wh+库位+SKU 但 org 不同，本任务审核通过可能顺带释放其它在途任务的锁；
+     *       现网暂无此类数据，故维持通配；若后续出现，需在明细落库 orgId 或改按任务维度收窄 pattern</li>
+     * </ul>
+     * 对外入口与审核路径均 afterCommit + 重试。
+     */
     private void releaseInventoryLockByTask(StocktakingTaskEntity task) {
         if (Objects.isNull(task) || CharSequenceUtil.isBlank(task.getSourceCode())) {
             return;
@@ -627,6 +678,12 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         detailList.forEach(detail -> releaseInventoryLockByDetail(planCode, task.getCode(), detail));
     }
 
+    /**
+     * 按明细 wh+库位+sku 通配 SCAN 释锁（orgId/status 为 *）。
+     * <p>
+     * pattern 示例：{@code lock:wms:inventory:{planCode}_*_{wh}_{loc}_{sku}_*}，
+     * 会删除该计划下该库存维度的全部 org/状态锁，见 {@link #releaseInventoryLockByTask} 审查约定。
+     */
     private void releaseInventoryLockByDetail(String planCode, String taskCode, StocktakingTaskDetailEntity detail) {
         String keyPattern = CharSequenceUtil.format(RedisCacheConstants.INVENTORY_LOCK, planCode, "*",
                 detail.getWarehouseId(), detail.getWarehouseLocation(), detail.getSkuId(), "*");
@@ -635,6 +692,30 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
             keys.forEach(redisUtil::del);
             log.warn("释放盘点任务库存锁：taskCode={}, pattern={}, count={}", taskCode, keyPattern, keys.size());
         }
+    }
+
+    /**
+     * 事务提交后执行释锁；无活跃事务时立即执行（如非事务入口调用的兼容路径）。
+     */
+    private void runAfterCommit(Runnable runnable) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            try {
+                runnable.run();
+            } catch (Exception e) {
+                log.error("盘点库存锁 afterCommit 立即执行失败", e);
+            }
+            return;
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                try {
+                    runnable.run();
+                } catch (Exception e) {
+                    log.error("盘点库存锁 afterCommit 执行失败", e);
+                }
+            }
+        });
     }
 
     /**
@@ -653,6 +734,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
 
     /**
      * 加锁：checkConflict=true 时走 Lua（SCAN 冲突 + SET NX 原子）；pattern 按库存维度收窄，避免全量 inventory 锁 SCAN。
+     * orgId 取下推时 {@code inventory.org_id}。
      */
     private void lockInventoryForStocktaking(StocktakingPlanEntity entity, List<InventoryEntity> inventoryList, boolean checkConflict) {
         String planCode = entity.getCode();
@@ -1149,14 +1231,16 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
             return Boolean.TRUE;
         }
         StocktakingPlanEntity planEntity = stocktakingPlanService.getById(sourceId);
-        if (ObjectUtil.isNotEmpty(planEntity)) {
-            releaseInventoryLockByPlanCode(planEntity.getCode());
-        }
+        String planCode = ObjectUtil.isNotEmpty(planEntity) ? planEntity.getCode() : null;
         List<String> mainIds = taskEntityList.stream().map(StocktakingTaskEntity::getId).collect(Collectors.toList());
         // 删除明细表数据
         stocktakingTaskDetailService.removeByMainId(mainIds);
         // 删除主表数据
+        // 先删库再 afterCommit 按计划释锁，避免事务回滚后锁已丢
         this.removeByIds(mainIds);
+        if (CharSequenceUtil.isNotBlank(planCode)) {
+            runAfterCommit(() -> releaseInventoryLockByPlanCodeWithRetry(planCode, "removeBySourceId:" + sourceId));
+        }
         return Boolean.TRUE;
     }
 

@@ -172,6 +172,12 @@ public interface WmsTaskFeign {
     Boolean stocktakingTaskApprove(@RequestBody @Validated BaseApproveParamDTO approveOneDTO);
 
     /**
+     * 按任务 ID 释放盘点库存 Redis 锁（补偿/运维入口，与审核通过释锁语义一致）
+     */
+    @PostMapping("feign/wmsWorkOption/releaseStocktakingTaskInventoryLock")
+    void releaseStocktakingTaskInventoryLock(@RequestBody String taskId);
+
+    /**
      * 根据销售 销售订单详情ids 获取是否有下推的单据
      * @author yl
      * @date 2023-05-25 10:27
