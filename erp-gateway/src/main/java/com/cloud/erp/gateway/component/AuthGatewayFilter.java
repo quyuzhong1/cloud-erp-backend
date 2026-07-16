@@ -1,6 +1,7 @@
 package com.cloud.erp.gateway.component;
 
 import cn.hutool.core.exceptions.ExceptionUtil;
+import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
@@ -25,11 +26,16 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
+import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpRequest;
+import org.springframework.http.server.reactive.ServerHttpRequestDecorator;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.Flux;
 import reactor.core.scheduler.Schedulers;
 import com.erp.rpc.sys.feign.SysApiTokenFeign;
 
@@ -42,6 +48,7 @@ import java.net.URLEncoder;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -315,7 +322,7 @@ public class AuthGatewayFilter implements GlobalFilter, Ordered {
                 .subscribeOn(Schedulers.boundedElastic())
                 .flatMap(decision -> {
                     if (decision.authenticated) {
-                        return chain.filter(decision.authenticatedExchange);
+                        return stripApiTokenSqlMap(decision.authenticatedExchange, chain);
                     }
                     return unauthorizedResponse(exchange, decision.msg, decision.code);
                 })
@@ -323,6 +330,80 @@ public class AuthGatewayFilter implements GlobalFilter, Ordered {
                     log.error("API Token校验失败，URI: {}", uri, e);
                     return unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.HTTP_UNAUTHORIZED, exchange.getRequest()), ApiError.HTTP_UNAUTHORIZED.getCode());
                 });
+    }
+
+    /**
+     * API Token 调用不允许客户端控制后端 SQL 片段。普通 JWT 请求不会进入此方法，
+     * advanceQueryDTOList 等结构化条件会被原样保留。
+     */
+    private Mono<Void> stripApiTokenSqlMap(ServerWebExchange exchange, GatewayFilterChain chain) {
+        MediaType contentType = exchange.getRequest().getHeaders().getContentType();
+        if (contentType == null || !MediaType.APPLICATION_JSON.isCompatibleWith(contentType)) {
+            return chain.filter(exchange);
+        }
+        return DataBufferUtils.join(exchange.getRequest().getBody())
+                .flatMap(dataBuffer -> {
+                    byte[] originalBytes = new byte[dataBuffer.readableByteCount()];
+                    dataBuffer.read(originalBytes);
+                    DataBufferUtils.release(dataBuffer);
+
+                    byte[] forwardedBytes = originalBytes;
+                    try {
+                        Object body = JSONUtil.parse(new String(originalBytes, StandardCharsets.UTF_8));
+                        if (removeSqlMapRecursively(body)) {
+                            forwardedBytes = JSONUtil.toJsonStr(body).getBytes(StandardCharsets.UTF_8);
+                        }
+                    } catch (Exception e) {
+                        // 非法 JSON 交由下游现有参数校验处理，但必须重放已读取的原始请求体。
+                        log.debug("API Token请求体不是有效JSON，按原文转发，URI: {}", exchange.getRequest().getPath().value());
+                    }
+                    return forwardBody(exchange, chain, forwardedBytes);
+                })
+                .switchIfEmpty(chain.filter(exchange));
+    }
+
+    static boolean removeSqlMapRecursively(Object node) {
+        boolean changed = false;
+        if (node instanceof JSONObject) {
+            JSONObject object = (JSONObject) node;
+            for (String key : new ArrayList<>(object.keySet())) {
+                if ("sqlMap".equals(key)) {
+                    object.remove(key);
+                    changed = true;
+                } else {
+                    changed = removeSqlMapRecursively(object.get(key)) || changed;
+                }
+            }
+        } else if (node instanceof JSONArray) {
+            for (Object item : (JSONArray) node) {
+                changed = removeSqlMapRecursively(item) || changed;
+            }
+        }
+        return changed;
+    }
+
+    private Mono<Void> forwardBody(ServerWebExchange exchange, GatewayFilterChain chain, byte[] bodyBytes) {
+        GatewayContext<?> gatewayContext = exchange.getAttribute(GatewayContext.CACHE_GATEWAY_CONTEXT);
+        if (gatewayContext != null) {
+            gatewayContext.setRequestBody(new String(bodyBytes, StandardCharsets.UTF_8));
+        }
+        ServerHttpRequestDecorator request = new ServerHttpRequestDecorator(exchange.getRequest()) {
+            @Override
+            public HttpHeaders getHeaders() {
+                HttpHeaders headers = new HttpHeaders();
+                headers.putAll(super.getHeaders());
+                headers.remove(HttpHeaders.CONTENT_LENGTH);
+                headers.remove(HttpHeaders.TRANSFER_ENCODING);
+                headers.setContentLength(bodyBytes.length);
+                return headers;
+            }
+
+            @Override
+            public Flux<DataBuffer> getBody() {
+                return Flux.defer(() -> Mono.just(exchange.getResponse().bufferFactory().wrap(bodyBytes)));
+            }
+        };
+        return chain.filter(exchange.mutate().request(request).build());
     }
 
     private ApiTokenAuthDecision authenticateApiToken(ServerWebExchange exchange, ServerHttpRequest request,
