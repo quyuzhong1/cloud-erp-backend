@@ -8,15 +8,18 @@ import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.OkHttpUtils;
+import com.erp.model.wms.dto.AiyaSkuQueryDTO;
 import com.sdk.wms.aiya.constants.AiyaConstants;
 import com.sdk.wms.aiya.dto.response.AiyaInboundResp;
 import com.sdk.wms.aiya.dto.response.AiyaOutboundResp;
 import com.sdk.wms.aiya.dto.response.AiyaReturnOrderResp;
 import com.sdk.wms.aiya.utils.AiyaSignUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
 
+import javax.validation.Valid;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -70,6 +73,13 @@ public class AiyaOpenApiService {
             new HashSet<>(Arrays.asList("pageNum", "pageSize"));
 
     /**
+     * SKU 查询专用保留参数：文档字段名为 {@code page}（而非其它接口的 {@code pageNum}），
+     * 避免分页/状态过滤参数被业务透传覆盖。
+     */
+    private static final Set<String> SKU_QUERY_RESERVED_PARAM_KEYS =
+            new HashSet<>(Arrays.asList("page", "pageSize", "status"));
+
+    /**
      * 原始响应字符串在日志中打印的最大长度。
      */
     private static final int RAW_RESPONSE_LOG_MAX_LEN = 500;
@@ -105,22 +115,29 @@ public class AiyaOpenApiService {
     }
 
     /**
-     * 调用 AIYA product.search 分页查询 SKU 列表。
+     * 调用 AIYA {@code GLINK_QUERY_ITEM_NOTIFY} 分页查询 SKU（商品）列表。
+     * <p>
+     * 按《爱亚海外仓对接方案文档》商品注册/查询接口：请求字段为 {@code page}（注意不是其它接口的
+     * {@code pageNum}）/ {@code pageSize}（默认200）/ 可选 {@code status}（商品使用状态）；
+     * 响应结构为 {@code {code, message, success, itemList:[...]}}，与 warehouse/inventory
+     * 接口的 {@code result}/{@code resultList} 结构不同，调用方需按 {@code itemList} 解析。
+     * <p>
+     * TODO：文档未说明分页是否有 {@code total}/{@code pages} 等终止字段，翻页终止条件（如
+     * {@code itemList.size() < pageSize}）需联调真实接口后确认。
      *
-     * @param accessToken  AIYA partnerId（客户ID）
-     * @param secret       AIYA partnerKey（仅用于本地签名）
-     * @param customerCode AIYA 客户code（必填业务参数）
-     * @param pageNum      页码（从 1 开始）
-     * @param pageSize     每页数量
-     * @param bizParams    业务扩展参数（可为 null）
-     * @return AIYA 接口原始响应解析后的 JSONObject
+     * @param dto 查询请求，包含 accessToken / secret / customerCode / pageNum(对应文档page) / pageSize / status
+     * @return AIYA 接口原始响应解析后的 JSONObject（含 code / message / success / itemList 等字段）
      */
-    public JSONObject querySku(String accessToken, String secret, String customerCode, int pageNum, int pageSize, Map<String, Object> bizParams) {
+    public JSONObject querySku(@Valid AiyaSkuQueryDTO.QueryReqDTO dto) {
         Map<String, Object> params = new HashMap<>();
-        params.put("pageNum", pageNum);
-        params.put("pageSize", pageSize);
-        mergeBizParams(params, bizParams, "查询SKU", PAGE_RESERVED_PARAM_KEYS);
-        return doQuery(accessToken, secret, customerCode, AiyaConstants.GLINK_QUERY_ITEM_NOTIFY, params, "查询SKU");
+        params.put("page", dto.getPageNum());
+        params.put("pageSize", dto.getPageSize());
+        if (StringUtils.isNotBlank(dto.getStatus())) {
+            params.put("status", dto.getStatus());
+        }
+        mergeBizParams(params, dto.getBizParams(), "查询SKU", SKU_QUERY_RESERVED_PARAM_KEYS);
+        return doQuery(dto.getAccessToken(), dto.getSecret(), dto.getCustomerCode(),
+                AiyaConstants.GLINK_QUERY_ITEM_NOTIFY, params, "查询SKU");
     }
 
     /**
