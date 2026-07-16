@@ -70,10 +70,15 @@ public class AiyaOpenApiService {
 
     /**
      * SKU 查询专用保留参数：文档字段名为 {@code page}（而非其它接口的 {@code pageNum}），
-     * 避免分页/状态过滤参数被业务透传覆盖。
+     * 避免分页/状态过滤/时间范围参数被业务透传覆盖。
+     * <p>
+     * {@code createdTimeFrom}/{@code createdTimeTo}：2026-07-16 联调发现文档未列出的真实必填约束
+     * （爱亚网关底层 QERP Open API Platform {@code GLINK_QUERY_ITEM_NOTIFY} 规范）——{@code skus}、
+     * createdTime 范围、updatedTime 范围三者至少要有一组非空，否则报
+     * {@code INVALID_DATA: Created time and Updated time and SKUs cannot be both empty}。
      */
     private static final Set<String> SKU_QUERY_RESERVED_PARAM_KEYS =
-            new HashSet<>(Arrays.asList("page", "pageSize", "status"));
+            new HashSet<>(Arrays.asList("page", "pageSize", "status", "createdTimeFrom", "createdTimeTo"));
 
     /**
      * 库存查询专用保留参数：文档字段名同样为 {@code page}（而非 {@code pageNum}），
@@ -129,10 +134,19 @@ public class AiyaOpenApiService {
      * 响应结构为 {@code {code, message, success, itemList:[...]}}，与 warehouse/inventory
      * 接口的 {@code result}/{@code resultList} 结构不同，调用方需按 {@code itemList} 解析。
      * <p>
+     * 2026-07-16 联调发现文档未列出的真实必填约束（爱亚网关底层 QERP Open API Platform
+     * {@code GLINK_QUERY_ITEM_NOTIFY} 规范）——{@code skus}、{@code createdTimeFrom}/
+     * {@code createdTimeTo}、{@code updatedTimeFrom}/{@code updatedTimeTo} 三者至少要有一组非空，
+     * 否则报 {@code INVALID_DATA: Created time and Updated time and SKUs cannot be both empty}；
+     * 本方法固定按 {@link AiyaSkuQueryDTO.QueryReqDTO#getCreatedTimeFrom()}/
+     * {@link AiyaSkuQueryDTO.QueryReqDTO#getCreatedTimeTo()} 满足该约束，调用方需保证成对非空传入
+     * （具体锚点时间由 {@code AiyaSkuInitHandler} 决定，用于全量拉取）。
+     * <p>
      * TODO：文档未说明分页是否有 {@code total}/{@code pages} 等终止字段，翻页终止条件（如
      * {@code itemList.size() < pageSize}）需联调真实接口后确认。
      *
-     * @param dto 查询请求，包含 accessToken / secret / customerCode / pageNum(对应文档page) / pageSize / status
+     * @param dto 查询请求，包含 accessToken / secret / customerCode / pageNum(对应文档page) / pageSize /
+     *            status / createdTimeFrom / createdTimeTo
      * @return AIYA 接口原始响应解析后的 JSONObject（含 code / message / success / itemList 等字段）
      */
     public JSONObject querySku(@Valid AiyaSkuQueryDTO.QueryReqDTO dto) {
@@ -141,6 +155,12 @@ public class AiyaOpenApiService {
         params.put("pageSize", dto.getPageSize());
         if (StringUtils.isNotBlank(dto.getStatus())) {
             params.put("status", dto.getStatus());
+        }
+        if (StringUtils.isNotBlank(dto.getCreatedTimeFrom())) {
+            params.put("createdTimeFrom", dto.getCreatedTimeFrom());
+        }
+        if (StringUtils.isNotBlank(dto.getCreatedTimeTo())) {
+            params.put("createdTimeTo", dto.getCreatedTimeTo());
         }
         mergeBizParams(params, dto.getBizParams(), "查询SKU", SKU_QUERY_RESERVED_PARAM_KEYS);
         return doQuery(dto.getAccessToken(), dto.getSecret(), dto.getCustomerCode(),

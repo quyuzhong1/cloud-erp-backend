@@ -205,6 +205,9 @@ public class AiyaLogisticsHandlerImpl extends AbstractLogisticsHandler {
      */
     private List<LogisticsSaleChannelEntity> buildSaleChannels(String platform, String warehouseCode, JSONObject item) {
         List<LogisticsSaleChannelEntity> list = new ArrayList<>();
+        // carrier / carrierType / logisticsProvider 均在承运商外层 item 上，carrierServiceList 元素仅含 carrierService
+        String carrier = item.getString("carrier");
+        String carrierType = item.getString("carrierType");
         String logisticsProvider = item.getString("logisticsProvider");
         JSONArray carrierServiceList = item.getJSONArray("carrierServiceList");
         if (carrierServiceList == null || carrierServiceList.isEmpty()) {
@@ -217,7 +220,8 @@ public class AiyaLogisticsHandlerImpl extends AbstractLogisticsHandler {
             if (service == null) {
                 continue;
             }
-            LogisticsSaleChannelEntity entity = buildSaleChannel(platform, warehouseCode, logisticsProvider, service);
+            LogisticsSaleChannelEntity entity = buildSaleChannel(platform, warehouseCode, carrier, carrierType,
+                    logisticsProvider, service);
             if (entity != null) {
                 list.add(entity);
             }
@@ -226,10 +230,9 @@ public class AiyaLogisticsHandlerImpl extends AbstractLogisticsHandler {
     }
 
     private LogisticsSaleChannelEntity buildSaleChannel(String platform, String warehouseCode,
+                                                        String carrier, String carrierType,
                                                         String logisticsProvider, JSONObject service) {
-        String carrier = service.getString("carrier");
         String carrierService = service.getString("carrierService");
-        String carrierType = service.getString("carrierType");
         if (CharSequenceUtil.hasBlank(carrier, carrierService)) {
             log.warn("[AIYA渠道同步] 派送渠道关键字段为空, 跳过: warehouseCode={}, service={}",
                     warehouseCode, service.toJSONString());

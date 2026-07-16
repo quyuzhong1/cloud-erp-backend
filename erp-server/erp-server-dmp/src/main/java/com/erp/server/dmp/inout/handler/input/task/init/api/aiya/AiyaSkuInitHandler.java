@@ -14,6 +14,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -30,6 +32,15 @@ import java.util.List;
  * {@code {success, result:...}} 结构不同，不能复用 {@link AbstractAiyaInitHandler#extractPageResult}，
  * 本类单独解析 {@code itemList}。
  * <p>
+ * 2026-07-16 联调发现文档未列出的真实必填约束（爱亚网关底层 QERP Open API Platform
+ * {@code GLINK_QUERY_ITEM_NOTIFY} 规范）——{@code skus}、createdTime 范围、updatedTime 范围三者
+ * 至少要有一组非空，否则报 {@code INVALID_DATA: Created time and Updated time and SKUs cannot be
+ * both empty}。业务目标是每次全量拉取所有 SKU（详见文档 6.2.2 排重逻辑 a-e，需要每次拿到 SKU 全量
+ * 快照才能判断爱亚侧已删除/停用的 SKU），故固定传 {@code createdTimeFrom}={@link #DEV_START_TIME}
+ * （本次爱亚对接开发起始日期）~ {@code createdTimeTo}=当前时间，覆盖迄今为止创建的所有 SKU。
+ * 已与产品/业务确认（2026-07-16）：该客户账号/SKU 不存在早于 {@link #DEV_START_TIME} 的创建记录，
+ * 该固定锚点不会漏拉历史 SKU，详见 docs/integrations/aiya-overseas-warehouse/README.md「已确认结论」。
+ * <p>
  * TODO：文档未提供 {@code total}/{@code pages}/{@code emptyFlag} 等分页终止字段，暂以
  * "本页返回条数 &lt; pageSize" 判断已到最后一页，需联调真实接口后确认。
  */
@@ -41,9 +52,25 @@ public class AiyaSkuInitHandler extends AbstractAiyaInitHandler {
     private static final String ACTION = "SKU";
     private static final int DEFAULT_PAGE_SIZE = 200;
 
+    /**
+     * 爱亚 createdTime 范围请求字段的时间格式。
+     */
+    private static final DateTimeFormatter DATETIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+    /**
+     * 本次爱亚对接开发起始日期（首个爱亚相关提交日期），作为 createdTimeFrom 固定锚点，
+     * 用于全量拉取「迄今为止创建的所有 SKU」。已与产品/业务确认（2026-07-16）该账号/SKU
+     * 不存在早于此锚点的创建记录，不会漏拉，详见类注释。
+     */
+    private static final LocalDateTime DEV_START_TIME = LocalDateTime.of(2026, 7, 14, 0, 0, 0);
+
     @Override
     public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
         AiyaAuth auth = resolveAuth();
+
+        // 全量拉取窗口：固定锚点 ~ 当前时间，在本次任务运行期间保持稳定（不逐页重新取"现在"）
+        String createdTimeFrom = DEV_START_TIME.format(DATETIME_FORMATTER);
+        String createdTimeTo = LocalDateTime.now().format(DATETIME_FORMATTER);
 
         List<Object> allSkuList = new ArrayList<>();
         int pageNum = 1;
@@ -55,6 +82,8 @@ public class AiyaSkuInitHandler extends AbstractAiyaInitHandler {
             reqDTO.setCustomerCode(auth.getCustomerCode());
             reqDTO.setPageNum(pageNum);
             reqDTO.setPageSize(DEFAULT_PAGE_SIZE);
+            reqDTO.setCreatedTimeFrom(createdTimeFrom);
+            reqDTO.setCreatedTimeTo(createdTimeTo);
 
             JSONObject response;
             try {

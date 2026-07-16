@@ -14,6 +14,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -58,8 +60,8 @@ public class AiyaOpenApiServiceManualTest {
     /**
      * 账户只有生产账号，无独立测试环境；生产账号下专门划出的测试仓库编码。
      * 文档里 warehouseCode 为「是」（必填）的接口（queryTransport/queryInventory/saveInorder/
-     * queryInorderPage/save2cOrder/query2cOrderPage）必须带这个仓库编码，
-     * 避免误操作到真实生产仓库数据。
+     * save2cOrder/query2cOrderPage）必须带这个仓库编码，避免误操作到真实生产仓库数据。
+     * 注：queryAsnInspectDetail（原 queryInorderPage）改按上架完成时间窗口查询，不再需要 warehouseCode。
      */
     private static final String TEST_WAREHOUSE_CODE = "SHENZHEN-01";
 
@@ -76,6 +78,8 @@ public class AiyaOpenApiServiceManualTest {
 
     @Test
     public void querySkuTest() {
+        // 真实接口要求 skus/createdTime范围/updatedTime范围 三者至少非空一组，否则报
+        // INVALID_DATA: Created time and Updated time and SKUs cannot be both empty（文档未列出）
         AiyaSkuQueryDTO.QueryReqDTO reqDTO = new AiyaSkuQueryDTO.QueryReqDTO();
         reqDTO.setAccessToken(ACCESS_TOKEN);
         reqDTO.setSecret(SECRET);
@@ -83,6 +87,8 @@ public class AiyaOpenApiServiceManualTest {
         reqDTO.setPageNum(1);
         reqDTO.setPageSize(AiyaSkuQueryDTO.DEFAULT_PAGE_SIZE);
         // reqDTO.setStatus("Active"); // 可选：按状态过滤，真实大小写/取值需联调确认
+        reqDTO.setCreatedTimeFrom("2026-07-14 00:00:00"); // 锚点：本次爱亚对接开发起始日期，与 AiyaSkuInitHandler 一致
+        reqDTO.setCreatedTimeTo(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         JSONObject response = aiyaOpenApiService.querySku(reqDTO);
         System.out.println(JSONUtil.toJsonStr(response));
         // 重点核对：response.itemList 是否存在、每条 item 的 sku/name/barcode/status 字段名与文档是否一致，
@@ -131,24 +137,26 @@ public class AiyaOpenApiServiceManualTest {
         Map<String, Object> bizParams = new HashMap<>();
         // 文档：warehouseCode 必填（目的仓的仓库编码），生产账号必须带测试专属仓库编码
         bizParams.put("warehouseCode", TEST_WAREHOUSE_CODE);
-        // TODO：按 AiyaConstants.INORDER_SAVE 真实字段补充剩余业务参数（refNumber/markList 明细等）
+        // TODO：按 AiyaConstants.GLINK_CREATE_ASN_NOTIFY 真实字段补充剩余业务参数（refNumber/markList 明细等）
         JSONObject response = aiyaOpenApiService.saveInorder(ACCESS_TOKEN, SECRET, CUSTOMER_CODE, bizParams);
         System.out.println(JSONUtil.toJsonStr(response));
     }
 
     @Test
-    public void queryInorderPageTest() {
-        Map<String, Object> bizParams = new HashMap<>();
-        // 文档：warehouseCode 必填
-        bizParams.put("warehouseCode", TEST_WAREHOUSE_CODE);
-        AiyaInboundResp response = aiyaOpenApiService.queryInorderPage(ACCESS_TOKEN, SECRET, CUSTOMER_CODE, 1, 200, bizParams);
+    public void queryAsnInspectDetailTest() {
+        // queryInorderPage 已被移除，现按「上架完成时间」窗口查询入库单验货明细（GLINK_QUERY_ASN_INSPECT_DETAIL_NOTIFY），
+        // 不再接收 warehouseCode/bizParams
+        AiyaInboundResp response = aiyaOpenApiService.queryAsnInspectDetail(
+                ACCESS_TOKEN, SECRET, CUSTOMER_CODE, 1, 200,
+                null, null); // TODO：按需传 putawayCompletedTimeFrom/To（yyyy-MM-dd HH:mm:ss）缩小范围
         System.out.println(JSONUtil.toJsonStr(response));
     }
 
     @Test
     public void cancelInorderTest() {
-        String no = "TODO-填真实入库单号";
-        JSONObject response = aiyaOpenApiService.cancelInorder(ACCESS_TOKEN, SECRET, CUSTOMER_CODE, no);
+        // cancelInorder 签名已从单个 no（String）改为 asnNumbers（List<String>）
+        List<String> asnNumbers = Arrays.asList("TODO-填真实入库单号(即发货单号asnNumber)");
+        JSONObject response = aiyaOpenApiService.cancelInorder(ACCESS_TOKEN, SECRET, CUSTOMER_CODE, asnNumbers);
         System.out.println(JSONUtil.toJsonStr(response));
     }
 
