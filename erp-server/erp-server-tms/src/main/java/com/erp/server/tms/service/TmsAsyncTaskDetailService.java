@@ -29,12 +29,12 @@ public interface TmsAsyncTaskDetailService extends SuperService<TmsAsyncTaskDeta
     boolean tryClaimDetailForExecution(String taskDetailId);
 
     /**
-     * 将失败/僵死执行中的明细重新认领为 ING（错误重试、watchdog 恢复）。
+     * 将失败明细重新认领为 ING（错误重试）。
      * <p>
-     * 仅当库中状态仍为 FAILED 或 ING 时 CAS 成功，避免并发覆盖终态。
+     * 仅当库中状态仍为 FAILED 时 CAS 成功；僵死 ING 明细必须先由 watchdog 标记为 FAILED。
      *
      * @param taskDetailId 任务明细 ID
-     * @return true 表示认领成功；false 表示状态已变化
+     * @return true 表示认领成功；false 表示状态已变化或明细仍为 ING
      */
     boolean tryClaimDetailForRetry(String taskDetailId);
 
@@ -46,6 +46,14 @@ public interface TmsAsyncTaskDetailService extends SuperService<TmsAsyncTaskDeta
      * @return 实际标记为失败的明细数量
      */
     int markDetailsFailed(Collection<String> detailIds, String errorMsg);
+
+    /**
+     * 批量将未进入终态的任务明细标记为成功。
+     *
+     * @param detailIds 任务明细 ID 集合
+     * @return 实际标记为成功的明细数量
+     */
+    int markDetailsFinished(Collection<String> detailIds);
 
     /**
      * 将超过执行窗口的 ING 明细标记为失败，不重置为 PENDING，后续走错误重试。

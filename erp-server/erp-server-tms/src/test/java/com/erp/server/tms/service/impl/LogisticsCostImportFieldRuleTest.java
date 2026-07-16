@@ -316,6 +316,35 @@ public class LogisticsCostImportFieldRuleTest {
     }
 
     @Test
+    public void splitIdentifyNoProcessBillsShouldNotUpdatePendingCostFromDifferentMonth() throws Exception {
+        ImportHistoryRecordServiceImpl service = new ImportHistoryRecordServiceImpl();
+        String payType = logisticsPayTypeEnum.PAY.getCode();
+        LogisticsBillDTO.LogisticsBillVo billVo = billVoWithSupplier("bill-1", "detail-1", "supplier-a");
+        LogisticsBillCostEntity pendingJuly = billCost("cost-july", "detail-1", payType,
+                ReconciliationStatusEnum.TO_BE_CONFIRM.getCode(), "2026-07");
+        pendingJuly.setLogisticsBillId("bill-1");
+        LogisticsBillCostEntity confirmedJune = billCost("cost-june", "detail-1", payType,
+                ReconciliationStatusEnum.CONFIRMED.getCode(), "2026-06");
+        confirmedJune.setLogisticsBillId("bill-1");
+        CfgLogisticsCostImportEntity config = costImportConfig(
+                CfgLogisticsCostImportIdentifyTypeEnum.IDENTIFY_NO.getCode(),
+                CfgLogisticsCostImportCfgTypeEnum.LOGISTICS_SUPPLIER.getCode(),
+                "supplier-a");
+        config.setImportType(CfgLogisticsCostImportImportTypeEnum.IMPORT_UPDATE.getCode()
+                + "," + CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_OLD.getCode());
+        List<LogisticsBillDTO.LogisticsBillVo> updateBillList = new ArrayList<>();
+        List<LogisticsBillDTO.LogisticsBillVo> addOldBillList = new ArrayList<>();
+
+        invokePrivate(service, "splitIdentifyNoProcessBills",
+                new Class[]{List.class, List.class, String.class, String.class, CfgLogisticsCostImportEntity.class, List.class, List.class},
+                Collections.singletonList(billVo), Arrays.asList(pendingJuly, confirmedJune), payType, "2026-06", config,
+                updateBillList, addOldBillList);
+
+        assertTrue(updateBillList.isEmpty());
+        assertEquals(1, addOldBillList.size());
+    }
+
+    @Test
     public void checkCostImportDataShouldBlockAddOldWhenConfirmedSameMonthAndPayType() throws Exception {
         ImportHistoryRecordServiceImpl service = new ImportHistoryRecordServiceImpl();
         String payType = logisticsPayTypeEnum.PAY.getCode();
@@ -406,6 +435,165 @@ public class LogisticsCostImportFieldRuleTest {
                 excelDTO, Collections.singletonList(existing), billVo, config, errorMsgList);
 
         assertTrue(errorMsgList.stream().anyMatch(msg -> msg.contains("已存在相同对账月份和付款类型的物流费用单")));
+    }
+
+    @Test
+    public void checkCostImportDataShouldBlockCrossMonthPendingUpdateWhenTargetMonthExists() throws Exception {
+        ImportHistoryRecordServiceImpl service = new ImportHistoryRecordServiceImpl();
+        String payType = logisticsPayTypeEnum.PAY.getCode();
+        LogisticsBillDTO.LogisticsBillVo billVo = billVo("bill-1", "detail-1", null, "track-1", "so-1");
+        billVo.setReconciliationMonth("2026-06");
+        LogisticsBillCostEntity confirmedJune = billCost("cost-june", "detail-1", payType,
+                ReconciliationStatusEnum.CONFIRMED.getCode(), "2026-06");
+        confirmedJune.setLogisticsBillId("bill-1");
+        LogisticsBillCostEntity pendingJuly = billCost("cost-july", "detail-1", payType,
+                ReconciliationStatusEnum.TO_BE_CONFIRM.getCode(), "2026-07");
+        pendingJuly.setLogisticsBillId("bill-1");
+        ImportHistoryRecordExcelDTO excelDTO = new ImportHistoryRecordExcelDTO();
+        excelDTO.setPayType(payType);
+        excelDTO.setTrackNo("track-1");
+        CfgLogisticsCostImportEntity config = costImportConfig(
+                CfgLogisticsCostImportIdentifyTypeEnum.IDENTIFY_NO.getCode(),
+                CfgLogisticsCostImportCfgTypeEnum.LOGISTICS_SUPPLIER.getCode(),
+                "supplier-a");
+        config.setImportType(CfgLogisticsCostImportImportTypeEnum.IMPORT_UPDATE.getCode()
+                + "," + CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_OLD.getCode());
+        List<String> errorMsgList = new ArrayList<>();
+
+        invokePrivate(service, "checkCostImportData",
+                new Class[]{ImportHistoryRecordExcelDTO.class, List.class, LogisticsBillDTO.LogisticsBillVo.class,
+                        CfgLogisticsCostImportEntity.class, List.class},
+                excelDTO, Arrays.asList(confirmedJune, pendingJuly), billVo, config, errorMsgList);
+
+        assertTrue(errorMsgList.stream().anyMatch(msg -> msg.contains("相同对账月份和付款类型")));
+    }
+
+    @Test
+    public void checkCostImportDataShouldBlockUpdateWhenTargetMonthAlreadyHasMultipleCosts() throws Exception {
+        ImportHistoryRecordServiceImpl service = new ImportHistoryRecordServiceImpl();
+        String payType = logisticsPayTypeEnum.PAY.getCode();
+        LogisticsBillDTO.LogisticsBillVo billVo = billVo("bill-1", "detail-1", null, "track-1", "so-1");
+        billVo.setReconciliationMonth("2026-06");
+        LogisticsBillCostEntity pendingJune = billCost("cost-pending", "detail-1", payType,
+                ReconciliationStatusEnum.TO_BE_CONFIRM.getCode(), "2026-06");
+        pendingJune.setLogisticsBillId("bill-1");
+        LogisticsBillCostEntity confirmedJune = billCost("cost-confirmed", "detail-1", payType,
+                ReconciliationStatusEnum.CONFIRMED.getCode(), "2026-06");
+        confirmedJune.setLogisticsBillId("bill-1");
+        ImportHistoryRecordExcelDTO excelDTO = new ImportHistoryRecordExcelDTO();
+        excelDTO.setPayType(payType);
+        excelDTO.setTrackNo("track-1");
+        CfgLogisticsCostImportEntity config = costImportConfig(
+                CfgLogisticsCostImportIdentifyTypeEnum.IDENTIFY_NO.getCode(),
+                CfgLogisticsCostImportCfgTypeEnum.LOGISTICS_SUPPLIER.getCode(),
+                "supplier-a");
+        config.setImportType(CfgLogisticsCostImportImportTypeEnum.IMPORT_UPDATE.getCode());
+        List<String> errorMsgList = new ArrayList<>();
+
+        invokePrivate(service, "checkCostImportData",
+                new Class[]{ImportHistoryRecordExcelDTO.class, List.class, LogisticsBillDTO.LogisticsBillVo.class,
+                        CfgLogisticsCostImportEntity.class, List.class},
+                excelDTO, Arrays.asList(pendingJune, confirmedJune), billVo, config, errorMsgList);
+
+        assertTrue(errorMsgList.stream().anyMatch(msg -> msg.contains("不支持更新")));
+    }
+
+    @Test
+    public void findMatchedLogisticsBillCostShouldSelectPendingCostFromTargetMonth() throws Exception {
+        ImportHistoryRecordServiceImpl service = new ImportHistoryRecordServiceImpl();
+        String payType = logisticsPayTypeEnum.PAY.getCode();
+        LogisticsBillDTO.LogisticsBillVo billVo = billVoWithSupplier("bill-1", "detail-1", "supplier-a");
+        billVo.setReconciliationMonth("2026-06");
+        LogisticsBillCostEntity pendingJuly = billCost("cost-july", "detail-1", payType,
+                ReconciliationStatusEnum.TO_BE_CONFIRM.getCode(), "2026-07");
+        LogisticsBillCostEntity pendingJune = billCost("cost-june", "detail-1", payType,
+                ReconciliationStatusEnum.TO_BE_CONFIRM.getCode(), "2026-06");
+        CfgLogisticsCostImportEntity config = costImportConfig(
+                CfgLogisticsCostImportIdentifyTypeEnum.IDENTIFY_NO.getCode(),
+                CfgLogisticsCostImportCfgTypeEnum.LOGISTICS_SUPPLIER.getCode(),
+                "supplier-a");
+
+        LogisticsBillCostEntity matched = (LogisticsBillCostEntity) invokePrivate(service, "findMatchedLogisticsBillCost",
+                new Class[]{List.class, LogisticsBillDTO.LogisticsBillVo.class, String.class, String.class,
+                        CfgLogisticsCostImportEntity.class},
+                Arrays.asList(pendingJuly, pendingJune), billVo, payType,
+                CfgLogisticsCostImportImportTypeEnum.IMPORT_UPDATE.getCode(), config);
+
+        assertEquals("cost-june", matched.getId());
+    }
+
+    @Test
+    public void findMatchedLogisticsBillCostShouldAllowEmptyMonthPendingUpdate() throws Exception {
+        ImportHistoryRecordServiceImpl service = new ImportHistoryRecordServiceImpl();
+        String payType = logisticsPayTypeEnum.PAY.getCode();
+        LogisticsBillDTO.LogisticsBillVo billVo = billVoWithSupplier("bill-1", "detail-1", "supplier-a");
+        billVo.setReconciliationMonth("2026-06");
+        LogisticsBillCostEntity pendingEmpty = billCost("cost-empty", "detail-1", payType,
+                ReconciliationStatusEnum.TO_BE_CONFIRM.getCode(), null);
+        LogisticsBillCostEntity pendingJuly = billCost("cost-july", "detail-1", payType,
+                ReconciliationStatusEnum.TO_BE_CONFIRM.getCode(), "2026-07");
+        CfgLogisticsCostImportEntity config = costImportConfig(
+                CfgLogisticsCostImportIdentifyTypeEnum.IDENTIFY_NO.getCode(),
+                CfgLogisticsCostImportCfgTypeEnum.LOGISTICS_SUPPLIER.getCode(),
+                "supplier-a");
+
+        LogisticsBillCostEntity matched = (LogisticsBillCostEntity) invokePrivate(service, "findMatchedLogisticsBillCost",
+                new Class[]{List.class, LogisticsBillDTO.LogisticsBillVo.class, String.class, String.class,
+                        CfgLogisticsCostImportEntity.class},
+                Arrays.asList(pendingJuly, pendingEmpty), billVo, payType,
+                CfgLogisticsCostImportImportTypeEnum.IMPORT_UPDATE.getCode(), config);
+
+        assertEquals("cost-empty", matched.getId());
+    }
+
+    @Test
+    public void findMatchedLogisticsBillCostShouldPreferExactMonthOverEmptyMonth() throws Exception {
+        ImportHistoryRecordServiceImpl service = new ImportHistoryRecordServiceImpl();
+        String payType = logisticsPayTypeEnum.PAY.getCode();
+        LogisticsBillDTO.LogisticsBillVo billVo = billVoWithSupplier("bill-1", "detail-1", "supplier-a");
+        billVo.setReconciliationMonth("2026-06");
+        LogisticsBillCostEntity pendingEmpty = billCost("cost-empty", "detail-1", payType,
+                ReconciliationStatusEnum.TO_BE_CONFIRM.getCode(), null);
+        LogisticsBillCostEntity pendingJune = billCost("cost-june", "detail-1", payType,
+                ReconciliationStatusEnum.TO_BE_CONFIRM.getCode(), "2026-06");
+        CfgLogisticsCostImportEntity config = costImportConfig(
+                CfgLogisticsCostImportIdentifyTypeEnum.IDENTIFY_NO.getCode(),
+                CfgLogisticsCostImportCfgTypeEnum.LOGISTICS_SUPPLIER.getCode(),
+                "supplier-a");
+
+        LogisticsBillCostEntity matched = (LogisticsBillCostEntity) invokePrivate(service, "findMatchedLogisticsBillCost",
+                new Class[]{List.class, LogisticsBillDTO.LogisticsBillVo.class, String.class, String.class,
+                        CfgLogisticsCostImportEntity.class},
+                Arrays.asList(pendingEmpty, pendingJune), billVo, payType,
+                CfgLogisticsCostImportImportTypeEnum.IMPORT_UPDATE.getCode(), config);
+
+        assertEquals("cost-june", matched.getId());
+    }
+
+    @Test
+    public void splitIdentifyNoProcessBillsShouldUpdateEmptyMonthPendingForTargetMonth() throws Exception {
+        ImportHistoryRecordServiceImpl service = new ImportHistoryRecordServiceImpl();
+        String payType = logisticsPayTypeEnum.PAY.getCode();
+        LogisticsBillDTO.LogisticsBillVo billVo = billVoWithSupplier("bill-1", "detail-1", "supplier-a");
+        LogisticsBillCostEntity pendingEmpty = billCost("cost-empty", "detail-1", payType,
+                ReconciliationStatusEnum.TO_BE_CONFIRM.getCode(), null);
+        pendingEmpty.setLogisticsBillId("bill-1");
+        CfgLogisticsCostImportEntity config = costImportConfig(
+                CfgLogisticsCostImportIdentifyTypeEnum.IDENTIFY_NO.getCode(),
+                CfgLogisticsCostImportCfgTypeEnum.LOGISTICS_SUPPLIER.getCode(),
+                "supplier-a");
+        config.setImportType(CfgLogisticsCostImportImportTypeEnum.IMPORT_UPDATE.getCode()
+                + "," + CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_OLD.getCode());
+        List<LogisticsBillDTO.LogisticsBillVo> updateBillList = new ArrayList<>();
+        List<LogisticsBillDTO.LogisticsBillVo> addOldBillList = new ArrayList<>();
+
+        invokePrivate(service, "splitIdentifyNoProcessBills",
+                new Class[]{List.class, List.class, String.class, String.class, CfgLogisticsCostImportEntity.class, List.class, List.class},
+                Collections.singletonList(billVo), Collections.singletonList(pendingEmpty), payType, "2026-06", config,
+                updateBillList, addOldBillList);
+
+        assertEquals(1, updateBillList.size());
+        assertTrue(addOldBillList.isEmpty());
     }
 
     @Test

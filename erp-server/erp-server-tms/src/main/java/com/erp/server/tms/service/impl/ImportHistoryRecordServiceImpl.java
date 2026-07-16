@@ -611,9 +611,9 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
     }
 
     private ImportHistoryRecordDTO.ImportGroupContextDTO buildImportGroupContext(List<JSONObject> successList,
-                                                                                 List<CfgLogisticsCostImportDetailEntity> uniqueKeyList,
-                                                                                 ImportHistoryRecordDTO.PreQueryResultDTO preQueryResult,
-                                                                                 CfgLogisticsCostImportEntity costImportEntity) {
+                                                                                  List<CfgLogisticsCostImportDetailEntity> uniqueKeyList,
+                                                                                  ImportHistoryRecordDTO.PreQueryResultDTO preQueryResult,
+                                                                                  CfgLogisticsCostImportEntity costImportEntity) {
         Map<String, List<LogisticsBillDTO.LogisticsBillVo>> billVoIndex = buildLogisticsBillVoIndex(
                 preQueryResult.getLogisticsBillVoList(), uniqueKeyList, costImportEntity);
         Map<String, List<ImportHistoryRecordDTO.ImportRowContextDTO>> groupRowMap = new LinkedHashMap<>();
@@ -630,6 +630,20 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             groupMatchedBillMap.put(groupKey, resolveGroupMatchedLogisticsBillVoList(rowContextList, ignoreErrorList));
         });
         return new ImportHistoryRecordDTO.ImportGroupContextDTO(groupRowMap, groupMatchedBillMap);
+    }
+
+    /** Compatibility overload used by callers that still provide the pre-query context. */
+    private String buildImportRowGroupKey(JSONObject row,
+                                          List<CfgLogisticsCostImportDetailEntity> uniqueKeyList,
+                                          ImportHistoryRecordDTO.PreQueryResultDTO preQueryResult,
+                                          CfgLogisticsCostImportEntity costImportEntity) {
+        if (preQueryResult == null) {
+            return buildImportRowGroupKey(row, uniqueKeyList, Collections.emptyList());
+        }
+        Map<String, List<LogisticsBillDTO.LogisticsBillVo>> billVoIndex = buildLogisticsBillVoIndex(
+                preQueryResult.getLogisticsBillVoList(), uniqueKeyList, costImportEntity);
+        return buildImportRowGroupKey(row, uniqueKeyList,
+                resolveMatchedLogisticsBillVoList(uniqueKeyList, row, billVoIndex, costImportEntity));
     }
 
     /**
@@ -835,7 +849,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
      * <p>同一组内费用会被合计后统一处理，因此每行命中的物流单集合必须一致；不一致时直接报错，避免错误合并费用。</p>
      */
     private List<LogisticsBillDTO.LogisticsBillVo> resolveGroupMatchedLogisticsBillVoList(List<ImportHistoryRecordDTO.ImportRowContextDTO> rowContextList,
-                                                                                          List<String> errorMsgList) {
+                                                                                           List<String> errorMsgList) {
         if (CollUtil.isEmpty(rowContextList)) {
             return Collections.emptyList();
         }
@@ -852,6 +866,25 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             }
         }
         return firstMatchedList;
+    }
+
+    /** Compatibility overload that resolves row values from a pre-query context before grouping. */
+    private List<LogisticsBillDTO.LogisticsBillVo> resolveGroupMatchedLogisticsBillVoList(
+            List<CfgLogisticsCostImportDetailEntity> uniqueKeyList,
+            List<JSONObject> rows,
+            ImportHistoryRecordDTO.PreQueryResultDTO preQueryResult,
+            CfgLogisticsCostImportEntity costImportEntity,
+            List<String> errorMsgList) {
+        if (preQueryResult == null || CollUtil.isEmpty(rows)) {
+            return Collections.emptyList();
+        }
+        Map<String, List<LogisticsBillDTO.LogisticsBillVo>> billVoIndex = buildLogisticsBillVoIndex(
+                preQueryResult.getLogisticsBillVoList(), uniqueKeyList, costImportEntity);
+        List<ImportHistoryRecordDTO.ImportRowContextDTO> contexts = rows.stream()
+                .map(row -> new ImportHistoryRecordDTO.ImportRowContextDTO(row,
+                        resolveMatchedLogisticsBillVoList(uniqueKeyList, row, billVoIndex, costImportEntity)))
+                .collect(Collectors.toList());
+        return resolveGroupMatchedLogisticsBillVoList(contexts, errorMsgList);
     }
 
     /**
@@ -1297,6 +1330,16 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 multiBillVoList.addAll(matchedBillList);
             }
         }
+        if (rowMatchedMap.values().stream().allMatch(CollUtil::isEmpty)
+                && allRowsHaveIdentifyValues(ctx.getRows(), identifyFields)) {
+            return ctx.getRows().stream().map(row -> {
+                LogisticsReconMatchDTO.MatchResultDTO result = new LogisticsReconMatchDTO.MatchResultDTO();
+                result.setRowKey(row.getRowKey());
+                result.setSuccess(false);
+                result.setFailReason("未找到对应物流单");
+                return result;
+            }).collect(Collectors.toList());
+        }
         if (CollUtil.isNotEmpty(multiBillVoList)) {
             fillOrderWeightPreQuery(distinctLogisticsBillVoList(multiBillVoList), preQueryResult);
         }
@@ -1405,6 +1448,17 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                     costImportEntity, cfgImportDetailList, reconBillRefCostDetailMap, importDTO.getProcessingType()));
         }
         return fanOutReconMatchResults(groupResults, groupToOriginalRowKeys);
+    }
+
+    private boolean allRowsHaveIdentifyValues(List<LogisticsReconMatchDTO.MatchRowDTO> rows,
+                                              List<String> identifyFields) {
+        if (CollUtil.isEmpty(rows) || CollUtil.isEmpty(identifyFields)) {
+            return false;
+        }
+        return rows.stream().allMatch(row -> row != null
+                && row.getIdentifyValues() != null
+                && identifyFields.stream().allMatch(field ->
+                CharSequenceUtil.isNotBlank(row.getIdentifyValues().get(field))));
     }
 
     @Override
@@ -2610,19 +2664,21 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         if (CfgLogisticsCostImportImportTypeEnum.IMPORT_UPDATE.getCode().equals(importType)
                 && !shouldFilterByCostImportPlatform(costImportEntity)) {
             // 按识别单号更新只动待确认单；暂估确认等状态在跨物流商合并场景下不参与分摊更新。
-            return logisticsBillCostList.stream()
+            return preferExactMonthCost(logisticsBillCostList.stream()
                     .filter(obj -> CharSequenceUtil.equals(obj.getLogisticsBillDetailId(), logisticsBillVo.getDetailId())
                             && CharSequenceUtil.equals(obj.getReconciliationStatus(), ReconciliationStatusEnum.TO_BE_CONFIRM.getCode())
+                            && isUpdatableReconciliationMonth(logisticsBillVo.getReconciliationMonth(), obj.getReconciliationMonth())
                             && CharSequenceUtil.equals(obj.getPayType(), payType))
-                    .findFirst().orElse(null);
+                    .collect(Collectors.toList()), logisticsBillVo.getReconciliationMonth());
         }
-        LogisticsBillCostEntity logisticsBillCostEntity = logisticsBillCostList.stream().filter(obj ->
+        LogisticsBillCostEntity logisticsBillCostEntity = preferExactMonthCost(logisticsBillCostList.stream().filter(obj ->
                         CharSequenceUtil.equals(obj.getLogisticsBillDetailId(), logisticsBillVo.getDetailId())
                                 && (CharSequenceUtil.equals(obj.getReconciliationStatus(), ReconciliationStatusEnum.TO_BE_CONFIRM.getCode())
                                 || (CharSequenceUtil.equals(ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode(), obj.getReconciliationStatus())
                                 && CharSequenceUtil.equals(obj.getCheckStatus(), LogisticsBillCostCheckStatusEnum.CHECKING.getCode())))
+                                && isUpdatableReconciliationMonth(logisticsBillVo.getReconciliationMonth(), obj.getReconciliationMonth())
                                 && CharSequenceUtil.equals(obj.getPayType(), payType))
-                .findFirst().orElse(null);
+                .collect(Collectors.toList()), logisticsBillVo.getReconciliationMonth());
         if (CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_OLD.getCode().equals(importType) && Objects.isNull(logisticsBillCostEntity)) {
             // 按旧单新增费用允许复用已存在费用单作为模板，不强制要求状态/付款类型仍可更新。
             logisticsBillCostEntity = logisticsBillCostList.stream()
@@ -2630,6 +2686,20 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                     .findFirst().orElse(null);
         }
         return logisticsBillCostEntity;
+    }
+
+    /**
+     * 候选费用单优先取对账月份与导入月份完全一致的；否则回退到空月份等可更新记录。
+     */
+    private LogisticsBillCostEntity preferExactMonthCost(List<LogisticsBillCostEntity> candidates, String importMonth) {
+        if (CollUtil.isEmpty(candidates)) {
+            return null;
+        }
+        return candidates.stream()
+                .filter(obj -> CharSequenceUtil.isNotBlank(obj.getReconciliationMonth())
+                        && CharSequenceUtil.equals(StrUtil.trim(importMonth), StrUtil.trim(obj.getReconciliationMonth())))
+                .findFirst()
+                .orElse(candidates.get(0));
     }
 
     /**
@@ -2650,10 +2720,11 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         boolean allowAddOld = costImportEntity.getImportType()
                 .contains(CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_OLD.getCode());
         boolean groupHasToBeConfirmSamePayType = matchedBillList.stream()
-                .anyMatch(billVo -> hasToBeConfirmSamePayType(billVo, logisticsBillCostList, payType));
+                .anyMatch(billVo -> hasToBeConfirmSamePayType(billVo, logisticsBillCostList, payType,
+                        importReconciliationMonth));
         for (LogisticsBillDTO.LogisticsBillVo billVo : matchedBillList) {
             if (groupHasToBeConfirmSamePayType) {
-                if (hasToBeConfirmSamePayType(billVo, logisticsBillCostList, payType)) {
+                if (hasToBeConfirmSamePayType(billVo, logisticsBillCostList, payType, importReconciliationMonth)) {
                     updateBillList.add(billVo);
                 }
                 continue;
@@ -2669,12 +2740,24 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
 
     private boolean hasToBeConfirmSamePayType(LogisticsBillDTO.LogisticsBillVo billVo,
                                               List<LogisticsBillCostEntity> logisticsBillCostList,
-                                              String payType) {
+                                              String payType,
+                                              String reconciliationMonth) {
         return logisticsBillCostList.stream().anyMatch(cost ->
                 isSameLogisticsBillDetail(billVo, cost)
                         && CharSequenceUtil.equals(cost.getPayType(), payType)
+                        && isUpdatableReconciliationMonth(reconciliationMonth, cost.getReconciliationMonth())
                         && CharSequenceUtil.equals(cost.getReconciliationStatus(),
                                 ReconciliationStatusEnum.TO_BE_CONFIRM.getCode()));
+    }
+
+    /**
+     * 更新候选月份是否匹配：费用单对账月份为空可更新；有值则必须与导入月份一致，禁止改写其他月份。
+     */
+    private boolean isUpdatableReconciliationMonth(String importMonth, String costMonth) {
+        if (CharSequenceUtil.isBlank(costMonth)) {
+            return true;
+        }
+        return CharSequenceUtil.equals(StrUtil.trim(importMonth), StrUtil.trim(costMonth));
     }
 
     /**
@@ -2707,8 +2790,10 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         if (billVo == null || cost == null) {
             return false;
         }
-        return CharSequenceUtil.equals(cost.getLogisticsBillId(), billVo.getId())
-                && CharSequenceUtil.equals(cost.getLogisticsBillDetailId(), billVo.getDetailId());
+        // Historical cost rows may lack logisticsBillId; detailId remains the mandatory discriminator.
+        return CharSequenceUtil.equals(cost.getLogisticsBillDetailId(), billVo.getDetailId())
+                && (CharSequenceUtil.isBlank(cost.getLogisticsBillId())
+                || CharSequenceUtil.equals(cost.getLogisticsBillId(), billVo.getId()));
     }
 
     /**
@@ -3117,12 +3202,14 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
              * 2、其他情况走新增（按原单）逻辑
              */
 
+            // Reconciliation updates must stay within the target month; cross-month rows are never update candidates.
             List<LogisticsBillCostEntity> thisMonthEntityList = logisticsBillCostList.stream()
                     .filter(obj -> isSameLogisticsBillDetail(logisticsBillVo, obj)
                             && (
                             (CharSequenceUtil.equals(obj.getReconciliationStatus(), ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode()) && CharSequenceUtil.equals(obj.getCheckStatus(),LogisticsBillCostCheckStatusEnum.CHECKING.getCode()))
                                     || (CharSequenceUtil.equals(obj.getReconciliationStatus(), ReconciliationStatusEnum.TO_BE_CONFIRM.getCode()))
                     )
+                            && isUpdatableReconciliationMonth(logisticsBillVo.getReconciliationMonth(), obj.getReconciliationMonth())
                             && CharSequenceUtil.equals(excelDTO.getPayType(),obj.getPayType()))
                     .collect(Collectors.toList());
             //未查询到物流费用单则需要按新增分货（按原单）逻辑处理
@@ -3132,6 +3219,13 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                     errorMsgList.add("配置的导入处理类型不包含导入更新，请核查配置");
                 }
                 importType = CfgLogisticsCostImportImportTypeEnum.IMPORT_UPDATE.getCode();
+                long sameMonthCount = logisticsBillCostEntityList.stream()
+                        .filter(obj -> isUpdatableReconciliationMonth(logisticsBillVo.getReconciliationMonth(),
+                                obj.getReconciliationMonth()))
+                        .count();
+                if (sameMonthCount > 1) {
+                    errorMsgList.add("已存在相同对账月份和付款类型的物流费用单，不支持更新");
+                }
             } else {
                 boolean contains = costImportEntity.getImportType().contains(CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_OLD.getCode());
                 if (!contains) {

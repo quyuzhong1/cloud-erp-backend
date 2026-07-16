@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
 @Service
 public class TmsAsyncTaskDetailServiceImpl extends SuperServiceImpl<AsyncTaskDetailRecordMapper, TmsAsyncTaskDetailEntity> implements TmsAsyncTaskDetailService {
 
-
+    private static final int UPDATE_BATCH_SIZE = 1000;
 
     @Override
     public void updateDetail(String taskDetailId, String status, String msg){
@@ -68,9 +68,7 @@ public class TmsAsyncTaskDetailServiceImpl extends SuperServiceImpl<AsyncTaskDet
             .set(TmsAsyncTaskDetailEntity::getStartTime, LocalDateTime.now())
             .set(TmsAsyncTaskDetailEntity::getErrorData, "")
             .eq(TmsAsyncTaskDetailEntity::getId, taskDetailId)
-            .in(TmsAsyncTaskDetailEntity::getStatus, Arrays.asList(
-                    TmsAsyncTaskRecordStatusEnum.FAILED.getCode(),
-                    TmsAsyncTaskRecordStatusEnum.ING.getCode()))
+            .eq(TmsAsyncTaskDetailEntity::getStatus, TmsAsyncTaskRecordStatusEnum.FAILED.getCode())
             .update();
     }
 
@@ -109,6 +107,41 @@ public class TmsAsyncTaskDetailServiceImpl extends SuperServiceImpl<AsyncTaskDet
                 .notIn(TmsAsyncTaskDetailEntity::getStatus, terminalStatuses)
                 .update();
         return unfinishedCount;
+    }
+
+    @Override
+    public int markDetailsFinished(Collection<String> detailIds) {
+        if (detailIds == null || detailIds.isEmpty()) {
+            return 0;
+        }
+        List<String> validDetailIds = detailIds.stream()
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(validDetailIds)) {
+            return 0;
+        }
+        List<String> terminalStatuses = terminalStatuses();
+        int finishedCount = 0;
+        for (int i = 0; i < validDetailIds.size(); i += UPDATE_BATCH_SIZE) {
+            List<String> batch = validDetailIds.subList(i, Math.min(i + UPDATE_BATCH_SIZE, validDetailIds.size()));
+            int unfinishedCount = lambdaQuery()
+                    .in(TmsAsyncTaskDetailEntity::getId, batch)
+                    .notIn(TmsAsyncTaskDetailEntity::getStatus, terminalStatuses)
+                    .count();
+            if (unfinishedCount <= 0) {
+                continue;
+            }
+            lambdaUpdate()
+                    .set(TmsAsyncTaskDetailEntity::getStatus, TmsAsyncTaskRecordStatusEnum.FINISH.getCode())
+                    .set(TmsAsyncTaskDetailEntity::getEndTime, LocalDateTime.now())
+                    .set(TmsAsyncTaskDetailEntity::getErrorData, "")
+                    .in(TmsAsyncTaskDetailEntity::getId, batch)
+                    .notIn(TmsAsyncTaskDetailEntity::getStatus, terminalStatuses)
+                    .update();
+            finishedCount += unfinishedCount;
+        }
+        return finishedCount;
     }
 
     /**
