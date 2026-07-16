@@ -387,4 +387,14 @@ public class RocketMqConsumerGroup {
      * dmp 异步获取物流下单面单标签
      */
     public static final String DMP_ASYNC_GET_LOGISTICS_ORDER_LABEL_CONSUMER = "${spring.cloud.nacos.discovery.namespace}-dmp_async_get_logistics_order_label_consumer";
+
+    /**
+     * B2B 三方发货单创建出库（DMP → WMS Feign）
+     */
+    public static final String SYNC_B2B_THIRD_DELIVERY_CREATE = "${spring.cloud.nacos.discovery.namespace}-sync_b2b_third_create";
+
+    /**
+     * B2B 三方发货单取消出库（DMP → WMS Feign）
+     */
+    public static final String SYNC_B2B_THIRD_DELIVERY_CANCEL = "${spring.cloud.nacos.discovery.namespace}-sync_b2b_third_cancel";
 }
