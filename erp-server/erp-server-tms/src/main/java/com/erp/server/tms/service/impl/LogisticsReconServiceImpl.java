@@ -1949,7 +1949,8 @@ public class LogisticsReconServiceImpl
     }
 
     /**
-     * 分批执行匹配：主单锁内认领本批费用项 → {@link #doMatchSubsChunk} → 按费用项回写任务明细。
+     * 分批执行匹配：主单锁内扩组 → 按识别组打包 → 整组认领校验 → {@link #doMatchSubsChunk} → 回写任务明细。
+     * <p>扩组/认领均在主单锁内完成；识别组未完整认领时整组跳过，避免半组合并覆盖费用。</p>
      */
     @Override
     public TmsAsyncTaskRecordDTO.BatchProcessResult processMatchBatch(String taskId, String mainId,
@@ -1958,13 +1959,17 @@ public class LogisticsReconServiceImpl
         if (StrUtil.isBlank(mainId) || CollUtil.isEmpty(batchSubIds)) {
             return new TmsAsyncTaskRecordDTO.BatchProcessResult(0, 0);
         }
-        List<String> subIds = batchSubIds.stream().filter(StrUtil::isNotBlank).distinct()
+        List<String> seedSubIds = batchSubIds.stream().filter(StrUtil::isNotBlank).distinct()
                 .collect(Collectors.toList());
-        if (CollUtil.isEmpty(subIds)) {
+        if (CollUtil.isEmpty(seedSubIds)) {
             return new TmsAsyncTaskRecordDTO.BatchProcessResult(0, 0);
         }
+        List<CfgLogisticsCostImportDetailEntity> uniqueKeyList = loadUniqueKeyListByMainId(mainId);
+        if (CollUtil.isEmpty(uniqueKeyList)) {
+            log.warn("[processMatchBatch] 对账单未配置识别唯一键，无法按识别组扩组合并 mainId={}", mainId);
+        }
         String businessType = TmsAsyncTaskRecordBusinessTypeEnum.LOGISTICS_RECON.getCode();
-        Map<String, TmsAsyncTaskDetailEntity> detailMap = loadOrCreateTaskDetails(taskId, businessType, subIds);
+        Map<String, TmsAsyncTaskDetailEntity> detailMap = new LinkedHashMap<>();
         int success = 0;
         int failed = 0;
         // 已置 MATCHING 的费用项：外层异常或“匹配未完成”时必须回写，避免永久卡在 matching
@@ -1975,8 +1980,9 @@ public class LogisticsReconServiceImpl
         try {
             locked = tryLockReconMain(lock, mainId, "processMatchBatch");
             if (!locked) {
-                // 等待超时仍未拿到锁：本批落 FAILED，便于错误重试；不再用 tryLock(0) 瞬时误杀
-                for (String subId : subIds) {
+                // 锁外仅处理本批种子明细，避免未持锁扩组误伤同组其它 PENDING
+                detailMap.putAll(loadOrCreateTaskDetails(taskId, businessType, seedSubIds));
+                for (String subId : seedSubIds) {
                     TmsAsyncTaskDetailEntity detail = detailMap.get(subId);
                     if (detail == null || isTaskDetailTerminal(detail.getStatus())) {
                         continue;
@@ -1987,53 +1993,22 @@ public class LogisticsReconServiceImpl
                 return new TmsAsyncTaskRecordDTO.BatchProcessResult(success, failed);
             }
             UserContext.setLoginUser(operatorUser);
-            List<TmsAsyncTaskDetailEntity> claimedDetails = new ArrayList<>();
-            for (String subId : subIds) {
-                TmsAsyncTaskDetailEntity detail = detailMap.get(subId);
-                int[] claimCounted = tryClaimTaskDetailForBatch(detail);
-                if (claimCounted != null) {
-                    success += claimCounted[0];
-                    failed += claimCounted[1];
-                    continue;
-                }
-                claimedDetails.add(detail);
+            // ① 锁内扩组：保证与同步匹配互斥后再凑齐同识别组 PENDING
+            List<String> expandedSubIds = expandTaskPendingSubIdsByIdentifyGroup(
+                    taskId, mainId, seedSubIds, uniqueKeyList);
+            detailMap.putAll(loadOrCreateTaskDetails(taskId, businessType, expandedSubIds));
+            // ② 扩组后按识别组打包，避免单次匹配体量过大
+            List<List<String>> chunks = packSubIdsByIdentifyGroup(
+                    mainId, expandedSubIds, MATCH_CHUNK_SIZE, uniqueKeyList);
+            LogisticsReconEntity entity = super.getByIdOpt(mainId)
+                    .orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, DOC_NAME));
+            LogisticsReconMatchDTO.ReconMatchPreloadDTO preload = buildReconMatchPreload(entity);
+            for (List<String> chunkSubIds : chunks) {
+                int[] chunkResult = processMatchBatchChunk(taskId, mainId, chunkSubIds, isConfirm, preload,
+                        uniqueKeyList, detailMap, feeItemsClaimedMatching);
+                success += chunkResult[0];
+                failed += chunkResult[1];
             }
-            if (CollUtil.isEmpty(claimedDetails)) {
-                return new TmsAsyncTaskRecordDTO.BatchProcessResult(success, failed);
-            }
-            List<String> claimIds = claimedDetails.stream().map(TmsAsyncTaskDetailEntity::getBusinessId)
-                    .collect(Collectors.toList());
-            List<String> claimedSubIds = logisticsReconDetailSubService.batchClaimMatchStatus(
-                    claimIds, LogisticsReconDetailMatchStatusEnum.MATCHING.getCode(), null, MATCH_CLAIM_FROM_STATUSES);
-            feeItemsClaimedMatching.addAll(claimedSubIds);
-            Set<String> claimedSet = new HashSet<>(claimedSubIds);
-            List<TmsAsyncTaskDetailEntity> executableDetails = new ArrayList<>();
-            for (TmsAsyncTaskDetailEntity detail : claimedDetails) {
-                if (claimedSet.contains(detail.getBusinessId())) {
-                    executableDetails.add(detail);
-                } else {
-                    finishTaskDetail(detail, false, "费用项状态已变更或无需匹配");
-                    failed++;
-                }
-            }
-            if (CollUtil.isEmpty(executableDetails)) {
-                return new TmsAsyncTaskRecordDTO.BatchProcessResult(success, failed);
-            }
-            List<String> executableSubIds = executableDetails.stream()
-                    .map(TmsAsyncTaskDetailEntity::getBusinessId).collect(Collectors.toList());
-            try {
-                LogisticsReconEntity entity = super.getByIdOpt(mainId)
-                        .orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, DOC_NAME));
-                LogisticsReconMatchDTO.ReconMatchPreloadDTO preload = buildReconMatchPreload(entity);
-                self.doMatchSubsChunk(mainId, executableSubIds, isConfirm, preload);
-            } catch (Exception e) {
-                String reason = LogisticsReconMatchFailReasonSupport.resolve(e);
-                log.error("[processMatchBatch] 分片匹配失败 taskId={} mainId={}", taskId, mainId, e);
-                self.markReconMatchFailed(mainId, executableSubIds, reason);
-            }
-            int[] settled = settleMatchTaskDetailsByFeeStatus(mainId, executableDetails, "匹配未完成");
-            success += settled[0];
-            failed += settled[1];
         } catch (Exception e) {
             log.error("[processMatchBatch] 批次异常 taskId={} mainId={}", taskId, mainId, e);
             String reason = LogisticsReconMatchFailReasonSupport.resolve(e);
@@ -2055,6 +2030,88 @@ public class LogisticsReconServiceImpl
             }
         }
         return new TmsAsyncTaskRecordDTO.BatchProcessResult(success, failed);
+    }
+
+    /**
+     * 处理单个识别组打包分片：任务明细认领 → 费用项 MATCHING 认领 → 整组完整性校验 → 匹配 → 回写。
+     *
+     * @return int[0]=success, int[1]=failed
+     */
+    private int[] processMatchBatchChunk(String taskId,
+                                         String mainId,
+                                         List<String> chunkSubIds,
+                                         boolean isConfirm,
+                                         LogisticsReconMatchDTO.ReconMatchPreloadDTO preload,
+                                         List<CfgLogisticsCostImportDetailEntity> uniqueKeyList,
+                                         Map<String, TmsAsyncTaskDetailEntity> detailMap,
+                                         List<String> feeItemsClaimedMatching) {
+        int success = 0;
+        int failed = 0;
+        if (CollUtil.isEmpty(chunkSubIds)) {
+            return new int[]{0, 0};
+        }
+        List<TmsAsyncTaskDetailEntity> claimedDetails = new ArrayList<>();
+        for (String subId : chunkSubIds) {
+            TmsAsyncTaskDetailEntity detail = detailMap.get(subId);
+            int[] claimCounted = tryClaimTaskDetailForBatch(detail);
+            if (claimCounted != null) {
+                success += claimCounted[0];
+                failed += claimCounted[1];
+                continue;
+            }
+            claimedDetails.add(detail);
+        }
+        if (CollUtil.isEmpty(claimedDetails)) {
+            return new int[]{success, failed};
+        }
+        List<String> attemptSubIds = claimedDetails.stream()
+                .map(TmsAsyncTaskDetailEntity::getBusinessId)
+                .collect(Collectors.toList());
+        List<String> claimedSubIds = logisticsReconDetailSubService.batchClaimMatchStatus(
+                attemptSubIds, LogisticsReconDetailMatchStatusEnum.MATCHING.getCode(), null, MATCH_CLAIM_FROM_STATUSES);
+        feeItemsClaimedMatching.addAll(claimedSubIds);
+        Set<String> claimedSet = new HashSet<>(claimedSubIds);
+
+        List<String> incompleteSubIds = new ArrayList<>();
+        // 以分包内费用项为期望全集（排除任务明细已 FINISH），避免同组其它成员认领失败时半组匹配
+        List<String> executableSubIds = filterCompleteIdentifyGroups(
+                mainId, chunkSubIds, claimedSet, uniqueKeyList, detailMap, incompleteSubIds);
+        if (CollUtil.isNotEmpty(incompleteSubIds)) {
+            String incompleteReason = "识别组未完整认领，已跳过避免费用覆盖";
+            List<String> revertMatchingIds = incompleteSubIds.stream()
+                    .filter(claimedSet::contains)
+                    .distinct()
+                    .collect(Collectors.toList());
+            if (CollUtil.isNotEmpty(revertMatchingIds)) {
+                self.markReconMatchFailed(mainId, revertMatchingIds, incompleteReason);
+            }
+            for (String subId : incompleteSubIds) {
+                TmsAsyncTaskDetailEntity detail = detailMap.get(subId);
+                if (detail != null && !isTaskDetailTerminal(detail.getStatus())) {
+                    finishTaskDetail(detail, false, incompleteReason);
+                    failed++;
+                }
+            }
+        }
+        if (CollUtil.isEmpty(executableSubIds)) {
+            return new int[]{success, failed};
+        }
+        List<TmsAsyncTaskDetailEntity> executableDetails = executableSubIds.stream()
+                .map(detailMap::get)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+        try {
+            self.doMatchSubsChunk(mainId, executableSubIds, isConfirm, preload);
+        } catch (Exception e) {
+            String reason = LogisticsReconMatchFailReasonSupport.resolve(e);
+            log.error("[processMatchBatchChunk] 分片匹配失败 taskId={} mainId={} chunkSize={}",
+                    taskId, mainId, executableSubIds.size(), e);
+            self.markReconMatchFailed(mainId, executableSubIds, reason);
+        }
+        int[] settled = settleMatchTaskDetailsByFeeStatus(mainId, executableDetails, "匹配未完成");
+        success += settled[0];
+        failed += settled[1];
+        return new int[]{success, failed};
     }
 
     /**
@@ -2144,9 +2201,9 @@ public class LogisticsReconServiceImpl
     }
 
     /**
-     * 流式匹配整单 matching 费用项：整单级预加载一次，按 (main_id, id) keyset 分页逐片匹配，单片失败仅回写该分片。
-     * <p>以 id 游标向前推进，匹配成功/失败的费用项均会离开 matching 集合，天然收敛且不会重复认领形成死循环；
-     * 即便个别分片回写失败仍处于 matching，游标也已越过，交由认领侧超时重认领兜底，避免无限循环。</p>
+     * 流式匹配整单 matching 费用项：整单级预加载一次，按 id 游标取种子 → 识别组扩展 → 再按组打包匹配。
+     * <p>以种子 id 游标向前推进；同识别组费用项完整进入同一次 {@link #doMatchSubsChunk}，保证组内相同费用类型合并加总。
+     * 匹配成功/失败的费用项离开 matching 后天然收敛；游标按种子推进，扩展带出的更大 id 随后会被跳过。</p>
      */
     private void streamMatchMatchingSubs(String mainId, boolean isConfirm) {
         LogisticsReconEntity entity = super.getByIdOpt(mainId)
@@ -2157,6 +2214,10 @@ public class LogisticsReconServiceImpl
         // 整单级预加载：导入配置 + 币别/汇率对同一对账单不变，仅加载一次供各分片复用，
         // 避免每 500 条分片重复查询配置并放大 sys/dmp Feign 调用。
         LogisticsReconMatchDTO.ReconMatchPreloadDTO preload = buildReconMatchPreload(entity);
+        List<CfgLogisticsCostImportDetailEntity> uniqueKeyList = resolveUniqueKeyList(preload);
+        if (CollUtil.isEmpty(uniqueKeyList)) {
+            log.warn("[streamMatchMatchingSubs] 对账单未配置识别唯一键，无法按识别组扩组合并 mainId={}", mainId);
+        }
         String lastId = null;
         while (true) {
             LambdaQueryChainWrapper<LogisticsReconDetailSubEntity> query = logisticsReconDetailSubService.lambdaQuery()
@@ -2169,24 +2230,29 @@ public class LogisticsReconServiceImpl
             if (lastId != null) {
                 query.gt(LogisticsReconDetailSubEntity::getId, lastId);
             }
-            List<String> chunk = query.list().stream()
+            List<String> seedChunk = query.list().stream()
                     .map(LogisticsReconDetailSubEntity::getId)
                     .collect(Collectors.toList());
-            if (CollUtil.isEmpty(chunk)) {
+            if (CollUtil.isEmpty(seedChunk)) {
                 break;
             }
-            lastId = chunk.get(chunk.size() - 1);
-            try {
-                self.doMatchSubsChunk(mainId, chunk, isConfirm, preload);
-            } catch (Exception e) {
-                log.error("[streamMatchMatchingSubs] 分片匹配失败 mainId={} chunkSize={}", mainId, chunk.size(), e);
-                self.markReconMatchFailed(mainId, chunk, LogisticsReconMatchFailReasonSupport.resolve(e));
+            lastId = seedChunk.get(seedChunk.size() - 1);
+            // candidate=null：扩展同组全部仍处于 MATCHING 的费用项，单组不拆分
+            List<String> expanded = expandSubIdsByIdentifyGroup(mainId, seedChunk, null, uniqueKeyList);
+            List<List<String>> chunks = packSubIdsByIdentifyGroup(mainId, expanded, MATCH_CHUNK_SIZE, uniqueKeyList);
+            for (List<String> chunk : chunks) {
+                try {
+                    self.doMatchSubsChunk(mainId, chunk, isConfirm, preload);
+                } catch (Exception e) {
+                    log.error("[streamMatchMatchingSubs] 分片匹配失败 mainId={} chunkSize={}", mainId, chunk.size(), e);
+                    self.markReconMatchFailed(mainId, chunk, LogisticsReconMatchFailReasonSupport.resolve(e));
+                }
             }
         }
     }
 
     /**
-     * 对账单整批匹配（同步）：按 scopeSubIds 分片调用 {@link #doMatchSubsChunk}，单片失败仅回写该分片。
+     * 对账单整批匹配（同步）：按识别组打包分片调用 {@link #doMatchSubsChunk}，单组不拆分，单片失败仅回写该分片。
      */
     @Override
     public void doMatchByMain(String mainId, List<String> scopeSubIds, boolean isConfirm) {
@@ -2203,8 +2269,11 @@ public class LogisticsReconServiceImpl
         // 整单级预加载：导入配置 + 币别/汇率对同一对账单不变，仅加载一次供各分片复用，
         // 避免每 500 条分片重复查询配置并放大 sys/dmp Feign 调用。
         LogisticsReconMatchDTO.ReconMatchPreloadDTO preload = buildReconMatchPreload(entity);
-        for (int i = 0; i < sortedScope.size(); i += MATCH_CHUNK_SIZE) {
-            List<String> chunk = sortedScope.subList(i, Math.min(sortedScope.size(), i + MATCH_CHUNK_SIZE));
+        List<CfgLogisticsCostImportDetailEntity> uniqueKeyList = resolveUniqueKeyList(preload);
+        // 先在 scope 内按识别组补齐同组成员，再打包分片（单组不拆分）
+        List<String> groupedScope = expandSubIdsByIdentifyGroup(mainId, sortedScope, sortedScope, uniqueKeyList);
+        List<List<String>> chunks = packSubIdsByIdentifyGroup(mainId, groupedScope, MATCH_CHUNK_SIZE, uniqueKeyList);
+        for (List<String> chunk : chunks) {
             try {
                 self.doMatchSubsChunk(mainId, chunk, isConfirm, preload);
             } catch (Exception e) {
@@ -2233,6 +2302,420 @@ public class LogisticsReconServiceImpl
         preload.setCfgImportDetailList(cfgDetails);
         importHistoryRecordService.fillReconMatchCurrencyContext(preload);
         return preload;
+    }
+
+    /**
+     * 从预加载上下文解析模板唯一识别字段配置。
+     */
+    private List<CfgLogisticsCostImportDetailEntity> resolveUniqueKeyList(
+            LogisticsReconMatchDTO.ReconMatchPreloadDTO preload) {
+        if (preload == null || CollUtil.isEmpty(preload.getCfgImportDetailList())) {
+            return Collections.emptyList();
+        }
+        return preload.getCfgImportDetailList().stream()
+                .filter(detail -> Boolean.TRUE.equals(detail.getIsUniqueKey()))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 按对账单加载模板唯一识别字段（轻量，不含币别 Feign），供异步分批扩组使用。
+     */
+    private List<CfgLogisticsCostImportDetailEntity> loadUniqueKeyListByMainId(String mainId) {
+        LogisticsReconEntity entity = super.getByIdOpt(mainId).orElse(null);
+        if (entity == null || StrUtil.isBlank(entity.getCfgImportId())) {
+            return Collections.emptyList();
+        }
+        List<CfgLogisticsCostImportDetailEntity> cfgDetails =
+                cfgLogisticsCostImportDetailService.listByMainIdList(Collections.singletonList(entity.getCfgImportId()));
+        if (CollUtil.isEmpty(cfgDetails)) {
+            return Collections.emptyList();
+        }
+        return cfgDetails.stream()
+                .filter(detail -> Boolean.TRUE.equals(detail.getIsUniqueKey()))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 异步任务：将本批种子费用项扩展为同识别组内仍为 PENDING 的完整费用项集合。
+     */
+    private List<String> expandTaskPendingSubIdsByIdentifyGroup(String taskId,
+                                                                String mainId,
+                                                                List<String> seedSubIds,
+                                                                List<CfgLogisticsCostImportDetailEntity> uniqueKeyList) {
+        LinkedHashSet<String> result = seedSubIds == null ? new LinkedHashSet<>()
+                : seedSubIds.stream().filter(StrUtil::isNotBlank).collect(Collectors.toCollection(LinkedHashSet::new));
+        if (result.isEmpty() || StrUtil.isBlank(taskId) || CollUtil.isEmpty(uniqueKeyList)) {
+            return new ArrayList<>(result);
+        }
+        List<String> siblingSubIds = listSiblingSubIdsByIdentifyGroup(mainId, new ArrayList<>(result), uniqueKeyList, null);
+        if (CollUtil.isEmpty(siblingSubIds)) {
+            return new ArrayList<>(result);
+        }
+        for (int i = 0; i < siblingSubIds.size(); i += MATCH_ID_BATCH_SIZE) {
+            List<String> batch = siblingSubIds.subList(i, Math.min(siblingSubIds.size(), i + MATCH_ID_BATCH_SIZE));
+            tmsAsyncTaskDetailService.lambdaQuery()
+                    .select(TmsAsyncTaskDetailEntity::getBusinessId)
+                    .eq(TmsAsyncTaskDetailEntity::getMainId, taskId)
+                    .eq(TmsAsyncTaskDetailEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode())
+                    .in(TmsAsyncTaskDetailEntity::getBusinessId, batch)
+                    .list()
+                    .forEach(detail -> {
+                        if (StrUtil.isNotBlank(detail.getBusinessId())) {
+                            result.add(detail.getBusinessId());
+                        }
+                    });
+        }
+        return result.stream().sorted().collect(Collectors.toList());
+    }
+
+    /**
+     * 将种子费用项按识别组扩展为完整组。
+     * <ul>
+     *   <li>{@code candidateSubIds == null}：扩展同组全部仍为 MATCHING 的费用项（流式匹配）</li>
+     *   <li>非 null：仅保留候选集合内的同组成员（同步 scope）</li>
+     * </ul>
+     */
+    private List<String> expandSubIdsByIdentifyGroup(String mainId,
+                                                     List<String> seedSubIds,
+                                                     Collection<String> candidateSubIds,
+                                                     List<CfgLogisticsCostImportDetailEntity> uniqueKeyList) {
+        LinkedHashSet<String> result = seedSubIds == null ? new LinkedHashSet<>()
+                : seedSubIds.stream().filter(StrUtil::isNotBlank).collect(Collectors.toCollection(LinkedHashSet::new));
+        if (result.isEmpty() || CollUtil.isEmpty(uniqueKeyList)) {
+            return new ArrayList<>(result);
+        }
+        String matchStatusFilter = candidateSubIds == null
+                ? LogisticsReconDetailMatchStatusEnum.MATCHING.getCode() : null;
+        List<String> siblingSubIds = listSiblingSubIdsByIdentifyGroup(
+                mainId, new ArrayList<>(result), uniqueKeyList, matchStatusFilter);
+        if (CollUtil.isEmpty(siblingSubIds)) {
+            return new ArrayList<>(result);
+        }
+        if (candidateSubIds != null) {
+            Set<String> candidateSet = candidateSubIds.stream()
+                    .filter(StrUtil::isNotBlank)
+                    .collect(Collectors.toSet());
+            siblingSubIds = siblingSubIds.stream().filter(candidateSet::contains).collect(Collectors.toList());
+        }
+        result.addAll(siblingSubIds);
+        return result.stream().sorted().collect(Collectors.toList());
+    }
+
+    /**
+     * 查询与种子费用项同识别组的费用项 id；{@code matchStatus} 非空时仅返回该匹配状态。
+     */
+    private List<String> listSiblingSubIdsByIdentifyGroup(String mainId,
+                                                          List<String> seedSubIds,
+                                                          List<CfgLogisticsCostImportDetailEntity> uniqueKeyList,
+                                                          String matchStatus) {
+        if (StrUtil.isBlank(mainId) || CollUtil.isEmpty(seedSubIds) || CollUtil.isEmpty(uniqueKeyList)) {
+            return Collections.emptyList();
+        }
+        Map<String, String> seedGroupKeyMap = buildSubIdGroupKeyMap(mainId, seedSubIds, uniqueKeyList);
+        Set<String> targetGroupKeys = seedGroupKeyMap.values().stream()
+                .filter(StrUtil::isNotBlank)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        if (targetGroupKeys.isEmpty()) {
+            return Collections.emptyList();
+        }
+        Set<String> siblingDetailIds = findDetailIdsByGroupKeys(mainId, targetGroupKeys, uniqueKeyList, seedSubIds);
+        if (CollUtil.isEmpty(siblingDetailIds)) {
+            return Collections.emptyList();
+        }
+        List<String> siblingSubIds = new ArrayList<>();
+        List<String> detailIdList = new ArrayList<>(siblingDetailIds);
+        for (int i = 0; i < detailIdList.size(); i += MATCH_ID_BATCH_SIZE) {
+            List<String> batch = detailIdList.subList(i, Math.min(detailIdList.size(), i + MATCH_ID_BATCH_SIZE));
+            LambdaQueryChainWrapper<LogisticsReconDetailSubEntity> subQuery = logisticsReconDetailSubService.lambdaQuery()
+                    .select(LogisticsReconDetailSubEntity::getId)
+                    .eq(LogisticsReconDetailSubEntity::getMainId, mainId)
+                    .in(LogisticsReconDetailSubEntity::getDetailId, batch);
+            if (StrUtil.isNotBlank(matchStatus)) {
+                subQuery.eq(LogisticsReconDetailSubEntity::getMatchStatus, matchStatus);
+            }
+            subQuery.list().forEach(sub -> {
+                if (StrUtil.isNotBlank(sub.getId())) {
+                    siblingSubIds.add(sub.getId());
+                }
+            });
+        }
+        return siblingSubIds;
+    }
+
+    /**
+     * 识别组完整性校验：分包内同组「仍需处理」的成员必须全部成功进入 MATCHING 才允许匹配。
+     * <p>任务明细已 FINISH 的成员视为既往已完成，不参与完整性判断；其余任一未认领成功则整组跳过。</p>
+     *
+     * @param expectedSubIds      分包内费用项全集
+     * @param claimedSubIds       实际认领成功进入 MATCHING 的费用项
+     * @param detailMap           任务明细（用于排除已 FINISH）
+     * @param incompleteSubIdsOut 不完整组中仍需处理的成员
+     * @return 可安全匹配的完整组费用项 id
+     */
+    private List<String> filterCompleteIdentifyGroups(String mainId,
+                                                      List<String> expectedSubIds,
+                                                      Set<String> claimedSubIds,
+                                                      List<CfgLogisticsCostImportDetailEntity> uniqueKeyList,
+                                                      Map<String, TmsAsyncTaskDetailEntity> detailMap,
+                                                      List<String> incompleteSubIdsOut) {
+        if (CollUtil.isEmpty(expectedSubIds)) {
+            return Collections.emptyList();
+        }
+        Set<String> claimedSet = claimedSubIds == null ? Collections.emptySet() : claimedSubIds;
+        if (CollUtil.isEmpty(uniqueKeyList)) {
+            return expectedSubIds.stream().filter(claimedSet::contains).collect(Collectors.toList());
+        }
+        Map<String, String> groupKeyMap = buildSubIdGroupKeyMap(mainId, expectedSubIds, uniqueKeyList);
+        Map<String, List<String>> byGroupKey = new LinkedHashMap<>();
+        for (String subId : expectedSubIds) {
+            String groupKey = StrUtil.blankToDefault(groupKeyMap.get(subId), subId);
+            byGroupKey.computeIfAbsent(groupKey, key -> new ArrayList<>()).add(subId);
+        }
+        List<String> executable = new ArrayList<>();
+        for (List<String> members : byGroupKey.values()) {
+            List<String> activeMembers = new ArrayList<>();
+            for (String subId : members) {
+                TmsAsyncTaskDetailEntity detail = detailMap == null ? null : detailMap.get(subId);
+                if (detail != null && TmsAsyncTaskRecordStatusEnum.FINISH.getCode().equals(detail.getStatus())) {
+                    continue;
+                }
+                activeMembers.add(subId);
+            }
+            if (CollUtil.isEmpty(activeMembers)) {
+                continue;
+            }
+            boolean complete = claimedSet.containsAll(activeMembers);
+            if (complete) {
+                executable.addAll(activeMembers);
+            } else if (incompleteSubIdsOut != null) {
+                incompleteSubIdsOut.addAll(activeMembers);
+            }
+        }
+        return executable;
+    }
+
+    /**
+     * 按识别组打包费用项分片：完整组不拆分；单组超过阈值时整组单独一批（与导入匹配一致）。
+     */
+    private List<List<String>> packSubIdsByIdentifyGroup(String mainId,
+                                                         List<String> subIds,
+                                                         int maxChunkSize,
+                                                         List<CfgLogisticsCostImportDetailEntity> uniqueKeyList) {
+        if (CollUtil.isEmpty(subIds)) {
+            return Collections.emptyList();
+        }
+        int limit = maxChunkSize > 0 ? maxChunkSize : MATCH_CHUNK_SIZE;
+        if (CollUtil.isEmpty(uniqueKeyList)) {
+            List<List<String>> plainChunks = new ArrayList<>();
+            for (int i = 0; i < subIds.size(); i += limit) {
+                plainChunks.add(new ArrayList<>(subIds.subList(i, Math.min(subIds.size(), i + limit))));
+            }
+            return plainChunks;
+        }
+        Map<String, String> subIdGroupKeyMap = buildSubIdGroupKeyMap(mainId, subIds, uniqueKeyList);
+        Map<String, List<String>> inputsByGroupKey = new LinkedHashMap<>();
+        for (String subId : subIds) {
+            String groupKey = StrUtil.blankToDefault(subIdGroupKeyMap.get(subId), subId);
+            inputsByGroupKey.computeIfAbsent(groupKey, key -> new ArrayList<>()).add(subId);
+        }
+        List<List<String>> chunks = new ArrayList<>();
+        List<String> chunk = new ArrayList<>();
+        for (Map.Entry<String, List<String>> entry : inputsByGroupKey.entrySet()) {
+            List<String> groupSubIds = entry.getValue();
+            if (groupSubIds.size() > limit) {
+                log.warn("[packSubIdsByIdentifyGroup] 单识别组费用项超过分片阈值，整组提交不拆分 mainId={} groupKey={} subCount={} threshold={}",
+                        mainId, entry.getKey(), groupSubIds.size(), limit);
+                if (CollUtil.isNotEmpty(chunk)) {
+                    chunks.add(new ArrayList<>(chunk));
+                    chunk.clear();
+                }
+                chunks.add(new ArrayList<>(groupSubIds));
+                continue;
+            }
+            if (chunk.size() + groupSubIds.size() > limit) {
+                chunks.add(new ArrayList<>(chunk));
+                chunk.clear();
+            }
+            chunk.addAll(groupSubIds);
+        }
+        if (CollUtil.isNotEmpty(chunk)) {
+            chunks.add(chunk);
+        }
+        return chunks;
+    }
+
+    /**
+     * 构造费用项 id → 识别组键。
+     */
+    private Map<String, String> buildSubIdGroupKeyMap(String mainId,
+                                                      List<String> subIds,
+                                                      List<CfgLogisticsCostImportDetailEntity> uniqueKeyList) {
+        Map<String, String> result = new HashMap<>();
+        if (StrUtil.isBlank(mainId) || CollUtil.isEmpty(subIds) || CollUtil.isEmpty(uniqueKeyList)) {
+            return result;
+        }
+        Map<String, LogisticsReconDetailSubEntity> subMap = new HashMap<>();
+        for (int i = 0; i < subIds.size(); i += MATCH_ID_BATCH_SIZE) {
+            List<String> batch = subIds.subList(i, Math.min(subIds.size(), i + MATCH_ID_BATCH_SIZE));
+            logisticsReconDetailSubService.lambdaQuery()
+                    .select(LogisticsReconDetailSubEntity::getId, LogisticsReconDetailSubEntity::getDetailId)
+                    .eq(LogisticsReconDetailSubEntity::getMainId, mainId)
+                    .in(LogisticsReconDetailSubEntity::getId, batch)
+                    .list()
+                    .forEach(sub -> subMap.put(sub.getId(), sub));
+        }
+        Set<String> detailIds = subMap.values().stream()
+                .map(LogisticsReconDetailSubEntity::getDetailId)
+                .filter(StrUtil::isNotBlank)
+                .collect(Collectors.toSet());
+        Map<String, LogisticsReconDetailEntity> detailMap = loadDetailsByIds(mainId, detailIds);
+        for (String subId : subIds) {
+            LogisticsReconDetailSubEntity sub = subMap.get(subId);
+            if (sub == null) {
+                continue;
+            }
+            LogisticsReconDetailEntity detail = detailMap.get(sub.getDetailId());
+            if (detail == null) {
+                continue;
+            }
+            result.put(subId, LogisticsReconMatchGroupHelper.buildDetailGroupKey(detail, uniqueKeyList));
+        }
+        return result;
+    }
+
+    /**
+     * 按识别组键反查本主单下可能命中的明细 id（先按识别字段 IN 粗查，再精确过滤组键）。
+     */
+    private Set<String> findDetailIdsByGroupKeys(String mainId,
+                                                 Set<String> targetGroupKeys,
+                                                 List<CfgLogisticsCostImportDetailEntity> uniqueKeyList,
+                                                 Collection<String> seedSubIds) {
+        Set<String> result = new LinkedHashSet<>();
+        if (StrUtil.isBlank(mainId) || CollUtil.isEmpty(targetGroupKeys) || CollUtil.isEmpty(uniqueKeyList)) {
+            return result;
+        }
+        Map<String, LogisticsReconDetailSubEntity> seedSubMap = new HashMap<>();
+        List<String> seedIdList = seedSubIds.stream().filter(StrUtil::isNotBlank).distinct().collect(Collectors.toList());
+        for (int i = 0; i < seedIdList.size(); i += MATCH_ID_BATCH_SIZE) {
+            List<String> batch = seedIdList.subList(i, Math.min(seedIdList.size(), i + MATCH_ID_BATCH_SIZE));
+            logisticsReconDetailSubService.lambdaQuery()
+                    .select(LogisticsReconDetailSubEntity::getId, LogisticsReconDetailSubEntity::getDetailId)
+                    .eq(LogisticsReconDetailSubEntity::getMainId, mainId)
+                    .in(LogisticsReconDetailSubEntity::getId, batch)
+                    .list()
+                    .forEach(sub -> seedSubMap.put(sub.getId(), sub));
+        }
+        Set<String> seedDetailIds = seedSubMap.values().stream()
+                .map(LogisticsReconDetailSubEntity::getDetailId)
+                .filter(StrUtil::isNotBlank)
+                .collect(Collectors.toSet());
+        Map<String, LogisticsReconDetailEntity> seedDetailMap = loadDetailsByIds(mainId, seedDetailIds);
+
+        Set<String> soCodes = new LinkedHashSet<>();
+        Set<String> platformOrderNos = new LinkedHashSet<>();
+        Set<String> trackNos = new LinkedHashSet<>();
+        Set<String> soDeliveryCodes = new LinkedHashSet<>();
+        for (LogisticsReconDetailEntity detail : seedDetailMap.values()) {
+            collectIdentifyFilterValues(detail, uniqueKeyList, soCodes, platformOrderNos, trackNos, soDeliveryCodes);
+        }
+        if (CollUtil.isEmpty(soCodes) && CollUtil.isEmpty(platformOrderNos)
+                && CollUtil.isEmpty(trackNos) && CollUtil.isEmpty(soDeliveryCodes)) {
+            return seedDetailIds;
+        }
+
+        LambdaQueryChainWrapper<LogisticsReconDetailEntity> detailQuery = logisticsReconDetailService.lambdaQuery()
+                .select(LogisticsReconDetailEntity::getId,
+                        LogisticsReconDetailEntity::getSoCode,
+                        LogisticsReconDetailEntity::getPlatformOrderNo,
+                        LogisticsReconDetailEntity::getTrackNo,
+                        LogisticsReconDetailEntity::getSoDeliveryCode)
+                .eq(LogisticsReconDetailEntity::getMainId, mainId)
+                .and(wrapper -> {
+                    boolean started = false;
+                    if (CollUtil.isNotEmpty(soCodes)) {
+                        wrapper.in(LogisticsReconDetailEntity::getSoCode, soCodes);
+                        started = true;
+                    }
+                    if (CollUtil.isNotEmpty(platformOrderNos)) {
+                        if (started) {
+                            wrapper.or();
+                        }
+                        wrapper.in(LogisticsReconDetailEntity::getPlatformOrderNo, platformOrderNos);
+                        started = true;
+                    }
+                    if (CollUtil.isNotEmpty(trackNos)) {
+                        if (started) {
+                            wrapper.or();
+                        }
+                        wrapper.in(LogisticsReconDetailEntity::getTrackNo, trackNos);
+                        started = true;
+                    }
+                    if (CollUtil.isNotEmpty(soDeliveryCodes)) {
+                        if (started) {
+                            wrapper.or();
+                        }
+                        wrapper.in(LogisticsReconDetailEntity::getSoDeliveryCode, soDeliveryCodes);
+                    }
+                });
+        for (LogisticsReconDetailEntity detail : detailQuery.list()) {
+            String groupKey = LogisticsReconMatchGroupHelper.buildDetailGroupKey(detail, uniqueKeyList);
+            if (targetGroupKeys.contains(groupKey)) {
+                result.add(detail.getId());
+            }
+        }
+        result.addAll(seedDetailIds);
+        return result;
+    }
+
+    private void collectIdentifyFilterValues(LogisticsReconDetailEntity detail,
+                                             List<CfgLogisticsCostImportDetailEntity> uniqueKeyList,
+                                             Set<String> soCodes,
+                                             Set<String> platformOrderNos,
+                                             Set<String> trackNos,
+                                             Set<String> soDeliveryCodes) {
+        if (detail == null || CollUtil.isEmpty(uniqueKeyList)) {
+            return;
+        }
+        for (CfgLogisticsCostImportDetailEntity uniqueKey : uniqueKeyList) {
+            String value = LogisticsReconMatchGroupHelper.detailIdentifyValue(detail, uniqueKey.getTargetField());
+            if (StrUtil.isBlank(value)) {
+                continue;
+            }
+            String targetField = uniqueKey.getTargetField();
+            if (LogisticsCostImportTargetFieldConstant.SOURCE_CODE.equals(targetField)
+                    || LogisticsCostImportTargetFieldConstant.SO_CODE.equals(targetField)) {
+                soCodes.add(value);
+            } else if (LogisticsCostImportTargetFieldConstant.PLATFORM_CODE.equals(targetField)
+                    || LogisticsCostImportTargetFieldConstant.PLATFORM_ORDER_NO.equals(targetField)) {
+                platformOrderNos.add(value);
+            } else if (LogisticsCostImportTargetFieldConstant.TRACK_NO.equals(targetField)) {
+                trackNos.add(value);
+            } else if (LogisticsCostImportTargetFieldConstant.SO_DELIVERY_CODE.equals(targetField)) {
+                soDeliveryCodes.add(value);
+            }
+        }
+    }
+
+    private Map<String, LogisticsReconDetailEntity> loadDetailsByIds(String mainId, Collection<String> detailIds) {
+        Map<String, LogisticsReconDetailEntity> detailMap = new HashMap<>();
+        if (StrUtil.isBlank(mainId) || CollUtil.isEmpty(detailIds)) {
+            return detailMap;
+        }
+        List<String> idList = detailIds.stream().filter(StrUtil::isNotBlank).distinct().collect(Collectors.toList());
+        for (int i = 0; i < idList.size(); i += MATCH_ID_BATCH_SIZE) {
+            List<String> batch = idList.subList(i, Math.min(idList.size(), i + MATCH_ID_BATCH_SIZE));
+            logisticsReconDetailService.lambdaQuery()
+                    .select(LogisticsReconDetailEntity::getId,
+                            LogisticsReconDetailEntity::getSoCode,
+                            LogisticsReconDetailEntity::getPlatformOrderNo,
+                            LogisticsReconDetailEntity::getTrackNo,
+                            LogisticsReconDetailEntity::getSoDeliveryCode)
+                    .eq(LogisticsReconDetailEntity::getMainId, mainId)
+                    .in(LogisticsReconDetailEntity::getId, batch)
+                    .list()
+                    .forEach(detail -> detailMap.put(detail.getId(), detail));
+        }
+        return detailMap;
     }
 
     /**
