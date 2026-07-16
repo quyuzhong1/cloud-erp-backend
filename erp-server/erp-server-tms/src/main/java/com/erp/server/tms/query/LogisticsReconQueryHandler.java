@@ -63,48 +63,71 @@ public class LogisticsReconQueryHandler extends AbstractQueryHandler {
 
 
     /**
-     * 构建匹配状态派生字段查询 SQL
+     * 构建匹配状态派生字段查询 SQL（关联子查询，不依赖 paging 全表聚合 JOIN）
      * @author Will
      * @date: 2026/06/02
      * @param status
      * @return String
      */
     private String matchStatusSql(String status) {
+        String stats = validSubStatsSubquery();
         if (LogisticsReconMatchStatusEnum.UNMATCHED.getCode().equals(status)) {
-            return "(COALESCE(s.valid_cost_count, 0) <= 0 OR COALESCE(s.match_count, 0) <= 0)";
+            return "(SELECT COALESCE(t.valid_cost_count, 0) <= 0 OR COALESCE(t.match_count, 0) <= 0 FROM "
+                    + stats + " t)";
         }
         if (LogisticsReconMatchStatusEnum.PARTIAL.getCode().equals(status)) {
-            return "(COALESCE(s.match_count, 0) > 0 AND COALESCE(s.match_count, 0) < COALESCE(s.valid_cost_count, 0))";
+            return "(SELECT COALESCE(t.match_count, 0) > 0 AND COALESCE(t.match_count, 0) < COALESCE(t.valid_cost_count, 0) FROM "
+                    + stats + " t)";
         }
         if (LogisticsReconMatchStatusEnum.MATCHED.getCode().equals(status)) {
-            return "(COALESCE(s.valid_cost_count, 0) > 0 AND COALESCE(s.match_count, 0) >= COALESCE(s.valid_cost_count, 0))";
+            return "(SELECT COALESCE(t.valid_cost_count, 0) > 0 AND COALESCE(t.match_count, 0) >= COALESCE(t.valid_cost_count, 0) FROM "
+                    + stats + " t)";
         }
         return "";
     }
 
     /**
-     * 构建对账确认状态派生字段查询 SQL
+     * 构建对账确认状态派生字段查询 SQL（关联子查询，不依赖 paging 全表聚合 JOIN）
      * @author Will
      * @date: 2026/06/02
      * @param status
      * @return String
      */
     private String reconciliationStatusSql(String status) {
+        String stats = validSubStatsSubquery();
         if (LogisticsReconReconciliationStatusEnum.TO_BE_CONFIRM.getCode().equals(status)) {
-            return "(COALESCE(s.reconciliation_total_count, 0) <= 0 "
-                    + "OR (COALESCE(s.reconciliation_confirmed_count, 0) <= 0 "
-                    + "AND COALESCE(s.reconciliation_partial_count, 0) <= 0))";
+            return "(SELECT COALESCE(t.reconciliation_total_count, 0) <= 0 "
+                    + "OR (COALESCE(t.reconciliation_confirmed_count, 0) <= 0 "
+                    + "AND COALESCE(t.reconciliation_partial_count, 0) <= 0) FROM "
+                    + stats + " t)";
         }
         if (LogisticsReconReconciliationStatusEnum.PARTIAL_CONFIRM.getCode().equals(status)) {
-            return "(COALESCE(s.reconciliation_partial_count, 0) > 0 "
-                    + "OR (COALESCE(s.reconciliation_confirmed_count, 0) > 0 "
-                    + "AND COALESCE(s.reconciliation_confirmed_count, 0) < COALESCE(s.reconciliation_total_count, 0)))";
+            return "(SELECT COALESCE(t.reconciliation_partial_count, 0) > 0 "
+                    + "OR (COALESCE(t.reconciliation_confirmed_count, 0) > 0 "
+                    + "AND COALESCE(t.reconciliation_confirmed_count, 0) < COALESCE(t.reconciliation_total_count, 0)) FROM "
+                    + stats + " t)";
         }
         if (LogisticsReconReconciliationStatusEnum.CONFIRMED.getCode().equals(status)) {
-            return "(COALESCE(s.reconciliation_total_count, 0) > 0 "
-                    + "AND COALESCE(s.reconciliation_confirmed_count, 0) >= COALESCE(s.reconciliation_total_count, 0))";
+            return "(SELECT COALESCE(t.reconciliation_total_count, 0) > 0 "
+                    + "AND COALESCE(t.reconciliation_confirmed_count, 0) >= COALESCE(t.reconciliation_total_count, 0) FROM "
+                    + stats + " t)";
         }
         return "";
+    }
+
+    /**
+     * 单主表有效费用项统计子查询（与详情页 / listPagingStatsByMainIds 口径一致）
+     */
+    private String validSubStatsSubquery() {
+        return "(SELECT COUNT(*) AS valid_cost_count, "
+                + "COUNT(*) FILTER (WHERE sub.match_status = 'matched') AS match_count, "
+                + "COUNT(*) AS reconciliation_total_count, "
+                + "COUNT(*) FILTER (WHERE sub.reconciliation_status = 'confirmed') AS reconciliation_confirmed_count, "
+                + "COUNT(*) FILTER (WHERE sub.reconciliation_status = 'partialConfirm') AS reconciliation_partial_count "
+                + "FROM logistics_recon_detail_sub sub "
+                + "INNER JOIN logistics_recon_detail d "
+                + "ON d.id = sub.detail_id AND d.is_deleted = false AND d.main_id = sub.main_id "
+                + "WHERE sub.is_deleted = false AND sub.main_id = logistics_recon.id)";
     }
 
     /**

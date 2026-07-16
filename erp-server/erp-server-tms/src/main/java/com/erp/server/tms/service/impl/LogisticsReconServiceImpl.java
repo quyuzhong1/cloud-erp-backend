@@ -4835,6 +4835,7 @@ public class LogisticsReconServiceImpl
         if (CollUtil.isEmpty(list)) {
             return;
         }
+        fillPagingStats(list);
         Map<String, String> currencySymbolMap = FeignQuery.list(DictCurrencyEntity.class).stream()
                 .collect(Collectors.toMap(DictCurrencyEntity::getId, DictCurrencyEntity::getSymbol, (first, second) -> first));
         for (LogisticsReconDTO.ListDTO data : list) {
@@ -4842,7 +4843,7 @@ public class LogisticsReconServiceImpl
             data.setCheckStatusName(LogisticsReconCheckStatusEnum.getName(data.getCheckStatus()));
             data.setReconciliationStatusName(
                     LogisticsReconReconciliationStatusEnum.getName(data.getReconciliationStatus()));
-            // match_count / valid_cost_count 由 paging 子查询实时聚合（与详情页口径一致），match_status 据此派生
+            // match_count / valid_cost_count 由当前页 mainId 二次聚合（与详情页口径一致），match_status 据此派生
             int matchCount = data.getMatchCount() == null ? 0 : data.getMatchCount();
             int costCount = data.getValidCostCount() != null ? data.getValidCostCount()
                     : (data.getCostCount() == null ? 0 : data.getCostCount());
@@ -4857,6 +4858,48 @@ public class LogisticsReconServiceImpl
             data.setTotalAmountStr(formatAmount(data.getTotalAmount(), symbol));
             data.setMatchSuccessAmountStr(formatAmount(data.getMatchSuccessAmount(), symbol));
             data.setMatchFailAmountStr(formatAmount(data.getMatchFailAmount(), symbol));
+        }
+    }
+
+    /**
+     * 按当前页主表 id 批量聚合费用项统计并回填，避免 paging 对全表 detail_sub 做 GROUP BY。
+     */
+    private void fillPagingStats(List<LogisticsReconDTO.ListDTO> list) {
+        List<String> mainIds = list.stream()
+                .map(LogisticsReconDTO.ListDTO::getId)
+                .filter(StrUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, LogisticsReconDTO.PagingStatsDTO> statsMap = CollUtil.isEmpty(mainIds)
+                ? Collections.emptyMap()
+                : logisticsReconDetailSubService.listPagingStatsByMainIds(mainIds).stream()
+                .filter(Objects::nonNull)
+                .filter(item -> StrUtil.isNotBlank(item.getMainId()))
+                .collect(Collectors.toMap(LogisticsReconDTO.PagingStatsDTO::getMainId, item -> item, (a, b) -> a));
+        for (LogisticsReconDTO.ListDTO data : list) {
+            LogisticsReconDTO.PagingStatsDTO stats = statsMap.get(data.getId());
+            int validCostCount = stats == null || stats.getValidCostCount() == null ? 0 : stats.getValidCostCount();
+            int matchCount = stats == null || stats.getMatchCount() == null ? 0 : stats.getMatchCount();
+            int reconTotal = stats == null || stats.getReconciliationTotalCount() == null
+                    ? 0 : stats.getReconciliationTotalCount();
+            int reconConfirmed = stats == null || stats.getReconciliationConfirmedCount() == null
+                    ? 0 : stats.getReconciliationConfirmedCount();
+            int reconPartial = stats == null || stats.getReconciliationPartialCount() == null
+                    ? 0 : stats.getReconciliationPartialCount();
+            data.setValidCostCount(validCostCount);
+            data.setMatchCount(matchCount);
+            data.setMatchSuccessAmount(stats == null || stats.getMatchSuccessAmount() == null
+                    ? BigDecimal.ZERO : stats.getMatchSuccessAmount());
+            data.setMatchFailAmount(stats == null || stats.getMatchFailAmount() == null
+                    ? BigDecimal.ZERO : stats.getMatchFailAmount());
+            // 与原 paging CASE 口径一致
+            if (reconTotal <= 0 || (reconConfirmed <= 0 && reconPartial <= 0)) {
+                data.setReconciliationStatus(LogisticsReconReconciliationStatusEnum.TO_BE_CONFIRM.getCode());
+            } else if (reconConfirmed >= reconTotal) {
+                data.setReconciliationStatus(LogisticsReconReconciliationStatusEnum.CONFIRMED.getCode());
+            } else {
+                data.setReconciliationStatus(LogisticsReconReconciliationStatusEnum.PARTIAL_CONFIRM.getCode());
+            }
         }
     }
 
