@@ -201,7 +201,9 @@ public class AiyaLogisticsHandlerImpl extends AbstractLogisticsHandler {
      * 将 AIYA resultList 单条（含 carrierServiceList）映射为渠道实体列表。
      * <p>
      * 落库 upsert 唯一键（受 {@code saveOrUpdateSaleChannel} 约束）：
-     * {@code logisticsPlatform + code + platformWarehouseCode}。
+     * {@code logisticsPlatform + code + platformWarehouseCode}；其中 code 只取 carrierService。
+     * 注意：同一仓库下若不同 carrier 存在同名 carrierService（如多个 {@code STD}），
+     * 会因 code 相同而被去重为同一条渠道（后者覆盖前者）。
      */
     private List<LogisticsSaleChannelEntity> buildSaleChannels(String platform, String warehouseCode, JSONObject item) {
         List<LogisticsSaleChannelEntity> list = new ArrayList<>();
@@ -238,17 +240,16 @@ public class AiyaLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     warehouseCode, service.toJSONString());
             return null;
         }
-        String channelCode = buildChannelCode(carrier, carrierService);
-        String displayName = CharSequenceUtil.blankToDefault(service.getString("carrierServiceDescription"),
-                carrierService);
+        // code 与 name 均只取 carrierService，不做拼接
+        String channelCode = carrierService;
 
         LogisticsSaleChannelEntity entity = new LogisticsSaleChannelEntity();
         entity.setLogisticsPlatform(platform);
         entity.setServicePlatform(SERVICE_PLATFORM_TMS);
         entity.setPlatformChannelId(channelCode);
         entity.setCode(channelCode);
-        entity.setCnName(displayName);
-        entity.setEnName(displayName);
+        entity.setCnName(channelCode);
+        entity.setEnName(channelCode);
         entity.setSupplierName(CharSequenceUtil.blankToDefault(logisticsProvider, carrier));
         entity.setSupplierCode(carrier);
         entity.setPlatformWarehouseCode(warehouseCode);
@@ -257,14 +258,6 @@ public class AiyaLogisticsHandlerImpl extends AbstractLogisticsHandler {
         entity.setChannelStatus(MathUtil.ZERO);
         entity.setSourceData(service.toJSONString());
         return entity;
-    }
-
-    /**
-     * 构造 AIYA 渠道 code：{@code carrier|carrierService}。
-     * {@code platformWarehouseCode} 已单独保留，code 不再叠加仓库编码。
-     */
-    private String buildChannelCode(String carrier, String carrierService) {
-        return CharSequenceUtil.nullToEmpty(carrier) + "|" + CharSequenceUtil.nullToEmpty(carrierService);
     }
 
     /**
