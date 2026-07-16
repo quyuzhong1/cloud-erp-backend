@@ -154,7 +154,9 @@ public interface StocktakingTaskService extends SuperService<StocktakingTaskEnti
     Boolean approveEnd(ApproveOneDTO approveOne, StocktakingTaskEntity entity);
 
     /**
-     * 按盘点任务明细释放 Redis 盘点库存锁（工作流/Feign/页面审核统一入口）
+     * 按盘点任务明细释放 Redis 盘点库存锁（工作流/Feign/补偿统一入口；有事务时 afterCommit 执行并重试）。
+     * <p>
+     * 释锁采用 planCode+wh+库位+sku 通配（orgId/status=*）；边界说明见实现类 {@code releaseInventoryLockByTask} 方法注释。
      */
     void releaseInventoryLockByTaskId(String taskId);
 

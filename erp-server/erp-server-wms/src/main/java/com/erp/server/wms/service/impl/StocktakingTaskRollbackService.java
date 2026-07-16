@@ -5,7 +5,9 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.erp.model.wms.entity.StocktakingTaskEntity;
 import com.erp.server.wms.mapper.StocktakingTaskMapper;
 import com.erp.server.wms.service.StocktakingTaskDetailService;
+import com.erp.server.wms.service.StocktakingTaskService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +27,9 @@ public class StocktakingTaskRollbackService {
     private StocktakingTaskMapper stocktakingTaskMapper;
     @Resource
     private StocktakingTaskDetailService stocktakingTaskDetailService;
+    @Lazy
+    @Resource
+    private StocktakingTaskService stocktakingTaskService;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, rollbackFor = Exception.class)
     public void rollbackTasksByPlanId(String planId, String planCode) {
@@ -35,7 +40,7 @@ public class StocktakingTaskRollbackService {
         }
         List<String> mainIds = taskEntityList.stream().map(StocktakingTaskEntity::getId).collect(Collectors.toList());
         stocktakingTaskDetailService.removeByMainId(mainIds);
-        stocktakingTaskMapper.delete(Wrappers.lambdaQuery(StocktakingTaskEntity.class).in(StocktakingTaskEntity::getId, mainIds));
+        stocktakingTaskService.removeByIds(mainIds);
         log.warn("下推失败回滚盘点任务：planCode={}, taskCount={}", planCode, mainIds.size());
     }
 }
