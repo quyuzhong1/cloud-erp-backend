@@ -16,7 +16,7 @@ public class AiyaConstants {
     /**
      * AIYA 接口域名-测试环境
      */
-    public static final String BASE_URL = "http://kytest.800best.com/gateway/api/glink";
+    public static final String BASE_URL = "http://edi-glink.800best.com/gateway/api/glink";
 
     /**
      * AIYA 接口域名-正式环境
@@ -41,17 +41,17 @@ public class AiyaConstants {
     /**
      * 入库订单创建/修改
      */
-    public static final String INORDER_SAVE = "GLINK_CREATE_ASN_NOTIFY";
+    public static final String GLINK_CREATE_ASN_NOTIFY = "GLINK_CREATE_ASN_NOTIFY";
 
     /**
-     * 入库订单分页查询
+     * 入库单验货明细查询（按上架完成时间范围分页查询 SKU 级验货明细，含良品/不良品）
      */
-    public static final String INORDER_QUERY_PAGE = "inorder.queryPage";
+    public static final String GLINK_QUERY_ASN_INSPECT_DETAIL_NOTIFY = "GLINK_QUERY_ASN_INSPECT_DETAIL_NOTIFY";
 
     /**
      * 入库订单取消
      */
-    public static final String INORDER_CANCEL = "inorder.cancel";
+    public static final String GLINK_CANCEL_ASN_NOTIFY = "GLINK_CANCEL_ASN_NOTIFY";
 
     /**
      * 2C订单创建/修改

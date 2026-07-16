@@ -21,19 +21,14 @@ import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
 
 import javax.validation.Valid;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * AIYA（爱亚）海外仓开放接口 SDK（骨架）。
  * <p>
  * 参照 {@code WegoOpenApiService} 搭建，采用「单网关 + bizData 业务报文 + 签名」模式，
- * 所有接口统一 POST 到爱亚网关地址（{@code getPreUrl()}），外层请求字段为 partnerId / serviceType / bizData / sign，
+ * 所有接口统一以 {@code x-www-form-urlencoded} 表单 POST 到爱亚网关地址（{@code getPreUrl()}），
+ * 外层表单字段为 partnerId / serviceType / bizData / sign（非 JSON body），
  * 业务字段序列化进 bizData，其中 {@code customerCode}（客户code）为爱亚所有接口必填业务参数，由 SDK 统一注入。
  * <p>
  * 签名规则见 {@link AiyaSignUtils}：{@code sign = MD5(bizData + partnerKey)}，32 位小写十六进制。
@@ -114,16 +109,16 @@ public class AiyaOpenApiService {
      * <p>
      * 响应结构：{@code {code, message, success, resultList:[{warehouseCode, warehouseDescription, country, ...}]}}。
      *
-     * @param accessToken  AIYA partnerId（客户ID）
-     * @param secret       AIYA partnerKey（仅用于本地签名）
+     * @param partnerId    AIYA partnerId（客户ID）
+     * @param partnerKey   AIYA partnerKey（仅用于本地签名）
      * @param customerCode AIYA 客户code（必填业务参数）
      * @param bizParams    其它业务参数（可为 null）
      * @return AIYA 接口原始响应解析后的 JSONObject
      */
-    public JSONObject queryWarehouse(String accessToken, String secret, String customerCode, Map<String, Object> bizParams) {
+    public JSONObject queryWarehouse(String partnerId, String partnerKey, String customerCode, Map<String, Object> bizParams) {
         Map<String, Object> params = new HashMap<>();
         mergeBizParams(params, bizParams, "查询仓库", Collections.emptySet());
-        return doQuery(accessToken, secret, customerCode, AiyaConstants.GLINK_QUERY_WAREHOUSE_NOTIFY, params, "查询仓库");
+        return doQuery(partnerId, partnerKey, customerCode, AiyaConstants.GLINK_QUERY_WAREHOUSE_NOTIFY, params, "查询仓库");
     }
 
     /**
@@ -202,18 +197,22 @@ public class AiyaOpenApiService {
     }
 
     /**
-     * 调用 AIYA transport.get 查询派送渠道列表。
+     * 调用 AIYA {@code GLINK_QUERY_CARRIER_NOTIFY} 查询派送渠道列表。
+     * <p>
+     * 请求业务参数（写入 bizData）：{@code warehouseCode}（必填）、{@code customerCode}（由 SDK 注入）、
+     * {@code needActualLogistics}（可选）。
+     * 响应结构：{@code {code, message, success, resultList:[{logisticsProvider, carrierServiceList:[...]}]}}。
      *
-     * @param accessToken  AIYA partnerId（客户ID）
-     * @param secret       AIYA partnerKey（仅用于本地签名）
+     * @param partnerId    AIYA partnerId（客户ID）
+     * @param partnerKey   AIYA partnerKey（仅用于本地签名）
      * @param customerCode AIYA 客户code（必填业务参数）
-     * @param bizParams    业务扩展参数（可为 null）
+     * @param bizParams    业务扩展参数（须含 warehouseCode，可为 null 时由调用方保证）
      * @return AIYA 接口原始响应解析后的 JSONObject
      */
-    public JSONObject queryTransport(String accessToken, String secret, String customerCode, Map<String, Object> bizParams) {
+    public JSONObject queryTransport(String partnerId, String partnerKey, String customerCode, Map<String, Object> bizParams) {
         Map<String, Object> params = new HashMap<>();
         mergeBizParams(params, bizParams, "查询派送渠道", Collections.emptySet());
-        return doQuery(accessToken, secret, customerCode, AiyaConstants.GLINK_QUERY_CARRIER_NOTIFY, params, "查询派送渠道");
+        return doQuery(partnerId, partnerKey, customerCode, AiyaConstants.GLINK_QUERY_CARRIER_NOTIFY, params, "查询派送渠道");
     }
 
     /**
@@ -228,50 +227,62 @@ public class AiyaOpenApiService {
     public JSONObject saveInorder(String accessToken, String secret, String customerCode, Map<String, Object> bizParams) {
         Map<String, Object> params = new HashMap<>();
         mergeBizParams(params, bizParams, "保存入库单", Collections.emptySet());
-        return doQuery(accessToken, secret, customerCode, AiyaConstants.INORDER_SAVE, params, "保存入库单");
+        return doQuery(accessToken, secret, customerCode, AiyaConstants.GLINK_CREATE_ASN_NOTIFY, params, "保存入库单");
     }
 
     /**
-     * 调用 AIYA inorder.queryPage 分页查询入库单。
+     * 调用 AIYA {@code GLINK_QUERY_ASN_INSPECT_DETAIL_NOTIFY} 按「上架完成时间」范围分页查询入库单验货明细。
+     * <p>
+     * 与 wego 一致——按上架/收货时间窗口分页拉取，响应为 {@code asnInfoList[]}，每个 ASN 下挂
+     * {@code asnItems[]}（SKU × 货物状态 验货明细，{@code skuStatus} 区分良品 GOOD / 不良品 DAMAGE）。
+     * 分页无 total/pages 元数据，调用方按「返回条数 &lt; pageSize」判断末页。
      *
-     * @param accessToken  AIYA partnerId（客户ID）
-     * @param secret       AIYA partnerKey（仅用于本地签名）
-     * @param customerCode AIYA 客户code（必填业务参数）
-     * @param pageNum      页码（从 1 开始）
-     * @param pageSize     每页数量
-     * @param bizParams    过滤条件（可为 null）
+     * @param accessToken             AIYA partnerId（客户ID）
+     * @param secret                  AIYA partnerKey（仅用于本地签名）
+     * @param customerCode            AIYA 客户code（必填业务参数）
+     * @param page                    页码（从 1 开始）
+     * @param pageSize                每页数量
+     * @param putawayCompletedTimeFrom 上架完成时间起（yyyy-MM-dd HH:mm:ss，可为 null）
+     * @param putawayCompletedTimeTo   上架完成时间止（yyyy-MM-dd HH:mm:ss，可为 null）
      * @return AIYA 接口原始响应解析后的强类型 {@link AiyaInboundResp}；无响应时返回 null
      */
-    public AiyaInboundResp queryInorderPage(String accessToken, String secret, String customerCode, int pageNum, int pageSize, Map<String, Object> bizParams) {
+    public AiyaInboundResp queryAsnInspectDetail(String accessToken, String secret, String customerCode,
+                                                 int page, int pageSize,
+                                                 String putawayCompletedTimeFrom, String putawayCompletedTimeTo) {
         Map<String, Object> params = new HashMap<>();
-        params.put("pageNum", pageNum);
+        params.put("page", page);
         params.put("pageSize", pageSize);
-        mergeBizParams(params, bizParams, "分页查询入库单", PAGE_RESERVED_PARAM_KEYS);
-        JSONObject response = doQuery(accessToken, secret, customerCode, AiyaConstants.INORDER_QUERY_PAGE, params, "分页查询入库单");
+        putIfNotNull(params, "putawayCompletedTimeFrom", putawayCompletedTimeFrom);
+        putIfNotNull(params, "putawayCompletedTimeTo", putawayCompletedTimeTo);
+        JSONObject response = doQuery(accessToken, secret, customerCode,
+                AiyaConstants.GLINK_QUERY_ASN_INSPECT_DETAIL_NOTIFY, params, "查询入库单验货明细");
         if (response == null) {
             return null;
         }
         try {
             return response.toJavaObject(AiyaInboundResp.class);
         } catch (Exception ex) {
-            log.error("[AIYA分页查询入库单] 响应JSON转换AiyaInboundResp失败, response={}", safeResponseLog(response), ex);
+            log.error("[AIYA查询入库单验货明细] 响应JSON转换AiyaInboundResp失败, response={}", safeResponseLog(response), ex);
             throw new ServiceException(ApiError.WH_AIYA_SDK_INBOUND_PAGE_CONVERT_FAILED, ex.getMessage());
         }
     }
 
     /**
-     * 调用 AIYA inorder.cancel 取消入库单。
+     * 调用 AIYA {@code GLINK_CANCEL_ASN_NOTIFY} 取消入库单。
+     * <p>
+     * 按接口文档仅传必填业务字段：{@code asnNumbers[]}（ASN 编码数组，单个 ≤ 64）与
+     * {@code customerCode}（由 {@link #doQuery} 统一注入）。响应为 {@code {success, code, message}}。
      *
      * @param accessToken  AIYA partnerId（客户ID）
      * @param secret       AIYA partnerKey（仅用于本地签名）
      * @param customerCode AIYA 客户code（必填业务参数）
-     * @param no           AIYA 入库单号
-     * @return AIYA 接口原始响应解析后的 JSONObject
+     * @param asnNumbers   ASN 编码列表（必填，即我方下发的 asnNumber=发货单号）
+     * @return AIYA 接口原始响应解析后的 JSONObject（含 success / code / message）
      */
-    public JSONObject cancelInorder(String accessToken, String secret, String customerCode, String no) {
+    public JSONObject cancelInorder(String accessToken, String secret, String customerCode, List<String> asnNumbers) {
         Map<String, Object> params = new HashMap<>();
-        params.put("no", no);
-        return doQuery(accessToken, secret, customerCode, AiyaConstants.INORDER_CANCEL, params, "取消入库单");
+        params.put("asnNumbers", JSON.toJSON(asnNumbers));
+        return doQuery(accessToken, secret, customerCode, AiyaConstants.GLINK_CANCEL_ASN_NOTIFY, params, "取消入库单");
     }
 
     // ===================== 2C 出库单相关接口 =====================
@@ -417,15 +428,15 @@ public class AiyaOpenApiService {
     /**
      * AIYA 通用查询方法：将业务参数序列化为 bizData、按 {@code MD5(bizData + partnerKey)} 计算签名并执行 HTTP 请求。
      *
-     * @param accessToken   AIYA partnerId（客户ID，作为外层 partnerId 字段随请求发送）
-     * @param secret        AIYA partnerKey（合作方密钥，仅用于本地签名，不发送）
-     * @param customerCode  AIYA 客户code（爱亚所有接口必填的业务参数，统一注入 bizData）
-     * @param interfaceType AIYA 接口标识（外层 serviceType 字段），如 GLINK_QUERY_WAREHOUSE_NOTIFY
-     * @param bizParams     业务参数（序列化为 bizData 后参与签名）
-     * @param actionName    日志中的业务动作名
+     * @param partnerId    AIYA partnerId（客户ID，作为外层 partnerId 字段随请求发送）
+     * @param partnerKey   AIYA partnerKey（合作方密钥，仅用于本地签名，不发送）
+     * @param customerCode AIYA 客户code（爱亚所有接口必填的业务参数，统一注入 bizData）
+     * @param serviceType  AIYA 接口标识（外层 serviceType 字段），如 GLINK_QUERY_WAREHOUSE_NOTIFY
+     * @param bizParams    业务参数（序列化为 bizData 后参与签名）
+     * @param actionName   日志中的业务动作名
      * @return AIYA 接口原始响应解析后的 JSONObject
      */
-    private JSONObject doQuery(String accessToken, String secret, String customerCode, String interfaceType,
+    private JSONObject doQuery(String partnerId, String partnerKey, String customerCode, String serviceType,
                                Map<String, Object> bizParams, String actionName) {
         long start = System.currentTimeMillis();
         Map<String, Object> bizDataMap = new HashMap<>();
@@ -434,11 +445,11 @@ public class AiyaOpenApiService {
         bizDataMap.put(BIZ_PARAM_CUSTOMER_CODE, customerCode);
         // AIYA：bizData 为业务参数序列化字符串，签名 = MD5(bizData + partnerKey)
         String bizData = JSON.toJSONString(bizDataMap);
-        String sign = AiyaSignUtils.sign(bizData, secret);
+        String sign = AiyaSignUtils.sign(bizData, partnerKey);
 
         Map<String, Object> params = new HashMap<>();
-        params.put("partnerId", accessToken);
-        params.put("serviceType", interfaceType);
+        params.put("partnerId", partnerId);
+        params.put("serviceType", serviceType);
         params.put("bizData", bizData);
         params.put(AiyaSignUtils.SIGN_FIELD, sign);
 
@@ -448,7 +459,9 @@ public class AiyaOpenApiService {
         log.info("[AIYA{}] 请求开始, url={}, params={}", actionName, url, logRequestJson);
         String response;
         try {
-            response = OkHttpUtils.doPostJson(url, params, null);
+            // 爱亚网关要求 partnerId/serviceType/bizData/sign 以 x-www-form-urlencoded 表单字段提交，
+            // 而非 JSON body，故使用表单 POST（OkHttpUtils.doPost 内部走 FormBody）。
+            response = OkHttpUtils.doPost(url, params, null);
         } catch (Exception e) {
             long cost = System.currentTimeMillis() - start;
             log.error("[AIYA{}] HTTP调用异常, url={}, cost={}ms, params={}", actionName, url, cost, logRequestJson, e);

@@ -4,22 +4,21 @@ import com.alibaba.fastjson.annotation.JSONField;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
 
 import java.io.Serializable;
-import java.math.BigDecimal;
 import java.util.List;
 
 /**
- * AIYA 入库订单分页查询（interfaceType=inorder.queryPage）响应结构（骨架）。
+ * AIYA（爱亚/百世 GLINK）入库单验货明细查询（serviceType={@code GLINK_QUERY_ASN_INSPECT_DETAIL_NOTIFY}）响应结构。
  * <p>
- * 参照 {@code WegoInboundResp} 搭建，外层统一为 success / errorCode / errorMsg / serverTime / result。
- * TODO：字段以 AIYA 官方文档为准，需按实际返回补充/调整。
+ * 外层 success / code / message，业务数据为 {@code asnInfoList[]}，每个 ASN 下挂 {@code asnItems[]}
+ * （SKU × 货物状态 的验货明细行）。数据模型与 wego 一致——按「上架完成时间」分页查询，
+ * {@code asnItems} 为验货明细流水，其中 {@code skuStatus} 区分良品（GOOD）/不良品（DAMAGE），
+ * 下游据此把良品/不良品分别写入签收记录、直接调拨单与即时库存。
  */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@SuperBuilder
 public class AiyaInboundResp implements Serializable {
 
     /**
@@ -29,194 +28,189 @@ public class AiyaInboundResp implements Serializable {
     private Boolean success;
 
     /**
-     * 错误代码（成功时为 0）
+     * 操作状态码（失败时返回错误类型）
      */
-    @JSONField(name = "errorCode")
-    private Integer errorCode;
+    @JSONField(name = "code")
+    private String code;
 
     /**
-     * 错误信息
+     * 提示信息
      */
-    @JSONField(name = "errorMsg")
-    private String errorMsg;
+    @JSONField(name = "message")
+    private String message;
 
     /**
-     * 服务器时间戳（秒）
+     * 批量入库单验货结果
      */
-    @JSONField(name = "serverTime")
-    private Long serverTime;
+    @JSONField(name = "asnInfoList")
+    private List<AsnInfoDTO> asnInfoList;
 
     /**
-     * 分页结果体
-     */
-    @JSONField(name = "result")
-    private PageResultDTO result;
-
-    /**
-     * 分页结果
+     * 单个入库单（ASN）验货结果
      */
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class PageResultDTO implements Serializable {
+    public static class AsnInfoDTO implements Serializable {
 
         /**
-         * 当前页
+         * 入库单状态
          */
-        @JSONField(name = "pageNum")
-        private Integer pageNum;
+        @JSONField(name = "status")
+        private String status;
 
         /**
-         * 每页数量
+         * 预计到货时间
          */
-        @JSONField(name = "pageSize")
-        private Integer pageSize;
+        @JSONField(name = "expectReceivedTime")
+        private String expectReceivedTime;
 
         /**
-         * 总条数
+         * 完成收货时间
          */
-        @JSONField(name = "total")
-        private Integer total;
+        @JSONField(name = "receiveTime")
+        private String receiveTime;
 
         /**
-         * 总页数
+         * 外部 ASN 编号
          */
-        @JSONField(name = "pages")
-        private Integer pages;
+        @JSONField(name = "extAsnNumber")
+        private String extAsnNumber;
 
         /**
-         * 入库单列表
+         * 客户编码
          */
-        @JSONField(name = "list")
-        private List<InorderDTO> list;
+        @JSONField(name = "customerCode")
+        private String customerCode;
 
         /**
-         * 是否为空页
-         */
-        @JSONField(name = "emptyFlag")
-        private Boolean emptyFlag;
-    }
-
-    /**
-     * 入库单
-     */
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class InorderDTO implements Serializable {
-
-        /**
-         * AIYA 入库单号
-         */
-        @JSONField(name = "no")
-        private String no;
-
-        /**
-         * 海外仓供应商代码
-         */
-        @JSONField(name = "warehouseBusiness")
-        private String warehouseBusiness;
-
-        /**
-         * 仓库代码
+         * 仓库编码
          */
         @JSONField(name = "warehouseCode")
         private String warehouseCode;
 
         /**
-         * 预计到货日期（yyyy-MM-dd）
+         * 仓库备注
          */
-        @JSONField(name = "expectedArrivalDate")
-        private String expectedArrivalDate;
+        @JSONField(name = "warehouseNotes")
+        private String warehouseNotes;
 
         /**
-         * 跟踪号/货柜号
+         * 用户标识
          */
-        @JSONField(name = "trackNumber")
-        private String trackNumber;
+        @JSONField(name = "extUserId")
+        private String extUserId;
 
         /**
-         * 参照编号（第三方系统单号）
+         * 仓库入库单号（爱亚内部单号）
+         */
+        @JSONField(name = "wmsAsnNumber")
+        private String wmsAsnNumber;
+
+        /**
+         * 承运商
+         */
+        @JSONField(name = "carrier")
+        private String carrier;
+
+        /**
+         * 仓库单据来源，枚举值（ENTRY, API, PO, AUTO_GWMS）
+         */
+        @JSONField(name = "wmsDocSource")
+        private String wmsDocSource;
+
+        /**
+         * 参考单号
          */
         @JSONField(name = "referenceNumber")
         private String referenceNumber;
 
         /**
-         * 备注
+         * 入库单分类
          */
-        @JSONField(name = "notes")
-        private String notes;
+        @JSONField(name = "asnType")
+        private String asnType;
 
         /**
-         * 订单状态（含义以 AIYA 文档为准）
+         * 入库单号（回显我方创建时下发的 asnNumber，即发货单号/referenceNo）
          */
-        @JSONField(name = "status")
-        private Integer status;
+        @JSONField(name = "asnNumber")
+        private String asnNumber;
 
         /**
-         * 订单明细（创建时录入的箱体明细）
+         * 验货明细
          */
-        @JSONField(name = "details")
-        private List<DetailDTO> details;
+        @JSONField(name = "asnItems")
+        private List<AsnItemDTO> asnItems;
     }
 
     /**
-     * 订单明细：创建/修改入库单时录入的箱体信息
+     * ASN 验货明细行（SKU × 货物状态）
      */
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class DetailDTO implements Serializable {
+    public static class AsnItemDTO implements Serializable {
 
         /**
-         * 箱数
+         * 原产国
          */
-        @JSONField(name = "boxQty")
-        private Integer boxQty;
+        @JSONField(name = "originCountry")
+        private String originCountry;
 
         /**
-         * 单箱内 SKU 总件数
+         * 批次号
          */
-        @JSONField(name = "skuQty")
-        private Integer skuQty;
+        @JSONField(name = "batchNo")
+        private String batchNo;
 
         /**
-         * 箱唛
+         * 生产日期
          */
-        @JSONField(name = "boxLabel")
-        private String boxLabel;
+        @JSONField(name = "mfgDate")
+        private String mfgDate;
 
         /**
-         * 外箱重 kg
+         * 到期日期
          */
-        @JSONField(name = "boxWeight")
-        private BigDecimal boxWeight;
+        @JSONField(name = "expDate")
+        private String expDate;
 
         /**
-         * 箱内产品明细
-         */
-        @JSONField(name = "products")
-        private List<ProductDTO> products;
-    }
-
-    /**
-     * 箱内产品明细
-     */
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class ProductDTO implements Serializable {
-
-        /**
-         * 产品 SKU
+         * 商品编码
          */
         @JSONField(name = "sku")
         private String sku;
 
         /**
-         * 数量
+         * 验货数量
          */
-        @JSONField(name = "qty")
-        private Integer qty;
+        @JSONField(name = "quantity")
+        private Integer quantity;
+
+        /**
+         * 货物状态：良品-GOOD，不良品-DAMAGE
+         */
+        @JSONField(name = "skuStatus")
+        private String skuStatus;
+
+        /**
+         * 备注
+         */
+        @JSONField(name = "remark")
+        private String remark;
+
+        /**
+         * ERP 侧回填字段：完成收货时间（由 InitHandler 从所属 {@link AsnInfoDTO#getReceiveTime()} 复制到每行，
+         * 以便下游把 asnItems 拍平到 detail_list_json 后仍能取到收货时间生成签收流水）。非爱亚原始接口字段。
+         */
+        @JSONField(name = "receiveTime")
+        private String receiveTime;
+
+        /**
+         * ERP 侧回填字段：所属入库单号（asnNumber），用于生成唯一的签收流水 ID（thirdId）。非爱亚原始接口字段。
+         */
+        @JSONField(name = "asnNumber")
+        private String asnNumber;
     }
 }

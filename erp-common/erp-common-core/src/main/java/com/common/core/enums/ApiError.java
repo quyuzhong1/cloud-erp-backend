@@ -1128,6 +1128,13 @@ public final class ApiError implements Serializable {
     public static final ApiError WH_AIYA_RESPONSE_FAILED = ApiErrorWms.WH_AIYA_RESPONSE_FAILED;
     public static final ApiError WH_AIYA_RESULT_EMPTY = ApiErrorWms.WH_AIYA_RESULT_EMPTY;
     public static final ApiError WH_AIYA_PAGE_LIMIT_EXCEEDED = ApiErrorWms.WH_AIYA_PAGE_LIMIT_EXCEEDED;
+    public static final ApiError WH_AIYA_INBOUND_TYPE_ONLY_SELF_HEADWAY = ApiErrorWms.WH_AIYA_INBOUND_TYPE_ONLY_SELF_HEADWAY;
+    public static final ApiError WH_AIYA_INBOUND_CODE_REQUIRED = ApiErrorWms.WH_AIYA_INBOUND_CODE_REQUIRED;
+    public static final ApiError WH_AIYA_AUTH_TOKEN_SECRET_MISSING = ApiErrorWms.WH_AIYA_AUTH_TOKEN_SECRET_MISSING;
+    public static final ApiError WH_AIYA_PACKING_LIST_EMPTY = ApiErrorWms.WH_AIYA_PACKING_LIST_EMPTY;
+    public static final ApiError WH_AIYA_PACKING_BOX_NO_VALID_SKU = ApiErrorWms.WH_AIYA_PACKING_BOX_NO_VALID_SKU;
+    public static final ApiError WH_AIYA_PACKING_LIST_MISSING_BOX_NO = ApiErrorWms.WH_AIYA_PACKING_LIST_MISSING_BOX_NO;
+    public static final ApiError WH_AIYA_INBOUND_DETAIL_JSON_PARSE_FAILED = ApiErrorWms.WH_AIYA_INBOUND_DETAIL_JSON_PARSE_FAILED;
 
     /** Tms service error constants. */
     public static final ApiError FIRST_MILE_FBA_SHIPMENT_NOT_EXIST_BILL = ApiErrorTms.FIRST_MILE_FBA_SHIPMENT_NOT_EXIST_BILL;
@@ -1455,6 +1462,13 @@ public final class ApiError implements Serializable {
     public static final ApiError LOGISTICS_RECON_BILL_REVERT_NO_ELIGIBLE = ApiErrorTms.LOGISTICS_RECON_BILL_REVERT_NO_ELIGIBLE;
     public static final ApiError LOGISTICS_RECON_BILL_REVERT_COST_STATUS_FORBIDDEN = ApiErrorTms.LOGISTICS_RECON_BILL_REVERT_COST_STATUS_FORBIDDEN;
     public static final ApiError LOGISTICS_SALES_PLATFORM_REQUIRED = ApiErrorTms.LOGISTICS_SALES_PLATFORM_REQUIRED;
+    public static final ApiError LOGISTICS_AIYA_CHANNEL_AUTH_INFO_EMPTY = ApiErrorTms.LOGISTICS_AIYA_CHANNEL_AUTH_INFO_EMPTY;
+    public static final ApiError LOGISTICS_AIYA_CHANNEL_TOKEN_SECRET_MISSING = ApiErrorTms.LOGISTICS_AIYA_CHANNEL_TOKEN_SECRET_MISSING;
+    public static final ApiError LOGISTICS_AIYA_CHANNEL_QUERY_ERROR = ApiErrorTms.LOGISTICS_AIYA_CHANNEL_QUERY_ERROR;
+    public static final ApiError LOGISTICS_AIYA_CHANNEL_RESPONSE_EMPTY = ApiErrorTms.LOGISTICS_AIYA_CHANNEL_RESPONSE_EMPTY;
+    public static final ApiError LOGISTICS_AIYA_CHANNEL_QUERY_FAILED = ApiErrorTms.LOGISTICS_AIYA_CHANNEL_QUERY_FAILED;
+    public static final ApiError LOGISTICS_AIYA_CHANNEL_WAREHOUSE_EMPTY = ApiErrorTms.LOGISTICS_AIYA_CHANNEL_WAREHOUSE_EMPTY;
+    public static final ApiError LOGISTICS_AIYA_SERVICE_NOT_OPEN = ApiErrorTms.LOGISTICS_AIYA_SERVICE_NOT_OPEN;
 
     /** Plm service error constants. */
     public static final ApiError BOM_REQUIRED = ApiErrorPlm.BOM_REQUIRED;

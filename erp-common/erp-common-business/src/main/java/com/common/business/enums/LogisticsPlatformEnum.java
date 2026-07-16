@@ -51,6 +51,7 @@ public enum LogisticsPlatformEnum implements EnumMessage {
     WILDBERRIES("wildberries", "Wildberries", "Wildberries", "","Y","N"),
     TONG_YOU_WAREHOUSE("tongyou", "通邮海外仓", "通邮海外仓", "","Y","N"),
     WEGO("wego", "WEGO", "WEGO", "","Y","N"),
+    AIYA(OmsPlatformEnum.AI_YA.getCode(), OmsPlatformEnum.AI_YA.getName(), "百世", "","Y","N"),
 
     ;
 

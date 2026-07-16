@@ -536,6 +536,11 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 throw new ServiceException(ApiError.WH_WEGO_INBOUND_TRACKING_NO_REQUIRED);
             }
         }
+        // 校验参数：爱亚(AIYA) 平台目的仓只支持「自发头程」入库类型
+        if (OmsPlatformEnum.AI_YA.getCode().equalsIgnoreCase(dictPlatform)
+                && !OverseasInstockTypeEnum.SELF_HEADWAY.equals(commonDTO.getInstockType())) {
+            throw new ServiceException(ApiError.WH_AIYA_INBOUND_TYPE_ONLY_SELF_HEADWAY);
+        }
         // 入库类型=自发头程
         if (OverseasInstockTypeEnum.SELF_HEADWAY.equals(commonDTO.getInstockType())) {
             if (null == commonDTO.getLogisticsMethod()) {
@@ -1357,11 +1362,13 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                     if (!receivedKeySet.add(key)) {
                         continue;
                     }
-                } else if (OmsPlatformEnum.WE_GO.getCode().equalsIgnoreCase(dto.getPlatform())) {
-                    // wego 在 WegoInboundRocketMQTaskHandler 为每条流水生成的 thirdId 为
-                    // inOrderDetailId_batch_createTime_sku，在仓库侧已经唯一定位一次上架操作。
-                    // 多次部分签收场景下 wego 每次会推全量 instocks 列表，必须按 flow_id 去重，
-                    // 否则同一条批次会被反复落 overseas_warehouse_inbound_received，导致调拨/状态计算重复触发。
+                } else if (OmsPlatformEnum.WE_GO.getCode().equalsIgnoreCase(dto.getPlatform())
+                        || OmsPlatformEnum.AI_YA.getCode().equalsIgnoreCase(dto.getPlatform())) {
+                    // wego / 爱亚(aiya) 均按上架/收货时间窗口分页回传全量明细，且每条流水都带全局唯一 thirdId：
+                    // - wego：inOrderDetailId_batch_createTime_sku；
+                    // - 爱亚：asnNumber_sku_skuStatus_batchNo_receiveTime（skuStatus 区分良品/不良品，各自独立成流水）。
+                    // 时间窗口重叠会重复拉取同一行，必须按 flow_id 强去重，否则会反复落
+                    // overseas_warehouse_inbound_received，导致调拨/库存/状态计算重复触发。
                     // 兜底：极端情况下 thirdId 缺失时降级到 (detailId,qty,time) 弱去重，避免完全丢数据。
                     if (StringUtil.isNotBlank(receiving.getThirdId())) {
                         if (!wegoFlowIdSet.add(receiving.getThirdId())) {

@@ -445,6 +445,13 @@ public final class ApiErrorWms {
     public static final ApiError WH_AIYA_RESPONSE_FAILED = new ApiError("WH_AIYA_RESPONSE_FAILED", 11240, "AIYA{0}接口返回失败: errorCode={1}, errorMsg={2}");
     public static final ApiError WH_AIYA_RESULT_EMPTY = new ApiError("WH_AIYA_RESULT_EMPTY", 11241, "AIYA{0}接口success=true但result为空");
     public static final ApiError WH_AIYA_PAGE_LIMIT_EXCEEDED = new ApiError("WH_AIYA_PAGE_LIMIT_EXCEEDED", 11242, "AIYA{0}已达最大翻页上限{1}，已拉取{2}条");
+    public static final ApiError WH_AIYA_INBOUND_TYPE_ONLY_SELF_HEADWAY = new ApiError("WH_AIYA_INBOUND_TYPE_ONLY_SELF_HEADWAY", 11243, "目的仓平台授权为爱亚(AIYA)时，入库类型只能为【自发头程】");
+    public static final ApiError WH_AIYA_INBOUND_CODE_REQUIRED = new ApiError("WH_AIYA_INBOUND_CODE_REQUIRED", 11244, "AIYA入库单号不能为空");
+    public static final ApiError WH_AIYA_AUTH_TOKEN_SECRET_MISSING = new ApiError("WH_AIYA_AUTH_TOKEN_SECRET_MISSING", 11245, "AIYA授权信息partnerId/customerCode/partnerKey不能为空");
+    public static final ApiError WH_AIYA_PACKING_LIST_EMPTY = new ApiError("WH_AIYA_PACKING_LIST_EMPTY", 11246, "AIYA装箱清单为空");
+    public static final ApiError WH_AIYA_PACKING_BOX_NO_VALID_SKU = new ApiError("WH_AIYA_PACKING_BOX_NO_VALID_SKU", 11247, "装箱清单箱内无有效SKU明细，发货单号【{0}】，箱号【{1}】");
+    public static final ApiError WH_AIYA_PACKING_LIST_MISSING_BOX_NO = new ApiError("WH_AIYA_PACKING_LIST_MISSING_BOX_NO", 11248, "装箱清单缺少箱号");
+    public static final ApiError WH_AIYA_INBOUND_DETAIL_JSON_PARSE_FAILED = new ApiError("WH_AIYA_INBOUND_DETAIL_JSON_PARSE_FAILED", 11249, "AIYA解析入库签收明细JSON失败，签收数据不完整，inboundId={0}");
 
     static ApiError[] values() {
         return new ApiError[]{
@@ -885,6 +892,13 @@ public final class ApiErrorWms {
                 WH_AIYA_RESPONSE_FAILED,
                 WH_AIYA_RESULT_EMPTY,
                 WH_AIYA_PAGE_LIMIT_EXCEEDED,
+                WH_AIYA_INBOUND_TYPE_ONLY_SELF_HEADWAY,
+                WH_AIYA_INBOUND_CODE_REQUIRED,
+                WH_AIYA_AUTH_TOKEN_SECRET_MISSING,
+                WH_AIYA_PACKING_LIST_EMPTY,
+                WH_AIYA_PACKING_BOX_NO_VALID_SKU,
+                WH_AIYA_PACKING_LIST_MISSING_BOX_NO,
+                WH_AIYA_INBOUND_DETAIL_JSON_PARSE_FAILED,
         };
     }
 }

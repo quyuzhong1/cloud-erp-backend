@@ -333,6 +333,13 @@ public final class ApiErrorTms {
     public static final ApiError LOGISTICS_RECON_BILL_REVERT_NO_ELIGIBLE = new ApiError("LOGISTICS_RECON_BILL_REVERT_NO_ELIGIBLE", 13676, "没有可回退为待确认的已确认数据");
     public static final ApiError LOGISTICS_RECON_BILL_REVERT_COST_STATUS_FORBIDDEN = new ApiError("LOGISTICS_RECON_BILL_REVERT_COST_STATUS_FORBIDDEN", 13677, "存在已确认关联数据，但物流费用核算状态非待生成或支付状态非未支付（待付款/待退款），无法回退为待确认");
     public static final ApiError LOGISTICS_SALES_PLATFORM_REQUIRED = new ApiError("LOGISTICS_SALES_PLATFORM_REQUIRED", 13649, "销售平台不能为空");
+    public static final ApiError LOGISTICS_AIYA_CHANNEL_AUTH_INFO_EMPTY = new ApiError("LOGISTICS_AIYA_CHANNEL_AUTH_INFO_EMPTY", 13730, "AIYA授权信息为空");
+    public static final ApiError LOGISTICS_AIYA_CHANNEL_TOKEN_SECRET_MISSING = new ApiError("LOGISTICS_AIYA_CHANNEL_TOKEN_SECRET_MISSING", 13731, "AIYA授权信息缺失partnerId(或appKey)/customerCode/appSecret");
+    public static final ApiError LOGISTICS_AIYA_CHANNEL_QUERY_ERROR = new ApiError("LOGISTICS_AIYA_CHANNEL_QUERY_ERROR", 13732, "AIYA查询派送渠道异常");
+    public static final ApiError LOGISTICS_AIYA_CHANNEL_RESPONSE_EMPTY = new ApiError("LOGISTICS_AIYA_CHANNEL_RESPONSE_EMPTY", 13733, "AIYA查询派送渠道接口返回为空");
+    public static final ApiError LOGISTICS_AIYA_CHANNEL_QUERY_FAILED = new ApiError("LOGISTICS_AIYA_CHANNEL_QUERY_FAILED", 13734, "AIYA查询派送渠道失败: {0}");
+    public static final ApiError LOGISTICS_AIYA_CHANNEL_WAREHOUSE_EMPTY = new ApiError("LOGISTICS_AIYA_CHANNEL_WAREHOUSE_EMPTY", 13735, "AIYA查询仓库列表为空，无法同步派送渠道");
+    public static final ApiError LOGISTICS_AIYA_SERVICE_NOT_OPEN = new ApiError("LOGISTICS_AIYA_SERVICE_NOT_OPEN", 13736, "AIYA物流服务功能暂未开放");
 
     static ApiError[] values() {
         return new ApiError[]{
@@ -661,6 +668,13 @@ public final class ApiErrorTms {
                 LOGISTICS_RECON_BILL_REVERT_NO_ELIGIBLE,
                 LOGISTICS_RECON_BILL_REVERT_COST_STATUS_FORBIDDEN,
                 LOGISTICS_SALES_PLATFORM_REQUIRED,
+                LOGISTICS_AIYA_CHANNEL_AUTH_INFO_EMPTY,
+                LOGISTICS_AIYA_CHANNEL_TOKEN_SECRET_MISSING,
+                LOGISTICS_AIYA_CHANNEL_QUERY_ERROR,
+                LOGISTICS_AIYA_CHANNEL_RESPONSE_EMPTY,
+                LOGISTICS_AIYA_CHANNEL_QUERY_FAILED,
+                LOGISTICS_AIYA_CHANNEL_WAREHOUSE_EMPTY,
+                LOGISTICS_AIYA_SERVICE_NOT_OPEN,
         };
     }
 }
