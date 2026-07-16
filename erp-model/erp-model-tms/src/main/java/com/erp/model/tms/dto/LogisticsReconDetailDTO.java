@@ -10,7 +10,6 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -222,47 +221,6 @@ public class LogisticsReconDetailDTO implements Serializable {
          * 创建人名称
          */
         private String createUserName;
-        /**
-         * 关联到的 ERP 物流单号（预留字段，当前列表不展示）
-         */
-        private String matchedLogisticsBillCode;
-    }
-
-    /**
-     * 导出 Excel 参数
-     */
-    @Data
-    @NoArgsConstructor
-    public static class ExportDTO extends PagingParamDTO {
-        /**
-         * 勾选的 id 集合
-         */
-        private List<String> ids;
-    }
-
-    /**
-     * 详情
-     */
-    @Data
-    @NoArgsConstructor
-    public static class ViewDTO extends ListDTO {
-        /**
-         * 行内费用项
-         */
-        private List<LogisticsReconDetailSubDTO.ListDTO> subList;
-    }
-
-    /**
-     * 行明细批量按 ids 查询
-     */
-    @Data
-    @NoArgsConstructor
-    public static class ListByIdsDTO {
-        /**
-         * 对账明细 id 集合
-         */
-        @NotEmpty(message = "id集合不能为空")
-        private List<String> ids;
     }
 
     /**
@@ -399,24 +357,5 @@ public class LogisticsReconDetailDTO implements Serializable {
          * ERP 发货单号
          */
         private String erpSoDeliveryCode;
-    }
-
-    /**
-     * 新增费用单（基于对账费用项补建物流费用单后绑定）
-     */
-    @Data
-    @NoArgsConstructor
-    public static class AddLogisticsBillCostDTO {
-        /**
-         * 对账费用项 id
-         */
-        @NotBlank(message = "对账费用项id不能为空")
-        private String detailSubId;
-
-        /**
-         * 业务字段后续按 logistics_bill / logistics_bill_cost 实际入参类型化补齐
-         */
-        @NotNull(message = "新建费用单参数不能为空")
-        private Map<String, Object> billCostPayload;
     }
 }

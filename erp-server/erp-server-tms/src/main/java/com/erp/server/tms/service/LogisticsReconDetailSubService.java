@@ -2,7 +2,6 @@ package com.erp.server.tms.service;
 
 import com.common.business.service.SuperService;
 import com.erp.model.tms.dto.LogisticsReconDTO;
-import com.erp.model.tms.dto.LogisticsReconDetailSubDTO;
 import com.erp.model.tms.dto.LogisticsReconMatchDTO;
 import com.erp.model.tms.entity.LogisticsReconDetailSubEntity;
 
@@ -20,24 +19,6 @@ import java.util.Map;
  * @since 2026-05-29
  */
 public interface LogisticsReconDetailSubService extends SuperService<LogisticsReconDetailSubEntity> {
-
-    /**
-     * 物流商对账费用项查询（按 detail_id 批量；详情页展开 / 合并匹配阶段读取）
-     * @author Will
-     * @date: 2026/05/29
-     * @param detailIds
-     * @return List<LogisticsReconDetailSubDTO.ListDTO>
-     */
-    List<LogisticsReconDetailSubDTO.ListDTO> listByDetailIds(Collection<String> detailIds);
-
-    /**
-     * 按 detail_id 级联逻辑删除（用于行级删除 / 主表 batchDelete）
-     * @author Will
-     * @date: 2026/05/29
-     * @param detailIds
-     * @return
-     */
-    void removeByDetailIds(Collection<String> detailIds);
 
     /**
      * 按 main_id 级联逻辑删除

@@ -4,7 +4,6 @@ import cn.hutool.core.collection.CollUtil;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
-import com.erp.model.tms.dto.LogisticsReconRefLogisticsBillDTO;
 import com.erp.model.tms.entity.LogisticsReconRefLogisticsBillEntity;
 import com.erp.server.tms.mapper.LogisticsReconRefLogisticsBillMapper;
 import com.erp.server.tms.service.LogisticsReconRefLogisticsBillService;
@@ -15,7 +14,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -32,23 +30,6 @@ import java.util.stream.Collectors;
 public class LogisticsReconRefLogisticsBillServiceImpl
         extends SuperServiceImpl<LogisticsReconRefLogisticsBillMapper, LogisticsReconRefLogisticsBillEntity>
         implements LogisticsReconRefLogisticsBillService {
-
-    @Override
-    public List<LogisticsReconRefLogisticsBillDTO.ListDTO> listByDetailIds(Collection<String> detailIds) {
-        if (CollUtil.isEmpty(detailIds)) {
-            return Collections.emptyList();
-        }
-        List<String> ids = detailIds instanceof List ? (List<String>) detailIds : new ArrayList<>(detailIds);
-        return baseMapper.listByDetailIds(ids);
-    }
-
-    @Override
-    public List<LogisticsReconRefLogisticsBillDTO.ListDTO> listByMainId(String mainId) {
-        if (mainId == null || mainId.isEmpty()) {
-            return Collections.emptyList();
-        }
-        return baseMapper.listByMainId(mainId);
-    }
 
     @Transactional(rollbackFor = Exception.class)
     @Override

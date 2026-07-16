@@ -10,13 +10,8 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.LogisticsReconDetailDTO;
-import com.erp.model.tms.dto.LogisticsReconDetailSubDTO;
-import com.erp.model.tms.dto.LogisticsReconRefLogisticsBillDTO;
 import com.erp.server.tms.query.LogisticsReconDetailQueryHandler;
 import com.erp.server.tms.service.LogisticsReconDetailService;
-import com.erp.server.tms.service.LogisticsReconDetailSubService;
-import com.erp.server.tms.service.LogisticsReconRefLogisticsBillService;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -30,7 +25,6 @@ import java.util.List;
  * @author Will
  * @since 2026-05-29
  */
-@Slf4j
 @RestController
 @LogSystemModule("物流商对账明细")
 @RequestMapping("/logisticsReconDetail")
@@ -38,13 +32,6 @@ public class LogisticsReconDetailController extends BaseController {
 
     @Resource
     private LogisticsReconDetailService logisticsReconDetailService;
-
-    @Resource
-    private LogisticsReconDetailSubService logisticsReconDetailSubService;
-
-    @Resource
-    private LogisticsReconRefLogisticsBillService logisticsReconRefLogisticsBillService;
-
 
     /**
      * 物流商对账明细分页列表查询
@@ -74,33 +61,6 @@ public class LogisticsReconDetailController extends BaseController {
     }
 
     /**
-     * 物流商对账费用项查询（按 detail_id 集合，详情页展开/匹配结果展示）
-     * @author Will
-     * @date: 2026/05/29
-     * @param dto
-     * @return ApiResult<List<LogisticsReconDetailSubDTO.ListDTO>>
-     */
-    @PostMapping("/detailSubListByDetailIds")
-    public ApiResult<List<LogisticsReconDetailSubDTO.ListDTO>> detailSubListByDetailIds(
-            @RequestBody @Validated LogisticsReconDetailSubDTO.ListByDetailIdsDTO dto) {
-        return success(logisticsReconDetailSubService.listByDetailIds(dto.getDetailIds()));
-    }
-
-    /**
-     * 物流商对账明细 - 关联关系查询（按 detail_id 集合，展示已匹配的物流单/费用单号）
-     * @author Will
-     * @date: 2026/05/29
-     * @param dto
-     * @return ApiResult<List<LogisticsReconRefLogisticsBillDTO.ListDTO>>
-     */
-    @PostMapping("/refListByDetailIds")
-    public ApiResult<List<LogisticsReconRefLogisticsBillDTO.ListDTO>> refListByDetailIds(
-            @RequestBody @Validated LogisticsReconDetailDTO.ListByIdsDTO dto) {
-        return success(logisticsReconRefLogisticsBillService.listByDetailIds(dto.getIds()));
-    }
-
-
-    /**
      * 物流商对账明细手动匹配（按明细展开其下未匹配费用项，批量指定 ERP 四个业务单号）
      * @author Will
      * @date: 2026/05/29
@@ -128,8 +88,6 @@ public class LogisticsReconDetailController extends BaseController {
         logisticsReconDetailService.downloadTemplate(response);
         return success();
     }
-
-
 
     /**
      * 物流商对账费用项导入匹配（按对账费用项批量触发合并 & 匹配）
