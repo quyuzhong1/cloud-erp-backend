@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
@@ -59,7 +60,12 @@ public class KolCooperationPlatformDTO implements Serializable {
         /**
         * 粉丝数量
         */
-        private Integer followerCount;
+        private BigDecimal followerCount;
+
+        /**
+        * 粉丝数量单位
+        */
+        private String followerCountUnit;
 
         /**
         * 主页链接
@@ -129,7 +135,12 @@ public class KolCooperationPlatformDTO implements Serializable {
         /**
         * 粉丝数量
         */
-        private Integer followerCount;
+        private BigDecimal followerCount;
+
+        /**
+        * 粉丝数量单位
+        */
+        private String followerCountUnit;
 
         /**
         * 主页链接

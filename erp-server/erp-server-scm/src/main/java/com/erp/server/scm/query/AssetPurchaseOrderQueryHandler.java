@@ -11,6 +11,7 @@ import com.erp.model.plm.entity.MoldInfoEntity;
 import com.erp.model.scm.enums.AssetPurchaseOrderTabListEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -53,7 +54,6 @@ public class AssetPurchaseOrderQueryHandler extends AbstractQueryHandler {
                 return this.getQueryAllSql();
             }
         }
-
         // 项目名称查询：把当前高级查询条件透传到 PLM 端走 @WebAdvanceQuery 切面解析，
         // 远端按 mi.project_name 完整支持 EQ / CONTAINS / STARTS_WITH 等所有比较符
         // 和大小写不敏感匹配；这里只用拿到的模具 ID 在主表上做 IN 关联。
@@ -87,8 +87,31 @@ public class AssetPurchaseOrderQueryHandler extends AbstractQueryHandler {
                 super.buildSplicingSQLDTO("apod.asset_id",
                         QueryConditionEnum.IN_LIST, moldIds, QueryDataTypeEnum.STRING);
             }
+            return null;
+        }
+
+        // 模具名称查询：根据模具档案名称远程查询模具编码，再按 asset_code in 查询
+        if (isAssetNameField(field)) {
+            return handleAssetNameQuery(value, "apod.asset_code");
         }
 
         return null;
+    }
+
+    private String handleAssetNameQuery(Object value, String assetCodeField) {
+        String moldName = value != null ? value.toString() : null;
+        if (StringUtils.isBlank(moldName)) {
+            return null;
+        }
+        List<String> moldCodes = plmTaskFeign.listMoldCodesByName(moldName);
+        if (CollectionUtils.isNotEmpty(moldCodes)) {
+            super.buildDefaultDTO(assetCodeField, moldCodes);
+            return null;
+        }
+        return this.getQueryEmptySql();
+    }
+
+    private boolean isAssetNameField(String field) {
+        return "assetName".equals(field) || "moldName".equals(field) || "apod.asset_name".equals(field);
     }
 }

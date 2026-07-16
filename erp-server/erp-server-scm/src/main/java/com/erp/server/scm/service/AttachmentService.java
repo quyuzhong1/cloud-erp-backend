@@ -5,6 +5,7 @@ import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.entity.ScmAttachmentEntity;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -60,6 +61,16 @@ public interface AttachmentService extends SuperService<ScmAttachmentEntity> {
 
 
     List<AttachmentDTO.UpdateDTO> getByBusinessIdAndType(List<String> businessIds, String type);
+
+    /**
+     * 根据业务id和附件类型查询
+     */
+    List<AttachmentDTO.UpdateDTO> listByBusinessIdAndType(String businessId, String type);
+
+    /**
+     * 统计指定类型附件数量
+     */
+    Map<String, Long> countByBusinessIdsAndType(List<String> businessIds, String type);
 
     /**
      * 删除附件

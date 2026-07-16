@@ -11,6 +11,7 @@ import com.erp.model.plm.entity.MoldInfoEntity;
 import com.erp.model.scm.enums.CreatePoTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -89,8 +90,31 @@ public class AssetNoticeQueryHandler extends AbstractQueryHandler {
                 super.buildSplicingSQLDTO("and1.asset_id",
                         QueryConditionEnum.IN_LIST, moldIds, QueryDataTypeEnum.STRING);
             }
+            return null;
+        }
+
+        // 模具名称查询：根据模具档案名称远程查询模具编码，再按 asset_code in 查询
+        if (isAssetNameField(field)) {
+            return handleAssetNameQuery(value, "and1.asset_code");
         }
 
         return null;
+    }
+
+    private String handleAssetNameQuery(Object value, String assetCodeField) {
+        String moldName = value != null ? value.toString() : null;
+        if (StringUtils.isBlank(moldName)) {
+            return null;
+        }
+        List<String> moldCodes = plmTaskFeign.listMoldCodesByName(moldName);
+        if (CollectionUtils.isNotEmpty(moldCodes)) {
+            super.buildDefaultDTO(assetCodeField, moldCodes);
+            return null;
+        }
+        return this.getQueryEmptySql();
+    }
+
+    private boolean isAssetNameField(String field) {
+        return "assetName".equals(field) || "moldName".equals(field) || "and1.asset_name".equals(field);
     }
 }

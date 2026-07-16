@@ -17,6 +17,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.scm.dto.AssetNoticeDTO;
+import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.entity.AssetNoticeEntity;
 import com.erp.server.scm.query.AssetNoticeQueryHandler;
 import com.erp.server.scm.service.AssetNoticeService;
@@ -489,6 +490,47 @@ public class AssetNoticeController extends BaseController {
     public ApiResult<Object> exportList(@RequestBody @Validated AssetNoticeDTO.ExportDTO dto, HttpServletResponse response) {
         assetNoticeService.exportList(dto, response);
         return success();
+    }
+
+    /**
+     * 查询 DFM 附件（下载列表）
+     */
+    @GetMapping("/listDfmAttachment")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "scm:assetNotice:uploadDfmAttachment",
+            serviceClass = AssetNoticeService.class,
+            keyIdName = "id")
+    public ApiResult<List<AttachmentDTO.UpdateDTO>> listDfmAttachment(@RequestParam("id") String id) {
+        return success(assetNoticeService.listDfmAttachment(id));
+    }
+
+    /**
+     * 上传 DFM 附件
+     */
+    @PostMapping("/uploadDfmAttachment")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "scm:assetNotice:uploadDfmAttachment",
+            serviceClass = AssetNoticeService.class,
+            keyIdName = "id")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "上传DFM附件")
+    public ApiResult<BatchResultDTO> uploadDfmAttachment(@RequestBody @Validated AssetNoticeDTO.UploadDfmAttachmentDTO dto) {
+        return success(assetNoticeService.uploadDfmAttachment(dto));
+    }
+
+    /**
+     * 删除 DFM 附件
+     */
+    @PostMapping("/deleteDfmAttachment")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "scm:assetNotice:uploadDfmAttachment",
+            serviceClass = AssetNoticeService.class,
+            keyIdName = "businessId")
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除DFM附件")
+    public ApiResult<BatchResultDTO> deleteDfmAttachment(@RequestBody @Validated AttachmentDTO.DeleteDTO dto) {
+        return success(assetNoticeService.deleteDfmAttachment(dto));
     }
 
 

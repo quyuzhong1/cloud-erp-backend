@@ -61,7 +61,7 @@ mm.source_detail_id AS sourceDetailId,
 mm.source_type AS sourceType,
 mm.mold_id AS moldId,
 mm.mold_code AS moldCode,
-mm.mold_name AS moldName,
+mi.name AS moldName,
 mm.supplier_id AS supplierId,
 mm.supplier_code AS supplierCode,
 mm.supplier_name AS supplierName,
@@ -124,6 +124,7 @@ mm.remark AS remark
         <include refid="Base_Column_List"></include>
         FROM
         mold_monitor mm
+        LEFT JOIN mold_info mi ON mi.id = mm.mold_id AND mi.is_deleted = FALSE
         where
         ${params.sqlMap.default}
         AND mm.is_deleted = FALSE

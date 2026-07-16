@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -48,7 +49,12 @@ public class KolCooperationPlatformEntity extends BaseEntity<KolCooperationPlatf
     * 粉丝数量
     */
     @TableField("follower_count")
-    private Integer followerCount;
+    private BigDecimal followerCount;
+    /**
+    * 粉丝数量单位
+    */
+    @TableField("follower_count_unit")
+    private String followerCountUnit;
     /**
     * 主页链接
     */
@@ -70,6 +76,8 @@ public class KolCooperationPlatformEntity extends BaseEntity<KolCooperationPlatf
     public static final String PLATFORM_ACCOUNT_NAME = "platform_account_name";
 
     public static final String FOLLOWER_COUNT = "follower_count";
+
+    public static final String FOLLOWER_COUNT_UNIT = "follower_count_unit";
 
     public static final String HOMEPAGE_URL = "homepage_url";
 

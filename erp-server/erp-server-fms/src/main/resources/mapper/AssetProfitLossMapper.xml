@@ -69,7 +69,7 @@
             apld.asset_category AS assetCategory,
             apld.card_code AS cardCode,
             apld.card_id AS cardId,
-            apld.asset_name AS assetName,
+            ac.name AS assetName,
             apld.asset_code AS assetCode,
             apld.unit,
             apld.diff_qty AS qty,
@@ -79,6 +79,7 @@
             apld.actual_location as actualLocation
         FROM asset_profit_loss apl
         LEFT JOIN asset_profit_loss_detail apld ON apld.main_id = apl.id AND apld.is_deleted = false
+        LEFT JOIN asset_card ac ON ac.id = apld.card_id AND ac.is_deleted = false
         LEFT JOIN asset_stocktaking_plan asp ON asp.id = apl.plan_id AND asp.is_deleted = false
         WHERE
         ${params.sqlMap.default}
@@ -124,7 +125,7 @@
             apld.asset_category AS assetCategory,
             apld.card_code AS cardCode,
             apld.card_id AS cardId,
-            apld.asset_name AS assetName,
+            ac.name AS assetName,
             apld.asset_code AS assetCode,
             apld.unit,
             apld.diff_qty AS qty,
@@ -133,6 +134,7 @@
             asp.plan_name AS planName
         FROM asset_profit_loss apl
         LEFT JOIN asset_profit_loss_detail apld ON apld.main_id = apl.id AND apld.is_deleted = false
+        LEFT JOIN asset_card ac ON ac.id = apld.card_id AND ac.is_deleted = false
         LEFT JOIN asset_stocktaking_plan asp ON asp.id = apl.plan_id AND asp.is_deleted = false
         WHERE
         ${params.sqlMap.default}

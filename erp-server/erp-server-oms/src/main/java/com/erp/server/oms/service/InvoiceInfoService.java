@@ -79,6 +79,14 @@ public interface InvoiceInfoService extends SuperService<InvoiceInfoEntity> {
 
     List<InvoiceInfoEntity> listBySoIds(List<String> soIds);
 
+    /**
+     * 订单是否存在开票中或已开票（开票成功）的开票清单
+     *
+     * @param soId 销售订单id
+     * @return true-存在阻塞状态的开票清单
+     */
+    boolean hasBlockingInvoiceStatus(String soId);
+
     void retryInvoice(String jobParam);
 
     void queryUploadingInvoice() throws Exception;

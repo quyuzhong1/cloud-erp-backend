@@ -42,6 +42,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.fms.kingdee.SyncKingdeeAssetAcceptService;
 import com.erp.server.fms.service.AssetAcceptDetailService;
 import com.erp.server.fms.service.FmsPushMsgService;
+import com.erp.server.fms.utils.FmsAssetNameResolver;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -75,6 +76,8 @@ public class SyncKingdeeAssetAcceptServiceImpl implements SyncKingdeeAssetAccept
 
     @Resource
     private AssetAcceptDetailService assetAcceptDetailService;
+    @Resource
+    private FmsAssetNameResolver fmsAssetNameResolver;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -221,6 +224,8 @@ public class SyncKingdeeAssetAcceptServiceImpl implements SyncKingdeeAssetAccept
             JSONObject jsonObject = new JSONObject();
             //sku编码
             jsonObject.set("skuNo", detail.getSkuNo());
+            //产品/资产名称（关联查询）
+            jsonObject.set("productName", fmsAssetNameResolver.resolveAcceptDetailProductName(detail));
             //验收数量
             jsonObject.set("acceptQty", detail.getAcceptQty());
             ProductDetailEntity productDetailEntity = skuMap.get(detail.getSkuId());

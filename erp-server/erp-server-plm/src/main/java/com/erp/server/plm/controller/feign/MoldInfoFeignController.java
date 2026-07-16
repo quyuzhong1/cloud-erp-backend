@@ -69,6 +69,20 @@ public class MoldInfoFeignController {
                 .collect(Collectors.toList());
     }
 
+    @PostMapping("/listMoldCodesByName")
+    List<String> listMoldCodesByName(@RequestBody String moldName){
+        if (moldName == null || moldName.trim().isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<MoldInfoEntity> moldInfoList = moldInfoService.lambdaQuery()
+                .like(MoldInfoEntity::getName, moldName)
+                .list();
+        return moldInfoList.stream()
+                .map(MoldInfoEntity::getCode)
+                .filter(code -> code != null && !code.trim().isEmpty())
+                .collect(Collectors.toList());
+    }
+
     @PostMapping("/searchMoldRefSkuByAssetId")
     List<AssetNoticeDetailDTO.AssetDetailRefSkuDTO> searchMoldRefSkuByAssetId(@RequestBody String assetId){
         return moldInfoMapper.searchMoldRefSkuByAssetId(assetId);

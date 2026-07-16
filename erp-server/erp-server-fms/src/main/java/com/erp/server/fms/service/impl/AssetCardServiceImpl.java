@@ -40,6 +40,8 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
+import com.erp.model.plm.entity.MoldInfoEntity;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
@@ -102,6 +104,8 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private CfgQueryOptionFeign cfgQueryOptionFeign;
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -878,6 +882,47 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
                     })
                     .collect(Collectors.toList());
             data.setDetailList(detailViewList);
+            String assetCode = detailList.stream()
+                    .map(AssetCardDetailEntity::getAssetCode)
+                    .filter(StringUtils::isNotBlank)
+                    .findFirst()
+                    .orElse(data.getAssetCode());
+            fillCardDisplayName(data, assetCode);
+        } else {
+            fillCardDisplayName(data, data.getAssetCode());
+        }
+    }
+
+    private void fillCardDisplayName(AssetCardDTO.ViewDTO data, String assetCode) {
+        if (StringUtils.isNotBlank(assetCode)) {
+            Map<String, MoldInfoEntity> moldInfoMap = buildMoldInfoMap(Collections.singletonList(assetCode));
+            MoldInfoEntity moldInfo = moldInfoMap.get(assetCode);
+            if (moldInfo != null && StringUtils.isNotBlank(moldInfo.getName())) {
+                data.setName(moldInfo.getName());
+                return;
+            }
+        }
+        AssetCardEntity card = getById(data.getId());
+        if (card != null) {
+            data.setName(card.getName());
+        }
+    }
+
+    private Map<String, MoldInfoEntity> buildMoldInfoMap(List<String> moldCodes) {
+        if (CollUtil.isEmpty(moldCodes)) {
+            return Collections.emptyMap();
+        }
+        try {
+            List<MoldInfoEntity> moldInfoList = plmTaskFeign.listMoldInfoByCodes(moldCodes);
+            if (CollUtil.isEmpty(moldInfoList)) {
+                return Collections.emptyMap();
+            }
+            return moldInfoList.stream()
+                    .filter(info -> StringUtils.isNotBlank(info.getCode()))
+                    .collect(Collectors.toMap(MoldInfoEntity::getCode, info -> info, (v1, v2) -> v1));
+        } catch (Exception e) {
+            log.error("查询模具档案失败，moldCodes: {}", moldCodes, e);
+            return Collections.emptyMap();
         }
     }
 
@@ -999,6 +1044,24 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
             }
         }
 
+        List<String> cardIds = list.stream()
+                .map(AssetCardDTO.ListDTO::getId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, String> cardNameMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(cardIds)) {
+            cardNameMap = this.listByIds(cardIds).stream()
+                    .filter(card -> StringUtils.isNotBlank(card.getId()))
+                    .collect(Collectors.toMap(AssetCardEntity::getId, AssetCardEntity::getName, (v1, v2) -> v1));
+        }
+        List<String> assetCodes = list.stream()
+                .map(item -> StringUtils.isNotBlank(item.getDetailAssetCode()) ? item.getDetailAssetCode() : item.getAssetCode())
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, MoldInfoEntity> moldInfoMap = buildMoldInfoMap(assetCodes);
+
         // 属性赋值
         for(AssetCardDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
@@ -1043,6 +1106,14 @@ public class AssetCardServiceImpl extends SuperServiceImpl<AssetCardMapper, Asse
             // 费用项目枚举转换
             if (StringUtils.isNotBlank(data.getCostType())) {
                 data.setCostTypeName(CostTypeEnum.getName(data.getCostType()));
+            }
+
+            String assetCode = StringUtils.isNotBlank(data.getDetailAssetCode()) ? data.getDetailAssetCode() : data.getAssetCode();
+            MoldInfoEntity moldInfo = moldInfoMap.get(assetCode);
+            if (moldInfo != null && StringUtils.isNotBlank(moldInfo.getName())) {
+                data.setName(moldInfo.getName());
+            } else {
+                data.setName(cardNameMap.get(data.getId()));
             }
 
             //最新审核人：先判断流程中的审核人是否存在，如果存在则使用流程中的，否则保持数据库原值

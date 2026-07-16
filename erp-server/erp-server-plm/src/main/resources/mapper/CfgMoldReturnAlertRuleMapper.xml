@@ -45,7 +45,7 @@ cmr.remark AS remark,
 cmr.invalid_remark AS invalidRemark,
 cmr.mold_id AS moldId,
 cmr.mold_code AS moldCode,
-cmr.mold_name AS moldName,
+mi.name AS moldName,
 cmr.supplier_id AS supplierId,
 cmr.supplier_code AS supplierCode,
 cmr.supplier_name AS supplierName,
@@ -77,6 +77,7 @@ cmr.count_dim AS countDim
             cmrd.remark AS detailRemark
         FROM
         cfg_mold_return_alert_rule cmr
+        LEFT JOIN mold_info mi ON mi.id = cmr.mold_id AND mi.is_deleted = FALSE
         left join cfg_mold_return_alert_detail cmrd on cmr.id = cmrd.main_id and cmrd.is_deleted = FALSE
         where
         ${params.sqlMap.default}
@@ -103,6 +104,7 @@ cmr.count_dim AS countDim
         cmrd.remark AS detailRemark
         FROM
         cfg_mold_return_alert_rule cmr
+        LEFT JOIN mold_info mi ON mi.id = cmr.mold_id AND mi.is_deleted = FALSE
         left join cfg_mold_return_alert_detail cmrd on cmr.id = cmrd.main_id and cmrd.is_deleted = FALSE
         LEFT JOIN mold_monitor mm ON mm.source_detail_id = cmrd.ID AND mm.is_deleted = FALSE
         where

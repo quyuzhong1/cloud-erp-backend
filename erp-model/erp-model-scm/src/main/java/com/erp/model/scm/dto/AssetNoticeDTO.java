@@ -15,6 +15,7 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.BaseDTO;
 
 import java.util.Map;
 
@@ -266,6 +267,11 @@ public class AssetNoticeDTO implements Serializable {
          */
         private BigDecimal realPurchaseQty;
 
+        /**
+         * DFM附件数量（列表展示）
+         */
+        private Integer dfmAttachmentCount;
+
     }
 
     /**
@@ -368,14 +374,24 @@ public class AssetNoticeDTO implements Serializable {
         private List<AssetNoticeDetailDTO.ViewDTO> assetNoticeDetailDTOList;
 
         /**
-         * 附件名称集合
+         * 3D附件+CFM附件名称集合（原附件字段，同一组附件）
          */
         private List<String> attachmentNameList;
 
         /**
-         * 附件URL集合
+         * 3D附件+CFM附件URL集合
          */
         private List<String> attachmentUrlList;
+
+        /**
+         * DFM附件名称集合
+         */
+        private List<String> attachmentDfmNameList;
+
+        /**
+         * DFM附件URL集合
+         */
+        private List<String> attachmentDfmUrlList;
 
         /**
          * 采购开发用户id
@@ -509,14 +525,24 @@ public class AssetNoticeDTO implements Serializable {
         private LocalDate applyDate;
 
         /**
-         * 附件名称集合
+         * 3D附件+CFM附件名称集合（原附件字段，同一组附件）
          */
         private List<String> attachmentNameList;
 
         /**
-         * 附件URL集合
+         * 3D附件+CFM附件URL集合
          */
         private List<String> attachmentUrlList;
+
+        /**
+         * DFM附件名称集合
+         */
+        private List<String> attachmentDfmNameList;
+
+        /**
+         * DFM附件URL集合
+         */
+        private List<String> attachmentDfmUrlList;
 
     }
 
@@ -788,5 +814,74 @@ public class AssetNoticeDTO implements Serializable {
          */
         private String projectName;
 
+    }
+
+    /**
+     * 列表上传/管理 DFM 附件
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UploadDfmAttachmentDTO {
+
+        /**
+         * 开模通知单主键
+         */
+        @NotBlank(message = "开模通知单id不能为空")
+        private String id;
+
+        /**
+         * DFM附件列表
+         */
+        @NotEmpty(message = "DFM附件列表不能为空")
+        private List<BaseDTO.AttachmentDTO> fileList;
+    }
+
+    /**
+     * DFM附件缺失飞书提醒任务参数（XXL-JOB jobParam JSON）
+     */
+    @Data
+    @NoArgsConstructor
+    public static class DfmAttachmentNoticeJobParamDTO {
+
+        /**
+         * 创建时间偏移天数，默认30（创建日 + 天数 = 今日时触发）
+         */
+        private Integer offsetDays;
+
+        /**
+         * 通知人字段：applyUserId（申请人，默认）/ createUserId（创建人）
+         */
+        private String receiverField;
+
+        /**
+         * 飞书通知标题，默认：上传DMF附件
+         */
+        private String title;
+
+        /**
+         * 飞书通知正文模板，占位符 {code}=开模通知单号
+         */
+        private String contentTemplate;
+
+        /**
+         * 单次任务最大处理单据数，默认500
+         */
+        private Integer batchLimit;
+    }
+
+    /**
+     * DFM附件缺失飞书提醒查询结果
+     */
+    @Data
+    @NoArgsConstructor
+    public static class MissingDfmNoticeDTO {
+
+        private String id;
+
+        private String code;
+
+        private String applyUserId;
+
+        private String createUserId;
     }
 }

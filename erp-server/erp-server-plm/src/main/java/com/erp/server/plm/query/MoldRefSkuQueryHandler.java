@@ -31,6 +31,10 @@ public class MoldRefSkuQueryHandler extends AbstractQueryHandler {
         if ("tab".equals(field)) {
             return getTabSql(value);
         }
+        if (isMoldNameField(field)) {
+            super.buildDefaultDTO("mi.name", value);
+            return super.getSplicingSQL();
+        }
         if("mrs.approve_user_id".equals(field)){
             ValidList<ProcessManagementDTO.ApproveActivityDTO> dtoList = new ValidList<>();
 
@@ -77,5 +81,9 @@ public class MoldRefSkuQueryHandler extends AbstractQueryHandler {
         super.buildDefaultDTO("mrs.approve_status", value);
 
         return super.getSplicingSQL();
+    }
+
+    private boolean isMoldNameField(String field) {
+        return "moldName".equals(field) || "mrs.mold_name".equals(field);
     }
 }

@@ -6,10 +6,12 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.AssetNoticeDTO;
 import com.erp.model.scm.dto.AssetNoticeDetailDTO;
+import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.dto.excel.AssetNoticeImportExcelDTO;
 import com.erp.model.scm.entity.AssetNoticeEntity;
 
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -172,4 +174,31 @@ public interface AssetNoticeService extends SuperService<AssetNoticeEntity> {
      * @param dto
      */
     void importAssetNotice(BaseDTO.ImportDTO dto);
+
+    /**
+     * 查询 DFM 附件列表（列表/弹窗下载）
+     */
+    List<AttachmentDTO.UpdateDTO> listDfmAttachment(String id);
+
+    /**
+     * 上传 DFM 附件
+     */
+    BatchResultDTO uploadDfmAttachment(AssetNoticeDTO.UploadDfmAttachmentDTO dto);
+
+    /**
+     * 删除 DFM 附件
+     */
+    BatchResultDTO deleteDfmAttachment(AttachmentDTO.DeleteDTO dto);
+
+    /**
+     * 查询 DFM 附件为空、且创建时间满足条件的开模通知单（供定时任务使用）
+     */
+    List<AssetNoticeDTO.MissingDfmNoticeDTO> listMissingDfmAttachment(LocalDate targetCreateDate, int batchLimit);
+
+    /**
+     * DFM 附件缺失飞书提醒（XXL-JOB 调用）
+     *
+     * @return 成功发送通知条数
+     */
+    int notifyMissingDfmAttachment(AssetNoticeDTO.DfmAttachmentNoticeJobParamDTO param);
 }

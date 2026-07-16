@@ -101,6 +101,8 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
     private WmsTaskFeign wmsTaskFeign;
     @Resource
     private FileFeign fileFeign;
+    @Resource
+    private MoldInfoService moldInfoService;
 
     @Override
     public List<MoldMonitorDTO.TabListDTO> tabList(MoldMonitorDTO.TabDTO param) {
@@ -190,6 +192,17 @@ public class MoldMonitorServiceImpl extends SuperServiceImpl<MoldMonitorMapper, 
         data.setCountDimName(CfgMoldReturnAlertRuleCountDimEnum.getName(data.getCountDim()));
         data.setDisabledName(DisabledEnum.getName(data.getDisabled()));
         data.setRemainingQty(data.getLifeQty() - data.getPurchaseOrderQty() - data.getWarehouseReceiveQty() - data.getPoInstockQty());
+        fillMoldNameFromArchive(data.getMoldId(), data::setMoldName);
+    }
+
+    private void fillMoldNameFromArchive(String moldId, java.util.function.Consumer<String> moldNameSetter) {
+        if (StringUtils.isBlank(moldId)) {
+            return;
+        }
+        MoldInfoEntity moldInfo = moldInfoService.getById(moldId);
+        if (Objects.nonNull(moldInfo)) {
+            moldNameSetter.accept(moldInfo.getName());
+        }
     }
 
     /**

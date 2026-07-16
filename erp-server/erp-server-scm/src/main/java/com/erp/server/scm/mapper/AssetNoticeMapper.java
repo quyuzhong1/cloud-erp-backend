@@ -10,6 +10,7 @@ import org.apache.ibatis.annotations.Param;
 import com.erp.model.scm.dto.AssetNoticeDTO;
 import com.common.business.dto.base.ApproveStatusQtyDTO;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -55,5 +56,11 @@ public interface AssetNoticeMapper extends BaseMapper<AssetNoticeEntity> {
 
 
     List<AssetNoticeDTO.TabListDTO> refPurchaseTabList(@Param("params") AssetNoticeDTO.PagingParamDTO searchParam);
+
+    /**
+     * 查询 DFM 附件为空的开模通知单（按创建日期匹配）
+     */
+    List<AssetNoticeDTO.MissingDfmNoticeDTO> listMissingDfmAttachment(@Param("targetCreateDate") LocalDate targetCreateDate,
+                                                                      @Param("batchLimit") int batchLimit);
 
 }

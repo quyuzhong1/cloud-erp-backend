@@ -175,4 +175,24 @@
             </if>
         ) t2
     </select>
+
+    <select id="listMissingDfmAttachment" resultType="com.erp.model.scm.dto.AssetNoticeDTO$MissingDfmNoticeDTO">
+        SELECT
+            an.id,
+            an.code,
+            an.apply_user_id AS applyUserId,
+            an.create_user_id AS createUserId
+        FROM asset_notice an
+        WHERE an.is_deleted = FALSE
+          AND an.create_time::date = #{targetCreateDate}
+          AND NOT EXISTS (
+              SELECT 1
+              FROM attachment a
+              WHERE a.business_id = an.id
+                AND a.is_deleted = FALSE
+                AND a.type = 'asset_notice_dfm'
+          )
+        ORDER BY an.create_time ASC
+        LIMIT #{batchLimit}
+    </select>
 </mapper>
