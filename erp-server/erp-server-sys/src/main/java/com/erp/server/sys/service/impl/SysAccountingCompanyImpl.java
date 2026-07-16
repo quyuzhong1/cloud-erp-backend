@@ -106,6 +106,7 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
         entity.setContactName(dto.getContactName());
         entity.setKingdeeCode(dto.getKingdeeCode());
         entity.setUsciCode(dto.getUsciCode());
+        entity.setCompanyHsCode(dto.getCompanyHsCode());
         if(Objects.isNull(dto.getVatRate())){
             entity.setVatRate(BigDecimal.ZERO);
         }else{
@@ -234,7 +235,6 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
         return BeanMapper.copyList(list, SysAccountingCompanyDTO.ListDTO.class);
     }
 
-
     /**
      * 根据ids 获取组织列表
      *
@@ -254,6 +254,7 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
                 dto.setName(item.getCompanyName());
                 dto.setCode(item.getCode());
                 dto.setFlagId(item.getKingdeeId());
+                dto.setDisabled(item.getDisabled());
                 resultList.add(dto);
             }
             return resultList;
@@ -265,6 +266,7 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
             dto.setName(item.getCompanyName());
             dto.setCode(item.getCode());
             dto.setFlagId(item.getKingdeeId());
+            dto.setDisabled(item.getDisabled());
             resultList.add(dto);
         }
         return resultList;

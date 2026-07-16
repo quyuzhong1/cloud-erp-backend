@@ -15,6 +15,7 @@ import com.erp.model.dmp.enums.DmpOrderReturnStatusEnum;
 import com.erp.model.dmp.enums.MabangOriginalOrderStatusEnum;
 import com.erp.model.dmp.enums.MabangSourcePlatformEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.erp.oms.aliexpress.dto.response.AliExpressOrder;
 import com.erp.sdk.oms.amz.spapi.client.StringUtil;
@@ -164,8 +165,6 @@ public class ShopifyOrderDmpHandler extends ShopifyDmpHandler {
                     }
                 }
 
-                // 是否明细退款
-                boolean hasRefundLineItems = false;
                 //退款
                 Object refundsObj = dmpDataMap.get("refunds");
                 if (ObjectUtil.isNotEmpty(refundsObj)) {
@@ -185,7 +184,6 @@ public class ShopifyOrderDmpHandler extends ShopifyDmpHandler {
                                         .distinct()
                                         .collect(Collectors.toList());
                                 refundedLineItemIds.addAll(sourceFundedLineItemIds);
-                                hasRefundLineItems = true;
                             }
                         }
                     }
@@ -198,21 +196,17 @@ public class ShopifyOrderDmpHandler extends ShopifyDmpHandler {
 
                 dmpDataMap.put("extendData", JSONUtil.toJsonStr(lableMap));
 
-                // ERP需要的作废状态
-                String financialStatusStr= dmpDataMap.getOrDefault("platformOriginalStatus", "").toString();
-                dmpDataMap.put("invalidStatus", ShopifyOrderFinancialStatusEnum.VOIDED.getCode().equalsIgnoreCase(financialStatusStr));
-
-                // dmp退款状态
-                String dmpReturnStatus = dmpDataMap.getOrDefault("returnStatus", "notReturn").toString();
-                // 平台订单原始取消状态(已退款,部分退款)
-                DmpOrderReturnStatusEnum dmpBasicSystemCodeEnum = DmpOrderReturnStatusEnum.getByCode(dmpReturnStatus);
-                // 整单退款 或 明细存在退货 才推送取消状态
-                if (DmpOrderReturnStatusEnum.ORDER_RETURN.equals(dmpBasicSystemCodeEnum)
-                        || hasRefundLineItems
-                ) {
-                    dmpDataMap.put("isCancel", Boolean.TRUE);
+                // 平台是否取消/作废：仅依据 cancelled_at；部分退款不等同于平台取消
+                String financialStatusStr = dmpDataMap.getOrDefault("platformOriginalStatus", "").toString();
+                Object cancelledAtObj = dmpDataMap.get("cancelledAt");
+                boolean platformCancelled = ObjectUtil.isNotEmpty(cancelledAtObj);
+                dmpDataMap.put("isCancel", platformCancelled);
+                if (platformCancelled) {
+                    dmpDataMap.put("invalidStatus", Boolean.TRUE);
+                    dmpDataMap.put("invalidType", SoB2cInvalidTypeEnum.ENUM_AUTOMATIC.getCode());
+                    dmpDataMap.put("invalidRemark", SoB2cInvalidTypeEnum.PLATFORM_CANCEL_REMARK);
                 } else {
-                    dmpDataMap.put("isCancel", Boolean.FALSE);
+                    dmpDataMap.put("invalidStatus", ShopifyOrderFinancialStatusEnum.VOIDED.getCode().equalsIgnoreCase(financialStatusStr));
                 }
 
             }

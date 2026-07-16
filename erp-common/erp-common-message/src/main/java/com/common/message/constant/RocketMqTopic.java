@@ -149,6 +149,7 @@ public class RocketMqTopic {
      * 同步虚拟仓库存明细
      */
     public static final String WMS_VIRTUAL_DETAIL_MSG_TOPIC = "${spring.cloud.nacos.discovery.namespace}-wms_virtual_detail_msg_topic";
+
     /**
      * 同步track123 物流轨迹更新记录
      * 注意：原 Track123 专用，现快递100 小包/海运拉取也复用此 topic 推进 update_time 游标（仅刷新时间，与轨迹数据回写无关）
@@ -176,11 +177,7 @@ public class RocketMqTopic {
     public static final String OMS_WORKFLOW_TASK_RECORD_TOPIC = "${spring.cloud.nacos.discovery.namespace}-oms_workflow_task_record_topic";
 
     /**
-     * tms 费用分摊异步任务--手动
-     */
-    public static final String TMS_PUSH_ALLOCATION_COST_TOPIC = "${spring.cloud.nacos.discovery.namespace}-tms_push_allocation_cost_topic";
-    /**
-     * tms 费用分摊异步任务--自动
+     * tms 费用分摊异步任务
      */
     public static final String TMS_ASYNC_TASK_RECORD_TOPIC = "${spring.cloud.nacos.discovery.namespace}-tms_async_task_record_topic";
 

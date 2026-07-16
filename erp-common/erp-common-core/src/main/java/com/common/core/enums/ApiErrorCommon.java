@@ -1,0 +1,580 @@
+package com.common.core.enums;
+
+/**
+ * Common service error constants.
+ */
+public final class ApiErrorCommon {
+
+    private ApiErrorCommon() {
+    }
+
+    public static final ApiError ASYNC_TASK_DETAIL_TIMEOUT = new ApiError("ASYNC_TASK_DETAIL_TIMEOUT", 13648, "明细执行超时，系统自动标记失败");
+    public static final ApiError BILL_SAVE_FAILED = new ApiError("BILL_SAVE_FAILED", 3000, "数据保存失败");
+    public static final ApiError BILL_UPDATE_FAILED = new ApiError("BILL_UPDATE_FAILED", 3001, "数据修改失败");
+    public static final ApiError BILL_DATA_DUPLICATE = new ApiError("BILL_DATA_DUPLICATE", 3002, "数据重复，请修改后再提交");
+    public static final ApiError BILL_UPDATE_STATUS_NOT_ALLOWED = new ApiError("BILL_UPDATE_STATUS_NOT_ALLOWED", 3003, "只有待提交和审核不通过数据支持修改");
+    public static final ApiError BILL_SOURCE_NOT_FOUND = new ApiError("BILL_SOURCE_NOT_FOUND", 3004, "未找到来源单据");
+    public static final ApiError BILL_SOURCE_DETAIL_NOT_FOUND = new ApiError("BILL_SOURCE_DETAIL_NOT_FOUND", 3005, "未找到来源单据明细");
+    public static final ApiError BILL_PUSH_DOWN_NOT_ALLOWED = new ApiError("BILL_PUSH_DOWN_NOT_ALLOWED", 3006, "单据【{0}】未审核完成，不支持下推");
+    public static final ApiError BILL_DATA_LOCKED = new ApiError("BILL_DATA_LOCKED", 3007, "数据已被他人锁住，为避免数据错误，请稍后再试");
+    public static final ApiError BILL_SAVE_FAIL = new ApiError("BILL_SAVE_FAIL", 3009, "保存{0}单据失败");
+    public static final ApiError BILL_DETAIL_NOT_FOUND = new ApiError("BILL_DETAIL_NOT_FOUND", 3010, "{0}单据明细不存在");
+    public static final ApiError BILL_DETAIL_REQUIRED = new ApiError("BILL_DETAIL_REQUIRED", 3011, "{0}明细不能为空");
+    public static final ApiError BILL_SUBMIT_FAILED = new ApiError("BILL_SUBMIT_FAILED", 3012, "{0}单据提交失败");
+    public static final ApiError BILL_DELETE_STATUS_NOT_ALLOWED = new ApiError("BILL_DELETE_STATUS_NOT_ALLOWED", 3013, "只有待提交数据支持删除");
+    public static final ApiError BILL_DELETE_FAILED = new ApiError("BILL_DELETE_FAILED", 3014, "数据删除失败");
+    public static final ApiError BILL_DISAPPROVE_FAILED = new ApiError("BILL_DISAPPROVE_FAILED", 3015, "数据反审核失败");
+    public static final ApiError BILL_APPROVE_FAILED = new ApiError("BILL_APPROVE_FAILED", 3016, "{0}单据审核失败");
+    public static final ApiError BILL_APPROVE_NOT_FOUND = new ApiError("BILL_APPROVE_NOT_FOUND", 3017, "类型【{0}】未找到审核处理器");
+    public static final ApiError BILL_APPROVE_BUSINESS_KEY_NOT_FOUND = new ApiError("BILL_APPROVE_BUSINESS_KEY_NOT_FOUND", 3018, "{0}操作，未找到单据类型【{1}】");
+    public static final ApiError BILL_APPROVE_SUBMIT_RETRY = new ApiError("BILL_APPROVE_SUBMIT_RETRY", 3019, "流程提审失败，请重试提审");
+    public static final ApiError BILL_ENABLE_NOT_ALLOWED = new ApiError("BILL_ENABLE_NOT_ALLOWED", 3020, "未禁用状态的数据不支持启用");
+    public static final ApiError BILL_DISABLE_NOT_ALLOWED = new ApiError("BILL_DISABLE_NOT_ALLOWED", 3021, "未启用状态的数据不支持禁用");
+    public static final ApiError BILL_DELETE_NOT_ALLOWED = new ApiError("BILL_DELETE_NOT_ALLOWED", 3022, "只有已禁用数据支持删除");
+    public static final ApiError BILL_REJECT_STATUS_INVALID = new ApiError("BILL_REJECT_STATUS_INVALID", 3023, "只有审核中和完成待审核的任务,才可操作审核不通过");
+    public static final ApiError BILL_APPROVAL_STATUS_INVALID = new ApiError("BILL_APPROVAL_STATUS_INVALID", 3024, "只有待审核任务和审核中才可操作审核任务");
+    public static final ApiError BILL_EDIT_ALLOWED_STATUS_ONLY = new ApiError("BILL_EDIT_ALLOWED_STATUS_ONLY", 3025, "在待提交审核/审核不通过的状态下才能编辑");
+    public static final ApiError BILL_SUBMIT_APPROVAL_STATUS_INVALID = new ApiError("BILL_SUBMIT_APPROVAL_STATUS_INVALID", 3026, "只有待提交审核单据才能提交审核");
+    public static final ApiError BILL_WAIT_APPROVE_REQUIRED = new ApiError("BILL_WAIT_APPROVE_REQUIRED", 3027, "只有待审核才能编辑");
+    public static final ApiError BILL_RESUBMIT_STATUS_INVALID = new ApiError("BILL_RESUBMIT_STATUS_INVALID", 3028, "审核不通过才能重新提交");
+    public static final ApiError BILL_TASK_CANCEL_SUBMIT_INVALID = new ApiError("BILL_TASK_CANCEL_SUBMIT_INVALID", 3029, "待审核任务才能取消提交");
+    public static final ApiError BILL_URGE_ONLY_IN_APPROVING = new ApiError("BILL_URGE_ONLY_IN_APPROVING", 3030, "仅支持审核中的单据支持催办提醒");
+    public static final ApiError BILL_VOID_EDIT_FORBIDDEN = new ApiError("BILL_VOID_EDIT_FORBIDDEN", 3031, "单据已作废，不支持编辑功能");
+    public static final ApiError BILL_VOID_SUBMIT_FORBIDDEN = new ApiError("BILL_VOID_SUBMIT_FORBIDDEN", 3031, "单据已作废，不支持提交");
+    public static final ApiError BILL_UPDATE_FIELD_APPROVEING = new ApiError("BILL_UPDATE_FIELD_APPROVEING", 3032, "状态在审核中不可更新");
+    public static final ApiError BILL_ROW_CHANGE_FORBIDDEN = new ApiError("BILL_ROW_CHANGE_FORBIDDEN", 3033, "已验收和已关闭的明细行不允许变更");
+    public static final ApiError BILL_SELECTION_REQUIRED = new ApiError("BILL_SELECTION_REQUIRED", 3034, "选择数据不能为空");
+    public static final ApiError BILL_PARAM_SELECTION_REQUIRED = new ApiError("BILL_PARAM_SELECTION_REQUIRED", 3034, "{0}明细数据不能为空");
+    public static final ApiError BILL_VOID_ALLOWED_STATUS_ONLY = new ApiError("BILL_VOID_ALLOWED_STATUS_ONLY", 3035, "只有待提交和审核不通过数据支持作废");
+    public static final ApiError BILL_DELETE_ALLOWED_STATUS_ONLY = new ApiError("BILL_DELETE_ALLOWED_STATUS_ONLY", 3036, "只有待提交数据支持删除");
+    public static final ApiError BILL_SUBMIT_ALLOWED_STATUS_ONLY = new ApiError("BILL_SUBMIT_ALLOWED_STATUS_ONLY", 3037, "只有待提交或审核不通过并且未作废数据支持提交");
+    public static final ApiError BILL_ALREADY_VOID_CANNOT_VOID_AGAIN = new ApiError("BILL_ALREADY_VOID_CANNOT_VOID_AGAIN", 3038, "已作废数据不支持作废");
+    public static final ApiError BILL_WAIT_SUBMIT_TO_APPROVE_ING = new ApiError("BILL_WAIT_SUBMIT_TO_APPROVE_ING", 3039, "只有待提交和审核不通过才能提交审核");
+    public static final ApiError BILL_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY = new ApiError("BILL_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY", 3040, "仅已审核状态的单据支持反审核操作");
+    public static final ApiError BILL_APPROVED_ONLY_CAN_PUSH = new ApiError("BILL_APPROVED_ONLY_CAN_PUSH", 3041, "只有已审核的单据可以下推");
+    public static final ApiError BILL_INCONSISTENT_VOID_STATUS = new ApiError("BILL_INCONSISTENT_VOID_STATUS", 3042, "存在已作废订单");
+    public static final ApiError BILL_PUSH_ALLOWED_APPROVED_ONLY = new ApiError("BILL_PUSH_ALLOWED_APPROVED_ONLY", 3043, "只有审核通过才能下推单据");
+    public static final ApiError BILL_VOIDED_CANNOT_SUBMIT = new ApiError("BILL_VOIDED_CANNOT_SUBMIT", 3044, "已作废单据不能提交审核");
+    public static final ApiError BILL_VOIDED_CANNOT_DELETE = new ApiError("BILL_VOIDED_CANNOT_DELETE", 3044, "已作废单据不能删除");
+    public static final ApiError BILL_INV_ORG_NOT_FOUND = new ApiError("BILL_INV_ORG_NOT_FOUND", 3045, "库存组织不存在");
+    public static final ApiError BILL_NOT_EXIST = new ApiError("BILL_NOT_EXIST", 3046, "单据不存在");
+    public static final ApiError BILL_NOT_EXIST_WITH_TYPE = new ApiError("BILL_NOT_EXIST_WITH_TYPE", 3047, "{0}单据不存在");
+    public static final ApiError BILL_ALREADY_EXIST = new ApiError("BILL_ALREADY_EXIST", 3048, "{0}单据已存在");
+    public static final ApiError BILL_HAS_CHANGE_ORDER_REVERSE_FORBIDDEN = new ApiError("BILL_HAS_CHANGE_ORDER_REVERSE_FORBIDDEN", 3049, "【{0}】单据存在调价表,无法反审核");
+    public static final ApiError BILL_SUBMIT_ALLOWED_PENDING_ONLY = new ApiError("BILL_SUBMIT_ALLOWED_PENDING_ONLY", 3050, "仅待提交状态的单据允许提交");
+    public static final ApiError BILL_WAIT_HANDLE_CANCEL_PROCESS_ALLOWED = new ApiError("BILL_WAIT_HANDLE_CANCEL_PROCESS_ALLOWED", 3051, "仅待处理、处理中、已处理状态允许撤销");
+    public static final ApiError BILL_STATUS_ALREADY_HANDLED_NOT_OPERATE = new ApiError("BILL_STATUS_ALREADY_HANDLED_NOT_OPERATE", 3052, "已处理的数据不允许重复操作");
+    public static final ApiError BILL_FINANCE_RECONCILIATION_DUPLICATE = new ApiError("BILL_FINANCE_RECONCILIATION_DUPLICATE", 3053, "单据【{0}】在月份【{1}】、对账类型【{2}】、物流商【{3}】下已生成对账单，不可重复生成");
+    public static final ApiError BILL_RETURN_WAIT_CONFIRM_STATUS_REQUIRED = new ApiError("BILL_RETURN_WAIT_CONFIRM_STATUS_REQUIRED", 3054, "仅退货确认状态为【待确认】时才允许操作");
+    public static final ApiError BILL_KEEP_AT_LEAST_ONE_DETAIL_OR_DELETE = new ApiError("BILL_KEEP_AT_LEAST_ONE_DETAIL_OR_DELETE", 3055, "请至少保留一条明细，或选择整单删除");
+    public static final ApiError BILL_DECLARE_STATUS_GENERATED_NOT_CHANGE_TO_NO_DECLARE = new ApiError("BILL_DECLARE_STATUS_GENERATED_NOT_CHANGE_TO_NO_DECLARE", 3056, "单据【{0}】报关状态非未生成，不允许修改为【无需生成】");
+    public static final ApiError BILL_LOGISTICS_STATUS_GENERATED_NOT_CHANGE_TO_NO_LOGISTICS = new ApiError("BILL_LOGISTICS_STATUS_GENERATED_NOT_CHANGE_TO_NO_LOGISTICS", 3057, "单据【{0}】物流状态非未生成，不允许修改为【无需生成】");
+    public static final ApiError BILL_DETAIL_IS_ZERO = new ApiError("BILL_DETAIL_IS_ZERO", 3058, "单据【{0}】的明细条数为0，不允许提交");
+    public static final ApiError BILL_IN_USE_DELETE_FORBIDDEN = new ApiError("BILL_IN_USE_DELETE_FORBIDDEN", 3059, "销售订单已被引用，无法删除");
+    public static final ApiError BILL_IN_USE_SO_RECEIPT = new ApiError("BILL_IN_USE_SO_RECEIPT", 3059, "销售订单已被收款单【{0}】引用，无法删除或作废");
+    public static final ApiError BILL_VOID_FORBIDDEN = new ApiError("BILL_VOID_FORBIDDEN", 3060, "仅待提交、暂存或审核不通过状态的销售订单允许作废");
+    public static final ApiError BILL_RECEIVER_ADDRESS_REQUIRED = new ApiError("BILL_RECEIVER_ADDRESS_REQUIRED", 3061, "订单买家地址不能全部为空");
+    public static final ApiError BILL_RECEIVER_REQUIRED = new ApiError("BILL_RECEIVER_REQUIRED", 3062, "订单买家信息不能为空");
+    public static final ApiError BILL_NOT_FOUND = new ApiError("BILL_NOT_FOUND", 3063, "单据不存在");
+    public static final ApiError BILL_MANUAL_SUB_TYPE_REQUIRED = new ApiError("BILL_MANUAL_SUB_TYPE_REQUIRED", 3064, "【{0}】手工单的单据子类型不能为空");
+    public static final ApiError BILL_HAS_DOWNSTREAM_VOID_FORBIDDEN = new ApiError("BILL_HAS_DOWNSTREAM_VOID_FORBIDDEN", 3065, "当前单据存在下游单据，不允许作废");
+    public static final ApiError BILL_DETAIL_DATA_NOT_FOUND = new ApiError("BILL_DETAIL_DATA_NOT_FOUND", 3066, "明细数据不存在");
+    public static final ApiError BILL_DATA_CREATE_FAILED = new ApiError("BILL_DATA_CREATE_FAILED", 1019, "数据新增失败");
+    public static final ApiError BILL_AUDIT_QTY_DETAIL_REQUIRED = new ApiError("BILL_AUDIT_QTY_DETAIL_REQUIRED", 99250, "审核数量修改明细列表不能为空");
+    public static final ApiError BILL_DECLARE_STATUS_GENERATED_NOT_DISAPPROVE = new ApiError("BILL_DECLARE_STATUS_GENERATED_NOT_DISAPPROVE", 94109, "单据已生成申报信息，不支持反审核");
+    public static final ApiError HTTP_BAD_REQUEST = new ApiError("HTTP_BAD_REQUEST", 400, "参数格式错误、缺失必填参数");
+    public static final ApiError HTTP_UNAUTHORIZED = new ApiError("HTTP_UNAUTHORIZED", 401, "未登录 / Token 无效，请重新登录。");
+    public static final ApiError HTTP_FORBIDDEN = new ApiError("HTTP_FORBIDDEN", 403, "无访问权限");
+    public static final ApiError HTTP_NOT_FOUND = new ApiError("HTTP_NOT_FOUND", 404, "访问资源不存在");
+    public static final ApiError HTTP_METHOD_NOT_ALLOWED = new ApiError("HTTP_METHOD_NOT_ALLOWED", 405, "请求方式错误");
+    public static final ApiError HTTP_PAYLOAD_TOO_LARGE = new ApiError("HTTP_PAYLOAD_TOO_LARGE", 413, "请求数据过大");
+    public static final ApiError HTTP_UNSUPPORTED_MEDIA_TYPE = new ApiError("HTTP_UNSUPPORTED_MEDIA_TYPE", 415, "不支持的媒体类型");
+    public static final ApiError HTTP_TOO_MANY_REQUESTS = new ApiError("HTTP_TOO_MANY_REQUESTS", 429, "访问频率过高，请稍后再试");
+    public static final ApiError HTTP_UNKNOWN = new ApiError("HTTP_UNKNOWN", 500, "系统未知异常，请联系【实施人员】协调开发人员排查 ");
+    public static final ApiError HTTP_NOT_IMPLEMENTED = new ApiError("HTTP_NOT_IMPLEMENTED", 501, "接口未实现");
+    public static final ApiError HTTP_BAD_GATEWAY = new ApiError("HTTP_BAD_GATEWAY", 502, "网关错误");
+    public static final ApiError HTTP_SERVICE_UNAVAILABLE = new ApiError("HTTP_SERVICE_UNAVAILABLE", 503, "服务不可用，服务器暂时过载或维护");
+    public static final ApiError HTTP_GATEWAY_TIMEOUT = new ApiError("HTTP_GATEWAY_TIMEOUT", 504, "网关超时");
+    public static final ApiError HTTP_VERSION_NOT_SUPPORTED = new ApiError("HTTP_VERSION_NOT_SUPPORTED", 505, "不支持的 HTTP 版本");
+    public static final ApiError HTTP_SESSION_EXPIRED = new ApiError("HTTP_SESSION_EXPIRED", 430, "会话过期，请重新协商密钥");
+    public static final ApiError WARNING = new ApiError("WARNING", 600, "系统警告...");
+    public static final ApiError WARNING_SUBMIT_CONFIRM = new ApiError("WARNING_SUBMIT_CONFIRM", 601, "存在[{0}]尚未填写完成，是否确认提交");
+    public static final ApiError WARNING_TASK_UNFINISHED = new ApiError("WARNING_TASK_UNFINISHED", 602, "存在[{0}]的任务未完成");
+    public static final ApiError COMMON_PARAM_REQUIRED = new ApiError("COMMON_PARAM_REQUIRED", 1000, "{0}不能为空");
+    public static final ApiError COMMON_DUPLICATE_OPERATION = new ApiError("COMMON_DUPLICATE_OPERATION", 1001, "请勿重复操作");
+    public static final ApiError COMMON_PARAM_LIST_REQUIRED = new ApiError("COMMON_PARAM_LIST_REQUIRED", 1002, "参数列表不能为空");
+    public static final ApiError COMMON_PARAM_NAME_TOO_LONG = new ApiError("COMMON_PARAM_NAME_TOO_LONG", 1003, "名称不能大于200字符");
+    public static final ApiError COMMON_PARAM_CONTENT_TOO_LONG = new ApiError("COMMON_PARAM_CONTENT_TOO_LONG", 1004, "内容过长，请调整后再提交");
+    public static final ApiError COMMON_PARAM_TIME_REQUIRED = new ApiError("COMMON_PARAM_TIME_REQUIRED", 1005, "{0}不能为空");
+    public static final ApiError COMMON_PARAM_RANGE_INVALID = new ApiError("COMMON_PARAM_RANGE_INVALID", 1006, "{0}不能大于等于{1}");
+    public static final ApiError COMMON_EXCEPTION_HANDLER_METHOD_ERROR = new ApiError("COMMON_EXCEPTION_HANDLER_METHOD_ERROR", 1007, "全局异常解析失败：【{0}】");
+    public static final ApiError COMMON_CFG_SETTING_KEY = new ApiError("COMMON_CFG_SETTING_KEY", 1008, "未找到配置的key【{0}】");
+    public static final ApiError COMMON_NAME_EXIST = new ApiError("COMMON_NAME_EXIST", 1009, "名称【{0}】已存在");
+    public static final ApiError COMMON_COPY_FAILED = new ApiError("COMMON_COPY_FAILED", 1010, "对象复制异常");
+    public static final ApiError COMMON_NOT_FOUND = new ApiError("COMMON_NOT_FOUND", 1011, "{0}未找到");
+    public static final ApiError COMMON_HAS_EXIST = new ApiError("COMMON_HAS_EXIST", 1012, "{0}已存在");
+    public static final ApiError COMMON_DUPLICATION_NAME = new ApiError("COMMON_DUPLICATION_NAME", 1013, "名称【{0}】不能重复");
+    public static final ApiError COMMON_COPY_ERROR = new ApiError("COMMON_COPY_ERROR", 1014, "对象复制时类型错误");
+    public static final ApiError COMMON_COMPANY_NOT_FOUND = new ApiError("COMMON_COMPANY_NOT_FOUND", 1015, "核算公司不存在");
+    public static final ApiError COMMON_ROLE_NOT_FOUND = new ApiError("COMMON_ROLE_NOT_FOUND", 1016, "角色不存在");
+    public static final ApiError COMMON_DEPT_NAME_EXISTS = new ApiError("COMMON_DEPT_NAME_EXISTS", 1017, "部门名已存在");
+    public static final ApiError COMMON_ROLE_NAME_EXISTS = new ApiError("COMMON_ROLE_NAME_EXISTS", 1018, "角色名已存在");
+    public static final ApiError COMMON_CODE_GENERATE_FAILED = new ApiError("COMMON_CODE_GENERATE_FAILED", 1019, "生成编号失败");
+    public static final ApiError COMMON_ENUM_CONVERT_FAILED = new ApiError("COMMON_ENUM_CONVERT_FAILED", 1020, "枚举转换失败");
+    public static final ApiError COMMON_DEPT_NOT_FOUND = new ApiError("COMMON_DEPT_NOT_FOUND", 1021, "部门不存在");
+    public static final ApiError COMMON_NOTICE_NOT_FOUND = new ApiError("COMMON_NOTICE_NOT_FOUND", 1022, "通知不存在");
+    public static final ApiError COMMON_FIELD_CODE_INVALID = new ApiError("COMMON_FIELD_CODE_INVALID", 1023, "字段编号【{0}】不正确");
+    public static final ApiError COMMON_SCHEME_NOT_EXIST = new ApiError("COMMON_SCHEME_NOT_EXIST", 1024, "方案不存在");
+    public static final ApiError COMMON_SCHEME_NAME_EXIST = new ApiError("COMMON_SCHEME_NAME_EXIST", 1025, "查询方案[{0}]已存在");
+    public static final ApiError COMMON_BANK_IS_EXIST = new ApiError("COMMON_BANK_IS_EXIST", 1026, "银行名称【{0}】不能重复");
+    public static final ApiError COMMON_DELETE_PARENT_NODE_EXISTS = new ApiError("COMMON_DELETE_PARENT_NODE_EXISTS", 1027, "存在父级节点，无法删除");
+    public static final ApiError COMMON_MOBILE_EXISTS = new ApiError("COMMON_MOBILE_EXISTS", 1028, "手机号码已存在");
+    public static final ApiError COMMON_CALENDAR_UPDATE_EXCEPTION = new ApiError("COMMON_CALENDAR_UPDATE_EXCEPTION", 1029, "日历修改异常请重试");
+    public static final ApiError COMMON_CURRENCY_NOT_EXIST = new ApiError("COMMON_CURRENCY_NOT_EXIST", 1030, "币别[{0}]不存在");
+    public static final ApiError COMMON_EXCHANGE_RATE_NOT_EXIST = new ApiError("COMMON_EXCHANGE_RATE_NOT_EXIST", 1031, "日期【{0}】币别【{1}】下未找到汇率");
+    public static final ApiError COMMON_MSG_REQUIRED = new ApiError("COMMON_MSG_REQUIRED", 1032, "消息模板不能为空");
+    public static final ApiError COMMON_MSG_PARAM_REQUIRED = new ApiError("COMMON_MSG_PARAM_REQUIRED", 1033, "消息ID或者用户绑定ID为空，发送加急信息失败");
+    public static final ApiError COMMON_BUSINESS_NOT_EXIST = new ApiError("COMMON_BUSINESS_NOT_EXIST", 1034, "业务类型不存在，请检查");
+    public static final ApiError COMMON_CHANGE_INFO_REQUIRED = new ApiError("COMMON_CHANGE_INFO_REQUIRED", 1035, "变更信息不能为空");
+    public static final ApiError COMMON_CHANGE_INVALID = new ApiError("COMMON_CHANGE_INVALID", 1036, "审核通过才能变更");
+    public static final ApiError COMMON_RATE_LIMIT_WITH_NAME = new ApiError("COMMON_RATE_LIMIT_WITH_NAME", 1037, "【{0}】已催办一次，请在30分钟后再催办");
+    public static final ApiError COMMON_CHANGE_NO_RECORD = new ApiError("COMMON_CHANGE_NO_RECORD", 1038, "未发现已变更信息");
+    public static final ApiError COMMON_RATE_LIMIT = new ApiError("COMMON_RATE_LIMIT", 1039, "已催办一次，请在30分钟后再催办");
+    public static final ApiError COMMON_FIELD_NAME_EXISTS = new ApiError("COMMON_FIELD_NAME_EXISTS", 1040, "字段名[{0}]已存在，不可重复提交");
+    public static final ApiError COMMON_MEMBER_ROLE_ALREADY_EXISTS = new ApiError("COMMON_MEMBER_ROLE_ALREADY_EXISTS", 1041, "成员列表中已有该角色");
+    public static final ApiError COMMON_UNIONID_REQUIRED = new ApiError("COMMON_UNIONID_REQUIRED", 1042, "unionId不能为空");
+    public static final ApiError COMMON_YEAR_REQUIRED = new ApiError("COMMON_YEAR_REQUIRED", 1043, "选择年份不能为空");
+    public static final ApiError COMMON_LARK_TOKEN_IS_NULL = new ApiError("COMMON_LARK_TOKEN_IS_NULL", 1044, "飞书应用token为空");
+    public static final ApiError COMMON_LARK_SEND_MSG_FAIL = new ApiError("COMMON_LARK_SEND_MSG_FAIL", 1045, "飞书发送消息失败");
+    public static final ApiError COMMON_NOT_EXIST_GENERIC = new ApiError("COMMON_NOT_EXIST_GENERIC", 1046, "{0}不存在");
+    public static final ApiError COMMON_CN_EXPORT_DECLARATION_HS_NOT_FOUND = new ApiError("COMMON_CN_EXPORT_DECLARATION_HS_NOT_FOUND", 1047, "中国海关编码不存在于出口申报要素");
+    public static final ApiError COMMON_URGE_RATE_LIMITED = new ApiError("COMMON_URGE_RATE_LIMITED", 1048, "{0}已催办，间隔时间30min内请勿重复操作");
+    public static final ApiError COMMON_CUSTOMS_CN_HS_CODE_EXISTS = new ApiError("COMMON_CUSTOMS_CN_HS_CODE_EXISTS", 1049, "中国海关编码【{0}】已存在");
+    public static final ApiError COMMON_PLATFORM_NAME_NOT_FOUND = new ApiError("COMMON_PLATFORM_NAME_NOT_FOUND", 1050, "未找到对应平台名称");
+    public static final ApiError COMMON_K3_SAVE_FAILED = new ApiError("COMMON_K3_SAVE_FAILED", 1051, "调用金蝶保存接口失败");
+    public static final ApiError COMMON_SETTING_EXIST = new ApiError("COMMON_SETTING_EXIST", 1052, "{0}已设置,不可重复设置");
+    public static final ApiError COMMON_CODE_EXISTS = new ApiError("COMMON_CODE_EXISTS", 1053, "code编码不能重复");
+    public static final ApiError COMMON_EXPIRE_BEFORE_EFFECTIVE = new ApiError("COMMON_EXPIRE_BEFORE_EFFECTIVE", 1054, "失效时间不能小于生效时间");
+    public static final ApiError COMMON_SYSTEM_MODULE_NOT_FOUND = new ApiError("COMMON_SYSTEM_MODULE_NOT_FOUND", 1055, "系统模块未找到");
+    public static final ApiError COMMON_NAME_EXISTS = new ApiError("COMMON_NAME_EXISTS", 1056, "名称不能重复");
+    public static final ApiError COMMON_SEARCH_TYPE_NOT_FOUND = new ApiError("COMMON_SEARCH_TYPE_NOT_FOUND", 1057, "搜索类型不存在");
+    public static final ApiError COMMON_REQUEST_EMPTY = new ApiError("COMMON_REQUEST_EMPTY", 1058, "请求参数不能为空");
+    public static final ApiError COMMON_EXPIRE_AFTER_EFFECTIVE_REQUIRED = new ApiError("COMMON_EXPIRE_AFTER_EFFECTIVE_REQUIRED", 1059, "失效时间要大于生效时间");
+    public static final ApiError COMMON_CHANGE_DATE_INVALID = new ApiError("COMMON_CHANGE_DATE_INVALID", 1060, "变更日期不能小于今天");
+    public static final ApiError COMMON_INCONSISTENT_DISABLE_STATUS = new ApiError("COMMON_INCONSISTENT_DISABLE_STATUS", 1061, "存在不一样的禁用状态");
+    public static final ApiError COMMON_PROVIDER_SERVICE_NOT_ENABLED = new ApiError("COMMON_PROVIDER_SERVICE_NOT_ENABLED", 1062, "服务商服务{0}未开发");
+    public static final ApiError COMMON_DEST_COUNTRY_REQUIRED = new ApiError("COMMON_DEST_COUNTRY_REQUIRED", 1063, "目的国家不能为空");
+    public static final ApiError COMMON_WEIGHT_REQUIRED = new ApiError("COMMON_WEIGHT_REQUIRED", 1064, "重量不能为空");
+    public static final ApiError COMMON_POSTCODE_REQUIRED = new ApiError("COMMON_POSTCODE_REQUIRED", 1065, "邮编不能为空");
+    public static final ApiError COMMON_ATTACH_QTY_MAX_FIVE = new ApiError("COMMON_ATTACH_QTY_MAX_FIVE", 1066, "附件上传数量不可超过5个文件");
+    public static final ApiError COMMON_UNUSUAL_TYPE_NOT_EXISTS = new ApiError("COMMON_UNUSUAL_TYPE_NOT_EXISTS", 1067, "异常分类配置错误或不存在");
+    public static final ApiError COMMON_PAPER_SIZE_INCONSISTENT_NOT_PRINT = new ApiError("COMMON_PAPER_SIZE_INCONSISTENT_NOT_PRINT", 1068, "选择的面单纸张大小不一致，不支持批量打印");
+    public static final ApiError COMMON_BINDING_ERROR = new ApiError("COMMON_BINDING_ERROR", 1069, "绑定失败，请检查绑定信息");
+    public static final ApiError COMMON_SAME_STATUS_DUPLICATE = new ApiError("COMMON_SAME_STATUS_DUPLICATE", 1070, "存在相同状态记录");
+    public static final ApiError COMMON_PLATFORM_CHANNEL_NOT_FOUND = new ApiError("COMMON_PLATFORM_CHANNEL_NOT_FOUND", 1071, "平台【{0}】中渠道编码【{1}】不存在");
+    public static final ApiError COMMON_WAVE_ORDER_QTY_COMPARE = new ApiError("COMMON_WAVE_ORDER_QTY_COMPARE", 1072, "波次规则配置中最小单数不能大于最大单数");
+    public static final ApiError COMMON_WAVE_QTY_COMPARE = new ApiError("COMMON_WAVE_QTY_COMPARE", 1073, "波次规则配置中最少商品数量不能大于最多商品数量");
+    public static final ApiError COMMON_IMPORT_SIZE_EXCEED_LIMIT = new ApiError("COMMON_IMPORT_SIZE_EXCEED_LIMIT", 1074, "导入数据条数超过最大限制：{0}");
+    public static final ApiError COMMON_DATE_RANGE_INVALID = new ApiError("COMMON_DATE_RANGE_INVALID", 1075, "开始日期不能大于结束日期");
+    public static final ApiError COMMON_DATE_SORT_ASC_REQUIRED = new ApiError("COMMON_DATE_SORT_ASC_REQUIRED", 1076, "开始日期必须按升序排列");
+    public static final ApiError COMMON_SKU_MAPPING_NOT_FOUND = new ApiError("COMMON_SKU_MAPPING_NOT_FOUND", 1077, "SKU映射关系不存在");
+    public static final ApiError COMMON_SKU_MAPPING_DUPLICATE_PLATFORM_SHOP = new ApiError("COMMON_SKU_MAPPING_DUPLICATE_PLATFORM_SHOP", 1078, "同一平台同一店铺仅允许映射一个SKU");
+    public static final ApiError COMMON_PLATFORM_NOT_FOUND = new ApiError("COMMON_PLATFORM_NOT_FOUND", 1079, "平台不存在");
+    public static final ApiError COMMON_RULE_EXPRESSION_ERROR = new ApiError("COMMON_RULE_EXPRESSION_ERROR", 1080, "规则执行条件不完整，请检查配置");
+    public static final ApiError COMMON_ADMIN_USER = new ApiError("COMMON_ADMIN_USER", 1081, "admin");
+    public static final ApiError COMMON_STATUS_CHANGE_LOG = new ApiError("COMMON_STATUS_CHANGE_LOG", 1082, "状态由[{0}]变更为[{1}]");
+    public static final ApiError COMMON_SALESMAN_NOT_FOUND = new ApiError("COMMON_SALESMAN_NOT_FOUND", 1083, "未查询到对应销售员");
+    public static final ApiError COMMON_SALESMAN_ID_REQUIRED = new ApiError("COMMON_SALESMAN_ID_REQUIRED", 1084, "变更后的销售员ID不能为空");
+    public static final ApiError COMMON_LOCAL_PUSH_MESSAGE = new ApiError("COMMON_LOCAL_PUSH_MESSAGE", 1085, "本地推送消息单");
+    public static final ApiError COMMON_WEIGHT_RANGE_INVALID = new ApiError("COMMON_WEIGHT_RANGE_INVALID", 1086, "开始重量不能大于结束重量");
+    public static final ApiError COMMON_LOGIN_COOPERATION_TERMINATED = new ApiError("COMMON_LOGIN_COOPERATION_TERMINATED", 1087, "合作关系已终止，当前账号无法登录");
+    public static final ApiError COMMON_LOGIN_ACCOUNT_DISABLED = new ApiError("COMMON_LOGIN_ACCOUNT_DISABLED", 1088, "账号已被停用，无法登录系统");
+    public static final ApiError COMMON_SYSTEM_CONFIG_MANAGEMENT = new ApiError("COMMON_SYSTEM_CONFIG_MANAGEMENT", 1089, "系统配置管理");
+    public static final ApiError COMMON_BOX_LENGTH_LT_PRODUCT_FORBIDDEN = new ApiError("COMMON_BOX_LENGTH_LT_PRODUCT_FORBIDDEN", 1090, "箱规长度必须大于或等于包装长度");
+    public static final ApiError COMMON_BOX_WIDTH_LT_PRODUCT_FORBIDDEN = new ApiError("COMMON_BOX_WIDTH_LT_PRODUCT_FORBIDDEN", 1091, "箱规宽度必须大于或等于包装宽度");
+    public static final ApiError COMMON_BOX_HEIGHT_LT_PRODUCT_FORBIDDEN = new ApiError("COMMON_BOX_HEIGHT_LT_PRODUCT_FORBIDDEN", 1092, "箱规高度必须大于或等于包装高度");
+    public static final ApiError COMMON_GROSS_WEIGHT_LT_NET_WEIGHT_FORBIDDEN = new ApiError("COMMON_GROSS_WEIGHT_LT_NET_WEIGHT_FORBIDDEN", 1093, "毛重必须大于或等于净重");
+    public static final ApiError COMMON_PRODUCT_LENGTH_LT_WIDTH_FORBIDDEN = new ApiError("COMMON_PRODUCT_LENGTH_LT_WIDTH_FORBIDDEN", 1094, "包装尺寸校验失败：长度必须大于或等于宽度");
+    public static final ApiError COMMON_PRODUCT_WIDTH_LT_HEIGHT_FORBIDDEN = new ApiError("COMMON_PRODUCT_WIDTH_LT_HEIGHT_FORBIDDEN", 1095, "包装尺寸校验失败：宽度必须大于或等于高度");
+    public static final ApiError COMMON_BOX_LENGTH_LT_WIDTH_FORBIDDEN = new ApiError("COMMON_BOX_LENGTH_LT_WIDTH_FORBIDDEN", 1096, "箱规尺寸校验失败：长度必须大于或等于宽度");
+    public static final ApiError COMMON_BOX_WIDTH_LT_HEIGHT_FORBIDDEN = new ApiError("COMMON_BOX_WIDTH_LT_HEIGHT_FORBIDDEN", 1097, "箱规尺寸校验失败：宽度必须大于或等于高度");
+    public static final ApiError COMMON_TABLE_NOT_FOUND = new ApiError("COMMON_TABLE_NOT_FOUND", 1098, "数据表{0}不存在");
+    public static final ApiError COMMON_TIME_FRAME_RULE_CONFIG_NOT_EXIST = new ApiError("COMMON_TIME_FRAME_RULE_CONFIG_NOT_EXIST", 1099, "*建议时间范围规则配置不存在");
+    public static final ApiError COMMON_WDT_API_CALL_FAILED = new ApiError("COMMON_WDT_API_CALL_FAILED", 1100, "调用旺店通接口异常");
+    public static final ApiError COMMON_WDT_PRE_TASK_NOT_FINISHED_CANCEL_EXECUTION = new ApiError("COMMON_WDT_PRE_TASK_NOT_FINISHED_CANCEL_EXECUTION", 1101, "前序推送任务未完成，当前任务已取消执行");
+    public static final ApiError COMMON_TEMPLATE_DEFAULT_CONTRACT_EXISTS = new ApiError("COMMON_TEMPLATE_DEFAULT_CONTRACT_EXISTS", 1102, "模板类型【{0}】已存在默认合同");
+    public static final ApiError COMMON_CONTRACT_TEMPLATE_REQUIRED = new ApiError("COMMON_CONTRACT_TEMPLATE_REQUIRED", 1103, "合同模板不能为空");
+    public static final ApiError COMMON_CONTRACT_TEMPLATE_NOT_AVAILABLE = new ApiError("COMMON_CONTRACT_TEMPLATE_NOT_AVAILABLE", 1104, "合同模板不存在或被禁用");
+    public static final ApiError COMMON_CONTRACT_TEMPLATE_BINDING_DUPLICATE = new ApiError("COMMON_CONTRACT_TEMPLATE_BINDING_DUPLICATE", 1105, "【{0}】已绑定【{1}】，不可重复绑定");
+    public static final ApiError COMMON_CONTRACT_TEMPLATE_BOUND_BY_OTHER_SUPPLIER = new ApiError("COMMON_CONTRACT_TEMPLATE_BOUND_BY_OTHER_SUPPLIER", 1106, "【{0}】已被其他供应商绑定，请先解除关联再绑定所有供应商");
+    public static final ApiError COMMON_USER_NOT_FOUND = new ApiError("COMMON_USER_NOT_FOUND", 1107, "用户不存在");
+    public static final ApiError COMMON_CATEGORY_LEVEL_EXCEED_MAX = new ApiError("COMMON_CATEGORY_LEVEL_EXCEED_MAX", 1107, "分类级别最多支持{0}级");
+    public static final ApiError COMMON_SYSTEM_CATEGORY_DELETE_FORBIDDEN = new ApiError("COMMON_SYSTEM_CATEGORY_DELETE_FORBIDDEN", 1108, "系统分类不允许删除");
+    public static final ApiError COMMON_SYSTEM_CATEGORY_UPDATE_FORBIDDEN = new ApiError("COMMON_SYSTEM_CATEGORY_UPDATE_FORBIDDEN", 1109, "系统分类不允许编辑");
+    public static final ApiError COMMON_DELETE_CHILD_NODE_EXISTS = new ApiError("COMMON_DELETE_CHILD_NODE_EXISTS", 1110, "存在子节点，无法删除");
+    public static final ApiError COMMON_CONTRACT_NOT_BINDING = new ApiError("COMMON_CONTRACT_NOT_BINDING", 98127, "无关联合同，请在合同管理页面关联后打印");
+    public static final ApiError COMMON_NO_DELIVERY_SKU = new ApiError("COMMON_NO_DELIVERY_SKU", 98128, "没有发货的SKU");
+    public static final ApiError COMMON_SKU_NOT_EXIST_OR_NOT_APPROVE = new ApiError("COMMON_SKU_NOT_EXIST_OR_NOT_APPROVE", 98129, "SKU【{0}】不存在或未审核");
+    public static final ApiError COMMON_FILE_EMPTY = new ApiError("COMMON_FILE_EMPTY", 1111, "文件为空{0}");
+    public static final ApiError COMMON_FS_USER_NOT_BIND = new ApiError("COMMON_FS_USER_NOT_BIND", 98130, "飞书【{0}】事件,用户【{1}】未绑定飞书账号");
+    public static final ApiError COMMON_DEPARTMENT_HAVE_USER = new ApiError("COMMON_DEPARTMENT_HAVE_USER", 98131, "【{0}】部门或下级部门存在用户");
+    public static final ApiError COMMON_FILE_HEAD_NOT_EMPTY = new ApiError("COMMON_FILE_HEAD_NOT_EMPTY", 98132, "文件表头不能为空");
+    public static final ApiError COMMON_PLATFORM_SHOP_EXSIT = new ApiError("COMMON_PLATFORM_SHOP_EXSIT", 92132, "平台【{0}】下店铺【{1}】已存在，不能重复配置");
+    public static final ApiError COMMON_CSAGENT_EXSIT = new ApiError("COMMON_CSAGENT_EXSIT", 92133, "平台【{1}】下售后人员【{1}】已存在，不能重复配置");
+    public static final ApiError COMMON_STATUS_SAME = new ApiError("COMMON_STATUS_SAME", 92134, "存在相同状态");
+    public static final ApiError COMMON_FILE_HEAD_READ_HEAD_FAIL = new ApiError("COMMON_FILE_HEAD_READ_HEAD_FAIL", 98134, "配置有误，开始行读取失败");
+    public static final ApiError COMMON_NO_SKU = new ApiError("COMMON_NO_SKU", 98128, "SKU不存在");
+    public static final ApiError COMMON_NOTICE_TIME_AFTER_NOW = new ApiError("COMMON_NOTICE_TIME_AFTER_NOW", 98134, "通知时间不能早于当前时间");
+    public static final ApiError COMMON_NOW_TYPE_NOT_ALLOW_UPDATE = new ApiError("COMMON_NOW_TYPE_NOT_ALLOW_UPDATE", 98135, "立即通知不允许修改");
+    public static final ApiError COMMON_NOT_FOUND_PUSH_DADA = new ApiError("COMMON_NOT_FOUND_PUSH_DADA", 98136, "未找到可下推数据");
+    public static final ApiError COMMON_SELECT_DATA_REQUIRED = new ApiError("COMMON_SELECT_DATA_REQUIRED", 98137, "请选择要操作的数据");
+    public static final ApiError COMMON_DATA_NOT_EXIST = new ApiError("COMMON_DATA_NOT_EXIST", 98138, "要操作的数据{0}系统不存在");
+    public static final ApiError COMMON_BATCH_PROCESSING = new ApiError("COMMON_BATCH_PROCESSING", 98139, "分批处理中");
+    public static final ApiError COMMON_COUNTRY_INFO_NOT_FOUND = new ApiError("COMMON_COUNTRY_INFO_NOT_FOUND", 13711, "国家信息不存在");
+    public static final ApiError COMMON_CFG_SETTING_SAVE_FAILED = new ApiError("COMMON_CFG_SETTING_SAVE_FAILED", 13718, "系统配置管理保存失败");
+    public static final ApiError COMMON_CFG_SETTING_TYPE_INVALID = new ApiError("COMMON_CFG_SETTING_TYPE_INVALID", 13719, "系统配置类型不正确");
+    public static final ApiError COMMON_REMOTE_SERVICE_ERROR = new ApiError("COMMON_REMOTE_SERVICE_ERROR", 13720, "{0}服务调用失败：{1}");
+    public static final ApiError COMMON_REMOTE_RESPONSE_EMPTY = new ApiError("COMMON_REMOTE_RESPONSE_EMPTY", 13720, "{0}服务返回为空");
+    public static final ApiError COMMON_REMOTE_RESPONSE_INVALID = new ApiError("COMMON_REMOTE_RESPONSE_INVALID", 13720, "{0}服务返回格式异常：{1}");
+    public static final ApiError COMMON_THIRD_PARTY_API_FAILED = new ApiError("COMMON_THIRD_PARTY_API_FAILED", 13720, "{0}接口调用失败：{1}");
+    public static final ApiError COMMON_LARK_USER_INFO_FAILED = new ApiError("COMMON_LARK_USER_INFO_FAILED", 13721, "获取飞书用户信息失败：{0}");
+    public static final ApiError COMMON_LARK_UNION_ID_NOT_FOUND = new ApiError("COMMON_LARK_UNION_ID_NOT_FOUND", 13722, "未找到飞书Union ID");
+    public static final ApiError COMMON_LARK_UNION_ID_FETCH_FAILED = new ApiError("COMMON_LARK_UNION_ID_FETCH_FAILED", 13723, "获取飞书Union ID失败：{0}");
+
+    public static final ApiError FASTDFS_UPLOAD_FAILED_FOR_WAYBILL = new ApiError("FASTDFS_UPLOAD_FAILED_FOR_WAYBILL", 11216, "面单上传FastDFS失败");
+    public static final ApiError FILE_EXCEL_PARSE = new ApiError("FILE_EXCEL_PARSE", 2400, "Excel解析数据时发生错误");
+    public static final ApiError FILE_EXPORT_FAILED = new ApiError("FILE_EXPORT_FAILED", 2401, "导出失败");
+    public static final ApiError FILE_IMPORT_FORMAT_INVALID_XLSX = new ApiError("FILE_IMPORT_FORMAT_INVALID_XLSX", 2402, "导入文件格式错误，请使用xlsx文件");
+    public static final ApiError FILE_TOO_LARGE = new ApiError("FILE_TOO_LARGE", 2403, "文件过大 不能超过 {0}");
+    public static final ApiError FILE_IMPORT_PARSE_FAILED = new ApiError("FILE_IMPORT_PARSE_FAILED", 2404, "导入文件解析失败");
+    public static final ApiError FILE_IMPORT_FORMAT_INVALID_MMP = new ApiError("FILE_IMPORT_FORMAT_INVALID_MMP", 2405, "导入文件格式错误，请使用mmp文件");
+    public static final ApiError FILE_IMPORT_TIMEOUT = new ApiError("FILE_IMPORT_TIMEOUT", 2406, "导入超时,请减少数据导入");
+    public static final ApiError FILE_IMPORT_DATA_NOT_NULL = new ApiError("FILE_IMPORT_DATA_NOT_NULL", 2407, "导入{0}数据不能为空");
+    public static final ApiError FILE_DELETE = new ApiError("FILE_DELETE", 2408, "文件删除失败");
+    public static final ApiError FILE_NOT_DELETE_ALL = new ApiError("FILE_NOT_DELETE_ALL", 2409, "文件不能全部删除");
+    public static final ApiError FILE_TEMPLATE_NOT_EXIST = new ApiError("FILE_TEMPLATE_NOT_EXIST", 2410, "文件模板不存在");
+    public static final ApiError FILE_TEMPLATE_DOWNLOAD = new ApiError("FILE_TEMPLATE_DOWNLOAD", 2411, "文件模板下载失败");
+    public static final ApiError FILE_EXCEL_PARSING_FIELD_EXCEPTION = new ApiError("FILE_EXCEL_PARSING_FIELD_EXCEPTION", 2412, "excel解析字段异常");
+    public static final ApiError FILE_EXCEL_ILLEGAL_FIELDS = new ApiError("FILE_EXCEL_ILLEGAL_FIELDS", 2413, "excel第【{0}】行 【{1}】列非法字段");
+    public static final ApiError FILE_EXCEL_IMPORT_HEAD_EXIST = new ApiError("FILE_EXCEL_IMPORT_HEAD_EXIST", 2414, "导入表头不能重复");
+    public static final ApiError FILE_EXCEL_IMPORT_SIZE = new ApiError("FILE_EXCEL_IMPORT_SIZE", 2415, "导入明细不能超过5000条");
+    public static final ApiError FILE_NOT_FOUND = new ApiError("FILE_NOT_FOUND", 2416, "未找到上传文件");
+    public static final ApiError FILE_UPLOAD_FAILED_OR_LINK_INVALID = new ApiError("FILE_UPLOAD_FAILED_OR_LINK_INVALID", 2417, "上传文件失败或者链接不存在");
+    public static final ApiError FILE_DATA_REQUIRED = new ApiError("FILE_DATA_REQUIRED", 2418, "导入数据不能为空");
+    public static final ApiError FILE_DATA_IMPORT_FAILED = new ApiError("FILE_DATA_IMPORT_FAILED", 2419, "导入数据失败");
+    public static final ApiError FILE_EXPORT_ERROR_DATA_FAILED = new ApiError("FILE_EXPORT_ERROR_DATA_FAILED", 2420, "导出错误数据失败");
+    public static final ApiError FILE_UPLOAD_FAILED = new ApiError("FILE_UPLOAD_FAILED", 2421, "上传文件失败");
+    public static final ApiError FILE_UPLOADED_NOT_FOUND = new ApiError("FILE_UPLOADED_NOT_FOUND", 2422, "已上传的文档不存在");
+    public static final ApiError FILE_DELETE_FORBIDDEN_APPROVED = new ApiError("FILE_DELETE_FORBIDDEN_APPROVED", 2423, "审核已通过不能删除文档");
+    public static final ApiError FILE_DOC_NOT_FOUND = new ApiError("FILE_DOC_NOT_FOUND", 2424, "文档不存在");
+    public static final ApiError FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED = new ApiError("FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED", 2425, "导入模板下载失败");
+    public static final ApiError FILE_REF_CLOSE_FORBIDDEN = new ApiError("FILE_REF_CLOSE_FORBIDDEN", 2426, "该文档已被引用状态不能关闭");
+    public static final ApiError FILE_SIZE_EXCEEDS_LIMIT = new ApiError("FILE_SIZE_EXCEEDS_LIMIT", 2427, "文件不可超过{0}m");
+    public static final ApiError FILE_NAME_DUPLICATE = new ApiError("FILE_NAME_DUPLICATE", 2428, "文档名已存在,不可重复提交");
+    public static final ApiError FILE_EXPORT_DATA_EMPTY = new ApiError("FILE_EXPORT_DATA_EMPTY", 2429, "导出数据不能为空");
+    public static final ApiError FILE_PARAM_EMPTY = new ApiError("FILE_PARAM_EMPTY", 2430, "请求参数不能为空");
+    public static final ApiError FILE_STRUCTURE_AND_FILES_EMPTY = new ApiError("FILE_STRUCTURE_AND_FILES_EMPTY", 2431, "文件夹结构和文件列表不能同时为空");
+    public static final ApiError FILE_ZIP_CREATE_FAILED = new ApiError("FILE_ZIP_CREATE_FAILED", 2432, "创建ZIP文件失败: {0}");
+    public static final ApiError FILE_ZIP_EXTRACT_FAILED = new ApiError("FILE_ZIP_EXTRACT_FAILED", 2433, "解压缩ZIP文件失败: {0}");
+    public static final ApiError FILE_ZIP_NOT_FOUND = new ApiError("FILE_ZIP_NOT_FOUND", 2434, "ZIP文件为空或不存在: {0}");
+    public static final ApiError FILE_IMAGE_COMPRESS_FAILED = new ApiError("FILE_IMAGE_COMPRESS_FAILED", 2435, "压缩图片失败: {0}");
+    public static final ApiError FILE_OPERATION_FAILED = new ApiError("FILE_OPERATION_FAILED", 2436, "FastDFS操作失败: {0}");
+    public static final ApiError FILE_DOWNLOAD_TIMEOUT = new ApiError("FILE_DOWNLOAD_TIMEOUT", 2437, "文件下载超时");
+    public static final ApiError FILE_OPERATION_INTERRUPTED = new ApiError("FILE_OPERATION_INTERRUPTED", 2438, "操作被中断");
+    public static final ApiError FILE_ZIP_EMPTY = new ApiError("FILE_ZIP_EMPTY", 2439, "ZIP文件中没有找到文件");
+    public static final ApiError FILE_CHECK_SIZE_FAILED = new ApiError("FILE_CHECK_SIZE_FAILED", 2440, "检查ZIP文件大小失败: {0}");
+    public static final ApiError FILE_MANAGEMENT_SKU_TYPE_EXIST = new ApiError("FILE_MANAGEMENT_SKU_TYPE_EXIST", 2441, "SKU【{0}】类型【{1}】已存在");
+    public static final ApiError FILE_MANAGEMENT_CATEGORY_TYPE_EXIST = new ApiError("FILE_MANAGEMENT_CATEGORY_TYPE_EXIST", 2442, "品类【{0}】类型【{1}】已存在");
+    public static final ApiError FILE_URL_INVALID = new ApiError("FILE_URL_INVALID", 2443, "文件url格式错误");
+    public static final ApiError FILE_UNSUPPORTED_TYPE = new ApiError("FILE_UNSUPPORTED_TYPE", 2444, "不支持的文件类型【{0}】");
+    public static final ApiError FILE_DOWNLOAD_FAILED = new ApiError("FILE_DOWNLOAD_FAILED", 2445, "文件下载失败【{0}】");
+    public static final ApiError FILE_SHEET_NOT_EXIST = new ApiError("FILE_SHEET_NOT_EXIST", 2446, "未找到配置的sheet页名称");
+    public static final ApiError FILE_EXPORT_SIZE_EXCEED_LIMIT = new ApiError("FILE_EXPORT_SIZE_EXCEED_LIMIT", 2447, "导出数据条数超过最大限制：{0}");
+    public static final ApiError FILE_IMPORT_TASK_FINISH = new ApiError("FILE_IMPORT_TASK_FINISH", 2448, "处理完成，失败{0}条");
+    public static final ApiError FILE_IMPORT_TASK_FINISH_EXPORT_FAILED = new ApiError("FILE_IMPORT_TASK_FINISH_EXPORT_FAILED", 2449, "处理完成，失败{0}条，{1}");
+    public static final ApiError FILE_IMPORT_TASK_FINISH_ALL_SUCCESS = new ApiError("FILE_IMPORT_TASK_FINISH_ALL_SUCCESS", 2450, "处理完成，全部成功");
+    public static final ApiError FILE_IMPORT_TASK_STATUS_UPDATE_FAILED = new ApiError("FILE_IMPORT_TASK_STATUS_UPDATE_FAILED", 2451, "导入处理已完成但任务状态同步失败，请刷新列表核对");
+
+    static ApiError[] values() {
+        return new ApiError[]{
+                ASYNC_TASK_DETAIL_TIMEOUT,
+                BILL_SAVE_FAILED,
+                BILL_UPDATE_FAILED,
+                BILL_DATA_DUPLICATE,
+                BILL_UPDATE_STATUS_NOT_ALLOWED,
+                BILL_SOURCE_NOT_FOUND,
+                BILL_SOURCE_DETAIL_NOT_FOUND,
+                BILL_PUSH_DOWN_NOT_ALLOWED,
+                BILL_DATA_LOCKED,
+                BILL_SAVE_FAIL,
+                BILL_DETAIL_NOT_FOUND,
+                BILL_DETAIL_REQUIRED,
+                BILL_SUBMIT_FAILED,
+                BILL_DELETE_STATUS_NOT_ALLOWED,
+                BILL_DELETE_FAILED,
+                BILL_DISAPPROVE_FAILED,
+                BILL_APPROVE_FAILED,
+                BILL_APPROVE_NOT_FOUND,
+                BILL_APPROVE_BUSINESS_KEY_NOT_FOUND,
+                BILL_APPROVE_SUBMIT_RETRY,
+                BILL_ENABLE_NOT_ALLOWED,
+                BILL_DISABLE_NOT_ALLOWED,
+                BILL_DELETE_NOT_ALLOWED,
+                BILL_REJECT_STATUS_INVALID,
+                BILL_APPROVAL_STATUS_INVALID,
+                BILL_EDIT_ALLOWED_STATUS_ONLY,
+                BILL_SUBMIT_APPROVAL_STATUS_INVALID,
+                BILL_WAIT_APPROVE_REQUIRED,
+                BILL_RESUBMIT_STATUS_INVALID,
+                BILL_TASK_CANCEL_SUBMIT_INVALID,
+                BILL_URGE_ONLY_IN_APPROVING,
+                BILL_VOID_EDIT_FORBIDDEN,
+                BILL_VOID_SUBMIT_FORBIDDEN,
+                BILL_UPDATE_FIELD_APPROVEING,
+                BILL_ROW_CHANGE_FORBIDDEN,
+                BILL_SELECTION_REQUIRED,
+                BILL_PARAM_SELECTION_REQUIRED,
+                BILL_VOID_ALLOWED_STATUS_ONLY,
+                BILL_DELETE_ALLOWED_STATUS_ONLY,
+                BILL_SUBMIT_ALLOWED_STATUS_ONLY,
+                BILL_ALREADY_VOID_CANNOT_VOID_AGAIN,
+                BILL_WAIT_SUBMIT_TO_APPROVE_ING,
+                BILL_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY,
+                BILL_APPROVED_ONLY_CAN_PUSH,
+                BILL_INCONSISTENT_VOID_STATUS,
+                BILL_PUSH_ALLOWED_APPROVED_ONLY,
+                BILL_VOIDED_CANNOT_SUBMIT,
+                BILL_VOIDED_CANNOT_DELETE,
+                BILL_INV_ORG_NOT_FOUND,
+                BILL_NOT_EXIST,
+                BILL_NOT_EXIST_WITH_TYPE,
+                BILL_ALREADY_EXIST,
+                BILL_HAS_CHANGE_ORDER_REVERSE_FORBIDDEN,
+                BILL_SUBMIT_ALLOWED_PENDING_ONLY,
+                BILL_WAIT_HANDLE_CANCEL_PROCESS_ALLOWED,
+                BILL_STATUS_ALREADY_HANDLED_NOT_OPERATE,
+                BILL_FINANCE_RECONCILIATION_DUPLICATE,
+                BILL_RETURN_WAIT_CONFIRM_STATUS_REQUIRED,
+                BILL_KEEP_AT_LEAST_ONE_DETAIL_OR_DELETE,
+                BILL_DECLARE_STATUS_GENERATED_NOT_CHANGE_TO_NO_DECLARE,
+                BILL_LOGISTICS_STATUS_GENERATED_NOT_CHANGE_TO_NO_LOGISTICS,
+                BILL_DETAIL_IS_ZERO,
+                BILL_IN_USE_DELETE_FORBIDDEN,
+                BILL_IN_USE_SO_RECEIPT,
+                BILL_VOID_FORBIDDEN,
+                BILL_RECEIVER_ADDRESS_REQUIRED,
+                BILL_RECEIVER_REQUIRED,
+                BILL_NOT_FOUND,
+                BILL_MANUAL_SUB_TYPE_REQUIRED,
+                BILL_HAS_DOWNSTREAM_VOID_FORBIDDEN,
+                BILL_DETAIL_DATA_NOT_FOUND,
+                BILL_DATA_CREATE_FAILED,
+                BILL_AUDIT_QTY_DETAIL_REQUIRED,
+                BILL_DECLARE_STATUS_GENERATED_NOT_DISAPPROVE,
+                HTTP_BAD_REQUEST,
+                HTTP_UNAUTHORIZED,
+                HTTP_FORBIDDEN,
+                HTTP_NOT_FOUND,
+                HTTP_METHOD_NOT_ALLOWED,
+                HTTP_PAYLOAD_TOO_LARGE,
+                HTTP_UNSUPPORTED_MEDIA_TYPE,
+                HTTP_TOO_MANY_REQUESTS,
+                HTTP_UNKNOWN,
+                HTTP_NOT_IMPLEMENTED,
+                HTTP_BAD_GATEWAY,
+                HTTP_SERVICE_UNAVAILABLE,
+                HTTP_GATEWAY_TIMEOUT,
+                HTTP_VERSION_NOT_SUPPORTED,
+                HTTP_SESSION_EXPIRED,
+                WARNING,
+                WARNING_SUBMIT_CONFIRM,
+                WARNING_TASK_UNFINISHED,
+                COMMON_PARAM_REQUIRED,
+                COMMON_DUPLICATE_OPERATION,
+                COMMON_PARAM_LIST_REQUIRED,
+                COMMON_PARAM_NAME_TOO_LONG,
+                COMMON_PARAM_CONTENT_TOO_LONG,
+                COMMON_PARAM_TIME_REQUIRED,
+                COMMON_PARAM_RANGE_INVALID,
+                COMMON_EXCEPTION_HANDLER_METHOD_ERROR,
+                COMMON_CFG_SETTING_KEY,
+                COMMON_NAME_EXIST,
+                COMMON_COPY_FAILED,
+                COMMON_NOT_FOUND,
+                COMMON_HAS_EXIST,
+                COMMON_DUPLICATION_NAME,
+                COMMON_COPY_ERROR,
+                COMMON_COMPANY_NOT_FOUND,
+                COMMON_ROLE_NOT_FOUND,
+                COMMON_DEPT_NAME_EXISTS,
+                COMMON_ROLE_NAME_EXISTS,
+                COMMON_CODE_GENERATE_FAILED,
+                COMMON_ENUM_CONVERT_FAILED,
+                COMMON_DEPT_NOT_FOUND,
+                COMMON_NOTICE_NOT_FOUND,
+                COMMON_FIELD_CODE_INVALID,
+                COMMON_SCHEME_NOT_EXIST,
+                COMMON_SCHEME_NAME_EXIST,
+                COMMON_BANK_IS_EXIST,
+                COMMON_DELETE_PARENT_NODE_EXISTS,
+                COMMON_MOBILE_EXISTS,
+                COMMON_CALENDAR_UPDATE_EXCEPTION,
+                COMMON_CURRENCY_NOT_EXIST,
+                COMMON_EXCHANGE_RATE_NOT_EXIST,
+                COMMON_MSG_REQUIRED,
+                COMMON_MSG_PARAM_REQUIRED,
+                COMMON_BUSINESS_NOT_EXIST,
+                COMMON_CHANGE_INFO_REQUIRED,
+                COMMON_CHANGE_INVALID,
+                COMMON_RATE_LIMIT_WITH_NAME,
+                COMMON_CHANGE_NO_RECORD,
+                COMMON_RATE_LIMIT,
+                COMMON_FIELD_NAME_EXISTS,
+                COMMON_MEMBER_ROLE_ALREADY_EXISTS,
+                COMMON_UNIONID_REQUIRED,
+                COMMON_YEAR_REQUIRED,
+                COMMON_LARK_TOKEN_IS_NULL,
+                COMMON_LARK_SEND_MSG_FAIL,
+                COMMON_NOT_EXIST_GENERIC,
+                COMMON_CN_EXPORT_DECLARATION_HS_NOT_FOUND,
+                COMMON_URGE_RATE_LIMITED,
+                COMMON_CUSTOMS_CN_HS_CODE_EXISTS,
+                COMMON_PLATFORM_NAME_NOT_FOUND,
+                COMMON_K3_SAVE_FAILED,
+                COMMON_SETTING_EXIST,
+                COMMON_CODE_EXISTS,
+                COMMON_EXPIRE_BEFORE_EFFECTIVE,
+                COMMON_SYSTEM_MODULE_NOT_FOUND,
+                COMMON_NAME_EXISTS,
+                COMMON_SEARCH_TYPE_NOT_FOUND,
+                COMMON_REQUEST_EMPTY,
+                COMMON_EXPIRE_AFTER_EFFECTIVE_REQUIRED,
+                COMMON_CHANGE_DATE_INVALID,
+                COMMON_INCONSISTENT_DISABLE_STATUS,
+                COMMON_PROVIDER_SERVICE_NOT_ENABLED,
+                COMMON_DEST_COUNTRY_REQUIRED,
+                COMMON_WEIGHT_REQUIRED,
+                COMMON_POSTCODE_REQUIRED,
+                COMMON_ATTACH_QTY_MAX_FIVE,
+                COMMON_UNUSUAL_TYPE_NOT_EXISTS,
+                COMMON_PAPER_SIZE_INCONSISTENT_NOT_PRINT,
+                COMMON_BINDING_ERROR,
+                COMMON_SAME_STATUS_DUPLICATE,
+                COMMON_PLATFORM_CHANNEL_NOT_FOUND,
+                COMMON_WAVE_ORDER_QTY_COMPARE,
+                COMMON_WAVE_QTY_COMPARE,
+                COMMON_IMPORT_SIZE_EXCEED_LIMIT,
+                COMMON_DATE_RANGE_INVALID,
+                COMMON_DATE_SORT_ASC_REQUIRED,
+                COMMON_SKU_MAPPING_NOT_FOUND,
+                COMMON_SKU_MAPPING_DUPLICATE_PLATFORM_SHOP,
+                COMMON_PLATFORM_NOT_FOUND,
+                COMMON_RULE_EXPRESSION_ERROR,
+                COMMON_ADMIN_USER,
+                COMMON_STATUS_CHANGE_LOG,
+                COMMON_SALESMAN_NOT_FOUND,
+                COMMON_SALESMAN_ID_REQUIRED,
+                COMMON_LOCAL_PUSH_MESSAGE,
+                COMMON_WEIGHT_RANGE_INVALID,
+                COMMON_LOGIN_COOPERATION_TERMINATED,
+                COMMON_LOGIN_ACCOUNT_DISABLED,
+                COMMON_SYSTEM_CONFIG_MANAGEMENT,
+                COMMON_BOX_LENGTH_LT_PRODUCT_FORBIDDEN,
+                COMMON_BOX_WIDTH_LT_PRODUCT_FORBIDDEN,
+                COMMON_BOX_HEIGHT_LT_PRODUCT_FORBIDDEN,
+                COMMON_GROSS_WEIGHT_LT_NET_WEIGHT_FORBIDDEN,
+                COMMON_PRODUCT_LENGTH_LT_WIDTH_FORBIDDEN,
+                COMMON_PRODUCT_WIDTH_LT_HEIGHT_FORBIDDEN,
+                COMMON_BOX_LENGTH_LT_WIDTH_FORBIDDEN,
+                COMMON_BOX_WIDTH_LT_HEIGHT_FORBIDDEN,
+                COMMON_TABLE_NOT_FOUND,
+                COMMON_TIME_FRAME_RULE_CONFIG_NOT_EXIST,
+                COMMON_WDT_API_CALL_FAILED,
+                COMMON_WDT_PRE_TASK_NOT_FINISHED_CANCEL_EXECUTION,
+                COMMON_TEMPLATE_DEFAULT_CONTRACT_EXISTS,
+                COMMON_CONTRACT_TEMPLATE_REQUIRED,
+                COMMON_CONTRACT_TEMPLATE_NOT_AVAILABLE,
+                COMMON_CONTRACT_TEMPLATE_BINDING_DUPLICATE,
+                COMMON_CONTRACT_TEMPLATE_BOUND_BY_OTHER_SUPPLIER,
+                COMMON_USER_NOT_FOUND,
+                COMMON_CATEGORY_LEVEL_EXCEED_MAX,
+                COMMON_SYSTEM_CATEGORY_DELETE_FORBIDDEN,
+                COMMON_SYSTEM_CATEGORY_UPDATE_FORBIDDEN,
+                COMMON_DELETE_CHILD_NODE_EXISTS,
+                COMMON_CONTRACT_NOT_BINDING,
+                COMMON_NO_DELIVERY_SKU,
+                COMMON_SKU_NOT_EXIST_OR_NOT_APPROVE,
+                COMMON_FILE_EMPTY,
+                COMMON_FS_USER_NOT_BIND,
+                COMMON_DEPARTMENT_HAVE_USER,
+                COMMON_FILE_HEAD_NOT_EMPTY,
+                COMMON_PLATFORM_SHOP_EXSIT,
+                COMMON_CSAGENT_EXSIT,
+                COMMON_STATUS_SAME,
+                COMMON_FILE_HEAD_READ_HEAD_FAIL,
+                COMMON_NO_SKU,
+                COMMON_NOTICE_TIME_AFTER_NOW,
+                COMMON_NOW_TYPE_NOT_ALLOW_UPDATE,
+                COMMON_NOT_FOUND_PUSH_DADA,
+                COMMON_SELECT_DATA_REQUIRED,
+                COMMON_DATA_NOT_EXIST,
+                COMMON_BATCH_PROCESSING,
+                COMMON_COUNTRY_INFO_NOT_FOUND,
+                COMMON_CFG_SETTING_SAVE_FAILED,
+                COMMON_CFG_SETTING_TYPE_INVALID,
+                FASTDFS_UPLOAD_FAILED_FOR_WAYBILL,
+                FILE_EXCEL_PARSE,
+                FILE_EXPORT_FAILED,
+                FILE_IMPORT_FORMAT_INVALID_XLSX,
+                FILE_TOO_LARGE,
+                FILE_IMPORT_PARSE_FAILED,
+                FILE_IMPORT_FORMAT_INVALID_MMP,
+                FILE_IMPORT_TIMEOUT,
+                FILE_IMPORT_DATA_NOT_NULL,
+                FILE_DELETE,
+                FILE_NOT_DELETE_ALL,
+                FILE_TEMPLATE_NOT_EXIST,
+                FILE_TEMPLATE_DOWNLOAD,
+                FILE_EXCEL_PARSING_FIELD_EXCEPTION,
+                FILE_EXCEL_ILLEGAL_FIELDS,
+                FILE_EXCEL_IMPORT_HEAD_EXIST,
+                FILE_EXCEL_IMPORT_SIZE,
+                FILE_NOT_FOUND,
+                FILE_UPLOAD_FAILED_OR_LINK_INVALID,
+                FILE_DATA_REQUIRED,
+                FILE_DATA_IMPORT_FAILED,
+                FILE_EXPORT_ERROR_DATA_FAILED,
+                FILE_UPLOAD_FAILED,
+                FILE_UPLOADED_NOT_FOUND,
+                FILE_DELETE_FORBIDDEN_APPROVED,
+                FILE_DOC_NOT_FOUND,
+                FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED,
+                FILE_REF_CLOSE_FORBIDDEN,
+                FILE_SIZE_EXCEEDS_LIMIT,
+                FILE_NAME_DUPLICATE,
+                FILE_EXPORT_DATA_EMPTY,
+                FILE_PARAM_EMPTY,
+                FILE_STRUCTURE_AND_FILES_EMPTY,
+                FILE_ZIP_CREATE_FAILED,
+                FILE_ZIP_EXTRACT_FAILED,
+                FILE_ZIP_NOT_FOUND,
+                FILE_IMAGE_COMPRESS_FAILED,
+                FILE_OPERATION_FAILED,
+                FILE_DOWNLOAD_TIMEOUT,
+                FILE_OPERATION_INTERRUPTED,
+                FILE_ZIP_EMPTY,
+                FILE_CHECK_SIZE_FAILED,
+                FILE_MANAGEMENT_SKU_TYPE_EXIST,
+                FILE_MANAGEMENT_CATEGORY_TYPE_EXIST,
+                FILE_URL_INVALID,
+                FILE_UNSUPPORTED_TYPE,
+                FILE_DOWNLOAD_FAILED,
+                FILE_SHEET_NOT_EXIST,
+                FILE_EXPORT_SIZE_EXCEED_LIMIT,
+                FILE_IMPORT_TASK_FINISH,
+                FILE_IMPORT_TASK_FINISH_EXPORT_FAILED,
+                FILE_IMPORT_TASK_FINISH_ALL_SUCCESS,
+                FILE_IMPORT_TASK_STATUS_UPDATE_FAILED,
+        };
+    }
+}

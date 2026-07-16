@@ -3,6 +3,7 @@ package com.erp.server.wms.service;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
+import com.erp.model.wms.entity.ThirdWarehouseDeliveryEntity;
 
 import java.util.List;
 
@@ -79,5 +80,16 @@ public interface AsyncService {
      */
     void syncAutoOut(SoB2cDeliveryEntity entity);
 
-    void asyncCancelThirdWarehouseOrder(SoB2cEntity mainEntity,String abnormalProblemReason);
+    /**
+     * 异步取消三方仓出库单（用于三方仓出库异常自动截单场景）。
+     * <p>
+     * 拦截确认成功后才会更新销售订单状态为"配货中"；若传入了 {@code thirdWarehouseDeliveryEntity}，
+     * 同样只在拦截确认成功后才将其状态更新为"取消发货"，避免与异步执行结果的时序不一致。
+     *
+     * @param mainEntity                 销售订单
+     * @param abnormalProblemReason      异常原因
+     * @param thirdWarehouseDeliveryEntity 三方仓发货单，为空时不处理其状态（如非WEGO平台场景）
+     */
+    void asyncCancelThirdWarehouseOrder(SoB2cEntity mainEntity, String abnormalProblemReason,
+                                         ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity);
 }

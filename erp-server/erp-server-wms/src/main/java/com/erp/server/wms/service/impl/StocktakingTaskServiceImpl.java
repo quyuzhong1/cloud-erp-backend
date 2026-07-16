@@ -196,7 +196,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
                     if (CollectionUtils.isNotEmpty(dtoList)) {
                         ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> result = workflowFeign.curApprover(dtoList);
                         if (200 != result.getCode()) {
-                            throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(), result.getMsg()));
+                            throw new ServiceException(ApiError.WF_CUR_APPROVER_QUERY_FAILED, result.getMsg());
                         }
                         return result;
                     }

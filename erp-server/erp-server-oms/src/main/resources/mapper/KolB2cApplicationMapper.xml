@@ -281,7 +281,7 @@ ksba.platform_order_code AS platformOrderCode
             kba.is_deleted = false
           and kba.invalid_status = false
         <if test="detailIdList != null and detailIdList.size > 0">
-            kbad.id in
+          and kbad.id in
             <foreach  collection="detailIdList" item="item" open="(" separator="," close=")" >
                 #{item}
             </foreach>

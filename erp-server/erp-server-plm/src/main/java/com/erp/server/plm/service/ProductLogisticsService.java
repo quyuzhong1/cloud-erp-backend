@@ -62,6 +62,23 @@ public interface ProductLogisticsService extends IService<ProductLogisticsEntity
     Boolean saveOrUpdateBatch(List<ProductLogisticsDTO> productLogisticsList);
 
     /**
+     * Convert declare unit input to basic_dict value.
+     *
+     * @param declareUnit declare unit value or name
+     * @return basic_dict.value
+     */
+    String convertDeclareUnitToValue(String declareUnit);
+
+    /**
+     * Convert declare unit input to basic_dict value by cached declare unit dict list.
+     *
+     * @param declareUnit declare unit value or name
+     * @param declareUnitList declare unit dict list
+     * @return basic_dict.value
+     */
+    String convertDeclareUnitToValue(String declareUnit, List<BasicDictEntity> declareUnitList);
+
+    /**
      * @Description 删除产品物流信息
      * @Author Luo_WG
      * @Date 2022/9/26 18:42

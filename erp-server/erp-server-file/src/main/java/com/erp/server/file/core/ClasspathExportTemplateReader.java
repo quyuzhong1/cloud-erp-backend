@@ -1,5 +1,6 @@
 package com.erp.server.file.core;
 
+import com.common.core.excel.EasyExcelListTemplateValidator;
 import com.common.core.exception.ServiceException;
 import com.erp.server.file.handler.FileRegistry;
 import org.apache.commons.io.IOUtils;
@@ -10,7 +11,8 @@ import java.io.InputStream;
 
 /**
  * classpath 导出模板读取：读入前/后按 {@link FileRegistry#maxSingleTemplateBytesOrDefault()} 早失败，
- * 避免超大 xlsx 整文件进堆后再做 POI 展开。
+ * 并通过 {@link EasyExcelListTemplateValidator} 校验列表占位符模板与 EasyExcel fill 的兼容性，
+ * 避免超大 xlsx 整文件进堆后再做 POI 展开，或 fill 静默留下 {@code {.field}}。
  */
 public final class ClasspathExportTemplateReader {
 
@@ -32,6 +34,7 @@ public final class ClasspathExportTemplateReader {
         try (InputStream in = resource.getInputStream()) {
             byte[] bytes = IOUtils.toByteArray(in);
             assertWithinSingleTemplateLimit(excelPath, bytes.length, maxSingle);
+            EasyExcelListTemplateValidator.assertListFillCompatible(bytes, excelPath);
             return bytes;
         }
     }

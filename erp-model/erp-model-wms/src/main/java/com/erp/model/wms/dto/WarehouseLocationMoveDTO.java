@@ -202,6 +202,16 @@ public class WarehouseLocationMoveDTO implements Serializable {
         private String sourceTypeName;
 
         /**
+         * 操作类型
+         */
+        private String operateType;
+
+        /**
+         * 操作类型名称
+         */
+        private String operateTypeName;
+
+        /**
          * 上架仓位库存状态名称
          */
         private String inInventoryStatus;
@@ -352,6 +362,16 @@ public class WarehouseLocationMoveDTO implements Serializable {
         private LocalDate billDate;
 
         /**
+         * 操作类型
+         */
+        private String operateType;
+
+        /**
+         * 操作类型名称
+         */
+        private String operateTypeName;
+
+        /**
          * 明细信息
          */
         private List<WarehouseLocationMoveDetailDTO.ViewDTO> detailList;
@@ -404,6 +424,16 @@ public class WarehouseLocationMoveDTO implements Serializable {
         private LocalDate billDate;
 
         /**
+         * 操作类型
+         */
+        private String operateType;
+
+        /**
+         * 操作类型名称
+         */
+        private String operateTypeName;
+
+        /**
          * 明细信息
          */
         private List<DetailViewDTO> detailList;
@@ -440,6 +470,11 @@ public class WarehouseLocationMoveDTO implements Serializable {
          * 来源类型
          */
         private String sourceType;
+
+        /**
+         * 操作类型
+         */
+        private String operateType;
     }
 
     /**
@@ -477,6 +512,11 @@ public class WarehouseLocationMoveDTO implements Serializable {
          * 单据时间
          */
         private LocalDate billDate;
+
+        /**
+         * 操作类型
+         */
+        private String operateType;
     }
 
     /**
@@ -758,6 +798,16 @@ public class WarehouseLocationMoveDTO implements Serializable {
          * 来源类型名称
          */
         private String sourceTypeName;
+
+        /**
+         * 操作类型
+         */
+        private String operateType;
+
+        /**
+         * 操作类型名称
+         */
+        private String operateTypeName;
     }    /**
      * PDA:分页列表
      */
@@ -896,6 +946,16 @@ public class WarehouseLocationMoveDTO implements Serializable {
          * 取出仓位名称
          */
         private String outWarehouseLocationName;
+
+        /**
+         * 操作类型
+         */
+        private String operateType;
+
+        /**
+         * 操作类型名称
+         */
+        private String operateTypeName;
 
         /**
          * 实际库存

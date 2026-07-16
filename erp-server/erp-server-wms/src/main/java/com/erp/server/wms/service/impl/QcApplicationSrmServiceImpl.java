@@ -176,7 +176,7 @@ public class QcApplicationSrmServiceImpl extends SuperServiceImpl<QcApplicationM
             addDTO.setSourceId(purchaseOrderEntity.getId());
             addDTO.setSourceCode(purchaseOrderEntity.getCode());
             addDTO.setSourceType(SourceTypeEnum.WAIT_DELIVERY.getCode());
-            addDTO.setPlanQcDate(value.get(0).getPlanQcDate());
+            addDTO.setExpectQcDate(value.get(0).getExpectQcDate());
             addDTO.setWarehouseId(purchaseOrderEntity.getDeliveryWarehouseId());
 
             List<QcApplicationDetailDTO.AddDTO> detailList = new ArrayList<>();
@@ -221,7 +221,7 @@ public class QcApplicationSrmServiceImpl extends SuperServiceImpl<QcApplicationM
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(), listApiResult.getMsg()));
+                throw new ServiceException(ApiError.WF_CUR_APPROVER_QUERY_FAILED, listApiResult.getMsg());
             }
         }
 

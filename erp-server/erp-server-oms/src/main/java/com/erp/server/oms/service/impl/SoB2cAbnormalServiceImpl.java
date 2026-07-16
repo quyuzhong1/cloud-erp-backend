@@ -67,6 +67,9 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
     @Resource
     private RuleLogisticsService ruleLogisticsService;
 
+    @Resource
+    private SoB2cCoreService soB2cCoreService;
+
 
     @Override
     public PagingVO<SoB2cAbnormalDTO.ListDTO> abnormalPaging(PagingDTO<SoB2cAbnormalDTO.PagingParamDTO> pagingParamDTO) {
@@ -118,9 +121,23 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
                 resultDTOList.add(soB2cService.retryPackagePlan(id));
                 break;
             case GENERATE_OUTSTOCK:
-                Boolean flag = soOutstockFeign.afreshGenerateB2cOutstock(Arrays.asList(id));
-                BatchResultDTO outStockResultDTO = flag ? BatchResultDTO.success(id, soB2cEntity.getCode(), "重试成功") : BatchResultDTO.fail(id, soB2cEntity.getCode(), "重试失败");
-                resultDTOList.add(outStockResultDTO);
+                if (Boolean.TRUE.equals(soB2cEntity.hasPlatformWarehouseOrder())) {
+                    try {
+                        soB2cCoreService.handleOrderRetryConsumer(soB2cEntity);
+                        resultDTOList.add(BatchResultDTO.success(id, soB2cEntity.getCode(), "重试成功"));
+                    } catch (ServiceException e) {
+                        log.warn("平台仓订单重试生成出库业务失败, id: {}, code: {}, message: {}",
+                                soB2cEntity.getId(), soB2cEntity.getCode(), e.getMessage());
+                        resultDTOList.add(BatchResultDTO.fail(id, soB2cEntity.getCode(), e.getMessage()));
+                    } catch (Exception e) {
+                        log.error("平台仓订单重试生成出库失败, id: {}, code: {}", soB2cEntity.getId(), soB2cEntity.getCode(), e);
+                        resultDTOList.add(BatchResultDTO.fail(id, soB2cEntity.getCode(), "重试失败，请查看日志或联系管理员"));
+                    }
+                } else {
+                    Boolean flag = soOutstockFeign.afreshGenerateB2cOutstock(Arrays.asList(id));
+                    BatchResultDTO outStockResultDTO = flag ? BatchResultDTO.success(id, soB2cEntity.getCode(), "重试成功") : BatchResultDTO.fail(id, soB2cEntity.getCode(), "重试失败");
+                    resultDTOList.add(outStockResultDTO);
+                }
                 break;
             case INTERCEPT_SUCCESS:
                 resultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(), soB2cEntity.getCode(), "拦截成功，无需重试"));

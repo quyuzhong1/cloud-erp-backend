@@ -53,6 +53,11 @@ public class PackageForecastDetailDTO implements Serializable {
         private String soId;
 
         /**
+         * 平台单号
+         */
+        private String platformOrderCode;
+
+        /**
         * 物流渠道id
         */
         private String logisticsChannelId;

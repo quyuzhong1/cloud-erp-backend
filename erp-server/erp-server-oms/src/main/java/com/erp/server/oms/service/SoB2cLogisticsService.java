@@ -51,6 +51,11 @@ public interface SoB2cLogisticsService extends SuperService<SoB2cLogisticsEntity
      * @return SoB2cLogisticsEntity
      */
     SoB2cLogisticsEntity getByMainId(String mainId);
+
+    /**
+     * 独立事务读取物流行，避免 REQUIRES_NEW 提交后外层 SqlSession 一级缓存仍是旧 version。
+     */
+    SoB2cLogisticsEntity getFreshByMainId(String mainId);
     /**
      * @description: 根据主表ids查询
      * @author Will
@@ -153,6 +158,12 @@ public interface SoB2cLogisticsService extends SuperService<SoB2cLogisticsEntity
    Boolean updateWeight(String soId, String logisticsId, BigDecimal weightByG, String operation);
 
     BatchResultDTO cancelLogistic(String id, List<SoB2cEntity> soB2cEntityList, List<SoB2cLogisticsEntity> soB2cLogisticsEntityList, Boolean checkBillStatus);
+
+    /**
+     * 配货换渠道：独立事务取消三方物流并清空运单号，避免主流程回滚导致云途已删但 ERP 仍留单号
+     */
+    BatchResultDTO cancelThirdLogisticsRequiresNew(SoB2cEntity entity, String cancelChannelId);
+
     /**
      * 根据物流跟踪号或运单好查询订单物流信息
      * @author will

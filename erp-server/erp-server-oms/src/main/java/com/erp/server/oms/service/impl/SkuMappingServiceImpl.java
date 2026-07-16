@@ -1237,11 +1237,28 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
         List<String> skuIdList = list.stream().map(SkuMappingDTO.PagingViewDTO::getProductSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIdList);
+        if (CollectionUtils.isEmpty(skuList)) {
+            skuList = Collections.emptyList();
+        }
+        List<String> skuNoList = list.stream().map(SkuMappingDTO.PagingViewDTO::getProductSkuNo)
+                .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<SkuVO> skuNoVoList = CollectionUtils.isEmpty(skuNoList) ? Collections.emptyList() : plmTaskFeign.listBySkuNoList(skuNoList);
+        if (CollectionUtils.isEmpty(skuNoVoList)) {
+            skuNoVoList = Collections.emptyList();
+        }
+        Map<String, SkuVO> skuNoVoMap = skuNoVoList.stream()
+                .collect(Collectors.toMap(SkuVO::getSkuNo, Function.identity(), (k1, k2) -> k1));
         //子件信息
         List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
+        if (CollectionUtils.isEmpty(bomChildrenSkuList)) {
+            bomChildrenSkuList = Collections.emptyList();
+        }
 
         //原产地名称
         List<DictBasicEntity> originList = dictBasicService.getByKey(DictBasicTypeEnum.INVOICE_TAX_NFE_ORIGIN.getType());
+        if (CollectionUtils.isEmpty(originList)) {
+            originList = Collections.emptyList();
+        }
         Map<String, String> originMap = originList.stream().collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName));
 
         for (SkuMappingDTO.PagingViewDTO item : list) {
@@ -1249,6 +1266,10 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             String skuName = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).
                     findFirst().map(SkuVO::getSkuName).orElse("");
             item.setProductName(skuName);
+            SkuVO skuNoVo = skuNoVoMap.get(item.getProductSkuNo());
+            if (Objects.nonNull(skuNoVo)) {
+                item.setBoxQty(skuNoVo.getBoxQty());
+            }
             item.setMatchResultStr(ListingMatchResultEnum.getName(item.getMatchResult()));
             //查询sku是否存在子SKU
             List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuList.stream()
@@ -2549,5 +2570,13 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
                 .eq(SkuMappingEntity::getIsExpire,true)
                 .orderByDesc(SkuMappingEntity::getEffectiveTime)
                 .list();
+    }
+
+    @Override
+    public List<SkuMappingDTO.UnmatchCountDTO> countUnmatchedGroupByWarehouse(SkuMappingDTO.UnmatchQueryDTO dto) {
+        if (dto == null || StringUtils.isBlank(dto.getType())) {
+            throw new ServiceException("SKU未匹配统计：type 不能为空");
+        }
+        return baseMapper.countUnmatchedGroupByWarehouse(dto);
     }
 }

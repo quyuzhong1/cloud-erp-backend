@@ -98,4 +98,10 @@ public interface SkuMappingFeign {
     @PostMapping("feign/skuMapping/listByWarehouseAndPlatformSku")
     List<SkuMappingDTO.WarehouseSkuDTO> listByWarehouseAndPlatformSku(@RequestParam("warehouseId") String warehouseId,
                                                                       @RequestBody List<String> platformSkuNoList);
+
+    /**
+     * 统计各海外仓未匹配SKU数量
+     */
+    @PostMapping("feign/skuMapping/countUnmatchedGroupByWarehouse")
+    List<SkuMappingDTO.UnmatchCountDTO> countUnmatchedGroupByWarehouse(@RequestBody SkuMappingDTO.UnmatchQueryDTO dto);
 }

@@ -911,7 +911,7 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
             wb.write(output);
             wb.close();
         } catch (Exception e) {
-            throw new ServiceException(ApiError.HTTP_UNKNOWN);
+            throw new ServiceException(ApiError.FILE_TEMPLATE_DOWNLOAD);
         }
     }
 
@@ -919,12 +919,12 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
     }
 
     @Override
-    public List<String> pageFirstMileDeliveryIds(TmsAsyncTaskRecordDTO.PushParamsDTO params) {
+    public List<String> pageFirstMileDeliveryIds(TmsAsyncTaskRecordDTO.FirstMilePushAllocationQueryDTO params) {
         return baseMapper.pageFirstMileDeliveryIds(params);
     }
 
     @Override
-    public int countFirstMileDeliveryIds(TmsAsyncTaskRecordDTO.PushParamsDTO params) {
+    public int countFirstMileDeliveryIds(TmsAsyncTaskRecordDTO.FirstMilePushAllocationQueryDTO params) {
         Integer count = baseMapper.countFirstMileDeliveryIds(params);
         return count == null ? 0 : count;
     }

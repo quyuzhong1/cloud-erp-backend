@@ -1,22 +1,20 @@
 package com.erp.server.tms.service;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.common.core.utils.ExcelUtil;
-import com.common.core.utils.date.DateUtil;
-import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
+import com.erp.model.tms.entity.TmsDeclareBillDetailEntity;
 import com.erp.model.tms.entity.TmsDeclareBillEntity;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -46,17 +44,19 @@ public interface TmsDeclareBillService extends SuperService<TmsDeclareBillEntity
 
     List<TmsDeclareBillDTO.DeliveryDTO> getCanGenerateDeliveryOrder(TmsDeclareBillDTO.QuerySourceDTO querySourceDTO);
 
+    /**
+     * 根据选中SKU查询报关表头信息
+     * @author will
+     * @date 2026/5/7 14:47
+     * @param dto
+     * @param sourceTypeEnum
+     * @return com.erp.model.tms.dto.TmsDeclareBillDTO.SelectedSkuHeaderDTO
+     */
+    TmsDeclareBillDTO.SelectedSkuHeaderDTO querySelectedSkuHeader(TmsDeclareBillDTO.SelectedSkuHeaderParamDTO dto, SourceTypeEnum sourceTypeEnum);
+
     TmsDeclareBillDTO.ViewDTO view(String id);
 
-    List<BatchResultDTO> updateToDeclare(TmsDeclareBillDTO.UpdateDeclareStatusDTO dto,SourceTypeEnum sourceTypeEnum);
-
-    List<BatchResultDTO> cancelDeclare(TmsDeclareBillDTO.UpdateDeclareStatusDTO dto);
-
-    Boolean mergeDeclare(TmsDeclareBillDTO.MergeDeclareDTO dto);
-
-    List<BatchResultDTO> cancelMerge(TmsDeclareBillDTO.MergeDeclareDTO dto);
-
-
+    BatchResultDTO confirmDeclareStatus(TmsDeclareBillDTO.ConfirmDeclareStatusDTO dto, SourceTypeEnum sourceTypeEnum);
 
     List<BatchResultDTO> delete(TmsDeclareBillDTO.DeleteDTO dto);
 
@@ -77,11 +77,181 @@ public interface TmsDeclareBillService extends SuperService<TmsDeclareBillEntity
 
     Boolean addB2BDeclare(TmsDeclareBillDTO.AddDTO dto);
 
-    Boolean autoGenerateFirstMileDeclare(AutoGenerateBillDTO autoGenerateBillDTO);
-
-    Boolean autoGenerateB2bDeclare(AutoGenerateBillDTO autoGenerateBillDTO);
+    BaseResultDTO.AddDTO add(TmsDeclareBillEntity tmsDeclareBillEntity,
+                             List<TmsDeclareBillDetailEntity> detailEntityList,
+                             SourceTypeEnum sourceTypeEnum,
+                             boolean isMerged);
 
     PagingVO<TmsDeclareBillDTO.PagingVO> export(PagingDTO<TmsDeclareBillDTO.PagingParamDTO> dto);
 
+
+    /**
+     * 多 sheet 报关单导出
+     *
+     * <p>业务规则：</p>
+     * <ul>
+     *   <li>单条记录 → 1 个 xlsx，包含 报关单 / 合同 两个 sheet（发票 / 装箱单 / 装箱明细 暂未实现）</li>
+     *   <li>多条记录 → ZIP 包，包内每个 xlsx 同上述结构</li>
+     *   <li>单次导出条数上限 100 条，超过抛业务异常</li>
+     *   <li>合同 sheet 多明细行币别不一致时，取首行币别并打印 warn 日志</li>
+     * </ul>
+     *
+     * @param pagingParamDTO 查询参数
+     * @param response       响应流
+     */
     void exportDeclare(TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) throws IOException;
+    /**
+     * 更新备注
+     * @author will
+     * @date 2026/4/21 14:43
+     * @param id
+     * @return com.common.business.dto.base.BatchResultDTO
+     */
+    BatchResultDTO updateRemark(String id,String remark);
+
+    /**
+     * 批量更新报关单主表字段
+     * @param dto dto
+     * @param sourceTypeEnum 报关单类型
+     * @return Boolean
+     */
+    Boolean updateBatchFiled(TmsDeclareBillDTO.BatchUpdateFieldDTO dto, SourceTypeEnum sourceTypeEnum);
+
+    /**
+     * 查询报关单批量更新字段下拉配置
+     * @return 下拉字段配置
+     */
+    List<TmsDeclareBillDTO.BatchUpdateFieldDropDownDTO> batchUpdateFieldDropDown(String type);
+
+    /**
+     * 删除报关单
+     * @author will
+     * @date 2026/4/30 10:59
+     * @param id
+     */
+    void deleteDeclareBillById (String id);
+    /**
+     * 查询拆分报关明细
+     * @author will
+     * @date 2026/4/23 15:21
+     * @param id
+     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.SplitDeclareDTO>
+     */
+    List<TmsDeclareBillDTO.SplitDeclareDTO> listSplitB2bDetail(String id);
+    /**
+     * 批量保存拆分报关明细
+     * @author will
+     * @date 2026/4/24 12:30
+     * @param declareDTO
+     * @return java.lang.Boolean
+     */
+    Boolean batchAddSplitB2bDetail(TmsDeclareBillDTO.AddSplitDeclareDTO declareDTO);
+    /**
+     * 查询拆分报关明细
+     * @author will
+     * @date 2026/4/23 15:21
+     * @param id
+     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.SplitDeclareDTO>
+     */
+    List<TmsDeclareBillDTO.SplitDeclareDTO> listSplitFmDetail(String id);
+    /**
+     * 批量保存拆分报关明细
+     * @author will
+     * @date 2026/4/23 16:39
+     * @param declareDTO
+     */
+    Boolean batchAddSplitFmDetail(TmsDeclareBillDTO.AddSplitDeclareDTO declareDTO);
+    /**
+     * 查询合并前的报关明细
+     * @author will
+     * @date 2026/4/24 10:21
+     * @param ids
+     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.MergeDeclareBeforeDTO>
+     */
+    List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> listBeforeMergeDetail( List<String> ids);
+    /**
+     * 查询合并后的报关明细
+     * @author will
+     * @date 2026/4/23 19:09
+     * @param ids
+     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.MergeDeclareBillDTO>
+     */
+    List<TmsDeclareBillDTO.MergeDeclareBillDTO> listAfterMergeDetail( List<String> ids);
+    /**
+     * 批量保存合并后的报关明细
+     * @author will
+     * @date 2026/4/24 10:22
+     * @param list
+     * @return Boolean
+     */
+    Boolean batchAddMergeDetail(String type, List<TmsDeclareBillDTO.MergeDeclareBillDTO> list) ;
+
+    /**
+     * 合并报关单数据
+     * @author will
+     * @date 2026/4/29 15:07
+     * @param viewDTO
+     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.MergeDeclareBillDTO>
+     */
+    List<TmsDeclareBillDTO.MergeDeclareBillDTO> autoMergeDeclareBillView(TmsDeclareBillDTO.AutoMergeDeclareBillViewDTO viewDTO) ;
+
+    /**
+     * B2B 报关单且境外收货人为客户时返回 true（与合并预览 sixDimensionMerge 口径一致）。
+     */
+    Boolean isB2bCustomerReceiver(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList);
+
+    /**
+     * 独立报关：按来源单分组各自判定收货人类型，返回「来源 key -> 是否按客户分发」。
+     * 供调用方一次远程调用拿到全部来源的判定结果，避免按来源逐个调用。
+     */
+    Map<String, Boolean> isB2bCustomerReceiverBySource(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList);
+
+    /**
+     * 自动生成报关单链路（DeliveryDeclareDetailMid 中间表自动生成、batchAddMergeDetail 等）
+     * 在入库前调用，按合并明细维度校验报关必填信息（海关编码 / 报关品名 / 申报要素 / 单位 / 币种 / 单价）。
+     * 任一行缺失即抛 {@link com.common.core.enums.ApiError#LOGISTICS_DECLARE_AUTO_DETAIL_FIELD_REQUIRED}，
+     * 提示对应来源单据 + SKU + 缺失字段，不再继续生成报关单。
+     *
+     * @param mergeDetailList 合并后明细列表（已展平）
+     */
+    void validateAutoMergeDeclareDetailRequired(List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList);
+
+    /**
+     * 自动生成 / 手动下推报关单前，按合并明细维度校验"目的国 != 中国大陆 (CN)"。
+     * 任一合并行的 toCountry 或其来源行 countryId 等于 "CN" 时，
+     * 抛 {@link com.common.core.enums.ApiError#LOGISTICS_DECLARE_DEST_COUNTRY_CN_NOT_GENERATE}，
+     * 错误文案里一次性列出所有命中的来源单号，便于使用方反查；
+     * 被命中的来源单 declare_status 不做变更，保留 WAIT，使其后续可以重新选择/调整目的国。
+     *
+     * @param mergeDetailList 合并后明细列表（已展平）
+     */
+    void validateDestCountryNotMainlandChina(List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList);
+
+    /**
+     * 校验「同一箱的全部明细必须在同一张报关单」。以 WMS 装箱数据为准取整箱全集，
+     * 本次提交涉及到的每个业务单号+箱号，其在 WMS 中的全部明细都必须在提交范围内，
+     * 否则说明该箱被拆分到多张报关单（或漏选），抛
+     * {@link com.common.core.enums.ApiError#LOGISTICS_DECLARE_BOX_NOT_FULL_SELECTED}，
+     * 提示业务单号 + 箱号 + 缺失 SKU。适用于下推保存 / 合并保存 / 编辑保存等入口。
+     *
+     * @param sourceType 来源单类型（firstMileDelivery / soDeliveryNotice）
+     * @param submittedSourceDetails 本次提交的来源明细（已展平）
+     */
+    void validateSameBoxAllInOneBill(String sourceType, List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> submittedSourceDetails);
+
+    /**
+     * 校验不同业务单号必须归属同一个国家；同一业务单号内部也只能有一个目的国。
+     * 适用于合并预览 / 合并保存 / 单票保存等入口。
+     *
+     * @param sourceDetailList 来源明细（已展平）
+     */
+    void validateMergeCountryByBusinessCode(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList);
+
+    /**
+     * 按中间表生成状态回写来源单报关状态：存在已生成明细则来源单为已生成，否则为未生成。
+     *
+     * @param declareBillType 报关单类型（fmDeclareBill / b2bDeclareBill）
+     * @param sourceIdList    待回写的来源单 id 集合
+     */
+    void syncSourceDeclareStatusBySourceIds(String declareBillType, List<String> sourceIdList);
 }

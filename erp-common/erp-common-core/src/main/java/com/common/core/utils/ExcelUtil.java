@@ -200,7 +200,7 @@ public class ExcelUtil {
      *  设置表格内容居中显示策略
      * @return
      */
-    private static HorizontalCellStyleStrategy getStyleStrategy(){
+    public static HorizontalCellStyleStrategy getStyleStrategy(){
         WriteCellStyle headWriteCellStyle = new WriteCellStyle();
         //设置背景颜色
         headWriteCellStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
@@ -256,7 +256,7 @@ public class ExcelUtil {
                     //自定义注解
                     .doWrite(list2);
         } catch (Exception e) {
-            throw new ServiceException(ApiError.HTTP_UNKNOWN);
+            throw new ServiceException(ApiError.FILE_EXPORT_FAILED);
         }
     }
 
@@ -304,7 +304,7 @@ public class ExcelUtil {
                     //自定义注解
                     .doWrite(list2);
         } catch (Exception e) {
-            throw new ServiceException(ApiError.HTTP_UNKNOWN);
+            throw new ServiceException(ApiError.FILE_EXPORT_FAILED);
         }
     }
 
@@ -343,7 +343,7 @@ public class ExcelUtil {
                     .doWrite(list2);
 
         } catch (Exception e) {
-            throw new ServiceException(ApiError.HTTP_UNKNOWN);
+            throw new ServiceException(ApiError.FILE_EXPORT_FAILED);
         }
     }
 
@@ -375,7 +375,7 @@ public class ExcelUtil {
                     .doWrite(list2);
             return outputStream.toByteArray();
         } catch (Exception e) {
-            throw new ServiceException(ApiError.HTTP_UNKNOWN);
+            throw new ServiceException(ApiError.FILE_EXPORT_FAILED);
         }
     }
 
@@ -767,7 +767,7 @@ public class ExcelUtil {
             throw new ServiceException("创建Excel临时文件失败：{}", e.getMessage());
         } catch (Exception e) {
             log.error("自定义Excel导出失败，fileName={}", fileName, e);
-            throw new ServiceException(ApiError.HTTP_UNKNOWN);
+            throw new ServiceException(ApiError.FILE_EXPORT_FAILED);
         } finally {
             if (excelWriter != null) {
                 excelWriter.finish();
@@ -800,7 +800,7 @@ public class ExcelUtil {
 
             return outputFile;
         } catch (Exception e) {
-            throw new ServiceException(ApiError.HTTP_UNKNOWN);
+            throw new ServiceException(ApiError.FILE_EXPORT_FAILED);
         }
     }
 

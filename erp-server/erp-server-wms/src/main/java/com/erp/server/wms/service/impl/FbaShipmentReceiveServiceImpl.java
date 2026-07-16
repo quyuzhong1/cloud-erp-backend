@@ -38,6 +38,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -74,6 +75,7 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
 
     @Resource
     private DictBasicService dictBasicService;
+    @Lazy
     @Resource
     private FbaShipmentService fbaShipmentService;
     @Resource

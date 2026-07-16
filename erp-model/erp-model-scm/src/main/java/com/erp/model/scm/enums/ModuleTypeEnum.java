@@ -90,6 +90,7 @@ public enum ModuleTypeEnum {
     WAREHOUSE_AREA("80", "库区"),
     PICKING_STRATEGY("81", "拣货策略"),
     WAREHOUSE_LOCATION("90", "仓位"),
+    WAREHOUSE_LOCATION_MAPPING("168", "仓位绑定"),
 
 
 
@@ -102,6 +103,8 @@ public enum ModuleTypeEnum {
     PICKING_LISTS("91", "拣货单"),
     CFG_RULE_WAVE("92", "波次规则"),
     WAREHOUSE_LOCATION_REPLENISH("93", "仓位补货"),
+    AFTERSALES_WAREHOUSE_LOCATION_SUGGEST("94", "售后仓位推荐"),
+
 
     CFG_RULE_COMMON("97", "规则设置"),
     REPLENISHMENT_SUGGESTION("98", "补货建议"),
@@ -213,11 +216,13 @@ public enum ModuleTypeEnum {
     MESSAGE("162","系统通知"),
     SYS_VERSION("163","版本更新"),
     PDA_VERSION("164","PDA系统升级"),
+    CFG_DECLARE_RULE("165", "报关规则配置"),
 
 
     LOGISTICS_ORDER("168", "物流下单"),
 
-
+    AFTER_SALE_PACK("190", "售后装箱"),
+    FULL_BOX_TRANSFER("191", "整箱移仓"),
 
 
 

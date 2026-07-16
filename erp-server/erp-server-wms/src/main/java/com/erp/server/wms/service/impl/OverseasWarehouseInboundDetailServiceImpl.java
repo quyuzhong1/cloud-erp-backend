@@ -236,7 +236,8 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
                     dto.getReceivedQty(),
                     dto.getReceiveDate().atStartOfDay(),
                     SignSourceTypeEnum.MANUAL.getCode(),
-                    ""
+                    "",
+                    false
             );
             addReceivedList.add(receivedEntity);
             // 添加主表
@@ -374,7 +375,8 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
                     dto.getReceivedQty(),
                     dto.getReceiveDate().atStartOfDay(),
                     SignSourceTypeEnum.CHANGE.getCode(),
-                    "");
+                    "",
+                    false);
             addReceivedList.add(receivedEntity);
             // 添加主表
             mainResultMap.putIfAbsent(entity.getId(), entity);

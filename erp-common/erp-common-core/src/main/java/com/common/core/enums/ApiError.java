@@ -7,1895 +7,2116 @@ import lombok.Getter;
 import java.io.Serializable;
 
 /**
- * 【错误码规范说明】
- *
- * 一、业务域前缀清晰化（按单据/能力域划分）
- * COMMON_        通用错误（参数、配置、重复操作、基础校验）
- * BILL_          单据通用（保存 / 提交 / 审核 / 状态流转）
- * PO_            采购订单 / 采购入库
- * PURCHASE_PRICE_ 采购价目表
- * SO_            销售订单 / 销售发货 / 出库
- * WH_            仓库 / 仓位 / 调拨 / 拣货 / 波次
- * VM_            虚拟仓
- * SUPPLIER_      供应商
- * CUSTOMER_      客户
- * SAMPLE_        样品 / 寄样（B2B / B2C / KOL）
- * SALES_DEMAND_  备货申请
- * LOGISTICS_     物流 / 运输 / 运费模板 / 报关
- * WF_            工作流 / 审批
- * PROJECT_       项目 / 任务 / 模板
- * FILE_          文件 / 导入 / 导出
- * AUTH_          认证 / 授权 / SSO
- * EMAIL_         邮件
- * FIN_           财务 / 发票 / 对账
- * DMP_           数据中台
- * MAPPING_       映射关系
- * MOULD_         模具
- * 二、占位符规范
- * - 统一使用国际化占位符：{0} {1} {2} ...
- * - 严禁混用 {} / %s / $1 等格式
- * - 占位符顺序必须与参数顺序一致
- *
+ * 错误码统一门面。
+ * <p>常量按服务拆分到 {@code ApiErrorXxx} 类，门面保留 {@code ApiError.XXX} 访问方式，
+ * 避免单个 enum 初始化方法超过 JVM 64KB 字节码限制。</p>
  */
+public final class ApiError implements Serializable {
+
+    /** Common service error constants. */
+    public static final ApiError ASYNC_TASK_DETAIL_TIMEOUT = ApiErrorCommon.ASYNC_TASK_DETAIL_TIMEOUT;
+    public static final ApiError BILL_SAVE_FAILED = ApiErrorCommon.BILL_SAVE_FAILED;
+    public static final ApiError BILL_UPDATE_FAILED = ApiErrorCommon.BILL_UPDATE_FAILED;
+    public static final ApiError BILL_DATA_DUPLICATE = ApiErrorCommon.BILL_DATA_DUPLICATE;
+    public static final ApiError BILL_UPDATE_STATUS_NOT_ALLOWED = ApiErrorCommon.BILL_UPDATE_STATUS_NOT_ALLOWED;
+    public static final ApiError BILL_SOURCE_NOT_FOUND = ApiErrorCommon.BILL_SOURCE_NOT_FOUND;
+    public static final ApiError BILL_SOURCE_DETAIL_NOT_FOUND = ApiErrorCommon.BILL_SOURCE_DETAIL_NOT_FOUND;
+    public static final ApiError BILL_PUSH_DOWN_NOT_ALLOWED = ApiErrorCommon.BILL_PUSH_DOWN_NOT_ALLOWED;
+    public static final ApiError BILL_DATA_LOCKED = ApiErrorCommon.BILL_DATA_LOCKED;
+    public static final ApiError BILL_SAVE_FAIL = ApiErrorCommon.BILL_SAVE_FAIL;
+    public static final ApiError BILL_DETAIL_NOT_FOUND = ApiErrorCommon.BILL_DETAIL_NOT_FOUND;
+    public static final ApiError BILL_DETAIL_REQUIRED = ApiErrorCommon.BILL_DETAIL_REQUIRED;
+    public static final ApiError BILL_SUBMIT_FAILED = ApiErrorCommon.BILL_SUBMIT_FAILED;
+    public static final ApiError BILL_DELETE_STATUS_NOT_ALLOWED = ApiErrorCommon.BILL_DELETE_STATUS_NOT_ALLOWED;
+    public static final ApiError BILL_DELETE_FAILED = ApiErrorCommon.BILL_DELETE_FAILED;
+    public static final ApiError BILL_DISAPPROVE_FAILED = ApiErrorCommon.BILL_DISAPPROVE_FAILED;
+    public static final ApiError BILL_APPROVE_FAILED = ApiErrorCommon.BILL_APPROVE_FAILED;
+    public static final ApiError BILL_APPROVE_NOT_FOUND = ApiErrorCommon.BILL_APPROVE_NOT_FOUND;
+    public static final ApiError BILL_APPROVE_BUSINESS_KEY_NOT_FOUND = ApiErrorCommon.BILL_APPROVE_BUSINESS_KEY_NOT_FOUND;
+    public static final ApiError BILL_APPROVE_SUBMIT_RETRY = ApiErrorCommon.BILL_APPROVE_SUBMIT_RETRY;
+    public static final ApiError BILL_ENABLE_NOT_ALLOWED = ApiErrorCommon.BILL_ENABLE_NOT_ALLOWED;
+    public static final ApiError BILL_DISABLE_NOT_ALLOWED = ApiErrorCommon.BILL_DISABLE_NOT_ALLOWED;
+    public static final ApiError BILL_DELETE_NOT_ALLOWED = ApiErrorCommon.BILL_DELETE_NOT_ALLOWED;
+    public static final ApiError BILL_REJECT_STATUS_INVALID = ApiErrorCommon.BILL_REJECT_STATUS_INVALID;
+    public static final ApiError BILL_APPROVAL_STATUS_INVALID = ApiErrorCommon.BILL_APPROVAL_STATUS_INVALID;
+    public static final ApiError BILL_EDIT_ALLOWED_STATUS_ONLY = ApiErrorCommon.BILL_EDIT_ALLOWED_STATUS_ONLY;
+    public static final ApiError BILL_SUBMIT_APPROVAL_STATUS_INVALID = ApiErrorCommon.BILL_SUBMIT_APPROVAL_STATUS_INVALID;
+    public static final ApiError BILL_WAIT_APPROVE_REQUIRED = ApiErrorCommon.BILL_WAIT_APPROVE_REQUIRED;
+    public static final ApiError BILL_RESUBMIT_STATUS_INVALID = ApiErrorCommon.BILL_RESUBMIT_STATUS_INVALID;
+    public static final ApiError BILL_TASK_CANCEL_SUBMIT_INVALID = ApiErrorCommon.BILL_TASK_CANCEL_SUBMIT_INVALID;
+    public static final ApiError BILL_URGE_ONLY_IN_APPROVING = ApiErrorCommon.BILL_URGE_ONLY_IN_APPROVING;
+    public static final ApiError BILL_VOID_EDIT_FORBIDDEN = ApiErrorCommon.BILL_VOID_EDIT_FORBIDDEN;
+    public static final ApiError BILL_VOID_SUBMIT_FORBIDDEN = ApiErrorCommon.BILL_VOID_SUBMIT_FORBIDDEN;
+    public static final ApiError BILL_UPDATE_FIELD_APPROVEING = ApiErrorCommon.BILL_UPDATE_FIELD_APPROVEING;
+    public static final ApiError BILL_ROW_CHANGE_FORBIDDEN = ApiErrorCommon.BILL_ROW_CHANGE_FORBIDDEN;
+    public static final ApiError BILL_SELECTION_REQUIRED = ApiErrorCommon.BILL_SELECTION_REQUIRED;
+    public static final ApiError BILL_PARAM_SELECTION_REQUIRED = ApiErrorCommon.BILL_PARAM_SELECTION_REQUIRED;
+    public static final ApiError BILL_VOID_ALLOWED_STATUS_ONLY = ApiErrorCommon.BILL_VOID_ALLOWED_STATUS_ONLY;
+    public static final ApiError BILL_DELETE_ALLOWED_STATUS_ONLY = ApiErrorCommon.BILL_DELETE_ALLOWED_STATUS_ONLY;
+    public static final ApiError BILL_SUBMIT_ALLOWED_STATUS_ONLY = ApiErrorCommon.BILL_SUBMIT_ALLOWED_STATUS_ONLY;
+    public static final ApiError BILL_ALREADY_VOID_CANNOT_VOID_AGAIN = ApiErrorCommon.BILL_ALREADY_VOID_CANNOT_VOID_AGAIN;
+    public static final ApiError BILL_WAIT_SUBMIT_TO_APPROVE_ING = ApiErrorCommon.BILL_WAIT_SUBMIT_TO_APPROVE_ING;
+    public static final ApiError BILL_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY = ApiErrorCommon.BILL_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY;
+    public static final ApiError BILL_APPROVED_ONLY_CAN_PUSH = ApiErrorCommon.BILL_APPROVED_ONLY_CAN_PUSH;
+    public static final ApiError BILL_INCONSISTENT_VOID_STATUS = ApiErrorCommon.BILL_INCONSISTENT_VOID_STATUS;
+    public static final ApiError BILL_PUSH_ALLOWED_APPROVED_ONLY = ApiErrorCommon.BILL_PUSH_ALLOWED_APPROVED_ONLY;
+    public static final ApiError BILL_VOIDED_CANNOT_SUBMIT = ApiErrorCommon.BILL_VOIDED_CANNOT_SUBMIT;
+    public static final ApiError BILL_VOIDED_CANNOT_DELETE = ApiErrorCommon.BILL_VOIDED_CANNOT_DELETE;
+    public static final ApiError BILL_INV_ORG_NOT_FOUND = ApiErrorCommon.BILL_INV_ORG_NOT_FOUND;
+    public static final ApiError BILL_NOT_EXIST = ApiErrorCommon.BILL_NOT_EXIST;
+    public static final ApiError BILL_NOT_EXIST_WITH_TYPE = ApiErrorCommon.BILL_NOT_EXIST_WITH_TYPE;
+    public static final ApiError BILL_ALREADY_EXIST = ApiErrorCommon.BILL_ALREADY_EXIST;
+    public static final ApiError BILL_HAS_CHANGE_ORDER_REVERSE_FORBIDDEN = ApiErrorCommon.BILL_HAS_CHANGE_ORDER_REVERSE_FORBIDDEN;
+    public static final ApiError BILL_SUBMIT_ALLOWED_PENDING_ONLY = ApiErrorCommon.BILL_SUBMIT_ALLOWED_PENDING_ONLY;
+    public static final ApiError BILL_WAIT_HANDLE_CANCEL_PROCESS_ALLOWED = ApiErrorCommon.BILL_WAIT_HANDLE_CANCEL_PROCESS_ALLOWED;
+    public static final ApiError BILL_STATUS_ALREADY_HANDLED_NOT_OPERATE = ApiErrorCommon.BILL_STATUS_ALREADY_HANDLED_NOT_OPERATE;
+    public static final ApiError BILL_FINANCE_RECONCILIATION_DUPLICATE = ApiErrorCommon.BILL_FINANCE_RECONCILIATION_DUPLICATE;
+    public static final ApiError BILL_RETURN_WAIT_CONFIRM_STATUS_REQUIRED = ApiErrorCommon.BILL_RETURN_WAIT_CONFIRM_STATUS_REQUIRED;
+    public static final ApiError BILL_KEEP_AT_LEAST_ONE_DETAIL_OR_DELETE = ApiErrorCommon.BILL_KEEP_AT_LEAST_ONE_DETAIL_OR_DELETE;
+    public static final ApiError BILL_DECLARE_STATUS_GENERATED_NOT_CHANGE_TO_NO_DECLARE = ApiErrorCommon.BILL_DECLARE_STATUS_GENERATED_NOT_CHANGE_TO_NO_DECLARE;
+    public static final ApiError BILL_LOGISTICS_STATUS_GENERATED_NOT_CHANGE_TO_NO_LOGISTICS = ApiErrorCommon.BILL_LOGISTICS_STATUS_GENERATED_NOT_CHANGE_TO_NO_LOGISTICS;
+    public static final ApiError BILL_DETAIL_IS_ZERO = ApiErrorCommon.BILL_DETAIL_IS_ZERO;
+    public static final ApiError BILL_IN_USE_DELETE_FORBIDDEN = ApiErrorCommon.BILL_IN_USE_DELETE_FORBIDDEN;
+    public static final ApiError BILL_IN_USE_SO_RECEIPT = ApiErrorCommon.BILL_IN_USE_SO_RECEIPT;
+    public static final ApiError BILL_VOID_FORBIDDEN = ApiErrorCommon.BILL_VOID_FORBIDDEN;
+    public static final ApiError BILL_RECEIVER_ADDRESS_REQUIRED = ApiErrorCommon.BILL_RECEIVER_ADDRESS_REQUIRED;
+    public static final ApiError BILL_RECEIVER_REQUIRED = ApiErrorCommon.BILL_RECEIVER_REQUIRED;
+    public static final ApiError BILL_NOT_FOUND = ApiErrorCommon.BILL_NOT_FOUND;
+    public static final ApiError BILL_MANUAL_SUB_TYPE_REQUIRED = ApiErrorCommon.BILL_MANUAL_SUB_TYPE_REQUIRED;
+    public static final ApiError BILL_HAS_DOWNSTREAM_VOID_FORBIDDEN = ApiErrorCommon.BILL_HAS_DOWNSTREAM_VOID_FORBIDDEN;
+    public static final ApiError BILL_DETAIL_DATA_NOT_FOUND = ApiErrorCommon.BILL_DETAIL_DATA_NOT_FOUND;
+    public static final ApiError BILL_DATA_CREATE_FAILED = ApiErrorCommon.BILL_DATA_CREATE_FAILED;
+    public static final ApiError BILL_AUDIT_QTY_DETAIL_REQUIRED = ApiErrorCommon.BILL_AUDIT_QTY_DETAIL_REQUIRED;
+    public static final ApiError BILL_DECLARE_STATUS_GENERATED_NOT_DISAPPROVE = ApiErrorCommon.BILL_DECLARE_STATUS_GENERATED_NOT_DISAPPROVE;
+    public static final ApiError HTTP_BAD_REQUEST = ApiErrorCommon.HTTP_BAD_REQUEST;
+    public static final ApiError HTTP_UNAUTHORIZED = ApiErrorCommon.HTTP_UNAUTHORIZED;
+    public static final ApiError HTTP_FORBIDDEN = ApiErrorCommon.HTTP_FORBIDDEN;
+    public static final ApiError HTTP_NOT_FOUND = ApiErrorCommon.HTTP_NOT_FOUND;
+    public static final ApiError HTTP_METHOD_NOT_ALLOWED = ApiErrorCommon.HTTP_METHOD_NOT_ALLOWED;
+    public static final ApiError HTTP_PAYLOAD_TOO_LARGE = ApiErrorCommon.HTTP_PAYLOAD_TOO_LARGE;
+    public static final ApiError HTTP_UNSUPPORTED_MEDIA_TYPE = ApiErrorCommon.HTTP_UNSUPPORTED_MEDIA_TYPE;
+    public static final ApiError HTTP_TOO_MANY_REQUESTS = ApiErrorCommon.HTTP_TOO_MANY_REQUESTS;
+    public static final ApiError HTTP_UNKNOWN = ApiErrorCommon.HTTP_UNKNOWN;
+    public static final ApiError HTTP_NOT_IMPLEMENTED = ApiErrorCommon.HTTP_NOT_IMPLEMENTED;
+    public static final ApiError HTTP_BAD_GATEWAY = ApiErrorCommon.HTTP_BAD_GATEWAY;
+    public static final ApiError HTTP_SERVICE_UNAVAILABLE = ApiErrorCommon.HTTP_SERVICE_UNAVAILABLE;
+    public static final ApiError HTTP_GATEWAY_TIMEOUT = ApiErrorCommon.HTTP_GATEWAY_TIMEOUT;
+    public static final ApiError HTTP_VERSION_NOT_SUPPORTED = ApiErrorCommon.HTTP_VERSION_NOT_SUPPORTED;
+    public static final ApiError HTTP_SESSION_EXPIRED = ApiErrorCommon.HTTP_SESSION_EXPIRED;
+    public static final ApiError WARNING = ApiErrorCommon.WARNING;
+    public static final ApiError WARNING_SUBMIT_CONFIRM = ApiErrorCommon.WARNING_SUBMIT_CONFIRM;
+    public static final ApiError WARNING_TASK_UNFINISHED = ApiErrorCommon.WARNING_TASK_UNFINISHED;
+    public static final ApiError COMMON_PARAM_REQUIRED = ApiErrorCommon.COMMON_PARAM_REQUIRED;
+    public static final ApiError COMMON_DUPLICATE_OPERATION = ApiErrorCommon.COMMON_DUPLICATE_OPERATION;
+    public static final ApiError COMMON_PARAM_LIST_REQUIRED = ApiErrorCommon.COMMON_PARAM_LIST_REQUIRED;
+    public static final ApiError COMMON_PARAM_NAME_TOO_LONG = ApiErrorCommon.COMMON_PARAM_NAME_TOO_LONG;
+    public static final ApiError COMMON_PARAM_CONTENT_TOO_LONG = ApiErrorCommon.COMMON_PARAM_CONTENT_TOO_LONG;
+    public static final ApiError COMMON_PARAM_TIME_REQUIRED = ApiErrorCommon.COMMON_PARAM_TIME_REQUIRED;
+    public static final ApiError COMMON_PARAM_RANGE_INVALID = ApiErrorCommon.COMMON_PARAM_RANGE_INVALID;
+    public static final ApiError COMMON_EXCEPTION_HANDLER_METHOD_ERROR = ApiErrorCommon.COMMON_EXCEPTION_HANDLER_METHOD_ERROR;
+    public static final ApiError COMMON_CFG_SETTING_KEY = ApiErrorCommon.COMMON_CFG_SETTING_KEY;
+    public static final ApiError COMMON_NAME_EXIST = ApiErrorCommon.COMMON_NAME_EXIST;
+    public static final ApiError COMMON_COPY_FAILED = ApiErrorCommon.COMMON_COPY_FAILED;
+    public static final ApiError COMMON_NOT_FOUND = ApiErrorCommon.COMMON_NOT_FOUND;
+    public static final ApiError COMMON_HAS_EXIST = ApiErrorCommon.COMMON_HAS_EXIST;
+    public static final ApiError COMMON_DUPLICATION_NAME = ApiErrorCommon.COMMON_DUPLICATION_NAME;
+    public static final ApiError COMMON_COPY_ERROR = ApiErrorCommon.COMMON_COPY_ERROR;
+    public static final ApiError COMMON_COMPANY_NOT_FOUND = ApiErrorCommon.COMMON_COMPANY_NOT_FOUND;
+    public static final ApiError COMMON_ROLE_NOT_FOUND = ApiErrorCommon.COMMON_ROLE_NOT_FOUND;
+    public static final ApiError COMMON_DEPT_NAME_EXISTS = ApiErrorCommon.COMMON_DEPT_NAME_EXISTS;
+    public static final ApiError COMMON_ROLE_NAME_EXISTS = ApiErrorCommon.COMMON_ROLE_NAME_EXISTS;
+    public static final ApiError COMMON_CODE_GENERATE_FAILED = ApiErrorCommon.COMMON_CODE_GENERATE_FAILED;
+    public static final ApiError COMMON_ENUM_CONVERT_FAILED = ApiErrorCommon.COMMON_ENUM_CONVERT_FAILED;
+    public static final ApiError COMMON_DEPT_NOT_FOUND = ApiErrorCommon.COMMON_DEPT_NOT_FOUND;
+    public static final ApiError COMMON_NOTICE_NOT_FOUND = ApiErrorCommon.COMMON_NOTICE_NOT_FOUND;
+    public static final ApiError COMMON_FIELD_CODE_INVALID = ApiErrorCommon.COMMON_FIELD_CODE_INVALID;
+    public static final ApiError COMMON_SCHEME_NOT_EXIST = ApiErrorCommon.COMMON_SCHEME_NOT_EXIST;
+    public static final ApiError COMMON_SCHEME_NAME_EXIST = ApiErrorCommon.COMMON_SCHEME_NAME_EXIST;
+    public static final ApiError COMMON_BANK_IS_EXIST = ApiErrorCommon.COMMON_BANK_IS_EXIST;
+    public static final ApiError COMMON_DELETE_PARENT_NODE_EXISTS = ApiErrorCommon.COMMON_DELETE_PARENT_NODE_EXISTS;
+    public static final ApiError COMMON_MOBILE_EXISTS = ApiErrorCommon.COMMON_MOBILE_EXISTS;
+    public static final ApiError COMMON_CALENDAR_UPDATE_EXCEPTION = ApiErrorCommon.COMMON_CALENDAR_UPDATE_EXCEPTION;
+    public static final ApiError COMMON_CURRENCY_NOT_EXIST = ApiErrorCommon.COMMON_CURRENCY_NOT_EXIST;
+    public static final ApiError COMMON_EXCHANGE_RATE_NOT_EXIST = ApiErrorCommon.COMMON_EXCHANGE_RATE_NOT_EXIST;
+    public static final ApiError COMMON_MSG_REQUIRED = ApiErrorCommon.COMMON_MSG_REQUIRED;
+    public static final ApiError COMMON_MSG_PARAM_REQUIRED = ApiErrorCommon.COMMON_MSG_PARAM_REQUIRED;
+    public static final ApiError COMMON_BUSINESS_NOT_EXIST = ApiErrorCommon.COMMON_BUSINESS_NOT_EXIST;
+    public static final ApiError COMMON_CHANGE_INFO_REQUIRED = ApiErrorCommon.COMMON_CHANGE_INFO_REQUIRED;
+    public static final ApiError COMMON_CHANGE_INVALID = ApiErrorCommon.COMMON_CHANGE_INVALID;
+    public static final ApiError COMMON_RATE_LIMIT_WITH_NAME = ApiErrorCommon.COMMON_RATE_LIMIT_WITH_NAME;
+    public static final ApiError COMMON_CHANGE_NO_RECORD = ApiErrorCommon.COMMON_CHANGE_NO_RECORD;
+    public static final ApiError COMMON_RATE_LIMIT = ApiErrorCommon.COMMON_RATE_LIMIT;
+    public static final ApiError COMMON_FIELD_NAME_EXISTS = ApiErrorCommon.COMMON_FIELD_NAME_EXISTS;
+    public static final ApiError COMMON_MEMBER_ROLE_ALREADY_EXISTS = ApiErrorCommon.COMMON_MEMBER_ROLE_ALREADY_EXISTS;
+    public static final ApiError COMMON_UNIONID_REQUIRED = ApiErrorCommon.COMMON_UNIONID_REQUIRED;
+    public static final ApiError COMMON_YEAR_REQUIRED = ApiErrorCommon.COMMON_YEAR_REQUIRED;
+    public static final ApiError COMMON_LARK_TOKEN_IS_NULL = ApiErrorCommon.COMMON_LARK_TOKEN_IS_NULL;
+    public static final ApiError COMMON_LARK_SEND_MSG_FAIL = ApiErrorCommon.COMMON_LARK_SEND_MSG_FAIL;
+    public static final ApiError COMMON_NOT_EXIST_GENERIC = ApiErrorCommon.COMMON_NOT_EXIST_GENERIC;
+    public static final ApiError COMMON_CN_EXPORT_DECLARATION_HS_NOT_FOUND = ApiErrorCommon.COMMON_CN_EXPORT_DECLARATION_HS_NOT_FOUND;
+    public static final ApiError COMMON_URGE_RATE_LIMITED = ApiErrorCommon.COMMON_URGE_RATE_LIMITED;
+    public static final ApiError COMMON_CUSTOMS_CN_HS_CODE_EXISTS = ApiErrorCommon.COMMON_CUSTOMS_CN_HS_CODE_EXISTS;
+    public static final ApiError COMMON_PLATFORM_NAME_NOT_FOUND = ApiErrorCommon.COMMON_PLATFORM_NAME_NOT_FOUND;
+    public static final ApiError COMMON_K3_SAVE_FAILED = ApiErrorCommon.COMMON_K3_SAVE_FAILED;
+    public static final ApiError COMMON_SETTING_EXIST = ApiErrorCommon.COMMON_SETTING_EXIST;
+    public static final ApiError COMMON_CODE_EXISTS = ApiErrorCommon.COMMON_CODE_EXISTS;
+    public static final ApiError COMMON_EXPIRE_BEFORE_EFFECTIVE = ApiErrorCommon.COMMON_EXPIRE_BEFORE_EFFECTIVE;
+    public static final ApiError COMMON_SYSTEM_MODULE_NOT_FOUND = ApiErrorCommon.COMMON_SYSTEM_MODULE_NOT_FOUND;
+    public static final ApiError COMMON_NAME_EXISTS = ApiErrorCommon.COMMON_NAME_EXISTS;
+    public static final ApiError COMMON_SEARCH_TYPE_NOT_FOUND = ApiErrorCommon.COMMON_SEARCH_TYPE_NOT_FOUND;
+    public static final ApiError COMMON_REQUEST_EMPTY = ApiErrorCommon.COMMON_REQUEST_EMPTY;
+    public static final ApiError COMMON_EXPIRE_AFTER_EFFECTIVE_REQUIRED = ApiErrorCommon.COMMON_EXPIRE_AFTER_EFFECTIVE_REQUIRED;
+    public static final ApiError COMMON_CHANGE_DATE_INVALID = ApiErrorCommon.COMMON_CHANGE_DATE_INVALID;
+    public static final ApiError COMMON_INCONSISTENT_DISABLE_STATUS = ApiErrorCommon.COMMON_INCONSISTENT_DISABLE_STATUS;
+    public static final ApiError COMMON_PROVIDER_SERVICE_NOT_ENABLED = ApiErrorCommon.COMMON_PROVIDER_SERVICE_NOT_ENABLED;
+    public static final ApiError COMMON_DEST_COUNTRY_REQUIRED = ApiErrorCommon.COMMON_DEST_COUNTRY_REQUIRED;
+    public static final ApiError COMMON_WEIGHT_REQUIRED = ApiErrorCommon.COMMON_WEIGHT_REQUIRED;
+    public static final ApiError COMMON_POSTCODE_REQUIRED = ApiErrorCommon.COMMON_POSTCODE_REQUIRED;
+    public static final ApiError COMMON_ATTACH_QTY_MAX_FIVE = ApiErrorCommon.COMMON_ATTACH_QTY_MAX_FIVE;
+    public static final ApiError COMMON_UNUSUAL_TYPE_NOT_EXISTS = ApiErrorCommon.COMMON_UNUSUAL_TYPE_NOT_EXISTS;
+    public static final ApiError COMMON_PAPER_SIZE_INCONSISTENT_NOT_PRINT = ApiErrorCommon.COMMON_PAPER_SIZE_INCONSISTENT_NOT_PRINT;
+    public static final ApiError COMMON_BINDING_ERROR = ApiErrorCommon.COMMON_BINDING_ERROR;
+    public static final ApiError COMMON_SAME_STATUS_DUPLICATE = ApiErrorCommon.COMMON_SAME_STATUS_DUPLICATE;
+    public static final ApiError COMMON_PLATFORM_CHANNEL_NOT_FOUND = ApiErrorCommon.COMMON_PLATFORM_CHANNEL_NOT_FOUND;
+    public static final ApiError COMMON_WAVE_ORDER_QTY_COMPARE = ApiErrorCommon.COMMON_WAVE_ORDER_QTY_COMPARE;
+    public static final ApiError COMMON_WAVE_QTY_COMPARE = ApiErrorCommon.COMMON_WAVE_QTY_COMPARE;
+    public static final ApiError COMMON_IMPORT_SIZE_EXCEED_LIMIT = ApiErrorCommon.COMMON_IMPORT_SIZE_EXCEED_LIMIT;
+    public static final ApiError COMMON_DATE_RANGE_INVALID = ApiErrorCommon.COMMON_DATE_RANGE_INVALID;
+    public static final ApiError COMMON_DATE_SORT_ASC_REQUIRED = ApiErrorCommon.COMMON_DATE_SORT_ASC_REQUIRED;
+    public static final ApiError COMMON_SKU_MAPPING_NOT_FOUND = ApiErrorCommon.COMMON_SKU_MAPPING_NOT_FOUND;
+    public static final ApiError COMMON_SKU_MAPPING_DUPLICATE_PLATFORM_SHOP = ApiErrorCommon.COMMON_SKU_MAPPING_DUPLICATE_PLATFORM_SHOP;
+    public static final ApiError COMMON_PLATFORM_NOT_FOUND = ApiErrorCommon.COMMON_PLATFORM_NOT_FOUND;
+    public static final ApiError COMMON_RULE_EXPRESSION_ERROR = ApiErrorCommon.COMMON_RULE_EXPRESSION_ERROR;
+    public static final ApiError COMMON_ADMIN_USER = ApiErrorCommon.COMMON_ADMIN_USER;
+    public static final ApiError COMMON_STATUS_CHANGE_LOG = ApiErrorCommon.COMMON_STATUS_CHANGE_LOG;
+    public static final ApiError COMMON_SALESMAN_NOT_FOUND = ApiErrorCommon.COMMON_SALESMAN_NOT_FOUND;
+    public static final ApiError COMMON_SALESMAN_ID_REQUIRED = ApiErrorCommon.COMMON_SALESMAN_ID_REQUIRED;
+    public static final ApiError COMMON_LOCAL_PUSH_MESSAGE = ApiErrorCommon.COMMON_LOCAL_PUSH_MESSAGE;
+    public static final ApiError COMMON_WEIGHT_RANGE_INVALID = ApiErrorCommon.COMMON_WEIGHT_RANGE_INVALID;
+    public static final ApiError COMMON_LOGIN_COOPERATION_TERMINATED = ApiErrorCommon.COMMON_LOGIN_COOPERATION_TERMINATED;
+    public static final ApiError COMMON_LOGIN_ACCOUNT_DISABLED = ApiErrorCommon.COMMON_LOGIN_ACCOUNT_DISABLED;
+    public static final ApiError COMMON_SYSTEM_CONFIG_MANAGEMENT = ApiErrorCommon.COMMON_SYSTEM_CONFIG_MANAGEMENT;
+    public static final ApiError COMMON_BOX_LENGTH_LT_PRODUCT_FORBIDDEN = ApiErrorCommon.COMMON_BOX_LENGTH_LT_PRODUCT_FORBIDDEN;
+    public static final ApiError COMMON_BOX_WIDTH_LT_PRODUCT_FORBIDDEN = ApiErrorCommon.COMMON_BOX_WIDTH_LT_PRODUCT_FORBIDDEN;
+    public static final ApiError COMMON_BOX_HEIGHT_LT_PRODUCT_FORBIDDEN = ApiErrorCommon.COMMON_BOX_HEIGHT_LT_PRODUCT_FORBIDDEN;
+    public static final ApiError COMMON_GROSS_WEIGHT_LT_NET_WEIGHT_FORBIDDEN = ApiErrorCommon.COMMON_GROSS_WEIGHT_LT_NET_WEIGHT_FORBIDDEN;
+    public static final ApiError COMMON_PRODUCT_LENGTH_LT_WIDTH_FORBIDDEN = ApiErrorCommon.COMMON_PRODUCT_LENGTH_LT_WIDTH_FORBIDDEN;
+    public static final ApiError COMMON_PRODUCT_WIDTH_LT_HEIGHT_FORBIDDEN = ApiErrorCommon.COMMON_PRODUCT_WIDTH_LT_HEIGHT_FORBIDDEN;
+    public static final ApiError COMMON_BOX_LENGTH_LT_WIDTH_FORBIDDEN = ApiErrorCommon.COMMON_BOX_LENGTH_LT_WIDTH_FORBIDDEN;
+    public static final ApiError COMMON_BOX_WIDTH_LT_HEIGHT_FORBIDDEN = ApiErrorCommon.COMMON_BOX_WIDTH_LT_HEIGHT_FORBIDDEN;
+    public static final ApiError COMMON_TABLE_NOT_FOUND = ApiErrorCommon.COMMON_TABLE_NOT_FOUND;
+    public static final ApiError COMMON_TIME_FRAME_RULE_CONFIG_NOT_EXIST = ApiErrorCommon.COMMON_TIME_FRAME_RULE_CONFIG_NOT_EXIST;
+    public static final ApiError COMMON_WDT_API_CALL_FAILED = ApiErrorCommon.COMMON_WDT_API_CALL_FAILED;
+    public static final ApiError COMMON_WDT_PRE_TASK_NOT_FINISHED_CANCEL_EXECUTION = ApiErrorCommon.COMMON_WDT_PRE_TASK_NOT_FINISHED_CANCEL_EXECUTION;
+    public static final ApiError COMMON_TEMPLATE_DEFAULT_CONTRACT_EXISTS = ApiErrorCommon.COMMON_TEMPLATE_DEFAULT_CONTRACT_EXISTS;
+    public static final ApiError COMMON_CONTRACT_TEMPLATE_REQUIRED = ApiErrorCommon.COMMON_CONTRACT_TEMPLATE_REQUIRED;
+    public static final ApiError COMMON_CONTRACT_TEMPLATE_NOT_AVAILABLE = ApiErrorCommon.COMMON_CONTRACT_TEMPLATE_NOT_AVAILABLE;
+    public static final ApiError COMMON_CONTRACT_TEMPLATE_BINDING_DUPLICATE = ApiErrorCommon.COMMON_CONTRACT_TEMPLATE_BINDING_DUPLICATE;
+    public static final ApiError COMMON_CONTRACT_TEMPLATE_BOUND_BY_OTHER_SUPPLIER = ApiErrorCommon.COMMON_CONTRACT_TEMPLATE_BOUND_BY_OTHER_SUPPLIER;
+    public static final ApiError COMMON_USER_NOT_FOUND = ApiErrorCommon.COMMON_USER_NOT_FOUND;
+    public static final ApiError COMMON_CATEGORY_LEVEL_EXCEED_MAX = ApiErrorCommon.COMMON_CATEGORY_LEVEL_EXCEED_MAX;
+    public static final ApiError COMMON_SYSTEM_CATEGORY_DELETE_FORBIDDEN = ApiErrorCommon.COMMON_SYSTEM_CATEGORY_DELETE_FORBIDDEN;
+    public static final ApiError COMMON_SYSTEM_CATEGORY_UPDATE_FORBIDDEN = ApiErrorCommon.COMMON_SYSTEM_CATEGORY_UPDATE_FORBIDDEN;
+    public static final ApiError COMMON_DELETE_CHILD_NODE_EXISTS = ApiErrorCommon.COMMON_DELETE_CHILD_NODE_EXISTS;
+    public static final ApiError COMMON_CONTRACT_NOT_BINDING = ApiErrorCommon.COMMON_CONTRACT_NOT_BINDING;
+    public static final ApiError COMMON_NO_DELIVERY_SKU = ApiErrorCommon.COMMON_NO_DELIVERY_SKU;
+    public static final ApiError COMMON_SKU_NOT_EXIST_OR_NOT_APPROVE = ApiErrorCommon.COMMON_SKU_NOT_EXIST_OR_NOT_APPROVE;
+    public static final ApiError COMMON_FILE_EMPTY = ApiErrorCommon.COMMON_FILE_EMPTY;
+    public static final ApiError COMMON_FS_USER_NOT_BIND = ApiErrorCommon.COMMON_FS_USER_NOT_BIND;
+    public static final ApiError COMMON_DEPARTMENT_HAVE_USER = ApiErrorCommon.COMMON_DEPARTMENT_HAVE_USER;
+    public static final ApiError COMMON_FILE_HEAD_NOT_EMPTY = ApiErrorCommon.COMMON_FILE_HEAD_NOT_EMPTY;
+    public static final ApiError COMMON_PLATFORM_SHOP_EXSIT = ApiErrorCommon.COMMON_PLATFORM_SHOP_EXSIT;
+    public static final ApiError COMMON_CSAGENT_EXSIT = ApiErrorCommon.COMMON_CSAGENT_EXSIT;
+    public static final ApiError COMMON_STATUS_SAME = ApiErrorCommon.COMMON_STATUS_SAME;
+    public static final ApiError COMMON_FILE_HEAD_READ_HEAD_FAIL = ApiErrorCommon.COMMON_FILE_HEAD_READ_HEAD_FAIL;
+    public static final ApiError COMMON_NO_SKU = ApiErrorCommon.COMMON_NO_SKU;
+    public static final ApiError COMMON_NOTICE_TIME_AFTER_NOW = ApiErrorCommon.COMMON_NOTICE_TIME_AFTER_NOW;
+    public static final ApiError COMMON_NOW_TYPE_NOT_ALLOW_UPDATE = ApiErrorCommon.COMMON_NOW_TYPE_NOT_ALLOW_UPDATE;
+    public static final ApiError COMMON_NOT_FOUND_PUSH_DADA = ApiErrorCommon.COMMON_NOT_FOUND_PUSH_DADA;
+    public static final ApiError COMMON_SELECT_DATA_REQUIRED = ApiErrorCommon.COMMON_SELECT_DATA_REQUIRED;
+    public static final ApiError COMMON_DATA_NOT_EXIST = ApiErrorCommon.COMMON_DATA_NOT_EXIST;
+    public static final ApiError COMMON_BATCH_PROCESSING = ApiErrorCommon.COMMON_BATCH_PROCESSING;
+    public static final ApiError COMMON_COUNTRY_INFO_NOT_FOUND = ApiErrorCommon.COMMON_COUNTRY_INFO_NOT_FOUND;
+    public static final ApiError COMMON_CFG_SETTING_SAVE_FAILED = ApiErrorCommon.COMMON_CFG_SETTING_SAVE_FAILED;
+    public static final ApiError COMMON_CFG_SETTING_TYPE_INVALID = ApiErrorCommon.COMMON_CFG_SETTING_TYPE_INVALID;
+    public static final ApiError COMMON_REMOTE_SERVICE_ERROR = ApiErrorCommon.COMMON_REMOTE_SERVICE_ERROR;
+    public static final ApiError COMMON_REMOTE_RESPONSE_EMPTY = ApiErrorCommon.COMMON_REMOTE_RESPONSE_EMPTY;
+    public static final ApiError COMMON_REMOTE_RESPONSE_INVALID = ApiErrorCommon.COMMON_REMOTE_RESPONSE_INVALID;
+    public static final ApiError COMMON_THIRD_PARTY_API_FAILED = ApiErrorCommon.COMMON_THIRD_PARTY_API_FAILED;
+    public static final ApiError COMMON_LARK_USER_INFO_FAILED = ApiErrorCommon.COMMON_LARK_USER_INFO_FAILED;
+    public static final ApiError COMMON_LARK_UNION_ID_NOT_FOUND = ApiErrorCommon.COMMON_LARK_UNION_ID_NOT_FOUND;
+    public static final ApiError COMMON_LARK_UNION_ID_FETCH_FAILED = ApiErrorCommon.COMMON_LARK_UNION_ID_FETCH_FAILED;
+
+    public static final ApiError FASTDFS_UPLOAD_FAILED_FOR_WAYBILL = ApiErrorCommon.FASTDFS_UPLOAD_FAILED_FOR_WAYBILL;
+    public static final ApiError FILE_EXCEL_PARSE = ApiErrorCommon.FILE_EXCEL_PARSE;
+    public static final ApiError FILE_EXPORT_FAILED = ApiErrorCommon.FILE_EXPORT_FAILED;
+    public static final ApiError FILE_IMPORT_FORMAT_INVALID_XLSX = ApiErrorCommon.FILE_IMPORT_FORMAT_INVALID_XLSX;
+    public static final ApiError FILE_TOO_LARGE = ApiErrorCommon.FILE_TOO_LARGE;
+    public static final ApiError FILE_IMPORT_PARSE_FAILED = ApiErrorCommon.FILE_IMPORT_PARSE_FAILED;
+    public static final ApiError FILE_IMPORT_FORMAT_INVALID_MMP = ApiErrorCommon.FILE_IMPORT_FORMAT_INVALID_MMP;
+    public static final ApiError FILE_IMPORT_TIMEOUT = ApiErrorCommon.FILE_IMPORT_TIMEOUT;
+    public static final ApiError FILE_IMPORT_DATA_NOT_NULL = ApiErrorCommon.FILE_IMPORT_DATA_NOT_NULL;
+    public static final ApiError FILE_DELETE = ApiErrorCommon.FILE_DELETE;
+    public static final ApiError FILE_NOT_DELETE_ALL = ApiErrorCommon.FILE_NOT_DELETE_ALL;
+    public static final ApiError FILE_TEMPLATE_NOT_EXIST = ApiErrorCommon.FILE_TEMPLATE_NOT_EXIST;
+    public static final ApiError FILE_TEMPLATE_DOWNLOAD = ApiErrorCommon.FILE_TEMPLATE_DOWNLOAD;
+    public static final ApiError FILE_EXCEL_PARSING_FIELD_EXCEPTION = ApiErrorCommon.FILE_EXCEL_PARSING_FIELD_EXCEPTION;
+    public static final ApiError FILE_EXCEL_ILLEGAL_FIELDS = ApiErrorCommon.FILE_EXCEL_ILLEGAL_FIELDS;
+    public static final ApiError FILE_EXCEL_IMPORT_HEAD_EXIST = ApiErrorCommon.FILE_EXCEL_IMPORT_HEAD_EXIST;
+    public static final ApiError FILE_EXCEL_IMPORT_SIZE = ApiErrorCommon.FILE_EXCEL_IMPORT_SIZE;
+    public static final ApiError FILE_NOT_FOUND = ApiErrorCommon.FILE_NOT_FOUND;
+    public static final ApiError FILE_UPLOAD_FAILED_OR_LINK_INVALID = ApiErrorCommon.FILE_UPLOAD_FAILED_OR_LINK_INVALID;
+    public static final ApiError FILE_DATA_REQUIRED = ApiErrorCommon.FILE_DATA_REQUIRED;
+    public static final ApiError FILE_DATA_IMPORT_FAILED = ApiErrorCommon.FILE_DATA_IMPORT_FAILED;
+    public static final ApiError FILE_EXPORT_ERROR_DATA_FAILED = ApiErrorCommon.FILE_EXPORT_ERROR_DATA_FAILED;
+    public static final ApiError FILE_UPLOAD_FAILED = ApiErrorCommon.FILE_UPLOAD_FAILED;
+    public static final ApiError FILE_UPLOADED_NOT_FOUND = ApiErrorCommon.FILE_UPLOADED_NOT_FOUND;
+    public static final ApiError FILE_DELETE_FORBIDDEN_APPROVED = ApiErrorCommon.FILE_DELETE_FORBIDDEN_APPROVED;
+    public static final ApiError FILE_DOC_NOT_FOUND = ApiErrorCommon.FILE_DOC_NOT_FOUND;
+    public static final ApiError FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED = ApiErrorCommon.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED;
+    public static final ApiError FILE_REF_CLOSE_FORBIDDEN = ApiErrorCommon.FILE_REF_CLOSE_FORBIDDEN;
+    public static final ApiError FILE_SIZE_EXCEEDS_LIMIT = ApiErrorCommon.FILE_SIZE_EXCEEDS_LIMIT;
+    public static final ApiError FILE_NAME_DUPLICATE = ApiErrorCommon.FILE_NAME_DUPLICATE;
+    public static final ApiError FILE_EXPORT_DATA_EMPTY = ApiErrorCommon.FILE_EXPORT_DATA_EMPTY;
+    public static final ApiError FILE_PARAM_EMPTY = ApiErrorCommon.FILE_PARAM_EMPTY;
+    public static final ApiError FILE_STRUCTURE_AND_FILES_EMPTY = ApiErrorCommon.FILE_STRUCTURE_AND_FILES_EMPTY;
+    public static final ApiError FILE_ZIP_CREATE_FAILED = ApiErrorCommon.FILE_ZIP_CREATE_FAILED;
+    public static final ApiError FILE_ZIP_EXTRACT_FAILED = ApiErrorCommon.FILE_ZIP_EXTRACT_FAILED;
+    public static final ApiError FILE_ZIP_NOT_FOUND = ApiErrorCommon.FILE_ZIP_NOT_FOUND;
+    public static final ApiError FILE_IMAGE_COMPRESS_FAILED = ApiErrorCommon.FILE_IMAGE_COMPRESS_FAILED;
+    public static final ApiError FILE_OPERATION_FAILED = ApiErrorCommon.FILE_OPERATION_FAILED;
+    public static final ApiError FILE_DOWNLOAD_TIMEOUT = ApiErrorCommon.FILE_DOWNLOAD_TIMEOUT;
+    public static final ApiError FILE_OPERATION_INTERRUPTED = ApiErrorCommon.FILE_OPERATION_INTERRUPTED;
+    public static final ApiError FILE_ZIP_EMPTY = ApiErrorCommon.FILE_ZIP_EMPTY;
+    public static final ApiError FILE_CHECK_SIZE_FAILED = ApiErrorCommon.FILE_CHECK_SIZE_FAILED;
+    public static final ApiError FILE_MANAGEMENT_SKU_TYPE_EXIST = ApiErrorCommon.FILE_MANAGEMENT_SKU_TYPE_EXIST;
+    public static final ApiError FILE_MANAGEMENT_CATEGORY_TYPE_EXIST = ApiErrorCommon.FILE_MANAGEMENT_CATEGORY_TYPE_EXIST;
+    public static final ApiError FILE_URL_INVALID = ApiErrorCommon.FILE_URL_INVALID;
+    public static final ApiError FILE_UNSUPPORTED_TYPE = ApiErrorCommon.FILE_UNSUPPORTED_TYPE;
+    public static final ApiError FILE_DOWNLOAD_FAILED = ApiErrorCommon.FILE_DOWNLOAD_FAILED;
+    public static final ApiError FILE_SHEET_NOT_EXIST = ApiErrorCommon.FILE_SHEET_NOT_EXIST;
+    public static final ApiError FILE_EXPORT_SIZE_EXCEED_LIMIT = ApiErrorCommon.FILE_EXPORT_SIZE_EXCEED_LIMIT;
+    public static final ApiError FILE_IMPORT_TASK_FINISH = ApiErrorCommon.FILE_IMPORT_TASK_FINISH;
+    public static final ApiError FILE_IMPORT_TASK_FINISH_EXPORT_FAILED = ApiErrorCommon.FILE_IMPORT_TASK_FINISH_EXPORT_FAILED;
+    public static final ApiError FILE_IMPORT_TASK_FINISH_ALL_SUCCESS = ApiErrorCommon.FILE_IMPORT_TASK_FINISH_ALL_SUCCESS;
+    public static final ApiError FILE_IMPORT_TASK_STATUS_UPDATE_FAILED = ApiErrorCommon.FILE_IMPORT_TASK_STATUS_UPDATE_FAILED;
+
+    /** Sys service error constants. */
+    public static final ApiError AUTH_PASSWORD_MISMATCH = ApiErrorSys.AUTH_PASSWORD_MISMATCH;
+    public static final ApiError AUTH_LOGIN_FAILED = ApiErrorSys.AUTH_LOGIN_FAILED;
+    public static final ApiError AUTH_ACCOUNT_DISABLED = ApiErrorSys.AUTH_ACCOUNT_DISABLED;
+    public static final ApiError AUTH_USER_NOT_FOUND = ApiErrorSys.AUTH_USER_NOT_FOUND;
+    public static final ApiError AUTH_LOGIN_LOCKED = ApiErrorSys.AUTH_LOGIN_LOCKED;
+    public static final ApiError AUTH_LOGIN_RETRY_LEFT = ApiErrorSys.AUTH_LOGIN_RETRY_LEFT;
+    public static final ApiError AUTH_CREDENTIALS_INVALID = ApiErrorSys.AUTH_CREDENTIALS_INVALID;
+    public static final ApiError AUTH_PASSWORD_REQUIRED = ApiErrorSys.AUTH_PASSWORD_REQUIRED;
+    public static final ApiError AUTH_ACCOUNT_PASSWORD = ApiErrorSys.AUTH_ACCOUNT_PASSWORD;
+    public static final ApiError AUTH_ACCOUNT_BIND_FAILED = ApiErrorSys.AUTH_ACCOUNT_BIND_FAILED;
+    public static final ApiError AUTH_ACCOUNT_NOT_BOUND = ApiErrorSys.AUTH_ACCOUNT_NOT_BOUND;
+    public static final ApiError AUTH_ACCOUNT_ALREADY_BOUND = ApiErrorSys.AUTH_ACCOUNT_ALREADY_BOUND;
+    public static final ApiError AUTH_USERNAME_EXISTS = ApiErrorSys.AUTH_USERNAME_EXISTS;
+    public static final ApiError AUTH_ACCOUNT_NOT_FOUND = ApiErrorSys.AUTH_ACCOUNT_NOT_FOUND;
+    public static final ApiError AUTH_MOBILE_IS_EXIST = ApiErrorSys.AUTH_MOBILE_IS_EXIST;
+    public static final ApiError AUTH_FS_USER_NOT_BIND = ApiErrorSys.AUTH_FS_USER_NOT_BIND;
+    public static final ApiError AUTH_FS_NOT_BOUND = ApiErrorSys.AUTH_FS_NOT_BOUND;
+    public static final ApiError AUTH_MODIFY_DELETE_DENIED = ApiErrorSys.AUTH_MODIFY_DELETE_DENIED;
+    public static final ApiError AUTH_VIEW_DENIED = ApiErrorSys.AUTH_VIEW_DENIED;
+    public static final ApiError AUTH_SSO_APP_NOT_FOUND = ApiErrorSys.AUTH_SSO_APP_NOT_FOUND;
+    public static final ApiError AUTH_SSO_DISABLED = ApiErrorSys.AUTH_SSO_DISABLED;
+    public static final ApiError AUTH_SSO_DECRYPT_FAILED = ApiErrorSys.AUTH_SSO_DECRYPT_FAILED;
+    public static final ApiError AUTH_SSO_PAYLOAD_PARSE_FAILED = ApiErrorSys.AUTH_SSO_PAYLOAD_PARSE_FAILED;
+    public static final ApiError AUTH_SSO_INVALID_PAYLOAD = ApiErrorSys.AUTH_SSO_INVALID_PAYLOAD;
+    public static final ApiError AUTH_SSO_USER_NOT_BOUND_ERP = ApiErrorSys.AUTH_SSO_USER_NOT_BOUND_ERP;
+    public static final ApiError AUTH_SSO_SYSTEM_ERROR = ApiErrorSys.AUTH_SSO_SYSTEM_ERROR;
+    public static final ApiError AUTH_ARCHIVE_DENIED = ApiErrorSys.AUTH_ARCHIVE_DENIED;
+    public static final ApiError AUTH_MENU_FETCH_FAILED = ApiErrorSys.AUTH_MENU_FETCH_FAILED;
+    public static final ApiError AUTH_PERMISSION_FETCH_FAILED = ApiErrorSys.AUTH_PERMISSION_FETCH_FAILED;
+    public static final ApiError AUTH_API_TOKEN_EXPIRED_RECREATE = ApiErrorSys.AUTH_API_TOKEN_EXPIRED_RECREATE;
+    public static final ApiError AUTH_API_TOKEN_ID_REQUIRED = ApiErrorSys.AUTH_API_TOKEN_ID_REQUIRED;
+    public static final ApiError AUTH_API_TOKEN_NOT_FOUND = ApiErrorSys.AUTH_API_TOKEN_NOT_FOUND;
+    public static final ApiError AUTH_API_TOKEN_USER_NOT_LOGIN = ApiErrorSys.AUTH_API_TOKEN_USER_NOT_LOGIN;
+    public static final ApiError AUTH_API_TOKEN_NAME_REQUIRED = ApiErrorSys.AUTH_API_TOKEN_NAME_REQUIRED;
+    public static final ApiError AUTH_API_TOKEN_NAME_TOO_LONG = ApiErrorSys.AUTH_API_TOKEN_NAME_TOO_LONG;
+    public static final ApiError AUTH_API_TOKEN_VALIDITY_REQUIRED = ApiErrorSys.AUTH_API_TOKEN_VALIDITY_REQUIRED;
+    public static final ApiError AUTH_API_TOKEN_VALIDITY_INVALID = ApiErrorSys.AUTH_API_TOKEN_VALIDITY_INVALID;
+    public static final ApiError AUTH_API_TOKEN_ENCRYPT_FAILED = ApiErrorSys.AUTH_API_TOKEN_ENCRYPT_FAILED;
+    public static final ApiError AUTH_API_TOKEN_CIPHERTEXT_INVALID = ApiErrorSys.AUTH_API_TOKEN_CIPHERTEXT_INVALID;
+    public static final ApiError AUTH_API_TOKEN_DECRYPT_FAILED = ApiErrorSys.AUTH_API_TOKEN_DECRYPT_FAILED;
+    public static final ApiError AUTH_API_TOKEN_AES_KEY_REQUIRED = ApiErrorSys.AUTH_API_TOKEN_AES_KEY_REQUIRED;
+    public static final ApiError AUTH_API_TOKEN_AES_KEY_INIT_FAILED = ApiErrorSys.AUTH_API_TOKEN_AES_KEY_INIT_FAILED;
+    public static final ApiError AUTH_API_TOKEN_HASH_FAILED = ApiErrorSys.AUTH_API_TOKEN_HASH_FAILED;
+    public static final ApiError AUTH_API_TOKEN_PATH_REQUIRED = ApiErrorSys.AUTH_API_TOKEN_PATH_REQUIRED;
+    public static final ApiError AUTH_API_TOKEN_PATH_BACKSLASH_FORBIDDEN = ApiErrorSys.AUTH_API_TOKEN_PATH_BACKSLASH_FORBIDDEN;
+    public static final ApiError AUTH_API_TOKEN_PATH_INVALID = ApiErrorSys.AUTH_API_TOKEN_PATH_INVALID;
+    public static final ApiError AUTH_API_TOKEN_PATH_TRAVERSAL_FORBIDDEN = ApiErrorSys.AUTH_API_TOKEN_PATH_TRAVERSAL_FORBIDDEN;
+    public static final ApiError AUTH_API_TOKEN_PATH_TOO_LONG = ApiErrorSys.AUTH_API_TOKEN_PATH_TOO_LONG;
+    public static final ApiError AUTH_API_TOKEN_WHITELIST_NOT_FOUND = ApiErrorSys.AUTH_API_TOKEN_WHITELIST_NOT_FOUND;
+    public static final ApiError AUTH_API_TOKEN_PATH_EXISTS = ApiErrorSys.AUTH_API_TOKEN_PATH_EXISTS;
+    public static final ApiError AUTH_API_TOKEN_MANAGEMENT_PATH_FORBIDDEN = ApiErrorSys.AUTH_API_TOKEN_MANAGEMENT_PATH_FORBIDDEN;
+    public static final ApiError AUTH_API_TOKEN_PATH_NOT_IN_WHITELIST = ApiErrorSys.AUTH_API_TOKEN_PATH_NOT_IN_WHITELIST;
+    public static final ApiError AUTH_API_TOKEN_WHITELIST_ADMIN_REQUIRED = ApiErrorSys.AUTH_API_TOKEN_WHITELIST_ADMIN_REQUIRED;
+    public static final ApiError QUERY_NOT_EXTEND_METHOD = ApiErrorSys.QUERY_NOT_EXTEND_METHOD;
+    public static final ApiError QUERY_ILLEGAL_FIELD = ApiErrorSys.QUERY_ILLEGAL_FIELD;
+    public static final ApiError QUERY_ILLEGAL_COND = ApiErrorSys.QUERY_ILLEGAL_COND;
+    public static final ApiError QUERY_LIST_TYPE_ERROR = ApiErrorSys.QUERY_LIST_TYPE_ERROR;
+    public static final ApiError QUERY_BETWEEN_ERROR = ApiErrorSys.QUERY_BETWEEN_ERROR;
+    public static final ApiError QUERY_ILLEGAL_DATE_FORMAT = ApiErrorSys.QUERY_ILLEGAL_DATE_FORMAT;
+    public static final ApiError QUERY_NOT_EXTEND_CLASS = ApiErrorSys.QUERY_NOT_EXTEND_CLASS;
+    public static final ApiError CFG_QUERY_OPTION_API_CONFIG_REQUIRED = ApiErrorSys.CFG_QUERY_OPTION_API_CONFIG_REQUIRED;
+    public static final ApiError CFG_QUERY_OPTION_API_CONFIG_DUPLICATE = ApiErrorSys.CFG_QUERY_OPTION_API_CONFIG_DUPLICATE;
+    public static final ApiError CFG_FILE_PARSE_NOT_MONTHLY = ApiErrorSys.CFG_FILE_PARSE_NOT_MONTHLY;
+    public static final ApiError CFG_FILE_PARSE_FOLDER_REQUIRED = ApiErrorSys.CFG_FILE_PARSE_FOLDER_REQUIRED;
+    public static final ApiError CFG_FILE_PARSE_FILE_REQUIRED = ApiErrorSys.CFG_FILE_PARSE_FILE_REQUIRED;
+    public static final ApiError CFG_FILE_PARSE_DUPLICATE = ApiErrorSys.CFG_FILE_PARSE_DUPLICATE;
+    public static final ApiError CFG_FILE_PARSE_DOWNSTREAM_EXISTS = ApiErrorSys.CFG_FILE_PARSE_DOWNSTREAM_EXISTS;
+    public static final ApiError CFG_FILE_PARSE_TEMPLATE_NOT_FOUND = ApiErrorSys.CFG_FILE_PARSE_TEMPLATE_NOT_FOUND;
+    public static final ApiError CFG_FILE_PARSE_EXPORT_TASK_CREATE_FAILED = ApiErrorSys.CFG_FILE_PARSE_EXPORT_TASK_CREATE_FAILED;
+    public static final ApiError CFG_FILE_PARSE_FILE_RULE_INVALID = ApiErrorSys.CFG_FILE_PARSE_FILE_RULE_INVALID;
+    public static final ApiError CFG_FILE_PARSE_FOLDER_RULE_INVALID = ApiErrorSys.CFG_FILE_PARSE_FOLDER_RULE_INVALID;
+    public static final ApiError EMAIL_TEMPLATE_NOT_FOUND = ApiErrorSys.EMAIL_TEMPLATE_NOT_FOUND;
+    public static final ApiError EMAIL_CODE_INVALID = ApiErrorSys.EMAIL_CODE_INVALID;
+    public static final ApiError EMAIL_INVALID = ApiErrorSys.EMAIL_INVALID;
+    public static final ApiError EMAIL_RATE_LIMITED = ApiErrorSys.EMAIL_RATE_LIMITED;
+    public static final ApiError EMAIL_SEND_FAILED = ApiErrorSys.EMAIL_SEND_FAILED;
+    public static final ApiError EMAIL_ADDR_EXISTS = ApiErrorSys.EMAIL_ADDR_EXISTS;
+    public static final ApiError EMAIL_ACCOUN_NOT_BOUND = ApiErrorSys.EMAIL_ACCOUN_NOT_BOUND;
+
+    /** Oms service error constants. */
+    public static final ApiError CUSTOMER_ADDRESS_NOT_MATCH = ApiErrorOms.CUSTOMER_ADDRESS_NOT_MATCH;
+    public static final ApiError CUSTOMER_GROUP_REQUIRED = ApiErrorOms.CUSTOMER_GROUP_REQUIRED;
+    public static final ApiError CUSTOMER_GROUP_NAME_DUPLICATE = ApiErrorOms.CUSTOMER_GROUP_NAME_DUPLICATE;
+    public static final ApiError CUSTOMER_GROUP_IN_USE_DELETE_FORBIDDEN = ApiErrorOms.CUSTOMER_GROUP_IN_USE_DELETE_FORBIDDEN;
+    public static final ApiError CUSTOMER_DEFAULT_CONTACT_LIMIT = ApiErrorOms.CUSTOMER_DEFAULT_CONTACT_LIMIT;
+    public static final ApiError CUSTOMER_DEFAULT_ADDRESS_LIMIT = ApiErrorOms.CUSTOMER_DEFAULT_ADDRESS_LIMIT;
+    public static final ApiError CUSTOMER_DEFAULT_BANK_LIMIT = ApiErrorOms.CUSTOMER_DEFAULT_BANK_LIMIT;
+    public static final ApiError CUSTOMER_NOT_FOUND = ApiErrorOms.CUSTOMER_NOT_FOUND;
+    public static final ApiError CUSTOMER_ADDRESS_IN_USE_DELETE_FORBIDDEN = ApiErrorOms.CUSTOMER_ADDRESS_IN_USE_DELETE_FORBIDDEN;
+    public static final ApiError CUSTOMER_DISABLE_FORBIDDEN = ApiErrorOms.CUSTOMER_DISABLE_FORBIDDEN;
+    public static final ApiError CUSTOMER_SKU_INTERVAL_OVERLAP = ApiErrorOms.CUSTOMER_SKU_INTERVAL_OVERLAP;
+    public static final ApiError CUSTOMER_NAME_DUPLICATE = ApiErrorOms.CUSTOMER_NAME_DUPLICATE;
+    public static final ApiError SALES_DEMAND_NOT_FOUND = ApiErrorOms.SALES_DEMAND_NOT_FOUND;
+    public static final ApiError SALES_DEMAND_DETAIL_NOT_FOUND = ApiErrorOms.SALES_DEMAND_DETAIL_NOT_FOUND;
+    public static final ApiError SALES_DEMAND_SKU_QTY_EXCEEDS = ApiErrorOms.SALES_DEMAND_SKU_QTY_EXCEEDS;
+    public static final ApiError SALES_DEMAND_ALREADY_PUSHED_SUBCONTRACT_REVERSE_FORBIDDEN = ApiErrorOms.SALES_DEMAND_ALREADY_PUSHED_SUBCONTRACT_REVERSE_FORBIDDEN;
+    public static final ApiError SHOP_NAME_EXISTS = ApiErrorOms.SHOP_NAME_EXISTS;
+    public static final ApiError SHOP_AUTH_SHIPMENT_ERROR = ApiErrorOms.SHOP_AUTH_SHIPMENT_ERROR;
+    public static final ApiError SHOP_NOT_AUTH_ERROR = ApiErrorOms.SHOP_NOT_AUTH_ERROR;
+    public static final ApiError SHOP_FBA_MARKETPLACE_DISABLED = ApiErrorOms.SHOP_FBA_MARKETPLACE_DISABLED;
+    public static final ApiError SHOP_AUTHORIZE_CODE_REQUIRED = ApiErrorOms.SHOP_AUTHORIZE_CODE_REQUIRED;
+    public static final ApiError SHOP_AUTHORIZE_FAILED = ApiErrorOms.SHOP_AUTHORIZE_FAILED;
+    public static final ApiError SHOP_TOKEN_FETCH_FAILED = ApiErrorOms.SHOP_TOKEN_FETCH_FAILED;
+    public static final ApiError SHOP_ALREADY_AUTHORIZED = ApiErrorOms.SHOP_ALREADY_AUTHORIZED;
+    public static final ApiError SHOP_LISTING_NOT_FOUND = ApiErrorOms.SHOP_LISTING_NOT_FOUND;
+    public static final ApiError SHOP_AUTHORIZE_ERROR = ApiErrorOms.SHOP_AUTHORIZE_ERROR;
+    public static final ApiError SHOP_WALMART_ID_REQUIRED = ApiErrorOms.SHOP_WALMART_ID_REQUIRED;
+    public static final ApiError SHOP_WALMART_CLIENT_ID_REQUIRED = ApiErrorOms.SHOP_WALMART_CLIENT_ID_REQUIRED;
+    public static final ApiError SHOP_WALMART_CLIENT_SECRET_REQUIRED = ApiErrorOms.SHOP_WALMART_CLIENT_SECRET_REQUIRED;
+    public static final ApiError SHOP_AUTH_REQUIRED = ApiErrorOms.SHOP_AUTH_REQUIRED;
+    public static final ApiError SHOP_EXIST = ApiErrorOms.SHOP_EXIST;
+    public static final ApiError SHOP_COUNTRY_EXIST = ApiErrorOms.SHOP_COUNTRY_EXIST;
+    public static final ApiError SHOP_NOT_FOUND = ApiErrorOms.SHOP_NOT_FOUND;
+    public static final ApiError SHOP_NOT_EXIST_NO_PERMISSION = ApiErrorOms.SHOP_NOT_EXIST_NO_PERMISSION;
+    public static final ApiError SHOP_PARAM_AUTHORIZE_FAILED = ApiErrorOms.SHOP_PARAM_AUTHORIZE_FAILED;
+    public static final ApiError SHOP_DELETE_ONLY_DISABLED = ApiErrorOms.SHOP_DELETE_ONLY_DISABLED;
+    public static final ApiError SHOP_INVOICE_NOT_BIND_COMPANY = ApiErrorOms.SHOP_INVOICE_NOT_BIND_COMPANY;
+    public static final ApiError SHOP_COUNTRY_CODE_REQUIRED = ApiErrorOms.SHOP_COUNTRY_CODE_REQUIRED;
+    public static final ApiError SHOP_TIKTOK_AUTHORIZED_SHOPS_EMPTY = ApiErrorOms.SHOP_TIKTOK_AUTHORIZED_SHOPS_EMPTY;
+    public static final ApiError SHOP_TIKTOK_REGION_NOT_MATCH = ApiErrorOms.SHOP_TIKTOK_REGION_NOT_MATCH;
+    public static final ApiError SO_DELIVERY_DETAIL_SKU_NOT_EXIST = ApiErrorOms.SO_DELIVERY_DETAIL_SKU_NOT_EXIST;
+    public static final ApiError SO_DELIVERY_NOTICE_NOT_EXIST = ApiErrorOms.SO_DELIVERY_NOTICE_NOT_EXIST;
+    public static final ApiError SO_DELIVERY_SALES_ORDER_PUSH_STOCK_APPLY_QTY_EXCEEDS = ApiErrorOms.SO_DELIVERY_SALES_ORDER_PUSH_STOCK_APPLY_QTY_EXCEEDS;
+    public static final ApiError SO_RETURN_PUSH_ALLOWED_SOURCE_SALES_RETURN_RECEIPT_ONLY = ApiErrorOms.SO_RETURN_PUSH_ALLOWED_SOURCE_SALES_RETURN_RECEIPT_ONLY;
+    public static final ApiError SO_CLOSED_PRODUCT_EXISTS_CANNOT_PUSH = ApiErrorOms.SO_CLOSED_PRODUCT_EXISTS_CANNOT_PUSH;
+    public static final ApiError SO_OUTBOUND_NOT_FOUND = ApiErrorOms.SO_OUTBOUND_NOT_FOUND;
+    public static final ApiError SO_RETURN_RECEIPT_ALREADY_PUSHED_REVERSE_FORBIDDEN = ApiErrorOms.SO_RETURN_RECEIPT_ALREADY_PUSHED_REVERSE_FORBIDDEN;
+    public static final ApiError SO_DEMAND_REQ_PUSHED_DELIVERY_PICKLIST_LOCKED = ApiErrorOms.SO_DEMAND_REQ_PUSHED_DELIVERY_PICKLIST_LOCKED;
+    public static final ApiError SO_NOTICE_PUSHED_OUTBOUND_PICKLIST_LOCKED = ApiErrorOms.SO_NOTICE_PUSHED_OUTBOUND_PICKLIST_LOCKED;
+    public static final ApiError SO_PICKLIST_NOT_FOUND_FOR_SO = ApiErrorOms.SO_PICKLIST_NOT_FOUND_FOR_SO;
+    public static final ApiError SO_PICKLIST_EXISTS_FORBID_VOID_DELETE = ApiErrorOms.SO_PICKLIST_EXISTS_FORBID_VOID_DELETE;
+    public static final ApiError SO_OUTBOUND_QTY_EXCEEDS_ORDER = ApiErrorOms.SO_OUTBOUND_QTY_EXCEEDS_ORDER;
+    public static final ApiError SO_DEMAND_REQ_ALREADY_PUSHED_DELIVERY = ApiErrorOms.SO_DEMAND_REQ_ALREADY_PUSHED_DELIVERY;
+    public static final ApiError SO_NOT_APPROVED_PUSH_OUTBOUND_FORBIDDEN = ApiErrorOms.SO_NOT_APPROVED_PUSH_OUTBOUND_FORBIDDEN;
+    public static final ApiError SO_PICKLIST_ALREADY_EXISTS = ApiErrorOms.SO_PICKLIST_ALREADY_EXISTS;
+    public static final ApiError SO_PICKLIST_TOTAL_QTY_ZERO_FORBIDDEN = ApiErrorOms.SO_PICKLIST_TOTAL_QTY_ZERO_FORBIDDEN;
+    public static final ApiError SO_PICKLIST_DETAIL_NOT_FOUND_FOR_SO = ApiErrorOms.SO_PICKLIST_DETAIL_NOT_FOUND_FOR_SO;
+    public static final ApiError SO_SKU_FULLY_ALLOCATED = ApiErrorOms.SO_SKU_FULLY_ALLOCATED;
+    public static final ApiError SO_WAVE_GENERATED_SHORTAGE_AUTO = ApiErrorOms.SO_WAVE_GENERATED_SHORTAGE_AUTO;
+    public static final ApiError SO_ABNORMAL_ORDER_HANDLE_ALLOWED_ONLY = ApiErrorOms.SO_ABNORMAL_ORDER_HANDLE_ALLOWED_ONLY;
+    public static final ApiError SO_ABNORMAL_ORDER_AUTO_DELIVERY_FORBIDDEN = ApiErrorOms.SO_ABNORMAL_ORDER_AUTO_DELIVERY_FORBIDDEN;
+    public static final ApiError SO_ABNORMAL_ORDER_AUTO_DELIVERY_FORBIDDEN_FOR_SO = ApiErrorOms.SO_ABNORMAL_ORDER_AUTO_DELIVERY_FORBIDDEN_FOR_SO;
+    public static final ApiError SO_WAVE_GEN_ALLOWED_PENDING_NON_INTERCEPT = ApiErrorOms.SO_WAVE_GEN_ALLOWED_PENDING_NON_INTERCEPT;
+    public static final ApiError SO_WAVE_NO_AND_SKU_REQUIRED = ApiErrorOms.SO_WAVE_NO_AND_SKU_REQUIRED;
+    public static final ApiError SO_WAVE_EXIST_MANAGED_AND_NORMAL_ORDER = ApiErrorOms.SO_WAVE_EXIST_MANAGED_AND_NORMAL_ORDER;
+    public static final ApiError SO_WAVE_NO_AND_BASKET_REQUIRED = ApiErrorOms.SO_WAVE_NO_AND_BASKET_REQUIRED;
+    public static final ApiError SO_WAVE_NO_REQUIRED = ApiErrorOms.SO_WAVE_NO_REQUIRED;
+    public static final ApiError SO_WAVE_SKU_NOT_FOUND = ApiErrorOms.SO_WAVE_SKU_NOT_FOUND;
+    public static final ApiError SO_WAVE_SAME_WAREHOUSE_REQUIRED = ApiErrorOms.SO_WAVE_SAME_WAREHOUSE_REQUIRED;
+    public static final ApiError SO_IN_AUTO_REPLENISH_PRINT_FORBIDDEN = ApiErrorOms.SO_IN_AUTO_REPLENISH_PRINT_FORBIDDEN;
+    public static final ApiError SO_IN_PICK_OR_SUSPENDED_INTERCEPT_FORBIDDEN = ApiErrorOms.SO_IN_PICK_OR_SUSPENDED_INTERCEPT_FORBIDDEN;
+    public static final ApiError SO_ABNORMAL_ORDER_CANCEL_DELIVERY_INTERCEPT_FAIL = ApiErrorOms.SO_ABNORMAL_ORDER_CANCEL_DELIVERY_INTERCEPT_FAIL;
+    public static final ApiError SO_ABNORMAL_ORDER_CANCEL_DELIVERY_INTERCEPT_FORBIDDEN = ApiErrorOms.SO_ABNORMAL_ORDER_CANCEL_DELIVERY_INTERCEPT_FORBIDDEN;
+    public static final ApiError SO_SKU_NOT_PICKED_CANNOT_ALLOCATE = ApiErrorOms.SO_SKU_NOT_PICKED_CANNOT_ALLOCATE;
+    public static final ApiError SO_NOTICE_PICK_QTY_EXCEEDS_DELIVERY = ApiErrorOms.SO_NOTICE_PICK_QTY_EXCEEDS_DELIVERY;
+    public static final ApiError SO_BUNDLE_PICK_QTY_RATIO_INVALID = ApiErrorOms.SO_BUNDLE_PICK_QTY_RATIO_INVALID;
+    public static final ApiError SO_OUTBOUND_ALREADY_PUSHED = ApiErrorOms.SO_OUTBOUND_ALREADY_PUSHED;
+    public static final ApiError SO_DEMAND_REQ_COMPLETED_PICKLIST_LOCKED = ApiErrorOms.SO_DEMAND_REQ_COMPLETED_PICKLIST_LOCKED;
+    public static final ApiError SO_PICKLIST_GENERATED_TRANSFER_REVERSE_FORBIDDEN = ApiErrorOms.SO_PICKLIST_GENERATED_TRANSFER_REVERSE_FORBIDDEN;
+    public static final ApiError SO_NOTICE_ALREADY_PICKLIST_LOCKED = ApiErrorOms.SO_NOTICE_ALREADY_PICKLIST_LOCKED;
+    public static final ApiError SO_PICKLIST_PUSHED_DELIVERY_WH_MOVE_LOCKED = ApiErrorOms.SO_PICKLIST_PUSHED_DELIVERY_WH_MOVE_LOCKED;
+    public static final ApiError SO_THIRD_PARTY_ORDER_MODIFY_FORBIDDEN = ApiErrorOms.SO_THIRD_PARTY_ORDER_MODIFY_FORBIDDEN;
+    public static final ApiError SO_NOTICE_APPROVED_PICKLIST_GEN_FORBIDDEN = ApiErrorOms.SO_NOTICE_APPROVED_PICKLIST_GEN_FORBIDDEN;
+    public static final ApiError SO_NOTICE_APPROVED_PICKLIST_MODIFY_DELETE_FORBIDDEN = ApiErrorOms.SO_NOTICE_APPROVED_PICKLIST_MODIFY_DELETE_FORBIDDEN;
+    public static final ApiError SO_RETURN_INSTOCK_NOT_GENERATE = ApiErrorOms.SO_RETURN_INSTOCK_NOT_GENERATE;
+    public static final ApiError SO_DELIVERY_STATUS_NOT_SUPPORT_MANUAL_SHIP_FLAG = ApiErrorOms.SO_DELIVERY_STATUS_NOT_SUPPORT_MANUAL_SHIP_FLAG;
+    public static final ApiError SO_DELIVERY_B2C_NOT_EXISTS = ApiErrorOms.SO_DELIVERY_B2C_NOT_EXISTS;
+    public static final ApiError SO_DELIVERY_STATUS_NOT_ALLOW_MANUAL_DELIVERY = ApiErrorOms.SO_DELIVERY_STATUS_NOT_ALLOW_MANUAL_DELIVERY;
+    public static final ApiError SO_DELIVERY_PLATFORM_ERROR_MSG = ApiErrorOms.SO_DELIVERY_PLATFORM_ERROR_MSG;
+    public static final ApiError SO_RETURN_RECEIVE_SKU_NOT_EXIST = ApiErrorOms.SO_RETURN_RECEIVE_SKU_NOT_EXIST;
+    public static final ApiError SO_PUSH_MACHINE = ApiErrorOms.SO_PUSH_MACHINE;
+    public static final ApiError SO_APPROVE_ONLY_CAN_UPLOAD_PACKING = ApiErrorOms.SO_APPROVE_ONLY_CAN_UPLOAD_PACKING;
+    public static final ApiError SO_DELIVERY_ALREADY_PUSHED_NOT_UPDATE_MAPPING = ApiErrorOms.SO_DELIVERY_ALREADY_PUSHED_NOT_UPDATE_MAPPING;
+    public static final ApiError SO_B2C_DELIVERY_ALREADY_EXIST = ApiErrorOms.SO_B2C_DELIVERY_ALREADY_EXIST;
+    public static final ApiError SO_INTERCEPTED_STATUS_NOT_UPDATE = ApiErrorOms.SO_INTERCEPTED_STATUS_NOT_UPDATE;
+    public static final ApiError SO_FULLY_MANAGED_ORDER_NOT_NEED_MANUAL_SHIP = ApiErrorOms.SO_FULLY_MANAGED_ORDER_NOT_NEED_MANUAL_SHIP;
+    public static final ApiError SO_NOT_FULLY_MANAGED_ORDER_NOT_PRINT_SKU_BARCODE = ApiErrorOms.SO_NOT_FULLY_MANAGED_ORDER_NOT_PRINT_SKU_BARCODE;
+    public static final ApiError SO_FULLY_MANAGED_AND_B2C_NOT_PRINT_TOGETHER = ApiErrorOms.SO_FULLY_MANAGED_AND_B2C_NOT_PRINT_TOGETHER;
+    public static final ApiError SO_B2C_DELIVERY_STATUS_NOT_ALLOW_MANUAL_SHIP_FLAG = ApiErrorOms.SO_B2C_DELIVERY_STATUS_NOT_ALLOW_MANUAL_SHIP_FLAG;
+    public static final ApiError SO_MANUAL_SHIP_ALLOWED_APPROVED_PENDING_ONLY = ApiErrorOms.SO_MANUAL_SHIP_ALLOWED_APPROVED_PENDING_ONLY;
+    public static final ApiError SO_DISTRIBUTION_MANUAL_SHIP_ALLOWED = ApiErrorOms.SO_DISTRIBUTION_MANUAL_SHIP_ALLOWED;
+    public static final ApiError SO_STATUS_NOT_WAVE_CANNOT_PRINT_PICKING = ApiErrorOms.SO_STATUS_NOT_WAVE_CANNOT_PRINT_PICKING;
+    public static final ApiError SO_CONTAIN_NON_FULLY_MANAGED_ORDER_NOT_PRINT_BARCODE = ApiErrorOms.SO_CONTAIN_NON_FULLY_MANAGED_ORDER_NOT_PRINT_BARCODE;
+    public static final ApiError SO_DELIVERY_NOTICE_WAREHOUSE_REQUIRED = ApiErrorOms.SO_DELIVERY_NOTICE_WAREHOUSE_REQUIRED;
+    public static final ApiError SO_B2C_SHIPMENT_WAREHOUSE_REQUIRED = ApiErrorOms.SO_B2C_SHIPMENT_WAREHOUSE_REQUIRED;
+    public static final ApiError SO_OUTSTOCK_BILL_COST_NOT_DISAPPROVE = ApiErrorOms.SO_OUTSTOCK_BILL_COST_NOT_DISAPPROVE;
+    public static final ApiError SO_OUTBOUND_RECORD_NOT_FOUND = ApiErrorOms.SO_OUTBOUND_RECORD_NOT_FOUND;
+    public static final ApiError SO_DELIVERY_NOTICE_RECORD_NOT_FOUND = ApiErrorOms.SO_DELIVERY_NOTICE_RECORD_NOT_FOUND;
+    public static final ApiError SO_B2C_DELIVERY_FINISH_PRINT_ONLY = ApiErrorOms.SO_B2C_DELIVERY_FINISH_PRINT_ONLY;
+    public static final ApiError SO_B2C_DELIVERY_NOT_FINISH_PRINT_ONLY = ApiErrorOms.SO_B2C_DELIVERY_NOT_FINISH_PRINT_ONLY;
+    public static final ApiError SO_B2B_ORDER_PACK_ONLY = ApiErrorOms.SO_B2B_ORDER_PACK_ONLY;
+    public static final ApiError SO_UNPICKED_QUANTITY_SHORTAGE = ApiErrorOms.SO_UNPICKED_QUANTITY_SHORTAGE;
+    public static final ApiError SO_DELIVERY_NOTICE_DETAIL_NOT_EXIST = ApiErrorOms.SO_DELIVERY_NOTICE_DETAIL_NOT_EXIST;
+    public static final ApiError SO_DETAIL_NOT_EXIST = ApiErrorOms.SO_DETAIL_NOT_EXIST;
+    public static final ApiError SO_OUTBOUND_B2B_REQUIRED = ApiErrorOms.SO_OUTBOUND_B2B_REQUIRED;
+    public static final ApiError SO_DELIVERY_REQUIRED_PENDING_NOT_APPROVED = ApiErrorOms.SO_DELIVERY_REQUIRED_PENDING_NOT_APPROVED;
+    public static final ApiError SO_TRANSFER_NOT_RETRY_OUTSTOCK = ApiErrorOms.SO_TRANSFER_NOT_RETRY_OUTSTOCK;
+    public static final ApiError SO_OUTSTOCK_UPDATE_ALLOWED_WAIT_NOTIFY_ONLY = ApiErrorOms.SO_OUTSTOCK_UPDATE_ALLOWED_WAIT_NOTIFY_ONLY;
+    public static final ApiError SO_OUTSTOCK_PUSH_ALLOWED_FLAG_ONLY = ApiErrorOms.SO_OUTSTOCK_PUSH_ALLOWED_FLAG_ONLY;
+    public static final ApiError SO_NOT_FOUND = ApiErrorOms.SO_NOT_FOUND;
+    public static final ApiError SO_OUTBOUND_PUSH_REVERSE_FORBIDDEN = ApiErrorOms.SO_OUTBOUND_PUSH_REVERSE_FORBIDDEN;
+    public static final ApiError SO_DELIVERY_RETURN_QTY_EXCEEDS_OUTBOUND = ApiErrorOms.SO_DELIVERY_RETURN_QTY_EXCEEDS_OUTBOUND;
+    public static final ApiError SO_DELIVERY_QTY_EXCEEDS_SALES = ApiErrorOms.SO_DELIVERY_QTY_EXCEEDS_SALES;
+    public static final ApiError SO_DELIVERY_QTY_EXCEEDS_FROZEN = ApiErrorOms.SO_DELIVERY_QTY_EXCEEDS_FROZEN;
+    public static final ApiError SO_DELIVERY_RETURN_NOTICE_PUSH_REVERSE_FORBIDDEN = ApiErrorOms.SO_DELIVERY_RETURN_NOTICE_PUSH_REVERSE_FORBIDDEN;
+    public static final ApiError SO_DELIVERY_RETURN_SIGN_PUSH_REVERSE_FORBIDDEN = ApiErrorOms.SO_DELIVERY_RETURN_SIGN_PUSH_REVERSE_FORBIDDEN;
+    public static final ApiError SO_DELIVERY_RETURN_ORDER_APPROVED_REQUIRED_NOTICE = ApiErrorOms.SO_DELIVERY_RETURN_ORDER_APPROVED_REQUIRED_NOTICE;
+    public static final ApiError SO_DETAIL_NOT_FOUND = ApiErrorOms.SO_DETAIL_NOT_FOUND;
+    public static final ApiError SO_DELETE_FORBIDDEN = ApiErrorOms.SO_DELETE_FORBIDDEN;
+    public static final ApiError SO_DELIVERY_RETURN_SIGN_QTY_EXCEEDS = ApiErrorOms.SO_DELIVERY_RETURN_SIGN_QTY_EXCEEDS;
+    public static final ApiError SO_DELIVERY_RETURN_NOTICE_APPROVED_REQUIRED_PUSH = ApiErrorOms.SO_DELIVERY_RETURN_NOTICE_APPROVED_REQUIRED_PUSH;
+    public static final ApiError SO_EXPORT_CONTRACT_INVOICE_ALLOWED = ApiErrorOms.SO_EXPORT_CONTRACT_INVOICE_ALLOWED;
+    public static final ApiError SO_DELIVERY_RETURN_ORDER_SKU_NOT_FOUND = ApiErrorOms.SO_DELIVERY_RETURN_ORDER_SKU_NOT_FOUND;
+    public static final ApiError SO_DELIVERY_RETURN_ORDER_QTY_EXCEEDS = ApiErrorOms.SO_DELIVERY_RETURN_ORDER_QTY_EXCEEDS;
+    public static final ApiError SO_NOT_APPROVED_CANNOT_PUSH_STOCKREQ = ApiErrorOms.SO_NOT_APPROVED_CANNOT_PUSH_STOCKREQ;
+    public static final ApiError SO_DELIVERY_RETURN_ORDER_INBOUND_QTY_EXCEEDS = ApiErrorOms.SO_DELIVERY_RETURN_ORDER_INBOUND_QTY_EXCEEDS;
+    public static final ApiError SO_DELIVERY_QTY_GT_REQUIRED_QTY = ApiErrorOms.SO_DELIVERY_QTY_GT_REQUIRED_QTY;
+    public static final ApiError SO_DELIVERY_QTY_GT_AVAILABLE_QTY = ApiErrorOms.SO_DELIVERY_QTY_GT_AVAILABLE_QTY;
+    public static final ApiError SO_DELIVERY_OUTBOUND_DETAIL_REQUIRED = ApiErrorOms.SO_DELIVERY_OUTBOUND_DETAIL_REQUIRED;
+    public static final ApiError SO_DELIVERY_QTY_GT_STOCK = ApiErrorOms.SO_DELIVERY_QTY_GT_STOCK;
+    public static final ApiError SO_DELIVERY_RETURN_SIGN_APPROVED_REQUIRED_PUSH_INBOUND = ApiErrorOms.SO_DELIVERY_RETURN_SIGN_APPROVED_REQUIRED_PUSH_INBOUND;
+    public static final ApiError SO_CHANGE_APPROVED_REQUIRED = ApiErrorOms.SO_CHANGE_APPROVED_REQUIRED;
+    public static final ApiError SO_CHANGE_NOT_FOUND = ApiErrorOms.SO_CHANGE_NOT_FOUND;
+    public static final ApiError SO_CHANGE_DETAIL_NOT_FOUND = ApiErrorOms.SO_CHANGE_DETAIL_NOT_FOUND;
+    public static final ApiError SO_ASSOCIATED_DOC_DELETE_FORBIDDEN = ApiErrorOms.SO_ASSOCIATED_DOC_DELETE_FORBIDDEN;
+    public static final ApiError SO_CHANGE_CONFLICT = ApiErrorOms.SO_CHANGE_CONFLICT;
+    public static final ApiError SO_ASSOCIATED_DOC_REVERSE_FORBIDDEN = ApiErrorOms.SO_ASSOCIATED_DOC_REVERSE_FORBIDDEN;
+    public static final ApiError SO_CHANGE_IN_PROGRESS = ApiErrorOms.SO_CHANGE_IN_PROGRESS;
+    public static final ApiError SO_APPROVED_REQUIRED_PUSH = ApiErrorOms.SO_APPROVED_REQUIRED_PUSH;
+    public static final ApiError SO_NOT_VOID_REQUIRED_PUSH = ApiErrorOms.SO_NOT_VOID_REQUIRED_PUSH;
+    public static final ApiError SO_DELIVERY_RETURN_SIGN_TOTAL_QTY_EXCEEDS = ApiErrorOms.SO_DELIVERY_RETURN_SIGN_TOTAL_QTY_EXCEEDS;
+    public static final ApiError SO_CHANGE_IN_REVERSE_FORBIDDEN = ApiErrorOms.SO_CHANGE_IN_REVERSE_FORBIDDEN;
+    public static final ApiError SO_CHANGE_QTY_LT_DELIVERY_NOTICE = ApiErrorOms.SO_CHANGE_QTY_LT_DELIVERY_NOTICE;
+    public static final ApiError SO_B2C_DELIVERY_K3_CLOUD_OUTBOUND_WAREHOUSE_NOT_FOUND = ApiErrorOms.SO_B2C_DELIVERY_K3_CLOUD_OUTBOUND_WAREHOUSE_NOT_FOUND;
+    public static final ApiError SO_B2C_DELIVERY_K3_CLOUD_RETURN_WAREHOUSE_NOT_FOUND = ApiErrorOms.SO_B2C_DELIVERY_K3_CLOUD_RETURN_WAREHOUSE_NOT_FOUND;
+    public static final ApiError SO_B2C_DELIVERY_K3_CLOUD_RETURN_SKU_NOT_FOUND = ApiErrorOms.SO_B2C_DELIVERY_K3_CLOUD_RETURN_SKU_NOT_FOUND;
+    public static final ApiError SO_DEMAND_DATE_GT_ORDER_DATE = ApiErrorOms.SO_DEMAND_DATE_GT_ORDER_DATE;
+    public static final ApiError SO_B2C_NOT_FOUND = ApiErrorOms.SO_B2C_NOT_FOUND;
+    public static final ApiError SO_B2C_WILDBERRIES_NOT_ALLOWED = ApiErrorOms.SO_B2C_WILDBERRIES_NOT_ALLOWED;
+    public static final ApiError SO_B2C_PLATFORM_SHOP_REQUIRED = ApiErrorOms.SO_B2C_PLATFORM_SHOP_REQUIRED;
+    public static final ApiError SO_B2C_LOGISTICS_NOT_FOUND = ApiErrorOms.SO_B2C_LOGISTICS_NOT_FOUND;
+    public static final ApiError SO_B2C_RECEIVER_NOT_FOUND = ApiErrorOms.SO_B2C_RECEIVER_NOT_FOUND;
+    public static final ApiError SO_B2C_EXTEND_NOT_FOUND = ApiErrorOms.SO_B2C_EXTEND_NOT_FOUND;
+    public static final ApiError SO_B2C_DETAIL_NOT_FOUND = ApiErrorOms.SO_B2C_DETAIL_NOT_FOUND;
+    public static final ApiError SO_B2C_DETAIL_IMPORT_FAILED = ApiErrorOms.SO_B2C_DETAIL_IMPORT_FAILED;
+    public static final ApiError SO_B2C_DETAIL_SAVE_OR_UPDATE_FAILED = ApiErrorOms.SO_B2C_DETAIL_SAVE_OR_UPDATE_FAILED;
+    public static final ApiError SO_B2C_DELIVERY_WAREHOUSE_CONFLICT = ApiErrorOms.SO_B2C_DELIVERY_WAREHOUSE_CONFLICT;
+    public static final ApiError SO_B2C_SKU_INVENTORY_NOT_FOUND = ApiErrorOms.SO_B2C_SKU_INVENTORY_NOT_FOUND;
+    public static final ApiError SO_B2C_MERGE_PLATFORM_CONFLICT = ApiErrorOms.SO_B2C_MERGE_PLATFORM_CONFLICT;
+    public static final ApiError SO_B2C_MERGE_SHOP_CONFLICT = ApiErrorOms.SO_B2C_MERGE_SHOP_CONFLICT;
+    public static final ApiError SO_B2C_MERGE_CURRENCY_CONFLICT = ApiErrorOms.SO_B2C_MERGE_CURRENCY_CONFLICT;
+    public static final ApiError SO_B2C_MERGE_LOGISTICS_METHOD_CONFLICT = ApiErrorOms.SO_B2C_MERGE_LOGISTICS_METHOD_CONFLICT;
+    public static final ApiError SO_B2C_MERGE_BUYER_CONFLICT = ApiErrorOms.SO_B2C_MERGE_BUYER_CONFLICT;
+    public static final ApiError SO_B2C_MERGE_RECEIVER_CONFLICT = ApiErrorOms.SO_B2C_MERGE_RECEIVER_CONFLICT;
+    public static final ApiError SO_B2C_MERGE_ADDRESS_CONFLICT = ApiErrorOms.SO_B2C_MERGE_ADDRESS_CONFLICT;
+    public static final ApiError SO_B2C_MERGE_WAREHOUSE_CONFLICT = ApiErrorOms.SO_B2C_MERGE_WAREHOUSE_CONFLICT;
+    public static final ApiError SO_B2C_CANCEL_MERGE_NOT_SUPPORTED = ApiErrorOms.SO_B2C_CANCEL_MERGE_NOT_SUPPORTED;
+    public static final ApiError SO_B2C_MERGE_NOT_SPLIT = ApiErrorOms.SO_B2C_MERGE_NOT_SPLIT;
+    public static final ApiError SO_B2C_SPLIT_QTY_EXCEEDS = ApiErrorOms.SO_B2C_SPLIT_QTY_EXCEEDS;
+    public static final ApiError SO_B2C_NOT_SPLIT_ORDER = ApiErrorOms.SO_B2C_NOT_SPLIT_ORDER;
+    public static final ApiError SO_B2C_SPLIT_ORDER_REQUIRED = ApiErrorOms.SO_B2C_SPLIT_ORDER_REQUIRED;
+    public static final ApiError SO_B2C_CATEGORY_NOT_FOUND = ApiErrorOms.SO_B2C_CATEGORY_NOT_FOUND;
+    public static final ApiError SO_B2C_CANCEL_NOT_SUPPORTED = ApiErrorOms.SO_B2C_CANCEL_NOT_SUPPORTED;
+    public static final ApiError SO_B2C_REVERSE_VOID_FORBIDDEN = ApiErrorOms.SO_B2C_REVERSE_VOID_FORBIDDEN;
+    public static final ApiError SO_B2C_MERGE_SIZE_REQUIRED = ApiErrorOms.SO_B2C_MERGE_SIZE_REQUIRED;
+    public static final ApiError SO_B2C_CHILD_NOT_FOUND = ApiErrorOms.SO_B2C_CHILD_NOT_FOUND;
+    public static final ApiError SO_B2C_LOGISTICS_CODE_ONLY_DISTRIBUTION = ApiErrorOms.SO_B2C_LOGISTICS_CODE_ONLY_DISTRIBUTION;
+    public static final ApiError SO_B2C_SUBMIT_DELIVERY_NOT_ALLOWED = ApiErrorOms.SO_B2C_SUBMIT_DELIVERY_NOT_ALLOWED;
+    public static final ApiError SO_B2C_DISTRIBUTION_STATUS_REQUIRED = ApiErrorOms.SO_B2C_DISTRIBUTION_STATUS_REQUIRED;
+    public static final ApiError SO_B2C_CANCEL_MERGE_STATUS_LIMIT = ApiErrorOms.SO_B2C_CANCEL_MERGE_STATUS_LIMIT;
+    public static final ApiError SO_B2C_LOGISTICS_METHOD_NOT_FOUND = ApiErrorOms.SO_B2C_LOGISTICS_METHOD_NOT_FOUND;
+    public static final ApiError SO_B2C_CUSTOMER_NOT_FOUND = ApiErrorOms.SO_B2C_CUSTOMER_NOT_FOUND;
+    public static final ApiError SO_B2C_FINANCE_NOT_FOUND = ApiErrorOms.SO_B2C_FINANCE_NOT_FOUND;
+    public static final ApiError SO_B2C_NOT_NEED_MERGE = ApiErrorOms.SO_B2C_NOT_NEED_MERGE;
+    public static final ApiError SO_NOT_APPROVED_PUSH_FORBIDDEN = ApiErrorOms.SO_NOT_APPROVED_PUSH_FORBIDDEN;
+    public static final ApiError SO_B2C_PLATFORM_ORDER_VOIDED = ApiErrorOms.SO_B2C_PLATFORM_ORDER_VOIDED;
+    public static final ApiError SO_B2C_ORDER_VOIDED = ApiErrorOms.SO_B2C_ORDER_VOIDED;
+    public static final ApiError SO_B2C_LOGISTICS_CHANNEL_REQUIRED = ApiErrorOms.SO_B2C_LOGISTICS_CHANNEL_REQUIRED;
+    public static final ApiError SO_B2C_LOGISTICS_CHANNEL_AND_NO_REQUIRED = ApiErrorOms.SO_B2C_LOGISTICS_CHANNEL_AND_NO_REQUIRED;
+    public static final ApiError SO_B2C_UPDATE_CATEGORY_FORBIDDEN = ApiErrorOms.SO_B2C_UPDATE_CATEGORY_FORBIDDEN;
+    public static final ApiError SO_B2C_UPDATE_REMARK_FORBIDDEN = ApiErrorOms.SO_B2C_UPDATE_REMARK_FORBIDDEN;
+    public static final ApiError SO_B2C_NOT_APPROVED_DISTRIBUTION_FORBIDDEN = ApiErrorOms.SO_B2C_NOT_APPROVED_DISTRIBUTION_FORBIDDEN;
+    public static final ApiError SO_B2C_SUBMIT_FORBIDDEN_WHEN_FROZEN_OR_VOIDED = ApiErrorOms.SO_B2C_SUBMIT_FORBIDDEN_WHEN_FROZEN_OR_VOIDED;
+    public static final ApiError SO_B2C_SPLIT_FORBIDDEN_BY_STATUS = ApiErrorOms.SO_B2C_SPLIT_FORBIDDEN_BY_STATUS;
+    public static final ApiError SO_B2C_MERGE_FORBIDDEN_BY_STATUS = ApiErrorOms.SO_B2C_MERGE_FORBIDDEN_BY_STATUS;
+    public static final ApiError SO_B2C_SHOPEE_SPLIT_FORBIDDEN = ApiErrorOms.SO_B2C_SHOPEE_SPLIT_FORBIDDEN;
+    public static final ApiError SO_B2C_MERCADO_SPLIT_FORBIDDEN = ApiErrorOms.SO_B2C_MERCADO_SPLIT_FORBIDDEN;
+    public static final ApiError SO_B2C_MERGE_FBA_FORBIDDEN = ApiErrorOms.SO_B2C_MERGE_FBA_FORBIDDEN;
+    public static final ApiError SO_B2C_MERGE_CAINIAO_FORBIDDEN = ApiErrorOms.SO_B2C_MERGE_CAINIAO_FORBIDDEN;
+    public static final ApiError SO_B2C_MERGE_TAX_ORDER_FORBIDDEN = ApiErrorOms.SO_B2C_MERGE_TAX_ORDER_FORBIDDEN;
+    public static final ApiError SO_B2C_SHOPEE_MERGE_FORBIDDEN = ApiErrorOms.SO_B2C_SHOPEE_MERGE_FORBIDDEN;
+    public static final ApiError SO_B2C_MERCADO_MERGE_FORBIDDEN = ApiErrorOms.SO_B2C_MERCADO_MERGE_FORBIDDEN;
+    public static final ApiError SO_B2C_TIKTOK_MERGE_FORBIDDEN = ApiErrorOms.SO_B2C_TIKTOK_MERGE_FORBIDDEN;
+    public static final ApiError SO_B2C_PAYMENT_REQUIRED = ApiErrorOms.SO_B2C_PAYMENT_REQUIRED;
+    public static final ApiError SO_DELIVERY_WAREHOUSE_NOT_FOUND = ApiErrorOms.SO_DELIVERY_WAREHOUSE_NOT_FOUND;
+    public static final ApiError SO_B2C_ORDER_FETCH_FAILED = ApiErrorOms.SO_B2C_ORDER_FETCH_FAILED;
+    public static final ApiError SO_B2C_WAREHOUSE_NOT_FOUND = ApiErrorOms.SO_B2C_WAREHOUSE_NOT_FOUND;
+    public static final ApiError SO_B2C_ALREADY_MERGED_OR_SPLIT = ApiErrorOms.SO_B2C_ALREADY_MERGED_OR_SPLIT;
+    public static final ApiError SO_DELIVERY_STATUS_REQUIRED_FOR_INTERCEPT = ApiErrorOms.SO_DELIVERY_STATUS_REQUIRED_FOR_INTERCEPT;
+    public static final ApiError SO_DELIVERY_ALREADY_INTERCEPTED = ApiErrorOms.SO_DELIVERY_ALREADY_INTERCEPTED;
+    public static final ApiError SO_CHANGE_ALREADY_TERMINATED = ApiErrorOms.SO_CHANGE_ALREADY_TERMINATED;
+    public static final ApiError SO_PUSH_MACHINE_DATA_NOT_FOUND = ApiErrorOms.SO_PUSH_MACHINE_DATA_NOT_FOUND;
+    public static final ApiError SO_B2C_REVERSE_APPROVE_STATUS_LIMIT = ApiErrorOms.SO_B2C_REVERSE_APPROVE_STATUS_LIMIT;
+    public static final ApiError SO_B2C_APPROVED_REQUIRED_FOR_DELIVERY = ApiErrorOms.SO_B2C_APPROVED_REQUIRED_FOR_DELIVERY;
+    public static final ApiError SO_OUTBOUND_EXISTS_MAPPING_UPDATE_FORBIDDEN = ApiErrorOms.SO_OUTBOUND_EXISTS_MAPPING_UPDATE_FORBIDDEN;
+    public static final ApiError SO_DELIVERY_EXISTS_MAPPING_UPDATE_FORBIDDEN = ApiErrorOms.SO_DELIVERY_EXISTS_MAPPING_UPDATE_FORBIDDEN;
+    public static final ApiError SO_B2C_SOURCE_ONLY_MAPPING_UPDATE_ALLOWED = ApiErrorOms.SO_B2C_SOURCE_ONLY_MAPPING_UPDATE_ALLOWED;
+    public static final ApiError SO_B2C_DISTRIBUTION_DECLARE_STATUS_INVALID = ApiErrorOms.SO_B2C_DISTRIBUTION_DECLARE_STATUS_INVALID;
+    public static final ApiError SO_B2C_DECLARE_ALREADY_EXISTS = ApiErrorOms.SO_B2C_DECLARE_ALREADY_EXISTS;
+    public static final ApiError SO_B2C_DECLARE_INFO_NOT_FOUND = ApiErrorOms.SO_B2C_DECLARE_INFO_NOT_FOUND;
+    public static final ApiError SO_B2C_TIKTOK_SPLIT_FORBIDDEN_WITH_REASON = ApiErrorOms.SO_B2C_TIKTOK_SPLIT_FORBIDDEN_WITH_REASON;
+    public static final ApiError SO_B2C_TIKTOK_SPLIT_SKU_FORBIDDEN = ApiErrorOms.SO_B2C_TIKTOK_SPLIT_SKU_FORBIDDEN;
+    public static final ApiError SO_B2C_TIKTOK_SPLIT_FAILED = ApiErrorOms.SO_B2C_TIKTOK_SPLIT_FAILED;
+    public static final ApiError SO_B2C_SPLIT_BY_WAREHOUSE_FORBIDDEN = ApiErrorOms.SO_B2C_SPLIT_BY_WAREHOUSE_FORBIDDEN;
+    public static final ApiError SO_B2C_LOGISTICS_PLATFORM_REQUIRED = ApiErrorOms.SO_B2C_LOGISTICS_PLATFORM_REQUIRED;
+    public static final ApiError SO_B2C_MULTI_CHANNEL_FORBIDDEN = ApiErrorOms.SO_B2C_MULTI_CHANNEL_FORBIDDEN;
+    public static final ApiError SO_B2C_SPLIT_KOL_FORBIDDEN = ApiErrorOms.SO_B2C_SPLIT_KOL_FORBIDDEN;
+    public static final ApiError SO_B2C_MAGALU_SPLIT_FORBIDDEN = ApiErrorOms.SO_B2C_MAGALU_SPLIT_FORBIDDEN;
+    public static final ApiError SO_B2C_MAGALU_MERGE_FORBIDDEN = ApiErrorOms.SO_B2C_MAGALU_MERGE_FORBIDDEN;
+    public static final ApiError SO_DETAIL_SKU_ALL_EMPTY_FORBIDDEN = ApiErrorOms.SO_DETAIL_SKU_ALL_EMPTY_FORBIDDEN;
+    public static final ApiError SO_REPLACE_SKU_STATUS_INVALID = ApiErrorOms.SO_REPLACE_SKU_STATUS_INVALID;
+    public static final ApiError SO_B2B_SALESMAN_CHANGE = ApiErrorOms.SO_B2B_SALESMAN_CHANGE;
+    public static final ApiError SO_REFUND_ORDER_DETAIL = ApiErrorOms.SO_REFUND_ORDER_DETAIL;
+    public static final ApiError SO_PLATFORM_ORDER_MERGE_TOO_LONG = ApiErrorOms.SO_PLATFORM_ORDER_MERGE_TOO_LONG;
+    public static final ApiError SO_DELIVERY_AUTO_SUBMIT_OPTION_LIMIT = ApiErrorOms.SO_DELIVERY_AUTO_SUBMIT_OPTION_LIMIT;
+    public static final ApiError SO_OUTBOUND_ALREADY_GENERATED_TERMINATE_FORBIDDEN = ApiErrorOms.SO_OUTBOUND_ALREADY_GENERATED_TERMINATE_FORBIDDEN;
+    public static final ApiError SO_PICKLIST_NOT_PROCESSED_FORBIDDEN = ApiErrorOms.SO_PICKLIST_NOT_PROCESSED_FORBIDDEN;
+    public static final ApiError SO_RETURN_NOTICE_SKU_NOT_FOUND = ApiErrorOms.SO_RETURN_NOTICE_SKU_NOT_FOUND;
+    public static final ApiError SO_RETURN_SIGN_SKU_NOT_FOUND = ApiErrorOms.SO_RETURN_SIGN_SKU_NOT_FOUND;
+    public static final ApiError SO_RETURN_QTY_EXCEEDS_EXPECTED = ApiErrorOms.SO_RETURN_QTY_EXCEEDS_EXPECTED;
+    public static final ApiError SO_RETURN_NOTICE_DETAIL_REQUIRED = ApiErrorOms.SO_RETURN_NOTICE_DETAIL_REQUIRED;
+    public static final ApiError SO_RETURN_SIGN_DETAIL_REQUIRED = ApiErrorOms.SO_RETURN_SIGN_DETAIL_REQUIRED;
+    public static final ApiError SO_RETURN_INBOUND_DETAIL_REQUIRED = ApiErrorOms.SO_RETURN_INBOUND_DETAIL_REQUIRED;
+    public static final ApiError SO_PRICE_EXPIRE_BEFORE_EFFECTIVE = ApiErrorOms.SO_PRICE_EXPIRE_BEFORE_EFFECTIVE;
+    public static final ApiError SO_PRICE_DATE_RANGE_OVERLAP = ApiErrorOms.SO_PRICE_DATE_RANGE_OVERLAP;
+    public static final ApiError SO_PRICE_NOT_FOUND = ApiErrorOms.SO_PRICE_NOT_FOUND;
+    public static final ApiError SO_PRICE_DETAIL_NOT_FOUND = ApiErrorOms.SO_PRICE_DETAIL_NOT_FOUND;
+    public static final ApiError SO_ORG_NOT_REPEAT = ApiErrorOms.SO_ORG_NOT_REPEAT;
+    public static final ApiError SO_PRICE_INTERVAL_INVALID = ApiErrorOms.SO_PRICE_INTERVAL_INVALID;
+    public static final ApiError SO_ALREADY_REF_DOWNSTREAM_BILL_FORBIDDEN = ApiErrorOms.SO_ALREADY_REF_DOWNSTREAM_BILL_FORBIDDEN;
+    public static final ApiError SO_RETURN_DETAIL_SKU_NOT_FOUND = ApiErrorOms.SO_RETURN_DETAIL_SKU_NOT_FOUND;
+    public static final ApiError SO_B2C_ADD_GIFT_STATUS_FORBIDDEN = ApiErrorOms.SO_B2C_ADD_GIFT_STATUS_FORBIDDEN;
+    public static final ApiError SO_WDT_SALES_RAW_TRADE_PUSHSELF = ApiErrorOms.SO_WDT_SALES_RAW_TRADE_PUSHSELF;
+    public static final ApiError SO_LOGISTICS_WAYBILL_NOT_OBTAINED = ApiErrorOms.SO_LOGISTICS_WAYBILL_NOT_OBTAINED;
+    public static final ApiError SO_THIRD_DELIVERY_INTERCEPT_ONLY_WAIT_SHIPPED = ApiErrorOms.SO_THIRD_DELIVERY_INTERCEPT_ONLY_WAIT_SHIPPED;
+    public static final ApiError SO_THIRD_DELIVERY_MANUAL_ONLY_B2B_DISABLED = ApiErrorOms.SO_THIRD_DELIVERY_MANUAL_ONLY_B2B_DISABLED;
+    public static final ApiError SO_THIRD_DELIVERY_ONLY_WAIT_SHIPPED = ApiErrorOms.SO_THIRD_DELIVERY_ONLY_WAIT_SHIPPED;
+    public static final ApiError SO_THIRD_DELIVERY_GENERATE_OUTSTOCK_ONLY_SHIPPED = ApiErrorOms.SO_THIRD_DELIVERY_GENERATE_OUTSTOCK_ONLY_SHIPPED;
+    public static final ApiError SO_THIRD_DELIVERY_DELETE_ONLY_FAILED_OR_CANCELED = ApiErrorOms.SO_THIRD_DELIVERY_DELETE_ONLY_FAILED_OR_CANCELED;
+    public static final ApiError SO_B2C_GET_EXCHANGE_RATE_FAILED = ApiErrorOms.SO_B2C_GET_EXCHANGE_RATE_FAILED;
+    public static final ApiError SO_RETURN_EXCHANGE_RATE_REQUIRED = ApiErrorOms.SO_RETURN_EXCHANGE_RATE_REQUIRED;
+    public static final ApiError SO_RETURN_RECEIVE_QTY_INVALID = ApiErrorOms.SO_RETURN_RECEIVE_QTY_INVALID;
+    public static final ApiError SO_RETURN_RECEIVE_AMOUNT_MISSING = ApiErrorOms.SO_RETURN_RECEIVE_AMOUNT_MISSING;
+    public static final ApiError SO_RETURN_INSTOCK_IMPORT_DUPLICATE_CODE = ApiErrorOms.SO_RETURN_INSTOCK_IMPORT_DUPLICATE_CODE;
+    public static final ApiError SO_RETURN_INSTOCK_IMPORT_BATCH_ABORT = ApiErrorOms.SO_RETURN_INSTOCK_IMPORT_BATCH_ABORT;
+    public static final ApiError SO_RETURN_INSTOCK_IMPORT_PERSIST_FAILED = ApiErrorOms.SO_RETURN_INSTOCK_IMPORT_PERSIST_FAILED;
+    public static final ApiError SO_RETURN_INSTOCK_IMPORT_CODE_NOT_FOUND = ApiErrorOms.SO_RETURN_INSTOCK_IMPORT_CODE_NOT_FOUND;
+    public static final ApiError SO_RETURN_INSTOCK_IMPORT_UPDATE_STATUS_INVALID = ApiErrorOms.SO_RETURN_INSTOCK_IMPORT_UPDATE_STATUS_INVALID;
+    public static final ApiError SO_RETURN_INSTOCK_IMPORT_SOURCE_TYPE_FORBIDDEN = ApiErrorOms.SO_RETURN_INSTOCK_IMPORT_SOURCE_TYPE_FORBIDDEN;
+    public static final ApiError SO_RETURN_INSTOCK_IMPORT_CUSTOMER_NOT_FOUND = ApiErrorOms.SO_RETURN_INSTOCK_IMPORT_CUSTOMER_NOT_FOUND;
+    public static final ApiError SO_RETURN_INSTOCK_IMPORT_CUSTOMER_CHANGE_FORBIDDEN = ApiErrorOms.SO_RETURN_INSTOCK_IMPORT_CUSTOMER_CHANGE_FORBIDDEN;
+    public static final ApiError SO_RETURN_INSTOCK_IMPORT_INVENTORY_ORG_NOT_FOUND = ApiErrorOms.SO_RETURN_INSTOCK_IMPORT_INVENTORY_ORG_NOT_FOUND;
+    public static final ApiError SO_RETURN_INSTOCK_IMPORT_CURRENCY_NOT_FOUND = ApiErrorOms.SO_RETURN_INSTOCK_IMPORT_CURRENCY_NOT_FOUND;
+    public static final ApiError SO_RETURN_INSTOCK_IMPORT_BILL_TYPE_NOT_FOUND = ApiErrorOms.SO_RETURN_INSTOCK_IMPORT_BILL_TYPE_NOT_FOUND;
+    public static final ApiError SO_RETURN_INSTOCK_IMPORT_BILL_DATE_INVALID = ApiErrorOms.SO_RETURN_INSTOCK_IMPORT_BILL_DATE_INVALID;
+    public static final ApiError SO_RETURN_INSTOCK_IMPORT_RETURN_QTY_INVALID = ApiErrorOms.SO_RETURN_INSTOCK_IMPORT_RETURN_QTY_INVALID;
+    public static final ApiError SO_RETURN_INSTOCK_IMPORT_ADD_CUSTOMER_NOT_FOUND = ApiErrorOms.SO_RETURN_INSTOCK_IMPORT_ADD_CUSTOMER_NOT_FOUND;
+    public static final ApiError SO_RETURN_INSTOCK_IMPORT_ADD_CURRENCY_NOT_FOUND = ApiErrorOms.SO_RETURN_INSTOCK_IMPORT_ADD_CURRENCY_NOT_FOUND;
+    public static final ApiError SO_RETURN_INSTOCK_IMPORT_ADD_SKU_NOT_FOUND = ApiErrorOms.SO_RETURN_INSTOCK_IMPORT_ADD_SKU_NOT_FOUND;
+    public static final ApiError SO_RETURN_INSTOCK_IMPORT_ADD_WAREHOUSE_NOT_FOUND = ApiErrorOms.SO_RETURN_INSTOCK_IMPORT_ADD_WAREHOUSE_NOT_FOUND;
+    public static final ApiError SO_RETURN_INSTOCK_IMPORT_ADD_WAREHOUSE_LOCATION_NOT_FOUND = ApiErrorOms.SO_RETURN_INSTOCK_IMPORT_ADD_WAREHOUSE_LOCATION_NOT_FOUND;
+    public static final ApiError SO_RETURN_INSTOCK_IMPORT_TASK_CREATE_FAILED = ApiErrorOms.SO_RETURN_INSTOCK_IMPORT_TASK_CREATE_FAILED;
+    public static final ApiError SO_RETURN_INSTOCK_IMPORT_TASK_FAILED = ApiErrorOms.SO_RETURN_INSTOCK_IMPORT_TASK_FAILED;
+    public static final ApiError SO_RETURN_INSTOCK_IMPORT_CUSTOMER_DUPLICATE = ApiErrorOms.SO_RETURN_INSTOCK_IMPORT_CUSTOMER_DUPLICATE;
+    public static final ApiError SO_RETURN_INSTOCK_IMPORT_SKU_OCCUPY_FAILED = ApiErrorOms.SO_RETURN_INSTOCK_IMPORT_SKU_OCCUPY_FAILED;
+    public static final ApiError SO_B2C_NOT_OUTBOUND_DETAIL_WAREHOUSE_UPDATE_FAILED = ApiErrorOms.SO_B2C_NOT_OUTBOUND_DETAIL_WAREHOUSE_UPDATE_FAILED;
+    public static final ApiError SO_B2C_NOT_OUTBOUND_LOGISTICS_UPDATE_FAILED = ApiErrorOms.SO_B2C_NOT_OUTBOUND_LOGISTICS_UPDATE_FAILED;
+    public static final ApiError SO_B2C_NOT_OUTBOUND_STATUS_UPDATE_FAILED = ApiErrorOms.SO_B2C_NOT_OUTBOUND_STATUS_UPDATE_FAILED;
+    public static final ApiError SO_CHANGE_DELETE_ALL_DETAIL_FORBIDDEN = ApiErrorOms.SO_CHANGE_DELETE_ALL_DETAIL_FORBIDDEN;
+    public static final ApiError SO_OUTSTOCK_AMOUNT_MISMATCH_SUBMIT = ApiErrorOms.SO_OUTSTOCK_AMOUNT_MISMATCH_SUBMIT;
+    public static final ApiError SO_OUTSTOCK_AMOUNT_MISMATCH_APPROVE = ApiErrorOms.SO_OUTSTOCK_AMOUNT_MISMATCH_APPROVE;
+    public static final ApiError SO_OUTSTOCK_UPSTREAM_AMOUNT_CHECK_UNAVAILABLE = ApiErrorOms.SO_OUTSTOCK_UPSTREAM_AMOUNT_CHECK_UNAVAILABLE;
+    public static final ApiError SO_B2C_DELIVERY_TRANSFER_NOT_PERSISTED = ApiErrorOms.SO_B2C_DELIVERY_TRANSFER_NOT_PERSISTED;
+    public static final ApiError SO_B2C_DELIVERY_TRANSFER_NOT_APPROVED = ApiErrorOms.SO_B2C_DELIVERY_TRANSFER_NOT_APPROVED;
+    public static final ApiError SO_B2C_DELIVERY_MULTI_WAREHOUSE_NOT_SUPPORTED = ApiErrorOms.SO_B2C_DELIVERY_MULTI_WAREHOUSE_NOT_SUPPORTED;
+    public static final ApiError SO_DELIVERY_NOTICE_CUSTOMER_COUNTRY_INCONSISTENT = ApiErrorOms.SO_DELIVERY_NOTICE_CUSTOMER_COUNTRY_INCONSISTENT;
+    public static final ApiError TRIAL_CALC_DATA_NOT_FOUND = ApiErrorOms.TRIAL_CALC_DATA_NOT_FOUND;
+    public static final ApiError TRIAL_CALC_DATA_INCONSISTENT = ApiErrorOms.TRIAL_CALC_DATA_INCONSISTENT;
+    public static final ApiError TRIAL_CALC_HISTORY_SALES_INCONSISTENT = ApiErrorOms.TRIAL_CALC_HISTORY_SALES_INCONSISTENT;
+    public static final ApiError TRIAL_CALC_START_DATE_AFTER_NOW_FORBIDDEN = ApiErrorOms.TRIAL_CALC_START_DATE_AFTER_NOW_FORBIDDEN;
+    public static final ApiError TRIAL_CALC_END_DATE_BEFORE_START_FORBIDDEN = ApiErrorOms.TRIAL_CALC_END_DATE_BEFORE_START_FORBIDDEN;
+    public static final ApiError TRIAL_CALC_DATE_RANGE_EXCEEDS_ONE_YEAR = ApiErrorOms.TRIAL_CALC_DATE_RANGE_EXCEEDS_ONE_YEAR;
+    public static final ApiError TRIAL_CALC_END_DATE_AFTER_MIN_FORBIDDEN = ApiErrorOms.TRIAL_CALC_END_DATE_AFTER_MIN_FORBIDDEN;
+    public static final ApiError TRIAL_CALC_START_DATE_BEFORE_MIN_FORBIDDEN = ApiErrorOms.TRIAL_CALC_START_DATE_BEFORE_MIN_FORBIDDEN;
+    public static final ApiError TRIAL_CALC_TASK_SIZE_EXCEEDS_LIMIT = ApiErrorOms.TRIAL_CALC_TASK_SIZE_EXCEEDS_LIMIT;
+
+    /** Wms service error constants. */
+    public static final ApiError DELIVERY_SUGGESTION_ONLY_COMPLETED_ALLOW_PUSH = ApiErrorWms.DELIVERY_SUGGESTION_ONLY_COMPLETED_ALLOW_PUSH;
+    public static final ApiError DELIVERY_SUGGESTION_INVALID_FORBIDDEN = ApiErrorWms.DELIVERY_SUGGESTION_INVALID_FORBIDDEN;
+    public static final ApiError FBA_SHIPMENT_COUNTRY_NOT_FOUND = ApiErrorWms.FBA_SHIPMENT_COUNTRY_NOT_FOUND;
+    public static final ApiError PO_QC_ASSIGN_ALLOWED_PENDING_ONLY = ApiErrorWms.PO_QC_ASSIGN_ALLOWED_PENDING_ONLY;
+    public static final ApiError PO_QC_PASSED_OR_EXEMPT_ONLY_ALLOWED = ApiErrorWms.PO_QC_PASSED_OR_EXEMPT_ONLY_ALLOWED;
+    public static final ApiError PO_QC_REPORT_NOT_FOUND = ApiErrorWms.PO_QC_REPORT_NOT_FOUND;
+    public static final ApiError PO_QC_RULE_NOT_FOUND = ApiErrorWms.PO_QC_RULE_NOT_FOUND;
+    public static final ApiError PO_QC_TYPE_EXISTS = ApiErrorWms.PO_QC_TYPE_EXISTS;
+    public static final ApiError PO_QC_ORDER_NOT_FOUND = ApiErrorWms.PO_QC_ORDER_NOT_FOUND;
+    public static final ApiError PO_QC_TOTAL_GOOD_BAD_QTY_INVALID = ApiErrorWms.PO_QC_TOTAL_GOOD_BAD_QTY_INVALID;
+    public static final ApiError PO_QC_COMPLETE_ALLOWED_STATUS_ONLY = ApiErrorWms.PO_QC_COMPLETE_ALLOWED_STATUS_ONLY;
+    public static final ApiError PO_QC_EXEMPT_ALLOWED_STATUS_ONLY = ApiErrorWms.PO_QC_EXEMPT_ALLOWED_STATUS_ONLY;
+    public static final ApiError PO_QC_CANCEL_ALLOWED_STATUS_ONLY = ApiErrorWms.PO_QC_CANCEL_ALLOWED_STATUS_ONLY;
+    public static final ApiError PO_QC_DELETE_ALLOWED_STATUS_ONLY = ApiErrorWms.PO_QC_DELETE_ALLOWED_STATUS_ONLY;
+    public static final ApiError PO_QC_REVOKE_ALLOWED_STATUS_ONLY = ApiErrorWms.PO_QC_REVOKE_ALLOWED_STATUS_ONLY;
+    public static final ApiError PO_QC_QUALITY_CONTROL_TYPE_ALREADY_EXISTS = ApiErrorWms.PO_QC_QUALITY_CONTROL_TYPE_ALREADY_EXISTS;
+    public static final ApiError PO_QC_QUALITY_CONTROL_TYPE_EXISTS_PARTIAL = ApiErrorWms.PO_QC_QUALITY_CONTROL_TYPE_EXISTS_PARTIAL;
+    public static final ApiError PO_QC_QUALITY_CONTROL_TYPE_EXISTS_PARTIAL_SKU = ApiErrorWms.PO_QC_QUALITY_CONTROL_TYPE_EXISTS_PARTIAL_SKU;
+    public static final ApiError PO_QC_SAMPLING_PLAN_DETAIL_RANGE_NOT_CONTINUOUS = ApiErrorWms.PO_QC_SAMPLING_PLAN_DETAIL_RANGE_NOT_CONTINUOUS;
+    public static final ApiError PO_QC_SAMPLING_PLAN_DETAIL_QTY_INVALID = ApiErrorWms.PO_QC_SAMPLING_PLAN_DETAIL_QTY_INVALID;
+    public static final ApiError PO_QC_SAMPLING_PLAN_DETAIL_QTY_EXCEEDS = ApiErrorWms.PO_QC_SAMPLING_PLAN_DETAIL_QTY_EXCEEDS;
+    public static final ApiError PO_QC_SAMPLING_PLAN_DETAIL_QC_LEVEL_INVALID = ApiErrorWms.PO_QC_SAMPLING_PLAN_DETAIL_QC_LEVEL_INVALID;
+    public static final ApiError PO_QC_SAMPLING_PLAN_DETAIL_MAJOR_AQL_INVALID = ApiErrorWms.PO_QC_SAMPLING_PLAN_DETAIL_MAJOR_AQL_INVALID;
+    public static final ApiError PO_QC_SAMPLING_PLAN_DETAIL_MAJOR_AQL_EMPTY = ApiErrorWms.PO_QC_SAMPLING_PLAN_DETAIL_MAJOR_AQL_EMPTY;
+    public static final ApiError PO_QC_SAMPLING_PLAN_DETAIL_GENERAL_AQL_INVALID = ApiErrorWms.PO_QC_SAMPLING_PLAN_DETAIL_GENERAL_AQL_INVALID;
+    public static final ApiError PO_QC_SAMPLING_PLAN_DETAIL_GENERAL_AQL_EMPTY = ApiErrorWms.PO_QC_SAMPLING_PLAN_DETAIL_GENERAL_AQL_EMPTY;
+    public static final ApiError PO_QC_SAMPLING_PLAN_DETAIL_MAJOR_AQL_ENUM_INVALID = ApiErrorWms.PO_QC_SAMPLING_PLAN_DETAIL_MAJOR_AQL_ENUM_INVALID;
+    public static final ApiError PO_QC_SAMPLING_PLAN_DETAIL_GENERAL_AQL_ENUM_INVALID = ApiErrorWms.PO_QC_SAMPLING_PLAN_DETAIL_GENERAL_AQL_ENUM_INVALID;
+    public static final ApiError PO_QC_SAMPLING_PLAN_DETAIL_DETAIL_EMPTY = ApiErrorWms.PO_QC_SAMPLING_PLAN_DETAIL_DETAIL_EMPTY;
+    public static final ApiError PO_QC_SAMPLING_PLAN_DETAIL_DETAIL_NOT_EMPTY = ApiErrorWms.PO_QC_SAMPLING_PLAN_DETAIL_DETAIL_NOT_EMPTY;
+    public static final ApiError PO_QC_SAMPLING_PLAN_DETAIL_RANGE_INVALID = ApiErrorWms.PO_QC_SAMPLING_PLAN_DETAIL_RANGE_INVALID;
+    public static final ApiError PO_QC_SAMPLING_PLAN_DETAIL_RANGE_LESS_THAN_ZERO = ApiErrorWms.PO_QC_SAMPLING_PLAN_DETAIL_RANGE_LESS_THAN_ZERO;
+    public static final ApiError PO_QC_SAMPLING_PLAN_DETAIL_RANGE_EQUAL = ApiErrorWms.PO_QC_SAMPLING_PLAN_DETAIL_RANGE_EQUAL;
+    public static final ApiError PO_QC_SAMPLING_PLAN_DETAIL_RANGE_GREATER_THAN_END = ApiErrorWms.PO_QC_SAMPLING_PLAN_DETAIL_RANGE_GREATER_THAN_END;
+    public static final ApiError PO_QC_SAMPLING_PLAN_DETAIL_QC_TYPE_NOT_FOUND = ApiErrorWms.PO_QC_SAMPLING_PLAN_DETAIL_QC_TYPE_NOT_FOUND;
+    public static final ApiError PO_QC_SAMPLING_PLAN_DETAIL_RATE_INVALID = ApiErrorWms.PO_QC_SAMPLING_PLAN_DETAIL_RATE_INVALID;
+    public static final ApiError PO_QC_SAMPLING_PLAN_QC_TYPE_IS_NULL = ApiErrorWms.PO_QC_SAMPLING_PLAN_QC_TYPE_IS_NULL;
+    public static final ApiError PO_QC_SAMPLING_PLAN_NOT_FOUND = ApiErrorWms.PO_QC_SAMPLING_PLAN_NOT_FOUND;
+    public static final ApiError PO_QC_SAMPLING_PLAN_DETAIL_FOUND = ApiErrorWms.PO_QC_SAMPLING_PLAN_DETAIL_FOUND;
+    public static final ApiError PO_QC_SAMPLING_PLAN_GENERAL_AQL_IS_NULL = ApiErrorWms.PO_QC_SAMPLING_PLAN_GENERAL_AQL_IS_NULL;
+    public static final ApiError PO_QC_SAMPLING_PLAN_MAJOR_AQL_IS_NULL = ApiErrorWms.PO_QC_SAMPLING_PLAN_MAJOR_AQL_IS_NULL;
+    public static final ApiError PO_QC_UPDATE_MEASURE_ALLOWED_STATUS_ONLY = ApiErrorWms.PO_QC_UPDATE_MEASURE_ALLOWED_STATUS_ONLY;
+    public static final ApiError PO_QC_PUSH_RETURN_ALLOWED_ONLY_IF_REJECTED = ApiErrorWms.PO_QC_PUSH_RETURN_ALLOWED_ONLY_IF_REJECTED;
+    public static final ApiError PO_QC_ALREADY_PUSHED_REVERSE_FORBIDDEN = ApiErrorWms.PO_QC_ALREADY_PUSHED_REVERSE_FORBIDDEN;
+    public static final ApiError PO_QC_TOTAL_QTY_EXCEEDS = ApiErrorWms.PO_QC_TOTAL_QTY_EXCEEDS;
+    public static final ApiError PO_QC_VOIDED_OPERATION_NOT_ALLOWED = ApiErrorWms.PO_QC_VOIDED_OPERATION_NOT_ALLOWED;
+    public static final ApiError PO_QC_NOTICE_VOIDED_OPERATION_NOT_ALLOWED = ApiErrorWms.PO_QC_NOTICE_VOIDED_OPERATION_NOT_ALLOWED;
+    public static final ApiError PO_QC_STOCK_INSUFFICIENT = ApiErrorWms.PO_QC_STOCK_INSUFFICIENT;
+    public static final ApiError PO_QC_ALREADY_COMPLETED_REVERSE_FORBIDDEN = ApiErrorWms.PO_QC_ALREADY_COMPLETED_REVERSE_FORBIDDEN;
+    public static final ApiError PO_QC_NOTICE_APPROVE_REQUIRED = ApiErrorWms.PO_QC_NOTICE_APPROVE_REQUIRED;
+    public static final ApiError PO_QC_DETAIL_REQUIRED = ApiErrorWms.PO_QC_DETAIL_REQUIRED;
+    public static final ApiError PO_QC_PACKAGE_NOT_FOUND = ApiErrorWms.PO_QC_PACKAGE_NOT_FOUND;
+    public static final ApiError PO_QC_STOCK_INSUFFICIENT_CONTINUE_CONFIRM = ApiErrorWms.PO_QC_STOCK_INSUFFICIENT_CONTINUE_CONFIRM;
+    public static final ApiError PO_QC_GOOD_BAD_BOTH_ZERO_FORBIDDEN = ApiErrorWms.PO_QC_GOOD_BAD_BOTH_ZERO_FORBIDDEN;
+    public static final ApiError PO_QC_NO_TRANSFER_OUT = ApiErrorWms.PO_QC_NO_TRANSFER_OUT;
+    public static final ApiError PO_QC_TRANSFER_OUT_ALREADY_GENERATED = ApiErrorWms.PO_QC_TRANSFER_OUT_ALREADY_GENERATED;
+    public static final ApiError PO_QC_NOT_COMPLETED_REVERSE_FORBIDDEN = ApiErrorWms.PO_QC_NOT_COMPLETED_REVERSE_FORBIDDEN;
+    public static final ApiError PO_QC_DEFECT_INFO_INCOMPLETE = ApiErrorWms.PO_QC_DEFECT_INFO_INCOMPLETE;
+    public static final ApiError PO_QC_WAIT_QC_QTY_NOT_ALLOW_LESS_THAN_ZERO = ApiErrorWms.PO_QC_WAIT_QC_QTY_NOT_ALLOW_LESS_THAN_ZERO;
+    public static final ApiError PO_QC_DEFECT_LEVEL_DUPLICATE = ApiErrorWms.PO_QC_DEFECT_LEVEL_DUPLICATE;
+    public static final ApiError PO_QC_NOTICE_FINISH = ApiErrorWms.PO_QC_NOTICE_FINISH;
+    public static final ApiError PO_QC_NOTICE_DETAIL_NOT_FOUND = ApiErrorWms.PO_QC_NOTICE_DETAIL_NOT_FOUND;
+    public static final ApiError PO_QC_QTY_NOT_ALLOW_LESS_THAN_ZERO = ApiErrorWms.PO_QC_QTY_NOT_ALLOW_LESS_THAN_ZERO;
+    public static final ApiError PO_QC_RESULT_NOT_EMPTY = ApiErrorWms.PO_QC_RESULT_NOT_EMPTY;
+    public static final ApiError QC_APPLICATION_NOT_EXIST = ApiErrorWms.QC_APPLICATION_NOT_EXIST;
+    public static final ApiError QC_APPLICATION_DETAIL_NOT_EXIST = ApiErrorWms.QC_APPLICATION_DETAIL_NOT_EXIST;
+    public static final ApiError QC_APPLICATION_SUPPLIER_NOT_DIFF = ApiErrorWms.QC_APPLICATION_SUPPLIER_NOT_DIFF;
+    public static final ApiError QC_APPLICATION_NOT_APPROVE_PUSH = ApiErrorWms.QC_APPLICATION_NOT_APPROVE_PUSH;
+    public static final ApiError QC_APPLICATION_EXPECT_QC_DATE_NOT_BEFORE_NOW = ApiErrorWms.QC_APPLICATION_EXPECT_QC_DATE_NOT_BEFORE_NOW;
+    public static final ApiError QC_APPLICATION_DETAIL_QTY_NOT_GREATER_THAN_PO_QTY = ApiErrorWms.QC_APPLICATION_DETAIL_QTY_NOT_GREATER_THAN_PO_QTY;
+    public static final ApiError QC_STANDARD_SKU_NOT_FOUND = ApiErrorWms.QC_STANDARD_SKU_NOT_FOUND;
+    public static final ApiError QC_STANDARD_NOT_FOUND = ApiErrorWms.QC_STANDARD_NOT_FOUND;
+    public static final ApiError QC_STANDARD_SKU_EXISTS = ApiErrorWms.QC_STANDARD_SKU_EXISTS;
+    public static final ApiError QC_STANDARD_IMPORT_SKU_NOT_FOUND = ApiErrorWms.QC_STANDARD_IMPORT_SKU_NOT_FOUND;
+    public static final ApiError QC_STANDARD_IMPORT_DETAIL_NOT_FOUND = ApiErrorWms.QC_STANDARD_IMPORT_DETAIL_NOT_FOUND;
+    public static final ApiError QC_APPLICATION_DETAIL_QTY_NOT_GREATER_THAN_WAIT_DELIVERY_QTY = ApiErrorWms.QC_APPLICATION_DETAIL_QTY_NOT_GREATER_THAN_WAIT_DELIVERY_QTY;
+    public static final ApiError QC_APPLICATION_SOURCE_WAIT_DELIVERY_NOT_OPTION = ApiErrorWms.QC_APPLICATION_SOURCE_WAIT_DELIVERY_NOT_OPTION;
+    public static final ApiError QC_APPLICATION_SOURCE_PO_NOT_OPTION = ApiErrorWms.QC_APPLICATION_SOURCE_PO_NOT_OPTION;
+    public static final ApiError QC_APPLICATION_PUSH_QC_NOTICE_NOT_DISAPPROVE = ApiErrorWms.QC_APPLICATION_PUSH_QC_NOTICE_NOT_DISAPPROVE;
+    public static final ApiError QC_APPLICATION_PUSH_QC_NOTICE_NOT_PUSH = ApiErrorWms.QC_APPLICATION_PUSH_QC_NOTICE_NOT_PUSH;
+    public static final ApiError CFG_QC_USER_NOT_EXIST = ApiErrorWms.CFG_QC_USER_NOT_EXIST;
+    public static final ApiError CFG_QC_USER_SUPPLIER_DUPLICATE = ApiErrorWms.CFG_QC_USER_SUPPLIER_DUPLICATE;
+    public static final ApiError CFG_QC_USER_SUPPLIER_REQUIRED = ApiErrorWms.CFG_QC_USER_SUPPLIER_REQUIRED;
+    public static final ApiError CFG_QC_USER_SUPPLIER_NOT_FOUND = ApiErrorWms.CFG_QC_USER_SUPPLIER_NOT_FOUND;
+    public static final ApiError CFG_QC_USER_IMPORT_USER_NOT_IN_ORG = ApiErrorWms.CFG_QC_USER_IMPORT_USER_NOT_IN_ORG;
+    public static final ApiError CFG_QC_USER_WAREHOUSE_REQUIRED = ApiErrorWms.CFG_QC_USER_WAREHOUSE_REQUIRED;
+    public static final ApiError CFG_QC_USER_WAREHOUSE_NOT_FOUND = ApiErrorWms.CFG_QC_USER_WAREHOUSE_NOT_FOUND;
+    public static final ApiError CFG_QC_USER_WAREHOUSE_NAME_DUPLICATE = ApiErrorWms.CFG_QC_USER_WAREHOUSE_NAME_DUPLICATE;
+    public static final ApiError PO_QC_NOTICE_PLAN_QC_DATE_REQUIRED = ApiErrorWms.PO_QC_NOTICE_PLAN_QC_DATE_REQUIRED;
+    public static final ApiError PO_QC_NOTICE_PLAN_QC_DATE_NOT_BEFORE_NOW = ApiErrorWms.PO_QC_NOTICE_PLAN_QC_DATE_NOT_BEFORE_NOW;
+    public static final ApiError CFG_QC_USER_QC_USER_AT_LEAST_ONE = ApiErrorWms.CFG_QC_USER_QC_USER_AT_LEAST_ONE;
+    public static final ApiError CFG_QC_USER_LOAD_QC_USER_LIST_FAILED = ApiErrorWms.CFG_QC_USER_LOAD_QC_USER_LIST_FAILED;
+    public static final ApiError CFG_QC_USER_UPDATE_KEY_NOT_MODIFIABLE = ApiErrorWms.CFG_QC_USER_UPDATE_KEY_NOT_MODIFIABLE;
+    public static final ApiError QC_NOTICE_PARAM_REQUIRED = ApiErrorWms.QC_NOTICE_PARAM_REQUIRED;
+    public static final ApiError QC_NOTICE_DETAILS_MUST_SAME_NOTICE = ApiErrorWms.QC_NOTICE_DETAILS_MUST_SAME_NOTICE;
+    public static final ApiError QC_NOTICE_UPDATE_QC_USER_STATUS_INVALID = ApiErrorWms.QC_NOTICE_UPDATE_QC_USER_STATUS_INVALID;
+    public static final ApiError QC_NOTICE_QC_USER_ID_REQUIRED = ApiErrorWms.QC_NOTICE_QC_USER_ID_REQUIRED;
+    public static final ApiError QC_NOTICE_DETAIL_UPDATE_QC_USER_STATUS_INVALID = ApiErrorWms.QC_NOTICE_DETAIL_UPDATE_QC_USER_STATUS_INVALID;
+    public static final ApiError REPLENISHMENT_ONLY_NORMAL_ALLOW_STOP = ApiErrorWms.REPLENISHMENT_ONLY_NORMAL_ALLOW_STOP;
+    public static final ApiError REPLENISHMENT_ONLY_STOPPED_ALLOW_RESTORE = ApiErrorWms.REPLENISHMENT_ONLY_STOPPED_ALLOW_RESTORE;
+    public static final ApiError REPLENISHMENT_STOCK_UP_RULE_CONFIG_NOT_EXIST = ApiErrorWms.REPLENISHMENT_STOCK_UP_RULE_CONFIG_NOT_EXIST;
+    public static final ApiError REPLENISHMENT_SALES_RULE_CONFIG_NOT_EXIST = ApiErrorWms.REPLENISHMENT_SALES_RULE_CONFIG_NOT_EXIST;
+    public static final ApiError REPLENISHMENT_NEW_PRODUCT_RULE_CONFIG_NOT_EXIST = ApiErrorWms.REPLENISHMENT_NEW_PRODUCT_RULE_CONFIG_NOT_EXIST;
+    public static final ApiError REPLENISHMENT_DAYS_RULE_CONFIG_NOT_EXIST = ApiErrorWms.REPLENISHMENT_DAYS_RULE_CONFIG_NOT_EXIST;
+    public static final ApiError REPLENISHMENT_SUGGESTION_NOT_FOUND = ApiErrorWms.REPLENISHMENT_SUGGESTION_NOT_FOUND;
+    public static final ApiError REPLENISHMENT_SUGGESTION_ONLY_PENDING_CONFIRM_ALLOW = ApiErrorWms.REPLENISHMENT_SUGGESTION_ONLY_PENDING_CONFIRM_ALLOW;
+    public static final ApiError REPLENISHMENT_SUGGESTION_ONLY_DRAFT_ALLOW_LOCK = ApiErrorWms.REPLENISHMENT_SUGGESTION_ONLY_DRAFT_ALLOW_LOCK;
+    public static final ApiError REPLENISHMENT_SUGGESTION_PUSHED_INVALID_FORBIDDEN = ApiErrorWms.REPLENISHMENT_SUGGESTION_PUSHED_INVALID_FORBIDDEN;
+    public static final ApiError REPLENISHMENT_SUGGESTION_UPDATE_REMARK_FORBIDDEN = ApiErrorWms.REPLENISHMENT_SUGGESTION_UPDATE_REMARK_FORBIDDEN;
+    public static final ApiError REPLENISHMENT_SUGGESTION_UPDATE_FORBIDDEN = ApiErrorWms.REPLENISHMENT_SUGGESTION_UPDATE_FORBIDDEN;
+    public static final ApiError SAMPLE_AVAILABLE_QTY_EXCEEDS_LEDGER = ApiErrorWms.SAMPLE_AVAILABLE_QTY_EXCEEDS_LEDGER;
+    public static final ApiError SAMPLE_BORROW_DATE_INVALID = ApiErrorWms.SAMPLE_BORROW_DATE_INVALID;
+    public static final ApiError SAMPLE_GENERATE_RETURN_VIEW_ALLOWED_APPROVED_ONLY = ApiErrorWms.SAMPLE_GENERATE_RETURN_VIEW_ALLOWED_APPROVED_ONLY;
+    public static final ApiError SAMPLE_GENERATE_VIEW_LEDGER_QTY_ZERO_FORBIDDEN = ApiErrorWms.SAMPLE_GENERATE_VIEW_LEDGER_QTY_ZERO_FORBIDDEN;
+    public static final ApiError SAMPLE_GENERATE_VIEW_USER_UNIQUE_REQUIRED = ApiErrorWms.SAMPLE_GENERATE_VIEW_USER_UNIQUE_REQUIRED;
+    public static final ApiError SAMPLE_RETURN_QTY_NOT_EXIST = ApiErrorWms.SAMPLE_RETURN_QTY_NOT_EXIST;
+    public static final ApiError SAMPLE_RETURN_QTY_NOT_ENOUGH = ApiErrorWms.SAMPLE_RETURN_QTY_NOT_ENOUGH;
+    public static final ApiError SAMPLE_LEDGER_NOT_EXIST = ApiErrorWms.SAMPLE_LEDGER_NOT_EXIST;
+    public static final ApiError SAMPLE_BORROW_USER_SAME_FORBIDDEN = ApiErrorWms.SAMPLE_BORROW_USER_SAME_FORBIDDEN;
+    public static final ApiError SAMPLE_RETURN_USER_SAME_FORBIDDEN = ApiErrorWms.SAMPLE_RETURN_USER_SAME_FORBIDDEN;
+    public static final ApiError SAMPLE_RETURN_EXIST_REVERSE_FORBIDDEN = ApiErrorWms.SAMPLE_RETURN_EXIST_REVERSE_FORBIDDEN;
+    public static final ApiError SAMPLE_GENERATE_RETURN_QTY_ZERO = ApiErrorWms.SAMPLE_GENERATE_RETURN_QTY_ZERO;
+    public static final ApiError SAMPLE_ASSET_ACCEPT_QTY_EXCEEDS_PURCHASE_QTY = ApiErrorWms.SAMPLE_ASSET_ACCEPT_QTY_EXCEEDS_PURCHASE_QTY;
+    public static final ApiError SAMPLE_ASSET_NOT_FOUND = ApiErrorWms.SAMPLE_ASSET_NOT_FOUND;
+    public static final ApiError SAMPLE_ASSET_DISPOSAL_QTY_EXCEEDS_BOOK_QTY = ApiErrorWms.SAMPLE_ASSET_DISPOSAL_QTY_EXCEEDS_BOOK_QTY;
+    public static final ApiError SAMPLE_B2C_DISAPPROVE_FORBIDDEN = ApiErrorWms.SAMPLE_B2C_DISAPPROVE_FORBIDDEN;
+    public static final ApiError SAMPLE_B2C_CANCEL_APPROVE_REQUIRED = ApiErrorWms.SAMPLE_B2C_CANCEL_APPROVE_REQUIRED;
+    public static final ApiError SAMPLE_B2C_CANCEL_STATUS_INVALID = ApiErrorWms.SAMPLE_B2C_CANCEL_STATUS_INVALID;
+    public static final ApiError SAMPLE_B2C_CANCEL_ALREADY = ApiErrorWms.SAMPLE_B2C_CANCEL_ALREADY;
+    public static final ApiError SAMPLE_ADDRESS_PARSE_ONLY_CN = ApiErrorWms.SAMPLE_ADDRESS_PARSE_ONLY_CN;
+    public static final ApiError SAMPLE_ADDRESS_PARSE_EMPTY_INPUT = ApiErrorWms.SAMPLE_ADDRESS_PARSE_EMPTY_INPUT;
+    public static final ApiError SAMPLE_B2B_APPLICATION_NOT_FOUND = ApiErrorWms.SAMPLE_B2B_APPLICATION_NOT_FOUND;
+    public static final ApiError SAMPLE_B2B_APPLICATION_DETAIL_NOT_FOUND = ApiErrorWms.SAMPLE_B2B_APPLICATION_DETAIL_NOT_FOUND;
+    public static final ApiError SAMPLE_B2B_APPLICATION_NOT_APPROVED = ApiErrorWms.SAMPLE_B2B_APPLICATION_NOT_APPROVED;
+    public static final ApiError SAMPLE_PUSH_DETAIL_ID_NOT_FOUND = ApiErrorWms.SAMPLE_PUSH_DETAIL_ID_NOT_FOUND;
+    public static final ApiError SAMPLE_PUSH_WAREHOUSE_MISMATCH = ApiErrorWms.SAMPLE_PUSH_WAREHOUSE_MISMATCH;
+    public static final ApiError SAMPLE_PUSH_SALES_ORG_MISMATCH = ApiErrorWms.SAMPLE_PUSH_SALES_ORG_MISMATCH;
+    public static final ApiError SAMPLE_B2C_APPROVED_REQUIRED = ApiErrorWms.SAMPLE_B2C_APPROVED_REQUIRED;
+    public static final ApiError SAMPLE_B2C_HAS_GENERATED_SO = ApiErrorWms.SAMPLE_B2C_HAS_GENERATED_SO;
+    public static final ApiError SAMPLE_PARTNER_MULTIPLE_DEFAULT_ADDRESS_FORBIDDEN = ApiErrorWms.SAMPLE_PARTNER_MULTIPLE_DEFAULT_ADDRESS_FORBIDDEN;
+    public static final ApiError SAMPLE_B2B_DETAIL_ALREADY_PUSHED_SO = ApiErrorWms.SAMPLE_B2B_DETAIL_ALREADY_PUSHED_SO;
+    public static final ApiError SAMPLE_B2B_PUSHED_SO_DETAIL_DELETE_FORBIDDEN = ApiErrorWms.SAMPLE_B2B_PUSHED_SO_DETAIL_DELETE_FORBIDDEN;
+    public static final ApiError SAMPLE_B2C_APPLICATION_SAVE_FAILED = ApiErrorWms.SAMPLE_B2C_APPLICATION_SAVE_FAILED;
+    public static final ApiError SAMPLE_B2C_CN_DISTRICT_REQUIRED = ApiErrorWms.SAMPLE_B2C_CN_DISTRICT_REQUIRED;
+    public static final ApiError SAMPLE_B2C_DUPLICATE_PARTNER_ADDRESS = ApiErrorWms.SAMPLE_B2C_DUPLICATE_PARTNER_ADDRESS;
+    public static final ApiError SAMPLE_B2C_APPLICATION_DETAIL_NOT_FOUND = ApiErrorWms.SAMPLE_B2C_APPLICATION_DETAIL_NOT_FOUND;
+    public static final ApiError SAMPLE_B2C_DETAIL_REMARK_UPDATE_FAILED = ApiErrorWms.SAMPLE_B2C_DETAIL_REMARK_UPDATE_FAILED;
+    public static final ApiError SAMPLE_B2C_SHOP_DISABLED_ADD_ORDER_FORBIDDEN = ApiErrorWms.SAMPLE_B2C_SHOP_DISABLED_ADD_ORDER_FORBIDDEN;
+    public static final ApiError SAMPLE_B2C_APPROVE_CALLBACK_SUB_ORDER_NOT_FOUND = ApiErrorWms.SAMPLE_B2C_APPROVE_CALLBACK_SUB_ORDER_NOT_FOUND;
+    public static final ApiError SAMPLE_B2C_APPROVED_SO_FORBIDDEN_ACTION = ApiErrorWms.SAMPLE_B2C_APPROVED_SO_FORBIDDEN_ACTION;
+    public static final ApiError SAMPLE_APPLY_NOT_FOUND = ApiErrorWms.SAMPLE_APPLY_NOT_FOUND;
+    public static final ApiError SAMPLE_ONLY_AUDITING_ALLOW_MODIFY_QTY = ApiErrorWms.SAMPLE_ONLY_AUDITING_ALLOW_MODIFY_QTY;
+    public static final ApiError SAMPLE_VOIDED_MODIFY_QTY_FORBIDDEN = ApiErrorWms.SAMPLE_VOIDED_MODIFY_QTY_FORBIDDEN;
+    public static final ApiError SAMPLE_DETAIL_NOT_BELONG_TO_APPLY = ApiErrorWms.SAMPLE_DETAIL_NOT_BELONG_TO_APPLY;
+    public static final ApiError SAMPLE_AUDIT_QTY_EXCEEDS_APPLY_QTY = ApiErrorWms.SAMPLE_AUDIT_QTY_EXCEEDS_APPLY_QTY;
+    public static final ApiError SAMPLE_AUDIT_QTY_UPDATE_FAILED = ApiErrorWms.SAMPLE_AUDIT_QTY_UPDATE_FAILED;
+    public static final ApiError SAMPLE_PARTNER_IN_USE = ApiErrorWms.SAMPLE_PARTNER_IN_USE;
+    public static final ApiError SAMPLE_ASSET_ACCEPT_DETAIL_NOT_FOUND = ApiErrorWms.SAMPLE_ASSET_ACCEPT_DETAIL_NOT_FOUND;
+    public static final ApiError SAMPLE_ASSET_PURCHASE_ORDER_NOT_FOUND = ApiErrorWms.SAMPLE_ASSET_PURCHASE_ORDER_NOT_FOUND;
+    public static final ApiError SAMPLE_ASSET_PURCHASE_ORDER_DETAIL_NOT_FOUND = ApiErrorWms.SAMPLE_ASSET_PURCHASE_ORDER_DETAIL_NOT_FOUND;
+    public static final ApiError SAMPLE_USER_ID_CHINESE_NOT_FOUND = ApiErrorWms.SAMPLE_USER_ID_CHINESE_NOT_FOUND;
+    public static final ApiError SAMPLE_USER_ID_CHINESE_QUERY_FAILED = ApiErrorWms.SAMPLE_USER_ID_CHINESE_QUERY_FAILED;
+    public static final ApiError SAMPLE_USE_USER_ID_CHINESE_NOT_FOUND = ApiErrorWms.SAMPLE_USE_USER_ID_CHINESE_NOT_FOUND;
+    public static final ApiError SAMPLE_USE_USER_ID_CHINESE_QUERY_FAILED = ApiErrorWms.SAMPLE_USE_USER_ID_CHINESE_QUERY_FAILED;
+    public static final ApiError VM_INVENTORY_INSUFFICIENT = ApiErrorWms.VM_INVENTORY_INSUFFICIENT;
+    public static final ApiError VM_NAME_EXIST = ApiErrorWms.VM_NAME_EXIST;
+    public static final ApiError VM_NOT_EXIST = ApiErrorWms.VM_NOT_EXIST;
+    public static final ApiError VM_ALLOCATION_DETAIL_SAVE_FAILED = ApiErrorWms.VM_ALLOCATION_DETAIL_SAVE_FAILED;
+    public static final ApiError VM_FROM_TO_BOTH_EMPTY = ApiErrorWms.VM_FROM_TO_BOTH_EMPTY;
+    public static final ApiError VM_FROM_TO_SAME = ApiErrorWms.VM_FROM_TO_SAME;
+    public static final ApiError VM_TARGET_NOT_FOUND = ApiErrorWms.VM_TARGET_NOT_FOUND;
+    public static final ApiError VM_TARGET_NOT_ACTIVE = ApiErrorWms.VM_TARGET_NOT_ACTIVE;
+    public static final ApiError VM_SOURCE_NOT_FOUND = ApiErrorWms.VM_SOURCE_NOT_FOUND;
+    public static final ApiError VM_SOURCE_NOT_ACTIVE = ApiErrorWms.VM_SOURCE_NOT_ACTIVE;
+    public static final ApiError VM_SOURCE_INVENTORY_INSUFFICIENT = ApiErrorWms.VM_SOURCE_INVENTORY_INSUFFICIENT;
+    public static final ApiError VM_ALLOCATION_NOT_FOUND = ApiErrorWms.VM_ALLOCATION_NOT_FOUND;
+    public static final ApiError VM_MANUAL_STATUS_ERROR = ApiErrorWms.VM_MANUAL_STATUS_ERROR;
+    public static final ApiError VM_SYNC_ERROR_STATUS_ONLY = ApiErrorWms.VM_SYNC_ERROR_STATUS_ONLY;
+    public static final ApiError VM_RELATION_ERROR = ApiErrorWms.VM_RELATION_ERROR;
+    public static final ApiError VM_ALLOCATION_UNIQUE_ERROR = ApiErrorWms.VM_ALLOCATION_UNIQUE_ERROR;
+    public static final ApiError VM_ALLOCATION_TRANSFER_UNIQUE_ERROR = ApiErrorWms.VM_ALLOCATION_TRANSFER_UNIQUE_ERROR;
+    public static final ApiError VM_ALLOCATION_CANCEL_UNIQUE_ERROR = ApiErrorWms.VM_ALLOCATION_CANCEL_UNIQUE_ERROR;
+    public static final ApiError VM_STOCK_NOT_EMPTY = ApiErrorWms.VM_STOCK_NOT_EMPTY;
+    public static final ApiError VM_ENTITY_STOCK_NOT_EMPTY = ApiErrorWms.VM_ENTITY_STOCK_NOT_EMPTY;
+    public static final ApiError VM_THIRD_VIRTUAL_WAREHOUSE_BINDED = ApiErrorWms.VM_THIRD_VIRTUAL_WAREHOUSE_BINDED;
+    public static final ApiError VM_NO_SYNC_INFO = ApiErrorWms.VM_NO_SYNC_INFO;
+    public static final ApiError VM_CHECK_OUT_VIRTUAL_INVENTORY = ApiErrorWms.VM_CHECK_OUT_VIRTUAL_INVENTORY;
+    public static final ApiError VM_CHANNEL_RELATION_ERROR = ApiErrorWms.VM_CHANNEL_RELATION_ERROR;
+    public static final ApiError VM_SAME_WAREHOUSE_B2B_FOREIGN_ERROR = ApiErrorWms.VM_SAME_WAREHOUSE_B2B_FOREIGN_ERROR;
+    public static final ApiError VM_INVENTORY_INSUFFICIENT_FOR_TRANSFER = ApiErrorWms.VM_INVENTORY_INSUFFICIENT_FOR_TRANSFER;
+    public static final ApiError VM_FROM_WAREHOUSE_NOT_BLANK = ApiErrorWms.VM_FROM_WAREHOUSE_NOT_BLANK;
+    public static final ApiError VM_NOT_CONTAINS_FROM_WAREHOUSE = ApiErrorWms.VM_NOT_CONTAINS_FROM_WAREHOUSE;
+    public static final ApiError VM_ALLOCATION_NOT_REPEAT = ApiErrorWms.VM_ALLOCATION_NOT_REPEAT;
+    public static final ApiError VM_VIRTUAL_WAREHOUSE_NOT_FOUND = ApiErrorWms.VM_VIRTUAL_WAREHOUSE_NOT_FOUND;
+    public static final ApiError VM_WDT_ENTITY_INVENTORY_INSUFFICIENT = ApiErrorWms.VM_WDT_ENTITY_INVENTORY_INSUFFICIENT;
+    public static final ApiError WH_MACHINE_EXIST_PURCHASE_RETURN = ApiErrorWms.WH_MACHINE_EXIST_PURCHASE_RETURN;
+    public static final ApiError WH_LOCATION_REQUIRED = ApiErrorWms.WH_LOCATION_REQUIRED;
+    public static final ApiError WH_TRANSFER_DIRECT_ALREADY_PUSHED_REVERSE_FORBIDDEN = ApiErrorWms.WH_TRANSFER_DIRECT_ALREADY_PUSHED_REVERSE_FORBIDDEN;
+    public static final ApiError WH_TRANSFER_IN_OUT_WAREHOUSE_MUST_DIFFER = ApiErrorWms.WH_TRANSFER_IN_OUT_WAREHOUSE_MUST_DIFFER;
+    public static final ApiError WH_TRANSFER_MB_UPDATE_NOT_ALLOWED = ApiErrorWms.WH_TRANSFER_MB_UPDATE_NOT_ALLOWED;
+    public static final ApiError WH_K3_CLOUD_WAREHOUSE_CODE_EXISTS = ApiErrorWms.WH_K3_CLOUD_WAREHOUSE_CODE_EXISTS;
+    public static final ApiError WH_REQUIRED = ApiErrorWms.WH_REQUIRED;
+    public static final ApiError WH_NOT_FOUND = ApiErrorWms.WH_NOT_FOUND;
+    public static final ApiError WH_STOCK_RULE_WAREHOUSE_CONFIG_ERROR = ApiErrorWms.WH_STOCK_RULE_WAREHOUSE_CONFIG_ERROR;
+    public static final ApiError WH_STOCK_RULE_BIZ_TYPE_ERROR = ApiErrorWms.WH_STOCK_RULE_BIZ_TYPE_ERROR;
+    public static final ApiError WH_STOCK_INSUFFICIENT = ApiErrorWms.WH_STOCK_INSUFFICIENT;
+    public static final ApiError WH_STOCK_RULE_STATUS_CONFIG_ERROR = ApiErrorWms.WH_STOCK_RULE_STATUS_CONFIG_ERROR;
+    public static final ApiError WH_STOCK_RULE_TX_TYPE_ERROR = ApiErrorWms.WH_STOCK_RULE_TX_TYPE_ERROR;
+    public static final ApiError WH_STOCK_TRANSFER_SRC_DEST_SAME = ApiErrorWms.WH_STOCK_TRANSFER_SRC_DEST_SAME;
+    public static final ApiError WH_STOCK_TX_NOT_FOUND_OR_REVERSED = ApiErrorWms.WH_STOCK_TX_NOT_FOUND_OR_REVERSED;
+    public static final ApiError WH_TRANSFER_APPLY_NOT_FOUND = ApiErrorWms.WH_TRANSFER_APPLY_NOT_FOUND;
+    public static final ApiError WH_TRANSFER_APPLY_DETAIL_NOT_FOUND = ApiErrorWms.WH_TRANSFER_APPLY_DETAIL_NOT_FOUND;
+    public static final ApiError WH_TRANSFER_APPLY_ALREADY_PUSHED_DIRECT_REVERSE_FORBIDDEN = ApiErrorWms.WH_TRANSFER_APPLY_ALREADY_PUSHED_DIRECT_REVERSE_FORBIDDEN;
+    public static final ApiError WH_TRANSFER_APPLY_ALREADY_PUSHED_STEP_REVERSE_FORBIDDEN = ApiErrorWms.WH_TRANSFER_APPLY_ALREADY_PUSHED_STEP_REVERSE_FORBIDDEN;
+    public static final ApiError WH_TRANSFER_DIRECT_NOT_FOUND = ApiErrorWms.WH_TRANSFER_DIRECT_NOT_FOUND;
+    public static final ApiError WH_TRANSFER_DIRECT_DETAIL_NOT_FOUND = ApiErrorWms.WH_TRANSFER_DIRECT_DETAIL_NOT_FOUND;
+    public static final ApiError WH_TRANSFER_DIRECTION_NOT_FOUND = ApiErrorWms.WH_TRANSFER_DIRECTION_NOT_FOUND;
+    public static final ApiError WH_TRANSFER_APPLY_QTY_EXCEEDS = ApiErrorWms.WH_TRANSFER_APPLY_QTY_EXCEEDS;
+    public static final ApiError WH_TRANSFER_APPLY_ALREADY_COMPLETED_DIRECT = ApiErrorWms.WH_TRANSFER_APPLY_ALREADY_COMPLETED_DIRECT;
+    public static final ApiError WH_SUBCONTRACT_PROCESS_ORDER_NOT_FOUND = ApiErrorWms.WH_SUBCONTRACT_PROCESS_ORDER_NOT_FOUND;
+    public static final ApiError WH_SUBCONTRACT_PROCESS_ORDER_DETAIL_NOT_FOUND = ApiErrorWms.WH_SUBCONTRACT_PROCESS_ORDER_DETAIL_NOT_FOUND;
+    public static final ApiError WH_TRANSFER_APPLY_ALREADY_COMPLETED_STEP_OUT = ApiErrorWms.WH_TRANSFER_APPLY_ALREADY_COMPLETED_STEP_OUT;
+    public static final ApiError WH_SUBCONTRACT_PROCESS_ORDER_CHILD_DETAIL_NOT_FOUND = ApiErrorWms.WH_SUBCONTRACT_PROCESS_ORDER_CHILD_DETAIL_NOT_FOUND;
+    public static final ApiError WH_SUBCONTRACT_PROCESS_CHILD_QTY_NOT_MATCH = ApiErrorWms.WH_SUBCONTRACT_PROCESS_CHILD_QTY_NOT_MATCH;
+    public static final ApiError WH_OTHER_INBOUND_NOT_FOUND = ApiErrorWms.WH_OTHER_INBOUND_NOT_FOUND;
+    public static final ApiError WH_OTHER_INBOUND_DETAIL_NOT_FOUND = ApiErrorWms.WH_OTHER_INBOUND_DETAIL_NOT_FOUND;
+    public static final ApiError WH_OTHER_OUTBOUND_NOT_FOUND = ApiErrorWms.WH_OTHER_OUTBOUND_NOT_FOUND;
+    public static final ApiError WH_OTHER_OUTBOUND_DETAIL_NOT_FOUND = ApiErrorWms.WH_OTHER_OUTBOUND_DETAIL_NOT_FOUND;
+    public static final ApiError WH_OTHER_OUTBOUND_CUSTOMER_NOT_FOUND = ApiErrorWms.WH_OTHER_OUTBOUND_CUSTOMER_NOT_FOUND;
+    public static final ApiError WH_TRANSFER_APPLY_APPROVED_ONLY_CAN_PUSH = ApiErrorWms.WH_TRANSFER_APPLY_APPROVED_ONLY_CAN_PUSH;
+    public static final ApiError WH_TRANSFER_IN_QTY_EXCEEDS_OUT_QTY = ApiErrorWms.WH_TRANSFER_IN_QTY_EXCEEDS_OUT_QTY;
+    public static final ApiError WH_TRANSFER_INBOUND_NOT_FOUND = ApiErrorWms.WH_TRANSFER_INBOUND_NOT_FOUND;
+    public static final ApiError WH_TRANSFER_OUTBOUND_NOT_FOUND = ApiErrorWms.WH_TRANSFER_OUTBOUND_NOT_FOUND;
+    public static final ApiError WH_TRANSFER_OUT_WAREHOUSE_IMMUTABLE = ApiErrorWms.WH_TRANSFER_OUT_WAREHOUSE_IMMUTABLE;
+    public static final ApiError WH_TRANSFER_IN_QTY_EXCEEDS_PLAN = ApiErrorWms.WH_TRANSFER_IN_QTY_EXCEEDS_PLAN;
+    public static final ApiError WH_SKU_STOCK_INSUFFICIENT = ApiErrorWms.WH_SKU_STOCK_INSUFFICIENT;
+    public static final ApiError WH_K3_CLOUD_WAREHOUSE_CODE_NOT_FOUND = ApiErrorWms.WH_K3_CLOUD_WAREHOUSE_CODE_NOT_FOUND;
+    public static final ApiError WH_TRANSFER_ALREADY_EXISTS = ApiErrorWms.WH_TRANSFER_ALREADY_EXISTS;
+    public static final ApiError WH_RETURN_QTY_EXCEEDS_PENDING_QC = ApiErrorWms.WH_RETURN_QTY_EXCEEDS_PENDING_QC;
+    public static final ApiError WH_LOCATION_DEFAULT_STAGING_NOT_FOUND = ApiErrorWms.WH_LOCATION_DEFAULT_STAGING_NOT_FOUND;
+    public static final ApiError WH_LOCATION_STAGING_NOT_FOUND = ApiErrorWms.WH_LOCATION_STAGING_NOT_FOUND;
+    public static final ApiError WH_BIN_NOT_AVAILABLE = ApiErrorWms.WH_BIN_NOT_AVAILABLE;
+    public static final ApiError WH_REF_LOCATION_NOT_FOUND = ApiErrorWms.WH_REF_LOCATION_NOT_FOUND;
+    public static final ApiError WH_STOCKTAKING_TASK_STARTED = ApiErrorWms.WH_STOCKTAKING_TASK_STARTED;
+    public static final ApiError WH_LOCATION_IS_NULL = ApiErrorWms.WH_LOCATION_IS_NULL;
+    public static final ApiError WH_AREA_IS_NULL = ApiErrorWms.WH_AREA_IS_NULL;
+    public static final ApiError WH_STOCK_FREEZE_NOT_ALLOW = ApiErrorWms.WH_STOCK_FREEZE_NOT_ALLOW;
+    public static final ApiError WH_NOT_EXIST_ORG = ApiErrorWms.WH_NOT_EXIST_ORG;
+    public static final ApiError WH_STOCKTAKING_TASK_EXIST = ApiErrorWms.WH_STOCKTAKING_TASK_EXIST;
+    public static final ApiError WH_LOCATION_MOVE_DETAIL_SAVE_FAILED = ApiErrorWms.WH_LOCATION_MOVE_DETAIL_SAVE_FAILED;
+    public static final ApiError WH_LOCATION_MOVE_QTY_EXCEEDS_AVAILABLE = ApiErrorWms.WH_LOCATION_MOVE_QTY_EXCEEDS_AVAILABLE;
+    public static final ApiError WH_LOCATION_MOVE_FROZEN_QTY_EXCEEDS = ApiErrorWms.WH_LOCATION_MOVE_FROZEN_QTY_EXCEEDS;
+    public static final ApiError WH_CURRENT_TARGET_WAREHOUSE_MUST_SAME = ApiErrorWms.WH_CURRENT_TARGET_WAREHOUSE_MUST_SAME;
+    public static final ApiError WH_INV_CLOSED = ApiErrorWms.WH_INV_CLOSED;
+    public static final ApiError WH_SUBCONTRACT_MACHINE_WAREHOUSE_ORG_DIFF = ApiErrorWms.WH_SUBCONTRACT_MACHINE_WAREHOUSE_ORG_DIFF;
+    public static final ApiError WH_STOCKTAKING_DIFF_QTY_NOT_ZERO = ApiErrorWms.WH_STOCKTAKING_DIFF_QTY_NOT_ZERO;
+    public static final ApiError WH_PROFIT_DIFF_GREATER_ZERO_REQUIRED = ApiErrorWms.WH_PROFIT_DIFF_GREATER_ZERO_REQUIRED;
+    public static final ApiError WH_LOSS_DIFF_LESS_ZERO_REQUIRED = ApiErrorWms.WH_LOSS_DIFF_LESS_ZERO_REQUIRED;
+    public static final ApiError WH_ORG_WAREHOUSE_MISMATCH = ApiErrorWms.WH_ORG_WAREHOUSE_MISMATCH;
+    public static final ApiError WH_DISABLED = ApiErrorWms.WH_DISABLED;
+    public static final ApiError WH_AREA_LOCATION_DISABLED = ApiErrorWms.WH_AREA_LOCATION_DISABLED;
+    public static final ApiError WH_SUBCONTRACT_GENERATE_MACHINE_FOR_COMBINATION_ONLY = ApiErrorWms.WH_SUBCONTRACT_GENERATE_MACHINE_FOR_COMBINATION_ONLY;
+    public static final ApiError WH_SUBCONTRACT_WAIT_SUBMIT_GENERATE_MACHINE_ONLY = ApiErrorWms.WH_SUBCONTRACT_WAIT_SUBMIT_GENERATE_MACHINE_ONLY;
+    public static final ApiError WH_SUBCONTRACT_MACHINE_ALREADY_GENERATED = ApiErrorWms.WH_SUBCONTRACT_MACHINE_ALREADY_GENERATED;
+    public static final ApiError WH_GENERATE_TRANSFER_OUT_FAILED = ApiErrorWms.WH_GENERATE_TRANSFER_OUT_FAILED;
+    public static final ApiError WH_NOT_MATCHED = ApiErrorWms.WH_NOT_MATCHED;
+    public static final ApiError WH_ONWAY_NOT_EXIST = ApiErrorWms.WH_ONWAY_NOT_EXIST;
+    public static final ApiError WH_SHOP_INFO_EXIST_NOT_DISAPPROVE = ApiErrorWms.WH_SHOP_INFO_EXIST_NOT_DISAPPROVE;
+    public static final ApiError WH_OPEN_STATUS_OPEN_TIME_REQUIRED = ApiErrorWms.WH_OPEN_STATUS_OPEN_TIME_REQUIRED;
+    public static final ApiError WH_OVERSEAS_INBOUND_DETAIL_NOT_EXIST = ApiErrorWms.WH_OVERSEAS_INBOUND_DETAIL_NOT_EXIST;
+    public static final ApiError WH_OVERSEAS_INBOUND_NOT_EXIST = ApiErrorWms.WH_OVERSEAS_INBOUND_NOT_EXIST;
+    public static final ApiError WH_OVERSEAS_INBOUND_NOT_CANCEL = ApiErrorWms.WH_OVERSEAS_INBOUND_NOT_CANCEL;
+    public static final ApiError WH_OVERSEAS_INBOUND_NOT_DELETE = ApiErrorWms.WH_OVERSEAS_INBOUND_NOT_DELETE;
+    public static final ApiError WH_OVERSEAS_INTERFACE_EXCEPTION = ApiErrorWms.WH_OVERSEAS_INTERFACE_EXCEPTION;
+    public static final ApiError WH_OVERSEAS_INBOUND_EXIST_NOT_UPDATE = ApiErrorWms.WH_OVERSEAS_INBOUND_EXIST_NOT_UPDATE;
+    public static final ApiError WH_OVERSEAS_PROVIDER_NOT_FOUND = ApiErrorWms.WH_OVERSEAS_PROVIDER_NOT_FOUND;
+    public static final ApiError WH_OVERSEAS_PROVIDER_NOT_AUTH = ApiErrorWms.WH_OVERSEAS_PROVIDER_NOT_AUTH;
+    public static final ApiError WH_INBOUND_EXIST_NOT_REPEAT = ApiErrorWms.WH_INBOUND_EXIST_NOT_REPEAT;
+    public static final ApiError WH_ONWAY_NOT_CONFIGURED = ApiErrorWms.WH_ONWAY_NOT_CONFIGURED;
+    public static final ApiError WH_CODE_XGWJ_FBA_NOT_EXIST = ApiErrorWms.WH_CODE_XGWJ_FBA_NOT_EXIST;
+    public static final ApiError WH_OVERSEAS_INBOUND_NOT_FOUND_FOR_APPROVE = ApiErrorWms.WH_OVERSEAS_INBOUND_NOT_FOUND_FOR_APPROVE;
+    public static final ApiError WH_REPEAT_BINDING_THIRD_WAREHOUSE = ApiErrorWms.WH_REPEAT_BINDING_THIRD_WAREHOUSE;
+    public static final ApiError WH_OVERSEAS_INBOUND_ALREADY_PUSHED_REVERSE_FORBIDDEN = ApiErrorWms.WH_OVERSEAS_INBOUND_ALREADY_PUSHED_REVERSE_FORBIDDEN;
+    public static final ApiError WH_TRANSFER_INFO_ERROR_NOT_CANCEL_PROCESS = ApiErrorWms.WH_TRANSFER_INFO_ERROR_NOT_CANCEL_PROCESS;
+    public static final ApiError WH_TRANSFER_INFO_CANCEL_PROCESS_ERROR = ApiErrorWms.WH_TRANSFER_INFO_CANCEL_PROCESS_ERROR;
+    public static final ApiError WH_TRANSFER_DECLARE_DETAIL_NOT_EXIST = ApiErrorWms.WH_TRANSFER_DECLARE_DETAIL_NOT_EXIST;
+    public static final ApiError WH_THIRD_WAREHOUSE_NAME_EXIST = ApiErrorWms.WH_THIRD_WAREHOUSE_NAME_EXIST;
+    public static final ApiError WH_STOCKTAKING_PROFIT_LOSS_CLOSED = ApiErrorWms.WH_STOCKTAKING_PROFIT_LOSS_CLOSED;
+    public static final ApiError WH_TRANSFER_WAREHOUSE_REQUIRED = ApiErrorWms.WH_TRANSFER_WAREHOUSE_REQUIRED;
+    public static final ApiError WH_TRANSFER_ALREADY_APPROVED_MODIFY_FORBIDDEN = ApiErrorWms.WH_TRANSFER_ALREADY_APPROVED_MODIFY_FORBIDDEN;
+    public static final ApiError WH_PARAM_NOT_FOUND = ApiErrorWms.WH_PARAM_NOT_FOUND;
+    public static final ApiError WH_NOT_EXIST_OR_NO_PERMISSION = ApiErrorWms.WH_NOT_EXIST_OR_NO_PERMISSION;
+    public static final ApiError WH_TRANSFER_DECLARE_SO_EXISTS = ApiErrorWms.WH_TRANSFER_DECLARE_SO_EXISTS;
+    public static final ApiError WH_THIRD_WAREHOUSE_MAPPING_EXIST = ApiErrorWms.WH_THIRD_WAREHOUSE_MAPPING_EXIST;
+    public static final ApiError WH_ENTITY_NOT_FOUND = ApiErrorWms.WH_ENTITY_NOT_FOUND;
+    public static final ApiError WH_ENTITY_NOT_ACTIVE = ApiErrorWms.WH_ENTITY_NOT_ACTIVE;
+    public static final ApiError WH_ENTITY_INVENTORY_INSUFFICIENT = ApiErrorWms.WH_ENTITY_INVENTORY_INSUFFICIENT;
+    public static final ApiError WH_ENTITY_NO_VIRTUAL_RELATION = ApiErrorWms.WH_ENTITY_NO_VIRTUAL_RELATION;
+    public static final ApiError WH_AREA_EXIST = ApiErrorWms.WH_AREA_EXIST;
+    public static final ApiError WH_POSITION_BINDING_EXIST = ApiErrorWms.WH_POSITION_BINDING_EXIST;
+    public static final ApiError WH_TRANSFER_ASSOCIATED_OUTBOUND_APPROVE_REQUIRED = ApiErrorWms.WH_TRANSFER_ASSOCIATED_OUTBOUND_APPROVE_REQUIRED;
+    public static final ApiError WH_TRANSFER_OUTBOUND_DATE_INVALID = ApiErrorWms.WH_TRANSFER_OUTBOUND_DATE_INVALID;
+    public static final ApiError WH_ENTITY_ALLOCATION_STOCK_INSUFFICIENT = ApiErrorWms.WH_ENTITY_ALLOCATION_STOCK_INSUFFICIENT;
+    public static final ApiError WH_EXISTS_TRANSFER_INFO_NOT_CLEAR = ApiErrorWms.WH_EXISTS_TRANSFER_INFO_NOT_CLEAR;
+    public static final ApiError WH_REPLENISH_AREA_NOT_FOUND = ApiErrorWms.WH_REPLENISH_AREA_NOT_FOUND;
+    public static final ApiError WH_REPLENISH_LOCATION_NOT_FOUND = ApiErrorWms.WH_REPLENISH_LOCATION_NOT_FOUND;
+    public static final ApiError WH_TRANSFER_AUTO_CREATED_DIRECT_FORBIDDEN = ApiErrorWms.WH_TRANSFER_AUTO_CREATED_DIRECT_FORBIDDEN;
+    public static final ApiError WH_INV_NOT_EXIST = ApiErrorWms.WH_INV_NOT_EXIST;
+    public static final ApiError WH_AREA_NOT_EXIST = ApiErrorWms.WH_AREA_NOT_EXIST;
+    public static final ApiError WH_AREA_USED_STOCK_TYPE_NOT_EDIT = ApiErrorWms.WH_AREA_USED_STOCK_TYPE_NOT_EDIT;
+    public static final ApiError WH_WAREHOUSE_NOT_EDITABLE = ApiErrorWms.WH_WAREHOUSE_NOT_EDITABLE;
+    public static final ApiError WH_FBA_FNSKU_NOT_BLANK = ApiErrorWms.WH_FBA_FNSKU_NOT_BLANK;
+    public static final ApiError WH_PICK_AND_PUTAWAY_POSITION_SAME_FORBIDDEN = ApiErrorWms.WH_PICK_AND_PUTAWAY_POSITION_SAME_FORBIDDEN;
+    public static final ApiError WH_SKU_MAPPING_STOCK_INSUFFICIENT = ApiErrorWms.WH_SKU_MAPPING_STOCK_INSUFFICIENT;
+    public static final ApiError WH_WAREHOUSE_LOCATION_NOT_FOUND = ApiErrorWms.WH_WAREHOUSE_LOCATION_NOT_FOUND;
+    public static final ApiError WH_THIRD_NOT_ALLOW_MULTIPLE = ApiErrorWms.WH_THIRD_NOT_ALLOW_MULTIPLE;
+    public static final ApiError WH_INVENTORY_NOT_EXIST = ApiErrorWms.WH_INVENTORY_NOT_EXIST;
+    public static final ApiError WH_BOX_RULE_SKU_EXISTS = ApiErrorWms.WH_BOX_RULE_SKU_EXISTS;
+    public static final ApiError WH_BOX_RULE_BATCH_UPDATE_FAILED = ApiErrorWms.WH_BOX_RULE_BATCH_UPDATE_FAILED;
+    public static final ApiError WH_BOX_RULE_PRIORITY_DUPLICATE = ApiErrorWms.WH_BOX_RULE_PRIORITY_DUPLICATE;
+    public static final ApiError WH_BOX_RULE_BATCH_ADD_FAILED = ApiErrorWms.WH_BOX_RULE_BATCH_ADD_FAILED;
+    public static final ApiError WH_BOX_RULE_QTY_NOT_MULTIPLE = ApiErrorWms.WH_BOX_RULE_QTY_NOT_MULTIPLE;
+    public static final ApiError WH_BOX_RULE_SKU_DUPLICATE = ApiErrorWms.WH_BOX_RULE_SKU_DUPLICATE;
+    public static final ApiError WH_BOX_RULE_PER_BOX_QTY_DUPLICATE = ApiErrorWms.WH_BOX_RULE_PER_BOX_QTY_DUPLICATE;
+    public static final ApiError WH_BOX_PER_QTY_FORBIDDEN_ONE = ApiErrorWms.WH_BOX_PER_QTY_FORBIDDEN_ONE;
+    public static final ApiError WH_STOCKTAKING_BILL_DATE_NEED_GREATER_THAN_TODAY = ApiErrorWms.WH_STOCKTAKING_BILL_DATE_NEED_GREATER_THAN_TODAY;
+    public static final ApiError WH_STOCKPLAN_NOT_FOUND = ApiErrorWms.WH_STOCKPLAN_NOT_FOUND;
+    public static final ApiError WH_STOCKPLAN_ALREADY_PUSH = ApiErrorWms.WH_STOCKPLAN_ALREADY_PUSH;
+    public static final ApiError WH_STOCKTAKING_PUSH_OVER = ApiErrorWms.WH_STOCKTAKING_PUSH_OVER;
+    public static final ApiError WH_STOCKTAKING_APPROVE_BILL_DATE_NEED_GREATER_THAN_TODAY = ApiErrorWms.WH_STOCKTAKING_APPROVE_BILL_DATE_NEED_GREATER_THAN_TODAY;
+    public static final ApiError WH_STOCKTAKING_PROFIT_LOSS_NOT_ALLOW_UPDATE = ApiErrorWms.WH_STOCKTAKING_PROFIT_LOSS_NOT_ALLOW_UPDATE;
+    public static final ApiError WH_STOCKTAKING_NOT_NEED_PUSH = ApiErrorWms.WH_STOCKTAKING_NOT_NEED_PUSH;
+    public static final ApiError WH_STOCKTAKING_NOT_ALLOW_APPROVE = ApiErrorWms.WH_STOCKTAKING_NOT_ALLOW_APPROVE;
+    public static final ApiError WH_ONWAY_WAREHOUSE_NOT_EXIST = ApiErrorWms.WH_ONWAY_WAREHOUSE_NOT_EXIST;
+    public static final ApiError WH_WEGO_INBOUND_CODE_REQUIRED = ApiErrorWms.WH_WEGO_INBOUND_CODE_REQUIRED;
+    public static final ApiError WH_WEGO_AUTH_INFO_EMPTY = ApiErrorWms.WH_WEGO_AUTH_INFO_EMPTY;
+    public static final ApiError WH_WEGO_AUTH_TOKEN_SECRET_MISSING = ApiErrorWms.WH_WEGO_AUTH_TOKEN_SECRET_MISSING;
+    public static final ApiError WH_WEGO_PACKING_LIST_EMPTY = ApiErrorWms.WH_WEGO_PACKING_LIST_EMPTY;
+    public static final ApiError WH_WEGO_PACKING_BOX_NO_VALID_SKU = ApiErrorWms.WH_WEGO_PACKING_BOX_NO_VALID_SKU;
+    public static final ApiError WH_WEGO_PACKING_LIST_MISSING_BOX_NO = ApiErrorWms.WH_WEGO_PACKING_LIST_MISSING_BOX_NO;
+    public static final ApiError WH_WEGO_OUTBOUND_DETAIL_EMPTY = ApiErrorWms.WH_WEGO_OUTBOUND_DETAIL_EMPTY;
+    public static final ApiError WH_WEGO_OUTBOUND_CODE_REQUIRED = ApiErrorWms.WH_WEGO_OUTBOUND_CODE_REQUIRED;
+    public static final ApiError WH_WEGO_QUERY_FALLBACK_EMPTY_RESPONSE = ApiErrorWms.WH_WEGO_QUERY_FALLBACK_EMPTY_RESPONSE;
+    public static final ApiError WH_WEGO_QUERY_FALLBACK_FAILED = ApiErrorWms.WH_WEGO_QUERY_FALLBACK_FAILED;
+    public static final ApiError WH_WEGO_INBOUND_AUTH_ID_NOT_FOUND = ApiErrorWms.WH_WEGO_INBOUND_AUTH_ID_NOT_FOUND;
+    public static final ApiError WH_WEGO_INBOUND_AUTH_JSON_EMPTY = ApiErrorWms.WH_WEGO_INBOUND_AUTH_JSON_EMPTY;
+    public static final ApiError WH_WEGO_INBOUND_TOKEN_SECRET_MISSING = ApiErrorWms.WH_WEGO_INBOUND_TOKEN_SECRET_MISSING;
+    public static final ApiError WH_WEGO_INBOUND_PAGE_QUERY_ERROR = ApiErrorWms.WH_WEGO_INBOUND_PAGE_QUERY_ERROR;
+    public static final ApiError WH_WEGO_INBOUND_PAGE_PARSE_FAILED = ApiErrorWms.WH_WEGO_INBOUND_PAGE_PARSE_FAILED;
+    public static final ApiError WH_WEGO_INBOUND_PAGE_LIMIT_EXCEEDED = ApiErrorWms.WH_WEGO_INBOUND_PAGE_LIMIT_EXCEEDED;
+    public static final ApiError WH_WEGO_INBOUND_RESPONSE_EMPTY = ApiErrorWms.WH_WEGO_INBOUND_RESPONSE_EMPTY;
+    public static final ApiError WH_WEGO_INBOUND_RESPONSE_FAILED = ApiErrorWms.WH_WEGO_INBOUND_RESPONSE_FAILED;
+    public static final ApiError WH_WEGO_INBOUND_RESULT_EMPTY = ApiErrorWms.WH_WEGO_INBOUND_RESULT_EMPTY;
+    public static final ApiError WH_WEGO_INBOUND_TYPE_ONLY_SELF_HEADWAY = ApiErrorWms.WH_WEGO_INBOUND_TYPE_ONLY_SELF_HEADWAY;
+    public static final ApiError WH_WEGO_INBOUND_TRACKING_NO_REQUIRED = ApiErrorWms.WH_WEGO_INBOUND_TRACKING_NO_REQUIRED;
+    public static final ApiError WH_WEGO_INVENTORY_PROVIDER_NOT_FOUND = ApiErrorWms.WH_WEGO_INVENTORY_PROVIDER_NOT_FOUND;
+    public static final ApiError WH_WEGO_INVENTORY_AUTH_JSON_EMPTY = ApiErrorWms.WH_WEGO_INVENTORY_AUTH_JSON_EMPTY;
+    public static final ApiError WH_WEGO_INVENTORY_TOKEN_SECRET_MISSING = ApiErrorWms.WH_WEGO_INVENTORY_TOKEN_SECRET_MISSING;
+    public static final ApiError WH_WEGO_INVENTORY_PAGE_QUERY_ERROR = ApiErrorWms.WH_WEGO_INVENTORY_PAGE_QUERY_ERROR;
+    public static final ApiError WH_WEGO_INVENTORY_PAGE_PARSE_FAILED = ApiErrorWms.WH_WEGO_INVENTORY_PAGE_PARSE_FAILED;
+    public static final ApiError WH_WEGO_INVENTORY_PAGE_LIMIT_EXCEEDED = ApiErrorWms.WH_WEGO_INVENTORY_PAGE_LIMIT_EXCEEDED;
+    public static final ApiError WH_WEGO_INVENTORY_RESPONSE_FAILED = ApiErrorWms.WH_WEGO_INVENTORY_RESPONSE_FAILED;
+    public static final ApiError WH_WEGO_AUTH_INFO_NOT_FOUND = ApiErrorWms.WH_WEGO_AUTH_INFO_NOT_FOUND;
+    public static final ApiError WH_WEGO_OUTBOUND_AUTH_ID_NOT_FOUND = ApiErrorWms.WH_WEGO_OUTBOUND_AUTH_ID_NOT_FOUND;
+    public static final ApiError WH_WEGO_OUTBOUND_AUTH_JSON_EMPTY = ApiErrorWms.WH_WEGO_OUTBOUND_AUTH_JSON_EMPTY;
+    public static final ApiError WH_WEGO_OUTBOUND_TOKEN_SECRET_MISSING = ApiErrorWms.WH_WEGO_OUTBOUND_TOKEN_SECRET_MISSING;
+    public static final ApiError WH_WEGO_OUTBOUND_PAGE_QUERY_ERROR = ApiErrorWms.WH_WEGO_OUTBOUND_PAGE_QUERY_ERROR;
+    public static final ApiError WH_WEGO_OUTBOUND_RESPONSE_EMPTY = ApiErrorWms.WH_WEGO_OUTBOUND_RESPONSE_EMPTY;
+    public static final ApiError WH_WEGO_OUTBOUND_RESPONSE_FAILED = ApiErrorWms.WH_WEGO_OUTBOUND_RESPONSE_FAILED;
+    public static final ApiError WH_WEGO_OUTBOUND_RESULT_EMPTY = ApiErrorWms.WH_WEGO_OUTBOUND_RESULT_EMPTY;
+    public static final ApiError WH_WEGO_OUTBOUND_PAGE_LIMIT_EXCEEDED = ApiErrorWms.WH_WEGO_OUTBOUND_PAGE_LIMIT_EXCEEDED;
+    public static final ApiError WH_WEGO_SDK_INBOUND_PAGE_CONVERT_FAILED = ApiErrorWms.WH_WEGO_SDK_INBOUND_PAGE_CONVERT_FAILED;
+    public static final ApiError WH_WEGO_SDK_OUTBOUND_SEARCH_NO_RESPONSE = ApiErrorWms.WH_WEGO_SDK_OUTBOUND_SEARCH_NO_RESPONSE;
+    public static final ApiError WH_WEGO_SDK_OUTBOUND_SEARCH_FAILED = ApiErrorWms.WH_WEGO_SDK_OUTBOUND_SEARCH_FAILED;
+    public static final ApiError WH_WEGO_SDK_OUTBOUND_SEARCH_CONVERT_FAILED = ApiErrorWms.WH_WEGO_SDK_OUTBOUND_SEARCH_CONVERT_FAILED;
+    public static final ApiError WH_WEGO_SDK_OUTBOUND_PAGE_CONVERT_FAILED = ApiErrorWms.WH_WEGO_SDK_OUTBOUND_PAGE_CONVERT_FAILED;
+    public static final ApiError WH_WEGO_SDK_RETURN_ORDER_PAGE_CONVERT_FAILED = ApiErrorWms.WH_WEGO_SDK_RETURN_ORDER_PAGE_CONVERT_FAILED;
+    public static final ApiError WH_WEGO_SDK_API_CALL_ERROR = ApiErrorWms.WH_WEGO_SDK_API_CALL_ERROR;
+    public static final ApiError WH_WEGO_SDK_API_RESPONSE_EMPTY = ApiErrorWms.WH_WEGO_SDK_API_RESPONSE_EMPTY;
+    public static final ApiError WH_WEGO_SDK_API_RESPONSE_NOT_JSON = ApiErrorWms.WH_WEGO_SDK_API_RESPONSE_NOT_JSON;
+    public static final ApiError WH_WEGO_SDK_DOMAIN_EMPTY = ApiErrorWms.WH_WEGO_SDK_DOMAIN_EMPTY;
+    public static final ApiError WH_WEGO_SDK_SIGN_PARAMS_EMPTY = ApiErrorWms.WH_WEGO_SDK_SIGN_PARAMS_EMPTY;
+    public static final ApiError WH_WEGO_SDK_SIGN_SECRET_EMPTY = ApiErrorWms.WH_WEGO_SDK_SIGN_SECRET_EMPTY;
+    public static final ApiError WH_WEGO_SDK_SIGN_JSON_EMPTY = ApiErrorWms.WH_WEGO_SDK_SIGN_JSON_EMPTY;
+    public static final ApiError WH_WEGO_RETURN_AUTH_INFO_NOT_FOUND = ApiErrorWms.WH_WEGO_RETURN_AUTH_INFO_NOT_FOUND;
+    public static final ApiError WH_WEGO_RETURN_AUTH_ID_NOT_FOUND = ApiErrorWms.WH_WEGO_RETURN_AUTH_ID_NOT_FOUND;
+    public static final ApiError WH_WEGO_RETURN_AUTH_JSON_EMPTY = ApiErrorWms.WH_WEGO_RETURN_AUTH_JSON_EMPTY;
+    public static final ApiError WH_WEGO_RETURN_TOKEN_SECRET_MISSING = ApiErrorWms.WH_WEGO_RETURN_TOKEN_SECRET_MISSING;
+    public static final ApiError WH_WEGO_RETURN_PAGE_QUERY_ERROR = ApiErrorWms.WH_WEGO_RETURN_PAGE_QUERY_ERROR;
+    public static final ApiError WH_WEGO_RETURN_RESPONSE_EMPTY = ApiErrorWms.WH_WEGO_RETURN_RESPONSE_EMPTY;
+    public static final ApiError WH_WEGO_RETURN_RESPONSE_FAILED = ApiErrorWms.WH_WEGO_RETURN_RESPONSE_FAILED;
+    public static final ApiError WH_WEGO_RETURN_RESULT_EMPTY = ApiErrorWms.WH_WEGO_RETURN_RESULT_EMPTY;
+    public static final ApiError WH_WEGO_RETURN_PAGE_LIMIT_EXCEEDED = ApiErrorWms.WH_WEGO_RETURN_PAGE_LIMIT_EXCEEDED;
+    public static final ApiError WH_WEGO_CHANNEL_AUTH_INFO_EMPTY = ApiErrorWms.WH_WEGO_CHANNEL_AUTH_INFO_EMPTY;
+    public static final ApiError WH_WEGO_CHANNEL_TOKEN_SECRET_MISSING = ApiErrorWms.WH_WEGO_CHANNEL_TOKEN_SECRET_MISSING;
+    public static final ApiError WH_WEGO_CHANNEL_QUERY_ERROR = ApiErrorWms.WH_WEGO_CHANNEL_QUERY_ERROR;
+    public static final ApiError WH_WEGO_CHANNEL_RESPONSE_EMPTY = ApiErrorWms.WH_WEGO_CHANNEL_RESPONSE_EMPTY;
+    public static final ApiError WH_WEGO_CHANNEL_QUERY_FAILED = ApiErrorWms.WH_WEGO_CHANNEL_QUERY_FAILED;
+    public static final ApiError WH_WEGO_LOGISTICS_SERVICE_NOT_OPEN = ApiErrorWms.WH_WEGO_LOGISTICS_SERVICE_NOT_OPEN;
+    public static final ApiError WH_WEGO_SKU_PROVIDER_NOT_FOUND = ApiErrorWms.WH_WEGO_SKU_PROVIDER_NOT_FOUND;
+    public static final ApiError WH_WEGO_SKU_AUTH_JSON_EMPTY = ApiErrorWms.WH_WEGO_SKU_AUTH_JSON_EMPTY;
+    public static final ApiError WH_WEGO_SKU_TOKEN_SECRET_MISSING = ApiErrorWms.WH_WEGO_SKU_TOKEN_SECRET_MISSING;
+    public static final ApiError WH_WEGO_SKU_PAGE_QUERY_ERROR = ApiErrorWms.WH_WEGO_SKU_PAGE_QUERY_ERROR;
+    public static final ApiError WH_WEGO_SKU_PAGE_PARSE_FAILED = ApiErrorWms.WH_WEGO_SKU_PAGE_PARSE_FAILED;
+    public static final ApiError WH_WEGO_SKU_PAGE_LIMIT_EXCEEDED = ApiErrorWms.WH_WEGO_SKU_PAGE_LIMIT_EXCEEDED;
+    public static final ApiError WH_WEGO_SKU_RESPONSE_FAILED = ApiErrorWms.WH_WEGO_SKU_RESPONSE_FAILED;
+    public static final ApiError WH_WEGO_WAREHOUSE_AUTH_ID_NOT_FOUND = ApiErrorWms.WH_WEGO_WAREHOUSE_AUTH_ID_NOT_FOUND;
+    public static final ApiError WH_WEGO_WAREHOUSE_REFRESH_TOKEN_FAILED = ApiErrorWms.WH_WEGO_WAREHOUSE_REFRESH_TOKEN_FAILED;
+    public static final ApiError WH_WEGO_WAREHOUSE_QUERY_FAILED = ApiErrorWms.WH_WEGO_WAREHOUSE_QUERY_FAILED;
+    public static final ApiError WH_WEGO_WAREHOUSE_AUTH_JSON_EMPTY = ApiErrorWms.WH_WEGO_WAREHOUSE_AUTH_JSON_EMPTY;
+    public static final ApiError WH_WEGO_WAREHOUSE_TOKEN_SECRET_MISSING = ApiErrorWms.WH_WEGO_WAREHOUSE_TOKEN_SECRET_MISSING;
+    public static final ApiError WH_WEGO_INBOUND_DETAIL_JSON_PARSE_FAILED = ApiErrorWms.WH_WEGO_INBOUND_DETAIL_JSON_PARSE_FAILED;
+    public static final ApiError WH_BORROW_WAREHOUSE_USABLE_INSUFFICIENT = ApiErrorWms.WH_BORROW_WAREHOUSE_USABLE_INSUFFICIENT;
+
+    /** Tms service error constants. */
+    public static final ApiError FIRST_MILE_FBA_SHIPMENT_NOT_EXIST_BILL = ApiErrorTms.FIRST_MILE_FBA_SHIPMENT_NOT_EXIST_BILL;
+    public static final ApiError FIRST_MILE_SHIPMENT_NOT_FOUND = ApiErrorTms.FIRST_MILE_SHIPMENT_NOT_FOUND;
+    public static final ApiError FIRST_MILE_SHIPMENT_DELETE_ALLOWED_PENDING_ONLY = ApiErrorTms.FIRST_MILE_SHIPMENT_DELETE_ALLOWED_PENDING_ONLY;
+    public static final ApiError FIRST_MILE_SHIPMENT_DETAIL_NOT_EXIST = ApiErrorTms.FIRST_MILE_SHIPMENT_DETAIL_NOT_EXIST;
+    public static final ApiError FIRST_MILE_SHIPMENT_NOT_EXIST = ApiErrorTms.FIRST_MILE_SHIPMENT_NOT_EXIST;
+    public static final ApiError FIRST_MILE_SHIPMENT_SKU_NOT_MAPPED = ApiErrorTms.FIRST_MILE_SHIPMENT_SKU_NOT_MAPPED;
+    public static final ApiError FIRST_MILE_SHIPMENT_CONTAIN_COMBINATION_REQUIRE_MACHINE = ApiErrorTms.FIRST_MILE_SHIPMENT_CONTAIN_COMBINATION_REQUIRE_MACHINE;
+    public static final ApiError FIRST_MILE_SHIPMENT_INVENTORY_INSUFFICIENT = ApiErrorTms.FIRST_MILE_SHIPMENT_INVENTORY_INSUFFICIENT;
+    public static final ApiError FIRST_MILE_SHIPMENT_RECEIVE_EXIST_REVERSE_FORBIDDEN = ApiErrorTms.FIRST_MILE_SHIPMENT_RECEIVE_EXIST_REVERSE_FORBIDDEN;
+    public static final ApiError FIRST_MILE_SHIPMENT_STATUS_FINISH_ONLY = ApiErrorTms.FIRST_MILE_SHIPMENT_STATUS_FINISH_ONLY;
+    public static final ApiError FIRST_MILE_SHIPMENT_ALREADY_PUSHED_NOT_DELETE = ApiErrorTms.FIRST_MILE_SHIPMENT_ALREADY_PUSHED_NOT_DELETE;
+    public static final ApiError FIRST_MILE_SHIPMENT_STATUS_CHECK_NOT_DELETE = ApiErrorTms.FIRST_MILE_SHIPMENT_STATUS_CHECK_NOT_DELETE;
+    public static final ApiError FIRST_MILE_SHIPMENT_ERROR = ApiErrorTms.FIRST_MILE_SHIPMENT_ERROR;
+    public static final ApiError FIRST_MILE_SHIPMENT_PLAN_NOT_EXIST = ApiErrorTms.FIRST_MILE_SHIPMENT_PLAN_NOT_EXIST;
+    public static final ApiError FIRST_MILE_SHIPMENT_DETAIL_NOT_DISAPPROVE = ApiErrorTms.FIRST_MILE_SHIPMENT_DETAIL_NOT_DISAPPROVE;
+    public static final ApiError FIRST_MILE_SHIPMENT_REQ_NOT_DISAPPROVE = ApiErrorTms.FIRST_MILE_SHIPMENT_REQ_NOT_DISAPPROVE;
+    public static final ApiError FIRST_MILE_SHIPMENT_QTY_EXCEED_DECLARE_QTY = ApiErrorTms.FIRST_MILE_SHIPMENT_QTY_EXCEED_DECLARE_QTY;
+    public static final ApiError FIRST_MILE_SHIPMENT_REQ_NOT_FOUND = ApiErrorTms.FIRST_MILE_SHIPMENT_REQ_NOT_FOUND;
+    public static final ApiError FIRST_MILE_SHIPMENT_REQ_DETAIL_NOT_FOUND = ApiErrorTms.FIRST_MILE_SHIPMENT_REQ_DETAIL_NOT_FOUND;
+    public static final ApiError FIRST_MILE_SHIPMENT_NOTICE_DETAIL_NOT_FOUND = ApiErrorTms.FIRST_MILE_SHIPMENT_NOTICE_DETAIL_NOT_FOUND;
+    public static final ApiError FIRST_MILE_SHIPMENT_WAIT_HANDLE_ONLY = ApiErrorTms.FIRST_MILE_SHIPMENT_WAIT_HANDLE_ONLY;
+    public static final ApiError FIRST_MILE_SHIPMENT_HANDLE_ING_FINISH_ONLY = ApiErrorTms.FIRST_MILE_SHIPMENT_HANDLE_ING_FINISH_ONLY;
+    public static final ApiError FIRST_MILE_SHIPMENT_ONLY_FOR_OVERSEAS_WAREHOUSE = ApiErrorTms.FIRST_MILE_SHIPMENT_ONLY_FOR_OVERSEAS_WAREHOUSE;
+    public static final ApiError FIRST_MILE_SHIPMENT_APPROVE_ONLY_CAN_PUSH_OVERSEAS_INBOUND = ApiErrorTms.FIRST_MILE_SHIPMENT_APPROVE_ONLY_CAN_PUSH_OVERSEAS_INBOUND;
+    public static final ApiError FIRST_MILE_SHIPMENT_HANDLE_PRINT_PICKING_ALLOWED = ApiErrorTms.FIRST_MILE_SHIPMENT_HANDLE_PRINT_PICKING_ALLOWED;
+    public static final ApiError FIRST_MILE_SHIPMENT_PACKING_NOT_COMPLETED_CANNOT_GENERATE_INBOUND = ApiErrorTms.FIRST_MILE_SHIPMENT_PACKING_NOT_COMPLETED_CANNOT_GENERATE_INBOUND;
+    public static final ApiError FIRST_MILE_SHIPMENT_FINANCE_COST_ALLOCATION_REVERSE_FORBIDDEN = ApiErrorTms.FIRST_MILE_SHIPMENT_FINANCE_COST_ALLOCATION_REVERSE_FORBIDDEN;
+    public static final ApiError FIRST_MILE_SHIPMENT_WAREHOUSE_REQUIRED = ApiErrorTms.FIRST_MILE_SHIPMENT_WAREHOUSE_REQUIRED;
+    public static final ApiError FIRST_MILE_SHIPMENT_DELIVERY_GENERATE_FAIL = ApiErrorTms.FIRST_MILE_SHIPMENT_DELIVERY_GENERATE_FAIL;
+    public static final ApiError FIRST_MILE_SHIPMENT_AWD_OUTSTOCK_NOT_EXIST = ApiErrorTms.FIRST_MILE_SHIPMENT_AWD_OUTSTOCK_NOT_EXIST;
+    public static final ApiError FIRST_MILE_SHIPMENT_GENERATE_NEED_BILL_DATE = ApiErrorTms.FIRST_MILE_SHIPMENT_GENERATE_NEED_BILL_DATE;
+    public static final ApiError FIRST_MILE_COST_ALLOCATION_ORG_ID_REQUIRED = ApiErrorTms.FIRST_MILE_COST_ALLOCATION_ORG_ID_REQUIRED;
+    public static final ApiError FIRST_MILE_SHIPMENT_DEST_COUNTRY_INCONSISTENT = ApiErrorTms.FIRST_MILE_SHIPMENT_DEST_COUNTRY_INCONSISTENT;
+    public static final ApiError FIRST_MILE_SHIPMENT_DEST_COUNTRY_NOT_MAINTAINED = ApiErrorTms.FIRST_MILE_SHIPMENT_DEST_COUNTRY_NOT_MAINTAINED;
+    public static final ApiError FIRST_MILE_SHIPMENT_SAVE_FAILED = ApiErrorTms.FIRST_MILE_SHIPMENT_SAVE_FAILED;
+    public static final ApiError FIRST_MILE_SHIPMENT_DECLARE_SOURCE_NOT_FOUND = ApiErrorTms.FIRST_MILE_SHIPMENT_DECLARE_SOURCE_NOT_FOUND;
+    public static final ApiError FIRST_MILE_SHIPMENT_PACKING_TASK_NOT_GENERATED = ApiErrorTms.FIRST_MILE_SHIPMENT_PACKING_TASK_NOT_GENERATED;
+    public static final ApiError FIRST_MILE_SHIPMENT_PACKING_WEIGHT_REQUIRED_FOR_APPROVE = ApiErrorTms.FIRST_MILE_SHIPMENT_PACKING_WEIGHT_REQUIRED_FOR_APPROVE;
+    public static final ApiError FIRST_MILE_SHIPMENT_AVAILABLE_INVENTORY_INSUFFICIENT = ApiErrorTms.FIRST_MILE_SHIPMENT_AVAILABLE_INVENTORY_INSUFFICIENT;
+    public static final ApiError FIRST_MILE_SHIPMENT_MACHINE_EXISTS_DELETE_FORBIDDEN = ApiErrorTms.FIRST_MILE_SHIPMENT_MACHINE_EXISTS_DELETE_FORBIDDEN;
+    public static final ApiError FIRST_MILE_SHIPMENT_INBOUND_EXISTS_DELETE_FORBIDDEN = ApiErrorTms.FIRST_MILE_SHIPMENT_INBOUND_EXISTS_DELETE_FORBIDDEN;
+    public static final ApiError FIRST_MILE_SHIPMENT_THIRD_WAREHOUSE_APPROVE_PUSH_FAILED = ApiErrorTms.FIRST_MILE_SHIPMENT_THIRD_WAREHOUSE_APPROVE_PUSH_FAILED;
+    public static final ApiError FIRST_MILE_SHIPMENT_LOGISTICS_AUTO_GENERATE_FAILED = ApiErrorTms.FIRST_MILE_SHIPMENT_LOGISTICS_AUTO_GENERATE_FAILED;
+    public static final ApiError FIRST_MILE_SHIPMENT_WORKFLOW_START_FAILED = ApiErrorTms.FIRST_MILE_SHIPMENT_WORKFLOW_START_FAILED;
+    public static final ApiError FIRST_MILE_SHIPMENT_DEST_WAREHOUSE_REQUIRED = ApiErrorTms.FIRST_MILE_SHIPMENT_DEST_WAREHOUSE_REQUIRED;
+    public static final ApiError FIRST_MILE_DELIVERY_DECLARE_ALREADY_GENERATED = ApiErrorTms.FIRST_MILE_DELIVERY_DECLARE_ALREADY_GENERATED;
+    public static final ApiError LOGISTICS_BILL_COST_IMPORT_NOT_EXIST_RECONCILIATION_MONTH = ApiErrorTms.LOGISTICS_BILL_COST_IMPORT_NOT_EXIST_RECONCILIATION_MONTH;
+    public static final ApiError LOGISTICS_BILL_COST_IMPORT_NOT_EXIST_BILL = ApiErrorTms.LOGISTICS_BILL_COST_IMPORT_NOT_EXIST_BILL;
+    public static final ApiError LOGISTICS_PDF_MERGE_ERROR = ApiErrorTms.LOGISTICS_PDF_MERGE_ERROR;
+    public static final ApiError LOGISTICS_PDF_MERGE_SKU_BARCODE_ERROR = ApiErrorTms.LOGISTICS_PDF_MERGE_SKU_BARCODE_ERROR;
+    public static final ApiError LOGISTICS_PDF_SO_MERGE_ERROR = ApiErrorTms.LOGISTICS_PDF_SO_MERGE_ERROR;
+    public static final ApiError LOGISTICS_NO_TRACKING_NUMBER_CANNOT_MANUAL_SHIP = ApiErrorTms.LOGISTICS_NO_TRACKING_NUMBER_CANNOT_MANUAL_SHIP;
+    public static final ApiError LOGISTICS_ALREADY_PACKAGE_TRANSFER_NOT_INTERCEPT = ApiErrorTms.LOGISTICS_ALREADY_PACKAGE_TRANSFER_NOT_INTERCEPT;
+    public static final ApiError LOGISTICS_HANDLE_STATUS_ALREADY_HANDLED_OR_CANCEL_NOT = ApiErrorTms.LOGISTICS_HANDLE_STATUS_ALREADY_HANDLED_OR_CANCEL_NOT;
+    public static final ApiError LOGISTICS_UPLOAD_SUCCESS_NOT_DELETE = ApiErrorTms.LOGISTICS_UPLOAD_SUCCESS_NOT_DELETE;
+    public static final ApiError LOGISTICS_DELIVERY_INTERCEPT_READY_PACKAGED = ApiErrorTms.LOGISTICS_DELIVERY_INTERCEPT_READY_PACKAGED;
+    public static final ApiError LOGISTICS_PACKING_REF_ORDER_APPROVED_FORBIDDEN = ApiErrorTms.LOGISTICS_PACKING_REF_ORDER_APPROVED_FORBIDDEN;
+    public static final ApiError LOGISTICS_PACKING_TASK_NOT_FOUND = ApiErrorTms.LOGISTICS_PACKING_TASK_NOT_FOUND;
+    public static final ApiError LOGISTICS_SYNC_ADDRESS_NOT_EDITABLE = ApiErrorTms.LOGISTICS_SYNC_ADDRESS_NOT_EDITABLE;
+    public static final ApiError LOGISTICS_SYNC_ADDRESS_NOT_DELETABLE = ApiErrorTms.LOGISTICS_SYNC_ADDRESS_NOT_DELETABLE;
+    public static final ApiError LOGISTICS_PACKING_SPEC_NOT_FOUND = ApiErrorTms.LOGISTICS_PACKING_SPEC_NOT_FOUND;
+    public static final ApiError LOGISTICS_PACKING_RECORD_NOT_FOUND = ApiErrorTms.LOGISTICS_PACKING_RECORD_NOT_FOUND;
+    public static final ApiError LOGISTICS_PACKING_FNSKU_QTY_EXCEEDS_UNPACKED = ApiErrorTms.LOGISTICS_PACKING_FNSKU_QTY_EXCEEDS_UNPACKED;
+    public static final ApiError LOGISTICS_PACKING_SKU_QTY_EXCEEDS_BOX = ApiErrorTms.LOGISTICS_PACKING_SKU_QTY_EXCEEDS_BOX;
+    public static final ApiError LOGISTICS_PACKING_SKU_NOT_IN_ASSOCIATED_ORDER = ApiErrorTms.LOGISTICS_PACKING_SKU_NOT_IN_ASSOCIATED_ORDER;
+    public static final ApiError LOGISTICS_PACKING_SKU_NOT_IN_BOX = ApiErrorTms.LOGISTICS_PACKING_SKU_NOT_IN_BOX;
+    public static final ApiError LOGISTICS_PACKING_ASSOCIATED_ORDER_APPROVED_EDIT_DELETE_FORBIDDEN = ApiErrorTms.LOGISTICS_PACKING_ASSOCIATED_ORDER_APPROVED_EDIT_DELETE_FORBIDDEN;
+    public static final ApiError LOGISTICS_PACKING_DELIVERY_CHECK_FORBIDDEN = ApiErrorTms.LOGISTICS_PACKING_DELIVERY_CHECK_FORBIDDEN;
+    public static final ApiError LOGISTICS_PACKING_SKU_FNSKU_QTY_EXCEEDS_DELIVERY = ApiErrorTms.LOGISTICS_PACKING_SKU_FNSKU_QTY_EXCEEDS_DELIVERY;
+    public static final ApiError LOGISTICS_PACKING_TOTAL_QTY_EXCEEDS_DELIVERY = ApiErrorTms.LOGISTICS_PACKING_TOTAL_QTY_EXCEEDS_DELIVERY;
+    public static final ApiError LOGISTICS_PACKING_PICKLIST_REQUIRED = ApiErrorTms.LOGISTICS_PACKING_PICKLIST_REQUIRED;
+    public static final ApiError LOGISTICS_PACKING_SELECT_PICKLIST_REQUIRED = ApiErrorTms.LOGISTICS_PACKING_SELECT_PICKLIST_REQUIRED;
+    public static final ApiError LOGISTICS_ORDER_EXISTS_REVERSE_FORBIDDEN = ApiErrorTms.LOGISTICS_ORDER_EXISTS_REVERSE_FORBIDDEN;
+    public static final ApiError LOGISTICS_DECLARE_BILL_EXISTS_REVERSE_FORBIDDEN = ApiErrorTms.LOGISTICS_DECLARE_BILL_EXISTS_REVERSE_FORBIDDEN;
+    public static final ApiError LOGISTICS_FNSKU_LABEL_PRINT_FAILED = ApiErrorTms.LOGISTICS_FNSKU_LABEL_PRINT_FAILED;
+    public static final ApiError LOGISTICS_CUSTOMER_SKU_LABEL_PRINT_FAILED = ApiErrorTms.LOGISTICS_CUSTOMER_SKU_LABEL_PRINT_FAILED;
+    public static final ApiError LOGISTICS_PACKING_NOT_COMPLETED_DECLARATION_FORBIDDEN = ApiErrorTms.LOGISTICS_PACKING_NOT_COMPLETED_DECLARATION_FORBIDDEN;
+    public static final ApiError LOGISTICS_FIRST_MILE_ORDER_EXISTS_NOT_DEL = ApiErrorTms.LOGISTICS_FIRST_MILE_ORDER_EXISTS_NOT_DEL;
+    public static final ApiError LOGISTICS_DECLARE_BILL_EXISTS_NOT_DEL = ApiErrorTms.LOGISTICS_DECLARE_BILL_EXISTS_NOT_DEL;
+    public static final ApiError LOGISTICS_CHANNEL_BLACKLIST = ApiErrorTms.LOGISTICS_CHANNEL_BLACKLIST;
+    public static final ApiError LOGISTICS_CHANNEL_COUNTRY_BLACKLIST = ApiErrorTms.LOGISTICS_CHANNEL_COUNTRY_BLACKLIST;
+    public static final ApiError LOGISTICS_CANCEL_NOT_SUPPORTED = ApiErrorTms.LOGISTICS_CANCEL_NOT_SUPPORTED;
+    public static final ApiError LOGISTICS_CANCEL_FAILED = ApiErrorTms.LOGISTICS_CANCEL_FAILED;
+    public static final ApiError LOGISTICS_PLATFORM_WAREHOUSE_NOT_INTERCEPT = ApiErrorTms.LOGISTICS_PLATFORM_WAREHOUSE_NOT_INTERCEPT;
+    public static final ApiError LOGISTICS_CHANNEL_REQUIRED_FOR_CANCEL = ApiErrorTms.LOGISTICS_CHANNEL_REQUIRED_FOR_CANCEL;
+    public static final ApiError LOGISTICS_NOT_INTERCEPTED_CANNOT_CANCEL = ApiErrorTms.LOGISTICS_NOT_INTERCEPTED_CANNOT_CANCEL;
+    public static final ApiError LOGISTICS_INTERCEPT_STATUS_INVALID = ApiErrorTms.LOGISTICS_INTERCEPT_STATUS_INVALID;
+    public static final ApiError LOGISTICS_INTERCEPT_PROCESSING_FORBIDDEN_CANCEL = ApiErrorTms.LOGISTICS_INTERCEPT_PROCESSING_FORBIDDEN_CANCEL;
+    public static final ApiError LOGISTICS_DECLARE_INFO_NOT_FOUND = ApiErrorTms.LOGISTICS_DECLARE_INFO_NOT_FOUND;
+    public static final ApiError LOGISTICS_DECLARE_SKU_NOT_FOUND = ApiErrorTms.LOGISTICS_DECLARE_SKU_NOT_FOUND;
+    public static final ApiError LOGISTICS_DECLARE_CN_NAME_REQUIRED = ApiErrorTms.LOGISTICS_DECLARE_CN_NAME_REQUIRED;
+    public static final ApiError LOGISTICS_DECLARE_EN_NAME_REQUIRED = ApiErrorTms.LOGISTICS_DECLARE_EN_NAME_REQUIRED;
+    public static final ApiError LOGISTICS_DECLARE_PRICE_REQUIRED = ApiErrorTms.LOGISTICS_DECLARE_PRICE_REQUIRED;
+    public static final ApiError LOGISTICS_DECLARE_CURRENCY_REQUIRED = ApiErrorTms.LOGISTICS_DECLARE_CURRENCY_REQUIRED;
+    public static final ApiError LOGISTICS_DECLARE_CURRENCY_SYMBOL_REQUIRED = ApiErrorTms.LOGISTICS_DECLARE_CURRENCY_SYMBOL_REQUIRED;
+    public static final ApiError LOGISTICS_DECLARE_WEIGHT_REQUIRED = ApiErrorTms.LOGISTICS_DECLARE_WEIGHT_REQUIRED;
+    public static final ApiError LOGISTICS_DECLARE_CUSTOMS_INFO_REQUIRED = ApiErrorTms.LOGISTICS_DECLARE_CUSTOMS_INFO_REQUIRED;
+    public static final ApiError LOGISTICS_SHIPPING_TEMPLATE_NOT_FOUND = ApiErrorTms.LOGISTICS_SHIPPING_TEMPLATE_NOT_FOUND;
+    public static final ApiError LOGISTICS_SHIPPING_DEST_COUNTRY_REQUIRED = ApiErrorTms.LOGISTICS_SHIPPING_DEST_COUNTRY_REQUIRED;
+    public static final ApiError LOGISTICS_SHIPPING_REGION_REQUIRED = ApiErrorTms.LOGISTICS_SHIPPING_REGION_REQUIRED;
+    public static final ApiError LOGISTICS_SHIPPING_CITY_REQUIRED = ApiErrorTms.LOGISTICS_SHIPPING_CITY_REQUIRED;
+    public static final ApiError LOGISTICS_SHIPPING_WAREHOUSE_REQUIRED = ApiErrorTms.LOGISTICS_SHIPPING_WAREHOUSE_REQUIRED;
+    public static final ApiError LOGISTICS_FIRST_WEIGHT_REQUIRED = ApiErrorTms.LOGISTICS_FIRST_WEIGHT_REQUIRED;
+    public static final ApiError LOGISTICS_FIRST_WEIGHT_COST_REQUIRED = ApiErrorTms.LOGISTICS_FIRST_WEIGHT_COST_REQUIRED;
+    public static final ApiError LOGISTICS_ADDITIONAL_UNIT_WEIGHT_REQUIRED = ApiErrorTms.LOGISTICS_ADDITIONAL_UNIT_WEIGHT_REQUIRED;
+    public static final ApiError LOGISTICS_ADDITIONAL_UNIT_PRICE_REQUIRED = ApiErrorTms.LOGISTICS_ADDITIONAL_UNIT_PRICE_REQUIRED;
+    public static final ApiError LOGISTICS_SHIPPING_OTHER_COST_NOT_FOUND = ApiErrorTms.LOGISTICS_SHIPPING_OTHER_COST_NOT_FOUND;
+    public static final ApiError LOGISTICS_SHIPPING_TEMPLATE_CHANNEL_REF_DISABLED_FORBIDDEN = ApiErrorTms.LOGISTICS_SHIPPING_TEMPLATE_CHANNEL_REF_DISABLED_FORBIDDEN;
+    public static final ApiError LOGISTICS_SHIPPING_TEMPLATE_CHANNEL_REF_DELETE_FORBIDDEN = ApiErrorTms.LOGISTICS_SHIPPING_TEMPLATE_CHANNEL_REF_DELETE_FORBIDDEN;
+    public static final ApiError LOGISTICS_SHIPPING_TEMPLATE_ALREADY_EXISTS = ApiErrorTms.LOGISTICS_SHIPPING_TEMPLATE_ALREADY_EXISTS;
+    public static final ApiError LOGISTICS_TEMPLATE_RULE_WEIGHT_COUNTRY_OVERLAP = ApiErrorTms.LOGISTICS_TEMPLATE_RULE_WEIGHT_COUNTRY_OVERLAP;
+    public static final ApiError LOGISTICS_TEMPLATE_RULE_WEIGHT_REGION_OVERLAP = ApiErrorTms.LOGISTICS_TEMPLATE_RULE_WEIGHT_REGION_OVERLAP;
+    public static final ApiError LOGISTICS_TEMPLATE_RULE_WEIGHT_WAREHOUSE_OVERLAP = ApiErrorTms.LOGISTICS_TEMPLATE_RULE_WEIGHT_WAREHOUSE_OVERLAP;
+    public static final ApiError LOGISTICS_SHIPPING_RULE_NOT_FOUND = ApiErrorTms.LOGISTICS_SHIPPING_RULE_NOT_FOUND;
+    public static final ApiError LOGISTICS_WEIGHT_OUT_OF_RANGE = ApiErrorTms.LOGISTICS_WEIGHT_OUT_OF_RANGE;
+    public static final ApiError LOGISTICS_OTHER_COST_SETTING_NOT_FOUND = ApiErrorTms.LOGISTICS_OTHER_COST_SETTING_NOT_FOUND;
+    public static final ApiError LOGISTICS_ADDRESS_NAME_ALREADY_EXISTS = ApiErrorTms.LOGISTICS_ADDRESS_NAME_ALREADY_EXISTS;
+    public static final ApiError LOGISTICS_UNIT_PRICE_REQUIRED = ApiErrorTms.LOGISTICS_UNIT_PRICE_REQUIRED;
+    public static final ApiError LOGISTICS_CANCEL_AUTH_NOT_ALLOWED = ApiErrorTms.LOGISTICS_CANCEL_AUTH_NOT_ALLOWED;
+    public static final ApiError LOGISTICS_SYNC_FORBIDDEN_NOT_AUTHORIZED = ApiErrorTms.LOGISTICS_SYNC_FORBIDDEN_NOT_AUTHORIZED;
+    public static final ApiError LOGISTICS_CHANNEL_EXIST_ENABLED_DISABLE_FORBIDDEN = ApiErrorTms.LOGISTICS_CHANNEL_EXIST_ENABLED_DISABLE_FORBIDDEN;
+    public static final ApiError LOGISTICS_CHANNEL_ADDRESS_REF_DELETE_FORBIDDEN = ApiErrorTms.LOGISTICS_CHANNEL_ADDRESS_REF_DELETE_FORBIDDEN;
+    public static final ApiError LOGISTICS_CHANNEL_NOT_FOUND = ApiErrorTms.LOGISTICS_CHANNEL_NOT_FOUND;
+    public static final ApiError LOGISTICS_CHANNEL_ADDRESS_TYPE_EMPTY = ApiErrorTms.LOGISTICS_CHANNEL_ADDRESS_TYPE_EMPTY;
+    public static final ApiError LOGISTICS_SALES_CHANNEL_NOT_CONFIGURED = ApiErrorTms.LOGISTICS_SALES_CHANNEL_NOT_CONFIGURED;
+    public static final ApiError LOGISTICS_PRINT_WAYBILL_FAILED = ApiErrorTms.LOGISTICS_PRINT_WAYBILL_FAILED;
+    public static final ApiError LOGISTICS_CHANNEL_QUOTE_REF_DELETE_FORBIDDEN = ApiErrorTms.LOGISTICS_CHANNEL_QUOTE_REF_DELETE_FORBIDDEN;
+    public static final ApiError LOGISTICS_SELF_SHIP_BILL_STATUS_CHANGE_FORBIDDEN = ApiErrorTms.LOGISTICS_SELF_SHIP_BILL_STATUS_CHANGE_FORBIDDEN;
+    public static final ApiError LOGISTICS_CHANNEL_ALREADY_USED = ApiErrorTms.LOGISTICS_CHANNEL_ALREADY_USED;
+    public static final ApiError LOGISTICS_SAILING_CONFIG_ALREADY_EXISTS = ApiErrorTms.LOGISTICS_SAILING_CONFIG_ALREADY_EXISTS;
+    public static final ApiError LOGISTICS_COST_NAME_ALREADY_EXISTS = ApiErrorTms.LOGISTICS_COST_NAME_ALREADY_EXISTS;
+    public static final ApiError LOGISTICS_WAREHOUSE_MAPPING_ALREADY_EXISTS = ApiErrorTms.LOGISTICS_WAREHOUSE_MAPPING_ALREADY_EXISTS;
+    public static final ApiError LOGISTICS_DECLARE_RECONCILIATION_NOT_FOUND = ApiErrorTms.LOGISTICS_DECLARE_RECONCILIATION_NOT_FOUND;
+    public static final ApiError LOGISTICS_DECLARE_RECONCILIATION_DETAIL_NOT_FOUND = ApiErrorTms.LOGISTICS_DECLARE_RECONCILIATION_DETAIL_NOT_FOUND;
+    public static final ApiError LOGISTICS_DECLARE_RECONCILIATION_SUPPLIER_MISMATCH = ApiErrorTms.LOGISTICS_DECLARE_RECONCILIATION_SUPPLIER_MISMATCH;
+    public static final ApiError LOGISTICS_TRANSFER_SUPPLIER_NOT_FOUND_NOT_PACKAGE = ApiErrorTms.LOGISTICS_TRANSFER_SUPPLIER_NOT_FOUND_NOT_PACKAGE;
+    public static final ApiError LOGISTICS_ORDER_VOIDED_NOT_PACKAGE = ApiErrorTms.LOGISTICS_ORDER_VOIDED_NOT_PACKAGE;
+    public static final ApiError LOGISTICS_TRANSFER_ORDER_INVALID_NOT_PACKAGE = ApiErrorTms.LOGISTICS_TRANSFER_ORDER_INVALID_NOT_PACKAGE;
+    public static final ApiError LOGISTICS_ORDER_INTERCEPTED_NOT_PACKAGE = ApiErrorTms.LOGISTICS_ORDER_INTERCEPTED_NOT_PACKAGE;
+    public static final ApiError LOGISTICS_CHANNEL_AUTH_INFO_NOT_FOUND = ApiErrorTms.LOGISTICS_CHANNEL_AUTH_INFO_NOT_FOUND;
+    public static final ApiError LOGISTICS_DELIVERY_SUPPLIER_DUPLICATE = ApiErrorTms.LOGISTICS_DELIVERY_SUPPLIER_DUPLICATE;
+    public static final ApiError LOGISTICS_TRANSFER_SUPPLIER_DUPLICATE = ApiErrorTms.LOGISTICS_TRANSFER_SUPPLIER_DUPLICATE;
+    public static final ApiError LOGISTICS_GENERATE_TIME_AFTER_DEADLINE_FORBIDDEN = ApiErrorTms.LOGISTICS_GENERATE_TIME_AFTER_DEADLINE_FORBIDDEN;
+    public static final ApiError LOGISTICS_TRACK_STATUS_SYSTEM_MANAGED_NOT_EDITABLE = ApiErrorTms.LOGISTICS_TRACK_STATUS_SYSTEM_MANAGED_NOT_EDITABLE;
+    public static final ApiError LOGISTICS_TRANSFER_SUPPLIER_REF_DELETE_FORBIDDEN = ApiErrorTms.LOGISTICS_TRANSFER_SUPPLIER_REF_DELETE_FORBIDDEN;
+    public static final ApiError LOGISTICS_PRODUCT_NOT_REGISTERED = ApiErrorTms.LOGISTICS_PRODUCT_NOT_REGISTERED;
+    public static final ApiError LOGISTICS_CHANNEL_CHANGE_FORBIDDEN_NOT_REGISTERED = ApiErrorTms.LOGISTICS_CHANNEL_CHANGE_FORBIDDEN_NOT_REGISTERED;
+    public static final ApiError LOGISTICS_TRANSFER_CHANNEL_EXIST_ENABLED_DISABLE_FORBIDDEN = ApiErrorTms.LOGISTICS_TRANSFER_CHANNEL_EXIST_ENABLED_DISABLE_FORBIDDEN;
+    public static final ApiError LOGISTICS_PACKAGE_DIMENSION_REQUIRED = ApiErrorTms.LOGISTICS_PACKAGE_DIMENSION_REQUIRED;
+    public static final ApiError LOGISTICS_PRINT_WAYBILL_NOT_SUPPORTED = ApiErrorTms.LOGISTICS_PRINT_WAYBILL_NOT_SUPPORTED;
+    public static final ApiError LOGISTICS_PRINT_ALLOCATE_CARGO_NOT_SUPPORTED = ApiErrorTms.LOGISTICS_PRINT_ALLOCATE_CARGO_NOT_SUPPORTED;
+    public static final ApiError LOGISTICS_PRINT_SETTING_NOT_FOUND = ApiErrorTms.LOGISTICS_PRINT_SETTING_NOT_FOUND;
+    public static final ApiError LOGISTICS_COST_CONFIG_NOT_FOUND = ApiErrorTms.LOGISTICS_COST_CONFIG_NOT_FOUND;
+    public static final ApiError LOGISTICS_CHANNEL_WAREHOUSE_REQUIRED = ApiErrorTms.LOGISTICS_CHANNEL_WAREHOUSE_REQUIRED;
+    public static final ApiError LOGISTICS_CONFIG_NOT_FOUND = ApiErrorTms.LOGISTICS_CONFIG_NOT_FOUND;
+    public static final ApiError LOGISTICS_CALL_THIRD_PLATFORM_ERROR = ApiErrorTms.LOGISTICS_CALL_THIRD_PLATFORM_ERROR;
+    public static final ApiError LOGISTICS_LABEL_TYPE_REQUIRED = ApiErrorTms.LOGISTICS_LABEL_TYPE_REQUIRED;
+    public static final ApiError LOGISTICS_LARGE_TABLE_EXISTS = ApiErrorTms.LOGISTICS_LARGE_TABLE_EXISTS;
+    public static final ApiError LOGISTICS_LARGE_ESTIMATED_EXISTS = ApiErrorTms.LOGISTICS_LARGE_ESTIMATED_EXISTS;
+    public static final ApiError LOGISTICS_SMALL_BAG_NOT_CONFIRMED = ApiErrorTms.LOGISTICS_SMALL_BAG_NOT_CONFIRMED;
+    public static final ApiError LOGISTICS_SELF_SHIP_FEE_NOT_FOUND = ApiErrorTms.LOGISTICS_SELF_SHIP_FEE_NOT_FOUND;
+    public static final ApiError LOGISTICS_ACTUAL_EXISTS_CANNOT_PUSH = ApiErrorTms.LOGISTICS_ACTUAL_EXISTS_CANNOT_PUSH;
+    public static final ApiError LOGISTICS_MAPPING_NOT_NULL = ApiErrorTms.LOGISTICS_MAPPING_NOT_NULL;
+    public static final ApiError LOGISTICS_SUPPLIER_NOT_FOUND = ApiErrorTms.LOGISTICS_SUPPLIER_NOT_FOUND;
+    public static final ApiError LOGISTICS_SUPPLIER_NOT_EXIST = ApiErrorTms.LOGISTICS_SUPPLIER_NOT_EXIST;
+    public static final ApiError LOGISTICS_IMPORT_FILE_NAME_NOT_FOUND = ApiErrorTms.LOGISTICS_IMPORT_FILE_NAME_NOT_FOUND;
+    public static final ApiError LOGISTICS_CFG_IMPORT_DETAIL_NOT_FOUND = ApiErrorTms.LOGISTICS_CFG_IMPORT_DETAIL_NOT_FOUND;
+    public static final ApiError LOGISTICS_CFG_IMPORT_DETAIL_IS_UNIQUE_KEY_NOT_FOUND = ApiErrorTms.LOGISTICS_CFG_IMPORT_DETAIL_IS_UNIQUE_KEY_NOT_FOUND;
+    public static final ApiError LOGISTICS_SUPPLIER_NAME_NOT_FOUND = ApiErrorTms.LOGISTICS_SUPPLIER_NAME_NOT_FOUND;
+    public static final ApiError LOGISTICS_BILL_COST_IMPORT_RECORD_UNIQUE_KEY_ERROR = ApiErrorTms.LOGISTICS_BILL_COST_IMPORT_RECORD_UNIQUE_KEY_ERROR;
+    public static final ApiError LOGISTICS_ASYNC_TASK_CREATE_ERROR = ApiErrorTms.LOGISTICS_ASYNC_TASK_CREATE_ERROR;
+    public static final ApiError LOGISTICS_PENDING_COST_NOT_FOUND = ApiErrorTms.LOGISTICS_PENDING_COST_NOT_FOUND;
+    public static final ApiError LOGISTICS_SELECT_AT_LEAST_ONE = ApiErrorTms.LOGISTICS_SELECT_AT_LEAST_ONE;
+    public static final ApiError LOGISTICS_BILL_FIELD_DUPLICATE_NOT_ALLOWED = ApiErrorTms.LOGISTICS_BILL_FIELD_DUPLICATE_NOT_ALLOWED;
+    public static final ApiError LOGISTICS_BILL_DETAIL_FIELD_REQUIRED = ApiErrorTms.LOGISTICS_BILL_DETAIL_FIELD_REQUIRED;
+    public static final ApiError LOGISTICS_SMALL_BAG_NOT_CAN_Allocate = ApiErrorTms.LOGISTICS_SMALL_BAG_NOT_CAN_Allocate;
+    public static final ApiError LOGISTICS_BILL_COST_IMPORT_RECORD_HEAD_NOTFOUND = ApiErrorTms.LOGISTICS_BILL_COST_IMPORT_RECORD_HEAD_NOTFOUND;
+    public static final ApiError LOGISTICS_BILL_UNIQUE_FIELD_NOT_ALLOWED = ApiErrorTms.LOGISTICS_BILL_UNIQUE_FIELD_NOT_ALLOWED;
+    public static final ApiError LOGISTICS_THIRD_CHANNEL_PUSH_TYPE_REQUIRED = ApiErrorTms.LOGISTICS_THIRD_CHANNEL_PUSH_TYPE_REQUIRED;
+    public static final ApiError LOGISTICS_THIRD_CHANNEL_SAVE_FAILED = ApiErrorTms.LOGISTICS_THIRD_CHANNEL_SAVE_FAILED;
+    public static final ApiError LOGISTICS_THIRD_CHANNEL_NOT_FOUND = ApiErrorTms.LOGISTICS_THIRD_CHANNEL_NOT_FOUND;
+    public static final ApiError LOGISTICS_THIRD_CHANNEL_IN_USE_DELETE_FORBIDDEN = ApiErrorTms.LOGISTICS_THIRD_CHANNEL_IN_USE_DELETE_FORBIDDEN;
+    public static final ApiError LOGISTICS_THIRD_CHANNEL_STATUS_UNCHANGED = ApiErrorTms.LOGISTICS_THIRD_CHANNEL_STATUS_UNCHANGED;
+    public static final ApiError LOGISTICS_THIRD_CHANNEL_DUPLICATE = ApiErrorTms.LOGISTICS_THIRD_CHANNEL_DUPLICATE;
+    public static final ApiError LOGISTICS_THIRD_CHANNEL_SUPPLIER_NOT_FOUND = ApiErrorTms.LOGISTICS_THIRD_CHANNEL_SUPPLIER_NOT_FOUND;
+    public static final ApiError LOGISTICS_THIRD_CHANNEL_CHANNEL_NOT_FOUND = ApiErrorTms.LOGISTICS_THIRD_CHANNEL_CHANNEL_NOT_FOUND;
+    public static final ApiError LOGISTICS_THIRD_CHANNEL_QUERY_PROVIDER_NOT_FOUND = ApiErrorTms.LOGISTICS_THIRD_CHANNEL_QUERY_PROVIDER_NOT_FOUND;
+    public static final ApiError LOGISTICS_THIRD_CHANNEL_PUSH_MOBILE_IMMUTABLE = ApiErrorTms.LOGISTICS_THIRD_CHANNEL_PUSH_MOBILE_IMMUTABLE;
+    public static final ApiError LOGISTICS_THIRD_CHANNEL_MOBILE_REQUIRED = ApiErrorTms.LOGISTICS_THIRD_CHANNEL_MOBILE_REQUIRED;
+    public static final ApiError LOGISTICS_THIRD_CHANNEL_SHOP_ID_REQUIRED = ApiErrorTms.LOGISTICS_THIRD_CHANNEL_SHOP_ID_REQUIRED;
+    public static final ApiError LOGISTICS_THIRD_CHANNEL_PLATFORM_REQUIRED = ApiErrorTms.LOGISTICS_THIRD_CHANNEL_PLATFORM_REQUIRED;
+    public static final ApiError LOGISTICS_THIRD_CHANNEL_DETAIL_NOT_REQUIRED = ApiErrorTms.LOGISTICS_THIRD_CHANNEL_DETAIL_NOT_REQUIRED;
+    public static final ApiError LOGISTICS_THIRD_CHANNEL_QUERY_SUPPLIER_NAME_REQUIRED = ApiErrorTms.LOGISTICS_THIRD_CHANNEL_QUERY_SUPPLIER_NAME_REQUIRED;
+    public static final ApiError LOGISTICS_ORDER_NOT_CANCEL = ApiErrorTms.LOGISTICS_ORDER_NOT_CANCEL;
+    public static final ApiError LOGISTICS_ORDER_CANNOT_EDIT = ApiErrorTms.LOGISTICS_ORDER_CANNOT_EDIT;
+    public static final ApiError LOGISTICS_CHANNEL_CODE_EMPTY = ApiErrorTms.LOGISTICS_CHANNEL_CODE_EMPTY;
+    public static final ApiError LOGISTICS_DECLARE_BILL_EXISTS_NOT_SOURCE = ApiErrorTms.LOGISTICS_DECLARE_BILL_EXISTS_NOT_SOURCE;
+    public static final ApiError LOGISTICS_DECLARE_DETAIL_MID_DETAIL_MATCH_FAILED = ApiErrorTms.LOGISTICS_DECLARE_DETAIL_MID_DETAIL_MATCH_FAILED;
+    public static final ApiError LOGISTICS_PRODUCT_LOGISTIC_NOT_FOUND = ApiErrorTms.LOGISTICS_PRODUCT_LOGISTIC_NOT_FOUND;
+    public static final ApiError LOGISTICS_PRODUCT_LOGISTIC_DECLARE_INFO_INCOMPLETE = ApiErrorTms.LOGISTICS_PRODUCT_LOGISTIC_DECLARE_INFO_INCOMPLETE;
+    public static final ApiError LOGISTICS_PRODUCT_LOGISTIC_DECLARE_PRICE_REQUIRED = ApiErrorTms.LOGISTICS_PRODUCT_LOGISTIC_DECLARE_PRICE_REQUIRED;
+    public static final ApiError LOGISTICS_COMBO_DECLARE_CHILD_EMPTY = ApiErrorTms.LOGISTICS_COMBO_DECLARE_CHILD_EMPTY;
+    public static final ApiError LOGISTICS_COMBO_DECLARE_CHILD_QTY_EMPTY = ApiErrorTms.LOGISTICS_COMBO_DECLARE_CHILD_QTY_EMPTY;
+    public static final ApiError LOGISTICS_DECLARE_DETAIL_MID_AUTO_GENERATE_FAILED = ApiErrorTms.LOGISTICS_DECLARE_DETAIL_MID_AUTO_GENERATE_FAILED;
+    public static final ApiError LOGISTICS_DECLARE_BILL_AUTO_GENERATE_FAILED = ApiErrorTms.LOGISTICS_DECLARE_BILL_AUTO_GENERATE_FAILED;
+    public static final ApiError LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_REQUIRED = ApiErrorTms.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_REQUIRED;
+    public static final ApiError LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_NOT_FOUND = ApiErrorTms.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_NOT_FOUND;
+    public static final ApiError LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_STATUS_LIMIT = ApiErrorTms.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_STATUS_LIMIT;
+    public static final ApiError LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_SOURCE_TYPE_CONFLICT = ApiErrorTms.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_SOURCE_TYPE_CONFLICT;
+    public static final ApiError LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_COUNTRY_CONFLICT = ApiErrorTms.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_COUNTRY_CONFLICT;
+    public static final ApiError LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_RULE_NOT_FOUND = ApiErrorTms.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_RULE_NOT_FOUND;
+    public static final ApiError LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_SENDER_TYPE_CONFLICT = ApiErrorTms.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_SENDER_TYPE_CONFLICT;
+    public static final ApiError LOGISTICS_DECLARE_DETAIL_MID_MERGE_MIN_COUNT_REQUIRED = ApiErrorTms.LOGISTICS_DECLARE_DETAIL_MID_MERGE_MIN_COUNT_REQUIRED;
+    public static final ApiError LOGISTICS_DECLARE_STATUS_UPDATE_FORBIDDEN = ApiErrorTms.LOGISTICS_DECLARE_STATUS_UPDATE_FORBIDDEN;
+    public static final ApiError LOGISTICS_DECLARE_STATUS_CONFIRM_DATE_REQUIRED = ApiErrorTms.LOGISTICS_DECLARE_STATUS_CONFIRM_DATE_REQUIRED;
+    public static final ApiError LOGISTICS_DECLARE_STATUS_CONFIRM_USER_REQUIRED = ApiErrorTms.LOGISTICS_DECLARE_STATUS_CONFIRM_USER_REQUIRED;
+    public static final ApiError LOGISTICS_DECLARE_STATUS_DETAIL_REQUIRED = ApiErrorTms.LOGISTICS_DECLARE_STATUS_DETAIL_REQUIRED;
+    public static final ApiError LOGISTICS_DECLARE_STATUS_DETAIL_INCONSISTENT = ApiErrorTms.LOGISTICS_DECLARE_STATUS_DETAIL_INCONSISTENT;
+    public static final ApiError LOGISTICS_DECLARE_BILL_TYPE_MISMATCH = ApiErrorTms.LOGISTICS_DECLARE_BILL_TYPE_MISMATCH;
+    public static final ApiError LOGISTICS_DECLARE_STATUS_INVALID_TARGET = ApiErrorTms.LOGISTICS_DECLARE_STATUS_INVALID_TARGET;
+    public static final ApiError LOGISTICS_DECLARE_MERGE_RECEIVER_TYPE_DIFF = ApiErrorTms.LOGISTICS_DECLARE_MERGE_RECEIVER_TYPE_DIFF;
+    public static final ApiError LOGISTICS_DECLARE_CONTRACT_AGREEMENT_NO_NOT_FOUND = ApiErrorTms.LOGISTICS_DECLARE_CONTRACT_AGREEMENT_NO_NOT_FOUND;
+    public static final ApiError LOGISTICS_DECLARE_CONTRACT_AGREEMENT_NO_FAILED = ApiErrorTms.LOGISTICS_DECLARE_CONTRACT_AGREEMENT_NO_FAILED;
+    public static final ApiError LOGISTICS_DECLARE_SENDER_REQUIRED = ApiErrorTms.LOGISTICS_DECLARE_SENDER_REQUIRED;
+    public static final ApiError LOGISTICS_DECLARE_RULE_SENDER_RECEIVER_DUPLICATE = ApiErrorTms.LOGISTICS_DECLARE_RULE_SENDER_RECEIVER_DUPLICATE;
+    public static final ApiError LOGISTICS_DECLARE_RULE_CONDITION_DUPLICATE = ApiErrorTms.LOGISTICS_DECLARE_RULE_CONDITION_DUPLICATE;
+    public static final ApiError LOGISTICS_DECLARE_RULE_SAVE_FAILED = ApiErrorTms.LOGISTICS_DECLARE_RULE_SAVE_FAILED;
+    public static final ApiError LOGISTICS_DECLARE_GENERATABLE_DELIVERY_NOT_FOUND = ApiErrorTms.LOGISTICS_DECLARE_GENERATABLE_DELIVERY_NOT_FOUND;
+    public static final ApiError LOGISTICS_DECLARE_DETAIL_SAVE_REQUIRED = ApiErrorTms.LOGISTICS_DECLARE_DETAIL_SAVE_REQUIRED;
+    public static final ApiError LOGISTICS_DECLARE_GENERATABLE_DETAIL_NOT_FOUND = ApiErrorTms.LOGISTICS_DECLARE_GENERATABLE_DETAIL_NOT_FOUND;
+    public static final ApiError LOGISTICS_DECLARE_BILL_SAVE_FAILED = ApiErrorTms.LOGISTICS_DECLARE_BILL_SAVE_FAILED;
+    public static final ApiError LOGISTICS_DECLARE_WAIT_STATUS_REQUIRED_FOR_EDIT = ApiErrorTms.LOGISTICS_DECLARE_WAIT_STATUS_REQUIRED_FOR_EDIT;
+    public static final ApiError LOGISTICS_DECLARE_DETAIL_SAVE_FAILED = ApiErrorTms.LOGISTICS_DECLARE_DETAIL_SAVE_FAILED;
+    public static final ApiError LOGISTICS_DECLARE_DELIVERY_NOT_FOUND = ApiErrorTms.LOGISTICS_DECLARE_DELIVERY_NOT_FOUND;
+    public static final ApiError LOGISTICS_DECLARE_SO_OUT_NOT_FOUND = ApiErrorTms.LOGISTICS_DECLARE_SO_OUT_NOT_FOUND;
+    public static final ApiError LOGISTICS_DECLARE_STATUS_INVALID = ApiErrorTms.LOGISTICS_DECLARE_STATUS_INVALID;
+    public static final ApiError LOGISTICS_DECLARE_SELECTED_SKU_REQUIRED = ApiErrorTms.LOGISTICS_DECLARE_SELECTED_SKU_REQUIRED;
+    public static final ApiError LOGISTICS_DECLARE_SOURCE_HEADER_NOT_FOUND = ApiErrorTms.LOGISTICS_DECLARE_SOURCE_HEADER_NOT_FOUND;
+    public static final ApiError LOGISTICS_DECLARE_GENERATABLE_SO_DELIVERY_NOT_FOUND = ApiErrorTms.LOGISTICS_DECLARE_GENERATABLE_SO_DELIVERY_NOT_FOUND;
+    public static final ApiError LOGISTICS_DECLARE_BATCH_UPDATE_FAILED = ApiErrorTms.LOGISTICS_DECLARE_BATCH_UPDATE_FAILED;
+    public static final ApiError LOGISTICS_DECLARE_FIELD_DATE_FORMAT_INVALID = ApiErrorTms.LOGISTICS_DECLARE_FIELD_DATE_FORMAT_INVALID;
+    public static final ApiError LOGISTICS_DECLARE_FIELD_NUMBER_FORMAT_INVALID = ApiErrorTms.LOGISTICS_DECLARE_FIELD_NUMBER_FORMAT_INVALID;
+    public static final ApiError LOGISTICS_DECLARE_FM_SPLIT_VIEW_FORBIDDEN = ApiErrorTms.LOGISTICS_DECLARE_FM_SPLIT_VIEW_FORBIDDEN;
+    public static final ApiError LOGISTICS_DECLARE_SPLIT_WAIT_STATUS_REQUIRED = ApiErrorTms.LOGISTICS_DECLARE_SPLIT_WAIT_STATUS_REQUIRED;
+    public static final ApiError LOGISTICS_DECLARE_SPLIT_SINGLE_BILL_REQUIRED = ApiErrorTms.LOGISTICS_DECLARE_SPLIT_SINGLE_BILL_REQUIRED;
+    public static final ApiError LOGISTICS_DECLARE_FM_SPLIT_ADD_FORBIDDEN = ApiErrorTms.LOGISTICS_DECLARE_FM_SPLIT_ADD_FORBIDDEN;
+    public static final ApiError LOGISTICS_DECLARE_B2B_SPLIT_ADD_FORBIDDEN = ApiErrorTms.LOGISTICS_DECLARE_B2B_SPLIT_ADD_FORBIDDEN;
+    public static final ApiError LOGISTICS_DECLARE_MERGE_WAIT_STATUS_REQUIRED = ApiErrorTms.LOGISTICS_DECLARE_MERGE_WAIT_STATUS_REQUIRED;
+    public static final ApiError LOGISTICS_DECLARE_RULE_NOT_FOUND_FOR_SOURCE = ApiErrorTms.LOGISTICS_DECLARE_RULE_NOT_FOUND_FOR_SOURCE;
+    public static final ApiError LOGISTICS_DECLARE_MERGE_SKU_LIMIT_EXCEEDED = ApiErrorTms.LOGISTICS_DECLARE_MERGE_SKU_LIMIT_EXCEEDED;
+    public static final ApiError LOGISTICS_DECLARE_MERGE_COUNTRY_MISMATCH = ApiErrorTms.LOGISTICS_DECLARE_MERGE_COUNTRY_MISMATCH;
+    public static final ApiError LOGISTICS_DECLARE_DETAIL_SOURCE_REQUIRED = ApiErrorTms.LOGISTICS_DECLARE_DETAIL_SOURCE_REQUIRED;
+    public static final ApiError LOGISTICS_DECLARE_DETAIL_SOURCE_DUPLICATE = ApiErrorTms.LOGISTICS_DECLARE_DETAIL_SOURCE_DUPLICATE;
+    public static final ApiError LOGISTICS_DECLARE_DETAIL_QTY_MISMATCH = ApiErrorTms.LOGISTICS_DECLARE_DETAIL_QTY_MISMATCH;
+    public static final ApiError LOGISTICS_DECLARE_SOURCE_DETAIL_NOT_FOUND_FOR_SAVE = ApiErrorTms.LOGISTICS_DECLARE_SOURCE_DETAIL_NOT_FOUND_FOR_SAVE;
+    public static final ApiError LOGISTICS_DECLARE_SELECTED_DETAIL_GENERATED = ApiErrorTms.LOGISTICS_DECLARE_SELECTED_DETAIL_GENERATED;
+    public static final ApiError LOGISTICS_DECLARE_SOURCE_GENERATED = ApiErrorTms.LOGISTICS_DECLARE_SOURCE_GENERATED;
+    public static final ApiError LOGISTICS_DECLARE_SOURCE_BOX_IMMUTABLE = ApiErrorTms.LOGISTICS_DECLARE_SOURCE_BOX_IMMUTABLE;
+    public static final ApiError LOGISTICS_DECLARE_SOURCE_QTY_IMMUTABLE = ApiErrorTms.LOGISTICS_DECLARE_SOURCE_QTY_IMMUTABLE;
+    public static final ApiError LOGISTICS_DECLARE_DUPLICATE_SKU_ROW = ApiErrorTms.LOGISTICS_DECLARE_DUPLICATE_SKU_ROW;
+    public static final ApiError LOGISTICS_DECLARE_DETAIL_SOURCE_VALUE_MISMATCH = ApiErrorTms.LOGISTICS_DECLARE_DETAIL_SOURCE_VALUE_MISMATCH;
+    public static final ApiError LOGISTICS_DECLARE_DETAIL_FIELD_REQUIRED = ApiErrorTms.LOGISTICS_DECLARE_DETAIL_FIELD_REQUIRED;
+    public static final ApiError LOGISTICS_DECLARE_DETAIL_FIELD_POSITIVE_REQUIRED = ApiErrorTms.LOGISTICS_DECLARE_DETAIL_FIELD_POSITIVE_REQUIRED;
+    public static final ApiError LOGISTICS_DECLARE_REPLACE_TYPE_MISMATCH = ApiErrorTms.LOGISTICS_DECLARE_REPLACE_TYPE_MISMATCH;
+    public static final ApiError LOGISTICS_DECLARE_REPLACE_WAIT_STATUS_REQUIRED = ApiErrorTms.LOGISTICS_DECLARE_REPLACE_WAIT_STATUS_REQUIRED;
+    public static final ApiError LOGISTICS_DECLARE_BOX_SINGLE_BILL_REQUIRED = ApiErrorTms.LOGISTICS_DECLARE_BOX_SINGLE_BILL_REQUIRED;
+    public static final ApiError LOGISTICS_DECLARE_B2B_SPLIT_VIEW_FORBIDDEN = ApiErrorTms.LOGISTICS_DECLARE_B2B_SPLIT_VIEW_FORBIDDEN;
+    public static final ApiError LOGISTICS_DECLARE_COMBO_CHILD_NOT_FULL_SELECTED = ApiErrorTms.LOGISTICS_DECLARE_COMBO_CHILD_NOT_FULL_SELECTED;
+    public static final ApiError LOGISTICS_DECLARE_BOM_HISTORY_NOT_FOUND = ApiErrorTms.LOGISTICS_DECLARE_BOM_HISTORY_NOT_FOUND;
+    public static final ApiError LOGISTICS_DECLARE_LATEST_PRODUCT_LOGISTIC_NOT_FOUND = ApiErrorTms.LOGISTICS_DECLARE_LATEST_PRODUCT_LOGISTIC_NOT_FOUND;
+    public static final ApiError LOGISTICS_PACKING_DELIVERY_CHECK_DECLARE_STATUS = ApiErrorTms.LOGISTICS_PACKING_DELIVERY_CHECK_DECLARE_STATUS;
+    public static final ApiError LOGISTICS_DECLARE_AUTO_DETAIL_FIELD_REQUIRED = ApiErrorTms.LOGISTICS_DECLARE_AUTO_DETAIL_FIELD_REQUIRED;
+    public static final ApiError LOGISTICS_DECLARE_DEST_COUNTRY_CN_NOT_GENERATE = ApiErrorTms.LOGISTICS_DECLARE_DEST_COUNTRY_CN_NOT_GENERATE;
+    public static final ApiError LOGISTICS_DECLARE_BOX_NOT_FULL_SELECTED = ApiErrorTms.LOGISTICS_DECLARE_BOX_NOT_FULL_SELECTED;
+    public static final ApiError LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_RECEIVER_TYPE_CONFLICT = ApiErrorTms.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_RECEIVER_TYPE_CONFLICT;
+    public static final ApiError LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_RULE_NOT_FOUND_FOR_SOURCE = ApiErrorTms.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_RULE_NOT_FOUND_FOR_SOURCE;
+    public static final ApiError LOGISTICS_DECLARE_AUTO_DETAIL_FIELD_REQUIRED_BATCH = ApiErrorTms.LOGISTICS_DECLARE_AUTO_DETAIL_FIELD_REQUIRED_BATCH;
+    public static final ApiError LOGISTICS_DECLARE_SPLIT_DETAIL_MISSING = ApiErrorTms.LOGISTICS_DECLARE_SPLIT_DETAIL_MISSING;
+    public static final ApiError LOGISTICS_DECLARE_SOURCE_STATUS_SYNC_FAILED = ApiErrorTms.LOGISTICS_DECLARE_SOURCE_STATUS_SYNC_FAILED;
+    public static final ApiError LOGISTICS_DECLARE_DETAIL_MID_SAVE_FAILED = ApiErrorTms.LOGISTICS_DECLARE_DETAIL_MID_SAVE_FAILED;
+    public static final ApiError LOGISTICS_DECLARE_DETAIL_MID_NOT_EXIST = ApiErrorTms.LOGISTICS_DECLARE_DETAIL_MID_NOT_EXIST;
+    public static final ApiError LOGISTICS_DECLARE_DETAIL_MID_UPDATE_FAILED = ApiErrorTms.LOGISTICS_DECLARE_DETAIL_MID_UPDATE_FAILED;
+    public static final ApiError LOGISTICS_DECLARE_B2B_SO_DETAIL_NOT_FOUND = ApiErrorTms.LOGISTICS_DECLARE_B2B_SO_DETAIL_NOT_FOUND;
+    public static final ApiError LOGISTICS_DECLARE_B2B_CUSTOMER_RECEIVER_NOT_FOUND = ApiErrorTms.LOGISTICS_DECLARE_B2B_CUSTOMER_RECEIVER_NOT_FOUND;
+    public static final ApiError LOGISTICS_DECLARE_RULE_TYPE_INVALID = ApiErrorTms.LOGISTICS_DECLARE_RULE_TYPE_INVALID;
+    public static final ApiError LOGISTICS_DECLARE_RULE_TYPE_MISMATCH = ApiErrorTms.LOGISTICS_DECLARE_RULE_TYPE_MISMATCH;
+    public static final ApiError LOGISTICS_DECLARE_RULE_CROSS_TYPE_UPDATE_FORBIDDEN = ApiErrorTms.LOGISTICS_DECLARE_RULE_CROSS_TYPE_UPDATE_FORBIDDEN;
+    public static final ApiError LOGISTICS_DECLARE_RULE_ACCOUNTING_COMPANY_LOAD_FAILED = ApiErrorTms.LOGISTICS_DECLARE_RULE_ACCOUNTING_COMPANY_LOAD_FAILED;
+    public static final ApiError LOGISTICS_CONTRACT_AGREEMENT_NO_CONFIG_REQUIRED = ApiErrorTms.LOGISTICS_CONTRACT_AGREEMENT_NO_CONFIG_REQUIRED;
+    public static final ApiError LOGISTICS_CONTRACT_AGREEMENT_NO_COMPANY_REQUIRED = ApiErrorTms.LOGISTICS_CONTRACT_AGREEMENT_NO_COMPANY_REQUIRED;
+    public static final ApiError LOGISTICS_CONTRACT_AGREEMENT_NO_REQUIRED = ApiErrorTms.LOGISTICS_CONTRACT_AGREEMENT_NO_REQUIRED;
+    public static final ApiError LOGISTICS_CONTRACT_AGREEMENT_NO_LETTERS_ONLY = ApiErrorTms.LOGISTICS_CONTRACT_AGREEMENT_NO_LETTERS_ONLY;
+    public static final ApiError LOGISTICS_CONTRACT_AGREEMENT_NO_COMPANY_INVALID = ApiErrorTms.LOGISTICS_CONTRACT_AGREEMENT_NO_COMPANY_INVALID;
+    public static final ApiError LOGISTICS_CONTRACT_AGREEMENT_NO_DUPLICATE = ApiErrorTms.LOGISTICS_CONTRACT_AGREEMENT_NO_DUPLICATE;
+    public static final ApiError LOGISTICS_RECON_IMPORT_TEMPLATE_NOT_RECOGNIZED = ApiErrorTms.LOGISTICS_RECON_IMPORT_TEMPLATE_NOT_RECOGNIZED;
+    public static final ApiError LOGISTICS_RECON_EXCEL_HEAD_NOT_FOUND = ApiErrorTms.LOGISTICS_RECON_EXCEL_HEAD_NOT_FOUND;
+    public static final ApiError LOGISTICS_RECON_SAVE_FAILED = ApiErrorTms.LOGISTICS_RECON_SAVE_FAILED;
+    public static final ApiError LOGISTICS_RECON_PREPROCESS_IMPORT_NOT_READY = ApiErrorTms.LOGISTICS_RECON_PREPROCESS_IMPORT_NOT_READY;
+    public static final ApiError LOGISTICS_RECON_IMPORTING_CHECK_STATUS_FORBIDDEN = ApiErrorTms.LOGISTICS_RECON_IMPORTING_CHECK_STATUS_FORBIDDEN;
+    public static final ApiError LOGISTICS_RECON_CHECK_STATUS_INVALID = ApiErrorTms.LOGISTICS_RECON_CHECK_STATUS_INVALID;
+    public static final ApiError LOGISTICS_RECON_MATCH_REF_EXISTS_ROLLBACK_FORBIDDEN = ApiErrorTms.LOGISTICS_RECON_MATCH_REF_EXISTS_ROLLBACK_FORBIDDEN;
+    public static final ApiError LOGISTICS_RECON_ONLY_CONFIRMED_ALLOW_MATCH = ApiErrorTms.LOGISTICS_RECON_ONLY_CONFIRMED_ALLOW_MATCH;
+    public static final ApiError LOGISTICS_RECON_RECONCILIATION_STATUS_INVALID = ApiErrorTms.LOGISTICS_RECON_RECONCILIATION_STATUS_INVALID;
+    public static final ApiError LOGISTICS_RECON_ONLY_CONFIRMED_ALLOW_BILL_CONFIRM = ApiErrorTms.LOGISTICS_RECON_ONLY_CONFIRMED_ALLOW_BILL_CONFIRM;
+    public static final ApiError LOGISTICS_RECON_MATCHED_BILL_COST_NOT_FOUND = ApiErrorTms.LOGISTICS_RECON_MATCHED_BILL_COST_NOT_FOUND;
+    public static final ApiError LOGISTICS_RECON_CONFIRMED_DELETE_FORBIDDEN = ApiErrorTms.LOGISTICS_RECON_CONFIRMED_DELETE_FORBIDDEN;
+    public static final ApiError LOGISTICS_RECON_MANUAL_MATCH_NOT_READY = ApiErrorTms.LOGISTICS_RECON_MANUAL_MATCH_NOT_READY;
+    public static final ApiError LOGISTICS_RECON_ADD_BILL_COST_NOT_READY = ApiErrorTms.LOGISTICS_RECON_ADD_BILL_COST_NOT_READY;
+    public static final ApiError LOGISTICS_RECON_IMPORT_MATCH_NOT_READY = ApiErrorTms.LOGISTICS_RECON_IMPORT_MATCH_NOT_READY;
+    public static final ApiError LOGISTICS_RECON_MATCH_NOT_READY = ApiErrorTms.LOGISTICS_RECON_MATCH_NOT_READY;
+    public static final ApiError LOGISTICS_RECON_MATCHING_CONFIRM_FORBIDDEN = ApiErrorTms.LOGISTICS_RECON_MATCHING_CONFIRM_FORBIDDEN;
+    public static final ApiError LOGISTICS_RECON_CONFIRM_COST_UPDATE_MISMATCH = ApiErrorTms.LOGISTICS_RECON_CONFIRM_COST_UPDATE_MISMATCH;
+    public static final ApiError LOGISTICS_RECON_CONFIRM_PARTIAL_FAILURE = ApiErrorTms.LOGISTICS_RECON_CONFIRM_PARTIAL_FAILURE;
+    public static final ApiError LOGISTICS_RECON_MATCH_POOL_BUSY = ApiErrorTms.LOGISTICS_RECON_MATCH_POOL_BUSY;
+    public static final ApiError LOGISTICS_RECON_IMPORT_FAILED_CHECK_STATUS_FORBIDDEN = ApiErrorTms.LOGISTICS_RECON_IMPORT_FAILED_CHECK_STATUS_FORBIDDEN;
+    public static final ApiError LOGISTICS_RECON_IMPORTING_DUPLICATE = ApiErrorTms.LOGISTICS_RECON_IMPORTING_DUPLICATE;
+    public static final ApiError LOGISTICS_RECON_IMPORT_MAIN_NOT_FOUND = ApiErrorTms.LOGISTICS_RECON_IMPORT_MAIN_NOT_FOUND;
+    public static final ApiError LOGISTICS_RECON_CHECK_STATUS_NO_CHANGE = ApiErrorTms.LOGISTICS_RECON_CHECK_STATUS_NO_CHANGE;
+    public static final ApiError LOGISTICS_RECON_ONLY_PENDING_ALLOW_CHECK_CONFIRM = ApiErrorTms.LOGISTICS_RECON_ONLY_PENDING_ALLOW_CHECK_CONFIRM;
+    public static final ApiError LOGISTICS_RECON_BILL_CONFIRM_ALREADY_TO_BE_CONFIRM = ApiErrorTms.LOGISTICS_RECON_BILL_CONFIRM_ALREADY_TO_BE_CONFIRM;
+    public static final ApiError LOGISTICS_RECON_BILL_CONFIRM_ALREADY_CONFIRMED = ApiErrorTms.LOGISTICS_RECON_BILL_CONFIRM_ALREADY_CONFIRMED;
+    public static final ApiError LOGISTICS_RECON_BILL_CONFIRM_NO_ELIGIBLE = ApiErrorTms.LOGISTICS_RECON_BILL_CONFIRM_NO_ELIGIBLE;
+    public static final ApiError LOGISTICS_RECON_BILL_REVERT_NO_ELIGIBLE = ApiErrorTms.LOGISTICS_RECON_BILL_REVERT_NO_ELIGIBLE;
+    public static final ApiError LOGISTICS_RECON_BILL_REVERT_COST_STATUS_FORBIDDEN = ApiErrorTms.LOGISTICS_RECON_BILL_REVERT_COST_STATUS_FORBIDDEN;
+    public static final ApiError LOGISTICS_SALES_PLATFORM_REQUIRED = ApiErrorTms.LOGISTICS_SALES_PLATFORM_REQUIRED;
+
+    /** Plm service error constants. */
+    public static final ApiError BOM_REQUIRED = ApiErrorPlm.BOM_REQUIRED;
+    public static final ApiError BOM_CHANGING = ApiErrorPlm.BOM_CHANGING;
+    public static final ApiError BOM_NOT_FOUND = ApiErrorPlm.BOM_NOT_FOUND;
+    public static final ApiError BOM_CHILD_NOT_FOUND = ApiErrorPlm.BOM_CHILD_NOT_FOUND;
+    public static final ApiError BOM_CHILD_NOT_FOUND_PARENT = ApiErrorPlm.BOM_CHILD_NOT_FOUND_PARENT;
+    public static final ApiError BOM_CONTAIN = ApiErrorPlm.BOM_CONTAIN;
+    public static final ApiError BOM_PARENT_SKU_REPEAT = ApiErrorPlm.BOM_PARENT_SKU_REPEAT;
+    public static final ApiError BOM_SKU_REPEAT = ApiErrorPlm.BOM_SKU_REPEAT;
+    public static final ApiError BOM_COMB_SKU_EXISTS = ApiErrorPlm.BOM_COMB_SKU_EXISTS;
+    public static final ApiError BOM_COMB_STATE_INVALID = ApiErrorPlm.BOM_COMB_STATE_INVALID;
+    public static final ApiError BOM_COMB_NAME_MISMATCH = ApiErrorPlm.BOM_COMB_NAME_MISMATCH;
+    public static final ApiError BOM_COMB_EXPORT_FORBIDDEN = ApiErrorPlm.BOM_COMB_EXPORT_FORBIDDEN;
+    public static final ApiError BOM_COMB_NOT_FOUND = ApiErrorPlm.BOM_COMB_NOT_FOUND;
+    public static final ApiError BOM_COMB_SKU_NOT_CHINESE = ApiErrorPlm.BOM_COMB_SKU_NOT_CHINESE;
+    public static final ApiError BOM_COMB_SKU_UNAPPROVED = ApiErrorPlm.BOM_COMB_SKU_UNAPPROVED;
+    public static final ApiError BOM_COMB_CHILD_REPEAT = ApiErrorPlm.BOM_COMB_CHILD_REPEAT;
+    public static final ApiError BOM_FOR_MABANG_EXIST = ApiErrorPlm.BOM_FOR_MABANG_EXIST;
+    public static final ApiError MOULD_NOT_EXIST = ApiErrorPlm.MOULD_NOT_EXIST;
+    public static final ApiError MOULD_FILE_AUDITED_ONLY = ApiErrorPlm.MOULD_FILE_AUDITED_ONLY;
+    public static final ApiError MOULD_REF_SKU_EXISTS = ApiErrorPlm.MOULD_REF_SKU_EXISTS;
+    public static final ApiError MOULD_NOTICE_PURCHASE_ONLY = ApiErrorPlm.MOULD_NOTICE_PURCHASE_ONLY;
+    public static final ApiError MOULD_NOTICE_NOT_FOUND = ApiErrorPlm.MOULD_NOTICE_NOT_FOUND;
+    public static final ApiError MOULD_NOTICE_DETAIL_NOT_FOUND = ApiErrorPlm.MOULD_NOTICE_DETAIL_NOT_FOUND;
+    public static final ApiError MOULD_NOTICE_NO_PUSHABLE = ApiErrorPlm.MOULD_NOTICE_NO_PUSHABLE;
+    public static final ApiError MOULD_NOTICE_QTY_EXCEED = ApiErrorPlm.MOULD_NOTICE_QTY_EXCEED;
+    public static final ApiError MOULD_NOT_APPROVED = ApiErrorPlm.MOULD_NOT_APPROVED;
+    public static final ApiError MOULD_LIFESPAN_TOO_SMALL = ApiErrorPlm.MOULD_LIFESPAN_TOO_SMALL;
+    public static final ApiError MOULD_RETURN_EXISTS = ApiErrorPlm.MOULD_RETURN_EXISTS;
+    public static final ApiError MOULD_ALERT_EXISTS = ApiErrorPlm.MOULD_ALERT_EXISTS;
+    public static final ApiError MOULD_COST_REQUIRED = ApiErrorPlm.MOULD_COST_REQUIRED;
+    public static final ApiError MOULD_NOTICE_ALREADY_PUSHED = ApiErrorPlm.MOULD_NOTICE_ALREADY_PUSHED;
+    public static final ApiError MOULD_PURCHASE_ALREADY_CHANGED = ApiErrorPlm.MOULD_PURCHASE_ALREADY_CHANGED;
+    public static final ApiError MOULD_PURCHASE_ORDER_NOT_FOUND = ApiErrorPlm.MOULD_PURCHASE_ORDER_NOT_FOUND;
+    public static final ApiError MOULD_PURCHASE_DETAIL_NOT_FOUND = ApiErrorPlm.MOULD_PURCHASE_DETAIL_NOT_FOUND;
+    public static final ApiError MOULD_PURCHASE_NO_PUSHABLE = ApiErrorPlm.MOULD_PURCHASE_NO_PUSHABLE;
+    public static final ApiError MOULD_PURCHASE_NOT_AUDITED_CHANGE_FORBIDDEN = ApiErrorPlm.MOULD_PURCHASE_NOT_AUDITED_CHANGE_FORBIDDEN;
+    public static final ApiError MOULD_PURCHASE_PUSHED_NO_NEW_DETAIL = ApiErrorPlm.MOULD_PURCHASE_PUSHED_NO_NEW_DETAIL;
+    public static final ApiError MOULD_PURCHASE_DETAIL_MUST_BE_SAME_ORDER = ApiErrorPlm.MOULD_PURCHASE_DETAIL_MUST_BE_SAME_ORDER;
+    public static final ApiError MOULD_PURCHASE_SUPPLIER_INFO_MISSING = ApiErrorPlm.MOULD_PURCHASE_SUPPLIER_INFO_MISSING;
+    public static final ApiError MOULD_PURCHASE_CHANGE_DETAIL_NOT_FOUND = ApiErrorPlm.MOULD_PURCHASE_CHANGE_DETAIL_NOT_FOUND;
+    public static final ApiError MOULD_PURCHASE_AUDITED_ONLY_FOR_ACCEPTANCE = ApiErrorPlm.MOULD_PURCHASE_AUDITED_ONLY_FOR_ACCEPTANCE;
+    public static final ApiError MOULD_CODE_ACCEPT_QTY_EXCEED = ApiErrorPlm.MOULD_CODE_ACCEPT_QTY_EXCEED;
+    public static final ApiError MOULD_RETURN_EXIST = ApiErrorPlm.MOULD_RETURN_EXIST;
+    public static final ApiError MOULD_ALERT_EXIST = ApiErrorPlm.MOULD_ALERT_EXIST;
+    public static final ApiError PRODUCT_CATEGORY_EXISTS = ApiErrorPlm.PRODUCT_CATEGORY_EXISTS;
+    public static final ApiError PRODUCT_CATEGORY_HAS_CHILD = ApiErrorPlm.PRODUCT_CATEGORY_HAS_CHILD;
+    public static final ApiError PRODUCT_CATEGORY_HAS_PRODUCT = ApiErrorPlm.PRODUCT_CATEGORY_HAS_PRODUCT;
+    public static final ApiError PRODUCT_NAME_EXISTS = ApiErrorPlm.PRODUCT_NAME_EXISTS;
+    public static final ApiError PRODUCT_NAME_MISMATCH = ApiErrorPlm.PRODUCT_NAME_MISMATCH;
+    public static final ApiError PRODUCT_NOT_FOUND = ApiErrorPlm.PRODUCT_NOT_FOUND;
+    public static final ApiError PRODUCT_SKU_EXISTS = ApiErrorPlm.PRODUCT_SKU_EXISTS;
+    public static final ApiError PRODUCT_SPU_EXISTS = ApiErrorPlm.PRODUCT_SPU_EXISTS;
+    public static final ApiError PRODUCT_CATEGORY_NOT_FOUND = ApiErrorPlm.PRODUCT_CATEGORY_NOT_FOUND;
+    public static final ApiError PRODUCT_SKU_NOT_GENERATED = ApiErrorPlm.PRODUCT_SKU_NOT_GENERATED;
+    public static final ApiError PRODUCT_CATEGORY_CODE_REQUIRED = ApiErrorPlm.PRODUCT_CATEGORY_CODE_REQUIRED;
+    public static final ApiError PRODUCT_CATEGORY_CODE_EXISTS = ApiErrorPlm.PRODUCT_CATEGORY_CODE_EXISTS;
+    public static final ApiError PRODUCT_CATEGORY_CODE_RANGE_INVALID = ApiErrorPlm.PRODUCT_CATEGORY_CODE_RANGE_INVALID;
+    public static final ApiError PRODUCT_CATEGORY_CODE_NOT_FOUND = ApiErrorPlm.PRODUCT_CATEGORY_CODE_NOT_FOUND;
+    public static final ApiError PRODUCT_CATEGORY_CODE_NOT_ALLOWED = ApiErrorPlm.PRODUCT_CATEGORY_CODE_NOT_ALLOWED;
+    public static final ApiError PRODUCT_VARIANT_COLOR_NOT_FOUND = ApiErrorPlm.PRODUCT_VARIANT_COLOR_NOT_FOUND;
+    public static final ApiError PRODUCT_VARIANT_INFO_EMPTY = ApiErrorPlm.PRODUCT_VARIANT_INFO_EMPTY;
+    public static final ApiError PRODUCT_VARIANT_COLOR_EMPTY = ApiErrorPlm.PRODUCT_VARIANT_COLOR_EMPTY;
+    public static final ApiError PRODUCT_VARIANT_COLOR_ATTR_EMPTY = ApiErrorPlm.PRODUCT_VARIANT_COLOR_ATTR_EMPTY;
+    public static final ApiError PRODUCT_VARIANT_NAME_EXISTS = ApiErrorPlm.PRODUCT_VARIANT_NAME_EXISTS;
+    public static final ApiError PRODUCT_VARIANT_VALUE_DUPLICATE = ApiErrorPlm.PRODUCT_VARIANT_VALUE_DUPLICATE;
+    public static final ApiError PRODUCT_VARIANT_COLOR_CODE_DUPLICATE = ApiErrorPlm.PRODUCT_VARIANT_COLOR_CODE_DUPLICATE;
+    public static final ApiError PRODUCT_VARIANT_TYPE_REF_DELETE_FORBIDDEN = ApiErrorPlm.PRODUCT_VARIANT_TYPE_REF_DELETE_FORBIDDEN;
+    public static final ApiError PRODUCT_VARIANT_VALUES_REF_DELETE_FORBIDDEN = ApiErrorPlm.PRODUCT_VARIANT_VALUES_REF_DELETE_FORBIDDEN;
+    public static final ApiError PRODUCT_VARIANT_VALUE_NOT_FOUND = ApiErrorPlm.PRODUCT_VARIANT_VALUE_NOT_FOUND;
+    public static final ApiError PRODUCT_INFO_NOT_FOUND = ApiErrorPlm.PRODUCT_INFO_NOT_FOUND;
+    public static final ApiError PRODUCT_ALREADY_INITIATED = ApiErrorPlm.PRODUCT_ALREADY_INITIATED;
+    public static final ApiError PRODUCT_INITIATE_REQUIRED = ApiErrorPlm.PRODUCT_INITIATE_REQUIRED;
+    public static final ApiError PRODUCT_INITIATE_MISSING_EXISTS = ApiErrorPlm.PRODUCT_INITIATE_MISSING_EXISTS;
+    public static final ApiError PRODUCT_BU_IS_EXISTS_REF = ApiErrorPlm.PRODUCT_BU_IS_EXISTS_REF;
+    public static final ApiError PRODUCT_SKU_REQUIRED = ApiErrorPlm.PRODUCT_SKU_REQUIRED;
+    public static final ApiError PRODUCT_SKU_NOT_FOUND = ApiErrorPlm.PRODUCT_SKU_NOT_FOUND;
+    public static final ApiError PRODUCT_NOT_FOUND_SKU = ApiErrorPlm.PRODUCT_NOT_FOUND_SKU;
+    public static final ApiError PRODUCT_SKU_RECORD_NOT_FOUND = ApiErrorPlm.PRODUCT_SKU_RECORD_NOT_FOUND;
+    public static final ApiError PRODUCT_SKU_APPROVED_REQUIRED = ApiErrorPlm.PRODUCT_SKU_APPROVED_REQUIRED;
+    public static final ApiError PRODUCT_SKU_CHILD_APPROVED_REQUIRED = ApiErrorPlm.PRODUCT_SKU_CHILD_APPROVED_REQUIRED;
+    public static final ApiError PRODUCT_SKU_EAN_DUPLICATE = ApiErrorPlm.PRODUCT_SKU_EAN_DUPLICATE;
+    public static final ApiError PRODUCT_SKU_CODE_REQUIRED = ApiErrorPlm.PRODUCT_SKU_CODE_REQUIRED;
+    public static final ApiError PRODUCT_SKU_REQUIRED_FOR_OPERATION = ApiErrorPlm.PRODUCT_SKU_REQUIRED_FOR_OPERATION;
+    public static final ApiError PRODUCT_SKU_IN_USE_DELETE_FORBIDDEN = ApiErrorPlm.PRODUCT_SKU_IN_USE_DELETE_FORBIDDEN;
+    public static final ApiError PRODUCT_SKU_STOCK_REF_CHANGE_FORBIDDEN = ApiErrorPlm.PRODUCT_SKU_STOCK_REF_CHANGE_FORBIDDEN;
+    public static final ApiError PRODUCT_EXIST_SKU = ApiErrorPlm.PRODUCT_EXIST_SKU;
+    public static final ApiError PRODUCT_REQUIRED_FIELDS_INCOMPLETE = ApiErrorPlm.PRODUCT_REQUIRED_FIELDS_INCOMPLETE;
+    public static final ApiError PRODUCT_PM_REQUIRED = ApiErrorPlm.PRODUCT_PM_REQUIRED;
+    public static final ApiError PRODUCT_SALES_METHOD_REQUIRED = ApiErrorPlm.PRODUCT_SALES_METHOD_REQUIRED;
+    public static final ApiError PRODUCT_CATEGORY_REQUIRED = ApiErrorPlm.PRODUCT_CATEGORY_REQUIRED;
+    public static final ApiError PRODUCT_BRAND_REQUIRED = ApiErrorPlm.PRODUCT_BRAND_REQUIRED;
+    public static final ApiError PRODUCT_LEVEL_REQUIRED = ApiErrorPlm.PRODUCT_LEVEL_REQUIRED;
+    public static final ApiError PRODUCT_STYLE_NAME_CN_REQUIRED = ApiErrorPlm.PRODUCT_STYLE_NAME_CN_REQUIRED;
+    public static final ApiError PRODUCT_STYLE_NAME_EN_REQUIRED = ApiErrorPlm.PRODUCT_STYLE_NAME_EN_REQUIRED;
+    public static final ApiError PRODUCT_ATTR_REQUIRED = ApiErrorPlm.PRODUCT_ATTR_REQUIRED;
+    public static final ApiError PRODUCT_SALES_CHANNEL_REQUIRED = ApiErrorPlm.PRODUCT_SALES_CHANNEL_REQUIRED;
+    public static final ApiError PRODUCT_COMMISSIONED_DEV_COST_REQUIRED = ApiErrorPlm.PRODUCT_COMMISSIONED_DEV_COST_REQUIRED;
+    public static final ApiError PRODUCT_TARGET_COST_REQUIRED = ApiErrorPlm.PRODUCT_TARGET_COST_REQUIRED;
+    public static final ApiError PRODUCT_TARGET_COST_EX_TAX_REQUIRED = ApiErrorPlm.PRODUCT_TARGET_COST_EX_TAX_REQUIRED;
+    public static final ApiError PRODUCT_RETAIL_PRICE_REQUIRED = ApiErrorPlm.PRODUCT_RETAIL_PRICE_REQUIRED;
+    public static final ApiError PRODUCT_MASS_PRODUCTION_COST_REQUIRED = ApiErrorPlm.PRODUCT_MASS_PRODUCTION_COST_REQUIRED;
+    public static final ApiError PRODUCT_TAX_RATE_REQUIRED = ApiErrorPlm.PRODUCT_TAX_RATE_REQUIRED;
+    public static final ApiError PRODUCT_ANNUAL_SALES_REQUIRED = ApiErrorPlm.PRODUCT_ANNUAL_SALES_REQUIRED;
+    public static final ApiError PRODUCT_MONTHLY_SALES_REQUIRED = ApiErrorPlm.PRODUCT_MONTHLY_SALES_REQUIRED;
+    public static final ApiError PRODUCT_Q1_SALES_REQUIRED = ApiErrorPlm.PRODUCT_Q1_SALES_REQUIRED;
+    public static final ApiError PRODUCT_ANNUAL_SALES_AMOUNT_REQUIRED = ApiErrorPlm.PRODUCT_ANNUAL_SALES_AMOUNT_REQUIRED;
+    public static final ApiError PRODUCT_MONTHLY_SALES_AMOUNT_REQUIRED = ApiErrorPlm.PRODUCT_MONTHLY_SALES_AMOUNT_REQUIRED;
+    public static final ApiError PRODUCT_SALES_COUNTRY_REQUIRED = ApiErrorPlm.PRODUCT_SALES_COUNTRY_REQUIRED;
+    public static final ApiError PRODUCT_IMAGE_COMPLETE_REQUIRED = ApiErrorPlm.PRODUCT_IMAGE_COMPLETE_REQUIRED;
+    public static final ApiError PRODUCT_VIDEO_COMPLETE_REQUIRED = ApiErrorPlm.PRODUCT_VIDEO_COMPLETE_REQUIRED;
+    public static final ApiError PRODUCT_SALES_STATUS_REQUIRED = ApiErrorPlm.PRODUCT_SALES_STATUS_REQUIRED;
+    public static final ApiError PRODUCT_SALEABLE_FLAG_REQUIRED = ApiErrorPlm.PRODUCT_SALEABLE_FLAG_REQUIRED;
+    public static final ApiError PRODUCT_SALES_PLATFORM_REQUIRED = ApiErrorPlm.PRODUCT_SALES_PLATFORM_REQUIRED;
+    public static final ApiError PRODUCT_COST_INFO_REQUIRED = ApiErrorPlm.PRODUCT_COST_INFO_REQUIRED;
+    public static final ApiError PRODUCT_SALES_INFO_REQUIRED = ApiErrorPlm.PRODUCT_SALES_INFO_REQUIRED;
+    public static final ApiError PRODUCT_PACK_REQUIRED = ApiErrorPlm.PRODUCT_PACK_REQUIRED;
+    public static final ApiError PRODUCT_SIZE_REQUIRED = ApiErrorPlm.PRODUCT_SIZE_REQUIRED;
+    public static final ApiError PRODUCT_BOX_SIZE_REQUIRED = ApiErrorPlm.PRODUCT_BOX_SIZE_REQUIRED;
+    public static final ApiError PRODUCT_GROSS_WEIGHT_REQUIRED = ApiErrorPlm.PRODUCT_GROSS_WEIGHT_REQUIRED;
+    public static final ApiError PRODUCT_BOX_WEIGHT_REQUIRED = ApiErrorPlm.PRODUCT_BOX_WEIGHT_REQUIRED;
+    public static final ApiError PRODUCT_NET_WEIGHT_REQUIRED = ApiErrorPlm.PRODUCT_NET_WEIGHT_REQUIRED;
+    public static final ApiError PRODUCT_BOX_QTY_REQUIRED = ApiErrorPlm.PRODUCT_BOX_QTY_REQUIRED;
+    public static final ApiError PRODUCT_ITERATE_SKU_REQUIRED = ApiErrorPlm.PRODUCT_ITERATE_SKU_REQUIRED;
+    public static final ApiError PRODUCT_CERTIFICATE_EXISTS = ApiErrorPlm.PRODUCT_CERTIFICATE_EXISTS;
+    public static final ApiError PRODUCT_BASIC_LABEL_EXISTS = ApiErrorPlm.PRODUCT_BASIC_LABEL_EXISTS;
+    public static final ApiError PRODUCT_BASIC_LABEL_LEVEL_NOT_FOUND = ApiErrorPlm.PRODUCT_BASIC_LABEL_LEVEL_NOT_FOUND;
+    public static final ApiError PRODUCT_BASIC_LABEL_NAME_EXISTS = ApiErrorPlm.PRODUCT_BASIC_LABEL_NAME_EXISTS;
+    public static final ApiError PRODUCT_BASIC_LABEL_SAVE_FAILED = ApiErrorPlm.PRODUCT_BASIC_LABEL_SAVE_FAILED;
+    public static final ApiError PRODUCT_BASIC_LABEL_REL_SAVE_FAILED = ApiErrorPlm.PRODUCT_BASIC_LABEL_REL_SAVE_FAILED;
+    public static final ApiError PRODUCT_INFO_CHANGE_CONTENT_REQUIRED = ApiErrorPlm.PRODUCT_INFO_CHANGE_CONTENT_REQUIRED;
+    public static final ApiError PRODUCT_TRIAL_DETAIL_NOT_FOUND = ApiErrorPlm.PRODUCT_TRIAL_DETAIL_NOT_FOUND;
+    public static final ApiError PRODUCT_VENDOR_PRICE_FETCH_FAILED = ApiErrorPlm.PRODUCT_VENDOR_PRICE_FETCH_FAILED;
+    public static final ApiError PRODUCT_VENDOR_PRICE_NOT_SUBMITTED = ApiErrorPlm.PRODUCT_VENDOR_PRICE_NOT_SUBMITTED;
+    public static final ApiError PRODUCT_VENDOR_PRICE_NOT_FOUND = ApiErrorPlm.PRODUCT_VENDOR_PRICE_NOT_FOUND;
+    public static final ApiError PRODUCT_UPLOAD_FORBIDDEN_IN_APPROVING = ApiErrorPlm.PRODUCT_UPLOAD_FORBIDDEN_IN_APPROVING;
+    public static final ApiError PRODUCT_CREATE_FAILED = ApiErrorPlm.PRODUCT_CREATE_FAILED;
+    public static final ApiError PRODUCT_SKU_NOT_APPROVED_REVOKE_APPROVAL_FORBIDDEN = ApiErrorPlm.PRODUCT_SKU_NOT_APPROVED_REVOKE_APPROVAL_FORBIDDEN;
+    public static final ApiError PRODUCT_ATTR_IN_USE_DELETE_FORBIDDEN = ApiErrorPlm.PRODUCT_ATTR_IN_USE_DELETE_FORBIDDEN;
+    public static final ApiError PRODUCT_SKU_FIN_CODE_NOT_FOUND = ApiErrorPlm.PRODUCT_SKU_FIN_CODE_NOT_FOUND;
+    public static final ApiError PRODUCT_SKU_NOT_COST = ApiErrorPlm.PRODUCT_SKU_NOT_COST;
+    public static final ApiError PRODUCT_SKU_MABANG_FIN_CODE_NOT_FOUND = ApiErrorPlm.PRODUCT_SKU_MABANG_FIN_CODE_NOT_FOUND;
+    public static final ApiError PRODUCT_SKU_DUPLICATE = ApiErrorPlm.PRODUCT_SKU_DUPLICATE;
+    public static final ApiError PRODUCT_SKU_OCCUPY_STATE_UPDATE_FAIL = ApiErrorPlm.PRODUCT_SKU_OCCUPY_STATE_UPDATE_FAIL;
+    public static final ApiError PRODUCT_SKU_STOCK_EXISTS_SPU_CHANGE_FORBIDDEN = ApiErrorPlm.PRODUCT_SKU_STOCK_EXISTS_SPU_CHANGE_FORBIDDEN;
+    public static final ApiError PRODUCT_PACKING_SKU_IS_NOT_NULL = ApiErrorPlm.PRODUCT_PACKING_SKU_IS_NOT_NULL;
+    public static final ApiError PRODUCT_PACKING_SKU_PACK_QTY_IS_NOT_NULL = ApiErrorPlm.PRODUCT_PACKING_SKU_PACK_QTY_IS_NOT_NULL;
+    public static final ApiError PRODUCT_PACKING_SKU_BOX_QTY_IS_NOT_NULL = ApiErrorPlm.PRODUCT_PACKING_SKU_BOX_QTY_IS_NOT_NULL;
+    public static final ApiError PRODUCT_SKU_PARAM_NOT_FOUND = ApiErrorPlm.PRODUCT_SKU_PARAM_NOT_FOUND;
+    public static final ApiError PRODUCT_DEV_STATUS_REQUIRED = ApiErrorPlm.PRODUCT_DEV_STATUS_REQUIRED;
+    public static final ApiError PRODUCT_APP_CATEGORY_CODE_EXISTS = ApiErrorPlm.PRODUCT_APP_CATEGORY_CODE_EXISTS;
+    public static final ApiError PRODUCT_APP_CATEGORY_NAME_EXISTS = ApiErrorPlm.PRODUCT_APP_CATEGORY_NAME_EXISTS;
+    public static final ApiError PRODUCT_PROPERTY_ASSET_NOT_EXIST = ApiErrorPlm.PRODUCT_PROPERTY_ASSET_NOT_EXIST;
+    public static final ApiError PRODUCT_SALES_BATTERY_WEIGHT_NOT_NULL = ApiErrorPlm.PRODUCT_SALES_BATTERY_WEIGHT_NOT_NULL;
+    public static final ApiError PRODUCT_IMG_ATTACHMENT_SAVE_FAILED = ApiErrorPlm.PRODUCT_IMG_ATTACHMENT_SAVE_FAILED;
+    public static final ApiError PRODUCT_IMG_ATTACHMENT_NOT_FOUND = ApiErrorPlm.PRODUCT_IMG_ATTACHMENT_NOT_FOUND;
+    public static final ApiError PRODUCT_IMG_CATEGORY_MOVE_FORBIDDEN_ALL = ApiErrorPlm.PRODUCT_IMG_CATEGORY_MOVE_FORBIDDEN_ALL;
+    public static final ApiError PRODUCT_IMG_CATEGORY_MOVE_FORBIDDEN_MAIN = ApiErrorPlm.PRODUCT_IMG_CATEGORY_MOVE_FORBIDDEN_MAIN;
+    public static final ApiError PRODUCT_IMG_CATEGORY_MOVE_FORBIDDEN_THUMBNAIL = ApiErrorPlm.PRODUCT_IMG_CATEGORY_MOVE_FORBIDDEN_THUMBNAIL;
+    public static final ApiError PRODUCT_IMG_DOWNLOAD_MIN_REQUIRED = ApiErrorPlm.PRODUCT_IMG_DOWNLOAD_MIN_REQUIRED;
+    public static final ApiError PRODUCT_IMG_DOWNLOAD_MAX_LIMIT = ApiErrorPlm.PRODUCT_IMG_DOWNLOAD_MAX_LIMIT;
+    public static final ApiError PRODUCT_IMG_DOWNLOAD_NOT_FOUND = ApiErrorPlm.PRODUCT_IMG_DOWNLOAD_NOT_FOUND;
+    public static final ApiError PRODUCT_CHANGE_SKU_NOT_APPROVE = ApiErrorPlm.PRODUCT_CHANGE_SKU_NOT_APPROVE;
+    public static final ApiError PRODUCT_CHANGE_PRODUCT_SIZE_CHANGE = ApiErrorPlm.PRODUCT_CHANGE_PRODUCT_SIZE_CHANGE;
+    public static final ApiError PRODUCT_CHANGE_BOX_SIZE_CHANGE = ApiErrorPlm.PRODUCT_CHANGE_BOX_SIZE_CHANGE;
+    public static final ApiError PRODUCT_CHANGE_EXIST = ApiErrorPlm.PRODUCT_CHANGE_EXIST;
+    public static final ApiError PRODUCT_RETAIL_PRICE_MISSING = ApiErrorPlm.PRODUCT_RETAIL_PRICE_MISSING;
+    public static final ApiError PRODUCT_RETAIL_PRICE_MISSING_ZERO = ApiErrorPlm.PRODUCT_RETAIL_PRICE_MISSING_ZERO;
+    public static final ApiError PRODUCT_RETAIL_SKU_MISSING = ApiErrorPlm.PRODUCT_RETAIL_SKU_MISSING;
+    public static final ApiError PRODUCT_RETAIL_SKU_DUPLICATE = ApiErrorPlm.PRODUCT_RETAIL_SKU_DUPLICATE;
+    public static final ApiError PROJECT_TASK_REQUIRED = ApiErrorPlm.PROJECT_TASK_REQUIRED;
+    public static final ApiError PROJECT_TASK_NAME_REQUIRED = ApiErrorPlm.PROJECT_TASK_NAME_REQUIRED;
+    public static final ApiError PROJECT_TASK_OWNER_REQUIRED = ApiErrorPlm.PROJECT_TASK_OWNER_REQUIRED;
+    public static final ApiError PROJECT_OWNER_NOT_FOUND = ApiErrorPlm.PROJECT_OWNER_NOT_FOUND;
+    public static final ApiError PROJECT_PM_REQUIRED = ApiErrorPlm.PROJECT_PM_REQUIRED;
+    public static final ApiError PROJECT_RND_CENTER_OWNER_REQUIRED = ApiErrorPlm.PROJECT_RND_CENTER_OWNER_REQUIRED;
+    public static final ApiError PROJECT_PMO_OWNER_REQUIRED = ApiErrorPlm.PROJECT_PMO_OWNER_REQUIRED;
+    public static final ApiError PROJECT_DATE_START_AFTER_END = ApiErrorPlm.PROJECT_DATE_START_AFTER_END;
+    public static final ApiError PROJECT_DATE_END_AFTER_START = ApiErrorPlm.PROJECT_DATE_END_AFTER_START;
+    public static final ApiError PROJECT_STAGE_TASK_EXISTS = ApiErrorPlm.PROJECT_STAGE_TASK_EXISTS;
+    public static final ApiError PROJECT_STAGE_TASK_REQUIRED = ApiErrorPlm.PROJECT_STAGE_TASK_REQUIRED;
+    public static final ApiError PROJECT_STAGE_INIT_NAME_IMMUTABLE = ApiErrorPlm.PROJECT_STAGE_INIT_NAME_IMMUTABLE;
+    public static final ApiError PROJECT_TEMPLATE_EXISTS = ApiErrorPlm.PROJECT_TEMPLATE_EXISTS;
+    public static final ApiError PROJECT_TASK_EXISTS = ApiErrorPlm.PROJECT_TASK_EXISTS;
+    public static final ApiError PROJECT_ROLE_EXISTS = ApiErrorPlm.PROJECT_ROLE_EXISTS;
+    public static final ApiError PROJECT_ARCHIVE_FORBIDDEN_NOT_DONE = ApiErrorPlm.PROJECT_ARCHIVE_FORBIDDEN_NOT_DONE;
+    public static final ApiError PROJECT_STAGE_INIT_DELETE_FORBIDDEN = ApiErrorPlm.PROJECT_STAGE_INIT_DELETE_FORBIDDEN;
+    public static final ApiError PROJECT_FIELD_EXISTS = ApiErrorPlm.PROJECT_FIELD_EXISTS;
+    public static final ApiError PROJECT_TASK_HAS_CHILD = ApiErrorPlm.PROJECT_TASK_HAS_CHILD;
+    public static final ApiError PROJECT_NOT_FOUND = ApiErrorPlm.PROJECT_NOT_FOUND;
+    public static final ApiError PROJECT_TASK_NOT_FOUND = ApiErrorPlm.PROJECT_TASK_NOT_FOUND;
+    public static final ApiError PROJECT_TASK_BATCH_STATUS_FORBIDDEN = ApiErrorPlm.PROJECT_TASK_BATCH_STATUS_FORBIDDEN;
+    public static final ApiError PROJECT_TASK_PUBLISH_REQUIRED = ApiErrorPlm.PROJECT_TASK_PUBLISH_REQUIRED;
+    public static final ApiError PROJECT_TASK_START_REQUIRED = ApiErrorPlm.PROJECT_TASK_START_REQUIRED;
+    public static final ApiError PROJECT_TASK_CLOSE_REQUIRED = ApiErrorPlm.PROJECT_TASK_CLOSE_REQUIRED;
+    public static final ApiError PROJECT_TASK_REVIEW_COMPLETE_FORBIDDEN = ApiErrorPlm.PROJECT_TASK_REVIEW_COMPLETE_FORBIDDEN;
+    public static final ApiError PROJECT_TASK_PREDECESSOR_UNFINISHED = ApiErrorPlm.PROJECT_TASK_PREDECESSOR_UNFINISHED;
+    public static final ApiError PROJECT_TASK_CHILD_UNFINISHED = ApiErrorPlm.PROJECT_TASK_CHILD_UNFINISHED;
+    public static final ApiError PROJECT_TASK_DOC_CHANGE_FORBIDDEN = ApiErrorPlm.PROJECT_TASK_DOC_CHANGE_FORBIDDEN;
+    public static final ApiError PROJECT_STAGE_TASK_NOT_FOUND = ApiErrorPlm.PROJECT_STAGE_TASK_NOT_FOUND;
+    public static final ApiError PROJECT_STAGE_INITIATION_DELETE_FORBIDDEN = ApiErrorPlm.PROJECT_STAGE_INITIATION_DELETE_FORBIDDEN;
+    public static final ApiError PROJECT_STAGE_HAS_TASKS_DELETE_FORBIDDEN = ApiErrorPlm.PROJECT_STAGE_HAS_TASKS_DELETE_FORBIDDEN;
+    public static final ApiError PROJECT_TASK_COMPLETE_REQUIRED = ApiErrorPlm.PROJECT_TASK_COMPLETE_REQUIRED;
+    public static final ApiError PROJECT_TASK_DELIVERABLE_UNFINISHED = ApiErrorPlm.PROJECT_TASK_DELIVERABLE_UNFINISHED;
+    public static final ApiError PROJECT_TASK_UNFINISHED_FORBIDDEN = ApiErrorPlm.PROJECT_TASK_UNFINISHED_FORBIDDEN;
+    public static final ApiError PROJECT_TEMPLATE_NOT_FOUND = ApiErrorPlm.PROJECT_TEMPLATE_NOT_FOUND;
+    public static final ApiError PROJECT_NOTICE_NODE_IN_USE = ApiErrorPlm.PROJECT_NOTICE_NODE_IN_USE;
+    public static final ApiError PROJECT_NOTICE_NODE_NOT_FOUND = ApiErrorPlm.PROJECT_NOTICE_NODE_NOT_FOUND;
+    public static final ApiError PROJECT_MEMBER_OR_OTHER_REQUIRED = ApiErrorPlm.PROJECT_MEMBER_OR_OTHER_REQUIRED;
+    public static final ApiError PROJECT_TEMPLATE_TASK_EXISTS = ApiErrorPlm.PROJECT_TEMPLATE_TASK_EXISTS;
+    public static final ApiError PROJECT_TEMPLATE_TASK_NOT_FOUND = ApiErrorPlm.PROJECT_TEMPLATE_TASK_NOT_FOUND;
+    public static final ApiError PROJECT_TEMPLATE_ROLE_EXISTS = ApiErrorPlm.PROJECT_TEMPLATE_ROLE_EXISTS;
+    public static final ApiError PROJECT_TEMPLATE_MEMBER_REQUIRED = ApiErrorPlm.PROJECT_TEMPLATE_MEMBER_REQUIRED;
+    public static final ApiError PROJECT_TEMPLATE_ROLE_MEMBER_EXISTS = ApiErrorPlm.PROJECT_TEMPLATE_ROLE_MEMBER_EXISTS;
+    public static final ApiError PROJECT_TASK_NAME_TOO_LONG = ApiErrorPlm.PROJECT_TASK_NAME_TOO_LONG;
+    public static final ApiError PROJECT_TASK_RESTART_REQUIRED = ApiErrorPlm.PROJECT_TASK_RESTART_REQUIRED;
+    public static final ApiError PROJECT_TASK_VIEW_EXPORT_TYPE_REQUIRED = ApiErrorPlm.PROJECT_TASK_VIEW_EXPORT_TYPE_REQUIRED;
+    public static final ApiError PROJECT_TASK_SAVE_FORBIDDEN_ARCHIVED = ApiErrorPlm.PROJECT_TASK_SAVE_FORBIDDEN_ARCHIVED;
+    public static final ApiError PROJECT_TASK_COMPLETE_FORBIDDEN_PRODUCT_INCOMPLETE = ApiErrorPlm.PROJECT_TASK_COMPLETE_FORBIDDEN_PRODUCT_INCOMPLETE;
+    public static final ApiError PROJECT_PARAM_TASK_OWNER_REQUIRED = ApiErrorPlm.PROJECT_PARAM_TASK_OWNER_REQUIRED;
+    public static final ApiError PROJECT_FREEZE_REQUIRED = ApiErrorPlm.PROJECT_FREEZE_REQUIRED;
+    public static final ApiError PROJECT_UNFREEZE_REQUIRED = ApiErrorPlm.PROJECT_UNFREEZE_REQUIRED;
+    public static final ApiError PROJECT_SCRAP_REQUIRED = ApiErrorPlm.PROJECT_SCRAP_REQUIRED;
+    public static final ApiError PROJECT_RESTORE_REQUIRED = ApiErrorPlm.PROJECT_RESTORE_REQUIRED;
+    public static final ApiError PROJECT_CHANGE_REQUEST_REQUIRED = ApiErrorPlm.PROJECT_CHANGE_REQUEST_REQUIRED;
+    public static final ApiError PROJECT_CHANGE_VOID_REQUIRED = ApiErrorPlm.PROJECT_CHANGE_VOID_REQUIRED;
+    public static final ApiError PROJECT_UNARCHIVE_REQUIRED = ApiErrorPlm.PROJECT_UNARCHIVE_REQUIRED;
+    public static final ApiError PROJECT_TASK_UNPUBLISH_STATUS_INVALID = ApiErrorPlm.PROJECT_TASK_UNPUBLISH_STATUS_INVALID;
+    public static final ApiError PROJECT_TASK_FIXED_RENAME_FORBIDDEN = ApiErrorPlm.PROJECT_TASK_FIXED_RENAME_FORBIDDEN;
+    public static final ApiError PROJECT_TASK_FIXED_DOC_FORBIDDEN = ApiErrorPlm.PROJECT_TASK_FIXED_DOC_FORBIDDEN;
+    public static final ApiError PROJECT_TASK_FIXED_APPROVAL_FORBIDDEN = ApiErrorPlm.PROJECT_TASK_FIXED_APPROVAL_FORBIDDEN;
+    public static final ApiError PROJECT_CHANGE_IN_PROGRESS_FORBIDDEN = ApiErrorPlm.PROJECT_CHANGE_IN_PROGRESS_FORBIDDEN;
+    public static final ApiError PROJECT_SCHEDULE_TIME_NOT_FOUND = ApiErrorPlm.PROJECT_SCHEDULE_TIME_NOT_FOUND;
+    public static final ApiError PROJECT_SCHEDULE_SUBMIT_REQUIRED = ApiErrorPlm.PROJECT_SCHEDULE_SUBMIT_REQUIRED;
+    public static final ApiError PROJECT_PRODUCT_SUBMIT_REQUIRED = ApiErrorPlm.PROJECT_PRODUCT_SUBMIT_REQUIRED;
+    public static final ApiError PROJECT_PRODUCT_SCHEDULE_REQUIRED = ApiErrorPlm.PROJECT_PRODUCT_SCHEDULE_REQUIRED;
+    public static final ApiError PROJECT_K3_SEND_REQUIRED = ApiErrorPlm.PROJECT_K3_SEND_REQUIRED;
+    public static final ApiError PROJECT_CHANGE_INFO_NOT_FOUND = ApiErrorPlm.PROJECT_CHANGE_INFO_NOT_FOUND;
+    public static final ApiError PROJECT_ROLE_REF_DELETE_FORBIDDEN = ApiErrorPlm.PROJECT_ROLE_REF_DELETE_FORBIDDEN;
+    public static final ApiError PROJECT_TEMPLATE_EMPTY = ApiErrorPlm.PROJECT_TEMPLATE_EMPTY;
+    public static final ApiError PROJECT_PLAN_NOT_FOUND = ApiErrorPlm.PROJECT_PLAN_NOT_FOUND;
+    public static final ApiError PROJECT_PLAN_EDIT_REQUIRED = ApiErrorPlm.PROJECT_PLAN_EDIT_REQUIRED;
+    public static final ApiError PROJECT_PLAN_LINKED_PRODUCT_EXISTS = ApiErrorPlm.PROJECT_PLAN_LINKED_PRODUCT_EXISTS;
+    public static final ApiError PROJECT_PLAN_SYNC_FAILED = ApiErrorPlm.PROJECT_PLAN_SYNC_FAILED;
+    public static final ApiError PROJECT_PRODUCT_ALREADY_IN_PLAN = ApiErrorPlm.PROJECT_PRODUCT_ALREADY_IN_PLAN;
+    public static final ApiError PROJECT_SUBTASK_SCHEDULE_FORBIDDEN = ApiErrorPlm.PROJECT_SUBTASK_SCHEDULE_FORBIDDEN;
+    public static final ApiError PROJECT_FIRST_RECORD_START_TIME_REQUIRED = ApiErrorPlm.PROJECT_FIRST_RECORD_START_TIME_REQUIRED;
+    public static final ApiError PROJECT_TASK_DATA_NOT_FOUND = ApiErrorPlm.PROJECT_TASK_DATA_NOT_FOUND;
+    public static final ApiError PROJECT_TASK_RECORD_NOT_FOUND = ApiErrorPlm.PROJECT_TASK_RECORD_NOT_FOUND;
+    public static final ApiError PROJECT_SCHEDULE_UNDER_REVIEW_FORBIDDEN = ApiErrorPlm.PROJECT_SCHEDULE_UNDER_REVIEW_FORBIDDEN;
+    public static final ApiError PROJECT_TASK_APPROVER_MISSING = ApiErrorPlm.PROJECT_TASK_APPROVER_MISSING;
+    public static final ApiError PROJECT_PLAN_DELETE_FORBIDDEN = ApiErrorPlm.PROJECT_PLAN_DELETE_FORBIDDEN;
+    public static final ApiError PROJECT_TASK_DUPLICATE = ApiErrorPlm.PROJECT_TASK_DUPLICATE;
+    public static final ApiError PROJECT_TEMPLATE_PREREQUISITE_UPDATE_FAILED = ApiErrorPlm.PROJECT_TEMPLATE_PREREQUISITE_UPDATE_FAILED;
+    public static final ApiError PROJECT_TEMPLATE_REQUIRED = ApiErrorPlm.PROJECT_TEMPLATE_REQUIRED;
+    public static final ApiError PROJECT_TASK_AUDIT_STATUS_INVALID = ApiErrorPlm.PROJECT_TASK_AUDIT_STATUS_INVALID;
+    public static final ApiError PROJECT_PROJECT_RESUME_REQUIRED = ApiErrorPlm.PROJECT_PROJECT_RESUME_REQUIRED;
+    public static final ApiError PROJECT_INITIATE_FORBIDDEN_TERMINATED = ApiErrorPlm.PROJECT_INITIATE_FORBIDDEN_TERMINATED;
+    public static final ApiError PROJECT_PAUSE_INVALID = ApiErrorPlm.PROJECT_PAUSE_INVALID;
+    public static final ApiError PROJECT_PAUSE_FORBIDDEN_INIT = ApiErrorPlm.PROJECT_PAUSE_FORBIDDEN_INIT;
+    public static final ApiError PROJECT_CLOSE_REQUIRED = ApiErrorPlm.PROJECT_CLOSE_REQUIRED;
+    public static final ApiError PROJECT_INITIATE_FORBIDDEN = ApiErrorPlm.PROJECT_INITIATE_FORBIDDEN;
+    public static final ApiError PROJECT_START_REQUIRED = ApiErrorPlm.PROJECT_START_REQUIRED;
+    public static final ApiError PROJECT_TERMINATED_CHANGE_FORBIDDEN = ApiErrorPlm.PROJECT_TERMINATED_CHANGE_FORBIDDEN;
+    public static final ApiError PROJECT_TERMINATED_AGAIN_FORBIDDEN = ApiErrorPlm.PROJECT_TERMINATED_AGAIN_FORBIDDEN;
+    public static final ApiError PROJECT_RESUME_ONLY = ApiErrorPlm.PROJECT_RESUME_ONLY;
+    public static final ApiError PROJECT_INITIATION_COST_REQUIRED = ApiErrorPlm.PROJECT_INITIATION_COST_REQUIRED;
+    public static final ApiError PROJECT_COST_REQUIRED = ApiErrorPlm.PROJECT_COST_REQUIRED;
+
+    /** Scm service error constants. */
+    public static final ApiError PO_ITEMS_TO_GENERATE_NOT_FOUND = ApiErrorScm.PO_ITEMS_TO_GENERATE_NOT_FOUND;
+    public static final ApiError PO_APPLY_NOT_FOUND = ApiErrorScm.PO_APPLY_NOT_FOUND;
+    public static final ApiError PO_APPLY_DETAIL_NOT_FOUND = ApiErrorScm.PO_APPLY_DETAIL_NOT_FOUND;
+    public static final ApiError PO_APPLY_DETAIL_ALREADY_PUSHED = ApiErrorScm.PO_APPLY_DETAIL_ALREADY_PUSHED;
+    public static final ApiError PO_APPLY_QTY_EXCEEDS_PENDING_QTY = ApiErrorScm.PO_APPLY_QTY_EXCEEDS_PENDING_QTY;
+    public static final ApiError PO_NOT_FOUND = ApiErrorScm.PO_NOT_FOUND;
+    public static final ApiError PO_DETAIL_NOT_FOUND = ApiErrorScm.PO_DETAIL_NOT_FOUND;
+    public static final ApiError PO_SUPPLIER_INFO_NOT_FOUND = ApiErrorScm.PO_SUPPLIER_INFO_NOT_FOUND;
+    public static final ApiError PO_PURCHASE_ORG_NOT_FOUND = ApiErrorScm.PO_PURCHASE_ORG_NOT_FOUND;
+    public static final ApiError PO_RECEIVE_ORG_NOT_FOUND = ApiErrorScm.PO_RECEIVE_ORG_NOT_FOUND;
+    public static final ApiError PO_DELIVERY_WH_REQUIRED = ApiErrorScm.PO_DELIVERY_WH_REQUIRED;
+    public static final ApiError PO_ORG_REQUIRED = ApiErrorScm.PO_ORG_REQUIRED;
+    public static final ApiError PO_SUPPLIER_ACCOUNT_REQUIRED = ApiErrorScm.PO_SUPPLIER_ACCOUNT_REQUIRED;
+    public static final ApiError PO_CAN_GENERATE_ONLY_WHEN_APPROVED = ApiErrorScm.PO_CAN_GENERATE_ONLY_WHEN_APPROVED;
+    public static final ApiError PO_APPLY_APPROVAL_NOT_ALLOWED_ONLY = ApiErrorScm.PO_APPLY_APPROVAL_NOT_ALLOWED_ONLY;
+    public static final ApiError PO_SUBMIT_FAILED = ApiErrorScm.PO_SUBMIT_FAILED;
+    public static final ApiError PO_APPROVE_FAILED = ApiErrorScm.PO_APPROVE_FAILED;
+    public static final ApiError PO_SUBMIT_OR_REJECT_EXPORT_CONTRACT_FORBIDDEN = ApiErrorScm.PO_SUBMIT_OR_REJECT_EXPORT_CONTRACT_FORBIDDEN;
+    public static final ApiError PO_APPROVED_ONLY_CAN_PUSH_RECEIPT = ApiErrorScm.PO_APPROVED_ONLY_CAN_PUSH_RECEIPT;
+    public static final ApiError PO_APPROVED_ONLY_CAN_PUSH_QC_APPLICATION = ApiErrorScm.PO_APPROVED_ONLY_CAN_PUSH_QC_APPLICATION;
+    public static final ApiError PO_DETAIL_CONFIRM_OR_DELIVER_CAN_PUSH_RECEIPT = ApiErrorScm.PO_DETAIL_CONFIRM_OR_DELIVER_CAN_PUSH_RECEIPT;
+    public static final ApiError PO_APPROVED_ONLY_CAN_PUSH_INBOUND = ApiErrorScm.PO_APPROVED_ONLY_CAN_PUSH_INBOUND;
+    public static final ApiError PO_RECEIVE_ALREADY_PUSHED_REVERSE_FORBIDDEN = ApiErrorScm.PO_RECEIVE_ALREADY_PUSHED_REVERSE_FORBIDDEN;
+    public static final ApiError PO_INSTOCK_ALREADY_PUSHED_REVERSE_FORBIDDEN = ApiErrorScm.PO_INSTOCK_ALREADY_PUSHED_REVERSE_FORBIDDEN;
+    public static final ApiError PO_END_DELIVERY_ALLOWED_ONLY = ApiErrorScm.PO_END_DELIVERY_ALLOWED_ONLY;
+    public static final ApiError PO_DELIVERY_STATUS_CHANGE_FAILED = ApiErrorScm.PO_DELIVERY_STATUS_CHANGE_FAILED;
+    public static final ApiError PO_ALREADY_GENERATED_DELIVERY_CANNOT_CHANGE_WH_OR_SUPPLIER = ApiErrorScm.PO_ALREADY_GENERATED_DELIVERY_CANNOT_CHANGE_WH_OR_SUPPLIER;
+    public static final ApiError PO_ALREADY_GENERATED_INBOUND_CANNOT_CHANGE_WH_OR_SUPPLIER = ApiErrorScm.PO_ALREADY_GENERATED_INBOUND_CANNOT_CHANGE_WH_OR_SUPPLIER;
+    public static final ApiError PO_CHANGE_NOT_FOUND = ApiErrorScm.PO_CHANGE_NOT_FOUND;
+    public static final ApiError PO_CHANGE_DETAIL_NOT_FOUND = ApiErrorScm.PO_CHANGE_DETAIL_NOT_FOUND;
+    public static final ApiError PO_NOT_APPROVED_CHANGE_FORBIDDEN = ApiErrorScm.PO_NOT_APPROVED_CHANGE_FORBIDDEN;
+    public static final ApiError PO_SKU_HAS_PUSHED_DOC_CHANGE_DELETE_FORBIDDEN = ApiErrorScm.PO_SKU_HAS_PUSHED_DOC_CHANGE_DELETE_FORBIDDEN;
+    public static final ApiError PO_SKU_CHANGE_QTY_LESS_THAN_PO_QTY = ApiErrorScm.PO_SKU_CHANGE_QTY_LESS_THAN_PO_QTY;
+    public static final ApiError PO_INSTOCK_NOT_FOUND = ApiErrorScm.PO_INSTOCK_NOT_FOUND;
+    public static final ApiError PO_INSTOCK_DETAIL_NOT_FOUND = ApiErrorScm.PO_INSTOCK_DETAIL_NOT_FOUND;
+    public static final ApiError PO_INSTOCK_APPROVED_ONLY_CAN_PUSH_RETURN = ApiErrorScm.PO_INSTOCK_APPROVED_ONLY_CAN_PUSH_RETURN;
+    public static final ApiError PO_INBOUND_ALREADY_PUSHED_REVERSE_FORBIDDEN = ApiErrorScm.PO_INBOUND_ALREADY_PUSHED_REVERSE_FORBIDDEN;
+    public static final ApiError PO_RETURN_NOT_EXISTS = ApiErrorScm.PO_RETURN_NOT_EXISTS;
+    public static final ApiError PO_RETURN_ALREADY_PUSHED_REVERSE_FORBIDDEN = ApiErrorScm.PO_RETURN_ALREADY_PUSHED_REVERSE_FORBIDDEN;
+    public static final ApiError PO_RETURN_INBOUND_ALREADY_PUSHED = ApiErrorScm.PO_RETURN_INBOUND_ALREADY_PUSHED;
+    public static final ApiError PO_DETAIL_DATE_REQUIRED = ApiErrorScm.PO_DETAIL_DATE_REQUIRED;
+    public static final ApiError PO_DATE_INVALID = ApiErrorScm.PO_DATE_INVALID;
+    public static final ApiError PO_PRICE_INVALID = ApiErrorScm.PO_PRICE_INVALID;
+    public static final ApiError PO_SKU_PURCHASE_QTY_INVALID = ApiErrorScm.PO_SKU_PURCHASE_QTY_INVALID;
+    public static final ApiError PO_ALREADY_QTY_EXCEED = ApiErrorScm.PO_ALREADY_QTY_EXCEED;
+    public static final ApiError PO_CHANGE_QTY_EXCEED = ApiErrorScm.PO_CHANGE_QTY_EXCEED;
+    public static final ApiError PO_SUBCONTRACT_ORDER_NOT_FOUND = ApiErrorScm.PO_SUBCONTRACT_ORDER_NOT_FOUND;
+    public static final ApiError PO_SUBCONTRACT_DETAIL_NOT_FOUND = ApiErrorScm.PO_SUBCONTRACT_DETAIL_NOT_FOUND;
+    public static final ApiError PO_SUBCONTRACT_PARENT_SKU_QTY_EXCEEDS = ApiErrorScm.PO_SUBCONTRACT_PARENT_SKU_QTY_EXCEEDS;
+    public static final ApiError PO_SUBCONTRACT_ALREADY_PUSHED_REVERSE_FORBIDDEN = ApiErrorScm.PO_SUBCONTRACT_ALREADY_PUSHED_REVERSE_FORBIDDEN;
+    public static final ApiError PO_RECONCILIATION_ONLY_PENDING_SUPPLIER_CONFIRM_ALLOWED = ApiErrorScm.PO_RECONCILIATION_ONLY_PENDING_SUPPLIER_CONFIRM_ALLOWED;
+    public static final ApiError PO_RECONCILIATION_ONLY_PENDING_BUYER_CONFIRM_ALLOWED = ApiErrorScm.PO_RECONCILIATION_ONLY_PENDING_BUYER_CONFIRM_ALLOWED;
+    public static final ApiError PO_RECONCILIATION_BUYER_CONFIRM_OR_CONFIRMED_ALLOWED = ApiErrorScm.PO_RECONCILIATION_BUYER_CONFIRM_OR_CONFIRMED_ALLOWED;
+    public static final ApiError PO_RECONCILIATION_DELETE_STATUS_FORBIDDEN = ApiErrorScm.PO_RECONCILIATION_DELETE_STATUS_FORBIDDEN;
+    public static final ApiError PO_RECONCILIATION_ONLY_CONFIRMED_RECEIVABLE_ALLOWED = ApiErrorScm.PO_RECONCILIATION_ONLY_CONFIRMED_RECEIVABLE_ALLOWED;
+    public static final ApiError PO_RECONCILIATION_UPDATE_STATUS_FORBIDDEN = ApiErrorScm.PO_RECONCILIATION_UPDATE_STATUS_FORBIDDEN;
+    public static final ApiError PO_RECONCILIATION_DATE_RANGE_INVALID = ApiErrorScm.PO_RECONCILIATION_DATE_RANGE_INVALID;
+    public static final ApiError PO_HAS_SUPPLIER_DELETE_FORBIDDEN = ApiErrorScm.PO_HAS_SUPPLIER_DELETE_FORBIDDEN;
+    public static final ApiError PO_SUBCONTRACT_DETAIL_PARENT_SKU_NOT_FOUND = ApiErrorScm.PO_SUBCONTRACT_DETAIL_PARENT_SKU_NOT_FOUND;
+    public static final ApiError PO_SUBCONTRACT_DETAIL_CHILD_SKU_NOT_FOUND = ApiErrorScm.PO_SUBCONTRACT_DETAIL_CHILD_SKU_NOT_FOUND;
+    public static final ApiError PO_SUBCONTRACT_NOT_EDITABLE = ApiErrorScm.PO_SUBCONTRACT_NOT_EDITABLE;
+    public static final ApiError PO_SUBCONTRACT_CHANGE_DETAIL_PARENT_SKU_NOT_FOUND = ApiErrorScm.PO_SUBCONTRACT_CHANGE_DETAIL_PARENT_SKU_NOT_FOUND;
+    public static final ApiError PO_SUBCONTRACT_CHANGE_DETAIL_CHILD_SKU_NOT_FOUND = ApiErrorScm.PO_SUBCONTRACT_CHANGE_DETAIL_CHILD_SKU_NOT_FOUND;
+    public static final ApiError PO_SUBCONTRACT_CHANGE_NOT_FOUND = ApiErrorScm.PO_SUBCONTRACT_CHANGE_NOT_FOUND;
+    public static final ApiError PO_SUBCONTRACT_CHANGE_DETAIL_NOT_FOUND = ApiErrorScm.PO_SUBCONTRACT_CHANGE_DETAIL_NOT_FOUND;
+    public static final ApiError PO_SUBCONTRACT_PARENT_SKU_QTY_EXCEEDS_REMAIN = ApiErrorScm.PO_SUBCONTRACT_PARENT_SKU_QTY_EXCEEDS_REMAIN;
+    public static final ApiError PO_SUBCONTRACT_PURCHASE_QTY_PUSHED_END = ApiErrorScm.PO_SUBCONTRACT_PURCHASE_QTY_PUSHED_END;
+    public static final ApiError PO_SUBCONTRACT_SELECT_COMPOSITE_SKU_TO_GENERATE = ApiErrorScm.PO_SUBCONTRACT_SELECT_COMPOSITE_SKU_TO_GENERATE;
+    public static final ApiError PO_SUBCONTRACT_PUSH_CHANGE = ApiErrorScm.PO_SUBCONTRACT_PUSH_CHANGE;
+    public static final ApiError PO_SUBCONTRACT_PUSH_ISSUE = ApiErrorScm.PO_SUBCONTRACT_PUSH_ISSUE;
+    public static final ApiError PO_ID_REPEAT = ApiErrorScm.PO_ID_REPEAT;
+    public static final ApiError PO_DETAIL_SKU_NOT_EXIST = ApiErrorScm.PO_DETAIL_SKU_NOT_EXIST;
+    public static final ApiError PO_INSTOCK_DETAIL_SKU_NOT_EXIST = ApiErrorScm.PO_INSTOCK_DETAIL_SKU_NOT_EXIST;
+    public static final ApiError PO_PUSH_DOWN_CHANGE_EXISTS = ApiErrorScm.PO_PUSH_DOWN_CHANGE_EXISTS;
+    public static final ApiError PO_PUSH_DOWN_DELIVERY_EXISTS = ApiErrorScm.PO_PUSH_DOWN_DELIVERY_EXISTS;
+    public static final ApiError PO_PUSH_DOWN_QC_APPLICATION_EXISTS = ApiErrorScm.PO_PUSH_DOWN_QC_APPLICATION_EXISTS;
+    public static final ApiError PO_SUPPLIER_CONFIRM_NOT_ALLOWED = ApiErrorScm.PO_SUPPLIER_CONFIRM_NOT_ALLOWED;
+    public static final ApiError PO_DETAIL_SUPPLIER_CONFIRM_NOT_ALLOWED = ApiErrorScm.PO_DETAIL_SUPPLIER_CONFIRM_NOT_ALLOWED;
+    public static final ApiError PO_SKU_PUSH_DOWN_NOT_ALLOWED = ApiErrorScm.PO_SKU_PUSH_DOWN_NOT_ALLOWED;
+    public static final ApiError PO_CLOSE_REVERSE_NOT_ALLOWED = ApiErrorScm.PO_CLOSE_REVERSE_NOT_ALLOWED;
+    public static final ApiError PO_NO_SUPPLIER_CONFIRM = ApiErrorScm.PO_NO_SUPPLIER_CONFIRM;
+    public static final ApiError PO_SUPPLIER_CONFIRM_DIFF = ApiErrorScm.PO_SUPPLIER_CONFIRM_DIFF;
+    public static final ApiError PO_DETAIL_DELIVERY_QTY_EXCEEDS = ApiErrorScm.PO_DETAIL_DELIVERY_QTY_EXCEEDS;
+    public static final ApiError PO_CONTRACT_EXPORT_FORBIDDEN_OTHER_SUPPLIER = ApiErrorScm.PO_CONTRACT_EXPORT_FORBIDDEN_OTHER_SUPPLIER;
+    public static final ApiError PO_ADJUST_PRICE_NOT_ALLOWED = ApiErrorScm.PO_ADJUST_PRICE_NOT_ALLOWED;
+    public static final ApiError PO_PUSHED_ACCEPT_REVIEW_FORBIDDEN = ApiErrorScm.PO_PUSHED_ACCEPT_REVIEW_FORBIDDEN;
+    public static final ApiError PO_CHANGE_SKU_QTY_LT_ACCEPTED = ApiErrorScm.PO_CHANGE_SKU_QTY_LT_ACCEPTED;
+    public static final ApiError PO_SKU_NEW_QTY_LT_ACCEPTED = ApiErrorScm.PO_SKU_NEW_QTY_LT_ACCEPTED;
+    public static final ApiError PO_RETURN_DATA_NOT_FOUND = ApiErrorScm.PO_RETURN_DATA_NOT_FOUND;
+    public static final ApiError PO_RECEIPT_NOT_FOUND = ApiErrorScm.PO_RECEIPT_NOT_FOUND;
+    public static final ApiError PO_RECEIPT_QTY_EXCEEDS_ALLOWED = ApiErrorScm.PO_RECEIPT_QTY_EXCEEDS_ALLOWED;
+    public static final ApiError PO_RETURN_QTY_EXCEEDS_INBOUND = ApiErrorScm.PO_RETURN_QTY_EXCEEDS_INBOUND;
+    public static final ApiError PO_INBOUND_EXISTS_REVOKE_FORBIDDEN = ApiErrorScm.PO_INBOUND_EXISTS_REVOKE_FORBIDDEN;
+    public static final ApiError PO_RETURN_EXISTS_REVOKE_FORBIDDEN = ApiErrorScm.PO_RETURN_EXISTS_REVOKE_FORBIDDEN;
+    public static final ApiError PO_RETURN_QTY_EXCEEDS_RECEIPT = ApiErrorScm.PO_RETURN_QTY_EXCEEDS_RECEIPT;
+    public static final ApiError PO_RETURN_TOTAL_QTY_EXCEEDS_INBOUND = ApiErrorScm.PO_RETURN_TOTAL_QTY_EXCEEDS_INBOUND;
+    public static final ApiError PO_RETURN_SKU_CLOSE = ApiErrorScm.PO_RETURN_SKU_CLOSE;
+    public static final ApiError PO_PUSH_TOTAL_QTY_EXCEEDS_RECEIPT = ApiErrorScm.PO_PUSH_TOTAL_QTY_EXCEEDS_RECEIPT;
+    public static final ApiError PO_RECEIPT_QTY_EXCEEDS_UNDELIVERED = ApiErrorScm.PO_RECEIPT_QTY_EXCEEDS_UNDELIVERED;
+    public static final ApiError PO_INSTOCK_REMAIN_QTY_EXCEEDS = ApiErrorScm.PO_INSTOCK_REMAIN_QTY_EXCEEDS;
+    public static final ApiError PO_INSTOCK_ALREADY_COMPLETED = ApiErrorScm.PO_INSTOCK_ALREADY_COMPLETED;
+    public static final ApiError PO_RETURN_INBOUND_ALLOWED_APPROVED_ONLY = ApiErrorScm.PO_RETURN_INBOUND_ALLOWED_APPROVED_ONLY;
+    public static final ApiError PO_RETURN_INBOUND_NOT_FOUND = ApiErrorScm.PO_RETURN_INBOUND_NOT_FOUND;
+    public static final ApiError PO_RETURN_REF_PO_EXISTS = ApiErrorScm.PO_RETURN_REF_PO_EXISTS;
+    public static final ApiError PO_RETURN_REF_PO_NOT_APPROVED = ApiErrorScm.PO_RETURN_REF_PO_NOT_APPROVED;
+    public static final ApiError PO_RECEIVE_QTY_EXCEEDS_DELIVERY = ApiErrorScm.PO_RECEIVE_QTY_EXCEEDS_DELIVERY;
+    public static final ApiError PO_SUBCONTRACT_ISSUE_SUPPLIER_DIFF = ApiErrorScm.PO_SUBCONTRACT_ISSUE_SUPPLIER_DIFF;
+    public static final ApiError PO_SUBCONTRACT_RETURN_SUPPLIER_DIFF = ApiErrorScm.PO_SUBCONTRACT_RETURN_SUPPLIER_DIFF;
+    public static final ApiError PO_INSTOCK_PUSH_SUBCONTRACT_ISSUE_EXIST = ApiErrorScm.PO_INSTOCK_PUSH_SUBCONTRACT_ISSUE_EXIST;
+    public static final ApiError PO_RETURN_UNIT_PRICE_REQUIRED = ApiErrorScm.PO_RETURN_UNIT_PRICE_REQUIRED;
+    public static final ApiError PO_RETURN_SKU_UNIT_PRICE_REQUIRED = ApiErrorScm.PO_RETURN_SKU_UNIT_PRICE_REQUIRED;
+    public static final ApiError PO_SUBCONTRACT_ISSUE_NOT_EXIST = ApiErrorScm.PO_SUBCONTRACT_ISSUE_NOT_EXIST;
+    public static final ApiError PO_SUBCONTRACT_ISSUE_DETAIL_NOT_EXIST = ApiErrorScm.PO_SUBCONTRACT_ISSUE_DETAIL_NOT_EXIST;
+    public static final ApiError PO_SUBCONTRACT_ISSUE_QTY_EXCEED = ApiErrorScm.PO_SUBCONTRACT_ISSUE_QTY_EXCEED;
+    public static final ApiError PO_RETURN_CFG_SETTING_NOT_EXISTS = ApiErrorScm.PO_RETURN_CFG_SETTING_NOT_EXISTS;
+    public static final ApiError PO_RECEIVE_SHOULD_GENERATE_BY_DELIVERY = ApiErrorScm.PO_RECEIVE_SHOULD_GENERATE_BY_DELIVERY;
+    public static final ApiError PO_SUBCONTRACT_RETURN_NOT_EXIST = ApiErrorScm.PO_SUBCONTRACT_RETURN_NOT_EXIST;
+    public static final ApiError PO_SUBCONTRACT_RETURN_DETAIL_NOT_EXIST = ApiErrorScm.PO_SUBCONTRACT_RETURN_DETAIL_NOT_EXIST;
+    public static final ApiError PO_SUBCONTRACT_RETURN_QTY_EXCEED = ApiErrorScm.PO_SUBCONTRACT_RETURN_QTY_EXCEED;
+    public static final ApiError PO_SUBCONTRACT_RETURN_ORDER_REVERSE_FORBIDDEN = ApiErrorScm.PO_SUBCONTRACT_RETURN_ORDER_REVERSE_FORBIDDEN;
+    public static final ApiError PO_ORDER_REVERSE_FORBIDDEN = ApiErrorScm.PO_ORDER_REVERSE_FORBIDDEN;
+    public static final ApiError PO_RETURN_ORDER_REVERSE_FORBIDDEN = ApiErrorScm.PO_RETURN_ORDER_REVERSE_FORBIDDEN;
+    public static final ApiError PO_SUBCONTRACT_AND_PO_RETURN_REVERSE_FORBIDDEN = ApiErrorScm.PO_SUBCONTRACT_AND_PO_RETURN_REVERSE_FORBIDDEN;
+    public static final ApiError PO_INSTOCK_PUSH_PO_RECONCILIATION_EXIST = ApiErrorScm.PO_INSTOCK_PUSH_PO_RECONCILIATION_EXIST;
+    public static final ApiError PO_RETURN_REPLENISH_QTY_CHECK = ApiErrorScm.PO_RETURN_REPLENISH_QTY_CHECK;
+    public static final ApiError PO_RETURN_DEDUCT_AMOUNT_QTY_CHECK = ApiErrorScm.PO_RETURN_DEDUCT_AMOUNT_QTY_CHECK;
+    public static final ApiError PO_RECONCILIATION_NOT_CONFIRMED_FOR_GENERATE = ApiErrorScm.PO_RECONCILIATION_NOT_CONFIRMED_FOR_GENERATE;
+    public static final ApiError PO_RECONCILIATION_ALREADY_GENERATED = ApiErrorScm.PO_RECONCILIATION_ALREADY_GENERATED;
+    public static final ApiError PO_RECONCILIATION_DETAIL_DELETE_FORBIDDEN = ApiErrorScm.PO_RECONCILIATION_DETAIL_DELETE_FORBIDDEN;
+    public static final ApiError PO_RECONCILIATION_DETAIL_ALREADY_GENERATED = ApiErrorScm.PO_RECONCILIATION_DETAIL_ALREADY_GENERATED;
+    public static final ApiError PO_RECONCILIATION_REF_RECEIVE_DISAPPROVE_FORBIDDEN = ApiErrorScm.PO_RECONCILIATION_REF_RECEIVE_DISAPPROVE_FORBIDDEN;
+    public static final ApiError PO_RECONCILIATION_ONLY_RECEIVED_CANCEL_ALLOWED = ApiErrorScm.PO_RECONCILIATION_ONLY_RECEIVED_CANCEL_ALLOWED;
+    public static final ApiError PO_RECONCILIATION_NOT_REQUIRED_FORBIDDEN = ApiErrorScm.PO_RECONCILIATION_NOT_REQUIRED_FORBIDDEN;
+    public static final ApiError PO_INSTOCK_NOT_APPROVED_RECONCILIATION_DETAIL_FORBIDDEN = ApiErrorScm.PO_INSTOCK_NOT_APPROVED_RECONCILIATION_DETAIL_FORBIDDEN;
+    public static final ApiError PO_INSTOCK_QC_RETURN_RECONCILIATION_DETAIL_FORBIDDEN = ApiErrorScm.PO_INSTOCK_QC_RETURN_RECONCILIATION_DETAIL_FORBIDDEN;
+    public static final ApiError PO_RECONCILIATION_MANUAL_GENERATE_FORBIDDEN = ApiErrorScm.PO_RECONCILIATION_MANUAL_GENERATE_FORBIDDEN;
+    public static final ApiError PO_RECONCILIATION_NOT_FOUND = ApiErrorScm.PO_RECONCILIATION_NOT_FOUND;
+    public static final ApiError PO_RECONCILIATION_DETAIL_NOT_FOUND = ApiErrorScm.PO_RECONCILIATION_DETAIL_NOT_FOUND;
+    public static final ApiError PO_RECONCILIATION_DETAIL_SUPPLIER_ORG_MISMATCH = ApiErrorScm.PO_RECONCILIATION_DETAIL_SUPPLIER_ORG_MISMATCH;
+    public static final ApiError PO_FRAMEWORK_CONTRACT_ATTACHMENT_REQUIRED = ApiErrorScm.PO_FRAMEWORK_CONTRACT_ATTACHMENT_REQUIRED;
+    public static final ApiError PO_SUBCONTRACT_ONLY_PUSH_ONE_ORDER = ApiErrorScm.PO_SUBCONTRACT_ONLY_PUSH_ONE_ORDER;
+    public static final ApiError PO_RETURN_DETAIL_NOT_EXISTS = ApiErrorScm.PO_RETURN_DETAIL_NOT_EXISTS;
+    public static final ApiError PO_RETURN_REPAIR_QTY_NOT_ALLOW_BIGGER_THAN_RETURN_QTY = ApiErrorScm.PO_RETURN_REPAIR_QTY_NOT_ALLOW_BIGGER_THAN_RETURN_QTY;
+    public static final ApiError PO_REPAIR_SUBCONTRACT_ORDER_NOT_ALLOW_DISAPPROVE = ApiErrorScm.PO_REPAIR_SUBCONTRACT_ORDER_NOT_ALLOW_DISAPPROVE;
+    public static final ApiError PO_RETURN_ONLY_SAME_SUPPLIER = ApiErrorScm.PO_RETURN_ONLY_SAME_SUPPLIER;
+    public static final ApiError PO_RETURN_ONLY_APPROVED_CONFIRMED = ApiErrorScm.PO_RETURN_ONLY_APPROVED_CONFIRMED;
+    public static final ApiError PO_RETURN_SKU_EXECUTION_STATUS_CLOSED = ApiErrorScm.PO_RETURN_SKU_EXECUTION_STATUS_CLOSED;
+    public static final ApiError PO_RETURN_NOT_ALLOW_PUSH_DOWN = ApiErrorScm.PO_RETURN_NOT_ALLOW_PUSH_DOWN;
+    public static final ApiError PO_RECONCILIATION_STATUS_NOT_CONFIRM = ApiErrorScm.PO_RECONCILIATION_STATUS_NOT_CONFIRM;
+    public static final ApiError PO_SUBCONTRACT_REPAIR_QTY_MUST_GT_ZERO = ApiErrorScm.PO_SUBCONTRACT_REPAIR_QTY_MUST_GT_ZERO;
+    public static final ApiError PO_SUBCONTRACT_REPAIR_SUB_LINE_PRICE_REQUIRED = ApiErrorScm.PO_SUBCONTRACT_REPAIR_SUB_LINE_PRICE_REQUIRED;
+    public static final ApiError PO_SUBCONTRACT_REPAIR_SUB_LINE_TAX_RATE_OR_CURRENCY_REQUIRED = ApiErrorScm.PO_SUBCONTRACT_REPAIR_SUB_LINE_TAX_RATE_OR_CURRENCY_REQUIRED;
+    public static final ApiError PO_RECONCILIATION_INVOICE_LIMIT_EXCEEDED = ApiErrorScm.PO_RECONCILIATION_INVOICE_LIMIT_EXCEEDED;
+    public static final ApiError PO_RECONCILIATION_INVOICE_FILE_INVALID = ApiErrorScm.PO_RECONCILIATION_INVOICE_FILE_INVALID;
+    public static final ApiError PO_RECONCILIATION_INVOICE_PDF_ONLY = ApiErrorScm.PO_RECONCILIATION_INVOICE_PDF_ONLY;
+    public static final ApiError PO_DELIVERY_SKU_UPDATE_FORBIDDEN = ApiErrorScm.PO_DELIVERY_SKU_UPDATE_FORBIDDEN;
+    public static final ApiError PO_BOX_QTY_LESS_THAN_NOTICE_QTY = ApiErrorScm.PO_BOX_QTY_LESS_THAN_NOTICE_QTY;
+    public static final ApiError PO_BOX_PER_QTY_GT_ONE_SO_OUTBOUND_FORBIDDEN = ApiErrorScm.PO_BOX_PER_QTY_GT_ONE_SO_OUTBOUND_FORBIDDEN;
+    public static final ApiError PO_RECONCILIATION_DETAIL_REF_NOT_FOUND = ApiErrorScm.PO_RECONCILIATION_DETAIL_REF_NOT_FOUND;
+    public static final ApiError PO_RECONCILIATION_DETAIL_STATUS_UPDATE_FORBIDDEN = ApiErrorScm.PO_RECONCILIATION_DETAIL_STATUS_UPDATE_FORBIDDEN;
+    public static final ApiError PO_RECONCILIATION_DETAIL_AUTO_UPDATE_FORBIDDEN = ApiErrorScm.PO_RECONCILIATION_DETAIL_AUTO_UPDATE_FORBIDDEN;
+    public static final ApiError PO_RECONCILIATION_DETAIL_QTY_EXCEEDS_AVAILABLE = ApiErrorScm.PO_RECONCILIATION_DETAIL_QTY_EXCEEDS_AVAILABLE;
+    public static final ApiError PO_RECONCILIATION_DETAIL_ALREADY_IN_RECONCILIATION = ApiErrorScm.PO_RECONCILIATION_DETAIL_ALREADY_IN_RECONCILIATION;
+    public static final ApiError PO_RECONCILIATION_REMARK_REQUIRED = ApiErrorScm.PO_RECONCILIATION_REMARK_REQUIRED;
+    public static final ApiError PURCHASE_PRICE_LIST_NOT_FOUND = ApiErrorScm.PURCHASE_PRICE_LIST_NOT_FOUND;
+    public static final ApiError PURCHASE_PRICE_NOT_EXIST = ApiErrorScm.PURCHASE_PRICE_NOT_EXIST;
+    public static final ApiError PURCHASE_PRICE_DETAIL_NOT_FOUND = ApiErrorScm.PURCHASE_PRICE_DETAIL_NOT_FOUND;
+    public static final ApiError PURCHASE_PRICE_CHANGE_NOT_FOUND = ApiErrorScm.PURCHASE_PRICE_CHANGE_NOT_FOUND;
+    public static final ApiError PURCHASE_PRICE_CHANGE_ALLOWED_APPROVED_ONLY = ApiErrorScm.PURCHASE_PRICE_CHANGE_ALLOWED_APPROVED_ONLY;
+    public static final ApiError PURCHASE_PRICE_CHANGE_APPROVE_STATUS_INVALID = ApiErrorScm.PURCHASE_PRICE_CHANGE_APPROVE_STATUS_INVALID;
+    public static final ApiError PURCHASE_PRICE_CHANGE_ADJUST_NOT_ALLOWED = ApiErrorScm.PURCHASE_PRICE_CHANGE_ADJUST_NOT_ALLOWED;
+    public static final ApiError PURCHASE_PRICE_QUOTE_QUERY_PARAM_REQUIRED = ApiErrorScm.PURCHASE_PRICE_QUOTE_QUERY_PARAM_REQUIRED;
+    public static final ApiError PURCHASE_PRICE_HAS_SUPPLIER_DELETE_FORBIDDEN = ApiErrorScm.PURCHASE_PRICE_HAS_SUPPLIER_DELETE_FORBIDDEN;
+    public static final ApiError PURCHASE_PRICE_DATE_INVALID = ApiErrorScm.PURCHASE_PRICE_DATE_INVALID;
+    public static final ApiError PURCHASE_PRICE_DATE_OVERLAP = ApiErrorScm.PURCHASE_PRICE_DATE_OVERLAP;
+    public static final ApiError PURCHASE_PRICE_SUBMIT_SKU_UN_APPROVE = ApiErrorScm.PURCHASE_PRICE_SUBMIT_SKU_UN_APPROVE;
+    public static final ApiError PURCHASE_PRICE_SKU_NOT_FOUND = ApiErrorScm.PURCHASE_PRICE_SKU_NOT_FOUND;
+    public static final ApiError PURCHASE_PRICE_SKU_PRICE_NOT_FOUND = ApiErrorScm.PURCHASE_PRICE_SKU_PRICE_NOT_FOUND;
+    public static final ApiError PURCHASE_PRICE_SKU_PRICE_ZERO = ApiErrorScm.PURCHASE_PRICE_SKU_PRICE_ZERO;
+    public static final ApiError PURCHASE_PRICE_ORG_NOT_REPEAT = ApiErrorScm.PURCHASE_PRICE_ORG_NOT_REPEAT;
+
+    /** Srm service error constants. */
+    public static final ApiError SUPPLIER_LEVEL_NAME_EXISTS = ApiErrorSrm.SUPPLIER_LEVEL_NAME_EXISTS;
+    public static final ApiError SUPPLIER_LEVEL_IN_USE = ApiErrorSrm.SUPPLIER_LEVEL_IN_USE;
+    public static final ApiError SUPPLIER_STAGE_NOT_FOUND = ApiErrorSrm.SUPPLIER_STAGE_NOT_FOUND;
+    public static final ApiError SUPPLIER_STAGE_INVALID = ApiErrorSrm.SUPPLIER_STAGE_INVALID;
+    public static final ApiError SUPPLIER_NAME_EMPTY = ApiErrorSrm.SUPPLIER_NAME_EMPTY;
+    public static final ApiError SUPPLIER_NAME_EXISTS = ApiErrorSrm.SUPPLIER_NAME_EXISTS;
+    public static final ApiError SUPPLIER_NOT_FOUND = ApiErrorSrm.SUPPLIER_NOT_FOUND;
+    public static final ApiError SUPPLIER_INFO_REQUIRED = ApiErrorSrm.SUPPLIER_INFO_REQUIRED;
+    public static final ApiError SUPPLIER_CONTACT_NOT_FOUND = ApiErrorSrm.SUPPLIER_CONTACT_NOT_FOUND;
+    public static final ApiError SUPPLIER_DEFAULT_CONTACT_EXCEEDS_ONE = ApiErrorSrm.SUPPLIER_DEFAULT_CONTACT_EXCEEDS_ONE;
+    public static final ApiError SUPPLIER_QUALIFICATION_DATE_INVALID = ApiErrorSrm.SUPPLIER_QUALIFICATION_DATE_INVALID;
+    public static final ApiError SUPPLIER_CERT_NAME_EXISTS = ApiErrorSrm.SUPPLIER_CERT_NAME_EXISTS;
+    public static final ApiError SUPPLIER_UN_APPROVE = ApiErrorSrm.SUPPLIER_UN_APPROVE;
+    public static final ApiError SUPPLIER_DISABLE = ApiErrorSrm.SUPPLIER_DISABLE;
+    public static final ApiError SUPPLIER_SRM_DISABLE = ApiErrorSrm.SUPPLIER_SRM_DISABLE;
+    public static final ApiError SUPPLIER_USER_NOT_REL = ApiErrorSrm.SUPPLIER_USER_NOT_REL;
+    public static final ApiError SUPPLIER_DOC_USER_MISMATCH = ApiErrorSrm.SUPPLIER_DOC_USER_MISMATCH;
+    public static final ApiError SUPPLIER_INTERVAL_OVERLAP = ApiErrorSrm.SUPPLIER_INTERVAL_OVERLAP;
+    public static final ApiError SUPPLIER_EXIST_PO_RECONCILIATION_DETAIL = ApiErrorSrm.SUPPLIER_EXIST_PO_RECONCILIATION_DETAIL;
+    public static final ApiError SUPPLIER_ACCOUNT_NOT_FOUND = ApiErrorSrm.SUPPLIER_ACCOUNT_NOT_FOUND;
+    public static final ApiError SUPPLIER_REF_WAREHOUSE_EXIST = ApiErrorSrm.SUPPLIER_REF_WAREHOUSE_EXIST;
+    public static final ApiError SUPPLIER_REF_WAREHOUSE_GLOBAL_EXISTS = ApiErrorSrm.SUPPLIER_REF_WAREHOUSE_GLOBAL_EXISTS;
+    public static final ApiError SUPPLIER_REF_WAREHOUSE_GLOBAL_CONFLICT = ApiErrorSrm.SUPPLIER_REF_WAREHOUSE_GLOBAL_CONFLICT;
+    public static final ApiError SUPPLIER_CONFIG_ALREADY_EXISTS = ApiErrorSrm.SUPPLIER_CONFIG_ALREADY_EXISTS;
+    public static final ApiError SUPPLIER_REF_NOT_FOUND = ApiErrorSrm.SUPPLIER_REF_NOT_FOUND;
+    public static final ApiError SUPPLIER_MODIFY_FORBIDDEN = ApiErrorSrm.SUPPLIER_MODIFY_FORBIDDEN;
+
+    /** Dmp service error constants. */
+    public static final ApiError BI_TOPIC_REQUIRED = ApiErrorDmp.BI_TOPIC_REQUIRED;
+    public static final ApiError BI_NOT_OWNER = ApiErrorDmp.BI_NOT_OWNER;
+    public static final ApiError BI_MODULE_NAME_EXISTS = ApiErrorDmp.BI_MODULE_NAME_EXISTS;
+    public static final ApiError BI_MODULE_REQUIRED = ApiErrorDmp.BI_MODULE_REQUIRED;
+    public static final ApiError BI_SALES_MONITOR_SETTING_REQUIRED = ApiErrorDmp.BI_SALES_MONITOR_SETTING_REQUIRED;
+    public static final ApiError BI_NOT_DASHBOARD = ApiErrorDmp.BI_NOT_DASHBOARD;
+    public static final ApiError BI_SALES_MONITOR_TYPE_DUPLICATE = ApiErrorDmp.BI_SALES_MONITOR_TYPE_DUPLICATE;
+    public static final ApiError BI_DASHBOARD_NOT_FOUND = ApiErrorDmp.BI_DASHBOARD_NOT_FOUND;
+    public static final ApiError BI_AT_LEAST_ONE_LAYOUT = ApiErrorDmp.BI_AT_LEAST_ONE_LAYOUT;
+    public static final ApiError BI_DUPLICATE_IN_PLATFORM_MODULE = ApiErrorDmp.BI_DUPLICATE_IN_PLATFORM_MODULE;
+    public static final ApiError BI_MODULE_NAME_MAX = ApiErrorDmp.BI_MODULE_NAME_MAX;
+    public static final ApiError BI_MODULE_DESC_MAX = ApiErrorDmp.BI_MODULE_DESC_MAX;
+    public static final ApiError BI_FIN_SALES_DATE_TYPE = ApiErrorDmp.BI_FIN_SALES_DATE_TYPE;
+    public static final ApiError BI_DATE_RANGE_THIRTY_ONE = ApiErrorDmp.BI_DATE_RANGE_THIRTY_ONE;
+    public static final ApiError BI_DATE_RANGE_WEEK_DAY = ApiErrorDmp.BI_DATE_RANGE_WEEK_DAY;
+    public static final ApiError BI_SALE_RANGE_EXIST = ApiErrorDmp.BI_SALE_RANGE_EXIST;
+    public static final ApiError BI_SETTLE_METHOD_EXIST = ApiErrorDmp.BI_SETTLE_METHOD_EXIST;
+    public static final ApiError DMP_KINGDEE_FIELD_NOT_FOUND = ApiErrorDmp.DMP_KINGDEE_FIELD_NOT_FOUND;
+    public static final ApiError DMP_KINGDEE_DATA_NOT_FOUND = ApiErrorDmp.DMP_KINGDEE_DATA_NOT_FOUND;
+    public static final ApiError DMP_KINGDEE_ADD_FAILED = ApiErrorDmp.DMP_KINGDEE_ADD_FAILED;
+    public static final ApiError DMP_KINGDEE_DETAIL_ID_NOT_FOUND = ApiErrorDmp.DMP_KINGDEE_DETAIL_ID_NOT_FOUND;
+    public static final ApiError DMP_ADDRESS_OR_CONTACT_REQUIRED = ApiErrorDmp.DMP_ADDRESS_OR_CONTACT_REQUIRED;
+    public static final ApiError DMP_PARENT_ASSISTANT_NOT_FOUND = ApiErrorDmp.DMP_PARENT_ASSISTANT_NOT_FOUND;
+    public static final ApiError DMP_PUSH_TASK_NOT_FOUND = ApiErrorDmp.DMP_PUSH_TASK_NOT_FOUND;
+    public static final ApiError DMP_THIRD_ALREADY_BINDED = ApiErrorDmp.DMP_THIRD_ALREADY_BINDED;
+    public static final ApiError DMP_THIRD_SHOP_NOT_FOUND = ApiErrorDmp.DMP_THIRD_SHOP_NOT_FOUND;
+    public static final ApiError DMP_THIRD_WAREHOUSE_NOT_FOUND = ApiErrorDmp.DMP_THIRD_WAREHOUSE_NOT_FOUND;
+    public static final ApiError DMP_THIRD_SYS_TYPE_SINGLE_BINDING = ApiErrorDmp.DMP_THIRD_SYS_TYPE_SINGLE_BINDING;
+    public static final ApiError DMP_THIRD_LOGISTICS_NOT_FOUND = ApiErrorDmp.DMP_THIRD_LOGISTICS_NOT_FOUND;
+    public static final ApiError DMP_PUSH_CFG_NOT_FOUND = ApiErrorDmp.DMP_PUSH_CFG_NOT_FOUND;
+    public static final ApiError DMP_ADS_ERP_DIFF_OUTSTOCK_NOT_FOUND = ApiErrorDmp.DMP_ADS_ERP_DIFF_OUTSTOCK_NOT_FOUND;
+    public static final ApiError DMP_ADS_ERP_DIFF_OUTSTOCK_NOT_PLATFORM = ApiErrorDmp.DMP_ADS_ERP_DIFF_OUTSTOCK_NOT_PLATFORM;
+    public static final ApiError DMP_ADS_ERP_DIFF_OUTSTOCK_NOT_SAME_PERIOD = ApiErrorDmp.DMP_ADS_ERP_DIFF_OUTSTOCK_NOT_SAME_PERIOD;
+    public static final ApiError DMP_ADS_ERP_DIFF_OUTSTOCK_NOT_SAME_PLATFORM = ApiErrorDmp.DMP_ADS_ERP_DIFF_OUTSTOCK_NOT_SAME_PLATFORM;
+    public static final ApiError DMP_THIRD_WAREHOUSE_WAREHOUSE_OPERATION_NOT_ALLOW_NULL = ApiErrorDmp.DMP_THIRD_WAREHOUSE_WAREHOUSE_OPERATION_NOT_ALLOW_NULL;
+    public static final ApiError DMP_THIRD_WAREHOUSE_WAREHOUSE_OPERATION_MISSING_ENUM = ApiErrorDmp.DMP_THIRD_WAREHOUSE_WAREHOUSE_OPERATION_MISSING_ENUM;
+    public static final ApiError DMP_THIRD_WAREHOUSE_WAREHOUSE_OPERATION_VALUE_EMPTY = ApiErrorDmp.DMP_THIRD_WAREHOUSE_WAREHOUSE_OPERATION_VALUE_EMPTY;
+    public static final ApiError DMP_KINGDEE_SUBORDER_NOT_ALLOW_DISAPPROVE = ApiErrorDmp.DMP_KINGDEE_SUBORDER_NOT_ALLOW_DISAPPROVE;
+    public static final ApiError DMP_KINGDEE_SUBCONTRACT_BOM_PARENT_MATCH_AMBIGUOUS = ApiErrorDmp.DMP_KINGDEE_SUBCONTRACT_BOM_PARENT_MATCH_AMBIGUOUS;
+    public static final ApiError MAPPING_FIELD_VALUE_REQUIRED = ApiErrorDmp.MAPPING_FIELD_VALUE_REQUIRED;
+    public static final ApiError MAPPING_EN_DESC_DUPLICATE = ApiErrorDmp.MAPPING_EN_DESC_DUPLICATE;
+    public static final ApiError MAPPING_NOT_SET_PUSH_FORBIDDEN = ApiErrorDmp.MAPPING_NOT_SET_PUSH_FORBIDDEN;
+    public static final ApiError MAPPING_SKU_MAPPING_EXIST = ApiErrorDmp.MAPPING_SKU_MAPPING_EXIST;
+    public static final ApiError MAPPING_SKU_MAPPING_NOT_EXIST = ApiErrorDmp.MAPPING_SKU_MAPPING_NOT_EXIST;
+    public static final ApiError MAPPING_SKU_RULE_REQUIRED = ApiErrorDmp.MAPPING_SKU_RULE_REQUIRED;
+    public static final ApiError MAPPING_SKU_HISTORY_EXISTS = ApiErrorDmp.MAPPING_SKU_HISTORY_EXISTS;
+    public static final ApiError MAPPING_WAREHOUSE_WDT_NOT_FOUND = ApiErrorDmp.MAPPING_WAREHOUSE_WDT_NOT_FOUND;
+    public static final ApiError MAPPING_SHOP_WDT_NOT_FOUND = ApiErrorDmp.MAPPING_SHOP_WDT_NOT_FOUND;
+    public static final ApiError MAPPING_SKU_WDT_NOT_FOUND = ApiErrorDmp.MAPPING_SKU_WDT_NOT_FOUND;
+    public static final ApiError MAPPING_THIRD_SHOP_EXISTS = ApiErrorDmp.MAPPING_THIRD_SHOP_EXISTS;
+    public static final ApiError MAPPING_START_DATE_INVALID = ApiErrorDmp.MAPPING_START_DATE_INVALID;
+    public static final ApiError MAPPING_MSKU_NOT_MAPPING = ApiErrorDmp.MAPPING_MSKU_NOT_MAPPING;
+    public static final ApiError MAPPING_MSKU_NOT_EXIST = ApiErrorDmp.MAPPING_MSKU_NOT_EXIST;
+
+    /** Fms service error constants. */
+    public static final ApiError FIN_INVOICE_NOT_FOUND = ApiErrorFms.FIN_INVOICE_NOT_FOUND;
+    public static final ApiError FIN_INVOICE_OPERATION_NOT_ALLOWED = ApiErrorFms.FIN_INVOICE_OPERATION_NOT_ALLOWED;
+    public static final ApiError FIN_INVOICE_NOT_REQUIRED_ONLY_PENDING_OR_FAILED = ApiErrorFms.FIN_INVOICE_NOT_REQUIRED_ONLY_PENDING_OR_FAILED;
+    public static final ApiError FIN_INVOICE_NFE_ONLY_SUPPORTED = ApiErrorFms.FIN_INVOICE_NFE_ONLY_SUPPORTED;
+    public static final ApiError FIN_SKU_INVOICE_TAX_INFO_NOT_FOUND = ApiErrorFms.FIN_SKU_INVOICE_TAX_INFO_NOT_FOUND;
+    public static final ApiError FIN_INVOICE_NFE_CANCEL_FAILED = ApiErrorFms.FIN_INVOICE_NFE_CANCEL_FAILED;
+    public static final ApiError FIN_COMPANY_TOKEN_NOT_FOUND = ApiErrorFms.FIN_COMPANY_TOKEN_NOT_FOUND;
+    public static final ApiError FIN_INVOICE_NFE_UPDATE_CCE_FAILED = ApiErrorFms.FIN_INVOICE_NFE_UPDATE_CCE_FAILED;
+    public static final ApiError FIN_INVOICE_UPLOAD_FILE_NOT_FOUND = ApiErrorFms.FIN_INVOICE_UPLOAD_FILE_NOT_FOUND;
+    public static final ApiError FIN_INVOICE_NFE_JSON_PARSE_FAILED = ApiErrorFms.FIN_INVOICE_NFE_JSON_PARSE_FAILED;
+    public static final ApiError FIN_INVOICE_CREATING_REGENERATE_FORBIDDEN = ApiErrorFms.FIN_INVOICE_CREATING_REGENERATE_FORBIDDEN;
+    public static final ApiError FIN_INVOICE_NFE_RETURN_FAILED = ApiErrorFms.FIN_INVOICE_NFE_RETURN_FAILED;
+    public static final ApiError FIN_INVOICE_NFE_VOID_FAILED = ApiErrorFms.FIN_INVOICE_NFE_VOID_FAILED;
+    public static final ApiError FIN_RECONCILIATION_NOT_FOUND = ApiErrorFms.FIN_RECONCILIATION_NOT_FOUND;
+    public static final ApiError FIN_RECONCILIATION_DETAIL_NOT_FOUND = ApiErrorFms.FIN_RECONCILIATION_DETAIL_NOT_FOUND;
+
+    /** Workflow service error constants. */
+    public static final ApiError WF_PROCESS_NOT_FOUND_OR_ENDED = ApiErrorWorkflow.WF_PROCESS_NOT_FOUND_OR_ENDED;
+    public static final ApiError WF_PROCESS_NOT_STARTED = ApiErrorWorkflow.WF_PROCESS_NOT_STARTED;
+    public static final ApiError WF_CURRENT_NODE_NULL = ApiErrorWorkflow.WF_CURRENT_NODE_NULL;
+    public static final ApiError WF_PROCESS_ALREADY_STARTED = ApiErrorWorkflow.WF_PROCESS_ALREADY_STARTED;
+    public static final ApiError WF_PROCESS_ALREADY_ENDED = ApiErrorWorkflow.WF_PROCESS_ALREADY_ENDED;
+    public static final ApiError WF_PROCESS_INSTANCE_NOT_FOUND = ApiErrorWorkflow.WF_PROCESS_INSTANCE_NOT_FOUND;
+    public static final ApiError WF_PROCESS_MANAGEMENT_NOT_EXIST = ApiErrorWorkflow.WF_PROCESS_MANAGEMENT_NOT_EXIST;
+    public static final ApiError WF_PROCESS_STATUS_NOT_ALLOWED = ApiErrorWorkflow.WF_PROCESS_STATUS_NOT_ALLOWED;
+    public static final ApiError WF_RECALL_NOT_FIRST_TASK = ApiErrorWorkflow.WF_RECALL_NOT_FIRST_TASK;
+    public static final ApiError WF_START_FAILED = ApiErrorWorkflow.WF_START_FAILED;
+    public static final ApiError WF_NOT_APPROVER = ApiErrorWorkflow.WF_NOT_APPROVER;
+    public static final ApiError WF_APPROVE_FAILED = ApiErrorWorkflow.WF_APPROVE_FAILED;
+    public static final ApiError WF_PROCESS_SAVE_FAILED = ApiErrorWorkflow.WF_PROCESS_SAVE_FAILED;
+    public static final ApiError WF_PROCESS_UPDATE_FAILED = ApiErrorWorkflow.WF_PROCESS_UPDATE_FAILED;
+    public static final ApiError WF_PROCESS_DEFINITION_NOT_EXIST = ApiErrorWorkflow.WF_PROCESS_DEFINITION_NOT_EXIST;
+    public static final ApiError WF_PROCESS_CANCEL_FAILED = ApiErrorWorkflow.WF_PROCESS_CANCEL_FAILED;
+    public static final ApiError WF_PROCESS_ALREADY_DEPLOYED = ApiErrorWorkflow.WF_PROCESS_ALREADY_DEPLOYED;
+    public static final ApiError WF_PROCESS_DEPLOY_DELETE_NOT_ALLOWED = ApiErrorWorkflow.WF_PROCESS_DEPLOY_DELETE_NOT_ALLOWED;
+    public static final ApiError WF_PROCESS_DEPLOY_UPDATE_NOT_ALLOWED = ApiErrorWorkflow.WF_PROCESS_DEPLOY_UPDATE_NOT_ALLOWED;
+    public static final ApiError WF_PROCESS_CHANGE_NOT_ALLOWED = ApiErrorWorkflow.WF_PROCESS_CHANGE_NOT_ALLOWED;
+    public static final ApiError WF_PROCESS_CHANGE_EXIST_NOT_DEPLOY = ApiErrorWorkflow.WF_PROCESS_CHANGE_EXIST_NOT_DEPLOY;
+    public static final ApiError WF_TASK_COMPLETE_FAILED = ApiErrorWorkflow.WF_TASK_COMPLETE_FAILED;
+    public static final ApiError WF_TASK_REJECT_NOT_ALLOWED = ApiErrorWorkflow.WF_TASK_REJECT_NOT_ALLOWED;
+    public static final ApiError WF_APPROVE_TASK_INFO_ERROR = ApiErrorWorkflow.WF_APPROVE_TASK_INFO_ERROR;
+    public static final ApiError WF_DEFINITION_NODE_NOT_EXIST = ApiErrorWorkflow.WF_DEFINITION_NODE_NOT_EXIST;
+    public static final ApiError WF_TASK_NOT_FOUND = ApiErrorWorkflow.WF_TASK_NOT_FOUND;
+    public static final ApiError WF_APPROVE_TASK_NOT_FOUND = ApiErrorWorkflow.WF_APPROVE_TASK_NOT_FOUND;
+    public static final ApiError WF_TASK_DETAIL_NOT_FOUND = ApiErrorWorkflow.WF_TASK_DETAIL_NOT_FOUND;
+    public static final ApiError WF_MENU_NOT_FOUND = ApiErrorWorkflow.WF_MENU_NOT_FOUND;
+    public static final ApiError WF_MENU_FEIGN_CLASS_NOT_FOUND = ApiErrorWorkflow.WF_MENU_FEIGN_CLASS_NOT_FOUND;
+    public static final ApiError WF_PROCESS_NOT_START_USER = ApiErrorWorkflow.WF_PROCESS_NOT_START_USER;
+    public static final ApiError WF_NEXT_NODE_NO_APPROVER = ApiErrorWorkflow.WF_NEXT_NODE_NO_APPROVER;
+    public static final ApiError WF_RULE_TYPE_NOT_FOUND = ApiErrorWorkflow.WF_RULE_TYPE_NOT_FOUND;
+    public static final ApiError WF_RULE_USED_CANNOT_DELETE = ApiErrorWorkflow.WF_RULE_USED_CANNOT_DELETE;
+    public static final ApiError WF_THIRD_CONFIG_EXIST = ApiErrorWorkflow.WF_THIRD_CONFIG_EXIST;
+    public static final ApiError WF_CREATOR_APPROVER_NOT_SAME = ApiErrorWorkflow.WF_CREATOR_APPROVER_NOT_SAME;
+    public static final ApiError WF_FIELD_MAP_NOT_FOUND = ApiErrorWorkflow.WF_FIELD_MAP_NOT_FOUND;
+    public static final ApiError WF_DELEGATE_CLOSE_ALLOWED_ONLY_RUNNING = ApiErrorWorkflow.WF_DELEGATE_CLOSE_ALLOWED_ONLY_RUNNING;
+    public static final ApiError WF_DELEGATE_CLOSE_FAILED = ApiErrorWorkflow.WF_DELEGATE_CLOSE_FAILED;
+    public static final ApiError WF_DELEGATE_UPDATE_ALLOWED_ONLY_PENDING = ApiErrorWorkflow.WF_DELEGATE_UPDATE_ALLOWED_ONLY_PENDING;
+    public static final ApiError WF_DELEGATE_TIME_INVALID = ApiErrorWorkflow.WF_DELEGATE_TIME_INVALID;
+    public static final ApiError WF_DELEGATE_OVERLAP_NOT_ALLOWED = ApiErrorWorkflow.WF_DELEGATE_OVERLAP_NOT_ALLOWED;
+    public static final ApiError WF_FS_PROCESS_NOT_EXIST = ApiErrorWorkflow.WF_FS_PROCESS_NOT_EXIST;
+    public static final ApiError WF_FS_QUERY_MULTIPLE_USERS = ApiErrorWorkflow.WF_FS_QUERY_MULTIPLE_USERS;
+    public static final ApiError WF_FS_QUERY_USER_NOT_FOUND = ApiErrorWorkflow.WF_FS_QUERY_USER_NOT_FOUND;
+    public static final ApiError WF_FS_APPROVE_REQUIRED = ApiErrorWorkflow.WF_FS_APPROVE_REQUIRED;
+    public static final ApiError WF_MANAGEMENT_FORCE_PASS_NOT_ALLOWED = ApiErrorWorkflow.WF_MANAGEMENT_FORCE_PASS_NOT_ALLOWED;
+    public static final ApiError WF_MANAGEMENT_FORCE_REJECT_NOT_ALLOWED = ApiErrorWorkflow.WF_MANAGEMENT_FORCE_REJECT_NOT_ALLOWED;
+    public static final ApiError WF_MANAGEMENT_RESTORE_NOT_ALLOWED = ApiErrorWorkflow.WF_MANAGEMENT_RESTORE_NOT_ALLOWED;
+    public static final ApiError WF_MANAGEMENT_SUSPEND_NOT_ALLOWED = ApiErrorWorkflow.WF_MANAGEMENT_SUSPEND_NOT_ALLOWED;
+    public static final ApiError WF_RULE_CONFLICT = ApiErrorWorkflow.WF_RULE_CONFLICT;
+    public static final ApiError WF_MODULE_ALREADY_EXISTS = ApiErrorWorkflow.WF_MODULE_ALREADY_EXISTS;
+    public static final ApiError WF_APPROVE_START_FAILED = ApiErrorWorkflow.WF_APPROVE_START_FAILED;
+    public static final ApiError WF_NOT_YOUR_APPROVAL = ApiErrorWorkflow.WF_NOT_YOUR_APPROVAL;
+    public static final ApiError WF_APPROVER_REQUIRED = ApiErrorWorkflow.WF_APPROVER_REQUIRED;
+    public static final ApiError WF_REJECT_COMMENT_REQUIRED = ApiErrorWorkflow.WF_REJECT_COMMENT_REQUIRED;
+    public static final ApiError WF_REVOCATION_REQUIRED = ApiErrorWorkflow.WF_REVOCATION_REQUIRED;
+    public static final ApiError WF_APPROVAL_DELETE_FORBIDDEN = ApiErrorWorkflow.WF_APPROVAL_DELETE_FORBIDDEN;
+    public static final ApiError WF_APPROVE_ALLOWED_STATUS_ONLY = ApiErrorWorkflow.WF_APPROVE_ALLOWED_STATUS_ONLY;
+    public static final ApiError WF_REVOKE_PROCESS_ALLOWED_STATUS_ONLY = ApiErrorWorkflow.WF_REVOKE_PROCESS_ALLOWED_STATUS_ONLY;
+    public static final ApiError WF_FS_PROCESS_USER_NOT_FOUND = ApiErrorWorkflow.WF_FS_PROCESS_USER_NOT_FOUND;
+    public static final ApiError WF_FS_DEFINITION_SUBSCRIBE_FAIL = ApiErrorWorkflow.WF_FS_DEFINITION_SUBSCRIBE_FAIL;
+    public static final ApiError WF_FS_DEFINITION_UNSUBSCRIBE_FAIL = ApiErrorWorkflow.WF_FS_DEFINITION_UNSUBSCRIBE_FAIL;
+    public static final ApiError WF_APPROVE_TASK_NO_NEED_SYNC_ALLOWED_ONLY_FAIL = ApiErrorWorkflow.WF_APPROVE_TASK_NO_NEED_SYNC_ALLOWED_ONLY_FAIL;
+    public static final ApiError WF_APPROVE_SYNC_RECORD_NO_NEED_SYNC_ALLOWED_ONLY_FAIL = ApiErrorWorkflow.WF_APPROVE_SYNC_RECORD_NO_NEED_SYNC_ALLOWED_ONLY_FAIL;
+    public static final ApiError WF_APPROVE_SYNC_RECORD_NOT_FOUND = ApiErrorWorkflow.WF_APPROVE_SYNC_RECORD_NOT_FOUND;
+    public static final ApiError WF_APPROVE_TASK_NO_NEED_SYNC_NOT_ALLOW_OPERATION = ApiErrorWorkflow.WF_APPROVE_TASK_NO_NEED_SYNC_NOT_ALLOW_OPERATION;
+    public static final ApiError WF_APPROVE_SYNC_RECORD_NO_NEED_SYNC_NOT_ALLOW_REPUSH = ApiErrorWorkflow.WF_APPROVE_SYNC_RECORD_NO_NEED_SYNC_NOT_ALLOW_REPUSH;
+    public static final ApiError WF_TASK_RECORD_CONTEXT_REQUIRED = ApiErrorWorkflow.WF_TASK_RECORD_CONTEXT_REQUIRED;
+    public static final ApiError WF_TASK_RECORD_CONTEXT_MISMATCH = ApiErrorWorkflow.WF_TASK_RECORD_CONTEXT_MISMATCH;
+    public static final ApiError WF_TASK_RECORD_NOT_MATCH = ApiErrorWorkflow.WF_TASK_RECORD_NOT_MATCH;
+    public static final ApiError WF_TASK_RECORD_NOT_PROCESSING = ApiErrorWorkflow.WF_TASK_RECORD_NOT_PROCESSING;
+    public static final ApiError WF_TASK_RECORD_DUPLICATE = ApiErrorWorkflow.WF_TASK_RECORD_DUPLICATE;
+    public static final ApiError WF_TASK_RECORD_FORCE_RETRY_PARAM_REQUIRED = ApiErrorWorkflow.WF_TASK_RECORD_FORCE_RETRY_PARAM_REQUIRED;
+    public static final ApiError WF_TASK_RECORD_FORCE_RETRY_NOT_FOUND = ApiErrorWorkflow.WF_TASK_RECORD_FORCE_RETRY_NOT_FOUND;
+    public static final ApiError WF_TASK_RECORD_FORCE_RETRY_FORBIDDEN = ApiErrorWorkflow.WF_TASK_RECORD_FORCE_RETRY_FORBIDDEN;
+    public static final ApiError WF_KOL_B2C_APPROVE_REQUIRED = ApiErrorWorkflow.WF_KOL_B2C_APPROVE_REQUIRED;
+    public static final ApiError WF_TASK_RECORD_MQ_SEND_FAILED = ApiErrorWorkflow.WF_TASK_RECORD_MQ_SEND_FAILED;
+    public static final ApiError WF_TASK_RECORD_FORCE_RETRY_NO_ELIGIBLE = ApiErrorWorkflow.WF_TASK_RECORD_FORCE_RETRY_NO_ELIGIBLE;
+    public static final ApiError WF_TASK_RECORD_FORCE_RETRY_PARAM_INCOMPLETE = ApiErrorWorkflow.WF_TASK_RECORD_FORCE_RETRY_PARAM_INCOMPLETE;
+    public static final ApiError WF_TASK_INSTANCE_NOT_FOUND = ApiErrorWorkflow.WF_TASK_INSTANCE_NOT_FOUND;
+    public static final ApiError WF_KOL_B2C_SUB_TASK_NODE_NOT_FOUND = ApiErrorWorkflow.WF_KOL_B2C_SUB_TASK_NODE_NOT_FOUND;
+    public static final ApiError WF_KOL_B2C_SPLIT_DETAIL_INCOMPLETE = ApiErrorWorkflow.WF_KOL_B2C_SPLIT_DETAIL_INCOMPLETE;
+    public static final ApiError WF_KOL_B2C_WAIT_SPLIT_ORDER = ApiErrorWorkflow.WF_KOL_B2C_WAIT_SPLIT_ORDER;
+    public static final ApiError WF_KOL_B2C_WAIT_SUB_TASK_COMPLETE = ApiErrorWorkflow.WF_KOL_B2C_WAIT_SUB_TASK_COMPLETE;
+    public static final ApiError WF_TASK_RECORD_TYPE_NOT_FOUND = ApiErrorWorkflow.WF_TASK_RECORD_TYPE_NOT_FOUND;
+    public static final ApiError WF_TASK_INSTANCE_VERSION_CONFLICT = ApiErrorWorkflow.WF_TASK_INSTANCE_VERSION_CONFLICT;
+    public static final ApiError WF_CUR_APPROVER_QUERY_FAILED = ApiErrorWorkflow.WF_CUR_APPROVER_QUERY_FAILED;
 
-public enum ApiError implements Serializable {
-
-    /**
-     * HTTP错误 0- 599
-     */
-    HTTP_BAD_REQUEST(400, "参数格式错误、缺失必填参数"),
-    HTTP_UNAUTHORIZED(401, "未登录 / Token 无效，请重新登录。"),
-    HTTP_FORBIDDEN(403, "无访问权限"),
-    HTTP_NOT_FOUND(404, "访问资源不存在"),
-    HTTP_METHOD_NOT_ALLOWED(405, "请求方式错误"),
-    HTTP_PAYLOAD_TOO_LARGE(413, "请求数据过大"),
-    HTTP_UNSUPPORTED_MEDIA_TYPE(415, "不支持的媒体类型"),
-    HTTP_TOO_MANY_REQUESTS(429, "访问频率过高，请稍后再试"),
-    HTTP_UNKNOWN(500, "系统未知异常，请联系【实施人员】协调开发人员排查 "),
-    HTTP_NOT_IMPLEMENTED(501, "接口未实现"),
-    HTTP_BAD_GATEWAY(502, "网关错误"),
-    HTTP_SERVICE_UNAVAILABLE(503, "服务不可用，服务器暂时过载或维护"),
-    HTTP_GATEWAY_TIMEOUT(504, "网关超时"),
-    HTTP_VERSION_NOT_SUPPORTED(505, "不支持的 HTTP 版本"),
-    // 会话密钥相关错误码
-    HTTP_SESSION_EXPIRED(430, "会话过期，请重新协商密钥"),
-
-    /**
-     * 警告信息 从600-699 开始
-     */
-    WARNING(600, "系统警告..."),
-    WARNING_SUBMIT_CONFIRM(601,"存在[{0}]尚未填写完成，是否确认提交"),
-    WARNING_TASK_UNFINISHED(602,"存在[{0}]的任务未完成"),
-
-    /**
-     * 高级查询异常 从700-799 开始
-     */
-    QUERY_NOT_EXTEND_METHOD(700,"扩展字段没有配置查询脚本"),
-    QUERY_ILLEGAL_FIELD(701, "非法的查询字段或查询值"),
-    QUERY_ILLEGAL_COND(702, "非法的查询连接条件"),
-    QUERY_LIST_TYPE_ERROR(703, "在...列表或不在...列表查询应传递数组"),
-    QUERY_BETWEEN_ERROR(704, "介于条件需要填起始时间和开始时间"),
-    QUERY_ILLEGAL_DATE_FORMAT(705, "非法日期格式"),
-    QUERY_NOT_EXTEND_CLASS(706,"扩展字段没有配置处理类"),
-    CFG_QUERY_OPTION_API_CONFIG_REQUIRED(707,"接口路径、下拉框绑定值、下拉框显示值不能为空"),
-    CFG_QUERY_OPTION_API_CONFIG_DUPLICATE(708,"接口路径、下拉框绑定值、下拉框显示值的组合已存在"),
-
-    /**
-     * COMMON 从1000 - 2000 开始 与业务域无直接关联提示
-     */
-    COMMON_PARAM_REQUIRED(1000, "{0}不能为空"),
-    COMMON_DUPLICATE_OPERATION(1001, "请勿重复操作"),
-    COMMON_PARAM_LIST_REQUIRED(1002, "参数列表不能为空"),
-    COMMON_PARAM_NAME_TOO_LONG(1003, "名称不能大于200字符"),
-    COMMON_PARAM_CONTENT_TOO_LONG(1004, "内容过长，请调整后再提交"),
-    COMMON_PARAM_TIME_REQUIRED(1005,"{0}不能为空"),
-    COMMON_PARAM_RANGE_INVALID(1006, "{0}不能大于等于{1}"),
-    COMMON_EXCEPTION_HANDLER_METHOD_ERROR(1007, "全局异常解析失败：【{0}】"),
-    COMMON_CFG_SETTING_KEY(1008,"未找到配置的key【{0}】"),
-    COMMON_NAME_EXIST(1009,"名称【{0}】已存在"),
-    COMMON_COPY_FAILED(1010,"对象复制异常"),
-    COMMON_NOT_FOUND(1011,"{0}未找到"),
-    COMMON_HAS_EXIST(1012,"{0}已存在"),
-    COMMON_DUPLICATION_NAME(1013,"名称【{0}】不能重复"),
-    COMMON_COPY_ERROR(1014,"对象复制时类型错误"),
-    COMMON_COMPANY_NOT_FOUND(1015, "核算公司不存在"),
-    COMMON_ROLE_NOT_FOUND(1016, "角色不存在"),
-    COMMON_DEPT_NAME_EXISTS(1017, "部门名已存在"),
-    COMMON_ROLE_NAME_EXISTS(1018, "角色名已存在"),
-    COMMON_CODE_GENERATE_FAILED(1019, "生成编号失败"),
-    COMMON_ENUM_CONVERT_FAILED(1020, "枚举转换失败"),
-    COMMON_DEPT_NOT_FOUND(1021, "部门不存在"),
-    COMMON_NOTICE_NOT_FOUND(1022, "通知不存在"),
-    COMMON_FIELD_CODE_INVALID(1023, "字段编号【{0}】不正确"),
-    COMMON_SCHEME_NOT_EXIST(1024, "方案不存在"),
-    COMMON_SCHEME_NAME_EXIST(1025, "查询方案[{0}]已存在"),
-    COMMON_BANK_IS_EXIST(1026,"银行名称【{0}】不能重复"),
-    COMMON_DELETE_PARENT_NODE_EXISTS(1027, "存在父级节点，无法删除"),
-    COMMON_MOBILE_EXISTS(1028, "手机号码已存在"),
-    COMMON_CALENDAR_UPDATE_EXCEPTION(1029, "日历修改异常请重试"),
-    COMMON_CURRENCY_NOT_EXIST(1030, "币别[{0}]不存在"),
-    COMMON_EXCHANGE_RATE_NOT_EXIST(1031, "日期【{0}】币别【{1}】下未找到汇率"),
-    COMMON_MSG_REQUIRED(1032, "消息模板不能为空"),
-    COMMON_MSG_PARAM_REQUIRED(1033, "消息ID或者用户绑定ID为空，发送加急信息失败"),
-    COMMON_BUSINESS_NOT_EXIST(1034, "业务类型不存在，请检查"),
-    COMMON_CHANGE_INFO_REQUIRED(1035,"变更信息不能为空"),
-    COMMON_CHANGE_INVALID(1036,"审核通过才能变更"),
-    COMMON_RATE_LIMIT_WITH_NAME(1037, "【{0}】已催办一次，请在30分钟后再催办"),
-    COMMON_CHANGE_NO_RECORD(1038,"未发现已变更信息"),
-    COMMON_RATE_LIMIT(1039, "已催办一次，请在30分钟后再催办"),
-    COMMON_FIELD_NAME_EXISTS(1040, "字段名[{0}]已存在，不可重复提交"),
-    COMMON_MEMBER_ROLE_ALREADY_EXISTS(1041, "成员列表中已有该角色"),
-    COMMON_UNIONID_REQUIRED(1042, "unionId不能为空"),
-    COMMON_YEAR_REQUIRED(1043, "选择年份不能为空"),
-    COMMON_LARK_TOKEN_IS_NULL(1044, "飞书应用token为空"),
-    COMMON_LARK_SEND_MSG_FAIL(1045, "飞书发送消息失败"),
-    COMMON_NOT_EXIST_GENERIC(1046, "{0}不存在"),
-    COMMON_CN_EXPORT_DECLARATION_HS_NOT_FOUND(1047,"中国海关编码不存在于出口申报要素"),
-    COMMON_URGE_RATE_LIMITED(1048, "{0}已催办，间隔时间30min内请勿重复操作"),
-    COMMON_CUSTOMS_CN_HS_CODE_EXISTS(1049, "中国海关编码【{0}】已存在"),
-    COMMON_PLATFORM_NAME_NOT_FOUND(1050,"未找到对应平台名称"),
-    COMMON_K3_SAVE_FAILED(1051,"调用金蝶保存接口失败"),
-    COMMON_SETTING_EXIST(1052, "{0}已设置,不可重复设置"),
-    COMMON_CODE_EXISTS(1053,"code编码不能重复"),
-    COMMON_EXPIRE_BEFORE_EFFECTIVE(1054,"失效时间不能小于生效时间"),
-    COMMON_SYSTEM_MODULE_NOT_FOUND(1055,"系统模块未找到"),
-    COMMON_NAME_EXISTS(1056,"名称不能重复"),
-    COMMON_SEARCH_TYPE_NOT_FOUND(1057, "搜索类型不存在"),
-    COMMON_REQUEST_EMPTY(1058, "请求参数不能为空"),
-    COMMON_EXPIRE_AFTER_EFFECTIVE_REQUIRED(1059,"失效时间要大于生效时间"),
-    COMMON_CHANGE_DATE_INVALID(1060,"变更日期不能小于今天"),
-    COMMON_INCONSISTENT_DISABLE_STATUS(1061,"存在不一样的禁用状态"),
-    COMMON_PROVIDER_SERVICE_NOT_ENABLED(1062,"服务商服务{0}未开发"),
-    COMMON_DEST_COUNTRY_REQUIRED(1063,"目的国家不能为空"),
-    COMMON_WEIGHT_REQUIRED(1064,"重量不能为空"),
-    COMMON_POSTCODE_REQUIRED(1065,"邮编不能为空"),
-    COMMON_ATTACH_QTY_MAX_FIVE(1066,"附件上传数量不可超过5个文件"),
-    COMMON_UNUSUAL_TYPE_NOT_EXISTS(1067,"异常分类配置错误或不存在"),
-    COMMON_PAPER_SIZE_INCONSISTENT_NOT_PRINT(1068,"选择的面单纸张大小不一致，不支持批量打印"),
-    COMMON_BINDING_ERROR(1069,"绑定失败，请检查绑定信息"),
-    COMMON_SAME_STATUS_DUPLICATE(1070,"存在相同状态记录"),
-    COMMON_PLATFORM_CHANNEL_NOT_FOUND(1071,"平台【{0}】中渠道编码【{1}】不存在"),
-    COMMON_WAVE_ORDER_QTY_COMPARE(1072, "波次规则配置中最小单数不能大于最大单数"),
-    COMMON_WAVE_QTY_COMPARE(1073, "波次规则配置中最少商品数量不能大于最多商品数量"),
-    COMMON_IMPORT_SIZE_EXCEED_LIMIT(1074,"导入数据条数超过最大限制：{0}"),
-    COMMON_DATE_RANGE_INVALID(1075,"开始日期不能大于结束日期"),
-    COMMON_DATE_SORT_ASC_REQUIRED(1076,"开始日期必须按升序排列"),
-    COMMON_SKU_MAPPING_NOT_FOUND(1077,"SKU映射关系不存在"),
-    COMMON_SKU_MAPPING_DUPLICATE_PLATFORM_SHOP(1078,"同一平台同一店铺仅允许映射一个SKU"),
-    COMMON_PLATFORM_NOT_FOUND(1079,"平台不存在"),
-    COMMON_RULE_EXPRESSION_ERROR(1080,"规则执行条件不完整，请检查配置"),
-    COMMON_ADMIN_USER(1081,"admin"),
-    COMMON_STATUS_CHANGE_LOG(1082,"状态由[{0}]变更为[{1}]"),
-    COMMON_SALESMAN_NOT_FOUND(1083,"未查询到对应销售员"),
-    COMMON_SALESMAN_ID_REQUIRED(1084,"变更后的销售员ID不能为空"),
-    COMMON_LOCAL_PUSH_MESSAGE(1085,"本地推送消息单"),
-    COMMON_WEIGHT_RANGE_INVALID(1086,"开始重量不能大于结束重量"),
-    COMMON_LOGIN_COOPERATION_TERMINATED(1087,"合作关系已终止，当前账号无法登录"),
-    COMMON_LOGIN_ACCOUNT_DISABLED(1088,"账号已被停用，无法登录系统"),
-    COMMON_SYSTEM_CONFIG_MANAGEMENT(1089,"系统配置管理"),
-    COMMON_BOX_LENGTH_LT_PRODUCT_FORBIDDEN(1090,"箱规长度必须大于或等于包装长度"),
-    COMMON_BOX_WIDTH_LT_PRODUCT_FORBIDDEN(1091,"箱规宽度必须大于或等于包装宽度"),
-    COMMON_BOX_HEIGHT_LT_PRODUCT_FORBIDDEN(1092,"箱规高度必须大于或等于包装高度"),
-    COMMON_GROSS_WEIGHT_LT_NET_WEIGHT_FORBIDDEN(1093,"毛重必须大于或等于净重"),
-    COMMON_PRODUCT_LENGTH_LT_WIDTH_FORBIDDEN(1094,"包装尺寸校验失败：长度必须大于或等于宽度"),
-    COMMON_PRODUCT_WIDTH_LT_HEIGHT_FORBIDDEN(1095,"包装尺寸校验失败：宽度必须大于或等于高度"),
-    COMMON_BOX_LENGTH_LT_WIDTH_FORBIDDEN(1096,"箱规尺寸校验失败：长度必须大于或等于宽度"),
-    COMMON_BOX_WIDTH_LT_HEIGHT_FORBIDDEN(1097,"箱规尺寸校验失败：宽度必须大于或等于高度"),
-    COMMON_TABLE_NOT_FOUND(1098,"数据表{0}不存在"),
-    COMMON_TIME_FRAME_RULE_CONFIG_NOT_EXIST(1099,"*建议时间范围规则配置不存在"),
-    COMMON_WDT_API_CALL_FAILED(1100, "调用旺店通接口异常"),
-    COMMON_WDT_PRE_TASK_NOT_FINISHED_CANCEL_EXECUTION(1101, "前序推送任务未完成，当前任务已取消执行"),
-    COMMON_TEMPLATE_DEFAULT_CONTRACT_EXISTS(1102, "模板类型【{0}】已存在默认合同"),
-    COMMON_CONTRACT_TEMPLATE_REQUIRED(1103,"合同模板不能为空"),
-    COMMON_CONTRACT_TEMPLATE_NOT_AVAILABLE(1104,"合同模板不存在或被禁用"),
-    COMMON_CONTRACT_TEMPLATE_BINDING_DUPLICATE(1105,"【{0}】已绑定【{1}】，不可重复绑定"),
-    COMMON_CONTRACT_TEMPLATE_BOUND_BY_OTHER_SUPPLIER(1106,"【{0}】已被其他供应商绑定，请先解除关联再绑定所有供应商"),
-    COMMON_USER_NOT_FOUND(1107, "用户不存在"),
-    COMMON_CATEGORY_LEVEL_EXCEED_MAX(1107,"分类级别最多支持{0}级"),
-    COMMON_SYSTEM_CATEGORY_DELETE_FORBIDDEN(1108,"系统分类不允许删除"),
-    COMMON_SYSTEM_CATEGORY_UPDATE_FORBIDDEN(1109,"系统分类不允许编辑"),
-    COMMON_DELETE_CHILD_NODE_EXISTS(1110,"存在子节点，无法删除"),
-    COMMON_CONTRACT_NOT_BINDING(98127,"无关联合同，请在合同管理页面关联后打印"),
-
-    COMMON_NO_DELIVERY_SKU(98128,"没有发货的SKU"),
-    COMMON_SKU_NOT_EXIST_OR_NOT_APPROVE(98129,"SKU【{0}】不存在或未审核"),
-    COMMON_FILE_EMPTY(1111, "文件为空{0}"),
-    COMMON_FS_USER_NOT_BIND(98130,"飞书【{0}】事件,用户【{1}】未绑定飞书账号"),
-    COMMON_DEPARTMENT_HAVE_USER(98131,"【{0}】部门或下级部门存在用户"),
-    COMMON_FILE_HEAD_NOT_EMPTY(98132,"文件表头不能为空"),
-    COMMON_PLATFORM_SHOP_EXSIT(92132,"平台【{0}】下店铺【{1}】已存在，不能重复配置"),
-    COMMON_CSAGENT_EXSIT(92133,"平台【{1}】下售后人员【{1}】已存在，不能重复配置"),
-    COMMON_STATUS_SAME(92134,"存在相同状态"),
-    COMMON_FILE_HEAD_READ_HEAD_FAIL(98134,"配置有误，开始行读取失败"),
-
-    COMMON_NO_SKU(98128,"SKU不存在"),
-    COMMON_NOTICE_TIME_AFTER_NOW(98134,"通知时间不能早于当前时间"),
-    COMMON_NOW_TYPE_NOT_ALLOW_UPDATE(98135,"立即通知不允许修改"),
-    /**
-     * AUTH 授权与登录 相关 2000 - 2200
-     */
-    AUTH_PASSWORD_MISMATCH(2000, "两次密码不一致"),
-    AUTH_LOGIN_FAILED(2001, "登录失败!"),
-    AUTH_ACCOUNT_DISABLED(2002, "账户【{0}】已禁用!"),
-    AUTH_USER_NOT_FOUND(2003,"用户【{0}】不存在"),
-    AUTH_LOGIN_LOCKED(2004,"账户密码已输入错误5次，请在1小时后重试"),
-    AUTH_LOGIN_RETRY_LEFT(2005,"账号密码错误,还可尝试【{0}】次,失败后将锁定1小时"),
-    AUTH_CREDENTIALS_INVALID(2006, "用户不存在或者密码错误"),
-    AUTH_PASSWORD_REQUIRED(2007, "密码不能为空"),
-    AUTH_ACCOUNT_PASSWORD(2008, "账号密码错误"),
-    AUTH_ACCOUNT_BIND_FAILED(2009, "绑定账号失败"),
-    AUTH_ACCOUNT_NOT_BOUND(2010, "账号尚未绑定请绑定后在登录"),
-    AUTH_ACCOUNT_ALREADY_BOUND(2011, "该账号已经绑定"),
-    AUTH_USERNAME_EXISTS(2012, "用户名称已存在"),
-    AUTH_ACCOUNT_NOT_FOUND(2013, "账号不存在"),
-    AUTH_MOBILE_IS_EXIST(2014,"手机号已注册"),
-    AUTH_FS_USER_NOT_BIND(2015,"当前用户未绑定飞书账号"),
-    AUTH_FS_NOT_BOUND(2016, "尚未绑定飞书，请在ERP系统[个人中心]绑定飞书后可查看通知"),
-    AUTH_MODIFY_DELETE_DENIED(2017,"您无权修改或删除"),
-    AUTH_VIEW_DENIED(2018,"您没有权限查看"),
-    AUTH_SSO_APP_NOT_FOUND(2019, "应用不存在"),
-    AUTH_SSO_DISABLED(2020, "单点登录功能已禁用"),
-    AUTH_SSO_DECRYPT_FAILED(2021, "单点登录信息解密失败"),
-    AUTH_SSO_PAYLOAD_PARSE_FAILED(2022, "单点登录Payload解析失败"),
-    AUTH_SSO_INVALID_PAYLOAD(2023, "单点登录Payload内容无效"),
-    AUTH_SSO_USER_NOT_BOUND_ERP(2024, "用户未绑定ERP系统"),
-    AUTH_SSO_SYSTEM_ERROR(2025, "单点登录系统异常：{0}"),
-    AUTH_ARCHIVE_DENIED(2026,"归档系统不允许增删改数据"),
-
-    /**
-     * EMAIL 邮件相关 2200 - 2400
-     */
-    EMAIL_TEMPLATE_NOT_FOUND(2200, "邮箱模板不存在!"),
-    EMAIL_CODE_INVALID(2201, "邮箱验证码错误!"),
-    EMAIL_INVALID(2202, "邮箱格式错误!"),
-    EMAIL_RATE_LIMITED(2203, "发送邮件太频繁 请稍后再试!"),
-    EMAIL_SEND_FAILED(2204, "发送邮件失败!"),
-    EMAIL_ADDR_EXISTS(2205, "邮箱已存在"),
-    EMAIL_ACCOUN_NOT_BOUND(2206, "账号未绑定邮箱，请绑定邮箱后操作"),
-
-    /**
-     * FILE 文件处理相关 2400 - 2600
-     */
-    FILE_EXCEL_PARSE(2400, "Excel解析数据时发生错误"),
-    FILE_EXPORT_FAILED(2401, "导出失败"),
-    FILE_IMPORT_FORMAT_INVALID_XLSX(2402, "导入文件格式错误，请使用xlsx文件"),
-    FILE_TOO_LARGE(2403, "文件过大 不能超过 {0}"),
-    FILE_IMPORT_PARSE_FAILED(2404, "导入文件解析失败"),
-    FILE_IMPORT_FORMAT_INVALID_MMP(2405, "导入文件格式错误，请使用mmp文件"),
-    FILE_IMPORT_TIMEOUT(2406, "导入超时,请减少数据导入"),
-    FILE_IMPORT_DATA_NOT_NULL(2407,"导入{0}数据不能为空"),
-    FILE_DELETE(2408,"文件删除失败"),
-    FILE_NOT_DELETE_ALL(2409,"文件不能全部删除"),
-    FILE_TEMPLATE_NOT_EXIST(2410,"文件模板不存在"),
-    FILE_TEMPLATE_DOWNLOAD(2411,"文件模板下载失败"),
-    FILE_EXCEL_PARSING_FIELD_EXCEPTION(2412,"excel解析字段异常"),
-    FILE_EXCEL_ILLEGAL_FIELDS(2413,"excel第【{0}】行 【{1}】列非法字段"),
-    FILE_EXCEL_IMPORT_HEAD_EXIST(2414,"导入表头不能重复"),
-    FILE_EXCEL_IMPORT_SIZE(2415,"导入明细不能超过5000条"),
-    FILE_NOT_FOUND(2416, "未找到上传文件"),
-    FILE_UPLOAD_FAILED_OR_LINK_INVALID(2417, "上传文件失败或者链接不存在"),
-    FILE_DATA_REQUIRED(2418,"导入数据不能为空"),
-    FILE_DATA_IMPORT_FAILED(2419,"导入数据失败"),
-    FILE_EXPORT_ERROR_DATA_FAILED(2420,"导出错误数据失败"),
-    FILE_UPLOAD_FAILED(2421, "上传文件失败"),
-    FILE_UPLOADED_NOT_FOUND(2422, "已上传的文档不存在"),
-    FILE_DELETE_FORBIDDEN_APPROVED(2423, "审核已通过不能删除文档"),
-    FILE_DOC_NOT_FOUND(2424, "文档不存在"),
-    FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED(2425,"导入模板下载失败"),
-    FILE_REF_CLOSE_FORBIDDEN(2426, "该文档已被引用状态不能关闭"),
-    FILE_SIZE_EXCEEDS_LIMIT(2427,"文件不可超过{0}m"),
-    FILE_NAME_DUPLICATE(2428, "文档名已存在,不可重复提交"),
-    FILE_EXPORT_DATA_EMPTY(2429,"导出数据不能为空"),
-    FILE_PARAM_EMPTY(2430, "请求参数不能为空"),
-    FILE_STRUCTURE_AND_FILES_EMPTY(2431, "文件夹结构和文件列表不能同时为空"),
-    FILE_ZIP_CREATE_FAILED(2432, "创建ZIP文件失败: {0}"),
-    FILE_ZIP_EXTRACT_FAILED(2433, "解压缩ZIP文件失败: {0}"),
-    FILE_ZIP_NOT_FOUND(2434, "ZIP文件为空或不存在: {0}"),
-    FILE_IMAGE_COMPRESS_FAILED(2435, "压缩图片失败: {0}"),
-    FILE_OPERATION_FAILED(2436, "FastDFS操作失败: {0}"),
-    FILE_DOWNLOAD_TIMEOUT(2437, "文件下载超时"),
-    FILE_OPERATION_INTERRUPTED(2438, "操作被中断"),
-    FILE_ZIP_EMPTY(2439, "ZIP文件中没有找到文件"),
-    FILE_CHECK_SIZE_FAILED(2440, "检查ZIP文件大小失败: {0}"),
-    FILE_MANAGEMENT_SKU_TYPE_EXIST(2441, "SKU【{0}】类型【{1}】已存在"),
-    FILE_MANAGEMENT_CATEGORY_TYPE_EXIST(2442, "品类【{0}】类型【{1}】已存在"),
-
-    FILE_URL_INVALID(2443, "文件url格式错误"),
-    FILE_UNSUPPORTED_TYPE(2444, "不支持的文件类型【{0}】"),
-    FILE_DOWNLOAD_FAILED(2445, "文件下载失败【{0}】"),
-    FILE_SHEET_NOT_EXIST(2446,"未找到配置的sheet页名称"),
-
-    /**
-     * 单据相关提示 从3000 - 3500
-     */
-    BILL_SAVE_FAILED(3000, "数据保存失败"),
-    BILL_UPDATE_FAILED(3001, "数据修改失败"),
-    BILL_DATA_DUPLICATE(3002, "数据重复，请修改后再提交"),
-    BILL_UPDATE_STATUS_NOT_ALLOWED(3003, "只有待提交和审核不通过数据支持修改"),
-    BILL_SOURCE_NOT_FOUND(3004, "未找到来源单据"),
-    BILL_SOURCE_DETAIL_NOT_FOUND(3005, "未找到来源单据明细"),
-    BILL_PUSH_DOWN_NOT_ALLOWED(3006,"单据【{0}】未审核完成，不支持下推"),
-    BILL_DATA_LOCKED(3007, "数据已被他人锁住，为避免数据错误，请稍后再试"),
-    BILL_SAVE_FAIL(3009, "保存{0}单据失败"),
-    BILL_DETAIL_NOT_FOUND(3010,"{0}单据明细不存在"),
-    BILL_DETAIL_REQUIRED(3011,"{0}明细不能为空"),
-    BILL_SUBMIT_FAILED(3012,"{0}单据提交失败"),
-    BILL_DELETE_STATUS_NOT_ALLOWED(3013,"只有待提交数据支持删除"),
-    BILL_DELETE_FAILED(3014, "数据删除失败"),
-    BILL_DISAPPROVE_FAILED(3015, "数据反审核失败"),
-    BILL_APPROVE_FAILED(3016,"{0}单据审核失败"),
-    BILL_APPROVE_NOT_FOUND(3017,"类型【{0}】未找到审核处理器"),
-    BILL_APPROVE_BUSINESS_KEY_NOT_FOUND(3018,"{0}操作，未找到单据类型【{1}】"),
-    BILL_APPROVE_SUBMIT_RETRY(3019,"流程提审失败，请重试提审"),
-    BILL_ENABLE_NOT_ALLOWED(3020,"未禁用状态的数据不支持启用"),
-    BILL_DISABLE_NOT_ALLOWED(3021,"未启用状态的数据不支持禁用"),
-    BILL_DELETE_NOT_ALLOWED(3022,"只有已禁用数据支持删除"),
-    BILL_REJECT_STATUS_INVALID(3023, "只有审核中和完成待审核的任务,才可操作审核不通过"),
-    BILL_APPROVAL_STATUS_INVALID(3024, "只有待审核任务和审核中才可操作审核任务"),
-    BILL_EDIT_ALLOWED_STATUS_ONLY(3025,"在待提交审核/审核不通过的状态下才能编辑"),
-    BILL_SUBMIT_APPROVAL_STATUS_INVALID(3026,"只有待提交审核单据才能提交审核"),
-    BILL_WAIT_APPROVE_REQUIRED(3027,"只有待审核才能编辑"),
-    BILL_RESUBMIT_STATUS_INVALID(3028,"审核不通过才能重新提交"),
-    BILL_TASK_CANCEL_SUBMIT_INVALID(3029,"待审核任务才能取消提交"),
-    BILL_URGE_ONLY_IN_APPROVING(3030, "仅支持审核中的单据支持催办提醒"),
-    BILL_VOID_EDIT_FORBIDDEN(3031,"单据已作废，不支持编辑功能"),
-    BILL_VOID_SUBMIT_FORBIDDEN(3031,"单据已作废，不支持提交"),
-    BILL_UPDATE_FIELD_APPROVEING(3032,"状态在审核中不可更新"),
-    BILL_ROW_CHANGE_FORBIDDEN(3033,"已验收和已关闭的明细行不允许变更"),
-    BILL_SELECTION_REQUIRED(3034,"选择数据不能为空"),
-    BILL_PARAM_SELECTION_REQUIRED(3034,"{0}明细数据不能为空"),
-    BILL_VOID_ALLOWED_STATUS_ONLY(3035,"只有待提交和审核不通过数据支持作废"),
-    BILL_DELETE_ALLOWED_STATUS_ONLY(3036,"只有待提交数据支持删除"),
-    BILL_SUBMIT_ALLOWED_STATUS_ONLY(3037,"只有待提交或审核不通过并且未作废数据支持提交"),
-    BILL_ALREADY_VOID_CANNOT_VOID_AGAIN(3038,"已作废数据不支持作废"),
-    BILL_WAIT_SUBMIT_TO_APPROVE_ING(3039,"只有待提交和审核不通过才能提交审核"),
-    BILL_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY(3040,"仅已审核状态的单据支持反审核操作"),
-    BILL_APPROVED_ONLY_CAN_PUSH(3041,"只有已审核的单据可以下推"),
-    BILL_INCONSISTENT_VOID_STATUS(3042,"存在已作废订单"),
-    BILL_PUSH_ALLOWED_APPROVED_ONLY(3043,"只有审核通过才能下推单据"),
-    BILL_VOIDED_CANNOT_SUBMIT(3044,"已作废单据不能提交审核"),
-    BILL_VOIDED_CANNOT_DELETE(3044,"已作废单据不能删除"),
-    BILL_INV_ORG_NOT_FOUND(3045,"库存组织不存在"),
-    BILL_NOT_EXIST(3046,"单据不存在"),
-    BILL_NOT_EXIST_WITH_TYPE(3047, "{0}单据不存在"),
-    BILL_ALREADY_EXIST(3048, "{0}单据已存在"),
-    BILL_HAS_CHANGE_ORDER_REVERSE_FORBIDDEN(3049, "【{0}】单据存在调价表,无法反审核"),
-    BILL_SUBMIT_ALLOWED_PENDING_ONLY(3050,"仅待提交状态的单据允许提交"),
-    BILL_WAIT_HANDLE_CANCEL_PROCESS_ALLOWED(3051,"仅待处理、处理中、已处理状态允许撤销"),
-    BILL_STATUS_ALREADY_HANDLED_NOT_OPERATE(3052,"已处理的数据不允许重复操作"),
-    BILL_FINANCE_RECONCILIATION_DUPLICATE(3053,"单据【{0}】在月份【{1}】、对账类型【{2}】、物流商【{3}】下已生成对账单，不可重复生成"),
-    BILL_RETURN_WAIT_CONFIRM_STATUS_REQUIRED(3054,"仅退货确认状态为【待确认】时才允许操作"),
-    BILL_KEEP_AT_LEAST_ONE_DETAIL_OR_DELETE(3055,"请至少保留一条明细，或选择整单删除"),
-    BILL_DECLARE_STATUS_GENERATED_NOT_CHANGE_TO_NO_DECLARE(3056,"单据【{0}】报关状态已生成，不允许修改为【无需生成】"),
-    BILL_LOGISTICS_STATUS_GENERATED_NOT_CHANGE_TO_NO_LOGISTICS(3057,"单据【{0}】物流状态已生成，不允许修改为【无需生成】"),
-    BILL_DETAIL_IS_ZERO(3058, "单据【{0}】的明细条数为0，不允许提交"),
-    BILL_IN_USE_DELETE_FORBIDDEN(3059,"销售订单已被引用，无法删除"),
-    BILL_VOID_FORBIDDEN(3060,"仅待提交、暂存或审核不通过状态的销售订单允许作废"),
-    BILL_RECEIVER_ADDRESS_REQUIRED(3061,"订单买家地址不能全部为空"),
-    BILL_RECEIVER_REQUIRED(3062,"订单买家信息不能为空"),
-    BILL_NOT_FOUND(3063,"单据不存在"),
-    BILL_MANUAL_SUB_TYPE_REQUIRED(3064,"【{0}】手工单的单据子类型不能为空"),
-    BILL_HAS_DOWNSTREAM_VOID_FORBIDDEN(3065,"当前单据存在下游单据，不允许作废"),
-    BILL_DETAIL_DATA_NOT_FOUND(3066,"明细数据不存在"),
-    BILL_DATA_CREATE_FAILED(1019, "数据新增失败"),
-    BILL_AUDIT_QTY_DETAIL_REQUIRED(99250,"审核数量修改明细列表不能为空"),
-
-
-    /**
-     * DMP 服务通用配置错误 3500 - 4000
-     */
-    DMP_KINGDEE_FIELD_NOT_FOUND(3500,"金蝶推送未配置同步字段"),
-    DMP_KINGDEE_DATA_NOT_FOUND(3501,"查询无数据，无需处理"),
-    DMP_KINGDEE_ADD_FAILED(3502,"金蝶系统新增数据失败"),
-    DMP_KINGDEE_DETAIL_ID_NOT_FOUND(3503,"未查询到子单据id"),
-    DMP_ADDRESS_OR_CONTACT_REQUIRED(3504,"地址编码或联系人编号是空，同步金蝶失败，请手动维护数据"),
-    DMP_PARENT_ASSISTANT_NOT_FOUND(3505,"未找到上级辅助资料"),
-    DMP_PUSH_TASK_NOT_FOUND(3506,"未找到中台推送任务"),
-    DMP_THIRD_ALREADY_BINDED(3507,"第三方{0}【{1}】已经被【{2}】绑定"),
-    DMP_THIRD_SHOP_NOT_FOUND(3508,"第三方店铺不存在"),
-    DMP_THIRD_WAREHOUSE_NOT_FOUND(3509,"第三方仓库不存在"),
-    DMP_THIRD_SYS_TYPE_SINGLE_BINDING(3510,"同一个第三方平台只能绑定一个{0}"),
-    DMP_THIRD_LOGISTICS_NOT_FOUND(3511,"第三方渠道不存在"),
-    DMP_PUSH_CFG_NOT_FOUND(3512,"未找到推送配置项【{0}】"),
-    DMP_ADS_ERP_DIFF_OUTSTOCK_NOT_FOUND(3513,"出库同步差异记录不存在"),
-    DMP_ADS_ERP_DIFF_OUTSTOCK_NOT_PLATFORM(3514,"请选择差异标签为平台单据多的"),
-    DMP_ADS_ERP_DIFF_OUTSTOCK_NOT_SAME_PERIOD(3515, "请选择同一个核算周期的数据"),
-    DMP_ADS_ERP_DIFF_OUTSTOCK_NOT_SAME_PLATFORM(3516, "请选择同一个平台的数据"),
-    DMP_THIRD_WAREHOUSE_WAREHOUSE_OPERATION_NOT_ALLOW_NULL(3513,"仓库操作类型不允许为空"),
-    DMP_THIRD_WAREHOUSE_WAREHOUSE_OPERATION_MISSING_ENUM(3514,"缺少必要的仓库操作类型【{0}】"),
-    DMP_THIRD_WAREHOUSE_WAREHOUSE_OPERATION_VALUE_EMPTY(3515,"仓库操作类型或描述不能为空"),
-    DMP_KINGDEE_SUBORDER_NOT_ALLOW_DISAPPROVE(3516,"请操作金蝶反审核至待提交后执行反审核"),
-    /** 3517 语义（2026-03）：父行分录无法唯一匹配；参数 {单号},{候选父行数}。子行硬歧义不抛此码，监控「跳过仓库回填」error 日志 */
-    DMP_KINGDEE_SUBCONTRACT_BOM_PARENT_MATCH_AMBIGUOUS(3517,"委外用料清单变更单{0}按分录行号无法唯一匹配父行，候选父行数={1}"),
-
-    /**
-     * 工作流错误 workflow 4000 - 4500
-     */
-    WF_PROCESS_NOT_FOUND_OR_ENDED(4000, "流程不存在或者流程已结束"),
-    WF_PROCESS_NOT_STARTED(4001, "流程尚未开始"),
-    WF_CURRENT_NODE_NULL(4002, "当前节点为空"),
-    WF_PROCESS_ALREADY_STARTED(4003,"流程已启动"),
-    WF_PROCESS_ALREADY_ENDED(4004,"流程已结束"),
-    WF_PROCESS_INSTANCE_NOT_FOUND(4005,"流程实例不存在"),
-    WF_PROCESS_MANAGEMENT_NOT_EXIST(4006,"流程管理不存在"),
-    WF_PROCESS_STATUS_NOT_ALLOWED(4007,"流程状态为【{0}】不支持审核"),
-    WF_RECALL_NOT_FIRST_TASK(4008, "非首个用户任务节点，无法取回"),
-    WF_START_FAILED(4009, "启动流程失败"),
-    WF_NOT_APPROVER(4010, "无权限操作，该任务不属于当前审批人"),
-    WF_APPROVE_FAILED(4011, "审核失败"),
-    WF_PROCESS_SAVE_FAILED(4012,"保存流程定义失败"),
-    WF_PROCESS_UPDATE_FAILED(4013,"更新流程定义失败"),
-    WF_PROCESS_DEFINITION_NOT_EXIST(4014,"流程定义不存在"),
-    WF_PROCESS_CANCEL_FAILED(4015,"流程定义撤销失败"),
-    WF_PROCESS_ALREADY_DEPLOYED(4016,"流程定义已部署，不需要重复发布"),
-    WF_PROCESS_DEPLOY_DELETE_NOT_ALLOWED(4017,"流程定义已部署，不可删除"),
-    WF_PROCESS_DEPLOY_UPDATE_NOT_ALLOWED(4018,"流程定义已发布不支持编辑"),
-    WF_PROCESS_CHANGE_NOT_ALLOWED(4019,"流程定义未发布不支持变更"),
-    WF_PROCESS_CHANGE_EXIST_NOT_DEPLOY(4020,"流程定义已存在未发布数据不支持再次变更"),
-    WF_TASK_COMPLETE_FAILED(4021,"审核失败，错误信息：{0}"),
-    WF_TASK_REJECT_NOT_ALLOWED(4022,"当前任务无法驳回"),
-    WF_APPROVE_TASK_INFO_ERROR(4023,"查询三方生成查询报错,{0}"),
-    WF_DEFINITION_NODE_NOT_EXIST(4024,"节点已审核或不存在"),
-    WF_TASK_NOT_FOUND(4025,"任务已审核或不存在"),
-    WF_APPROVE_TASK_NOT_FOUND(4026,"三方生成查询不存在"),
-    WF_TASK_DETAIL_NOT_FOUND(4027,"三方生成查询明细不存在"),
-    WF_MENU_NOT_FOUND(4028, "模块编码对应的菜单不存在"),
-    WF_MENU_FEIGN_CLASS_NOT_FOUND(4029, "工作流feign调用的类名不存在,请检查"),
-    WF_PROCESS_NOT_START_USER(4030,"只有流程发起人可执行撤销操作"),
-    WF_NEXT_NODE_NO_APPROVER(4031,"下级节点无审核人，无法提交，请联系管理员"),
-    WF_RULE_TYPE_NOT_FOUND(4032,"未找到流程配置规则类型"),
-    WF_RULE_USED_CANNOT_DELETE(4033,"{0}已被单据使用,不可删除"),
-    WF_THIRD_CONFIG_EXIST(4034,"单据类型【{0}】下已存在第三方配置，暂不支持再次添加"),
-    WF_CREATOR_APPROVER_NOT_SAME(4035,"创建人与审批人不能相同，人员：【{0}】"),
-    WF_FIELD_MAP_NOT_FOUND(4036,"流程字段映射不存在"),
-    WF_DELEGATE_CLOSE_ALLOWED_ONLY_RUNNING(4037,"仅运行中或待执行状态的流程可终止"),
-    WF_DELEGATE_CLOSE_FAILED(4038,"委托审批单终止失败"),
-    WF_DELEGATE_UPDATE_ALLOWED_ONLY_PENDING(4039,"仅待执行状态的委托审批单可编辑"),
-    WF_DELEGATE_TIME_INVALID(4040,"委托失效时间不可早于生效时间"),
-    WF_DELEGATE_OVERLAP_NOT_ALLOWED(4041,"相同发起人、委托流程与时间区间重复，不支持该操作"),
-    WF_FS_PROCESS_NOT_EXIST(4042,"飞书审批流程不存在"),
-    WF_FS_QUERY_MULTIPLE_USERS(4043,"查询第三方用户信息返回多条数据，请检查"),
-    WF_FS_QUERY_USER_NOT_FOUND(4044,"未找到提审用户的飞书账号，请绑定飞书账号"),
-    WF_FS_APPROVE_REQUIRED(4045,"当前单据审核流程为飞书流程，请前往飞书审核"),
-    WF_MANAGEMENT_FORCE_PASS_NOT_ALLOWED(4046,"强制通过仅适用于运行中或暂停状态的流程"),
-    WF_MANAGEMENT_FORCE_REJECT_NOT_ALLOWED(4047,"强制驳回仅适用于运行中或暂停状态的流程"),
-    WF_MANAGEMENT_RESTORE_NOT_ALLOWED(4048,"恢复操作仅适用于暂停状态的流程"),
-    WF_MANAGEMENT_SUSPEND_NOT_ALLOWED(4049,"暂停操作仅适用于运行中状态的流程"),
-    WF_RULE_CONFLICT(4050,"{0}流程设置下存在多条符合条件的规则，请检查"),
-    WF_MODULE_ALREADY_EXISTS(4051,"模块已存在请不要重复操作"),
-    WF_APPROVE_START_FAILED(4052, "存在为空的审核人，流程启动失败"),
-    WF_NOT_YOUR_APPROVAL(4053, "不是您审核的任务，您无法审核"),
-    WF_APPROVER_REQUIRED(4054, "审核人为空，请先配置任务审核人"),
-    WF_REJECT_COMMENT_REQUIRED(4055, "审核不通过必须填写审核意见"),
-    WF_REVOCATION_REQUIRED(4056, "仅在待审核,审核中可申请撤销"),
-    WF_APPROVAL_DELETE_FORBIDDEN(4057, "审核中和审核通过状态不可删除"),
-    WF_APPROVE_ALLOWED_STATUS_ONLY(4058,"只有审核中数据支持审核"),
-    WF_REVOKE_PROCESS_ALLOWED_STATUS_ONLY(4059,"只有审核中数据支持撤销流程"),
-    WF_FS_PROCESS_USER_NOT_FOUND(4060,"未找到飞书用户对应的系统用户,飞书userId: {0}"),
-    WF_FS_DEFINITION_SUBSCRIBE_FAIL(4061,"飞书定义订阅失败，请检查"),
-    WF_FS_DEFINITION_UNSUBSCRIBE_FAIL(4062,"取消飞书定义订阅失败，请检查"),
-    /**
-     * PROJECT 项目相关 4500 - 5000
-     */
-    PROJECT_TASK_REQUIRED(4500,"project导入{0}级任务不能为空"),
-    PROJECT_TASK_NAME_REQUIRED(4501,"{0}级任务名称不能为空"),
-    PROJECT_TASK_OWNER_REQUIRED(4502,"{0}级任务负责人不能为空"),
-    PROJECT_OWNER_NOT_FOUND(4503,"未找到project导入{0}级任务负责人"),
-    PROJECT_PM_REQUIRED(4504, "产品经理不能为空"),
-    PROJECT_RND_CENTER_OWNER_REQUIRED(4505, "产品研发中心负责人不能为空"),
-    PROJECT_PMO_OWNER_REQUIRED(4506, "项目管理部负责人不能为空"),
-    PROJECT_DATE_START_AFTER_END(4507, "启动日期应当晚于立项日期"),
-    PROJECT_DATE_END_AFTER_START(4508, "结项日期应当晚于启动日期"),
-    PROJECT_STAGE_TASK_EXISTS(4509, "任务阶段名已存在,不可重复提交"),
-    PROJECT_STAGE_TASK_REQUIRED(4510, "任务阶段名不能为空"),
-    PROJECT_STAGE_INIT_NAME_IMMUTABLE(4511, "立项阶段名不可更改"),
-    PROJECT_TEMPLATE_EXISTS(4512, "模板名已存在,不可重复提交"),
-    PROJECT_TASK_EXISTS(4513, "任务名已存在,不可重复提交"),
-    PROJECT_ROLE_EXISTS(4514, "项目角色名已存在，不可重复提交"),
-    PROJECT_ARCHIVE_FORBIDDEN_NOT_DONE(4515, "项目尚未完成，不可归档"),
-    PROJECT_STAGE_INIT_DELETE_FORBIDDEN(4516, "立项阶段名不能删除"),
-    PROJECT_FIELD_EXISTS(4517, "该项目已有该字段"),
-    PROJECT_TASK_HAS_CHILD(4518, "该任务存在子任务,不能删除"),
-    PROJECT_NOT_FOUND(4519, "项目不存在"),
-    PROJECT_TASK_NOT_FOUND(4520, "任务不存在"),
-    PROJECT_TASK_BATCH_STATUS_FORBIDDEN(4521, "存在多个任务状态不可批量操作"),
-    PROJECT_TASK_PUBLISH_REQUIRED(4522, "只有待发布才可操作发布任务"),
-    PROJECT_TASK_START_REQUIRED(4523, "只有待开始或者关闭，才可操作开始任务"),
-    PROJECT_TASK_CLOSE_REQUIRED(4524, "只有进行中的任务,才可操作关闭任务"),
-    PROJECT_TASK_REVIEW_COMPLETE_FORBIDDEN(4525, "评审任务不可操作完成任务"),
-    PROJECT_TASK_PREDECESSOR_UNFINISHED(4526, "操作失败，前置任务有未完成的任务"),
-    PROJECT_TASK_CHILD_UNFINISHED(4527, "操作失败，子任务有未完成的任务"),
-    PROJECT_TASK_DOC_CHANGE_FORBIDDEN(4528, "任务未完成 不能变更文档"),
-    PROJECT_STAGE_TASK_NOT_FOUND(4529, "任务阶段不存在"),
-    PROJECT_STAGE_INITIATION_DELETE_FORBIDDEN(4530, "立项阶段不能删除"),
-    PROJECT_STAGE_HAS_TASKS_DELETE_FORBIDDEN(4531, "该阶段下已有任务不能删除"),
-    PROJECT_TASK_COMPLETE_REQUIRED(4532, "只有进行中的任务,才可操作完成任务"),
-    PROJECT_TASK_DELIVERABLE_UNFINISHED(4533, "存在输出物尚未完成,请完成后再操作"),
-    PROJECT_TASK_UNFINISHED_FORBIDDEN(4534, "操作失败，有未完成的任务"),
-    PROJECT_TEMPLATE_NOT_FOUND(4535, "模板不存在"),
-    PROJECT_NOTICE_NODE_IN_USE(4536, "通知节点已使用"),
-    PROJECT_NOTICE_NODE_NOT_FOUND(4537, "通知节点不存在"),
-    PROJECT_MEMBER_OR_OTHER_REQUIRED(4538, "项目人员/其他人员必须填写一个"),
-    PROJECT_TEMPLATE_TASK_EXISTS(4539, "该模板下已存在相同任务名称，不可重复提交"),
-    PROJECT_TEMPLATE_TASK_NOT_FOUND(4540, "模板任务不存在"),
-    PROJECT_TEMPLATE_ROLE_EXISTS(4541, "模板下已存在该角色"),
-    PROJECT_TEMPLATE_MEMBER_REQUIRED(4542, "请选择模板成员"),
-    PROJECT_TEMPLATE_ROLE_MEMBER_EXISTS(4543, "模板角色下已存在该成员"),
-    PROJECT_TASK_NAME_TOO_LONG(4544, "任务名不能超过{0}字符"),
-    PROJECT_TASK_RESTART_REQUIRED(4545, "只有审核不通过的任务,才可操作重新开始"),
-    PROJECT_TASK_VIEW_EXPORT_TYPE_REQUIRED(4546, "任务视图导出类型必填"),
-    PROJECT_TASK_SAVE_FORBIDDEN_ARCHIVED(4547, "保存任务失败,该产品已归档或该项目已归档"),
-    PROJECT_TASK_COMPLETE_FORBIDDEN_PRODUCT_INCOMPLETE(4548, "完成任务失败,产品信息尚未填写"),
-    PROJECT_PARAM_TASK_OWNER_REQUIRED(4549,"任务负责人不能为空"),
-    PROJECT_FREEZE_REQUIRED(4550,"只有归档才能冻结"),
-    PROJECT_UNFREEZE_REQUIRED(4551,"只有已冻结才能解冻"),
-    PROJECT_SCRAP_REQUIRED(4552,"只有已冻结或者已归档才能报废"),
-    PROJECT_RESTORE_REQUIRED(4553,"只有已报废才能恢复"),
-    PROJECT_CHANGE_REQUEST_REQUIRED(4554,"只有归档才能申请变更"),
-    PROJECT_CHANGE_VOID_REQUIRED(4555,"变更状态为待审核/审核不通过时,才可以作废"),
-    PROJECT_UNARCHIVE_REQUIRED(4556,"只有归档才能解除归档"),
-    PROJECT_TASK_UNPUBLISH_STATUS_INVALID(4557, "只有待开始，待审核任务才可操作取消发布"),
-    PROJECT_TASK_FIXED_RENAME_FORBIDDEN(4558,"固定任务不能修改任务名称"),
-    PROJECT_TASK_FIXED_DOC_FORBIDDEN(4559,"固定任务不能修改目标交付文档"),
-    PROJECT_TASK_FIXED_APPROVAL_FORBIDDEN(4560,"固定任务不能修改审核流程"),
-    PROJECT_CHANGE_IN_PROGRESS_FORBIDDEN(4561,"变更中不能操作"),
-    PROJECT_SCHEDULE_TIME_NOT_FOUND(4562,"排期时间不存在"),
-    PROJECT_SCHEDULE_SUBMIT_REQUIRED(4563,"只有排期状态为待提交才能提交计划"),
-    PROJECT_PRODUCT_SUBMIT_REQUIRED(4564,"待提交、审核不通过产品信息才能提交"),
-    PROJECT_PRODUCT_SCHEDULE_REQUIRED(4565,"产品排期不能为空"),
-    PROJECT_K3_SEND_REQUIRED(4566,"审核通过才能发送金蝶数据"),
-    PROJECT_CHANGE_INFO_NOT_FOUND(4567,"变更信息不存在"),
-    PROJECT_ROLE_REF_DELETE_FORBIDDEN(4568,"角色已被任务引用不支持删除"),
-    PROJECT_TEMPLATE_EMPTY(4569, "模板数据为空"),
-    PROJECT_PLAN_NOT_FOUND(4570, "产品规划不存在"),
-    PROJECT_PLAN_EDIT_REQUIRED(4571, "只有{0}可编辑计划开始-结束时间"),
-    PROJECT_PLAN_LINKED_PRODUCT_EXISTS(4572, "产品规划已存在关联产品"),
-    PROJECT_PLAN_SYNC_FAILED(4573, "产品规划同步产品数据失败"),
-    PROJECT_PRODUCT_ALREADY_IN_PLAN(4574, "录入产品已关联规划"),
-    PROJECT_SUBTASK_SCHEDULE_FORBIDDEN(4575, "子任务不能排期变更"),
-    PROJECT_FIRST_RECORD_START_TIME_REQUIRED(4576, "第一条数据必须存在开始时间"),
-    PROJECT_TASK_DATA_NOT_FOUND(4577, "项目任务数据不存在"),
-    PROJECT_TASK_RECORD_NOT_FOUND(4578, "项目任务记录不存在"),
-    PROJECT_SCHEDULE_UNDER_REVIEW_FORBIDDEN(4579, "排期还在审核中,无法操作"),
-    PROJECT_TASK_APPROVER_MISSING(4580, "存在无审核人的任务"),
-    PROJECT_PLAN_DELETE_FORBIDDEN(4581, "规划已关联产品，不支持删除"),
-    PROJECT_TASK_DUPLICATE(4582, "存在重复的任务"),
-    PROJECT_TEMPLATE_PREREQUISITE_UPDATE_FAILED(4583, "模板前置数据修改失败"),
-    PROJECT_TEMPLATE_REQUIRED(4584, "请选择模板"),
-    PROJECT_TASK_AUDIT_STATUS_INVALID(4585, "任务不存在或已审核"),
-    PROJECT_PROJECT_RESUME_REQUIRED(4586, "只有暂停的项目才能重新启动"),
-    PROJECT_INITIATE_FORBIDDEN_TERMINATED(4587, "已终止,暂停的项目不能进行立项"),
-    PROJECT_PAUSE_INVALID(4588, "已完成,终止,暂停的项目不能进行暂停"),
-    PROJECT_PAUSE_FORBIDDEN_INIT(4589, "已立项,终止,暂停的项目不能进行暂停"),
-    PROJECT_CLOSE_REQUIRED(4590, "只有已启动,进行中的项目才能结项"),
-    PROJECT_INITIATE_FORBIDDEN(4591, "已立项,终止,暂停的项目不能进行立项"),
-    PROJECT_START_REQUIRED(4592, "只有未启动的项目才能启动项目"),
-    PROJECT_TERMINATED_CHANGE_FORBIDDEN(4593, "已终止的项目禁止状态更改"),
-    PROJECT_TERMINATED_AGAIN_FORBIDDEN(4594, "已终止项目不能再次终止"),
-    PROJECT_RESUME_ONLY(4595, "已暂停的项目只能进行重新启动"),
-    PROJECT_INITIATION_COST_REQUIRED(4596, "预计立项成本必填，请填写预计立项成本"),
-    PROJECT_COST_REQUIRED(4597, "预计项目成本必填，请填写预计项目成本"),
-
-    /**
-     * 产品错误信息 5000 - 5999
-     */
-    PRODUCT_CATEGORY_EXISTS(5000, "产品分类名称已存在"),
-    PRODUCT_CATEGORY_HAS_CHILD(5001, "分类下存在子分类，不可删除"),
-    PRODUCT_CATEGORY_HAS_PRODUCT(5002, "分类下存在产品，请调整分类后删除"),
-    PRODUCT_NAME_EXISTS(5003, "产品名称已存在，不可重复提交"),
-    PRODUCT_NAME_MISMATCH(5004, "产品名不一致 无法删除"),
-    PRODUCT_NOT_FOUND(5005, "产品不存在"),
-    PRODUCT_SKU_EXISTS(5006, "SKU已存在，请确保SKU的唯一性"),
-    PRODUCT_SPU_EXISTS(5007, "SPU已存在，请确保SPU的唯一性"),
-    PRODUCT_CATEGORY_NOT_FOUND(5008, "产品分类不存在"),
-    PRODUCT_SKU_NOT_GENERATED(5009, "尚未生成SKU，请在立项阶段生成SKU后启动"),
-    PRODUCT_CATEGORY_CODE_REQUIRED(5010, "产品分类代号不能为空"),
-    PRODUCT_CATEGORY_CODE_EXISTS(5011, "产品分类代号已存在"),
-    PRODUCT_CATEGORY_CODE_RANGE_INVALID(5012, "产品分类代号范围在A-Z区间"),
-    PRODUCT_CATEGORY_CODE_NOT_FOUND(5013,"未找到所选品类的{0}级分类代号"),
-    PRODUCT_CATEGORY_CODE_NOT_ALLOWED(5014,"非一二级分类不能添加代号"),
-    PRODUCT_VARIANT_COLOR_NOT_FOUND(5015, "未找到SKU变体颜色信息"),
-    PRODUCT_VARIANT_INFO_EMPTY(5016, "变体信息为空"),
-    PRODUCT_VARIANT_COLOR_EMPTY(5017, "变体颜色信息为空"),
-    PRODUCT_VARIANT_COLOR_ATTR_EMPTY(5018, "变体颜色属性值为空"),
-    PRODUCT_VARIANT_NAME_EXISTS(5019, "变体名已存在，不可重复添加"),
-    PRODUCT_VARIANT_VALUE_DUPLICATE(5020, "变体值不可重复，请检查是否有重复的值"),
-    PRODUCT_VARIANT_COLOR_CODE_DUPLICATE(5021, "变体颜色编码不可重复，请检查是否有重复的编码"),
-    PRODUCT_VARIANT_TYPE_REF_DELETE_FORBIDDEN(5022,"变体类型已被关联，不可删除"),
-    PRODUCT_VARIANT_VALUES_REF_DELETE_FORBIDDEN(5023,"变体值已被关联，不可删除"),
-    PRODUCT_VARIANT_VALUE_NOT_FOUND(5024,"变体类型值不存在或已被删除"),
-    PRODUCT_INFO_NOT_FOUND(5025,"产品信息不存在"),
-    PRODUCT_ALREADY_INITIATED(5026, "已立项的产品不能再次立项"),
-    PRODUCT_INITIATE_REQUIRED(5027, "项目未立项"),
-    PRODUCT_INITIATE_MISSING_EXISTS(5028, "存在未立项的项目"),
-    PRODUCT_BU_IS_EXISTS_REF(5050,"产品BU线已绑定产品"),
-    PRODUCT_SKU_REQUIRED(5029,"sku必须选择一个"),
-    PRODUCT_SKU_NOT_FOUND(5030,"SKU不存在"),
-    PRODUCT_NOT_FOUND_SKU(5031,"SKU【{0}】不存在"),
-    PRODUCT_SKU_RECORD_NOT_FOUND(5032, "SKU【{0}】记录不存在"),
-    PRODUCT_SKU_APPROVED_REQUIRED(5033, "请录入已审核的父级SKU"),
-    PRODUCT_SKU_CHILD_APPROVED_REQUIRED(5034, "请录入已审核的子级SKU"),
-    PRODUCT_SKU_EAN_DUPLICATE(5035, "不可新增相同EAN码"),
-    PRODUCT_SKU_CODE_REQUIRED(5036, "sku编号必填，请填写sku编号"),
-    PRODUCT_SKU_REQUIRED_FOR_OPERATION(5037, "SKU为空，不允许进行此操作"),
-    PRODUCT_SKU_IN_USE_DELETE_FORBIDDEN(5038, "Sku已被其他单据引用不能删除"),
-    PRODUCT_SKU_STOCK_REF_CHANGE_FORBIDDEN(5039,"SKU存在【{0}】库存，产品属性不允许变更"),
-    PRODUCT_EXIST_SKU(5040,"SKU【{0}】已存在,不允许反审核"),
-    PRODUCT_REQUIRED_FIELDS_INCOMPLETE(5041, "请检查产品必填项是否填写完成"),
-    PRODUCT_PM_REQUIRED(5042, "产品经理必填，请填写产品经理"),
-    PRODUCT_SALES_METHOD_REQUIRED(5043, "销售方式必填，请填写销售方式"),
-    PRODUCT_CATEGORY_REQUIRED(5044, "产品分类必填，请填写产品分类"),
-    PRODUCT_BRAND_REQUIRED(5045, "产品品牌必填，请填写产品品牌"),
-    PRODUCT_LEVEL_REQUIRED(5046, "产品等级必填，请填写产品等级"),
-    PRODUCT_STYLE_NAME_CN_REQUIRED(5047, "产品款名(中文)必填，请填写产品款名(中文)"),
-    PRODUCT_STYLE_NAME_EN_REQUIRED(5048, "产品款名(英文)必填，请填写产品款名(英文)"),
-    PRODUCT_ATTR_REQUIRED(5049, "产品属性必填，请填写产品属性"),
-    PRODUCT_SALES_CHANNEL_REQUIRED(5050, "销售渠道必填，请填写销售渠道"),
-    PRODUCT_COMMISSIONED_DEV_COST_REQUIRED(5051, "委托开发成本必填，请填写委托开发成本"),
-    PRODUCT_TARGET_COST_REQUIRED(5052, "目标含税成本必填，请填写目标含税成本"),
-    PRODUCT_TARGET_COST_EX_TAX_REQUIRED(5053, "目标不含税成本必填，请填写目标不含税成本"),
-    PRODUCT_RETAIL_PRICE_REQUIRED(5054, "标准零售价必填，请填写标准零售价"),
-    PRODUCT_MASS_PRODUCTION_COST_REQUIRED(5055, "实际量产成本必填，请填写实际量产成本"),
-    PRODUCT_TAX_RATE_REQUIRED(5056, "税率必填，请填写税率"),
-    PRODUCT_ANNUAL_SALES_REQUIRED(5057, "年目标销量必填，请填写年目标销量"),
-    PRODUCT_MONTHLY_SALES_REQUIRED(5058, "目标月销售量必填，请填写目标月销售量"),
-    PRODUCT_Q1_SALES_REQUIRED(5059, "首季度目标销量必填，请填写首季度目标销量"),
-    PRODUCT_ANNUAL_SALES_AMOUNT_REQUIRED(5060, "年目标销售额必填，请填写年目标销售额"),
-    PRODUCT_MONTHLY_SALES_AMOUNT_REQUIRED(5061, "目标月销售额必填，请填写目标月销售额"),
-    PRODUCT_SALES_COUNTRY_REQUIRED(5062, "销售国家必填，请填写销售国家"),
-    PRODUCT_IMAGE_COMPLETE_REQUIRED(5063, "图片是否完成必填，请填写图片是否完成"),
-    PRODUCT_VIDEO_COMPLETE_REQUIRED(5064, "视频是否完成必填，请填写视频是否完成"),
-    PRODUCT_SALES_STATUS_REQUIRED(5065, "销售状态必填，请填写销售状态"),
-    PRODUCT_SALEABLE_FLAG_REQUIRED(5066, "是否可销售必填，请填写是否可销售"),
-    PRODUCT_SALES_PLATFORM_REQUIRED(5067, "销售平台必填，请填写销售平台"),
-    PRODUCT_COST_INFO_REQUIRED(5068, "请填写产品成本信息的必填项"),
-    PRODUCT_SALES_INFO_REQUIRED(5069, "请填写产品销售信息的必填项"),
-    PRODUCT_PACK_REQUIRED(5070,"SKU【{0}】产品包装信息不能为空"),
-    PRODUCT_SIZE_REQUIRED(5071,"SKU【{0}】包装尺寸不能为空"),
-    PRODUCT_BOX_SIZE_REQUIRED(5072,"SKU【{0}】箱规不能为空"),
-    PRODUCT_GROSS_WEIGHT_REQUIRED(5073,"SKU【{0}】毛重不能为空"),
-    PRODUCT_BOX_WEIGHT_REQUIRED(5074,"SKU【{0}】单箱重量不能为空"),
-    PRODUCT_NET_WEIGHT_REQUIRED(5075,"SKU【{0}】净重不能为空"),
-    PRODUCT_BOX_QTY_REQUIRED(5076,"SKU【{0}】单箱数量不能为空"),
-    PRODUCT_ITERATE_SKU_REQUIRED(5077,"迭代产品不能为空"),
-    PRODUCT_CERTIFICATE_EXISTS(5078,"SKU【{0}】下已存在证书项目【{1}】的证书"),
-    PRODUCT_BASIC_LABEL_EXISTS(5079, "基础标签单{0}已存在"),
-    PRODUCT_BASIC_LABEL_LEVEL_NOT_FOUND(5080, "基础标签单级别{0}不存在"),
-    PRODUCT_BASIC_LABEL_NAME_EXISTS(5081, "基础标签单标签名称{0}数据重复"),
-    PRODUCT_BASIC_LABEL_SAVE_FAILED(5082, "基础标签单保存失败"),
-    PRODUCT_BASIC_LABEL_REL_SAVE_FAILED(5083, "产品便签关系保存失败"),
-    PRODUCT_INFO_CHANGE_CONTENT_REQUIRED(5084, "当选择<产品信息变更>时，需选择<变更内容>，最少1项"),
-    PRODUCT_TRIAL_DETAIL_NOT_FOUND(5085,"试产量产详情不存在"),
-    PRODUCT_VENDOR_PRICE_FETCH_FAILED(5086,"获取供应商采购价目表失败: sku：{0}，数量：{1}"),
-    PRODUCT_VENDOR_PRICE_NOT_SUBMITTED(5087,"尚未提交供应商采购价目表，请联系采购开发提交后提审:{0}"),
-    PRODUCT_VENDOR_PRICE_NOT_FOUND(5088,"供应商采购价目表不存在，请联系采购开发提交后提审:{0}"),
-    PRODUCT_UPLOAD_FORBIDDEN_IN_APPROVING(5089,"审核中不支持上传"),
-    PRODUCT_CREATE_FAILED(5090, "产品新增失败"),
-    PRODUCT_SKU_NOT_APPROVED_REVOKE_APPROVAL_FORBIDDEN(5091,"SKU未审核通过，不支持申请变更"),
-    PRODUCT_ATTR_IN_USE_DELETE_FORBIDDEN(5092,"【{0}】属性已被使用，则不允许被删除"),
-    PRODUCT_SKU_FIN_CODE_NOT_FOUND(5093, "sku【{0}】的财务编码不存在！"),
-    PRODUCT_SKU_NOT_COST(5094, "sku【{0}】未发现成本数据！"),
-    PRODUCT_SKU_MABANG_FIN_CODE_NOT_FOUND(5095, "马帮财务编码：{0}不存在"),
-    PRODUCT_SKU_DUPLICATE(5096,"存在重复的SKU,不可提交"),
-    PRODUCT_SKU_OCCUPY_STATE_UPDATE_FAIL(5097,"更新sku【{0}】占用状态失败"),
-    PRODUCT_SKU_STOCK_EXISTS_SPU_CHANGE_FORBIDDEN(5098,"SKU【{0}】存在库存，禁止变更关联的SPU"),
-    PRODUCT_PACKING_SKU_IS_NOT_NULL(5099,"箱规【{0}】中sku不能为空"),
-    PRODUCT_PACKING_SKU_PACK_QTY_IS_NOT_NULL(5100,"箱规【{0}】中sku【{1}】未填写装箱数量"),
-    PRODUCT_PACKING_SKU_BOX_QTY_IS_NOT_NULL(5101,"箱规【{0}】中未填写箱数"),
-    PRODUCT_SKU_PARAM_NOT_FOUND(5102,"SKU【{0}】不存在"),
-    PRODUCT_DEV_STATUS_REQUIRED(5103, "产品开发状态必填，请填写产品开发状态"),
-    PRODUCT_APP_CATEGORY_CODE_EXISTS(5104, "应用分类代号已存在"),
-    PRODUCT_APP_CATEGORY_NAME_EXISTS(5105, "应用分类名称已存在"),
-    PRODUCT_PROPERTY_ASSET_NOT_EXIST(98161,"SKU【{0}】产品属性非资产，与供应商付款条件不一致"),
-    PRODUCT_SALES_BATTERY_WEIGHT_NOT_NULL(5106,"产品销售信息电池重量（g）不能为空"),
-    PRODUCT_IMG_ATTACHMENT_SAVE_FAILED(5107, "图片分类附件关联单保存失败"),
-    PRODUCT_IMG_ATTACHMENT_NOT_FOUND(5108, "未找到图片分类附件关联单数据"),
-    PRODUCT_IMG_CATEGORY_MOVE_FORBIDDEN_ALL(5109, "不能移动到\"所有分类\""),
-    PRODUCT_IMG_CATEGORY_MOVE_FORBIDDEN_MAIN(5110, "不能移动到\"产品主图\"分类"),
-    PRODUCT_IMG_CATEGORY_MOVE_FORBIDDEN_THUMBNAIL(5111, "不能移动到\"产品缩略图\"分类"),
-    PRODUCT_IMG_DOWNLOAD_MIN_REQUIRED(5112, "请至少选择一张图片"),
-    PRODUCT_IMG_DOWNLOAD_MAX_LIMIT(5113, "最多支持50张图片下载"),
-    PRODUCT_IMG_DOWNLOAD_NOT_FOUND(5114, "未找到可下载的图片"),
-    PRODUCT_CHANGE_SKU_NOT_APPROVE(5115, "【{0}】只有已审核SKU可以变更"),
-    PRODUCT_CHANGE_PRODUCT_SIZE_CHANGE(5115, "产品尺寸变更请遵循运费最优尺寸：长≥宽≥高"),
-    PRODUCT_CHANGE_BOX_SIZE_CHANGE(5115, "箱规尺寸变更请遵循运费最优尺寸：长≥宽≥高"),
-    PRODUCT_CHANGE_EXIST(5115, "已存在未审核的变更单，sku:【{0}】"),
-    PRODUCT_RETAIL_PRICE_MISSING(5120, "{0}无零售价，会导致订单无法分摊"),
-    PRODUCT_RETAIL_PRICE_MISSING_ZERO(5120, "{0}零售价都是0，会导致订单无法分摊"),
-    PRODUCT_RETAIL_SKU_MISSING(5121, "提取SKU编号失败"),
-    PRODUCT_RETAIL_SKU_DUPLICATE(5122, "已存在同SKU同币种零售价,不可重复创建"),
-
-
-    /**
-     * BOM 错误信息 6000 - 6499
-     */
-    BOM_REQUIRED(6000,"bom不能为空"),
-    BOM_CHANGING(6001,"bom信息变更中"),
-    BOM_NOT_FOUND(6002, "未找到选择的BOM信息"),
-    BOM_CHILD_NOT_FOUND(6003, "未找到BOM子件"),
-    BOM_CHILD_NOT_FOUND_PARENT(6004, "父级SKU【{0}】未找到BOM子件"),
-    BOM_CONTAIN(6005,"BOM【{0}】子级SKU已包含SKU【{1}】"),
-    BOM_PARENT_SKU_REPEAT(6006,"父级sku【{0}】已生成BOM"),
-    BOM_SKU_REPEAT(6007,"父级sku【{0}】和子级sku不能重复"),
-    BOM_COMB_SKU_EXISTS(6008,"组合产品SKU【{0}】已存在"),
-    BOM_COMB_STATE_INVALID(6009,"组合产品状态有误"),
-    BOM_COMB_NAME_MISMATCH(6010,"组合产品SKU【{0}】对应名称不一致"),
-    BOM_COMB_EXPORT_FORBIDDEN(6011,"组合产品【{0}】已存在不支持导入"),
-    BOM_COMB_NOT_FOUND(6012,"组合产品不存在"),
-    BOM_COMB_SKU_NOT_CHINESE(6013,"组合产品【{0}】不能输入中文"),
-    BOM_COMB_SKU_UNAPPROVED(6014,"组合产品SKU【{0}】未审核成功"),
-    BOM_COMB_CHILD_REPEAT(6015,"组合产品子SKU【{0}】不能重复"),
-    BOM_FOR_MABANG_EXIST(6016, "sku【{0}】在马帮的BOM中不存在！"),
-
-    /**
-     * 模具错误信息 6500 - 6999
-     */
-    MOULD_NOT_EXIST(6500,"模具档案不存在"),
-    MOULD_FILE_AUDITED_ONLY(6501,"只允许选择已审核的模具档案批量关联SKU"),
-    MOULD_REF_SKU_EXISTS(6502,"模具档案已存在关联SKU"),
-    MOULD_NOTICE_PURCHASE_ONLY(6503,"只有未生成模具采购订单的通知单单才能反审核"),
-    MOULD_NOTICE_NOT_FOUND(6504,"未找到开模通知单"),
-    MOULD_NOTICE_DETAIL_NOT_FOUND(6505,"未找到开模通知单明细"),
-    MOULD_NOTICE_NO_PUSHABLE(6506,"未找到可以下推的开模通知单"),
-    MOULD_NOTICE_QTY_EXCEED(6507,"开模通知单【{0}】,资产【{1}】采购数量不能大于待申请数量"),
-    MOULD_NOT_APPROVED(6508,"模具未审核通过"),
-    MOULD_LIFESPAN_TOO_SMALL(6509,"寿命数量不能小于预警寿命数量"),
-    MOULD_RETURN_EXISTS(6510,"模具档案已存在返还策略"),
-    MOULD_ALERT_EXISTS(6511,"模具档案已存在预警策略"),
-    MOULD_COST_REQUIRED(6512, "模具成本必填，请填写模具成本"),
-    MOULD_NOTICE_ALREADY_PUSHED(6513,"开模通知单已下推模具采购单"),
-    MOULD_PURCHASE_ALREADY_CHANGED(6514,"模具采购订单已下推模具采购变更单"),
-    MOULD_PURCHASE_ORDER_NOT_FOUND(6515,"未找到模具采购订单"),
-    MOULD_PURCHASE_DETAIL_NOT_FOUND(6516,"未找到模具采购订单明细"),
-    MOULD_PURCHASE_NO_PUSHABLE(6517,"未找到可以下推的模具采购订单"),
-    MOULD_PURCHASE_NOT_AUDITED_CHANGE_FORBIDDEN(6518,"未审核的模具采购单不允许变更"),
-    MOULD_PURCHASE_PUSHED_NO_NEW_DETAIL(6519,"下推的模具采购单不允许新增明细"),
-    MOULD_PURCHASE_DETAIL_MUST_BE_SAME_ORDER(6520,"请选择同一模具采购订单下明细进行变更!"),
-    MOULD_PURCHASE_SUPPLIER_INFO_MISSING(6521,"未找到模具采购供应商信息"),
-    MOULD_PURCHASE_CHANGE_DETAIL_NOT_FOUND(6522,"未找到模具采购变更单明细"),
-    MOULD_PURCHASE_AUDITED_ONLY_FOR_ACCEPTANCE(6523,"只有已审核的模具采购单才可以结束验收"),
-    MOULD_CODE_ACCEPT_QTY_EXCEED(6524,"模具编码【{0}】验收数量不能超过可验收数量"),
-    MOULD_RETURN_EXIST(6525,"模具【{0}】已生成模具返还策略，无法再次生成"),
-    MOULD_ALERT_EXIST(6526,"模具【{0}】已生成模具预警策略，无法再次生成"),
-
-    /**
-     * BI 错误信息 7000 - 7499
-     */
-    BI_TOPIC_REQUIRED(7000,"专题不能为空"),
-    BI_NOT_OWNER(7001,"不能设置非自己创建的仪表盘"),
-    BI_MODULE_NAME_EXISTS(7002,"模块名称不能重复"),
-    BI_MODULE_REQUIRED(7003,"模块不能为空"),
-    BI_SALES_MONITOR_SETTING_REQUIRED(7004,"销售监控设置不能为空"),
-    BI_NOT_DASHBOARD(7005,"不是仪表盘"),
-    BI_SALES_MONITOR_TYPE_DUPLICATE(7006,"销售监控类型不能重复选择"),
-    BI_DASHBOARD_NOT_FOUND(7007,"暂无仪表盘，请先创建仪表盘"),
-    BI_AT_LEAST_ONE_LAYOUT(7008,"至少需要一个布局"),
-    BI_DUPLICATE_IN_PLATFORM_MODULE(7009,"同平台、模块下不能新增相同字段"),
-    BI_MODULE_NAME_MAX(7010,"模块名称最大30字符"),
-    BI_MODULE_DESC_MAX(7011,"模块说明最大200字符"),
-    BI_FIN_SALES_DATE_TYPE(7012, "财务销售额只支持月，季，年维度查询"),
-    BI_DATE_RANGE_THIRTY_ONE(7013, "日范围不能大于31天"),
-    BI_DATE_RANGE_WEEK_DAY(7014, "周范围不能大于12周"),
-    BI_SALE_RANGE_EXIST(7015, "区间类型不能为空"),
-    BI_SETTLE_METHOD_EXIST(7016, "结算方式不能为空"),
-
-    /**
-     * 映射 错误 信息 7500 - 7999
-     */
-    MAPPING_FIELD_VALUE_REQUIRED(7500,"字段值对应关系不能为空"),
-    MAPPING_EN_DESC_DUPLICATE(7501,"同平台下存在相同英文描述"),
-    MAPPING_NOT_SET_PUSH_FORBIDDEN(7502,"未设置字段映射，不支持推送"),
-    MAPPING_SKU_MAPPING_EXIST(7503,"该平台SKU已存在SKU映射关系!"),
-    MAPPING_SKU_MAPPING_NOT_EXIST(7503,"该平台SKU在对照表不存在!"),
-    MAPPING_SKU_RULE_REQUIRED(7504,"SKU匹配规则详情不能为空"),
-    MAPPING_SKU_HISTORY_EXISTS(7505,"当前SKU映射关系在【{0}】中已存在历史记录，不支持修改"),
-    MAPPING_WAREHOUSE_WDT_NOT_FOUND(7506,"同步旺店通B2C单据时未找到对应仓库映射【{0}】"),
-    MAPPING_SHOP_WDT_NOT_FOUND(7507,"同步旺店通B2C单据时未找到对应店铺映射【{0}】"),
-    MAPPING_SKU_WDT_NOT_FOUND(7508,"同步旺店通单据时未找到对应SKU【{0}】"),
-    MAPPING_THIRD_SHOP_EXISTS(7509,"店铺【{0}】已存在第三方映射关系，请在【中台配置】页面中解除绑定后再进行操作!"),
-    MAPPING_START_DATE_INVALID(7510,"启用日期不能早于上个映射关系的开始时间【{0}】"),
-    MAPPING_MSKU_NOT_MAPPING(7511,"MSKU【{0}】未映射SKU"),
-    MAPPING_MSKU_NOT_EXIST(7512,"MSKU不存在"),
-
-
-    /**
-     * 店铺 错误 信息 8000 - 8499
-     */
-    SHOP_NAME_EXISTS(8000,"店铺名称已存在"),
-    SHOP_AUTH_SHIPMENT_ERROR(8001,"店铺未授权，无法拉取货件"),
-    SHOP_NOT_AUTH_ERROR(8002,"店铺尚未授权，无法执行该操作"),
-    SHOP_FBA_MARKETPLACE_DISABLED(8003,"亚马逊店铺已被禁用:{0}"),
-    SHOP_AUTHORIZE_CODE_REQUIRED(8004,"授权code不能为空"),
-    SHOP_AUTHORIZE_FAILED(8005,"授权失败，原因：【{0}】"),
-    SHOP_TOKEN_FETCH_FAILED(8006,"店铺【{0}】获取Token失败"),
-    SHOP_ALREADY_AUTHORIZED(8007,"店铺已完成授权"),
-    SHOP_LISTING_NOT_FOUND(8008,"Listing信息不存在"),
-    SHOP_AUTHORIZE_ERROR(8009,"授权的平台编码错误"),
-    SHOP_WALMART_ID_REQUIRED(8010,"沃尔玛授权店铺Id不能为空"),
-    SHOP_WALMART_CLIENT_ID_REQUIRED(8011,"沃尔玛授权ClientId不能为空"),
-    SHOP_WALMART_CLIENT_SECRET_REQUIRED(8012,"沃尔玛授权ClientSecret不能为空"),
-    SHOP_AUTH_REQUIRED(8013,"指定店铺授权时，店铺不能为空"),
-    SHOP_EXIST(8014 , "平台【{0}】下账号【{1}】已存在店铺"),
-    SHOP_COUNTRY_EXIST(8015 , "平台【{0}】账号【{1}】下国家【{2}】已存在店铺"),
-    SHOP_NOT_FOUND(8016,"店铺不存在"),
-    SHOP_NOT_EXIST_NO_PERMISSION(8017,"店铺不存在或当前用户无权限"),
-    SHOP_PARAM_AUTHORIZE_FAILED(8018,"店铺【{0}】授权失败，原因：【{1}】"),
-    SHOP_DELETE_ONLY_DISABLED(8019,"仅禁用状态的店铺允许删除"),
-    SHOP_INVOICE_NOT_BIND_COMPANY(8020,"店铺【{0}】未配置公司账号"),
-    SHOP_COUNTRY_CODE_REQUIRED(8021,"店铺未配置国家，无法完成授权"),
-    SHOP_TIKTOK_AUTHORIZED_SHOPS_EMPTY(8022,"TikTok授权失败：未获取到平台授权站点"),
-    SHOP_TIKTOK_REGION_NOT_MATCH(8023,"TikTok授权失败：店铺国家[{0}]在平台授权站点中不存在，可用站点：{1}"),
-
-
-    /**
-     * 供应商 错误 信息 8500 - 8999
-     */
-    SUPPLIER_LEVEL_NAME_EXISTS(8500,"供应商等级名不能重复"),
-    SUPPLIER_LEVEL_IN_USE(8501,"存在已被供应商引用的等级"),
-    SUPPLIER_STAGE_NOT_FOUND(8502,"供应商阶段不存在"),
-    SUPPLIER_STAGE_INVALID(8503,"供应商当前阶段有误"),
-    SUPPLIER_NAME_EMPTY(8504,"供应商名称不能为空"),
-    SUPPLIER_NAME_EXISTS(8505,"供应商名称不能重复"),
-    SUPPLIER_NOT_FOUND(8506,"供应商不存在"),
-    SUPPLIER_INFO_REQUIRED(8507,"供应商信息不能为空"),
-    SUPPLIER_CONTACT_NOT_FOUND(8508,"未找到供应商联系人"),
-    SUPPLIER_DEFAULT_CONTACT_EXCEEDS_ONE(8509,"供应商默认联系人只能有一个"),
-    SUPPLIER_QUALIFICATION_DATE_INVALID(8510,"资质起始有效期不能大于资质截止有效期"),
-    SUPPLIER_CERT_NAME_EXISTS(8511,"证照名称已存在"),
-    SUPPLIER_UN_APPROVE(8512,"供应商未审核"),
-    SUPPLIER_DISABLE(8513,"供应商未启用"),
-    SUPPLIER_SRM_DISABLE(8514,"供应商未协同"),
-    SUPPLIER_USER_NOT_REL(8515,"用户未关联供应商"),
-    SUPPLIER_DOC_USER_MISMATCH(8516,"单据供应商与用户供应商不一致"),
-    SUPPLIER_INTERVAL_OVERLAP(8517,"该供应商SKU区间存在重叠，不可提交"),
-    SUPPLIER_EXIST_PO_RECONCILIATION_DETAIL(8518,"存在待对账明细/未确认的对账单，请完成对账后关闭"),
-    SUPPLIER_ACCOUNT_NOT_FOUND(8519,"没有找到供应商的账户信息"),
-    SUPPLIER_REF_WAREHOUSE_EXIST(8520,"供应商【{0}】仓库【{1}】仓位【{2}】已存在"),
-    SUPPLIER_REF_WAREHOUSE_GLOBAL_EXISTS(8521,"供应商【{0}】在仓库【{1}】已存在全局仓位"),
-    SUPPLIER_REF_WAREHOUSE_GLOBAL_CONFLICT(8522,"供应商【{0}】仓库【{1}】全局仓位不能与其他仓位共存"),
-    SUPPLIER_CONFIG_ALREADY_EXISTS(8523,"供应商配置信息已存在"),
-    SUPPLIER_REF_NOT_FOUND(8524,"查询不到关联供应商"),
-    SUPPLIER_MODIFY_FORBIDDEN(8525,"供应商不允许修改"),
-    /**
-     * 备货申请单 错误 信息 9000 - 9499
-     */
-    SALES_DEMAND_NOT_FOUND(9000,"未找到备货申请单"),
-    SALES_DEMAND_DETAIL_NOT_FOUND(9001,"未找到备货申请单明细"),
-    SALES_DEMAND_SKU_QTY_EXCEEDS(9002,"备货申请单SKU【{0}】数量不能超过【{1}】"),
-    SALES_DEMAND_ALREADY_PUSHED_SUBCONTRACT_REVERSE_FORBIDDEN(9003, "所选采购申请单已下推委外订单，不支持反审核"),
-
-
-    /**
-     * 采购订单错误 信息 9500 - 9999
-     */
-    PO_ITEMS_TO_GENERATE_NOT_FOUND(9500,"未找到可生成采购订单的采购申请明细"),
-    PO_APPLY_NOT_FOUND(9501,"未找到采购申请单"),
-    PO_APPLY_DETAIL_NOT_FOUND(9502,"未找到采购申请单明细"),
-    PO_APPLY_DETAIL_ALREADY_PUSHED(9503,"采购申请单【{0}】明细SKU【{1}】已下推采购订单"),
-    PO_APPLY_QTY_EXCEEDS_PENDING_QTY(9504,"采购申请单【{0}】下级SKU【{1}】采购数量不能大于待申请数量"),
-
-    PO_NOT_FOUND(9505,"未找到采购订单"),
-    PO_DETAIL_NOT_FOUND(9506,"采购单明细信息不存在"),
-    PO_SUPPLIER_INFO_NOT_FOUND(9507,"未找到采购订单供应商信息"),
-    PO_PURCHASE_ORG_NOT_FOUND(9508,"采购组织不存在"),
-    PO_RECEIVE_ORG_NOT_FOUND(9509,"收料组织不存在"),
-    PO_DELIVERY_WH_REQUIRED(9510,"采购订单【{0}】交货仓库不能为空"),
-    PO_ORG_REQUIRED(9511,"采购订单【{0}】收料组织不能为空"),
-    PO_SUPPLIER_ACCOUNT_REQUIRED(9512,"采购订单【{0}】供应商账户信息不能为空"),
-
-    PO_CAN_GENERATE_ONLY_WHEN_APPROVED(9513,"已审核数据才能生成采购单"),
-    PO_APPLY_APPROVAL_NOT_ALLOWED_ONLY(9514,"只有未生成采购订单的申请单才能反审核"),
-    PO_SUBMIT_FAILED(9515,"采购订单提交失败"),
-    PO_APPROVE_FAILED(9516,"采购订单审核失败"),
-    PO_SUBMIT_OR_REJECT_EXPORT_CONTRACT_FORBIDDEN(9517,"待提交和审核不通过采购订单不支持导出采购合同"),
-
-    PO_APPROVED_ONLY_CAN_PUSH_RECEIPT(9518,"只有已审核采购订单能下推签收单"),
-    PO_APPROVED_ONLY_CAN_PUSH_QC_APPLICATION(9518,"只有已审核采购订单能下推质检申请单"),
-
-    PO_DETAIL_CONFIRM_OR_DELIVER_CAN_PUSH_RECEIPT(9519,"只有已确认或送货中的采购订单明细允许下推签收单"),
-    PO_APPROVED_ONLY_CAN_PUSH_INBOUND(9520,"只有已审核采购订单支持下推采购入库单"),
-    PO_RECEIVE_ALREADY_PUSHED_REVERSE_FORBIDDEN(9521,"已存在下推收货单，不支持反审核"),
-    PO_INSTOCK_ALREADY_PUSHED_REVERSE_FORBIDDEN(9522,"已存在下推采购入库单，不支持反审核"),
-
-    PO_END_DELIVERY_ALLOWED_ONLY(9523,"只有已确认，已拒绝和送货中的采购订单能结束交货"),
-    PO_DELIVERY_STATUS_CHANGE_FAILED(9524,"采购订单交货状态变更失败"),
-    PO_ALREADY_GENERATED_DELIVERY_CANNOT_CHANGE_WH_OR_SUPPLIER(9525,"{0}已生成交货单,不可变更仓库和供应商"),
-    PO_ALREADY_GENERATED_INBOUND_CANNOT_CHANGE_WH_OR_SUPPLIER(9526,"{0}已生成入库单,不可变更仓库和供应商"),
-
-    PO_CHANGE_NOT_FOUND(9527,"未找到采购变更单"),
-    PO_CHANGE_DETAIL_NOT_FOUND(9528,"未找到采购变更明细单"),
-    PO_NOT_APPROVED_CHANGE_FORBIDDEN(9529,"非已审核采购订单不支持变更"),
-    PO_SKU_HAS_PUSHED_DOC_CHANGE_DELETE_FORBIDDEN(9530,"SKU【{0}】已存在下推单据，不支持删除变更"),
-    PO_SKU_CHANGE_QTY_LESS_THAN_PO_QTY(9531,"SKU【{0}】变更数量【{1}】不能小于关联订单采购数量【{2}】"),
-
-    PO_INSTOCK_NOT_FOUND(9532,"未找到采购入库单"),
-    PO_INSTOCK_DETAIL_NOT_FOUND(9533,"未找到采购入库单明细"),
-    PO_INSTOCK_APPROVED_ONLY_CAN_PUSH_RETURN(9534,"仅已审核的采购入库单支持下推采购退货单"),
-    PO_INBOUND_ALREADY_PUSHED_REVERSE_FORBIDDEN(9535,"已下推入库单，不允许执行反审核操作"),
-
-    PO_RETURN_NOT_EXISTS(9536,"未找到采购退货单"),
-    PO_RETURN_ALREADY_PUSHED_REVERSE_FORBIDDEN(9537,"已存在下推的退货单，不支持反审核操作"),
-    PO_RETURN_INBOUND_ALREADY_PUSHED(9538,"已下推退货入库单【{0}】，不允许执行反审核操作"),
-
-    PO_DETAIL_DATE_REQUIRED(9539,"采购订单【{0}】SKU【{1}】预计交货日期不能为空"),
-    PO_DATE_INVALID(9540,"采购订单SKU【{0}】预计交货日期不能小于【{1}】"),
-    PO_PRICE_INVALID(9541,"采购订单SKU【{0}】单价必须大于0"),
-    PO_SKU_PURCHASE_QTY_INVALID(9542,"sku【{0}】采购数量不能小于等于0"),
-    PO_ALREADY_QTY_EXCEED(9543,"采购数量不能大于待申请数量"),
-    PO_CHANGE_QTY_EXCEED(9544,"采购变更数量不能大于待申请数量"),
-
-    PO_QC_ASSIGN_ALLOWED_PENDING_ONLY(9545,"只有待质检状态才能分配质检员"),
-    PO_QC_PASSED_OR_EXEMPT_ONLY_ALLOWED(9546,"只有已质检和免检才能下推单据"),
-    PO_QC_REPORT_NOT_FOUND(9547,"质检报告不存在或已删除"),
-    PO_QC_RULE_NOT_FOUND(9548,"质检规则不存在或已删除"),
-    PO_QC_TYPE_EXISTS(9549,"质检类型已存在，请勿重复新增"),
-    PO_QC_ORDER_NOT_FOUND(9550,"质检单不存在或已删除"),
-    PO_QC_TOTAL_GOOD_BAD_QTY_INVALID(9551,"不良数与合格数之和不能超过质检数量"),
-    PO_QC_COMPLETE_ALLOWED_STATUS_ONLY(9552,"仅待质检状态的单据允许完成质检"),
-    PO_QC_EXEMPT_ALLOWED_STATUS_ONLY(9553,"仅暂存或待质检状态的质检单允许执行免检操作"),
-    PO_QC_CANCEL_ALLOWED_STATUS_ONLY(9554,"仅待质检状态的质检单允许执行取消操作"),
-    PO_QC_DELETE_ALLOWED_STATUS_ONLY(9555,"仅待质检、已取消、暂存状态的质检单允许删除"),
-    PO_QC_REVOKE_ALLOWED_STATUS_ONLY(9556,"仅免检或已质检状态的质检单允许撤销质检"),
-    PO_QC_QUALITY_CONTROL_TYPE_ALREADY_EXISTS(9557,"质检类型【{0}】已存在全量的抽样方案，不能重复配置"),
-    PO_QC_QUALITY_CONTROL_TYPE_EXISTS_PARTIAL(9558,"质检类型【{0}】已存在部分SKU的抽样方案，不能配置全部SKU"),
-    PO_QC_QUALITY_CONTROL_TYPE_EXISTS_PARTIAL_SKU(9558,"质检类型【{0}】已存在部分SKU的抽样方案，不能配置相同SKU【{1}】"),
-    PO_QC_SAMPLING_PLAN_DETAIL_RANGE_NOT_CONTINUOUS(9559,"抽样方案明细区间不连续【{0},{1}】->【{2},{3}】"),
-    PO_QC_SAMPLING_PLAN_DETAIL_QTY_INVALID(9560,"抽样方案明细抽样数量只能输入大于0的整数"),
-    PO_QC_SAMPLING_PLAN_DETAIL_QTY_EXCEEDS(9561,"抽样方案明细抽样数量不能大于批量范围"),
-    PO_QC_SAMPLING_PLAN_DETAIL_QC_LEVEL_INVALID(9562,"检验水平不能为空"),
-    PO_QC_SAMPLING_PLAN_DETAIL_MAJOR_AQL_INVALID(9563,"严重缺陷AQL不能为空"),
-    PO_QC_SAMPLING_PLAN_DETAIL_MAJOR_AQL_EMPTY(9563,"严重缺陷AQL应该为空"),
-    PO_QC_SAMPLING_PLAN_DETAIL_GENERAL_AQL_INVALID(9564,"一般缺陷AQL不能为空"),
-    PO_QC_SAMPLING_PLAN_DETAIL_GENERAL_AQL_EMPTY(9564,"一般缺陷AQL应该为空"),
-    PO_QC_SAMPLING_PLAN_DETAIL_MAJOR_AQL_ENUM_INVALID(9564,"严重缺陷AQL枚举不存在"),
-    PO_QC_SAMPLING_PLAN_DETAIL_GENERAL_AQL_ENUM_INVALID(9565,"一般缺陷AQL枚举不存在"),
-    PO_QC_SAMPLING_PLAN_DETAIL_DETAIL_EMPTY(9566,"抽样方案明细要为空"),
-    PO_QC_SAMPLING_PLAN_DETAIL_DETAIL_NOT_EMPTY(9567,"抽样方案明细不能为空"),
-    PO_QC_SAMPLING_PLAN_DETAIL_RANGE_INVALID(9568,"抽样方案明细范围不能为空"),
-    PO_QC_SAMPLING_PLAN_DETAIL_RANGE_LESS_THAN_ZERO(9569,"范围必须大于等于0"),
-    PO_QC_SAMPLING_PLAN_DETAIL_RANGE_EQUAL(9570,"范围前后值不能相同"),
-    PO_QC_SAMPLING_PLAN_DETAIL_RANGE_GREATER_THAN_END(9571,"起始值不能大于结束值"),
-    PO_QC_SAMPLING_PLAN_DETAIL_QC_TYPE_NOT_FOUND(9572,"未找到抽样方案质检类型单数据"),
-    PO_QC_SAMPLING_PLAN_DETAIL_RATE_INVALID(9573,"抽样比例明细抽样比例只能输入大于等于0的小数且小于等于100"),
-    PO_QC_SAMPLING_PLAN_QC_TYPE_IS_NULL(9574,"质检类型【{0}】不存在抽样方案"),
-    PO_QC_SAMPLING_PLAN_NOT_FOUND(9575,"未找到抽样方案【{0}】，SKU【{1}】不存在"),
-    PO_QC_SAMPLING_PLAN_DETAIL_FOUND(9576,"未找到抽样方案明细【{0}】，SKU【{1}】不存在"),
-    PO_QC_SAMPLING_PLAN_GENERAL_AQL_IS_NULL(9577,"一般缺陷AQL【{0}】方案不存在"),
-    PO_QC_SAMPLING_PLAN_MAJOR_AQL_IS_NULL(9578,"严重缺陷AQL【{0}】方案不存在"),
-
-    PO_SUBCONTRACT_ORDER_NOT_FOUND(9557,"未找到委外订单"),
-    PO_SUBCONTRACT_DETAIL_NOT_FOUND(9558,"未找到委外订单明细"),
-    PO_SUBCONTRACT_PARENT_SKU_QTY_EXCEEDS(9559,"委外订单【{0}】明细父级SKU【{1}】数量不能大于{2}"),
-    PO_SUBCONTRACT_ALREADY_PUSHED_REVERSE_FORBIDDEN(9560,"委外订单【{0}】已下推采购订单【{1}】,不支持反审核"),
-
-    PO_RECONCILIATION_ONLY_PENDING_SUPPLIER_CONFIRM_ALLOWED(9561,"仅【待供方确认】支持此操作"),
-    PO_RECONCILIATION_ONLY_PENDING_BUYER_CONFIRM_ALLOWED(9562,"仅【待采方确认】支持此操作"),
-    PO_RECONCILIATION_BUYER_CONFIRM_OR_CONFIRMED_ALLOWED(9563,"仅【待采方确认】或【已确认待完结】支持此操作"),
-    PO_RECONCILIATION_DELETE_STATUS_FORBIDDEN(9564,"仅【待供方确认】或【待采方确认】支持删除对账单"),
-    PO_RECONCILIATION_ONLY_CONFIRMED_RECEIVABLE_ALLOWED(9565,"仅【已确认待完结】支持单据签收"),
-    PO_RECONCILIATION_UPDATE_STATUS_FORBIDDEN(9566,"仅【待供方确认】或【待采方确认】支持修改对账单"),
-    PO_RECONCILIATION_DATE_RANGE_INVALID(9567,"对账开始时间不能晚于结束时间"),
-
-
-    PO_HAS_SUPPLIER_DELETE_FORBIDDEN(9568,"采购订单存在对应供应商,不能删除"),
-    PO_SUBCONTRACT_DETAIL_PARENT_SKU_NOT_FOUND(9569,"未找到委外订单明细父级SKU信息"),
-    PO_SUBCONTRACT_DETAIL_CHILD_SKU_NOT_FOUND(9570,"未找到委外订单明细子级SKU信息"),
-    PO_SUBCONTRACT_NOT_EDITABLE(9571,"委外采购订单不支持修改"),
-    PO_SUBCONTRACT_CHANGE_DETAIL_PARENT_SKU_NOT_FOUND(9572,"未找到委外变更单明细父级SKU信息"),
-    PO_SUBCONTRACT_CHANGE_DETAIL_CHILD_SKU_NOT_FOUND(9573,"未找到委外变更单明细子级SKU信息"),
-    PO_SUBCONTRACT_CHANGE_NOT_FOUND(9574,"未找到委外变更单"),
-    PO_SUBCONTRACT_CHANGE_DETAIL_NOT_FOUND(9575,"未找到委外变更单明细"),
-    PO_SUBCONTRACT_PARENT_SKU_QTY_EXCEEDS_REMAIN(9576,"父级SKU【{0}】数量不能超过采购申请剩余可下推数量【{1}】"),
-    PO_SUBCONTRACT_PURCHASE_QTY_PUSHED_END(9577,"采购量已经下推完毕"),
-    PO_SUBCONTRACT_SELECT_COMPOSITE_SKU_TO_GENERATE(9578,"请选择组合SKU生成委外订单"),
-    PO_SUBCONTRACT_PUSH_CHANGE(9579,"委外订单【{0}】已下推委外变更单【{1}】,不支持反审核"),
-    PO_SUBCONTRACT_PUSH_ISSUE(9580,"委外订单【{0}】已下推委外发料单【{1}】,不支持反审核"),
-    PO_ID_REPEAT(9581,"请选择同一采购订单下明细进行变更"),
-    PO_DETAIL_SKU_NOT_EXIST(9582,"sku【{0}】在采购单中不存在"),
-    PO_INSTOCK_DETAIL_SKU_NOT_EXIST(9583,"sku【{0}】在采购收货单中未找到"),
-    PO_PUSH_DOWN_CHANGE_EXISTS(9584,"采购订单已下推采购变更单"),
-    PO_PUSH_DOWN_DELIVERY_EXISTS(9585,"采购订单已下推送货单"),
-    PO_PUSH_DOWN_QC_APPLICATION_EXISTS(9585,"采购订单已下质检申请单【{0}】"),
-    PO_SUPPLIER_CONFIRM_NOT_ALLOWED(9586,"采购订单【{0}】未审核完成不支持确认"),
-    PO_DETAIL_SUPPLIER_CONFIRM_NOT_ALLOWED(9587,"采购订单【{0}】非待确认不支持确认"),
-    PO_SKU_PUSH_DOWN_NOT_ALLOWED(9588,"采购订单【{0}】SKU【{1}】非已确认和送货中、已完成不支持下推"),
-    PO_CLOSE_REVERSE_NOT_ALLOWED(9589,"已关闭采购订单不支持反审核"),
-    PO_NO_SUPPLIER_CONFIRM(9590,"采购订单【{0}】未关联供应商不支持确认"),
-    PO_SUPPLIER_CONFIRM_DIFF(9591,"不能操作其他供应商采购订单【{0}】"),
-    PO_DETAIL_DELIVERY_QTY_EXCEEDS(9592,"采购订单明细【{0}】送货数量不可超过【待交货量】"),
-    PO_CONTRACT_EXPORT_FORBIDDEN_OTHER_SUPPLIER(9593,"非当前供应商【{0}】的采购订单不支持导出采购合同"),
-    PO_ADJUST_PRICE_NOT_ALLOWED(9594,"采购订单审核中不支持调价"),
-    PO_PUSHED_ACCEPT_REVIEW_FORBIDDEN(9595,"已存在下推资产验收单，不支持反审核"),
-    PO_CHANGE_SKU_QTY_LT_ACCEPTED(9596,"sku【{0}】变更数量不能小于已验收数量"),
-    PO_SKU_NEW_QTY_LT_ACCEPTED(9597,"sku【{0}】的新采购数量不能小于已验收数量"),
-    PO_RETURN_DATA_NOT_FOUND(9598,"未找到对应退货数据"),
-    PO_RECEIPT_NOT_FOUND(9599,"收货单不存在或已删除"),
-    PO_QC_UPDATE_MEASURE_ALLOWED_STATUS_ONLY(9600,"仅待质检或暂存状态的质检单允许更新处理措施"),
-    PO_RECEIPT_QTY_EXCEEDS_ALLOWED(9601,"产品【{0}】的收货数量不能超过可收货数量"),
-    PO_RETURN_QTY_EXCEEDS_INBOUND(9602,"【{0}】的退货数量不能大于已入库数量"),
-    PO_INBOUND_EXISTS_REVOKE_FORBIDDEN(9603,"存在有效的入库单记录，不允许撤销操作"),
-    PO_RETURN_EXISTS_REVOKE_FORBIDDEN(9604,"存在有效的退货单记录，不允许撤销操作"),
-    PO_QC_PUSH_RETURN_ALLOWED_ONLY_IF_REJECTED(9605,"仅当质检结果为退货供应商时才允许下推退货单"),
-    PO_RETURN_QTY_EXCEEDS_RECEIPT(9606,"【{0}】的退货数量不能大于收货数量"),
-    PO_RETURN_TOTAL_QTY_EXCEEDS_INBOUND(9607,"【{0}】退货单的合计数量不能大于入库数量"),
-    PO_RETURN_SKU_CLOSE(9666,"采购订单【{0}】SKU【{1}】非已确认和送货中、已完成不支持质检"),
-    PO_PUSH_TOTAL_QTY_EXCEEDS_RECEIPT(9608,"【{0}】下推的数量合计不能大于收货数量"),
-    PO_QC_ALREADY_PUSHED_REVERSE_FORBIDDEN(9609,"质检单【{0}】已生成下游单据，不允许执行反审核"),
-    PO_RECEIPT_QTY_EXCEEDS_UNDELIVERED(9610,"【{0}】的收货数量不能大于未交货数量"),
-    PO_QC_TOTAL_QTY_EXCEEDS(9611,"质检数量不能大于总数量"),
-    PO_INSTOCK_REMAIN_QTY_EXCEEDS(9612,"采购订单【{0}】SKU【{1}】的剩余可入库数量不能超过【{2}】"),
-    PO_INSTOCK_ALREADY_COMPLETED(9613,"采购订单【{0}】SKU【{1}】已完成入库"),
-    PO_RETURN_INBOUND_ALLOWED_APPROVED_ONLY(9614,"仅已审核的单据支持下推退货入库单"),
-    PO_RETURN_INBOUND_NOT_FOUND(9615,"退货入库单不存在"),
-    PO_QC_VOIDED_OPERATION_NOT_ALLOWED(9616,"已作废的质检单不支持执行【{0}】操作"),
-    PO_QC_NOTICE_VOIDED_OPERATION_NOT_ALLOWED(9617,"已作废的质检通知单不支持执行【{0}】操作"),
-    PO_RETURN_REF_PO_EXISTS(9618,"采购退货单【{0}】已下推采购订单"),
-    PO_RETURN_REF_PO_NOT_APPROVED(9619,"采购退货单【{0}】未审核完成，不支持下推采购订单"),
-    PO_RECEIVE_QTY_EXCEEDS_DELIVERY(9620,"收货数量不能大于送货数量"),
-    PO_SUBCONTRACT_ISSUE_SUPPLIER_DIFF(9621,"委外发料单明细对应的供应商【{0}】必须一致"),
-    PO_SUBCONTRACT_RETURN_SUPPLIER_DIFF(9622,"委外退料单明细对应的供应商【{0}】必须一致"),
-    PO_INSTOCK_PUSH_SUBCONTRACT_ISSUE_EXIST(9623,"采购入库单已下推委外发料单【{0}】"),
-    PO_RETURN_UNIT_PRICE_REQUIRED(9624,"无关联采购单时，退款单价不能为空"),
-    PO_RETURN_SKU_UNIT_PRICE_REQUIRED(9625,"采购退货单【{0}】在无关联采购时，SKU【{1}】的退款单价不能为空"),
-    PO_SUBCONTRACT_ISSUE_NOT_EXIST(9626,"委外发料单不存在"),
-    PO_SUBCONTRACT_ISSUE_DETAIL_NOT_EXIST(9627,"委外发料单明细不存在"),
-    PO_SUBCONTRACT_ISSUE_QTY_EXCEED(9628,"委外发料单中SKU【{0}】数量不能大于【{1}】"),
-    PO_RETURN_CFG_SETTING_NOT_EXISTS(9629,"退货配置不存在，请先配置异常处理人"),
-    PO_RECEIVE_SHOULD_GENERATE_BY_DELIVERY(9630,"【{0}】已开启系统收货协同，请从送货单下推生成收货单"),
-    PO_SUBCONTRACT_RETURN_NOT_EXIST(9631,"委外退料单不存在"),
-    PO_SUBCONTRACT_RETURN_DETAIL_NOT_EXIST(9632,"委外退料单明细不存在"),
-    PO_SUBCONTRACT_RETURN_QTY_EXCEED(9633,"委外退料单中SKU【{0}】退料数量【{1}】不能大于可退数量【{2}】"),
-    PO_SUBCONTRACT_RETURN_ORDER_REVERSE_FORBIDDEN(9634,"存在有效下推单据【委外退料单{0}】，不支持反审核"),
-    PO_ORDER_REVERSE_FORBIDDEN(9635,"存在有效下推单据【采购订单{0}】，不支持反审核"),
-    PO_RETURN_ORDER_REVERSE_FORBIDDEN(9636,"存在有效下推单据【采购退货单{0}】，不支持反审核"),
-    PO_SUBCONTRACT_AND_PO_RETURN_REVERSE_FORBIDDEN(9637,"存在有效下推单据【委外退料单{0}】【采购退货单{1}】，不支持反审核"),
-    PO_QC_STOCK_INSUFFICIENT(9638, "【{0}】库存不足,质检通知数量{1}，可用库存{2}"),
-    PO_QC_ALREADY_COMPLETED_REVERSE_FORBIDDEN(9639, "【{0}】已质检完成，不允许操作反审核"),
-    PO_QC_NOTICE_APPROVE_REQUIRED(9640, "请先审核通过质检通知单"),
-    PO_QC_DETAIL_REQUIRED(9641, "请至少选择一条质检明细"),
-    PO_QC_PACKAGE_NOT_FOUND(9642, "【{0}】对应的包装信息不存在"),
-    PO_QC_STOCK_INSUFFICIENT_CONTINUE_CONFIRM(9643, "SKU库存不足，质检通知数量为{0}，可用库存为{1}，请确认是否继续创建"),
-    PO_QC_GOOD_BAD_BOTH_ZERO_FORBIDDEN(9644, "【{0}】良品数量与不良品数量不能同时为0"),
-    PO_QC_NO_TRANSFER_OUT(9645, "【{0}】质检单未下推分步式调出单"),
-    PO_QC_TRANSFER_OUT_ALREADY_GENERATED(9646, "【{0}】质检单【{1}】已生成分步式调出单并审核，不允许撤销质检"),
-    PO_QC_NOT_COMPLETED_REVERSE_FORBIDDEN(9647, "【{0}】质检单【{1}】尚未完成质检，不能撤销"),
-    PO_INSTOCK_PUSH_PO_RECONCILIATION_EXIST(9648, "采购入库单已生成对账记录，不支持反审核"),
-    PO_RETURN_REPLENISH_QTY_CHECK(9649, "SKU【{0}】补货数量必须大于0"),
-    PO_RETURN_DEDUCT_AMOUNT_QTY_CHECK(9650, "SKU【{0}】扣款数量必须大于0"),
-    PO_RECONCILIATION_NOT_CONFIRMED_FOR_GENERATE(9651,"单据单号【{0}】未确认，不支持生成采购对账单"),
-    PO_RECONCILIATION_ALREADY_GENERATED(9652,"单据单号【{0}】已生成采购对账单"),
-    PO_RECONCILIATION_DETAIL_DELETE_FORBIDDEN(9653,"单据【{0}】已完成对账，不支持删除对账明细"),
-    PO_RECONCILIATION_DETAIL_ALREADY_GENERATED(9654,"单据单号【{0}】已生成对账明细"),
-    PO_RECONCILIATION_REF_RECEIVE_DISAPPROVE_FORBIDDEN(9655,"单据单号【{0}】已关联对账单，无法反审核"),
-    PO_RECONCILIATION_ONLY_RECEIVED_CANCEL_ALLOWED(9656,"仅处于【已收单据】状态的对账单支持取消签收"),
-    PO_RECONCILIATION_NOT_REQUIRED_FORBIDDEN(9657,"单据单号【{0}】无需对账，不支持生成对账单"),
-    PO_INSTOCK_NOT_APPROVED_RECONCILIATION_DETAIL_FORBIDDEN(9658,"单据未审核，不支持生成待对账明细"),
-    PO_INSTOCK_QC_RETURN_RECONCILIATION_DETAIL_FORBIDDEN(9659,"质检退货单据不支持生成待对账明细"),
-    PO_RECONCILIATION_MANUAL_GENERATE_FORBIDDEN(9660,"当前单据不支持手动生成对账明细"),
-    PO_RECONCILIATION_NOT_FOUND(9661,"采购对账单不存在"),
-    PO_RECONCILIATION_DETAIL_NOT_FOUND(9662,"采购对账明细不存在"),
-    PO_RECONCILIATION_DETAIL_SUPPLIER_ORG_MISMATCH(9663,"对账单【{0}】新增对账明细的供应商【{1}】与结算组织【{2}】必须保持一致"),
-    PO_FRAMEWORK_CONTRACT_ATTACHMENT_REQUIRED(9664,"采购框架合同类型附件不能为空"),
-    PO_SUBCONTRACT_ONLY_PUSH_ONE_ORDER(9665,"请选择同一采购退货单下明细进行下推"),
-    PO_RETURN_DETAIL_NOT_EXISTS(9666,"未找到采购退货单明细"),
-    PO_RETURN_REPAIR_QTY_NOT_ALLOW_BIGGER_THAN_RETURN_QTY(9667,"SKU【{0}】委外返修数量不能大于采购退货数量"),
-    PO_REPAIR_SUBCONTRACT_ORDER_NOT_ALLOW_DISAPPROVE(9668,"返修委外订单不允许反审核"),
-    PO_RETURN_ONLY_SAME_SUPPLIER(9669,"只能选择同一供应商的采购退货订单进行下推"),
-    PO_RETURN_ONLY_APPROVED_CONFIRMED(9670,"只能选择审核通过且已确认的采购退货订单进行下推"),
-    PO_RETURN_SKU_EXECUTION_STATUS_CLOSED(9665,"采购订单【{0}】SKU【{1}】执行状态已关闭，请线下退回"),
-    PO_QC_DEFECT_INFO_INCOMPLETE(9666,"缺陷信息必须同时填写或同时不填写"),
-    PO_QC_WAIT_QC_QTY_NOT_ALLOW_LESS_THAN_ZERO(9667,"采购收货单待质检数量不允许小于0"),
-    PO_QC_DEFECT_LEVEL_DUPLICATE(9668,"缺陷等级不能重复"),
-    PO_QC_NOTICE_FINISH(9668,"【{0}】已质检完成"),
-    PO_QC_NOTICE_DETAIL_NOT_FOUND(9669,"没有找到质检通知单明细"),
-    PO_QC_QTY_NOT_ALLOW_LESS_THAN_ZERO(9670,"良品/不良品数量不允许小于0或空"),
-    PO_QC_RESULT_NOT_EMPTY(9671,"质检结果不允许为空"),
-    PO_RETURN_NOT_ALLOW_PUSH_DOWN(9672,"不同退货方式的采购退货单不允许合并下推委外订单"),
-    PO_RECONCILIATION_STATUS_NOT_CONFIRM(9673,"单据状态不是【已确认待完结】，不允许上传发票"),
-    PO_SUBCONTRACT_REPAIR_QTY_MUST_GT_ZERO(9675,"SKU【{0}】返修数量必须大于0"),
-    PO_SUBCONTRACT_REPAIR_SUB_LINE_PRICE_REQUIRED(9676,"SKU【{0}】委外返修子行价格不能为空"),
-    PO_SUBCONTRACT_REPAIR_SUB_LINE_TAX_RATE_OR_CURRENCY_REQUIRED(9677,"SKU【{0}】委外返修子行税率或币种不能为空"),
-
-    /**
-     * 采购价目表错误 信息 10000 - 10500
-     */
-    PURCHASE_PRICE_LIST_NOT_FOUND(10000,"采购价目表不存在"),
-    PURCHASE_PRICE_NOT_EXIST(10001,"采购价目表不存在"),
-    PURCHASE_PRICE_DETAIL_NOT_FOUND(10002,"未找到采购价目明细"),
-
-    PURCHASE_PRICE_CHANGE_NOT_FOUND(10003,"采购价目变更不存在"),
-    PURCHASE_PRICE_CHANGE_ALLOWED_APPROVED_ONLY(10004,"只有采购价目审核通过才能变更"),
-    PURCHASE_PRICE_CHANGE_APPROVE_STATUS_INVALID(10005,"采购调价表未审核通过不支持调价"),
-    PURCHASE_PRICE_CHANGE_ADJUST_NOT_ALLOWED(10006,"该调价表数据非最新报价数据不支持批量调价"),
-
-    PURCHASE_PRICE_QUOTE_QUERY_PARAM_REQUIRED(10007,"请输入采购报价查询条件"),
-
-    PURCHASE_PRICE_HAS_SUPPLIER_DELETE_FORBIDDEN(10008,"采购价目存在对应供应商,不能删除"),
-
-    PURCHASE_PRICE_DATE_INVALID(10009,"采购价目表SKU【{0}】失效时间不可小于生效时间"),
-    PURCHASE_PRICE_DATE_OVERLAP(10010,"采购价目表SKU【{0}】时间区间重叠"),
-
-    PURCHASE_PRICE_SUBMIT_SKU_UN_APPROVE(10011,"SKU【{0}】未审核通过，采购价目表数据不支持提交"),
-    PURCHASE_PRICE_SKU_NOT_FOUND(10012,"SKU【{0}】未找到数量【{1}】的供应商报价信息"),
-    PURCHASE_PRICE_SKU_PRICE_NOT_FOUND(10013,"sku【{0}】未找到价目表"),
-    PURCHASE_PRICE_SKU_PRICE_ZERO(10014,"SKU【{0}】价格不能为零"),
-
-    PURCHASE_PRICE_ORG_NOT_REPEAT(10015,"只有相同的采购组织可以批量变更报价"),
-
-    /**
-     * 销售订单错误 信息 10500-11000
-     */
-    SO_DELIVERY_DETAIL_SKU_NOT_EXIST(10500,"SKU【{0}】在发货通知单中未找到"),
-    SO_DELIVERY_NOTICE_NOT_EXIST(10501,"发货通知单不存在"),
-    SO_DELIVERY_SALES_ORDER_PUSH_STOCK_APPLY_QTY_EXCEEDS(10502,"销售订单【{0}】下推备货申请单SKU【{1}】数量不能超过【{2}】"),
-    SO_RETURN_PUSH_ALLOWED_SOURCE_SALES_RETURN_RECEIPT_ONLY(10503,"只有来源是【销售退货签收单】的单据可以下推【销售退货入库单】"),
-    SO_CLOSED_PRODUCT_EXISTS_CANNOT_PUSH(10504,"存在已关闭的产品,不能下推单据"),
-    SO_OUTBOUND_NOT_FOUND(10505,"销售出库单不存在"),
-    SO_RETURN_RECEIPT_ALREADY_PUSHED_REVERSE_FORBIDDEN(10506,"已下推销售退货签收单，不能反审核"),
-    SO_DEMAND_REQ_PUSHED_DELIVERY_PICKLIST_LOCKED(10507,"要货申请下推发货单后，关联的拣货单不允许修改和删除"),
-    SO_NOTICE_PUSHED_OUTBOUND_PICKLIST_LOCKED(10508,"销售通知单下推销售出库单后，拣货单不允许修改和删除"),
-    SO_PICKLIST_NOT_FOUND_FOR_SO(10509,"【{0}】未生成拣货单，不允许下推销售出库单"),
-    SO_PICKLIST_EXISTS_FORBID_VOID_DELETE(10510,"存在拣货单，不允许作废、删除或撤销该单据"),
-    SO_OUTBOUND_QTY_EXCEEDS_ORDER(10511,"SKU【{0}】的出库数量不能大于销售订单的销售数量"),
-    SO_DEMAND_REQ_ALREADY_PUSHED_DELIVERY(10512,"要货申请已生成发货单并完成处理，无需重复下推"),
-    SO_NOT_APPROVED_PUSH_OUTBOUND_FORBIDDEN(10513,"销售订单未审核，不允许下推生成出库单"),
-    SO_PICKLIST_ALREADY_EXISTS(10514,"已存在拣货单【{0}】，不允许重复生成"),
-    SO_PICKLIST_TOTAL_QTY_ZERO_FORBIDDEN(10515,"拣货数量合计不能为0"),
-    SO_PICKLIST_DETAIL_NOT_FOUND_FOR_SO(10516,"未找到销售订单【{0}】对应的拣货明细"),
-    SO_SKU_FULLY_ALLOCATED(10517,"SKU【{0}】已全部完成分货"),
-    SO_WAVE_GENERATED_SHORTAGE_AUTO(10518,"该波次已自动生成缺货记录，无需手动处理"),
-    SO_ABNORMAL_ORDER_HANDLE_ALLOWED_ONLY(10519,"只有异常单状态的发货单才允许执行异常处理操作"),
-    SO_ABNORMAL_ORDER_AUTO_DELIVERY_FORBIDDEN(10520,"待处理或异常状态的发货单不支持自动发货"),
-    SO_ABNORMAL_ORDER_AUTO_DELIVERY_FORBIDDEN_FOR_SO(10521,"销售订单【{0}】对应的发货单存在待处理或异常数据，不支持自动发货"),
-    SO_WAVE_GEN_ALLOWED_PENDING_NON_INTERCEPT(10522,"仅待处理且未处于拦截中的发货单允许生成波次"),
-    SO_WAVE_NO_AND_SKU_REQUIRED(10523,"波次号和sku不能为空"),
-    SO_WAVE_EXIST_MANAGED_AND_NORMAL_ORDER(10524,"存在托管订单与其他小包订单混合，请分开生成波次"),
-    SO_WAVE_NO_AND_BASKET_REQUIRED(10525,"波次号与篮号不能为空"),
-    SO_WAVE_NO_REQUIRED(10526,"波次号不能为空"),
-    SO_WAVE_SKU_NOT_FOUND(10527,"当前波次中不存在该SKU"),
-    SO_WAVE_SAME_WAREHOUSE_REQUIRED(10528,"仅允许相同仓库的发货单生成同一波次"),
-    SO_IN_AUTO_REPLENISH_PRINT_FORBIDDEN(10529,"单据【{0}】处于异常波次缺货自动补货处理中，不允许打印"),
-    SO_IN_PICK_OR_SUSPENDED_INTERCEPT_FORBIDDEN(10530,"单据【{0}】所属波次处于拣货中或挂起状态，不允许执行拦截操作"),
-    SO_ABNORMAL_ORDER_CANCEL_DELIVERY_INTERCEPT_FAIL(10531,"待处理或异常取消发货的数据不支持拦截失败操作"),
-    SO_ABNORMAL_ORDER_CANCEL_DELIVERY_INTERCEPT_FORBIDDEN(10532,"异常单或取消发货的数据不支持拦截操作"),
-    SO_SKU_NOT_PICKED_CANNOT_ALLOCATE(10533,"SKU尚未完成拣货，不允许执行分货操作"),
-    SO_NOTICE_PICK_QTY_EXCEEDS_DELIVERY(10534,"发货通知单【{0}】的拣货数量不能大于发货数量"),
-    SO_BUNDLE_PICK_QTY_RATIO_INVALID(10535,"组合产品【{0}】的拣货数量与BOM用量比例不一致，无法修改"),
-    SO_OUTBOUND_ALREADY_PUSHED(10536,"已下推销售出库单，不允许重复下推"),
-    SO_DEMAND_REQ_COMPLETED_PICKLIST_LOCKED(10537,"要货申请完成后，不允许修改或删除拣货单"),
-    SO_PICKLIST_GENERATED_TRANSFER_REVERSE_FORBIDDEN(10538,"由拣货单生成的移仓单不支持反审核"),
-    SO_NOTICE_ALREADY_PICKLIST_LOCKED(10539,"已生成拣货单，不允许修改发货通知单"),
-    SO_PICKLIST_PUSHED_DELIVERY_WH_MOVE_LOCKED(10540,"拣货单下推的发货单，不允许修改仓位移动单"),
-    SO_THIRD_PARTY_ORDER_MODIFY_FORBIDDEN(10541,"第三方平台来源的单据不允许修改"),
-    SO_NOTICE_APPROVED_PICKLIST_GEN_FORBIDDEN(10542,"发货通知单已审核，不允许继续生成拣货单"),
-    SO_NOTICE_APPROVED_PICKLIST_MODIFY_DELETE_FORBIDDEN(10543,"发货通知单已审核，不允许修改或删除拣货单"),
-    SO_RETURN_INSTOCK_NOT_GENERATE(10544,"退货入库单【{0}】未审核通过，不支持继续下推"),
-    SO_DELIVERY_STATUS_NOT_SUPPORT_MANUAL_SHIP_FLAG(10545,"手动标发、已发货、取消发货状态的发货单不允许再次手动标发"),
-    SO_DELIVERY_B2C_NOT_EXISTS(10546,"b2c发货单不存在"),
-    SO_DELIVERY_STATUS_NOT_ALLOW_MANUAL_DELIVERY(10547,"待处理、已发货、异常单、取消发货状态的数据不允许手动发货"),
-    SO_DELIVERY_PLATFORM_ERROR_MSG(10548,"平台发货失败，错误信息【{0}】"),
-    SO_RETURN_RECEIVE_SKU_NOT_EXIST(10549,"sku【{0}】在退货签收单中不存在"),
-    SO_PUSH_MACHINE(10550,"销售订单【{0}】SKU【{1}】已下推加工单"),
-    SO_APPROVE_ONLY_CAN_UPLOAD_PACKING(10551,"待审核的数据才可以上传装箱数据"),
-    SO_DELIVERY_ALREADY_PUSHED_NOT_UPDATE_MAPPING(10552,"已下推发货单，不允许修改发货信息"),
-    SO_B2C_DELIVERY_ALREADY_EXIST(10553,"订单【{0}】已生成发货单，不允许重复新增！"),
-    SO_INTERCEPTED_STATUS_NOT_UPDATE(10554,"订单【{0}】已发起拦截并被冻结，禁止修改状态"),
-    SO_FULLY_MANAGED_ORDER_NOT_NEED_MANUAL_SHIP(10555,"全托管订单【{0}】无需手动标发"),
-    SO_NOT_FULLY_MANAGED_ORDER_NOT_PRINT_SKU_BARCODE(10556,"订单【{0}】不是全托管订单，禁止打印SKU条码"),
-    SO_FULLY_MANAGED_AND_B2C_NOT_PRINT_TOGETHER(10557,"托管订单与B2C订单不支持同时打印"),
-    SO_B2C_DELIVERY_STATUS_NOT_ALLOW_MANUAL_SHIP_FLAG(10558,"发货单【{0}】处于手动标发或已发货状态，不允许再次手动标发"),
-    SO_MANUAL_SHIP_ALLOWED_APPROVED_PENDING_ONLY(10559,"仅审核通过且待发货的订单允许执行手动标发操作"),
-    SO_DISTRIBUTION_MANUAL_SHIP_ALLOWED(10560,"仅配货中且已生成渠道与物流号的订单允许手动标发"),
-    SO_STATUS_NOT_WAVE_CANNOT_PRINT_PICKING(10561,"单据【{0}】未生成波次，不允许操作"),
-    SO_CONTAIN_NON_FULLY_MANAGED_ORDER_NOT_PRINT_BARCODE(10562,"存在非全托管订单不能打印sku条码"),
-    SO_DELIVERY_NOTICE_WAREHOUSE_REQUIRED(10563,"发货通知单【{0}】配置的发货仓库不能为空"),
-    SO_B2C_SHIPMENT_WAREHOUSE_REQUIRED(10564,"B2C发货单【{0}】配置的发货仓库不能为空"),
-    SO_OUTSTOCK_BILL_COST_NOT_DISAPPROVE(10565,"销售出库单【{0}】已生成物流费用单且已确认/暂估确认，不允许反审核"),
-    SO_OUTBOUND_RECORD_NOT_FOUND(10566,"销售订单出库记录不存在"),
-    SO_DELIVERY_NOTICE_RECORD_NOT_FOUND(10567,"装箱记录不存在"),
-    SO_B2C_DELIVERY_FINISH_PRINT_ONLY(10568,"发货单【{0}】仅在生成波次或拣货中状态下支持设置为打印完成"),
-    SO_B2C_DELIVERY_NOT_FINISH_PRINT_ONLY(10569,"发货单【{0}】仅在生成波次或拣货中状态下支持取消完成打印"),
-    SO_B2B_ORDER_PACK_ONLY(10570,"仅B2B订单类型的销售单允许执行装箱操作"),
-    SO_UNPICKED_QUANTITY_SHORTAGE(10571,"未拣货数量不足，无法生成拣货单，请重新选择"),
-    SO_DELIVERY_NOTICE_DETAIL_NOT_EXIST(10572,"销售通知单明细未找到"),
-    SO_DETAIL_NOT_EXIST(10573,"销售订单明细未找到"),
-    SO_OUTBOUND_B2B_REQUIRED(10574,"仅未作废的B2B订单类型销售出库单允许执行该操作"),
-    SO_DELIVERY_REQUIRED_PENDING_NOT_APPROVED(10575,"仅未作废且未审核通过的发货单允许执行该操作"),
-    SO_TRANSFER_NOT_RETRY_OUTSTOCK(10576,"发货单已通过调拨完成出库，不允许重新出库"),
-    SO_OUTSTOCK_UPDATE_ALLOWED_WAIT_NOTIFY_ONLY(10577,"仅待通知出库状态的单据允许修改为待通知出库"),
-    SO_OUTSTOCK_PUSH_ALLOWED_FLAG_ONLY(10578,"  - 仅标记为允许出库的通知单才允许下推销售出库单"),
-    SO_NOT_FOUND(10579,"销售订单不存在"),
-    SO_OUTBOUND_PUSH_REVERSE_FORBIDDEN(10580,"销售订单已下推销售出库单，不支持反审核"),
-    SO_DELIVERY_RETURN_QTY_EXCEEDS_OUTBOUND(10581,"退货数量不能大于已出库数量"),
-    SO_DELIVERY_QTY_EXCEEDS_SALES(10582,"sku【{0}】发货总数量不能大于销售数量"),
-    SO_DELIVERY_QTY_EXCEEDS_FROZEN(10582,"sku【{0}】发货数量不能大于锁定数量"),
-    SO_DELIVERY_RETURN_NOTICE_PUSH_REVERSE_FORBIDDEN(10583,"销售退货通知单已下推，不支持反审核"),
-    SO_DELIVERY_RETURN_SIGN_PUSH_REVERSE_FORBIDDEN(10584,"销售退货签收单已下推，不支持反审核"),
-    SO_DELIVERY_RETURN_ORDER_APPROVED_REQUIRED_NOTICE(10585,"仅已审核的销售退货订单才允许下推销售退货通知单"),
-    SO_DETAIL_NOT_FOUND(10586,"销售订单明细不存在"),
-    SO_DELETE_FORBIDDEN(10587,"仅待提交或暂存状态的销售订单允许删除"),
-    SO_DELIVERY_RETURN_SIGN_QTY_EXCEEDS(10588,"sku【{0}】签收数量不能大于退货数量"),
-    SO_DELIVERY_RETURN_NOTICE_APPROVED_REQUIRED_PUSH(10589,"仅已审核的退货通知单才允许下推销售退货单"),
-    SO_EXPORT_CONTRACT_INVOICE_ALLOWED(10590,"未作废的待提交、审核中或已审核状态支持导出合同或发票"),
-    SO_DELIVERY_RETURN_ORDER_SKU_NOT_FOUND(10591,"SKU【{0}】在销售退货单中不存在"),
-    SO_DELIVERY_RETURN_ORDER_QTY_EXCEEDS(10592,"SKU【{0}】退货数量不能大于退货单数量"),
-    SO_NOT_APPROVED_CANNOT_PUSH_STOCKREQ(10593,"销售订单【{0}】未审核完成，不支持下推备货申请单"),
-    SO_DELIVERY_RETURN_ORDER_INBOUND_QTY_EXCEEDS(10594,"SKU【{0}】入库数量不能大于签收数量"),
-    SO_DELIVERY_QTY_GT_REQUIRED_QTY(10595,"实际发货数量不能大于应发数量"),
-    SO_DELIVERY_QTY_GT_AVAILABLE_QTY(10596,"应发数量不能大于可出库数量"),
-    SO_DELIVERY_OUTBOUND_DETAIL_REQUIRED(10597,"销售出库单明细不能为空"),
-    SO_DELIVERY_QTY_GT_STOCK(10598,"应发数量不能大于库存数量"),
-    SO_DELIVERY_RETURN_SIGN_APPROVED_REQUIRED_PUSH_INBOUND(10599,"仅已审核的销售退货签收单才允许下推退货入库单"),
-    SO_CHANGE_APPROVED_REQUIRED(10600,"仅已审核的销售订单允许发起变更"),
-    SO_CHANGE_NOT_FOUND(10601,"销售订单变更单不存在"),
-    SO_CHANGE_DETAIL_NOT_FOUND(10602,"销售订单变更明细不存在"),
-    SO_ASSOCIATED_DOC_DELETE_FORBIDDEN(10603,"单据【{0}】已生成下游单据，无法删除"),
-    SO_CHANGE_CONFLICT(10604,"存在多个销售订单变更记录，请重新选择"),
-    SO_ASSOCIATED_DOC_REVERSE_FORBIDDEN(10605,"销售订单存在关联单据，不支持反审核"),
-    SO_CHANGE_IN_PROGRESS(10606,"存在销售订单正在变更中，无法下推单据"),
-    SO_APPROVED_REQUIRED_PUSH(10607,"仅审核通过的销售订单允许下推单据"),
-    SO_NOT_VOID_REQUIRED_PUSH(10608,"仅未作废的销售订单允许下推单据"),
-    SO_DELIVERY_RETURN_SIGN_TOTAL_QTY_EXCEEDS(10609,"SKU【{0}】实退总数量不能大于签收数量"),
-    SO_CHANGE_IN_REVERSE_FORBIDDEN(10610,"销售订单处于变更中，不支持反审核"),
-    SO_CHANGE_QTY_LT_DELIVERY_NOTICE(10611,"销售订单变更数量不能小于已下推的发货通知数量"),
-    SO_B2C_DELIVERY_K3_CLOUD_OUTBOUND_WAREHOUSE_NOT_FOUND(10612,"同步金蝶B2C销售出库单时未找到对应仓库【{0}】"),
-    SO_B2C_DELIVERY_K3_CLOUD_RETURN_WAREHOUSE_NOT_FOUND(10613,"同步金蝶B2C销售退货单未找到对应的仓库【{0}】"),
-    SO_B2C_DELIVERY_K3_CLOUD_RETURN_SKU_NOT_FOUND(10614,"同步金蝶B2C销售退货单时未找到对应SKU【{0}】"),
-    SO_DEMAND_DATE_GT_ORDER_DATE(10615,"要货日期必须晚于单据日期"),
-    SO_B2C_NOT_FOUND(10616,"B2C销售订单不存在"),
-    SO_B2C_WILDBERRIES_NOT_ALLOWED(10617,"WB平台订单【{0}】不支持拆分或合并"),
-    SO_B2C_PLATFORM_SHOP_REQUIRED(10618,"B2C销售订单【{0}】平台和店铺不能为空"),
-    SO_B2C_LOGISTICS_NOT_FOUND(10619,"B2C销售订单物流信息不存在"),
-    SO_B2C_RECEIVER_NOT_FOUND(10620,"B2C销售订单买家信息不存在"),
-    SO_B2C_EXTEND_NOT_FOUND(10621,"B2C销售订单扩展信息不存在"),
-    SO_B2C_DETAIL_NOT_FOUND(10622,"B2C销售订单明细不存在"),
-    SO_B2C_DELIVERY_WAREHOUSE_CONFLICT(10623,"B2C销售订单【{0}】存在多个发货仓库，不支持提交发货"),
-    SO_B2C_SKU_INVENTORY_NOT_FOUND(10624,"B2C销售订单【{0}】SKU【{1}】在仓库【{2}】中未找到可用库存"),
-    SO_B2C_MERGE_PLATFORM_CONFLICT(10625,"合并订单要求销售平台一致"),
-    SO_B2C_MERGE_SHOP_CONFLICT(10626,"合并订单要求店铺一致"),
-    SO_B2C_MERGE_CURRENCY_CONFLICT(10627,"合并订单要求币种一致"),
-    SO_B2C_MERGE_LOGISTICS_METHOD_CONFLICT(10628,"合并订单要求物流方式一致"),
-    SO_B2C_MERGE_BUYER_CONFLICT(10629,"合并订单要求买家一致"),
-    SO_B2C_MERGE_RECEIVER_CONFLICT(10630,"合并订单要求收货人一致"),
-    SO_B2C_MERGE_ADDRESS_CONFLICT(10631,"合并订单要求收货地址一致"),
-    SO_B2C_MERGE_WAREHOUSE_CONFLICT(10632,"合并订单要求发货仓库一致"),
-    SO_B2C_CANCEL_MERGE_NOT_SUPPORTED(10633,"订单【{0}】非合并订单，不支持取消合并"),
-    SO_B2C_MERGE_NOT_SPLIT(10634,"订单【{0}】为合并订单，不支持拆分"),
-    SO_B2C_SPLIT_QTY_EXCEEDS(10635,"订单【{0}】SKU【{1}】拆分数量【{2}】不能大于原数量【{3}】"),
-    SO_B2C_NOT_SPLIT_ORDER(10636,"B2C销售订单【{0}】非拆分后订单，不支持取消拆分"),
-    SO_B2C_SPLIT_ORDER_REQUIRED(10637,"请先选择需要拆分的订单"),
-    SO_B2C_CATEGORY_NOT_FOUND(10638,"B2C销售订单分类信息不存在"),
-    SO_B2C_CANCEL_NOT_SUPPORTED(10639,"单据【{0}】不支持取消【{1}】操作"),
-    SO_B2C_REVERSE_VOID_FORBIDDEN(10640,"单据【{0}】未作废，不支持反作废"),
-    SO_B2C_MERGE_SIZE_REQUIRED(10641,"请至少选择两条订单进行合并"),
-    SO_B2C_CHILD_NOT_FOUND(10642,"B2C销售订单【{0}】未找到拆分后的子订单"),
-    SO_B2C_LOGISTICS_CODE_ONLY_DISTRIBUTION(10643,"B2C销售订单【{0}】仅在配货中状态支持获取物流单号"),
-    SO_B2C_SUBMIT_DELIVERY_NOT_ALLOWED(10644,"B2C销售订单【{0}】仅在配货中状态支持提交发货"),
-    SO_B2C_DISTRIBUTION_STATUS_REQUIRED(10645,"B2C销售订单【{0}】仅支持待配货或配货中状态"),
-    SO_B2C_CANCEL_MERGE_STATUS_LIMIT(10646,"B2C销售订单【{0}】仅待提交或审核不通过状态支持取消合并"),
-    SO_B2C_LOGISTICS_METHOD_NOT_FOUND(10647,"B2C销售订单物流方式不存在"),
-    SO_B2C_CUSTOMER_NOT_FOUND(10648,"B2C销售客户不存在"),
-    SO_B2C_FINANCE_NOT_FOUND(10649,"B2C销售订单财务信息不存在"),
-    SO_B2C_NOT_NEED_MERGE(10650,"销售订单【{0}】无需合并"),
-    SO_NOT_APPROVED_PUSH_FORBIDDEN(10651,"销售订单【{0}】未审核完成，不支持下推"),
-    SO_B2C_PLATFORM_ORDER_VOIDED(10652,"全托管订单【{0}】平台状态为已作废，不支持提交发货"),
-    SO_B2C_ORDER_VOIDED(10653,"订单【{0}】已作废，不支持提交发货"),
-    SO_B2C_LOGISTICS_CHANNEL_REQUIRED(10654,"B2C销售订单【{0}】物流渠道不能为空"),
-    SO_B2C_LOGISTICS_CHANNEL_AND_NO_REQUIRED(10655,"B2C销售订单【{0}】物流渠道和物流单号不能为空"),
-    SO_B2C_UPDATE_CATEGORY_FORBIDDEN(10656,"冻结中或已作废的订单不支持更新分类"),
-    SO_B2C_UPDATE_REMARK_FORBIDDEN(10657,"已作废的订单不支持更新备注"),
-    SO_B2C_NOT_APPROVED_DISTRIBUTION_FORBIDDEN(10658,"B2C销售订单【{0}】未审核，不支持配货"),
-    SO_B2C_SUBMIT_FORBIDDEN_WHEN_FROZEN_OR_VOIDED(10659,"B2C销售订单【{0}】冻结中或已作废，不支持提交"),
-    SO_B2C_SPLIT_FORBIDDEN_BY_STATUS(10660,"冻结中、已作废或待发货状态不支持拆分"),
-    SO_B2C_MERGE_FORBIDDEN_BY_STATUS(10661,"冻结中、已作废、待发货或已发货状态不支持合并"),
-    SO_B2C_SHOPEE_SPLIT_FORBIDDEN(10662,"B2C销售订单【{0}】为Shopee订单，不支持拆分"),
-    SO_B2C_MERCADO_SPLIT_FORBIDDEN(10663,"B2C销售订单【{0}】为Mercado订单，不支持拆分"),
-    SO_B2C_MERGE_FBA_FORBIDDEN(10664,"B2C销售订单【{0}】为FBA订单，不支持合并"),
-    SO_B2C_MERGE_CAINIAO_FORBIDDEN(10665,"B2C销售订单【{0}】为菜鸟官方仓订单，不支持合并"),
-    SO_B2C_MERGE_TAX_ORDER_FORBIDDEN(10666,"B2C销售订单【{0}】为速卖通已税订单，不支持合并"),
-    SO_B2C_SHOPEE_MERGE_FORBIDDEN(10667,"B2C销售订单【{0}】为shopee订单不支持合并"),
-    SO_B2C_MERCADO_MERGE_FORBIDDEN(10668,"B2C销售订单【{0}】为mercado订单不支持合并"),
-    SO_B2C_TIKTOK_MERGE_FORBIDDEN(10669,"B2C销售订单【{0}】为TikTok订单不支持合并"),
-    SO_B2C_PAYMENT_REQUIRED(10670,"B2C销售订单【{0}】未完成付款，不支持任何操作"),
-    SO_DELIVERY_WAREHOUSE_NOT_FOUND(10671,"销售订单发货仓库不存在，不支持提交发货"),
-    SO_B2C_ORDER_FETCH_FAILED(10672,"订单拉取失败，请刷新订单后重试"),
-    SO_B2C_WAREHOUSE_NOT_FOUND(10673,"B2C销售订单发货仓库不存在"),
-    SO_B2C_ALREADY_MERGED_OR_SPLIT(10674,"B2C销售订单【{0}】已合并或已拆分，不支持再次合并"),
-    SO_DELIVERY_STATUS_REQUIRED_FOR_INTERCEPT(10675,"仅待发货状态的订单支持发起拦截"),
-    SO_DELIVERY_ALREADY_INTERCEPTED(10676,"订单已取消或已被拦截"),
-    SO_CHANGE_ALREADY_TERMINATED(10677,"销售订单已存在终止记录，不支持再次终止"),
-    SO_PUSH_MACHINE_DATA_NOT_FOUND(10678,"未找到可下推加工单的销售订单数据"),
-    SO_B2C_REVERSE_APPROVE_STATUS_LIMIT(10679,"仅待配货或配货中状态的订单支持反审核"),
-    SO_B2C_APPROVED_REQUIRED_FOR_DELIVERY(10680,"仅审核通过的订单支持提交发货"),
-    SO_OUTBOUND_EXISTS_MAPPING_UPDATE_FORBIDDEN(10681,"已生成销售出库单，不支持修改SKU映射关系"),
-    SO_DELIVERY_EXISTS_MAPPING_UPDATE_FORBIDDEN(10682,"已生成发货单，不支持修改SKU映射关系"),
-    SO_B2C_SOURCE_ONLY_MAPPING_UPDATE_ALLOWED(10683,"非平台来源的B2C销售订单不支持修改SKU映射关系"),
-    SO_B2C_DISTRIBUTION_DECLARE_STATUS_INVALID(10684,"B2C销售订单【{0}】仅支持已审核且处于配货中的订单操作"),
-    SO_B2C_DECLARE_ALREADY_EXISTS(10685,"B2C销售订单【{0}】已存在申报信息，不再执行规则匹配"),
-    SO_B2C_DECLARE_INFO_NOT_FOUND(10686,"销售订单【{0}】申报信息不存在"),
-    SO_B2C_TIKTOK_SPLIT_FORBIDDEN_WITH_REASON(10687,"B2C销售订单【{0}】在TikTok平台不允许拆分，平台提示【{1}】"),
-    SO_B2C_TIKTOK_SPLIT_SKU_FORBIDDEN(10688,"订单【{0}】SKU【{1}】在TikTok平台中不允许把一个sku拆分成多个单据分开发货"),
-    SO_B2C_TIKTOK_SPLIT_FAILED(10689,"订单【{0}】TikTok拆分订单失败"),
-    SO_B2C_SPLIT_BY_WAREHOUSE_FORBIDDEN(10690,"订单明细仓库一致，无法按仓库维度拆分"),
-    SO_B2C_LOGISTICS_PLATFORM_REQUIRED(10691,"B2C销售订单【{0}】物流下单平台不能为空"),
-    SO_B2C_MULTI_CHANNEL_FORBIDDEN(10692,"B2C销售订单【{0}】不支持设置多个销售渠道"),
-    SO_B2C_SPLIT_KOL_FORBIDDEN(10727,"销售订单由寄样申请单生成，无法拆单"),
-    SO_DETAIL_SKU_ALL_EMPTY_FORBIDDEN(10693,"销售订单【{0}】明细中sku不能全部为空"),
-    SO_REPLACE_SKU_STATUS_INVALID(10694,"销售订单【{0}】只能在待提交、审核不通过或已发货状态更换发货SKU"),
-    SO_B2B_SALESMAN_CHANGE(10695,"b2b客户销售员变更单" ),
-    SO_REFUND_ORDER_DETAIL(10696,"退款订单明细"),
-    SO_PLATFORM_ORDER_MERGE_TOO_LONG(10697,"合并后的平台订单号长度过长"),
-    SO_DELIVERY_AUTO_SUBMIT_OPTION_LIMIT(10698,"仅允许选择一个自动提交发货选项"),
-    SO_OUTBOUND_ALREADY_GENERATED_TERMINATE_FORBIDDEN(10699,"【{0}】已生成销售出库单，不支持终止"),
-    SO_PICKLIST_NOT_PROCESSED_FORBIDDEN(10700,"拣货单未处理，无法生成"),
-    SO_RETURN_NOTICE_SKU_NOT_FOUND(10701,"sku【{0}】在退货通知单中不存在"),
-    SO_RETURN_SIGN_SKU_NOT_FOUND(10702,"sku【{0}】在退货签收单中不存在"),
-    SO_RETURN_QTY_EXCEEDS_EXPECTED(10703,"sku【{0}】实退总数量不能大于应退数量"),
-    SO_RETURN_NOTICE_DETAIL_REQUIRED(10704,"退货通知单明细不能为空"),
-    SO_RETURN_SIGN_DETAIL_REQUIRED(10705,"退货签收单明细不能为空"),
-    SO_RETURN_INBOUND_DETAIL_REQUIRED(10706,"退货入库单明细不能为空"),
-    SO_PRICE_EXPIRE_BEFORE_EFFECTIVE(10707,"销售价目表中SKU【{0}】的失效时间不能早于生效时间"),
-    SO_PRICE_DATE_RANGE_OVERLAP(10708,"销售价目表中SKU【{0}】的价格时间区间存在重叠"),
-    SO_PRICE_NOT_FOUND(10709,"未找到销售价目表数据"),
-    SO_PRICE_DETAIL_NOT_FOUND(10710,"未找到销售价目表明细"),
-    SO_ORG_NOT_REPEAT(10711,"只有相同的销售组织可以批量变更报价"),
-    SO_PRICE_INTERVAL_INVALID(10712,"SKU【{0}】价格区间起始值不能大于或等于结束值"),
-    SO_ALREADY_REF_DOWNSTREAM_BILL_FORBIDDEN(10713,"销售订单已存在关联单据【{0}】，不支持该操作"),
-    SO_RETURN_DETAIL_SKU_NOT_FOUND(10714,"SKU在销售退货单中未找到"),
-    SO_B2C_ADD_GIFT_STATUS_FORBIDDEN(10715,"非待提交或审核不通过状态的订单不允许添加赠品"),
-    SO_WDT_SALES_RAW_TRADE_PUSHSELF(10716,"ERP原始订单推送旺店通结果：新增订单的数量:【{0}】，更新订单的数量:【{1}】，错误信息:【{2}】"),
-    SO_LOGISTICS_WAYBILL_NOT_OBTAINED(92118,"【{0}】面单未获取，无法打印，请获取后操作！"),
-    SO_THIRD_DELIVERY_INTERCEPT_ONLY_WAIT_SHIPPED(92248,"只有待发货、异常订单允许发货拦截"),
-    SO_THIRD_DELIVERY_MANUAL_ONLY_B2B_DISABLED(92248,"只有未开启B2B发货的允许手动发货"),
-    SO_THIRD_DELIVERY_ONLY_WAIT_SHIPPED(92248,"只有待发货状态的允许发货"),
-    SO_THIRD_DELIVERY_GENERATE_OUTSTOCK_ONLY_SHIPPED(92248,"只有已发货状态的允许生成销售出库单"),
-    SO_THIRD_DELIVERY_DELETE_ONLY_FAILED_OR_CANCELED(92248,"只有创建失败、取消发货允许删除"),
-    PO_DELIVERY_SKU_UPDATE_FORBIDDEN(92202,"已下推发货通知单的明细，不能修改发货sku"),
-    PO_BOX_QTY_LESS_THAN_NOTICE_QTY(92203,"发货箱数不能少于已下推的发货通知单数量"),
-    PO_BOX_PER_QTY_GT_ONE_SO_OUTBOUND_FORBIDDEN(92205,"单箱数量>1的销售订单不能下推销售出库单"),
-    PO_RECONCILIATION_DETAIL_REF_NOT_FOUND(96004,"对账单明细不存在"),
-    PO_RECONCILIATION_DETAIL_STATUS_UPDATE_FORBIDDEN(94106,"仅待对账或无需对账数据允许状态更新"),
-    PO_RECONCILIATION_DETAIL_AUTO_UPDATE_FORBIDDEN(94107,"单号【{0}】无需对账不支持自动更新对账状态"),
-    PO_RECONCILIATION_DETAIL_QTY_EXCEEDS_AVAILABLE(94108,"单号【{0}】SKU【{1}】本期对账数量{2}超出可对账数量{3}"),
-    PO_RECONCILIATION_DETAIL_ALREADY_IN_RECONCILIATION(94109,"单号【{0}】SKU【{1}】已加入对账单，不允许重复添加"),
-    PO_RECONCILIATION_REMARK_REQUIRED(96009,"对账单备注不能为空"),
-    SO_B2C_GET_EXCHANGE_RATE_FAILED(10718,"获取汇率异常-汇率获取失败，请重新获取"),
-    SO_RETURN_EXCHANGE_RATE_REQUIRED(10719,"销售订单明细【{0}】汇率为空，无法计算本位币金额"),
-    SO_RETURN_RECEIVE_QTY_INVALID(10720,"sku【{0}】签收数量异常，实际值：{1}"),
-    SO_RETURN_RECEIVE_AMOUNT_MISSING(10721,"sku【{0}】签收金额数据缺失"),
-    SO_B2C_NOT_OUTBOUND_DETAIL_WAREHOUSE_UPDATE_FAILED(10753,"不出库发货失败：销售订单明细仓库未成功落库，请刷新后重试"),
-    SO_B2C_NOT_OUTBOUND_LOGISTICS_UPDATE_FAILED(10754,"不出库发货失败：销售订单物流信息更新失败，请刷新后重试"),
-    SO_B2C_NOT_OUTBOUND_STATUS_UPDATE_FAILED(10755,"不出库发货失败：销售订单状态更新失败，请刷新后重试"),
-    CUSTOMER_ADDRESS_NOT_MATCH(94108,"未匹配到客户地址，客户id：{0}，收货地址：{1}"),
-
-    /**
-     * 销售订单错误信息 11000-11500
-     */
-    WH_MACHINE_EXIST_PURCHASE_RETURN(11000,"加工单【{0}】已存在下推采购退货单，不支持反审核"),
-    WH_LOCATION_REQUIRED(11001,"仓库【{0}】下必须配置至少一个仓位，仓位不能为空"),
-    WH_TRANSFER_DIRECT_ALREADY_PUSHED_REVERSE_FORBIDDEN(11002,"【{0}】已存在下推的直接调拨单，不允许执行反审核操作"),
-    WH_TRANSFER_IN_OUT_WAREHOUSE_MUST_DIFFER(11003,"【{0}】调入仓库和调出仓库不能是同一仓库"),
-    WH_TRANSFER_MB_UPDATE_NOT_ALLOWED(11004,"马帮直接调拨单不允许修改"),
-    WH_K3_CLOUD_WAREHOUSE_CODE_EXISTS(11005,"金蝶仓库编号已存在，不允许重复维护"),
-    WH_REQUIRED(11006,"仓库不能为空，请先选择仓库"),
-    WH_NOT_FOUND(11007,"未找到对应的仓库信息"),
-    WH_STOCK_RULE_WAREHOUSE_CONFIG_ERROR(11008,"库存交易规则的仓库配置错误，请联系系统管理员"),
-    WH_STOCK_RULE_BIZ_TYPE_ERROR(11009,"库存交易规则未正确配置业务类型【{0}】，请联系系统管理员"),
-    WH_STOCK_INSUFFICIENT(11010,"库存不足，SKU:[{0}]，仓库:[{1}]，仓位:[{2}]，库存状态:[{3}]，当前库存[{4}]，交易数量[{5}]"),
-    WH_STOCK_RULE_STATUS_CONFIG_ERROR(11011,"库存交易规则的库存状态配置错误，请联系系统管理员"),
-    WH_STOCK_RULE_TX_TYPE_ERROR(11012,"库存交易规则的交易类型配置错误，请联系系统管理员"),
-    WH_STOCK_TRANSFER_SRC_DEST_SAME(11013,"库存交易的当前仓与目的仓不能为同一仓库"),
-    WH_STOCK_TX_NOT_FOUND_OR_REVERSED(11014,"库存交易流水不存在或已反审核，无法再次执行反审核"),
-    WH_TRANSFER_APPLY_NOT_FOUND(11015,"未找到调拨申请单"),
-    WH_TRANSFER_APPLY_DETAIL_NOT_FOUND(11016,"未找到调拨申请明细"),
-    WH_TRANSFER_APPLY_ALREADY_PUSHED_DIRECT_REVERSE_FORBIDDEN(11017,"调拨申请单已下推直接调拨单，不支持反审核"),
-    WH_TRANSFER_APPLY_ALREADY_PUSHED_STEP_REVERSE_FORBIDDEN(11018,"调拨申请单已下推分步式调出单，不支持反审核"),
-    WH_TRANSFER_DIRECT_NOT_FOUND(11019,"未找到直接调拨单"),
-    WH_TRANSFER_DIRECT_DETAIL_NOT_FOUND(11020,"未找到直接调拨明细"),
-    WH_TRANSFER_DIRECTION_NOT_FOUND(11021,"未找到调拨方向"),
-    WH_TRANSFER_APPLY_QTY_EXCEEDS(11022,"调拨申请单【{0}】SKU【{1}】调拨数量不能超过【{2}】"),
-    WH_TRANSFER_APPLY_ALREADY_COMPLETED_DIRECT(11023,"调拨申请单【{0}】中SKU【{1}】的直接调拨已完成"),
-    WH_SUBCONTRACT_PROCESS_ORDER_NOT_FOUND(11024,"未找到加工单"),
-    WH_SUBCONTRACT_PROCESS_ORDER_DETAIL_NOT_FOUND(11025,"未找到加工单明细"),
-    WH_TRANSFER_APPLY_ALREADY_COMPLETED_STEP_OUT(11026,"调拨申请单【{0}】中SKU【{1}】的分步式调出已全部完成"),
-    WH_SUBCONTRACT_PROCESS_ORDER_CHILD_DETAIL_NOT_FOUND(11027,"未找到加工单子件明细"),
-    WH_SUBCONTRACT_PROCESS_CHILD_QTY_NOT_MATCH(11028,"第【{0}】条产品明细中，SKU【{1}】子件数量合计应等于【{2}】"),
-    WH_OTHER_INBOUND_NOT_FOUND(11029,"未找到其他入库单"),
-    WH_OTHER_INBOUND_DETAIL_NOT_FOUND(11030,"未找到其他入库单明细"),
-    WH_OTHER_OUTBOUND_NOT_FOUND(11031,"未找到其他出库单"),
-    WH_OTHER_OUTBOUND_DETAIL_NOT_FOUND(11032,"未找到其他出库单明细"),
-    WH_OTHER_OUTBOUND_CUSTOMER_NOT_FOUND(11033,"未找到其他出库单对应的客户信息"),
-    WH_TRANSFER_APPLY_APPROVED_ONLY_CAN_PUSH(11034,"仅已审核的调拨申请单支持下推单据"),
-    WH_TRANSFER_IN_QTY_EXCEEDS_OUT_QTY(11035,"调入数量不能大于调出数量"),
-    WH_TRANSFER_INBOUND_NOT_FOUND(11036,"未找到分步式调入单"),
-    WH_TRANSFER_OUTBOUND_NOT_FOUND(11037,"未找到分步式调出单"),
-    WH_TRANSFER_OUT_WAREHOUSE_IMMUTABLE(11038,"调出仓库不允许修改"),
-    WH_TRANSFER_IN_QTY_EXCEEDS_PLAN(11039,"调入数量+途损数量 不能超过计划调入数量"),
-    WH_SKU_STOCK_INSUFFICIENT(11040,"sku【{0}】可用库存数不足，请调整数量"),
-    WH_K3_CLOUD_WAREHOUSE_CODE_NOT_FOUND(11041,"未找到仓库对应的金蝶编号【{0}】"),
-    WH_TRANSFER_ALREADY_EXISTS(11042,"ERP中已存在直接调拨单【{0}】"),
-    WH_RETURN_QTY_EXCEEDS_PENDING_QC(11043,"【{0}】的退货数量不能大于待检库存数量"),
-    WH_LOCATION_DEFAULT_STAGING_NOT_FOUND(11044,"仓库对应的默认暂存库位不存在，请联系管理员维护"),
-    WH_LOCATION_STAGING_NOT_FOUND(11045,"仓库【{0}】对应的默认暂存库位不存在"),
-    WH_BIN_NOT_AVAILABLE(11046,"暂无可用仓位，请检查仓位配置"),
-    WH_REF_LOCATION_NOT_FOUND(11047,"仓库【{0}】下未找到有效仓位【{1}】"),
-    WH_STOCKTAKING_TASK_STARTED(11048,"盘点任务已开始, 无法反审核"),
-    WH_LOCATION_IS_NULL(11049,"仓位不能为空"),
-    WH_AREA_IS_NULL(11050,"库区不能为空"),
-    WH_STOCK_FREEZE_NOT_ALLOW(11051,"仓库【{0}】、库位【{1}】、SKU【{2}】、库存状态【{3}】存在冻结库存【{4}】，当前不允许操作"),
-    WH_NOT_EXIST_ORG(11052,"仓库【{0}】未关联库存组织"),
-    WH_STOCKTAKING_TASK_EXIST(11053,"仓库【{0}】、仓位【{1}】、SKU【{2}】已存在盘点任务"),
-    WH_LOCATION_MOVE_DETAIL_SAVE_FAILED(11054,"仓位移动明细单保存失败"),
-    WH_LOCATION_MOVE_QTY_EXCEEDS_AVAILABLE(11055,"SKU【{0}】仓位移动数量不能大于可用库存数量"),
-    WH_LOCATION_MOVE_FROZEN_QTY_EXCEEDS(11056,"sku【{0}】仓位移动数量不能大于冻结库存数量"),
-    WH_CURRENT_TARGET_WAREHOUSE_MUST_SAME(11057,"仓位移动的当前仓与目的仓必须为同一仓库"),
-    WH_INV_CLOSED(11058,"库存已关账，不允许操作【{0}】之前的单据"),
-    WH_SUBCONTRACT_MACHINE_WAREHOUSE_ORG_DIFF(11059,"加工单子件【{0}】仓库【{1}】不属于库存组织【{2}】"),
-    WH_STOCKTAKING_DIFF_QTY_NOT_ZERO(11060,"盘点差异数量不能为0"),
-    WH_PROFIT_DIFF_GREATER_ZERO_REQUIRED(11061,"盘盈单差异数量必须大于0"),
-    WH_LOSS_DIFF_LESS_ZERO_REQUIRED(11062,"盘亏单差异数量必须小于0"),
-    WH_ORG_WAREHOUSE_MISMATCH(11063,"仓库所属组织与当前操作组织不匹配"),
-    WH_DISABLED(11064,"仓库【{0}】未审核或已被禁用，无法进行盘点"),
-    WH_AREA_LOCATION_DISABLED(11065,"仓库【{0}】、库区【{1}】、仓位【{2}】未审核或已禁用，无法进行盘点"),
-    WH_SUBCONTRACT_GENERATE_MACHINE_FOR_COMBINATION_ONLY(11066,"只有组合SKU允许下推加工单"),
-    WH_SUBCONTRACT_WAIT_SUBMIT_GENERATE_MACHINE_ONLY(11067,"只有单据为待审核状态允许下推加工单"),
-    WH_SUBCONTRACT_MACHINE_ALREADY_GENERATED(11068,"已下推加工单"),
-    WH_GENERATE_TRANSFER_OUT_FAILED(11069,"生成直接调拨单失败!"),
-    WH_NOT_MATCHED(11070,"请先在系统中匹配并启用对应的仓库"),
-    WH_ONWAY_NOT_EXIST(11071,"在途归属仓库不存在"),
-    WH_SHOP_INFO_EXIST_NOT_DISAPPROVE(11072,"仓库已绑定店铺【{0}】，不允许反审核"),
-    WH_OPEN_STATUS_OPEN_TIME_REQUIRED(11073,"仓库状态为启用时，启用日期不能为空"),
-    WH_OVERSEAS_INBOUND_DETAIL_NOT_EXIST(11074,"海外仓入库单详情不存在"),
-    WH_OVERSEAS_INBOUND_NOT_EXIST(11075,"海外仓入库单不存在"),
-    WH_OVERSEAS_INBOUND_NOT_CANCEL(11076,"仅待提交状态的海外仓入库单支持取消"),
-    WH_OVERSEAS_INBOUND_NOT_DELETE(11077,"仅已取消状态的海外仓入库单支持删除"),
-    WH_OVERSEAS_INTERFACE_EXCEPTION(11078,"调用第三方仓接口异常"),
-    WH_OVERSEAS_INBOUND_EXIST_NOT_UPDATE(11079,"已下推海外仓入库单【{0}】，不允许修改删除装箱数据"),
-    WH_OVERSEAS_PROVIDER_NOT_FOUND(11080,"未查询到海外仓服务商信息"),
-    WH_OVERSEAS_PROVIDER_NOT_AUTH(11081,"海外仓服务商尚未授权"),
-    WH_INBOUND_EXIST_NOT_REPEAT(11082,"已下推入库单【{0}】，不允许重复操作"),
-    WH_ONWAY_NOT_CONFIGURED(11083,"目的仓没有配置在途归属仓库，请在【仓库列表】配置后再审核"),
-    WH_CODE_XGWJ_FBA_NOT_EXIST(11084,"未找到仓库为【FBA在途仓-xgwj-fba】的仓库和仓库编码"),
-    WH_OVERSEAS_INBOUND_NOT_FOUND_FOR_APPROVE(11085,"没有找到海外仓入库单，请先下推海外仓入库单再审核"),
-    WH_REPEAT_BINDING_THIRD_WAREHOUSE(11086,"仓库【{0}】已绑定多个第三方仓库，一个仓库仅允许绑定一个第三方仓"),
-    WH_OVERSEAS_INBOUND_ALREADY_PUSHED_REVERSE_FORBIDDEN(11087,"已下推海外仓入库单【{0}】，不允许执行反审核"),
-    WH_TRANSFER_INFO_ERROR_NOT_CANCEL_PROCESS(11088,"关联的直接调拨单【{0}】反审核或删除失败，无法撤销"),
-    WH_TRANSFER_INFO_CANCEL_PROCESS_ERROR(11089,"关联的直接调拨单【{0}】撤销或删除失败，无法撤销"),
-    WH_TRANSFER_DECLARE_DETAIL_NOT_EXIST(11090,"入库预报订单明细不能为空"),
-    WH_THIRD_WAREHOUSE_NAME_EXIST(11091,"平台【{0}】下第三方仓【{1}】不能重复绑定多个仓库"),
-    WH_STOCKTAKING_PROFIT_LOSS_CLOSED(11092,"已存在盘盈/盘亏单【{0}】，不允许操作【{1}】及之前的单据"),
-    WH_TRANSFER_WAREHOUSE_REQUIRED(11093,"中转出库配置的中转仓库不能为空，请检查配置"),
-    WH_TRANSFER_ALREADY_APPROVED_MODIFY_FORBIDDEN(11094,"存在已审核的调拨单【{0}】，不允许修改中转仓配置"),
-    WH_PARAM_NOT_FOUND(11095,"未找到仓库【{0}】"),
-    WH_NOT_EXIST_OR_NO_PERMISSION(11096,"仓库不存在或没有仓库权限"),
-    WH_TRANSFER_DECLARE_SO_EXISTS(11097,"订单【{0}】已存在入库预报单，请不要重复新增"),
-    WH_THIRD_WAREHOUSE_MAPPING_EXIST(11098,"仓库【{0}】已存在第三方仓库映射关系，请在【中台配置】页面解除绑定后再操作"),
-    WH_ENTITY_NOT_FOUND(11099,"实体仓不存在"),
-    WH_ENTITY_NOT_ACTIVE(11100,"实体仓必须为启用状态"),
-    WH_ENTITY_INVENTORY_INSUFFICIENT(11101,"实体仓库存不足，SKU【{0}】，实体仓【{1}】，可分配库存【{2}】"),
-    WH_ENTITY_NO_VIRTUAL_RELATION(11102,"实体仓未关联任何虚拟仓"),
-    WH_AREA_EXIST(11103,"库区类型{0}【{1}】已存在"),
-    WH_POSITION_BINDING_EXIST(11104,"库区{0}存在仓位绑定，无法删除或禁用"),
-    WH_TRANSFER_ASSOCIATED_OUTBOUND_APPROVE_REQUIRED(11105,"请先审核通过关联的中转调拨单【{0}】后再审核出库单"),
-    WH_TRANSFER_OUTBOUND_DATE_INVALID(11106,"出库日期不能早于最后一个调拨单的调拨日期【{0}】"),
-    WH_ENTITY_ALLOCATION_STOCK_INSUFFICIENT(11107,"实体仓可分配库存不足，SKU【{0}】，实体仓【{1}】，可分配库存【{2}】"),
-    WH_EXISTS_TRANSFER_INFO_NOT_CLEAR(11108,"存在未删除或未作废的直接调拨单"),
-    WH_REPLENISH_AREA_NOT_FOUND(11109,"新增补货单时，SKU【{0}】未找到有效的库区"),
-    WH_REPLENISH_LOCATION_NOT_FOUND(11110,"新增补货单时，SKU【{0}】未找到有效的仓位"),
-    WH_TRANSFER_AUTO_CREATED_DIRECT_FORBIDDEN(11111,"根据中转规则自动生成的直接调拨单，不支持修改"),
-    WH_INV_NOT_EXIST(11112,"仓库【{0}】、SKU【{1}】、库存状态【{2}】对应的库存记录不存在"),
-    WH_AREA_NOT_EXIST(11113,"库区信息不存在"),
-    WH_AREA_USED_STOCK_TYPE_NOT_EDIT(11114,"库区已被使用，库存类型禁止修改"),
-    WH_WAREHOUSE_NOT_EDITABLE(11115,"所属仓库禁止修改"),
-    WH_FBA_FNSKU_NOT_BLANK(11116,"FNSKU不能为空"),
-    WH_PICK_AND_PUTAWAY_POSITION_SAME_FORBIDDEN(11117,"取货仓位与上架仓位不能为同一仓位"),
-    WH_SKU_MAPPING_STOCK_INSUFFICIENT(11118,"需要扣除的映射关系SKU【{0}】可用库存不足"),
-    WH_WAREHOUSE_LOCATION_NOT_FOUND(11119,"仓库【{0}】下的仓位【{1}】不存在"),
-    WH_THIRD_NOT_ALLOW_MULTIPLE(11120,"不允许绑定多个海外三方仓"),
-    WH_INVENTORY_NOT_EXIST(11121, "仓库:【{0}】,SKU:【{1}】,库存状态:【{2}】,库存不存在"),
-    WH_BOX_RULE_SKU_EXISTS(11122,"箱规sku已存在"),
-    WH_BOX_RULE_BATCH_UPDATE_FAILED(11123,"批量更新箱规失败"),
-    WH_BOX_RULE_PRIORITY_DUPLICATE(11124,"箱规优先级【{0}】重复"),
-    WH_BOX_RULE_BATCH_ADD_FAILED(11125,"批量新增箱规失败"),
-    WH_BOX_RULE_QTY_NOT_MULTIPLE(11126,"变更数量必须是发货箱规的整数倍"),
-    WH_BOX_RULE_SKU_DUPLICATE(11127,"箱规SKU【{0}】重复"),
-    WH_BOX_RULE_PER_BOX_QTY_DUPLICATE(11128,"箱规单箱数量【{0}】重复"),
-    WH_BOX_PER_QTY_FORBIDDEN_ONE(11129,"单箱数量必须大>1"),
-    WH_STOCKTAKING_BILL_DATE_NEED_GREATER_THAN_TODAY(11130,"盘点日期需要大于等于今天"),
-    WH_STOCKPLAN_NOT_FOUND(11131,"盘点计划不存在"),
-    WH_STOCKPLAN_ALREADY_PUSH(11132,"盘点计划【{0}】已下推盘点任务"),
-    WH_STOCKTAKING_PUSH_OVER(11133,"【{0}】已生成盘盈/亏单{1}，不允许再次生成"),
-    WH_STOCKTAKING_APPROVE_BILL_DATE_NEED_GREATER_THAN_TODAY(11134,"盘点日期不能小于当前日期，请修改后重新审核"),
-    WH_STOCKTAKING_PROFIT_LOSS_NOT_ALLOW_UPDATE(11135,"下推生成的盘盈盘亏单不允许修改"),
-    WH_STOCKTAKING_NOT_NEED_PUSH(11136,"【{0}】无需下推盘盈/亏单{1}"),
-    WH_STOCKTAKING_NOT_ALLOW_APPROVE(11137,"【{0}】盘点日期不能小于当前日期,请修改后重新审核"),
-
-    WH_ONWAY_WAREHOUSE_NOT_EXIST(11138,"目的仓【{}】未配置在途仓"),
-
-
-    /**
-     * 头程发货单 错误 信息 11500-12000
-     */
-    FIRST_MILE_FBA_SHIPMENT_NOT_EXIST_BILL(11500, "货件单据不存在！"),
-    FIRST_MILE_SHIPMENT_NOT_FOUND(11501,"未找到头程发货单"),
-    FIRST_MILE_SHIPMENT_DELETE_ALLOWED_PENDING_ONLY(11502,"只有未发货的头程数据支持删除"),
-    FIRST_MILE_SHIPMENT_DETAIL_NOT_EXIST(11503,"货件详情不存在"),
-    FIRST_MILE_SHIPMENT_NOT_EXIST(11504,"货件不存在"),
-    FIRST_MILE_SHIPMENT_SKU_NOT_MAPPED(11505,"【{0}】包含未匹配到SKU的货件，不允许下推发货单"),
-    FIRST_MILE_SHIPMENT_CONTAIN_COMBINATION_REQUIRE_MACHINE(11506,"发货单【{0}】包含组合产品，请先下推加工单并审核通过后重试"),
-    FIRST_MILE_SHIPMENT_INVENTORY_INSUFFICIENT(11507,"提示：SKU【{0}】发货仓【{1}】冻结库存不足，无法审核该发货单"),
-    FIRST_MILE_SHIPMENT_RECEIVE_EXIST_REVERSE_FORBIDDEN(11508,"已存在货件签收数量的发货单，不允许反审核!"),
-    FIRST_MILE_SHIPMENT_STATUS_FINISH_ONLY(11509,"仅【已发货】或【自动完结】状态的货件允许手动完结!"),
-    FIRST_MILE_SHIPMENT_ALREADY_PUSHED_NOT_DELETE(11510,"已下推发货单，不能删除!"),
-    FIRST_MILE_SHIPMENT_STATUS_CHECK_NOT_DELETE(11511,"状态为 DELETED 或 CANCELLED 的货件不允许下推发货单"),
-    FIRST_MILE_SHIPMENT_ERROR(11512,"货件不存在或状态异常"),
-    FIRST_MILE_SHIPMENT_PLAN_NOT_EXIST(11513,"未找到发货计划单"),
-    FIRST_MILE_SHIPMENT_DETAIL_NOT_DISAPPROVE(11514,"已下推发货单，不允许执行反审核"),
-    FIRST_MILE_SHIPMENT_REQ_NOT_DISAPPROVE(11515,"已下推要货申请，不允许执行反审核"),
-    FIRST_MILE_SHIPMENT_QTY_EXCEED_DECLARE_QTY(11516,"SKU【{0}】发货数量超过申报数量，不允许下推"),
-    FIRST_MILE_SHIPMENT_REQ_NOT_FOUND(11517,"未找到要货申请单"),
-    FIRST_MILE_SHIPMENT_REQ_DETAIL_NOT_FOUND(11518,"未找到要货申请单明细"),
-    FIRST_MILE_SHIPMENT_NOTICE_DETAIL_NOT_FOUND(11519,"未找到发货通知单明细"),
-    FIRST_MILE_SHIPMENT_WAIT_HANDLE_ONLY(11520,"待处理状态的要货单才能处理"),
-    FIRST_MILE_SHIPMENT_HANDLE_ING_FINISH_ONLY(11521,"单号【{0}】处理中状态的要货单才能完成"),
-    FIRST_MILE_SHIPMENT_ONLY_FOR_OVERSEAS_WAREHOUSE(11522,"只有备货海外仓的发货单允许下推入库单"),
-    FIRST_MILE_SHIPMENT_APPROVE_ONLY_CAN_PUSH_OVERSEAS_INBOUND(11523,"只有待审核的数据允许下推海外仓入库单"),
-    FIRST_MILE_SHIPMENT_HANDLE_PRINT_PICKING_ALLOWED(11524,"仅处理中或已处理状态的要货单允许打印拣货单"),
-    FIRST_MILE_SHIPMENT_PACKING_NOT_COMPLETED_CANNOT_GENERATE_INBOUND(11525,"装箱未完成，不能下推入库单"),
-    FIRST_MILE_SHIPMENT_FINANCE_COST_ALLOCATION_REVERSE_FORBIDDEN(11526,"已进行费用分摊，不允许执行反审核操作"),
-    FIRST_MILE_SHIPMENT_WAREHOUSE_REQUIRED(11527,"头程发货单【{0}】配置的发货仓库不能为空"),
-    FIRST_MILE_SHIPMENT_DELIVERY_GENERATE_FAIL(11528,"下推头程发货单失败"),
-    FIRST_MILE_SHIPMENT_AWD_OUTSTOCK_NOT_EXIST(11529,"AWD出库货件不存在"),
-    FIRST_MILE_SHIPMENT_GENERATE_NEED_BILL_DATE(11530,"出库货件【{0}】没有发货时间，不支持生成头程发货单"),
-    LOGISTICS_BILL_COST_IMPORT_NOT_EXIST_RECONCILIATION_MONTH(11528,"物流费用导入对账月份不能为空"),
-    LOGISTICS_BILL_COST_IMPORT_NOT_EXIST_BILL(11529,"平台订单号、发货单号、销售单号、物流跟踪单号必须至少填一个"),
-    FIRST_MILE_COST_ALLOCATION_ORG_ID_REQUIRED(11531,"分摊组织id为空"),
-
-    /**
-     * 样品管理 错误 信息 12000-12500
-     */
-    SAMPLE_AVAILABLE_QTY_EXCEEDS_LEDGER(12000,"SKU【{0}】{1}数量不能大于台账数量"),
-    SAMPLE_BORROW_DATE_INVALID(12001,"预计退回日期不能小于借用日期"),
-    SAMPLE_GENERATE_RETURN_VIEW_ALLOWED_APPROVED_ONLY(12002,"仅已审核且可归还数量大于0的样品借用单支持下推样品归还单"),
-    SAMPLE_GENERATE_VIEW_LEDGER_QTY_ZERO_FORBIDDEN(12003,"台账数量为0，无法下推{0}"),
-    SAMPLE_GENERATE_VIEW_USER_UNIQUE_REQUIRED(12004,"请勿选择多个{0}，仅支持针对单一样品生成"),
-    SAMPLE_RETURN_QTY_NOT_EXIST(12005,"【{0}】不存在可归还数量"),
-    SAMPLE_RETURN_QTY_NOT_ENOUGH(12006,"SKU【{0}】归还数量【{1}】不能大于可归还数量【{2}】"),
-    SAMPLE_LEDGER_NOT_EXIST(12007,"样品台账不存在"),
-    SAMPLE_BORROW_USER_SAME_FORBIDDEN(12008,"借入人和借出人不能为同一人"),
-    SAMPLE_RETURN_USER_SAME_FORBIDDEN(12009,"归还人和接收人不能为同一人"),
-    SAMPLE_RETURN_EXIST_REVERSE_FORBIDDEN(12010,"已下推的样品归还单不支持反审核"),
-    SAMPLE_GENERATE_RETURN_QTY_ZERO(12011,"可归还数量为0，没有可下推的数据"),
-    SAMPLE_ASSET_ACCEPT_QTY_EXCEEDS_PURCHASE_QTY(12012,"资产验收数量不能大于模具采购单的采购数量"),
-    SAMPLE_ASSET_NOT_FOUND(12013,"资产卡片【{0}】不存在"),
-    SAMPLE_ASSET_DISPOSAL_QTY_EXCEEDS_BOOK_QTY(12014,"资产编码【{0}】处置数量不能大于账存数量"),
-    SAMPLE_B2C_DISAPPROVE_FORBIDDEN(12015,"B2C寄样单不允许反审核"),
-    SAMPLE_B2C_CANCEL_APPROVE_REQUIRED(12016,"B2C寄样单仅审核通过后允许取消"),
-    SAMPLE_B2C_CANCEL_STATUS_INVALID(12017,"B2C寄样单当前单据状态不允许取消"),
-    SAMPLE_B2C_CANCEL_ALREADY(12018,"B2C寄样单已取消，不允许再次取消"),
-    SAMPLE_ADDRESS_PARSE_ONLY_CN(12019,"只支持中国地区地址解析，请检查地址内容"),
-    SAMPLE_ADDRESS_PARSE_EMPTY_INPUT(12020,"待解析地址不能为空"),
-    SAMPLE_B2B_APPLICATION_NOT_FOUND(10716,"B2B寄样申请单不存在"),
-    SAMPLE_B2B_APPLICATION_DETAIL_NOT_FOUND(10717,"B2B寄样申请单明细不存在"),
-    SAMPLE_B2B_APPLICATION_NOT_APPROVED(10718,"B2B寄样申请单【{0}】未审核完成，暂不支持下推"),
-    SAMPLE_PUSH_DETAIL_ID_NOT_FOUND(10719,"未找到明细ID【{0}】对应的B2B寄样申请明细"),
-    SAMPLE_PUSH_WAREHOUSE_MISMATCH(10720,"B2B寄样申请单【{0}】明细下推的发货仓库不一致"),
-    SAMPLE_PUSH_SALES_ORG_MISMATCH(10721,"B2B寄样申请单【{0}】明细下推的销售组织不一致"),
-    SAMPLE_B2C_APPROVED_REQUIRED(10722,"请选择审核通过的B2C寄样申请数据"),
-    SAMPLE_B2C_HAS_GENERATED_SO(10723,"B2C寄样申请已生成销售订单，不支持反审核"),
-    SAMPLE_PARTNER_MULTIPLE_DEFAULT_ADDRESS_FORBIDDEN(10724,"企业达人不允许配置多个默认地址"),
-    SAMPLE_B2B_DETAIL_ALREADY_PUSHED_SO(10725,"B2B寄样申请单【{0}】SKU【{1}】已下推销售订单，禁止重复下推"),
-    SAMPLE_B2B_PUSHED_SO_DETAIL_DELETE_FORBIDDEN(10726,"由B2B寄样申请单下推生成的销售订单明细不允许删除"),
-    SAMPLE_APPLY_NOT_FOUND(10738,"样品领用单不存在"),
-    SAMPLE_ONLY_AUDITING_ALLOW_MODIFY_QTY(10739,"只有审核中的样品领用单才能修改审核数量"),
-    SAMPLE_VOIDED_MODIFY_QTY_FORBIDDEN(10740,"已作废的样品领用单不支持修改审核数量"),
-    SAMPLE_DETAIL_NOT_BELONG_TO_APPLY(10741,"部分明细不存在或不属于该样品领用单"),
-    SAMPLE_AUDIT_QTY_EXCEEDS_APPLY_QTY(10742,"SKU【{0}】的审核数量【{1}】不能大于领用数量【{2}】"),
-    SAMPLE_AUDIT_QTY_UPDATE_FAILED(10743,"修改审核数量失败"),
-    SAMPLE_PARTNER_IN_USE(10744,"企业达人已被引用，不允许删除"),
-    SAMPLE_ASSET_ACCEPT_DETAIL_NOT_FOUND(10744,"资产验收单明细不存在"),
-    SAMPLE_ASSET_PURCHASE_ORDER_NOT_FOUND(10745,"资产采购订单不存在"),
-    SAMPLE_ASSET_PURCHASE_ORDER_DETAIL_NOT_FOUND(10746,"资产采购订单明细不存在"),
-
-
-
-    SAMPLE_USER_ID_CHINESE_NOT_FOUND(10745,"领用人【{0}】不存在，请传入正确的用户ID或用户名称"),
-    SAMPLE_USER_ID_CHINESE_QUERY_FAILED(10746,"领用人【{0}】查询失败，请传入正确的用户ID或用户名称"),
-    SAMPLE_USE_USER_ID_CHINESE_NOT_FOUND(10747,"使用方【{0}】不存在，请传入正确的使用方ID或使用方名称"),
-    SAMPLE_USE_USER_ID_CHINESE_QUERY_FAILED(10748,"使用方【{0}】查询失败，请传入正确的使用方ID或使用方名称"),
-    SO_B2C_DELIVERY_TRANSFER_NOT_PERSISTED(10750,"发货单【{0}】中转调拨单未落库，不允许生成销售出库单"),
-    SO_B2C_DELIVERY_TRANSFER_NOT_APPROVED(10751,"发货单【{0}】关联的中转调拨单【{1}】未审核通过，不允许生成销售出库单"),
-    SO_B2C_DELIVERY_MULTI_WAREHOUSE_NOT_SUPPORTED(10752,"发货单【{0}】明细存在多个发货仓库，不支持校验中转调拨单"),
-    /**
-     * 虚拟仓 错误 信息 12500-13000
-     */
-    VM_INVENTORY_INSUFFICIENT(12500,"虚拟库存不足，SKU:[{0}]，虚拟仓库:[{1}]，实物仓库:[{2}]，库存状态:[{3}]，当前库存[{4}]，交易数量[{5}]"),
-    VM_NAME_EXIST(12501,"虚拟仓名称已存在"),
-    VM_NOT_EXIST(12502,"虚拟仓不存在"),
-    VM_ALLOCATION_DETAIL_SAVE_FAILED(12503,"分货单明细保存失败"),
-    VM_FROM_TO_BOTH_EMPTY(12504,"调入虚拟仓与调出虚拟仓不能同时为空"),
-    VM_FROM_TO_SAME(12505,"调入虚拟仓与调出虚拟仓不能为同一虚拟仓"),
-    VM_TARGET_NOT_FOUND(12506,"调入虚拟仓不存在"),
-    VM_TARGET_NOT_ACTIVE(12507,"调入虚拟仓未启用"),
-    VM_SOURCE_NOT_FOUND(12508,"调出虚拟仓不存在"),
-    VM_SOURCE_NOT_ACTIVE(12509,"调出虚拟仓未启用"),
-    VM_SOURCE_INVENTORY_INSUFFICIENT(12510,"调出虚拟仓库存不足，SKU【{0}】，虚拟仓【{1}】，可用库存【{2}】"),
-    VM_ALLOCATION_NOT_FOUND(12511,"分货单【{0}】不存在"),
-    VM_MANUAL_STATUS_ERROR(12512,"仅已处理且同步失败状态的记录才可手动完结"),
-    VM_SYNC_ERROR_STATUS_ONLY(12513,"仅已处理且同步失败状态的记录才可重新同步"),
-    VM_RELATION_ERROR(12514,"实体仓【{0}】未关联虚拟仓【{1}】"),
-    VM_ALLOCATION_UNIQUE_ERROR(12515,"“SKU【{0}】- 实体仓【{1}】- 调入虚拟仓【{2}】”记录重复\n"),
-    VM_ALLOCATION_TRANSFER_UNIQUE_ERROR(12516,"“SKU【{0}】- 实体仓【{1}】- 调入虚拟仓【{2}】- 调出虚拟仓【{3}】”记录重复\n"),
-    VM_ALLOCATION_CANCEL_UNIQUE_ERROR(12517,"“SKU【{0}】- 实体仓【{1}】- 调出虚拟仓【{2}】”记录重复\n"),
-    VM_STOCK_NOT_EMPTY(12518,"虚拟仓库存不为0，操作失败"),
-    VM_ENTITY_STOCK_NOT_EMPTY(12519,"虚拟仓在实体仓【{0}】下库存不为0，操作失败"),
-    VM_THIRD_VIRTUAL_WAREHOUSE_BINDED(12520,"旺店通虚拟仓【{0}】已与仓库【{1}】关联"),
-    VM_NO_SYNC_INFO(12521,"暂无可同步信息"),
-    VM_CHECK_OUT_VIRTUAL_INVENTORY(12522,"SKU【{0}】实体仓【{1}】虚拟仓库存已分配【{2}】，出库数量不能超过【{3}】"),
-    VM_CHANNEL_RELATION_ERROR(12523,"平台【{0}】店铺【{1}】军区【{2}】已绑定虚拟仓【{3}】\n"),
-    VM_SAME_WAREHOUSE_B2B_FOREIGN_ERROR(12525,"实体仓【{0}】下虚拟仓【{1}】已配置平台【{2}】，同一实体仓的不同虚拟仓不可重复配置"),
-    VM_INVENTORY_INSUFFICIENT_FOR_TRANSFER(12524,"虚拟仓【{0}】库存不足"),
-    VM_FROM_WAREHOUSE_NOT_BLANK(92290,"启动自动借调时，借调仓不能为空"),
-    VM_NOT_CONTAINS_FROM_WAREHOUSE(92291,"虚拟仓关联实体仓不能包含借调仓"),
-    VM_ALLOCATION_NOT_REPEAT(92292,"存在未同步成功的虚拟仓分货单调出任务，调出仓库ID：{0}，调出虚拟仓ID：{1}，SKU：{2}，请确认后再操作"),
-    VM_VIRTUAL_WAREHOUSE_NOT_FOUND(12524,"虚拟仓【{0}】未找到"),
-    VM_WDT_ENTITY_INVENTORY_INSUFFICIENT(12525,"提交失败，旺店通【{0}】【{1}】可用库存不足无法分货，可用库存【{2}】，分配数量【{3}】"),
-
-    /**
-     * 客户管理 错误 信息 13000-13500
-     */
-    CUSTOMER_GROUP_REQUIRED(13000,"客户分组不能为空"),
-    CUSTOMER_GROUP_NAME_DUPLICATE(13001,"客户分组名不能重复"),
-    CUSTOMER_GROUP_IN_USE_DELETE_FORBIDDEN(13002,"客户分组已被引用，无法删除"),
-    CUSTOMER_DEFAULT_CONTACT_LIMIT(13003,"客户默认联系人最多只能设置一个"),
-    CUSTOMER_DEFAULT_ADDRESS_LIMIT(13004,"客户默认地址最多只能设置一个"),
-    CUSTOMER_DEFAULT_BANK_LIMIT(13005,"客户默认开户行最多只能设置一个"),
-    CUSTOMER_NOT_FOUND(13006,"客户不存在"),
-    CUSTOMER_ADDRESS_IN_USE_DELETE_FORBIDDEN(13007,"客户地址已被销售订单引用，无法删除"),
-    CUSTOMER_DISABLE_FORBIDDEN(13008,"客户已被使用，无法停用"),
-    CUSTOMER_SKU_INTERVAL_OVERLAP(13009,"客户SKU价格区间存在重叠，不允许提交"),
-    CUSTOMER_NAME_DUPLICATE(13010, "客户名称不能重复"),
-
-    /**
-     * 物流管理 错误 信息  13500-14000
-     */
-    LOGISTICS_PDF_MERGE_ERROR(13500,"打印面单/配货单失败，合并PDF时出错"),
-    LOGISTICS_PDF_MERGE_SKU_BARCODE_ERROR(13501,"打印SKU条码失败，合并PDF时出错"),
-    LOGISTICS_PDF_SO_MERGE_ERROR(13502,"打印面单失败，合并PDF时出错"),
-    LOGISTICS_NO_TRACKING_NUMBER_CANNOT_MANUAL_SHIP(13503,"请先申请物流单号后再执行手动标发"),
-    LOGISTICS_ALREADY_PACKAGE_TRANSFER_NOT_INTERCEPT(13504,"拦截单号【{0}】已组包或已预报成功，请先取消组包/预报后再操作"),
-    LOGISTICS_HANDLE_STATUS_ALREADY_HANDLED_OR_CANCEL_NOT(13505,"处理状态为【已处理】或【已取消】的单据，不支持再次发起物流拦截"),
-    LOGISTICS_UPLOAD_SUCCESS_NOT_DELETE(13506,"上传成功状态的数据不允许删除"),
-    LOGISTICS_DELIVERY_INTERCEPT_READY_PACKAGED(13507,"销售订单号【{0}】已组包，不支持拦截操作"),
-    LOGISTICS_PACKING_REF_ORDER_APPROVED_FORBIDDEN(13508,"关联单号【{0}】已审核，不能修改装箱信息"),
-    LOGISTICS_PACKING_TASK_NOT_FOUND(13509,"装箱任务记录不存在"),
-    LOGISTICS_SYNC_ADDRESS_NOT_EDITABLE(13510,"同步自物流商的地址不允许修改"),
-    LOGISTICS_SYNC_ADDRESS_NOT_DELETABLE(13511,"同步自物流商的地址不允许删除"),
-    LOGISTICS_PACKING_SPEC_NOT_FOUND(13512,"箱规记录不存在"),
-    LOGISTICS_PACKING_RECORD_NOT_FOUND(13513,"装箱记录不存在"),
-    LOGISTICS_PACKING_FNSKU_QTY_EXCEEDS_UNPACKED(13514,"SKU【{0}】FnSKU【{1}】装箱数量不能超过未装箱数量【{2}】"),
-    LOGISTICS_PACKING_SKU_QTY_EXCEEDS_BOX(13515,"SSKU【{0}】装箱数量不能超过本箱当前已装箱数量【{1}】"),
-    LOGISTICS_PACKING_SKU_NOT_IN_ASSOCIATED_ORDER(13516,"SKU【{0}】在关联单中不存在"),
-    LOGISTICS_PACKING_SKU_NOT_IN_BOX(13517,"SKU【{0}】在当前装箱记录中不存在，不能执行移出"),
-    LOGISTICS_PACKING_ASSOCIATED_ORDER_APPROVED_EDIT_DELETE_FORBIDDEN(13518,"关联单号已审核，不支持编辑或删除"),
-    LOGISTICS_PACKING_DELIVERY_CHECK_FORBIDDEN(13519,"发货单已审核且装箱任务状态为【已装箱且已称重】时，不支持编辑或删除"),
-    LOGISTICS_PACKING_SKU_FNSKU_QTY_EXCEEDS_DELIVERY(13520,"装箱中SKU【{0}】FnSku【{1}】累计装箱数量【{2}】不可大于发货数量【{3}】"),
-    LOGISTICS_PACKING_TOTAL_QTY_EXCEEDS_DELIVERY(13521,"装箱中SKU【{0}】累计装箱数量【{1}】不能大于发货数量【{2}】"),
-    LOGISTICS_PACKING_PICKLIST_REQUIRED(13522,"调整装箱后，装箱数量不能为0，请检查装箱明细"),
-    LOGISTICS_PACKING_SELECT_PICKLIST_REQUIRED(13523,"请先选择拣货单"),
-    LOGISTICS_ORDER_EXISTS_REVERSE_FORBIDDEN(13524,"物流单【{0}】已生成，不允许执行反审核"),
-    LOGISTICS_DECLARE_BILL_EXISTS_REVERSE_FORBIDDEN(13525,"报关单【{0}】已生成，不允许执行反审核"),
-    LOGISTICS_FNSKU_LABEL_PRINT_FAILED(13526,"打印FNSKU标签失败"),
-    LOGISTICS_CUSTOMER_SKU_LABEL_PRINT_FAILED(13527,"打印客户SKU标签失败"),
-    LOGISTICS_PACKING_NOT_COMPLETED_DECLARATION_FORBIDDEN(13528,"装箱未完成，不允许下推报关单"),
-    LOGISTICS_FIRST_MILE_ORDER_EXISTS_NOT_DEL(13529,"物流单【{0}】已生成，不允许删除"),
-    LOGISTICS_DECLARE_BILL_EXISTS_NOT_DEL(13530,"报关单【{0}】已生成，不允许删除"),
-    LOGISTICS_CHANNEL_BLACKLIST(13531,"物流渠道【{0}】不允许发往指定地区【{1}{2}{3}{4}{5}】，请调整物流渠道"),
-    LOGISTICS_CHANNEL_COUNTRY_BLACKLIST(13532,"物流渠道【{0}】不支持目的国家【{1}】"),
-    LOGISTICS_CANCEL_NOT_SUPPORTED(13533,"当前物流渠道不支持取消物流单【{0}】"),
-    LOGISTICS_CANCEL_FAILED(13534,"原物流订单取消失败，请联系物流商处理后重试"),
-    LOGISTICS_PLATFORM_WAREHOUSE_NOT_INTERCEPT(13535,"平台仓订单不支持物流拦截操作"),
-    LOGISTICS_CHANNEL_REQUIRED_FOR_CANCEL(13536,"取消物流单时，物流渠道不能为空"),
-    LOGISTICS_NOT_INTERCEPTED_CANNOT_CANCEL(13537,"未标记拦截的订单不支持取消拦截"),
-    LOGISTICS_INTERCEPT_STATUS_INVALID(13538,"物流商处理状态为空，仅未处理状态允许取消拦截"),
-    LOGISTICS_INTERCEPT_PROCESSING_FORBIDDEN_CANCEL(13539,"订单拦截处理中或已完成，无法取消拦截"),
-    LOGISTICS_DECLARE_INFO_NOT_FOUND(13540,"申报信息不存在"),
-    LOGISTICS_DECLARE_SKU_NOT_FOUND(13541,"销售订单【{0}】申报信息中未找到SKU"),
-    LOGISTICS_DECLARE_CN_NAME_REQUIRED(13542,"申报信息中SKU【{0}】的报关中文名不能为空"),
-    LOGISTICS_DECLARE_EN_NAME_REQUIRED(13543,"申报信息中SKU【{0}】的报关英文名不能为空"),
-    LOGISTICS_DECLARE_PRICE_REQUIRED(13544,"申报信息中SKU【{0}】目的国申报价不能为0"),
-    LOGISTICS_DECLARE_CURRENCY_REQUIRED(13545,"申报信息中SKU【{0}】目的国申报价币种不存在"),
-    LOGISTICS_DECLARE_CURRENCY_SYMBOL_REQUIRED(13546,"申报信息中SKU【{0}】目的国申报价币种符号不存在"),
-    LOGISTICS_DECLARE_WEIGHT_REQUIRED(13547,"申报信息中SKU【{0}】重量不能为0"),
-    LOGISTICS_DECLARE_CUSTOMS_INFO_REQUIRED(13548,"申报信息中SKU【{0}】目的国申报信息不存在"),
-    LOGISTICS_SHIPPING_TEMPLATE_NOT_FOUND(13549,"运费模板不存在"),
-    LOGISTICS_SHIPPING_DEST_COUNTRY_REQUIRED(13550,"运费规则目的地不能为空"),
-    LOGISTICS_SHIPPING_REGION_REQUIRED(13551,"运费规则城市分区不能为空"),
-    LOGISTICS_SHIPPING_CITY_REQUIRED(13552,"运费规则城市不能为空"),
-    LOGISTICS_SHIPPING_WAREHOUSE_REQUIRED(13553,"运费规则仓库不能为空"),
-    LOGISTICS_FIRST_WEIGHT_REQUIRED(13554,"运费规则首重不能为空"),
-    LOGISTICS_FIRST_WEIGHT_COST_REQUIRED(13555,"运费规则首重运费不能为空"),
-    LOGISTICS_ADDITIONAL_UNIT_WEIGHT_REQUIRED(13556,"运费规则续重单位重量不能为空"),
-    LOGISTICS_ADDITIONAL_UNIT_PRICE_REQUIRED(13557,"运费规则续重单价不能为空"),
-    LOGISTICS_SHIPPING_OTHER_COST_NOT_FOUND(13558,"运费模板其他费用"),
-    LOGISTICS_SHIPPING_TEMPLATE_CHANNEL_REF_DISABLED_FORBIDDEN(13559,"运费模板被渠道引用不支持停用/启用"),
-    LOGISTICS_SHIPPING_TEMPLATE_CHANNEL_REF_DELETE_FORBIDDEN(13560,"运费模板被渠道引用不支持删除"),
-    LOGISTICS_SHIPPING_TEMPLATE_ALREADY_EXISTS(13561,"运费模板已存在"),
-    LOGISTICS_TEMPLATE_RULE_WEIGHT_COUNTRY_OVERLAP(13562,"起始国【{0}】、目的国【{1}】的运费规则重量区间存在重叠"),
-    LOGISTICS_TEMPLATE_RULE_WEIGHT_REGION_OVERLAP(13563,"起始国【{0}】、目的国【{1}】、城市分区【{2}】的运费规则重量区间存在重叠"),
-    LOGISTICS_TEMPLATE_RULE_WEIGHT_WAREHOUSE_OVERLAP(13564,"起始国【{0}】、目的仓库【{1}】的运费规则重量区间存在重叠"),
-    LOGISTICS_SHIPPING_RULE_NOT_FOUND(13565,"未找到运费规则"),
-    LOGISTICS_WEIGHT_OUT_OF_RANGE(13566,"重量【{0}】不在开始重量【{1}】与结束重量【{2}】之间"),
-    LOGISTICS_OTHER_COST_SETTING_NOT_FOUND(13567,"未找到其他费用【{0}】的计算方式"),
-    LOGISTICS_ADDRESS_NAME_ALREADY_EXISTS(13568,"物流地址名称【{0}】已存在"),
-    LOGISTICS_UNIT_PRICE_REQUIRED(13569,"运费规则运费单价不能为空"),
-    LOGISTICS_CANCEL_AUTH_NOT_ALLOWED(13570,"仅已授权状态才允许取消授权"),
-    LOGISTICS_SYNC_FORBIDDEN_NOT_AUTHORIZED(13571,"物流商未授权，不允许同步渠道"),
-    LOGISTICS_CHANNEL_EXIST_ENABLED_DISABLE_FORBIDDEN(13572,"存在未停用的物流渠道，无法停用该物流商"),
-    LOGISTICS_CHANNEL_ADDRESS_REF_DELETE_FORBIDDEN(13573,"地址【{0}】已被渠道引用，不支持删除"),
-    LOGISTICS_CHANNEL_NOT_FOUND(13574,"物流渠道不存在"),
-    LOGISTICS_CHANNEL_ADDRESS_TYPE_EMPTY(13575,"渠道【{0}】下类型【{1}】的地址为空"),
-    LOGISTICS_SALES_CHANNEL_NOT_CONFIGURED(13576,"渠道【{0}】尚未配置销售渠道"),
-    LOGISTICS_PRINT_WAYBILL_FAILED(13577,"调用第三方接口打印面单异常，订单ID:{0}，原因：{1}"),
-    LOGISTICS_CHANNEL_QUOTE_REF_DELETE_FORBIDDEN(13578,"该物流渠道已被引用，不支持删除"),
-    LOGISTICS_SELF_SHIP_BILL_STATUS_CHANGE_FORBIDDEN(13579,"已确认或已作废的自发货费用单不支持状态变更"),
-    LOGISTICS_CHANNEL_ALREADY_USED(13580,"物流渠道【{0}】已被使用，不支持重复选择"),
-    LOGISTICS_SAILING_CONFIG_ALREADY_EXISTS(13581,"已存在渠道【{0}】的截单开船配置数据"),
-    LOGISTICS_COST_NAME_ALREADY_EXISTS(13582,"费用归属【{0}】费用名称【{1}】已存在"),
-    LOGISTICS_WAREHOUSE_MAPPING_ALREADY_EXISTS(13583,"物流商仓库代码【{0}】已存在"),
-    LOGISTICS_DECLARE_RECONCILIATION_NOT_FOUND(13584,"报关对账单不存在"),
-    LOGISTICS_DECLARE_RECONCILIATION_DETAIL_NOT_FOUND(13585,"报关对账单明细不存在"),
-    LOGISTICS_DECLARE_RECONCILIATION_SUPPLIER_MISMATCH(13586,"报关对账单【{0}】新增对账明细的供应商【{1}】必须保持一致"),
-    LOGISTICS_TRANSFER_SUPPLIER_NOT_FOUND_NOT_PACKAGE(13587,"订单中转物流商不存在，请重新预报后再扫描"),
-    LOGISTICS_ORDER_VOIDED_NOT_PACKAGE(13588,"订单已作废，不允许组包"),
-    LOGISTICS_TRANSFER_ORDER_INVALID_NOT_PACKAGE(13589,"中转报关订单处于待中转或上传失败状态，不允许组包发货"),
-    LOGISTICS_ORDER_INTERCEPTED_NOT_PACKAGE(13590,"订单已被拦截，不允许操作"),
-    LOGISTICS_CHANNEL_AUTH_INFO_NOT_FOUND(13591,"物流渠道未匹配到授权信息"),
-    LOGISTICS_DELIVERY_SUPPLIER_DUPLICATE(13592,"发货物流商不可重复设置，每个发货物流商仅允许配置一个报关规则"),
-    LOGISTICS_TRANSFER_SUPPLIER_DUPLICATE(13593,"中转物流商不可重复设置，每个中转物流商仅允许配置一个截单规则"),
-    LOGISTICS_GENERATE_TIME_AFTER_DEADLINE_FORBIDDEN(13594,"生成时间不能晚于截单时间"),
-    LOGISTICS_TRACK_STATUS_SYSTEM_MANAGED_NOT_EDITABLE(13595,"该运输状态由系统维护，不允许手动修改"),
-    LOGISTICS_TRANSFER_SUPPLIER_REF_DELETE_FORBIDDEN(13596,"被其他单据引用的中转物流商不允许删除"),
-    LOGISTICS_PRODUCT_NOT_REGISTERED(13597,"产品【{0}】未在平台【{1}】完成备案，请联系关务或物流"),
-    LOGISTICS_CHANNEL_CHANGE_FORBIDDEN_NOT_REGISTERED(13598,"产品【{0}】未在平台【{1}】备案，无法切换渠道【{2}】，请联系关务或物流"),
-    LOGISTICS_TRANSFER_CHANNEL_EXIST_ENABLED_DISABLE_FORBIDDEN(13599,"存在未停用的中转物流渠道，无法停用该物流商"),
-    LOGISTICS_PACKAGE_DIMENSION_REQUIRED(13600,"长、宽、高的单个值不能为空且必须大于0"),
-    LOGISTICS_PRINT_WAYBILL_NOT_SUPPORTED(13601,"物流商【{0}】不支持打印物流面单"),
-    LOGISTICS_PRINT_ALLOCATE_CARGO_NOT_SUPPORTED(13602,"物流商【{0}】不支持单独打印官方配货单"),
-    LOGISTICS_PRINT_SETTING_NOT_FOUND(13603,"渠道【{0}】配置的配货单打印类型未找到"),
-    LOGISTICS_COST_CONFIG_NOT_FOUND(13604,"未发现费用【{0}】的配置信息"),
-    LOGISTICS_CHANNEL_WAREHOUSE_REQUIRED(13605,"指定仓库不能为空"),
-    LOGISTICS_CONFIG_NOT_FOUND(13606,"物流配置不存在"),
-    LOGISTICS_CALL_THIRD_PLATFORM_ERROR(13607,"调用第三方物流平台接口异常"),
-    LOGISTICS_LABEL_TYPE_REQUIRED(13608,"标签类型不能为空"),
-    LOGISTICS_LARGE_TABLE_EXISTS(13609,"已生成物流大表不能重复生成"),
-    LOGISTICS_LARGE_ESTIMATED_EXISTS(13610,"已存在预估账单的物流大表信息，请不要重复下推"),
-    LOGISTICS_SMALL_BAG_NOT_CONFIRMED(13611,"小包费用分摊未确认，不能生成物流大表"),
-    LOGISTICS_SELF_SHIP_FEE_NOT_FOUND(13612,"自发货费用不存在"),
-    LOGISTICS_ACTUAL_EXISTS_CANNOT_PUSH(13613,"已存在实际账单，不能再下推实际账单"),
-    LOGISTICS_MAPPING_NOT_NULL(13614,"【{0}】所属的平台【{1}】没有配置【{2}】的标发信息，不允许提交发货"),
-    LOGISTICS_SUPPLIER_NOT_FOUND(13615,"头程费用分摊物流商为空"),
-    LOGISTICS_SUPPLIER_NOT_EXIST(13616,"头程费用分摊物流商不存在"),
-    LOGISTICS_IMPORT_FILE_NAME_NOT_FOUND(13617,"导入文件名称不能为空"),
-    LOGISTICS_CFG_IMPORT_DETAIL_NOT_FOUND(13618,"导入的物流配置明细不能为空"),
-    LOGISTICS_CFG_IMPORT_DETAIL_IS_UNIQUE_KEY_NOT_FOUND(13619,"文件【{0}】导入的物流配置明细唯一键未找到"),
-    LOGISTICS_SUPPLIER_NAME_NOT_FOUND(13620,"物流商名称【{0}】未找到"),
-    LOGISTICS_BILL_COST_IMPORT_RECORD_UNIQUE_KEY_ERROR(13621,"导入唯一识别单号查询失败，请检查识别单号配置"),
-    LOGISTICS_ASYNC_TASK_CREATE_ERROR(13622,"异步任务已存在参数【{0}】"),
-    LOGISTICS_PENDING_COST_NOT_FOUND(13623,"待确认费用分摊记录不存在"),
-    LOGISTICS_SELECT_AT_LEAST_ONE(13624,"明细至少勾选一个识别单号"),
-    LOGISTICS_BILL_FIELD_DUPLICATE_NOT_ALLOWED(13625,"数大臣单据字段【{0}】不允许重复"),
-    LOGISTICS_BILL_DETAIL_FIELD_REQUIRED(13626,"数大臣单据明细字段不允许为空"),
-    LOGISTICS_SMALL_BAG_NOT_CAN_Allocate(13627,"费用分摊设置为不分摊，不能生成小包费用分摊"),
-    LOGISTICS_BILL_COST_IMPORT_RECORD_HEAD_NOTFOUND(13628,"导入未匹配到表头字段，请检查费用配置"),
-    LOGISTICS_BILL_UNIQUE_FIELD_NOT_ALLOWED(13629,"【{0}】不能作为识别单号字段"),
-    LOGISTICS_THIRD_CHANNEL_PUSH_TYPE_REQUIRED(13630,"推送类型不能为空"),
-    LOGISTICS_THIRD_CHANNEL_SAVE_FAILED(13631,"物流-第三方渠道关系单保存失败"),
-    LOGISTICS_THIRD_CHANNEL_NOT_FOUND(13632,"未找到渠道配置数据"),
-    LOGISTICS_THIRD_CHANNEL_IN_USE_DELETE_FORBIDDEN(13633,"该渠道配置已被使用，不能删除"),
-    LOGISTICS_THIRD_CHANNEL_STATUS_UNCHANGED(13634,"渠道配置数据状态未变更"),
-    LOGISTICS_THIRD_CHANNEL_DUPLICATE(13635,"同一个平台下我司物流商【{0}】+渠道【{1}】，查询物流商+渠道仅可创建一条"),
-    LOGISTICS_THIRD_CHANNEL_SUPPLIER_NOT_FOUND(13636,"物流商不存在"),
-    LOGISTICS_THIRD_CHANNEL_CHANNEL_NOT_FOUND(13637,"物流商渠道不存在"),
-    LOGISTICS_THIRD_CHANNEL_QUERY_PROVIDER_NOT_FOUND(13638,"查询物流商【{0}】不存在"),
-    LOGISTICS_THIRD_CHANNEL_PUSH_MOBILE_IMMUTABLE(13639,"是否推送电话不能修改"),
-    LOGISTICS_THIRD_CHANNEL_MOBILE_REQUIRED(13640,"手机号码不能为空"),
-    LOGISTICS_THIRD_CHANNEL_SHOP_ID_REQUIRED(13641,"店铺Id不能为空"),
-    LOGISTICS_THIRD_CHANNEL_PLATFORM_REQUIRED(13642,"平台不能为空"),
-    LOGISTICS_THIRD_CHANNEL_DETAIL_NOT_REQUIRED(13643,"推送明细不需要配置"),
-    LOGISTICS_THIRD_CHANNEL_QUERY_SUPPLIER_NAME_REQUIRED(13644,"查询物流商(中文)不能为空"),
-    LOGISTICS_ORDER_NOT_CANCEL(13645,"物流单据不是已取消或者下单失败状态，不能编辑"),
-    LOGISTICS_ORDER_CANNOT_EDIT(13646,"该单据不能再当前页面编辑"),
-    LOGISTICS_CHANNEL_CODE_EMPTY(13647,"渠道代码为空或者格式不正确"),
-    /**
-     * 财务管理 错误 信息 14000-14500
-     */
-    FIN_INVOICE_NOT_FOUND(14000,"发票信息不存在"),
-    FIN_INVOICE_OPERATION_NOT_ALLOWED(14001,"发票未开票成功，不支持当前操作"),
-    FIN_INVOICE_NOT_REQUIRED_ONLY_PENDING_OR_FAILED(14002,"仅待开票或开票失败的订单支持设置为无需开票"),
-    FIN_INVOICE_NFE_ONLY_SUPPORTED(14003,"仅NF-e类型发票支持该操作"),
-    FIN_SKU_INVOICE_TAX_INFO_NOT_FOUND(14004,"平台SKU【{0}】、店铺【{1}】未找到对应税务信息"),
-    FIN_INVOICE_NFE_CANCEL_FAILED(14005,"更新NF-e发票CCE失败，原因：{0}"),
-    FIN_COMPANY_TOKEN_NOT_FOUND(14006,"公司token不存在"),
-    FIN_INVOICE_NFE_UPDATE_CCE_FAILED(14007,"更新Cce发票失败，原因：{0}"),
-    FIN_INVOICE_UPLOAD_FILE_NOT_FOUND(14008,"发票上传文件不存在"),
-    FIN_INVOICE_NFE_JSON_PARSE_FAILED(14009,"NF-e发票创建时JSON解析失败"),
-    FIN_INVOICE_CREATING_REGENERATE_FORBIDDEN(14010,"订单正在开票处理中，不支持重新生成发票"),
-    FIN_INVOICE_NFE_RETURN_FAILED(14011,"退票发票失败，原因：{0}"),
-    FIN_INVOICE_NFE_VOID_FAILED(14012,"作废发票失败，原因：{0}"),
-    FIN_RECONCILIATION_NOT_FOUND(14013,"对账单不存在"),
-    FIN_RECONCILIATION_DETAIL_NOT_FOUND(14014,"对账明细不存在"),
-
-    /**
-     * 补货管理 错误 信息 14500-15000
-     */
-    REPLENISHMENT_ONLY_NORMAL_ALLOW_STOP(14500,"只有正常补货数据支持暂不补货"),
-    REPLENISHMENT_ONLY_STOPPED_ALLOW_RESTORE(14501,"只有暂不补货数据支持恢复补货"),
-    REPLENISHMENT_STOCK_UP_RULE_CONFIG_NOT_EXIST(14502,"备货规则配置不存在"),
-    REPLENISHMENT_SALES_RULE_CONFIG_NOT_EXIST(14503,"销量【{0}】规则配置不存在"),
-    REPLENISHMENT_NEW_PRODUCT_RULE_CONFIG_NOT_EXIST(14504,"新品系统规则配置不存在"),
-    REPLENISHMENT_DAYS_RULE_CONFIG_NOT_EXIST(14505,"补货天数规则配置不存在"),
-    REPLENISHMENT_SUGGESTION_NOT_FOUND(14506,"未找到补货建议数据"),
-    REPLENISHMENT_SUGGESTION_ONLY_PENDING_CONFIRM_ALLOW(14507,"仅待确认状态的补货建议支持确认操作"),
-    REPLENISHMENT_SUGGESTION_ONLY_DRAFT_ALLOW_LOCK(14508,"仅草稿状态的补货建议支持锁定操作"),
-    REPLENISHMENT_SUGGESTION_PUSHED_INVALID_FORBIDDEN(14509,"已下推的补货建议不支持作废操作"),
-    REPLENISHMENT_SUGGESTION_UPDATE_REMARK_FORBIDDEN(14510,"仅未作废的草稿和待确认补货建议支持更新备注"),
-    REPLENISHMENT_SUGGESTION_UPDATE_FORBIDDEN(14511,"仅未作废的草稿和待确认补货建议支持更新"),
-
-    /**
-     * 试算管理 错误 信息 15000-15500
-     */
-    TRIAL_CALC_DATA_NOT_FOUND(15000,"未找到符合条件的试算数据"),
-    TRIAL_CALC_DATA_INCONSISTENT(15001,"所选数据存在SKU、店铺或试算开始时间不一致，无法进行对比"),
-    TRIAL_CALC_HISTORY_SALES_INCONSISTENT(15002,"所选数据历史销量不一致，无法进行比较"),
-    TRIAL_CALC_START_DATE_AFTER_NOW_FORBIDDEN(15003,"试算开始日期不能晚于当前日期"),
-    TRIAL_CALC_END_DATE_BEFORE_START_FORBIDDEN(15004,"试算结束日期不能早于试算开始日期"),
-    TRIAL_CALC_DATE_RANGE_EXCEEDS_ONE_YEAR(15005,"试算开始日期与结束日期间隔不能超过一年"),
-    TRIAL_CALC_END_DATE_AFTER_MIN_FORBIDDEN(15006,"结束日期不能晚于所选数据中的最小试算结束日期"),
-    TRIAL_CALC_START_DATE_BEFORE_MIN_FORBIDDEN(15007,"开始日期不能早于所选数据的试算开始日期"),
-    TRIAL_CALC_TASK_SIZE_EXCEEDS_LIMIT(15008,"单模板按SKU×店铺维度计算，最多支持999999条任务"),
-
-    /**
-     * 发货建议 错误 信息 15500-16000
-     */
-    DELIVERY_SUGGESTION_ONLY_COMPLETED_ALLOW_PUSH(15500,"发货建议【{0}】未完成，不支持下推"),
-    DELIVERY_SUGGESTION_INVALID_FORBIDDEN(15501,"发货建议【{0}】已作废，不支持下推"),
-
-
-    /**
-     * 质检申请 错误 信息 16000-16500
-      */
-    QC_APPLICATION_NOT_EXIST(16000,"质检申请单不存在"),
-    QC_APPLICATION_DETAIL_NOT_EXIST(16001,"质检申请明细单不存在"),
-    QC_APPLICATION_SUPPLIER_NOT_DIFF(16002,"质检申请单明细单供应商与来源单据供应商不一致"),
-    QC_APPLICATION_NOT_APPROVE_PUSH(16003,"质检申请单未审核不支持下推"),
-    QC_APPLICATION_PLAN_QC_DATE_NOT_BEFORE_NOW(16004,"期望质检日期不能早于当前日期"),
-    QC_APPLICATION_DETAIL_QTY_NOT_GREATER_THAN_PO_QTY(16005,"申请质检数量不能大于未入库数量，SKU【{0}】未入库数量：【{1}】"),
-    QC_STANDARD_SKU_NOT_FOUND(11140,  "SKU【{0}】未查得质检标准"),
-    QC_STANDARD_NOT_FOUND(11141, "质检标准不存在"),
-    QC_STANDARD_SKU_EXISTS(11142, "该SKU已存在质检标准"),
-    QC_STANDARD_IMPORT_SKU_NOT_FOUND(11143, "未在Excel中找到“产品SKU”对应值"),
-    QC_STANDARD_IMPORT_DETAIL_NOT_FOUND(11144, "未发现有效的质检明细（请确保从第15行开始有数字序号的明细项）"),
-    QC_APPLICATION_DETAIL_QTY_NOT_GREATER_THAN_WAIT_DELIVERY_QTY(16006,"申请质检数量不能大于剩余送货数量，SKU【{0}】剩余送货数量：【{1}】"),
-    QC_APPLICATION_SOURCE_WAIT_DELIVERY_NOT_OPTION(16007,"待发货来源质检申请单不允许操作"),
-    QC_APPLICATION_SOURCE_PO_NOT_OPTION(16008,"采购订单/自建质检申请单不允许操作"),
-    QC_APPLICATION_PUSH_QC_NOTICE_NOT_DISAPPROVE(16009,"质检申请单已下推质检通知单，不支持反审核"),
-    QC_APPLICATION_PUSH_QC_NOTICE_NOT_PUSH(16010,"质检申请单已下推质检通知单，不支持再次下推"),
-
-    ;
     @Getter
     private final Integer code;
     @Getter
     private final String msg;
+    /** 常量名，兼容原 enum.name() / getMessageKey()。 */
+    private final String name;
 
-    ApiError(Integer code, String msg) {
+    ApiError(String name, Integer code, String msg) {
+        this.name = name;
         this.code = code;
         this.msg = msg;
     }
 
-    /** 国际化key，直接使用枚举名 */
+    /** 兼容原 enum.name()。 */
+    public String name() {
+        return this.name;
+    }
+
+    @Override
+    public String toString() {
+        return this.name;
+    }
+
+    /** 兼容原 enum.values()。 */
+    public static ApiError[] values() {
+        return ApiErrorRegistry.values();
+    }
+
+    /** 兼容原 enum.valueOf(String)。 */
+    public static ApiError valueOf(String name) {
+        return ApiErrorRegistry.valueOf(name);
+    }
+
+    /** 国际化key，直接使用常量名。 */
     public String getMessageKey() {
-        return this.name();
+        return this.name;
     }
 
     /**

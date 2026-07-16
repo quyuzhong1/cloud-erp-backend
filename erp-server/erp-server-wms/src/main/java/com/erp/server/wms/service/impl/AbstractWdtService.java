@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.enums.SyncStatusEnum;
@@ -27,14 +28,14 @@ import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
-import com.erp.model.wms.entity.WdtWarehouseLocationMappingEntity;
+import com.erp.model.wms.entity.WarehouseLocationMappingEntity;
 import com.erp.model.wms.entity.WmsPushMsgEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpPushWdtFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.server.wms.service.WdtWarehouseLocationMappingService;
+import com.erp.server.wms.service.WarehouseLocationMappingService;
 import com.erp.server.wms.service.WmsPushMsgService;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CommonCreateBillGoodsReq;
@@ -65,7 +66,7 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
     @Resource
     private DocNoGenHelper docNoGenHelper;
     @Resource
-    private WdtWarehouseLocationMappingService locationMappingService;
+    private WarehouseLocationMappingService locationMappingService;
     @Resource
     private DmpThirdMappingFeign dmpThirdMappingFeign;
     @Resource
@@ -205,7 +206,9 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
      */
     private <T extends CommonCreateBillGoodsReq> Pair<List<T>, List<T>> handleTransfer(List<T> goodsLists, String warehouseId) {
         List<String> noNeedPushPositionNo = Arrays.asList("B2B-JHZC" , "TC-JHZC");
-    	List<WdtWarehouseLocationMappingEntity> mappingList = locationMappingService.list(new LambdaQueryWrapper<WdtWarehouseLocationMappingEntity>().eq(WdtWarehouseLocationMappingEntity::getSysWarehouseId, warehouseId));
+    	List<WarehouseLocationMappingEntity> mappingList = locationMappingService.list(new LambdaQueryWrapper<WarehouseLocationMappingEntity>()
+                .eq(WarehouseLocationMappingEntity::getSysWarehouseId, warehouseId)
+                .eq(WarehouseLocationMappingEntity::getDictPlatform, PlatformDictEnum.WDT.getCode()));
         Map<String, String> wdtLocationMap = mappingList.stream().collect(Collectors.toMap(item -> item.getSysWarehouseId() + "#" + item.getSysWarehouseLocation(), item1 -> item1.getThirdWarehouseLocation()));
         List<T> needPushList = new ArrayList<>();
         List<T> noNeedPushList = new ArrayList<>();

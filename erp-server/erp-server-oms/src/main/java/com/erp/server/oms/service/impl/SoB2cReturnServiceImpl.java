@@ -775,7 +775,7 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = ids.stream().map(obj -> new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SO_B2C_RETURN.getCode(), obj)).collect(Collectors.toCollection(ValidList::new));
         ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
         if (200 != listApiResult.getCode()) {
-            throw new ServiceException(ApiResult.error(ApiError.HTTP_UNKNOWN.getCode(),listApiResult.getMsg()));
+            throw new ServiceException(ApiError.WF_CUR_APPROVER_QUERY_FAILED, listApiResult.getMsg());
         }
         Map<String, String> approveNameMap = listApiResult.getData().stream().collect(Collectors.groupingBy(ProcessManagementDTO.CurApproveInfoDTO::getBusinessId, Collectors.mapping(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName, Collectors.joining(","))));
 
@@ -844,5 +844,14 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
     */
     private void handleData(SoB2cReturnEntity soB2cReturnEntity) {
     // TODO 验证数据 & 数据赋值
+    }
+
+    @Override
+    public SoB2cReturnEntity findFirstByReferenceNo(String referenceNo) {
+        // 空参不下发SQL：referenceNo为空时OR多字段匹配无意义，且防止误匹配某些字段为空字符串的历史脏数据
+        if (StringUtils.isBlank(referenceNo)) {
+            return null;
+        }
+        return baseMapper.findFirstByReferenceNo(referenceNo);
     }
 }

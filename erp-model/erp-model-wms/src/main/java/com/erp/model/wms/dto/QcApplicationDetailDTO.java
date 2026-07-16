@@ -264,6 +264,12 @@ public class QcApplicationDetailDTO implements Serializable {
         @Size(max = 19,message = "来源明细id最大长度不能超过19位")
         private String sourceDetailId;
 
+        /**
+        * 备注
+        */
+        @Size(max = 255, message = "备注最大长度不能超过255位")
+        private String remark;
+
     }
 
     @Data

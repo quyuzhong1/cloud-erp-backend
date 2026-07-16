@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.UserRequestPermissionsDTO;
 import com.common.business.dto.UserSelectDto;
+import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.ForgotPasswordDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -14,6 +15,8 @@ import com.common.message.dto.email.EmailVerifyCodeDTO;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.model.sys.vo.SupplierUserVO;
+import com.erp.model.sys.vo.SysUserMenuAuthVO;
+import com.erp.model.sys.vo.SysUserPermissionAuthVO;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -60,11 +63,38 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
     Boolean updateSrmUser(SysUserInfoDTO sysUserInfoDTO);
     /**
      * 账号登录
+     * <p>
+     * 仅校验账号密码并返回用户基础信息，不再组装菜单与权限数据。
+     * </p>
      *
-     * @param dto
-     * @return
+     * @param dto 登录入参
+     * @return 用户基础信息
      */
     SysUserDTO accountLogin(AccountLoginDTO dto);
+
+    /**
+     * 获取用户菜单权限
+     * <p>
+     * 根据用户 ID 和所属系统类型，查询 leftMenuList 与 overallMenuList。
+     * </p>
+     *
+     * @param userId   用户 ID
+     * @param userType 所属系统（erp/srm/pda）
+     * @return 菜单权限数据
+     */
+    SysUserMenuAuthVO getUserMenuAuth(String userId, String userType);
+
+    /**
+     * 获取用户按钮权限编码
+     * <p>
+     * 根据用户 ID 和所属系统类型，查询按钮权限 menuCode 列表。
+     * </p>
+     *
+     * @param userId   用户 ID
+     * @param userType 所属系统（erp/srm/pda）
+     * @return 按钮权限编码列表
+     */
+    SysUserPermissionAuthVO getUserPermissionAuth(String userId, String userType);
 
     /**
      * 根据关键字获取用户列表
@@ -252,6 +282,17 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
      * @return java.util.List<com.erp.model.sys.entity.SysUserInfoEntity>
      **/
     List<SysUserInfoEntity> listUserByDept(String deptName);
+
+    /**
+     * 根据部门ID查询部门及下级部门用户
+     */
+    List<SysUserInfoEntity> listUserByDeptId(String deptId);
+
+    /**
+     * 根据部门ID查询用户下拉列表
+     */
+    List<BaseDropDownDTO.DisabledDTO> listDeptUserDropDown(String deptId);
+
     /**
      * @description: 店铺权限设置分页查询
      * @author Will

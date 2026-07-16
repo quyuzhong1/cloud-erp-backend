@@ -89,6 +89,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.common.core.utils.MathUtil.removeSignAndSpace;
@@ -106,6 +108,7 @@ public class NfeInvoiceService {
     private static final String SHOPEE_BR_FREIGHT_ERROR_MSG = "虾皮巴西店铺不支持含买家运费开票";
     private static final int DANFE_SIMPLE_HEIGHT_MM = 150;
     private static final int DANFE_SIMPLE_WIDTH_MM = 100;
+    private static final Pattern BRAZIL_NFE_CHAVE_PATTERN = Pattern.compile("\\b\\d{44}\\b");
     private static final OkHttpClient OK_HTTP_CLIENT = new OkHttpClient.Builder()
             .connectTimeout(10, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
@@ -365,8 +368,6 @@ public class NfeInvoiceService {
      */
     @Transactional(rollbackFor = Exception.class)
     public Boolean createInvoiceV2(SoB2cEntity soB2cEntity) {
-        String invoiceStatus = InvoiceInfoStatusEnum.INVOICE_SUCCESS.getCode();
-        String uploadStatus = InvoiceInfoUploadStatusEnum.WAIT_UPLOAD.getCode();
         //配置信息
         CfgInvoiceSettingDetailEntity invoiceSettingDetail = null;
         CfgInvoiceSettingEntity invoiceSetting = null;
@@ -414,6 +415,9 @@ public class NfeInvoiceService {
             log.warn("开具发票（新接口V2）响应, 销售订单：{}, status:{}", soB2cEntity.getCode(), responseData.getStatus());
         }catch (Exception e){
             log.error("创建发票失败,返回信息:{}", e.getMessage(), e);
+            if (tryHandleDuplicateInvoiceByChave(soB2cEntity, invoiceSettingDetail, e.getMessage(), invoiceAddress, sellerTaxNo, companyName, shopeeBrazilOrderContext)) {
+                return Boolean.TRUE;
+            }
             InvoiceInfoEntity invoiceInfoEntity = invoiceInfoService.getInvoicingBySoId(soB2cEntity.getId());
             invoiceInfoEntity.setCfgId(invoiceSettingDetail.getId());
             invoiceInfoEntity.setStatus(InvoiceInfoStatusEnum.INVOICE_FAILED.getCode());
@@ -443,53 +447,7 @@ public class NfeInvoiceService {
         InvoiceInfoStatusEnum statusEnum = InvoiceStatusMapper.mapToEnum(status);
         
         if (InvoiceStatusMapper.isSuccess(status)) {
-            // 开票成功后，查询发票详情以获取完整的发票信息（特别是XML链接）
-            InvoiceDetailResponseDTO.InvoiceDetailDataDTO detailData = null;
-            try {
-                String companyToken = invoiceSettingDetail.getToken();
-                detailData = tfFiscalService.getInvoiceDetailV2(responseData.getUuid(), companyToken);
-                log.warn("查询发票详情成功, uuid: {}, xml: {}", responseData.getUuid(), detailData.getXml());
-            } catch (Exception e) {
-                log.error("查询发票详情失败, uuid: {}, 错误: {}", responseData.getUuid(), e.getMessage(), e);
-                // 即使查询详情失败，也继续使用创建接口返回的数据
-            }
-            
-            // 使用详情接口返回的数据（如果查询成功），否则使用创建接口返回的数据
-            Integer serie = detailData != null && detailData.getSerie() != null ? detailData.getSerie() : responseData.getSerie();
-            Integer number = detailData != null && detailData.getNumber() != null ? detailData.getNumber() : responseData.getNfe();
-            String xmlUrl = detailData != null && CharSequenceUtil.isNotBlank(detailData.getXml()) ? detailData.getXml() : responseData.getXml();
-            String chave = detailData != null && CharSequenceUtil.isNotBlank(detailData.getChave()) ? detailData.getChave() : responseData.getChave();
-            
-            if (serie != null && number != null) {
-                cfgInvoiceSettingService.updateSerialNoById(invoiceSettingDetail.getMainId(), serie, number);
-            }
-            
-            InvoiceInfoEntity invoiceInfoEntity = invoiceInfoService.getInvoicingBySoId(soB2cEntity.getId());
-            invoiceInfoEntity.setCfgId(invoiceSettingDetail.getId());
-            invoiceInfoEntity.setStatus(invoiceStatus);
-            invoiceInfoEntity.setUploadStatus(PlatformDictEnum.ALI_EXPRESS.getCode().equals(soB2cEntity.getDictPlatform()) ? InvoiceInfoUploadStatusEnum.NOT_NEED_UPLOAD.getCode() : uploadStatus);
-            invoiceInfoEntity.setQueryId(responseData.getUuid());
-            // queryKey直接使用chave，不需要解析XML
-            invoiceInfoEntity.setQueryKey(chave);
-            invoiceInfoEntity.setPlatformInvoiceNo(chave);
-            invoiceInfoEntity.setNo(serie);
-            invoiceInfoEntity.setStartCode(String.valueOf(number));
-            invoiceInfoEntity.setInvoiceAddress(invoiceAddress);
-            invoiceInfoEntity.setSellerTaxNo(sellerTaxNo);
-            invoiceInfoEntity.setCompanyName(companyName);
-            invoiceInfoService.updateNfeStatusById(invoiceInfoEntity);
-            
-            // 上传xml、pdf（使用详情接口返回的XML链接）
-            if (CharSequenceUtil.isNotBlank(xmlUrl)) {
-                uploadFile(invoiceInfoEntity.getId(), xmlUrl, "");
-                // 获取Danfe PDF并上传
-                generateAndUploadPdfFromDanfe(invoiceInfoEntity.getId(), responseData.getUuid(), invoiceSettingDetail.getToken());
-            }
-            
-            if (shouldAutoUploadInvoice(soB2cEntity, invoiceSettingDetail, shopeeBrazilOrderContext)) {
-                invoiceInfoService.uploadNfeInvoice(soB2cEntity,invoiceInfoEntity.getId());
-            }
-            return Boolean.TRUE;
+            return handleCreateInvoiceSuccess(soB2cEntity, invoiceSettingDetail, responseData, null, invoiceAddress, sellerTaxNo, companyName, shopeeBrazilOrderContext);
         } else if (InvoiceStatusMapper.isProcessing(status)) {
             InvoiceInfoEntity invoiceInfoEntity = invoiceInfoService.getInvoicingBySoId(soB2cEntity.getId());
             invoiceInfoEntity.setCfgId(invoiceSettingDetail.getId());
@@ -504,6 +462,10 @@ public class NfeInvoiceService {
         } else {
             // 失败状态（包括 InvoicingFailed, Failed, Canceled, Voided 等）
             String motivo = CharSequenceUtil.isNotBlank(responseData.getMotivo()) ? responseData.getMotivo() : statusEnum.getName();
+            String duplicateMessage = CharSequenceUtil.format("{} {} {}", status, motivo, responseData.getChave());
+            if (tryHandleDuplicateInvoiceByChave(soB2cEntity, invoiceSettingDetail, duplicateMessage, invoiceAddress, sellerTaxNo, companyName, shopeeBrazilOrderContext)) {
+                return Boolean.TRUE;
+            }
             boolean isErrorStatus = InvoiceStatusMapper.isFailed(status);
             
             if (isErrorStatus) {
@@ -538,6 +500,159 @@ public class NfeInvoiceService {
             }
             return Boolean.FALSE;
         }
+    }
+
+    /**
+     * 开票接口超时后再次调用可能返回“已开票/重复开票”错误。
+     * 这种场景第三方已经生成了NF-e，不能按失败处理；需要用错误里的chave反查详情，再复用开票成功落库和附件上传逻辑。
+     */
+    private boolean tryHandleDuplicateInvoiceByChave(SoB2cEntity soB2cEntity,
+                                                     CfgInvoiceSettingDetailEntity invoiceSettingDetail,
+                                                     String errorMessage,
+                                                     String invoiceAddress,
+                                                     String sellerTaxNo,
+                                                     String companyName,
+                                                     ShopeeBrazilOrderContext shopeeBrazilOrderContext) {
+        String chave = extractDuplicateInvoiceChave(errorMessage);
+        if (CharSequenceUtil.isBlank(chave)) {
+            return false;
+        }
+        if (Objects.isNull(invoiceSettingDetail) || CharSequenceUtil.isBlank(invoiceSettingDetail.getToken())) {
+            log.warn("重复开票补偿失败，发票配置或公司token为空, soCode:{}, chave:{}", soB2cEntity.getCode(), chave);
+            return false;
+        }
+        try {
+            InvoiceDetailResponseDTO.InvoiceDetailDataDTO detailData =
+                    tfFiscalService.getInvoiceDetailByChaveV2(chave, invoiceSettingDetail.getToken());
+            if (Objects.isNull(detailData) || !InvoiceStatusMapper.isSuccess(detailData.getStatus())) {
+                log.warn("重复开票补偿未确认成功, soCode:{}, chave:{}, detailStatus:{}",
+                        soB2cEntity.getCode(), chave, Objects.isNull(detailData) ? null : detailData.getStatus());
+                return false;
+            }
+            log.warn("重复开票补偿确认成功, soCode:{}, chave:{}, uuid:{}",
+                    soB2cEntity.getCode(), chave, detailData.getUuid());
+            return handleCreateInvoiceSuccess(soB2cEntity, invoiceSettingDetail, null, detailData,
+                    invoiceAddress, sellerTaxNo, companyName, shopeeBrazilOrderContext);
+        } catch (Exception ex) {
+            log.error("重复开票补偿查询失败, soCode:{}, chave:{}, error:{}", soB2cEntity.getCode(), chave, ex.getMessage(), ex);
+            return false;
+        }
+    }
+
+    private String extractDuplicateInvoiceChave(String errorMessage) {
+        if (CharSequenceUtil.isBlank(errorMessage) || !isDuplicateInvoiceMessage(errorMessage)) {
+            return CharSequenceUtil.EMPTY;
+        }
+        Matcher matcher = BRAZIL_NFE_CHAVE_PATTERN.matcher(errorMessage);
+        return matcher.find() ? matcher.group() : CharSequenceUtil.EMPTY;
+    }
+
+    private boolean isDuplicateInvoiceMessage(String errorMessage) {
+        String lowerMessage = errorMessage.toLowerCase(Locale.ROOT);
+        return lowerMessage.contains("duplicad")
+                || lowerMessage.contains("ja foi emitido")
+                || lowerMessage.contains("já foi emitido")
+                || lowerMessage.contains("已开票")
+                || lowerMessage.contains("已经开票")
+                || lowerMessage.contains("重复开票")
+                || lowerMessage.contains("重复发票");
+    }
+
+    private Boolean handleCreateInvoiceSuccess(SoB2cEntity soB2cEntity,
+                                               CfgInvoiceSettingDetailEntity invoiceSettingDetail,
+                                               CreateInvoiceResponseDTO.CreateInvoiceDataDTO responseData,
+                                               InvoiceDetailResponseDTO.InvoiceDetailDataDTO detailData,
+                                               String invoiceAddress,
+                                               String sellerTaxNo,
+                                               String companyName,
+                                               ShopeeBrazilOrderContext shopeeBrazilOrderContext) {
+        InvoiceDetailResponseDTO.InvoiceDetailDataDTO resolvedDetailData = detailData;
+        String uuidFromCreate = Objects.nonNull(responseData) ? responseData.getUuid() : null;
+        if (Objects.isNull(resolvedDetailData) && CharSequenceUtil.isNotBlank(uuidFromCreate)) {
+            try {
+                resolvedDetailData = tfFiscalService.getInvoiceDetailV2(uuidFromCreate, invoiceSettingDetail.getToken());
+                log.warn("查询发票详情成功, uuid: {}, xml: {}", uuidFromCreate, resolvedDetailData.getXml());
+            } catch (Exception e) {
+                log.error("查询发票详情失败, uuid: {}, 错误: {}", uuidFromCreate, e.getMessage(), e);
+                // 创建接口已返回Success时，详情查询失败仍使用创建接口数据继续落库。
+            }
+        }
+
+        Integer serie = firstNonNull(
+                Objects.nonNull(resolvedDetailData) ? resolvedDetailData.getSerie() : null,
+                Objects.nonNull(responseData) ? responseData.getSerie() : null
+        );
+        Integer number = firstNonNull(
+                Objects.nonNull(resolvedDetailData) ? resolvedDetailData.getNumber() : null,
+                Objects.nonNull(responseData) ? responseData.getNfe() : null
+        );
+        String uuid = firstNonBlank(
+                Objects.nonNull(resolvedDetailData) ? resolvedDetailData.getUuid() : null,
+                uuidFromCreate
+        );
+        String chave = firstNonBlank(
+                Objects.nonNull(resolvedDetailData) ? resolvedDetailData.getChave() : null,
+                Objects.nonNull(responseData) ? responseData.getChave() : null
+        );
+        String xmlUrl = firstNonBlank(
+                Objects.nonNull(resolvedDetailData) ? resolvedDetailData.getXml() : null,
+                Objects.nonNull(responseData) ? responseData.getXml() : null
+        );
+        String pdfUrl = resolveInvoiceDetailPdfUrl(resolvedDetailData);
+
+        if (serie != null && number != null) {
+            cfgInvoiceSettingService.updateSerialNoById(invoiceSettingDetail.getMainId(), serie, number);
+        }
+
+        InvoiceInfoEntity invoiceInfoEntity = invoiceInfoService.getInvoicingBySoId(soB2cEntity.getId());
+        invoiceInfoEntity.setCfgId(invoiceSettingDetail.getId());
+        invoiceInfoEntity.setStatus(InvoiceInfoStatusEnum.INVOICE_SUCCESS.getCode());
+        invoiceInfoEntity.setUploadStatus(PlatformDictEnum.ALI_EXPRESS.getCode().equals(soB2cEntity.getDictPlatform()) ? InvoiceInfoUploadStatusEnum.NOT_NEED_UPLOAD.getCode() : InvoiceInfoUploadStatusEnum.WAIT_UPLOAD.getCode());
+        invoiceInfoEntity.setQueryId(uuid);
+        // queryKey直接使用chave，避免再从XML解析失败影响后续取消/退货发票。
+        invoiceInfoEntity.setQueryKey(chave);
+        invoiceInfoEntity.setPlatformInvoiceNo(chave);
+        invoiceInfoEntity.setNo(serie);
+        if (number != null) {
+            invoiceInfoEntity.setStartCode(String.valueOf(number));
+        }
+        invoiceInfoEntity.setInvoiceAddress(invoiceAddress);
+        invoiceInfoEntity.setSellerTaxNo(sellerTaxNo);
+        invoiceInfoEntity.setCompanyName(companyName);
+        invoiceInfoService.updateNfeStatusById(invoiceInfoEntity);
+
+        if (CharSequenceUtil.isNotBlank(xmlUrl) || CharSequenceUtil.isNotBlank(pdfUrl)) {
+            uploadFile(invoiceInfoEntity.getId(), xmlUrl, pdfUrl);
+        }
+        if (CharSequenceUtil.isBlank(pdfUrl) && CharSequenceUtil.isNotBlank(uuid)) {
+            generateAndUploadPdfFromDanfe(invoiceInfoEntity.getId(), uuid, invoiceSettingDetail.getToken());
+        }
+
+        if (shouldAutoUploadInvoice(soB2cEntity, invoiceSettingDetail, shopeeBrazilOrderContext)) {
+            invoiceInfoService.uploadNfeInvoice(soB2cEntity, invoiceInfoEntity.getId());
+        }
+        return Boolean.TRUE;
+    }
+
+    private static Integer firstNonNull(Integer first, Integer second) {
+        return first != null ? first : second;
+    }
+
+    private static String firstNonBlank(String first, String second) {
+        return CharSequenceUtil.isNotBlank(first) ? first : second;
+    }
+
+    private static String resolveInvoiceDetailPdfUrl(InvoiceDetailResponseDTO.InvoiceDetailDataDTO detailData) {
+        if (Objects.isNull(detailData)) {
+            return null;
+        }
+        if (CharSequenceUtil.isNotBlank(detailData.getDanfeSimples())) {
+            return detailData.getDanfeSimples();
+        }
+        if (CharSequenceUtil.isNotBlank(detailData.getDanfe())) {
+            return detailData.getDanfe();
+        }
+        return detailData.getDanfeEtiqueta();
     }
 
     /**
@@ -980,6 +1095,7 @@ public class NfeInvoiceService {
             }
         }
         fillReceiverFallbackClientInfo(nfeClienteDTO, receiverEntity);
+        fillAliExpressLatinClientName(nfeClienteDTO, receiverEntity, soB2cEntity);
         nfeClienteDTO = enrichShopeeBrazilClientDTO(soB2cEntity, nfeClienteDTO, shopeeBrazilOrderContext);
         nfeClienteDTO.setCpfCnpj(cleanTaxNo(nfeClienteDTO.getCpfCnpj()));
         fillProvinceInfo(nfeClienteDTO);
@@ -997,6 +1113,28 @@ public class NfeInvoiceService {
             return cpfCnpj;
         }
         return cpfCnpj.replaceAll("[^0-9]", "");
+    }
+
+    private void fillAliExpressLatinClientName(NfeInvoiceDTO.NfeClienteDTO nfeClienteDTO, SoB2cReceiverEntity receiverEntity, SoB2cEntity soB2cEntity) {
+        if (ObjUtil.isEmpty(nfeClienteDTO)
+                || ObjUtil.isEmpty(receiverEntity)
+                || ObjUtil.isEmpty(soB2cEntity)
+                || !PlatformDictEnum.ALI_EXPRESS.getCode().equals(soB2cEntity.getDictPlatform())
+                || CharSequenceUtil.isBlank(receiverEntity.getReceiverName())) {
+            return;
+        }
+        if (hasNonLatinLetter(nfeClienteDTO.getName())) {
+            nfeClienteDTO.setName(receiverEntity.getReceiverName());
+        }
+    }
+
+    private boolean hasNonLatinLetter(String value) {
+        if (CharSequenceUtil.isBlank(value)) {
+            return false;
+        }
+        return value.codePoints().anyMatch(codePoint ->
+                Character.isLetter(codePoint)
+                        && Character.UnicodeScript.of(codePoint) != Character.UnicodeScript.LATIN);
     }
 
     private String getRuaStr(String dictPlatform, String rua) {

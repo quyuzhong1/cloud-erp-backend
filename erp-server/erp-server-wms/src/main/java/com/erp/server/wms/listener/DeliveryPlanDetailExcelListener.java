@@ -3,18 +3,21 @@ package com.erp.server.wms.listener;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.StrUtils;
 import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.wms.dto.excel.DeliveryPlanDetailExportExcelDTO;
-import org.apache.xpath.operations.Bool;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
 public class DeliveryPlanDetailExcelListener extends AnalysisEventListener<DeliveryPlanDetailExportExcelDTO> {
+
+    private static final int MAX_IMPORT_ROWS = 5000;
 
     /**
      * 导入数据，用于判断导入是否为空
@@ -62,6 +65,9 @@ public class DeliveryPlanDetailExcelListener extends AnalysisEventListener<Deliv
     @Override
     public void invoke(DeliveryPlanDetailExportExcelDTO deliveryPlanDetailExportExcelDTO, AnalysisContext analysisContext) {
         ListingInfoDTO.PageDTO viewDTO = new ListingInfoDTO.PageDTO();
+        if (allList.size() >= MAX_IMPORT_ROWS) {
+            throw new ServiceException(ApiError.FILE_EXCEL_IMPORT_SIZE);
+        }
         //添加数据用于判断是否为空
         allList.add(deliveryPlanDetailExportExcelDTO);
 

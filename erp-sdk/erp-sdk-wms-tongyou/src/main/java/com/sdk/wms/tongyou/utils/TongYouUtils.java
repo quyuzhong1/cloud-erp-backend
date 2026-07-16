@@ -7,6 +7,9 @@ import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.exception.ServiceException;
 import com.common.core.exception.ThirdWarehouseEmptyResponseException;
 import com.sdk.wms.tongyou.dto.response.TongYouBaseResp;
+import com.sdk.wms.tongyou.dto.response.TongYouCancelOutboundResp;
+import com.sdk.wms.tongyou.dto.response.TongYouQueryOutboundBillResp;
+import com.sdk.wms.tongyou.dto.response.TongYouQueryOutboundResp;
 import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -93,6 +96,51 @@ public class TongYouUtils {
         } catch (Exception e) {
             log.error("JSON 解析失败,原始值：{}，异常: ", jsonStr, e);
             return TongYouBaseResp.error("JSON 解析失败,原始值：{}，异常:{} ", jsonStr, e);
+        }
+    }
+
+    public static TongYouCancelOutboundResp parseToTongYouCancelOutboundResp(String jsonStr) {
+        try {
+            assertResponseNotBlank(jsonStr);
+            TongYouCancelOutboundResp resp = JSON.parseObject(jsonStr, TongYouCancelOutboundResp.class);
+            if (resp == null) {
+                throw new ThirdWarehouseEmptyResponseException(EMPTY_RESPONSE_MESSAGE);
+            }
+            return resp;
+        } catch (ThirdWarehouseEmptyResponseException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("JSON 解析失败,原始值：{}，异常: ", jsonStr, e);
+            TongYouCancelOutboundResp resp = new TongYouCancelOutboundResp();
+            resp.setError("F");
+            resp.setContent(CharSequenceUtil.format("JSON 解析失败,原始值：{}，异常: {}", jsonStr, e));
+            return resp;
+        }
+    }
+
+    public static TongYouQueryOutboundBillResp parseToTongYouQueryOutboundResp(String jsonStr) {
+        try {
+            assertResponseNotBlank(jsonStr);
+            String trimmed = jsonStr.trim();
+            TongYouQueryOutboundBillResp resp = new TongYouQueryOutboundBillResp();
+            if (trimmed.startsWith("[")) {
+                resp.setError("T");
+                resp.setData(JSON.parseArray(trimmed, TongYouQueryOutboundResp.class));
+                return resp;
+            }
+            resp = JSON.parseObject(jsonStr, TongYouQueryOutboundBillResp.class);
+            if (resp == null) {
+                throw new ThirdWarehouseEmptyResponseException(EMPTY_RESPONSE_MESSAGE);
+            }
+            return resp;
+        } catch (ThirdWarehouseEmptyResponseException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("JSON 解析失败,原始值：{}，异常: ", jsonStr, e);
+            TongYouQueryOutboundBillResp resp = new TongYouQueryOutboundBillResp();
+            resp.setError("F");
+            resp.setContent(CharSequenceUtil.format("JSON 解析失败,原始值：{}，异常: {}", jsonStr, e));
+            return resp;
         }
     }
 
