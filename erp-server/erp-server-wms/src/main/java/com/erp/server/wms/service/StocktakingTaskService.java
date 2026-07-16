@@ -116,6 +116,11 @@ public interface StocktakingTaskService extends SuperService<StocktakingTaskEnti
     List<StocktakingTaskEntity> listBySourceId(String sourceId);
 
     /**
+     * 批量按盘点计划 sourceId 查询任务
+     */
+    List<StocktakingTaskEntity> listBySourceIds(List<String> sourceIds);
+
+    /**
      * 根据来源ID 删除任务
      * @param id
      * @return
@@ -147,6 +152,21 @@ public interface StocktakingTaskService extends SuperService<StocktakingTaskEnti
      * @return java.lang.Boolean
      */
     Boolean approveEnd(ApproveOneDTO approveOne, StocktakingTaskEntity entity);
+
+    /**
+     * 按盘点任务明细释放 Redis 盘点库存锁（工作流/Feign/页面审核统一入口）
+     */
+    void releaseInventoryLockByTaskId(String taskId);
+
+    /**
+     * 按盘点计划单号释放该计划下全部 Redis 盘点库存锁
+     */
+    void releaseInventoryLockByPlanCode(String planCode);
+
+    /**
+     * 判断库存维度是否已被盘点锁定（任意计划下的 plan lock key）
+     */
+    boolean isInventoryLockedForStocktaking(String orgId, String warehouseId, String warehouseLocation, String skuId, String dictInventoryStatus);
 
     /**
      * 根据code 获取任务信息

@@ -1,13 +1,11 @@
 package com.erp.server.wms.controller.api;
 
-import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
-import com.common.business.utils.RedisUtil;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -15,7 +13,6 @@ import com.common.core.anno.LogViewService;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.common.business.constant.RedisCacheConstants;
 import com.erp.model.wms.dto.StocktakingPlanDTO;
 import com.erp.model.wms.entity.StocktakingPlanEntity;
 import com.erp.server.wms.query.StocktakingPlanQueryHandler;
@@ -42,8 +39,6 @@ public class StocktakingPlanController extends BaseController {
 
     @Resource
     private StocktakingPlanService stocktakingPlanService;
-    @Resource
-    private RedisUtil redisUtil;
 
     /**
     * 获取状态统计
@@ -209,9 +204,6 @@ public class StocktakingPlanController extends BaseController {
                     continue;
                 }
                 approveResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
-                // 删除盘点锁定的库存
-                redisUtil.keys(CharSequenceUtil.format(RedisCacheConstants.INVENTORY_LOCK_CODE, entity.getCode()))
-                        .forEach(key -> redisUtil.del(key));
             }
             resultDTOS.add(approveResult);
         }
@@ -239,9 +231,6 @@ public class StocktakingPlanController extends BaseController {
             BatchResultDTO disApproveResult;
             try {
                 disApproveResult = stocktakingPlanService.disApprove(id);
-                // 删除盘点锁定的库存
-                redisUtil.keys(CharSequenceUtil.format(RedisCacheConstants.INVENTORY_LOCK_CODE, entity.getCode()))
-                        .forEach(key -> redisUtil.del(key));
             }catch (Exception e){
                 log.error("盘点计划反审核失败",e);
                 if (ObjectUtil.isEmpty(entity)) {

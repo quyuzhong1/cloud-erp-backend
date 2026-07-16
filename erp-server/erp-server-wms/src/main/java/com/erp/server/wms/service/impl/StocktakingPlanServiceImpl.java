@@ -16,7 +16,6 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.common.business.utils.RedisUtil;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -28,7 +27,6 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.ValidatorUtil;
 import com.common.core.utils.date.DateUtil;
-import com.common.business.constant.RedisCacheConstants;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.StocktakingPlanDTO;
 import com.erp.model.wms.dto.StocktakingPlanDetailDTO;
@@ -82,8 +80,6 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
     private WarehouseLocationService warehouseLocationService;
     @Resource
     private InventoryService inventoryService;
-    @Resource
-    private RedisUtil redisUtil;
 
     @Override
     public PagingVO<StocktakingPlanDTO.ListDTO> paging(PagingDTO<StocktakingPlanDTO.PagingParamDTO> pagingParamDTO) {
@@ -312,17 +308,22 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         if (entity.getStocktakingDate().isBefore(LocalDate.now())) {
             throw new ServiceException(ApiError.WH_STOCKTAKING_NOT_ALLOW_APPROVE,entity.getCode());
         }
-        // 调用流程审核
-        approveProcess(entity, dto);
-        // 操作日志
-        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "盘点计划", approveType.getName(), dto.getComment());
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PLAN.getCode(), entity.getId(), "审核操作");
-        ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
+        try {
+            // 调用流程审核
+            approveProcess(entity, dto);
+            // 操作日志
+            String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "盘点计划", approveType.getName(), dto.getComment());
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PLAN.getCode(), entity.getId(), "审核操作");
+            ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
+        } catch (Exception e) {
+            stocktakingTaskService.releaseInventoryLockByPlanCode(entity.getCode());
+            throw e;
+        }
     }
 
     /**
-     * 审核流程处理
+     * 审核流程处理（原 approve 内联逻辑）
      * @param entity
      * @param dto
      */
@@ -504,13 +505,15 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
                         now.getHour() == 23 &&
                         now.getMinute() >= 50);
 
-        // 如果是当天盘点，直接生成任务
-        if (shouldCreateTaskImmediately) {
-            updatePlanTaskTime(entity.getId(), now);
-            List<StocktakingPlanDetailEntity> detailEntityList = stocktakingPlanDetailService.listByMainId(entity.getId());
-            stocktakingTaskService.createTaskList(entity, detailEntityList,Boolean.TRUE);
-        } else {
-            updatePlanTaskTime(entity.getId(), planTaskTime);
+        // 审核通过且满足下推时间窗口时，才生成盘点任务并加锁
+        if (ApproveStatusEnum.APPROVE.equals(approveStatus)) {
+            if (shouldCreateTaskImmediately) {
+                updatePlanTaskTime(entity.getId(), now);
+                List<StocktakingPlanDetailEntity> detailEntityList = stocktakingPlanDetailService.listByMainId(entity.getId());
+                stocktakingTaskService.createTaskList(entity, detailEntityList, Boolean.TRUE);
+            } else {
+                updatePlanTaskTime(entity.getId(), planTaskTime);
+            }
         }
 
         return Boolean.TRUE;
@@ -585,7 +588,15 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
     public Boolean pushStockingTaskByJob(BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
         List<StocktakingPlanEntity> stocktakingPlanList = this.listByIds(ids);
+        List<String> planIds = stocktakingPlanList.stream().map(StocktakingPlanEntity::getId).collect(Collectors.toList());
+        Set<String> pushedPlanIdSet = stocktakingTaskService.listBySourceIds(planIds).stream()
+                .map(StocktakingTaskEntity::getSourceId)
+                .collect(Collectors.toSet());
         for (StocktakingPlanEntity entity : stocktakingPlanList) {
+            if (pushedPlanIdSet.contains(entity.getId())) {
+                log.warn("盘点计划【{}】已下推盘点任务，Job 跳过重复下推", entity.getCode());
+                continue;
+            }
             List<StocktakingPlanDetailEntity> detailEntityList = stocktakingPlanDetailService.listByMainId(entity.getId());
             stocktakingTaskService.createTaskListByJob(entity, detailEntityList);
         }
@@ -791,57 +802,40 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
                 continue;
             }
 
-            //检查库存是否已被锁定
-            boolean hasConflict = false;
-            for (InventoryEntity item : inventoryList) {
-                String existKey = CharSequenceUtil.format(
-                        RedisCacheConstants.INVENTORY_LOCK,
-                        "*",
-                        item.getOrgId(),
-                        item.getWarehouseId(),
-                        item.getWarehouseLocation(),
-                        item.getSkuId(),
-                        item.getDictInventoryStatus()
-                );
-
-                Collection<String> keys = redisUtil.keys(existKey);
-                if (CollUtil.isNotEmpty(keys)) {
-                    WarehouseDTO.UpdateDTO updateDTO = warehouseService.detailWithCache(item.getWarehouseId());
-                    String warehouseName = ObjectUtil.isNotEmpty(updateDTO) ? updateDTO.getName() : item.getWarehouseId();
-                    log.error("仓库【{}】库位【{}】 SKU【{}】【{}】库存已存在盘点任务，跳过该计划",
-                            warehouseName,
-                            item.getWarehouseLocation(),
-                            item.getSkuNo(),
-                            item.getDictInventoryStatus()
-                    );
-                    removedIds.put(planId, "库存已锁定");
-                    hasConflict = true;
-                    break;
+            //检查库存是否已被锁定（按库存维度去重后 SCAN）；单计划异常仅跳过当前计划，不影响批次内其它计划
+            try {
+                boolean hasConflict = false;
+                Set<String> checkedDimensions = new HashSet<>();
+                for (InventoryEntity item : inventoryList) {
+                    String dimensionKey = CharSequenceUtil.format("{}_{}_{}_{}_{}", item.getOrgId(), item.getWarehouseId(),
+                            item.getWarehouseLocation(), item.getSkuId(), item.getDictInventoryStatus());
+                    if (!checkedDimensions.add(dimensionKey)) {
+                        continue;
+                    }
+                    if (stocktakingTaskService.isInventoryLockedForStocktaking(item.getOrgId(), item.getWarehouseId(),
+                            item.getWarehouseLocation(), item.getSkuId(), item.getDictInventoryStatus())) {
+                        WarehouseDTO.UpdateDTO updateDTO = warehouseService.detailWithCache(item.getWarehouseId());
+                        String warehouseName = ObjectUtil.isNotEmpty(updateDTO) ? updateDTO.getName() : item.getWarehouseId();
+                        log.error("仓库【{}】库位【{}】 SKU【{}】【{}】库存已存在盘点任务，跳过该计划",
+                                warehouseName,
+                                item.getWarehouseLocation(),
+                                item.getSkuNo(),
+                                item.getDictInventoryStatus()
+                        );
+                        removedIds.put(planId, "库存已锁定");
+                        hasConflict = true;
+                        break;
+                    }
                 }
-            }
 
-            if (hasConflict) {
+                if (hasConflict) {
+                    idIterator.remove();
+                }
+            } catch (Exception e) {
+                log.warn("盘点计划【{}】处理异常，跳过该计划", entity.getId(), e);
+                removedIds.put(planId, "处理异常");
                 idIterator.remove();
-                continue;
             }
-
-            //设置Redis锁
-            String planCode = entity.getCode();
-            inventoryList.forEach(item -> {
-                String redisKey = CharSequenceUtil.format(
-                        RedisCacheConstants.INVENTORY_LOCK,
-                        planCode,
-                        item.getOrgId(),
-                        item.getWarehouseId(),
-                        item.getWarehouseLocation(),
-                        item.getSkuId(),
-                        item.getDictInventoryStatus()
-                );
-                redisUtil.set(redisKey, planCode);
-                log.info("已设置库存锁定：key={}, value={}", redisKey, planCode);
-            });
-
-            log.info("盘点计划【{}】处理完成，共锁定{}条库存记录", entity.getId(), inventoryList.size());
         }
 
         //输出最终结果

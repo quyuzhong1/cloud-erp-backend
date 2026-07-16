@@ -1035,6 +1035,7 @@ public final class ApiError implements Serializable {
     public static final ApiError WH_STOCKTAKING_PROFIT_LOSS_NOT_ALLOW_UPDATE = ApiErrorWms.WH_STOCKTAKING_PROFIT_LOSS_NOT_ALLOW_UPDATE;
     public static final ApiError WH_STOCKTAKING_NOT_NEED_PUSH = ApiErrorWms.WH_STOCKTAKING_NOT_NEED_PUSH;
     public static final ApiError WH_STOCKTAKING_NOT_ALLOW_APPROVE = ApiErrorWms.WH_STOCKTAKING_NOT_ALLOW_APPROVE;
+    public static final ApiError WH_STOCKTAKING_INVENTORY_INVALID = ApiErrorWms.WH_STOCKTAKING_INVENTORY_INVALID;
     public static final ApiError WH_ONWAY_WAREHOUSE_NOT_EXIST = ApiErrorWms.WH_ONWAY_WAREHOUSE_NOT_EXIST;
     public static final ApiError WH_WEGO_INBOUND_CODE_REQUIRED = ApiErrorWms.WH_WEGO_INBOUND_CODE_REQUIRED;
     public static final ApiError WH_WEGO_AUTH_INFO_EMPTY = ApiErrorWms.WH_WEGO_AUTH_INFO_EMPTY;

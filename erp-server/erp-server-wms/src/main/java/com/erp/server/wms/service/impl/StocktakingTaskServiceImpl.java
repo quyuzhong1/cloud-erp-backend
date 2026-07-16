@@ -104,6 +104,8 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
     private WarehouseService warehouseService;
     @Resource
     private StocktakingPlanService stocktakingPlanService;
+    @Resource
+    private StocktakingTaskRollbackService stocktakingTaskRollbackService;
 
     /**
      * tab list
@@ -583,7 +585,104 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         if (stocktakingTaskEntities.stream().allMatch(task -> Objects.equals(task.getStatus(), StocktakingStatusEnum.COMPLETED))) {
             stocktakingPlanService.updateForStocktakingStatus(entity.getSourceId(), StocktakingStatusEnum.COMPLETED);
         }
+        if (ApproveStatusEnum.APPROVE.equals(approveStatus)) {
+            releaseInventoryLockByTask(entity);
+        }
         return result;
+    }
+
+    @Override
+    public void releaseInventoryLockByTaskId(String taskId) {
+        if (CharSequenceUtil.isBlank(taskId)) {
+            return;
+        }
+        StocktakingTaskEntity task = getById(taskId);
+        releaseInventoryLockByTask(task);
+    }
+
+    @Override
+    public void releaseInventoryLockByPlanCode(String planCode) {
+        if (CharSequenceUtil.isBlank(planCode)) {
+            return;
+        }
+        String keyPattern = CharSequenceUtil.format(RedisCacheConstants.INVENTORY_LOCK_CODE, planCode);
+        Collection<String> keys = redisUtil.scanKeys(keyPattern);
+        if (CollUtil.isEmpty(keys)) {
+            return;
+        }
+        keys.forEach(redisUtil::del);
+        log.warn("释放盘点计划库存锁：planCode={}, count={}", planCode, keys.size());
+    }
+
+    private void releaseInventoryLockByTask(StocktakingTaskEntity task) {
+        if (Objects.isNull(task) || CharSequenceUtil.isBlank(task.getSourceCode())) {
+            return;
+        }
+        List<StocktakingTaskDetailEntity> detailList = stocktakingTaskDetailService.listBaseByMainIds(Collections.singletonList(task.getId()));
+        if (CollUtil.isEmpty(detailList)) {
+            return;
+        }
+        String planCode = task.getSourceCode();
+        detailList.forEach(detail -> releaseInventoryLockByDetail(planCode, task.getCode(), detail));
+    }
+
+    private void releaseInventoryLockByDetail(String planCode, String taskCode, StocktakingTaskDetailEntity detail) {
+        String keyPattern = CharSequenceUtil.format(RedisCacheConstants.INVENTORY_LOCK, planCode, "*",
+                detail.getWarehouseId(), detail.getWarehouseLocation(), detail.getSkuId(), "*");
+        Collection<String> keys = redisUtil.scanKeys(keyPattern);
+        if (CollUtil.isNotEmpty(keys)) {
+            keys.forEach(redisUtil::del);
+            log.warn("释放盘点任务库存锁：taskCode={}, pattern={}, count={}", taskCode, keyPattern, keys.size());
+        }
+    }
+
+    /**
+     * 按单库存维度 SCAN 判断是否已有其它盘点计划占用锁（pattern 含 org/warehouse/location/sku/status，非全库锁前缀）。
+     */
+    @Override
+    public boolean isInventoryLockedForStocktaking(String orgId, String warehouseId, String warehouseLocation, String skuId, String dictInventoryStatus) {
+        String keyPattern = CharSequenceUtil.format(RedisCacheConstants.INVENTORY_LOCK, "*", orgId, warehouseId, warehouseLocation, skuId, dictInventoryStatus);
+        return redisUtil.hasScanKeys(keyPattern);
+    }
+
+    private void rollbackStocktakingTaskCreation(String planId, String planCode) {
+        stocktakingTaskRollbackService.rollbackTasksByPlanId(planId, planCode);
+        releaseInventoryLockByPlanCode(planCode);
+    }
+
+    /**
+     * 加锁：checkConflict=true 时走 Lua（SCAN 冲突 + SET NX 原子）；pattern 按库存维度收窄，避免全量 inventory 锁 SCAN。
+     */
+    private void lockInventoryForStocktaking(StocktakingPlanEntity entity, List<InventoryEntity> inventoryList, boolean checkConflict) {
+        String planCode = entity.getCode();
+        for (InventoryEntity item : inventoryList) {
+            if (CharSequenceUtil.isBlank(item.getWarehouseId()) || CharSequenceUtil.isBlank(item.getSkuId())) {
+                log.warn("盘点计划【{}】存在无效库存记录：warehouseId={}, skuId={}", planCode, item.getWarehouseId(), item.getSkuId());
+                throw new ServiceException(ApiError.WH_STOCKTAKING_INVENTORY_INVALID, planCode, item.getWarehouseId(), item.getSkuNo());
+            }
+            String redisKey = CharSequenceUtil.format(RedisCacheConstants.INVENTORY_LOCK, planCode, item.getOrgId(),
+                    item.getWarehouseId(), item.getWarehouseLocation(), item.getSkuId(), item.getDictInventoryStatus());
+            String conflictPattern = CharSequenceUtil.format(RedisCacheConstants.INVENTORY_LOCK, "*", item.getOrgId(),
+                    item.getWarehouseId(), item.getWarehouseLocation(), item.getSkuId(), item.getDictInventoryStatus());
+            if (checkConflict) {
+                if (!redisUtil.tryInventoryLock(conflictPattern, redisKey, planCode)) {
+                    throwStocktakingTaskExist(item);
+                }
+            } else if (!Boolean.TRUE.equals(redisUtil.setIfAbsent(redisKey, planCode))) {
+                Object existing = redisUtil.get(redisKey);
+                if (!Objects.equals(planCode, String.valueOf(existing))) {
+                    throwStocktakingTaskExist(item);
+                }
+            }
+        }
+    }
+
+    private void throwStocktakingTaskExist(InventoryEntity item) {
+        WarehouseDTO.UpdateDTO updateDTO = warehouseService.detailWithCache(item.getWarehouseId());
+        String warehouseName = ObjectUtil.isNotEmpty(updateDTO) ? updateDTO.getName() : item.getWarehouseId();
+        log.error("仓库【{}】库位【{}】 SKU【{}】【{}】库存 已存在盘点任务，不能重复创建",
+                warehouseName, item.getWarehouseLocation(), item.getSkuNo(), item.getDictInventoryStatus());
+        throw new ServiceException(ApiError.WH_STOCKTAKING_TASK_EXIST, warehouseName, item.getWarehouseLocation(), item.getSkuNo(), item.getDictInventoryStatus());
     }
 
     /**
@@ -1027,11 +1126,25 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
     }
 
     @Override
+    public List<StocktakingTaskEntity> listBySourceIds(List<String> sourceIds) {
+        if (CollUtil.isEmpty(sourceIds)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery()
+                .in(StocktakingTaskEntity::getSourceId, sourceIds)
+                .list();
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean removeBySourceId(String sourceId) {
         List<StocktakingTaskEntity> taskEntityList = listBySourceId(sourceId);
         if (CollUtil.isEmpty(taskEntityList)) {
             return Boolean.TRUE;
+        }
+        StocktakingPlanEntity planEntity = stocktakingPlanService.getById(sourceId);
+        if (ObjectUtil.isNotEmpty(planEntity)) {
+            releaseInventoryLockByPlanCode(planEntity.getCode());
         }
         List<String> mainIds = taskEntityList.stream().map(StocktakingTaskEntity::getId).collect(Collectors.toList());
         // 删除明细表数据
@@ -1062,62 +1175,49 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         }
 
         String planCode = entity.getCode();
-        // 2. 对需要盘点的 组织+仓库+仓位+skuId+库存状态 进行增加锁定库存操作
-        inventoryList.stream().forEach(item -> {
-            // 判断如果已存在盘点任务，抛出异常
-            String existKey = CharSequenceUtil.format(RedisCacheConstants.INVENTORY_LOCK, "*", item.getOrgId(), item.getWarehouseId(), item.getWarehouseLocation(), item.getSkuId(), item.getDictInventoryStatus());
-            Collection<String> keys = redisUtil.keys(existKey);
-            if (CollUtil.isNotEmpty(keys)) {
-                WarehouseDTO.UpdateDTO updateDTO = warehouseService.detailWithCache(item.getWarehouseId());
-                String warehouseName = ObjectUtil.isNotEmpty(updateDTO) ? updateDTO.getName() : item.getWarehouseId();
-                log.error("仓库【{}】库位【{}】 SKU【{}】【{}】库存 已存在盘点任务，不能重复创建", warehouseName, item.getWarehouseLocation(), item.getSkuNo(), item.getDictInventoryStatus());
-                throw new ServiceException(ApiError.WH_STOCKTAKING_TASK_EXIST, warehouseName, item.getWarehouseLocation(), item.getSkuNo(), item.getDictInventoryStatus());
+        try {
+            // 2. 对需要盘点的 组织+仓库+仓位+skuId+库存状态 进行增加锁定库存操作
+            lockInventoryForStocktaking(entity, inventoryList, true);
+            // 3. 对库存记录进行分组，按照分单规则进行分组
+            SeparateRuleEnum separateRule = entity.getSeparateRule();
+            Map<String, String> locationAreaMap = new HashMap<>();
+            if (ObjectUtil.equals(separateRule, SeparateRuleEnum.WAREHOUSE_AREA)) {
+                // 查询仓位对应的库区
+                locationAreaMap = warehouseLocationService.locationAreaMap();
             }
-            String redisKey = CharSequenceUtil.format(RedisCacheConstants.INVENTORY_LOCK, entity.getCode(), item.getOrgId(), item.getWarehouseId(), item.getWarehouseLocation(), item.getSkuId(), item.getDictInventoryStatus());
-            redisUtil.set(redisKey, planCode);
-        });
-        // 3. 对库存记录进行分组，按照分单规则进行分组
-        SeparateRuleEnum separateRule = entity.getSeparateRule();
-        Map<String, String> locationAreaMap = new HashMap<>();
-        if (ObjectUtil.equals(separateRule, SeparateRuleEnum.WAREHOUSE_AREA)) {
-            // 查询仓位对应的库区
-            locationAreaMap = warehouseLocationService.locationAreaMap();
-        }
-        String format = SeparateRuleEnum.getFormatStr(separateRule);
-        ;
-        Map<String, String> finalLocationAreaMap = locationAreaMap;
-        Map<String, List<InventoryEntity>> inventoryMap = inventoryList
-                .stream()
-                .collect(Collectors.groupingBy(item -> {
-                    // 按照仓库区域分单时，仓位需要转换为库区
-                    String groupKey = getGroupKey(separateRule, format, finalLocationAreaMap, item);
-                    return groupKey;
-                }));
-        // 4. 根据分组结果构建数据并保存盘点任务
-        // 串行执行：避免事务在子线程中失效（@Transactional 与 UserContext 均绑定 ThreadLocal）
-        LoginUser userInfo = UserContext.getDefaultLoginUser();
-        String uid = userInfo.getUid();
-        String username = userInfo.getUserName();
-        for (String key : inventoryMap.keySet()) {
-            String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.STOCKTAKING_TASK);
-            StocktakingTaskEntity insertTask = new StocktakingTaskEntity(entity, code, uid, username);
-            //盘点日期
-            insertTask.setBillDate(entity.getStocktakingDate());
-            this.save(insertTask);
-            List<InventoryEntity> inventoryEntityList = inventoryMap.get(key);
-            // 根据组织+仓库+仓位+skuId 进行分组 获取不同库存状态的库存记录
-            Map<String, List<InventoryEntity>> inventoryStatusMap = inventoryEntityList.stream()
-                    .collect(Collectors.groupingBy(item -> CharSequenceUtil.format("{}_{}_{}_{}", item.getOrgId(), item.getWarehouseId(), item.getWarehouseLocation(), item.getSkuId())));
-            List<StocktakingTaskDetailEntity> insertDetailList = inventoryStatusMap.keySet().stream().map(item -> {
-                List<InventoryEntity> inventoryEntities = inventoryStatusMap.get(item);
-                WarehouseDTO.UpdateDTO updateDTO = warehouseService.detailWithCache(inventoryEntities.get(0).getWarehouseId());
-                String warehouseName = ObjectUtil.isNotEmpty(updateDTO) ? updateDTO.getName() : "";
-                StocktakingTaskDetailEntity detailEntity = new StocktakingTaskDetailEntity(inventoryEntities, insertTask.getId(), warehouseName, uid, username);
-                return detailEntity;
-            }).collect(Collectors.toList());
-            stocktakingTaskDetailService.saveBatch(insertDetailList, 500);
-            String msg = CharSequenceUtil.format("由盘点计划【{}】自动生成盘点任务单号为【{}】单据", planCode, code);
-            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_TASK.getCode(), insertTask.getId(), "新增单据", uid, username);
+            String format = SeparateRuleEnum.getFormatStr(separateRule);
+            Map<String, String> finalLocationAreaMap = locationAreaMap;
+            Map<String, List<InventoryEntity>> inventoryMap = inventoryList
+                    .stream()
+                    .collect(Collectors.groupingBy(item -> getGroupKey(separateRule, format, finalLocationAreaMap, item)));
+            // 4. 根据分组结果构建数据并保存盘点任务（串行写库，保证与 @Transactional 同一事务）
+            LoginUser userInfo = UserContext.getDefaultLoginUser();
+            String uid = userInfo.getUid();
+            String username = userInfo.getUserName();
+            inventoryMap.keySet().forEach(key -> {
+                String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.STOCKTAKING_TASK);
+                StocktakingTaskEntity insertTask = new StocktakingTaskEntity(entity, code, uid, username);
+                //盘点日期
+                insertTask.setBillDate(entity.getStocktakingDate());
+                this.save(insertTask);
+                List<InventoryEntity> inventoryEntityList = inventoryMap.get(key);
+                // 根据组织+仓库+仓位+skuId 进行分组 获取不同库存状态的库存记录
+                Map<String, List<InventoryEntity>> inventoryStatusMap = inventoryEntityList.stream()
+                        .collect(Collectors.groupingBy(item -> CharSequenceUtil.format("{}_{}_{}_{}", item.getOrgId(), item.getWarehouseId(), item.getWarehouseLocation(), item.getSkuId())));
+                List<StocktakingTaskDetailEntity> insertDetailList = inventoryStatusMap.keySet().stream().map(item -> {
+                    List<InventoryEntity> inventoryEntities = inventoryStatusMap.get(item);
+                    WarehouseDTO.UpdateDTO updateDTO = warehouseService.detailWithCache(inventoryEntities.get(0).getWarehouseId());
+                    String warehouseName = ObjectUtil.isNotEmpty(updateDTO) ? updateDTO.getName() : "";
+                    StocktakingTaskDetailEntity detailEntity = new StocktakingTaskDetailEntity(inventoryEntities, insertTask.getId(), warehouseName, uid, username);
+                    return detailEntity;
+                }).collect(Collectors.toList());
+                stocktakingTaskDetailService.saveBatch(insertDetailList, 500);
+                String msg = CharSequenceUtil.format("由盘点计划【{}】自动生成盘点任务单号为【{}】单据", planCode, code);
+                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_TASK.getCode(), insertTask.getId(), "新增单据", uid, username);
+            });
+        } catch (Exception e) {
+            rollbackStocktakingTaskCreation(entity.getId(), planCode);
+            throw e;
         }
         return Boolean.TRUE;
     }
@@ -1133,53 +1233,48 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         }
 
         String planCode = entity.getCode();
-        // 2. 对需要盘点的 组织+仓库+仓位+skuId+库存状态 进行增加锁定库存操作
-        inventoryList.stream().forEach(item -> {
-            String redisKey = CharSequenceUtil.format(RedisCacheConstants.INVENTORY_LOCK, entity.getCode(), item.getOrgId(), item.getWarehouseId(), item.getWarehouseLocation(), item.getSkuId(), item.getDictInventoryStatus());
-            redisUtil.set(redisKey, planCode);
-        });
-        // 3. 对库存记录进行分组，按照分单规则进行分组
-        SeparateRuleEnum separateRule = entity.getSeparateRule();
-        Map<String, String> locationAreaMap = new HashMap<>();
-        if (ObjectUtil.equals(separateRule, SeparateRuleEnum.WAREHOUSE_AREA)) {
-            // 查询仓位对应的库区
-            locationAreaMap = warehouseLocationService.locationAreaMap();
-        }
-        String format = SeparateRuleEnum.getFormatStr(separateRule);
-        ;
-        Map<String, String> finalLocationAreaMap = locationAreaMap;
-        Map<String, List<InventoryEntity>> inventoryMap = inventoryList
-                .stream()
-                .collect(Collectors.groupingBy(item -> {
-                    // 按照仓库区域分单时，仓位需要转换为库区
-                    String groupKey = getGroupKey(separateRule, format, finalLocationAreaMap, item);
-                    return groupKey;
-                }));
-        // 4. 根据分组结果构建数据并保存盘点任务
-        // 串行执行：避免事务在子线程中失效（@Transactional 与 UserContext 均绑定 ThreadLocal）
-        LoginUser userInfo = UserContext.getDefaultLoginUser();
-        String uid = userInfo.getUid();
-        String username = userInfo.getUserName();
-        for (String key : inventoryMap.keySet()) {
-            String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.STOCKTAKING_TASK);
-            StocktakingTaskEntity insertTask = new StocktakingTaskEntity(entity, code, uid, username);
-            //盘点日期
-            insertTask.setBillDate(entity.getStocktakingDate());
-            this.save(insertTask);
-            List<InventoryEntity> inventoryEntityList = inventoryMap.get(key);
-            // 根据组织+仓库+仓位+skuId 进行分组 获取不同库存状态的库存记录
-            Map<String, List<InventoryEntity>> inventoryStatusMap = inventoryEntityList.stream()
-                    .collect(Collectors.groupingBy(item -> CharSequenceUtil.format("{}_{}_{}_{}", item.getOrgId(), item.getWarehouseId(), item.getWarehouseLocation(), item.getSkuId())));
-            List<StocktakingTaskDetailEntity> insertDetailList = inventoryStatusMap.keySet().stream().map(item -> {
-                List<InventoryEntity> inventoryEntities = inventoryStatusMap.get(item);
-                WarehouseDTO.UpdateDTO updateDTO = warehouseService.detailWithCache(inventoryEntities.get(0).getWarehouseId());
-                String warehouseName = ObjectUtil.isNotEmpty(updateDTO) ? updateDTO.getName() : "";
-                StocktakingTaskDetailEntity detailEntity = new StocktakingTaskDetailEntity(inventoryEntities, insertTask.getId(), warehouseName, uid, username);
-                return detailEntity;
-            }).collect(Collectors.toList());
-            stocktakingTaskDetailService.saveBatch(insertDetailList, 500);
-            String msg = CharSequenceUtil.format("由盘点计划【{}】自动生成盘点任务单号为【{}】单据", planCode, code);
-            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_TASK.getCode(), insertTask.getId(), "新增单据", uid, username);
+        try {
+            // 2. 对需要盘点的 组织+仓库+仓位+skuId+库存状态 进行增加锁定库存操作（与手动下推一致做冲突校验）
+            lockInventoryForStocktaking(entity, inventoryList, true);
+            // 3. 对库存记录进行分组，按照分单规则进行分组
+            SeparateRuleEnum separateRule = entity.getSeparateRule();
+            Map<String, String> locationAreaMap = new HashMap<>();
+            if (ObjectUtil.equals(separateRule, SeparateRuleEnum.WAREHOUSE_AREA)) {
+                // 查询仓位对应的库区
+                locationAreaMap = warehouseLocationService.locationAreaMap();
+            }
+            String format = SeparateRuleEnum.getFormatStr(separateRule);
+            Map<String, String> finalLocationAreaMap = locationAreaMap;
+            Map<String, List<InventoryEntity>> inventoryMap = inventoryList
+                    .stream()
+                    .collect(Collectors.groupingBy(item -> getGroupKey(separateRule, format, finalLocationAreaMap, item)));
+            // 4. 根据分组结果构建数据并保存盘点任务（串行写库，保证与 @Transactional 同一事务）
+            LoginUser userInfo = UserContext.getDefaultLoginUser();
+            String uid = userInfo.getUid();
+            String username = userInfo.getUserName();
+            inventoryMap.keySet().forEach(key -> {
+                String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.STOCKTAKING_TASK);
+                StocktakingTaskEntity insertTask = new StocktakingTaskEntity(entity, code, uid, username);
+                //盘点日期
+                insertTask.setBillDate(entity.getStocktakingDate());
+                this.save(insertTask);
+                List<InventoryEntity> inventoryEntityList = inventoryMap.get(key);
+                // 根据组织+仓库+仓位+skuId 进行分组 获取不同库存状态的库存记录
+                Map<String, List<InventoryEntity>> inventoryStatusMap = inventoryEntityList.stream()
+                        .collect(Collectors.groupingBy(item -> CharSequenceUtil.format("{}_{}_{}_{}", item.getOrgId(), item.getWarehouseId(), item.getWarehouseLocation(), item.getSkuId())));
+                List<StocktakingTaskDetailEntity> insertDetailList = inventoryStatusMap.keySet().stream().map(item -> {
+                    List<InventoryEntity> inventoryEntities = inventoryStatusMap.get(item);
+                    WarehouseDTO.UpdateDTO updateDTO = warehouseService.detailWithCache(inventoryEntities.get(0).getWarehouseId());
+                    String warehouseName = ObjectUtil.isNotEmpty(updateDTO) ? updateDTO.getName() : "";
+                    return new StocktakingTaskDetailEntity(inventoryEntities, insertTask.getId(), warehouseName, uid, username);
+                }).collect(Collectors.toList());
+                stocktakingTaskDetailService.saveBatch(insertDetailList, 500);
+                String msg = CharSequenceUtil.format("由盘点计划【{}】自动生成盘点任务单号为【{}】单据", planCode, code);
+                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_TASK.getCode(), insertTask.getId(), "新增单据", uid, username);
+            });
+        } catch (Exception e) {
+            rollbackStocktakingTaskCreation(entity.getId(), planCode);
+            throw e;
         }
         return Boolean.TRUE;
     }
