@@ -53,6 +53,34 @@ public class AiyaController extends BaseController {
     }
 
     /**
+     * 仅测试「调用爱亚接口查询派送渠道」，不落库。
+     * <p>
+     * 直接返回爱亚 {@code GLINK_QUERY_CARRIER_NOTIFY} 的原始响应（含 success / code / message / resultList），
+     * 用于验证外层字段、customerCode 业务参数、bizData 签名及网关连通性是否正确。
+     *
+     * @param partnerId           爱亚 partnerId（客户ID，外层字段）
+     * @param customerCode        爱亚 customerCode（客户code，必填业务参数）
+     * @param partnerKey          爱亚 partnerKey（合作方密钥，仅用于本地签名）
+     * @param warehouseCode       仓库编码（必填业务参数，写入 bizData）
+     * @param needActualLogistics 是否需要实际物流商（可选）
+     * @return 爱亚接口原始响应
+     */
+    @GetMapping("/queryTransport")
+    public ApiResult<JSONObject> queryTransport(@RequestParam("partnerId") String partnerId,
+                                                @RequestParam("customerCode") String customerCode,
+                                                @RequestParam("partnerKey") String partnerKey,
+                                                @RequestParam("warehouseCode") String warehouseCode,
+                                                @RequestParam(value = "needActualLogistics", required = false) Boolean needActualLogistics) {
+        Map<String, Object> bizParams = new HashMap<>();
+        bizParams.put("warehouseCode", warehouseCode);
+        if (needActualLogistics != null) {
+            bizParams.put("needActualLogistics", needActualLogistics);
+        }
+        JSONObject resp = aiyaOpenApiService.queryTransport(partnerId, partnerKey, customerCode, bizParams);
+        return success(resp);
+    }
+
+    /**
      * 测试「拉取仓库 + 排重落库」完整链路。
      * <p>
      * 调用爱亚接口拉取仓库后，交由 {@link OverseasProviderWarehouseService#syncFromAiya} 排重落库，
