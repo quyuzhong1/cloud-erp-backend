@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.api;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
@@ -18,6 +19,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
+import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
 import com.erp.model.wms.dto.PackingTaskDTO;
@@ -25,14 +27,12 @@ import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.entity.PackingTaskEntity;
 import com.erp.server.wms.query.FirstMileDeliveryQueryHandler;
-import com.erp.server.wms.service.FirstMileDeliveryDetailService;
 import com.erp.server.wms.service.FirstMileDeliveryService;
 import com.erp.server.wms.service.PackingTaskService;
 import com.erp.server.wms.service.RequisitionApplicationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
 import javax.annotation.Resource;
 import javax.validation.Valid;
 import java.util.ArrayList;
@@ -54,10 +54,6 @@ public class FirstMileDeliveryController extends BaseController {
 
     @Resource
     private FirstMileDeliveryService firstMileDeliveryService;
-
-    @Resource
-    private FirstMileDeliveryDetailService firstMileDeliveryDetailService;
-
     @Resource
     private PackingTaskService packingTaskService;
     @Resource
@@ -129,6 +125,14 @@ public class FirstMileDeliveryController extends BaseController {
     @WebAdvanceQuery(handler = FirstMileDeliveryQueryHandler.class)
     public ApiResult<PagingVO<FirstMileDeliveryDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<FirstMileDeliveryDTO.PagingParamDTO> dto) {
         return success(firstMileDeliveryService.paging(dto));
+    }
+
+    /**
+     * 根据头程发货单ids获取国家下拉。
+     */
+    @PostMapping("/countryDropDownByIds")
+    public ApiResult<List<BaseDropDownDTO.DisabledDTO>> countryDropDownByIds(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        return success(firstMileDeliveryService.countryDropDownByIds(dto.getIds()));
     }
 
     /**
@@ -664,34 +668,6 @@ public class FirstMileDeliveryController extends BaseController {
     }
 
 
-    /**
-     * 下推头程报关单 (不校验系统配置)
-     * @author jack
-     * @date: 2025-07-18
-     * @param dto
-     * @return ApiResult<List<BatchResultDTO>>
-     */
-    @PostMapping("/generateFirstMileDeclare")
-    public ApiResult<List<BatchResultDTO>> generateFirstMileDeclare(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
-        for (String id : dto.getIds()) {
-            BatchResultDTO result;
-            try {
-                result = firstMileDeliveryService.generateFirstMileDeclare(id);
-            }catch (Exception e){
-                log.error("下推头程报关单失败",e);
-                FirstMileDeliveryEntity entity = firstMileDeliveryService.getById(id);
-                if (ObjectUtil.isEmpty(entity)) {
-                    result = BatchResultDTO.fail(id, id, "下推头程报关单失败");
-                    resultDTOS.add(result);
-                    continue;
-                }
-                result = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());
-            }
-            resultDTOS.add(result);
-        }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
-    }
 
     /**
      * 重新出库
@@ -753,16 +729,84 @@ public class FirstMileDeliveryController extends BaseController {
     @PostMapping("/batchCancelDelivery")
     public ApiResult<Object> batchCancelDelivery(@RequestBody @Valid ValidList<FirstMileDeliveryDTO.CancelDeliveryDTO> list) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(list.size());
+        List<String> logisticsBillIds = new ArrayList<>();
         for (FirstMileDeliveryDTO.CancelDeliveryDTO cancelDeliveryDTO :list) {
             BatchResultDTO resultDTO;
             try {
                 resultDTO = firstMileDeliveryService.cancelDelivery(cancelDeliveryDTO);
+                if(resultDTO.getSuccess()){
+                    logisticsBillIds.add(cancelDeliveryDTO.getLogisticsBillId());
+                }
             }catch (Exception e){
                 resultDTO = BatchResultDTO.fail(cancelDeliveryDTO.getPackingTaskId(), cancelDeliveryDTO.getPackingTaskId(), e.getMessage());
             }
             resultDTOS.add(resultDTO);
         }
+        if(CollUtil.isNotEmpty(logisticsBillIds)){
+            firstMileDeliveryService.sendMsg(logisticsBillIds);
+        }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
+    /**
+     * 添加产品明细（查询未生成的头程发货明细信息）
+     * @author will
+     * @date 2026/4/21 19:09
+     * @return com.common.core.controller.vo.ApiResult<java.lang.Object>
+     */
+    @PostMapping("/listNotGenerateFmDetailPaging")
+    @WebAdvanceQuery
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            shopTableField = "fd.shop_id",
+            warehouseTableField = "fd.delivery_warehouse_id,fd.dest_warehouse_id",
+            menuCode = "wms:fbaDelivery:paging",
+            tableAlias = "fd"
+    )
+    public ApiResult<PagingVO<TmsDeclareBillDTO.NotGenerateDetailDTO>> listNotGenerateFmDetailPaging(@RequestBody @Valid PagingDTO<TmsDeclareBillDTO.NotGenerateParamDTO> dto)  {
+        PagingVO<TmsDeclareBillDTO.NotGenerateDetailDTO> pagingVO = firstMileDeliveryService.listNotGenerateFmDetailPaging(dto);
+        return success(pagingVO);
+    }
+
+    /**
+     * 下推头程报关单（合并前）
+     * @author will
+     * @date 2026/4/23 18:00
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.lang.Object>
+     */
+    @PostMapping("/listBeforePushFmDeclare")
+    public ApiResult<List<TmsDeclareBillDTO.SourceDeliveryDetailDTO>> listBeforePushFmDeclare(@RequestBody @Valid TmsDeclareBillDTO.PushDeclareBeforeParamDTO dto)  {
+        return success(firstMileDeliveryService.listBeforePushFmDeclare(dto));
+    }
+
+
+    /**
+     * 下推头程报关单（合并后）
+     * @author will
+     * @date 2026/4/23 18:00
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<List<TmsDeclareBillDTO.SourceDeliveryDetailDTO>>
+     */
+    @PostMapping("/listAfterPushFmDeclare")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:tmsFmDeclareBill:batchAddMergeDetail",
+            serviceClass = FirstMileDeliveryService.class,
+            keyIdName = "ids")
+    public ApiResult<List<TmsDeclareBillDTO.MergeDeclareBillDTO>> listAfterPushFmDeclare(@RequestBody @Valid TmsDeclareBillDTO.PushDeclareBeforeParamDTO dto)  {
+        return success(firstMileDeliveryService.listAfterPushFmDeclare(dto));
+    }
+
+    /**
+     * 头程报关单（BOM拆分后不合并，按来源明细最小维度返回）
+     * @author will
+     * @date 2026/5/9 15:00
+     * @param list
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.MergeDeclareBillDTO>>
+     */
+    @PostMapping("/listAfterPushFmDeclareNoMerge")
+    public ApiResult<TmsDeclareBillDTO.MergeDeclareBillDTO> listAfterPushFmDeclareNoMerge(@RequestBody @Valid ValidList<TmsDeclareBillDTO.PushDeclareNoMergeDTO> list)  {
+        return success(firstMileDeliveryService.listAfterPushFmDeclareNoMerge(list.getList()));
+    }
 }

@@ -623,7 +623,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(), listApiResult.getMsg()));
+                throw new ServiceException(ApiError.WF_CUR_APPROVER_QUERY_FAILED, listApiResult.getMsg());
             }
         }
         //TODO 获取srm 供应商订单规则
@@ -1664,7 +1664,7 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(ApiError.HTTP_UNKNOWN);
+                throw new ServiceException(ApiError.WF_CUR_APPROVER_QUERY_FAILED, listApiResult.getMsg());
             }
         }
         List<String> credentialIdList = list.stream().map(SupplierDTO.PagingExportDTO::getCredentialId).distinct().collect(Collectors.toList());

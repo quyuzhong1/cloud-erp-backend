@@ -5,6 +5,7 @@ import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.tms.enums.BillGenerateTimingEnum;
 import com.erp.model.wms.dto.*;
@@ -12,6 +13,7 @@ import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.entity.PackingTaskEntity;
 import org.apache.ibatis.annotations.Param;
 
+import javax.validation.Valid;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -34,7 +36,27 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
     */
     BaseResultDTO.AddDTO add(FirstMileDeliveryDTO.AddDTO dto);
 
+    /**
+     * 按装箱状态自动生成报关明细中间表
+     *
+     * @param entity 头程发货单
+     * @param billGenerateTimingEnum 单据生成时机
+     * @throws com.common.core.exception.ServiceException 自动生成失败时抛出
+     * @author jack
+     * @date 2026-04-29
+     */
     void autoGenerateByPacked(FirstMileDeliveryEntity entity, BillGenerateTimingEnum billGenerateTimingEnum);
+
+    /**
+     * 消费头程报关自动生成任务
+     *
+     * @param dto 自动生成参数
+     * @return 是否处理成功
+     * @throws com.common.core.exception.ServiceException 自动生成失败时抛出
+     * @author jack
+     * @date 2026-05-12
+     */
+    Boolean consumeDeclareAutoGenerateTask(AutoGenerateBillDTO dto);
 
     /**
     * 修改
@@ -53,6 +75,11 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
       * @return PagingVO<FbaDeliveryDTO.ListDTO>>
       */
       PagingVO<FirstMileDeliveryDTO.ListDTO> paging(PagingDTO<FirstMileDeliveryDTO.PagingParamDTO> pagingParamDTO);
+
+    /**
+     * 根据头程发货单ids获取国家下拉。
+     */
+    List<BaseDropDownDTO.DisabledDTO> countryDropDownByIds(List<String> ids);
 
     /**
      * 期初明细分页列表
@@ -288,6 +315,17 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
 
     List<TmsDeclareBillDTO.DeliveryDTO> getCanGenerateDeclare(TmsDeclareBillDTO.QuerySourceDTO dto);
 
+    /**
+     * 查询用于报关中间表生成的装箱明细
+     *
+     * @param ids 发货单id
+     * @return List<WmsCartonDetailDTO.ListPackingDetailDTO>
+     * @throws RuntimeException 查询异常时抛出
+     * @author jack
+     * @date 2026-04-29
+     */
+    List<WmsCartonDetailDTO.ListPackingDetailDTO> listDeclarePackingDetail(List<String> ids);
+
     int countNotVoided(String id);
 
     /**
@@ -381,7 +419,6 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
 
     List<OverseasProviderWarehouseDTO.ProviderDTO> listOverseasProvider(List<String> deliveryIds);
 
-    BatchResultDTO generateFirstMileDeclare(String id);
     /**
      * 重新出库
      * @author will
@@ -410,4 +447,39 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
      * @return BatchResultDTO
      */
     BatchResultDTO cancelDelivery(FirstMileDeliveryDTO.CancelDeliveryDTO cancelDeliveryDTO);
+
+    /**
+     * 头程添加产品明细
+     * @author will
+     * @date 2026/4/22 10:21
+     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.NotGenerateDetailDTO>
+     */
+    PagingVO<TmsDeclareBillDTO.NotGenerateDetailDTO> listNotGenerateFmDetailPaging(PagingDTO<TmsDeclareBillDTO.NotGenerateParamDTO> dto);
+
+    /**
+     * 下推头程报关单（合并前）
+     * @author will
+     * @date 2026/4/24 11:19
+     * @param dto
+     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.SourceDeliveryDetailDTO>
+     */
+    List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> listBeforePushFmDeclare(TmsDeclareBillDTO.PushDeclareBeforeParamDTO dto);
+    /**
+     * 下推头程报关单（合并后）
+     * @author will
+     * @date 2026/4/24 11:45
+     * @param dto
+     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.MergeDeclareBillDTO>
+     */
+    List<TmsDeclareBillDTO.MergeDeclareBillDTO> listAfterPushFmDeclare(TmsDeclareBillDTO.PushDeclareBeforeParamDTO dto);
+    /**
+     * 报关单（BOM拆分后不合并，按来源明细最小维度返回）
+     * @author will
+     * @date 2026/5/9 16:11
+     * @param list
+     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.MergeDeclareBillDTO>
+     */
+    TmsDeclareBillDTO.MergeDeclareBillDTO listAfterPushFmDeclareNoMerge(List<TmsDeclareBillDTO.PushDeclareNoMergeDTO> list);
+
+    void sendMsg(List<String> logisticsBillIds);
 }

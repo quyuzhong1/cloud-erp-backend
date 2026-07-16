@@ -102,7 +102,6 @@ public class FeignQuery{
     
     /**
      * 统一远程无参方法，无返回值
-     * @param <T>
      * @param className 远程类全名称
      * @param methodName 远程方法名称
      * @return
@@ -113,7 +112,6 @@ public class FeignQuery{
     
     /**
      * 统一远程有参方法，无返回值
-     * @param <T>
      * @param className 远程类全名称
      * @param methodName 远程方法名称
      * @param param 远程方法参数
@@ -140,6 +138,17 @@ public class FeignQuery{
     		throw new ServiceException("调用远程方法不能为空");
     	}
     	FeignInvoke feignInvoke = new FeignInvoke(className , methodName , param);
+		return FeignBuilder.create(returnClazz).invoke(feignInvoke);
+    }
+
+    public static <T> T invoke(Class<T> returnClazz , String className , String methodName , List<Object> param, Class<?>... parameterTypes) {
+        if(className == null || "".equals(className)) {
+            throw new ServiceException("调用远程类不能为空");
+        }
+        if(methodName == null || "".equals(methodName)) {
+            throw new ServiceException("调用远程方法不能为空");
+        }
+        FeignInvoke feignInvoke = new FeignInvoke(className , methodName , param, parameterTypes);
 		return FeignBuilder.create(returnClazz).invoke(feignInvoke);
     }
     
@@ -172,6 +181,17 @@ public class FeignQuery{
     		throw new ServiceException("调用远程方法不能为空");
     	}
     	FeignInvoke feignInvoke = new FeignInvoke(className , methodName , param);
+		return FeignBuilder.create(returnClazz).invokeList(feignInvoke);
+    }
+
+    public static <T> List<T> invokeList(Class<T> returnClazz , String className , String methodName , List<Object> param, Class<?>... parameterTypes) {
+        if(className == null || "".equals(className)) {
+            throw new ServiceException("调用远程类不能为空");
+        }
+        if(methodName == null || "".equals(methodName)) {
+            throw new ServiceException("调用远程方法不能为空");
+        }
+        FeignInvoke feignInvoke = new FeignInvoke(className , methodName , param, parameterTypes);
 		return FeignBuilder.create(returnClazz).invokeList(feignInvoke);
     }
     

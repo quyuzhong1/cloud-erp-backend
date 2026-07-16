@@ -118,14 +118,8 @@ public interface SoOutstockFeign {
     @PostMapping("feign/soOutstock/generateB2cSoOutstockByPlatformData")
     Boolean generateB2cSoOutstockByPlatformData(@RequestBody PlatformGenerateSoOutstockDTO platformGenerateSoOutstockDTO);
 
-    @PostMapping("feign/soOutstock/getCanGenerateDeclare")
-    List<TmsDeclareBillDTO.SoOutDTO> getCanGenerateDeclare(@RequestBody TmsDeclareBillDTO.QuerySourceDTO querySourceDTO);
-
     @PostMapping("feign/soOutstock/logisticStatistics")
     List<FirstMileDeliveryDTO.LogisticStatisticsDTO> logisticStatistics(@RequestBody FirstMileDeliveryDTO.StatisticsReq deliveryStaticsReq);
-
-    @PostMapping("feign/soOutstock/updateStatus")
-    Boolean updateStatus(@RequestBody TmsDeclareBillDTO.UpdateStatusDTO dto);
 
     /**
      * 重新生成销售出库单
