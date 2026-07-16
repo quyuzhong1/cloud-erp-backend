@@ -26,6 +26,9 @@
 | 2026-07-15 | 完成「商品数据查询/SKU」对接开发：`AiyaSkuQueryDTO` / `AiyaOpenApiService.querySku` / `AiyaSkuStatusEnum` / `AiyaSkuInitHandler` / `AiyaSkuOmsSyncDmpHandler`，参照 WEGO SKU 链路实现，过程中发现的骨架代码与文档不一致项见下方「待产品确认」 |
 | 2026-07-16 | 完成「库存数据」对接开发/修正：新增 `AiyaInventoryQueryDTO`，重写 `AiyaOpenApiService.queryInventory`（强类型 DTO，请求字段名 `pageNum`→`page` 修正）、`AiyaInventoryInitHandler`（单独解析 `inventoryVOList`，不再复用为 WEGO 分页结构设计的 `extractPageResult`），新增 Output 侧 `AiyaInventoryRocketMQTaskHandler`（对齐 `WegoInventoryRocketMQTaskHandler`，补齐推送至 WMS `overseas_inventory` 的缺失链路）。之前会话遗留的 `AiyaInventoryInitHandler` 是照抄 WEGO 结构、未对齐爱亚库存接口真实响应结构（`{Code,message,success,inventoryVOList}` vs WEGO 的 `{success,result:{list,pages,emptyFlag}}`），本次已修正，过程中发现的问题见下方「待产品确认」 |
 | 2026-07-16 | 用用户提供的爱亚开放平台接口文档页面截图（比翻译稿更权威）核对「库存数据」接口，发现并修正两处出入：① 请求参数里**没有** `status` 字段（翻译稿里有，疑似跟 SKU 查询接口混淆），已从 `AiyaInventoryQueryDTO`/`AiyaOpenApiService.queryInventory` 移除；② 截图多出一个翻译稿没提到的可选字段 `domainCode`（未给出参数描述），已补充到 DTO/SDK 方法，默认不传。同时确认响应 `inventoryVOList` 明细比翻译稿多出 `customerCode`/`barcode`/`skuStatus` 三个字段（无需改代码即可透传，已更新相关 Javadoc），其中 `skuStatus` 可能带来 DMP 去重风险，详见下方「待产品确认」新增项 |
+| 2026-07-16 | 梳理「6.2.2 商品映射」章节，对照现有公共 SKU 映射代码（`ListingInfoServiceImpl.syncWarehouseNotMatchSku`/`SkuMappingEntity`）：新增/更新（规则a/e）已复用平台无关的通用能力，未新增公共代码；但删除/禁用（规则b/c/d）目前完全未实现，且涉及是否要改动公共代码（影响WEGO等其它海外仓）的范围问题，见下方「商品映射相关」新增待确认项。文档一度从项目目录消失（只剩README），已由用户从原始下载文件重新恢复，内容比对与之前分析版本逐字节一致 |
+| 2026-07-16 | 修复 `querySkuTest` 联调报错 `INVALID_DATA: Created time and Updated time and SKUs cannot be both empty`：确认方案文档「商品注册/查询」请求字段列表（`status`/`pageSize`/`page`/`customerCode`）不完整，爱亚网关底层 QERP Open API Platform `GLINK_QUERY_ITEM_NOTIFY` 真实规范要求 `skus`/`createdTime`范围/`updatedTime`范围三者至少一组非空。已给 `AiyaSkuQueryDTO`/`AiyaOpenApiService.querySku` 补充 `createdTimeFrom`/`createdTimeTo`，`AiyaSkuInitHandler` 固定传「开发起始日期 2026-07-14 00:00:00 ~ 当前时间」以满足全量拉取诉求，`AiyaOpenApiServiceManualTest.querySkuTest` 同步更新。残留风险见下方「待产品确认」新增项 |
+| 2026-07-16 | 已与产品/业务确认：爱亚账号/SKU 不存在早于 2026-07-14 的创建记录，`AiyaSkuInitHandler.DEV_START_TIME` 固定锚点不会漏拉历史 SKU，相关「待产品确认」项已移至「已确认结论」，同步更新代码注释 |
 
 ## 待产品确认
 
@@ -51,6 +54,19 @@
 - [ ] **`totalQty`/`skuDescription` 无落地字段**：`dmp_third_inventory`（三方仓库存中间表）没有对应这两个字段的列，文档自己给的字段映射表里这两项的"对应数大臣字段"也是空白。目前理解为不需要存这两个字段，但需要产品确认一下不存是否会影响后续排查/展示需求。同批截图核对还发现响应里另有 `customerCode`/`barcode` 两个中间表也没有列的字段，情况类似，一并确认。
 - [ ] **DMP 任务与字段映射配置**：新增的 `AiyaInventoryInitHandler`（Input）和 `AiyaInventoryRocketMQTaskHandler`（Output）都需要在数据库配置表（`dmp_cfg_input_convert`/`dmp_cfg_output`/`dmp_cfg_input_convert_mapping`）里注册任务和字段映射，这部分在数据库里配置，不在代码仓库。建议的字段映射（爱亚字段 → `dmp_third_inventory` 列）：`warehouseCode→platform_warehouse_code`、`sku→product_sku`、`salableQty→sellable`（可售）、`occupiedQty→pi_freeze`（冻结）、`duePutawayQty→pending`（待上架）、`unavailableQty→unsellable`（不可售），其余在途/缺货类字段按文档默认0。**若上面「`skuStatus` 拆行」问题确认为真，这里的唯一键/映射设计也需要一并调整**。需要找运维/产品在环境里配置，否则代码上线了也不会被调度/推送。
 
+### 商品映射相关（2026-07-16）
+
+依据文档「6.2.2 商品映射」+「5. ERP新增/优化功能」章节梳理，对照现有公共 SKU 映射代码（`ListingInfoServiceImpl.syncWarehouseNotMatchSku`/`SkuMappingEntity`）后发现：
+
+- 文档规则 a（数大臣未存在的新增）、e（存在且正常则更新name/barcode）**已经通过现有通用能力覆盖**：`AiyaSkuOmsSyncDmpHandler` 直接复用了平台无关的 `syncWarehouseNotMatchSku`（本来给 WEGO 用的），未新增/修改公共代码。
+- 文档规则 b（数大臣有爱亚无且未映射→删除）、c（已映射→改禁用+按钮置灰）、d（爱亚已停用+已映射→改禁用）**目前完全未实现**：`syncWarehouseNotMatchSku` 只做"存在则更新、不存在则插入"，不会对"本次增量里没出现的旧SKU"做任何删除/禁用判断，也没用到爱亚 `status` 字段。`SkuMappingEntity` 已有 `effectiveTime`/`expireTime`/`isExpire` 字段，"启用/禁用"状态本身大概率不用改表结构，缺的是**触发禁用/删除的全量对比逻辑**。
+
+- [ ] **【高优，未开发】b/c/d 全量对比删除/禁用逻辑的实现边界**：要判断"哪些旧SKU这次没出现"，必须知道"本次全量拉取的完整SKU集合"，但 `AiyaSkuInitHandler`→`AiyaSkuOmsSyncDmpHandler` 是分页/分批推给 OMS 的（`SYNC_BATCH_SIZE=500`）。DMP 任务框架是否有"本次全量已跑完"的信号可以拿到完整集合再做对比？还是需要在爱亚侧新增逻辑攒一次全量快照？需要找技术确认任务框架能力。
+- [ ] **【高优，需产品明确范围】这套 b/c/d 状态机要不要对现有 WEGO/谷仓等海外仓也生效**：文档原话"其它海外仓接口也同上处理"，听起来产品希望做成所有海外仓服务商通用能力，但这样会影响现有 WEGO 同步链路的行为，风险面更大。需要跟产品确认：这次是只对爱亚生效（爱亚专属代码里做全量对比），还是要顺带把公共 `ListingInfoServiceImpl`/`SkuMappingServiceImpl` 一起改掉（影响所有服务商）。
+- [ ] **规则 b/c 边界理解待确认**：理解为 b 针对"未映射"的 `ListingInfoEntity`（原始爱亚SKU行，还没绑定productSkuId）直接物理删除；c 针对"已映射"的 `SkuMappingEntity` 行只做禁用（`isExpire=true`），不删除。这个理解目前只是读文档推断，未跟产品核实过。
+- [ ] **"启动按钮置灰"是否需要后端额外拦截**：如果只是前端按 `isExpire` 状态置灰按钮，后端只要保证 `isExpire=true` 的映射在业务使用（如推单选仓库sku）时被正常拦截即可；如果还要求"被系统自动禁用的映射，人工不能手动重新启用"这类额外规则，文档未写清楚，需要产品确认。
+- [ ] （关联「SKU 查询相关」的 `status` 字段疑问）规则 d 的判断依据是爱亚 `status=Inactive`，但 `status` 真实取值大小写/是否还有其它状态值仍未拿到真实响应验证，会直接影响 d 规则判断条件。
+
 ## 已确认结论
 
 （确认后从上面移到这里，写清结论与确认人/日期）
@@ -59,3 +75,5 @@
   - 请求字段（8个）：`customerCode`（必填）、`ignoreZero`（可选）、`domainCode`（可选，用途未知）、`skus[]`（可选，≤200个）、`pageSize`（`skus`不存在时必填）、`page`（`skus`不存在时必填）、`stockStatus`（必填，取值未知）、`warehouseCode`（必填）。**没有 `status` 字段**。
   - 响应 `inventoryVOList[]` 明细字段（11个）：`customerCode`、`warehouseCode`、`sku`、`skuDescription`、`barcode`、`skuStatus`、`totalQty`、`occupiedQty`、`salableQty`、`duePutawayQty`、`unavailableQty`。
   - 代码已按上述清单更新（`AiyaInventoryQueryDTO`/`AiyaOpenApiService.queryInventory`/`AiyaInventoryInitHandler` 的 Javadoc），但 `stockStatus`/`domainCode` 取值及 `skuStatus` 拆行问题仍未确认，见上方「待产品确认」。
+- **SKU 查询接口真实必填约束（2026-07-16，联调报错 + 对照爱亚网关底层 QERP Open API Platform `GLINK_QUERY_ITEM_NOTIFY` 公开接口规范确认）**：方案文档「商品注册/查询」列出的请求字段（`status`/`pageSize`/`page`/`customerCode`）不完整，真实接口还有 `skus`（≤100个）/`createdTimeFrom`+`createdTimeTo`/`updatedTimeFrom`+`updatedTimeTo`，且这三组里**必须至少有一组非空**，否则报 `INVALID_DATA: Created time and Updated time and SKUs cannot be both empty`。已在 `AiyaSkuQueryDTO` 补充 `createdTimeFrom`/`createdTimeTo`（`updatedTimeFrom`/`updatedTimeTo`/`skus` 暂未接入），`AiyaSkuInitHandler` 固定传「2026-07-14 00:00:00（开发起始日期）~ 当前时间」，全量拉取以来创建的所有 SKU。
+- **`createdTimeFrom` 固定锚点日期（2026-07-14）不会漏拉历史 SKU（2026-07-16，已与产品/业务确认）**：已确认爱亚该客户账号/SKU 不存在早于 2026-07-14 的创建记录，`AiyaSkuInitHandler.DEV_START_TIME` 固定为 `2026-07-14 00:00:00` 可以安全覆盖全部 SKU，无需再按账号建立时间调整锚点，此前的漏拉风险已排除。
