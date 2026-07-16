@@ -5,8 +5,8 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONUtil;
 import cn.hutool.extra.spring.SpringUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.incrementer.IdentifierGenerator;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -22,7 +22,6 @@ import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.DynamicDataSourceThreadLocal;
 import com.common.business.threadlocal.UserContext;
-import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.utils.JasperHelperUtil;
 import com.common.business.utils.PdfUtil;
 import com.common.business.validator.ValidList;
@@ -63,7 +62,6 @@ import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.sys.entity.FileTemplateEntity;
 import com.erp.model.tms.constant.DeclareMergeDefaults;
-import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.tms.enums.BillGenerateTimingEnum;
 import com.erp.model.wms.dto.*;
@@ -86,7 +84,6 @@ import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.sys.feign.FileTemplateFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.tms.feign.DeliveryDeclareDetailMidFeign;
 import com.erp.rpc.tms.feign.TmsDeclareBillFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.constant.WmsConstant;
@@ -1040,10 +1037,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         //删除tms发货明细数据
         TmsDeclareBillDTO.DeleteDeliveryDeclareDetailMidDTO deleteDTO = new TmsDeclareBillDTO.DeleteDeliveryDeclareDetailMidDTO();
         deleteDTO.setSourceIds(Collections.singletonList(id));
-        Boolean delete = tmsDeclareBillFeign.deleteDeliveryDeclareDetailMid(deleteDTO);
-        if (!Boolean.TRUE.equals(delete)) {
-            return  BatchResultDTO.fail(deliveryNoticeEntity.getId(), deliveryNoticeEntity.getCode(), "删除发货明细中间表失败");
-        }
+        //无需处理返回结果，无删除数据也不影响
+        tmsDeclareBillFeign.deleteDeliveryDeclareDetailMid(deleteDTO);
+
 
         deliveryNoticeEntity.setDeclareStatus(WmsDeclareStatusEnum.NONE.getCode());
         super.updateById(deliveryNoticeEntity);
