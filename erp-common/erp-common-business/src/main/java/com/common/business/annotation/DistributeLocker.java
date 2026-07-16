@@ -66,8 +66,13 @@ public @interface DistributeLocker {
     TimeUnit timeUnit() default TimeUnit.SECONDS;
 
     /**
-     * 是否在事务提交后解锁
-     * @return  true:在事务提交后解锁
+     * 是否在事务提交/回滚后再解锁。
+     * <p><b>发起方</b>：本服务通过 {@code @GlobalTransactional} 开启全局事务，或仅处于 Spring 本地事务时，
+     * 锁延迟到事务提交/回滚后释放（含 XXL-JOB 等无 HTTP 上下文的发起方）。</p>
+     * <p><b>参与方</b>：入站 Feign 请求携带 {@code TX_XID} 时，Seata {@code TransactionHook}
+     * 不会在本进程触发，切面退化为<b>方法执行结束后</b>即解锁（非全局事务结束），以避免锁泄漏；
+     * 方法上的本地 {@code @Transactional} 仍先于 unlock 完成提交。</p>
+     * @return  true:在事务结束后解锁（参与方实际为方法结束后解锁）
      */
     boolean unlockAfterTx() default false;
     /**
