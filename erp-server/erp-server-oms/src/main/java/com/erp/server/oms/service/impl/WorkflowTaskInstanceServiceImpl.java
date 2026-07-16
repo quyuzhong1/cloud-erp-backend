@@ -475,7 +475,7 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
      */
     @Transactional(rollbackFor = Exception.class)
     @DistributeLocker(businessType = DistributeKeyConstant.WORKFLOW_LOCK_KEY,
-            keyName = "sourceType,sourceId", unlockAfterTx = true)
+            keyName = "sourceType,sourceId", unlockAfterTx = false)
     public WorkflowTaskInstanceDTO.RetryResultDTO retryFromStepWithLock(WorkflowTaskInstanceDTO.RetryFromStepDTO dto,
                                                                         String sourceType, String sourceId) {
         WorkflowTaskInstanceEntity instance = getById(dto.getInstanceId());

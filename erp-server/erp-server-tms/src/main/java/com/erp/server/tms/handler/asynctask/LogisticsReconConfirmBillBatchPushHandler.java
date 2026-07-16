@@ -22,13 +22,12 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * 物流商对账单合并匹配异步任务分批执行策略。
- * <p>一主单一任务：payload 存主单 id；任务明细 businessId 为费用项 id，按游标分批。
- * 执行时在主单锁内按识别组扩组、打包，且仅整组认领成功才匹配，避免半组覆盖费用。</p>
+ * 物流商对账单账单确认异步任务分批执行策略。
+ * <p>一主单一任务：payload 存主单 id；任务明细 businessId 为费用项 id，按游标分批确认。</p>
  */
 @Component
-public class LogisticsReconMatchBatchPushHandler
-        implements TmsAsyncTaskBatchPushHandler<TmsAsyncTaskRecordDTO.LogisticsReconMatchPayloadDTO> {
+public class LogisticsReconConfirmBillBatchPushHandler
+        implements TmsAsyncTaskBatchPushHandler<TmsAsyncTaskRecordDTO.LogisticsReconConfirmBillPayloadDTO> {
 
     @Lazy
     @Resource
@@ -42,51 +41,62 @@ public class LogisticsReconMatchBatchPushHandler
 
     @Override
     public String taskDisplayName() {
-        return "物流商对账单合并匹配异步任务";
+        return "物流商对账单账单确认异步任务";
     }
 
     @Override
-    public Class<TmsAsyncTaskRecordDTO.LogisticsReconMatchPayloadDTO> payloadClass() {
-        return TmsAsyncTaskRecordDTO.LogisticsReconMatchPayloadDTO.class;
+    public Class<TmsAsyncTaskRecordDTO.LogisticsReconConfirmBillPayloadDTO> payloadClass() {
+        return TmsAsyncTaskRecordDTO.LogisticsReconConfirmBillPayloadDTO.class;
     }
 
     @Override
     public String payloadParseErrorMessage() {
-        return "物流商对账单合并匹配异步任务信封参数解析失败";
+        return "物流商对账单账单确认异步任务信封参数解析失败";
     }
 
+    /**
+     * 校验账单确认 payload：对账单主单 id 与目标对账状态必填。
+     */
     @Override
-    public String validatePayload(TmsAsyncTaskRecordDTO.LogisticsReconMatchPayloadDTO payload) {
+    public String validatePayload(TmsAsyncTaskRecordDTO.LogisticsReconConfirmBillPayloadDTO payload) {
         if (payload == null || StringUtils.isBlank(payload.resolveMainId())) {
-            return "无可匹配的对账单";
+            return "无可确认的对账单";
+        }
+        if (StringUtils.isBlank(payload.getReconciliationStatus())) {
+            return "对账状态不能为空";
         }
         return null;
     }
 
+    /**
+     * 按本任务待执行费用项明细游标分批（支持失败重试模式）。
+     */
     @Override
     public List<String> pageBatchIds(String taskId,
                                      TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope,
-                                     TmsAsyncTaskRecordDTO.LogisticsReconMatchPayloadDTO payload,
+                                     TmsAsyncTaskRecordDTO.LogisticsReconConfirmBillPayloadDTO payload,
                                      String lastId,
                                      int batchSize,
                                      TmsAsyncTaskRecordEntity taskRecord) {
-        // 正常路径：按本任务待执行明细（费用项 id）游标分页；失败重试走来源任务失败明细
         BatchBusinessIdProvider defaultProvider = (cursor, size) -> pagePendingDetailBusinessIds(taskId, cursor, size);
         return asyncTaskRecordService.pageBatchBusinessIds(
                 envelope.getRetryMode(), envelope.getRetrySourceTaskId(), lastId, batchSize,
                 defaultProvider, null);
     }
 
+    /**
+     * 本批按费用项执行账单确认，复用 {@link LogisticsReconService#processConfirmBillBatch}。
+     */
     @Override
     public TmsAsyncTaskRecordDTO.BatchProcessResult processBatch(String taskId,
                                                                  TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope,
-                                                                 TmsAsyncTaskRecordDTO.LogisticsReconMatchPayloadDTO payload,
+                                                                 TmsAsyncTaskRecordDTO.LogisticsReconConfirmBillPayloadDTO payload,
                                                                  LoginUser operatorUser,
                                                                  List<String> batchIds,
                                                                  int batchNumber,
                                                                  CfgSettingValueDTO.BillBatchParamsDTO billBatchParams) {
-        return logisticsReconService.processMatchBatch(taskId, payload.resolveMainId(), batchIds,
-                Boolean.TRUE.equals(payload.getIsConfirm()), operatorUser);
+        return logisticsReconService.processConfirmBillBatch(taskId, payload.resolveMainId(), batchIds,
+                payload.getReconciliationStatus(), payload.getConfirmTime(), operatorUser);
     }
 
     private List<String> pagePendingDetailBusinessIds(String taskId, String cursor, int batchSize) {

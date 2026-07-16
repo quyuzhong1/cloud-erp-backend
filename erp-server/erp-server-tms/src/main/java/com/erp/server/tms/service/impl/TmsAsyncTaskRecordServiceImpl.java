@@ -132,21 +132,31 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
             .in(TmsAsyncTaskRecordEntity::getStatus,Arrays.asList(TmsAsyncTaskRecordStatusEnum.ING.getCode(), TmsAsyncTaskRecordStatusEnum.PENDING.getCode()))
             .list();
 
-        //仅头程/小包费用分摊防重维度需要不同月份；小包下推还需区分销售平台集合
         if (CollUtil.isNotEmpty(runningTasks)) {
-            String reportDate = extractReportDate(compactJson);
-            if (StringUtils.isBlank(reportDate)) {
-                log.warn("存在进行中手动任务且无法提取核算期间，businessType: {}, methodType: {}", businessType, methodType);
-                throw new ServiceException("存在进行中的异步任务，请稍后重试或联系管理员");
+            if (isLogisticsReconIdBasedMethod(methodType)) {
+                validateLogisticsReconIdTaskNotConflict(compactJson, runningTasks, businessType, methodType,
+                        resolveLogisticsReconConflictMessage(methodType));
+            } else {
+                // 仅头程/小包费用分摊防重维度需要不同月份
+                validateManualTaskReportDateNotConflict(compactJson, runningTasks, businessType, methodType);
             }
-            Optional<TmsAsyncTaskRecordEntity> periodConflict = runningTasks.stream()
-                    .filter(task -> isSameSmallBagPushScope(compactJson, task.getDataJson()))
-                    .findFirst();
-            if (periodConflict.isPresent()) {
-                TmsAsyncTaskRecordEntity conflict = periodConflict.get();
-                log.warn("手动异步任务核算期间冲突，businessType: {}, methodType: {}, reportDate: {}, 进行中任务 code: {}",
-                        businessType, conflict.getMethodType(), reportDate, conflict.getCode());
-                throw new ServiceException(ApiError.LOGISTICS_ASYNC_TASK_CREATE_ERROR, reportDate);
+        }
+        // 对账单匹配 / 账单确认：跨方法按业务 id 互斥，避免同单同时跑匹配与确认
+        if (isLogisticsReconIdBasedMethod(methodType)) {
+            String crossMethodType = resolveLogisticsReconCrossMethodType(methodType);
+            if (StringUtils.isNotBlank(crossMethodType)) {
+                List<TmsAsyncTaskRecordEntity> crossRunningTasks = lambdaQuery()
+                        .eq(TmsAsyncTaskRecordEntity::getExecType, TmsAsyncTaskRecordExecTypeEnum.MANUAL.getCode())
+                        .eq(TmsAsyncTaskRecordEntity::getBusinessType, businessType)
+                        .eq(TmsAsyncTaskRecordEntity::getMethodType, crossMethodType)
+                        .in(TmsAsyncTaskRecordEntity::getStatus, Arrays.asList(
+                                TmsAsyncTaskRecordStatusEnum.ING.getCode(),
+                                TmsAsyncTaskRecordStatusEnum.PENDING.getCode()))
+                        .list();
+                if (CollUtil.isNotEmpty(crossRunningTasks)) {
+                    validateLogisticsReconIdTaskNotConflict(compactJson, crossRunningTasks, businessType, methodType,
+                            resolveLogisticsReconConflictMessage(crossMethodType));
+                }
             }
         }
 
@@ -179,6 +189,146 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
             throw new ServiceException("任务参数必须为 TaskEnvelope 格式");
         }
         return JSONUtil.toJsonStr(envelope, TASK_DATA_JSON_CONFIG);
+    }
+
+    /**
+     * 物流商对账单（匹配 / 账单确认）创建任务防重：
+     * 仅当本次勾选的对账单 id 与进行中任务 payload 内 id 有交集时拦截。
+     *
+     * @param compactJson     本次任务信封 JSON
+     * @param runningTasks    进行中（PENDING/ING）的同类或跨方法任务
+     * @param businessType    业务类型（日志用）
+     * @param methodType      当前创建的方法类型（日志用）
+     * @param conflictMessage 命中交集时抛出的提示文案
+     */
+    private void validateLogisticsReconIdTaskNotConflict(String compactJson,
+                                                         List<TmsAsyncTaskRecordEntity> runningTasks,
+                                                         String businessType,
+                                                         String methodType,
+                                                         String conflictMessage) {
+        List<String> requestIds = extractLogisticsReconBusinessIds(compactJson);
+        if (CollUtil.isEmpty(requestIds)) {
+            log.warn("物流商对账单任务无法提取业务id，businessType: {}, methodType: {}", businessType, methodType);
+            throw new ServiceException("任务参数缺少对账单业务id，无法创建任务");
+        }
+        for (TmsAsyncTaskRecordEntity runningTask : runningTasks) {
+            List<String> runningIds = extractLogisticsReconBusinessIds(runningTask.getDataJson());
+            if (CollUtil.isEmpty(runningIds)) {
+                continue;
+            }
+            boolean conflict = requestIds.stream().anyMatch(runningIds::contains);
+            if (conflict) {
+                log.warn("物流商对账单任务业务id冲突，businessType: {}, methodType: {}, requestIds: {}, 进行中任务 code: {}",
+                        businessType, methodType, requestIds, runningTask.getCode());
+                throw new ServiceException(conflictMessage);
+            }
+        }
+    }
+
+    /**
+     * 是否为按对账单主单 id 做防重的物流商对账异步方法（合并匹配 / 账单确认）。
+     */
+    private boolean isLogisticsReconIdBasedMethod(String methodType) {
+        return TmsAsyncTaskMethodTypeEnum.LOGISTICS_RECON_MATCH.getCode().equals(methodType)
+                || TmsAsyncTaskMethodTypeEnum.LOGISTICS_RECON_CONFIRM_BILL.getCode().equals(methodType);
+    }
+
+    /**
+     * 解析与当前方法互斥的对账异步方法类型（匹配 ↔ 账单确认）。
+     *
+     * @return 对端 methodType；非对账 id 防重方法返回 null
+     */
+    private String resolveLogisticsReconCrossMethodType(String methodType) {
+        if (TmsAsyncTaskMethodTypeEnum.LOGISTICS_RECON_MATCH.getCode().equals(methodType)) {
+            return TmsAsyncTaskMethodTypeEnum.LOGISTICS_RECON_CONFIRM_BILL.getCode();
+        }
+        if (TmsAsyncTaskMethodTypeEnum.LOGISTICS_RECON_CONFIRM_BILL.getCode().equals(methodType)) {
+            return TmsAsyncTaskMethodTypeEnum.LOGISTICS_RECON_MATCH.getCode();
+        }
+        return null;
+    }
+
+    /**
+     * 按「进行中任务」的方法类型生成防重冲突提示（匹配中 / 账单确认中）。
+     */
+    private String resolveLogisticsReconConflictMessage(String runningMethodType) {
+        if (TmsAsyncTaskMethodTypeEnum.LOGISTICS_RECON_CONFIRM_BILL.getCode().equals(runningMethodType)) {
+            return "所选对账单正在账单确认中，请稍后重试或联系管理员";
+        }
+        return "所选对账单正在匹配中，请稍后重试或联系管理员";
+    }
+
+    /**
+     * 头程/小包费用分摊等：按核算期间防重。
+     */
+    private void validateManualTaskReportDateNotConflict(String compactJson,
+                                                         List<TmsAsyncTaskRecordEntity> runningTasks,
+                                                         String businessType,
+                                                         String methodType) {
+        String reportDate = extractReportDate(compactJson);
+        if (StringUtils.isBlank(reportDate)) {
+            log.warn("存在进行中手动任务且无法提取核算期间，businessType: {}, methodType: {}", businessType, methodType);
+            throw new ServiceException("存在进行中的异步任务，请稍后重试或联系管理员");
+        }
+        Optional<TmsAsyncTaskRecordEntity> periodConflict = runningTasks.stream()
+                .filter(task -> isSameSmallBagPushScope(compactJson, task.getDataJson()))
+                .findFirst();
+        if (periodConflict.isPresent()) {
+            TmsAsyncTaskRecordEntity conflict = periodConflict.get();
+            log.warn("手动异步任务核算期间冲突，businessType: {}, methodType: {}, reportDate: {}, 进行中任务 code: {}",
+                    businessType, conflict.getMethodType(), reportDate, conflict.getCode());
+            throw new ServiceException(ApiError.LOGISTICS_ASYNC_TASK_CREATE_ERROR, reportDate);
+        }
+    }
+
+    /**
+     * 从任务信封解析物流商对账单业务主单 id（匹配 / 账单确认 payload 含 mainId，兼容旧版 ids）。
+     * <p>按 envelope.methodType 选择对应 Payload 类型反序列化。</p>
+     *
+     * @param json 任务 dataJson（TaskEnvelope）
+     * @return 去空白、去重后的对账单 id；无法解析时返回空列表
+     */
+    private List<String> extractLogisticsReconBusinessIds(String json) {
+        TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope = parseEnvelope(json);
+        if (envelope == null) {
+            return Collections.emptyList();
+        }
+        if (TmsAsyncTaskMethodTypeEnum.LOGISTICS_RECON_CONFIRM_BILL.getCode().equals(envelope.getMethodType())) {
+            TmsAsyncTaskRecordDTO.LogisticsReconConfirmBillPayloadDTO confirmPayload =
+                    parseEnvelopePayload(envelope, TmsAsyncTaskRecordDTO.LogisticsReconConfirmBillPayloadDTO.class);
+            return resolveLogisticsReconPayloadMainIds(
+                    confirmPayload == null ? null : confirmPayload.getMainId(),
+                    confirmPayload == null ? null : confirmPayload.getIds());
+        }
+        TmsAsyncTaskRecordDTO.LogisticsReconMatchPayloadDTO matchPayload =
+                parseEnvelopePayload(envelope, TmsAsyncTaskRecordDTO.LogisticsReconMatchPayloadDTO.class);
+        return resolveLogisticsReconPayloadMainIds(
+                matchPayload == null ? null : matchPayload.getMainId(),
+                matchPayload == null ? null : matchPayload.getIds());
+    }
+
+    /**
+     * 解析对账 payload 主单 id：优先 mainId；否则回退旧版 ids 列表（防重需保留全集）。
+     */
+    private List<String> resolveLogisticsReconPayloadMainIds(String mainId, List<String> legacyIds) {
+        if (StringUtils.isNotBlank(mainId)) {
+            return normalizeBusinessIds(Collections.singletonList(mainId));
+        }
+        if (CollUtil.isEmpty(legacyIds)) {
+            return Collections.emptyList();
+        }
+        return normalizeBusinessIds(legacyIds);
+    }
+
+    /**
+     * 规范化业务 id 列表：去空白、trim、去重（保持首次出现顺序）。
+     */
+    private List<String> normalizeBusinessIds(List<String> ids) {
+        return ids.stream()
+                .filter(StringUtils::isNotBlank)
+                .map(String::trim)
+                .distinct()
+                .collect(Collectors.toList());
     }
 
     /**
@@ -1237,6 +1387,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         String transferDeclareBusinessType = TmsAsyncTaskRecordBusinessTypeEnum.TRANSFER_DECLARE_COST_ALLOCATION.getCode();
         String firstMileReconBusinessType = TmsAsyncTaskRecordBusinessTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode();
         String b2cDeclareBusinessType = TmsAsyncTaskRecordBusinessTypeEnum.TMS_B2C_DECLARE_RECONCILIATION.getCode();
+        String logisticsReconBusinessType = TmsAsyncTaskRecordBusinessTypeEnum.LOGISTICS_RECON.getCode();
         return Arrays.asList(
                 new TmsAsyncTaskRecordDTO.WatchdogStaleDetailTaskType(smallBagBusinessType, TmsAsyncTaskMethodTypeEnum.SELFDELIVER_PUSH_ALLOCATION.getCode()),
                 new TmsAsyncTaskRecordDTO.WatchdogStaleDetailTaskType(smallBagBusinessType, TmsAsyncTaskMethodTypeEnum.LASTMILE_PUSH_ALLOCATION.getCode()),
@@ -1255,7 +1406,9 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
                 new TmsAsyncTaskRecordDTO.WatchdogStaleDetailTaskType(transferDeclareBusinessType, TmsAsyncTaskMethodTypeEnum.RE_ALLOCATION.getCode()),
                 new TmsAsyncTaskRecordDTO.WatchdogStaleDetailTaskType(transferDeclareBusinessType, TmsAsyncTaskMethodTypeEnum.DELETE.getCode()),
                 new TmsAsyncTaskRecordDTO.WatchdogStaleDetailTaskType(firstMileReconBusinessType, TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode()),
-                new TmsAsyncTaskRecordDTO.WatchdogStaleDetailTaskType(b2cDeclareBusinessType, TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode())
+                new TmsAsyncTaskRecordDTO.WatchdogStaleDetailTaskType(b2cDeclareBusinessType, TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode()),
+                new TmsAsyncTaskRecordDTO.WatchdogStaleDetailTaskType(logisticsReconBusinessType, TmsAsyncTaskMethodTypeEnum.LOGISTICS_RECON_MATCH.getCode()),
+                new TmsAsyncTaskRecordDTO.WatchdogStaleDetailTaskType(logisticsReconBusinessType, TmsAsyncTaskMethodTypeEnum.LOGISTICS_RECON_CONFIRM_BILL.getCode())
         );
     }
 

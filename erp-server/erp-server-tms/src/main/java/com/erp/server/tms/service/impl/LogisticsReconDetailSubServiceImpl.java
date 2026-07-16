@@ -3,6 +3,7 @@ package com.erp.server.tms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.extension.conditions.update.LambdaUpdateChainWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.erp.model.tms.dto.LogisticsReconDTO;
 import com.erp.model.tms.dto.LogisticsReconDetailSubDTO;
 import com.erp.model.tms.dto.LogisticsReconMatchDTO;
 import com.erp.model.tms.entity.LogisticsReconDetailSubEntity;
@@ -263,5 +264,13 @@ public class LogisticsReconDetailSubServiceImpl
         }
         BigDecimal total = baseMapper.sumLocalAmountByMainId(mainId);
         return total == null ? BigDecimal.ZERO : total;
+    }
+
+    @Override
+    public List<LogisticsReconDTO.PagingStatsDTO> listPagingStatsByMainIds(List<String> mainIds) {
+        if (CollUtil.isEmpty(mainIds)) {
+            return Collections.emptyList();
+        }
+        return baseMapper.listPagingStatsByMainIds(mainIds);
     }
 }

@@ -722,6 +722,9 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         List<SellerDTO.ViewDTO> sellerList = customerSellerService.listByMainId(id);
         view.setSellerList(sellerList);
 
+        // 是否关联店铺：前端据此置灰「客户名称」
+        view.setHasRelateShop(hasRelateShop(id));
+
         return view;
     }
 
@@ -741,6 +744,11 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         CustomerInfoEntity customer = this.getById(id);
         if (Objects.isNull(customer)) {
             throw new ServiceException(ApiError.CUSTOMER_NOT_FOUND);
+        }
+
+        // 已关联店铺时不允许修改客户名称（与前端置灰一致，防绕过）
+        if (!CharSequenceUtil.equals(customer.getName(), dto.getName()) && hasRelateShop(id)) {
+            throw new ServiceException(ApiError.CUSTOMER_NAME_RELATE_SHOP_FORBIDDEN);
         }
 
         //检查名称
@@ -2695,6 +2703,19 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
                 || StringUtils.isNotBlank(entity.getSyncKingdeeId())) {
             sendPushTask(Collections.singletonList(entity), SyncOperateEnum.OPERATE_UPDATE.getCode());
         }
+    }
+
+    /**
+     * 客户是否已关联店铺（shop_info.customer_id）
+     */
+    private boolean hasRelateShop(String customerId) {
+        if (StringUtils.isBlank(customerId)) {
+            return false;
+        }
+        return shopInfoService.lambdaQuery()
+                .eq(ShopInfoEntity::getCustomerId, customerId)
+                .last(SqlConstants.LIMIT_1)
+                .one() != null;
     }
 
     /** 默认仓库/账号有值时同步校验有效性；WMS 不可用会阻断保存，属有意设计，异步校验需产品方案后再改。 */

@@ -101,14 +101,14 @@ public class LogisticsReconDetailController extends BaseController {
 
 
     /**
-     * 物流商对账费用项手动匹配（批量指定 ERP 四个业务单号）
+     * 物流商对账明细手动匹配（按明细展开其下未匹配费用项，批量指定 ERP 四个业务单号）
      * @author Will
      * @date: 2026/05/29
      * @param dto
      * @return ApiResult<List<BatchResultDTO>>
      */
     @PostMapping("/manualMatch")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "物流商对账费用项手动匹配")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "物流商对账明细手动匹配")
     public ApiResult<List<BatchResultDTO>> manualMatch(
             @RequestBody @Validated LogisticsReconDetailDTO.ManualMatchDTO dto) {
         List<BatchResultDTO> results = logisticsReconDetailService.manualMatch(dto);

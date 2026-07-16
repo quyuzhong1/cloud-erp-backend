@@ -57,6 +57,23 @@ public class TmsAsyncTaskDetailServiceImpl extends SuperServiceImpl<AsyncTaskDet
             .update();
     }
 
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public boolean tryClaimDetailForRetry(String taskDetailId) {
+        if (StringUtils.isBlank(taskDetailId)) {
+            return false;
+        }
+        return lambdaUpdate()
+            .set(TmsAsyncTaskDetailEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
+            .set(TmsAsyncTaskDetailEntity::getStartTime, LocalDateTime.now())
+            .set(TmsAsyncTaskDetailEntity::getErrorData, "")
+            .eq(TmsAsyncTaskDetailEntity::getId, taskDetailId)
+            .in(TmsAsyncTaskDetailEntity::getStatus, Arrays.asList(
+                    TmsAsyncTaskRecordStatusEnum.FAILED.getCode(),
+                    TmsAsyncTaskRecordStatusEnum.ING.getCode()))
+            .update();
+    }
+
     /**
      * 将指定明细中仍未结束的数据标记为失败。
      *

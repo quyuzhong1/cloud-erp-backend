@@ -88,8 +88,7 @@ public interface LogisticsReconDetailService extends SuperService<LogisticsRecon
                                  Set<String> handledGroupKeySet);
 
     /**
-     * 物流商对账费用项手动匹配（批量指定 ERP 四个业务单号）
-     * TODO 后续按 ERP 四个业务单号查询 logistics_bill / logistics_bill_cost / tms_cost_detail 并落 ref 关系
+     * 物流商对账明细手动匹配（按 detailId：明细下全部未匹配费用项共用同一组 ERP 业务单号）
      * @author Will
      * @date: 2026/05/29
      * @param dto

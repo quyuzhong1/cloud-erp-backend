@@ -204,7 +204,7 @@ public class LogisticsReconController extends BaseController {
     }
 
     /**
-     * 物流商对账单账单确认（更新关联物流费用单对账状态）
+     * 物流商对账单账单确认（异步任务列表：按对账单 id 校验后派发任务）
      * @author Will
      * @date: 2026/06/01
      * @param dto
@@ -219,6 +219,7 @@ public class LogisticsReconController extends BaseController {
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> batchConfirmBill(
             @RequestBody @Validated LogisticsReconDTO.BatchConfirmBillDTO dto) {
+        // 统一按 id 自然排序，保证分布式多锁的获取顺序一致，避免交叉死锁
         if (dto.getIds() != null) {
             dto.getIds().sort(null);
         }

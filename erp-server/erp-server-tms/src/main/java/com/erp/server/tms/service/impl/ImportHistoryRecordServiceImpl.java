@@ -2637,7 +2637,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
      * <ul>
      *   <li>分组内存在待确认 + 同付款类型：仅待确认进更新批次（可参与重量分摊），已确认（当月/跨月）均不处理</li>
      *   <li>分组内无待确认 + 同付款类型、且配置含 import_add_old：已确认 + 同付款类型进按原单新增批次</li>
-     *   <li>分组内无待确认 + 付款类型不一致、且配置含 import_add_old：进按原单新增批次（与 checkCostImportData 付款类型分支一致，支持退款等）</li>
+     *   <li>分组内无待确认 + 付款类型不一致、且配置含 import_add_old：按物流单/明细关联费用单后进按原单新增批次（不强制跟踪号一致）</li>
      * </ul>
      */
     private void splitIdentifyNoProcessBills(List<LogisticsBillDTO.LogisticsBillVo> matchedBillList,
@@ -2671,7 +2671,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                                               List<LogisticsBillCostEntity> logisticsBillCostList,
                                               String payType) {
         return logisticsBillCostList.stream().anyMatch(cost ->
-                CharSequenceUtil.equals(cost.getLogisticsBillDetailId(), billVo.getDetailId())
+                isSameLogisticsBillDetail(billVo, cost)
                         && CharSequenceUtil.equals(cost.getPayType(), payType)
                         && CharSequenceUtil.equals(cost.getReconciliationStatus(),
                                 ReconciliationStatusEnum.TO_BE_CONFIRM.getCode()));
@@ -2679,23 +2679,36 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
 
     /**
      * 识别单号维度下是否应进入按原单新增批次（下游 checkCostImportData 再校验月份/重复）。
+     * <p>物流单已由配置识别单号命中，此处按物流单/明细关联费用单，不再强制比对跟踪号
+     * （识别键可能是平台订单号等，跟踪号常为空或不一致）。</p>
      */
     private boolean shouldAddOldForIdentifyNoBill(LogisticsBillDTO.LogisticsBillVo billVo,
                                                   List<LogisticsBillCostEntity> logisticsBillCostList,
                                                   String importPayType) {
         boolean hasConfirmedSamePayType = logisticsBillCostList.stream().anyMatch(cost ->
-                CharSequenceUtil.equals(cost.getLogisticsBillDetailId(), billVo.getDetailId())
+                isSameLogisticsBillDetail(billVo, cost)
                         && CharSequenceUtil.equals(cost.getPayType(), importPayType)
                         && CharSequenceUtil.equals(cost.getReconciliationStatus(),
                                 ReconciliationStatusEnum.CONFIRMED.getCode()));
         if (hasConfirmedSamePayType) {
             return true;
         }
+        // 付款类型不一致：同物流单明细下已有其它付款类型费用单，可作为按原单新增模板
         return logisticsBillCostList.stream().anyMatch(cost ->
-                CharSequenceUtil.equals(cost.getLogisticsBillId(), billVo.getId())
-                        && CharSequenceUtil.equals(cost.getLogisticsBillDetailId(), billVo.getDetailId())
-                        && CharSequenceUtil.equals(billVo.getTrackNo(), cost.getTrackNo())
+                isSameLogisticsBillDetail(billVo, cost)
                         && !CharSequenceUtil.equals(importPayType, cost.getPayType()));
+    }
+
+    /**
+     * 费用单是否属于当前已命中的物流单明细（按 billId + detailId，不依赖跟踪号）。
+     */
+    private boolean isSameLogisticsBillDetail(LogisticsBillDTO.LogisticsBillVo billVo,
+                                              LogisticsBillCostEntity cost) {
+        if (billVo == null || cost == null) {
+            return false;
+        }
+        return CharSequenceUtil.equals(cost.getLogisticsBillId(), billVo.getId())
+                && CharSequenceUtil.equals(cost.getLogisticsBillDetailId(), billVo.getDetailId());
     }
 
     /**
@@ -3071,6 +3084,8 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
     /**
      * 校验物流费用单是否可导入，并判定导入处理类型（更新 / 按原单新增）。
      * 返回值供 findMatchedLogisticsBillCost 与落库分支使用，不是物流费用主单 type（selfDeliver/lastMile）。
+     * <p>费用单与已命中物流单的关联按 billId + detailId，不再强制比对跟踪号；
+     * 物流单本身已由配置识别单号命中。</p>
      */
     private String checkCostImportData(ImportHistoryRecordExcelDTO excelDTO,
                                      List<LogisticsBillCostEntity> logisticsBillCostList,
@@ -3089,11 +3104,10 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         if (CharSequenceUtil.isBlank(logisticsBillVo.getDetailId())) {
             errorMsgList.add("未找到对应的物流单明细");
         }
-        //物流费用单
+        // 物流费用单：按已命中的物流单/明细关联（与配置识别单号命中结果对齐，不写死跟踪号）
         List<LogisticsBillCostEntity> logisticsBillCostEntityList = logisticsBillCostList.stream()
-                .filter(obj -> obj.getLogisticsBillId().equals(logisticsBillVo.getId())
-                        && CharSequenceUtil.equals(logisticsBillVo.getTrackNo(),obj.getTrackNo())
-                        && CharSequenceUtil.equals(excelDTO.getPayType(),obj.getPayType()))
+                .filter(obj -> isSameLogisticsBillDetail(logisticsBillVo, obj)
+                        && CharSequenceUtil.equals(excelDTO.getPayType(), obj.getPayType()))
                 .collect(Collectors.toList());
 
         if (CollUtil.isNotEmpty(logisticsBillCostEntityList)) {
@@ -3104,8 +3118,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
              */
 
             List<LogisticsBillCostEntity> thisMonthEntityList = logisticsBillCostList.stream()
-                    .filter(obj -> obj.getLogisticsBillId().equals(logisticsBillVo.getId())
-                            && CharSequenceUtil.equals(logisticsBillVo.getTrackNo(),obj.getTrackNo())
+                    .filter(obj -> isSameLogisticsBillDetail(logisticsBillVo, obj)
                             && (
                             (CharSequenceUtil.equals(obj.getReconciliationStatus(), ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode()) && CharSequenceUtil.equals(obj.getCheckStatus(),LogisticsBillCostCheckStatusEnum.CHECKING.getCode()))
                                     || (CharSequenceUtil.equals(obj.getReconciliationStatus(), ReconciliationStatusEnum.TO_BE_CONFIRM.getCode()))
@@ -3129,9 +3142,8 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         }else {
             //付款类型不一致的情况下走IMPORT_ADD_OLD的逻辑
             logisticsBillCostEntityList = logisticsBillCostList.stream()
-                    .filter(obj -> obj.getLogisticsBillId().equals(logisticsBillVo.getId())
-                            && CharSequenceUtil.equals(logisticsBillVo.getTrackNo(),obj.getTrackNo())
-                            && !CharSequenceUtil.equals(excelDTO.getPayType(),obj.getPayType()))
+                    .filter(obj -> isSameLogisticsBillDetail(logisticsBillVo, obj)
+                            && !CharSequenceUtil.equals(excelDTO.getPayType(), obj.getPayType()))
                     .collect(Collectors.toList());
             if (CollUtil.isEmpty(logisticsBillCostEntityList)) {
                 errorMsgList.add("未找到对应的物流费用单");

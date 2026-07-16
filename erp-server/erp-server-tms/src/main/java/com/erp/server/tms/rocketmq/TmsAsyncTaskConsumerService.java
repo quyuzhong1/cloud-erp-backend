@@ -145,10 +145,12 @@ public class TmsAsyncTaskConsumerService implements RocketMQListener<TmsAsyncTas
                 return;
             }
         }
-        //物流商对账单合并匹配
+        //物流商对账单
         else if(Objects.equals(businessType, TmsAsyncTaskRecordBusinessTypeEnum.LOGISTICS_RECON.getCode())){
             if (Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.LOGISTICS_RECON_MATCH.getCode())) {
                 logisticsReconService.pushMatch(taskRecord);
+            } else if (Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.LOGISTICS_RECON_CONFIRM_BILL.getCode())) {
+                logisticsReconService.pushConfirmBill(taskRecord);
             } else {
                 log.warn("物流商对账单MQ方法类型不支持，跳过消费，taskId: {}, methodType: {}", taskId, methodType);
                 asyncTaskRecordService.finishTaskWithError(taskId, "物流商对账单MQ方法类型不支持: " + methodType);

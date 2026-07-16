@@ -69,4 +69,26 @@
           AND d.main_id = #{mainId}
     </select>
 
+    <!-- 按主表 id 批量聚合有效费用项统计（与原 paging 子查询口径一致，仅限定当前页） -->
+    <select id="listPagingStatsByMainIds"
+            resultType="com.erp.model.tms.dto.LogisticsReconDTO$PagingStatsDTO">
+        SELECT d.main_id AS mainId,
+               COUNT(*) AS validCostCount,
+               COUNT(*) FILTER (WHERE sub.match_status = 'matched') AS matchCount,
+               COALESCE(SUM(sub.local_amount) FILTER (WHERE sub.match_status = 'matched'), 0) AS matchSuccessAmount,
+               COALESCE(SUM(sub.local_amount) FILTER (WHERE sub.match_status = 'failed'), 0) AS matchFailAmount,
+               COUNT(*) AS reconciliationTotalCount,
+               COUNT(*) FILTER (WHERE sub.reconciliation_status = 'confirmed') AS reconciliationConfirmedCount,
+               COUNT(*) FILTER (WHERE sub.reconciliation_status = 'partialConfirm') AS reconciliationPartialCount
+        FROM logistics_recon_detail_sub sub
+        INNER JOIN logistics_recon_detail d
+            ON d.id = sub.detail_id AND d.is_deleted = false AND d.main_id = sub.main_id
+        WHERE sub.is_deleted = false
+          AND sub.main_id IN
+        <foreach collection="mainIds" item="mainId" open="(" separator="," close=")">
+            #{mainId}
+        </foreach>
+        GROUP BY d.main_id
+    </select>
+
 </mapper>
