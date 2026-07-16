@@ -1,10 +1,12 @@
 package com.erp.server.tms.service;
 
 import com.common.business.service.SuperService;
+import com.erp.model.tms.dto.LogisticsReconDTO;
 import com.erp.model.tms.dto.LogisticsReconDetailSubDTO;
 import com.erp.model.tms.dto.LogisticsReconMatchDTO;
 import com.erp.model.tms.entity.LogisticsReconDetailSubEntity;
 
+import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -99,5 +101,10 @@ public interface LogisticsReconDetailSubService extends SuperService<LogisticsRe
     /**
      * 汇总主表下有效费用项的本位币金额（local_amount），无数据返回 0
      */
-    java.math.BigDecimal sumLocalAmountByMainId(String mainId);
+    BigDecimal sumLocalAmountByMainId(String mainId);
+
+    /**
+     * 按主表 id 集合批量聚合分页列表所需费用项统计
+     */
+    List<LogisticsReconDTO.PagingStatsDTO> listPagingStatsByMainIds(List<String> mainIds);
 }

@@ -96,154 +96,173 @@ public class LogisticsReconDTO implements Serializable {
 
     /**
      * 分页列表
+     * <p>排序说明：仅主表字段支持 ORDER BY（与 paging SQL 别名一致）；
+     * 统计/派生字段由当前页二次聚合或 fillList 回填，不可排序。</p>
      */
     @Data
     @NoArgsConstructor
     public static class ListDTO {
         /**
-         * 主键id
+         * 主键id（可排序）
          */
         private String id;
         /**
-         * 批次单号
+         * 批次单号（可排序）
          */
         private String code;
         /**
-         * 对账月份（展示格式：yyyy年M月份）
+         * 对账月份（可排序；展示格式：yyyy年M月份）
          */
         private String reconciliationMonth;
         /**
-         * 业务类型
+         * 业务类型（可排序）
          */
         private String businessType;
         /**
-         * 匹配到的导入模板配置 id
+         * 匹配到的导入模板配置 id（可排序）
          */
         private String cfgImportId;
         /**
-         * 配置类型 logisticsSupplier / platform
+         * 配置类型 logisticsSupplier / platform（可排序）
          */
         private String cfgType;
         /**
-         * 物流商/平台 id
+         * 物流商/平台 id（可排序）
          */
         private String supplierId;
         /**
-         * 物流商/平台名称
+         * 物流商/平台名称（可排序）
          */
         private String supplierName;
         /**
-         * 处理表格源 sheet 名称
+         * 处理表格源 sheet 名称（可排序）
          */
         private String sheetName;
         /**
-         * 上传文件 URL
+         * 上传文件 URL（可排序）
          */
         private String fileUrl;
         /**
-         * 上传文件名
+         * 上传文件名（可排序）
          */
         private String fileName;
         /**
-         * 导入失败原因
+         * 导入失败原因（可排序）
          */
         private String importFailReason;
         /**
-         * 校验状态（已合并导入状态）importing / pending / confirmed
+         * 校验状态（可排序；已合并导入状态）importing / pending / confirmed
          */
         private String checkStatus;
         /**
-         * 校验状态名称
+         * 校验状态名称（不可排序；展示派生）
          */
         private String checkStatusName;
         /**
-         * 对账确认状态 toBeConfirm / partialConfirm / confirmed（查询时按当前对账单费用项状态派生，非主表存储）
+         * 对账确认状态（不可排序；统计派生）toBeConfirm / partialConfirm / confirmed
          */
         private String reconciliationStatus;
         /**
-         * 对账确认状态名称
+         * 对账确认状态名称（不可排序；展示派生）
          */
         private String reconciliationStatusName;
         /**
-         * 匹配状态 unmatched / partial / matched（查询时按费用项 cost_count + 已匹配费用项数实时派生，非主表存储）
+         * 匹配状态（不可排序；统计派生）unmatched / partial / matched
          */
         private String matchStatus;
         /**
-         * 匹配状态名称
+         * 匹配状态名称（不可排序；展示派生）
          */
         private String matchStatusName;
         /**
-         * 导入明细行数
+         * 导入明细行数（可排序；主表冗余）
          */
         private Integer importCount;
         /**
-         * 导入费用项条数
+         * 导入费用项条数（可排序；主表冗余；列表展示可能被 validCostCount 覆盖）
          */
         private Integer costCount;
         /**
-         * 已匹配费用项数（查询时实时聚合 logistics_recon_detail_sub.match_status='matched'，非主表存储）
+         * 已匹配费用项数（不可排序；当前页二次聚合统计）
          */
         private Integer matchCount;
         /**
-         * 有效费用项总数（查询时实时聚合：detail 归属与 sub.main_id 一致，用于派生 match_status）
+         * 有效费用项总数（不可排序；当前页二次聚合统计）
          */
         private Integer validCostCount;
         /**
-         * 对账总金额
+         * 对账总金额（可排序）
          */
         private BigDecimal totalAmount;
         /**
-         * 对账总金额（带币别符号展示）
+         * 对账总金额（不可排序；带币别符号展示）
          */
         private String totalAmountStr;
         /**
-         * 匹配成功金额
+         * 匹配成功金额（不可排序；当前页二次聚合统计）
          */
         private BigDecimal matchSuccessAmount;
         /**
-         * 匹配成功金额（带币别符号展示）
+         * 匹配成功金额（不可排序；带币别符号展示）
          */
         private String matchSuccessAmountStr;
         /**
-         * 匹配失败金额
+         * 匹配失败金额（不可排序；当前页二次聚合统计）
          */
         private BigDecimal matchFailAmount;
         /**
-         * 匹配失败金额（带币别符号展示）
+         * 匹配失败金额（不可排序；带币别符号展示）
          */
         private String matchFailAmountStr;
         /**
-         * 总金额币别（多币别则空）
+         * 总金额币别（可排序；多币别则空）
          */
         private String currency;
         /**
-         * 币别符号
+         * 币别符号（不可排序；展示派生）
          */
         private String currencySymbol;
         /**
-         * 校验人 id
+         * 校验人 id（可排序）
          */
         private String checkUserId;
         /**
-         * 校验人姓名
+         * 校验人姓名（可排序）
          */
         private String checkUserName;
         /**
-         * 校验完成时间
+         * 校验完成时间（可排序）
          */
         private LocalDateTime checkTime;
         /**
-         * 备注
+         * 备注（可排序）
          */
         private String remark;
         /**
-         * 创建时间
+         * 创建时间（可排序）
          */
         private LocalDateTime createTime;
         /**
-         * 创建人名称
+         * 创建人名称（可排序）
          */
         private String createUserName;
+    }
+
+    /**
+     * 分页列表费用项统计（按 mainId 批量聚合后回填 ListDTO）
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PagingStatsDTO {
+        private String mainId;
+        private Integer validCostCount;
+        private Integer matchCount;
+        private BigDecimal matchSuccessAmount;
+        private BigDecimal matchFailAmount;
+        private Integer reconciliationTotalCount;
+        private Integer reconciliationConfirmedCount;
+        private Integer reconciliationPartialCount;
     }
 
     /**
