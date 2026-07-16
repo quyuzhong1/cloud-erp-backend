@@ -119,6 +119,14 @@ public class OverseasProviderDTO implements Serializable {
          * eccompanyid
          */
         private String eccompanyid;
+        /**
+         * partnerId
+         */
+        private String partnerId;
+        /**
+         * 客户编码
+         */
+        private String customerCode;
     }
     /**
     * 详情

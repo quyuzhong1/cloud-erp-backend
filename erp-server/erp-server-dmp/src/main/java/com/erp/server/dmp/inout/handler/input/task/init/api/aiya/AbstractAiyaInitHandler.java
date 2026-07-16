@@ -23,7 +23,7 @@ import java.util.Map;
 /**
  * AIYA（爱亚）海外仓 DMP 输入 init 任务处理器公共基类。
  * <p>
- * 收敛 6 个爱亚 init handler 共用的「按 nextLevelId 定位授权 + 读取 customerCode/partnerKey +
+ * 收敛各爱亚 init handler 共用的「按 nextLevelId 定位授权 + 读取 partnerId/customerCode/partnerKey +
  * 组装 DmpInputTaskInitDTO」逻辑，避免各业务 handler 重复复制。
  * <p>
  * 授权约定：爱亚不走 OAuth，凭证以 {@code partnerId}（客户ID，外层字段）/ {@code customerCode}（客户code，业务字段）/
@@ -47,9 +47,9 @@ public abstract class AbstractAiyaInitHandler extends DmpInputInitHandler {
     protected static final String AUTH_KEY_CUSTOMER_CODE = "customerCode";
 
     /**
-     * 爱亚授权 JSON（overseas_provider.auth_json）中的 partnerKey 字段 key。
+     * 爱亚授权 JSON（overseas_provider.auth_json）中的 appSecret 字段 key。
      */
-    protected static final String AUTH_KEY_PARTNER_KEY = "partnerKey";
+    protected static final String AUTH_KEY_APP_SECRET = "appSecret";
 
     /**
      * 最大翻页保护，避免接口异常导致死循环。
@@ -61,9 +61,9 @@ public abstract class AbstractAiyaInitHandler extends DmpInputInitHandler {
 
     /**
      * 按 {@link #dmpInputTaskEntity} 的 {@code nextLevelId} 定位本次任务对应的已授权爱亚服务商，
-     * 并解析 customerCode / partnerKey。
+     * 并解析 partnerId / customerCode / partnerKey。
      *
-     * @return 爱亚授权信息（authId + customerCode + partnerKey）
+     * @return 爱亚授权信息（authId + partnerId + customerCode + partnerKey）
      */
     protected AiyaAuth resolveAuth() {
         List<OverseasProviderEntity> providerList = FeignQuery.create(OverseasProviderEntity.class)
@@ -86,7 +86,7 @@ public abstract class AbstractAiyaInitHandler extends DmpInputInitHandler {
         }
         String partnerId = toStr(authJson.get(AUTH_KEY_PARTNER_ID));
         String customerCode = toStr(authJson.get(AUTH_KEY_CUSTOMER_CODE));
-        String partnerKey = toStr(authJson.get(AUTH_KEY_PARTNER_KEY));
+        String partnerKey = toStr(authJson.get(AUTH_KEY_APP_SECRET));
         if (CharSequenceUtil.hasBlank(partnerId, customerCode, partnerKey)) {
             throw new ServiceException(ApiError.WH_AIYA_TOKEN_SECRET_MISSING, provider.getId());
         }
@@ -125,7 +125,7 @@ public abstract class AbstractAiyaInitHandler extends DmpInputInitHandler {
         }
         if (!Boolean.TRUE.equals(response.getBoolean("success"))) {
             throw new ServiceException(ApiError.WH_AIYA_RESPONSE_FAILED, actionName,
-                    String.valueOf(response.get("errorCode")), String.valueOf(response.get("errorMsg")));
+                    String.valueOf(response.get("code")), String.valueOf(response.get("message")));
         }
         Object resultObj = response.get("result");
         if (resultObj instanceof JSONObject) {
@@ -134,7 +134,6 @@ public abstract class AbstractAiyaInitHandler extends DmpInputInitHandler {
         if (resultObj instanceof JSONArray) {
             JSONObject wrap = new JSONObject();
             wrap.put("list", resultObj);
-            wrap.put("pageNum", 1);
             wrap.put("pages", 1);
             wrap.put("emptyFlag", ((JSONArray) resultObj).isEmpty());
             return wrap;
