@@ -1,5 +1,6 @@
 package com.erp.model.oms.dto;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -206,7 +207,12 @@ public class KolPartnerInfoDTO implements Serializable {
         /**
          * 粉丝数量
          */
-        private Integer followerCount;
+        private BigDecimal followerCount;
+
+        /**
+         * 粉丝数量单位
+         */
+        private String followerCountUnit;
 
         /**
          * 主页链接

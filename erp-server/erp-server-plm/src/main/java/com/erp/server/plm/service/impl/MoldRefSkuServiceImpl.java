@@ -330,6 +330,17 @@ public class MoldRefSkuServiceImpl extends SuperServiceImpl<MoldRefSkuMapper, Mo
         if (ObjectUtil.isEmpty(data)) {
             return;
         }
+        fillMoldNameFromArchive(data.getMoldId(), data::setMoldName);
+    }
+
+    private void fillMoldNameFromArchive(String moldId, java.util.function.Consumer<String> moldNameSetter) {
+        if (StringUtils.isBlank(moldId)) {
+            return;
+        }
+        MoldInfoEntity moldInfo = moldInfoService.getById(moldId);
+        if (Objects.nonNull(moldInfo)) {
+            moldNameSetter.accept(moldInfo.getName());
+        }
     }
 
     /**

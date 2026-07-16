@@ -209,6 +209,11 @@ public class AssetAcceptDTO implements Serializable {
         private String skuNo;
 
         /**
+         * SKU ID
+         */
+        private String skuId;
+
+        /**
          * 产品名称
          */
         private String productName;

@@ -287,6 +287,7 @@ public class CfgMoldAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldAlertRu
         data.setCountDimName(CfgMoldReturnAlertRuleCountDimEnum.getName(data.getCountDim()));
         data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
         data.setDisabledName(DisabledEnum.getName(data.getDisabled()));
+        fillMoldNameFromArchive(data.getMoldId(), data::setMoldName);
 
         String noticeType = data.getNoticeType();
         if(StringUtils.isNotBlank(noticeType)){
@@ -302,6 +303,16 @@ public class CfgMoldAlertRuleServiceImpl extends SuperServiceImpl<CfgMoldAlertRu
                 List<String> noticeTypeNameList = Arrays.asList(noticeTypeName.split(","));
                 data.setNoticeTypeNameList(noticeTypeNameList);
             }
+        }
+    }
+
+    private void fillMoldNameFromArchive(String moldId, java.util.function.Consumer<String> moldNameSetter) {
+        if (StringUtils.isBlank(moldId)) {
+            return;
+        }
+        MoldInfoEntity moldInfo = moldInfoService.getById(moldId);
+        if (Objects.nonNull(moldInfo)) {
+            moldNameSetter.accept(moldInfo.getName());
         }
     }
 

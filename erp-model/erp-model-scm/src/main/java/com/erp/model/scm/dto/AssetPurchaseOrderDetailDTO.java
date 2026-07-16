@@ -66,6 +66,11 @@ public class AssetPurchaseOrderDetailDTO implements Serializable {
         private String tagName;
 
         /**
+         * 项目名称（关联模具档案）
+         */
+        private String projectName;
+
+        /**
         * 含税单价
         */
         private BigDecimal taxPrice;

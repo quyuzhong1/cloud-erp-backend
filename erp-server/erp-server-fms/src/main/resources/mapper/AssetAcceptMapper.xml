@@ -79,7 +79,7 @@
             aa.create_user_name AS createUserName,
             aad.id AS detailId,
             aad.sku_no AS skuNo,
-            aad.product_name AS productName,
+            aad.sku_id AS skuId,
             aad.accept_qty AS acceptQty,
             aad.asset_card_status AS assetCardStatus
         FROM asset_accept aa
@@ -132,7 +132,7 @@
             aa.create_user_name AS createUserName,
             aad.id AS detailId,
             aad.sku_no AS skuNo,
-            aad.product_name AS productName,
+            aad.sku_id AS skuId,
             aad.accept_qty AS acceptQty,
             aad.asset_card_status AS assetCardStatus
         FROM asset_accept aa

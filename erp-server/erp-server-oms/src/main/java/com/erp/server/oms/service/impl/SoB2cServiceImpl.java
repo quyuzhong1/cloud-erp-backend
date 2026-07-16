@@ -4629,6 +4629,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<SoB2cLogisticsEntity> logisticsEntityList = soB2cLogisticsService.listByMainIds(ids);
 
         for (SoB2cEntity entity : list) {
+            checkInvoiceStatusForOperation(entity.getId(), "订单合并");
             if (SoB2cBillStatusEnum.ENUM_FROZEN.getCode().equals(entity.getBillStatus()) || entity.getInvalidStatus()
                     || SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equals(entity.getBillStatus()) || SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(entity.getBillStatus())) {
                 throw new ServiceException(ApiError.SO_B2C_MERGE_FORBIDDEN_BY_STATUS);
@@ -4840,16 +4841,20 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (!ApproveStatusEnum.WAIT_SUBMIT.equals(entity.getApproveStatus()) && !ApproveStatusEnum.REJECT.equals(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.SO_B2C_CANCEL_MERGE_STATUS_LIMIT, entity.getCode());
         }
+        checkInvoiceStatusForOperation(entity.getId(), "取消合并");
         //关联数据
         List<SoB2cRefEntity> soB2cRefList = soB2cRefService.listByTargetId(id, SoB2cOptionTypeEnum.ENUM_MERGE);
         if (CollUtil.isEmpty(soB2cRefList)) {
             throw new ServiceException(ApiError.SO_B2C_CANCEL_MERGE_NOT_SUPPORTED, entity.getCode());
         }
+        List<String> sourceIdList = soB2cRefList.stream().map(SoB2cRefEntity::getSourceId).distinct().collect(Collectors.toList());
+        for (String sourceId : sourceIdList) {
+            checkInvoiceStatusForOperation(sourceId, "取消合并");
+        }
         log.info("删除销售订单数据，id = {}", id);
         //删除合并后的数据
         deleteById(Arrays.asList(id), null);
         //反作废合并前的数据
-        List<String> sourceIdList = soB2cRefList.stream().map(SoB2cRefEntity::getSourceId).distinct().collect(Collectors.toList());
         for (String sourceId : sourceIdList) {
             log.info("作废原销售订单数据，id = {}", sourceId);
             unInvalid(sourceId, SoB2cInvalidTypeEnum.ENUM_MERGE);
@@ -9979,6 +9984,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 .anyMatch(e -> !SoB2cWarehouseDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(e.getStatus()));
         if (hasActiveB2cDelivery || hasActiveThirdDelivery) {
             throw new ServiceException(CharSequenceUtil.format("已生成B2C发货单或三方仓发货单，不允许操作{}", operationName));
+        }
+    }
+
+    @Override
+    public void checkInvoiceStatusForOperation(String soId, String operationDesc) {
+        if (StrUtil.isBlank(soId)) {
+            return;
+        }
+        if (invoiceInfoService.hasBlockingInvoiceStatus(soId)) {
+            throw new ServiceException(CharSequenceUtil.format("订单已开票/开票中，请先取消发票后操作{}", operationDesc));
         }
     }
 

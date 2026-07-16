@@ -3,6 +3,7 @@ package com.erp.server.scm.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
@@ -28,6 +29,11 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
+import com.common.message.service.mq.MQProducerService;
+import com.erp.model.msg.dto.NoticeMsgInfoDTO;
+import com.erp.model.msg.enums.NoticeTypeEnum;
 import com.erp.model.plm.dto.MoldInfoDTO;
 import com.erp.model.plm.entity.MoldInfoEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -40,6 +46,7 @@ import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.*;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
+import com.erp.model.sys.dto.SysUserSimpleDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.sys.entity.SysUserInfoEntity;
@@ -59,6 +66,8 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -93,6 +102,13 @@ import static com.common.business.enums.FileTaskEventEnum.IMPORT_SCM_ASSET_NOTIC
 public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, AssetNoticeEntity> implements AssetNoticeService {
 
     private static final Integer USER_DISABLED_STATE = 0;
+    private static final int DEFAULT_DFM_NOTICE_OFFSET_DAYS = 30;
+    private static final String DEFAULT_DFM_NOTICE_RECEIVER_FIELD = "applyUserId";
+    private static final String DEFAULT_DFM_NOTICE_TITLE = "上传DMF附件";
+    private static final String DEFAULT_DFM_NOTICE_CONTENT_TEMPLATE =
+            "请确认开模通知单【{code}】是否已和供应商确认DFM附件，已确认及时在数大臣系统上传！";
+    private static final int DEFAULT_DFM_NOTICE_BATCH_LIMIT = 500;
+    private static final String RECEIVER_FIELD_CREATE_USER_ID = "createUserId";
 
     @Autowired
     private ModuleOperateLogService moduleOperateLogService;
@@ -143,6 +159,9 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
     @Autowired
     private AssetNoticeService self;
 
+    @Autowired
+    private MQProducerService<NoticeMsgInfoDTO> mqProducerService;
+
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -166,16 +185,8 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         // 新增明细
         assetNoticeDetailService.add(addDTO.getAssetNoticeDetailDTO(),assetNoticeEntity.getId());
 
-        // 保存附件
-        List<String> attachmentUrlList = addDTO.getAttachmentUrlList();
-        List<String> attachmentNameList = addDTO.getAttachmentNameList();
-        if (CollectionUtils.isNotEmpty(attachmentUrlList) && CollectionUtils.isNotEmpty(attachmentNameList) 
-                && attachmentUrlList.size() == attachmentNameList.size()) {
-            Class<AssetNoticeEntity> entityClass = AssetNoticeEntity.class;
-            TableName tableName = entityClass.getDeclaredAnnotation(TableName.class);
-            String type = tableName.value();
-            attachmentService.batchSave(attachmentUrlList, attachmentNameList, type, assetNoticeEntity.getId());
-        }
+        // 保存附件（3D附件+CFM附件 / DFM）
+        saveAttachmentsOnAdd(assetNoticeEntity.getId(), assetNoticeEntity.getCode(), addDTO);
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "开模通知单" , assetNoticeEntity.getCode());
@@ -210,51 +221,8 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         hanleUpdateDetailData(assetNoticeEntity,addOrUpdateDTO.getAssetNoticeDetailDTO());
         assetNoticeDetailService.update(addOrUpdateDTO.getAssetNoticeDetailDTO(),assetNoticeEntity.getId());
 
-        // 更新附件
-        List<String> attachmentUrlList = addOrUpdateDTO.getAttachmentUrlList();
-        List<String> attachmentNameList = addOrUpdateDTO.getAttachmentNameList();
-        if (CollectionUtils.isNotEmpty(attachmentUrlList) && CollectionUtils.isNotEmpty(attachmentNameList)
-                && attachmentUrlList.size() == attachmentNameList.size()) {
-            // 获取旧附件列表
-            List<AttachmentDTO.UpdateDTO> oldAttachmentList = attachmentService.getByBusinessId(assetNoticeEntity.getId());
-            if (CollUtil.isNotEmpty(oldAttachmentList)) {
-                // 处理删除的数据
-                List<AttachmentDTO.UpdateDTO> remove = oldAttachmentList.stream()
-                        .filter(oldAttachment -> !attachmentUrlList.contains(oldAttachment.getAttachUrl()))
-                        .collect(Collectors.toList());
-                if (CollUtil.isNotEmpty(remove)) {
-                    attachmentService.deleteByUrlList(remove.stream().map(AttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList()));
-                }
-                //记录删除的附件
-                if (CollUtil.isNotEmpty(remove)) {
-                    String msg = StrUtil.format("用户【{}】编辑【{}】单据单号为【{}】，删除附件：【{}】", UserContext.getDefaultLoginUser().getUserName(), "开模通知单" , assetNoticeEntity.getCode(),
-                            remove.stream().map(AttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.joining(",")));
-                    moduleOperateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_NOTICE.getCode(), assetNoticeEntity.getId(), "修改操作");
-                }
-            }
-
-            // 处理需要新增的数据
-            List<String> oldUrlList = oldAttachmentList.stream().map(AttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
-            List<String> addUrls = attachmentUrlList.stream()
-                    .filter(url -> !oldUrlList.contains(url))
-                    .collect(Collectors.toList());
-            if (CollUtil.isNotEmpty(addUrls)) {
-                Class<AssetNoticeEntity> entityClass = AssetNoticeEntity.class;
-                TableName tableName = entityClass.getDeclaredAnnotation(TableName.class);
-                String type = tableName.value();
-                List<String> addNames = new ArrayList<>();
-                for (int i = 0; i < attachmentUrlList.size(); i++) {
-                    if (addUrls.contains(attachmentUrlList.get(i))) {
-                        addNames.add(attachmentNameList.get(i));
-                    }
-                }
-                //记录新增的附件
-                String msg = StrUtil.format("用户【{}】编辑【{}】单据单号为【{}】，新增附件：【{}】", UserContext.getDefaultLoginUser().getUserName(), "开模通知单" , assetNoticeEntity.getCode(),
-                        addNames.stream().collect(Collectors.joining(",")));
-                moduleOperateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_NOTICE.getCode(), assetNoticeEntity.getId(), "修改操作");
-                attachmentService.batchSave(addUrls, addNames, type, assetNoticeEntity.getId());
-            }
-        }
+        // 更新附件（3D附件+CFM附件 / DFM）
+        syncAttachmentsOnUpdate(assetNoticeEntity.getId(), assetNoticeEntity.getCode(), addOrUpdateDTO);
 
         // 记录主单操作日志
             log.info("编辑 开始记录日志数据，单号：【{}】", assetNoticeEntity.getCode());
@@ -937,21 +905,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         fillViewList(dtoList);
         data.setAssetNoticeDetailDTOList(dtoList);
 
-        // 查询附件信息
-        Class<AssetNoticeEntity> entityClass = AssetNoticeEntity.class;
-        TableName tableName = entityClass.getDeclaredAnnotation(TableName.class);
-        String type = tableName.value();
-        List<AttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessIdAndType(Arrays.asList(id), type);
-        if (CollUtil.isNotEmpty(attachmentList)) {
-            List<String> attachmentUrlList = attachmentList.stream()
-                    .map(AttachmentDTO.UpdateDTO::getAttachUrl)
-                    .collect(Collectors.toList());
-            List<String> attachmentNameList = attachmentList.stream()
-                    .map(AttachmentDTO.UpdateDTO::getAttachName)
-                    .collect(Collectors.toList());
-            data.setAttachmentUrlList(attachmentUrlList);
-            data.setAttachmentNameList(attachmentNameList);
-        }
+        fillAttachmentView(data, id);
 
         return data;
     }
@@ -960,11 +914,12 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
 
         for (AssetNoticeDetailDTO.ViewDTO detailDTO : dtoList) {
             detailDTO.setTagName(MoldInfoTagEnum.getName(detailDTO.getTag()));
-            // 项目名称从模具档案获取
+            // 项目名称、模具名称从模具档案获取
             if (StringUtils.isNotBlank(detailDTO.getAssetCode())) {
                 MoldInfoEntity moldInfoEntity = plmTaskFeign.getMoldInfoByCode(detailDTO.getAssetCode());
                 if (Objects.nonNull(moldInfoEntity)) {
                     detailDTO.setProjectName(moldInfoEntity.getProjectName());
+                    detailDTO.setAssetName(moldInfoEntity.getName());
                 }
             }
         }
@@ -1000,23 +955,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
      */
     private Map<String, Object> getVariablesMap(AssetNoticeEntity entity) {
         Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
-        Class<AssetNoticeEntity> entityClass = AssetNoticeEntity.class;
-        TableName tableName = entityClass.getDeclaredAnnotation(TableName.class);
-        String type = tableName.value();
-        List<AttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessIdAndType(Arrays.asList(entity.getId()), type);
-        List<String> attachmentUrlList = new ArrayList<>();
-        List<String> attachmentNameList = new ArrayList<>();
-        Map<String, Object> attachmentMap = new HashMap<>();
-        if (CollUtil.isNotEmpty(attachmentList)) {
-            for (AttachmentDTO.UpdateDTO attachment : attachmentList) {
-                attachmentUrlList.add(attachment.getAttachUrl());
-                attachmentNameList.add(attachment.getAttachName());
-                attachmentMap.put(attachment.getAttachName(), attachment.getAttachUrl());
-            }
-        }
-        variablesMap.put("attachmentUrlList", attachmentUrlList);
-        variablesMap.put("attachmentNameList", attachmentNameList);
-        variablesMap.put("attachmentMap", attachmentMap);
+        fillAttachmentVariablesMap(variablesMap, entity.getId());
 
         // 主动查询明细列表并补充到 variablesMap，飞书 form 中的 fieldList 控件依赖此数据
         // 兼容运营在 cfg_process_field_map.sys_parent_id 上配置的几种常见命名：
@@ -1155,6 +1094,14 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
             }
         }
 
+        List<String> mainIds = list.stream()
+                .map(AssetNoticeDTO.ListDTO::getId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, Long> dfmCountMap = attachmentService.countByBusinessIdsAndType(
+                mainIds, AssetNoticeAttachmentTypeEnum.DFM.getCode());
+
         // 属性赋值
         for(AssetNoticeDTO.ListDTO data : list) {
             List<AssetPurchaseOrderDetailEntity> assetPurchaseOrderDetailEntityList = assetPurchaseOrderDetailService.lambdaQuery()
@@ -1189,11 +1136,12 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
                 }
             }
 
-            // 项目名称从模具档案获取
+            // 项目名称、模具名称从模具档案获取
             if (StringUtils.isNotBlank(data.getAssetCode())) {
                 MoldInfoEntity moldInfoEntity = moldInfoMap.get(data.getAssetCode());
                 if (Objects.nonNull(moldInfoEntity)) {
                     data.setProjectName(moldInfoEntity.getProjectName());
+                    data.setAssetName(moldInfoEntity.getName());
                 }
             }
 
@@ -1204,6 +1152,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
                     data.setApproveUserName(curApprove);
                 }
             }
+            data.setDfmAttachmentCount(dfmCountMap.getOrDefault(data.getId(), 0L).intValue());
         }
     }
     /**
@@ -1647,5 +1596,289 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
             }
         }
 
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public List<AttachmentDTO.UpdateDTO> listDfmAttachment(String id) {
+        super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.MOULD_NOTICE_NOT_FOUND));
+        return attachmentService.listByBusinessIdAndType(id, AssetNoticeAttachmentTypeEnum.DFM.getCode());
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO uploadDfmAttachment(AssetNoticeDTO.UploadDfmAttachmentDTO dto) {
+        AssetNoticeEntity entity = super.getByIdOpt(dto.getId())
+                .orElseThrow(() -> new ServiceException(ApiError.MOULD_NOTICE_NOT_FOUND));
+        List<String> urlList = dto.getFileList().stream()
+                .map(BaseDTO.AttachmentDTO::getAttachUrl)
+                .collect(Collectors.toList());
+        List<String> nameList = dto.getFileList().stream()
+                .map(BaseDTO.AttachmentDTO::getAttachName)
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(urlList) || urlList.size() != nameList.size()) {
+            throw new ServiceException("DFM附件数据不完整");
+        }
+        attachmentService.batchSave(urlList, nameList, AssetNoticeAttachmentTypeEnum.DFM.getCode(), entity.getId());
+        String msg = StrUtil.format("用户【{}】对开模通知单【{}】新增{}附件：【{}】",
+                UserContext.getDefaultLoginUser().getUserName(),
+                entity.getCode(),
+                AssetNoticeAttachmentTypeEnum.DFM.getName(),
+                String.join(",", nameList));
+        moduleOperateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_NOTICE.getCode(), entity.getId(), "上传DFM附件");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "上传DFM附件成功");
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO deleteDfmAttachment(AttachmentDTO.DeleteDTO dto) {
+        if (StringUtils.isBlank(dto.getBusinessId()) || StringUtils.isBlank(dto.getAttachUrl())) {
+            throw new ServiceException("删除DFM附件参数不完整");
+        }
+        AssetNoticeEntity entity = super.getByIdOpt(dto.getBusinessId())
+                .orElseThrow(() -> new ServiceException(ApiError.MOULD_NOTICE_NOT_FOUND));
+        List<AttachmentDTO.UpdateDTO> dfmList = attachmentService.listByBusinessIdAndType(
+                dto.getBusinessId(), AssetNoticeAttachmentTypeEnum.DFM.getCode());
+        AttachmentDTO.UpdateDTO target = dfmList.stream()
+                .filter(item -> dto.getAttachUrl().equals(item.getAttachUrl()))
+                .findFirst()
+                .orElseThrow(() -> new ServiceException("DFM附件不存在或已删除"));
+        attachmentService.removeAttachment(dto);
+        String msg = StrUtil.format("用户【{}】对开模通知单【{}】删除{}附件：【{}】",
+                UserContext.getDefaultLoginUser().getUserName(),
+                entity.getCode(),
+                AssetNoticeAttachmentTypeEnum.DFM.getName(),
+                target.getAttachName());
+        moduleOperateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_NOTICE.getCode(), entity.getId(), "删除DFM附件");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "删除DFM附件成功");
+    }
+
+    @Override
+    public List<AssetNoticeDTO.MissingDfmNoticeDTO> listMissingDfmAttachment(LocalDate targetCreateDate,
+                                                                             int batchLimit) {
+        return baseMapper.listMissingDfmAttachment(targetCreateDate, batchLimit);
+    }
+
+    @Override
+    public int notifyMissingDfmAttachment(AssetNoticeDTO.DfmAttachmentNoticeJobParamDTO param) {
+        AssetNoticeDTO.DfmAttachmentNoticeJobParamDTO jobParam = normalizeDfmNoticeJobParam(param);
+        LocalDate targetCreateDate = LocalDate.now().minusDays(jobParam.getOffsetDays());
+        List<AssetNoticeDTO.MissingDfmNoticeDTO> noticeList = listMissingDfmAttachment(
+                targetCreateDate, jobParam.getBatchLimit());
+        if (CollUtil.isEmpty(noticeList)) {
+            log.info("开模通知单DFM附件缺失提醒：无符合条件单据，targetCreateDate={}", targetCreateDate);
+            return 0;
+        }
+        boolean notifyCreateUser = RECEIVER_FIELD_CREATE_USER_ID.equalsIgnoreCase(jobParam.getReceiverField());
+        List<String> receiverUserIds = noticeList.stream()
+                .map(item -> notifyCreateUser ? item.getCreateUserId() : item.getApplyUserId())
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(receiverUserIds)) {
+            log.warn("开模通知单DFM附件缺失提醒：未找到有效通知人，receiverField={}", jobParam.getReceiverField());
+            return 0;
+        }
+        List<SysUserSimpleDTO> userList = sysUserFeign.getUserSimpleInfoByIds(receiverUserIds);
+        if (CollUtil.isEmpty(userList)) {
+            log.warn("开模通知单DFM附件缺失提醒：通知人均不可用或已禁用，receiverUserIds={}", receiverUserIds);
+            return 0;
+        }
+        Set<String> enabledUserIds = userList.stream()
+                .map(SysUserSimpleDTO::getUid)
+                .filter(CharSequenceUtil::isNotBlank)
+                .collect(Collectors.toSet());
+        int sentCount = 0;
+        for (AssetNoticeDTO.MissingDfmNoticeDTO item : noticeList) {
+            String receiverUserId = notifyCreateUser ? item.getCreateUserId() : item.getApplyUserId();
+            if (CharSequenceUtil.isBlank(receiverUserId) || !enabledUserIds.contains(receiverUserId)) {
+                continue;
+            }
+            String content = buildDfmNoticeContent(jobParam.getContentTemplate(), item.getCode());
+            NoticeMsgInfoDTO noticeMsgInfo = new NoticeMsgInfoDTO();
+            noticeMsgInfo.setReceiverUserIds(Collections.singletonList(receiverUserId));
+            noticeMsgInfo.setTitle(jobParam.getTitle());
+            noticeMsgInfo.setContent(content);
+            noticeMsgInfo.setNoticeTypeEnum(NoticeTypeEnum.SCM_TASK);
+            SendResult result = mqProducerService.syncClassMsg(
+                    RocketMqTopic.NOTICE_MSG_TOPIC,
+                    RocketMqTagEnum.MSG_NOTICE_TAG.getName(),
+                    noticeMsgInfo,
+                    IdUtil.simpleUUID());
+            if (SendStatus.SEND_OK.equals(result.getSendStatus())) {
+                sentCount++;
+            } else {
+                log.error("开模通知单DFM附件缺失提醒发送失败，code={}，receiverUserId={}，result={}",
+                        item.getCode(), receiverUserId, result);
+            }
+        }
+        log.info("开模通知单DFM附件缺失提醒完成，匹配{}条，成功发送{}条", noticeList.size(), sentCount);
+        return sentCount;
+    }
+
+    private AssetNoticeDTO.DfmAttachmentNoticeJobParamDTO normalizeDfmNoticeJobParam(
+            AssetNoticeDTO.DfmAttachmentNoticeJobParamDTO param) {
+        AssetNoticeDTO.DfmAttachmentNoticeJobParamDTO normalized =
+                param == null ? new AssetNoticeDTO.DfmAttachmentNoticeJobParamDTO() : param;
+        if (normalized.getOffsetDays() == null || normalized.getOffsetDays() < 0) {
+            normalized.setOffsetDays(DEFAULT_DFM_NOTICE_OFFSET_DAYS);
+        }
+        if (CharSequenceUtil.isBlank(normalized.getReceiverField())) {
+            normalized.setReceiverField(DEFAULT_DFM_NOTICE_RECEIVER_FIELD);
+        } else if (!RECEIVER_FIELD_CREATE_USER_ID.equalsIgnoreCase(normalized.getReceiverField())
+                && !DEFAULT_DFM_NOTICE_RECEIVER_FIELD.equalsIgnoreCase(normalized.getReceiverField())) {
+            log.warn("开模通知单DFM附件缺失提醒：未知receiverField={}，回退为applyUserId", normalized.getReceiverField());
+            normalized.setReceiverField(DEFAULT_DFM_NOTICE_RECEIVER_FIELD);
+        }
+        if (CharSequenceUtil.isBlank(normalized.getTitle())) {
+            normalized.setTitle(DEFAULT_DFM_NOTICE_TITLE);
+        }
+        if (CharSequenceUtil.isBlank(normalized.getContentTemplate())) {
+            normalized.setContentTemplate(DEFAULT_DFM_NOTICE_CONTENT_TEMPLATE);
+        }
+        if (normalized.getBatchLimit() == null || normalized.getBatchLimit() <= 0) {
+            normalized.setBatchLimit(DEFAULT_DFM_NOTICE_BATCH_LIMIT);
+        }
+        return normalized;
+    }
+
+    private String buildDfmNoticeContent(String contentTemplate, String code) {
+        return contentTemplate
+                .replace("{code}", code)
+                .replace("【开模通知单号】", "【" + code + "】");
+    }
+
+    private void saveAttachmentsOnAdd(String businessId, String code, AssetNoticeDTO.CommonDTO dto) {
+        saveAttachmentGroupOnAdd(businessId, code, dto.getAttachmentUrlList(), dto.getAttachmentNameList(),
+                AssetNoticeAttachmentTypeEnum.THREE_D_CFM);
+        saveAttachmentGroupOnAdd(businessId, code, dto.getAttachmentDfmUrlList(), dto.getAttachmentDfmNameList(),
+                AssetNoticeAttachmentTypeEnum.DFM);
+    }
+
+    private void saveAttachmentGroupOnAdd(String businessId, String code, List<String> urlList, List<String> nameList,
+                                          AssetNoticeAttachmentTypeEnum attachmentType) {
+        if (CollUtil.isEmpty(urlList) || CollUtil.isEmpty(nameList) || urlList.size() != nameList.size()) {
+            return;
+        }
+        attachmentService.batchSave(urlList, nameList, attachmentType.getCode(), businessId);
+        String msg = StrUtil.format("用户【{}】新增开模通知单【{}】{}：【{}】",
+                UserContext.getDefaultLoginUser().getUserName(),
+                code,
+                attachmentType.getName(),
+                String.join(",", nameList));
+        moduleOperateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_NOTICE.getCode(), businessId, "新增操作");
+    }
+
+    private void syncAttachmentsOnUpdate(String businessId, String code, AssetNoticeDTO.CommonDTO dto) {
+        syncAttachmentGroupOnUpdate(businessId, code, dto.getAttachmentUrlList(), dto.getAttachmentNameList(),
+                AssetNoticeAttachmentTypeEnum.THREE_D_CFM);
+        syncAttachmentGroupOnUpdate(businessId, code, dto.getAttachmentDfmUrlList(), dto.getAttachmentDfmNameList(),
+                AssetNoticeAttachmentTypeEnum.DFM);
+    }
+
+    private void syncAttachmentGroupOnUpdate(String businessId, String code, List<String> urlList, List<String> nameList,
+                                             AssetNoticeAttachmentTypeEnum attachmentType) {
+        if (urlList == null || nameList == null) {
+            return;
+        }
+        if (urlList.size() != nameList.size()) {
+            throw new ServiceException(attachmentType.getName() + "附件名称与地址数量不一致");
+        }
+        List<AttachmentDTO.UpdateDTO> oldAttachmentList = AssetNoticeAttachmentTypeEnum.THREE_D_CFM.equals(attachmentType)
+                ? listThreeDCfmAttachments(businessId)
+                : attachmentService.listByBusinessIdAndType(businessId, attachmentType.getCode());
+        List<AttachmentDTO.UpdateDTO> remove = oldAttachmentList.stream()
+                .filter(oldAttachment -> !urlList.contains(oldAttachment.getAttachUrl()))
+                .collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(remove)) {
+            attachmentService.deleteByUrlList(remove.stream().map(AttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList()));
+            String msg = StrUtil.format("用户【{}】编辑开模通知单【{}】，删除{}：【{}】",
+                    UserContext.getDefaultLoginUser().getUserName(),
+                    code,
+                    attachmentType.getName(),
+                    remove.stream().map(AttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.joining(",")));
+            moduleOperateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_NOTICE.getCode(), businessId, "修改操作");
+        }
+        List<String> oldUrlList = oldAttachmentList.stream().map(AttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
+        List<String> addUrls = urlList.stream().filter(url -> !oldUrlList.contains(url)).collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(addUrls)) {
+            List<String> addNames = new ArrayList<>();
+            for (int i = 0; i < urlList.size(); i++) {
+                if (addUrls.contains(urlList.get(i))) {
+                    addNames.add(nameList.get(i));
+                }
+            }
+            attachmentService.batchSave(addUrls, addNames, attachmentType.getCode(), businessId);
+            String msg = StrUtil.format("用户【{}】编辑开模通知单【{}】，新增{}：【{}】",
+                    UserContext.getDefaultLoginUser().getUserName(),
+                    code,
+                    attachmentType.getName(),
+                    String.join(",", addNames));
+            moduleOperateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_NOTICE.getCode(), businessId, "修改操作");
+        }
+    }
+
+    private void fillAttachmentView(AssetNoticeDTO.ViewDTO data, String businessId) {
+        List<AttachmentDTO.UpdateDTO> threeDCfmList = listThreeDCfmAttachments(businessId);
+        if (CollUtil.isNotEmpty(threeDCfmList)) {
+            data.setAttachmentUrlList(threeDCfmList.stream().map(AttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList()));
+            data.setAttachmentNameList(threeDCfmList.stream().map(AttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList()));
+        }
+        List<AttachmentDTO.UpdateDTO> dfmList = attachmentService.listByBusinessIdAndType(
+                businessId, AssetNoticeAttachmentTypeEnum.DFM.getCode());
+        if (CollUtil.isNotEmpty(dfmList)) {
+            data.setAttachmentDfmUrlList(dfmList.stream().map(AttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList()));
+            data.setAttachmentDfmNameList(dfmList.stream().map(AttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList()));
+        }
+    }
+
+    /**
+     * 3D附件+CFM附件（type=asset_notice）；兼容误存为 asset_notice_3d / asset_notice_cfm 的数据
+     */
+    private List<AttachmentDTO.UpdateDTO> listThreeDCfmAttachments(String businessId) {
+        List<AttachmentDTO.UpdateDTO> result = new ArrayList<>();
+        result.addAll(attachmentService.listByBusinessIdAndType(businessId, AssetNoticeAttachmentTypeEnum.THREE_D_CFM.getCode()));
+        result.addAll(attachmentService.listByBusinessIdAndType(businessId, "asset_notice_3d"));
+        result.addAll(attachmentService.listByBusinessIdAndType(businessId, "asset_notice_cfm"));
+        Map<String, AttachmentDTO.UpdateDTO> dedup = new LinkedHashMap<>();
+        for (AttachmentDTO.UpdateDTO item : result) {
+            if (StringUtils.isNotBlank(item.getAttachUrl())) {
+                dedup.putIfAbsent(item.getAttachUrl(), item);
+            }
+        }
+        return new ArrayList<>(dedup.values());
+    }
+
+    private void fillAttachmentVariablesMap(Map<String, Object> variablesMap, String businessId) {
+        List<AttachmentDTO.UpdateDTO> threeDCfmList = listThreeDCfmAttachments(businessId);
+        List<String> urlList = new ArrayList<>();
+        List<String> nameList = new ArrayList<>();
+        Map<String, Object> attachmentMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(threeDCfmList)) {
+            for (AttachmentDTO.UpdateDTO attachment : threeDCfmList) {
+                urlList.add(attachment.getAttachUrl());
+                nameList.add(attachment.getAttachName());
+                attachmentMap.put(attachment.getAttachName(), attachment.getAttachUrl());
+            }
+        }
+        variablesMap.put("attachmentUrlList", urlList);
+        variablesMap.put("attachmentNameList", nameList);
+        variablesMap.put("attachmentMap", attachmentMap);
+
+        List<AttachmentDTO.UpdateDTO> dfmList = attachmentService.listByBusinessIdAndType(
+                businessId, AssetNoticeAttachmentTypeEnum.DFM.getCode());
+        List<String> dfmUrlList = new ArrayList<>();
+        List<String> dfmNameList = new ArrayList<>();
+        Map<String, Object> dfmAttachmentMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(dfmList)) {
+            for (AttachmentDTO.UpdateDTO attachment : dfmList) {
+                dfmUrlList.add(attachment.getAttachUrl());
+                dfmNameList.add(attachment.getAttachName());
+                dfmAttachmentMap.put(attachment.getAttachName(), attachment.getAttachUrl());
+            }
+        }
+        variablesMap.put("attachmentDfmUrlList", dfmUrlList);
+        variablesMap.put("attachmentDfmNameList", dfmNameList);
+        variablesMap.put("attachmentDfmMap", dfmAttachmentMap);
     }
 }

@@ -11,7 +11,15 @@ public class AssetProfitLossQueryHandler extends AbstractQueryHandler {
         if ("tab".equals(field)) {
             return getTabSql(value);
         }
+        if (isAssetNameField(field)) {
+            super.buildDefaultDTO("ac.name", value);
+            return super.getSplicingSQL();
+        }
         return null;
+    }
+
+    private boolean isAssetNameField(String field) {
+        return "assetName".equals(field) || "apld.asset_name".equals(field);
     }
 
     public String getTabSql(Object value) {
@@ -22,4 +30,3 @@ public class AssetProfitLossQueryHandler extends AbstractQueryHandler {
         return super.getSplicingSQL();
     }
 }
-

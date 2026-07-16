@@ -1057,6 +1057,14 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     void checkGeneratedDeliveryForOperation(String soId, String operationName);
 
     /**
+     * 校验订单关联开票清单是否处于开票中/已开票，阻塞拆单、合并等操作
+     *
+     * @param soId 订单id
+     * @param operationDesc 操作描述，如拆单、取消拆单、订单合并
+     */
+    void checkInvoiceStatusForOperation(String soId, String operationDesc);
+
+    /**
      * 更新是否更换sku状态
      *
      * @param ids

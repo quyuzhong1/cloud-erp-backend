@@ -17,7 +17,15 @@ public class CfgMoldAlertRuleQueryHandler extends AbstractQueryHandler {
         if ("tab".equals(field)) {
             return getTabSql(value);
         }
+        if (isMoldNameField(field)) {
+            super.buildDefaultDTO("mi.name", value);
+            return super.getSplicingSQL();
+        }
         return null;
+    }
+
+    private boolean isMoldNameField(String field) {
+        return "moldName".equals(field) || "cmr.mold_name".equals(field);
     }
 
     public String getTabSql(Object value) {

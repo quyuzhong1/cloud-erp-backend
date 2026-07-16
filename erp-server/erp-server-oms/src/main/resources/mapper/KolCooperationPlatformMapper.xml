@@ -17,6 +17,7 @@
        <result column="platform_account_id" property="platformAccountId" />
        <result column="platform_account_name" property="platformAccountName" />
        <result column="follower_count" property="followerCount" />
+       <result column="follower_count_unit" property="followerCountUnit" />
        <result column="homepage_url" property="homepageUrl" />
        <result column="remark" property="remark" />
     </resultMap>
@@ -37,6 +38,7 @@ kcp.platform_name AS platformName,
 kcp.platform_account_id AS platformAccountId,
 kcp.platform_account_name AS platformAccountName,
 kcp.follower_count AS followerCount,
+kcp.follower_count_unit AS followerCountUnit,
 kcp.homepage_url AS homepageUrl,
 kcp.remark AS remark
 

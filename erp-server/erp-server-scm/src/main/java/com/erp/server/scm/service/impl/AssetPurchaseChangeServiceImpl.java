@@ -26,6 +26,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
 import com.erp.model.fms.dto.AssetAcceptDTO;
+import com.erp.model.plm.entity.MoldInfoEntity;
 import com.erp.model.plm.enums.MoldInfoTagEnum;
 import com.erp.model.scm.dto.AssetPurchaseChangeDTO;
 import com.erp.model.scm.dto.AssetPurchaseChangeDetailDTO;
@@ -65,7 +66,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_ASSET_PURCHASE_ORDER;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_ASSET_PURCHASE_CHANGE;
 
 
 /**
@@ -251,7 +252,7 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
 
     @Override
     public void exportList(AssetPurchaseChangeDTO.ExportDTO param, HttpServletResponse response) {
-        downloadTaskFeign.saveDownloadTask("模具采购变更单导出", EXPORT_SCM_ASSET_PURCHASE_ORDER.getCode(), param);
+        downloadTaskFeign.saveDownloadTask("模具采购变更单导出", EXPORT_SCM_ASSET_PURCHASE_CHANGE.getCode(), param);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -682,6 +683,15 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
             }
         }
 
+        List<String> moldCodes = list.stream().map(AssetPurchaseChangeDTO.ListDTO::getAssetCode).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        Map<String, MoldInfoEntity> moldInfoMap = new HashMap<>();
+        if (CollectionUtils.isNotEmpty(moldCodes)) {
+            List<MoldInfoEntity> moldInfoEntities = plmTaskFeign.listMoldInfoByCodes(moldCodes);
+            moldInfoMap = moldInfoEntities.stream()
+                    .filter(x -> StringUtils.isNotBlank(x.getCode()))
+                    .collect(Collectors.toMap(MoldInfoEntity::getCode, Function.identity(), (oldValue, newValue) -> oldValue));
+        }
+
         // 属性赋值
         for(AssetPurchaseChangeDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
@@ -693,6 +703,10 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
                 if (StringUtils.isNotBlank(curApprove)) {
                     data.setApproveUserName(curApprove);
                 }
+            }
+            MoldInfoEntity moldInfoEntity = moldInfoMap.get(data.getAssetCode());
+            if (Objects.nonNull(moldInfoEntity)) {
+                data.setAssetName(moldInfoEntity.getName());
             }
         }
     }
@@ -1004,11 +1018,30 @@ public class AssetPurchaseChangeServiceImpl extends SuperServiceImpl<AssetPurcha
     }
 
     public void fillViewList(List<AssetPurchaseChangeDetailDTO.ViewDTO> dtoList){
-
+        if (CollUtil.isEmpty(dtoList)) {
+            return;
+        }
+        List<String> moldCodes = dtoList.stream()
+                .map(AssetPurchaseChangeDetailDTO.ViewDTO::getAssetCode)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, MoldInfoEntity> moldInfoMap = new HashMap<>();
+        if (CollectionUtils.isNotEmpty(moldCodes)) {
+            List<MoldInfoEntity> moldInfoList = plmTaskFeign.listMoldInfoByCodes(moldCodes);
+            if (CollectionUtils.isNotEmpty(moldInfoList)) {
+                moldInfoMap = moldInfoList.stream()
+                        .filter(x -> StringUtils.isNotBlank(x.getCode()))
+                        .collect(Collectors.toMap(MoldInfoEntity::getCode, Function.identity(), (k1, k2) -> k1));
+            }
+        }
         for (AssetPurchaseChangeDetailDTO.ViewDTO detailDTO : dtoList) {
             detailDTO.setTagName(MoldInfoTagEnum.getName(detailDTO.getTag()));
+            MoldInfoEntity moldInfoEntity = moldInfoMap.get(detailDTO.getAssetCode());
+            if (Objects.nonNull(moldInfoEntity)) {
+                detailDTO.setAssetName(moldInfoEntity.getName());
+            }
         }
-
     }
 
     public void handleAddDetailData(List<AssetPurchaseChangeDetailDTO.AddDTO> assetPurchaseChangeDetailDTOList,String assetPurchaseChangeId){

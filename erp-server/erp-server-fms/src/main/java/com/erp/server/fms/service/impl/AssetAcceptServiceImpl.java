@@ -41,6 +41,7 @@ import com.erp.model.fms.entity.FmsAttachmentEntity;
 import com.erp.model.fms.enums.UnitEnum;
 import com.erp.model.fms.enums.*;
 import com.erp.model.plm.entity.MoldInfoEntity;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.dto.AssetPurchaseOrderDTO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -61,6 +62,7 @@ import com.erp.server.fms.kingdee.SyncKingdeeAssetAcceptService;
 import com.erp.server.fms.listener.AssetAcceptExcelListener;
 import com.erp.server.fms.mapper.AssetAcceptMapper;
 import com.erp.server.fms.service.*;
+import com.erp.server.fms.utils.FmsAssetNameResolver;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -127,6 +129,8 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
 
     @Resource
     private SyncKingdeeAssetAcceptService syncKingdeeAssetAcceptService;
+    @Resource
+    private FmsAssetNameResolver fmsAssetNameResolver;
 
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
@@ -1227,6 +1231,11 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
                     .distinct()
                     .collect(Collectors.toList());
             Map<String, MoldInfoEntity> moldInfoMap = buildMoldInfoMap(detailSkuNoList);
+            Map<String, String> productNameMap = buildProductNameMap(detailList.stream()
+                    .map(AssetAcceptDetailEntity::getSkuId)
+                    .filter(StringUtils::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.toList()));
             // 收集所有需要查询的资产位置ID和部门ID
             List<String> assetLocationIds = detailList.stream()
                     .map(AssetAcceptDetailEntity::getAssetLocationId)
@@ -1342,6 +1351,7 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
                             detailView.setMoldType(moldInfo.getType());
                             detailView.setMoldTypeName(moldTypeName);
                         }
+                        fillAcceptDetailProductName(detail, detailView, moldInfoMap, productNameMap);
 
                         // 填充资产位置名称
                         if (StringUtils.isNotBlank(detail.getAssetLocationId())) {
@@ -1490,6 +1500,11 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
                 .distinct()
                 .collect(Collectors.toList());
         Map<String, MoldInfoEntity> moldInfoMap = buildMoldInfoMap(moldCodes);
+        Map<String, String> productNameMap = buildProductNameMap(list.stream()
+                .map(AssetAcceptDTO.ListDTO::getSkuId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList()));
         // 属性赋值
         for(AssetAcceptDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
@@ -1499,6 +1514,12 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
                 String moldTypeName = getMoldTypeName(moldInfo);
                 data.setMoldType(moldInfo.getType());
                 data.setMoldTypeName(moldTypeName);
+                if (StringUtils.isNotBlank(moldInfo.getName())) {
+                    data.setProductName(moldInfo.getName());
+                }
+            }
+            if (StringUtils.isBlank(data.getProductName()) && StringUtils.isNotBlank(data.getSkuId())) {
+                data.setProductName(productNameMap.get(data.getSkuId()));
             }
 
             // 设置验收人中文名称（从数据库中已有的 acceptUserName 字段获取）
@@ -1540,15 +1561,16 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
                 Integer acceptableQty = detail.getAcceptableQty();
                 
                 // 验收数量必须大于0
+                String productName = fmsAssetNameResolver.resolveAcceptDetailProductName(detail);
                 if (acceptQty == null || acceptQty <= 0) {
-                    throw new ServiceException(String.format("产品【%s】的验收数量必须大于0", 
-                        StrUtil.blankToDefault(detail.getProductName(), detail.getSkuNo())));
+                    throw new ServiceException(String.format("产品【%s】的验收数量必须大于0",
+                        StrUtil.blankToDefault(productName, detail.getSkuNo())));
                 }
                 
                 // 验收数量必须小于等于可验收数量
                 if (acceptableQty != null && acceptQty > acceptableQty) {
-                    throw new ServiceException(String.format("产品【%s】的验收数量【%d】不能大于可验收数量【%d】", 
-                        StrUtil.blankToDefault(detail.getProductName(), detail.getSkuNo()), 
+                    throw new ServiceException(String.format("产品【%s】的验收数量【%d】不能大于可验收数量【%d】",
+                        StrUtil.blankToDefault(productName, detail.getSkuNo()),
                         acceptQty, acceptableQty));
                 }
             }
@@ -1567,17 +1589,20 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         for (AssetAcceptDetailDTO.AddDTO detail : detailList) {
             Integer acceptQty = detail.getAcceptQty();
             Integer availableAcceptQty = detail.getAvailableAcceptQty();
+            AssetAcceptDetailEntity tempDetail = new AssetAcceptDetailEntity();
+            tempDetail.setSkuId(detail.getSkuId());
+            String productName = fmsAssetNameResolver.resolveAcceptDetailProductName(tempDetail);
             
             // 验收数量必须大于0
             if (acceptQty == null || acceptQty <= 0) {
-                throw new ServiceException(String.format("产品【%s】的验收数量必须大于0", 
-                    StrUtil.blankToDefault(detail.getProductName(), detail.getSkuId())));
+                throw new ServiceException(String.format("产品【%s】的验收数量必须大于0",
+                    StrUtil.blankToDefault(productName, detail.getSkuId())));
             }
             
             // 验收数量必须小于等于可验收数量
             if (availableAcceptQty != null && acceptQty > availableAcceptQty) {
-                throw new ServiceException(String.format("产品【%s】的验收数量【%d】不能大于可验收数量【%d】", 
-                    StrUtil.blankToDefault(detail.getProductName(), detail.getSkuId()), 
+                throw new ServiceException(String.format("产品【%s】的验收数量【%d】不能大于可验收数量【%d】",
+                    StrUtil.blankToDefault(productName, detail.getSkuId()),
                     acceptQty, availableAcceptQty));
             }
         }
@@ -1679,7 +1704,8 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
             detail.setAssetCardStatus(AssetCardStatusEnum.GENERATED.getStatus());
             assetAcceptDetailService.updateById(detail);
             log.info("资产验收明细{}转资产卡片成功，生成资产卡片ID: {}", detailId, generatedCardId);
-            return BatchResultDTO.success(detailId, detail.getProductName(), "转资产卡片成功，生成1张资产卡片，包含" + detail.getAcceptQty() + "个实物信息");
+            String productName = fmsAssetNameResolver.resolveAcceptDetailProductName(detail);
+            return BatchResultDTO.success(detailId, productName, "转资产卡片成功，生成1张资产卡片，包含" + detail.getAcceptQty() + "个实物信息");
         }finally {
             //恢复系统标识
             UserContext.setIsUserSystem(originalValue);
@@ -1702,7 +1728,7 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         cardDTO.setType(AssetCategoryEnum.MACHINERY.getCode()); // 资产类别默认值
         cardDTO.setStatus(AssetStatusEnum.NORMAL.getCode()); // 资产状态默认值
         cardDTO.setChangeMethod(ChangeMethodEnum.PURCHASE.getCode()); // 变动方式默认值
-        cardDTO.setName(detail.getProductName()); // 资产名称 = 产品名称
+        cardDTO.setName(fmsAssetNameResolver.resolveAcceptDetailProductName(detail));
         cardDTO.setStartUseDate(currentDate); // 开始使用日期 = 操作日期
         cardDTO.setQty(detail.getAcceptQty()); // 数量 = 验收数量
         
@@ -1874,11 +1900,15 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
                 item.setSourceDetailId(detail.getId()); // 设置来源单据明细ID（模具采购订单明细ID）
                 item.setSkuId(detail.getSkuId());
                 item.setSkuNo(detail.getSkuNo());
-                item.setProductName(detail.getProductName());
                 item.setMoldCode(detail.getMoldCode());
                 item.setMoldName(detail.getMoldName());
                 String moldCode = StringUtils.isNotBlank(detail.getMoldCode()) ? detail.getMoldCode() : detail.getSkuNo();
                 MoldInfoEntity moldInfo = moldInfoMap.get(moldCode);
+                if (moldInfo != null) {
+                    item.setProductName(moldInfo.getName());
+                } else {
+                    item.setProductName(detail.getProductName());
+                }
                 if (moldInfo != null) {
                     String moldTypeName = getMoldTypeName(moldInfo);
                     item.setMoldType(moldInfo.getType());
@@ -1985,10 +2015,14 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
                 AssetAcceptDTO.AddDetailItemDTO item = new AssetAcceptDTO.AddDetailItemDTO();
                 item.setSkuId(skuDTO.getSkuId());
                 item.setSkuNo(skuDTO.getSkuNo());
-                item.setProductName(skuDTO.getProductName());
                 if (moldInfo != null) {
+                    item.setProductName(moldInfo.getName());
                     item.setMoldCode(skuDTO.getSkuNo());
                     item.setMoldName(moldInfo.getName());
+                } else {
+                    item.setProductName(skuDTO.getProductName());
+                }
+                if (moldInfo != null) {
                     String moldTypeName = getMoldTypeName(moldInfo);
                     item.setMoldType(moldInfo.getType());
                     item.setMoldTypeName(moldTypeName);
@@ -2037,6 +2071,36 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
             return null;
         }
         return StringUtils.isNotBlank(moldInfo.getTypeName()) ? moldInfo.getTypeName() : moldInfo.getType();
+    }
+
+    private Map<String, String> buildProductNameMap(List<String> skuIds) {
+        if (CollUtil.isEmpty(skuIds)) {
+            return Collections.emptyMap();
+        }
+        try {
+            List<ProductDetailEntity> productList = plmTaskFeign.listByIds(skuIds);
+            if (CollUtil.isEmpty(productList)) {
+                return Collections.emptyMap();
+            }
+            return productList.stream()
+                    .filter(p -> StringUtils.isNotBlank(p.getId()) && StringUtils.isNotBlank(p.getName()))
+                    .collect(Collectors.toMap(ProductDetailEntity::getId, ProductDetailEntity::getName, (v1, v2) -> v1));
+        } catch (Exception e) {
+            log.error("查询SKU产品名称失败，skuIds: {}", skuIds, e);
+            return Collections.emptyMap();
+        }
+    }
+
+    private void fillAcceptDetailProductName(AssetAcceptDetailEntity detail, AssetAcceptDetailDTO.ViewDTO detailView,
+                                             Map<String, MoldInfoEntity> moldInfoMap, Map<String, String> productNameMap) {
+        MoldInfoEntity moldInfo = moldInfoMap.get(detail.getSkuNo());
+        if (moldInfo != null && StringUtils.isNotBlank(moldInfo.getName())) {
+            detailView.setProductName(moldInfo.getName());
+            return;
+        }
+        if (StringUtils.isNotBlank(detail.getSkuId())) {
+            detailView.setProductName(productNameMap.get(detail.getSkuId()));
+        }
     }
 
     /**
@@ -2334,7 +2398,7 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
                 assetPurchaseOrderRefListDTO.setInvalidStatusName(InvalidStatusEnum.getName(assetAcceptEntity.getInvalidStatus()));
                 assetPurchaseOrderRefListDTO.setSkuId(detailEntity.getSkuId());
                 assetPurchaseOrderRefListDTO.setSkuNo(detailEntity.getSkuNo());
-                assetPurchaseOrderRefListDTO.setProductName(detailEntity.getProductName());
+                assetPurchaseOrderRefListDTO.setProductName(fmsAssetNameResolver.resolveAcceptDetailProductName(detailEntity));
                 assetPurchaseOrderRefListDTO.setAcceptDate(assetAcceptEntity.getAcceptDate());
                 assetPurchaseOrderRefListDTO.setAcceptQty(new BigDecimal(detailEntity.getAcceptQty()));
                 assetPurchaseOrderRefListDTO.setRemark(detailEntity.getRemark());
@@ -2463,7 +2527,7 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
             detailEntity.setSourceDetailId(generateAssetAcceptDTO.getDetailId());
             detailEntity.setSkuId(generateAssetAcceptDTO.getAssetId());
             detailEntity.setSkuNo(generateAssetAcceptDTO.getAssetCode());
-            detailEntity.setProductName(generateAssetAcceptDTO.getAssetName());
+            detailEntity.setProductName(fmsAssetNameResolver.resolveAcceptDetailProductName(detailEntity));
             detailEntity.setCostType(generateAssetAcceptDTO.getCostType());
 
             detailEntity.setAcceptQty(generateAssetAcceptDTO.getAcceptQty() != null ? generateAssetAcceptDTO.getAcceptQty().intValue() : 0);
