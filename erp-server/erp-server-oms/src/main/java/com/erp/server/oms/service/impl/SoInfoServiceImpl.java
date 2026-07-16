@@ -2631,28 +2631,15 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             // 待发货通知数量 = 销售数量 - 累计发货通知数量 - 锁定数量
             view.setWaitNoticeQty(salesQty - effectiveNoticeQty - frozenQty);
             // 销售数量-sku发货通知数量 ≤0，默认移除，不要出现返回（但sku=yf01，除外，照常返回）
-            if (CollectionUtils.isNotEmpty(dictBasicEntityList)) {
-                if (!dictBasicEntityList.get(0).getValue().equals(view.getSkuNo())) {
-                    if (view.getDeliveryQty() <= MathUtil.ZERO) {
-                        continue;
-                    }
-                    // 绑定虚拟仓且锁定数量为0的明细不在下推发货通知弹框展示（费用类、服务类除外）
-                    if (virtualWarehouseIdBySoId.containsKey(view.getSoId())
-                            && ObjectUtil.defaultIfNull(view.getFrozenQty(), MathUtil.ZERO).equals(MathUtil.ZERO)
-                            && !isFilterCalculate(view.getSkuId(), view.getSkuId(), skuList)) {
-                        continue;
-                    }
-                }
-            } else {
-                if (view.getDeliveryQty() <= MathUtil.ZERO) {
-                    continue;
-                }
-                // 绑定虚拟仓且锁定数量为0的明细不在下推发货通知弹框展示（费用类、服务类除外）
-                if (virtualWarehouseIdBySoId.containsKey(view.getSoId())
-                        && ObjectUtil.defaultIfNull(view.getFrozenQty(), MathUtil.ZERO).equals(MathUtil.ZERO)
-                        && !isFilterCalculate(view.getSkuId(), view.getSkuId(), skuList)) {
-                    continue;
-                }
+            boolean isSpecialSku = CollectionUtils.isNotEmpty(dictBasicEntityList)
+                    && Objects.equals(dictBasicEntityList.get(0).getValue(), view.getSkuNo());
+            if (!isSpecialSku && view.getDeliveryQty() <= MathUtil.ZERO) {
+                continue;
+            }
+            if (virtualWarehouseIdBySoId.containsKey(view.getSoId())
+                    && ObjectUtil.defaultIfNull(view.getFrozenQty(), MathUtil.ZERO).equals(MathUtil.ZERO)
+                    && !isFilterCalculate(view.getSkuId(), view.getSkuId(), skuList)) {
+                continue;
             }
             resultList.add(view);
         }
