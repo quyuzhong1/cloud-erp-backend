@@ -76,7 +76,7 @@ public class AiyaConstants {
     /**
      * 2C库存查询
      */
-    public static final String TWO_C_INVENTORY_SEARCH = "2c.inventory.search";
+    public static final String TWO_C_INVENTORY_SEARCH = "GLINK_QUERY_INVENTORY_NOTIFY_NEW";
 
     /**
      * 退货订单分页查询

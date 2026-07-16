@@ -174,25 +174,29 @@ public class AiyaOpenApiService {
      * 6.2.4「库存数据」翻译稿更权威，请求字段为 {@code customerCode}（必填）/ {@code warehouseCode}
      * （必填）/ {@code page}（可选，{@code skus} 不存在时必填，注意不是其它接口的 {@code pageNum}）/
      * {@code pageSize}（可选，{@code skus} 不存在时必填，默认200）/ 可选 {@code ignoreZero}/{@code skus}/
-     * {@code domainCode}（截图新增字段，未给出参数描述，用途未知）/ {@code stockStatus}（必填但未给出可选
-     * 枚举值，详见 {@link AiyaInventoryQueryDTO}）；<b>没有</b> {@code status} 字段（翻译稿里有，疑似跟
+     * {@code domainCode}（截图新增字段，未给出参数描述，用途未知）/ {@code stockStatus}（文档标"必填"，
+     * 但 2026-07-16 真实接口联调已确认实测<b>非必传、推荐不传</b>，不传即查全部状态库存，详见
+     * {@link AiyaInventoryQueryDTO}）；<b>没有</b> {@code status} 字段（翻译稿里有，疑似跟
      * SKU 查询接口混淆，已从本方法与 DTO 移除）。
      * <p>
-     * 响应结构为 {@code {Code, message, success, inventoryVOList:[...]}}，与 warehouse/inbound 等接口的
-     * {@code resultList}/{@code result} 结构不同，调用方需按 {@code inventoryVOList} 解析；截图确认
-     * {@code inventoryVOList} 每条明细字段为 {@code customerCode}/{@code warehouseCode}/{@code sku}/
-     * {@code skuDescription}/{@code barcode}（商品条码，多个用逗号拼接）/{@code skuStatus}（商品状态，
-     * 未给出枚举值，疑似跟 6.3.2 入库签收段的 {@code skuStatus}（GOOD/DAMAGE）同义——需联调确认，
-     * 若为真则同一 sku 可能按状态拆成多条明细，下游按 warehouseCode+sku 去重时需一并确认是否要把
-     * skuStatus 纳入唯一键，避免良品/不良品明细互相覆盖）/{@code totalQty}/{@code occupiedQty}/
+     * 响应结构为 {@code {code, message, success, inventoryVOList:[...]}}（2026-07-16 真实联调响应样例
+     * 确认顶层字段为小写 {@code code}，此前文档/注释写的大写 {@code Code} 有误，已修正），与
+     * warehouse/inbound 等接口的 {@code resultList}/{@code result} 结构不同，调用方需按
+     * {@code inventoryVOList} 解析；真实样例确认 {@code inventoryVOList} 每条明细字段为
+     * {@code customerCode}/{@code warehouseCode}/{@code sku}/{@code skuDescription}/
+     * {@code barcode}（商品条码，多个用逗号拼接）/{@code skuStatus}（商品状态，真实样例已出现取值
+     * {@code GOOD}，疑似与 6.3.2 入库签收段的 {@code skuStatus}（GOOD/DAMAGE）同义——是否会让同一
+     * sku 按状态拆成多条明细仍未验证，下游按 warehouseCode+sku 去重时需一并确认是否要把 skuStatus
+     * 纳入唯一键，避免良品/不良品明细互相覆盖）/{@code totalQty}/{@code occupiedQty}/
      * {@code salableQty}/{@code duePutawayQty}/{@code unavailableQty}，本方法仍原样返回原始 JSON，
      * 调用方（{@link com.erp.model.wms.dto.AiyaInventoryQueryDTO} 使用方）按需解析。
      * <p>
-     * TODO：文档未说明分页是否有 {@code total}/{@code pages} 等终止字段，翻页终止条件（如
-     * {@code inventoryVOList.size() < pageSize}）需联调真实接口后确认。
+     * TODO：真实响应样例顶层只有 {@code code}/{@code success}/{@code inventoryVOList} 三个字段，没有
+     * {@code total}/{@code pages} 等分页终止字段，翻页终止条件（如
+     * {@code inventoryVOList.size() < pageSize}）仍按此实现，尚未验证接口对同批全部返回时的边界表现。
      *
      * @param dto 查询请求，包含 accessToken / secret / customerCode / warehouseCode / pageNum(对应文档page) / pageSize 等
-     * @return AIYA 接口原始响应解析后的 JSONObject（含 Code / message / success / inventoryVOList 等字段）
+     * @return AIYA 接口原始响应解析后的 JSONObject（含 code / message / success / inventoryVOList 等字段）
      */
     public JSONObject queryInventory(@Valid AiyaInventoryQueryDTO.QueryReqDTO dto) {
         Map<String, Object> params = new HashMap<>();
