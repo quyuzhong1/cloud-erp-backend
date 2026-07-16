@@ -2613,8 +2613,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             Integer frozenQty = ObjectUtil.defaultIfNull(view.getFrozenQty(), MathUtil.ZERO);
             // 销售数量
             Integer salesQty = ObjectUtil.defaultIfNull(view.getSalesQty(), MathUtil.ZERO);
-            // 发货数量默认填充已锁库存（锁定数量）
-            view.setDeliveryQty(frozenQty);
             view.setPlanDeliveryDate(view.getRequireDate());
             String customerName = customerList.stream().filter(c -> c.getId().equals(view.getCustomerId())).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
@@ -2630,13 +2628,20 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             view.setEffectiveNoticeQty(effectiveNoticeQty);
             // 待发货通知数量 = 销售数量 - 累计发货通知数量 - 锁定数量
             view.setWaitNoticeQty(salesQty - effectiveNoticeQty - frozenQty);
-            // 销售数量-sku发货通知数量 ≤0，默认移除，不要出现返回（但sku=yf01，除外，照常返回）
+            boolean hasVirtualWarehouse = virtualWarehouseIdBySoId.containsKey(view.getSoId());
+            // 有虚拟仓：发货数量默认填充锁定数量；无虚拟仓：发货数量默认填充可发数量（销售数量 - 发货通知数量）
+            if (hasVirtualWarehouse) {
+                view.setDeliveryQty(frozenQty);
+            } else {
+                view.setDeliveryQty(Math.max(MathUtil.ZERO, salesQty - effectiveNoticeQty));
+            }
+            // 有虚拟仓：锁定数量≤0 默认移除；无虚拟仓：销售数量-发货通知数量≤0 默认移除（sku=yf01 除外，照常返回）
             boolean isSpecialSku = CollectionUtils.isNotEmpty(dictBasicEntityList)
                     && Objects.equals(dictBasicEntityList.get(0).getValue(), view.getSkuNo());
             if (!isSpecialSku && view.getDeliveryQty() <= MathUtil.ZERO) {
                 continue;
             }
-            if (virtualWarehouseIdBySoId.containsKey(view.getSoId())
+            if (hasVirtualWarehouse
                     && ObjectUtil.defaultIfNull(view.getFrozenQty(), MathUtil.ZERO).equals(MathUtil.ZERO)
                     && !isFilterCalculate(view.getSkuId(), view.getSkuId(), skuList)) {
                 continue;
