@@ -5,7 +5,6 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
@@ -39,7 +38,8 @@ import com.erp.model.wms.enums.*;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.constant.WmsConstant;
-import com.erp.server.wms.listener.StocktakingTaskExcelListener;
+import com.erp.server.wms.listener.StocktakingTaskDetailExcelImportHelper;
+import com.erp.server.wms.listener.StocktakingTaskDetailExcelTemplateWriter;
 import com.erp.server.wms.mapper.StocktakingTaskMapper;
 import com.erp.server.wms.service.*;
 import com.google.common.collect.Lists;
@@ -48,15 +48,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.core.io.DefaultResourceLoader;
-import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
@@ -986,14 +982,15 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
-        StocktakingTaskExcelListener excelListener = new StocktakingTaskExcelListener(this, stocktakingTaskDetailService,stocktakingProfitLossService, warehouseService,operateLogService);
+        List<StocktakingTaskDetailExcelDTO> errorList;
         try {
-            EasyExcel.read(excelFile.getInputStream(), StocktakingTaskDetailExcelDTO.class, excelListener).sheet(0).doRead();
+            errorList = StocktakingTaskDetailExcelImportHelper.importListSheets(
+                    excelFile, this, stocktakingTaskDetailService, stocktakingProfitLossService,
+                    warehouseService, operateLogService);
         } catch (Exception e) {
             log.error("盘点任务明细导入错误！>>>>>{}", e);
             return Boolean.FALSE;
         }
-        List<StocktakingTaskDetailExcelDTO> errorList = excelListener.getErrorList();
         if (errorList.size() > 0) {
             String fileName = "盘点任务明细错误信息";
             ExcelUtil.export(fileName, "error", errorList, StocktakingTaskDetailExcelDTO.class, response);
@@ -1004,21 +1001,15 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
 
     @Override
     public void downloadTemplate(HttpServletResponse response) {
-        String path = "classpath:excel/StocktakingTaskTemplate.xlsx";
         String excelName = "template.xlsx";
-        ResourceLoader resourceLoader = new DefaultResourceLoader();
         try {
-            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
-            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
-            // 输出Excel文件
             OutputStream output = response.getOutputStream();
             response.reset();
-            // 设置文件头
             response.setHeader("Content-Disposition",
                     "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
             response.setContentType("application/msexcel");
-            wb.write(output);
-            wb.close();
+            StocktakingTaskDetailExcelTemplateWriter.writeEmptyTemplate(output);
+            output.flush();
         } catch (Exception e) {
             log.error("盘点任务单 downloadTemplate  出错了 e==={}", e);
             throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
