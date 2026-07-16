@@ -122,6 +122,24 @@ public class ThreadPoolConfig {
         return new TraceableExecutorService(service);
     }
 
+    /**
+     * 对账匹配识别组内存计算线程池（与 Excel 导入池隔离）。
+     * <p>使用 AbortPolicy：池满时快速失败并由业务回写，避免 CallerRunsPolicy 在持主单锁的 MQ 线程上反压拉长锁时间。</p>
+     */
+    @Bean(name = "logisticsReconMatchComputePool")
+    public ExecutorService logisticsReconMatchComputePool() {
+        ThreadPoolExecutor service = new ThreadPoolExecutor(16, 32,
+                60L, TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(5000),
+                r -> {
+                    Thread t = new Thread(r);
+                    t.setName("recon-match-compute-" + t.getId());
+                    return t;
+                },
+                new ThreadPoolExecutor.AbortPolicy());
+        return new TraceableExecutorService(service);
+    }
+
     @Bean(name = "tmsLogisticsOrderPool")
     public ExecutorService tmsLogisticsOrderPool() {
         // 1. 先创建原始的 ThreadPoolExecutor

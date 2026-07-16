@@ -2222,8 +2222,7 @@ public class LogisticsReconServiceImpl
         if (!LogisticsReconCheckStatusEnum.CONFIRMED.getCode().equals(entity.getCheckStatus())) {
             throw new ServiceException(ApiError.LOGISTICS_RECON_ONLY_CONFIRMED_ALLOW_MATCH);
         }
-        // 整单级预加载：导入配置 + 币别/汇率对同一对账单不变，仅加载一次供各分片复用，
-        // 避免每 500 条分片重复查询配置并放大 sys/dmp Feign 调用。
+        // 整单级预加载：导入配置 + 币别/汇率/费用配置复用，避免每分片重复查询。
         LogisticsReconMatchDTO.ReconMatchPreloadDTO preload = buildReconMatchPreload(entity);
         List<CfgLogisticsCostImportDetailEntity> uniqueKeyList = resolveUniqueKeyList(preload);
         if (CollUtil.isEmpty(uniqueKeyList)) {
@@ -2250,7 +2249,9 @@ public class LogisticsReconServiceImpl
             lastId = seedChunk.get(seedChunk.size() - 1);
             // candidate=null：扩展同组全部仍处于 MATCHING 的费用项，单组不拆分
             List<String> expanded = expandSubIdsByIdentifyGroup(mainId, seedChunk, null, uniqueKeyList);
-            List<List<String>> chunks = packSubIdsByIdentifyGroup(mainId, expanded, MATCH_CHUNK_SIZE, uniqueKeyList);
+            Map<String, String> groupKeyMap = buildSubIdGroupKeyMap(mainId, expanded, uniqueKeyList);
+            List<List<String>> chunks = packSubIdsByIdentifyGroup(
+                    mainId, expanded, MATCH_CHUNK_SIZE, uniqueKeyList, groupKeyMap);
             for (List<String> chunk : chunks) {
                 try {
                     self.doMatchSubsChunk(mainId, chunk, isConfirm, preload);
@@ -2277,13 +2278,14 @@ public class LogisticsReconServiceImpl
         }
         List<String> sortedScope = scopeSubIds.stream().filter(StrUtil::isNotBlank).distinct().sorted()
                 .collect(Collectors.toList());
-        // 整单级预加载：导入配置 + 币别/汇率对同一对账单不变，仅加载一次供各分片复用，
-        // 避免每 500 条分片重复查询配置并放大 sys/dmp Feign 调用。
+        // 整单级预加载：导入配置 + 币别/汇率/费用配置对同一对账单不变，仅加载一次供各分片复用。
         LogisticsReconMatchDTO.ReconMatchPreloadDTO preload = buildReconMatchPreload(entity);
         List<CfgLogisticsCostImportDetailEntity> uniqueKeyList = resolveUniqueKeyList(preload);
         // 先在 scope 内按识别组补齐同组成员，再打包分片（单组不拆分）
         List<String> groupedScope = expandSubIdsByIdentifyGroup(mainId, sortedScope, sortedScope, uniqueKeyList);
-        List<List<String>> chunks = packSubIdsByIdentifyGroup(mainId, groupedScope, MATCH_CHUNK_SIZE, uniqueKeyList);
+        Map<String, String> groupKeyMap = buildSubIdGroupKeyMap(mainId, groupedScope, uniqueKeyList);
+        List<List<String>> chunks = packSubIdsByIdentifyGroup(
+                mainId, groupedScope, MATCH_CHUNK_SIZE, uniqueKeyList, groupKeyMap);
         for (List<String> chunk : chunks) {
             try {
                 self.doMatchSubsChunk(mainId, chunk, isConfirm, preload);
@@ -2295,7 +2297,7 @@ public class LogisticsReconServiceImpl
     }
 
     /**
-     * 构建整单级匹配预加载上下文：导入模板配置 + 字段配置 + 币别/汇率映射，供整单各分片复用。
+     * 构建整单级匹配预加载上下文：导入模板配置 + 字段配置 + 币别/汇率 + 费用配置，供整单各分片复用。
      */
     private LogisticsReconMatchDTO.ReconMatchPreloadDTO buildReconMatchPreload(LogisticsReconEntity entity) {
         CfgLogisticsCostImportEntity costImportEntity = cfgLogisticsCostImportService.getById(entity.getCfgImportId());
@@ -2894,6 +2896,7 @@ public class LogisticsReconServiceImpl
         if (preload != null) {
             ctx.setCurrencyLookupMap(preload.getCurrencyLookupMap());
             ctx.setCurrencyRateMap(preload.getCurrencyRateMap());
+            ctx.setCfgCostList(preload.getCfgCostList());
         }
         ctx.setRows(rows);
 
@@ -3200,11 +3203,11 @@ public class LogisticsReconServiceImpl
             return results;
         }
         List<String> matchingSubIds = units.stream().map(unit -> unit.sub.getId()).collect(Collectors.toList());
+        // 匹配开始心跳一次即可；匹配过程中不再重复 touch，缩短无效写库
         touchMatchingSubsUpdateTime(matchingSubIds);
 
         // 复用统一核心编排（与导入一致：同识别号合并费用、多物流单重量分摊）
         LogisticsReconMatchExecutionResultDTO executionResult = executeReconMatch(entity, units, true, false, null);
-        touchMatchingSubsUpdateTime(matchingSubIds);
         self.commitReconMatchResult(mainId, matchType, executionResult.getRowKeyToDetailId(),
                 executionResult.getRowKeyToSubs(), executionResult.getMatchResults(), inputs);
         for (LogisticsReconMatchDTO.MatchResultDTO matchResult : executionResult.getMatchResults()) {
@@ -5000,9 +5003,9 @@ public class LogisticsReconServiceImpl
     private static final int MATCH_ID_BATCH_SIZE = 1000;
 
     /**
-     * 整单匹配时每批处理的费用项数量（小事务分片）。
+     * 整单匹配时每批处理的费用项数量（小事务分片，与异步任务默认批大小对齐）。
      */
-    private static final int MATCH_CHUNK_SIZE = 500;
+    private static final int MATCH_CHUNK_SIZE = 1000;
 
     // ============================== private ==============================
 

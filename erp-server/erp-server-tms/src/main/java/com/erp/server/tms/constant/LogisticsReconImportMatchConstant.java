@@ -18,6 +18,7 @@ public final class LogisticsReconImportMatchConstant {
 
     /**
      * 单次 {@code submitManualMatch} 费用项上限（按完整识别组打包，不拆组）。
+     * 与主表匹配 {@code MATCH_CHUNK_SIZE} 对齐。
      */
-    public static final int SUBMIT_CHUNK_SIZE = 500;
+    public static final int SUBMIT_CHUNK_SIZE = 1000;
 }
