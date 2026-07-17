@@ -23,7 +23,6 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
@@ -264,16 +263,17 @@ public class DistributeLockerAspect {
      * @return             锁的key
      */
     private List<String> getLockKeys(DistributeLocker annotation, ProceedingJoinPoint pjp)  {
-        List<String> result=new ArrayList<>();
         String className = getTargetClassName(pjp);
         String methodName = getTargetMethodName(pjp);
         String prefixStr= annotation.businessType().isEmpty() ? className + "." + methodName: annotation.businessType();
 
         List<Object> keys = getValuesByParam(pjp, annotation.keyName());
-        for (Object key:keys){
-            result.add("RedissonLock:" + prefixStr +"." + key);
-        }
-        return result;
+        // 去重 + 排序：避免同一 key 重复 getLock；同时让 RedissonMultiLock 在并发时按固定顺序获取，降低交叉抢锁失败率
+        return keys.stream()
+                .map(key -> "RedissonLock:" + prefixStr + "." + key)
+                .distinct()
+                .sorted()
+                .collect(Collectors.toList());
     }
 
     /**
@@ -449,17 +449,18 @@ public class DistributeLockerAspect {
      * @return  获取当前方法
      */
     private Method currentMethod(JoinPoint joinPoint) {
-        String methodName = joinPoint.getSignature().getName();
-        //获取目标类的所有方法，找到当前要执行的方法
-        Method[] methods = joinPoint.getTarget().getClass().getMethods();
-        for (Method method : methods) {
-            if (method.getName().equals(methodName)) {
-                return method;
-            }
+        if (!(joinPoint.getSignature() instanceof MethodSignature)) {
+            log.warn("无法解析方法签名：{}", joinPoint.getSignature());
+            return null;
         }
-        log.warn("未找到方法：{}", methodName);
-        // 返回 null 并记录警告日志
-        return null;
+        MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
+        Method signatureMethod = methodSignature.getMethod();
+        try {
+            return joinPoint.getTarget().getClass().getMethod(signatureMethod.getName(), signatureMethod.getParameterTypes());
+        } catch (NoSuchMethodException e) {
+            log.warn("目标类未找到方法：{}，使用签名方法兜底", signatureMethod.getName(), e);
+            return signatureMethod;
+        }
     }
 
     /**

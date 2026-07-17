@@ -143,6 +143,11 @@ public class WarehouseLocationDTO implements Serializable {
 
 
         private Integer usableQty;
+
+        /**
+         * 父级id(库区id)
+         */
+        private String parentId;
     }
 
 
@@ -285,6 +290,16 @@ public class WarehouseLocationDTO implements Serializable {
         private String skuNo;
 
         private Boolean filterZero;
+
+        /**
+         * 仓位编码
+         */
+        private String code;
+
+        /**
+         * 仓位编码列表
+         */
+        private List<String> codeList;
 
         /**
          * 关键词
@@ -487,6 +502,21 @@ public class WarehouseLocationDTO implements Serializable {
          * 更新时间
          */
         private String updateTime;
+
+        /**
+         * 类型，location-仓位;area-分区
+         */
+        private String type;
+
+        /**
+         * 父id
+         */
+        private String parentId;
+
+        /**
+         * 占用状态
+         */
+        private Boolean occupyStatus;
     }
 
     @EqualsAndHashCode(callSuper = true)

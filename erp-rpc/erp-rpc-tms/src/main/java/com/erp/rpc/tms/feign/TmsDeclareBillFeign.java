@@ -2,7 +2,6 @@ package com.erp.rpc.tms.feign;
 
 import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.base.BatchResultDTO;
-import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.tms.entity.TmsDeclareBillEntity;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -34,14 +33,34 @@ public interface TmsDeclareBillFeign {
     List<BatchResultDTO> delete(@RequestBody TmsDeclareBillDTO.DeleteDTO dto);
 
     /**
-     * 自动生成头程报关单
-     **/
-    @PostMapping("/feign/tmsDeclareBill/autoGenerateFirstMileDeclare")
-    Boolean autoGenerateFirstMileDeclare(@RequestBody AutoGenerateBillDTO autoGenerateBillDTO);
+     * 删除tms发货明细
+     * @author will
+     * @date 2026/4/24 14:55
+     * @param dto 删除参数
+     * @return java.lang.Boolean
+     */
+    @PostMapping("/feign/tmsDeclareBill/deleteDeliveryDeclareDetailMid")
+    Boolean deleteDeliveryDeclareDetailMid(@RequestBody TmsDeclareBillDTO.DeleteDeliveryDeclareDetailMidDTO dto);
+
 
     /**
-     * 自动生成B2B报关单
+     * 合并报关单预览
      **/
-    @PostMapping("/feign/tmsDeclareBill/autoGenerateB2bDeclare")
-    Boolean autoGenerateB2bDeclare(@RequestBody AutoGenerateBillDTO autoGenerateBillDTO);
+    @PostMapping("/feign/tmsDeclareBill/autoMergeDeclareBillView")
+    List<TmsDeclareBillDTO.MergeDeclareBillDTO> autoMergeDeclareBillView(@RequestBody TmsDeclareBillDTO.AutoMergeDeclareBillViewDTO viewDTO);
+
+    @PostMapping("/feign/tmsDeclareBill/batchAddMergeDetail")
+    Boolean batchAddMergeDetail(@RequestBody TmsDeclareBillDTO.AutoGenerateMidDataDTO dto);
+
+    /**
+     * B2B 报关合并预览：判断境外收货人是否按客户分发。
+     */
+    @PostMapping("/feign/tmsDeclareBill/isB2bCustomerReceiver")
+    Boolean isB2bCustomerReceiver(@RequestBody List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList);
+
+    /**
+     * 独立报关：按来源单分组判断境外收货人是否按客户分发，返回「来源 key -> 是否按客户分发」。
+     */
+    @PostMapping("/feign/tmsDeclareBill/isB2bCustomerReceiverBySource")
+    java.util.Map<String, Boolean> isB2bCustomerReceiverBySource(@RequestBody List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList);
 }

@@ -3,8 +3,10 @@ package com.erp.server.wms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
+import com.erp.model.wms.dto.WmsCartonDetailDTO;
 import com.erp.model.wms.dto.inventory.VirtualFlowRefactorDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -28,7 +30,6 @@ public interface SoDeliveryNoticeMapper extends BaseMapper<SoDeliveryNoticeEntit
     Integer listCount(@Param("params") SoDeliveryNoticeDTO.PagingParam pagingParam);
 
 
-    List<SoDeliveryNoticeDTO.PagingView> soDeliveryNoticeExportExcel(@Param("params") SoDeliveryNoticeDTO.PagingParam dto);
     Page<SoDeliveryNoticeDTO.PagingView> soDeliveryNoticeExportExcel(@Param("page") Page<SoDeliveryNoticeDTO.PagingView> page, @Param("params") SoDeliveryNoticeDTO.PagingParam dto);
 
     /**
@@ -74,4 +75,49 @@ public interface SoDeliveryNoticeMapper extends BaseMapper<SoDeliveryNoticeEntit
     List<VirtualFlowRefactorDTO.OutInStockDTO> rebuildB2bVirtualFlow();
 
     List<SoDeliveryNoticeDTO.PrintSkuLabelDTO> printSkuLabelView(@Param("detailIds") List<String> detailIds);
+
+    /**
+     * 查询未生成报关单的b2b发货通知单明细信息
+     * @author will
+     * @date 2026/4/22 10:26
+     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.NotGenerateDetailDTO>
+     */
+    IPage<TmsDeclareBillDTO.NotGenerateDetailDTO> listNotGenerateB2bDetailPaging(Page query,@Param("params") TmsDeclareBillDTO.NotGenerateParamDTO params);
+
+    /**
+     * 查询需要下推的报关数据
+     * @author will
+     * @date 2026/4/24 16:29
+     * @param ids 发货通知单id集合
+     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.SourceDeliveryDetailDTO>
+     */
+    List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> listBeforePushB2bDeclare(@Param("ids") List<String> ids,
+                                                                              @Param("onlyWaitDeclareStatus") Boolean onlyWaitDeclareStatus);
+    /**
+     * 查询需要下推的报关数据
+     * @author will
+     * @date 2026/4/24 16:29
+     * @param ids 发货通知单id集合
+     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.SourceDeliveryDetailDTO>
+     */
+    List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> listAfterPushB2bDeclare(@Param("ids") List<String> ids);
+
+    /**
+     * 查询B2B报关按箱号最小维度来源明细
+     *
+     * @param list 发货通知单明细参数集合
+     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.SourceDeliveryDetailDTO>
+     */
+    List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> listB2bDeclareMinSourceDetail(@Param("list") List<TmsDeclareBillDTO.PushDeclareNoMergeDTO> list);
+
+    /**
+     * 查询用于报关中间表生成的装箱明细
+     *
+     * @param ids 发货通知单id集合
+     * @return 装箱明细集合
+     * @throws RuntimeException 查询异常时抛出
+     * @author jack
+     * @date 2026-04-29
+     */
+    List<WmsCartonDetailDTO.ListPackingDetailDTO> listDeclarePackingDetail(@Param("ids") List<String> ids);
 }

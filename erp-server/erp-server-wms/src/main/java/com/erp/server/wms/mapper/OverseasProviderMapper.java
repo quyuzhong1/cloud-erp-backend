@@ -41,6 +41,11 @@ public interface OverseasProviderMapper extends BaseMapper<OverseasProviderEntit
      */
     List<OverseasProviderDTO.ListWithWarehouseDTO> selectListWithWarehouse(Boolean notEmptyWarehouseId);
 
+    /**
+     * 按服务商主键 id 精确查询携带仓库信息，避免全表扫描后在内存中按 id 过滤。
+     */
+    List<OverseasProviderDTO.ListWithWarehouseDTO> selectListWithWarehouseByMainId(@Param("mainId") String mainId);
+
     OverseasProviderDTO.FeignDTO getOverseasWarehouse(@Param("params") OverseasProviderDTO.FeignDTO params);
 
     IPage<SkuMappingDTO.SyncWarehouseProductView> pageWarehouseProduct(Page query, @Param("params") AdvanceQueryContainer params);

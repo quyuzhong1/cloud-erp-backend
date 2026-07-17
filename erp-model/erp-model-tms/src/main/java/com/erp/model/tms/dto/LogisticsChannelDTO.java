@@ -1192,4 +1192,28 @@ public class LogisticsChannelDTO implements Serializable {
     public static class PlatformChannelDTO extends WarehouseChannelDTO.ChannelDTO {
         private String platformCode;
     }
+
+    /**
+     * 三方仓自动出库：shipping_method + platform_warehouse_code → ERP 物流渠道查询入参。
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ThirdWarehouseLogisticsMappingDTO implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        /**
+         * 物流平台（三方仓 provider / platform code）
+         */
+        private String logisticsPlatform;
+
+        /**
+         * 运输方式（销售平台渠道 code / shipping_method）
+         */
+        private String shippingMethod;
+
+        /**
+         * 平台仓库 code
+         */
+        private String platformWarehouseCode;
+    }
 }

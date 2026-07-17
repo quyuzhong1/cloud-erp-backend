@@ -21,6 +21,11 @@ public class AuthPassPath {
             "/sso/login;"
             ;
 
+    /**
+     * token 可选路径：不带 token 也放行；带合法 token 时正常解析并注入登录用户，
+     * 以便业务层（如 PDA 版本「跳过此版本」）在已登录场景下仍能拿到真实用户。
+     */
+    public static final String OPTIONAL_AUTH_PATH_LIST = "/pdaVersion/getPdaVersion;";
 
     public static final String EVENT_TRACKING_PATH = "/sysEventTracking/add";
 }

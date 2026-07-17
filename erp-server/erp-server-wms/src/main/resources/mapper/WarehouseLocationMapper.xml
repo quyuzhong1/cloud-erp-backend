@@ -116,8 +116,17 @@
         <if test="params.warehouseId != null and params.warehouseId != ''">
             and wl.warehouse_id = #{params.warehouseId}
         </if>
+        <if test="params.code != null and params.code != ''">
+            and wl.code ilike concat('%', #{params.code}::text ,'%')
+        </if>
+        <if test="params.codeList != null and params.codeList.size() > 0">
+            and wl.code in
+            <foreach collection="params.codeList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
-            and ((wl.code = #{params.searchKeyword}) or wl.name ilike concat('%', #{params.searchKeyword}::text ,'%'))
+            and ((wl.code ilike concat('%', #{params.searchKeyword}::text ,'%')) or wl.name ilike concat('%', #{params.searchKeyword}::text ,'%'))
         </if>
         <if test="params.warehouseAreaId != null and params.warehouseAreaId != ''">
             and wl.parent_id = #{params.warehouseAreaId}
@@ -367,8 +376,17 @@
         <if test="params.warehouseId != null and params.warehouseId != ''">
             and wl.warehouse_id = #{params.warehouseId}
         </if>
+        <if test="params.code != null and params.code != ''">
+            and wl.code ilike concat('%', #{params.code}::text ,'%')
+        </if>
+        <if test="params.codeList != null and params.codeList.size() > 0">
+            and wl.code in
+            <foreach collection="params.codeList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
-            and ((wl.code = #{params.searchKeyword}) or wl.name ilike concat('%', #{params.searchKeyword}::text ,'%'))
+            and ((wl.code ilike concat('%', #{params.searchKeyword}::text ,'%')) or wl.name ilike concat('%', #{params.searchKeyword}::text ,'%'))
         </if>
         <if test="params.warehouseAreaId != null and params.warehouseAreaId != ''">
             and wl.parent_id = #{params.warehouseAreaId}
@@ -454,5 +472,38 @@
         </if>
         ORDER BY i.qty DESC
             limit 1
+    </select>
+
+    <select id="listByAfterSalesWarehouse" resultType="com.erp.model.wms.dto.WarehouseLocationDTO$ViewDto">
+        select wl.id,
+        wl.code,
+        wl.name,
+        wa.area_type as areaType,
+        wl.status,
+        wl.disabled,
+        wl.remark,
+        wl.update_user_name as updateUserName,
+        wl.update_time as updateTime,
+        wa.id as warehouseAreaId,
+        wa.code as warehouseAreaCode,
+        wa.name as warehouseAreaName,
+        wt.id as warehouseId,
+        wt.kingdee_warehouse_code as warehouseCode,
+        wt.name as warehouseName
+        from warehouse_location wl
+        inner join warehouse_location wa on wl.parent_id = wa.id and wa.is_deleted = false
+        inner join warehouse wt on wl.warehouse_id = wt.id
+        where wl.is_deleted = false
+          and wt.is_deleted = false
+          and wt.approve_status = 'approve'
+          <if test="warehouseId != null and warehouseId != ''">
+              and wl.warehouse_id = #{warehouseId}
+          </if>
+          <if test="name != null and name != ''">
+              and wl.name = #{name}
+          </if>
+        order by
+            case when coalesce(wl.code, '') = '' then 0 else 1 end asc,
+            wl.create_time desc
     </select>
 </mapper>

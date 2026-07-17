@@ -2,6 +2,7 @@ package com.erp.server.tms.service;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
 import com.erp.model.tms.entity.FirstMileCostAllocationEntity;
+import com.erp.model.tms.entity.TmsAsyncTaskRecordEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
@@ -110,6 +111,24 @@ public interface FirstMileCostAllocationService extends SuperService<FirstMileCo
     BatchResultDTO updateStatus(FirstMileCostAllocationEntity entity, String status, String accountPeriod);
 
     /**
+     * 按月异步更新核算状态
+     */
+    BatchResultDTO asyncUpdateStatus(FirstMileCostAllocationDTO.UpdateStatusDTO dto);
+
+    /**
+     * 消费端分批更新核算状态
+     */
+    void pushUpdateStatus(TmsAsyncTaskRecordEntity taskRecord);
+
+    BatchResultDTO asyncReAllocationCalcCost(FirstMileCostAllocationDTO.ResetIdsDTO dto);
+
+    void pushReAllocationCalcCost(TmsAsyncTaskRecordEntity taskRecord);
+
+    BatchResultDTO asyncDelete(FirstMileCostAllocationDTO.ResetIdsDTO dto);
+
+    void pushDelete(TmsAsyncTaskRecordEntity taskRecord);
+
+    /**
      * 根据对账单id查询费用分摊记录
      * @param reconciliationIds
      * @return
@@ -160,10 +179,10 @@ public interface FirstMileCostAllocationService extends SuperService<FirstMileCo
     Boolean importExcel(MultipartFile excelFile, HttpServletResponse response);
 
     void asyncResetAllocatedCost(List<FirstMileCostAllocationEntity> entityList, List<FirstMileDeliveryEntity> firstMileDeliveryEntityList, List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList);
-
-    void asyncBatchPushAllocatedCost(TmsAsyncTaskRecordDTO.PushParamsDTO idsDTO);
+    
+    BatchResultDTO asyncBatchPushAllocatedCost(String reportDate);
 
     FirstMileCostAllocationDTO.PushAllocatedCostCountDTO pushAllocatedCostCount(FirstMileCostAllocationDTO.IdsDTO dto);
 
-    void pushFirstMileCostAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
+    void pushFirstMileCostAllocation(TmsAsyncTaskRecordEntity taskRecord);
 }

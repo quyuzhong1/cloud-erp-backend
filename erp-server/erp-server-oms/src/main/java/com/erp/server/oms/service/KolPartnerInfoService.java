@@ -95,6 +95,8 @@ public interface KolPartnerInfoService extends SuperService<KolPartnerInfoEntity
 
     void handleImportSuccessList(List<KolPartnerInfoImportExcelDTO> successList, List<String> errorNoList, List<KolPartnerInfoImportExcelDTO> errorList2, String importType);
 
+    void handleImportUpdateSuccessList(List<KolPartnerInfoImportExcelDTO.UpdateExcelDTO> successList, List<String> errorNoList, List<KolPartnerInfoImportExcelDTO.UpdateExcelDTO> errorList);
+
     List<KolPartnerInfoDTO.PartnerAddressDTO> partnerAddressList(KolPartnerInfoDTO.AddressSelectDTO dto);
 
     AddressParseDTO.ParseResultDTO addressParse(AddressParseDTO.ParseRequestDTO dto);

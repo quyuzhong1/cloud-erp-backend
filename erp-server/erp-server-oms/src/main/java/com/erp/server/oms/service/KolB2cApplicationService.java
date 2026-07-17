@@ -5,8 +5,11 @@ import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.AddressParseDTO;
+import com.erp.model.oms.dto.KolB2cApplicationApproveCallbackDTO;
 import com.erp.model.oms.dto.KolB2cApplicationCancelCallbackDTO;
 import com.erp.model.oms.dto.KolB2cApplicationDTO;
+import com.erp.model.oms.dto.KolSubB2cApplicationDTO;
+import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
 import com.erp.model.oms.dto.excel.KolB2cApplicationAddressImportExcelDTO;
 import com.erp.model.oms.dto.excel.KolB2cApplicationDetailImportExcelDTO;
 import com.erp.model.oms.dto.excel.KolB2cApplicationImportExcelDTO;
@@ -14,6 +17,7 @@ import com.erp.model.oms.entity.KolB2cApplicationEntity;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -171,6 +175,18 @@ public interface KolB2cApplicationService extends SuperService<KolB2cApplication
     void handleDomesticCancelPushFail(KolB2cApplicationCancelCallbackDTO dto);
 
     /**
+     * Handle domestic approve success callback after DMP push success.
+     * @param dto callback payload
+     */
+    void handleDomesticApprovePushSuccess(KolB2cApplicationApproveCallbackDTO dto);
+
+    /**
+     * Handle domestic approve fail callback after DMP push fail.
+     * @param dto callback payload
+     */
+    void handleDomesticApprovePushFail(KolB2cApplicationApproveCallbackDTO dto);
+
+    /**
      * 撤销
      * @author jack
     * @date: 2025-12-04
@@ -196,6 +212,19 @@ public interface KolB2cApplicationService extends SuperService<KolB2cApplication
     * @return
     */
     Boolean approveEnd(ApproveOneDTO dto, KolB2cApplicationEntity entity);
+
+    WorkflowTaskRecordDTO.MqResponseDTO generateKolB2cSplitOrder(WorkflowTaskRecordDTO.MqRequestDTO dto);
+
+    WorkflowTaskRecordDTO.MqResponseDTO dispatchKolB2cSubApproveTasks(WorkflowTaskRecordDTO.MqRequestDTO dto);
+
+    WorkflowTaskRecordDTO.MqResponseDTO finishKolB2cApplicationApprove(WorkflowTaskRecordDTO.MqRequestDTO dto);
+
+    WorkflowTaskRecordDTO.MqResponseDTO pushKolB2cSubOrder(WorkflowTaskRecordDTO.MqRequestDTO dto);
+
+    /**
+     * 子单下推（无外层事务，Feign/跨服务写操作在独立事务中执行）。
+     */
+    Map<String, Object> executeKolB2cSubOrderPush(KolB2cApplicationEntity entity, KolSubB2cApplicationDTO.PushDTO pushDTO);
 
     Boolean importFile(BaseDTO.ImportDTO dto);
 

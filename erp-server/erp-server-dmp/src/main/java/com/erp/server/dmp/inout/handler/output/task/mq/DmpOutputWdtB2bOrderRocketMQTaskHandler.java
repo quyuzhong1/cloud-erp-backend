@@ -7,7 +7,6 @@ import com.common.business.dto.PlatformB2bOrderDetailDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.entity.BaseEntity;
-import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpSoDetailEntity;
@@ -157,7 +156,7 @@ public class DmpOutputWdtB2bOrderRocketMQTaskHandler extends DmpOutputRocketMQTa
 		}else{
 			platformB2bOrderDTO.setIsInvalid(false);
 		}
-		Map<String,List<DmpSoDetailEntity>> combineDetailMap = dmpSoDetailEntityList.stream().filter(v-> StringUtils.isNotBlank(v.getSuiteNo())).collect(Collectors.groupingBy(DmpSoDetailEntity::getSuiteNo));
+		Map<String,List<DmpSoDetailEntity>> combineDetailMap = dmpSoDetailEntityList.stream().filter(v-> StringUtils.isNotBlank(v.getSuiteNo())).collect(Collectors.groupingBy(this::getCombineDetailGroupKey));
 		List<PlatformB2bOrderDetailDTO> details = new ArrayList<>();
 
 		//订单详情 ERP-15125 如果是组合品，推送组合品明细
@@ -178,10 +177,10 @@ public class DmpOutputWdtB2bOrderRocketMQTaskHandler extends DmpOutputRocketMQTa
 			detailDTO.setPrice(detailDTO.getTaxPrice().divide(BigDecimal.ONE.add(detailDTO.getTaxRate().divide(new BigDecimal("100"), 4, RoundingMode.HALF_UP)), 2, RoundingMode.HALF_UP));
 			details.add(detailDTO);
 		}
-		combineDetailMap.forEach((suiteNo,list)->{
+		combineDetailMap.forEach((groupKey,list)->{
 			DmpSoDetailEntity dmpSoDetailEntity = list.get(0);
 			PlatformB2bOrderDetailDTO detailDTO = new PlatformB2bOrderDetailDTO();
-			detailDTO.setSkuNo(suiteNo);
+			detailDTO.setSkuNo(dmpSoDetailEntity.getSuiteNo());
 			detailDTO.setPlatformSkuNo(dmpSoDetailEntity.getPlatformSpuNo());
 			detailDTO.setCustomerPO(dmpSoInfoEntity.getPlatformCode());
 			detailDTO.setToCountry(dmpSoInfoEntity.getSellRemark());
@@ -189,13 +188,33 @@ public class DmpOutputWdtB2bOrderRocketMQTaskHandler extends DmpOutputRocketMQTa
 			Integer totalQty = dmpSoDetailEntity.getSuiteQty();
 			detailDTO.setQty(totalQty);
 			detailDTO.setTaxRate(dmpSoInfoEntity.getTaxRate());
-			BigDecimal totalTaxPrice = list.stream().map(DmpSoDetailEntity::getSellPriceOrigin).reduce(BigDecimal.ZERO, BigDecimal::add);
-			detailDTO.setTaxPrice(totalTaxPrice);
+			detailDTO.setTaxPrice(getCombineDetailTaxPrice(dmpSoDetailEntity, list));
 			detailDTO.setPrice(detailDTO.getTaxPrice().divide(BigDecimal.ONE.add(detailDTO.getTaxRate().divide(new BigDecimal("100"), 4, RoundingMode.HALF_UP)), 2, RoundingMode.HALF_UP));
 			details.add(detailDTO);
 		});
 		platformB2bOrderDTO.setDetail(details);
 		return platformB2bOrderDTO;
+	}
+
+	private String getCombineDetailGroupKey(DmpSoDetailEntity dmpSoDetailEntity) {
+		String suiteNo = dmpSoDetailEntity.getSuiteNo();
+		String platformDetailId = dmpSoDetailEntity.getPlatformDetailId();
+		if (StringUtils.isNotBlank(suiteNo) && StringUtils.isNotBlank(platformDetailId)) {
+			return platformDetailId + "|" + suiteNo;
+		}
+		return suiteNo;
+	}
+
+	private BigDecimal getCombineDetailTaxPrice(DmpSoDetailEntity dmpSoDetailEntity, List<DmpSoDetailEntity> detailList) {
+		Integer suiteQty = dmpSoDetailEntity.getSuiteQty();
+		if (suiteQty != null && suiteQty != 0) {
+			List<BigDecimal> shareAmountList = detailList.stream().map(DmpSoDetailEntity::getAfterAmount).filter(Objects::nonNull).collect(Collectors.toList());
+			if (CollUtil.isNotEmpty(shareAmountList)) {
+				BigDecimal shareAmount = shareAmountList.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+				return shareAmount.divide(new BigDecimal(suiteQty), 4, RoundingMode.HALF_UP);
+			}
+		}
+		return detailList.stream().map(DmpSoDetailEntity::getSellPriceOrigin).reduce(BigDecimal.ZERO, BigDecimal::add);
 	}
 
 	@Override

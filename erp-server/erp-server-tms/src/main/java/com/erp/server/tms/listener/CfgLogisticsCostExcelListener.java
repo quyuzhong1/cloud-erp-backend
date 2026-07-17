@@ -51,13 +51,11 @@ public class CfgLogisticsCostExcelListener extends AnalysisEventListener<CfgLogi
     //用户
     private List<FindUserDTO> userList ;
 
-    private Map<String, String> dictBasicMap;
-
     private Map<String, String> logisticsSupplierMap;
 
     private Map<String, String> salesPlatformMap;
 
-    private Map<String, List<CfgLogisticsCostImportFieldEntity>> fieldMap;
+    private List<CfgLogisticsCostImportFieldEntity> fieldEntities;
 
     private Map<String, List<TmsCfgCostEntity>> tmsCfgCostGroup;
 
@@ -80,20 +78,18 @@ public class CfgLogisticsCostExcelListener extends AnalysisEventListener<CfgLogi
     public CfgLogisticsCostExcelListener(String taskId,
                                          String importType,
                                          Integer importCount,
-                                         Map<String, String> dictBasicMap,
                                          Map<String, String> logisticsSupplierMap,
                                          Map<String, String> salesPlatformMap,
-                                         Map<String, List<CfgLogisticsCostImportFieldEntity>> fieldMap,
+                                         List<CfgLogisticsCostImportFieldEntity> fieldEntities,
                                          Map<String, List<TmsCfgCostEntity>> tmsCfgCostGroup,
                                          List<FindUserDTO> userList) {
         this.taskId = taskId;
         this.importType = importType;
         this.importCount = importCount;
         this.userList = userList;
-        this.dictBasicMap = dictBasicMap;
         this.logisticsSupplierMap = logisticsSupplierMap;
         this.salesPlatformMap = salesPlatformMap;
-        this.fieldMap = fieldMap;
+        this.fieldEntities = fieldEntities;
         this.tmsCfgCostGroup = tmsCfgCostGroup;
     }
 
@@ -126,58 +122,54 @@ public class CfgLogisticsCostExcelListener extends AnalysisEventListener<CfgLogi
         }
 
 
-        String businessTypeName = excelDTO.getBusinessTypeName();
-        if(StringUtils.isNotBlank(businessTypeName)){
-            String businessType = dictBasicMap.get(businessTypeName);
-            if(StringUtils.isBlank(businessType)){
-                errorMsgList.add("配置单据不存在");
+        String identifyTypeName = excelDTO.getIdentifyTypeName();
+        if(StringUtils.isNotBlank(identifyTypeName)){
+            String identifyType = CfgLogisticsCostImportIdentifyTypeEnum.getCode(identifyTypeName);
+            if(StringUtils.isBlank(identifyType)){
+                errorMsgList.add("识别维度不存在");
             }else {
-                excelDTO.setBusinessType(businessType);
+                excelDTO.setIdentifyType(identifyType);
+            }
+        }
 
-                String targetFieldName = excelDTO.getTargetFieldName();
-                if(StringUtils.isNotBlank(targetFieldName)){
-                    targetFieldName = targetFieldName.trim();
-                    List<CfgLogisticsCostImportFieldEntity> fieldEntities = fieldMap.get(businessType);
-                    if(CollUtil.isEmpty(fieldEntities)){
-                        errorMsgList.add("【"+businessTypeName+"】配置单据类型不存在字段基础数据");
+        String targetFieldName = excelDTO.getTargetFieldName();
+        if(StringUtils.isNotBlank(targetFieldName)){
+            targetFieldName = targetFieldName.trim();
+
+            String finalTargetFieldName = targetFieldName;
+            CfgLogisticsCostImportFieldEntity fieldEntity = fieldEntities.stream().filter(e -> e.getFieldName().equals(finalTargetFieldName)).findFirst().orElse(null);
+            if(Objects.isNull(fieldEntity)){
+                errorMsgList.add("【"+targetFieldName+"】字段基础数据不存在");
+            }else {
+                excelDTO.setTargetFieldId(fieldEntity.getId());
+            }
+
+            if(Objects.equals(targetFieldName,"费用项明细")){
+                String targetDetailFieldName = excelDTO.getTargetDetailFieldName();
+                if(StringUtils.isBlank(targetDetailFieldName)){
+                    errorMsgList.add(ApiError.LOGISTICS_BILL_DETAIL_FIELD_REQUIRED.getMsg());
+                }else if(!targetDetailFieldName.contains("/") || targetDetailFieldName.split("/").length !=2){
+                    errorMsgList.add("格式错误，正确格式如：运费/物流费用");
+                }else {
+                    targetDetailFieldName = targetDetailFieldName.trim();
+                    // 费用配置导入的尾程费用项统一从“尾程发货”归属查询，不改业务单据类型。
+                    String type = DictCostAttributionEnum.LAST_MILE_DELIVERY.getCode();
+                    List<TmsCfgCostEntity> tmsCfgCostEntities = tmsCfgCostGroup.get(type);
+
+                    List<String> list = Arrays.asList(targetDetailFieldName.split("/"));
+                    AllocationFeeTypeEnum allocationFeeTypeCode = AllocationFeeTypeEnum.getByName(list.get(0));
+                    if(Objects.isNull(allocationFeeTypeCode)){
+                        errorMsgList.add("【"+list.get(0)+"】不存在");
+                    }else if(CollUtil.isEmpty(tmsCfgCostEntities)){
+                        errorMsgList.add("费用管理尾程发货未配置费用项");
                     }else {
-                        String finalTargetFieldName = targetFieldName;
-                        CfgLogisticsCostImportFieldEntity fieldEntity = fieldEntities.stream().filter(e -> e.getFieldName().equals(finalTargetFieldName)).findFirst().orElse(null);
-                        if(Objects.isNull(fieldEntity)){
-                            errorMsgList.add("【"+targetFieldName+"】字段基础数据不存在");
+                        TmsCfgCostEntity tmsCfgCostEntity = tmsCfgCostEntities.stream()
+                                .filter(e -> Objects.equals(allocationFeeTypeCode.getCode(), e.getDictCostCategory()) && Objects.equals(list.get(1), e.getCostName()))
+                                .findFirst().orElse(null);
+                        if(Objects.isNull(tmsCfgCostEntity)){
+                            errorMsgList.add(StrUtil.format("【{}】费用项不存在",targetDetailFieldName));
                         }else {
-                            excelDTO.setTargetFieldId(fieldEntity.getId());
-                        }
-                    }
-
-                    if(Objects.equals(targetFieldName,"费用项明细")){
-                        String targetDetailFieldName = excelDTO.getTargetDetailFieldName();
-                        if(StringUtils.isBlank(targetDetailFieldName)){
-                            errorMsgList.add(ApiError.LOGISTICS_BILL_DETAIL_FIELD_REQUIRED.getMsg());
-                        }else if(!targetDetailFieldName.contains("/") || targetDetailFieldName.split("/").length !=2){
-                            errorMsgList.add("格式错误，正确格式如：运费/物流费用");
-                        }else {
-                            targetDetailFieldName = targetDetailFieldName.trim();
-                            // 费用配置导入的尾程费用项统一从“尾程发货”归属查询，不改业务单据类型。
-                            String type = DictCostAttributionEnum.LAST_MILE_DELIVERY.getCode();
-                            List<TmsCfgCostEntity> tmsCfgCostEntities = tmsCfgCostGroup.get(type);
-
-                            List<String> list = Arrays.asList(targetDetailFieldName.split("/"));
-                            AllocationFeeTypeEnum allocationFeeTypeCode = AllocationFeeTypeEnum.getByName(list.get(0));
-                            if(Objects.isNull(allocationFeeTypeCode)){
-                                errorMsgList.add("【"+list.get(0)+"】不存在");
-                            }else if(CollUtil.isEmpty(tmsCfgCostEntities)){
-                                errorMsgList.add("费用管理尾程发货未配置费用项");
-                            }else {
-                                TmsCfgCostEntity tmsCfgCostEntity = tmsCfgCostEntities.stream()
-                                        .filter(e -> Objects.equals(allocationFeeTypeCode.getCode(), e.getDictCostCategory()) && Objects.equals(list.get(1), e.getCostName()))
-                                        .findFirst().orElse(null);
-                                if(Objects.isNull(tmsCfgCostEntity)){
-                                    errorMsgList.add(StrUtil.format("【{}】费用项不存在",targetDetailFieldName));
-                                }else {
-                                    excelDTO.setTargetDetailFieldId(tmsCfgCostEntity.getId());
-                                }
-                            }
+                            excelDTO.setTargetDetailFieldId(tmsCfgCostEntity.getId());
                         }
                     }
                 }

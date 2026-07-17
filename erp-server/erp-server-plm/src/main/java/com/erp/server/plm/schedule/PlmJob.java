@@ -61,6 +61,9 @@ public class PlmJob {
     @Resource
     private MouldRefCalcQtyService mouldRefCalcQtyService;
 
+    @Resource
+    private ProductSaleService productSaleService;
+
     /**
      * 生成发送任务预警通知 每天17:00
      */
@@ -99,5 +102,16 @@ public class PlmJob {
     @XxlJob("calcRefundQty")
     public void calcRefundQty() {
         mouldRefCalcQtyService.calcRefundQty();
+    }
+
+    /**
+     * 库存为0的卖完下架SKU自动更新为已下架
+     */
+    @XxlJob("autoLowerShelfSoldOutSku")
+    public void autoLowerShelfSoldOutSku() {
+        XxlJobHelper.log("autoLowerShelfSoldOutSku start : {}", LocalDateTime.now());
+        Integer updateCount = productSaleService.autoLowerShelfSoldOutSku();
+        XxlJobHelper.log("库存为0自动更新为已下架SKU数量：{}", updateCount);
+        XxlJobHelper.log("autoLowerShelfSoldOutSku end : {}", LocalDateTime.now());
     }
 }
