@@ -371,7 +371,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         StocktakingPlanEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到盘点计划单数据"));
         // 反审核条件判断
         validateDisApprove(entity);
-        // 删除盘点任务及明细
+        // 删任务；释锁在 removeBySourceId 内 afterCommit 执行，见该方法 JavaDoc
         stocktakingTaskService.removeBySourceId(id);
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
@@ -802,7 +802,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
                 continue;
             }
 
-            //检查库存是否已被锁定（按库存维度去重后 SCAN）；单计划异常仅跳过当前计划，不影响批次内其它计划
+            // 按去重后的库存维度 SCAN 检查是否已锁定；checkedDimensions 避免同维度重复扫描
             try {
                 boolean hasConflict = false;
                 Set<String> checkedDimensions = new HashSet<>();

@@ -44,6 +44,7 @@ import com.erp.server.wms.listener.StocktakingTaskDetailExcelImportHelper;
 import com.erp.server.wms.listener.StocktakingTaskDetailExcelTemplateWriter;
 import com.erp.server.wms.mapper.StocktakingTaskMapper;
 import com.erp.server.wms.service.*;
+import com.erp.server.wms.utils.StocktakingInventoryLockRedisUtil;
 import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -98,6 +99,8 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
 
     @Resource
     private RedisUtil redisUtil;
+    @Resource
+    private StocktakingInventoryLockRedisUtil stocktakingInventoryLockRedisUtil;
     @Resource
     private WarehouseLocationService warehouseLocationService;
     @Resource
@@ -608,6 +611,12 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         runAfterCommit(() -> releaseInventoryLockByTaskWithRetry(taskId, planCode));
     }
 
+    /**
+     * 按计划单号释放该计划下全部 Redis 盘点库存锁。
+     * <p>
+     * 释锁语义：按 {@code lock:wms:inventory:{planCode}_*} SCAN 后删除；不校验 key value 是否为 planCode
+     * （与历史 Controller {@code keys().forEach(del)} 一致）；pattern 已限定本计划单号。
+     */
     @Override
     public void releaseInventoryLockByPlanCode(String planCode) {
         if (CharSequenceUtil.isBlank(planCode)) {
@@ -655,13 +664,14 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
     /**
      * 按任务明细释放 Redis 盘点库存锁（与 {@link #lockInventoryForStocktaking} 成对）。
      * <p>
-     * 审查约定（通配释锁边界）：
+     * 通配释锁边界（与历史 Controller 行为一致）：
      * <ul>
-     *   <li>任务级按 {@code planCode + wh + 库位 + sku} 通配（orgId/status 为 *）SCAN 释锁，与历史 Controller 行为一致</li>
+     *   <li>任务级按 {@code planCode + wh + 库位 + sku} 通配（orgId/status 为 *）SCAN 释锁</li>
      *   <li>范围已限定本计划单号，不按 plan 整批释锁（同计划其它任务可能仍在途）</li>
      *   <li>明细未落库 orgId，故不用 inventory 反查精确 key，避免反查失败导致锁残留</li>
      *   <li>若同一计划下多任务并发、且共享 wh+库位+SKU 但 org 不同，本任务审核通过可能顺带释放其它在途任务的锁；
-     *       现网暂无此类数据，故维持通配；若后续出现，需在明细落库 orgId 或改按任务维度收窄 pattern</li>
+     *       现网暂无此类数据，故维持通配</li>
+     *   <li>SCAN 后无条件 DEL，不校验 value；相同 wh+库位+SKU 的多条明细可能重复 SCAN</li>
      * </ul>
      * 对外入口与审核路径均 afterCommit + 重试。
      */
@@ -681,7 +691,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
      * 按明细 wh+库位+sku 通配 SCAN 释锁（orgId/status 为 *）。
      * <p>
      * pattern 示例：{@code lock:wms:inventory:{planCode}_*_{wh}_{loc}_{sku}_*}，
-     * 会删除该计划下该库存维度的全部 org/状态锁，见 {@link #releaseInventoryLockByTask} 审查约定。
+     * 会删除该计划下该库存维度的全部 org/状态锁，见 {@link #releaseInventoryLockByTask} 方法注释。
      */
     private void releaseInventoryLockByDetail(String planCode, String taskCode, StocktakingTaskDetailEntity detail) {
         String keyPattern = CharSequenceUtil.format(RedisCacheConstants.INVENTORY_LOCK, planCode, "*",
@@ -695,6 +705,8 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
 
     /**
      * 事务提交后执行释锁；无活跃事务时立即执行（如非事务入口调用的兼容路径）。
+     * <p>
+     * Redis 不参与 DB 事务：调用方须先完成 DB 写操作，再注册本回调；仅在外层事务成功提交后执行释锁。
      */
     private void runAfterCommit(Runnable runnable) {
         if (!TransactionSynchronizationManager.isSynchronizationActive()) {
@@ -718,7 +730,8 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
     }
 
     /**
-     * 按单库存维度 SCAN 判断是否已有其它盘点计划占用锁（pattern 含 org/warehouse/location/sku/status，非全库锁前缀）。
+     * 按单库存维度 SCAN 判断是否已有其它计划占用锁；pattern 含 org/warehouse/location/sku/status，
+     * 非 {@code lock:wms:inventory:*} 全量前缀。
      */
     @Override
     public boolean isInventoryLockedForStocktaking(String orgId, String warehouseId, String warehouseLocation, String skuId, String dictInventoryStatus) {
@@ -732,8 +745,15 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
     }
 
     /**
-     * 加锁：checkConflict=true 时走 Lua（SCAN 冲突 + SET NX 原子）；pattern 按库存维度收窄，避免全量 inventory 锁 SCAN。
-     * orgId 取下推时 {@code inventory.org_id}。
+     * 盘点库存加锁：checkConflict=true 时走 {@link StocktakingInventoryLockRedisUtil#tryStocktakingInventoryLock}（Lua SCAN + SET NX）。
+     * <p>
+     * 参数与 pattern（均见 {@link com.common.business.constant.RedisCacheConstants#INVENTORY_LOCK}）：
+     * <ul>
+     *   <li>lockKey：{@code {planCode}_{org}_{wh}_{loc}_{sku}_{status}}</li>
+     *   <li>conflictPattern：{@code *_{org}_{wh}_{loc}_{sku}_{status}}，非 {@code lock:wms:inventory:*} 全量前缀</li>
+     *   <li>orgId 取下推时 {@code inventory.org_id}；每条库存一次 Lua，与 Job 预检 {@link #isInventoryLockedForStocktaking} 可能叠加</li>
+     *   <li>MATCH 仅过滤 SCAN 返回，未命中时仍可能遍历 keyspace；后续可用 slot 占用 key + plan 索引优化</li>
+     * </ul>
      */
     private void lockInventoryForStocktaking(StocktakingPlanEntity entity, List<InventoryEntity> inventoryList, boolean checkConflict) {
         String planCode = entity.getCode();
@@ -747,7 +767,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
             String conflictPattern = CharSequenceUtil.format(RedisCacheConstants.INVENTORY_LOCK, "*", item.getOrgId(),
                     item.getWarehouseId(), item.getWarehouseLocation(), item.getSkuId(), item.getDictInventoryStatus());
             if (checkConflict) {
-                if (!redisUtil.tryInventoryLock(conflictPattern, redisKey, planCode)) {
+                if (!stocktakingInventoryLockRedisUtil.tryStocktakingInventoryLock(conflictPattern, redisKey, planCode)) {
                     throwStocktakingTaskExist(item);
                 }
             } else if (!Boolean.TRUE.equals(redisUtil.setIfAbsent(redisKey, planCode))) {
@@ -1217,6 +1237,13 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
                 .list();
     }
 
+    /**
+     * 删除计划下属盘点任务及明细；反审核、计划删除等场景调用。
+     * <p>
+     * 执行顺序：先 {@code removeByMainId/removeByIds}，再注册 {@code afterCommit → releaseInventoryLockByPlanCode}；
+     * 外层 {@link com.erp.server.wms.service.impl.StocktakingPlanServiceImpl#disApprove} 事务提交成功后才删 Redis。
+     * 无下属任务时跳过释锁（反审核经 validateDisApprove 通常必有任务）。
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean removeBySourceId(String sourceId) {
@@ -1227,10 +1254,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         StocktakingPlanEntity planEntity = stocktakingPlanService.getById(sourceId);
         String planCode = ObjectUtil.isNotEmpty(planEntity) ? planEntity.getCode() : null;
         List<String> mainIds = taskEntityList.stream().map(StocktakingTaskEntity::getId).collect(Collectors.toList());
-        // 删除明细表数据
         stocktakingTaskDetailService.removeByMainId(mainIds);
-        // 删除主表数据
-        // 先删库再 afterCommit 按计划释锁，避免事务回滚后锁已丢
         this.removeByIds(mainIds);
         if (CharSequenceUtil.isNotBlank(planCode)) {
             runAfterCommit(() -> releaseInventoryLockByPlanCodeWithRetry(planCode, "removeBySourceId:" + sourceId));

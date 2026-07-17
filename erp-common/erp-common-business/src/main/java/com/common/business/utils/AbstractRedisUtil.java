@@ -16,9 +16,6 @@ import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
-
-import org.springframework.data.redis.core.script.DefaultRedisScript;
 
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -27,48 +24,6 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public abstract class AbstractRedisUtil {
-
-    private static final DefaultRedisScript<Long> TRY_INVENTORY_LOCK_SCRIPT;
-
-    /**
-     * 盘点库存锁 Lua 脚本：同一库存维度下 SCAN 冲突检测 + SET NX 原子执行。
-     * <p>
-     * 性能说明：
-     * <ul>
-     *   <li>ARGV[1] 为单库存维度 pattern（org/warehouse/location/sku/status），非全量 lock:wms:inventory:*</li>
-     *   <li>SCAN COUNT=500，命中其它 plan 的冲突 key 即提前 return 0，无冲突时才继续 SET NX</li>
-     *   <li>正常业务同一维度同时仅一个盘点计划，单维度 key 数量极少；若历史遗留孤儿锁过多，需运维清理</li>
-     * </ul>
-     */
-    static {
-        TRY_INVENTORY_LOCK_SCRIPT = new DefaultRedisScript<>();
-        TRY_INVENTORY_LOCK_SCRIPT.setScriptText(
-                "local pattern = ARGV[1]\n"
-                        + "local lockKey = ARGV[2]\n"
-                        + "local lockValue = ARGV[3]\n"
-                        + "local existing = redis.call('GET', lockKey)\n"
-                        + "if existing == lockValue then\n"
-                        + "  return 1\n"
-                        + "end\n"
-                        + "if existing then\n"
-                        + "  return 0\n"
-                        + "end\n"
-                        + "local cursor = '0'\n"
-                        + "repeat\n"
-                        + "  local result = redis.call('SCAN', cursor, 'MATCH', pattern, 'COUNT', 500)\n"
-                        + "  cursor = result[1]\n"
-                        + "  for _, key in ipairs(result[2]) do\n"
-                        + "    if key ~= lockKey then\n"
-                        + "      return 0\n"
-                        + "    end\n"
-                        + "  end\n"
-                        + "until cursor == '0'\n"
-                        + "if redis.call('SET', lockKey, lockValue, 'NX') then\n"
-                        + "  return 1\n"
-                        + "end\n"
-                        + "return 0");
-        TRY_INVENTORY_LOCK_SCRIPT.setResultType(Long.class);
-    }
 
     public abstract RedisTemplate getRedisTemplate();
     
@@ -194,26 +149,6 @@ public abstract class AbstractRedisUtil {
         } catch (Exception e) {
             log.error("redis setIfAbsent error, key={}", key, e);
             throw new ServiceException(ApiError.COMMON_REMOTE_SERVICE_ERROR, "Redis", "SET NX 失败");
-        }
-    }
-
-    /**
-     * SCAN + SET NX 原子加锁：冲突维度存在其它 plan lock key 时返回 false。
-     * conflictPattern 已收窄至单库存维度，Lua 内 SCAN 成本随该维度并发锁数量线性增长，非全库 inventory 锁规模。
-     */
-    public boolean tryInventoryLock(String conflictPattern, String lockKey, String lockValue) {
-        try {
-            Long result = (Long) getRedisTemplate().execute(TRY_INVENTORY_LOCK_SCRIPT, Collections.emptyList(),
-                    conflictPattern, lockKey, lockValue);
-            if (result == null) {
-                throw new ServiceException(ApiError.COMMON_REMOTE_SERVICE_ERROR, "Redis", "盘点加锁脚本返回为空");
-            }
-            return result == 1L;
-        } catch (ServiceException e) {
-            throw e;
-        } catch (Exception e) {
-            log.error("redis tryInventoryLock error, pattern={}, lockKey={}", conflictPattern, lockKey, e);
-            throw new ServiceException(ApiError.COMMON_REMOTE_SERVICE_ERROR, "Redis", "盘点加锁失败");
         }
     }
 
@@ -674,7 +609,7 @@ public abstract class AbstractRedisUtil {
     }
 
     /**
-     * 使用 SCAN 分批匹配 key，避免 KEYS 阻塞 Redis
+     * 使用 SCAN 分批匹配 key，避免 KEYS 阻塞 Redis。
      */
     public Collection<String> scanKeys(final String pattern) {
         try {
@@ -706,7 +641,7 @@ public abstract class AbstractRedisUtil {
 
     /**
      * SCAN 判断是否存在匹配 key（命中即返回，减少全量收集）。
-     * 盘点 Job 过滤场景传入单库存维度 pattern，避免对 lock:wms:inventory:* 做全量 SCAN。
+     * 调用方应传入尽量收窄的 pattern，避免 {@code *} 前缀过宽。
      */
     public boolean hasScanKeys(final String pattern) {
         try {
