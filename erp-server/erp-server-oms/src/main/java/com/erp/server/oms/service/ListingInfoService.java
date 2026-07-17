@@ -120,4 +120,21 @@ public interface ListingInfoService extends SuperService<ListingInfoEntity> {
      * @return 本次新增到未匹配对照表的记录数
      */
     Integer syncWarehouseNotMatchSku(WegoSkuSyncDTO.SyncReqDTO dto);
+
+    /**
+     * 三方仓 SKU 全量快照回收：在 {@link #syncWarehouseNotMatchSku} 新增/更新基础上，
+     * 按 {@code dto.getAuthId()} 维度回收本次快照未覆盖到的历史记录：
+     * <ul>
+     *     <li>未映射（{@code matchResult=FALSE}）且本次快照中已找不到 → 删除；</li>
+     *     <li>已映射（{@code matchResult=TRUE}）且本次快照中已找不到 → 映射关系置为禁用；</li>
+     *     <li>已映射且快照中存在但源端状态非启用（{@code SkuItemDTO.status} 非 active）→ 映射关系置为禁用。</li>
+     * </ul>
+     * 禁用后不会被本方法自动重新置为启用，需人工在 SKU 对照表页面手动恢复。
+     * 平台无关实现（按 authId 维度处理），本轮仅接入爱亚，后续其它三方仓可直接复用。
+     *
+     * @param dto 三方仓 SKU 全量快照（服务商、平台、本次拉取到的全部 SKU 及其源端状态）；
+     *            {@code skuList} 为空时视为异常拉取，跳过删除/禁用，仅保留已有映射关系
+     * @return 本次回收统计结果（新增/删除/禁用数量）
+     */
+    WegoSkuSyncDTO.ReconcileResultDTO reconcileWarehouseSkuSnapshot(WegoSkuSyncDTO.SyncReqDTO dto);
 }

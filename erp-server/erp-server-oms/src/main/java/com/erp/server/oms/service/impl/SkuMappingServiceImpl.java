@@ -842,8 +842,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         List<String> skuIds = skuList.stream().map(SkuVO::getSkuId).collect(Collectors.toList());
         List<BomChildrenSkuDTO> allBomChildrenSkuDTOList = plmTaskFeign.listBomChildBySkuIds(skuIds);
         allBomChildrenSkuDTOList = allBomChildrenSkuDTOList.stream().filter(v->BomTypeEnum.COMBINATION.getType().equals(v.getType())).collect(Collectors.toList());
-        //获取到skumappping 的对应关系
-        List<SkuMappingEntity> list = lambdaQuery().in(SkuMappingEntity::getProductSkuNo, skuNoList).eq(SkuMappingEntity::getIsExpire, Boolean.FALSE).list();
+        //获取到skumappping 的对应关系（映射关系状态：仅取启用中的，业务流程不得使用已禁用的映射关系）
+        List<SkuMappingEntity> list = lambdaQuery().in(SkuMappingEntity::getProductSkuNo, skuNoList).eq(SkuMappingEntity::getIsExpire, Boolean.FALSE)
+                .eq(SkuMappingEntity::getStatus, SkuMappingStatusEnum.ENABLE).list();
         List<ListingInfoEntity> listingList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(list)) {
             List<String> listingIds = list.stream().map(SkuMappingEntity::getListingId).collect(Collectors.toList());
@@ -1143,6 +1144,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
             //平台状态
             item.setPlatformStatusName(ListingInfoPlatformStatusEnum.getName(item.getPlatformStatus()));
+            //映射关系状态：历史数据 status 为空时按启用展示
+            item.setStatusName(SkuMappingStatusEnum.getName(
+                    CharSequenceUtil.isBlank(item.getStatus()) ? SkuMappingStatusEnum.ENABLE.getCode() : item.getStatus()));
         }
 
     }
@@ -1329,6 +1333,8 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
                 .eq(SkuMappingEntity::getWarehouseId, warehouseId)
                 .eq(SkuMappingEntity::getType, typeEnum)
                 .eq(SkuMappingEntity::getIsExpire, false)
+                // 映射关系状态：仅取启用中的，业务流程不得使用已禁用的映射关系
+                .eq(SkuMappingEntity::getStatus, SkuMappingStatusEnum.ENABLE)
                 .last(" LIMIT 1")
                 .one();
     }
@@ -1546,6 +1552,8 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
                 in(CollectionUtils.isNotEmpty(listingIds), SkuMappingEntity::getListingId, listingIds).
                 eq(SkuMappingEntity::getDictPlatform, dictPlatform).
                 eq(SkuMappingEntity::getType, type).
+                // 映射关系状态：仅取启用中的，业务流程（如B2C销售订单推三方仓出库单选库存SKU）不得使用已禁用的映射关系
+                eq(SkuMappingEntity::getStatus, SkuMappingStatusEnum.ENABLE).
                 list();
     }
 
