@@ -7,6 +7,8 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.erp.model.scm.dto.PurchaseBusinessGatherTableDTO;
 import com.erp.model.srm.dto.DeliveryOrderDTO;
 import com.erp.model.srm.dto.excel.DeliveryOrderExportExcelDTO;
@@ -707,11 +709,13 @@ public class ExportWmsFeignController {
         try {
             return soDeliveryNoticeService.paging(dto);
         } catch (ExecutionException e) {
-            log.error("Error occurred while exporting SO delivery notice", e);
-            throw new RuntimeException(e);
-        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             log.error("Interrupted while exporting SO delivery notice", e);
-            throw new RuntimeException(e);
+            throw new ServiceException(ApiError.COMMON_EXECUTOR_EXCEPTION, e.getMessage());
+        } catch (InterruptedException e) {
+            log.error("Error occurred while exporting SO delivery notice", e);
+            // 保留并转换底层业务异常，避免统一丢失为普通 RuntimeException
+            throw new ServiceException(ApiError.COMMON_THREAD_INTERRUPTED_EXCEPTION, e.getMessage());
         }
     }
 
