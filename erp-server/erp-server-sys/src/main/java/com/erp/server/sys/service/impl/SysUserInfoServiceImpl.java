@@ -2157,8 +2157,8 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             return;
         }
         try {
-            maskPermissionEvictPublisher.publishUser(uids, source);
-        } catch (Throwable ignore) {
+            maskPermissionEvictPublisher.publishUserAfterCommit(uids, source);
+        } catch (Exception ignore) {
             // publisher 内部已经容错，这里再吞一次保证 service 主流程不受影响
         }
     }

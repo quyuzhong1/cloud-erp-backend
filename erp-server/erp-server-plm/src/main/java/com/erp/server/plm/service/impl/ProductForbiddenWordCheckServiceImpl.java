@@ -121,7 +121,15 @@ public class ProductForbiddenWordCheckServiceImpl extends SuperServiceImpl<Produ
         if (Objects.equals(ProductForbiddenWordCheckStatusEnum.RUNNING.getCode(), entity.getStatus())) {
             throw new ServiceException("检测中数据不允许删除");
         }
-        super.removeById(id);
+        boolean removed = lambdaUpdate()
+                .eq(ProductForbiddenWordCheckEntity::getId, id)
+                .eq(ProductForbiddenWordCheckEntity::getVersion, entity.getVersion())
+                .ne(ProductForbiddenWordCheckEntity::getStatus,
+                        ProductForbiddenWordCheckStatusEnum.RUNNING.getCode())
+                .remove();
+        if (!removed) {
+            throw new ServiceException("产品检测记录状态已变更，请刷新后重试");
+        }
         return BatchResultDTO.success(entity.getId(), entity.getReportName(), OperationTypeEnum.DELETE);
     }
 
@@ -145,7 +153,10 @@ public class ProductForbiddenWordCheckServiceImpl extends SuperServiceImpl<Produ
         }
         File reportFile = null;
         try {
-            updateRunning(id);
+            if (!updateRunning(entity)) {
+                log.info("产品违禁词检测任务已被删除或状态已变更，跳过执行，id={}", id);
+                return;
+            }
             SensitiveWordMatcher matcher = productForbiddenWordMatcher.openSnapshot();
             Integer totalCount = baseMapper.countProductForDetect();
             ReportWriteResult writeResult = writeReportFile(entity.getReportName(), matcher, totalCount);
@@ -153,16 +164,20 @@ public class ProductForbiddenWordCheckServiceImpl extends SuperServiceImpl<Produ
             String reportUrl = FastDFSClientUtil.uploadFile(reportFile, entity.getReportName());
             ProductForbiddenWordCheckEntity updateEntity = new ProductForbiddenWordCheckEntity();
             updateEntity.setId(id);
+            updateEntity.setVersion(entity.getVersion());
             updateEntity.setStatus(ProductForbiddenWordCheckStatusEnum.FINISH.getCode());
             updateEntity.setFinishTime(LocalDateTime.now());
             updateEntity.setReportUrl(reportUrl);
             updateEntity.setTotalCount(totalCount);
             updateEntity.setHitCount(writeResult.getHitCount());
             updateEntity.setFailReason(writeResult.isTruncated() ? "命中结果超过上限，仅导出前10万条" : "");
-            super.updateById(updateEntity);
+            if (!super.updateById(updateEntity)) {
+                throw new ServiceException("检测任务状态已变更，结果保存失败");
+            }
+            entity.setVersion(updateEntity.getVersion());
         } catch (Exception e) {
             log.error("产品违禁词检测失败，id：{}", id, e);
-            updateFail(id, e);
+            updateFail(entity, e);
         } finally {
             if (Objects.nonNull(reportFile) && reportFile.exists()) {
                 boolean deleted = reportFile.delete();
@@ -278,22 +293,36 @@ public class ProductForbiddenWordCheckServiceImpl extends SuperServiceImpl<Produ
         customExecutor.execute(task);
     }
 
-    private void updateRunning(String id) {
+    private boolean updateRunning(ProductForbiddenWordCheckEntity entity) {
+        if (!Objects.equals(ProductForbiddenWordCheckStatusEnum.WAIT.getCode(), entity.getStatus())) {
+            return false;
+        }
         ProductForbiddenWordCheckEntity updateEntity = new ProductForbiddenWordCheckEntity();
-        updateEntity.setId(id);
+        updateEntity.setId(entity.getId());
+        updateEntity.setVersion(entity.getVersion());
         updateEntity.setStatus(ProductForbiddenWordCheckStatusEnum.RUNNING.getCode());
         updateEntity.setFailReason("");
-        super.updateById(updateEntity);
+        boolean updated = super.updateById(updateEntity);
+        if (updated) {
+            entity.setVersion(updateEntity.getVersion());
+            entity.setStatus(ProductForbiddenWordCheckStatusEnum.RUNNING.getCode());
+        }
+        return updated;
     }
 
-    private void updateFail(String id, Exception e) {
-        String failReason = StringUtils.defaultIfBlank(e.getMessage(), e.toString());
+    private void updateFail(ProductForbiddenWordCheckEntity entity, Exception e) {
+        String failReason = e instanceof ServiceException
+                ? ((ServiceException) e).getMsg() : "检测任务执行失败，请稍后重试";
         ProductForbiddenWordCheckEntity updateEntity = new ProductForbiddenWordCheckEntity();
-        updateEntity.setId(id);
+        updateEntity.setId(entity.getId());
+        updateEntity.setVersion(entity.getVersion());
         updateEntity.setStatus(ProductForbiddenWordCheckStatusEnum.FAIL.getCode());
         updateEntity.setFinishTime(LocalDateTime.now());
-        updateEntity.setFailReason(StringUtils.left(failReason, 500));
-        super.updateById(updateEntity);
+        updateEntity.setFailReason(StringUtils.left(
+                StringUtils.defaultIfBlank(failReason, "检测任务执行失败，请稍后重试"), 500));
+        if (!super.updateById(updateEntity)) {
+            log.warn("产品违禁词检测失败状态保存未生效，任务可能已变更，id={}", entity.getId());
+        }
     }
 
     private void fillList(List<ProductForbiddenWordCheckDTO.ListDTO> list) {

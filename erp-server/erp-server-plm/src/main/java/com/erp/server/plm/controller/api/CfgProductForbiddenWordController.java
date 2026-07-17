@@ -1,6 +1,7 @@
 package com.erp.server.plm.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.SuperAdminOnly;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -35,6 +36,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @RestController
+@SuperAdminOnly
 @LogSystemModule("违禁词库")
 @RequestMapping("/cfgProductForbiddenWord")
 public class CfgProductForbiddenWordController extends BaseController {
@@ -92,7 +94,7 @@ public class CfgProductForbiddenWordController extends BaseController {
                     resultDTOS.add(deleteResult);
                     continue;
                 }
-                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getForbiddenWord(), e.getMessage());
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getForbiddenWord(), e);
             }
             resultDTOS.add(deleteResult);
         }
@@ -121,7 +123,7 @@ public class CfgProductForbiddenWordController extends BaseController {
                     resultDTOS.add(result);
                     continue;
                 }
-                result = BatchResultDTO.fail(entity.getId(), entity.getForbiddenWord(), e.getMessage());
+                result = BatchResultDTO.fail(entity.getId(), entity.getForbiddenWord(), e);
             }
             resultDTOS.add(result);
         }

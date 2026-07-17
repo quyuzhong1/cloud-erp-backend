@@ -1,6 +1,7 @@
 package com.erp.server.sys.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.common.business.mask.resolver.MaskPermissionEvictPublisher;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.core.exception.ServiceException;
@@ -13,6 +14,7 @@ import com.erp.server.sys.service.SysFieldPermissionService;
 import com.erp.server.sys.service.SysRoleMenuService;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,6 +53,9 @@ public class SysFieldPermissionServiceImpl implements SysFieldPermissionService 
 
     @Resource
     private CfgMaskFieldMapper cfgMaskFieldMapper;
+
+    @Autowired(required = false)
+    private MaskPermissionEvictPublisher maskPermissionEvictPublisher;
 
     @Override
     public List<SysFieldPermissionDTO.ListVO> list(SysFieldPermissionDTO.ListSearchDTO dto) {
@@ -122,6 +127,9 @@ public class SysFieldPermissionServiceImpl implements SysFieldPermissionService 
                 batch.add(entity);
             }
             sysRoleMenuService.saveBatch(batch);
+        }
+        if (maskPermissionEvictPublisher != null) {
+            maskPermissionEvictPublisher.publishAllAfterCommit("SysFieldPermissionService.save");
         }
         return Boolean.TRUE;
     }

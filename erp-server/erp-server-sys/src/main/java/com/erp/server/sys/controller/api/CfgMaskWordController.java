@@ -1,5 +1,6 @@
 package com.erp.server.sys.controller.api;
 
+import com.common.business.annotation.SuperAdminOnly;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
@@ -28,6 +29,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @RestController
+@SuperAdminOnly
 @LogSystemModule("脱敏词典")
 @RequestMapping("/cfgMaskWord")
 public class CfgMaskWordController extends BaseController {

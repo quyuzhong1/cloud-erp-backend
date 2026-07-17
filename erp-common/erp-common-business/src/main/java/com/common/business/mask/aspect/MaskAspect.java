@@ -29,7 +29,6 @@ import lombok.extern.slf4j.Slf4j;
  * <ul>
  *   <li>方法 {@code @MaskScan(disabled=true)}</li>
  *   <li>当前用户为超级管理员。业务服务引入 erp-rpc-sys 后对齐数据权限的 {@code roleId=1} 口径</li>
- *   <li>方法 {@code @MaskScan(permission)} 不为空且当前用户拥有该权限码</li>
  * </ul>
  *
  * @author cloud-erp
@@ -74,9 +73,7 @@ public class MaskAspect {
         }
         long start = System.nanoTime();
         try {
-            maskCore.process(result);
-        } catch (Throwable e) {
-            log.warn("MaskAspect process failed, return original, msg={}", e.getMessage());
+            maskCore.process(result, scan == null ? "" : scan.permission());
         } finally {
             long costMs = (System.nanoTime() - start) / 1_000_000L;
             if (costMs >= SLOW_MASK_WARN_MS) {
@@ -92,7 +89,7 @@ public class MaskAspect {
             MethodSignature signature = (MethodSignature) pjp.getSignature();
             Method method = signature.getMethod();
             return method.getAnnotation(MaskScan.class);
-        } catch (Throwable e) {
+        } catch (Exception e) {
             return null;
         }
     }

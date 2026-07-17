@@ -6,8 +6,11 @@ import com.common.business.constant.RedisCacheConstants;
 import org.redisson.api.RTopic;
 import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -27,9 +30,8 @@ import lombok.extern.slf4j.Slf4j;
  * <p>本 publisher 是<b>非阻塞、容错</b>的：Redis 不可用时只记 warn，不影响主业务事务。
  * 失效消息丢失由业务节点本地 TTL 兜底，最终一致。</p>
  *
- * <p><b>调用时机</b>：建议放在事务提交后（如 {@code TransactionSynchronizationManager#registerSynchronization}），
- * 避免事务回滚后发出无效失效，但为了实现简单，目前调用方可以直接在写完后调，
- * 多发一次失效广播的代价远小于"漏发导致的数据泄露"。</p>
+ * <p><b>调用时机</b>：事务写路径使用 afterCommit 方法，避免回滚事务提前广播后，
+ * 其他请求在提交前重新加载旧权限并形成脏缓存。</p>
  *
  * @author cloud-erp
  */
@@ -70,6 +72,17 @@ public class MaskPermissionEvictPublisher {
     }
 
     /**
+     * 事务提交后失效指定 uid；当前无事务时立即广播。
+     */
+    public void publishUserAfterCommit(Collection<String> uids, String source) {
+        if (uids == null || uids.isEmpty()) {
+            return;
+        }
+        Collection<String> snapshot = new ArrayList<>(uids);
+        runAfterCommit(() -> publishUser(snapshot, source));
+    }
+
+    /**
      * 清空全部本地权限缓存（重操作，慎用：用于角色/菜单大改）
      */
     public void publishAll(String source) {
@@ -83,5 +96,26 @@ public class MaskPermissionEvictPublisher {
             log.warn("MaskPermissionEvictPublisher publish ALL failed, source={}, msg={}",
                     source, e.getMessage());
         }
+    }
+
+    /**
+     * 事务提交后清空全部权限缓存；当前无事务时立即广播。
+     */
+    public void publishAllAfterCommit(String source) {
+        runAfterCommit(() -> publishAll(source));
+    }
+
+    private void runAfterCommit(Runnable action) {
+        if (TransactionSynchronizationManager.isActualTransactionActive()
+                && TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                @Override
+                public void afterCommit() {
+                    action.run();
+                }
+            });
+            return;
+        }
+        action.run();
     }
 }

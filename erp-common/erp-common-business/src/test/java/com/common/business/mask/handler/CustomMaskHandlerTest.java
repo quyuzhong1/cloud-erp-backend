@@ -8,7 +8,6 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
 
 /**
  * {@link CustomMaskHandler} 单元测试
@@ -16,8 +15,8 @@ import static org.junit.Assert.assertSame;
  * <p>验证三道防线：</p>
  * <ol>
  *   <li>正常正则正确脱敏</li>
- *   <li>命中 ReDoS 黑名单的正则被编译成 INVALID 哨兵，运行时原样返回</li>
- *   <li>超长输入跳过匹配，原样返回</li>
+ *   <li>命中 ReDoS 黑名单的正则被编译成 INVALID 哨兵，运行时返回安全占位</li>
+ *   <li>超长输入跳过匹配并返回安全占位</li>
  * </ol>
  *
  * @author cloud-erp
@@ -57,44 +56,42 @@ public class CustomMaskHandlerTest {
     // ============ 哨兵：编译失败 / 命中黑名单 ============
 
     @Test
-    public void shouldReturnOriginalWhenRegexUnsafe() {
+    public void shouldReturnReplacementWhenRegexUnsafe() {
         // (a+)+ 会被 RegexSafetyGuard 拒绝，编译成 INVALID 哨兵
         MaskContext ctx = MaskContext.builder()
                 .classPath("com.demo.Foo").fieldName("evil")
                 .regex("(a+)+").replacement("*").build();
         String input = "aaaaaab";
-        // 关键：不仅要返回原值，更重要的是不应该卡死（如果真的执行了正则，会指数级回溯）
+        // 关键：既不能泄露原值，也不应该卡死（如果真的执行了正则，会指数级回溯）
         long start = System.nanoTime();
         Object out = handler.handle(input, ctx);
         long costMs = (System.nanoTime() - start) / 1_000_000L;
-        assertEquals(input, out);
-        assertSame("INVALID 哨兵应原样返回，不进入 matcher", input, out);
+        assertEquals("*", out);
         // 防御性断言：编译路径 < 50ms，远低于实际执行 (a+)+ 的回溯耗时（秒级）
         org.junit.Assert.assertTrue("ReDoS 防护必须在 50ms 内决断，实际 " + costMs + "ms", costMs < 50);
     }
 
     @Test
-    public void shouldReturnOriginalWhenRegexInvalidSyntax() {
+    public void shouldReturnReplacementWhenRegexInvalidSyntax() {
         MaskContext ctx = MaskContext.builder()
                 .classPath("com.demo.Foo").fieldName("x")
                 .regex("[unclosed").replacement("*").build();
-        assertEquals("hello", handler.handle("hello", ctx));
+        assertEquals("*", handler.handle("hello", ctx));
     }
 
     // ============ 防御：非 String / 空 regex ============
 
     @Test
-    public void shouldReturnAsIsForNonStringValue() {
+    public void shouldReturnReplacementForNonStringValue() {
         MaskContext ctx = MaskContext.builder()
                 .regex("[0-9]+").replacement("*").build();
-        Integer in = 12345;
-        assertSame(in, handler.handle(in, ctx));
+        assertEquals("*", handler.handle(12345, ctx));
     }
 
     @Test
-    public void shouldReturnAsIsForBlankRegex() {
+    public void shouldReturnReplacementForBlankRegex() {
         MaskContext ctx = MaskContext.builder().regex("").replacement("*").build();
-        assertEquals("abc123", handler.handle("abc123", ctx));
+        assertEquals("*", handler.handle("abc123", ctx));
     }
 
     @Test
@@ -116,7 +113,7 @@ public class CustomMaskHandlerTest {
         MaskContext ctx = MaskContext.builder()
                 .classPath("com.demo.Foo").fieldName("bigText")
                 .regex("a").replacement("*").build();
-        assertSame("超长输入应原样返回（同一引用）", big, handler.handle(big, ctx));
+        assertEquals("*", handler.handle(big, ctx));
     }
 
     @Test

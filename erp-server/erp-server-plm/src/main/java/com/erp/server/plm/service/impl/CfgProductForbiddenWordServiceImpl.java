@@ -121,11 +121,11 @@ public class CfgProductForbiddenWordServiceImpl extends SuperServiceImpl<CfgProd
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO updateStatus(String id, Boolean disabled) {
         CfgProductForbiddenWordEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到违禁词数据"));
-        boolean updated = lambdaUpdate()
-                .eq(CfgProductForbiddenWordEntity::getId, id)
-                .eq(CfgProductForbiddenWordEntity::getVersion, entity.getVersion())
-                .set(CfgProductForbiddenWordEntity::getDisabled, disabled)
-                .update();
+        CfgProductForbiddenWordEntity updateEntity = new CfgProductForbiddenWordEntity();
+        updateEntity.setId(id);
+        updateEntity.setVersion(entity.getVersion());
+        updateEntity.setDisabled(disabled);
+        boolean updated = super.updateById(updateEntity);
         if (!updated) {
             throw new ServiceException("违禁词状态更新失败，数据已被修改");
         }

@@ -11,6 +11,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.exception.ServiceException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -39,7 +40,7 @@ import lombok.extern.slf4j.Slf4j;
  *   <li>类元数据由 {@link MaskClassDescriptorRegistry} 提供，命中 {@link MaskClassDescriptor#NO_MASK} 直接 O(1) 返回</li>
  *   <li>字段反射 {@code Field.setAccessible(true)} 已在元数据扫描时设置，热路径无开销</li>
  *   <li>用 {@link IdentityHashMap} 跟踪已处理对象，避免循环引用导致栈溢出</li>
- *   <li>权限豁免在切面层早退；本类总是按全脱执行，不感知权限</li>
+ *   <li>方法级权限作为字段默认权限传入，字段级权限优先覆盖</li>
  * </ul>
  *
  * @author cloud-erp
@@ -90,17 +91,23 @@ public class MaskCore {
      * </ul>
      */
     public void process(Object returnValue) {
-        if (returnValue == null || registry == null) {
+        process(returnValue, "");
+    }
+
+    /**
+     * 入口：按方法级默认权限处理 Controller 返回值。
+     */
+    public void process(Object returnValue, String methodPermission) {
+        if (returnValue == null) {
             return;
         }
-        ensureDispatch();
-        try {
-            LoginUser user = UserContext.getLoginUser();
-            Set<String> permissionSet = toPermissionSet(user);
-            walk(returnValue, user, permissionSet, new IdentityHashMap<>(64));
-        } catch (Throwable e) {
-            log.warn("MaskCore process failed, return value will be returned without mask, msg={}", e.getMessage());
+        if (registry == null) {
+            throw new ServiceException("响应数据脱敏组件不可用");
         }
+        ensureDispatch();
+        LoginUser user = UserContext.getLoginUser();
+        Set<String> permissionSet = toPermissionSet(user);
+        walk(returnValue, user, permissionSet, methodPermission, new IdentityHashMap<>(64));
     }
 
     /**
@@ -114,16 +121,16 @@ public class MaskCore {
      *       维持本类历史行为，便于单测和老代码迁移。</li>
      * </ol>
      *
-     * <p>返回结果保证非空（Resolver 抛异常时降级为 emptySet，由 resolver 内部记录 warn）。</p>
+     * <p>返回结果保证非空。Resolver 异常时按无权限处理，避免权限解析失败时放行明文。</p>
      */
     private Set<String> toPermissionSet(LoginUser user) {
         if (permissionResolver != null) {
             try {
                 Set<String> resolved = permissionResolver.resolve(user);
                 return resolved == null ? Collections.emptySet() : resolved;
-            } catch (Throwable e) {
-                log.warn("MaskCore permissionResolver threw, fallback to LoginUser.permissionList, msg={}",
-                        e.getMessage());
+            } catch (Exception e) {
+                log.warn("MaskCore permissionResolver threw, treat as no permission, msg={}", e.getMessage());
+                return Collections.emptySet();
             }
         }
         if (user == null || user.getPermissionList() == null || user.getPermissionList().isEmpty()) {
@@ -155,7 +162,7 @@ public class MaskCore {
     /**
      * 递归遍历入口：根据对象类型解包到具体的元素，再走 {@link #walkPojo} 处理 POJO
      */
-    private void walk(Object obj, LoginUser user, Set<String> permissionSet,
+    private void walk(Object obj, LoginUser user, Set<String> permissionSet, String methodPermission,
                       IdentityHashMap<Object, Boolean> seen) {
         if (obj == null) {
             return;
@@ -164,14 +171,14 @@ public class MaskCore {
             return;
         }
         if (obj instanceof ApiResult) {
-            walk(((ApiResult<?>) obj).getData(), user, permissionSet, seen);
+            walk(((ApiResult<?>) obj).getData(), user, permissionSet, methodPermission, seen);
             return;
         }
         if (obj instanceof PagingVO) {
             List<?> list = ((PagingVO<?>) obj).getList();
             if (list != null) {
                 for (Object e : list) {
-                    walk(e, user, permissionSet, seen);
+                    walk(e, user, permissionSet, methodPermission, seen);
                 }
             }
             return;
@@ -180,20 +187,20 @@ public class MaskCore {
             List<?> records = ((IPage<?>) obj).getRecords();
             if (records != null) {
                 for (Object e : records) {
-                    walk(e, user, permissionSet, seen);
+                    walk(e, user, permissionSet, methodPermission, seen);
                 }
             }
             return;
         }
         if (obj instanceof Collection) {
             for (Object e : (Collection<?>) obj) {
-                walk(e, user, permissionSet, seen);
+                walk(e, user, permissionSet, methodPermission, seen);
             }
             return;
         }
         if (obj instanceof Map) {
             for (Object v : ((Map<?, ?>) obj).values()) {
-                walk(v, user, permissionSet, seen);
+                walk(v, user, permissionSet, methodPermission, seen);
             }
             return;
         }
@@ -202,18 +209,18 @@ public class MaskCore {
             if (!comp.isPrimitive()) {
                 Object[] arr = (Object[]) obj;
                 for (Object e : arr) {
-                    walk(e, user, permissionSet, seen);
+                    walk(e, user, permissionSet, methodPermission, seen);
                 }
             }
             return;
         }
-        walkPojo(obj, user, permissionSet, seen);
+        walkPojo(obj, user, permissionSet, methodPermission, seen);
     }
 
     /**
      * 处理一个 POJO：拿元数据 → 遍历每个 MaskFieldDescriptor → 脱敏或递归
      */
-    private void walkPojo(Object pojo, LoginUser user, Set<String> permissionSet,
+    private void walkPojo(Object pojo, LoginUser user, Set<String> permissionSet, String methodPermission,
                           IdentityHashMap<Object, Boolean> seen) {
         Class<?> clazz = pojo.getClass();
         MaskClassDescriptor descriptor = registry.of(clazz);
@@ -226,12 +233,13 @@ public class MaskCore {
             try {
                 value = field.get(pojo);
             } catch (IllegalAccessException e) {
-                continue;
+                throw new ServiceException(e, "响应数据脱敏失败");
             }
 
             // 字段级豁免：①权限码命中 ②MaskPermissionEvaluator 扩展点命中（任一即看明文）
             // 容器字段（无策略）仍继续递归
-            boolean fieldGranted = fd.hasStrategy() && isFieldGranted(user, permissionSet, pojo, fd);
+            boolean fieldGranted = fd.hasStrategy()
+                    && isFieldGranted(user, permissionSet, pojo, fd, methodPermission);
 
             if (fd.hasStrategy() && !fieldGranted) {
                 Object newValue = applyStrategy(pojo, fd, value);
@@ -243,15 +251,14 @@ public class MaskCore {
                     try {
                         field.set(pojo, newValue);
                     } catch (Exception e) {
-                        log.debug("MaskCore set field failed, class={}, field={}, msg={}",
-                                clazz.getName(), field.getName(), e.getMessage());
+                        throw new ServiceException(e, "响应数据脱敏失败");
                     }
                 }
                 value = newValue;
             }
 
             if (fd.isRecursive() && fd.isContainer() && value != null) {
-                walk(value, user, permissionSet, seen);
+                walk(value, user, permissionSet, methodPermission, seen);
             }
         }
     }
@@ -269,11 +276,13 @@ public class MaskCore {
      * <p>无 evaluator Bean 时第 3 步跳过；evaluator 抛异常被吞掉并按"未豁免"处理，不影响响应链路。</p>
      */
     private boolean isFieldGranted(LoginUser user, Set<String> permissionSet,
-                                   Object pojo, MaskFieldDescriptor fd) {
+                                   Object pojo, MaskFieldDescriptor fd, String methodPermission) {
         if (isSuperAdmin(user)) {
             return true;
         }
-        if (hasFieldPermission(permissionSet, fd.getPermission())) {
+        String effectivePermission = fd.getPermission() == null || fd.getPermission().isEmpty()
+                ? methodPermission : fd.getPermission();
+        if (hasFieldPermission(permissionSet, effectivePermission)) {
             return true;
         }
         if (permissionEvaluators == null || permissionEvaluators.isEmpty()) {
@@ -284,7 +293,7 @@ public class MaskCore {
                 if (evaluator.shouldShowPlain(user, pojo, fd)) {
                     return true;
                 }
-            } catch (Throwable e) {
+            } catch (Exception e) {
                 log.debug("MaskPermissionEvaluator threw, treat as not bypassed, evaluator={}, msg={}",
                         evaluator.getClass().getName(), e.getMessage());
             }
@@ -310,7 +319,7 @@ public class MaskCore {
         if (handler == null) {
             log.warn("MaskCore no handler for strategy={}, field={}, classPath={}",
                     fd.getStrategy(), fd.getField().getName(), owner.getClass().getName());
-            return value;
+            throw new ServiceException("响应数据脱敏配置异常");
         }
         MaskContext ctx = MaskContext.builder()
                 .owner(owner)
@@ -331,13 +340,10 @@ public class MaskCore {
      *   <li>方法 @MaskScan(disabled=true)</li>
      *   <li>当前用户为超级管理员。common-business 默认认 {@code LoginUser.isSupper == true}，
      *       业务服务引入 erp-rpc-sys 后对齐数据权限的 {@code roleId=1} 口径</li>
-     *   <li>方法 @MaskScan(permission) 不为空 且 当前用户拥有该权限码（经 {@link #permissionResolver} 解析）</li>
      * </ul>
      *
-     * <p><b>注意</b>：第 3 条改为走 {@link #permissionResolver} 而不是直接读
-     * {@link LoginUser#getPermissionList()}。项目里下游服务的 LoginUser.permissionList
-     * 通常是 null（详见 {@link com.common.business.vo.LoginUser#simpleLoginUser}），
-     * 直接读会导致 {@code @MaskScan(permission)} 在下游永远不生效。</p>
+     * <p>方法级 permission 不能在此处整段早退，否则会绕过字段级权限覆盖；
+     * 它在字段判权时仅作为未配置字段权限的默认值。</p>
      */
     public boolean shouldSkip(MaskScan scan) {
         if (scan != null && scan.disabled()) {
@@ -350,15 +356,6 @@ public class MaskCore {
         if (isSuperAdmin(user)) {
             return true;
         }
-        if (scan != null) {
-            String permission = scan.permission();
-            if (permission != null && !permission.isEmpty()) {
-                Set<String> perms = toPermissionSet(user);
-                if (!perms.isEmpty() && perms.contains(permission)) {
-                    return true;
-                }
-            }
-        }
         return false;
     }
 
@@ -369,7 +366,7 @@ public class MaskCore {
         if (permissionResolver != null) {
             try {
                 return permissionResolver.isSuperAdmin(user);
-            } catch (Throwable e) {
+            } catch (Exception e) {
                 log.warn("MaskCore permissionResolver.isSuperAdmin threw, fallback to LoginUser.isSupper, msg={}",
                         e.getMessage());
             }
@@ -391,7 +388,7 @@ public class MaskCore {
     void walkPojoForTest(Object pojo) {
         ensureDispatch();
         LoginUser user = UserContext.getLoginUser();
-        walkPojo(pojo, user, toPermissionSet(user), new IdentityHashMap<>());
+        walkPojo(pojo, user, toPermissionSet(user), "", new IdentityHashMap<>());
     }
 
     /**

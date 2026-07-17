@@ -193,7 +193,7 @@ public class CfgMaskWordServiceImpl
         } catch (Throwable e) {
             log.warn("CfgMaskWord rebuild redis cache failed", e);
             if (throwOnError) {
-                throw new ServiceException("刷新脱敏词典 Redis 缓存失败：" + e.getMessage());
+                throw new ServiceException(e, "刷新脱敏词典 Redis 缓存失败");
             }
             return false;
         }
