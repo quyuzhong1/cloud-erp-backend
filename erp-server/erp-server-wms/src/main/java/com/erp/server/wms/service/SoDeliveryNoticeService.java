@@ -320,9 +320,6 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
      */
     BatchResultDTO handleErrorData(String id);
 
-    PagingVO<SoDeliveryNoticeDTO.PagingView> exportSoDeliveryNotice(PagingDTO<SoDeliveryNoticeDTO.PagingParam> dto);
-
-
     /**
      * 更新中转仓库配置
      * @param entity

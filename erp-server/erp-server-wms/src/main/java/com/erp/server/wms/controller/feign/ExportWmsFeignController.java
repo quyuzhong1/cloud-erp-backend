@@ -24,6 +24,7 @@ import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.server.wms.handler.InventoryQueryHandler;
 import com.erp.server.wms.query.*;
 import com.erp.server.wms.service.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -32,7 +33,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.concurrent.ExecutionException;
 
+@Slf4j
 @RestController
 @RequestMapping("/feign/export")
 public class ExportWmsFeignController {
@@ -701,7 +704,15 @@ public class ExportWmsFeignController {
     )
     @WebAdvanceQuery(handler = SoDeliveryNoticeQueryHandler.class)
     public PagingVO<SoDeliveryNoticeDTO.PagingView> exportSoDeliveryNotice(@RequestBody PagingDTO<SoDeliveryNoticeDTO.PagingParam> dto) {
-        return soDeliveryNoticeService.exportSoDeliveryNotice(dto);
+        try {
+            return soDeliveryNoticeService.paging(dto);
+        } catch (ExecutionException e) {
+            log.error("Error occurred while exporting SO delivery notice", e);
+            throw new RuntimeException(e);
+        } catch (InterruptedException e) {
+            log.error("Interrupted while exporting SO delivery notice", e);
+            throw new RuntimeException(e);
+        }
     }
 
     @PostMapping("/soDeliveryNoticeChange")
