@@ -21,6 +21,12 @@ public class SysConstant {
 
     public static final Integer FUNCTION_TYPE = 4;
 
+    /**
+     * 字段权限码菜单：menu_code 同时作为 cfg_mask_field.permission_code，
+     * 挂到角色 sys_role_menu 即放开该字段的明文查看权限。
+     */
+    public static final Integer FIELD_PERMISSION_TYPE = 5;
+
 
     public static final Integer YES_STATE = 1;
 
