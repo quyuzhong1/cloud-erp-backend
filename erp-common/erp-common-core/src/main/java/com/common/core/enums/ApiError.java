@@ -246,6 +246,8 @@ public final class ApiError implements Serializable {
     public static final ApiError COMMON_LARK_USER_INFO_FAILED = ApiErrorCommon.COMMON_LARK_USER_INFO_FAILED;
     public static final ApiError COMMON_LARK_UNION_ID_NOT_FOUND = ApiErrorCommon.COMMON_LARK_UNION_ID_NOT_FOUND;
     public static final ApiError COMMON_LARK_UNION_ID_FETCH_FAILED = ApiErrorCommon.COMMON_LARK_UNION_ID_FETCH_FAILED;
+    public static final ApiError COMMON_THREAD_INTERRUPTED_EXCEPTION = ApiErrorCommon.COMMON_THREAD_INTERRUPTED_EXCEPTION;
+    public static final ApiError COMMON_EXECUTOR_EXCEPTION = ApiErrorCommon.COMMON_EXECUTOR_EXCEPTION;
 
     public static final ApiError FASTDFS_UPLOAD_FAILED_FOR_WAYBILL = ApiErrorCommon.FASTDFS_UPLOAD_FAILED_FOR_WAYBILL;
     public static final ApiError FILE_EXCEL_PARSE = ApiErrorCommon.FILE_EXCEL_PARSE;

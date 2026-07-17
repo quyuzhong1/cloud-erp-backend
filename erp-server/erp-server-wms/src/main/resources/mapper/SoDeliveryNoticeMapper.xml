@@ -40,7 +40,7 @@
         sd.box_qty as salesQty,
         pd.name as productName,
         pd.unit_name as unit,
-        CASE WHEN total.total_delivery_qty = total.total_picked_qty THEN '已生成' WHEN total.total_picked_qty > 0 THEN '部分生成' ELSE '未生成' END AS generationPickStatus
+        CASE WHEN total.total_picked_qty = 0 THEN '未生成' WHEN total.total_delivery_qty = total.total_picked_qty THEN '已生成' ELSE '部分生成' END AS generationPickStatus
         FROM
         so_delivery_notice sdn
         LEFT JOIN so_delivery_notice_detail sdnd ON sdn.ID = sdnd.main_id and sdnd.is_deleted=false

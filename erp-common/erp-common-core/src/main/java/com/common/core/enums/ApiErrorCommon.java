@@ -240,6 +240,8 @@ public final class ApiErrorCommon {
     public static final ApiError COMMON_LARK_USER_INFO_FAILED = new ApiError("COMMON_LARK_USER_INFO_FAILED", 13721, "获取飞书用户信息失败：{0}");
     public static final ApiError COMMON_LARK_UNION_ID_NOT_FOUND = new ApiError("COMMON_LARK_UNION_ID_NOT_FOUND", 13722, "未找到飞书Union ID");
     public static final ApiError COMMON_LARK_UNION_ID_FETCH_FAILED = new ApiError("COMMON_LARK_UNION_ID_FETCH_FAILED", 13723, "获取飞书Union ID失败：{0}");
+    public static final ApiError COMMON_THREAD_INTERRUPTED_EXCEPTION = new ApiError("COMMON_THREAD_INTERRUPTED_EXCEPTION", 13724, "线程被中断：{0}");
+    public static final ApiError COMMON_EXECUTOR_EXCEPTION = new ApiError("COMMON_EXECUTOR_EXCEPTION", 13725, "异步处理异常：{0}");
 
     public static final ApiError FASTDFS_UPLOAD_FAILED_FOR_WAYBILL = new ApiError("FASTDFS_UPLOAD_FAILED_FOR_WAYBILL", 11216, "面单上传FastDFS失败");
     public static final ApiError FILE_EXCEL_PARSE = new ApiError("FILE_EXCEL_PARSE", 2400, "Excel解析数据时发生错误");
