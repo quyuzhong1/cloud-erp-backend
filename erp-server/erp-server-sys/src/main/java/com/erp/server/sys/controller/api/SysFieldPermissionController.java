@@ -1,5 +1,6 @@
 package com.erp.server.sys.controller.api;
 
+import com.common.business.annotation.SuperAdminOnly;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
@@ -29,6 +30,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @RestController
+@SuperAdminOnly
 @LogSystemModule("字段权限管理")
 @RequestMapping("/fieldPermission")
 public class SysFieldPermissionController extends BaseController {

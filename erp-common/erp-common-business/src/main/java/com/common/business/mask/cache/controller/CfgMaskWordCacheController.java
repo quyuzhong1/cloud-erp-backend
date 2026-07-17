@@ -1,5 +1,6 @@
 package com.common.business.mask.cache.controller;
 
+import com.common.business.annotation.SuperAdminOnly;
 import com.common.business.mask.cache.CfgMaskWordLocalCache;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -17,10 +18,11 @@ import java.util.Map;
  * @author cloud-erp
  */
 @RestController
+@SuperAdminOnly
 @RequestMapping("maskWordCfgCache")
 public class CfgMaskWordCacheController extends BaseController {
 
-    @Resource
+    @Resource(name = "cfgMaskWordLocalCache")
     private CfgMaskWordLocalCache localCache;
 
     /**

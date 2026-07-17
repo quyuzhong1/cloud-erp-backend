@@ -1,5 +1,6 @@
 package com.erp.server.sys.controller.api;
 
+import com.common.business.annotation.SuperAdminOnly;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -41,6 +42,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @RestController
+@SuperAdminOnly
 @LogSystemModule("脱敏诊断")
 @RequestMapping("/maskDiagnose")
 class MaskDiagnoseController extends BaseController {

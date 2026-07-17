@@ -202,7 +202,7 @@ public class CfgMaskFieldServiceImpl
         } catch (Throwable e) {
             log.warn("CfgMaskField rebuild redis cache failed", e);
             if (throwOnError) {
-                throw new ServiceException("刷新脱敏配置 Redis 缓存失败：" + e.getMessage());
+                throw new ServiceException(e, "刷新脱敏配置 Redis 缓存失败");
             }
             return false;
         }

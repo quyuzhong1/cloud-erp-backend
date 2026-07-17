@@ -23,7 +23,7 @@ import lombok.extern.slf4j.Slf4j;
  * <p>双重 ReDoS 防护：</p>
  * <ol>
  *   <li><b>编译时</b>：{@link RegexSafetyGuard#check} 拦截嵌套量词等已知灾难性回溯模式；
- *       不通过的正则编译为 {@link #INVALID} 哨兵，后续直接返回原值；</li>
+ *       不通过的正则编译为 {@link #INVALID} 哨兵，后续返回安全占位；</li>
  *   <li><b>运行时</b>：输入文本超过 {@link RegexSafetyGuard#MAX_INPUT_LEN} 跳过匹配，
  *       把单字段 worst-case CPU 限制在百毫秒内；超过 {@link #SLOW_REGEX_WARN_NS}
  *       的单次匹配 warn 一行（含 className#fieldName），便于在 ELK 抓出问题正则。</li>
@@ -44,7 +44,7 @@ public class CustomMaskHandler implements MaskHandler {
     private final ConcurrentHashMap<String, Pattern> patternCache = new ConcurrentHashMap<>(64);
 
     /**
-     * 哨兵：表示该字符串编译失败 / 命中安全黑名单，下次直接返回原值，避免重复抛异常
+     * 哨兵：表示该字符串编译失败 / 命中安全黑名单，下次直接返回安全占位，避免重复抛异常
      */
     private static final Pattern INVALID = Pattern.compile("");
 
@@ -55,23 +55,26 @@ public class CustomMaskHandler implements MaskHandler {
 
     @Override
     public Object handle(Object value, MaskContext ctx) {
+        if (value == null) {
+            return ctx.isKeepEmpty() ? null : ctx.getReplacement();
+        }
         if (!(value instanceof String)) {
-            return value;
+            return ctx.getReplacement();
         }
         String regex = ctx.getRegex();
         if (regex == null || regex.isEmpty()) {
-            return value;
+            return ctx.getReplacement();
         }
         Pattern p = patternCache.computeIfAbsent(regex, this::compileSafe);
         if (p == INVALID) {
-            return value;
+            return ctx.getReplacement();
         }
         String text = (String) value;
         // 运行时长度护栏：超长输入跳过，避免单字段拖垮整个响应
         if (text.length() > RegexSafetyGuard.MAX_INPUT_LEN) {
             log.warn("CustomMaskHandler skip oversized input: classPath={}, field={}, len={}, threshold={}",
                     ctx.getClassPath(), ctx.getFieldName(), text.length(), RegexSafetyGuard.MAX_INPUT_LEN);
-            return text;
+            return ctx.getReplacement();
         }
         long start = System.nanoTime();
         try {

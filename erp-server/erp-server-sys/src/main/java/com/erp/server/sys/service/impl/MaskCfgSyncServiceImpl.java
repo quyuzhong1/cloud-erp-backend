@@ -80,25 +80,33 @@ public class MaskCfgSyncServiceImpl implements MaskCfgSyncService {
             }
 
             boolean fieldChanged = !Objects.equals(cfgMaskFieldHashSnapshot, currentFieldHash);
+            boolean fieldPublished = true;
             stats.put("cfgMaskFieldChanged", fieldChanged);
             if (fieldChanged) {
                 log.info("MaskCfgSyncJob cfg_mask_field hash changed: {} -> {}",
                         shortHash(cfgMaskFieldHashSnapshot), shortHash(currentFieldHash));
-                safelyPublishCfgMaskField();
+                fieldPublished = safelyPublishCfgMaskField();
+                stats.put("cfgMaskFieldPublished", fieldPublished);
+                if (fieldPublished) {
+                    cfgMaskFieldHashSnapshot = currentFieldHash;
+                }
             }
 
             boolean wordChanged = !Objects.equals(cfgMaskWordHashSnapshot, currentWordHash);
+            boolean wordPublished = true;
             stats.put("cfgMaskWordChanged", wordChanged);
             if (wordChanged) {
                 log.info("MaskCfgSyncJob cfg_mask_word hash changed: {} -> {}",
                         shortHash(cfgMaskWordHashSnapshot), shortHash(currentWordHash));
-                safelyPublishCfgMaskWord();
+                wordPublished = safelyPublishCfgMaskWord();
+                stats.put("cfgMaskWordPublished", wordPublished);
+                if (wordPublished) {
+                    cfgMaskWordHashSnapshot = currentWordHash;
+                }
             }
 
-            cfgMaskFieldHashSnapshot = currentFieldHash;
-            cfgMaskWordHashSnapshot = currentWordHash;
-            stats.put("success", true);
-        } catch (Throwable e) {
+            stats.put("success", fieldPublished && wordPublished);
+        } catch (Exception e) {
             log.warn("MaskCfgSyncJob failed, snapshot keeps unchanged, next run retry", e);
             stats.put("success", false);
             stats.put("errorMsg", e.getClass().getSimpleName() + ":" + e.getMessage());
@@ -130,32 +138,34 @@ public class MaskCfgSyncServiceImpl implements MaskCfgSyncService {
     }
 
     /**
-     * 调 cfg_mask_field 全量 Redis 回填，失败只 warn，不抛
+     * 调 cfg_mask_field 全量 Redis 回填，失败只 warn 并返回 false
      */
-    private void safelyPublishCfgMaskField() {
+    private boolean safelyPublishCfgMaskField() {
         if (cfgMaskFieldService == null) {
             log.warn("CfgMaskFieldService not available, skip redis refresh");
-            return;
+            return false;
         }
         try {
-            cfgMaskFieldService.publishFullCache();
-        } catch (Throwable e) {
+            return Boolean.TRUE.equals(cfgMaskFieldService.publishFullCache());
+        } catch (Exception e) {
             log.warn("refresh cfg_mask_field redis cache failed, next run will retry on diff", e);
+            return false;
         }
     }
 
     /**
-     * 调 cfg_mask_word 全量 Redis 回填，失败只 warn，不抛
+     * 调 cfg_mask_word 全量 Redis 回填，失败只 warn 并返回 false
      */
-    private void safelyPublishCfgMaskWord() {
+    private boolean safelyPublishCfgMaskWord() {
         if (cfgMaskWordService == null) {
             log.warn("CfgMaskWordService not available, skip redis refresh");
-            return;
+            return false;
         }
         try {
-            cfgMaskWordService.publishFullCache();
-        } catch (Throwable e) {
+            return Boolean.TRUE.equals(cfgMaskWordService.publishFullCache());
+        } catch (Exception e) {
             log.warn("refresh cfg_mask_word redis cache failed, next run will retry on diff", e);
+            return false;
         }
     }
 

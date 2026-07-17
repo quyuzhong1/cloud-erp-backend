@@ -1,5 +1,6 @@
 package com.erp.server.sys.controller.api;
 
+import com.common.business.annotation.SuperAdminOnly;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.server.sys.service.MaskCfgSyncService;
@@ -25,6 +26,7 @@ import java.util.Map;
  * @author cloud-erp
  */
 @RestController
+@SuperAdminOnly
 @RequestMapping("maskCfgSync")
 public class MaskCfgSyncController extends BaseController {
 

@@ -1,6 +1,7 @@
 package com.erp.server.plm.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.SuperAdminOnly;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -35,6 +36,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @RestController
+@SuperAdminOnly
 @LogSystemModule("产品检测")
 @RequestMapping("/productForbiddenWordCheck")
 public class ProductForbiddenWordCheckController extends BaseController {
@@ -82,7 +84,7 @@ public class ProductForbiddenWordCheckController extends BaseController {
                     resultDTOS.add(deleteResult);
                     continue;
                 }
-                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getReportName(), e.getMessage());
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getReportName(), e);
             }
             resultDTOS.add(deleteResult);
         }

@@ -1,5 +1,6 @@
 package com.common.business.mask.cache.controller;
 
+import com.common.business.annotation.SuperAdminOnly;
 import com.common.business.mask.MaskPermissionResolver;
 import com.common.business.mask.cache.CfgMaskFieldLocalCache;
 import com.common.business.mask.core.MaskClassDescriptorRegistry;
@@ -35,10 +36,11 @@ import java.util.stream.Collectors;
  * @author cloud-erp
  */
 @RestController
+@SuperAdminOnly
 @RequestMapping("maskFieldCfgCache")
 public class CfgMaskFieldCacheController extends BaseController {
 
-    @Resource
+    @Resource(name = "cfgMaskFieldLocalCache")
     private CfgMaskFieldLocalCache localCache;
 
     @Autowired(required = false)
