@@ -239,6 +239,14 @@ public final class ApiError implements Serializable {
     public static final ApiError COMMON_COUNTRY_INFO_NOT_FOUND = ApiErrorCommon.COMMON_COUNTRY_INFO_NOT_FOUND;
     public static final ApiError COMMON_CFG_SETTING_SAVE_FAILED = ApiErrorCommon.COMMON_CFG_SETTING_SAVE_FAILED;
     public static final ApiError COMMON_CFG_SETTING_TYPE_INVALID = ApiErrorCommon.COMMON_CFG_SETTING_TYPE_INVALID;
+    public static final ApiError COMMON_REMOTE_SERVICE_ERROR = ApiErrorCommon.COMMON_REMOTE_SERVICE_ERROR;
+    public static final ApiError COMMON_REMOTE_RESPONSE_EMPTY = ApiErrorCommon.COMMON_REMOTE_RESPONSE_EMPTY;
+    public static final ApiError COMMON_REMOTE_RESPONSE_INVALID = ApiErrorCommon.COMMON_REMOTE_RESPONSE_INVALID;
+    public static final ApiError COMMON_THIRD_PARTY_API_FAILED = ApiErrorCommon.COMMON_THIRD_PARTY_API_FAILED;
+    public static final ApiError COMMON_LARK_USER_INFO_FAILED = ApiErrorCommon.COMMON_LARK_USER_INFO_FAILED;
+    public static final ApiError COMMON_LARK_UNION_ID_NOT_FOUND = ApiErrorCommon.COMMON_LARK_UNION_ID_NOT_FOUND;
+    public static final ApiError COMMON_LARK_UNION_ID_FETCH_FAILED = ApiErrorCommon.COMMON_LARK_UNION_ID_FETCH_FAILED;
+
     public static final ApiError FASTDFS_UPLOAD_FAILED_FOR_WAYBILL = ApiErrorCommon.FASTDFS_UPLOAD_FAILED_FOR_WAYBILL;
     public static final ApiError FILE_EXCEL_PARSE = ApiErrorCommon.FILE_EXCEL_PARSE;
     public static final ApiError FILE_EXPORT_FAILED = ApiErrorCommon.FILE_EXPORT_FAILED;
@@ -2072,6 +2080,7 @@ public final class ApiError implements Serializable {
     public static final ApiError WF_KOL_B2C_WAIT_SUB_TASK_COMPLETE = ApiErrorWorkflow.WF_KOL_B2C_WAIT_SUB_TASK_COMPLETE;
     public static final ApiError WF_TASK_RECORD_TYPE_NOT_FOUND = ApiErrorWorkflow.WF_TASK_RECORD_TYPE_NOT_FOUND;
     public static final ApiError WF_TASK_INSTANCE_VERSION_CONFLICT = ApiErrorWorkflow.WF_TASK_INSTANCE_VERSION_CONFLICT;
+    public static final ApiError WF_CUR_APPROVER_QUERY_FAILED = ApiErrorWorkflow.WF_CUR_APPROVER_QUERY_FAILED;
 
     @Getter
     private final Integer code;

@@ -90,6 +90,7 @@ public enum ModuleTypeEnum {
     WAREHOUSE_AREA("80", "库区"),
     PICKING_STRATEGY("81", "拣货策略"),
     WAREHOUSE_LOCATION("90", "仓位"),
+    WAREHOUSE_LOCATION_MAPPING("168", "仓位绑定"),
 
 
 
