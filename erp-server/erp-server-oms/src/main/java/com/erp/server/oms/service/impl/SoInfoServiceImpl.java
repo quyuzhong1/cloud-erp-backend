@@ -2611,7 +2611,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<String> soIdList = viewList.stream().map(SoInfoDTO.GenerateDeliveryView::getSoId).distinct().collect(Collectors.toList());
         Map<String, String> virtualWarehouseIdBySoId = CollectionUtils.isEmpty(soIdList) ? Collections.emptyMap()
                 : this.listByIds(soIdList).stream()
-                .filter(so -> CharSequenceUtil.isNotBlank(so.getVirtualWarehouseId()))
                 .collect(Collectors.toMap(SoInfoEntity::getId, SoInfoEntity::getVirtualWarehouseId, (a, b) -> a));
         List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKey(DictBasicTypeEnum.SKU_NO.getType());
         for (SoInfoDTO.GenerateDeliveryView view : viewList) {
@@ -2636,7 +2635,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             view.setEffectiveNoticeQty(effectiveNoticeQty);
             // 待发货通知数量 = 销售数量 - 累计发货通知数量 - 锁定数量
             view.setWaitNoticeQty(salesQty - effectiveNoticeQty - frozenQty);
-            boolean hasVirtualWarehouse = virtualWarehouseIdBySoId.containsKey(view.getSoId());
+            boolean hasVirtualWarehouse = StringUtils.isNotBlank(virtualWarehouseIdBySoId.get(view.getSoId()));
             // 有虚拟仓：发货数量默认填充锁定数量；无虚拟仓：发货数量默认填充可发数量（销售数量 - 发货通知数量）
             if (hasVirtualWarehouse) {
                 view.setDeliveryQty(frozenQty);

@@ -56,8 +56,10 @@ public class SoInfoQueryHandler extends AbstractQueryHandler {
             return " (si.remark "+compareCodeSplicingValueSql+" or sod.remark "+ compareCodeSplicingValueSql +") ";
         }
         /**
-         * 可发货状态：0=无货可发(锁定数量=0)，1=部分可发(0<锁定数量<销售数量)，2=全量可发(锁定数量=销售数量)
-         * 锁定数量=sod.frozen_qty，销售数量=sod.box_qty
+         * 可发货状态：0=无货可发，1=部分可发，2=全量可发。
+         * 该字段仅针对有虚拟仓（si.virtual_warehouse_id 非空）的数据，查询时自动过滤掉无虚拟仓的数据；
+         * 可发数量沿用锁定数量口径（sod.frozen_qty），与销售数量(sod.box_qty)比较：
+         * 0档=锁定数量为0；1档=0<锁定数量<销售数量；2档=锁定数量>0且≥销售数量。
          */
         if ("shipableStatus".equals(field)) {
             List<String> statusList = new ArrayList<>();
@@ -73,20 +75,27 @@ public class SoInfoQueryHandler extends AbstractQueryHandler {
             if (CollectionUtils.isEmpty(statusList)) {
                 return getQueryAllSql();
             }
+            // 该字段仅针对虚拟仓数据，自动过滤掉无虚拟仓的数据
+            String hasVw = "COALESCE(si.virtual_warehouse_id,'') <> ''";
+            // 销售数量
+            String boxQty = "COALESCE(sod.box_qty, 0)";
+            // 可发数量口径 = 锁定数量
+            String frozenQty = "COALESCE(sod.frozen_qty, 0)";
             List<String> conditions = new ArrayList<>();
             for (String status : statusList) {
                 if (ShipableStatusEnum.NONE.getCode().toString().equals(status)) {
-                    conditions.add("COALESCE(sod.frozen_qty,0) = 0");
+                    conditions.add("(" + frozenQty + " = 0)");
                 } else if (ShipableStatusEnum.PART.getCode().toString().equals(status)) {
-                    conditions.add("(COALESCE(sod.frozen_qty,0) > 0 and COALESCE(sod.frozen_qty,0) < COALESCE(sod.box_qty,0))");
+                    conditions.add("(" + frozenQty + " > 0 and " + frozenQty + " < " + boxQty + ")");
                 } else if (ShipableStatusEnum.ALL.getCode().toString().equals(status)) {
-                    conditions.add("(COALESCE(sod.frozen_qty,0) > 0 and COALESCE(sod.frozen_qty,0) >= COALESCE(sod.box_qty,0))");
+                    conditions.add("(" + frozenQty + " > 0 and " + frozenQty + " >= " + boxQty + ")");
                 }
             }
             if (CollectionUtils.isEmpty(conditions)) {
                 return getQueryEmptySql();
             }
-            return " (" + String.join(" or ", conditions) + ") ";
+            // 拼接：虚拟仓过滤 and (各档位 or ...)
+            return " (" + hasVw + " and (" + String.join(" or ", conditions) + ")) ";
         }
         /**
          * SPU编号查询
