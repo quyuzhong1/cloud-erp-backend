@@ -2,11 +2,8 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.SourceTypeEnum;
-import com.common.business.vo.PagingVO;
 import com.common.core.exception.ServiceException;
-import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.dto.WarehouseLocationDTO.LocationListDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDetailDTO;
@@ -18,7 +15,6 @@ import com.erp.model.wms.entity.WarehouseLocationMoveEntity;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.server.wms.service.InventoryService;
 import com.erp.server.wms.service.WarehouseLocationMoveService;
-import com.erp.server.wms.service.WarehouseLocationService;
 import com.erp.server.wms.service.WarehouseService;
 import com.erp.server.wms.service.WdtSoOutstockAutoMoveService;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +28,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -48,8 +45,6 @@ public class WdtSoOutstockAutoMoveServiceImpl implements WdtSoOutstockAutoMoveSe
     private WarehouseService warehouseService;
     @Resource
     private InventoryService inventoryService;
-    @Resource
-    private WarehouseLocationService warehouseLocationService;
     @Resource
     private WarehouseLocationMoveService warehouseLocationMoveService;
 
@@ -69,9 +64,14 @@ public class WdtSoOutstockAutoMoveServiceImpl implements WdtSoOutstockAutoMoveSe
         Map<String, List<NeedStock>> byWarehouse = needMap.values().stream()
                 .collect(Collectors.groupingBy(NeedStock::getWarehouseId, LinkedHashMap::new, Collectors.toList()));
 
+        // 批量加载仓库，避免按仓 getById
+        Map<String, WarehouseEntity> warehouseMap = warehouseService.listByIds(byWarehouse.keySet()).stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.toMap(WarehouseEntity::getId, w -> w, (a, b) -> a, LinkedHashMap::new));
+
         for (Map.Entry<String, List<NeedStock>> entry : byWarehouse.entrySet()) {
             String warehouseId = entry.getKey();
-            WarehouseEntity warehouse = warehouseService.getById(warehouseId);
+            WarehouseEntity warehouse = warehouseMap.get(warehouseId);
             if (warehouse == null) {
                 log.warn("旺店通出库预检移仓跳过：仓库不存在 warehouseId={}", warehouseId);
                 continue;
@@ -82,9 +82,13 @@ public class WdtSoOutstockAutoMoveServiceImpl implements WdtSoOutstockAutoMoveSe
 
             boolean alreadyMoved = CharSequenceUtil.isNotBlank(sourceId) && existsMovedBySource(sourceId, warehouseId);
 
+            List<NeedStock> needList = entry.getValue();
+            // 按仓批量加载本单涉及 SKU 的可用库存：同时用于当前库位预检 + 候选源仓分配
+            WarehouseInventoryCache inventoryCache = loadWarehouseInventoryCache(warehouse, needList);
+
             List<WarehouseLocationMoveDetailDTO.AddDTO> moveDetailList = new ArrayList<>();
-            for (NeedStock need : entry.getValue()) {
-                planMoveForNeed(warehouse, need, detailList, inOutStockList, moveDetailList, alreadyMoved);
+            for (NeedStock need : needList) {
+                planMoveForNeed(need, detailList, inOutStockList, moveDetailList, alreadyMoved, inventoryCache);
             }
             moveDetailList.removeIf(d -> Objects.equals(d.getInWarehouseLocation(), d.getOutWarehouseLocation())
                     || d.getQty() == null || d.getQty() <= 0);
@@ -128,16 +132,56 @@ public class WdtSoOutstockAutoMoveServiceImpl implements WdtSoOutstockAutoMoveSe
                 .one() != null;
     }
 
-    private void planMoveForNeed(WarehouseEntity warehouse, NeedStock need,
+    /**
+     * 按仓库一次查出本单 SKU 的全部可用库存，构建当前库位数量 Map 与候选源仓列表。
+     */
+    private WarehouseInventoryCache loadWarehouseInventoryCache(WarehouseEntity warehouse, List<NeedStock> needList) {
+        Set<String> skuIds = needList.stream()
+                .map(NeedStock::getSkuId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .collect(Collectors.toSet());
+        WarehouseInventoryCache cache = new WarehouseInventoryCache();
+        if (CollUtil.isEmpty(skuIds)) {
+            return cache;
+        }
+        List<InventoryEntity> inventoryList = inventoryService.lambdaQuery()
+                .eq(InventoryEntity::getOrgId, warehouse.getOrgId())
+                .eq(InventoryEntity::getWarehouseId, warehouse.getId())
+                .eq(InventoryEntity::getDictInventoryStatus, InventoryStatusEnum.USABLE.getCode())
+                .in(InventoryEntity::getSkuId, skuIds)
+                .list();
+        if (CollUtil.isEmpty(inventoryList)) {
+            return cache;
+        }
+        for (InventoryEntity inv : inventoryList) {
+            if (inv == null || CharSequenceUtil.isBlank(inv.getSkuId())) {
+                continue;
+            }
+            String location = CharSequenceUtil.nullToEmpty(inv.getWarehouseLocation());
+            int qty = inv.getQty() == null ? 0 : inv.getQty();
+            cache.qtyBySkuLocation.put(buildSkuLocationKey(inv.getSkuId(), location), qty);
+            if (qty <= 0) {
+                continue;
+            }
+            LocationListDTO locationDto = new LocationListDTO();
+            locationDto.setCode(location);
+            locationDto.setUsableQty(qty);
+            cache.locationsBySkuId
+                    .computeIfAbsent(inv.getSkuId(), k -> new ArrayList<>())
+                    .add(locationDto);
+        }
+        return cache;
+    }
+
+    private void planMoveForNeed(NeedStock need,
                                  List<SoOutstockDetailEntity> detailList,
                                  List<InOutStockDTO> inOutStockList,
                                  List<WarehouseLocationMoveDetailDTO.AddDTO> moveDetailList,
-                                 boolean alreadyMoved) {
-        String orgId = warehouse.getOrgId();
+                                 boolean alreadyMoved,
+                                 WarehouseInventoryCache inventoryCache) {
         String currentLocation = CharSequenceUtil.nullToEmpty(need.getWarehouseLocation());
-        InventoryEntity currentInv = inventoryService.findInventory(
-                orgId, need.getWarehouseId(), need.getSkuId(), currentLocation, InventoryStatusEnum.USABLE.getCode());
-        int haveQty = currentInv == null || currentInv.getQty() == null ? 0 : currentInv.getQty();
+        int haveQty = inventoryCache.qtyBySkuLocation.getOrDefault(
+                buildSkuLocationKey(need.getSkuId(), currentLocation), 0);
         if (haveQty >= need.getQty()) {
             return;
         }
@@ -148,22 +192,19 @@ public class WdtSoOutstockAutoMoveServiceImpl implements WdtSoOutstockAutoMoveSe
             return;
         }
 
-        // 全量移入空仓位，不再用空仓位现有量计算缺口
+        // 全量移入空仓位；候选源仓来自本仓批量库存缓存（等价于原 pagingSelect + filterZero）
         int moveQty = need.getQty();
-        PagingDTO<WarehouseLocationDTO.SelectDTO> searchDTO = new PagingDTO<>();
-        searchDTO.setPageSize(-1);
-        searchDTO.setCurrPage(1);
-        WarehouseLocationDTO.SelectDTO params = new WarehouseLocationDTO.SelectDTO();
-        params.setWarehouseId(need.getWarehouseId());
-        params.setFilterZero(true);
-        params.setSkuNo(need.getSkuNo());
-        searchDTO.setParams(params);
-
-        PagingVO<LocationListDTO> pagingVO = warehouseLocationService.pagingSelect(searchDTO);
-        List<LocationListDTO> locationList = pagingVO == null ? null : pagingVO.getList();
-        if (CollUtil.isEmpty(locationList)) {
+        List<LocationListDTO> sourceLocations = inventoryCache.locationsBySkuId.get(need.getSkuId());
+        if (CollUtil.isEmpty(sourceLocations)) {
             return;
         }
+        // 拷贝一份，避免本单多 SKU/多行互相扣减 usableQty 时污染缓存
+        List<LocationListDTO> locationList = sourceLocations.stream().map(src -> {
+            LocationListDTO copy = new LocationListDTO();
+            copy.setCode(src.getCode());
+            copy.setUsableQty(src.getUsableQty());
+            return copy;
+        }).collect(Collectors.toList());
 
         Map<String, Integer> plannedOutMaps = new HashMap<>();
         for (WarehouseLocationMoveDetailDTO.AddDTO planned : moveDetailList) {
@@ -260,7 +301,6 @@ public class WdtSoOutstockAutoMoveServiceImpl implements WdtSoOutstockAutoMoveSe
         predicateList.add(l -> CharSequenceUtil.startWith(l.getCode(), "3"));
         predicateList.add(l -> CharSequenceUtil.startWith(l.getCode(), "4"));
         predicateList.add(l -> CharSequenceUtil.startWith(CharSequenceUtil.nullToEmpty(l.getCode()), ""));
-        predicateList.add(l -> Objects.equals(l.getCode(), "2"));
         return predicateList;
     }
 
@@ -318,6 +358,17 @@ public class WdtSoOutstockAutoMoveServiceImpl implements WdtSoOutstockAutoMoveSe
             need.setQty(need.getQty() + item.getQty());
         }
         return map;
+    }
+
+    private static String buildSkuLocationKey(String skuId, String location) {
+        return skuId + "_" + CharSequenceUtil.nullToEmpty(location);
+    }
+
+    private static class WarehouseInventoryCache {
+        /** key = skuId_location */
+        private final Map<String, Integer> qtyBySkuLocation = new HashMap<>();
+        /** key = skuId，value = 该 SKU 有可用库存的仓位列表 */
+        private final Map<String, List<LocationListDTO>> locationsBySkuId = new HashMap<>();
     }
 
     @lombok.Data
