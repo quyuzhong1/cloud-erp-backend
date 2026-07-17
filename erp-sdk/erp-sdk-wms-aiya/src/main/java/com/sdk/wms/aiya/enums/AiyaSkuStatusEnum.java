@@ -12,7 +12,7 @@ import lombok.Getter;
  * </ul>
  * 文档处理策略：两种状态都拉取，本枚举负责标识两种状态均需同步到 OMS 未匹配表；
  * 爱亚已停用（{@code Inactive}）时，若该 SKU 已建立映射关系，由
- * {@code ListingInfoService#reconcileWarehouseSkuSnapshot} 全量快照回收逻辑将对应
+ * {@code ListingInfoService#syncWarehouseNotMatchSku} 将对应
  * {@code sku_mapping.status} 置为禁用（不会自动重新启用，需人工确认后手动恢复）。
  * <p>
  * 2026-07-16 联调实测确认：真实响应 {@code status} 字段值为 {@code "Active"}（首字母大写，与文档一致）。

@@ -114,27 +114,21 @@ public interface ListingInfoService extends SuperService<ListingInfoEntity> {
     boolean updatePlatformSkuId(String listingId, String platformSkuId);
 
     /**
-     * 同步三方仓SKU到未匹配对照表
-     *
-     * @param dto 三方仓 SKU 同步参数（服务商、平台、SKU 列表）
-     * @return 本次新增到未匹配对照表的记录数
-     */
-    Integer syncWarehouseNotMatchSku(WegoSkuSyncDTO.SyncReqDTO dto);
-
-    /**
-     * 三方仓 SKU 全量快照回收：在 {@link #syncWarehouseNotMatchSku} 新增/更新基础上，
-     * 按 {@code dto.getAuthId()} 维度回收本次快照未覆盖到的历史记录：
-     * <ul>
-     *     <li>未映射（{@code matchResult=FALSE}）且本次快照中已找不到 → 删除；</li>
-     *     <li>已映射（{@code matchResult=TRUE}）且本次快照中已找不到 → 映射关系置为禁用；</li>
-     *     <li>已映射且快照中存在但源端状态非启用（{@code SkuItemDTO.status} 非 active）→ 映射关系置为禁用。</li>
-     * </ul>
+     * 同步三方仓SKU到未匹配对照表，并按源端状态做禁用回收：
+     * 除新增/更新未匹配对照表外，对本次传入 SKU 中源端状态非启用（{@code SkuItemDTO.status} 非 active）的记录，
+     * 若已存在启用中的映射关系（{@code matchResult=TRUE}），置为禁用。
+     * <p>
+     * 禁用判断仅依赖本次传入 SKU 各自携带的状态，不需要"完整快照"用于比对是否有 SKU 消失
+     * （三方仓通常会把已下架/停用的 SKU 继续保留在拉取结果里，只是状态变化，不会整条消失），
+     * 因此可以按任意批次（不要求携带全量数据）调用，调用方无需为了触发禁用而单独攒批。
+     * 未回传状态的调用方（如历史 WEGO 调用不传 {@code status}）不会触发禁用分支，行为与此前一致。
+     * <p>
      * 禁用后不会被本方法自动重新置为启用，需人工在 SKU 对照表页面手动恢复。
      * 平台无关实现（按 authId 维度处理），本轮仅接入爱亚，后续其它三方仓可直接复用。
      *
-     * @param dto 三方仓 SKU 全量快照（服务商、平台、本次拉取到的全部 SKU 及其源端状态）；
-     *            {@code skuList} 为空时视为异常拉取，跳过删除/禁用，仅保留已有映射关系
-     * @return 本次回收统计结果（新增/删除/禁用数量）
+     * @param dto 三方仓 SKU 同步参数（服务商、平台、本次批次的 SKU 及其可选的源端状态）；
+     *            {@code skuList} 为空时跳过处理
+     * @return 本次处理统计结果（新增/禁用数量）
      */
-    WegoSkuSyncDTO.ReconcileResultDTO reconcileWarehouseSkuSnapshot(WegoSkuSyncDTO.SyncReqDTO dto);
+    WegoSkuSyncDTO.ReconcileResultDTO syncWarehouseNotMatchSku(WegoSkuSyncDTO.SyncReqDTO dto);
 }

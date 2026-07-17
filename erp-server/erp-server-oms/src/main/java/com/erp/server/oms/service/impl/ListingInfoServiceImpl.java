@@ -99,6 +99,13 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
     private SkuMappingExtendService skuMappingExtendService;
 
     /**
+     * OMS 侧约定的三方仓 SKU"启用"状态值，与具体三方仓平台无关。
+     * 各三方仓自身状态字段的取值大小写可能不同（如爱亚 {@code AiyaSkuStatusEnum.ACTIVE} 实测为 {@code "Active"}），
+     * 判断时统一用 {@code equalsIgnoreCase} 与本常量比对，OMS 层不直接依赖任何具体三方仓 SDK 的枚举。
+     */
+    private static final String STATUS_ACTIVE = "active";
+
+    /**
      * 添加库存sku
      *
      * @param skuNo
@@ -665,20 +672,30 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
     }
 
     /**
-     * 同步第三方仓 SKU 到「sku对照表-未匹配」：
+     * 同步第三方仓 SKU 到「sku对照表-未匹配」，并按源端状态做禁用回收：
      * 1) 先按平台 SKU 去重；
      * 2) 已存在记录按最新数据纠偏（名称/条码）并更新平台更新时间；
      * 3) 不存在记录写入 listing_info（未匹配）；
-     * 4) 仅为新增 listing_info 创建一条初始 sku_mapping（产品 SKU 信息为空，待后续人工匹配）。
+     * 4) 仅为新增 listing_info 创建一条初始 sku_mapping（产品 SKU 信息为空，待后续人工匹配）；
+     * 5) 对本次传入 SKU 中源端状态非启用（{@code SkuItemDTO.status} 非 active）的记录，若已存在启用中的
+     *    映射关系（{@code matchResult=TRUE}），置为禁用；禁用后不会被本方法自动重新置为启用，
+     *    需人工在 SKU 对照表页面手动恢复。
+     * <p>
+     * 第 5 步判断仅依赖本次传入 SKU 各自携带的状态，不需要"完整快照"用于比对是否有 SKU 消失
+     * （三方仓通常会把已下架/停用的 SKU 继续保留在拉取结果里，只是状态变化，不会整条消失），
+     * 因此可以按任意批次（不要求携带全量数据）调用，调用方无需为了触发禁用而单独攒批。
+     * 未回传状态的调用方（如历史 WEGO 调用不传 {@code status}）不会触发禁用分支，行为与此前一致。
+     * 平台无关实现（按 authId 维度处理），本轮仅接入爱亚，后续其它三方仓可直接复用。
      *
-     * @param dto 三方仓 SKU 同步参数
-     * @return 本次新增 listing_info 数量
+     * @param dto 三方仓 SKU 同步参数（服务商、平台、本次批次的 SKU 及其可选的源端状态）
+     * @return 本次处理统计结果（新增/禁用数量）
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Integer syncWarehouseNotMatchSku(WegoSkuSyncDTO.SyncReqDTO dto) {
+    public WegoSkuSyncDTO.ReconcileResultDTO syncWarehouseNotMatchSku(WegoSkuSyncDTO.SyncReqDTO dto) {
+        WegoSkuSyncDTO.ReconcileResultDTO result = new WegoSkuSyncDTO.ReconcileResultDTO();
         if (Objects.isNull(dto) || CollectionUtils.isEmpty(dto.getSkuList())) {
-            return 0;
+            return result;
         }
         // 按平台SKU去重，保留最后一条数据
         Map<String, WegoSkuSyncDTO.SkuItemDTO> itemMap = new LinkedHashMap<>();
@@ -689,7 +706,7 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
             itemMap.put(itemDTO.getSku(), itemDTO);
         }
         if (itemMap.isEmpty()) {
-            return 0;
+            return result;
         }
 
         List<String> skuNoList = new ArrayList<>(itemMap.keySet());
@@ -769,129 +786,74 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
             }
         }
 
-        if (CollectionUtils.isEmpty(toInsert)) {
-            // 没有新增 listing_info 时无需新增 sku_mapping
-            return 0;
+        if (CollectionUtils.isNotEmpty(toInsert)) {
+            String platformName = OmsPlatformEnum.getName(dto.getPlatform());
+            if (StringUtils.isBlank(platformName)) {
+                platformName = dto.getPlatform();
+            }
+            LocalDateTime effectiveTime = LocalDateTime.now();
+            List<SkuMappingEntity> addSkuMappingList = new ArrayList<>();
+            for (ListingInfoEntity listingInfoEntity : toInsert) {
+                // 新增未匹配 SKU 对应一条“空产品信息”的仓库映射，后续人工维护 productSku 字段
+                SkuMappingEntity skuMappingEntity = new SkuMappingEntity();
+                skuMappingEntity.setShopId("");
+                skuMappingEntity.setDictPlatform(dto.getPlatform());
+                skuMappingEntity.setPlatformName(platformName);
+                skuMappingEntity.setProductSkuId("");
+                skuMappingEntity.setProductSkuNo("");
+                skuMappingEntity.setProductName("");
+                skuMappingEntity.setType(RuleTypeEnum.WAREHOUSE);
+                skuMappingEntity.setListingId(listingInfoEntity.getId());
+                skuMappingEntity.setWarehouseId(dto.getWarehouseId() != null ? dto.getWarehouseId() : "");
+                skuMappingEntity.setWarehouseName(dto.getWarehouseName() != null ? dto.getWarehouseName() : "");
+                // 服务商（authId）可能绑定多个系统仓库，对照关系按服务商维度共享，与其它 sku_mapping 创建路径保持一致
+                skuMappingEntity.setHasMappingAll(Boolean.TRUE);
+                skuMappingEntity.setIsExpire(Boolean.FALSE);
+                skuMappingEntity.setEffectiveTime(effectiveTime);
+                skuMappingEntity.setExpireTime(effectiveTime.plusYears(MathUtil.NUMBER_100));
+                addSkuMappingList.add(skuMappingEntity);
+            }
+            if (CollectionUtils.isNotEmpty(addSkuMappingList)) {
+                CollUtil.split(addSkuMappingList, 500).forEach(batch -> skuMappingService.saveBatch(batch));
+            }
+            result.setAddedCount(toInsert.size());
         }
 
-        String platformName = OmsPlatformEnum.getName(dto.getPlatform());
-        if (StringUtils.isBlank(platformName)) {
-            platformName = dto.getPlatform();
-        }
-        LocalDateTime effectiveTime = LocalDateTime.now();
-        List<SkuMappingEntity> addSkuMappingList = new ArrayList<>();
-        for (ListingInfoEntity listingInfoEntity : toInsert) {
-            // 新增未匹配 SKU 对应一条“空产品信息”的仓库映射，后续人工维护 productSku 字段
-            SkuMappingEntity skuMappingEntity = new SkuMappingEntity();
-            skuMappingEntity.setShopId("");
-            skuMappingEntity.setDictPlatform(dto.getPlatform());
-            skuMappingEntity.setPlatformName(platformName);
-            skuMappingEntity.setProductSkuId("");
-            skuMappingEntity.setProductSkuNo("");
-            skuMappingEntity.setProductName("");
-            skuMappingEntity.setType(RuleTypeEnum.WAREHOUSE);
-            skuMappingEntity.setListingId(listingInfoEntity.getId());
-            skuMappingEntity.setWarehouseId(dto.getWarehouseId() != null ? dto.getWarehouseId() : "");
-            skuMappingEntity.setWarehouseName(dto.getWarehouseName() != null ? dto.getWarehouseName() : "");
-            // 服务商（authId）可能绑定多个系统仓库，对照关系按服务商维度共享，与其它 sku_mapping 创建路径保持一致
-            skuMappingEntity.setHasMappingAll(Boolean.TRUE);
-            skuMappingEntity.setIsExpire(Boolean.FALSE);
-            skuMappingEntity.setEffectiveTime(effectiveTime);
-            skuMappingEntity.setExpireTime(effectiveTime.plusYears(MathUtil.NUMBER_100));
-            addSkuMappingList.add(skuMappingEntity);
-        }
-        if (CollectionUtils.isNotEmpty(addSkuMappingList)) {
-            CollUtil.split(addSkuMappingList, 500).forEach(batch -> skuMappingService.saveBatch(batch));
-        }
-        return toInsert.size();
-    }
-
-    /**
-     * 三方仓 SKU 全量快照回收，详见接口注释。
-     * 按 authId 维度：先复用 {@link #syncWarehouseNotMatchSku} 完成新增/更新，
-     * 再对本次快照未覆盖到的历史记录做删除（未映射且源端已消失）/禁用（已映射但源端消失或已停用）。
-     */
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public WegoSkuSyncDTO.ReconcileResultDTO reconcileWarehouseSkuSnapshot(WegoSkuSyncDTO.SyncReqDTO dto) {
-        WegoSkuSyncDTO.ReconcileResultDTO result = new WegoSkuSyncDTO.ReconcileResultDTO();
-        if (Objects.isNull(dto) || CollectionUtils.isEmpty(dto.getSkuList())) {
-            log.warn("[三方仓SKU快照回收] authId={} 本次快照SKU列表为空，视为异常拉取，跳过删除/禁用回收，保留现有映射关系",
-                    Objects.isNull(dto) ? null : dto.getAuthId());
+        // 源端明确回传为非启用状态（如爱亚 Inactive）的 SKU 编号；未回传状态（如WEGO现有调用）不参与禁用判断
+        Set<String> inactiveSkuNoSet = itemMap.values().stream()
+                .filter(item -> StringUtils.isNotBlank(item.getStatus()))
+                .filter(item -> !STATUS_ACTIVE.equalsIgnoreCase(item.getStatus()))
+                .map(WegoSkuSyncDTO.SkuItemDTO::getSku)
+                .collect(Collectors.toSet());
+        if (CollectionUtils.isEmpty(inactiveSkuNoSet)) {
             return result;
         }
 
-        Integer addedCount = service.syncWarehouseNotMatchSku(dto);
-        result.setAddedCount(Objects.isNull(addedCount) ? 0 : addedCount);
-
-        // 快照SKU -> 源端原始状态（可能为空，代表该三方仓未回传状态，如WEGO现有调用）
-        Map<String, String> snapshotStatusMap = dto.getSkuList().stream()
-                .filter(item -> Objects.nonNull(item) && StringUtils.isNotBlank(item.getSku()))
-                .collect(Collectors.toMap(WegoSkuSyncDTO.SkuItemDTO::getSku,
-                        item -> StringUtils.defaultString(item.getStatus()), (a, b) -> b));
-        Set<String> snapshotSkuNoSet = snapshotStatusMap.keySet();
-
-        List<ListingInfoEntity> allListingByAuth = this.listByAuthIds(Collections.singletonList(dto.getAuthId())).stream()
-                .filter(li -> RuleTypeEnum.WAREHOUSE.getCode().equals(li.getType()))
+        // 已映射且当前启用，但本次传入的源端状态非启用 -> 置为禁用；不做反向自动恢复
+        // 复用 listByAuth 把 type/authId/platformSkuNo 过滤下推到SQL，避免像 listByAuthIds 一样拉取该服务商全部 listing 记录
+        List<ListingInfoEntity> matchedListing = this.listByAuth(
+                        RuleTypeEnum.WAREHOUSE.getCode(),
+                        new ArrayList<>(inactiveSkuNoSet),
+                        Collections.singletonList(dto.getAuthId())
+                ).stream()
                 .filter(li -> ListingSourceTypeEnum.THIRD.getCode().equals(li.getSourceType()))
-                .filter(li -> StringUtils.isNotBlank(li.getPlatformSkuNo()))
-                .collect(Collectors.toList());
-
-        // 未映射且本次快照中已找不到对应 SKU -> 删除 listing_info 及其占位 sku_mapping
-        List<ListingInfoEntity> unmatchedDisappeared = allListingByAuth.stream()
-                .filter(li -> ListingMatchResultEnum.FALSE.getCode().equals(li.getMatchResult()))
-                .filter(li -> !snapshotSkuNoSet.contains(li.getPlatformSkuNo()))
-                .collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(unmatchedDisappeared)) {
-            List<String> listingIdsToDelete = unmatchedDisappeared.stream().map(ListingInfoEntity::getId).collect(Collectors.toList());
-            List<String> skuMappingIdsToDelete = skuMappingService.listByListingIds(listingIdsToDelete).stream()
-                    .filter(sm -> RuleTypeEnum.WAREHOUSE.equals(sm.getType()))
-                    .map(SkuMappingEntity::getId)
-                    .collect(Collectors.toList());
-            CollUtil.split(listingIdsToDelete, 500).forEach(batch -> this.removeByIds(batch));
-            if (CollectionUtils.isNotEmpty(skuMappingIdsToDelete)) {
-                CollUtil.split(skuMappingIdsToDelete, 500).forEach(batch -> skuMappingService.removeByIds(batch));
-            }
-            result.setDeletedCount(listingIdsToDelete.size());
-            log.warn("[三方仓SKU快照回收] authId={} 未映射且源端已消失，删除 listing={}条 sku_mapping={}条",
-                    dto.getAuthId(), listingIdsToDelete.size(), skuMappingIdsToDelete.size());
-        }
-
-        // 已映射且当前启用，但源端已消失或源端状态非启用 -> 置为禁用；不做反向自动恢复
-        List<ListingInfoEntity> matchedListing = allListingByAuth.stream()
                 .filter(li -> ListingMatchResultEnum.TRUE.getCode().equals(li.getMatchResult()))
                 .collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(matchedListing)) {
-            Map<String, ListingInfoEntity> matchedListingByIdMap = matchedListing.stream()
-                    .collect(Collectors.toMap(ListingInfoEntity::getId, Function.identity(), (a, b) -> a));
-            List<String> matchedListingIds = new ArrayList<>(matchedListingByIdMap.keySet());
-            List<SkuMappingEntity> enabledMappings = skuMappingService.listByListingIds(matchedListingIds).stream()
-                    .filter(sm -> RuleTypeEnum.WAREHOUSE.equals(sm.getType()))
-                    .filter(sm -> Objects.isNull(sm.getStatus()) || SkuMappingStatusEnum.ENABLE.equals(sm.getStatus()))
-                    .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(matchedListing)) {
+            return result;
+        }
 
-            List<SkuMappingEntity> toDisable = new ArrayList<>();
-            for (SkuMappingEntity sm : enabledMappings) {
-                ListingInfoEntity li = matchedListingByIdMap.get(sm.getListingId());
-                if (Objects.isNull(li)) {
-                    continue;
-                }
-                String skuNo = li.getPlatformSkuNo();
-                boolean disappearedFromSnapshot = !snapshotSkuNoSet.contains(skuNo);
-                String sourceStatus = snapshotStatusMap.get(skuNo);
-                // 源端有明确回传状态、且不是"启用"语义（如爱亚 Inactive）时才判定为已停用；未回传状态（如WEGO）不触发
-                boolean sourceInactive = StringUtils.isNotBlank(sourceStatus) && !"active".equalsIgnoreCase(sourceStatus);
-                if (disappearedFromSnapshot || sourceInactive) {
-                    sm.setStatus(SkuMappingStatusEnum.DISABLE);
-                    toDisable.add(sm);
-                }
-            }
-            if (CollectionUtils.isNotEmpty(toDisable)) {
-                CollUtil.split(toDisable, 500).forEach(batch -> skuMappingService.updateBatchById(batch));
-                result.setDisabledCount(toDisable.size());
-                log.warn("[三方仓SKU快照回收] authId={} 映射关系置为禁用 {}条（源端消失或已停用，需人工确认后手动重新启用）",
-                        dto.getAuthId(), toDisable.size());
-            }
+        List<String> matchedListingIds = matchedListing.stream().map(ListingInfoEntity::getId).collect(Collectors.toList());
+        List<SkuMappingEntity> enabledMappings = skuMappingService.listByListingIds(matchedListingIds).stream()
+                .filter(sm -> RuleTypeEnum.WAREHOUSE.equals(sm.getType()))
+                .filter(sm -> Objects.isNull(sm.getStatus()) || SkuMappingStatusEnum.ENABLE.equals(sm.getStatus()))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(enabledMappings)) {
+            enabledMappings.forEach(sm -> sm.setStatus(SkuMappingStatusEnum.DISABLE));
+            CollUtil.split(enabledMappings, 500).forEach(batch -> skuMappingService.updateBatchById(batch));
+            result.setDisabledCount(enabledMappings.size());
+            log.warn("[三方仓SKU同步] authId={} 映射关系置为禁用 {}条（源端已停用，需人工确认后手动重新启用）",
+                    dto.getAuthId(), enabledMappings.size());
         }
 
         return result;
