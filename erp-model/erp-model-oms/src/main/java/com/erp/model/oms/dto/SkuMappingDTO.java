@@ -186,6 +186,11 @@ public class SkuMappingDTO implements Serializable {
 
         private String type;
 
+        /**
+         * 按映射关系状态过滤（启用/禁用），取值见 {@link com.erp.model.oms.enums.SkuMappingStatusEnum}；为空不过滤
+         */
+        private String status;
+
     }
 
     /**
@@ -989,6 +994,15 @@ public class SkuMappingDTO implements Serializable {
         private String platformStatus;
         private String platformStatusName;
         private String platformParentSpuNo;
+
+        /**
+         * 映射关系状态：启用/禁用，取值见 {@link com.erp.model.oms.enums.SkuMappingStatusEnum}
+         */
+        private String status;
+        /**
+         * 映射关系状态名称
+         */
+        private String statusName;
     }
 
 

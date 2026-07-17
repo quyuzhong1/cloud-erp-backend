@@ -10,9 +10,10 @@ import lombok.Getter;
  *     <li>{@code Active} - 商品启用状态</li>
  *     <li>{@code Inactive} - 商品停用状态</li>
  * </ul>
- * 文档处理策略：两种状态都拉取；爱亚已停用（{@code Inactive}）时，仓库设置里的 SKU
- * 映射关系需取消——该取消逻辑由数大臣已有的通用 SKU 映射关系状态流转能力承接（文档 6.2.2
- * 节：配置已完成，无需再介入开发），本枚举仅负责标识两种状态均需同步到 OMS 未匹配表。
+ * 文档处理策略：两种状态都拉取，本枚举负责标识两种状态均需同步到 OMS 未匹配表；
+ * 爱亚已停用（{@code Inactive}）时，若该 SKU 已建立映射关系，由
+ * {@code ListingInfoService#reconcileWarehouseSkuSnapshot} 全量快照回收逻辑将对应
+ * {@code sku_mapping.status} 置为禁用（不会自动重新启用，需人工确认后手动恢复）。
  * <p>
  * 2026-07-16 联调实测确认：真实响应 {@code status} 字段值为 {@code "Active"}（首字母大写，与文档一致）。
  * TODO：目前仅实测验证过 {@code Active}，{@code Inactive} 的真实大小写仍未见过真实响应样例，

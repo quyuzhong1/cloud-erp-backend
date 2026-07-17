@@ -32,6 +32,8 @@
 | 2026-07-16 | 实测确认库存查询接口 `stockStatus` 参数**非必传，且最好不传**（不传即查询全部状态库存），此前的猜测（可能需按 GOOD/DAMAGE 分两次查）已被推翻。已从 `AiyaInventoryInitHandler` 移除 `STOCK_STATUS_PLACEHOLDER` 占位逻辑（不再传该参数），同步更新 `AiyaInventoryQueryDTO`/`AiyaOpenApiService.queryInventory`/`AiyaOpenApiServiceManualTest` 的注释，相关「待产品确认」项移至「已确认结论」 |
 | 2026-07-16 | 用户提供真实联调响应样例（不传 `stockStatus` 时的查询结果），核对后发现并修复一个真实 bug：`AiyaInventoryInitHandler.extractInventoryList` 里失败分支读取的是 `response.get("Code")`（大写C），但真实响应顶层字段其实是小写 `code`（跟 `AbstractAiyaInitHandler`/`AiyaSkuInitHandler`/`AiyaWarehouseInitHandler` 里其它接口一致），大写写法会导致失败时异常信息里的错误码永远打印成 `null`。已修正为 `response.get("code")`，同步更新 `AiyaOpenApiService.queryInventory`/`AiyaInventoryInitHandler` 里写错的 `{Code,...}` 结构说明为 `{code,...}`。此外真实样例其它字段（`success`/`inventoryVOList`/明细 11 个字段、`skuStatus="GOOD"`）均与此前按接口文档截图确认的清单一致，无其它出入；样例仍只有 3 个顶层字段，未出现 `total`/`pages` |
 | 2026-07-16 | 用户提供 `querySku` 真实联调响应样例（2条测试SKU：test1602/test2717），核对后有 1 项新发现 + 1 处真实 bug 修复：① **响应顶层实际带 `total` 字段**（`{"total":2,"code":"SUCCESS","success":true,"itemList":[...]}`），此前「分页翻页终止条件」待确认项已解决，`AiyaSkuInitHandler` 已改为"累计拉取条数达到 `total`"与"本页条数<pageSize"任一满足即停止翻页，`total`缺失时自动退化为纯size判断；② `status` 字段实测确认真实取值为 `"Active"`（大小写与文档一致），`Inactive` 暂未见真实样例但 `needSync` 用 `equalsIgnoreCase` 兼容，不受影响；③ **真实bug**：`AiyaSkuOmsSyncDmpHandler.parseBarcodeList` 之前读取顶层 `barcode` 字段，但真实响应条码字段是顶层 `barcodeList` 数组（元素为 `{unit,barcode}` 对象，与 `packagingList` 同级、非嵌套关系），导致条码同步到 OMS 一直是空列表，已修正为解析 `barcodeList`；④ 顺带发现两条测试SKU响应里完全没有 `name` 键（只有 `description`），`AiyaSkuOmsSyncDmpHandler` 的 name 映射已改为"`name` 为空则回退用 `description`"，避免可选字段 `name` 未设置时未匹配表里名称长期为空 |
+| 2026-07-17 | 完成「商品映射」规则 b/c/d（全量快照回收）开发：`SkuMappingEntity`/`WarehousePagingViewDTO` 新增 `status` 字段 + `SkuMappingStatusEnum`（启用/禁用，与 `isExpire` 是两个维度，不复用旧字段）；`WegoSkuSyncDTO.SkuItemDTO` 新增可选 `status`（源端原始状态）；`ListingInfoService` 新增平台无关的 `reconcileWarehouseSkuSnapshot`（空快照防呆 + 规则b删除 + 规则c/d禁用），配套 Feign 契约 `OmsListingInfoFeign#reconcileWarehouseSkuSnapshot`；`AiyaSkuOmsSyncDmpHandler` 改为除最后一批走原 `syncWarehouseNotMatchSku`（a/e），最后一批携带全量 skuItems 调新方法触发回收；并在 `SkuMappingServiceImpl` 一批"解析当前可用映射供业务使用"的方法（`getByAttribute`/`listBySkuNoList`/`listByInfo`/`listByPlatformSkuNoAndPlatform`/`listStockSkuNoByProductSkuIds`/`listByErpSkuIdAndType`/`listByWarehouseAndPlatformSku`/`listSkuMappingByParams`）追加 `status=enable` 过滤，覆盖头程发货单、海外仓入库单选库存SKU、B2C销售订单推三方仓出库单选库存SKU等链路；管理页面（`warehousePaging`/`listWarehouseExport`/`paging`/导出等）不过滤，仅新增 `status`/`statusName` 展示列 + 可选筛选参数。本轮只对爱亚生效，`listByListingIds`（历史遗留 warehouseId 回填、Excel 导入比对等通用工具方法，含义偏"全部记录"而非"仅可用记录"）保持不加过滤，避免误伤 Excel 导入等未验证场景 |
+| 2026-07-17 | 代码审查复核 3 项问题：① 末批 `reconcileWarehouseSkuSnapshot` 请求体重新变为全量（架构取舍，已知晓暂不处理，见「待产品确认」新增项）；② 新增/改写的两处批次进度日志（`AiyaSkuOmsSyncDmpHandler` 原 160-161/177-180 行）此前误用 `log.info`，违反仓库 `java-log-min-warn.mdc` 规则，已改为 `log.warn`；③ `sku_mapping.status` 列 DDL 未纳入仓库迁移机制，属已知且已文档化的发布检查项，不涉及代码改动。同时把本次新增代码里引用外部方案文档规则编号（如"规则b"/"规则a/e"）的 Java 注释改写为直接描述行为，避免依赖不会保留在仓库里的外部文档 |
 
 ## 待产品确认
 
@@ -59,13 +61,14 @@
 依据文档「6.2.2 商品映射」+「5. ERP新增/优化功能」章节梳理，对照现有公共 SKU 映射代码（`ListingInfoServiceImpl.syncWarehouseNotMatchSku`/`SkuMappingEntity`）后发现：
 
 - 文档规则 a（数大臣未存在的新增）、e（存在且正常则更新name/barcode）**已经通过现有通用能力覆盖**：`AiyaSkuOmsSyncDmpHandler` 直接复用了平台无关的 `syncWarehouseNotMatchSku`（本来给 WEGO 用的），未新增/修改公共代码。
-- 文档规则 b（数大臣有爱亚无且未映射→删除）、c（已映射→改禁用+按钮置灰）、d（爱亚已停用+已映射→改禁用）**目前完全未实现**：`syncWarehouseNotMatchSku` 只做"存在则更新、不存在则插入"，不会对"本次增量里没出现的旧SKU"做任何删除/禁用判断，也没用到爱亚 `status` 字段。`SkuMappingEntity` 已有 `effectiveTime`/`expireTime`/`isExpire` 字段，"启用/禁用"状态本身大概率不用改表结构，缺的是**触发禁用/删除的全量对比逻辑**。
+- 文档规则 b（数大臣有爱亚无且未映射→删除）、c（已映射→改禁用+按钮置灰）、d（爱亚已停用+已映射→改禁用）**2026-07-17 已开发完成**，详见下方「已确认结论」及「文档变更记录」。
 
-- [ ] **【高优，未开发】b/c/d 全量对比删除/禁用逻辑的实现边界**：要判断"哪些旧SKU这次没出现"，必须知道"本次全量拉取的完整SKU集合"，但 `AiyaSkuInitHandler`→`AiyaSkuOmsSyncDmpHandler` 是分页/分批推给 OMS 的（`SYNC_BATCH_SIZE=500`）。DMP 任务框架是否有"本次全量已跑完"的信号可以拿到完整集合再做对比？还是需要在爱亚侧新增逻辑攒一次全量快照？需要找技术确认任务框架能力。
-- [ ] **【高优，需产品明确范围】这套 b/c/d 状态机要不要对现有 WEGO/谷仓等海外仓也生效**：文档原话"其它海外仓接口也同上处理"，听起来产品希望做成所有海外仓服务商通用能力，但这样会影响现有 WEGO 同步链路的行为，风险面更大。需要跟产品确认：这次是只对爱亚生效（爱亚专属代码里做全量对比），还是要顺带把公共 `ListingInfoServiceImpl`/`SkuMappingServiceImpl` 一起改掉（影响所有服务商）。
-- [ ] **规则 b/c 边界理解待确认**：理解为 b 针对"未映射"的 `ListingInfoEntity`（原始爱亚SKU行，还没绑定productSkuId）直接物理删除；c 针对"已映射"的 `SkuMappingEntity` 行只做禁用（`isExpire=true`），不删除。这个理解目前只是读文档推断，未跟产品核实过。
-- [ ] **"启动按钮置灰"是否需要后端额外拦截**：如果只是前端按 `isExpire` 状态置灰按钮，后端只要保证 `isExpire=true` 的映射在业务使用（如推单选仓库sku）时被正常拦截即可；如果还要求"被系统自动禁用的映射，人工不能手动重新启用"这类额外规则，文档未写清楚，需要产品确认。
-- [ ] （关联「SKU 查询相关」的 `status` 字段疑问）规则 d 的判断依据是爱亚 `status=Inactive`，但 `status` 真实取值大小写/是否还有其它状态值仍未拿到真实响应验证，会直接影响 d 规则判断条件。
+以下遗留问题仍待确认，但均不阻塞已完成的开发：
+
+- [ ] （关联「SKU 查询相关」的 `status` 字段疑问）规则 d 的判断依据是爱亚 `status` 非启用态（当前按"非 `Active`（忽略大小写）即视为停用"判断，未硬编码 `Inactive` 字符串），但 `Inactive` 真实取值大小写/是否还有其它状态值仍未拿到真实响应验证；即使大小写有出入，当前 `active`/`Active` 均已用 `equalsIgnoreCase` 兼容，不影响判断结果。
+- [ ] **【新增】人工重新启用的入口未开发**：本次只实现了"自动禁用 + 不自动恢复"，SKU对照表页面目前没有单独的"启用/禁用"手动切换按钮/接口（`SkuMappingController` 现有 `updateWarehouseSku` 等编辑接口未涉及 `status` 字段）。产品文档提到"禁用后按钮置灰"，暗示前端需要交互入口，但人工重新启用具体走什么页面/接口尚未设计，需要产品明确前端交互方案后再补开发（后端可复用 `status` 字段，预计只需小改动）。
+- [ ] **【新增，中优】`SkuMappingServiceImpl` 中共享查询方法的 `status` 过滤覆盖范围**：本次已对确认与"头程发货单/海外仓入库单选库存SKU/B2C销售订单选库存SKU"等业务流程直接相关的方法（`getByAttribute`/`listBySkuNoList`/`listByInfo`(供`listBySkuList`)/`listByPlatformSkuNoAndPlatform`/`listStockSkuNoByProductSkuIds`/`listByErpSkuIdAndType`/`listByWarehouseAndPlatformSku`/`listSkuMappingByParams`）追加 `status=enable` 过滤；`listSkuBySkuNos`/`listByPlatformSkuNoList`/`findListDto`(`listByParams`，`isExpire`本身是可选参数、20+调用方语义不完全一致) 等方法暂未改动，`listByListingIds`（历史遗留字段回填、Excel导入比对等通用工具语义）也刻意保持不过滤。若后续发现有业务流程通过这些未过滤方法读到了已禁用映射并绕过拦截，需要补充确认调用语义后再决定是否追加过滤。
+- [ ] **【新增，代码审查发现，已知晓，暂不处理】末批 `reconcileWarehouseSkuSnapshot` 请求体大小重新变为"全量"**：`AiyaSkuOmsSyncDmpHandler` 除最后一批外都按 `SYNC_BATCH_SIZE=500` 分批调用 `syncWarehouseNotMatchSku`，但最后一批为了让"删除/禁用"判断能拿到完整快照做比对，故意改成携带本次任务拉取到的**全部** SKU（不是仅本批 500 条）调用 `reconcileWarehouseSkuSnapshot`，这重新引入了分批机制本要规避的单次超大请求体/OMS侧长事务风险。当前判断：爱亚单服务商 SKU 量级目前是几百到小几千条，风险可控，暂不处理；若后续量级明显增长（如达万级），需要重新评估，可选方向：①回收接口只传 `{sku, status}` 精简结构（去掉 name/barcode 等字段）降低单条体积；②在 OMS 侧引入快照暂存机制，分批落地后仅用最后一次轻量调用触发 diff，彻底解决但改动较大。
 
 ## 已确认结论
 
@@ -85,3 +88,11 @@
   - `status` 真实取值确认为 `"Active"`（大小写与文档一致）。
   - `barcodeList` 与 `packagingList` 是**同级两个独立数组**，不是嵌套关系（`packagingList` 元素内没有各自的 `barcodeList`）；此前 `AiyaSkuOmsSyncDmpHandler.parseBarcodeList` 误读顶层 `barcode` 字段（实际不存在该字段），已修正为读取 `barcodeList[].barcode`，属于真实 bug 修复（此前条码同步到 OMS 一直是空列表）。
   - 两条测试样例响应里均**没有 `name` 键**（只有 `description`），`AiyaSkuOmsSyncDmpHandler` 已改为 name 为空时回退用 description，避免可选字段未设置导致未匹配表名称长期为空。
+- **商品映射规则 b/c/d：状态字段设计（2026-07-17，已与用户确认）**：
+  - 新增字段名为 `status`（不用 `mappingStatus`），不复用 `SkuMappingEntity.isExpire`（`isExpire` 语义是"是否已被新记录替代的历史版本"，与"业务上是否允许使用"是两个维度）。
+  - 取值：`SkuMappingStatusEnum.ENABLE`/`DISABLE`，新建/历史数据默认 `ENABLE`（DB 列 `DEFAULT 'enable'`，Entity 字段 Java 侧默认值同步兜底）。
+  - 全量SKU集合**不需要跨任务攒批**：`AiyaSkuInitHandler.getInitData()` 内部已翻页拉到底一次性打包，`AiyaSkuOmsSyncDmpHandler.convertToDmp` 单次调用收到的 `inputMongoEntityList` 本身就是本次全量，不存在"框架有没有全量完成信号"的问题。
+  - **本轮只对爱亚生效**：`reconcileWarehouseSkuSnapshot` 是新增方法（不是改造 `syncWarehouseNotMatchSku`），WEGO 现有链路继续调用原方法，不受影响；但新方法按 `authId` 维度实现、不含爱亚专属逻辑，后续其它海外仓可以直接复用。
+  - **禁用后不会被系统自动重新置为启用**：只有规则 a/e（新增/更新）会持续跑，规则 c/d 的禁用是单向的，恢复启用需要人工介入（当前无对应前端/接口，见上方「待产品确认」新增项）。
+  - **禁用状态需要在实际业务流程里拦截，不是只做展示**：已在 `SkuMappingServiceImpl` 中"解析当前可用映射供业务使用"的一批共享方法里追加 `status=enable` 过滤（清单见上方「待产品确认」），命中头程发货单下推海外仓入库单、海外仓入库单/B2C销售订单推三方仓出库单选库存SKU等链路；命中后复用各流程**现有的"SKU未映射"异常路径**，未新建异常类型，也未在报错文案上区分"从未映射"和"已被禁用"（如需区分可作为后续增强单独排期）。
+  - DB 变更 `ALTER TABLE sku_mapping ADD COLUMN status varchar NOT NULL DEFAULT 'enable'` 未在仓库内找到迁移脚本机制（无 flyway/liquibase/`db/migration`），需要走仓库外流程手动执行，本次改动前需要先跟 DBA/运维确认已执行，否则代码里 `@TableField("status")` 会因列不存在报错。
