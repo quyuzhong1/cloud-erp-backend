@@ -210,7 +210,7 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 		if (Objects.nonNull(thirdWarehouseDeliveryEntity) && CharSequenceUtil.isNotBlank(thirdWarehouseDeliveryEntity.getSoCode())) {
 			SoB2cEntity soB2cEntity = soB2cFeign.getSoCode(thirdWarehouseDeliveryEntity.getSoCode());
 			if (Objects.nonNull(soB2cEntity)) {
-				generateInstockBySo(dto, warehouseEntity, soB2cEntity);
+				generateInstockBySo(dto, warehouseEntity, soB2cEntity, resolveSkuMappingByPlatformSkuNo(dto));
 				return true;
 			}
 		}
@@ -219,24 +219,30 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 
 	/**
 	 * 按参考单号依次匹配《B2C售后单-退货单》、《B2B/B2C销售订单》，命中则生成退货入库单并返回 true，均未匹配返回 false
+	 * <p>
+	 * 平台SKU -> ERP SKU 映射只在本方法入口处调用一次 Feign（{@link #resolveSkuMappingByPlatformSkuNo}），
+	 * 并作为参数向下传递给候选退货单SKU匹配、销售订单SKU匹配、明细拆分等步骤复用，避免同一批
+	 * platformSkuNoList/authId 在一次消息处理内被重复请求（此前候选退货单匹配、销售订单候选匹配、
+	 * 明细拆分三处各自独立调用，最多产生3次内容相同的远程调用）
 	 */
 	private boolean handleReferenceNoAfterSaleMatch(PlatformReturnInstockDTO dto, WarehouseEntity warehouseEntity) {
+		Map<String, SkuMappingDTO.MappingSkuViewDTO> skuMappingMap = resolveSkuMappingByPlatformSkuNo(dto);
+		Set<String> incomingSkuIds = toSkuIdSet(skuMappingMap);
 		List<SoB2cReturnEntity> candidates = matchB2cReturnCandidates(dto.getOrderReferenceNo());
-		SoB2cReturnEntity matchedReturn = CollectionUtils.isEmpty(candidates) ? null : pickReturnBySkuMatch(candidates, dto);
+		SoB2cReturnEntity matchedReturn = CollectionUtils.isEmpty(candidates) ? null : pickReturnBySkuMatch(candidates, incomingSkuIds);
 		if (Objects.nonNull(matchedReturn)) {
-			if (generateInstockByMatchedReturn(dto, warehouseEntity, matchedReturn)) {
+			if (generateInstockByMatchedReturn(dto, warehouseEntity, matchedReturn, skuMappingMap)) {
 				return true;
 			}
 		}
-		Set<String> incomingSkuIds = resolveSkuIds(dto);
 		SoB2cEntity soB2cEntity = matchB2cSoByReferenceNo(dto.getOrderReferenceNo(), incomingSkuIds);
 		if (Objects.nonNull(soB2cEntity)) {
-			generateInstockBySo(dto, warehouseEntity, soB2cEntity);
+			generateInstockBySo(dto, warehouseEntity, soB2cEntity, skuMappingMap);
 			return true;
 		}
 		SoInfoEntity soInfoEntity = matchB2bSoByReferenceNo(dto.getOrderReferenceNo(), incomingSkuIds);
 		if (Objects.nonNull(soInfoEntity)) {
-			generateInstockBySoInfo(dto, warehouseEntity, soInfoEntity);
+			generateInstockBySoInfo(dto, warehouseEntity, soInfoEntity, skuMappingMap);
 			return true;
 		}
 		return false;
@@ -254,8 +260,7 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 	/**
 	 * 按SKU维度从候选退货单中挑选可匹配的一条：优先"待退货"状态，同状态内取第一个SKU命中的
 	 */
-	private SoB2cReturnEntity pickReturnBySkuMatch(List<SoB2cReturnEntity> candidates, PlatformReturnInstockDTO dto) {
-		Set<String> incomingSkuIds = resolveSkuIds(dto);
+	private SoB2cReturnEntity pickReturnBySkuMatch(List<SoB2cReturnEntity> candidates, Set<String> incomingSkuIds) {
 		if (CollectionUtils.isEmpty(incomingSkuIds)) {
 			return null;
 		}
@@ -281,12 +286,38 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 	}
 
 	/**
-	 * 解析退货入库明细对应的ERP SKU ID集合（仅保留已成功映射的）
+	 * 从"平台SKU -> ERP SKU映射"结果中提取 ERP SKU ID 集合（仅保留已成功映射的），纯内存转换、不发起远程调用。
+	 * 原先通过独立的 resolveSkuIds(dto) 单独调用一次 Feign 获取，与
+	 * {@link #resolveSkuMappingByPlatformSkuNo} 请求参数完全一致，属重复远程调用，现统一改为基于
+	 * 后者的结果做二次派生，调用方应保证在一次消息处理内只调用一次 resolveSkuMappingByPlatformSkuNo。
 	 */
-	private Set<String> resolveSkuIds(PlatformReturnInstockDTO dto) {
+	private Set<String> toSkuIdSet(Map<String, SkuMappingDTO.MappingSkuViewDTO> skuMappingMap) {
+		if (skuMappingMap == null || skuMappingMap.isEmpty()) {
+			return Collections.emptySet();
+		}
+		return skuMappingMap.values().stream()
+				.map(SkuMappingDTO.MappingSkuViewDTO::getProductSkuId)
+				.filter(StringUtils::isNotBlank)
+				.collect(Collectors.toSet());
+	}
+
+	/**
+	 * 解析退货入库明细的"平台原始SKU -> ERP SKU映射"（key为平台原始 productSku，大小写不敏感）。
+	 * <p>
+	 * 拆分明细落库（{@link #buildPlatformSoReturnInstockDetailSplit}、
+	 * {@link #buildPlatformSoReturnInstockDetailForSoInfoSplit}）需要按 ERP skuId 与订单明细比较，
+	 * 而不能直接拿平台原始 productSku 去和订单的 platformSkuNo/warehouseSkuNo 做字符串比较——
+	 * 部分海外仓平台回传的 productSku 是平台侧仓库SKU，与订单记录的 platformSkuNo/warehouseSkuNo
+	 * 不是同一套编码，只有经过 listing/SKU映射转换成 ERP skuId 后才能与订单明细的 skuId 对上；
+	 * 直接字符串比较会导致本应命中的行被误判为"订单里找不到"，改走预入库单而非退货入库单。
+	 * <p>
+	 * 调用方须保证同一次消息处理只调用本方法一次，并把结果向下传递复用，避免对同一批
+	 * platformSkuNoList/authId 反复发起相同的 Feign 请求。
+	 */
+	private Map<String, SkuMappingDTO.MappingSkuViewDTO> resolveSkuMappingByPlatformSkuNo(PlatformReturnInstockDTO dto) {
 		List<PlatformReturnInstockDTO.Detail> details = dto.getProductDetailList();
 		if (CollectionUtils.isEmpty(details)) {
-			return Collections.emptySet();
+			return Collections.emptyMap();
 		}
 		List<String> platformSkuNoList = details.stream().map(PlatformReturnInstockDTO.Detail::getProductSku).collect(Collectors.toList());
 		ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
@@ -294,10 +325,22 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 		listingInfoParamDTO.setAuthId(dto.getAuthId());
 		listingInfoParamDTO.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
 		List<SkuMappingDTO.MappingSkuViewDTO> mappingSkuViewDTOList = skuMappingFeign.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
-		return mappingSkuViewDTOList.stream()
-				.map(SkuMappingDTO.MappingSkuViewDTO::getProductSkuId)
-				.filter(StringUtils::isNotBlank)
-				.collect(Collectors.toSet());
+		Map<String, SkuMappingDTO.MappingSkuViewDTO> mappingMap = new HashMap<>();
+		for (SkuMappingDTO.MappingSkuViewDTO mapping : mappingSkuViewDTOList) {
+			if (StringUtils.isBlank(mapping.getPlatformSkuNo()) || StringUtils.isBlank(mapping.getProductSkuId())) {
+				continue;
+			}
+			String key = mapping.getPlatformSkuNo().toUpperCase();
+			SkuMappingDTO.MappingSkuViewDTO existing = mappingMap.putIfAbsent(key, mapping);
+			// 同一 authId+platformSkuNo 命中多条指向不同ERP SKU的有效映射时，接口返回顺序是否具备
+			// 稳定的生效时间/更新时间排序保证不在本方法可确认范围内，此处仅保留第一条并打日志留痕，
+			// 出现该日志需人工核实映射数据是否重复/冲突
+			if (existing != null && !existing.getProductSkuId().equals(mapping.getProductSkuId())) {
+				log.warn("[海外仓退货入库] authId={} 平台SKU={} 命中多条ERP SKU映射（{} / {}），按接口返回顺序保留第一条，请人工核实映射数据",
+						dto.getAuthId(), mapping.getPlatformSkuNo(), existing.getProductSkuId(), mapping.getProductSkuId());
+			}
+		}
+		return mappingMap;
 	}
 
 	/**
@@ -305,7 +348,8 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 	 *
 	 * @return 是否生成成功；售后单/店铺数据不一致导致无法生成时返回 false，交由调用方回退到下一步匹配
 	 */
-	private boolean generateInstockByMatchedReturn(PlatformReturnInstockDTO dto, WarehouseEntity warehouseEntity, SoB2cReturnEntity matchedReturn) {
+	private boolean generateInstockByMatchedReturn(PlatformReturnInstockDTO dto, WarehouseEntity warehouseEntity, SoB2cReturnEntity matchedReturn,
+													Map<String, SkuMappingDTO.MappingSkuViewDTO> skuMappingMap) {
 		SoB2cEntity soB2cEntity = soB2cFeign.getById(matchedReturn.getSoId());
 		if (Objects.isNull(soB2cEntity)) {
 			log.warn("[海外仓退货入库] 匹配到退货单{}但对应销售订单不存在，回退到销售订单匹配：soId={}", matchedReturn.getCode(), matchedReturn.getSoId());
@@ -316,7 +360,7 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 			log.warn("[海外仓退货入库] 匹配到退货单{}但对应店铺不存在，回退到销售订单匹配：shopId={}", matchedReturn.getCode(), soB2cEntity.getShopId());
 			return false;
 		}
-		SkuSplitDetailResult splitResult = this.buildPlatformSoReturnInstockDetailSplit(dto, warehouseEntity, soB2cEntity);
+		SkuSplitDetailResult splitResult = this.buildPlatformSoReturnInstockDetailSplit(dto, warehouseEntity, soB2cEntity, skuMappingMap);
 		if (CollectionUtils.isEmpty(splitResult.matchedList)) {
 			// 整批SKU在销售订单里都对不上（销售订单本身命中了SKU匹配，但订单明细与本次退货入库明细完全不一致的极端情况）：
 			// 不再整批抛错中断，全部明细改走预入库单，避免消息卡死重试
@@ -421,14 +465,15 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 	 * 命中销售订单后生成《已审核-退货入库单》，字段映射与已存在销售订单场景（{@link #createByExistSoB2c}）保持一致，
 	 * 仅仓库改用海外仓映射的 warehouseEntity
 	 */
-	private void generateInstockBySo(PlatformReturnInstockDTO dto, WarehouseEntity warehouseEntity, SoB2cEntity soB2cEntity) {
+	private void generateInstockBySo(PlatformReturnInstockDTO dto, WarehouseEntity warehouseEntity, SoB2cEntity soB2cEntity,
+									  Map<String, SkuMappingDTO.MappingSkuViewDTO> skuMappingMap) {
 		ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(soB2cEntity.getShopId());
 		if (Objects.isNull(shopInfoEntity)) {
 			log.warn("[海外仓退货入库] 参考单号匹配到销售订单{}但对应店铺不存在，生成无关联预入库单：shopId={}", soB2cEntity.getCode(), soB2cEntity.getShopId());
 			this.createSoReturnPrestockHeadless(dto, warehouseEntity);
 			return;
 		}
-		SkuSplitDetailResult splitResult = this.buildPlatformSoReturnInstockDetailSplit(dto, warehouseEntity, soB2cEntity);
+		SkuSplitDetailResult splitResult = this.buildPlatformSoReturnInstockDetailSplit(dto, warehouseEntity, soB2cEntity, skuMappingMap);
 		if (CollectionUtils.isEmpty(splitResult.matchedList)) {
 			// 整批SKU在销售订单里都对不上：不再整批抛错中断，全部明细改走预入库单，避免消息卡死重试
 			log.warn("[海外仓退货入库] 参考单号匹配到销售订单{}但一个SKU都匹配不上，全部改为生成预入库单", soB2cEntity.getCode());
@@ -449,8 +494,9 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 	/**
 	 * 命中B2B销售订单后生成《已审核-退货入库单》：B2B无"店铺"概念，客户直接取销售订单上的客户
 	 */
-	private void generateInstockBySoInfo(PlatformReturnInstockDTO dto, WarehouseEntity warehouseEntity, SoInfoEntity soInfoEntity) {
-		SkuSplitDetailResult splitResult = this.buildPlatformSoReturnInstockDetailForSoInfoSplit(dto, warehouseEntity, soInfoEntity);
+	private void generateInstockBySoInfo(PlatformReturnInstockDTO dto, WarehouseEntity warehouseEntity, SoInfoEntity soInfoEntity,
+										  Map<String, SkuMappingDTO.MappingSkuViewDTO> skuMappingMap) {
+		SkuSplitDetailResult splitResult = this.buildPlatformSoReturnInstockDetailForSoInfoSplit(dto, warehouseEntity, soInfoEntity, skuMappingMap);
 		if (CollectionUtils.isEmpty(splitResult.matchedList)) {
 			// 整批SKU在B2B销售订单里都对不上：不再整批抛错中断，全部明细改走预入库单，避免消息卡死重试
 			log.warn("[海外仓退货入库] 参考单号匹配到B2B销售订单{}但一个SKU都匹配不上，全部改为生成预入库单", soInfoEntity.getCode());
@@ -469,9 +515,11 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 	 * B2C场景拆分版明细构建：逻辑与 {@link #buildPlatformSoReturnInstockDetail} 一致（含就近出库单匹配、
 	 * 按订单明细 platformSkuNo/warehouseSkuNo 兜底匹配），唯一区别是SKU在订单里彻底找不到时不抛错，
 	 * 而是收集进 unmatchedList，交由调用方单独生成预入库单。已匹配行按平台推送的 mustQty/receiveQty/realQty
-	 * 原样落库，不按订单自身库存数量截断
+	 * 原样落库，不按订单自身库存数量截断。注意：不要修改共享的 {@link #buildPlatformSoReturnInstockDetail}，
+	 * 该方法还被 Amazon 平台仓入库路径 {@link #createByExistSoB2c} 复用
 	 */
-	private SkuSplitDetailResult buildPlatformSoReturnInstockDetailSplit(PlatformReturnInstockDTO dto, WarehouseEntity warehouseEntity, SoB2cEntity soB2cEntity) {
+	private SkuSplitDetailResult buildPlatformSoReturnInstockDetailSplit(PlatformReturnInstockDTO dto, WarehouseEntity warehouseEntity, SoB2cEntity soB2cEntity,
+																		  Map<String, SkuMappingDTO.MappingSkuViewDTO> skuMappingMap) {
 		List<PlatformReturnInstockDTO.Detail> details = dto.getProductDetailList();
 		List<SoB2cDetailEntity> soDetailEntityList = soB2cFeign.listDetailByMainIds(Collections.singletonList(soB2cEntity.getId()));
 		SkuSplitDetailResult result = new SkuSplitDetailResult();
@@ -499,14 +547,27 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 				result.matchedList.add(soReturnInstockDetailEntity);
 				continue;
 			}
-			// 未匹配到就近出库单，按订单明细 platformSkuNo/warehouseSkuNo 兜底匹配
-			SoB2cDetailEntity detailEntity = soDetailEntityList.stream()
-					.filter(e -> StringUtils.isNotBlank(e.getPlatformSkuNo()) && e.getPlatformSkuNo().equalsIgnoreCase(detail.getProductSku()))
-					.findFirst()
-					.orElseGet(() -> soDetailEntityList.stream()
-							.filter(e -> StringUtils.isNotBlank(e.getWarehouseSkuNo()) && e.getWarehouseSkuNo().equalsIgnoreCase(detail.getProductSku()))
-							.findFirst()
-							.orElse(null));
+			// 未匹配到就近出库单：优先按 listing/SKU映射转换后的 ERP skuId 匹配订单明细，
+			// 映射不到或订单里没有该 skuId 时，再退回按平台原始 productSku 对
+			// platformSkuNo/warehouseSkuNo 做字符串兜底匹配
+			String platformSkuNo = detail.getProductSku();
+			SkuMappingDTO.MappingSkuViewDTO skuMapping = StringUtils.isBlank(platformSkuNo) ? null : skuMappingMap.get(platformSkuNo.toUpperCase());
+			SoB2cDetailEntity detailEntity = null;
+			if (Objects.nonNull(skuMapping)) {
+				detailEntity = soDetailEntityList.stream()
+						.filter(e -> skuMapping.getProductSkuId().equals(e.getSkuId()))
+						.findFirst()
+						.orElse(null);
+			}
+			if (Objects.isNull(detailEntity)) {
+				detailEntity = soDetailEntityList.stream()
+						.filter(e -> StringUtils.isNotBlank(e.getPlatformSkuNo()) && e.getPlatformSkuNo().equalsIgnoreCase(platformSkuNo))
+						.findFirst()
+						.orElseGet(() -> soDetailEntityList.stream()
+								.filter(e -> StringUtils.isNotBlank(e.getWarehouseSkuNo()) && e.getWarehouseSkuNo().equalsIgnoreCase(platformSkuNo))
+								.findFirst()
+								.orElse(null));
+			}
 			if (Objects.isNull(detailEntity)) {
 				// 订单里彻底找不到这个SKU：不再整包报错，收集进unmatchedList单独生成预入库单
 				log.warn("[海外仓退货入库] 参考单号匹配到订单{}但订单明细中找不到SKU={}，该行改为生成预入库单", dto.getPlatformOrderNo(), detail.getProductSku());
@@ -533,7 +594,8 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 	 * B2B销售订单明细按平台SKU直接映射入库SKU（B2B无出库单就近匹配逻辑，字段映射与B2C保持一致）；
 	 * SKU在订单里找不到时收集进 unmatchedList，不抛错
 	 */
-	private SkuSplitDetailResult buildPlatformSoReturnInstockDetailForSoInfoSplit(PlatformReturnInstockDTO dto, WarehouseEntity warehouseEntity, SoInfoEntity soInfoEntity) {
+	private SkuSplitDetailResult buildPlatformSoReturnInstockDetailForSoInfoSplit(PlatformReturnInstockDTO dto, WarehouseEntity warehouseEntity, SoInfoEntity soInfoEntity,
+																				   Map<String, SkuMappingDTO.MappingSkuViewDTO> skuMappingMap) {
 		List<PlatformReturnInstockDTO.Detail> details = dto.getProductDetailList();
 		List<SoDetailEntity> soDetailEntityList = soInfoFeign.listSoDetailByMainIds(Collections.singletonList(soInfoEntity.getId()));
 		SkuSplitDetailResult result = new SkuSplitDetailResult();
@@ -543,9 +605,22 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 			return result;
 		}
 		for (PlatformReturnInstockDTO.Detail detail : details) {
-			SoDetailEntity detailEntity = soDetailEntityList.stream()
-					.filter(e -> StringUtils.isNotBlank(e.getPlatformSkuNo()) && e.getPlatformSkuNo().equalsIgnoreCase(detail.getProductSku()))
-					.findFirst().orElse(null);
+			// 优先按 ERP skuId 匹配，映射不到或订单里没有该 skuId 时再退回按平台原始 productSku
+			// 对 platformSkuNo 做字符串兜底匹配，理由同B2C场景
+			String platformSkuNo = detail.getProductSku();
+			SkuMappingDTO.MappingSkuViewDTO skuMapping = StringUtils.isBlank(platformSkuNo) ? null : skuMappingMap.get(platformSkuNo.toUpperCase());
+			SoDetailEntity detailEntity = null;
+			if (Objects.nonNull(skuMapping)) {
+				detailEntity = soDetailEntityList.stream()
+						.filter(e -> skuMapping.getProductSkuId().equals(e.getSkuId()))
+						.findFirst()
+						.orElse(null);
+			}
+			if (Objects.isNull(detailEntity)) {
+				detailEntity = soDetailEntityList.stream()
+						.filter(e -> StringUtils.isNotBlank(e.getPlatformSkuNo()) && e.getPlatformSkuNo().equalsIgnoreCase(platformSkuNo))
+						.findFirst().orElse(null);
+			}
 			if (Objects.isNull(detailEntity)) {
 				log.warn("[海外仓退货入库] 参考单号匹配到B2B订单{}但订单明细中找不到SKU={}，该行改为生成预入库单", dto.getPlatformOrderNo(), detail.getProductSku());
 				result.unmatchedList.add(detail);
