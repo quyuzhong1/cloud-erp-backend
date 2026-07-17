@@ -24,14 +24,17 @@ import java.util.Objects;
 /**
  * 爱亚 SKU DMP 阶段处理器，对齐 {@code WegoSkuOmsSyncDmpHandler}。
  * <p>
- * 从 MongoDB 中读取本次拉取的爱亚 {@code GLINK_QUERY_ITEM_NOTIFY} 原始数据：
- * 除最后一批外，各批次调用 OMS {@code syncWarehouseNotMatchSku} 完成新增/更新未匹配对照表；
- * 最后一批携带本次任务拉取到的全部 SKU，调用 OMS {@code reconcileWarehouseSkuSnapshot} 触发全量快照回收
- * （在完成新增/更新基础上，额外处理未映射且源端消失→删除、已映射且源端消失→禁用、已映射且源端停用→禁用）。
+ * 从 MongoDB 中读取本次拉取的爱亚 {@code GLINK_QUERY_ITEM_NOTIFY} 原始数据，按 {@code SYNC_BATCH_SIZE}
+ * 分批调用 OMS {@code syncWarehouseNotMatchSku}：每一批都会完成新增/更新未匹配对照表，
+ * 并对本批 SKU 中源端状态非启用（{@code status} 非 {@code Active}）的已映射记录置为禁用。
+ * 该判断只依赖每条 SKU 自身携带的状态，不需要"完整快照"用于比对是否有 SKU 消失
+ * （爱亚等三方仓通常会把已下架/停用的 SKU 继续保留在拉取结果里，只是状态变化，不会整条消失），
+ * 因此各批次调用之间互不依赖，无需区分"是否最后一批"。
  * <p>
  * 复用的 {@link WegoSkuSyncDTO} 已确认为平台无关的通用 DTO（按 {@code dto.getPlatform()}/{@code dto.getAuthId()}
- * 落库），命名沿用历史 "Wego" 前缀，但对爱亚可直接复用；{@code reconcileWarehouseSkuSnapshot} 同样按
- * {@code authId} 维度实现，为平台无关的公共能力，本轮仅接入爱亚。
+ * 落库），命名沿用历史 "Wego" 前缀，但对爱亚可直接复用；{@code syncWarehouseNotMatchSku} 同样按
+ * {@code authId} 维度实现禁用回收，为平台无关的公共能力，本轮仅接入爱亚。WEGO 现有调用不传 {@code status}，
+ * 因此不会触发禁用分支，行为不受影响。
  * <p>
  * {@code storage_name} 设为 {@code dmp_sku_info} 仅用于满足
  * {@link com.erp.server.dmp.inout.handler.input.task.dmp.DmpInputDmpHandler}
@@ -96,7 +99,7 @@ public class AiyaSkuOmsSyncDmpHandler extends DmpInputBaseDmpHandler {
             }
             item.setName(name);
             item.setBarcode(parseBarcodeList(mongoData));
-            // 随行透传源端原始状态，供 OMS 侧全量快照回收判断已映射且源端停用→禁用
+            // 随行透传源端原始状态，供 OMS 侧判断已映射且源端停用→禁用
             item.setStatus(status);
             skuItems.add(item);
         }
@@ -130,61 +133,41 @@ public class AiyaSkuOmsSyncDmpHandler extends DmpInputBaseDmpHandler {
             return new ArrayList<>();
         }
 
-        // 大批量 SKU 分批推送，避免单次 Feign 请求体过大导致超时/OMS 长事务/OOM
-        // 注意：reconcileWarehouseSkuSnapshot 的删除/禁用回收按"本次快照未覆盖到的记录"计算，
-        // 分批调用时每一批各自只能看到本批携带的 SKU，因此仅最后一批的回收结果覆盖当前 authId 下的全量真实快照；
-        // 中间批次调用时也会触发回收比对，但由于此时仅传入部分SKU，会把"还没轮到的批次里的SKU"误判为"已消失"而提前禁用/删除。
-        // 为避免误删/误禁用，删除/禁用回收只在处理最后一批时、且带上本次任务拉取到的全部 SKU 触发一次；
-        // 前面的批次仅做新增/更新（a/e），不做回收。
+        // 大批量 SKU 分批推送，避免单次 Feign 请求体过大导致超时/OMS 长事务/OOM。
+        // syncWarehouseNotMatchSku 的禁用判断只看本批 SKU 各自携带的状态，不需要"完整快照"比对，
+        // 因此每一批都独立调用同一个接口即可，不需要区分"是否最后一批"。
         List<List<WegoSkuSyncDTO.SkuItemDTO>> batches = ListUtil.split(skuItems, SYNC_BATCH_SIZE);
         int totalBatches = batches.size();
-        int totalSyncCount = 0;
-        // 记录已成功推送的批次序号，便于中途失败时定位断点、人工核对 OMS 侧是否已产生重复未匹配记录
+        int totalAddedCount = 0;
+        int totalDisabledCount = 0;
+        // 记录已成功处理的批次序号，便于中途失败时定位断点、人工核对 OMS 侧是否已产生重复处理
         int succeededBatchIndex = 0;
         try {
             for (List<WegoSkuSyncDTO.SkuItemDTO> batch : batches) {
                 int currentBatchIndex = succeededBatchIndex + 1;
-                boolean isLastBatch = currentBatchIndex == totalBatches;
 
-                if (!isLastBatch) {
-                    WegoSkuSyncDTO.SyncReqDTO syncReqDTO = new WegoSkuSyncDTO.SyncReqDTO();
-                    syncReqDTO.setAuthId(authId);
-                    syncReqDTO.setPlatform(OmsPlatformEnum.AI_YA.getCode());
-                    syncReqDTO.setWarehouseId(warehouseId);
-                    syncReqDTO.setWarehouseName(warehouseName);
-                    syncReqDTO.setSkuList(batch);
+                WegoSkuSyncDTO.SyncReqDTO reqDTO = new WegoSkuSyncDTO.SyncReqDTO();
+                reqDTO.setAuthId(authId);
+                reqDTO.setPlatform(OmsPlatformEnum.AI_YA.getCode());
+                reqDTO.setWarehouseId(warehouseId);
+                reqDTO.setWarehouseName(warehouseName);
+                reqDTO.setSkuList(batch);
 
-                    Integer syncCount = omsListingInfoFeign.syncWarehouseNotMatchSku(syncReqDTO);
-                    totalSyncCount += Objects.isNull(syncCount) ? 0 : syncCount;
-                    succeededBatchIndex = currentBatchIndex;
-                    log.warn("[爱亚SKU OMS同步] 服务商[authId={}] 批次{}/{} 推送成功（新增/更新）, 本批={}条, 新增未匹配记录={}条",
-                            authId, currentBatchIndex, totalBatches, batch.size(), syncCount);
-                    continue;
-                }
-
-                // 最后一批：带上本次任务拉取到的全部 SKU（skuItems），触发全量快照回收（新增/更新/删除/禁用一并生效）
-                WegoSkuSyncDTO.SyncReqDTO reconcileReqDTO = new WegoSkuSyncDTO.SyncReqDTO();
-                reconcileReqDTO.setAuthId(authId);
-                reconcileReqDTO.setPlatform(OmsPlatformEnum.AI_YA.getCode());
-                reconcileReqDTO.setWarehouseId(warehouseId);
-                reconcileReqDTO.setWarehouseName(warehouseName);
-                reconcileReqDTO.setSkuList(skuItems);
-
-                WegoSkuSyncDTO.ReconcileResultDTO reconcileResult = omsListingInfoFeign.reconcileWarehouseSkuSnapshot(reconcileReqDTO);
+                WegoSkuSyncDTO.ReconcileResultDTO reconcileResult = omsListingInfoFeign.syncWarehouseNotMatchSku(reqDTO);
                 int addedCount = Objects.isNull(reconcileResult) ? 0 : reconcileResult.getAddedCount();
-                totalSyncCount += addedCount;
+                int disabledCount = Objects.isNull(reconcileResult) ? 0 : reconcileResult.getDisabledCount();
+                totalAddedCount += addedCount;
+                totalDisabledCount += disabledCount;
                 succeededBatchIndex = currentBatchIndex;
-                log.warn("[爱亚SKU OMS同步] 服务商[authId={}] 批次{}/{}（末批，全量快照回收）, 本批={}条, 新增={}条, 删除={}条, 禁用={}条",
-                        authId, currentBatchIndex, totalBatches, batch.size(), addedCount,
-                        Objects.isNull(reconcileResult) ? 0 : reconcileResult.getDeletedCount(),
-                        Objects.isNull(reconcileResult) ? 0 : reconcileResult.getDisabledCount());
+                log.warn("[爱亚SKU OMS同步] 服务商[authId={}] 批次{}/{} 处理成功, 本批={}条, 新增={}条, 禁用={}条",
+                        authId, currentBatchIndex, totalBatches, batch.size(), addedCount, disabledCount);
             }
-            log.info("[爱亚SKU OMS同步] 服务商[authId={}] SKU总数={}条，分{}批推送，新增未匹配记录={}条",
-                    authId, skuItems.size(), totalBatches, totalSyncCount);
+            log.info("[爱亚SKU OMS同步] 服务商[authId={}] SKU总数={}条，分{}批处理，新增未匹配记录={}条，禁用映射关系={}条",
+                    authId, skuItems.size(), totalBatches, totalAddedCount, totalDisabledCount);
         } catch (Exception e) {
             log.error("[爱亚SKU OMS同步] 服务商[authId={}] 批次{}/{} 调用OMS异常，已成功批次={}/{}，已成功新增={}条: {}",
                     authId, succeededBatchIndex + 1, totalBatches, succeededBatchIndex, totalBatches,
-                    totalSyncCount, ExceptionUtil.getMessage(e), e);
+                    totalAddedCount, ExceptionUtil.getMessage(e), e);
             throw e;
         }
 

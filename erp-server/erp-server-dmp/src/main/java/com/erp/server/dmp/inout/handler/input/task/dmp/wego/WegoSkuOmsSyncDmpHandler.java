@@ -133,10 +133,11 @@ public class WegoSkuOmsSyncDmpHandler extends DmpInputBaseDmpHandler {
                 syncReqDTO.setWarehouseName(warehouseName);
                 syncReqDTO.setSkuList(batch);
 
-                Integer syncCount = omsListingInfoFeign.syncWarehouseNotMatchSku(syncReqDTO);
-                totalSyncCount += Objects.isNull(syncCount) ? 0 : syncCount;
+                WegoSkuSyncDTO.ReconcileResultDTO reconcileResult = omsListingInfoFeign.syncWarehouseNotMatchSku(syncReqDTO);
+                int syncCount = Objects.isNull(reconcileResult) ? 0 : reconcileResult.getAddedCount();
+                totalSyncCount += syncCount;
                 succeededBatchIndex = currentBatchIndex;
-                log.info("[WEGO SKU OMS同步] 服务商[authId={}] 批次{}/{} 推送成功, 本批={}条, 新增未匹配记录={}条",
+                log.warn("[WEGO SKU OMS同步] 服务商[authId={}] 批次{}/{} 推送成功, 本批={}条, 新增未匹配记录={}条",
                         authId, currentBatchIndex, totalBatches, batch.size(), syncCount);
             }
             log.info("[WEGO SKU OMS同步] 服务商[authId={}] SKU总数={}条，分{}批推送，新增未匹配记录={}条",

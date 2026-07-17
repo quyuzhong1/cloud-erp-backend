@@ -78,21 +78,14 @@ public interface OmsListingInfoFeign {
     boolean updatePlatformSkuId(@RequestParam(value = "listingId") String listingId, @RequestParam(value = "platformSkuId") String platformSkuId);
 
     /**
-     * 同步三方仓SKU到未匹配对照表
+     * 同步三方仓SKU到未匹配对照表，并对本次传入 SKU 中源端状态非启用的已映射记录置为禁用。
+     * 判断仅依赖本次传入 SKU 各自的状态，不要求携带完整快照，可按任意批次调用；
+     * 未回传状态的调用方（如WEGO）不会触发禁用分支。
+     * 禁用后不会自动恢复启用，需人工在SKU对照表页面处理。
      *
-     * @param dto 三方仓 SKU 同步参数
-     * @return 本次新增未匹配记录数量
+     * @param dto 三方仓 SKU 同步参数（服务商、平台、本次批次的 SKU 及其可选的源端状态）
+     * @return 本次处理统计结果（新增/禁用数量）
      */
     @PostMapping("feign/listing/syncWarehouseNotMatchSku")
-    Integer syncWarehouseNotMatchSku(@RequestBody @Validated WegoSkuSyncDTO.SyncReqDTO dto);
-
-    /**
-     * 三方仓SKU全量快照回收：新增/更新未匹配对照表，并删除源端已消失的未映射记录，
-     * 禁用源端已消失或已停用的已映射记录。禁用后不会自动恢复启用，需人工在SKU对照表页面处理。
-     *
-     * @param dto 三方仓 SKU 全量快照（服务商、平台、本次拉取到的全部 SKU 及其源端状态）
-     * @return 本次回收统计结果（新增/删除/禁用数量）
-     */
-    @PostMapping("feign/listing/reconcileWarehouseSkuSnapshot")
-    WegoSkuSyncDTO.ReconcileResultDTO reconcileWarehouseSkuSnapshot(@RequestBody @Validated WegoSkuSyncDTO.SyncReqDTO dto);
+    WegoSkuSyncDTO.ReconcileResultDTO syncWarehouseNotMatchSku(@RequestBody @Validated WegoSkuSyncDTO.SyncReqDTO dto);
 }

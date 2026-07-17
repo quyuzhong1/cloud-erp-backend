@@ -83,7 +83,7 @@ public class WegoSkuSyncDTO implements Serializable {
     }
 
     /**
-     * 全量快照回收结果统计，供调用方（DMP Handler）记录日志/排查用。
+     * SKU 同步/回收结果统计，供调用方（DMP Handler）记录日志/排查用。
      */
     @Data
     @NoArgsConstructor
@@ -93,11 +93,7 @@ public class WegoSkuSyncDTO implements Serializable {
          */
         private int addedCount;
         /**
-         * 未映射且源端快照中已消失，被删除的记录数
-         */
-        private int deletedCount;
-        /**
-         * 已映射但源端消失或已停用，被置为禁用的映射关系数
+         * 已映射但源端状态非启用（如爱亚 Inactive），被置为禁用的映射关系数
          */
         private int disabledCount;
     }
