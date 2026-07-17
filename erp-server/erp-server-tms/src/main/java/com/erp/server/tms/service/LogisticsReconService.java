@@ -93,6 +93,12 @@ public interface LogisticsReconService extends SuperService<LogisticsReconEntity
      */
     void executeImportTask(LogisticsReconDTO.ImportDTO dto);
 
+    /** 导入任务提交/执行失败时回写主单状态。 */
+    void markImportFail(List<String> mainIds, String failReason);
+
+    /** 导入执行中断时清理本次主单下已分批落库的数据并回写失败原因。 */
+    void rollbackImportTask(List<String> mainIds, String failReason);
+
 
     /**
      * 物流商对账单校验状态单条切换（待确认 ↔ 已确认）

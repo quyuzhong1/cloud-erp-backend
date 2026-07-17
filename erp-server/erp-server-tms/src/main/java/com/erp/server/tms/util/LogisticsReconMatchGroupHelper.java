@@ -73,7 +73,7 @@ public final class LogisticsReconMatchGroupHelper {
         if (row == null) {
             return true;
         }
-        return StrUtil.isAllBlank(row.getSoCode(), row.getPlatformOrderNo(), row.getTrackNo(),
+        return StrUtil.isAllBlank(row.getSoCode(), row.getPlatformOrderNo(), row.getTransportNo(), row.getTrackNo(),
                 row.getSoDeliveryCode());
     }
 
@@ -110,11 +110,15 @@ public final class LogisticsReconMatchGroupHelper {
         }
         switch (targetField) {
             case LogisticsCostImportTargetFieldConstant.SOURCE_CODE:
+            case LogisticsCostImportTargetFieldConstant.SO_CODE:
                 return StrUtil.trimToEmpty(detail.getSoCode());
             case LogisticsCostImportTargetFieldConstant.PLATFORM_CODE:
+            case LogisticsCostImportTargetFieldConstant.PLATFORM_ORDER_NO:
                 return StrUtil.trimToEmpty(detail.getPlatformOrderNo());
             case LogisticsCostImportTargetFieldConstant.TRACK_NO:
                 return StrUtil.trimToEmpty(detail.getTrackNo());
+            case LogisticsCostImportTargetFieldConstant.TRANSPORT_NO:
+                return StrUtil.trimToEmpty(detail.getTransportNo());
             case LogisticsCostImportTargetFieldConstant.SO_DELIVERY_CODE:
                 return StrUtil.trimToEmpty(detail.getSoDeliveryCode());
             default:
@@ -137,11 +141,15 @@ public final class LogisticsReconMatchGroupHelper {
         }
         switch (targetField) {
             case LogisticsCostImportTargetFieldConstant.SOURCE_CODE:
+            case LogisticsCostImportTargetFieldConstant.SO_CODE:
                 return StrUtil.trimToEmpty(row.getSoCode());
             case LogisticsCostImportTargetFieldConstant.PLATFORM_CODE:
+            case LogisticsCostImportTargetFieldConstant.PLATFORM_ORDER_NO:
                 return StrUtil.trimToEmpty(row.getPlatformOrderNo());
             case LogisticsCostImportTargetFieldConstant.TRACK_NO:
                 return StrUtil.trimToEmpty(row.getTrackNo());
+            case LogisticsCostImportTargetFieldConstant.TRANSPORT_NO:
+                return StrUtil.trimToEmpty(row.getTransportNo());
             case LogisticsCostImportTargetFieldConstant.SO_DELIVERY_CODE:
                 return StrUtil.trimToEmpty(row.getSoDeliveryCode());
             default:

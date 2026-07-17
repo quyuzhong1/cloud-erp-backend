@@ -601,7 +601,8 @@ public class LogisticsReconDetailServiceImpl
      * @return 可匹配时返回 true
      */
     private boolean canImportMatchSub(LogisticsReconDetailSubEntity sub) {
-        if (LogisticsReconReconciliationStatusEnum.CONFIRMED.getCode().equals(sub.getReconciliationStatus())) {
+        if (LogisticsReconReconciliationStatusEnum.CONFIRMED.getCode().equals(sub.getReconciliationStatus())
+                || LogisticsReconReconciliationStatusEnum.PARTIAL_CONFIRM.getCode().equals(sub.getReconciliationStatus())) {
             return false;
         }
         if (LogisticsReconDetailMatchStatusEnum.MATCHING.getCode().equals(sub.getMatchStatus())) {
