@@ -5,6 +5,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
+import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -16,6 +17,8 @@ import java.util.Collections;
 @Component
 @Slf4j
 public class StocktakingInventoryLockRedisUtil {
+
+    private static final StringRedisSerializer STRING_REDIS_SERIALIZER = StringRedisSerializer.UTF_8;
 
     private static final DefaultRedisScript<Long> TRY_STOCKTAKING_INVENTORY_LOCK_SCRIPT;
 
@@ -65,7 +68,9 @@ public class StocktakingInventoryLockRedisUtil {
      */
     public boolean tryStocktakingInventoryLock(String conflictPattern, String lockKey, String lockValue) {
         try {
+            // Lua ARGV 须用 StringRedisSerializer，否则 FastJson valueSerializer 会把 key/value 序列化成带引号 JSON
             Long result = (Long) redisUtil.getRedisTemplate().execute(TRY_STOCKTAKING_INVENTORY_LOCK_SCRIPT,
+                    STRING_REDIS_SERIALIZER, STRING_REDIS_SERIALIZER,
                     Collections.emptyList(), conflictPattern, lockKey, lockValue);
             if (result == null) {
                 throw new ServiceException(ApiError.COMMON_REMOTE_SERVICE_ERROR, "Redis", "盘点加锁脚本返回为空");

@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.plm.mapper.CfgProductForbiddenWordMapper">
+
+    <resultMap id="BaseResultMap" type="com.erp.model.plm.entity.CfgProductForbiddenWordEntity">
+        <id column="id" property="id"/>
+        <result column="create_user_id" property="createUserId"/>
+        <result column="create_user_name" property="createUserName"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_user_id" property="updateUserId"/>
+        <result column="update_user_name" property="updateUserName"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="version" property="version"/>
+        <result column="is_deleted" property="isDeleted"/>
+        <result column="forbidden_word" property="forbiddenWord"/>
+        <result column="disabled" property="disabled"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        cpfw.id AS id,
+        cpfw.forbidden_word AS forbiddenWord,
+        cpfw.disabled AS disabled,
+        cpfw.create_user_id AS createUserId,
+        cpfw.create_user_name AS createUserName,
+        cpfw.create_time AS createTime,
+        cpfw.update_user_id AS updateUserId,
+        cpfw.update_user_name AS updateUserName,
+        cpfw.update_time AS updateTime,
+        cpfw.version AS version
+    </sql>
+
+    <sql id="Where_Condition">
+        cpfw.is_deleted = FALSE
+        <if test="params != null and params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.default != ''">
+            AND ${params.sqlMap.default}
+        </if>
+        <if test="params != null and params.ids != null and params.ids.size > 0">
+            AND cpfw.id IN
+            <foreach collection="params.ids" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params != null and params.forbiddenWord != null and params.forbiddenWord != ''">
+            AND cpfw.forbidden_word ILIKE concat('%', #{params.forbiddenWord}::text, '%')
+        </if>
+        <if test="params != null and params.disabled != null">
+            AND cpfw.disabled = #{params.disabled}
+        </if>
+        <if test="params != null and params.createUserName != null and params.createUserName != ''">
+            AND cpfw.create_user_name ILIKE concat('%', #{params.createUserName}::text, '%')
+        </if>
+        <if test="params != null and params.createStartTime != null">
+            AND cpfw.create_time &gt;= #{params.createStartTime}
+        </if>
+        <if test="params != null and params.createEndTime != null">
+            AND cpfw.create_time &lt;= #{params.createEndTime}
+        </if>
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.plm.dto.CfgProductForbiddenWordDTO$ListDTO">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM cfg_product_forbidden_word cpfw
+        WHERE
+        <include refid="Where_Condition"/>
+        ORDER BY
+        <if test="params != null and params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        cpfw.create_time DESC
+    </select>
+
+    <select id="listAll" resultType="com.erp.model.plm.dto.CfgProductForbiddenWordDTO$ListDTO">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM cfg_product_forbidden_word cpfw
+        WHERE
+        <include refid="Where_Condition"/>
+        ORDER BY cpfw.create_time DESC
+    </select>
+
+    <select id="getByNormalizedWord" resultMap="BaseResultMap">
+        SELECT
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        forbidden_word,
+        disabled
+        FROM cfg_product_forbidden_word
+        WHERE is_deleted = FALSE
+          AND lower(btrim(forbidden_word)) = lower(btrim(#{word}))
+        LIMIT 1
+    </select>
+
+    <select id="countByNormalizedWord" resultType="java.lang.Integer">
+        SELECT count(1)
+        FROM cfg_product_forbidden_word
+        WHERE is_deleted = FALSE
+          AND lower(btrim(forbidden_word)) = lower(btrim(#{word}))
+        <if test="excludeId != null and excludeId != ''">
+            AND id != #{excludeId}
+        </if>
+    </select>
+
+    <select id="listEnabledWords" resultType="java.lang.String">
+        SELECT forbidden_word
+        FROM cfg_product_forbidden_word
+        WHERE is_deleted = FALSE
+          AND disabled = FALSE
+        ORDER BY create_time DESC
+    </select>
+
+    <select id="getEnabledWordsMaxUpdateTime" resultType="java.time.LocalDateTime">
+        SELECT max(update_time)
+        FROM cfg_product_forbidden_word
+        WHERE is_deleted = FALSE
+          AND disabled = FALSE
+    </select>
+</mapper>
