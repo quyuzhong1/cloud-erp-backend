@@ -709,10 +709,10 @@ public class ExportWmsFeignController {
         try {
             return soDeliveryNoticeService.paging(dto);
         } catch (ExecutionException e) {
-            Thread.currentThread().interrupt();
             log.error("Interrupted while exporting SO delivery notice", e);
             throw new ServiceException(ApiError.COMMON_EXECUTOR_EXCEPTION, e.getMessage());
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             log.error("Error occurred while exporting SO delivery notice", e);
             // 保留并转换底层业务异常，避免统一丢失为普通 RuntimeException
             throw new ServiceException(ApiError.COMMON_THREAD_INTERRUPTED_EXCEPTION, e.getMessage());
