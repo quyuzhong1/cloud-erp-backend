@@ -495,6 +495,39 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     /**
+     * @Description 开模通知单-选择产品弹框：产品分页 + 关联模具档案项目名称（skuNo = mold_info.code）
+     **/
+    @Override
+    public PagingVO<ProductMoldProjectDTO> pagingWithMoldProject(PagingDTO<ProductSkuDTO> pagingDTO) {
+        PagingVO<ProductDetailShowDTO> base = this.paging(pagingDTO);
+        List<ProductDetailShowDTO> baseList = base.getList();
+        List<ProductMoldProjectDTO> records = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(baseList)) {
+            for (ProductDetailShowDTO src : baseList) {
+                ProductMoldProjectDTO dto = new ProductMoldProjectDTO();
+                BeanUtils.copyProperties(src, dto);
+                records.add(dto);
+            }
+            // 按 skuNo = mold_info.code 批量取模具档案项目名称（模具编号与生成的SKU编码一致）
+            Set<String> skuNos = records.stream()
+                    .map(ProductDetailShowDTO::getSkuNo)
+                    .filter(StringUtils::isNotBlank)
+                    .collect(Collectors.toSet());
+            if (CollectionUtils.isNotEmpty(skuNos)) {
+                List<MoldInfoEntity> moldList = moldInfoService.lambdaQuery()
+                        .select(MoldInfoEntity::getCode, MoldInfoEntity::getProjectName)
+                        .in(MoldInfoEntity::getCode, skuNos)
+                        .list();
+                Map<String, String> codeProjectMap = moldList.stream()
+                        .filter(m -> StringUtils.isNotBlank(m.getProjectName()))
+                        .collect(Collectors.toMap(MoldInfoEntity::getCode, MoldInfoEntity::getProjectName, (a, b) -> a));
+                records.forEach(r -> r.setProjectName(codeProjectMap.get(r.getSkuNo())));
+            }
+        }
+        return new PagingVO<>(records, base.getTotalCount(), base.getPageSize(), base.getCurrPage());
+    }
+
+    /**
      * @param name:产品名称
      * @return ProductDetailShowDTO
      * @Description 条件查询产品信息

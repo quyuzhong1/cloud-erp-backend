@@ -41,6 +41,13 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
     PagingVO<ProductDetailShowDTO> paging(PagingDTO<ProductSkuDTO> pagingDTO);
 
     /**
+     * @Description 开模通知单-选择产品弹框：产品分页 + 关联模具档案项目名称（skuNo = mold_info.code）
+     * @param pagingDTO 查询参数
+     * @return PagingVO
+     **/
+    PagingVO<ProductMoldProjectDTO> pagingWithMoldProject(PagingDTO<ProductSkuDTO> pagingDTO);
+
+    /**
      * @Description 条件查询产品信息
      * @Author Luo_WG
      * @Date 2022/9/22 10:28
