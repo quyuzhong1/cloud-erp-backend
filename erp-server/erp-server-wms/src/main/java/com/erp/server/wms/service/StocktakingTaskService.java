@@ -161,12 +161,14 @@ public interface StocktakingTaskService extends SuperService<StocktakingTaskEnti
     void releaseInventoryLockByTaskId(String taskId);
 
     /**
-     * 按盘点计划单号释放该计划下全部 Redis 盘点库存锁
+     * 按计划单号 SCAN 匹配并删除该计划全部 Redis 库存锁（反审核、下推失败回滚等调用）。
+     * 实现细节见 {@link com.erp.server.wms.service.impl.StocktakingTaskServiceImpl#releaseInventoryLockByPlanCode}。
      */
     void releaseInventoryLockByPlanCode(String planCode);
 
     /**
-     * 判断库存维度是否已被盘点锁定（任意计划下的 plan lock key）
+     * 判断指定库存维度是否已被盘点占用。
+     * 实现细节见 {@link com.erp.server.wms.service.impl.StocktakingTaskServiceImpl#isInventoryLockedForStocktaking}。
      */
     boolean isInventoryLockedForStocktaking(String orgId, String warehouseId, String warehouseLocation, String skuId, String dictInventoryStatus);
 

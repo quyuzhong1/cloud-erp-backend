@@ -212,6 +212,10 @@ public class StocktakingPlanController extends BaseController {
 
     /**
     * 反审核
+    * <p>
+    * 释锁由 Service 完成：{@link com.erp.server.wms.service.impl.StocktakingPlanServiceImpl#disApprove} →
+    * {@link com.erp.server.wms.service.StocktakingTaskService#removeBySourceId}，在 DB 事务提交后
+    * {@code afterCommit} 调用 {@code releaseInventoryLockByPlanCode}。
     * @author Cloud
     * @date:  2023-08-08
     * @param dto
