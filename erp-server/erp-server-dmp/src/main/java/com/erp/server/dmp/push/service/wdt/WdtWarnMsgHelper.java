@@ -37,6 +37,9 @@ import java.util.stream.Collectors;
  * 旺店通推送告警消息发送公共类。
  * <p>抽取自 WdtOtherInStockServiceImpl / WdtOtherOutStockServiceImpl 的告警发送逻辑，
  * 统一字段组装、中台仓库映射解析、MQ 发送及异常吞噬策略；告警发送失败不影响主流程抛错。</p>
+ * <p><b>错误翻译范围</b>：{@link WdtErrorMsgTranslator} 仅在本类创建/审核失败 MQ 告警的 {@code keyInfo}
+ * 中生效；{@code WdtOtherInStockServiceImpl} / {@code WdtOtherOutStockServiceImpl} 抛出的
+ * {@code ServiceException} 及推送任务失败详情仍透传旺店通原文，未走翻译。</p>
  */
 @Slf4j
 @Component
@@ -59,12 +62,18 @@ public class WdtWarnMsgHelper {
     private DmpPushWdtService dmpPushWdtService;
     @Resource
     private WmsWarehouseFeign wmsWarehouseFeign;
+    @Resource
+    private WdtErrorMsgTranslator wdtErrorMsgTranslator;
 
+    /**
+     * 其他出入库「创建失败」MQ 告警；{@code wdtErrorMsg} 经 {@link WdtErrorMsgTranslator} 翻译后写入 keyInfo。
+     */
     public void safeSendOtherStockCreateFailWarn(OtherStockWarnContext context, Integer wdtErrorCode, String wdtErrorMsg) {
         try {
             ResolvedWarnFields fields = resolveWarnFields(context);
+            String displayErrorMsg = wdtErrorMsgTranslator.translate(wdtErrorCode, wdtErrorMsg);
             String keyInfo = buildCreateFailMsg(fields.getDocTypeName(), fields.getErpSourceCode(), fields.getOuterNo(),
-                    fields.getErpWarehouseName(), fields.getWdtWarehouseNo(), wdtErrorCode, wdtErrorMsg);
+                    fields.getErpWarehouseName(), fields.getWdtWarehouseNo(), wdtErrorCode, displayErrorMsg);
             String title = CharSequenceUtil.format("创建{}失败", fields.getDocTypeName());
             safeSendCreateOrApproveWarnMsg(fields.getBizName(), title, fields.getTableId(), keyInfo);
         } catch (Exception e) {
@@ -73,11 +82,15 @@ public class WdtWarnMsgHelper {
         }
     }
 
+    /**
+     * 其他出入库「审核失败」MQ 告警；{@code wdtErrorMsg} 经 {@link WdtErrorMsgTranslator} 翻译后写入 keyInfo。
+     */
     public void safeSendOtherStockAuditFailWarn(OtherStockWarnContext context, Integer wdtErrorCode, String wdtErrorMsg) {
         try {
             ResolvedWarnFields fields = resolveWarnFields(context);
+            String displayErrorMsg = wdtErrorMsgTranslator.translate(wdtErrorCode, wdtErrorMsg);
             String keyInfo = buildAuditFailMsg(fields.getDocTypeName(), fields.getErpSourceCode(), fields.getErpWarehouseName(),
-                    fields.getOuterNo(), fields.getWdtWarehouseNo(), wdtErrorCode, wdtErrorMsg);
+                    fields.getOuterNo(), fields.getWdtWarehouseNo(), wdtErrorCode, displayErrorMsg);
             String title = CharSequenceUtil.format("审核{}失败", fields.getDocTypeName());
             safeSendCreateOrApproveWarnMsg(fields.getBizName(), title, fields.getTableId(), keyInfo);
         } catch (Exception e) {
