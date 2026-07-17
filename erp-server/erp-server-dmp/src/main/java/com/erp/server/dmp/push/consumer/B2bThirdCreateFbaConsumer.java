@@ -5,32 +5,22 @@ import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.core.controller.vo.ApiResult;
-import com.common.message.constant.RocketMqConsumerGroup;
-import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.erp.model.wms.dto.third.ThirdWarehouseCreateFbaOutboundReq;
 import com.erp.rpc.wms.feign.B2bThirdDeliveryFeign;
 import com.erp.server.dmp.service.DmpPushTaskService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.rocketmq.spring.annotation.ConsumeMode;
-import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 
 /**
- * B2B 三方发货单创建出库 MQ 消费（与 saveCreateTask 的 topic/tag 对齐）
- *
  * @author zdy
  * @version 1.0
  * @date 2023/4/20 11:12
  */
 @Service
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqTopic.SYNC_B2B_THIRD_DELIVERY_CREATE_ERP_TOPIC,
-        selectorExpression = "erp_b2b_third_warehouse_create_tag",
-        consumerGroup = RocketMqConsumerGroup.SYNC_B2B_THIRD_DELIVERY_CREATE,
-        consumeMode = ConsumeMode.ORDERLY)
 public class B2bThirdCreateFbaConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatformConsumerHandler<T> {
 
     @Resource
