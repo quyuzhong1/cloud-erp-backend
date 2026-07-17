@@ -1052,6 +1052,8 @@ public class SoReturnPrestockServiceImpl
         } else {
             log.warn("无头件预入库单缺少第三方单号，跳过幂等校验，可能重复生成");
         }
+        // 海外仓拉取明细来源于平台SKU映射（仅含产品名称，无图片/EAN），此处按 skuId 从 PLM 批量补全产品名称/图片/EAN
+        enrichDetailProductInfoBySkuId(dto.getDetailList());
         SoReturnPrestockEntity entity = buildAndPersist(dto, "", PrestockSourceTypeEnum.OVERSEAS_WH.getStatus());
         // 与人工发起创建（addFromReturnInstock）保持一致：预入库单落库后同步生成其它入库单，使预入库真正增加库存
         generateOtherInstockForPrestock(entity.getId(), dto);
@@ -1510,6 +1512,38 @@ public class SoReturnPrestockServiceImpl
             detail.setRemark(d.getRemark());
             return detail;
         }).collect(Collectors.toList());
+    }
+
+    /**
+     * 按 skuId 从 PLM 批量补全预入库单明细的产品名称/图片/EAN（就地修改传入的明细列表）。
+     * <p>用于海外仓拉取场景：明细来源于平台SKU映射（{@code MappingSkuViewDTO} 仅含产品名称，无图片/EAN），
+     * 图片/EAN 缺失、产品名称也可能因未匹配到映射而为空。仅对已解析出 skuId 且原值为空的字段补齐，
+     * 不覆盖已有值；未解析出 skuId 的明细（三无包裹）无法补全，保持原样由运营人工核对。</p>
+     */
+    private void enrichDetailProductInfoBySkuId(List<SoReturnPrestockDetailDTO.Add> detailList) {
+        if (CollUtil.isEmpty(detailList)) {
+            return;
+        }
+        Map<String, SkuVO> skuVOMap = listSkuVOMap(detailList.stream()
+                .map(SoReturnPrestockDetailDTO.Add::getSkuId).collect(Collectors.toList()));
+        if (CollUtil.isEmpty(skuVOMap)) {
+            return;
+        }
+        for (SoReturnPrestockDetailDTO.Add detail : detailList) {
+            SkuVO skuVO = skuVOMap.get(detail.getSkuId());
+            if (Objects.isNull(skuVO)) {
+                continue;
+            }
+            if (CharSequenceUtil.isBlank(detail.getProductName())) {
+                detail.setProductName(CharSequenceUtil.sub(skuVO.getSkuName(), 0, PRODUCT_NAME_MAX_LENGTH));
+            }
+            if (CharSequenceUtil.isBlank(detail.getProductImageUrl())) {
+                detail.setProductImageUrl(firstDisplayImageUrl(skuVO.getSkuImagesUrl()));
+            }
+            if (CharSequenceUtil.isBlank(detail.getEan())) {
+                detail.setEan(skuVO.getEan());
+            }
+        }
     }
 
     /**
