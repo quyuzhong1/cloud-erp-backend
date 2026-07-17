@@ -45,7 +45,16 @@ public class SysMenuEntity implements Serializable {
      */
     private String menuUrl;
     /**
-     * 类型 1：目录   2：菜单   3：按钮  4：功能
+     * 菜单类型
+     * <ul>
+     *   <li>1 = 目录</li>
+     *   <li>2 = 菜单</li>
+     *   <li>3 = 按钮</li>
+     *   <li>4 = 功能</li>
+     *   <li>5 = 字段权限码（用于"角色管理 - 字段权限"tab；
+     *       {@code menu_code} 同时作为 {@code cfg_mask_field.permission_code}，
+     *       挂到角色 {@code sys_role_menu} 即放开该字段明文）</li>
+     * </ul>
      */
     private Integer type;
 

@@ -29,6 +29,7 @@
        <result column="is_default" property="isDefault" />
        <result column="remark" property="remark" />
        <result column="disabled" property="disabled" />
+       <result column="receiver_tax_no" property="receiverTaxNo" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -58,7 +59,8 @@ kai.phone AS phone,
 kai.zip_code AS zipCode,
 kai.is_default AS isDefault,
 kai.remark AS remark,
-kai.disabled AS disabled
+kai.disabled AS disabled,
+kai.receiver_tax_no AS receiverTaxNo
     </sql>
 
 

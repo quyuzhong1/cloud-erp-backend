@@ -117,4 +117,16 @@ public class ListingInfoFeignController extends BaseController {
     public Integer syncWarehouseNotMatchSku(@RequestBody @Validated WegoSkuSyncDTO.SyncReqDTO dto) {
         return listingInfoService.syncWarehouseNotMatchSku(dto);
     }
+
+    /**
+     * 三方仓SKU全量快照回收：新增/更新未匹配对照表，并删除源端已消失的未映射记录、
+     * 禁用源端已消失或已停用的已映射记录
+     *
+     * @param dto 三方仓 SKU 全量快照
+     * @return 本次回收统计结果（新增/删除/禁用数量）
+     */
+    @PostMapping("/reconcileWarehouseSkuSnapshot")
+    public WegoSkuSyncDTO.ReconcileResultDTO reconcileWarehouseSkuSnapshot(@RequestBody @Validated WegoSkuSyncDTO.SyncReqDTO dto) {
+        return listingInfoService.reconcileWarehouseSkuSnapshot(dto);
+    }
 }

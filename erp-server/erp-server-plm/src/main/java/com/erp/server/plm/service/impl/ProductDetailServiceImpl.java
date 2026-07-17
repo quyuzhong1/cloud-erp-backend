@@ -347,6 +347,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Resource
     private ProductRefSkuService productRefSkuService;
 
+    @Resource
+    private CfgProductForbiddenWordService cfgProductForbiddenWordService;
+
     //变更财务人员审核
     @Value("${changeFinancialAudit}")
     private String financial;
@@ -804,6 +807,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Override
     public void updateName(String id, String name) {
+        cfgProductForbiddenWordService.validateProductName(name);
         lambdaUpdate().eq(ProductDetailEntity::getId, id)
                 .set(ProductDetailEntity::getName, name)
                 .update(new ProductDetailEntity());
@@ -1151,6 +1155,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         ProductDetailEntity detailEntity = new ProductDetailEntity();
         BeanMapper.copy(productSkuBaseInfoDTO, detailEntity);
         detailEntity.setIsChange(IsConstant.NO);
+        cfgProductForbiddenWordService.validateProductName(detailEntity.getName());
         productUnitService.setupOccupy(Arrays.asList(detailEntity.getUnitId()));
         this.saveOrUpdate(detailEntity);
         if (CharSequenceUtil.isNotBlank(productSkuBaseInfoDTO.getId())){
@@ -1209,6 +1214,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<ProductDetailEntity> list = BeanMapper.copyList(productDetailList, ProductDetailEntity.class);
         list.forEach(req -> {
             req.setIsChange(IsConstant.NO);
+            cfgProductForbiddenWordService.validateProductName(req.getName());
         });
         List<String> unitList = list.stream().map(ProductDetailEntity::getUnitId).collect(Collectors.toList());
         productUnitService.setupOccupy(unitList);
@@ -4826,6 +4832,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<ProductDetailEntity> entityList = this.listByIds(dto.getIds());
         if (CollectionUtils.isEmpty(entityList)) {
             throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
+        }
+        if (ProductDetailEntity.NAME.equals(dto.getUpdateFiledCode())) {
+            cfgProductForbiddenWordService.validateProductName(Objects.toString(dto.getValues(), ""));
         }
         Boolean flag = Boolean.TRUE;
         //如果是产品经理需要查询name

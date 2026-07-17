@@ -7,6 +7,8 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.erp.model.scm.dto.PurchaseBusinessGatherTableDTO;
 import com.erp.model.srm.dto.DeliveryOrderDTO;
 import com.erp.model.srm.dto.excel.DeliveryOrderExportExcelDTO;
@@ -24,6 +26,7 @@ import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.server.wms.handler.InventoryQueryHandler;
 import com.erp.server.wms.query.*;
 import com.erp.server.wms.service.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -32,7 +35,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.concurrent.ExecutionException;
 
+@Slf4j
 @RestController
 @RequestMapping("/feign/export")
 public class ExportWmsFeignController {
@@ -701,7 +706,17 @@ public class ExportWmsFeignController {
     )
     @WebAdvanceQuery(handler = SoDeliveryNoticeQueryHandler.class)
     public PagingVO<SoDeliveryNoticeDTO.PagingView> exportSoDeliveryNotice(@RequestBody PagingDTO<SoDeliveryNoticeDTO.PagingParam> dto) {
-        return soDeliveryNoticeService.exportSoDeliveryNotice(dto);
+        try {
+            return soDeliveryNoticeService.paging(dto);
+        } catch (ExecutionException e) {
+            log.error("Interrupted while exporting SO delivery notice", e);
+            throw new ServiceException(ApiError.COMMON_EXECUTOR_EXCEPTION, e.getMessage());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.error("Error occurred while exporting SO delivery notice", e);
+            // 保留并转换底层业务异常，避免统一丢失为普通 RuntimeException
+            throw new ServiceException(ApiError.COMMON_THREAD_INTERRUPTED_EXCEPTION, e.getMessage());
+        }
     }
 
     @PostMapping("/soDeliveryNoticeChange")

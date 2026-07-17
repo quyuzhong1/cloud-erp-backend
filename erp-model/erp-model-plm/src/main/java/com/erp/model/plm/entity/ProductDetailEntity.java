@@ -39,6 +39,8 @@ public class ProductDetailEntity extends BaseEntity<ProductDetailEntity> impleme
     @TableField(value = "name")
     private String name;
 
+    public static final String NAME = "name";
+
     /**
      * 产品品名(英文)
      */

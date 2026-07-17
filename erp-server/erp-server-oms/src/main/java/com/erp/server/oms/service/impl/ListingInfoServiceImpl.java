@@ -29,6 +29,7 @@ import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.ListingMatchResultEnum;
 import com.erp.model.oms.enums.ListingSourceTypeEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
+import com.erp.model.oms.enums.SkuMappingStatusEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -803,6 +804,97 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
             CollUtil.split(addSkuMappingList, 500).forEach(batch -> skuMappingService.saveBatch(batch));
         }
         return toInsert.size();
+    }
+
+    /**
+     * 三方仓 SKU 全量快照回收，详见接口注释。
+     * 按 authId 维度：先复用 {@link #syncWarehouseNotMatchSku} 完成新增/更新，
+     * 再对本次快照未覆盖到的历史记录做删除（未映射且源端已消失）/禁用（已映射但源端消失或已停用）。
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public WegoSkuSyncDTO.ReconcileResultDTO reconcileWarehouseSkuSnapshot(WegoSkuSyncDTO.SyncReqDTO dto) {
+        WegoSkuSyncDTO.ReconcileResultDTO result = new WegoSkuSyncDTO.ReconcileResultDTO();
+        if (Objects.isNull(dto) || CollectionUtils.isEmpty(dto.getSkuList())) {
+            log.warn("[三方仓SKU快照回收] authId={} 本次快照SKU列表为空，视为异常拉取，跳过删除/禁用回收，保留现有映射关系",
+                    Objects.isNull(dto) ? null : dto.getAuthId());
+            return result;
+        }
+
+        Integer addedCount = service.syncWarehouseNotMatchSku(dto);
+        result.setAddedCount(Objects.isNull(addedCount) ? 0 : addedCount);
+
+        // 快照SKU -> 源端原始状态（可能为空，代表该三方仓未回传状态，如WEGO现有调用）
+        Map<String, String> snapshotStatusMap = dto.getSkuList().stream()
+                .filter(item -> Objects.nonNull(item) && StringUtils.isNotBlank(item.getSku()))
+                .collect(Collectors.toMap(WegoSkuSyncDTO.SkuItemDTO::getSku,
+                        item -> StringUtils.defaultString(item.getStatus()), (a, b) -> b));
+        Set<String> snapshotSkuNoSet = snapshotStatusMap.keySet();
+
+        List<ListingInfoEntity> allListingByAuth = this.listByAuthIds(Collections.singletonList(dto.getAuthId())).stream()
+                .filter(li -> RuleTypeEnum.WAREHOUSE.getCode().equals(li.getType()))
+                .filter(li -> ListingSourceTypeEnum.THIRD.getCode().equals(li.getSourceType()))
+                .filter(li -> StringUtils.isNotBlank(li.getPlatformSkuNo()))
+                .collect(Collectors.toList());
+
+        // 未映射且本次快照中已找不到对应 SKU -> 删除 listing_info 及其占位 sku_mapping
+        List<ListingInfoEntity> unmatchedDisappeared = allListingByAuth.stream()
+                .filter(li -> ListingMatchResultEnum.FALSE.getCode().equals(li.getMatchResult()))
+                .filter(li -> !snapshotSkuNoSet.contains(li.getPlatformSkuNo()))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(unmatchedDisappeared)) {
+            List<String> listingIdsToDelete = unmatchedDisappeared.stream().map(ListingInfoEntity::getId).collect(Collectors.toList());
+            List<String> skuMappingIdsToDelete = skuMappingService.listByListingIds(listingIdsToDelete).stream()
+                    .filter(sm -> RuleTypeEnum.WAREHOUSE.equals(sm.getType()))
+                    .map(SkuMappingEntity::getId)
+                    .collect(Collectors.toList());
+            CollUtil.split(listingIdsToDelete, 500).forEach(batch -> this.removeByIds(batch));
+            if (CollectionUtils.isNotEmpty(skuMappingIdsToDelete)) {
+                CollUtil.split(skuMappingIdsToDelete, 500).forEach(batch -> skuMappingService.removeByIds(batch));
+            }
+            result.setDeletedCount(listingIdsToDelete.size());
+            log.warn("[三方仓SKU快照回收] authId={} 未映射且源端已消失，删除 listing={}条 sku_mapping={}条",
+                    dto.getAuthId(), listingIdsToDelete.size(), skuMappingIdsToDelete.size());
+        }
+
+        // 已映射且当前启用，但源端已消失或源端状态非启用 -> 置为禁用；不做反向自动恢复
+        List<ListingInfoEntity> matchedListing = allListingByAuth.stream()
+                .filter(li -> ListingMatchResultEnum.TRUE.getCode().equals(li.getMatchResult()))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(matchedListing)) {
+            Map<String, ListingInfoEntity> matchedListingByIdMap = matchedListing.stream()
+                    .collect(Collectors.toMap(ListingInfoEntity::getId, Function.identity(), (a, b) -> a));
+            List<String> matchedListingIds = new ArrayList<>(matchedListingByIdMap.keySet());
+            List<SkuMappingEntity> enabledMappings = skuMappingService.listByListingIds(matchedListingIds).stream()
+                    .filter(sm -> RuleTypeEnum.WAREHOUSE.equals(sm.getType()))
+                    .filter(sm -> Objects.isNull(sm.getStatus()) || SkuMappingStatusEnum.ENABLE.equals(sm.getStatus()))
+                    .collect(Collectors.toList());
+
+            List<SkuMappingEntity> toDisable = new ArrayList<>();
+            for (SkuMappingEntity sm : enabledMappings) {
+                ListingInfoEntity li = matchedListingByIdMap.get(sm.getListingId());
+                if (Objects.isNull(li)) {
+                    continue;
+                }
+                String skuNo = li.getPlatformSkuNo();
+                boolean disappearedFromSnapshot = !snapshotSkuNoSet.contains(skuNo);
+                String sourceStatus = snapshotStatusMap.get(skuNo);
+                // 源端有明确回传状态、且不是"启用"语义（如爱亚 Inactive）时才判定为已停用；未回传状态（如WEGO）不触发
+                boolean sourceInactive = StringUtils.isNotBlank(sourceStatus) && !"active".equalsIgnoreCase(sourceStatus);
+                if (disappearedFromSnapshot || sourceInactive) {
+                    sm.setStatus(SkuMappingStatusEnum.DISABLE);
+                    toDisable.add(sm);
+                }
+            }
+            if (CollectionUtils.isNotEmpty(toDisable)) {
+                CollUtil.split(toDisable, 500).forEach(batch -> skuMappingService.updateBatchById(batch));
+                result.setDisabledCount(toDisable.size());
+                log.warn("[三方仓SKU快照回收] authId={} 映射关系置为禁用 {}条（源端消失或已停用，需人工确认后手动重新启用）",
+                        dto.getAuthId(), toDisable.size());
+            }
+        }
+
+        return result;
     }
 
     /**

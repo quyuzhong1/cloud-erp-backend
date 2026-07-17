@@ -182,6 +182,10 @@
             <artifactId>spring-web</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-jdbc</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.mapstruct</groupId>
             <artifactId>mapstruct</artifactId>
             <version>1.5.5.Final</version>
@@ -276,6 +280,27 @@
     <artifactId>dynamic-datasource-spring-boot-starter</artifactId>
     <version>3.3.1</version>
 </dependency>
+
+        <!-- 敏感词检测：MaskStrategy.AUTO 策略的底层引擎，支持手机/邮箱/URL/IP 模式检测 + 自定义词典 -->
+        <dependency>
+            <groupId>com.github.houbb</groupId>
+            <artifactId>sensitive-word</artifactId>
+            <version>0.29.5</version>
+        </dependency>
+
+        <!-- 单元测试（仅 test scope, 不污染运行时）：覆盖 mask 模块纯逻辑类如 RegexSafetyGuard / CustomMaskHandler -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+            <exclusions>
+                <!-- 项目用 junit4，排除 junit5 引擎避免冲突 -->
+                <exclusion>
+                    <groupId>org.junit.vintage</groupId>
+                    <artifactId>junit-vintage-engine</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
     </dependencies>
 
     <build>

@@ -74,5 +74,31 @@ public class WegoSkuSyncDTO implements Serializable {
          * 条码列表
          */
         private List<String> barcode;
+
+        /**
+         * 源端（三方仓）原始状态，如爱亚的 {@code Active}/{@code Inactive}；可选字段，不传即为空。
+         * 用于映射关系回收：源端停用（非 Active）时对应已映射记录会被置为禁用。
+         */
+        private String status;
+    }
+
+    /**
+     * 全量快照回收结果统计，供调用方（DMP Handler）记录日志/排查用。
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ReconcileResultDTO {
+        /**
+         * 本次新增到未匹配对照表的记录数
+         */
+        private int addedCount;
+        /**
+         * 未映射且源端快照中已消失，被删除的记录数
+         */
+        private int deletedCount;
+        /**
+         * 已映射但源端消失或已停用，被置为禁用的映射关系数
+         */
+        private int disabledCount;
     }
 }

@@ -5,6 +5,7 @@ import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
+import com.erp.model.plm.dto.excel.CfgProductForbiddenWordExportExcelDTO;
 import com.erp.model.plm.dto.excel.ProductPlanExcelDTO;
 import com.erp.model.plm.dto.excel.TaskExportDTO;
 import com.erp.model.plm.vo.BomExportExcelVO;
@@ -82,4 +83,7 @@ public interface ExportPlmFeign {
     
     @PostMapping("/feign/export/skuStdRetailPrice")
     PagingVO<SkuStdRetailPriceDTO.ListDTO> skuStdRetailPrice(@RequestBody @Validated PagingDTO<SkuStdRetailPriceDTO.PagingParamDTO> dto);
+
+    @PostMapping("/feign/export/productForbiddenWord")
+    PagingVO<CfgProductForbiddenWordExportExcelDTO> exportProductForbiddenWord(@RequestBody @Validated PagingDTO<CfgProductForbiddenWordDTO.PagingParamDTO> dto);
 }

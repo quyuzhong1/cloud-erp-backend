@@ -40,7 +40,7 @@
         sd.box_qty as salesQty,
         pd.name as productName,
         pd.unit_name as unit,
-        CASE WHEN total.total_delivery_qty = total.total_picked_qty THEN '已生成' WHEN total.total_picked_qty > 0 THEN '部分生成' ELSE '未生成' END AS generationPickStatus
+        CASE WHEN total.total_picked_qty = 0 THEN '未生成' WHEN total.total_delivery_qty = total.total_picked_qty THEN '已生成' ELSE '部分生成' END AS generationPickStatus
         FROM
         so_delivery_notice sdn
         LEFT JOIN so_delivery_notice_detail sdnd ON sdn.ID = sdnd.main_id and sdnd.is_deleted=false
@@ -92,52 +92,6 @@
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
-    </select>
-
-    <select id="soDeliveryNoticeExportExcel" resultType="com.erp.model.wms.dto.SoDeliveryNoticeDTO$PagingView">
-        SELECT
-        sdn.id,
-        sdn.source_id AS sourceId,
-        sdnd.source_detail_id AS sourceDetailId,
-        sdn.code,
-        sdn.source_code AS sourceCode,
-        sdn.customer_id AS customerId,
-        sdn.customer_name AS customerName,
-        sdn.approve_status AS approveStatus,
-        sdn.invalid_status AS invalidStatus,
-        sdn.delivery_status AS deliveryStatus,
-        sdn.warehouse_org_id AS warehouseOrgId,
-        sdn.warehouse_org_name AS warehouseOrgName,
-        sdn.is_allow_outstock as isAllowOutstock,
-        sdnd.sku_id AS skuId,
-        sdnd.sku_no AS skuNo,
-        sdnd.delivery_qty AS deliveryQty,
-        sdnd.customer_po AS customerPO,
-        sdnd.to_country AS toCountry,
-        sdn.declare_status AS declareStatus,
-        sdn.seller_name AS sellerName,
-        sdn.require_date AS requireDate,
-        sdn.plan_delivery_date AS planDeliveryDate,
-        sdn.actual_delivery_date AS actualDeliveryDate,
-        sdn.approve_user_name AS approveUserName,
-        sdn.create_user_name AS createUserName,
-        sdn.create_time AS createTime,
-        sdn.transfer_warehouse_ids
-        FROM so_delivery_notice sdn
-        INNER JOIN so_delivery_notice_detail sdnd ON sdn.id = sdnd.main_id AND sdn.is_deleted = FALSE
-        WHERE
-        ${params.sqlMap.default}
-         and   sdnd.is_deleted = FALSE
-        <if test="params.permissionSql != null and params.permissionSql != ''">
-            ${params.permissionSql}
-        </if>
-        ORDER BY
-        <if test="params.sortList != null and params.sortList.size > 0">
-            <foreach collection="params.sortList" item="item" separator="," close=",">
-                ${item.field} ${item.sort}
-            </foreach>
-        </if>
-        sdn.create_time desc
     </select>
 
     <select id="listGenerateSoOutstockView" resultType="com.erp.model.wms.dto.SoOutstockDTO$GenerateSoOutstockViewDTO">

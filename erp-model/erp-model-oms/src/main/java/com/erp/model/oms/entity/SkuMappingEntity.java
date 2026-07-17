@@ -8,6 +8,7 @@ import com.common.core.entity.BaseEntity;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.enums.RuleTypeEnum;
+import com.erp.model.oms.enums.SkuMappingStatusEnum;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -124,6 +125,14 @@ public class SkuMappingEntity extends BaseEntity<SkuMappingEntity> {
     @TableField("rule_id")
     private String ruleId;
 
+    /**
+     * 映射关系状态：启用/禁用。
+     * 禁用后业务流程不得使用该映射（详见 {@link SkuMappingStatusEnum}），且不会被系统自动重新置为启用。
+     * 字段初始值默认启用，避免各处 {@code new SkuMappingEntity()} 新增记录时遗漏赋值。
+     */
+    @TableField("status")
+    private SkuMappingStatusEnum status = SkuMappingStatusEnum.ENABLE;
+
 
 
     public SkuMappingEntity(ListingInfoEntity entity, String shopId) {
@@ -148,5 +157,6 @@ public class SkuMappingEntity extends BaseEntity<SkuMappingEntity> {
         this.warehouseId = "";
         this.warehouseName = "";
         this.isExpire = false;
+        this.status = SkuMappingStatusEnum.ENABLE;
     }
 }
