@@ -83,7 +83,8 @@ public class VirtualInventoryTradingRedisServiceImpl implements VirtualInventory
                 this.deleteTransactionFlowList(ids);
             }
             log.warn("stopwatch4 ={}",stopwatch.elapsed(TimeUnit.MILLISECONDS));
-        }catch (Exception e) {
+        } catch (Exception e) {
+            log.error("redis虚拟仓库存交易失败：", e);
             throw new ServiceException(e.getMessage());
         } finally {
             stopwatch.stop();

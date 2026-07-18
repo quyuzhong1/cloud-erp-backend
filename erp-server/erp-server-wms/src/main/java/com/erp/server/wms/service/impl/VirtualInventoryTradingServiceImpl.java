@@ -82,7 +82,7 @@ public class VirtualInventoryTradingServiceImpl implements VirtualInventoryTradi
                 this.deleteTransactionFlowList(ids);
             }
             log.warn("stopwatch4 ={}",stopwatch.elapsed(TimeUnit.MILLISECONDS));
-        }catch (Exception e) {
+        } catch (Exception e) {
             throw new ServiceException(e.getMessage());
         } finally {
             stopwatch.stop();

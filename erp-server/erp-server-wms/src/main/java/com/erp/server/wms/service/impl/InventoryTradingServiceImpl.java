@@ -112,7 +112,7 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
             }
 
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new ServiceException(e.getMessage());
         } finally {
             stopwatch.stop();
             // 计时器-结束
