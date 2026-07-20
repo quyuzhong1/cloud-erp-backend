@@ -1114,6 +1114,7 @@ public final class ApiError implements Serializable {
     public static final ApiError WH_WEGO_WAREHOUSE_TOKEN_SECRET_MISSING = ApiErrorWms.WH_WEGO_WAREHOUSE_TOKEN_SECRET_MISSING;
     public static final ApiError WH_WEGO_INBOUND_DETAIL_JSON_PARSE_FAILED = ApiErrorWms.WH_WEGO_INBOUND_DETAIL_JSON_PARSE_FAILED;
     public static final ApiError WH_BORROW_WAREHOUSE_USABLE_INSUFFICIENT = ApiErrorWms.WH_BORROW_WAREHOUSE_USABLE_INSUFFICIENT;
+    public static final ApiError WAREHOUSE_INVENTORY_FAILED = ApiErrorWms.WAREHOUSE_INVENTORY_FAILED;
 
     /** Tms service error constants. */
     public static final ApiError FIRST_MILE_FBA_SHIPMENT_NOT_EXIST_BILL = ApiErrorTms.FIRST_MILE_FBA_SHIPMENT_NOT_EXIST_BILL;
