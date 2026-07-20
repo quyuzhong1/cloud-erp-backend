@@ -55,15 +55,10 @@ public class SoReturnPrestockDetailDTO {
         private String ean;
 
         /**
-         * 退货数量
-         */
-        @NotNull(message = "退货数量不能为空")
-        @Min(value = 1, message = "退货数量必须大于0")
-        private Integer returnQty;
-
-        /**
          * 实际收货数量
          */
+        @NotNull(message = "实际收货数量不能为空")
+        @Min(value = 1, message = "实际收货数量必须大于0")
         private Integer receiveQty;
 
         /**
@@ -93,8 +88,8 @@ public class SoReturnPrestockDetailDTO {
         private String skuNo;
 
         /**
-         * 实退数量；预入库单明细的【退货数量】【实际收货数量】均取自本字段
-         * （手动创建时该行数据尚未与售后单关联，无法区分应退/签收/实退，统一按本行实退数量落库）
+         * 实退数量；写入预入库单明细的【实际收货数量】
+         * （手动创建时该行数据尚未与售后单关联，统一按本行实退数量落库）
          */
         @NotNull(message = "实退数量不能为空")
         @Min(value = 1, message = "实退数量必须大于0")
@@ -167,7 +162,7 @@ public class SoReturnPrestockDetailDTO {
         private String detailId;
 
         /**
-         * 本次关联数量（≤ 当前行 return_qty）
+         * 本次关联数量（≤ 当前行实际收货数量 receive_qty）
          */
         @NotNull(message = "关联数量不能为空")
         @Min(value = 1, message = "关联数量必须大于0")
@@ -455,12 +450,12 @@ public class SoReturnPrestockDetailDTO {
     /**
      * 确认关联店铺入参（预入库单维度，明细逐行选择店铺）。
      * <p>页面点击"确定关联"时提交：shopList 为在产品明细中逐行选择了店铺的未关联行，
-     * 每行填写认领数量（默认 = 当前行退货数量）。与批量关联店铺 {@link LinkShop} 不同：
+     * 每行填写认领数量（默认 = 当前行实际收货数量）。与批量关联店铺 {@link LinkShop} 不同：
      * LinkShop 是把整张预入库单的未关联行整体关联到同一店铺；本接口允许同一张预入库单内
      * 不同明细行分别关联到不同店铺，并支持按认领数量拆行。</p>
      * <ul>
      *   <li>仅未关联行可参与关联；未在 shopList 中出现（未选择店铺）的行保持未关联；</li>
-     *   <li>认领数量 = 退货数量：整行关联；认领数量 &lt; 退货数量：拆行，认领部分独立成行并关联，剩余保持未关联；</li>
+     *   <li>认领数量 = 实际收货数量：整行关联；认领数量 &lt; 实际收货数量：拆行，认领部分独立成行并关联，剩余保持未关联；</li>
      *   <li>关联相同店铺的行合并生成一张《退货入库单》。</li>
      * </ul>
      */
@@ -496,8 +491,8 @@ public class SoReturnPrestockDetailDTO {
         private String detailId;
 
         /**
-         * 认领数量（默认 = 当前行退货数量，≤ 当前行退货数量）；
-         * 小于退货数量时触发拆行，认领部分独立成行并关联
+         * 认领数量（默认 = 当前行实际收货数量，≤ 当前行实际收货数量）；
+         * 小于实际收货数量时触发拆行，认领部分独立成行并关联
          */
         @NotNull(message = "认领数量不能为空")
         @Min(value = 1, message = "认领数量必须大于0")
@@ -671,11 +666,6 @@ public class SoReturnPrestockDetailDTO {
          * EAN 码
          */
         private String ean;
-
-        /**
-         * 退货数量
-         */
-        private Integer returnQty;
 
         /**
          * 实际收货数量

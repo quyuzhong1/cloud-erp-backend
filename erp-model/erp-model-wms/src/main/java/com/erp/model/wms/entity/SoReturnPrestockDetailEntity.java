@@ -40,7 +40,6 @@ public class SoReturnPrestockDetailEntity extends BaseEntity<SoReturnPrestockDet
     public static final String SKU_ID = "sku_id";
     public static final String SKU_NO = "sku_no";
     public static final String PRODUCT_NAME = "product_name";
-    public static final String RETURN_QTY = "return_qty";
     public static final String RECEIVE_QTY = "receive_qty";
     public static final String CLAIMED_QTY = "claimed_qty";
     public static final String LINK_STATUS = "link_status";
@@ -150,12 +149,7 @@ public class SoReturnPrestockDetailEntity extends BaseEntity<SoReturnPrestockDet
     @TableField("ean")
     private String ean;
     /**
-     * 退货数量
-     */
-    @TableField("return_qty")
-    private Integer returnQty;
-    /**
-     * 实际收货数量
+     * 实际收货数量（预入库单明细唯一数量字段；关联/拆行/认领均以此为准）
      */
     @TableField("receive_qty")
     private Integer receiveQty;

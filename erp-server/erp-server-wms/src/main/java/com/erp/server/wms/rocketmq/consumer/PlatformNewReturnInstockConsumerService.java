@@ -792,8 +792,14 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 			// 未匹配到映射时，仍用平台SKU占位落库，不丢消息，等运营人工在预入库单里核对
 			detailDTO.setSkuNo(Objects.nonNull(skuViewDTO) ? skuViewDTO.getProductSkuNo() : detail.getProductSku());
 			detailDTO.setProductName(Objects.nonNull(skuViewDTO) ? skuViewDTO.getProductName() : "");
-			detailDTO.setReturnQty(detail.getMustQty());
-			detailDTO.setReceiveQty(detail.getReceiveQty());
+			Integer receiveQty = detail.getReceiveQty();
+			if (Objects.isNull(receiveQty) || receiveQty <= 0) {
+				receiveQty = detail.getRealQty();
+			}
+			if (Objects.isNull(receiveQty) || receiveQty <= 0) {
+				receiveQty = detail.getMustQty();
+			}
+			detailDTO.setReceiveQty(receiveQty);
 			// 平台订单号、平台字典值均为【关联】相关字段，不代表本行数据来源渠道，此处无头件尚未关联，不写入
 			detailDTO.setRemark(dto.getReason());
 			return detailDTO;
