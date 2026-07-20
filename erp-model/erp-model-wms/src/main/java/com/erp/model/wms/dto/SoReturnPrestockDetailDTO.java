@@ -93,14 +93,8 @@ public class SoReturnPrestockDetailDTO {
         private String skuNo;
 
         /**
-         * 应退数量
-         */
-        @NotNull(message = "应退数量不能为空")
-        @Min(value = 1, message = "应退数量必须大于0")
-        private Integer mustQty;
-
-        /**
-         * 实退数量
+         * 实退数量；预入库单明细的【退货数量】【实际收货数量】均取自本字段
+         * （手动创建时该行数据尚未与售后单关联，无法区分应退/签收/实退，统一按本行实退数量落库）
          */
         @NotNull(message = "实退数量不能为空")
         @Min(value = 1, message = "实退数量必须大于0")
