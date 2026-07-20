@@ -1500,7 +1500,7 @@ public class SoReturnPrestockServiceImpl
         Map<String, SkuVO> skuVOMap = listSkuVOMap(instockDetailList.stream()
                 .map(SoReturnPrestockDetailDTO.FromInstock::getSkuId).collect(Collectors.toList()));
         return instockDetailList.stream().map(d -> {
-            if (Objects.isNull(d.getRealQty()) || d.getRealQty() <= 0) {
+            if (Objects.isNull(d.getMustQty()) || d.getMustQty() <= 0) {
                 throw new ServiceException(ApiError.SO_RETURN_PRESTOCK_RETURN_QTY_INVALID, d.getSkuNo());
             }
             SkuVO skuVO = skuVOMap.getOrDefault(d.getSkuId(), new SkuVO());
@@ -1510,8 +1510,8 @@ public class SoReturnPrestockServiceImpl
             detail.setProductName(CharSequenceUtil.sub(skuVO.getSkuName(), 0, PRODUCT_NAME_MAX_LENGTH));
             detail.setProductImageUrl(firstDisplayImageUrl(skuVO.getSkuImagesUrl()));
             detail.setEan(skuVO.getEan());
-            detail.setReturnQty(d.getRealQty());
-            detail.setReceiveQty(d.getReceiveQty());
+            detail.setReturnQty(d.getMustQty());
+            detail.setReceiveQty(d.getRealQty());
             detail.setRemark(d.getRemark());
             return detail;
         }).collect(Collectors.toList());

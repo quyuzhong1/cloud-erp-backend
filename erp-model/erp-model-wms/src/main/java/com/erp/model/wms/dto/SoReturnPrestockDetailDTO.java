@@ -93,16 +93,18 @@ public class SoReturnPrestockDetailDTO {
         private String skuNo;
 
         /**
+         * 应退数量
+         */
+        @NotNull(message = "应退数量不能为空")
+        @Min(value = 1, message = "应退数量必须大于0")
+        private Integer mustQty;
+
+        /**
          * 实退数量
          */
         @NotNull(message = "实退数量不能为空")
-        @Min(value = 1, message = "退货数量必须大于0")
+        @Min(value = 1, message = "实退数量必须大于0")
         private Integer realQty;
-
-        /**
-         * 实际收货数量
-         */
-        private Integer receiveQty;
 
         /**
          * 仓库 ID；退货入库单表单按明细行填写仓库，预入库单主表仅支持单一仓库。
