@@ -485,6 +485,9 @@ public class SoReturnPrestockServiceImpl
                 .setSalesOrgId("").setSalesOrgName("")
                 .setSalesDeptId("").setSalesDeptName("")
                 .setSellerId("").setSellerName("")
+                // 已认领数量与关联店铺口径一致：取本行分配/拆行后收敛的 returnQty，
+                // 否则会停留在预入库单创建时初始化的 0
+                .setClaimedQty(Objects.nonNull(row.getReturnQty()) ? row.getReturnQty() : 0)
                 .setLinkStatus(PrestockLinkStatusEnum.LINKED.getStatus());
     }
 

@@ -1107,16 +1107,38 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             item.setWarehouseName(matchedWarehouse.map(WarehouseEntity::getName).orElse(""));
             item.setWarehouseManageType(matchedWarehouse.map(WarehouseEntity::getWarehouseManageType).orElse(""));
 
-            //可发货状态：依据锁定数量(冻结数量)与销售数量(发货箱数)关系判定
-            Integer lockQty = ObjectUtil.defaultIfNull(item.getFrozenQty(), MathUtil.ZERO);
+            //可发货状态：按是否有虚拟仓区分判定口径
             Integer saleBoxQty = ObjectUtil.defaultIfNull(item.getBoxQty(), MathUtil.ZERO);
             Integer shipableStatus;
-            if (lockQty <= MathUtil.ZERO) {
-                shipableStatus = ShipableStatusEnum.NONE.getCode();
-            } else if (lockQty >= saleBoxQty) {
-                shipableStatus = ShipableStatusEnum.ALL.getCode();
+            if (StrUtil.isNotBlank(item.getVirtualWarehouseId())) {
+                //有虚拟仓：沿用原逻辑，依据锁定数量(冻结数量)与销售数量(发货箱数)关系判定
+                Integer lockQty = ObjectUtil.defaultIfNull(item.getFrozenQty(), MathUtil.ZERO);
+                if (lockQty <= MathUtil.ZERO) {
+                    shipableStatus = ShipableStatusEnum.NONE.getCode();
+                } else if (lockQty >= saleBoxQty) {
+                    shipableStatus = ShipableStatusEnum.ALL.getCode();
+                } else {
+                    shipableStatus = ShipableStatusEnum.PART.getCode();
+                }
             } else {
-                shipableStatus = ShipableStatusEnum.PART.getCode();
+                //无虚拟仓：可发数量 = 销售数量(发货箱数) - 发货通知数量(普通发货通知箱数 + B2B三方仓已发货箱数)
+                Integer noticeBoxQty = soDeliveryNoticeDetailList.stream()
+                        .filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), item.getDetailId()))
+                        .map(SoDeliveryNoticeDetailEntity::getDeliveryQty)
+                        .reduce(MathUtil.ZERO, Integer::sum);
+                Integer b2bNoticeBoxQty = b2bThirdDeliveryDetailList.stream()
+                        .filter(e -> !ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(e.getStatus())
+                                && CharSequenceUtil.equals(e.getSoDetailId(), item.getDetailId()))
+                        .map(B2bThirdDeliveryDetailEntity::getBoxQty)
+                        .reduce(Integer::sum).orElse(MathUtil.ZERO);
+                int shipableQty = saleBoxQty - (noticeBoxQty + b2bNoticeBoxQty);
+                if (shipableQty <= MathUtil.ZERO) {
+                    shipableStatus = ShipableStatusEnum.NONE.getCode();
+                } else if (shipableQty >= saleBoxQty) {
+                    shipableStatus = ShipableStatusEnum.ALL.getCode();
+                } else {
+                    shipableStatus = ShipableStatusEnum.PART.getCode();
+                }
             }
             item.setShipableStatus(shipableStatus);
             item.setShipableStatusName(ShipableStatusEnum.getName(shipableStatus));
@@ -2611,6 +2633,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<String> soIdList = viewList.stream().map(SoInfoDTO.GenerateDeliveryView::getSoId).distinct().collect(Collectors.toList());
         Map<String, String> virtualWarehouseIdBySoId = CollectionUtils.isEmpty(soIdList) ? Collections.emptyMap()
                 : this.listByIds(soIdList).stream()
+                .filter(so -> CharSequenceUtil.isNotBlank(so.getVirtualWarehouseId()))
                 .collect(Collectors.toMap(SoInfoEntity::getId, SoInfoEntity::getVirtualWarehouseId, (a, b) -> a));
         List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKey(DictBasicTypeEnum.SKU_NO.getType());
         for (SoInfoDTO.GenerateDeliveryView view : viewList) {
