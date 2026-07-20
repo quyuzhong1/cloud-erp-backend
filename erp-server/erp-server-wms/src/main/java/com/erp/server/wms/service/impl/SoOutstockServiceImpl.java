@@ -157,6 +157,8 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -630,25 +632,15 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     /**
      * 校验销售出库单与上游销售订单的金额一致性（明细由调用方传入）。
      * <p>
-     * 业务规则：
+     * 按产品流程图「销售出库单审核」，并保留多包裹/赠品防误伤：
      * <ol>
-     *     <li>仅 B2C 订单参与校验，B2B 链路保持原状</li>
-     *     <li>若 soId 为空或上游销售订单明细查询结果为空，不拦截</li>
-     *     <li>若上游 Feign 查询异常，返回 UPSTREAM_UNAVAILABLE（fail-safe，避免静默放行）</li>
-     *     <li>若上游明细已查到但 so_detail_id 无法关联，返回 AMOUNT_MISMATCH</li>
-     *     <li>对当前出库单中 tax_amount=0 的每条明细，按 so_detail_id 维度
-     *         汇总<b>所有兄弟出库单（同 soId 且非作废，含当前内存明细）</b>的
-     *         tax_amount 总和，与上游销售订单明细对比：
-     *         <ul>
-     *             <li>所有兄弟出库总和 != 0：金额已分摊到其他兄弟单，放行</li>
-     *             <li>上游销售订单明细 isGift = true：赠品，放行</li>
-     *             <li>上游销售订单明细 amount = 0：上游也是 0，放行</li>
-     *             <li>否则命中 AMOUNT_MISMATCH</li>
-     *         </ul>
-     *     </li>
+     *     <li>source_type 非约定来源 → 放行（产品：仅平台仓/拉取/海外仓；不含 B2B 手工下推 soInfo 等）</li>
+     *     <li>按销售单号查 B2C/B2B；不存在 → 放行</li>
+     *     <li>订单总金额 = 0 → 放行（B2C 主单 amount、B2B 主单 orderAmount）</li>
+     *     <li>出库明细逐行：价税合计=0 才进入比对；赠品不参与；上游明细 B2C 用 amount、B2B 用 taxAmount</li>
+     *     <li>按 so_detail_id 汇总兄弟出库单价税：已分摊非 0 / 上游明细金额为 0 → 放行；否则 AMOUNT_MISMATCH</li>
      * </ol>
-     * [审查说明] submit/approve 在事务外调用本方法；同步落库场景仍可在落库事务内调用。
-     * 适用于"主单和明细尚未落库"的同步落地场景，避免重复查询。
+     * Feign 查询异常返回 UPSTREAM_UNAVAILABLE（避免静默放行）。
      *
      * @param entity     销售出库单主单
      * @param outDetails 销售出库单明细（可来自内存）
@@ -656,53 +648,183 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      */
     @Override
     public UpstreamAmountCheckResultEnum checkUpstreamAmountWithSo(SoOutstockEntity entity, List<SoOutstockDetailEntity> outDetails) {
-        if (entity == null || !OrderTypeEnum.B2C.getCode().equalsIgnoreCase(entity.getOrderType())) {
+        if (entity == null || CollUtil.isEmpty(outDetails)) {
             return UpstreamAmountCheckResultEnum.PASS;
         }
+
+        // 1. 非约定来源（平台仓/拉取/海外仓）→ 放行
+        // [产品需求] 白名单见 isUpstreamAmountCheckSourceType；B2B 手工下推 soInfo 等不在范围内
+        if (!isUpstreamAmountCheckSourceType(entity.getSourceType())) {
+            return UpstreamAmountCheckResultEnum.PASS;
+        }
+
+        // 2. 取销售单号查 B2C/B2B；不存在 → 放行
         String soId = entity.getSoId();
         if (CharSequenceUtil.isBlank(soId)) {
             return UpstreamAmountCheckResultEnum.PASS;
         }
-        if (CollUtil.isEmpty(outDetails)) {
+        if (OrderTypeEnum.B2C.getCode().equalsIgnoreCase(entity.getOrderType())) {
+            return checkB2cUpstreamAmountByFlow(entity, outDetails, soId);
+        }
+        if (OrderTypeEnum.B2B.getCode().equalsIgnoreCase(entity.getOrderType())) {
+            return checkB2bUpstreamAmountByFlow(entity, outDetails, soId);
+        }
+        return UpstreamAmountCheckResultEnum.PASS;
+    }
+
+    /**
+     * 金额一致性校验约定来源：平台仓、其他渠道拉取、海外仓创建出库。
+     * <p>[产品需求] 不含 B2B 手工下推 {@code soInfo} 等来源，此类单不进入本校验。</p>
+     */
+    private boolean isUpstreamAmountCheckSourceType(String sourceType) {
+        if (CharSequenceUtil.isBlank(sourceType)) {
+            return false;
+        }
+        return SourceTypeEnum.PLATFORM_SO_OUT_STOCK.getCode().equals(sourceType)
+                || SourceTypeEnum.SO_OUTSTOCK.getCode().equals(sourceType)
+                || SourceTypeEnum.SAL_OUTSTOCK.getCode().equals(sourceType)
+                || SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL.getCode().equals(sourceType)
+                || SourceTypeEnum.THIRD_WAREHOUSE_CREATE_FBA_OUTBOUND_BILL.getCode().equals(sourceType);
+    }
+
+    /**
+     * B2C：订单总金额/明细金额均用 amount。
+     * <p>[产品需求] 不以 paidAmount 参与校验。</p>
+     */
+    private UpstreamAmountCheckResultEnum checkB2cUpstreamAmountByFlow(SoOutstockEntity entity,
+                                                                      List<SoOutstockDetailEntity> outDetails,
+                                                                      String soId) {
+        return checkUpstreamAmountByFlow(
+                entity, outDetails, soId, "B2C",
+                () -> soB2cFeign.getById(soId),
+                so -> so.getAmount() == null ? BigDecimal.ZERO : so.getAmount(),
+                () -> soB2cFeign.listDetailByMainIds(Collections.singletonList(soId)),
+                SoB2cDetailEntity::getId,
+                d -> Boolean.TRUE.equals(d.getIsGift()),
+                d -> d.getAmount() == null ? BigDecimal.ZERO : d.getAmount());
+    }
+
+    /**
+     * B2B：订单总金额=orderAmount（主单无 taxAmount）；明细金额用 taxAmount。
+     * <p>[产品需求] 明细不以 amount 兜底。</p>
+     */
+    private UpstreamAmountCheckResultEnum checkB2bUpstreamAmountByFlow(SoOutstockEntity entity,
+                                                                      List<SoOutstockDetailEntity> outDetails,
+                                                                      String soId) {
+        return checkUpstreamAmountByFlow(
+                entity, outDetails, soId, "B2B",
+                () -> soInfoFeign.getSoInfoById(soId),
+                so -> so.getOrderAmount() == null ? BigDecimal.ZERO : so.getOrderAmount(),
+                () -> soInfoFeign.listSoDetailByMainIds(Collections.singletonList(soId)),
+                SoDetailEntity::getId,
+                d -> Boolean.TRUE.equals(d.getIsGift()),
+                d -> d.getTaxAmount() == null ? BigDecimal.ZERO : d.getTaxAmount());
+    }
+
+    /**
+     * 上游金额校验公共流程：主单短路 → 查明细 → 零价税非赠品行 → 兄弟分摊 → 逐行比对。
+     */
+    private <M, D> UpstreamAmountCheckResultEnum checkUpstreamAmountByFlow(SoOutstockEntity entity,
+                                                                           List<SoOutstockDetailEntity> outDetails,
+                                                                           String soId,
+                                                                           String orderLabel,
+                                                                           Supplier<M> mainLoader,
+                                                                           Function<M, BigDecimal> orderTotalGetter,
+                                                                           Supplier<List<D>> detailLoader,
+                                                                           Function<D, String> detailIdGetter,
+                                                                           Predicate<D> isGift,
+                                                                           Function<D, BigDecimal> detailAmountGetter) {
+        // 先查主单：不存在或订单总金额=0 可短路，避免多余明细 Feign
+        M main;
+        try {
+            main = mainLoader.get();
+        } catch (Exception e) {
+            log.warn("销售出库单金额校验：查询上游 {} 销售订单主单失败，视为需人工核实并拦截，soId={}, outstockId={}",
+                    orderLabel, soId, entity.getId(), e);
+            return UpstreamAmountCheckResultEnum.UPSTREAM_UNAVAILABLE;
+        }
+        if (main == null) {
+            return UpstreamAmountCheckResultEnum.PASS;
+        }
+        // 3. [订单总金额]=0？Y → 放行
+        BigDecimal orderTotal = orderTotalGetter.apply(main);
+        if (orderTotal == null || orderTotal.compareTo(BigDecimal.ZERO) == 0) {
             return UpstreamAmountCheckResultEnum.PASS;
         }
 
-        // 1. 收集当前出库单中 tax_amount=0 的明细的 so_detail_id 作为校验候选
-        Set<String> zeroTaxSoDetailIds = outDetails.stream()
+        List<D> upstreamDetails;
+        try {
+            upstreamDetails = detailLoader.get();
+        } catch (Exception e) {
+            log.warn("销售出库单金额校验：查询上游 {} 销售订单明细失败，视为需人工核实并拦截，soId={}, outstockId={}",
+                    orderLabel, soId, entity.getId(), e);
+            return UpstreamAmountCheckResultEnum.UPSTREAM_UNAVAILABLE;
+        }
+        if (CollUtil.isEmpty(upstreamDetails)) {
+            return UpstreamAmountCheckResultEnum.PASS;
+        }
+
+        Map<String, D> detailMap = upstreamDetails.stream()
+                .collect(Collectors.toMap(detailIdGetter, Function.identity(), (a, b) -> a));
+        // 4. 逐行：仅价税合计=0 的出库明细进入比对；赠品不参与
+        Set<String> zeroTaxSoDetailIds = collectZeroTaxSoDetailIdsExcludingGifts(outDetails, id -> {
+            D d = detailMap.get(id);
+            return d != null && isGift.test(d);
+        });
+        if (CollUtil.isEmpty(zeroTaxSoDetailIds)) {
+            return UpstreamAmountCheckResultEnum.PASS;
+        }
+
+        // 5. 兄弟出库价税分摊 + 逐 so_detail_id 比对上游金额
+        Map<String, BigDecimal> taxSumBySoDetailId = sumSiblingTaxAmountBySoDetailId(entity, outDetails, soId, zeroTaxSoDetailIds);
+        for (String soDetailId : zeroTaxSoDetailIds) {
+            BigDecimal sumTax = taxSumBySoDetailId.getOrDefault(soDetailId, BigDecimal.ZERO);
+            if (sumTax.compareTo(BigDecimal.ZERO) != 0) {
+                continue;
+            }
+            D upstreamDetail = detailMap.get(soDetailId);
+            if (upstreamDetail == null) {
+                log.warn("销售出库单金额校验：出库明细 soDetailId={} 在上游 {} 明细中未找到关联，soId={}, outstockId={}",
+                        soDetailId, orderLabel, soId, entity.getId());
+                return UpstreamAmountCheckResultEnum.AMOUNT_MISMATCH;
+            }
+            BigDecimal soAmount = detailAmountGetter.apply(upstreamDetail);
+            if (soAmount != null && soAmount.compareTo(BigDecimal.ZERO) != 0) {
+                return UpstreamAmountCheckResultEnum.AMOUNT_MISMATCH;
+            }
+        }
+        return UpstreamAmountCheckResultEnum.PASS;
+    }
+
+    /**
+     * 收集出库明细中价税合计=0 的 soDetailId；上游为赠品的不参与校验。
+     */
+    private Set<String> collectZeroTaxSoDetailIdsExcludingGifts(List<SoOutstockDetailEntity> outDetails,
+                                                               Predicate<String> isGiftBySoDetailId) {
+        return outDetails.stream()
                 .filter(d -> {
                     BigDecimal tax = d.getTaxAmount() == null ? BigDecimal.ZERO : d.getTaxAmount();
                     return tax.compareTo(BigDecimal.ZERO) == 0;
                 })
                 .map(SoOutstockDetailEntity::getSoDetailId)
                 .filter(CharSequenceUtil::isNotBlank)
+                .filter(id -> !isGiftBySoDetailId.test(id))
                 .collect(Collectors.toSet());
-        if (CollUtil.isEmpty(zeroTaxSoDetailIds)) {
-            return UpstreamAmountCheckResultEnum.PASS;
-        }
+    }
 
-        // 2. 查询上游销售订单明细
-        List<SoB2cDetailEntity> b2cDetails;
-        try {
-            b2cDetails = soB2cFeign.listDetailByMainIds(Collections.singletonList(soId));
-        } catch (Exception e) {
-            log.warn("销售出库单金额校验：查询上游销售订单明细失败，视为需人工核实并拦截，soId={}, outstockId={}", soId, entity.getId(), e);
-            return UpstreamAmountCheckResultEnum.UPSTREAM_UNAVAILABLE;
-        }
-        if (CollUtil.isEmpty(b2cDetails)) {
-            return UpstreamAmountCheckResultEnum.PASS;
-        }
-        Map<String, SoB2cDetailEntity> b2cDetailMap = b2cDetails.stream()
-                .collect(Collectors.toMap(SoB2cDetailEntity::getId, Function.identity(), (a, b) -> a));
-
-        // 3. 查询同 soId 的非作废兄弟主单（排除当前 entity.id；同步落库场景下当前主单尚未持久化，ne 不影响结果）
-        // 历史数据 invalid_status 可能为 NULL，PostgreSQL 中 NULL != true 返回 NULL 会过滤掉，需显式兼容
+    /**
+     * 按 so_detail_id 汇总当前出库单 + 同 soId 非作废兄弟出库单的价税合计（多包裹金额分摊放行）。
+     */
+    private Map<String, BigDecimal> sumSiblingTaxAmountBySoDetailId(SoOutstockEntity entity,
+                                                                   List<SoOutstockDetailEntity> outDetails,
+                                                                   String soId,
+                                                                   Set<String> soDetailIds) {
         List<SoOutstockEntity> siblingOutstocks = lambdaQuery()
                 .eq(SoOutstockEntity::getSoId, soId)
                 .and(w -> w.isNull(SoOutstockEntity::getInvalidStatus).or().eq(SoOutstockEntity::getInvalidStatus, Boolean.FALSE))
                 .ne(CharSequenceUtil.isNotBlank(entity.getId()), SoOutstockEntity::getId, entity.getId())
                 .list();
 
-        // 4. 查询兄弟主单的明细中命中候选 so_detail_id 的部分
         List<SoOutstockDetailEntity> siblingDetails = Collections.emptyList();
         if (CollUtil.isNotEmpty(siblingOutstocks)) {
             List<String> siblingMainIds = siblingOutstocks.stream()
@@ -710,43 +832,19 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                     .collect(Collectors.toList());
             siblingDetails = soOutstockDetailService.lambdaQuery()
                     .in(SoOutstockDetailEntity::getMainId, siblingMainIds)
-                    .in(SoOutstockDetailEntity::getSoDetailId, zeroTaxSoDetailIds)
+                    .in(SoOutstockDetailEntity::getSoDetailId, soDetailIds)
                     .list();
         }
 
-        // 5. 按 so_detail_id 维度合并求 tax_amount 总和（当前内存 + 兄弟主单）
         Map<String, BigDecimal> taxSumBySoDetailId = new HashMap<>();
         Stream.concat(outDetails.stream(), siblingDetails.stream())
                 .filter(d -> CharSequenceUtil.isNotBlank(d.getSoDetailId()))
+                .filter(d -> soDetailIds.contains(d.getSoDetailId()))
                 .forEach(d -> {
                     BigDecimal tax = d.getTaxAmount() == null ? BigDecimal.ZERO : d.getTaxAmount();
                     taxSumBySoDetailId.merge(d.getSoDetailId(), tax, BigDecimal::add);
                 });
-
-        // 6. 逐 so_detail_id 判定：兄弟总和已分摊 / 上游赠品 / 上游为0 → 放行；否则命中
-        for (String soDetailId : zeroTaxSoDetailIds) {
-            BigDecimal sumTax = taxSumBySoDetailId.getOrDefault(soDetailId, BigDecimal.ZERO);
-            if (sumTax.compareTo(BigDecimal.ZERO) != 0) {
-                continue;
-            }
-            SoB2cDetailEntity b2c = b2cDetailMap.get(soDetailId);
-            if (b2c == null) {
-                log.warn("销售出库单金额校验：出库明细 soDetailId={} 在上游 B2C 明细中未找到关联，soId={}, outstockId={}",
-                        soDetailId, soId, entity.getId());
-                return UpstreamAmountCheckResultEnum.AMOUNT_MISMATCH;
-            }
-            if (Boolean.TRUE.equals(b2c.getIsGift())) {
-                continue;
-            }
-            BigDecimal detailPaid = b2c.getPaidAmount();
-            BigDecimal legacyAmount = b2c.getAmount() == null ? BigDecimal.ZERO : b2c.getAmount();
-            BigDecimal soAmount = (detailPaid != null && detailPaid.compareTo(BigDecimal.ZERO) > 0)
-                    ? detailPaid : legacyAmount;
-            if (soAmount.compareTo(BigDecimal.ZERO) != 0) {
-                return UpstreamAmountCheckResultEnum.AMOUNT_MISMATCH;
-            }
-        }
-        return UpstreamAmountCheckResultEnum.PASS;
+        return taxSumBySoDetailId;
     }
 
     @Override
@@ -796,7 +894,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     }
 
     /**
-     * 三方同步落库：金额与上游 B2C 不一致时落待提交并写 approve_remark，不扣库存、不自动审核。
+     * 三方同步落库：金额与上游销售订单不一致时落待提交并写 approve_remark，不扣库存、不自动审核。
      */
     @Override
     public boolean handleSyncAmountMismatchIfNeeded(SoOutstockEntity soOutstock,

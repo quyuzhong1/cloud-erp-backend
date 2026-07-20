@@ -15,7 +15,7 @@ import java.util.List;
  */
 public final class SoInfoAmountUtil {
 
-    private static final int SCALE = 4;
+    private static final int SCALE = 6;
 
     private SoInfoAmountUtil() {
     }
