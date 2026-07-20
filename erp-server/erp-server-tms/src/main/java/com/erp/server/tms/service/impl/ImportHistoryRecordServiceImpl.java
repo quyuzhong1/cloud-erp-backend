@@ -2591,13 +2591,24 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             rowData.set(detail.getMappingIndex().toString(), text);
         }
         if (CharSequenceUtil.isNotBlank(detail.getTargetField())) {
-            rowData.set(detail.getTargetField(), text);
+            if(Objects.equals(detail.getTargetField(), COST_ITEM_FIELD)){
+                if(StringUtils.isNotBlank(detail.getTargetDetailField())){
+                    rowData.set(detail.getTargetDetailField(), text);
+                }
+            }else {
+                rowData.set(detail.getTargetField(), text);
+            }
         }
     }
 
     private String getPreparedValue(JSONObject rowData, CfgLogisticsCostImportDetailEntity detail) {
         Object value = ObjectUtil.isNotNull(detail.getMappingIndex()) ? rowData.get(detail.getMappingIndex().toString()) : null;
         if (ObjectUtil.isEmpty(value) && CharSequenceUtil.isNotBlank(detail.getTargetField())) {
+            value = rowData.get(detail.getTargetField());
+        }
+        if (ObjectUtil.isEmpty(value)
+                && CharSequenceUtil.isNotBlank(detail.getTargetField())
+                && !CharSequenceUtil.equals(COST_ITEM_FIELD, detail.getTargetField())) {
             value = rowData.get(detail.getTargetField());
         }
         if (ObjectUtil.isEmpty(value)) {
