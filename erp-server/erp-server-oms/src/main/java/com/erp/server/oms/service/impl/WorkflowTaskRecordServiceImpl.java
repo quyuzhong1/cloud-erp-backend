@@ -156,21 +156,7 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
                 return;
             }
             WorkflowTaskRecordEntity currentStep = resolveCurrentStep(latest);
-            if (currentStep == null) {
-                // currentIndex 指向已成功节点且无剩余未成功节点时，resolve 可能仍返回成功节点；
-                // 仅当库内完全没有节点才为空。再兜底：全部成功则纠偏实例状态。
-                List<WorkflowTaskRecordEntity> activeSteps = listBySourceId(dto.getSourceId(), dto.getSourceTypeEnum().getCode());
-                if (CollUtil.isNotEmpty(activeSteps)
-                        && activeSteps.stream().allMatch(e -> WorkflowTaskRecordStatusEnum.SUCCESS.getCode().equals(e.getStatus()))) {
-                    int maxIndex = activeSteps.stream().map(WorkflowTaskRecordEntity::getIndex).max(Integer::compareTo).orElse(0);
-                    workflowTaskInstanceService.markSuccess(latest.getId(), maxIndex, activeSteps.size());
-                    log.warn("编排实例节点已全部成功，纠偏实例状态，instanceId={}", latest.getId());
-                    return;
-                }
-                log.warn("编排实例无有效节点，instanceId={}", latest.getId());
-                return;
-            }
-            // 活跃实例但节点已全部成功：直接收口，避免再发 MQ / markRunning 把状态打回执行中
+            // 纠偏/判断仅看当前实例节点，避免 listBySourceId 混入历史实例节点误收口
             List<WorkflowTaskRecordEntity> instanceSteps = CharSequenceUtil.isNotBlank(latest.getId())
                     ? this.lambdaQuery()
                     .eq(WorkflowTaskRecordEntity::getInstanceId, latest.getId())
@@ -182,6 +168,10 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
                 int maxIndex = instanceSteps.stream().map(WorkflowTaskRecordEntity::getIndex).max(Integer::compareTo).orElse(0);
                 workflowTaskInstanceService.markSuccess(latest.getId(), maxIndex, instanceSteps.size());
                 log.warn("编排实例节点已全部成功，纠偏实例状态，instanceId={}", latest.getId());
+                return;
+            }
+            if (currentStep == null) {
+                log.warn("编排实例无有效节点，instanceId={}", latest.getId());
                 return;
             }
             prepareStaleProcessingStep(currentStep);
@@ -869,36 +859,29 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
             if (CollUtil.isEmpty(steps)) {
                 continue;
             }
+            // 以「是否存在未成功节点」为准收口；仅全部成功时 markSuccess，避免 currentIndex 漂移误收口
+            WorkflowTaskRecordEntity next = steps.stream()
+                    .filter(e -> !WorkflowTaskRecordStatusEnum.SUCCESS.getCode().equals(e.getStatus()))
+                    .min(Comparator.comparing(WorkflowTaskRecordEntity::getIndex))
+                    .orElse(null);
+            if (next == null) {
+                int maxIndex = steps.stream().map(WorkflowTaskRecordEntity::getIndex).max(Integer::compareTo).orElse(0);
+                workflowTaskInstanceService.markSuccess(instance.getId(), maxIndex, steps.size());
+                XxlJobHelper.log(StrUtil.format("节点已全部成功，补偿实例状态为成功，instanceId={}", instance.getId()));
+                continue;
+            }
+            // 链式 MQ 补偿仍要求 currentIndex 节点已成功，避免与进行中节点抢调度
             Map<Integer, WorkflowTaskRecordEntity> indexMap = buildIndexTaskMap(steps);
             WorkflowTaskRecordEntity current = indexMap.get(instance.getCurrentIndex());
             if (current == null
                     || !WorkflowTaskRecordStatusEnum.SUCCESS.getCode().equals(current.getStatus())) {
                 continue;
             }
-            // 当前已是末节点且成功：补齐实例 SUCCESS（避免进度 100% 仍显示执行中）
-            boolean allSuccess = steps.stream()
-                    .allMatch(e -> WorkflowTaskRecordStatusEnum.SUCCESS.getCode().equals(e.getStatus()));
-            if (allSuccess) {
-                int maxIndex = steps.stream().map(WorkflowTaskRecordEntity::getIndex).max(Integer::compareTo).orElse(0);
-                workflowTaskInstanceService.markSuccess(instance.getId(), maxIndex, steps.size());
-                XxlJobHelper.log(StrUtil.format("节点已全部成功，补偿实例状态为成功，instanceId={}", instance.getId()));
-                continue;
-            }
-            int nextIndex = instance.getCurrentIndex() + 1;
-            while (indexMap.containsKey(nextIndex)
-                    && WorkflowTaskRecordStatusEnum.SUCCESS.getCode().equals(indexMap.get(nextIndex).getStatus())) {
-                nextIndex++;
-            }
-            WorkflowTaskRecordEntity next = indexMap.get(nextIndex);
-            if (next == null) {
-                int maxIndex = steps.stream().map(WorkflowTaskRecordEntity::getIndex).max(Integer::compareTo).orElse(0);
-                workflowTaskInstanceService.markSuccess(instance.getId(), maxIndex, steps.size());
-                continue;
-            }
             if (!WorkflowTaskRecordStatusEnum.PENDING.getCode().equals(next.getStatus())
                     && !WorkflowTaskRecordStatusEnum.FAILED.getCode().equals(next.getStatus())) {
                 continue;
             }
+            int nextIndex = next.getIndex();
             WorkflowTaskRecordDTO.AddTaskDTO template = new WorkflowTaskRecordDTO.AddTaskDTO();
             template.setDictBasicTypeEnum(DictBasicTypeEnum.WORKFLOW_TASK_NODE);
             template.setSourceTypeEnum(WorkflowTaskRecordTypeEnum.getByCode(instance.getSourceType()));
