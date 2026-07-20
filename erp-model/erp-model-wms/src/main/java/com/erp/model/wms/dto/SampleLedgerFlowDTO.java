@@ -583,6 +583,17 @@ public class SampleLedgerFlowDTO implements Serializable {
             private String sampleLedgerId;
 
             /**
+             * 使用方ID（可选覆盖）：非空时流水与台账使用该使用方，
+             * 不从 sampleLedgerId 反查台账使用方。用于样品转移单转入按“目标使用方”记账。
+             */
+            private String useUserId;
+
+            /**
+             * 使用方名称（可选覆盖），与 useUserId 配套使用。
+             */
+            private String useUserName;
+
+            /**
              * 备注
              */
             private String remark;

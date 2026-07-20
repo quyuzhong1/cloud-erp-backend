@@ -18,6 +18,7 @@
        <result column="approve_user_id" property="approveUserId" />
        <result column="approve_user_name" property="approveUserName" />
        <result column="invalid_status" property="invalidStatus" />
+       <result column="transfer_type" property="transferType" />
        <result column="transfer_out_user_id" property="transferOutUserId" />
        <result column="transfer_out_user_name" property="transferOutUserName" />
        <result column="transfer_out_dept_id" property="transferOutDeptId" />
@@ -42,7 +43,7 @@
         update_time,
         version,
         is_deleted,
-        code, approve_status, approve_time, approve_user_id, approve_user_name, invalid_status, transfer_out_user_id, transfer_out_user_name, transfer_out_dept_id, transfer_out_dept_name, transfer_in_user_id, transfer_in_user_name, transfer_in_dept_id, transfer_in_dept_name, transfer_date, remark, invalid_remark
+        code, approve_status, approve_time, approve_user_id, approve_user_name, invalid_status, transfer_type, transfer_out_user_id, transfer_out_user_name, transfer_out_dept_id, transfer_out_dept_name, transfer_in_user_id, transfer_in_user_name, transfer_in_dept_id, transfer_in_dept_name, transfer_date, remark, invalid_remark
     </sql>
 
     <select id="paging" resultType="com.erp.model.wms.dto.SampleTransferInfoDTO$ListDTO">
@@ -54,6 +55,7 @@
             sti.approve_user_name AS approveUserName,
             sti.approve_time AS approveTime,
             sti.invalid_status AS invalidStatus,
+            sti.transfer_type AS transferType,
             sti.transfer_out_user_id AS transferOutUserId,
             sti.transfer_out_user_name AS transferOutUserName,
             sti.transfer_out_dept_id AS transferOutDeptId,
@@ -71,10 +73,15 @@
             std.sku_id AS skuId,
             std.product_name AS productName,
             std.transfer_qty AS transferQty,
+            sl.use_user_name AS useUserName,
+            std.target_use_user_id AS targetUseUserId,
+            std.target_use_user_name AS targetUseUserName,
             std.remark AS detailRemark
         FROM sample_transfer_info sti
         LEFT JOIN sample_transfer_detail std
             ON std.main_id = sti.id AND std.is_deleted = false
+        LEFT JOIN sample_ledger sl
+            ON sl.id = std.sample_ledger_id AND sl.is_deleted = false
         WHERE
         ${params.sqlMap.default}
         AND sti.is_deleted = false
@@ -101,6 +108,7 @@
             sti.code,
             sti.approve_status AS approveStatus,
             sti.transfer_date AS transferDate,
+            sti.transfer_type AS transferType,
             sti.approve_user_name AS approveUserName,
             sti.approve_time AS approveTime,
             sti.transfer_in_user_name AS transferInUserName,
@@ -113,10 +121,15 @@
             std.sku_id AS skuId,
             std.product_name AS productName,
             std.transfer_qty AS transferQty,
+            sl.use_user_name AS useUserName,
+            std.target_use_user_id AS targetUseUserId,
+            std.target_use_user_name AS targetUseUserName,
             std.remark AS detailRemark
         FROM sample_transfer_info sti
         LEFT JOIN sample_transfer_detail std
             ON std.main_id = sti.id AND std.is_deleted = false
+        LEFT JOIN sample_ledger sl
+            ON sl.id = std.sample_ledger_id AND sl.is_deleted = false
         WHERE
         <if test="params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.default != ''">
             ${params.sqlMap.default}
@@ -147,6 +160,7 @@
             sti.approve_time AS approveTime,
             sti.invalid_status AS invalidStatus,
             sti.invalid_remark AS invalidRemark,
+            sti.transfer_type AS transferType,
             sti.transfer_out_user_id AS transferOutUserId,
             sti.transfer_out_user_name AS transferOutUserName,
             sti.transfer_out_dept_id AS transferOutDeptId,
@@ -164,10 +178,15 @@
             std.sku_id AS skuId,
             std.product_name AS productName,
             std.transfer_qty AS transferQty,
+            sl.use_user_name AS useUserName,
+            std.target_use_user_id AS targetUseUserId,
+            std.target_use_user_name AS targetUseUserName,
             std.remark AS detailRemark
         FROM sample_transfer_info sti
         LEFT JOIN sample_transfer_detail std
         ON std.main_id = sti.id AND std.is_deleted = false
+        LEFT JOIN sample_ledger sl
+        ON sl.id = std.sample_ledger_id AND sl.is_deleted = false
         WHERE
         ${params.sqlMap.default}
         AND sti.is_deleted = false

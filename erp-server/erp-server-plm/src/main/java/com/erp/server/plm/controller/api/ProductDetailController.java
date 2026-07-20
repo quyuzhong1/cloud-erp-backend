@@ -150,6 +150,20 @@ public class ProductDetailController extends BaseController {
     }
 
     /**
+     * 产品信息-选择产品弹框（开模通知单）：在产品列表基础上附带模具档案项目名称
+     *
+     * @param pagingDTO pagingDTO
+     * @return com.common.core.controller.vo.ApiResult<com.common.business.vo.PagingVO<com.erp.model.plm.dto.ProductMoldProjectDTO>>
+     **/
+    @PostMapping("/listWithMoldProject")
+    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:product:detail:list", tableAlias = "pd")
+    @WebAdvanceQuery(handler = ProductDetailQueryHandler.class)
+    public ApiResult<PagingVO<ProductMoldProjectDTO>> listWithMoldProject(@RequestBody PagingDTO<ProductSkuDTO> pagingDTO) {
+        PagingVO<ProductMoldProjectDTO> paging = productDetailService.pagingWithMoldProject(pagingDTO);
+        return this.success(paging);
+    }
+
+    /**
      * 根据sku进行模糊搜索
      * @param pagingDTO
      * @return

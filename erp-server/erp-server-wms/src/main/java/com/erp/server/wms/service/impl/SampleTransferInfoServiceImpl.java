@@ -44,6 +44,7 @@ import com.erp.model.wms.entity.SampleTransferDetailEntity;
 import com.erp.model.wms.entity.SampleTransferInfoEntity;
 import com.erp.model.wms.entity.WmsAttachmentEntity;
 import com.erp.model.wms.enums.SampleLedgerTypeEnum;
+import com.erp.model.wms.enums.SampleTransferTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -119,6 +120,8 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
     public BaseResultDTO.AddDTO add(SampleTransferInfoDTO.AddDTO addDTO) {
         SampleTransferInfoEntity sampleTransferInfoEntity = new SampleTransferInfoEntity();
         BeanMapperUtils.copy(addDTO, sampleTransferInfoEntity);
+        // 显式转换转移类型（String -> 枚举），避免 Bean 拷贝对枚举字段处理不一致
+        sampleTransferInfoEntity.setTransferType(resolveTransferType(addDTO.getTransferType()));
 
         // 校验明细不能为空
         if (CollUtil.isEmpty(addDTO.getDetailList())) {
@@ -165,7 +168,10 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
                 sampleTransferDetailEntity.setProductName(skuVO.getSkuName());
             }
         }
-        
+
+        // 校验并回填明细目标使用方（内部转移=系统用户；外部转移=外部使用方）
+        validateAndFillDetailTargetUseUser(sampleTransferInfoEntity, sampleTransferDetailEntities);
+
         // 批量保存明细
         sampleTransferDetailService.saveBatch(sampleTransferDetailEntities);
         
@@ -223,6 +229,8 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
             throw new ServiceException("样品转移单明细不能为空");
         }
         SampleTransferInfoEntity sampleTransferInfoEntity =  BeanMapperUtils.map(SampleTransferInfoEntity.class, addOrUpdateDTO);
+        // 显式转换转移类型（String -> 枚举），避免 Bean 拷贝对枚举字段处理不一致
+        sampleTransferInfoEntity.setTransferType(resolveTransferType(addOrUpdateDTO.getTransferType()));
 
         // 数据处理
         handleData(sampleTransferInfoEntity);
@@ -289,6 +297,9 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
                 sampleTransferDetailEntity.setProductName(skuVO.getSkuName());
             }
         }
+
+        // 校验并回填明细目标使用方（内部转移=系统用户；外部转移=外部使用方）
+        validateAndFillDetailTargetUseUser(sampleTransferInfoEntity, sampleTransferDetailEntities);
         
         // 处理删除的明细数据
         if(CollUtil.isNotEmpty(oldList)){
@@ -807,6 +818,11 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
         SampleTransferInfoEntity sampleTransferInfoEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到样品转移单主单数据"));
         SampleTransferInfoDTO.ViewDTO data = BeanMapperUtils.map(SampleTransferInfoDTO.ViewDTO.class, sampleTransferInfoEntity);
         data.setApproveStatus(sampleTransferInfoEntity.getApproveStatus().getStatus());
+        // 转移类型（枚举 -> String + 名称）
+        if (sampleTransferInfoEntity.getTransferType() != null) {
+            data.setTransferType(sampleTransferInfoEntity.getTransferType().getTransferType());
+            data.setTransferTypeName(sampleTransferInfoEntity.getTransferType().getName());
+        }
         // 数据填充处理
         fillOne(data);
 
@@ -972,6 +988,8 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             // 设置作废状态名称
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
+            // 设置转移类型名称
+            data.setTransferTypeName(SampleTransferTypeEnum.getName(data.getTransferType()));
             
             // 最新审核人：先判断流程中的审核人是否存在，如果存在则使用流程中的，否则保持数据库原值
             if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
@@ -1117,6 +1135,55 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
         sampleTransferInfoEntity.setTransferOutDeptName(transferOutDept.getName());
     }
 
+    /**
+     * 转移类型 String -> 枚举，非法时抛业务异常
+     */
+    private SampleTransferTypeEnum resolveTransferType(String transferType) {
+        SampleTransferTypeEnum type = SampleTransferTypeEnum.getByTransferType(transferType);
+        if (Objects.isNull(type)) {
+            throw new ServiceException("转移类型不正确");
+        }
+        return type;
+    }
+
+    /**
+     * 校验并回填明细目标使用方。
+     * 内部转移：目标使用方必须是有效的系统用户，并以系统用户名回填名称；
+     * 外部转移：目标使用方为外部使用方，信任前端传入的 id/name（页面从外部使用方下拉或新建获取）。
+     */
+    private void validateAndFillDetailTargetUseUser(SampleTransferInfoEntity main,
+                                                    List<SampleTransferDetailEntity> details) {
+        if (CollUtil.isEmpty(details)) {
+            return;
+        }
+        // 目标使用方必填
+        for (SampleTransferDetailEntity detail : details) {
+            if (StrUtil.isBlank(detail.getTargetUseUserId()) || StrUtil.isBlank(detail.getTargetUseUserName())) {
+                throw new ServiceException(StrUtil.format("SKU【{}】的目标使用方不能为空", detail.getSkuNo()));
+            }
+        }
+
+        if (SampleTransferTypeEnum.INTERNAL_TRANSFER == main.getTransferType()) {
+            // 内部转移：目标使用方必须是系统用户
+            List<String> targetUserIds = details.stream()
+                    .map(SampleTransferDetailEntity::getTargetUseUserId)
+                    .distinct()
+                    .collect(Collectors.toList());
+            List<FindUserDTO> users = sysUserFeign.getUserListByUserIds(targetUserIds);
+            Map<String, FindUserDTO> userMap = CollUtil.isEmpty(users) ? new HashMap<>()
+                    : users.stream().collect(Collectors.toMap(FindUserDTO::getUserId, Function.identity(), (o1, o2) -> o1));
+            for (SampleTransferDetailEntity detail : details) {
+                FindUserDTO user = userMap.get(detail.getTargetUseUserId());
+                if (Objects.isNull(user)) {
+                    throw new ServiceException(StrUtil.format("SKU【{}】的目标使用方【{}】不是有效的内部用户",
+                            detail.getSkuNo(), detail.getTargetUseUserName()));
+                }
+                // 以系统用户名为准回填
+                detail.setTargetUseUserName(user.getUserName());
+            }
+        }
+    }
+
     // ==================== 实现 SampleLedgerFlowBuilder 接口 ====================
     
     @Override
@@ -1199,6 +1266,10 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
                 flowDetail.setQty(qty);
                 // 设置样品台账ID
                 flowDetail.setSampleLedgerId(detail.getSampleLedgerId());
+                // 转入人台账使用方 = 目标使用方（明细级覆盖，不从转出人台账反查使用方）
+                // 历史数据无目标使用方时留空，SampleLedgerFlowServiceImpl 会回退到转出人台账使用方
+                flowDetail.setUseUserId(detail.getTargetUseUserId());
+                flowDetail.setUseUserName(detail.getTargetUseUserName());
                 flowDetails.add(flowDetail);
             }
 
@@ -1614,12 +1685,14 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
         List<String> skuNos = new ArrayList<>();
         
         for (SampleTransferDetailEntity detail : detailList) {
-            // 从转出人台账中获取使用方ID
-            String useUserId = ledgerIdToUseUserIdMap.get(detail.getSampleLedgerId());
+            // 转入人台账使用方 = 目标使用方；历史数据无目标使用方时回退到转出人台账使用方
+            String useUserId = StrUtil.isNotBlank(detail.getTargetUseUserId())
+                    ? detail.getTargetUseUserId()
+                    : ledgerIdToUseUserIdMap.get(detail.getSampleLedgerId());
             if (StrUtil.isBlank(useUserId)) {
-                log.warn("未找到转出人台账使用方信息，ledgerId：{}，SKU：{}，单据编号：{}", 
+                log.warn("未找到转入人台账使用方信息，ledgerId：{}，SKU：{}，单据编号：{}", 
                     detail.getSampleLedgerId(), detail.getSkuNo(), entity.getCode());
-                throw new ServiceException(StrUtil.format("SKU【{}】的转出人台账使用方信息不存在，无法反审核", detail.getSkuNo()));
+                throw new ServiceException(StrUtil.format("SKU【{}】的转入人台账使用方信息不存在，无法反审核", detail.getSkuNo()));
             }
             
             // 拼接 key 从 map 中获取转入人台账ID

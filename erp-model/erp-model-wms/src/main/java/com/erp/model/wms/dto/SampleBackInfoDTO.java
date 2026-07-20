@@ -187,6 +187,11 @@ public class SampleBackInfoDTO implements Serializable {
         private String orgName;
 
         /**
+        * 物流单号
+        */
+        private String logisticsNo;
+
+        /**
         * 备注
         */
         private String remark;
@@ -389,6 +394,11 @@ public class SampleBackInfoDTO implements Serializable {
         private String orgId;
 
         /**
+        * 物流单号
+        */
+        private String logisticsNo;
+
+        /**
         * 备注
         */
         private String remark;
@@ -513,6 +523,12 @@ public class SampleBackInfoDTO implements Serializable {
         */
         @NotBlank(message = "退回组织ID不能为空")
         private String orgId;
+
+        /**
+        * 物流单号
+        */
+        @Size(max = 50, message = "物流单号最大长度不能超过50位")
+        private String logisticsNo;
 
         /**
         * 备注

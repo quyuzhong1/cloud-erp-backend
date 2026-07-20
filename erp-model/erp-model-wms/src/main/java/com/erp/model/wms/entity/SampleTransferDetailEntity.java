@@ -60,6 +60,16 @@ public class SampleTransferDetailEntity extends BaseEntity<SampleTransferDetailE
     @TableField("available_qty")
     private Integer availableQty;
     /**
+    * 目标使用方ID：内部转移=内部用户ID，外部转移=外部使用方字典ID
+    */
+    @TableField("target_use_user_id")
+    private String targetUseUserId;
+    /**
+    * 目标使用方名称
+    */
+    @TableField("target_use_user_name")
+    private String targetUseUserName;
+    /**
     * 备注
     */
     @TableField("remark")
@@ -79,6 +89,10 @@ public class SampleTransferDetailEntity extends BaseEntity<SampleTransferDetailE
     public static final String TRANSFER_QTY = "transfer_qty";
 
     public static final String AVAILABLE_QTY = "available_qty";
+
+    public static final String TARGET_USE_USER_ID = "target_use_user_id";
+
+    public static final String TARGET_USE_USER_NAME = "target_use_user_name";
 
     public static final String REMARK = "remark";
 

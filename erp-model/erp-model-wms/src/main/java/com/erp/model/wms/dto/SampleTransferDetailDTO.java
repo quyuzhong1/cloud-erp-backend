@@ -62,14 +62,24 @@ public class SampleTransferDetailDTO implements Serializable {
         private String productName;
 
         /**
-        * 使用方ID - 从样品台账关联查询
+        * 原使用方ID - 从样品台账关联查询（转出人台账使用方）
         */
         private String useUserId;
 
         /**
-        * 使用方名称 - 从样品台账关联查询
+        * 原使用方名称 - 从样品台账关联查询（转出人台账使用方）
         */
         private String useUserName;
+
+        /**
+        * 目标使用方ID：内部转移=内部用户ID，外部转移=外部使用方字典ID
+        */
+        private String targetUseUserId;
+
+        /**
+        * 目标使用方名称
+        */
+        private String targetUseUserName;
 
         /**
         * 转移数量
@@ -146,6 +156,20 @@ public class SampleTransferDetailDTO implements Serializable {
         * 产品名称
         */
         private String productName;
+
+        /**
+        * 目标使用方ID：内部转移=内部用户ID，外部转移=外部使用方字典ID
+        */
+        @NotBlank(message = "目标使用方不能为空")
+        @Size(max = 50,message = "目标使用方ID最大长度不能超过50位")
+        private String targetUseUserId;
+
+        /**
+        * 目标使用方名称
+        */
+        @NotBlank(message = "目标使用方名称不能为空")
+        @Size(max = 50,message = "目标使用方名称最大长度不能超过50位")
+        private String targetUseUserName;
 
         /**
         * 转移数量

@@ -10,6 +10,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import com.common.business.enums.ApproveStatusEnum;
+import com.erp.model.wms.enums.SampleTransferTypeEnum;
 
 
 /**
@@ -56,6 +57,11 @@ public class SampleTransferInfoEntity extends BaseEntity<SampleTransferInfoEntit
     */
     @TableField("invalid_status")
     private Boolean invalidStatus;
+    /**
+    * 转移类型：internalTransfer=公司内部转移，externalTransfer=公司外部转移
+    */
+    @TableField("transfer_type")
+    private SampleTransferTypeEnum transferType;
     /**
     * 转出人ID
     */
@@ -124,6 +130,8 @@ public class SampleTransferInfoEntity extends BaseEntity<SampleTransferInfoEntit
     public static final String APPROVE_USER_NAME = "approve_user_name";
 
     public static final String INVALID_STATUS = "invalid_status";
+
+    public static final String TRANSFER_TYPE = "transfer_type";
 
     public static final String TRANSFER_OUT_USER_ID = "transfer_out_user_id";
 

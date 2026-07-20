@@ -129,6 +129,11 @@ public class SampleBackInfoEntity extends BaseEntity<SampleBackInfoEntity> {
     @TableField("org_name")
     private String orgName;
     /**
+    * 物流单号
+    */
+    @TableField("logistics_no")
+    private String logisticsNo;
+    /**
     * 备注
     */
     @TableField("remark")
@@ -175,6 +180,8 @@ public class SampleBackInfoEntity extends BaseEntity<SampleBackInfoEntity> {
 
     public static final String REMARK = "remark";
     public static final String ORG_NAME = "org_name";
+
+    public static final String LOGISTICS_NO = "logistics_no";
 
     @Override
     public Serializable pkVal() {
