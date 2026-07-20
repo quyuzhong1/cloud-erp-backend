@@ -2603,13 +2603,16 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
 
     private String getPreparedValue(JSONObject rowData, CfgLogisticsCostImportDetailEntity detail) {
         Object value = ObjectUtil.isNotNull(detail.getMappingIndex()) ? rowData.get(detail.getMappingIndex().toString()) : null;
-        if (ObjectUtil.isEmpty(value) && CharSequenceUtil.isNotBlank(detail.getTargetField())) {
+        if (ObjectUtil.isEmpty(value)
+                && CharSequenceUtil.isNotBlank(detail.getTargetField())
+                &&!CharSequenceUtil.equals(COST_ITEM_FIELD, detail.getTargetField())) {
             value = rowData.get(detail.getTargetField());
         }
         if (ObjectUtil.isEmpty(value)
                 && CharSequenceUtil.isNotBlank(detail.getTargetField())
-                && !CharSequenceUtil.equals(COST_ITEM_FIELD, detail.getTargetField())) {
-            value = rowData.get(detail.getTargetField());
+                && CharSequenceUtil.equals(COST_ITEM_FIELD, detail.getTargetField())
+                && CharSequenceUtil.isNotBlank(detail.getTargetDetailField())) {
+            value = rowData.get(detail.getTargetDetailField());
         }
         if (ObjectUtil.isEmpty(value)) {
             return "";
