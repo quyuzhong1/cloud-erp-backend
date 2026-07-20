@@ -1455,6 +1455,10 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             if (Objects.isNull(cartonEntity)){
                 throw new ServiceException(ApiError.LOGISTICS_PACKING_RECORD_NOT_FOUND);
             }
+            // 单箱已完成，禁止再暂存/完成，避免另一端脏页面覆盖
+            if (PackingTaskStatusEnum.COMPLETED.getCode().equals(cartonEntity.getPackingStatus())){
+                throw new ServiceException(ApiError.LOGISTICS_PACKING_CARTON_COMPLETED_FORBIDDEN);
+            }
             //存在则删除之前装箱明细
             wmsCartonDetailService.deleteByCartonIds(Collections.singletonList(cartonEntity.getId()));
         }
