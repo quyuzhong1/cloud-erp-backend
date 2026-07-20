@@ -3190,12 +3190,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         //重置不含税采购单价
         resetSkuCost(calCostProfitDTO, skuIdList, skuList);
         List<SoDetailEntity> soDetailList = BeanMapper.copyList(detailList, SoDetailEntity.class);
-        //是否含税
-        long count = soDetailList.stream().filter(s -> Objects.isNull(s.getTaxRate()) || (Objects.nonNull(s.getTaxRate()) &&
-                s.getTaxRate().compareTo(BigDecimal.ZERO) == 0)).count();
+        // 与保存口径一致：明细存在有效税率时按含税订单扣减税额（不额外传 isTax 参数）
+        boolean isTax = soDetailList.stream()
+                .anyMatch(s -> Objects.nonNull(s.getTaxRate()) && s.getTaxRate().compareTo(BigDecimal.ZERO) > 0);
 
         // 金额折扣处理
-        SoUtils.handleDetailAmount(count > 0, calCostProfitDTO.getDiscountAmount(), soDetailList);
+        SoUtils.handleDetailAmount(isTax, calCostProfitDTO.getDiscountAmount(), soDetailList);
         for (int i = 0; i < soDetailList.size(); i++) {
             SoDetailEntity item = soDetailList.get(i);
 
