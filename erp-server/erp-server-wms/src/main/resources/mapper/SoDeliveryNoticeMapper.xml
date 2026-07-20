@@ -40,11 +40,11 @@
         sd.box_qty as salesQty,
         pd.name as productName,
         pd.unit_name as unit,
-        CASE WHEN total.total_picked_qty = 0 THEN '未生成' WHEN total.total_delivery_qty = total.total_picked_qty THEN '已生成' ELSE '部分生成' END AS generationPickStatus
+        CASE WHEN COALESCE(total.total_picked_qty, 0) = 0 THEN '未生成' WHEN COALESCE(total.total_delivery_qty, 0) = COALESCE(total.total_picked_qty, 0) THEN '已生成' ELSE '部分生成' END AS generationPickStatus
         FROM
         so_delivery_notice sdn
         LEFT JOIN so_delivery_notice_detail sdnd ON sdn.ID = sdnd.main_id and sdnd.is_deleted=false
-        INNER JOIN (SELECT main_id,SUM(delivery_qty) AS total_delivery_qty,SUM(picking_qty) AS total_picked_qty
+        INNER JOIN (SELECT main_id,SUM(COALESCE(delivery_qty, 0)) AS total_delivery_qty,SUM(COALESCE(picking_qty, 0)) AS total_picked_qty
         FROM so_delivery_notice_detail WHERE is_deleted = false GROUP BY main_id
         ) total ON sdn.ID = total.main_id
         <if test="params.dynamicDataSource != null and params.dynamicDataSource == 'doris'">

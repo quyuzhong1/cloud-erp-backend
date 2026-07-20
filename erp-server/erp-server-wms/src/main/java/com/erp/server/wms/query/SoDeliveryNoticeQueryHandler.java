@@ -90,9 +90,9 @@ public class SoDeliveryNoticeQueryHandler extends AbstractQueryHandler {
                 .map(s -> "'" + s + "'")
                 .collect(Collectors.joining(","));
         String op = notIn ? "NOT IN" : "IN";
-        // 依赖 paging / 导出共用 SQL 中的 total 子查询 JOIN；先判拣货为 0 → 未生成，避免 0/0 误判为已生成
-        return "(CASE WHEN total.total_picked_qty = 0 THEN '未生成'"
-                + " WHEN total.total_delivery_qty = total.total_picked_qty THEN '已生成'"
+        // 依赖 paging / 导出共用 SQL 中的 total 子查询 JOIN；COALESCE 覆盖拣货数量为 NULL 的未生成场景，避免落入「部分生成」
+        return "(CASE WHEN COALESCE(total.total_picked_qty, 0) = 0 THEN '未生成'"
+                + " WHEN COALESCE(total.total_delivery_qty, 0) = COALESCE(total.total_picked_qty, 0) THEN '已生成'"
                 + " ELSE '部分生成' END) " + op + " (" + inExpr + ")";
     }
 }

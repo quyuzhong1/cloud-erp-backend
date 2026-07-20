@@ -709,6 +709,10 @@ public class ExportWmsFeignController {
         try {
             return soDeliveryNoticeService.paging(dto);
         } catch (ExecutionException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof  ServiceException){
+                throw (ServiceException) cause;
+            }
             log.error("Interrupted while exporting SO delivery notice", e);
             throw new ServiceException(ApiError.COMMON_EXECUTOR_EXCEPTION, e.getMessage());
         } catch (InterruptedException e) {
