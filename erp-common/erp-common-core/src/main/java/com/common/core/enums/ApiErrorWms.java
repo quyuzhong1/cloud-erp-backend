@@ -454,7 +454,6 @@ public final class ApiErrorWms {
     public static final ApiError WH_BORROW_WAREHOUSE_USABLE_INSUFFICIENT = new ApiError("WH_BORROW_WAREHOUSE_USABLE_INSUFFICIENT", 11218, "SKU【{0}】，借调仓【{1}】，可用数【{2}】，可用库存不足，无法借调");
     public static final ApiError WAREHOUSE_INVENTORY_FAILED = new ApiError("WAREHOUSE_INVENTORY_FAILED", 11219, "库存交易失败：{0}");
     public static final ApiError VIRTUAL_WAREHOUSE_INVENTORY_FAILED = new ApiError("VIRTUAL_WAREHOUSE_INVENTORY_FAILED", 11220, "虚拟仓库库存交易失败");
-    public static final ApiError SO_RETURN_PRESTOCK_AFTER_SALE_TYPE_LINK_FORBIDDEN = new ApiError("SO_RETURN_PRESTOCK_AFTER_SALE_TYPE_LINK_FORBIDDEN", 10807, "售后订单类型的预入库单不支持关联售后单，请改用「关联店铺」进行关联");
     public static final ApiError WH_AIYA_SDK_INBOUND_PAGE_CONVERT_FAILED = new ApiError("WH_AIYA_SDK_INBOUND_PAGE_CONVERT_FAILED", 11219, "AIYA 分页查询入库单接口响应转换失败: {0}");
     public static final ApiError WH_AIYA_SDK_OUTBOUND_SEARCH_NO_RESPONSE = new ApiError("WH_AIYA_SDK_OUTBOUND_SEARCH_NO_RESPONSE", 11220, "AIYA 查询2C出库单接口无响应");
     public static final ApiError WH_AIYA_SDK_OUTBOUND_SEARCH_FAILED = new ApiError("WH_AIYA_SDK_OUTBOUND_SEARCH_FAILED", 11221, "AIYA 查询2C出库单接口失败: {0}");
