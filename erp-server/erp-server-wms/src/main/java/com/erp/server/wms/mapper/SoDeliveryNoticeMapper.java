@@ -28,10 +28,6 @@ public interface SoDeliveryNoticeMapper extends BaseMapper<SoDeliveryNoticeEntit
     IPage<SoDeliveryNoticeDTO.PagingView> paging(Page query, @Param("params") SoDeliveryNoticeDTO.PagingParam params);
 
     Integer listCount(@Param("params") SoDeliveryNoticeDTO.PagingParam pagingParam);
-
-
-    Page<SoDeliveryNoticeDTO.PagingView> soDeliveryNoticeExportExcel(@Param("page") Page<SoDeliveryNoticeDTO.PagingView> page, @Param("params") SoDeliveryNoticeDTO.PagingParam dto);
-
     /**
      * 获取到销售退货单列表
      * @author yl

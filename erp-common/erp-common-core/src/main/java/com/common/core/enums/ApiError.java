@@ -246,6 +246,8 @@ public final class ApiError implements Serializable {
     public static final ApiError COMMON_LARK_USER_INFO_FAILED = ApiErrorCommon.COMMON_LARK_USER_INFO_FAILED;
     public static final ApiError COMMON_LARK_UNION_ID_NOT_FOUND = ApiErrorCommon.COMMON_LARK_UNION_ID_NOT_FOUND;
     public static final ApiError COMMON_LARK_UNION_ID_FETCH_FAILED = ApiErrorCommon.COMMON_LARK_UNION_ID_FETCH_FAILED;
+    public static final ApiError COMMON_THREAD_INTERRUPTED_EXCEPTION = ApiErrorCommon.COMMON_THREAD_INTERRUPTED_EXCEPTION;
+    public static final ApiError COMMON_EXECUTOR_EXCEPTION = ApiErrorCommon.COMMON_EXECUTOR_EXCEPTION;
 
     public static final ApiError FASTDFS_UPLOAD_FAILED_FOR_WAYBILL = ApiErrorCommon.FASTDFS_UPLOAD_FAILED_FOR_WAYBILL;
     public static final ApiError FILE_EXCEL_PARSE = ApiErrorCommon.FILE_EXCEL_PARSE;
@@ -1112,6 +1114,8 @@ public final class ApiError implements Serializable {
     public static final ApiError WH_WEGO_WAREHOUSE_TOKEN_SECRET_MISSING = ApiErrorWms.WH_WEGO_WAREHOUSE_TOKEN_SECRET_MISSING;
     public static final ApiError WH_WEGO_INBOUND_DETAIL_JSON_PARSE_FAILED = ApiErrorWms.WH_WEGO_INBOUND_DETAIL_JSON_PARSE_FAILED;
     public static final ApiError WH_BORROW_WAREHOUSE_USABLE_INSUFFICIENT = ApiErrorWms.WH_BORROW_WAREHOUSE_USABLE_INSUFFICIENT;
+    public static final ApiError WAREHOUSE_INVENTORY_FAILED = ApiErrorWms.WAREHOUSE_INVENTORY_FAILED;
+    public static final ApiError VIRTUAL_WAREHOUSE_INVENTORY_FAILED = ApiErrorWms.VIRTUAL_WAREHOUSE_INVENTORY_FAILED;
 
     /** Tms service error constants. */
     public static final ApiError FIRST_MILE_FBA_SHIPMENT_NOT_EXIST_BILL = ApiErrorTms.FIRST_MILE_FBA_SHIPMENT_NOT_EXIST_BILL;
