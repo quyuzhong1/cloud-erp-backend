@@ -39,10 +39,20 @@ public class SampleTransferImportExcelDTO implements Serializable {
     private LocalDate transferDate;
 
     /**
+     * 转移类型
+     */
+    @ColumnWidth(20)
+    @ExcelProperty(value = "*转移类型", index = 2)
+    @FieldValid(fieldName = "*转移类型", isNotBlank = true)
+    private String transferTypeName;
+    @ExcelIgnore
+    private String transferType;
+
+    /**
      * 转入人
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "*转入人", index = 2)
+    @ExcelProperty(value = "*转入人", index = 3)
     @FieldValid(fieldName = "*转入人", isNotBlank = true)
     private String transferInUserName;
     @ExcelIgnore
@@ -52,7 +62,7 @@ public class SampleTransferImportExcelDTO implements Serializable {
      * 转入部门
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "*转入部门", index = 3)
+    @ExcelProperty(value = "*转入部门", index = 4)
     @FieldValid(fieldName = "*转入部门", isNotBlank = true)
     private String transferInDeptName;
     @ExcelIgnore
@@ -62,7 +72,7 @@ public class SampleTransferImportExcelDTO implements Serializable {
      * 转出人
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "*转出人", index = 4)
+    @ExcelProperty(value = "*转出人", index = 5)
     @FieldValid(fieldName = "*转出人", isNotBlank = true)
     private String transferOutUserName;
     @ExcelIgnore
@@ -72,7 +82,7 @@ public class SampleTransferImportExcelDTO implements Serializable {
      * 转出部门
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "*转出部门", index = 5)
+    @ExcelProperty(value = "*转出部门", index = 6)
     @FieldValid(fieldName = "*转出部门", isNotBlank = true)
     private String transferOutDeptName;
     @ExcelIgnore
@@ -82,7 +92,7 @@ public class SampleTransferImportExcelDTO implements Serializable {
      * 备注
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "备注", index = 6)
+    @ExcelProperty(value = "备注", index = 7)
     @FieldValid(fieldName = "备注", maxLength = 200)
     private String remark;
 
@@ -90,7 +100,7 @@ public class SampleTransferImportExcelDTO implements Serializable {
      * SKU
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "*SKU", index = 7)
+    @ExcelProperty(value = "*SKU", index = 8)
     @FieldValid(fieldName = "*SKU", isNotBlank = true)
     private String skuNo;
     @ExcelIgnore
@@ -99,18 +109,28 @@ public class SampleTransferImportExcelDTO implements Serializable {
     private String productName;
 
     /**
-     * 使用方
+     * 原使用方（转出人台账使用方）
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "*使用方", index = 8)
-    @FieldValid(fieldName = "*使用方", isNotBlank = true)
+    @ExcelProperty(value = "*原使用方", index = 9)
+    @FieldValid(fieldName = "*原使用方", isNotBlank = true)
     private String useUserName;
+
+    /**
+     * 目标使用方
+     */
+    @ColumnWidth(20)
+    @ExcelProperty(value = "*目标使用方", index = 10)
+    @FieldValid(fieldName = "*目标使用方", isNotBlank = true)
+    private String targetUseUserName;
+    @ExcelIgnore
+    private String targetUseUserId;
 
     /**
      * 转移数量
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "*转移数量", index = 9)
+    @ExcelProperty(value = "*转移数量", index = 11)
     @FieldValid(fieldName = "*转移数量", isNotBlank = true, formatPattern = FieldFormatPatternTypeEnum.POSITIVEINTEGER)
     private String transferQty;
 
@@ -118,7 +138,7 @@ public class SampleTransferImportExcelDTO implements Serializable {
      * 明细备注
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "备注", index = 10)
+    @ExcelProperty(value = "备注", index = 12)
     @FieldValid(fieldName = "备注", maxLength = 200)
     private String detailRemark;
 
@@ -128,8 +148,7 @@ public class SampleTransferImportExcelDTO implements Serializable {
     /**
      * 错误数据
      */
-    @ExcelProperty(value = "错误数据", index = 11)
+    @ExcelProperty(value = "错误数据", index = 13)
     @ColumnWidth(50)
     private String errorMsg = "";
 }
-

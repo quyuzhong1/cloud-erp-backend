@@ -121,6 +121,16 @@ public class SampleTransferInfoDTO implements Serializable {
         private Boolean invalidStatus;
 
         /**
+        * 转移类型：internalTransfer=公司内部转移，externalTransfer=公司外部转移
+        */
+        private String transferType;
+
+        /**
+        * 转移类型名称
+        */
+        private String transferTypeName;
+
+        /**
         * 转出人ID
         */
         private String transferOutUserId;
@@ -227,6 +237,21 @@ public class SampleTransferInfoDTO implements Serializable {
         private Integer transferQty;
 
         /**
+        * 原使用方名称（明细，转出人台账使用方）
+        */
+        private String useUserName;
+
+        /**
+        * 目标使用方ID（明细）
+        */
+        private String targetUseUserId;
+
+        /**
+        * 目标使用方名称（明细）
+        */
+        private String targetUseUserName;
+
+        /**
         * 明细备注
         */
         private String detailRemark;
@@ -297,6 +322,16 @@ public class SampleTransferInfoDTO implements Serializable {
         * 是否作废
         */
         private Boolean invalidStatus;
+
+        /**
+        * 转移类型：internalTransfer=公司内部转移，externalTransfer=公司外部转移
+        */
+        private String transferType;
+
+        /**
+        * 转移类型名称
+        */
+        private String transferTypeName;
 
         /**
         * 转出人ID
@@ -414,6 +449,13 @@ public class SampleTransferInfoDTO implements Serializable {
         * 客户端类型
         */
         private ClientTypeEnum clientType = ClientTypeEnum.WEB;
+
+        /**
+        * 转移类型：internalTransfer=公司内部转移，externalTransfer=公司外部转移
+        */
+        @NotBlank(message = "转移类型不能为空")
+        @Size(max = 20,message = "转移类型最大长度不能超过20位")
+        private String transferType;
 
         /**
         * 转出人ID

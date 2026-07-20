@@ -1,29 +1,38 @@
 package com.erp.server.wms.listener;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseDTO;
 import com.common.business.enums.FileTaskStatusEnum;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.sys.dto.SampleUseUserDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.excel.SampleTransferImportExcelDTO;
+import com.erp.model.wms.enums.SampleTransferTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.service.SampleTransferInfoService;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.redisson.api.RedissonClient;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -31,6 +40,7 @@ import java.util.stream.Collectors;
  * @author wuhaotian
  * @Date 2025-10-28
  */
+@Slf4j
 public class SampleTransferInfoExcelListener extends AnalysisEventListener<SampleTransferImportExcelDTO> {
 
     private static final int BATCH_COUNT = 1000;
@@ -54,6 +64,10 @@ public class SampleTransferInfoExcelListener extends AnalysisEventListener<Sampl
     private final SampleTransferInfoService sampleTransferInfoService = SpringUtil.getBean(SampleTransferInfoService.class);
 
     private final DownloadTaskFeign downloadTaskFeign = SpringUtil.getBean(DownloadTaskFeign.class);
+
+    private final SysUserFeign sysUserFeign = SpringUtil.getBean(SysUserFeign.class);
+
+    private final RedissonClient redissonClient = SpringUtil.getBean(RedissonClient.class);
 
     /**
      * 错误信息
@@ -99,6 +113,17 @@ public class SampleTransferInfoExcelListener extends AnalysisEventListener<Sampl
         List<String> msgList = FieldValidUtil.fieldValid(excelDTO);
         if (CollectionUtils.isNotEmpty(msgList)) {
             errorMsgList.addAll(msgList);
+        }
+
+        // 转移类型
+        String transferTypeName = excelDTO.getTransferTypeName();
+        if (StringUtils.isNotBlank(transferTypeName)) {
+            String transferType = SampleTransferTypeEnum.getTransferTypeByName(transferTypeName);
+            if (StringUtils.isBlank(transferType)) {
+                errorMsgList.add(StrUtil.format("未知转移类型:{}", transferTypeName));
+            } else {
+                excelDTO.setTransferType(transferType);
+            }
         }
 
         // 转入人
@@ -194,6 +219,33 @@ public class SampleTransferInfoExcelListener extends AnalysisEventListener<Sampl
             }
         }
 
+        // 目标使用方：内部转移=系统用户；外部转移=外部使用方
+        String targetUseUserName = excelDTO.getTargetUseUserName();
+        String transferType = excelDTO.getTransferType();
+        if (StringUtils.isNotBlank(transferType) && StringUtils.isNotBlank(targetUseUserName)) {
+            if (SampleTransferTypeEnum.INTERNAL_TRANSFER.getTransferType().equals(transferType)) {
+                // 内部转移：目标使用方必须是系统用户
+                FindUserDTO targetUser = userList.stream()
+                        .filter(e -> targetUseUserName.equals(e.getUserName()))
+                        .findFirst()
+                        .orElse(null);
+                if (Objects.isNull(targetUser)) {
+                    errorMsgList.add(StrUtil.format("目标使用方【{}】不是有效的内部用户", targetUseUserName));
+                } else {
+                    excelDTO.setTargetUseUserId(targetUser.getUserId());
+                    excelDTO.setTargetUseUserName(targetUser.getUserName());
+                }
+            } else {
+                // 外部转移：目标使用方为外部使用方
+                String targetUseUserId = getSampleUseUserIdByName(targetUseUserName);
+                if (StringUtils.isBlank(targetUseUserId)) {
+                    errorMsgList.add(StrUtil.format("未知目标使用方:{}", targetUseUserName));
+                } else {
+                    excelDTO.setTargetUseUserId(targetUseUserId);
+                }
+            }
+        }
+
         // 存在错误数据则直接返回
         if (errorMsgList.size() > 0) {
             excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
@@ -251,6 +303,33 @@ public class SampleTransferInfoExcelListener extends AnalysisEventListener<Sampl
         importResultDTO.setRemark("处理中");
         importResultDTO.setCount(count);
         downloadTaskFeign.updateTask(importResultDTO);
+    }
+
+    /**
+     * 根据外部使用方名称查询使用方ID（带缓存），不存在返回 null
+     */
+    private String getSampleUseUserIdByName(String useUserName) {
+        if (StrUtil.isBlank(useUserName)) {
+            return null;
+        }
+        String cacheKey = "sample_use_user_name_to_id:" + useUserName;
+        String useUserId = (String) redissonClient.getBucket(cacheKey).get();
+        if (StrUtil.isNotBlank(useUserId)) {
+            return useUserId;
+        }
+        try {
+            List<String> nameList = Collections.singletonList(useUserName);
+            ApiResult<List<SampleUseUserDTO.ViewDTO>> result = sysUserFeign.getSampleUseUserListByNameList(nameList);
+            if (result != null && result.isSuccess() && CollectionUtils.isNotEmpty(result.getData())) {
+                useUserId = result.getData().get(0).getId();
+                redissonClient.getBucket(cacheKey).set(useUserId, 1, TimeUnit.HOURS);
+                return useUserId;
+            }
+            return null;
+        } catch (Exception e) {
+            log.error("查询目标使用方ID失败，使用方名称：{}，错误：{}", useUserName, e.getMessage(), e);
+            return null;
+        }
     }
 }
 

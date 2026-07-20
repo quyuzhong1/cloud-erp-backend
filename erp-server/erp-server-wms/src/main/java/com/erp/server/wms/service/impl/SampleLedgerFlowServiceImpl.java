@@ -194,7 +194,12 @@ public class SampleLedgerFlowServiceImpl extends SuperServiceImpl<SampleLedgerFl
                 String finalLedgerId = detail.getSampleLedgerId();
                 flowEntity.setSampleLedgerId(finalLedgerId);
                 
-                if (StrUtil.isNotBlank(finalLedgerId)) {
+                if (StrUtil.isNotBlank(detail.getUseUserId())) {
+                    // 明细级使用方覆盖（样品转移单转入按“目标使用方”记账）：
+                    // 不从来源台账反查使用方，直接使用明细指定的使用方
+                    flowEntity.setUseUserId(detail.getUseUserId());
+                    flowEntity.setUseUserName(detail.getUseUserName());
+                } else if (StrUtil.isNotBlank(finalLedgerId)) {
                     // 如果有台账ID，直接通过ID查询主表获取使用方信息
                     SampleLedgerEntity ledgerEntity = sampleLedgerService.getById(finalLedgerId);
                     if (ledgerEntity != null) {
