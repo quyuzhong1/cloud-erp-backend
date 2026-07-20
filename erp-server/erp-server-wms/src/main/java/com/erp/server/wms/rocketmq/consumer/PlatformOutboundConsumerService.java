@@ -518,6 +518,9 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         }
         ThirdWarehouseLogisticsChannelValidationContext logisticsChannelContext =
                 loadThirdWarehouseLogisticsChannelValidationContext(soB2cIds, dto);
+        // 订单物流渠道 isPushLabel：未推送海外仓面单时，仓回传跟踪号不一致则覆盖订单物流单号/跟踪号
+        Map<String, LogisticsChannelEntity> orderLogisticsChannelById =
+                loadOrderLogisticsChannelById(logisticsChannelContext.getLogisticsByMainId());
 
         for (SoB2cEntity mainEntity : mainEntityList) {
             SoB2cDeliveryEntity soB2cDeliveryEntity = soB2cDeliveryMap.get(mainEntity.getId());
@@ -612,6 +615,12 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                 updateDto.setResolvedLogisticsChannelId(resolvedLogisticsChannel.getId());
                 updateDto.setResolvedLogisticsChannelName(resolvedLogisticsChannel.getName());
             }
+            // 本消费者仅处理海外仓出库回传；渠道未配置推送海外仓面单且跟踪号不一致时，强制覆盖物流单号+跟踪号
+            updateDto.setForceUpdateLogisticsTrack(shouldForceUpdateLogisticsTrack(
+                    logisticsChannelContext.getLogisticsByMainId().get(mainEntity.getId()),
+                    orderLogisticsChannelById,
+                    resolvedLogisticsChannel,
+                    dto.getTrackNo()));
             if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dto.getOrderStatus())) {
                 //只有已发货才更新
                 updateDto.setBillStatus(dto.getOrderStatus());
@@ -724,6 +733,59 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         String providerCode = StrUtil.blankToDefault(dto.getProvider(), dto.getPlatform());
         String providerName = StrUtil.blankToDefault(OmsPlatformEnum.getName(providerCode), providerCode);
         return StrUtil.format("自动出库失败，【{}】物流渠道【{}】未映射", providerName, dto.getShippingMethod());
+    }
+
+    /**
+     * 批量加载订单已绑定物流渠道（用于读取 isPushLabel）。
+     */
+    private Map<String, LogisticsChannelEntity> loadOrderLogisticsChannelById(
+            Map<String, SoB2cLogisticsEntity> logisticsByMainId) {
+        Map<String, LogisticsChannelEntity> channelById = new HashMap<>();
+        if (CollUtil.isEmpty(logisticsByMainId)) {
+            return channelById;
+        }
+        Set<String> channelIds = logisticsByMainId.values().stream()
+                .filter(Objects::nonNull)
+                .map(SoB2cLogisticsEntity::getLogisticsChannelId)
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.toSet());
+        for (String channelId : channelIds) {
+            try {
+                LogisticsChannelEntity channel = logisticsFeign.getChannelById(channelId);
+                if (Objects.nonNull(channel)) {
+                    channelById.put(channelId, channel);
+                }
+            } catch (Exception e) {
+                log.warn("三方仓自动出库: 查询物流渠道失败, channelId={}", channelId, e);
+            }
+        }
+        return channelById;
+    }
+
+    /**
+     * 渠道「是否推送海外仓面单」为否（含未配置）且仓回传跟踪号与订单不一致时，强制覆盖物流单号/跟踪号。
+     * 配置为是则不做覆盖。本消费者单据均为海外仓出库回传。
+     */
+    private boolean shouldForceUpdateLogisticsTrack(SoB2cLogisticsEntity logisticsEntity,
+                                                    Map<String, LogisticsChannelEntity> orderLogisticsChannelById,
+                                                    LogisticsChannelEntity resolvedLogisticsChannel,
+                                                    String warehouseTrackNo) {
+        if (CharSequenceUtil.isBlank(warehouseTrackNo) || Objects.isNull(logisticsEntity)) {
+            return false;
+        }
+        LogisticsChannelEntity channel = null;
+        if (StringUtils.isNotBlank(logisticsEntity.getLogisticsChannelId())) {
+            channel = orderLogisticsChannelById.get(logisticsEntity.getLogisticsChannelId());
+        }
+        if (Objects.isNull(channel)) {
+            channel = resolvedLogisticsChannel;
+        }
+        // 推送海外仓面单=是：跟踪号以 ERP 面单为准，不覆盖
+        if (Objects.nonNull(channel) && Boolean.TRUE.equals(channel.getIsPushLabel())) {
+            return false;
+        }
+        String orderTrack = CharSequenceUtil.blankToDefault(logisticsEntity.getTrackNo(), logisticsEntity.getCode());
+        return !StrUtil.equals(warehouseTrackNo, orderTrack);
     }
 
     private ThirdWarehouseSkuValidationContext loadThirdWarehouseSkuValidationContext(PlatformOutboundDTO dto,

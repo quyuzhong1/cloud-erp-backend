@@ -4303,6 +4303,11 @@ public class SoB2cDTO implements Serializable {
          * WMS 校验阶段已解析的 ERP 物流渠道名称
          */
         private String resolvedLogisticsChannelName;
+
+        /**
+         * 是否强制覆盖物流单号/跟踪号（渠道未推送海外仓面单且仓回传跟踪号与订单不一致时由 WMS 消费者置 true）
+         */
+        private boolean forceUpdateLogisticsTrack = false;
     }
 
     @Data
