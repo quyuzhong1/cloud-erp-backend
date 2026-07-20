@@ -447,7 +447,7 @@ public final class ApiErrorWms {
     public static final ApiError SO_RETURN_PRESTOCK_ALL_LINKED = new ApiError("SO_RETURN_PRESTOCK_ALL_LINKED", 10802, "该预入库单无可关联的明细行");
     public static final ApiError SO_RETURN_PRESTOCK_LINK_AFTER_SALE_SKU_TYPE_EXCEEDS = new ApiError("SO_RETURN_PRESTOCK_LINK_AFTER_SALE_SKU_TYPE_EXCEEDS", 10804, "退货单SKU明细数量超过预入库单（SKU种类超出：{0}），可能为异常包裹或关联的售后单有误，请改用「关联店铺」进行关联");
     public static final ApiError SO_RETURN_PRESTOCK_LINK_AFTER_SALE_SKU_QTY_EXCEEDS = new ApiError("SO_RETURN_PRESTOCK_LINK_AFTER_SALE_SKU_QTY_EXCEEDS", 10805, "退货单SKU明细数量超过预入库单（SKU数量超出：{0}），可能为异常包裹或关联的售后单有误，请改用「关联店铺」进行关联");
-    public static final ApiError SO_RETURN_PRESTOCK_LINK_AFTER_SALE_SKU_RECEIVE_QTY_EXCEEDS = new ApiError("SO_RETURN_PRESTOCK_LINK_AFTER_SALE_SKU_RECEIVE_QTY_EXCEEDS", 10806, "认领失败，【sku：{0}]实际退货数量<认领数量");
+    public static final ApiError SO_RETURN_PRESTOCK_LINK_AFTER_SALE_SKU_RECEIVE_QTY_EXCEEDS = new ApiError("SO_RETURN_PRESTOCK_LINK_AFTER_SALE_SKU_RECEIVE_QTY_EXCEEDS", 10806, "认领失败，【sku：{0}】实际收货数量不可<累计的剩余应退货数量");
     public static final ApiError SO_RETURN_PRESTOCK_AFTER_SALE_TYPE_LINK_FORBIDDEN = new ApiError("SO_RETURN_PRESTOCK_AFTER_SALE_TYPE_LINK_FORBIDDEN", 10807, "售后订单类型的预入库单不支持关联售后单，请改用「关联店铺」进行关联");
 
     static ApiError[] values() {
