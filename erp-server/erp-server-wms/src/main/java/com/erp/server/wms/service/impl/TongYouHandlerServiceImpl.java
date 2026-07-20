@@ -484,8 +484,14 @@ public class TongYouHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     protected ApiResult<String> cancelFbaOutboundBill(ThirdWarehouseCancelFbaOutboundReq cancelOutboundReq) {
+        // B2B 拦截走 cancelFba → 复用通邮取消出库；须带齐 auth 与单号，否则 @Valid 在 SDK 层直接失败
         ThirdWarehouseCancelOutboundReq cancelReq = new ThirdWarehouseCancelOutboundReq();
+        cancelReq.setAuthId(cancelOutboundReq.getAuthId());
+        cancelReq.setThirdWarehouseProvideCode(cancelOutboundReq.getThirdWarehouseProvideCode());
         cancelReq.setErpOrderCode(CharSequenceUtil.blankToDefault(cancelOutboundReq.getErpOrderCode(), cancelOutboundReq.getOrderCode()));
+        cancelReq.setOrderCode(CharSequenceUtil.blankToDefault(cancelOutboundReq.getOrderCode(), cancelOutboundReq.getErpOrderCode()));
+        cancelReq.setOwnerCode(cancelOutboundReq.getOwnerCode());
+        cancelReq.setReason(CharSequenceUtil.blankToDefault(cancelOutboundReq.getReason(), cancelOutboundReq.getRemark()));
         ApiResult<String> cancelResult = cancelOutboundBill(cancelReq);
         if (!cancelResult.isSuccess()) {
             return failure(cancelResult.getMsg());
