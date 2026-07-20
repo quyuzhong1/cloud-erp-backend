@@ -1059,6 +1059,17 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
         //销售出库单列表
         List<SoOutstockEntity> soOutstockList = soOutstockFeign.listBySoIds(soIdList);
+        //可发货状态(无虚拟仓)所需：按明细维度预聚合发货通知箱数，避免循环内重复全表扫描
+        Map<String, Integer> noticeBoxQtyByDetailId = soDeliveryNoticeDetailList.stream()
+                .filter(e -> CharSequenceUtil.isNotBlank(e.getSourceDetailId()))
+                .collect(Collectors.groupingBy(SoDeliveryNoticeDetailEntity::getSourceDetailId,
+                        Collectors.summingInt(e -> ObjectUtil.defaultIfNull(e.getDeliveryQty(), MathUtil.ZERO))));
+        //B2B三方仓已发货箱数（排除已取消发货）按明细维度预聚合
+        Map<String, Integer> b2bNoticeBoxQtyByDetailId = b2bThirdDeliveryDetailList.stream()
+                .filter(e -> !ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(e.getStatus()))
+                .filter(e -> CharSequenceUtil.isNotBlank(e.getSoDetailId()))
+                .collect(Collectors.groupingBy(B2bThirdDeliveryDetailEntity::getSoDetailId,
+                        Collectors.summingInt(e -> ObjectUtil.defaultIfNull(e.getBoxQty(), MathUtil.ZERO))));
         for (SoInfoDTO.PagingViewDTO item : list) {
             BankAccountEntity bankAccountEntity = bankAccountList.stream().filter(b -> CharSequenceUtil.equals(b.getId(), item.getReceiveAccount())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(bankAccountEntity)) {
@@ -1122,15 +1133,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 }
             } else {
                 //无虚拟仓：可发数量 = 销售数量(发货箱数) - 发货通知数量(普通发货通知箱数 + B2B三方仓已发货箱数)
-                Integer noticeBoxQty = soDeliveryNoticeDetailList.stream()
-                        .filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), item.getDetailId()))
-                        .map(SoDeliveryNoticeDetailEntity::getDeliveryQty)
-                        .reduce(MathUtil.ZERO, Integer::sum);
-                Integer b2bNoticeBoxQty = b2bThirdDeliveryDetailList.stream()
-                        .filter(e -> !ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(e.getStatus())
-                                && CharSequenceUtil.equals(e.getSoDetailId(), item.getDetailId()))
-                        .map(B2bThirdDeliveryDetailEntity::getBoxQty)
-                        .reduce(Integer::sum).orElse(MathUtil.ZERO);
+                //数量已在循环外按明细维度预聚合，此处 O(1) 取值
+                Integer noticeBoxQty = noticeBoxQtyByDetailId.getOrDefault(item.getDetailId(), MathUtil.ZERO);
+                Integer b2bNoticeBoxQty = b2bNoticeBoxQtyByDetailId.getOrDefault(item.getDetailId(), MathUtil.ZERO);
                 int shipableQty = saleBoxQty - (noticeBoxQty + b2bNoticeBoxQty);
                 if (shipableQty <= MathUtil.ZERO) {
                     shipableStatus = ShipableStatusEnum.NONE.getCode();
