@@ -437,7 +437,7 @@ public final class ApiErrorWms {
     public static final ApiError WH_AIYA_SDK_SIGN_FAILED = new ApiError("WH_AIYA_SDK_SIGN_FAILED", 11232, "AIYA 签名计算失败: {0}");
     public static final ApiError WH_AIYA_AUTH_INFO_NOT_FOUND = new ApiError("WH_AIYA_AUTH_INFO_NOT_FOUND", 11233, "AIYA授权信息不存在");
     public static final ApiError WH_AIYA_AUTH_ID_NOT_FOUND = new ApiError("WH_AIYA_AUTH_ID_NOT_FOUND", 11234, "AIYA对应授权ID信息不存在, nextId:{0}");
-    public static final ApiError WH_AIYA_AUTH_JSON_EMPTY = new ApiError("WH_AIYA_AUTH_JSON_EMPTY", 11235, "AIYA：服务商[{0}]auth_json为空");
+    public static final ApiError WH_AIYA_AUTH_JSON_EMPTY = new ApiError("WH_AIYA_AUTH_JSON_EMPTY", 11235, "AIYA：服务商[{0}]的auth_json为空");
     public static final ApiError WH_AIYA_TOKEN_SECRET_MISSING = new ApiError("WH_AIYA_TOKEN_SECRET_MISSING", 11236, "AIYA：服务商[{0}]customerCode/partnerKey缺失");
     public static final ApiError WH_AIYA_PAGE_QUERY_ERROR = new ApiError("WH_AIYA_PAGE_QUERY_ERROR", 11237, "AIYA{0}分页查询异常, pageNum={1}");
     public static final ApiError WH_AIYA_PAGE_PARSE_FAILED = new ApiError("WH_AIYA_PAGE_PARSE_FAILED", 11238, "AIYA{0}分页结果解析失败, pageNum={1}");
