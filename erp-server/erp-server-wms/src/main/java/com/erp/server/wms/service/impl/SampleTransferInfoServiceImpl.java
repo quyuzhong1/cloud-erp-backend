@@ -119,9 +119,12 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
     @Override
     public BaseResultDTO.AddDTO add(SampleTransferInfoDTO.AddDTO addDTO) {
         SampleTransferInfoEntity sampleTransferInfoEntity = new SampleTransferInfoEntity();
+        // Orika 无法将 DTO.String transferType 拷到 Entity.枚举，先置空再显式转换
+        String transferType = addDTO.getTransferType();
+        addDTO.setTransferType(null);
         BeanMapperUtils.copy(addDTO, sampleTransferInfoEntity);
-        // 显式转换转移类型（String -> 枚举），避免 Bean 拷贝对枚举字段处理不一致
-        sampleTransferInfoEntity.setTransferType(resolveTransferType(addDTO.getTransferType()));
+        addDTO.setTransferType(transferType);
+        sampleTransferInfoEntity.setTransferType(resolveTransferType(transferType));
 
         // 校验明细不能为空
         if (CollUtil.isEmpty(addDTO.getDetailList())) {
@@ -228,9 +231,12 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
         if (CollUtil.isEmpty(addOrUpdateDTO.getDetailList())) {
             throw new ServiceException("样品转移单明细不能为空");
         }
-        SampleTransferInfoEntity sampleTransferInfoEntity =  BeanMapperUtils.map(SampleTransferInfoEntity.class, addOrUpdateDTO);
-        // 显式转换转移类型（String -> 枚举），避免 Bean 拷贝对枚举字段处理不一致
-        sampleTransferInfoEntity.setTransferType(resolveTransferType(addOrUpdateDTO.getTransferType()));
+        // Orika 无法将 DTO.String transferType 拷到 Entity.枚举，先置空再显式转换
+        String transferType = addOrUpdateDTO.getTransferType();
+        addOrUpdateDTO.setTransferType(null);
+        SampleTransferInfoEntity sampleTransferInfoEntity = BeanMapperUtils.map(SampleTransferInfoEntity.class, addOrUpdateDTO);
+        addOrUpdateDTO.setTransferType(transferType);
+        sampleTransferInfoEntity.setTransferType(resolveTransferType(transferType));
 
         // 数据处理
         handleData(sampleTransferInfoEntity);
