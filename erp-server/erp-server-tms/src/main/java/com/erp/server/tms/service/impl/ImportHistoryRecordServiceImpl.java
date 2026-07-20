@@ -712,7 +712,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 if (CharSequenceUtil.isBlank(field)) {
                     continue;
                 }
-                Object billValue = BeanUtil.getFieldValue(logisticsBillVo, field);
+                Object billValue = getLogisticsBillIdentifyValue(logisticsBillVo, field);
                 if (ObjectUtil.isNull(billValue)) {
                     continue;
                 }
@@ -742,7 +742,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 if (CharSequenceUtil.isBlank(field)) {
                     continue;
                 }
-                Object billValue = BeanUtil.getFieldValue(logisticsBillVo, field);
+                Object billValue = getLogisticsBillIdentifyValue(logisticsBillVo, field);
                 if (ObjectUtil.isNull(billValue)) {
                     continue;
                 }
@@ -860,7 +860,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         return identifyValues.entrySet().stream()
                 .filter(entry -> CharSequenceUtil.isNotBlank(entry.getKey()) && CharSequenceUtil.isNotBlank(entry.getValue()))
                 .allMatch(entry -> {
-                    Object billValue = BeanUtil.getFieldValue(logisticsBillVo, entry.getKey());
+                    Object billValue = getLogisticsBillIdentifyValue(logisticsBillVo, entry.getKey());
                     if (CharSequenceUtil.equals(LogisticsCostImportTargetFieldConstant.PLATFORM_CODE, entry.getKey())) {
                         return LogisticsBillPlatformCodeUtil.matches(entry.getValue(), ObjectUtil.isNull(billValue) ? null : String.valueOf(billValue));
                     }
@@ -2771,13 +2771,29 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         return lastImportType;
     }
 
+    /** 统一处理模板 targetField 别名，避免 soCode/platformOrderNo 在物流单 VO 上取不到值。 */
+    private Object getLogisticsBillIdentifyValue(LogisticsBillDTO.LogisticsBillVo logisticsBillVo, String field) {
+        if (logisticsBillVo == null || CharSequenceUtil.isBlank(field)) {
+            return null;
+        }
+        if (LogisticsCostImportTargetFieldConstant.SOURCE_CODE.equals(field)
+                || LogisticsCostImportTargetFieldConstant.SO_CODE.equals(field)) {
+            return logisticsBillVo.getSourceCode();
+        }
+        if (LogisticsCostImportTargetFieldConstant.PLATFORM_CODE.equals(field)
+                || LogisticsCostImportTargetFieldConstant.PLATFORM_ORDER_NO.equals(field)) {
+            return logisticsBillVo.getPlatformCode();
+        }
+        return BeanUtil.getFieldValue(logisticsBillVo, field);
+    }
+
     /**
      * 按导入模板配置的唯一识别字段匹配物流单，字段为空已在上游统一拦截。
      */
     private boolean matchesUniqueKey(List<CfgLogisticsCostImportDetailEntity> uniqueKeyList, JSONObject successJson, LogisticsBillDTO.LogisticsBillVo logisticsBillVo) {
         return uniqueKeyList.stream().allMatch(uniqueKey -> {
             String importValue = getPreparedValue(successJson, uniqueKey);
-            Object billValue = BeanUtil.getFieldValue(logisticsBillVo, uniqueKey.getTargetField());
+            Object billValue = getLogisticsBillIdentifyValue(logisticsBillVo, uniqueKey.getTargetField());
             if (CharSequenceUtil.equals(LogisticsCostImportTargetFieldConstant.PLATFORM_CODE, uniqueKey.getTargetField())) {
                 return LogisticsBillPlatformCodeUtil.matches(importValue, ObjectUtil.isNull(billValue) ? null : String.valueOf(billValue));
             }

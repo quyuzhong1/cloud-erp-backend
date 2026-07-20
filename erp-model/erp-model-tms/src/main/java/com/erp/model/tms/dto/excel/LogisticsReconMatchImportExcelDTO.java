@@ -30,6 +30,12 @@ public class LogisticsReconMatchImportExcelDTO implements Serializable {
     private String platformOrderNo;
 
     /**
+     * 第三方-物流运单号（识别列，对应 transportNo）
+     */
+    @ExcelProperty("第三方-物流运单号")
+    private String transportNo;
+
+    /**
      * 第三方-物流跟踪号（识别列，对应 trackNo）
      */
     @ExcelProperty("第三方-物流跟踪号")

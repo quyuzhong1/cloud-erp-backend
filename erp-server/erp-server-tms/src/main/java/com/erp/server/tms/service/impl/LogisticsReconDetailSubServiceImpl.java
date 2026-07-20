@@ -51,10 +51,13 @@ public class LogisticsReconDetailSubServiceImpl
             LogisticsReconDetailMatchStatusEnum.FAILED.getCode());
 
     /**
-     * matching 超时分钟数：超过则视为崩溃/中断遗留，允许被重新认领直接抢占重试。
-     * 在跑的任务由每个 chunk 刷新 update_time 续期，只要单 chunk 执行时长不超过该值即不会被误抢占。
+     * matching 超时分钟数：超过则视为崩溃/中断遗留，允许打回失败后重新认领。
+     * 在跑的任务由每个 chunk 刷新 update_time 续期，只要单 chunk 执行时长不超过该值即不会被误伤。
      */
-    private static final long MATCHING_STALE_MINUTES = 120;
+    private static final long MATCHING_STALE_MINUTES = 20;
+
+    /** 超时 MATCHING 打回失败时的原因文案 */
+    private static final String STALE_MATCHING_FAIL_REASON = "匹配中断超时，可重试";
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -106,10 +109,14 @@ public class LogisticsReconDetailSubServiceImpl
                     .in(LogisticsReconDetailSubEntity::getId, batch)
                     .in(CollUtil.isNotEmpty(fromMatchStatuses),
                             LogisticsReconDetailSubEntity::getMatchStatus, fromMatchStatuses)
-                    .select(LogisticsReconDetailSubEntity::getId)
+                    .select(LogisticsReconDetailSubEntity::getId,
+                            LogisticsReconDetailSubEntity::getReconciliationStatus)
                     .orderByAsc(LogisticsReconDetailSubEntity::getId)
                     .last("FOR UPDATE")
                     .list().stream()
+                    .filter(row -> !LogisticsReconDetailMatchStatusEnum.MATCHING.getCode().equals(matchStatus)
+                            || (!LogisticsReconReconciliationStatusEnum.CONFIRMED.getCode().equals(row.getReconciliationStatus())
+                            && !LogisticsReconReconciliationStatusEnum.PARTIAL_CONFIRM.getCode().equals(row.getReconciliationStatus())))
                     .map(LogisticsReconDetailSubEntity::getId)
                     .collect(Collectors.toList());
             if (CollUtil.isEmpty(lockedIds)) {
@@ -213,6 +220,57 @@ public class LogisticsReconDetailSubServiceImpl
                 .set(LogisticsReconDetailSubEntity::getUpdateTime, LocalDateTime.now())
                 .update();
         return lockedIds;
+    }
+
+    /**
+     * 分批将主单下超时 MATCHING 费用项打回 FAILED，便于提交/执行匹配时重新认领。
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public int failStaleMatchingSubsByMainId(String mainId) {
+        if (StrUtil.isBlank(mainId)) {
+            return 0;
+        }
+        LocalDateTime staleThreshold = LocalDateTime.now().minusMinutes(MATCHING_STALE_MINUTES);
+        int total = 0;
+        while (true) {
+            List<String> lockedIds = lambdaQuery()
+                    .eq(LogisticsReconDetailSubEntity::getMainId, mainId)
+                    .eq(LogisticsReconDetailSubEntity::getMatchStatus,
+                            LogisticsReconDetailMatchStatusEnum.MATCHING.getCode())
+                    .lt(LogisticsReconDetailSubEntity::getUpdateTime, staleThreshold)
+                    .ne(LogisticsReconDetailSubEntity::getReconciliationStatus,
+                            LogisticsReconReconciliationStatusEnum.CONFIRMED.getCode())
+                    .ne(LogisticsReconDetailSubEntity::getReconciliationStatus,
+                            LogisticsReconReconciliationStatusEnum.PARTIAL_CONFIRM.getCode())
+                    .select(LogisticsReconDetailSubEntity::getId)
+                    .orderByAsc(LogisticsReconDetailSubEntity::getId)
+                    .last("LIMIT " + UPDATE_BATCH_SIZE + " FOR UPDATE")
+                    .list().stream()
+                    .map(LogisticsReconDetailSubEntity::getId)
+                    .collect(Collectors.toList());
+            if (CollUtil.isEmpty(lockedIds)) {
+                break;
+            }
+            lambdaUpdate()
+                    .in(LogisticsReconDetailSubEntity::getId, lockedIds)
+                    .eq(LogisticsReconDetailSubEntity::getMatchStatus,
+                            LogisticsReconDetailMatchStatusEnum.MATCHING.getCode())
+                    .lt(LogisticsReconDetailSubEntity::getUpdateTime, staleThreshold)
+                    .set(LogisticsReconDetailSubEntity::getMatchStatus,
+                            LogisticsReconDetailMatchStatusEnum.FAILED.getCode())
+                    .set(LogisticsReconDetailSubEntity::getMatchFailReason, STALE_MATCHING_FAIL_REASON)
+                    .update();
+            total += lockedIds.size();
+            if (lockedIds.size() < UPDATE_BATCH_SIZE) {
+                break;
+            }
+        }
+        if (total > 0) {
+            log.warn("[failStaleMatchingSubsByMainId] 超时匹配中已打回失败 mainId={} count={} thresholdMinutes={}",
+                    mainId, total, MATCHING_STALE_MINUTES);
+        }
+        return total;
     }
 
     @Override

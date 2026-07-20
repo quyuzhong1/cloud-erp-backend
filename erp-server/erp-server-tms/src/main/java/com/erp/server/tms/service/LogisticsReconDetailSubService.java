@@ -75,6 +75,15 @@ public interface LogisticsReconDetailSubService extends SuperService<LogisticsRe
     List<String> claimMainSubsMatchingBatch(String mainId, int batchSize);
 
     /**
+     * 将主单下「匹配中且 update_time 已超时」的费用项打回匹配失败，供后续重新认领匹配。
+     * <p>用于进程宕机等场景下 MATCHING 残留；在跑任务会刷新 update_time，未超时的不会被误伤。</p>
+     *
+     * @param mainId 对账单 id
+     * @return 本次打回失败的费用项数量
+     */
+    int failStaleMatchingSubsByMainId(String mainId);
+
+    /**
      * 统计主表下有效费用项数（detail 归属与 sub.main_id 一致）
      */
     int countValidByMainId(String mainId);
