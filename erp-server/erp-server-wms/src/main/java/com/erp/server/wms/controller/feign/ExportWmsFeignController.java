@@ -713,11 +713,11 @@ public class ExportWmsFeignController {
             if (cause instanceof  ServiceException){
                 throw (ServiceException) cause;
             }
-            log.error("Interrupted while exporting SO delivery notice", e);
+            log.error("Error occurred while exporting SO delivery notice", e);
             throw new ServiceException(ApiError.COMMON_EXECUTOR_EXCEPTION);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            log.error("Error occurred while exporting SO delivery notice", e);
+            log.error("Interrupted while exporting SO delivery notice", e);
             // 保留并转换底层业务异常，避免统一丢失为普通 RuntimeException
             throw new ServiceException(ApiError.COMMON_THREAD_INTERRUPTED_EXCEPTION);
         }
