@@ -349,6 +349,11 @@ public class SkuMappingController extends BaseController {
      * @return
      */
     @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量变更SKU映射状态:ids={ids},状态={status}")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:skuMaping:updateStatus",
+            serviceClass = SkuMappingService.class,
+            keyIdName = "ids")
     @PostMapping("/updateStatus")
     public ApiResult<List<BatchResultDTO>> updateStatus(@RequestBody @Validated SkuMappingDTO.UpdateStatusDTO dto) {
         List<BatchResultDTO> resultDTOList = skuMappingService.updateStatus(dto);
