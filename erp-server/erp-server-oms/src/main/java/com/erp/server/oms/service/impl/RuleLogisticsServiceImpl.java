@@ -90,9 +90,7 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
         RuleLogisticsEntity ruleLogisticsEntity = new RuleLogisticsEntity();
         BeanMapperUtils.copy(addDTO, ruleLogisticsEntity);
         handleData(ruleLogisticsEntity);
-        if(Boolean.TRUE.equals(ruleLogisticsEntity.getAutoGetTrackNo()) && Boolean.TRUE.equals(ruleLogisticsEntity.getAutoGetTrackNotOfRangeDelivery())){
-            throw new ServiceException(ApiError.SO_DELIVERY_AUTO_SUBMIT_OPTION_LIMIT);
-        }
+        handleAutoAction(ruleLogisticsEntity);
         boolean save = super.save(ruleLogisticsEntity);
         if (!save) {
             throw new ServiceException("物流规则单保存失败");
@@ -131,9 +129,7 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
         RuleLogisticsEntity ruleLogisticsEntity = BeanMapperUtils.map(RuleLogisticsEntity.class, updateDTO);
         // 数据处理
         handleData(ruleLogisticsEntity);
-        if(Boolean.TRUE.equals(ruleLogisticsEntity.getAutoGetTrackNo()) && Boolean.TRUE.equals(ruleLogisticsEntity.getAutoGetTrackNotOfRangeDelivery())){
-            throw new ServiceException(ApiError.SO_DELIVERY_AUTO_SUBMIT_OPTION_LIMIT);
-        }
+        handleAutoAction(ruleLogisticsEntity);
         boolean save = super.updateById(ruleLogisticsEntity);
         if (!save) {
             throw new ServiceException("物流规则单保存失败");
@@ -286,6 +282,8 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
                 RuleLogisticsDTO.RuleMatchResultDTO ruleMatchResult = new RuleLogisticsDTO.RuleMatchResultDTO();
                 ruleMatchResult.setLogisticsSupplierId(item.getLogisticsSupplierId());
                 ruleMatchResult.setAutoGetTrackNo(item.getAutoGetTrackNo());
+                ruleMatchResult.setAutoTrackNoOnly(item.getAutoTrackNoOnly());
+                ruleMatchResult.setAutoTrackNoInRange(item.getAutoTrackNoInRange());
                 ruleMatchResult.setAutoGetTrackNotOfRangeDelivery(item.getAutoGetTrackNotOfRangeDelivery());
                 ruleMatchResult.setLogisticsChannelId(item.getLogisticsChannelId());
                 ruleMatchResult.setLogisticsChannelName(item.getLogisticsChannelName());
@@ -327,6 +325,20 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
             ruleLogisticsEntity.setLogisticsSupplierName(baseDTO.getLogisticsSupplierName());
         }
 
+    }
+
+    private void handleAutoAction(RuleLogisticsEntity ruleLogisticsEntity) {
+        ruleLogisticsEntity.setAutoTrackNoOnly(Boolean.TRUE.equals(ruleLogisticsEntity.getAutoTrackNoOnly()));
+        ruleLogisticsEntity.setAutoTrackNoInRange(Boolean.TRUE.equals(ruleLogisticsEntity.getAutoTrackNoInRange()));
+        long selectedActionCount = Arrays.asList(
+                ruleLogisticsEntity.getAutoGetTrackNo(),
+                ruleLogisticsEntity.getAutoTrackNoOnly(),
+                ruleLogisticsEntity.getAutoTrackNoInRange(),
+                ruleLogisticsEntity.getAutoGetTrackNotOfRangeDelivery()
+        ).stream().filter(Boolean.TRUE::equals).count();
+        if (selectedActionCount > 1) {
+            throw new ServiceException(ApiError.SO_DELIVERY_AUTO_SUBMIT_OPTION_LIMIT);
+        }
     }
 
 

@@ -46,8 +46,6 @@ public interface FirstMileDeliveryMapper extends BaseMapper<FirstMileDeliveryEnt
     * @param params
     * @return
     */
-    List<FirstMileDeliveryDTO.ListDTO> listExport(@Param("params") FirstMileDeliveryDTO.PagingParamDTO params);
-
     Page<FirstMileDeliveryDTO.ListDTO> listExport(@Param("page") Page<FirstMileDeliveryDTO.ListDTO> page, @Param("params") FirstMileDeliveryDTO.PagingParamDTO params);
 
 
@@ -83,6 +81,17 @@ public interface FirstMileDeliveryMapper extends BaseMapper<FirstMileDeliveryEnt
      * @return java.util.List<com.erp.model.wms.dto.FirstMileCartonDetailDTO.ListPackingDetailDTO>
      **/
     List<WmsCartonDetailDTO.ListPackingDetailDTO> listPackingDetail(@Param("ids") List<String> ids);
+
+    /**
+     * 查询用于报关中间表生成的装箱明细
+     *
+     * @param ids 头程发货单id集合
+     * @return 装箱明细集合
+     * @throws RuntimeException 查询异常时抛出
+     * @author jack
+     * @date 2026-04-29
+     */
+    List<WmsCartonDetailDTO.ListPackingDetailDTO> listDeclarePackingDetail(@Param("ids") List<String> ids);
 
     /**
      * 导出装箱清单Excel
@@ -128,6 +137,15 @@ public interface FirstMileDeliveryMapper extends BaseMapper<FirstMileDeliveryEnt
     List<FbaTransitCalculateReportDTO.DeliveryDTO> listDeliveryByReportMonth(@Param("approveStatus") String approveStatus, @Param("sourceType") String sourceType, @Param("reportMonth") LocalDate reportMonth, @Param("shipmentCode") String shipmentCode, @Param("asin") String asin, @Param("msku") String msku);
 
     List<OverseasProviderWarehouseDTO.ProviderDTO> listOverseasProvider(@Param("deliveryIds") List<String> deliveryIds);
+
+    /**
+     * 查询未生成报关单的头程发货明细信息
+     * @author will
+     * @date 2026/4/22 10:26
+     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.NotGenerateDetailDTO>
+     */
+    IPage<TmsDeclareBillDTO.NotGenerateDetailDTO> listNotGenerateDeclareFmDetail(Page query,@Param("params") TmsDeclareBillDTO.NotGenerateParamDTO params);
+
     /**
      * 取消分货分页查询
      * @author will
@@ -137,4 +155,29 @@ public interface FirstMileDeliveryMapper extends BaseMapper<FirstMileDeliveryEnt
      * @return IPage<CancelDeliveryListDTO>
      */
     IPage<FirstMileDeliveryDTO.CancelDeliveryListDTO> cancelDeliveryPaging(Page<FirstMileDeliveryDTO.CancelDeliveryListDTO> query,@Param("params") FirstMileDeliveryDTO.CancelDeliveryParamDTO params);
+    /**
+     * 查询合并前数据
+     * @author will
+     * @date 2026/4/27 17:39
+     * @param ids 头程发货单id集合
+     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.SourceDeliveryDetailDTO>
+     */
+    List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> listBeforePushFmDeclare(@Param("ids") List<String> ids,
+                                                                            @Param("onlyWaitDeclareStatus") Boolean onlyWaitDeclareStatus);
+    /**
+     * 查询合后前数据
+     * @author will
+     * @date 2026/4/27 17:39
+     * @param ids 头程发货单id集合
+     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.SourceDeliveryDetailDTO>
+     */
+    List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> listAfterPushFmDeclare(@Param("ids") List<String> ids);
+    /**
+     * 查询B2B报关按箱号最小维度来源明细
+     * @author will
+     * @date 2026/5/9 16:12
+     * @param list
+     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.SourceDeliveryDetailDTO>
+     */
+    List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> listFmDeclareMinSourceDetail(@Param("list")List<TmsDeclareBillDTO.PushDeclareNoMergeDTO> list);
 }

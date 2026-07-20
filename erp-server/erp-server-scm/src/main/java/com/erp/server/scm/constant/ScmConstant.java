@@ -28,4 +28,9 @@ public interface ScmConstant {
      * 阶段升级
      */
     String UPGRADE = "upgrade";
+
+    /**
+     * 供应链支持中心部门ID
+     */
+    public static final String SUPPLY_CHAIN_SUPPORT_CENTER_DEPT_ID = "1598322141168668673";
 }

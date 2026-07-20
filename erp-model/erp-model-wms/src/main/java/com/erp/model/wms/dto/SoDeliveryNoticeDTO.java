@@ -2,13 +2,8 @@ package com.erp.model.wms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import lombok.*;
 import com.common.business.enums.DynamicDataSourceTypeEnum;
-
-import lombok.Data;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
@@ -103,7 +98,7 @@ public class SoDeliveryNoticeDTO {
          * 动态数据源，需要重新get方法
          */
         private String dynamicDataSource;
-        
+
         //dynamicDataSource需要重新此方法
         public String getDynamicDataSource(){
         	if(StringUtils.isNotBlank(dynamicDataSource) && dynamicDataSource.toUpperCase().contains(DynamicDataSourceTypeEnum.DORIS.getCode().toUpperCase())) {
@@ -311,6 +306,14 @@ public class SoDeliveryNoticeDTO {
          * 出库通知状态名称
          */
         private String isAllowOutstockName;
+        /**
+         * 报关状态 ("none","无需生成"), ("wait","未生成"),("finish","已生成"),
+         */
+        private String declareStatus;
+        /**
+         * 报关状态名称
+         */
+        private String declareStatusName;
     }
 
     /**
@@ -825,5 +828,22 @@ public class SoDeliveryNoticeDTO {
     public static class PickStatus{
         private String noticeId;
         private String generationPickStatus;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class DeclareStatusDTO {
+        /**
+         * 主键id
+         */
+        @NotEmpty(message = "主键ids不能为空")
+        private List<String> ids;
+        /**
+         * 报关状态
+         */
+        @NotBlank(message = "报关状态不能为空")
+        private String declareStatus;
     }
 }

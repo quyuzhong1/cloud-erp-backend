@@ -2,7 +2,10 @@ package com.erp.rpc.wms.feign;
 
 import com.common.business.config.FeignErrorDecoder;
 import com.erp.model.oms.entity.SoInfoEntity;
+import com.erp.model.tms.dto.TmsDeclareBillDTO;
+import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
+import com.erp.model.wms.dto.WmsCartonDetailDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -65,6 +68,48 @@ public interface SoDeliveryNoticeFeign {
     SoDeliveryNoticeDetailEntity getNoticeDetailById(@RequestParam(value = "id") String id);
 
     /**
+     * 批量查询发货通知单
+     *
+     * @param ids 发货通知单id集合
+     * @return 发货通知单集合
+     * @throws RuntimeException 远程调用异常时抛出
+     * @author jack
+     * @date 2026-04-29
+     */
+    @PostMapping("feign/soDeliveryNotice/listByIds")
+    List<SoDeliveryNoticeEntity> listByIds(@RequestBody List<String> ids);
+
+    /**
+     * 按主表批量查询发货通知明细
+     *
+     * @param mainIds 发货通知单id集合
+     * @return 发货通知明细集合
+     * @throws RuntimeException 远程调用异常时抛出
+     * @author jack
+     * @date 2026-04-29
+     */
+    @PostMapping("feign/soDeliveryNotice/listDetailByMainIds")
+    List<SoDeliveryNoticeDetailEntity> listDetailByMainIds(@RequestBody List<String> mainIds);
+
+    /**
+     * 查询用于报关中间表生成的装箱明细
+     *
+     * @param ids 发货通知单id集合
+     * @return 装箱明细集合
+     * @throws RuntimeException 远程调用异常时抛出
+     * @author jack
+     * @date 2026-04-29
+     */
+    @PostMapping("feign/soDeliveryNotice/listDeclarePackingDetail")
+    List<WmsCartonDetailDTO.ListPackingDetailDTO> listDeclarePackingDetail(@RequestBody List<String> ids);
+
+    /**
+     * 下推B2B报关单合并前明细
+     */
+    @PostMapping("feign/soDeliveryNotice/listBeforePushB2bDeclare")
+    List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> listBeforePushB2bDeclare(@RequestBody TmsDeclareBillDTO.PushDeclareBeforeParamDTO dto);
+
+    /**
      * 更新销售信息
      * @param soInfoEntity
      */
@@ -79,4 +124,23 @@ public interface SoDeliveryNoticeFeign {
      */
     @PostMapping("/getNoticeDetailByIdList")
     public List<SoDeliveryNoticeDetailEntity> getNoticeDetailByIdList(@RequestParam(value = "id") List<String> idList);
+    
+    /**
+     * 根据id查询装箱明细信息
+     * @author will
+     * @date 2026/4/21 15:07
+     * @param querySourceDTO 
+     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.SoOutDTO>
+     */
+    @PostMapping("feign/soDeliveryNotice/listPackingDetailByIdList")
+    List<TmsDeclareBillDTO.SoOutDTO> listPackingDetailByIdList(@RequestBody TmsDeclareBillDTO.QuerySourceDTO querySourceDTO);
+
+    /**
+     * 更新报关状态
+     * @author will
+     * @date 2026/4/30 11:46
+     * @param dto
+     */
+    @PostMapping("feign/soDeliveryNotice/updateDeclareStatus")
+    Boolean updateDeclareStatus(@RequestBody SoDeliveryNoticeDTO.DeclareStatusDTO dto);
 }

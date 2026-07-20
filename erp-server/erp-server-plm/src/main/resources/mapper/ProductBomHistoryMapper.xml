@@ -8,5 +8,49 @@
           bom_version as  version,bom_id,id AS bomHistoryId  FROM product_bom_history
           WHERE bom_id=#{bomId} AND is_deleted = FALSE ORDER BY version DESC
     </select>
+
+    <!-- 查询指定 BOM 历史版本的父子件，用于组合品旧拆分行校验和父 SKU 反查 -->
+    <select id="listBomHistoryByIds" resultType="com.erp.model.plm.dto.BomChildrenSkuDTO">
+        SELECT
+        pbh.id AS bomHistoryId,
+        pbh.bom_version AS bomVersion,
+        pbs.parent_sku_id AS parentSkuId,
+        pbs.parent_sku_no AS parentSkuNo,
+        pbs.sku_id AS skuId,
+        pbs.sku_no AS skuNo,
+        pbs.quantity AS quantity,
+        pbi.bom_version AS thisBomVersion,
+        pbi.type AS type
+        FROM product_bom_history pbh
+        INNER JOIN product_bom_sku_history pbs ON pbh.id = pbs.bom_history_id AND pbs.is_deleted = FALSE
+        LEFT JOIN product_bom_info pbi ON pbh.bom_id = pbi.id AND pbi.is_deleted = FALSE
+        WHERE pbh.is_deleted = FALSE
+        AND pbh.id IN
+        <foreach collection="bomHistoryIds" item="bomHistoryId" open="(" separator="," close=")">
+            #{bomHistoryId}
+        </foreach>
+    </select>
+
+    <!-- 查询组合品父 SKU 的全部 BOM 历史子件，用于定位旧中间表拆分行清理范围 -->
+    <select id="listBomHistoryByParentSkuIds" resultType="com.erp.model.plm.dto.BomChildrenSkuDTO">
+        SELECT
+        pbh.id AS bomHistoryId,
+        pbh.bom_version AS bomVersion,
+        pbs.parent_sku_id AS parentSkuId,
+        pbs.parent_sku_no AS parentSkuNo,
+        pbs.sku_id AS skuId,
+        pbs.sku_no AS skuNo,
+        pbs.quantity AS quantity,
+        pbi.bom_version AS thisBomVersion,
+        pbi.type AS type
+        FROM product_bom_history pbh
+        INNER JOIN product_bom_sku_history pbs ON pbh.id = pbs.bom_history_id AND pbs.is_deleted = FALSE
+        LEFT JOIN product_bom_info pbi ON pbh.bom_id = pbi.id AND pbi.is_deleted = FALSE
+        WHERE pbh.is_deleted = FALSE
+        AND pbs.parent_sku_id IN
+        <foreach collection="parentSkuIds" item="parentSkuId" open="(" separator="," close=")">
+            #{parentSkuId}
+        </foreach>
+    </select>
 </mapper>
 

@@ -5,9 +5,8 @@ import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
 
-public enum FmDeclareSourceTypeEnum implements EnumMessage {
-    FBA_SHIPMENT("fbaShipment", "FBA仓"),
-    DELIVERY_PLAN("deliveryPlan", "第三方仓")
+public enum CfgDeclareRuleSenderTypeEnum implements EnumMessage {
+    BY_COMPANY("byCompany","按核算公司"),
     ;
 
     /**
@@ -21,26 +20,28 @@ public enum FmDeclareSourceTypeEnum implements EnumMessage {
      */
     private String name;
 
-    FmDeclareSourceTypeEnum(String code, String name) {
+
+    CfgDeclareRuleSenderTypeEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
 
     @Override
     public String getCode() {
-        return this.code;
+        return code;
     }
 
     @Override
     public String getName() {
-        return this.name;
+        return name;
     }
+
 
     public static String getName(String code) {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (FmDeclareSourceTypeEnum typeEnums : FmDeclareSourceTypeEnum.values()) {
+        for (CfgDeclareRuleSenderTypeEnum typeEnums : CfgDeclareRuleSenderTypeEnum.values()) {
             if (code.equals(typeEnums.getCode())) {
                 return typeEnums.getName();
             }
