@@ -6,6 +6,7 @@ import com.common.business.dto.base.SortDTO;
 import com.common.business.validator.AddGroup;
 import com.common.business.validator.UpdateGroup;
 import com.common.core.anno.StateEnumValue;
+import com.erp.model.oms.enums.SkuMappingStatusEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.*;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -481,6 +482,26 @@ public class SkuMappingDTO implements Serializable {
          */
         private String platformStatus;
 
+    }
+
+    /**
+     * 批量启用/禁用库存SKU映射关系（人工手动操作）
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateStatusDTO {
+
+        /**
+         * sku对照表id列表
+         */
+        @NotEmpty(message = "ids不能为空")
+        private List<String> ids;
+
+        /**
+         * 目标状态，见 {@link com.erp.model.oms.enums.SkuMappingStatusEnum}
+         */
+        @NotNull(message = "状态不能为空")
+        private SkuMappingStatusEnum status;
     }
 
     /**

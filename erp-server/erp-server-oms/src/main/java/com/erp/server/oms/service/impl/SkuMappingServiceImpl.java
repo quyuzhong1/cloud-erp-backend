@@ -1817,6 +1817,43 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    public List<BatchResultDTO> updateStatus(SkuMappingDTO.UpdateStatusDTO dto) {
+        List<SkuMappingEntity> entityList = this.listByIds(dto.getIds());
+        Map<String, SkuMappingEntity> entityMap = entityList.stream()
+                .collect(Collectors.toMap(SkuMappingEntity::getId, Function.identity(), (a, b) -> a));
+
+        List<BatchResultDTO> resultDTOList = new ArrayList<>(dto.getIds().size());
+        List<SkuMappingEntity> toUpdate = new ArrayList<>();
+        for (String id : dto.getIds()) {
+            SkuMappingEntity entity = entityMap.get(id);
+            if (Objects.isNull(entity)) {
+                resultDTOList.add(BatchResultDTO.fail(id, id, "SKU映射不存在"));
+                continue;
+            }
+            if (!RuleTypeEnum.WAREHOUSE.equals(entity.getType())) {
+                resultDTOList.add(BatchResultDTO.fail(id, entity.getProductSkuNo(), "仅支持库存SKU映射关系变更状态"));
+                continue;
+            }
+            if (dto.getStatus().equals(entity.getStatus())) {
+                resultDTOList.add(BatchResultDTO.success(id, entity.getProductSkuNo()));
+                continue;
+            }
+            String beforeName = SkuMappingStatusEnum.getName(Objects.isNull(entity.getStatus()) ? SkuMappingStatusEnum.ENABLE.getCode() : entity.getStatus().getCode());
+            entity.setStatus(dto.getStatus());
+            toUpdate.add(entity);
+            String msg = CharSequenceUtil.format("用户【{}】将SKU映射状态由【{}】变更为【{}】",
+                    UserContext.getDefaultLoginUser().getUserName(), beforeName, dto.getStatus().getName());
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SKU_MAPPING.getCode(), entity.getId(), "状态变更");
+            resultDTOList.add(BatchResultDTO.success(id, entity.getProductSkuNo()));
+        }
+        if (CollectionUtils.isNotEmpty(toUpdate)) {
+            this.updateBatchById(toUpdate);
+        }
+        return resultDTOList;
+    }
+
+    @Override
     public PagingVO<SkuMappingDTO.SyncPlatformProductView> syncPlatformProductView(PagingDTO<AdvanceQueryContainer> advanceQueryDTO) {
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         List<ShopSysUserAuthDTO.ViewDTO> shopSysUserAuthList = shopSysUserAuthService.listShopSysUserAuthByUserIdList(Arrays.asList(userInfo.getUid()));

@@ -63,7 +63,7 @@ public class AiyaSkuInitHandler extends AbstractAiyaInitHandler {
      * 用于全量拉取「迄今为止创建的所有 SKU」。已与产品/业务确认（2026-07-16）该账号/SKU
      * 不存在早于此锚点的创建记录，不会漏拉，详见类注释。
      */
-    private static final LocalDateTime DEV_START_TIME = LocalDateTime.of(2026, 7, 14, 0, 0, 0);
+    private static final LocalDateTime DEV_START_TIME = LocalDateTime.of(2026, 7, 1, 0, 0, 0);
 
     @Override
     public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
@@ -107,16 +107,40 @@ public class AiyaSkuInitHandler extends AbstractAiyaInitHandler {
                 declaredTotal = response.getLongValue("total");
             }
             fetchedRawCount += itemList.size();
-
+            int skippedByStatus = 0;
             for (int i = 0; i < itemList.size(); i++) {
                 JSONObject item = itemList.getJSONObject(i);
                 if (item == null) {
+                    skippedByStatus++;
                     continue;
                 }
                 if (!AiyaSkuStatusEnum.needSync(item.getString("status"))) {
+                    skippedByStatus++;
+                    if (pageNum == 1 && skippedByStatus <= 3) {
+                        log.warn("[爱亚SKU] 服务商[id={}] 跳过SKU: sku={}, status={}",
+                                auth.getAuthId(), item.getString("sku"), item.getString("status"));
+                    }
                     continue;
                 }
                 allSkuList.add(item);
+            }
+            // 首屏必打：区分「接口本身返回空」与「有数据但被 status 过滤掉」
+            if (pageNum == 1) {
+                log.warn("[爱亚SKU] 服务商[id={}] 第1页响应: success={}, code={}, total={}, itemListSize={}, "
+                                + "accepted={}, skippedByStatus={}, partnerId={}, customerCode={}, "
+                                + "createdTimeFrom={}, createdTimeTo={}, responseKeys={}",
+                        auth.getAuthId(),
+                        response.get("success"),
+                        response.get("code"),
+                        response.get("total"),
+                        itemList.size(),
+                        itemList.size() - skippedByStatus,
+                        skippedByStatus,
+                        auth.getPartnerId(),
+                        auth.getCustomerCode(),
+                        createdTimeFrom,
+                        createdTimeTo,
+                        response.keySet());
             }
 
             boolean lastPageBySize = itemList.isEmpty() || itemList.size() < DEFAULT_PAGE_SIZE;
@@ -132,11 +156,14 @@ public class AiyaSkuInitHandler extends AbstractAiyaInitHandler {
                     auth.getAuthId(), MAX_PAGE_LIMIT);
             throw new ServiceException(ApiError.WH_AIYA_PAGE_LIMIT_EXCEEDED, ACTION, MAX_PAGE_LIMIT, allSkuList.size());
         }
-        log.info("[爱亚SKU] 服务商[id={}] 共拉取SKU={}条，页数={}", auth.getAuthId(), allSkuList.size(), pageNum);
-
         if (allSkuList.isEmpty()) {
+            // 空结果也会把任务标成 finish（无 error_message），必须用 warn 留痕，否则会误判为「任务成功但 ERP 无数据」
+            log.warn("[爱亚SKU] 服务商[id={}] 拉取结果为空，跳过后续FDS/Mongo/OMS。createdTimeFrom={}, createdTimeTo={}, declaredTotal={}, fetchedRawCount={}, pageNum={}",
+                    auth.getAuthId(), createdTimeFrom, createdTimeTo, declaredTotal, fetchedRawCount, pageNum);
             return Collections.emptyList();
         }
+        log.warn("[爱亚SKU] 服务商[id={}] 共拉取SKU={}条，页数={}, createdTimeFrom={}, createdTimeTo={}, declaredTotal={}",
+                auth.getAuthId(), allSkuList.size(), pageNum, createdTimeFrom, createdTimeTo, declaredTotal);
 
         JSONArray result = JSON.parseArray(JSONObject.toJSONString(allSkuList));
         return Collections.singletonList(buildInitDTO(result, auth.getAuthId()));

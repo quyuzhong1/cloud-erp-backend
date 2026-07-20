@@ -344,6 +344,18 @@ public class SkuMappingController extends BaseController {
     }
 
     /**
+     * 批量启用/禁用库存SKU映射关系（人工手动操作，系统自动禁用后不会自动恢复，需走此接口人工确认恢复）
+     *
+     * @return
+     */
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量变更SKU映射状态:ids={ids},状态={status}")
+    @PostMapping("/updateStatus")
+    public ApiResult<List<BatchResultDTO>> updateStatus(@RequestBody @Validated SkuMappingDTO.UpdateStatusDTO dto) {
+        List<BatchResultDTO> resultDTOList = skuMappingService.updateStatus(dto);
+        return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
+    }
+
+    /**
      * 更改平台 对照表
      *
      * @return

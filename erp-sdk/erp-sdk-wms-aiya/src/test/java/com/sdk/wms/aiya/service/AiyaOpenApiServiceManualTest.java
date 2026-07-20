@@ -45,7 +45,7 @@ public class AiyaOpenApiServiceManualTest {
     /**
      * TODO：替换为真实沙箱 partnerId（对应 overseas_provider.auth_json.partnerId）
      */
-    private static final String ACCESS_TOKEN = "YQ427002_wyouqian1782970582833";
+    private static final String ACCESS_TOKEN = "YQ427002_wyouqian1784167592726";//"YQ427002_wyouqian1782970582833";
 
     /**
      * TODO：替换为真实沙箱 partnerKey（对应 overseas_provider.auth_json.partnerKey，仅用于本地签名）
