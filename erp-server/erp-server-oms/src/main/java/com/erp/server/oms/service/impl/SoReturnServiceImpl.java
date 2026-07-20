@@ -280,6 +280,30 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
             if (CollectionUtils.isEmpty(records)) {
                 return new PagingVO<>(pageData);
             }
+            //剩余应退货数量所需：按退货明细维度预聚合已入库实退数量，避免循环内查库/重复扫描。
+            //口径对齐各自分页接口：B2B 同 /soReturn/paging 的 returnInStockQty（按退货明细汇总全部实退）；
+            //B2C 同 /soB2cReturn/paging 的 instockQty（按退货明细汇总已审核实退）
+            Map<String, Integer> instockQtyByDetailId;
+            if (isB2b) {
+                List<String> detailIdList = records.stream().map(SoReturnDTO.LinkAfterSaleView::getDetailId)
+                        .filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+                List<SoReturnInstockDetailEntity> instockDetails = CollectionUtils.isEmpty(detailIdList)
+                        ? Collections.emptyList() : soReturnInstockFeign.listDetailBySoReturnDetailIds(detailIdList);
+                instockQtyByDetailId = instockDetails.stream()
+                        .filter(d -> StringUtils.isNotBlank(d.getSoReturnDetailId()))
+                        .collect(Collectors.groupingBy(SoReturnInstockDetailEntity::getSoReturnDetailId,
+                                Collectors.summingInt(d -> ObjectUtil.defaultIfNull(d.getRealQty(), MathUtil.ZERO))));
+            } else {
+                List<String> mainIdList = records.stream().map(SoReturnDTO.LinkAfterSaleView::getId)
+                        .filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+                List<SoReturnInstockDetailEntity> instockDetails = CollectionUtils.isEmpty(mainIdList)
+                        ? Collections.emptyList() : soReturnInstockFeign.getSoReturnInstockByReturnIds(mainIdList);
+                instockQtyByDetailId = instockDetails.stream()
+                        .filter(d -> StringUtils.isNotBlank(d.getSoReturnDetailId())
+                                && ApproveStatusEnum.APPROVE.getCode().equals(d.getApproveStatus()))
+                        .collect(Collectors.groupingBy(SoReturnInstockDetailEntity::getSoReturnDetailId,
+                                Collectors.summingInt(d -> ObjectUtil.defaultIfNull(d.getRealQty(), MathUtil.ZERO))));
+            }
             //B2C 需要根据店铺 id 批量查询店铺名称（避免循环内单条查询）
             Map<String, String> shopNameMap = Collections.emptyMap();
             if (!isB2b) {
@@ -293,6 +317,11 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
             for (SoReturnDTO.LinkAfterSaleView view : records) {
                 view.setType(billType);
                 view.setTypeName(BillTypeEnum.getName(billType));
+                //退货数量改为“剩余应退货数量 = 退货数量 - 已入库实退”，负数兜底为0，避免关联时出现负数可关联量
+                Integer originReturnQty = ObjectUtil.defaultIfNull(view.getReturnQty(), MathUtil.ZERO);
+                Integer instockQty = instockQtyByDetailId.getOrDefault(view.getDetailId(), MathUtil.ZERO);
+                int remainReturnQty = originReturnQty - instockQty;
+                view.setReturnQty(remainReturnQty > MathUtil.ZERO ? remainReturnQty : MathUtil.ZERO);
                 //退货类型名称：字典枚举优先，兜底原值
                 view.setReturnTypeName(CharSequenceUtil.blankToDefault(ReturnTypeEnum.getName(view.getReturnType()), view.getReturnType()));
                 //退货原因名称：先 ReturnReasonEnum，再 B2C 退货原因枚举，最后兜底原值
@@ -306,6 +335,11 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
                     view.setShopName(shopNameMap.get(view.getShopId()));
                 }
             }
+            //剩余应退货数量 <= 0（已退完/超退）的记录无可关联量，不返回
+            List<SoReturnDTO.LinkAfterSaleView> validRecords = records.stream()
+                    .filter(v -> ObjectUtil.defaultIfNull(v.getReturnQty(), MathUtil.ZERO) > MathUtil.ZERO)
+                    .collect(Collectors.toList());
+            pageData.setRecords(validRecords);
             return new PagingVO<>(pageData);
         } finally {
             //清理高级查询处理类写入的上下文，避免线程复用脏值
