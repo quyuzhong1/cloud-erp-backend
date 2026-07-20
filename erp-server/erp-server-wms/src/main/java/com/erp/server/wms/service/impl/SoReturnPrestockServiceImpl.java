@@ -1500,7 +1500,7 @@ public class SoReturnPrestockServiceImpl
         Map<String, SkuVO> skuVOMap = listSkuVOMap(instockDetailList.stream()
                 .map(SoReturnPrestockDetailDTO.FromInstock::getSkuId).collect(Collectors.toList()));
         return instockDetailList.stream().map(d -> {
-            if (Objects.isNull(d.getMustQty()) || d.getMustQty() <= 0) {
+            if (Objects.isNull(d.getRealQty()) || d.getRealQty() <= 0) {
                 throw new ServiceException(ApiError.SO_RETURN_PRESTOCK_RETURN_QTY_INVALID, d.getSkuNo());
             }
             SkuVO skuVO = skuVOMap.getOrDefault(d.getSkuId(), new SkuVO());
@@ -1510,7 +1510,8 @@ public class SoReturnPrestockServiceImpl
             detail.setProductName(CharSequenceUtil.sub(skuVO.getSkuName(), 0, PRODUCT_NAME_MAX_LENGTH));
             detail.setProductImageUrl(firstDisplayImageUrl(skuVO.getSkuImagesUrl()));
             detail.setEan(skuVO.getEan());
-            detail.setReturnQty(d.getMustQty());
+            // 手动创建场景：退货数量、实际收货数量均取自表单实退数量（该行尚未关联售后单，无法区分应退/签收/实退）
+            detail.setReturnQty(d.getRealQty());
             detail.setReceiveQty(d.getRealQty());
             detail.setRemark(d.getRemark());
             return detail;
@@ -1668,7 +1669,10 @@ public class SoReturnPrestockServiceImpl
             OtherInstockDetailEntity detailEntity = new OtherInstockDetailEntity();
             detailEntity.setSkuId(detail.getSkuId());
             detailEntity.setSkuNo(detail.getSkuNo());
-            detailEntity.setActualQty(detail.getReturnQty());
+            // 其它入库单实际入库数量应反映真实收到的数量：优先取实际收货数量（人工发起场景=实退数量），
+            // 海外仓自动拉取场景平台可能未回传签收数量时兜底取退货数量，避免联动生成0数量入库行
+            Integer receiveQty = detail.getReceiveQty();
+            detailEntity.setActualQty(Objects.nonNull(receiveQty) && receiveQty > 0 ? receiveQty : detail.getReturnQty());
             detailEntity.setUnit(skuVO.getUnitName());
             detailEntity.setRemark(detail.getRemark());
             Deque<SoReturnPrestockDetailEntity> persistedQueue = persistedDetailQueueBySkuId.get(detail.getSkuId());
