@@ -421,7 +421,8 @@ public final class ApiErrorWms {
     public static final ApiError WH_WEGO_WAREHOUSE_TOKEN_SECRET_MISSING = new ApiError("WH_WEGO_WAREHOUSE_TOKEN_SECRET_MISSING", 11215, "WEGO授权信息appToken/appSecret缺失,authId:{0}");
     public static final ApiError WH_WEGO_INBOUND_DETAIL_JSON_PARSE_FAILED = new ApiError("WH_WEGO_INBOUND_DETAIL_JSON_PARSE_FAILED", 11217, "WEGO入库明细 detail_list_json 解析失败，inboundId={0}");
     public static final ApiError WH_BORROW_WAREHOUSE_USABLE_INSUFFICIENT = new ApiError("WH_BORROW_WAREHOUSE_USABLE_INSUFFICIENT", 11218, "SKU【{0}】，借调仓【{1}】，可用数【{2}】，可用库存不足，无法借调");
-    public static final ApiError WAREHOUSE_INVENTORY_FAILED = new ApiError("WAREHOUSE_INVENTORY_FAILED", 11219, "库存交易失败：{0}");
+    public static final ApiError WAREHOUSE_INVENTORY_FAILED = new ApiError("WAREHOUSE_INVENTORY_FAILED", 11219, "库存交易失败");
+    public static final ApiError VIRTUAL_WAREHOUSE_INVENTORY_FAILED = new ApiError("VIRTUAL_WAREHOUSE_INVENTORY_FAILED", 11220, "虚拟仓库库存交易失败");
 
     static ApiError[] values() {
         return new ApiError[]{
