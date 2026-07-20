@@ -142,4 +142,9 @@ public interface SkuMappingMapper extends BaseMapper<SkuMappingEntity> {
      * @return IPage<PagingViewDTO>
      */
     IPage<SkuMappingDTO.PagingViewDTO> b2bPlatformPaging(Page<T> query, @Param("params")SkuMappingDTO.PagingParamDTO params);
+
+    /**
+     * 按扫描码查询SKU映射（平台SKU/三方条码/ERP SKU）
+     */
+    List<SkuMappingDTO.MappingSkuViewDTO> listByScanCode(@Param("scanCode") String scanCode);
 }

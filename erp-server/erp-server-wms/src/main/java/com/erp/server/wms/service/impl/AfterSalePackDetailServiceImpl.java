@@ -94,6 +94,7 @@ public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePa
         if (afterSalePackEntity == null) {
             throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "售后装箱单");
         }
+        afterSalePackService.assertPackNotInvalid(afterSalePackEntity.getCode());
         // 已经发生了移仓，拆箱时移入仓位不能为空：空仓位 code 为 "" 属于合法选择，仅当字段缺失（null）时拦截。
         if (Boolean.TRUE.equals(afterSalePackEntity.getIsMoveWarehouse()) && addOrUpdateDTO.getInWarehouseLocationCode() == null) {
             throw new ServiceException("移入仓位不能为空");
@@ -130,6 +131,7 @@ public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePa
         if (StrUtil.isBlank(code)) {
             throw new ServiceException("箱唛不能为空");
         }
+        afterSalePackService.assertPackNotInvalid(code);
         AfterSalePackEntity afterSalePackEntity = afterSalePackService.lambdaQuery()
                 .eq(AfterSalePackEntity::getCode, code)
                 .one();
@@ -421,7 +423,27 @@ public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePa
         viewDTO.setDetailDTOList(detailList.stream()
                 .map(detail -> buildBoxDetailDTO(afterSalePackEntity, detail, warehouseLocationMap))
                 .collect(Collectors.toList()));
+        viewDTO.setLocationInconsistent(isSkuLocationInconsistent(detailList, viewDTO.getDetailDTOList()));
         return viewDTO;
+    }
+
+    private boolean isSkuLocationInconsistent(List<AfterSalePackDetailEntity> detailList,
+                                              List<AfterSalePackDTO.DetailDTO> detailDTOList) {
+        Set<String> locationIds = detailList.stream()
+                .map(AfterSalePackDetailEntity::getOutWarehouseLocationId)
+                .filter(StrUtil::isNotBlank)
+                .collect(Collectors.toSet());
+        if (locationIds.size() > 1) {
+            return true;
+        }
+        if (CollectionUtils.isEmpty(detailDTOList)) {
+            return false;
+        }
+        Set<String> locationCodes = detailDTOList.stream()
+                .map(AfterSalePackDTO.DetailDTO::getOutWarehouseLocationCode)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        return locationCodes.size() > 1;
     }
 
     private AfterSalePackDTO.DetailDTO buildBoxDetailDTO(AfterSalePackEntity afterSalePackEntity,

@@ -28,4 +28,9 @@ public interface AfterSalePackMapper extends BaseMapper<AfterSalePackEntity> {
      */
     IPage<AfterSalePackDTO.ListDTO> paging(Page query, @Param("params") AfterSalePackDTO.PagingParamDTO params);
 
+    /**
+     * 导出售后装箱（主表+明细 flat 分页）
+     */
+    IPage<AfterSalePackDTO.ExportViewDTO> listExport(Page<?> page, @Param("params") AfterSalePackDTO.ExportDTO params);
+
 }

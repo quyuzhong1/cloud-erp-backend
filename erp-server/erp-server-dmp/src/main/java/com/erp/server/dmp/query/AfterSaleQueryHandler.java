@@ -64,7 +64,7 @@ public class AfterSaleQueryHandler extends AbstractQueryHandler {
 
         //商家寄出快递单号
         if(field.equals("send_track_no")){
-            return " afs.id in (select main_id from after_sale_progress where node ='toBeShipped' and track_no "+compareCodeSplicingValueSql+")";
+            return " afs.id in (select main_id from after_sale_progress where node in ('toBeShipped','completed') and track_no "+compareCodeSplicingValueSql+")";
         }
         if(field.equals("tab")){
             if(value.equals("all") || value.equals("")){

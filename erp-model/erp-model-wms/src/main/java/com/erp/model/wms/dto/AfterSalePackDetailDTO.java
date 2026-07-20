@@ -243,6 +243,11 @@ public class AfterSalePackDetailDTO implements Serializable {
         private List<AfterSalePackDTO.DetailDTO> detailDTOList;
 
         /**
+         * 同SKU跨箱/跨行拣货仓位不一致
+         */
+        private Boolean locationInconsistent;
+
+        /**
          * 首批到货量
          */
         private String actualArrivalQty;

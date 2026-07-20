@@ -78,6 +78,8 @@ import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.model.oms.dto.SkuMappingDTO;
+import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -280,6 +282,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Autowired
     private SupplierFeign supplierFeign;
+
+    @Resource
+    private SkuMappingFeign skuMappingFeign;
 
     @Autowired
     private BomSkuService bomSkuService;
@@ -5047,27 +5052,68 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     public List<SkuVO> pdaSearchSku(ProductDetailDTO.PdaSearchDTO dto) {
         Integer state = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
         dto.setStatus(state);
-        List<SkuVO> skuVOS = baseMapper.pdaSearchSku(dto);
+        LinkedHashMap<String, SkuVO> skuMap = new LinkedHashMap<>();
+        if (StringUtils.isNotBlank(dto.getSearchKeyword())) {
+            List<SkuVO> keywordResults = baseMapper.pdaSearchSku(dto);
+            if (CollectionUtils.isNotEmpty(keywordResults)) {
+                keywordResults.forEach(item -> skuMap.putIfAbsent(item.getSkuId(), item));
+            }
+        } else if (StringUtils.isNotBlank(dto.getSkuNo())) {
+            String scanCode = CharSequenceUtil.trim(dto.getSkuNo());
+            dto.setSkuNo(scanCode);
+            // SKU编码 + EAN码
+            List<SkuVO> plmResults = baseMapper.pdaSearchSku(dto);
+            if (CollectionUtils.isNotEmpty(plmResults)) {
+                plmResults.forEach(item -> skuMap.putIfAbsent(item.getSkuId(), item));
+            }
+            // 客户SKU / 京东条码（SKU对照表）
+            List<SkuMappingDTO.MappingSkuViewDTO> mappingList = skuMappingFeign.listByScanCode(scanCode);
+            if (CollectionUtils.isNotEmpty(mappingList)) {
+                List<String> skuIds = mappingList.stream()
+                        .map(SkuMappingDTO.MappingSkuViewDTO::getProductSkuId)
+                        .filter(StringUtils::isNotBlank)
+                        .distinct()
+                        .collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(skuIds)) {
+                    List<SkuVO> mappingSkus = baseMapper.pdaSearchSkuBySkuIds(skuIds, state);
+                    if (CollectionUtils.isNotEmpty(mappingSkus)) {
+                        mappingSkus.forEach(item -> skuMap.putIfAbsent(item.getSkuId(), item));
+                    }
+                }
+            }
+            log.warn("PDA扫码查询完成，扫描码={}，PLM匹配数={}，总匹配数={}",
+                    scanCode, plmResults == null ? 0 : plmResults.size(), skuMap.size());
+        } else {
+            List<SkuVO> skuResults = baseMapper.pdaSearchSku(dto);
+            if (CollectionUtils.isNotEmpty(skuResults)) {
+                skuResults.forEach(item -> skuMap.putIfAbsent(item.getSkuId(), item));
+            }
+        }
+        List<SkuVO> skuVOS = new ArrayList<>(skuMap.values());
+        fillPdaSearchSkuSupplierName(skuVOS);
+        if (CollectionUtils.isEmpty(skuVOS)) {
+            throw new ServiceException(ApiError.PRODUCT_SKU_NOT_FOUND);
+        }
+        return skuVOS;
+    }
+
+    private void fillPdaSearchSkuSupplierName(List<SkuVO> skuVOS) {
+        if (CollectionUtils.isEmpty(skuVOS)) {
+            return;
+        }
         List<String> mainSupplierIds = skuVOS.stream().map(SkuVO::getMainSupplier).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
         List<String> secondSupplierIds = skuVOS.stream().map(SkuVO::getSecondSupplier).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
         mainSupplierIds.addAll(secondSupplierIds);
         List<String> supplierIds = mainSupplierIds.stream().distinct().collect(Collectors.toList());
         Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = CollUtil.isEmpty(supplierIds) ? Collections.emptyMap() : supplierFeign.getSupplierSimpleInfo(supplierIds);
         skuVOS.forEach(req -> {
-            // 一级供应商名称
             if (StrUtils.isNotEmpty(req.getMainSupplier()) && supplierMap.containsKey(req.getMainSupplier())) {
                 req.setMainSupplierName(supplierMap.get(req.getMainSupplier()).getName());
             }
-
-            // 二级供应商名称
             if (StrUtils.isNotEmpty(req.getSecondSupplier()) && supplierMap.containsKey(req.getSecondSupplier())) {
                 req.setSecondSupplierName(supplierMap.get(req.getSecondSupplier()).getName());
             }
         });
-        if (CollectionUtils.isEmpty(skuVOS)) {
-            throw new ServiceException(ApiError.PRODUCT_SKU_NOT_FOUND);
-        }
-        return skuVOS;
     }
 
     /**

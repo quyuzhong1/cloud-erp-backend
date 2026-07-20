@@ -52,6 +52,12 @@ public interface CfgSettingService extends SuperService<CfgSettingEntity> {
     CfgSettingValueDTO.PoReturnSettingDTO getPoReturnSetting();
 
     /**
+     * 查询采购退货默认采购组织配置
+     * @return PoReturnDefaultOrgSettingDTO
+     */
+    CfgSettingValueDTO.PoReturnDefaultOrgSettingDTO getPoReturnDefaultOrgSetting();
+
+    /**
      * 获取物流商配置
      * @param logisticsSupplierId
      * @return

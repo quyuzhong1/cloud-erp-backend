@@ -27,10 +27,15 @@ public class DmpAfterSaleExcelDTO implements Serializable {
         private String code;
 
         /**
-         * 订单编号
+         * 平台单号
          */
-//        @ExcelProperty(value = "订单编号", index = 1)
+//        @ExcelProperty(value = "平台单号", index = 1)
         private String platformCode;
+
+        /**
+         * 平台名称
+         */
+        private String dictPlatformName;
 
         /**
          * 售后人员名称
@@ -178,6 +183,8 @@ public class DmpAfterSaleExcelDTO implements Serializable {
     private String approveStatus;
     @ExcelIgnore
     private Boolean invalidStatus;
+    @ExcelIgnore
+    private String dictPlatform;
 
 
 }

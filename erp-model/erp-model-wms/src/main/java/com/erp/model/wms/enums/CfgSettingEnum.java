@@ -8,6 +8,7 @@ public enum CfgSettingEnum implements EnumMessage {
 
     SUBCONTRACT_ISSUE("subcontractIssue","委外发料单设置"),
     PO_RETURN("poReturn","采购退货单设置"),
+    PO_RETURN_DEFAULT_ORG("poReturnDefaultOrg","采购退货默认采购组织"),
     PO_RECONCILIATION("poReconciliation","采购对账单设置"),
     FS_QC_NOTICE("fsQcNotice","飞书通知配置"),
     DELIVERY_INTERCEPT("b2cDeliveryIntercept","发货拦截设置"),

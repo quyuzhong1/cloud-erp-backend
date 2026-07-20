@@ -63,6 +63,19 @@ public class CfgSettingValueDTO implements Serializable {
     }
 
     /**
+     * 采购退货默认采购组织
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PoReturnDefaultOrgSettingDTO {
+
+        /**
+         * PDA默认采购组织ID
+         */
+        private String purchaseOrgId;
+    }
+
+    /**
      * 采购对账单设置
      */
     @Data

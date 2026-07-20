@@ -100,6 +100,15 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
     }
 
     @Override
+    public CfgSettingValueDTO.PoReturnDefaultOrgSettingDTO getPoReturnDefaultOrgSetting() {
+        CfgSettingEntity entity = baseMapper.getByKey(CfgSettingEnum.PO_RETURN_DEFAULT_ORG.getCode());
+        if (ObjectUtil.isEmpty(entity) || ObjectUtil.isEmpty(entity.getDataJson())) {
+            return new CfgSettingValueDTO.PoReturnDefaultOrgSettingDTO();
+        }
+        return BeanUtil.toBean(entity.getDataJson(), CfgSettingValueDTO.PoReturnDefaultOrgSettingDTO.class);
+    }
+
+    @Override
     public Boolean getPackageSupplierSetting(String logisticsSupplierId) {
         if (CharSequenceUtil.isBlank(logisticsSupplierId)){
             return Boolean.FALSE;
@@ -209,6 +218,9 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
             case PO_RETURN:
                 jsonObject = JSONUtil.parseObj(addDTO.getPoReturnSettingDTO());
                 break;
+            case PO_RETURN_DEFAULT_ORG:
+                jsonObject = JSONUtil.parseObj(addDTO.getPoReturnDefaultOrgSettingDTO());
+                break;
             case PO_RECONCILIATION:
                 handlePoReconciliationSetting(addDTO.getPoReconciliationSettingDTO());
                 jsonObject = JSONUtil.parseObj(addDTO.getPoReconciliationSettingDTO());
@@ -308,6 +320,10 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
             case PO_RETURN:
                 CfgSettingValueDTO.PoReturnSettingDTO poReturnSettingDTO = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.PoReturnSettingDTO.class);
                 viewDTO.setPoReturnSettingDTO(poReturnSettingDTO);
+                break;
+            case PO_RETURN_DEFAULT_ORG:
+                CfgSettingValueDTO.PoReturnDefaultOrgSettingDTO poReturnDefaultOrgSettingDTO = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.PoReturnDefaultOrgSettingDTO.class);
+                viewDTO.setPoReturnDefaultOrgSettingDTO(poReturnDefaultOrgSettingDTO);
                 break;
             case PO_RECONCILIATION:
                 CfgSettingValueDTO.PoReconciliationSettingDTO poReconciliationSettingDTO = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.PoReconciliationSettingDTO.class);

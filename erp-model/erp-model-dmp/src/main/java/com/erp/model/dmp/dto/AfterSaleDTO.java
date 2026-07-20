@@ -268,6 +268,17 @@ public class AfterSaleDTO implements Serializable {
          * 客户寄的快递单号
          */
         private String returnTrackNo;
+
+        /**
+         * 商家寄件物流状态 code（after_sale.outbound_track_status，列表展示用 outboundTrackStatusName）
+         */
+        private String outboundTrackStatus;
+
+        /**
+         * 商家寄件物流状态（列表「快递单号-轨迹更新」展示）
+         */
+        private String outboundTrackStatusName;
+
         /**
          * 客户名
          */

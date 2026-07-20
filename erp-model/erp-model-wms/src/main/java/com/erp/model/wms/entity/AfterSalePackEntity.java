@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 
 /**
@@ -92,6 +93,24 @@ public class AfterSalePackEntity extends BaseEntity<AfterSalePackEntity> {
     @TableField("remark")
     private String remark;
 
+    /**
+     * 作废状态 false 未作废 true 已作废
+     */
+    @TableField("invalid_status")
+    private Boolean invalidStatus;
+
+    /**
+     * 作废描述
+     */
+    @TableField("invalid_remark")
+    private String invalidRemark;
+
+    /**
+     * 作废时间
+     */
+    @TableField("invalid_time")
+    private LocalDateTime invalidTime;
+
 
     public static final String CODE = "code";
 
@@ -118,6 +137,12 @@ public class AfterSalePackEntity extends BaseEntity<AfterSalePackEntity> {
     public static final String REJECT_DESCRIPTION = "reject_description";
 
     public static final String REMARK = "remark";
+
+    public static final String INVALID_STATUS = "invalid_status";
+
+    public static final String INVALID_REMARK = "invalid_remark";
+
+    public static final String INVALID_TIME = "invalid_time";
 
     @Override
     public Serializable pkVal() {

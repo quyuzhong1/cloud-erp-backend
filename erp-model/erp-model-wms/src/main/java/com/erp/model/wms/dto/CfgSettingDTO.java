@@ -67,6 +67,12 @@ public class CfgSettingDTO implements Serializable {
         private CfgSettingValueDTO.PoReturnSettingDTO poReturnSettingDTO;
 
         /**
+         * 采购退货默认采购组织
+         */
+        @Valid
+        private CfgSettingValueDTO.PoReturnDefaultOrgSettingDTO poReturnDefaultOrgSettingDTO;
+
+        /**
          * 采购对账单设置
          */
         @Valid

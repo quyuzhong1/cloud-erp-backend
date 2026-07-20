@@ -13,10 +13,11 @@ import java.util.Arrays;
  */
 public enum AfterSaleStatusEnum implements EnumMessage {
     APPROVE_ING("approveIng","审核中","客服审核"),
-    TO_BE_RETURNED("toBeReturned","待寄回","客户寄件"),
+    TO_BE_RETURNED("toBeReturned","待客户寄件","待客户寄件"),
     AFTER_SALES_RECEIVED("afterSalesReceived","待售后签收","待售后签收"),
     REPAIR("repair","检测/维修中","检测/维修中"),
-    TO_BE_SHIPPED("toBeShipped","待寄出","已完成"),
+    TO_BE_SHIPPED("toBeShipped","待商家寄出","待商家寄出"),
+    COMPLETED("completed","已完成","已完成"),
     TERMINATED("terminated","已终止","已终止")
     ;
 
@@ -74,6 +75,12 @@ public enum AfterSaleStatusEnum implements EnumMessage {
         return "";
     }
 
+    public static boolean isTerminalStatus(String code) {
+        return isCompletedStatus(code) || TERMINATED.getCode().equals(code);
+    }
 
+    public static boolean isCompletedStatus(String code) {
+        return COMPLETED.getCode().equals(code);
+    }
 
 }

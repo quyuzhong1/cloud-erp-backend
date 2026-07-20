@@ -174,6 +174,16 @@ public interface AfterSaleService extends SuperService<AfterSaleEntity> {
 
     void syncWdtToAfterSale();
 
+    /**
+     * 同步寄修单商家寄出物流轨迹状态（Track123，供 XXL-JOB 调用）
+     */
+    void syncAfterSaleTrackStatus();
+
+    /**
+     * 批量更新寄修单商家寄出物流状态
+     */
+    void batchUpdateOutboundTrackStatus(List<AfterSaleEntity> updateList);
+
     List<AfterSaleDTO.DropDownDTO> getDetailByPlatformCode(String platformCode);
 
     Boolean udpateTrackNo(AfterSaleDTO.UpdateTrackNoDTO dto);

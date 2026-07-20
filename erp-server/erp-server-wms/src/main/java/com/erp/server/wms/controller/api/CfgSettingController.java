@@ -69,6 +69,14 @@ public class CfgSettingController extends BaseController {
     }
 
     /**
+     * 查询采购退货默认采购组织配置
+     */
+    @GetMapping("/getPoReturnDefaultOrgSetting")
+    public ApiResult<CfgSettingValueDTO.PoReturnDefaultOrgSettingDTO> getPoReturnDefaultOrgSetting() {
+        return success(cfgSettingService.getPoReturnDefaultOrgSetting());
+    }
+
+    /**
      * 获取委外入库自动入库配置
      * @return
      */

@@ -162,4 +162,24 @@ public interface AfterSalePackService extends SuperService<AfterSalePackEntity> 
      * @date: 2026-05-12
      */
     List<BatchResultDTO> batchSubmit(BaseIdsDTO.IdsDTO dto);
+
+    /**
+     * 箱唛作废
+     */
+    BatchResultDTO invalid(String id, String remark);
+
+    /**
+     * 校验箱唛未作废（扫码/装箱等业务操作）
+     */
+    void assertPackNotInvalid(String code);
+
+    /**
+     * 导出Excel
+     */
+    Boolean exportExcel(AfterSalePackDTO.ExportDTO dto);
+
+    /**
+     * 导出售后装箱（含明细）
+     */
+    PagingVO<AfterSalePackDTO.ExportViewDTO> exportAfterSalePack(PagingDTO<AfterSalePackDTO.ExportDTO> pagingParamDTO);
 }

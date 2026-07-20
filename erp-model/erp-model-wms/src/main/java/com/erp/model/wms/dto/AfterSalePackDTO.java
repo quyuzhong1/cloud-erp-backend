@@ -199,6 +199,31 @@ public class AfterSalePackDTO implements Serializable {
          * 更新人名称
          */
         private String updateUserName;
+
+        /**
+         * 作废状态 false 未作废 true 已作废
+         */
+        private Boolean invalidStatus;
+
+        /**
+         * 作废状态名称
+         */
+        private String invalidStatusName;
+
+        /**
+         * 作废描述
+         */
+        private String invalidRemark;
+
+        /**
+         * 是否存在同SKU拣货仓位不一致
+         */
+        private Boolean locationInconsistent;
+
+        /**
+         * 作废时间
+         */
+        private LocalDateTime invalidTime;
     }
 
     /**
@@ -325,6 +350,26 @@ public class AfterSalePackDTO implements Serializable {
          * 关联供应商
          */
         private String supplierName;
+
+        /**
+         * 作废状态 false 未作废 true 已作废
+         */
+        private Boolean invalidStatus;
+
+        /**
+         * 作废状态名称
+         */
+        private String invalidStatusName;
+
+        /**
+         * 作废描述
+         */
+        private String invalidRemark;
+
+        /**
+         * 作废时间
+         */
+        private LocalDateTime invalidTime;
 
         /**
          * 装箱明细列表
@@ -505,6 +550,35 @@ public class AfterSalePackDTO implements Serializable {
          * 移入仓位名称
          */
         private String inWarehouseLocationName;
+    }
+
+    /**
+     * 售后装箱导出
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExportViewDTO {
+
+        private String type;
+        private String packStatus;
+        private Boolean isUse;
+        private Boolean invalidStatus;
+        private String code;
+        private String typeName;
+        private String packStatusName;
+        private String isUseName;
+        private String invalidStatusName;
+        private String invalidRemark;
+        private LocalDateTime invalidTime;
+        private String supplierName;
+        private String skuNo;
+        private Integer packQty;
+        private String outWarehouseLocationCode;
+        private Integer totalQty;
+        private Integer skuSpeciesQty;
+        private String createUserName;
+        private LocalDateTime createTime;
+        private String remark;
     }
 
 }
