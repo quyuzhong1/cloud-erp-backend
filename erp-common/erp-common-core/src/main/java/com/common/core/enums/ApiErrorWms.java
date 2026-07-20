@@ -440,7 +440,7 @@ public final class ApiErrorWms {
     public static final ApiError SO_RETURN_PRESTOCK_INSTOCK_WAREHOUSE_INCONSISTENT = new ApiError("SO_RETURN_PRESTOCK_INSTOCK_WAREHOUSE_INCONSISTENT", 10795, "退货入库明细仓库不一致，无法生成预入库单");
     public static final ApiError SO_RETURN_PRESTOCK_INSTOCK_RETURN_TYPE_INCONSISTENT = new ApiError("SO_RETURN_PRESTOCK_INSTOCK_RETURN_TYPE_INCONSISTENT", 10796, "退货入库明细退货类型不一致，无法生成预入库单");
     public static final ApiError SO_RETURN_PRESTOCK_DETAIL_NOT_BELONG = new ApiError("SO_RETURN_PRESTOCK_DETAIL_NOT_BELONG", 10797, "详情行不属于当前预入库单");
-    public static final ApiError SO_RETURN_PRESTOCK_RETURN_QTY_INVALID = new ApiError("SO_RETURN_PRESTOCK_RETURN_QTY_INVALID", 10798, "退货数量必须大于0：{0}");
+    public static final ApiError SO_RETURN_PRESTOCK_RETURN_QTY_INVALID = new ApiError("SO_RETURN_PRESTOCK_RETURN_QTY_INVALID", 10798, "实际收货数量必须大于0：{0}");
     public static final ApiError SO_RETURN_PRESTOCK_CUSTOMER_NOT_EMPTY_FORBIDDEN = new ApiError("SO_RETURN_PRESTOCK_CUSTOMER_NOT_EMPTY_FORBIDDEN", 10799, "退货客户不为空时无法创建预入库单，请直接保存退货入库单");
     public static final ApiError SO_RETURN_PRESTOCK_RETURN_LOGISTIC_CODE_REQUIRED = new ApiError("SO_RETURN_PRESTOCK_RETURN_LOGISTIC_CODE_REQUIRED", 10800, "退货物流单号不能为空");
     public static final ApiError SO_RETURN_PRESTOCK_FORCE_CLOSE = new ApiError("SO_RETURN_PRESTOCK_FORCE_CLOSE", 10801, "该预入库单已强制关闭，不可再关联");
@@ -449,6 +449,7 @@ public final class ApiErrorWms {
     public static final ApiError SO_RETURN_PRESTOCK_LINK_AFTER_SALE_SKU_QTY_EXCEEDS = new ApiError("SO_RETURN_PRESTOCK_LINK_AFTER_SALE_SKU_QTY_EXCEEDS", 10805, "退货单SKU明细数量超过预入库单（SKU数量超出：{0}），可能为异常包裹或关联的售后单有误，请改用「关联店铺」进行关联");
     public static final ApiError SO_RETURN_PRESTOCK_LINK_AFTER_SALE_SKU_RECEIVE_QTY_EXCEEDS = new ApiError("SO_RETURN_PRESTOCK_LINK_AFTER_SALE_SKU_RECEIVE_QTY_EXCEEDS", 10806, "认领失败，【sku：{0}】实际收货数量不可<累计的剩余应退货数量");
     public static final ApiError SO_RETURN_PRESTOCK_AFTER_SALE_TYPE_LINK_FORBIDDEN = new ApiError("SO_RETURN_PRESTOCK_AFTER_SALE_TYPE_LINK_FORBIDDEN", 10807, "售后订单类型的预入库单不支持关联售后单，请改用「关联店铺」进行关联");
+    public static final ApiError SO_RETURN_PRESTOCK_REAL_QTY_INVALID = new ApiError("SO_RETURN_PRESTOCK_REAL_QTY_INVALID", 10808, "实退数量必须大于0：{0}");
 
     static ApiError[] values() {
         return new ApiError[]{
@@ -893,6 +894,7 @@ public final class ApiErrorWms {
                 SO_RETURN_PRESTOCK_LINK_AFTER_SALE_SKU_QTY_EXCEEDS,
                 SO_RETURN_PRESTOCK_LINK_AFTER_SALE_SKU_RECEIVE_QTY_EXCEEDS,
                 SO_RETURN_PRESTOCK_AFTER_SALE_TYPE_LINK_FORBIDDEN,
+                SO_RETURN_PRESTOCK_REAL_QTY_INVALID,
         };
     }
 }
