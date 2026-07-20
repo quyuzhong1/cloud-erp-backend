@@ -173,6 +173,8 @@ public final class ApiErrorWms {
     public static final ApiError SAMPLE_USE_USER_ID_CHINESE_NOT_FOUND = new ApiError("SAMPLE_USE_USER_ID_CHINESE_NOT_FOUND", 10747, "使用方【{0}】不存在，请传入正确的使用方ID或使用方名称");
     public static final ApiError SAMPLE_USE_USER_ID_CHINESE_QUERY_FAILED = new ApiError("SAMPLE_USE_USER_ID_CHINESE_QUERY_FAILED", 10748, "使用方【{0}】查询失败，请传入正确的使用方ID或使用方名称");
     // ---------- 预入库单（SO_RETURN_PRESTOCK） 10780-10800 ----------
+    public static final ApiError SO_RETURN_PRESTOCK_MODIFIED = new ApiError("SO_RETURN_PRESTOCK_MODIFIED", 10780, "预入库单数据已被修改，请刷新后重试");
+    public static final ApiError SO_RETURN_PRESTOCK_B2C_PLATFORM_REQUIRED = new ApiError("SO_RETURN_PRESTOCK_B2C_PLATFORM_REQUIRED", 10781, "B2C售后单平台信息不能为空");
     public static final ApiError SO_RETURN_PRESTOCK_DETAIL_MODIFIED = new ApiError("SO_RETURN_PRESTOCK_DETAIL_MODIFIED", 10782, "预入库单详情行数据已被修改，请刷新后重试");
     public static final ApiError SO_RETURN_PRESTOCK_WAREHOUSE_REQUIRED_FOR_INSTOCK = new ApiError("SO_RETURN_PRESTOCK_WAREHOUSE_REQUIRED_FOR_INSTOCK", 10783, "预入库单未设置收货仓库，无法生成退货入库单");
     public static final ApiError SO_RETURN_PRESTOCK_LINK_AFTER_SALE_GROUP_EXCEEDS = new ApiError("SO_RETURN_PRESTOCK_LINK_AFTER_SALE_GROUP_EXCEEDS", 10784, "本次关联涉及售后单数量过多（{0}个），单次事务内生成退货入库单数量超限，请分批关联");
