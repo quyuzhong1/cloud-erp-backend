@@ -6,6 +6,7 @@ import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
@@ -295,15 +296,27 @@ public class SoReturnPrestockServiceImpl
                 .collect(Collectors.groupingBy(SoReturnPrestockDetailEntity::getSkuNo,
                         Collectors.toCollection(LinkedList::new)));
         List<LinkedDetailPair> linkedPairs = new ArrayList<>();
+        // 拆行仅在内存中进行，产生的新明细行统一收集到此处，最后作为「新增」一次性插入；
+        // 避免「先 save 拆行新行、随后又对同一新行乐观锁 updateById」在同事务内触发 version 冲突
+        List<SoReturnPrestockDetailEntity> newRows = new ArrayList<>();
         for (SoReturnPrestockDetailDTO.AfterSaleItem item : dto.getAfterSaleList()) {
-            allocateAfterSaleItem(skuRowQueue.get(item.getSkuNo()), item, linkedPairs);
+            allocateAfterSaleItem(skuRowQueue.get(item.getSkuNo()), item, linkedPairs, newRows);
         }
 
         // 联动处理：为本次已关联的 SKU 按售后单分组生成《退货入库单》，并把生成的入库单号回写到对应明细行（内存）
         generateReturnInstock(main, linkedPairs);
 
-        // 统一落库本次关联的明细行（含关联信息 + 退货入库单回写）
+        // 拆行新增行统一插入（含可能已被关联/回写退货入库单号的最终状态）；新行为纯插入，无需乐观锁
+        if (CollUtil.isNotEmpty(newRows)) {
+            soReturnPrestockDetailService.saveBatch(newRows, 500);
+        }
+        // 落库本次关联的「已存在」明细行（含关联信息 + 退货入库单回写）；拆行新增行已在上一步插入，跳过以免重复且避免乐观锁冲突
+        Set<SoReturnPrestockDetailEntity> newRowSet = Collections.newSetFromMap(new IdentityHashMap<>());
+        newRowSet.addAll(newRows);
         for (LinkedDetailPair pair : linkedPairs) {
+            if (newRowSet.contains(pair.detail)) {
+                continue;
+            }
             if (!soReturnPrestockDetailService.updateById(pair.detail)) {
                 throw new ServiceException(ApiError.SO_RETURN_PRESTOCK_DETAIL_MODIFIED);
             }
@@ -337,7 +350,8 @@ public class SoReturnPrestockServiceImpl
      * 关联的明细行仅在内存中变更，配对信息收集到 collector，由调用方统一落库。</p>
      */
     private void allocateAfterSaleItem(Deque<SoReturnPrestockDetailEntity> rows,
-                                       SoReturnPrestockDetailDTO.AfterSaleItem item, List<LinkedDetailPair> collector) {
+                                       SoReturnPrestockDetailDTO.AfterSaleItem item, List<LinkedDetailPair> collector,
+                                       List<SoReturnPrestockDetailEntity> newRows) {
         int remaining = Objects.nonNull(item.getReturnQty()) ? item.getReturnQty() : 0;
         while (remaining > 0 && Objects.nonNull(rows) && !rows.isEmpty()) {
             SoReturnPrestockDetailEntity row = rows.pollFirst();
@@ -348,7 +362,9 @@ public class SoReturnPrestockServiceImpl
                 remaining -= rowQty;
             } else {
                 // 拆行：当前行关联 remaining，剩余 rowQty-remaining 拆为新未关联行并回队
-                SoReturnPrestockDetailEntity leftover = splitDetail(row, remaining);
+                // 新行仅在内存中拆分并收集，统一由调用方最后插入，避免同事务内对新行乐观锁更新
+                SoReturnPrestockDetailEntity leftover = splitDetailInMemory(row, remaining);
+                newRows.add(leftover);
                 applyAfterSaleToDetail(row, item);
                 collector.add(new LinkedDetailPair(row, item));
                 rows.addFirst(leftover);
@@ -1271,12 +1287,31 @@ public class SoReturnPrestockServiceImpl
     }
 
     /**
+     * 拆行（仅内存）：与 {@link #splitDetail} 逻辑一致，但拆出的剩余行不在此处落库，
+     * 由调用方统一收集后作为「新增」一次性插入。
+     * <p>用于关联售后单场景：拆行剩余行会回队供后续同 SKU 售后单明细继续认领，可能再次被关联并进入
+     * 待落库列表。若在此处先 {@code save} 再由调用方对同一新行乐观锁 {@code updateById}，同事务内该新行
+     * 的 version 一旦被其它写操作顶高即会导致乐观锁冲突。故新行改为纯插入，避免二次乐观锁更新。</p>
+     *
+     * @return 承载剩余数量的新未关联详情行（已预分配 ID，未落库）
+     */
+    private SoReturnPrestockDetailEntity splitDetailInMemory(SoReturnPrestockDetailEntity original, int linkQty) {
+        int originalReceiveQty = Objects.nonNull(original.getReceiveQty()) ? original.getReceiveQty() : 0;
+        int remainReceiveQty = originalReceiveQty - linkQty;
+
+        SoReturnPrestockDetailEntity newDetail = buildLeftoverDetail(original, remainReceiveQty);
+        // 原行收敛为本次认领数量，剩余部分已转入新行
+        original.setReceiveQty(linkQty);
+        return newDetail;
+    }
+
+    /**
      * 构建拆行产生的剩余未关联详情行：复制原行的商品信息，携带传入的剩余实际收货数量，
      * 并清空所有关联相关字段（等待后续单独关联）。落库由调用方负责。
      */
     private SoReturnPrestockDetailEntity buildLeftoverDetail(SoReturnPrestockDetailEntity original,
                                                              int remainReceiveQty) {
-        return new SoReturnPrestockDetailEntity()
+        SoReturnPrestockDetailEntity newDetail = new SoReturnPrestockDetailEntity()
                 .setMainId(original.getMainId())
                 .setParentDetailId(original.getId())
                 .setSkuId(original.getSkuId())
@@ -1299,6 +1334,10 @@ public class SoReturnPrestockServiceImpl
                 .setSalesDeptId("").setSalesDeptName("")
                 .setSellerId("").setSellerName("")
                 .setRemark(original.getRemark());
+        // 预分配 ID：拆行剩余行可能在落库前被再次拆分，需以其 ID 作为下一行的 parentDetailId 溯源；
+        // 与 @TableId(ASSIGN_ID) 使用同一雪花算法生成器，插入时沿用该 ID
+        newDetail.setId(IdWorker.getIdStr());
+        return newDetail;
     }
 
     /**
