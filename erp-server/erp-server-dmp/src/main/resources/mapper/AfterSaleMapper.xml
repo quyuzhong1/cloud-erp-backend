@@ -127,6 +127,7 @@
         afs.phone_number AS phoneNumber,
         r.track_no as returnTrackNo,
         o.track_no as outboundTrackNo,
+        afs.outbound_track_status as outboundTrackStatus,
         afs.shop_id as shopId,
         afs.cs_agent_id as csAgentId,
         afs.cs_agent_name as csAgentName,
@@ -139,7 +140,7 @@
         LEFT JOIN after_sale_progress AS r ON r.main_id = afs.ID
         AND r.node = 'toBeReturned' AND r.is_deleted = FALSE
         LEFT JOIN after_sale_progress AS o ON o.main_id = afs.ID
-        AND o.node IN ( 'toBeShipped', 'terminated' )  AND o.is_deleted = FALSE
+        AND o.node = 'toBeShipped' AND o.is_deleted = FALSE
         where
         ${params.sqlMap.default}
         AND afs.is_deleted = false
@@ -246,7 +247,7 @@
         after_sale AS afs
         LEFT JOIN after_sale_detail AS afsd ON afs.ID = afsd.main_id AND afsd.is_deleted = FALSE
         LEFT JOIN after_sale_progress AS o ON o.main_id = afs.ID
-        AND o.node IN ('toBeShipped', 'terminated')  AND o.is_deleted = FALSE
+        AND o.node = 'toBeShipped' AND o.is_deleted = FALSE
         where afs.is_deleted = false
         <if test="ids != null and ids.size > 0">
             and afs.id in

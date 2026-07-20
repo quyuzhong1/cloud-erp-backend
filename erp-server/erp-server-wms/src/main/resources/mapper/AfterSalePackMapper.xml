@@ -24,6 +24,10 @@
        <result column="sku_species_qty" property="skuSpeciesQty" />
        <result column="total_qty" property="totalQty" />
        <result column="remark" property="remark" />
+       <result column="reject_description" property="rejectDescription" />
+       <result column="invalid_status" property="invalidStatus" />
+       <result column="invalid_remark" property="invalidRemark" />
+       <result column="invalid_time" property="invalidTime" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -48,7 +52,11 @@
         is_move_warehouse,
         sku_species_qty,
         total_qty,
-        remark
+        remark,
+        reject_description,
+        invalid_status,
+        invalid_remark,
+        invalid_time
     </sql>
 
     <select id="paging" resultType="com.erp.model.wms.dto.AfterSalePackDTO$ListDTO">
@@ -73,6 +81,10 @@
         t.sku_species_qty as skuSpeciesQty,
         t.total_qty as totalQty,
         t.remark,
+        t.reject_description as rejectDescription,
+        t.invalid_status as invalidStatus,
+        t.invalid_remark as invalidRemark,
+        t.invalid_time as invalidTime,
         pt.supplier_id as supplierId,
         pt.supplier_name as supplierName
         from after_sale_pack t
@@ -94,6 +106,44 @@
             </foreach>
         </if>
         t.update_time DESC
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.wms.dto.AfterSalePackDTO$ExportViewDTO">
+        SELECT
+        t.code,
+        t.type AS type,
+        t.pack_status AS packStatus,
+        t.is_use AS isUse,
+        t.invalid_status AS invalidStatus,
+        t.invalid_remark AS invalidRemark,
+        t.invalid_time AS invalidTime,
+        t.total_qty AS totalQty,
+        t.sku_species_qty AS skuSpeciesQty,
+        t.create_user_name AS createUserName,
+        t.create_time AS createTime,
+        t.remark,
+        pt.supplier_name AS supplierName,
+        dt.sku_no AS skuNo,
+        dt.pack_qty AS packQty,
+        wl.code AS outWarehouseLocationCode
+        FROM after_sale_pack t
+        LEFT JOIN po_return pt ON t.source_id = pt.id AND pt.is_deleted = FALSE
+        LEFT JOIN after_sale_pack_detail dt ON t.id = dt.main_id AND dt.is_deleted = FALSE
+        LEFT JOIN warehouse_location wl ON dt.out_warehouse_location_id = wl.id AND wl.is_deleted = FALSE
+        WHERE t.is_deleted = FALSE
+        <if test="params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.default != ''">
+            AND ${params.sqlMap.default}
+        </if>
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        t.update_time DESC, dt.id ASC
     </select>
 
 </mapper>
