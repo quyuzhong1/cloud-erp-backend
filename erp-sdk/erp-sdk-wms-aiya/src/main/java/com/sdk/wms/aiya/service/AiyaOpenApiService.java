@@ -93,8 +93,9 @@ public class AiyaOpenApiService {
 
     /**
      * 原始响应字符串在日志中打印的最大长度。
+     * SKU 查询排查时空结果需要看到 total/itemList 结构，适当加大截断上限。
      */
-    private static final int RAW_RESPONSE_LOG_MAX_LEN = 500;
+    private static final int RAW_RESPONSE_LOG_MAX_LEN = 2000;
 
     /**
      * 根据当前激活的 Spring profile 选择 AIYA 接口域名。
@@ -480,7 +481,12 @@ public class AiyaOpenApiService {
         String url = getRequestUrl();
         String requestJson = JSON.toJSONString(params);
         String logRequestJson = JSON.toJSONString(maskLogParams(params));
-        log.info("[AIYA{}] 请求开始, url={}, params={}", actionName, url, logRequestJson);
+        // SKU 查询用 warn：任务拉到 0 条而手工测试有数据时，需从日志直接核对 bizData/响应
+        if ("查询SKU".equals(actionName)) {
+            log.warn("[AIYA{}] 请求开始, url={}, params={}", actionName, url, logRequestJson);
+        } else {
+            log.info("[AIYA{}] 请求开始, url={}, params={}", actionName, url, logRequestJson);
+        }
         String response;
         try {
             // 爱亚网关要求 partnerId/serviceType/bizData/sign 以 x-www-form-urlencoded 表单字段提交，
@@ -492,7 +498,11 @@ public class AiyaOpenApiService {
             throw new ServiceException(e, ApiError.WH_AIYA_SDK_API_CALL_ERROR, actionName, e.getMessage());
         }
         long cost = System.currentTimeMillis() - start;
-        log.info("[AIYA{}] 请求结束, cost={}ms", actionName, cost);
+        if ("查询SKU".equals(actionName)) {
+            log.warn("[AIYA{}] 请求结束, cost={}ms, response={}", actionName, cost, truncateRawResponse(response));
+        } else {
+            log.info("[AIYA{}] 请求结束, cost={}ms", actionName, cost);
+        }
         if (response == null || response.isEmpty()) {
             log.error("[AIYA{}] 接口返回为空, url={}, params={}", actionName, url, logRequestJson);
             throw new ServiceException(ApiError.WH_AIYA_SDK_API_RESPONSE_EMPTY, actionName);

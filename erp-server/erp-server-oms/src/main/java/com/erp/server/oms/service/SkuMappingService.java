@@ -294,6 +294,14 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
 
     void updateNotMatch(SkuMappingDTO.UpdateNotMatchDTO dto);
 
+    /**
+     * 批量启用/禁用库存SKU映射关系（人工手动操作，系统自动禁用后不会自动恢复，需走此接口人工确认恢复）
+     *
+     * @param dto ids + 目标状态
+     * @return 批量处理结果
+     */
+    List<BatchResultDTO> updateStatus(SkuMappingDTO.UpdateStatusDTO dto);
+
     PagingVO<SkuMappingDTO.SyncPlatformProductView> syncPlatformProductView(PagingDTO<AdvanceQueryContainer> advanceQueryDTO);
 
     PagingVO<SkuMappingDTO.SyncWarehouseProductView> syncWarehouseProductView(PagingDTO<AdvanceQueryContainer> advanceQueryDTO);
