@@ -13233,8 +13233,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         // 三方仓渠道映射依赖 Feign，须在事务外完成，避免长事务占用连接
         SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsService.getByMainId(dto.getSoB2cId());
         if (Objects.nonNull(logisticsEntity)) {
-            logisticsEntity.setCode(CharSequenceUtil.isNotBlank(logisticsEntity.getCode()) ? logisticsEntity.getCode() : dto.getTrackNo());
-            logisticsEntity.setTrackNo(CharSequenceUtil.isNotBlank(logisticsEntity.getTrackNo()) ? logisticsEntity.getTrackNo() : dto.getTrackNo());
+            if (dto.isForceUpdateLogisticsTrack() && CharSequenceUtil.isNotBlank(dto.getTrackNo())) {
+                // 未推送海外仓面单：仓回传跟踪号与订单不一致时覆盖物流单号+跟踪号（不清面单）
+                logisticsEntity.setCode(dto.getTrackNo());
+                logisticsEntity.setTrackNo(dto.getTrackNo());
+            } else {
+                logisticsEntity.setCode(CharSequenceUtil.isNotBlank(logisticsEntity.getCode()) ? logisticsEntity.getCode() : dto.getTrackNo());
+                logisticsEntity.setTrackNo(CharSequenceUtil.isNotBlank(logisticsEntity.getTrackNo()) ? logisticsEntity.getTrackNo() : dto.getTrackNo());
+            }
             applyThirdWarehouseLogisticsChannel(logisticsEntity, dto);
         }
         // 经 self-injection 代理调用，使 @Transactional 生效；该方法 intentionally 不暴露在 SoB2cService 接口
