@@ -263,8 +263,9 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     @Override
     public PagingVO<SoReturnDTO.LinkAfterSaleView> pagingLinkAfterSale(PagingDTO<SoReturnDTO.LinkAfterSalePagingParam> dto) {
         SoReturnDTO.LinkAfterSalePagingParam params = dto.getParams();
+        long pageNo = dto.getPage();
+        long pageSize = dto.getPageSize();
         try {
-            Page<SoReturnDTO.LinkAfterSaleView> query = new Page<>(dto.getPage(), dto.getPageSize());
             //单据类型经高级查询传入：优先取高级查询处理类写入的上下文，兜底扫描高级查询条件
             String billType = resolveLinkAfterSaleBillType(params);
             //单据类型为空时不得默认 B2C，避免 B2B 预入库查到错误候选集导致误关联
@@ -273,12 +274,41 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
             }
             //售后单据类型分流：B2B 查 so_return，B2C 查 so_b2c_return
             boolean isB2b = BillTypeEnum.B2B.getCode().equals(billType);
+            //剩余应退货数量依赖 WMS 入库数据（跨库 feign 取值），无法下推到 SQL 过滤。
+            //为保证过滤后 total 与分页结果一致，这里不在 SQL 层分页（size=-1 时 MyBatis-Plus 不追加 LIMIT，
+            //searchCount=false 跳过 count 查询），取全量候选后在内存过滤，再手动分页。
+            //候选集已被高级查询条件（客户/订单/SKU 等）与 skuNoList 收敛，数据量可控。
+            Page<SoReturnDTO.LinkAfterSaleView> query = new Page<>(1, -1, false);
             IPage<SoReturnDTO.LinkAfterSaleView> pageData = isB2b
                     ? this.baseMapper.pagingLinkAfterSaleB2B(query, params)
                     : soB2cReturnMapper.pagingLinkAfterSaleB2C(query, params);
             List<SoReturnDTO.LinkAfterSaleView> records = pageData.getRecords();
             if (CollectionUtils.isEmpty(records)) {
-                return new PagingVO<>(pageData);
+                return new PagingVO<>(new Page<>(pageNo, pageSize));
+            }
+            //剩余应退货数量所需：按退货明细维度预聚合已入库实退数量，避免循环内查库/重复扫描。
+            //口径对齐各自分页接口：B2B 同 /soReturn/paging 的 returnInStockQty（按退货明细汇总全部实退）；
+            //B2C 同 /soB2cReturn/paging 的 instockQty（按退货明细汇总已审核实退）
+            Map<String, Integer> instockQtyByDetailId;
+            if (isB2b) {
+                List<String> detailIdList = records.stream().map(SoReturnDTO.LinkAfterSaleView::getDetailId)
+                        .filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+                List<SoReturnInstockDetailEntity> instockDetails = CollectionUtils.isEmpty(detailIdList)
+                        ? Collections.emptyList() : soReturnInstockFeign.listDetailBySoReturnDetailIds(detailIdList);
+                instockQtyByDetailId = instockDetails.stream()
+                        .filter(d -> StringUtils.isNotBlank(d.getSoReturnDetailId()))
+                        .collect(Collectors.groupingBy(SoReturnInstockDetailEntity::getSoReturnDetailId,
+                                Collectors.summingInt(d -> ObjectUtil.defaultIfNull(d.getRealQty(), MathUtil.ZERO))));
+            } else {
+                List<String> mainIdList = records.stream().map(SoReturnDTO.LinkAfterSaleView::getId)
+                        .filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+                List<SoReturnInstockDetailEntity> instockDetails = CollectionUtils.isEmpty(mainIdList)
+                        ? Collections.emptyList() : soReturnInstockFeign.getSoReturnInstockByReturnIds(mainIdList);
+                instockQtyByDetailId = instockDetails.stream()
+                        .filter(d -> StringUtils.isNotBlank(d.getSoReturnDetailId())
+                                && ApproveStatusEnum.APPROVE.getCode().equals(d.getApproveStatus()))
+                        .collect(Collectors.groupingBy(SoReturnInstockDetailEntity::getSoReturnDetailId,
+                                Collectors.summingInt(d -> ObjectUtil.defaultIfNull(d.getRealQty(), MathUtil.ZERO))));
             }
             //B2C 需要根据店铺 id 批量查询店铺名称（避免循环内单条查询）
             Map<String, String> shopNameMap = Collections.emptyMap();
@@ -293,6 +323,11 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
             for (SoReturnDTO.LinkAfterSaleView view : records) {
                 view.setType(billType);
                 view.setTypeName(BillTypeEnum.getName(billType));
+                //退货数量改为“剩余应退货数量 = 退货数量 - 已入库实退”，负数兜底为0，避免关联时出现负数可关联量
+                Integer originReturnQty = ObjectUtil.defaultIfNull(view.getReturnQty(), MathUtil.ZERO);
+                Integer instockQty = instockQtyByDetailId.getOrDefault(view.getDetailId(), MathUtil.ZERO);
+                int remainReturnQty = originReturnQty - instockQty;
+                view.setReturnQty(remainReturnQty > MathUtil.ZERO ? remainReturnQty : MathUtil.ZERO);
                 //退货类型名称：字典枚举优先，兜底原值
                 view.setReturnTypeName(CharSequenceUtil.blankToDefault(ReturnTypeEnum.getName(view.getReturnType()), view.getReturnType()));
                 //退货原因名称：先 ReturnReasonEnum，再 B2C 退货原因枚举，最后兜底原值
@@ -306,7 +341,21 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
                     view.setShopName(shopNameMap.get(view.getShopId()));
                 }
             }
-            return new PagingVO<>(pageData);
+            //剩余应退货数量 <= 0（已退完/超退）的记录无可关联量，不返回
+            List<SoReturnDTO.LinkAfterSaleView> validRecords = records.stream()
+                    .filter(v -> ObjectUtil.defaultIfNull(v.getReturnQty(), MathUtil.ZERO) > MathUtil.ZERO)
+                    .collect(Collectors.toList());
+            //内存手动分页：total 取过滤后的真实条数，避免 total 与分页结果不一致
+            long total = validRecords.size();
+            Page<SoReturnDTO.LinkAfterSaleView> resultPage = new Page<>(pageNo, pageSize, total);
+            int fromIndex = (int) Math.max(0, (pageNo - 1) * pageSize);
+            if (fromIndex >= total) {
+                resultPage.setRecords(Collections.emptyList());
+            } else {
+                int toIndex = (int) Math.min(total, fromIndex + pageSize);
+                resultPage.setRecords(validRecords.subList(fromIndex, toIndex));
+            }
+            return new PagingVO<>(resultPage);
         } finally {
             //清理高级查询处理类写入的上下文，避免线程复用脏值
             LinkAfterSaleQueryContext.remove();
