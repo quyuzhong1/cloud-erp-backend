@@ -495,6 +495,7 @@ public class SkuMappingDTO implements Serializable {
          * sku对照表id列表
          */
         @NotEmpty(message = "ids不能为空")
+        @Size(max = 500, message = "单次最多操作500条")
         private List<String> ids;
 
         /**

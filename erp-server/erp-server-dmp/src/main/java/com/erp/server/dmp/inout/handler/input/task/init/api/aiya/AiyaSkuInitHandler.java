@@ -35,11 +35,10 @@ import java.util.List;
  * 2026-07-16 联调发现文档未列出的真实必填约束（爱亚网关底层 QERP Open API Platform
  * {@code GLINK_QUERY_ITEM_NOTIFY} 规范）——{@code skus}、createdTime 范围、updatedTime 范围三者
  * 至少要有一组非空，否则报 {@code INVALID_DATA: Created time and Updated time and SKUs cannot be
- * both empty}。业务目标是每次全量拉取所有 SKU（详见文档 6.2.2 排重逻辑 a-e，需要每次拿到 SKU 全量
- * 快照才能判断爱亚侧已删除/停用的 SKU），故固定传 {@code createdTimeFrom}={@link #DEV_START_TIME}
- * （本次爱亚对接开发起始日期）~ {@code createdTimeTo}=当前时间，覆盖迄今为止创建的所有 SKU。
- * 已与产品/业务确认（2026-07-16）：该客户账号/SKU 不存在早于 {@link #DEV_START_TIME} 的创建记录，
- * 该固定锚点不会漏拉历史 SKU，详见 docs/integrations/aiya-overseas-warehouse/README.md「已确认结论」。
+ * both empty}。时间范围优先取 DMP 任务上的 {@code startTime}/{@code endTime}（创建/手动拉取任务时
+ * 前端传入）；仅当任务未带时间时，才回退 {@code createdTimeFrom}={@link #DEV_START_TIME}、
+ * {@code createdTimeTo}=当前时间。已与产品/业务确认（2026-07-16）：该客户账号/SKU 不存在早于
+ * {@link #DEV_START_TIME} 的创建记录，回退锚点不会漏拉历史 SKU。
  * <p>
  * 2026-07-16 联调实测确认：响应顶层实际带有 {@code total} 字段（文档未列出），本类据此在
  * "本页返回条数 &lt; pageSize" 之外，新增按累计拉取条数对比 {@code total} 的终止判断，两者任一满足即停止翻页，
@@ -59,9 +58,8 @@ public class AiyaSkuInitHandler extends AbstractAiyaInitHandler {
     private static final DateTimeFormatter DATETIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     /**
-     * 本次爱亚对接开发起始日期（首个爱亚相关提交日期），作为 createdTimeFrom 固定锚点，
-     * 用于全量拉取「迄今为止创建的所有 SKU」。已与产品/业务确认（2026-07-16）该账号/SKU
-     * 不存在早于此锚点的创建记录，不会漏拉，详见类注释。
+     * 任务未传 startTime 时的 createdTimeFrom 回退锚点（本次爱亚对接开发起始日期）。
+     * 已与产品/业务确认（2026-07-16）该账号/SKU 不存在早于此锚点的创建记录。
      */
     private static final LocalDateTime DEV_START_TIME = LocalDateTime.of(2026, 7, 1, 0, 0, 0);
 
@@ -69,9 +67,10 @@ public class AiyaSkuInitHandler extends AbstractAiyaInitHandler {
     public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
         AiyaAuth auth = resolveAuth();
 
-        // 全量拉取窗口：固定锚点 ~ 当前时间，在本次任务运行期间保持稳定（不逐页重新取"现在"）
-        String createdTimeFrom = DEV_START_TIME.format(DATETIME_FORMATTER);
-        String createdTimeTo = LocalDateTime.now().format(DATETIME_FORMATTER);
+        // 优先用任务 startTime/endTime（与 AiyaInboundInitHandler 一致）；缺失时再回退锚点/当前时间
+        LocalDateTime[] timeRange = resolveCreatedTimeRange();
+        String createdTimeFrom = timeRange[0].format(DATETIME_FORMATTER);
+        String createdTimeTo = timeRange[1].format(DATETIME_FORMATTER);
 
         List<Object> allSkuList = new ArrayList<>();
         int pageNum = 1;
@@ -167,6 +166,32 @@ public class AiyaSkuInitHandler extends AbstractAiyaInitHandler {
 
         JSONArray result = JSON.parseArray(JSONObject.toJSONString(allSkuList));
         return Collections.singletonList(buildInitDTO(result, auth.getAuthId()));
+    }
+
+    /**
+     * 解析 createdTime 查询窗口。
+     * <ul>
+     *   <li>from：任务 startTime，缺省回退 {@link #DEV_START_TIME}</li>
+     *   <li>to：任务 endTime，缺省回退当前时间</li>
+     *   <li>若 from &gt; to（任务传参颠倒或回退组合导致），交换两者并打 warn，避免爱亚直接返回空列表</li>
+     * </ul>
+     *
+     * @return [createdTimeFrom, createdTimeTo]
+     */
+    private LocalDateTime[] resolveCreatedTimeRange() {
+        LocalDateTime startTime = dmpInputTaskEntity == null ? null : dmpInputTaskEntity.getStartTime();
+        LocalDateTime endTime = dmpInputTaskEntity == null ? null : dmpInputTaskEntity.getEndTime();
+        LocalDateTime from = startTime != null ? startTime : DEV_START_TIME;
+        LocalDateTime to = endTime != null ? endTime : LocalDateTime.now();
+        if (from.isAfter(to)) {
+            log.warn("[爱亚SKU] 任务时间窗口非法(from>to)，已自动交换。taskId={}, startTime={}, endTime={}, from={}, to={}",
+                    dmpInputTaskEntity == null ? null : dmpInputTaskEntity.getId(),
+                    startTime, endTime, from, to);
+            LocalDateTime tmp = from;
+            from = to;
+            to = tmp;
+        }
+        return new LocalDateTime[]{from, to};
     }
 
     /**
