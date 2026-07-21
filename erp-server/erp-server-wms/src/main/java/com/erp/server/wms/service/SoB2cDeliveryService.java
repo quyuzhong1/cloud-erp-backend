@@ -343,7 +343,10 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @param soB2cDeliveryDetailEntities 发货单明细
      * @param waveType 波次类型
      */
-    List<String> generatePickingDetail(SoB2cDeliveryEntity soB2cDeliveryEntity, List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailEntities,String waveType);
+    /**
+     * @return 缺货 Map（skuNo → 缺货数量）；空 Map 表示拣货成功
+     */
+    Map<String, Integer> generatePickingDetail(SoB2cDeliveryEntity soB2cDeliveryEntity, List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailEntities,String waveType);
 
     /**
      * B2C生成拣货单 (规则前置执行)
@@ -352,8 +355,24 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @param soB2cDeliveryDetailEntities 发货单明细
      * @param results 前置规则返回的仓位
      * @param waveType 波次类型
+     * @return 缺货 Map（skuNo → 缺货数量）；空 Map 表示拣货成功
      */
-    List<String> generatePickingDetail(SoB2cDeliveryEntity soB2cDeliveryEntity, List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailEntities, List<LocationInventoryResultDTO> results,String waveType);
+    Map<String, Integer> generatePickingDetail(SoB2cDeliveryEntity soB2cDeliveryEntity, List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailEntities, List<LocationInventoryResultDTO> results,String waveType);
+
+    /**
+     * 发货缺货生成仓位补货单。
+     * <p>
+     * 取货/上架仓位通过仓位推荐 {@code resolveReplenishLocations} 解析；
+     * 补货数量使用匹配后的缺货量（非发货全量）。
+     *
+     * @param detailList      发货明细
+     * @param deliveryEntity  发货单
+     * @param shortageMap     缺货 skuNo → 缺货数量（可为组合拆分后的子件）
+     * @param waveType        波次类型（参与规则命中）
+     */
+    void generateStockOutReplenish(List<SoB2cDeliveryDetailEntity> detailList, SoB2cDeliveryEntity deliveryEntity,
+                                   Map<String, Integer> shortageMap, String waveType);
+
     /**
      * 取消发货
      */

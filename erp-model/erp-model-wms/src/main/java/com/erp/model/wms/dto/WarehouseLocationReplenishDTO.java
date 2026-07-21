@@ -325,6 +325,18 @@ public class WarehouseLocationReplenishDTO implements Serializable {
          */
         private String warehouseLocation;
         /**
+         * 发货缺货--取货库区（预填后跳过旧备货区推荐）
+         */
+        private String fromWarehouseArea;
+        /**
+         * 发货缺货--取货仓位（预填后跳过旧备货区推荐）
+         */
+        private String fromWarehouseLocation;
+        /**
+         * 发货缺货--补货上架库区（预填后跳过旧上架推荐）
+         */
+        private String toWarehouseArea;
+        /**
          * 发货缺货--补货推荐仓位
          */
         private String toWarehouseLocation;

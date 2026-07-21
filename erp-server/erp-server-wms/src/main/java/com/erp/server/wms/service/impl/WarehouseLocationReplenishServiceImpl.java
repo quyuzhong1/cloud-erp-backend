@@ -209,7 +209,10 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
             toWarehouseLocationMap = productDetailEntities.stream().filter(v -> CharSequenceUtil.isNotBlank(v.getWarehouseLocation())).collect(Collectors.toMap(ProductDetailEntity::getId,ProductDetailEntity::getWarehouseLocation));
         }
         for (WarehouseLocationReplenishDTO.AddDTO dto : addList) {
-            if(toWarehouseLocationMap.containsKey(dto.getSkuId())){
+            // 已预填取货/上架时不再覆盖产品小货区推荐
+            boolean prefilled = CharSequenceUtil.isNotBlank(dto.getFromWarehouseLocation())
+                    && CharSequenceUtil.isNotBlank(dto.getToWarehouseLocation());
+            if (!prefilled && toWarehouseLocationMap.containsKey(dto.getSkuId())) {
                 //推荐仓位（小货区）
                 dto.setToWarehouseLocation(toWarehouseLocationMap.get(dto.getSkuId()));
             }
@@ -232,6 +235,18 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
 
         //发货缺货补货
         if(dto.getSourceType().equals(ReplenishTypeEnum.DELIVER_STOCK_OUT)){
+            // 已由仓位推荐预填取货/上架时，直接落库并计算建议数量
+            if (CharSequenceUtil.isNotBlank(dto.getFromWarehouseLocation())
+                    && CharSequenceUtil.isNotBlank(dto.getToWarehouseLocation())) {
+                entity.setFromWarehouseArea(dto.getFromWarehouseArea());
+                entity.setFromWarehouseLocation(dto.getFromWarehouseLocation());
+                entity.setToWarehouseArea(dto.getToWarehouseArea());
+                entity.setToWarehouseLocation(dto.getToWarehouseLocation());
+                entity.setSuggestQty(calcDeliverStockOutSuggestQty(dto, dto.getToWarehouseLocation()));
+                this.save(entity);
+                return BatchResultDTO.success(entity.getId(), dto.getSkuNo(), OperationTypeEnum.ADD);
+            }
+
             //推荐取货库区和取货仓位
             Pair<WarehouseLocationEntity, InventoryEntity> pair = getFromAreaAndLocation(dto);
             entity.setFromWarehouseArea(pair.getKey().getCode());
@@ -393,6 +408,42 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
         }
 
         return BatchResultDTO.success(entity.getId(), dto.getSkuNo(), OperationTypeEnum.ADD);
+    }
+
+    /**
+     * 发货缺货补货：按上架仓位安全库存/最大补货量计算建议补货数量。
+     * <p>
+     * 有最大补货量：maxQty + 缺货数量 - 上架仓位可用库存；<br>
+     * 仅有安全库存：safetyQty + 缺货数量 - 上架仓位可用库存；<br>
+     * 否则：等于缺货数量。
+     *
+     * @param dto                 补货新增入参
+     * @param toWarehouseLocation 上架仓位编码
+     * @return 建议补货数量
+     */
+    private Integer calcDeliverStockOutSuggestQty(WarehouseLocationReplenishDTO.AddDTO dto, String toWarehouseLocation) {
+        InventoryEntity inventoryEntity = inventoryService.getOne(new QueryWrapper<InventoryEntity>()
+                .eq("warehouse_id", dto.getWarehouseId())
+                .eq("sku_id", dto.getSkuId())
+                .eq("warehouse_location", toWarehouseLocation)
+                .eq("dict_inventory_status", "usable")
+                .eq("is_deleted", false)
+                .last("limit 1")
+        );
+        WarehouseLocationSafetyInventoryEntity safetyInventoryEntity = safetyInventoryService.getOne(new QueryWrapper<WarehouseLocationSafetyInventoryEntity>()
+                .eq("sku_id", dto.getSkuId())
+                .eq("warehouse_id", dto.getWarehouseId())
+                .eq("warehouse_location", toWarehouseLocation)
+        );
+        if (safetyInventoryEntity != null && inventoryEntity != null) {
+            if (safetyInventoryEntity.getMaxQty() != 0) {
+                return safetyInventoryEntity.getMaxQty() + dto.getQty() - inventoryEntity.getQty();
+            }
+            if (safetyInventoryEntity.getMaxQty() == 0 && safetyInventoryEntity.getSafetyQty() != 0) {
+                return safetyInventoryEntity.getSafetyQty() + dto.getQty() - inventoryEntity.getQty();
+            }
+        }
+        return dto.getQty();
     }
 
     private InventoryEntity findLastInventory(WarehouseLocationReplenishDTO.AddDTO dto , List<String> pickLocationCodeList , List<InventoryEntity> pickInventoryList){

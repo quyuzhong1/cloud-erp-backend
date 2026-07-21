@@ -90,7 +90,10 @@ public interface PickingListsService extends SuperService<PickingListsEntity> {
      * @param warehouseMap        仓库id和仓库名映射
      * @param results 前置规则返回的仓位数据
      */
-    List<String> generateSoB2cPicking(SoB2cDeliveryEntity soB2cDeliveryEntity, CfgRulePickingDTO.CfgExecutionDataDTO executionData, Map<String, String> warehouseMap, List<LocationInventoryResultDTO> results);
+    /**
+     * @return 缺货 Map（skuNo → 缺货数量）；空 Map 表示全部匹配成功并已生成拣货单
+     */
+    Map<String, Integer> generateSoB2cPicking(SoB2cDeliveryEntity soB2cDeliveryEntity, CfgRulePickingDTO.CfgExecutionDataDTO executionData, Map<String, String> warehouseMap, List<LocationInventoryResultDTO> results);
     /**
      * 根据来源单id汇总sku拣货数量
      * @param sourceIds

@@ -354,4 +354,37 @@ public class CfgRulePickingDTO {
 
         private Integer index;
     }
+
+    /**
+     * 缺货补货仓位推荐入参（SKU 维度）
+     */
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ReplenishShortageItemDTO {
+        private String skuId;
+        private String skuNo;
+        /** 缺货/补货建议数量 */
+        private Integer qty;
+    }
+
+    /**
+     * 缺货补货仓位推荐结果（取货 + 上架）
+     */
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ReplenishLocationSuggestDTO {
+        private String skuId;
+        private String skuNo;
+        private Integer qty;
+        private String fromWarehouseArea;
+        private String fromWarehouseLocation;
+        private String toWarehouseArea;
+        private String toWarehouseLocation;
+        /** 命中的补货推荐规则 ID */
+        private String ruleId;
+    }
 }

@@ -91,4 +91,25 @@ public interface CfgRulePickingService extends SuperService<CfgRulePickingEntity
      * @return 命中规则列表（已按优先级、更新时间排序）
      */
     List<CfgRulePickingEntity> listMatchedRules(CfgRulePickingDTO.CfgExecutionDataDTO executionData, String ruleType);
+
+    /**
+     * 按补货仓位推荐解析缺货 SKU 的取货/上架仓位。
+     * <p>
+     * 取货：命中规则的补货动作库区优先级 + 可用库存；无库存抛 {@code WH_REPLENISH_FROM_LOCATION_NOT_FOUND}。<br>
+     * 上架：按规则 {@code inWarehouseLocation} 解析：
+     * <ul>
+     *   <li>large / small → SKU 大件/小件推荐仓位</li>
+     *   <li>recent → 优先产品小货区，否则拣货区最新出入库流水；无流水抛 {@code WH_REPLENISH_TO_LOCATION_NOT_CONFIGURED}</li>
+     * </ul>
+     * 无补货规则或本仓无补货动作时抛 {@code WH_LOCATION_SUGGEST_NOT_FOUND}。
+     *
+     * @param executionData 规则执行数据（用于命中补货规则）
+     * @param warehouseId   仓库 ID
+     * @param shortageItems 缺货 SKU 列表（含缺货数量）
+     * @return 每个 SKU 的取货/上架仓位建议
+     */
+    List<CfgRulePickingDTO.ReplenishLocationSuggestDTO> resolveReplenishLocations(
+            CfgRulePickingDTO.CfgExecutionDataDTO executionData,
+            String warehouseId,
+            List<CfgRulePickingDTO.ReplenishShortageItemDTO> shortageItems);
 }

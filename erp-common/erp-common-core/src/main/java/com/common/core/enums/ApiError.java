@@ -1116,6 +1116,9 @@ public final class ApiError implements Serializable {
     public static final ApiError WH_BORROW_WAREHOUSE_USABLE_INSUFFICIENT = ApiErrorWms.WH_BORROW_WAREHOUSE_USABLE_INSUFFICIENT;
     public static final ApiError WAREHOUSE_INVENTORY_FAILED = ApiErrorWms.WAREHOUSE_INVENTORY_FAILED;
     public static final ApiError VIRTUAL_WAREHOUSE_INVENTORY_FAILED = ApiErrorWms.VIRTUAL_WAREHOUSE_INVENTORY_FAILED;
+    public static final ApiError WH_LOCATION_SUGGEST_NOT_FOUND = ApiErrorWms.WH_LOCATION_SUGGEST_NOT_FOUND;
+    public static final ApiError WH_REPLENISH_FROM_LOCATION_NOT_FOUND = ApiErrorWms.WH_REPLENISH_FROM_LOCATION_NOT_FOUND;
+    public static final ApiError WH_REPLENISH_TO_LOCATION_NOT_CONFIGURED = ApiErrorWms.WH_REPLENISH_TO_LOCATION_NOT_CONFIGURED;
 
     /** Tms service error constants. */
     public static final ApiError FIRST_MILE_FBA_SHIPMENT_NOT_EXIST_BILL = ApiErrorTms.FIRST_MILE_FBA_SHIPMENT_NOT_EXIST_BILL;

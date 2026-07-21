@@ -423,4 +423,10 @@ public final class ApiErrorWms {
     public static final ApiError WH_BORROW_WAREHOUSE_USABLE_INSUFFICIENT = new ApiError("WH_BORROW_WAREHOUSE_USABLE_INSUFFICIENT", 11218, "SKU【{0}】，借调仓【{1}】，可用数【{2}】，可用库存不足，无法借调");
     public static final ApiError WAREHOUSE_INVENTORY_FAILED = new ApiError("WAREHOUSE_INVENTORY_FAILED", 11219, "库存交易失败");
     public static final ApiError VIRTUAL_WAREHOUSE_INVENTORY_FAILED = new ApiError("VIRTUAL_WAREHOUSE_INVENTORY_FAILED", 11220, "虚拟仓库库存交易失败");
+    /** 仓位推荐规则未命中或本仓无补货动作 */
+    public static final ApiError WH_LOCATION_SUGGEST_NOT_FOUND = new ApiError("WH_LOCATION_SUGGEST_NOT_FOUND", 11221, "未找到推荐仓位，请检查推荐仓位配置");
+    /** 补货推荐取货仓位（补货库区）无可用库存 */
+    public static final ApiError WH_REPLENISH_FROM_LOCATION_NOT_FOUND = new ApiError("WH_REPLENISH_FROM_LOCATION_NOT_FOUND", 11222, "SKU【{0}】未找到补货推荐取货仓位");
+    /** 补货推荐上架仓位未配置或无法解析 */
+    public static final ApiError WH_REPLENISH_TO_LOCATION_NOT_CONFIGURED = new ApiError("WH_REPLENISH_TO_LOCATION_NOT_CONFIGURED", 11223, "SKU【{0}】未配置补货推荐上架仓位");
 }

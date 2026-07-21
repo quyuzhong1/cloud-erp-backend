@@ -18,11 +18,14 @@ import com.common.core.exception.ServiceException;
 import com.common.core.server.rule.SpElServer;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.pickingstrategy.*;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.InWarehouseLocationEnum;
 import com.erp.model.wms.enums.RuleTypeEnum;
+import com.erp.model.wms.enums.WarehouseAreaTypeEnum;
+import com.erp.rpc.plm.feign.ProductDetailFeign;
 import com.erp.server.wms.convert.CfgRuleConverter;
 import com.erp.server.wms.mapper.CfgRulePickingMapper;
 import com.erp.server.wms.service.*;
@@ -36,6 +39,7 @@ import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -68,6 +72,10 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
     private PickingListsService pickingListsService;
     @Resource
     private DictBasicService dictBasicService;
+    @Resource
+    private ProductDetailFeign productDetailFeign;
+    @Resource
+    private TransactionFlowService transactionFlowService;
 
     @Override
     public PagingVO<CfgRulePickingDTO.PagingView> paging(PagingDTO<CfgRulePickingDTO.PagingParam> dto) {
@@ -365,5 +373,246 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
                 .orderByAsc(CfgRulePickingEntity::getPriority)
                 .orderByDesc(CfgRulePickingEntity::getUpdateTime)
         );
+    }
+
+    /**
+     * 按补货仓位推荐解析缺货 SKU 的取货/上架仓位（B2C 缺货补货、要货一键移动共用）。
+     * <ul>
+     *   <li>取货：补货动作库区优先级 + 可用库存；无库存 → {@link ApiError#WH_REPLENISH_FROM_LOCATION_NOT_FOUND}</li>
+     *   <li>上架 large/small：SKU 大/小件推荐仓位；无效 → {@link ApiError#WH_REPLENISH_TO_LOCATION_NOT_CONFIGURED}</li>
+     *   <li>上架 recent：优先产品小货区；否则拣货区最新出入库流水；无流水 → {@link ApiError#WH_REPLENISH_TO_LOCATION_NOT_CONFIGURED}</li>
+     *   <li>无规则/本仓无动作 → {@link ApiError#WH_LOCATION_SUGGEST_NOT_FOUND}</li>
+     * </ul>
+     */
+    @Override
+    public List<CfgRulePickingDTO.ReplenishLocationSuggestDTO> resolveReplenishLocations(
+            CfgRulePickingDTO.CfgExecutionDataDTO executionData,
+            String warehouseId,
+            List<CfgRulePickingDTO.ReplenishShortageItemDTO> shortageItems) {
+        if (CollectionUtils.isEmpty(shortageItems) || CharSequenceUtil.isBlank(warehouseId)) {
+            return Collections.emptyList();
+        }
+        List<CfgRulePickingEntity> replenishRules = this.listMatchedRules(executionData, RuleTypeEnum.WAREHOUSE_LOCATION_REPLENISH.getCode());
+        if (CollectionUtils.isEmpty(replenishRules)) {
+            throw new ServiceException(ApiError.WH_LOCATION_SUGGEST_NOT_FOUND);
+        }
+        CfgRulePickingEntity hitRule = replenishRules.get(0);
+        List<CfgRulePackingActionEntity> replenishActions = cfgRulePackingActionService.listByRuleIds(
+                Collections.singletonList(hitRule.getId()), RuleTypeEnum.WAREHOUSE_LOCATION_REPLENISH.getCode());
+        replenishActions = replenishActions.stream()
+                .filter(action -> warehouseId.equals(action.getWarehouseId()))
+                .sorted(Comparator.comparing(CfgRulePackingActionEntity::getIndex, Comparator.nullsLast(Integer::compareTo)))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(replenishActions)) {
+            throw new ServiceException(ApiError.WH_LOCATION_SUGGEST_NOT_FOUND);
+        }
+
+        List<String> skuIds = shortageItems.stream().map(CfgRulePickingDTO.ReplenishShortageItemDTO::getSkuId)
+                .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(skuIds)) {
+            String skuNo = shortageItems.stream().map(CfgRulePickingDTO.ReplenishShortageItemDTO::getSkuNo)
+                    .filter(CharSequenceUtil::isNotBlank).findFirst().orElse("");
+            throw new ServiceException(ApiError.WH_REPLENISH_FROM_LOCATION_NOT_FOUND, skuNo);
+        }
+        List<CfgRulePickingDTO.CfgRulePickingInventoryDTO> replenishInventories = cfgRulePackingActionService.listLocationByRule(
+                Collections.singletonList(hitRule),
+                Collections.singletonList(warehouseId),
+                skuIds,
+                "gt",
+                RuleTypeEnum.WAREHOUSE_LOCATION_REPLENISH.getCode());
+
+        List<WarehouseLocationEntity> warehouseLocations = warehouseLocationService.listByWarehouseIds(Collections.singletonList(warehouseId));
+        Map<String, WarehouseLocationEntity> locationByCode = warehouseLocations.stream()
+                .filter(loc -> "location".equals(loc.getType()))
+                .filter(loc -> !Boolean.TRUE.equals(loc.getDisabled()))
+                .collect(Collectors.toMap(WarehouseLocationEntity::getCode, Function.identity(), (a, b) -> a));
+        Map<String, WarehouseLocationEntity> areaById = warehouseLocations.stream()
+                .filter(loc -> "area".equals(loc.getType()))
+                .collect(Collectors.toMap(WarehouseLocationEntity::getId, Function.identity(), (a, b) -> a));
+
+        List<ProductDetailEntity> productDetails = CollectionUtils.isEmpty(skuIds)
+                ? Collections.emptyList() : productDetailFeign.listByIds(skuIds);
+        Map<String, ProductDetailEntity> productMap = productDetails.stream()
+                .collect(Collectors.toMap(ProductDetailEntity::getId, Function.identity(), (a, b) -> a));
+
+        List<String> pickLocationCodes = listPickingAreaLocationCodes(warehouseId, warehouseLocations);
+        List<CfgRulePickingDTO.ReplenishLocationSuggestDTO> result = new ArrayList<>();
+        for (CfgRulePickingDTO.ReplenishShortageItemDTO item : shortageItems) {
+            if (CharSequenceUtil.isBlank(item.getSkuId()) && CharSequenceUtil.isBlank(item.getSkuNo())) {
+                throw new ServiceException(ApiError.WH_REPLENISH_FROM_LOCATION_NOT_FOUND, "");
+            }
+            CfgRulePickingDTO.CfgRulePickingInventoryDTO outInventory = replenishInventories.stream()
+                    .filter(v -> {
+                        boolean skuMatch = (CharSequenceUtil.isNotBlank(item.getSkuId()) && item.getSkuId().equals(v.getSkuId()))
+                                || (CharSequenceUtil.isNotBlank(item.getSkuNo()) && item.getSkuNo().equals(v.getSkuNo()));
+                        return warehouseId.equals(v.getWarehouseId())
+                                && skuMatch
+                                && v.getQty() != null
+                                && v.getQty() > 0;
+                    })
+                    .findFirst()
+                    .orElse(null);
+            if (outInventory == null || CharSequenceUtil.isBlank(outInventory.getWarehouseLocation())) {
+                throw new ServiceException(ApiError.WH_REPLENISH_FROM_LOCATION_NOT_FOUND, item.getSkuNo());
+            }
+            String fromLocation = outInventory.getWarehouseLocation();
+            WarehouseLocationEntity fromLocEntity = locationByCode.get(fromLocation);
+            String fromArea = null;
+            if (fromLocEntity != null && CharSequenceUtil.isNotBlank(fromLocEntity.getParentId())) {
+                WarehouseLocationEntity area = areaById.get(fromLocEntity.getParentId());
+                fromArea = area != null ? area.getCode() : null;
+            }
+
+            String toLocation = resolveToWarehouseLocation(hitRule.getInWarehouseLocation(), productMap.get(item.getSkuId()),
+                    warehouseId, item.getSkuId(), item.getSkuNo(), pickLocationCodes, locationByCode);
+            WarehouseLocationEntity toLocEntity = locationByCode.get(toLocation);
+            if (toLocEntity == null) {
+                // 可能 listByWarehouseIds 未覆盖（如禁用过滤），再查一次
+                toLocEntity = warehouseLocationService.getOne(Wrappers.<WarehouseLocationEntity>lambdaQuery()
+                        .eq(WarehouseLocationEntity::getWarehouseId, warehouseId)
+                        .eq(WarehouseLocationEntity::getCode, toLocation)
+                        .eq(WarehouseLocationEntity::getDisabled, false)
+                        .last("limit 1"));
+            }
+            if (toLocEntity == null) {
+                throw new ServiceException(ApiError.WH_REPLENISH_TO_LOCATION_NOT_CONFIGURED, item.getSkuNo());
+            }
+            String toArea = null;
+            if (CharSequenceUtil.isNotBlank(toLocEntity.getParentId())) {
+                WarehouseLocationEntity area = areaById.get(toLocEntity.getParentId());
+                if (area == null) {
+                    area = warehouseLocationService.getById(toLocEntity.getParentId());
+                }
+                toArea = area != null ? area.getCode() : null;
+            }
+
+            CfgRulePickingDTO.ReplenishLocationSuggestDTO suggest = new CfgRulePickingDTO.ReplenishLocationSuggestDTO();
+            suggest.setSkuId(item.getSkuId());
+            suggest.setSkuNo(item.getSkuNo());
+            suggest.setQty(item.getQty());
+            suggest.setFromWarehouseArea(fromArea);
+            suggest.setFromWarehouseLocation(fromLocation);
+            suggest.setToWarehouseArea(toArea);
+            suggest.setToWarehouseLocation(toLocation);
+            suggest.setRuleId(hitRule.getId());
+            result.add(suggest);
+        }
+        return result;
+    }
+
+    /**
+     * 按规则上架类型解析上架仓位编码。
+     * <ul>
+     *   <li>{@code large}：产品推荐仓位（大货区），多值取第一个并校验系统仓位</li>
+     *   <li>{@code small}：产品推荐仓位（小货区），多值取第一个并校验系统仓位</li>
+     *   <li>{@code recent}：先小货区；无效则查拣货区出入库流水最新仓位；仍无则抛业务异常</li>
+     * </ul>
+     *
+     * @param inWarehouseLocationConfig 规则上的上架类型配置
+     * @param product                   SKU 产品主数据（可空）
+     * @param warehouseId               仓库 ID
+     * @param skuId                     SKU ID（recent 查流水必填）
+     * @param skuNo                     SKU 编码（异常文案）
+     * @param pickLocationCodes         拣货区仓位编码集合
+     * @param locationByCode            本仓库位缓存
+     * @return 上架仓位编码
+     */
+    private String resolveToWarehouseLocation(String inWarehouseLocationConfig,
+                                              ProductDetailEntity product,
+                                              String warehouseId,
+                                              String skuId,
+                                              String skuNo,
+                                              List<String> pickLocationCodes,
+                                              Map<String, WarehouseLocationEntity> locationByCode) {
+        if (CharSequenceUtil.isBlank(inWarehouseLocationConfig)) {
+            throw new ServiceException(ApiError.WH_REPLENISH_TO_LOCATION_NOT_CONFIGURED, skuNo);
+        }
+        InWarehouseLocationEnum locationEnum = InWarehouseLocationEnum.getEnum(inWarehouseLocationConfig);
+        if (locationEnum == null) {
+            throw new ServiceException(ApiError.WH_REPLENISH_TO_LOCATION_NOT_CONFIGURED, skuNo);
+        }
+        if (InWarehouseLocationEnum.LARGE.equals(locationEnum)) {
+            String loc = firstLocationCode(product == null ? null : product.getWarehouseLocationLarge());
+            if (CharSequenceUtil.isBlank(loc) || !isValidSystemLocation(loc, locationByCode, warehouseId)) {
+                throw new ServiceException(ApiError.WH_REPLENISH_TO_LOCATION_NOT_CONFIGURED, skuNo);
+            }
+            return loc;
+        }
+        if (InWarehouseLocationEnum.SMALL.equals(locationEnum)) {
+            String loc = firstLocationCode(product == null ? null : product.getWarehouseLocation());
+            if (CharSequenceUtil.isBlank(loc) || !isValidSystemLocation(loc, locationByCode, warehouseId)) {
+                throw new ServiceException(ApiError.WH_REPLENISH_TO_LOCATION_NOT_CONFIGURED, skuNo);
+            }
+            return loc;
+        }
+        // recent：优先产品小货区，否则拣货区最新出入库流水
+        String smallLoc = firstLocationCode(product == null ? null : product.getWarehouseLocation());
+        if (CharSequenceUtil.isNotBlank(smallLoc) && isValidSystemLocation(smallLoc, locationByCode, warehouseId)) {
+            return smallLoc;
+        }
+        if (CollectionUtils.isEmpty(pickLocationCodes) || CharSequenceUtil.isBlank(skuId)) {
+            throw new ServiceException(ApiError.WH_REPLENISH_TO_LOCATION_NOT_CONFIGURED, skuNo);
+        }
+        TransactionFlowEntity transactionFlow = transactionFlowService.lambdaQuery()
+                .eq(TransactionFlowEntity::getWarehouseId, warehouseId)
+                .eq(TransactionFlowEntity::getSkuId, skuId)
+                .in(TransactionFlowEntity::getWarehouseLocation, pickLocationCodes)
+                .orderByDesc(TransactionFlowEntity::getBillDate, TransactionFlowEntity::getId)
+                .last("limit 1")
+                .one();
+        if (transactionFlow == null || CharSequenceUtil.isBlank(transactionFlow.getWarehouseLocation())) {
+            throw new ServiceException(ApiError.WH_REPLENISH_TO_LOCATION_NOT_CONFIGURED, skuNo);
+        }
+        return transactionFlow.getWarehouseLocation();
+    }
+
+    /**
+     * 逗号分隔仓位配置取第一个有效编码
+     */
+    private String firstLocationCode(String locationConfig) {
+        if (CharSequenceUtil.isBlank(locationConfig)) {
+            return null;
+        }
+        return locationConfig.split(",")[0].trim();
+    }
+
+    /**
+     * 校验仓位编码在本仓是否存在且未禁用
+     */
+    private boolean isValidSystemLocation(String locationCode,
+                                          Map<String, WarehouseLocationEntity> locationByCode,
+                                          String warehouseId) {
+        if (locationByCode.containsKey(locationCode)) {
+            return true;
+        }
+        WarehouseLocationEntity entity = warehouseLocationService.getOne(Wrappers.<WarehouseLocationEntity>lambdaQuery()
+                .eq(WarehouseLocationEntity::getWarehouseId, warehouseId)
+                .eq(WarehouseLocationEntity::getCode, locationCode)
+                .eq(WarehouseLocationEntity::getDisabled, false)
+                .last("limit 1"));
+        return entity != null;
+    }
+
+    /**
+     * 列出仓库下拣货区（pickingArea）内全部仓位编码，供 recent 上架查出入库流水
+     */
+    private List<String> listPickingAreaLocationCodes(String warehouseId, List<WarehouseLocationEntity> warehouseLocations) {
+        List<String> pickAreaIds = warehouseLocations.stream()
+                .filter(loc -> "area".equals(loc.getType()))
+                .filter(loc -> WarehouseAreaTypeEnum.PICKING_AREA.getCode().equals(loc.getAreaType()))
+                .filter(loc -> !Boolean.TRUE.equals(loc.getDisabled()))
+                .map(WarehouseLocationEntity::getId)
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(pickAreaIds)) {
+            return Collections.emptyList();
+        }
+        return warehouseLocations.stream()
+                .filter(loc -> "location".equals(loc.getType()))
+                .filter(loc -> pickAreaIds.contains(loc.getParentId()))
+                .filter(loc -> !Boolean.TRUE.equals(loc.getDisabled()))
+                .map(WarehouseLocationEntity::getCode)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
     }
 }

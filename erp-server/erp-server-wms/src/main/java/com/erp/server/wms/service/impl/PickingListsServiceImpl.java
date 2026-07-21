@@ -1418,7 +1418,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
     }
 
     @Override
-    public List<String> generateSoB2cPicking(SoB2cDeliveryEntity soB2cDeliveryEntity, CfgRulePickingDTO.CfgExecutionDataDTO executionData, Map<String, String> warehouseMap, List<LocationInventoryResultDTO> results) {
+    public Map<String, Integer> generateSoB2cPicking(SoB2cDeliveryEntity soB2cDeliveryEntity, CfgRulePickingDTO.CfgExecutionDataDTO executionData, Map<String, String> warehouseMap, List<LocationInventoryResultDTO> results) {
         List<String> skuIdList = executionData.getDetails().stream().map(CfgRulePickingDTO.CfgExecutionDataDetailDTO::getSkuId).distinct().collect(Collectors.toList());
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
         Pair<List<LocationInventoryResultDTO>, Map<String, Integer>> resultData = Pair.create(Collections.emptyList(), Collections.emptyMap());
@@ -1426,7 +1426,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             resultData = cfgRulePickingService.getSoB2CRuleOrderMatchResult(executionData);
             results = resultData.getFirst();
             if (!CollectionUtils.isEmpty(resultData.getSecond())) {
-                return new ArrayList<>(resultData.getSecond().keySet());
+                return resultData.getSecond();
             }
         }
         Map<String, List<LocationInventoryResultDTO>> resultMap = results.stream().collect(Collectors.groupingBy(LocationInventoryResultDTO::getWarehouseId));
@@ -1486,7 +1486,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "拣货单" , entity.getCode());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PICKING_LISTS.getCode(), soB2cDeliveryEntity.getId(), "新增操作");
         }
-        return new ArrayList<>(resultData.getSecond().keySet());
+        return Collections.emptyMap();
     }
 
     @Override
