@@ -6647,8 +6647,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             detailMap.put("actualShippingCost", logisticsEntity.getActualShippingCost());
             detailMap.put("estimatedShippingCost", logisticsEntity.getEstimatedShippingCost());
             detailMap.put("dictPlatform", soB2cEntity.getDictPlatform());
-            // 配货库规则按明细 detailMap 匹配，须同步注入开票状态，否则 invoiceStatus 条件恒不命中
+            // 配货库规则按明细 detailMap 匹配，须同步注入开票相关状态，否则条件恒不命中
             detailMap.put("invoiceStatus", Objects.nonNull(latestInvoice) ? latestInvoice.getStatus() : "");
+            detailMap.put("vatInvoiceStatus", CharSequenceUtil.isNotBlank(soB2cEntity.getVatInvoiceStatus()) ? soB2cEntity.getVatInvoiceStatus() : "");
+            detailMap.put("nfeInvoiceStatus", CharSequenceUtil.isNotBlank(soB2cEntity.getNfeInvoiceStatus()) ? soB2cEntity.getNfeInvoiceStatus() : "");
             detailMap.put("isHavebuyerRemark", isHavebuyerRemark);
             detailMap.put("deliveryWarehouseQty", warehouseCount);
             detailMap.put("skuTypeQty", skuTypeQty);

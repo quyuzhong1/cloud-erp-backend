@@ -11,6 +11,7 @@ import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.erp.model.wms.dto.AiyaInboundCancelDTO;
 import com.erp.model.wms.dto.AiyaInboundSaveDTO;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.WmsCartonSpecDTO;
@@ -181,8 +182,10 @@ public class AiyaHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         AiyaAuth auth = resolveAuth();
         // 取消入库单 GLINK_CANCEL_ASN_NOTIFY 必填 asnNumbers[]，ERP 单据 code(=asnNumber=发货单号) 单条取消
         log.warn("{}取消入库单请求:asnNumber={}", getPlatForm().getName(), cancelInboundReq.getReceivingCode());
-        JSONObject resp = aiyaOpenApiService.cancelInorder(auth.partnerId, auth.partnerKey, auth.customerCode,
-                Collections.singletonList(cancelInboundReq.getReceivingCode()));
+        AiyaInboundCancelDTO request = AiyaInboundCancelDTO.builder()
+                .asnNumbers(Collections.singletonList(cancelInboundReq.getReceivingCode()))
+                .build();
+        JSONObject resp = aiyaOpenApiService.cancelInorder(auth.partnerId, auth.partnerKey, auth.customerCode, request);
         log.warn("{}取消入库单结果:{}", getPlatForm().getName(), JSONUtil.toJsonStr(resp));
         if (!isSuccess(resp)) {
             return failure(buildErrorMessage(resp));
