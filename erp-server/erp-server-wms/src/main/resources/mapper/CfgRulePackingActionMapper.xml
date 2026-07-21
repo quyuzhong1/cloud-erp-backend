@@ -29,8 +29,8 @@
         crp.priority,
         crp.update_time,
         crpa.index
-        FROM cfg_rule_picking crp
-        INNER JOIN cfg_rule_picking_action crpa ON crpa.is_deleted = FALSE AND crpa.rule_id = crp.id
+        FROM cfg_rule_location_suggest crp
+        INNER JOIN cfg_rule_location_suggest_action crpa ON crpa.is_deleted = FALSE AND crpa.rule_id = crp.id
         INNER JOIN inventory inv ON inv.is_deleted = FALSE and inv.warehouse_id = crpa.warehouse_id AND
         inv.dict_inventory_status = 'usable'
         <if test="determiningCondition != null and determiningCondition != '' ">

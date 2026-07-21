@@ -43,12 +43,13 @@ public class CfgRulePackingActionServiceImpl extends SuperServiceImpl<CfgRulePac
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void saveRuleAction(String ruleId, List<CfgRuleActionDTO.Add> actions) {
+    public void saveRuleAction(String ruleId, List<CfgRuleActionDTO.Add> actions, String ruleType) {
         AtomicInteger index = new AtomicInteger(0);
         List<CfgRulePackingActionEntity> actionEntities = actions.stream()
                 .map(action -> {
                     CfgRulePackingActionEntity entity = BeanMapperUtils.map(CfgRulePackingActionEntity.class, action);
                     entity.setRuleId(ruleId);
+                    entity.setRuleType(ruleType);
                     entity.setIndex(index.incrementAndGet());
                     return entity;
                 }).collect(Collectors.toList());
@@ -57,11 +58,12 @@ public class CfgRulePackingActionServiceImpl extends SuperServiceImpl<CfgRulePac
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void updateRuleAction(String ruleId, List<CfgRuleActionDTO.Update> actionList) {
+    public void updateRuleAction(String ruleId, List<CfgRuleActionDTO.Update> actionList, String ruleType) {
 
         AtomicInteger index = new AtomicInteger(0);
         // 查询规则动作
         List<CfgRulePackingActionEntity> oldActions = list(Wrappers.<CfgRulePackingActionEntity>lambdaQuery()
+                .eq(CfgRulePackingActionEntity::getRuleType, ruleType)
                 .eq(CfgRulePackingActionEntity::getRuleId, ruleId));
         List<String> actionIds = actionList.stream().map(CfgRuleActionDTO.Update::getId).collect(Collectors.toList());
         if (!CollectionUtils.isEmpty(actionIds)) {
@@ -77,6 +79,7 @@ public class CfgRulePackingActionServiceImpl extends SuperServiceImpl<CfgRulePac
                 .map(action -> {
                     CfgRulePackingActionEntity entity = BeanMapperUtils.map(CfgRulePackingActionEntity.class, action);
                     entity.setRuleId(ruleId);
+                    entity.setRuleType(ruleType);
                     entity.setIndex(index.incrementAndGet());
                     return entity;
                 }).collect(Collectors.toList());
@@ -84,8 +87,8 @@ public class CfgRulePackingActionServiceImpl extends SuperServiceImpl<CfgRulePac
     }
 
     @Override
-    public List<CfgRulePackingActionEntity> listByRuleIds(List<String> cfgRuleIds) {
-        return list(Wrappers.<CfgRulePackingActionEntity>lambdaQuery().in(CfgRulePackingActionEntity::getRuleId, cfgRuleIds));
+    public List<CfgRulePackingActionEntity> listByRuleIds(List<String> cfgRuleIds, String ruleType) {
+        return list(Wrappers.<CfgRulePackingActionEntity>lambdaQuery().in(CfgRulePackingActionEntity::getRuleId, cfgRuleIds).eq(CfgRulePackingActionEntity::getRuleType, ruleType));
     }
 
     @Override

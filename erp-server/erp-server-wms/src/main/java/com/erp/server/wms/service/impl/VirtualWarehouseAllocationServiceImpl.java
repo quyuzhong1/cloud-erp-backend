@@ -915,7 +915,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         List<CfgRulePickingDTO.CfgExecutionDataDetailDTO> details = transferWarehouseList.stream()
                 .map(v -> new CfgRulePickingDTO.CfgExecutionDataDetailDTO(v.getFromWarehouseId(), v.getSkuId(), v.getSkuNo(),v.getSkuNo(), v.getQty(), v.getSourceDetailId())).collect(Collectors.toList());
         executionData.setDetails(details);
-        Pair<List<CfgRulePickingDTO.CfgRulePickingInventoryDTO>, List<WarehouseLocationEntity>> pickPair = cfgRulePickingService.matchRuleActionList(executionData, "gt");
+        Pair<List<CfgRulePickingDTO.CfgRulePickingInventoryDTO>, List<WarehouseLocationEntity>> pickPair = cfgRulePickingService.matchRuleActionList(executionData, "gt", RuleTypeEnum.PICKING_STRATEGY.getCode());
         Pair<List<LocationInventoryResultDTO>, Map<String, Integer>> ruleOrderMatchResult = cfgRulePickingService.getSoB2CRuleOrderMatchResult(executionData, pickPair);
 
         List<String> resultList = new ArrayList<>();

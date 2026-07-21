@@ -5,7 +5,6 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.IdUtil;
-import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
@@ -2487,9 +2486,9 @@ revokeDTO.setSourcePlatform(dto.getSourcePlatform());
         List<WarehouseLocationMoveDTO.GenPickToSkuMove> moveEntityList = new ArrayList<>();
         //        Pair<List<LocationInventoryResultDTO>, Map<String, Integer>> ruleOrderMatchResult = cfgRulePickingService.getRuleOrderMatchResult(addDTO);
         Pair<List<LocationInventoryResultDTO>, Map<String, Integer>> ruleOrderMatchResult = null;
-        CfgRulePickingDTO.CfgExecutionDataDTO executionData = cfgRulePickingService.getRuleExecutionData(addDTO);
+        CfgRulePickingDTO.CfgExecutionDataDTO executionData = cfgRulePickingService.getPickingRuleExecutionData(addDTO);
         //null 标识获取所有数据 。 稍后再自己提取qty>0 的数据进行使用
-        Pair<List<CfgRulePickingDTO.CfgRulePickingInventoryDTO>, List<WarehouseLocationEntity>> listListPair = cfgRulePickingService.matchRuleActionList(executionData, null);
+        Pair<List<CfgRulePickingDTO.CfgRulePickingInventoryDTO>, List<WarehouseLocationEntity>> listListPair = cfgRulePickingService.matchRuleActionList(executionData, null, RuleTypeEnum.PICKING_STRATEGY.getCode());
         //生成拣货单，只需要考虑qty>0的仓库仓位数据
         List<CfgRulePickingDTO.CfgRulePickingInventoryDTO> cfgRulePickingInventoryGtList = listListPair.getFirst().stream().filter(v -> v.getQty() > 0).collect(Collectors.toList());
         Pair<List<CfgRulePickingDTO.CfgRulePickingInventoryDTO>, List<WarehouseLocationEntity>> gtPair = Pair.create(cfgRulePickingInventoryGtList, listListPair.getSecond());

@@ -25,23 +25,25 @@ public interface CfgRulePackingActionService extends SuperService<CfgRulePacking
     void removeByRuleIds(List<String> ids);
 
     /**
-     * 保存拣货规则动作
+     * 保存仓位推荐动作
      * @param ruleId 规则主表id
      * @param actions 动作
+     * @param ruleType 规则类型 RuleTypeEnum
      */
-    void saveRuleAction(String ruleId, List<CfgRuleActionDTO.Add> actions);
+    void saveRuleAction(String ruleId, List<CfgRuleActionDTO.Add> actions, String ruleType);
     /**
-     * 编辑拣货规则动作
+     * 编辑仓位推荐动作
      * @param ruleId 规则主表id
      * @param actions 动作
      */
-    void updateRuleAction(String ruleId, List<CfgRuleActionDTO.Update> actions);
+    void updateRuleAction(String ruleId, List<CfgRuleActionDTO.Update> actions, String ruleType);
 
     /**
      * 根据规则id获取拣货动作
      * @param cfgRuleIds 规则id
+     * @param ruleType 规则类型
      */
-    List<CfgRulePackingActionEntity> listByRuleIds(List<String> cfgRuleIds);
+    List<CfgRulePackingActionEntity> listByRuleIds(List<String> cfgRuleIds, String ruleType);
 
     List<CfgRulePickingDTO.CfgRulePickingInventoryDTO> listLocationByRule(List<CfgRulePickingEntity> rules, List<String> warehouseIds, List<String> skuIds,String determiningCondition);
 }

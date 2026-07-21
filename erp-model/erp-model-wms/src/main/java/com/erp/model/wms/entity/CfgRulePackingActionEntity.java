@@ -20,7 +20,7 @@ import java.io.Serializable;
 @Getter
 @Setter
 @Accessors(chain = true)
-@TableName("cfg_rule_picking_action")
+@TableName("cfg_rule_location_suggest_action")
 public class CfgRulePackingActionEntity extends BaseEntity<CfgRulePackingActionEntity> {
 
     @TableField("rule_id")
@@ -47,6 +47,13 @@ public class CfgRulePackingActionEntity extends BaseEntity<CfgRulePackingActionE
      */
     @TableField("index")
     private Integer index;
+
+    /**
+     * 规则类型
+     * （PICKING_STRATEGY：拣货仓位推荐;WAREHOUSE_LOCATION_REPLENISH:补货仓位推荐;WAREHOUSE_LOCATION_OUT_STOCK:出库仓位推荐）
+     */
+    @TableField("rule_type")
+    private String ruleType;
 
     @Override
     public Serializable pkVal() {

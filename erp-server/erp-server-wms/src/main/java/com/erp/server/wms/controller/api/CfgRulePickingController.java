@@ -22,14 +22,14 @@ import java.util.List;
 
 /**
  * <p>
- * 拣货规则表 前端控制器
+ * 仓位推荐表 前端控制器
  * </p>
  *
  * @author Lambda
  * @since 2024-05-28
  */
 @RestController
-@LogSystemModule("拣货规则")
+@LogSystemModule("仓位推荐")
 @RequestMapping("/cfg-rule-picking")
 public class CfgRulePickingController extends BaseController {
 
@@ -88,7 +88,7 @@ public class CfgRulePickingController extends BaseController {
      *
      * @param idsDTO idsDTO
      **/
-    @LogAction(value = LogActionEnum.DELETE, desc = "批量删除拣货规则")
+    @LogAction(value = LogActionEnum.DELETE, desc = "批量删除仓位推荐")
     @PostMapping("/delete")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
         List<BatchResultDTO> resultDTOList = cfgRulePickingService.delete(idsDTO.getIds());

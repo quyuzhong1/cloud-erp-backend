@@ -15,6 +15,9 @@
         <result column="is_deleted" property="isDeleted"/>
         <result column="name" property="name"/>
         <result column="disabled" property="disabled"/>
+        <result column="pick_disabled" property="pickDisabled"/>
+        <result column="replenish_disabled" property="replenishDisabled"/>
+        <result column="out_stock_disabled" property="outStockDisabled"/>
         <result column="priority" property="priority"/>
         <result column="description" property="description"/>
     </resultMap>
@@ -24,9 +27,12 @@
                cfp.name,
                cfp.description,
                cfp.disabled,
+               cfp.pick_disabled,
+               cfp.replenish_disabled,
+               cfp.out_stock_disabled,
                cfp.update_user_name,
                cfp.update_time
-        from cfg_rule_picking as cfp
+        from cfg_rule_location_suggest as cfp
         where ${params.sqlMap.default}
           and is_deleted = false
         order by cfp.update_time desc ,cfp.id desc

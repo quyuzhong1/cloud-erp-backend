@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto.pickingstrategy;
 
+import cn.hutool.core.collection.CollUtil;
 import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
@@ -10,10 +11,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Positive;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -33,6 +31,19 @@ public class CfgRulePickingDTO {
         private Integer priority;
         private String id;
         private Boolean disabled;
+
+        /**
+         * 拣货禁用状态 false 未禁用
+         */
+        private Boolean pickDisabled;
+        /**
+         * 补货禁用状态 false 未禁用
+         */
+        private Boolean replenishDisabled;
+        /**
+         * 出库禁用状态 false 未禁用
+         */
+        private Boolean outStockDisabled;
         private String updateUserName;
         private LocalDateTime updateTime;
     }
@@ -60,13 +71,70 @@ public class CfgRulePickingDTO {
         private Integer priority;
         @NotNull(message = "状态不能为空")
         private Boolean disabled;
+
+        /**
+         * 拣货禁用状态 false 未禁用
+         */
+        private Boolean pickDisabled;
+        /**
+         * 补货禁用状态 false 未禁用
+         */
+        private Boolean replenishDisabled;
+        /**
+         * 出库禁用状态 false 未禁用
+         */
+        private Boolean outStockDisabled;
+
         private String description;
+        /**
+         * 拣货仓位推荐
+         */
         @Valid
-        @Size(min = 1, message = "至少存在一条仓位分配规则")
-        private List<CfgRuleActionDTO.Add> actions;
+        private List<CfgRuleActionDTO.Add> pickActions;
+        /**
+         * 补货仓位推荐
+         */
+        @Valid
+        private List<CfgRuleActionDTO.Add> replenishActions;
+        /**
+         * 出库仓位推荐
+         */
+        @Valid
+        private List<CfgRuleActionDTO.Add> outStockActions;
+
         @Valid
         @Size(min = 1, message = "至少存在一条规则条件")
         private List<CfgRuleConditionDTO.Add> conditionList;
+
+        /** 拣货未禁用时，拣货仓位推荐不能为空 */
+        @AssertTrue(message = "拣货仓位推荐不能为空")
+        public boolean isPickActionsValid() {
+            if (Boolean.TRUE.equals(pickDisabled)) {
+                return true; // 已禁用，不校验集合
+            }
+            return CollUtil.isNotEmpty(pickActions);
+        }
+        @AssertTrue(message = "补货仓位推荐不能为空")
+        public boolean isReplenishActionsValid() {
+            if (Boolean.TRUE.equals(replenishDisabled)) {
+                return true;
+            }
+            return CollUtil.isNotEmpty(replenishActions);
+        }
+        @AssertTrue(message = "出库仓位推荐不能为空")
+        public boolean isOutStockActionsValid() {
+            if (Boolean.TRUE.equals(outStockDisabled)) {
+                return true;
+            }
+            return CollUtil.isNotEmpty(outStockActions);
+        }
+
+        @AssertTrue(message = "拣货/补货/出库至少启用一种仓位推荐")
+        public boolean isAnyActionTypeEnabled() {
+            return !Boolean.TRUE.equals(pickDisabled)
+                    || !Boolean.TRUE.equals(replenishDisabled)
+                    || !Boolean.TRUE.equals(outStockDisabled);
+        }
     }
 
     @Getter
@@ -81,21 +149,92 @@ public class CfgRulePickingDTO {
         private Integer priority;
         @NotNull(message = "状态不能为空")
         private Boolean disabled;
+
+        /**
+         * 拣货禁用状态 false 未禁用
+         */
+        private Boolean pickDisabled;
+        /**
+         * 补货禁用状态 false 未禁用
+         */
+        private Boolean replenishDisabled;
+        /**
+         * 出库禁用状态 false 未禁用
+         */
+        private Boolean outStockDisabled;
+
         private String description;
+        /**
+         * 拣货仓位推荐
+         */
         @Valid
-        @Size(min = 1, message = "至少存在一条仓位分配规则")
-        private List<CfgRuleActionDTO.Update> actions;
+        private List<CfgRuleActionDTO.Update> pickActions;
+        /**
+         * 补货仓位推荐
+         */
+        @Valid
+        private List<CfgRuleActionDTO.Update> replenishActions;
+        /**
+         * 出库仓位推荐
+         */
+        @Valid
+        private List<CfgRuleActionDTO.Update> outStockActions;
+
         @Valid
         @Size(min = 1, message = "至少存在一条规则条件")
         private List<CfgRuleConditionDTO.Update> conditionList;
+
+
+        /** 拣货未禁用时，拣货仓位推荐不能为空 */
+        @AssertTrue(message = "拣货仓位推荐不能为空")
+        public boolean isPickActionsValid() {
+            if (Boolean.TRUE.equals(pickDisabled)) {
+                return true; // 已禁用，不校验集合
+            }
+            return CollUtil.isNotEmpty(pickActions);
+        }
+        @AssertTrue(message = "补货仓位推荐不能为空")
+        public boolean isReplenishActionsValid() {
+            if (Boolean.TRUE.equals(replenishDisabled)) {
+                return true;
+            }
+            return CollUtil.isNotEmpty(replenishActions);
+        }
+        @AssertTrue(message = "出库仓位推荐不能为空")
+        public boolean isOutStockActionsValid() {
+            if (Boolean.TRUE.equals(outStockDisabled)) {
+                return true;
+            }
+            return CollUtil.isNotEmpty(outStockActions);
+        }
+
+        @AssertTrue(message = "拣货/补货/出库至少启用一种仓位推荐")
+        public boolean isAnyActionTypeEnabled() {
+            return !Boolean.TRUE.equals(pickDisabled)
+                    || !Boolean.TRUE.equals(replenishDisabled)
+                    || !Boolean.TRUE.equals(outStockDisabled);
+        }
     }
 
     @Getter
     @Setter
     public static class View {
-
+        /**
+         * 拣货仓位推荐
+         */
         @Dict
-        private List<CfgRuleActionDTO.View> actions;
+        private List<CfgRuleActionDTO.View> pickActions;
+        /**
+         * 补货仓位推荐
+         */
+        @Dict
+        private List<CfgRuleActionDTO.View> replenishActions;
+        /**
+         * 出库仓位推荐
+         */
+        @Dict
+        private List<CfgRuleActionDTO.View> outStockActions;
+
         @Dict
         private List<CfgRuleConditionDTO.View> conditionList;
         private String description;
@@ -103,6 +242,27 @@ public class CfgRulePickingDTO {
         private Integer priority;
         private String id;
         private Boolean disabled;
+
+        /**
+         * 拣货禁用状态 false 未禁用
+         */
+        private Boolean pickDisabled;
+        /**
+         * 补货禁用状态 false 未禁用
+         */
+        private Boolean replenishDisabled;
+        /**
+         * 出库禁用状态 false 未禁用
+         */
+        private Boolean outStockDisabled;
+        /**
+         * 上架仓位
+         */
+        private String inWarehouseLocation;
+        /**
+         * 名称
+         */
+        private String inWarehouseLocationName;
     }
 
     @Getter

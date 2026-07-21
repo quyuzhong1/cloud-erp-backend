@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -20,7 +21,9 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.pickingstrategy.*;
 import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.InWarehouseLocationEnum;
 import com.erp.model.wms.enums.RuleTypeEnum;
+import com.erp.server.wms.convert.CfgRuleConverter;
 import com.erp.server.wms.mapper.CfgRulePickingMapper;
 import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +40,7 @@ import java.util.stream.Collectors;
 
 /**
  * <p>
- * 拣货规则表 服务实现类
+ * 仓位推荐表 服务实现类
  * </p>
  *
  * @author Lambda
@@ -63,6 +66,8 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
     private CfgConditionService cfgConditionService;
     @Resource
     private PickingListsService pickingListsService;
+    @Resource
+    private DictBasicService dictBasicService;
 
     @Override
     public PagingVO<CfgRulePickingDTO.PagingView> paging(PagingDTO<CfgRulePickingDTO.PagingParam> dto) {
@@ -78,8 +83,12 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
         // 操作日志
         String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "拣货策略规则", entity.getId());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PICKING_STRATEGY.getCode(), entity.getId(), "新增操作");
+        //默认使用拣货类型作为规则条件
         cfgRuleConditionService.saveRuleCondition(entity.getId(), dto.getConditionList(), RuleTypeEnum.PICKING_STRATEGY.getCode());
-        cfgRulePackingActionService.saveRuleAction(entity.getId(), dto.getActions());
+        //保存对应的规则动作
+        cfgRulePackingActionService.saveRuleAction(entity.getId(), dto.getPickActions(), RuleTypeEnum.PICKING_STRATEGY.getCode());
+        cfgRulePackingActionService.saveRuleAction(entity.getId(), dto.getReplenishActions(), RuleTypeEnum.WAREHOUSE_LOCATION_REPLENISH.getCode());
+        cfgRulePackingActionService.saveRuleAction(entity.getId(), dto.getOutStockActions(), RuleTypeEnum.WAREHOUSE_LOCATION_OUT_STOCK.getCode());
     }
 
     @Override
@@ -91,14 +100,21 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
         updateById(entity);
         String msg = CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), dto.getId(), "拣货策略规则");
         operateLogService.addModuleOperateLogByObj(old, entity, ModuleTypeEnum.PICKING_STRATEGY.getCode(), dto.getId(), msg);
+        //保存条件
         cfgRuleConditionService.updateRuleCondition(dto.getId(), dto.getConditionList(), ModuleTypeEnum.PICKING_STRATEGY.getCode(), RuleTypeEnum.PICKING_STRATEGY.getCode());
-        cfgRulePackingActionService.updateRuleAction(dto.getId(), dto.getActions());
+        //更新动作
+        cfgRulePackingActionService.updateRuleAction(dto.getId(), dto.getPickActions(), RuleTypeEnum.PICKING_STRATEGY.getCode());
+        cfgRulePackingActionService.updateRuleAction(dto.getId(), dto.getReplenishActions(), RuleTypeEnum.WAREHOUSE_LOCATION_REPLENISH.getCode());
+        cfgRulePackingActionService.updateRuleAction(dto.getId(), dto.getOutStockActions(), RuleTypeEnum.WAREHOUSE_LOCATION_OUT_STOCK.getCode());
     }
 
     @Override
     public CfgRulePickingDTO.View view(String id) {
         CfgRulePickingEntity entity = getById(id);
         CfgRulePickingDTO.View view = BeanMapperUtils.map(CfgRulePickingDTO.View.class, entity);
+        if (CharSequenceUtil.isNotBlank(view.getInWarehouseLocation())){
+            view.setInWarehouseLocationName(InWarehouseLocationEnum.getName(view.getInWarehouseLocation()));
+        }
         //查询规则条件
         List<CfgRuleConditionEntity> ruleConditionEntities = cfgRuleConditionService.list(Wrappers.<CfgRuleConditionEntity>lambdaQuery()
                 .eq(CfgRuleConditionEntity::getRuleId, id)
@@ -109,8 +125,22 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
         List<CfgRulePackingActionEntity> actionEntities = cfgRulePackingActionService.list(Wrappers.<CfgRulePackingActionEntity>lambdaQuery()
                 .eq(CfgRulePackingActionEntity::getRuleId, id)
                 .orderByAsc(CfgRulePackingActionEntity::getIndex));
-        List<CfgRuleActionDTO.View> actions = BeanMapperUtils.copyList(CfgRuleActionDTO.View.class, actionEntities);
-        view.setActions(actions);
+        Map<String, List<CfgRulePackingActionEntity>> actionMap = actionEntities.stream().collect(Collectors.groupingBy(CfgRulePackingActionEntity::getRuleType));
+        List<CfgRulePackingActionEntity> pickingActionEntityList = actionMap.get(RuleTypeEnum.PICKING_STRATEGY.getCode());
+        if (CollUtil.isNotEmpty(pickingActionEntityList)) {
+            List<CfgRuleActionDTO.View> packingActions = CfgRuleConverter.INSTANCE.entityToView(pickingActionEntityList);
+            view.setPickActions(packingActions);
+        }
+        List<CfgRulePackingActionEntity> replenishActionEntityList = actionMap.get(RuleTypeEnum.WAREHOUSE_LOCATION_REPLENISH.getCode());
+        if (CollUtil.isNotEmpty(replenishActionEntityList)) {
+            List<CfgRuleActionDTO.View> packingActions = CfgRuleConverter.INSTANCE.entityToView(replenishActionEntityList);
+            view.setReplenishActions(packingActions);
+        }
+        List<CfgRulePackingActionEntity> outStockActionEntityList = actionMap.get(RuleTypeEnum.WAREHOUSE_LOCATION_OUT_STOCK.getCode());
+        if (CollUtil.isNotEmpty(outStockActionEntityList)) {
+            List<CfgRuleActionDTO.View> packingActions = CfgRuleConverter.INSTANCE.entityToView(outStockActionEntityList);
+            view.setOutStockActions(packingActions);
+        }
         return view;
     }
 
@@ -118,7 +148,7 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
     @Transactional(rollbackFor = Exception.class)
     public List<BatchResultDTO> delete(List<String> ids) {
         List<CfgRulePickingEntity> list = this.listByIds(ids);
-        //删除拣货规则
+        //删除仓位推荐
         removeByIds(ids);
         //删除规则
         cfgRuleConditionService.removeByRuleIds(ids);
@@ -146,37 +176,22 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
         String content = "启用状态由[%s]变更为" + (Boolean.TRUE.equals(dto.getDisabled()) ? "停用" : "启用");
         operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.PICKING_STRATEGY.getCode(), pairs, "状态变更");
     }
-    /**
-     * 根据单据相关信息匹配出拣货规则===> 仓位分配规则 ===> 对应仓位 ===> 根据sku加仓位获取对应库位库存
-     * 库存不满足sku对应数量   循环库位 ===> 循环库区 ===>循环仓库 ===> 循环规则
-     */
-    @Override
-    public Pair<List<LocationInventoryResultDTO>, Map<String, Integer>> getRuleOrderMatchResult(PickingListsDTO.AddDTO dto) {
-        CfgRulePickingDTO.CfgExecutionDataDTO executionData = this.getRuleExecutionData(dto);
-        Pair<List<LocationInventoryResultDTO>, Map<String, Integer>> result = getSoB2CRuleOrderMatchResult(executionData);
-        return result;
-    }
 
     @Override
     public Pair<List<LocationInventoryResultDTO>, Map<String, Integer>> getSoB2CRuleOrderMatchResult(CfgRulePickingDTO.CfgExecutionDataDTO executionData) {
         // 暂时只计算数量优先
-        Pair<List<CfgRulePickingDTO.CfgRulePickingInventoryDTO>, List<WarehouseLocationEntity>> listListPair = this.matchRuleActionList(executionData, "gt");
+        Pair<List<CfgRulePickingDTO.CfgRulePickingInventoryDTO>, List<WarehouseLocationEntity>> listListPair = this.matchRuleActionList(executionData, "gt", RuleTypeEnum.PICKING_STRATEGY.getCode());
         //
         Pair<List<LocationInventoryResultDTO>, Map<String, Integer>> result = this.getSoB2CRuleOrderMatchResult(executionData, listListPair);
         return result;
     }
 
     /**
-     *根据主单信息，获取符合拣货策略的RuleAction集合
-     * */
-    @Override
-    public  List<CfgRulePickingDTO.CfgRulePickingInventoryDTO> getMatchRuleActionList(PickingListsDTO.AddDTO dto,String determiningCondition){
-        // 拣货明细转换为规则执行数据明细
-        CfgRulePickingDTO.CfgExecutionDataDTO executionData = this.getRuleExecutionData(dto);
-        Pair<List<CfgRulePickingDTO.CfgRulePickingInventoryDTO>, List<WarehouseLocationEntity>> listListPair = this.matchRuleActionList(executionData, determiningCondition);
-        return listListPair.getFirst();
-    }
-
+     * 按明细需求，在这些候选上做数量优先占用，输出「拣货结果 + 缺货清单」。
+     * @param executionData
+     * @param listListPair
+     * @return
+     */
     @Override
     public Pair<List<LocationInventoryResultDTO>, Map<String, Integer>> getSoB2CRuleOrderMatchResult(CfgRulePickingDTO.CfgExecutionDataDTO executionData,Pair<List<CfgRulePickingDTO.CfgRulePickingInventoryDTO>, List<WarehouseLocationEntity>> listListPair) {
         List<LocationInventoryResultDTO> result = new ArrayList<>();
@@ -233,7 +248,7 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
      * 拣货明细转换为规则执行数据明细
      */
     @Override
-    public CfgRulePickingDTO.CfgExecutionDataDTO getRuleExecutionData(PickingListsDTO.AddDTO dto){
+    public CfgRulePickingDTO.CfgExecutionDataDTO getPickingRuleExecutionData(PickingListsDTO.AddDTO dto){
         pickingListsService.generatePicking(dto);
         List<CfgRulePickingDTO.CfgExecutionDataDetailDTO> details = dto.getDetails().stream()
                 .map(v -> new CfgRulePickingDTO.CfgExecutionDataDetailDTO(v.getWarehouseId(), v.getSkuId(), v.getSkuNo(),v.getPlatformSkuNo(), v.getQty(), v.getSourceDetailId())).collect(Collectors.toList());
@@ -248,21 +263,21 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
     }
 
     /**
-     * 根据拣货策略条件，进行拣货策略的匹配
+     * 按单据条件命中规则，查出「能从哪些仓位拣、各有多少可用库存」。
      */
     @Override
-    public Pair<List<CfgRulePickingDTO.CfgRulePickingInventoryDTO>, List<WarehouseLocationEntity>> matchRuleActionList(CfgRulePickingDTO.CfgExecutionDataDTO executionData,String determiningCondition){
+    public Pair<List<CfgRulePickingDTO.CfgRulePickingInventoryDTO>, List<WarehouseLocationEntity>> matchRuleActionList(CfgRulePickingDTO.CfgExecutionDataDTO executionData,String determiningCondition, String ruleType){
         log.warn("单据【{}】开始执行拣货策略，开始时间为{}", executionData.getSourceCode(), System.currentTimeMillis());
-        // 获取所有已启用规则
-        List<CfgRulePickingEntity> cfgRulePickings = this.listOrderByPriority();
+        // 获取所有已启用规则，并按 ruleType 过滤对应业务禁用标识
+        List<CfgRulePickingEntity> cfgRulePickings = this.filterByRuleTypeDisabled(this.listOrderByPriority(), ruleType);
         if (CollectionUtils.isEmpty(cfgRulePickings)) {
-            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "拣货规则");
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "仓位推荐");
         }
         List<String> cfgRuleIds = cfgRulePickings.stream().map(CfgRulePickingEntity::getId).collect(Collectors.toList());
         // 查询所有规则对应的规则条件
         List<CfgRuleConditionDTO.ConditionElementDTO> conditions = cfgRuleConditionService.listByRuleIds(cfgRuleIds, RuleTypeEnum.PICKING_STRATEGY.getCode());
         // 查询所有规则对应的规则动作
-        List<CfgRulePackingActionEntity> actions = cfgRulePackingActionService.listByRuleIds(cfgRuleIds);
+        List<CfgRulePackingActionEntity> actions = cfgRulePackingActionService.listByRuleIds(cfgRuleIds, ruleType);
         //封装条件参数
         Map<String, Object> map = this.getRuleConditionMap(executionData);
         // 获取所有符合条件的规则 使用异步流后需要重排序
@@ -281,6 +296,27 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
         List<String> skuIds = executionData.getDetails().parallelStream().map(CfgRulePickingDTO.CfgExecutionDataDetailDTO::getSkuId).distinct().collect(Collectors.toList());
         List<CfgRulePickingDTO.CfgRulePickingInventoryDTO> cfgRulePickingInventoryDTOS = cfgRulePackingActionService.listLocationByRule(rules, warehouseIds, skuIds,determiningCondition);
         return  Pair.create(cfgRulePickingInventoryDTOS, locationList);
+    }
+
+    /**
+     * 按规则类型过滤业务禁用标识：true=已禁用，不参与匹配
+     */
+    private List<CfgRulePickingEntity> filterByRuleTypeDisabled(List<CfgRulePickingEntity> cfgRulePickings, String ruleType) {
+        if (CollectionUtils.isEmpty(cfgRulePickings) || CharSequenceUtil.isBlank(ruleType)) {
+            return cfgRulePickings;
+        }
+        return cfgRulePickings.stream().filter(rule -> {
+            if (RuleTypeEnum.PICKING_STRATEGY.getCode().equals(ruleType)) {
+                return !Boolean.TRUE.equals(rule.getPickDisabled());
+            }
+            if (RuleTypeEnum.WAREHOUSE_LOCATION_REPLENISH.getCode().equals(ruleType)) {
+                return !Boolean.TRUE.equals(rule.getReplenishDisabled());
+            }
+            if (RuleTypeEnum.WAREHOUSE_LOCATION_OUT_STOCK.getCode().equals(ruleType)) {
+                return !Boolean.TRUE.equals(rule.getOutStockDisabled());
+            }
+            return true;
+        }).collect(Collectors.toList());
     }
 
     /**
