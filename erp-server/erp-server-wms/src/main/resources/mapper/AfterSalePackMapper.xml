@@ -28,6 +28,10 @@
        <result column="invalid_status" property="invalidStatus" />
        <result column="invalid_remark" property="invalidRemark" />
        <result column="invalid_time" property="invalidTime" />
+       <result column="operate_user_id" property="operateUserId" />
+       <result column="operate_user_name" property="operateUserName" />
+       <result column="check_user_id" property="checkUserId" />
+       <result column="check_user_name" property="checkUserName" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -56,7 +60,11 @@
         reject_description,
         invalid_status,
         invalid_remark,
-        invalid_time
+        invalid_time,
+        operate_user_id,
+        operate_user_name,
+        check_user_id,
+        check_user_name
     </sql>
 
     <select id="paging" resultType="com.erp.model.wms.dto.AfterSalePackDTO$ListDTO">
@@ -85,6 +93,10 @@
         t.invalid_status as invalidStatus,
         t.invalid_remark as invalidRemark,
         t.invalid_time as invalidTime,
+        t.operate_user_id as operateUserId,
+        t.operate_user_name as operateUserName,
+        t.check_user_id as checkUserId,
+        t.check_user_name as checkUserName,
         pt.supplier_id as supplierId,
         pt.supplier_name as supplierName
         from after_sale_pack t
@@ -121,6 +133,8 @@
         t.sku_species_qty AS skuSpeciesQty,
         t.create_user_name AS createUserName,
         t.create_time AS createTime,
+        t.operate_user_name AS operateUserName,
+        t.check_user_name AS checkUserName,
         t.remark,
         pt.supplier_name AS supplierName,
         dt.sku_no AS skuNo,

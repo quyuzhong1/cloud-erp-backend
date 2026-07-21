@@ -16,6 +16,7 @@ import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.ApplicationContextUtils;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
@@ -600,6 +601,7 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
             handleAfterSalePackDetail(addOrUpdateDTO.getDetailList(), afterSalePackEntity);
         }
         afterSalePackEntity.setPackStatus(AfterSalePackStatusEnum.UNDER_REVIEW.getCode());
+        fillOperateUser(afterSalePackEntity);
         boolean save = super.updateById(afterSalePackEntity);
         if (!save) {
             throw new ServiceException("箱唛确定提审失败");
@@ -668,6 +670,7 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
             handleAfterSalePackDetail(addOrUpdateDTO.getDetailList(), afterSalePackEntity);
         }
         afterSalePackEntity.setPackStatus(AfterSalePackStatusEnum.SEALED_BOX.getCode());
+        fillCheckUser(afterSalePackEntity);
         boolean save = super.updateById(afterSalePackEntity);
         if (!save) {
             throw new ServiceException("箱唛确定并封箱失败");
@@ -1070,6 +1073,7 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
             } else {
                 log.info("确定提审 开始修改箱唛数据，单号：【{}】", afterSalePackEntity.getCode());
                 afterSalePackEntity.setPackStatus(AfterSalePackStatusEnum.UNDER_REVIEW.getCode());
+                fillOperateUser(afterSalePackEntity);
                 boolean save = super.updateById(afterSalePackEntity);
                 if (!save) {
                     throw new ServiceException("箱唛确定提审失败");
@@ -1166,6 +1170,24 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
             data.setPackStatusName(AfterSalePackStatusEnum.getByCode(data.getPackStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
         }
+    }
+
+    /**
+     * 记录装箱人（最新提交复审人）
+     */
+    private void fillOperateUser(AfterSalePackEntity afterSalePackEntity) {
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
+        afterSalePackEntity.setOperateUserId(CharSequenceUtil.blankToDefault(loginUser.getUid(), ""));
+        afterSalePackEntity.setOperateUserName(CharSequenceUtil.blankToDefault(loginUser.getUserName(), ""));
+    }
+
+    /**
+     * 记录复审人（最新完成复审人）
+     */
+    private void fillCheckUser(AfterSalePackEntity afterSalePackEntity) {
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
+        afterSalePackEntity.setCheckUserId(CharSequenceUtil.blankToDefault(loginUser.getUid(), ""));
+        afterSalePackEntity.setCheckUserName(CharSequenceUtil.blankToDefault(loginUser.getUserName(), ""));
     }
 
 }

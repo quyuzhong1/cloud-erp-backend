@@ -219,6 +219,26 @@ public class AfterSalePackDTO implements Serializable {
          * 作废时间
          */
         private LocalDateTime invalidTime;
+
+        /**
+         * 装箱人ID（最新提交复审人）
+         */
+        private String operateUserId;
+
+        /**
+         * 装箱人姓名（最新提交复审人）
+         */
+        private String operateUserName;
+
+        /**
+         * 复审人ID（最新完成复审人）
+         */
+        private String checkUserId;
+
+        /**
+         * 复审人姓名（最新完成复审人）
+         */
+        private String checkUserName;
     }
 
     /**
@@ -365,6 +385,26 @@ public class AfterSalePackDTO implements Serializable {
          * 作废时间
          */
         private LocalDateTime invalidTime;
+
+        /**
+         * 装箱人ID（最新提交复审人）
+         */
+        private String operateUserId;
+
+        /**
+         * 装箱人姓名（最新提交复审人）
+         */
+        private String operateUserName;
+
+        /**
+         * 复审人ID（最新完成复审人）
+         */
+        private String checkUserId;
+
+        /**
+         * 复审人姓名（最新完成复审人）
+         */
+        private String checkUserName;
 
         /**
          * 装箱明细列表
@@ -573,6 +613,8 @@ public class AfterSalePackDTO implements Serializable {
         private Integer skuSpeciesQty;
         private String createUserName;
         private LocalDateTime createTime;
+        private String operateUserName;
+        private String checkUserName;
         private String remark;
     }
 

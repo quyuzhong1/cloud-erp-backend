@@ -111,6 +111,30 @@ public class AfterSalePackEntity extends BaseEntity<AfterSalePackEntity> {
     @TableField("invalid_time")
     private LocalDateTime invalidTime;
 
+    /**
+     * 装箱人ID（最新提交复审人）
+     */
+    @TableField("operate_user_id")
+    private String operateUserId;
+
+    /**
+     * 装箱人姓名（最新提交复审人）
+     */
+    @TableField("operate_user_name")
+    private String operateUserName;
+
+    /**
+     * 复审人ID（最新完成复审人）
+     */
+    @TableField("check_user_id")
+    private String checkUserId;
+
+    /**
+     * 复审人姓名（最新完成复审人）
+     */
+    @TableField("check_user_name")
+    private String checkUserName;
+
 
     public static final String CODE = "code";
 
@@ -143,6 +167,14 @@ public class AfterSalePackEntity extends BaseEntity<AfterSalePackEntity> {
     public static final String INVALID_REMARK = "invalid_remark";
 
     public static final String INVALID_TIME = "invalid_time";
+
+    public static final String OPERATE_USER_ID = "operate_user_id";
+
+    public static final String OPERATE_USER_NAME = "operate_user_name";
+
+    public static final String CHECK_USER_ID = "check_user_id";
+
+    public static final String CHECK_USER_NAME = "check_user_name";
 
     @Override
     public Serializable pkVal() {
