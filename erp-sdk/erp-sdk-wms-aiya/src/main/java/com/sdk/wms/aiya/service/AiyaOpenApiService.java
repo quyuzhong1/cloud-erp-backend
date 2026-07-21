@@ -9,6 +9,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.OkHttpUtils;
 import com.erp.model.wms.dto.AiyaInventoryQueryDTO;
+import com.erp.model.wms.dto.AiyaOutboundSaveDTO;
 import com.erp.model.wms.dto.AiyaSkuQueryDTO;
 import com.sdk.wms.aiya.constants.AiyaConstants;
 import com.sdk.wms.aiya.dto.response.AiyaInboundResp;
@@ -313,17 +314,29 @@ public class AiyaOpenApiService {
     // ===================== 2C 出库单相关接口 =====================
 
     /**
-     * 调用 AIYA 2c.order.save 创建或修改 2C 出库单。
+     * 调用 AIYA {@code GLINK_CREATE_ORDER_NOTIFY} 创建或修改 2C 出库单。
+     * <p>
+     * 创建/修改合一：以 {@link AiyaOutboundSaveDTO#getOrderNumber()}（客户交易物流订单号=三方仓发货单号）
+     * 为幂等键；爱亚成功响应不回传独立出库单号，后续查询/取消均以此号为 key。
+     * <p>
+     * 请求字段以 2026-07-21 官方接口截图为准，嵌套结构为
+     * {@code shippingInstructions}/{@code shipTo}/{@code items}/{@code shipFrom}（及可选 {@code files}），
+     * 详见 {@link AiyaOutboundSaveDTO}。{@code customerCode} 由本方法经 {@link #doQuery} 统一注入。
      *
      * @param accessToken  AIYA partnerId（客户ID）
      * @param secret       AIYA partnerKey（仅用于本地签名）
      * @param customerCode AIYA 客户code（必填业务参数）
-     * @param bizParams    出库单业务字段
-     * @return AIYA 接口原始响应解析后的 JSONObject
+     * @param request      出库单业务报文（不含 customerCode）
+     * @return AIYA 接口原始响应解析后的 JSONObject（含 success / code / message）
      */
-    public JSONObject save2cOrder(String accessToken, String secret, String customerCode, Map<String, Object> bizParams) {
+    public JSONObject save2cOrder(String accessToken, String secret, String customerCode, AiyaOutboundSaveDTO request) {
         Map<String, Object> params = new HashMap<>();
-        mergeBizParams(params, bizParams, "创建2C出库单", Collections.emptySet());
+        if (request != null) {
+            // fastjson 默认忽略 null，可选字段未赋值时不会出现在 bizData 中
+            @SuppressWarnings("unchecked")
+            Map<String, Object> bizParams = (JSONObject) JSON.toJSON(request);
+            mergeBizParams(params, bizParams, "创建2C出库单", Collections.emptySet());
+        }
         return doQuery(accessToken, secret, customerCode, AiyaConstants.TWO_C_ORDER_SAVE, params, "创建2C出库单");
     }
 
