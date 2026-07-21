@@ -1569,7 +1569,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.WMS_PACKING_TASK_CARTON_KEY, keyName = "dto.cartonId", unlockAfterTx = true)
+    @DistributeLocker(businessType = DistributeKeyConstant.WMS_PACKING_TASK_CARTON_KEY, keyName = "dto.taskId", unlockAfterTx = true)
     public String adjustPackingSave(WmsCartonDTO.AdjustSaveDTO dto) {
         PackingTaskEntity packingTaskEntity = this.getById(dto.getTaskId());
         if (ObjectUtils.isEmpty(packingTaskEntity)) {
