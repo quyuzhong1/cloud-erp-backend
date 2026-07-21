@@ -38,4 +38,10 @@ public interface TmsAsyncTaskRecordMapper extends BaseMapper<TmsAsyncTaskRecordE
     List<TmsAsyncTaskRecordEntity> listTimedOutTasksForWatchdog(@Param("defaultExecTimeout") int defaultExecTimeout,
                                                                 @Param("now") LocalDateTime now,
                                                                 @Param("limit") int limit);
+
+    /**
+     * 在事务内抢占来源任务的错误重试资格，避免旧实体重复创建重试任务。
+     */
+    int claimErrorRetry(@Param("id") String id,
+                        @Param("finishStatus") String finishStatus);
 }

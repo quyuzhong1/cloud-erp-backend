@@ -1408,6 +1408,10 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
 
         // 复用导入落库：短事务分片；中途失败则中断后续分片，未落库组标记失败（已落库组保持成功，可错误重试）
         if (CollUtil.isNotEmpty(importDataList)) {
+            // 前置 Feign/DB 预查询已完成；从此处开始费用可能分批提交，先持久化不可重放标记。
+            if (ctx.getBeforePersistHook() != null) {
+                ctx.getBeforePersistHook().run();
+            }
             int nextPersistIndex = 0;
             try {
                 for (int i = 0; i < importDataList.size(); i += RECON_MATCH_PERSIST_BATCH_SIZE) {

@@ -66,7 +66,7 @@ public interface LogisticsReconDetailSubService extends SuperService<LogisticsRe
 
     /**
      * 认领对账单下一批可匹配费用项（短事务），返回本次真正认领成功的 id 集合。
-     * 排除已确认费用项，仅认领未匹配/失败状态。
+     * 排除已确认/部分确认费用项，仅认领未匹配/失败状态及可安全回收的超时匹配状态。
      *
      * @param mainId    对账单 id
      * @param batchSize 单批认领上限
@@ -82,6 +82,14 @@ public interface LogisticsReconDetailSubService extends SuperService<LogisticsRe
      * @return 本次打回失败的费用项数量
      */
     int failStaleMatchingSubsByMainId(String mainId);
+
+    /**
+     * 收敛已经产生确认结果但仍残留 MATCHING 的费用项，避免确认状态与匹配状态长期不一致。
+     *
+     * @param mainId 对账单 id
+     * @return 本次收敛为 MATCHED 的费用项数量
+     */
+    int settleConfirmedMatchingSubsByMainId(String mainId);
 
     /**
      * 统计主表下有效费用项数（detail 归属与 sub.main_id 一致）
