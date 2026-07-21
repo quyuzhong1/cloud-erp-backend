@@ -711,5 +711,15 @@ public class SoReturnPrestockDetailDTO {
          * 备注
          */
         private String remark;
+
+        /**
+         * 认领后生成的退货入库单 ID；由 so_return_instock_detail.prestock_detail_id 反查得到，只读展示，不参与写入
+         */
+        private String returnInstockId;
+
+        /**
+         * 认领后生成的退货入库单号；同上
+         */
+        private String returnInstockCode;
     }
 }
