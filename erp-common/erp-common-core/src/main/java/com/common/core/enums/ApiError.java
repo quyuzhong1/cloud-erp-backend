@@ -1180,6 +1180,8 @@ public final class ApiError implements Serializable {
     public static final ApiError WH_AIYA_PACKING_BOX_NO_VALID_SKU = ApiErrorWms.WH_AIYA_PACKING_BOX_NO_VALID_SKU;
     public static final ApiError WH_AIYA_PACKING_LIST_MISSING_BOX_NO = ApiErrorWms.WH_AIYA_PACKING_LIST_MISSING_BOX_NO;
     public static final ApiError WH_AIYA_INBOUND_DETAIL_JSON_PARSE_FAILED = ApiErrorWms.WH_AIYA_INBOUND_DETAIL_JSON_PARSE_FAILED;
+    public static final ApiError WH_PICK_SHORTAGE_NON_PICK_INSUFFICIENT = ApiErrorWms.WH_PICK_SHORTAGE_NON_PICK_INSUFFICIENT;
+    public static final ApiError WH_PICK_RECOMMENDED_LOCATION_NOT_FOUND = ApiErrorWms.WH_PICK_RECOMMENDED_LOCATION_NOT_FOUND;
 
     /** Tms service error constants. */
     public static final ApiError FIRST_MILE_FBA_SHIPMENT_NOT_EXIST_BILL = ApiErrorTms.FIRST_MILE_FBA_SHIPMENT_NOT_EXIST_BILL;

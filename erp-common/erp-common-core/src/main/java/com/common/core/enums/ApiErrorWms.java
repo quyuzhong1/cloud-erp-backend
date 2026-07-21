@@ -487,5 +487,6 @@ public final class ApiErrorWms {
     public static final ApiError WH_AIYA_PACKING_BOX_NO_VALID_SKU = new ApiError("WH_AIYA_PACKING_BOX_NO_VALID_SKU", 11247, "装箱清单箱内无有效SKU明细，发货单号【{0}】，箱号【{1}】");
     public static final ApiError WH_AIYA_PACKING_LIST_MISSING_BOX_NO = new ApiError("WH_AIYA_PACKING_LIST_MISSING_BOX_NO", 11248, "装箱清单缺少箱号");
     public static final ApiError WH_AIYA_INBOUND_DETAIL_JSON_PARSE_FAILED = new ApiError("WH_AIYA_INBOUND_DETAIL_JSON_PARSE_FAILED", 11249, "AIYA解析入库签收明细JSON失败，签收数据不完整，inboundId={0}");
-
+    public static final ApiError WH_PICK_SHORTAGE_NON_PICK_INSUFFICIENT = new ApiError("WH_PICK_SHORTAGE_NON_PICK_INSUFFICIENT", 11250, "库存不足：sku=[{0}],推荐拣货仓位缺少数:{1},可从非拣货区仓位移仓数:{2},总仓依旧缺货：{3}");
+    public static final ApiError WH_PICK_RECOMMENDED_LOCATION_NOT_FOUND = new ApiError("WH_PICK_RECOMMENDED_LOCATION_NOT_FOUND", 11251, "SKU【{0}】未找到推荐拣货上架仓位，无法生成移仓建议");
 }
