@@ -85,6 +85,7 @@ public final class ApiErrorTms {
     public static final ApiError LOGISTICS_FNSKU_LABEL_PRINT_FAILED = new ApiError("LOGISTICS_FNSKU_LABEL_PRINT_FAILED", 13526, "打印FNSKU标签失败");
     public static final ApiError LOGISTICS_CUSTOMER_SKU_LABEL_PRINT_FAILED = new ApiError("LOGISTICS_CUSTOMER_SKU_LABEL_PRINT_FAILED", 13527, "打印客户SKU标签失败");
     public static final ApiError LOGISTICS_PACKING_NOT_COMPLETED_DECLARATION_FORBIDDEN = new ApiError("LOGISTICS_PACKING_NOT_COMPLETED_DECLARATION_FORBIDDEN", 13528, "装箱未完成，不允许下推报关单");
+    public static final ApiError LOGISTICS_PACKING_CARTON_COMPLETED_FORBIDDEN = new ApiError("LOGISTICS_PACKING_CARTON_COMPLETED_FORBIDDEN", 13726, "该箱已完成装箱，不允许再次操作，请刷新后重试");
     public static final ApiError LOGISTICS_FIRST_MILE_ORDER_EXISTS_NOT_DEL = new ApiError("LOGISTICS_FIRST_MILE_ORDER_EXISTS_NOT_DEL", 13529, "物流单【{0}】已生成，不允许删除");
     public static final ApiError LOGISTICS_DECLARE_BILL_EXISTS_NOT_DEL = new ApiError("LOGISTICS_DECLARE_BILL_EXISTS_NOT_DEL", 13530, "报关单【{0}】已生成，不允许删除");
     public static final ApiError LOGISTICS_CHANNEL_BLACKLIST = new ApiError("LOGISTICS_CHANNEL_BLACKLIST", 13531, "物流渠道【{0}】不允许发往指定地区【{1}{2}{3}{4}{5}】，请调整物流渠道");

@@ -633,7 +633,41 @@ public class WorkflowTaskInstanceServiceImpl extends SuperServiceImpl<WorkflowTa
                                        int totalSteps) {
         // 同一事务：节点 SUCCESS 落库 + 实例 SUCCESS 落库，消除两步写库之间的中间态
         workflowTaskRecordService.updateById(node);
-        markSuccess(instanceId, maxIndex, totalSteps);
+        // 末节点成功必须把实例打成 SUCCESS；乐观锁冲突时抛错回滚节点，避免「节点全成功、实例仍执行中」
+        markSuccessOrThrow(instanceId, maxIndex, totalSteps);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void markSuccessOrThrow(String instanceId, int currentIndex, int totalSteps) {
+        WorkflowTaskInstanceEntity fresh = getById(instanceId);
+        if (fresh == null) {
+            throw new ServiceException(ApiError.WF_TASK_INSTANCE_NOT_FOUND);
+        }
+        if (WorkflowTaskInstanceStatusEnum.SUCCESS.getCode().equals(fresh.getStatus())) {
+            return;
+        }
+        if (WorkflowTaskInstanceStatusEnum.CANCELLED.getCode().equals(fresh.getStatus())) {
+            log.warn("markSuccessOrThrow 跳过，实例已取消，instanceId={}", instanceId);
+            return;
+        }
+        boolean updated = this.lambdaUpdate()
+                .eq(WorkflowTaskInstanceEntity::getId, instanceId)
+                .eq(WorkflowTaskInstanceEntity::getVersion, fresh.getVersion())
+                .ne(WorkflowTaskInstanceEntity::getStatus, WorkflowTaskInstanceStatusEnum.CANCELLED.getCode())
+                .set(WorkflowTaskInstanceEntity::getStatus, WorkflowTaskInstanceStatusEnum.SUCCESS.getCode())
+                .set(WorkflowTaskInstanceEntity::getCurrentIndex, currentIndex)
+                .set(WorkflowTaskInstanceEntity::getTotalSteps, totalSteps)
+                .set(WorkflowTaskInstanceEntity::getLastError, "")
+                .set(WorkflowTaskInstanceEntity::getFinishTime, LocalDateTime.now())
+                .set(WorkflowTaskInstanceEntity::getVersion, fresh.getVersion() + 1)
+                .update();
+        if (!updated) {
+            log.warn("markSuccessOrThrow 并发冲突，instanceId={}, version={}", instanceId, fresh.getVersion());
+            throw new ServiceException(ApiError.WF_TASK_INSTANCE_VERSION_CONFLICT);
+        }
     }
 
     /**
