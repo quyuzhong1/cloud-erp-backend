@@ -26,7 +26,7 @@ import java.util.List;
 public class AiyaInboundCancelDTO implements Serializable {
 
     /**
-     * ASN 编码列表（必填），单个长度 ≤ 64，即我方下发的 {@code asnNumber}（=发货单号）。
+     * ASN 编码列表（必填）
      */
     @NotEmpty(message = "asnNumbers不能为空")
     private List<String> asnNumbers;

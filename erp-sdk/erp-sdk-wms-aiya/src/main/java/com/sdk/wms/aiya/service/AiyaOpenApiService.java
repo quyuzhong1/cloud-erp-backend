@@ -23,6 +23,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.util.*;
 
 /**
@@ -283,7 +284,7 @@ public class AiyaOpenApiService {
      *            pageSize/putawayCompletedTimeFrom/putawayCompletedTimeTo 等）
      * @return AIYA 接口原始响应解析后的强类型 {@link AiyaInboundResp}；无响应时返回 null
      */
-    public AiyaInboundResp batchQueryAsn(@Valid AiyaInboundQueryDTO.QueryReqDTO dto) {
+    public AiyaInboundResp batchQueryAsn(@NotNull(message = "入库单查询请求不能为空") @Valid AiyaInboundQueryDTO.QueryReqDTO dto) {
         Map<String, Object> params = new HashMap<>();
         params.put("page", dto.getPageNum());
         params.put("pageSize", dto.getPageSize());
@@ -334,7 +335,7 @@ public class AiyaOpenApiService {
      * @param request      取消入库单请求（必填 asnNumbers）
      * @return AIYA 接口原始响应解析后的 JSONObject（含 success / code / message）
      */
-    public JSONObject cancelInorder(String accessToken, String secret, String customerCode, @Valid AiyaInboundCancelDTO request) {
+    public JSONObject cancelInorder(String accessToken, String secret, String customerCode, @NotNull(message = "取消入库单请求不能为空") @Valid AiyaInboundCancelDTO request) {
         Map<String, Object> params = new HashMap<>();
         params.put("asnNumbers", JSON.toJSON(request.getAsnNumbers()));
         return doQuery(accessToken, secret, customerCode, AiyaConstants.GLINK_CANCEL_ASN_NOTIFY, params, "取消入库单");
