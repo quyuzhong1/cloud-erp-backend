@@ -17,7 +17,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
@@ -192,20 +194,24 @@ public class AiyaInboundInitHandler extends AbstractAiyaInitHandler {
     }
 
     /**
-     * 收货时间起：dmp 任务有 startTime 则取之，否则回退「今天 - 1 天」。
+     * 收货时间起：dmp 任务有 startTime 则取其「当天 00:00:00」，否则回退「今天 - 1 天」的 00:00:00。
+     * <p>
+     * 与 {@code WegoInboundInitHandler} 对齐：dmp 任务的 startTime/endTime 是「业务时间窗口」，NORMAL 任务
+     * 常为很窄的增量窗口（甚至只有数十秒，见基类拆分逻辑），若按秒级窗口过滤 {@code receiveTime} 几乎命中不到
+     * 任何实际收货数据，故统一放宽到「整天」边界（爱亚按 asnNumber 幂等 upsert，重复拉取安全）。
      */
     private String resolveBeginTime() {
         LocalDateTime startTime = dmpInputTaskEntity == null ? null : dmpInputTaskEntity.getStartTime();
-        LocalDateTime begin = startTime != null ? startTime : LocalDateTime.now().minusDays(1);
-        return begin.format(DATETIME_FORMATTER);
+        LocalDate beginDate = startTime != null ? startTime.toLocalDate() : LocalDate.now().minusDays(1);
+        return beginDate.atStartOfDay().format(DATETIME_FORMATTER);
     }
 
     /**
-     * 收货时间止：dmp 任务有 endTime 则取之，否则回退「当前时间」。
+     * 收货时间止：dmp 任务有 endTime 则取其「当天 23:59:59」，否则回退「今天」的 23:59:59。
      */
     private String resolveEndTime() {
         LocalDateTime endTime = dmpInputTaskEntity == null ? null : dmpInputTaskEntity.getEndTime();
-        LocalDateTime end = endTime != null ? endTime : LocalDateTime.now();
-        return end.format(DATETIME_FORMATTER);
+        LocalDate endDate = endTime != null ? endTime.toLocalDate() : LocalDate.now();
+        return endDate.atTime(LocalTime.MAX).format(DATETIME_FORMATTER);
     }
 }

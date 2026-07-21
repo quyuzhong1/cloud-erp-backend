@@ -524,12 +524,7 @@ public class AiyaOpenApiService {
         String url = getRequestUrl();
         String requestJson = JSON.toJSONString(params);
         String logRequestJson = JSON.toJSONString(maskLogParams(params));
-        // SKU 查询用 warn：任务拉到 0 条而手工测试有数据时，需从日志直接核对 bizData/响应
-        if ("查询SKU".equals(actionName)) {
-            log.warn("[AIYA{}] 请求开始, url={}, params={}", actionName, url, logRequestJson);
-        } else {
-            log.info("[AIYA{}] 请求开始, url={}, params={}", actionName, url, logRequestJson);
-        }
+        log.info("[AIYA{}] 请求开始, url={}, params={}", actionName, url, logRequestJson);
         String response;
         try {
             // 爱亚网关要求 partnerId/serviceType/bizData/sign 以 x-www-form-urlencoded 表单字段提交，
@@ -541,11 +536,7 @@ public class AiyaOpenApiService {
             throw new ServiceException(e, ApiError.WH_AIYA_SDK_API_CALL_ERROR, actionName, e.getMessage());
         }
         long cost = System.currentTimeMillis() - start;
-        if ("查询SKU".equals(actionName)) {
-            log.warn("[AIYA{}] 请求结束, cost={}ms, response={}", actionName, cost, truncateRawResponse(response));
-        } else {
-            log.info("[AIYA{}] 请求结束, cost={}ms", actionName, cost);
-        }
+        log.warn("[AIYA{}] 请求结束, cost={}ms, response={}", actionName, cost, truncateRawResponse(response));
         if (response == null || response.isEmpty()) {
             log.error("[AIYA{}] 接口返回为空, url={}, params={}", actionName, url, logRequestJson);
             throw new ServiceException(ApiError.WH_AIYA_SDK_API_RESPONSE_EMPTY, actionName);
