@@ -13,17 +13,15 @@
                 srp.code,
                 srp.type,
                 srp.return_logistic_code  AS returnLogisticCode,
-                srp.link_status           AS linkStatus,
-                srp.source_id             AS sourceId,
-                srp.source_code           AS sourceCode,
+                srp.claim_status          AS claimStatus,
                 srp.source_type           AS sourceType,
                 srp.third_code            AS thirdCode,
                 srp.inventory_org_id      AS inventoryOrgId,
                 srp.inventory_org_name    AS inventoryOrgName,
                 srp.warehouse_id          AS warehouseId,
                 srp.warehouse_name        AS warehouseName,
-                srp.return_type_dict      AS returnTypeDict,
-                srp.return_instock_time   AS returnInstockTime,
+                srp.dict_return_type      AS dictReturnType,
+                srp.received_time         AS receivedTime,
                 srp.operate_time          AS operateTime,
                 srp.remark,
                 srp.version,
@@ -46,7 +44,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        srp.return_instock_time DESC
+        srp.received_time DESC
     </select>
 
 </mapper>

@@ -6,10 +6,10 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
 
 /**
- * 预入库单关联状态枚举
- * 主表与详情表的 link_status 字段均使用此枚举，表存字符串值
+ * 预入库单认领状态枚举
+ * 主表与详情表的 claim_status 字段均使用此枚举，表存字符串值
  */
-public enum PrestockLinkStatusEnum implements EnumMessage {
+public enum PrestockClaimStatusEnum implements EnumMessage {
 
     UNLINKED("UNLINKED", "未关联"),
     PARTIAL("PARTIAL", "部分关联"),
@@ -22,7 +22,7 @@ public enum PrestockLinkStatusEnum implements EnumMessage {
     private final String status;
     private final String name;
 
-    PrestockLinkStatusEnum(String status, String name) {
+    PrestockClaimStatusEnum(String status, String name) {
         this.status = status;
         this.name = name;
     }
@@ -34,7 +34,7 @@ public enum PrestockLinkStatusEnum implements EnumMessage {
         if (StringUtils.isBlank(status)) {
             return "";
         }
-        for (PrestockLinkStatusEnum item : PrestockLinkStatusEnum.values()) {
+        for (PrestockClaimStatusEnum item : PrestockClaimStatusEnum.values()) {
             if (status.equals(item.getStatus())) {
                 return item.getName();
             }

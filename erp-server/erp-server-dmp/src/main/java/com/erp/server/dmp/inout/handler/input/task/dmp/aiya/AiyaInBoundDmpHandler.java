@@ -13,8 +13,8 @@ import java.util.TreeMap;
 /**
  * 爱亚（AIYA/百世 GLINK）入库 DMP 转换扩展 handler，对齐 {@code WegoInBoundDmpHandler} / {@code JiFengInBoundDmpHandler}。
  * <p>
- * 把 mongo 缓存中的验货明细数组（{@code asnItems}，对应
- * {@link com.sdk.wms.aiya.dto.response.AiyaInboundResp.AsnItemDTO}）整体拍平到
+ * 把 mongo 缓存中的入库单明细数组（{@code asnItems}，对应
+ * {@link com.sdk.wms.aiya.dto.response.AiyaInboundResp.AsnLineItemDTO}）整体拍平到
  * {@link com.erp.model.dmp.entity.DmpThirdInboundEntity} 的 {@code detail_list_json} 字段，
  * 供下游 {@code AiyaInboundRocketMQTaskHandler} 反序列化后按验货流水（含良品/不良品）生成签收/调拨/库存数据。
  * <p>
@@ -29,8 +29,9 @@ import java.util.TreeMap;
 public class AiyaInBoundDmpHandler extends DmpInputDbConvertDmpHandler {
 
     /**
-     * 爱亚入库 mongo 缓存中「验货明细」字段名，对应
-     * {@link com.sdk.wms.aiya.dto.response.AiyaInboundResp.AsnInfoDTO#getAsnItems()}。
+     * 爱亚入库 mongo 缓存中「入库单明细」字段名，对应
+     * {@link com.sdk.wms.aiya.dto.response.AiyaInboundResp.AsnInfoDTO#getAsnLineItems()}
+     * 归一化后统一以 {@code asnItems} 键承载。
      */
     private static final String MONGO_KEY_ASN_ITEMS = "asnItems";
 
