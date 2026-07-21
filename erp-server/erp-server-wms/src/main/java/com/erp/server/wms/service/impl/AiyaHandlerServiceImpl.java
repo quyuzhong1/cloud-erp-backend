@@ -28,6 +28,7 @@ import javax.annotation.Resource;
 import javax.validation.Valid;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -87,6 +88,11 @@ public class AiyaHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     private static final DateTimeFormatter ETA_DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     /**
+     * ERP 单据编号时间后缀格式（与通邮一致：发货单号_HHmmss）。
+     */
+    private static final DateTimeFormatter RECEIVING_CODE_TIME_FORMATTER = DateTimeFormatter.ofPattern("HHmmss");
+
+    /**
      * g → kg 换算除数。
      */
     private static final BigDecimal G_TO_KG_DIVISOR = new BigDecimal("1000");
@@ -138,6 +144,10 @@ public class AiyaHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     @Override
     protected ApiResult<String> createInboundBill(ThirdWarehouseCreateInboundReq createInboundReq) {
         AiyaAuth auth = resolveAuth();
+        // ERP 单据编号(=下发爱亚的 asnNumber) 采用「头程发货单号_HHmmss」，避免同一发货单号重复入库时冲突；
+        // 该 asnNumber 同时作为爱亚 upsert/回传(asnInfo.asnNumber 回显)/取消 三段匹配的幂等键，故下发即为最终 code。
+        String timeFormatter = LocalDateTime.now().format(RECEIVING_CODE_TIME_FORMATTER);
+        createInboundReq.setReceivingCode(CharSequenceUtil.format("{}_{}", createInboundReq.getReferenceNo(), timeFormatter));
         AiyaInboundSaveDTO request = buildInboundSaveDto(createInboundReq);
         log.warn("{}创建入库单请求:{}", getPlatForm().getName(), JSONUtil.toJsonStr(request));
         JSONObject resp = aiyaOpenApiService.saveInorder(auth.partnerId, auth.partnerKey, auth.customerCode, toBizParams(request));
@@ -145,10 +155,6 @@ public class AiyaHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         if (!isSuccess(resp)) {
             return failure(buildErrorMessage(resp));
         }
-        // ERP.code 统一采用我方下发的 asnNumber(=发货单号/referenceNo)：爱亚入库验货明细查询接口
-        // GLINK_QUERY_ASN_INSPECT_DETAIL_NOTIFY 按 putawayCompletedTime 时间窗口回传，asnInfo.asnNumber 即回显
-        // 我方下发的 asnNumber；回传侧 InitHandler 以 asnNumber 作为 receivingCode/sourceCode，故创建/修改一律以
-        // asnNumber 作为 ERP 单据编号，保证创建/回传(按 receivingCode 匹配主表)/取消三段以同一键关联。
         log.warn("{}创建入库单成功, asnNumber={}, wmsAsnNumber={}", getPlatForm().getName(),
                 request.getAsnNumber(), extractAsnNumber(resp));
         return success(request.getAsnNumber());
@@ -196,8 +202,10 @@ public class AiyaHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     /**
      * 构造爱亚 ASN 创建/修改请求。
      * <p>
-     * {@code asnNumber}（必填）取发货单号（{@link ThirdWarehouseCreateInboundReq#getReferenceNo()}），
-     * 作为 ERP 侧唯一号，创建/修改以此为幂等键；入库明细按装箱清单逐箱组装。
+     * {@code asnNumber}（必填，幂等键）取 ERP 单据编号 {@link ThirdWarehouseCreateInboundReq#getReceivingCode()}
+     * （= 发货单号_HHmmss）：创建时由 {@link #createInboundBill} 生成，修改时为已存在的 code；
+     * {@code extAsnNumber}/{@code refNumber}/{@code referenceNumber} 仍取发货单号（{@code referenceNo}）便于溯源；
+     * 入库明细按装箱清单逐箱组装。
      */
     private AiyaInboundSaveDTO buildInboundSaveDto(ThirdWarehouseCreateInboundReq createInboundReq) {
         List<WmsCartonSpecDTO.PackingItemDTO> packingItems = loadPackingList(createInboundReq.getReferenceNo());
@@ -215,7 +223,7 @@ public class AiyaHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         int skuTypeCount = (int) lineItems.stream().map(AiyaInboundSaveDTO.AsnLineItem::getSku).distinct().count();
         String trackingNumber = CharSequenceUtil.blankToDefault(createInboundReq.getTrackingNumber(), createInboundReq.getDeliveryCode());
         return AiyaInboundSaveDTO.builder()
-                .asnNumber(createInboundReq.getReferenceNo())
+                .asnNumber(createInboundReq.getReceivingCode())
                 .extAsnNumber(createInboundReq.getReferenceNo())
                 .refNumber(createInboundReq.getReferenceNo())
                 .referenceNumber(createInboundReq.getReferenceNo())
