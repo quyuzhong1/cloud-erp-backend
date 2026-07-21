@@ -59,7 +59,7 @@ public class SoReturnPrestockDetailDTO {
          */
         @NotNull(message = "实际收货数量不能为空")
         @Min(value = 1, message = "实际收货数量必须大于0")
-        private Integer receiveQty;
+        private Integer receivedQty;
 
         /**
          * 备注
@@ -138,7 +138,7 @@ public class SoReturnPrestockDetailDTO {
         /**
          * 实际收货数量
          */
-        private Integer receiveQty;
+        private Integer receivedQty;
 
         /**
          * 备注
@@ -162,7 +162,7 @@ public class SoReturnPrestockDetailDTO {
         private String detailId;
 
         /**
-         * 本次关联数量（≤ 当前行实际收货数量 receive_qty）
+         * 本次关联数量（≤ 当前行实际收货数量 received_qty）
          */
         @NotNull(message = "关联数量不能为空")
         @Min(value = 1, message = "关联数量必须大于0")
@@ -623,16 +623,6 @@ public class SoReturnPrestockDetailDTO {
         private String soReturnCode;
 
         /**
-         * 生成的退货入库单 ID；认领关联成功后系统回写
-         */
-        private String returnInstockId;
-
-        /**
-         * 生成的退货入库单号；认领关联成功后系统回写
-         */
-        private String returnInstockCode;
-
-        /**
          * 店铺 ID
          */
         private String shopId;
@@ -670,7 +660,7 @@ public class SoReturnPrestockDetailDTO {
         /**
          * 实际收货数量
          */
-        private Integer receiveQty;
+        private Integer receivedQty;
 
         /**
          * 已认领数量
@@ -680,12 +670,12 @@ public class SoReturnPrestockDetailDTO {
         /**
          * 关联状态
          */
-        private String linkStatus;
+        private String claimStatus;
 
         /**
          * 关联状态名称
          */
-        private String linkStatusName;
+        private String claimStatusName;
 
         /**
          * 销售组织 ID

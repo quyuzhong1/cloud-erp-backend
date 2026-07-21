@@ -61,8 +61,6 @@ public class SoReturnInstockDetailEntity extends BaseEntity<SoReturnInstockDetai
     @TableField("real_qty")
     private Integer realQty;
 
-    public static final String REMAIN_MUST_QTY = "remain_must_qty";
-
     /**
      * 退货类型：dict_basic表type = returnType  退货退款  退货补货
      */
@@ -221,8 +219,8 @@ public class SoReturnInstockDetailEntity extends BaseEntity<SoReturnInstockDetai
     /**
      * 剩余应退货数量 = 应退数量(must_qty) - 历史已入库实退数量(real_qty)累计（含本次）
      */
-    @TableField("remain_must_qty")
-    private Integer remainMustQty;
+    @TableField("remain_should_qty")
+    private Integer remainShouldQty;
 
     public static final String RETURN_TYPE_DICT = "return_type_dict";
 
@@ -234,7 +232,7 @@ public class SoReturnInstockDetailEntity extends BaseEntity<SoReturnInstockDetai
 
     public static final String WAREHOUSE_LOCATION = "warehouse_location";
 
-    
+    public static final String REMAIN_SHOULD_QTY = "remain_should_qty";
 
     public static final String SOURCE_DETAIL_ID = "source_detail_id";
 

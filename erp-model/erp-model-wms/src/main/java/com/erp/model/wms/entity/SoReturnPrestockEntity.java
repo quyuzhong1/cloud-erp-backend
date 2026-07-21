@@ -27,17 +27,15 @@ public class SoReturnPrestockEntity extends BaseEntity<SoReturnPrestockEntity> {
     public static final String CODE = "code";
     public static final String TYPE = "type";
     public static final String RETURN_LOGISTIC_CODE = "return_logistic_code";
-    public static final String LINK_STATUS = "link_status";
-    public static final String SOURCE_ID = "source_id";
-    public static final String SOURCE_CODE = "source_code";
+    public static final String CLAIM_STATUS = "claim_status";
     public static final String SOURCE_TYPE = "source_type";
     public static final String THIRD_CODE = "third_code";
     public static final String INVENTORY_ORG_ID = "inventory_org_id";
     public static final String INVENTORY_ORG_NAME = "inventory_org_name";
     public static final String WAREHOUSE_ID = "warehouse_id";
     public static final String WAREHOUSE_NAME = "warehouse_name";
-    public static final String RETURN_TYPE_DICT = "return_type_dict";
-    public static final String RETURN_INSTOCK_TIME = "return_instock_time";
+    public static final String DICT_RETURN_TYPE = "dict_return_type";
+    public static final String RECEIVED_TIME = "received_time";
     public static final String OPERATE_TIME = "operate_time";
     /**
      * 预入库单编号；格式：YRK + yyMMdd + 5位流水
@@ -59,18 +57,8 @@ public class SoReturnPrestockEntity extends BaseEntity<SoReturnPrestockEntity> {
     /**
      * 关联状态：UNLINKED=未关联，LINKED=已关联，PARTIAL=部分关联
      */
-    @TableField("link_status")
-    private String linkStatus;
-    /**
-     * 来源单 ID（退货入库单 ID）
-     */
-    @TableField("source_id")
-    private String sourceId;
-    /**
-     * 来源单号（退货入库单编号）
-     */
-    @TableField("source_code")
-    private String sourceCode;
+    @TableField("claim_status")
+    private String claimStatus;
     /**
      * 来源类型：MANUAL=手动创建，OVERSEAS_WH=海外仓拉取
      */
@@ -104,15 +92,15 @@ public class SoReturnPrestockEntity extends BaseEntity<SoReturnPrestockEntity> {
     /**
      * 退货类型字典值（dict_basic type=ReturnType）
      */
-    @TableField("return_type_dict")
-    private String returnTypeDict;
+    @TableField("dict_return_type")
+    private String dictReturnType;
     /**
-     * 入库时间；创建预入库单时写入，不可修改
+     * 实际收货时间/签收时间；创建预入库单时写入，不可修改
      */
-    @TableField("return_instock_time")
-    private LocalDateTime returnInstockTime;
+    @TableField("received_time")
+    private LocalDateTime receivedTime;
     /**
-     * 操作时间；每次执行关联/解关联等业务操作时更新，首次值等于 return_instock_time
+     * 操作时间；每次执行关联/解关联等业务操作时更新，首次值等于 received_time
      */
     @TableField("operate_time")
     private LocalDateTime operateTime;

@@ -33,16 +33,14 @@ public class SoReturnPrestockDetailEntity extends BaseEntity<SoReturnPrestockDet
     public static final String SO_CODE = "so_code";
     public static final String SO_RETURN_ID = "so_return_id";
     public static final String SO_RETURN_CODE = "so_return_code";
-    public static final String RETURN_INSTOCK_ID = "return_instock_id";
-    public static final String RETURN_INSTOCK_CODE = "return_instock_code";
     public static final String SHOP_ID = "shop_id";
     public static final String SHOP_NAME = "shop_name";
     public static final String SKU_ID = "sku_id";
     public static final String SKU_NO = "sku_no";
     public static final String PRODUCT_NAME = "product_name";
-    public static final String RECEIVE_QTY = "receive_qty";
+    public static final String RECEIVED_QTY = "received_qty";
     public static final String CLAIMED_QTY = "claimed_qty";
-    public static final String LINK_STATUS = "link_status";
+    public static final String CLAIM_STATUS = "claim_status";
     public static final String SALES_ORG_ID = "sales_org_id";
     public static final String SALES_DEPT_ID = "sales_dept_id";
     public static final String SELLER_ID = "seller_id";
@@ -104,16 +102,6 @@ public class SoReturnPrestockDetailEntity extends BaseEntity<SoReturnPrestockDet
     @TableField("so_return_code")
     private String soReturnCode;
     /**
-     * 生成的退货入库单 ID；认领关联成功后，由系统生成并回写
-     */
-    @TableField("return_instock_id")
-    private String returnInstockId;
-    /**
-     * 生成的退货入库单号；认领关联成功后，由系统生成并回写（对齐：SoB2cReturnEntity.return_instock_code）
-     */
-    @TableField("return_instock_code")
-    private String returnInstockCode;
-    /**
      * 店铺 ID
      */
     @TableField("shop_id")
@@ -151,8 +139,8 @@ public class SoReturnPrestockDetailEntity extends BaseEntity<SoReturnPrestockDet
     /**
      * 实际收货数量（预入库单明细唯一数量字段；关联/拆行/认领均以此为准）
      */
-    @TableField("receive_qty")
-    private Integer receiveQty;
+    @TableField("received_qty")
+    private Integer receivedQty;
     /**
      * 已认领数量
      */
@@ -161,8 +149,8 @@ public class SoReturnPrestockDetailEntity extends BaseEntity<SoReturnPrestockDet
     /**
      * 关联状态：UNLINKED=未关联，LINKED=已关联
      */
-    @TableField("link_status")
-    private String linkStatus;
+    @TableField("claim_status")
+    private String claimStatus;
     /**
      * 销售组织 ID
      */

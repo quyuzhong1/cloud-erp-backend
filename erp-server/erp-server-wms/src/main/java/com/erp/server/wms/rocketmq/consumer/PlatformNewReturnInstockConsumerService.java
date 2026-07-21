@@ -758,7 +758,7 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 		// 无法判断真实业务类型（完全无参考号，或参考单号匹配到的订单里没有该SKU），按历史惯例默认落为B2C，后续人工在预入库单列表页可自行修正
 		addDTO.setType(BillTypeEnum.B2C.getCode());
 		addDTO.setReturnLogisticCode("");
-		addDTO.setReturnTypeDict(dto.getReturnType());
+		addDTO.setDictReturnType(dto.getReturnType());
 		addDTO.setInventoryOrgId(warehouseEntity.getOrgId());
 		addDTO.setInventoryOrgName(Objects.nonNull(company) ? company.getCompanyName() : "");
 		addDTO.setWarehouseId(warehouseEntity.getId());
@@ -799,7 +799,7 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 			if (Objects.isNull(receiveQty) || receiveQty <= 0) {
 				receiveQty = detail.getMustQty();
 			}
-			detailDTO.setReceiveQty(receiveQty);
+			detailDTO.setReceivedQty(receiveQty);
 			// 平台订单号、平台字典值均为【关联】相关字段，不代表本行数据来源渠道，此处无头件尚未关联，不写入
 			detailDTO.setRemark(dto.getReason());
 			return detailDTO;

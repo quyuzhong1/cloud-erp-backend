@@ -32,7 +32,7 @@
         srid.must_qty AS mustQty,
         srid.receive_qty AS receiveQty,
         srid.real_qty AS realQty,
-        srid.remain_must_qty AS remainMustQty,
+        srid.remain_should_qty AS remainShouldQty,
         sri.bill_date AS billDate,
         sri.approve_user_name AS approveUserName,
         sri.create_user_name AS createUserName,
