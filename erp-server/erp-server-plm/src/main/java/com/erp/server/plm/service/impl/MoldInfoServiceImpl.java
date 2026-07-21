@@ -373,8 +373,8 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         // 反审核条件判断
         validateDisApprove(entity);
 
-        //检查模具下游关联数据是否存在
-        checkDownstream(entity.getId());
+        // 检查模具下游关联数据是否存在（反审核不校验关联SKU）
+        checkDownstream(entity.getId(), false);
 
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
@@ -402,7 +402,7 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
             throw new ServiceException(ApiError.BILL_DELETE_STATUS_NOT_ALLOWED);
         }
         //检查模具下游关联数据是否存在
-        checkDownstream(id);
+        checkDownstream(id, true);
 
         // 删除主单数据
         log.info("删除 开始删除模具档案主单数据，id：【{}】", id);
@@ -416,12 +416,13 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
 
     /**
      * 检查模具下游关联数据是否存在
-     * <p>用于删除模具前的校验，确保没有其他数据引用该模具</p>
+     * <p>用于删除/作废/反审核前的校验；反审核时可不校验关联SKU</p>
      *
-     * @param id 模具ID，用于查询关联数据
+     * @param id           模具ID，用于查询关联数据
+     * @param checkRefSku  是否校验模具关联SKU
      */
-    private void checkDownstream(String id) {
-        if(moldRefSkuService.lambdaQuery().eq(MoldRefSkuEntity::getMoldId, id).count() > 0){
+    private void checkDownstream(String id, boolean checkRefSku) {
+        if (checkRefSku && moldRefSkuService.lambdaQuery().eq(MoldRefSkuEntity::getMoldId, id).count() > 0) {
             throw new ServiceException(ApiError.MOULD_REF_SKU_EXISTS);
         }
 
@@ -448,7 +449,7 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
             throw new ServiceException(ApiError.BILL_VOID_ALLOWED_STATUS_ONLY);
         }
         //检查模具下游关联数据是否存在
-        checkDownstream(id);
+        checkDownstream(id, true);
         log.info("作废 开始修改模具档案状态数据，id：【{}】", id);
         lambdaUpdate().eq(MoldInfoEntity::getId, id)
             .set(MoldInfoEntity::getInvalidStatus, InvalidStatusEnum.VOIDED.getStatus())
