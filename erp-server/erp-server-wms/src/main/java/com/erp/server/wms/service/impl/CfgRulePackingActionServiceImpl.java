@@ -86,17 +86,23 @@ public class CfgRulePackingActionServiceImpl extends SuperServiceImpl<CfgRulePac
         service.saveOrUpdateBatch(actions);
     }
 
+    /**
+     * 按规则 ID + 动作类型（拣货/补货/出库）查询仓位推荐动作。
+     */
     @Override
     public List<CfgRulePackingActionEntity> listByRuleIds(List<String> cfgRuleIds, String ruleType) {
         return list(Wrappers.<CfgRulePackingActionEntity>lambdaQuery().in(CfgRulePackingActionEntity::getRuleId, cfgRuleIds).eq(CfgRulePackingActionEntity::getRuleType, ruleType));
     }
 
+    /**
+     * 委托 Mapper：按规则、仓库、SKU、库存条件与动作类型查询仓位库存候选。
+     */
     @Override
-    public List<CfgRulePickingDTO.CfgRulePickingInventoryDTO> listLocationByRule(List<CfgRulePickingEntity> rules, List<String> warehouseIds, List<String> skuIds,String determiningCondition) {
+    public List<CfgRulePickingDTO.CfgRulePickingInventoryDTO> listLocationByRule(List<CfgRulePickingEntity> rules, List<String> warehouseIds, List<String> skuIds, String determiningCondition, String ruleType) {
         if (CollectionUtils.isEmpty(rules)) {
             return Collections.emptyList();
         }
         List<String> ruleIds = rules.parallelStream().map(CfgRulePickingEntity::getId).collect(Collectors.toList());
-        return baseMapper.listLocationByRule(ruleIds, warehouseIds, skuIds,determiningCondition);
+        return baseMapper.listLocationByRule(ruleIds, warehouseIds, skuIds, determiningCondition, ruleType);
     }
 }

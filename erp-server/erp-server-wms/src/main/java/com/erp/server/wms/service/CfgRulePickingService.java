@@ -69,10 +69,26 @@ public interface CfgRulePickingService extends SuperService<CfgRulePickingEntity
      */
     CfgRulePickingDTO.CfgExecutionDataDTO getPickingRuleExecutionData(PickingListsDTO.AddDTO dto);
     /**
-     * 根据拣货策略条件，进行拣货策略的匹配
-     * @param executionData 规则执行数据
-     * @param determiningCondition 确定条件
-     * @param ruleType 规则类型 RuleTypeEnum
+     * 按单据条件命中仓位推荐规则，并查询候选仓位库存。
+     * <p>
+     * ruleType 决定动作类型与禁用标识过滤：拣货 / 补货 / 出库。
+     *
+     * @param executionData        规则执行数据（单据头 + SKU 明细）
+     * @param determiningCondition 库存过滤条件，如 gt；传 null 表示不过滤数量
+     * @param ruleType             规则类型，见 {@link com.erp.model.wms.enums.RuleTypeEnum}
+     * @return first=仓位库存候选，second=相关仓位主数据
      */
     Pair<List<CfgRulePickingDTO.CfgRulePickingInventoryDTO>, List<WarehouseLocationEntity>> matchRuleActionList(CfgRulePickingDTO.CfgExecutionDataDTO executionData,String determiningCondition, String ruleType);
+
+    /**
+     * 按单据条件匹配命中的仓位推荐规则（仅规则，不含库存）。
+     * <p>
+     * 流程：启用规则 → 按 ruleType 过滤业务禁用标识 → SpEL 条件匹配 → 优先级排序。
+     * 未命中返回空列表（不抛异常）。
+     *
+     * @param executionData 规则执行数据
+     * @param ruleType      规则类型，见 {@link com.erp.model.wms.enums.RuleTypeEnum}
+     * @return 命中规则列表（已按优先级、更新时间排序）
+     */
+    List<CfgRulePickingEntity> listMatchedRules(CfgRulePickingDTO.CfgExecutionDataDTO executionData, String ruleType);
 }

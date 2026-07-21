@@ -263,43 +263,63 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
     }
 
     /**
-     * 按单据条件命中规则，查出「能从哪些仓位拣、各有多少可用库存」。
+     * 按单据条件命中规则，查出「能从哪些仓位操作、各有多少可用库存」。
+     * <p>
+     * 无命中规则时抛业务异常；有规则但无动作仓库时返回空候选。
      */
     @Override
     public Pair<List<CfgRulePickingDTO.CfgRulePickingInventoryDTO>, List<WarehouseLocationEntity>> matchRuleActionList(CfgRulePickingDTO.CfgExecutionDataDTO executionData,String determiningCondition, String ruleType){
         log.warn("单据【{}】开始执行拣货策略，开始时间为{}", executionData.getSourceCode(), System.currentTimeMillis());
-        // 获取所有已启用规则，并按 ruleType 过滤对应业务禁用标识
-        List<CfgRulePickingEntity> cfgRulePickings = this.filterByRuleTypeDisabled(this.listOrderByPriority(), ruleType);
-        if (CollectionUtils.isEmpty(cfgRulePickings)) {
+        List<CfgRulePickingEntity> rules = this.listMatchedRules(executionData, ruleType);
+        if (CollectionUtils.isEmpty(rules)) {
             throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "仓位推荐");
         }
-        List<String> cfgRuleIds = cfgRulePickings.stream().map(CfgRulePickingEntity::getId).collect(Collectors.toList());
-        // 查询所有规则对应的规则条件
-        List<CfgRuleConditionDTO.ConditionElementDTO> conditions = cfgRuleConditionService.listByRuleIds(cfgRuleIds, RuleTypeEnum.PICKING_STRATEGY.getCode());
-        // 查询所有规则对应的规则动作
-        List<CfgRulePackingActionEntity> actions = cfgRulePackingActionService.listByRuleIds(cfgRuleIds, ruleType);
-        //封装条件参数
-        Map<String, Object> map = this.getRuleConditionMap(executionData);
-        // 获取所有符合条件的规则 使用异步流后需要重排序
-        List<CfgRulePickingEntity> rules = cfgRulePickings.parallelStream()
-                .filter(v -> {
-                    List<CfgRuleConditionDTO.ConditionElementDTO> conditionList = conditions.stream().
-                            filter(r -> r.getRuleId().equals(v.getId())).
-                            sorted(Comparator.comparing(CfgRuleConditionDTO.ConditionElementDTO::getIndex)).collect(Collectors.toList());
-                    List<ConditionElement> conditionElementList = BeanMapper.copyList(conditionList, ConditionElement.class);
-                    //获取到表达式,判断表达式是否匹配
-                    return spElServer.matchExpressionByConditionList(conditionElementList, map,"");
-                }).collect(Collectors.toList());
         log.warn("单据【{}】完成过滤拣货策略，完成时间为{}", executionData.getSourceCode(), System.currentTimeMillis());
-        List<String> warehouseIds = actions.parallelStream().map(CfgRulePackingActionEntity::getWarehouseId).distinct().collect(Collectors.toList());
+        List<String> ruleIds = rules.stream().map(CfgRulePickingEntity::getId).collect(Collectors.toList());
+        List<CfgRulePackingActionEntity> actions = cfgRulePackingActionService.listByRuleIds(ruleIds, ruleType);
+        List<String> warehouseIds = actions.stream().map(CfgRulePackingActionEntity::getWarehouseId).distinct().collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(warehouseIds)) {
+            return Pair.create(Collections.emptyList(), Collections.emptyList());
+        }
         List<WarehouseLocationEntity> locationList = warehouseLocationService.listByWarehouseIds(warehouseIds);
-        List<String> skuIds = executionData.getDetails().parallelStream().map(CfgRulePickingDTO.CfgExecutionDataDetailDTO::getSkuId).distinct().collect(Collectors.toList());
-        List<CfgRulePickingDTO.CfgRulePickingInventoryDTO> cfgRulePickingInventoryDTOS = cfgRulePackingActionService.listLocationByRule(rules, warehouseIds, skuIds,determiningCondition);
-        return  Pair.create(cfgRulePickingInventoryDTOS, locationList);
+        List<String> skuIds = executionData.getDetails().stream().map(CfgRulePickingDTO.CfgExecutionDataDetailDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<CfgRulePickingDTO.CfgRulePickingInventoryDTO> cfgRulePickingInventoryDTOS = cfgRulePackingActionService.listLocationByRule(rules, warehouseIds, skuIds, determiningCondition, ruleType);
+        return Pair.create(cfgRulePickingInventoryDTOS, locationList);
     }
 
     /**
-     * 按规则类型过滤业务禁用标识：true=已禁用，不参与匹配
+     * 仅做规则命中匹配（不含库存），供拣货分配、缺货补货仓位推荐等复用。
+     */
+    @Override
+    public List<CfgRulePickingEntity> listMatchedRules(CfgRulePickingDTO.CfgExecutionDataDTO executionData, String ruleType) {
+        List<CfgRulePickingEntity> cfgRulePickings = this.filterByRuleTypeDisabled(this.listOrderByPriority(), ruleType);
+        if (CollectionUtils.isEmpty(cfgRulePickings)) {
+            return Collections.emptyList();
+        }
+        List<String> cfgRuleIds = cfgRulePickings.stream().map(CfgRulePickingEntity::getId).collect(Collectors.toList());
+        List<CfgRuleConditionDTO.ConditionElementDTO> conditions = cfgRuleConditionService.listByRuleIds(cfgRuleIds, RuleTypeEnum.PICKING_STRATEGY.getCode());
+        Map<String, Object> map = this.getRuleConditionMap(executionData);
+        return cfgRulePickings.stream()
+                .filter(v -> {
+                    List<CfgRuleConditionDTO.ConditionElementDTO> conditionList = conditions.stream()
+                            .filter(r -> r.getRuleId().equals(v.getId()))
+                            .sorted(Comparator.comparing(CfgRuleConditionDTO.ConditionElementDTO::getIndex))
+                            .collect(Collectors.toList());
+                    List<ConditionElement> conditionElementList = BeanMapper.copyList(conditionList, ConditionElement.class);
+                    return spElServer.matchExpressionByConditionList(conditionElementList, map, "");
+                })
+                .sorted(Comparator.comparing(CfgRulePickingEntity::getPriority, Comparator.nullsLast(Integer::compareTo))
+                        .thenComparing(CfgRulePickingEntity::getUpdateTime, Comparator.nullsLast(Comparator.reverseOrder())))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 按规则类型过滤业务禁用标识：字段为 true 表示该业务已禁用，不参与匹配。
+     * <ul>
+     *   <li>拣货 → pickDisabled</li>
+     *   <li>补货 → replenishDisabled</li>
+     *   <li>出库 → outStockDisabled</li>
+     * </ul>
      */
     private List<CfgRulePickingEntity> filterByRuleTypeDisabled(List<CfgRulePickingEntity> cfgRulePickings, String ruleType) {
         if (CollectionUtils.isEmpty(cfgRulePickings) || CharSequenceUtil.isBlank(ruleType)) {
