@@ -7,6 +7,9 @@
         - ${params.sqlMap.default}  : 由 @WebAdvanceQuery QueryHandler 注入的高级搜索 SQL 条件
         - ${params.permissionSql}   : 由 @DataPermission 框架注入的数据权限 SQL，不得视为注入风险
         - ${item.field}/${item.sort}: 排序字段由 @WebAdvanceQuery 框架白名单校验，不得视为注入风险
+        - so_return_instock_detail sid / so_return_instock sri：仅用于高级搜索按"关联退货入库单号"过滤，
+          不出现在 SELECT 列表；自 v1.7 起 so_return_prestock_detail 不再冗余存储 return_instock_code，
+          前端高级搜索条件字段需由旧的 dt.return_instock_code 改为 sri.code
     -->
     <select id="paging" resultType="com.erp.model.wms.dto.SoReturnPrestockDTO$PagingView">
         SELECT distinct srp.id,
@@ -33,6 +36,8 @@
                 srp.update_time           AS updateTime
         FROM so_return_prestock srp
         left join so_return_prestock_detail dt on dt.main_id = srp.id and dt.is_deleted = FALSE
+        left join so_return_instock_detail sid on sid.prestock_detail_id = dt.id and sid.is_deleted = FALSE
+        left join so_return_instock sri on sri.id = sid.main_id and sri.is_deleted = FALSE
         WHERE ${params.sqlMap.default}
           AND srp.is_deleted = FALSE
         <if test="params.permissionSql != null and params.permissionSql != ''">

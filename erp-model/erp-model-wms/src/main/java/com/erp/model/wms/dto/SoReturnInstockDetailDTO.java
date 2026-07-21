@@ -77,9 +77,13 @@ public class SoReturnInstockDetailDTO {
          */
         private String remark;
         /**
-         * 来源明细id
+         * 来源明细id（签收单明细id，sourceType=soReturnReceive 时有值）
          */
         private String sourceDetailId;
+        /**
+         * 来源预入库单明细ID（so_return_prestock_detail.id），仅 sourceType=soReturnPrestock 时有值
+         */
+        private String prestockDetailId;
         /**
          * 退货单明细表id
          */
@@ -158,9 +162,14 @@ public class SoReturnInstockDetailDTO {
          */
         private String remark;
         /**
-         * 来源明细id
+         * 来源明细id（签收单明细id，sourceType=soReturnReceive 时有值）
          */
         private String sourceDetailId;
+        /**
+         * 来源预入库单明细ID（so_return_prestock_detail.id），仅 sourceType=soReturnPrestock 时有值；
+         * 编辑时需按 View 原样回传，否则会被清空
+         */
+        private String prestockDetailId;
         /**
          * 退货单明细表id
          */
@@ -288,9 +297,14 @@ public class SoReturnInstockDetailDTO {
          */
         private String remark;
         /**
-         * 销售单明细表id
+         * 来源明细id（签收单明细id，sourceType=soReturnReceive 时有值）
          */
         private String sourceDetailId;
+
+        /**
+         * 来源预入库单明细ID（so_return_prestock_detail.id），仅 sourceType=soReturnPrestock 时有值
+         */
+        private String prestockDetailId;
 
         /**
          * 销售退货明细表id
