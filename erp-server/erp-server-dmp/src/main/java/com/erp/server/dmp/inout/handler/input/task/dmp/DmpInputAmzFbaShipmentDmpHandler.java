@@ -11,6 +11,8 @@ import com.erp.model.dmp.entity.ShopInfoMappingEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonFbaLabelPageTypeEnum;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonFbaPackTypeEnum;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.Address;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.LabelPrepType;
 import com.erp.server.dmp.service.ShopInfoMappingService;
@@ -85,7 +87,12 @@ public class DmpInputAmzFbaShipmentDmpHandler extends DmpInputDbConvertDmpHandle
                 }
                 Object areCasesRequired = mongoData.get("areCasesRequired");
                 if (areCasesRequired instanceof Boolean) {
-                    dmpDataMap.put("packType", (Boolean) areCasesRequired ? "原厂包装" : "混装");
+                    // 审查说明（packType 落库格式）：统一写入 AmazonFbaPackTypeEnum.code（CASE_PACKED/INDIVIDUAL），
+                    // 不再落库中文「原厂包装/混装」；历史存量/WMS 展示兼容依赖 AmazonFbaPackTypeEnum.toDisplayName/toCode。
+                    // 审查问题2（intentional）：MQ→WMS 推送同样传 code，WMS 展示见 FbaShipmentConverter.toDisplayName；
+                    // 见 DmpOutputAmzFbaShipmentRocketMQTaskHandler，UAT 验证新/旧数据即可。
+                    AmazonFbaPackTypeEnum packTypeEnum = AmazonFbaPackTypeEnum.fromAreCasesRequired((Boolean) areCasesRequired);
+                    dmpDataMap.put("packType", packTypeEnum == null ? "" : packTypeEnum.getCode());
                 } else {
                     dmpDataMap.put("packType", "");
                 }
@@ -122,7 +129,7 @@ public class DmpInputAmzFbaShipmentDmpHandler extends DmpInputDbConvertDmpHandle
                         if (label.get("shipment_id").toString().equals(dmpDataMap.get("fbaShipmentId"))) {
                             String labelUrl = (String)label.get("label_url");
                             dmpDataMap.put("labelUrl", CharSequenceUtil.isNotBlank(labelUrl) ? labelUrl : "");
-                            dmpDataMap.put("pageType", "PackageLabel_Plain_Paper");
+                            dmpDataMap.put("pageType", AmazonFbaLabelPageTypeEnum.PLAIN_PAPER.getCode());
                         }
                     }
 

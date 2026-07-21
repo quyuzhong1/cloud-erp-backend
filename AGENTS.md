@@ -14,7 +14,6 @@
 - `erp-rpc/**/pom.xml`
 - `erp-server/**/pom.xml`
 - `erp-sdk/**/pom.xml`
-- `erp-chrome/pom.xml`
 
 当前仓库未发现 `package.json` 或前端构建配置，因此不要为本仓库编造前端框架、组件库、路由、状态管理或样式规范。
 
@@ -78,7 +77,6 @@ mvn -pl <module> -am test
 | `erp-server-*` | 各业务域服务实现。 |
 | `erp-sdk-*` | 第三方平台和外部系统 SDK。 |
 | `erp-generator` | 初始化代码生成模板。 |
-| `erp-chrome` | Spring Boot 插件服务，不是前端工程。 |
 
 典型请求链路：
 
@@ -135,6 +133,7 @@ Client -> erp-gateway -> erp-server-* Controller -> Service -> Mapper -> Databas
 - 不在业务代码硬编码环境地址、密钥、token、密码或第三方凭证。
 - Mapper XML 中谨慎使用 `${...}`，只沿用已有安全封装和查询辅助模式。
 - 修改已有接口时保持路径、返回结构、字段语义和错误码兼容。
+- **新增方法必须写 JavaDoc**：接口与实现类的新增方法（含 private）默认都要注释用途、关键业务规则、参数与返回值；行为有实质变更时同步更新注释；无逻辑的 getter/setter 可免。
 
 ## 黄金实践
 

@@ -28,6 +28,15 @@ public interface DmpAmazonFeign {
     @PostMapping("/amazon/getShipment")
     Boolean pullShipment(@RequestBody DmpPullShipmentDTO dto);
 
+    /**
+     * 手动拉取亚马逊FBA入库计划货件
+     *
+     * @author Cloud
+     * @since 2026-05-11
+     */
+    @PostMapping("/amazon/getInboundPlanShipment")
+    Boolean pullInboundPlanShipment(@RequestBody DmpPullShipmentDTO dto);
+
 
     /**
      * 缓存和获取亚马逊授权相关信息

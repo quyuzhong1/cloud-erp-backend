@@ -92,4 +92,9 @@ public interface WmsConstant {
      * 东莞售后仓库编码
      */
     String DG_AFTER_SALES_WAREHOUSE_CODE = "jp-gdshc";
+
+    /**
+     * 盘点任务明细导出：无仓位或找不到所属库区时的 sheet / 库区名
+     */
+    String EMPTY_WAREHOUSE_AREA_NAME = "空仓位";
 }

@@ -325,6 +325,94 @@
         </where>
     </select>
 
+    <!-- 批量更新对账状态：按高级查询和状态流转前置条件统计可处理数据 -->
+    <select id="countByUpdateReconciliationStatus" resultType="java.lang.Integer">
+        select count(lbc.id)
+        from logistics_bill_cost lbc
+        inner join logistics_bill lb on lbc.logistics_bill_id = lb.id and lb.is_deleted = false
+        left join logistics_channel lc on lbc.channel_id = lc.id and lc.is_deleted = false
+        <where>
+            <if test="params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.default != ''">
+                ${params.sqlMap.default}
+            </if>
+            and lbc.is_deleted = false
+            <include refid="UpdateReconciliationStatusCondition"/>
+        </where>
+    </select>
+
+    <!-- 批量更新对账状态：游标分页查询可处理费用ID -->
+    <select id="pageByUpdateReconciliationStatus" resultType="java.lang.String">
+        select lbc.id
+        from logistics_bill_cost lbc
+        inner join logistics_bill lb on lbc.logistics_bill_id = lb.id and lb.is_deleted = false
+        left join logistics_channel lc on lbc.channel_id = lc.id and lc.is_deleted = false
+        <where>
+            <if test="params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.default != ''">
+                ${params.sqlMap.default}
+            </if>
+            and lbc.is_deleted = false
+            <include refid="UpdateReconciliationStatusCondition"/>
+            <if test="params.lastId != null and params.lastId != ''">
+                and lbc.id &gt; #{params.lastId}
+            </if>
+        </where>
+        order by lbc.id asc
+        limit #{params.batchSize}
+    </select>
+
+    <!-- 同步按ID更新时，校验入参ID是否仍在当前用户数据权限范围内 -->
+    <select id="countPermittedUpdateReconciliationStatusIds" resultType="java.lang.Integer">
+        select count(distinct lbc.id)
+        from logistics_bill_cost lbc
+        inner join logistics_bill lb on lbc.logistics_bill_id = lb.id and lb.is_deleted = false
+        left join logistics_channel lc on lbc.channel_id = lc.id and lc.is_deleted = false
+        <where>
+            lbc.is_deleted = false
+            and lbc.type = #{params.type}
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+            <if test="params.ids != null and params.ids.size() > 0">
+                and lbc.id in
+                <foreach collection="params.ids" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+    <sql id="UpdateReconciliationStatusCondition">
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        <if test="params.ids != null and params.ids.size() > 0">
+            and lbc.id in
+            <foreach collection="params.ids" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        and lbc.type = #{params.type}
+        and lbc.reconciliation_status is distinct from #{params.reconciliationStatus}
+        <if test="params.reconciliationStatus == params.estimateConfirmStatus">
+            and lbc.pay_type != #{params.refundPayType}
+        </if>
+        <if test="params.reconciliationStatus == params.confirmedStatus">
+            and not (lbc.reconciliation_status = #{params.estimateConfirmStatus} and lbc.check_status = #{params.checkedCheckStatus})
+        </if>
+        <if test="params.reconciliationStatus != params.confirmedStatus">
+            and not (
+                lbc.reconciliation_status in (#{params.estimateConfirmStatus}, #{params.confirmedStatus})
+                and (lbc.check_status != #{params.checkingCheckStatus} or lbc.pay_status != #{params.paymentPayStatus})
+            )
+        </if>
+        <if test="params.reconciliationStatus != params.estimateConfirmStatus and params.reconciliationStatus != params.confirmedStatus">
+            and lbc.reconciliation_status != #{params.invalidStatus}
+        </if>
+        <if test="params.reconciliationStatus != params.estimateConfirmStatus and params.reconciliationStatus != params.confirmedStatus and params.reconciliationStatus != params.invalidStatus">
+            and lbc.reconciliation_status != #{params.toBeConfirmStatus}
+        </if>
+    </sql>
+
     <!-- 统计总数 -->
     <select id="listTotalCostValueCount" resultType="com.erp.model.tms.dto.LogisticsBillCostDTO$TotalCountDTO">
         select
@@ -343,46 +431,6 @@
                 ${params.permissionSql}
             </if>
         </where>
-    </select>
-
-    <select id="listByCanPushAllocation" resultType="java.lang.String">
-        SELECT lbc.id
-        FROM logistics_bill_cost AS lbc
-        inner join logistics_bill lb on lbc.logistics_bill_id = lb.id and lb.is_deleted = false
-        LEFT JOIN (
-            SELECT DISTINCT cost_id
-            FROM small_bag_cost_allocation_main
-            WHERE is_deleted = FALSE
-              AND (
-                  report_date = #{params.reportDate}
-                  OR report_status = 'confirmed'
-                  OR fee_source = 'confirmed'
-              )
-        ) excl_confirmed ON lbc.id = excl_confirmed.cost_id
-        LEFT JOIN (
-            SELECT DISTINCT cost_id
-            FROM small_bag_cost_allocation_main
-            WHERE is_deleted = FALSE
-              AND (
-                  report_date = #{params.reportDate}
-                  OR report_status = 'confirmed'
-              )
-        ) excl_estimate ON lbc.id = excl_estimate.cost_id
-        WHERE lbc.is_deleted = FALSE
-          AND lb.is_allocate_cost_required = true
-          AND lbc.type = #{params.type}
-          AND lbc.reconciliation_month = #{params.reportDate}
-          AND (
-              (lbc.reconciliation_status = 'confirmed'      AND excl_confirmed.cost_id IS NULL)
-              OR
-              (lbc.reconciliation_status = 'estimateConfirm' AND excl_estimate.cost_id IS NULL)
-          )
-        <if test="params.ids != null and params.ids.size() > 0">
-            AND lbc.id IN
-            <foreach collection="params.ids" item="item" open="(" separator="," close=")">
-                #{item}
-            </foreach>
-        </if>
     </select>
 
     <select id="pageByCanPushAllocation" resultType="java.lang.String">

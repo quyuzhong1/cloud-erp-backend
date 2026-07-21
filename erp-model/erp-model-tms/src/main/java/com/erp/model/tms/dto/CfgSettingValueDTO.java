@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import javax.validation.constraints.Digits;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -147,7 +148,7 @@ public class CfgSettingValueDTO implements Serializable {
          * 头程分摊执行超时时间 单位：秒
          */
         private Integer firstMileAllocationeExecTimeout;
-        
+
         /**
          * 小包分摊类型，/wms/dict/drop/down?type=reconciliationType
          */
@@ -168,7 +169,7 @@ public class CfgSettingValueDTO implements Serializable {
          * 小包分摊执行超时时间 单位：秒
          */
         private Integer packageBeginExecTimeout;
-        
+
         /**
          * 中转分摊类型，/wms/dict/drop/down?type=reconciliationType
          */
@@ -316,6 +317,40 @@ public class CfgSettingValueDTO implements Serializable {
     }
 
     /**
+     * 合同协议号
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ContractAgreementNoDTO {
+
+        /**
+         * 核算公司id
+         */
+        @NotBlank(message = "核算公司不能为空")
+        private String companyId;
+
+        /**
+         * 核算公司名称
+         */
+        private String companyName;
+        /**
+         * 序号
+         */
+        private Integer index;
+
+        /**
+         * 合同协议号
+         */
+        @NotBlank(message = "合同协议号不能为空")
+        @Pattern(regexp = "^[A-Za-z]+$", message = "合同协议号只能输入英文字母")
+        private String contractAgreementNo;
+
+        public void setContractAgreementNo(String contractAgreementNo) {
+            this.contractAgreementNo = contractAgreementNo == null ? null : contractAgreementNo.trim();
+        }
+    }
+
+    /**
      * 东莞塘厦仓 东莞简拍
      */
     @Data
@@ -349,10 +384,22 @@ public class CfgSettingValueDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class BillBatchParamsDTO {
-        private String smallBagBatch;
-        private String smallBagTimeoutSeconds;
-        private String firstMileBatch;
-        private String firstMileTimeoutSeconds;
+        /** 每批次数量 */
+        private String batch;
+        /** 每批次任务超时时间（秒） */
+        private String batchTimeoutSeconds;
+        /** 主任务超时时间（秒） */
+        private String taskTimeoutSeconds;
+        /** 明细僵死判定缓冲时间（秒） */
+        private String detailBufferSeconds;
+        /** watchdog 单轮主任务扫描上限 */
+        private String watchdogMainTaskLimit;
+        /** watchdog 单轮明细扫描上限 */
+        private String watchdogDetailLimit;
+        /** watchdog 明细批量更新大小 */
+        private String watchdogUpdateBatchSize;
+        /** watchdog 单次执行最大轮数 */
+        private String watchdogMaxRounds;
     }
 
 }

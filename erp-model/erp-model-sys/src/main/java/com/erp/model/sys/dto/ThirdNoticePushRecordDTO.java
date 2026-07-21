@@ -220,4 +220,10 @@ public class ThirdNoticePushRecordDTO implements Serializable {
         private List<String> diffFields;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class BatchSendMqRecordConsumerDTO {
+        private List<String> jsonStrList;
+    }
+
 }

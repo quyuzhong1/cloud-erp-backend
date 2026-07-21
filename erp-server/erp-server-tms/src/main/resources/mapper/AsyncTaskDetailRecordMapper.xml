@@ -36,4 +36,42 @@
         main_id, business_id, business_code, business_type, start_time, end_time, status, error_data
     </sql>
 
+    <select id="listOrphanIngDetailIds" resultType="java.lang.String">
+        SELECT
+        tatd.id
+        FROM
+        tms_async_task_detail tatd
+        INNER JOIN tms_async_task_record tatr
+            ON tatr.id = tatd.main_id
+            AND tatr.is_deleted = FALSE
+        WHERE
+        tatd.is_deleted = FALSE
+        AND tatd.status = 'ing'
+        AND tatr.status = 'finish'
+        ORDER BY
+        tatd.id ASC
+        LIMIT #{limit}
+    </select>
+
+    <select id="listStaleIngDetailIdsByTaskType" resultType="java.lang.String">
+        SELECT
+        tatd.id
+        FROM
+        tms_async_task_detail tatd
+        INNER JOIN tms_async_task_record tatr
+            ON tatr.id = tatd.main_id
+            AND tatr.is_deleted = FALSE
+        WHERE
+        tatd.is_deleted = FALSE
+        AND tatd.status = 'ing'
+        AND tatd.start_time IS NOT NULL
+        AND tatd.start_time <![CDATA[ <= ]]> #{staleBefore}
+        AND tatr.business_type = #{businessType}
+        AND tatr.method_type = #{methodType}
+        ORDER BY
+        tatd.start_time ASC,
+        tatd.id ASC
+        LIMIT #{limit}
+    </select>
+
 </mapper>

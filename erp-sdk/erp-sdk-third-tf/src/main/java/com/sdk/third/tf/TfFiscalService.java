@@ -398,6 +398,26 @@ public class TfFiscalService {
     }
 
     /**
+     * 根据chave查询发票详情
+     * 使用新接口路径：/api/invoice/get_detail
+     *
+     * @param chave 发票访问密钥
+     * @param companyToken 公司token（cfg_invoice_setting.token）
+     * @return 发票详情响应数据DTO（data部分）
+     */
+    public InvoiceDetailResponseDTO.InvoiceDetailDataDTO getInvoiceDetailByChaveV2(String chave, String companyToken) {
+        // 签名的appKey就是header的token，所以这里appKey = companyToken
+
+        log.info("根据chave查询发票详情, chave: {}, 使用公司token", chave);
+
+        InvoiceDetailResponseDTO.InvoiceDetailDataDTO response =
+            invoiceApiClient.getInvoiceDetailByChave(chave, companyToken, companyToken);
+
+        log.info("根据chave查询发票详情成功, chave: {}, status: {}", chave, response.getStatus());
+        return response;
+    }
+
+    /**
      * 取消发票（新接口）
      * 使用新接口路径：/api/invoice/cancel
      * 

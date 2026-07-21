@@ -70,6 +70,27 @@ public class InvoiceDetailResponseDTO {
         private String xml;
 
         /**
+         * 普通DANFE PDF文件链接
+         */
+        @JsonProperty("danfe")
+        @JsonAlias({"danfe", "Danfe"})
+        private String danfe;
+
+        /**
+         * 简版DANFE PDF文件链接
+         */
+        @JsonProperty("danfe_simples")
+        @JsonAlias({"danfe_simples", "danfeSimples"})
+        private String danfeSimples;
+
+        /**
+         * 标签DANFE PDF文件链接
+         */
+        @JsonProperty("danfe_etiqueta")
+        @JsonAlias({"danfe_etiqueta", "danfeEtiqueta"})
+        private String danfeEtiqueta;
+
+        /**
          * 创建时间
          */
         @JsonProperty("create")

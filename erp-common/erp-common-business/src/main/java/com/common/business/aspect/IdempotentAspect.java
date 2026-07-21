@@ -4,11 +4,13 @@ import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.annotation.Idempotent;
 import com.common.business.constant.RedisCacheConstants;
+import com.common.business.constant.TokenConstants;
 import com.common.business.utils.MD5Util;
 import com.common.business.utils.RedisUtil;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -62,15 +64,14 @@ public class IdempotentAspect {
         }
         String params = argsToString(proceedingJoinPoint.getArgs());
         String url = null;
-        String token = null;
+        String requesterIdentity = null;
         if (request != null) {
             // 请求地址（作为存放cache的key值）
             url = request.getRequestURI();
-            // 用户的唯一标识
-            token = request.getHeader("Authorization");
+            requesterIdentity = getRequesterIdentity(request);
         }
-        // 唯一标识（url +  token  + params）
-        String submitKey = RedisCacheConstants.IDEM_REDISKEY + MD5Util.toMD5(url + "_" + token + ":" + params);
+        // 唯一标识（url + 请求方身份 + params）。API Token请求不透传原始Authorization，使用tokenId/用户上下文兜底。
+        String submitKey = RedisCacheConstants.IDEM_REDISKEY + MD5Util.toMD5(url + "_" + requesterIdentity + ":" + params);
         boolean flag = false;
         //判断缓存中是否有此key
         if (redisUtil.hasKey(submitKey)) {
@@ -131,6 +132,22 @@ public class IdempotentAspect {
             }
         }
         return params.toString().trim();
+    }
+
+    private String getRequesterIdentity(HttpServletRequest request) {
+        String authorization = request.getHeader(TokenConstants.AUTHENTICATION);
+        if (StringUtils.isNotBlank(authorization)) {
+            return authorization;
+        }
+        String apiTokenId = request.getHeader(TokenConstants.API_TOKEN_ID_HEADER);
+        if (StringUtils.isNotBlank(apiTokenId)) {
+            return "apiToken:" + apiTokenId;
+        }
+        String tokenUserInfo = request.getHeader(TokenConstants.TOKEN_USER_INFO);
+        if (StringUtils.isNotBlank(tokenUserInfo)) {
+            return "user:" + tokenUserInfo;
+        }
+        return "";
     }
 
     /**

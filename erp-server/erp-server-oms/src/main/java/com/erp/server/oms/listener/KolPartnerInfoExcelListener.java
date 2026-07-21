@@ -144,4 +144,91 @@ public class KolPartnerInfoExcelListener extends AnalysisEventListener<KolPartne
         downloadTaskFeign.updateTask(importResultDTO);
     }
 
+    public static class UpdateListener extends AnalysisEventListener<KolPartnerInfoImportExcelDTO.UpdateExcelDTO> {
+
+        private final String taskId;
+
+        private final Integer importCount;
+
+        @Getter
+        private Integer count = 0;
+
+        private final KolPartnerInfoService kolPartnerInfoService = SpringUtil.getBean(KolPartnerInfoService.class);
+
+        private final DownloadTaskFeign downloadTaskFeign = SpringUtil.getBean(DownloadTaskFeign.class);
+
+        @Getter
+        private List<KolPartnerInfoImportExcelDTO.UpdateExcelDTO> errorList = new ArrayList<>();
+
+        @Getter
+        private List<KolPartnerInfoImportExcelDTO.UpdateExcelDTO> successList = new ArrayList<>(BATCH_COUNT);
+
+        public UpdateListener(String taskId, Integer importCount) {
+            this.taskId = taskId;
+            this.importCount = importCount;
+        }
+
+        @Override
+        @Transactional(rollbackFor = Exception.class)
+        public void invoke(KolPartnerInfoImportExcelDTO.UpdateExcelDTO excelDTO, AnalysisContext analysisContext) {
+            count += 1;
+            //已经导入的数据跳过进度
+            if (Objects.nonNull(importCount) && count < importCount){
+                return;
+            }
+
+            List<String> errorMsgList = new ArrayList<>();
+            //基础验证
+            List<String> msgList = FieldValidUtil.fieldValid(excelDTO);
+            if (CollectionUtils.isNotEmpty(msgList)) {
+                errorMsgList.addAll(msgList);
+            }
+
+            // 达人昵称、详细地址、联系人不允许包含特殊字符（表情符号等）
+            if (ConvertUtil.containsSpecialChar(excelDTO.getNickname())) {
+                errorMsgList.add("达人昵称存在特殊字符");
+            }
+            if (ConvertUtil.containsSpecialChar(excelDTO.getDetailAddress())) {
+                errorMsgList.add("详细地址存在特殊字符");
+            }
+            if (ConvertUtil.containsSpecialChar(excelDTO.getContactPerson())) {
+                errorMsgList.add("联系人存在特殊字符");
+            }
+
+            //存在错误数据则直接返回
+            if (errorMsgList.size() > 0) {
+                excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                errorList.add(excelDTO);
+                return;
+            }
+            successList.add(excelDTO);
+        }
+
+        @Override
+        @Transactional(rollbackFor = Exception.class)
+        public void doAfterAllAnalysed(AnalysisContext analysisContext) {
+            if (!successList.isEmpty()){
+                try {
+                    List<String> errorNoList = errorList.stream().map(KolPartnerInfoImportExcelDTO.UpdateExcelDTO::getCode).distinct().collect(Collectors.toList());
+                    List<KolPartnerInfoImportExcelDTO.UpdateExcelDTO> errorList2 = new ArrayList<>();
+                    kolPartnerInfoService.handleImportUpdateSuccessList(successList, errorNoList, errorList2);
+                    errorList.addAll(errorList2);
+                }catch (Exception e){
+                    successList.forEach(excelDTO1 -> excelDTO1.setErrorMsg(e.getMessage().length() > 50 ? e.getMessage().substring(0, 50) : e.getMessage()));
+                    errorList.addAll(successList);
+                }
+                updateTask(count);
+            }
+        }
+
+        private void updateTask(Integer count){
+            BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+            importResultDTO.setTaskId(taskId);
+            importResultDTO.setStatus(FileTaskStatusEnum.PROCESS.getCode());
+            importResultDTO.setRemark("处理中");
+            importResultDTO.setCount(count);
+            downloadTaskFeign.updateTask(importResultDTO);
+        }
+    }
+
 }

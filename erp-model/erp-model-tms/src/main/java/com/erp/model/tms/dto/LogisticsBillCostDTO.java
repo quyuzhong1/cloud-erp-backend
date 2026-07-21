@@ -1039,12 +1039,27 @@ public class LogisticsBillCostDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class UpdateStatusDTO {
+    public static class UpdateStatusDTO extends PermissionsDTO {
 
         /**
          * ids
          */
         private List<String> ids;
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
+
+        /**
+         * 费用归属类型
+         */
+        private String type;
 
         /**
          * 状态 对账类型   http://172.16.100.11:3002/project/128/interface/api/25522 key=reconciliationStatus
@@ -1125,6 +1140,8 @@ public class LogisticsBillCostDTO implements Serializable {
     	 *物流标签类型
     	 */
     	private String type;
+
+
     	
     } /**
      * 支付状态
@@ -1332,4 +1349,65 @@ public class LogisticsBillCostDTO implements Serializable {
     public static class OutstockWeightPreloadDTO {
         private Map<String, List<SoOutstockDetailEntity>> outstockDetailMap = Collections.emptyMap();
     }
+
+    /**
+     * 小包下推分摊游标分页查询参数。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CanPushAllocationPageQueryDTO implements Serializable {
+
+        private String reportDate;
+
+        private String type;
+
+        private String lastId;
+
+        private Integer batchSize;
+
+        private List<String> ids;
+    }
+
+    /**
+     * 批量更新对账状态游标分页查询参数。
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateReconciliationStatusPageQueryDTO implements Serializable {
+
+        private String type;
+
+        private String reconciliationStatus;
+
+        private LocalDateTime confirmTime;
+
+        private Map<String, String> sqlMap;
+
+        private String permissionSql;
+
+        private String lastId;
+
+        private Integer batchSize;
+
+        private List<String> ids;
+
+        private String estimateConfirmStatus;
+
+        private String confirmedStatus;
+
+        private String invalidStatus;
+
+        private String toBeConfirmStatus;
+
+        private String checkedCheckStatus;
+
+        private String checkingCheckStatus;
+
+        private String refundPayType;
+
+        private String paymentPayStatus;
+
+    }
+
 }

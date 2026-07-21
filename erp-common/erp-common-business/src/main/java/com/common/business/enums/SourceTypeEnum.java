@@ -74,6 +74,7 @@ public enum SourceTypeEnum {
     FBA_SHIPMENT("fbaShipment", "FBA货件","fba_shipment"),
     AWD_SHIPMENT("awdShipment", "AWD货件","fba_shipment"),
     FBA_SHIPMENT_DETAIL("fbaShipmentDetail", "FBA货件明细","fba_shipment_detail"),
+    FBA_INBOUND_PLANS("fbaInboundPlans", "FBA入库货件列表","fba_inbound_plans"),
     FIRST_MILE_DELIVERY("firstMileDelivery", "头程发货单", "first_mile_delivery"),
     //当前仓可用减少，中转仓冻结增加
     FIRST_MILE_DELIVERY_TRANSFER_TO_THIRD("firstMileDeliveryTransferToThird", "头程发货单-中转（三方仓发三方仓）", "first_mile_delivery"),
@@ -135,6 +136,10 @@ public enum SourceTypeEnum {
     CUSTOMER_GROUP( "customerGroup", "客户分组","customer_group"),
     LISTING_INFO( "listingInfo", "产品信息","listing_info"),
     SDY_SKU_MAPPING( "sdy_skuMapping", "sku映射","sku_mapping"),
+    OMS_SKU_MAPPING_UNMATCH_PLATFORM("omsSkuMappingUnmatchPlatform", "B2C平台SKU未匹配预警", "sku_mapping"),
+    OMS_SKU_MAPPING_UNMATCH_WAREHOUSE("omsSkuMappingUnmatchWarehouse", "库存SKU未匹配预警", "sku_mapping"),
+    OMS_SKU_MAPPING_UNMATCH_CUSTOMER("omsSkuMappingUnmatchCustomer", "B2B客户SKU未匹配预警", "sku_mapping"),
+    OMS_SKU_MAPPING_UNMATCH_B2B_PLATFORM("omsSkuMappingUnmatchB2bPlatform", "B2B平台SKU未匹配预警", "sku_mapping"),
     CFG_VAT_INVOICE( "cfgVatInvoice", "VAT发票设置","cfg_vat_invoice"),
     SO_PRICE( "soPrice", "销售价目表","so_price"),
     SO_PRICE_CHANGE( "soPriceChange", "销售调价表","so_price_change"),
@@ -206,6 +211,7 @@ public enum SourceTypeEnum {
     TRANSFER_DECLARE("transferDeclare", "中转报关","transfer_declare"),
     DICT_BASIC("dictBasic", "字典","dict_basic"),
     TMS_CFG_COST("tmsCfgCost", "费用管理配置","tms_cfg_cost"),
+    CFG_DECLARE_RULE("cfgDeclareRule", "报关配置", "cfg_declare_rule"),
 
     LOGISTICS_BILL_COST("logisticsBillCost", "自发货物流费用","logistics_bill_cost"),
     FIRST_MILE_LOGISTICS_BILL_COST("firstMileLogisticsBillCost", "头程物流费用","logistics_bill_cost"),

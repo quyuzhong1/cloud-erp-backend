@@ -28,6 +28,8 @@ import com.erp.model.sys.dto.SysLoginIpDTO;
 import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.dto.SysUserThirdDTO;
 import com.erp.model.sys.vo.SysLoginUserVO;
+import com.erp.model.sys.vo.SysUserMenuAuthVO;
+import com.erp.model.sys.vo.SysUserPermissionAuthVO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.auth.server.AuthTokenService;
 import com.erp.server.auth.server.LoginAuthService;
@@ -53,7 +55,15 @@ public class SysLoginAuthController extends BaseController {
     private LoginAuthService loginAuthService;
 
     /**
-     * erp登录
+     * ERP 账号密码登录
+     * <p>
+     * 登录成功后仅返回 Token 和用户基础信息，菜单与按钮权限需分别调用
+     * {@link #getUserMenus(HttpServletRequest)} 和 {@link #getUserPermissions(HttpServletRequest)} 获取。
+     * </p>
+     *
+     * @param loginDTO 登录入参
+     * @param request  HTTP 请求
+     * @return 登录结果
      */
     @LogAction(value = LogActionEnum.LOGIN, desc = "ERP登录")
     @RequestMapping("/accountLogin")
@@ -99,6 +109,44 @@ public class SysLoginAuthController extends BaseController {
         }
     }
 
+
+    /**
+     * 获取用户菜单权限
+     * <p>
+     * 登录成功后调用，Header 需携带 Authorization Token。
+     * 返回 leftMenuList（左侧导航）和 overallMenuList（全量菜单树）。
+     * </p>
+     *
+     * @param request HTTP 请求
+     * @return 菜单权限数据
+     */
+    @GetMapping("/menus")
+    public ApiResult<SysUserMenuAuthVO> getUserMenus(HttpServletRequest request) {
+        String token = request.getHeader(TokenConstants.AUTHENTICATION);
+        if (StringUtils.isBlank(token)) {
+            throw new ServiceException(ApiError.HTTP_FORBIDDEN);
+        }
+        return success(loginAuthService.getUserMenus(token));
+    }
+
+    /**
+     * 获取用户按钮权限编码
+     * <p>
+     * 登录成功后调用，Header 需携带 Authorization Token。
+     * 返回 permissionList，用于前端按钮级权限控制。
+     * </p>
+     *
+     * @param request HTTP 请求
+     * @return 按钮权限编码列表
+     */
+    @GetMapping("/permissions")
+    public ApiResult<SysUserPermissionAuthVO> getUserPermissions(HttpServletRequest request) {
+        String token = request.getHeader(TokenConstants.AUTHENTICATION);
+        if (StringUtils.isBlank(token)) {
+            throw new ServiceException(ApiError.HTTP_FORBIDDEN);
+        }
+        return success(loginAuthService.getUserPermissions(token));
+    }
 
     /**
      * 退出登录

@@ -238,7 +238,14 @@ public class ProductDetailDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ProductLogisticDTO {
-
+        /**
+         *  bom版本
+         */
+        private String bomVersion;
+        /**
+         *  bom历史id
+         */
+        private String bomHistoryId;
         /**
          * sku id
          */

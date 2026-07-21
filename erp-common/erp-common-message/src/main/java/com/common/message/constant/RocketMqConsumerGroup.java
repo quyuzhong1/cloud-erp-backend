@@ -323,7 +323,6 @@ public class RocketMqConsumerGroup {
      */
     public static final String WMS_VIRTUAL_DETAIL_MSG_CONSUMER = "${spring.cloud.nacos.discovery.namespace}-wms_virtual_detail_msg_consumer";
 
-
     /**
      *
      */
@@ -359,6 +358,7 @@ public class RocketMqConsumerGroup {
      * 添加系统操作日志
      */
     public static final String OMS_WORKFLOW_TASK_RECORD = "${spring.cloud.nacos.discovery.namespace}-oms_workflow_task_record";
+
     //---------------------------------------------------wangdian---------------------------------------------------------------------------------------------
     /**
      * 旺店通推送货品资料
@@ -376,7 +376,6 @@ public class RocketMqConsumerGroup {
 
 
     //---------------------------------------------------tms---------------------------------------------------------------------------------------------
-    public static final String TMS_PUSH_ALLOCATION_COST_CONSUMER = "${spring.cloud.nacos.discovery.namespace}-tms_push_allocation_cost_consumer";
     public static final String TMS_ASYNC_TASK_RECORD_CONSUMER = "${spring.cloud.nacos.discovery.namespace}-tms_async_task_record_consumer";
 
     /**

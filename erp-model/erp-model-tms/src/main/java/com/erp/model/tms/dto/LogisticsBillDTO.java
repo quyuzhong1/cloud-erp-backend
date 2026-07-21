@@ -986,6 +986,11 @@ public class LogisticsBillDTO implements Serializable {
          */
         private String receiverTaxNo;
 
+        /**
+         * 门牌号
+         */
+        private String houseNumber;
+
     }
 
     @Data
